@@ -1,17 +1,59 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
 import { CasesProvider, useCases } from './cases-context'
+import { formatDate } from '@/lib/utils'
 import { CaseList } from './case-list'
 import { CaseDetail, CaseDetailEmpty } from './case-detail'
+import { CaseHistory } from './case-history'
+import { createCase } from '@/lib/actions/create-case'
+import { deleteCase } from '@/lib/actions/delete-case'
+import { undoLastChange } from '@/lib/actions/cases'
 
 function Inner() {
-  const { cases, selectedId } = useCases()
+  const { cases, selectedId, addLocalCase, removeLocalCase, updateLocalCaseField } = useCases()
   const selectedCase = useMemo(
     () => cases.find((c) => c.id === selectedId) ?? null,
     [cases, selectedId],
   )
+  const detailScrollRef = useRef<HTMLDivElement>(null)
+
+  // Reset detail scroll to top when selected case changes
+  useEffect(() => {
+    detailScrollRef.current?.scrollTo(0, 0)
+  }, [selectedId])
+
+  const handleAdd = useCallback(async () => {
+    const result = await createCase()
+    if (result.ok) {
+      addLocalCase(result.case)
+    }
+  }, [addLocalCase])
+
+  // Ctrl+Z: undo last change on selected case
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && selectedId) {
+        e.preventDefault()
+        undoLastChange(selectedId).then((result) => {
+          if (result.ok) {
+            updateLocalCaseField(selectedId, result.storage, result.key, result.restoredValue)
+          }
+        })
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [selectedId, updateLocalCaseField])
+
+  const handleDelete = useCallback(async (id: string) => {
+    if (!confirm('이 케이스를 삭제하시겠습니까?')) return
+    const result = await deleteCase(id)
+    if (result.ok) {
+      removeLocalCase(id)
+    }
+  }, [removeLocalCase])
 
   return (
     <div className="flex h-screen bg-background">
@@ -24,7 +66,7 @@ function Inner() {
       <aside className="basis-1/2 min-w-0">
         <div className="h-full overflow-hidden pt-32 pb-24 px-14 2xl:pt-36 2xl:pb-28 2xl:px-16 3xl:pt-44 3xl:pb-36 3xl:px-20 4xl:pt-52 4xl:pb-44 4xl:px-24 6xl:pt-64 6xl:pb-52 6xl:px-28">
           <div className="h-full mx-auto max-w-lg 4xl:max-w-xl 6xl:max-w-2xl">
-            <CaseList />
+            <CaseList onAdd={handleAdd} />
           </div>
         </div>
       </aside>
@@ -45,7 +87,7 @@ function Inner() {
             </div>
 
             {/* Scrollable content — starts at same vertical position as left list */}
-            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-minimal">
+            <div ref={detailScrollRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-minimal">
               {selectedCase ? (
                 <CaseDetail caseRow={selectedCase} />
               ) : (
@@ -53,8 +95,29 @@ function Inner() {
               )}
             </div>
 
-            {/* Bottom spacer — matches left pane's "N건" height so scroll ends align */}
-            <div className="shrink-0 pt-2 text-xs">&nbsp;</div>
+            {/* Footer: 접수일/수정일 + 이력/삭제 */}
+            <div className="shrink-0 pt-2 text-xs text-muted-foreground flex items-center justify-between">
+              {selectedCase ? (
+                <>
+                  <span>
+                    접수일 {formatDate(selectedCase.created_at)}
+                    {selectedCase.updated_at !== selectedCase.created_at && (
+                      <span className="ml-4">수정일 {formatDate(selectedCase.updated_at)}</span>
+                    )}
+                  </span>
+                  <div className="flex items-center gap-4">
+                    <CaseHistory caseId={selectedCase.id} />
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(selectedCase.id)}
+                      className="text-muted-foreground/50 hover:text-red-500 transition-colors"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </>
+              ) : '\u00A0'}
+            </div>
           </div>
         </div>
       </main>

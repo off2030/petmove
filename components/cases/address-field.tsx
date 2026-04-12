@@ -1,0 +1,328 @@
+'use client'
+
+import { useState, useEffect, useRef, useTransition } from 'react'
+import { cn } from '@/lib/utils'
+import { renderFieldValue } from '@/lib/fields'
+import type { FieldSpec } from '@/lib/fields'
+import { updateCaseField } from '@/lib/actions/cases'
+import { CopyButton } from './copy-button'
+import { useCases } from './cases-context'
+
+declare global {
+  interface Window {
+    daum: {
+      Postcode: new (opts: {
+        oncomplete: (data: DaumPostcodeResult) => void
+        width: string
+        height: string
+      }) => { embed: (el: HTMLElement) => void }
+    }
+  }
+}
+
+interface DaumPostcodeResult {
+  roadAddress: string
+  roadAddressEnglish: string
+  jibunAddress: string
+  zonecode: string
+  buildingName: string
+  apartment: string
+  sido: string
+  sigungu: string
+  bname: string
+  roadname: string
+}
+
+export function AddressField({
+  caseId,
+  krSpec,
+  enSpec,
+  krRaw,
+  enRaw,
+}: {
+  caseId: string
+  krSpec: FieldSpec
+  enSpec: FieldSpec | undefined
+  krRaw: unknown
+  enRaw: unknown
+}) {
+  const { updateLocalCaseField } = useCases()
+  const [scriptLoaded, setScriptLoaded] = useState(false)
+  const [saving, startSave] = useTransition()
+  const composingRef = useRef(false)
+  const [showModal, setShowModal] = useState(false)
+  const [editingKr, setEditingKr] = useState(false)
+  const [editingEn, setEditingEn] = useState(false)
+  const [krVal, setKrVal] = useState('')
+  const [enVal, setEnVal] = useState('')
+  const [detailAddr, setDetailAddr] = useState('')
+  const [enError, setEnError] = useState<string | null>(null)
+  const [showDetail, setShowDetail] = useState(false)
+  const modalRef = useRef<HTMLDivElement>(null)
+  const detailRef = useRef<HTMLInputElement>(null)
+  const krInputRef = useRef<HTMLInputElement>(null)
+  const enInputRef = useRef<HTMLInputElement>(null)
+
+  const krDisplay = renderFieldValue(krSpec, krRaw)
+  const enDisplay = enSpec ? renderFieldValue(enSpec, enRaw) : '—'
+  const krEmpty = krDisplay === '—'
+  const enEmpty = enDisplay === '—'
+
+  useEffect(() => {
+    setShowModal(false)
+    setShowDetail(false)
+    setEditingKr(false)
+    setEditingEn(false)
+  }, [caseId])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.daum?.Postcode) {
+      setScriptLoaded(true)
+      return
+    }
+    const script = document.createElement('script')
+    script.src = '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js'
+    script.async = true
+    script.onload = () => setScriptLoaded(true)
+    document.head.appendChild(script)
+  }, [])
+
+  // Close modal on Escape
+  useEffect(() => {
+    if (!showModal) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setShowModal(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [showModal])
+
+  function handleSearch() {
+    if (!scriptLoaded || !window.daum?.Postcode) return
+    setEditingKr(false)
+    setEditingEn(false)
+    setShowModal(true)
+
+    setTimeout(() => {
+      if (!modalRef.current) return
+      new window.daum.Postcode({
+        width: '100%',
+        height: '100%',
+        oncomplete(data: DaumPostcodeResult) {
+          const kr = data.roadAddress
+          const en = data.roadAddressEnglish
+          const krWithZip = data.zonecode ? `(${data.zonecode}) ${kr}` : kr
+          setShowModal(false)
+
+          // Parse English address into components for future document automation
+          const enParts = en.split(',').map((s: string) => s.trim())
+          const country = 'Republic of Korea'
+          // English format: "396, World Cup buk-ro, Mapo-gu, Seoul"
+          // Last part = city (Seoul, Busan, etc.)
+          const city = enParts.length > 0 ? enParts[enParts.length - 1] : ''
+          // Second to last = district (Mapo-gu, Gangnam-gu, etc.)
+          const province = enParts.length > 1 ? enParts[enParts.length - 2] : ''
+
+          startSave(async () => {
+            // Main addresses
+            const r1 = await updateCaseField(caseId, 'data', krSpec.key, krWithZip)
+            if (r1.ok) updateLocalCaseField(caseId, 'data', krSpec.key, krWithZip)
+            if (enSpec && en) {
+              const r2 = await updateCaseField(caseId, 'data', enSpec.key, en)
+              if (r2.ok) updateLocalCaseField(caseId, 'data', enSpec.key, en)
+            }
+            // Address components (hidden from UI, used for document generation)
+            const components: Record<string, string> = {
+              address_zipcode: data.zonecode,
+              address_city: city,
+              address_province: province,
+              address_country: country,
+              address_sido: data.sido,
+              address_sigungu: data.sigungu,
+            }
+            for (const [key, val] of Object.entries(components)) {
+              if (val) {
+                const r = await updateCaseField(caseId, 'data', key, val)
+                if (r.ok) updateLocalCaseField(caseId, 'data', key, val)
+              }
+            }
+          })
+
+          setDetailAddr('')
+          setShowDetail(true)
+          setTimeout(() => detailRef.current?.focus(), 100)
+        },
+      }).embed(modalRef.current)
+    }, 50)
+  }
+
+  function handleDetailSave() {
+    const detail = detailAddr.trim()
+    if (!detail) { setShowDetail(false); return }
+    const currentKr = String(krRaw ?? '')
+    const full = currentKr ? `${currentKr} ${detail}` : detail
+    startSave(async () => {
+      const r = await updateCaseField(caseId, 'data', krSpec.key, full)
+      if (r.ok) updateLocalCaseField(caseId, 'data', krSpec.key, full)
+      setShowDetail(false)
+    })
+  }
+
+  function startEditKr() {
+    setKrVal(String(krRaw ?? ''))
+    setEditingKr(true)
+    setTimeout(() => krInputRef.current?.focus(), 50)
+  }
+  function saveKr() {
+    const v = krVal.trim() || null
+    startSave(async () => {
+      const r = await updateCaseField(caseId, 'data', krSpec.key, v)
+      if (r.ok) updateLocalCaseField(caseId, 'data', krSpec.key, v)
+      setEditingKr(false)
+    })
+  }
+  function startEditEn() {
+    setEnVal(String(enRaw ?? ''))
+    setEditingEn(true)
+    setTimeout(() => enInputRef.current?.focus(), 50)
+  }
+  function saveEn() {
+    if (!enSpec) return
+    const v = enVal.trim() || null
+    startSave(async () => {
+      const r = await updateCaseField(caseId, 'data', enSpec.key, v)
+      if (r.ok) updateLocalCaseField(caseId, 'data', enSpec.key, v)
+      setEditingEn(false)
+    })
+  }
+
+  const inputClass =
+    'flex-1 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
+
+  return (
+    <>
+      {/* Korean address */}
+      <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40">
+        <div className="pt-1 text-sm text-muted-foreground">한국주소</div>
+        <div className="flex items-center gap-2 min-w-0">
+          {editingKr ? (
+            <div className="flex items-center gap-2 flex-1">
+              <input
+                ref={krInputRef}
+                type="text"
+                value={krVal}
+                onChange={(e) => setKrVal(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') saveKr()
+                  if (e.key === 'Escape') setEditingKr(false)
+                }}
+                onBlur={() => setTimeout(() => setEditingKr(false), 150)}
+                className={inputClass}
+              />
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={saveKr} disabled={saving}
+                className="shrink-0 inline-flex h-7 items-center rounded px-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50">
+                {saving ? '...' : '저장'}
+              </button>
+            </div>
+          ) : (
+            <div className="group/kr relative flex items-center gap-1 min-w-0">
+              <button type="button" onClick={startEditKr}
+                className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text', krEmpty && 'text-muted-foreground/60 italic')}>
+                {krDisplay}
+              </button>
+              <button type="button" onClick={handleSearch} disabled={!scriptLoaded || saving}
+                className="shrink-0 inline-flex h-7 items-center rounded px-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50 opacity-0 group-hover/kr:opacity-100">
+                검색
+              </button>
+              <CopyButton value={krEmpty ? '' : krDisplay}
+                className="opacity-0 group-hover/kr:opacity-100 shrink-0" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Detail address input */}
+      {showDetail && (
+        <div className="grid grid-cols-[140px_1fr_auto] items-start gap-3 py-1 border-b border-border/40">
+          <div className="pt-1 text-sm text-muted-foreground">상세 주소</div>
+          <div className="flex items-center gap-2">
+            <input ref={detailRef} type="text" value={detailAddr} onChange={(e) => setDetailAddr(e.target.value)}
+              placeholder="동/호수 입력"
+              onKeyDown={(e) => { if (e.key === 'Enter') handleDetailSave(); if (e.key === 'Escape') setShowDetail(false) }}
+              className={inputClass} />
+            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={handleDetailSave} disabled={saving}
+              className="shrink-0 inline-flex h-7 items-center rounded px-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50">
+              {saving ? '...' : '저장'}
+            </button>
+          </div>
+          <div />
+        </div>
+      )}
+
+      {/* English address */}
+      <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40">
+        <div className="pt-1 text-sm text-muted-foreground">영문주소</div>
+        <div className="min-w-0">
+          {editingEn ? (
+            <>
+              <div className="flex items-center gap-2">
+                <input ref={enInputRef} type="text" value={enVal}
+                  onChange={(e) => {
+                    if (composingRef.current) { setEnVal(e.target.value); return }
+                    setEnVal(e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, ''))
+                  }}
+                  onCompositionStart={() => { composingRef.current = true }}
+                  onCompositionEnd={(e) => {
+                    composingRef.current = false
+                    const raw = (e.target as HTMLInputElement).value
+                    const filtered = raw.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
+                    setEnVal(filtered)
+                    if (raw !== filtered) {
+                      setEnError('영문만 입력 가능합니다')
+                      setTimeout(() => setEnError(null), 2000)
+                    }
+                  }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') saveEn(); if (e.key === 'Escape') setEditingEn(false) }}
+                  onBlur={() => setTimeout(() => setEditingEn(false), 150)}
+                  className={inputClass} />
+                <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={saveEn} disabled={saving}
+                  className="shrink-0 inline-flex h-7 items-center rounded px-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50">
+                  {saving ? '...' : '저장'}
+                </button>
+              </div>
+              {enError && <div className="mt-1 text-xs text-red-600">{enError}</div>}
+            </>
+          ) : (
+            <div className="group/en relative w-fit">
+              <button type="button" onClick={startEditEn}
+                className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text', enEmpty && 'text-muted-foreground/60 italic')}>
+                {enDisplay}
+              </button>
+              <CopyButton value={enEmpty ? '' : enDisplay}
+                className="absolute left-full top-0.5 ml-1 z-10 opacity-0 group-hover/en:opacity-100" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Modal overlay for Daum Postcode search */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/30" onClick={() => setShowModal(false)} />
+          {/* Modal */}
+          <div className="relative bg-background rounded-lg shadow-lg overflow-hidden" style={{ width: '500px', height: '500px' }}>
+            <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
+              <span className="text-sm font-medium">주소 검색</span>
+              <button type="button" onClick={() => setShowModal(false)}
+                className="text-sm text-muted-foreground hover:text-foreground">
+                닫기
+              </button>
+            </div>
+            <div ref={modalRef} style={{ height: 'calc(100% - 41px)' }} />
+          </div>
+        </div>
+      )}
+    </>
+  )
+}

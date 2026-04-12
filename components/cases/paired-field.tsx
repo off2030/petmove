@@ -56,6 +56,7 @@ export function PairedField({
           <div className="group/en relative inline-flex items-baseline">
             <EditableField
               inline
+              lang="en"
               caseId={caseId}
               spec={enSpec}
               rawValue={enRaw}

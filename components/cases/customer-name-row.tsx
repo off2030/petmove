@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { cn } from '@/lib/utils'
 import { REGULAR_COLUMN_SPECS } from '@/lib/fields'
 import { updateCaseField } from '@/lib/actions/cases'
@@ -8,6 +8,16 @@ import { EditableField } from './editable-field'
 import { CopyButton } from './copy-button'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
+
+/** Capitalize first letter of each word: "john doe" → "John Doe" */
+function capitalize(str: string): string {
+  return str.replace(/\b[a-z]/g, (c) => c.toUpperCase())
+}
+
+/** Remove Korean characters */
+function filterKorean(str: string): string {
+  return str.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
+}
 
 /**
  * Custom row for the customer name that shows:
@@ -56,7 +66,14 @@ export function CustomerNameRow({
     }
   }, [lastName, firstName, editing])
 
+  const composingRef = useRef(false)
   const koSpec = REGULAR_COLUMN_SPECS.find((s) => s.key === 'customer_name')!
+
+  // Reset editing when case changes
+  useEffect(() => {
+    setEditing(false)
+    setError(null)
+  }, [caseId])
 
   function handleEditEn() {
     setLastVal(lastName)
@@ -92,7 +109,7 @@ export function CustomerNameRow({
 
   return (
     <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0">
-      <div className="pt-1 text-sm text-muted-foreground">보호자</div>
+      <div className="pt-1 text-sm text-muted-foreground">성함</div>
 
       <div className="flex items-baseline gap-[35px] min-w-0 flex-wrap">
         {/* Korean name — standard inline EditableField */}
@@ -114,39 +131,68 @@ export function CustomerNameRow({
         {/* English name — combined "First Last" display, two-input edit */}
         <div className="group/en relative inline-flex items-baseline">
           {editing ? (
-            <div className="flex items-center gap-2">
+            <div
+              className="flex items-center gap-2"
+              onBlur={(e) => {
+                // Only cancel if focus leaves the entire group (not just moving between inputs)
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                  setTimeout(() => { if (!saving) handleCancel() }, 150)
+                }
+              }}
+            >
               <input
                 type="text"
                 value={firstVal}
-                onChange={(e) => setFirstVal(e.target.value)}
-                placeholder="이름"
+                onChange={(e) => {
+                  if (composingRef.current) { setFirstVal(e.target.value); return }
+                  setFirstVal(capitalize(filterKorean(e.target.value)))
+                }}
+                onCompositionStart={() => { composingRef.current = true }}
+                onCompositionEnd={(e) => {
+                  composingRef.current = false
+                  const raw = (e.target as HTMLInputElement).value
+                  const filtered = capitalize(filterKorean(raw))
+                  setFirstVal(filtered)
+                  if (raw !== filtered) {
+                    setError('영문만 입력 가능합니다')
+                    setTimeout(() => setError(null), 2000)
+                  }
+                }}
+                placeholder="영문만 입력 가능"
                 autoFocus
                 onKeyDown={handleKeyDown}
-                className="h-8 w-28 rounded-md border border-input bg-background px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="h-8 w-28 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
               />
               <input
                 type="text"
                 value={lastVal}
-                onChange={(e) => setLastVal(e.target.value)}
-                placeholder="성"
+                onChange={(e) => {
+                  if (composingRef.current) { setLastVal(e.target.value); return }
+                  setLastVal(capitalize(filterKorean((e.target as HTMLInputElement).value)))
+                }}
+                onCompositionStart={() => { composingRef.current = true }}
+                onCompositionEnd={(e) => {
+                  composingRef.current = false
+                  const raw = (e.target as HTMLInputElement).value
+                  const filtered = capitalize(filterKorean(raw))
+                  setLastVal(filtered)
+                  if (raw !== filtered) {
+                    setError('영문만 입력 가능합니다')
+                    setTimeout(() => setError(null), 2000)
+                  }
+                }}
+                placeholder="영문만 입력 가능"
                 onKeyDown={handleKeyDown}
-                className="h-8 w-28 rounded-md border border-input bg-background px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="h-8 w-28 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
               />
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={handleSave}
                 disabled={saving}
-                className="inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                className="inline-flex h-7 items-center justify-center rounded px-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
               >
                 {saving ? '...' : '저장'}
-              </button>
-              <button
-                type="button"
-                onClick={handleCancel}
-                disabled={saving}
-                className="inline-flex h-8 items-center justify-center rounded-md border border-input px-3 text-xs font-medium hover:bg-accent"
-              >
-                취소
               </button>
             </div>
           ) : (

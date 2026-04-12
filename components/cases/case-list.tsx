@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Search } from 'lucide-react'
+import { Search, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { CaseRow } from '@/lib/supabase/types'
 import { Input } from '@/components/ui/input'
@@ -16,7 +16,7 @@ const LOAD_MORE_STEP = 100
  *   - searches across every scalar field in the row (identity + data jsonb)
  *   - progressive rendering: 100 rows first, +100 on scroll
  */
-export function CaseList() {
+export function CaseList({ onAdd }: { onAdd?: () => void }) {
   const { cases, selectedId, selectCase } = useCases()
 
   const [query, setQuery] = useState('')
@@ -27,14 +27,24 @@ export function CaseList() {
   }, [query])
 
   const filtered = useMemo(() => {
-    const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean)
-    if (terms.length === 0) return cases
+    const raw = query.trim().toLowerCase()
+    if (!raw) return cases
+
+    // If query has spaces, try exact phrase match first
+    // e.g., "000 000" should match "410 000 000 123 456", not every chip with a single "000"
+    if (raw.includes(' ')) {
+      const phraseMatch = cases.filter((c) =>
+        buildSearchString(c).toLowerCase().includes(raw),
+      )
+      if (phraseMatch.length > 0) return phraseMatch
+    }
+
+    // Fallback: multi-term AND (each term must appear somewhere)
+    // e.g., "오유진 루이" → both "오유진" AND "루이" must be present
+    const terms = raw.split(/\s+/).filter(Boolean)
     return cases.filter((c) => {
       const hay = buildSearchString(c).toLowerCase()
-      for (const t of terms) {
-        if (!hay.includes(t)) return false
-      }
-      return true
+      return terms.every((t) => hay.includes(t))
     })
   }, [cases, query])
 
@@ -59,15 +69,34 @@ export function CaseList() {
 
   return (
     <div className="flex h-full flex-col gap-4">
-      {/* Search bar with magnifier icon */}
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          autoFocus
-          className="pl-9"
-        />
+      {/* Search bar + add button */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && filtered.length > 0) {
+                selectCase(filtered[0].id)
+              }
+              if (e.key === 'Escape') {
+                setQuery('')
+                if (cases.length > 0) selectCase(cases[0].id)
+              }
+            }}
+            autoFocus
+            className="pl-9"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => onAdd?.()}
+          className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-md border border-border/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          title="새 케이스 추가"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Scrollable list — minimal scrollbar (thin, subtle, drag-able) */}
@@ -78,7 +107,7 @@ export function CaseList() {
           </div>
         ) : (
           <ul className="space-y-0.5">
-            {visibleCases.map((c) => {
+            {visibleCases.map((c, i) => {
               const isSelected = c.id === selectedId
               return (
                 <li key={c.id}>
@@ -89,6 +118,7 @@ export function CaseList() {
                       'block w-full rounded-md px-3 py-3 text-left transition-colors',
                       'hover:bg-accent/60',
                       isSelected && 'bg-accent',
+                      !isSelected && i === 0 && query.trim() && 'bg-accent/40',
                     )}
                   >
                     {/* Proportional grid:
@@ -122,7 +152,7 @@ export function CaseList() {
 
       {/* Result count at bottom */}
       <div className="shrink-0 px-1 pt-2 text-xs text-muted-foreground">
-        {filtered.length.toLocaleString()}건
+        총 {filtered.length.toLocaleString()}건
       </div>
     </div>
   )
@@ -133,12 +163,14 @@ export function CaseList() {
  * Includes regular columns + every scalar value in the data jsonb.
  */
 function buildSearchString(c: CaseRow): string {
+  const chip = c.microchip ?? ''
   const parts: string[] = [
     c.customer_name,
     c.customer_name_en ?? '',
     c.pet_name ?? '',
     c.pet_name_en ?? '',
-    c.microchip ?? '',
+    chip,
+    chip.replace(/\s/g, ''), // 공백 없는 버전도 포함
     ...(c.microchip_extra ?? []),
     c.destination ?? '',
     c.status,

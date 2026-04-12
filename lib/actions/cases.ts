@@ -16,10 +16,7 @@ const REGULAR_COLUMNS = new Set([
 export type UpdateResult = { ok: true } | { ok: false; error: string }
 
 /**
- * Update a single field on a case.
- *
- * - `column` storage: updates a regular column directly
- * - `data` storage  : merges into the `data` jsonb column (null/empty removes the key)
+ * Update a single field on a case. Records change in case_history for undo.
  */
 export async function updateCaseField(
   caseId: string,
@@ -31,17 +28,34 @@ export async function updateCaseField(
 
   const supabase = await createClient()
 
+  // Get old value for history
+  let oldValue: string | null = null
+
   if (storage === 'column') {
     if (!REGULAR_COLUMNS.has(key)) {
       return { ok: false, error: `column "${key}" is not updatable` }
     }
+    const { data: row } = await supabase
+      .from('cases')
+      .select('*')
+      .eq('id', caseId)
+      .single()
+    if (row) {
+      const v = (row as Record<string, unknown>)[key]
+      oldValue = v != null ? String(v) : null
+    }
+
     const { error } = await supabase
       .from('cases')
       .update({ [key]: value })
       .eq('id', caseId)
-    if (error) return { ok: false, error: error.message }
+    if (error) {
+      if (error.message.includes('cases_org_microchip_unique')) {
+        return { ok: false, error: '이미 등록된 번호입니다' }
+      }
+      return { ok: false, error: error.message }
+    }
   } else {
-    // Fetch -> merge -> update. Simpler than jsonb_set via RPC for MVP.
     const { data: row, error: fetchErr } = await supabase
       .from('cases')
       .select('data')
@@ -51,6 +65,8 @@ export async function updateCaseField(
 
     const current: Record<string, unknown> =
       (row?.data as Record<string, unknown> | null) ?? {}
+    oldValue = current[key] != null ? String(current[key]) : null
+
     const next = { ...current }
     if (value === null || value === undefined || value === '') {
       delete next[key]
@@ -65,6 +81,81 @@ export async function updateCaseField(
     if (error) return { ok: false, error: error.message }
   }
 
+  // Record history (skip if value unchanged)
+  const newValue = value != null && value !== '' ? String(value) : null
+  if (oldValue !== newValue) {
+    await supabase.from('case_history').insert({
+      case_id: caseId,
+      field_key: key,
+      field_storage: storage,
+      old_value: oldValue,
+      new_value: newValue,
+    })
+  }
+
   revalidatePath('/cases')
   return { ok: true }
+}
+
+/**
+ * Undo the most recent change for a case. Returns the restored field info.
+ */
+export async function undoLastChange(
+  caseId: string,
+): Promise<
+  | { ok: true; key: string; storage: 'column' | 'data'; restoredValue: unknown }
+  | { ok: false; error: string }
+> {
+  if (!caseId) return { ok: false, error: 'caseId is required' }
+
+  const supabase = await createClient()
+
+  // Get most recent history entry
+  const { data: entry, error: histErr } = await supabase
+    .from('case_history')
+    .select('*')
+    .eq('case_id', caseId)
+    .order('changed_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (histErr || !entry) return { ok: false, error: '되돌릴 변경 이력이 없습니다' }
+
+  const { field_key, field_storage, old_value } = entry
+  const restoredValue = old_value
+
+  // Restore the old value
+  if (field_storage === 'column') {
+    const { error } = await supabase
+      .from('cases')
+      .update({ [field_key]: restoredValue })
+      .eq('id', caseId)
+    if (error) return { ok: false, error: error.message }
+  } else {
+    const { data: row, error: fetchErr } = await supabase
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const current: Record<string, unknown> =
+      (row?.data as Record<string, unknown> | null) ?? {}
+    if (restoredValue === null) {
+      delete current[field_key]
+    } else {
+      current[field_key] = restoredValue
+    }
+    const { error } = await supabase
+      .from('cases')
+      .update({ data: current })
+      .eq('id', caseId)
+    if (error) return { ok: false, error: error.message }
+  }
+
+  // Delete this history entry (consumed)
+  await supabase.from('case_history').delete().eq('id', entry.id)
+
+  revalidatePath('/cases')
+  return { ok: true, key: field_key, storage: field_storage as 'column' | 'data', restoredValue }
 }

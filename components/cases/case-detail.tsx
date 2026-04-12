@@ -11,6 +11,9 @@ import { formatDate } from '@/lib/utils'
 import { EditableField } from './editable-field'
 import { PairedField } from './paired-field'
 import { CustomerNameRow } from './customer-name-row'
+import { AddressField } from './address-field'
+import { BreedField } from './breed-field'
+import { ColorField } from './color-field'
 import { useCases } from './cases-context'
 
 /**
@@ -37,6 +40,47 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
           </h3>
           <div>
             {g.items.map((spec) => {
+              // Address: combined Korean + English with Daum Postcode search
+              if (spec.key === 'phone') {
+                // Insert AddressField AFTER phone (before email)
+                const addrKrSpec = allSpecs.find((s) => s.key === 'address_kr')
+                const addrEnSpec = allSpecs.find((s) => s.key === 'address_en')
+                return (
+                  <div key="phone+address">
+                    <EditableField
+                      caseId={caseRow.id}
+                      spec={spec}
+                      rawValue={readCaseField(caseRow, spec)}
+                    />
+                    {addrKrSpec && (
+                      <AddressField
+                        caseId={caseRow.id}
+                        krSpec={addrKrSpec}
+                        enSpec={addrEnSpec}
+                        krRaw={readCaseField(caseRow, addrKrSpec)}
+                        enRaw={addrEnSpec ? readCaseField(caseRow, addrEnSpec) : null}
+                      />
+                    )}
+                  </div>
+                )
+              }
+
+              // Breed: searchable breed selector with ko/en auto-fill
+              if (spec.key === 'species') {
+                // Insert BreedField + ColorField after species (종)
+                return (
+                  <div key="species+breed+color">
+                    <EditableField
+                      caseId={caseRow.id}
+                      spec={spec}
+                      rawValue={readCaseField(caseRow, spec)}
+                    />
+                    <BreedField caseId={caseRow.id} caseRow={caseRow} />
+                    <ColorField caseId={caseRow.id} caseRow={caseRow} />
+                  </div>
+                )
+              }
+
               // Customer name: special row with combined "First Last" English display
               if (spec.key === 'customer_name') {
                 return (
@@ -76,15 +120,6 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
         </section>
       ))}
 
-      {/* ─── Footer: timestamps ─── */}
-      <footer className="mt-12 pt-4 border-t border-border/50 text-xs text-muted-foreground">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span>접수일 {formatDate(caseRow.created_at)}</span>
-          {caseRow.updated_at !== caseRow.created_at && (
-            <span>수정일 {formatDate(caseRow.updated_at)}</span>
-          )}
-        </div>
-      </footer>
     </div>
   )
 }

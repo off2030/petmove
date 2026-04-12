@@ -37,7 +37,7 @@ export const REGULAR_COLUMN_SPECS: FieldSpec[] = [
   {
     key: 'customer_name',
     storage: 'column',
-    label: '보호자',
+    label: '성함',
     type: 'text',
     group: '고객정보',
     groupOrder: 0,
@@ -78,7 +78,7 @@ export const REGULAR_COLUMN_SPECS: FieldSpec[] = [
   {
     key: 'microchip',
     storage: 'column',
-    label: '마이크로칩',
+    label: '마이크로칩번호',
     type: 'text',
     group: '동물정보',
     groupOrder: 1,
@@ -87,7 +87,7 @@ export const REGULAR_COLUMN_SPECS: FieldSpec[] = [
   {
     key: 'status',
     storage: 'column',
-    label: '케이스 상태',
+    label: 'Status',
     type: 'select',
     group: '동물정보',
     groupOrder: 1,
@@ -108,7 +108,7 @@ export const REGULAR_COLUMN_SPECS: FieldSpec[] = [
 export const DESTINATION_SPEC: FieldSpec = {
   key: 'destination',
   storage: 'column',
-  label: '도착 국가',
+  label: '목적지',
   type: 'text',
   group: '절차정보',
   groupOrder: 2,
@@ -134,9 +134,13 @@ export const HIDDEN_EN_KEYS = new Set<string>([
   'customer_last_name_en',   // shown via CustomerNameRow combined display
   'customer_first_name_en',  // shown via CustomerNameRow combined display
   'pet_name_en',
-  'breed_en',
-  'color_en',
+  'breed',     // shown via BreedField
+  'breed_en',  // shown via BreedField
+  'color',     // shown via ColorField
+  'color_en',  // shown via ColorField
   'sex_en', // redundant with sex select's bilingual label
+  'address_kr',  // shown via AddressField with search
+  'address_en',  // shown via AddressField with search
 ])
 
 // Remap field_definitions.group_name (from DB seed) into the simpler
@@ -218,13 +222,36 @@ export function groupFieldSpecs(specs: FieldSpec[]): Array<{ group: string; item
 
 /**
  * Read a value out of a case row given its spec.
+ * Special case: 'age' is auto-calculated from 'birth_date'.
  */
 export function readCaseField(row: CaseRow, spec: FieldSpec): unknown {
+  if (spec.key === 'age') {
+    const data = (row.data ?? {}) as Record<string, unknown>
+    const birthStr = data.birth_date as string | undefined
+    if (birthStr) return calculateAge(birthStr)
+    return null
+  }
   if (spec.storage === 'column') {
     return (row as unknown as Record<string, unknown>)[spec.key] ?? null
   }
   const data = row.data ?? {}
   return (data as Record<string, unknown>)[spec.key] ?? null
+}
+
+function calculateAge(birthDateStr: string): string {
+  const birth = new Date(birthDateStr)
+  if (isNaN(birth.getTime())) return ''
+  const now = new Date()
+  let years = now.getFullYear() - birth.getFullYear()
+  let months = now.getMonth() - birth.getMonth()
+  if (now.getDate() < birth.getDate()) {
+    months--
+  }
+  if (months < 0) {
+    years--
+    months += 12
+  }
+  return `${years}Y ${months}M`
 }
 
 /**
@@ -235,11 +262,25 @@ export function readCaseField(row: CaseRow, spec: FieldSpec): unknown {
  */
 export function renderFieldValue(spec: FieldSpec, raw: unknown): string {
   if (raw === null || raw === undefined || raw === '') return '—'
+  // Microchip formatting: 410100012271380 → 410 100 012 271 380
+  if (spec.key === 'microchip') {
+    const digits = String(raw).replace(/\D/g, '')
+    if (digits.length === 15) return `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6,9)} ${digits.slice(9,12)} ${digits.slice(12)}`
+    return String(raw)
+  }
+
+  // Phone number formatting: 01012345678 → 010-1234-5678
+  if (spec.key === 'phone') {
+    const digits = String(raw).replace(/\D/g, '')
+    if (digits.length === 11) return `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7)}`
+    if (digits.length === 10) return `${digits.slice(0,3)}-${digits.slice(3,6)}-${digits.slice(6)}`
+    return String(raw)
+  }
+
   if (spec.type === 'select' && spec.options) {
     const opt = spec.options.find((o) => o.value === raw)
     if (!opt) return String(raw)
-    if (opt.label_en) return `${opt.label_ko} / ${opt.label_en}`
-    return opt.label_ko
+    return opt.label_en ?? opt.label_ko
   }
   if (spec.type === 'date') {
     try {
@@ -265,6 +306,16 @@ export function renderFieldValue(spec: FieldSpec, raw: unknown): string {
 export function coerceInputValue(spec: FieldSpec, input: string): unknown {
   const trimmed = input.trim()
   if (trimmed === '') return null
+
+  // Microchip: must be exactly 15 digits, formatted as "NNN NNN NNN NNN NNN"
+  if (spec.key === 'microchip') {
+    const digits = trimmed.replace(/\D/g, '')
+    if (digits.length !== 15) {
+      return null // validation will catch this
+    }
+    return `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6,9)} ${digits.slice(9,12)} ${digits.slice(12)}`
+  }
+
   if (spec.type === 'number') {
     const n = Number(trimmed)
     return Number.isFinite(n) ? n : null

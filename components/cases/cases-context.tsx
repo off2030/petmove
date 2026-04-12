@@ -21,6 +21,8 @@ interface CasesContextValue {
   fieldDefs: FieldDefinition[]
   selectedId: string | null
   selectCase: (id: string | null) => void
+  addLocalCase: (newCase: CaseRow) => void
+  removeLocalCase: (id: string) => void
   updateLocalCaseField: (
     caseId: string,
     storage: 'column' | 'data',
@@ -41,10 +43,26 @@ export function CasesProvider({
   children: React.ReactNode
 }) {
   const [cases, setCases] = useState<CaseRow[]>(initialCases)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(
+    initialCases.length > 0 ? initialCases[0].id : null,
+  )
 
   const selectCase = useCallback((id: string | null) => {
     setSelectedId(id)
+  }, [])
+
+  const addLocalCase = useCallback((newCase: CaseRow) => {
+    setCases((prev) => [newCase, ...prev])
+    setSelectedId(newCase.id)
+  }, [])
+
+  const removeLocalCase = useCallback((id: string) => {
+    setCases((prev) => {
+      const next = prev.filter((c) => c.id !== id)
+      // Auto-select the first (latest) case after deletion
+      setSelectedId(next.length > 0 ? next[0].id : null)
+      return next
+    })
   }, [])
 
   const updateLocalCaseField = useCallback(
@@ -82,9 +100,11 @@ export function CasesProvider({
       fieldDefs,
       selectedId,
       selectCase,
+      addLocalCase,
+      removeLocalCase,
       updateLocalCaseField,
     }),
-    [cases, fieldDefs, selectedId, selectCase, updateLocalCaseField],
+    [cases, fieldDefs, selectedId, selectCase, addLocalCase, removeLocalCase, updateLocalCaseField],
   )
 
   return <CasesContext.Provider value={value}>{children}</CasesContext.Provider>
