@@ -43,6 +43,7 @@ export default function ApplyPage() {
   const [microchip, setMicrochip] = useState('')
   const [microchipDate, setMicrochipDate] = useState('')
   const [rabiesDate, setRabiesDate] = useState('')
+  const [enWarning, setEnWarning] = useState<string | null>(null)
 
   const filteredDests = DESTS.filter(d => {
     if (!destQuery.trim()) return true
@@ -197,13 +198,26 @@ export default function ApplyPage() {
               <div>
                 <label className={labelClass}>영문성함 <span className="text-red-500">*</span> <span className="text-xs font-normal text-gray-400">여권과 동일하게</span></label>
                 <input type="text" value={customerNameEn}
-                  onChange={(e) => setCustomerNameEn(e.target.value)}
-                  onCompositionEnd={(e) => {
-                    const v = (e.target as HTMLInputElement).value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
-                    setCustomerNameEn(v)
+                  onChange={(e) => {
+                    const raw = e.target.value
+                    const filtered = raw.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
+                    setCustomerNameEn(filtered)
+                    if (raw !== filtered) {
+                      setEnWarning('영문만 입력 가능합니다')
+                      setTimeout(() => setEnWarning(null), 2000)
+                    }
                   }}
-                  onBlur={(e) => setCustomerNameEn(e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, ''))}
+                  onCompositionEnd={(e) => {
+                    const raw = (e.target as HTMLInputElement).value
+                    const filtered = raw.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
+                    setCustomerNameEn(filtered)
+                    if (raw !== filtered) {
+                      setEnWarning('영문만 입력 가능합니다')
+                      setTimeout(() => setEnWarning(null), 2000)
+                    }
+                  }}
                   placeholder="HONG GILDONG" className={inputClass} />
+                {enWarning && <p className="mt-1 text-xs text-red-500">{enWarning}</p>}
               </div>
               <div>
                 <label className={labelClass}>전화번호 <span className="text-red-500">*</span></label>
@@ -236,12 +250,24 @@ export default function ApplyPage() {
               <div>
                 <label className={labelClass}>동물 영문이름 <span className="text-red-500">*</span></label>
                 <input type="text" value={petNameEn}
-                  onChange={(e) => setPetNameEn(e.target.value)}
-                  onCompositionEnd={(e) => {
-                    const v = (e.target as HTMLInputElement).value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
-                    setPetNameEn(v)
+                  onChange={(e) => {
+                    const raw = e.target.value
+                    const filtered = raw.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
+                    setPetNameEn(filtered)
+                    if (raw !== filtered) {
+                      setEnWarning('영문만 입력 가능합니다')
+                      setTimeout(() => setEnWarning(null), 2000)
+                    }
                   }}
-                  onBlur={(e) => setPetNameEn(e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, ''))}
+                  onCompositionEnd={(e) => {
+                    const raw = (e.target as HTMLInputElement).value
+                    const filtered = raw.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
+                    setPetNameEn(filtered)
+                    if (raw !== filtered) {
+                      setEnWarning('영문만 입력 가능합니다')
+                      setTimeout(() => setEnWarning(null), 2000)
+                    }
+                  }}
                   placeholder="MARU" className={inputClass} />
               </div>
               <div>
