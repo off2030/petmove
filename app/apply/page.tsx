@@ -363,7 +363,8 @@ export default function ApplyPage() {
                 <label className={labelClass}>한국주소 <span className="text-red-500">*</span></label>
                 <div className="flex gap-2">
                   <input type="text" value={addressKr} onChange={(e) => setAddressKr(e.target.value)}
-                    placeholder="주소 검색 버튼을 눌러주세요" className={inputClass + ' flex-1'} readOnly />
+                    placeholder="클릭하여 주소 검색" className={inputClass + ' flex-1 cursor-pointer'} readOnly
+                    onFocus={() => { if (!addressKr) handleAddrSearch() }} />
                   <button type="button" onClick={handleAddrSearch}
                     className="shrink-0 h-12 px-4 rounded-lg bg-gray-100 border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors">
                     주소 검색
@@ -408,7 +409,14 @@ export default function ApplyPage() {
               </div>
               <div>
                 <label className={labelClass}>생년월일 <span className="text-red-500">*</span></label>
-                <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)}
+                <input type="date" min="1900-01-01" max="2100-12-31"
+                  defaultValue={birthDate}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    if (!v) { setBirthDate(''); return }
+                    const year = parseInt(v.split('-')[0], 10)
+                    if (year >= 1900 && year <= 2100) setBirthDate(v)
+                  }}
                   className={inputClass} />
               </div>
               <div>
@@ -491,7 +499,7 @@ export default function ApplyPage() {
                 <label className={labelClass}>몸무게 (kg) <span className="text-red-500">*</span></label>
                 <input type="text" inputMode="decimal" value={weight}
                   onChange={(e) => setWeight(e.target.value.replace(/[^\d.]/g, ''))}
-                  placeholder="5.2" className={inputClass} />
+                  placeholder="5" className={inputClass} />
               </div>
             </div>
           </section>
@@ -513,12 +521,26 @@ export default function ApplyPage() {
               </div>
               <div>
                 <label className={labelClass}>마이크로칩 삽입일</label>
-                <input type="date" value={microchipDate} onChange={(e) => setMicrochipDate(e.target.value)}
+                <input type="date" min="1900-01-01" max="2100-12-31"
+                  defaultValue={microchipDate}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    if (!v) { setMicrochipDate(''); return }
+                    const year = parseInt(v.split('-')[0], 10)
+                    if (year >= 1900 && year <= 2100) setMicrochipDate(v)
+                  }}
                   className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>최근 광견병 접종일 (1년 이내)</label>
-                <input type="date" value={rabiesDate} onChange={(e) => setRabiesDate(e.target.value)}
+                <input type="date" min="1900-01-01" max="2100-12-31"
+                  defaultValue={rabiesDate}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    if (!v) { setRabiesDate(''); return }
+                    const year = parseInt(v.split('-')[0], 10)
+                    if (year >= 1900 && year <= 2100) setRabiesDate(v)
+                  }}
                   className={inputClass} />
               </div>
             </div>
