@@ -1,11 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { applyCase } from '@/lib/actions/apply-case'
 import destsData from '@/data/destinations.json'
+import breedsData from '@/data/breeds.json'
+import colorsData from '@/data/colors.json'
+
+function capitalize(s: string) {
+  return s.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
+}
 
 interface Dest { ko: string; en: string }
 const DESTS = destsData as Dest[]
+interface Breed { ko: string; en: string; type: string; alias?: string[] }
+const BREEDS = breedsData as Breed[]
+interface Color { ko: string; en: string; alias?: string[] }
+const COLORS = colorsData as Color[]
 
 const SPECIES_OPTIONS = [
   { value: 'dog', label: '강아지' },
@@ -28,22 +38,88 @@ export default function ApplyPage() {
   const [destination, setDestination] = useState('')
   const [destQuery, setDestQuery] = useState('')
   const [customerName, setCustomerName] = useState('')
-  const [customerNameEn, setCustomerNameEn] = useState('')
+  const [customerLastNameEn, setCustomerLastNameEn] = useState('')
+  const [customerFirstNameEn, setCustomerFirstNameEn] = useState('')
   const [phone, setPhone] = useState('')
-  const [addressKr, setAddressKr] = useState('')
+  const [addressKr, setAddressKr] = useState('')  // 검색된 기본주소
+  const [addressDetail, setAddressDetail] = useState('')  // 상세주소
+  const [addressEn, setAddressEn] = useState('')
+  const [addressZipcode, setAddressZipcode] = useState('')
+  const [addressSido, setAddressSido] = useState('')
+  const [addressSigungu, setAddressSigungu] = useState('')
   const [email, setEmail] = useState('')
+
+  // Daum Postcode
+  const [scriptLoaded, setScriptLoaded] = useState(false)
+  const [showAddrModal, setShowAddrModal] = useState(false)
+  const addrModalRef = useRef<HTMLDivElement>(null)
+  const addrDetailRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.daum?.Postcode) {
+      setScriptLoaded(true)
+      return
+    }
+    const script = document.createElement('script')
+    script.src = '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js'
+    script.async = true
+    script.onload = () => setScriptLoaded(true)
+    document.head.appendChild(script)
+  }, [])
+
+  useEffect(() => {
+    if (!showAddrModal) return
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setShowAddrModal(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [showAddrModal])
+
+  function handleAddrSearch() {
+    if (!scriptLoaded || !window.daum?.Postcode) return
+    setShowAddrModal(true)
+    setTimeout(() => {
+      if (!addrModalRef.current) return
+      new window.daum.Postcode({
+        width: '100%',
+        height: '100%',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        oncomplete(data: any) {
+          const kr = data.zonecode ? `(${data.zonecode}) ${data.roadAddress}` : data.roadAddress
+          setAddressKr(kr)
+          setAddressDetail('')
+          setAddressEn(data.roadAddressEnglish)
+          setAddressZipcode(data.zonecode)
+          setAddressSido(data.sido)
+          setAddressSigungu(data.sigungu)
+          setShowAddrModal(false)
+          setTimeout(() => addrDetailRef.current?.focus(), 100)
+        },
+      }).embed(addrModalRef.current)
+    }, 100)
+  }
   const [petName, setPetName] = useState('')
   const [petNameEn, setPetNameEn] = useState('')
   const [birthDate, setBirthDate] = useState('')
   const [species, setSpecies] = useState('')
-  const [breed, setBreed] = useState('')
-  const [color, setColor] = useState('')
+  const [breed, setBreed] = useState('')      // ko
+  const [breedEn, setBreedEn] = useState('')  // en
+  const [breedQuery, setBreedQuery] = useState('')
+  const [selectedColors, setSelectedColors] = useState<string[]>([]) // ko values
   const [sex, setSex] = useState('')
   const [weight, setWeight] = useState('')
   const [microchip, setMicrochip] = useState('')
   const [microchipDate, setMicrochipDate] = useState('')
   const [rabiesDate, setRabiesDate] = useState('')
   const [enWarning, setEnWarning] = useState<string | null>(null)
+  const [destHighlight, setDestHighlight] = useState(-1)
+  const [breedHighlight, setBreedHighlight] = useState(-1)
+
+  const filteredBreeds = BREEDS.filter(b => {
+    if (species && b.type !== species) return false
+    if (!breedQuery.trim()) return false
+    const q = breedQuery.toLowerCase()
+    return b.ko.includes(q) || b.en.toLowerCase().includes(q) || b.alias?.some(a => a.toLowerCase().includes(q))
+  })
 
   const filteredDests = DESTS.filter(d => {
     if (!destQuery.trim()) return true
@@ -58,7 +134,7 @@ export default function ApplyPage() {
     // Validation
     if (!destination) { setError('목적지를 선택해주세요.'); return }
     if (!customerName.trim()) { setError('성함을 입력해주세요.'); return }
-    if (!customerNameEn.trim()) { setError('영문성함을 입력해주세요.'); return }
+    if (!customerLastNameEn.trim() || !customerFirstNameEn.trim()) { setError('영문 성과 이름을 모두 입력해주세요.'); return }
     if (!phone.trim()) { setError('전화번호를 입력해주세요.'); return }
     if (phone.length < 10 || phone.length > 11) { setError('전화번호는 10~11자리로 입력해주세요.'); return }
     if (!addressKr.trim()) { setError('한국주소를 입력해주세요.'); return }
@@ -67,25 +143,33 @@ export default function ApplyPage() {
     if (!petNameEn.trim()) { setError('동물 영문이름을 입력해주세요.'); return }
     if (!birthDate) { setError('생년월일을 입력해주세요.'); return }
     if (!species) { setError('종을 선택해주세요.'); return }
-    if (!breed.trim()) { setError('품종을 입력해주세요.'); return }
-    if (!color.trim()) { setError('모색을 입력해주세요.'); return }
+    if (!breed.trim()) { setError('품종을 선택해주세요.'); return }
+    if (selectedColors.length === 0) { setError('모색을 선택해주세요.'); return }
     if (!sex) { setError('성별을 선택해주세요.'); return }
     if (!weight.trim()) { setError('몸무게를 입력해주세요.'); return }
+    if (microchip.trim() && microchip.replace(/\D/g, '').length !== 15) { setError('마이크로칩 번호는 15자리 숫자여야 합니다.'); return }
 
     setSubmitting(true)
     const result = await applyCase({
       destination,
       customer_name: customerName.trim(),
-      customer_name_en: customerNameEn.trim().toUpperCase(),
+      customer_last_name_en: capitalize(customerLastNameEn.trim()),
+      customer_first_name_en: capitalize(customerFirstNameEn.trim()),
       phone: phone.trim(),
-      address_kr: addressKr.trim(),
+      address_kr: addressDetail.trim() ? `${addressKr.trim()} ${addressDetail.trim()}` : addressKr.trim(),
+      address_en: addressEn.trim(),
+      address_zipcode: addressZipcode,
+      address_sido: addressSido,
+      address_sigungu: addressSigungu,
       email: email.trim(),
       pet_name: petName.trim(),
-      pet_name_en: petNameEn.trim().toUpperCase(),
+      pet_name_en: capitalize(petNameEn.trim()),
       birth_date: birthDate,
       species,
       breed: breed.trim(),
-      color: color.trim(),
+      breed_en: breedEn.trim(),
+      color: selectedColors.map(ko => COLORS.find(c => c.ko === ko)?.ko ?? ko).join(', '),
+      color_en: selectedColors.map(ko => COLORS.find(c => c.ko === ko)?.en ?? ko).join(', '),
       sex,
       weight: weight.trim(),
       microchip: microchip.trim() || undefined,
@@ -116,9 +200,9 @@ export default function ApplyPage() {
             onClick={() => {
               setStep(0)
               setDestination(''); setDestQuery('')
-              setCustomerName(''); setCustomerNameEn(''); setPhone(''); setAddressKr(''); setEmail('')
-              setPetName(''); setPetNameEn(''); setBirthDate(''); setSpecies(''); setBreed('')
-              setColor(''); setSex(''); setWeight('')
+              setCustomerName(''); setCustomerLastNameEn(''); setCustomerFirstNameEn(''); setPhone(''); setAddressKr(''); setAddressDetail(''); setAddressEn(''); setEmail('')
+              setPetName(''); setPetNameEn(''); setBirthDate(''); setSpecies(''); setBreed(''); setBreedEn(''); setBreedQuery('')
+              setSelectedColors([]); setSex(''); setWeight('')
               setMicrochip(''); setMicrochipDate(''); setRabiesDate('')
             }}
             className="text-sm text-blue-600 hover:underline"
@@ -150,19 +234,24 @@ export default function ApplyPage() {
             <div>
               <label className={labelClass}>이동할 국가 <span className="text-red-500">*</span></label>
               {destination ? (
-                <div className="flex items-center gap-2">
-                  <span className="flex-1 h-12 flex items-center rounded-lg border border-gray-300 bg-gray-50 px-4 text-base">
-                    {DESTS.find(d => d.ko === destination)?.ko ?? destination} ({DESTS.find(d => d.ko === destination)?.en ?? ''})
-                  </span>
-                  <button type="button" onClick={() => { setDestination(''); setDestQuery('') }}
-                    className="text-sm text-gray-500 hover:text-red-500 px-2">변경</button>
-                </div>
+                <button type="button" onClick={() => { setDestination(''); setDestQuery('') }}
+                  className="w-full h-12 flex items-center rounded-lg border border-gray-300 bg-gray-50 px-4 text-base text-left hover:bg-gray-100 transition-colors cursor-pointer">
+                  {DESTS.find(d => d.ko === destination)?.ko ?? destination} <span className="text-gray-400 ml-1">({DESTS.find(d => d.ko === destination)?.en ?? ''})</span>
+                </button>
               ) : (
                 <div>
                   <input
                     type="text"
                     value={destQuery}
-                    onChange={(e) => setDestQuery(e.target.value)}
+                    onChange={(e) => { setDestQuery(e.target.value); setDestHighlight(-1) }}
+                    onKeyDown={(e) => {
+                      const items = filteredDests.slice(0, 10)
+                      if (e.key === 'ArrowDown') { e.preventDefault(); setDestHighlight(h => Math.min(h + 1, items.length - 1)) }
+                      if (e.key === 'ArrowUp') { e.preventDefault(); setDestHighlight(h => Math.max(h - 1, 0)) }
+                      if (e.key === 'Enter' && destHighlight >= 0 && items[destHighlight]) {
+                        e.preventDefault(); setDestination(items[destHighlight].ko); setDestQuery(''); setDestHighlight(-1)
+                      }
+                    }}
                     placeholder="국가명 검색 (예: 일본, Japan)"
                     className={inputClass}
                   />
@@ -171,10 +260,10 @@ export default function ApplyPage() {
                       {filteredDests.length === 0 ? (
                         <li className="px-4 py-3 text-gray-500 text-sm">검색 결과 없음</li>
                       ) : (
-                        filteredDests.slice(0, 10).map(d => (
+                        filteredDests.slice(0, 10).map((d, i) => (
                           <li key={d.ko}>
-                            <button type="button" onClick={() => { setDestination(d.ko); setDestQuery('') }}
-                              className="w-full text-left px-4 py-3 text-base hover:bg-blue-50 transition-colors">
+                            <button type="button" onClick={() => { setDestination(d.ko); setDestQuery(''); setDestHighlight(-1) }}
+                              className={`w-full text-left px-4 py-3 text-base transition-colors ${i === destHighlight ? 'bg-blue-50' : 'hover:bg-blue-50'}`}>
                               {d.ko} <span className="text-gray-400">{d.en}</span>
                             </button>
                           </li>
@@ -198,26 +287,30 @@ export default function ApplyPage() {
               </div>
               <div>
                 <label className={labelClass}>영문성함 <span className="text-red-500">*</span> <span className="text-xs font-normal text-gray-400">여권과 동일하게</span></label>
-                <input type="text" value={customerNameEn}
-                  onChange={(e) => {
-                    const raw = e.target.value
-                    const filtered = raw.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
-                    setCustomerNameEn(filtered)
-                    if (raw !== filtered) {
-                      setEnWarning('영문만 입력 가능합니다')
-                      setTimeout(() => setEnWarning(null), 2000)
-                    }
-                  }}
-                  onCompositionEnd={(e) => {
-                    const raw = (e.target as HTMLInputElement).value
-                    const filtered = raw.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
-                    setCustomerNameEn(filtered)
-                    if (raw !== filtered) {
-                      setEnWarning('영문만 입력 가능합니다')
-                      setTimeout(() => setEnWarning(null), 2000)
-                    }
-                  }}
-                  placeholder="HONG GILDONG" className={inputClass} />
+                <div className="flex gap-2">
+                  <input type="text" value={customerLastNameEn}
+                    onChange={(e) => {
+                      const filtered = e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').replace(/\b[a-z]/g, c => c.toUpperCase())
+                      setCustomerLastNameEn(filtered)
+                      if (e.target.value !== filtered) { setEnWarning('영문만 입력 가능합니다'); setTimeout(() => setEnWarning(null), 2000) }
+                    }}
+                    onCompositionEnd={(e) => {
+                      const filtered = (e.target as HTMLInputElement).value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').replace(/\b[a-z]/g, c => c.toUpperCase())
+                      setCustomerLastNameEn(filtered)
+                    }}
+                    placeholder="성 (HONG)" className={inputClass + ' flex-1'} />
+                  <input type="text" value={customerFirstNameEn}
+                    onChange={(e) => {
+                      const filtered = e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').replace(/\b[a-z]/g, c => c.toUpperCase())
+                      setCustomerFirstNameEn(filtered)
+                      if (e.target.value !== filtered) { setEnWarning('영문만 입력 가능합니다'); setTimeout(() => setEnWarning(null), 2000) }
+                    }}
+                    onCompositionEnd={(e) => {
+                      const filtered = (e.target as HTMLInputElement).value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').replace(/\b[a-z]/g, c => c.toUpperCase())
+                      setCustomerFirstNameEn(filtered)
+                    }}
+                    placeholder="이름 (GILDONG)" className={inputClass + ' flex-1'} />
+                </div>
                 {enWarning && <p className="mt-1 text-xs text-red-500">{enWarning}</p>}
               </div>
               <div>
@@ -230,12 +323,28 @@ export default function ApplyPage() {
               </div>
               <div>
                 <label className={labelClass}>한국주소 <span className="text-red-500">*</span></label>
-                <input type="text" value={addressKr} onChange={(e) => setAddressKr(e.target.value)}
-                  placeholder="서울시 강남구 테헤란로 123" className={inputClass} />
+                <div className="flex gap-2">
+                  <input type="text" value={addressKr} onChange={(e) => setAddressKr(e.target.value)}
+                    placeholder="주소 검색 버튼을 눌러주세요" className={inputClass + ' flex-1'} readOnly />
+                  <button type="button" onClick={handleAddrSearch}
+                    className="shrink-0 h-12 px-4 rounded-lg bg-gray-100 border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors">
+                    주소 검색
+                  </button>
+                </div>
+                {addressKr && (
+                  <input ref={addrDetailRef} type="text" value={addressDetail} onChange={(e) => setAddressDetail(e.target.value)}
+                    placeholder="상세주소 (동/호수 등)"
+                    className={inputClass + ' mt-2'} />
+                )}
+                {addressEn && (
+                  <p className="mt-1 text-xs text-gray-500">{addressEn}</p>
+                )}
               </div>
               <div>
                 <label className={labelClass}>이메일 <span className="text-red-500">*</span></label>
-                <input type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                <input type="email" inputMode="email" value={email}
+                  onChange={(e) => setEmail(e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣A-Z]/g, (c) => c >= 'A' && c <= 'Z' ? c.toLowerCase() : ''))}
+                  onCompositionEnd={(e) => setEmail((e.target as HTMLInputElement).value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').toLowerCase())}
                   placeholder="example@email.com" className={inputClass} />
               </div>
             </div>
@@ -289,13 +398,61 @@ export default function ApplyPage() {
               </div>
               <div>
                 <label className={labelClass}>품종 <span className="text-red-500">*</span></label>
-                <input type="text" value={breed} onChange={(e) => setBreed(e.target.value)}
-                  placeholder="골든 리트리버" className={inputClass} />
+                {breed ? (
+                  <button type="button" onClick={() => { setBreed(''); setBreedEn(''); setBreedQuery('') }}
+                    className="w-full h-12 flex items-center rounded-lg border border-gray-300 bg-gray-50 px-4 text-base text-left hover:bg-gray-100 transition-colors cursor-pointer">
+                    {breed} <span className="text-gray-400 ml-1">{breedEn}</span>
+                  </button>
+                ) : (
+                  <div>
+                    <input type="text" value={breedQuery}
+                      onChange={(e) => { setBreedQuery(e.target.value); setBreedHighlight(-1) }}
+                      onKeyDown={(e) => {
+                        const items = filteredBreeds.slice(0, 10)
+                        if (e.key === 'ArrowDown') { e.preventDefault(); setBreedHighlight(h => Math.min(h + 1, items.length - 1)) }
+                        if (e.key === 'ArrowUp') { e.preventDefault(); setBreedHighlight(h => Math.max(h - 1, 0)) }
+                        if (e.key === 'Enter' && breedHighlight >= 0 && items[breedHighlight]) {
+                          e.preventDefault(); setBreed(items[breedHighlight].ko); setBreedEn(items[breedHighlight].en); setBreedQuery(''); setBreedHighlight(-1)
+                        }
+                      }}
+                      placeholder={species ? '품종 검색 (예: 말티즈, Maltese)' : '종을 먼저 선택해주세요'}
+                      disabled={!species} className={inputClass} />
+                    {breedQuery && filteredBreeds.length > 0 && (
+                      <ul className="mt-1 rounded-lg border border-gray-200 bg-white max-h-48 overflow-y-auto">
+                        {filteredBreeds.slice(0, 10).map((b, i) => (
+                          <li key={`${b.type}:${b.en}`}>
+                            <button type="button" onClick={() => { setBreed(b.ko); setBreedEn(b.en); setBreedQuery(''); setBreedHighlight(-1) }}
+                              className={`w-full text-left px-4 py-3 text-base transition-colors ${i === breedHighlight ? 'bg-blue-50' : 'hover:bg-blue-50'}`}>
+                              {b.ko} <span className="text-gray-400">{b.en}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {breedQuery && filteredBreeds.length === 0 && (
+                      <p className="mt-1 text-xs text-gray-500">검색 결과 없음 — 정확한 품종명을 입력해주세요</p>
+                    )}
+                  </div>
+                )}
               </div>
               <div>
-                <label className={labelClass}>모색 <span className="text-red-500">*</span></label>
-                <input type="text" value={color} onChange={(e) => setColor(e.target.value)}
-                  placeholder="갈색" className={inputClass} />
+                <label className={labelClass}>모색 <span className="text-red-500">*</span> <span className="text-xs font-normal text-gray-400">최대 3개</span></label>
+                <div className="flex flex-wrap gap-2">
+                  {COLORS.map(c => {
+                    const selected = selectedColors.includes(c.ko)
+                    return (
+                      <button key={c.ko} type="button"
+                        onClick={() => {
+                          if (selected) setSelectedColors(prev => prev.filter(v => v !== c.ko))
+                          else if (selectedColors.length < 3) setSelectedColors(prev => [...prev, c.ko])
+                        }}
+                        className={`h-10 px-4 rounded-lg border text-sm font-medium transition-colors ${selected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'} ${!selected && selectedColors.length >= 3 ? 'opacity-40 cursor-not-allowed' : ''}`}
+                      >
+                        {c.ko}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
               <div>
                 <label className={labelClass}>성별 <span className="text-red-500">*</span></label>
@@ -360,6 +517,20 @@ export default function ApplyPage() {
           </p>
         </form>
       </div>
+
+      {/* Daum Postcode Modal */}
+      {showAddrModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowAddrModal(false)}>
+          <div className="relative w-full max-w-lg mx-4 bg-white rounded-xl shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b">
+              <span className="text-sm font-medium">주소 검색</span>
+              <button type="button" onClick={() => setShowAddrModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
+            </div>
+            <div ref={addrModalRef} className="h-[450px]" />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

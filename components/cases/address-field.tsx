@@ -13,8 +13,8 @@ declare global {
     daum: {
       Postcode: new (opts: {
         oncomplete: (data: DaumPostcodeResult) => void
-        width: string
-        height: string
+        width?: string
+        height?: string
       }) => { embed: (el: HTMLElement) => void }
     }
   }

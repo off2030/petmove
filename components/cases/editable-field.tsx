@@ -41,10 +41,13 @@ function filterNumeric(str: string): string {
 }
 
 /** Apply all input filters based on field spec */
+const EMAIL_KEYS = new Set(['email'])
+
 function applyFilter(spec: FieldSpec, str: string, lang?: 'ko' | 'en'): string {
   if (DIGITS_ONLY_KEYS.has(spec.key)) return filterDigitsOnly(str)
   if (DIGITS_SPACE_KEYS.has(spec.key)) return str.replace(/[^\d\s]/g, '')
   if (NUMERIC_KEYS.has(spec.key) || spec.type === 'number') return filterNumeric(str)
+  if (EMAIL_KEYS.has(spec.key)) return str.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').toLowerCase()
   return filterByLang(str, lang)
 }
 
@@ -340,6 +343,8 @@ export function EditableField({
                   ? '숫자만 입력 가능합니다'
                 : (NUMERIC_KEYS.has(spec.key) || spec.type === 'number') && hasNonDigit
                   ? '숫자만 입력 가능합니다'
+                : EMAIL_KEYS.has(spec.key) && (hasKorean || /[A-Z]/.test(v))
+                  ? hasKorean ? '영문 소문자만 입력 가능합니다' : '소문자만 입력 가능합니다'
                 : effectiveLang === 'en' && hasKorean
                   ? '영문만 입력 가능합니다'
                 : ''
