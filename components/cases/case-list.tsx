@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Search, Plus } from 'lucide-react'
+import { Search, Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { CaseRow } from '@/lib/supabase/types'
 import { Input } from '@/components/ui/input'
@@ -86,8 +86,17 @@ export function CaseList({ onAdd }: { onAdd?: () => void }) {
               }
             }}
             autoFocus
-            className="pl-9"
+            className="pl-9 pr-8"
           />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
         <button
           type="button"

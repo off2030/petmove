@@ -1,19 +1,29 @@
 'use client'
 
 import type { CaseRow } from '@/lib/supabase/types'
+import type { FieldSpec } from '@/lib/fields'
 import {
   buildFieldSpecs,
   groupFieldSpecs,
   HIDDEN_EN_KEYS,
   readCaseField,
 } from '@/lib/fields'
+import { useEffect, useRef, useState } from 'react'
+import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/utils'
+import { updateCaseField } from '@/lib/actions/cases'
+import { CopyButton } from './copy-button'
 import { EditableField } from './editable-field'
 import { PairedField } from './paired-field'
 import { CustomerNameRow } from './customer-name-row'
 import { AddressField } from './address-field'
 import { BreedField } from './breed-field'
 import { ColorField } from './color-field'
+import { DestinationField } from './destination-field'
+import { PaymentField } from './payment-field'
+import { RabiesTiterField } from './rabies-titer-field'
+import { RepeatableDateField } from './repeatable-date-field'
+import { AttachmentsField } from './attachments-field'
 import { useCases } from './cases-context'
 
 /**
@@ -40,6 +50,8 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
           </h3>
           <div>
             {g.items.map((spec) => {
+              // 기타정보 is handled specially — after all its items we append Attachments + Payment
+              // (see below after the map)
               // Address: combined Korean + English with Daum Postcode search
               if (spec.key === 'phone') {
                 // Insert AddressField AFTER phone (before email)
@@ -62,6 +74,62 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
                       />
                     )}
                   </div>
+                )
+              }
+
+              // Memo → then Attachments + Payment rendered after the group loop
+              if (spec.key === 'memo') {
+                return (
+                  <EditableField
+                    key="memo"
+                    caseId={caseRow.id}
+                    spec={spec}
+                    rawValue={readCaseField(caseRow, spec)}
+                  />
+                )
+              }
+
+              // Microchip: implant date | check date on same row
+              if (spec.key === 'microchip_implant_date') {
+                return (
+                  <MicrochipDatesRow key="microchip-dates" caseId={caseRow.id} caseRow={caseRow} />
+                )
+              }
+
+              // Repeatable schedule fields: after comprehensive (종합백신),
+              // insert all array-based schedule fields
+              if (spec.key === 'general_vaccine') {
+                return (
+                  <div key="general_vaccine+schedule">
+                    <EditableField
+                      caseId={caseRow.id}
+                      spec={spec}
+                      rawValue={readCaseField(caseRow, spec)}
+                    />
+                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="광견병" dataKey="rabies_dates" />
+                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="CIV" dataKey="civ_dates" />
+                    <RabiesTiterField caseId={caseRow.id} caseRow={caseRow} />
+                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="외부구충" dataKey="external_parasite_dates" />
+                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="내부구충" dataKey="internal_parasite_dates" />
+                  </div>
+                )
+              }
+
+              // Destination: searchable country selector
+              if (spec.key === 'destination') {
+                return (
+                  <DestinationField
+                    key="destination"
+                    caseId={caseRow.id}
+                    destination={caseRow.destination}
+                  />
+                )
+              }
+
+              // Microchip: main + optional secondary with + button
+              if (spec.key === 'microchip') {
+                return (
+                  <MicrochipField key="microchip" caseId={caseRow.id} caseRow={caseRow} spec={spec} />
                 )
               }
 
@@ -116,11 +184,256 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
                 />
               )
             })}
+            {/* 기타정보: Attachments + Payment */}
+            {g.group === '기타정보' && (
+              <>
+                <AttachmentsField caseId={caseRow.id} caseRow={caseRow} />
+                <PaymentField caseId={caseRow.id} caseRow={caseRow} />
+              </>
+            )}
           </div>
         </section>
       ))}
 
     </div>
+  )
+}
+
+/**
+ * Microchip: main chip + optional secondary chip (+ button to add)
+ */
+function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: CaseRow; spec: FieldSpec }) {
+  const { updateLocalCaseField } = useCases()
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const secondary = (data.microchip_secondary as string) || ''
+  const [showSecondary, setShowSecondary] = useState(!!secondary)
+  const [editingSecondary, setEditingSecondary] = useState(false)
+  const [secVal, setSecVal] = useState(secondary)
+  const [secError, setSecError] = useState<string | null>(null)
+  const secRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setShowSecondary(!!((caseRow.data as Record<string, unknown>)?.microchip_secondary))
+    setEditingSecondary(false)
+    setSecError(null)
+  }, [caseId, caseRow.data])
+
+  useEffect(() => {
+    if (editingSecondary && secRef.current) secRef.current.focus()
+  }, [editingSecondary])
+
+  function formatChip(v: string) {
+    const digits = v.replace(/\D/g, '')
+    if (digits.length === 15) return `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6,9)} ${digits.slice(9,12)} ${digits.slice(12)}`
+    return v
+  }
+
+  async function saveSecondary() {
+    const raw = secVal.trim()
+    if (!raw) {
+      const r = await updateCaseField(caseId, 'data', 'microchip_secondary', null)
+      if (r.ok) updateLocalCaseField(caseId, 'data', 'microchip_secondary', null)
+      setEditingSecondary(false)
+      setShowSecondary(false)
+      return
+    }
+    const digits = raw.replace(/\D/g, '')
+    if (digits.length !== 15) {
+      setSecError('유효한 번호가 아닙니다')
+      return
+    }
+    const r = await updateCaseField(caseId, 'data', 'microchip_secondary', digits)
+    if (r.ok) {
+      updateLocalCaseField(caseId, 'data', 'microchip_secondary', digits)
+      setSecError(null)
+      setEditingSecondary(false)
+    } else {
+      setSecError(r.error)
+    }
+  }
+
+  function handleSecChange(raw: string) {
+    const filtered = raw.replace(/\D/g, '')
+    setSecVal(filtered)
+    if (raw !== filtered) {
+      setSecError('숫자만 입력 가능합니다')
+      setTimeout(() => setSecError(null), 2000)
+    }
+  }
+
+  return (
+    <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40">
+      <div className="flex items-center gap-1 pt-1">
+        <span className="text-sm text-muted-foreground">{spec.label}</span>
+        {!showSecondary && (
+          <button type="button" onClick={() => { setShowSecondary(true); setEditingSecondary(true); setSecVal(''); setSecError(null) }}
+            className="text-muted-foreground/40 hover:text-foreground text-sm font-medium leading-none transition-colors"
+            title="보조 마이크로칩 추가">
+            +
+          </button>
+        )}
+      </div>
+      <div className="min-w-0">
+        <div className="flex items-baseline gap-[30px]">
+          {/* Main chip */}
+          <div className="group/val relative w-fit">
+            <EditableField caseId={caseId} spec={spec} rawValue={readCaseField(caseRow, spec)} inline />
+            <CopyButton
+              value={caseRow.microchip ? String(caseRow.microchip).replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{3})(\d{3})/, '$1 $2 $3 $4 $5') : ''}
+              className="absolute left-full top-0.5 ml-1 z-10 opacity-0 group-hover/val:opacity-100"
+            />
+          </div>
+
+          {/* Secondary chip — pipe separated, same line */}
+          {showSecondary && (
+            <>
+              <span className="text-muted-foreground/30 select-none">|</span>
+              {editingSecondary ? (
+                <input ref={secRef} type="text" inputMode="numeric" value={secVal}
+                  onChange={(e) => handleSecChange(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') saveSecondary(); if (e.key === 'Escape') { setEditingSecondary(false); setSecError(null); if (!secondary) setShowSecondary(false) } }}
+                  onBlur={() => setTimeout(() => saveSecondary(), 150)}
+                  placeholder="보조칩 번호"
+                  className="w-44 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+                />
+              ) : (
+                <div className="group/sec relative w-fit">
+                  <button type="button" onClick={() => { setSecVal(secondary.replace(/\D/g, '')); setEditingSecondary(true); setSecError(null) }}
+                    className="text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text">
+                    {formatChip(secondary)}
+                  </button>
+                  <CopyButton
+                    value={formatChip(secondary)}
+                    className="absolute left-full top-0.5 ml-1 z-10 opacity-0 group-hover/sec:opacity-100"
+                  />
+                </div>
+              )}
+              <button type="button" onClick={async () => {
+                const r = await updateCaseField(caseId, 'data', 'microchip_secondary', null)
+                if (r.ok) updateLocalCaseField(caseId, 'data', 'microchip_secondary', null)
+                setShowSecondary(false)
+                setSecError(null)
+              }} className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0">
+                ✕
+              </button>
+            </>
+          )}
+        </div>
+        {secError && <div className="mt-1 text-xs text-red-600">{secError}</div>}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Microchip dates: 기본 삽입일 + (선택) 확인일
+ * + 한번만 추가 가능 (확인일), ✕로 확인일 제거
+ */
+function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
+  const { updateLocalCaseField } = useCases()
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const implantDate = (data.microchip_implant_date as string) || ''
+  const checkDate = (data.microchip_check_date as string) || ''
+
+  const [editingField, setEditingField] = useState<'implant' | 'check' | null>(null)
+  const [showCheck, setShowCheck] = useState(!!checkDate)
+
+  useEffect(() => {
+    setEditingField(null)
+    setShowCheck(!!((caseRow.data as Record<string, unknown>)?.microchip_check_date))
+  }, [caseId, caseRow.data])
+
+  async function saveDate(key: string, value: string | null) {
+    const r = await updateCaseField(caseId, 'data', key, value)
+    if (r.ok) updateLocalCaseField(caseId, 'data', key, value)
+    setEditingField(null)
+  }
+
+  function addCheckDate() {
+    setShowCheck(true)
+    setEditingField('check')
+  }
+
+  async function removeCheckDate() {
+    const r = await updateCaseField(caseId, 'data', 'microchip_check_date', null)
+    if (r.ok) updateLocalCaseField(caseId, 'data', 'microchip_check_date', null)
+    setShowCheck(false)
+  }
+
+  return (
+    <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40">
+      <div className="flex items-center gap-1 pt-1">
+        <span className="text-sm text-muted-foreground">마이크로칩</span>
+        {!showCheck && (
+          <button type="button" onClick={addCheckDate}
+            className="text-muted-foreground/40 hover:text-foreground text-sm font-medium leading-none transition-colors"
+            title="확인일 추가">+</button>
+        )}
+      </div>
+      <div className="min-w-0 space-y-0.5">
+        {/* 삽입일 */}
+        <div className="flex items-baseline gap-[10px]">
+          {editingField === 'implant' ? (
+            <MicrochipDateInput initial={implantDate} onSave={(v) => saveDate('microchip_implant_date', v || null)} onCancel={() => setEditingField(null)} />
+          ) : (
+            <button type="button" onClick={() => setEditingField('implant')}
+              className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', !implantDate && 'text-muted-foreground/60 italic')}>
+              {implantDate || '—'}
+            </button>
+          )}
+        </div>
+
+        {/* 확인일 — + 누르면 나타남 */}
+        {showCheck && (
+          <div className="flex items-baseline gap-[10px]">
+            {editingField === 'check' ? (
+              <MicrochipDateInput initial={checkDate} onSave={(v) => {
+                if (v) saveDate('microchip_check_date', v)
+                else { setShowCheck(false); setEditingField(null) }
+              }} onCancel={() => { if (!checkDate) setShowCheck(false); setEditingField(null) }} />
+            ) : (
+              <button type="button" onClick={() => setEditingField('check')}
+                className="text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer">
+                {checkDate}
+              </button>
+            )}
+            <button type="button" onClick={removeCheckDate}
+              className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0">✕</button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function MicrochipDateInput({ initial, onSave, onCancel }: {
+  initial: string; onSave: (v: string) => void; onCancel: () => void
+}) {
+  const ref = useRef<HTMLInputElement>(null)
+  const dateTypedRef = useRef(false)
+  useEffect(() => { ref.current?.focus() }, [])
+
+  function saveFromRef() {
+    const raw = (ref.current?.value ?? '').trim()
+    if (!raw) { onSave(''); return }
+    onSave(raw)
+  }
+
+  return (
+    <input ref={ref} type="date" min="1900-01-01" max="2100-12-31" defaultValue={initial}
+      onChange={(e) => {
+        const v = e.target.value
+        if (!v) { dateTypedRef.current = false; return }
+        if (dateTypedRef.current) { onSave(v); dateTypedRef.current = false } else { saveFromRef() }
+      }}
+      onKeyDown={(e) => {
+        dateTypedRef.current = true
+        if (e.key === 'Enter') { e.preventDefault(); saveFromRef() }
+        if (e.key === 'Escape') { e.preventDefault(); onCancel() }
+      }}
+      onBlur={() => setTimeout(() => saveFromRef(), 150)}
+      className="w-36 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+    />
   )
 }
 

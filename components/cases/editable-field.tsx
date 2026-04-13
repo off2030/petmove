@@ -16,7 +16,7 @@ function filterByLang(str: string, lang?: 'ko' | 'en'): string {
 }
 
 /** Auto-determine language filter from field spec */
-const DIGITS_ONLY_KEYS = new Set(['phone'])
+const DIGITS_ONLY_KEYS = new Set(['phone', 'payment_amount'])
 const DIGITS_SPACE_KEYS = new Set(['microchip'])
 const NUMERIC_KEYS = new Set(['rabies_titer', 'rabies_titer_value'])
 
@@ -380,17 +380,20 @@ export function EditableField({
     <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0">
       <div className="text-sm text-muted-foreground pt-1">{spec.label}</div>
       <div className="min-w-0">
-        {(isDate && editing) || isSelect || editing ? (
-          valueCell
-        ) : (
-          <div className="group/val relative w-fit">
-            {valueCell}
-            <CopyButton
-              value={isEmpty ? '' : display}
-              className="absolute left-full top-0.5 ml-1 z-10 opacity-0 group-hover/val:opacity-100"
-            />
-          </div>
-        )}
+        {(() => {
+          const noCopy = isDate || isSelect || spec.type === 'longtext'
+          if ((isDate && editing) || isSelect || editing) return valueCell
+          if (noCopy) return valueCell
+          return (
+            <div className="group/val relative w-fit">
+              {valueCell}
+              <CopyButton
+                value={isEmpty ? '' : display}
+                className="absolute left-full top-0.5 ml-1 z-10 opacity-0 group-hover/val:opacity-100"
+              />
+            </div>
+          )
+        })()}
       </div>
     </div>
   )

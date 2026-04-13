@@ -33,23 +33,19 @@ export function PairedField({
     <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0">
       <div className="pt-1 text-sm text-muted-foreground">{koSpec.label}</div>
 
-      <div className="flex items-baseline gap-[35px] min-w-0 flex-wrap">
-        {/* Korean half — copy button absolute, zero layout impact */}
-        <div className="group/ko relative inline-flex items-baseline">
+      <div className="flex items-baseline gap-[10px] min-w-0 flex-wrap">
+        {/* Korean half — no copy button */}
+        <div className="inline-flex items-baseline">
           <EditableField
             inline
             caseId={caseId}
             spec={koSpec}
             rawValue={koRaw}
           />
-          <CopyButton
-            value={koDisplay === '—' ? '' : koDisplay}
-            className="absolute left-full ml-1 z-10 opacity-0 group-hover/ko:opacity-100 shrink-0"
-          />
         </div>
 
         {/* Divider */}
-        <span className="text-sm text-muted-foreground/30 select-none">/</span>
+        <span className="text-muted-foreground/30 select-none">|</span>
 
         {/* English half */}
         {enSpec && (

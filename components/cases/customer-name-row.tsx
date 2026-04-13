@@ -111,22 +111,18 @@ export function CustomerNameRow({
     <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0">
       <div className="pt-1 text-sm text-muted-foreground">성함</div>
 
-      <div className="flex items-baseline gap-[35px] min-w-0 flex-wrap">
+      <div className="flex items-baseline gap-[10px] min-w-0 flex-wrap">
         {/* Korean name — standard inline EditableField */}
-        <div className="group/ko relative inline-flex items-baseline">
+        <div className="inline-flex items-baseline">
           <EditableField
             inline
             caseId={caseId}
             spec={koSpec}
             rawValue={caseRow.customer_name}
           />
-          <CopyButton
-            value={caseRow.customer_name || ''}
-            className="absolute left-full ml-1 z-10 opacity-0 group-hover/ko:opacity-100 shrink-0"
-          />
         </div>
 
-        <span className="text-sm text-muted-foreground/30 select-none">/</span>
+        <span className="text-muted-foreground/30 select-none">|</span>
 
         {/* English name — combined "First Last" display, two-input edit */}
         <div className="group/en relative inline-flex items-baseline">

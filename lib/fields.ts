@@ -89,15 +89,14 @@ export const REGULAR_COLUMN_SPECS: FieldSpec[] = [
     storage: 'column',
     label: 'Status',
     type: 'select',
-    group: '동물정보',
-    groupOrder: 1,
-    order: 99, // always last in 동물정보
+    group: '절차정보',
+    groupOrder: 2,
+    order: -2, // before destination (-1)
     options: [
-      { value: '신규', label_ko: '신규' },
-      { value: '진행중', label_ko: '진행중' },
-      { value: '보류', label_ko: '보류' },
-      { value: '완료', label_ko: '완료' },
-      { value: '취소', label_ko: '취소' },
+      { value: '진행중', label_ko: 'In Progress' },
+      { value: '완료', label_ko: 'Completed' },
+      { value: '보류', label_ko: 'On Hold' },
+      { value: '취소', label_ko: 'Cancelled' },
     ],
   },
 ]
@@ -138,6 +137,19 @@ export const HIDDEN_EN_KEYS = new Set<string>([
   'breed_en',  // shown via BreedField
   'color',     // shown via ColorField
   'color_en',  // shown via ColorField
+  'payment_amount',  // legacy, shown via PaymentField
+  'payment_method',  // legacy, shown via PaymentField
+  'payments',        // shown via PaymentField (array)
+  // Rabies titer: legacy flat + new array
+  'rabies_titer_test_date', 'rabies_titer', 'rabies_titer_lab',
+  'rabies_titer_records',
+  // Repeatable schedule fields: legacy 1st/2nd/3rd + new arrays
+  'rabies_1', 'rabies_2', 'rabies_3', 'rabies_dates',
+  'civ', 'civ_dates',
+  'external_parasite_1', 'external_parasite_2', 'external_parasite_3', 'external_parasite_dates',
+  'internal_parasite_1', 'internal_parasite_2', 'internal_parasite_dates',
+  'microchip_check_date', // shown inline with microchip_implant_date
+  'microchip_secondary', // shown via MicrochipField
   'sex_en', // redundant with sex select's bilingual label
   'address_kr',  // shown via AddressField with search
   'address_en',  // shown via AddressField with search
@@ -152,11 +164,11 @@ const GROUP_REMAP: Record<string, string> = {
   '절차/예방접종': '절차정보',
   '절차/검사': '절차정보',
   '절차/구충': '절차정보',
-  메모: '절차정보',
+  메모: '기타정보',
 }
 
 // Deterministic group ordering for the detail page.
-const KNOWN_GROUP_ORDER = ['고객정보', '동물정보', '절차정보']
+const KNOWN_GROUP_ORDER = ['고객정보', '동물정보', '절차정보', '기타정보']
 
 function groupOrderOf(groupName: string): number {
   const i = KNOWN_GROUP_ORDER.indexOf(groupName)
@@ -262,6 +274,20 @@ function calculateAge(birthDateStr: string): string {
  */
 export function renderFieldValue(spec: FieldSpec, raw: unknown): string {
   if (raw === null || raw === undefined || raw === '') return '—'
+  // Payment amount formatting: 50000 → ₩50,000 (legacy flat key)
+  if (spec.key === 'payment_amount') {
+    const n = Number(raw)
+    if (Number.isFinite(n)) return `₩${n.toLocaleString()}`
+    return String(raw)
+  }
+
+  // Payments array: show total
+  if (spec.key === 'payments' && Array.isArray(raw)) {
+    const total = (raw as Array<{ amount: number }>).reduce((s, p) => s + (p.amount || 0), 0)
+    if (total > 0) return `₩${total.toLocaleString()}`
+    return '—'
+  }
+
   // Microchip formatting: 410100012271380 → 410 100 012 271 380
   if (spec.key === 'microchip') {
     const digits = String(raw).replace(/\D/g, '')
