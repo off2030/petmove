@@ -60,6 +60,7 @@ export default function ApplyPage() {
     if (!customerName.trim()) { setError('성함을 입력해주세요.'); return }
     if (!customerNameEn.trim()) { setError('영문성함을 입력해주세요.'); return }
     if (!phone.trim()) { setError('전화번호를 입력해주세요.'); return }
+    if (phone.length < 10 || phone.length > 11) { setError('전화번호는 10~11자리로 입력해주세요.'); return }
     if (!addressKr.trim()) { setError('한국주소를 입력해주세요.'); return }
     if (!email.trim()) { setError('이메일을 입력해주세요.'); return }
     if (!petName.trim()) { setError('동물 이름을 입력해주세요.'); return }
