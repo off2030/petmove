@@ -23,11 +23,31 @@ const SPECIES_OPTIONS = [
 ]
 
 const SEX_OPTIONS = [
-  { value: 'male', label: '수컷' },
-  { value: 'female', label: '암컷' },
-  { value: 'neutered_male', label: '중성화 수컷' },
   { value: 'spayed_female', label: '중성화 암컷' },
+  { value: 'neutered_male', label: '중성화 수컷' },
+  { value: 'female', label: '암컷' },
+  { value: 'male', label: '수컷' },
 ]
+
+interface PetForm {
+  petName: string
+  petNameEn: string
+  birthDate: string
+  species: string
+  breed: string
+  breedEn: string
+  breedQuery: string
+  selectedColors: string[]
+  sex: string
+  weight: string
+  microchip: string
+  microchipDate: string
+  rabiesDate: string
+}
+
+function emptyPet(): PetForm {
+  return { petName: '', petNameEn: '', birthDate: '', species: '', breed: '', breedEn: '', breedQuery: '', selectedColors: [], sex: '', weight: '', microchip: '', microchipDate: '', rabiesDate: '' }
+}
 
 export default function ApplyPage() {
   const [step, setStep] = useState(0) // 0=form, 1=done
@@ -97,19 +117,20 @@ export default function ApplyPage() {
       }).embed(addrModalRef.current)
     }, 100)
   }
-  const [petName, setPetName] = useState('')
-  const [petNameEn, setPetNameEn] = useState('')
-  const [birthDate, setBirthDate] = useState('')
-  const [species, setSpecies] = useState('')
-  const [breed, setBreed] = useState('')      // ko
-  const [breedEn, setBreedEn] = useState('')  // en
-  const [breedQuery, setBreedQuery] = useState('')
-  const [selectedColors, setSelectedColors] = useState<string[]>([]) // ko values
-  const [sex, setSex] = useState('')
-  const [weight, setWeight] = useState('')
-  const [microchip, setMicrochip] = useState('')
-  const [microchipDate, setMicrochipDate] = useState('')
-  const [rabiesDate, setRabiesDate] = useState('')
+  const [petCount, setPetCount] = useState(1)
+  const [pets, setPets] = useState<PetForm[]>([emptyPet()])
+
+  function updatePet(idx: number, field: keyof PetForm, value: PetForm[keyof PetForm]) {
+    setPets(prev => prev.map((p, i) => i === idx ? { ...p, [field]: value } : p))
+  }
+
+  function handlePetCountChange(count: number) {
+    setPetCount(count)
+    setPets(prev => {
+      if (count > prev.length) return [...prev, ...Array(count - prev.length).fill(null).map(() => emptyPet())]
+      return prev.slice(0, count)
+    })
+  }
   const [enWarnings, setEnWarnings] = useState<Record<string, string | null>>({})
   const composingRef = useRef(false)
 
@@ -144,14 +165,16 @@ export default function ApplyPage() {
     if (hasKorean) showEnWarning(field, '영문만 입력 가능합니다')
   }
   const [destHighlight, setDestHighlight] = useState(-1)
-  const [breedHighlight, setBreedHighlight] = useState(-1)
+  const [breedHighlights, setBreedHighlights] = useState<Record<number, number>>({})
 
-  const filteredBreeds = BREEDS.filter(b => {
-    if (species && b.type !== species) return false
-    if (!breedQuery.trim()) return false
-    const q = breedQuery.toLowerCase()
-    return b.ko.includes(q) || b.en.toLowerCase().includes(q) || b.alias?.some(a => a.toLowerCase().includes(q))
-  })
+  function getFilteredBreeds(pet: PetForm) {
+    return BREEDS.filter(b => {
+      if (pet.species && b.type !== pet.species) return false
+      if (!pet.breedQuery.trim()) return true
+      const q = pet.breedQuery.toLowerCase()
+      return b.ko.includes(q) || b.en.toLowerCase().includes(q) || b.alias?.some(a => a.toLowerCase().includes(q))
+    })
+  }
 
   const filteredDests = DESTS.filter(d => {
     if (!destQuery.trim()) return true
@@ -171,49 +194,55 @@ export default function ApplyPage() {
     if (phone.length < 10 || phone.length > 11) { setError('전화번호는 10~11자리로 입력해주세요.'); return }
     if (!addressKr.trim()) { setError('한국주소를 입력해주세요.'); return }
     if (!email.trim()) { setError('이메일을 입력해주세요.'); return }
-    if (!petName.trim()) { setError('동물 이름을 입력해주세요.'); return }
-    if (!petNameEn.trim()) { setError('동물 영문이름을 입력해주세요.'); return }
-    if (!birthDate) { setError('생년월일을 입력해주세요.'); return }
-    if (!species) { setError('종을 선택해주세요.'); return }
-    if (!breed.trim()) { setError('품종을 선택해주세요.'); return }
-    if (selectedColors.length === 0) { setError('모색을 선택해주세요.'); return }
-    if (!sex) { setError('성별을 선택해주세요.'); return }
-    if (!weight.trim()) { setError('몸무게를 입력해주세요.'); return }
-    if (microchip && microchip.length !== 15) { setError('마이크로칩 번호는 15자리 숫자여야 합니다.'); return }
+    for (let i = 0; i < pets.length; i++) {
+      const p = pets[i]
+      const label = pets.length > 1 ? `동물 ${i + 1}: ` : ''
+      if (!p.petName.trim()) { setError(`${label}이름을 입력해주세요.`); return }
+      if (!p.petNameEn.trim()) { setError(`${label}영문이름을 입력해주세요.`); return }
+      if (!p.birthDate) { setError(`${label}생년월일을 입력해주세요.`); return }
+      if (!p.species) { setError(`${label}종을 선택해주세요.`); return }
+      if (!p.breed.trim()) { setError(`${label}품종을 선택해주세요.`); return }
+      if (p.selectedColors.length === 0) { setError(`${label}모색을 선택해주세요.`); return }
+      if (!p.sex) { setError(`${label}성별을 선택해주세요.`); return }
+      if (!p.weight.trim()) { setError(`${label}몸무게를 입력해주세요.`); return }
+      if (p.microchip && p.microchip.length !== 15) { setError(`${label}마이크로칩 번호는 15자리 숫자여야 합니다.`); return }
+    }
 
     setSubmitting(true)
-    const result = await applyCase({
-      destination,
-      customer_name: customerName.trim(),
-      customer_last_name_en: capitalize(customerLastNameEn.trim()),
-      customer_first_name_en: capitalize(customerFirstNameEn.trim()),
-      phone: phone.trim(),
-      address_kr: addressDetail.trim() ? `${addressKr.trim()} ${addressDetail.trim()}` : addressKr.trim(),
-      address_en: addressEn.trim(),
-      address_zipcode: addressZipcode,
-      address_sido: addressSido,
-      address_sigungu: addressSigungu,
-      email: email.trim(),
-      pet_name: petName.trim(),
-      pet_name_en: capitalize(petNameEn.trim()),
-      birth_date: birthDate,
-      species,
-      breed: breed.trim(),
-      breed_en: breedEn.trim(),
-      color: selectedColors.map(ko => COLORS.find(c => c.ko === ko)?.ko ?? ko).join(', '),
-      color_en: selectedColors.map(ko => COLORS.find(c => c.ko === ko)?.en ?? ko).join(', '),
-      sex,
-      weight: weight.trim(),
-      microchip: microchip.replace(/\D/g, '') || undefined,
-      microchip_implant_date: microchipDate || undefined,
-      rabies_date: rabiesDate || undefined,
-    })
+    let allOk = true
+    for (const p of pets) {
+      const result = await applyCase({
+        destination,
+        customer_name: customerName.trim(),
+        customer_last_name_en: capitalize(customerLastNameEn.trim()),
+        customer_first_name_en: capitalize(customerFirstNameEn.trim()),
+        phone: phone.trim(),
+        address_kr: addressDetail.trim() ? `${addressKr.trim()} ${addressDetail.trim()}` : addressKr.trim(),
+        address_en: addressEn.trim(),
+        address_zipcode: addressZipcode,
+        address_sido: addressSido,
+        address_sigungu: addressSigungu,
+        email: email.trim(),
+        pet_name: p.petName.trim(),
+        pet_name_en: capitalize(p.petNameEn.trim()),
+        birth_date: p.birthDate,
+        species: p.species,
+        breed: p.breed.trim(),
+        breed_en: p.breedEn.trim(),
+        color: p.selectedColors.map(ko => COLORS.find(c => c.ko === ko)?.ko ?? ko).join(', '),
+        color_en: p.selectedColors.map(ko => COLORS.find(c => c.ko === ko)?.en ?? ko).join(', '),
+        sex: p.sex,
+        weight: p.weight.trim(),
+        microchip: p.microchip.replace(/\D/g, '') || undefined,
+        microchip_implant_date: p.microchipDate || undefined,
+        rabies_date: p.rabiesDate || undefined,
+      })
+      if (!result.ok) { setError(result.error); allOk = false; break }
+    }
     setSubmitting(false)
 
-    if (result.ok) {
+    if (allOk) {
       setStep(1)
-    } else {
-      setError(result.error)
     }
   }
 
@@ -233,9 +262,7 @@ export default function ApplyPage() {
               setStep(0)
               setDestination(''); setDestQuery('')
               setCustomerName(''); setCustomerLastNameEn(''); setCustomerFirstNameEn(''); setPhone(''); setAddressKr(''); setAddressDetail(''); setAddressEn(''); setEmail('')
-              setPetName(''); setPetNameEn(''); setBirthDate(''); setSpecies(''); setBreed(''); setBreedEn(''); setBreedQuery('')
-              setSelectedColors([]); setSex(''); setWeight('')
-              setMicrochip(''); setMicrochipDate(''); setRabiesDate('')
+              setPetCount(1); setPets([emptyPet()])
             }}
             className="text-sm text-blue-600 hover:underline"
           >
@@ -267,6 +294,20 @@ export default function ApplyPage() {
             if (target.tagName === 'BUTTON' && (target as HTMLButtonElement).type === 'submit') return
             // 검색 드롭다운에서 Enter는 선택 로직에서 처리
             if (target.tagName === 'BUTTON') return
+            // 검색 드롭다운 input에서는 선택 완료 전까지 다음 필드 이동 차단
+            if ((target as HTMLInputElement).dataset.searchField === 'dest' && !destination) { e.preventDefault(); return }
+            if ((target as HTMLInputElement).dataset.searchField === 'breed') { e.preventDefault(); return }
+            // date input: Enter로 값 확정 + 다음 필드 이동
+            // 단, 생년월일은 다음이 버튼(종)이라 이동 안 함
+            if ((target as HTMLInputElement).type === 'date') {
+              e.preventDefault()
+              const form = e.currentTarget
+              const focusable = Array.from(form.querySelectorAll<HTMLElement>('input:not([type="hidden"]):not([disabled]), select:not([disabled]), button[type="submit"]'))
+              const idx = focusable.indexOf(target)
+              const next = idx >= 0 && idx < focusable.length - 1 ? focusable[idx + 1] : null
+              if (next && next.tagName === 'INPUT') { next.focus() } else { (target as HTMLInputElement).blur() }
+              return
+            }
             // input/select에서 Enter → 다음 필드로 이동
             if (target.tagName === 'INPUT' || target.tagName === 'SELECT') {
               e.preventDefault()
@@ -292,16 +333,19 @@ export default function ApplyPage() {
                 <div>
                   <input
                     type="text"
+                    data-search-field="dest"
                     value={destQuery}
                     onChange={(e) => { setDestQuery(e.target.value); setDestHighlight(-1) }}
                     onKeyDown={(e) => {
                       const items = filteredDests.slice(0, 10)
                       if (e.key === 'ArrowDown') { e.preventDefault(); setDestHighlight(h => Math.min(h + 1, items.length - 1)) }
                       if (e.key === 'ArrowUp') { e.preventDefault(); setDestHighlight(h => Math.max(h - 1, 0)) }
-                      if (e.key === 'Enter' && destHighlight >= 0 && items[destHighlight]) {
-                        e.preventDefault(); setDestination(items[destHighlight].ko); setDestQuery(''); setDestHighlight(-1)
+                      if (e.key === 'Enter') {
+                        const pick = destHighlight >= 0 ? items[destHighlight] : items.length === 1 ? items[0] : null
+                        if (pick) { e.preventDefault(); setDestination(pick.ko); setDestQuery(''); setDestHighlight(-1) }
                       }
                     }}
+                    onBlur={() => setTimeout(() => { if (!destination) setDestQuery('') }, 300)}
                     placeholder="국가명 검색 (예: 일본, Japan)"
                     className={inputClass}
                   />
@@ -312,7 +356,7 @@ export default function ApplyPage() {
                       ) : (
                         filteredDests.slice(0, 10).map((d, i) => (
                           <li key={d.ko}>
-                            <button type="button" onClick={() => { setDestination(d.ko); setDestQuery(''); setDestHighlight(-1) }}
+                            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setDestination(d.ko); setDestQuery(''); setDestHighlight(-1) }}
                               className={`w-full text-left px-4 py-3 text-base transition-colors ${i === destHighlight ? 'bg-blue-50' : 'hover:bg-blue-50'}`}>
                               {d.ko} <span className="text-gray-400">{d.en}</span>
                             </button>
@@ -389,162 +433,42 @@ export default function ApplyPage() {
             </div>
           </section>
 
-          {/* 3. 동물정보 */}
+          {/* 마리 수 선택 */}
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">동물정보</h2>
-            <div className="space-y-4">
-              <div>
-                <label className={labelClass}>동물 이름 <span className="text-red-500">*</span></label>
-                <input type="text" value={petName} onChange={(e) => setPetName(e.target.value.replace(/\b[a-z]/g, c => c.toUpperCase()))}
-                  placeholder="마루" className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>동물 영문이름 <span className="text-red-500">*</span></label>
-                <input type="text" value={petNameEn}
-                  onCompositionStart={() => { composingRef.current = true }}
-                  onChange={(e) => handleEnInput(e, setPetNameEn, 'petNameEn')}
-                  onCompositionEnd={(e) => handleEnCompositionEnd(e, setPetNameEn, 'petNameEn')}
-                  placeholder="Maru" className={inputClass} />
-                {enWarnings.petNameEn && <p className="mt-1 text-xs text-red-500">{enWarnings.petNameEn}</p>}
-              </div>
-              <div>
-                <label className={labelClass}>생년월일 <span className="text-red-500">*</span></label>
-                <input type="date" min="1900-01-01" max="2100-12-31"
-                  defaultValue={birthDate}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    if (!v) { setBirthDate(''); return }
-                    const year = parseInt(v.split('-')[0], 10)
-                    if (year >= 1900 && year <= 2100) setBirthDate(v)
-                  }}
-                  className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>종 <span className="text-red-500">*</span></label>
-                <select value={species} onChange={(e) => setSpecies(e.target.value)} className={selectClass}>
-                  <option value="">선택</option>
-                  {SPECIES_OPTIONS.map(o => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>품종 <span className="text-red-500">*</span></label>
-                {breed ? (
-                  <button type="button" onClick={() => { setBreed(''); setBreedEn(''); setBreedQuery('') }}
-                    className="w-full h-12 flex items-center rounded-lg border border-gray-300 bg-gray-50 px-4 text-base text-left hover:bg-gray-100 transition-colors cursor-pointer">
-                    {breed} <span className="text-gray-400 ml-1">{breedEn}</span>
-                  </button>
-                ) : (
-                  <div>
-                    <input type="text" value={breedQuery}
-                      onChange={(e) => { setBreedQuery(e.target.value); setBreedHighlight(-1) }}
-                      onKeyDown={(e) => {
-                        const items = filteredBreeds.slice(0, 10)
-                        if (e.key === 'ArrowDown') { e.preventDefault(); setBreedHighlight(h => Math.min(h + 1, items.length - 1)) }
-                        if (e.key === 'ArrowUp') { e.preventDefault(); setBreedHighlight(h => Math.max(h - 1, 0)) }
-                        if (e.key === 'Enter' && breedHighlight >= 0 && items[breedHighlight]) {
-                          e.preventDefault(); setBreed(items[breedHighlight].ko); setBreedEn(items[breedHighlight].en); setBreedQuery(''); setBreedHighlight(-1)
-                        }
-                      }}
-                      placeholder={species ? '품종 검색 (예: 말티즈, Maltese)' : '종을 먼저 선택해주세요'}
-                      disabled={!species} className={inputClass} />
-                    {breedQuery && filteredBreeds.length > 0 && (
-                      <ul className="mt-1 rounded-lg border border-gray-200 bg-white max-h-48 overflow-y-auto">
-                        {filteredBreeds.slice(0, 10).map((b, i) => (
-                          <li key={`${b.type}:${b.en}`}>
-                            <button type="button" onClick={() => { setBreed(b.ko); setBreedEn(b.en); setBreedQuery(''); setBreedHighlight(-1) }}
-                              className={`w-full text-left px-4 py-3 text-base transition-colors ${i === breedHighlight ? 'bg-blue-50' : 'hover:bg-blue-50'}`}>
-                              {b.ko} <span className="text-gray-400">{b.en}</span>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    {breedQuery && filteredBreeds.length === 0 && (
-                      <p className="mt-1 text-xs text-gray-500">검색 결과 없음 — 정확한 품종명을 입력해주세요</p>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div>
-                <label className={labelClass}>모색 <span className="text-red-500">*</span> <span className="text-xs font-normal text-gray-400">최대 3개</span></label>
-                <div className="flex flex-wrap gap-2">
-                  {COLORS.map(c => {
-                    const selected = selectedColors.includes(c.ko)
-                    return (
-                      <button key={c.ko} type="button"
-                        onClick={() => {
-                          if (selected) setSelectedColors(prev => prev.filter(v => v !== c.ko))
-                          else if (selectedColors.length < 3) setSelectedColors(prev => [...prev, c.ko])
-                        }}
-                        className={`h-10 px-4 rounded-lg border text-sm font-medium transition-colors ${selected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'} ${!selected && selectedColors.length >= 3 ? 'opacity-40 cursor-not-allowed' : ''}`}
-                      >
-                        {c.ko}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-              <div>
-                <label className={labelClass}>성별 <span className="text-red-500">*</span></label>
-                <select value={sex} onChange={(e) => setSex(e.target.value)} className={selectClass}>
-                  <option value="">선택</option>
-                  {SEX_OPTIONS.map(o => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>몸무게 (kg) <span className="text-red-500">*</span></label>
-                <input type="text" inputMode="decimal" value={weight}
-                  onChange={(e) => setWeight(e.target.value.replace(/[^\d.]/g, ''))}
-                  placeholder="5" className={inputClass} />
-              </div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">몇 마리를 신청하시나요?</h2>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map(n => (
+                <button key={n} type="button" onClick={() => handlePetCountChange(n)}
+                  className={`h-10 w-10 rounded-lg border text-sm font-medium transition-colors ${petCount === n ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}>
+                  {n}
+                </button>
+              ))}
             </div>
           </section>
 
-          {/* 4. 선택 항목 */}
-          <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">추가정보 <span className="text-sm font-normal text-gray-400">(선택)</span></h2>
-            <p className="text-sm text-gray-500 mb-4">모르시는 항목은 비워두셔도 됩니다.</p>
-            <div className="space-y-4">
-              <div>
-                <label className={labelClass}>마이크로칩 번호</label>
-                <input type="text" inputMode="numeric"
-                  value={microchip.replace(/(\d{3})(?=\d)/g, '$1 ')}
-                  onChange={(e) => {
-                    const digits = e.target.value.replace(/\D/g, '').slice(0, 15)
-                    setMicrochip(digits)
-                  }}
-                  placeholder="000 000 000 000 000" maxLength={19} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>마이크로칩 삽입일</label>
-                <input type="date" min="1900-01-01" max="2100-12-31"
-                  defaultValue={microchipDate}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    if (!v) { setMicrochipDate(''); return }
-                    const year = parseInt(v.split('-')[0], 10)
-                    if (year >= 1900 && year <= 2100) setMicrochipDate(v)
-                  }}
-                  className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>최근 광견병 접종일 (1년 이내)</label>
-                <input type="date" min="1900-01-01" max="2100-12-31"
-                  defaultValue={rabiesDate}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    if (!v) { setRabiesDate(''); return }
-                    const year = parseInt(v.split('-')[0], 10)
-                    if (year >= 1900 && year <= 2100) setRabiesDate(v)
-                  }}
-                  className={inputClass} />
-              </div>
-            </div>
+          {/* 3. 동물정보 (반복) */}
+          {pets.map((pet, pi) => (
+          <section key={pi}>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
+              {pets.length > 1 ? `동물정보 ${pi + 1}` : '동물정보'}
+            </h2>
+            <PetFormSection
+              pet={pet}
+              index={pi}
+              updatePet={updatePet}
+              enWarnings={enWarnings}
+              showEnWarning={showEnWarning}
+              composingRef={composingRef}
+              handleEnInput={handleEnInput}
+              handleEnCompositionEnd={handleEnCompositionEnd}
+              breedHighlight={breedHighlights[pi] ?? -1}
+              setBreedHighlight={(h: number) => setBreedHighlights(prev => ({ ...prev, [pi]: h }))}
+              getFilteredBreeds={getFilteredBreeds}
+              inputClass={inputClass}
+              labelClass={labelClass}
+            />
           </section>
+          ))}
 
           {/* Error */}
           {error && (
@@ -581,6 +505,210 @@ export default function ApplyPage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+/* ── Pet Form Section (동물정보 + 선택항목) ── */
+
+function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, composingRef, handleEnInput, handleEnCompositionEnd, breedHighlight, setBreedHighlight, getFilteredBreeds, inputClass, labelClass }: {
+  pet: PetForm
+  index: number
+  updatePet: (idx: number, field: keyof PetForm, value: PetForm[keyof PetForm]) => void
+  enWarnings: Record<string, string | null>
+  showEnWarning: (field: string, msg: string) => void
+  composingRef: React.RefObject<boolean>
+  handleEnInput: (e: React.ChangeEvent<HTMLInputElement>, setter: (v: string) => void, field: string) => void
+  handleEnCompositionEnd: (e: React.CompositionEvent<HTMLInputElement>, setter: (v: string) => void, field: string) => void
+  breedHighlight: number
+  setBreedHighlight: (h: number) => void
+  getFilteredBreeds: (pet: PetForm) => Breed[]
+  inputClass: string
+  labelClass: string
+}) {
+  const filteredBreeds = getFilteredBreeds(pet)
+  const warnKey = (f: string) => `pet${index}_${f}`
+
+  return (
+    <div className="space-y-4">
+      {/* 이름 */}
+      <div>
+        <label className={labelClass}>동물 이름 <span className="text-red-500">*</span></label>
+        <input type="text" value={pet.petName} onChange={(e) => updatePet(index, 'petName', e.target.value.replace(/\b[a-z]/g, c => c.toUpperCase()))}
+          placeholder="마루" className={inputClass} />
+      </div>
+      <div>
+        <label className={labelClass}>동물 영문이름 <span className="text-red-500">*</span></label>
+        <input type="text" value={pet.petNameEn}
+          onCompositionStart={() => { composingRef.current = true }}
+          onChange={(e) => handleEnInput(e, (v) => updatePet(index, 'petNameEn', v), warnKey('en'))}
+          onCompositionEnd={(e) => handleEnCompositionEnd(e, (v) => updatePet(index, 'petNameEn', v), warnKey('en'))}
+          placeholder="Maru" className={inputClass} />
+        {enWarnings[warnKey('en')] && <p className="mt-1 text-xs text-red-500">{enWarnings[warnKey('en')]}</p>}
+      </div>
+
+      {/* 생년월일 */}
+      <div>
+        <label className={labelClass}>생년월일 <span className="text-red-500">*</span></label>
+        <input type="date" min="1900-01-01" max="2100-12-31"
+          defaultValue={pet.birthDate}
+          onChange={(e) => {
+            const v = e.target.value
+            if (!v) { updatePet(index, 'birthDate', ''); return }
+            const year = parseInt(v.split('-')[0], 10)
+            if (year >= 1900 && year <= 2100) updatePet(index, 'birthDate', v)
+          }}
+          onBlur={(e) => {
+            const v = e.target.value
+            if (v) { const year = parseInt(v.split('-')[0], 10); if (year >= 1900 && year <= 2100) updatePet(index, 'birthDate', v) }
+          }}
+          className={inputClass} />
+      </div>
+
+      {/* 종 */}
+      <div>
+        <label className={labelClass}>종 <span className="text-red-500">*</span></label>
+        <div className="flex flex-wrap gap-2">
+          {SPECIES_OPTIONS.map(o => (
+            <button key={o.value} type="button"
+              onClick={() => { updatePet(index, 'species', o.value); if (pet.breed) { updatePet(index, 'breed', ''); updatePet(index, 'breedEn', ''); updatePet(index, 'breedQuery', '') } }}
+              className={`h-10 px-5 rounded-lg border text-sm font-medium transition-colors ${pet.species === o.value ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 품종 */}
+      <div>
+        <label className={labelClass}>품종 <span className="text-red-500">*</span></label>
+        {pet.breed ? (
+          <button type="button" onClick={() => { updatePet(index, 'breed', ''); updatePet(index, 'breedEn', ''); updatePet(index, 'breedQuery', '') }}
+            className="w-full h-12 flex items-center rounded-lg border border-gray-300 bg-gray-50 px-4 text-base text-left hover:bg-gray-100 transition-colors cursor-pointer">
+            {pet.breed} <span className="text-gray-400 ml-1">{pet.breedEn}</span>
+          </button>
+        ) : (
+          <div>
+            <input type="text" data-search-field="breed" value={pet.breedQuery}
+              onChange={(e) => { updatePet(index, 'breedQuery', e.target.value); setBreedHighlight(-1) }}
+              onKeyDown={(e) => {
+                const items = filteredBreeds.slice(0, 10)
+                if (e.key === 'ArrowDown') { e.preventDefault(); setBreedHighlight(Math.min(breedHighlight + 1, items.length - 1)) }
+                if (e.key === 'ArrowUp') { e.preventDefault(); setBreedHighlight(Math.max(breedHighlight - 1, 0)) }
+                if (e.key === 'Enter') {
+                  const pick = breedHighlight >= 0 ? items[breedHighlight] : items.length === 1 ? items[0] : null
+                  if (pick) { e.preventDefault(); updatePet(index, 'breed', pick.ko); updatePet(index, 'breedEn', pick.en); updatePet(index, 'breedQuery', ''); setBreedHighlight(-1) }
+                }
+              }}
+              onBlur={() => setTimeout(() => { if (!pet.breed) updatePet(index, 'breedQuery', '') }, 300)}
+              placeholder={pet.species ? '품종 검색 (예: 말티즈, Maltese)' : '종을 먼저 선택해주세요'}
+              disabled={!pet.species} className={inputClass} />
+            {pet.breedQuery && filteredBreeds.length > 0 && (
+              <ul className="mt-1 rounded-lg border border-gray-200 bg-white max-h-48 overflow-y-auto">
+                {filteredBreeds.slice(0, 10).map((b, i) => (
+                  <li key={`${b.type}:${b.en}`}>
+                    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { updatePet(index, 'breed', b.ko); updatePet(index, 'breedEn', b.en); updatePet(index, 'breedQuery', ''); setBreedHighlight(-1) }}
+                      className={`w-full text-left px-4 py-3 text-base transition-colors ${i === breedHighlight ? 'bg-blue-50' : 'hover:bg-blue-50'}`}>
+                      {b.ko} <span className="text-gray-400">{b.en}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {pet.breedQuery && filteredBreeds.length === 0 && (
+              <p className="mt-1 text-xs text-gray-500">검색 결과 없음</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 모색 */}
+      <div>
+        <label className={labelClass}>모색 <span className="text-red-500">*</span> <span className="text-xs font-normal text-gray-400">최대 3개</span></label>
+        <div className="flex flex-wrap gap-2">
+          {COLORS.map(c => {
+            const selected = pet.selectedColors.includes(c.ko)
+            return (
+              <button key={c.ko} type="button"
+                onClick={() => {
+                  if (selected) updatePet(index, 'selectedColors', pet.selectedColors.filter(v => v !== c.ko))
+                  else if (pet.selectedColors.length < 3) updatePet(index, 'selectedColors', [...pet.selectedColors, c.ko])
+                }}
+                className={`h-10 px-4 rounded-lg border text-sm font-medium transition-colors ${selected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'} ${!selected && pet.selectedColors.length >= 3 ? 'opacity-40 cursor-not-allowed' : ''}`}>
+                {c.ko}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* 성별 */}
+      <div>
+        <label className={labelClass}>성별 <span className="text-red-500">*</span></label>
+        <div className="flex flex-wrap gap-2">
+          {SEX_OPTIONS.map(o => (
+            <button key={o.value} type="button"
+              onClick={() => updatePet(index, 'sex', o.value)}
+              className={`h-10 px-4 rounded-lg border text-sm font-medium transition-colors ${pet.sex === o.value ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 몸무게 */}
+      <div>
+        <label className={labelClass}>몸무게 (kg) <span className="text-red-500">*</span></label>
+        <input type="text" inputMode="decimal" value={pet.weight}
+          onChange={(e) => updatePet(index, 'weight', e.target.value.replace(/[^\d.]/g, ''))}
+          placeholder="5" className={inputClass} />
+      </div>
+
+      {/* 선택: 마이크로칩 */}
+      <div className="pt-2 mt-2 border-t border-gray-100">
+        <p className="text-xs text-gray-400 mb-3">선택 항목 — 모르시면 비워두셔도 됩니다</p>
+        <div className="space-y-4">
+          <div>
+            <label className={labelClass}>마이크로칩 번호</label>
+            <input type="text" inputMode="numeric"
+              value={pet.microchip.replace(/(\d{3})(?=\d)/g, '$1 ')}
+              onChange={(e) => updatePet(index, 'microchip', e.target.value.replace(/\D/g, '').slice(0, 15))}
+              placeholder="000 000 000 000 000" maxLength={19} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>마이크로칩 삽입일</label>
+            <input type="date" min="1900-01-01" max="2100-12-31"
+              defaultValue={pet.microchipDate}
+              onChange={(e) => {
+                const v = e.target.value
+                if (!v) { updatePet(index, 'microchipDate', ''); return }
+                const year = parseInt(v.split('-')[0], 10)
+                if (year >= 1900 && year <= 2100) updatePet(index, 'microchipDate', v)
+              }}
+              onBlur={(e) => {
+                const v = e.target.value
+                if (v) { const year = parseInt(v.split('-')[0], 10); if (year >= 1900 && year <= 2100) updatePet(index, 'microchipDate', v) }
+              }}
+              className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>최근 광견병 접종일 (1년 이내)</label>
+            <input type="date" min="1900-01-01" max="2100-12-31"
+              defaultValue={pet.rabiesDate}
+              onChange={(e) => {
+                const v = e.target.value
+                if (!v) { updatePet(index, 'rabiesDate', ''); return }
+                const year = parseInt(v.split('-')[0], 10)
+                if (year >= 1900 && year <= 2100) updatePet(index, 'rabiesDate', v)
+              }}
+              onBlur={(e) => {
+                const v = e.target.value
+                if (v) { const year = parseInt(v.split('-')[0], 10); if (year >= 1900 && year <= 2100) updatePet(index, 'rabiesDate', v) }
+              }}
+              className={inputClass} />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

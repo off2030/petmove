@@ -154,7 +154,7 @@ export function CustomerNameRow({
                     setTimeout(() => setError(null), 2000)
                   }
                 }}
-                placeholder="영문만 입력 가능"
+                placeholder="이름 (First)"
                 autoFocus
                 onKeyDown={handleKeyDown}
                 className="h-8 w-28 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
@@ -177,7 +177,7 @@ export function CustomerNameRow({
                     setTimeout(() => setError(null), 2000)
                   }
                 }}
-                placeholder="영문만 입력 가능"
+                placeholder="성 (Last)"
                 onKeyDown={handleKeyDown}
                 className="h-8 w-28 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
               />

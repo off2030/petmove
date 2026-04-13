@@ -44,9 +44,18 @@ function filterNumeric(str: string): string {
 /** Apply all input filters based on field spec */
 const EMAIL_KEYS = new Set(['email'])
 
+const MAX_DIGITS: Record<string, number> = { phone: 11 }
+
 function applyFilter(spec: FieldSpec, str: string, lang?: 'ko' | 'en'): string {
-  if (DIGITS_ONLY_KEYS.has(spec.key)) return filterDigitsOnly(str)
-  if (DIGITS_SPACE_KEYS.has(spec.key)) return str.replace(/[^\d\s]/g, '')
+  if (DIGITS_ONLY_KEYS.has(spec.key)) {
+    const digits = filterDigitsOnly(str)
+    return MAX_DIGITS[spec.key] ? digits.slice(0, MAX_DIGITS[spec.key]) : digits
+  }
+  if (DIGITS_SPACE_KEYS.has(spec.key)) {
+    const digits = str.replace(/\D/g, '').slice(0, 15)
+    // Format as spaced: 000 000 000 000 000
+    return digits.replace(/(\d{3})(?=\d)/g, '$1 ')
+  }
   if (NUMERIC_KEYS.has(spec.key) || spec.type === 'number') return filterNumeric(str)
   if (EMAIL_KEYS.has(spec.key)) return str.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').toLowerCase()
   return filterByLang(str, lang)
@@ -513,6 +522,18 @@ function renderInput(
       />
     )
   }
+  if (spec.key === 'phone') {
+    return (
+      <PhoneInput
+        inputRef={ref as React.RefObject<HTMLInputElement>}
+        initial={value}
+        onChange={setValue}
+        onKeyDown={onKeyDown}
+        onBlur={onBlur}
+        className={commonClass}
+      />
+    )
+  }
   if (spec.type === 'number' || NUMERIC_KEYS.has(spec.key)) {
     return (
       <input
@@ -548,6 +569,66 @@ function renderInput(
       onBlur={onBlur}
       placeholder={placeholder}
       className={commonClass}
+    />
+  )
+}
+
+/**
+ * Phone input: uncontrolled to avoid IME conflicts.
+ * Formats display as 010-1234-5678, stores digits only, max 11.
+ */
+function PhoneInput({ inputRef, initial, onChange, onKeyDown, onBlur, className }: {
+  inputRef: React.RefObject<HTMLInputElement | null>
+  initial: string
+  onChange: (v: string) => void
+  onKeyDown: (e: React.KeyboardEvent) => void
+  onBlur: () => void
+  className: string
+}) {
+  const localRef = useRef<HTMLInputElement>(null)
+  const ref = inputRef || localRef
+  const composing = useRef(false)
+
+  function formatPhone(digits: string) {
+    if (digits.length <= 3) return digits
+    if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`
+    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`
+  }
+
+  function sync() {
+    const el = ref.current
+    if (!el) return
+    const digits = el.value.replace(/\D/g, '').slice(0, 11)
+    const hadNonDigit = /[^\d\s-]/.test(el.value)
+    el.value = formatPhone(digits)
+    onChange(digits)
+    return hadNonDigit
+  }
+
+  useEffect(() => {
+    if (ref.current) ref.current.value = formatPhone(initial)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <input
+      ref={ref}
+      type="tel"
+      inputMode="numeric"
+      defaultValue={formatPhone(initial)}
+      onCompositionStart={() => { composing.current = true }}
+      onCompositionEnd={() => {
+        composing.current = false
+        sync()
+      }}
+      onChange={() => {
+        if (composing.current) return
+        sync()
+      }}
+      onKeyDown={onKeyDown}
+      onBlur={() => { sync(); onBlur() }}
+      placeholder="010-0000-0000"
+      maxLength={13}
+      className={className}
     />
   )
 }

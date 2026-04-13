@@ -1,0 +1,111 @@
+{
+  "한국_예방접종증명서": {
+    "source": "한국.pdf",
+    "description": "별지 제25호서식 - 예방접종 및 건강증명서",
+    "fields": {
+      "owner": {
+        "owner_name": "소유자 이름 (Name)",
+        "owner_phone": "소유자 전화번호 (Telephone)",
+        "owner_address": "소유자 주소 (Address)"
+      },
+      "species": {
+        "species_dog": "개 (Dog) 체크박스",
+        "species_cat": "고양이 (Cat) 체크박스",
+        "species_other": "기타 (Other) 체크박스"
+      },
+      "sex": {
+        "sex_female": "암 (Female) 체크박스",
+        "sex_male": "수 (Male) 체크박스",
+        "sex_neutered_female": "중성화 암 (Neutered Female) 체크박스",
+        "sex_neutered_male": "중성화 수 (Neutered Male) 체크박스"
+      },
+      "animal_info": {
+        "age_years": "연령 (년)",
+        "age_months": "연령 (개월)",
+        "birth_date": "생년월일",
+        "color": "모색 (Color/Marks)",
+        "pet_name": "동물 이름 (Name)",
+        "breed": "품종 (Breed)"
+      },
+      "weight": {
+        "weight_under5": "5kg 이하 체크박스",
+        "weight_5to10": "5~10kg 체크박스",
+        "weight_over10": "10kg 이상 체크박스",
+        "weight_kg": "무게 (kg) 텍스트"
+      },
+      "microchip": {
+        "microchip_no": "마이크로칩 번호",
+        "microchip_yes": "있음 (Y) 체크박스",
+        "microchip_none": "없음 (N) 체크박스",
+        "microchip_implant_date": "이식일 (Date of implantation)"
+      },
+      "rabies_vaccination": {
+        "_note": "3행: 제품명, 제조사, 제조번호, 접종일자, 면역유효기간(1Y/2Y/3Y)",
+        "rabies1_product": "1차 제품명",
+        "rabies1_manufacturer": "1차 제조사",
+        "rabies1_serial": "1차 제조번호",
+        "rabies1_date": "1차 접종일자",
+        "rabies1_1y": "1차 1년 체크",
+        "rabies1_2y": "1차 2년 체크",
+        "rabies1_3y": "1차 3년 체크",
+        "rabies2_product": "2차 제품명",
+        "rabies2_manufacturer": "2차 제조사",
+        "rabies2_serial": "2차 제조번호",
+        "rabies2_date": "2차 접종일자",
+        "rabies2_1y": "2차 1년 체크",
+        "rabies2_2y": "2차 2년 체크",
+        "rabies2_3y": "2차 3년 체크",
+        "rabies3_product": "3차 제품명",
+        "rabies3_manufacturer": "3차 제조사",
+        "rabies3_serial": "3차 제조번호",
+        "rabies3_date": "3차 접종일자",
+        "rabies3_1y": "3차 1년 체크",
+        "rabies3_2y": "3차 2년 체크",
+        "rabies3_3y": "3차 3년 체크"
+      },
+      "other_vaccination": {
+        "_note": "3행: 제품종류, 제품명, 제조사, 제조번호, 접종일자",
+        "other1_type": "1행 제품종류",
+        "other1_product": "1행 제품명",
+        "other1_manufacturer": "1행 제조사",
+        "other1_serial": "1행 제조번호",
+        "other1_date": "1행 접종일자",
+        "other2_type": "2행 제품종류",
+        "other2_product": "2행 제품명",
+        "other2_manufacturer": "2행 제조사",
+        "other2_serial": "2행 제조번호",
+        "other2_date": "2행 접종일자",
+        "other3_type": "3행 제품종류",
+        "other3_product": "3행 제품명",
+        "other3_manufacturer": "3행 제조사",
+        "other3_serial": "3행 제조번호",
+        "other3_date": "3행 접종일자"
+      },
+      "issuer": {
+        "issue_date": "발급일 (Date of Issue)"
+      }
+    },
+    "data_mapping": {
+      "_note": "DB cases 테이블 필드 → PDF 필드 매핑 (자동 문서 생성용)",
+      "customer_name": "owner_name",
+      "phone": "owner_phone",
+      "address_en": "owner_address",
+      "species:dog": "species_dog",
+      "species:cat": "species_cat",
+      "sex:female": "sex_female",
+      "sex:male": "sex_male",
+      "sex:neutered_female": "sex_neutered_female",
+      "sex:neutered_male": "sex_neutered_male",
+      "birth_date": "birth_date",
+      "color_en": "color",
+      "pet_name_en": "pet_name",
+      "breed_en": "breed",
+      "weight": "weight_kg",
+      "microchip": "microchip_no",
+      "microchip_implant_date": "microchip_implant_date",
+      "rabies_dates[0]": "rabies1_date",
+      "rabies_dates[1]": "rabies2_date",
+      "rabies_dates[2]": "rabies3_date"
+    }
+  }
+}

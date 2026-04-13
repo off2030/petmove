@@ -16,14 +16,16 @@ const LOAD_MORE_STEP = 100
  *   - searches across every scalar field in the row (identity + data jsonb)
  *   - progressive rendering: 100 rows first, +100 on scroll
  */
-export function CaseList({ onAdd }: { onAdd?: () => void }) {
+export function CaseList({ onAdd, onTrash }: { onAdd?: () => void; onTrash?: () => void }) {
   const { cases, selectedId, selectCase } = useCases()
 
   const [query, setQuery] = useState('')
   const [visible, setVisible] = useState(INITIAL_VISIBLE)
+  const [highlight, setHighlight] = useState(-1)
 
   useEffect(() => {
     setVisible(INITIAL_VISIBLE)
+    setHighlight(-1)
   }, [query])
 
   const filtered = useMemo(() => {
@@ -77,11 +79,32 @@ export function CaseList({ onAdd }: { onAdd?: () => void }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
+              if (e.key === 'ArrowDown') {
+                e.preventDefault()
+                setHighlight(h => {
+                  const next = Math.min(h + 1, filtered.length - 1)
+                  // 스크롤 따라가기
+                  const el = document.querySelector(`[data-case-idx="${next}"]`)
+                  el?.scrollIntoView({ block: 'nearest' })
+                  return next
+                })
+              }
+              if (e.key === 'ArrowUp') {
+                e.preventDefault()
+                setHighlight(h => {
+                  const next = Math.max(h - 1, 0)
+                  const el = document.querySelector(`[data-case-idx="${next}"]`)
+                  el?.scrollIntoView({ block: 'nearest' })
+                  return next
+                })
+              }
               if (e.key === 'Enter' && filtered.length > 0) {
-                selectCase(filtered[0].id)
+                const target = highlight >= 0 ? filtered[highlight] : filtered[0]
+                if (target) { selectCase(target.id); setQuery(''); setHighlight(-1) }
               }
               if (e.key === 'Escape') {
                 setQuery('')
+                setHighlight(-1)
                 if (cases.length > 0) selectCase(cases[0].id)
               }
             }}
@@ -119,15 +142,15 @@ export function CaseList({ onAdd }: { onAdd?: () => void }) {
             {visibleCases.map((c, i) => {
               const isSelected = c.id === selectedId
               return (
-                <li key={c.id}>
+                <li key={c.id} data-case-idx={i}>
                   <button
                     type="button"
-                    onClick={() => selectCase(c.id)}
+                    onClick={() => { selectCase(c.id); setHighlight(-1) }}
                     className={cn(
                       'block w-full rounded-md px-3 py-3 text-left transition-colors',
                       'hover:bg-accent/60',
                       isSelected && 'bg-accent',
-                      !isSelected && i === 0 && query.trim() && 'bg-accent/40',
+                      !isSelected && i === highlight && 'bg-accent/40',
                     )}
                   >
                     {/* Proportional grid:
@@ -159,9 +182,15 @@ export function CaseList({ onAdd }: { onAdd?: () => void }) {
         )}
       </div>
 
-      {/* Result count at bottom */}
-      <div className="shrink-0 px-1 pt-2 text-xs text-muted-foreground">
-        총 {filtered.length.toLocaleString()}건
+      {/* Result count + trash link at bottom */}
+      <div className="shrink-0 px-1 pt-2 flex items-center justify-between text-xs text-muted-foreground">
+        <span>총 {filtered.length.toLocaleString()}건</span>
+        {onTrash && (
+          <button type="button" onClick={onTrash}
+            className="hover:text-foreground transition-colors">
+            🗑️ 휴지통
+          </button>
+        )}
       </div>
     </div>
   )

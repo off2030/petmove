@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
 import { CasesProvider, useCases } from './cases-context'
 import { formatDate } from '@/lib/utils'
@@ -11,6 +11,8 @@ import { createCase } from '@/lib/actions/create-case'
 import { deleteCase } from '@/lib/actions/delete-case'
 import { duplicateCase } from '@/lib/actions/duplicate-case'
 import { undoLastChange } from '@/lib/actions/cases'
+import { generateKoreaVetCert } from '@/lib/actions/generate-pdf'
+import { TrashModal } from './trash-modal'
 
 function Inner() {
   const { cases, selectedId, selectCase, addLocalCase, removeLocalCase, updateLocalCaseField } = useCases()
@@ -19,6 +21,7 @@ function Inner() {
     [cases, selectedId],
   )
   const detailScrollRef = useRef<HTMLDivElement>(null)
+  const [showTrash, setShowTrash] = useState(false)
 
   // Reset detail scroll to top when selected case changes
   useEffect(() => {
@@ -75,7 +78,7 @@ function Inner() {
       <aside className="basis-1/2 min-w-0">
         <div className="h-full overflow-hidden pt-32 pb-24 px-14 2xl:pt-36 2xl:pb-28 2xl:px-16 3xl:pt-44 3xl:pb-36 3xl:px-20 4xl:pt-52 4xl:pb-44 4xl:px-24 6xl:pt-64 6xl:pb-52 6xl:px-28">
           <div className="h-full mx-auto max-w-lg 4xl:max-w-xl 6xl:max-w-2xl">
-            <CaseList onAdd={handleAdd} />
+            <CaseList onAdd={handleAdd} onTrash={() => setShowTrash(true)} />
           </div>
         </div>
       </aside>
@@ -115,6 +118,23 @@ function Inner() {
                     )}
                   </span>
                   <div className="flex items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const result = await generateKoreaVetCert(selectedCase.id)
+                        if (result.ok) {
+                          const link = document.createElement('a')
+                          link.href = `data:application/pdf;base64,${result.pdf}`
+                          link.download = result.filename
+                          link.click()
+                        } else {
+                          alert(result.error)
+                        }
+                      }}
+                      className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                    >
+                      📄 증명서
+                    </button>
                     <CaseHistory caseId={selectedCase.id} />
                     <button
                       type="button"
@@ -137,6 +157,15 @@ function Inner() {
           </div>
         </div>
       </main>
+      {showTrash && (
+        <TrashModal
+          onClose={() => setShowTrash(false)}
+          onRestore={() => {
+            // Reload page to pick up restored case
+            window.location.reload()
+          }}
+        />
+      )}
     </div>
   )
 }
