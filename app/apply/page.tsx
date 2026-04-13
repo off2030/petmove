@@ -222,10 +222,11 @@ export default function ApplyPage() {
               </div>
               <div>
                 <label className={labelClass}>전화번호 <span className="text-red-500">*</span></label>
-                <input type="tel" inputMode="numeric" value={phone}
-                  maxLength={11}
+                <input type="tel" inputMode="numeric"
+                  value={phone.replace(/(\d{3})(\d{4})(\d{0,4})/, (_, a, b, c) => c ? `${a}-${b}-${c}` : b ? `${a}-${b}` : a)}
+                  maxLength={13}
                   onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, '').slice(0, 11))}
-                  placeholder="01012345678" className={inputClass} />
+                  placeholder="010-1234-5678" className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>한국주소 <span className="text-red-500">*</span></label>
