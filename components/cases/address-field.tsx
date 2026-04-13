@@ -226,7 +226,7 @@ export function AddressField({
             </div>
           ) : (
             <div className="group/kr relative flex items-center gap-1 min-w-0">
-              <button type="button" onClick={startEditKr}
+              <button type="button" onClick={krEmpty ? handleSearch : startEditKr}
                 className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text', krEmpty && 'text-muted-foreground/60 italic')}>
                 {krDisplay}
               </button>

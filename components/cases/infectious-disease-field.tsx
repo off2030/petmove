@@ -6,59 +6,40 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 
-interface TiterRecord {
+interface InfectiousRecord {
   date: string | null
-  received_date: string | null
-  value: string | null
   lab: string | null
 }
 
 const LABS = [
-  { value: 'komipharm', label: 'Komipharm' },
-  { value: 'nvrqs_seoul', label: 'NVRQS Seoul' },
-  { value: 'nvrqs_main', label: 'NVRQS HQ' },
-  { value: 'ksu', label: 'KSU' },
+  { value: 'ksvdl', label: 'KSVDL' },
+  { value: 'vbddl', label: 'VBDDL' },
+  { value: 'nvrqs_hq', label: 'NVRQS HQ' },
+  { value: 'nvrqs_hq+vbddl', label: 'NVRQS HQ · VBDDL' },
 ]
 
-const DATA_KEY = 'rabies_titer_records'
-
-type TiterEditField = 'date' | 'received_date' | 'value' | 'lab'
-
-const EU_COUNTRIES = new Set([
-  '독일', '프랑스', '이탈리아', '스페인', '네덜란드', '벨기에', '오스트리아',
-  '스웨덴', '덴마크', '핀란드', '폴란드', '체코', '헝가리', '포르투갈',
-  '그리스', '루마니아', '불가리아', '크로아티아', '슬로바키아', '슬로베니아',
-  '리투아니아', '라트비아', '에스토니아', '룩셈부르크', '몰타', '키프로스',
-  '아일랜드', '영국',
-])
+const DATA_KEY = 'infectious_disease_records'
 
 /** Auto-detect lab based on destination */
-function autoDetectLab(destination?: string | null): string | null {
-  if (!destination) return 'komipharm'
+function autoDetectInfectiousLab(destination?: string | null): string {
+  if (!destination) return 'ksvdl'
   const dests = destination.split(',').map(s => s.trim()).filter(Boolean)
-  if (dests.length !== 1) return null // 복수 목적지: 미지정
-  const d = dests[0]
-  if (d === '일본' || d === '하와이' || d.toLowerCase() === 'japan' || d.toLowerCase() === 'hawaii') return 'nvrqs_seoul'
-  if (d === '싱가포르' || d.toLowerCase() === 'singapore') return 'ksu'
-  if (EU_COUNTRIES.has(d)) return 'nvrqs_main'
-  return 'komipharm'
+  // 호주 → KSVDL
+  if (dests.some(d => d === '호주' || d.toLowerCase() === 'australia')) return 'ksvdl'
+  // 뉴질랜드 → NVRQS HQ (VBDDL도 가능하지만 기본은 NVRQS HQ)
+  if (dests.some(d => d === '뉴질랜드' || d.toLowerCase() === 'new zealand')) return 'nvrqs_hq'
+  return 'ksvdl'
 }
 
-export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
-  const isAustralia = destination?.includes('호주') || destination?.toLowerCase().includes('australia')
+export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
   const { updateLocalCaseField } = useCases()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
 
-  // Read array (backward compat: old flat keys)
-  function readRecords(): TiterRecord[] {
-    if (Array.isArray(data[DATA_KEY])) return data[DATA_KEY] as TiterRecord[]
-    if (data.rabies_titer_test_date || data.rabies_titer || data.rabies_titer_lab) {
-      return [{
-        date: (data.rabies_titer_test_date as string) || null,
-        received_date: null,
-        value: (data.rabies_titer as string) || null,
-        lab: (data.rabies_titer_lab as string) || null,
-      }]
+  // Read array (backward compat: old flat key)
+  function readRecords(): InfectiousRecord[] {
+    if (Array.isArray(data[DATA_KEY])) return data[DATA_KEY] as InfectiousRecord[]
+    if (data.infectious_disease_test) {
+      return [{ date: data.infectious_disease_test as string, lab: 'ksvdl' }]
     }
     return []
   }
@@ -66,7 +47,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
   const records = readRecords()
   const [saving, startSave] = useTransition()
   const [editIdx, setEditIdx] = useState<number | null>(null)
-  const [editField, setEditField] = useState<TiterEditField | null>(null)
+  const [editField, setEditField] = useState<'date' | 'lab' | null>(null)
   const [addingNew, setAddingNew] = useState(false)
 
   useEffect(() => {
@@ -75,8 +56,13 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
     setAddingNew(false)
   }, [caseId])
 
-  async function saveRecords(next: TiterRecord[]) {
+  async function saveRecords(next: InfectiousRecord[]) {
     const val = next.length > 0 ? next : null
+    // Also clear legacy flat key if it exists
+    if (data.infectious_disease_test) {
+      await updateCaseField(caseId, 'data', 'infectious_disease_test', null)
+      updateLocalCaseField(caseId, 'data', 'infectious_disease_test', null)
+    }
     const r = await updateCaseField(caseId, 'data', DATA_KEY, val)
     if (r.ok) updateLocalCaseField(caseId, 'data', DATA_KEY, val)
   }
@@ -86,15 +72,16 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
     startSave(() => saveRecords(next))
   }
 
-  function updateRecord(idx: number, field: keyof TiterRecord, value: unknown) {
+  function updateRecord(idx: number, field: keyof InfectiousRecord, value: unknown) {
     const next = records.map((rec, i) => i === idx ? { ...rec, [field]: value || null } : rec)
     startSave(() => saveRecords(next))
   }
 
   function saveNewRecord(date: string) {
     if (!date) { setAddingNew(false); return }
-    const detectedLab = autoDetectLab(destination)
-    const next = [...records, { date, received_date: null, value: null, lab: detectedLab }]
+    const isNZ = destination?.includes('뉴질랜드') || destination?.toLowerCase().includes('new zealand')
+    const lab = isNZ ? 'nvrqs_hq+vbddl' : autoDetectInfectiousLab(destination)
+    const next = [...records, { date, lab }]
     startSave(async () => {
       await saveRecords(next)
       setAddingNew(false)
@@ -104,20 +91,20 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
   return (
     <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0">
       <div className="flex items-center gap-1 pt-1">
-        <span className="text-sm text-muted-foreground">광견병항체검사</span>
+        <span className="text-sm text-muted-foreground">전염병검사</span>
         <button
           type="button"
           onClick={() => setAddingNew(true)}
           disabled={saving || addingNew}
           className="text-muted-foreground/40 hover:text-foreground text-sm font-medium leading-none transition-colors disabled:opacity-30"
-          title="항체검사 추가"
+          title="전염병검사 추가"
         >
           +
         </button>
       </div>
       <div className="min-w-0 space-y-0.5">
         {records.map((rec, i) => (
-          <TiterRow
+          <InfectiousRow
             key={i}
             record={rec}
             isEditing={editIdx === i ? editField : null}
@@ -126,7 +113,6 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
             onUpdateField={(f, v) => updateRecord(i, f, v)}
             onDelete={() => deleteRecord(i)}
             saving={saving}
-            showReceivedDate={isAustralia}
           />
         ))}
 
@@ -149,29 +135,26 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
   )
 }
 
-/* ── Single titer row: date | received_date? | value | lab ── */
+/* ── Single row: date | lab ── */
 
-function TiterRow({
-  record, isEditing, onStartEdit, onStopEdit, onUpdateField, onDelete, saving, showReceivedDate,
+function InfectiousRow({
+  record, isEditing, onStartEdit, onStopEdit, onUpdateField, onDelete, saving,
 }: {
-  record: TiterRecord
-  isEditing: TiterEditField | null
-  onStartEdit: (f: TiterEditField) => void
+  record: InfectiousRecord
+  isEditing: 'date' | 'lab' | null
+  onStartEdit: (f: 'date' | 'lab') => void
   onStopEdit: () => void
-  onUpdateField: (f: keyof TiterRecord, v: unknown) => void
+  onUpdateField: (f: keyof InfectiousRecord, v: unknown) => void
   onDelete: () => void
   saving: boolean
-  showReceivedDate?: boolean
 }) {
   const dateDisplay = record.date || '—'
-  const receivedDateDisplay = record.received_date || '—'
-  const valueDisplay = record.value || '—'
   const labObj = LABS.find(l => l.value === record.lab)
   const labDisplay = labObj?.label || record.lab || '—'
 
   return (
     <div className="group/item flex items-baseline gap-[10px] min-w-0">
-      {/* Date (채혈일) */}
+      {/* Date */}
       {isEditing === 'date' ? (
         <DateInput
           initial={record.date || ''}
@@ -185,45 +168,9 @@ function TiterRow({
         </button>
       )}
 
-      {/* Received date (수령일) — 호주만 */}
-      {showReceivedDate && (
-        <>
-          <span className="text-muted-foreground/30 select-none">|</span>
-          {isEditing === 'received_date' ? (
-            <DateInput
-              initial={record.received_date || ''}
-              onSave={(v) => { onUpdateField('received_date', v || null); onStopEdit() }}
-              onCancel={onStopEdit}
-            />
-          ) : (
-            <button type="button" onClick={() => onStartEdit('received_date')}
-              className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', receivedDateDisplay === '—' && 'text-muted-foreground/60 italic')}>
-              {receivedDateDisplay}
-            </button>
-          )}
-        </>
-      )}
-
       <span className="text-muted-foreground/30 select-none">|</span>
 
-      {/* Value (수치) */}
-      {isEditing === 'value' ? (
-        <ValueInput
-          initial={record.value || ''}
-          onSave={(v) => { onUpdateField('value', v || null); onStopEdit() }}
-          onCancel={onStopEdit}
-          saving={saving}
-        />
-      ) : (
-        <button type="button" onClick={() => onStartEdit('value')}
-          className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text', valueDisplay === '—' && 'text-muted-foreground/60 italic')}>
-          {valueDisplay}
-        </button>
-      )}
-
-      <span className="text-muted-foreground/30 select-none">|</span>
-
-      {/* Lab (검사기관) */}
+      {/* Lab */}
       {isEditing === 'lab' ? (
         <LabDropdown
           current={record.lab}
@@ -290,24 +237,6 @@ function DateInput({ initial, onSave, onCancel }: {
   )
 }
 
-function ValueInput({ initial, onSave, onCancel, saving }: {
-  initial: string; onSave: (v: string) => void; onCancel: () => void; saving: boolean
-}) {
-  const [val, setVal] = useState(initial)
-  const ref = useRef<HTMLInputElement>(null)
-  useEffect(() => { ref.current?.focus() }, [])
-
-  return (
-    <input ref={ref} type="text" value={val}
-      onChange={(e) => setVal(e.target.value)}
-      onKeyDown={(e) => { if (e.key === 'Enter') onSave(val.trim()); if (e.key === 'Escape') onCancel() }}
-      onBlur={() => setTimeout(() => { if (!saving) onSave(val.trim()) }, 150)}
-      placeholder="수치"
-      className="w-20 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
-    />
-  )
-}
-
 function LabDropdown({ current, onSelect, onClose }: {
   current: string | null; onSelect: (v: string | null) => void; onClose: () => void
 }) {
@@ -320,7 +249,7 @@ function LabDropdown({ current, onSelect, onClose }: {
 
   return (
     <div ref={ref} className="relative">
-      <ul className="absolute left-0 top-0 z-20 min-w-[160px] rounded-md border border-border/50 bg-background py-1 shadow-md">
+      <ul className="absolute left-0 top-0 z-20 min-w-[200px] rounded-md border border-border/50 bg-background py-1 shadow-md">
         <li><button type="button" onClick={() => onSelect(null)}
           className="w-full text-left px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors">—</button></li>
         {LABS.map(l => (

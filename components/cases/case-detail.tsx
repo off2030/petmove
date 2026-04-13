@@ -24,6 +24,8 @@ import { PaymentField } from './payment-field'
 import { RabiesTiterField } from './rabies-titer-field'
 import { RepeatableDateField } from './repeatable-date-field'
 import { AttachmentsField } from './attachments-field'
+import { InfectiousDiseaseField } from './infectious-disease-field'
+import { RepeatableMemoField } from './repeatable-memo-field'
 import { useCases } from './cases-context'
 
 /**
@@ -80,11 +82,10 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
               // Memo → then Attachments + Payment rendered after the group loop
               if (spec.key === 'memo') {
                 return (
-                  <EditableField
+                  <RepeatableMemoField
                     key="memo"
                     caseId={caseRow.id}
-                    spec={spec}
-                    rawValue={readCaseField(caseRow, spec)}
+                    caseRow={caseRow}
                   />
                 )
               }
@@ -92,7 +93,7 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
               // Microchip: implant date | check date on same row
               if (spec.key === 'microchip_implant_date') {
                 return (
-                  <MicrochipDatesRow key="microchip-dates" caseId={caseRow.id} caseRow={caseRow} />
+                  <MicrochipDatesRow key="microchip-dates" caseId={caseRow.id} caseRow={caseRow} destination={caseRow.destination} />
                 )
               }
 
@@ -101,19 +102,21 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
               if (spec.key === 'general_vaccine') {
                 return (
                   <div key="general_vaccine+schedule">
-                    <EditableField
-                      caseId={caseRow.id}
-                      spec={spec}
-                      rawValue={readCaseField(caseRow, spec)}
-                    />
+                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="종합백신" dataKey="general_vaccine_dates" legacyKey="general_vaccine" />
                     <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="광견병" dataKey="rabies_dates" />
                     <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="CIV" dataKey="civ_dates" />
-                    <RabiesTiterField caseId={caseRow.id} caseRow={caseRow} />
-                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="외부구충" dataKey="external_parasite_dates" />
-                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="내부구충" dataKey="internal_parasite_dates" />
+                    <RabiesTiterField caseId={caseRow.id} caseRow={caseRow} destination={caseRow.destination} />
+                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="외부구충" dataKey="external_parasite_dates" hideValidUntil />
+                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="내부구충" dataKey="internal_parasite_dates" hideValidUntil />
+                    {(caseRow.destination?.includes('호주') || caseRow.destination?.includes('뉴질랜드') || caseRow.destination?.toLowerCase().includes('australia') || caseRow.destination?.toLowerCase().includes('new zealand')) && (
+                      <InfectiousDiseaseField caseId={caseRow.id} caseRow={caseRow} destination={caseRow.destination} />
+                    )}
                   </div>
                 )
               }
+
+              // 전염병검사: handled inside general_vaccine block above
+              if (spec.key === 'infectious_disease_test') return null
 
               // Destination: searchable country selector
               if (spec.key === 'destination') {
@@ -175,12 +178,14 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
                   />
                 )
               }
+              const isClearable = g.group === '절차정보' || g.group === '기타정보'
               return (
                 <EditableField
                   key={`${spec.storage}:${spec.key}`}
                   caseId={caseRow.id}
                   spec={spec}
                   rawValue={readCaseField(caseRow, spec)}
+                  clearable={isClearable}
                 />
               )
             })}
@@ -286,7 +291,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
 
           {/* Secondary chip — pipe separated, same line */}
           {showSecondary && (
-            <>
+            <div className="group/item inline-flex items-baseline gap-[6px]">
               <span className="text-muted-foreground/30 select-none">|</span>
               {editingSecondary ? (
                 <input ref={secRef} type="text" inputMode="numeric" value={secVal}
@@ -297,26 +302,24 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
                   className="w-44 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
                 />
               ) : (
-                <div className="group/sec relative w-fit">
-                  <button type="button" onClick={() => { setSecVal(secondary.replace(/\D/g, '')); setEditingSecondary(true); setSecError(null) }}
-                    className="text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text">
-                    {formatChip(secondary)}
-                  </button>
-                  <CopyButton
-                    value={formatChip(secondary)}
-                    className="absolute left-full top-0.5 ml-1 z-10 opacity-0 group-hover/sec:opacity-100"
-                  />
-                </div>
+                <button type="button" onClick={() => { setSecVal(secondary.replace(/\D/g, '')); setEditingSecondary(true); setSecError(null) }}
+                  className="text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text">
+                  {formatChip(secondary)}
+                </button>
               )}
+              <CopyButton
+                value={formatChip(secondary)}
+                className="shrink-0 opacity-0 group-hover/item:opacity-100"
+              />
               <button type="button" onClick={async () => {
                 const r = await updateCaseField(caseId, 'data', 'microchip_secondary', null)
                 if (r.ok) updateLocalCaseField(caseId, 'data', 'microchip_secondary', null)
                 setShowSecondary(false)
                 setSecError(null)
-              }} className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0">
+              }} className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100">
                 ✕
               </button>
-            </>
+            </div>
           )}
         </div>
         {secError && <div className="mt-1 text-xs text-red-600">{secError}</div>}
@@ -326,22 +329,20 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
 }
 
 /**
- * Microchip dates: 기본 삽입일 + (선택) 확인일
- * + 한번만 추가 가능 (확인일), ✕로 확인일 제거
+ * Microchip dates: 삽입일 + 확인일 (호주일 때만 확인일 표시)
  */
-function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
+function MicrochipDatesRow({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
+  const isAustralia = destination?.includes('호주') || destination?.toLowerCase().includes('australia')
   const { updateLocalCaseField } = useCases()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const implantDate = (data.microchip_implant_date as string) || ''
   const checkDate = (data.microchip_check_date as string) || ''
 
   const [editingField, setEditingField] = useState<'implant' | 'check' | null>(null)
-  const [showCheck, setShowCheck] = useState(!!checkDate)
 
   useEffect(() => {
     setEditingField(null)
-    setShowCheck(!!((caseRow.data as Record<string, unknown>)?.microchip_check_date))
-  }, [caseId, caseRow.data])
+  }, [caseId])
 
   async function saveDate(key: string, value: string | null) {
     const r = await updateCaseField(caseId, 'data', key, value)
@@ -349,57 +350,46 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
     setEditingField(null)
   }
 
-  function addCheckDate() {
-    setShowCheck(true)
-    setEditingField('check')
-  }
-
-  async function removeCheckDate() {
-    const r = await updateCaseField(caseId, 'data', 'microchip_check_date', null)
-    if (r.ok) updateLocalCaseField(caseId, 'data', 'microchip_check_date', null)
-    setShowCheck(false)
-  }
-
   return (
     <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40">
       <div className="flex items-center gap-1 pt-1">
         <span className="text-sm text-muted-foreground">마이크로칩</span>
-        {!showCheck && (
-          <button type="button" onClick={addCheckDate}
-            className="text-muted-foreground/40 hover:text-foreground text-sm font-medium leading-none transition-colors"
-            title="확인일 추가">+</button>
-        )}
       </div>
-      <div className="min-w-0 space-y-0.5">
+      <div className="group/item flex items-baseline gap-[10px] min-w-0 flex-wrap">
         {/* 삽입일 */}
-        <div className="flex items-baseline gap-[10px]">
-          {editingField === 'implant' ? (
-            <MicrochipDateInput initial={implantDate} onSave={(v) => saveDate('microchip_implant_date', v || null)} onCancel={() => setEditingField(null)} />
-          ) : (
-            <button type="button" onClick={() => setEditingField('implant')}
-              className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', !implantDate && 'text-muted-foreground/60 italic')}>
-              {implantDate || '—'}
-            </button>
-          )}
-        </div>
+        {editingField === 'implant' ? (
+          <MicrochipDateInput initial={implantDate} onSave={(v) => saveDate('microchip_implant_date', v || null)} onCancel={() => setEditingField(null)} />
+        ) : (
+          <button type="button" onClick={() => setEditingField('implant')}
+            className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', !implantDate && 'text-muted-foreground/60 italic')}>
+            {implantDate || '—'}
+          </button>
+        )}
 
-        {/* 확인일 — + 누르면 나타남 */}
-        {showCheck && (
-          <div className="flex items-baseline gap-[10px]">
+        {/* 확인일 — 호주일 때 항상 표시 */}
+        {isAustralia && (
+          <>
+            <span className="text-muted-foreground/30 select-none">|</span>
             {editingField === 'check' ? (
-              <MicrochipDateInput initial={checkDate} onSave={(v) => {
-                if (v) saveDate('microchip_check_date', v)
-                else { setShowCheck(false); setEditingField(null) }
-              }} onCancel={() => { if (!checkDate) setShowCheck(false); setEditingField(null) }} />
+              <MicrochipDateInput initial={checkDate} onSave={(v) => saveDate('microchip_check_date', v || null)} onCancel={() => setEditingField(null)} />
             ) : (
               <button type="button" onClick={() => setEditingField('check')}
-                className="text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer">
-                {checkDate}
+                className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', !checkDate && 'text-muted-foreground/60 italic')}>
+                {checkDate || '—'}
               </button>
             )}
-            <button type="button" onClick={removeCheckDate}
-              className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0">✕</button>
-          </div>
+          </>
+        )}
+
+        {/* 호버 시 전체 행 삭제 (삽입일+확인일 모두 초기화) */}
+        {(implantDate || checkDate) && editingField === null && (
+          <button type="button" onClick={async () => {
+            await saveDate('microchip_implant_date', null)
+            if (checkDate) await saveDate('microchip_check_date', null)
+          }}
+            className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100">
+            ✕
+          </button>
         )}
       </div>
     </div>

@@ -93,6 +93,7 @@ export const REGULAR_COLUMN_SPECS: FieldSpec[] = [
     groupOrder: 2,
     order: -2, // before destination (-1)
     options: [
+      { value: 'applied', label_ko: 'Applied' },
       { value: '진행중', label_ko: 'In Progress' },
       { value: '완료', label_ko: 'Completed' },
       { value: '보류', label_ko: 'On Hold' },

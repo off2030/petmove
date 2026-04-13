@@ -83,7 +83,8 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
       setAddingNew(false)
       return
     }
-    const next = [...payments, { amount, method: null, date: null }]
+    const today = new Date().toISOString().slice(0, 10)
+    const next = [...payments, { amount, method: 'cash', date: today }]
     startSave(async () => {
       await savePayments(next)
       setAddingNew(false)
@@ -135,7 +136,10 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
         )}
 
         {payments.length === 0 && !addingNew && (
-          <span className="text-sm text-muted-foreground/60 italic">—</span>
+          <button type="button" onClick={() => setAddingNew(true)}
+            className="text-left rounded-md px-2 py-1 -mx-2 text-sm text-muted-foreground/60 italic transition-colors hover:bg-accent/60 cursor-pointer">
+            —
+          </button>
         )}
       </div>
     </div>
@@ -167,7 +171,7 @@ function PaymentRow({
   const dateDisplay = record.date || '—'
 
   return (
-    <div className="flex items-baseline gap-[10px] min-w-0">
+    <div className="group/item flex items-baseline gap-[10px] min-w-0">
       {/* Amount */}
       {isEditing === 'amount' ? (
         <AmountInput
@@ -220,7 +224,7 @@ function PaymentRow({
       <button
         type="button"
         onClick={onDelete}
-        className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 ml-1"
+        className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 ml-1 opacity-0 group-hover/item:opacity-100"
       >
         ✕
       </button>

@@ -9,10 +9,11 @@ import { CaseDetail, CaseDetailEmpty } from './case-detail'
 import { CaseHistory } from './case-history'
 import { createCase } from '@/lib/actions/create-case'
 import { deleteCase } from '@/lib/actions/delete-case'
+import { duplicateCase } from '@/lib/actions/duplicate-case'
 import { undoLastChange } from '@/lib/actions/cases'
 
 function Inner() {
-  const { cases, selectedId, addLocalCase, removeLocalCase, updateLocalCaseField } = useCases()
+  const { cases, selectedId, selectCase, addLocalCase, removeLocalCase, updateLocalCaseField } = useCases()
   const selectedCase = useMemo(
     () => cases.find((c) => c.id === selectedId) ?? null,
     [cases, selectedId],
@@ -46,6 +47,14 @@ function Inner() {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [selectedId, updateLocalCaseField])
+
+  const handleDuplicate = useCallback(async (id: string) => {
+    const result = await duplicateCase(id)
+    if (result.ok) {
+      addLocalCase(result.case)
+      selectCase(result.case.id)
+    }
+  }, [addLocalCase, selectCase])
 
   const handleDelete = useCallback(async (id: string) => {
     if (!confirm('이 케이스를 삭제하시겠습니까?')) return
@@ -107,6 +116,13 @@ function Inner() {
                   </span>
                   <div className="flex items-center gap-4">
                     <CaseHistory caseId={selectedCase.id} />
+                    <button
+                      type="button"
+                      onClick={() => handleDuplicate(selectedCase.id)}
+                      className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                    >
+                      복제
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleDelete(selectedCase.id)}

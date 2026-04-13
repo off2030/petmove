@@ -134,7 +134,7 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
         {attachments.length > 0 && (
           <ul className="space-y-1">
             {attachments.map((att, i) => (
-              <li key={i} className="flex items-center gap-2 text-sm">
+              <li key={i} className="group/item flex items-center gap-2 text-sm">
                 <a
                   href={att.url}
                   target="_blank"
@@ -149,9 +149,9 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
                 <button
                   type="button"
                   onClick={() => handleDelete(i)}
-                  className="text-xs text-muted-foreground/50 hover:text-red-500 transition-colors shrink-0"
+                  className="text-xs text-muted-foreground/50 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100"
                 >
-                  삭제
+                  ✕
                 </button>
               </li>
             ))}
@@ -159,7 +159,10 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
         )}
 
         {attachments.length === 0 && (
-          <span className="text-sm text-muted-foreground/60 italic">—</span>
+          <button type="button" onClick={() => fileRef.current?.click()}
+            className="text-left rounded-md px-2 py-1 -mx-2 text-sm text-muted-foreground/60 italic transition-colors hover:bg-accent/60 cursor-pointer">
+            —
+          </button>
         )}
 
         {error && <div className="mt-1 text-xs text-red-600">{error}</div>}

@@ -24,7 +24,8 @@ function autoDetectLang(spec: FieldSpec, explicit?: 'ko' | 'en'): 'ko' | 'en' | 
   if (explicit) return explicit
   if (spec.type !== 'text') return undefined
   if (spec.key.endsWith('_en')) return 'en'
-  if (spec.key === 'address_overseas' || spec.key === 'email') return 'en'
+  if (spec.key === 'address_overseas') return 'en'
+  if (spec.key === 'email') return undefined // no auto-capitalize
   // Korean fields: allow both Korean AND English (no filter)
   return undefined
 }
@@ -53,12 +54,14 @@ export function EditableField({
   rawValue,
   inline = false,
   lang,
+  clearable = false,
 }: {
   caseId: string
   spec: FieldSpec
   rawValue: unknown
   inline?: boolean
   lang?: 'ko' | 'en'
+  clearable?: boolean
 }) {
   const { updateLocalCaseField } = useCases()
   const [editing, setEditing] = useState(false)
@@ -94,6 +97,16 @@ export function EditableField({
 
   const display = renderFieldValue(spec, rawValue)
   const isEmpty = display === '—'
+
+  function handleClear() {
+    startSave(async () => {
+      const result = await updateCaseField(caseId, spec.storage, spec.key, null)
+      if (!result.ok) { setError(result.error); return }
+      updateLocalCaseField(caseId, spec.storage, spec.key, null)
+      setError(null)
+      setEditing(false)
+    })
+  }
 
   function handleEnterEdit() {
     if (spec.key === 'age') return // age is auto-calculated, not editable
@@ -236,7 +249,7 @@ export function EditableField({
             if (!e.currentTarget.contains(e.relatedTarget as Node)) setEditing(false)
           }}
         >
-          <div className="group/val relative w-fit">
+          <div className="relative w-fit">
             <button
               type="button"
               onClick={() => setEditing(!editing)}
@@ -244,10 +257,6 @@ export function EditableField({
             >
               {display}
             </button>
-            <CopyButton
-              value={isEmpty ? '' : display}
-              className="absolute left-full top-0.5 ml-1 z-10 opacity-0 group-hover/val:opacity-100"
-            />
           </div>
           {editing && (
             <ul className="absolute left-0 top-full mt-1 z-20 min-w-[120px] rounded-md border border-border/50 bg-background py-1 shadow-md">
@@ -376,14 +385,24 @@ export function EditableField({
 
   if (inline) return valueCell
 
+  const clearButton = clearable && !isEmpty && !editing ? (
+    <button
+      type="button"
+      onClick={handleClear}
+      className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/row:opacity-100"
+    >
+      ✕
+    </button>
+  ) : null
+
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0">
+    <div className={cn("grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0", clearable && "group/row")}>
       <div className="text-sm text-muted-foreground pt-1">{spec.label}</div>
-      <div className="min-w-0">
+      <div className="min-w-0 flex items-baseline gap-2">
         {(() => {
           const noCopy = isDate || isSelect || spec.type === 'longtext'
           if ((isDate && editing) || isSelect || editing) return valueCell
-          if (noCopy) return valueCell
+          if (noCopy) return <>{valueCell}{clearButton}</>
           return (
             <div className="group/val relative w-fit">
               {valueCell}
@@ -394,6 +413,7 @@ export function EditableField({
             </div>
           )
         })()}
+        {!isDate && !isSelect && !(spec.type === 'longtext') && !editing && clearButton}
       </div>
     </div>
   )
