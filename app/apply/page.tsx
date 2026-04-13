@@ -223,7 +223,8 @@ export default function ApplyPage() {
               <div>
                 <label className={labelClass}>전화번호 <span className="text-red-500">*</span></label>
                 <input type="tel" inputMode="numeric" value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, ''))}
+                  maxLength={11}
+                  onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, '').slice(0, 11))}
                   placeholder="01012345678" className={inputClass} />
               </div>
               <div>
