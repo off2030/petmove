@@ -197,7 +197,12 @@ export default function ApplyPage() {
               <div>
                 <label className={labelClass}>영문성함 <span className="text-red-500">*</span> <span className="text-xs font-normal text-gray-400">여권과 동일하게</span></label>
                 <input type="text" value={customerNameEn}
-                  onChange={(e) => setCustomerNameEn(e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, ''))}
+                  onChange={(e) => setCustomerNameEn(e.target.value)}
+                  onCompositionEnd={(e) => {
+                    const v = (e.target as HTMLInputElement).value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
+                    setCustomerNameEn(v)
+                  }}
+                  onBlur={(e) => setCustomerNameEn(e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, ''))}
                   placeholder="HONG GILDONG" className={inputClass} />
               </div>
               <div>
@@ -231,7 +236,12 @@ export default function ApplyPage() {
               <div>
                 <label className={labelClass}>동물 영문이름 <span className="text-red-500">*</span></label>
                 <input type="text" value={petNameEn}
-                  onChange={(e) => setPetNameEn(e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, ''))}
+                  onChange={(e) => setPetNameEn(e.target.value)}
+                  onCompositionEnd={(e) => {
+                    const v = (e.target as HTMLInputElement).value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
+                    setPetNameEn(v)
+                  }}
+                  onBlur={(e) => setPetNameEn(e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, ''))}
                   placeholder="MARU" className={inputClass} />
               </div>
               <div>
