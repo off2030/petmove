@@ -194,7 +194,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
 
           {sortedForExpand.map((rec, si) => {
             const oi = origIdx(si)
-            const hasDetails = rec.valid_until || rec.product || rec.manufacturer || rec.batch || rec.expiry
+            const hasDetails = rec.valid_until || rec.product || rec.manufacturer || rec.lot || rec.expiry
             return (
               <div key={oi} className="group/item">
                 {/* Row 1: date + valid_until */}
