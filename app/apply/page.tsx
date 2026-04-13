@@ -110,7 +110,39 @@ export default function ApplyPage() {
   const [microchip, setMicrochip] = useState('')
   const [microchipDate, setMicrochipDate] = useState('')
   const [rabiesDate, setRabiesDate] = useState('')
-  const [enWarning, setEnWarning] = useState<string | null>(null)
+  const [enWarnings, setEnWarnings] = useState<Record<string, string | null>>({})
+  const composingRef = useRef(false)
+
+  function showEnWarning(field: string, msg: string) {
+    setEnWarnings(prev => ({ ...prev, [field]: msg }))
+    setTimeout(() => setEnWarnings(prev => ({ ...prev, [field]: null })), 2000)
+  }
+
+  function handleEnInput(
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: (v: string) => void,
+    field: string,
+  ) {
+    if (composingRef.current) { setter(e.target.value); return }
+    const raw = e.target.value
+    const hasKorean = /[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(raw)
+    const filtered = raw.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').replace(/\b[a-z]/g, c => c.toUpperCase())
+    setter(filtered)
+    if (hasKorean) showEnWarning(field, '영문만 입력 가능합니다')
+  }
+
+  function handleEnCompositionEnd(
+    e: React.CompositionEvent<HTMLInputElement>,
+    setter: (v: string) => void,
+    field: string,
+  ) {
+    composingRef.current = false
+    const raw = (e.target as HTMLInputElement).value
+    const hasKorean = /[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(raw)
+    const filtered = raw.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').replace(/\b[a-z]/g, c => c.toUpperCase())
+    setter(filtered)
+    if (hasKorean) showEnWarning(field, '영문만 입력 가능합니다')
+  }
   const [destHighlight, setDestHighlight] = useState(-1)
   const [breedHighlight, setBreedHighlight] = useState(-1)
 
@@ -147,7 +179,7 @@ export default function ApplyPage() {
     if (selectedColors.length === 0) { setError('모색을 선택해주세요.'); return }
     if (!sex) { setError('성별을 선택해주세요.'); return }
     if (!weight.trim()) { setError('몸무게를 입력해주세요.'); return }
-    if (microchip.trim() && microchip.replace(/\D/g, '').length !== 15) { setError('마이크로칩 번호는 15자리 숫자여야 합니다.'); return }
+    if (microchip && microchip.length !== 15) { setError('마이크로칩 번호는 15자리 숫자여야 합니다.'); return }
 
     setSubmitting(true)
     const result = await applyCase({
@@ -172,7 +204,7 @@ export default function ApplyPage() {
       color_en: selectedColors.map(ko => COLORS.find(c => c.ko === ko)?.en ?? ko).join(', '),
       sex,
       weight: weight.trim(),
-      microchip: microchip.trim() || undefined,
+      microchip: microchip.replace(/\D/g, '') || undefined,
       microchip_implant_date: microchipDate || undefined,
       rabies_date: rabiesDate || undefined,
     })
@@ -227,7 +259,25 @@ export default function ApplyPage() {
           <p className="text-gray-500 mt-1">반려동물 해외이동 신청</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8"
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter') return
+            const target = e.target as HTMLElement
+            // submit 버튼에서 Enter는 제출 허용
+            if (target.tagName === 'BUTTON' && (target as HTMLButtonElement).type === 'submit') return
+            // 검색 드롭다운에서 Enter는 선택 로직에서 처리
+            if (target.tagName === 'BUTTON') return
+            // input/select에서 Enter → 다음 필드로 이동
+            if (target.tagName === 'INPUT' || target.tagName === 'SELECT') {
+              e.preventDefault()
+              const form = e.currentTarget
+              const focusable = Array.from(form.querySelectorAll<HTMLElement>('input:not([type="hidden"]):not([disabled]), select:not([disabled]), button[type="submit"]'))
+              const idx = focusable.indexOf(target)
+              if (idx >= 0 && idx < focusable.length - 1) {
+                focusable[idx + 1].focus()
+              }
+            }
+          }}>
           {/* 1. 목적지 */}
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">목적지</h2>
@@ -282,36 +332,24 @@ export default function ApplyPage() {
             <div className="space-y-4">
               <div>
                 <label className={labelClass}>성함 <span className="text-red-500">*</span></label>
-                <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)}
+                <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value.replace(/\b[a-z]/g, c => c.toUpperCase()))}
                   placeholder="홍길동" className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>영문성함 <span className="text-red-500">*</span> <span className="text-xs font-normal text-gray-400">여권과 동일하게</span></label>
                 <div className="flex gap-2">
                   <input type="text" value={customerLastNameEn}
-                    onChange={(e) => {
-                      const filtered = e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').replace(/\b[a-z]/g, c => c.toUpperCase())
-                      setCustomerLastNameEn(filtered)
-                      if (e.target.value !== filtered) { setEnWarning('영문만 입력 가능합니다'); setTimeout(() => setEnWarning(null), 2000) }
-                    }}
-                    onCompositionEnd={(e) => {
-                      const filtered = (e.target as HTMLInputElement).value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').replace(/\b[a-z]/g, c => c.toUpperCase())
-                      setCustomerLastNameEn(filtered)
-                    }}
-                    placeholder="성 (HONG)" className={inputClass + ' flex-1'} />
+                    onCompositionStart={() => { composingRef.current = true }}
+                    onChange={(e) => handleEnInput(e, setCustomerLastNameEn, 'lastNameEn')}
+                    onCompositionEnd={(e) => handleEnCompositionEnd(e, setCustomerLastNameEn, 'lastNameEn')}
+                    placeholder="성 (Hong)" className={inputClass + ' flex-1'} />
                   <input type="text" value={customerFirstNameEn}
-                    onChange={(e) => {
-                      const filtered = e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').replace(/\b[a-z]/g, c => c.toUpperCase())
-                      setCustomerFirstNameEn(filtered)
-                      if (e.target.value !== filtered) { setEnWarning('영문만 입력 가능합니다'); setTimeout(() => setEnWarning(null), 2000) }
-                    }}
-                    onCompositionEnd={(e) => {
-                      const filtered = (e.target as HTMLInputElement).value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').replace(/\b[a-z]/g, c => c.toUpperCase())
-                      setCustomerFirstNameEn(filtered)
-                    }}
-                    placeholder="이름 (GILDONG)" className={inputClass + ' flex-1'} />
+                    onCompositionStart={() => { composingRef.current = true }}
+                    onChange={(e) => handleEnInput(e, setCustomerFirstNameEn, 'firstNameEn')}
+                    onCompositionEnd={(e) => handleEnCompositionEnd(e, setCustomerFirstNameEn, 'firstNameEn')}
+                    placeholder="이름 (Gildong)" className={inputClass + ' flex-1'} />
                 </div>
-                {enWarning && <p className="mt-1 text-xs text-red-500">{enWarning}</p>}
+                {(enWarnings.lastNameEn || enWarnings.firstNameEn) && <p className="mt-1 text-xs text-red-500">{enWarnings.lastNameEn || enWarnings.firstNameEn}</p>}
               </div>
               <div>
                 <label className={labelClass}>전화번호 <span className="text-red-500">*</span></label>
@@ -356,31 +394,17 @@ export default function ApplyPage() {
             <div className="space-y-4">
               <div>
                 <label className={labelClass}>동물 이름 <span className="text-red-500">*</span></label>
-                <input type="text" value={petName} onChange={(e) => setPetName(e.target.value)}
+                <input type="text" value={petName} onChange={(e) => setPetName(e.target.value.replace(/\b[a-z]/g, c => c.toUpperCase()))}
                   placeholder="마루" className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>동물 영문이름 <span className="text-red-500">*</span></label>
                 <input type="text" value={petNameEn}
-                  onChange={(e) => {
-                    const raw = e.target.value
-                    const filtered = raw.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
-                    setPetNameEn(filtered)
-                    if (raw !== filtered) {
-                      setEnWarning('영문만 입력 가능합니다')
-                      setTimeout(() => setEnWarning(null), 2000)
-                    }
-                  }}
-                  onCompositionEnd={(e) => {
-                    const raw = (e.target as HTMLInputElement).value
-                    const filtered = raw.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
-                    setPetNameEn(filtered)
-                    if (raw !== filtered) {
-                      setEnWarning('영문만 입력 가능합니다')
-                      setTimeout(() => setEnWarning(null), 2000)
-                    }
-                  }}
-                  placeholder="MARU" className={inputClass} />
+                  onCompositionStart={() => { composingRef.current = true }}
+                  onChange={(e) => handleEnInput(e, setPetNameEn, 'petNameEn')}
+                  onCompositionEnd={(e) => handleEnCompositionEnd(e, setPetNameEn, 'petNameEn')}
+                  placeholder="Maru" className={inputClass} />
+                {enWarnings.petNameEn && <p className="mt-1 text-xs text-red-500">{enWarnings.petNameEn}</p>}
               </div>
               <div>
                 <label className={labelClass}>생년월일 <span className="text-red-500">*</span></label>
@@ -479,9 +503,13 @@ export default function ApplyPage() {
             <div className="space-y-4">
               <div>
                 <label className={labelClass}>마이크로칩 번호</label>
-                <input type="text" inputMode="numeric" value={microchip}
-                  onChange={(e) => setMicrochip(e.target.value.replace(/[^\d\s]/g, ''))}
-                  placeholder="15자리 숫자" className={inputClass} />
+                <input type="text" inputMode="numeric"
+                  value={microchip.replace(/(\d{3})(?=\d)/g, '$1 ')}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, '').slice(0, 15)
+                    setMicrochip(digits)
+                  }}
+                  placeholder="000 000 000 000 000" maxLength={19} className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>마이크로칩 삽입일</label>

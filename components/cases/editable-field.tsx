@@ -12,7 +12,8 @@ import { useCases } from '@/components/cases/cases-context'
 function filterByLang(str: string, lang?: 'ko' | 'en'): string {
   if (lang === 'ko') return str.replace(/[a-zA-Z]/g, '')
   if (lang === 'en') return str.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').replace(/\b[a-z]/g, (c) => c.toUpperCase())
-  return str
+  // mixed (undefined): allow both, but auto-capitalize English words
+  return str.replace(/\b[a-z]/g, (c) => c.toUpperCase())
 }
 
 /** Auto-determine language filter from field spec */
@@ -343,8 +344,8 @@ export function EditableField({
                   ? '숫자만 입력 가능합니다'
                 : (NUMERIC_KEYS.has(spec.key) || spec.type === 'number') && hasNonDigit
                   ? '숫자만 입력 가능합니다'
-                : EMAIL_KEYS.has(spec.key) && (hasKorean || /[A-Z]/.test(v))
-                  ? hasKorean ? '영문 소문자만 입력 가능합니다' : '소문자만 입력 가능합니다'
+                : EMAIL_KEYS.has(spec.key) && hasKorean
+                  ? '영문만 입력 가능합니다'
                 : effectiveLang === 'en' && hasKorean
                   ? '영문만 입력 가능합니다'
                 : ''
