@@ -3,19 +3,17 @@
 import { memo, useCallback, useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { Sidebar, type TabId } from './sidebar'
+import { useCases } from '@/components/cases/cases-context'
 import { CasesApp } from '@/components/cases/cases-app'
 import { TodosApp } from '@/components/todos/todos-app'
-import { CalculatorApp } from '@/components/calculator/calculator-app'
 import { SettingsApp } from '@/components/settings/settings-app'
 
 const MemoizedCases = memo(CasesApp)
 const MemoizedTodos = memo(TodosApp)
-const MemoizedCalculator = memo(CalculatorApp)
 const MemoizedSettings = memo(SettingsApp)
 
 function pathToTab(pathname: string): TabId {
   if (pathname.startsWith('/todos')) return 'todos'
-  if (pathname.startsWith('/calculator')) return 'calculator'
   if (pathname.startsWith('/settings')) return 'settings'
   return 'cases'
 }
@@ -25,7 +23,10 @@ export function DashboardShell() {
   const [activeTab, setActiveTab] = useState<TabId>(() => pathToTab(pathname))
   const [mounted, setMounted] = useState<Set<TabId>>(() => new Set([activeTab]))
 
+  const { selectCase } = useCases()
+
   const handleTabChange = useCallback((tab: TabId) => {
+    if (tab === 'cases') selectCase(null)
     setActiveTab(tab)
     setMounted((prev) => {
       if (prev.has(tab)) return prev
@@ -62,12 +63,7 @@ export function DashboardShell() {
             <MemoizedTodos />
           </div>
         )}
-        {mounted.has('calculator') && (
-          <div className="h-full" style={{ display: activeTab === 'calculator' ? 'block' : 'none' }}>
-            <MemoizedCalculator />
-          </div>
-        )}
-        {mounted.has('settings') && (
+{mounted.has('settings') && (
           <div className="h-full" style={{ display: activeTab === 'settings' ? 'block' : 'none' }}>
             <MemoizedSettings />
           </div>

@@ -1,15 +1,14 @@
 'use client'
 
-import { ClipboardList, CheckSquare, Calculator, Settings, Trash2 } from 'lucide-react'
+import { ClipboardList, CheckSquare, Settings, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { TrashModal } from '@/components/cases/trash-modal'
 
-export type TabId = 'cases' | 'todos' | 'calculator' | 'settings'
+export type TabId = 'cases' | 'todos' | 'settings'
 
 export const NAV_ITEMS: Array<{ id: TabId; icon: typeof ClipboardList; label: string }> = [
   { id: 'cases', icon: ClipboardList, label: '케이스' },
   { id: 'todos', icon: CheckSquare, label: '할일' },
-  { id: 'calculator', icon: Calculator, label: '계산기' },
 ]
 
 export function Sidebar({

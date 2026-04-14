@@ -14,16 +14,25 @@ export interface TodoColumn {
   type: 'text' | 'date' | 'select'
   width: number
   options?: Array<{ value: string; label: string }>
+  /** Override default value resolution (e.g. read from nested structure) */
+  resolveValue?: (row: CaseRow) => string
+  /** Fallback value when stored value is empty */
+  defaultValue?: string
+  /** Only show this column's cell for rows matching this condition */
+  condition?: (row: CaseRow) => boolean
 }
 
 function getCellValue(row: CaseRow, col: TodoColumn): string {
+  if (col.resolveValue) return col.resolveValue(row)
+  let v: unknown
   if (col.storage === 'column') {
-    const v = (row as unknown as Record<string, unknown>)[col.key]
-    return v != null ? String(v) : ''
+    v = (row as unknown as Record<string, unknown>)[col.key]
+  } else {
+    const data = (row.data ?? {}) as Record<string, unknown>
+    v = data[col.key]
   }
-  const data = (row.data ?? {}) as Record<string, unknown>
-  const v = data[col.key]
-  return v != null ? String(v) : ''
+  if (v != null && String(v) !== '') return String(v)
+  return col.defaultValue ?? ''
 }
 
 function StatusBadge({ value, options }: { value: string; options: Array<{ value: string; label: string }> }) {
@@ -32,8 +41,8 @@ function StatusBadge({ value, options }: { value: string; options: Array<{ value
 
   let colorClass = 'bg-muted text-muted-foreground'
   if (value === 'done') colorClass = 'bg-emerald-100 text-emerald-700'
-  else if (value === 'in_progress') colorClass = 'bg-blue-100 text-blue-700'
-  else if (value === 'not_started') colorClass = 'bg-gray-100 text-gray-600'
+  else if (value === 'in_progress' || value === 'testing') colorClass = 'bg-blue-100 text-blue-700'
+  else if (value === 'not_started' || value === 'waiting') colorClass = 'bg-gray-100 text-gray-600'
   else if (value === 'na') colorClass = 'bg-orange-50 text-orange-600'
   else if (value === 'yes') colorClass = 'bg-red-100 text-red-700'
 
@@ -73,28 +82,6 @@ function EditableCell({
     [row.id, col.storage, col.key, value, onUpdate],
   )
 
-  // Select type: show dropdown
-  if (col.type === 'select' && col.options) {
-    return (
-      <select
-        value={value}
-        onChange={async (e) => {
-          const newVal = e.target.value
-          onUpdate(row.id, col.storage, col.key, newVal || null)
-          await updateCaseField(row.id, col.storage, col.key, newVal || null)
-        }}
-        className="w-full bg-transparent border-0 text-xs py-1 cursor-pointer focus:outline-none focus:ring-0"
-      >
-        <option value="">—</option>
-        {col.options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    )
-  }
-
   // Display mode
   if (!editing) {
     return (
@@ -125,6 +112,39 @@ function EditableCell({
       }}
       className="w-full bg-transparent border-0 border-b border-primary text-xs py-1 focus:outline-none"
     />
+  )
+}
+
+function SelectCell({
+  row,
+  col,
+  onUpdate,
+}: {
+  row: CaseRow
+  col: TodoColumn
+  onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
+}) {
+  const value = getCellValue(row, col)
+  const opt = col.options?.find((o) => o.value === value)
+
+  return (
+    <div className="relative">
+      <StatusBadge value={value} options={col.options!} />
+      <select
+        value={value}
+        onChange={async (e) => {
+          const newVal = e.target.value
+          onUpdate(row.id, col.storage, col.key, newVal || null)
+          await updateCaseField(row.id, col.storage, col.key, newVal || null)
+        }}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+      >
+        <option value="">—</option>
+        {col.options!.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+    </div>
   )
 }
 
@@ -187,25 +207,10 @@ export function TodoTable({
                 className="px-2 py-1"
                 style={{ width: col.width, minWidth: col.width }}
               >
-                {col.type === 'select' && col.options && getCellValue(row, col) ? (
-                  <div className="flex items-center gap-1">
-                    <StatusBadge value={getCellValue(row, col)} options={col.options} />
-                    <select
-                      value={getCellValue(row, col)}
-                      onChange={async (e) => {
-                        const newVal = e.target.value
-                        onUpdate(row.id, col.storage, col.key, newVal || null)
-                        await updateCaseField(row.id, col.storage, col.key, newVal || null)
-                      }}
-                      className="w-4 h-4 opacity-0 hover:opacity-100 cursor-pointer absolute"
-                      style={{ marginLeft: -4 }}
-                    >
-                      <option value="">—</option>
-                      {col.options.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
-                  </div>
+                {col.condition && !col.condition(row) ? (
+                  <span className="text-muted-foreground/30 text-xs px-1">—</span>
+                ) : col.type === 'select' && col.options ? (
+                  <SelectCell row={row} col={col} onUpdate={onUpdate} />
                 ) : (
                   <EditableCell row={row} col={col} onUpdate={onUpdate} />
                 )}

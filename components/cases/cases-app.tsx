@@ -10,8 +10,21 @@ import { createCase } from '@/lib/actions/create-case'
 import { deleteCase } from '@/lib/actions/delete-case'
 import { duplicateCase } from '@/lib/actions/duplicate-case'
 import { undoLastChange } from '@/lib/actions/cases'
-import { generateKoreaVetCert } from '@/lib/actions/generate-pdf'
+import { generateKoreaVetCert, generateAustraliaIdDecl, generateEuCert, generateUkCert } from '@/lib/actions/generate-pdf'
 import { ArrowLeft } from 'lucide-react'
+
+const EU_COUNTRIES = new Set([
+  '독일', '프랑스', '이탈리아', '스페인', '네덜란드', '벨기에', '오스트리아',
+  '스웨덴', '덴마크', '핀란드', '폴란드', '체코', '헝가리', '포르투갈',
+  '그리스', '루마니아', '불가리아', '크로아티아', '슬로바키아', '슬로베니아',
+  '리투아니아', '라트비아', '에스토니아', '룩셈부르크', '몰타', '키프로스',
+  '아일랜드',
+])
+
+function isEuDestination(dest: string | null): boolean {
+  if (!dest) return false
+  return dest.split(',').map(s => s.trim()).some(d => EU_COUNTRIES.has(d))
+}
 
 function Inner() {
   const { cases, selectedId, selectCase, addLocalCase, removeLocalCase, updateLocalCaseField } = useCases()
@@ -80,7 +93,7 @@ function Inner() {
         {/* Panel 1: List (full width = 50% of 200%) */}
         <div className="w-1/2 h-full">
           <div className="h-full overflow-hidden pt-32 pb-24 px-14 2xl:pt-36 2xl:pb-28 2xl:px-16 3xl:pt-44 3xl:pb-36 3xl:px-20 4xl:pt-52 4xl:pb-44 4xl:px-24 6xl:pt-64 6xl:pb-52 6xl:px-28">
-            <div className="h-full mx-auto max-w-2xl 4xl:max-w-3xl 6xl:max-w-4xl">
+            <div className="h-full mx-auto max-w-3xl 4xl:max-w-4xl 6xl:max-w-5xl">
               <CaseList onAdd={handleAdd} />
             </div>
           </div>
@@ -137,8 +150,65 @@ function Inner() {
                         }}
                         className="text-muted-foreground/50 hover:text-foreground transition-colors"
                       >
-                        📄 증명서
+                        증명서
                       </button>
+                      {selectedCase.destination?.includes('호주') && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const result = await generateAustraliaIdDecl(selectedCase.id)
+                            if (result.ok) {
+                              const link = document.createElement('a')
+                              link.href = `data:application/pdf;base64,${result.pdf}`
+                              link.download = result.filename
+                              link.click()
+                            } else {
+                              alert(result.error)
+                            }
+                          }}
+                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                        >
+                          ID선언서
+                        </button>
+                      )}
+                      {isEuDestination(selectedCase.destination) && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const result = await generateEuCert(selectedCase.id)
+                            if (result.ok) {
+                              const link = document.createElement('a')
+                              link.href = `data:application/pdf;base64,${result.pdf}`
+                              link.download = result.filename
+                              link.click()
+                            } else {
+                              alert(result.error)
+                            }
+                          }}
+                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                        >
+                          EU증명서
+                        </button>
+                      )}
+                      {selectedCase.destination?.includes('영국') && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const result = await generateUkCert(selectedCase.id)
+                            if (result.ok) {
+                              const link = document.createElement('a')
+                              link.href = `data:application/pdf;base64,${result.pdf}`
+                              link.download = result.filename
+                              link.click()
+                            } else {
+                              alert(result.error)
+                            }
+                          }}
+                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                        >
+                          UK증명서
+                        </button>
+                      )}
                       <CaseHistory caseId={selectedCase.id} />
                       <button
                         type="button"

@@ -1,9 +1,14 @@
 'use server'
 
-import { readFile } from 'fs/promises'
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+import { readFile, writeFile, unlink } from 'fs/promises'
+import { execFile } from 'child_process'
+import { promisify } from 'util'
+import { PDFDocument } from 'pdf-lib'
 import { createClient } from '@/lib/supabase/server'
 import path from 'path'
+import os from 'os'
+
+const execFileAsync = promisify(execFile)
 
 // PDF 템플릿 → DB 필드 매핑
 function mapCaseToPdfFields(c: Record<string, unknown>, d: Record<string, unknown>) {
@@ -112,36 +117,367 @@ export async function generateKoreaVetCert(caseId: string): Promise<
     }
   }
 
-  // Fill checkboxes — draw V at checkbox position since appearances are missing
-  const page = pdfDoc.getPages()[0]
-  const checkFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
-  for (const name of checkboxFields) {
-    try {
-      const field = form.getCheckBox(name)
-      const widgets = field.acroField.getWidgets()
-      if (widgets.length > 0) {
-        const rect = widgets[0].getRectangle()
-        page.drawText('V', {
-          x: rect.x + 1,
-          y: rect.y + 1,
-          size: Math.min(rect.width, rect.height) - 2,
-          font: checkFont,
-          color: rgb(0, 0, 0),
-        })
-      }
-    } catch {
-      // Field not found — skip
-    }
-  }
-
-  // Remove form fields and flatten
-  form.flatten()
+  // Keep form fields editable — no flatten
 
   const pdfBytes = await pdfDoc.save()
-  const base64 = Buffer.from(pdfBytes).toString('base64')
+
+  // Use pypdf for checkboxes (pdf-lib can't handle custom appearances)
+  const finalBytes = await fillCheckboxesWithPypdf(Buffer.from(pdfBytes), checkboxFields)
+
+  const base64 = finalBytes.toString('base64')
 
   const petName = (c.pet_name_en || c.pet_name || 'pet').replace(/\s/g, '_')
   const filename = `VetCert_${petName}.pdf`
 
   return { ok: true, pdf: base64, filename }
+}
+
+// ── Australia ID Declaration ──
+
+const MICROCHIP_DIGIT_FIELDS = [
+  'text_22iegx', 'text_24isfk', 'text_25mzkv', 'text_26rkqp', 'text_27hnnh',
+  'text_28rfly', 'text_29scbr', 'text_30dyor', 'text_31ilkr', 'text_32vrnm',
+  'text_33etmo', 'text_34ugyw', 'text_35vmev', 'text_36wstb', 'text_37rwb',
+]
+
+/** Convert YYYY-MM-DD to dd/mm/yy */
+function toDdMmYy(dateStr: string): string {
+  if (!dateStr) return ''
+  const parts = dateStr.split('-')
+  if (parts.length !== 3) return dateStr
+  const yy = parts[0].slice(2)
+  return `${parts[2]}/${parts[1]}/${yy}`
+}
+
+/** Convert YYYY-MM-DD to dd/mm/yyyy */
+function toDdMmYyyy(dateStr: string): string {
+  if (!dateStr) return ''
+  const parts = dateStr.split('-')
+  if (parts.length !== 3) return dateStr
+  return `${parts[2]}/${parts[1]}/${parts[0]}`
+}
+
+/** Convert sex DB value to English abbreviation */
+function sexToEn(sex: string): string {
+  const map: Record<string, string> = {
+    male: 'M', female: 'F',
+    neutered_male: 'M(N)', spayed_female: 'F(N)',
+  }
+  return map[sex] || sex
+}
+
+/** Convert species DB value to English */
+function speciesToEn(species: string): string {
+  if (species === 'dog') return 'Dog'
+  if (species === 'cat') return 'Cat'
+  return species
+}
+
+/** Extract rabies date strings from rabies_dates array (handles string or {date} objects) */
+function extractRabiesDates(d: Record<string, unknown>): string[] {
+  const raw = (d.rabies_dates as unknown[]) || []
+  return raw.map(v =>
+    typeof v === 'string' ? v
+    : (v && typeof v === 'object' && 'date' in (v as Record<string, unknown>))
+      ? String((v as Record<string, unknown>).date ?? '')
+      : ''
+  ).filter(Boolean)
+}
+
+function mapCaseToIdFields(c: Record<string, unknown>, d: Record<string, unknown>) {
+  const textFields: Record<string, string> = {}
+  const checkboxFields: string[] = []
+
+  // Animal name (Page 1 + Section B #5)
+  const petNameEn = (c.pet_name_en as string) || ''
+  textFields.text_1siug = petNameEn
+  textFields.text_5upip = petNameEn
+
+  // Date of birth (Page 1 + Section B #6) — dd/mm/yy
+  const birthDate = (d.birth_date as string) || ''
+  const birthDdMmYy = toDdMmYy(birthDate)
+  textFields.text_2gtck = birthDdMmYy
+  textFields.text_6truz = birthDdMmYy
+
+  // Name of importer (Section B #4)
+  const firstName = (d.customer_first_name_en as string) || ''
+  const lastName = (d.customer_last_name_en as string) || ''
+  textFields.text_4wsfw = `${firstName} ${lastName}`.trim()
+
+  // Description: breed, colour (Page 1 + Section B #8)
+  const breedEn = (d.breed_en as string) || ''
+  const colorEn = (d.color_en as string) || ''
+  const description = [breedEn, colorEn].filter(Boolean).join(', ')
+  textFields.text_3gevi = description
+  textFields.text_7gzzz = description
+
+  // Sex checkboxes — Page 1 (12,17,18,19) + Section B (13,14,15,16)
+  const sexMapPage1: Record<string, string> = {
+    male: 'checkbox_12cuyn',
+    neutered_male: 'checkbox_17haam',
+    female: 'checkbox_18zupd',
+    spayed_female: 'checkbox_19arlr',
+  }
+  const sexMapSectionB: Record<string, string> = {
+    male: 'checkbox_13gqmq',
+    neutered_male: 'checkbox_14sqah',
+    female: 'checkbox_15rcpk',
+    spayed_female: 'checkbox_16igol',
+  }
+  const sex = (d.sex as string) || ''
+  if (sexMapPage1[sex]) checkboxFields.push(sexMapPage1[sex])
+  if (sexMapSectionB[sex]) checkboxFields.push(sexMapSectionB[sex])
+
+  // Microchip — 15 individual digit boxes
+  const chip = ((c.microchip as string) || '').replace(/\s/g, '')
+  for (let i = 0; i < MICROCHIP_DIGIT_FIELDS.length; i++) {
+    textFields[MICROCHIP_DIGIT_FIELDS[i]] = chip[i] || ''
+  }
+
+  return { textFields, checkboxFields }
+}
+
+export async function generateAustraliaIdDecl(caseId: string): Promise<
+  { ok: true; pdf: string; filename: string } | { ok: false; error: string }
+> {
+  const supabase = await createClient()
+  const { data: c, error } = await supabase.from('cases').select('*').eq('id', caseId).single()
+  if (error || !c) return { ok: false, error: error?.message || 'Case not found' }
+
+  const d = (c.data ?? {}) as Record<string, unknown>
+
+  // Load template
+  const templatePath = path.join(process.cwd(), 'data', 'pdf-templates', 'ID.pdf')
+  let templateBytes: Buffer
+  try {
+    templateBytes = await readFile(templatePath)
+  } catch {
+    try {
+      templateBytes = await readFile('C:\\Users\\off20\\OneDrive\\Desktop\\Form\\ID.pdf')
+    } catch {
+      return { ok: false, error: 'ID.pdf 템플릿을 찾을 수 없습니다' }
+    }
+  }
+
+  const pdfDoc = await PDFDocument.load(templateBytes)
+  const form = pdfDoc.getForm()
+
+  const { textFields, checkboxFields } = mapCaseToIdFields(c, d)
+
+  // Fill text fields
+  for (const [name, value] of Object.entries(textFields)) {
+    if (!value) continue
+    try {
+      const field = form.getTextField(name)
+      field.setText(value)
+    } catch {
+      // Field not found — skip
+    }
+  }
+
+  // Keep form fields editable — no flatten
+
+  const pdfBytes = await pdfDoc.save()
+
+  // Step 2: Use pypdf to check checkboxes (pdf-lib can't handle custom appearances)
+  const finalBytes = await fillCheckboxesWithPypdf(Buffer.from(pdfBytes), checkboxFields)
+
+  const base64 = finalBytes.toString('base64')
+
+  const petName = (c.pet_name_en || c.pet_name || 'pet').replace(/\s/g, '_')
+  const filename = `ID_Decl_${petName}.pdf`
+
+  return { ok: true, pdf: base64, filename }
+}
+
+// ── EU Certificate ──
+
+function mapCaseToEuFields(c: Record<string, unknown>, d: Record<string, unknown>) {
+  const f: Record<string, string> = {}
+
+  // I.1 Consignor
+  const firstName = (d.customer_first_name_en as string) || ''
+  const lastName = (d.customer_last_name_en as string) || ''
+  f.text_1fomr = `${firstName} ${lastName}`.trim()
+  f.text_4xkcj = (d.address_en as string) || ''
+  const phone = (d.phone as string) || ''
+  f.text_6kwtx = phone.replace(/^0(\d{2})(\d{4})(\d{4})$/, '+82-$1-$2-$3')
+
+  // I.28 Row1 — animal info
+  f.text_13yqbv = speciesToEn((d.species as string) || '')
+  f.text_12toqh = (d.breed_en as string) || ''
+  f.text_14zhbg = sexToEn((d.sex as string) || '')
+  f.text_15saus = toDdMmYyyy((d.birth_date as string) || '')
+  f.text_16iisx = ((c.microchip as string) || '').replace(/\s/g, '')
+  f.text_17wdwy = toDdMmYyyy((d.microchip_implant_date as string) || '')
+  f.text_18muyo = (d.color_en as string) || ''
+
+  // Vaccination Row1
+  f.text_33rsbf = ((c.microchip as string) || '').replace(/\s/g, '')
+  const rabiesDates = extractRabiesDates(d)
+  if (rabiesDates[0]) f.text_38gvmq = toDdMmYyyy(rabiesDates[0])
+
+  // Titer Row1
+  const titerRecords = (d.rabies_titer_records as Array<{ date?: string; value?: string }>) || []
+  if (titerRecords[0]) {
+    f.text_63grvq = toDdMmYyyy(titerRecords[0].date || '')
+    f.text_68llwb = titerRecords[0].value || ''
+  }
+
+  return f
+}
+
+export async function generateEuCert(caseId: string): Promise<
+  { ok: true; pdf: string; filename: string } | { ok: false; error: string }
+> {
+  const supabase = await createClient()
+  const { data: c, error } = await supabase.from('cases').select('*').eq('id', caseId).single()
+  if (error || !c) return { ok: false, error: error?.message || 'Case not found' }
+
+  const d = (c.data ?? {}) as Record<string, unknown>
+
+  const templatePath = path.join(process.cwd(), 'data', 'pdf-templates', '유럽.pdf')
+  let templateBytes: Buffer
+  try {
+    templateBytes = await readFile(templatePath)
+  } catch {
+    return { ok: false, error: 'EU 증명서 템플릿을 찾을 수 없습니다' }
+  }
+
+  const pdfDoc = await PDFDocument.load(templateBytes)
+  const form = pdfDoc.getForm()
+  const fields = mapCaseToEuFields(c, d)
+
+  for (const [name, value] of Object.entries(fields)) {
+    if (!value) continue
+    try { form.getTextField(name).setText(value) } catch {}
+  }
+
+  const pdfBytes = await pdfDoc.save()
+  const base64 = Buffer.from(pdfBytes).toString('base64')
+  const petName = (c.pet_name_en || c.pet_name || 'pet').replace(/\s/g, '_')
+  return { ok: true, pdf: base64, filename: `EU_Cert_${petName}.pdf` }
+}
+
+// ── UK Certificate ──
+
+function mapCaseToUkFields(c: Record<string, unknown>, d: Record<string, unknown>) {
+  const f: Record<string, string> = {}
+
+  // I.1 Consignor
+  const firstName = (d.customer_first_name_en as string) || ''
+  const lastName = (d.customer_last_name_en as string) || ''
+  f.text_71rzrp = `${firstName} ${lastName}`.trim()
+  f.text_72dbsc = (d.address_en as string) || ''
+  const phone = (d.phone as string) || ''
+  f.text_74pdju = phone.replace(/^0(\d{2})(\d{4})(\d{4})$/, '+82-$1-$2-$3')
+
+  // I.28 Row1 — animal info
+  f.text_11bcid = speciesToEn((d.species as string) || '')
+  f.text_12pslr = (d.breed_en as string) || ''
+  f.text_13eoyt = sexToEn((d.sex as string) || '')
+  f.text_14hsoy = toDdMmYyyy((d.birth_date as string) || '')
+  f.text_15rtix = ((c.microchip as string) || '').replace(/\s/g, '')
+  f.text_16bahe = toDdMmYyyy((d.microchip_implant_date as string) || '')
+  f.text_18ztyb = (d.color_en as string) || ''
+
+  // Vaccination Row1
+  f.text_34btpu = ((c.microchip as string) || '').replace(/\s/g, '')
+  const rabiesDates = extractRabiesDates(d)
+  if (rabiesDates[0]) f.text_35keld = toDdMmYyyy(rabiesDates[0])
+
+  // Titer Row1
+  const titerRecords = (d.rabies_titer_records as Array<{ date?: string; value?: string }>) || []
+  if (titerRecords[0]) {
+    f.text_40ecaj = toDdMmYyyy(titerRecords[0].date || '')
+    f.text_41snjc = titerRecords[0].value || ''
+  }
+
+  return f
+}
+
+export async function generateUkCert(caseId: string): Promise<
+  { ok: true; pdf: string; filename: string } | { ok: false; error: string }
+> {
+  const supabase = await createClient()
+  const { data: c, error } = await supabase.from('cases').select('*').eq('id', caseId).single()
+  if (error || !c) return { ok: false, error: error?.message || 'Case not found' }
+
+  const d = (c.data ?? {}) as Record<string, unknown>
+
+  const templatePath = path.join(process.cwd(), 'data', 'pdf-templates', '영국.pdf')
+  let templateBytes: Buffer
+  try {
+    templateBytes = await readFile(templatePath)
+  } catch {
+    return { ok: false, error: 'UK 증명서 템플릿을 찾을 수 없습니다' }
+  }
+
+  const pdfDoc = await PDFDocument.load(templateBytes)
+  const form = pdfDoc.getForm()
+  const fields = mapCaseToUkFields(c, d)
+
+  for (const [name, value] of Object.entries(fields)) {
+    if (!value) continue
+    try { form.getTextField(name).setText(value) } catch {}
+  }
+
+  const pdfBytes = await pdfDoc.save()
+  const base64 = Buffer.from(pdfBytes).toString('base64')
+  const petName = (c.pet_name_en || c.pet_name || 'pet').replace(/\s/g, '_')
+  return { ok: true, pdf: base64, filename: `UK_Cert_${petName}.pdf` }
+}
+
+/** Use pypdf to set checkbox values — works with non-standard appearance keys */
+async function fillCheckboxesWithPypdf(pdfBuffer: Buffer, checkboxNames: string[]): Promise<Buffer> {
+  if (checkboxNames.length === 0) return pdfBuffer
+
+  const tmpIn = path.join(os.tmpdir(), `pdf_cb_in_${Date.now()}.pdf`)
+  const tmpOut = path.join(os.tmpdir(), `pdf_cb_out_${Date.now()}.pdf`)
+
+  try {
+    await writeFile(tmpIn, pdfBuffer)
+
+    const script = `
+import sys, json
+from pypdf import PdfReader, PdfWriter
+from pypdf.generic import NameObject
+
+names = json.loads(sys.argv[1])
+src = sys.argv[2]
+dst = sys.argv[3]
+
+reader = PdfReader(src)
+writer = PdfWriter()
+writer.append(reader)
+
+acro = writer._root_object.get('/AcroForm', {})
+fields_list = acro.get('/Fields', [])
+
+for field_ref in fields_list:
+    field_obj = field_ref.get_object()
+    name = str(field_obj.get('/T', ''))
+    if name not in names:
+        continue
+    field_obj[NameObject('/V')] = NameObject('/Yes')
+    kids = field_obj.get('/Kids', [])
+    for kid_ref in kids:
+        kid = kid_ref.get_object()
+        kid[NameObject('/AS')] = NameObject('/Yes')
+
+with open(dst, 'wb') as f:
+    writer.write(f)
+`
+    await execFileAsync('py', [
+      '-c', script,
+      JSON.stringify(checkboxNames),
+      tmpIn,
+      tmpOut,
+    ])
+
+    return await readFile(tmpOut)
+  } finally {
+    try { await unlink(tmpIn) } catch {}
+    try { await unlink(tmpOut) } catch {}
+  }
 }

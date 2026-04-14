@@ -107,5 +107,327 @@
       "rabies_dates[1]": "rabies2_date",
       "rabies_dates[2]": "rabies3_date"
     }
+  },
+  "호주_ID": {
+    "source": "ID.pdf",
+    "description": "Identification Declaration for export of dogs/cats from Korea to Australia",
+    "fields": {
+      "page1_exporter": {
+        "text_1siug": "Name of animal (Page 1)",
+        "text_2gtck": "Date of birth dd/mm/yy (Page 1)",
+        "checkbox_12cuyn": "Male (entire) (Page 1)",
+        "checkbox_17haam": "Neutered male (Page 1)",
+        "checkbox_18zupd": "Female (entire) (Page 1)",
+        "checkbox_19arlr": "Neutered female (Page 1)",
+        "text_3gevi": "Breed/colour/size/marks (Page 1)"
+      },
+      "section_b": {
+        "text_4wsfw": "#4 Name of importer",
+        "text_5upip": "#5 Name of animal",
+        "text_6truz": "#6 Date of birth",
+        "checkbox_13gqmq": "#7 Male",
+        "checkbox_14sqah": "#7 Neutered male",
+        "checkbox_15rcpk": "#7 Female",
+        "checkbox_16igol": "#7 Neutered female",
+        "text_7gzzz": "#8 Description (breed, colour, size, marks)",
+        "text_8adnq": "#11 Site of microchip (pre-filled: Neck)"
+      },
+      "microchip_digits": {
+        "_note": "15 individual digit boxes for microchip number, left to right",
+        "text_22iegx": "digit 1",
+        "text_24isfk": "digit 2",
+        "text_25mzkv": "digit 3",
+        "text_26rkqp": "digit 4",
+        "text_27hnnh": "digit 5",
+        "text_28rfly": "digit 6",
+        "text_29scbr": "digit 7",
+        "text_30dyor": "digit 8",
+        "text_31ilkr": "digit 9",
+        "text_32vrnm": "digit 10",
+        "text_33etmo": "digit 11",
+        "text_34ugyw": "digit 12",
+        "text_35vmev": "digit 13",
+        "text_36wstb": "digit 14",
+        "text_37rwb": "digit 15"
+      }
+    },
+    "data_mapping": {
+      "_note": "DB cases → PDF field mapping",
+      "pet_name_en": ["text_1siug", "text_5upip"],
+      "birth_date:ddmmyy": ["text_2gtck", "text_6truz"],
+      "customer_name_en": "text_4wsfw",
+      "breed_en+color_en": ["text_3gevi", "text_7gzzz"],
+      "sex:male": ["checkbox_12cuyn", "checkbox_13gqmq"],
+      "sex:neutered_male": ["checkbox_17haam", "checkbox_14sqah"],
+      "sex:female": ["checkbox_18zupd", "checkbox_15rcpk"],
+      "sex:spayed_female": ["checkbox_19arlr", "checkbox_16igol"],
+      "microchip_digits": ["text_22iegx","text_24isfk","text_25mzkv","text_26rkqp","text_27hnnh","text_28rfly","text_29scbr","text_30dyor","text_31ilkr","text_32vrnm","text_33etmo","text_34ugyw","text_35vmev","text_36wstb","text_37rwb"]
+    }
+  },
+  "유럽_건강증명서": {
+    "source": "유럽.pdf",
+    "description": "EU Regulation 576/2013 Annex III - Non-commercial movement certificate (dogs/cats/ferrets)",
+    "fields": {
+      "part1_consignor_I1": {
+        "_note": "I.1 Consignor (보내는 사람 = 소유자)",
+        "text_1fomr": "I.1 Name (소유자 이름)",
+        "text_4xkcj": "I.1 Address line 1",
+        "text_5gosd": "I.1 Address line 2",
+        "text_6kwtx": "I.1 Tel (전화번호)"
+      },
+      "part1_consignee_I5": {
+        "_note": "I.5 Consignee (받는 사람 = 목적지 연락처)",
+        "text_7nccq": "I.5 Name",
+        "text_8fqzz": "I.5 Address line 1",
+        "text_9tish": "I.5 Address line 2 / Postal code",
+        "text_10edla": "I.5 Tel"
+      },
+      "part1_I28_animal_table": {
+        "_note": "I.28 동물 정보 테이블 (3행, 7열: Species/Breed/Sex/DOB/Transponder or tattoo/Date of marking/Colour)",
+        "row1": {
+          "text_13yqbv": "Row1 Species",
+          "text_12toqh": "Row1 Breed",
+          "text_14zhbg": "Row1 Sex",
+          "text_15saus": "Row1 Date of birth",
+          "text_16iisx": "Row1 Transponder/Tattoo",
+          "text_17wdwy": "Row1 Date of marking",
+          "text_18muyo": "Row1 Colour"
+        },
+        "row2": {
+          "text_19ykbc": "Row2 Species",
+          "text_100pkmj": "Row2 Breed",
+          "text_102cgbo": "Row2 Sex",
+          "text_104cxnw": "Row2 Date of birth",
+          "text_106xhre": "Row2 Transponder/Tattoo",
+          "text_108uoc": "Row2 Date of marking",
+          "text_110ogoj": "Row2 Colour"
+        },
+        "row3": {
+          "text_26gual": "Row3 Species",
+          "text_101neei": "Row3 Breed",
+          "text_103bdty": "Row3 Sex",
+          "text_105nuqt": "Row3 Date of birth",
+          "text_107vqla": "Row3 Transponder/Tattoo",
+          "text_109dzac": "Row3 Date of marking",
+          "text_111uyjn": "Row3 Colour"
+        }
+      },
+      "part1_misc": {
+        "text_11wrua": "I.28 Description of commodity (동물 설명 텍스트)",
+        "text_32oqph": "II.a Certificate reference No (증명서 번호)"
+      },
+      "vaccination_table": {
+        "_note": "광견병 예방접종 테이블 (3행, 8열: Transponder/Date/Vaccine name/Manufacturer/Batch/Validity from/Validity to/Date of sampling)",
+        "row1": {
+          "text_33rsbf": "Row1 Transponder",
+          "text_38gvmq": "Row1 Date of vaccination",
+          "text_43mfoe": "Row1 Vaccine name",
+          "text_48ittw": "Row1 Batch number",
+          "text_50yagc": "Row1 Validity from",
+          "text_58ivbr": "Row1 Validity to",
+          "text_63grvq": "Row1 Date of sampling",
+          "text_68llwb": "Row1 Result (IU/ml)"
+        },
+        "row2": {
+          "text_112qzbq": "Row2 Transponder",
+          "text_113mwex": "Row2 Date of vaccination",
+          "text_114zhhb": "Row2 Vaccine name",
+          "text_115yfps": "Row2 Batch number",
+          "text_116lxe": "Row2 Validity from",
+          "text_117tmmj": "Row2 Validity to",
+          "text_118znkl": "Row2 Date of sampling",
+          "text_119lftw": "Row2 Result (IU/ml)"
+        },
+        "row3": {
+          "text_120sigu": "Row3 Transponder",
+          "text_121aso": "Row3 Date of vaccination",
+          "text_122duch": "Row3 Vaccine name",
+          "text_123axcf": "Row3 Batch number",
+          "text_124ewj": "Row3 Validity from",
+          "text_125down": "Row3 Validity to",
+          "text_126igof": "Row3 Date of sampling",
+          "text_127tnpd": "Row3 Result (IU/ml)"
+        }
+      },
+      "treatment_table": {
+        "_note": "구충 처리 테이블 (3행, 4열: Transponder/Product name/Manufacturer/Date+Time)",
+        "row1": {
+          "text_73brgu": "Row1 Transponder",
+          "text_78mbys": "Row1 Product name",
+          "text_83ucjz": "Row1 Manufacturer",
+          "text_88lvnb": "Row1 Date and time"
+        },
+        "row2": {
+          "text_74rzok": "Row2 Transponder",
+          "text_79ypbe": "Row2 Product name",
+          "text_84rcmq": "Row2 Manufacturer",
+          "text_89vjdm": "Row2 Date and time"
+        },
+        "row3": {
+          "text_75dvkl": "Row3 Transponder",
+          "text_80gxyy": "Row3 Product name",
+          "text_85tlfm": "Row3 Manufacturer",
+          "text_90uhek": "Row3 Date and time"
+        }
+      },
+      "signature": {
+        "text_38rwyf": "Official vet name (서명란 이름)",
+        "text_39cucd": "Date of signature (서명 날짜)",
+        "text_96qovu": "Stamp/Seal area",
+        "text_93vbfh": "Page 5 - additional date field",
+        "text_2kyio": "Page 6 - Owner declaration name",
+        "text_1ehrq": "Page 6 - Owner declaration address",
+        "text_3mhff": "Page 6 - Owner declaration date"
+      }
+    },
+    "data_mapping": {
+      "_note": "DB cases → PDF 필드 매핑",
+      "customer_name_en": "text_1fomr",
+      "address_en": ["text_4xkcj", "text_5gosd"],
+      "phone": "text_6kwtx",
+      "species": "text_13yqbv",
+      "breed_en": "text_12toqh",
+      "sex_en": "text_14zhbg",
+      "birth_date:ddmmyyyy": "text_15saus",
+      "microchip": "text_16iisx",
+      "microchip_implant_date:ddmmyyyy": "text_17wdwy",
+      "color_en": "text_18muyo",
+      "rabies_dates[0]:ddmmyyyy": "text_38gvmq",
+      "rabies_titer_records[0].date:ddmmyyyy": "text_63grvq",
+      "rabies_titer_records[0].value": "text_68llwb"
+    }
+  },
+  "영국_건강증명서": {
+    "source": "영국.pdf",
+    "description": "UK/Great Britain Non-commercial movement certificate (dogs/cats/ferrets) with Echinococcus treatment",
+    "fields": {
+      "part1_consignor": {
+        "_note": "I.1 Consignor (보내는 사람)",
+        "text_71rzrp": "Name (소유자 이름)",
+        "text_72dbsc": "Address line 1",
+        "text_73ccfv": "Address line 2",
+        "text_74pdju": "Tel"
+      },
+      "part1_consignee": {
+        "_note": "I.5 Consignee (받는 사람)",
+        "text_1fsaw": "Name (= jinwon Lee 기입됨)",
+        "text_2rzkf": "Address line 1",
+        "text_3htrv": "Address line 2",
+        "text_4chdt": "Postal code / Tel"
+      },
+      "part1_route": {
+        "text_5zxzi": "I.7 Country of origin",
+        "text_6wpkp": "I.8 Region / I.9 Country of destination",
+        "text_7gvam": "I.10 Region of destination",
+        "text_8ahyh": "I.12 Place of destination",
+        "text_9krty": "I.14 Date of departure / I.15 Means of transport",
+        "text_10apcn": "I.18 Description of commodity"
+      },
+      "I28_animal_table": {
+        "_note": "I.28 동물 정보 테이블 (3행, 7열: Species/Breed/Sex/DOB/Transponder/Date of marking/Colour)",
+        "row1": {
+          "text_11bcid": "Row1 Species",
+          "text_12pslr": "Row1 Breed",
+          "text_13eoyt": "Row1 Sex",
+          "text_14hsoy": "Row1 Date of birth",
+          "text_15rtix": "Row1 Transponder/Tattoo",
+          "text_16bahe": "Row1 Date of marking",
+          "text_17smvj": "Row1 Marking type (= Transponder 기입됨)",
+          "text_18ztyb": "Row1 Colour"
+        },
+        "row2": {
+          "text_19oijb": "Row2 Species",
+          "text_20fojk": "Row2 Breed",
+          "text_21cctf": "Row2 Sex",
+          "text_22xhvo": "Row2 Date of birth",
+          "text_23yrkl": "Row2 Transponder/Tattoo",
+          "text_24wmpm": "Row2 Date of marking",
+          "text_25heke": "Row2 Colour"
+        },
+        "row3": {
+          "text_26jdst": "Row3 Species",
+          "text_27ozq": "Row3 Breed",
+          "text_28rijd": "Row3 Sex",
+          "text_29vjoo": "Row3 Date of birth",
+          "text_30yvak": "Row3 Transponder/Tattoo",
+          "text_31wtbc": "Row3 Date of marking",
+          "text_32sgec": "Row3 Colour"
+        }
+      },
+      "vaccination_table": {
+        "_note": "광견병 예방접종 테이블 (3행, 8열)",
+        "row1": {
+          "text_34btpu": "Row1 Transponder",
+          "text_35keld": "Row1 Date of vaccination",
+          "text_36wxvt": "Row1 Vaccine name",
+          "text_37nwvm": "Row1 Batch number",
+          "text_38zpoj": "Row1 Validity from",
+          "text_39dhti": "Row1 Validity to",
+          "text_40ecaj": "Row1 Date of sampling",
+          "text_41snjc": "Row1 Result (IU/ml)"
+        },
+        "row2": {
+          "text_42umhb": "Row2 Transponder",
+          "text_43pozb": "Row2 Date of vaccination",
+          "text_44svwo": "Row2 Vaccine name",
+          "text_45exvf": "Row2 Batch number",
+          "text_47puhg": "Row2 Validity from",
+          "text_48jdza": "Row2 Validity to",
+          "text_49xtkw": "Row2 Date of sampling",
+          "text_50uvh": "Row2 Result (IU/ml)"
+        },
+        "row3": {
+          "text_51hyfl": "Row3 Transponder",
+          "text_52typi": "Row3 Date of vaccination",
+          "text_53jxlw": "Row3 Vaccine name",
+          "text_54iduw": "Row3 Batch number",
+          "text_55ptoy": "Row3 Validity from",
+          "text_56wwkx": "Row3 Validity to",
+          "text_57ifnc": "Row3 Date of sampling",
+          "text_58wkjj": "Row3 Result (IU/ml)"
+        }
+      },
+      "echinococcus_treatment": {
+        "_note": "구충 처리 테이블 (3행, 4열: Transponder/Product/Date+Time/Vet name)",
+        "row1": {
+          "text_59vydy": "Row1 Transponder",
+          "text_60gbqd": "Row1 Product name + manufacturer",
+          "text_61kmze": "Row1 Date and time",
+          "text_62cabb": "Row1 Vet name/stamp/signature"
+        },
+        "row2": {
+          "text_63mbxs": "Row2 Transponder",
+          "text_64fwju": "Row2 Product name + manufacturer",
+          "text_65swte": "Row2 Date and time",
+          "text_66qqbe": "Row2 Vet name/stamp/signature"
+        },
+        "row3": {
+          "text_67qntq": "Row3 Transponder",
+          "text_68payc": "Row3 Product name + manufacturer",
+          "text_69agli": "Row3 Date and time",
+          "text_70ggxq": "Row3 Vet name/stamp/signature"
+        }
+      },
+      "signature": {
+        "text_33xloh": "Official vet qualification / title",
+        "text_75raua": "Date of signature"
+      }
+    },
+    "data_mapping": {
+      "_note": "DB cases → PDF 필드 매핑",
+      "customer_name_en": "text_71rzrp",
+      "address_en": "text_72dbsc",
+      "phone": "text_74pdju",
+      "species": "text_11bcid",
+      "breed_en": "text_12pslr",
+      "sex_en": "text_13eoyt",
+      "birth_date:ddmmyyyy": "text_14hsoy",
+      "microchip": "text_15rtix",
+      "microchip_implant_date:ddmmyyyy": "text_16bahe",
+      "color_en": "text_18ztyb",
+      "rabies_dates[0]:ddmmyyyy": "text_35keld",
+      "rabies_titer_records[0].date:ddmmyyyy": "text_40ecaj",
+      "rabies_titer_records[0].value": "text_41snjc"
+    }
   }
 }
