@@ -85,6 +85,15 @@ export const REGULAR_COLUMN_SPECS: FieldSpec[] = [
     order: 3,
   },
   {
+    key: 'departure_date',
+    storage: 'column',
+    label: '출국일',
+    type: 'date',
+    group: '절차정보',
+    groupOrder: 2,
+    order: -3, // before status (-2) and destination (-1)
+  },
+  {
     key: 'status',
     storage: 'column',
     label: 'Status',
@@ -166,6 +175,10 @@ const GROUP_REMAP: Record<string, string> = {
   '절차/검사': '절차정보',
   '절차/구충': '절차정보',
   메모: '기타정보',
+  // 할일 페이지 전용 필드 — 상세페이지에서는 숨김
+  '할일/검사': '__hidden__',
+  '할일/출국서류': '__hidden__',
+  '할일/수입신고': '__hidden__',
 }
 
 // Deterministic group ordering for the detail page.
@@ -210,6 +223,7 @@ export function buildFieldSpecs(defs: FieldDefinition[]): FieldSpec[] {
   const dataSpecs = defs
     .filter((d) => d.is_active)
     .map(fieldDefToSpec)
+    .filter((s) => s.group !== '__hidden__')
   const all = [...REGULAR_COLUMN_SPECS, DESTINATION_SPEC, ...dataSpecs]
   return all.sort((a, b) => {
     if (a.groupOrder !== b.groupOrder) return a.groupOrder - b.groupOrder

@@ -10,6 +10,7 @@ const REGULAR_COLUMNS = new Set([
   'pet_name_en',
   'microchip',
   'destination',
+  'departure_date',
   'status',
 ])
 

@@ -13,6 +13,7 @@ export interface CaseRow {
   pet_name: string | null
   pet_name_en: string | null
   destination: string | null
+  departure_date: string | null
   status: CaseStatus
   data: Record<string, unknown>
   created_at: string

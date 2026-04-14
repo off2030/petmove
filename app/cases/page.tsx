@@ -18,7 +18,7 @@ async function fetchAllCases(): Promise<CaseRow[]> {
     const { data, error } = await supabase
       .from('cases')
       .select(
-        'id, org_id, microchip, microchip_extra, customer_name, customer_name_en, pet_name, pet_name_en, destination, status, data, created_at, updated_at, deleted_at',
+        'id, org_id, microchip, microchip_extra, customer_name, customer_name_en, pet_name, pet_name_en, destination, departure_date, status, data, created_at, updated_at, deleted_at',
       )
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
