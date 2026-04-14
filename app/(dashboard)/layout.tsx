@@ -1,19 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
-import { CasesApp } from '@/components/cases/cases-app'
+import { CasesProvider } from '@/components/cases/cases-context'
+import { DashboardShell } from '@/components/layout/dashboard-shell'
 
 export const dynamic = 'force-dynamic'
 
-/**
- * Fetch every case row once. Supabase caps a single query at 1000 rows, so
- * we page through until we've got everything. 1,816 rows = 2 requests.
- */
 async function fetchAllCases(): Promise<CaseRow[]> {
   const supabase = await createClient()
   const all: CaseRow[] = []
   const batchSize = 1000
   let from = 0
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const { data, error } = await supabase
       .from('cases')
@@ -44,10 +40,19 @@ async function fetchFieldDefs(): Promise<FieldDefinition[]> {
   return (data ?? []) as FieldDefinition[]
 }
 
-export default async function CasesPage() {
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const [initialCases, fieldDefs] = await Promise.all([
     fetchAllCases(),
     fetchFieldDefs(),
   ])
-  return <CasesApp initialCases={initialCases} fieldDefs={fieldDefs} />
+
+  return (
+    <CasesProvider initialCases={initialCases} fieldDefs={fieldDefs}>
+      <DashboardShell />
+    </CasesProvider>
+  )
 }

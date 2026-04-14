@@ -1,8 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
-import { CasesProvider, useCases } from './cases-context'
+import { useCases } from './cases-context'
 import { formatDate } from '@/lib/utils'
 import { CaseList } from './case-list'
 import { CaseDetail, CaseDetailEmpty } from './case-detail'
@@ -167,16 +166,6 @@ function Inner() {
   )
 }
 
-export function CasesApp({
-  initialCases,
-  fieldDefs,
-}: {
-  initialCases: CaseRow[]
-  fieldDefs: FieldDefinition[]
-}) {
-  return (
-    <CasesProvider initialCases={initialCases} fieldDefs={fieldDefs}>
-      <Inner />
-    </CasesProvider>
-  )
+export function CasesApp() {
+  return <Inner />
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { CaseRow } from '@/lib/supabase/types'
+import { useCases } from '@/components/cases/cases-context'
 import { TodoTable, type TodoColumn } from './todo-table'
 
 const TABS = [
@@ -70,27 +70,9 @@ const COLUMNS_MAP: Record<TabId, TodoColumn[]> = {
   import_report: IMPORT_REPORT_COLUMNS,
 }
 
-export function TodosApp({ initialCases }: { initialCases: CaseRow[] }) {
+export function TodosApp() {
+  const { cases, updateLocalCaseField } = useCases()
   const [activeTab, setActiveTab] = useState<TabId>('inspection')
-  const [cases, setCases] = useState(initialCases)
-
-  const updateLocalField = (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => {
-    setCases((prev) =>
-      prev.map((c) => {
-        if (c.id !== caseId) return c
-        if (storage === 'column') {
-          return { ...c, [key]: value }
-        }
-        const data = { ...(c.data as Record<string, unknown>) }
-        if (value === null || value === undefined || value === '') {
-          delete data[key]
-        } else {
-          data[key] = value
-        }
-        return { ...c, data }
-      }),
-    )
-  }
 
   return (
     <div className="h-full flex flex-col px-8 py-6 4xl:px-12 4xl:py-8 6xl:px-16 6xl:py-10">
@@ -117,7 +99,7 @@ export function TodosApp({ initialCases }: { initialCases: CaseRow[] }) {
         <TodoTable
           cases={cases}
           columns={COLUMNS_MAP[activeTab]}
-          onUpdate={updateLocalField}
+          onUpdate={updateLocalCaseField}
         />
       </div>
     </div>

@@ -1,8 +1,11 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CaseRow } from '@/lib/supabase/types'
 import { updateCaseField } from '@/lib/actions/cases'
+
+const INITIAL_VISIBLE = 100
+const LOAD_MORE_STEP = 100
 
 export interface TodoColumn {
   key: string
@@ -134,6 +137,32 @@ export function TodoTable({
   columns: TodoColumn[]
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
 }) {
+  const [visible, setVisible] = useState(INITIAL_VISIBLE)
+  const sentinelRef = useRef<HTMLTableRowElement>(null)
+
+  // Reset visible count when cases or columns change
+  useEffect(() => {
+    setVisible(INITIAL_VISIBLE)
+  }, [cases.length, columns])
+
+  // Infinite scroll
+  useEffect(() => {
+    const node = sentinelRef.current
+    if (!node) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && visible < cases.length) {
+          setVisible((v) => Math.min(v + LOAD_MORE_STEP, cases.length))
+        }
+      },
+      { rootMargin: '200px' },
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [visible, cases.length])
+
+  const visibleCases = cases.slice(0, visible)
+
   return (
     <table className="w-full border-collapse text-sm">
       <thead>
@@ -150,7 +179,7 @@ export function TodoTable({
         </tr>
       </thead>
       <tbody>
-        {cases.map((row) => (
+        {visibleCases.map((row) => (
           <tr key={row.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
             {columns.map((col) => (
               <td
@@ -184,6 +213,13 @@ export function TodoTable({
             ))}
           </tr>
         ))}
+        {visible < cases.length && (
+          <tr ref={sentinelRef}>
+            <td colSpan={columns.length} className="text-center text-muted-foreground/50 py-2 text-xs">
+              {visible} / {cases.length}건
+            </td>
+          </tr>
+        )}
         {cases.length === 0 && (
           <tr>
             <td colSpan={columns.length} className="text-center text-muted-foreground py-8">
