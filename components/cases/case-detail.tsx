@@ -400,7 +400,6 @@ function MicrochipDateInput({ initial, onSave, onCancel }: {
   initial: string; onSave: (v: string) => void; onCancel: () => void
 }) {
   const ref = useRef<HTMLInputElement>(null)
-  const dateTypedRef = useRef(false)
   useEffect(() => { ref.current?.focus() }, [])
 
   function saveFromRef() {
@@ -411,13 +410,7 @@ function MicrochipDateInput({ initial, onSave, onCancel }: {
 
   return (
     <input ref={ref} type="date" min="1900-01-01" max="2100-12-31" defaultValue={initial}
-      onChange={(e) => {
-        const v = e.target.value
-        if (!v) { dateTypedRef.current = false; return }
-        if (dateTypedRef.current) { onSave(v); dateTypedRef.current = false } else { saveFromRef() }
-      }}
       onKeyDown={(e) => {
-        dateTypedRef.current = true
         if (e.key === 'Enter') { e.preventDefault(); saveFromRef() }
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}

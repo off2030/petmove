@@ -91,7 +91,7 @@ export const REGULAR_COLUMN_SPECS: FieldSpec[] = [
     type: 'date',
     group: '절차정보',
     groupOrder: 2,
-    order: -3, // before status (-2) and destination (-1)
+    order: 9999, // bottom of 절차정보
   },
   {
     key: 'status',

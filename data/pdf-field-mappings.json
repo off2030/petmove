@@ -1,111 +1,88 @@
 {
   "한국_예방접종증명서": {
     "source": "한국.pdf",
-    "description": "별지 제25호서식 - 예방접종 및 건강증명서",
+    "description": "별지 제25호서식 - 예방접종 및 건강증명서 (신양식)",
     "fields": {
       "owner": {
-        "owner_name": "소유자 이름 (Name)",
-        "owner_phone": "소유자 전화번호 (Telephone)",
-        "owner_address": "소유자 주소 (Address)"
+        "text_1glv": "소유자 이름 (Name)",
+        "text_71wojh": "소유자 전화번호 (Telephone)",
+        "text_72hnbw": "소유자 주소 (Address)"
       },
       "species": {
-        "species_dog": "개 (Dog) 체크박스",
-        "species_cat": "고양이 (Cat) 체크박스",
-        "species_other": "기타 (Other) 체크박스"
+        "checkbox_4ujzf": "개 (Dog) 체크박스",
+        "checkbox_5qdvw": "고양이 (Cat) 체크박스",
+        "checkbox_6ezru": "기타 (Other) 체크박스"
       },
       "sex": {
-        "sex_female": "암 (Female) 체크박스",
-        "sex_male": "수 (Male) 체크박스",
-        "sex_neutered_female": "중성화 암 (Neutered Female) 체크박스",
-        "sex_neutered_male": "중성화 수 (Neutered Male) 체크박스"
+        "checkbox_7andd": "암 (Female) 체크박스",
+        "checkbox_8sccm": "수 (Male) 체크박스",
+        "checkbox_9pny": "중성 암 (Neutered Female) 체크박스",
+        "checkbox_10rmua": "중성 수 (Neutered Male) 체크박스"
       },
       "animal_info": {
-        "age_years": "연령 (년)",
-        "age_months": "연령 (개월)",
-        "birth_date": "생년월일",
-        "color": "모색 (Color/Marks)",
-        "pet_name": "동물 이름 (Name)",
-        "breed": "품종 (Breed)"
+        "text_18yimo": "연령 (년)",
+        "text_19ugzc": "연령 (개월)",
+        "text_20xyny": "생년월일",
+        "text_73xblc": "모색 (Color/Marks)",
+        "text_76vxyj": "동물 이름 (Name)",
+        "text_75omqf": "품종 (Breed)"
       },
       "weight": {
-        "weight_under5": "5kg 이하 체크박스",
-        "weight_5to10": "5~10kg 체크박스",
-        "weight_over10": "10kg 이상 체크박스",
-        "weight_kg": "무게 (kg) 텍스트"
+        "checkbox_11rdzs": "5kg 이하 체크박스",
+        "checkbox_12gvbl": "5~10kg 체크박스",
+        "checkbox_13mffg": "10kg 이상 체크박스",
+        "text_23fqef": "무게 (kg) 텍스트"
       },
       "microchip": {
-        "microchip_no": "마이크로칩 번호",
-        "microchip_yes": "있음 (Y) 체크박스",
-        "microchip_none": "없음 (N) 체크박스",
-        "microchip_implant_date": "이식일 (Date of implantation)"
+        "text_24etkk": "마이크로칩 번호",
+        "checkbox_14wddu": "있음 (Y) 체크박스",
+        "checkbox_15njpa": "없음 (N) 체크박스",
+        "text_25uhns": "이식일 (Date of implantation)"
       },
       "rabies_vaccination": {
-        "_note": "3행: 제품명, 제조사, 제조번호, 접종일자, 면역유효기간(1Y/2Y/3Y)",
-        "rabies1_product": "1차 제품명",
-        "rabies1_manufacturer": "1차 제조사",
-        "rabies1_serial": "1차 제조번호",
-        "rabies1_date": "1차 접종일자",
-        "rabies1_1y": "1차 1년 체크",
-        "rabies1_2y": "1차 2년 체크",
-        "rabies1_3y": "1차 3년 체크",
-        "rabies2_product": "2차 제품명",
-        "rabies2_manufacturer": "2차 제조사",
-        "rabies2_serial": "2차 제조번호",
-        "rabies2_date": "2차 접종일자",
-        "rabies2_1y": "2차 1년 체크",
-        "rabies2_2y": "2차 2년 체크",
-        "rabies2_3y": "2차 3년 체크",
-        "rabies3_product": "3차 제품명",
-        "rabies3_manufacturer": "3차 제조사",
-        "rabies3_serial": "3차 제조번호",
-        "rabies3_date": "3차 접종일자",
-        "rabies3_1y": "3차 1년 체크",
-        "rabies3_2y": "3차 2년 체크",
-        "rabies3_3y": "3차 3년 체크"
+        "_note": "3행: 제품명 | 제조사 | 제조번호 | 접종일자 | 면역유효기간(1Y/2Y/3Y)",
+        "text_26hjhu": "1행 제품명", "text_32zofi": "1행 제조사", "text_38qdpg": "1행 제조번호", "text_44xgdx": "1행 접종일자",
+        "checkbox_53evfq": "1행 1Y", "checkbox_61xmsq": "1행 2Y", "checkbox_60xljq": "1행 3Y",
+        "text_27uhsa": "2행 제품명", "text_33ksgd": "2행 제조사", "text_39rvnx": "2행 제조번호", "text_45dikx": "2행 접종일자",
+        "checkbox_54mqll": "2행 1Y", "checkbox_58tfve": "2행 2Y", "checkbox_59mdyi": "2행 3Y",
+        "text_28bmgd": "3행 제품명", "text_34ufcq": "3행 제조사", "text_40rtgx": "3행 제조번호", "text_46djkq": "3행 접종일자",
+        "checkbox_55ssri": "3행 1Y", "checkbox_56oldu": "3행 2Y", "checkbox_57ekhj": "3행 3Y"
       },
       "other_vaccination": {
-        "_note": "3행: 제품종류, 제품명, 제조사, 제조번호, 접종일자",
-        "other1_type": "1행 제품종류",
-        "other1_product": "1행 제품명",
-        "other1_manufacturer": "1행 제조사",
-        "other1_serial": "1행 제조번호",
-        "other1_date": "1행 접종일자",
-        "other2_type": "2행 제품종류",
-        "other2_product": "2행 제품명",
-        "other2_manufacturer": "2행 제조사",
-        "other2_serial": "2행 제조번호",
-        "other2_date": "2행 접종일자",
-        "other3_type": "3행 제품종류",
-        "other3_product": "3행 제품명",
-        "other3_manufacturer": "3행 제조사",
-        "other3_serial": "3행 제조번호",
-        "other3_date": "3행 접종일자"
+        "_note": "3행: 제품종류 | 제품명 | 제조사 | 제조번호 | 접종일자 (기타접종+기생충처치 공용)",
+        "text_29miub": "1행 제품종류", "text_35vprf": "1행 제품명", "text_41uccy": "1행 제조사", "text_47ltvz": "1행 제조번호", "text_50kgza": "1행 접종일자",
+        "text_30fsan": "2행 제품종류", "text_36rodf": "2행 제품명", "text_42wlxj": "2행 제조사", "text_48qhcv": "2행 제조번호", "text_51zflp": "2행 접종일자",
+        "text_31xhe":  "3행 제품종류", "text_37sqay": "3행 제품명", "text_43bhsp": "3행 제조사", "text_49hnqf": "3행 제조번호", "text_52pdic": "3행 접종일자"
       },
       "issuer": {
-        "issue_date": "발급일 (Date of Issue)"
+        "text_63xua": "발급일 (Date of Issue)",
+        "text_66ovsr": "동물병원명 (Name of Animal Hospital)",
+        "text_64nlgd": "수의사 이름 (Name of Issuing Veterinarian)",
+        "text_67ajdb": "병원 전화번호 (Telephone)",
+        "text_68prxi": "병원 주소 (Address)"
       }
     },
     "data_mapping": {
       "_note": "DB cases 테이블 필드 → PDF 필드 매핑 (자동 문서 생성용)",
-      "customer_name": "owner_name",
-      "phone": "owner_phone",
-      "address_en": "owner_address",
-      "species:dog": "species_dog",
-      "species:cat": "species_cat",
-      "sex:female": "sex_female",
-      "sex:male": "sex_male",
-      "sex:neutered_female": "sex_neutered_female",
-      "sex:neutered_male": "sex_neutered_male",
-      "birth_date": "birth_date",
-      "color_en": "color",
-      "pet_name_en": "pet_name",
-      "breed_en": "breed",
-      "weight": "weight_kg",
-      "microchip": "microchip_no",
-      "microchip_implant_date": "microchip_implant_date",
-      "rabies_dates[0]": "rabies1_date",
-      "rabies_dates[1]": "rabies2_date",
-      "rabies_dates[2]": "rabies3_date"
+      "customer_name_en": "text_1glv",
+      "phone": "text_71wojh",
+      "address_en": "text_72hnbw",
+      "species:dog": "checkbox_4ujzf",
+      "species:cat": "checkbox_5qdvw",
+      "sex:female": "checkbox_7andd",
+      "sex:male": "checkbox_8sccm",
+      "sex:spayed_female": "checkbox_9pny",
+      "sex:neutered_male": "checkbox_10rmua",
+      "birth_date": "text_20xyny",
+      "color_en": "text_73xblc",
+      "pet_name_en": "text_76vxyj",
+      "breed_en": "text_75omqf",
+      "weight": "text_23fqef",
+      "microchip": "text_24etkk",
+      "microchip_implant_date": "text_25uhns",
+      "rabies_dates[0]": "text_44xgdx",
+      "rabies_dates[1]": "text_45dikx",
+      "rabies_dates[2]": "text_46djkq"
     }
   },
   "호주_ID": {
@@ -119,7 +96,7 @@
         "checkbox_17haam": "Neutered male (Page 1)",
         "checkbox_18zupd": "Female (entire) (Page 1)",
         "checkbox_19arlr": "Neutered female (Page 1)",
-        "text_3gevi": "Breed/colour/size/marks (Page 1)"
+        "text_3gevi": "Breed/colour/weight/marks (Page 1)"
       },
       "section_b": {
         "text_4wsfw": "#4 Name of importer",
@@ -129,7 +106,7 @@
         "checkbox_14sqah": "#7 Neutered male",
         "checkbox_15rcpk": "#7 Female",
         "checkbox_16igol": "#7 Neutered female",
-        "text_7gzzz": "#8 Description (breed, colour, size, marks)",
+        "text_7gzzz": "#8 Description (breed, colour, weight, marks)",
         "text_8adnq": "#11 Site of microchip (pre-filled: Neck)"
       },
       "microchip_digits": {
@@ -156,7 +133,7 @@
       "pet_name_en": ["text_1siug", "text_5upip"],
       "birth_date:ddmmyy": ["text_2gtck", "text_6truz"],
       "customer_name_en": "text_4wsfw",
-      "breed_en+color_en": ["text_3gevi", "text_7gzzz"],
+      "breed_en+color_en+weight": ["text_3gevi", "text_7gzzz"],
       "sex:male": ["checkbox_12cuyn", "checkbox_13gqmq"],
       "sex:neutered_male": ["checkbox_17haam", "checkbox_14sqah"],
       "sex:female": ["checkbox_18zupd", "checkbox_15rcpk"],
@@ -428,6 +405,93 @@
       "rabies_dates[0]:ddmmyyyy": "text_35keld",
       "rabies_titer_records[0].date:ddmmyyyy": "text_40ecaj",
       "rabies_titer_records[0].value": "text_41snjc"
+    }
+  },
+  "일본_FormAC": {
+    "source": "FormAC(PDF).pdf",
+    "description": "別記様式第４号の３ - 일본 수입용 개/고양이 건강증명서 (Form AC, NON-DESIGNATED REGION)",
+    "fields": {
+      "consignor": {
+        "text_3efqg": "Consignor Name (수출자 이름)",
+        "text_4jyll": "Consignor Address (수출자 주소)"
+      },
+      "consignee": {
+        "text_5izml": "Consignee Name (수입자 이름)",
+        "text_6igov": "Consignee Address (수입자 주소)"
+      },
+      "animal_identification": {
+        "text_7xwua": "Species (종: Dog/Cat)",
+        "text_8bjsb": "Breed (품종)",
+        "text_9vbhv": "Name (동물이름)",
+        "checkbox_11hy": "Male 체크박스",
+        "checkbox_10xihc": "Female 체크박스",
+        "checkbox_12agd": "Pet 체크박스",
+        "text_13tlnw": "Color (모색)",
+        "text_14wgoq": "Date of birth or Age (yyyy/mm/dd)",
+        "text_15oqtq": "Microchip number",
+        "text_16bkvn": "Date of identification (yyyy/mm/dd)"
+      },
+      "rabies_vaccination": {
+        "_note": "3행 테이블 (최신 접종부터): 접종일 / 유효기간(년) / 제품명+제조사",
+        "row1": {
+          "text_17hwqx": "Row1 Date of vaccination (yyyy/mm/dd)",
+          "text_22cuhd": "Row1 Vaccine effective period (years)",
+          "text_25mprj": "Row1 Name of product and manufacturer"
+        },
+        "row2": {
+          "text_18cib": "Row2 Date of vaccination",
+          "text_23iajt": "Row2 Vaccine effective period",
+          "text_26wtjh": "Row2 Name of product and manufacturer"
+        },
+        "row3": {
+          "text_21nfys": "Row3 Date of vaccination",
+          "text_24qrob": "Row3 Vaccine effective period",
+          "text_27couo": "Row3 Name of product and manufacturer"
+        }
+      },
+      "rabies_serology": {
+        "_note": "2행 테이블: 채혈일 / 항체가 / 검사기관(+서명자)",
+        "row1": {
+          "text_28mxll": "Row1 Date of blood drawing (yyyy/mm/dd)",
+          "text_30xdu": "Row1 Antibody titer (IU/ml)",
+          "text_32zqtv": "Row1 Designated laboratory (= Jinwon Lee 기입됨)",
+          "text_33irrn": "Row1 Lab signatory (= Jinwon Lee 기입됨)"
+        },
+        "row2": {
+          "text_29hexi": "Row2 Date of blood drawing",
+          "text_31hozo": "Row2 Antibody titer",
+          "text_40wtsb": "Row2 Designated laboratory (= Jinwon Lee 기입됨)",
+          "text_41ggfv": "Row2 Lab signatory (= Jinwon Lee 기입됨)"
+        }
+      },
+      "clinical_inspection": {
+        "text_36zit": "Date of inspection (yyyy/mm/dd)"
+      },
+      "endorsement": {
+        "text_37sjps": "Address of veterinarian",
+        "text_38aqfp": "Date of endorsement (yyyy/mm/dd)"
+      }
+    },
+    "data_mapping": {
+      "_note": "DB cases → PDF 필드 매핑 (날짜 형식 yyyy/mm/dd)",
+      "customer_name_en": "text_3efqg",
+      "address_en": "text_4jyll",
+      "species": "text_7xwua",
+      "breed_en": "text_8bjsb",
+      "pet_name_en": "text_9vbhv",
+      "sex:male": "checkbox_11hy",
+      "sex:female": "checkbox_10xihc",
+      "color_en": "text_13tlnw",
+      "birth_date:yyyymmdd_slash": "text_14wgoq",
+      "microchip": "text_15oqtq",
+      "microchip_implant_date:yyyymmdd_slash": "text_16bkvn",
+      "rabies_dates[0]:yyyymmdd_slash": "text_17hwqx",
+      "rabies_dates[1]:yyyymmdd_slash": "text_18cib",
+      "rabies_dates[2]:yyyymmdd_slash": "text_21nfys",
+      "rabies_titer_records[0].date:yyyymmdd_slash": "text_28mxll",
+      "rabies_titer_records[0].value": "text_30xdu",
+      "rabies_titer_records[1].date:yyyymmdd_slash": "text_29hexi",
+      "rabies_titer_records[1].value": "text_31hozo"
     }
   }
 }

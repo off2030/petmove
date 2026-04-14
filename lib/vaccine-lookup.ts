@@ -27,6 +27,8 @@ interface ProductsData {
   parasite_combo_cat: VaccineProduct[]
   parasite_external_dog: VaccineProduct[]
   parasite_external_cat: VaccineProduct[]
+  parasite_internal_dog: VaccineProduct[]
+  parasite_internal_cat: VaccineProduct[]
 }
 
 const DATA = productsData as unknown as ProductsData
@@ -102,7 +104,14 @@ export function lookupKennelCough(): VaccineProduct | null {
 
 export function lookupExternalParasite(species: 'dog' | 'cat', vaccinationDate: string): VaccineProduct | null {
   const list = species === 'dog' ? DATA.parasite_external_dog : DATA.parasite_external_cat
-  // 단일 항목이거나 date-range 둘 다 지원
+  if (list.length === 0) return null
+  if (list.length === 1) return list[0]
+  return lookupByDateRange(list, vaccinationDate)
+}
+
+export function lookupInternalParasite(species: 'dog' | 'cat', vaccinationDate: string): VaccineProduct | null {
+  const list = species === 'dog' ? DATA.parasite_internal_dog : DATA.parasite_internal_cat
+  if (list.length === 0) return null
   if (list.length === 1) return list[0]
   return lookupByDateRange(list, vaccinationDate)
 }
@@ -162,10 +171,12 @@ const CATEGORY_LABELS: Record<string, string> = {
   comprehensive_cat: '종합백신 (고양이)',
   civ: 'CIV 독감',
   kennel_cough: '켄넬코프 (강아지)',
-  parasite_combo_dog: '내외부 구충 (강아지)',
-  parasite_combo_cat: '내외부 구충 (고양이)',
+  parasite_combo_dog: '내외부 구충 합제 (강아지)',
+  parasite_combo_cat: '내외부 구충 합제 (고양이)',
   parasite_external_dog: '외부 구충 (강아지)',
   parasite_external_cat: '외부 구충 (고양이)',
+  parasite_internal_dog: '내부 구충 (강아지)',
+  parasite_internal_cat: '내부 구충 (고양이)',
 }
 
 export function getAllProducts(now = new Date()): FlatProduct[] {

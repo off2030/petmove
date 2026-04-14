@@ -2,14 +2,16 @@
   "_note": "백신/구충제 제품 정보. 접종일 또는 체중으로 lookup. 업데이트 시 이 파일만 편집하면 전 시스템 반영.",
   "_schema": {
     "rabies": "광견병 - 연도별 자동 매핑 (접종일의 연도로 조회). validity는 접종일+1년.",
-    "comprehensive_dog": "강아지 종합 - validUntil 기준. 접종일 <= validUntil 중 가장 빠른 것 선택",
-    "comprehensive_cat": "고양이 종합 - 동일",
-    "civ": "CIV 독감 - validUntil 기준",
+    "comprehensive_dog": "강아지 종합 - validUntil 기준. 접종일 <= validUntil 중 가장 빠른 것 선택. 면역유효기간 1년.",
+    "comprehensive_cat": "고양이 종합 - 동일. 면역유효기간 1년.",
+    "civ": "CIV 독감 - validUntil 기준. 면역유효기간 1년.",
     "kennel_cough": "켄넬코프 - 강아지 전용, 단일 batch",
-    "parasite_combo_dog": "내외부 구충 강아지 - 체중 범위로 조회",
-    "parasite_combo_cat": "내외부 구충 고양이 - 체중 범위로 조회",
-    "parasite_external_dog": "외부 구충 강아지 - validUntil 기준",
-    "parasite_external_cat": "외부 구충 고양이 - validUntil 기준"
+    "parasite_combo_dog": "내외부 구충 합제 강아지 (NexGard Spectra) - 체중 범위로 조회",
+    "parasite_combo_cat": "내외부 구충 합제 고양이 (NexGard Combo) - 체중 범위로 조회",
+    "parasite_external_dog": "외부 구충 강아지 (Frontline Plus) - validUntil 기준",
+    "parasite_external_cat": "외부 구충 고양이 (Frontline Spray) - validUntil 기준",
+    "parasite_internal_dog": "내부 구충 강아지 (Drontal Plus) - validUntil 기준",
+    "parasite_internal_cat": "내부 구충 고양이 - validUntil 기준"
   },
 
   "rabies": [
@@ -57,5 +59,12 @@
 
   "parasite_external_cat": [
     { "product": "Frontline Spray", "manufacturer": "Boehringer Ingelheim", "batch": null, "expiry": null, "_note": "batch/expiry 추후 입력" }
-  ]
+  ],
+
+  "parasite_internal_dog": [
+    { "validUntil": "2026-03-08", "product": "Drontal Plus", "manufacturer": "Bayer", "batch": "KV035S6", "expiry": "2026-03-08" },
+    { "validUntil": "2028-01-03", "product": "Drontal Plus", "manufacturer": "Bayer", "batch": "KVO53HV", "expiry": "2028-01-03" }
+  ],
+
+  "parasite_internal_cat": []
 }

@@ -10,7 +10,7 @@ import { createCase } from '@/lib/actions/create-case'
 import { deleteCase } from '@/lib/actions/delete-case'
 import { duplicateCase } from '@/lib/actions/duplicate-case'
 import { undoLastChange } from '@/lib/actions/cases'
-import { generateKoreaVetCert, generateAustraliaIdDecl, generateEuCert, generateUkCert } from '@/lib/actions/generate-pdf'
+import { generateKoreaVetCert, generateAustraliaIdDecl, generateEuCert, generateUkCert, generateJapanFormAC } from '@/lib/actions/generate-pdf'
 import { ArrowLeft } from 'lucide-react'
 
 const EU_COUNTRIES = new Set([
@@ -207,6 +207,25 @@ function Inner() {
                           className="text-muted-foreground/50 hover:text-foreground transition-colors"
                         >
                           UK증명서
+                        </button>
+                      )}
+                      {(selectedCase.destination?.includes('일본') || selectedCase.destination?.includes('하와이')) && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const result = await generateJapanFormAC(selectedCase.id)
+                            if (result.ok) {
+                              const link = document.createElement('a')
+                              link.href = `data:application/pdf;base64,${result.pdf}`
+                              link.download = result.filename
+                              link.click()
+                            } else {
+                              alert(result.error)
+                            }
+                          }}
+                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                        >
+                          FormAC
                         </button>
                       )}
                       <CaseHistory caseId={selectedCase.id} />

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
-import { lookupRabies, lookupComprehensive, lookupCiv } from '@/lib/vaccine-lookup'
+import { lookupRabies, lookupComprehensive, lookupCiv, lookupExternalParasite, lookupInternalParasite } from '@/lib/vaccine-lookup'
 
 interface VacRecord {
   date: string
@@ -39,17 +39,72 @@ function readRecords(data: Record<string, unknown>, dataKey: string, legacyKey?:
   return []
 }
 
-/** 라벨과 접종일로 자동 조회 힌트 생성 (상세페이지 보조 표시용) */
-function getLookupHint(label: string, date: string, species: string): string | null {
-  if (!date) return null
+/** 접종일 + 1년 → YYYY-MM-DD */
+function addOneYear(dateStr: string): string {
+  if (!dateStr) return ''
+  const parts = dateStr.split('-')
+  if (parts.length < 3) return ''
+  return `${parseInt(parts[0], 10) + 1}-${parts[1]}-${parts[2]}`
+}
+
+/** 라벨과 접종일로 lookup 데이터를 VacRecord 형태로 반환 (expanded view 힌트용) */
+function getDetailHints(label: string, date: string, species: string): Partial<VacRecord> {
+  if (!date) return {}
   const sp: 'dog' | 'cat' = species === 'cat' ? 'cat' : 'dog'
-  let result: { vaccine?: string; product?: string; batch: string | null } | null = null
-  if (label === '광견병') result = lookupRabies(date)
-  else if (label === '종합백신') result = lookupComprehensive(sp, date)
-  else if (label === 'CIV') result = lookupCiv(date)
-  if (!result) return null
-  const name = result.vaccine || result.product || ''
-  return result.batch ? `${name} · ${result.batch}` : name || null
+  if (label === '광견병') {
+    const r = lookupRabies(date)
+    if (!r) return {}
+    return {
+      product: r.vaccine || r.product || undefined,
+      manufacturer: r.manufacturer || undefined,
+      lot: r.batch || undefined,
+      expiry: r.expiry || undefined,
+      valid_until: addOneYear(date),
+    }
+  }
+  if (label === '종합백신') {
+    const r = lookupComprehensive(sp, date)
+    if (!r) return {}
+    return {
+      product: r.vaccine || r.product || undefined,
+      manufacturer: r.manufacturer || undefined,
+      lot: r.batch || undefined,
+      expiry: r.expiry || undefined,
+      valid_until: addOneYear(date),
+    }
+  }
+  if (label === 'CIV') {
+    const r = lookupCiv(date)
+    if (!r) return {}
+    return {
+      product: r.vaccine || r.product || undefined,
+      manufacturer: r.manufacturer || undefined,
+      lot: r.batch || undefined,
+      expiry: r.expiry || undefined,
+      valid_until: addOneYear(date),
+    }
+  }
+  if (label === '외부구충') {
+    const r = lookupExternalParasite(sp, date)
+    if (!r) return {}
+    return {
+      product: r.product || undefined,
+      manufacturer: r.manufacturer || undefined,
+      lot: r.batch || undefined,
+      expiry: r.expiry || undefined,
+    }
+  }
+  if (label === '내부구충') {
+    const r = lookupInternalParasite(sp, date)
+    if (!r) return {}
+    return {
+      product: r.product || undefined,
+      manufacturer: r.manufacturer || undefined,
+      lot: r.batch || undefined,
+      expiry: r.expiry || undefined,
+    }
+  }
+  return {}
 }
 
 export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey, hideValidUntil }: Props) {
@@ -160,17 +215,8 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                   type="button"
                   onClick={() => setEditIdx(i)}
                   className="text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer"
-                  title={getLookupHint(label, rec.date, species) ?? undefined}
                 >
                   {rec.date}
-                  {(() => {
-                    const hint = getLookupHint(label, rec.date, species)
-                    return hint ? (
-                      <span className="ml-2 text-xs text-muted-foreground/60 font-normal">
-                        {hint}
-                      </span>
-                    ) : null
-                  })()}
                 </button>
               )}
               <button
@@ -218,7 +264,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
 
           {sortedForExpand.map((rec, si) => {
             const oi = origIdx(si)
-            const hasDetails = rec.valid_until || rec.product || rec.manufacturer || rec.lot || rec.expiry
+            const hints = getDetailHints(label, rec.date, species)
             return (
               <div key={oi} className="group/item">
                 {/* Row 1: date + valid_until */}
@@ -240,6 +286,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                     <>
                       <DetailField
                         value={rec.valid_until}
+                        hint={hints.valid_until}
                         type="date"
                         placeholder="유효기간"
                         isEditing={detailEdit?.idx === oi && detailEdit?.field === 'valid_until'}
@@ -261,6 +308,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                 <div className="flex items-baseline gap-[10px] ml-2 mt-0.5">
                   <DetailField
                     value={rec.product}
+                    hint={hints.product}
                     placeholder="제품명"
                     isEditing={detailEdit?.idx === oi && detailEdit?.field === 'product'}
                     onStartEdit={() => setDetailEdit({ idx: oi, field: 'product' })}
@@ -271,6 +319,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                   <span className="text-muted-foreground/30 select-none">|</span>
                   <DetailField
                     value={rec.manufacturer}
+                    hint={hints.manufacturer}
                     placeholder="제조사"
                     isEditing={detailEdit?.idx === oi && detailEdit?.field === 'manufacturer'}
                     onStartEdit={() => setDetailEdit({ idx: oi, field: 'manufacturer' })}
@@ -281,6 +330,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                   <span className="text-muted-foreground/30 select-none">|</span>
                   <DetailField
                     value={rec.lot}
+                    hint={hints.lot}
                     placeholder="제품번호"
                     isEditing={detailEdit?.idx === oi && detailEdit?.field === 'lot'}
                     onStartEdit={() => setDetailEdit({ idx: oi, field: 'lot' })}
@@ -293,6 +343,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                       <span className="text-muted-foreground/30 select-none">|</span>
                       <DetailField
                         value={rec.expiry}
+                        hint={hints.expiry}
                         type="date"
                         placeholder="유효기간"
                         isEditing={detailEdit?.idx === oi && detailEdit?.field === 'expiry'}
@@ -315,8 +366,9 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
 
 /* ── Detail field (text or date, inline editable) ── */
 
-function DetailField({ value, type, placeholder, isEditing, onStartEdit, onSave, onCancel, saving }: {
+function DetailField({ value, hint, type, placeholder, isEditing, onStartEdit, onSave, onCancel, saving }: {
   value?: string | null
+  hint?: string | null
   type?: 'text' | 'date'
   placeholder: string
   isEditing: boolean
@@ -325,21 +377,26 @@ function DetailField({ value, type, placeholder, isEditing, onStartEdit, onSave,
   onCancel: () => void
   saving: boolean
 }) {
-  const display = value || '—'
-  const isEmpty = !value
+  const hasValue = !!value
+  const hasHint = !value && !!hint
+  const display = value || hint || placeholder
 
   if (isEditing) {
     return type === 'date' ? (
-      <DateInput initial={value || ''} onSave={(v) => onSave(v || null)} onCancel={onCancel} />
+      <DateInput initial={value || hint || ''} onSave={(v) => onSave(v || null)} onCancel={onCancel} />
     ) : (
-      <TextInput initial={value || ''} placeholder={placeholder} onSave={(v) => onSave(v || null)} onCancel={onCancel} saving={saving} />
+      <TextInput initial={value || hint || ''} placeholder={placeholder} onSave={(v) => onSave(v || null)} onCancel={onCancel} saving={saving} />
     )
   }
 
   return (
     <button type="button" onClick={onStartEdit}
-      className={cn('text-left rounded-md px-2 py-1 -mx-2 text-xs transition-colors hover:bg-accent/60 cursor-text', isEmpty && 'text-muted-foreground/40 italic')}>
-      {isEmpty ? placeholder : display}
+      className={cn(
+        'text-left rounded-md px-2 py-1 -mx-2 text-xs transition-colors hover:bg-accent/60 cursor-text',
+        !hasValue && !hasHint && 'text-muted-foreground/40 italic',
+        hasHint && 'text-muted-foreground/60',
+      )}>
+      {display}
     </button>
   )
 }
@@ -372,7 +429,6 @@ function DateInput({ initial, onSave, onCancel }: {
   onCancel: () => void
 }) {
   const ref = useRef<HTMLInputElement>(null)
-  const dateTypedRef = useRef(false)
 
   useEffect(() => { ref.current?.focus() }, [])
 
@@ -401,20 +457,7 @@ function DateInput({ initial, onSave, onCancel }: {
       min="1900-01-01"
       max="2100-12-31"
       defaultValue={initial}
-      onChange={(e) => {
-        const v = e.target.value
-        if (!v) { dateTypedRef.current = false; return }
-        const year = parseInt(v.split('-')[0], 10)
-        if (year < 1900 || year > 2100) { dateTypedRef.current = false; return }
-        if (dateTypedRef.current) {
-          onSave(v)
-          dateTypedRef.current = false
-        } else {
-          saveFromRef()
-        }
-      }}
       onKeyDown={(e) => {
-        dateTypedRef.current = true
         if (e.key === 'Enter') { e.preventDefault(); saveFromRef() }
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
