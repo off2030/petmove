@@ -3,7 +3,7 @@
 import { readFile, writeFile, unlink } from 'fs/promises'
 import { execFile } from 'child_process'
 import { promisify } from 'util'
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument, PDFDict, PDFName, PDFRef, PDFArray, PDFString, PDFHexString } from 'pdf-lib'
 import { createClient } from '@/lib/supabase/server'
 import {
   lookupRabies,
@@ -18,6 +18,35 @@ import path from 'path'
 import os from 'os'
 
 const execFileAsync = promisify(execFile)
+
+/**
+ * 영문 주소를 두 줄로 분리한다.
+ * line1 = 도로명/번지 (street), line2 = 동/시/도/국가.
+ * 분리 기준: 첫 콤마 이후가 행정 구역이라고 간주.
+ *  ex) "3, Gwanak-ro 29-gil, Gwanak-gu, Seoul, Republic of Korea"
+ *      → ["3, Gwanak-ro 29-gil", "Gwanak-gu, Seoul, Republic of Korea"]
+ *  ex) "123 Main St, Springfield, IL, USA"
+ *      → ["123 Main St", "Springfield, IL, USA"]
+ * 한국 도로명주소처럼 앞부분이 "번지, 도로명"으로 시작하는 경우엔 첫 두 토큰을 합쳐서 첫 줄로 둔다.
+ */
+function splitStreetAndCity(addr: string): [string, string] {
+  if (!addr) return ['', '']
+  const parts = addr.split(',').map(s => s.trim()).filter(Boolean)
+  if (parts.length <= 1) return [parts.join(', '), '']
+  // 첫 토큰이 순수 숫자면 "번지, 도로명" 형태 → 두 토큰을 합쳐 street로
+  const firstIsNumber = /^\d+(-\d+)?$/.test(parts[0])
+  const splitIdx = firstIsNumber && parts.length >= 3 ? 2 : 1
+  return [parts.slice(0, splitIdx).join(', '), parts.slice(splitIdx).join(', ')]
+}
+
+// EU/UK/AU 증명서의 표준 WinAnsi 폰트는 한글·비라틴 문자를 인코딩하지 못한다.
+// 영문 폼에 비-WinAnsi 문자가 섞여 들어오면 PDF 저장이 실패하므로 제거한다.
+function toWinAnsiSafe(v: string): string {
+  // WinAnsi 범위 밖 문자(기본적으로 U+00FF 초과)는 버린다.
+  const stripped = v.replace(/[^\x00-\xFF]/g, '')
+  // 연속 공백 정리
+  return stripped.replace(/\s+/g, ' ').trim()
+}
 
 // ── 병원 / 수의사 공통 상수 ──
 const CLINIC_NAME    = 'Lausanne Veterinary Medical Center'
@@ -179,12 +208,17 @@ function mapCaseToPdfFields(c: Record<string, unknown>, d: Record<string, unknow
   }
 
   // ── 발급기관 (병원 / 수의사) ──
-  textFields.text_63xua  = ((d.vet_visit_date as string) || '').replace(/-/g, '/')  // 발급일
+  // 주의: 실제 PDF 레이아웃상 text_63xua = 면허번호 칸, text_65lyvh = 발급일 칸
+  textFields.text_63xua  = VET_LICENSE    // 면허번호
   textFields.text_64nlgd = VET_NAME       // 수의사 이름
-  textFields.text_65lyvh = VET_LICENSE    // 면허번호
+  textFields.text_65lyvh = ((d.vet_visit_date as string) || '').replace(/-/g, '/')  // 발급일
   textFields.text_66ovsr = CLINIC_NAME    // 동물병원명
   textFields.text_67ajdb = CLINIC_PHONE   // 전화번호
-  textFields.text_68prxi = CLINIC_ADDRESS // 주소
+  // 주소: 3개 필드(text_68prxi/text_69gsnn/text_70fevy)에 각각 street / city+region+country / 빈 값
+  const [clinicStreet, clinicCity] = splitStreetAndCity(CLINIC_ADDRESS)
+  textFields.text_68prxi = clinicStreet
+  textFields.text_69gsnn = clinicCity
+  // text_70fevy는 비워둠 (사용자가 필요 시 수동 입력)
 
   return { textFields, checkboxFields }
 }
@@ -212,30 +246,145 @@ export async function generateKoreaVetCert(caseId: string): Promise<
 
   const { textFields, checkboxFields } = mapCaseToPdfFields(c, d)
 
-  // Fill text fields
+  // Fill text fields. 줄바꿈이 포함된 값은 multiline 플래그를 켜야 뷰어에서 \n이 반영된다.
   for (const [name, value] of Object.entries(textFields)) {
     if (!value) continue
     try {
       const field = form.getTextField(name)
+      if (value.includes('\n')) field.enableMultiline()
       field.setText(value)
     } catch {
       // Field not found — skip
     }
   }
 
-  // Keep form fields editable — no flatten
+  // 체크박스: pdf-lib low-level API로 직접 채움 (Python 의존성 제거).
+  // 'Yes'가 아닌 커스텀 on-state 키도 처리하기 위해 /AP/N 키를 동적으로 찾는다.
+  fillCheckboxesNative(pdfDoc, checkboxFields)
 
-  const pdfBytes = await pdfDoc.save()
+  // [KOREA-ONLY] 한국.pdf는 필드에 한글이 들어가므로 pdf-lib가 Helvetica로 외관을 재생성하면
+  // 빈칸으로 표시된다. updateFieldAppearances:false + NeedAppearances=true로 뷰어가 /V 값을
+  // 템플릿 폰트로 렌더링하도록 맡긴다. 영문 전용 PDF(EU/UK/AU/Japan)는 기본 save를 사용.
+  setNeedAppearances(pdfDoc)
+  const pdfBytes = await pdfDoc.save({ updateFieldAppearances: false })
 
-  // Use pypdf for checkboxes (pdf-lib can't handle custom appearances)
-  const finalBytes = await fillCheckboxesWithPypdf(Buffer.from(pdfBytes), checkboxFields)
-
-  const base64 = finalBytes.toString('base64')
+  const base64 = Buffer.from(pdfBytes).toString('base64')
 
   const petName = (c.pet_name_en || c.pet_name || 'pet').replace(/\s/g, '_')
-  const filename = `VetCert_${petName}.pdf`
+  const filename = `별지 제25호 서식_${petName}.pdf`
 
   return { ok: true, pdf: base64, filename }
+}
+
+/**
+ * AcroForm에 /NeedAppearances=true 를 세팅한다.
+ * pdf-lib가 appearance를 재생성하지 않도록 updateFieldAppearances:false로 저장할 때,
+ * 대신 PDF 뷰어가 /V 값 기반으로 필드 외관을 동적으로 렌더링하도록 지시한다.
+ */
+function setNeedAppearances(pdfDoc: PDFDocument): void {
+  const acroForm = pdfDoc.catalog.lookup(PDFName.of('AcroForm'))
+  if (!(acroForm instanceof PDFDict)) return
+  acroForm.set(PDFName.of('NeedAppearances'), pdfDoc.context.obj(true))
+}
+
+/**
+ * 텍스트 필드에 /V 값을 직접 세팅하고 /AP를 제거한다. 뷰어(Acrobat/Chrome)는 /NeedAppearances=true
+ * 시 /DA를 이용해 새로 외관을 그린다. pdf-lib가 Helvetica로 stale한 /AP를 만들어 버리면
+ * Acrobat에서 빈 화면으로 보이는 문제가 있어, /AP를 비우고 뷰어에게 렌더링을 맡긴다.
+ */
+function fillTextFieldsNative(pdfDoc: PDFDocument, textFields: Record<string, string>): void {
+  const wanted = new Map(Object.entries(textFields).filter(([, v]) => v))
+  if (wanted.size === 0) return
+
+  const acroFormRaw = pdfDoc.catalog.lookup(PDFName.of('AcroForm'))
+  if (!(acroFormRaw instanceof PDFDict)) return
+  const fieldsRaw = acroFormRaw.lookup(PDFName.of('Fields'))
+  if (!(fieldsRaw instanceof PDFArray)) return
+
+  const visit = (fieldRef: unknown): void => {
+    const field = fieldRef instanceof PDFRef
+      ? pdfDoc.context.lookup(fieldRef)
+      : fieldRef
+    if (!(field instanceof PDFDict)) return
+
+    const tNode = field.lookup(PDFName.of('T'))
+    const name = tNode
+      ? (tNode as { decodeText?: () => string }).decodeText?.() ?? String(tNode)
+      : ''
+    const cleanName = name.replace(/^\(|\)$/g, '')
+
+    if (wanted.has(cleanName)) {
+      const value = wanted.get(cleanName)!
+      field.set(PDFName.of('V'), PDFHexString.fromText(value))
+      // 각 위젯(자식 또는 필드 자체)의 /AP 제거 → 뷰어가 /DA + /V로 다시 그림
+      const kidsNode = field.lookup(PDFName.of('Kids'))
+      const widgetTargets = kidsNode instanceof PDFArray ? kidsNode.asArray() : [fieldRef]
+      for (const w of widgetTargets) {
+        const widget = w instanceof PDFRef ? pdfDoc.context.lookup(w) : w
+        if (widget instanceof PDFDict) widget.delete(PDFName.of('AP'))
+      }
+    }
+
+    // 자식 필드 재귀 처리 (이름 있는 /Kids)
+    const kidsArr = field.lookup(PDFName.of('Kids'))
+    if (kidsArr instanceof PDFArray) for (const kid of kidsArr.asArray()) visit(kid)
+  }
+
+  for (const ref of fieldsRaw.asArray()) visit(ref)
+}
+
+// (PDFString import는 향후 필요시 사용 — 현재는 PDFHexString 사용)
+void PDFString
+
+/**
+ * pdf-lib 네이티브로 체크박스를 채운다. 표준 'Yes' on-state가 아닌 PDF (예: '/1', '/On')도
+ * /AP/N 딕셔너리에서 '/Off'가 아닌 첫 키를 동적으로 찾아 사용한다.
+ */
+function fillCheckboxesNative(pdfDoc: PDFDocument, checkboxNames: string[]): void {
+  if (checkboxNames.length === 0) return
+  const wanted = new Set(checkboxNames)
+
+  const acroForm = pdfDoc.catalog.lookup(PDFName.of('AcroForm'))
+  if (!(acroForm instanceof PDFDict)) return
+  const fields = acroForm.lookup(PDFName.of('Fields'))
+  if (!(fields instanceof PDFArray)) return
+
+  for (const fieldRef of fields.asArray()) {
+    const field = fieldRef instanceof PDFRef
+      ? pdfDoc.context.lookup(fieldRef)
+      : fieldRef
+    if (!(field instanceof PDFDict)) continue
+
+    const tNode = field.lookup(PDFName.of('T'))
+    const name = tNode ? (tNode as { decodeText?: () => string; toString?: () => string }).decodeText?.()
+                       ?? String(tNode) : ''
+    const cleanName = name.replace(/^\(|\)$/g, '')
+    if (!wanted.has(cleanName)) continue
+
+    const kidsNode = field.lookup(PDFName.of('Kids'))
+    const kidArray = kidsNode instanceof PDFArray ? kidsNode.asArray() : [fieldRef]
+
+    let onKey = 'Yes'
+    for (const kidRef of kidArray) {
+      const kid = kidRef instanceof PDFRef
+        ? pdfDoc.context.lookup(kidRef)
+        : kidRef
+      if (!(kid instanceof PDFDict)) continue
+
+      const ap = kid.lookup(PDFName.of('AP'))
+      if (ap instanceof PDFDict) {
+        const n = ap.lookup(PDFName.of('N'))
+        if (n instanceof PDFDict) {
+          for (const k of n.keys()) {
+            const keyStr = k.toString().replace(/^\//, '')
+            if (keyStr !== 'Off') { onKey = keyStr; break }
+          }
+        }
+      }
+      kid.set(PDFName.of('AS'), PDFName.of(onKey))
+    }
+    field.set(PDFName.of('V'), PDFName.of(onKey))
+  }
 }
 
 // ── Australia ID Declaration ──
@@ -393,32 +542,20 @@ export async function generateAustraliaIdDecl(caseId: string): Promise<
   }
 
   const pdfDoc = await PDFDocument.load(templateBytes)
-  const form = pdfDoc.getForm()
 
   const { textFields, checkboxFields } = mapCaseToIdFields(c, d)
 
-  // Fill text fields
-  for (const [name, value] of Object.entries(textFields)) {
-    if (!value) continue
-    try {
-      const field = form.getTextField(name)
-      field.setText(value)
-    } catch {
-      // Field not found — skip
-    }
-  }
+  // 텍스트·체크박스를 모두 low-level API로 처리 — pdf-lib의 외관 재생성을 완전히 건너뛰어
+  // Acrobat Reader가 템플릿 /DA 기반으로 /V를 렌더링하게 한다 (NeedAppearances=true 필수).
+  fillTextFieldsNative(pdfDoc, textFields)
+  fillCheckboxesNative(pdfDoc, checkboxFields)
+  setNeedAppearances(pdfDoc)
+  const pdfBytes = await pdfDoc.save({ updateFieldAppearances: false })
 
-  // Keep form fields editable — no flatten
-
-  const pdfBytes = await pdfDoc.save()
-
-  // Step 2: Use pypdf to check checkboxes (pdf-lib can't handle custom appearances)
-  const finalBytes = await fillCheckboxesWithPypdf(Buffer.from(pdfBytes), checkboxFields)
-
-  const base64 = finalBytes.toString('base64')
+  const base64 = Buffer.from(pdfBytes).toString('base64')
 
   const petName = (c.pet_name_en || c.pet_name || 'pet').replace(/\s/g, '_')
-  const filename = `ID_Decl_${petName}.pdf`
+  const filename = `Identification Declaration_${petName}.pdf`
 
   return { ok: true, pdf: base64, filename }
 }
@@ -564,13 +701,14 @@ export async function generateEuCert(caseId: string): Promise<
 
   for (const [name, value] of Object.entries(fields)) {
     if (!value) continue
-    try { form.getTextField(name).setText(value) } catch {}
+    try { form.getTextField(name).setText(toWinAnsiSafe(value)) } catch {}
   }
 
+  // 영문 전용 템플릿 — pdf-lib 기본 save로 appearance를 생성하면 모든 뷰어에서 올바르게 표시된다.
   const pdfBytes = await pdfDoc.save()
   const base64 = Buffer.from(pdfBytes).toString('base64')
   const petName = (c.pet_name_en || c.pet_name || 'pet').replace(/\s/g, '_')
-  return { ok: true, pdf: base64, filename: `EU_Cert_${petName}.pdf` }
+  return { ok: true, pdf: base64, filename: `ANNEX III_${petName}.pdf` }
 }
 
 // ── UK Certificate ──
@@ -656,13 +794,14 @@ export async function generateUkCert(caseId: string): Promise<
 
   for (const [name, value] of Object.entries(fields)) {
     if (!value) continue
-    try { form.getTextField(name).setText(value) } catch {}
+    try { form.getTextField(name).setText(toWinAnsiSafe(value)) } catch {}
   }
 
+  // 영문 전용 템플릿 — pdf-lib 기본 save로 appearance를 생성하면 모든 뷰어에서 올바르게 표시된다.
   const pdfBytes = await pdfDoc.save()
   const base64 = Buffer.from(pdfBytes).toString('base64')
   const petName = (c.pet_name_en || c.pet_name || 'pet').replace(/\s/g, '_')
-  return { ok: true, pdf: base64, filename: `UK_Cert_${petName}.pdf` }
+  return { ok: true, pdf: base64, filename: `UK_${petName}.pdf` }
 }
 
 // ── Japan Form AC ──
@@ -796,9 +935,10 @@ export async function generateJapanFormAC(caseId: string): Promise<
   // Fill text fields
   for (const [name, value] of Object.entries(textFields)) {
     if (!value) continue
-    try { form.getTextField(name).setText(value) } catch {}
+    try { form.getTextField(name).setText(toWinAnsiSafe(value)) } catch {}
   }
 
+  // 영문 전용 템플릿 — pdf-lib 기본 save로 appearance를 생성하면 모든 뷰어에서 올바르게 표시된다.
   const pdfBytes = await pdfDoc.save()
 
   // Checkboxes via pypdf
@@ -859,14 +999,28 @@ for field_ref in fields_list:
 with open(dst, 'wb') as f:
     writer.write(f)
 `
-    await execFileAsync('py', [
-      '-c', script,
-      JSON.stringify(checkboxNames),
-      tmpIn,
-      tmpOut,
-    ])
-
-    return await readFile(tmpOut)
+    // Windows는 보통 `py`, 맥/리눅스는 `python3`/`python`. 없으면 체크박스 채우기를 건너뛰고
+    // 원본 PDF를 그대로 반환 (텍스트 필드는 이미 채워져 있음).
+    const candidates = ['py', 'python3', 'python']
+    let lastErr: unknown = null
+    for (const cmd of candidates) {
+      try {
+        await execFileAsync(cmd, [
+          '-c', script,
+          JSON.stringify(checkboxNames),
+          tmpIn,
+          tmpOut,
+        ])
+        return await readFile(tmpOut)
+      } catch (e) {
+        lastErr = e
+        // ENOENT면 다음 후보로, 실행은 됐는데 스크립트가 실패한 경우는 바로 중단
+        const code = (e as { code?: string }).code
+        if (code !== 'ENOENT') break
+      }
+    }
+    console.warn('[generate-pdf] Python(pypdf) 사용 불가 — 체크박스 채우기를 건너뜁니다:', lastErr)
+    return pdfBuffer
   } finally {
     try { await unlink(tmpIn) } catch {}
     try { await unlink(tmpOut) } catch {}

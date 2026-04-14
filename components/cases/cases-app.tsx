@@ -150,7 +150,7 @@ function Inner() {
                         }}
                         className="text-muted-foreground/50 hover:text-foreground transition-colors"
                       >
-                        증명서
+                        별지 제25호 서식
                       </button>
                       {selectedCase.destination?.includes('호주') && (
                         <button
@@ -168,7 +168,7 @@ function Inner() {
                           }}
                           className="text-muted-foreground/50 hover:text-foreground transition-colors"
                         >
-                          ID선언서
+                          Identification Declaration
                         </button>
                       )}
                       {isEuDestination(selectedCase.destination) && (
@@ -187,7 +187,7 @@ function Inner() {
                           }}
                           className="text-muted-foreground/50 hover:text-foreground transition-colors"
                         >
-                          EU증명서
+                          ANNEX III
                         </button>
                       )}
                       {selectedCase.destination?.includes('영국') && (
@@ -206,7 +206,7 @@ function Inner() {
                           }}
                           className="text-muted-foreground/50 hover:text-foreground transition-colors"
                         >
-                          UK증명서
+                          UK
                         </button>
                       )}
                       {(selectedCase.destination?.includes('일본') || selectedCase.destination?.includes('하와이')) && (
