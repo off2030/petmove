@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
+import { lookupRabies, lookupComprehensive, lookupCiv } from '@/lib/vaccine-lookup'
 
 interface VacRecord {
   date: string
@@ -38,10 +39,24 @@ function readRecords(data: Record<string, unknown>, dataKey: string, legacyKey?:
   return []
 }
 
+/** 라벨과 접종일로 자동 조회 힌트 생성 (상세페이지 보조 표시용) */
+function getLookupHint(label: string, date: string, species: string): string | null {
+  if (!date) return null
+  const sp: 'dog' | 'cat' = species === 'cat' ? 'cat' : 'dog'
+  let result: { vaccine?: string; product?: string; batch: string | null } | null = null
+  if (label === '광견병') result = lookupRabies(date)
+  else if (label === '종합백신') result = lookupComprehensive(sp, date)
+  else if (label === 'CIV') result = lookupCiv(date)
+  if (!result) return null
+  const name = result.vaccine || result.product || ''
+  return result.batch ? `${name} · ${result.batch}` : name || null
+}
+
 export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey, hideValidUntil }: Props) {
   const { updateLocalCaseField } = useCases()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const records = readRecords(data, dataKey, legacyKey)
+  const species = (data.species as string) || ''
 
   // Sort: newest first for expanded view
   const sortedForExpand = [...records].sort((a, b) => (b.date || '').localeCompare(a.date || ''))
@@ -145,8 +160,17 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                   type="button"
                   onClick={() => setEditIdx(i)}
                   className="text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer"
+                  title={getLookupHint(label, rec.date, species) ?? undefined}
                 >
                   {rec.date}
+                  {(() => {
+                    const hint = getLookupHint(label, rec.date, species)
+                    return hint ? (
+                      <span className="ml-2 text-xs text-muted-foreground/60 font-normal">
+                        {hint}
+                      </span>
+                    ) : null
+                  })()}
                 </button>
               )}
               <button

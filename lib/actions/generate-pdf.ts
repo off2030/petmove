@@ -5,6 +5,14 @@ import { execFile } from 'child_process'
 import { promisify } from 'util'
 import { PDFDocument } from 'pdf-lib'
 import { createClient } from '@/lib/supabase/server'
+import {
+  lookupRabies,
+  lookupComprehensive,
+  lookupCiv,
+  lookupKennelCough,
+  lookupParasiteCombo,
+  lookupExternalParasite,
+} from '@/lib/vaccine-lookup'
 import path from 'path'
 import os from 'os'
 
@@ -68,12 +76,60 @@ function mapCaseToPdfFields(c: Record<string, unknown>, d: Record<string, unknow
   }
   if (sexMap[d.sex as string]) checkboxFields.push(sexMap[d.sex as string])
 
-  // Rabies dates (may contain strings or {date} objects)
+  // Rabies dates — 연도별 lookup 자동 반영
   const rawRabies = (d.rabies_dates as unknown[]) || []
   const rabiesDates = rawRabies.map(v => typeof v === 'string' ? v : (v && typeof v === 'object' && 'date' in (v as Record<string,unknown>)) ? String((v as Record<string,unknown>).date ?? '') : '').filter(Boolean)
-  if (rabiesDates[0]) textFields.rabies1_date = rabiesDates[0].replace(/-/g, '/')
-  if (rabiesDates[1]) textFields.rabies2_date = rabiesDates[1].replace(/-/g, '/')
-  if (rabiesDates[2]) textFields.rabies3_date = rabiesDates[2].replace(/-/g, '/')
+  rabiesDates.slice(0, 3).forEach((date, i) => {
+    const n = i + 1
+    textFields[`rabies${n}_date`] = date.replace(/-/g, '/')
+    const rab = lookupRabies(date)
+    if (rab) {
+      textFields[`rabies${n}_product`] = rab.vaccine ?? ''
+      textFields[`rabies${n}_manufacturer`] = rab.manufacturer
+      textFields[`rabies${n}_serial`] = rab.batch ?? ''
+      // 광견병은 1년 면역 — 1Y 체크
+      checkboxFields.push(`rabies${n}_1y`)
+    }
+  })
+
+  // Other vaccines (종합/CIV/켄넬코프) — 3행 사용
+  const species = (d.species as string) === 'cat' ? 'cat' : 'dog'
+  let otherRow = 1
+  const fillOther = (type: string, date: string, product: string, manufacturer: string, serial: string) => {
+    if (otherRow > 3 || !date) return
+    textFields[`other${otherRow}_type`] = type
+    textFields[`other${otherRow}_date`] = date.replace(/-/g, '/')
+    if (product) textFields[`other${otherRow}_product`] = product
+    if (manufacturer) textFields[`other${otherRow}_manufacturer`] = manufacturer
+    if (serial) textFields[`other${otherRow}_serial`] = serial
+    otherRow++
+  }
+
+  // 종합백신 (array or single)
+  const compRaw = d.comprehensive_dates ?? (d.comprehensive ? [d.comprehensive] : [])
+  const compDates = (Array.isArray(compRaw) ? compRaw : []).map(v =>
+    typeof v === 'string' ? v : (v && typeof v === 'object' && 'date' in (v as Record<string,unknown>)) ? String((v as Record<string,unknown>).date ?? '') : ''
+  ).filter(Boolean) as string[]
+  if (compDates[0]) {
+    const c1 = lookupComprehensive(species, compDates[0])
+    fillOther('종합백신', compDates[0], c1?.vaccine ?? '', c1?.manufacturer ?? '', c1?.batch ?? '')
+  }
+
+  // CIV 독감
+  const civRaw = d.civ_dates ?? (d.civ ? [d.civ] : [])
+  const civDates = (Array.isArray(civRaw) ? civRaw : []).map(v =>
+    typeof v === 'string' ? v : (v && typeof v === 'object' && 'date' in (v as Record<string,unknown>)) ? String((v as Record<string,unknown>).date ?? '') : ''
+  ).filter(Boolean) as string[]
+  if (civDates[0]) {
+    const civ1 = lookupCiv(civDates[0])
+    fillOther('CIV', civDates[0], civ1?.vaccine ?? '', civ1?.manufacturer ?? '', civ1?.batch ?? '')
+  }
+
+  // 켄넬코프 (강아지 전용)
+  if (species === 'dog' && d.kennel_cough_date) {
+    const kc = lookupKennelCough()
+    fillOther('켄넬코프', String(d.kennel_cough_date), kc?.vaccine ?? '', kc?.manufacturer ?? '', kc?.batch ?? '')
+  }
 
   return { textFields, checkboxFields }
 }
@@ -292,37 +348,114 @@ export async function generateAustraliaIdDecl(caseId: string): Promise<
 
 // ── EU Certificate ──
 
+/** Split English address by commas, return [line1 (street+city), line2 (region+country)] */
+function splitAddressEn(addrEn: string): [string, string] {
+  if (!addrEn) return ['', '']
+  const parts = addrEn.split(',').map(s => s.trim()).filter(Boolean)
+  if (parts.length <= 3) return [parts.join(', '), '']
+  // Typical Korean: [street, gu, si, do, country] → split 3+rest
+  const splitIdx = parts.length >= 5 ? 3 : 2
+  const line1 = parts.slice(0, splitIdx).join(', ')
+  const line2 = parts.slice(splitIdx).join(', ')
+  return [line1, line2]
+}
+
+/** Add N years to YYYY-MM-DD date, return dd/mm/yyyy */
+function addYearsAndFormat(dateStr: string, years: number): string {
+  if (!dateStr) return ''
+  const parts = dateStr.split('-')
+  if (parts.length !== 3) return ''
+  const d = new Date(Number(parts[0]) + years, Number(parts[1]) - 1, Number(parts[2]))
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${dd}/${mm}/${yyyy}`
+}
+
+/** Destinations requiring anti-parasite treatment (tapeworm/Echinococcus) */
+const ANTI_PARASITE_COUNTRIES = ['영국', '핀란드', '아일랜드', '몰타', '노르웨이', '북아일랜드']
+function needsAntiParasite(destination: string | null | undefined): boolean {
+  if (!destination) return false
+  const dests = destination.split(',').map(s => s.trim())
+  return dests.some(d => ANTI_PARASITE_COUNTRIES.includes(d))
+}
+
 function mapCaseToEuFields(c: Record<string, unknown>, d: Record<string, unknown>) {
   const f: Record<string, string> = {}
 
-  // I.1 Consignor
+  const chipDigits = ((c.microchip as string) || '').replace(/\s/g, '')
+
+  // ── I.1 Consignor (owner, Korea) ──
   const firstName = (d.customer_first_name_en as string) || ''
   const lastName = (d.customer_last_name_en as string) || ''
   f.text_1fomr = `${firstName} ${lastName}`.trim()
-  f.text_4xkcj = (d.address_en as string) || ''
+  const [addrLine1, addrLine2] = splitAddressEn((d.address_en as string) || '')
+  f.text_4xkcj = addrLine1
+  f.text_5gosd = addrLine2
   const phone = (d.phone as string) || ''
   f.text_6kwtx = phone.replace(/^0(\d{2})(\d{4})(\d{4})$/, '+82-$1-$2-$3')
 
-  // I.28 Row1 — animal info
-  f.text_13yqbv = speciesToEn((d.species as string) || '')
-  f.text_12toqh = (d.breed_en as string) || ''
-  f.text_14zhbg = sexToEn((d.sex as string) || '')
-  f.text_15saus = toDdMmYyyy((d.birth_date as string) || '')
-  f.text_16iisx = ((c.microchip as string) || '').replace(/\s/g, '')
-  f.text_17wdwy = toDdMmYyyy((d.microchip_implant_date as string) || '')
-  f.text_18muyo = (d.color_en as string) || ''
+  // ── I.5 Consignee (destination contact) ──
+  // 이름, 해외주소+우편번호, 해외 전화번호. 데이터 없으면 비움 (구조만 유지)
+  f.text_7nccq = '' // Name — 추후
+  f.text_8fqzz = (d.address_overseas as string) || '' // 해외 주소
+  f.text_9tish = '' // Postal code — 추후
+  f.text_10edla = '' // 해외 전화번호 — 추후
 
-  // Vaccination Row1
-  f.text_33rsbf = ((c.microchip as string) || '').replace(/\s/g, '')
+  // ── I.18 Description of commodity ──
+  f.text_11wrua = speciesToEn((d.species as string) || '')
+
+  // ── I.28 Row1 — Identification of commodities ──
+  // 실제 PDF 컬럼 순서 (좌→우): Species | Sex | Colour | Breed | ID System | Transponder No | DOB
+  f.text_13yqbv = speciesToEn((d.species as string) || '')        // Species
+  f.text_12toqh = sexToEn((d.sex as string) || '')                // Sex
+  f.text_14zhbg = (d.color_en as string) || ''                    // Colour
+  f.text_15saus = (d.breed_en as string) || ''                    // Breed
+  f.text_16iisx = chipDigits ? 'Transponder' : ''                 // ID System
+  f.text_17wdwy = chipDigits                                      // Transponder Number
+  f.text_18muyo = toDdMmYyyy((d.birth_date as string) || '')      // Date of birth
+
+  // ── Vaccination Row1 ──
+  // 광견병 접종일로 제품 정보 자동 조회 (data/vaccine-products.json)
   const rabiesDates = extractRabiesDates(d)
-  if (rabiesDates[0]) f.text_38gvmq = toDdMmYyyy(rabiesDates[0])
+  f.text_33rsbf = chipDigits                                      // Transponder
+  if (rabiesDates[0]) {
+    const rab = lookupRabies(rabiesDates[0])
+    f.text_38gvmq = toDdMmYyyy(rabiesDates[0])                    // Date of vaccination
+    if (rab) {
+      f.text_43mfoe = `${rab.vaccine ?? ''} (${rab.manufacturer})`.trim()  // Vaccine name + manufacturer
+      f.text_48ittw = rab.batch ?? ''                             // Batch number
+    }
+    f.text_50yagc = toDdMmYyyy(rabiesDates[0])                    // Validity from
+    f.text_58ivbr = addYearsAndFormat(rabiesDates[0], 1)          // Validity to (접종일+1년)
+  }
 
-  // Titer Row1
+  // ── Blood sampling (Titer) Row1 ──
   const titerRecords = (d.rabies_titer_records as Array<{ date?: string; value?: string }>) || []
   if (titerRecords[0]) {
     f.text_63grvq = toDdMmYyyy(titerRecords[0].date || '')
     f.text_68llwb = titerRecords[0].value || ''
   }
+
+  // ── Anti-parasite treatment (영국/핀란드/아일랜드/몰타/노르웨이/북아일랜드만) ──
+  if (needsAntiParasite(c.destination as string)) {
+    f.text_73brgu = chipDigits // Row1 Transponder
+    // 구충 제품 자동 조회 (체중 + 종 기반)
+    const weight = Number(d.weight) || 0
+    const parasiteSp: 'dog' | 'cat' = (d.species as string) === 'cat' ? 'cat' : 'dog'
+    const parasite = weight > 0 ? lookupParasiteCombo(parasiteSp, weight) : null
+    if (parasite) {
+      f.text_78mbys = parasite.product ?? ''      // Product name
+      f.text_83ucjz = parasite.manufacturer       // Manufacturer
+      // Date and time (text_88lvnb)은 실제 투약일 데이터가 있으면 추후
+    }
+  }
+
+  // ── P6 Model of declaration ──
+  // 고객명 (undersigned), 마이크로칩번호
+  const customerName = (c.customer_name as string) || `${firstName} ${lastName}`.trim()
+  f.text_2kyio = customerName
+  f.text_1ehrq = chipDigits
 
   return f
 }
@@ -363,34 +496,53 @@ export async function generateEuCert(caseId: string): Promise<
 
 function mapCaseToUkFields(c: Record<string, unknown>, d: Record<string, unknown>) {
   const f: Record<string, string> = {}
+  const chipDigits = ((c.microchip as string) || '').replace(/\s/g, '')
 
-  // I.1 Consignor
+  // I.1 Consignor (보호자) — 주소 2줄 분리
   const firstName = (d.customer_first_name_en as string) || ''
   const lastName = (d.customer_last_name_en as string) || ''
   f.text_71rzrp = `${firstName} ${lastName}`.trim()
-  f.text_72dbsc = (d.address_en as string) || ''
+  const [addr1, addr2] = splitAddressEn((d.address_en as string) || '')
+  f.text_72dbsc = addr1
+  f.text_73ccfv = addr2
   const phone = (d.phone as string) || ''
   f.text_74pdju = phone.replace(/^0(\d{2})(\d{4})(\d{4})$/, '+82-$1-$2-$3')
 
-  // I.28 Row1 — animal info
-  f.text_11bcid = speciesToEn((d.species as string) || '')
-  f.text_12pslr = (d.breed_en as string) || ''
-  f.text_13eoyt = sexToEn((d.sex as string) || '')
-  f.text_14hsoy = toDdMmYyyy((d.birth_date as string) || '')
-  f.text_15rtix = ((c.microchip as string) || '').replace(/\s/g, '')
-  f.text_16bahe = toDdMmYyyy((d.microchip_implant_date as string) || '')
-  f.text_18ztyb = (d.color_en as string) || ''
+  // I.28 Row1 — EU 양식과 동일한 컬럼 재배치 적용
+  // Species | Sex | Colour | Breed | ID System | Transponder No | DOB
+  f.text_11bcid = speciesToEn((d.species as string) || '')        // Species
+  f.text_12pslr = sexToEn((d.sex as string) || '')                // Sex
+  f.text_13eoyt = (d.color_en as string) || ''                    // Colour
+  f.text_14hsoy = (d.breed_en as string) || ''                    // Breed
+  f.text_15rtix = chipDigits ? 'Transponder' : ''                 // ID System
+  f.text_16bahe = chipDigits                                      // Transponder Number
+  f.text_18ztyb = toDdMmYyyy((d.birth_date as string) || '')      // DOB
 
-  // Vaccination Row1
-  f.text_34btpu = ((c.microchip as string) || '').replace(/\s/g, '')
+  // Vaccination Row1 — 광견병 제품 자동 조회
   const rabiesDates = extractRabiesDates(d)
-  if (rabiesDates[0]) f.text_35keld = toDdMmYyyy(rabiesDates[0])
+  f.text_34btpu = chipDigits
+  if (rabiesDates[0]) {
+    f.text_35keld = toDdMmYyyy(rabiesDates[0])
+    // UK 템플릿에 Vaccine name/Manufacturer/Batch 필드가 있다면 추후 매핑
+    const rab = lookupRabies(rabiesDates[0])
+    if (rab) {
+      // UK cert 추가 필드는 템플릿 분석 후 매핑
+    }
+  }
 
   // Titer Row1
   const titerRecords = (d.rabies_titer_records as Array<{ date?: string; value?: string }>) || []
   if (titerRecords[0]) {
     f.text_40ecaj = toDdMmYyyy(titerRecords[0].date || '')
     f.text_41snjc = titerRecords[0].value || ''
+  }
+
+  // Echinococcus treatment — UK는 필수
+  const weightUk = Number(d.weight) || 0
+  const speciesUk: 'dog' | 'cat' = (d.species as string) === 'cat' ? 'cat' : 'dog'
+  const parasite = weightUk > 0 ? lookupParasiteCombo(speciesUk, weightUk) : null
+  if (parasite) {
+    // UK 템플릿의 treatment 테이블 필드는 추후 매핑 (현재 필드명 미확인)
   }
 
   return f

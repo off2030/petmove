@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import { TrashModal } from '@/components/cases/trash-modal'
+import { VaccineSection } from './vaccine-section'
 
 const TABS = [
   { id: 'company', label: '회사 정보' },
+  { id: 'vaccines', label: '약품 관리' },
   { id: 'data', label: '데이터 관리' },
 ] as const
 
@@ -110,6 +112,7 @@ export function SettingsApp() {
       </div>
 
       {activeTab === 'company' && <CompanySection />}
+      {activeTab === 'vaccines' && <VaccineSection />}
       {activeTab === 'data' && <DataSection />}
     </div>
   )

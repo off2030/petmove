@@ -1,8 +1,9 @@
 'use client'
 
 import { ClipboardList, CheckSquare, Settings, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { TrashModal } from '@/components/cases/trash-modal'
+import { countExpiringProducts } from '@/lib/vaccine-lookup'
 
 export type TabId = 'cases' | 'todos' | 'settings'
 
@@ -19,6 +20,7 @@ export function Sidebar({
   onTabChange: (tab: TabId) => void
 }) {
   const [showTrash, setShowTrash] = useState(false)
+  const expiringCount = useMemo(() => countExpiringProducts(), [])
 
   return (
     <>
@@ -58,14 +60,17 @@ export function Sidebar({
           <button
             type="button"
             onClick={() => onTabChange('settings')}
-            title="설정"
-            className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${
+            title={expiringCount > 0 ? `설정 — ${expiringCount}개 제품 만료 임박` : '설정'}
+            className={`relative w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${
               activeTab === 'settings'
                 ? 'bg-accent text-foreground'
                 : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
             }`}
           >
             <Settings size={20} />
+            {expiringCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-background" />
+            )}
           </button>
         </div>
       </aside>

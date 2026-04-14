@@ -1,0 +1,61 @@
+{
+  "_note": "백신/구충제 제품 정보. 접종일 또는 체중으로 lookup. 업데이트 시 이 파일만 편집하면 전 시스템 반영.",
+  "_schema": {
+    "rabies": "광견병 - 연도별 자동 매핑 (접종일의 연도로 조회). validity는 접종일+1년.",
+    "comprehensive_dog": "강아지 종합 - validUntil 기준. 접종일 <= validUntil 중 가장 빠른 것 선택",
+    "comprehensive_cat": "고양이 종합 - 동일",
+    "civ": "CIV 독감 - validUntil 기준",
+    "kennel_cough": "켄넬코프 - 강아지 전용, 단일 batch",
+    "parasite_combo_dog": "내외부 구충 강아지 - 체중 범위로 조회",
+    "parasite_combo_cat": "내외부 구충 고양이 - 체중 범위로 조회",
+    "parasite_external_dog": "외부 구충 강아지 - validUntil 기준",
+    "parasite_external_cat": "외부 구충 고양이 - validUntil 기준"
+  },
+
+  "rabies": [
+    { "year": 2023, "vaccine": "Rabisin", "manufacturer": "Boehringer Ingelheim", "batch": "E19623", "expiry": "2025-01-06" },
+    { "year": 2024, "vaccine": "Rabisin", "manufacturer": "Boehringer Ingelheim", "batch": "E59694", "expiry": "2025-01-31" },
+    { "year": 2025, "vaccine": "Rabisin", "manufacturer": "Boehringer Ingelheim", "batch": "F52512", "expiry": "2026-06-15" },
+    { "year": 2026, "vaccine": "Rabisin", "manufacturer": "Boehringer Ingelheim", "batch": "G98321", "expiry": "2027-10-07" }
+  ],
+
+  "comprehensive_dog": [
+    { "validUntil": "2025-06-07", "vaccine": "Canishot DHPPL", "manufacturer": "Komipharm", "batch": "323 DPL 02", "expiry": "2025-06-07" },
+    { "validUntil": "2026-04-09", "vaccine": "Canishot DHPPL", "manufacturer": "Komipharm", "batch": "324 EDPL 07", "expiry": "2026-04-09" },
+    { "validUntil": "2027-03-05", "vaccine": "Canishot DHPPL", "manufacturer": "Komipharm", "batch": "325 DPL 01", "expiry": "2027-03-05" }
+  ],
+
+  "comprehensive_cat": [
+    { "validUntil": "2025-10-13", "vaccine": "Nobivac 1-HCPCH", "manufacturer": "MSD Animal Health", "batch": "02071456C", "expiry": "2025-10-13" },
+    { "validUntil": "2026-10-02", "vaccine": "Nobivac 1-HCPCH", "manufacturer": "MSD Animal Health", "batch": "02071481B", "expiry": "2026-10-02" }
+  ],
+
+  "civ": [
+    { "validUntil": "2025-09-06", "vaccine": "CaniFlu-Max", "manufacturer": "KBNP", "batch": "123CIV07Z", "expiry": "2025-09-06" },
+    { "validUntil": "2026-04-29", "vaccine": "Fluvax H3N2", "manufacturer": "Woogene B&G", "batch": "324CNFL03", "expiry": "2026-04-29" }
+  ],
+
+  "kennel_cough": [
+    { "vaccine": "Vanguard B", "manufacturer": "Zoetis", "batch": "791956", "expiry": "2028-01-12" }
+  ],
+
+  "parasite_combo_dog": [
+    { "product": "NexGard", "manufacturer": "Boehringer Ingelheim", "weightMin": 1.35, "weightMax": 3.5,  "size": "1.35-3.5kg", "batch": "G97530", "expiry": "2027-06" },
+    { "product": "NexGard", "manufacturer": "Boehringer Ingelheim", "weightMin": 3.5,  "weightMax": 7.5,  "size": "3.5-7.5kg", "batch": "H22417", "expiry": "2027-09" },
+    { "product": "NexGard", "manufacturer": "Boehringer Ingelheim", "weightMin": 7.5,  "weightMax": 15,   "size": "7.5-15kg",  "batch": "H26328", "expiry": "2027-09" },
+    { "product": "NexGard", "manufacturer": "Boehringer Ingelheim", "weightMin": 15,   "weightMax": 30,   "size": "15-30kg",   "batch": "H11662", "expiry": "2027-07" }
+  ],
+
+  "parasite_combo_cat": [
+    { "product": "NexGard Combo", "manufacturer": "Boehringer Ingelheim", "weightMin": 0,   "weightMax": 2.5, "size": "~2.5kg",   "batch": "G21637A", "expiry": "2027-05" },
+    { "product": "NexGard Combo", "manufacturer": "Boehringer Ingelheim", "weightMin": 2.5, "weightMax": 7.5, "size": "2.5-7.5kg", "batch": "G58432E", "expiry": "2027-10" }
+  ],
+
+  "parasite_external_dog": [
+    { "validUntil": "2026-12-31", "product": "Frontline Plus", "manufacturer": "Boehringer Ingelheim", "batch": "F74992C", "expiry": "2026-12-31" }
+  ],
+
+  "parasite_external_cat": [
+    { "product": "Frontline Spray", "manufacturer": "Boehringer Ingelheim", "batch": null, "expiry": null, "_note": "batch/expiry 추후 입력" }
+  ]
+}
