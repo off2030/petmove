@@ -284,7 +284,12 @@ function DateInput({ initial, onSave, onCancel }: {
         if (e.key === 'Enter') { e.preventDefault(); saveFromRef() }
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
-      onBlur={() => setTimeout(() => saveFromRef(), 150)}
+      onBlur={() => setTimeout(() => {
+        // If value is empty, don't close — native date picker can briefly blur the input
+        // while user is still choosing. User can press Escape to cancel.
+        if (!(ref.current?.value ?? '').trim()) return
+        saveFromRef()
+      }, 150)}
       className="w-36 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
   )

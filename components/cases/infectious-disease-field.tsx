@@ -232,7 +232,10 @@ function DateInput({ initial, onSave, onCancel }: {
         if (e.key === 'Enter') { e.preventDefault(); saveFromRef() }
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
-      onBlur={() => setTimeout(() => saveFromRef(), 150)}
+      onBlur={() => setTimeout(() => {
+        if (!(ref.current?.value ?? '').trim()) return
+        saveFromRef()
+      }, 150)}
       className="w-36 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
   )
