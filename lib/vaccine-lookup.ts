@@ -127,6 +127,90 @@ export function lookupParasiteCombo(species: 'dog' | 'cat', weightKg: number): V
   ) ?? null
 }
 
+// ─── Parasite product registry (id-based) ───
+
+export type ParasiteKind = 'external' | 'internal' | 'combo'
+export interface ParasiteFamily {
+  id: string
+  name: string
+  manufacturer: string
+  species: 'dog' | 'cat'
+  kind: ParasiteKind
+}
+
+/**
+ * Authoritative list of parasiticide product families. The catalog stores
+ * batches/dates per id; this registry exposes the user-facing options.
+ * `kind: 'combo'` means the product treats both internal and external sites.
+ */
+export const PARASITE_FAMILIES: ParasiteFamily[] = [
+  { id: 'frontline_plus_dog',  name: 'Frontline Plus',  manufacturer: 'Boehringer Ingelheim', species: 'dog', kind: 'external' },
+  { id: 'frontline_spray_cat', name: 'Frontline Spray', manufacturer: 'Boehringer Ingelheim', species: 'cat', kind: 'external' },
+  { id: 'drontal_plus_dog',    name: 'Drontal Plus',    manufacturer: 'Bayer',                species: 'dog', kind: 'internal' },
+  { id: 'drontal_plus_cat',    name: 'Drontal Plus',    manufacturer: 'Bayer',                species: 'cat', kind: 'internal' },
+  { id: 'nexgard_spectra_dog',  name: 'NexGard Spectra',   manufacturer: 'Boehringer Ingelheim', species: 'dog', kind: 'combo' },
+  { id: 'nexgard_cat_combo_cat', name: 'NexGard Cat Combo', manufacturer: 'Boehringer Ingelheim', species: 'cat', kind: 'combo' },
+]
+
+export function getParasiteFamily(id: string): ParasiteFamily | null {
+  return PARASITE_FAMILIES.find(p => p.id === id) ?? null
+}
+
+/** Families applicable to a (species, kind) — defaults + combo (combo applies to both kinds). */
+export function listParasiteFamilies(species: 'dog' | 'cat', kind: 'external' | 'internal'): ParasiteFamily[] {
+  return PARASITE_FAMILIES.filter(p =>
+    p.species === species && (p.kind === kind || p.kind === 'combo')
+  )
+}
+
+interface ParasiteSection {
+  id?: string
+  validUntil?: string
+  product?: string
+  manufacturer?: string
+  batch?: string | null
+  expiry?: string | null
+  weightMin?: number
+  weightMax?: number
+}
+
+/**
+ * Resolve product/manufacturer/batch/expiry for a given product family id.
+ * Picks the right batch by date (non-combo) or weight (combo).
+ * Falls back to the family registry for product/manufacturer when no batch matches.
+ */
+export function lookupParasiteById(id: string, ctx: { date?: string; weightKg?: number }): VaccineProduct | null {
+  const family = getParasiteFamily(id)
+  if (!family) return null
+  const sectionKey = `parasite_${family.kind}_${family.species}` as keyof ProductsData
+  const list = (DATA[sectionKey] ?? []) as ParasiteSection[]
+  const matches = list.filter(p => p.id === id)
+
+  let pick: ParasiteSection | undefined
+  if (family.kind === 'combo' && ctx.weightKg) {
+    pick = matches.find(p =>
+      (p.weightMin === undefined || ctx.weightKg! >= p.weightMin) &&
+      (p.weightMax === undefined || ctx.weightKg! <= p.weightMax)
+    )
+  } else if (ctx.date) {
+    const candidates = matches
+      .filter(p => p.validUntil && ctx.date! <= p.validUntil)
+      .sort((a, b) => (a.validUntil! < b.validUntil! ? -1 : 1))
+    pick = candidates[0] ?? matches[0]
+  } else {
+    pick = matches[0]
+  }
+
+  // Use family info as a baseline so the dropdown selection at minimum
+  // shows the product/manufacturer name even when no batch entry exists.
+  return {
+    product: pick?.product ?? family.name,
+    manufacturer: pick?.manufacturer ?? family.manufacturer,
+    batch: pick?.batch ?? null,
+    expiry: pick?.expiry ?? null,
+  }
+}
+
 // ─── Expiry status ───
 
 export type ExpiryStatus = 'expired' | 'urgent' | 'warning' | 'ok' | 'unknown'

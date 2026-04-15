@@ -34,6 +34,59 @@ const FORM_RE_RENAMES = {
   text_31ndli: 'inspection_date',
 }
 
+const ID_DECL_RENAMES = {
+  // Page 1 — Exporter/Official header
+  text_1siug: 'animal_name',
+  text_2gtck: 'birth_date',
+  text_3gevi: 'breed_desc',
+  checkbox_12cuyn: 'sex_male_entire',
+  checkbox_34toyq: 'sex_neutered_male',
+  checkbox_35kupz: 'sex_female_entire',
+  checkbox_36xpuj: 'sex_neutered_female',
+  // Page 2 — Section B items 4-8
+  text_4wsfw: 'importer_name',
+  text_5upip: 'animal_name_b',
+  text_6truz: 'birth_date_b',
+  checkbox_37ltqi: 'sex_b_male',
+  checkbox_38gsco: 'sex_b_neutered_male',
+  checkbox_39pyxd: 'sex_b_female',
+  checkbox_40xvtw: 'sex_b_neutered_female',
+  text_7gzzz: 'description_b',
+  text_33hgor: 'microchip_site',
+  // Microchip 1 (primary) — 15 digits, left→right at y≈511
+  text_22iegx: 'chip1_01',
+  text_41dwso: 'chip1_02',
+  text_43nwcf: 'chip1_03',
+  text_44legb: 'chip1_04',
+  text_45gmsu: 'chip1_05',
+  text_46drhi: 'chip1_06',
+  text_47uukw: 'chip1_07',
+  text_48svhv: 'chip1_08',
+  text_49zlsr: 'chip1_09',
+  text_51rrxz: 'chip1_10',
+  text_52foqc: 'chip1_11',
+  text_53evhe: 'chip1_12',
+  text_54ohnu: 'chip1_13',
+  text_55unrk: 'chip1_14',
+  text_56qffx: 'chip1_15',
+  // Microchip 2 (secondary if present) — 15 digits, y≈461
+  text_57xji:  'chip2_01',
+  text_58rfwo: 'chip2_02',
+  text_59pc:   'chip2_03',
+  text_60wiua: 'chip2_04',
+  text_61cqzu: 'chip2_05',
+  text_62ybhe: 'chip2_06',
+  text_63atvl: 'chip2_07',
+  text_64uoih: 'chip2_08',
+  text_65reid: 'chip2_09',
+  text_66upid: 'chip2_10',
+  text_67tggs: 'chip2_11',
+  text_68vgww: 'chip2_12',
+  text_69uoih: 'chip2_13',
+  text_70qnlz: 'chip2_14',
+  text_71zrmh: 'chip2_15',
+}
+
 const AUTO_DA = '/Helv 0 Tf 0 g'
 
 async function processFile(inputPath, renames) {
@@ -79,6 +132,7 @@ async function processFile(inputPath, renames) {
 
 const results = []
 results.push(await processFile('data/pdf-templates/FormRE.pdf', FORM_RE_RENAMES))
+results.push(await processFile('data/pdf-templates/IdentificationDeclaration.pdf', ID_DECL_RENAMES))
 
 for (const r of results) {
   console.log(`\n[${r.file}] ${r.renamed}/${r.total} renamed, font→Auto`)

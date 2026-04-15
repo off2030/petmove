@@ -106,8 +106,8 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
                     <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="광견병" dataKey="rabies_dates" />
                     <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="CIV" dataKey="civ_dates" />
                     <RabiesTiterField caseId={caseRow.id} caseRow={caseRow} destination={caseRow.destination} />
-                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="외부구충" dataKey="external_parasite_dates" hideValidUntil />
-                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="내부구충" dataKey="internal_parasite_dates" hideValidUntil />
+                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="외부구충" dataKey="external_parasite_dates" hideValidUntil siblingKey="internal_parasite_dates" />
+                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="내부구충" dataKey="internal_parasite_dates" hideValidUntil siblingKey="external_parasite_dates" />
                     {(caseRow.destination?.includes('호주') || caseRow.destination?.includes('뉴질랜드') || caseRow.destination?.toLowerCase().includes('australia') || caseRow.destination?.toLowerCase().includes('new zealand')) && (
                       <InfectiousDiseaseField caseId={caseRow.id} caseRow={caseRow} destination={caseRow.destination} />
                     )}

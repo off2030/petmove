@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
-import { lookupRabies, lookupComprehensive, lookupCiv, lookupExternalParasite, lookupInternalParasite } from '@/lib/vaccine-lookup'
+import { lookupRabies, lookupComprehensive, lookupCiv, lookupExternalParasite, lookupInternalParasite, lookupParasiteById, listParasiteFamilies, getParasiteFamily } from '@/lib/vaccine-lookup'
 
 interface VacRecord {
   date: string
@@ -14,6 +14,8 @@ interface VacRecord {
   manufacturer?: string | null
   lot?: string | null
   expiry?: string | null
+  /** Parasiticide product family selected by user (overrides date-based lookup). */
+  product_id?: string | null
 }
 
 interface Props {
@@ -23,6 +25,8 @@ interface Props {
   dataKey: string
   legacyKey?: string
   hideValidUntil?: boolean // 구충 등 유효기간 불필요한 항목
+  /** Sibling parasite kind data key (for combo sync). e.g. external→internal */
+  siblingKey?: string
 }
 
 /** Normalize: string[] or VacRecord[] or legacy flat key → VacRecord[] */
@@ -107,11 +111,35 @@ function getDetailHints(label: string, date: string, species: string): Partial<V
   return {}
 }
 
-export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey, hideValidUntil }: Props) {
+/** Detail hints for a record that already has product_id picked. */
+function getDetailHintsById(productId: string, date: string, weightKg: number): Partial<VacRecord> {
+  const p = lookupParasiteById(productId, { date, weightKg })
+  if (!p) return {}
+  return {
+    product: p.product || undefined,
+    manufacturer: p.manufacturer || undefined,
+    lot: p.batch || undefined,
+    expiry: p.expiry || undefined,
+  }
+}
+
+/** label → 'external' | 'internal' | null (for parasiticide rows only) */
+function parasiteKindFromLabel(label: string): 'external' | 'internal' | null {
+  if (label === '외부구충') return 'external'
+  if (label === '내부구충') return 'internal'
+  return null
+}
+
+export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey, hideValidUntil, siblingKey }: Props) {
   const { updateLocalCaseField } = useCases()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const records = readRecords(data, dataKey, legacyKey)
   const species = (data.species as string) || ''
+  const weightKg = Number(String(data.weight ?? '').replace(/[^\d.]/g, '')) || 0
+  const parasiteKind = parasiteKindFromLabel(label)
+  const productOptions = parasiteKind && (species === 'dog' || species === 'cat')
+    ? listParasiteFamilies(species, parasiteKind)
+    : []
 
   // Sort: newest first for expanded view
   const sortedForExpand = [...records].sort((a, b) => (b.date || '').localeCompare(a.date || ''))
@@ -141,14 +169,50 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     if (r.ok) updateLocalCaseField(caseId, 'data', dataKey, val)
   }
 
+  /** Persist updates to the sibling parasite array (combo sync). */
+  async function saveSiblingRecords(next: VacRecord[]) {
+    if (!siblingKey) return
+    const val = next.length > 0 ? next : null
+    const r = await updateCaseField(caseId, 'data', siblingKey, val)
+    if (r.ok) updateLocalCaseField(caseId, 'data', siblingKey, val)
+  }
+
+  function readSiblingRecords(): VacRecord[] {
+    if (!siblingKey) return []
+    const raw = data[siblingKey]
+    if (!Array.isArray(raw)) return []
+    return raw.map(item => (typeof item === 'string' ? { date: item } : (item as VacRecord)))
+  }
+
   function deleteRecord(idx: number) {
+    const removed = records[idx]
     const next = records.filter((_, i) => i !== idx)
-    startSave(() => saveRecords(next))
+    startSave(async () => {
+      await saveRecords(next)
+      // If the deleted entry was a combo product, remove its mirror on the other side.
+      if (removed?.product_id && getParasiteFamily(removed.product_id)?.kind === 'combo' && siblingKey) {
+        const sib = readSiblingRecords()
+        const sibNext = sib.filter(r => !(r.date === removed.date && r.product_id === removed.product_id))
+        if (sibNext.length !== sib.length) await saveSiblingRecords(sibNext)
+      }
+    })
   }
 
   function updateRecordDate(idx: number, value: string) {
+    const target = records[idx]
+    const oldDate = target?.date
     const next = records.map((r, i) => i === idx ? { ...r, date: value } : r)
-    startSave(() => saveRecords(next))
+    startSave(async () => {
+      await saveRecords(next)
+      // Keep combo mirror's date in sync.
+      if (target?.product_id && getParasiteFamily(target.product_id)?.kind === 'combo' && siblingKey) {
+        const sib = readSiblingRecords()
+        const sibNext = sib.map(r =>
+          r.product_id === target.product_id && r.date === oldDate ? { ...r, date: value } : r,
+        )
+        if (JSON.stringify(sibNext) !== JSON.stringify(sib)) await saveSiblingRecords(sibNext)
+      }
+    })
     setEditIdx(null)
   }
 
@@ -156,6 +220,42 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     const next = records.map((r, i) => i === idx ? { ...r, [field]: value || null } : r)
     startSave(() => saveRecords(next))
     setDetailEdit(null)
+  }
+
+  /** Apply a parasite product family selection. Handles combo sync to sibling array. */
+  function updateProductId(idx: number, newProductId: string | null) {
+    const target = records[idx]
+    if (!target) return
+    const oldFamily = target.product_id ? getParasiteFamily(target.product_id) : null
+    const newFamily = newProductId ? getParasiteFamily(newProductId) : null
+
+    // Clear product/manufacturer/lot/expiry overrides so hints take over for the new product.
+    const next = records.map((r, i) => i === idx
+      ? { date: r.date, valid_until: r.valid_until ?? null, product_id: newProductId }
+      : r)
+
+    startSave(async () => {
+      await saveRecords(next)
+      if (!siblingKey) { setDetailEdit(null); return }
+
+      const sib = readSiblingRecords()
+      let sibNext = sib
+
+      // If the previous selection was combo, remove its mirror on the other side.
+      if (oldFamily?.kind === 'combo' && oldFamily.id !== newFamily?.id) {
+        sibNext = sibNext.filter(r => !(r.date === target.date && r.product_id === oldFamily.id))
+      }
+
+      // If the new selection is combo, ensure a mirror entry exists on the other side.
+      if (newFamily?.kind === 'combo') {
+        // Replace any existing entry with the same date on sibling (per "교체" policy).
+        sibNext = sibNext.filter(r => r.date !== target.date)
+        sibNext.push({ date: target.date, product_id: newFamily.id })
+      }
+
+      if (sibNext !== sib) await saveSiblingRecords(sibNext)
+      setDetailEdit(null)
+    })
   }
 
   function saveNewDate(value: string) {
@@ -264,7 +364,10 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
 
           {sortedForExpand.map((rec, si) => {
             const oi = origIdx(si)
-            const hints = getDetailHints(label, rec.date, species)
+            // If user picked a specific parasite product, hints come from that product family.
+            const hints = rec.product_id
+              ? getDetailHintsById(rec.product_id, rec.date, weightKg)
+              : getDetailHints(label, rec.date, species)
             return (
               <div key={oi} className="group/item">
                 {/* Row 1: date + valid_until */}
@@ -306,16 +409,26 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
 
                 {/* Row 2: 제품명 | 제조사 | 제품번호 | 유효기간 */}
                 <div className="flex items-baseline gap-[10px] ml-2 mt-0.5">
-                  <DetailField
-                    value={rec.product}
-                    hint={hints.product}
-                    placeholder="제품명"
-                    isEditing={detailEdit?.idx === oi && detailEdit?.field === 'product'}
-                    onStartEdit={() => setDetailEdit({ idx: oi, field: 'product' })}
-                    onSave={(v) => updateRecordField(oi, 'product', v)}
-                    onCancel={() => setDetailEdit(null)}
-                    saving={saving}
-                  />
+                  {productOptions.length > 0 ? (
+                    <ProductDropdown
+                      value={rec.product_id ?? null}
+                      defaultName={hints.product ?? null}
+                      options={productOptions}
+                      onChange={(id) => updateProductId(oi, id)}
+                      saving={saving}
+                    />
+                  ) : (
+                    <DetailField
+                      value={rec.product}
+                      hint={hints.product}
+                      placeholder="제품명"
+                      isEditing={detailEdit?.idx === oi && detailEdit?.field === 'product'}
+                      onStartEdit={() => setDetailEdit({ idx: oi, field: 'product' })}
+                      onSave={(v) => updateRecordField(oi, 'product', v)}
+                      onCancel={() => setDetailEdit(null)}
+                      saving={saving}
+                    />
+                  )}
                   <span className="text-muted-foreground/30 select-none">|</span>
                   <DetailField
                     value={rec.manufacturer}
@@ -361,6 +474,43 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
         </div>
       )}
     </div>
+  )
+}
+
+/* ── Parasite product dropdown ── */
+
+function ProductDropdown({ value, defaultName, options, onChange, saving }: {
+  value: string | null
+  defaultName: string | null
+  options: ReturnType<typeof listParasiteFamilies>
+  onChange: (id: string | null) => void
+  saving: boolean
+}) {
+  const selected = value ? options.find(o => o.id === value) : null
+  // Display: explicit pick = product name in normal color; default = "(자동)" hint
+  const display = selected
+    ? `${selected.name}${selected.kind === 'combo' ? ' (콤보)' : ''}`
+    : (defaultName ? `(자동: ${defaultName})` : '제품명')
+
+  return (
+    <select
+      value={value ?? ''}
+      onChange={(e) => onChange(e.target.value || null)}
+      disabled={saving}
+      className={cn(
+        'text-xs rounded-md px-2 py-1 -mx-2 bg-transparent border-0 cursor-pointer transition-colors hover:bg-accent/60 focus:outline-none focus:ring-1 focus:ring-ring max-w-[180px]',
+        !selected && 'text-muted-foreground/60',
+        !selected && !defaultName && 'italic text-muted-foreground/40',
+      )}
+      title={display}
+    >
+      <option value="">{defaultName ? `(자동: ${defaultName})` : '(자동)'}</option>
+      {options.map(opt => (
+        <option key={opt.id} value={opt.id}>
+          {opt.name}{opt.kind === 'combo' ? ' (콤보)' : ''}
+        </option>
+      ))}
+    </select>
   )
 }
 

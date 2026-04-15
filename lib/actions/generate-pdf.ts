@@ -22,3 +22,11 @@ async function generate(formKey: string, caseId: string): Promise<GeneratePdfRes
 export async function generateFormRE(caseId: string) {
   return generate('FormRE', caseId)
 }
+
+export async function generateIdentificationDeclaration(caseId: string) {
+  return generate('IdentificationDeclaration', caseId)
+}
+
+export async function generateForm25(caseId: string) {
+  return generate('Form25', caseId)
+}

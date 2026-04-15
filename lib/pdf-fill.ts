@@ -3,12 +3,12 @@
  * Reads case row, resolves each field value via the mapping's transform,
  * and fills the PDF form.
  */
-import { PDFDocument, PDFName, PDFBool } from 'pdf-lib'
+import { PDFDocument } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import mappings from '@/data/pdf-field-mappings.json'
-import { lookupRabies } from '@/lib/vaccine-lookup'
+import { lookupRabies, lookupExternalParasite, lookupInternalParasite, lookupComprehensive, lookupParasiteById, getParasiteFamily } from '@/lib/vaccine-lookup'
 import type { CaseRow } from '@/lib/supabase/types'
 
 type FieldMapping = {
@@ -45,6 +45,46 @@ function fmtDate(s: unknown): string {
   return s.replace(/-/g, '/')
 }
 
+/** YYYY-MM-DD → dd/mm/yyyy for Australian forms. */
+function fmtDateDMY(s: unknown): string {
+  if (typeof s !== 'string') return ''
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!m) return ''
+  return `${m[3]}/${m[2]}/${m[1]}`
+}
+
+/** Compute full years + remaining months between birth and today. */
+function ageParts(birth: unknown): { years: number; months: number } | null {
+  if (typeof birth !== 'string') return null
+  const m = birth.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!m) return null
+  const by = Number(m[1]); const bm = Number(m[2]) - 1; const bd = Number(m[3])
+  const now = new Date()
+  let years = now.getFullYear() - by
+  let months = now.getMonth() - bm
+  if (now.getDate() < bd) months -= 1
+  if (months < 0) { years -= 1; months += 12 }
+  if (years < 0) return null
+  return { years, months }
+}
+
+/** Format raw digit string into 010-XXXX-XXXX (10–11 digit Korean mobile). */
+function fmtPhoneDash(raw: unknown): string {
+  const s = String(raw ?? '').replace(/\D/g, '')
+  if (s.length === 11) return `${s.slice(0, 3)}-${s.slice(3, 7)}-${s.slice(7)}`
+  if (s.length === 10) return `${s.slice(0, 3)}-${s.slice(3, 6)}-${s.slice(6)}`
+  return s
+}
+
+/** Today's date as YYYY/MM/DD local. */
+function todayYMDSlash(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${y}/${mm}/${dd}`
+}
+
 /** rabies_dates: string[] 또는 {date, ...}[] 둘 다 지원 → 최신순 날짜 배열 */
 function sortedDesc(dates: unknown): string[] {
   if (!Array.isArray(dates)) return []
@@ -52,6 +92,108 @@ function sortedDesc(dates: unknown): string[] {
     .map(d => (typeof d === 'string' ? d : (d as { date?: string })?.date))
     .filter((d): d is string => typeof d === 'string' && !!d)
   return normalized.slice().sort((a, b) => b.localeCompare(a))
+}
+
+/** Same as sortedDesc but ascending — oldest first. */
+function sortedAsc(dates: unknown): string[] {
+  return sortedDesc(dates).slice().reverse()
+}
+
+interface ParasiteRecord {
+  date: string
+  product_id?: string | null
+}
+/** Sort parasite records (objects with date + optional product_id) by date desc. */
+function sortedDescRecords(arr: unknown): ParasiteRecord[] {
+  if (!Array.isArray(arr)) return []
+  return arr
+    .map(item => typeof item === 'string' ? { date: item } : (item as ParasiteRecord))
+    .filter(r => r && typeof r.date === 'string' && r.date)
+    .slice()
+    .sort((a, b) => b.date.localeCompare(a.date))
+}
+
+/**
+ * "기타 예방접종 및 기생충 처치내역" 슬롯 채우기용 시퀀스.
+ * 우선순위: 종합백신 → 외부구충 → 내부구충 → (추후) 내외부 합제.
+ * 각 타입당 가장 최근 1건만 픽업하고, 없는 타입은 스킵해서 앞으로 당김.
+ */
+interface OtherVacEntry {
+  type: 'Vaccination' | 'Parasiticide'
+  name: string
+  manufacturer: string
+  serial: string
+  date: string
+}
+function buildOtherVaccineSequence(data: Record<string, unknown>): OtherVacEntry[] {
+  const species = String(data.species ?? '').toLowerCase()
+  const hasSpecies = species === 'dog' || species === 'cat'
+  const weightKg = Number(String(data.weight ?? '').replace(/[^\d.]/g, '')) || 0
+  const out: OtherVacEntry[] = []
+
+  // 1. 종합백신 (Comprehensive — Vaccination)
+  const gv = sortedDesc(data.general_vaccine_dates)[0]
+  if (gv) {
+    const p = hasSpecies ? lookupComprehensive(species as 'dog' | 'cat', gv) : null
+    out.push({
+      type: 'Vaccination',
+      name: p?.vaccine || p?.product || '',
+      manufacturer: p?.manufacturer ?? '',
+      serial: p?.batch ?? '',
+      date: fmtDate(gv),
+    })
+  }
+
+  // 2/3. Parasiticides — pick latest of each side, dedupe combo across sides.
+  const buildParasite = (rec: ParasiteRecord, side: 'external' | 'internal'): OtherVacEntry => {
+    if (rec.product_id) {
+      const p = lookupParasiteById(rec.product_id, { date: rec.date, weightKg })
+      return {
+        type: 'Parasiticide',
+        name: p?.product || '',
+        manufacturer: p?.manufacturer ?? '',
+        serial: p?.batch ?? '',
+        date: fmtDate(rec.date),
+      }
+    }
+    const p = hasSpecies
+      ? (side === 'external'
+          ? lookupExternalParasite(species as 'dog' | 'cat', rec.date)
+          : lookupInternalParasite(species as 'dog' | 'cat', rec.date))
+      : null
+    return {
+      type: 'Parasiticide',
+      name: p?.product || p?.vaccine || '',
+      manufacturer: p?.manufacturer ?? '',
+      serial: p?.batch ?? '',
+      date: fmtDate(rec.date),
+    }
+  }
+
+  const seenComboKeys = new Set<string>()
+  const dedupKey = (rec: ParasiteRecord): string | null => {
+    if (!rec.product_id) return null
+    return getParasiteFamily(rec.product_id)?.kind === 'combo'
+      ? `${rec.product_id}@${rec.date}`
+      : null
+  }
+
+  const ext = sortedDescRecords(data.external_parasite_dates)[0]
+  if (ext) {
+    const k = dedupKey(ext)
+    if (k) seenComboKeys.add(k)
+    out.push(buildParasite(ext, 'external'))
+  }
+
+  const int = sortedDescRecords(data.internal_parasite_dates)[0]
+  if (int) {
+    const k = dedupKey(int)
+    if (!(k && seenComboKeys.has(k))) {
+      out.push(buildParasite(int, 'internal'))
+    }
+  }
+
+  return out
 }
 
 interface TiterRec { date: string | null; value: string | null; lab: string | null }
@@ -137,6 +279,119 @@ function resolveField(
   if (transform === 'checkbox:female') {
     const s = String(raw ?? '')
     return s === 'female' || s === 'spayed_female'
+  }
+  // Exact-match checkbox, e.g. `checkbox:eq:neutered_male`
+  const eqMatch = transform?.match(/^checkbox:eq:(.+)$/)
+  if (eqMatch) {
+    return String(raw ?? '') === eqMatch[1]
+  }
+
+  // Extract nth char of the raw string (for microchip digit-per-box fields)
+  const charMatch = transform?.match(/^char\[(\d+)\]$/)
+  if (charMatch) {
+    const s = String(raw ?? '')
+    return s[Number(charMatch[1])] ?? ''
+  }
+
+  // Extract nth digit of the raw string (spaces/dashes stripped first).
+  const digitMatch = transform?.match(/^digit\[(\d+)\]$/)
+  if (digitMatch) {
+    const s = String(raw ?? '').replace(/\D/g, '')
+    return s[Number(digitMatch[1])] ?? ''
+  }
+
+  // Australian date format: dd/mm/yyyy
+  if (transform === 'date_dmy') {
+    return fmtDateDMY(raw)
+  }
+
+  // Age in full years computed from birth date.
+  if (transform === 'age_years') {
+    const a = ageParts(raw)
+    return a ? String(a.years) : ''
+  }
+  if (transform === 'age_months') {
+    const a = ageParts(raw)
+    return a ? String(a.months) : ''
+  }
+
+  // Numeric comparison for weight range checkboxes etc.
+  // Examples: `cmp:num:lt:5`, `cmp:num:ge:10`, `cmp:num:between:5:10` (inclusive low, exclusive high).
+  const cmpMatch = transform?.match(/^cmp:num:(lt|le|gt|ge|eq|between|gt_lt):(.+)$/)
+  if (cmpMatch) {
+    const n = Number(String(raw ?? '').replace(/[^\d.]/g, ''))
+    if (!Number.isFinite(n)) return false
+    const op = cmpMatch[1]
+    const args = cmpMatch[2].split(':').map(Number)
+    if (op === 'lt') return n < args[0]
+    if (op === 'le') return n <= args[0]
+    if (op === 'gt') return n > args[0]
+    if (op === 'ge') return n >= args[0]
+    if (op === 'eq') return n === args[0]
+    if (op === 'between') return n >= args[0] && n < args[1]
+    if (op === 'gt_lt') return n > args[0] && n < args[1]
+    return false
+  }
+
+  // Phone formatting: raw digits → 010-XXXX-XXXX.
+  if (transform === 'phone_dash') {
+    return fmtPhoneDash(raw)
+  }
+
+  // Today's date (no source needed). Returns YYYY/MM/DD.
+  if (transform === 'today_ymd_slash') {
+    return todayYMDSlash()
+  }
+
+  // Boolean-coerce: truthy → checkbox on.
+  if (transform === 'checkbox:truthy') {
+    return !!(raw != null && raw !== '')
+  }
+  if (transform === 'checkbox:falsy') {
+    return !(raw != null && raw !== '')
+  }
+
+  // Boolean: does the nth entry of an array source exist?
+  // Uses ascending order (oldest first) to match Form25 vaccine row layout.
+  const hasMatch = transform?.match(/^has\[(\d+)\]$/)
+  if (hasMatch) {
+    return !!sortedAsc(raw)[Number(hasMatch[1])]
+  }
+
+  // Form25 "기타 예방접종" slot filler. `other_vacc_seq:<attr>[<n>]`.
+  // Pulls the nth entry of the compressed vaccine sequence built from
+  // comprehensive → external → internal (skipping missing types).
+  const seqMatch = transform?.match(/^other_vacc_seq:(type|name|manufacturer|serial|date)\[(\d+)\]$/)
+  if (seqMatch) {
+    const attr = seqMatch[1] as keyof OtherVacEntry
+    const idx = Number(seqMatch[2])
+    const entry = buildOtherVaccineSequence(data)[idx]
+    return entry ? entry[attr] : ''
+  }
+
+  // Vaccine attribute accessors for rabies / external / internal parasites.
+  // Pattern: `vaccine:<kind>:<attr>[<n>]` where
+  //   kind = rabies | ext_parasite | int_parasite
+  //   attr = name | manufacturer | serial | date
+  const vacMatch = transform?.match(/^vaccine:(rabies|ext_parasite|int_parasite):(name|manufacturer|serial|date)\[(\d+)\]$/)
+  if (vacMatch) {
+    const kind = vacMatch[1]
+    const attr = vacMatch[2]
+    const idx = Number(vacMatch[3])
+    // Oldest-first ordering: row 1 = first dose, row 2 = second, etc.
+    const date = sortedAsc(raw)[idx]
+    if (!date) return ''
+    if (attr === 'date') return fmtDate(date)
+    const species = String(data.species ?? '').toLowerCase()
+    let p: { vaccine?: string; product?: string; manufacturer?: string; batch?: string | null } | null = null
+    if (kind === 'rabies') p = lookupRabies(date)
+    else if (kind === 'ext_parasite' && (species === 'dog' || species === 'cat')) p = lookupExternalParasite(species, date)
+    else if (kind === 'int_parasite' && (species === 'dog' || species === 'cat')) p = lookupInternalParasite(species, date)
+    if (!p) return ''
+    if (attr === 'name') return p.vaccine || p.product || ''
+    if (attr === 'manufacturer') return p.manufacturer ?? ''
+    if (attr === 'serial') return p.batch ?? ''
+    return ''
   }
 
   // Text transforms
@@ -299,9 +554,11 @@ export async function fillPdf(formKey: string, caseRow: CaseRow): Promise<FillRe
   console.log(`  empty (no value resolved):`, empty)
   if (missing.length) console.warn(`  missing PDF fields:`, missing)
 
-  // Acrobat Reader: 앱리어런스 스트림 없는 필드도 렌더링하도록
-  const acroForm = pdfForm.acroForm.dict
-  acroForm.set(PDFName.of('NeedAppearances'), PDFBool.True)
+  // NOTE: NeedAppearances intentionally NOT set to True. Setting it makes
+  // Acrobat Reader ignore the appearance streams we built with NanumGothic
+  // and re-render using its own Helvetica, which drops Korean glyphs.
+  // updateFieldAppearances above generates valid appearance streams for all
+  // text fields, so Acrobat has everything it needs to render as-is.
 
   const bytes = await pdf.save()
   const base64 = Buffer.from(bytes).toString('base64')

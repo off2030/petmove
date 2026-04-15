@@ -10,7 +10,7 @@ import { createCase } from '@/lib/actions/create-case'
 import { deleteCase } from '@/lib/actions/delete-case'
 import { duplicateCase } from '@/lib/actions/duplicate-case'
 import { undoLastChange } from '@/lib/actions/cases'
-import { generateFormRE } from '@/lib/actions/generate-pdf'
+import { generateFormRE, generateIdentificationDeclaration, generateForm25 } from '@/lib/actions/generate-pdf'
 import { ArrowLeft } from 'lucide-react'
 
 function downloadBase64Pdf(base64: string, filename: string) {
@@ -23,6 +23,11 @@ function downloadBase64Pdf(base64: string, filename: string) {
 function isJapanDestination(dest: string | null | undefined): boolean {
   if (!dest) return false
   return dest.split(',').map(s => s.trim()).some(d => d === '일본' || d === '하와이')
+}
+
+function isAustraliaDestination(dest: string | null | undefined): boolean {
+  if (!dest) return false
+  return dest.split(',').map(s => s.trim()).some(d => d === '호주')
 }
 
 function Inner() {
@@ -147,6 +152,30 @@ function Inner() {
                           Form RE
                         </button>
                       )}
+                      {isAustraliaDestination(selectedCase.destination) && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const r = await generateIdentificationDeclaration(selectedCase.id)
+                            if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
+                            else alert(r.error)
+                          }}
+                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                        >
+                          ID Declaration
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const r = await generateForm25(selectedCase.id)
+                          if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
+                          else alert(r.error)
+                        }}
+                        className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                      >
+                        별지 25호
+                      </button>
                       <CaseHistory caseId={selectedCase.id} />
                       <button
                         type="button"
