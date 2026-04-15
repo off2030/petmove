@@ -1,17 +1,18 @@
 {
   "_note": "백신/구충제 제품 정보. 접종일 또는 체중으로 lookup. 업데이트 시 이 파일만 편집하면 전 시스템 반영.",
   "_schema": {
-    "rabies": "광견병 - 연도별 자동 매핑 (접종일의 연도로 조회). validity는 접종일+1년.",
-    "comprehensive_dog": "강아지 종합 - validUntil 기준. 접종일 <= validUntil 중 가장 빠른 것 선택. 면역유효기간 1년.",
-    "comprehensive_cat": "고양이 종합 - 동일. 면역유효기간 1년.",
-    "civ": "CIV 독감 - validUntil 기준. 면역유효기간 1년.",
+    "_terminology": "expiry = 제품(바이알)의 실제 유효기한. 면역 유효기간(valid_until)은 접종일+1년으로 record 단계에서 계산하며 카탈로그 필드가 아님.",
+    "rabies": "광견병 - 연도별 자동 매핑 (접종일의 연도로 조회).",
+    "comprehensive_dog": "강아지 종합 - expiry 기준. 접종일 <= expiry 중 가장 빠른 것 선택.",
+    "comprehensive_cat": "고양이 종합 - 동일.",
+    "civ": "CIV 독감 - expiry 기준.",
     "kennel_cough": "켄넬코프 - 강아지 전용, 단일 batch",
     "parasite_combo_dog": "내외부 구충 합제 강아지 (NexGard Spectra) - 체중 범위로 조회",
     "parasite_combo_cat": "내외부 구충 합제 고양이 (NexGard Cat Combo) - 체중 범위로 조회",
-    "parasite_external_dog": "외부 구충 강아지 (Frontline Plus) - validUntil 기준",
-    "parasite_external_cat": "외부 구충 고양이 (Frontline Spray) - validUntil 기준",
-    "parasite_internal_dog": "내부 구충 강아지 (Drontal Plus) - validUntil 기준",
-    "parasite_internal_cat": "내부 구충 고양이 - validUntil 기준"
+    "parasite_external_dog": "외부 구충 강아지 (Frontline Plus) - expiry 기준",
+    "parasite_external_cat": "외부 구충 고양이 (Frontline Spray) - expiry 기준",
+    "parasite_internal_dog": "내부 구충 강아지 (Drontal Plus) - expiry 기준",
+    "parasite_internal_cat": "내부 구충 고양이 - expiry 기준"
   },
 
   "rabies": [
@@ -22,19 +23,19 @@
   ],
 
   "comprehensive_dog": [
-    { "validUntil": "2025-06-07", "vaccine": "Canishot DHPPL", "manufacturer": "Komipharm", "batch": "323 DPL 02", "expiry": "2025-06-07" },
-    { "validUntil": "2026-04-09", "vaccine": "Canishot DHPPL", "manufacturer": "Komipharm", "batch": "324 EDPL 07", "expiry": "2026-04-09" },
-    { "validUntil": "2027-03-05", "vaccine": "Canishot DHPPL", "manufacturer": "Komipharm", "batch": "325 DPL 01", "expiry": "2027-03-05" }
+    { "vaccine": "Canishot DHPPL", "manufacturer": "CAVAC", "batch": "323 DPL 02", "expiry": "2025-06-07" },
+    { "vaccine": "Canishot DHPPL", "manufacturer": "CAVAC", "batch": "324 EDPL 07", "expiry": "2026-04-09" },
+    { "vaccine": "Canishot DHPPL", "manufacturer": "CAVAC", "batch": "325 DPL 01", "expiry": "2027-03-05" }
   ],
 
   "comprehensive_cat": [
-    { "validUntil": "2025-10-13", "vaccine": "Nobivac 1-HCPCH", "manufacturer": "MSD Animal Health", "batch": "02071456C", "expiry": "2025-10-13" },
-    { "validUntil": "2026-10-02", "vaccine": "Nobivac 1-HCPCH", "manufacturer": "MSD Animal Health", "batch": "02071481B", "expiry": "2026-10-02" }
+    { "vaccine": "Nobivac 1-HCPCH", "manufacturer": "MSD Animal Health", "batch": "02071456C", "expiry": "2025-10-13" },
+    { "vaccine": "Nobivac 1-HCPCH", "manufacturer": "MSD Animal Health", "batch": "02071481B", "expiry": "2026-10-02" }
   ],
 
   "civ": [
-    { "validUntil": "2025-09-06", "vaccine": "CaniFlu-Max", "manufacturer": "KBNP", "batch": "123CIV07Z", "expiry": "2025-09-06" },
-    { "validUntil": "2026-04-29", "vaccine": "Fluvax H3N2", "manufacturer": "Woogene B&G", "batch": "324CNFL03", "expiry": "2026-04-29" }
+    { "vaccine": "CaniFlu-Max", "manufacturer": "GCVP", "batch": "123CIV07Z", "expiry": "2025-09-06" },
+    { "vaccine": "Fluvax H3N2", "manufacturer": "CAVAC", "batch": "324CNFL03", "expiry": "2026-04-29" }
   ],
 
   "kennel_cough": [
@@ -54,7 +55,7 @@
   ],
 
   "parasite_external_dog": [
-    { "id": "frontline_plus_dog", "validUntil": "2026-12-31", "product": "Frontline Plus", "manufacturer": "Boehringer Ingelheim", "batch": "F74992C", "expiry": "2026-12-31" }
+    { "id": "frontline_plus_dog", "product": "Frontline Plus", "manufacturer": "Boehringer Ingelheim", "batch": "F74992C", "expiry": "2026-12-31" }
   ],
 
   "parasite_external_cat": [
@@ -62,8 +63,8 @@
   ],
 
   "parasite_internal_dog": [
-    { "id": "drontal_plus_dog", "validUntil": "2026-03-08", "product": "Drontal Plus", "manufacturer": "Bayer", "batch": "KV035S6", "expiry": "2026-03-08" },
-    { "id": "drontal_plus_dog", "validUntil": "2028-01-03", "product": "Drontal Plus", "manufacturer": "Bayer", "batch": "KVO53HV", "expiry": "2028-01-03" }
+    { "id": "drontal_plus_dog", "product": "Drontal Plus", "manufacturer": "Elanco", "batch": "KV035S6", "expiry": "2026-03-08" },
+    { "id": "drontal_plus_dog", "product": "Drontal Plus", "manufacturer": "Elanco", "batch": "KVO53HV", "expiry": "2028-01-03" }
   ],
 
   "parasite_internal_cat": []

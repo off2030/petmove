@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
-import { lookupRabies, lookupComprehensive, lookupCiv, lookupExternalParasite, lookupInternalParasite, lookupParasiteById, listParasiteFamilies, getParasiteFamily } from '@/lib/vaccine-lookup'
+import { lookupRabies, lookupComprehensive, lookupCiv, lookupKennelCough, lookupExternalParasite, lookupInternalParasite, lookupParasiteById, listParasiteFamilies, getParasiteFamily } from '@/lib/vaccine-lookup'
 
 interface VacRecord {
   date: string
@@ -79,6 +79,17 @@ function getDetailHints(label: string, date: string, species: string): Partial<V
   }
   if (label === 'CIV') {
     const r = lookupCiv(date)
+    if (!r) return {}
+    return {
+      product: r.vaccine || r.product || undefined,
+      manufacturer: r.manufacturer || undefined,
+      lot: r.batch || undefined,
+      expiry: r.expiry || undefined,
+      valid_until: addOneYear(date),
+    }
+  }
+  if (label === '켄넬코프') {
+    const r = lookupKennelCough()
     if (!r) return {}
     return {
       product: r.vaccine || r.product || undefined,

@@ -156,6 +156,7 @@ export const HIDDEN_EN_KEYS = new Set<string>([
   // Repeatable schedule fields: legacy 1st/2nd/3rd + new arrays
   'rabies_1', 'rabies_2', 'rabies_3', 'rabies_dates',
   'civ', 'civ_dates',
+  'kennel_cough_dates',
   'external_parasite_1', 'external_parasite_2', 'external_parasite_3', 'external_parasite_dates',
   'internal_parasite_1', 'internal_parasite_2', 'internal_parasite_dates',
   'microchip_check_date', // shown inline with microchip_implant_date

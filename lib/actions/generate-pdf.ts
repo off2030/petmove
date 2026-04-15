@@ -23,10 +23,26 @@ export async function generateFormRE(caseId: string) {
   return generate('FormRE', caseId)
 }
 
+export async function generateFormAC(caseId: string) {
+  return generate('FormAC', caseId)
+}
+
 export async function generateIdentificationDeclaration(caseId: string) {
   return generate('IdentificationDeclaration', caseId)
 }
 
 export async function generateForm25(caseId: string) {
   return generate('Form25', caseId)
+}
+
+export async function generateForm25AuNz(caseId: string) {
+  return generate('Form25AuNz', caseId)
+}
+
+export async function generateAnnexIII(caseId: string) {
+  return generate('AnnexIII', caseId)
+}
+
+export async function generateUK(caseId: string) {
+  return generate('UK', caseId)
 }

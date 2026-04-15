@@ -10,7 +10,7 @@ import { createCase } from '@/lib/actions/create-case'
 import { deleteCase } from '@/lib/actions/delete-case'
 import { duplicateCase } from '@/lib/actions/duplicate-case'
 import { undoLastChange } from '@/lib/actions/cases'
-import { generateFormRE, generateIdentificationDeclaration, generateForm25 } from '@/lib/actions/generate-pdf'
+import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAnnexIII, generateUK } from '@/lib/actions/generate-pdf'
 import { ArrowLeft } from 'lucide-react'
 
 function downloadBase64Pdf(base64: string, filename: string) {
@@ -28,6 +28,27 @@ function isJapanDestination(dest: string | null | undefined): boolean {
 function isAustraliaDestination(dest: string | null | undefined): boolean {
   if (!dest) return false
   return dest.split(',').map(s => s.trim()).some(d => d === '호주')
+}
+
+function isAuNzGuamDestination(dest: string | null | undefined): boolean {
+  if (!dest) return false
+  return dest.split(',').map(s => s.trim()).some(d =>
+    d === '호주' || d === '뉴질랜드' || d === '괌',
+  )
+}
+
+function isEuDestination(dest: string | null | undefined): boolean {
+  if (!dest) return false
+  return dest.split(',').map(s => s.trim()).some(d =>
+    d === '유럽연합' || d === 'EU' || d === '스위스' ||
+    d === '아일랜드' || d === '몰타' ||
+    d === '북아일랜드' || d === '노르웨이' || d === '핀란드',
+  )
+}
+
+function isUkDestination(dest: string | null | undefined): boolean {
+  if (!dest) return false
+  return dest.split(',').map(s => s.trim()).some(d => d === '영국')
 }
 
 function Inner() {
@@ -140,17 +161,30 @@ function Inner() {
                     </span>
                     <div className="flex items-center gap-4">
                       {isJapanDestination(selectedCase.destination) && (
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            const r = await generateFormRE(selectedCase.id)
-                            if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
-                            else alert(r.error)
-                          }}
-                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
-                        >
-                          Form RE
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const r = await generateFormRE(selectedCase.id)
+                              if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
+                              else alert(r.error)
+                            }}
+                            className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                          >
+                            Form RE
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const r = await generateFormAC(selectedCase.id)
+                              if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
+                              else alert(r.error)
+                            }}
+                            className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                          >
+                            Form AC
+                          </button>
+                        </>
                       )}
                       {isAustraliaDestination(selectedCase.destination) && (
                         <button
@@ -165,17 +199,57 @@ function Inner() {
                           ID Declaration
                         </button>
                       )}
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          const r = await generateForm25(selectedCase.id)
-                          if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
-                          else alert(r.error)
-                        }}
-                        className="text-muted-foreground/50 hover:text-foreground transition-colors"
-                      >
-                        별지 25호
-                      </button>
+                      {isEuDestination(selectedCase.destination) && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const r = await generateAnnexIII(selectedCase.id)
+                            if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
+                            else alert(r.error)
+                          }}
+                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                        >
+                          Annex III
+                        </button>
+                      )}
+                      {isUkDestination(selectedCase.destination) && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const r = await generateUK(selectedCase.id)
+                            if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
+                            else alert(r.error)
+                          }}
+                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                        >
+                          UK
+                        </button>
+                      )}
+                      {isAuNzGuamDestination(selectedCase.destination) ? (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const r = await generateForm25AuNz(selectedCase.id)
+                            if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
+                            else alert(r.error)
+                          }}
+                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                        >
+                          별지 25호 (호주·뉴질랜드·괌)
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const r = await generateForm25(selectedCase.id)
+                            if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
+                            else alert(r.error)
+                          }}
+                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                        >
+                          별지 25호
+                        </button>
+                      )}
                       <CaseHistory caseId={selectedCase.id} />
                       <button
                         type="button"

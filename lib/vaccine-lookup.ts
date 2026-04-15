@@ -9,9 +9,8 @@ export interface VaccineProduct {
   product?: string
   manufacturer: string
   batch: string | null
-  expiry: string | null  // YYYY-MM-DD or YYYY-MM
+  expiry: string | null  // YYYY-MM-DD or YYYY-MM (바이알 실제 유효기한)
   year?: number
-  validUntil?: string
   weightMin?: number
   weightMax?: number
   size?: string
@@ -81,11 +80,10 @@ export function lookupRabies(vaccinationDate: string): RabiesLookupResult | null
 
 function lookupByDateRange(list: VaccineProduct[], vaccinationDate: string): VaccineProduct | null {
   if (!vaccinationDate) return null
-  // 접종일 <= validUntil 중 validUntil이 가장 작은 (=가장 먼저 만료되는) 것
-  // = 접종일 시점에 유효했던 batch
+  // 접종일 <= expiry 중 expiry가 가장 빠른 것 = 접종일 시점에 유효했던 batch
   const candidates = list
-    .filter(p => p.validUntil && vaccinationDate <= p.validUntil)
-    .sort((a, b) => (a.validUntil! < b.validUntil! ? -1 : 1))
+    .filter(p => p.expiry && vaccinationDate <= p.expiry)
+    .sort((a, b) => (a.expiry! < b.expiry! ? -1 : 1))
   return candidates[0] ?? null
 }
 
@@ -146,8 +144,8 @@ export interface ParasiteFamily {
 export const PARASITE_FAMILIES: ParasiteFamily[] = [
   { id: 'frontline_plus_dog',  name: 'Frontline Plus',  manufacturer: 'Boehringer Ingelheim', species: 'dog', kind: 'external' },
   { id: 'frontline_spray_cat', name: 'Frontline Spray', manufacturer: 'Boehringer Ingelheim', species: 'cat', kind: 'external' },
-  { id: 'drontal_plus_dog',    name: 'Drontal Plus',    manufacturer: 'Bayer',                species: 'dog', kind: 'internal' },
-  { id: 'drontal_plus_cat',    name: 'Drontal Plus',    manufacturer: 'Bayer',                species: 'cat', kind: 'internal' },
+  { id: 'drontal_plus_dog',    name: 'Drontal Plus',    manufacturer: 'Elanco',                species: 'dog', kind: 'internal' },
+  { id: 'drontal_plus_cat',    name: 'Drontal Plus',    manufacturer: 'Elanco',                species: 'cat', kind: 'internal' },
   { id: 'nexgard_spectra_dog',  name: 'NexGard Spectra',   manufacturer: 'Boehringer Ingelheim', species: 'dog', kind: 'combo' },
   { id: 'nexgard_cat_combo_cat', name: 'NexGard Cat Combo', manufacturer: 'Boehringer Ingelheim', species: 'cat', kind: 'combo' },
 ]
@@ -165,7 +163,6 @@ export function listParasiteFamilies(species: 'dog' | 'cat', kind: 'external' | 
 
 interface ParasiteSection {
   id?: string
-  validUntil?: string
   product?: string
   manufacturer?: string
   batch?: string | null
@@ -194,8 +191,8 @@ export function lookupParasiteById(id: string, ctx: { date?: string; weightKg?: 
     )
   } else if (ctx.date) {
     const candidates = matches
-      .filter(p => p.validUntil && ctx.date! <= p.validUntil)
-      .sort((a, b) => (a.validUntil! < b.validUntil! ? -1 : 1))
+      .filter(p => p.expiry && ctx.date! <= p.expiry)
+      .sort((a, b) => (a.expiry! < b.expiry! ? -1 : 1))
     pick = candidates[0] ?? matches[0]
   } else {
     pick = matches[0]
@@ -246,7 +243,7 @@ export interface FlatProduct {
   expiry: string | null
   status: ExpiryStatus
   daysLeft: number | null
-  meta: string // 연도/체중/validUntil 등 추가 정보
+  meta: string // 연도/체중 등 추가 정보
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -272,7 +269,6 @@ export function getAllProducts(now = new Date()): FlatProduct[] {
       const meta: string[] = []
       if (p.year) meta.push(`${p.year}년`)
       if (p.size) meta.push(p.size)
-      if (p.validUntil) meta.push(`~${p.validUntil}`)
       result.push({
         category,
         categoryLabel: label,

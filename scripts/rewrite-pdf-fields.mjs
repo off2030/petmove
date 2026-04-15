@@ -87,6 +87,41 @@ const ID_DECL_RENAMES = {
   text_71zrmh: 'chip2_15',
 }
 
+const FORM_AC_RENAMES = {
+  // Top
+  text_3efqg:  'exporting_country',
+  text_4jyll:  'consignor_name',
+  text_5izml:  'consignor_address',
+  text_6igov:  'consignee_name',
+  // Animal identification
+  text_7xwua:  'species',
+  text_8bjsb:  'breed',
+  text_9vbhv:  'pet_name',
+  checkbox_36goul: 'sex_male',
+  checkbox_37xoym: 'sex_female',
+  text_13tlnw: 'birth_or_age',
+  text_14wgoq: 'color',
+  checkbox_38rzav: 'use_pet',
+  text_15oqtq: 'microchip',
+  text_16bkvn: 'id_date',
+  // Rabies vaccination (6 rows, latest first per form instruction)
+  text_17hwqx: 'rabies1_date',   text_22cuhd: 'rabies1_period', text_25mprj: 'rabies1_product',
+  text_18cib:  'rabies2_date',   text_23iajt: 'rabies2_period', text_26wtjh: 'rabies2_product',
+  text_21nfys: 'rabies3_date',   text_24qrob: 'rabies3_period', text_27couo: 'rabies3_product',
+  text_36ypzn: 'rabies4_date',   text_39noyw: 'rabies4_period', text_42bedq: 'rabies4_product',
+  text_37rkbx: 'rabies5_date',   text_40wedy: 'rabies5_period', text_43apgz: 'rabies5_product',
+  text_38bndh: 'rabies6_date',   text_41wqon: 'rabies6_period', text_45nmba: 'rabies6_product',
+  // Rabies serological test (2 rows)
+  text_28mxll: 'titer1_date',    text_30xdu:  'titer1_value',
+  text_32zqtv: 'titer1_lab_name', text_46aazp: 'titer1_lab_country',
+  text_29hexi: 'titer2_date',    text_31hozo: 'titer2_value',
+  text_45kysm: 'titer2_lab_name', text_47nomy: 'titer2_lab_country',
+  // Clinical inspection by veterinarian
+  text_36zit:  'vet_name',
+  text_37sjps: 'vet_address',
+  text_38aqfp: 'inspection_date',
+}
+
 const AUTO_DA = '/Helv 0 Tf 0 g'
 
 async function processFile(inputPath, renames) {
@@ -133,6 +168,7 @@ async function processFile(inputPath, renames) {
 const results = []
 results.push(await processFile('data/pdf-templates/FormRE.pdf', FORM_RE_RENAMES))
 results.push(await processFile('data/pdf-templates/IdentificationDeclaration.pdf', ID_DECL_RENAMES))
+results.push(await processFile('data/pdf-templates/FormAC.pdf', FORM_AC_RENAMES))
 
 for (const r of results) {
   console.log(`\n[${r.file}] ${r.renamed}/${r.total} renamed, font→Auto`)
