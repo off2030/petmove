@@ -38,13 +38,12 @@ const ROUND_TRIP_OPTIONS = [
 ]
 
 const LAB_OPTIONS = [
-  { value: 'komipharm', label: 'Komipharm' },
-  { value: 'nvrqs_seoul', label: 'NVRQS Seoul' },
-  { value: 'nvrqs_main', label: 'NVRQS HQ' },
-  { value: 'ksu', label: 'KSU' },
+  { value: 'krsl', label: 'KRSL' },
+  { value: 'apqa_seoul', label: 'APQA Seoul' },
+  { value: 'apqa_hq', label: 'APQA HQ' },
+  { value: 'ksvdl_r', label: 'KSVDL-R' },
   { value: 'ksvdl', label: 'KSVDL' },
   { value: 'vbddl', label: 'VBDDL' },
-  { value: 'nvrqs_hq+vbddl', label: 'NVRQS HQ + VBDDL' },
 ]
 
 const EU_COUNTRIES = new Set([
@@ -57,13 +56,13 @@ const EU_COUNTRIES = new Set([
 
 /** Auto-detect lab from destination. Priority: 싱가포르 > EU > 일본/하와이 > 기타 */
 function autoDetectLab(destination?: string | null): string {
-  if (!destination) return 'komipharm'
+  if (!destination) return 'krsl'
   const dests = destination.split(',').map(s => s.trim()).filter(Boolean)
   // Priority order check across all destinations
-  if (dests.some(d => d === '싱가포르' || d.toLowerCase() === 'singapore')) return 'ksu'
-  if (dests.some(d => EU_COUNTRIES.has(d))) return 'nvrqs_main'
-  if (dests.some(d => d === '일본' || d === '하와이' || d.toLowerCase() === 'japan' || d.toLowerCase() === 'hawaii')) return 'nvrqs_seoul'
-  return 'komipharm'
+  if (dests.some(d => d === '싱가포르' || d.toLowerCase() === 'singapore')) return 'ksvdl_r'
+  if (dests.some(d => EU_COUNTRIES.has(d))) return 'apqa_hq'
+  if (dests.some(d => d === '일본' || d === '하와이' || d.toLowerCase() === 'japan' || d.toLowerCase() === 'hawaii')) return 'apqa_seoul'
+  return 'krsl'
 }
 
 /** Read the first titer record date from rabies_titer_records */
@@ -102,12 +101,12 @@ function isInspectionDone(row: CaseRow): boolean {
 
 /** Sort order for labs */
 const LAB_SORT_ORDER: Record<string, number> = {
-  komipharm: 0,
-  nvrqs_seoul: 1,
-  nvrqs_main: 2,
-  ksu: 3,
+  krsl: 0,
+  apqa_seoul: 1,
+  apqa_hq: 2,
+  ksvdl_r: 3,
   ksvdl: 4,
-  'nvrqs_hq+vbddl': 5,
+  vbddl: 5,
 }
 
 function compareByLab(a: CaseRow, b: CaseRow): number {

@@ -14,8 +14,7 @@ interface InfectiousRecord {
 const LABS = [
   { value: 'ksvdl', label: 'KSVDL' },
   { value: 'vbddl', label: 'VBDDL' },
-  { value: 'nvrqs_hq', label: 'NVRQS HQ' },
-  { value: 'nvrqs_hq+vbddl', label: 'NVRQS HQ · VBDDL' },
+  { value: 'apqa_hq', label: 'APQA HQ' },
 ]
 
 const DATA_KEY = 'infectious_disease_records'
@@ -26,8 +25,8 @@ function autoDetectInfectiousLab(destination?: string | null): string {
   const dests = destination.split(',').map(s => s.trim()).filter(Boolean)
   // 호주 → KSVDL
   if (dests.some(d => d === '호주' || d.toLowerCase() === 'australia')) return 'ksvdl'
-  // 뉴질랜드 → NVRQS HQ (VBDDL도 가능하지만 기본은 NVRQS HQ)
-  if (dests.some(d => d === '뉴질랜드' || d.toLowerCase() === 'new zealand')) return 'nvrqs_hq'
+  // 뉴질랜드 → APQA HQ (VBDDL도 가능하지만 기본은 APQA HQ)
+  if (dests.some(d => d === '뉴질랜드' || d.toLowerCase() === 'new zealand')) return 'apqa_hq'
   return 'ksvdl'
 }
 
@@ -80,8 +79,10 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
   function saveNewRecord(date: string) {
     if (!date) { setAddingNew(false); return }
     const isNZ = destination?.includes('뉴질랜드') || destination?.toLowerCase().includes('new zealand')
-    const lab = isNZ ? 'nvrqs_hq+vbddl' : autoDetectInfectiousLab(destination)
-    const next = [...records, { date, lab }]
+    const newRows: InfectiousRecord[] = isNZ
+      ? [{ date, lab: 'apqa_hq' }, { date, lab: 'vbddl' }]
+      : [{ date, lab: autoDetectInfectiousLab(destination) }]
+    const next = [...records, ...newRows]
     startSave(async () => {
       await saveRecords(next)
       setAddingNew(false)

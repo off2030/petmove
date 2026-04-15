@@ -10,20 +10,19 @@ import { createCase } from '@/lib/actions/create-case'
 import { deleteCase } from '@/lib/actions/delete-case'
 import { duplicateCase } from '@/lib/actions/duplicate-case'
 import { undoLastChange } from '@/lib/actions/cases'
-import { generateKoreaVetCert, generateAustraliaIdDecl, generateEuCert, generateUkCert, generateJapanFormAC } from '@/lib/actions/generate-pdf'
+import { generateFormRE } from '@/lib/actions/generate-pdf'
 import { ArrowLeft } from 'lucide-react'
 
-const EU_COUNTRIES = new Set([
-  '독일', '프랑스', '이탈리아', '스페인', '네덜란드', '벨기에', '오스트리아',
-  '스웨덴', '덴마크', '핀란드', '폴란드', '체코', '헝가리', '포르투갈',
-  '그리스', '루마니아', '불가리아', '크로아티아', '슬로바키아', '슬로베니아',
-  '리투아니아', '라트비아', '에스토니아', '룩셈부르크', '몰타', '키프로스',
-  '아일랜드',
-])
+function downloadBase64Pdf(base64: string, filename: string) {
+  const link = document.createElement('a')
+  link.href = `data:application/pdf;base64,${base64}`
+  link.download = filename
+  link.click()
+}
 
-function isEuDestination(dest: string | null): boolean {
+function isJapanDestination(dest: string | null | undefined): boolean {
   if (!dest) return false
-  return dest.split(',').map(s => s.trim()).some(d => EU_COUNTRIES.has(d))
+  return dest.split(',').map(s => s.trim()).some(d => d === '일본' || d === '하와이')
 }
 
 function Inner() {
@@ -135,97 +134,17 @@ function Inner() {
                       )}
                     </span>
                     <div className="flex items-center gap-4">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          const result = await generateKoreaVetCert(selectedCase.id)
-                          if (result.ok) {
-                            const link = document.createElement('a')
-                            link.href = `data:application/pdf;base64,${result.pdf}`
-                            link.download = result.filename
-                            link.click()
-                          } else {
-                            alert(result.error)
-                          }
-                        }}
-                        className="text-muted-foreground/50 hover:text-foreground transition-colors"
-                      >
-                        별지 제25호 서식
-                      </button>
-                      {selectedCase.destination?.includes('호주') && (
+                      {isJapanDestination(selectedCase.destination) && (
                         <button
                           type="button"
                           onClick={async () => {
-                            const result = await generateAustraliaIdDecl(selectedCase.id)
-                            if (result.ok) {
-                              const link = document.createElement('a')
-                              link.href = `data:application/pdf;base64,${result.pdf}`
-                              link.download = result.filename
-                              link.click()
-                            } else {
-                              alert(result.error)
-                            }
+                            const r = await generateFormRE(selectedCase.id)
+                            if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
+                            else alert(r.error)
                           }}
                           className="text-muted-foreground/50 hover:text-foreground transition-colors"
                         >
-                          Identification Declaration
-                        </button>
-                      )}
-                      {isEuDestination(selectedCase.destination) && (
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            const result = await generateEuCert(selectedCase.id)
-                            if (result.ok) {
-                              const link = document.createElement('a')
-                              link.href = `data:application/pdf;base64,${result.pdf}`
-                              link.download = result.filename
-                              link.click()
-                            } else {
-                              alert(result.error)
-                            }
-                          }}
-                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
-                        >
-                          ANNEX III
-                        </button>
-                      )}
-                      {selectedCase.destination?.includes('영국') && (
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            const result = await generateUkCert(selectedCase.id)
-                            if (result.ok) {
-                              const link = document.createElement('a')
-                              link.href = `data:application/pdf;base64,${result.pdf}`
-                              link.download = result.filename
-                              link.click()
-                            } else {
-                              alert(result.error)
-                            }
-                          }}
-                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
-                        >
-                          UK
-                        </button>
-                      )}
-                      {(selectedCase.destination?.includes('일본') || selectedCase.destination?.includes('하와이')) && (
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            const result = await generateJapanFormAC(selectedCase.id)
-                            if (result.ok) {
-                              const link = document.createElement('a')
-                              link.href = `data:application/pdf;base64,${result.pdf}`
-                              link.download = result.filename
-                              link.click()
-                            } else {
-                              alert(result.error)
-                            }
-                          }}
-                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
-                        >
-                          FormAC
+                          Form RE
                         </button>
                       )}
                       <CaseHistory caseId={selectedCase.id} />

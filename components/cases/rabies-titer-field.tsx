@@ -14,10 +14,10 @@ interface TiterRecord {
 }
 
 const LABS = [
-  { value: 'komipharm', label: 'Komipharm' },
-  { value: 'nvrqs_seoul', label: 'NVRQS Seoul' },
-  { value: 'nvrqs_main', label: 'NVRQS HQ' },
-  { value: 'ksu', label: 'KSU' },
+  { value: 'krsl', label: 'KRSL' },
+  { value: 'apqa_seoul', label: 'APQA Seoul' },
+  { value: 'apqa_hq', label: 'APQA HQ' },
+  { value: 'ksvdl_r', label: 'KSVDL-R' },
 ]
 
 const DATA_KEY = 'rabies_titer_records'
@@ -34,14 +34,14 @@ const EU_COUNTRIES = new Set([
 
 /** Auto-detect lab based on destination */
 function autoDetectLab(destination?: string | null): string | null {
-  if (!destination) return 'komipharm'
+  if (!destination) return 'krsl'
   const dests = destination.split(',').map(s => s.trim()).filter(Boolean)
   if (dests.length !== 1) return null // 복수 목적지: 미지정
   const d = dests[0]
-  if (d === '일본' || d === '하와이' || d.toLowerCase() === 'japan' || d.toLowerCase() === 'hawaii') return 'nvrqs_seoul'
-  if (d === '싱가포르' || d.toLowerCase() === 'singapore') return 'ksu'
-  if (EU_COUNTRIES.has(d)) return 'nvrqs_main'
-  return 'komipharm'
+  if (d === '일본' || d === '하와이' || d.toLowerCase() === 'japan' || d.toLowerCase() === 'hawaii') return 'apqa_seoul'
+  if (d === '싱가포르' || d.toLowerCase() === 'singapore') return 'ksvdl_r'
+  if (EU_COUNTRIES.has(d)) return 'apqa_hq'
+  return 'krsl'
 }
 
 export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
