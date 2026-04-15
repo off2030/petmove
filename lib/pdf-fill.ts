@@ -67,6 +67,13 @@ function destinationRequiresTapeworm(dest: unknown): boolean {
   return dest.split(',').map(s => s.trim()).some(d => TAPEWORM_REQUIRED_DESTINATIONS.includes(d))
 }
 
+/** Echinococcus treatment is required for dogs only — cats are exempt. */
+function requiresTapewormForCase(caseRow: CaseRow, data: Record<string, unknown>): boolean {
+  if (!destinationRequiresTapeworm(caseRow.destination)) return false
+  const species = String(data.species ?? '').toLowerCase()
+  return species === 'dog'
+}
+
 /** YYYY-MM-DD → YYYY/MM/DD for Japan forms. */
 function fmtDate(s: unknown): string {
   if (typeof s !== 'string' || !s) return ''
@@ -556,7 +563,7 @@ function resolveField(
   // `internal_parasite_dates` for the rest — so we don't use it directly here.
   const annexParMatch = transform?.match(/^annex_parasite:(transponder|product|date|vet)\[(\d+)\]$/)
   if (annexParMatch) {
-    if (!destinationRequiresTapeworm(caseRow.destination)) return ''
+    if (!requiresTapewormForCase(caseRow, data)) return ''
     const attr = annexParMatch[1]
     const idx = Number(annexParMatch[2])
     const records = sortedDescRecords(data.internal_parasite_dates).slice().reverse()
