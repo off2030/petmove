@@ -272,18 +272,16 @@ function resolveField(
 
   // Checkboxes
   if (transform === 'checkbox:always_true') return true
-  if (transform === 'checkbox:male') {
-    const s = String(raw ?? '')
-    return s === 'male' || s === 'neutered_male'
-  }
-  if (transform === 'checkbox:female') {
-    const s = String(raw ?? '')
-    return s === 'female' || s === 'spayed_female'
-  }
   // Exact-match checkbox, e.g. `checkbox:eq:neutered_male`
   const eqMatch = transform?.match(/^checkbox:eq:(.+)$/)
   if (eqMatch) {
     return String(raw ?? '') === eqMatch[1]
+  }
+  // Membership checkbox, e.g. `checkbox:in:male|neutered_male` — checks if value is any of the listed options
+  const inMatch = transform?.match(/^checkbox:in:(.+)$/)
+  if (inMatch) {
+    const s = String(raw ?? '')
+    return inMatch[1].split('|').includes(s)
   }
 
   // Extract nth char of the raw string (for microchip digit-per-box fields)
