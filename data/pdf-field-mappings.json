@@ -208,7 +208,10 @@
       "vet_license_number":   { "source": null, "default": "9608" },
       "vet_name":             { "source": null, "default": "Jinwon Lee" },
       "issue_date":           { "source": "vet_visit_date" }
-    }
+    },
+    "signatures": [
+      { "image": "lausanne.png", "page": 0, "x": 405, "y": 182, "w": 61, "h": 17 }
+    ]
   },
   "Form25AuNz": {
     "template": "Form25AuNz.pdf",
@@ -299,7 +302,10 @@
       "vet_license_number":   { "source": null, "default": "9608" },
       "vet_name":             { "source": null, "default": "Jinwon Lee" },
       "issue_date":           { "source": "vet_visit_date" }
-    }
+    },
+    "signatures": [
+      { "image": "lausanne.png", "page": 0, "x": 405, "y": 150, "w": 61, "h": 17 }
+    ]
   },
 
   "AnnexIII": {
@@ -311,16 +317,16 @@
       "I1_consignor_name":            { "source": "customer_name_en" },
       "I1_consignor_address":         { "source": "address_en", "transform": "address_part:street", "note": "1=스트리트" },
       "I1_consignor_address2":        { "source": "address_en", "transform": "address_part:locality", "note": "2=시/지역/국가" },
-      "I1_consignor_tel":             { "source": "phone", "transform": "phone_dash" },
+      "I1_consignor_tel":             { "source": "phone", "transform": "phone_intl_kr" },
 
       "I5_consignee_name":            { "source": "customer_name_en" },
       "I5_consignee_address":         { "source": "address_overseas", "transform": "address_part:street", "note": "1=스트리트" },
       "I5_consignee_address2":        { "source": "address_overseas", "transform": "address_part:locality", "note": "2=시/지역/국가" },
       "I5_consignee_postal_code":     { "source": null },
-      "I5_consignee_tel":             { "source": "phone", "transform": "phone_dash" },
+      "I5_consignee_tel":             { "source": "phone", "transform": "phone_intl_kr" },
 
-      "I18_description":              { "source": "species", "transform": "en" },
-      "I20_quantity":                 { "source": null, "default": "1" },
+      "I18_description":              { "source": null, "transform": "multi:species_en" },
+      "I20_quantity":                 { "source": null, "transform": "multi:count" },
 
       "I28_row1_species":             { "source": "species", "transform": "en" },
       "I28_row1_sex":                 { "source": "sex", "transform": "sex_label" },
@@ -408,9 +414,9 @@
       "vet_address":                  { "source": null, "default": "3, Gwanak-ro 29-gil, Gwanak-gu, Seoul, Republic of Korea" },
       "vet_qualification":            { "source": null, "default": "Veterinarian" },
 
-      "decl_owner_name":              { "source": "microchip", "note": "시각적 위치: Transponder/tattoo 첫 칸 (PDF 필드명은 owner지만 실제로는 transponder1 위치)" },
-      "decl_transponder1":            { "source": null, "note": "시각적 위치: Transponder/tattoo 둘째 칸 — 공백" },
-      "decl_transponder2":            { "source": null, "note": "시각적 위치: Transponder/tattoo 셋째 칸 — 공백" },
+      "decl_owner_name":              { "source": null, "transform": "multi:microchip[0]", "note": "시각적 위치: Transponder/tattoo 첫 칸" },
+      "decl_transponder1":            { "source": null, "transform": "multi:microchip[1]", "note": "시각적 위치: Transponder/tattoo 둘째 칸" },
+      "decl_transponder2":            { "source": null, "transform": "multi:microchip[2]", "note": "시각적 위치: Transponder/tattoo 셋째 칸" },
       "decl_place_date":              { "source": "customer_name_en", "note": "시각적 위치: 'either [the owner]' 고객명 칸 (PDF 필드명은 place_date지만 실제로는 owner 위치)" },
       "decl_signature":               { "source": "vet_visit_date", "note": "시각적 위치: 'Place and date:' 날짜 칸 (PDF 필드명은 signature지만 실제로는 date 위치) — 발급일" }
     }
@@ -425,17 +431,16 @@
       "I1_consignor_name":            { "source": "customer_name_en" },
       "I1_consignor_address":         { "source": "address_en", "transform": "address_part:street", "note": "1=스트리트" },
       "I1_consignor_address2":        { "source": "address_en", "transform": "address_part:locality", "note": "2=시/지역/국가" },
-      "I1_consignor_tel":             { "source": "phone", "transform": "phone_dash" },
-
-      "I2_cert_ref_number":           { "source": null, "note": "증명서 번호 — 발급 시 수기 기입" },
+      "I1_consignor_tel":             { "source": "phone", "transform": "phone_intl_kr" },
 
       "I3_consignee_name":            { "source": "customer_name_en" },
-      "I3_consignee_address":         { "source": "address_overseas" },
+      "I3_consignee_address":         { "source": "address_overseas", "transform": "address_part:street",   "note": "1=스트리트" },
+      "I3_consignee_address2":        { "source": "address_overseas", "transform": "address_part:locality", "note": "2=시/지역/국가" },
       "I3_consignee_postal_code":     { "source": null },
-      "I3_consignee_tel":             { "source": "phone", "transform": "phone_dash" },
+      "I3_consignee_tel":             { "source": "phone", "transform": "phone_intl_kr" },
 
-      "I8_description":               { "source": "species", "transform": "en" },
-      "I10_quantity":                 { "source": null, "default": "1" },
+      "I8_description":               { "source": null, "transform": "multi:species_en" },
+      "I10_quantity":                 { "source": null, "transform": "multi:count" },
 
       "I12_row1_species":             { "source": "species", "transform": "en" },
       "I12_row1_sex":                 { "source": "sex", "transform": "sex_label" },
@@ -543,10 +548,11 @@
       "vet_name":                     { "source": null, "default": "Jinwon Lee" },
       "vet_telephone":                { "source": null, "default": "+82-2-872-7588" },
       "vet_qualification":            { "source": null, "default": "Veterinarian" },
+      "vet_address":                  { "source": null, "default": "3, Gwanak-ro 29-gil, Gwanak-gu, Seoul, Republic of Korea" },
 
-      "decl_owner_name":              { "source": "microchip", "note": "시각적 위치: Transponder/tattoo 첫 칸" },
-      "decl_transponder1":            { "source": null, "note": "시각적 위치: Transponder/tattoo 둘째 칸 — 공백" },
-      "decl_transponder2":            { "source": null, "note": "시각적 위치: Transponder/tattoo 셋째 칸 — 공백" },
+      "decl_owner_name":              { "source": null, "transform": "multi:microchip[0]", "note": "시각적 위치: Transponder/tattoo 첫 칸" },
+      "decl_transponder1":            { "source": null, "transform": "multi:microchip[1]", "note": "시각적 위치: Transponder/tattoo 둘째 칸" },
+      "decl_transponder2":            { "source": null, "transform": "multi:microchip[2]", "note": "시각적 위치: Transponder/tattoo 셋째 칸" },
       "decl_place_date":              { "source": "customer_name_en", "note": "시각적 위치: 'either [the owner]' 고객명 칸" },
       "decl_signature":               { "source": "vet_visit_date", "note": "시각적 위치: 'Place and date:' 날짜 칸 — 발급일" }
     }

@@ -43,9 +43,7 @@ export function CasesProvider({
   children: React.ReactNode
 }) {
   const [cases, setCases] = useState<CaseRow[]>(initialCases)
-  const [selectedId, setSelectedId] = useState<string | null>(
-    initialCases.length > 0 ? initialCases[0].id : null,
-  )
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const selectCase = useCallback((id: string | null) => {
     setSelectedId(id)

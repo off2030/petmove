@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCases } from './cases-context'
 import { formatDate } from '@/lib/utils'
 import { CaseList } from './case-list'
@@ -10,7 +10,8 @@ import { createCase } from '@/lib/actions/create-case'
 import { deleteCase } from '@/lib/actions/delete-case'
 import { duplicateCase } from '@/lib/actions/duplicate-case'
 import { undoLastChange } from '@/lib/actions/cases'
-import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAnnexIII, generateUK } from '@/lib/actions/generate-pdf'
+import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, previewSiblings, generateAnnexIIIMulti, generateUKMulti } from '@/lib/actions/generate-pdf'
+import { MultiFormDialog } from './multi-form-dialog'
 import { ArrowLeft } from 'lucide-react'
 
 function downloadBase64Pdf(base64: string, filename: string) {
@@ -42,7 +43,8 @@ function isEuDestination(dest: string | null | undefined): boolean {
   return dest.split(',').map(s => s.trim()).some(d =>
     d === '유럽연합' || d === 'EU' || d === '스위스' ||
     d === '아일랜드' || d === '몰타' ||
-    d === '북아일랜드' || d === '노르웨이' || d === '핀란드',
+    d === '북아일랜드' || d === '노르웨이' || d === '핀란드' ||
+    d === '영국' || d === 'UK',
   )
 }
 
@@ -58,6 +60,8 @@ function Inner() {
     [cases, selectedId],
   )
   const detailScrollRef = useRef<HTMLDivElement>(null)
+  const [multiForm, setMultiForm] = useState<{ caseId: string; formKey: 'AnnexIII' | 'UK' } | null>(null)
+  const [includeSignature, setIncludeSignature] = useState(false)
 
   // Reset detail scroll to top when selected case changes
   useEffect(() => {
@@ -104,6 +108,22 @@ function Inner() {
     }
   }, [removeLocalCase, selectCase])
 
+  // Annex III / UK: if the case has siblings (same customer + destination +
+  // departure date), show the multi-animal preview modal. Otherwise skip the
+  // modal and generate a single-animal document directly.
+  const handleMultiForm = useCallback(async (caseId: string, formKey: 'AnnexIII' | 'UK') => {
+    const p = await previewSiblings(caseId, formKey)
+    if (!p.ok) { alert(p.error); return }
+    if (p.preview.cases.length <= 1) {
+      const ids = p.preview.cases.map(c => c.id)
+      const r = formKey === 'AnnexIII' ? await generateAnnexIIIMulti(ids) : await generateUKMulti(ids)
+      if (!r.ok) { alert(r.error); return }
+      for (const doc of r.docs) downloadBase64Pdf(doc.pdf, doc.filename)
+      return
+    }
+    setMultiForm({ caseId, formKey })
+  }, [])
+
   const showDetail = selectedId !== null
 
   return (
@@ -123,6 +143,14 @@ function Inner() {
             </div>
           </div>
         </div>
+
+        {multiForm && (
+          <MultiFormDialog
+            caseId={multiForm.caseId}
+            formKey={multiForm.formKey}
+            onClose={() => setMultiForm(null)}
+          />
+        )}
 
         {/* Panel 2: Detail (full width = 50% of 200%) */}
         <div className="w-1/2 h-full">
@@ -202,11 +230,7 @@ function Inner() {
                       {isEuDestination(selectedCase.destination) && (
                         <button
                           type="button"
-                          onClick={async () => {
-                            const r = await generateAnnexIII(selectedCase.id)
-                            if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
-                            else alert(r.error)
-                          }}
+                          onClick={() => handleMultiForm(selectedCase.id, 'AnnexIII')}
                           className="text-muted-foreground/50 hover:text-foreground transition-colors"
                         >
                           Annex III
@@ -215,21 +239,26 @@ function Inner() {
                       {isUkDestination(selectedCase.destination) && (
                         <button
                           type="button"
-                          onClick={async () => {
-                            const r = await generateUK(selectedCase.id)
-                            if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
-                            else alert(r.error)
-                          }}
+                          onClick={() => handleMultiForm(selectedCase.id, 'UK')}
                           className="text-muted-foreground/50 hover:text-foreground transition-colors"
                         >
                           UK
                         </button>
                       )}
+                      <label className="flex items-center gap-1 text-muted-foreground/50 select-none cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={includeSignature}
+                          onChange={(e) => setIncludeSignature(e.target.checked)}
+                          className="cursor-pointer"
+                        />
+                        서명
+                      </label>
                       {isAuNzGuamDestination(selectedCase.destination) ? (
                         <button
                           type="button"
                           onClick={async () => {
-                            const r = await generateForm25AuNz(selectedCase.id)
+                            const r = await generateForm25AuNz(selectedCase.id, { includeSignature })
                             if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
                             else alert(r.error)
                           }}
@@ -241,7 +270,7 @@ function Inner() {
                         <button
                           type="button"
                           onClick={async () => {
-                            const r = await generateForm25(selectedCase.id)
+                            const r = await generateForm25(selectedCase.id, { includeSignature })
                             if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
                             else alert(r.error)
                           }}

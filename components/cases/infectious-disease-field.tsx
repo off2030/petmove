@@ -199,36 +199,17 @@ function DateInput({ initial, onSave, onCancel }: {
   initial: string; onSave: (v: string) => void; onCancel: () => void
 }) {
   const ref = useRef<HTMLInputElement>(null)
-  const dateTypedRef = useRef(false)
   useEffect(() => { ref.current?.focus() }, [])
 
   function saveFromRef() {
     const raw = (ref.current?.value ?? '').trim()
     if (!raw) { onSave(''); return }
-    const digits = raw.replace(/\D/g, '')
-    let dateStr = ''
-    if (digits.length === 8) dateStr = `${digits.slice(0,4)}-${digits.slice(4,6)}-${digits.slice(6,8)}`
-    else if (/^\d{4}[-./]\d{1,2}[-./]\d{1,2}$/.test(raw)) {
-      const parts = raw.split(/[-./]/)
-      dateStr = `${parts[0]}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`
-    } else { dateStr = raw }
-    const d = new Date(dateStr)
-    const year = parseInt(dateStr.split('-')[0], 10)
-    if (isNaN(d.getTime()) || year < 1900 || year > 2100) return
-    onSave(dateStr)
+    onSave(raw)
   }
 
   return (
     <input ref={ref} type="date" min="1900-01-01" max="2100-12-31" defaultValue={initial}
-      onChange={(e) => {
-        const v = e.target.value
-        if (!v) { dateTypedRef.current = false; return }
-        const year = parseInt(v.split('-')[0], 10)
-        if (year < 1900 || year > 2100) { dateTypedRef.current = false; return }
-        if (dateTypedRef.current) { onSave(v); dateTypedRef.current = false } else { saveFromRef() }
-      }}
       onKeyDown={(e) => {
-        dateTypedRef.current = true
         if (e.key === 'Enter') { e.preventDefault(); saveFromRef() }
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}

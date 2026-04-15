@@ -3,7 +3,7 @@
  * Reads case row, resolves each field value via the mapping's transform,
  * and fills the PDF form.
  */
-import { PDFDocument, PDFName, PDFString, PDFDict } from 'pdf-lib'
+import { PDFDocument, PDFName, PDFString, PDFDict, PDFBool } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -11,11 +11,74 @@ import mappings from '@/data/pdf-field-mappings.json'
 import { lookupRabies, lookupExternalParasite, lookupInternalParasite, lookupComprehensive, lookupCiv, lookupKennelCough, lookupParasiteById, getParasiteFamily } from '@/lib/vaccine-lookup'
 import type { CaseRow } from '@/lib/supabase/types'
 
+/* ─── Performance feature flags ────────────────────────────────────────
+ * Flip any to `false` to revert to the original slower-but-safe behavior.
+ * - SUBSET_FONT: embed only used glyphs (~4MB → ~100KB).
+ * - CACHE_ASSETS: cache template + font bytes in memory (first hit hits disk,
+ *   later hits reuse). Template/font file changes require server restart.
+ * - REMOVE_NEED_APPEARANCES: drop AcroForm's /NeedAppearances so Acrobat
+ *   doesn't regenerate APs on every open. We already bake APs via
+ *   updateFieldAppearances, so this is the correct final state.
+ */
+// Optimized for browser-only viewing/editing (Chrome PDFium, Edge, Firefox).
+// Browsers render typed text via their own font stack, so the embedded font
+// only needs the glyphs we pre-filled. Subset = big speed+size win (~4MB→~100KB).
+//
+// Rollback:
+// - Korean typing in browser breaks → flip SUBSET_FONT to false
+// - Fields appear blank in some viewer → flip NEED_APPEARANCES to 'true'
+// - Template/font changes not picked up → flip CACHE_ASSETS to false (dev)
+const PDF_SUBSET_FONT = true
+const PDF_CACHE_ASSETS = true
+const PDF_NEED_APPEARANCES: 'false' | 'true' | 'unset' = 'false'
+
+const assetCache: { template: Map<string, Buffer>; font: Buffer | null; signature: Map<string, Buffer> } = {
+  template: new Map(),
+  font: null,
+  signature: new Map(),
+}
+
+async function loadSignatureImage(name: string): Promise<Buffer> {
+  if (PDF_CACHE_ASSETS) {
+    const cached = assetCache.signature.get(name)
+    if (cached) return cached
+  }
+  const buf = await readFile(path.join(process.cwd(), 'public', 'signatures', name))
+  if (PDF_CACHE_ASSETS) assetCache.signature.set(name, buf)
+  return buf
+}
+
+async function loadTemplate(name: string): Promise<Buffer> {
+  if (PDF_CACHE_ASSETS) {
+    const cached = assetCache.template.get(name)
+    if (cached) return cached
+  }
+  const buf = await readFile(path.join(process.cwd(), 'data', 'pdf-templates', name))
+  if (PDF_CACHE_ASSETS) assetCache.template.set(name, buf)
+  return buf
+}
+
+async function loadFontBytes(): Promise<Buffer> {
+  if (PDF_CACHE_ASSETS && assetCache.font) return assetCache.font
+  const buf = await readFile(path.join(process.cwd(), 'data', 'fonts', 'NanumGothic.ttf'))
+  if (PDF_CACHE_ASSETS) assetCache.font = buf
+  return buf
+}
+
 type FieldMapping = {
   source: string | null
   transform?: string
   default?: string
   note?: string
+}
+
+type SignatureOverlay = {
+  image: string
+  page?: number
+  x: number
+  y: number
+  w: number
+  h: number
 }
 
 type FormMapping = {
@@ -29,6 +92,8 @@ type FormMapping = {
    */
   dateFormat?: 'dmy'
   fields: Record<string, FieldMapping>
+  /** Optional signature/stamp image overlays — applied only when caller opts in. */
+  signatures?: SignatureOverlay[]
 }
 
 type MappingsJson = Record<string, FormMapping>
@@ -109,6 +174,24 @@ function fmtPhoneDash(raw: unknown): string {
   if (s.length === 11) return `${s.slice(0, 3)}-${s.slice(3, 7)}-${s.slice(7)}`
   if (s.length === 10) return `${s.slice(0, 3)}-${s.slice(3, 6)}-${s.slice(6)}`
   return s
+}
+
+// Korean phone → +82-AREA-XXXX-YYYY. Seoul (02) keeps 1-digit area code,
+// everything else uses 2-digit. Subscriber part splits so the tail is 4 digits
+// when ≥7 digits remain, else 3.
+function fmtPhoneIntlKr(raw: unknown): string {
+  let s = String(raw ?? '').replace(/\D/g, '')
+  if (!s) return ''
+  if (s.startsWith('82')) s = s.slice(2)
+  if (s.startsWith('0')) s = s.slice(1)
+  if (!s) return ''
+  const areaLen = s.startsWith('2') ? 1 : 2
+  const area = s.slice(0, areaLen)
+  const rest = s.slice(areaLen)
+  if (!rest) return `+82-${area}`
+  const tailLen = rest.length >= 7 ? 4 : 3
+  if (rest.length <= tailLen) return `+82-${area}-${rest}`
+  return `+82-${area}-${rest.slice(0, rest.length - tailLen)}-${rest.slice(-tailLen)}`
 }
 
 /** Today's date as YYYY/MM/DD local. */
@@ -369,7 +452,7 @@ const EN_FALLBACK: Record<string, string> = {
   color_en: 'color',
   sex_en: 'sex',
   address_en: 'address_kr',
-  address_overseas: 'address_kr',
+  // address_overseas: 폴백 없음 — 비어있으면 그대로 비움 (목적지 해외 주소는 한국 주소로 대체 불가)
 }
 
 function readSource(
@@ -486,6 +569,10 @@ function resolveField(
   // Phone formatting: raw digits → 010-XXXX-XXXX.
   if (transform === 'phone_dash') {
     return fmtPhoneDash(raw)
+  }
+
+  if (transform === 'phone_intl_kr') {
+    return fmtPhoneIntlKr(raw)
   }
 
   // Today's date (no source needed). Returns YYYY/MM/DD.
@@ -816,70 +903,246 @@ export type FillResult =
   | { ok: true; pdf: string; filename: string }
   | { ok: false; error: string }
 
-export async function fillPdf(formKey: string, caseRow: CaseRow): Promise<FillResult> {
+/* ─────────────────────────── Multi-case packing ──────────────────────────
+ * Annex III (EU) and UK forms accept multiple animals in a single document
+ * when the same customer travels with several pets. Rows are a shared
+ * resource: each animal consumes 1 rabies-vaccination row per dose it has
+ * (minimum 1 even if no rabies record exists). Animal identity rows and
+ * parasite rows are allocated 1 per animal.
+ *
+ * Annex: animals ≤ 3, vacc rows ≤ 5.
+ * UK:    animals ≤ 5, vacc rows ≤ 5.
+ *
+ * Cases that don't fit in one document spill into the next document, etc.
+ */
+
+interface VaccSlot { caseIdx: number; doseIdx: number }
+
+interface PackedDoc {
+  cases: CaseRow[]
+  vaccSlots: VaccSlot[]      // vaccSlots[rowIdx] = {caseIdx within doc, doseIdx}
+  animalSlots: number[]      // animalSlots[rowIdx] = caseIdx within doc
+  parasiteSlots: number[]    // parasiteSlots[rowIdx] = caseIdx within doc
+}
+
+interface FormCapacity { animals: number; vaccRows: number }
+
+const FORM_CAPACITY: Record<string, FormCapacity | undefined> = {
+  AnnexIII: { animals: 3, vaccRows: 5 },
+  UK:       { animals: 5, vaccRows: 5 },
+}
+
+function rabiesDoseCount(c: CaseRow): number {
+  const data = (c.data ?? {}) as Record<string, unknown>
+  const dates = data.rabies_dates
+  if (!Array.isArray(dates)) return 0
+  return dates
+    .map(d => (typeof d === 'string' ? d : (d as { date?: string })?.date))
+    .filter((d): d is string => typeof d === 'string' && !!d)
+    .length
+}
+
+export function packCases(formKey: string, cases: CaseRow[]): PackedDoc[] {
+  const cap = FORM_CAPACITY[formKey]
+  if (!cap) return [{ cases, vaccSlots: [], animalSlots: cases.map((_, i) => i), parasiteSlots: cases.map((_, i) => i) }]
+
+  const docs: PackedDoc[] = []
+  let remaining = cases.slice()
+  while (remaining.length > 0) {
+    const doc: PackedDoc = { cases: [], vaccSlots: [], animalSlots: [], parasiteSlots: [] }
+    const leftover: CaseRow[] = []
+    for (const c of remaining) {
+      const doses = Math.max(1, rabiesDoseCount(c))
+      if (doc.cases.length >= cap.animals || doc.vaccSlots.length + doses > cap.vaccRows) {
+        leftover.push(c)
+        continue
+      }
+      const caseIdx = doc.cases.length
+      doc.cases.push(c)
+      doc.animalSlots.push(caseIdx)
+      doc.parasiteSlots.push(caseIdx)
+      for (let d = 0; d < doses; d++) doc.vaccSlots.push({ caseIdx, doseIdx: d })
+    }
+    if (doc.cases.length === 0) {
+      // Single case alone exceeds capacity — fail hard.
+      throw new Error(`Case exceeds form capacity: ${remaining[0].id}`)
+    }
+    docs.push(doc)
+    remaining = leftover
+  }
+  return docs
+}
+
+/**
+ * Parse a row-based field name like `I28_row2_species` or `vacc_row3_vacc_date`.
+ * Returns row kind + 0-indexed row number, or null if not a row field.
+ */
+function parseRowField(fieldName: string): { kind: 'animal' | 'vacc' | 'parasite'; rowIdx: number } | null {
+  let m = fieldName.match(/^(?:I28|I12)_row(\d+)_/)
+  if (m) return { kind: 'animal', rowIdx: Number(m[1]) - 1 }
+  m = fieldName.match(/^vacc_row(\d+)_/)
+  if (m) return { kind: 'vacc', rowIdx: Number(m[1]) - 1 }
+  m = fieldName.match(/^parasite_row(\d+)_/)
+  if (m) return { kind: 'parasite', rowIdx: Number(m[1]) - 1 }
+  return null
+}
+
+/** Rewrite the `[N]` index at the tail of a transform string. */
+function rewriteTransformIndex(transform: string | undefined, newIdx: number): string | undefined {
+  if (!transform) return transform
+  return transform.replace(/\[\d+\]$/, `[${newIdx}]`)
+}
+
+/**
+ * Resolve one field for a multi-case document.
+ * Row-based fields pick their target case+dose from the pack map and reuse row 1's
+ * mapping as a template (with index rewritten). Non-row fields use the primary case.
+ */
+/** Multi-case aggregate transforms used by Annex III / UK non-row fields. */
+function resolveMultiTransform(transform: string | undefined, doc: PackedDoc): string | null {
+  if (!transform) return null
+
+  if (transform === 'multi:species_en') {
+    const kinds = new Set<string>()
+    for (const c of doc.cases) {
+      const sp = String((c.data as Record<string, unknown>)?.species ?? '').toLowerCase()
+      if (SPECIES_EN[sp]) kinds.add(SPECIES_EN[sp])
+    }
+    if (kinds.size === 0) return ''
+    if (kinds.size === 1) return [...kinds][0]
+    // Pluralize + join for mixed-species shipments.
+    const parts = [...kinds].map(k => `${k}s`)
+    return parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1]
+  }
+
+  if (transform === 'multi:count') {
+    return String(doc.cases.length)
+  }
+
+  const mcMatch = transform.match(/^multi:microchip\[(\d+)\]$/)
+  if (mcMatch) {
+    const idx = Number(mcMatch[1])
+    const c = doc.cases[idx]
+    if (!c) return ''
+    const mc = (c as unknown as Record<string, unknown>).microchip
+    return typeof mc === 'string' ? mc : ''
+  }
+
+  return null
+}
+
+function resolveFieldMulti(
+  fieldName: string,
+  allFields: Record<string, FieldMapping>,
+  doc: PackedDoc,
+): Resolved {
+  const mapping = allFields[fieldName]
+
+  // Multi-case aggregates (description, quantity, declaration transponders, …)
+  // take precedence before we dispatch by field name.
+  const agg = resolveMultiTransform(mapping?.transform, doc)
+  if (agg !== null) return agg
+
+  const parsed = parseRowField(fieldName)
+  if (!parsed) {
+    const primary = doc.cases[0]
+    return resolveField(mapping, primary, (primary.data ?? {}) as Record<string, unknown>)
+  }
+
+  let targetCaseIdx: number | undefined
+  let newIdx: number | null = null
+  if (parsed.kind === 'animal') {
+    targetCaseIdx = doc.animalSlots[parsed.rowIdx]
+  } else if (parsed.kind === 'vacc') {
+    const slot = doc.vaccSlots[parsed.rowIdx]
+    if (slot) { targetCaseIdx = slot.caseIdx; newIdx = slot.doseIdx }
+  } else {
+    targetCaseIdx = doc.parasiteSlots[parsed.rowIdx]
+    if (targetCaseIdx !== undefined) newIdx = 0  // most recent parasite dose per animal
+  }
+
+  if (targetCaseIdx === undefined) return ''
+
+  const templateName = fieldName.replace(/_row\d+_/, '_row1_')
+  const templateMapping = allFields[templateName]
+  if (!templateMapping) return ''
+
+  const finalMapping: FieldMapping = newIdx != null
+    ? { ...templateMapping, transform: rewriteTransformIndex(templateMapping.transform, newIdx) }
+    : templateMapping
+
+  const target = doc.cases[targetCaseIdx]
+  return resolveField(finalMapping, target, (target.data ?? {}) as Record<string, unknown>)
+}
+
+export async function fillPdfMulti(formKey: string, cases: CaseRow[]): Promise<FillResult[]> {
+  if (cases.length === 0) return [{ ok: false, error: '대상 동물이 없습니다' }]
+  let docs: PackedDoc[]
+  try { docs = packCases(formKey, cases) }
+  catch (e) { return [{ ok: false, error: (e as Error).message }] }
+
+  const results: FillResult[] = []
+  for (let i = 0; i < docs.length; i++) {
+    const r = await fillOnePackedDoc(formKey, docs[i], docs.length > 1 ? i + 1 : 0)
+    results.push(r)
+  }
+  return results
+}
+
+async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: number): Promise<FillResult> {
   const form = MAPS[formKey]
   if (!form) return { ok: false, error: `Unknown form: ${formKey}` }
 
-  const templatePath = path.join(process.cwd(), 'data', 'pdf-templates', form.template)
   let templateBytes: Buffer
-  try {
-    templateBytes = await readFile(templatePath)
-  } catch {
-    return { ok: false, error: `템플릿을 찾을 수 없습니다: ${form.template}` }
-  }
+  try { templateBytes = await loadTemplate(form.template) }
+  catch { return { ok: false, error: `템플릿을 찾을 수 없습니다: ${form.template}` } }
 
   const pdf = await PDFDocument.load(templateBytes)
   pdf.registerFontkit(fontkit)
-  const fontBytes = await readFile(path.join(process.cwd(), 'data', 'fonts', 'NanumGothic.ttf'))
-  const customFont = await pdf.embedFont(fontBytes, { subset: false })
+  const fontBytes = await loadFontBytes()
+  const customFont = await pdf.embedFont(fontBytes, { subset: PDF_SUBSET_FONT })
 
   const pdfForm = pdf.getForm()
-  const data = (caseRow.data ?? {}) as Record<string, unknown>
 
-  // Date reformatter for form-level dateFormat override (e.g. Annex III uses dd/mm/yyyy).
-  // Converts a stand-alone YYYY-MM-DD or YYYY/MM/DD token to dd/mm/yyyy.
-  const toDmy = (s: string): string =>
-    s.replace(/^(\d{4})[-/](\d{2})[-/](\d{2})$/, '$3/$2/$1')
+  const toDmy = (s: string): string => s.replace(/^(\d{4})[-/](\d{2})[-/](\d{2})$/, '$3/$2/$1')
   const reformatDate = form.dateFormat === 'dmy'
     ? (s: unknown): unknown => (typeof s === 'string' ? toDmy(s) : s)
     : (s: unknown): unknown => s
 
-  const missing: string[] = []
-  const empty: string[] = []
-  const filled: Record<string, string | boolean> = {}
-  for (const [fieldName, mapping] of Object.entries(form.fields)) {
-    const value = reformatDate(resolveField(mapping, caseRow, data))
-    if (value === '' || value === false) empty.push(fieldName)
-    else filled[fieldName] = typeof value === 'string' && value.length > 40 ? value.slice(0, 40) + '…' : value as string | boolean
+  for (const [fieldName] of Object.entries(form.fields)) {
+    const value = reformatDate(resolveFieldMulti(fieldName, form.fields, doc))
     let field
-    try {
-      field = pdfForm.getField(fieldName)
-    } catch {
-      missing.push(fieldName)
-      continue
-    }
+    try { field = pdfForm.getField(fieldName) } catch { continue }
     const type = field.constructor.name
     if (type === 'PDFCheckBox') {
       if (value === true) (field as import('pdf-lib').PDFCheckBox).check()
       else (field as import('pdf-lib').PDFCheckBox).uncheck()
     } else if (type === 'PDFTextField') {
       const text = typeof value === 'string' ? value : ''
-      if (text) {
-        const tf = field as import('pdf-lib').PDFTextField
-        tf.setText(text)
-      }
+      // Always setText (even to '') so any template default text is cleared.
+      const tf = field as import('pdf-lib').PDFTextField
+      tf.setText(text)
     }
   }
 
-  // Printing fix — Acrobat Reader refused to print ("문서를 인쇄할 수 없습니다")
-  // and Chromium PDF viewers printed blank fields because:
-  //   (a) widget DAs referenced /NanumGothic after updateFieldAppearances,
-  //       but the field-level DA was still /Helv from the template;
-  //   (b) AcroForm's /DR (Default Resources) only had /Helv — so any time
-  //       a viewer tried to render via DR (on print in Reader, or during
-  //       appearance regen), Korean glyphs couldn't be drawn.
-  // Fix: register NanumGothic in the form's /DR.Font and rewrite every
-  // text field's /DA to reference it. Keeps fields editable (no flatten).
+  await applyFontFixes(pdf, pdfForm, customFont)
+
+  const bytes = await pdf.save()
+  const base64 = Buffer.from(bytes).toString('base64')
+  const petNames = doc.cases
+    .map(c => (c.pet_name_en || c.pet_name || 'pet').replace(/[^\w가-힣]/g, '_'))
+    .join('_')
+  const partSuffix = partNumber > 0 ? `_part${partNumber}` : ''
+  const filename = form.filename.replace('{pet_name}', `${petNames}${partSuffix}`)
+  return { ok: true, pdf: base64, filename }
+}
+
+/** Shared font/appearance post-processing extracted so both single and multi paths use it. */
+async function applyFontFixes(
+  pdf: PDFDocument,
+  pdfForm: import('pdf-lib').PDFForm,
+  customFont: import('pdf-lib').PDFFont,
+): Promise<void> {
   const fontName = 'NanumGothic'
   const fontRef = (customFont as unknown as { ref: import('pdf-lib').PDFRef }).ref
   const acroFormDict = pdf.catalog.lookup(PDFName.of('AcroForm'), PDFDict)
@@ -895,39 +1158,112 @@ export async function fillPdf(formKey: string, caseRow: CaseRow): Promise<FillRe
   }
   drFonts.set(PDFName.of(fontName), fontRef)
 
-  // Per-field max font size (Option 2 of our plan).
-  // pdf-lib's default updateFieldAppearances bakes a very conservative auto-size
-  // (~6-7pt) into AP streams, making fields look unreadably small even though
-  // the template DA says size=0 (auto). To fix, we compute the maximum size
-  // that fits each field's box for its actual text and set an explicit DA,
-  // then run updateFieldAppearances once so the AP is generated at that size.
-  //
-  // ROLLBACK: flip MAXIMIZE_FIELD_FONT_SIZE to `false`. The fallback path runs
-  // the original flow (updateFieldAppearances first, then DA=0 rewrite).
-  const MAXIMIZE_FIELD_FONT_SIZE = true
-
-  if (MAXIMIZE_FIELD_FONT_SIZE) {
-    // Compute per-field max size and set DA *before* appearance generation.
-    for (const field of pdfForm.getFields()) {
-      if (field.constructor.name !== 'PDFTextField') continue
-      const tf = field as import('pdf-lib').PDFTextField
-      const text = tf.getText() ?? ''
-      const size = computeMaxFontSize(tf, text, customFont)
-      const da = PDFString.of(`/${fontName} ${size} Tf 0 g`)
-      field.acroField.dict.set(PDFName.of('DA'), da)
-      for (const w of field.acroField.getWidgets()) {
-        w.dict.set(PDFName.of('DA'), da)
-      }
+  for (const field of pdfForm.getFields()) {
+    if (field.constructor.name !== 'PDFTextField') continue
+    const tf = field as import('pdf-lib').PDFTextField
+    const text = tf.getText() ?? ''
+    const size = computeMaxFontSize(tf, text, customFont)
+    const da = PDFString.of(`/${fontName} ${size} Tf 0 g`)
+    field.acroField.dict.set(PDFName.of('DA'), da)
+    for (const w of field.acroField.getWidgets()) {
+      w.dict.set(PDFName.of('DA'), da)
     }
-    // Regenerate AP using the DAs we just set.
-    pdfForm.updateFieldAppearances(customFont)
-  } else {
-    // Original conservative path.
-    pdfForm.updateFieldAppearances(customFont)
-    const fieldDA = PDFString.of(`/${fontName} 0 Tf 0 g`)
-    for (const field of pdfForm.getFields()) {
-      if (field.constructor.name !== 'PDFTextField') continue
-      field.acroField.dict.set(PDFName.of('DA'), fieldDA)
+  }
+  pdfForm.updateFieldAppearances(customFont)
+
+  if (PDF_NEED_APPEARANCES === 'false') {
+    acroFormDict.set(PDFName.of('NeedAppearances'), PDFBool.False)
+  } else if (PDF_NEED_APPEARANCES === 'true') {
+    // Let Acrobat regenerate APs using its own fonts so Korean typing works.
+    acroFormDict.set(PDFName.of('NeedAppearances'), PDFBool.True)
+  }
+  // 'unset' → leave the key as-is from the template.
+}
+
+export type FillOptions = { includeSignature?: boolean }
+
+export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillOptions): Promise<FillResult> {
+  const form = MAPS[formKey]
+  if (!form) return { ok: false, error: `Unknown form: ${formKey}` }
+
+  let templateBytes: Buffer
+  try {
+    templateBytes = await loadTemplate(form.template)
+  } catch {
+    return { ok: false, error: `템플릿을 찾을 수 없습니다: ${form.template}` }
+  }
+
+  const pdf = await PDFDocument.load(templateBytes)
+  pdf.registerFontkit(fontkit)
+  const fontBytes = await loadFontBytes()
+  const customFont = await pdf.embedFont(fontBytes, { subset: PDF_SUBSET_FONT })
+
+  const pdfForm = pdf.getForm()
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+
+  // Date reformatter for form-level dateFormat override (e.g. Annex III uses dd/mm/yyyy).
+  // Converts a stand-alone YYYY-MM-DD or YYYY/MM/DD token to dd/mm/yyyy.
+  const toDmy = (s: string): string =>
+    s.replace(/^(\d{4})[-/](\d{2})[-/](\d{2})$/, '$3/$2/$1')
+  const reformatDate = form.dateFormat === 'dmy'
+    ? (s: unknown): unknown => (typeof s === 'string' ? toDmy(s) : s)
+    : (s: unknown): unknown => s
+
+  // Route single-case fills through the same multi-case resolver so
+  // aggregate transforms (multi:species_en, multi:count, multi:microchip[n])
+  // and row-based resolution stay consistent with fillPdfMulti.
+  const soloDoc: PackedDoc = {
+    cases: [caseRow],
+    vaccSlots: [],
+    animalSlots: [0],
+    parasiteSlots: [0],
+  }
+  // Populate vacc slots so vacc_rowN_* fields still fill for single-animal docs.
+  const doses = Math.max(1, rabiesDoseCount(caseRow))
+  for (let d = 0; d < doses; d++) soloDoc.vaccSlots.push({ caseIdx: 0, doseIdx: d })
+
+  const missing: string[] = []
+  const empty: string[] = []
+  const filled: Record<string, string | boolean> = {}
+  for (const [fieldName] of Object.entries(form.fields)) {
+    const value = reformatDate(resolveFieldMulti(fieldName, form.fields, soloDoc))
+    if (value === '' || value === false) empty.push(fieldName)
+    else filled[fieldName] = typeof value === 'string' && value.length > 40 ? value.slice(0, 40) + '…' : value as string | boolean
+    let field
+    try {
+      field = pdfForm.getField(fieldName)
+    } catch {
+      missing.push(fieldName)
+      continue
+    }
+    const type = field.constructor.name
+    if (type === 'PDFCheckBox') {
+      if (value === true) (field as import('pdf-lib').PDFCheckBox).check()
+      else (field as import('pdf-lib').PDFCheckBox).uncheck()
+    } else if (type === 'PDFTextField') {
+      const text = typeof value === 'string' ? value : ''
+      // Always setText (even to '') so any template default text is cleared.
+      const tf = field as import('pdf-lib').PDFTextField
+      tf.setText(text)
+    }
+  }
+
+  await applyFontFixes(pdf, pdfForm, customFont)
+
+  if (options?.includeSignature && form.signatures?.length) {
+    const pages = pdf.getPages()
+    for (const sig of form.signatures) {
+      try {
+        const imgBytes = await loadSignatureImage(sig.image)
+        const img = sig.image.toLowerCase().endsWith('.jpg') || sig.image.toLowerCase().endsWith('.jpeg')
+          ? await pdf.embedJpg(imgBytes)
+          : await pdf.embedPng(imgBytes)
+        const page = pages[sig.page ?? 0]
+        if (!page) continue
+        page.drawImage(img, { x: sig.x, y: sig.y, width: sig.w, height: sig.h })
+      } catch (e) {
+        console.warn(`[${formKey}] signature overlay failed:`, (e as Error).message)
+      }
     }
   }
 

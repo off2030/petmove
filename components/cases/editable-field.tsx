@@ -194,7 +194,6 @@ export function EditableField({
   // Select fields: always render as inline dropdown (no edit mode toggle)
   const isSelect = spec.type === 'select' && spec.options
   const isDate = spec.type === 'date'
-  const dateTypedRef = useRef(false)
   const composingRef = useRef(false) // IME composition state
   const effectiveLang = autoDetectLang(spec, lang) // true if keyboard was used (vs picker)
 
@@ -307,36 +306,15 @@ export function EditableField({
           max="2100-12-31"
           defaultValue={stringifyRaw(rawValue, spec)}
           autoFocus
-          onChange={(e) => {
-            const v = e.target.value
-
-            // Empty value: picker's delete/clear button
-            if (!v) {
-              if (!dateTypedRef.current) {
-                saveDateFromRef() // save null + close
-              }
-              dateTypedRef.current = false
-              return
-            }
-
-            const year = parseInt(v.split('-')[0], 10)
-            if (year < 1900 || year > 2100) { dateTypedRef.current = false; return }
-
-            if (dateTypedRef.current) {
-              // Keyboard typing → save silently, keep open
-              autoSave(coerceInputValue(spec, v))
-              dateTypedRef.current = false
-            } else {
-              // Calendar picker (no keyDown before onChange) → save + close
-              saveDateFromRef()
-            }
-          }}
           onKeyDown={(e) => {
-            dateTypedRef.current = true
             if (e.key === 'Enter') { e.preventDefault(); saveDateFromRef() }
             if (e.key === 'Escape') { e.preventDefault(); handleCancel() }
           }}
-          onBlur={() => setTimeout(() => saveDateFromRef(), 150)}
+          onBlur={() => setTimeout(() => {
+            const el = inputRef.current as HTMLInputElement | null
+            if (!(el?.value ?? '').trim()) return
+            saveDateFromRef()
+          }, 150)}
           className="w-44 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
         />
       ) : editing ? (
