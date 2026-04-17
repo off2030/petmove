@@ -746,19 +746,21 @@
       "Text6":   { "source": "breed_en", "note": "p1 Row1 — Breed" },
       "Text7":   { "source": "microchip", "note": "p1 Row1 — Microchip number" },
       "Text36":  { "source": "pet_name_en", "note": "p1 Row1 — Name" },
+      "Dropdown13": { "source": "sex", "transform": "dropdown_sex",      "note": "p1 Row1 — Sex (MALE/FEMALE)" },
+      "Dropdown14": { "source": "sex", "transform": "dropdown_neutered", "note": "p1 Row1 — Neutered or entire" },
       "Text15":  { "source": "birth_date", "transform": "age_years", "note": "p1 Row1 — Age (years)" },
 
-      "Text48":  { "source": "customer_name_en", "note": "p1 (1) Name and address of owner/exporter (line 1 - name)" },
-      "Text49":  { "source": "address_en", "note": "p1 (1) Name and address of owner/exporter (line 2 - address)" },
-      "Text50":  { "source": null, "default": "Republic of Korea", "note": "p1 (2) Country or territory of origin" },
-      "Text51":  { "source": null, "default": "Incheon International Airport (ICN)", "note": "p1 (3) Port of departure" },
-      "Text54":  { "source": null, "default": "Air transport", "note": "p1 (5) Means of transport" },
+      "Text47":  { "source": "customer_name_en", "note": "p1 (1) Name of owner/exporter line 1 (송하인 = 고객명)" },
+      "Text48":  { "source": "address_en", "transform": "strip_country", "note": "p1 (1) Address of owner/exporter line 2 (주소, 국가명 제거)" },
+      "Text49":  { "source": null, "default": "Republic of Korea", "note": "p1 (2) Country or territory of origin" },
+      "Text51":  { "source": "customer_name_en", "note": "p1 (4) Name of importer/consignee in NZ (수하인 = 고객명)" },
+      "Text53":  { "source": null, "default": "Air transport", "note": "p1 (5) Means of transport" },
 
       "Text1":   { "source": null, "default": "Republic of Korea", "note": "p1 (9c) country of export (6개월 거주)" },
 
-      "Text55":  { "source": "rabies_dates", "transform": "vaccine_desc:rabies:date[0]", "note": "p1 (10a) Primary rabies vaccination date" },
-      "Text56":  { "source": "rabies_dates", "transform": "vaccine_desc:rabies:date[0]", "note": "p1 (10b) Booster rabies vaccination date (최신)" },
-      "Text57":  { "source": "rabies_dates", "transform": "vaccine_desc:rabies:date[1]", "note": "p1 (10b) Previous vaccination date (이전 접종)" },
+      "Text55":  { "source": "rabies_dates", "transform": "vaccine_desc:rabies:primary_date[0]", "note": "p1 (10a) Primary rabies vaccination date (1회만 있을 때)" },
+      "Text56":  { "source": "rabies_dates", "transform": "vaccine_desc:rabies:booster_date[0]", "note": "p1 (10b) Booster rabies vaccination date (2회 이상, 최신)" },
+      "Text57":  { "source": "rabies_dates", "transform": "vaccine_desc:rabies:booster_date[1]", "note": "p1 (10b) Previous vaccination date (2회 이상, 이전)" },
 
       "Text58":  { "source": "rabies_titer_records", "transform": "array[0].date", "note": "p2 (11) RNATT sample collection date" },
       "Text59":  { "source": "rabies_titer_records", "transform": "array[0].value", "note": "p2 (11) RNATT test result IU/ml" },
@@ -781,12 +783,12 @@
       "Text73":  { "source": "infectious_disease_records", "transform": "array[0].date", "note": "p3 (24) Leptospira MAT sample collection date" },
 
       "Text78":  { "source": null, "default": "Jinwon Lee",                                  "note": "p4 Vet Name" },
-      "Text80":  { "source": null, "default": "3, Gwanak-ro 29-gil, Gwanak-gu, Seoul, Republic of Korea", "note": "p4 Vet Address" },
-      "Text81":  { "source": null, "default": "lausanne.vet@example.com",                    "note": "p4 Vet Email" },
+      "Text80":  { "source": null, "default": "3, Gwanak-ro 29-gil\nGwanak-gu, Seoul, Republic of Korea", "note": "p4 Vet Address (2줄)" },
+      "Text81":  { "source": null, "default": "petmove@naver.com", "note": "p4 Vet Email" },
       "Text82":  { "source": "vet_visit_date", "note": "p4 Date of certification" },
 
-      "Text74":  { "source": "microchip", "note": "p5 Certificate B — Microchip number" },
-      "Text75":  { "source": "new_zealand_extra", "transform": "json:permit_no", "note": "p5 Certificate B — NZ Permit to Import number" }
+      "Text75":  { "source": "new_zealand_extra", "transform": "json:permit_no", "note": "p5 Certificate B — NZ Permit to Import number" },
+      "Text76":  { "source": "microchip", "note": "p5 Certificate B — (4) Microchip number confirmed" }
     }
   },
 

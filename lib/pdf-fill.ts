@@ -565,6 +565,39 @@ function resolveField(
     return inMatch[1].split('|').includes(s)
   }
 
+  // Dropdown sex/neutered — maps DB sex code to dropdown option values
+  if (transform === 'dropdown_sex') {
+    const s = String(raw ?? '')
+    if (s === 'male' || s === 'neutered_male') return 'MALE'
+    if (s === 'female' || s === 'spayed_female') return 'FEMALE'
+    return ''
+  }
+  if (transform === 'dropdown_neutered') {
+    const s = String(raw ?? '')
+    if (s === 'neutered_male' || s === 'spayed_female') return 'NEUTERED'
+    if (s === 'male' || s === 'female') return 'ENTIRE'
+    return ''
+  }
+
+  // Conditional rabies date — only fill if primary (1 dose) or booster (2+ doses)
+  // vaccine_desc:rabies:primary_date[N] — returns date[N] only when total doses == 1
+  // vaccine_desc:rabies:booster_date[N] — returns date[N] only when total doses >= 2
+  const rabiesCondMatch = transform?.match(/^vaccine_desc:rabies:(primary|booster)_date\[(\d+)\]$/)
+  if (rabiesCondMatch) {
+    const mode = rabiesCondMatch[1] // 'primary' or 'booster'
+    const idx = Number(rabiesCondMatch[2])
+    const allDates = sortedDesc(raw)
+    const isPrimary = allDates.length <= 1
+    if ((mode === 'primary') !== isPrimary) return ''
+    const date = allDates[idx]
+    return date ? fmtDate(date) : ''
+  }
+
+  // Strip trailing country name from address (e.g. ", Republic of Korea" / ", South Korea" / ", Korea")
+  if (transform === 'strip_country') {
+    return String(raw ?? '').replace(/,?\s*(Republic of Korea|South Korea|Korea)\s*\.?\s*$/i, '').trim()
+  }
+
   // Extract nth char of the raw string (for microchip digit-per-box fields)
   const charMatch = transform?.match(/^char\[(\d+)\]$/)
   if (charMatch) {
@@ -958,6 +991,14 @@ function resolveField(
       if (prop === 'lab') return rec.lab ? (LAB_INFO[rec.lab]?.name ?? rec.lab) : ''
       if (prop === 'lab_country') return rec.lab ? (LAB_INFO[rec.lab]?.country ?? '') : ''
     }
+    // Generic array of objects with .date / .value etc. (infectious_disease_records, etc.)
+    if (Array.isArray(raw) && prop) {
+      const rec = raw[idx] as Record<string, unknown> | undefined
+      if (!rec) return ''
+      const v = rec[prop]
+      if (prop === 'date' && typeof v === 'string') return fmtDate(v)
+      return v == null ? '' : String(v)
+    }
     // Generic string[] / primitive[] fallback (used by e.g. microchip_extra).
     if (Array.isArray(raw) && !prop) {
       const v = raw[idx]
@@ -1327,6 +1368,11 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
     if (type === 'PDFCheckBox') {
       if (value === true) (field as import('pdf-lib').PDFCheckBox).check()
       else (field as import('pdf-lib').PDFCheckBox).uncheck()
+    } else if (type === 'PDFDropdown') {
+      if (typeof value === 'string' && value) {
+        const dd = field as import('pdf-lib').PDFDropdown
+        try { dd.select(value) } catch { /* option not found */ }
+      }
     } else if (type === 'PDFTextField') {
       let text = typeof value === 'string' ? value : ''
       // Fall back to mapping.default when a transform returned empty.
@@ -1481,6 +1527,11 @@ export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillO
     if (type === 'PDFCheckBox') {
       if (value === true) (field as import('pdf-lib').PDFCheckBox).check()
       else (field as import('pdf-lib').PDFCheckBox).uncheck()
+    } else if (type === 'PDFDropdown') {
+      if (typeof value === 'string' && value) {
+        const dd = field as import('pdf-lib').PDFDropdown
+        try { dd.select(value) } catch { /* option not found */ }
+      }
     } else if (type === 'PDFTextField') {
       let text = typeof value === 'string' ? value : ''
       // Fall back to mapping.default when a transform returned empty.
