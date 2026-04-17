@@ -19,7 +19,7 @@
  */
 
 const DEFAULT_EXTRACTION_MODEL = 'gpt-4o-mini'
-const DEFAULT_DROP_CREATE_MODEL = 'gpt-4o-mini'
+const DEFAULT_DROP_CREATE_MODEL = 'gpt-4o'
 
 /** 항공/백신/주소 등 개별 필드 추출용 모델. */
 export const EXTRACTION_MODEL =

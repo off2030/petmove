@@ -5,49 +5,170 @@
     "filename": "FormAC_{pet_name}.pdf",
     "dateFormat": "ymd_slash",
     "fields": {
-      "consignor_name":       { "source": "customer_name_en" },
-      "consignor_address":    { "source": "address_en" },
-      "consignee_name":       { "source": "customer_name_en" },
-      "consignee_address":    { "source": "address_overseas" },
-      "species":              { "source": "species", "transform": "en" },
-      "breed":                { "source": "breed_en" },
-      "pet_name":             { "source": "pet_name_en" },
-      "sex_male":             { "source": "sex", "transform": "checkbox:in:male|neutered_male" },
-      "sex_female":           { "source": "sex", "transform": "checkbox:in:female|spayed_female" },
-      "birth_or_age":         { "source": "birth_date", "transform": "date_or_age" },
-      "color":                { "source": "color_en" },
-      "use_pet":              { "source": null, "transform": "checkbox:always_true" },
-      "microchip":            { "source": "microchip" },
-      "id_date":              { "source": "microchip_implant_date" },
-      "rabies1_date":         { "source": "rabies_dates", "transform": "array[0]", "note": "Row I = 최신 접종일" },
-      "rabies1_period":       { "source": "rabies_dates", "transform": "period[0]" },
-      "rabies1_product":      { "source": "rabies_dates", "transform": "product[0]" },
-      "rabies2_date":         { "source": "rabies_dates", "transform": "array[1]" },
-      "rabies2_period":       { "source": "rabies_dates", "transform": "period[1]" },
-      "rabies2_product":      { "source": "rabies_dates", "transform": "product[1]" },
-      "rabies3_date":         { "source": "rabies_dates", "transform": "array[2]" },
-      "rabies3_period":       { "source": "rabies_dates", "transform": "period[2]" },
-      "rabies3_product":      { "source": "rabies_dates", "transform": "product[2]" },
-      "rabies4_date":         { "source": "rabies_dates", "transform": "array[3]" },
-      "rabies4_period":       { "source": "rabies_dates", "transform": "period[3]" },
-      "rabies4_product":      { "source": "rabies_dates", "transform": "product[3]" },
-      "rabies5_date":         { "source": "rabies_dates", "transform": "array[4]" },
-      "rabies5_period":       { "source": "rabies_dates", "transform": "period[4]" },
-      "rabies5_product":      { "source": "rabies_dates", "transform": "product[4]" },
-      "rabies6_date":         { "source": "rabies_dates", "transform": "array[5]" },
-      "rabies6_period":       { "source": "rabies_dates", "transform": "period[5]" },
-      "rabies6_product":      { "source": "rabies_dates", "transform": "product[5]" },
-      "titer1_date":          { "source": "rabies_titer_records", "transform": "array[0].date", "note": "Row I = 최신 항체검사" },
-      "titer1_value":         { "source": "rabies_titer_records", "transform": "array[0].value" },
-      "titer1_lab_name":      { "source": "rabies_titer_records", "transform": "array[0].lab" },
-      "titer1_lab_country":   { "source": "rabies_titer_records", "transform": "array[0].lab_country" },
-      "titer2_date":          { "source": "rabies_titer_records", "transform": "array[1].date" },
-      "titer2_value":         { "source": "rabies_titer_records", "transform": "array[1].value" },
-      "titer2_lab_name":      { "source": "rabies_titer_records", "transform": "array[1].lab" },
-      "titer2_lab_country":   { "source": "rabies_titer_records", "transform": "array[1].lab_country" },
-      "vet_name":             { "source": null, "default": "Jinwon Lee" },
-      "vet_address":          { "source": null, "default": "3, Gwanak-ro 29-gil, Gwanak-gu, Seoul, Republic of Korea" },
-      "inspection_date":      { "source": "vet_visit_date" }
+      "consignor_name": {
+        "source": "customer_name_en"
+      },
+      "consignor_address": {
+        "source": "address_en"
+      },
+      "consignee_name": {
+        "source": "customer_name_en"
+      },
+      "consignee_address": {
+        "source": "address_overseas"
+      },
+      "species": {
+        "source": "species",
+        "transform": "en"
+      },
+      "breed": {
+        "source": "breed_en"
+      },
+      "pet_name": {
+        "source": "pet_name_en"
+      },
+      "sex_male": {
+        "source": "sex",
+        "transform": "checkbox:in:male|neutered_male"
+      },
+      "sex_female": {
+        "source": "sex",
+        "transform": "checkbox:in:female|spayed_female"
+      },
+      "birth_or_age": {
+        "source": "birth_date",
+        "transform": "date_or_age"
+      },
+      "color": {
+        "source": "color_en"
+      },
+      "use_pet": {
+        "source": null,
+        "transform": "checkbox:always_true"
+      },
+      "microchip": {
+        "source": "microchip"
+      },
+      "id_date": {
+        "source": "microchip_implant_date"
+      },
+      "rabies1_date": {
+        "source": "rabies_dates",
+        "transform": "array[0]",
+        "note": "Row I = 최신 접종일"
+      },
+      "rabies1_period": {
+        "source": "rabies_dates",
+        "transform": "period[0]"
+      },
+      "rabies1_product": {
+        "source": "rabies_dates",
+        "transform": "product[0]"
+      },
+      "rabies2_date": {
+        "source": "rabies_dates",
+        "transform": "array[1]"
+      },
+      "rabies2_period": {
+        "source": "rabies_dates",
+        "transform": "period[1]"
+      },
+      "rabies2_product": {
+        "source": "rabies_dates",
+        "transform": "product[1]"
+      },
+      "rabies3_date": {
+        "source": "rabies_dates",
+        "transform": "array[2]"
+      },
+      "rabies3_period": {
+        "source": "rabies_dates",
+        "transform": "period[2]"
+      },
+      "rabies3_product": {
+        "source": "rabies_dates",
+        "transform": "product[2]"
+      },
+      "rabies4_date": {
+        "source": "rabies_dates",
+        "transform": "array[3]"
+      },
+      "rabies4_period": {
+        "source": "rabies_dates",
+        "transform": "period[3]"
+      },
+      "rabies4_product": {
+        "source": "rabies_dates",
+        "transform": "product[3]"
+      },
+      "rabies5_date": {
+        "source": "rabies_dates",
+        "transform": "array[4]"
+      },
+      "rabies5_period": {
+        "source": "rabies_dates",
+        "transform": "period[4]"
+      },
+      "rabies5_product": {
+        "source": "rabies_dates",
+        "transform": "product[4]"
+      },
+      "rabies6_date": {
+        "source": "rabies_dates",
+        "transform": "array[5]"
+      },
+      "rabies6_period": {
+        "source": "rabies_dates",
+        "transform": "period[5]"
+      },
+      "rabies6_product": {
+        "source": "rabies_dates",
+        "transform": "product[5]"
+      },
+      "titer1_date": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].date",
+        "note": "Row I = 최신 항체검사"
+      },
+      "titer1_value": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].value"
+      },
+      "titer1_lab_name": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].lab"
+      },
+      "titer1_lab_country": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].lab_country"
+      },
+      "titer2_date": {
+        "source": "rabies_titer_records",
+        "transform": "array[1].date"
+      },
+      "titer2_value": {
+        "source": "rabies_titer_records",
+        "transform": "array[1].value"
+      },
+      "titer2_lab_name": {
+        "source": "rabies_titer_records",
+        "transform": "array[1].lab"
+      },
+      "titer2_lab_country": {
+        "source": "rabies_titer_records",
+        "transform": "array[1].lab_country"
+      },
+      "vet_name": {
+        "source": null,
+        "transform": "vet:name_en"
+      },
+      "vet_address": {
+        "source": null,
+        "transform": "vet:address_en"
+      },
+      "inspection_date": {
+        "source": "vet_visit_date"
+      }
     }
   },
   "FormRE": {
@@ -56,35 +177,114 @@
     "filename": "FormRE_{pet_name}.pdf",
     "dateFormat": "ymd_slash",
     "fields": {
-      "consignor_name":       { "source": "customer_name_en" },
-      "consignor_address":    { "source": "address_en" },
-      "consignee_name":       { "source": "customer_name_en" },
-      "consignee_address":    { "source": "address_overseas" },
-      "species":              { "source": "species", "transform": "en" },
-      "breed":                { "source": "breed_en" },
-      "pet_name":             { "source": "pet_name_en" },
-      "sex_male":             { "source": "sex", "transform": "checkbox:in:male|neutered_male" },
-      "sex_female":           { "source": "sex", "transform": "checkbox:in:female|spayed_female" },
-      "birth_or_age":         { "source": "birth_date", "transform": "date_or_age" },
-      "color":                { "source": "color_en" },
-      "use_pet":              { "source": null, "transform": "checkbox:always_true" },
-      "microchip":            { "source": "microchip" },
-      "id_date":              { "source": "microchip_implant_date" },
-      "rabies_cert_number":   { "source": null, "note": "일본 AQS 수출검역증명서 번호 — 케이스 데이터 없음" },
-      "rabies_date_1":        { "source": "rabies_dates", "transform": "after_titer[0]", "note": "1차 항체검사일 이후 추가접종분만" },
-      "rabies_date_2":        { "source": "rabies_dates", "transform": "after_titer[1]" },
-      "rabies_period_1":      { "source": "rabies_dates", "transform": "after_titer_period[0]" },
-      "rabies_period_2":      { "source": "rabies_dates", "transform": "after_titer_period[1]" },
-      "rabies_product_1":     { "source": "rabies_dates", "transform": "after_titer_product[0]" },
-      "rabies_product_2":     { "source": "rabies_dates", "transform": "after_titer_product[1]" },
-      "titer_cert_number":    { "source": null, "note": "일본 AQS 항체가검사 증명서 번호" },
-      "titer_date_1":         { "source": "rabies_titer_records", "transform": "if_multi[0].date", "note": "2차 항체검사(최신)가 있을 때만 출력" },
-      "titer_value_1":        { "source": "rabies_titer_records", "transform": "if_multi[0].value" },
-      "titer_lab_name_1":     { "source": "rabies_titer_records", "transform": "if_multi[0].lab" },
-      "titer_lab_country_1":  { "source": "rabies_titer_records", "transform": "if_multi[0].lab_country" },
-      "vet_name":             { "source": null, "default": "Jinwon Lee" },
-      "vet_address":          { "source": null, "default": "3, Gwanak-ro 29-gil, Gwanak-gu, Seoul, Republic of Korea" },
-      "inspection_date":      { "source": "vet_visit_date" }
+      "consignor_name": {
+        "source": "customer_name_en"
+      },
+      "consignor_address": {
+        "source": "address_en"
+      },
+      "consignee_name": {
+        "source": "customer_name_en"
+      },
+      "consignee_address": {
+        "source": "address_overseas"
+      },
+      "species": {
+        "source": "species",
+        "transform": "en"
+      },
+      "breed": {
+        "source": "breed_en"
+      },
+      "pet_name": {
+        "source": "pet_name_en"
+      },
+      "sex_male": {
+        "source": "sex",
+        "transform": "checkbox:in:male|neutered_male"
+      },
+      "sex_female": {
+        "source": "sex",
+        "transform": "checkbox:in:female|spayed_female"
+      },
+      "birth_or_age": {
+        "source": "birth_date",
+        "transform": "date_or_age"
+      },
+      "color": {
+        "source": "color_en"
+      },
+      "use_pet": {
+        "source": null,
+        "transform": "checkbox:always_true"
+      },
+      "microchip": {
+        "source": "microchip"
+      },
+      "id_date": {
+        "source": "microchip_implant_date"
+      },
+      "rabies_cert_number": {
+        "source": null,
+        "note": "일본 AQS 수출검역증명서 번호 — 케이스 데이터 없음"
+      },
+      "rabies_date_1": {
+        "source": "rabies_dates",
+        "transform": "after_titer[0]",
+        "note": "1차 항체검사일 이후 추가접종분만"
+      },
+      "rabies_date_2": {
+        "source": "rabies_dates",
+        "transform": "after_titer[1]"
+      },
+      "rabies_period_1": {
+        "source": "rabies_dates",
+        "transform": "after_titer_period[0]"
+      },
+      "rabies_period_2": {
+        "source": "rabies_dates",
+        "transform": "after_titer_period[1]"
+      },
+      "rabies_product_1": {
+        "source": "rabies_dates",
+        "transform": "after_titer_product[0]"
+      },
+      "rabies_product_2": {
+        "source": "rabies_dates",
+        "transform": "after_titer_product[1]"
+      },
+      "titer_cert_number": {
+        "source": null,
+        "note": "일본 AQS 항체가검사 증명서 번호"
+      },
+      "titer_date_1": {
+        "source": "rabies_titer_records",
+        "transform": "if_multi[0].date",
+        "note": "2차 항체검사(최신)가 있을 때만 출력"
+      },
+      "titer_value_1": {
+        "source": "rabies_titer_records",
+        "transform": "if_multi[0].value"
+      },
+      "titer_lab_name_1": {
+        "source": "rabies_titer_records",
+        "transform": "if_multi[0].lab"
+      },
+      "titer_lab_country_1": {
+        "source": "rabies_titer_records",
+        "transform": "if_multi[0].lab_country"
+      },
+      "vet_name": {
+        "source": null,
+        "transform": "vet:name_en"
+      },
+      "vet_address": {
+        "source": null,
+        "transform": "vet:address_en"
+      },
+      "inspection_date": {
+        "source": "vet_visit_date"
+      }
     }
   },
   "IdentificationDeclaration": {
@@ -93,52 +293,169 @@
     "filename": "ID_{pet_name}.pdf",
     "dateFormat": "dmmmy",
     "fields": {
-      "animal_name":          { "source": "pet_name_en" },
-      "birth_date":           { "source": "birth_date" },
-      "breed_desc":           { "source": "animal_description" },
-      "sex_male_entire":      { "source": "sex", "transform": "checkbox:eq:male" },
-      "sex_neutered_male":    { "source": "sex", "transform": "checkbox:eq:neutered_male" },
-      "sex_female_entire":    { "source": "sex", "transform": "checkbox:eq:female" },
-      "sex_neutered_female":  { "source": "sex", "transform": "checkbox:eq:spayed_female" },
-      "importer_name":        { "source": "customer_name_en" },
-      "animal_name_b":        { "source": "pet_name_en" },
-      "birth_date_b":         { "source": "birth_date" },
-      "sex_b_male":           { "source": "sex", "transform": "checkbox:eq:male" },
-      "sex_b_neutered_male":  { "source": "sex", "transform": "checkbox:eq:neutered_male" },
-      "sex_b_female":         { "source": "sex", "transform": "checkbox:eq:female" },
-      "sex_b_neutered_female":{ "source": "sex", "transform": "checkbox:eq:spayed_female" },
-      "description_b":        { "source": "animal_description" },
-      "microchip_site":       { "source": null, "note": "수의사 기입 — 케이스 데이터 없음" },
-      "chip1_01": { "source": "microchip", "transform": "digit[0]" },
-      "chip1_02": { "source": "microchip", "transform": "digit[1]" },
-      "chip1_03": { "source": "microchip", "transform": "digit[2]" },
-      "chip1_04": { "source": "microchip", "transform": "digit[3]" },
-      "chip1_05": { "source": "microchip", "transform": "digit[4]" },
-      "chip1_06": { "source": "microchip", "transform": "digit[5]" },
-      "chip1_07": { "source": "microchip", "transform": "digit[6]" },
-      "chip1_08": { "source": "microchip", "transform": "digit[7]" },
-      "chip1_09": { "source": "microchip", "transform": "digit[8]" },
-      "chip1_10": { "source": "microchip", "transform": "digit[9]" },
-      "chip1_11": { "source": "microchip", "transform": "digit[10]" },
-      "chip1_12": { "source": "microchip", "transform": "digit[11]" },
-      "chip1_13": { "source": "microchip", "transform": "digit[12]" },
-      "chip1_14": { "source": "microchip", "transform": "digit[13]" },
-      "chip1_15": { "source": "microchip", "transform": "digit[14]" },
-      "chip2_01": { "source": null, "note": "2차 마이크로칩 — 케이스 데이터 없음" },
-      "chip2_02": { "source": null },
-      "chip2_03": { "source": null },
-      "chip2_04": { "source": null },
-      "chip2_05": { "source": null },
-      "chip2_06": { "source": null },
-      "chip2_07": { "source": null },
-      "chip2_08": { "source": null },
-      "chip2_09": { "source": null },
-      "chip2_10": { "source": null },
-      "chip2_11": { "source": null },
-      "chip2_12": { "source": null },
-      "chip2_13": { "source": null },
-      "chip2_14": { "source": null },
-      "chip2_15": { "source": null }
+      "animal_name": {
+        "source": "pet_name_en"
+      },
+      "birth_date": {
+        "source": "birth_date"
+      },
+      "breed_desc": {
+        "source": "animal_description"
+      },
+      "sex_male_entire": {
+        "source": "sex",
+        "transform": "checkbox:eq:male"
+      },
+      "sex_neutered_male": {
+        "source": "sex",
+        "transform": "checkbox:eq:neutered_male"
+      },
+      "sex_female_entire": {
+        "source": "sex",
+        "transform": "checkbox:eq:female"
+      },
+      "sex_neutered_female": {
+        "source": "sex",
+        "transform": "checkbox:eq:spayed_female"
+      },
+      "importer_name": {
+        "source": "customer_name_en"
+      },
+      "animal_name_b": {
+        "source": "pet_name_en"
+      },
+      "birth_date_b": {
+        "source": "birth_date"
+      },
+      "sex_b_male": {
+        "source": "sex",
+        "transform": "checkbox:eq:male"
+      },
+      "sex_b_neutered_male": {
+        "source": "sex",
+        "transform": "checkbox:eq:neutered_male"
+      },
+      "sex_b_female": {
+        "source": "sex",
+        "transform": "checkbox:eq:female"
+      },
+      "sex_b_neutered_female": {
+        "source": "sex",
+        "transform": "checkbox:eq:spayed_female"
+      },
+      "description_b": {
+        "source": "animal_description"
+      },
+      "microchip_site": {
+        "source": null,
+        "note": "수의사 기입 — 케이스 데이터 없음"
+      },
+      "chip1_01": {
+        "source": "microchip",
+        "transform": "digit[0]"
+      },
+      "chip1_02": {
+        "source": "microchip",
+        "transform": "digit[1]"
+      },
+      "chip1_03": {
+        "source": "microchip",
+        "transform": "digit[2]"
+      },
+      "chip1_04": {
+        "source": "microchip",
+        "transform": "digit[3]"
+      },
+      "chip1_05": {
+        "source": "microchip",
+        "transform": "digit[4]"
+      },
+      "chip1_06": {
+        "source": "microchip",
+        "transform": "digit[5]"
+      },
+      "chip1_07": {
+        "source": "microchip",
+        "transform": "digit[6]"
+      },
+      "chip1_08": {
+        "source": "microchip",
+        "transform": "digit[7]"
+      },
+      "chip1_09": {
+        "source": "microchip",
+        "transform": "digit[8]"
+      },
+      "chip1_10": {
+        "source": "microchip",
+        "transform": "digit[9]"
+      },
+      "chip1_11": {
+        "source": "microchip",
+        "transform": "digit[10]"
+      },
+      "chip1_12": {
+        "source": "microchip",
+        "transform": "digit[11]"
+      },
+      "chip1_13": {
+        "source": "microchip",
+        "transform": "digit[12]"
+      },
+      "chip1_14": {
+        "source": "microchip",
+        "transform": "digit[13]"
+      },
+      "chip1_15": {
+        "source": "microchip",
+        "transform": "digit[14]"
+      },
+      "chip2_01": {
+        "source": null,
+        "note": "2차 마이크로칩 — 케이스 데이터 없음"
+      },
+      "chip2_02": {
+        "source": null
+      },
+      "chip2_03": {
+        "source": null
+      },
+      "chip2_04": {
+        "source": null
+      },
+      "chip2_05": {
+        "source": null
+      },
+      "chip2_06": {
+        "source": null
+      },
+      "chip2_07": {
+        "source": null
+      },
+      "chip2_08": {
+        "source": null
+      },
+      "chip2_09": {
+        "source": null
+      },
+      "chip2_10": {
+        "source": null
+      },
+      "chip2_11": {
+        "source": null
+      },
+      "chip2_12": {
+        "source": null
+      },
+      "chip2_13": {
+        "source": null
+      },
+      "chip2_14": {
+        "source": null
+      },
+      "chip2_15": {
+        "source": null
+      }
     }
   },
   "Form25": {
@@ -147,74 +464,269 @@
     "filename": "접종 및 건강증명서_{pet_name}.pdf",
     "dateFormat": "ymd_slash",
     "fields": {
-      "owner_name":           { "source": "customer_name_en" },
-      "owner_phone":          { "source": "phone", "transform": "phone_dash" },
-      "owner_address":        { "source": "address_en" },
-      "species_dog":          { "source": "species", "transform": "checkbox:eq:dog" },
-      "species_cat":          { "source": "species", "transform": "checkbox:eq:cat" },
-      "species_other":        { "source": null, "note": "견/묘 외 — 수기 기입" },
-      "species_other_text":   { "source": null },
-      "sex_male":             { "source": "sex", "transform": "checkbox:eq:male" },
-      "sex_female":           { "source": "sex", "transform": "checkbox:eq:female" },
-      "sex_neutered_male":    { "source": "sex", "transform": "checkbox:eq:neutered_male" },
-      "sex_neutered_female":  { "source": "sex", "transform": "checkbox:eq:spayed_female" },
-      "age_years":            { "source": "birth_date", "transform": "age_years" },
-      "age_months":           { "source": "birth_date", "transform": "age_months" },
-      "birth_date":           { "source": "birth_date" },
-      "color_marks":          { "source": "color_en" },
-      "breed":                { "source": "breed_en" },
-      "pet_name":             { "source": "pet_name_en" },
-      "weight_under_5kg":     { "source": "weight", "transform": "cmp:num:le:5" },
-      "weight_5_to_10kg":     { "source": "weight", "transform": "cmp:num:gt_lt:5:10" },
-      "weight_over_10kg":     { "source": "weight", "transform": "cmp:num:ge:10" },
-      "weight_kg":            { "source": "weight" },
-      "microchip_yes":        { "source": "microchip", "transform": "checkbox:truthy" },
-      "microchip_no":         { "source": "microchip", "transform": "checkbox:falsy" },
-      "microchip_number":     { "source": "microchip" },
-      "microchip_implant_date":{ "source": "microchip_implant_date" },
-      "rabies1_product":      { "source": "rabies_dates", "transform": "vaccine:rabies:name[0]" },
-      "rabies1_manufacturer": { "source": "rabies_dates", "transform": "vaccine:rabies:manufacturer[0]" },
-      "rabies1_serial":       { "source": "rabies_dates", "transform": "vaccine:rabies:serial[0]" },
-      "rabies1_vacc_date":    { "source": "rabies_dates", "transform": "vaccine:rabies:date[0]" },
-      "rabies1_validity_1Y":  { "source": "rabies_dates", "transform": "has[0]", "note": "Rabisin은 1년 유효 — 2Y/3Y 체크박스는 템플릿 기본 언체크 유지" },
-      "rabies2_product":      { "source": "rabies_dates", "transform": "vaccine:rabies:name[1]" },
-      "rabies2_manufacturer": { "source": "rabies_dates", "transform": "vaccine:rabies:manufacturer[1]" },
-      "rabies2_serial":       { "source": "rabies_dates", "transform": "vaccine:rabies:serial[1]" },
-      "rabies2_vacc_date":    { "source": "rabies_dates", "transform": "vaccine:rabies:date[1]" },
-      "rabies2_validity_1Y":  { "source": "rabies_dates", "transform": "has[1]" },
-      "rabies3_product":      { "source": "rabies_dates", "transform": "vaccine:rabies:name[2]" },
-      "rabies3_manufacturer": { "source": "rabies_dates", "transform": "vaccine:rabies:manufacturer[2]" },
-      "rabies3_serial":       { "source": "rabies_dates", "transform": "vaccine:rabies:serial[2]" },
-      "rabies3_vacc_date":    { "source": "rabies_dates", "transform": "vaccine:rabies:date[2]" },
-      "rabies3_validity_1Y":  { "source": "rabies_dates", "transform": "has[2]" },
-      "other1_product_type":  { "source": null, "transform": "other_vacc_seq:type[0]", "note": "종합백신→외부→내부 순서로 최신 1건씩, 없는 타입 skip" },
-      "other1_product_name":  { "source": null, "transform": "other_vacc_seq:name[0]" },
-      "other1_manufacturer":  { "source": null, "transform": "other_vacc_seq:manufacturer[0]" },
-      "other1_serial":        { "source": null, "transform": "other_vacc_seq:serial[0]" },
-      "other1_date":          { "source": null, "transform": "other_vacc_seq:date[0]" },
-      "other2_product_type":  { "source": null, "transform": "other_vacc_seq:type[1]" },
-      "other2_product_name":  { "source": null, "transform": "other_vacc_seq:name[1]" },
-      "other2_manufacturer":  { "source": null, "transform": "other_vacc_seq:manufacturer[1]" },
-      "other2_serial":        { "source": null, "transform": "other_vacc_seq:serial[1]" },
-      "other2_date":          { "source": null, "transform": "other_vacc_seq:date[1]" },
-      "other3_product_type":  { "source": null, "transform": "other_vacc_seq:type[2]" },
-      "other3_product_name":  { "source": null, "transform": "other_vacc_seq:name[2]" },
-      "other3_manufacturer":  { "source": null, "transform": "other_vacc_seq:manufacturer[2]" },
-      "other3_serial":        { "source": null, "transform": "other_vacc_seq:serial[2]" },
-      "other3_date":          { "source": null, "transform": "other_vacc_seq:date[2]" },
-      "clinical_cert_kr":     { "source": null, "transform": "checkbox:always_true" },
-      "clinical_cert_en":     { "source": null, "transform": "checkbox:always_true" },
-      "hospital_name":        { "source": null, "default": "Lausanne Veterinary Medical Center" },
-      "hospital_phone":       { "source": null, "default": "+82-2-872-7588" },
-      "hospital_address1":    { "source": null, "default": "3, Gwanak-ro 29-gil", "note": "1=거리 주소" },
-      "hospital_address2":    { "source": null, "default": "Gwanak-gu, Seoul, Republic of Korea", "note": "2=시/지역/국가" },
-      "hospital_address3":    { "source": null },
-      "vet_license_number":   { "source": null, "default": "9608" },
-      "vet_name":             { "source": null, "default": "Jinwon Lee" },
-      "issue_date":           { "source": "vet_visit_date", "transform": "date_or_today" }
+      "owner_name": {
+        "source": "customer_name_en"
+      },
+      "owner_phone": {
+        "source": "phone",
+        "transform": "phone_dash"
+      },
+      "owner_address": {
+        "source": "address_en"
+      },
+      "species_dog": {
+        "source": "species",
+        "transform": "checkbox:eq:dog"
+      },
+      "species_cat": {
+        "source": "species",
+        "transform": "checkbox:eq:cat"
+      },
+      "species_other": {
+        "source": null,
+        "note": "견/묘 외 — 수기 기입"
+      },
+      "species_other_text": {
+        "source": null
+      },
+      "sex_male": {
+        "source": "sex",
+        "transform": "checkbox:eq:male"
+      },
+      "sex_female": {
+        "source": "sex",
+        "transform": "checkbox:eq:female"
+      },
+      "sex_neutered_male": {
+        "source": "sex",
+        "transform": "checkbox:eq:neutered_male"
+      },
+      "sex_neutered_female": {
+        "source": "sex",
+        "transform": "checkbox:eq:spayed_female"
+      },
+      "age_years": {
+        "source": "birth_date",
+        "transform": "age_years"
+      },
+      "age_months": {
+        "source": "birth_date",
+        "transform": "age_months"
+      },
+      "birth_date": {
+        "source": "birth_date"
+      },
+      "color_marks": {
+        "source": "color_en"
+      },
+      "breed": {
+        "source": "breed_en"
+      },
+      "pet_name": {
+        "source": "pet_name_en"
+      },
+      "weight_under_5kg": {
+        "source": "weight",
+        "transform": "cmp:num:le:5"
+      },
+      "weight_5_to_10kg": {
+        "source": "weight",
+        "transform": "cmp:num:gt_lt:5:10"
+      },
+      "weight_over_10kg": {
+        "source": "weight",
+        "transform": "cmp:num:ge:10"
+      },
+      "weight_kg": {
+        "source": "weight"
+      },
+      "microchip_yes": {
+        "source": "microchip",
+        "transform": "checkbox:truthy"
+      },
+      "microchip_no": {
+        "source": "microchip",
+        "transform": "checkbox:falsy"
+      },
+      "microchip_number": {
+        "source": "microchip"
+      },
+      "microchip_implant_date": {
+        "source": "microchip_implant_date"
+      },
+      "rabies1_product": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:name[0]"
+      },
+      "rabies1_manufacturer": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:manufacturer[0]"
+      },
+      "rabies1_serial": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:serial[0]"
+      },
+      "rabies1_vacc_date": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[0]"
+      },
+      "rabies1_validity_1Y": {
+        "source": "rabies_dates",
+        "transform": "has[0]",
+        "note": "Rabisin은 1년 유효 — 2Y/3Y 체크박스는 템플릿 기본 언체크 유지"
+      },
+      "rabies2_product": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:name[1]"
+      },
+      "rabies2_manufacturer": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:manufacturer[1]"
+      },
+      "rabies2_serial": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:serial[1]"
+      },
+      "rabies2_vacc_date": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[1]"
+      },
+      "rabies2_validity_1Y": {
+        "source": "rabies_dates",
+        "transform": "has[1]"
+      },
+      "rabies3_product": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:name[2]"
+      },
+      "rabies3_manufacturer": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:manufacturer[2]"
+      },
+      "rabies3_serial": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:serial[2]"
+      },
+      "rabies3_vacc_date": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[2]"
+      },
+      "rabies3_validity_1Y": {
+        "source": "rabies_dates",
+        "transform": "has[2]"
+      },
+      "other1_product_type": {
+        "source": null,
+        "transform": "other_vacc_seq:type[0]",
+        "note": "종합백신→외부→내부 순서로 최신 1건씩, 없는 타입 skip"
+      },
+      "other1_product_name": {
+        "source": null,
+        "transform": "other_vacc_seq:name[0]"
+      },
+      "other1_manufacturer": {
+        "source": null,
+        "transform": "other_vacc_seq:manufacturer[0]"
+      },
+      "other1_serial": {
+        "source": null,
+        "transform": "other_vacc_seq:serial[0]"
+      },
+      "other1_date": {
+        "source": null,
+        "transform": "other_vacc_seq:date[0]"
+      },
+      "other2_product_type": {
+        "source": null,
+        "transform": "other_vacc_seq:type[1]"
+      },
+      "other2_product_name": {
+        "source": null,
+        "transform": "other_vacc_seq:name[1]"
+      },
+      "other2_manufacturer": {
+        "source": null,
+        "transform": "other_vacc_seq:manufacturer[1]"
+      },
+      "other2_serial": {
+        "source": null,
+        "transform": "other_vacc_seq:serial[1]"
+      },
+      "other2_date": {
+        "source": null,
+        "transform": "other_vacc_seq:date[1]"
+      },
+      "other3_product_type": {
+        "source": null,
+        "transform": "other_vacc_seq:type[2]"
+      },
+      "other3_product_name": {
+        "source": null,
+        "transform": "other_vacc_seq:name[2]"
+      },
+      "other3_manufacturer": {
+        "source": null,
+        "transform": "other_vacc_seq:manufacturer[2]"
+      },
+      "other3_serial": {
+        "source": null,
+        "transform": "other_vacc_seq:serial[2]"
+      },
+      "other3_date": {
+        "source": null,
+        "transform": "other_vacc_seq:date[2]"
+      },
+      "clinical_cert_kr": {
+        "source": null,
+        "transform": "checkbox:always_true"
+      },
+      "clinical_cert_en": {
+        "source": null,
+        "transform": "checkbox:always_true"
+      },
+      "hospital_name": {
+        "source": null,
+        "transform": "vet:clinic_en"
+      },
+      "hospital_phone": {
+        "source": null,
+        "transform": "vet:phone_intl"
+      },
+      "hospital_address1": {
+        "source": null,
+        "note": "1=거리 주소",
+        "transform": "vet:address_street_en"
+      },
+      "hospital_address2": {
+        "source": null,
+        "note": "2=시/지역/국가",
+        "transform": "vet:address_locality_en"
+      },
+      "hospital_address3": {
+        "source": null
+      },
+      "vet_license_number": {
+        "source": null,
+        "default": "9608"
+      },
+      "vet_name": {
+        "source": null,
+        "transform": "vet:name_en"
+      },
+      "issue_date": {
+        "source": "vet_visit_date",
+        "transform": "date_or_today"
+      }
     },
     "signatures": [
-      { "image": "lausanne.png", "page": 0, "x": 405, "y": 182, "w": 61, "h": 17 }
+      {
+        "image": "lausanne.png",
+        "page": 0,
+        "x": 405,
+        "y": 182,
+        "w": 61,
+        "h": 17
+      }
     ]
   },
   "Form25AuNz": {
@@ -223,624 +735,3174 @@
     "filename": "접종 및 건강증명서_{pet_name}.pdf",
     "dateFormat": "ymd_slash",
     "fields": {
-      "owner_name":           { "source": "customer_name_en" },
-      "owner_phone":          { "source": "phone", "transform": "phone_dash" },
-      "owner_address":        { "source": "address_en" },
-      "species_dog":          { "source": "species", "transform": "checkbox:eq:dog" },
-      "species_cat":          { "source": "species", "transform": "checkbox:eq:cat" },
-      "species_other":        { "source": null, "note": "견/묘 외 — 수기 기입" },
-      "species_other_text":   { "source": null },
-      "sex_male":             { "source": "sex", "transform": "checkbox:eq:male" },
-      "sex_female":           { "source": "sex", "transform": "checkbox:eq:female" },
-      "sex_neutered_male":    { "source": "sex", "transform": "checkbox:eq:neutered_male" },
-      "sex_neutered_female":  { "source": "sex", "transform": "checkbox:eq:spayed_female" },
-      "age_years":            { "source": "birth_date", "transform": "age_years" },
-      "age_months":           { "source": "birth_date", "transform": "age_months" },
-      "birth_date":           { "source": "birth_date" },
-      "color_marks":          { "source": "color_en" },
-      "breed":                { "source": "breed_en" },
-      "pet_name":             { "source": "pet_name_en" },
-      "weight_under_5kg":     { "source": "weight", "transform": "cmp:num:le:5" },
-      "weight_5_to_10kg":     { "source": "weight", "transform": "cmp:num:gt_lt:5:10" },
-      "weight_over_10kg":     { "source": "weight", "transform": "cmp:num:ge:10" },
-      "weight_kg":            { "source": "weight" },
-      "microchip_yes":        { "source": "microchip", "transform": "checkbox:truthy" },
-      "microchip_no":         { "source": "microchip", "transform": "checkbox:falsy" },
-      "microchip_number":     { "source": "microchip" },
-      "rabies1_product":      { "source": "rabies_dates", "transform": "vaccine:rabies:name[0]" },
-      "rabies1_manufacturer": { "source": "rabies_dates", "transform": "vaccine:rabies:manufacturer[0]" },
-      "rabies1_serial":       { "source": "rabies_dates", "transform": "vaccine:rabies:serial_with_expiry[0]", "note": "AU/NZ: batch + product expiry 병기" },
-      "rabies1_vacc_date":    { "source": "rabies_dates", "transform": "vaccine:rabies:date[0]" },
-      "rabies1_validity_1Y":  { "source": "rabies_dates", "transform": "has[0]" },
-      "rabies2_product":      { "source": "rabies_dates", "transform": "vaccine:rabies:name[1]" },
-      "rabies2_manufacturer": { "source": "rabies_dates", "transform": "vaccine:rabies:manufacturer[1]" },
-      "rabies2_serial":       { "source": "rabies_dates", "transform": "vaccine:rabies:serial_with_expiry[1]", "note": "AU/NZ: batch + product expiry 병기" },
-      "rabies2_vacc_date":    { "source": "rabies_dates", "transform": "vaccine:rabies:date[1]" },
-      "rabies2_validity_1Y":  { "source": "rabies_dates", "transform": "has[1]" },
-      "other1_product_type":  { "source": null, "transform": "expanded_vacc_seq:type[0]", "note": "8슬롯: 종합→CIV→켄넬코프(미구현)→외부→내부, 각 타입 최대 3회차" },
-      "other1_product_name":  { "source": null, "transform": "expanded_vacc_seq:name[0]" },
-      "other1_manufacturer":  { "source": null, "transform": "expanded_vacc_seq:manufacturer[0]" },
-      "other1_serial":        { "source": null, "transform": "expanded_vacc_seq:serial_with_expiry[0]", "note": "AU/NZ: batch + product expiry 병기" },
-      "other1_date":          { "source": null, "transform": "expanded_vacc_seq:date[0]" },
-      "other2_product_type":  { "source": null, "transform": "expanded_vacc_seq:type[1]" },
-      "other2_product_name":  { "source": null, "transform": "expanded_vacc_seq:name[1]" },
-      "other2_manufacturer":  { "source": null, "transform": "expanded_vacc_seq:manufacturer[1]" },
-      "other2_serial":        { "source": null, "transform": "expanded_vacc_seq:serial_with_expiry[1]" },
-      "other2_date":          { "source": null, "transform": "expanded_vacc_seq:date[1]" },
-      "other3_product_type":  { "source": null, "transform": "expanded_vacc_seq:type[2]" },
-      "other3_product_name":  { "source": null, "transform": "expanded_vacc_seq:name[2]" },
-      "other3_manufacturer":  { "source": null, "transform": "expanded_vacc_seq:manufacturer[2]" },
-      "other3_serial":        { "source": null, "transform": "expanded_vacc_seq:serial_with_expiry[2]" },
-      "other3_date":          { "source": null, "transform": "expanded_vacc_seq:date[2]" },
-      "other4_product_type":  { "source": null, "transform": "expanded_vacc_seq:type[3]" },
-      "other4_product_name":  { "source": null, "transform": "expanded_vacc_seq:name[3]" },
-      "other4_manufacturer":  { "source": null, "transform": "expanded_vacc_seq:manufacturer[3]" },
-      "other4_serial":        { "source": null, "transform": "expanded_vacc_seq:serial_with_expiry[3]" },
-      "other4_date":          { "source": null, "transform": "expanded_vacc_seq:date[3]" },
-      "other5_product_type":  { "source": null, "transform": "expanded_vacc_seq:type[4]" },
-      "other5_product_name":  { "source": null, "transform": "expanded_vacc_seq:name[4]" },
-      "other5_manufacturer":  { "source": null, "transform": "expanded_vacc_seq:manufacturer[4]" },
-      "other5_serial":        { "source": null, "transform": "expanded_vacc_seq:serial_with_expiry[4]" },
-      "other5_date":          { "source": null, "transform": "expanded_vacc_seq:date[4]" },
-      "other6_product_type":  { "source": null, "transform": "expanded_vacc_seq:type[5]" },
-      "other6_product_name":  { "source": null, "transform": "expanded_vacc_seq:name[5]" },
-      "other6_manufacturer":  { "source": null, "transform": "expanded_vacc_seq:manufacturer[5]" },
-      "other6_serial":        { "source": null, "transform": "expanded_vacc_seq:serial_with_expiry[5]" },
-      "other6_date":          { "source": null, "transform": "expanded_vacc_seq:date[5]" },
-      "other7_product_type":  { "source": null, "transform": "expanded_vacc_seq:type[6]" },
-      "other7_product_name":  { "source": null, "transform": "expanded_vacc_seq:name[6]" },
-      "other7_manufacturer":  { "source": null, "transform": "expanded_vacc_seq:manufacturer[6]" },
-      "other7_serial":        { "source": null, "transform": "expanded_vacc_seq:serial_with_expiry[6]" },
-      "other7_date":          { "source": null, "transform": "expanded_vacc_seq:date[6]" },
-      "other8_product_type":  { "source": null, "transform": "expanded_vacc_seq:type[7]" },
-      "other8_product_name":  { "source": null, "transform": "expanded_vacc_seq:name[7]" },
-      "other8_manufacturer":  { "source": null, "transform": "expanded_vacc_seq:manufacturer[7]" },
-      "other8_serial":        { "source": null, "transform": "expanded_vacc_seq:serial_with_expiry[7]" },
-      "other8_date":          { "source": null, "transform": "expanded_vacc_seq:date[7]" },
-      "clinical_cert_kr":     { "source": null, "transform": "checkbox:always_true" },
-      "clinical_cert_en":     { "source": null, "transform": "checkbox:always_true" },
-      "hospital_name":        { "source": null, "default": "Lausanne Veterinary Medical Center" },
-      "hospital_phone":       { "source": null, "default": "+82-2-872-7588" },
-      "hospital_address1":    { "source": null, "default": "3, Gwanak-ro 29-gil", "note": "1=거리 주소" },
-      "hospital_address2":    { "source": null, "default": "Gwanak-gu, Seoul, Republic of Korea", "note": "2=시/지역/국가" },
-      "hospital_address3":    { "source": null },
-      "vet_license_number":   { "source": null, "default": "9608" },
-      "vet_name":             { "source": null, "default": "Jinwon Lee" },
-      "issue_date":           { "source": "vet_visit_date", "transform": "date_or_today" }
+      "owner_name": {
+        "source": "customer_name_en"
+      },
+      "owner_phone": {
+        "source": "phone",
+        "transform": "phone_dash"
+      },
+      "owner_address": {
+        "source": "address_en"
+      },
+      "species_dog": {
+        "source": "species",
+        "transform": "checkbox:eq:dog"
+      },
+      "species_cat": {
+        "source": "species",
+        "transform": "checkbox:eq:cat"
+      },
+      "species_other": {
+        "source": null,
+        "note": "견/묘 외 — 수기 기입"
+      },
+      "species_other_text": {
+        "source": null
+      },
+      "sex_male": {
+        "source": "sex",
+        "transform": "checkbox:eq:male"
+      },
+      "sex_female": {
+        "source": "sex",
+        "transform": "checkbox:eq:female"
+      },
+      "sex_neutered_male": {
+        "source": "sex",
+        "transform": "checkbox:eq:neutered_male"
+      },
+      "sex_neutered_female": {
+        "source": "sex",
+        "transform": "checkbox:eq:spayed_female"
+      },
+      "age_years": {
+        "source": "birth_date",
+        "transform": "age_years"
+      },
+      "age_months": {
+        "source": "birth_date",
+        "transform": "age_months"
+      },
+      "birth_date": {
+        "source": "birth_date"
+      },
+      "color_marks": {
+        "source": "color_en"
+      },
+      "breed": {
+        "source": "breed_en"
+      },
+      "pet_name": {
+        "source": "pet_name_en"
+      },
+      "weight_under_5kg": {
+        "source": "weight",
+        "transform": "cmp:num:le:5"
+      },
+      "weight_5_to_10kg": {
+        "source": "weight",
+        "transform": "cmp:num:gt_lt:5:10"
+      },
+      "weight_over_10kg": {
+        "source": "weight",
+        "transform": "cmp:num:ge:10"
+      },
+      "weight_kg": {
+        "source": "weight"
+      },
+      "microchip_yes": {
+        "source": "microchip",
+        "transform": "checkbox:truthy"
+      },
+      "microchip_no": {
+        "source": "microchip",
+        "transform": "checkbox:falsy"
+      },
+      "microchip_number": {
+        "source": "microchip"
+      },
+      "rabies1_product": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:name[0]"
+      },
+      "rabies1_manufacturer": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:manufacturer[0]"
+      },
+      "rabies1_serial": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:serial_with_expiry[0]",
+        "note": "AU/NZ: batch + product expiry 병기"
+      },
+      "rabies1_vacc_date": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[0]"
+      },
+      "rabies1_validity_1Y": {
+        "source": "rabies_dates",
+        "transform": "has[0]"
+      },
+      "rabies2_product": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:name[1]"
+      },
+      "rabies2_manufacturer": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:manufacturer[1]"
+      },
+      "rabies2_serial": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:serial_with_expiry[1]",
+        "note": "AU/NZ: batch + product expiry 병기"
+      },
+      "rabies2_vacc_date": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[1]"
+      },
+      "rabies2_validity_1Y": {
+        "source": "rabies_dates",
+        "transform": "has[1]"
+      },
+      "other1_product_type": {
+        "source": null,
+        "transform": "expanded_vacc_seq:type[0]",
+        "note": "8슬롯: 종합→CIV→켄넬코프(미구현)→외부→내부, 각 타입 최대 3회차"
+      },
+      "other1_product_name": {
+        "source": null,
+        "transform": "expanded_vacc_seq:name[0]"
+      },
+      "other1_manufacturer": {
+        "source": null,
+        "transform": "expanded_vacc_seq:manufacturer[0]"
+      },
+      "other1_serial": {
+        "source": null,
+        "transform": "expanded_vacc_seq:serial_with_expiry[0]",
+        "note": "AU/NZ: batch + product expiry 병기"
+      },
+      "other1_date": {
+        "source": null,
+        "transform": "expanded_vacc_seq:date[0]"
+      },
+      "other2_product_type": {
+        "source": null,
+        "transform": "expanded_vacc_seq:type[1]"
+      },
+      "other2_product_name": {
+        "source": null,
+        "transform": "expanded_vacc_seq:name[1]"
+      },
+      "other2_manufacturer": {
+        "source": null,
+        "transform": "expanded_vacc_seq:manufacturer[1]"
+      },
+      "other2_serial": {
+        "source": null,
+        "transform": "expanded_vacc_seq:serial_with_expiry[1]"
+      },
+      "other2_date": {
+        "source": null,
+        "transform": "expanded_vacc_seq:date[1]"
+      },
+      "other3_product_type": {
+        "source": null,
+        "transform": "expanded_vacc_seq:type[2]"
+      },
+      "other3_product_name": {
+        "source": null,
+        "transform": "expanded_vacc_seq:name[2]"
+      },
+      "other3_manufacturer": {
+        "source": null,
+        "transform": "expanded_vacc_seq:manufacturer[2]"
+      },
+      "other3_serial": {
+        "source": null,
+        "transform": "expanded_vacc_seq:serial_with_expiry[2]"
+      },
+      "other3_date": {
+        "source": null,
+        "transform": "expanded_vacc_seq:date[2]"
+      },
+      "other4_product_type": {
+        "source": null,
+        "transform": "expanded_vacc_seq:type[3]"
+      },
+      "other4_product_name": {
+        "source": null,
+        "transform": "expanded_vacc_seq:name[3]"
+      },
+      "other4_manufacturer": {
+        "source": null,
+        "transform": "expanded_vacc_seq:manufacturer[3]"
+      },
+      "other4_serial": {
+        "source": null,
+        "transform": "expanded_vacc_seq:serial_with_expiry[3]"
+      },
+      "other4_date": {
+        "source": null,
+        "transform": "expanded_vacc_seq:date[3]"
+      },
+      "other5_product_type": {
+        "source": null,
+        "transform": "expanded_vacc_seq:type[4]"
+      },
+      "other5_product_name": {
+        "source": null,
+        "transform": "expanded_vacc_seq:name[4]"
+      },
+      "other5_manufacturer": {
+        "source": null,
+        "transform": "expanded_vacc_seq:manufacturer[4]"
+      },
+      "other5_serial": {
+        "source": null,
+        "transform": "expanded_vacc_seq:serial_with_expiry[4]"
+      },
+      "other5_date": {
+        "source": null,
+        "transform": "expanded_vacc_seq:date[4]"
+      },
+      "other6_product_type": {
+        "source": null,
+        "transform": "expanded_vacc_seq:type[5]"
+      },
+      "other6_product_name": {
+        "source": null,
+        "transform": "expanded_vacc_seq:name[5]"
+      },
+      "other6_manufacturer": {
+        "source": null,
+        "transform": "expanded_vacc_seq:manufacturer[5]"
+      },
+      "other6_serial": {
+        "source": null,
+        "transform": "expanded_vacc_seq:serial_with_expiry[5]"
+      },
+      "other6_date": {
+        "source": null,
+        "transform": "expanded_vacc_seq:date[5]"
+      },
+      "other7_product_type": {
+        "source": null,
+        "transform": "expanded_vacc_seq:type[6]"
+      },
+      "other7_product_name": {
+        "source": null,
+        "transform": "expanded_vacc_seq:name[6]"
+      },
+      "other7_manufacturer": {
+        "source": null,
+        "transform": "expanded_vacc_seq:manufacturer[6]"
+      },
+      "other7_serial": {
+        "source": null,
+        "transform": "expanded_vacc_seq:serial_with_expiry[6]"
+      },
+      "other7_date": {
+        "source": null,
+        "transform": "expanded_vacc_seq:date[6]"
+      },
+      "other8_product_type": {
+        "source": null,
+        "transform": "expanded_vacc_seq:type[7]"
+      },
+      "other8_product_name": {
+        "source": null,
+        "transform": "expanded_vacc_seq:name[7]"
+      },
+      "other8_manufacturer": {
+        "source": null,
+        "transform": "expanded_vacc_seq:manufacturer[7]"
+      },
+      "other8_serial": {
+        "source": null,
+        "transform": "expanded_vacc_seq:serial_with_expiry[7]"
+      },
+      "other8_date": {
+        "source": null,
+        "transform": "expanded_vacc_seq:date[7]"
+      },
+      "clinical_cert_kr": {
+        "source": null,
+        "transform": "checkbox:always_true"
+      },
+      "clinical_cert_en": {
+        "source": null,
+        "transform": "checkbox:always_true"
+      },
+      "hospital_name": {
+        "source": null,
+        "transform": "vet:clinic_en"
+      },
+      "hospital_phone": {
+        "source": null,
+        "transform": "vet:phone_intl"
+      },
+      "hospital_address1": {
+        "source": null,
+        "note": "1=거리 주소",
+        "transform": "vet:address_street_en"
+      },
+      "hospital_address2": {
+        "source": null,
+        "note": "2=시/지역/국가",
+        "transform": "vet:address_locality_en"
+      },
+      "hospital_address3": {
+        "source": null
+      },
+      "vet_license_number": {
+        "source": null,
+        "default": "9608"
+      },
+      "vet_name": {
+        "source": null,
+        "transform": "vet:name_en"
+      },
+      "issue_date": {
+        "source": "vet_visit_date",
+        "transform": "date_or_today"
+      }
     },
     "signatures": [
-      { "image": "lausanne.png", "page": 0, "x": 405, "y": 150, "w": 61, "h": 17 }
+      {
+        "image": "lausanne.png",
+        "page": 0,
+        "x": 405,
+        "y": 150,
+        "w": 61,
+        "h": 17
+      }
     ]
   },
-
   "AnnexIII": {
     "template": "ANNEX_III.pdf",
     "description": "ANNEX III — EU/영국/스위스/아일랜드 수입용 반려동물 건강증명서",
     "filename": "Annex_III_{pet_name}.pdf",
     "dateFormat": "dmy",
     "fields": {
-      "I1_consignor_name":            { "source": "customer_name_en" },
-      "I1_consignor_address":         { "source": "address_en", "transform": "address_part:street", "note": "1=스트리트" },
-      "I1_consignor_address2":        { "source": "address_en", "transform": "address_part:locality", "note": "2=시/지역/국가" },
-      "I1_consignor_tel":             { "source": "phone", "transform": "phone_intl_kr" },
-
-      "I5_consignee_name":            { "source": "customer_name_en" },
-      "I5_consignee_address":         { "source": "address_overseas", "transform": "address_part:street", "note": "1=스트리트" },
-      "I5_consignee_address2":        { "source": "address_overseas", "transform": "address_part:locality", "note": "2=시/지역/국가" },
-      "I5_consignee_postal_code":     { "source": null },
-      "I5_consignee_tel":             { "source": "phone", "transform": "phone_intl_kr" },
-
-      "I18_description":              { "source": null, "transform": "multi:species_en" },
-      "I20_quantity":                 { "source": null, "transform": "multi:count" },
-
-      "I28_row1_species":             { "source": "species", "transform": "en" },
-      "I28_row1_sex":                 { "source": "sex", "transform": "sex_label" },
-      "I28_row1_colour":              { "source": "color_en" },
-      "I28_row1_breed":               { "source": "breed_en" },
-      "I28_row1_id_number":           { "source": "microchip" },
-      "I28_row1_id_system":           { "source": null, "default": "Transponder(RFID)" },
-      "I28_row1_date_of_birth":       { "source": "birth_date" },
-      "I28_row2_species":             { "source": null },
-      "I28_row2_sex":                 { "source": null },
-      "I28_row2_colour":              { "source": null },
-      "I28_row2_breed":               { "source": null },
-      "I28_row2_id_number":           { "source": null },
-      "I28_row2_id_system":           { "source": null },
-      "I28_row2_date_of_birth":       { "source": null },
-      "I28_row3_species":             { "source": null },
-      "I28_row3_sex":                 { "source": null },
-      "I28_row3_colour":              { "source": null },
-      "I28_row3_breed":               { "source": null },
-      "I28_row3_id_number":           { "source": null },
-      "I28_row3_id_system":           { "source": null },
-      "I28_row3_date_of_birth":       { "source": null },
-
-      "vacc_row1_transponder_code":   { "source": "microchip",        "transform": "vacc_row_field:transponder[0]" },
-      "vacc_row1_implant_date":       { "source": "microchip",        "transform": "vacc_row_field:implant[0]" },
-      "vacc_row1_vacc_date":          { "source": "rabies_dates",     "transform": "vaccine:rabies:date[0]" },
-      "vacc_row1_vaccine_name":       { "source": "rabies_dates",     "transform": "vaccine:rabies:name[0]" },
-      "vacc_row1_batch_number":       { "source": "rabies_dates",     "transform": "vaccine:rabies:serial[0]" },
-      "vacc_row1_validity_from":      { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_from[0]" },
-      "vacc_row1_validity_to":        { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_to[0]" },
-      "vacc_row1_blood_sample_date":  { "source": "rabies_titer_records", "transform": "titer_date_asc[0]" },
-
-      "vacc_row2_transponder_code":   { "source": "microchip",        "transform": "vacc_row_field:transponder[1]" },
-      "vacc_row2_implant_date":       { "source": "microchip",        "transform": "vacc_row_field:implant[1]" },
-      "vacc_row2_vacc_date":          { "source": "rabies_dates",     "transform": "vaccine:rabies:date[1]" },
-      "vacc_row2_vaccine_name":       { "source": "rabies_dates",     "transform": "vaccine:rabies:name[1]" },
-      "vacc_row2_batch_number":       { "source": "rabies_dates",     "transform": "vaccine:rabies:serial[1]" },
-      "vacc_row2_validity_from":      { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_from[1]" },
-      "vacc_row2_validity_to":        { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_to[1]" },
-      "vacc_row2_blood_sample_date":  { "source": "rabies_titer_records", "transform": "titer_date_asc[1]" },
-
-      "vacc_row3_transponder_code":   { "source": "microchip",        "transform": "vacc_row_field:transponder[2]" },
-      "vacc_row3_implant_date":       { "source": "microchip",        "transform": "vacc_row_field:implant[2]" },
-      "vacc_row3_vacc_date":          { "source": "rabies_dates",     "transform": "vaccine:rabies:date[2]" },
-      "vacc_row3_vaccine_name":       { "source": "rabies_dates",     "transform": "vaccine:rabies:name[2]" },
-      "vacc_row3_batch_number":       { "source": "rabies_dates",     "transform": "vaccine:rabies:serial[2]" },
-      "vacc_row3_validity_from":      { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_from[2]" },
-      "vacc_row3_validity_to":        { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_to[2]" },
-      "vacc_row3_blood_sample_date":  { "source": "rabies_titer_records", "transform": "titer_date_asc[2]" },
-
-      "vacc_row4_transponder_code":   { "source": "microchip",        "transform": "vacc_row_field:transponder[3]" },
-      "vacc_row4_implant_date":       { "source": "microchip",        "transform": "vacc_row_field:implant[3]" },
-      "vacc_row4_vacc_date":          { "source": "rabies_dates",     "transform": "vaccine:rabies:date[3]" },
-      "vacc_row4_vaccine_name":       { "source": "rabies_dates",     "transform": "vaccine:rabies:name[3]" },
-      "vacc_row4_batch_number":       { "source": "rabies_dates",     "transform": "vaccine:rabies:serial[3]" },
-      "vacc_row4_validity_from":      { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_from[3]" },
-      "vacc_row4_validity_to":        { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_to[3]" },
-      "vacc_row4_blood_sample_date":  { "source": "rabies_titer_records", "transform": "titer_date_asc[3]" },
-
-      "vacc_row5_transponder_code":   { "source": "microchip",        "transform": "vacc_row_field:transponder[4]" },
-      "vacc_row5_implant_date":       { "source": "microchip",        "transform": "vacc_row_field:implant[4]" },
-      "vacc_row5_vacc_date":          { "source": "rabies_dates",     "transform": "vaccine:rabies:date[4]" },
-      "vacc_row5_vaccine_name":       { "source": "rabies_dates",     "transform": "vaccine:rabies:name[4]" },
-      "vacc_row5_batch_number":       { "source": "rabies_dates",     "transform": "vaccine:rabies:serial[4]" },
-      "vacc_row5_validity_from":      { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_from[4]" },
-      "vacc_row5_validity_to":        { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_to[4]" },
-      "vacc_row5_blood_sample_date":  { "source": "rabies_titer_records", "transform": "titer_date_asc[4]" },
-
-      "parasite_row1_transponder":    { "source": "microchip",                "transform": "annex_parasite:transponder[0]" },
-      "parasite_row1_product":        { "source": "internal_parasite_dates",  "transform": "annex_parasite:product[0]" },
-      "parasite_row1_date_time":      { "source": "internal_parasite_dates",  "transform": "annex_parasite:date[0]" },
-      "parasite_row1_vet_name":       { "source": "internal_parasite_dates",  "transform": "annex_parasite:vet[0]" },
-      "parasite_row2_transponder":    { "source": "microchip",                "transform": "annex_parasite:transponder[1]" },
-      "parasite_row2_product":        { "source": "internal_parasite_dates",  "transform": "annex_parasite:product[1]" },
-      "parasite_row2_date_time":      { "source": "internal_parasite_dates",  "transform": "annex_parasite:date[1]" },
-      "parasite_row2_vet_name":       { "source": "internal_parasite_dates",  "transform": "annex_parasite:vet[1]" },
-      "parasite_row3_transponder":    { "source": "microchip",                "transform": "annex_parasite:transponder[2]" },
-      "parasite_row3_product":        { "source": "internal_parasite_dates",  "transform": "annex_parasite:product[2]" },
-      "parasite_row3_date_time":      { "source": "internal_parasite_dates",  "transform": "annex_parasite:date[2]" },
-      "parasite_row3_vet_name":       { "source": "internal_parasite_dates",  "transform": "annex_parasite:vet[2]" },
-
-      "vet_date":                     { "source": "vet_visit_date" },
-      "vet_name":                     { "source": null, "default": "Jinwon Lee" },
-      "vet_telephone":                { "source": null, "default": "+82-2-872-7588" },
-      "vet_address":                  { "source": null, "default": "3, Gwanak-ro 29-gil, Gwanak-gu, Seoul, Republic of Korea" },
-      "vet_qualification":            { "source": null, "default": "Veterinarian" },
-
-      "decl_owner_name":              { "source": null, "transform": "multi:microchip[0]", "note": "시각적 위치: Transponder/tattoo 첫 칸" },
-      "decl_transponder1":            { "source": null, "transform": "multi:microchip[1]", "note": "시각적 위치: Transponder/tattoo 둘째 칸" },
-      "decl_transponder2":            { "source": null, "transform": "multi:microchip[2]", "note": "시각적 위치: Transponder/tattoo 셋째 칸" },
-      "decl_place_date":              { "source": "customer_name_en", "note": "시각적 위치: 'either [the owner]' 고객명 칸 (PDF 필드명은 place_date지만 실제로는 owner 위치)" },
-      "decl_signature":               { "source": "vet_visit_date", "note": "시각적 위치: 'Place and date:' 날짜 칸 (PDF 필드명은 signature지만 실제로는 date 위치) — 발급일" }
+      "I1_consignor_name": {
+        "source": "customer_name_en"
+      },
+      "I1_consignor_address": {
+        "source": "address_en",
+        "transform": "address_part:street",
+        "note": "1=스트리트"
+      },
+      "I1_consignor_address2": {
+        "source": "address_en",
+        "transform": "address_part:locality",
+        "note": "2=시/지역/국가"
+      },
+      "I1_consignor_tel": {
+        "source": "phone",
+        "transform": "phone_intl_kr"
+      },
+      "I5_consignee_name": {
+        "source": "customer_name_en"
+      },
+      "I5_consignee_address": {
+        "source": "address_overseas",
+        "transform": "address_part:street",
+        "note": "1=스트리트"
+      },
+      "I5_consignee_address2": {
+        "source": "address_overseas",
+        "transform": "address_part:locality",
+        "note": "2=시/지역/국가"
+      },
+      "I5_consignee_postal_code": {
+        "source": null
+      },
+      "I5_consignee_tel": {
+        "source": "phone",
+        "transform": "phone_intl_kr"
+      },
+      "I18_description": {
+        "source": null,
+        "transform": "multi:species_en"
+      },
+      "I20_quantity": {
+        "source": null,
+        "transform": "multi:count"
+      },
+      "I28_row1_species": {
+        "source": "species",
+        "transform": "en"
+      },
+      "I28_row1_sex": {
+        "source": "sex",
+        "transform": "sex_label"
+      },
+      "I28_row1_colour": {
+        "source": "color_en"
+      },
+      "I28_row1_breed": {
+        "source": "breed_en"
+      },
+      "I28_row1_id_number": {
+        "source": "microchip"
+      },
+      "I28_row1_id_system": {
+        "source": null,
+        "default": "Transponder(RFID)"
+      },
+      "I28_row1_date_of_birth": {
+        "source": "birth_date"
+      },
+      "I28_row2_species": {
+        "source": null
+      },
+      "I28_row2_sex": {
+        "source": null
+      },
+      "I28_row2_colour": {
+        "source": null
+      },
+      "I28_row2_breed": {
+        "source": null
+      },
+      "I28_row2_id_number": {
+        "source": null
+      },
+      "I28_row2_id_system": {
+        "source": null
+      },
+      "I28_row2_date_of_birth": {
+        "source": null
+      },
+      "I28_row3_species": {
+        "source": null
+      },
+      "I28_row3_sex": {
+        "source": null
+      },
+      "I28_row3_colour": {
+        "source": null
+      },
+      "I28_row3_breed": {
+        "source": null
+      },
+      "I28_row3_id_number": {
+        "source": null
+      },
+      "I28_row3_id_system": {
+        "source": null
+      },
+      "I28_row3_date_of_birth": {
+        "source": null
+      },
+      "vacc_row1_transponder_code": {
+        "source": "microchip",
+        "transform": "vacc_row_field:transponder[0]"
+      },
+      "vacc_row1_implant_date": {
+        "source": "microchip",
+        "transform": "vacc_row_field:implant[0]"
+      },
+      "vacc_row1_vacc_date": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[0]"
+      },
+      "vacc_row1_vaccine_name": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:name[0]"
+      },
+      "vacc_row1_batch_number": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:serial[0]"
+      },
+      "vacc_row1_validity_from": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_from[0]"
+      },
+      "vacc_row1_validity_to": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_to[0]"
+      },
+      "vacc_row1_blood_sample_date": {
+        "source": "rabies_titer_records",
+        "transform": "titer_date_asc[0]"
+      },
+      "vacc_row2_transponder_code": {
+        "source": "microchip",
+        "transform": "vacc_row_field:transponder[1]"
+      },
+      "vacc_row2_implant_date": {
+        "source": "microchip",
+        "transform": "vacc_row_field:implant[1]"
+      },
+      "vacc_row2_vacc_date": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[1]"
+      },
+      "vacc_row2_vaccine_name": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:name[1]"
+      },
+      "vacc_row2_batch_number": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:serial[1]"
+      },
+      "vacc_row2_validity_from": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_from[1]"
+      },
+      "vacc_row2_validity_to": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_to[1]"
+      },
+      "vacc_row2_blood_sample_date": {
+        "source": "rabies_titer_records",
+        "transform": "titer_date_asc[1]"
+      },
+      "vacc_row3_transponder_code": {
+        "source": "microchip",
+        "transform": "vacc_row_field:transponder[2]"
+      },
+      "vacc_row3_implant_date": {
+        "source": "microchip",
+        "transform": "vacc_row_field:implant[2]"
+      },
+      "vacc_row3_vacc_date": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[2]"
+      },
+      "vacc_row3_vaccine_name": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:name[2]"
+      },
+      "vacc_row3_batch_number": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:serial[2]"
+      },
+      "vacc_row3_validity_from": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_from[2]"
+      },
+      "vacc_row3_validity_to": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_to[2]"
+      },
+      "vacc_row3_blood_sample_date": {
+        "source": "rabies_titer_records",
+        "transform": "titer_date_asc[2]"
+      },
+      "vacc_row4_transponder_code": {
+        "source": "microchip",
+        "transform": "vacc_row_field:transponder[3]"
+      },
+      "vacc_row4_implant_date": {
+        "source": "microchip",
+        "transform": "vacc_row_field:implant[3]"
+      },
+      "vacc_row4_vacc_date": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[3]"
+      },
+      "vacc_row4_vaccine_name": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:name[3]"
+      },
+      "vacc_row4_batch_number": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:serial[3]"
+      },
+      "vacc_row4_validity_from": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_from[3]"
+      },
+      "vacc_row4_validity_to": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_to[3]"
+      },
+      "vacc_row4_blood_sample_date": {
+        "source": "rabies_titer_records",
+        "transform": "titer_date_asc[3]"
+      },
+      "vacc_row5_transponder_code": {
+        "source": "microchip",
+        "transform": "vacc_row_field:transponder[4]"
+      },
+      "vacc_row5_implant_date": {
+        "source": "microchip",
+        "transform": "vacc_row_field:implant[4]"
+      },
+      "vacc_row5_vacc_date": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[4]"
+      },
+      "vacc_row5_vaccine_name": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:name[4]"
+      },
+      "vacc_row5_batch_number": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:serial[4]"
+      },
+      "vacc_row5_validity_from": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_from[4]"
+      },
+      "vacc_row5_validity_to": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_to[4]"
+      },
+      "vacc_row5_blood_sample_date": {
+        "source": "rabies_titer_records",
+        "transform": "titer_date_asc[4]"
+      },
+      "parasite_row1_transponder": {
+        "source": "microchip",
+        "transform": "annex_parasite:transponder[0]"
+      },
+      "parasite_row1_product": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:product[0]"
+      },
+      "parasite_row1_date_time": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:date[0]"
+      },
+      "parasite_row1_vet_name": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:vet[0]"
+      },
+      "parasite_row2_transponder": {
+        "source": "microchip",
+        "transform": "annex_parasite:transponder[1]"
+      },
+      "parasite_row2_product": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:product[1]"
+      },
+      "parasite_row2_date_time": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:date[1]"
+      },
+      "parasite_row2_vet_name": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:vet[1]"
+      },
+      "parasite_row3_transponder": {
+        "source": "microchip",
+        "transform": "annex_parasite:transponder[2]"
+      },
+      "parasite_row3_product": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:product[2]"
+      },
+      "parasite_row3_date_time": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:date[2]"
+      },
+      "parasite_row3_vet_name": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:vet[2]"
+      },
+      "vet_date": {
+        "source": "vet_visit_date"
+      },
+      "vet_name": {
+        "source": null,
+        "transform": "vet:name_en"
+      },
+      "vet_telephone": {
+        "source": null,
+        "transform": "vet:phone_intl"
+      },
+      "vet_address": {
+        "source": null,
+        "transform": "vet:address_en"
+      },
+      "vet_qualification": {
+        "source": null,
+        "default": "Veterinarian"
+      },
+      "decl_owner_name": {
+        "source": null,
+        "transform": "multi:microchip[0]",
+        "note": "시각적 위치: Transponder/tattoo 첫 칸"
+      },
+      "decl_transponder1": {
+        "source": null,
+        "transform": "multi:microchip[1]",
+        "note": "시각적 위치: Transponder/tattoo 둘째 칸"
+      },
+      "decl_transponder2": {
+        "source": null,
+        "transform": "multi:microchip[2]",
+        "note": "시각적 위치: Transponder/tattoo 셋째 칸"
+      },
+      "decl_place_date": {
+        "source": "customer_name_en",
+        "note": "시각적 위치: 'either [the owner]' 고객명 칸 (PDF 필드명은 place_date지만 실제로는 owner 위치)"
+      },
+      "decl_signature": {
+        "source": "vet_visit_date",
+        "note": "시각적 위치: 'Place and date:' 날짜 칸 (PDF 필드명은 signature지만 실제로는 date 위치) — 발급일"
+      }
     }
   },
-
   "UK": {
     "template": "UK.pdf",
     "description": "영국 수입용 반려동물 건강증명서 (GB pet health certificate)",
     "filename": "UK_{pet_name}.pdf",
     "dateFormat": "dmy",
     "fields": {
-      "I1_consignor_name":            { "source": "customer_name_en" },
-      "I1_consignor_address":         { "source": "address_en", "transform": "address_part:street", "note": "1=스트리트" },
-      "I1_consignor_address2":        { "source": "address_en", "transform": "address_part:locality", "note": "2=시/지역/국가" },
-      "I1_consignor_tel":             { "source": "phone", "transform": "phone_intl_kr" },
-
-      "I3_consignee_name":            { "source": "customer_name_en" },
-      "I3_consignee_address":         { "source": "address_overseas", "transform": "address_part:street",   "note": "1=스트리트" },
-      "I3_consignee_address2":        { "source": "address_overseas", "transform": "address_part:locality", "note": "2=시/지역/국가" },
-      "I3_consignee_postal_code":     { "source": null },
-      "I3_consignee_tel":             { "source": "phone", "transform": "phone_intl_kr" },
-
-      "I8_description":               { "source": null, "transform": "multi:species_en" },
-      "I10_quantity":                 { "source": null, "transform": "multi:count" },
-
-      "I12_row1_species":             { "source": "species", "transform": "en" },
-      "I12_row1_sex":                 { "source": "sex", "transform": "sex_label" },
-      "I12_row1_colour":              { "source": "color_en" },
-      "I12_row1_breed":               { "source": "breed_en" },
-      "I12_row1_id_number":           { "source": "microchip" },
-      "I12_row1_id_system":           { "source": null, "default": "Transponder(RFID)" },
-      "I12_row1_date_of_birth":       { "source": "birth_date" },
-      "I12_row2_species":             { "source": null },
-      "I12_row2_sex":                 { "source": null },
-      "I12_row2_colour":              { "source": null },
-      "I12_row2_breed":               { "source": null },
-      "I12_row2_id_number":           { "source": null },
-      "I12_row2_id_system":           { "source": null },
-      "I12_row2_date_of_birth":       { "source": null },
-      "I12_row3_species":             { "source": null },
-      "I12_row3_sex":                 { "source": null },
-      "I12_row3_colour":              { "source": null },
-      "I12_row3_breed":               { "source": null },
-      "I12_row3_id_number":           { "source": null },
-      "I12_row3_id_system":           { "source": null },
-      "I12_row3_date_of_birth":       { "source": null },
-      "I12_row4_species":             { "source": null },
-      "I12_row4_sex":                 { "source": null },
-      "I12_row4_colour":              { "source": null },
-      "I12_row4_breed":               { "source": null },
-      "I12_row4_id_number":           { "source": null },
-      "I12_row4_id_system":           { "source": null },
-      "I12_row4_date_of_birth":       { "source": null },
-      "I12_row5_species":             { "source": null },
-      "I12_row5_sex":                 { "source": null },
-      "I12_row5_colour":              { "source": null },
-      "I12_row5_breed":               { "source": null },
-      "I12_row5_id_number":           { "source": null },
-      "I12_row5_id_system":           { "source": null },
-      "I12_row5_date_of_birth":       { "source": null },
-
-      "vacc_row1_transponder_code":   { "source": "microchip",        "transform": "vacc_row_field:transponder[0]" },
-      "vacc_row1_implant_date":       { "source": "microchip",        "transform": "vacc_row_field:implant[0]" },
-      "vacc_row1_vacc_date":          { "source": "rabies_dates",     "transform": "vaccine:rabies:date[0]" },
-      "vacc_row1_vaccine_name":       { "source": "rabies_dates",     "transform": "vaccine:rabies:name[0]" },
-      "vacc_row1_batch_number":       { "source": "rabies_dates",     "transform": "vaccine:rabies:serial[0]" },
-      "vacc_row1_validity_from":      { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_from[0]" },
-      "vacc_row1_validity_to":        { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_to[0]" },
-      "vacc_row1_blood_sample_date":  { "source": "rabies_titer_records", "transform": "titer_date_asc[0]" },
-
-      "vacc_row2_transponder_code":   { "source": "microchip",        "transform": "vacc_row_field:transponder[1]" },
-      "vacc_row2_implant_date":       { "source": "microchip",        "transform": "vacc_row_field:implant[1]" },
-      "vacc_row2_vacc_date":          { "source": "rabies_dates",     "transform": "vaccine:rabies:date[1]" },
-      "vacc_row2_vaccine_name":       { "source": "rabies_dates",     "transform": "vaccine:rabies:name[1]" },
-      "vacc_row2_batch_number":       { "source": "rabies_dates",     "transform": "vaccine:rabies:serial[1]" },
-      "vacc_row2_validity_from":      { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_from[1]" },
-      "vacc_row2_validity_to":        { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_to[1]" },
-      "vacc_row2_blood_sample_date":  { "source": "rabies_titer_records", "transform": "titer_date_asc[1]" },
-
-      "vacc_row3_transponder_code":   { "source": "microchip",        "transform": "vacc_row_field:transponder[2]" },
-      "vacc_row3_implant_date":       { "source": "microchip",        "transform": "vacc_row_field:implant[2]" },
-      "vacc_row3_vacc_date":          { "source": "rabies_dates",     "transform": "vaccine:rabies:date[2]" },
-      "vacc_row3_vaccine_name":       { "source": "rabies_dates",     "transform": "vaccine:rabies:name[2]" },
-      "vacc_row3_batch_number":       { "source": "rabies_dates",     "transform": "vaccine:rabies:serial[2]" },
-      "vacc_row3_validity_from":      { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_from[2]" },
-      "vacc_row3_validity_to":        { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_to[2]" },
-      "vacc_row3_blood_sample_date":  { "source": "rabies_titer_records", "transform": "titer_date_asc[2]" },
-
-      "vacc_row4_transponder_code":   { "source": "microchip",        "transform": "vacc_row_field:transponder[3]" },
-      "vacc_row4_implant_date":       { "source": "microchip",        "transform": "vacc_row_field:implant[3]" },
-      "vacc_row4_vacc_date":          { "source": "rabies_dates",     "transform": "vaccine:rabies:date[3]" },
-      "vacc_row4_vaccine_name":       { "source": "rabies_dates",     "transform": "vaccine:rabies:name[3]" },
-      "vacc_row4_batch_number":       { "source": "rabies_dates",     "transform": "vaccine:rabies:serial[3]" },
-      "vacc_row4_validity_from":      { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_from[3]" },
-      "vacc_row4_validity_to":        { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_to[3]" },
-      "vacc_row4_blood_sample_date":  { "source": "rabies_titer_records", "transform": "titer_date_asc[3]" },
-
-      "vacc_row5_transponder_code":   { "source": "microchip",        "transform": "vacc_row_field:transponder[4]" },
-      "vacc_row5_implant_date":       { "source": "microchip",        "transform": "vacc_row_field:implant[4]" },
-      "vacc_row5_vacc_date":          { "source": "rabies_dates",     "transform": "vaccine:rabies:date[4]" },
-      "vacc_row5_vaccine_name":       { "source": "rabies_dates",     "transform": "vaccine:rabies:name[4]" },
-      "vacc_row5_batch_number":       { "source": "rabies_dates",     "transform": "vaccine:rabies:serial[4]" },
-      "vacc_row5_validity_from":      { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_from[4]" },
-      "vacc_row5_validity_to":        { "source": "rabies_dates",     "transform": "vaccine:rabies:validity_to[4]" },
-      "vacc_row5_blood_sample_date":  { "source": "rabies_titer_records", "transform": "titer_date_asc[4]" },
-
-      "parasite_row1_transponder":    { "source": "microchip",                "transform": "annex_parasite:transponder[0]" },
-      "parasite_row1_product":        { "source": "internal_parasite_dates",  "transform": "annex_parasite:product[0]" },
-      "parasite_row1_date_time":      { "source": "internal_parasite_dates",  "transform": "annex_parasite:date[0]" },
-      "parasite_row1_vet_name":       { "source": "internal_parasite_dates",  "transform": "annex_parasite:vet[0]" },
-      "parasite_row2_transponder":    { "source": "microchip",                "transform": "annex_parasite:transponder[1]" },
-      "parasite_row2_product":        { "source": "internal_parasite_dates",  "transform": "annex_parasite:product[1]" },
-      "parasite_row2_date_time":      { "source": "internal_parasite_dates",  "transform": "annex_parasite:date[1]" },
-      "parasite_row2_vet_name":       { "source": "internal_parasite_dates",  "transform": "annex_parasite:vet[1]" },
-      "parasite_row3_transponder":    { "source": "microchip",                "transform": "annex_parasite:transponder[2]" },
-      "parasite_row3_product":        { "source": "internal_parasite_dates",  "transform": "annex_parasite:product[2]" },
-      "parasite_row3_date_time":      { "source": "internal_parasite_dates",  "transform": "annex_parasite:date[2]" },
-      "parasite_row3_vet_name":       { "source": "internal_parasite_dates",  "transform": "annex_parasite:vet[2]" },
-      "parasite_row4_transponder":    { "source": "microchip",                "transform": "annex_parasite:transponder[3]" },
-      "parasite_row4_product":        { "source": "internal_parasite_dates",  "transform": "annex_parasite:product[3]" },
-      "parasite_row4_date_time":      { "source": "internal_parasite_dates",  "transform": "annex_parasite:date[3]" },
-      "parasite_row4_vet_name":       { "source": "internal_parasite_dates",  "transform": "annex_parasite:vet[3]" },
-      "parasite_row5_transponder":    { "source": "microchip",                "transform": "annex_parasite:transponder[4]" },
-      "parasite_row5_product":        { "source": "internal_parasite_dates",  "transform": "annex_parasite:product[4]" },
-      "parasite_row5_date_time":      { "source": "internal_parasite_dates",  "transform": "annex_parasite:date[4]" },
-      "parasite_row5_vet_name":       { "source": "internal_parasite_dates",  "transform": "annex_parasite:vet[4]" },
-
-      "vet_date":                     { "source": "vet_visit_date" },
-      "vet_name":                     { "source": null, "default": "Jinwon Lee" },
-      "vet_telephone":                { "source": null, "default": "+82-2-872-7588" },
-      "vet_qualification":            { "source": null, "default": "Veterinarian" },
-      "vet_address":                  { "source": null, "default": "3, Gwanak-ro 29-gil, Gwanak-gu, Seoul, Republic of Korea" },
-
-      "decl_owner_name":              { "source": null, "transform": "multi:microchip[0]", "note": "시각적 위치: Transponder/tattoo 첫 칸" },
-      "decl_transponder1":            { "source": null, "transform": "multi:microchip[1]", "note": "시각적 위치: Transponder/tattoo 둘째 칸" },
-      "decl_transponder2":            { "source": null, "transform": "multi:microchip[2]", "note": "시각적 위치: Transponder/tattoo 셋째 칸" },
-      "decl_place_date":              { "source": "customer_name_en", "note": "시각적 위치: 'either [the owner]' 고객명 칸" },
-      "decl_signature":               { "source": "vet_visit_date", "note": "시각적 위치: 'Place and date:' 날짜 칸 — 발급일" }
+      "I1_consignor_name": {
+        "source": "customer_name_en"
+      },
+      "I1_consignor_address": {
+        "source": "address_en",
+        "transform": "address_part:street",
+        "note": "1=스트리트"
+      },
+      "I1_consignor_address2": {
+        "source": "address_en",
+        "transform": "address_part:locality",
+        "note": "2=시/지역/국가"
+      },
+      "I1_consignor_tel": {
+        "source": "phone",
+        "transform": "phone_intl_kr"
+      },
+      "I3_consignee_name": {
+        "source": "customer_name_en"
+      },
+      "I3_consignee_address": {
+        "source": "address_overseas",
+        "transform": "address_part:street",
+        "note": "1=스트리트"
+      },
+      "I3_consignee_address2": {
+        "source": "address_overseas",
+        "transform": "address_part:locality",
+        "note": "2=시/지역/국가"
+      },
+      "I3_consignee_postal_code": {
+        "source": null
+      },
+      "I3_consignee_tel": {
+        "source": "phone",
+        "transform": "phone_intl_kr"
+      },
+      "I8_description": {
+        "source": null,
+        "transform": "multi:species_en"
+      },
+      "I10_quantity": {
+        "source": null,
+        "transform": "multi:count"
+      },
+      "I12_row1_species": {
+        "source": "species",
+        "transform": "en"
+      },
+      "I12_row1_sex": {
+        "source": "sex",
+        "transform": "sex_label"
+      },
+      "I12_row1_colour": {
+        "source": "color_en"
+      },
+      "I12_row1_breed": {
+        "source": "breed_en"
+      },
+      "I12_row1_id_number": {
+        "source": "microchip"
+      },
+      "I12_row1_id_system": {
+        "source": null,
+        "default": "Transponder(RFID)"
+      },
+      "I12_row1_date_of_birth": {
+        "source": "birth_date"
+      },
+      "I12_row2_species": {
+        "source": null
+      },
+      "I12_row2_sex": {
+        "source": null
+      },
+      "I12_row2_colour": {
+        "source": null
+      },
+      "I12_row2_breed": {
+        "source": null
+      },
+      "I12_row2_id_number": {
+        "source": null
+      },
+      "I12_row2_id_system": {
+        "source": null
+      },
+      "I12_row2_date_of_birth": {
+        "source": null
+      },
+      "I12_row3_species": {
+        "source": null
+      },
+      "I12_row3_sex": {
+        "source": null
+      },
+      "I12_row3_colour": {
+        "source": null
+      },
+      "I12_row3_breed": {
+        "source": null
+      },
+      "I12_row3_id_number": {
+        "source": null
+      },
+      "I12_row3_id_system": {
+        "source": null
+      },
+      "I12_row3_date_of_birth": {
+        "source": null
+      },
+      "I12_row4_species": {
+        "source": null
+      },
+      "I12_row4_sex": {
+        "source": null
+      },
+      "I12_row4_colour": {
+        "source": null
+      },
+      "I12_row4_breed": {
+        "source": null
+      },
+      "I12_row4_id_number": {
+        "source": null
+      },
+      "I12_row4_id_system": {
+        "source": null
+      },
+      "I12_row4_date_of_birth": {
+        "source": null
+      },
+      "I12_row5_species": {
+        "source": null
+      },
+      "I12_row5_sex": {
+        "source": null
+      },
+      "I12_row5_colour": {
+        "source": null
+      },
+      "I12_row5_breed": {
+        "source": null
+      },
+      "I12_row5_id_number": {
+        "source": null
+      },
+      "I12_row5_id_system": {
+        "source": null
+      },
+      "I12_row5_date_of_birth": {
+        "source": null
+      },
+      "vacc_row1_transponder_code": {
+        "source": "microchip",
+        "transform": "vacc_row_field:transponder[0]"
+      },
+      "vacc_row1_implant_date": {
+        "source": "microchip",
+        "transform": "vacc_row_field:implant[0]"
+      },
+      "vacc_row1_vacc_date": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[0]"
+      },
+      "vacc_row1_vaccine_name": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:name[0]"
+      },
+      "vacc_row1_batch_number": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:serial[0]"
+      },
+      "vacc_row1_validity_from": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_from[0]"
+      },
+      "vacc_row1_validity_to": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_to[0]"
+      },
+      "vacc_row1_blood_sample_date": {
+        "source": "rabies_titer_records",
+        "transform": "titer_date_asc[0]"
+      },
+      "vacc_row2_transponder_code": {
+        "source": "microchip",
+        "transform": "vacc_row_field:transponder[1]"
+      },
+      "vacc_row2_implant_date": {
+        "source": "microchip",
+        "transform": "vacc_row_field:implant[1]"
+      },
+      "vacc_row2_vacc_date": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[1]"
+      },
+      "vacc_row2_vaccine_name": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:name[1]"
+      },
+      "vacc_row2_batch_number": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:serial[1]"
+      },
+      "vacc_row2_validity_from": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_from[1]"
+      },
+      "vacc_row2_validity_to": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_to[1]"
+      },
+      "vacc_row2_blood_sample_date": {
+        "source": "rabies_titer_records",
+        "transform": "titer_date_asc[1]"
+      },
+      "vacc_row3_transponder_code": {
+        "source": "microchip",
+        "transform": "vacc_row_field:transponder[2]"
+      },
+      "vacc_row3_implant_date": {
+        "source": "microchip",
+        "transform": "vacc_row_field:implant[2]"
+      },
+      "vacc_row3_vacc_date": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[2]"
+      },
+      "vacc_row3_vaccine_name": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:name[2]"
+      },
+      "vacc_row3_batch_number": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:serial[2]"
+      },
+      "vacc_row3_validity_from": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_from[2]"
+      },
+      "vacc_row3_validity_to": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_to[2]"
+      },
+      "vacc_row3_blood_sample_date": {
+        "source": "rabies_titer_records",
+        "transform": "titer_date_asc[2]"
+      },
+      "vacc_row4_transponder_code": {
+        "source": "microchip",
+        "transform": "vacc_row_field:transponder[3]"
+      },
+      "vacc_row4_implant_date": {
+        "source": "microchip",
+        "transform": "vacc_row_field:implant[3]"
+      },
+      "vacc_row4_vacc_date": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[3]"
+      },
+      "vacc_row4_vaccine_name": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:name[3]"
+      },
+      "vacc_row4_batch_number": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:serial[3]"
+      },
+      "vacc_row4_validity_from": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_from[3]"
+      },
+      "vacc_row4_validity_to": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_to[3]"
+      },
+      "vacc_row4_blood_sample_date": {
+        "source": "rabies_titer_records",
+        "transform": "titer_date_asc[3]"
+      },
+      "vacc_row5_transponder_code": {
+        "source": "microchip",
+        "transform": "vacc_row_field:transponder[4]"
+      },
+      "vacc_row5_implant_date": {
+        "source": "microchip",
+        "transform": "vacc_row_field:implant[4]"
+      },
+      "vacc_row5_vacc_date": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[4]"
+      },
+      "vacc_row5_vaccine_name": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:name[4]"
+      },
+      "vacc_row5_batch_number": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:serial[4]"
+      },
+      "vacc_row5_validity_from": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_from[4]"
+      },
+      "vacc_row5_validity_to": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:validity_to[4]"
+      },
+      "vacc_row5_blood_sample_date": {
+        "source": "rabies_titer_records",
+        "transform": "titer_date_asc[4]"
+      },
+      "parasite_row1_transponder": {
+        "source": "microchip",
+        "transform": "annex_parasite:transponder[0]"
+      },
+      "parasite_row1_product": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:product[0]"
+      },
+      "parasite_row1_date_time": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:date[0]"
+      },
+      "parasite_row1_vet_name": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:vet[0]"
+      },
+      "parasite_row2_transponder": {
+        "source": "microchip",
+        "transform": "annex_parasite:transponder[1]"
+      },
+      "parasite_row2_product": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:product[1]"
+      },
+      "parasite_row2_date_time": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:date[1]"
+      },
+      "parasite_row2_vet_name": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:vet[1]"
+      },
+      "parasite_row3_transponder": {
+        "source": "microchip",
+        "transform": "annex_parasite:transponder[2]"
+      },
+      "parasite_row3_product": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:product[2]"
+      },
+      "parasite_row3_date_time": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:date[2]"
+      },
+      "parasite_row3_vet_name": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:vet[2]"
+      },
+      "parasite_row4_transponder": {
+        "source": "microchip",
+        "transform": "annex_parasite:transponder[3]"
+      },
+      "parasite_row4_product": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:product[3]"
+      },
+      "parasite_row4_date_time": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:date[3]"
+      },
+      "parasite_row4_vet_name": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:vet[3]"
+      },
+      "parasite_row5_transponder": {
+        "source": "microchip",
+        "transform": "annex_parasite:transponder[4]"
+      },
+      "parasite_row5_product": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:product[4]"
+      },
+      "parasite_row5_date_time": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:date[4]"
+      },
+      "parasite_row5_vet_name": {
+        "source": "internal_parasite_dates",
+        "transform": "annex_parasite:vet[4]"
+      },
+      "vet_date": {
+        "source": "vet_visit_date"
+      },
+      "vet_name": {
+        "source": null,
+        "transform": "vet:name_en"
+      },
+      "vet_telephone": {
+        "source": null,
+        "transform": "vet:phone_intl"
+      },
+      "vet_qualification": {
+        "source": null,
+        "default": "Veterinarian"
+      },
+      "vet_address": {
+        "source": null,
+        "transform": "vet:address_en"
+      },
+      "decl_owner_name": {
+        "source": null,
+        "transform": "multi:microchip[0]",
+        "note": "시각적 위치: Transponder/tattoo 첫 칸"
+      },
+      "decl_transponder1": {
+        "source": null,
+        "transform": "multi:microchip[1]",
+        "note": "시각적 위치: Transponder/tattoo 둘째 칸"
+      },
+      "decl_transponder2": {
+        "source": null,
+        "transform": "multi:microchip[2]",
+        "note": "시각적 위치: Transponder/tattoo 셋째 칸"
+      },
+      "decl_place_date": {
+        "source": "customer_name_en",
+        "note": "시각적 위치: 'either [the owner]' 고객명 칸"
+      },
+      "decl_signature": {
+        "source": "vet_visit_date",
+        "note": "시각적 위치: 'Place and date:' 날짜 칸 — 발급일"
+      }
     }
   },
-
   "AU": {
     "template": "AU.pdf",
     "description": "Australia 수출용 반려견 건강증명서 (Veterinary health certificate for the export of dogs from Republic of Korea to Australia) — 강아지 전용",
     "filename": "AU_{pet_name}.pdf",
     "dateFormat": "dmmmy",
     "fields": {
-      "text_1wcec":  { "source": "australia_extra", "transform": "json:permit_no", "note": "p1 Import permit number" },
-      "text_2uobx":  { "source": "pet_name_en", "note": "p1 Name of animal" },
-      "text_3dlfg":  { "source": "birth_date", "note": "p1 Date of birth (dmy)" },
-      "checkbox_4ccd": { "source": "sex", "transform": "checkbox:eq:male",           "note": "p1 Sex: Male" },
-      "checkbox_5yx":  { "source": "sex", "transform": "checkbox:eq:neutered_male",  "note": "p1 Sex: Neutered male" },
-      "checkbox_6breh":{ "source": "sex", "transform": "checkbox:eq:female",         "note": "p1 Sex: Female" },
-      "checkbox_7uiie":{ "source": "sex", "transform": "checkbox:eq:spayed_female",  "note": "p1 Sex: Neutered female" },
-      "checkbox_8ervd":{ "source": "sex", "transform": "checkbox:eq:female", "note": "p1 If female, not >30 days pregnant/suckling — 중성화 안 된 암컷만 체크 (중성화 암컷은 임신 불가)" },
-      "text_9tgye":  { "source": null, "default": "N/A", "note": "p1 If mated, date of last mating — 한국 케이스는 대부분 N/A" },
-      "text_10amlj": { "source": "microchip", "note": "p1 Microchip number" },
-      "text_11umee": { "source": null, "default": "Neck", "note": "p1 Site of microchip — 디폴트 Neck" },
-      "text_12tdis": { "source": "vet_visit_date", "note": "p1 Date of final examination & microchip scanning — 내원일 (vet_visit_date)" },
-      "text_13rotd": { "source": null, "default": "Jinwon Lee", "note": "p1 Government Approved Veterinarian Name" },
-      "text_14blkr": { "source": null, "default": "+82-2-872-7588", "note": "p1 Vet Email/Contact — 이메일이 없으면 병원 전화" },
-
-      "text_15xzcb": { "source": "rabies_titer_records", "transform": "titer_date_asc[0]", "note": "p1 RNATT 1. Collection date — oldest titer (= most recent titer when 1 record)" },
-      "text_16zsj":  { "source": "australia_extra", "transform": "json:sample_received_date", "note": "p1 RNATT 2. Date arrived at laboratory (dmy)" },
-      "text_17mhge": { "source": "rabies_titer_records", "transform": "array[0].value", "note": "p1 RNATT result IU/mL (최신 titer value)" },
-
-      "text_18rgpy": { "source": null, "transform": "au_disease:leishmania:date", "default": "N/A", "note": "p2 Leishmania — 항상 검사" },
-      "text_21lzge": { "source": null, "transform": "au_disease:leishmania:result", "default": "N/A", "note": "p2 Leishmania result = Negative" },
-      "text_19jhpr": { "source": null, "transform": "au_disease:leptospira:date", "default": "N/A", "note": "p2 Leptospira — 종합백신 없을 때만" },
-      "text_22hrgf": { "source": null, "transform": "au_disease:leptospira:result", "default": "N/A", "note": "p2 Leptospira result" },
-      "text_20iuqj": { "source": null, "transform": "au_disease:brucella:date", "default": "N/A", "note": "p2 Brucella — 중성화 안 된 경우만" },
-      "text_23aayo": { "source": null, "transform": "au_disease:brucella:result", "default": "N/A", "note": "p2 Brucella result" },
-
-      "text_24qhaf": { "source": "rabies_dates", "transform": "vaccine:rabies:date[0]", "note": "p2 Rabies vaccination date row 1 — oldest dose (asc order)" },
-      "text_25ombe": { "source": "rabies_dates", "transform": "vaccine:rabies:date[1]", "note": "p2 Rabies vaccination date row 2 — 2nd dose. 1회 접종이면 공란 (N/A 없음)" },
-      "text_31inqe": { "source": "rabies_dates", "transform": "vaccine_combined:rabies:name",        "note": "p2 Rabies vaccine name — 두 접종 다르면 'A / B', 같으면 하나만" },
-      "text_32empk": { "source": "rabies_dates", "transform": "vaccine_combined:rabies:serial",      "note": "p2 Rabies batch — 두 접종 다르면 'A / B', 같으면 하나만" },
-      "text_33qisq": { "source": "rabies_dates", "transform": "vaccine_combined:rabies:product_expiry", "note": "p2 Rabies product batch expiry — 같은 배치면 하나, 다르면 'A / B'" },
-      "text_30ukoe": { "source": "rabies_dates", "transform": "vaccine_combined:rabies:booster_due", "note": "p2 Next booster due — 최신 접종일 + 1y" },
-
-      "text_26vaic": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]",        "default": "N/A", "note": "p2 Leptospira 1 (= 종합백신 1차, 최신)" },
-      "text_34lifq": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:name[0]",        "default": "N/A", "note": "p2 Leptospira 1 vaccine name (종합백신)" },
-      "text_35zqkl": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:serial[0]",      "default": "N/A", "note": "p2 Leptospira 1 batch" },
-      "text_36nfaw": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:validity_to[0]", "default": "N/A", "note": "p2 Leptospira 1 expiry" },
-      "text_37pkcs": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:validity_to[0]", "default": "N/A", "note": "p2 Leptospira 1 booster due" },
-
-      "text_27beat": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[1]",        "default": "N/A", "note": "p2 Leptospira 2 (= 종합백신 2차)" },
-      "text_41oqln": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:name[1]",        "default": "N/A", "note": "p2 Leptospira 2 vaccine name" },
-      "text_40cqx":  { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:serial[1]",      "default": "N/A", "note": "p2 Leptospira 2 batch" },
-      "text_39comw": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:validity_to[1]", "default": "N/A", "note": "p2 Leptospira 2 expiry" },
-      "text_38xmqh": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:validity_to[1]", "default": "N/A", "note": "p2 Leptospira 2 booster due" },
-
-      "text_28kmcs": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[2]",        "default": "N/A", "note": "p3 Leptospira 3 (= 종합백신 3차)" },
-      "text_42xjqv": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:name[2]",        "default": "N/A", "note": "p3 Leptospira 3 vaccine name" },
-      "text_43lbsk": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:serial[2]",      "default": "N/A", "note": "p3 Leptospira 3 batch" },
-      "text_44jwab": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:validity_to[2]", "default": "N/A", "note": "p3 Leptospira 3 expiry" },
-      "text_45rmek": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:validity_to[2]", "default": "N/A", "note": "p3 Leptospira 3 booster due" },
-
-      "text_29rxcg": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[3]",        "default": "N/A", "note": "p3 Leptospira 4 (= 종합백신 4차)" },
-      "text_46psmz": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:name[3]",        "default": "N/A", "note": "p3 Leptospira 4 vaccine name" },
-      "text_47yaij": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:serial[3]",      "default": "N/A", "note": "p3 Leptospira 4 batch" },
-      "text_48bvcr": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:validity_to[3]", "default": "N/A", "note": "p3 Leptospira 4 expiry" },
-      "text_49vxhc": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:validity_to[3]", "default": "N/A", "note": "p3 Leptospira 4 booster due" },
-
-      "text_50bosa": { "source": "civ_dates", "transform": "vaccine_desc:civ:date[0]",        "note": "p3 CIV 1 vaccination date (most recent, dmy)" },
-      "text_54lrxu": { "source": "civ_dates", "transform": "vaccine_desc:civ:name[0]",        "note": "p3 CIV 1 vaccine name (most recent)" },
-      "text_56uvxm": { "source": "civ_dates", "transform": "vaccine_desc:civ:serial[0]",      "note": "p3 CIV 1 batch" },
-      "text_58mtsy": { "source": "civ_dates", "transform": "vaccine_desc:civ:validity_to[0]", "note": "p3 CIV 1 expiry date (접종일 + 1y)" },
-      "text_52uxaw": { "source": "civ_dates", "transform": "vaccine_desc:civ:validity_to[0]", "note": "p3 CIV 1 booster due" },
-
-      "text_51vpfk": { "source": "civ_dates", "transform": "vaccine_desc:civ:date[1]",        "default": "N/A", "note": "p3 CIV 2 vaccination date (없으면 N/A)" },
-      "text_55nend": { "source": "civ_dates", "transform": "vaccine_desc:civ:name[1]",        "default": "N/A", "note": "p3 CIV 2 vaccine name" },
-      "text_57hyjt": { "source": "civ_dates", "transform": "vaccine_desc:civ:serial[1]",      "default": "N/A", "note": "p3 CIV 2 batch" },
-      "text_59iaww": { "source": "civ_dates", "transform": "vaccine_desc:civ:validity_to[1]", "default": "N/A", "note": "p3 CIV 2 expiry date" },
-      "text_53jqcz": { "source": "civ_dates", "transform": "vaccine_desc:civ:validity_to[1]", "default": "N/A", "note": "p3 CIV 2 booster due" },
-
-      "text_60urhp": { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:date[0]", "note": "p4 External parasite 1 treatment date (most recent)" },
-      "text_63wiyu": { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:name[0]", "note": "p4 External parasite 1 product name" },
-      "text_64gjzd": { "source": "external_parasite_dates", "transform": "parasite_info:external:ingredient[0]", "note": "p4 External parasite 1 active ingredient" },
-      "text_65vrds": { "source": "external_parasite_dates", "transform": "parasite_info:external:dose[0]",       "note": "p4 External parasite 1 dose rate" },
-
-      "text_61wjfw": { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:date[1]", "default": "N/A", "note": "p4 External parasite 2 treatment date" },
-      "text_66rszv": { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:name[1]", "default": "N/A", "note": "p4 External parasite 2 product name" },
-      "text_67ntt":  { "source": "external_parasite_dates", "transform": "parasite_info:external:ingredient[1]", "default": "N/A", "note": "p4 External parasite 2 active ingredient" },
-      "text_68half": { "source": "external_parasite_dates", "transform": "parasite_info:external:dose[1]",       "default": "N/A", "note": "p4 External parasite 2 dose rate" },
-
-      "text_62bjwh": { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:date[2]", "default": "N/A", "note": "p4 External parasite 3 treatment date" },
-      "text_69yggd": { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:name[2]", "default": "N/A", "note": "p4 External parasite 3 product name" },
-      "text_70vivh": { "source": "external_parasite_dates", "transform": "parasite_info:external:ingredient[2]", "default": "N/A", "note": "p4 External parasite 3 active ingredient" },
-      "text_71hyga": { "source": "external_parasite_dates", "transform": "parasite_info:external:dose[2]",       "default": "N/A", "note": "p4 External parasite 3 dose rate" },
-
-      "text_72ojdd": { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:date[0]", "note": "p4 Internal parasite 1 treatment date" },
-      "text_74rpzb": { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:name[0]", "note": "p4 Internal parasite 1 product name" },
-      "text_76crgj": { "source": "internal_parasite_dates", "transform": "parasite_info:internal:ingredient[0]", "note": "p4 Internal parasite 1 active ingredient" },
-      "text_78lumz": { "source": "internal_parasite_dates", "transform": "parasite_info:internal:dose[0]",       "note": "p4 Internal parasite 1 dose rate" },
-
-      "text_73oezf": { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:date[1]", "default": "N/A", "note": "p4 Internal parasite 2 treatment date" },
-      "text_75mkbg": { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:name[1]", "default": "N/A", "note": "p4 Internal parasite 2 product name" },
-      "text_77eppl": { "source": "internal_parasite_dates", "transform": "parasite_info:internal:ingredient[1]", "default": "N/A", "note": "p4 Internal parasite 2 active ingredient" },
-      "text_79lvdj": { "source": "internal_parasite_dates", "transform": "parasite_info:internal:dose[1]",       "default": "N/A", "note": "p4 Internal parasite 2 dose rate" },
-
-      "text_80csoo": { "source": null, "default": "N/A", "align": "center", "note": "p4 Declaration — dog exported from Australia date (한국발 케이스는 N/A)" },
-      "text_81sjir": { "source": "australia_extra", "transform": "json:id_date", "default": "N/A", "align": "center", "note": "p4 Declaration — ID verification date (180일 전, dmy)" },
-
-      "text_82dwak": { "source": null, "default": "N/A", "note": "p3 Babesia canis rossi — Treatment date (한국발은 항상 N/A)" },
-      "text_83ftvk": { "source": null, "default": "N/A", "note": "p3 Babesia canis rossi — Product name" },
-      "text_84vemx": { "source": null, "default": "N/A", "note": "p3 Babesia canis rossi — Active ingredient(s)" },
-      "text_85tscx": { "source": null, "default": "N/A", "note": "p3 Babesia canis rossi — Dose rate" }
+      "text_1wcec": {
+        "source": "australia_extra",
+        "transform": "json:permit_no",
+        "note": "p1 Import permit number"
+      },
+      "text_2uobx": {
+        "source": "pet_name_en",
+        "note": "p1 Name of animal"
+      },
+      "text_3dlfg": {
+        "source": "birth_date",
+        "note": "p1 Date of birth (dmy)"
+      },
+      "checkbox_4ccd": {
+        "source": "sex",
+        "transform": "checkbox:eq:male",
+        "note": "p1 Sex: Male"
+      },
+      "checkbox_5yx": {
+        "source": "sex",
+        "transform": "checkbox:eq:neutered_male",
+        "note": "p1 Sex: Neutered male"
+      },
+      "checkbox_6breh": {
+        "source": "sex",
+        "transform": "checkbox:eq:female",
+        "note": "p1 Sex: Female"
+      },
+      "checkbox_7uiie": {
+        "source": "sex",
+        "transform": "checkbox:eq:spayed_female",
+        "note": "p1 Sex: Neutered female"
+      },
+      "checkbox_8ervd": {
+        "source": "sex",
+        "transform": "checkbox:eq:female",
+        "note": "p1 If female, not >30 days pregnant/suckling — 중성화 안 된 암컷만 체크 (중성화 암컷은 임신 불가)"
+      },
+      "text_9tgye": {
+        "source": null,
+        "default": "N/A",
+        "note": "p1 If mated, date of last mating — 한국 케이스는 대부분 N/A"
+      },
+      "text_10amlj": {
+        "source": "microchip",
+        "note": "p1 Microchip number"
+      },
+      "text_11umee": {
+        "source": null,
+        "default": "Neck",
+        "note": "p1 Site of microchip — 디폴트 Neck"
+      },
+      "text_12tdis": {
+        "source": "vet_visit_date",
+        "note": "p1 Date of final examination & microchip scanning — 내원일 (vet_visit_date)"
+      },
+      "text_13rotd": {
+        "source": null,
+        "note": "p1 Government Approved Veterinarian Name",
+        "transform": "vet:name_en"
+      },
+      "text_14blkr": {
+        "source": null,
+        "note": "p1 Vet Email/Contact — 이메일이 없으면 병원 전화",
+        "transform": "vet:phone_intl"
+      },
+      "text_15xzcb": {
+        "source": "rabies_titer_records",
+        "transform": "titer_date_asc[0]",
+        "note": "p1 RNATT 1. Collection date — oldest titer (= most recent titer when 1 record)"
+      },
+      "text_16zsj": {
+        "source": "australia_extra",
+        "transform": "json:sample_received_date",
+        "note": "p1 RNATT 2. Date arrived at laboratory (dmy)"
+      },
+      "text_17mhge": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].value",
+        "note": "p1 RNATT result IU/mL (최신 titer value)"
+      },
+      "text_18rgpy": {
+        "source": null,
+        "transform": "au_disease:leishmania:date",
+        "default": "N/A",
+        "note": "p2 Leishmania — 항상 검사"
+      },
+      "text_21lzge": {
+        "source": null,
+        "transform": "au_disease:leishmania:result",
+        "default": "N/A",
+        "note": "p2 Leishmania result = Negative"
+      },
+      "text_19jhpr": {
+        "source": null,
+        "transform": "au_disease:leptospira:date",
+        "default": "N/A",
+        "note": "p2 Leptospira — 종합백신 없을 때만"
+      },
+      "text_22hrgf": {
+        "source": null,
+        "transform": "au_disease:leptospira:result",
+        "default": "N/A",
+        "note": "p2 Leptospira result"
+      },
+      "text_20iuqj": {
+        "source": null,
+        "transform": "au_disease:brucella:date",
+        "default": "N/A",
+        "note": "p2 Brucella — 중성화 안 된 경우만"
+      },
+      "text_23aayo": {
+        "source": null,
+        "transform": "au_disease:brucella:result",
+        "default": "N/A",
+        "note": "p2 Brucella result"
+      },
+      "text_24qhaf": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[0]",
+        "note": "p2 Rabies vaccination date row 1 — oldest dose (asc order)"
+      },
+      "text_25ombe": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[1]",
+        "note": "p2 Rabies vaccination date row 2 — 2nd dose. 1회 접종이면 공란 (N/A 없음)"
+      },
+      "text_31inqe": {
+        "source": "rabies_dates",
+        "transform": "vaccine_combined:rabies:name",
+        "note": "p2 Rabies vaccine name — 두 접종 다르면 'A / B', 같으면 하나만"
+      },
+      "text_32empk": {
+        "source": "rabies_dates",
+        "transform": "vaccine_combined:rabies:serial",
+        "note": "p2 Rabies batch — 두 접종 다르면 'A / B', 같으면 하나만"
+      },
+      "text_33qisq": {
+        "source": "rabies_dates",
+        "transform": "vaccine_combined:rabies:product_expiry",
+        "note": "p2 Rabies product batch expiry — 같은 배치면 하나, 다르면 'A / B'"
+      },
+      "text_30ukoe": {
+        "source": "rabies_dates",
+        "transform": "vaccine_combined:rabies:booster_due",
+        "note": "p2 Next booster due — 최신 접종일 + 1y"
+      },
+      "text_26vaic": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[0]",
+        "default": "N/A",
+        "note": "p2 Leptospira 1 (= 종합백신 1차, 최신)"
+      },
+      "text_34lifq": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:name[0]",
+        "default": "N/A",
+        "note": "p2 Leptospira 1 vaccine name (종합백신)"
+      },
+      "text_35zqkl": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:serial[0]",
+        "default": "N/A",
+        "note": "p2 Leptospira 1 batch"
+      },
+      "text_36nfaw": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:validity_to[0]",
+        "default": "N/A",
+        "note": "p2 Leptospira 1 expiry"
+      },
+      "text_37pkcs": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:validity_to[0]",
+        "default": "N/A",
+        "note": "p2 Leptospira 1 booster due"
+      },
+      "text_27beat": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[1]",
+        "default": "N/A",
+        "note": "p2 Leptospira 2 (= 종합백신 2차)"
+      },
+      "text_41oqln": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:name[1]",
+        "default": "N/A",
+        "note": "p2 Leptospira 2 vaccine name"
+      },
+      "text_40cqx": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:serial[1]",
+        "default": "N/A",
+        "note": "p2 Leptospira 2 batch"
+      },
+      "text_39comw": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:validity_to[1]",
+        "default": "N/A",
+        "note": "p2 Leptospira 2 expiry"
+      },
+      "text_38xmqh": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:validity_to[1]",
+        "default": "N/A",
+        "note": "p2 Leptospira 2 booster due"
+      },
+      "text_28kmcs": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[2]",
+        "default": "N/A",
+        "note": "p3 Leptospira 3 (= 종합백신 3차)"
+      },
+      "text_42xjqv": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:name[2]",
+        "default": "N/A",
+        "note": "p3 Leptospira 3 vaccine name"
+      },
+      "text_43lbsk": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:serial[2]",
+        "default": "N/A",
+        "note": "p3 Leptospira 3 batch"
+      },
+      "text_44jwab": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:validity_to[2]",
+        "default": "N/A",
+        "note": "p3 Leptospira 3 expiry"
+      },
+      "text_45rmek": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:validity_to[2]",
+        "default": "N/A",
+        "note": "p3 Leptospira 3 booster due"
+      },
+      "text_29rxcg": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[3]",
+        "default": "N/A",
+        "note": "p3 Leptospira 4 (= 종합백신 4차)"
+      },
+      "text_46psmz": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:name[3]",
+        "default": "N/A",
+        "note": "p3 Leptospira 4 vaccine name"
+      },
+      "text_47yaij": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:serial[3]",
+        "default": "N/A",
+        "note": "p3 Leptospira 4 batch"
+      },
+      "text_48bvcr": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:validity_to[3]",
+        "default": "N/A",
+        "note": "p3 Leptospira 4 expiry"
+      },
+      "text_49vxhc": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:validity_to[3]",
+        "default": "N/A",
+        "note": "p3 Leptospira 4 booster due"
+      },
+      "text_50bosa": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:date[0]",
+        "note": "p3 CIV 1 vaccination date (most recent, dmy)"
+      },
+      "text_54lrxu": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:name[0]",
+        "note": "p3 CIV 1 vaccine name (most recent)"
+      },
+      "text_56uvxm": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:serial[0]",
+        "note": "p3 CIV 1 batch"
+      },
+      "text_58mtsy": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:validity_to[0]",
+        "note": "p3 CIV 1 expiry date (접종일 + 1y)"
+      },
+      "text_52uxaw": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:validity_to[0]",
+        "note": "p3 CIV 1 booster due"
+      },
+      "text_51vpfk": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:date[1]",
+        "default": "N/A",
+        "note": "p3 CIV 2 vaccination date (없으면 N/A)"
+      },
+      "text_55nend": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:name[1]",
+        "default": "N/A",
+        "note": "p3 CIV 2 vaccine name"
+      },
+      "text_57hyjt": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:serial[1]",
+        "default": "N/A",
+        "note": "p3 CIV 2 batch"
+      },
+      "text_59iaww": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:validity_to[1]",
+        "default": "N/A",
+        "note": "p3 CIV 2 expiry date"
+      },
+      "text_53jqcz": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:validity_to[1]",
+        "default": "N/A",
+        "note": "p3 CIV 2 booster due"
+      },
+      "text_60urhp": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[0]",
+        "note": "p4 External parasite 1 treatment date (most recent)"
+      },
+      "text_63wiyu": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:name[0]",
+        "note": "p4 External parasite 1 product name"
+      },
+      "text_64gjzd": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[0]",
+        "note": "p4 External parasite 1 active ingredient"
+      },
+      "text_65vrds": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:dose[0]",
+        "note": "p4 External parasite 1 dose rate"
+      },
+      "text_61wjfw": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[1]",
+        "default": "N/A",
+        "note": "p4 External parasite 2 treatment date"
+      },
+      "text_66rszv": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:name[1]",
+        "default": "N/A",
+        "note": "p4 External parasite 2 product name"
+      },
+      "text_67ntt": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[1]",
+        "default": "N/A",
+        "note": "p4 External parasite 2 active ingredient"
+      },
+      "text_68half": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:dose[1]",
+        "default": "N/A",
+        "note": "p4 External parasite 2 dose rate"
+      },
+      "text_62bjwh": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[2]",
+        "default": "N/A",
+        "note": "p4 External parasite 3 treatment date"
+      },
+      "text_69yggd": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:name[2]",
+        "default": "N/A",
+        "note": "p4 External parasite 3 product name"
+      },
+      "text_70vivh": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[2]",
+        "default": "N/A",
+        "note": "p4 External parasite 3 active ingredient"
+      },
+      "text_71hyga": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:dose[2]",
+        "default": "N/A",
+        "note": "p4 External parasite 3 dose rate"
+      },
+      "text_72ojdd": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:date[0]",
+        "note": "p4 Internal parasite 1 treatment date"
+      },
+      "text_74rpzb": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:name[0]",
+        "note": "p4 Internal parasite 1 product name"
+      },
+      "text_76crgj": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:ingredient[0]",
+        "note": "p4 Internal parasite 1 active ingredient"
+      },
+      "text_78lumz": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:dose[0]",
+        "note": "p4 Internal parasite 1 dose rate"
+      },
+      "text_73oezf": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:date[1]",
+        "default": "N/A",
+        "note": "p4 Internal parasite 2 treatment date"
+      },
+      "text_75mkbg": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:name[1]",
+        "default": "N/A",
+        "note": "p4 Internal parasite 2 product name"
+      },
+      "text_77eppl": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:ingredient[1]",
+        "default": "N/A",
+        "note": "p4 Internal parasite 2 active ingredient"
+      },
+      "text_79lvdj": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:dose[1]",
+        "default": "N/A",
+        "note": "p4 Internal parasite 2 dose rate"
+      },
+      "text_80csoo": {
+        "source": null,
+        "align": "center",
+        "note": "p4 Declaration — dog exported from Australia date — 공란 유지"
+      },
+      "text_81sjir": {
+        "source": "australia_extra",
+        "transform": "json:id_date",
+        "default": "N/A",
+        "align": "center",
+        "note": "p4 Declaration — ID verification date (180일 전, dmy)"
+      },
+      "text_82dwak": {
+        "source": null,
+        "default": "N/A",
+        "note": "p3 Babesia canis rossi — Treatment date (한국발은 항상 N/A)"
+      },
+      "text_83ftvk": {
+        "source": null,
+        "default": "N/A",
+        "note": "p3 Babesia canis rossi — Product name"
+      },
+      "text_84vemx": {
+        "source": null,
+        "default": "N/A",
+        "note": "p3 Babesia canis rossi — Active ingredient(s)"
+      },
+      "text_85tscx": {
+        "source": null,
+        "default": "N/A",
+        "note": "p3 Babesia canis rossi — Dose rate"
+      }
     }
   },
-
+  "AU_2": {
+    "template": "AU_2.pdf",
+    "description": "Australia 수출용 반려견 건강증명서 — ID Date 없는 버전",
+    "filename": "AU2_{pet_name}.pdf",
+    "dateFormat": "dmmmy",
+    "fields": {
+      "text_1wcec": {
+        "source": "australia_extra",
+        "transform": "json:permit_no",
+        "note": "p1 Import permit number"
+      },
+      "text_2uobx": {
+        "source": "pet_name_en",
+        "note": "p1 Name of animal"
+      },
+      "text_3dlfg": {
+        "source": "birth_date",
+        "note": "p1 Date of birth (dmy)"
+      },
+      "checkbox_4ccd": {
+        "source": "sex",
+        "transform": "checkbox:eq:male",
+        "note": "p1 Sex: Male"
+      },
+      "checkbox_5yx": {
+        "source": "sex",
+        "transform": "checkbox:eq:neutered_male",
+        "note": "p1 Sex: Neutered male"
+      },
+      "checkbox_6breh": {
+        "source": "sex",
+        "transform": "checkbox:eq:female",
+        "note": "p1 Sex: Female"
+      },
+      "checkbox_7uiie": {
+        "source": "sex",
+        "transform": "checkbox:eq:spayed_female",
+        "note": "p1 Sex: Neutered female"
+      },
+      "checkbox_8ervd": {
+        "source": "sex",
+        "transform": "checkbox:eq:female",
+        "note": "p1 If female, not >30 days pregnant/suckling — 중성화 안 된 암컷만 체크 (중성화 암컷은 임신 불가)"
+      },
+      "text_9tgye": {
+        "source": null,
+        "default": "N/A",
+        "note": "p1 If mated, date of last mating — 한국 케이스는 대부분 N/A"
+      },
+      "text_10amlj": {
+        "source": "microchip",
+        "note": "p1 Microchip number"
+      },
+      "text_11umee": {
+        "source": null,
+        "default": "Neck",
+        "note": "p1 Site of microchip — 디폴트 Neck"
+      },
+      "text_12tdis": {
+        "source": "vet_visit_date",
+        "note": "p1 Date of final examination & microchip scanning — 내원일 (vet_visit_date)"
+      },
+      "text_13rotd": {
+        "source": null,
+        "note": "p1 Government Approved Veterinarian Name",
+        "transform": "vet:name_en"
+      },
+      "text_14blkr": {
+        "source": null,
+        "note": "p1 Vet Email/Contact — 이메일이 없으면 병원 전화",
+        "transform": "vet:phone_intl"
+      },
+      "text_15xzcb": {
+        "source": "rabies_titer_records",
+        "transform": "titer_date_asc[0]",
+        "note": "p1 RNATT 1. Collection date — oldest titer (= most recent titer when 1 record)"
+      },
+      "text_16zsj": {
+        "source": "australia_extra",
+        "transform": "json:sample_received_date",
+        "note": "p1 RNATT 2. Date arrived at laboratory (dmy)"
+      },
+      "text_17mhge": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].value",
+        "note": "p1 RNATT result IU/mL (최신 titer value)"
+      },
+      "text_18rgpy": {
+        "source": null,
+        "transform": "au_disease:leishmania:date",
+        "default": "N/A",
+        "note": "p2 Leishmania — 항상 검사"
+      },
+      "text_21lzge": {
+        "source": null,
+        "transform": "au_disease:leishmania:result",
+        "default": "N/A",
+        "note": "p2 Leishmania result = Negative"
+      },
+      "text_19jhpr": {
+        "source": null,
+        "transform": "au_disease:leptospira:date",
+        "default": "N/A",
+        "note": "p2 Leptospira — 종합백신 없을 때만"
+      },
+      "text_22hrgf": {
+        "source": null,
+        "transform": "au_disease:leptospira:result",
+        "default": "N/A",
+        "note": "p2 Leptospira result"
+      },
+      "text_20iuqj": {
+        "source": null,
+        "transform": "au_disease:brucella:date",
+        "default": "N/A",
+        "note": "p2 Brucella — 중성화 안 된 경우만"
+      },
+      "text_23aayo": {
+        "source": null,
+        "transform": "au_disease:brucella:result",
+        "default": "N/A",
+        "note": "p2 Brucella result"
+      },
+      "text_24qhaf": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[0]",
+        "note": "p2 Rabies vaccination date row 1 — oldest dose (asc order)"
+      },
+      "text_25ombe": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[1]",
+        "note": "p2 Rabies vaccination date row 2 — 2nd dose. 1회 접종이면 공란 (N/A 없음)"
+      },
+      "text_31inqe": {
+        "source": "rabies_dates",
+        "transform": "vaccine_combined:rabies:name",
+        "note": "p2 Rabies vaccine name — 두 접종 다르면 'A / B', 같으면 하나만"
+      },
+      "text_32empk": {
+        "source": "rabies_dates",
+        "transform": "vaccine_combined:rabies:serial",
+        "note": "p2 Rabies batch — 두 접종 다르면 'A / B', 같으면 하나만"
+      },
+      "text_33qisq": {
+        "source": "rabies_dates",
+        "transform": "vaccine_combined:rabies:product_expiry",
+        "note": "p2 Rabies product batch expiry — 같은 배치면 하나, 다르면 'A / B'"
+      },
+      "text_30ukoe": {
+        "source": "rabies_dates",
+        "transform": "vaccine_combined:rabies:booster_due",
+        "note": "p2 Next booster due — 최신 접종일 + 1y"
+      },
+      "text_26vaic": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[0]",
+        "default": "N/A",
+        "note": "p2 Leptospira 1 (= 종합백신 1차, 최신)"
+      },
+      "text_34lifq": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:name[0]",
+        "default": "N/A",
+        "note": "p2 Leptospira 1 vaccine name (종합백신)"
+      },
+      "text_35zqkl": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:serial[0]",
+        "default": "N/A",
+        "note": "p2 Leptospira 1 batch"
+      },
+      "text_36nfaw": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:validity_to[0]",
+        "default": "N/A",
+        "note": "p2 Leptospira 1 expiry"
+      },
+      "text_37pkcs": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:validity_to[0]",
+        "default": "N/A",
+        "note": "p2 Leptospira 1 booster due"
+      },
+      "text_27beat": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[1]",
+        "default": "N/A",
+        "note": "p2 Leptospira 2 (= 종합백신 2차)"
+      },
+      "text_41oqln": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:name[1]",
+        "default": "N/A",
+        "note": "p2 Leptospira 2 vaccine name"
+      },
+      "text_40cqx": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:serial[1]",
+        "default": "N/A",
+        "note": "p2 Leptospira 2 batch"
+      },
+      "text_39comw": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:validity_to[1]",
+        "default": "N/A",
+        "note": "p2 Leptospira 2 expiry"
+      },
+      "text_38xmqh": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:validity_to[1]",
+        "default": "N/A",
+        "note": "p2 Leptospira 2 booster due"
+      },
+      "text_28kmcs": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[2]",
+        "default": "N/A",
+        "note": "p3 Leptospira 3 (= 종합백신 3차)"
+      },
+      "text_42xjqv": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:name[2]",
+        "default": "N/A",
+        "note": "p3 Leptospira 3 vaccine name"
+      },
+      "text_43lbsk": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:serial[2]",
+        "default": "N/A",
+        "note": "p3 Leptospira 3 batch"
+      },
+      "text_44jwab": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:validity_to[2]",
+        "default": "N/A",
+        "note": "p3 Leptospira 3 expiry"
+      },
+      "text_45rmek": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:validity_to[2]",
+        "default": "N/A",
+        "note": "p3 Leptospira 3 booster due"
+      },
+      "text_29rxcg": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[3]",
+        "default": "N/A",
+        "note": "p3 Leptospira 4 (= 종합백신 4차)"
+      },
+      "text_46psmz": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:name[3]",
+        "default": "N/A",
+        "note": "p3 Leptospira 4 vaccine name"
+      },
+      "text_47yaij": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:serial[3]",
+        "default": "N/A",
+        "note": "p3 Leptospira 4 batch"
+      },
+      "text_48bvcr": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:validity_to[3]",
+        "default": "N/A",
+        "note": "p3 Leptospira 4 expiry"
+      },
+      "text_49vxhc": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:validity_to[3]",
+        "default": "N/A",
+        "note": "p3 Leptospira 4 booster due"
+      },
+      "text_50bosa": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:date[0]",
+        "note": "p3 CIV 1 vaccination date (most recent, dmy)"
+      },
+      "text_54lrxu": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:name[0]",
+        "note": "p3 CIV 1 vaccine name (most recent)"
+      },
+      "text_56uvxm": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:serial[0]",
+        "note": "p3 CIV 1 batch"
+      },
+      "text_58mtsy": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:validity_to[0]",
+        "note": "p3 CIV 1 expiry date (접종일 + 1y)"
+      },
+      "text_52uxaw": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:validity_to[0]",
+        "note": "p3 CIV 1 booster due"
+      },
+      "text_51vpfk": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:date[1]",
+        "default": "N/A",
+        "note": "p3 CIV 2 vaccination date (없으면 N/A)"
+      },
+      "text_55nend": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:name[1]",
+        "default": "N/A",
+        "note": "p3 CIV 2 vaccine name"
+      },
+      "text_57hyjt": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:serial[1]",
+        "default": "N/A",
+        "note": "p3 CIV 2 batch"
+      },
+      "text_59iaww": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:validity_to[1]",
+        "default": "N/A",
+        "note": "p3 CIV 2 expiry date"
+      },
+      "text_53jqcz": {
+        "source": "civ_dates",
+        "transform": "vaccine_desc:civ:validity_to[1]",
+        "default": "N/A",
+        "note": "p3 CIV 2 booster due"
+      },
+      "text_60urhp": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[0]",
+        "note": "p4 External parasite 1 treatment date (most recent)"
+      },
+      "text_63wiyu": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:name[0]",
+        "note": "p4 External parasite 1 product name"
+      },
+      "text_64gjzd": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[0]",
+        "note": "p4 External parasite 1 active ingredient"
+      },
+      "text_65vrds": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:dose[0]",
+        "note": "p4 External parasite 1 dose rate"
+      },
+      "text_61wjfw": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[1]",
+        "default": "N/A",
+        "note": "p4 External parasite 2 treatment date"
+      },
+      "text_66rszv": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:name[1]",
+        "default": "N/A",
+        "note": "p4 External parasite 2 product name"
+      },
+      "text_67ntt": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[1]",
+        "default": "N/A",
+        "note": "p4 External parasite 2 active ingredient"
+      },
+      "text_68half": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:dose[1]",
+        "default": "N/A",
+        "note": "p4 External parasite 2 dose rate"
+      },
+      "text_62bjwh": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[2]",
+        "default": "N/A",
+        "note": "p4 External parasite 3 treatment date"
+      },
+      "text_69yggd": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:name[2]",
+        "default": "N/A",
+        "note": "p4 External parasite 3 product name"
+      },
+      "text_70vivh": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[2]",
+        "default": "N/A",
+        "note": "p4 External parasite 3 active ingredient"
+      },
+      "text_71hyga": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:dose[2]",
+        "default": "N/A",
+        "note": "p4 External parasite 3 dose rate"
+      },
+      "text_72ojdd": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:date[0]",
+        "note": "p4 Internal parasite 1 treatment date"
+      },
+      "text_74rpzb": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:name[0]",
+        "note": "p4 Internal parasite 1 product name"
+      },
+      "text_76crgj": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:ingredient[0]",
+        "note": "p4 Internal parasite 1 active ingredient"
+      },
+      "text_78lumz": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:dose[0]",
+        "note": "p4 Internal parasite 1 dose rate"
+      },
+      "text_73oezf": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:date[1]",
+        "default": "N/A",
+        "note": "p4 Internal parasite 2 treatment date"
+      },
+      "text_75mkbg": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:name[1]",
+        "default": "N/A",
+        "note": "p4 Internal parasite 2 product name"
+      },
+      "text_77eppl": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:ingredient[1]",
+        "default": "N/A",
+        "note": "p4 Internal parasite 2 active ingredient"
+      },
+      "text_79lvdj": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:dose[1]",
+        "default": "N/A",
+        "note": "p4 Internal parasite 2 dose rate"
+      },
+      "text_80csoo": {
+        "source": null,
+        "align": "center",
+        "note": "p4 Declaration — dog exported from Australia date — 공란 유지"
+      },
+      "text_81sjir": {
+        "align": "center",
+        "note": "p4 Declaration — ID verification date — 공란 유지",
+        "source": null
+      },
+      "text_82dwak": {
+        "source": null,
+        "default": "N/A",
+        "note": "p3 Babesia canis rossi — Treatment date (한국발은 항상 N/A)"
+      },
+      "text_83ftvk": {
+        "source": null,
+        "default": "N/A",
+        "note": "p3 Babesia canis rossi — Product name"
+      },
+      "text_84vemx": {
+        "source": null,
+        "default": "N/A",
+        "note": "p3 Babesia canis rossi — Active ingredient(s)"
+      },
+      "text_85tscx": {
+        "source": null,
+        "default": "N/A",
+        "note": "p3 Babesia canis rossi — Dose rate"
+      }
+    }
+  },
   "AU_Cat": {
     "template": "AU_Cat.pdf",
     "description": "Australia 수출용 반려묘 건강증명서 (Veterinary health certificate for the export of cats from Republic of Korea to Australia) — 고양이 전용",
     "filename": "AU_{pet_name}.pdf",
     "dateFormat": "dmmmy",
     "fields": {
-      "text_1bgqg":  { "source": "australia_extra", "transform": "json:permit_no", "note": "p1 Import permit number" },
-      "text_2ifcd":  { "source": "pet_name_en", "note": "p1 Name of animal" },
-      "text_3tfew":  { "source": "birth_date", "note": "p1 Date of birth" },
-      "checkbox_10ldsn": { "source": "sex", "transform": "checkbox:eq:male",          "note": "p1 Sex: Male" },
-      "checkbox_11cywy": { "source": "sex", "transform": "checkbox:eq:neutered_male", "note": "p1 Sex: Neutered male" },
-      "checkbox_12dhce": { "source": "sex", "transform": "checkbox:eq:female",        "note": "p1 Sex: Female" },
-      "checkbox_13d":    { "source": "sex", "transform": "checkbox:eq:spayed_female", "note": "p1 Sex: Neutered female" },
-      "checkbox_14rxhu": { "source": "sex", "transform": "checkbox:eq:female",        "note": "p1 If female, not pregnant (intact female만)" },
-      "text_4kjmn":  { "source": "microchip", "note": "p1 Microchip number" },
-      "text_5omcr":  { "source": null, "default": "Neck", "note": "p1 Site of microchip" },
-      "text_6bilv":  { "source": "vet_visit_date", "note": "p1 Date of final examination (내원일)" },
-      "text_7zssr":  { "source": null, "default": "Jinwon Lee", "note": "p1 Vet Name" },
-      "text_9zdee":  { "source": null, "default": "+82-2-872-7588", "note": "p1 Email/Contact" },
-
-      "text_15aqiu": { "source": "rabies_titer_records", "transform": "titer_date_asc[0]", "note": "p1 RNATT 1. Collection date (최신 titer)" },
-      "text_16oxvq": { "source": "australia_extra", "transform": "json:sample_received_date", "note": "p1 RNATT 2. Date arrived at laboratory" },
-      "text_17igkd": { "source": "rabies_titer_records", "transform": "array[0].value", "note": "p1 RNATT result IU/ml" },
-
-      "text_18rloc": { "source": "rabies_dates", "transform": "vaccine:rabies:date[0]",              "note": "p2 Rabies Row 1 date — oldest dose (1회 접종이면 여기만)" },
-      "text_38hidk": { "source": "rabies_dates", "transform": "vaccine:rabies:date[1]",              "note": "p2 Rabies Row 2 date — 2nd dose. 1회 접종이면 공란 (N/A 없음)" },
-      "text_19bpxy": { "source": "rabies_dates", "transform": "vaccine_combined:rabies:name",        "note": "p2 Rabies vaccine name — 두 접종 다르면 'A / B', 같으면 하나만" },
-      "text_20qafh": { "source": "rabies_dates", "transform": "vaccine_combined:rabies:serial",      "note": "p2 Rabies batch — 두 접종 다르면 'A / B'" },
-      "text_21dder": { "source": "rabies_dates", "transform": "vaccine_combined:rabies:product_expiry", "note": "p2 Rabies product batch expiry" },
-      "text_44lvua": { "source": "rabies_dates", "transform": "vaccine_combined:rabies:booster_due", "note": "p2 Next booster due — 최신 접종 + 1y" },
-
-      "text_25wueg": { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:date[0]",       "note": "p2 External parasite 1 date" },
-      "text_22rezj": { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:name[0]",       "note": "p2 External parasite 1 product" },
-      "text_23vnbb": { "source": "external_parasite_dates", "transform": "parasite_info:external:ingredient[0]",    "note": "p2 External parasite 1 ingredient" },
-      "text_24yghu": { "source": "external_parasite_dates", "transform": "parasite_info:external:dose[0]",          "note": "p2 External parasite 1 dose" },
-
-      "text_26cotg": { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:date[1]",       "default": "N/A", "note": "p2 External parasite 2 date" },
-      "text_28zgtu": { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:name[1]",       "default": "N/A", "note": "p2 External parasite 2 product" },
-      "text_30kuoj": { "source": "external_parasite_dates", "transform": "parasite_info:external:ingredient[1]",    "default": "N/A", "note": "p2 External parasite 2 ingredient" },
-      "text_32moga": { "source": "external_parasite_dates", "transform": "parasite_info:external:dose[1]",          "default": "N/A", "note": "p2 External parasite 2 dose" },
-
-      "text_27vvjo": { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:date[2]",       "default": "N/A", "note": "p2 External parasite 3 date" },
-      "text_29pje":  { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:name[2]",       "default": "N/A", "note": "p2 External parasite 3 product" },
-      "text_31sivn": { "source": "external_parasite_dates", "transform": "parasite_info:external:ingredient[2]",    "default": "N/A", "note": "p2 External parasite 3 ingredient" },
-      "text_33wpcd": { "source": "external_parasite_dates", "transform": "parasite_info:external:dose[2]",          "default": "N/A", "note": "p2 External parasite 3 dose" },
-
-      "text_34gton": { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:date[0]",       "note": "p2 Internal parasite 1 date" },
-      "text_35eql":  { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:name[0]",       "note": "p2 Internal parasite 1 product" },
-      "text_36rlf":  { "source": "internal_parasite_dates", "transform": "parasite_info:internal:ingredient[0]",    "note": "p2 Internal parasite 1 ingredient" },
-      "text_37rmzk": { "source": "internal_parasite_dates", "transform": "parasite_info:internal:dose[0]",          "note": "p2 Internal parasite 1 dose" },
-
-      "text_38xlke": { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:date[1]",       "default": "N/A", "note": "p3 Internal parasite 2 date" },
-      "text_39brvj": { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:name[1]",       "default": "N/A", "note": "p3 Internal parasite 2 product" },
-      "text_40oxh":  { "source": "internal_parasite_dates", "transform": "parasite_info:internal:ingredient[1]",    "default": "N/A", "note": "p3 Internal parasite 2 ingredient" },
-      "text_41vaso": { "source": "internal_parasite_dates", "transform": "parasite_info:internal:dose[1]",          "default": "N/A", "note": "p3 Internal parasite 2 dose" },
-
-      "text_42bwxb": { "source": null, "default": "N/A", "align": "center", "note": "p3 Declaration — cat exported from Australia date (한국발은 N/A)" },
-      "text_43dkwt": { "source": "australia_extra", "transform": "json:id_date", "default": "N/A", "align": "center", "note": "p3 Declaration — ID verification date (180일 전)" }
+      "text_1bgqg": {
+        "source": "australia_extra",
+        "transform": "json:permit_no",
+        "note": "p1 Import permit number"
+      },
+      "text_2ifcd": {
+        "source": "pet_name_en",
+        "note": "p1 Name of animal"
+      },
+      "text_3tfew": {
+        "source": "birth_date",
+        "note": "p1 Date of birth"
+      },
+      "checkbox_10ldsn": {
+        "source": "sex",
+        "transform": "checkbox:eq:male",
+        "note": "p1 Sex: Male"
+      },
+      "checkbox_11cywy": {
+        "source": "sex",
+        "transform": "checkbox:eq:neutered_male",
+        "note": "p1 Sex: Neutered male"
+      },
+      "checkbox_12dhce": {
+        "source": "sex",
+        "transform": "checkbox:eq:female",
+        "note": "p1 Sex: Female"
+      },
+      "checkbox_13d": {
+        "source": "sex",
+        "transform": "checkbox:eq:spayed_female",
+        "note": "p1 Sex: Neutered female"
+      },
+      "checkbox_14rxhu": {
+        "source": "sex",
+        "transform": "checkbox:eq:female",
+        "note": "p1 If female, not pregnant (intact female만)"
+      },
+      "text_4kjmn": {
+        "source": "microchip",
+        "note": "p1 Microchip number"
+      },
+      "text_5omcr": {
+        "source": null,
+        "default": "Neck",
+        "note": "p1 Site of microchip"
+      },
+      "text_6bilv": {
+        "source": "vet_visit_date",
+        "note": "p1 Date of final examination (내원일)"
+      },
+      "text_7zssr": {
+        "source": null,
+        "note": "p1 Vet Name",
+        "transform": "vet:name_en"
+      },
+      "text_9zdee": {
+        "source": null,
+        "note": "p1 Email/Contact",
+        "transform": "vet:phone_intl"
+      },
+      "text_15aqiu": {
+        "source": "rabies_titer_records",
+        "transform": "titer_date_asc[0]",
+        "note": "p1 RNATT 1. Collection date (최신 titer)"
+      },
+      "text_16oxvq": {
+        "source": "australia_extra",
+        "transform": "json:sample_received_date",
+        "note": "p1 RNATT 2. Date arrived at laboratory"
+      },
+      "text_17igkd": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].value",
+        "note": "p1 RNATT result IU/ml"
+      },
+      "text_18rloc": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[0]",
+        "note": "p2 Rabies Row 1 date — oldest dose (1회 접종이면 여기만)"
+      },
+      "text_38hidk": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[1]",
+        "note": "p2 Rabies Row 2 date — 2nd dose. 1회 접종이면 공란 (N/A 없음)"
+      },
+      "text_19bpxy": {
+        "source": "rabies_dates",
+        "transform": "vaccine_combined:rabies:name",
+        "note": "p2 Rabies vaccine name — 두 접종 다르면 'A / B', 같으면 하나만"
+      },
+      "text_20qafh": {
+        "source": "rabies_dates",
+        "transform": "vaccine_combined:rabies:serial",
+        "note": "p2 Rabies batch — 두 접종 다르면 'A / B'"
+      },
+      "text_21dder": {
+        "source": "rabies_dates",
+        "transform": "vaccine_combined:rabies:product_expiry",
+        "note": "p2 Rabies product batch expiry"
+      },
+      "text_44lvua": {
+        "source": "rabies_dates",
+        "transform": "vaccine_combined:rabies:booster_due",
+        "note": "p2 Next booster due — 최신 접종 + 1y"
+      },
+      "text_25wueg": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[0]",
+        "note": "p2 External parasite 1 date"
+      },
+      "text_22rezj": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:name[0]",
+        "note": "p2 External parasite 1 product"
+      },
+      "text_23vnbb": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[0]",
+        "note": "p2 External parasite 1 ingredient"
+      },
+      "text_24yghu": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:dose[0]",
+        "note": "p2 External parasite 1 dose"
+      },
+      "text_26cotg": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[1]",
+        "default": "N/A",
+        "note": "p2 External parasite 2 date"
+      },
+      "text_28zgtu": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:name[1]",
+        "default": "N/A",
+        "note": "p2 External parasite 2 product"
+      },
+      "text_30kuoj": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[1]",
+        "default": "N/A",
+        "note": "p2 External parasite 2 ingredient"
+      },
+      "text_32moga": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:dose[1]",
+        "default": "N/A",
+        "note": "p2 External parasite 2 dose"
+      },
+      "text_27vvjo": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[2]",
+        "default": "N/A",
+        "note": "p2 External parasite 3 date"
+      },
+      "text_29pje": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:name[2]",
+        "default": "N/A",
+        "note": "p2 External parasite 3 product"
+      },
+      "text_31sivn": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[2]",
+        "default": "N/A",
+        "note": "p2 External parasite 3 ingredient"
+      },
+      "text_33wpcd": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:dose[2]",
+        "default": "N/A",
+        "note": "p2 External parasite 3 dose"
+      },
+      "text_34gton": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:date[0]",
+        "note": "p2 Internal parasite 1 date"
+      },
+      "text_35eql": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:name[0]",
+        "note": "p2 Internal parasite 1 product"
+      },
+      "text_36rlf": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:ingredient[0]",
+        "note": "p2 Internal parasite 1 ingredient"
+      },
+      "text_37rmzk": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:dose[0]",
+        "note": "p2 Internal parasite 1 dose"
+      },
+      "text_38xlke": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:date[1]",
+        "default": "N/A",
+        "note": "p3 Internal parasite 2 date"
+      },
+      "text_39brvj": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:name[1]",
+        "default": "N/A",
+        "note": "p3 Internal parasite 2 product"
+      },
+      "text_40oxh": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:ingredient[1]",
+        "default": "N/A",
+        "note": "p3 Internal parasite 2 ingredient"
+      },
+      "text_41vaso": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:dose[1]",
+        "default": "N/A",
+        "note": "p3 Internal parasite 2 dose"
+      },
+      "text_42bwxb": {
+        "source": null,
+        "align": "center",
+        "note": "p3 Declaration — cat exported from Australia date — 공란 유지"
+      },
+      "text_43dkwt": {
+        "source": "australia_extra",
+        "transform": "json:id_date",
+        "default": "N/A",
+        "align": "center",
+        "note": "p3 Declaration — ID verification date (180일 전)"
+      }
     }
   },
-
+  "AU_Cat_2": {
+    "template": "AU_Cat_2.pdf",
+    "description": "Australia 수출용 반려묘 건강증명서 — ID Date 없는 버전",
+    "filename": "AU2_{pet_name}.pdf",
+    "dateFormat": "dmmmy",
+    "fields": {
+      "text_1bgqg": {
+        "source": "australia_extra",
+        "transform": "json:permit_no",
+        "note": "p1 Import permit number"
+      },
+      "text_2ifcd": {
+        "source": "pet_name_en",
+        "note": "p1 Name of animal"
+      },
+      "text_3tfew": {
+        "source": "birth_date",
+        "note": "p1 Date of birth"
+      },
+      "checkbox_10ldsn": {
+        "source": "sex",
+        "transform": "checkbox:eq:male",
+        "note": "p1 Sex: Male"
+      },
+      "checkbox_11cywy": {
+        "source": "sex",
+        "transform": "checkbox:eq:neutered_male",
+        "note": "p1 Sex: Neutered male"
+      },
+      "checkbox_12dhce": {
+        "source": "sex",
+        "transform": "checkbox:eq:female",
+        "note": "p1 Sex: Female"
+      },
+      "checkbox_13d": {
+        "source": "sex",
+        "transform": "checkbox:eq:spayed_female",
+        "note": "p1 Sex: Neutered female"
+      },
+      "checkbox_14rxhu": {
+        "source": "sex",
+        "transform": "checkbox:eq:female",
+        "note": "p1 If female, not pregnant (intact female만)"
+      },
+      "text_4kjmn": {
+        "source": "microchip",
+        "note": "p1 Microchip number"
+      },
+      "text_5omcr": {
+        "source": null,
+        "default": "Neck",
+        "note": "p1 Site of microchip"
+      },
+      "text_6bilv": {
+        "source": "vet_visit_date",
+        "note": "p1 Date of final examination (내원일)"
+      },
+      "text_7zssr": {
+        "source": null,
+        "note": "p1 Vet Name",
+        "transform": "vet:name_en"
+      },
+      "text_9zdee": {
+        "source": null,
+        "note": "p1 Email/Contact",
+        "transform": "vet:phone_intl"
+      },
+      "text_15aqiu": {
+        "source": "rabies_titer_records",
+        "transform": "titer_date_asc[0]",
+        "note": "p1 RNATT 1. Collection date (최신 titer)"
+      },
+      "text_16oxvq": {
+        "source": "australia_extra",
+        "transform": "json:sample_received_date",
+        "note": "p1 RNATT 2. Date arrived at laboratory"
+      },
+      "text_17igkd": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].value",
+        "note": "p1 RNATT result IU/ml"
+      },
+      "text_18rloc": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[0]",
+        "note": "p2 Rabies Row 1 date — oldest dose (1회 접종이면 여기만)"
+      },
+      "text_38hidk": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[1]",
+        "note": "p2 Rabies Row 2 date — 2nd dose. 1회 접종이면 공란 (N/A 없음)"
+      },
+      "text_19bpxy": {
+        "source": "rabies_dates",
+        "transform": "vaccine_combined:rabies:name",
+        "note": "p2 Rabies vaccine name — 두 접종 다르면 'A / B', 같으면 하나만"
+      },
+      "text_20qafh": {
+        "source": "rabies_dates",
+        "transform": "vaccine_combined:rabies:serial",
+        "note": "p2 Rabies batch — 두 접종 다르면 'A / B'"
+      },
+      "text_21dder": {
+        "source": "rabies_dates",
+        "transform": "vaccine_combined:rabies:product_expiry",
+        "note": "p2 Rabies product batch expiry"
+      },
+      "text_44lvua": {
+        "source": "rabies_dates",
+        "transform": "vaccine_combined:rabies:booster_due",
+        "note": "p2 Next booster due — 최신 접종 + 1y"
+      },
+      "text_25wueg": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[0]",
+        "note": "p2 External parasite 1 date"
+      },
+      "text_22rezj": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:name[0]",
+        "note": "p2 External parasite 1 product"
+      },
+      "text_23vnbb": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[0]",
+        "note": "p2 External parasite 1 ingredient"
+      },
+      "text_24yghu": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:dose[0]",
+        "note": "p2 External parasite 1 dose"
+      },
+      "text_26cotg": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[1]",
+        "default": "N/A",
+        "note": "p2 External parasite 2 date"
+      },
+      "text_28zgtu": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:name[1]",
+        "default": "N/A",
+        "note": "p2 External parasite 2 product"
+      },
+      "text_30kuoj": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[1]",
+        "default": "N/A",
+        "note": "p2 External parasite 2 ingredient"
+      },
+      "text_32moga": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:dose[1]",
+        "default": "N/A",
+        "note": "p2 External parasite 2 dose"
+      },
+      "text_27vvjo": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[2]",
+        "default": "N/A",
+        "note": "p2 External parasite 3 date"
+      },
+      "text_29pje": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:name[2]",
+        "default": "N/A",
+        "note": "p2 External parasite 3 product"
+      },
+      "text_31sivn": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[2]",
+        "default": "N/A",
+        "note": "p2 External parasite 3 ingredient"
+      },
+      "text_33wpcd": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:dose[2]",
+        "default": "N/A",
+        "note": "p2 External parasite 3 dose"
+      },
+      "text_34gton": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:date[0]",
+        "note": "p2 Internal parasite 1 date"
+      },
+      "text_35eql": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:name[0]",
+        "note": "p2 Internal parasite 1 product"
+      },
+      "text_36rlf": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:ingredient[0]",
+        "note": "p2 Internal parasite 1 ingredient"
+      },
+      "text_37rmzk": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:dose[0]",
+        "note": "p2 Internal parasite 1 dose"
+      },
+      "text_38xlke": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:date[1]",
+        "default": "N/A",
+        "note": "p3 Internal parasite 2 date"
+      },
+      "text_39brvj": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:name[1]",
+        "default": "N/A",
+        "note": "p3 Internal parasite 2 product"
+      },
+      "text_40oxh": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:ingredient[1]",
+        "default": "N/A",
+        "note": "p3 Internal parasite 2 ingredient"
+      },
+      "text_41vaso": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:dose[1]",
+        "default": "N/A",
+        "note": "p3 Internal parasite 2 dose"
+      },
+      "text_42bwxb": {
+        "source": null,
+        "align": "center",
+        "note": "p3 Declaration — cat exported from Australia date — 공란 유지"
+      },
+      "text_43dkwt": {
+        "align": "center",
+        "note": "p3 Declaration — ID verification date — 공란 유지",
+        "source": null
+      }
+    }
+  },
   "NZ": {
     "template": "NZ.pdf",
     "description": "New Zealand 수출용 반려동물 건강증명서 (Model Veterinary Certificate A - Cats and Dogs). 개/고양이 공통 양식",
     "filename": "NZ_{pet_name}.pdf",
     "dateFormat": "dmmmy",
     "fields": {
-      "Text2":   { "source": "new_zealand_extra", "transform": "json:permit_no", "note": "p1 NZ Permit to Import number" },
-      "APQA":    { "source": null, "default": "Republic of Korea", "note": "p1 Country of export" },
-      "Text5":   { "source": "species", "transform": "en", "note": "p1 Row1 — Species (cat/dog)" },
-      "Text6":   { "source": "breed_en", "note": "p1 Row1 — Breed" },
-      "Text7":   { "source": "microchip", "note": "p1 Row1 — Microchip number" },
-      "Text36":  { "source": "pet_name_en", "note": "p1 Row1 — Name" },
-      "Dropdown13": { "source": "sex", "transform": "dropdown_sex",      "note": "p1 Row1 — Sex (MALE/FEMALE)" },
-      "Dropdown14": { "source": "sex", "transform": "dropdown_neutered", "note": "p1 Row1 — Neutered or entire" },
-      "Text15":  { "source": "birth_date", "transform": "age_years", "note": "p1 Row1 — Age (years)" },
-
-      "Text47":  { "source": "customer_name_en", "note": "p1 (1) Name of owner/exporter line 1 (송하인 = 고객명)" },
-      "Text48":  { "source": "address_en", "transform": "strip_country", "note": "p1 (1) Address of owner/exporter line 2 (주소, 국가명 제거)" },
-      "Text49":  { "source": null, "default": "Republic of Korea", "note": "p1 (2) Country or territory of origin" },
-      "Text51":  { "source": "customer_name_en", "note": "p1 (4) Name of importer/consignee in NZ (수하인 = 고객명)" },
-      "Text53":  { "source": null, "default": "Air transport", "note": "p1 (5) Means of transport" },
-
-      "Text1":   { "source": null, "default": "Republic of Korea", "note": "p1 (9c) country of export (6개월 거주)" },
-
-      "Text55":  { "source": "rabies_dates", "transform": "vaccine_desc:rabies:primary_date[0]", "note": "p1 (10a) Primary rabies vaccination date (1회만 있을 때)" },
-      "Text56":  { "source": "rabies_dates", "transform": "vaccine_desc:rabies:booster_date[0]", "note": "p1 (10b) Booster rabies vaccination date (2회 이상, 최신)" },
-      "Text57":  { "source": "rabies_dates", "transform": "vaccine_desc:rabies:booster_date[1]", "note": "p1 (10b) Previous vaccination date (2회 이상, 이전)" },
-
-      "Text58":  { "source": "rabies_titer_records", "transform": "array[0].date", "note": "p2 (11) RNATT sample collection date" },
-      "Text59":  { "source": "rabies_titer_records", "transform": "array[0].value", "note": "p2 (11) RNATT test result IU/ml" },
-
-      "Text60":  { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:date[1]", "note": "p2 (12a) Internal 1st treatment date (이전)" },
-      "Text61":  { "source": "internal_parasite_dates", "transform": "parasite_info:internal:ingredient[1]", "note": "p2 (12a) Internal 1st active ingredient" },
-      "Text62":  { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:date[0]", "note": "p2 (12b) Internal 2nd treatment date (최근)" },
-      "Text63":  { "source": "internal_parasite_dates", "transform": "parasite_info:internal:ingredient[0]", "note": "p2 (12b) Internal 2nd active ingredient" },
-
-      "Text64":  { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:date[1]", "note": "p2 (13a) External 1st treatment date (이전)" },
-      "Text65":  { "source": "external_parasite_dates", "transform": "parasite_info:external:ingredient[1]", "note": "p2 (13a) External 1st active ingredient" },
-      "Text66":  { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:date[0]", "note": "p2 (13b) External 2nd treatment date (최근)" },
-      "Text67":  { "source": "external_parasite_dates", "transform": "parasite_info:external:ingredient[0]", "note": "p2 (13b) External 2nd active ingredient" },
-
-      "Text68":  { "source": "heartworm_dates", "transform": "vaccine_desc:int_parasite:date[0]", "note": "p2 (14a) Heartworm treatment date (최근)" },
-      "Text69":  { "source": "infectious_disease_records", "transform": "array[0].date", "note": "p2 (15a) Heartworm antigen ELISA sample collection date" },
-      "Text70":  { "source": "infectious_disease_records", "transform": "array[0].date", "note": "p2 (16) Babesia gibsoni IFA/ELISA sample collection date" },
-
-      "Text71":  { "source": "infectious_disease_records", "transform": "array[0].date", "note": "p3 (18) Brucella canis RSAT sample collection date" },
-      "Text73":  { "source": "infectious_disease_records", "transform": "array[0].date", "note": "p3 (24) Leptospira MAT sample collection date" },
-
-      "Text78":  { "source": null, "default": "Jinwon Lee",                                  "note": "p4 Vet Name" },
-      "Text80":  { "source": null, "default": "3, Gwanak-ro 29-gil\nGwanak-gu, Seoul, Republic of Korea", "note": "p4 Vet Address (2줄)" },
-      "Text81":  { "source": null, "default": "petmove@naver.com", "note": "p4 Vet Email" },
-      "Text82":  { "source": "vet_visit_date", "note": "p4 Date of certification" },
-
-      "Text75":  { "source": "new_zealand_extra", "transform": "json:permit_no", "note": "p5 Certificate B — NZ Permit to Import number" },
-      "Text76":  { "source": "microchip", "note": "p5 Certificate B — (4) Microchip number confirmed" }
+      "Text2": {
+        "source": "new_zealand_extra",
+        "transform": "json:permit_no",
+        "note": "p1 NZ Permit to Import number"
+      },
+      "Text5": {
+        "source": "species",
+        "transform": "en",
+        "note": "p1 Row1 — Species (cat/dog)"
+      },
+      "Text6": {
+        "source": "breed_en",
+        "note": "p1 Row1 — Breed"
+      },
+      "Text7": {
+        "source": "microchip",
+        "note": "p1 Row1 — Microchip number"
+      },
+      "Text36": {
+        "source": "pet_name_en",
+        "note": "p1 Row1 — Name"
+      },
+      "Text15": {
+        "source": "birth_date",
+        "transform": "age_years",
+        "note": "p1 Row1 — Age (years)"
+      },
+      "Text48": {
+        "source": "address_en",
+        "note": "p1 (1) Name and address line 2 (owner address)"
+      },
+      "Text49": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p1 (2) Country of origin (새 템플릿 라벨 시프트)"
+      },
+      "Text50": {
+        "source": null,
+        "default": "Incheon International Airport (ICN)",
+        "note": "p1 (3) Port of departure (새 템플릿 라벨 시프트)"
+      },
+      "Text1": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p1 (9c) country of export (6개월 거주)"
+      },
+      "Text55": {
+        "source": "rabies_dates",
+        "transform": "rabies:primary_date",
+        "note": "p1 (10a) Primary vaccination date — only when single dose"
+      },
+      "Text56": {
+        "source": "rabies_dates",
+        "transform": "rabies:booster_date_latest",
+        "note": "p1 (10b) Booster vaccination date — only when multi-dose (최신)"
+      },
+      "Text57": {
+        "source": "rabies_dates",
+        "transform": "rabies:booster_date_previous",
+        "note": "p1 (10b) Previous vaccination — only when multi-dose (직전)"
+      },
+      "Text58": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].date",
+        "note": "p2 (11) RNATT sample collection date"
+      },
+      "Text59": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].value",
+        "note": "p2 (11) RNATT test result IU/ml"
+      },
+      "Text60": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:date[1]",
+        "note": "p2 (12a) Internal 1st treatment date (이전)"
+      },
+      "Text61": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:ingredient[1]",
+        "note": "p2 (12a) Internal 1st active ingredient"
+      },
+      "Text62": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:date[0]",
+        "note": "p2 (12b) Internal 2nd treatment date (최근)"
+      },
+      "Text63": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:ingredient[0]",
+        "note": "p2 (12b) Internal 2nd active ingredient"
+      },
+      "Text64": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[1]",
+        "note": "p2 (13a) External 1st treatment date (이전)"
+      },
+      "Text65": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[1]",
+        "note": "p2 (13a) External 1st active ingredient"
+      },
+      "Text66": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[0]",
+        "note": "p2 (13b) External 2nd treatment date (최근)"
+      },
+      "Text67": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[0]",
+        "note": "p2 (13b) External 2nd active ingredient"
+      },
+      "Text68": {
+        "source": "heartworm_dates",
+        "transform": "vaccine_desc:int_parasite:date[0]",
+        "note": "p2 (14a) Heartworm treatment date (최근)"
+      },
+      "Text69": {
+        "source": "infectious_disease_records",
+        "transform": "array[0].date",
+        "note": "p2 (15a) Heartworm antigen ELISA sample collection date"
+      },
+      "Text70": {
+        "source": "infectious_disease_records",
+        "transform": "array[0].date",
+        "note": "p2 (16) Babesia gibsoni IFA/ELISA sample collection date"
+      },
+      "Text71": {
+        "source": "infectious_disease_records",
+        "transform": "array[0].date",
+        "note": "p3 (18) Brucella canis RSAT sample collection date"
+      },
+      "Text73": {
+        "source": "infectious_disease_records",
+        "transform": "array[0].date",
+        "note": "p3 (24) Leptospira MAT sample collection date"
+      },
+      "Text78": {
+        "source": null,
+        "note": "p4 Vet Name",
+        "transform": "vet:name_en"
+      },
+      "Text80": {
+        "source": null,
+        "note": "p4 Vet Address line 1 (street)",
+        "transform": "vet:address_street_en"
+      },
+      "Text81": {
+        "source": null,
+        "note": "p4 Vet Address line 2 (locality)",
+        "transform": "vet:address_locality_en"
+      },
+      "Text75": {
+        "source": "new_zealand_extra",
+        "transform": "json:permit_no",
+        "note": "p5 Certificate B — NZ Permit to Import number"
+      },
+      "text_15xevx": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p1 Country of export (6개월 거주 문구) — 새 템플릿 필드"
+      },
+      "text_14dawy": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p1 Government veterinary service — country or territory"
+      },
+      "text_78egqu": {
+        "source": "vet_visit_date",
+        "note": "p4 Date of certification (발급일)"
+      },
+      "Dropdown13": {
+        "source": "sex",
+        "transform": "sex_simple",
+        "note": "p1 Row1 — Sex (Male/Female)"
+      },
+      "Dropdown14": {
+        "source": "sex",
+        "transform": "sex_neutered_status",
+        "note": "p1 Row1 — Neutered or entire"
+      },
+      "Text53": {
+        "source": null,
+        "default": "Air transport",
+        "note": "p1 (5) Means of transport (새 템플릿 라벨 시프트)"
+      },
+      "Text51": {
+        "source": "customer_name_en",
+        "note": "p1 (4) Name and address of importer (consignee) — exporter와 동일"
+      },
+      "Text47": {
+        "source": "customer_name_en",
+        "note": "p1 (1) Name and address line 1 (owner name)"
+      },
+      "text_80gijj": {
+        "source": null,
+        "note": "p4 Vet Email",
+        "transform": "vet:email"
+      },
+      "Text76": {
+        "source": "microchip",
+        "note": "p5 (4) The microchip number was confirmed as ..."
+      }
     }
   },
-
+  "NZ_2": {
+    "template": "NZ_2.pdf",
+    "description": "New Zealand 수출용 반려동물 건강증명서 — 광견병 2회 접종 버전",
+    "filename": "NZ_{pet_name}.pdf",
+    "dateFormat": "dmmmy",
+    "fields": {
+      "Text2": {
+        "source": "new_zealand_extra",
+        "transform": "json:permit_no",
+        "note": "p1 NZ Permit to Import number"
+      },
+      "Text5": {
+        "source": "species",
+        "transform": "en",
+        "note": "p1 Row1 — Species (cat/dog)"
+      },
+      "Text6": {
+        "source": "breed_en",
+        "note": "p1 Row1 — Breed"
+      },
+      "Text7": {
+        "source": "microchip",
+        "note": "p1 Row1 — Microchip number"
+      },
+      "Text36": {
+        "source": "pet_name_en",
+        "note": "p1 Row1 — Name"
+      },
+      "Text15": {
+        "source": "birth_date",
+        "transform": "age_years",
+        "note": "p1 Row1 — Age (years)"
+      },
+      "Text48": {
+        "source": "address_en",
+        "note": "p1 (1) Name and address line 2 (owner address)"
+      },
+      "Text49": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p1 (2) Country of origin (새 템플릿 라벨 시프트)"
+      },
+      "Text50": {
+        "source": null,
+        "default": "Incheon International Airport (ICN)",
+        "note": "p1 (3) Port of departure (새 템플릿 라벨 시프트)"
+      },
+      "Text1": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p1 (9c) country of export (6개월 거주)"
+      },
+      "Text55": {
+        "source": "rabies_dates",
+        "transform": "rabies:primary_date",
+        "note": "p1 (10a) Primary vaccination date — only when single dose"
+      },
+      "Text56": {
+        "source": "rabies_dates",
+        "transform": "rabies:booster_date_latest",
+        "note": "p1 (10b) Booster vaccination date — only when multi-dose (최신)"
+      },
+      "Text57": {
+        "source": "rabies_dates",
+        "transform": "rabies:booster_date_previous",
+        "note": "p1 (10b) Previous vaccination — only when multi-dose (직전)"
+      },
+      "Text58": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].date",
+        "note": "p2 (11) RNATT sample collection date"
+      },
+      "Text59": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].value",
+        "note": "p2 (11) RNATT test result IU/ml"
+      },
+      "Text60": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:date[1]",
+        "note": "p2 (12a) Internal 1st treatment date (이전)"
+      },
+      "Text61": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:ingredient[1]",
+        "note": "p2 (12a) Internal 1st active ingredient"
+      },
+      "Text62": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:date[0]",
+        "note": "p2 (12b) Internal 2nd treatment date (최근)"
+      },
+      "Text63": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:ingredient[0]",
+        "note": "p2 (12b) Internal 2nd active ingredient"
+      },
+      "Text64": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[1]",
+        "note": "p2 (13a) External 1st treatment date (이전)"
+      },
+      "Text65": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[1]",
+        "note": "p2 (13a) External 1st active ingredient"
+      },
+      "Text66": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[0]",
+        "note": "p2 (13b) External 2nd treatment date (최근)"
+      },
+      "Text67": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[0]",
+        "note": "p2 (13b) External 2nd active ingredient"
+      },
+      "Text68": {
+        "source": "heartworm_dates",
+        "transform": "vaccine_desc:int_parasite:date[0]",
+        "note": "p2 (14a) Heartworm treatment date (최근)"
+      },
+      "Text69": {
+        "source": "infectious_disease_records",
+        "transform": "array[0].date",
+        "note": "p2 (15a) Heartworm antigen ELISA sample collection date"
+      },
+      "Text70": {
+        "source": "infectious_disease_records",
+        "transform": "array[0].date",
+        "note": "p2 (16) Babesia gibsoni IFA/ELISA sample collection date"
+      },
+      "Text71": {
+        "source": "infectious_disease_records",
+        "transform": "array[0].date",
+        "note": "p3 (18) Brucella canis RSAT sample collection date"
+      },
+      "Text73": {
+        "source": "infectious_disease_records",
+        "transform": "array[0].date",
+        "note": "p3 (24) Leptospira MAT sample collection date"
+      },
+      "Text78": {
+        "source": null,
+        "note": "p4 Vet Name",
+        "transform": "vet:name_en"
+      },
+      "Text80": {
+        "source": null,
+        "note": "p4 Vet Address line 1 (street)",
+        "transform": "vet:address_street_en"
+      },
+      "Text81": {
+        "source": null,
+        "note": "p4 Vet Address line 2 (locality)",
+        "transform": "vet:address_locality_en"
+      },
+      "Text75": {
+        "source": "new_zealand_extra",
+        "transform": "json:permit_no",
+        "note": "p5 Certificate B — NZ Permit to Import number"
+      },
+      "text_15xevx": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p1 Country of export (6개월 거주 문구) — 새 템플릿 필드"
+      },
+      "text_14dawy": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p1 Government veterinary service — country or territory"
+      },
+      "text_78egqu": {
+        "source": "vet_visit_date",
+        "note": "p4 Date of certification (발급일)"
+      },
+      "Dropdown13": {
+        "source": "sex",
+        "transform": "sex_simple",
+        "note": "p1 Row1 — Sex (Male/Female)"
+      },
+      "Dropdown14": {
+        "source": "sex",
+        "transform": "sex_neutered_status",
+        "note": "p1 Row1 — Neutered or entire"
+      },
+      "Text53": {
+        "source": null,
+        "default": "Air transport",
+        "note": "p1 (5) Means of transport (새 템플릿 라벨 시프트)"
+      },
+      "Text51": {
+        "source": "customer_name_en",
+        "note": "p1 (4) Name and address of importer (consignee) — exporter와 동일"
+      },
+      "Text47": {
+        "source": "customer_name_en",
+        "note": "p1 (1) Name and address line 1 (owner name)"
+      },
+      "text_80gijj": {
+        "source": null,
+        "note": "p4 Vet Email",
+        "transform": "vet:email"
+      },
+      "Text76": {
+        "source": "microchip",
+        "note": "p5 (4) The microchip number was confirmed as ..."
+      }
+    }
+  },
   "SGP": {
     "template": "SGP.pdf",
     "description": "Singapore 수출용 반려동물 건강증명서 (Veterinary Certificate for Import of Dogs and Cats — Schedule III). 개/고양이 공통 양식",
     "filename": "SGP_{pet_name}.pdf",
     "dateFormat": "dmy",
     "fields": {
-      "text_32dbb":  { "source": null, "note": "p1 NParks/AVS Import Licence No. (수동입력)" },
-      "text_33krrl": { "source": null, "note": "p1 Veterinary Certificate No. (수동입력)" },
-
-      "text_1anp":   { "source": "species", "transform": "en", "note": "p1 Species (cat/dog)" },
-      "text_4jytd":  { "source": "breed_en", "note": "p1 Breed" },
-      "text_5xryf":  { "source": "pet_name_en", "note": "p1 Name of animal" },
-      "checkbox_7cd":    { "source": "sex", "transform": "checkbox:eq:male",          "note": "p1 Sex: Male" },
-      "checkbox_9oehp":  { "source": "sex", "transform": "checkbox:eq:neutered_male",  "note": "p1 Sex: Neutered Male" },
-      "checkbox_10fotf": { "source": "sex", "transform": "checkbox:eq:female",         "note": "p1 Sex: Female" },
-      "checkbox_30xvic": { "source": "sex", "transform": "checkbox:eq:spayed_female",  "note": "p1 Sex: Neutered female" },
-      "text_6fscw":  { "source": "birth_date", "note": "p1 Age or Date of Birth" },
-      "text_12dvft": { "source": "color_en", "note": "p1 Colour" },
-      "text_13eqaz": { "source": "microchip", "note": "p1 Microchip Number" },
-      "text_14xwko": { "source": null, "note": "p1 Microchip scan date (수동입력)" },
-
-      "text_31wwtj": { "source": null, "default": "JINWON LEE", "note": "p1 Section III — Vet name" },
-      "text_34imom": { "source": null, "default": "Republic of Korea", "note": "p1 Section III — Country/region of export" },
-
-      "text_15lfrl": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p1 Canine distemper virus date (종합백신 최신)" },
-      "text_16lhri": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p1 Canine adenovirus type 1 date (종합백신 최신)" },
-      "text_17bobq": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p1 Canine parvovirus type 2 date (종합백신 최신)" },
-
-      "text_18felb": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p2 Feline Calicivirus date (종합백신 최신)" },
-      "text_19gyey": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p2 Feline Herpesvirus-1 date (종합백신 최신)" },
-      "text_20ixun": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p2 Feline Panleukopenia virus date (종합백신 최신)" },
-
-      "text_21xyyd": { "source": "rabies_dates", "transform": "vaccine_desc:rabies:date[0]", "note": "p2 Date of rabies vaccination (최신)" },
-      "text_22poce": { "source": "rabies_titer_records", "transform": "array[0].date",  "note": "p2 Date of blood sampling (RNATT)" },
-      "text_23kmjz": { "source": "rabies_titer_records", "transform": "array[0].value", "note": "p2 Rabies neutralising antibody titre (IU/ml)" },
-
-      "text_36ofwd": { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:date[0]",       "note": "p2 External parasite treatment date (최근)" },
-      "text_35dn":   { "source": "external_parasite_dates", "transform": "parasite_info:external:ingredient[0]",    "note": "p2 External parasite Name of product" },
-      "text_27zvdw": { "source": "external_parasite_dates", "transform": "parasite_info:external:ingredient[0]",    "note": "p2 External parasite Active ingredient" },
-
-      "text_42siqg": { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:date[0]",       "note": "p2 Internal parasite treatment date (최근)" },
-      "text_41itym": { "source": "internal_parasite_dates", "transform": "parasite_info:internal:ingredient[0]",    "note": "p2 Internal parasite Name of product" },
-      "text_39aeyw": { "source": "internal_parasite_dates", "transform": "parasite_info:internal:ingredient[0]",    "note": "p2 Internal parasite Active ingredient" },
-
-      "text_44viig": { "source": "vet_visit_date", "note": "p3 Endorsement signature date" },
-      "text_43sfjj": { "source": null, "default": "JINWON LEE", "note": "p3 Vet name" },
-      "text_45snmt": { "source": null, "default": "LAUSANNE VETERINARY MEDICAL CENTER", "note": "p3 Practice name" },
-      "text_49iqnn": { "source": null, "default": "3, GWANAK-RO 29-GIL, GWANAK-GU, SEOUL, REPUBLIC OF KOREA", "note": "p3 Practice address" },
-      "text_50saaa": { "source": null, "default": "+82-2-872-7588 / petmove@naver.com", "note": "p3 Phone/email" }
+      "text_32dbb": {
+        "source": null,
+        "note": "p1 NParks/AVS Import Licence No. (수동입력)"
+      },
+      "text_33krrl": {
+        "source": null,
+        "note": "p1 Veterinary Certificate No. (수동입력)"
+      },
+      "text_1anp": {
+        "source": "species",
+        "transform": "en",
+        "note": "p1 Species (cat/dog)"
+      },
+      "text_4jytd": {
+        "source": "breed_en",
+        "note": "p1 Breed"
+      },
+      "text_5xryf": {
+        "source": "pet_name_en",
+        "note": "p1 Name of animal"
+      },
+      "checkbox_7cd": {
+        "source": "sex",
+        "transform": "checkbox:eq:male",
+        "note": "p1 Sex: Male"
+      },
+      "checkbox_9oehp": {
+        "source": "sex",
+        "transform": "checkbox:eq:neutered_male",
+        "note": "p1 Sex: Neutered Male"
+      },
+      "checkbox_10fotf": {
+        "source": "sex",
+        "transform": "checkbox:eq:female",
+        "note": "p1 Sex: Female"
+      },
+      "checkbox_30xvic": {
+        "source": "sex",
+        "transform": "checkbox:eq:spayed_female",
+        "note": "p1 Sex: Neutered female"
+      },
+      "text_6fscw": {
+        "source": "birth_date",
+        "note": "p1 Age or Date of Birth"
+      },
+      "text_12dvft": {
+        "source": "color_en",
+        "note": "p1 Colour"
+      },
+      "text_13eqaz": {
+        "source": "microchip",
+        "note": "p1 Microchip Number"
+      },
+      "text_14xwko": {
+        "source": null,
+        "note": "p1 Microchip scan date (수동입력)"
+      },
+      "text_31wwtj": {
+        "source": null,
+        "default": "JINWON LEE",
+        "note": "p1 Section III — Vet name"
+      },
+      "text_34imom": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p1 Section III — Country/region of export"
+      },
+      "text_15lfrl": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[0]",
+        "note": "p1 Canine distemper virus date (종합백신 최신)"
+      },
+      "text_16lhri": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[0]",
+        "note": "p1 Canine adenovirus type 1 date (종합백신 최신)"
+      },
+      "text_17bobq": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[0]",
+        "note": "p1 Canine parvovirus type 2 date (종합백신 최신)"
+      },
+      "text_18felb": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[0]",
+        "note": "p2 Feline Calicivirus date (종합백신 최신)"
+      },
+      "text_19gyey": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[0]",
+        "note": "p2 Feline Herpesvirus-1 date (종합백신 최신)"
+      },
+      "text_20ixun": {
+        "source": "general_vaccine_dates",
+        "transform": "vaccine_desc:comprehensive:date[0]",
+        "note": "p2 Feline Panleukopenia virus date (종합백신 최신)"
+      },
+      "text_21xyyd": {
+        "source": "rabies_dates",
+        "transform": "vaccine_desc:rabies:date[0]",
+        "note": "p2 Date of rabies vaccination (최신)"
+      },
+      "text_22poce": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].date",
+        "note": "p2 Date of blood sampling (RNATT)"
+      },
+      "text_23kmjz": {
+        "source": "rabies_titer_records",
+        "transform": "array[0].value",
+        "note": "p2 Rabies neutralising antibody titre (IU/ml)"
+      },
+      "text_36ofwd": {
+        "source": "external_parasite_dates",
+        "transform": "vaccine_desc:ext_parasite:date[0]",
+        "note": "p2 External parasite treatment date (최근)"
+      },
+      "text_35dn": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[0]",
+        "note": "p2 External parasite Name of product"
+      },
+      "text_27zvdw": {
+        "source": "external_parasite_dates",
+        "transform": "parasite_info:external:ingredient[0]",
+        "note": "p2 External parasite Active ingredient"
+      },
+      "text_42siqg": {
+        "source": "internal_parasite_dates",
+        "transform": "vaccine_desc:int_parasite:date[0]",
+        "note": "p2 Internal parasite treatment date (최근)"
+      },
+      "text_41itym": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:ingredient[0]",
+        "note": "p2 Internal parasite Name of product"
+      },
+      "text_39aeyw": {
+        "source": "internal_parasite_dates",
+        "transform": "parasite_info:internal:ingredient[0]",
+        "note": "p2 Internal parasite Active ingredient"
+      },
+      "text_44viig": {
+        "source": "vet_visit_date",
+        "note": "p3 Endorsement signature date"
+      },
+      "text_43sfjj": {
+        "source": null,
+        "default": "JINWON LEE",
+        "note": "p3 Vet name"
+      },
+      "text_45snmt": {
+        "source": null,
+        "default": "LAUSANNE VETERINARY MEDICAL CENTER",
+        "note": "p3 Practice name"
+      },
+      "text_49iqnn": {
+        "source": null,
+        "default": "3, GWANAK-RO 29-GIL, GWANAK-GU, SEOUL, REPUBLIC OF KOREA",
+        "note": "p3 Practice address"
+      },
+      "text_50saaa": {
+        "source": null,
+        "default": "+82-2-872-7588 / petmove@naver.com",
+        "note": "p3 Phone/email"
+      }
     }
   }
 }

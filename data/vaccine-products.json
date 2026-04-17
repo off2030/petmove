@@ -12,7 +12,9 @@
     "parasite_external_dog": "외부 구충 강아지 (Frontline Plus) - expiry 기준",
     "parasite_external_cat": "외부 구충 고양이 (Frontline Spray) - expiry 기준",
     "parasite_internal_dog": "내부 구충 강아지 (Drontal Plus) - expiry 기준",
-    "parasite_internal_cat": "내부 구충 고양이 - expiry 기준"
+    "parasite_internal_cat": "내부 구충 고양이 - expiry 기준",
+    "heartworm_dog": "심장사상충 강아지 (Heartgard Plus) - 체중 범위로 조회",
+    "heartworm_cat": "심장사상충 고양이 - 체중 범위로 조회"
   },
 
   "rabies": [
@@ -67,5 +69,13 @@
     { "id": "drontal_plus_dog", "product": "Drontal Plus", "manufacturer": "Elanco", "batch": "KVO53HV", "expiry": "2028-01-03" }
   ],
 
-  "parasite_internal_cat": []
+  "parasite_internal_cat": [],
+
+  "heartworm_dog": [
+    { "product": "Heartgard Plus (ivermectin 68mcg / pyrantel 57mg)",   "manufacturer": "Boehringer Ingelheim", "weightMin": 0,  "weightMax": 11, "size": "~11kg",    "batch": "F94293", "expiry": "2027-01" },
+    { "product": "Heartgard Plus (ivermectin 136mcg / pyrantel 114mg)", "manufacturer": "Boehringer Ingelheim", "weightMin": 11, "weightMax": 22, "size": "11-22kg",  "batch": "G33907", "expiry": "2027-05" },
+    { "product": "Heartgard Plus (ivermectin 272mcg / pyrantel 227mg)", "manufacturer": "Boehringer Ingelheim", "weightMin": 22, "weightMax": 45, "size": "22-45kg",  "batch": "G06564", "expiry": "2027-03" }
+  ],
+
+  "heartworm_cat": []
 }

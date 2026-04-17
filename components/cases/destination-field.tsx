@@ -27,9 +27,10 @@ function joinDests(arr: string[]): string | null {
 }
 
 export function DestinationField({ caseId, destination }: { caseId: string; destination: string | null }) {
-  const { updateLocalCaseField } = useCases()
+  const { updateLocalCaseField, activeDestination, setActiveDestination } = useCases()
 
   const selected = parseDests(destination)
+  const multi = selected.length > 1
 
   // Display: show English names
   const display = selected.length > 0
@@ -117,11 +118,24 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
             {selected.map(ko => {
               const matched = ALL_DESTS.find(d => d.ko === ko)
               const label = matched ? matched.en : ko
+              const isActive = multi && activeDestination === ko
               return (
-                <span key={ko} className="group/tag inline-flex items-center gap-1 rounded px-2 py-0.5 text-sm bg-accent/40">
+                <span
+                  key={ko}
+                  className={cn(
+                    'group/tag inline-flex items-center gap-1 rounded px-2 py-0.5 text-sm bg-accent/40',
+                    multi && 'cursor-pointer hover:bg-accent/70 transition-colors',
+                    isActive && 'bg-accent ring-1 ring-ring/60',
+                  )}
+                  onClick={() => { if (multi) setActiveDestination(ko) }}
+                  title={multi ? (isActive ? `활성 목적지: ${label}` : `${label} 기준으로 보기`) : undefined}
+                >
                   {label}
-                  <button type="button" onClick={() => removeDest(ko)}
-                    className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors opacity-0 group-hover/tag:opacity-100">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); removeDest(ko) }}
+                    className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors opacity-0 group-hover/tag:opacity-100"
+                  >
                     ✕
                   </button>
                 </span>

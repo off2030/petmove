@@ -4,10 +4,12 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react'
 import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
+import { parseDestinations } from '@/lib/destination-config'
 
 /**
  * Global client-side state for the cases app:
@@ -29,6 +31,12 @@ interface CasesContextValue {
     key: string,
     value: unknown,
   ) => void
+  /**
+   * 선택된 케이스의 목적지 여럿 중 "현재 활성" 목적지. 단일 목적지면 그 값.
+   * 상세페이지 필드 필터·증명서 버튼·검증 기준이 됨. DB 저장 안 함.
+   */
+  activeDestination: string | null
+  setActiveDestination: (dest: string | null) => void
 }
 
 const CasesContext = createContext<CasesContextValue | null>(null)
@@ -44,10 +52,23 @@ export function CasesProvider({
 }) {
   const [cases, setCases] = useState<CaseRow[]>(initialCases)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [activeDestination, setActiveDestination] = useState<string | null>(null)
 
   const selectCase = useCallback((id: string | null) => {
     setSelectedId(id)
   }, [])
+
+  // Reset active destination to the first token of the newly selected case,
+  // or when the selected case's destination column changes underneath us.
+  const selectedCase = cases.find(c => c.id === selectedId) ?? null
+  const destTokens = parseDestinations(selectedCase?.destination ?? null)
+  const firstDest = destTokens[0] ?? null
+  useEffect(() => {
+    if (!selectedId) { setActiveDestination(null); return }
+    setActiveDestination(prev => (prev && destTokens.includes(prev) ? prev : firstDest))
+    // re-run only when the selected case id or the destination string changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, selectedCase?.destination])
 
   const addLocalCase = useCallback((newCase: CaseRow) => {
     setCases((prev) => [newCase, ...prev])
@@ -101,8 +122,10 @@ export function CasesProvider({
       addLocalCase,
       removeLocalCase,
       updateLocalCaseField,
+      activeDestination,
+      setActiveDestination,
     }),
-    [cases, fieldDefs, selectedId, selectCase, addLocalCase, removeLocalCase, updateLocalCaseField],
+    [cases, fieldDefs, selectedId, selectCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination],
   )
 
   return <CasesContext.Provider value={value}>{children}</CasesContext.Provider>

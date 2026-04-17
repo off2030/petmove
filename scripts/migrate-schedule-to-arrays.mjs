@@ -36,6 +36,8 @@ const OLD_KEYS = [
   'external_parasite_1', 'external_parasite_2', 'external_parasite_3',
   'internal_parasite_1', 'internal_parasite_2',
   'rabies_titer_test_date', 'rabies_titer', 'rabies_titer_lab',
+  'general_vaccine',
+  'infectious_disease_test',
 ]
 
 let migrated = 0, skipped = 0, errors = 0
@@ -46,7 +48,7 @@ for (const c of allCases) {
   // Check if any old keys exist
   const hasOld = OLD_KEYS.some(k => d[k] != null && d[k] !== '')
   // Check if already migrated
-  const hasNew = d.rabies_dates || d.civ_dates || d.external_parasite_dates || d.internal_parasite_dates || d.rabies_titer_records
+  const hasNew = d.rabies_dates || d.civ_dates || d.external_parasite_dates || d.internal_parasite_dates || d.rabies_titer_records || d.general_vaccine_dates || d.infectious_disease_records
   if (!hasOld && !hasNew) { skipped++; continue }
   if (hasNew && !hasOld) { skipped++; continue } // already done
 
@@ -93,6 +95,20 @@ for (const c of allCases) {
   }
   delete d.rabies_titer_test_date; delete d.rabies_titer; delete d.rabies_titer_lab
 
+  // 6. General vaccine (scalar → array)
+  if (!d.general_vaccine_dates && d.general_vaccine) {
+    d.general_vaccine_dates = [{ date: d.general_vaccine }]
+    changed = true
+  }
+  delete d.general_vaccine
+
+  // 7. Infectious disease test (scalar → records). Default lab: KSVDL (matches UI fallback).
+  if (!d.infectious_disease_records && d.infectious_disease_test) {
+    d.infectious_disease_records = [{ date: d.infectious_disease_test, lab: 'ksvdl' }]
+    changed = true
+  }
+  delete d.infectious_disease_test
+
   if (!changed && !hasOld) { skipped++; continue }
 
   if (DRY_RUN) {
@@ -104,6 +120,8 @@ for (const c of allCases) {
       if (d.external_parasite_dates) summary.push(`외부:${d.external_parasite_dates.length}`)
       if (d.internal_parasite_dates) summary.push(`내부:${d.internal_parasite_dates.length}`)
       if (d.rabies_titer_records) summary.push(`항체:${d.rabies_titer_records.length}`)
+      if (d.general_vaccine_dates) summary.push(`종합:${d.general_vaccine_dates.length}`)
+      if (d.infectious_disease_records) summary.push(`전염병:${d.infectious_disease_records.length}`)
       console.log(`  ${c.pet_name} (${c.customer_name}): ${summary.join(', ')}`)
     }
     continue

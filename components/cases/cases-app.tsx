@@ -10,15 +10,15 @@ import { createCase } from '@/lib/actions/create-case'
 import { createCaseWithData } from '@/lib/actions/create-case-with-data'
 import { deleteCase } from '@/lib/actions/delete-case'
 import { duplicateCase } from '@/lib/actions/duplicate-case'
-import { undoLastChange } from '@/lib/actions/cases'
+import { undoLastChange, updateCaseField } from '@/lib/actions/cases'
 import { extractAll } from '@/lib/actions/extract-all'
 import { extractResultToSeed } from '@/lib/extract-to-seed'
 import { filesToBase64 } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { lookupCaseByMicrochip } from '@/lib/actions/lookup-case-by-chip'
-import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAUCat, generateNZ, previewSiblings, generateAnnexIIIMulti, generateUKMulti } from '@/lib/actions/generate-pdf'
+import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateOVD, generateSGP, previewSiblings, generateAnnexIIIMulti, generateUKMulti } from '@/lib/actions/generate-pdf'
 import { MultiFormDialog } from './multi-form-dialog'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getCertButtons } from '@/lib/destination-config'
 import type { CertButton } from '@/lib/destination-config'
 import type { CaseRow } from '@/lib/supabase/types'
@@ -31,15 +31,24 @@ function downloadBase64Pdf(base64: string, filename: string) {
 }
 
 /** Cert key → server action mapping for single-type buttons */
-const CERT_ACTIONS: Record<string, (caseId: string, opts?: { includeSignature?: boolean }) => Promise<{ ok: true; pdf: string; filename: string } | { ok: false; error: string }>> = {
+type CertAction = (
+  caseId: string,
+  opts?: { includeSignature?: boolean; destination?: string | null },
+) => Promise<{ ok: true; pdf: string; filename: string } | { ok: false; error: string }>
+
+const CERT_ACTIONS: Record<string, CertAction> = {
   form25: generateForm25,
   form25AuNz: generateForm25AuNz,
-  formRE: generateFormRE as unknown as typeof generateForm25,
-  formAC: generateFormAC as unknown as typeof generateForm25,
-  idDeclaration: generateIdentificationDeclaration as unknown as typeof generateForm25,
-  au: generateAU as unknown as typeof generateForm25,
-  auCat: generateAUCat as unknown as typeof generateForm25,
-  nz: generateNZ as unknown as typeof generateForm25,
+  formRE: generateFormRE,
+  formAC: generateFormAC,
+  idDeclaration: generateIdentificationDeclaration,
+  au: generateAU,
+  au2: generateAU2,
+  auCat: generateAUCat,
+  auCat2: generateAUCat2,
+  nz: generateNZ,
+  ovd: generateOVD,
+  sgp: generateSGP,
 }
 
 /** Cert key → multi-form dialog formKey mapping */
@@ -48,12 +57,75 @@ const CERT_MULTI_KEYS: Record<string, string> = {
   uk: 'UK',
 }
 
+/**
+ * 신고 탭 포함 토글. 이미 자동 포함(일본/태국/필리핀/하와이/스위스 + 출국일)
+ * 이면 버튼은 잠겨 있음 표시만 한다. 아닌 케이스에서는 눌러 `data.import_report_manual`
+ * 을 토글해 신고 탭에 수동으로 나타나게 한다.
+ */
+const AUTO_IMPORT_REPORT_COUNTRIES = new Set(['일본', '하와이', '스위스', '태국', '필리핀'])
+
+function isAutoImportReportCase(row: CaseRow): boolean {
+  if (!row.departure_date || !row.destination) return false
+  const dests = row.destination.split(',').map(s => s.trim()).filter(Boolean)
+  return dests.some(d => AUTO_IMPORT_REPORT_COUNTRIES.has(d))
+}
+
+function ImportReportToggle({
+  caseRow,
+  onUpdate,
+}: {
+  caseRow: CaseRow
+  onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
+}) {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const manual = data.import_report_manual === true
+  const auto = isAutoImportReportCase(caseRow)
+  const included = auto || manual
+
+  if (auto) {
+    return (
+      <span
+        className="text-muted-foreground/40 select-none cursor-default"
+        title="목적지+출국일로 자동 포함됨"
+      >
+        신고 자동
+      </span>
+    )
+  }
+
+  const label = included ? '신고 제외' : '신고 추가'
+  const nextVal = !manual
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        onUpdate(caseRow.id, 'data', 'import_report_manual', nextVal || null)
+        await updateCaseField(caseRow.id, 'data', 'import_report_manual', nextVal || null)
+      }}
+      className={included
+        ? 'text-blue-500/70 hover:text-blue-600 transition-colors'
+        : 'text-muted-foreground/50 hover:text-foreground transition-colors'}
+      title={included ? '신고 탭에서 제거' : '신고 탭에 추가'}
+    >
+      {label}
+    </button>
+  )
+}
+
 function Inner() {
-  const { cases, selectedId, selectCase, addLocalCase, removeLocalCase, updateLocalCaseField } = useCases()
+  const { cases, selectedId, selectCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination } = useCases()
   const selectedCase = useMemo(
     () => cases.find((c) => c.id === selectedId) ?? null,
     [cases, selectedId],
   )
+  const { prevCase, nextCase } = useMemo(() => {
+    if (!selectedCase) return { prevCase: null as CaseRow | null, nextCase: null as CaseRow | null }
+    const idx = cases.findIndex((c) => c.id === selectedCase.id)
+    return {
+      prevCase: idx > 0 ? cases[idx - 1] : null,
+      nextCase: idx >= 0 && idx < cases.length - 1 ? cases[idx + 1] : null,
+    }
+  }, [cases, selectedCase])
   const detailScrollRef = useRef<HTMLDivElement>(null)
   const [multiForm, setMultiForm] = useState<{ caseId: string; formKey: 'AnnexIII' | 'UK' } | null>(null)
   const [includeSignature, setIncludeSignature] = useState(false)
@@ -135,6 +207,7 @@ function Inner() {
   }, [addLocalCase, selectCase, uploadFilesToNotes])
 
   // Ctrl+Z: undo last change on selected case
+  // Ctrl+←/→: 이전/다음 케이스로 이동 (인풋 포커스 중에는 커서 이동과 충돌하므로 무시)
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && selectedId) {
@@ -144,11 +217,32 @@ function Inner() {
             updateLocalCaseField(selectedId, result.storage, result.key, result.restoredValue)
           }
         })
+        return
+      }
+      if (e.ctrlKey || e.metaKey) {
+        const target = e.target as HTMLElement | null
+        const inTextField =
+          !!target && (
+            target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.isContentEditable
+          )
+        if (inTextField) return
+        if (e.key === 'ArrowLeft' && prevCase) {
+          e.preventDefault()
+          selectCase(prevCase.id)
+          return
+        }
+        if (e.key === 'ArrowRight' && nextCase) {
+          e.preventDefault()
+          selectCase(nextCase.id)
+          return
+        }
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [selectedId, updateLocalCaseField])
+  }, [selectedId, updateLocalCaseField, prevCase, nextCase, selectCase])
 
   const handleDuplicate = useCallback(async (id: string) => {
     const result = await duplicateCase(id)
@@ -214,7 +308,32 @@ function Inner() {
         {/* Panel 2: Detail (full width = 50% of 200%) */}
         <div className="w-1/2 h-full">
           <div className="h-full overflow-hidden pt-32 pb-24 px-20 2xl:pt-36 2xl:pb-28 2xl:px-24 3xl:pt-44 3xl:pb-36 3xl:px-32 4xl:pt-52 4xl:pb-44 4xl:px-40 6xl:pt-64 6xl:pb-52 6xl:px-56">
-            <div className="h-full mx-auto max-w-3xl 4xl:max-w-4xl 6xl:max-w-5xl flex flex-col gap-4">
+            <div className="relative h-full mx-auto max-w-3xl 4xl:max-w-4xl 6xl:max-w-5xl">
+              {selectedCase && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => prevCase && selectCase(prevCase.id)}
+                    disabled={!prevCase}
+                    aria-label="이전 케이스 (Ctrl+←)"
+                    title="이전 케이스 (Ctrl+←)"
+                    className="absolute -left-12 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+                  >
+                    <ChevronLeft size={24} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => nextCase && selectCase(nextCase.id)}
+                    disabled={!nextCase}
+                    aria-label="다음 케이스 (Ctrl+→)"
+                    title="다음 케이스 (Ctrl+→)"
+                    className="absolute -right-12 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+                  >
+                    <ChevronRight size={24} />
+                  </button>
+                </>
+              )}
+              <div className="h-full flex flex-col gap-4">
               {/* Back button + menu bar */}
               <div className="h-9 shrink-0 flex items-center">
                 <button
@@ -256,7 +375,7 @@ function Inner() {
                         />
                         서명
                       </label>
-                      {getCertButtons(selectedCase.destination, (selectedCase.data as Record<string, unknown>)?.species as string | undefined).map((btn) =>
+                      {getCertButtons(activeDestination ?? selectedCase.destination, (selectedCase.data as Record<string, unknown>)?.species as string | undefined).map((btn) =>
                         btn.type === 'multi' ? (
                           <button
                             key={btn.key}
@@ -273,7 +392,10 @@ function Inner() {
                             onClick={async () => {
                               const action = CERT_ACTIONS[btn.key]
                               if (!action) return
-                              const r = await action(selectedCase.id, { includeSignature })
+                              const r = await action(selectedCase.id, {
+                                includeSignature,
+                                destination: activeDestination ?? selectedCase.destination,
+                              })
                               if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
                               else alert(r.error)
                             }}
@@ -283,6 +405,7 @@ function Inner() {
                           </button>
                         ),
                       )}
+                      <ImportReportToggle caseRow={selectedCase} onUpdate={updateLocalCaseField} />
                       <CaseHistory caseId={selectedCase.id} />
                       <button
                         type="button"
@@ -302,6 +425,7 @@ function Inner() {
                   </>
                 ) : '\u00A0'}
               </div>
+            </div>
             </div>
           </div>
         </div>

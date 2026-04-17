@@ -142,9 +142,9 @@ Return ONE JSON object following the provided schema. For each field set the bes
 - microchip_implant_date: YYYY-MM-DD when the chip was implanted (거치일/implantation date)
 
 === CUSTOMER ===
-- customer_name: Korean/original-script full name
-- customer_name_en: full English name
-- customer_first_name_en: English given name only
+- customer_name: Korean/original-script full name, verbatim as written
+- customer_name_en: full English name, verbatim as written — preserve EVERY part (given + middle + family). Do not drop middle names or romanize differently. If the document shows "Hoa Mai Nguyen", return exactly "Hoa Mai Nguyen", not "Hoa Nguyen".
+- customer_first_name_en: English given name(s) only — everything before the family name. For "Hoa Mai Nguyen" with family name "Nguyen", this is "Hoa Mai".
 - customer_last_name_en: English family name only
 - phone: phone number as written (010-XXXX-XXXX or +82...)
 - address_kr: Korean domestic address

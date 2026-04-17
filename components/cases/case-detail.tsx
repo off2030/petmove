@@ -41,17 +41,22 @@ import { useCases } from './cases-context'
  * then a footer with timestamps.
  */
 export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
-  const { fieldDefs, updateLocalCaseField } = useCases()
+  const { fieldDefs, updateLocalCaseField, activeDestination } = useCases()
   const allSpecs = buildFieldSpecs(fieldDefs)
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const extraFields = (data.extra_visible_fields as string[]) ?? []
 
-  const allowedFields = getAllowedFields(caseRow.destination, extraFields)
-  const vaccineList = getEffectiveVaccineList(caseRow.destination, extraFields)
-  const destOverride = getDestinationOverride(caseRow.destination)
+  // 다중 목적지 케이스는 활성 목적지 하나만 기준으로 필드·백신을 결정한다.
+  // 활성값이 아직 비어있으면(초기 렌더) caseRow.destination 전체를 그대로 넘겨
+  // 적어도 첫 매칭 오버라이드라도 적용되게 한다.
+  const viewDestination = activeDestination ?? caseRow.destination
+
+  const allowedFields = getAllowedFields(viewDestination, extraFields)
+  const vaccineList = getEffectiveVaccineList(viewDestination, extraFields)
+  const destOverride = getDestinationOverride(viewDestination)
 
   // Toggleable fields not in the base destination config (can be toggled on/off)
-  const baseVaccines = getVaccineList(caseRow.destination) // destination default only
+  const baseVaccines = getVaccineList(viewDestination) // destination default only
   const toggleableForDest = TOGGLEABLE_FIELDS.filter((t) => {
     if (t.key.startsWith('vaccine:')) {
       const v = t.key.slice('vaccine:'.length)
@@ -137,7 +142,7 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
               // Microchip: implant date | check date on same row
               if (spec.key === 'microchip_implant_date') {
                 return (
-                  <MicrochipDatesRow key="microchip-dates" caseId={caseRow.id} caseRow={caseRow} destination={caseRow.destination} />
+                  <MicrochipDatesRow key="microchip-dates" caseId={caseRow.id} caseRow={caseRow} />
                 )
               }
 
@@ -147,11 +152,11 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
                 return (
                   <div key="general_vaccine+schedule">
                     {vaccineList.includes('rabies') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="광견병" dataKey="rabies_dates" />}
-                    {vaccineList.includes('rabies_titer') && <RabiesTiterField caseId={caseRow.id} caseRow={caseRow} destination={caseRow.destination} />}
+                    {vaccineList.includes('rabies_titer') && <RabiesTiterField caseId={caseRow.id} caseRow={caseRow} destination={viewDestination} />}
                     {vaccineList.includes('general') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="종합백신" dataKey="general_vaccine_dates" legacyKey="general_vaccine" />}
-                    {vaccineList.includes('civ') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="CIV" dataKey="civ_dates" />}
-                    {vaccineList.includes('kennel') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="켄넬코프" dataKey="kennel_cough_dates" />}
-                    {vaccineList.includes('infectious_disease') && <InfectiousDiseaseField caseId={caseRow.id} caseRow={caseRow} destination={caseRow.destination} />}
+                    {vaccineList.includes('civ') && data.species !== 'cat' && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="CIV" dataKey="civ_dates" />}
+                    {vaccineList.includes('kennel') && data.species !== 'cat' && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="켄넬코프" dataKey="kennel_cough_dates" />}
+                    {vaccineList.includes('infectious_disease') && <InfectiousDiseaseField caseId={caseRow.id} caseRow={caseRow} destination={viewDestination} />}
                     {vaccineList.includes('external_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="외부구충" dataKey="external_parasite_dates" hideValidUntil siblingKey="internal_parasite_dates" />}
                     {vaccineList.includes('internal_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="내부구충" dataKey="internal_parasite_dates" hideValidUntil siblingKey="external_parasite_dates" />}
                     {vaccineList.includes('heartworm') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="심장사상충" dataKey="heartworm_dates" hideValidUntil />}
@@ -444,25 +449,23 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
 }
 
 /**
- * Microchip dates: 삽입일 + 확인일 (호주일 때만 확인일 표시)
+ * Microchip implant date row.
  */
-function MicrochipDatesRow({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
-  const isAustralia = destination?.includes('호주') || destination?.toLowerCase().includes('australia')
+function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
   const { updateLocalCaseField } = useCases()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const implantDate = (data.microchip_implant_date as string) || ''
-  const checkDate = (data.microchip_check_date as string) || ''
 
-  const [editingField, setEditingField] = useState<'implant' | 'check' | null>(null)
+  const [editing, setEditing] = useState(false)
 
   useEffect(() => {
-    setEditingField(null)
+    setEditing(false)
   }, [caseId])
 
-  async function saveDate(key: string, value: string | null) {
-    const r = await updateCaseField(caseId, 'data', key, value)
-    if (r.ok) updateLocalCaseField(caseId, 'data', key, value)
-    setEditingField(null)
+  async function saveDate(value: string | null) {
+    const r = await updateCaseField(caseId, 'data', 'microchip_implant_date', value)
+    if (r.ok) updateLocalCaseField(caseId, 'data', 'microchip_implant_date', value)
+    setEditing(false)
   }
 
   return (
@@ -471,12 +474,11 @@ function MicrochipDatesRow({ caseId, caseRow, destination }: { caseId: string; c
         <span className="text-sm text-muted-foreground">마이크로칩</span>
       </div>
       <div className="group/item flex items-baseline gap-[10px] min-w-0 flex-wrap">
-        {/* 삽입일 */}
-        {editingField === 'implant' ? (
-          <MicrochipDateInput initial={implantDate} onSave={(v) => saveDate('microchip_implant_date', v || null)} onCancel={() => setEditingField(null)} />
+        {editing ? (
+          <MicrochipDateInput initial={implantDate} onSave={(v) => saveDate(v || null)} onCancel={() => setEditing(false)} />
         ) : (
           <span className="group/v relative inline-flex items-baseline">
-            <button type="button" onClick={() => setEditingField('implant')}
+            <button type="button" onClick={() => setEditing(true)}
               className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', !implantDate && 'text-muted-foreground/60 italic')}>
               {implantDate || '—'}
             </button>
@@ -484,30 +486,8 @@ function MicrochipDatesRow({ caseId, caseRow, destination }: { caseId: string; c
           </span>
         )}
 
-        {/* 확인일 — 호주일 때 항상 표시 */}
-        {isAustralia && (
-          <>
-            <span className="text-muted-foreground/30 select-none">|</span>
-            {editingField === 'check' ? (
-              <MicrochipDateInput initial={checkDate} onSave={(v) => saveDate('microchip_check_date', v || null)} onCancel={() => setEditingField(null)} />
-            ) : (
-              <span className="group/v relative inline-flex items-baseline">
-                <button type="button" onClick={() => setEditingField('check')}
-                  className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', !checkDate && 'text-muted-foreground/60 italic')}>
-                  {checkDate || '—'}
-                </button>
-                {checkDate && <CopyButton value={checkDate} className="ml-1 opacity-0 group-hover/v:opacity-100" />}
-              </span>
-            )}
-          </>
-        )}
-
-        {/* 호버 시 전체 행 삭제 (삽입일+확인일 모두 초기화) */}
-        {(implantDate || checkDate) && editingField === null && (
-          <button type="button" onClick={async () => {
-            await saveDate('microchip_implant_date', null)
-            if (checkDate) await saveDate('microchip_check_date', null)
-          }}
+        {implantDate && !editing && (
+          <button type="button" onClick={() => saveDate(null)}
             className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100">
             ✕
           </button>
