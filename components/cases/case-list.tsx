@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Search, Plus, X } from 'lucide-react'
+import { Search, Plus, X, Paperclip, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { CaseRow } from '@/lib/supabase/types'
 import { Input } from '@/components/ui/input'
 import { useCases } from './cases-context'
+import { isExtractableFile } from '@/lib/file-to-base64'
 
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
@@ -15,8 +16,19 @@ const LOAD_MORE_STEP = 100
  *   - live multi-term search (space-separated terms, AND semantics)
  *   - searches across every scalar field in the row (identity + data jsonb)
  *   - progressive rendering: 100 rows first, +100 on scroll
+ *   - drag/drop, Ctrl+V paste, or 📎 button: drop files → new case auto-filled from AI extraction
  */
-export function CaseList({ onAdd, onTrash }: { onAdd?: () => void; onTrash?: () => void }) {
+export function CaseList({
+  onAdd,
+  onTrash,
+  onAddFromFiles,
+  busy,
+}: {
+  onAdd?: () => void
+  onTrash?: () => void
+  onAddFromFiles?: (files: File[]) => void
+  busy?: boolean
+}) {
   const { cases, selectedId, selectCase } = useCases()
 
   const [query, setQuery] = useState('')
@@ -52,6 +64,46 @@ export function CaseList({ onAdd, onTrash }: { onAdd?: () => void; onTrash?: () 
 
   const visibleCases = filtered.slice(0, visible)
 
+  // ── File drop / paste / attach ─────────────────────────────────
+  const rootRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [dragOver, setDragOver] = useState(false)
+  const dragDepth = useRef(0) // 자식 위로 옮겨다닐 때 dragleave 깜빡임 방지
+
+  function handleFiles(list: FileList | File[] | null | undefined) {
+    if (!list || !onAddFromFiles) return
+    const files = Array.from(list).filter(isExtractableFile)
+    if (files.length > 0) onAddFromFiles(files)
+  }
+
+  // 전역 paste 리스너: 목록 화면이 실제로 보일 때만 동작.
+  // 상세페이지(selectedId !== null)에서 붙여넣으면 다른 컴포넌트(예: Japan AI 입력)가
+  // 같은 paste 이벤트를 먼저 처리하는데, 여기서도 반응하면 유령 새 케이스가 생김.
+  useEffect(() => {
+    if (!onAddFromFiles) return
+    if (selectedId !== null) return  // 상세 뷰일 땐 비활성
+    function onPaste(e: ClipboardEvent) {
+      // input/textarea에 포커스돼 있으면 그쪽에 맡김
+      const tag = (e.target as HTMLElement | null)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      if (!e.clipboardData) return
+      const files: File[] = []
+      for (const item of Array.from(e.clipboardData.items)) {
+        if (item.kind === 'file') {
+          const f = item.getAsFile()
+          if (f) files.push(f)
+        }
+      }
+      if (files.length > 0) {
+        e.preventDefault()
+        handleFiles(files)
+      }
+    }
+    window.addEventListener('paste', onPaste)
+    return () => window.removeEventListener('paste', onPaste)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onAddFromFiles, selectedId])
+
   // Infinite scroll via intersection observer
   const sentinelRef = useRef<HTMLLIElement>(null)
   useEffect(() => {
@@ -70,7 +122,50 @@ export function CaseList({ onAdd, onTrash }: { onAdd?: () => void; onTrash?: () 
   }, [visible, filtered.length])
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div
+      ref={rootRef}
+      className={cn(
+        'relative flex h-full flex-col gap-4 rounded-md transition-colors',
+        dragOver && 'ring-2 ring-primary/40 bg-primary/5',
+      )}
+      onDragEnter={(e) => {
+        if (!onAddFromFiles || selectedId !== null) return
+        if (!Array.from(e.dataTransfer.types).includes('Files')) return
+        dragDepth.current += 1
+        setDragOver(true)
+      }}
+      onDragOver={(e) => {
+        if (!onAddFromFiles || selectedId !== null) return
+        if (Array.from(e.dataTransfer.types).includes('Files')) e.preventDefault()
+      }}
+      onDragLeave={() => {
+        dragDepth.current = Math.max(0, dragDepth.current - 1)
+        if (dragDepth.current === 0) setDragOver(false)
+      }}
+      onDrop={(e) => {
+        if (!onAddFromFiles || selectedId !== null) return
+        e.preventDefault()
+        dragDepth.current = 0
+        setDragOver(false)
+        handleFiles(e.dataTransfer.files)
+      }}
+    >
+      {/* Drag overlay */}
+      {dragOver && onAddFromFiles && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-md bg-primary/10 backdrop-blur-[1px]">
+          <div className="text-sm text-primary font-medium">여기에 놓으면 새 케이스로 읽어옵니다</div>
+        </div>
+      )}
+      {/* Busy overlay */}
+      {busy && (
+        <div className="pointer-events-auto absolute inset-0 z-20 flex items-center justify-center rounded-md bg-background/70 backdrop-blur-sm">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            파일에서 정보 추출 중…
+          </div>
+        </div>
+      )}
+
       {/* Search bar + add button */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
@@ -121,6 +216,29 @@ export function CaseList({ onAdd, onTrash }: { onAdd?: () => void; onTrash?: () 
             </button>
           )}
         </div>
+        {onAddFromFiles && (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,application/pdf"
+              className="hidden"
+              onChange={(e) => {
+                handleFiles(e.target.files)
+                if (fileInputRef.current) fileInputRef.current.value = ''
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-md border border-border/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              title="파일로 새 케이스 추가 (드래그·드롭 / Ctrl+V 도 가능)"
+            >
+              <Paperclip className="h-4 w-4" />
+            </button>
+          </>
+        )}
         <button
           type="button"
           onClick={() => onAdd?.()}

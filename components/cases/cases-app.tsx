@@ -7,14 +7,21 @@ import { CaseList } from './case-list'
 import { CaseDetail, CaseDetailEmpty } from './case-detail'
 import { CaseHistory } from './case-history'
 import { createCase } from '@/lib/actions/create-case'
+import { createCaseWithData } from '@/lib/actions/create-case-with-data'
 import { deleteCase } from '@/lib/actions/delete-case'
 import { duplicateCase } from '@/lib/actions/duplicate-case'
 import { undoLastChange } from '@/lib/actions/cases'
+import { extractAll } from '@/lib/actions/extract-all'
+import { extractResultToSeed } from '@/lib/extract-to-seed'
+import { filesToBase64 } from '@/lib/file-to-base64'
+import { uploadFileToNotes } from '@/lib/notes-upload'
+import { lookupCaseByMicrochip } from '@/lib/actions/lookup-case-by-chip'
 import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAUCat, generateNZ, previewSiblings, generateAnnexIIIMulti, generateUKMulti } from '@/lib/actions/generate-pdf'
 import { MultiFormDialog } from './multi-form-dialog'
 import { ArrowLeft } from 'lucide-react'
 import { getCertButtons } from '@/lib/destination-config'
 import type { CertButton } from '@/lib/destination-config'
+import type { CaseRow } from '@/lib/supabase/types'
 
 function downloadBase64Pdf(base64: string, filename: string) {
   const link = document.createElement('a')
@@ -50,6 +57,7 @@ function Inner() {
   const detailScrollRef = useRef<HTMLDivElement>(null)
   const [multiForm, setMultiForm] = useState<{ caseId: string; formKey: 'AnnexIII' | 'UK' } | null>(null)
   const [includeSignature, setIncludeSignature] = useState(false)
+  const [addingFromFiles, setAddingFromFiles] = useState(false)
 
   // Reset detail scroll to top when selected case changes
   useEffect(() => {
@@ -62,6 +70,69 @@ function Inner() {
       addLocalCase(result.case)
     }
   }, [addLocalCase])
+
+  // 파일(이미지/PDF) 여러 개를 한 케이스로 묶어 처리:
+  // 1) 이미지화 → extractAll로 한 번에 정보 추출
+  // 2) 추출된 마이크로칩이 기존 케이스에 있으면 그 케이스를 선택해 파일만 첨부
+  //    (유령/중복 케이스 방지)
+  // 3) 없으면 새 케이스 생성 후 파일 첨부
+  const uploadFilesToNotes = useCallback(
+    async (caseRow: CaseRow, files: File[]) => {
+      let runningData = { ...((caseRow.data as Record<string, unknown>) ?? {}) }
+      for (const file of files) {
+        const snapshot = { ...caseRow, data: runningData } as CaseRow
+        const captured: Record<string, unknown> = runningData
+        await uploadFileToNotes(caseRow.id, snapshot, file, (cid, storage, key, val) => {
+          if (storage === 'data' && cid === caseRow.id) {
+            if (val === null || val === undefined || val === '') delete captured[key]
+            else captured[key] = val
+          }
+          updateLocalCaseField(cid, storage, key, val)
+        })
+        runningData = captured
+      }
+    },
+    [updateLocalCaseField],
+  )
+
+  const handleAddFromFiles = useCallback(async (files: File[]) => {
+    if (files.length === 0) return
+    setAddingFromFiles(true)
+    try {
+      // 1. 파일 → AI 입력용 이미지 배열
+      const images = await filesToBase64(files)
+
+      // 2. 추출 (실패해도 빈 케이스는 만든다 — 사용자가 수동 입력할 수 있도록)
+      const extract = images.length > 0 ? await extractAll({ images }) : { ok: false as const, error: 'no images' }
+      const seed = extract.ok ? extractResultToSeed(extract.data) : { column: {}, data: {} }
+
+      // 3. 마이크로칩으로 기존 케이스 찾기 — 있으면 그쪽에 파일만 추가
+      const chip = seed.column?.microchip as string | undefined
+      if (chip) {
+        const existing = await lookupCaseByMicrochip(chip)
+        if (existing.ok && existing.case) {
+          selectCase(existing.case.id)
+          await uploadFilesToNotes(existing.case, files)
+          alert(
+            `이미 등록된 마이크로칩입니다 — 기존 케이스(${existing.case.pet_name ?? existing.case.customer_name ?? '이름없음'})에 파일을 추가했습니다.`,
+          )
+          return
+        }
+      }
+
+      // 4. 새 케이스 생성
+      const created = await createCaseWithData(seed)
+      if (!created.ok) { alert(created.error); return }
+      addLocalCase(created.case)  // context가 자동 선택
+
+      // 5. 파일을 새 케이스의 notes에 업로드
+      await uploadFilesToNotes(created.case, files)
+
+      if (!extract.ok) console.warn('extract failed:', extract.error)
+    } finally {
+      setAddingFromFiles(false)
+    }
+  }, [addLocalCase, selectCase, uploadFilesToNotes])
 
   // Ctrl+Z: undo last change on selected case
   useEffect(() => {
@@ -127,7 +198,7 @@ function Inner() {
         <div className="w-1/2 h-full">
           <div className="h-full overflow-hidden pt-32 pb-24 px-14 2xl:pt-36 2xl:pb-28 2xl:px-16 3xl:pt-44 3xl:pb-36 3xl:px-20 4xl:pt-52 4xl:pb-44 4xl:px-24 6xl:pt-64 6xl:pb-52 6xl:px-28">
             <div className="h-full mx-auto max-w-3xl 4xl:max-w-4xl 6xl:max-w-5xl">
-              <CaseList onAdd={handleAdd} />
+              <CaseList onAdd={handleAdd} onAddFromFiles={handleAddFromFiles} busy={addingFromFiles} />
             </div>
           </div>
         </div>

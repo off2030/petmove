@@ -3,22 +3,20 @@
  * pdfjs-dist의 canvas 렌더링을 사용.
  */
 
-import * as pdfjsLib from 'pdfjs-dist'
-
-// Worker 설정 (Next.js 환경에서 static import 불가하므로 CDN 사용하지 않고 inline)
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
-    import.meta.url,
-  ).toString()
-}
-
 const MAX_PX = 1200
 const JPEG_QUALITY = 0.85
 
 export async function pdfToImages(
   file: File,
 ): Promise<{ base64: string; mediaType: string }[]> {
+  // SSR에서 DOMMatrix 참조 폭발을 피하기 위해 동적 import
+  const pdfjsLib = await import('pdfjs-dist')
+  if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+      'pdfjs-dist/build/pdf.worker.min.mjs',
+      import.meta.url,
+    ).toString()
+  }
   const arrayBuffer = await file.arrayBuffer()
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
 

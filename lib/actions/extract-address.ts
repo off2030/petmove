@@ -1,6 +1,7 @@
 'use server'
 
 import OpenAI from 'openai'
+import { EXTRACTION_MODEL } from '@/lib/openai-config'
 
 type ExtractResult =
   | { ok: true; data: string }
@@ -52,7 +53,7 @@ export async function extractAddress(input: {
     }
 
     const response = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: EXTRACTION_MODEL,
       max_tokens: 200,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },

@@ -86,6 +86,16 @@ export function JapanExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
 
   function saveFlightField(direction: 'inbound' | 'outbound', key: keyof FlightEntry, value: string | null) {
     saveExtra({ ...extra, [direction]: { ...extra[direction], [key]: value || null } })
+    // 한국 → 일본(inbound)의 날짜는 출국일과 동일 — 케이스의 departure_date에도 동기화
+    if (direction === 'inbound' && key === 'date' && value) {
+      syncDepartureDate(value)
+    }
+  }
+
+  async function syncDepartureDate(date: string | null) {
+    if (!date) return
+    const r = await updateCaseField(caseId, 'column', 'departure_date', date)
+    if (r.ok) updateLocalCaseField(caseId, 'column', 'departure_date', date)
   }
 
   function saveEmail(value: string | null) {
@@ -117,11 +127,14 @@ export function JapanExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
         for (const [k, v] of Object.entries(result.data.outbound)) {
           if (v !== null) (merged.outbound as unknown as Record<string, string | null>)[k] = v
         }
-        // Merge address & certificate
+        // Merge address & certificate & email
         if (result.data.address_overseas) merged.address_overseas = result.data.address_overseas
         if (result.data.certificate_no) merged.certificate_no = result.data.certificate_no
+        if (result.data.email) merged.email = result.data.email
         const r = await updateCaseField(caseId, 'data', DATA_KEY, merged)
         if (r.ok) updateLocalCaseField(caseId, 'data', DATA_KEY, merged)
+        // inbound.date = 한국 출국일 → 케이스의 departure_date 컬럼에도 동기화
+        if (result.data.inbound.date) await syncDepartureDate(result.data.inbound.date)
         setExtractMsg('항공편 정보가 입력되었습니다')
       } else {
         setExtractMsg('추출 실패: ' + result.error)

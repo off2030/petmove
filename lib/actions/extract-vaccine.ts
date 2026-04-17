@@ -1,6 +1,7 @@
 'use server'
 
 import OpenAI from 'openai'
+import { EXTRACTION_MODEL } from '@/lib/openai-config'
 
 export interface VaccineInfo {
   date: string | null           // YYYY-MM-DD (접종일)
@@ -67,7 +68,7 @@ export async function extractVaccineInfo(input: {
     }
 
     const response = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: EXTRACTION_MODEL,
       max_tokens: 300,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },

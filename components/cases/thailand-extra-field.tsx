@@ -101,6 +101,11 @@ export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRo
         if (result.data.quarantine_location) merged.quarantine_location = result.data.quarantine_location
         const r = await updateCaseField(caseId, 'data', DATA_KEY, merged)
         if (r.ok) updateLocalCaseField(caseId, 'data', DATA_KEY, merged)
+        // inbound.date = 한국 출국일 → 케이스의 departure_date 컬럼에도 동기화
+        if (result.data.inbound.date) {
+          const rd = await updateCaseField(caseId, 'column', 'departure_date', result.data.inbound.date)
+          if (rd.ok) updateLocalCaseField(caseId, 'column', 'departure_date', result.data.inbound.date)
+        }
         setExtractMsg('정보가 입력되었습니다')
       } else {
         setExtractMsg('추출 실패: ' + result.error)

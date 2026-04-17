@@ -5,10 +5,10 @@
     "filename": "FormAC_{pet_name}.pdf",
     "dateFormat": "ymd_slash",
     "fields": {
-      "exporting_country":    { "source": null, "default": "Republic of Korea" },
       "consignor_name":       { "source": "customer_name_en" },
       "consignor_address":    { "source": "address_en" },
       "consignee_name":       { "source": "customer_name_en" },
+      "consignee_address":    { "source": "address_overseas" },
       "species":              { "source": "species", "transform": "en" },
       "breed":                { "source": "breed_en" },
       "pet_name":             { "source": "pet_name_en" },
