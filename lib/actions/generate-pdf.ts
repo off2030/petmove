@@ -17,7 +17,7 @@ export type GenerateMultiPdfResult =
 async function generate(
   formKey: string,
   caseId: string,
-  options?: { includeSignature?: boolean },
+  options?: { includeSignature?: boolean; destination?: string | null },
 ): Promise<GeneratePdfResult> {
   const supabase = await createClient()
   const { data: row, error } = await supabase
@@ -29,51 +29,61 @@ async function generate(
   const caseRow = row as CaseRow
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const extraFields = (data.extra_visible_fields as string[]) ?? []
-  const allowedVaccines = getEffectiveVaccineList(caseRow.destination, extraFields)
-  return fillPdf(formKey, caseRow, { ...options, allowedVaccines })
+  // 다중 목적지 케이스에서 UI 활성 목적지를 받아 그 나라 규칙만 적용.
+  // 지정이 없으면 컬럼 전체 문자열을 사용(단일 목적지 케이스는 동작 동일).
+  const destForRules = options?.destination ?? caseRow.destination
+  const allowedVaccines = getEffectiveVaccineList(destForRules, extraFields)
+  return fillPdf(formKey, caseRow, { includeSignature: options?.includeSignature, allowedVaccines })
 }
 
-export async function generateFormRE(caseId: string) {
-  return generate('FormRE', caseId)
+/** 모든 generate* 진입점의 공통 옵션. UI 활성 목적지를 destination 으로 전달. */
+export type GenerateOpts = { includeSignature?: boolean; destination?: string | null }
+
+export async function generateFormRE(caseId: string, opts?: GenerateOpts) {
+  return generate('FormRE', caseId, opts)
 }
 
-export async function generateFormAC(caseId: string) {
-  return generate('FormAC', caseId)
+export async function generateFormAC(caseId: string, opts?: GenerateOpts) {
+  return generate('FormAC', caseId, opts)
 }
 
-export async function generateIdentificationDeclaration(caseId: string) {
-  return generate('IdentificationDeclaration', caseId)
+export async function generateIdentificationDeclaration(caseId: string, opts?: GenerateOpts) {
+  return generate('IdentificationDeclaration', caseId, opts)
 }
 
-export async function generateForm25(caseId: string, opts?: { includeSignature?: boolean }) {
+export async function generateForm25(caseId: string, opts?: GenerateOpts) {
   return generate('Form25', caseId, opts)
 }
 
-export async function generateForm25AuNz(caseId: string, opts?: { includeSignature?: boolean }) {
+export async function generateForm25AuNz(caseId: string, opts?: GenerateOpts) {
   return generate('Form25AuNz', caseId, opts)
 }
 
-export async function generateAU(caseId: string) {
-  return generate('AU', caseId)
+export async function generateAU(caseId: string, opts?: GenerateOpts) {
+  return generate('AU', caseId, opts)
 }
 
-export async function generateAU2(caseId: string) {
-  return generate('AU_2', caseId)
+export async function generateAU2(caseId: string, opts?: GenerateOpts) {
+  return generate('AU_2', caseId, opts)
 }
 
-export async function generateAUCat(caseId: string) {
-  return generate('AU_Cat', caseId)
+export async function generateAUCat(caseId: string, opts?: GenerateOpts) {
+  return generate('AU_Cat', caseId, opts)
 }
 
-export async function generateAUCat2(caseId: string) {
-  return generate('AU_Cat_2', caseId)
+export async function generateAUCat2(caseId: string, opts?: GenerateOpts) {
+  return generate('AU_Cat_2', caseId, opts)
 }
 
-export async function generateSGP(caseId: string) {
-  return generate('SGP', caseId)
+export async function generateSGP(caseId: string, opts?: GenerateOpts) {
+  return generate('SGP', caseId, opts)
 }
 
-export async function generateNZ(caseId: string) {
+export async function generateOVD(caseId: string, opts?: GenerateOpts) {
+  return generate('OVD', caseId, opts)
+}
+
+export async function generateNZ(caseId: string, opts?: GenerateOpts) {
   // 광견병 접종 횟수로 템플릿 선택: 1회면 NZ(primary), 2회 이상이면 NZ_2(booster).
   // 템플릿마다 (10a)/(10b) 구간에 미리 그어진 취소선이 달라서 결과 PDF의 해당 구간이
   // 깔끔하게 하나만 보이게 된다.
@@ -85,7 +95,7 @@ export async function generateNZ(caseId: string) {
     .single()
   const dates = ((row?.data as Record<string, unknown> | undefined)?.rabies_dates ?? []) as unknown[]
   const formKey = Array.isArray(dates) && dates.length >= 2 ? 'NZ_2' : 'NZ'
-  return generate(formKey, caseId)
+  return generate(formKey, caseId, opts)
 }
 
 /* ───── Multi-animal Annex/UK generation ───── */

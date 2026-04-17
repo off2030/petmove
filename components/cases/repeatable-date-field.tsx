@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
-import { lookupRabies, lookupComprehensive, lookupCiv, lookupKennelCough, lookupExternalParasite, lookupInternalParasite, lookupParasiteById, listParasiteFamilies, getParasiteFamily } from '@/lib/vaccine-lookup'
+import { lookupRabies, lookupComprehensive, lookupCiv, lookupKennelCough, lookupExternalParasite, lookupInternalParasite, lookupHeartworm, lookupParasiteById, listParasiteFamilies, getParasiteFamily } from '@/lib/vaccine-lookup'
 import { CopyButton } from './copy-button'
 import { extractVaccineInfo } from '@/lib/actions/extract-vaccine'
 import { uploadFileToNotes } from '@/lib/notes-upload'
@@ -56,7 +56,7 @@ function addOneYear(dateStr: string): string {
 }
 
 /** 라벨과 접종일로 lookup 데이터를 VacRecord 형태로 반환 (expanded view 힌트용) */
-function getDetailHints(label: string, date: string, species: string): Partial<VacRecord> {
+function getDetailHints(label: string, date: string, species: string, weightKg = 0): Partial<VacRecord> {
   if (!date) return {}
   const sp: 'dog' | 'cat' = species === 'cat' ? 'cat' : 'dog'
   if (label === '광견병') {
@@ -115,6 +115,16 @@ function getDetailHints(label: string, date: string, species: string): Partial<V
   }
   if (label === '내부구충') {
     const r = lookupInternalParasite(sp, date)
+    if (!r) return {}
+    return {
+      product: r.product || undefined,
+      manufacturer: r.manufacturer || undefined,
+      lot: r.batch || undefined,
+      expiry: r.expiry || undefined,
+    }
+  }
+  if (label === '심장사상충') {
+    const r = lookupHeartworm(sp, weightKg)
     if (!r) return {}
     return {
       product: r.product || undefined,
@@ -538,7 +548,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
             // If user picked a specific parasite product, hints come from that product family.
             const hints = rec.product_id
               ? getDetailHintsById(rec.product_id, rec.date, weightKg)
-              : getDetailHints(label, rec.date, species)
+              : getDetailHints(label, rec.date, species, weightKg)
             return (
               <div
                 key={oi}

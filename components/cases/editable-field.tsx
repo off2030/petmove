@@ -396,12 +396,14 @@ export function EditableField({
           const noCopy = spec.type === 'longtext' || spec.key === 'status'
           if ((isDate && editing) || (isSelect && editing) || editing) return valueCell
           if (noCopy) return <>{valueCell}{clearButton}</>
+          // CopyButton 을 flex 흐름에 두어 뒤따르는 ✕ 와 겹치지 않게 한다
+          // (과거: absolute left-full → ✕ 와 같은 위치 점유).
           return (
-            <div className="group/val relative w-fit">
+            <div className="group/val flex items-baseline gap-1 w-fit">
               {valueCell}
               <CopyButton
                 value={isEmpty ? '' : display}
-                className="absolute left-full top-0.5 ml-1 z-10 opacity-0 group-hover/val:opacity-100"
+                className="shrink-0 opacity-0 group-hover/val:opacity-100"
               />
             </div>
           )

@@ -41,17 +41,22 @@ import { useCases } from './cases-context'
  * then a footer with timestamps.
  */
 export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
-  const { fieldDefs, updateLocalCaseField } = useCases()
+  const { fieldDefs, updateLocalCaseField, activeDestination } = useCases()
   const allSpecs = buildFieldSpecs(fieldDefs)
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const extraFields = (data.extra_visible_fields as string[]) ?? []
 
-  const allowedFields = getAllowedFields(caseRow.destination, extraFields)
-  const vaccineList = getEffectiveVaccineList(caseRow.destination, extraFields)
-  const destOverride = getDestinationOverride(caseRow.destination)
+  // 다중 목적지 케이스는 활성 목적지 하나만 기준으로 필드·백신을 결정한다.
+  // 활성값이 아직 비어있으면(초기 렌더) caseRow.destination 전체를 그대로 넘겨
+  // 적어도 첫 매칭 오버라이드라도 적용되게 한다.
+  const viewDestination = activeDestination ?? caseRow.destination
+
+  const allowedFields = getAllowedFields(viewDestination, extraFields)
+  const vaccineList = getEffectiveVaccineList(viewDestination, extraFields)
+  const destOverride = getDestinationOverride(viewDestination)
 
   // Toggleable fields not in the base destination config (can be toggled on/off)
-  const baseVaccines = getVaccineList(caseRow.destination) // destination default only
+  const baseVaccines = getVaccineList(viewDestination) // destination default only
   const toggleableForDest = TOGGLEABLE_FIELDS.filter((t) => {
     if (t.key.startsWith('vaccine:')) {
       const v = t.key.slice('vaccine:'.length)
@@ -147,11 +152,11 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
                 return (
                   <div key="general_vaccine+schedule">
                     {vaccineList.includes('rabies') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="광견병" dataKey="rabies_dates" />}
-                    {vaccineList.includes('rabies_titer') && <RabiesTiterField caseId={caseRow.id} caseRow={caseRow} destination={caseRow.destination} />}
+                    {vaccineList.includes('rabies_titer') && <RabiesTiterField caseId={caseRow.id} caseRow={caseRow} destination={viewDestination} />}
                     {vaccineList.includes('general') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="종합백신" dataKey="general_vaccine_dates" legacyKey="general_vaccine" />}
-                    {vaccineList.includes('civ') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="CIV" dataKey="civ_dates" />}
-                    {vaccineList.includes('kennel') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="켄넬코프" dataKey="kennel_cough_dates" />}
-                    {vaccineList.includes('infectious_disease') && <InfectiousDiseaseField caseId={caseRow.id} caseRow={caseRow} destination={caseRow.destination} />}
+                    {vaccineList.includes('civ') && data.species !== 'cat' && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="CIV" dataKey="civ_dates" />}
+                    {vaccineList.includes('kennel') && data.species !== 'cat' && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="켄넬코프" dataKey="kennel_cough_dates" />}
+                    {vaccineList.includes('infectious_disease') && <InfectiousDiseaseField caseId={caseRow.id} caseRow={caseRow} destination={viewDestination} />}
                     {vaccineList.includes('external_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="외부구충" dataKey="external_parasite_dates" hideValidUntil siblingKey="internal_parasite_dates" />}
                     {vaccineList.includes('internal_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="내부구충" dataKey="internal_parasite_dates" hideValidUntil siblingKey="external_parasite_dates" />}
                     {vaccineList.includes('heartworm') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="심장사상충" dataKey="heartworm_dates" hideValidUntil />}

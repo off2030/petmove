@@ -103,6 +103,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     extraSection: 'new_zealand',
     extraCerts: [
       { key: 'nz', label: 'NZ', type: 'single' },
+      { key: 'ovd', label: 'OVD', type: 'single' },
     ],
   },
   thailand: {
@@ -146,6 +147,10 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['하와이', 'hawaii'],
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
   },
+  guam: {
+    keywords: ['괌', 'guam'],
+    vaccines: ['rabies', 'rabies_titer', 'general', 'kennel', 'external_parasite', 'internal_parasite', 'heartworm'],
+  },
   brazil: {
     keywords: ['브라질', 'brazil'],
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
@@ -156,7 +161,16 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
 
 // ── 헬퍼 함수 ──
 
-/** 목적지에 매칭되는 오버라이드 반환. 없으면 null. */
+/**
+ * 콤마 구분 다중 목적지를 개별 국가 토큰 배열로 분리.
+ * "일본, 베트남" → ["일본", "베트남"]
+ */
+export function parseDestinations(destination: string | null | undefined): string[] {
+  if (!destination) return []
+  return destination.split(',').map(s => s.trim()).filter(Boolean)
+}
+
+/** 단일 목적지 토큰에 매칭되는 오버라이드 반환. 없으면 null. */
 export function getDestinationOverride(destination: string | null | undefined): DestinationOverride | null {
   if (!destination) return null
   const lower = destination.toLowerCase()

@@ -11,7 +11,7 @@ export interface TodoColumn {
   key: string
   label: string
   storage: 'column' | 'data'
-  type: 'text' | 'date' | 'select'
+  type: 'text' | 'date' | 'select' | 'custom'
   width: number
   options?: Array<{ value: string; label: string }>
   /** Override default value resolution (e.g. read from nested structure) */
@@ -20,6 +20,11 @@ export interface TodoColumn {
   defaultValue?: string
   /** Only show this column's cell for rows matching this condition */
   condition?: (row: CaseRow) => boolean
+  /**
+   * Custom cell renderer for `type: 'custom'`. Receives the row and an
+   * `onUpdate` helper for persisting changes via the shared local+DB path.
+   */
+  render?: (row: CaseRow, onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void) => React.ReactNode
 }
 
 function getCellValue(row: CaseRow, col: TodoColumn): string {
@@ -209,6 +214,8 @@ export function TodoTable({
               >
                 {col.condition && !col.condition(row) ? (
                   <span className="text-muted-foreground/30 text-xs px-1">—</span>
+                ) : col.type === 'custom' && col.render ? (
+                  col.render(row, onUpdate)
                 ) : col.type === 'select' && col.options ? (
                   <SelectCell row={row} col={col} onUpdate={onUpdate} />
                 ) : (

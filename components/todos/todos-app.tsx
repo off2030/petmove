@@ -1,9 +1,11 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CaseRow } from '@/lib/supabase/types'
 import { useCases } from '@/components/cases/cases-context'
 import { TodoTable, type TodoColumn } from './todo-table'
+import { InspectionTable, type InspectionRow } from './inspection-table'
+import { updateCaseField } from '@/lib/actions/cases'
 
 const TABS = [
   { id: 'inspection', label: '검사' },
@@ -99,6 +101,93 @@ function isInspectionDone(row: CaseRow): boolean {
   return data.inspection_status === 'done'
 }
 
+/** Subtract N days from YYYY-MM-DD; returns '' when input malformed. */
+function subtractDays(dateStr: string | null | undefined, days: number): string {
+  if (!dateStr) return ''
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr)
+  if (!m) return ''
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+  d.setDate(d.getDate() - days)
+  const y = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${y}-${mm}-${dd}`
+}
+
+const AU_KEYWORDS = ['호주', 'australia']
+const NZ_KEYWORDS = ['뉴질랜드', 'new zealand', 'nz']
+
+function matchesDestination(row: CaseRow, keywords: string[]): boolean {
+  if (!row.destination) return false
+  const dests = row.destination.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+  return dests.some(d => keywords.some(k => d === k))
+}
+
+interface InfectiousRecord { date?: string | null; lab?: string | null }
+
+function readInfectiousRecords(row: CaseRow): InfectiousRecord[] {
+  const data = (row.data ?? {}) as Record<string, unknown>
+  const arr = data.infectious_disease_records
+  return Array.isArray(arr) ? (arr as InfectiousRecord[]) : []
+}
+
+/**
+ * 검사 탭에 뿌릴 행 목록을 케이스별로 펼친다.
+ * - 광견병항체: titer 기록 컷오프 이후 & 진행상태 ≠ done → 1행
+ * - 전염병검사(호주): 출국일 있음 → 1행 (KSVDL, 날짜는 infectious_disease_records 첫 항목)
+ * - 전염병검사(뉴질랜드): 출국일 있음 → 2행 (APQA HQ + VBDDL, 날짜=출국일-15일 고정)
+ */
+function buildInspectionRows(cases: CaseRow[]): InspectionRow[] {
+  const rows: InspectionRow[] = []
+  for (const c of cases) {
+    // 1) 광견병항체
+    if (hasTiterDateAfterCutoff(c) && !isInspectionDone(c)) {
+      rows.push({
+        id: `${c.id}:titer`,
+        caseRow: c,
+        kind: 'titer',
+        lab: resolveInspectionLab(c),
+        date: resolveTiterDate(c),
+        dateEditable: true,
+        dateStorage: { kind: 'titer' },
+      })
+    }
+    // 2) 전염병검사 — 호주/뉴질랜드 + 출국일 필수
+    if (c.departure_date) {
+      const isAU = matchesDestination(c, AU_KEYWORDS)
+      const isNZ = matchesDestination(c, NZ_KEYWORDS)
+      if (isAU) {
+        const recs = readInfectiousRecords(c)
+        const existing = recs.find(r => r.lab === 'ksvdl')
+        rows.push({
+          id: `${c.id}:inf:ksvdl`,
+          caseRow: c,
+          kind: 'infectious',
+          lab: 'ksvdl',
+          date: existing?.date ?? '',
+          dateEditable: true,
+          dateStorage: { kind: 'infectious', lab: 'ksvdl' },
+        })
+      }
+      if (isNZ) {
+        const derived = subtractDays(c.departure_date, 15)
+        for (const lab of ['apqa_hq', 'vbddl']) {
+          rows.push({
+            id: `${c.id}:inf:${lab}`,
+            caseRow: c,
+            kind: 'infectious',
+            lab,
+            date: derived,
+            dateEditable: false,
+            dateStorage: { kind: 'infectious', lab },
+          })
+        }
+      }
+    }
+  }
+  return rows
+}
+
 /** Sort order for labs */
 const LAB_SORT_ORDER: Record<string, number> = {
   krsl: 0,
@@ -137,7 +226,13 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
   { key: 'export_doc_memo', label: '메모', storage: 'data', type: 'text', width: 180 },
 ]
 
-const IMPORT_REPORT_COUNTRY_ORDER = ['일본', '하와이', '스위스', '태국', '필리핀', '미국']
+/**
+ * 신고 탭 자동 포함 규칙:
+ *   - 목적지가 이 5개국 중 하나여야 하고,
+ *   - 출국일(departure_date) 이 기재되어 있어야 함.
+ * 그 외 국가는 상세페이지에서 "신고 추가" 토글(`import_report_manual`)로 수동 포함.
+ */
+const IMPORT_REPORT_COUNTRY_ORDER = ['일본', '하와이', '스위스', '태국', '필리핀']
 const IMPORT_REPORT_COUNTRIES = new Set(IMPORT_REPORT_COUNTRY_ORDER)
 
 function isImportReportCountry(row: CaseRow): boolean {
@@ -146,10 +241,13 @@ function isImportReportCountry(row: CaseRow): boolean {
   return dests.some(d => IMPORT_REPORT_COUNTRIES.has(d))
 }
 
-function isRecentCase(row: CaseRow): boolean {
-  // 출국일이 있으면 4월 이후만, 없으면 접수일 기준
-  if (row.departure_date) return row.departure_date >= '2026-04-01'
-  return row.created_at >= '2026-04-01'
+function isAutoImportReport(row: CaseRow): boolean {
+  return !!row.departure_date && isImportReportCountry(row)
+}
+
+function isManualImportReport(row: CaseRow): boolean {
+  const data = (row.data ?? {}) as Record<string, unknown>
+  return data.import_report_manual === true
 }
 
 function compareByCountryOrder(a: CaseRow, b: CaseRow): number {
@@ -182,6 +280,32 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
   { key: 'import_import_status', label: '수입', storage: 'data', type: 'select', width: 80, options: STATUS_WITH_NA },
   { key: 'import_export_status', label: '수출', storage: 'data', type: 'select', width: 80, options: STATUS_WITH_NA, condition: isJapan },
   { key: 'import_memo', label: '메모', storage: 'data', type: 'text', width: 180 },
+  {
+    key: 'import_report_manual_remove',
+    label: '',
+    storage: 'data',
+    type: 'custom',
+    width: 32,
+    // 수동 포함(import_report_manual=true)인 케이스에만 ✕ 버튼 노출.
+    // 자동 포함 케이스에는 출국일이나 목적지를 지워야 탭에서 빠지므로 버튼 숨김.
+    render: (row, onUpdate) => {
+      if (!isManualImportReport(row)) return <span className="text-muted-foreground/20 text-xs">—</span>
+      return (
+        <button
+          type="button"
+          onClick={async (e) => {
+            e.stopPropagation()
+            onUpdate(row.id, 'data', 'import_report_manual', null)
+            await updateCaseField(row.id, 'data', 'import_report_manual', null)
+          }}
+          className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors"
+          title="신고 탭에서 제거"
+        >
+          ✕
+        </button>
+      )
+    },
+  },
 ]
 
 const COLUMNS_MAP: Record<TabId, TodoColumn[]> = {
@@ -195,18 +319,22 @@ export function TodosApp() {
   const [activeTab, setActiveTab] = useState<TabId>('inspection')
 
   const filteredCases = useMemo(() => {
-    if (activeTab === 'inspection') {
-      return cases
-        .filter(c => hasTiterDateAfterCutoff(c) && !isInspectionDone(c))
-        .sort(compareByLab)
-    }
     if (activeTab === 'import_report') {
       return cases
-        .filter(c => isImportReportCountry(c) && isRecentCase(c))
+        .filter(c => isAutoImportReport(c) || isManualImportReport(c))
         .sort(compareByCountryOrder)
     }
     return cases
   }, [cases, activeTab])
+
+  const inspectionRows = useMemo(
+    () => buildInspectionRows(cases).sort((a, b) => {
+      const la = LAB_SORT_ORDER[a.lab] ?? 99
+      const lb = LAB_SORT_ORDER[b.lab] ?? 99
+      return la - lb
+    }),
+    [cases],
+  )
 
   return (
     <div className="h-full overflow-hidden pt-32 pb-24 px-20 2xl:pt-36 2xl:pb-28 2xl:px-24 3xl:pt-44 3xl:pb-36 3xl:px-32 4xl:pt-52 4xl:pb-44 4xl:px-40 6xl:pt-64 6xl:pb-52 6xl:px-56">
@@ -229,15 +357,136 @@ export function TodosApp() {
         ))}
       </div>
 
+      {activeTab === 'import_report' && (
+        <div className="mb-2 shrink-0">
+          <ImportReportAddPicker
+            cases={cases}
+            onAdd={async (caseId) => {
+              updateLocalCaseField(caseId, 'data', 'import_report_manual', true)
+              await updateCaseField(caseId, 'data', 'import_report_manual', true)
+            }}
+          />
+        </div>
+      )}
+
       {/* Table */}
       <div className="flex-1 min-h-0 overflow-auto scrollbar-minimal">
-        <TodoTable
-          cases={filteredCases}
-          columns={COLUMNS_MAP[activeTab]}
-          onUpdate={updateLocalCaseField}
-        />
+        {activeTab === 'inspection' ? (
+          <InspectionTable
+            rows={inspectionRows}
+            labOptions={LAB_OPTIONS}
+            statusOptions={INSPECTION_STATUS_OPTIONS}
+            onUpdate={updateLocalCaseField}
+          />
+        ) : (
+          <TodoTable
+            cases={filteredCases}
+            columns={COLUMNS_MAP[activeTab]}
+            onUpdate={updateLocalCaseField}
+          />
+        )}
       </div>
       </div>
+    </div>
+  )
+}
+
+/**
+ * 신고 탭 상단 "신고 추가" 피커.
+ * 동물명·고객명·목적지로 검색하고, 이미 탭에 포함된 케이스(자동/수동)는
+ * 목록에서 제외한다. 선택 시 `data.import_report_manual = true` 로 저장.
+ */
+function ImportReportAddPicker({
+  cases,
+  onAdd,
+}: {
+  cases: CaseRow[]
+  onAdd: (caseId: string) => void | Promise<void>
+}) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const [highlight, setHighlight] = useState(0)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    inputRef.current?.focus()
+    function onClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [open])
+
+  const candidates = useMemo(() => {
+    // 이미 자동/수동으로 포함돼 있으면 후보에서 뺀다.
+    const pool = cases.filter(c => !isAutoImportReport(c) && !isManualImportReport(c))
+    const q = query.trim().toLowerCase()
+    const filtered = !q ? pool : pool.filter(c => {
+      const hay = [c.pet_name, c.pet_name_en, c.customer_name, c.destination]
+        .filter(Boolean).join(' ').toLowerCase()
+      return hay.includes(q)
+    })
+    // 최신 접수순.
+    return filtered.slice().sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? '')).slice(0, 30)
+  }, [cases, query])
+
+  useEffect(() => { setHighlight(0) }, [query])
+
+  async function pick(c: CaseRow) {
+    await onAdd(c.id)
+    setOpen(false)
+    setQuery('')
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        + 신고 추가
+      </button>
+    )
+  }
+
+  return (
+    <div ref={containerRef} className="relative inline-block w-72">
+      <input
+        ref={inputRef}
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') setOpen(false)
+          if (e.key === 'ArrowDown') { e.preventDefault(); setHighlight(i => Math.min(i + 1, candidates.length - 1)) }
+          if (e.key === 'ArrowUp') { e.preventDefault(); setHighlight(i => Math.max(i - 1, 0)) }
+          if (e.key === 'Enter' && candidates[highlight]) { e.preventDefault(); pick(candidates[highlight]) }
+        }}
+        placeholder="동물/고객/목적지 검색"
+        className="w-full h-8 rounded border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      />
+      <ul className="absolute left-0 top-full mt-1 z-20 w-[22rem] max-h-72 overflow-y-auto scrollbar-minimal rounded-md border border-border/50 bg-background shadow-md py-1">
+        {candidates.length === 0 ? (
+          <li className="px-3 py-2 text-sm text-muted-foreground">결과 없음</li>
+        ) : (
+          candidates.map((c, i) => (
+            <li key={c.id}>
+              <button
+                type="button"
+                onClick={() => pick(c)}
+                className={`w-full text-left px-3 py-1.5 text-sm transition-colors ${i === highlight ? 'bg-accent' : 'hover:bg-accent/60'}`}
+              >
+                <span>{c.pet_name ?? '—'}</span>
+                <span className="ml-2 text-muted-foreground">{c.customer_name ?? ''}</span>
+                <span className="ml-2 text-xs text-muted-foreground/70">{c.destination ?? ''}</span>
+              </button>
+            </li>
+          ))
+        )}
+      </ul>
     </div>
   )
 }

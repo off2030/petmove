@@ -28,6 +28,8 @@ interface ProductsData {
   parasite_external_cat: VaccineProduct[]
   parasite_internal_dog: VaccineProduct[]
   parasite_internal_cat: VaccineProduct[]
+  heartworm_dog: VaccineProduct[]
+  heartworm_cat: VaccineProduct[]
 }
 
 const DATA = productsData as unknown as ProductsData
@@ -119,6 +121,16 @@ export function lookupInternalParasite(species: 'dog' | 'cat', vaccinationDate: 
 export function lookupParasiteCombo(species: 'dog' | 'cat', weightKg: number): VaccineProduct | null {
   if (!weightKg || weightKg <= 0) return null
   const list = species === 'dog' ? DATA.parasite_combo_dog : DATA.parasite_combo_cat
+  return list.find(p =>
+    (p.weightMin === undefined || weightKg >= p.weightMin) &&
+    (p.weightMax === undefined || weightKg <= p.weightMax)
+  ) ?? null
+}
+
+/** 심장사상충: 체중 범위로 batch 조회 (Heartgard Plus 규격). */
+export function lookupHeartworm(species: 'dog' | 'cat', weightKg: number): VaccineProduct | null {
+  if (!weightKg || weightKg <= 0) return null
+  const list = species === 'dog' ? DATA.heartworm_dog : DATA.heartworm_cat
   return list.find(p =>
     (p.weightMin === undefined || weightKg >= p.weightMin) &&
     (p.weightMax === undefined || weightKg <= p.weightMax)
@@ -258,6 +270,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   parasite_external_cat: '외부 구충 (고양이)',
   parasite_internal_dog: '내부 구충 (강아지)',
   parasite_internal_cat: '내부 구충 (고양이)',
+  heartworm_dog: '심장사상충 (강아지)',
+  heartworm_cat: '심장사상충 (고양이)',
 }
 
 export function getAllProducts(now = new Date()): FlatProduct[] {

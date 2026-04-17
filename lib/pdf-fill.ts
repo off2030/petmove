@@ -8,7 +8,7 @@ import fontkit from '@pdf-lib/fontkit'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import mappings from '@/data/pdf-field-mappings.json'
-import { lookupRabies, lookupExternalParasite, lookupInternalParasite, lookupComprehensive, lookupCiv, lookupKennelCough, lookupParasiteById, getParasiteFamily } from '@/lib/vaccine-lookup'
+import { lookupRabies, lookupExternalParasite, lookupInternalParasite, lookupComprehensive, lookupCiv, lookupKennelCough, lookupHeartworm, lookupParasiteById, getParasiteFamily } from '@/lib/vaccine-lookup'
 import { VET_INFO } from '@/lib/vet-info'
 import type { CaseRow } from '@/lib/supabase/types'
 
@@ -272,9 +272,17 @@ function sortedDescRecords(arr: unknown): ParasiteRecord[] {
 }
 
 /**
- * "기타 예방접종 및 기생충 처치내역" 슬롯 채우기용 시퀀스.
- * 우선순위: 종합백신 → 외부구충 → 내부구충 → (추후) 내외부 합제.
- * 각 타입당 가장 최근 1건만 픽업하고, 없는 타입은 스킵해서 앞으로 당김.
+ * 별지 제25호서식의 "기타 예방접종 및 기생충 처치내역" 슬롯 채우기용 시퀀스.
+ *
+ * 규칙:
+ * - **`allowedVaccines` 에 포함된 카테고리만 출력** — 활성 목적지가 요구하는 것만 찍는다.
+ *   다중 목적지 케이스에서 각 나라 증명서마다 다르게 나와야 하므로 필수.
+ *   `allowedVaccines` 가 주어지지 않으면(undefined) 전체 포함(레거시 동작).
+ * - 순서 고정: 종합백신 → CIV → 켄넬코프 → 외부구충 → 내부구충 → 심장사상충.
+ * - 각 카테고리 최신 1건만, 없으면 스킵해 앞으로 당김.
+ * - 콤보 구충제(NexGard Spectra 등)는 외부에서만 표시, 같은 날짜·제품의 내부 미러 기록은 스킵.
+ *
+ * Form25.pdf는 "기타" 슬롯이 3개라 호출 측에서 sequence[0..2] 만 사용함.
  */
 interface OtherVacEntry {
   type: 'Vaccination' | 'Parasiticide'
@@ -292,22 +300,62 @@ function buildOtherVaccineSequence(data: Record<string, unknown>, allowedVaccine
   const hasSpecies = species === 'dog' || species === 'cat'
   const weightKg = Number(String(data.weight ?? '').replace(/[^\d.]/g, '')) || 0
   const out: OtherVacEntry[] = []
+  // allowedVaccines 가 undefined 면 필터 비활성(모두 허용). 배열이면 멤버십 체크.
+  const allow = (kind: string) => !allowedVaccines || allowedVaccines.includes(kind)
 
-  // 1. 종합백신 (Comprehensive — Vaccination)
-  const gv = (!allowedVaccines || allowedVaccines.includes('general')) ? sortedDesc(data.general_vaccine_dates)[0] : undefined
-  if (gv) {
-    const p = hasSpecies ? lookupComprehensive(species as 'dog' | 'cat', gv) : null
-    out.push({
-      type: 'Vaccination',
-      name: p?.vaccine || p?.product || '',
-      manufacturer: p?.manufacturer ?? '',
-      serial: p?.batch ?? '',
-      expiry: fmtDate(p?.expiry ?? ''),
-      date: fmtDate(gv),
-    })
+  const blankEntry = (type: OtherVacEntry['type'], date: string): OtherVacEntry => ({
+    type, name: '', manufacturer: '', serial: '', expiry: '', date: fmtDate(date),
+  })
+
+  // 1. 종합백신
+  if (allow('general')) {
+    const gv = sortedDesc(data.general_vaccine_dates)[0]
+    if (gv) {
+      const p = hasSpecies ? lookupComprehensive(species as 'dog' | 'cat', gv) : null
+      out.push({
+        type: 'Vaccination',
+        name: p?.vaccine || p?.product || '',
+        manufacturer: p?.manufacturer ?? '',
+        serial: p?.batch ?? '',
+        expiry: fmtDate(p?.expiry ?? ''),
+        date: fmtDate(gv),
+      })
+    }
   }
 
-  // 2/3. Parasiticides — pick latest of each side, dedupe combo across sides.
+  // 2. CIV
+  if (allow('civ')) {
+    const civ = sortedDesc(data.civ_dates)[0]
+    if (civ) {
+      const p = lookupCiv(civ)
+      out.push({
+        type: 'Vaccination',
+        name: p?.vaccine || p?.product || '',
+        manufacturer: p?.manufacturer ?? '',
+        serial: p?.batch ?? '',
+        expiry: fmtDate(p?.expiry ?? ''),
+        date: fmtDate(civ),
+      })
+    }
+  }
+
+  // 3. 켄넬코프
+  if (allow('kennel')) {
+    const kc = sortedDesc(data.kennel_cough_dates)[0]
+    if (kc) {
+      const p = lookupKennelCough()
+      out.push({
+        type: 'Vaccination',
+        name: p?.vaccine || p?.product || '',
+        manufacturer: p?.manufacturer ?? '',
+        serial: p?.batch ?? '',
+        expiry: fmtDate(p?.expiry ?? ''),
+        date: fmtDate(kc),
+      })
+    }
+  }
+
+  // 4/5. Parasiticides — pick latest of each side, dedupe combo across sides.
   const buildParasite = (rec: ParasiteRecord, side: 'external' | 'internal'): OtherVacEntry => {
     if (rec.product_id) {
       const p = lookupParasiteById(rec.product_id, { date: rec.date, weightKg })
@@ -343,18 +391,43 @@ function buildOtherVaccineSequence(data: Record<string, unknown>, allowedVaccine
       : null
   }
 
-  const ext = (!allowedVaccines || allowedVaccines.includes('external_parasite')) ? sortedDescRecords(data.external_parasite_dates)[0] : undefined
-  if (ext) {
-    const k = dedupKey(ext)
-    if (k) seenComboKeys.add(k)
-    out.push(buildParasite(ext, 'external'))
+  if (allow('external_parasite')) {
+    const ext = sortedDescRecords(data.external_parasite_dates)[0]
+    if (ext) {
+      const k = dedupKey(ext)
+      if (k) seenComboKeys.add(k)
+      out.push(buildParasite(ext, 'external'))
+    }
   }
 
-  const int = (!allowedVaccines || allowedVaccines.includes('internal_parasite')) ? sortedDescRecords(data.internal_parasite_dates)[0] : undefined
-  if (int) {
-    const k = dedupKey(int)
-    if (!(k && seenComboKeys.has(k))) {
-      out.push(buildParasite(int, 'internal'))
+  if (allow('internal_parasite')) {
+    const int = sortedDescRecords(data.internal_parasite_dates)[0]
+    if (int) {
+      const k = dedupKey(int)
+      if (!(k && seenComboKeys.has(k))) {
+        out.push(buildParasite(int, 'internal'))
+      }
+    }
+  }
+
+  // 6. 심장사상충 (Heartgard Plus) — 체중 범위로 batch/제조사/유효기간 조회.
+  if (allow('heartworm')) {
+    const hw = sortedDescRecords(data.heartworm_dates)[0]
+    if (hw) {
+      const p = hasSpecies ? lookupHeartworm(species as 'dog' | 'cat', weightKg) : null
+      if (p) {
+        out.push({
+          type: 'Parasiticide',
+          name: p.product || p.vaccine || '',
+          manufacturer: p.manufacturer ?? '',
+          serial: p.batch ?? '',
+          expiry: fmtDate(p.expiry ?? ''),
+          date: fmtDate(hw.date),
+        })
+      } else {
+        // 카탈로그 매칭 실패 시(체중 범위 밖 등) 날짜만 채우는 기존 동작 유지.
+        out.push(blankEntry('Parasiticide', hw.date))
+      }
     }
   }
 
@@ -728,8 +801,9 @@ function resolveField(
   }
 
   // Form25 "기타 예방접종" slot filler. `other_vacc_seq:<attr>[<n>]`.
-  // Pulls the nth entry of the compressed vaccine sequence built from
-  // comprehensive → external → internal (skipping missing types).
+  // Pulls the nth entry of the compressed vaccine sequence in this fixed order:
+  // 종합백신 → CIV → 켄넬코프 → 외부구충 → 내부구충 → 심장사상충.
+  // allowedVaccines 가 지정되면 그 목적지가 요구하는 카테고리만 출력된다.
   const seqMatch = transform?.match(/^other_vacc_seq:(type|name|manufacturer|serial|date)\[(\d+)\]$/)
   if (seqMatch) {
     const attr = seqMatch[1] as keyof OtherVacEntry
@@ -778,6 +852,81 @@ function resolveField(
     const asc = sortedTiters(raw).slice().reverse()
     const rec = asc[idx]
     return rec ? fmtDate(rec.date) : ''
+  }
+
+  // Generic date part extractor — raw must be YYYY-MM-DD or YYYY/MM/DD.
+  // Used by OVD's D/M/Y split cells (microchip implant date etc).
+  const datePartMatch = transform?.match(/^date_part:(day|month|year)$/)
+  if (datePartMatch) {
+    const s = typeof raw === 'string' ? raw : ''
+    const m = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/)
+    if (!m) return ''
+    if (datePartMatch[1] === 'year') return m[1]
+    if (datePartMatch[1] === 'month') return m[2].padStart(2, '0')
+    return m[3].padStart(2, '0')
+  }
+
+  // OVD titer part — split titer_records[N] into per-cell pieces.
+  // `titer_part[N]:date_(day|month|year)` → sample collection date part
+  // `titer_part[N]:value_(b0|b1|b2|a0|a1)` → titer value cell (XXX.XX layout,
+  //   b0-b2 = 3 chars before decimal right-justified, a0-a1 = 2 chars after).
+  const titerPartMatch = transform?.match(/^titer_part\[(\d+)\]:(date_(?:day|month|year)|value_(?:b[0-2]|a[01]))$/)
+  if (titerPartMatch && source === 'rabies_titer_records') {
+    const idx = Number(titerPartMatch[1])
+    const key = titerPartMatch[2]
+    const rec = sortedTiters(raw)[idx]
+    if (!rec) return ''
+    if (key.startsWith('date_')) {
+      const m = (rec.date ?? '').match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/)
+      if (!m) return ''
+      if (key === 'date_year') return m[1]
+      if (key === 'date_month') return m[2].padStart(2, '0')
+      return m[3].padStart(2, '0')
+    }
+    // value split — normalize "0.5" → " 0.50" etc across 3+2 cells.
+    const num = Number(String(rec.value ?? '').replace(/[^\d.]/g, ''))
+    if (!Number.isFinite(num)) return ''
+    const [before, after] = num.toFixed(2).split('.')
+    const padded = before.padStart(3, ' ')
+    if (key === 'value_b0') return padded[0]?.trim() ?? ''
+    if (key === 'value_b1') return padded[1]?.trim() ?? ''
+    if (key === 'value_b2') return padded[2] ?? ''
+    if (key === 'value_a0') return after[0] ?? ''
+    if (key === 'value_a1') return after[1] ?? ''
+    return ''
+  }
+
+  // OVD vaccination rows — two-most-recent rabies doses in chronological order.
+  // N=0 → older of two recent OR the only dose; N=1 → newest (blank when 1 dose).
+  // Attrs:
+  //   date_(day|month|year)   — D/M/Y cells of vaccination date
+  //   batch                   — batch number (from rabies catalog)
+  //   expiry_(day|month|year) — D/M/Y cells of batch expiry
+  //   doi_1y/doi_2y/doi_3y    — Duration of Immunity checkbox. Defaults to 1y=true
+  //                             since the rabies catalog (Rabisin) is annual; vet can
+  //                             override manually on the printed form.
+  const ovdVaccMatch = transform?.match(/^ovd_vacc\[(\d+)\]:(date_(?:day|month|year)|batch|expiry_(?:day|month|year)|doi_1y|doi_2y|doi_3y)$/)
+  if (ovdVaccMatch && source === 'rabies_dates') {
+    const idx = Number(ovdVaccMatch[1])
+    const attr = ovdVaccMatch[2]
+    const asc = sortedAsc(raw)
+    const recent2 = asc.length >= 2 ? asc.slice(-2) : asc
+    const date = recent2[idx]
+    const isCheckbox = attr.startsWith('doi_')
+    if (!date) return isCheckbox ? false : ''
+    if (attr === 'doi_1y') return true
+    if (attr === 'doi_2y' || attr === 'doi_3y') return false
+    if (attr.startsWith('date_') || attr.startsWith('expiry_')) {
+      const target = attr.startsWith('date_') ? date : (lookupRabies(date)?.expiry ?? '')
+      const m = target.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/)
+      if (!m) return ''
+      const part = attr.split('_')[1]
+      if (part === 'year') return m[1]
+      if (part === 'month') return m[2].padStart(2, '0')
+      return m[3].padStart(2, '0')
+    }
+    if (attr === 'batch') return lookupRabies(date)?.batch ?? ''
+    return ''
   }
 
   // Annex III parasite row — echo microchip/product/date/vet from Nth internal parasite entry.
