@@ -164,7 +164,10 @@ export const HIDDEN_EN_KEYS = new Set<string>([
   'sex_en', // redundant with sex select's bilingual label
   'address_kr',  // shown via AddressField with search
   'address_en',  // shown via AddressField with search
+  'notes',       // shown via NotesField (unified memo + attachments)
+  'japan_extra', // shown via JapanExtraField
 ])
+
 
 // Remap field_definitions.group_name (from DB seed) into the simpler
 // 3-group layout the detail page uses.

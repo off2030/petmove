@@ -393,8 +393,8 @@ export function EditableField({
       <div className="text-sm text-muted-foreground pt-1">{spec.label}</div>
       <div className="min-w-0 flex items-baseline gap-2">
         {(() => {
-          const noCopy = isDate || isSelect || spec.type === 'longtext'
-          if ((isDate && editing) || isSelect || editing) return valueCell
+          const noCopy = spec.type === 'longtext' || spec.key === 'status'
+          if ((isDate && editing) || (isSelect && editing) || editing) return valueCell
           if (noCopy) return <>{valueCell}{clearButton}</>
           return (
             <div className="group/val relative w-fit">
@@ -406,7 +406,7 @@ export function EditableField({
             </div>
           )
         })()}
-        {!isDate && !isSelect && !(spec.type === 'longtext') && !editing && clearButton}
+        {!(spec.type === 'longtext') && !editing && clearButton}
       </div>
     </div>
   )

@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import destsData from '@/data/destinations.json'
+import { CopyButton } from './copy-button'
 
 interface Dest {
   ko: string
@@ -112,7 +113,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
       </div>
       <div ref={containerRef} className="relative min-w-0">
         {selected.length > 0 ? (
-          <div className="flex items-center gap-1.5 flex-wrap min-h-[28px]">
+          <div className="group/val flex items-center gap-1.5 flex-wrap min-h-[28px]">
             {selected.map(ko => {
               const matched = ALL_DESTS.find(d => d.ko === ko)
               const label = matched ? matched.en : ko
@@ -126,6 +127,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                 </span>
               )
             })}
+            <CopyButton value={display} className="opacity-0 group-hover/val:opacity-100" />
           </div>
         ) : (
           <button

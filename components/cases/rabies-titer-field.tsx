@@ -5,12 +5,19 @@ import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
+import { CopyButton } from './copy-button'
 
 interface TiterRecord {
   date: string | null
-  received_date: string | null
   value: string | null
   lab: string | null
+  /**
+   * Legacy field — older rows may still carry `received_date` from when the
+   * Australia titer row displayed it inline. No longer shown or edited in the
+   * UI; the value now lives at `data.australia_extra.sample_received_date`.
+   * Kept in the type so existing rows deserialize without warnings.
+   */
+  received_date?: string | null
 }
 
 const LABS = [
@@ -22,7 +29,7 @@ const LABS = [
 
 const DATA_KEY = 'rabies_titer_records'
 
-type TiterEditField = 'date' | 'received_date' | 'value' | 'lab'
+type TiterEditField = 'date' | 'value' | 'lab'
 
 const EU_COUNTRIES = new Set([
   '독일', '프랑스', '이탈리아', '스페인', '네덜란드', '벨기에', '오스트리아',
@@ -45,7 +52,6 @@ function autoDetectLab(destination?: string | null): string | null {
 }
 
 export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
-  const isAustralia = destination?.includes('호주') || destination?.toLowerCase().includes('australia')
   const { updateLocalCaseField } = useCases()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
 
@@ -55,7 +61,6 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
     if (data.rabies_titer_test_date || data.rabies_titer || data.rabies_titer_lab) {
       return [{
         date: (data.rabies_titer_test_date as string) || null,
-        received_date: null,
         value: (data.rabies_titer as string) || null,
         lab: (data.rabies_titer_lab as string) || null,
       }]
@@ -94,7 +99,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
   function saveNewRecord(date: string) {
     if (!date) { setAddingNew(false); return }
     const detectedLab = autoDetectLab(destination)
-    const next = [...records, { date, received_date: null, value: null, lab: detectedLab }]
+    const next = [...records, { date, value: null, lab: detectedLab }]
     startSave(async () => {
       await saveRecords(next)
       setAddingNew(false)
@@ -126,7 +131,6 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
             onUpdateField={(f, v) => updateRecord(i, f, v)}
             onDelete={() => deleteRecord(i)}
             saving={saving}
-            showReceivedDate={isAustralia}
           />
         ))}
 
@@ -149,10 +153,10 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
   )
 }
 
-/* ── Single titer row: date | received_date? | value | lab ── */
+/* ── Single titer row: date | value | lab ── */
 
 function TiterRow({
-  record, isEditing, onStartEdit, onStopEdit, onUpdateField, onDelete, saving, showReceivedDate,
+  record, isEditing, onStartEdit, onStopEdit, onUpdateField, onDelete, saving,
 }: {
   record: TiterRecord
   isEditing: TiterEditField | null
@@ -161,10 +165,8 @@ function TiterRow({
   onUpdateField: (f: keyof TiterRecord, v: unknown) => void
   onDelete: () => void
   saving: boolean
-  showReceivedDate?: boolean
 }) {
   const dateDisplay = record.date || '—'
-  const receivedDateDisplay = record.received_date || '—'
   const valueDisplay = record.value || '—'
   const labObj = LABS.find(l => l.value === record.lab)
   const labDisplay = labObj?.label || record.lab || '—'
@@ -179,29 +181,13 @@ function TiterRow({
           onCancel={onStopEdit}
         />
       ) : (
-        <button type="button" onClick={() => onStartEdit('date')}
-          className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', dateDisplay === '—' && 'text-muted-foreground/60 italic')}>
-          {dateDisplay}
-        </button>
-      )}
-
-      {/* Received date (수령일) — 호주만 */}
-      {showReceivedDate && (
-        <>
-          <span className="text-muted-foreground/30 select-none">|</span>
-          {isEditing === 'received_date' ? (
-            <DateInput
-              initial={record.received_date || ''}
-              onSave={(v) => { onUpdateField('received_date', v || null); onStopEdit() }}
-              onCancel={onStopEdit}
-            />
-          ) : (
-            <button type="button" onClick={() => onStartEdit('received_date')}
-              className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', receivedDateDisplay === '—' && 'text-muted-foreground/60 italic')}>
-              {receivedDateDisplay}
-            </button>
-          )}
-        </>
+        <span className="group/v inline-flex items-baseline">
+          <button type="button" onClick={() => onStartEdit('date')}
+            className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', dateDisplay === '—' && 'text-muted-foreground/60 italic')}>
+            {dateDisplay}
+          </button>
+          {dateDisplay !== '—' && <CopyButton value={dateDisplay} className="ml-1 opacity-0 group-hover/v:opacity-100" />}
+        </span>
       )}
 
       <span className="text-muted-foreground/30 select-none">|</span>
@@ -215,10 +201,13 @@ function TiterRow({
           saving={saving}
         />
       ) : (
-        <button type="button" onClick={() => onStartEdit('value')}
-          className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text', valueDisplay === '—' && 'text-muted-foreground/60 italic')}>
-          {valueDisplay}
-        </button>
+        <span className="group/v inline-flex items-baseline">
+          <button type="button" onClick={() => onStartEdit('value')}
+            className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text', valueDisplay === '—' && 'text-muted-foreground/60 italic')}>
+            {valueDisplay}
+          </button>
+          {valueDisplay !== '—' && <CopyButton value={valueDisplay} className="ml-1 opacity-0 group-hover/v:opacity-100" />}
+        </span>
       )}
 
       <span className="text-muted-foreground/30 select-none">|</span>
@@ -231,10 +220,13 @@ function TiterRow({
           onClose={onStopEdit}
         />
       ) : (
-        <button type="button" onClick={() => onStartEdit('lab')}
-          className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', labDisplay === '—' && 'text-muted-foreground/60 italic')}>
-          {labDisplay}
-        </button>
+        <span className="group/v inline-flex items-baseline">
+          <button type="button" onClick={() => onStartEdit('lab')}
+            className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', labDisplay === '—' && 'text-muted-foreground/60 italic')}>
+            {labDisplay}
+          </button>
+          {labDisplay !== '—' && <CopyButton value={labDisplay} className="ml-1 opacity-0 group-hover/v:opacity-100" />}
+        </span>
       )}
 
       <button type="button" onClick={onDelete}

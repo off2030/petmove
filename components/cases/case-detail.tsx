@@ -8,7 +8,8 @@ import {
   HIDDEN_EN_KEYS,
   readCaseField,
 } from '@/lib/fields'
-import { useEffect, useRef, useState } from 'react'
+import { getAllowedFields, getVaccineList, getEffectiveVaccineList, getDestinationOverride, TOGGLEABLE_FIELDS } from '@/lib/destination-config'
+import React, { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
@@ -23,9 +24,15 @@ import { DestinationField } from './destination-field'
 import { PaymentField } from './payment-field'
 import { RabiesTiterField } from './rabies-titer-field'
 import { RepeatableDateField } from './repeatable-date-field'
-import { AttachmentsField } from './attachments-field'
 import { InfectiousDiseaseField } from './infectious-disease-field'
-import { RepeatableMemoField } from './repeatable-memo-field'
+import { NotesField } from './notes-field'
+import { JapanExtraField } from './japan-extra-field'
+import { ThailandExtraField } from './thailand-extra-field'
+import { PhilippinesExtraField } from './philippines-extra-field'
+import { UsaExtraField } from './usa-extra-field'
+import { AustraliaExtraField } from './australia-extra-field'
+import { NewZealandExtraField } from './new-zealand-extra-field'
+import { OverseasAddressField } from './overseas-address-field'
 import { useCases } from './cases-context'
 
 /**
@@ -34,22 +41,59 @@ import { useCases } from './cases-context'
  * then a footer with timestamps.
  */
 export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
-  const { fieldDefs } = useCases()
+  const { fieldDefs, updateLocalCaseField } = useCases()
   const allSpecs = buildFieldSpecs(fieldDefs)
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const extraFields = (data.extra_visible_fields as string[]) ?? []
 
-  // Sections exclude any spec whose key is merged into a paired row,
-  // so we don't render the English half twice.
-  const sectionSpecs = allSpecs.filter((s) => !HIDDEN_EN_KEYS.has(s.key))
+  const allowedFields = getAllowedFields(caseRow.destination, extraFields)
+  const vaccineList = getEffectiveVaccineList(caseRow.destination, extraFields)
+  const destOverride = getDestinationOverride(caseRow.destination)
+
+  // Toggleable fields not in the base destination config (can be toggled on/off)
+  const baseVaccines = getVaccineList(caseRow.destination) // destination default only
+  const toggleableForDest = TOGGLEABLE_FIELDS.filter((t) => {
+    if (t.key.startsWith('vaccine:')) {
+      const v = t.key.slice('vaccine:'.length)
+      return !baseVaccines.includes(v) // not in destination default → toggleable
+    }
+    return !allowedFields.has(t.key)
+  })
+
+  const sectionSpecs = allSpecs.filter((s) => {
+    if (HIDDEN_EN_KEYS.has(s.key)) return false
+    if (!allowedFields.has(s.key)) return false
+    return true
+  })
   const groups = groupFieldSpecs(sectionSpecs)
+
+  async function toggleField(key: string) {
+    const current = [...extraFields]
+    const idx = current.indexOf(key)
+    const next = idx >= 0 ? current.filter((_, i) => i !== idx) : [...current, key]
+    const val = next.length > 0 ? next : null
+    const r = await updateCaseField(caseRow.id, 'data', 'extra_visible_fields', val)
+    if (r.ok) updateLocalCaseField(caseRow.id, 'data', 'extra_visible_fields', val)
+  }
 
   return (
     <div>
       {/* ─── Sections ─── */}
       {groups.map((g) => (
-        <section key={g.group} className="mb-7">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {g.group}
-          </h3>
+        <React.Fragment key={g.group}>
+        <section className="mb-7">
+          <div className="mb-2 flex items-center gap-1">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {g.group}
+            </h3>
+            {g.group === '절차정보' && toggleableForDest.length > 0 && (
+              <FieldToggleMenu
+                items={toggleableForDest}
+                activeKeys={extraFields}
+                onToggle={toggleField}
+              />
+            )}
+          </div>
           <div>
             {g.items.map((spec) => {
               // 기타정보 is handled specially — after all its items we append Attachments + Payment
@@ -79,11 +123,11 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
                 )
               }
 
-              // Memo → then Attachments + Payment rendered after the group loop
+              // Memo → unified notes (text + files) + Payment rendered after the group loop
               if (spec.key === 'memo') {
                 return (
-                  <RepeatableMemoField
-                    key="memo"
+                  <NotesField
+                    key="notes"
                     caseId={caseRow.id}
                     caseRow={caseRow}
                   />
@@ -102,16 +146,15 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
               if (spec.key === 'general_vaccine') {
                 return (
                   <div key="general_vaccine+schedule">
-                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="종합백신" dataKey="general_vaccine_dates" legacyKey="general_vaccine" />
-                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="광견병" dataKey="rabies_dates" />
-                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="CIV" dataKey="civ_dates" />
-                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="켄넬코프" dataKey="kennel_cough_dates" />
-                    <RabiesTiterField caseId={caseRow.id} caseRow={caseRow} destination={caseRow.destination} />
-                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="외부구충" dataKey="external_parasite_dates" hideValidUntil siblingKey="internal_parasite_dates" />
-                    <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="내부구충" dataKey="internal_parasite_dates" hideValidUntil siblingKey="external_parasite_dates" />
-                    {(caseRow.destination?.includes('호주') || caseRow.destination?.includes('뉴질랜드') || caseRow.destination?.toLowerCase().includes('australia') || caseRow.destination?.toLowerCase().includes('new zealand')) && (
-                      <InfectiousDiseaseField caseId={caseRow.id} caseRow={caseRow} destination={caseRow.destination} />
-                    )}
+                    {vaccineList.includes('rabies') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="광견병" dataKey="rabies_dates" />}
+                    {vaccineList.includes('rabies_titer') && <RabiesTiterField caseId={caseRow.id} caseRow={caseRow} destination={caseRow.destination} />}
+                    {vaccineList.includes('general') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="종합백신" dataKey="general_vaccine_dates" legacyKey="general_vaccine" />}
+                    {vaccineList.includes('civ') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="CIV" dataKey="civ_dates" />}
+                    {vaccineList.includes('kennel') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="켄넬코프" dataKey="kennel_cough_dates" />}
+                    {vaccineList.includes('infectious_disease') && <InfectiousDiseaseField caseId={caseRow.id} caseRow={caseRow} destination={caseRow.destination} />}
+                    {vaccineList.includes('external_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="외부구충" dataKey="external_parasite_dates" hideValidUntil siblingKey="internal_parasite_dates" />}
+                    {vaccineList.includes('internal_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="내부구충" dataKey="internal_parasite_dates" hideValidUntil siblingKey="external_parasite_dates" />}
+                    {vaccineList.includes('heartworm') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="심장사상충" dataKey="heartworm_dates" hideValidUntil />}
                   </div>
                 )
               }
@@ -190,15 +233,86 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
                 />
               )
             })}
-            {/* 기타정보: Attachments + Payment */}
+            {/* 기타정보: Payment (attachments now inside NotesField) */}
             {g.group === '기타정보' && (
-              <>
-                <AttachmentsField caseId={caseRow.id} caseRow={caseRow} />
-                <PaymentField caseId={caseRow.id} caseRow={caseRow} />
-              </>
+              <PaymentField caseId={caseRow.id} caseRow={caseRow} />
             )}
           </div>
         </section>
+        {/* ─── 추가정보 — 절차정보 바로 뒤 ─── */}
+        {g.group === '절차정보' && destOverride?.extraSection === 'japan' && (
+          <section className="mb-7">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              추가정보
+            </h3>
+            <div>
+              <JapanExtraField caseId={caseRow.id} caseRow={caseRow} />
+            </div>
+          </section>
+        )}
+        {g.group === '절차정보' && destOverride?.extraSection === 'thailand' && (
+          <section className="mb-7">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              추가정보
+            </h3>
+            <div>
+              <ThailandExtraField caseId={caseRow.id} caseRow={caseRow} />
+            </div>
+          </section>
+        )}
+        {g.group === '절차정보' && destOverride?.extraSection === 'philippines' && (
+          <section className="mb-7">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              추가정보
+            </h3>
+            <div>
+              <PhilippinesExtraField caseId={caseRow.id} caseRow={caseRow} />
+            </div>
+          </section>
+        )}
+        {g.group === '절차정보' && destOverride?.extraSection === 'usa' && (
+          <section className="mb-7">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              추가정보
+            </h3>
+            <div>
+              <UsaExtraField caseId={caseRow.id} caseRow={caseRow} />
+            </div>
+          </section>
+        )}
+        {g.group === '절차정보' && destOverride?.extraSection === 'australia' && (
+          <section className="mb-7">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              추가정보
+            </h3>
+            <div>
+              <AustraliaExtraField caseId={caseRow.id} caseRow={caseRow} />
+            </div>
+          </section>
+        )}
+        {g.group === '절차정보' && destOverride?.extraSection === 'new_zealand' && (
+          <section className="mb-7">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              추가정보
+            </h3>
+            <div>
+              <NewZealandExtraField caseId={caseRow.id} caseRow={caseRow} />
+            </div>
+          </section>
+        )}
+        {g.group === '절차정보' && !destOverride?.extraSection && destOverride?.extraFields && destOverride.extraFields.length > 0 && (
+          <section className="mb-7">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              추가정보
+            </h3>
+            <div>
+              {destOverride.extraFields.includes('address_overseas') && (
+                <OverseasAddressField caseId={caseRow.id} caseRow={caseRow} />
+              )}
+            </div>
+          </section>
+        )}
+        </React.Fragment>
       ))}
 
     </div>
@@ -361,10 +475,13 @@ function MicrochipDatesRow({ caseId, caseRow, destination }: { caseId: string; c
         {editingField === 'implant' ? (
           <MicrochipDateInput initial={implantDate} onSave={(v) => saveDate('microchip_implant_date', v || null)} onCancel={() => setEditingField(null)} />
         ) : (
-          <button type="button" onClick={() => setEditingField('implant')}
-            className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', !implantDate && 'text-muted-foreground/60 italic')}>
-            {implantDate || '—'}
-          </button>
+          <span className="group/v relative inline-flex items-baseline">
+            <button type="button" onClick={() => setEditingField('implant')}
+              className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', !implantDate && 'text-muted-foreground/60 italic')}>
+              {implantDate || '—'}
+            </button>
+            {implantDate && <CopyButton value={implantDate} className="ml-1 opacity-0 group-hover/v:opacity-100" />}
+          </span>
         )}
 
         {/* 확인일 — 호주일 때 항상 표시 */}
@@ -374,10 +491,13 @@ function MicrochipDatesRow({ caseId, caseRow, destination }: { caseId: string; c
             {editingField === 'check' ? (
               <MicrochipDateInput initial={checkDate} onSave={(v) => saveDate('microchip_check_date', v || null)} onCancel={() => setEditingField(null)} />
             ) : (
-              <button type="button" onClick={() => setEditingField('check')}
-                className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', !checkDate && 'text-muted-foreground/60 italic')}>
-                {checkDate || '—'}
-              </button>
+              <span className="group/v relative inline-flex items-baseline">
+                <button type="button" onClick={() => setEditingField('check')}
+                  className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', !checkDate && 'text-muted-foreground/60 italic')}>
+                  {checkDate || '—'}
+                </button>
+                {checkDate && <CopyButton value={checkDate} className="ml-1 opacity-0 group-hover/v:opacity-100" />}
+              </span>
             )}
           </>
         )}
@@ -421,6 +541,62 @@ function MicrochipDateInput({ initial, onSave, onCancel }: {
       }, 150)}
       className="w-36 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
+  )
+}
+
+/**
+ * Dropdown toggle for adding hidden fields to the section.
+ */
+function FieldToggleMenu({ items, activeKeys, onToggle }: {
+  items: { key: string; label: string }[]
+  activeKeys: string[]
+  onToggle: (key: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        className="text-muted-foreground/40 hover:text-foreground text-xs font-medium leading-none transition-colors"
+        title="필드 추가/제거"
+      >
+        +
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-20 min-w-[140px] rounded-md border border-border bg-popover p-1 shadow-md">
+          {items.map((item) => {
+            const active = activeKeys.includes(item.key)
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => onToggle(item.key)}
+                className={cn(
+                  'w-full text-left rounded-sm px-2 py-1.5 text-sm hover:bg-accent transition-colors flex items-center gap-2',
+                  active && 'text-foreground',
+                  !active && 'text-muted-foreground',
+                )}
+              >
+                <span className="w-4 text-center text-xs">{active ? '✓' : ''}</span>
+                {item.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
 

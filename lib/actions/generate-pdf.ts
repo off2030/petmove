@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
 import type { CaseRow } from '@/lib/supabase/types'
+import { getEffectiveVaccineList } from '@/lib/destination-config'
 
 export type GeneratePdfResult =
   | { ok: true; pdf: string; filename: string }
@@ -25,7 +26,11 @@ async function generate(
     .eq('id', caseId)
     .single()
   if (error || !row) return { ok: false, error: error?.message ?? '케이스를 찾을 수 없습니다' }
-  return fillPdf(formKey, row as CaseRow, options)
+  const caseRow = row as CaseRow
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const extraFields = (data.extra_visible_fields as string[]) ?? []
+  const allowedVaccines = getEffectiveVaccineList(caseRow.destination, extraFields)
+  return fillPdf(formKey, caseRow, { ...options, allowedVaccines })
 }
 
 export async function generateFormRE(caseId: string) {
@@ -46,6 +51,18 @@ export async function generateForm25(caseId: string, opts?: { includeSignature?:
 
 export async function generateForm25AuNz(caseId: string, opts?: { includeSignature?: boolean }) {
   return generate('Form25AuNz', caseId, opts)
+}
+
+export async function generateAU(caseId: string) {
+  return generate('AU', caseId)
+}
+
+export async function generateAUCat(caseId: string) {
+  return generate('AU_Cat', caseId)
+}
+
+export async function generateNZ(caseId: string) {
+  return generate('NZ', caseId)
 }
 
 /* ───── Multi-animal Annex/UK generation ───── */

@@ -10,9 +10,11 @@ import { createCase } from '@/lib/actions/create-case'
 import { deleteCase } from '@/lib/actions/delete-case'
 import { duplicateCase } from '@/lib/actions/duplicate-case'
 import { undoLastChange } from '@/lib/actions/cases'
-import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, previewSiblings, generateAnnexIIIMulti, generateUKMulti } from '@/lib/actions/generate-pdf'
+import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAUCat, generateNZ, previewSiblings, generateAnnexIIIMulti, generateUKMulti } from '@/lib/actions/generate-pdf'
 import { MultiFormDialog } from './multi-form-dialog'
 import { ArrowLeft } from 'lucide-react'
+import { getCertButtons } from '@/lib/destination-config'
+import type { CertButton } from '@/lib/destination-config'
 
 function downloadBase64Pdf(base64: string, filename: string) {
   const link = document.createElement('a')
@@ -21,36 +23,22 @@ function downloadBase64Pdf(base64: string, filename: string) {
   link.click()
 }
 
-function isJapanDestination(dest: string | null | undefined): boolean {
-  if (!dest) return false
-  return dest.split(',').map(s => s.trim()).some(d => d === '일본' || d === '하와이')
+/** Cert key → server action mapping for single-type buttons */
+const CERT_ACTIONS: Record<string, (caseId: string, opts?: { includeSignature?: boolean }) => Promise<{ ok: true; pdf: string; filename: string } | { ok: false; error: string }>> = {
+  form25: generateForm25,
+  form25AuNz: generateForm25AuNz,
+  formRE: generateFormRE as unknown as typeof generateForm25,
+  formAC: generateFormAC as unknown as typeof generateForm25,
+  idDeclaration: generateIdentificationDeclaration as unknown as typeof generateForm25,
+  au: generateAU as unknown as typeof generateForm25,
+  auCat: generateAUCat as unknown as typeof generateForm25,
+  nz: generateNZ as unknown as typeof generateForm25,
 }
 
-function isAustraliaDestination(dest: string | null | undefined): boolean {
-  if (!dest) return false
-  return dest.split(',').map(s => s.trim()).some(d => d === '호주')
-}
-
-function isAuNzGuamDestination(dest: string | null | undefined): boolean {
-  if (!dest) return false
-  return dest.split(',').map(s => s.trim()).some(d =>
-    d === '호주' || d === '뉴질랜드' || d === '괌',
-  )
-}
-
-function isEuDestination(dest: string | null | undefined): boolean {
-  if (!dest) return false
-  return dest.split(',').map(s => s.trim()).some(d =>
-    d === '유럽연합' || d === 'EU' || d === '스위스' ||
-    d === '아일랜드' || d === '몰타' ||
-    d === '북아일랜드' || d === '노르웨이' || d === '핀란드' ||
-    d === '영국' || d === 'UK',
-  )
-}
-
-function isUkDestination(dest: string | null | undefined): boolean {
-  if (!dest) return false
-  return dest.split(',').map(s => s.trim()).some(d => d === '영국')
+/** Cert key → multi-form dialog formKey mapping */
+const CERT_MULTI_KEYS: Record<string, string> = {
+  annexIII: 'AnnexIII',
+  uk: 'UK',
 }
 
 function Inner() {
@@ -169,7 +157,7 @@ function Inner() {
               </div>
 
               {/* Scrollable content */}
-              <div ref={detailScrollRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-minimal">
+              <div ref={detailScrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-minimal">
                 {selectedCase ? (
                   <CaseDetail caseRow={selectedCase} />
                 ) : (
@@ -178,7 +166,7 @@ function Inner() {
               </div>
 
               {/* Footer: 접수일/수정일 + 이력/삭제 */}
-              <div className="shrink-0 pt-2 text-xs text-muted-foreground flex items-center justify-between">
+              <div className="shrink-0 pt-2 text-xs text-muted-foreground flex items-center justify-between flex-wrap gap-y-2">
                 {selectedCase ? (
                   <>
                     <span>
@@ -188,63 +176,6 @@ function Inner() {
                       )}
                     </span>
                     <div className="flex items-center gap-4">
-                      {isJapanDestination(selectedCase.destination) && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              const r = await generateFormRE(selectedCase.id)
-                              if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
-                              else alert(r.error)
-                            }}
-                            className="text-muted-foreground/50 hover:text-foreground transition-colors"
-                          >
-                            Form RE
-                          </button>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              const r = await generateFormAC(selectedCase.id)
-                              if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
-                              else alert(r.error)
-                            }}
-                            className="text-muted-foreground/50 hover:text-foreground transition-colors"
-                          >
-                            Form AC
-                          </button>
-                        </>
-                      )}
-                      {isAustraliaDestination(selectedCase.destination) && (
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            const r = await generateIdentificationDeclaration(selectedCase.id)
-                            if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
-                            else alert(r.error)
-                          }}
-                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
-                        >
-                          ID Declaration
-                        </button>
-                      )}
-                      {isEuDestination(selectedCase.destination) && (
-                        <button
-                          type="button"
-                          onClick={() => handleMultiForm(selectedCase.id, 'AnnexIII')}
-                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
-                        >
-                          Annex III
-                        </button>
-                      )}
-                      {isUkDestination(selectedCase.destination) && (
-                        <button
-                          type="button"
-                          onClick={() => handleMultiForm(selectedCase.id, 'UK')}
-                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
-                        >
-                          UK
-                        </button>
-                      )}
                       <label className="flex items-center gap-1 text-muted-foreground/50 select-none cursor-pointer">
                         <input
                           type="checkbox"
@@ -254,30 +185,32 @@ function Inner() {
                         />
                         서명
                       </label>
-                      {isAuNzGuamDestination(selectedCase.destination) ? (
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            const r = await generateForm25AuNz(selectedCase.id, { includeSignature })
-                            if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
-                            else alert(r.error)
-                          }}
-                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
-                        >
-                          별지 25호 (호주·뉴질랜드·괌)
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            const r = await generateForm25(selectedCase.id, { includeSignature })
-                            if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
-                            else alert(r.error)
-                          }}
-                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
-                        >
-                          별지 25호
-                        </button>
+                      {getCertButtons(selectedCase.destination, (selectedCase.data as Record<string, unknown>)?.species as string | undefined).map((btn) =>
+                        btn.type === 'multi' ? (
+                          <button
+                            key={btn.key}
+                            type="button"
+                            onClick={() => handleMultiForm(selectedCase.id, (CERT_MULTI_KEYS[btn.key] ?? btn.key) as 'AnnexIII' | 'UK')}
+                            className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                          >
+                            {btn.label}
+                          </button>
+                        ) : (
+                          <button
+                            key={btn.key}
+                            type="button"
+                            onClick={async () => {
+                              const action = CERT_ACTIONS[btn.key]
+                              if (!action) return
+                              const r = await action(selectedCase.id, { includeSignature })
+                              if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
+                              else alert(r.error)
+                            }}
+                            className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                          >
+                            {btn.label}
+                          </button>
+                        ),
                       )}
                       <CaseHistory caseId={selectedCase.id} />
                       <button

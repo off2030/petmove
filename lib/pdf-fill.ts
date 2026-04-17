@@ -3,7 +3,7 @@
  * Reads case row, resolves each field value via the mapping's transform,
  * and fills the PDF form.
  */
-import { PDFDocument, PDFName, PDFString, PDFDict, PDFBool } from 'pdf-lib'
+import { PDFDocument, PDFName, PDFString, PDFDict, PDFBool, TextAlignment } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -70,6 +70,8 @@ type FieldMapping = {
   transform?: string
   default?: string
   note?: string
+  /** Text alignment in the rendered widget. Default is left (PDF default). */
+  align?: 'left' | 'center' | 'right'
 }
 
 type SignatureOverlay = {
@@ -87,13 +89,21 @@ type FormMapping = {
   filename: string
   /**
    * Optional date format override for the entire form's output.
-   * 'dmy' — convert any resolved YYYY-MM-DD or YYYY/MM/DD value to dd/mm/yyyy.
-   * Default (undefined) preserves the transform's output (typically YYYY/MM/DD).
+   * 'dmy' — convert to dd/mm/yyyy (e.g. Annex III).
+   * 'ymd_slash' — normalize to YYYY/MM/DD with zero-padded month/day (e.g. Form25).
+   * Default (undefined) preserves the transform's output.
    */
-  dateFormat?: 'dmy'
+  dateFormat?: 'dmy' | 'ymd_slash' | 'dmmmy'
   fields: Record<string, FieldMapping>
   /** Optional signature/stamp image overlays — applied only when caller opts in. */
   signatures?: SignatureOverlay[]
+  /**
+   * Static text overlays always drawn onto the generated PDF. Use for
+   * hard-coded values in cells that have no form field (e.g. AU Babesia row
+   * always "N/A" because Korea-origin dogs never visit mainland Africa).
+   * Coordinates are PDF user-space (origin = bottom-left), size defaults to 10pt.
+   */
+  textOverlays?: { page?: number; x: number; y: number; text: string; size?: number }[]
 }
 
 type MappingsJson = Record<string, FormMapping>
@@ -109,6 +119,19 @@ const LAB_INFO: Record<string, { name: string; country: string }> = {
 }
 
 const SPECIES_EN: Record<string, string> = { dog: 'Dog', cat: 'Cat' }
+
+/**
+ * Hardcoded active ingredient + dose rate strings for parasiticide products
+ * used by the AU certificate's parasite rows. Keys match product_id values
+ * defined in PARASITE_FAMILIES (lib/vaccine-lookup.ts).
+ * Dose strings are per-product manufacturer instructions in English for AU.
+ */
+const PARASITE_PRODUCT_INFO: Record<string, { ingredient: string; dose: string }> = {
+  frontline_plus_dog:  { ingredient: 'Fipronil', dose: '1 vial' },
+  frontline_spray_cat: { ingredient: 'Fipronil', dose: '1 vial' },
+  drontal_plus_dog:    { ingredient: 'Pyrantel Pamoate, Praziquantel, Febantel', dose: '1 tablet per 10 kg body weight' },
+  drontal_plus_cat:    { ingredient: 'Pyrantel Pamoate, Praziquantel', dose: '1 tablet per 4 kg body weight' },
+}
 
 /** sex code → English label used by Annex III (N. = neutered/spayed). */
 const SEX_LABEL_EN: Record<string, string> = {
@@ -241,16 +264,20 @@ interface OtherVacEntry {
   name: string
   manufacturer: string
   serial: string
+  /** Product (batch) expiry — catalog's `expiry` field. Empty when unknown
+   * (e.g. parasiticide without batch-level expiry data). Used by Form25AuNz's
+   * serial_with_expiry renderer which must show batch + expiry in one cell. */
+  expiry: string
   date: string
 }
-function buildOtherVaccineSequence(data: Record<string, unknown>): OtherVacEntry[] {
+function buildOtherVaccineSequence(data: Record<string, unknown>, allowedVaccines?: string[]): OtherVacEntry[] {
   const species = String(data.species ?? '').toLowerCase()
   const hasSpecies = species === 'dog' || species === 'cat'
   const weightKg = Number(String(data.weight ?? '').replace(/[^\d.]/g, '')) || 0
   const out: OtherVacEntry[] = []
 
   // 1. 종합백신 (Comprehensive — Vaccination)
-  const gv = sortedDesc(data.general_vaccine_dates)[0]
+  const gv = (!allowedVaccines || allowedVaccines.includes('general')) ? sortedDesc(data.general_vaccine_dates)[0] : undefined
   if (gv) {
     const p = hasSpecies ? lookupComprehensive(species as 'dog' | 'cat', gv) : null
     out.push({
@@ -258,6 +285,7 @@ function buildOtherVaccineSequence(data: Record<string, unknown>): OtherVacEntry
       name: p?.vaccine || p?.product || '',
       manufacturer: p?.manufacturer ?? '',
       serial: p?.batch ?? '',
+      expiry: fmtDate(p?.expiry ?? ''),
       date: fmtDate(gv),
     })
   }
@@ -271,6 +299,7 @@ function buildOtherVaccineSequence(data: Record<string, unknown>): OtherVacEntry
         name: p?.product || '',
         manufacturer: p?.manufacturer ?? '',
         serial: p?.batch ?? '',
+        expiry: fmtDate(p?.expiry ?? ''),
         date: fmtDate(rec.date),
       }
     }
@@ -284,6 +313,7 @@ function buildOtherVaccineSequence(data: Record<string, unknown>): OtherVacEntry
       name: p?.product || p?.vaccine || '',
       manufacturer: p?.manufacturer ?? '',
       serial: p?.batch ?? '',
+      expiry: fmtDate(p?.expiry ?? ''),
       date: fmtDate(rec.date),
     }
   }
@@ -296,14 +326,14 @@ function buildOtherVaccineSequence(data: Record<string, unknown>): OtherVacEntry
       : null
   }
 
-  const ext = sortedDescRecords(data.external_parasite_dates)[0]
+  const ext = (!allowedVaccines || allowedVaccines.includes('external_parasite')) ? sortedDescRecords(data.external_parasite_dates)[0] : undefined
   if (ext) {
     const k = dedupKey(ext)
     if (k) seenComboKeys.add(k)
     out.push(buildParasite(ext, 'external'))
   }
 
-  const int = sortedDescRecords(data.internal_parasite_dates)[0]
+  const int = (!allowedVaccines || allowedVaccines.includes('internal_parasite')) ? sortedDescRecords(data.internal_parasite_dates)[0] : undefined
   if (int) {
     const k = dedupKey(int)
     if (!(k && seenComboKeys.has(k))) {
@@ -320,7 +350,7 @@ function buildOtherVaccineSequence(data: Record<string, unknown>): OtherVacEntry
  * 각 타입당 최대 maxPerType(기본 3)회차를 과거→최신 순으로 출력.
  * 콤보 구충제는 external에서만 표시, internal 동기화 기록은 스킵.
  */
-function buildExpandedVaccineSequence(data: Record<string, unknown>, maxPerType = 3): OtherVacEntry[] {
+function buildExpandedVaccineSequence(data: Record<string, unknown>, maxPerType = 3, allowedVaccines?: string[]): OtherVacEntry[] {
   const species = String(data.species ?? '').toLowerCase()
   const hasSpecies = species === 'dog' || species === 'cat'
   const weightKg = Number(String(data.weight ?? '').replace(/[^\d.]/g, '')) || 0
@@ -333,43 +363,46 @@ function buildExpandedVaccineSequence(data: Record<string, unknown>, maxPerType 
   }
 
   // 1. 종합백신 (Vaccination)
-  for (const rec of latestAscending(data.general_vaccine_dates)) {
+  for (const rec of ((!allowedVaccines || allowedVaccines.includes('general')) ? latestAscending(data.general_vaccine_dates) : [])) {
     const p = hasSpecies ? lookupComprehensive(species as 'dog' | 'cat', rec.date) : null
     out.push({
       type: 'Vaccination',
       name: p?.vaccine || p?.product || '',
       manufacturer: p?.manufacturer ?? '',
       serial: p?.batch ?? '',
+      expiry: fmtDate(p?.expiry ?? ''),
       date: fmtDate(rec.date),
     })
   }
 
   // 2. CIV (Vaccination)
-  for (const rec of latestAscending(data.civ_dates)) {
+  for (const rec of ((!allowedVaccines || allowedVaccines.includes('civ')) ? latestAscending(data.civ_dates) : [])) {
     const p = lookupCiv(rec.date)
     out.push({
       type: 'Vaccination',
       name: p?.vaccine || p?.product || '',
       manufacturer: p?.manufacturer ?? '',
       serial: p?.batch ?? '',
+      expiry: fmtDate(p?.expiry ?? ''),
       date: fmtDate(rec.date),
     })
   }
 
   // 3. 켄넬코프 (Vaccination)
-  for (const rec of latestAscending(data.kennel_cough_dates)) {
+  for (const rec of ((!allowedVaccines || allowedVaccines.includes('kennel')) ? latestAscending(data.kennel_cough_dates) : [])) {
     const p = lookupKennelCough()
     out.push({
       type: 'Vaccination',
       name: p?.vaccine || p?.product || '',
       manufacturer: p?.manufacturer ?? '',
       serial: p?.batch ?? '',
+      expiry: fmtDate(p?.expiry ?? ''),
       date: fmtDate(rec.date),
     })
   }
 
   // Collect combo keys from external so internal can skip duplicates.
-  const externalRecords = latestAscending(data.external_parasite_dates)
+  const externalRecords = (!allowedVaccines || allowedVaccines.includes('external_parasite')) ? latestAscending(data.external_parasite_dates) : []
   const comboKeysFromExternal = new Set<string>()
   for (const rec of externalRecords) {
     if (rec.product_id && getParasiteFamily(rec.product_id)?.kind === 'combo') {
@@ -385,6 +418,7 @@ function buildExpandedVaccineSequence(data: Record<string, unknown>, maxPerType 
         name: p?.product || '',
         manufacturer: p?.manufacturer ?? '',
         serial: p?.batch ?? '',
+        expiry: fmtDate(p?.expiry ?? ''),
         date: fmtDate(rec.date),
       })
       return
@@ -399,6 +433,7 @@ function buildExpandedVaccineSequence(data: Record<string, unknown>, maxPerType 
       name: p?.product || p?.vaccine || '',
       manufacturer: p?.manufacturer ?? '',
       serial: p?.batch ?? '',
+      expiry: fmtDate(p?.expiry ?? ''),
       date: fmtDate(rec.date),
     })
   }
@@ -407,7 +442,7 @@ function buildExpandedVaccineSequence(data: Record<string, unknown>, maxPerType 
   for (const rec of externalRecords) pushParasite(rec, 'external')
 
   // 5. 내부구충 (Parasiticide) — skip records that were already emitted via external combo.
-  for (const rec of latestAscending(data.internal_parasite_dates)) {
+  for (const rec of ((!allowedVaccines || allowedVaccines.includes('internal_parasite')) ? latestAscending(data.internal_parasite_dates) : [])) {
     if (rec.product_id && getParasiteFamily(rec.product_id)?.kind === 'combo') {
       if (comboKeysFromExternal.has(`${rec.product_id}@${rec.date}`)) continue
     }
@@ -501,9 +536,20 @@ function resolveField(
   mapping: FieldMapping,
   caseRow: CaseRow,
   data: Record<string, unknown>,
+  allowedVaccines?: string[],
 ): Resolved {
   const { source, transform } = mapping
   const raw = source ? readSource(source, caseRow, data) : null
+
+  // Date fallback to today when source is empty (e.g. 내원일 없으면 발급일을 오늘로)
+  if (transform === 'date_or_today') {
+    if (raw && String(raw).trim()) return String(raw)
+    const d = new Date()
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+  }
 
   // Checkboxes
   if (transform === 'checkbox:always_true') return true
@@ -538,6 +584,16 @@ function resolveField(
     return fmtDateDMY(raw)
   }
 
+  // Extract a string field from a JSON object source.
+  // Pattern: `json:<key>` — returns raw[key] as string, empty if missing.
+  // Used by AU form for data.australia_extra.{permit_no, id_date, sample_received_date}.
+  const jsonMatch = transform?.match(/^json:(.+)$/)
+  if (jsonMatch) {
+    if (!raw || typeof raw !== 'object') return ''
+    const v = (raw as Record<string, unknown>)[jsonMatch[1]]
+    return v == null ? '' : String(v)
+  }
+
   // Age in full years computed from birth date.
   if (transform === 'age_years') {
     const a = ageParts(raw)
@@ -564,6 +620,65 @@ function resolveField(
     if (op === 'between') return n >= args[0] && n < args[1]
     if (op === 'gt_lt') return n > args[0] && n < args[1]
     return false
+  }
+
+  // Australia disease test gating (AU certificate, p2).
+  // Pattern: `au_disease:<leishmania|leptospira|brucella>:(date|result)`
+  // Applicability is derived from case state — no UI toggle:
+  //   leishmania: always applicable (Australia always tests)
+  //   brucella:   only when the dog is NOT neutered/spayed (intact male or female)
+  //   leptospira: only when no Leptospira-containing vaccine has been given
+  //               (heuristic: no general_vaccine_dates entries)
+  // When applicable → date pulled from infectious_disease_records[0].date,
+  // result is the literal "Negative". Otherwise returns '' so mapping.default ("N/A") applies.
+  const auDiseaseMatch = transform?.match(/^au_disease:(leishmania|leptospira|brucella):(date|result)$/)
+  if (auDiseaseMatch) {
+    const disease = auDiseaseMatch[1]
+    const attr = auDiseaseMatch[2]
+    let applicable = false
+    if (disease === 'leishmania') {
+      applicable = true
+    } else if (disease === 'brucella') {
+      const sex = String(data.sex ?? '').toLowerCase()
+      applicable = sex === 'male' || sex === 'female'
+    } else if (disease === 'leptospira') {
+      const gv = data.general_vaccine_dates
+      applicable = !Array.isArray(gv) || gv.length === 0
+    }
+    if (!applicable) return ''
+    if (attr === 'result') return 'Negative'
+    // attr === 'date' — pull the most recent infectious_disease_records date
+    const recs = data.infectious_disease_records
+    if (!Array.isArray(recs) || recs.length === 0) return ''
+    const rec = recs[0] as { date?: string | null }
+    return rec.date ? fmtDate(rec.date) : ''
+  }
+
+  // Active ingredient / dose-rate lookup for AU parasite rows.
+  // Pattern: `parasite_info:(external|internal):(ingredient|dose)[<n>]` (desc order)
+  // Resolves the product by (1) rec.product_id when set, (2) falling back to
+  // species+kind→default product_id mapping so records saved without an
+  // explicit product selection still render (matches the Product name
+  // column's species/date-based lookup behavior).
+  const parInfoMatch = transform?.match(/^parasite_info:(external|internal):(ingredient|dose)\[(\d+)\]$/)
+  if (parInfoMatch) {
+    const side = parInfoMatch[1] as 'external' | 'internal'
+    const attr = parInfoMatch[2]
+    const idx = Number(parInfoMatch[3])
+    const records = sortedDescRecords(raw)
+    const rec = records[idx]
+    if (!rec) return ''
+    const species = String(data.species ?? '').toLowerCase()
+    const defaultIds: Record<'external' | 'internal', Record<string, string>> = {
+      external: { dog: 'frontline_plus_dog', cat: 'frontline_spray_cat' },
+      internal: { dog: 'drontal_plus_dog',   cat: 'drontal_plus_cat' },
+    }
+    const pid = rec.product_id || defaultIds[side][species]
+    const info = pid ? PARASITE_PRODUCT_INFO[pid] : undefined
+    if (!info) return ''
+    if (attr === 'ingredient') return info.ingredient
+    if (attr === 'dose') return info.dose
+    return ''
   }
 
   // Phone formatting: raw digits → 010-XXXX-XXXX.
@@ -602,18 +717,24 @@ function resolveField(
   if (seqMatch) {
     const attr = seqMatch[1] as keyof OtherVacEntry
     const idx = Number(seqMatch[2])
-    const entry = buildOtherVaccineSequence(data)[idx]
+    const entry = buildOtherVaccineSequence(data, allowedVaccines)[idx]
     return entry ? entry[attr] : ''
   }
 
   // Form25AuNz expanded filler (8 slots, 3 doses per type).
   // Order: 종합백신 → CIV → 켄넬코프(미구현) → 외부구충 → 내부구충.
-  const expSeqMatch = transform?.match(/^expanded_vacc_seq:(type|name|manufacturer|serial|date)\[(\d+)\]$/)
+  // `serial_with_expiry` — AU/NZ variant that combines batch + product expiry
+  // into one cell (e.g. "G98321 / 2027-10-07"). Empty string when no entry.
+  const expSeqMatch = transform?.match(/^expanded_vacc_seq:(type|name|manufacturer|serial|serial_with_expiry|date)\[(\d+)\]$/)
   if (expSeqMatch) {
-    const attr = expSeqMatch[1] as keyof OtherVacEntry
+    const attr = expSeqMatch[1]
     const idx = Number(expSeqMatch[2])
-    const entry = buildExpandedVaccineSequence(data)[idx]
-    return entry ? entry[attr] : ''
+    const entry = buildExpandedVaccineSequence(data, 3, allowedVaccines)[idx]
+    if (!entry) return ''
+    if (attr === 'serial_with_expiry') {
+      return entry.expiry ? `${entry.serial} / ${entry.expiry}` : entry.serial
+    }
+    return entry[attr as keyof OtherVacEntry]
   }
 
   // Annex III vaccination row — echo microchip/implant date only when Nth rabies dose exists.
@@ -678,12 +799,82 @@ function resolveField(
     return ''
   }
 
+  // Desc variant — row 0 = most recent dose. Used by AU form where the first
+  // listed row should be the current/latest treatment. Supports the same kinds
+  // as `vaccine:...` plus `civ` (CIV uses lookupCiv).
+  // For civ, validity_to/validity_from fall back to vaccinationDate ± 1 year
+  // because lookupCiv doesn't compute an explicit immunity window.
+  const vacDescMatch = transform?.match(/^vaccine_desc:(rabies|ext_parasite|int_parasite|civ|comprehensive):(name|manufacturer|serial|date|validity_from|validity_to)\[(\d+)\]$/)
+  if (vacDescMatch) {
+    const kind = vacDescMatch[1]
+    const attr = vacDescMatch[2]
+    const idx = Number(vacDescMatch[3])
+    const date = sortedDesc(raw)[idx]
+    if (!date) return ''
+    if (attr === 'date') return fmtDate(date)
+    if ((kind === 'civ' || kind === 'comprehensive') && attr === 'validity_from') return fmtDate(date)
+    if ((kind === 'civ' || kind === 'comprehensive') && attr === 'validity_to') {
+      // vaccinationDate + 1 year as YYYY-MM-DD → fmtDate → YYYY/MM/DD (form-level dmy converts to dd/mm/yyyy)
+      const m = date.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+      if (!m) return ''
+      return `${Number(m[1]) + 1}/${m[2]}/${m[3]}`
+    }
+    const species = String(data.species ?? '').toLowerCase()
+    let p: { vaccine?: string; product?: string; manufacturer?: string; batch?: string | null; validityFrom?: string; validityTo?: string } | null = null
+    if (kind === 'rabies') p = lookupRabies(date)
+    else if (kind === 'civ') p = lookupCiv(date)
+    else if (kind === 'comprehensive' && (species === 'dog' || species === 'cat')) p = lookupComprehensive(species, date)
+    else if (kind === 'ext_parasite' && (species === 'dog' || species === 'cat')) p = lookupExternalParasite(species, date)
+    else if (kind === 'int_parasite' && (species === 'dog' || species === 'cat')) p = lookupInternalParasite(species, date)
+    if (!p) return ''
+    if (attr === 'name') return p.vaccine || p.product || ''
+    if (attr === 'manufacturer') return p.manufacturer ?? ''
+    if (attr === 'serial') return p.batch ?? ''
+    if (attr === 'validity_from') return fmtDate(p.validityFrom ?? '')
+    if (attr === 'validity_to') return fmtDate(p.validityTo ?? '')
+    return ''
+  }
+
+  // AU certificate — combined rabies vaccine info across all doses.
+  // Pattern: `vaccine_combined:rabies:(name|serial|product_expiry|booster_due)`
+  // Source: rabies_dates. Joins distinct per-dose values with " / " so that
+  // certificates with 2 shots show both products/batches when they differ
+  // and collapse to a single value when identical.
+  //   - product_expiry: catalog batch expiry (same batch → one value, different → joined)
+  //   - booster_due: always latest (newest) dose + 1y, regardless of dose count
+  //   - others: per-dose values (asc — oldest first), deduped, joined by " / "
+  const vacCombinedMatch = transform?.match(/^vaccine_combined:rabies:(name|serial|product_expiry|booster_due)$/)
+  if (vacCombinedMatch) {
+    const attr = vacCombinedMatch[1]
+    const dates = sortedAsc(raw)
+    if (dates.length === 0) return ''
+    if (attr === 'booster_due') {
+      const latest = dates[dates.length - 1]
+      const m = latest.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+      if (!m) return ''
+      return fmtDate(`${Number(m[1]) + 1}-${m[2]}-${m[3]}`)
+    }
+    const values = dates.map(d => {
+      const p = lookupRabies(d) as (ReturnType<typeof lookupRabies> & { expiry?: string }) | null
+      if (!p) return ''
+      if (attr === 'name') return p.vaccine || p.product || ''
+      if (attr === 'serial') return p.batch ?? ''
+      if (attr === 'product_expiry') return fmtDate(p.expiry ?? '')
+      return ''
+    }).filter(Boolean)
+    if (values.length === 0) return ''
+    const unique = Array.from(new Set(values))
+    return unique.join(' / ')
+  }
+
   // Vaccine attribute accessors for rabies / external / internal parasites.
   // Pattern: `vaccine:<kind>:<attr>[<n>]` where
   //   kind = rabies | ext_parasite | int_parasite
   //   attr = name | manufacturer | serial | date | validity_from | validity_to
   // validity_from/to are only defined for rabies (uses lookupRabies's 1-year window).
-  const vacMatch = transform?.match(/^vaccine:(rabies|ext_parasite|int_parasite):(name|manufacturer|serial|date|validity_from|validity_to)\[(\d+)\]$/)
+  // `serial_with_expiry` attr concatenates batch + product expiry, used by
+  // Form25AuNz where rows need "batch / 2027-10-07" in the batch cell.
+  const vacMatch = transform?.match(/^vaccine:(rabies|ext_parasite|int_parasite):(name|manufacturer|serial|serial_with_expiry|date|validity_from|validity_to)\[(\d+)\]$/)
   if (vacMatch) {
     const kind = vacMatch[1]
     const attr = vacMatch[2]
@@ -693,7 +884,7 @@ function resolveField(
     if (!date) return ''
     if (attr === 'date') return fmtDate(date)
     const species = String(data.species ?? '').toLowerCase()
-    let p: { vaccine?: string; product?: string; manufacturer?: string; batch?: string | null; validityFrom?: string; validityTo?: string } | null = null
+    let p: { vaccine?: string; product?: string; manufacturer?: string; batch?: string | null; expiry?: string | null; validityFrom?: string; validityTo?: string } | null = null
     if (kind === 'rabies') p = lookupRabies(date)
     else if (kind === 'ext_parasite' && (species === 'dog' || species === 'cat')) p = lookupExternalParasite(species, date)
     else if (kind === 'int_parasite' && (species === 'dog' || species === 'cat')) p = lookupInternalParasite(species, date)
@@ -701,6 +892,11 @@ function resolveField(
     if (attr === 'name') return p.vaccine || p.product || ''
     if (attr === 'manufacturer') return p.manufacturer ?? ''
     if (attr === 'serial') return p.batch ?? ''
+    if (attr === 'serial_with_expiry') {
+      const batch = p.batch ?? ''
+      const expiry = fmtDate(p.expiry ?? '')
+      return expiry ? (batch ? `${batch} / ${expiry}` : expiry) : batch
+    }
     if (attr === 'validity_from') return fmtDate(p.validityFrom ?? '')
     if (attr === 'validity_to') return fmtDate(p.validityTo ?? '')
     return ''
@@ -1035,6 +1231,7 @@ function resolveFieldMulti(
   fieldName: string,
   allFields: Record<string, FieldMapping>,
   doc: PackedDoc,
+  allowedVaccines?: string[],
 ): Resolved {
   const mapping = allFields[fieldName]
 
@@ -1046,7 +1243,7 @@ function resolveFieldMulti(
   const parsed = parseRowField(fieldName)
   if (!parsed) {
     const primary = doc.cases[0]
-    return resolveField(mapping, primary, (primary.data ?? {}) as Record<string, unknown>)
+    return resolveField(mapping, primary, (primary.data ?? {}) as Record<string, unknown>, allowedVaccines)
   }
 
   let targetCaseIdx: number | undefined
@@ -1072,7 +1269,7 @@ function resolveFieldMulti(
     : templateMapping
 
   const target = doc.cases[targetCaseIdx]
-  return resolveField(finalMapping, target, (target.data ?? {}) as Record<string, unknown>)
+  return resolveField(finalMapping, target, (target.data ?? {}) as Record<string, unknown>, allowedVaccines)
 }
 
 export async function fillPdfMulti(formKey: string, cases: CaseRow[]): Promise<FillResult[]> {
@@ -1105,11 +1302,24 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
   const pdfForm = pdf.getForm()
 
   const toDmy = (s: string): string => s.replace(/^(\d{4})[-/](\d{2})[-/](\d{2})$/, '$3/$2/$1')
+  const toSlashYmd2 = (s: string): string =>
+    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/, (_, y, m, d) => `${y}/${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`)
+  const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const toDmmmY = (s: string): string =>
+    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/, (_, y, m, d) => `${String(d).padStart(2, '0')}/${MONTHS_SHORT[Number(m) - 1] ?? m}/${y}`)
+  // vaccine_combined may join multiple dates with " / ". Apply the format to
+  // each part so combined expiry/booster fields render in the form's date style.
+  const eachPart = (fn: (s: string) => string) => (s: string) =>
+    s.includes(' / ') ? s.split(' / ').map(fn).join(' / ') : fn(s)
   const reformatDate = form.dateFormat === 'dmy'
-    ? (s: unknown): unknown => (typeof s === 'string' ? toDmy(s) : s)
+    ? (s: unknown): unknown => (typeof s === 'string' ? eachPart(toDmy)(s) : s)
+    : form.dateFormat === 'ymd_slash'
+    ? (s: unknown): unknown => (typeof s === 'string' ? eachPart(toSlashYmd2)(s) : s)
+    : form.dateFormat === 'dmmmy'
+    ? (s: unknown): unknown => (typeof s === 'string' ? eachPart(toDmmmY)(s) : s)
     : (s: unknown): unknown => s
 
-  for (const [fieldName] of Object.entries(form.fields)) {
+  for (const [fieldName, mapping] of Object.entries(form.fields)) {
     const value = reformatDate(resolveFieldMulti(fieldName, form.fields, doc))
     let field
     try { field = pdfForm.getField(fieldName) } catch { continue }
@@ -1118,14 +1328,36 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
       if (value === true) (field as import('pdf-lib').PDFCheckBox).check()
       else (field as import('pdf-lib').PDFCheckBox).uncheck()
     } else if (type === 'PDFTextField') {
-      const text = typeof value === 'string' ? value : ''
+      let text = typeof value === 'string' ? value : ''
+      // Fall back to mapping.default when a transform returned empty.
+      // This lets us set `"default": "N/A"` on row/slot fields that should
+      // show "N/A" whenever the underlying data is missing (e.g. optional
+      // test rows, skipped vaccine doses).
+      if (!text && mapping.default) text = mapping.default
       // Always setText (even to '') so any template default text is cleared.
       const tf = field as import('pdf-lib').PDFTextField
       tf.setText(text)
+      if (mapping.align) {
+        tf.setAlignment(
+          mapping.align === 'center' ? TextAlignment.Center
+          : mapping.align === 'right' ? TextAlignment.Right
+          : TextAlignment.Left,
+        )
+      }
     }
   }
 
   await applyFontFixes(pdf, pdfForm, customFont)
+
+  // Static text overlays — applied in multi-case path too.
+  if (form.textOverlays?.length) {
+    const pages = pdf.getPages()
+    for (const t of form.textOverlays) {
+      const page = pages[t.page ?? 0]
+      if (!page) continue
+      page.drawText(t.text, { x: t.x, y: t.y, size: t.size ?? 10, font: customFont })
+    }
+  }
 
   const bytes = await pdf.save()
   const base64 = Buffer.from(bytes).toString('base64')
@@ -1180,7 +1412,7 @@ async function applyFontFixes(
   // 'unset' → leave the key as-is from the template.
 }
 
-export type FillOptions = { includeSignature?: boolean }
+export type FillOptions = { includeSignature?: boolean; allowedVaccines?: string[] }
 
 export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillOptions): Promise<FillResult> {
   const form = MAPS[formKey]
@@ -1205,8 +1437,17 @@ export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillO
   // Converts a stand-alone YYYY-MM-DD or YYYY/MM/DD token to dd/mm/yyyy.
   const toDmy = (s: string): string =>
     s.replace(/^(\d{4})[-/](\d{2})[-/](\d{2})$/, '$3/$2/$1')
+  const toSlashYmd = (s: string): string =>
+    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/, (_, y, m, d) => `${y}/${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`)
+  const MONTHS_SHORT_1 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const toDmmmY_1 = (s: string): string =>
+    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/, (_, y, m, d) => `${String(d).padStart(2, '0')}/${MONTHS_SHORT_1[Number(m) - 1] ?? m}/${y}`)
   const reformatDate = form.dateFormat === 'dmy'
     ? (s: unknown): unknown => (typeof s === 'string' ? toDmy(s) : s)
+    : form.dateFormat === 'ymd_slash'
+    ? (s: unknown): unknown => (typeof s === 'string' ? toSlashYmd(s) : s)
+    : form.dateFormat === 'dmmmy'
+    ? (s: unknown): unknown => (typeof s === 'string' ? toDmmmY_1(s) : s)
     : (s: unknown): unknown => s
 
   // Route single-case fills through the same multi-case resolver so
@@ -1225,8 +1466,8 @@ export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillO
   const missing: string[] = []
   const empty: string[] = []
   const filled: Record<string, string | boolean> = {}
-  for (const [fieldName] of Object.entries(form.fields)) {
-    const value = reformatDate(resolveFieldMulti(fieldName, form.fields, soloDoc))
+  for (const [fieldName, mapping] of Object.entries(form.fields)) {
+    const value = reformatDate(resolveFieldMulti(fieldName, form.fields, soloDoc, options?.allowedVaccines))
     if (value === '' || value === false) empty.push(fieldName)
     else filled[fieldName] = typeof value === 'string' && value.length > 40 ? value.slice(0, 40) + '…' : value as string | boolean
     let field
@@ -1241,10 +1482,20 @@ export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillO
       if (value === true) (field as import('pdf-lib').PDFCheckBox).check()
       else (field as import('pdf-lib').PDFCheckBox).uncheck()
     } else if (type === 'PDFTextField') {
-      const text = typeof value === 'string' ? value : ''
+      let text = typeof value === 'string' ? value : ''
+      // Fall back to mapping.default when a transform returned empty.
+      // Used for N/A placeholders on row/slot fields that shouldn't be blank.
+      if (!text && mapping.default) text = mapping.default
       // Always setText (even to '') so any template default text is cleared.
       const tf = field as import('pdf-lib').PDFTextField
       tf.setText(text)
+      if (mapping.align) {
+        tf.setAlignment(
+          mapping.align === 'center' ? TextAlignment.Center
+          : mapping.align === 'right' ? TextAlignment.Right
+          : TextAlignment.Left,
+        )
+      }
     }
   }
 
@@ -1264,6 +1515,18 @@ export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillO
       } catch (e) {
         console.warn(`[${formKey}] signature overlay failed:`, (e as Error).message)
       }
+    }
+  }
+
+  // Static text overlays — unconditional (not gated by includeSignature).
+  // Used for cells that are not form fields but must always carry a fixed
+  // value (e.g. AU Babesia row always "N/A" for Korea-origin dogs).
+  if (form.textOverlays?.length) {
+    const pages = pdf.getPages()
+    for (const t of form.textOverlays) {
+      const page = pages[t.page ?? 0]
+      if (!page) continue
+      page.drawText(t.text, { x: t.x, y: t.y, size: t.size ?? 10, font: customFont })
     }
   }
 

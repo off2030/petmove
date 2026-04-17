@@ -6,6 +6,10 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { lookupRabies, lookupComprehensive, lookupCiv, lookupKennelCough, lookupExternalParasite, lookupInternalParasite, lookupParasiteById, listParasiteFamilies, getParasiteFamily } from '@/lib/vaccine-lookup'
+import { CopyButton } from './copy-button'
+import { extractVaccineInfo } from '@/lib/actions/extract-vaccine'
+import { uploadFileToNotes } from '@/lib/notes-upload'
+import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 
 interface VacRecord {
   date: string
@@ -159,6 +163,10 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
   const [editIdx, setEditIdx] = useState<number | null>(null)
   const [addingNew, setAddingNew] = useState(false)
   const [expanded, setExpanded] = useState(false)
+  const [extracting, setExtracting] = useState(false)
+  const [extractMsg, setExtractMsg] = useState<string | null>(null)
+  const [dragOver, setDragOver] = useState(false)
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
 
   // Which detail field is being edited (in expanded view)
   const [detailEdit, setDetailEdit] = useState<{ idx: number; field: keyof VacRecord } | null>(null)
@@ -168,6 +176,8 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     setAddingNew(false)
     setExpanded(false)
     setDetailEdit(null)
+    setExtractMsg(null)
+    setDragOver(false)
   }, [caseId])
 
   async function saveRecords(next: VacRecord[]) {
@@ -278,6 +288,113 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     })
   }
 
+  /* ── AI extraction (image drop) ── */
+
+  /**
+   * targetIdx가 null이면 새 레코드 추가, 숫자면 해당 레코드의 약품 정보만 업데이트.
+   */
+  async function handleFile(file: File, targetIdx: number | null) {
+    if (!isExtractableFile(file)) return
+    setExtracting(true)
+    setExtractMsg(null)
+    uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField).catch(() => {})
+    try {
+      const images = await filesToBase64([file])
+      if (images.length === 0) return
+      const result = await extractVaccineInfo({ imageBase64: images[0].base64, mediaType: images[0].mediaType })
+      if (result.ok) {
+        const hasProduct = result.data.product || result.data.manufacturer || result.data.lot || result.data.expiry
+        if (!hasProduct) {
+          setExtractMsg('추출 실패: 약품 정보를 찾을 수 없습니다')
+        } else if (targetIdx !== null) {
+          // 기존 레코드 업데이트
+          const next = records.map((r, i) => i === targetIdx ? {
+            ...r,
+            product: result.data.product ?? r.product,
+            manufacturer: result.data.manufacturer ?? r.manufacturer,
+            lot: result.data.lot ?? r.lot,
+            expiry: result.data.expiry ?? r.expiry,
+          } : r)
+          await saveRecords(next)
+          setExtractMsg(`약품 정보가 업데이트되었습니다`)
+        } else {
+          // 새 레코드 추가
+          const newRec: VacRecord = {
+            date: '',
+            valid_until: null,
+            product: result.data.product,
+            manufacturer: result.data.manufacturer,
+            lot: result.data.lot,
+            expiry: result.data.expiry,
+          }
+          const next = [...records, newRec]
+          await saveRecords(next)
+          setExtractMsg(`${label} 약품 정보가 추가되었습니다. 접종일을 입력하세요.`)
+          setExpanded(true)
+          setEditIdx(next.length - 1)
+        }
+      } else {
+        setExtractMsg('추출 실패: ' + result.error)
+      }
+    } catch (err) {
+      setExtractMsg('오류: ' + (err instanceof Error ? err.message : String(err)))
+    } finally {
+      setExtracting(false)
+      setTimeout(() => setExtractMsg(null), 4000)
+    }
+  }
+
+  // ── Paste (Ctrl+V) ──
+  // 루트 div 또는 확장 뷰의 각 카드에 hover 중일 때 붙여넣으면 해당 영역으로 전달
+  const rootRef = useRef<HTMLDivElement | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    function handlePaste(e: ClipboardEvent) {
+      if (!rootRef.current) return
+      // 컴포넌트 내 input/textarea가 포커스 중이면 무시 (기본 동작 유지)
+      const active = document.activeElement
+      if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return
+      // 이 컴포넌트 위에 hover 중일 때만 처리
+      if (!rootRef.current.matches(':hover')) return
+
+      const items = e.clipboardData?.items
+      if (!items) return
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile()
+          if (file) {
+            e.preventDefault()
+            // 호버된 카드가 있으면 해당 레코드에, 아니면 새 기록으로 추가
+            // dragOverIdx는 드래그 전용이므로, hover 중인 카드를 별도로 찾음
+            const hoveredCard = rootRef.current.querySelector('[data-record-idx]:hover') as HTMLElement | null
+            if (hoveredCard) {
+              const idx = Number(hoveredCard.dataset.recordIdx)
+              if (!Number.isNaN(idx)) { handleFile(file, idx); return }
+            }
+            handleFile(file, null)
+            return
+          }
+        }
+      }
+    }
+    document.addEventListener('paste', handlePaste)
+    return () => document.removeEventListener('paste', handlePaste)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [records, caseId])
+
+  function handleDragOver(e: React.DragEvent) { e.preventDefault(); setDragOver(true) }
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault()
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false)
+  }
+  function handleDropNew(e: React.DragEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(false)
+    const file = Array.from(e.dataTransfer.files).find(isExtractableFile)
+    if (file) handleFile(file, null)
+  }
+
   // Map sorted index back to original records index
   function origIdx(sortedIdx: number): number {
     const rec = sortedForExpand[sortedIdx]
@@ -285,7 +402,16 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0">
+    <div
+      ref={rootRef}
+      onDragOver={!expanded ? handleDragOver : undefined}
+      onDragLeave={!expanded ? handleDragLeave : undefined}
+      onDrop={!expanded ? handleDropNew : undefined}
+      className={cn(
+        "grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0 rounded-md transition-colors",
+        !expanded && dragOver && "bg-accent/40 ring-2 ring-ring/30 ring-dashed",
+      )}
+    >
       <div className="flex items-center gap-1 pt-1">
         {/* Label: click to toggle expanded */}
         <button
@@ -307,38 +433,48 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
         >
           +
         </button>
+        <input ref={fileRef} type="file" accept="image/*,.pdf" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f, null); e.target.value = '' }} className="hidden" />
+        <button type="button" onClick={() => fileRef.current?.click()} disabled={extracting} className="shrink-0 rounded-md p-0.5 text-muted-foreground/40 hover:text-foreground transition-colors disabled:opacity-30" title="이미지/PDF로 약품 정보 추출">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        </button>
       </div>
 
-      {/* Collapsed view: dates inline */}
+      {/* Collapsed view: dates inline (newest first) */}
       {!expanded && (
         <div className="flex items-baseline gap-[10px] min-w-0 flex-wrap">
-          {records.map((rec, i) => (
-            <div key={i} className="group/item inline-flex items-baseline gap-[10px]">
-              {i > 0 && <span className="text-muted-foreground/30 select-none">|</span>}
-              {editIdx === i ? (
-                <DateInput
-                  initial={rec.date}
-                  onSave={(v) => { if (v) updateRecordDate(i, v); else setEditIdx(null) }}
-                  onCancel={() => setEditIdx(null)}
-                />
-              ) : (
+          {sortedForExpand.map((rec, si) => {
+            const i = origIdx(si)
+            return (
+              <div key={i} className="group/item inline-flex items-baseline gap-[10px]">
+                {si > 0 && <span className="text-muted-foreground/30 select-none">|</span>}
+                {editIdx === i ? (
+                  <DateInput
+                    initial={rec.date}
+                    onSave={(v) => { if (v) updateRecordDate(i, v); else setEditIdx(null) }}
+                    onCancel={() => setEditIdx(null)}
+                  />
+                ) : (
+                  <span className="group/v relative inline-flex items-baseline">
+                    <button
+                      type="button"
+                      onClick={() => setEditIdx(i)}
+                      className="text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer"
+                    >
+                      {rec.date}
+                    </button>
+                    <CopyButton value={rec.date} className="ml-1 opacity-0 group-hover/v:opacity-100" />
+                  </span>
+                )}
                 <button
                   type="button"
-                  onClick={() => setEditIdx(i)}
-                  className="text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer"
+                  onClick={() => deleteRecord(i)}
+                  className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100"
                 >
-                  {rec.date}
+                  ✕
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => deleteRecord(i)}
-                className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
+              </div>
+            )
+          })}
 
           {addingNew && (
             <>
@@ -351,11 +487,22 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
             </>
           )}
 
-          {records.length === 0 && !addingNew && (
+          {records.length === 0 && !addingNew && !extracting && (
             <button type="button" onClick={() => setAddingNew(true)}
               className="text-left rounded-md px-2 py-1 -mx-2 text-sm text-muted-foreground/60 italic transition-colors hover:bg-accent/60 cursor-pointer">
               —
             </button>
+          )}
+          {extracting && (
+            <span className="text-xs text-muted-foreground">추출 중...</span>
+          )}
+          {extractMsg && (
+            <span className={cn('text-xs ml-2', extractMsg.includes('실패') || extractMsg.includes('오류') ? 'text-red-600' : 'text-green-600')}>
+              {extractMsg}
+            </span>
+          )}
+          {dragOver && (
+            <span className="text-xs text-muted-foreground">이미지를 놓으면 자동 입력됩니다</span>
           )}
         </div>
       )}
@@ -373,6 +520,19 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
             </div>
           )}
 
+          {/* Drop zone for NEW record */}
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDropNew}
+            className={cn(
+              "text-xs text-muted-foreground/50 italic px-2 py-1 rounded-md border border-dashed border-border/40 transition-colors",
+              dragOver && "bg-accent/40 ring-2 ring-ring/30 ring-dashed text-foreground",
+            )}
+          >
+            {dragOver ? '새 기록으로 추가됩니다' : '이미지를 여기 드롭 → 새 접종 기록 추가'}
+          </div>
+
           {sortedForExpand.map((rec, si) => {
             const oi = origIdx(si)
             // If user picked a specific parasite product, hints come from that product family.
@@ -380,7 +540,25 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
               ? getDetailHintsById(rec.product_id, rec.date, weightKg)
               : getDetailHints(label, rec.date, species)
             return (
-              <div key={oi} className="group/item">
+              <div
+                key={oi}
+                data-record-idx={oi}
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverIdx(oi) }}
+                onDragLeave={(e) => {
+                  e.preventDefault(); e.stopPropagation()
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverIdx(null)
+                }}
+                onDrop={(e) => {
+                  e.preventDefault(); e.stopPropagation()
+                  setDragOverIdx(null)
+                  const file = Array.from(e.dataTransfer.files).find(isExtractableFile)
+                  if (file) handleFile(file, oi)
+                }}
+                className={cn(
+                  "group/item rounded-md transition-colors",
+                  dragOverIdx === oi && "bg-accent/40 ring-2 ring-ring/30 ring-dashed",
+                )}
+              >
                 {/* Row 1: date + valid_until */}
                 <div className="flex items-baseline gap-[10px]">
                   {editIdx === oi ? (
