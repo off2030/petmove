@@ -57,12 +57,35 @@ export async function generateAU(caseId: string) {
   return generate('AU', caseId)
 }
 
+export async function generateAU2(caseId: string) {
+  return generate('AU_2', caseId)
+}
+
 export async function generateAUCat(caseId: string) {
   return generate('AU_Cat', caseId)
 }
 
+export async function generateAUCat2(caseId: string) {
+  return generate('AU_Cat_2', caseId)
+}
+
+export async function generateSGP(caseId: string) {
+  return generate('SGP', caseId)
+}
+
 export async function generateNZ(caseId: string) {
-  return generate('NZ', caseId)
+  // 광견병 접종 횟수로 템플릿 선택: 1회면 NZ(primary), 2회 이상이면 NZ_2(booster).
+  // 템플릿마다 (10a)/(10b) 구간에 미리 그어진 취소선이 달라서 결과 PDF의 해당 구간이
+  // 깔끔하게 하나만 보이게 된다.
+  const supabase = await createClient()
+  const { data: row } = await supabase
+    .from('cases')
+    .select('data')
+    .eq('id', caseId)
+    .single()
+  const dates = ((row?.data as Record<string, unknown> | undefined)?.rabies_dates ?? []) as unknown[]
+  const formKey = Array.isArray(dates) && dates.length >= 2 ? 'NZ_2' : 'NZ'
+  return generate(formKey, caseId)
 }
 
 /* ───── Multi-animal Annex/UK generation ───── */

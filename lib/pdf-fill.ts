@@ -9,6 +9,7 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import mappings from '@/data/pdf-field-mappings.json'
 import { lookupRabies, lookupExternalParasite, lookupInternalParasite, lookupComprehensive, lookupCiv, lookupKennelCough, lookupParasiteById, getParasiteFamily } from '@/lib/vaccine-lookup'
+import { VET_INFO } from '@/lib/vet-info'
 import type { CaseRow } from '@/lib/supabase/types'
 
 /* ─── Performance feature flags ────────────────────────────────────────
@@ -139,6 +140,22 @@ const SEX_LABEL_EN: Record<string, string> = {
   female: 'Female',
   neutered_male: 'N. male',
   spayed_female: 'N. female',
+}
+
+/** sex code → Male/Female only (drops neutered status). */
+const SEX_SIMPLE_EN: Record<string, string> = {
+  male: 'Male',
+  female: 'Female',
+  neutered_male: 'Male',
+  spayed_female: 'Female',
+}
+
+/** sex code → Entire/Neutered column value. */
+const SEX_NEUTERED_STATUS: Record<string, string> = {
+  male: 'Entire',
+  female: 'Entire',
+  neutered_male: 'Neutered',
+  spayed_female: 'Neutered',
 }
 
 /**
@@ -910,6 +927,35 @@ function resolveField(
   if (transform === 'sex_label') {
     return SEX_LABEL_EN[String(raw ?? '').toLowerCase()] ?? ''
   }
+  if (transform === 'sex_simple') {
+    return SEX_SIMPLE_EN[String(raw ?? '').toLowerCase()] ?? ''
+  }
+  if (transform === 'sex_neutered_status') {
+    return SEX_NEUTERED_STATUS[String(raw ?? '').toLowerCase()] ?? ''
+  }
+
+  // Central vet info lookup: transform "vet:<key>" → VET_INFO[key]
+  const vetMatch = transform?.match(/^vet:(.+)$/)
+  if (vetMatch) {
+    const key = vetMatch[1] as keyof typeof VET_INFO
+    return VET_INFO[key] ?? ''
+  }
+
+  // NZ rabies: (10a) primary — filled ONLY when there's exactly 1 dose (즉, 부스터 이전)
+  if (transform === 'rabies:primary_date') {
+    const dates = sortedAsc(raw)
+    return dates.length === 1 ? fmtDate(dates[0]) : ''
+  }
+  // NZ rabies: (10b) booster latest — filled ONLY when 2+ doses (이미 부스터 받음)
+  if (transform === 'rabies:booster_date_latest') {
+    const dates = sortedDesc(raw)
+    return dates.length >= 2 ? fmtDate(dates[0]) : ''
+  }
+  // NZ rabies: (10b) previous — filled ONLY when 2+ doses
+  if (transform === 'rabies:booster_date_previous') {
+    const dates = sortedDesc(raw)
+    return dates.length >= 2 ? fmtDate(dates[1]) : ''
+  }
 
   // Split an address string into street vs locality portions for forms
   // that expose two address fields (Annex III I1/I5 consignor/consignee).
@@ -957,6 +1003,14 @@ function resolveField(
       if (prop === 'value') return rec.value ?? ''
       if (prop === 'lab') return rec.lab ? (LAB_INFO[rec.lab]?.name ?? rec.lab) : ''
       if (prop === 'lab_country') return rec.lab ? (LAB_INFO[rec.lab]?.country ?? '') : ''
+    }
+    if (source === 'infectious_disease_records') {
+      if (!Array.isArray(raw)) return ''
+      const rec = raw[idx] as { date?: string | null; lab?: string | null } | undefined
+      if (!rec) return ''
+      if (prop === 'date') return fmtDate(rec.date ?? '')
+      if (prop === 'lab') return rec.lab ?? ''
+      return ''
     }
     // Generic string[] / primitive[] fallback (used by e.g. microchip_extra).
     if (Array.isArray(raw) && !prop) {

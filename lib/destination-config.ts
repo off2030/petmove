@@ -92,7 +92,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     extraCerts: [
       { key: 'idDeclaration', label: 'ID', type: 'single' },
       { key: 'au', label: 'AU', type: 'single', species: 'dog' },
+      { key: 'au2', label: 'AU 2', type: 'single', species: 'dog' },
       { key: 'auCat', label: 'AU', type: 'single', species: 'cat' },
+      { key: 'auCat2', label: 'AU 2', type: 'single', species: 'cat' },
     ],
   },
   new_zealand: {
@@ -132,6 +134,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   singapore: {
     keywords: ['싱가포르', 'singapore'],
     vaccines: ['rabies', 'rabies_titer', 'general', 'external_parasite', 'internal_parasite'],
+    extraCerts: [
+      { key: 'sgp', label: 'SGP', type: 'single' },
+    ],
   },
   hongkong: {
     keywords: ['홍콩', 'hong kong', 'hongkong'],

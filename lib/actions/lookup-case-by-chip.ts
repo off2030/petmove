@@ -24,6 +24,7 @@ export async function lookupCaseByMicrochip(
   const { data, error } = await supabase
     .from('cases')
     .select('*')
+    .is('deleted_at', null)
     .or(variants.map(v => `microchip.eq.${v}`).join(','))
     .limit(1)
 

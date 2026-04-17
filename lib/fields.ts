@@ -159,7 +159,6 @@ export const HIDDEN_EN_KEYS = new Set<string>([
   'kennel_cough_dates',
   'external_parasite_1', 'external_parasite_2', 'external_parasite_3', 'external_parasite_dates',
   'internal_parasite_1', 'internal_parasite_2', 'internal_parasite_dates',
-  'microchip_check_date', // shown inline with microchip_implant_date
   'microchip_secondary', // shown via MicrochipField
   'sex_en', // redundant with sex select's bilingual label
   'address_kr',  // shown via AddressField with search

@@ -44,7 +44,12 @@ export function extractResultToSeed(r: ExtractAllResult): CaseSeed {
 
   // ── regular columns ──
   if (r.customer_name) column.customer_name = r.customer_name
-  if (r.customer_name_en) column.customer_name_en = r.customer_name_en
+  // 모델이 간혹 customer_name_en에 last를 중복 추가(예: "Hoa Mai Nguyen Nguyen")하는
+  // 버그가 있어 first + last로 직접 재구성. 둘 중 하나라도 없으면 모델 값 그대로 사용.
+  const firstEn = r.customer_first_name_en?.trim()
+  const lastEn = r.customer_last_name_en?.trim()
+  if (firstEn && lastEn) column.customer_name_en = `${firstEn} ${lastEn}`
+  else if (r.customer_name_en) column.customer_name_en = r.customer_name_en
   const petNameClean = cleanPetName(r.pet_name)
   if (petNameClean) column.pet_name = petNameClean
   const petNameEnClean = cleanPetName(r.pet_name_en)

@@ -16,9 +16,9 @@ import { extractResultToSeed } from '@/lib/extract-to-seed'
 import { filesToBase64 } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { lookupCaseByMicrochip } from '@/lib/actions/lookup-case-by-chip'
-import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAUCat, generateNZ, previewSiblings, generateAnnexIIIMulti, generateUKMulti } from '@/lib/actions/generate-pdf'
+import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateSGP, previewSiblings, generateAnnexIIIMulti, generateUKMulti } from '@/lib/actions/generate-pdf'
 import { MultiFormDialog } from './multi-form-dialog'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getCertButtons } from '@/lib/destination-config'
 import type { CertButton } from '@/lib/destination-config'
 import type { CaseRow } from '@/lib/supabase/types'
@@ -38,8 +38,11 @@ const CERT_ACTIONS: Record<string, (caseId: string, opts?: { includeSignature?: 
   formAC: generateFormAC as unknown as typeof generateForm25,
   idDeclaration: generateIdentificationDeclaration as unknown as typeof generateForm25,
   au: generateAU as unknown as typeof generateForm25,
+  au2: generateAU2 as unknown as typeof generateForm25,
   auCat: generateAUCat as unknown as typeof generateForm25,
+  auCat2: generateAUCat2 as unknown as typeof generateForm25,
   nz: generateNZ as unknown as typeof generateForm25,
+  sgp: generateSGP as unknown as typeof generateForm25,
 }
 
 /** Cert key → multi-form dialog formKey mapping */
@@ -54,6 +57,14 @@ function Inner() {
     () => cases.find((c) => c.id === selectedId) ?? null,
     [cases, selectedId],
   )
+  const { prevCase, nextCase } = useMemo(() => {
+    if (!selectedCase) return { prevCase: null as CaseRow | null, nextCase: null as CaseRow | null }
+    const idx = cases.findIndex((c) => c.id === selectedCase.id)
+    return {
+      prevCase: idx > 0 ? cases[idx - 1] : null,
+      nextCase: idx >= 0 && idx < cases.length - 1 ? cases[idx + 1] : null,
+    }
+  }, [cases, selectedCase])
   const detailScrollRef = useRef<HTMLDivElement>(null)
   const [multiForm, setMultiForm] = useState<{ caseId: string; formKey: 'AnnexIII' | 'UK' } | null>(null)
   const [includeSignature, setIncludeSignature] = useState(false)
@@ -135,6 +146,7 @@ function Inner() {
   }, [addLocalCase, selectCase, uploadFilesToNotes])
 
   // Ctrl+Z: undo last change on selected case
+  // Ctrl+←/→: 이전/다음 케이스로 이동 (인풋 포커스 중에는 커서 이동과 충돌하므로 무시)
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && selectedId) {
@@ -144,11 +156,32 @@ function Inner() {
             updateLocalCaseField(selectedId, result.storage, result.key, result.restoredValue)
           }
         })
+        return
+      }
+      if (e.ctrlKey || e.metaKey) {
+        const target = e.target as HTMLElement | null
+        const inTextField =
+          !!target && (
+            target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.isContentEditable
+          )
+        if (inTextField) return
+        if (e.key === 'ArrowLeft' && prevCase) {
+          e.preventDefault()
+          selectCase(prevCase.id)
+          return
+        }
+        if (e.key === 'ArrowRight' && nextCase) {
+          e.preventDefault()
+          selectCase(nextCase.id)
+          return
+        }
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [selectedId, updateLocalCaseField])
+  }, [selectedId, updateLocalCaseField, prevCase, nextCase, selectCase])
 
   const handleDuplicate = useCallback(async (id: string) => {
     const result = await duplicateCase(id)
@@ -214,7 +247,32 @@ function Inner() {
         {/* Panel 2: Detail (full width = 50% of 200%) */}
         <div className="w-1/2 h-full">
           <div className="h-full overflow-hidden pt-32 pb-24 px-20 2xl:pt-36 2xl:pb-28 2xl:px-24 3xl:pt-44 3xl:pb-36 3xl:px-32 4xl:pt-52 4xl:pb-44 4xl:px-40 6xl:pt-64 6xl:pb-52 6xl:px-56">
-            <div className="h-full mx-auto max-w-3xl 4xl:max-w-4xl 6xl:max-w-5xl flex flex-col gap-4">
+            <div className="relative h-full mx-auto max-w-3xl 4xl:max-w-4xl 6xl:max-w-5xl">
+              {selectedCase && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => prevCase && selectCase(prevCase.id)}
+                    disabled={!prevCase}
+                    aria-label="이전 케이스 (Ctrl+←)"
+                    title="이전 케이스 (Ctrl+←)"
+                    className="absolute -left-12 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+                  >
+                    <ChevronLeft size={24} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => nextCase && selectCase(nextCase.id)}
+                    disabled={!nextCase}
+                    aria-label="다음 케이스 (Ctrl+→)"
+                    title="다음 케이스 (Ctrl+→)"
+                    className="absolute -right-12 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+                  >
+                    <ChevronRight size={24} />
+                  </button>
+                </>
+              )}
+              <div className="h-full flex flex-col gap-4">
               {/* Back button + menu bar */}
               <div className="h-9 shrink-0 flex items-center">
                 <button
@@ -302,6 +360,7 @@ function Inner() {
                   </>
                 ) : '\u00A0'}
               </div>
+            </div>
             </div>
           </div>
         </div>
