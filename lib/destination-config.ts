@@ -110,6 +110,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['태국', 'thailand'],
     vaccines: ['rabies', 'rabies_titer', 'general'],
     extraSection: 'thailand',
+    extraCerts: [
+      { key: 'formR11', label: 'R.11', type: 'single' },
+    ],
   },
   philippines: {
     keywords: ['필리핀', 'philippines'],
@@ -146,6 +149,10 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   hawaii: {
     keywords: ['하와이', 'hawaii'],
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
+    extraSection: 'hawaii',
+    extraCerts: [
+      { key: 'aqs', label: 'AQS-279', type: 'single' },
+    ],
   },
   guam: {
     keywords: ['괌', 'guam'],

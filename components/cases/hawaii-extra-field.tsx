@@ -1,77 +1,53 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
-import { extractFlightInfo } from '@/lib/actions/extract-flight'
 import { CopyButton } from './copy-button'
+import { extractHawaiiInfo } from '@/lib/actions/extract-hawaii'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 
-/* ── Types ── */
-
-interface ThailandExtra {
-  address_overseas: string | null
+interface HawaiiExtra {
   passport_number: string | null
-  passport_issue_date: string | null
+  passport_issuing_country: string | null
   passport_expiry_date: string | null
-  passport_nationality: string | null
-  arrival_flight_number: string | null
-  arrival_date: string | null
-  arrival_time: string | null
-  quarantine_location: string | null
+  date_of_birth: string | null
+  email_address: string | null
+  address_overseas: string | null
+  postal_code: string | null
 }
 
-const EMPTY: ThailandExtra = {
-  address_overseas: null,
+const EMPTY: HawaiiExtra = {
   passport_number: null,
-  passport_issue_date: null,
+  passport_issuing_country: null,
   passport_expiry_date: null,
-  passport_nationality: null,
-  arrival_flight_number: null,
-  arrival_date: null,
-  arrival_time: null,
-  quarantine_location: null,
+  date_of_birth: null,
+  email_address: null,
+  address_overseas: null,
+  postal_code: null,
 }
 
-const QUARANTINE_OPTIONS = [
-  { value: 'Bangkok', label: 'Bangkok' },
-  { value: 'Phuket', label: 'Phuket' },
-  { value: 'Chiang Mai', label: 'Chiang Mai' },
-]
+const DATA_KEY = 'hawaii_extra'
 
-const DATA_KEY = 'thailand_extra'
-
-/* ── Component ── */
-
-export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
+export function HawaiiExtraField({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
   const { updateLocalCaseField } = useCases()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const extra: ThailandExtra = (data[DATA_KEY] as ThailandExtra) ?? { ...EMPTY }
+  const extra: HawaiiExtra = (data[DATA_KEY] as HawaiiExtra) ?? { ...EMPTY }
 
   const [editingField, setEditingField] = useState<string | null>(null)
   const [extracting, setExtracting] = useState(false)
   const [extractMsg, setExtractMsg] = useState<string | null>(null)
-  const [dragOver, setDragOver] = useState(false)
-  const [inputText, setInputText] = useState('')
   const [showInput, setShowInput] = useState(false)
+  const [inputText, setInputText] = useState('')
+  const [dragOver, setDragOver] = useState(false)
   const dropRef = useRef<HTMLDivElement>(null)
   const textRef = useRef<HTMLTextAreaElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    setEditingField(null)
-    setExtracting(false)
-    setExtractMsg(null)
-    setShowInput(false)
-    setInputText('')
-  }, [caseId])
-
-  /* ── Save ── */
-
-  async function saveExtra(next: ThailandExtra) {
+  async function saveExtra(next: HawaiiExtra) {
     const hasAny = Object.values(next).some((v) => v !== null)
     const val = hasAny ? next : null
     const r = await updateCaseField(caseId, 'data', DATA_KEY, val)
@@ -79,36 +55,24 @@ export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRo
     setEditingField(null)
   }
 
-  function saveField<K extends keyof ThailandExtra>(key: K, value: string | null) {
+  function saveField<K extends keyof HawaiiExtra>(key: K, value: string | null) {
     saveExtra({ ...extra, [key]: value || null })
   }
 
   /* ── AI extraction ── */
 
-  async function tryExtract(input: { images?: { base64: string; mediaType: string }[]; text?: string }) {
+  async function tryExtract(input: { imageBase64?: string; mediaType?: string; text?: string }) {
     setExtracting(true)
     setExtractMsg(null)
     try {
-      const result = await extractFlightInfo(input)
+      const result = await extractHawaiiInfo(input)
       if (result.ok) {
-        const merged: ThailandExtra = { ...extra }
-        if (result.data.address_overseas) merged.address_overseas = result.data.address_overseas
-        if (result.data.passport_number) merged.passport_number = result.data.passport_number
-        if (result.data.passport_issue_date) merged.passport_issue_date = result.data.passport_issue_date
-        if (result.data.passport_expiry_date) merged.passport_expiry_date = result.data.passport_expiry_date
-        if (result.data.passport_nationality) merged.passport_nationality = result.data.passport_nationality
-        // Arrival = inbound (Korea → Thailand)
-        if (result.data.inbound.flight_number) merged.arrival_flight_number = result.data.inbound.flight_number
-        if (result.data.inbound.date) merged.arrival_date = result.data.inbound.date
-        if (result.data.arrival_time) merged.arrival_time = result.data.arrival_time
-        if (result.data.quarantine_location) merged.quarantine_location = result.data.quarantine_location
+        const merged: HawaiiExtra = { ...extra }
+        for (const [k, v] of Object.entries(result.data)) {
+          if (v !== null) (merged as unknown as Record<string, string | null>)[k] = v
+        }
         const r = await updateCaseField(caseId, 'data', DATA_KEY, merged)
         if (r.ok) updateLocalCaseField(caseId, 'data', DATA_KEY, merged)
-        // inbound.date = 한국 출국일 → 케이스의 departure_date 컬럼에도 동기화
-        if (result.data.inbound.date) {
-          const rd = await updateCaseField(caseId, 'column', 'departure_date', result.data.inbound.date)
-          if (rd.ok) updateLocalCaseField(caseId, 'column', 'departure_date', result.data.inbound.date)
-        }
         setExtractMsg('정보가 입력되었습니다')
       } else {
         setExtractMsg('추출 실패: ' + result.error)
@@ -128,7 +92,9 @@ export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRo
       uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField).catch(() => {})
     }
     const images = await filesToBase64(extractable)
-    if (images.length > 0) tryExtract({ images })
+    for (const img of images) {
+      await tryExtract({ imageBase64: img.base64, mediaType: img.mediaType })
+    }
   }
 
   function handleTextSubmit() {
@@ -139,8 +105,6 @@ export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRo
     tryExtract({ text })
   }
 
-  /* ── Paste ── */
-
   useEffect(() => {
     function handlePaste(e: ClipboardEvent) {
       if (!dropRef.current) return
@@ -148,8 +112,10 @@ export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRo
       const inSection = dropRef.current.contains(active) || dropRef.current.matches(':hover')
       if (!inSection) return
       if (active instanceof HTMLInputElement || (active instanceof HTMLTextAreaElement && active !== textRef.current)) return
+
       const items = e.clipboardData?.items
       if (!items) return
+
       const imageFiles: File[] = []
       for (const item of Array.from(items)) {
         if (item.type.startsWith('image/')) {
@@ -160,13 +126,14 @@ export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRo
       if (imageFiles.length > 0) {
         e.preventDefault()
         handleFiles(imageFiles)
+        return
       }
+
+      if (active === textRef.current) return
     }
     document.addEventListener('paste', handlePaste)
     return () => document.removeEventListener('paste', handlePaste)
   })
-
-  /* ── Drag & drop ── */
 
   function handleDragOver(e: React.DragEvent) { e.preventDefault(); setDragOver(true) }
   function handleDragLeave(e: React.DragEvent) {
@@ -180,21 +147,14 @@ export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRo
     if (files.length > 0) handleFiles(files)
   }
 
-  /* ── Render helpers ── */
-
-  const renderField = (key: keyof ThailandExtra, label: string, type: 'text' | 'date' | 'time' | 'select' = 'text', placeholder = '', options?: { value: string; label: string }[]) => {
+  const renderField = (key: keyof HawaiiExtra, label: string, type: 'text' | 'date' | 'email' = 'text', placeholder = '') => {
     const val = extra[key] ?? null
     const isEditing = editingField === key
-    const display = type === 'select' && val ? (options?.find((o) => o.value === val)?.label ?? val) : val
     return (
       <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1">
         <span className="text-sm text-muted-foreground pt-1">{label}</span>
         {isEditing ? (
-          type === 'select' && options ? (
-            <SelectInput options={options} initial={val ?? ''} onSave={(v) => saveField(key, v)} onCancel={() => setEditingField(null)} />
-          ) : (
-            <InlineInput type={type === 'time' ? 'time' : type === 'date' ? 'date' : 'text'} initial={val ?? ''} placeholder={placeholder} onSave={(v) => saveField(key, v)} onCancel={() => setEditingField(null)} />
-          )
+          <InlineInput type={type} initial={val ?? ''} placeholder={placeholder} onSave={(v) => saveField(key, v)} onCancel={() => setEditingField(null)} />
         ) : (
           <div className="group/val inline-flex items-baseline">
             <button
@@ -205,16 +165,14 @@ export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRo
                 !val && 'text-muted-foreground/60 italic',
               )}
             >
-              {display || '—'}
+              {val || '—'}
             </button>
-            {val && <CopyButton value={String(display)} className="ml-1 opacity-0 group-hover/val:opacity-100" />}
+            {val && <CopyButton value={String(val)} className="ml-1 opacity-0 group-hover/val:opacity-100" />}
           </div>
         )}
       </div>
     )
   }
-
-  /* ── Render ── */
 
   return (
     <div
@@ -227,22 +185,24 @@ export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRo
         dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
-      {/* AI 입력 */}
+      {/* ── AI Input zone ── */}
       <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1">
         <span className="text-sm text-muted-foreground pt-1">AI 입력</span>
         <div className="min-w-0 space-y-1">
           {showInput ? (
-            <textarea
-              ref={textRef}
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTextSubmit() }
-                if (e.key === 'Escape') { setShowInput(false); setInputText('') }
-              }}
-              placeholder="정보를 붙여넣으세요 (Enter로 추출)"
-              className="w-full min-h-[3rem] rounded-md border border-border/50 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-none"
-            />
+            <div className="space-y-1">
+              <textarea
+                ref={textRef}
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTextSubmit() }
+                  if (e.key === 'Escape') { setShowInput(false); setInputText('') }
+                }}
+                placeholder="여권/주소 정보를 붙여넣으세요 (Enter로 추출)"
+                className="w-full min-h-[3rem] rounded-md border border-border/50 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-none"
+              />
+            </div>
           ) : (
             <div className="flex items-center gap-1">
               <button
@@ -268,27 +228,19 @@ export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRo
         </div>
       </div>
 
-      {/* 해외주소 */}
-      {renderField('address_overseas', '해외주소', 'text', 'Destination address in Thailand')}
-
-      {/* 여권정보 */}
-      {renderField('passport_number', '여권번호', 'text', 'M12345678')}
-      {renderField('passport_expiry_date', '여권 만료일', 'date')}
-      {renderField('passport_nationality', '국적', 'text', 'Republic of Korea')}
-
-      {/* 항공권 (출국편 only) */}
-      {renderField('arrival_flight_number', '항공편명', 'text', 'KE659')}
-      {renderField('arrival_date', '도착일', 'date')}
-      {renderField('arrival_time', '도착시간', 'time', 'HH:mm')}
-      {renderField('quarantine_location', '도착지', 'select', '', QUARANTINE_OPTIONS)}
+      {renderField('passport_number', '여권번호', 'text', '마지막 4자리')}
+      {renderField('passport_issuing_country', '발행국가', 'text', 'Republic of Korea')}
+      {renderField('passport_expiry_date', '만료일', 'date')}
+      {renderField('date_of_birth', '생년월일', 'date')}
+      {renderField('email_address', '이메일주소', 'email')}
+      {renderField('address_overseas', '해외주소', 'text')}
+      {renderField('postal_code', '우편번호', 'text')}
     </div>
   )
 }
 
-/* ── Inputs ── */
-
 function InlineInput({ type, initial, placeholder, onSave, onCancel }: {
-  type: 'text' | 'date' | 'time'
+  type: 'text' | 'date' | 'email'
   initial: string
   placeholder: string
   onSave: (v: string | null) => void
@@ -311,28 +263,5 @@ function InlineInput({ type, initial, placeholder, onSave, onCancel }: {
       placeholder={placeholder}
       className="h-7 w-full max-w-[320px] rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
-  )
-}
-
-function SelectInput({ options, initial, onSave, onCancel }: {
-  options: { value: string; label: string }[]
-  initial: string
-  onSave: (v: string | null) => void
-  onCancel: () => void
-}) {
-  const ref = useRef<HTMLSelectElement>(null)
-  useEffect(() => { ref.current?.focus() }, [])
-  return (
-    <select
-      ref={ref}
-      defaultValue={initial}
-      onChange={(e) => onSave(e.target.value || null)}
-      onBlur={() => setTimeout(onCancel, 150)}
-      onKeyDown={(e) => { if (e.key === 'Escape') onCancel() }}
-      className="h-7 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
-    >
-      <option value="">선택</option>
-      {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-    </select>
   )
 }

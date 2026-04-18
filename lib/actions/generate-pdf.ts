@@ -98,6 +98,14 @@ export async function generateNZ(caseId: string, opts?: GenerateOpts) {
   return generate(formKey, caseId, opts)
 }
 
+export async function generateAQS(caseId: string, opts?: GenerateOpts) {
+  return generate('AQS_279', caseId, opts)
+}
+
+export async function generateFormR11(caseId: string, opts?: GenerateOpts) {
+  return generate('Form_R11', caseId, opts)
+}
+
 /* ───── Multi-animal Annex/UK generation ───── */
 
 export interface SiblingSummary {

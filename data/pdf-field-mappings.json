@@ -3904,5 +3904,287 @@
         "note": "p3 Phone/email"
       }
     }
+  },
+  "AQS_279": {
+    "template": "AQS_279.pdf",
+    "description": "Hawaii 입주 신고서 (Animal Quarantine Station AQS-279 — Dog and Cat Entry Form for Hawaii). Page 1: 1) PLANNED DATE OF ARRIVAL, 2) PET INFORMATION, 3) PRIMARY OWNER INFORMATION. Page 3: Print Name & Date",
+    "filename": "AQS_279_{pet_name}.pdf",
+    "dateFormat": "dmy",
+    "fields": {
+      "1 PLANNED DATE OF ARRIVAL": {
+        "source": "departure_date",
+        "note": "p1 Section 1: Planned arrival date in Hawaii"
+      },
+      "PET NAME": {
+        "source": "pet_name_en",
+        "note": "p1 Section 2: Pet name"
+      },
+      "SPECIESRow1": {
+        "source": "species",
+        "transform": "en",
+        "note": "p1 Section 2: Species (Dog/Cat)"
+      },
+      "SEXRow1": {
+        "source": "sex",
+        "note": "p1 Section 2: Sex"
+      },
+      "BREED": {
+        "source": "breed_en",
+        "note": "p1 Section 2: Breed"
+      },
+      "COLOR": {
+        "source": "color_en",
+        "note": "p1 Section 2: Color"
+      },
+      "AGERow1": {
+        "source": "birth_date",
+        "transform": "age_years",
+        "note": "p1 Section 2: Age in years"
+      },
+      "MICROCHIP NUMBERRow1": {
+        "source": "microchip",
+        "note": "p1 Section 2: Microchip number"
+      },
+      "ID NUMBER LAST 4 DIGITSRow1": {
+        "source": "microchip",
+        "transform": "last_4_digits",
+        "note": "p1 Section 2: Last 4 digits of microchip"
+      },
+      "TYPE": {
+        "source": null,
+        "default": "RABIES",
+        "note": "p1 Section 2: Vaccine type"
+      },
+      "EXPIRATION DATE": {
+        "source": "rabies_dates",
+        "transform": "array[0]",
+        "note": "p1 Section 2: Rabies vaccine expiration date"
+      },
+      "FIRST": {
+        "source": "customer_name_en",
+        "transform": "split_name:first",
+        "note": "p1 Section 3: Primary owner first name"
+      },
+      "MI": {
+        "source": "customer_name_en",
+        "transform": "split_name:middle",
+        "note": "p1 Section 3: Primary owner middle initial"
+      },
+      "NAME LAST": {
+        "source": "customer_name_en",
+        "transform": "split_name:last",
+        "note": "p1 Section 3: Primary owner last name"
+      },
+      "OWNER DATE of BIRTH": {
+        "source": null,
+        "note": "p1 Section 3: Owner DOB - 수동입력"
+      },
+      "NUMBER and STREET": {
+        "source": "address_en",
+        "note": "p1 Section 3: Owner street address"
+      },
+      "CITY": {
+        "source": null,
+        "note": "p1 Section 3: Owner city - 수동입력"
+      },
+      "STATE": {
+        "source": null,
+        "note": "p1 Section 3: Owner state - 수동입력"
+      },
+      "ZIP": {
+        "source": null,
+        "note": "p1 Section 3: Owner ZIP - 수동입력"
+      },
+      "EMAIL ADDRESS": {
+        "source": "email",
+        "note": "p1 Section 3: Owner email"
+      },
+      "HAWAII ADDRESS": {
+        "source": "address_overseas",
+        "note": "p1 HAWAII ADDRESS section: Street address (해외주소 거리명)"
+      },
+      "CITY_2": {
+        "source": null,
+        "note": "p1 HAWAII ADDRESS section: City (하와이 도시명) - 수동입력"
+      },
+      "ISLAND": {
+        "source": null,
+        "note": "p1 HAWAII ADDRESS section: Island (하와이 섬) - 수동입력"
+      },
+      "ZIP_2": {
+        "source": null,
+        "note": "p1 HAWAII ADDRESS section: ZIP (하와이 우편번호) - 수동입력"
+      },
+      "EMAIL ADDRESS HAWAII ADDRESS": {
+        "source": null,
+        "note": "p1 Section 3: Hawaii email - 수동입력"
+      },
+      "TOTAL NUMBER of DOGS and CATS ARRIVING in HAWAII on that DATE": {
+        "source": null,
+        "default": "1",
+        "note": "p1: Total animals arriving"
+      },
+      "PRIMARY": {
+        "source": "phone",
+        "note": "p1 TELEPHONE section: Phone number"
+      },
+      "COUNTRY ADDRESS": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p1 TELEPHONE section: Country of address"
+      },
+      "Print Name": {
+        "source": null,
+        "default": "JINWON LEE",
+        "note": "p3: Veterinarian/RVC print name"
+      },
+      "Date": {
+        "source": null,
+        "transform": "today_ymd_slash",
+        "note": "p3: Date signature - 현재 신청 날짜 자동입력"
+      }
+    }
+  },
+  "Form_R11": {
+    "template": "Form_R11.pdf",
+    "description": "태국 동물 수입/수출/경유 신청서 (Department of Livestock Development Form R.1/1). 방콕/푸켓/치앙마이 공항 검역소 앞. 증명서 발행일은 신청일(PDF 생성 시점). 불력(B.E.) = 서기 + 543.",
+    "filename": "Form_R11_{pet_name}.pdf",
+    "dateFormat": "dmy",
+    "fields": {
+      "text_5gwje": {
+        "source": null,
+        "transform": "today_day",
+        "note": "Date (일) — 신청일"
+      },
+      "text_4gqdm": {
+        "source": null,
+        "transform": "today_month",
+        "note": "Month (월) — 신청일"
+      },
+      "text_3kjjv": {
+        "source": null,
+        "transform": "today_be_year",
+        "note": "B.E. (불력 연도) — 신청일 (서기 + 543)"
+      },
+      "text_6rsd": {
+        "source": "customer_name_en",
+        "note": "I am Mr./Mrs./Miss — 신청자 영문 이름"
+      },
+      "text_7svph": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "Nationality — 국적 (한국 기본값)"
+      },
+      "text_9tmqc": {
+        "source": "thailand_extra",
+        "transform": "json:address_overseas",
+        "note": "Address in Thailand — 태국 내 주소"
+      },
+      "text_10ygu": {
+        "source": "phone",
+        "note": "Telephone No. — 전화번호"
+      },
+      "text_8mbvi": {
+        "source": "thailand_extra",
+        "transform": "json:passport_number",
+        "note": "I.D. No/ Passport No. — 여권번호"
+      },
+      "text_12iiym": {
+        "source": null,
+        "default": "Ministry of Foreign Affairs",
+        "note": "Issued by — 발행기관 (한국 외교부 기본값)"
+      },
+      "text_13ahii": {
+        "source": "thailand_extra",
+        "transform": "json:passport_expiry_date",
+        "note": "Passport Expiry Date — 여권 만료일"
+      },
+      "text_14hvlw": {
+        "source": "breed_en",
+        "note": "Breed (좌측 동물) — 품종"
+      },
+      "text_16usib": {
+        "source": "sex",
+        "transform": "sex_label",
+        "note": "Sex (좌측 동물) — 성별"
+      },
+      "text_17lwoz": {
+        "source": "birth_date",
+        "note": "Birth (좌측 동물) — 생년월일"
+      },
+      "text_18leei": {
+        "source": "color_en",
+        "note": "Color (좌측 동물) — 모색"
+      },
+      "text_19qhjq": {
+        "source": "microchip",
+        "note": "Microchip No. (좌측 동물) — 마이크로칩 번호"
+      },
+      "text_15acce": {
+        "source": null,
+        "note": "Breed (우측 동물, 2번째) — 케이스당 1마리"
+      },
+      "text_23bfem": {
+        "source": null,
+        "note": "Sex (우측 동물, 2번째)"
+      },
+      "text_22mbr": {
+        "source": null,
+        "note": "Birth (우측 동물, 2번째)"
+      },
+      "text_21iwzo": {
+        "source": null,
+        "note": "Color (우측 동물, 2번째)"
+      },
+      "text_20dymn": {
+        "source": null,
+        "note": "Microchip No. (우측 동물, 2번째)"
+      },
+      "text_24bbbw": {
+        "source": "thailand_extra",
+        "transform": "json:arrival_flight_number",
+        "note": "By Flight — 입국 항공편명"
+      },
+      "text_25hlqx": {
+        "source": "thailand_extra",
+        "transform": "json:arrival_date",
+        "note": "Date — 입국 도착일"
+      },
+      "text_26frqr": {
+        "source": "thailand_extra",
+        "transform": "json:arrival_time",
+        "note": "Time — 입국 도착시간"
+      },
+      "text_27zaiz": {
+        "source": "thailand_extra",
+        "transform": "json:quarantine_location",
+        "note": "quarantine at — 검역/도착 공항 (Bangkok/Phuket/Chiang Mai)"
+      },
+      "text_33rxom": {
+        "source": null,
+        "note": "Address Of Origin: No. — 수기 입력"
+      },
+      "text_30ctcf": {
+        "source": null,
+        "note": "Address Of Origin: State — 수기 입력"
+      },
+      "text_32mbrv": {
+        "source": "address_en",
+        "note": "Address Of Origin: Street — 영문 주소"
+      },
+      "text_29ajre": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "Address Of Origin: Country — 한국 기본값"
+      },
+      "text_31lsvb": {
+        "source": null,
+        "note": "Address Of Origin: City — 수기 입력"
+      },
+      "text_28sg": {
+        "source": null,
+        "note": "Address Of Origin: Postcode — 수기 입력"
+      }
+    }
   }
 }

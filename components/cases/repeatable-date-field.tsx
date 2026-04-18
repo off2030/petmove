@@ -188,6 +188,30 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     setDetailEdit(null)
     setExtractMsg(null)
     setDragOver(false)
+
+    // If this field is toggled but has no records, remove it from toggleable fields
+    if (records.length === 0) {
+      const labelToToggleKey: Record<string, string> = {
+        '종합백신': 'vaccine:general',
+        '광견병': 'vaccine:rabies',
+        'CIV': 'vaccine:civ',
+        '켄넬코프': 'vaccine:kennel',
+        '외부구충': 'vaccine:external_parasite',
+        '내부구충': 'vaccine:internal_parasite',
+        '심장사상충': 'vaccine:heartworm',
+      }
+      const toggleKey = labelToToggleKey[label]
+      if (toggleKey) {
+        const currentExtra = (data.extra_visible_fields as string[]) ?? []
+        if (currentExtra.includes(toggleKey)) {
+          const updated = currentExtra.filter(f => f !== toggleKey)
+          const extraVal = updated.length > 0 ? updated : null
+          updateCaseField(caseId, 'data', 'extra_visible_fields', extraVal).then((r) => {
+            if (r.ok) updateLocalCaseField(caseId, 'data', 'extra_visible_fields', extraVal)
+          })
+        }
+      }
+    }
   }, [caseId])
 
   async function saveRecords(next: VacRecord[]) {
@@ -198,6 +222,29 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     }
     const r = await updateCaseField(caseId, 'data', dataKey, val)
     if (r.ok) updateLocalCaseField(caseId, 'data', dataKey, val)
+
+    // If clearing all records, remove this field from toggleable fields
+    if (val === null) {
+      const labelToToggleKey: Record<string, string> = {
+        '종합백신': 'vaccine:general',
+        '광견병': 'vaccine:rabies',
+        'CIV': 'vaccine:civ',
+        '켄넬코프': 'vaccine:kennel',
+        '외부구충': 'vaccine:external_parasite',
+        '내부구충': 'vaccine:internal_parasite',
+        '심장사상충': 'vaccine:heartworm',
+      }
+      const toggleKey = labelToToggleKey[label]
+      if (toggleKey) {
+        const currentExtra = (data.extra_visible_fields as string[]) ?? []
+        if (currentExtra.includes(toggleKey)) {
+          const updated = currentExtra.filter(f => f !== toggleKey)
+          const extraVal = updated.length > 0 ? updated : null
+          const r2 = await updateCaseField(caseId, 'data', 'extra_visible_fields', extraVal)
+          if (r2.ok) updateLocalCaseField(caseId, 'data', 'extra_visible_fields', extraVal)
+        }
+      }
+    }
   }
 
   /** Persist updates to the sibling parasite array (combo sync). */

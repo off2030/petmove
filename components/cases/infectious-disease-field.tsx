@@ -64,6 +64,18 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
     }
     const r = await updateCaseField(caseId, 'data', DATA_KEY, val)
     if (r.ok) updateLocalCaseField(caseId, 'data', DATA_KEY, val)
+
+    // If clearing all records, remove from toggleable fields
+    if (val === null) {
+      const toggleKey = 'vaccine:infectious_disease'
+      const currentExtra = (data.extra_visible_fields as string[]) ?? []
+      if (currentExtra.includes(toggleKey)) {
+        const updated = currentExtra.filter(f => f !== toggleKey)
+        const extraVal = updated.length > 0 ? updated : null
+        const r2 = await updateCaseField(caseId, 'data', 'extra_visible_fields', extraVal)
+        if (r2.ok) updateLocalCaseField(caseId, 'data', 'extra_visible_fields', extraVal)
+      }
+    }
   }
 
   function deleteRecord(idx: number) {

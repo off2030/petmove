@@ -579,6 +579,18 @@ function resolveField(
     return ''
   }
 
+  // Split name into first/middle/last parts
+  const splitMatch = transform?.match(/^split_name:(first|middle|last)$/)
+  if (splitMatch) {
+    const part = splitMatch[1]
+    const s = String(raw ?? '').trim()
+    const parts = s.split(/\s+/).filter(Boolean)
+    if (part === 'first') return parts[0] ?? ''
+    if (part === 'middle') return parts.length > 2 ? parts[1][0] : ''
+    if (part === 'last') return parts.length > 1 ? parts[parts.length - 1] : ''
+    return ''
+  }
+
   // Conditional rabies date — only fill if primary (1 dose) or booster (2+ doses)
   // vaccine_desc:rabies:primary_date[N] — returns date[N] only when total doses == 1
   // vaccine_desc:rabies:booster_date[N] — returns date[N] only when total doses >= 2
@@ -610,6 +622,12 @@ function resolveField(
   if (digitMatch) {
     const s = String(raw ?? '').replace(/\D/g, '')
     return s[Number(digitMatch[1])] ?? ''
+  }
+
+  // Last N digits of the raw string (spaces/dashes stripped).
+  if (transform === 'last_4_digits') {
+    const s = String(raw ?? '').replace(/\D/g, '')
+    return s.length >= 4 ? s.slice(-4) : s
   }
 
   // Australian date format: dd/mm/yyyy
@@ -726,6 +744,21 @@ function resolveField(
   // Today's date (no source needed). Returns YYYY/MM/DD.
   if (transform === 'today_ymd_slash') {
     return todayYMDSlash()
+  }
+
+  // Today's day of month (1-31, no padding) — for Thai Form R.11 신청일
+  if (transform === 'today_day') {
+    return String(new Date().getDate())
+  }
+
+  // Today's month (1-12, no padding) — for Thai Form R.11 신청일
+  if (transform === 'today_month') {
+    return String(new Date().getMonth() + 1)
+  }
+
+  // Today's year in Buddhist Era (Gregorian + 543) — for Thai Form R.11 신청일
+  if (transform === 'today_be_year') {
+    return String(new Date().getFullYear() + 543)
   }
 
   // Boolean-coerce: truthy → checkbox on.
