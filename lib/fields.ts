@@ -192,6 +192,13 @@ const KEY_GROUP_OVERRIDE: Record<string, string> = {
   vet_visit_date: '절차정보',
 }
 
+// Per-key overrides for display order. Used when a surfaced field needs a
+// specific slot within its (overridden) group instead of the DB display_order.
+const KEY_ORDER_OVERRIDE: Record<string, number> = {
+  // 내원일은 출국일(9999) 바로 아래에 표시.
+  vet_visit_date: 10000,
+}
+
 // Deterministic group ordering for the detail page.
 const KNOWN_GROUP_ORDER = ['고객정보', '동물정보', '절차정보', '기타정보']
 
@@ -219,7 +226,7 @@ export function fieldDefToSpec(def: FieldDefinition): FieldSpec {
         : def.type,
     group: mappedGroup,
     groupOrder: groupOrderOf(mappedGroup),
-    order: def.display_order,
+    order: KEY_ORDER_OVERRIDE[def.key] ?? def.display_order,
     options: def.options ?? undefined,
     isStep: def.is_step,
     pairEnKey: PAIRED_DATA_KEYS[def.key],

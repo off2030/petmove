@@ -62,16 +62,22 @@ const CERT_MULTI_KEYS: Record<string, string> = {
 }
 
 /**
- * 신고 탭 포함 토글. 이미 자동 포함(일본/태국/필리핀/하와이/스위스 + 출국일)
- * 이면 버튼은 잠겨 있음 표시만 한다. 아닌 케이스에서는 눌러 `data.import_report_manual`
- * 을 토글해 신고 탭에 수동으로 나타나게 한다.
+ * 신고 탭 포함 토글. 자동 포함 5개국(일본/태국/필리핀/하와이/스위스)에만 노출.
+ * - 목적지가 5개국 + 출국일 → "신고 자동" 읽기전용
+ * - 목적지가 5개국 + 출국일 미기재 → "신고 추가" 클릭해 수동 포함
+ * - 그 외 국가 → 버튼 숨김(신고 대상이 아님)
  */
 const AUTO_IMPORT_REPORT_COUNTRIES = new Set(['일본', '하와이', '스위스', '태국', '필리핀'])
 
-function isAutoImportReportCase(row: CaseRow): boolean {
-  if (!row.departure_date || !row.destination) return false
+function hasImportReportCountry(row: CaseRow): boolean {
+  if (!row.destination) return false
   const dests = row.destination.split(',').map(s => s.trim()).filter(Boolean)
   return dests.some(d => AUTO_IMPORT_REPORT_COUNTRIES.has(d))
+}
+
+function isAutoImportReportCase(row: CaseRow): boolean {
+  if (!row.departure_date) return false
+  return hasImportReportCountry(row)
 }
 
 function ImportReportToggle({
@@ -82,6 +88,9 @@ function ImportReportToggle({
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
 }) {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
+  // 신고 대상국이 아니면 토글 자체를 숨긴다.
+  if (!hasImportReportCountry(caseRow)) return null
+
   const manual = data.import_report_manual === true
   const auto = isAutoImportReportCase(caseRow)
   const included = auto || manual
@@ -342,7 +351,16 @@ function Inner() {
               <div className="h-9 shrink-0 flex items-center">
                 <button
                   type="button"
-                  onClick={() => selectCase(null)}
+                  onClick={() => {
+                    // 검사/신고/서류 탭에서 열고 들어왔으면 이전 탭으로 복귀,
+                    // 그 외(케이스 목록에서 선택)는 단순히 선택 해제.
+                    const state = typeof window !== 'undefined' ? window.history.state : null
+                    if (state?.caseDetailOrigin) {
+                      window.history.back()
+                    } else {
+                      selectCase(null)
+                    }
+                  }}
                   className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <ArrowLeft size={16} />

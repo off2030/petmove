@@ -300,6 +300,15 @@ function sortedAsc(dates: unknown): string[] {
 interface ParasiteRecord {
   date: string
   product_id?: string | null
+  /** Per-record user overrides (from repeatable-date-field.tsx).
+   * When present, take precedence over catalog lookup values so PDFs
+   * reflect what the user actually typed in the detail page. */
+  product?: string | null
+  manufacturer?: string | null
+  lot?: string | null
+  expiry?: string | null
+  /** Immunity validity end — displayed as-is. Free text, e.g. '2029-04-20' or '3년'. */
+  valid_until?: string | null
 }
 /** Sort parasite records (objects with date + optional product_id) by date desc. */
 function sortedDescRecords(arr: unknown): ParasiteRecord[] {
@@ -309,6 +318,59 @@ function sortedDescRecords(arr: unknown): ParasiteRecord[] {
     .filter(r => r && typeof r.date === 'string' && r.date)
     .slice()
     .sort((a, b) => b.date.localeCompare(a.date))
+}
+
+/** Same as sortedDescRecords but ascending — oldest first. */
+function sortedAscRecords(arr: unknown): ParasiteRecord[] {
+  return sortedDescRecords(arr).slice().reverse()
+}
+
+/**
+ * Resolve "Valid until" (validity_to) from vaccination date + rec.valid_until.
+ *
+ * - `rec.valid_until = '3년' | '3 yrs' | '3y'` → vaccination date + 3 years → 'YYYY/MM/DD'
+ * - `rec.valid_until` empty/null → vaccination date + fallbackYears (default 1)
+ * - `rec.valid_until` is a literal date like '2029-04-15' → returned as '2029/04/15'
+ *
+ * Returns '' when the vaccination date is malformed.
+ */
+function resolveValidityTo(
+  rec: ParasiteRecord | null | undefined,
+  date: string,
+  fallbackYears = 1,
+): string {
+  const raw = rec?.valid_until?.trim()
+  const yearsMatch = raw?.match(/^(\d+)\s*(?:년|yrs?|years?|y)$/i)
+  if (raw && !yearsMatch) return fmtDate(raw)
+  const years = yearsMatch ? Number(yearsMatch[1]) : fallbackYears
+  const m = date.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!m) return ''
+  return `${Number(m[1]) + years}/${m[2]}/${m[3]}`
+}
+
+/**
+ * Parse rec.valid_until as a year count. Defaults to 1 when empty or unparseable.
+ * Used by the form25 N-year validity checkboxes.
+ */
+function parseValidYears(rec: ParasiteRecord | null | undefined): number {
+  const raw = rec?.valid_until?.trim()
+  const yearsMatch = raw?.match(/^(\d+)\s*(?:년|yrs?|years?|y)$/i)
+  return yearsMatch ? Number(yearsMatch[1]) : 1
+}
+
+/**
+ * Merge per-record user overrides (product/manufacturer/lot/expiry from the detail
+ * page) on top of catalog lookup values. User input wins when non-empty.
+ */
+function applyRecOverrides(
+  rec: Pick<ParasiteRecord, 'product' | 'manufacturer' | 'lot' | 'expiry'> | null | undefined,
+  p: { vaccine?: string; product?: string; manufacturer?: string; batch?: string | null; expiry?: string | null } | null,
+): { name: string; manufacturer: string; serial: string; expiry: string } {
+  const name = rec?.product?.trim() || p?.vaccine || p?.product || ''
+  const manufacturer = rec?.manufacturer?.trim() || p?.manufacturer || ''
+  const serial = rec?.lot?.trim() || p?.batch || ''
+  const expiryRaw = rec?.expiry?.trim() || p?.expiry || ''
+  return { name, manufacturer, serial, expiry: fmtDate(expiryRaw) }
 }
 
 /**
@@ -334,45 +396,24 @@ function buildOtherVaccineSequence(data: Record<string, unknown>, allowedVaccine
   const out: OtherVacEntry[] = []
 
   // 1. 종합백신 (Comprehensive — Vaccination)
-  const gv = (!allowedVaccines || allowedVaccines.includes('general')) ? sortedDesc(data.general_vaccine_dates)[0] : undefined
-  if (gv) {
-    const p = hasSpecies ? lookupComprehensive(species as 'dog' | 'cat', gv) : null
-    out.push({
-      type: 'Vaccination',
-      name: p?.vaccine || p?.product || '',
-      manufacturer: p?.manufacturer ?? '',
-      serial: p?.batch ?? '',
-      expiry: fmtDate(p?.expiry ?? ''),
-      date: fmtDate(gv),
-    })
+  const gvRec = (!allowedVaccines || allowedVaccines.includes('general')) ? sortedDescRecords(data.general_vaccine_dates)[0] : undefined
+  if (gvRec) {
+    const p = hasSpecies ? lookupComprehensive(species as 'dog' | 'cat', gvRec.date) : null
+    out.push({ type: 'Vaccination', ...applyRecOverrides(gvRec, p), date: fmtDate(gvRec.date) })
   }
 
   // 2/3. Parasiticides — pick latest of each side, dedupe combo across sides.
   const buildParasite = (rec: ParasiteRecord, side: 'external' | 'internal'): OtherVacEntry => {
     if (rec.product_id) {
       const p = lookupParasiteById(rec.product_id, { date: rec.date, weightKg })
-      return {
-        type: 'Parasiticide',
-        name: p?.product || '',
-        manufacturer: p?.manufacturer ?? '',
-        serial: p?.batch ?? '',
-        expiry: fmtDate(p?.expiry ?? ''),
-        date: fmtDate(rec.date),
-      }
+      return { type: 'Parasiticide', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) }
     }
     const p = hasSpecies
       ? (side === 'external'
           ? lookupExternalParasite(species as 'dog' | 'cat', rec.date)
           : lookupInternalParasite(species as 'dog' | 'cat', rec.date))
       : null
-    return {
-      type: 'Parasiticide',
-      name: p?.product || p?.vaccine || '',
-      manufacturer: p?.manufacturer ?? '',
-      serial: p?.batch ?? '',
-      expiry: fmtDate(p?.expiry ?? ''),
-      date: fmtDate(rec.date),
-    }
+    return { type: 'Parasiticide', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) }
   }
 
   const seenComboKeys = new Set<string>()
@@ -422,40 +463,19 @@ function buildExpandedVaccineSequence(data: Record<string, unknown>, maxPerType 
   // 1. 종합백신 (Vaccination)
   for (const rec of ((!allowedVaccines || allowedVaccines.includes('general')) ? latestAscending(data.general_vaccine_dates) : [])) {
     const p = hasSpecies ? lookupComprehensive(species as 'dog' | 'cat', rec.date) : null
-    out.push({
-      type: 'Vaccination',
-      name: p?.vaccine || p?.product || '',
-      manufacturer: p?.manufacturer ?? '',
-      serial: p?.batch ?? '',
-      expiry: fmtDate(p?.expiry ?? ''),
-      date: fmtDate(rec.date),
-    })
+    out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
   }
 
   // 2. CIV (Vaccination)
   for (const rec of ((!allowedVaccines || allowedVaccines.includes('civ')) ? latestAscending(data.civ_dates) : [])) {
     const p = lookupCiv(rec.date)
-    out.push({
-      type: 'Vaccination',
-      name: p?.vaccine || p?.product || '',
-      manufacturer: p?.manufacturer ?? '',
-      serial: p?.batch ?? '',
-      expiry: fmtDate(p?.expiry ?? ''),
-      date: fmtDate(rec.date),
-    })
+    out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
   }
 
   // 3. 켄넬코프 (Vaccination)
   for (const rec of ((!allowedVaccines || allowedVaccines.includes('kennel')) ? latestAscending(data.kennel_cough_dates) : [])) {
     const p = lookupKennelCough()
-    out.push({
-      type: 'Vaccination',
-      name: p?.vaccine || p?.product || '',
-      manufacturer: p?.manufacturer ?? '',
-      serial: p?.batch ?? '',
-      expiry: fmtDate(p?.expiry ?? ''),
-      date: fmtDate(rec.date),
-    })
+    out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
   }
 
   // Collect combo keys from external so internal can skip duplicates.
@@ -470,14 +490,7 @@ function buildExpandedVaccineSequence(data: Record<string, unknown>, maxPerType 
   const pushParasite = (rec: ParasiteRecord, side: 'external' | 'internal') => {
     if (rec.product_id) {
       const p = lookupParasiteById(rec.product_id, { date: rec.date, weightKg })
-      out.push({
-        type: 'Parasiticide',
-        name: p?.product || '',
-        manufacturer: p?.manufacturer ?? '',
-        serial: p?.batch ?? '',
-        expiry: fmtDate(p?.expiry ?? ''),
-        date: fmtDate(rec.date),
-      })
+      out.push({ type: 'Parasiticide', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
       return
     }
     const p = hasSpecies
@@ -485,14 +498,7 @@ function buildExpandedVaccineSequence(data: Record<string, unknown>, maxPerType 
           ? lookupExternalParasite(species as 'dog' | 'cat', rec.date)
           : lookupInternalParasite(species as 'dog' | 'cat', rec.date))
       : null
-    out.push({
-      type: 'Parasiticide',
-      name: p?.product || p?.vaccine || '',
-      manufacturer: p?.manufacturer ?? '',
-      serial: p?.batch ?? '',
-      expiry: fmtDate(p?.expiry ?? ''),
-      date: fmtDate(rec.date),
-    })
+    out.push({ type: 'Parasiticide', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
   }
 
   // 4. 외부구충 (Parasiticide) — combos included here.
@@ -1038,6 +1044,19 @@ function resolveField(
     return !!sortedAsc(raw)[Number(hasMatch[1])]
   }
 
+  // Boolean: does the nth vaccine record's 유효기간(valid_until) equal the given year?
+  // Drives form25-style 1Y/2Y/3Y rabies validity checkboxes.
+  // `validity_y_eq:1[0]` → true when record[0] exists AND valid_until is null/"1년".
+  // Empty or non-"N년" valid_until counts as 1년 (matches UI default).
+  const validityYearMatch = transform?.match(/^validity_y_eq:(\d+)\[(\d+)\]$/)
+  if (validityYearMatch) {
+    const targetYears = Number(validityYearMatch[1])
+    const idx = Number(validityYearMatch[2])
+    const rec = sortedAscRecords(raw)[idx]
+    if (!rec) return false
+    return parseValidYears(rec) === targetYears
+  }
+
   // Form25 "기타 예방접종" slot filler. `other_vacc_seq:<attr>[<n>]`.
   // Pulls the nth entry of the compressed vaccine sequence built from
   // comprehensive → external → internal (skipping missing types).
@@ -1112,6 +1131,7 @@ function resolveField(
     if (attr === 'date') return fmtDate(rec.date)
     if (attr === 'vet') return 'Jinwon Lee'
     if (attr === 'product') {
+      if (rec.product?.trim()) return rec.product.trim()
       const weightKg = Number(String(data.weight ?? '').replace(/[^\d.]/g, '')) || 0
       const species = String(data.species ?? '').toLowerCase()
       if (rec.product_id) {
@@ -1137,32 +1157,29 @@ function resolveField(
     const kind = vacDescMatch[1]
     const attr = vacDescMatch[2]
     const idx = Number(vacDescMatch[3])
-    const date = sortedDesc(raw)[idx]
+    const rec = sortedDescRecords(raw)[idx]
+    const date = rec?.date
     if (!date) return ''
     if (attr === 'date') return fmtDate(date)
     if ((kind === 'civ' || kind === 'comprehensive') && attr === 'validity_from') return fmtDate(date)
+    // validity_to: rec.valid_until (예: "3년") 우선, 없으면 접종일 + 1년 기본.
+    // rabies/civ/comprehensive는 기본 1년. 다른 kind는 아래 catalog fallback 사용.
     if ((kind === 'civ' || kind === 'comprehensive' || kind === 'rabies') && attr === 'validity_to') {
-      // vaccinationDate + 1 year as YYYY/MM/DD (form-level dmy converts to dd/mm/yyyy).
-      // Rabies included here for the generic VHC cert — most Korean rabies vaccines
-      // are annual so +1y is a safe default. Specific multi-year products require
-      // manual editing on the generated PDF.
-      const m = date.match(/^(\d{4})-(\d{2})-(\d{2})$/)
-      if (!m) return ''
-      return `${Number(m[1]) + 1}/${m[2]}/${m[3]}`
+      return resolveValidityTo(rec, date, 1)
     }
     const species = String(data.species ?? '').toLowerCase()
-    let p: { vaccine?: string; product?: string; manufacturer?: string; batch?: string | null; validityFrom?: string; validityTo?: string } | null = null
+    let p: { vaccine?: string; product?: string; manufacturer?: string; batch?: string | null; expiry?: string | null; validityFrom?: string; validityTo?: string } | null = null
     if (kind === 'rabies') p = lookupRabies(date)
     else if (kind === 'civ') p = lookupCiv(date)
     else if (kind === 'comprehensive' && (species === 'dog' || species === 'cat')) p = lookupComprehensive(species, date)
     else if (kind === 'ext_parasite' && (species === 'dog' || species === 'cat')) p = lookupExternalParasite(species, date)
     else if (kind === 'int_parasite' && (species === 'dog' || species === 'cat')) p = lookupInternalParasite(species, date)
-    if (!p) return ''
-    if (attr === 'name') return p.vaccine || p.product || ''
-    if (attr === 'manufacturer') return p.manufacturer ?? ''
-    if (attr === 'serial') return p.batch ?? ''
-    if (attr === 'validity_from') return fmtDate(p.validityFrom ?? '')
-    if (attr === 'validity_to') return fmtDate(p.validityTo ?? '')
+    const merged = applyRecOverrides(rec, p)
+    if (attr === 'name') return merged.name
+    if (attr === 'manufacturer') return merged.manufacturer
+    if (attr === 'serial') return merged.serial
+    if (attr === 'validity_from') return fmtDate(p?.validityFrom ?? '')
+    if (attr === 'validity_to') return fmtDate(p?.validityTo ?? '')
     return ''
   }
 
@@ -1177,20 +1194,20 @@ function resolveField(
   const vacCombinedMatch = transform?.match(/^vaccine_combined:rabies:(name|serial|product_expiry|booster_due)$/)
   if (vacCombinedMatch) {
     const attr = vacCombinedMatch[1]
-    const dates = sortedAsc(raw)
-    if (dates.length === 0) return ''
+    const recs = sortedAscRecords(raw)
+    if (recs.length === 0) return ''
     if (attr === 'booster_due') {
-      const latest = dates[dates.length - 1]
+      const latest = recs[recs.length - 1].date
       const m = latest.match(/^(\d{4})-(\d{2})-(\d{2})$/)
       if (!m) return ''
       return fmtDate(`${Number(m[1]) + 1}-${m[2]}-${m[3]}`)
     }
-    const values = dates.map(d => {
-      const p = lookupRabies(d) as (ReturnType<typeof lookupRabies> & { expiry?: string }) | null
-      if (!p) return ''
-      if (attr === 'name') return p.vaccine || p.product || ''
-      if (attr === 'serial') return p.batch ?? ''
-      if (attr === 'product_expiry') return fmtDate(p.expiry ?? '')
+    const values = recs.map(rec => {
+      const p = lookupRabies(rec.date) as (ReturnType<typeof lookupRabies> & { expiry?: string }) | null
+      const merged = applyRecOverrides(rec, p)
+      if (attr === 'name') return merged.name
+      if (attr === 'serial') return merged.serial
+      if (attr === 'product_expiry') return merged.expiry
       return ''
     }).filter(Boolean)
     if (values.length === 0) return ''
@@ -1211,25 +1228,30 @@ function resolveField(
     const attr = vacMatch[2]
     const idx = Number(vacMatch[3])
     // Oldest-first ordering: row 1 = first dose, row 2 = second, etc.
-    const date = sortedAsc(raw)[idx]
+    const rec = sortedAscRecords(raw)[idx]
+    const date = rec?.date
     if (!date) return ''
     if (attr === 'date') return fmtDate(date)
+    // validity_to: rec.valid_until (예: "3년") 우선 적용. rabies는 기본 1년.
+    if (kind === 'rabies' && attr === 'validity_to') {
+      return resolveValidityTo(rec, date, 1)
+    }
     const species = String(data.species ?? '').toLowerCase()
     let p: { vaccine?: string; product?: string; manufacturer?: string; batch?: string | null; expiry?: string | null; validityFrom?: string; validityTo?: string } | null = null
     if (kind === 'rabies') p = lookupRabies(date)
     else if (kind === 'ext_parasite' && (species === 'dog' || species === 'cat')) p = lookupExternalParasite(species, date)
     else if (kind === 'int_parasite' && (species === 'dog' || species === 'cat')) p = lookupInternalParasite(species, date)
-    if (!p) return ''
-    if (attr === 'name') return p.vaccine || p.product || ''
-    if (attr === 'manufacturer') return p.manufacturer ?? ''
-    if (attr === 'serial') return p.batch ?? ''
+    const merged = applyRecOverrides(rec, p)
+    if (attr === 'name') return merged.name
+    if (attr === 'manufacturer') return merged.manufacturer
+    if (attr === 'serial') return merged.serial
     if (attr === 'serial_with_expiry') {
-      const batch = p.batch ?? ''
-      const expiry = fmtDate(p.expiry ?? '')
+      const batch = merged.serial
+      const expiry = merged.expiry
       return expiry ? (batch ? `${batch} / ${expiry}` : expiry) : batch
     }
-    if (attr === 'validity_from') return fmtDate(p.validityFrom ?? '')
-    if (attr === 'validity_to') return fmtDate(p.validityTo ?? '')
+    if (attr === 'validity_from') return fmtDate(p?.validityFrom ?? '')
+    if (attr === 'validity_to') return fmtDate(p?.validityTo ?? '')
     return ''
   }
 
@@ -1388,10 +1410,12 @@ function resolveField(
   if (afterTiterProductMatch && source === 'rabies_dates') {
     const idx = Number(afterTiterProductMatch[1])
     const date = rabiesDatesAfterFirstTiter(raw, data)[idx]
-    const p = date ? lookupRabies(date) : null
-    if (!p) return ''
-    const name = p.vaccine || p.product
-    return name ? `${name} (${p.manufacturer})` : p.manufacturer
+    if (!date) return ''
+    const rec = sortedAscRecords(raw).find(r => r.date === date) ?? null
+    const p = lookupRabies(date)
+    const merged = applyRecOverrides(rec, p)
+    if (!merged.name && !merged.manufacturer) return ''
+    return merged.name ? (merged.manufacturer ? `${merged.name} (${merged.manufacturer})` : merged.name) : merged.manufacturer
   }
   const afterTiterPeriodMatch = transform?.match(/^after_titer_period\[(\d+)\]$/)
   if (afterTiterPeriodMatch && source === 'rabies_dates') {
@@ -1419,11 +1443,12 @@ function resolveField(
   const productMatch = transform?.match(/^product\[(\d+)\]$/)
   if (productMatch && source === 'rabies_dates') {
     const idx = Number(productMatch[1])
-    const date = sortedDesc(raw)[idx]
-    const p = date ? lookupRabies(date) : null
-    if (!p) return ''
-    const name = p.vaccine || p.product
-    return name ? `${name} (${p.manufacturer})` : p.manufacturer
+    const rec = sortedDescRecords(raw)[idx]
+    if (!rec?.date) return ''
+    const p = lookupRabies(rec.date)
+    const merged = applyRecOverrides(rec, p)
+    if (!merged.name && !merged.manufacturer) return ''
+    return merged.name ? (merged.manufacturer ? `${merged.name} (${merged.manufacturer})` : merged.name) : merged.manufacturer
   }
 
   const periodMatch = transform?.match(/^period\[(\d+)\]$/)

@@ -572,8 +572,16 @@
       },
       "rabies1_validity_1Y": {
         "source": "rabies_dates",
-        "transform": "has[0]",
-        "note": "Rabisin은 1년 유효 — 2Y/3Y 체크박스는 템플릿 기본 언체크 유지"
+        "transform": "validity_y_eq:1[0]",
+        "note": "상세페이지 유효기간 1/2/3년 선택에 따라 체크. 기본은 1년."
+      },
+      "rabies1_validity_2Y": {
+        "source": "rabies_dates",
+        "transform": "validity_y_eq:2[0]"
+      },
+      "rabies1_validity_3Y": {
+        "source": "rabies_dates",
+        "transform": "validity_y_eq:3[0]"
       },
       "rabies2_product": {
         "source": "rabies_dates",
@@ -593,7 +601,15 @@
       },
       "rabies2_validity_1Y": {
         "source": "rabies_dates",
-        "transform": "has[1]"
+        "transform": "validity_y_eq:1[1]"
+      },
+      "rabies2_validity_2Y": {
+        "source": "rabies_dates",
+        "transform": "validity_y_eq:2[1]"
+      },
+      "rabies2_validity_3Y": {
+        "source": "rabies_dates",
+        "transform": "validity_y_eq:3[1]"
       },
       "rabies3_product": {
         "source": "rabies_dates",
@@ -613,7 +629,15 @@
       },
       "rabies3_validity_1Y": {
         "source": "rabies_dates",
-        "transform": "has[2]"
+        "transform": "validity_y_eq:1[2]"
+      },
+      "rabies3_validity_2Y": {
+        "source": "rabies_dates",
+        "transform": "validity_y_eq:2[2]"
+      },
+      "rabies3_validity_3Y": {
+        "source": "rabies_dates",
+        "transform": "validity_y_eq:3[2]"
       },
       "other1_product_type": {
         "source": null,
@@ -841,7 +865,16 @@
       },
       "rabies1_validity_1Y": {
         "source": "rabies_dates",
-        "transform": "has[0]"
+        "transform": "validity_y_eq:1[0]",
+        "note": "상세페이지 유효기간 1/2/3년 선택에 따라 체크. 기본 1년."
+      },
+      "rabies1_validity_2Y": {
+        "source": "rabies_dates",
+        "transform": "validity_y_eq:2[0]"
+      },
+      "rabies1_validity_3Y": {
+        "source": "rabies_dates",
+        "transform": "validity_y_eq:3[0]"
       },
       "rabies2_product": {
         "source": "rabies_dates",
@@ -862,7 +895,15 @@
       },
       "rabies2_validity_1Y": {
         "source": "rabies_dates",
-        "transform": "has[1]"
+        "transform": "validity_y_eq:1[1]"
+      },
+      "rabies2_validity_2Y": {
+        "source": "rabies_dates",
+        "transform": "validity_y_eq:2[1]"
+      },
+      "rabies2_validity_3Y": {
+        "source": "rabies_dates",
+        "transform": "validity_y_eq:3[1]"
       },
       "other1_product_type": {
         "source": null,

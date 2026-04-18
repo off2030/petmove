@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CaseRow } from '@/lib/supabase/types'
 import { updateCaseField } from '@/lib/actions/cases'
+import { useCases } from '@/components/cases/cases-context'
 
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
@@ -25,6 +26,11 @@ export interface TodoColumn {
    * `onUpdate` helper for persisting changes via the shared local+DB path.
    */
   render?: (row: CaseRow, onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void) => React.ReactNode
+  /**
+   * 읽기 전용으로 표시하고 셀 클릭 시 행 네비게이션(상세페이지 이동)을 허용.
+   * 식별 컬럼(동물명·고객명 등)에 사용.
+   */
+  readonly?: boolean
 }
 
 function getCellValue(row: CaseRow, col: TodoColumn): string {
@@ -120,6 +126,15 @@ function EditableCell({
   )
 }
 
+function ReadonlyCell({ row, col }: { row: CaseRow; col: TodoColumn }) {
+  const value = getCellValue(row, col)
+  return (
+    <div className="w-full px-1 py-1 text-xs truncate min-h-[24px]">
+      {value || <span className="text-muted-foreground/50">—</span>}
+    </div>
+  )
+}
+
 function SelectCell({
   row,
   col,
@@ -187,6 +202,7 @@ export function TodoTable({
   }, [visible, cases.length])
 
   const visibleCases = cases.slice(0, visible)
+  const { openCase } = useCases()
 
   return (
     <table className="w-full border-collapse text-sm">
@@ -205,24 +221,37 @@ export function TodoTable({
       </thead>
       <tbody>
         {visibleCases.map((row) => (
-          <tr key={row.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
-            {columns.map((col) => (
-              <td
-                key={col.key}
-                className="px-2 py-1"
-                style={{ width: col.width, minWidth: col.width }}
-              >
-                {col.condition && !col.condition(row) ? (
-                  <span className="text-muted-foreground/30 text-xs px-1">—</span>
-                ) : col.type === 'custom' && col.render ? (
-                  col.render(row, onUpdate)
-                ) : col.type === 'select' && col.options ? (
-                  <SelectCell row={row} col={col} onUpdate={onUpdate} />
-                ) : (
-                  <EditableCell row={row} col={col} onUpdate={onUpdate} />
-                )}
-              </td>
-            ))}
+          <tr
+            key={row.id}
+            className="border-b border-border/50 hover:bg-accent/30 transition-colors cursor-pointer"
+            onClick={() => openCase(row.id)}
+          >
+            {columns.map((col) => {
+              // readonly 셀은 행 클릭(네비게이션) 허용, 그 외 편집 셀은 클릭 전파 차단.
+              const tdProps = col.readonly
+                ? {}
+                : { onClick: (e: React.MouseEvent) => e.stopPropagation() }
+              return (
+                <td
+                  key={col.key}
+                  className="px-2 py-1"
+                  style={{ width: col.width, minWidth: col.width }}
+                  {...tdProps}
+                >
+                  {col.condition && !col.condition(row) ? (
+                    <span className="text-muted-foreground/30 text-xs px-1">—</span>
+                  ) : col.readonly ? (
+                    <ReadonlyCell row={row} col={col} />
+                  ) : col.type === 'custom' && col.render ? (
+                    col.render(row, onUpdate)
+                  ) : col.type === 'select' && col.options ? (
+                    <SelectCell row={row} col={col} onUpdate={onUpdate} />
+                  ) : (
+                    <EditableCell row={row} col={col} onUpdate={onUpdate} />
+                  )}
+                </td>
+              )
+            })}
           </tr>
         ))}
         {visible < cases.length && (

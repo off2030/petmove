@@ -24,7 +24,7 @@ export const DEFAULT_CONFIG = {
   // phone 렌더 시 AddressField(한국주소+영문주소) 자동 포함
   동물정보: ['pet_name', 'microchip', 'birth_date', 'species', 'sex', 'weight'],
   // species 렌더 시 BreedField+ColorField 자동 포함
-  절차정보: ['status', 'destination', 'microchip_implant_date', 'departure_date'],
+  절차정보: ['status', 'destination', 'microchip_implant_date', 'departure_date', 'vet_visit_date'],
   vaccines: ['rabies', 'rabies_titer'] as string[],
   기타정보: ['memo'],
   // payment는 항상 기타정보 하단에 표시
@@ -88,7 +88,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   },
   uk: {
     keywords: ['영국', 'uk', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland'],
-    extraFields: ['address_overseas'],
+    extraSection: 'uk',
     extraCerts: [
       { key: 'annexIII', label: 'EU', type: 'multi' },
       { key: 'uk', label: 'UK', type: 'multi' },

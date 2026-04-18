@@ -632,19 +632,11 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                   )}
 
                   {!hideValidUntil && (
-                    <>
-                      <DetailField
-                        value={rec.valid_until}
-                        hint={hints.valid_until}
-                        type="date"
-                        placeholder="유효기간"
-                        isEditing={detailEdit?.idx === oi && detailEdit?.field === 'valid_until'}
-                        onStartEdit={() => setDetailEdit({ idx: oi, field: 'valid_until' })}
-                        onSave={(v) => updateRecordField(oi, 'valid_until', v)}
-                        onCancel={() => setDetailEdit(null)}
-                        saving={saving}
-                      />
-                    </>
+                    <ValidUntilSelector
+                      value={rec.valid_until}
+                      onChange={(v) => updateRecordField(oi, 'valid_until', v)}
+                      saving={saving}
+                    />
                   )}
 
                   <button type="button" onClick={() => deleteRecord(oi)}
@@ -794,6 +786,39 @@ function DetailField({ value, hint, type, placeholder, isEditing, onStartEdit, o
       )}>
       {display}
     </button>
+  )
+}
+
+/* ── Valid-until selector (1년 / 2년 / 3년) ── */
+
+function ValidUntilSelector({ value, onChange, saving }: {
+  value?: string | null
+  onChange: (v: string | null) => void
+  saving: boolean
+}) {
+  // null/빈값은 1년 기본. "N년" 패턴이면 N 추출, 그 외 legacy 값은 선택 없음.
+  const match = value?.match(/^(\d+)\s*년$/)
+  const current = match ? match[1] : value ? null : '1'
+  return (
+    <div className="inline-flex items-center gap-0.5 rounded-md border border-border/40 bg-background/50 p-0.5">
+      {['1', '2', '3'].map(n => (
+        <button
+          key={n}
+          type="button"
+          disabled={saving}
+          onClick={() => onChange(`${n}년`)}
+          className={cn(
+            'text-xs px-2 py-0.5 rounded transition-colors',
+            current === n
+              ? 'bg-foreground text-background'
+              : 'text-muted-foreground/70 hover:bg-accent/60 hover:text-foreground',
+          )}
+          title={`유효기간 ${n}년`}
+        >
+          {n}년
+        </button>
+      ))}
+    </div>
   )
 }
 

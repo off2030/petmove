@@ -23,6 +23,10 @@ interface CasesContextValue {
   fieldDefs: FieldDefinition[]
   selectedId: string | null
   selectCase: (id: string | null) => void
+  /**
+   * 다른 탭(검사/신고/서류)에서 행 클릭 시 호출. 케이스 선택 + 상세페이지 탭으로 전환.
+   */
+  openCase: (id: string) => void
   addLocalCase: (newCase: CaseRow) => void
   removeLocalCase: (id: string) => void
   updateLocalCaseField: (
@@ -56,6 +60,19 @@ export function CasesProvider({
 
   const selectCase = useCallback((id: string | null) => {
     setSelectedId(id)
+  }, [])
+
+  // 검사/신고/서류 탭에서 행 클릭 시 호출. selectCase로 케이스 선택 후
+  // /cases로 URL을 밀고 popstate를 발사해 DashboardShell이 탭 전환하도록 함.
+  // origin 정보를 state에 남겨 "목록" 버튼에서 이전 탭으로 복귀 가능하게 함.
+  const openCase = useCallback((id: string) => {
+    setSelectedId(id)
+    if (typeof window === 'undefined') return
+    if (window.location.pathname !== '/cases') {
+      const origin = window.location.pathname
+      window.history.pushState({ caseDetailOrigin: origin }, '', '/cases')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    }
   }, [])
 
   // Reset active destination to the first token of the newly selected case,
@@ -119,13 +136,14 @@ export function CasesProvider({
       fieldDefs,
       selectedId,
       selectCase,
+      openCase,
       addLocalCase,
       removeLocalCase,
       updateLocalCaseField,
       activeDestination,
       setActiveDestination,
     }),
-    [cases, fieldDefs, selectedId, selectCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination],
+    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination],
   )
 
   return <CasesContext.Provider value={value}>{children}</CasesContext.Provider>

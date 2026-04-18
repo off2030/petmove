@@ -34,6 +34,7 @@ import { AustraliaExtraField } from './australia-extra-field'
 import { NewZealandExtraField } from './new-zealand-extra-field'
 import { HawaiiExtraField } from './hawaii-extra-field'
 import { SwissExtraField } from './switzerland-extra-field'
+import { UKExtraField } from './uk-extra-field'
 import { OverseasAddressField } from './overseas-address-field'
 import { useCases } from './cases-context'
 
@@ -326,6 +327,16 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
             </h3>
             <div>
               <SwissExtraField caseId={caseRow.id} caseRow={caseRow} />
+            </div>
+          </section>
+        )}
+        {g.group === '절차정보' && destOverride?.extraSection === 'uk' && (
+          <section className="mb-7">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              추가정보
+            </h3>
+            <div>
+              <UKExtraField caseId={caseRow.id} caseRow={caseRow} />
             </div>
           </section>
         )}

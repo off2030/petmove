@@ -119,19 +119,6 @@ function isInspectionDone(row: CaseRow): boolean {
   return data.inspection_status === 'done'
 }
 
-/** Subtract N days from YYYY-MM-DD; returns '' when input malformed. */
-function subtractDays(dateStr: string | null | undefined, days: number): string {
-  if (!dateStr) return ''
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr)
-  if (!m) return ''
-  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
-  d.setDate(d.getDate() - days)
-  const y = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${y}-${mm}-${dd}`
-}
-
 const AU_KEYWORDS = ['호주', 'australia']
 const NZ_KEYWORDS = ['뉴질랜드', 'new zealand', 'nz']
 
@@ -151,9 +138,10 @@ function readInfectiousRecords(row: CaseRow): InfectiousRecord[] {
 
 /**
  * 검사 탭에 뿌릴 행 목록을 케이스별로 펼친다.
+ * 공통 규칙: 상세페이지에서 검사일을 지우면 탭에서도 사라진다.
  * - 광견병항체: titer 기록 컷오프 이후 & 진행상태 ≠ done → 1행
- * - 전염병검사(호주): 출국일 있음 → 1행 (KSVDL, 날짜는 infectious_disease_records 첫 항목)
- * - 전염병검사(뉴질랜드): 출국일 있음 → 2행 (APQA HQ + VBDDL, 날짜=출국일-15일 고정)
+ * - 전염병검사(호주): infectious_disease_records에 lab=ksvdl & date 존재 → 1행
+ * - 전염병검사(뉴질랜드): infectious_disease_records에 lab=apqa_hq/vbddl & date 존재 → 각 1행
  */
 function buildInspectionRows(cases: CaseRow[]): InspectionRow[] {
   const rows: InspectionRow[] = []
@@ -177,28 +165,38 @@ function buildInspectionRows(cases: CaseRow[]): InspectionRow[] {
       if (isAU) {
         const recs = readInfectiousRecords(c)
         const existing = recs.find(r => r.lab === 'ksvdl')
-        rows.push({
-          id: `${c.id}:inf:ksvdl`,
-          caseRow: c,
-          kind: 'infectious',
-          lab: 'ksvdl',
-          date: existing?.date ?? '',
-          dateEditable: true,
-          dateStorage: { kind: 'infectious', lab: 'ksvdl' },
-        })
-      }
-      if (isNZ) {
-        const derived = subtractDays(c.departure_date, 15)
-        for (const lab of ['apqa_hq', 'vbddl']) {
+        // Only surface the KSVDL row when a date is actually set. Clearing the
+        // date in the detail page or here should remove the row from the tab;
+        // users re-add an initial date via the case detail's 전염병검사 field.
+        if (existing?.date) {
           rows.push({
-            id: `${c.id}:inf:${lab}`,
+            id: `${c.id}:inf:ksvdl`,
             caseRow: c,
             kind: 'infectious',
-            lab,
-            date: derived,
-            dateEditable: false,
-            dateStorage: { kind: 'infectious', lab },
+            lab: 'ksvdl',
+            date: existing.date,
+            dateEditable: true,
+            dateStorage: { kind: 'infectious', lab: 'ksvdl' },
           })
+        }
+      }
+      if (isNZ) {
+        const recs = readInfectiousRecords(c)
+        // Show NZ rows only when a date exists for that lab; deleting the date
+        // in the detail page removes the row from the tab (matches KSVDL behaviour).
+        for (const lab of ['apqa_hq', 'vbddl']) {
+          const existing = recs.find(r => r.lab === lab)
+          if (existing?.date) {
+            rows.push({
+              id: `${c.id}:inf:${lab}`,
+              caseRow: c,
+              kind: 'infectious',
+              lab,
+              date: existing.date,
+              dateEditable: true,
+              dateStorage: { kind: 'infectious', lab },
+            })
+          }
         }
       }
     }
@@ -238,8 +236,8 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
   { key: 'vet_visit_date', label: '내원일', storage: 'data', type: 'date', width: 110 },
   { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: 110 },
   { key: 'vet_available_date', label: '내원 가능일', storage: 'data', type: 'date', width: 110 },
-  { key: 'pet_name', label: '동물', storage: 'column', type: 'text', width: 90 },
-  { key: 'customer_name', label: '고객', storage: 'column', type: 'text', width: 90 },
+  { key: 'pet_name', label: '동물', storage: 'column', type: 'text', width: 90, readonly: true },
+  { key: 'customer_name', label: '고객', storage: 'column', type: 'text', width: 90, readonly: true },
   { key: 'export_doc_status', label: '준비상태', storage: 'data', type: 'select', width: 100, options: STATUS_OPTIONS, defaultValue: 'not_started' },
   { key: 'export_doc_memo', label: '메모', storage: 'data', type: 'text', width: 180 },
 ]
@@ -289,9 +287,9 @@ function isJapan(row: CaseRow): boolean {
 }
 
 const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
-  { key: 'destination', label: '목적지', storage: 'column', type: 'text', width: 80 },
-  { key: 'pet_name', label: '동물', storage: 'column', type: 'text', width: 90 },
-  { key: 'customer_name', label: '고객', storage: 'column', type: 'text', width: 90 },
+  { key: 'destination', label: '목적지', storage: 'column', type: 'text', width: 80, readonly: true },
+  { key: 'pet_name', label: '동물', storage: 'column', type: 'text', width: 90, readonly: true },
+  { key: 'customer_name', label: '고객', storage: 'column', type: 'text', width: 90, readonly: true },
   { key: 'import_deadline', label: '신고기한', storage: 'data', type: 'date', width: 110 },
   { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: 110 },
   { key: 'return_date', label: '귀국일', storage: 'data', type: 'date', width: 110, condition: isJapan },

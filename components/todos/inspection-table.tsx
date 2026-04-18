@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import type { CaseRow } from '@/lib/supabase/types'
 import { updateCaseField } from '@/lib/actions/cases'
+import { useCases } from '@/components/cases/cases-context'
 import {
   generateApqaHq,
   generateApqaHqEn,
@@ -339,6 +340,7 @@ export function InspectionTable({
 }) {
   const [visible, setVisible] = useState(INITIAL_VISIBLE)
   const sentinelRef = useRef<HTMLTableRowElement>(null)
+  const { openCase } = useCases()
 
   useEffect(() => { setVisible(INITIAL_VISIBLE) }, [rows.length])
 
@@ -399,11 +401,15 @@ export function InspectionTable({
       </thead>
       <tbody>
         {visibleRows.map(row => (
-          <tr key={row.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
-            <td className="px-2 py-1" style={{ width: 160, minWidth: 160 }}>
+          <tr
+            key={row.id}
+            className="border-b border-border/50 hover:bg-accent/30 transition-colors cursor-pointer"
+            onClick={() => openCase(row.caseRow.id)}
+          >
+            <td className="px-2 py-1" style={{ width: 160, minWidth: 160 }} onClick={(e) => e.stopPropagation()}>
               <LabCell row={row} options={labOptions} onUpdate={onUpdate} />
             </td>
-            <td className="px-2 py-1" style={{ width: 120, minWidth: 120 }}>
+            <td className="px-2 py-1" style={{ width: 120, minWidth: 120 }} onClick={(e) => e.stopPropagation()}>
               <DateCell
                 value={row.date}
                 editable={row.dateEditable}
@@ -419,13 +425,13 @@ export function InspectionTable({
             <td className="px-2 py-1" style={{ width: 100, minWidth: 100 }}>
               <StaticCell value={row.caseRow.destination ?? ''} />
             </td>
-            <td className="px-2 py-1" style={{ width: 110, minWidth: 110 }}>
+            <td className="px-2 py-1" style={{ width: 110, minWidth: 110 }} onClick={(e) => e.stopPropagation()}>
               <StatusCell row={row} options={statusOptions} onUpdate={onUpdate} />
             </td>
-            <td className="px-2 py-1 text-center" style={{ width: 70, minWidth: 70 }}>
+            <td className="px-2 py-1 text-center" style={{ width: 70, minWidth: 70 }} onClick={(e) => e.stopPropagation()}>
               <ApplyCell row={row} />
             </td>
-            <td className="px-2 py-1" style={{ width: 180, minWidth: 180 }}>
+            <td className="px-2 py-1" style={{ width: 180, minWidth: 180 }} onClick={(e) => e.stopPropagation()}>
               <MemoCell row={row} onUpdate={onUpdate} />
             </td>
           </tr>
