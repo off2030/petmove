@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useTransition } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { renderFieldValue } from '@/lib/fields'
 import type { FieldSpec } from '@/lib/fields'
@@ -39,12 +40,16 @@ export function AddressField({
   enSpec,
   krRaw,
   enRaw,
+  zipcode,
 }: {
   caseId: string
   krSpec: FieldSpec
   enSpec: FieldSpec | undefined
   krRaw: unknown
   enRaw: unknown
+  /** data.address_zipcode — shown as a separate chip next to the address.
+   *  Falls back to the legacy "(XXXXX) ..." prefix embedded in krRaw. */
+  zipcode: string | null
 }) {
   const { updateLocalCaseField } = useCases()
   const [scriptLoaded, setScriptLoaded] = useState(false)
@@ -67,6 +72,11 @@ export function AddressField({
   const enDisplay = enSpec ? renderFieldValue(enSpec, enRaw) : '—'
   const krEmpty = krDisplay === '—'
   const enEmpty = enDisplay === '—'
+
+  // Prefer explicit data.address_zipcode; fall back to the "(XXXXX) ..." prefix
+  // that legacy saves baked into the address string.
+  const legacyZipMatch = typeof krRaw === 'string' ? krRaw.match(/^\((\d{4,6})\)/) : null
+  const zipDisplay = (zipcode && zipcode.trim()) || legacyZipMatch?.[1] || null
 
   useEffect(() => {
     setShowModal(false)
@@ -114,14 +124,23 @@ export function AddressField({
           const krWithZip = data.zonecode ? `(${data.zonecode}) ${kr}` : kr
           setShowModal(false)
 
-          // Parse English address into components for future document automation
-          const enParts = en.split(',').map((s: string) => s.trim())
+          // Parse English address into components for future document automation.
+          // Daum's roadAddressEnglish may or may not include "Republic of Korea"
+          // at the end — strip it before picking city/province so we don't end
+          // up with city="Republic of Korea".
           const country = 'Republic of Korea'
-          // English format: "396, World Cup buk-ro, Mapo-gu, Seoul"
-          // Last part = city (Seoul, Busan, etc.)
-          const city = enParts.length > 0 ? enParts[enParts.length - 1] : ''
-          // Second to last = district (Mapo-gu, Gangnam-gu, etc.)
-          const province = enParts.length > 1 ? enParts[enParts.length - 2] : ''
+          const rawParts = en.split(',').map((s: string) => s.trim()).filter(Boolean)
+          const enParts = rawParts.length > 0 && /^republic of korea$/i.test(rawParts[rawParts.length - 1])
+            ? rawParts.slice(0, -1)
+            : rawParts
+          // After stripping country: last segment = city (Seoul/Busan/...) or province
+          // (Gyeonggi-do/...) for provincial addresses. Prefer a "*-si" or plain
+          // city name over a "*-do" province suffix.
+          const last = enParts[enParts.length - 1] ?? ''
+          const secondLast = enParts[enParts.length - 2] ?? ''
+          const isProvince = /-do$/i.test(last)
+          const city = isProvince && secondLast ? secondLast : last
+          const province = isProvince ? last : secondLast
 
           startSave(async () => {
             // Main addresses
@@ -225,7 +244,7 @@ export function AddressField({
               </button>
             </div>
           ) : (
-            <div className="group/kr relative flex items-center gap-1 min-w-0">
+            <div className="group/kr relative flex items-center gap-1 min-w-0 flex-1">
               <button type="button" onClick={krEmpty ? handleSearch : startEditKr}
                 className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text', krEmpty && 'text-muted-foreground/60 italic')}>
                 {krDisplay}
@@ -236,6 +255,16 @@ export function AddressField({
               </button>
               <CopyButton value={krEmpty ? '' : krDisplay}
                 className="opacity-0 group-hover/kr:opacity-100 shrink-0" />
+              {zipDisplay && (
+                <>
+                  <span className="text-muted-foreground/30 select-none mx-2">|</span>
+                  <div className="group/zip relative inline-flex items-baseline shrink-0">
+                    <span className="text-sm text-muted-foreground mr-1">우편번호</span>
+                    <span className="text-sm">{zipDisplay}</span>
+                    <CopyButton value={zipDisplay} className="ml-1 opacity-0 group-hover/zip:opacity-100" />
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -305,12 +334,12 @@ export function AddressField({
         </div>
       </div>
 
-      {/* Modal overlay for Daum Postcode search */}
-      {showModal && (
+      {/* Modal overlay for Daum Postcode search — rendered via portal because
+          an ancestor (cases-app panel slider) uses `transform`, which would
+          otherwise trap `position: fixed` inside the transformed container. */}
+      {showModal && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-black/30" onClick={() => setShowModal(false)} />
-          {/* Modal */}
           <div className="relative bg-background rounded-lg shadow-lg overflow-hidden" style={{ width: '500px', height: '500px' }}>
             <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
               <span className="text-sm font-medium">주소 검색</span>
@@ -321,7 +350,8 @@ export function AddressField({
             </div>
             <div ref={modalRef} style={{ height: 'calc(100% - 41px)' }} />
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   )

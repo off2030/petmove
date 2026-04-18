@@ -16,7 +16,7 @@ import { extractResultToSeed } from '@/lib/extract-to-seed'
 import { filesToBase64 } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { lookupCaseByMicrochip } from '@/lib/actions/lookup-case-by-chip'
-import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateOVD, generateSGP, generateAQS, generateFormR11, previewSiblings, generateAnnexIIIMulti, generateUKMulti } from '@/lib/actions/generate-pdf'
+import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateOVD, generateSGP, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti } from '@/lib/actions/generate-pdf'
 import { MultiFormDialog } from './multi-form-dialog'
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getCertButtons } from '@/lib/destination-config'
@@ -50,7 +50,9 @@ const CERT_ACTIONS: Record<string, CertAction> = {
   ovd: generateOVD,
   sgp: generateSGP,
   aqs: generateAQS,
+  ch: generateCH,
   formR11: generateFormR11,
+  vhc: generateVHC,
 }
 
 /** Cert key → multi-form dialog formKey mapping */

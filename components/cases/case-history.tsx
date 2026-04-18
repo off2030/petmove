@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useCases } from './cases-context'
 import { updateCaseField } from '@/lib/actions/cases'
 
@@ -87,7 +88,7 @@ export function CaseHistory({ caseId }: { caseId: string }) {
         변경이력
       </button>
 
-      {open && (
+      {open && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30" onClick={() => setOpen(false)} />
           <div className="relative bg-background rounded-lg shadow-lg w-[560px] max-h-[400px] flex flex-col">
@@ -133,7 +134,8 @@ export function CaseHistory({ caseId }: { caseId: string }) {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   )

@@ -393,9 +393,12 @@ export function EditableField({
       <div className="text-sm text-muted-foreground pt-1">{spec.label}</div>
       <div className="min-w-0 flex items-baseline gap-2">
         {(() => {
-          const noCopy = spec.type === 'longtext' || spec.key === 'status'
+          const noCopy = spec.type === 'longtext' || spec.key === 'select' || spec.key === 'status'
           if ((isDate && editing) || (isSelect && editing) || editing) return valueCell
-          if (noCopy) return <>{valueCell}{clearButton}</>
+          // longtext 만 inline clearButton — 긴 텍스트 wrap 때문에 외부 절대배치가 어색함.
+          // status 등 select 는 noCopy 라도 외부 clearButton 만 사용(아래 411) → 중복 방지.
+          if (spec.type === 'longtext') return <>{valueCell}{clearButton}</>
+          if (noCopy) return valueCell
           // CopyButton 을 flex 흐름에 두어 뒤따르는 ✕ 와 겹치지 않게 한다
           // (과거: absolute left-full → ✕ 와 같은 위치 점유).
           return (

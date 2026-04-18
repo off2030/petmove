@@ -507,6 +507,43 @@ function readSource(
     return (caseRow as unknown as Record<string, unknown>).customer_name ?? ''
   }
 
+  // Composite "Post code / Place" — "<zipcode> <city>" for EU forms that combine
+  // both into one field. Falls back gracefully when either part is missing.
+  // Legacy: if zipcode isn't stored but address has "(XXXXX) " prefix, extract it.
+  if (source === 'postcode_place') {
+    let zip = String(data.address_zipcode ?? '').trim()
+    if (!zip) {
+      const krAddr = String(data.address_kr ?? '')
+      const m = krAddr.match(/^\((\d{4,6})\)/)
+      if (m) zip = m[1]
+    }
+    let city = String(data.address_city ?? '').trim()
+    // Defensive: older saves sometimes captured "Republic of Korea" as city
+    // because roadAddressEnglish included the country at the end. Skip it.
+    if (/^republic of korea$/i.test(city)) {
+      const addrEn = String(data.address_en ?? '')
+      const parts = addrEn.split(',').map(s => s.trim()).filter(Boolean)
+      const cleaned = parts.length > 0 && /^republic of korea$/i.test(parts[parts.length - 1])
+        ? parts.slice(0, -1) : parts
+      const last = cleaned[cleaned.length - 1] ?? ''
+      const secondLast = cleaned[cleaned.length - 2] ?? ''
+      city = /-do$/i.test(last) && secondLast ? secondLast : last
+    }
+    return [zip, city].filter(Boolean).join(' ')
+  }
+
+  // Composite `address_en_no_country` — address_en with trailing "Republic of
+  // Korea" stripped, for forms where the country is labeled separately (e.g.
+  // CH §1 Address + static "Country: Republic of Korea" label).
+  if (source === 'address_en_no_country') {
+    const s = String(data.address_en ?? '').trim()
+    if (!s) return ''
+    const parts = s.split(',').map(seg => seg.trim()).filter(Boolean)
+    const cleaned = parts.length > 0 && /^republic of korea$/i.test(parts[parts.length - 1])
+      ? parts.slice(0, -1) : parts
+    return cleaned.join(', ')
+  }
+
   // Composite animal description: "<breed>, <color>, <weight>kg".
   // Used by Identification Declaration's Description / Breed-color-size fields.
   // Drops empty parts; weight gets a "kg" suffix only when present.
@@ -645,6 +682,129 @@ function resolveField(
     return v == null ? '' : String(v)
   }
 
+  // Korean address parser — splits an English-romanized Korean address into
+  // No / Street / City / State / Country components for forms that split
+  // the destination/origin address into discrete fields (e.g. Thailand R.11).
+  //
+  // Handles two common Daum Postcode output shapes:
+  //   (A) "25 Irwon-ro 14-gil, Gangnam-gu, Seoul, Republic of Korea"
+  //       → no="25", street="Irwon-ro 14-gil", city="Gangnam-gu", state="Seoul"
+  //   (B) "12-37, Sinhyeon-ro, Gwangju-si, Gyeonggi-do, Republic of Korea"
+  //       → no="12-37", street="Sinhyeon-ro", city="Gwangju-si", state="Gyeonggi-do"
+  //
+  // Algorithm:
+  //   1. Strip trailing "Republic of Korea" (keep country separately).
+  //   2. Remaining: [street_parts..., city, state?]. Last segment = state (if
+  //      it ends with "-do" or is a special city like Seoul/Busan/...), else
+  //      treat the last as city with state empty.
+  //   3. Second-to-last (after state removal) = city (gu/si).
+  //   4. Leftover segments form No + Street. If exactly 1 leftover segment,
+  //      split by first whitespace into No + Street (handles "25 Irwon-ro …").
+  //      If 2+ segments, first = No, rest joined = Street.
+  const krAddrMatch = transform?.match(/^kr_addr:(no|street|city|state|country|postcode)$/)
+  if (krAddrMatch) {
+    const attr = krAddrMatch[1]
+    if (attr === 'country') return 'Republic of Korea'
+    if (attr === 'postcode') {
+      return String(data.address_zipcode ?? '').trim()
+    }
+    const s = String(raw ?? '').trim()
+    if (!s) return ''
+    const all = s.split(',').map(seg => seg.trim()).filter(Boolean)
+    const parts = all.length && /^republic of korea$/i.test(all[all.length - 1]) ? all.slice(0, -1) : all
+    if (parts.length === 0) return ''
+    // Detect province/state: "-do" suffix or special-city names act as state.
+    const SPECIAL_CITIES = /^(seoul|busan|incheon|daegu|daejeon|gwangju|ulsan|sejong)$/i
+    const last = parts[parts.length - 1]
+    const hasState = /-do$/i.test(last) || SPECIAL_CITIES.test(last)
+    const state = hasState ? last : ''
+    const afterState = hasState ? parts.slice(0, -1) : parts
+    const city = afterState.length >= 2 ? afterState[afterState.length - 1] : (afterState[afterState.length - 1] ?? '')
+    const streetParts = afterState.length >= 2 ? afterState.slice(0, -1) : []
+    // Split No + Street. Two segment patterns need different handling:
+    //   "12-37, Sinhyeon-ro"  → first segment is pure digits(+hyphen) = No
+    //   "98 Pangyoyeok-ro, Bundang-gu" → first is "number + road", split by whitespace
+    let no = '', street = ''
+    const numOnly = /^\d+(-\d+)?$/
+    if (streetParts.length === 1) {
+      const m = streetParts[0].match(/^(\S+)\s+(.+)$/)
+      if (m) { no = m[1]; street = m[2] }
+      else { street = streetParts[0] }
+    } else if (streetParts.length >= 2) {
+      if (numOnly.test(streetParts[0])) {
+        no = streetParts[0]
+        street = streetParts.slice(1).join(', ')
+      } else {
+        const m = streetParts[0].match(/^(\S+)\s+(.+)$/)
+        if (m) {
+          no = m[1]
+          street = [m[2], ...streetParts.slice(1)].join(', ')
+        } else {
+          street = streetParts.join(', ')
+        }
+      }
+    }
+    if (attr === 'no') return no
+    if (attr === 'street') return street
+    if (attr === 'city') return city
+    if (attr === 'state') return state
+    return ''
+  }
+
+  // Swiss address parser — splits a free-form "Street, PLZ City, Switzerland"
+  // string into street / PLZ City / country components. PLZ is always 4 digits.
+  // Heuristic: find the segment starting with 4 digits → that's "PLZ City".
+  // Everything before = street, everything after = country (ignored, we always
+  // render "Switzerland" as the country).
+  //
+  // Examples that parse correctly:
+  //   "Rue du Lac 12, 1800 Vevey, Switzerland"
+  //     → street="Rue du Lac 12", postcode="1800", city="Vevey"
+  //   "Bahnhofstrasse 10, 8001 Zürich"
+  //     → street="Bahnhofstrasse 10", postcode="8001", city="Zürich"
+  //   "Route de Meyrin 15, 1202 Genève"
+  //     → street="Route de Meyrin 15", postcode="1202", city="Genève"
+  // When parsing fails (no PLZ found), fall back to street=entire input,
+  // postcode/city="".
+  const swissAddrMatch = transform?.match(/^swiss_addr:(street|postcode_place|postcode|city)$/)
+  if (swissAddrMatch) {
+    const attr = swissAddrMatch[1]
+    const s = String(raw ?? '').trim()
+    if (!s) return ''
+    const segments = s.split(',').map(seg => seg.trim()).filter(Boolean)
+    const plzIdx = segments.findIndex(seg => /^\d{4}(\s|$)/.test(seg))
+    if (plzIdx < 0) {
+      if (attr === 'street') return s
+      return ''
+    }
+    const plzSeg = segments[plzIdx]
+    const m = plzSeg.match(/^(\d{4})\s*(.*)$/)
+    const postcode = m?.[1] ?? ''
+    const city = (m?.[2] ?? '').trim()
+    const street = segments.slice(0, plzIdx).join(', ')
+    if (attr === 'street') return street
+    if (attr === 'postcode') return postcode
+    if (attr === 'city') return city
+    if (attr === 'postcode_place') return [postcode, city].filter(Boolean).join(' ')
+    return ''
+  }
+
+  // Checkbox from JSON object field equality. `json_eq:<key>:<value>`.
+  const jsonEqMatch = transform?.match(/^json_eq:([^:]+):(.+)$/)
+  if (jsonEqMatch) {
+    if (!raw || typeof raw !== 'object') return false
+    const v = (raw as Record<string, unknown>)[jsonEqMatch[1]]
+    return String(v ?? '') === jsonEqMatch[2]
+  }
+
+  // Checkbox from JSON object field membership. `json_in:<key>:<v1>|<v2>|...`.
+  const jsonInMatch = transform?.match(/^json_in:([^:]+):(.+)$/)
+  if (jsonInMatch) {
+    if (!raw || typeof raw !== 'object') return false
+    const v = (raw as Record<string, unknown>)[jsonInMatch[1]]
+    return jsonInMatch[2].split('|').includes(String(v ?? ''))
+  }
+
   // Age in full years computed from birth date.
   if (transform === 'age_years') {
     const a = ageParts(raw)
@@ -746,19 +906,64 @@ function resolveField(
     return todayYMDSlash()
   }
 
-  // Today's day of month (1-31, no padding) — for Thai Form R.11 신청일
+  // Today's day of month (1-31, no padding) — legacy, kept for upstream Form_R11 compat.
   if (transform === 'today_day') {
     return String(new Date().getDate())
   }
-
-  // Today's month (1-12, no padding) — for Thai Form R.11 신청일
   if (transform === 'today_month') {
     return String(new Date().getMonth() + 1)
   }
-
-  // Today's year in Buddhist Era (Gregorian + 543) — for Thai Form R.11 신청일
+  // Today's year in Buddhist Era (Gregorian + 543).
   if (transform === 'today_be_year') {
     return String(new Date().getFullYear() + 543)
+  }
+
+  // Part of today's date. `today_part:(day|month|year|be_year)`.
+  // `be_year` = Gregorian + 543 (Thai Buddhist Era).
+  const todayPartMatch = transform?.match(/^today_part:(day|month|year|be_year)$/)
+  if (todayPartMatch) {
+    const d = new Date()
+    const part = todayPartMatch[1]
+    if (part === 'day') return String(d.getDate()).padStart(2, '0')
+    if (part === 'month') return String(d.getMonth() + 1).padStart(2, '0')
+    if (part === 'year') return String(d.getFullYear())
+    if (part === 'be_year') return String(d.getFullYear() + 543)
+    return ''
+  }
+
+  // Conditional static label — `label_if:<kind>:<label>`. Returns <label> only
+  // when the matching `*_dates` array in `data` has entries, else empty.
+  // Used by VHC's 6-row vaccination table so "Rabies"/"CIV"/etc. only appears
+  // for rows that actually have data.
+  //
+  // Species split: if <label> contains `|`, the part before = dog label, after
+  // = cat label. E.g. `label_if:general:DHPPL|FVRCP` prints the species-
+  // appropriate shorthand for the comprehensive vaccine.
+  const labelIfMatch = transform?.match(/^label_if:([a-z_]+):(.+)$/)
+  if (labelIfMatch) {
+    const KIND_TO_DATES: Record<string, string> = {
+      rabies: 'rabies_dates',
+      general: 'general_vaccine_dates',
+      comprehensive: 'general_vaccine_dates',
+      civ: 'civ_dates',
+      kennel: 'kennel_cough_dates',
+      heartworm: 'heartworm_dates',
+      ext_parasite: 'external_parasite_dates',
+      int_parasite: 'internal_parasite_dates',
+    }
+    const key = KIND_TO_DATES[labelIfMatch[1]]
+    if (!key) return ''
+    const v = data[key]
+    if (!Array.isArray(v) || v.length === 0) return ''
+    const labelStr = labelIfMatch[2]
+    const pipeIdx = labelStr.indexOf('|')
+    if (pipeIdx >= 0) {
+      const dogLabel = labelStr.slice(0, pipeIdx)
+      const catLabel = labelStr.slice(pipeIdx + 1)
+      const species = String(data.species ?? '').toLowerCase()
+      return species === 'cat' ? catLabel : dogLabel
+    }
+    return labelStr
   }
 
   // Boolean-coerce: truthy → checkbox on.
@@ -879,8 +1084,11 @@ function resolveField(
     if (!date) return ''
     if (attr === 'date') return fmtDate(date)
     if ((kind === 'civ' || kind === 'comprehensive') && attr === 'validity_from') return fmtDate(date)
-    if ((kind === 'civ' || kind === 'comprehensive') && attr === 'validity_to') {
-      // vaccinationDate + 1 year as YYYY-MM-DD → fmtDate → YYYY/MM/DD (form-level dmy converts to dd/mm/yyyy)
+    if ((kind === 'civ' || kind === 'comprehensive' || kind === 'rabies') && attr === 'validity_to') {
+      // vaccinationDate + 1 year as YYYY/MM/DD (form-level dmy converts to dd/mm/yyyy).
+      // Rabies included here for the generic VHC cert — most Korean rabies vaccines
+      // are annual so +1y is a safe default. Specific multi-year products require
+      // manual editing on the generated PDF.
       const m = date.match(/^(\d{4})-(\d{2})-(\d{2})$/)
       if (!m) return ''
       return `${Number(m[1]) + 1}/${m[2]}/${m[3]}`

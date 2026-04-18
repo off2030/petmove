@@ -3733,176 +3733,49 @@
   },
   "SGP": {
     "template": "SGP.pdf",
-    "description": "Singapore 수출용 반려동물 건강증명서 (Veterinary Certificate for Import of Dogs and Cats — Schedule III). 개/고양이 공통 양식",
+    "description": "Singapore 수출용 반려동물 건강증명서 (Veterinary Certificate for Import of Dogs and Cats — Schedule III). 개/고양이 공통 양식. 성별은 폼에 plain text라 수의사가 직접 동그라미 침.",
     "filename": "SGP_{pet_name}.pdf",
     "dateFormat": "dmy",
     "fields": {
-      "text_32dbb": {
-        "source": null,
-        "note": "p1 NParks/AVS Import Licence No. (수동입력)"
-      },
-      "text_33krrl": {
-        "source": null,
-        "note": "p1 Veterinary Certificate No. (수동입력)"
-      },
-      "text_1anp": {
-        "source": "species",
-        "transform": "en",
-        "note": "p1 Species (cat/dog)"
-      },
-      "text_4jytd": {
-        "source": "breed_en",
-        "note": "p1 Breed"
-      },
-      "text_5xryf": {
-        "source": "pet_name_en",
-        "note": "p1 Name of animal"
-      },
-      "checkbox_7cd": {
-        "source": "sex",
-        "transform": "checkbox:eq:male",
-        "note": "p1 Sex: Male"
-      },
-      "checkbox_9oehp": {
-        "source": "sex",
-        "transform": "checkbox:eq:neutered_male",
-        "note": "p1 Sex: Neutered Male"
-      },
-      "checkbox_10fotf": {
-        "source": "sex",
-        "transform": "checkbox:eq:female",
-        "note": "p1 Sex: Female"
-      },
-      "checkbox_30xvic": {
-        "source": "sex",
-        "transform": "checkbox:eq:spayed_female",
-        "note": "p1 Sex: Neutered female"
-      },
-      "text_6fscw": {
-        "source": "birth_date",
-        "note": "p1 Age or Date of Birth"
-      },
-      "text_12dvft": {
-        "source": "color_en",
-        "note": "p1 Colour"
-      },
-      "text_13eqaz": {
-        "source": "microchip",
-        "note": "p1 Microchip Number"
-      },
-      "text_14xwko": {
-        "source": null,
-        "note": "p1 Microchip scan date (수동입력)"
-      },
-      "text_31wwtj": {
-        "source": null,
-        "default": "JINWON LEE",
-        "note": "p1 Section III — Vet name"
-      },
-      "text_34imom": {
-        "source": null,
-        "default": "Republic of Korea",
-        "note": "p1 Section III — Country/region of export"
-      },
-      "text_15lfrl": {
-        "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:date[0]",
-        "note": "p1 Canine distemper virus date (종합백신 최신)"
-      },
-      "text_16lhri": {
-        "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:date[0]",
-        "note": "p1 Canine adenovirus type 1 date (종합백신 최신)"
-      },
-      "text_17bobq": {
-        "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:date[0]",
-        "note": "p1 Canine parvovirus type 2 date (종합백신 최신)"
-      },
-      "text_18felb": {
-        "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:date[0]",
-        "note": "p2 Feline Calicivirus date (종합백신 최신)"
-      },
-      "text_19gyey": {
-        "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:date[0]",
-        "note": "p2 Feline Herpesvirus-1 date (종합백신 최신)"
-      },
-      "text_20ixun": {
-        "source": "general_vaccine_dates",
-        "transform": "vaccine_desc:comprehensive:date[0]",
-        "note": "p2 Feline Panleukopenia virus date (종합백신 최신)"
-      },
-      "text_21xyyd": {
-        "source": "rabies_dates",
-        "transform": "vaccine_desc:rabies:date[0]",
-        "note": "p2 Date of rabies vaccination (최신)"
-      },
-      "text_22poce": {
-        "source": "rabies_titer_records",
-        "transform": "array[0].date",
-        "note": "p2 Date of blood sampling (RNATT)"
-      },
-      "text_23kmjz": {
-        "source": "rabies_titer_records",
-        "transform": "array[0].value",
-        "note": "p2 Rabies neutralising antibody titre (IU/ml)"
-      },
-      "text_36ofwd": {
-        "source": "external_parasite_dates",
-        "transform": "vaccine_desc:ext_parasite:date[0]",
-        "note": "p2 External parasite treatment date (최근)"
-      },
-      "text_35dn": {
-        "source": "external_parasite_dates",
-        "transform": "parasite_info:external:ingredient[0]",
-        "note": "p2 External parasite Name of product"
-      },
-      "text_27zvdw": {
-        "source": "external_parasite_dates",
-        "transform": "parasite_info:external:ingredient[0]",
-        "note": "p2 External parasite Active ingredient"
-      },
-      "text_42siqg": {
-        "source": "internal_parasite_dates",
-        "transform": "vaccine_desc:int_parasite:date[0]",
-        "note": "p2 Internal parasite treatment date (최근)"
-      },
-      "text_41itym": {
-        "source": "internal_parasite_dates",
-        "transform": "parasite_info:internal:ingredient[0]",
-        "note": "p2 Internal parasite Name of product"
-      },
-      "text_39aeyw": {
-        "source": "internal_parasite_dates",
-        "transform": "parasite_info:internal:ingredient[0]",
-        "note": "p2 Internal parasite Active ingredient"
-      },
-      "text_44viig": {
-        "source": "vet_visit_date",
-        "note": "p3 Endorsement signature date"
-      },
-      "text_43sfjj": {
-        "source": null,
-        "default": "JINWON LEE",
-        "note": "p3 Vet name"
-      },
-      "text_45snmt": {
-        "source": null,
-        "default": "LAUSANNE VETERINARY MEDICAL CENTER",
-        "note": "p3 Practice name"
-      },
-      "text_49iqnn": {
-        "source": null,
-        "default": "3, GWANAK-RO 29-GIL, GWANAK-GU, SEOUL, REPUBLIC OF KOREA",
-        "note": "p3 Practice address"
-      },
-      "text_50saaa": {
-        "source": null,
-        "default": "+82-2-872-7588 / petmove@naver.com",
-        "note": "p3 Phone/email"
-      }
+      "text_1vqxe": { "source": null, "note": "p1 NParks/AVS Import Licence No. (수동입력)" },
+      "text_2dlhd": { "source": null, "note": "p1 Veterinary Certificate No. (수동입력)" },
+
+      "text_3tcic": { "source": "species", "transform": "en", "note": "p1 Section I — Species" },
+      "text_4okuj": { "source": "breed_en",    "note": "p1 Section I — Breed" },
+      "text_5wcle": { "source": "pet_name_en", "note": "p1 Section I — Name of animal" },
+      "text_6vatu": { "source": "birth_date",  "note": "p1 Age or Date of Birth" },
+      "text_7nvqf": { "source": "color_en",    "note": "p1 Colour" },
+      "text_9qhaf": { "source": "microchip",   "note": "p1 Microchip Number" },
+      "text_10ehnj": { "source": null,         "note": "p1 Microchip scan date (수동입력)" },
+
+      "text_11qfuf": { "source": null, "default": "JINWON LEE",       "note": "p1 Section III — Vet name (BLOCK LETTERS)" },
+      "text_12gljs": { "source": null, "default": "Republic of Korea", "note": "p1 Section III — Country/region of export" },
+
+      "text_13vpdl": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p1 Canine distemper virus date" },
+      "text_14yyzu": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p1 Canine adenovirus type 1 date" },
+      "text_15ggyf": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p1 Canine parvovirus type 2 date" },
+
+      "text_16wkhs": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p2 Feline Calicivirus date" },
+      "text_17ffjz": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p2 Feline Herpesvirus-1 date" },
+      "text_18uqim": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p2 Feline Panleukopenia date" },
+
+      "text_19jz":   { "source": "rabies_dates",         "transform": "vaccine_desc:rabies:date[0]", "note": "p2 Rabies vaccination date" },
+      "text_20olqh": { "source": "rabies_titer_records", "transform": "array[0].date",              "note": "p2 Blood sampling date (RNATT)" },
+      "text_21irsk": { "source": "rabies_titer_records", "transform": "array[0].value",             "note": "p2 Rabies titre IU/ml" },
+
+      "text_22mqjk": { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:date[0]", "note": "p2 Ext parasite treatment date" },
+      "text_23ltyb": { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:name[0]", "note": "p2 Ext parasite product name" },
+      "text_24egtj": { "source": "external_parasite_dates", "transform": "parasite_info:external:ingredient[0]", "note": "p2 Ext parasite active ingredient" },
+
+      "text_25pv":   { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:date[0]", "note": "p2 Int parasite treatment date" },
+      "text_26zheb": { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:name[0]", "note": "p2 Int parasite product name" },
+      "text_27lonm": { "source": "internal_parasite_dates", "transform": "parasite_info:internal:ingredient[0]", "note": "p2 Int parasite active ingredient" },
+
+      "text_28wkfi": { "source": "vet_visit_date", "note": "p3 Endorsement signature date" },
+      "text_29ulae": { "source": null, "transform": "vet:clinic_en",  "note": "p3 Practice name" },
+      "text_30hspb": { "source": null, "transform": "vet:address_en", "note": "p3 Address" },
+      "text_31tz":   { "source": null, "transform": "vet:phone_intl", "note": "p3 Phone" },
+      "text_32fjpy": { "source": null, "transform": "vet:email",      "note": "p3 Email" }
     }
   },
   "AQS_279": {
@@ -4160,31 +4033,202 @@
         "transform": "json:quarantine_location",
         "note": "quarantine at — 검역/도착 공항 (Bangkok/Phuket/Chiang Mai)"
       },
-      "text_33rxom": {
-        "source": null,
-        "note": "Address Of Origin: No. — 수기 입력"
-      },
-      "text_30ctcf": {
-        "source": null,
-        "note": "Address Of Origin: State — 수기 입력"
-      },
-      "text_32mbrv": {
-        "source": "address_en",
-        "note": "Address Of Origin: Street — 영문 주소"
-      },
-      "text_29ajre": {
-        "source": null,
-        "default": "Republic of Korea",
-        "note": "Address Of Origin: Country — 한국 기본값"
-      },
-      "text_31lsvb": {
-        "source": null,
-        "note": "Address Of Origin: City — 수기 입력"
-      },
-      "text_28sg": {
-        "source": null,
-        "note": "Address Of Origin: Postcode — 수기 입력"
-      }
+      "text_33rxom": { "source": "address_en", "transform": "kr_addr:no",       "note": "Address Of Origin: No. (한국주소 자동 파싱)" },
+      "text_30ctcf": { "source": "address_en", "transform": "kr_addr:state",    "note": "Address Of Origin: State (도/특별시)" },
+      "text_32mbrv": { "source": "address_en", "transform": "kr_addr:street",   "note": "Address Of Origin: Street (도로명)" },
+      "text_29ajre": { "source": "address_en", "transform": "kr_addr:country",  "note": "Address Of Origin: Country (Republic of Korea 고정)" },
+      "text_31lsvb": { "source": "address_en", "transform": "kr_addr:city",     "note": "Address Of Origin: City (구/시)" },
+      "text_28sg":   { "source": null,         "transform": "kr_addr:postcode", "note": "Address Of Origin: Postcode (data.address_zipcode)" }
     }
+  },
+  "OVD": {
+    "template": "OVD.pdf",
+    "description": "New Zealand Official Veterinarian Declaration (OVD) — 광견병 접종/항체검사 선언서. NZ 보조서류",
+    "filename": "OVD_{pet_name}.pdf",
+    "dateFormat": "dmy",
+    "fields": {
+      "text_1barn": { "source": null, "transform": "today_ymd_slash", "note": "Registered Vet 서명일 — 버튼 클릭한 오늘 날짜 (DD/MM/YYYY). OVD는 발급일=내원일 규칙의 예외" },
+
+      "text_53wspu": { "source": "microchip", "transform": "digit[0]",  "note": "Primary microchip digit 1" },
+      "text_52tpog": { "source": "microchip", "transform": "digit[1]",  "note": "Primary microchip digit 2" },
+      "text_51rkrw": { "source": "microchip", "transform": "digit[2]",  "note": "Primary microchip digit 3" },
+      "text_50noht": { "source": "microchip", "transform": "digit[3]",  "note": "Primary microchip digit 4" },
+      "text_49xcfr": { "source": "microchip", "transform": "digit[4]",  "note": "Primary microchip digit 5" },
+      "text_48slkl": { "source": "microchip", "transform": "digit[5]",  "note": "Primary microchip digit 6" },
+      "text_47zfmi": { "source": "microchip", "transform": "digit[6]",  "note": "Primary microchip digit 7" },
+      "text_46otex": { "source": "microchip", "transform": "digit[7]",  "note": "Primary microchip digit 8" },
+      "text_45xomb": { "source": "microchip", "transform": "digit[8]",  "note": "Primary microchip digit 9" },
+      "text_44yxby": { "source": "microchip", "transform": "digit[9]",  "note": "Primary microchip digit 10" },
+      "text_43tswy": { "source": "microchip", "transform": "digit[10]", "note": "Primary microchip digit 11" },
+      "text_42auuw": { "source": "microchip", "transform": "digit[11]", "note": "Primary microchip digit 12" },
+      "text_41vruq": { "source": "microchip", "transform": "digit[12]", "note": "Primary microchip digit 13" },
+      "text_40akbj": { "source": "microchip", "transform": "digit[13]", "note": "Primary microchip digit 14" },
+      "text_39cgqq": { "source": "microchip", "transform": "digit[14]", "note": "Primary microchip digit 15" },
+
+      "text_6cjms":  { "source": "microchip_implant_date", "transform": "date_part:day",   "note": "Microchip implant Day" },
+      "text_7norq":  { "source": "microchip_implant_date", "transform": "date_part:month", "note": "Microchip implant Month" },
+      "text_8esbt":  { "source": "microchip_implant_date", "transform": "date_part:year",  "note": "Microchip implant Year" },
+
+      "text_11uvn":  { "source": "rabies_titer_records", "transform": "titer_part[0]:date_day",   "note": "Blood sample Day (latest titer)" },
+      "text_10cemh": { "source": "rabies_titer_records", "transform": "titer_part[0]:date_month", "note": "Blood sample Month" },
+      "text_9bpit":  { "source": "rabies_titer_records", "transform": "titer_part[0]:date_year",  "note": "Blood sample Year" },
+
+      "text_38axmr": { "source": "rabies_titer_records", "transform": "titer_part[0]:value_b0", "note": "Titer XXX.XX digit b0" },
+      "text_37bkse": { "source": "rabies_titer_records", "transform": "titer_part[0]:value_b1", "note": "Titer digit b1" },
+      "text_36aefb": { "source": "rabies_titer_records", "transform": "titer_part[0]:value_b2", "note": "Titer digit b2 (just before decimal)" },
+      "text_35jmhg": { "source": "rabies_titer_records", "transform": "titer_part[0]:value_a0", "note": "Titer digit a0 (just after decimal)" },
+      "text_34oqam": { "source": "rabies_titer_records", "transform": "titer_part[0]:value_a1", "note": "Titer digit a1" },
+
+      "text_12puyn":     { "source": "rabies_dates", "transform": "ovd_vacc[0]:date_day",   "note": "Vacc1 Day (older of two recent, or only dose)" },
+      "text_13byis":     { "source": "rabies_dates", "transform": "ovd_vacc[0]:date_month", "note": "Vacc1 Month" },
+      "text_14eblq":     { "source": "rabies_dates", "transform": "ovd_vacc[0]:date_year",  "note": "Vacc1 Year" },
+      "checkbox_18aaad": { "source": "rabies_dates", "transform": "ovd_vacc[0]:doi_1y",     "note": "Vacc1 DOI 1 year (default when dose present)" },
+      "checkbox_20dsiy": { "source": "rabies_dates", "transform": "ovd_vacc[0]:doi_2y",     "note": "Vacc1 DOI 2 years" },
+      "checkbox_22yude": { "source": "rabies_dates", "transform": "ovd_vacc[0]:doi_3y",     "note": "Vacc1 DOI 3 years" },
+      "text_25aish":     { "source": "rabies_dates", "transform": "ovd_vacc[0]:batch",       "note": "Vacc1 Batch Number" },
+      "text_28fxpz":     { "source": "rabies_dates", "transform": "ovd_vacc[0]:expiry_day",  "note": "Vacc1 Batch Expiry Day" },
+      "text_30cnai":     { "source": "rabies_dates", "transform": "ovd_vacc[0]:expiry_month","note": "Vacc1 Batch Expiry Month" },
+      "text_32bokc":     { "source": "rabies_dates", "transform": "ovd_vacc[0]:expiry_year", "note": "Vacc1 Batch Expiry Year" },
+
+      "text_15vsaw":     { "source": "rabies_dates", "transform": "ovd_vacc[1]:date_day",   "note": "Vacc2 Day (newest, blank if 1 dose)" },
+      "text_16lx":       { "source": "rabies_dates", "transform": "ovd_vacc[1]:date_month", "note": "Vacc2 Month" },
+      "text_17oay":      { "source": "rabies_dates", "transform": "ovd_vacc[1]:date_year",  "note": "Vacc2 Year" },
+      "checkbox_19qpqb": { "source": "rabies_dates", "transform": "ovd_vacc[1]:doi_1y",     "note": "Vacc2 DOI 1 year" },
+      "checkbox_21amam": { "source": "rabies_dates", "transform": "ovd_vacc[1]:doi_2y",     "note": "Vacc2 DOI 2 years" },
+      "checkbox_23nitt": { "source": "rabies_dates", "transform": "ovd_vacc[1]:doi_3y",     "note": "Vacc2 DOI 3 years" },
+      "text_27ssea":     { "source": "rabies_dates", "transform": "ovd_vacc[1]:batch",       "note": "Vacc2 Batch Number" },
+      "text_29wkrm":     { "source": "rabies_dates", "transform": "ovd_vacc[1]:expiry_day",  "note": "Vacc2 Batch Expiry Day" },
+      "text_31udku":     { "source": "rabies_dates", "transform": "ovd_vacc[1]:expiry_month","note": "Vacc2 Batch Expiry Month" },
+      "text_33ukje":     { "source": "rabies_dates", "transform": "ovd_vacc[1]:expiry_year", "note": "Vacc2 Batch Expiry Year" }
+    }
+  },
+  "CH": {
+    "template": "CH.pdf",
+    "description": "Switzerland (BLV) Import authorisation application — 스위스 연방 식품안전 수의청 반려동물 입국 신청서. 한국→스위스 반려동물 수출시 제출 (Application form(스위스).pdf).",
+    "filename": "CH_{pet_name}.pdf",
+    "dateFormat": "dmy",
+    "fields": {
+      "text_1pdjr":  { "source": "address_en_no_country",  "note": "§1 Applicant — Address (Country label on form is static, so strip trailing 'Republic of Korea')" },
+      "text_2fvow":  { "source": "customer_last_name_en", "note": "§1 Applicant — Name (last)" },
+      "text_3yfsn":  { "source": "customer_first_name_en","note": "§1 Applicant — First name" },
+      "text_4xfzz":  { "source": "postcode_place",        "note": "§1 Applicant — Post code / Place (address_zipcode + city)" },
+      "text_5mmcj":  { "source": "phone", "transform": "phone_intl_kr", "note": "§1 Applicant — Telephone" },
+
+      "text_6xuns":  { "source": "switzerland_extra", "transform": "json:entry_date", "note": "§2 Entry — Date of entry" },
+
+      "checkbox_7drhm": { "source": "switzerland_extra", "transform": "json_eq:entry_airport:zurich", "note": "§2 Entry airport — Zürich" },
+      "checkbox_8ucaf": { "source": "switzerland_extra", "transform": "json_eq:entry_airport:geneva", "note": "§2 Entry airport — Geneva" },
+      "checkbox_9ztck": { "source": "switzerland_extra", "transform": "json_eq:entry_airport:basel",  "note": "§2 Entry airport — Basel" },
+
+      "checkbox_10ypsw": { "source": null, "transform": "checkbox:always_true", "note": "§2 Accompanied by owner (default — 수동 변경 시 PDF 편집)" },
+      "checkbox_11fleq": { "source": null, "note": "§2 Accompanied by attorney (기본 false — 필요 시 수동)" },
+
+      "checkbox_14rku":  { "source": "switzerland_extra", "transform": "json_eq:entry_purpose:temporary",  "note": "§2 Purpose — Temporary (short stay/holidays)" },
+      "checkbox_12tpgu": { "source": "switzerland_extra", "transform": "json_eq:entry_purpose:relocation", "note": "§2 Purpose — Relocation of owner" },
+      "checkbox_15vav":  { "source": "switzerland_extra", "transform": "json_eq:entry_purpose:reentry",    "note": "§2 Purpose — Re-entry" },
+      "checkbox_13txwk": { "source": null, "note": "§2 Purpose — Other reasons (UI 미제공, 수동 필요 시)" },
+
+      "text_16ruqx": { "source": "customer_last_name_en",  "note": "§3 Destination — Name (= §1 보호자 성)" },
+      "text_17tlnp": { "source": "customer_first_name_en", "note": "§3 Destination — First name (= §1 보호자 이름)" },
+      "text_18lpry": { "source": "address_overseas", "transform": "swiss_addr:street",         "note": "§3 Destination — Address (auto-parsed street part)" },
+      "text_19kyda": { "source": "address_overseas", "transform": "swiss_addr:postcode_place", "note": "§3 Destination — Post code / Place (auto-parsed PLZ + city)" },
+      "text_20xrot": { "source": null, "default": "Switzerland", "note": "§3 Destination — Country" },
+      "text_21qemk": { "source": "switzerland_extra", "transform": "json:email", "note": "§3 Destination — E-Mail (고객 이메일)" },
+      "text_22jvnm": { "source": "phone", "transform": "phone_intl_kr", "note": "§3 Destination — Telephone (= §1 고객 전화번호)" },
+
+      "checkbox_23bilb": { "source": "species", "transform": "checkbox:eq:dog", "note": "§4 Species — Dog" },
+      "checkbox_24ndek": { "source": "species", "transform": "checkbox:eq:cat", "note": "§4 Species — Cat" },
+      "checkbox_25hdqc": { "source": "sex", "transform": "checkbox:in:female|spayed_female", "note": "§4 Gender — Female" },
+      "checkbox_26cac":  { "source": "sex", "transform": "checkbox:in:male|neutered_male",   "note": "§4 Gender — Male" },
+
+      "text_31igbc": { "source": "breed_en", "note": "§4 Breed" },
+
+      "checkbox_27zquf": { "source": "switzerland_extra", "transform": "json_eq:cropped:no",           "note": "§4 Cropped — No (dog only)" },
+      "checkbox_28dbav": { "source": "switzerland_extra", "transform": "json_in:cropped:tail|ears|both","note": "§4 Cropped — Yes (dog only)" },
+      "checkbox_29feoy": { "source": "switzerland_extra", "transform": "json_in:cropped:tail|both",    "note": "§4 Cropped where — Tail" },
+      "checkbox_30vez":  { "source": "switzerland_extra", "transform": "json_in:cropped:ears|both",    "note": "§4 Cropped where — Ears" },
+
+      "text_32xwms": { "source": null, "default": "Seoul", "note": "§6 Signature — Place" },
+      "text_33qeve": { "source": null, "transform": "today_ymd_slash", "note": "§6 Signature — Date (보호자 서명일 = 출력하는 날짜). CH는 수의사 증명서가 아니라 보호자 신청서라 vet_visit_date 고정 규칙의 예외" }
+    }
+  },
+  "VHC": {
+    "template": "VHC.pdf",
+    "description": "Veterinary Health Certificate — 범용 영문 건강증명서. 인도네시아 등 특수 양식이 없는 국가 공통으로 사용. 보호자·동물·접종/구충·광견병항체·수의사 선언서로 구성.",
+    "filename": "VHC_{pet_name}.pdf",
+    "dateFormat": "dmy",
+    "fields": {
+      "owner_name":    { "source": "customer_name_en", "note": "§I Owner name" },
+      "owner_address": { "source": "address_en",       "note": "§I Owner address" },
+      "owner_phone":   { "source": "phone", "transform": "phone_intl_kr", "note": "§I Owner phone" },
+
+      "pet_species":        { "source": "species", "transform": "en",             "note": "§II Species (Dog/Cat)" },
+      "pet_breed":          { "source": "breed_en",                               "note": "§II Breed" },
+      "pet_sex":            { "source": "sex",     "transform": "sex_simple_en",  "note": "§II Sex (Male/Female)" },
+      "pet_dob":            { "source": "birth_date",                             "note": "§II Date of Birth" },
+      "pet_color":          { "source": "color_en",                               "note": "§II Color" },
+      "pet_weight":         { "source": "weight",                                 "note": "§II Weight (kg)" },
+      "pet_microchip":      { "source": "microchip",                              "note": "§II Microchip No." },
+      "pet_microchip_date": { "source": "microchip_implant_date",                 "note": "§II Microchip implant date" },
+
+      "vacc_1_date":         { "source": "rabies_dates", "transform": "vaccine_desc:rabies:date[0]",         "note": "§III-1 Rabies date" },
+      "vacc_1_type":         { "source": null,           "transform": "label_if:rabies:Rabies",              "note": "§III-1 Type label (rabies 접종 있으면 'Rabies')" },
+      "vacc_1_product":      { "source": "rabies_dates", "transform": "vaccine_desc:rabies:name[0]",         "note": "§III-1 Product" },
+      "vacc_1_manufacturer": { "source": "rabies_dates", "transform": "vaccine_desc:rabies:manufacturer[0]", "note": "§III-1 Manufacturer" },
+      "vacc_1_batch":        { "source": "rabies_dates", "transform": "vaccine_desc:rabies:serial[0]",       "note": "§III-1 Batch No." },
+      "vacc_1_validity":     { "source": "rabies_dates", "transform": "vaccine_desc:rabies:validity_to[0]",  "note": "§III-1 Valid until (date + 1yr)" },
+
+      "vacc_2_date":         { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]",         "note": "§III-2 General vaccine date" },
+      "vacc_2_type":         { "source": null,                    "transform": "label_if:general:DHPPL|FVRCP", "note": "§III-2 Type label — 개 DHPPL / 고양이 FVRCP" },
+      "vacc_2_product":      { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:name[0]",         "note": "§III-2 Product" },
+      "vacc_2_manufacturer": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:manufacturer[0]", "note": "§III-2 Manufacturer" },
+      "vacc_2_batch":        { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:serial[0]",       "note": "§III-2 Batch No." },
+      "vacc_2_validity":     { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:validity_to[0]",  "note": "§III-2 Valid until" },
+
+      "vacc_3_date":         { "source": "civ_dates", "transform": "vaccine_desc:civ:date[0]",         "note": "§III-3 CIV date" },
+      "vacc_3_type":         { "source": null,        "transform": "label_if:civ:CIV",                 "note": "§III-3 Type label" },
+      "vacc_3_product":      { "source": "civ_dates", "transform": "vaccine_desc:civ:name[0]",         "note": "§III-3 Product" },
+      "vacc_3_manufacturer": { "source": "civ_dates", "transform": "vaccine_desc:civ:manufacturer[0]", "note": "§III-3 Manufacturer" },
+      "vacc_3_batch":        { "source": "civ_dates", "transform": "vaccine_desc:civ:serial[0]",       "note": "§III-3 Batch No." },
+      "vacc_3_validity":     { "source": "civ_dates", "transform": "vaccine_desc:civ:validity_to[0]",  "note": "§III-3 Valid until" },
+
+      "vacc_4_date":         { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:date[0]",         "note": "§III-4 External parasite treatment date" },
+      "vacc_4_type":         { "source": null,                      "transform": "label_if:ext_parasite:External Parasite",   "note": "§III-4 Type label" },
+      "vacc_4_product":      { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:name[0]",         "note": "§III-4 Product" },
+      "vacc_4_manufacturer": { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:manufacturer[0]", "note": "§III-4 Manufacturer" },
+      "vacc_4_batch":        { "source": "external_parasite_dates", "transform": "vaccine_desc:ext_parasite:serial[0]",       "note": "§III-4 Batch No." },
+      "vacc_4_validity":     { "source": null,                                                                                "note": "§III-4 Validity (구충제는 지속기간 일정치 않아 공란)" },
+
+      "vacc_5_date":         { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:date[0]",         "note": "§III-5 Internal parasite treatment date" },
+      "vacc_5_type":         { "source": null,                      "transform": "label_if:int_parasite:Internal Parasite",   "note": "§III-5 Type label" },
+      "vacc_5_product":      { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:name[0]",         "note": "§III-5 Product" },
+      "vacc_5_manufacturer": { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:manufacturer[0]", "note": "§III-5 Manufacturer" },
+      "vacc_5_batch":        { "source": "internal_parasite_dates", "transform": "vaccine_desc:int_parasite:serial[0]",       "note": "§III-5 Batch No." },
+      "vacc_5_validity":     { "source": null,                                                                                "note": "§III-5 Validity (공란)" },
+
+      "vacc_6_date":         { "source": null, "note": "§III-6 Reserved — 켄넬/심장사상충/기타 수동 입력" },
+      "vacc_6_type":         { "source": null, "note": "§III-6 Type (수동)" },
+      "vacc_6_product":      { "source": null, "note": "§III-6 Product (수동)" },
+      "vacc_6_manufacturer": { "source": null, "note": "§III-6 Manufacturer (수동)" },
+      "vacc_6_batch":        { "source": null, "note": "§III-6 Batch (수동)" },
+      "vacc_6_validity":     { "source": null, "note": "§III-6 Validity (수동)" },
+
+      "vet_name":    { "source": null, "transform": "vet:name_en",     "note": "§IV Veterinarian name" },
+      "vet_license": { "source": null, "transform": "vet:license_no",  "note": "§IV Veterinarian license No." },
+      "vet_clinic":  { "source": null, "transform": "vet:clinic_en",   "note": "§IV Clinic" },
+      "vet_phone":   { "source": null, "transform": "vet:phone_intl",  "note": "§IV Phone" },
+      "vet_address": { "source": null, "transform": "vet:address_en",  "note": "§IV Address" },
+      "issue_date":  { "source": null, "transform": "today_ymd_slash", "note": "§IV Date of Issue — 사용자 지시(2026-04-18)로 '오늘' 사용. VHC 는 출국 시점에 맞춰 재발급하는 경우가 많아 발행일=인쇄일이 실무 편의상 정확함. vet_visit_date 고정 규칙의 예외." }
+    },
+    "signatures": [
+      {
+        "image": "lausanne.png",
+        "page": 0,
+        "x": 410,
+        "y": 232,
+        "w": 120,
+        "h": 34
+      }
+    ]
   }
 }

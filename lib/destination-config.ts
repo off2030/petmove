@@ -63,11 +63,11 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   eu: {
     keywords: [
       '유럽연합', '프랑스', '독일', '이탈리아', '스페인', '네덜란드', '벨기에', '오스트리아',
-      '스위스', '스웨덴', '덴마크', '폴란드', '체코', '포르투갈', '그리스',
+      '스웨덴', '덴마크', '폴란드', '체코', '포르투갈', '그리스',
       '헝가리', '아일랜드', '루마니아', '불가리아', '크로아티아', '슬로바키아',
       '슬로베니아', '리투아니아', '라트비아', '에스토니아', '룩셈부르크', '키프로스', '몰타',
       'france', 'germany', 'italy', 'spain', 'netherlands', 'belgium', 'austria',
-      'switzerland', 'sweden', 'denmark', 'poland', 'czech', 'portugal', 'greece',
+      'sweden', 'denmark', 'poland', 'czech', 'portugal', 'greece',
       'hungary', 'ireland', 'romania', 'bulgaria', 'croatia', 'slovakia',
       'slovenia', 'lithuania', 'latvia', 'estonia', 'luxembourg', 'cyprus', 'malta',
       'eu',
@@ -75,6 +75,15 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     extraFields: ['address_overseas'],
     extraCerts: [
       { key: 'annexIII', label: 'EU', type: 'multi' },
+    ],
+  },
+  switzerland: {
+    // 스위스는 EU 솅겐 가입국이지만 통관은 별도. AnnexIII + 스위스 전용 BLV 신청서(CH) 동시 제출.
+    keywords: ['스위스', 'switzerland'],
+    extraSection: 'switzerland',
+    extraCerts: [
+      { key: 'annexIII', label: 'EU', type: 'multi' },
+      { key: 'ch', label: 'CH', type: 'single' },
     ],
   },
   uk: {
@@ -118,6 +127,21 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['필리핀', 'philippines'],
     vaccines: ['rabies', 'rabies_titer', 'general', 'internal_parasite'],
     extraSection: 'philippines',
+  },
+  indonesia: {
+    // 인도네시아는 별도 양식 없이 병원 발급 일반 영문 건강증명서(VHC) 제출.
+    keywords: ['인도네시아', 'indonesia'],
+    vaccines: ['rabies', 'rabies_titer'],
+    extraCerts: [
+      { key: 'vhc', label: 'VHC', type: 'single' },
+    ],
+  },
+  turkey: {
+    keywords: ['터키', 'turkey', 'türkiye', 'turkiye'],
+    vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
+    extraCerts: [
+      { key: 'vhc', label: 'VHC', type: 'single' },
+    ],
   },
   usa: {
     keywords: ['미국', 'usa', 'united states', 'america'],

@@ -15,9 +15,9 @@ import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 interface ThailandExtra {
   address_overseas: string | null
   passport_number: string | null
-  passport_issue_date: string | null
   passport_expiry_date: string | null
-  passport_nationality: string | null
+  /** 여권 발급 기관 — Form R.11 "Issued by" */
+  passport_issuer: string | null
   arrival_flight_number: string | null
   arrival_date: string | null
   arrival_time: string | null
@@ -27,9 +27,8 @@ interface ThailandExtra {
 const EMPTY: ThailandExtra = {
   address_overseas: null,
   passport_number: null,
-  passport_issue_date: null,
   passport_expiry_date: null,
-  passport_nationality: null,
+  passport_issuer: null,
   arrival_flight_number: null,
   arrival_date: null,
   arrival_time: null,
@@ -94,9 +93,8 @@ export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRo
         const merged: ThailandExtra = { ...extra }
         if (result.data.address_overseas) merged.address_overseas = result.data.address_overseas
         if (result.data.passport_number) merged.passport_number = result.data.passport_number
-        if (result.data.passport_issue_date) merged.passport_issue_date = result.data.passport_issue_date
         if (result.data.passport_expiry_date) merged.passport_expiry_date = result.data.passport_expiry_date
-        if (result.data.passport_nationality) merged.passport_nationality = result.data.passport_nationality
+        if (result.data.passport_issuer) merged.passport_issuer = result.data.passport_issuer
         // Arrival = inbound (Korea → Thailand)
         if (result.data.inbound.flight_number) merged.arrival_flight_number = result.data.inbound.flight_number
         if (result.data.inbound.date) merged.arrival_date = result.data.inbound.date
@@ -281,14 +279,14 @@ export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRo
       </div>
 
       {/* 해외주소 */}
-      {renderField('address_overseas', '해외주소', 'text', 'Destination address in Thailand')}
+      {renderField('address_overseas', '해외주소', 'text', '88/17 Rama IV Rd, Silom, Bangkok 10500, Thailand')}
 
-      {/* 여권정보 */}
+      {/* 여권 */}
       {renderField('passport_number', '여권번호', 'text', 'M12345678')}
       {renderField('passport_expiry_date', '여권 만료일', 'date')}
-      {renderField('passport_nationality', '국적', 'text', 'Republic of Korea')}
+      {renderField('passport_issuer', '발급기관', 'text', 'Ministry of Foreign Affairs')}
 
-      {/* 항공권 (출국편 only) */}
+      {/* 항공권 + 검역 */}
       {renderField('arrival_flight_number', '항공편명', 'text', 'KE659')}
       {renderField('arrival_date', '도착일', 'date')}
       {renderField('arrival_time', '도착시간', 'time', 'HH:mm')}

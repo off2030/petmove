@@ -184,6 +184,14 @@ const GROUP_REMAP: Record<string, string> = {
   '할일/수입신고': '__hidden__',
 }
 
+// Per-key overrides for fields that should appear in a different group than
+// their DB group_name would imply. Useful when one field from an otherwise-
+// hidden group must be surfaced on the case detail page.
+const KEY_GROUP_OVERRIDE: Record<string, string> = {
+  // 내원일 = 발급일 — 모든 증명서의 issue date 소스라 상세페이지에서 바로 설정 가능해야 함.
+  vet_visit_date: '절차정보',
+}
+
 // Deterministic group ordering for the detail page.
 const KNOWN_GROUP_ORDER = ['고객정보', '동물정보', '절차정보', '기타정보']
 
@@ -200,7 +208,7 @@ function groupOrderOf(groupName: string): number {
  */
 export function fieldDefToSpec(def: FieldDefinition): FieldSpec {
   const rawGroup = def.group_name ?? '기타'
-  const mappedGroup = GROUP_REMAP[rawGroup] ?? rawGroup
+  const mappedGroup = KEY_GROUP_OVERRIDE[def.key] ?? GROUP_REMAP[rawGroup] ?? rawGroup
   return {
     key: def.key,
     storage: 'data',

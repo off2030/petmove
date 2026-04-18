@@ -33,6 +33,7 @@ import { UsaExtraField } from './usa-extra-field'
 import { AustraliaExtraField } from './australia-extra-field'
 import { NewZealandExtraField } from './new-zealand-extra-field'
 import { HawaiiExtraField } from './hawaii-extra-field'
+import { SwissExtraField } from './switzerland-extra-field'
 import { OverseasAddressField } from './overseas-address-field'
 import { useCases } from './cases-context'
 
@@ -123,6 +124,7 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
                         enSpec={addrEnSpec}
                         krRaw={readCaseField(caseRow, addrKrSpec)}
                         enRaw={addrEnSpec ? readCaseField(caseRow, addrEnSpec) : null}
+                        zipcode={(data.address_zipcode as string | null) ?? null}
                       />
                     )}
                   </div>
@@ -228,7 +230,8 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
                   />
                 )
               }
-              const isClearable = g.group === '절차정보' || g.group === '기타정보'
+              // Status 는 항상 값을 가져야 하므로 삭제 버튼 제외.
+              const isClearable = (g.group === '절차정보' || g.group === '기타정보') && spec.key !== 'status'
               return (
                 <EditableField
                   key={`${spec.storage}:${spec.key}`}
@@ -313,6 +316,16 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
             </h3>
             <div>
               <HawaiiExtraField caseId={caseRow.id} caseRow={caseRow} />
+            </div>
+          </section>
+        )}
+        {g.group === '절차정보' && destOverride?.extraSection === 'switzerland' && (
+          <section className="mb-7">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              추가정보
+            </h3>
+            <div>
+              <SwissExtraField caseId={caseRow.id} caseRow={caseRow} />
             </div>
           </section>
         )}

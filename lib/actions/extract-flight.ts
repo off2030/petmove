@@ -21,6 +21,8 @@ export interface FlightExtractResult {
   passport_expiry_date: string | null
   passport_nationality: string | null
   passport_number: string | null
+  /** Passport issuing authority (e.g. "Ministry of Foreign Affairs") */
+  passport_issuer: string | null
   /** Address postal code */
   postal_code: string | null
   /** Email address */
@@ -62,7 +64,7 @@ const FLIGHT_EXTRACT_SCHEMA = {
   required: [
     'inbound', 'outbound', 'address_overseas', 'certificate_no',
     'passport_issue_date', 'passport_expiry_date', 'passport_nationality',
-    'passport_number', 'postal_code', 'email', 'arrival_time',
+    'passport_number', 'passport_issuer', 'postal_code', 'email', 'arrival_time',
     'quarantine_location', 'au_permit_no', 'au_id_date',
     'au_sample_received_date', 'nz_permit_no',
   ],
@@ -75,6 +77,7 @@ const FLIGHT_EXTRACT_SCHEMA = {
     passport_expiry_date: { type: ['string', 'null'] },
     passport_nationality: { type: ['string', 'null'] },
     passport_number: { type: ['string', 'null'] },
+    passport_issuer: { type: ['string', 'null'] },
     postal_code: { type: ['string', 'null'] },
     email: { type: ['string', 'null'] },
     arrival_time: { type: ['string', 'null'] },
@@ -116,7 +119,8 @@ Return ONLY a JSON object:
   "passport_issue_date": "YYYY-MM-DD or null",
   "passport_expiry_date": "YYYY-MM-DD or null",
   "passport_nationality": "Nationality in English (e.g. Republic of Korea, USA) or null",
-  "passport_number": "Passport number or null",
+  "passport_number": "Passport number — the alphanumeric code to the right of 여권번호/Passport No. (e.g. M03627766, M12345678). Korean passports start with a letter (M/S/R/DP/O/TP) followed by 8 digits. Do NOT confuse with the machine-readable zone (MRZ) text at the bottom.",
+  "passport_issuer": "Passport issuing authority (발행관청/Authority). For Korean passports this is almost always 'MINISTRY OF FOREIGN AFFAIRS'. Copy the English text as printed, or null if not visible.",
   "postal_code": "Postal/ZIP code of the overseas address or null",
   "email": "Email address if present or null",
   "arrival_time": "HH:mm (24h) or null",
@@ -139,7 +143,9 @@ Rules:
 - If transport is found for one flight but not the other, apply the same transport to both.
 - If the input is not flight related, return all nulls for both.
 - address_overseas: destination address overseas, in English. Romanize Japanese/Thai/Korean if needed. Include postal code if visible.
-- passport fields: extract from passport images/text. Dates in YYYY-MM-DD. Nationality as full country name in English. passport_number as the alphanumeric code on the passport.
+- passport fields: extract from passport images/text. Dates in YYYY-MM-DD. Nationality as full country name in English.
+  - passport_number: the visible alphanumeric code next to "여권번호/Passport No." on the passport page. Korean passports: letter prefix (M/S/R/DP/O/TP) + 8 digits, e.g. "M03627766". Do NOT read the MRZ lines at the bottom (the two dense lines full of '<' characters) — those contain a different encoded form.
+  - passport_issuer: Authority (발행관청/Authority) label. For Korean passports almost always "MINISTRY OF FOREIGN AFFAIRS". Copy the English text exactly as printed.
 - postal_code: extract if present in the overseas address (ZIP code in US, 郵便番号 in Japan, etc.).
 - email: any email address in the input.
 - arrival_time: 24-hour format "HH:mm", from flight arrival time (not departure).
@@ -248,7 +254,7 @@ export async function extractFlightInfo(input: {
     const hasOutbound = Object.values(parsed.outbound).some((v) => v !== null)
     const hasAddr = !!parsed.address_overseas
     const hasCert = !!parsed.certificate_no
-    const hasPass = !!(parsed.passport_issue_date || parsed.passport_expiry_date || parsed.passport_nationality || parsed.passport_number || parsed.postal_code || parsed.email)
+    const hasPass = !!(parsed.passport_issue_date || parsed.passport_expiry_date || parsed.passport_nationality || parsed.passport_number || parsed.passport_issuer || parsed.postal_code || parsed.email)
     const hasTime = !!parsed.arrival_time
     const hasQuar = !!parsed.quarantine_location
     const hasAu = !!(parsed.au_permit_no || parsed.au_id_date || parsed.au_sample_received_date)
