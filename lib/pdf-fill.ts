@@ -31,7 +31,7 @@ import type { CaseRow } from '@/lib/supabase/types'
 // - Template/font changes not picked up → flip CACHE_ASSETS to false (dev)
 const PDF_SUBSET_FONT = true
 const PDF_CACHE_ASSETS = true
-const PDF_NEED_APPEARANCES: 'false' | 'true' | 'unset' = 'false'
+const PDF_NEED_APPEARANCES: 'false' | 'true' | 'unset' = 'unset'
 
 const assetCache: { template: Map<string, Buffer>; font: Buffer | null; signature: Map<string, Buffer> } = {
   template: new Map(),
@@ -94,7 +94,13 @@ type FormMapping = {
    * 'ymd_slash' — normalize to YYYY/MM/DD with zero-padded month/day (e.g. Form25).
    * Default (undefined) preserves the transform's output.
    */
-  dateFormat?: 'dmy' | 'ymd_slash' | 'dmmmy'
+  dateFormat?: 'dmy' | 'mdy_slash' | 'ymd_slash' | 'dmmmy'
+  /**
+   * true면 템플릿에 이미 기입된 텍스트 필드 값을 보존 — 매핑에 나열된
+   * 필드만 새로 채우고 나머지는 템플릿 원본 appearance 그대로 유지.
+   * Invoice처럼 pre-filled content가 많은 서식에 사용.
+   */
+  preserveTemplateText?: boolean
   fields: Record<string, FieldMapping>
   /** Optional signature/stamp image overlays — applied only when caller opts in. */
   signatures?: SignatureOverlay[]
@@ -124,29 +130,39 @@ const LAB_INFO: Record<string, { name: string; country: string }> = {
  * inspection_lab 값으로 조회. 국내 실험실(APQA HQ 등)은 물리적 배송 없이 직접
  * 방문/전달하므로 Invoice 대상이 아님 — US 실험실만 정의.
  */
-const LAB_SHIPPING: Record<string, { name: string; line1: string; line2: string; city: string; state: string; zip: string; country: string; phone?: string }> = {
-  ksvdl_r: {
-    name: 'Kansas State University Rabies Laboratory',
-    line1: '2005 Research Park Circle',
-    line2: '',
-    city: 'Manhattan', state: 'KS', zip: '66502',
-    country: 'United States of America',
-    phone: '+1-785-532-4483',
-  },
+const LAB_SHIPPING: Record<string, { name: string; country: string; block: string }> = {
   ksvdl: {
     name: 'Kansas State Veterinary Diagnostic Laboratory',
-    line1: '1800 Denison Avenue',
-    line2: 'Mosier D117',
-    city: 'Manhattan', state: 'KS', zip: '66506',
-    country: 'United States of America',
-    phone: '+1-866-512-5650',
+    country: 'United States',
+    block: [
+      'Kansas State Veterinary Diagnostic Laboratory(KSVDL)',
+      '1800 Denison Avenue, Mosier Hall D117',
+      'Manhattan, KS, 66506, United States',
+      'Tel. +1-866-512-5650 / emal: clientcare@vet.k-state.edu',
+      'Tax ID#: 48-0771751',
+    ].join('\n'),
   },
   vbddl: {
-    name: 'Vector Borne Disease Diagnostic Laboratory',
-    line1: 'CVM Research Building, Room 462A',
-    line2: '1060 William Moore Drive',
-    city: 'Raleigh', state: 'NC', zip: '27607',
-    country: 'United States of America',
+    name: 'Vector Borne Disease Diagnostic Lab',
+    country: 'USA',
+    block: [
+      'Vector Borne Disease Diagnostic Lab',
+      ' CVM Research Building, Room',
+      ' 462A, 1060 William Moor Drive, Raleigh, NC 27606, USA',
+      'Tel: +1 919-513-8279 / email: ncstatevectorborne@ncsu.edu',
+      'Tax ID#: 56-6000756',
+    ].join('\n'),
+  },
+  ksvdl_r: {
+    name: 'Kansas State Rabies Laboratory',
+    country: 'USA',
+    block: [
+      'Contact Name: Dr. Dale Claassen',
+      'Tel. +1-785-532-4474 / emal: rabies@vet.k-state.edu',
+      'Kansas State Rabies Laboratory, 2005 Research Park Circle',
+      'Manhattan, KS, 66502, USA',
+      'Tax ID#: 48-0771751',
+    ].join('\n'),
   },
 }
 
@@ -154,16 +170,10 @@ function formatLabShipping(code: string, attr: string): string {
   const lab = LAB_SHIPPING[code.toLowerCase()]
   if (!lab) return ''
   if (attr === 'name') return lab.name
-  if (attr === 'line1') return lab.line1
-  if (attr === 'line2') return lab.line2
-  if (attr === 'city_state_zip') return `${lab.city}, ${lab.state} ${lab.zip}`
   if (attr === 'country') return lab.country
-  if (attr === 'phone') return lab.phone ?? ''
-  if (attr === 'full') {
-    const parts = [lab.name, lab.line1, lab.line2, `${lab.city}, ${lab.state} ${lab.zip}`, lab.country].filter(Boolean)
-    if (lab.phone) parts.push(`Tel ${lab.phone}`)
-    return parts.join('\n')
-  }
+  if (attr === 'block' || attr === 'full') return lab.block
+  if (attr === 'name_line') return lab.block.split('\n').join(', ')
+  // line1/line2/city_state_zip/phone: 매핑에서 사용 안 함 — 호환성 위해 '' 반환.
   return ''
 }
 
@@ -570,6 +580,35 @@ function readSource(
     return (caseRow as unknown as Record<string, unknown>).customer_name ?? ''
   }
 
+  // Lab-specific inspection date from infectious_disease_records.
+  // Pattern: `infectious_date:<lab>` (e.g. ksvdl, vbddl, apqa_hq).
+  // Falls back to vet_visit_date when no record exists for that lab.
+  const infDateMatch = source.match(/^infectious_date:(.+)$/)
+  if (infDateMatch) {
+    const lab = infDateMatch[1]
+    const recs = data.infectious_disease_records
+    if (Array.isArray(recs)) {
+      const rec = (recs as Array<{ lab?: string; date?: string | null }>).find(r => r.lab === lab)
+      if (rec?.date) return rec.date
+    }
+    return data.vet_visit_date ?? ''
+  }
+
+  // Direct `address_city`: legacy saves sometimes captured "Republic of Korea"
+  // as city because roadAddressEnglish included the country. Re-derive from
+  // address_en when we detect that bad value.
+  if (source === 'address_city') {
+    const stored = String(data.address_city ?? '').trim()
+    if (stored && !/^republic of korea$/i.test(stored)) return stored
+    const addrEn = String(data.address_en ?? '')
+    const parts = addrEn.split(',').map(s => s.trim()).filter(Boolean)
+    const cleaned = parts.length > 0 && /^republic of korea$/i.test(parts[parts.length - 1])
+      ? parts.slice(0, -1) : parts
+    const last = cleaned[cleaned.length - 1] ?? ''
+    const secondLast = cleaned[cleaned.length - 2] ?? ''
+    return /-do$/i.test(last) && secondLast ? secondLast : last
+  }
+
   // Composite "Post code / Place" — "<zipcode> <city>" for EU forms that combine
   // both into one field. Falls back gracefully when either part is missing.
   // Legacy: if zipcode isn't stored but address has "(XXXXX) " prefix, extract it.
@@ -663,6 +702,14 @@ function resolveField(
   if (inMatch) {
     const s = String(raw ?? '')
     return inMatch[1].split('|').includes(s)
+  }
+  // Empty-array checkbox — true when source value is null/undefined/empty array.
+  // e.g. `checkbox:empty_array` with source `general_vaccine_dates` ticks when
+  // the dog has no recorded general vaccine (used by Leptospira canicola on KSVDL).
+  if (transform === 'checkbox:empty_array') {
+    if (raw == null) return true
+    if (Array.isArray(raw)) return raw.length === 0
+    return String(raw) === ''
   }
 
   // Dropdown sex/neutered — maps DB sex code to dropdown option values
@@ -1266,6 +1313,23 @@ function resolveField(
   if (transform === 'sex_label_ko') {
     return SEX_LABEL_KO[String(raw ?? '').toLowerCase()] ?? ''
   }
+  // "Male" / "Female" / "Neutered male" / "Spayed female" — readable English label
+  // for lab/dropdown forms. Preserves neuter status; title case, space (no underscore).
+  if (transform === 'sex_simple_en' || transform === 'sex_simple') {
+    const s = String(raw ?? '').toLowerCase()
+    if (s === 'male') return 'Male'
+    if (s === 'female') return 'Female'
+    if (s === 'neutered_male') return 'Neutered male'
+    if (s === 'spayed_female') return 'Spayed female'
+    return ''
+  }
+  // "Neutered" / "Entire" — used by NZ certificate dropdowns.
+  if (transform === 'sex_neutered_status') {
+    const s = String(raw ?? '').toLowerCase()
+    if (s === 'neutered_male' || s === 'spayed_female') return 'Neutered'
+    if (s === 'male' || s === 'female') return 'Entire'
+    return ''
+  }
 
   // MM/DD/YYYY with no separators (US lab forms: KSVDL "Date Blood Drawn (mmddyyyy)").
   if (transform === 'date_mdy_compact') {
@@ -1739,6 +1803,8 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
   const pdfForm = pdf.getForm()
 
   const toDmy = (s: string): string => s.replace(/^(\d{4})[-/](\d{2})[-/](\d{2})$/, '$3/$2/$1')
+  const toMdy = (s: string): string =>
+    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/, (_, y, m, d) => `${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}/${y}`)
   const toSlashYmd2 = (s: string): string =>
     s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/, (_, y, m, d) => `${y}/${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`)
   const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -1750,6 +1816,8 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
     s.includes(' / ') ? s.split(' / ').map(fn).join(' / ') : fn(s)
   const reformatDate = form.dateFormat === 'dmy'
     ? (s: unknown): unknown => (typeof s === 'string' ? eachPart(toDmy)(s) : s)
+    : form.dateFormat === 'mdy_slash'
+    ? (s: unknown): unknown => (typeof s === 'string' ? eachPart(toMdy)(s) : s)
     : form.dateFormat === 'ymd_slash'
     ? (s: unknown): unknown => (typeof s === 'string' ? eachPart(toSlashYmd2)(s) : s)
     : form.dateFormat === 'dmmmy'
@@ -1811,11 +1879,14 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
   return { ok: true, pdf: base64, filename }
 }
 
-/** Shared font/appearance post-processing extracted so both single and multi paths use it. */
+/** Shared font/appearance post-processing extracted so both single and multi paths use it.
+ *  `touchedFieldNames` limits DA/appearance regeneration to the listed fields — used by
+ *  Invoice where template carries pre-filled content that must keep its original look. */
 async function applyFontFixes(
   pdf: PDFDocument,
   pdfForm: import('pdf-lib').PDFForm,
   customFont: import('pdf-lib').PDFFont,
+  touchedFieldNames?: Set<string>,
 ): Promise<void> {
   const fontName = 'NanumGothic'
   const fontRef = (customFont as unknown as { ref: import('pdf-lib').PDFRef }).ref
@@ -1834,16 +1905,51 @@ async function applyFontFixes(
 
   for (const field of pdfForm.getFields()) {
     if (field.constructor.name !== 'PDFTextField') continue
+    if (touchedFieldNames && !touchedFieldNames.has(field.getName())) continue
     const tf = field as import('pdf-lib').PDFTextField
     const text = tf.getText() ?? ''
-    const size = computeMaxFontSize(tf, text, customFont)
+    // preserveTemplateText 모드: 템플릿 DA에 명시된 폰트 크기(>0)를 상한으로 사용
+    // — 셀이 커서 autosize가 과도하게 확대되는 문제 방지. 단, 줄바꿈이 포함된
+    // 멀티라인 텍스트는 실제 줄 수에 맞춰 더 줄여야 마지막 줄이 잘리지 않음
+    // (예: Invoice Consignee 블록 5줄이 66pt 셀에 담기려면 ~9pt 필요).
+    let size: number | null = null
+    if (touchedFieldNames) {
+      const existingDa = field.acroField.dict.get(PDFName.of('DA'))
+      const daStr = existingDa instanceof PDFString ? existingDa.asString() : ''
+      const m = daStr.match(/\s(\d+(?:\.\d+)?)\s+Tf/)
+      const daSize = m ? parseFloat(m[1]) : 0
+      if (daSize > 0) {
+        size = daSize
+        if (tf.isMultiline() && text.includes('\n')) {
+          const lines = text.split('\n').length
+          const h = tf.acroField.getWidgets()[0]?.getRectangle().height ?? 0
+          if (lines > 1 && h > 0) {
+            const fit = Math.max(5, Math.floor(((h - 4) / lines / 1.3) * 2) / 2)
+            size = Math.min(daSize, fit)
+          }
+        }
+      }
+    }
+    if (size === null) size = computeMaxFontSize(tf, text, customFont)
     const da = PDFString.of(`/${fontName} ${size} Tf 0 g`)
     field.acroField.dict.set(PDFName.of('DA'), da)
     for (const w of field.acroField.getWidgets()) {
       w.dict.set(PDFName.of('DA'), da)
     }
   }
-  pdfForm.updateFieldAppearances(customFont)
+  if (touchedFieldNames) {
+    // 개별 필드만 다시 그림 — 미리 기입된 필드는 템플릿 원본 그대로 유지.
+    for (const name of touchedFieldNames) {
+      try {
+        const field = pdfForm.getField(name)
+        if (field.constructor.name === 'PDFTextField') {
+          ;(field as import('pdf-lib').PDFTextField).updateAppearances(customFont)
+        }
+      } catch { /* missing field — skip */ }
+    }
+  } else {
+    pdfForm.updateFieldAppearances(customFont)
+  }
 
   if (PDF_NEED_APPEARANCES === 'false') {
     acroFormDict.set(PDFName.of('NeedAppearances'), PDFBool.False)
@@ -1879,11 +1985,17 @@ export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillO
 
   const pdfForm = pdf.getForm()
   const data = { ...(caseRow.data ?? {}), ...(options?.extras ?? {}) } as Record<string, unknown>
+  // extras(예: tube_count, consignee_lab)는 resolveField가 `caseRow.data` 를
+  // 통해 읽으므로, solo fill 경로에서도 extras 가 적용되도록 data 를 주입한
+  // 사본을 만들어 soloDoc 에 전달한다.
+  const caseRowWithExtras: CaseRow = options?.extras ? { ...caseRow, data } : caseRow
 
   // Date reformatter for form-level dateFormat override (e.g. Annex III uses dd/mm/yyyy).
   // Converts a stand-alone YYYY-MM-DD or YYYY/MM/DD token to dd/mm/yyyy.
   const toDmy = (s: string): string =>
     s.replace(/^(\d{4})[-/](\d{2})[-/](\d{2})$/, '$3/$2/$1')
+  const toMdy_1 = (s: string): string =>
+    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/, (_, y, m, d) => `${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}/${y}`)
   const toSlashYmd = (s: string): string =>
     s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/, (_, y, m, d) => `${y}/${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`)
   const MONTHS_SHORT_1 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -1891,6 +2003,8 @@ export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillO
     s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/, (_, y, m, d) => `${String(d).padStart(2, '0')}/${MONTHS_SHORT_1[Number(m) - 1] ?? m}/${y}`)
   const reformatDate = form.dateFormat === 'dmy'
     ? (s: unknown): unknown => (typeof s === 'string' ? toDmy(s) : s)
+    : form.dateFormat === 'mdy_slash'
+    ? (s: unknown): unknown => (typeof s === 'string' ? toMdy_1(s) : s)
     : form.dateFormat === 'ymd_slash'
     ? (s: unknown): unknown => (typeof s === 'string' ? toSlashYmd(s) : s)
     : form.dateFormat === 'dmmmy'
@@ -1901,18 +2015,19 @@ export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillO
   // aggregate transforms (multi:species_en, multi:count, multi:microchip[n])
   // and row-based resolution stay consistent with fillPdfMulti.
   const soloDoc: PackedDoc = {
-    cases: [caseRow],
+    cases: [caseRowWithExtras],
     vaccSlots: [],
     animalSlots: [0],
     parasiteSlots: [0],
   }
   // Populate vacc slots so vacc_rowN_* fields still fill for single-animal docs.
-  const doses = Math.max(1, rabiesDoseCount(caseRow))
+  const doses = Math.max(1, rabiesDoseCount(caseRowWithExtras))
   for (let d = 0; d < doses; d++) soloDoc.vaccSlots.push({ caseIdx: 0, doseIdx: d })
 
   const missing: string[] = []
   const empty: string[] = []
   const filled: Record<string, string | boolean> = {}
+  const touchedFields = new Set<string>()
   for (const [fieldName, mapping] of Object.entries(form.fields)) {
     const value = reformatDate(resolveFieldMulti(fieldName, form.fields, soloDoc, options?.allowedVaccines))
     if (value === '' || value === false) empty.push(fieldName)
@@ -1928,19 +2043,23 @@ export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillO
     if (type === 'PDFCheckBox') {
       if (value === true) (field as import('pdf-lib').PDFCheckBox).check()
       else (field as import('pdf-lib').PDFCheckBox).uncheck()
+      touchedFields.add(fieldName)
     } else if (type === 'PDFDropdown') {
       if (typeof value === 'string' && value) {
         const dd = field as import('pdf-lib').PDFDropdown
         try { dd.select(value) } catch { /* option not found */ }
+        touchedFields.add(fieldName)
       }
     } else if (type === 'PDFTextField') {
       let text = typeof value === 'string' ? value : ''
       // Fall back to mapping.default when a transform returned empty.
       // Used for N/A placeholders on row/slot fields that shouldn't be blank.
       if (!text && mapping.default) text = mapping.default
-      // Always setText (even to '') so any template default text is cleared.
       const tf = field as import('pdf-lib').PDFTextField
+      // preserveTemplateText: 매핑돼있지만 값이 빈 필드는 템플릿 값 유지
+      if (form.preserveTemplateText && !text) continue
       tf.setText(text)
+      touchedFields.add(fieldName)
       if (mapping.align) {
         tf.setAlignment(
           mapping.align === 'center' ? TextAlignment.Center
@@ -1951,7 +2070,7 @@ export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillO
     }
   }
 
-  await applyFontFixes(pdf, pdfForm, customFont)
+  await applyFontFixes(pdf, pdfForm, customFont, form.preserveTemplateText ? touchedFields : undefined)
 
   if (options?.includeSignature && form.signatures?.length) {
     const pages = pdf.getPages()

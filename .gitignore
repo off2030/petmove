@@ -23,6 +23,10 @@ tsconfig.tsbuildinfo
 
 # PDF analysis/debug output from test scripts
 data/pdf-analysis/
+data/test-*.pdf
+
+# Next.js auto-generated type reference — path changes per dev/build state
+next-env.d.ts
 
 # OS / Editor
 .DS_Store

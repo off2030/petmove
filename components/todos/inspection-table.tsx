@@ -6,9 +6,8 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from '@/components/cases/cases-context'
 import {
   generateApqaHq,
-  generateApqaHqEn,
   generateKsvdl,
-  generateVbddl,
+  generateNzInfectionPack,
 } from '@/lib/actions/generate-pdf'
 
 const INITIAL_VISIBLE = 100
@@ -16,17 +15,17 @@ const LOAD_MORE_STEP = 100
 
 /**
  * 검사기관(lab) → 신청 버튼 클릭 시 생성할 서류 목록.
- *   ksvdl_r : Invoice/ESD 만 (신청서 없음 — 하단 배송서류 버튼 사용)
- *   ksvdl   : KSVDL
- *   apqa_hq : APQA HQ (한글)
- *   vbddl   : APQA HQ + APQA HQ En + VBDDL (3개 동시 발급)
+ *   ksvdl_r     : Invoice/ESD 만 (신청서 없음 — 하단 배송서류 버튼 사용)
+ *   ksvdl       : KSVDL
+ *   apqa_hq     : APQA HQ (한글)
+ *   nz_combined : APQA HQ + APQA HQ En + VBDDL 병합 PDF 한 장
  */
 type CertAction = (caseId: string) => Promise<{ ok: true; pdf: string; filename: string } | { ok: false; error: string }>
 const DOCS_BY_LAB: Record<string, CertAction[]> = {
   ksvdl_r: [],
   ksvdl: [generateKsvdl],
   apqa_hq: [generateApqaHq],
-  vbddl: [generateApqaHq, generateApqaHqEn, generateVbddl],
+  nz_combined: [generateNzInfectionPack],
 }
 
 function downloadBase64Pdf(base64: string, filename: string) {
@@ -53,6 +52,7 @@ export interface InspectionRow {
   dateStorage:
     | { kind: 'titer' }
     | { kind: 'infectious'; lab: string }
+    | { kind: 'infectious_multi'; labs: string[] }
 }
 
 interface LabOption { value: string; label: string }
@@ -70,21 +70,33 @@ async function saveTiterDate(caseRow: CaseRow, newDate: string): Promise<void> {
   await updateCaseField(caseRow.id, 'data', 'rabies_titer_records', next)
 }
 
-/** Update infectious_disease_records: upsert entry with given lab, set date. */
-async function saveInfectiousDate(caseRow: CaseRow, lab: string, newDate: string): Promise<void> {
+/** Upsert infectious_disease_records entries for one or more labs with the same date. */
+function upsertInfectiousRecords(
+  current: Array<{ date?: string | null; lab?: string | null }>,
+  labs: string[],
+  newDate: string,
+): Array<{ date?: string | null; lab?: string | null }> {
+  const cleanDate = newDate || null
+  let next = current.slice()
+  for (const lab of labs) {
+    const idx = next.findIndex(r => r?.lab === lab)
+    if (idx >= 0) {
+      next = next.map((r, i) => i === idx ? { ...r, date: cleanDate } : r)
+    } else {
+      next = [...next, { lab, date: cleanDate }]
+    }
+  }
+  return next
+}
+
+async function saveInfectiousDates(caseRow: CaseRow, labs: string[], newDate: string): Promise<Array<{ date?: string | null; lab?: string | null }>> {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const current = Array.isArray(data.infectious_disease_records)
     ? (data.infectious_disease_records as Array<{ date?: string | null; lab?: string | null }>)
     : []
-  const idx = current.findIndex(r => r?.lab === lab)
-  const cleanDate = newDate || null
-  let next: Array<{ date?: string | null; lab?: string | null }>
-  if (idx >= 0) {
-    next = current.map((r, i) => i === idx ? { ...r, date: cleanDate } : r)
-  } else {
-    next = [...current, { lab, date: cleanDate }]
-  }
+  const next = upsertInfectiousRecords(current, labs, newDate)
   await updateCaseField(caseRow.id, 'data', 'infectious_disease_records', next)
+  return next
 }
 
 /** Simple inline date editor. */
@@ -370,16 +382,10 @@ export function InspectionTable({
       const next = [{ ...head, date: v || null }, ...current.slice(1)]
       onUpdate(row.caseRow.id, 'data', 'rabies_titer_records', next)
     } else {
-      const lab = row.dateStorage.lab
-      await saveInfectiousDate(row.caseRow, lab, v)
-      const data = (row.caseRow.data ?? {}) as Record<string, unknown>
-      const current = Array.isArray(data.infectious_disease_records)
-        ? (data.infectious_disease_records as Array<{ date?: string | null; lab?: string | null }>)
-        : []
-      const idx = current.findIndex(r => r?.lab === lab)
-      const next = idx >= 0
-        ? current.map((r, i) => i === idx ? { ...r, date: v || null } : r)
-        : [...current, { lab, date: v || null }]
+      const labs = row.dateStorage.kind === 'infectious_multi'
+        ? row.dateStorage.labs
+        : [row.dateStorage.lab]
+      const next = await saveInfectiousDates(row.caseRow, labs, v)
       onUpdate(row.caseRow.id, 'data', 'infectious_disease_records', next)
     }
   }, [onUpdate])

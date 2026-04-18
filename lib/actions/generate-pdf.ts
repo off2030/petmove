@@ -137,10 +137,19 @@ export type ShipmentOpts = {
   consignee_lab?: string
 }
 
+function generateShipperExportRef(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `LVMC${y}${m}${day}`
+}
+
 export async function generateInvoice(opts: ShipmentOpts): Promise<GeneratePdfResult> {
   const r = await generateStandalone('Invoice', {
     tube_count: opts.tube_count,
     consignee_lab: opts.consignee_lab ?? '',
+    shipper_export_ref: generateShipperExportRef(),
   })
   if (r.ok) r.filename = `Invoice_${opts.tube_count}tubes.pdf`
   return r
@@ -150,9 +159,70 @@ export async function generateESD(opts: ShipmentOpts): Promise<GeneratePdfResult
   const r = await generateStandalone('ESD', {
     tube_count: opts.tube_count,
     consignee_lab: opts.consignee_lab ?? '',
+    shipper_export_ref: generateShipperExportRef(),
   })
   if (r.ok) r.filename = `ESD_${opts.tube_count}tubes.pdf`
   return r
+}
+
+export async function generateInvoiceAndESD(opts: ShipmentOpts): Promise<GeneratePdfResult> {
+  const { PDFDocument } = await import('pdf-lib')
+
+  const [invoiceResult, esdResult] = await Promise.all([
+    generateInvoice(opts),
+    generateESD(opts),
+  ])
+
+  if (!invoiceResult.ok) return invoiceResult
+  if (!esdResult.ok) return esdResult
+
+  const invoicePdf = await PDFDocument.load(Buffer.from(invoiceResult.pdf, 'base64'))
+  const esdPdf = await PDFDocument.load(Buffer.from(esdResult.pdf, 'base64'))
+
+  const mergedPdf = await PDFDocument.create()
+  const invoicePages = await mergedPdf.copyPages(invoicePdf, invoicePdf.getPageIndices())
+  const esdPages = await mergedPdf.copyPages(esdPdf, esdPdf.getPageIndices())
+
+  invoicePages.forEach(page => mergedPdf.addPage(page))
+  esdPages.forEach(page => mergedPdf.addPage(page))
+
+  const pdfBytes = await mergedPdf.save()
+  const base64 = Buffer.from(pdfBytes).toString('base64')
+
+  return {
+    ok: true,
+    pdf: base64,
+    filename: `Invoice+ESD_${opts.tube_count}tubes.pdf`,
+  }
+}
+
+/**
+ * 뉴질랜드 전염병검사 3종(APQA HQ + APQA HQ En + VBDDL) 병합 PDF.
+ * 검사 탭 "신청" 버튼에서 한 번에 다운로드.
+ */
+export async function generateNzInfectionPack(caseId: string, opts?: GenerateOpts): Promise<GeneratePdfResult> {
+  const { PDFDocument } = await import('pdf-lib')
+  const [apqaHq, apqaHqEn, vbddl] = await Promise.all([
+    generateApqaHq(caseId, opts),
+    generateApqaHqEn(caseId, opts),
+    generateVbddl(caseId, opts),
+  ])
+  if (!apqaHq.ok) return apqaHq
+  if (!apqaHqEn.ok) return apqaHqEn
+  if (!vbddl.ok) return vbddl
+
+  const merged = await PDFDocument.create()
+  for (const r of [apqaHq, apqaHqEn, vbddl]) {
+    const doc = await PDFDocument.load(Buffer.from(r.pdf, 'base64'))
+    const pages = await merged.copyPages(doc, doc.getPageIndices())
+    pages.forEach(p => merged.addPage(p))
+  }
+  const pdfBytes = await merged.save()
+  return {
+    ok: true,
+    pdf: Buffer.from(pdfBytes).toString('base64'),
+    filename: apqaHq.filename.replace(/^APQA_HQ_/, 'NZ_Infection_'),
+  }
 }
 
 export async function generateOVD(caseId: string, opts?: GenerateOpts) {

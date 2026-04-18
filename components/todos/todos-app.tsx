@@ -6,23 +6,13 @@ import { useCases } from '@/components/cases/cases-context'
 import { TodoTable, type TodoColumn } from './todo-table'
 import { InspectionTable, type InspectionRow } from './inspection-table'
 import { updateCaseField } from '@/lib/actions/cases'
-import { generateInvoice, generateESD } from '@/lib/actions/generate-pdf'
+import { generateInvoice, generateESD, generateInvoiceAndESD } from '@/lib/actions/generate-pdf'
 
 function downloadBase64Pdf(base64: string, filename: string) {
   const link = document.createElement('a')
   link.href = `data:application/pdf;base64,${base64}`
   link.download = filename
   link.click()
-}
-
-/** 튜브 갯수 (1-5) + 실험실(선택) 프롬프트. 단순 prompt() 사용. null 반환 시 취소. */
-function promptShipment(): { tube_count: number; consignee_lab: string } | null {
-  const raw = typeof window === 'undefined' ? null : window.prompt('튜브 갯수 (1~5):', '1')
-  if (!raw) return null
-  const n = Math.max(1, Math.min(5, Math.trunc(Number(raw))))
-  if (!Number.isFinite(n) || n < 1) { alert('1~5 사이 숫자를 입력하세요'); return null }
-  const lab = typeof window === 'undefined' ? '' : (window.prompt('수신 실험실 코드 (ksvdl / ksvdl_r / vbddl, 비워두면 공란):', 'ksvdl') ?? '')
-  return { tube_count: n, consignee_lab: lab.trim().toLowerCase() }
 }
 
 const TABS = [
@@ -64,6 +54,7 @@ const LAB_OPTIONS = [
   { value: 'ksvdl_r', label: 'KSVDL-R' },
   { value: 'ksvdl', label: 'KSVDL' },
   { value: 'vbddl', label: 'VBDDL' },
+  { value: 'nz_combined', label: 'APQA HQ + VBDDL' },
 ]
 
 const EU_COUNTRIES = new Set([
@@ -106,11 +97,14 @@ function resolveInspectionLab(row: CaseRow): string {
   return autoDetectLab(row.destination)
 }
 
-/** Check if case has titer date on or after 2025-04-03 */
+/** 검사 탭 공통 컷오프: 이 날짜 이후의 검사/출국만 탭에 올라감. */
+const INSPECTION_CUTOFF_DATE = '2026-04-03'
+
+/** Check if case has titer date on or after cutoff */
 function hasTiterDateAfterCutoff(row: CaseRow): boolean {
   const date = resolveTiterDate(row)
   if (!date) return false
-  return date >= '2026-04-03'
+  return date >= INSPECTION_CUTOFF_DATE
 }
 
 /** Check if inspection is completed */
@@ -136,12 +130,32 @@ function readInfectiousRecords(row: CaseRow): InfectiousRecord[] {
   return Array.isArray(arr) ? (arr as InfectiousRecord[]) : []
 }
 
+/** 뉴질랜드 전염병검사 자동 검사일 = 출국일 - 15일 (YYYY-MM-DD). */
+function computeNZInspectionDate(departureDate: string): string {
+  return addDays(departureDate, -15)
+}
+
+/** 일본 수입 신고기한 = 출국일 - 40일 (YYYY-MM-DD). */
+function computeJapanImportDeadline(departureDate: string): string {
+  return addDays(departureDate, -40)
+}
+
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return ''
+  d.setDate(d.getDate() + days)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 /**
  * 검사 탭에 뿌릴 행 목록을 케이스별로 펼친다.
  * 공통 규칙: 상세페이지에서 검사일을 지우면 탭에서도 사라진다.
  * - 광견병항체: titer 기록 컷오프 이후 & 진행상태 ≠ done → 1행
  * - 전염병검사(호주): infectious_disease_records에 lab=ksvdl & date 존재 → 1행
- * - 전염병검사(뉴질랜드): infectious_disease_records에 lab=apqa_hq/vbddl & date 존재 → 각 1행
+ * - 전염병검사(뉴질랜드): 출국일이 있으면 APQA HQ+VBDDL 묶음 1행 (검사일 = 저장값 or 출국일-15일)
  */
 function buildInspectionRows(cases: CaseRow[]): InspectionRow[] {
   const rows: InspectionRow[] = []
@@ -158,47 +172,45 @@ function buildInspectionRows(cases: CaseRow[]): InspectionRow[] {
         dateStorage: { kind: 'titer' },
       })
     }
-    // 2) 전염병검사 — 호주/뉴질랜드 + 출국일 필수
-    if (c.departure_date) {
-      const isAU = matchesDestination(c, AU_KEYWORDS)
-      const isNZ = matchesDestination(c, NZ_KEYWORDS)
-      if (isAU) {
-        const recs = readInfectiousRecords(c)
-        const existing = recs.find(r => r.lab === 'ksvdl')
-        // Only surface the KSVDL row when a date is actually set. Clearing the
-        // date in the detail page or here should remove the row from the tab;
-        // users re-add an initial date via the case detail's 전염병검사 field.
-        if (existing?.date) {
-          rows.push({
-            id: `${c.id}:inf:ksvdl`,
-            caseRow: c,
-            kind: 'infectious',
-            lab: 'ksvdl',
-            date: existing.date,
-            dateEditable: true,
-            dateStorage: { kind: 'infectious', lab: 'ksvdl' },
-          })
-        }
+    // 2) 전염병검사 — 호주/뉴질랜드
+    const isAU = matchesDestination(c, AU_KEYWORDS)
+    const isNZ = matchesDestination(c, NZ_KEYWORDS)
+    if (isAU && !isInspectionDone(c)) {
+      // 호주: 검사일(infectious ksvdl.date) 또는 출국일 중 하나라도 있으면 탭에 올림.
+      // 날짜 컬럼은 검사일 있으면 그것, 없으면 빈 값(사용자가 탭에서 직접 입력).
+      // 컷오프: 기준일(검사일 우선, 없으면 출국일) >= 2026-04-03.
+      const recs = readInfectiousRecords(c)
+      const existing = recs.find(r => r.lab === 'ksvdl')
+      const referenceDate = existing?.date || c.departure_date
+      if (referenceDate && referenceDate >= INSPECTION_CUTOFF_DATE) {
+        rows.push({
+          id: `${c.id}:inf:ksvdl`,
+          caseRow: c,
+          kind: 'infectious',
+          lab: 'ksvdl',
+          date: existing?.date ?? '',
+          dateEditable: true,
+          dateStorage: { kind: 'infectious', lab: 'ksvdl' },
+        })
       }
-      if (isNZ) {
-        const recs = readInfectiousRecords(c)
-        // Show NZ rows only when a date exists for that lab; deleting the date
-        // in the detail page removes the row from the tab (matches KSVDL behaviour).
-        for (const lab of ['apqa_hq', 'vbddl']) {
-          const existing = recs.find(r => r.lab === lab)
-          if (existing?.date) {
-            rows.push({
-              id: `${c.id}:inf:${lab}`,
-              caseRow: c,
-              kind: 'infectious',
-              lab,
-              date: existing.date,
-              dateEditable: true,
-              dateStorage: { kind: 'infectious', lab },
-            })
-          }
-        }
-      }
+    }
+    if (isNZ && c.departure_date && !isInspectionDone(c)) {
+      // 뉴질랜드: APQA HQ + VBDDL 두 검사기관을 한 행으로 묶어서 표시.
+      // 검사일 수정 시 두 record(apqa_hq, vbddl)에 동시 저장.
+      // 표시 날짜는 저장값 우선(apqa_hq → vbddl 순), 없으면 출국일 - 15일 자동.
+      const recs = readInfectiousRecords(c)
+      const existing = recs.find(r => r.lab === 'apqa_hq') ?? recs.find(r => r.lab === 'vbddl')
+      const autoDate = computeNZInspectionDate(c.departure_date)
+      const date = existing?.date || autoDate
+      rows.push({
+        id: `${c.id}:inf:nz`,
+        caseRow: c,
+        kind: 'infectious',
+        lab: 'nz_combined',
+        date,
+        dateEditable: true,
+        dateStorage: { kind: 'infectious_multi', labs: ['apqa_hq', 'vbddl'] },
+      })
     }
   }
   return rows
@@ -212,6 +224,7 @@ const LAB_SORT_ORDER: Record<string, number> = {
   ksvdl_r: 3,
   ksvdl: 4,
   vbddl: 5,
+  nz_combined: 6,
 }
 
 function compareByLab(a: CaseRow, b: CaseRow): number {
@@ -290,7 +303,21 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
   { key: 'destination', label: '목적지', storage: 'column', type: 'text', width: 80, readonly: true },
   { key: 'pet_name', label: '동물', storage: 'column', type: 'text', width: 90, readonly: true },
   { key: 'customer_name', label: '고객', storage: 'column', type: 'text', width: 90, readonly: true },
-  { key: 'import_deadline', label: '신고기한', storage: 'data', type: 'date', width: 110 },
+  {
+    key: 'import_deadline',
+    label: '신고기한',
+    storage: 'data',
+    type: 'date',
+    width: 110,
+    // 일본: 저장된 값이 없으면 출국일 - 40일로 자동 계산하여 표시.
+    resolveValue: (row) => {
+      const data = (row.data ?? {}) as Record<string, unknown>
+      const stored = data.import_deadline
+      if (stored != null && String(stored) !== '') return String(stored)
+      if (isJapan(row) && row.departure_date) return computeJapanImportDeadline(row.departure_date)
+      return ''
+    },
+  },
   { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: 110 },
   { key: 'return_date', label: '귀국일', storage: 'data', type: 'date', width: 110, condition: isJapan },
   { key: 'import_import_status', label: '수입', storage: 'data', type: 'select', width: 80, options: STATUS_WITH_NA },
@@ -410,38 +437,133 @@ export function TodosApp() {
   )
 }
 
-/** 검사 탭 하단 — Invoice / ESD 생성 버튼. 튜브 갯수 + 수신 실험실 프롬프트. */
+/** 검사 탭 하단 — Invoice + ESD 생성 버튼. 튜브 갯수 + 수신 실험실 다이얼로그. */
 function ShipmentDocsFooter() {
+  const [open, setOpen] = useState(false)
   const [busy, startBusy] = useTransition()
-  async function handle(kind: 'invoice' | 'esd') {
-    const opts = promptShipment()
-    if (!opts) return
+
+  async function handle(opts: { tube_count: number; consignee_lab: string }) {
+    setOpen(false)
     startBusy(async () => {
-      const r = kind === 'invoice' ? await generateInvoice(opts) : await generateESD(opts)
+      const r = await generateInvoiceAndESD(opts)
       if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
       else alert(`생성 실패: ${r.error}`)
     })
   }
+
   return (
     <div className="shrink-0 mt-3 pt-3 border-t border-border/40 flex items-center gap-2">
-      <span className="text-xs text-muted-foreground mr-2">배송서류</span>
       <button
         type="button"
-        onClick={() => handle('invoice')}
+        onClick={() => setOpen(true)}
         disabled={busy}
         className="text-xs px-3 py-1.5 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-50"
       >
         Invoice
       </button>
-      <button
-        type="button"
-        onClick={() => handle('esd')}
-        disabled={busy}
-        className="text-xs px-3 py-1.5 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-50"
-      >
-        ESD
-      </button>
       {busy && <span className="text-xs text-muted-foreground">생성 중...</span>}
+      {open && <ShipmentDocsDialog onClose={() => setOpen(false)} onSubmit={handle} />}
+    </div>
+  )
+}
+
+/** 검사 탭 하단 배송서류 다이얼로그 — 튜브 갯수 + 수신 실험실 선택. */
+interface ShipmentDocsDialogProps {
+  onClose: () => void
+  onSubmit: (opts: { tube_count: number; consignee_lab: string }) => void
+}
+
+function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
+  const [tubeCount, setTubeCount] = useState('1')
+  const [selectedLab, setSelectedLab] = useState('ksvdl_r')
+
+  const labs = [
+    { value: 'ksvdl_r', label: 'KSVDL-R' },
+    { value: 'ksvdl', label: 'KSVDL' },
+    { value: 'vbddl', label: 'VBDDL' },
+  ]
+
+  function handleSubmit() {
+    const n = Math.trunc(Number(tubeCount))
+    if (!Number.isFinite(n) || n < 1 || n > 5) {
+      alert('1~5 사이 숫자를 선택하세요')
+      return
+    }
+    onSubmit({ tube_count: n, consignee_lab: selectedLab })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+      <div className="bg-background border border-border rounded-lg shadow-lg p-6 max-w-sm w-full mx-4">
+        <h2 className="text-sm font-semibold mb-4">인보이스</h2>
+
+        {/* 검체수 */}
+        <div className="mb-5">
+          <label className="text-xs font-medium text-foreground mb-2 block">
+            검체수
+          </label>
+          <div className="flex gap-2">
+            {[1, 2, 3, 4, 5].map(n => {
+              const v = String(n)
+              const selected = tubeCount === v
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setTubeCount(v)}
+                  className={`flex-1 h-8 rounded border text-sm transition-colors ${
+                    selected
+                      ? 'bg-slate-700 text-white border-slate-700'
+                      : 'bg-background text-foreground border-border hover:bg-accent'
+                  }`}
+                >
+                  {n}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* 검사기관 */}
+        <div className="mb-5">
+          <label className="text-xs font-medium text-foreground mb-2 block">
+            검사기관
+          </label>
+          <div className="space-y-2">
+            {labs.map(lab => (
+              <label key={lab.value} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="consignee_lab"
+                  value={lab.value}
+                  checked={selectedLab === lab.value}
+                  onChange={(e) => setSelectedLab(e.target.value)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm text-foreground">{lab.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* 버튼 */}
+        <div className="flex gap-2 justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-xs px-3 py-1.5 rounded border border-border text-foreground hover:bg-accent transition-colors"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="text-xs px-3 py-1.5 rounded bg-slate-700 text-white hover:bg-slate-800 transition-colors"
+          >
+            생성
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
