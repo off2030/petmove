@@ -16,6 +16,14 @@ out/
 dist/
 build/
 
+# TypeScript incremental build cache — regenerated on every tsc run,
+# causes noisy diffs and push conflicts across machines.
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# PDF analysis/debug output from test scripts
+data/pdf-analysis/
+
 # OS / Editor
 .DS_Store
 Thumbs.db
