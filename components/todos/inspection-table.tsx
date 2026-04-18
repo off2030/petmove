@@ -1,11 +1,39 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import type { CaseRow } from '@/lib/supabase/types'
 import { updateCaseField } from '@/lib/actions/cases'
+import {
+  generateApqaHq,
+  generateApqaHqEn,
+  generateKsvdl,
+  generateVbddl,
+} from '@/lib/actions/generate-pdf'
 
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
+
+/**
+ * 검사기관(lab) → 신청 버튼 클릭 시 생성할 서류 목록.
+ *   ksvdl_r : Invoice/ESD 만 (신청서 없음 — 하단 배송서류 버튼 사용)
+ *   ksvdl   : KSVDL
+ *   apqa_hq : APQA HQ (한글)
+ *   vbddl   : APQA HQ + APQA HQ En + VBDDL (3개 동시 발급)
+ */
+type CertAction = (caseId: string) => Promise<{ ok: true; pdf: string; filename: string } | { ok: false; error: string }>
+const DOCS_BY_LAB: Record<string, CertAction[]> = {
+  ksvdl_r: [],
+  ksvdl: [generateKsvdl],
+  apqa_hq: [generateApqaHq],
+  vbddl: [generateApqaHq, generateApqaHqEn, generateVbddl],
+}
+
+function downloadBase64Pdf(base64: string, filename: string) {
+  const link = document.createElement('a')
+  link.href = `data:application/pdf;base64,${base64}`
+  link.download = filename
+  link.click()
+}
 
 /**
  * 검사 탭의 한 행. 한 케이스가 여러 행을 가질 수 있음
@@ -254,8 +282,49 @@ const COLUMNS = [
   { key: 'customer_name', label: '고객', width: 100 },
   { key: 'destination', label: '목적지', width: 100 },
   { key: 'status', label: '진행상태', width: 110 },
+  { key: 'apply', label: '신청', width: 70 },
   { key: 'memo', label: '메모', width: 180 },
 ]
+
+/** 신청 버튼 — 검사기관별 서류 묶음 일괄 생성. */
+function ApplyCell({ row }: { row: InspectionRow }) {
+  const [saving, startSave] = useTransition()
+  const docs = DOCS_BY_LAB[row.lab] ?? []
+  const hasDocs = docs.length > 0
+
+  const onClick = useCallback(() => {
+    if (!hasDocs) return
+    startSave(async () => {
+      for (const action of docs) {
+        const r = await action(row.caseRow.id)
+        if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
+        else alert(`생성 실패: ${r.error}`)
+      }
+    })
+  }, [row.caseRow.id, docs, hasDocs])
+
+  if (!hasDocs) {
+    return (
+      <span
+        className="text-xs text-muted-foreground/40 cursor-default"
+        title="이 검사기관은 신청서가 없습니다 (Invoice/ESD 만 필요)"
+      >
+        —
+      </span>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={saving}
+      className="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-50"
+    >
+      {saving ? '생성중...' : '신청'}
+    </button>
+  )
+}
 
 export function InspectionTable({
   rows,
@@ -352,6 +421,9 @@ export function InspectionTable({
             </td>
             <td className="px-2 py-1" style={{ width: 110, minWidth: 110 }}>
               <StatusCell row={row} options={statusOptions} onUpdate={onUpdate} />
+            </td>
+            <td className="px-2 py-1 text-center" style={{ width: 70, minWidth: 70 }}>
+              <ApplyCell row={row} />
             </td>
             <td className="px-2 py-1" style={{ width: 180, minWidth: 180 }}>
               <MemoCell row={row} onUpdate={onUpdate} />

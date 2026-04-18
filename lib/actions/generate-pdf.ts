@@ -17,7 +17,7 @@ export type GenerateMultiPdfResult =
 async function generate(
   formKey: string,
   caseId: string,
-  options?: { includeSignature?: boolean; destination?: string | null },
+  options?: { includeSignature?: boolean; destination?: string | null; extras?: Record<string, unknown> },
 ): Promise<GeneratePdfResult> {
   const supabase = await createClient()
   const { data: row, error } = await supabase
@@ -33,7 +33,32 @@ async function generate(
   // 지정이 없으면 컬럼 전체 문자열을 사용(단일 목적지 케이스는 동작 동일).
   const destForRules = options?.destination ?? caseRow.destination
   const allowedVaccines = getEffectiveVaccineList(destForRules, extraFields)
-  return fillPdf(formKey, caseRow, { includeSignature: options?.includeSignature, allowedVaccines })
+  return fillPdf(formKey, caseRow, {
+    includeSignature: options?.includeSignature,
+    allowedVaccines,
+    extras: options?.extras,
+  })
+}
+
+/**
+ * 케이스 없이 (클리닉 레벨) PDF 생성 — Invoice/ESD 처럼 환자 정보가 필요 없는
+ * 서류용. 빈 caseRow 를 만들고 extras 로 가변 데이터(tube_count, consignee_lab 등)
+ * 를 주입.
+ */
+async function generateStandalone(
+  formKey: string,
+  extras: Record<string, unknown>,
+): Promise<GeneratePdfResult> {
+  const stub: CaseRow = {
+    id: 'standalone', org_id: '',
+    microchip: null, microchip_extra: [],
+    customer_name: '', customer_name_en: null,
+    pet_name: null, pet_name_en: null,
+    destination: null, departure_date: null,
+    status: '신규', data: {},
+    created_at: '', updated_at: '',
+  }
+  return fillPdf(formKey, stub, { extras })
 }
 
 /** 모든 generate* 진입점의 공통 옵션. UI 활성 목적지를 destination 으로 전달. */
@@ -85,6 +110,49 @@ export async function generateCH(caseId: string, opts?: GenerateOpts) {
 
 export async function generateVHC(caseId: string, opts?: GenerateOpts) {
   return generate('VHC', caseId, opts)
+}
+
+/* 전염병검사 신청서류 — 메뉴는 아직 미연결. 필요 시 cert 버튼으로 wire. */
+export async function generateApqaHq(caseId: string, opts?: GenerateOpts) {
+  return generate('APQA_HQ', caseId, opts)
+}
+export async function generateApqaHqEn(caseId: string, opts?: GenerateOpts) {
+  return generate('APQA_HQ_En', caseId, opts)
+}
+export async function generateKsvdl(caseId: string, opts?: GenerateOpts) {
+  return generate('KSVDL', caseId, opts)
+}
+export async function generateVbddl(caseId: string, opts?: GenerateOpts) {
+  return generate('VBDDL', caseId, opts)
+}
+
+/**
+ * Invoice / ESD — 클리닉 레벨 배송 서류. caseId 없이 tube_count/consignee_lab 만
+ * 받아 생성. 반환 파일명에는 튜브 갯수를 기록.
+ */
+export type ShipmentOpts = {
+  /** 발송 튜브 갯수. 1~5 가 일반적. */
+  tube_count: number
+  /** 수신 실험실 코드 (ksvdl / ksvdl_r / vbddl). 비워두면 Consignee 공란. */
+  consignee_lab?: string
+}
+
+export async function generateInvoice(opts: ShipmentOpts): Promise<GeneratePdfResult> {
+  const r = await generateStandalone('Invoice', {
+    tube_count: opts.tube_count,
+    consignee_lab: opts.consignee_lab ?? '',
+  })
+  if (r.ok) r.filename = `Invoice_${opts.tube_count}tubes.pdf`
+  return r
+}
+
+export async function generateESD(opts: ShipmentOpts): Promise<GeneratePdfResult> {
+  const r = await generateStandalone('ESD', {
+    tube_count: opts.tube_count,
+    consignee_lab: opts.consignee_lab ?? '',
+  })
+  if (r.ok) r.filename = `ESD_${opts.tube_count}tubes.pdf`
+  return r
 }
 
 export async function generateOVD(caseId: string, opts?: GenerateOpts) {

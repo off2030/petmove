@@ -74,8 +74,20 @@ export function extractResultToSeed(r: ExtractAllResult): CaseSeed {
   if (r.customer_first_name_en) data.customer_first_name_en = r.customer_first_name_en
   if (r.customer_last_name_en) data.customer_last_name_en = r.customer_last_name_en
   if (r.phone) data.phone = r.phone
-  if (r.address_kr) data.address_kr = r.address_kr
+  // 주소 + 우편번호: AI가 분리해서 주면 그대로, address_kr 앞에 (XXXXX) 등이
+  // 섞여 오면 떼어내서 address_zipcode로 분리 (상세페이지가 별도 필드로 읽기 때문).
+  let addressKr = r.address_kr ?? null
+  let addressZip = r.address_zipcode?.trim() || null
+  if (addressKr) {
+    const m = addressKr.match(/^\s*[\(\[]?\s*(\d{5,6})\s*[\)\]]?\s*[,·\-]?\s*/)
+    if (m) {
+      if (!addressZip) addressZip = m[1]
+      addressKr = addressKr.slice(m[0].length).trim() || null
+    }
+  }
+  if (addressKr) data.address_kr = addressKr
   if (r.address_en) data.address_en = r.address_en
+  if (addressZip) data.address_zipcode = addressZip
   if (r.email) data.email = r.email
 
   // ── overseas ──

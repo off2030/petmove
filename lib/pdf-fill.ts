@@ -9,6 +9,7 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import mappings from '@/data/pdf-field-mappings.json'
 import { lookupRabies, lookupExternalParasite, lookupInternalParasite, lookupComprehensive, lookupCiv, lookupKennelCough, lookupParasiteById, getParasiteFamily } from '@/lib/vaccine-lookup'
+import { VET_INFO } from '@/lib/vet-info'
 import type { CaseRow } from '@/lib/supabase/types'
 
 /* ─── Performance feature flags ────────────────────────────────────────
@@ -118,6 +119,54 @@ const LAB_INFO: Record<string, { name: string; country: string }> = {
   vbddl:       { name: 'Vector Borne Disease Diagnostic Laboratory', country: 'United States of America' },
 }
 
+/**
+ * 실험실 배송지 주소 — Invoice/ESD 의 Consignee 필드용.
+ * inspection_lab 값으로 조회. 국내 실험실(APQA HQ 등)은 물리적 배송 없이 직접
+ * 방문/전달하므로 Invoice 대상이 아님 — US 실험실만 정의.
+ */
+const LAB_SHIPPING: Record<string, { name: string; line1: string; line2: string; city: string; state: string; zip: string; country: string; phone?: string }> = {
+  ksvdl_r: {
+    name: 'Kansas State University Rabies Laboratory',
+    line1: '2005 Research Park Circle',
+    line2: '',
+    city: 'Manhattan', state: 'KS', zip: '66502',
+    country: 'United States of America',
+    phone: '+1-785-532-4483',
+  },
+  ksvdl: {
+    name: 'Kansas State Veterinary Diagnostic Laboratory',
+    line1: '1800 Denison Avenue',
+    line2: 'Mosier D117',
+    city: 'Manhattan', state: 'KS', zip: '66506',
+    country: 'United States of America',
+    phone: '+1-866-512-5650',
+  },
+  vbddl: {
+    name: 'Vector Borne Disease Diagnostic Laboratory',
+    line1: 'CVM Research Building, Room 462A',
+    line2: '1060 William Moore Drive',
+    city: 'Raleigh', state: 'NC', zip: '27607',
+    country: 'United States of America',
+  },
+}
+
+function formatLabShipping(code: string, attr: string): string {
+  const lab = LAB_SHIPPING[code.toLowerCase()]
+  if (!lab) return ''
+  if (attr === 'name') return lab.name
+  if (attr === 'line1') return lab.line1
+  if (attr === 'line2') return lab.line2
+  if (attr === 'city_state_zip') return `${lab.city}, ${lab.state} ${lab.zip}`
+  if (attr === 'country') return lab.country
+  if (attr === 'phone') return lab.phone ?? ''
+  if (attr === 'full') {
+    const parts = [lab.name, lab.line1, lab.line2, `${lab.city}, ${lab.state} ${lab.zip}`, lab.country].filter(Boolean)
+    if (lab.phone) parts.push(`Tel ${lab.phone}`)
+    return parts.join('\n')
+  }
+  return ''
+}
+
 const SPECIES_EN: Record<string, string> = { dog: 'Dog', cat: 'Cat' }
 
 /**
@@ -139,6 +188,14 @@ const SEX_LABEL_EN: Record<string, string> = {
   female: 'Female',
   neutered_male: 'N. male',
   spayed_female: 'N. female',
+}
+
+/** sex code → 한글 축약. 검역본부 혈청검사 신청서 등 한국 서식용. */
+const SEX_LABEL_KO: Record<string, string> = {
+  male: '수',
+  female: '암',
+  neutered_male: '중성화수',
+  spayed_female: '중성화암',
 }
 
 /**
@@ -1184,6 +1241,79 @@ function resolveField(
   if (transform === 'sex_label') {
     return SEX_LABEL_EN[String(raw ?? '').toLowerCase()] ?? ''
   }
+  if (transform === 'sex_label_ko') {
+    return SEX_LABEL_KO[String(raw ?? '').toLowerCase()] ?? ''
+  }
+
+  // MM/DD/YYYY with no separators (US lab forms: KSVDL "Date Blood Drawn (mmddyyyy)").
+  if (transform === 'date_mdy_compact') {
+    const s = String(raw ?? '')
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+    if (!m) return ''
+    return `${m[2]}${m[3]}${m[1]}`
+  }
+
+  // Korean age label — birth_date 기준 "N살" (만 나이). 검역본부 서식의 '연령' 칸용.
+  if (transform === 'age_ko') {
+    const a = ageParts(raw)
+    if (!a) return ''
+    return a.years === 0 ? `${a.months}개월` : `${a.years}살`
+  }
+
+  // Vet info central lookup. `vet:<key>` — returns VET_INFO[key] as string.
+  // Special: `vet:invoice_shipper_block` returns a multi-line block formatted
+  // for the FedEx Commercial Invoice "SHIPPER/EXPORTER" cell.
+  const vetMatch = transform?.match(/^vet:(.+)$/)
+  if (vetMatch) {
+    const key = vetMatch[1]
+    if (key === 'invoice_shipper_block') {
+      const v = VET_INFO
+      return [
+        v.clinic_en,
+        v.address_en,
+        `Tel: ${v.phone_intl}`,
+        `Email: ${v.email}`,
+        `Veterinarian: ${v.name_en} (License No. ${v.license_no})`,
+      ].join('\n')
+    }
+    const v = (VET_INFO as Record<string, unknown>)[key]
+    return v == null ? '' : String(v)
+  }
+
+  // Lab shipping address lookup (Invoice/ESD consignee).
+  // `lab_shipping:<attr>` where attr is name/line1/line2/city_state_zip/country/
+  // phone/full/name_line/block. Reads the lab code from raw (source =
+  // "consignee_lab" which is passed in via extras).
+  const labShipMatch = transform?.match(/^lab_shipping:(name|line1|line2|city_state_zip|country|phone|full|name_line|block)$/)
+  if (labShipMatch) {
+    const code = String(raw ?? '').toLowerCase()
+    const attr = labShipMatch[1]
+    if (attr === 'name_line') {
+      // ESD 한 줄 표기: "name, line1, city state zip, country"
+      const full = formatLabShipping(code, 'full')
+      return full.split('\n').filter(s => !s.startsWith('Tel ')).join(', ')
+    }
+    if (attr === 'block') {
+      // Invoice multi-line Consignee 블록
+      return formatLabShipping(code, 'full')
+    }
+    return formatLabShipping(code, attr)
+  }
+
+  // Invoice specimen description — "Non-infectious canine serum (0.5 mL × N tubes)"
+  // where N comes from the numeric source (tube_count).
+  if (transform === 'invoice_specimen_desc') {
+    const n = Number(raw)
+    const count = Number.isFinite(n) && n > 0 ? Math.trunc(n) : 1
+    return `Non-infectious canine serum (0.5 mL × ${count} ${count === 1 ? 'tube' : 'tubes'})`
+  }
+
+  // Invoice total value — tube_count × 1.00 USD, formatted "N.00".
+  if (transform === 'invoice_total_value') {
+    const n = Number(raw)
+    const count = Number.isFinite(n) && n > 0 ? Math.trunc(n) : 1
+    return `${count}.00`
+  }
 
   // Split an address string into street vs locality portions for forms
   // that expose two address fields (Annex III I1/I5 consignor/consignee).
@@ -1699,7 +1829,12 @@ async function applyFontFixes(
   // 'unset' → leave the key as-is from the template.
 }
 
-export type FillOptions = { includeSignature?: boolean; allowedVaccines?: string[] }
+export type FillOptions = {
+  includeSignature?: boolean
+  allowedVaccines?: string[]
+  /** 추가 필드 (예: Invoice/ESD의 tube_count). caseRow.data 에 병합되어 source 로 읽힘. */
+  extras?: Record<string, unknown>
+}
 
 export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillOptions): Promise<FillResult> {
   const form = MAPS[formKey]
@@ -1718,7 +1853,7 @@ export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillO
   const customFont = await pdf.embedFont(fontBytes, { subset: PDF_SUBSET_FONT })
 
   const pdfForm = pdf.getForm()
-  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const data = { ...(caseRow.data ?? {}), ...(options?.extras ?? {}) } as Record<string, unknown>
 
   // Date reformatter for form-level dateFormat override (e.g. Annex III uses dd/mm/yyyy).
   // Converts a stand-alone YYYY-MM-DD or YYYY/MM/DD token to dd/mm/yyyy.

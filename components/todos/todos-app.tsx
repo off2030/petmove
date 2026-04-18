@@ -1,11 +1,29 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import type { CaseRow } from '@/lib/supabase/types'
 import { useCases } from '@/components/cases/cases-context'
 import { TodoTable, type TodoColumn } from './todo-table'
 import { InspectionTable, type InspectionRow } from './inspection-table'
 import { updateCaseField } from '@/lib/actions/cases'
+import { generateInvoice, generateESD } from '@/lib/actions/generate-pdf'
+
+function downloadBase64Pdf(base64: string, filename: string) {
+  const link = document.createElement('a')
+  link.href = `data:application/pdf;base64,${base64}`
+  link.download = filename
+  link.click()
+}
+
+/** 튜브 갯수 (1-5) + 실험실(선택) 프롬프트. 단순 prompt() 사용. null 반환 시 취소. */
+function promptShipment(): { tube_count: number; consignee_lab: string } | null {
+  const raw = typeof window === 'undefined' ? null : window.prompt('튜브 갯수 (1~5):', '1')
+  if (!raw) return null
+  const n = Math.max(1, Math.min(5, Math.trunc(Number(raw))))
+  if (!Number.isFinite(n) || n < 1) { alert('1~5 사이 숫자를 입력하세요'); return null }
+  const lab = typeof window === 'undefined' ? '' : (window.prompt('수신 실험실 코드 (ksvdl / ksvdl_r / vbddl, 비워두면 공란):', 'ksvdl') ?? '')
+  return { tube_count: n, consignee_lab: lab.trim().toLowerCase() }
+}
 
 const TABS = [
   { id: 'inspection', label: '검사' },
@@ -386,7 +404,46 @@ export function TodosApp() {
           />
         )}
       </div>
+
+      {/* Bottom shipment document buttons — only on inspection tab */}
+      {activeTab === 'inspection' && <ShipmentDocsFooter />}
       </div>
+    </div>
+  )
+}
+
+/** 검사 탭 하단 — Invoice / ESD 생성 버튼. 튜브 갯수 + 수신 실험실 프롬프트. */
+function ShipmentDocsFooter() {
+  const [busy, startBusy] = useTransition()
+  async function handle(kind: 'invoice' | 'esd') {
+    const opts = promptShipment()
+    if (!opts) return
+    startBusy(async () => {
+      const r = kind === 'invoice' ? await generateInvoice(opts) : await generateESD(opts)
+      if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
+      else alert(`생성 실패: ${r.error}`)
+    })
+  }
+  return (
+    <div className="shrink-0 mt-3 pt-3 border-t border-border/40 flex items-center gap-2">
+      <span className="text-xs text-muted-foreground mr-2">배송서류</span>
+      <button
+        type="button"
+        onClick={() => handle('invoice')}
+        disabled={busy}
+        className="text-xs px-3 py-1.5 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-50"
+      >
+        Invoice
+      </button>
+      <button
+        type="button"
+        onClick={() => handle('esd')}
+        disabled={busy}
+        className="text-xs px-3 py-1.5 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-50"
+      >
+        ESD
+      </button>
+      {busy && <span className="text-xs text-muted-foreground">생성 중...</span>}
     </div>
   )
 }

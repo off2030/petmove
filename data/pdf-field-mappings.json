@@ -4230,5 +4230,148 @@
         "h": 34
       }
     ]
+  },
+  "APQA_HQ": {
+    "template": "APQA_HQ.pdf",
+    "description": "농림축산검역본부 혈청검사 신청서 (한국 서식). 별지 제2호서식 — 전염병검사(브루셀라/렙토스피라 등) 의뢰용. 3페이지 (신청서 + 의뢰인 동의서 + 여분 동의서).",
+    "filename": "APQA_HQ_{pet_name}.pdf",
+    "dateFormat": "ymd_slash",
+    "fields": {
+      "text_1es":    { "source": "customer_name", "note": "p1 사육농장 성명 — 고객명" },
+      "text_2clia":  { "source": "address_kr",    "note": "p1 사육농장 주소 (한국주소)" },
+      "text_3vgcl":  { "source": null,            "note": "p1 사육농장 주소 2줄째 (장문일 때 수동)" },
+      "text_13zhub": { "source": "sex",           "transform": "sex_label_ko", "note": "p1 가축 성별 (암/수)" },
+      "text_4gsyb":  { "source": "birth_date",    "transform": "age_ko",       "note": "p1 연령 — N살" },
+      "text_5yzzg":  { "source": null,            "default": "1", "note": "p1 사육두수" },
+      "text_6exxc":  { "source": null,            "default": "1", "note": "p1 의뢰두수" },
+      "text_7txrq":  { "source": null, "transform": "today_part:year",  "note": "p1 신청일 — 년" },
+      "text_8xwsm":  { "source": null, "transform": "today_part:month", "note": "p1 신청일 — 월" },
+      "text_15zdz":  { "source": null, "transform": "today_part:day",   "note": "p1 신청일 — 일" },
+      "text_12cw":   { "source": null, "transform": "today_part:year",  "note": "p2 개인정보 동의서 — 년" },
+      "text_16gnpk": { "source": null, "transform": "today_part:month", "note": "p2 개인정보 동의서 — 월" },
+      "text_17xwbs": { "source": null, "transform": "today_part:day",   "note": "p2 개인정보 동의서 — 일" },
+      "text_22cmqy": { "source": null, "transform": "today_part:year",  "note": "p3 개인정보 동의서 — 년" },
+      "text_13cclj": { "source": null, "transform": "today_part:month", "note": "p3 개인정보 동의서 — 월" },
+      "text_23ojdb": { "source": null, "transform": "today_part:day",   "note": "p3 개인정보 동의서 — 일" },
+      "text_16rzpm": { "source": "customer_name", "note": "p3 개인정보 동의서 — 의뢰인 성명" }
+    }
+  },
+  "APQA_HQ_En": {
+    "template": "APQA_HQ_En.pdf",
+    "description": "농림축산검역본부 혈청검사 신청서 (영문). Serological Test Application Form — 상대국(수출국) 검역 제출용. 1페이지.",
+    "filename": "APQA_HQ_En_{pet_name}.pdf",
+    "dateFormat": "dmy",
+    "fields": {
+      "text_1deys":  { "source": null, "transform": "today_ymd_slash", "note": "Date of Application — 신청일(오늘)" },
+      "text_3qzrv":  { "source": "customer_name_en", "note": "Owner Name — 보호자 영문" },
+      "text_4awig":  { "source": "address_en",       "note": "Owner Address" },
+      "text_5arog":  { "source": "phone", "transform": "phone_intl_kr", "note": "Owner Tel" },
+      "text_6ricl":  { "source": "pet_name_en",      "note": "Animal Name" },
+      "text_7amin":  { "source": "microchip",        "note": "Microchip Number" },
+      "text_11drex": { "source": "breed_en",         "note": "Species/Breed" },
+      "text_8ciww":  { "source": "birth_date",       "note": "Date of Birth (dmy)" },
+      "text_10ypae": { "source": "sex",   "transform": "sex_simple_en", "note": "Sex (Male/Female)" },
+      "text_9pytp":  { "source": "vet_visit_date",   "note": "Date of Blood Collection = 내원일" },
+      "text_12llof": { "source": null, "transform": "today_part:year",  "note": "하단 서명일 — 년" },
+      "text_15bg":   { "source": null, "transform": "today_part:month", "note": "하단 서명일 — 월" },
+      "text_16rebt": { "source": null, "transform": "today_part:day",   "note": "하단 서명일 — 일" }
+    }
+  },
+  "KSVDL": {
+    "template": "KSVDL.pdf",
+    "description": "Kansas State Veterinary Diagnostic Laboratory — Canine Export Submission Form. 뉴질랜드·호주 수출용 브루셀라/렙토스피라/레이슈마니아 등 혈청검사. Clinic 정보는 템플릿에 정적 인쇄, Owner 정보만 자동 채움.",
+    "filename": "KSVDL_{pet_name}.pdf",
+    "dateFormat": "ymd_slash",
+    "fields": {
+      "text_1jqev":  { "source": "customer_name_en", "note": "Owner Name" },
+      "text_2pghn":  { "source": "address_en", "transform": "address_part:street", "note": "Owner Address — 도로명 부분" },
+      "text_3qoui":  { "source": "address_city",   "note": "Owner City" },
+      "text_4nppi":  { "source": "address_zipcode","note": "Owner ZIP" },
+      "text_5lbxm":  { "source": null, "default": "REPUBLIC OF KOREA", "note": "Owner Country" },
+      "text_6znme":  { "source": "phone", "transform": "phone_intl_kr", "note": "Owner Cell phone" },
+      "text_7gray":  { "source": "species", "transform": "en", "note": "Species (Dog/Cat)" },
+      "text_8gaow":  { "source": "pet_name_en",    "note": "Animal Name" },
+      "text_9fsoj":  { "source": "microchip",      "note": "Microchip Number" },
+      "text_10toag": { "source": "vet_visit_date", "transform": "date_mdy_compact", "note": "Date Blood Drawn — MMDDYYYY 포맷 (내원일)" },
+      "checkbox_11rcln": { "source": null, "transform": "checkbox:always_true", "note": "Canine Brucellosis — 뉴질랜드/호주 필수" },
+      "checkbox_14aovq": { "source": null, "transform": "checkbox:always_true", "note": "Leptospira Canicola — 뉴질랜드 필수" },
+      "checkbox_13esom": { "source": null, "transform": "checkbox:always_true", "note": "Leishmania Infantum — 호주 필수. 불필요 시 PDF에서 체크 해제" }
+    }
+  },
+  "VBDDL": {
+    "template": "VBDDL.pdf",
+    "description": "Vector Borne Disease Diagnostic Lab (NC State) — Submission Form. 레이슈마니아 등 매개체 매개 질병 검사용. Clinic 정보 정적 인쇄, 환자 정보만 자동 채움.",
+    "filename": "VBDDL_{pet_name}.pdf",
+    "dateFormat": "ymd_slash",
+    "fields": {
+      "text_1kmam": { "source": "vet_visit_date", "note": "Sample Draw Date — 내원일" },
+      "text_2nmws": { "source": "pet_name_en",   "note": "Patient Name" },
+      "text_3vcfv": { "source": "birth_date",    "note": "DOB/AGE" },
+      "text_4knts": { "source": "sex", "transform": "sex_simple_en", "note": "Sex" },
+      "text_5cgsl": { "source": "customer_name_en", "note": "Owner First & Last Name" },
+      "text_6tvwn": { "source": "microchip",     "note": "Microchip Number" },
+      "text_7vwtc": { "source": "breed_en",      "note": "Breed" }
+    }
+  },
+  "ESD": {
+    "template": "ESD.pdf",
+    "description": "Exempt Specimen Declaration — 혈청 등 진단 검체를 해외 실험실(KSVDL/VBDDL 등)로 FedEx 발송 시 세관 통관용 수의사 선언서. 튜브 갯수와 수신 실험실만 가변.",
+    "filename": "ESD_{tube_count}tubes.pdf",
+    "dateFormat": "dmy",
+    "fields": {
+      "text_1ataj": { "source": null, "transform": "today_ymd_slash",       "note": "Date of Letter (오늘)" },
+      "text_2gscn": { "source": "consignee_lab", "transform": "lab_shipping:name_line", "note": "수신 실험실 전체 주소 (name, line1, city·state·zip, country)" },
+      "text_3fefc": { "source": "tube_count", "note": "0.5 mL × N tubes 의 N" },
+      "text_4vgcf": { "source": null, "note": "FedEx AWB No. (수동 — 배송 예약 후 입력)" }
+    },
+    "signatures": [
+      { "image": "lausanne.png", "page": 0, "x": 72, "y": 180, "w": 120, "h": 34 }
+    ]
+  },
+  "Invoice": {
+    "template": "Invoice.pdf",
+    "description": "FedEx Commercial Invoice — 진단 검체 해외 발송용. 튜브 갯수 + 수신 실험실 코드만 가변. 나머지는 병원 정보·정적 문구.",
+    "filename": "Invoice_{tube_count}tubes.pdf",
+    "dateFormat": "dmy",
+    "fields": {
+      "Text1":  { "source": null, "note": "International Air Waybill No. (수동)" },
+      "Text2":  { "source": null, "transform": "today_ymd_slash", "note": "Date of Exportation (오늘)" },
+      "Text3":  { "source": null, "default": "Veterinary diagnostic specimen", "note": "Shipper's Export References" },
+      "Text4":  { "source": null, "transform": "vet:invoice_shipper_block", "note": "Shipper/Exporter 전체 블록 (병원명+주소+전화+이메일)" },
+      "Text5":  { "source": "consignee_lab", "transform": "lab_shipping:block", "note": "Consignee — 수신 실험실 전체" },
+      "Text6":  { "source": null, "default": "Republic of Korea", "note": "Country of Export" },
+      "Text7":  { "source": null, "default": "Non-infectious canine serum for diagnostic testing (non-commercial)", "note": "Reason for Export" },
+      "Text8":  { "source": "consignee_lab", "transform": "lab_shipping:country", "note": "Country of Ultimate Destination" },
+      "Text9":  { "source": null, "note": "Importer if other than consignee (공란)" },
+      "Text10": { "source": null, "default": "Republic of Korea", "note": "Country of Origin" },
+      "Text11": { "source": null, "note": "Marks/Nos (수동)" },
+      "Text12": { "source": null, "default": "1", "note": "No. of Pkgs" },
+      "Text13": { "source": null, "default": "Envelope", "note": "Type of Packaging" },
+      "Text14": { "source": "tube_count", "transform": "invoice_specimen_desc", "note": "Description — 'Non-infectious canine serum (0.5 mL × N tubes)'" },
+      "Text15": { "source": null, "default": "3002.90.5250", "note": "HS Code" },
+      "Text16": { "source": "tube_count", "note": "QTY" },
+      "Text17": { "source": null, "default": "vial", "note": "Unit of Measure" },
+      "Text18": { "source": null, "note": "Weight (수동 — 실제 무게)" },
+      "Text19": { "source": null, "default": "1.00", "note": "Unit Value (명목가)" },
+      "Text20": { "source": "tube_count", "transform": "invoice_total_value", "note": "Total Value (명목가 × tube_count)" },
+      "Text21": { "source": null, "default": "1", "note": "Total PKGS" },
+      "Text22": { "source": null, "note": "Total Weight (수동)" },
+      "Text23": { "source": null, "default": "USD", "note": "Currency" },
+      "Text24": { "source": "tube_count", "transform": "invoice_total_value", "note": "Total Invoice Value" },
+      "Text27": { "source": null, "transform": "vet:name_en", "note": "Name (벳 이름)" },
+      "Text28": { "source": null, "default": "DVM", "note": "Title" },
+      "Text29": { "source": null, "transform": "today_ymd_slash", "note": "Date (오늘)" },
+      "Text26": { "source": null, "note": "서명란 (서명 이미지 오버레이가 위로 덮음)" },
+
+      "Check Box26": { "source": null, "note": "L/C (수동)" },
+      "Check Box27": { "source": null, "note": "T/T (수동)" },
+      "Check Box28": { "source": null, "note": "Others (수동)" },
+      "Check Box29": { "source": null, "note": "F.O.B. (수동)" },
+      "Check Box30": { "source": null, "note": "C & F (수동)" },
+      "Check Box31": { "source": null, "note": "C.I.F. (수동)" }
+    },
+    "signatures": [
+      { "image": "lausanne.png", "page": 0, "x": 14, "y": 55, "w": 120, "h": 34 }
+    ]
   }
 }

@@ -10,6 +10,7 @@
 
 import OpenAI from 'openai'
 import { DROP_CREATE_MODEL } from '@/lib/openai-config'
+import { lookupKoreanZipcode } from '@/lib/kakao-address'
 
 export interface ExtractedFlight {
   date: string | null
@@ -42,6 +43,7 @@ export interface ExtractAllResult {
   phone: string | null             // E.164 없이 사용자 입력 그대로
   address_kr: string | null        // 국내 주소 (한글)
   address_en: string | null        // 국내 주소 영문
+  address_zipcode: string | null   // 국내 우편번호 (5~6자리)
   email: string | null
 
   // --- 목적지 / 항공편 ---
@@ -84,7 +86,7 @@ const SCHEMA = {
     'pet_name', 'pet_name_en', 'species', 'breed', 'breed_en', 'color', 'color_en',
     'sex', 'birth_date', 'weight', 'microchip', 'microchip_implant_date',
     'customer_name', 'customer_name_en', 'customer_first_name_en', 'customer_last_name_en',
-    'phone', 'address_kr', 'address_en', 'email',
+    'phone', 'address_kr', 'address_en', 'address_zipcode', 'email',
     'destination', 'inbound', 'outbound', 'address_overseas',
     'passport_number', 'passport_issue_date', 'passport_expiry_date', 'passport_nationality',
   ],
@@ -111,6 +113,7 @@ const SCHEMA = {
     phone: { type: ['string', 'null'] },
     address_kr: { type: ['string', 'null'] },
     address_en: { type: ['string', 'null'] },
+    address_zipcode: { type: ['string', 'null'] },
     email: { type: ['string', 'null'] },
     destination: { type: ['string', 'null'] },
     inbound: FLIGHT_SCHEMA,
@@ -147,8 +150,9 @@ Return ONE JSON object following the provided schema. For each field set the bes
 - customer_first_name_en: English given name(s) only — everything before the family name. For "Hoa Mai Nguyen" with family name "Nguyen", this is "Hoa Mai".
 - customer_last_name_en: English family name only
 - phone: phone number as written (010-XXXX-XXXX or +82...)
-- address_kr: Korean domestic address
-- address_en: English-translated/romanized version of the Korean address (NOT the overseas destination address)
+- address_kr: Korean domestic address. If a postal code is visible, put it in address_zipcode and keep the address itself zipcode-free.
+- address_en: English-translated/romanized version of the Korean address (NOT the overseas destination address). REQUIRED whenever address_kr is present — never return address_en as null if address_kr has a value. Romanize road names (벚꽃로 → Beotkkot-ro), district (구 → -gu), city (시 → -si), province (도 → -do). Example: "서울시 금천구 벚꽃로 40, 102동 504호" → "40 Beotkkot-ro, Geumcheon-gu, Seoul, 102-504".
+- address_zipcode: Korean postal code, 5 or 6 digits only (no parentheses, no "우편번호" prefix). Look for "(06234)", "우편번호 06234", "[06234]", or a standalone 5-6 digit number next to the address. null if not visible.
 - email: email address
 
 === DESTINATION & FLIGHTS ===
@@ -209,6 +213,14 @@ export async function extractAll(input: {
 
     const text = response.choices[0]?.message?.content ?? ''
     const parsed = JSON.parse(text) as ExtractAllResult
+
+    // 이미지에 우편번호가 없으면 Kakao Local API로 한글 주소 → 우편번호 조회.
+    // Daum 위젯(클라이언트 팝업)과 달리 서버에서 자동 해결해야 사용자 개입 없이 채워짐.
+    if (!parsed.address_zipcode && parsed.address_kr) {
+      const lookup = await lookupKoreanZipcode(parsed.address_kr)
+      if (lookup?.zipcode) parsed.address_zipcode = lookup.zipcode
+    }
+
     return { ok: true, data: parsed }
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
