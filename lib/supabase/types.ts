@@ -33,3 +33,14 @@ export interface FieldDefinition {
   is_step: boolean
   is_active: boolean
 }
+
+export interface CalculatorItem {
+  id: number
+  country: string
+  item_name: string
+  cost: number
+  item_order: number
+  country_order: number
+  created_at: string
+  updated_at: string
+}
