@@ -26,8 +26,8 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1">
-      <span className="text-sm text-muted-foreground pt-1">해외주소</span>
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+      <span className="text-base text-primary pt-1">해외주소</span>
       {editing ? (
         <AddressInput
           initial={value ?? ''}
@@ -40,8 +40,8 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
             type="button"
             onClick={() => setEditing(true)}
             className={cn(
-              'text-left rounded-md px-2 py-0.5 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text',
-              !value && 'text-muted-foreground/60 italic',
+              'text-left rounded-md px-2 py-0.5 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text',
+              !value && 'text-muted-foreground/60',
             )}
           >
             {value || '—'}

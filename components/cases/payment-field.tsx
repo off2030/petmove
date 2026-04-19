@@ -92,14 +92,14 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
       <div className="flex items-center gap-xs pt-1">
-        <span className="text-sm text-muted-foreground">결제</span>
+        <span className="text-base text-primary">결제</span>
         <button
           type="button"
           onClick={() => setAddingNew(true)}
           disabled={saving || addingNew}
-          className="text-muted-foreground/40 hover:text-foreground text-sm font-medium leading-none transition-colors disabled:opacity-30"
+          className="text-muted-foreground/40 hover:text-foreground text-lg font-semibold leading-none transition-colors disabled:opacity-30"
           title="결제 추가"
         >
           +
@@ -129,15 +129,15 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
               saving={saving}
             />
             <span className="text-muted-foreground/30 select-none">|</span>
-            <span className="text-sm text-muted-foreground/60 italic">—</span>
+            <span className="text-sm text-muted-foreground/60">미입력</span>
             <span className="text-muted-foreground/30 select-none">|</span>
-            <span className="text-sm text-muted-foreground/60 italic">—</span>
+            <span className="text-sm text-muted-foreground/60">미입력</span>
           </div>
         )}
 
         {payments.length === 0 && !addingNew && (
           <button type="button" onClick={() => setAddingNew(true)}
-            className="text-left rounded-md px-2 py-1 -mx-2 text-sm text-muted-foreground/60 italic transition-colors hover:bg-accent/60 cursor-pointer">
+            className="text-left rounded-md px-2 py-1 -mx-2 text-base text-primary/60 transition-colors hover:bg-accent/60 cursor-pointer">
             —
           </button>
         )}
@@ -182,7 +182,7 @@ function PaymentRow({
         />
       ) : (
         <button type="button" onClick={() => onStartEdit('amount')}
-          className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text', amountDisplay === '—' && 'text-muted-foreground/60 italic')}>
+          className={cn('text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text', amountDisplay === '—' && 'text-muted-foreground/60')}>
           {amountDisplay}
         </button>
       )}
@@ -198,7 +198,7 @@ function PaymentRow({
         />
       ) : (
         <button type="button" onClick={() => onStartEdit('method')}
-          className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', methodDisplay === '—' && 'text-muted-foreground/60 italic')}>
+          className={cn('text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer', methodDisplay === '—' && 'text-muted-foreground/60')}>
           {methodDisplay}
         </button>
       )}
@@ -215,7 +215,7 @@ function PaymentRow({
         />
       ) : (
         <button type="button" onClick={() => onStartEdit('date')}
-          className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', dateDisplay === '—' && 'text-muted-foreground/60 italic')}>
+          className={cn('text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer', dateDisplay === '—' && 'text-muted-foreground/60')}>
           {dateDisplay}
         </button>
       )}
@@ -345,7 +345,8 @@ function DateInput({ initial, onSave, onCancel, saving }: {
       defaultValue={initial}
       onChange={(e) => {
         const v = e.target.value
-        if (!v) { dateTypedRef.current = false; return }
+        // 빈 값(달력 "삭제" 또는 백스페이스)은 즉시 저장 → 부모에서 null 처리.
+        if (!v) { dateTypedRef.current = false; saveFromRef(); return }
         const year = parseInt(v.split('-')[0], 10)
         if (year < 1900 || year > 2100) { dateTypedRef.current = false; return }
         if (dateTypedRef.current) {
@@ -361,10 +362,10 @@ function DateInput({ initial, onSave, onCancel, saving }: {
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
       onBlur={() => setTimeout(() => {
-        if (!(ref.current?.value ?? '').trim()) return
+        // 빈 값이면 saveFromRef 가 onSave('') 로 호출 → 부모에서 삭제 처리.
         saveFromRef()
       }, 150)}
-      className="w-36 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="w-36 bg-transparent border-0 border-b border-primary text-sm py-1 focus:outline-none"
     />
   )
 }

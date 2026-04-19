@@ -185,8 +185,8 @@ export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRo
     const isEditing = editingField === key
     const display = type === 'select' && val ? (options?.find((o) => o.value === val)?.label ?? val) : val
     return (
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1">
-        <span className="text-sm text-muted-foreground pt-1">{label}</span>
+      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+        <span className="text-base text-primary pt-1">{label}</span>
         {isEditing ? (
           type === 'select' && options ? (
             <SelectInput options={options} initial={val ?? ''} onSave={(v) => saveField(key, v)} onCancel={() => setEditingField(null)} />
@@ -199,8 +199,8 @@ export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRo
               type="button"
               onClick={() => setEditingField(key)}
               className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text',
-                !val && 'text-muted-foreground/60 italic',
+                'text-left rounded-md px-2 py-0.5 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text',
+                !val && 'text-muted-foreground/60',
               )}
             >
               {display || '—'}
@@ -233,13 +233,13 @@ export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRo
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        'mt-2 pt-2 border-t border-border/40 space-y-1 rounded-md transition-colors',
+        'mt-2 pt-2 border-t border-border/40 rounded-md transition-colors',
         dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
       {/* AI 입력 */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1">
-        <span className="text-sm text-muted-foreground pt-1">AI 입력</span>
+      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+        <span className="text-base text-primary pt-1">AI 입력</span>
         <div className="min-w-0 space-y-1">
           {showInput ? (
             <textarea
@@ -259,7 +259,7 @@ export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRo
                 type="button"
                 onClick={() => { setShowInput(true); setTimeout(() => textRef.current?.focus(), 50) }}
                 disabled={extracting}
-                className="text-left rounded-md px-2 py-1 -mx-2 text-sm text-muted-foreground/60 italic transition-colors hover:bg-accent/60 cursor-pointer disabled:opacity-50"
+                className="text-left rounded-md px-2 py-1 -mx-2 text-base text-primary/60 italic transition-colors hover:bg-accent/60 cursor-pointer disabled:opacity-50"
               >
                 {extracting ? '추출 중...' : '텍스트·이미지·PDF 붙여넣기'}
               </button>

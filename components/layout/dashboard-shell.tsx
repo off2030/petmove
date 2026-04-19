@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { Sidebar, type TabId } from './sidebar'
+import { TopBar, type TabId } from './topbar'
 import { useCases } from '@/components/cases/cases-context'
 import { CasesApp } from '@/components/cases/cases-app'
 import { TodosApp } from '@/components/todos/todos-app'
@@ -54,8 +54,8 @@ export function DashboardShell() {
 
   return (
     <>
-      <Sidebar activeTab={activeTab} onTabChange={handleTabChange} />
-      <main className="flex-1 min-w-0 h-screen overflow-hidden">
+      <TopBar activeTab={activeTab} onTabChange={handleTabChange} />
+      <main className="flex-1 min-w-0 overflow-hidden">
         {mounted.has('cases') && (
           <div className="h-full" style={{ display: activeTab === 'cases' ? 'block' : 'none' }}>
             <MemoizedCases />

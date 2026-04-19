@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { Calendar } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { cardContainer, iconButton } from '@/lib/design-system'
 import { applyCase } from '@/lib/actions/apply-case'
 import destsData from '@/data/destinations.json'
 import breedsData from '@/data/breeds.json'
@@ -48,6 +51,151 @@ interface PetForm {
 function emptyPet(): PetForm {
   return { petName: '', petNameEn: '', birthDate: '', species: '', breed: '', breedEn: '', breedQuery: '', selectedColors: [], sex: '', weight: '', microchip: '', microchipDate: '', rabiesDate: '' }
 }
+
+function normalizeDateInput(raw: string) {
+  const digits = raw.replace(/\D/g, '').slice(0, 8)
+  if (digits.length <= 4) return digits
+  if (digits.length <= 6) return `${digits.slice(0, 4)}-${digits.slice(4)}`
+  return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6)}`
+}
+
+function isValidDateInput(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+
+  const [yearStr, monthStr, dayStr] = value.split('-')
+  const year = Number(yearStr)
+  const month = Number(monthStr)
+  const day = Number(dayStr)
+
+  if (year < 1900 || year > 2100) return false
+  if (month < 1 || month > 12) return false
+
+  const maxDay = new Date(year, month, 0).getDate()
+  return day >= 1 && day <= maxDay
+}
+
+function DateTextField({
+  value,
+  onChange,
+  placeholder,
+  className,
+}: {
+  value: string
+  onChange: (value: string) => void
+  placeholder: string
+  className: string
+}) {
+  const [draft, setDraft] = useState(value)
+  const pickerRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setDraft(value)
+  }, [value])
+
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        inputMode="numeric"
+        value={draft}
+        maxLength={10}
+        placeholder={placeholder}
+        className={`${className} pr-12`}
+        onChange={(e) => {
+          const next = normalizeDateInput(e.target.value)
+          setDraft(next)
+
+          if (next.length === 10 && isValidDateInput(next)) {
+            onChange(next)
+          } else if (next.length === 0) {
+            onChange('')
+          }
+        }}
+        onBlur={() => {
+          if (!draft) {
+            onChange('')
+            return
+          }
+
+          if (isValidDateInput(draft)) {
+            onChange(draft)
+            return
+          }
+
+          setDraft(value)
+        }}
+      />
+      <input
+        ref={pickerRef}
+        type="date"
+        min="1900-01-01"
+        max="2100-12-31"
+        value={value}
+        tabIndex={-1}
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-0 right-0 h-0 w-0 opacity-0"
+        onChange={(e) => {
+          const next = e.target.value
+          setDraft(next)
+          onChange(next)
+        }}
+      />
+      <button
+        type="button"
+        aria-label="달력에서 날짜 선택"
+        className={cn(iconButton, 'absolute right-1 top-1/2 -translate-y-1/2 border-transparent bg-transparent')}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => {
+          const input = pickerRef.current
+          if (!input) return
+          if (typeof input.showPicker === 'function') {
+            input.showPicker()
+            return
+          }
+          input.focus()
+          input.click()
+        }}
+      >
+        <Calendar size={18} />
+      </button>
+    </div>
+  )
+}
+
+const pageShellClass =
+  'min-h-screen bg-background text-foreground'
+const pageInnerClass =
+  'mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:px-8'
+const heroCardClass = cn(cardContainer, 'p-md')
+const sectionCardClass = cn(cardContainer, 'p-md')
+const sectionTitleClass =
+  'text-base font-semibold text-primary mb-4 pb-3 border-b border-border/60'
+const inputClass =
+  'w-full h-10 rounded-md border border-border bg-card px-3 text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors'
+const selectClass =
+  'w-full h-10 rounded-md border border-border bg-card px-3 text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring appearance-none transition-colors'
+const labelClass =
+  'block text-sm font-medium text-primary mb-1.5'
+const surfaceButtonClass =
+  'inline-flex h-10 items-center rounded-md border border-border bg-card px-3 text-[15px] text-foreground transition-colors hover:bg-accent'
+const chipButtonActive =
+  'border-[#3FB39D] bg-[#3FB39D] text-white'
+const chipButtonInactive =
+  'border-border bg-card text-foreground hover:bg-accent'
+const dropdownClass =
+  'mt-1 rounded-md border border-border/60 bg-card shadow-sm'
+const dropdownRowClass =
+  'w-full text-left px-md py-2.5 text-[15px] transition-colors hover:bg-accent'
+const dropdownRowActiveClass = 'bg-accent'
+const destructiveBoxClass =
+  'rounded-md border border-destructive/20 bg-destructive/10 px-md py-2.5 text-sm text-destructive'
+const primaryButtonClass = cn(
+  'inline-flex items-center justify-center rounded-md font-medium transition-colors',
+  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+  'disabled:pointer-events-none disabled:opacity-50 select-none',
+  'w-full h-12 text-base',
+  'bg-[#3FB39D] text-white hover:bg-[#369C89]',
+)
 
 export default function ApplyPage() {
   const [step, setStep] = useState(0) // 0=form, 1=done
@@ -196,7 +344,7 @@ export default function ApplyPage() {
     if (!email.trim()) { setError('이메일을 입력해주세요.'); return }
     for (let i = 0; i < pets.length; i++) {
       const p = pets[i]
-      const label = pets.length > 1 ? `동물 ${i + 1}: ` : ''
+      const label = pets.length > 1 ? `반려동물 ${i + 1}: ` : ''
       if (!p.petName.trim()) { setError(`${label}이름을 입력해주세요.`); return }
       if (!p.petNameEn.trim()) { setError(`${label}영문이름을 입력해주세요.`); return }
       if (!p.birthDate) { setError(`${label}생년월일을 입력해주세요.`); return }
@@ -248,11 +396,11 @@ export default function ApplyPage() {
 
   if (step === 1) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-md">
-        <div className="w-full max-w-md text-center py-16">
+      <div className={cn(pageShellClass, 'flex items-center justify-center px-4')}>
+        <div className={cn(heroCardClass, 'mx-auto w-full max-w-md text-center py-16')}>
           <div className="text-5xl mb-4">&#10003;</div>
-          <h1 className="text-2xl font-bold mb-2">신청이 완료되었습니다</h1>
-          <p className="text-gray-600 mb-8">
+          <h1 className="text-xl font-semibold text-primary mb-2">신청이 완료되었습니다</h1>
+          <p className="text-sm text-muted-foreground mb-8">
             담당자가 확인 후 연락드리겠습니다.<br />
             감사합니다.
           </p>
@@ -264,7 +412,7 @@ export default function ApplyPage() {
               setCustomerName(''); setCustomerLastNameEn(''); setCustomerFirstNameEn(''); setPhone(''); setAddressKr(''); setAddressDetail(''); setAddressEn(''); setEmail('')
               setPetCount(1); setPets([emptyPet()])
             }}
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm text-primary hover:underline"
           >
             새 신청하기
           </button>
@@ -273,20 +421,15 @@ export default function ApplyPage() {
     )
   }
 
-  const inputClass = 'w-full h-12 rounded-lg border border-gray-300 bg-white px-md text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-  const selectClass = 'w-full h-12 rounded-lg border border-gray-300 bg-white px-md text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none'
-  const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="w-full max-w-lg mx-auto px-md py-2xl">
+    <div className={pageShellClass}>
+      <div className={pageInnerClass}>
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">PetMove</h1>
-          <p className="text-gray-500 mt-1">반려동물 해외이동 신청</p>
+        <div className={cn(heroCardClass, 'mb-md text-center')}>
+          <h1 className="text-xl font-semibold tracking-tight text-[#2D8A78]">펫무브 등록 신청서</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8"
+        <form onSubmit={handleSubmit} className="space-y-md"
           onKeyDown={(e) => {
             if (e.key !== 'Enter') return
             const target = e.target as HTMLElement
@@ -320,14 +463,15 @@ export default function ApplyPage() {
             }
           }}>
           {/* 1. 목적지 */}
-          <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">목적지</h2>
+          <section className={cn(sectionCardClass, 'space-y-4')}>
+            <h2 className={sectionTitleClass}>어디로 가시나요?</h2>
             <div>
-              <label className={labelClass}>이동할 국가 <span className="text-red-500">*</span></label>
+              <label className={labelClass}>목적지 <span className="text-red-500">*</span></label>
               {destination ? (
                 <button type="button" onClick={() => { setDestination(''); setDestQuery('') }}
-                  className="w-full h-12 flex items-center rounded-lg border border-gray-300 bg-gray-50 px-md text-base text-left hover:bg-gray-100 transition-colors cursor-pointer">
-                  {DESTS.find(d => d.ko === destination)?.ko ?? destination} <span className="text-gray-400 ml-1">({DESTS.find(d => d.ko === destination)?.en ?? ''})</span>
+                  className={cn(surfaceButtonClass, 'w-full cursor-pointer justify-between')}>
+                  <span>{DESTS.find(d => d.ko === destination)?.ko ?? destination}</span>
+                  <span className="ml-2 text-muted-foreground">({DESTS.find(d => d.ko === destination)?.en ?? ''})</span>
                 </button>
               ) : (
                 <div>
@@ -350,15 +494,15 @@ export default function ApplyPage() {
                     className={inputClass}
                   />
                   {destQuery && (
-                    <ul className="mt-1 rounded-lg border border-gray-200 bg-white max-h-48 overflow-y-auto">
+                    <ul className={cn(dropdownClass, 'max-h-48 overflow-y-auto')}>
                       {filteredDests.length === 0 ? (
-                        <li className="px-md py-3 text-gray-500 text-sm">검색 결과 없음</li>
+                        <li className="px-md py-3 text-sm text-muted-foreground">검색 결과 없음</li>
                       ) : (
                         filteredDests.slice(0, 10).map((d, i) => (
                           <li key={d.ko}>
                             <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setDestination(d.ko); setDestQuery(''); setDestHighlight(-1) }}
-                              className={`w-full text-left px-md py-3 text-base transition-colors ${i === destHighlight ? 'bg-blue-50' : 'hover:bg-blue-50'}`}>
-                              {d.ko} <span className="text-gray-400">{d.en}</span>
+                              className={cn(dropdownRowClass, i === destHighlight && dropdownRowActiveClass)}>
+                              {d.ko} <span className="text-muted-foreground">{d.en}</span>
                             </button>
                           </li>
                         ))
@@ -370,9 +514,9 @@ export default function ApplyPage() {
             </div>
           </section>
 
-          {/* 2. 고객정보 */}
-          <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">고객정보</h2>
+          {/* 2. 소유주 */}
+          <section className={cn(sectionCardClass, 'space-y-4')}>
+            <h2 className={sectionTitleClass}>소유주 정보</h2>
             <div className="space-y-4">
               <div>
                 <label className={labelClass}>성함 <span className="text-red-500">*</span></label>
@@ -380,7 +524,7 @@ export default function ApplyPage() {
                   placeholder="홍길동" className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>영문성함 <span className="text-red-500">*</span> <span className="text-xs font-normal text-gray-400">여권과 동일하게</span></label>
+                <label className={labelClass}>영문성함 <span className="text-red-500">*</span></label>
                 <div className="flex gap-sm">
                   <input type="text" value={customerLastNameEn}
                     onCompositionStart={() => { composingRef.current = true }}
@@ -410,7 +554,7 @@ export default function ApplyPage() {
                     placeholder="클릭하여 주소 검색" className={inputClass + ' flex-1 cursor-pointer'} readOnly
                     onFocus={() => { if (!addressKr) handleAddrSearch() }} />
                   <button type="button" onClick={handleAddrSearch}
-                    className="shrink-0 h-12 px-md rounded-lg bg-gray-100 border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors">
+                    className="shrink-0 h-10 rounded-md border border-border bg-card px-md text-sm font-medium text-foreground transition-colors hover:bg-accent">
                     주소 검색
                   </button>
                 </div>
@@ -420,11 +564,11 @@ export default function ApplyPage() {
                     className={inputClass + ' mt-2'} />
                 )}
                 {addressEn && (
-                  <p className="mt-1 text-xs text-gray-500">{addressEn}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{addressEn}</p>
                 )}
               </div>
               <div>
-                <label className={labelClass}>이메일 <span className="text-red-500">*</span></label>
+                <label className={labelClass}>이메일 주소 <span className="text-red-500">*</span></label>
                 <input type="email" inputMode="email" value={email}
                   onChange={(e) => setEmail(e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣A-Z]/g, (c) => c >= 'A' && c <= 'Z' ? c.toLowerCase() : ''))}
                   onCompositionEnd={(e) => setEmail((e.target as HTMLInputElement).value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').toLowerCase())}
@@ -434,23 +578,23 @@ export default function ApplyPage() {
           </section>
 
           {/* 마리 수 선택 */}
-          <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">몇 마리를 신청하시나요?</h2>
+          <section className={cn(sectionCardClass, 'space-y-4')}>
+            <h2 className={sectionTitleClass}>동반 마리수</h2>
             <div className="flex gap-sm">
               {[1, 2, 3, 4, 5].map(n => (
                 <button key={n} type="button" onClick={() => handlePetCountChange(n)}
-                  className={`h-10 w-10 rounded-lg border text-sm font-medium transition-colors ${petCount === n ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}>
+                  className={`h-10 w-10 rounded-full border text-sm font-medium transition-colors ${petCount === n ? chipButtonActive : chipButtonInactive}`}>
                   {n}
                 </button>
               ))}
             </div>
           </section>
 
-          {/* 3. 동물정보 (반복) */}
+          {/* 3. 반려동물 (반복) */}
           {pets.map((pet, pi) => (
-          <section key={pi}>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
-              {pets.length > 1 ? `동물정보 ${pi + 1}` : '동물정보'}
+          <section key={pi} className={cn(sectionCardClass, 'space-y-4')}>
+            <h2 className={sectionTitleClass}>
+              {pets.length > 1 ? `반려동물 정보 ${pi + 1}` : '반려동물 정보'}
             </h2>
             <PetFormSection
               pet={pet}
@@ -472,7 +616,7 @@ export default function ApplyPage() {
 
           {/* Error */}
           {error && (
-            <div className="rounded-lg bg-red-50 border border-red-200 px-md py-3 text-sm text-red-700">
+            <div className={destructiveBoxClass}>
               {error}
             </div>
           )}
@@ -481,13 +625,13 @@ export default function ApplyPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full h-14 rounded-lg bg-blue-600 text-white text-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className={primaryButtonClass}
           >
-            {submitting ? '제출 중...' : '신청하기'}
+            {submitting ? '제출 중...' : '정보 등록'}
           </button>
 
-          <p className="text-center text-xs text-gray-400 pb-8">
-            제출하신 정보는 반려동물 해외이동 준비에만 사용됩니다.
+          <p className="text-center text-xs text-muted-foreground pb-8">
+            등록하신 정보는 서류 발급에 사용됩니다.
           </p>
         </form>
       </div>
@@ -495,11 +639,11 @@ export default function ApplyPage() {
       {/* Daum Postcode Modal */}
       {showAddrModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowAddrModal(false)}>
-          <div className="relative w-full max-w-lg mx-4 bg-white rounded-xl shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-md py-3 border-b">
-              <span className="text-sm font-medium">주소 검색</span>
+          <div className={cn(cardContainer, 'relative mx-4 w-full max-w-lg overflow-hidden p-0')} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-md py-3 border-b border-border/60">
+              <span className="text-sm font-medium text-primary">주소 검색</span>
               <button type="button" onClick={() => setShowAddrModal(false)}
-                className="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
+                className="text-muted-foreground hover:text-foreground text-lg">&times;</button>
             </div>
             <div ref={addrModalRef} className="h-[450px]" />
           </div>
@@ -533,12 +677,12 @@ function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, comp
     <div className="space-y-4">
       {/* 이름 */}
       <div>
-        <label className={labelClass}>동물 이름 <span className="text-red-500">*</span></label>
+        <label className={labelClass}>이름 <span className="text-red-500">*</span></label>
         <input type="text" value={pet.petName} onChange={(e) => updatePet(index, 'petName', e.target.value.replace(/\b[a-z]/g, c => c.toUpperCase()))}
           placeholder="마루" className={inputClass} />
       </div>
       <div>
-        <label className={labelClass}>동물 영문이름 <span className="text-red-500">*</span></label>
+        <label className={labelClass}>영문이름 <span className="text-red-500">*</span></label>
         <input type="text" value={pet.petNameEn}
           onCompositionStart={() => { composingRef.current = true }}
           onChange={(e) => handleEnInput(e, (v) => updatePet(index, 'petNameEn', v), warnKey('en'))}
@@ -550,19 +694,12 @@ function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, comp
       {/* 생년월일 */}
       <div>
         <label className={labelClass}>생년월일 <span className="text-red-500">*</span></label>
-        <input type="date" min="1900-01-01" max="2100-12-31"
-          defaultValue={pet.birthDate}
-          onChange={(e) => {
-            const v = e.target.value
-            if (!v) { updatePet(index, 'birthDate', ''); return }
-            const year = parseInt(v.split('-')[0], 10)
-            if (year >= 1900 && year <= 2100) updatePet(index, 'birthDate', v)
-          }}
-          onBlur={(e) => {
-            const v = e.target.value
-            if (v) { const year = parseInt(v.split('-')[0], 10); if (year >= 1900 && year <= 2100) updatePet(index, 'birthDate', v) }
-          }}
-          className={inputClass} />
+        <DateTextField
+          value={pet.birthDate}
+          onChange={(v) => updatePet(index, 'birthDate', v)}
+          placeholder="YYYY-MM-DD"
+          className={inputClass}
+        />
       </div>
 
       {/* 종 */}
@@ -572,7 +709,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, comp
           {SPECIES_OPTIONS.map(o => (
             <button key={o.value} type="button"
               onClick={() => { updatePet(index, 'species', o.value); if (pet.breed) { updatePet(index, 'breed', ''); updatePet(index, 'breedEn', ''); updatePet(index, 'breedQuery', '') } }}
-              className={`h-10 px-5 rounded-lg border text-sm font-medium transition-colors ${pet.species === o.value ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}>
+              className={`h-10 px-5 rounded-full border text-sm font-medium transition-colors ${pet.species === o.value ? chipButtonActive : chipButtonInactive}`}>
               {o.label}
             </button>
           ))}
@@ -584,8 +721,8 @@ function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, comp
         <label className={labelClass}>품종 <span className="text-red-500">*</span></label>
         {pet.breed ? (
           <button type="button" onClick={() => { updatePet(index, 'breed', ''); updatePet(index, 'breedEn', ''); updatePet(index, 'breedQuery', '') }}
-            className="w-full h-12 flex items-center rounded-lg border border-gray-300 bg-gray-50 px-md text-base text-left hover:bg-gray-100 transition-colors cursor-pointer">
-            {pet.breed} <span className="text-gray-400 ml-1">{pet.breedEn}</span>
+            className={cn(surfaceButtonClass, 'w-full cursor-pointer justify-between')}>
+            <span>{pet.breed}</span> <span className="ml-2 text-muted-foreground">{pet.breedEn}</span>
           </button>
         ) : (
           <div>
@@ -604,19 +741,19 @@ function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, comp
               placeholder={pet.species ? '품종 검색 (예: 말티즈, Maltese)' : '종을 먼저 선택해주세요'}
               disabled={!pet.species} className={inputClass} />
             {pet.breedQuery && filteredBreeds.length > 0 && (
-              <ul className="mt-1 rounded-lg border border-gray-200 bg-white max-h-48 overflow-y-auto">
+            <ul className={cn(dropdownClass, 'max-h-48 overflow-y-auto')}>
                 {filteredBreeds.slice(0, 10).map((b, i) => (
                   <li key={`${b.type}:${b.en}`}>
                     <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { updatePet(index, 'breed', b.ko); updatePet(index, 'breedEn', b.en); updatePet(index, 'breedQuery', ''); setBreedHighlight(-1) }}
-                      className={`w-full text-left px-md py-3 text-base transition-colors ${i === breedHighlight ? 'bg-blue-50' : 'hover:bg-blue-50'}`}>
-                      {b.ko} <span className="text-gray-400">{b.en}</span>
+                      className={cn(dropdownRowClass, i === breedHighlight && dropdownRowActiveClass)}>
+                      {b.ko} <span className="text-muted-foreground">{b.en}</span>
                     </button>
                   </li>
                 ))}
               </ul>
             )}
             {pet.breedQuery && filteredBreeds.length === 0 && (
-              <p className="mt-1 text-xs text-gray-500">검색 결과 없음</p>
+              <p className="mt-1 text-xs text-muted-foreground">검색 결과 없음</p>
             )}
           </div>
         )}
@@ -624,7 +761,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, comp
 
       {/* 모색 */}
       <div>
-        <label className={labelClass}>모색 <span className="text-red-500">*</span> <span className="text-xs font-normal text-gray-400">최대 3개</span></label>
+        <label className={labelClass}>모색 <span className="text-red-500">*</span> <span className="text-xs font-normal text-muted-foreground">가장 유사한 색상을 최대 3개까지 골라주세요</span></label>
         <div className="flex flex-wrap gap-sm">
           {COLORS.map(c => {
             const selected = pet.selectedColors.includes(c.ko)
@@ -634,7 +771,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, comp
                   if (selected) updatePet(index, 'selectedColors', pet.selectedColors.filter(v => v !== c.ko))
                   else if (pet.selectedColors.length < 3) updatePet(index, 'selectedColors', [...pet.selectedColors, c.ko])
                 }}
-                className={`h-10 px-md rounded-lg border text-sm font-medium transition-colors ${selected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'} ${!selected && pet.selectedColors.length >= 3 ? 'opacity-40 cursor-not-allowed' : ''}`}>
+                className={`h-10 px-md rounded-full border text-sm font-medium transition-colors ${selected ? chipButtonActive : chipButtonInactive} ${!selected && pet.selectedColors.length >= 3 ? 'opacity-40 cursor-not-allowed' : ''}`}>
                 {c.ko}
               </button>
             )
@@ -649,7 +786,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, comp
           {SEX_OPTIONS.map(o => (
             <button key={o.value} type="button"
               onClick={() => updatePet(index, 'sex', o.value)}
-              className={`h-10 px-md rounded-lg border text-sm font-medium transition-colors ${pet.sex === o.value ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}>
+              className={`h-10 px-md rounded-full border text-sm font-medium transition-colors ${pet.sex === o.value ? chipButtonActive : chipButtonInactive}`}>
               {o.label}
             </button>
           ))}
@@ -666,7 +803,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, comp
 
       {/* 선택: 마이크로칩 */}
       <div className="pt-2 mt-2 border-t border-gray-100">
-        <p className="text-xs text-gray-400 mb-3">선택 항목 — 모르시면 비워두셔도 됩니다</p>
+        <p className="text-xs text-muted-foreground mb-3">아시는 경우 작성해주세요</p>
         <div className="space-y-4">
           <div>
             <label className={labelClass}>마이크로칩 번호</label>
@@ -677,35 +814,21 @@ function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, comp
           </div>
           <div>
             <label className={labelClass}>마이크로칩 삽입일</label>
-            <input type="date" min="1900-01-01" max="2100-12-31"
-              defaultValue={pet.microchipDate}
-              onChange={(e) => {
-                const v = e.target.value
-                if (!v) { updatePet(index, 'microchipDate', ''); return }
-                const year = parseInt(v.split('-')[0], 10)
-                if (year >= 1900 && year <= 2100) updatePet(index, 'microchipDate', v)
-              }}
-              onBlur={(e) => {
-                const v = e.target.value
-                if (v) { const year = parseInt(v.split('-')[0], 10); if (year >= 1900 && year <= 2100) updatePet(index, 'microchipDate', v) }
-              }}
-              className={inputClass} />
+            <DateTextField
+              value={pet.microchipDate}
+              onChange={(v) => updatePet(index, 'microchipDate', v)}
+              placeholder="YYYY-MM-DD"
+              className={inputClass}
+            />
           </div>
           <div>
             <label className={labelClass}>최근 광견병 접종일 (1년 이내)</label>
-            <input type="date" min="1900-01-01" max="2100-12-31"
-              defaultValue={pet.rabiesDate}
-              onChange={(e) => {
-                const v = e.target.value
-                if (!v) { updatePet(index, 'rabiesDate', ''); return }
-                const year = parseInt(v.split('-')[0], 10)
-                if (year >= 1900 && year <= 2100) updatePet(index, 'rabiesDate', v)
-              }}
-              onBlur={(e) => {
-                const v = e.target.value
-                if (v) { const year = parseInt(v.split('-')[0], 10); if (year >= 1900 && year <= 2100) updatePet(index, 'rabiesDate', v) }
-              }}
-              className={inputClass} />
+            <DateTextField
+              value={pet.rabiesDate}
+              onChange={(v) => updatePet(index, 'rabiesDate', v)}
+              placeholder="YYYY-MM-DD"
+              className={inputClass}
+            />
           </div>
         </div>
       </div>

@@ -465,7 +465,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
       onDragLeave={!expanded ? handleDragLeave : undefined}
       onDrop={!expanded ? handleDropNew : undefined}
       className={cn(
-        "grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0 rounded-md transition-colors",
+        "grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 last:border-0 rounded-md transition-colors hover:bg-muted/60",
         !expanded && dragOver && "bg-accent/40 ring-2 ring-ring/30 ring-dashed",
       )}
     >
@@ -475,7 +475,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
           type="button"
           onClick={() => { if (records.length > 0) setExpanded(!expanded) }}
           className={cn(
-            'text-sm text-muted-foreground transition-colors',
+            'text-base text-primary transition-colors',
             records.length > 0 && 'hover:text-foreground cursor-pointer',
           )}
         >
@@ -485,7 +485,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
           type="button"
           onClick={() => setAddingNew(true)}
           disabled={saving || addingNew}
-          className="text-muted-foreground/40 hover:text-foreground text-sm font-medium leading-none transition-colors disabled:opacity-30"
+          className="text-muted-foreground/40 hover:text-foreground text-lg font-semibold leading-none transition-colors disabled:opacity-30"
           title={`${label} 추가`}
         >
           +
@@ -507,7 +507,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                 {editIdx === i ? (
                   <DateInput
                     initial={rec.date}
-                    onSave={(v) => { if (v) updateRecordDate(i, v); else setEditIdx(null) }}
+                    onSave={(v) => { if (v) updateRecordDate(i, v); else { deleteRecord(i); setEditIdx(null) } }}
                     onCancel={() => setEditIdx(null)}
                   />
                 ) : (
@@ -515,7 +515,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                     <button
                       type="button"
                       onClick={() => setEditIdx(i)}
-                      className="text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer"
+                      className="text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer"
                     >
                       {rec.date}
                     </button>
@@ -546,7 +546,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
 
           {records.length === 0 && !addingNew && !extracting && (
             <button type="button" onClick={() => setAddingNew(true)}
-              className="text-left rounded-md px-2 py-1 -mx-2 text-sm text-muted-foreground/60 italic transition-colors hover:bg-accent/60 cursor-pointer">
+              className="text-left rounded-md px-2 py-1 -mx-2 text-base text-muted-foreground/60 transition-colors hover:bg-accent/60 cursor-pointer">
               —
             </button>
           )}
@@ -621,12 +621,12 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                   {editIdx === oi ? (
                     <DateInput
                       initial={rec.date}
-                      onSave={(v) => { if (v) updateRecordDate(oi, v); else setEditIdx(null) }}
+                      onSave={(v) => { if (v) updateRecordDate(oi, v); else { deleteRecord(oi); setEditIdx(null) } }}
                       onCancel={() => setEditIdx(null)}
                     />
                   ) : (
                     <button type="button" onClick={() => setEditIdx(oi)}
-                      className="text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer">
+                      className="text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer">
                       {rec.date}
                     </button>
                   )}
@@ -810,7 +810,7 @@ function ValidUntilSelector({ value, onChange, saving }: {
           className={cn(
             'text-xs px-2 py-0.5 rounded transition-colors',
             current === n
-              ? 'bg-foreground text-background'
+              ? 'bg-[#5f5f5f] text-white'
               : 'text-muted-foreground/70 hover:bg-accent/60 hover:text-foreground',
           )}
           title={`유효기간 ${n}년`}
@@ -878,15 +878,18 @@ function DateInput({ initial, onSave, onCancel }: {
       min="1900-01-01"
       max="2100-12-31"
       defaultValue={initial}
+      onChange={(e) => {
+        // 달력 picker "삭제" 버튼이나 segment 전체 백스페이스로 ''가 되면 즉시 저장.
+        if (e.target.value === '') saveFromRef()
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Enter') { e.preventDefault(); saveFromRef() }
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
       onBlur={() => setTimeout(() => {
-        if (!(ref.current?.value ?? '').trim()) return
         saveFromRef()
       }, 150)}
-      className="w-36 h-7 rounded-md border border-border/50 bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="w-36 bg-transparent border-0 border-b border-primary text-xs py-1 focus:outline-none"
     />
   )
 }

@@ -4,50 +4,50 @@
 
 @layer base {
   :root {
-    /* Juniper & Pearl Design System - Light Mode */
-    --background: 0 0% 98%;
-    --foreground: 180 3% 20%;
-    --card: 0 0% 100%;
-    --card-foreground: 180 3% 20%;
+    /* Serene Authority — cool neutrals with muted sage anchor */
+    --background: 210 17% 98%;           /* #f8f9fa */
+    --foreground: 195 8% 19%;            /* #2d3335 on-surface */
+    --card: 0 0% 100%;                   /* #ffffff surface-container-lowest */
+    --card-foreground: 195 8% 19%;
     --popover: 0 0% 100%;
-    --popover-foreground: 180 3% 20%;
-    --primary: 126 13% 35%;
-    --primary-foreground: 126 40% 79%;
-    --secondary: 204 14% 41%;
-    --secondary-foreground: 204 70% 86%;
-    --muted: 120 5% 95%;
-    --muted-foreground: 180 3% 35%;
-    --accent: 27 16% 41%;
-    --accent-foreground: 27 88% 92%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 90 3% 88%;
-    --input: 120 5% 95%;
-    --ring: 126 13% 35%;
+    --popover-foreground: 195 8% 19%;
+    --primary: 180 19% 33%;              /* #456565 muted sage */
+    --primary-foreground: 178 100% 94%;  /* #e0fffe */
+    --secondary: 195 17% 95%;            /* #f1f4f5 surface-container-low */
+    --secondary-foreground: 195 8% 19%;
+    --muted: 205 13% 93%;                /* #ebeef0 surface-container */
+    --muted-foreground: 200 6% 40%;
+    --accent: 200 13% 91%;               /* #e5e9eb surface-container-high */
+    --accent-foreground: 195 8% 19%;
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 203 14% 89%;               /* #dee3e6 surface-container-highest */
+    --input: 203 14% 89%;
+    --ring: 180 19% 33%;
     --radius: 0.5rem;
   }
 
   .dark {
-    /* Juniper & Pearl Design System - Dark Mode */
-    --background: 180 10% 15%;
-    --foreground: 0 0% 98%;
-    --card: 180 10% 20%;
-    --card-foreground: 0 0% 98%;
-    --popover: 180 10% 20%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 126 40% 79%;
-    --primary-foreground: 126 13% 35%;
-    --secondary: 204 70% 86%;
-    --secondary-foreground: 204 14% 41%;
-    --muted: 180 5% 30%;
-    --muted-foreground: 0 0% 70%;
-    --accent: 27 88% 92%;
-    --accent-foreground: 27 16% 41%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 180 5% 25%;
-    --input: 180 5% 30%;
-    --ring: 126 40% 79%;
+    /* Sophisticated dark slate — not pure black */
+    --background: 220 13% 11%;           /* ~#181c22 deep cool slate */
+    --foreground: 210 15% 92%;
+    --card: 220 12% 14%;                 /* ~#1e2229 elevated card */
+    --card-foreground: 210 15% 92%;
+    --popover: 220 12% 14%;
+    --popover-foreground: 210 15% 92%;
+    --primary: 178 55% 75%;              /* softer muted sage for dark */
+    --primary-foreground: 220 13% 11%;
+    --secondary: 220 10% 17%;
+    --secondary-foreground: 210 15% 92%;
+    --muted: 220 10% 17%;
+    --muted-foreground: 215 10% 62%;
+    --accent: 220 10% 21%;
+    --accent-foreground: 210 15% 92%;
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 210 15% 92%;
+    --border: 220 10% 22%;
+    --input: 220 10% 22%;
+    --ring: 178 55% 60%;
   }
 }
 

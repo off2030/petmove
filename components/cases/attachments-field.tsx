@@ -107,14 +107,14 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
       <div className="flex items-center gap-xs pt-1">
-        <span className="text-sm text-muted-foreground">첨부파일</span>
+        <span className="text-base text-primary">첨부파일</span>
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="text-muted-foreground/40 hover:text-foreground text-sm font-medium leading-none transition-colors"
+          className="text-muted-foreground/40 hover:text-foreground text-lg font-semibold leading-none transition-colors"
           title="파일 첨부"
         >
           {uploading ? '...' : '+'}
@@ -160,7 +160,7 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
 
         {attachments.length === 0 && (
           <button type="button" onClick={() => fileRef.current?.click()}
-            className="text-left rounded-md px-2 py-1 -mx-2 text-sm text-muted-foreground/60 italic transition-colors hover:bg-accent/60 cursor-pointer">
+            className="text-left rounded-md px-2 py-1 -mx-2 text-base text-primary/60 italic transition-colors hover:bg-accent/60 cursor-pointer">
             —
           </button>
         )}

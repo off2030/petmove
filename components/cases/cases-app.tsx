@@ -98,7 +98,7 @@ function ImportReportToggle({
   if (auto) {
     return (
       <span
-        className="text-muted-foreground/40 select-none cursor-default"
+        className="rounded-md px-2 py-1 text-muted-foreground/40 select-none cursor-default"
         title="목적지+출국일로 자동 포함됨"
       >
         신고 자동
@@ -106,7 +106,7 @@ function ImportReportToggle({
     )
   }
 
-  const label = included ? '신고 제외' : '신고 추가'
+  const label = included ? '신고 제외' : '신고'
   const nextVal = !manual
   return (
     <button
@@ -116,8 +116,8 @@ function ImportReportToggle({
         await updateCaseField(caseRow.id, 'data', 'import_report_manual', nextVal || null)
       }}
       className={included
-        ? 'text-blue-500/70 hover:text-blue-600 transition-colors'
-        : 'text-muted-foreground/50 hover:text-foreground transition-colors'}
+        ? 'rounded-md px-2 py-1 text-blue-500/70 hover:bg-accent hover:text-blue-600 transition-colors'
+        : 'rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors'}
       title={included ? '신고 탭에서 제거' : '신고 탭에 추가'}
     >
       {label}
@@ -303,8 +303,8 @@ function Inner() {
       >
         {/* Panel 1: List (full width = 50% of 200%) */}
         <div className="w-1/2 h-full">
-          <div className="h-full overflow-hidden pt-32 pb-24 px-14 2xl:pt-36 2xl:pb-28 2xl:px-16 3xl:pt-44 3xl:pb-36 3xl:px-20 4xl:pt-52 4xl:pb-44 4xl:px-24 6xl:pt-64 6xl:pb-52 6xl:px-28">
-            <div className="h-full mx-auto max-w-3xl 4xl:max-w-4xl 6xl:max-w-5xl">
+          <div className="h-full overflow-hidden px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
+            <div className="h-full mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl">
               <CaseList onAdd={handleAdd} onAddFromFiles={handleAddFromFiles} busy={addingFromFiles} />
             </div>
           </div>
@@ -320,8 +320,8 @@ function Inner() {
 
         {/* Panel 2: Detail (full width = 50% of 200%) */}
         <div className="w-1/2 h-full">
-          <div className="h-full overflow-hidden pt-32 pb-24 px-20 2xl:pt-36 2xl:pb-28 2xl:px-24 3xl:pt-44 3xl:pb-36 3xl:px-32 4xl:pt-52 4xl:pb-44 4xl:px-40 6xl:pt-64 6xl:pb-52 6xl:px-56">
-            <div className="relative h-full mx-auto max-w-3xl 4xl:max-w-4xl 6xl:max-w-5xl">
+          <div className="h-full overflow-hidden px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
+            <div className="relative h-full mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl">
               {selectedCase && (
                 <>
                   <button
@@ -347,8 +347,8 @@ function Inner() {
                 </>
               )}
               <div className="h-full flex flex-col gap-4">
-              {/* Back button + menu bar */}
-              <div className="h-9 shrink-0 flex items-center">
+              {/* Top menu bar: 목록 / 복원·복제·삭제 */}
+              <div className="h-9 shrink-0 flex items-center justify-between text-[13px] text-muted-foreground">
                 <button
                   type="button"
                   onClick={() => {
@@ -361,24 +361,42 @@ function Inner() {
                       selectCase(null)
                     }
                   }}
-                  className="flex items-center gap-xs text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
                 >
-                  <ArrowLeft size={16} />
                   목록
                 </button>
+                {selectedCase && (
+                  <div className="flex items-center gap-1">
+                    <CaseHistory caseId={selectedCase.id} />
+                    <button
+                      type="button"
+                      onClick={() => handleDuplicate(selectedCase.id)}
+                      className="rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
+                    >
+                      복제
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(selectedCase.id)}
+                      className="rounded-md px-2 py-1 hover:bg-accent hover:text-red-500 transition-colors"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* Scrollable content */}
-              <div ref={detailScrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-minimal">
+              {/* Card (scrolls inside) — 홈과 동일 패턴 */}
+              <div className="flex-1 min-h-0 flex flex-col">
                 {selectedCase ? (
-                  <CaseDetail caseRow={selectedCase} />
+                  <CaseDetail caseRow={selectedCase} scrollRef={detailScrollRef} />
                 ) : (
                   <CaseDetailEmpty />
                 )}
               </div>
 
               {/* Footer: 접수일/수정일 + 이력/삭제 */}
-              <div className="shrink-0 pt-2 text-xs text-muted-foreground flex items-center justify-between flex-wrap gap-y-2">
+              <div className="shrink-0 pt-2 text-[13px] text-muted-foreground flex items-center justify-between flex-wrap gap-y-2">
                 {selectedCase ? (
                   <>
                     <span>
@@ -387,8 +405,8 @@ function Inner() {
                         <span className="ml-4">수정일 {formatDate(selectedCase.updated_at)}</span>
                       )}
                     </span>
-                    <div className="flex items-center gap-4">
-                      <label className="flex items-center gap-xs text-muted-foreground/50 select-none cursor-pointer">
+                    <div className="flex items-center gap-1">
+                      <label className="flex items-center gap-xs select-none cursor-pointer rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors">
                         <input
                           type="checkbox"
                           checked={includeSignature}
@@ -403,7 +421,7 @@ function Inner() {
                             key={btn.key}
                             type="button"
                             onClick={() => handleMultiForm(selectedCase.id, (CERT_MULTI_KEYS[btn.key] ?? btn.key) as 'AnnexIII' | 'UK')}
-                            className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                            className="rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
                           >
                             {btn.label}
                           </button>
@@ -421,28 +439,13 @@ function Inner() {
                               if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
                               else alert(r.error)
                             }}
-                            className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                            className="rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
                           >
                             {btn.label}
                           </button>
                         ),
                       )}
                       <ImportReportToggle caseRow={selectedCase} onUpdate={updateLocalCaseField} />
-                      <CaseHistory caseId={selectedCase.id} />
-                      <button
-                        type="button"
-                        onClick={() => handleDuplicate(selectedCase.id)}
-                        className="text-muted-foreground/50 hover:text-foreground transition-colors"
-                      >
-                        복제
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(selectedCase.id)}
-                        className="text-muted-foreground/50 hover:text-red-500 transition-colors"
-                      >
-                        삭제
-                      </button>
                     </div>
                   </>
                 ) : '\u00A0'}

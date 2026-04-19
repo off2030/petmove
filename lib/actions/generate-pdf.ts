@@ -167,6 +167,8 @@ export async function generateESD(opts: ShipmentOpts): Promise<GeneratePdfResult
 
 export async function generateInvoiceAndESD(opts: ShipmentOpts): Promise<GeneratePdfResult> {
   const { PDFDocument } = await import('pdf-lib')
+  const { readFile } = await import('node:fs/promises')
+  const path = await import('node:path')
 
   const [invoiceResult, esdResult] = await Promise.all([
     generateInvoice(opts),
@@ -186,13 +188,25 @@ export async function generateInvoiceAndESD(opts: ShipmentOpts): Promise<Generat
   invoicePages.forEach(page => mergedPdf.addPage(page))
   esdPages.forEach(page => mergedPdf.addPage(page))
 
+  // KSVDL-R(미국행)만 세관 신고서(Customs Declaration for Animal)를 함께 동봉.
+  // 템플릿은 정적 PDF — 입력 필드 없음.
+  if (opts.consignee_lab === 'ksvdl_r') {
+    const customsBuf = await readFile(
+      path.join(process.cwd(), 'data', 'pdf-templates', 'Customs_declaration_animal.pdf'),
+    )
+    const customsPdf = await PDFDocument.load(customsBuf)
+    const customsPages = await mergedPdf.copyPages(customsPdf, customsPdf.getPageIndices())
+    customsPages.forEach(page => mergedPdf.addPage(page))
+  }
+
   const pdfBytes = await mergedPdf.save()
   const base64 = Buffer.from(pdfBytes).toString('base64')
 
+  const suffix = opts.consignee_lab === 'ksvdl_r' ? '+Customs' : ''
   return {
     ok: true,
     pdf: base64,
-    filename: `Invoice+ESD_${opts.tube_count}tubes.pdf`,
+    filename: `Invoice+ESD${suffix}_${opts.tube_count}tubes.pdf`,
   }
 }
 

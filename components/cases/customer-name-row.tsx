@@ -108,8 +108,8 @@ export function CustomerNameRow({
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0">
-      <div className="pt-1 text-sm text-muted-foreground">성함</div>
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+      <div className="pt-1 text-base text-primary">성함</div>
 
       <div className="flex items-baseline gap-[10px] min-w-0 flex-wrap">
         {/* Korean name — standard inline EditableField */}
@@ -196,9 +196,9 @@ export function CustomerNameRow({
               type="button"
               onClick={handleEditEn}
               className={cn(
-                'text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors',
+                'text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors',
                 'hover:bg-accent/60 cursor-text',
-                isEmpty && 'text-muted-foreground/60 italic',
+                isEmpty && 'text-muted-foreground/60',
               )}
               title="클릭하여 편집 (이름 / 성)"
             >

@@ -147,14 +147,14 @@ export function NewZealandExtraField({ caseId, caseRow }: { caseId: string; case
     const val = extra[key] ?? null
     const isEditing = editingField === key
     return (
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1">
-        <span className="text-sm text-muted-foreground pt-1">{label}</span>
+      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+        <span className="text-base text-primary pt-1">{label}</span>
         {isEditing ? (
           <InlineInput initial={val ?? ''} placeholder={placeholder} onSave={(v) => saveField(key, v)} onCancel={() => setEditingField(null)} />
         ) : (
           <div className="group/val inline-flex items-baseline">
             <button type="button" onClick={() => setEditingField(key)}
-              className={cn('text-left rounded-md px-2 py-0.5 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text', !val && 'text-muted-foreground/60 italic')}>
+              className={cn('text-left rounded-md px-2 py-0.5 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text', !val && 'text-muted-foreground/60')}>
               {val || '—'}
             </button>
             {val && <CopyButton value={val} className="ml-1 opacity-0 group-hover/val:opacity-100" />}
@@ -171,13 +171,13 @@ export function NewZealandExtraField({ caseId, caseRow }: { caseId: string; case
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        'mt-2 pt-2 border-t border-border/40 space-y-1 rounded-md transition-colors',
+        'mt-2 pt-2 border-t border-border/40 rounded-md transition-colors',
         dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
       {/* AI input */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1">
-        <span className="text-sm text-muted-foreground pt-1">AI 입력</span>
+      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+        <span className="text-base text-primary pt-1">AI 입력</span>
         <div className="min-w-0 space-y-1">
           {showInput ? (
             <textarea
@@ -196,7 +196,7 @@ export function NewZealandExtraField({ caseId, caseRow }: { caseId: string; case
               <button type="button"
                 onClick={() => { setShowInput(true); setTimeout(() => textRef.current?.focus(), 50) }}
                 disabled={extracting}
-                className="text-left rounded-md px-2 py-1 -mx-2 text-sm text-muted-foreground/60 italic transition-colors hover:bg-accent/60 cursor-pointer disabled:opacity-50">
+                className="text-left rounded-md px-2 py-1 -mx-2 text-base text-primary/60 italic transition-colors hover:bg-accent/60 cursor-pointer disabled:opacity-50">
                 {extracting ? '추출 중...' : '텍스트·이미지·PDF 붙여넣기'}
               </button>
               <input ref={fileRef} type="file" accept="image/*,.pdf" multiple onChange={(e) => { if (e.target.files) handleFiles(Array.from(e.target.files)); e.target.value = '' }} className="hidden" />

@@ -87,8 +87,8 @@ export function SwissExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
     const isEditing = editingField === key
     const display = val ? options.find(o => o.value === val)?.label ?? val : null
     return (
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1">
-        <span className="text-sm text-muted-foreground pt-1">{label}</span>
+      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+        <span className="text-base text-primary pt-1">{label}</span>
         {isEditing ? (
           <SelectInput
             options={options}
@@ -102,8 +102,8 @@ export function SwissExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
               type="button"
               onClick={() => setEditingField(key as string)}
               className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text',
-                !val && 'text-muted-foreground/60 italic',
+                'text-left rounded-md px-2 py-0.5 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text',
+                !val && 'text-muted-foreground/60',
               )}
             >
               {display || '—'}
@@ -124,8 +124,8 @@ export function SwissExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
     const val = extra[key] as string | null
     const isEditing = editingField === key
     return (
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1">
-        <span className="text-sm text-muted-foreground pt-1">{label}</span>
+      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+        <span className="text-base text-primary pt-1">{label}</span>
         {isEditing ? (
           <InlineInput
             type="date"
@@ -140,8 +140,8 @@ export function SwissExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
               type="button"
               onClick={() => setEditingField(key as string)}
               className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text',
-                !val && 'text-muted-foreground/60 italic',
+                'text-left rounded-md px-2 py-0.5 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text',
+                !val && 'text-muted-foreground/60',
               )}
             >
               {val || '—'}
@@ -166,8 +166,8 @@ export function SwissExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
 
       {/* 해외주소 — 단일 문자열. "Rue du Lac 12, 1800 Vevey, Switzerland" 포맷.
           PDF 생성 시 자동 파싱해 Address/Postcode/City 로 분리 출력. */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1">
-        <span className="text-sm text-muted-foreground pt-1">해외주소</span>
+      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+        <span className="text-base text-primary pt-1">해외주소</span>
         {editingField === 'address_overseas' ? (
           <InlineInput
             type="text"
@@ -182,8 +182,8 @@ export function SwissExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
               type="button"
               onClick={() => setEditingField('address_overseas')}
               className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text',
-                !addressValue && 'text-muted-foreground/60 italic',
+                'text-left rounded-md px-2 py-0.5 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text',
+                !addressValue && 'text-muted-foreground/60',
               )}
             >
               {addressValue || '—'}
@@ -207,8 +207,8 @@ export function SwissExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
     const val = extra[key] as string | null
     const isEditing = editingField === key
     return (
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1">
-        <span className="text-sm text-muted-foreground pt-1">{label}</span>
+      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+        <span className="text-base text-primary pt-1">{label}</span>
         {isEditing ? (
           <InlineInput
             type="text"
@@ -223,8 +223,8 @@ export function SwissExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
               type="button"
               onClick={() => setEditingField(key as string)}
               className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text',
-                !val && 'text-muted-foreground/60 italic',
+                'text-left rounded-md px-2 py-0.5 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text',
+                !val && 'text-muted-foreground/60',
               )}
             >
               {val || '—'}

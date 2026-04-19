@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Search, Plus, X, Paperclip, Loader2 } from 'lucide-react'
+import { Search, Plus, X, Paperclip, Loader2, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { CaseRow } from '@/lib/supabase/types'
 import { Input } from '@/components/ui/input'
 import { useCases } from './cases-context'
 import { isExtractableFile } from '@/lib/file-to-base64'
+import { destColor } from '@/lib/destination-color'
+import { TrashModal } from './trash-modal'
 
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
@@ -20,12 +22,10 @@ const LOAD_MORE_STEP = 100
  */
 export function CaseList({
   onAdd,
-  onTrash,
   onAddFromFiles,
   busy,
 }: {
   onAdd?: () => void
-  onTrash?: () => void
   onAddFromFiles?: (files: File[]) => void
   busy?: boolean
 }) {
@@ -34,6 +34,7 @@ export function CaseList({
   const [query, setQuery] = useState('')
   const [visible, setVisible] = useState(INITIAL_VISIBLE)
   const [highlight, setHighlight] = useState(-1)
+  const [showTrash, setShowTrash] = useState(false)
 
   useEffect(() => {
     setVisible(INITIAL_VISIBLE)
@@ -125,8 +126,8 @@ export function CaseList({
     <div
       ref={rootRef}
       className={cn(
-        'relative flex h-full flex-col gap-4 rounded-md transition-colors',
-        dragOver && 'ring-2 ring-primary/40 bg-primary/5',
+        'relative flex h-full flex-col gap-md transition-colors',
+        dragOver && 'ring-2 ring-primary/40 rounded-xl',
       )}
       onDragEnter={(e) => {
         if (!onAddFromFiles || selectedId !== null) return
@@ -152,13 +153,13 @@ export function CaseList({
     >
       {/* Drag overlay */}
       {dragOver && onAddFromFiles && (
-        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-md bg-primary/10 backdrop-blur-[1px]">
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-primary/10 backdrop-blur-[1px]">
           <div className="text-sm text-primary font-medium">여기에 놓으면 새 케이스로 읽어옵니다</div>
         </div>
       )}
       {/* Busy overlay */}
       {busy && (
-        <div className="pointer-events-auto absolute inset-0 z-20 flex items-center justify-center rounded-md bg-background/70 backdrop-blur-sm">
+        <div className="pointer-events-auto absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-background/70 backdrop-blur-sm">
           <div className="flex items-center gap-sm text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             파일에서 정보 추출 중…
@@ -166,13 +167,8 @@ export function CaseList({
         </div>
       )}
 
-      {/* Page title — editorial headline (Precision Canvas) */}
-      <div className="shrink-0">
-        <h2 className="text-2xl font-bold tracking-tight text-foreground">고객 목록</h2>
-      </div>
-
-      {/* Search bar + add button */}
-      <div className="flex items-center gap-sm">
+      {/* Search + actions — ABOVE the card */}
+      <div className="flex items-center gap-sm shrink-0">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -183,7 +179,6 @@ export function CaseList({
                 e.preventDefault()
                 setHighlight(h => {
                   const next = Math.min(h + 1, filtered.length - 1)
-                  // 스크롤 따라가기
                   const el = document.querySelector(`[data-case-idx="${next}"]`)
                   el?.scrollIntoView({ block: 'nearest' })
                   return next
@@ -209,7 +204,8 @@ export function CaseList({
               }
             }}
             autoFocus
-            className="pl-9 pr-8"
+            placeholder="검색"
+            className="h-10 pl-9 pr-8 text-[15px] bg-card"
           />
           {query && (
             <button
@@ -237,7 +233,7 @@ export function CaseList({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-md border border-border/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               title="파일로 새 케이스 추가 (드래그·드롭 / Ctrl+V 도 가능)"
             >
               <Paperclip className="h-4 w-4" />
@@ -247,60 +243,64 @@ export function CaseList({
         <button
           type="button"
           onClick={() => onAdd?.()}
-          className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-md border border-border/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          className="shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
           title="새 케이스 추가"
         >
           <Plus className="h-4 w-4" />
         </button>
       </div>
 
-      {/* Column headers — no divider, just spacing */}
-      <div className="shrink-0 px-sm">
-        <div className="grid grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-baseline gap-sm text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
-          <span>고객이름</span>
-          <span>동물이름</span>
-          <span>목적지</span>
-          <span>마이크로칩번호</span>
-        </div>
-      </div>
-
-      {/* Scrollable list — no dividers, vertical rhythm only (Precision List) */}
-      <div className="flex-1 overflow-y-auto scrollbar-minimal -mx-3">
+      {/* Card: list + count */}
+      <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border/60 bg-card p-md shadow-sm">
+      {/* Scrollable list */}
+      <div className="flex-1 overflow-y-auto scrollbar-minimal -mx-md">
         {visibleCases.length === 0 ? (
           <div className="py-12 text-center text-sm text-muted-foreground">
             결과가 없습니다
           </div>
         ) : (
-          <ul className="space-y-1">
+          <ul>
             {visibleCases.map((c, i) => {
               const isSelected = c.id === selectedId
+              const dest = c.destination
+              const dests = dest ? dest.split(',').map(s => s.trim()).filter(Boolean) : []
               return (
-                <li key={c.id} data-case-idx={i}>
+                <li key={c.id} data-case-idx={i} className="border-b border-border/60 last:border-b-0">
                   <button
                     type="button"
                     onClick={() => { selectCase(c.id); setHighlight(-1) }}
                     className={cn(
-                      'block w-full rounded-lg px-sm py-md text-left transition-colors',
-                      'hover:bg-accent/60',
+                      'block w-full px-md py-2.5 text-left transition-colors',
+                      'hover:bg-muted/60',
                       isSelected && 'bg-accent',
-                      !isSelected && i === highlight && 'bg-accent/40',
+                      !isSelected && i === highlight && 'bg-muted/60',
                     )}
                   >
-                    {/* Proportional grid:
-                        customer : pet : dest = 6 : 5 : 5  (fr units)
-                        microchip stays fixed (needs exact space for 19 chars)
-                        minmax(0, Nfr) lets columns shrink with truncation. */}
-                    <div className="grid grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-baseline gap-sm text-sm">
-                      <span className="truncate font-medium">
+                    <div className="grid grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm text-base">
+                      <span className="truncate font-medium text-foreground">
                         {c.customer_name}
                       </span>
                       <span className="truncate text-muted-foreground">
                         {c.pet_name ?? '—'}
                       </span>
-                      <span className="truncate text-muted-foreground">
-                        {c.destination ?? '—'}
+                      <span className="truncate inline-flex items-center gap-1 flex-wrap">
+                        {dests.length > 0 ? (
+                          dests.map((d) => {
+                            const tone = destColor(d)
+                            return (
+                              <span key={d} className={cn(
+                                'inline-flex items-center rounded px-2 py-0.5 text-xs font-medium',
+                                tone.bg, tone.text,
+                              )}>
+                                {d}
+                              </span>
+                            )
+                          })
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </span>
-                      <span className="font-mono text-muted-foreground/80 tabular-nums">
+                      <span className="font-mono text-[13px] text-muted-foreground tabular-nums">
                         {c.microchip ?? '미등록'}
                       </span>
                     </div>
@@ -314,17 +314,27 @@ export function CaseList({
           </ul>
         )}
       </div>
-
-      {/* Result count + trash link at bottom */}
-      <div className="shrink-0 px-1 pt-2 flex items-center justify-between text-xs text-muted-foreground">
-        <span>총 {filtered.length.toLocaleString()}건</span>
-        {onTrash && (
-          <button type="button" onClick={onTrash}
-            className="hover:text-foreground transition-colors">
-            🗑️ 휴지통
-          </button>
-        )}
       </div>
+
+      {/* Result count (left) + trash (right) — below the card */}
+      <div className="shrink-0 flex items-center justify-between text-[13px] text-muted-foreground">
+        <span>총 {filtered.length.toLocaleString()}건</span>
+        <button
+          type="button"
+          onClick={() => setShowTrash(true)}
+          title="휴지통"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-accent hover:text-foreground transition-colors"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+
+      {showTrash && (
+        <TrashModal
+          onClose={() => setShowTrash(false)}
+          onRestore={() => window.location.reload()}
+        />
+      )}
     </div>
   )
 }

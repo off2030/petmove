@@ -83,7 +83,7 @@ export function CaseHistory({ caseId }: { caseId: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-muted-foreground/50 hover:text-foreground transition-colors"
+        className="rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
       >
         변경이력
       </button>

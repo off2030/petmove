@@ -1,18 +1,46 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { Search } from 'lucide-react'
 import type { CaseRow } from '@/lib/supabase/types'
 import { useCases } from '@/components/cases/cases-context'
+import { Input } from '@/components/ui/input'
+import { destColor } from '@/lib/destination-color'
+import { cn } from '@/lib/utils'
 import { TodoTable, type TodoColumn } from './todo-table'
 import { InspectionTable, type InspectionRow } from './inspection-table'
 import { updateCaseField } from '@/lib/actions/cases'
-import { generateInvoice, generateESD, generateInvoiceAndESD } from '@/lib/actions/generate-pdf'
+import {
+  generateInvoice,
+  generateESD,
+  generateInvoiceAndESD,
+  generateKsvdl,
+  generateNzInfectionPack,
+} from '@/lib/actions/generate-pdf'
 
 function downloadBase64Pdf(base64: string, filename: string) {
   const link = document.createElement('a')
   link.href = `data:application/pdf;base64,${base64}`
   link.download = filename
   link.click()
+}
+
+/** 목적지를 국가별 색상 배지로 렌더링 (홈/상세와 동일 패턴). */
+function renderDestinationBadges(value: string | null | undefined) {
+  const dests = (value ?? '').split(',').map(s => s.trim()).filter(Boolean)
+  if (dests.length === 0) return <span className="text-muted-foreground/50">—</span>
+  return (
+    <span className="inline-flex items-center gap-1 flex-wrap">
+      {dests.map(d => {
+        const tone = destColor(d)
+        return (
+          <span key={d} className={cn('inline-flex items-center rounded px-2 py-0.5 text-xs font-medium', tone.bg, tone.text)}>
+            {d}
+          </span>
+        )
+      })}
+    </span>
+  )
 }
 
 const TABS = [
@@ -248,9 +276,33 @@ const INSPECTION_COLUMNS: TodoColumn[] = [
 const EXPORT_DOC_COLUMNS: TodoColumn[] = [
   { key: 'vet_visit_date', label: '내원일', storage: 'data', type: 'date', width: 110 },
   { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: 110 },
-  { key: 'vet_available_date', label: '내원 가능일', storage: 'data', type: 'date', width: 110 },
+  {
+    key: 'vet_available_date',
+    label: '내원 가능일',
+    storage: 'data',
+    type: 'date',
+    width: 110,
+    // 저장된 값이 없으면 내원일 - 9일로 자동 계산하여 표시.
+    resolveValue: (row) => {
+      const data = (row.data ?? {}) as Record<string, unknown>
+      const stored = data.vet_available_date
+      if (stored != null && String(stored) !== '') return String(stored)
+      const visit = data.vet_visit_date
+      if (typeof visit === 'string' && visit) return addDays(visit, -9)
+      return ''
+    },
+  },
   { key: 'pet_name', label: '동물', storage: 'column', type: 'text', width: 90, readonly: true },
   { key: 'customer_name', label: '고객', storage: 'column', type: 'text', width: 90, readonly: true },
+  {
+    key: 'destination',
+    label: '목적지',
+    storage: 'column',
+    type: 'custom',
+    width: 120,
+    readonly: true,
+    render: (row) => renderDestinationBadges(row.destination),
+  },
   { key: 'export_doc_status', label: '준비상태', storage: 'data', type: 'select', width: 100, options: STATUS_OPTIONS, defaultValue: 'not_started' },
   { key: 'export_doc_memo', label: '메모', storage: 'data', type: 'text', width: 180 },
 ]
@@ -279,18 +331,28 @@ function isManualImportReport(row: CaseRow): boolean {
   return data.import_report_manual === true
 }
 
+/**
+ * 신고 탭 정렬: 일본 우선, 그 외 국가는 한글 철자(가나다) 순.
+ * 복수 목적지인 경우 가장 앞순위 국가를 기준으로 비교.
+ */
 function compareByCountryOrder(a: CaseRow, b: CaseRow): number {
-  const getOrder = (row: CaseRow) => {
-    if (!row.destination) return 99
+  const primaryDest = (row: CaseRow): string => {
+    if (!row.destination) return ''
     const dests = row.destination.split(',').map(s => s.trim()).filter(Boolean)
-    let best = 99
-    for (const d of dests) {
-      const idx = IMPORT_REPORT_COUNTRY_ORDER.indexOf(d)
-      if (idx >= 0 && idx < best) best = idx
-    }
-    return best
+    if (dests.includes('일본')) return '일본'
+    return dests.slice().sort((x, y) => x.localeCompare(y, 'ko'))[0] ?? ''
   }
-  return getOrder(a) - getOrder(b)
+  const da = primaryDest(a)
+  const db = primaryDest(b)
+  // 일본 우선.
+  const ja = da === '일본' ? 0 : 1
+  const jb = db === '일본' ? 0 : 1
+  if (ja !== jb) return ja - jb
+  // 그 외는 가나다 순. 빈 destination은 맨 아래.
+  if (!da && !db) return 0
+  if (!da) return 1
+  if (!db) return -1
+  return da.localeCompare(db, 'ko')
 }
 
 function isJapan(row: CaseRow): boolean {
@@ -299,8 +361,44 @@ function isJapan(row: CaseRow): boolean {
   return dests.includes('일본')
 }
 
+/**
+ * 신고 탭 상태 디폴트 — 저장된 값이 있으면 그대로, 없으면:
+ *   - 수입: 출국일 있으면 'not_started', 없으면 'na'
+ *   - 수출(일본만): 귀국일 있으면 'not_started', 없으면 'na'
+ */
+function effectiveImportStatus(row: CaseRow): string {
+  const data = (row.data ?? {}) as Record<string, unknown>
+  const stored = data.import_import_status
+  if (stored != null && String(stored) !== '') return String(stored)
+  return row.departure_date ? 'not_started' : 'na'
+}
+
+function effectiveExportStatus(row: CaseRow): string {
+  const data = (row.data ?? {}) as Record<string, unknown>
+  // 귀국일이 없으면 저장값 무관하게 N/A. (귀국일이 없는데 수출 절차가 있을 수 없음)
+  if (!data.return_date) return 'na'
+  const stored = data.import_export_status
+  if (stored != null && String(stored) !== '') return String(stored)
+  return 'not_started'
+}
+
+/** 수입·수출 둘 다 완료(done) 혹은 N/A이면 신고 처리 끝난 건. */
+function isImportReportComplete(row: CaseRow): boolean {
+  const done = (s: string) => s === 'done' || s === 'na'
+  return done(effectiveImportStatus(row)) && done(effectiveExportStatus(row))
+}
+
+
 const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
-  { key: 'destination', label: '목적지', storage: 'column', type: 'text', width: 80, readonly: true },
+  {
+    key: 'destination',
+    label: '목적지',
+    storage: 'column',
+    type: 'custom',
+    width: 100,
+    readonly: true,
+    render: (row) => renderDestinationBadges(row.destination),
+  },
   { key: 'pet_name', label: '동물', storage: 'column', type: 'text', width: 90, readonly: true },
   { key: 'customer_name', label: '고객', storage: 'column', type: 'text', width: 90, readonly: true },
   {
@@ -319,9 +417,25 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     },
   },
   { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: 110 },
-  { key: 'return_date', label: '귀국일', storage: 'data', type: 'date', width: 110, condition: isJapan },
-  { key: 'import_import_status', label: '수입', storage: 'data', type: 'select', width: 80, options: STATUS_WITH_NA },
-  { key: 'import_export_status', label: '수출', storage: 'data', type: 'select', width: 80, options: STATUS_WITH_NA, condition: isJapan },
+  { key: 'return_date', label: '귀국일', storage: 'data', type: 'date', width: 110 },
+  {
+    key: 'import_import_status',
+    label: '수입',
+    storage: 'data',
+    type: 'select',
+    width: 80,
+    options: STATUS_WITH_NA,
+    resolveValue: effectiveImportStatus,
+  },
+  {
+    key: 'import_export_status',
+    label: '수출',
+    storage: 'data',
+    type: 'select',
+    width: 80,
+    options: STATUS_WITH_NA,
+    resolveValue: effectiveExportStatus,
+  },
   { key: 'import_memo', label: '메모', storage: 'data', type: 'text', width: 180 },
   {
     key: 'import_report_manual_remove',
@@ -332,7 +446,7 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     // 수동 포함(import_report_manual=true)인 케이스에만 ✕ 버튼 노출.
     // 자동 포함 케이스에는 출국일이나 목적지를 지워야 탭에서 빠지므로 버튼 숨김.
     render: (row, onUpdate) => {
-      if (!isManualImportReport(row)) return <span className="text-muted-foreground/20 text-xs">—</span>
+      if (!isManualImportReport(row)) return <span className="text-muted-foreground/20 text-sm">—</span>
       return (
         <button
           type="button"
@@ -341,7 +455,7 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
             onUpdate(row.id, 'data', 'import_report_manual', null)
             await updateCaseField(row.id, 'data', 'import_report_manual', null)
           }}
-          className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors"
+          className="text-sm text-muted-foreground/40 hover:text-red-500 transition-colors"
           title="신고 탭에서 제거"
         >
           ✕
@@ -357,51 +471,155 @@ const COLUMNS_MAP: Record<TabId, TodoColumn[]> = {
   import_report: IMPORT_REPORT_COLUMNS,
 }
 
+/** 동물/고객/목적지 매칭. 빈 query면 항상 true. */
+function matchesQuery(row: CaseRow, q: string): boolean {
+  if (!q) return true
+  const hay = [row.pet_name, row.pet_name_en, row.customer_name, row.destination]
+    .filter(Boolean).join(' ').toLowerCase()
+  return hay.includes(q)
+}
+
 export function TodosApp() {
   const { cases, updateLocalCaseField } = useCases()
   const [activeTab, setActiveTab] = useState<TabId>('inspection')
+  const [query, setQuery] = useState('')
+
+  const q = query.trim().toLowerCase()
 
   const filteredCases = useMemo(() => {
     if (activeTab === 'import_report') {
       return cases
         .filter(c => isAutoImportReport(c) || isManualImportReport(c))
-        .sort(compareByCountryOrder)
+        .filter(c => matchesQuery(c, q))
+        .sort((a, b) => {
+          // 1차: 완료(수입·수출 모두 done/na)는 무조건 미완료(시작전·진행중)보다 뒤.
+          const ca = isImportReportComplete(a) ? 1 : 0
+          const cb = isImportReportComplete(b) ? 1 : 0
+          if (ca !== cb) return ca - cb
+          // 2차: 같은 그룹 내에서는 출국일 빠른 순(asc).
+          const da = a.departure_date ?? ''
+          const db = b.departure_date ?? ''
+          if (da !== db) {
+            if (!da) return 1
+            if (!db) return -1
+            return da.localeCompare(db)
+          }
+          // 3차: 동일 출국일이면 일본 우선 + 가나다.
+          return compareByCountryOrder(a, b)
+        })
+    }
+    if (activeTab === 'export_doc') {
+      const visitDate = (c: CaseRow) => {
+        const d = (c.data ?? {}) as Record<string, unknown>
+        const v = d.vet_visit_date
+        return typeof v === 'string' && v ? v : ''
+      }
+      return cases
+        .filter((c) => !!c.departure_date)
+        .filter(c => matchesQuery(c, q))
+        .sort((a, b) => {
+          const va = visitDate(a)
+          const vb = visitDate(b)
+          const da = a.departure_date ?? ''
+          const db = b.departure_date ?? ''
+          // 1차: 내원일 있는 그룹 위, 없는 그룹 아래.
+          if (!!va !== !!vb) return va ? -1 : 1
+          // 2차: 내원일 있는 그룹은 내원일 빠른 순(asc), 동일하면 출국일 빠른 순.
+          if (va && vb) {
+            const cmp = va.localeCompare(vb)
+            return cmp !== 0 ? cmp : da.localeCompare(db)
+          }
+          // 2차: 내원일 없는 그룹은 출국일 빠른 순.
+          return da.localeCompare(db)
+        })
     }
     return cases
-  }, [cases, activeTab])
+  }, [cases, activeTab, q])
 
   const inspectionRows = useMemo(
-    () => buildInspectionRows(cases).sort((a, b) => {
-      const la = LAB_SORT_ORDER[a.lab] ?? 99
-      const lb = LAB_SORT_ORDER[b.lab] ?? 99
-      return la - lb
-    }),
-    [cases],
+    () => buildInspectionRows(cases)
+      .filter(r => matchesQuery(r.caseRow, q))
+      .sort((a, b) => {
+        const la = LAB_SORT_ORDER[a.lab] ?? 99
+        const lb = LAB_SORT_ORDER[b.lab] ?? 99
+        return la - lb
+      }),
+    [cases, q],
   )
 
   return (
-    <div className="h-full overflow-hidden pt-32 pb-24 px-20 2xl:pt-36 2xl:pb-28 2xl:px-24 3xl:pt-44 3xl:pb-36 3xl:px-32 4xl:pt-52 4xl:pb-44 4xl:px-40 6xl:pt-64 6xl:pb-52 6xl:px-56">
-      <div className="h-full mx-auto max-w-3xl 4xl:max-w-4xl 6xl:max-w-5xl flex flex-col">
-      {/* Tabs */}
-      <div className="flex gap-xs mb-4 border-b border-border shrink-0">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-md py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              activeTab === tab.id
-                ? 'border-foreground text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+    <div className="h-full overflow-hidden px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
+      <div className="h-full mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl flex flex-col gap-md">
+      {/* Tabs + search */}
+      <div className="flex items-end justify-between gap-md border-b border-border/60 shrink-0">
+        <div className="flex gap-xs">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-md py-2 text-base font-medium transition-colors border-b-2 -mb-px ${
+                activeTab === tab.id
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="relative w-56 mb-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="검색"
+            className="h-8 pl-9 text-sm bg-card"
+          />
+        </div>
       </div>
 
-      {activeTab === 'import_report' && (
-        <div className="mb-2 shrink-0">
+      {/* Card — 홈/상세와 동일한 컨테이너 스타일 */}
+      <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border/60 bg-card p-md shadow-sm">
+        <div className="flex-1 min-h-0 overflow-auto scrollbar-minimal">
+          {activeTab === 'inspection' ? (
+            <InspectionTable
+              rows={inspectionRows}
+              labOptions={LAB_OPTIONS}
+              statusOptions={INSPECTION_STATUS_OPTIONS}
+              onUpdate={updateLocalCaseField}
+            />
+          ) : (
+            <TodoTable
+              cases={filteredCases}
+              columns={COLUMNS_MAP[activeTab]}
+              onUpdate={updateLocalCaseField}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Footer — 홈과 동일한 "총 N건" 패턴. h-7 로 고정해 탭별 footer 높이 편차 제거. */}
+      <div className="shrink-0 h-7 flex items-center justify-between text-[13px] text-muted-foreground">
+        <span>
+          총 {(activeTab === 'inspection' ? inspectionRows.length : filteredCases.length).toLocaleString()}건
+        </span>
+        {activeTab === 'inspection' && (
+          <div className="flex items-center gap-sm">
+            <ShipmentDocsButton />
+            <BulkApplyPicker
+              label="KSVDL"
+              rows={inspectionRows.filter(r => r.lab === 'ksvdl')}
+              action={generateKsvdl}
+            />
+            <BulkApplyPicker
+              label="APQA HQ + VBDDL"
+              rows={inspectionRows.filter(r => r.lab === 'nz_combined')}
+              action={generateNzInfectionPack}
+            />
+          </div>
+        )}
+        {activeTab === 'import_report' && (
           <ImportReportAddPicker
             cases={cases}
             onAdd={async (caseId) => {
@@ -409,36 +627,15 @@ export function TodosApp() {
               await updateCaseField(caseId, 'data', 'import_report_manual', true)
             }}
           />
-        </div>
-      )}
-
-      {/* Table */}
-      <div className="flex-1 min-h-0 overflow-auto scrollbar-minimal">
-        {activeTab === 'inspection' ? (
-          <InspectionTable
-            rows={inspectionRows}
-            labOptions={LAB_OPTIONS}
-            statusOptions={INSPECTION_STATUS_OPTIONS}
-            onUpdate={updateLocalCaseField}
-          />
-        ) : (
-          <TodoTable
-            cases={filteredCases}
-            columns={COLUMNS_MAP[activeTab]}
-            onUpdate={updateLocalCaseField}
-          />
         )}
       </div>
-
-      {/* Bottom shipment document buttons — only on inspection tab */}
-      {activeTab === 'inspection' && <ShipmentDocsFooter />}
       </div>
     </div>
   )
 }
 
 /** 검사 탭 하단 — Invoice + ESD 생성 버튼. 튜브 갯수 + 수신 실험실 다이얼로그. */
-function ShipmentDocsFooter() {
+function ShipmentDocsButton() {
   const [open, setOpen] = useState(false)
   const [busy, startBusy] = useTransition()
 
@@ -452,16 +649,16 @@ function ShipmentDocsFooter() {
   }
 
   return (
-    <div className="shrink-0 mt-3 pt-3 border-t border-border/40 flex items-center gap-sm">
+    <div className="flex items-center gap-sm">
+      {busy && <span className="text-[13px] text-muted-foreground">생성 중...</span>}
       <button
         type="button"
         onClick={() => setOpen(true)}
         disabled={busy}
-        className="text-xs px-sm py-1.5 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-50"
+        className="text-[13px] rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors disabled:opacity-50"
       >
         Invoice
       </button>
-      {busy && <span className="text-xs text-muted-foreground">생성 중...</span>}
       {open && <ShipmentDocsDialog onClose={() => setOpen(false)} onSubmit={handle} />}
     </div>
   )
@@ -494,12 +691,12 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-      <div className="bg-background border border-border rounded-lg shadow-lg p-6 max-w-sm w-full mx-4">
-        <h2 className="text-sm font-semibold mb-4">인보이스</h2>
+      <div className="bg-background border border-border/60 rounded-lg shadow-lg p-6 max-w-sm w-full mx-4">
+        <h2 className="text-base font-semibold text-primary mb-4">인보이스</h2>
 
         {/* 검체수 */}
         <div className="mb-5">
-          <label className="text-xs font-medium text-foreground mb-2 block">
+          <label className="text-sm font-medium text-primary mb-2 block">
             검체수
           </label>
           <div className="flex gap-sm">
@@ -513,8 +710,8 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
                   onClick={() => setTubeCount(v)}
                   className={`flex-1 h-8 rounded border text-sm transition-colors ${
                     selected
-                      ? 'bg-slate-700 text-white border-slate-700'
-                      : 'bg-background text-foreground border-border hover:bg-accent'
+                      ? 'bg-[#5f5f5f] text-white border-[#5f5f5f]'
+                      : 'bg-background text-foreground border-border/60 hover:bg-accent'
                   }`}
                 >
                   {n}
@@ -526,7 +723,7 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
 
         {/* 검사기관 */}
         <div className="mb-5">
-          <label className="text-xs font-medium text-foreground mb-2 block">
+          <label className="text-sm font-medium text-primary mb-2 block">
             검사기관
           </label>
           <div className="space-y-2">
@@ -551,19 +748,89 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
           <button
             type="button"
             onClick={onClose}
-            className="text-xs px-sm py-1.5 rounded border border-border text-foreground hover:bg-accent transition-colors"
+            className="text-sm px-sm py-1.5 rounded-md border border-border/60 text-foreground hover:bg-accent transition-colors"
           >
             취소
           </button>
           <button
             type="button"
             onClick={handleSubmit}
-            className="text-xs px-sm py-1.5 rounded bg-slate-700 text-white hover:bg-slate-800 transition-colors"
+            className="text-sm px-sm py-1.5 rounded-md bg-[#5f5f5f] text-white hover:bg-[#4a4a4a] transition-colors"
           >
             생성
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+/**
+ * 검사 탭 하단 — 특정 lab(KSVDL / nz_combined) 행 목록에서 케이스 한 건을
+ * 골라 신청서 PDF 생성. 행이 0건이면 비활성화.
+ */
+function BulkApplyPicker({
+  label,
+  rows,
+  action,
+}: {
+  label: string
+  rows: InspectionRow[]
+  action: (caseId: string) => Promise<{ ok: true; pdf: string; filename: string } | { ok: false; error: string }>
+}) {
+  const [open, setOpen] = useState(false)
+  const [busy, startBusy] = useTransition()
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [open])
+
+  const disabled = rows.length === 0
+
+  function pick(caseId: string) {
+    setOpen(false)
+    startBusy(async () => {
+      const r = await action(caseId)
+      if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
+      else alert(`생성 실패: ${r.error}`)
+    })
+  }
+
+  return (
+    <div ref={containerRef} className="relative inline-block">
+      {busy && <span className="text-[13px] text-muted-foreground mr-sm">생성 중...</span>}
+      <button
+        type="button"
+        onClick={() => !disabled && setOpen(o => !o)}
+        disabled={disabled || busy}
+        className="text-[13px] rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        title={disabled ? '대상 케이스가 없습니다' : `${label} 신청서 생성`}
+      >
+        {label}
+      </button>
+      {open && (
+        <ul className="absolute right-0 bottom-full mb-1 z-20 w-72 max-h-72 overflow-y-auto scrollbar-minimal rounded-md border border-border/50 bg-background shadow-md py-1">
+          {rows.map(r => (
+            <li key={r.id}>
+              <button
+                type="button"
+                onClick={() => pick(r.caseRow.id)}
+                className="w-full text-left px-sm py-1.5 text-sm hover:bg-accent/60 transition-colors"
+              >
+                <span>{r.caseRow.pet_name ?? '—'}</span>
+                <span className="ml-2 text-muted-foreground">{r.caseRow.customer_name ?? ''}</span>
+                <span className="ml-2 text-xs text-muted-foreground/70">{r.caseRow.destination ?? ''}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }
@@ -622,9 +889,9 @@ function ImportReportAddPicker({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        className="text-[13px] text-muted-foreground rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
       >
-        + 신고 추가
+        + 추가
       </button>
     )
   }
@@ -645,7 +912,8 @@ function ImportReportAddPicker({
         placeholder="동물/고객/목적지 검색"
         className="w-full h-8 rounded border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
       />
-      <ul className="absolute left-0 top-full mt-1 z-20 w-[22rem] max-h-72 overflow-y-auto scrollbar-minimal rounded-md border border-border/50 bg-background shadow-md py-1">
+      {/* 푸터 우측 배치 — 드롭다운은 위로, 우측 정렬. */}
+      <ul className="absolute right-0 bottom-full mb-1 z-20 w-[22rem] max-h-72 overflow-y-auto scrollbar-minimal rounded-md border border-border/50 bg-background shadow-md py-1">
         {candidates.length === 0 ? (
           <li className="px-sm py-2 text-sm text-muted-foreground">결과 없음</li>
         ) : (

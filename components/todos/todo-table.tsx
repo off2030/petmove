@@ -50,12 +50,12 @@ function StatusBadge({ value, options }: { value: string; options: Array<{ value
   const opt = options.find((o) => o.value === value)
   if (!opt) return <span className="text-muted-foreground">—</span>
 
-  let colorClass = 'bg-muted text-muted-foreground'
-  if (value === 'done') colorClass = 'bg-emerald-100 text-emerald-700'
-  else if (value === 'in_progress' || value === 'testing') colorClass = 'bg-blue-100 text-blue-700'
-  else if (value === 'not_started' || value === 'waiting') colorClass = 'bg-gray-100 text-gray-600'
-  else if (value === 'na') colorClass = 'bg-orange-50 text-orange-600'
-  else if (value === 'yes') colorClass = 'bg-red-100 text-red-700'
+  // Juniper & Pearl 톤 — 저채도 (destination-color.ts 와 같은 팔레트).
+  let colorClass = 'bg-[#D6D5D1] text-[#3E3E3A] dark:bg-[#3A3A37] dark:text-[#CACAC5]' // charcoal — 기본/대기
+  if (value === 'done') colorClass = 'bg-[#DBE4D6] text-[#3F5A35] dark:bg-[#364332] dark:text-[#C4D4B9]' // olive — 완료
+  else if (value === 'in_progress' || value === 'testing') colorClass = 'bg-[#D6E0EA] text-[#3D5268] dark:bg-[#2F3D4D] dark:text-[#C4D1DE]' // blue — 진행 중
+  else if (value === 'na') colorClass = 'bg-[#E5D9C2] text-[#6B5A3A] dark:bg-[#4A412D] dark:text-[#DBCDB0]' // amber — N/A
+  else if (value === 'yes') colorClass = 'bg-[#EDD6D0] text-[#7A4A40] dark:bg-[#4D3631] dark:text-[#E3C4BE]' // red — 왕복
 
   return (
     <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${colorClass}`}>
@@ -77,6 +77,8 @@ function EditableCell({
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value)
   const inputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const isDate = col.type === 'date'
 
   const save = useCallback(
     async (newVal: string) => {
@@ -93,15 +95,23 @@ function EditableCell({
     [row.id, col.storage, col.key, value, onUpdate],
   )
 
+  useEffect(() => {
+    if (!editing || isDate) return
+    const el = textareaRef.current
+    if (!el) return
+    el.focus()
+    el.style.height = 'auto'
+    el.style.height = el.scrollHeight + 'px'
+  }, [editing, isDate])
+
   // Display mode
   if (!editing) {
     return (
       <div
-        className="w-full px-1 py-1 text-xs cursor-text truncate min-h-[24px]"
+        className="w-full px-1 py-1 text-base cursor-text whitespace-pre-wrap min-h-[24px]"
         onClick={() => {
           setDraft(value)
           setEditing(true)
-          setTimeout(() => inputRef.current?.focus(), 0)
         }}
       >
         {value || <span className="text-muted-foreground/50">—</span>}
@@ -109,19 +119,47 @@ function EditableCell({
     )
   }
 
-  // Edit mode
+  // Date: uncontrolled (검사 패턴 통일). defaultValue + ref + Ctrl+Z 보존.
+  if (isDate) {
+    const commit = () => save(inputRef.current?.value ?? '')
+    return (
+      <input
+        ref={inputRef}
+        type="date"
+        min="1900-01-01"
+        max="2100-12-31"
+        defaultValue={value}
+        autoFocus
+        onChange={(e) => {
+          // 달력 picker "삭제" 버튼으로 ''가 되면 즉시 저장.
+          if (e.target.value === '') commit()
+        }}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') commit()
+          if (e.key === 'Escape') setEditing(false)
+        }}
+        className="w-full bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
+      />
+    )
+  }
+
+  // Text: 상세페이지 NoteTextInput 동일 — 박스 textarea + 자동 높이 + Enter 저장 / Shift+Enter 줄바꿈.
   return (
-    <input
-      ref={inputRef}
-      type={col.type === 'date' ? 'date' : 'text'}
+    <textarea
+      ref={textareaRef}
       value={draft}
-      onChange={(e) => setDraft(e.target.value)}
+      onChange={(e) => {
+        setDraft(e.target.value)
+        e.target.style.height = 'auto'
+        e.target.style.height = e.target.scrollHeight + 'px'
+      }}
       onBlur={() => save(draft)}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') save(draft)
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save(draft) }
         if (e.key === 'Escape') setEditing(false)
       }}
-      className="w-full bg-transparent border-0 border-b border-primary text-xs py-1 focus:outline-none"
+      className="w-full min-h-[2rem] rounded-md border border-border/50 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-none"
     />
   )
 }
@@ -129,7 +167,7 @@ function EditableCell({
 function ReadonlyCell({ row, col }: { row: CaseRow; col: TodoColumn }) {
   const value = getCellValue(row, col)
   return (
-    <div className="w-full px-1 py-1 text-xs truncate min-h-[24px]">
+    <div className="w-full px-1 py-1 text-base truncate min-h-[24px]">
       {value || <span className="text-muted-foreground/50">—</span>}
     </div>
   )
@@ -205,13 +243,13 @@ export function TodoTable({
   const { openCase } = useCases()
 
   return (
-    <table className="w-full border-collapse text-sm">
+    <table className="w-full border-collapse text-base">
       <thead>
-        <tr className="border-b border-border">
+        <tr className="border-b border-border/60">
           {columns.map((col) => (
             <th
               key={col.key}
-              className="text-left text-xs font-medium text-muted-foreground px-2 py-2 whitespace-nowrap"
+              className="text-left text-base font-medium text-primary px-2 py-2.5 whitespace-nowrap"
               style={{ width: col.width, minWidth: col.width }}
             >
               {col.label}
@@ -223,7 +261,7 @@ export function TodoTable({
         {visibleCases.map((row) => (
           <tr
             key={row.id}
-            className="border-b border-border/50 hover:bg-accent/30 transition-colors cursor-pointer"
+            className="border-b border-border/60 hover:bg-accent/30 transition-colors cursor-pointer"
             onClick={() => openCase(row.id)}
           >
             {columns.map((col) => {
@@ -234,16 +272,16 @@ export function TodoTable({
               return (
                 <td
                   key={col.key}
-                  className="px-2 py-1"
+                  className="px-2 py-2"
                   style={{ width: col.width, minWidth: col.width }}
                   {...tdProps}
                 >
                   {col.condition && !col.condition(row) ? (
-                    <span className="text-muted-foreground/30 text-xs px-1">—</span>
-                  ) : col.readonly ? (
-                    <ReadonlyCell row={row} col={col} />
+                    <span className="text-muted-foreground/30 text-base px-1">—</span>
                   ) : col.type === 'custom' && col.render ? (
                     col.render(row, onUpdate)
+                  ) : col.readonly ? (
+                    <ReadonlyCell row={row} col={col} />
                   ) : col.type === 'select' && col.options ? (
                     <SelectCell row={row} col={col} onUpdate={onUpdate} />
                   ) : (
@@ -256,7 +294,7 @@ export function TodoTable({
         ))}
         {visible < cases.length && (
           <tr ref={sentinelRef}>
-            <td colSpan={columns.length} className="text-center text-muted-foreground/50 py-2 text-xs">
+            <td colSpan={columns.length} className="text-center text-muted-foreground/50 py-2 text-[13px]">
               {visible} / {cases.length}건
             </td>
           </tr>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
+import { createPortal } from 'react-dom'
 import { createClient } from '@supabase/supabase-js'
 import { restoreCase, permanentDeleteCase } from '@/lib/actions/delete-case'
 
@@ -21,6 +22,9 @@ export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRest
   const [loading, setLoading] = useState(true)
   const [acting, startAction] = useTransition()
   const [query, setQuery] = useState('')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     async function load() {
@@ -67,7 +71,9 @@ export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRest
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   }
 
-  return (
+  if (!mounted) return null
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
       <div className="relative w-full max-w-lg mx-4 bg-background rounded-xl shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-md border-b">
@@ -119,6 +125,7 @@ export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRest
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

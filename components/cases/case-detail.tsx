@@ -43,7 +43,7 @@ import { useCases } from './cases-context'
  * display at the top, then the three groups (고객정보 / 동물정보 / 절차정보),
  * then a footer with timestamps.
  */
-export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
+export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef?: React.Ref<HTMLDivElement> }) {
   const { fieldDefs, updateLocalCaseField, activeDestination } = useCases()
   const allSpecs = buildFieldSpecs(fieldDefs)
   const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -85,13 +85,16 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
   }
 
   return (
-    <div>
+    <div
+      ref={scrollRef}
+      className="flex-1 min-h-0 flex flex-col rounded-xl border border-border/60 bg-card p-md shadow-sm overflow-y-auto overflow-x-hidden scrollbar-minimal"
+    >
       {/* ─── Sections ─── */}
       {groups.map((g) => (
         <React.Fragment key={g.group}>
         <section className="mb-7">
           <div className="mb-2 flex items-center gap-xs">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               {g.group}
             </h3>
             {g.group === '절차정보' && toggleableForDest.length > 0 && (
@@ -252,7 +255,7 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
         {/* ─── 추가정보 — 절차정보 바로 뒤 ─── */}
         {g.group === '절차정보' && destOverride?.extraSection === 'japan' && (
           <section className="mb-7">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               추가정보
             </h3>
             <div>
@@ -262,7 +265,7 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
         )}
         {g.group === '절차정보' && destOverride?.extraSection === 'thailand' && (
           <section className="mb-7">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               추가정보
             </h3>
             <div>
@@ -272,7 +275,7 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
         )}
         {g.group === '절차정보' && destOverride?.extraSection === 'philippines' && (
           <section className="mb-7">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               추가정보
             </h3>
             <div>
@@ -282,7 +285,7 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
         )}
         {g.group === '절차정보' && destOverride?.extraSection === 'usa' && (
           <section className="mb-7">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               추가정보
             </h3>
             <div>
@@ -292,7 +295,7 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
         )}
         {g.group === '절차정보' && destOverride?.extraSection === 'australia' && (
           <section className="mb-7">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               추가정보
             </h3>
             <div>
@@ -302,7 +305,7 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
         )}
         {g.group === '절차정보' && destOverride?.extraSection === 'new_zealand' && (
           <section className="mb-7">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               추가정보
             </h3>
             <div>
@@ -312,7 +315,7 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
         )}
         {g.group === '절차정보' && destOverride?.extraSection === 'hawaii' && (
           <section className="mb-7">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               추가정보
             </h3>
             <div>
@@ -322,7 +325,7 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
         )}
         {g.group === '절차정보' && destOverride?.extraSection === 'switzerland' && (
           <section className="mb-7">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               추가정보
             </h3>
             <div>
@@ -332,7 +335,7 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
         )}
         {g.group === '절차정보' && destOverride?.extraSection === 'uk' && (
           <section className="mb-7">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               추가정보
             </h3>
             <div>
@@ -342,7 +345,7 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
         )}
         {g.group === '절차정보' && !destOverride?.extraSection && destOverride?.extraFields && destOverride.extraFields.length > 0 && (
           <section className="mb-7">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               추가정보
             </h3>
             <div>
@@ -422,12 +425,12 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
       <div className="flex items-center gap-xs pt-1">
-        <span className="text-sm text-muted-foreground">{spec.label}</span>
+        <span className="text-base text-primary">{spec.label}</span>
         {!showSecondary && (
           <button type="button" onClick={() => { setShowSecondary(true); setEditingSecondary(true); setSecVal(''); setSecError(null) }}
-            className="text-muted-foreground/40 hover:text-foreground text-sm font-medium leading-none transition-colors"
+            className="text-muted-foreground/40 hover:text-foreground text-lg font-semibold leading-none transition-colors"
             title="보조 마이크로칩 추가">
             +
           </button>
@@ -458,7 +461,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
                 />
               ) : (
                 <button type="button" onClick={() => { setSecVal(secondary.replace(/\D/g, '')); setEditingSecondary(true); setSecError(null) }}
-                  className="text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text">
+                  className="text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text">
                   {formatChip(secondary)}
                 </button>
               )}
@@ -504,9 +507,9 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
       <div className="flex items-center gap-xs pt-1">
-        <span className="text-sm text-muted-foreground">마이크로칩</span>
+        <span className="text-base text-primary">마이크로칩</span>
       </div>
       <div className="group/item flex items-baseline gap-[10px] min-w-0 flex-wrap">
         {editing ? (
@@ -514,7 +517,7 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
         ) : (
           <span className="group/v relative inline-flex items-baseline">
             <button type="button" onClick={() => setEditing(true)}
-              className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', !implantDate && 'text-muted-foreground/60 italic')}>
+              className={cn('text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer', !implantDate && 'text-muted-foreground/60')}>
               {implantDate || '—'}
             </button>
             {implantDate && <CopyButton value={implantDate} className="ml-1 opacity-0 group-hover/v:opacity-100" />}
@@ -546,15 +549,18 @@ function MicrochipDateInput({ initial, onSave, onCancel }: {
 
   return (
     <input ref={ref} type="date" min="1900-01-01" max="2100-12-31" defaultValue={initial}
+      onChange={(e) => {
+        // 달력 picker "삭제" 버튼이나 segment 전체 백스페이스로 ''가 되면 즉시 저장.
+        if (e.target.value === '') saveFromRef()
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Enter') { e.preventDefault(); saveFromRef() }
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
       onBlur={() => setTimeout(() => {
-        if (!(ref.current?.value ?? '').trim()) return
         saveFromRef()
       }, 150)}
-      className="w-36 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="w-36 bg-transparent border-0 border-b border-primary text-sm py-1 focus:outline-none"
     />
   )
 }

@@ -61,14 +61,14 @@ export function RepeatableMemoField({ caseId, caseRow }: { caseId: string; caseR
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
       <div className="flex items-center gap-xs pt-1">
-        <span className="text-sm text-muted-foreground">메모</span>
+        <span className="text-base text-primary">메모</span>
         <button
           type="button"
           onClick={() => setAddingNew(true)}
           disabled={saving || addingNew}
-          className="text-muted-foreground/40 hover:text-foreground text-sm font-medium leading-none transition-colors disabled:opacity-30"
+          className="text-muted-foreground/40 hover:text-foreground text-lg font-semibold leading-none transition-colors disabled:opacity-30"
           title="메모 추가"
         >
           +
@@ -88,7 +88,7 @@ export function RepeatableMemoField({ caseId, caseRow }: { caseId: string; caseR
               <button
                 type="button"
                 onClick={() => setEditIdx(i)}
-                className="text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text whitespace-pre-wrap flex-1 min-w-0"
+                className="text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text whitespace-pre-wrap flex-1 min-w-0"
               >
                 {m}
               </button>
@@ -114,7 +114,7 @@ export function RepeatableMemoField({ caseId, caseRow }: { caseId: string; caseR
 
         {memos.length === 0 && !addingNew && (
           <button type="button" onClick={() => setAddingNew(true)}
-            className="text-left rounded-md px-2 py-1 -mx-2 text-sm text-muted-foreground/60 italic transition-colors hover:bg-accent/60 cursor-pointer">
+            className="text-left rounded-md px-2 py-1 -mx-2 text-base text-primary/60 italic transition-colors hover:bg-accent/60 cursor-pointer">
             —
           </button>
         )}

@@ -19,6 +19,8 @@ export function CopyButton({
 }) {
   const [copied, setCopied] = useState(false)
 
+  if (!value || value === '—') return null
+
   async function handleCopy(e: React.MouseEvent) {
     e.stopPropagation()
     if (disabled || !value) return

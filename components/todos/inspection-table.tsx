@@ -1,39 +1,15 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CaseRow } from '@/lib/supabase/types'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from '@/components/cases/cases-context'
-import {
-  generateApqaHq,
-  generateKsvdl,
-  generateNzInfectionPack,
-} from '@/lib/actions/generate-pdf'
+import { labColor } from '@/lib/lab-color'
+import { destColor } from '@/lib/destination-color'
+import { cn } from '@/lib/utils'
 
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
-
-/**
- * 검사기관(lab) → 신청 버튼 클릭 시 생성할 서류 목록.
- *   ksvdl_r     : Invoice/ESD 만 (신청서 없음 — 하단 배송서류 버튼 사용)
- *   ksvdl       : KSVDL
- *   apqa_hq     : APQA HQ (한글)
- *   nz_combined : APQA HQ + APQA HQ En + VBDDL 병합 PDF 한 장
- */
-type CertAction = (caseId: string) => Promise<{ ok: true; pdf: string; filename: string } | { ok: false; error: string }>
-const DOCS_BY_LAB: Record<string, CertAction[]> = {
-  ksvdl_r: [],
-  ksvdl: [generateKsvdl],
-  apqa_hq: [generateApqaHq],
-  nz_combined: [generateNzInfectionPack],
-}
-
-function downloadBase64Pdf(base64: string, filename: string) {
-  const link = document.createElement('a')
-  link.href = `data:application/pdf;base64,${base64}`
-  link.download = filename
-  link.click()
-}
 
 /**
  * 검사 탭의 한 행. 한 케이스가 여러 행을 가질 수 있음
@@ -59,47 +35,71 @@ interface LabOption { value: string; label: string }
 
 interface StatusOption { value: string; label: string }
 
-/** Update rabies_titer_records[0].date, preserving other fields. */
-async function saveTiterDate(caseRow: CaseRow, newDate: string): Promise<void> {
+/**
+ * Update rabies_titer_records[0].date. Empty newDate → record 자체를 삭제(행 사라짐).
+ * 다른 곳들과 의미 일관성: 날짜 비움 = 그 회차 정보 사라짐.
+ */
+function computeTiterNext(
+  current: Array<{ date?: string | null; value?: string | null; lab?: string | null }>,
+  newDate: string,
+): Array<{ date?: string | null; value?: string | null; lab?: string | null }> {
+  if (!newDate) return current.slice(1)
+  const head = current[0] ?? { date: null, value: null, lab: null }
+  return [{ ...head, date: newDate }, ...current.slice(1)]
+}
+
+async function saveTiterDate(caseRow: CaseRow, newDate: string): Promise<Array<{ date?: string | null; value?: string | null; lab?: string | null }> | null> {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const current = Array.isArray(data.rabies_titer_records)
     ? (data.rabies_titer_records as Array<{ date?: string | null; value?: string | null; lab?: string | null }>)
     : []
-  const head = current[0] ?? { date: null, value: null, lab: null }
-  const next = [{ ...head, date: newDate || null }, ...current.slice(1)]
-  await updateCaseField(caseRow.id, 'data', 'rabies_titer_records', next)
+  const next = computeTiterNext(current, newDate)
+  const val = next.length > 0 ? next : null
+  await updateCaseField(caseRow.id, 'data', 'rabies_titer_records', val)
+  return val
 }
 
-/** Upsert infectious_disease_records entries for one or more labs with the same date. */
+/**
+ * Upsert infectious_disease_records entries for one or more labs.
+ * Empty newDate → 해당 lab들의 entry 제거(행 사라짐).
+ */
 function upsertInfectiousRecords(
   current: Array<{ date?: string | null; lab?: string | null }>,
   labs: string[],
   newDate: string,
 ): Array<{ date?: string | null; lab?: string | null }> {
-  const cleanDate = newDate || null
+  if (!newDate) {
+    return current.filter(r => !labs.includes(r?.lab ?? ''))
+  }
   let next = current.slice()
   for (const lab of labs) {
     const idx = next.findIndex(r => r?.lab === lab)
     if (idx >= 0) {
-      next = next.map((r, i) => i === idx ? { ...r, date: cleanDate } : r)
+      next = next.map((r, i) => i === idx ? { ...r, date: newDate } : r)
     } else {
-      next = [...next, { lab, date: cleanDate }]
+      next = [...next, { lab, date: newDate }]
     }
   }
   return next
 }
 
-async function saveInfectiousDates(caseRow: CaseRow, labs: string[], newDate: string): Promise<Array<{ date?: string | null; lab?: string | null }>> {
+async function saveInfectiousDates(caseRow: CaseRow, labs: string[], newDate: string): Promise<Array<{ date?: string | null; lab?: string | null }> | null> {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const current = Array.isArray(data.infectious_disease_records)
     ? (data.infectious_disease_records as Array<{ date?: string | null; lab?: string | null }>)
     : []
   const next = upsertInfectiousRecords(current, labs, newDate)
-  await updateCaseField(caseRow.id, 'data', 'infectious_disease_records', next)
-  return next
+  const val = next.length > 0 ? next : null
+  await updateCaseField(caseRow.id, 'data', 'infectious_disease_records', val)
+  return val
 }
 
-/** Simple inline date editor. */
+/**
+ * Inline date editor — 상세페이지(editable-field.tsx)와 동일한 패턴.
+ * Uncontrolled `defaultValue` + `autoFocus` 만 사용. `showPicker()`는 호출하지 않는다:
+ * 달력 팝업으로 선택한 값 변경은 브라우저 native undo history에 기록되지 않아
+ * Ctrl+Z 가 동작하지 않게 된다. 키보드 타이핑은 정상적으로 undo 됨.
+ */
 function DateCell({
   value,
   editable,
@@ -110,20 +110,18 @@ function DateCell({
   onSave: (v: string) => void
 }) {
   const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(value)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { setDraft(value) }, [value])
-
-  const commit = useCallback((v: string) => {
+  const commit = useCallback(() => {
     setEditing(false)
+    const v = inputRef.current?.value ?? ''
     if (v === value) return
     onSave(v)
   }, [value, onSave])
 
   if (!editable) {
     return (
-      <div className="w-full px-1 py-1 text-xs truncate min-h-[24px] text-muted-foreground/80">
+      <div className="w-full px-1 py-1 text-base truncate min-h-[24px] text-muted-foreground/80">
         {value || <span className="text-muted-foreground/50">—</span>}
       </div>
     )
@@ -132,12 +130,8 @@ function DateCell({
   if (!editing) {
     return (
       <div
-        className="w-full px-1 py-1 text-xs cursor-text truncate min-h-[24px]"
-        onClick={() => {
-          setDraft(value)
-          setEditing(true)
-          setTimeout(() => inputRef.current?.focus(), 0)
-        }}
+        className="w-full px-1 py-1 text-base cursor-text truncate min-h-[24px]"
+        onClick={() => setEditing(true)}
       >
         {value || <span className="text-muted-foreground/50">—</span>}
       </div>
@@ -148,14 +142,20 @@ function DateCell({
     <input
       ref={inputRef}
       type="date"
-      value={draft}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={() => commit(draft)}
+      min="1900-01-01"
+      max="2100-12-31"
+      defaultValue={value}
+      autoFocus
+      onChange={(e) => {
+        // 달력 picker "삭제" 버튼으로 ''가 되면 즉시 저장.
+        if (e.target.value === '') commit()
+      }}
+      onBlur={commit}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') commit(draft)
+        if (e.key === 'Enter') commit()
         if (e.key === 'Escape') setEditing(false)
       }}
-      className="w-full bg-transparent border-0 border-b border-primary text-xs py-1 focus:outline-none"
+      className="w-full bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
     />
   )
 }
@@ -163,13 +163,36 @@ function DateCell({
 /** Static text cell (read-only data from the case row). */
 function StaticCell({ value }: { value: string }) {
   return (
-    <div className="w-full px-1 py-1 text-xs truncate min-h-[24px]">
+    <div className="w-full px-1 py-1 text-base truncate min-h-[24px]">
       {value || <span className="text-muted-foreground/50">—</span>}
     </div>
   )
 }
 
-/** Editable text cell saved to case data (메모). */
+/** 목적지를 국가별 색상 배지로 표시 (홈/상세와 동일 패턴). */
+function DestinationCell({ value }: { value: string | null | undefined }) {
+  const dests = (value ?? '').split(',').map(s => s.trim()).filter(Boolean)
+  if (dests.length === 0) {
+    return <div className="w-full px-1 py-1 text-base min-h-[24px]"><span className="text-muted-foreground/50">—</span></div>
+  }
+  return (
+    <div className="w-full px-1 py-1 min-h-[24px] flex items-center gap-1 flex-wrap">
+      {dests.map(d => {
+        const tone = destColor(d)
+        return (
+          <span key={d} className={cn('inline-flex items-center rounded px-2 py-0.5 text-xs font-medium', tone.bg, tone.text)}>
+            {d}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
+/**
+ * Editable text cell saved to case data (메모).
+ * 상세페이지 NoteTextInput과 동일한 박스 textarea + 자동 높이 + Enter 저장 / Shift+Enter 줄바꿈.
+ */
 function MemoCell({ row, onUpdate }: {
   row: InspectionRow
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
@@ -178,7 +201,7 @@ function MemoCell({ row, onUpdate }: {
   const initial = typeof data.inspection_memo === 'string' ? (data.inspection_memo as string) : ''
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(initial)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => { setDraft(initial) }, [initial])
 
@@ -191,32 +214,39 @@ function MemoCell({ row, onUpdate }: {
     await updateCaseField(row.caseRow.id, 'data', 'inspection_memo', saveVal)
   }, [initial, onUpdate, row.caseRow.id])
 
+  useEffect(() => {
+    if (!editing || !inputRef.current) return
+    const el = inputRef.current
+    el.focus()
+    el.style.height = 'auto'
+    el.style.height = el.scrollHeight + 'px'
+  }, [editing])
+
   if (!editing) {
     return (
       <div
-        className="w-full px-1 py-1 text-xs cursor-text truncate min-h-[24px]"
-        onClick={() => {
-          setDraft(initial)
-          setEditing(true)
-          setTimeout(() => inputRef.current?.focus(), 0)
-        }}
+        className="w-full px-1 py-1 text-base cursor-text whitespace-pre-wrap min-h-[24px]"
+        onClick={() => { setDraft(initial); setEditing(true) }}
       >
         {initial || <span className="text-muted-foreground/50">—</span>}
       </div>
     )
   }
   return (
-    <input
+    <textarea
       ref={inputRef}
-      type="text"
       value={draft}
-      onChange={(e) => setDraft(e.target.value)}
+      onChange={(e) => {
+        setDraft(e.target.value)
+        e.target.style.height = 'auto'
+        e.target.style.height = e.target.scrollHeight + 'px'
+      }}
       onBlur={() => commit(draft)}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') commit(draft)
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commit(draft) }
         if (e.key === 'Escape') setEditing(false)
       }}
-      className="w-full bg-transparent border-0 border-b border-primary text-xs py-1 focus:outline-none"
+      className="w-full min-h-[2rem] rounded-md border border-border/50 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-none"
     />
   )
 }
@@ -232,9 +262,9 @@ function StatusCell({ row, options, onUpdate }: {
   const opt = options.find(o => o.value === value)
   const label = opt?.label ?? '대기'
 
-  let cls = 'bg-gray-100 text-gray-600'
-  if (value === 'done') cls = 'bg-emerald-100 text-emerald-700'
-  else if (value === 'testing') cls = 'bg-blue-100 text-blue-700'
+  let cls = 'bg-[#D6D5D1] text-[#3E3E3A] dark:bg-[#3A3A37] dark:text-[#CACAC5]'
+  if (value === 'done') cls = 'bg-[#DBE4D6] text-[#3F5A35] dark:bg-[#364332] dark:text-[#C4D4B9]'
+  else if (value === 'testing') cls = 'bg-[#D6E0EA] text-[#3D5268] dark:bg-[#2F3D4D] dark:text-[#C4D1DE]'
 
   return (
     <div className="relative">
@@ -262,15 +292,52 @@ function LabCell({ row, options, onUpdate }: {
   options: LabOption[]
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
 }) {
+  // Multi-lab row (e.g., NZ: APQA HQ + VBDDL) — render one chip per lab with its own tone.
+  if (row.dateStorage.kind === 'infectious_multi') {
+    return (
+      <div className="w-full min-h-[24px] flex items-center gap-1 flex-wrap">
+        {row.dateStorage.labs.map(labVal => {
+          const tone = labColor(labVal)
+          const label = options.find(o => o.value === labVal)?.label ?? labVal
+          return (
+            <span
+              key={labVal}
+              className={cn(
+                'inline-block text-xs rounded px-2 py-0.5 font-medium',
+                tone ? cn(tone.bg, tone.text) : 'bg-muted text-muted-foreground',
+              )}
+            >
+              {label}
+            </span>
+          )
+        })}
+      </div>
+    )
+  }
+
   const label = options.find(o => o.value === row.lab)?.label ?? row.lab
+  const tone = labColor(row.lab)
+
+  const chip = (
+    <span
+      className={cn(
+        'inline-block text-xs truncate max-w-full',
+        tone
+          ? cn('rounded px-2 py-0.5 font-medium', tone.bg, tone.text)
+          : 'px-1 py-1',
+      )}
+    >
+      {label}
+    </span>
+  )
 
   if (row.kind !== 'titer') {
-    return <div className="w-full px-1 py-1 text-xs truncate min-h-[24px]">{label}</div>
+    return <div className="w-full min-h-[24px] flex items-center">{chip}</div>
   }
 
   return (
-    <div className="relative">
-      <div className="w-full px-1 py-1 text-xs truncate min-h-[24px] cursor-pointer">{label}</div>
+    <div className="relative min-h-[24px] flex items-center">
+      <div className="cursor-pointer">{chip}</div>
       <select
         value={row.lab}
         onChange={async (e) => {
@@ -295,49 +362,9 @@ const COLUMNS = [
   { key: 'customer_name', label: '고객', width: 100 },
   { key: 'destination', label: '목적지', width: 100 },
   { key: 'status', label: '진행상태', width: 110 },
-  { key: 'apply', label: '신청', width: 70 },
+  { key: 'departure_date', label: '출국일', width: 120 },
   { key: 'memo', label: '메모', width: 180 },
 ]
-
-/** 신청 버튼 — 검사기관별 서류 묶음 일괄 생성. */
-function ApplyCell({ row }: { row: InspectionRow }) {
-  const [saving, startSave] = useTransition()
-  const docs = DOCS_BY_LAB[row.lab] ?? []
-  const hasDocs = docs.length > 0
-
-  const onClick = useCallback(() => {
-    if (!hasDocs) return
-    startSave(async () => {
-      for (const action of docs) {
-        const r = await action(row.caseRow.id)
-        if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
-        else alert(`생성 실패: ${r.error}`)
-      }
-    })
-  }, [row.caseRow.id, docs, hasDocs])
-
-  if (!hasDocs) {
-    return (
-      <span
-        className="text-xs text-muted-foreground/40 cursor-default"
-        title="이 검사기관은 신청서가 없습니다 (Invoice/ESD 만 필요)"
-      >
-        —
-      </span>
-    )
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={saving}
-      className="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-50"
-    >
-      {saving ? '생성중...' : '신청'}
-    </button>
-  )
-}
 
 export function InspectionTable({
   rows,
@@ -372,32 +399,25 @@ export function InspectionTable({
 
   const handleDateSave = useCallback(async (row: InspectionRow, v: string) => {
     if (row.dateStorage.kind === 'titer') {
-      await saveTiterDate(row.caseRow, v)
-      // Local optimistic: replace array shape is complex; simplest — force reload via onUpdate with raw read.
-      const data = (row.caseRow.data ?? {}) as Record<string, unknown>
-      const current = Array.isArray(data.rabies_titer_records)
-        ? (data.rabies_titer_records as Array<{ date?: string | null }>)
-        : []
-      const head = current[0] ?? {}
-      const next = [{ ...head, date: v || null }, ...current.slice(1)]
-      onUpdate(row.caseRow.id, 'data', 'rabies_titer_records', next)
+      const val = await saveTiterDate(row.caseRow, v)
+      onUpdate(row.caseRow.id, 'data', 'rabies_titer_records', val)
     } else {
       const labs = row.dateStorage.kind === 'infectious_multi'
         ? row.dateStorage.labs
         : [row.dateStorage.lab]
-      const next = await saveInfectiousDates(row.caseRow, labs, v)
-      onUpdate(row.caseRow.id, 'data', 'infectious_disease_records', next)
+      const val = await saveInfectiousDates(row.caseRow, labs, v)
+      onUpdate(row.caseRow.id, 'data', 'infectious_disease_records', val)
     }
   }, [onUpdate])
 
   return (
-    <table className="w-full border-collapse text-sm">
+    <table className="w-full border-collapse text-base">
       <thead>
-        <tr className="border-b border-border">
+        <tr className="border-b border-border/60">
           {COLUMNS.map(col => (
             <th
               key={col.key}
-              className="text-left text-xs font-medium text-muted-foreground px-2 py-2 whitespace-nowrap"
+              className="text-left text-base font-medium text-primary px-2 py-2.5 whitespace-nowrap"
               style={{ width: col.width, minWidth: col.width }}
             >
               {col.label}
@@ -409,42 +429,50 @@ export function InspectionTable({
         {visibleRows.map(row => (
           <tr
             key={row.id}
-            className="border-b border-border/50 hover:bg-accent/30 transition-colors cursor-pointer"
+            className="border-b border-border/60 hover:bg-accent/30 transition-colors cursor-pointer"
             onClick={() => openCase(row.caseRow.id)}
           >
-            <td className="px-2 py-1" style={{ width: 160, minWidth: 160 }} onClick={(e) => e.stopPropagation()}>
+            <td className="px-2 py-2" style={{ width: 160, minWidth: 160 }} onClick={(e) => e.stopPropagation()}>
               <LabCell row={row} options={labOptions} onUpdate={onUpdate} />
             </td>
-            <td className="px-2 py-1" style={{ width: 120, minWidth: 120 }} onClick={(e) => e.stopPropagation()}>
+            <td className="px-2 py-2" style={{ width: 120, minWidth: 120 }} onClick={(e) => e.stopPropagation()}>
               <DateCell
                 value={row.date}
                 editable={row.dateEditable}
                 onSave={(v) => handleDateSave(row, v)}
               />
             </td>
-            <td className="px-2 py-1" style={{ width: 100, minWidth: 100 }}>
+            <td className="px-2 py-2" style={{ width: 100, minWidth: 100 }}>
               <StaticCell value={row.caseRow.pet_name ?? ''} />
             </td>
-            <td className="px-2 py-1" style={{ width: 100, minWidth: 100 }}>
+            <td className="px-2 py-2" style={{ width: 100, minWidth: 100 }}>
               <StaticCell value={row.caseRow.customer_name ?? ''} />
             </td>
-            <td className="px-2 py-1" style={{ width: 100, minWidth: 100 }}>
-              <StaticCell value={row.caseRow.destination ?? ''} />
+            <td className="px-2 py-2" style={{ width: 100, minWidth: 100 }}>
+              <DestinationCell value={row.caseRow.destination} />
             </td>
-            <td className="px-2 py-1" style={{ width: 110, minWidth: 110 }} onClick={(e) => e.stopPropagation()}>
+            <td className="px-2 py-2" style={{ width: 110, minWidth: 110 }} onClick={(e) => e.stopPropagation()}>
               <StatusCell row={row} options={statusOptions} onUpdate={onUpdate} />
             </td>
-            <td className="px-2 py-1 text-center" style={{ width: 70, minWidth: 70 }} onClick={(e) => e.stopPropagation()}>
-              <ApplyCell row={row} />
+            <td className="px-2 py-2" style={{ width: 120, minWidth: 120 }} onClick={(e) => e.stopPropagation()}>
+              <DateCell
+                value={row.caseRow.departure_date ?? ''}
+                editable
+                onSave={async (v) => {
+                  const next = v || null
+                  onUpdate(row.caseRow.id, 'column', 'departure_date', next)
+                  await updateCaseField(row.caseRow.id, 'column', 'departure_date', next)
+                }}
+              />
             </td>
-            <td className="px-2 py-1" style={{ width: 180, minWidth: 180 }} onClick={(e) => e.stopPropagation()}>
+            <td className="px-2 py-2" style={{ width: 180, minWidth: 180 }} onClick={(e) => e.stopPropagation()}>
               <MemoCell row={row} onUpdate={onUpdate} />
             </td>
           </tr>
         ))}
         {visible < rows.length && (
           <tr ref={sentinelRef}>
-            <td colSpan={COLUMNS.length} className="text-center text-muted-foreground/50 py-2 text-xs">
+            <td colSpan={COLUMNS.length} className="text-center text-muted-foreground/50 py-2 text-[13px]">
               {visible} / {rows.length}건
             </td>
           </tr>

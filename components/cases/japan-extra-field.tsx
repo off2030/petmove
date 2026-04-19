@@ -223,13 +223,13 @@ export function JapanExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        'mt-2 pt-2 border-t border-border/40 space-y-1 rounded-md transition-colors',
+        'mt-2 pt-2 border-t border-border/40 rounded-md transition-colors',
         dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
       {/* ── Input zone ── */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1">
-        <span className="text-sm text-muted-foreground pt-1">AI 입력</span>
+      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+        <span className="text-base text-primary pt-1">AI 입력</span>
         <div className="min-w-0 space-y-1">
           {showInput ? (
             <div className="space-y-1">
@@ -251,7 +251,7 @@ export function JapanExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
                 type="button"
                 onClick={() => { setShowInput(true); setTimeout(() => textRef.current?.focus(), 50) }}
                 disabled={extracting}
-                className="text-left rounded-md px-2 py-1 -mx-2 text-sm text-muted-foreground/60 italic transition-colors hover:bg-accent/60 cursor-pointer disabled:opacity-50"
+                className="text-left rounded-md px-2 py-1 -mx-2 text-base text-primary/60 italic transition-colors hover:bg-accent/60 cursor-pointer disabled:opacity-50"
               >
                 {extracting ? '추출 중...' : '텍스트·이미지·PDF 붙여넣기'}
               </button>
@@ -291,8 +291,8 @@ export function JapanExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
       />
 
       {/* ── Email ── */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1">
-        <span className="text-sm text-muted-foreground pt-1">이메일</span>
+      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+        <span className="text-base text-primary pt-1">이메일</span>
         {editingField === 'email' ? (
           <InlineInput
             type="text"
@@ -307,8 +307,8 @@ export function JapanExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
               type="button"
               onClick={() => setEditingField('email')}
               className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text',
-                !extra.email && 'text-muted-foreground/60 italic',
+                'text-left rounded-md px-2 py-0.5 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text',
+                !extra.email && 'text-muted-foreground/60',
               )}
             >
               {extra.email || '—'}
@@ -321,8 +321,8 @@ export function JapanExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
       </div>
 
       {/* ── Address ── */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1">
-        <span className="text-sm text-muted-foreground pt-1">해외주소</span>
+      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+        <span className="text-base text-primary pt-1">해외주소</span>
         {editingField === 'address_overseas' ? (
           <InlineInput
             type="text"
@@ -337,8 +337,8 @@ export function JapanExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
               type="button"
               onClick={() => setEditingField('address_overseas')}
               className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text',
-                !extra.address_overseas && 'text-muted-foreground/60 italic',
+                'text-left rounded-md px-2 py-0.5 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text',
+                !extra.address_overseas && 'text-muted-foreground/60',
               )}
             >
               {extra.address_overseas || '—'}
@@ -351,8 +351,8 @@ export function JapanExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
       </div>
 
       {/* ── Certificate No ── */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1">
-        <span className="text-sm text-muted-foreground pt-1">EQC No.</span>
+      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+        <span className="text-base text-primary pt-1">EQC No.</span>
         {editingField === 'certificate_no' ? (
           <InlineInput
             type="text"
@@ -367,8 +367,8 @@ export function JapanExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
               type="button"
               onClick={() => setEditingField('certificate_no')}
               className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text',
-                !extra.certificate_no && 'text-muted-foreground/60 italic',
+                'text-left rounded-md px-2 py-0.5 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text',
+                !extra.certificate_no && 'text-muted-foreground/60',
               )}
             >
               {extra.certificate_no || '—'}
@@ -394,8 +394,8 @@ function FlightBlock({ label, direction, flight, editingField, setEditingField, 
   onSave: (key: keyof FlightEntry, val: string | null) => void
 }) {
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1">
-      <span className="text-sm text-muted-foreground pt-1">{label}</span>
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+      <span className="text-base text-primary pt-1">{label}</span>
       <div className="min-w-0 space-y-0.5">
         {FLIGHT_FIELDS.map((f) => {
           const fieldId = `${direction}.${f.key}`
@@ -403,7 +403,7 @@ function FlightBlock({ label, direction, flight, editingField, setEditingField, 
           const isEditing = editingField === fieldId
           return (
             <div key={f.key} className="flex items-center gap-sm">
-              <span className="text-xs text-muted-foreground/60 w-16 shrink-0">{f.label}</span>
+              <span className="text-base text-primary/60 w-16 shrink-0">{f.label}</span>
               {isEditing ? (
                 f.type === 'select' ? (
                   <SelectInput
@@ -428,8 +428,8 @@ function FlightBlock({ label, direction, flight, editingField, setEditingField, 
                     type="button"
                     onClick={() => setEditingField(fieldId)}
                     className={cn(
-                      'text-left rounded-md px-2 py-0.5 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text',
-                      !val && 'text-muted-foreground/60 italic',
+                      'text-left rounded-md px-2 py-0.5 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text',
+                      !val && 'text-muted-foreground/60',
                     )}
                   >
                     {f.type === 'select' && val

@@ -16,7 +16,7 @@ export default function RootLayout({
     <html lang="ko" suppressHydrationWarning>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <ThemeProvider />
-        <div className="flex h-screen">
+        <div className="flex flex-col h-screen">
           {children}
         </div>
       </body>

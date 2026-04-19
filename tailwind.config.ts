@@ -39,7 +39,6 @@ const config: Config = {
         '3xl': '4rem',  // 64px
       },
       colors: {
-        /* CSS Variables */
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -72,19 +71,6 @@ const config: Config = {
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
-        },
-        /* Juniper & Pearl Gray Palette */
-        gray: {
-          50: '#fdf9f5',
-          100: '#faf9f8',
-          200: '#f3f4f3',
-          300: '#edeeed',
-          400: '#e7e8e7',
-          500: '#e1e3e2',
-          600: '#c8cac9',
-          700: '#a8aba9',
-          800: '#6b6d6b',
-          900: '#404140',
         },
       },
       borderRadius: {

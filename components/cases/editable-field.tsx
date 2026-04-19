@@ -197,46 +197,14 @@ export function EditableField({
   const composingRef = useRef(false) // IME composition state
   const effectiveLang = autoDetectLang(spec, lang) // true if keyboard was used (vs picker)
 
-  /** Parse date from text input. Accepts: YYYY-MM-DD, YYYYMMDD, YYYY.MM.DD, YYYY/MM/DD */
   function saveDateFromRef() {
     const el = inputRef.current as HTMLInputElement | null
-    const raw = (el?.value ?? '').trim()
-
-    // Empty = delete the date
-    if (!raw) {
-      startSave(async () => {
-        const result = await updateCaseField(caseId, spec.storage, spec.key, null)
-        if (!result.ok) { setError(result.error); return }
-        updateLocalCaseField(caseId, spec.storage, spec.key, null)
-        setError(null)
-        setEditing(false)
-      })
-      return
-    }
-
-    // Parse: strip non-digits, then format
-    const digits = raw.replace(/\D/g, '')
-    let dateStr = ''
-    if (digits.length === 8) {
-      dateStr = `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`
-    } else if (/^\d{4}[-./]\d{1,2}[-./]\d{1,2}$/.test(raw)) {
-      const parts = raw.split(/[-./]/)
-      dateStr = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`
-    }
-
-    if (!dateStr) { setError('유효한 날짜가 아닙니다'); return }
-
-    const d = new Date(dateStr)
-    const year = parseInt(dateStr.split('-')[0], 10)
-    if (isNaN(d.getTime()) || year < 1900 || year > 2100) {
-      setError('유효한 날짜가 아닙니다')
-      return
-    }
-
+    // type="date" + min/max 가 이미 빈 문자열 또는 유효한 YYYY-MM-DD 만 보장.
+    const value = (el?.value ?? '').trim() || null
     startSave(async () => {
-      const result = await updateCaseField(caseId, spec.storage, spec.key, dateStr)
+      const result = await updateCaseField(caseId, spec.storage, spec.key, value)
       if (!result.ok) { setError(result.error); return }
-      updateLocalCaseField(caseId, spec.storage, spec.key, dateStr)
+      updateLocalCaseField(caseId, spec.storage, spec.key, value)
       setError(null)
       setEditing(false)
     })
@@ -265,7 +233,7 @@ export function EditableField({
             <button
               type="button"
               onClick={() => setEditing(!editing)}
-              className="text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer"
+              className="text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer"
             >
               {display}
             </button>
@@ -276,7 +244,7 @@ export function EditableField({
                 <button
                   type="button"
                   onClick={() => { handleSelectChange_custom(null); setEditing(false) }}
-                  className="w-full text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors"
+                  className="w-full text-left px-sm py-1.5 text-base text-muted-foreground hover:bg-accent/60 transition-colors"
                 >
                   —
                 </button>
@@ -287,7 +255,7 @@ export function EditableField({
                     type="button"
                     onClick={() => { handleSelectChange_custom(opt.value); setEditing(false) }}
                     className={cn(
-                      'w-full text-left px-sm py-1.5 text-sm hover:bg-accent/60 transition-colors',
+                      'w-full text-left px-sm py-1.5 text-base hover:bg-accent/60 transition-colors',
                       String(rawValue) === opt.value && 'font-medium',
                     )}
                   >
@@ -306,16 +274,19 @@ export function EditableField({
           max="2100-12-31"
           defaultValue={stringifyRaw(rawValue, spec)}
           autoFocus
+          onChange={(e) => {
+            // 달력 picker "지우기" 버튼이나 segment 전체 백스페이스로 ''가 되면
+            // 즉시 null 저장. picker 가 blur 를 잡고 있어 onBlur 만으로는 저장이 늦거나 누락됨.
+            if (e.target.value === '') saveDateFromRef()
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') { e.preventDefault(); saveDateFromRef() }
             if (e.key === 'Escape') { e.preventDefault(); handleCancel() }
           }}
           onBlur={() => setTimeout(() => {
-            const el = inputRef.current as HTMLInputElement | null
-            if (!(el?.value ?? '').trim()) return
             saveDateFromRef()
           }, 150)}
-          className="w-44 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+          className="w-44 bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
         />
       ) : editing ? (
         <div className="flex items-start gap-sm">
@@ -357,9 +328,9 @@ export function EditableField({
           type="button"
           onClick={handleEnterEdit}
           className={cn(
-            'text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors',
+            'text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors',
             'hover:bg-accent/60 cursor-text',
-            isEmpty && 'text-muted-foreground/60 italic',
+            isEmpty && 'text-muted-foreground/60',
           )}
           title="클릭하여 편집"
         >
@@ -389,8 +360,8 @@ export function EditableField({
   ) : null
 
   return (
-    <div className={cn("grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0", clearable && "group/row")}>
-      <div className="text-sm text-muted-foreground pt-1">{spec.label}</div>
+    <div className={cn("grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0", clearable && "group/row")}>
+      <div className="text-base text-primary pt-1">{spec.label}</div>
       <div className="min-w-0 flex items-baseline gap-sm">
         {(() => {
           const noCopy = spec.type === 'longtext' || spec.key === 'select' || spec.key === 'status'
@@ -444,7 +415,7 @@ function renderInput(
     : lang === 'en' ? '영문만 입력 가능'
     : undefined
   const commonClass =
-    'flex-1 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
+    'flex-1 h-8 rounded-md border border-border/50 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
 
   if (spec.type === 'longtext') {
     return (
@@ -455,7 +426,7 @@ function renderInput(
         onKeyDown={onKeyDown}
         onBlur={onBlur}
         rows={3}
-        className="flex-1 min-h-[4.5rem] rounded-md border border-border/50 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-y"
+        className="flex-1 min-h-[4.5rem] rounded-md border border-border/50 bg-background p-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-y"
       />
     )
   }
@@ -501,7 +472,7 @@ function renderInput(
             onBlur()
           }
         }}
-        className="w-44 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+        className="w-44 bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
       />
     )
   }

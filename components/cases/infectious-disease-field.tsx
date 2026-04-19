@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
+import { labColor } from '@/lib/lab-color'
 
 interface InfectiousRecord {
   date: string | null
@@ -102,14 +103,14 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
       <div className="flex items-center gap-xs pt-1">
-        <span className="text-sm text-muted-foreground">전염병검사</span>
+        <span className="text-base text-primary">전염병검사</span>
         <button
           type="button"
           onClick={() => setAddingNew(true)}
           disabled={saving || addingNew}
-          className="text-muted-foreground/40 hover:text-foreground text-sm font-medium leading-none transition-colors disabled:opacity-30"
+          className="text-muted-foreground/40 hover:text-foreground text-lg font-semibold leading-none transition-colors disabled:opacity-30"
           title="전염병검사 추가"
         >
           +
@@ -139,7 +140,7 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
 
         {records.length === 0 && !addingNew && (
           <button type="button" onClick={() => setAddingNew(true)}
-            className="text-left rounded-md px-2 py-1 -mx-2 text-sm text-muted-foreground/60 italic transition-colors hover:bg-accent/60 cursor-pointer">
+            className="text-left rounded-md px-2 py-1 -mx-2 text-base text-primary/60 transition-colors hover:bg-accent/60 cursor-pointer">
             —
           </button>
         )}
@@ -164,6 +165,7 @@ function InfectiousRow({
   const dateDisplay = record.date || '—'
   const labObj = LABS.find(l => l.value === record.lab)
   const labDisplay = labObj?.label || record.lab || '—'
+  const labTone = labColor(record.lab)
 
   return (
     <div className="group/item flex items-baseline gap-[10px] min-w-0">
@@ -171,12 +173,12 @@ function InfectiousRow({
       {isEditing === 'date' ? (
         <DateInput
           initial={record.date || ''}
-          onSave={(v) => { onUpdateField('date', v || null); onStopEdit() }}
+          onSave={(v) => { if (!v) onDelete(); else onUpdateField('date', v); onStopEdit() }}
           onCancel={onStopEdit}
         />
       ) : (
         <button type="button" onClick={() => onStartEdit('date')}
-          className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', dateDisplay === '—' && 'text-muted-foreground/60 italic')}>
+          className={cn('text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer', dateDisplay === '—' && 'text-muted-foreground/60')}>
           {dateDisplay}
         </button>
       )}
@@ -192,7 +194,12 @@ function InfectiousRow({
         />
       ) : (
         <button type="button" onClick={() => onStartEdit('lab')}
-          className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-pointer', labDisplay === '—' && 'text-muted-foreground/60 italic')}>
+          className={cn(
+            'text-left text-base cursor-pointer transition-all',
+            labTone
+              ? cn('rounded px-2 py-0.5 font-medium hover:opacity-80', labTone.bg, labTone.text)
+              : cn('rounded-md px-2 py-1 -mx-2 hover:bg-accent/60', labDisplay === '—' && 'text-muted-foreground/60'),
+          )}>
           {labDisplay}
         </button>
       )}
@@ -221,15 +228,18 @@ function DateInput({ initial, onSave, onCancel }: {
 
   return (
     <input ref={ref} type="date" min="1900-01-01" max="2100-12-31" defaultValue={initial}
+      onChange={(e) => {
+        // 달력 picker "삭제" 버튼이나 segment 전체 백스페이스로 ''가 되면 즉시 저장.
+        if (e.target.value === '') saveFromRef()
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Enter') { e.preventDefault(); saveFromRef() }
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
       onBlur={() => setTimeout(() => {
-        if (!(ref.current?.value ?? '').trim()) return
         saveFromRef()
       }, 150)}
-      className="w-36 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="w-36 bg-transparent border-0 border-b border-primary text-sm py-1 focus:outline-none"
     />
   )
 }

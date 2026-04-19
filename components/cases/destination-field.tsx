@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import destsData from '@/data/destinations.json'
+import { destColor } from '@/lib/destination-color'
 import { CopyButton } from './copy-button'
 
 interface Dest {
@@ -82,6 +83,13 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     await updateCaseField(caseId, 'column', 'destination', val)
   }
 
+  async function removeDest(ko: string) {
+    const next = selected.filter(s => s !== ko)
+    const val = joinDests(next)
+    updateLocalCaseField(caseId, 'column', 'destination', val)
+    await updateCaseField(caseId, 'column', 'destination', val)
+  }
+
   async function saveFree() {
     const v = freeVal.trim()
     if (!v) return
@@ -92,21 +100,14 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     await updateCaseField(caseId, 'column', 'destination', val)
   }
 
-  async function removeDest(ko: string) {
-    const next = selected.filter(s => s !== ko)
-    const val = joinDests(next)
-    updateLocalCaseField(caseId, 'column', 'destination', val)
-    await updateCaseField(caseId, 'column', 'destination', val)
-  }
-
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
       <div className="flex items-center gap-xs pt-1">
-        <span className="text-sm text-muted-foreground">목적지</span>
+        <span className="text-base text-primary">목적지</span>
         <button
           type="button"
           onClick={() => { setOpen(!open); setFreeMode(false); setQuery(''); setHighlightIdx(0) }}
-          className="text-muted-foreground/40 hover:text-foreground text-sm font-medium leading-none transition-colors"
+          className="text-muted-foreground/40 hover:text-foreground text-lg font-semibold leading-none transition-colors"
           title="목적지 추가"
         >
           +
@@ -114,29 +115,35 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
       </div>
       <div ref={containerRef} className="relative min-w-0">
         {selected.length > 0 ? (
-          <div className="group/val flex items-center gap-xs.5 flex-wrap min-h-[28px]">
-            {selected.map(ko => {
-              const matched = ALL_DESTS.find(d => d.ko === ko)
-              const label = matched ? matched.en : ko
-              const isActive = multi && activeDestination === ko
+          <div className="group/val inline-flex items-center gap-xs flex-wrap">
+            {selected.map((ko) => {
+              const tone = destColor(ko)
+              const isActive = multi && (activeDestination ?? selected[0]) === ko
               return (
                 <span
                   key={ko}
                   className={cn(
-                    'group/tag inline-flex items-center gap-xs rounded px-2 py-0.5 text-sm bg-accent/40',
-                    multi && 'cursor-pointer hover:bg-accent/70 transition-colors',
-                    isActive && 'bg-accent ring-1 ring-ring/60',
+                    'group/chip inline-flex items-center gap-1 rounded px-2 py-1 text-base font-medium transition-all',
+                    tone.bg, tone.text,
+                    multi && !isActive && 'opacity-50 hover:opacity-80',
+                    isActive && 'ring-2 ring-offset-1 ring-current',
                   )}
-                  onClick={() => { if (multi) setActiveDestination(ko) }}
-                  title={multi ? (isActive ? `활성 목적지: ${label}` : `${label} 기준으로 보기`) : undefined}
                 >
-                  {label}
+                  <button
+                    type="button"
+                    onClick={() => { if (multi) setActiveDestination(ko) }}
+                    className="text-base cursor-pointer"
+                    title={multi ? '클릭하여 이 국가 항목 보기' : undefined}
+                  >
+                    {ko}
+                  </button>
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); removeDest(ko) }}
-                    className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors opacity-0 group-hover/tag:opacity-100"
+                    className="opacity-0 group-hover/chip:opacity-70 hover:!opacity-100 leading-none text-base transition-opacity"
+                    title="삭제"
                   >
-                    ✕
+                    ×
                   </button>
                 </span>
               )
@@ -147,7 +154,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
           <button
             type="button"
             onClick={() => { setOpen(!open); setFreeMode(false); setQuery(''); setHighlightIdx(0) }}
-            className="text-left rounded-md px-2 py-1 -mx-2 text-sm text-muted-foreground/60 italic transition-colors hover:bg-accent/60 cursor-pointer"
+            className="text-left rounded-md px-2 py-1 -mx-2 text-base text-primary/60 transition-colors hover:bg-accent/60 cursor-pointer"
           >
             —
           </button>
