@@ -27,19 +27,14 @@ export function Sidebar({
 
   return (
     <>
-      <aside className="w-14 shrink-0 h-screen flex flex-col items-center py-4 border-r border-border bg-background">
+      <aside className="w-48 shrink-0 h-screen flex flex-col py-4 border-r border-border bg-background">
         {/* Logo */}
-        <div className="mb-6 flex items-center justify-center">
-          <div
-            title="펫무브워크"
-            className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-bold text-xs"
-          >
-            펫
-          </div>
+        <div className="mb-6 px-4">
+          <h1 className="text-lg font-bold text-foreground">펫무브워크</h1>
         </div>
 
         {/* Top nav */}
-        <nav className="flex flex-col items-center gap-1 flex-1">
+        <nav className="flex flex-col gap-1 flex-1 px-2">
           {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
             const active = activeTab === id
             return (
@@ -47,52 +42,52 @@ export function Sidebar({
                 key={id}
                 type="button"
                 onClick={() => onTabChange(id)}
-                title={label}
-                className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${
+                className={`w-full h-10 flex items-center gap-3 px-3 rounded-lg transition-colors text-sm font-medium ${
                   active
                     ? 'bg-accent text-foreground'
                     : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                 }`}
               >
-                <Icon size={20} />
+                <Icon size={20} className="shrink-0" />
+                <span>{label}</span>
               </button>
             )
           })}
         </nav>
 
         {/* Bottom actions */}
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex flex-col gap-1 px-2 border-t border-border pt-4">
           {mounted && (
             <button
               type="button"
               onClick={toggle}
-              title={isDark ? '라이트 모드' : '다크 모드'}
-              className="w-10 h-10 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+              className="w-full h-10 flex items-center gap-3 px-3 rounded-lg text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors text-sm font-medium"
             >
-              {isDark ? <Sun size={20} /> : <Moon size={20} />}
+              {isDark ? <Sun size={20} className="shrink-0" /> : <Moon size={20} className="shrink-0" />}
+              <span>{isDark ? '라이트 모드' : '다크 모드'}</span>
             </button>
           )}
           <button
             type="button"
-            title="휴지통"
             onClick={() => setShowTrash(true)}
-            className="w-10 h-10 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+            className="w-full h-10 flex items-center gap-3 px-3 rounded-lg text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors text-sm font-medium"
           >
-            <Trash2 size={20} />
+            <Trash2 size={20} className="shrink-0" />
+            <span>휴지통</span>
           </button>
           <button
             type="button"
             onClick={() => onTabChange('settings')}
-            title={expiringCount > 0 ? `설정 — ${expiringCount}개 제품 만료 임박` : '설정'}
-            className={`relative w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${
+            className={`relative w-full h-10 flex items-center gap-3 px-3 rounded-lg transition-colors text-sm font-medium ${
               activeTab === 'settings'
                 ? 'bg-accent text-foreground'
                 : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
             }`}
           >
-            <Settings size={20} />
+            <Settings size={20} className="shrink-0" />
+            <span>설정</span>
             {expiringCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-background" />
+              <span className="absolute right-3 w-2 h-2 rounded-full bg-red-500 ring-2 ring-background" />
             )}
           </button>
         </div>
