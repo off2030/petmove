@@ -166,6 +166,11 @@ export function CaseList({
         </div>
       )}
 
+      {/* Page title — editorial headline (Precision Canvas) */}
+      <div className="shrink-0">
+        <h2 className="text-2xl font-bold tracking-tight text-foreground">고객 목록</h2>
+      </div>
+
       {/* Search bar + add button */}
       <div className="flex items-center gap-sm">
         <div className="relative flex-1">
@@ -249,14 +254,24 @@ export function CaseList({
         </button>
       </div>
 
-      {/* Scrollable list — minimal scrollbar (thin, subtle, drag-able) */}
+      {/* Column headers — no divider, just spacing */}
+      <div className="shrink-0 px-sm">
+        <div className="grid grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-baseline gap-sm text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
+          <span>고객이름</span>
+          <span>동물이름</span>
+          <span>목적지</span>
+          <span>마이크로칩번호</span>
+        </div>
+      </div>
+
+      {/* Scrollable list — no dividers, vertical rhythm only (Precision List) */}
       <div className="flex-1 overflow-y-auto scrollbar-minimal -mx-3">
         {visibleCases.length === 0 ? (
           <div className="py-12 text-center text-sm text-muted-foreground">
             결과가 없습니다
           </div>
         ) : (
-          <ul className="space-y-0.5">
+          <ul className="space-y-1">
             {visibleCases.map((c, i) => {
               const isSelected = c.id === selectedId
               return (
@@ -265,7 +280,7 @@ export function CaseList({
                     type="button"
                     onClick={() => { selectCase(c.id); setHighlight(-1) }}
                     className={cn(
-                      'block w-full rounded-md px-sm py-3 text-left transition-colors',
+                      'block w-full rounded-lg px-sm py-md text-left transition-colors',
                       'hover:bg-accent/60',
                       isSelected && 'bg-accent',
                       !isSelected && i === highlight && 'bg-accent/40',
