@@ -1,9 +1,10 @@
 'use client'
 
-import { ClipboardList, CheckSquare, Calculator as CalculatorIcon, Settings, Trash2 } from 'lucide-react'
+import { ClipboardList, CheckSquare, Calculator as CalculatorIcon, Settings, Trash2, Moon, Sun } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { TrashModal } from '@/components/cases/trash-modal'
 import { countExpiringProducts } from '@/lib/vaccine-lookup'
+import { useDarkMode } from '@/lib/use-dark-mode'
 
 export type TabId = 'cases' | 'todos' | 'calculator' | 'settings'
 
@@ -22,6 +23,7 @@ export function Sidebar({
 }) {
   const [showTrash, setShowTrash] = useState(false)
   const expiringCount = useMemo(() => countExpiringProducts(), [])
+  const { isDark, toggle, mounted } = useDarkMode()
 
   return (
     <>
@@ -50,6 +52,16 @@ export function Sidebar({
 
         {/* Bottom actions */}
         <div className="flex flex-col items-center gap-1">
+          {mounted && (
+            <button
+              type="button"
+              onClick={toggle}
+              title={isDark ? '라이트 모드' : '다크 모드'}
+              className="w-10 h-10 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+            >
+              {isDark ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+          )}
           <button
             type="button"
             title="휴지통"
