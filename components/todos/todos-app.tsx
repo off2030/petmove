@@ -383,13 +383,13 @@ export function TodosApp() {
     <div className="h-full overflow-hidden pt-32 pb-24 px-20 2xl:pt-36 2xl:pb-28 2xl:px-24 3xl:pt-44 3xl:pb-36 3xl:px-32 4xl:pt-52 4xl:pb-44 4xl:px-40 6xl:pt-64 6xl:pb-52 6xl:px-56">
       <div className="h-full mx-auto max-w-3xl 4xl:max-w-4xl 6xl:max-w-5xl flex flex-col">
       {/* Tabs */}
-      <div className="flex gap-1 mb-4 border-b border-border shrink-0">
+      <div className="flex gap-xs mb-4 border-b border-border shrink-0">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             type="button"
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            className={`px-md py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
               activeTab === tab.id
                 ? 'border-foreground text-foreground'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -452,12 +452,12 @@ function ShipmentDocsFooter() {
   }
 
   return (
-    <div className="shrink-0 mt-3 pt-3 border-t border-border/40 flex items-center gap-2">
+    <div className="shrink-0 mt-3 pt-3 border-t border-border/40 flex items-center gap-sm">
       <button
         type="button"
         onClick={() => setOpen(true)}
         disabled={busy}
-        className="text-xs px-3 py-1.5 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-50"
+        className="text-xs px-sm py-1.5 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-50"
       >
         Invoice
       </button>
@@ -502,7 +502,7 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
           <label className="text-xs font-medium text-foreground mb-2 block">
             검체수
           </label>
-          <div className="flex gap-2">
+          <div className="flex gap-sm">
             {[1, 2, 3, 4, 5].map(n => {
               const v = String(n)
               const selected = tubeCount === v
@@ -531,7 +531,7 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
           </label>
           <div className="space-y-2">
             {labs.map(lab => (
-              <label key={lab.value} className="flex items-center gap-2 cursor-pointer">
+              <label key={lab.value} className="flex items-center gap-sm cursor-pointer">
                 <input
                   type="radio"
                   name="consignee_lab"
@@ -547,18 +547,18 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
         </div>
 
         {/* 버튼 */}
-        <div className="flex gap-2 justify-end">
+        <div className="flex gap-sm justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="text-xs px-3 py-1.5 rounded border border-border text-foreground hover:bg-accent transition-colors"
+            className="text-xs px-sm py-1.5 rounded border border-border text-foreground hover:bg-accent transition-colors"
           >
             취소
           </button>
           <button
             type="button"
             onClick={handleSubmit}
-            className="text-xs px-3 py-1.5 rounded bg-slate-700 text-white hover:bg-slate-800 transition-colors"
+            className="text-xs px-sm py-1.5 rounded bg-slate-700 text-white hover:bg-slate-800 transition-colors"
           >
             생성
           </button>
@@ -647,14 +647,14 @@ function ImportReportAddPicker({
       />
       <ul className="absolute left-0 top-full mt-1 z-20 w-[22rem] max-h-72 overflow-y-auto scrollbar-minimal rounded-md border border-border/50 bg-background shadow-md py-1">
         {candidates.length === 0 ? (
-          <li className="px-3 py-2 text-sm text-muted-foreground">결과 없음</li>
+          <li className="px-sm py-2 text-sm text-muted-foreground">결과 없음</li>
         ) : (
           candidates.map((c, i) => (
             <li key={c.id}>
               <button
                 type="button"
                 onClick={() => pick(c)}
-                className={`w-full text-left px-3 py-1.5 text-sm transition-colors ${i === highlight ? 'bg-accent' : 'hover:bg-accent/60'}`}
+                className={`w-full text-left px-sm py-1.5 text-sm transition-colors ${i === highlight ? 'bg-accent' : 'hover:bg-accent/60'}`}
               >
                 <span>{c.pet_name ?? '—'}</span>
                 <span className="ml-2 text-muted-foreground">{c.customer_name ?? ''}</span>

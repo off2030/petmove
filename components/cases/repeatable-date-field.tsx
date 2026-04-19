@@ -465,11 +465,11 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
       onDragLeave={!expanded ? handleDragLeave : undefined}
       onDrop={!expanded ? handleDropNew : undefined}
       className={cn(
-        "grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0 rounded-md transition-colors",
+        "grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0 rounded-md transition-colors",
         !expanded && dragOver && "bg-accent/40 ring-2 ring-ring/30 ring-dashed",
       )}
     >
-      <div className="flex items-center gap-1 pt-1">
+      <div className="flex items-center gap-xs pt-1">
         {/* Label: click to toggle expanded */}
         <button
           type="button"
@@ -568,7 +568,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
       {expanded && (
         <div className="min-w-0 space-y-2">
           {addingNew && (
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-baseline gap-sm">
               <DateInput
                 initial=""
                 onSave={saveNewDate}

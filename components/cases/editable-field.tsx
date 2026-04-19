@@ -276,7 +276,7 @@ export function EditableField({
                 <button
                   type="button"
                   onClick={() => { handleSelectChange_custom(null); setEditing(false) }}
-                  className="w-full text-left px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors"
+                  className="w-full text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors"
                 >
                   —
                 </button>
@@ -287,7 +287,7 @@ export function EditableField({
                     type="button"
                     onClick={() => { handleSelectChange_custom(opt.value); setEditing(false) }}
                     className={cn(
-                      'w-full text-left px-3 py-1.5 text-sm hover:bg-accent/60 transition-colors',
+                      'w-full text-left px-sm py-1.5 text-sm hover:bg-accent/60 transition-colors',
                       String(rawValue) === opt.value && 'font-medium',
                     )}
                   >
@@ -318,7 +318,7 @@ export function EditableField({
           className="w-44 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
         />
       ) : editing ? (
-        <div className="flex items-start gap-2">
+        <div className="flex items-start gap-sm">
           {renderInput(spec, value, (v, fromCompositionEnd) => {
             if (composingRef.current && !fromCompositionEnd) { setValue(v); return }
             const filtered = applyFilter(spec, v, effectiveLang)
@@ -389,9 +389,9 @@ export function EditableField({
   ) : null
 
   return (
-    <div className={cn("grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0", clearable && "group/row")}>
+    <div className={cn("grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0", clearable && "group/row")}>
       <div className="text-sm text-muted-foreground pt-1">{spec.label}</div>
-      <div className="min-w-0 flex items-baseline gap-2">
+      <div className="min-w-0 flex items-baseline gap-sm">
         {(() => {
           const noCopy = spec.type === 'longtext' || spec.key === 'select' || spec.key === 'status'
           if ((isDate && editing) || (isSelect && editing) || editing) return valueCell
@@ -402,7 +402,7 @@ export function EditableField({
           // CopyButton 을 flex 흐름에 두어 뒤따르는 ✕ 와 겹치지 않게 한다
           // (과거: absolute left-full → ✕ 와 같은 위치 점유).
           return (
-            <div className="group/val flex items-baseline gap-1 w-fit">
+            <div className="group/val flex items-baseline gap-xs w-fit">
               {valueCell}
               <CopyButton
                 value={isEmpty ? '' : display}

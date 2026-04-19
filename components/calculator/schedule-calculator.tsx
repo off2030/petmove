@@ -50,9 +50,9 @@ function DaysLabel({ date }: { date: string }) {
 function ResultRow({ label, date, note }: { label: string; date: string; note?: string }) {
   if (!date) return null
   return (
-    <div className="rounded-lg border border-border bg-card px-4 py-3">
+    <div className="rounded-lg border border-border bg-card px-md py-3">
       <div className="text-xs text-muted-foreground mb-0.5">{label}</div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-md">
         <span className="text-base font-semibold tabular-nums">{formatDate(date)}</span>
         <DaysLabel date={date} />
       </div>
@@ -76,7 +76,7 @@ function DateInput({ value, onChange }: { value: string; onChange: (v: string) =
       type="date"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-foreground"
+      className="w-full rounded-lg border border-border bg-background px-sm py-2 text-sm focus:outline-none focus:border-foreground"
     />
   )
 }
@@ -100,7 +100,7 @@ export function ScheduleCalculator() {
       </div>
 
       {/* Country */}
-      <div className="flex gap-2">
+      <div className="flex gap-sm">
         {COUNTRIES.map((c) => {
           const active = country === c.value
           return (
@@ -108,7 +108,7 @@ export function ScheduleCalculator() {
               key={c.value}
               type="button"
               onClick={() => setCountry(c.value)}
-              className={`flex-1 rounded-lg border-2 px-3 py-3 text-sm font-bold transition ${
+              className={`flex-1 rounded-lg border-2 px-sm py-3 text-sm font-bold transition ${
                 active
                   ? 'border-foreground bg-foreground/5 text-foreground'
                   : 'border-border bg-background text-muted-foreground hover:border-muted-foreground/40'

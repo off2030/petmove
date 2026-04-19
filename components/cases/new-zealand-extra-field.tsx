@@ -147,7 +147,7 @@ export function NewZealandExtraField({ caseId, caseRow }: { caseId: string; case
     const val = extra[key] ?? null
     const isEditing = editingField === key
     return (
-      <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1">
+      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1">
         <span className="text-sm text-muted-foreground pt-1">{label}</span>
         {isEditing ? (
           <InlineInput initial={val ?? ''} placeholder={placeholder} onSave={(v) => saveField(key, v)} onCancel={() => setEditingField(null)} />
@@ -176,7 +176,7 @@ export function NewZealandExtraField({ caseId, caseRow }: { caseId: string; case
       )}
     >
       {/* AI input */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1">
+      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1">
         <span className="text-sm text-muted-foreground pt-1">AI 입력</span>
         <div className="min-w-0 space-y-1">
           {showInput ? (
@@ -192,7 +192,7 @@ export function NewZealandExtraField({ caseId, caseRow }: { caseId: string; case
               className="w-full min-h-[3rem] rounded-md border border-border/50 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-none"
             />
           ) : (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-xs">
               <button type="button"
                 onClick={() => { setShowInput(true); setTimeout(() => textRef.current?.focus(), 50) }}
                 disabled={extracting}

@@ -90,7 +90,7 @@ export function CaseDetail({ caseRow }: { caseRow: CaseRow }) {
       {groups.map((g) => (
         <React.Fragment key={g.group}>
         <section className="mb-7">
-          <div className="mb-2 flex items-center gap-1">
+          <div className="mb-2 flex items-center gap-xs">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {g.group}
             </h3>
@@ -422,8 +422,8 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40">
-      <div className="flex items-center gap-1 pt-1">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40">
+      <div className="flex items-center gap-xs pt-1">
         <span className="text-sm text-muted-foreground">{spec.label}</span>
         {!showSecondary && (
           <button type="button" onClick={() => { setShowSecondary(true); setEditingSecondary(true); setSecVal(''); setSecError(null) }}
@@ -504,8 +504,8 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40">
-      <div className="flex items-center gap-1 pt-1">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40">
+      <div className="flex items-center gap-xs pt-1">
         <span className="text-sm text-muted-foreground">마이크로칩</span>
       </div>
       <div className="group/item flex items-baseline gap-[10px] min-w-0 flex-wrap">
@@ -599,7 +599,7 @@ function FieldToggleMenu({ items, activeKeys, onToggle }: {
                 type="button"
                 onClick={() => onToggle(item.key)}
                 className={cn(
-                  'w-full text-left rounded-sm px-2 py-1.5 text-sm hover:bg-accent transition-colors flex items-center gap-2',
+                  'w-full text-left rounded-sm px-2 py-1.5 text-sm hover:bg-accent transition-colors flex items-center gap-sm',
                   active && 'text-foreground',
                   !active && 'text-muted-foreground',
                 )}

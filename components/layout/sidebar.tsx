@@ -27,14 +27,14 @@ export function Sidebar({
 
   return (
     <>
-      <aside className="w-48 shrink-0 h-screen flex flex-col py-4 border-r border-border bg-background">
+      <aside className="w-48 shrink-0 h-screen flex flex-col py-md border-r border-border bg-background">
         {/* Logo */}
-        <div className="mb-6 px-4 w-full">
+        <div className="mb-lg px-md w-full">
           <h1 className="text-lg font-bold text-foreground text-center">펫무브워크</h1>
         </div>
 
         {/* Top nav */}
-        <nav className="flex flex-col gap-1 flex-1 px-2">
+        <nav className="flex flex-col gap-xs flex-1 px-sm">
           {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
             const active = activeTab === id
             return (
@@ -42,7 +42,7 @@ export function Sidebar({
                 key={id}
                 type="button"
                 onClick={() => onTabChange(id)}
-                className={`w-full h-10 flex items-center gap-3 px-3 rounded-lg transition-colors text-sm font-medium ${
+                className={`w-full h-10 flex items-center gap-md px-sm rounded-lg transition-colors text-sm font-medium ${
                   active
                     ? 'bg-accent text-foreground'
                     : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
@@ -56,12 +56,12 @@ export function Sidebar({
         </nav>
 
         {/* Bottom actions */}
-        <div className="flex flex-col gap-1 px-2 border-t border-border pt-4">
+        <div className="flex flex-col gap-xs px-sm border-t border-border pt-md">
           {mounted && (
             <button
               type="button"
               onClick={toggle}
-              className="w-full h-10 flex items-center gap-3 px-3 rounded-lg text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors text-sm font-medium"
+              className="w-full h-10 flex items-center gap-md px-sm rounded-lg text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors text-sm font-medium"
             >
               {isDark ? <Sun size={20} className="shrink-0" /> : <Moon size={20} className="shrink-0" />}
               <span>{isDark ? '라이트 모드' : '다크 모드'}</span>
@@ -70,7 +70,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={() => setShowTrash(true)}
-            className="w-full h-10 flex items-center gap-3 px-3 rounded-lg text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors text-sm font-medium"
+            className="w-full h-10 flex items-center gap-md px-sm rounded-lg text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors text-sm font-medium"
           >
             <Trash2 size={20} className="shrink-0" />
             <span>휴지통</span>
@@ -78,7 +78,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={() => onTabChange('settings')}
-            className={`relative w-full h-10 flex items-center gap-3 px-3 rounded-lg transition-colors text-sm font-medium ${
+            className={`relative w-full h-10 flex items-center gap-md px-sm rounded-lg transition-colors text-sm font-medium ${
               activeTab === 'settings'
                 ? 'bg-accent text-foreground'
                 : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'

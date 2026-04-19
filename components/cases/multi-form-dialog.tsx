@@ -83,7 +83,7 @@ export function MultiFormDialog({ caseId, formKey, onClose }: Props) {
           <>
             <div className="space-y-1.5 mb-5">
               {preview.cases.map((c, i) => (
-                <label key={c.id} className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                <label key={c.id} className="flex items-center gap-sm text-sm cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={selected.has(c.id)}
@@ -96,12 +96,12 @@ export function MultiFormDialog({ caseId, formKey, onClose }: Props) {
               ))}
             </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-sm">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={generating}
-                className="px-3 py-1.5 text-sm rounded-md border border-border hover:bg-accent/60 transition-colors disabled:opacity-50"
+                className="px-sm py-1.5 text-sm rounded-md border border-border hover:bg-accent/60 transition-colors disabled:opacity-50"
               >
                 취소
               </button>
@@ -109,7 +109,7 @@ export function MultiFormDialog({ caseId, formKey, onClose }: Props) {
                 type="button"
                 onClick={handleConfirm}
                 disabled={generating || selected.size === 0}
-                className="px-3 py-1.5 text-sm rounded-md bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-50"
+                className="px-sm py-1.5 text-sm rounded-md bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-50"
               >
                 {generating ? '생성 중…' : '발급'}
               </button>

@@ -104,15 +104,15 @@ export function CaseHistory({ caseId }: { caseId: string }) {
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-3">
               {loading ? (
-                <div className="text-sm text-muted-foreground py-4 text-center">로딩...</div>
+                <div className="text-sm text-muted-foreground py-md text-center">로딩...</div>
               ) : entries.length === 0 ? (
-                <div className="text-sm text-muted-foreground py-4 text-center">변경 이력이 없습니다</div>
+                <div className="text-sm text-muted-foreground py-md text-center">변경 이력이 없습니다</div>
               ) : (
                 <ul className="space-y-2">
                   {entries.map((e) => (
                     <li
                       key={e.id}
-                      className="flex items-baseline gap-3 text-sm py-1.5 border-b border-border/30 last:border-0"
+                      className="flex items-baseline gap-md text-sm py-1.5 border-b border-border/30 last:border-0"
                     >
                       <span className="shrink-0 text-xs font-mono text-muted-foreground">
                         {formatTime(e.changed_at)}

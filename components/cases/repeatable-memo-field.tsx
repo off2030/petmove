@@ -61,8 +61,8 @@ export function RepeatableMemoField({ caseId, caseRow }: { caseId: string; caseR
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0">
-      <div className="flex items-center gap-1 pt-1">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0">
+      <div className="flex items-center gap-xs pt-1">
         <span className="text-sm text-muted-foreground">메모</span>
         <button
           type="button"
@@ -76,7 +76,7 @@ export function RepeatableMemoField({ caseId, caseRow }: { caseId: string; caseR
       </div>
       <div className="min-w-0 space-y-1">
         {memos.map((m, i) => (
-          <div key={i} className="group/item flex items-start gap-2">
+          <div key={i} className="group/item flex items-start gap-sm">
             {editIdx === i ? (
               <MemoInput
                 initial={m}

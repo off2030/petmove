@@ -30,7 +30,7 @@ function CompanySection() {
           <input
             type="text"
             placeholder={placeholder}
-            className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            className="w-full px-sm py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             disabled
           />
         </div>
@@ -56,7 +56,7 @@ function DataSection() {
         <button
           type="button"
           onClick={() => setShowTrash(true)}
-          className="px-4 py-2 text-sm bg-muted hover:bg-accent rounded-lg transition-colors"
+          className="px-md py-2 text-sm bg-muted hover:bg-accent rounded-lg transition-colors"
         >
           휴지통 열기
         </button>
@@ -70,7 +70,7 @@ function DataSection() {
         </p>
         <button
           type="button"
-          className="px-4 py-2 text-sm bg-muted hover:bg-accent rounded-lg transition-colors opacity-50 cursor-not-allowed"
+          className="px-md py-2 text-sm bg-muted hover:bg-accent rounded-lg transition-colors opacity-50 cursor-not-allowed"
           disabled
         >
           CSV 내보내기 (준비 중)
@@ -91,16 +91,16 @@ export function SettingsApp() {
   const [activeTab, setActiveTab] = useState<TabId>('company')
 
   return (
-    <div className="h-full px-8 py-6 4xl:px-12 4xl:py-8 6xl:px-16 6xl:py-10">
+    <div className="h-full px-xl py-lg 4xl:px-12 4xl:py-2xl 6xl:px-16 6xl:py-10">
       <h1 className="text-xl font-semibold mb-6">설정</h1>
 
-      <div className="flex gap-1 mb-6 border-b border-border">
+      <div className="flex gap-xs mb-6 border-b border-border">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             type="button"
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            className={`px-md py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
               activeTab === tab.id
                 ? 'border-foreground text-foreground'
                 : 'border-transparent text-muted-foreground hover:text-foreground'

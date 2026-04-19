@@ -26,7 +26,7 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1">
       <span className="text-sm text-muted-foreground pt-1">해외주소</span>
       {editing ? (
         <AddressInput

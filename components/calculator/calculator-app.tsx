@@ -41,13 +41,13 @@ export function CalculatorApp() {
   return (
     <div className="h-full overflow-auto scrollbar-minimal pt-32 pb-24 px-20 2xl:pt-36 2xl:pb-28 2xl:px-24 3xl:pt-44 3xl:pb-36 3xl:px-32 4xl:pt-52 4xl:pb-44 4xl:px-40 6xl:pt-64 6xl:pb-52 6xl:px-56">
       <div className="mx-auto max-w-3xl 4xl:max-w-4xl 6xl:max-w-5xl">
-        <div className="mb-6 flex gap-1 border-b border-border">
+        <div className="mb-6 flex gap-xs border-b border-border">
           {MODES.map((m) => (
             <button
               key={m.value}
               type="button"
               onClick={() => setMode(m.value)}
-              className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              className={`px-md py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
                 mode === m.value
                   ? 'border-foreground text-foreground'
                   : 'border-transparent text-muted-foreground hover:text-foreground'

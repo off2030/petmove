@@ -221,11 +221,11 @@ export function AddressField({
   return (
     <>
       {/* Korean address */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40">
+      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40">
         <div className="pt-1 text-sm text-muted-foreground">한국주소</div>
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-sm min-w-0">
           {editingKr ? (
-            <div className="flex items-center gap-2 flex-1">
+            <div className="flex items-center gap-sm flex-1">
               <input
                 ref={krInputRef}
                 type="text"
@@ -244,7 +244,7 @@ export function AddressField({
               </button>
             </div>
           ) : (
-            <div className="group/kr relative flex items-center gap-1 min-w-0 flex-1">
+            <div className="group/kr relative flex items-center gap-xs min-w-0 flex-1">
               <button type="button" onClick={krEmpty ? handleSearch : startEditKr}
                 className={cn('text-left rounded-md px-2 py-1 -mx-2 text-sm transition-colors hover:bg-accent/60 cursor-text', krEmpty && 'text-muted-foreground/60 italic')}>
                 {krDisplay}
@@ -272,9 +272,9 @@ export function AddressField({
 
       {/* Detail address input */}
       {showDetail && (
-        <div className="grid grid-cols-[140px_1fr_auto] items-start gap-3 py-1 border-b border-border/40">
+        <div className="grid grid-cols-[140px_1fr_auto] items-start gap-md py-1 border-b border-border/40">
           <div className="pt-1 text-sm text-muted-foreground">상세 주소</div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-sm">
             <input ref={detailRef} type="text" value={detailAddr} onChange={(e) => setDetailAddr(e.target.value)}
               placeholder="동/호수 입력"
               onKeyDown={(e) => { if (e.key === 'Enter') handleDetailSave(); if (e.key === 'Escape') setShowDetail(false) }}
@@ -289,12 +289,12 @@ export function AddressField({
       )}
 
       {/* English address */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40">
+      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40">
         <div className="pt-1 text-sm text-muted-foreground">영문주소</div>
         <div className="min-w-0">
           {editingEn ? (
             <>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-sm">
                 <input ref={enInputRef} type="text" value={enVal}
                   onChange={(e) => {
                     if (composingRef.current) { setEnVal(e.target.value); return }
@@ -341,7 +341,7 @@ export function AddressField({
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30" onClick={() => setShowModal(false)} />
           <div className="relative bg-background rounded-lg shadow-lg overflow-hidden" style={{ width: '500px', height: '500px' }}>
-            <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
+            <div className="flex items-center justify-between px-md py-2 border-b border-border/50">
               <span className="text-sm font-medium">주소 검색</span>
               <button type="button" onClick={() => setShowModal(false)}
                 className="text-sm text-muted-foreground hover:text-foreground">

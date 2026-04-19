@@ -92,8 +92,8 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0">
-      <div className="flex items-center gap-1 pt-1">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0">
+      <div className="flex items-center gap-xs pt-1">
         <span className="text-sm text-muted-foreground">결제</span>
         <button
           type="button"
@@ -290,12 +290,12 @@ function MethodDropdown({ current, onSelect, onClose }: {
       <ul className="absolute left-0 top-0 z-20 min-w-[140px] rounded-md border border-border/50 bg-background py-1 shadow-md">
         <li>
           <button type="button" onClick={() => onSelect(null)}
-            className="w-full text-left px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors">—</button>
+            className="w-full text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors">—</button>
         </li>
         {METHODS.map(m => (
           <li key={m.value}>
             <button type="button" onClick={() => onSelect(m.value)}
-              className={cn('w-full text-left px-3 py-1.5 text-sm hover:bg-accent/60 transition-colors', current === m.value && 'font-medium')}>
+              className={cn('w-full text-left px-sm py-1.5 text-sm hover:bg-accent/60 transition-colors', current === m.value && 'font-medium')}>
               {m.label}
             </button>
           </li>

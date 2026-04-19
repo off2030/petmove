@@ -103,7 +103,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0">
       <div className="pt-1 text-sm text-muted-foreground">품종</div>
       <div ref={containerRef} className="relative min-w-0">
         {/* Display / trigger */}
@@ -161,7 +161,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
             {/* Options list */}
             <ul ref={listRef} className="max-h-60 overflow-y-auto scrollbar-minimal py-1">
               {filtered.length === 0 ? (
-                <li className="px-3 py-2 text-sm text-muted-foreground">검색 결과 없음</li>
+                <li className="px-sm py-2 text-sm text-muted-foreground">검색 결과 없음</li>
               ) : (
                 filtered.map((b, i) => (
                   <li key={`${b.type}:${b.en}:${b.ko}`}>
@@ -169,7 +169,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                       type="button"
                       onClick={() => selectBreed(b)}
                       className={cn(
-                        'w-full text-left px-3 py-1.5 text-sm transition-colors',
+                        'w-full text-left px-sm py-1.5 text-sm transition-colors',
                         i === highlightIdx ? 'bg-accent' : 'hover:bg-accent/60',
                       )}
                     >
@@ -185,7 +185,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
               <button
                 type="button"
                 onClick={() => { setFreeMode(true); setFreeKo(''); setFreeEn('') }}
-                className="w-full text-left px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors"
+                className="w-full text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors"
               >
                 기타 (직접 입력)
               </button>

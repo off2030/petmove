@@ -248,7 +248,7 @@ export default function ApplyPage() {
 
   if (step === 1) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-md">
         <div className="w-full max-w-md text-center py-16">
           <div className="text-5xl mb-4">&#10003;</div>
           <h1 className="text-2xl font-bold mb-2">신청이 완료되었습니다</h1>
@@ -273,13 +273,13 @@ export default function ApplyPage() {
     )
   }
 
-  const inputClass = 'w-full h-12 rounded-lg border border-gray-300 bg-white px-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-  const selectClass = 'w-full h-12 rounded-lg border border-gray-300 bg-white px-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none'
+  const inputClass = 'w-full h-12 rounded-lg border border-gray-300 bg-white px-md text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+  const selectClass = 'w-full h-12 rounded-lg border border-gray-300 bg-white px-md text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none'
   const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="w-full max-w-lg mx-auto px-4 py-8">
+      <div className="w-full max-w-lg mx-auto px-md py-2xl">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">PetMove</h1>
@@ -326,7 +326,7 @@ export default function ApplyPage() {
               <label className={labelClass}>이동할 국가 <span className="text-red-500">*</span></label>
               {destination ? (
                 <button type="button" onClick={() => { setDestination(''); setDestQuery('') }}
-                  className="w-full h-12 flex items-center rounded-lg border border-gray-300 bg-gray-50 px-4 text-base text-left hover:bg-gray-100 transition-colors cursor-pointer">
+                  className="w-full h-12 flex items-center rounded-lg border border-gray-300 bg-gray-50 px-md text-base text-left hover:bg-gray-100 transition-colors cursor-pointer">
                   {DESTS.find(d => d.ko === destination)?.ko ?? destination} <span className="text-gray-400 ml-1">({DESTS.find(d => d.ko === destination)?.en ?? ''})</span>
                 </button>
               ) : (
@@ -352,12 +352,12 @@ export default function ApplyPage() {
                   {destQuery && (
                     <ul className="mt-1 rounded-lg border border-gray-200 bg-white max-h-48 overflow-y-auto">
                       {filteredDests.length === 0 ? (
-                        <li className="px-4 py-3 text-gray-500 text-sm">검색 결과 없음</li>
+                        <li className="px-md py-3 text-gray-500 text-sm">검색 결과 없음</li>
                       ) : (
                         filteredDests.slice(0, 10).map((d, i) => (
                           <li key={d.ko}>
                             <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setDestination(d.ko); setDestQuery(''); setDestHighlight(-1) }}
-                              className={`w-full text-left px-4 py-3 text-base transition-colors ${i === destHighlight ? 'bg-blue-50' : 'hover:bg-blue-50'}`}>
+                              className={`w-full text-left px-md py-3 text-base transition-colors ${i === destHighlight ? 'bg-blue-50' : 'hover:bg-blue-50'}`}>
                               {d.ko} <span className="text-gray-400">{d.en}</span>
                             </button>
                           </li>
@@ -381,7 +381,7 @@ export default function ApplyPage() {
               </div>
               <div>
                 <label className={labelClass}>영문성함 <span className="text-red-500">*</span> <span className="text-xs font-normal text-gray-400">여권과 동일하게</span></label>
-                <div className="flex gap-2">
+                <div className="flex gap-sm">
                   <input type="text" value={customerLastNameEn}
                     onCompositionStart={() => { composingRef.current = true }}
                     onChange={(e) => handleEnInput(e, setCustomerLastNameEn, 'lastNameEn')}
@@ -405,12 +405,12 @@ export default function ApplyPage() {
               </div>
               <div>
                 <label className={labelClass}>한국주소 <span className="text-red-500">*</span></label>
-                <div className="flex gap-2">
+                <div className="flex gap-sm">
                   <input type="text" value={addressKr} onChange={(e) => setAddressKr(e.target.value)}
                     placeholder="클릭하여 주소 검색" className={inputClass + ' flex-1 cursor-pointer'} readOnly
                     onFocus={() => { if (!addressKr) handleAddrSearch() }} />
                   <button type="button" onClick={handleAddrSearch}
-                    className="shrink-0 h-12 px-4 rounded-lg bg-gray-100 border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors">
+                    className="shrink-0 h-12 px-md rounded-lg bg-gray-100 border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors">
                     주소 검색
                   </button>
                 </div>
@@ -436,7 +436,7 @@ export default function ApplyPage() {
           {/* 마리 수 선택 */}
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">몇 마리를 신청하시나요?</h2>
-            <div className="flex gap-2">
+            <div className="flex gap-sm">
               {[1, 2, 3, 4, 5].map(n => (
                 <button key={n} type="button" onClick={() => handlePetCountChange(n)}
                   className={`h-10 w-10 rounded-lg border text-sm font-medium transition-colors ${petCount === n ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}>
@@ -472,7 +472,7 @@ export default function ApplyPage() {
 
           {/* Error */}
           {error && (
-            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            <div className="rounded-lg bg-red-50 border border-red-200 px-md py-3 text-sm text-red-700">
               {error}
             </div>
           )}
@@ -496,7 +496,7 @@ export default function ApplyPage() {
       {showAddrModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowAddrModal(false)}>
           <div className="relative w-full max-w-lg mx-4 bg-white rounded-xl shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-4 py-3 border-b">
+            <div className="flex items-center justify-between px-md py-3 border-b">
               <span className="text-sm font-medium">주소 검색</span>
               <button type="button" onClick={() => setShowAddrModal(false)}
                 className="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
@@ -568,7 +568,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, comp
       {/* 종 */}
       <div>
         <label className={labelClass}>종 <span className="text-red-500">*</span></label>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-sm">
           {SPECIES_OPTIONS.map(o => (
             <button key={o.value} type="button"
               onClick={() => { updatePet(index, 'species', o.value); if (pet.breed) { updatePet(index, 'breed', ''); updatePet(index, 'breedEn', ''); updatePet(index, 'breedQuery', '') } }}
@@ -584,7 +584,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, comp
         <label className={labelClass}>품종 <span className="text-red-500">*</span></label>
         {pet.breed ? (
           <button type="button" onClick={() => { updatePet(index, 'breed', ''); updatePet(index, 'breedEn', ''); updatePet(index, 'breedQuery', '') }}
-            className="w-full h-12 flex items-center rounded-lg border border-gray-300 bg-gray-50 px-4 text-base text-left hover:bg-gray-100 transition-colors cursor-pointer">
+            className="w-full h-12 flex items-center rounded-lg border border-gray-300 bg-gray-50 px-md text-base text-left hover:bg-gray-100 transition-colors cursor-pointer">
             {pet.breed} <span className="text-gray-400 ml-1">{pet.breedEn}</span>
           </button>
         ) : (
@@ -608,7 +608,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, comp
                 {filteredBreeds.slice(0, 10).map((b, i) => (
                   <li key={`${b.type}:${b.en}`}>
                     <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { updatePet(index, 'breed', b.ko); updatePet(index, 'breedEn', b.en); updatePet(index, 'breedQuery', ''); setBreedHighlight(-1) }}
-                      className={`w-full text-left px-4 py-3 text-base transition-colors ${i === breedHighlight ? 'bg-blue-50' : 'hover:bg-blue-50'}`}>
+                      className={`w-full text-left px-md py-3 text-base transition-colors ${i === breedHighlight ? 'bg-blue-50' : 'hover:bg-blue-50'}`}>
                       {b.ko} <span className="text-gray-400">{b.en}</span>
                     </button>
                   </li>
@@ -625,7 +625,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, comp
       {/* 모색 */}
       <div>
         <label className={labelClass}>모색 <span className="text-red-500">*</span> <span className="text-xs font-normal text-gray-400">최대 3개</span></label>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-sm">
           {COLORS.map(c => {
             const selected = pet.selectedColors.includes(c.ko)
             return (
@@ -634,7 +634,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, comp
                   if (selected) updatePet(index, 'selectedColors', pet.selectedColors.filter(v => v !== c.ko))
                   else if (pet.selectedColors.length < 3) updatePet(index, 'selectedColors', [...pet.selectedColors, c.ko])
                 }}
-                className={`h-10 px-4 rounded-lg border text-sm font-medium transition-colors ${selected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'} ${!selected && pet.selectedColors.length >= 3 ? 'opacity-40 cursor-not-allowed' : ''}`}>
+                className={`h-10 px-md rounded-lg border text-sm font-medium transition-colors ${selected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'} ${!selected && pet.selectedColors.length >= 3 ? 'opacity-40 cursor-not-allowed' : ''}`}>
                 {c.ko}
               </button>
             )
@@ -645,11 +645,11 @@ function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, comp
       {/* 성별 */}
       <div>
         <label className={labelClass}>성별 <span className="text-red-500">*</span></label>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-sm">
           {SEX_OPTIONS.map(o => (
             <button key={o.value} type="button"
               onClick={() => updatePet(index, 'sex', o.value)}
-              className={`h-10 px-4 rounded-lg border text-sm font-medium transition-colors ${pet.sex === o.value ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}>
+              className={`h-10 px-md rounded-lg border text-sm font-medium transition-colors ${pet.sex === o.value ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}>
               {o.label}
             </button>
           ))}

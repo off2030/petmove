@@ -214,8 +214,8 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   /* ── Render ── */
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0">
-      <div className="flex items-center gap-1 pt-1">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0">
+      <div className="flex items-center gap-xs pt-1">
         <span className="text-sm text-muted-foreground">메모</span>
         <button
           type="button"
@@ -258,7 +258,7 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
 
         {/* ── Text memos ── */}
         {notes.map((note, i) => note.type === 'text' && (
-          <div key={i} className="group/item flex items-start gap-2">
+          <div key={i} className="group/item flex items-start gap-sm">
             {editIdx === i ? (
               <NoteTextInput
                 initial={note.content}
@@ -305,8 +305,8 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
 
         {/* ── File attachments ── */}
         {notes.map((note, i) => note.type === 'file' && (
-          <div key={i} className="group/item flex items-start gap-2">
-            <div className="flex items-center gap-2 flex-1 min-w-0 py-1">
+          <div key={i} className="group/item flex items-start gap-sm">
+            <div className="flex items-center gap-sm flex-1 min-w-0 py-1">
               <span className="text-muted-foreground/60 text-xs shrink-0">📎</span>
               <a
                 href={note.url}

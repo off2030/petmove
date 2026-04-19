@@ -17,7 +17,7 @@ function StatusBadge({ status, daysLeft }: { status: ExpiryStatus; daysLeft: num
   if (status === 'expired' && daysLeft !== null) extra = ` (${Math.abs(daysLeft)}일 경과)`
   else if ((status === 'urgent' || status === 'warning') && daysLeft !== null) extra = ` (D-${daysLeft})`
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium ${s.bg} ${s.text}`}>
+    <span className={`inline-flex items-center gap-xs.5 px-2 py-0.5 rounded text-xs font-medium ${s.bg} ${s.text}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
       {s.label}{extra}
     </span>
@@ -56,21 +56,21 @@ export function VaccineSection() {
   return (
     <div className="space-y-6">
       {/* Summary */}
-      <div className="flex gap-3 text-sm">
+      <div className="flex gap-md text-sm">
         {counts.expired > 0 && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-700">
+          <div className="flex items-center gap-xs.5 px-sm py-1.5 rounded-lg bg-red-50 text-red-700">
             <span className="w-2 h-2 rounded-full bg-red-500" />
             만료 {counts.expired}
           </div>
         )}
         {counts.urgent > 0 && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-50 text-orange-700">
+          <div className="flex items-center gap-xs.5 px-sm py-1.5 rounded-lg bg-orange-50 text-orange-700">
             <span className="w-2 h-2 rounded-full bg-orange-500" />
             30일 이내 {counts.urgent}
           </div>
         )}
         {counts.warning > 0 && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-50 text-yellow-700">
+          <div className="flex items-center gap-xs.5 px-sm py-1.5 rounded-lg bg-yellow-50 text-yellow-700">
             <span className="w-2 h-2 rounded-full bg-yellow-500" />
             90일 이내 {counts.warning}
           </div>
@@ -88,27 +88,27 @@ export function VaccineSection() {
       {/* Groups */}
       {grouped.map(([categoryLabel, list]) => (
         <div key={categoryLabel} className="border border-border rounded-lg overflow-hidden">
-          <div className="bg-muted/50 px-4 py-2 text-sm font-medium">{categoryLabel}</div>
+          <div className="bg-muted/50 px-md py-2 text-sm font-medium">{categoryLabel}</div>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-xs text-muted-foreground">
-                <th className="text-left px-4 py-2 font-medium">제품명</th>
-                <th className="text-left px-4 py-2 font-medium">제조사</th>
-                <th className="text-left px-4 py-2 font-medium">Batch</th>
-                <th className="text-left px-4 py-2 font-medium">만료일</th>
-                <th className="text-left px-4 py-2 font-medium">상태</th>
-                <th className="text-left px-4 py-2 font-medium">기준</th>
+                <th className="text-left px-md py-2 font-medium">제품명</th>
+                <th className="text-left px-md py-2 font-medium">제조사</th>
+                <th className="text-left px-md py-2 font-medium">Batch</th>
+                <th className="text-left px-md py-2 font-medium">만료일</th>
+                <th className="text-left px-md py-2 font-medium">상태</th>
+                <th className="text-left px-md py-2 font-medium">기준</th>
               </tr>
             </thead>
             <tbody>
               {list.map((p, i) => (
                 <tr key={i} className="border-b border-border/50 last:border-0 hover:bg-accent/20">
-                  <td className="px-4 py-2">{p.displayName}</td>
-                  <td className="px-4 py-2 text-muted-foreground">{p.manufacturer}</td>
-                  <td className="px-4 py-2 font-mono text-xs">{p.batch ?? '—'}</td>
-                  <td className="px-4 py-2 text-muted-foreground">{p.expiry ?? '—'}</td>
-                  <td className="px-4 py-2"><StatusBadge status={p.status} daysLeft={p.daysLeft} /></td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">{p.meta}</td>
+                  <td className="px-md py-2">{p.displayName}</td>
+                  <td className="px-md py-2 text-muted-foreground">{p.manufacturer}</td>
+                  <td className="px-md py-2 font-mono text-xs">{p.batch ?? '—'}</td>
+                  <td className="px-md py-2 text-muted-foreground">{p.expiry ?? '—'}</td>
+                  <td className="px-md py-2"><StatusBadge status={p.status} daysLeft={p.daysLeft} /></td>
+                  <td className="px-md py-2 text-xs text-muted-foreground">{p.meta}</td>
                 </tr>
               ))}
             </tbody>

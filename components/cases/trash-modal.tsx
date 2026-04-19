@@ -70,7 +70,7 @@ export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRest
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
       <div className="relative w-full max-w-lg mx-4 bg-background rounded-xl shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b">
+        <div className="flex items-center justify-between px-5 py-md border-b">
           <h2 className="text-sm font-semibold">🗑️ 휴지통</h2>
           <button type="button" onClick={onClose}
             className="text-muted-foreground hover:text-foreground text-lg">&times;</button>
@@ -81,15 +81,15 @@ export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRest
           <div className="px-5 py-3 border-b">
             <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
               placeholder="이름 검색" autoFocus
-              className="w-full h-9 rounded-md border border-border/50 bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30" />
+              className="w-full h-9 rounded-md border border-border/50 bg-background px-sm text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30" />
           </div>
         )}
 
         <div className="max-h-[400px] overflow-y-auto">
           {loading ? (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">불러오는 중...</div>
+            <div className="px-5 py-2xl text-center text-sm text-muted-foreground">불러오는 중...</div>
           ) : items.length === 0 ? (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">휴지통이 비어 있습니다</div>
+            <div className="px-5 py-2xl text-center text-sm text-muted-foreground">휴지통이 비어 있습니다</div>
           ) : (
             <ul>
               {items.filter(item => {
@@ -103,7 +103,7 @@ export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRest
                     <span className="text-sm text-muted-foreground ml-2">{item.pet_name}</span>
                     <span className="text-xs text-muted-foreground/60 ml-2">삭제 {formatDate(item.deleted_at)}</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-sm">
                     <button type="button" onClick={() => handleRestore(item.id)} disabled={acting}
                       className="text-xs text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50">
                       복원

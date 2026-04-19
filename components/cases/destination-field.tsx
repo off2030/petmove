@@ -100,8 +100,8 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0">
-      <div className="flex items-center gap-1 pt-1">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0">
+      <div className="flex items-center gap-xs pt-1">
         <span className="text-sm text-muted-foreground">목적지</span>
         <button
           type="button"
@@ -114,7 +114,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
       </div>
       <div ref={containerRef} className="relative min-w-0">
         {selected.length > 0 ? (
-          <div className="group/val flex items-center gap-1.5 flex-wrap min-h-[28px]">
+          <div className="group/val flex items-center gap-xs.5 flex-wrap min-h-[28px]">
             {selected.map(ko => {
               const matched = ALL_DESTS.find(d => d.ko === ko)
               const label = matched ? matched.en : ko
@@ -123,7 +123,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                 <span
                   key={ko}
                   className={cn(
-                    'group/tag inline-flex items-center gap-1 rounded px-2 py-0.5 text-sm bg-accent/40',
+                    'group/tag inline-flex items-center gap-xs rounded px-2 py-0.5 text-sm bg-accent/40',
                     multi && 'cursor-pointer hover:bg-accent/70 transition-colors',
                     isActive && 'bg-accent ring-1 ring-ring/60',
                   )}
@@ -185,7 +185,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
             </div>
             <ul ref={listRef} className="max-h-60 overflow-y-auto scrollbar-minimal py-1">
               {filtered.length === 0 ? (
-                <li className="px-3 py-2 text-sm text-muted-foreground">검색 결과 없음</li>
+                <li className="px-sm py-2 text-sm text-muted-foreground">검색 결과 없음</li>
               ) : (
                 filtered.map((d, i) => {
                   const isSelected = selected.includes(d.ko)
@@ -195,7 +195,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                         type="button"
                         onClick={async () => { await toggleDest(d); setOpen(false); setQuery('') }}
                         className={cn(
-                          'w-full text-left px-3 py-1.5 text-sm transition-colors',
+                          'w-full text-left px-sm py-1.5 text-sm transition-colors',
                           i === highlightIdx ? 'bg-accent' : 'hover:bg-accent/60',
                           isSelected && 'font-medium',
                         )}
@@ -213,14 +213,14 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
               <button
                 type="button"
                 onClick={() => { setFreeMode(true); setFreeVal('') }}
-                className="flex-1 text-left px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors"
+                className="flex-1 text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors"
               >
                 기타 (직접 입력)
               </button>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="px-sm py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 닫기
               </button>

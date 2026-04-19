@@ -127,7 +127,7 @@ export function Calculator({ initialItems, canEdit }: Props) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-xl px-4 py-10">
+    <div className="mx-auto w-full max-w-xl px-md py-10">
       <div className="mb-6 flex items-end justify-between">
         <div>
           <h1 className="text-2xl font-bold">비용 계산기</h1>
@@ -137,7 +137,7 @@ export function Calculator({ initialItems, canEdit }: Props) {
           <button
             type="button"
             onClick={() => setEditMode((v) => !v)}
-            className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition ${
+            className={`inline-flex items-center gap-xs.5 rounded-md border px-sm py-1.5 text-sm font-medium transition ${
               editMode
                 ? 'border-primary bg-primary text-primary-foreground'
                 : 'border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground'
@@ -152,7 +152,7 @@ export function Calculator({ initialItems, canEdit }: Props) {
       {/* Species */}
       <section className="mb-5">
         <Label>반려동물 종류</Label>
-        <div className="flex gap-2">
+        <div className="flex gap-sm">
           {([
             ['dog', '🐶 강아지'],
             ['cat', '🐱 고양이'],
@@ -163,7 +163,7 @@ export function Calculator({ initialItems, canEdit }: Props) {
                 key={v}
                 type="button"
                 onClick={() => setSpecies(v)}
-                className={`flex-1 rounded-lg border-2 px-3 py-3 text-sm font-bold transition ${
+                className={`flex-1 rounded-lg border-2 px-sm py-3 text-sm font-bold transition ${
                   active
                     ? 'border-foreground bg-foreground/5 text-foreground'
                     : 'border-border bg-background text-muted-foreground hover:border-muted-foreground/40'
@@ -183,7 +183,7 @@ export function Calculator({ initialItems, canEdit }: Props) {
           <button
             type="button"
             onClick={() => setDropOpen((v) => !v)}
-            className={`flex w-full items-center justify-between rounded-lg border-2 bg-background px-4 py-3 text-left text-sm font-semibold transition ${
+            className={`flex w-full items-center justify-between rounded-lg border-2 bg-background px-md py-3 text-left text-sm font-semibold transition ${
               dropOpen ? 'border-foreground' : 'border-border hover:border-muted-foreground/40'
             }`}
           >
@@ -214,7 +214,7 @@ export function Calculator({ initialItems, canEdit }: Props) {
               </div>
               <div className="scrollbar-minimal max-h-60 overflow-y-auto">
                 {filteredCountries.length === 0 ? (
-                  <div className="px-4 py-3 text-sm text-muted-foreground">검색 결과 없음</div>
+                  <div className="px-md py-3 text-sm text-muted-foreground">검색 결과 없음</div>
                 ) : (
                   filteredCountries.map((c) => {
                     const sel = c === country
@@ -227,7 +227,7 @@ export function Calculator({ initialItems, canEdit }: Props) {
                           setDropOpen(false)
                           setSearch('')
                         }}
-                        className={`block w-full px-4 py-2.5 text-left text-sm font-medium transition ${
+                        className={`block w-full px-md py-2.5 text-left text-sm font-medium transition ${
                           sel
                             ? 'bg-accent text-foreground'
                             : 'text-foreground hover:bg-accent'
@@ -260,7 +260,7 @@ export function Calculator({ initialItems, canEdit }: Props) {
               return (
                 <div
                   key={it.id}
-                  className={`flex items-center justify-between gap-2 px-4 py-3 transition ${
+                  className={`flex items-center justify-between gap-sm px-md py-3 transition ${
                     !last ? 'border-b border-border' : ''
                   } ${on ? 'bg-accent/40' : ''} ${editMode ? '' : 'cursor-pointer hover:bg-accent/60'}`}
                   onClick={() => {
@@ -268,7 +268,7 @@ export function Calculator({ initialItems, canEdit }: Props) {
                     setChecked((c) => ({ ...c, [it.id]: !c[it.id] }))
                   }}
                 >
-                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <div className="flex min-w-0 flex-1 items-center gap-md">
                     {!editMode && (
                       <div
                         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 ${
@@ -299,7 +299,7 @@ export function Calculator({ initialItems, canEdit }: Props) {
                       </span>
                     )}
                   </div>
-                  <div className="flex shrink-0 items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-sm">
                     {editMode ? (
                       <>
                         <input
@@ -341,7 +341,7 @@ export function Calculator({ initialItems, canEdit }: Props) {
               <button
                 type="button"
                 onClick={addItem}
-                className="flex w-full items-center justify-center gap-1.5 border-t border-border bg-accent/30 px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+                className="flex w-full items-center justify-center gap-xs.5 border-t border-border bg-accent/30 px-md py-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 <Plus size={14} />
                 항목 추가
@@ -359,7 +359,7 @@ export function Calculator({ initialItems, canEdit }: Props) {
             </div>
             {disc > 0 && disc < total && (
               <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-sm">
                   <span className="rounded bg-foreground px-1.5 py-0.5 text-[10px] font-extrabold text-background">
                     현금 5%
                   </span>

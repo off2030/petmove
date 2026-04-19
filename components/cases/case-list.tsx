@@ -159,7 +159,7 @@ export function CaseList({
       {/* Busy overlay */}
       {busy && (
         <div className="pointer-events-auto absolute inset-0 z-20 flex items-center justify-center rounded-md bg-background/70 backdrop-blur-sm">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-sm text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             파일에서 정보 추출 중…
           </div>
@@ -167,7 +167,7 @@ export function CaseList({
       )}
 
       {/* Search bar + add button */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-sm">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -265,7 +265,7 @@ export function CaseList({
                     type="button"
                     onClick={() => { selectCase(c.id); setHighlight(-1) }}
                     className={cn(
-                      'block w-full rounded-md px-3 py-3 text-left transition-colors',
+                      'block w-full rounded-md px-sm py-3 text-left transition-colors',
                       'hover:bg-accent/60',
                       isSelected && 'bg-accent',
                       !isSelected && i === highlight && 'bg-accent/40',
@@ -275,7 +275,7 @@ export function CaseList({
                         customer : pet : dest = 6 : 5 : 5  (fr units)
                         microchip stays fixed (needs exact space for 19 chars)
                         minmax(0, Nfr) lets columns shrink with truncation. */}
-                    <div className="grid grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-baseline gap-2 text-sm">
+                    <div className="grid grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-baseline gap-sm text-sm">
                       <span className="truncate font-medium">
                         {c.customer_name}
                       </span>

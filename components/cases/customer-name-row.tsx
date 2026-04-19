@@ -108,7 +108,7 @@ export function CustomerNameRow({
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0">
       <div className="pt-1 text-sm text-muted-foreground">성함</div>
 
       <div className="flex items-baseline gap-[10px] min-w-0 flex-wrap">
@@ -128,7 +128,7 @@ export function CustomerNameRow({
         <div className="group/en relative inline-flex items-baseline">
           {editing ? (
             <div
-              className="flex items-center gap-2"
+              className="flex items-center gap-sm"
               onBlur={(e) => {
                 // Only cancel if focus leaves the entire group (not just moving between inputs)
                 if (!e.currentTarget.contains(e.relatedTarget as Node)) {

@@ -263,7 +263,7 @@ export function TodoTable({
         )}
         {cases.length === 0 && (
           <tr>
-            <td colSpan={columns.length} className="text-center text-muted-foreground py-8">
+            <td colSpan={columns.length} className="text-center text-muted-foreground py-2xl">
               데이터가 없습니다
             </td>
           </tr>

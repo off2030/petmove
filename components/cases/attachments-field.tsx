@@ -107,8 +107,8 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0">
-      <div className="flex items-center gap-1 pt-1">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0">
+      <div className="flex items-center gap-xs pt-1">
         <span className="text-sm text-muted-foreground">첨부파일</span>
         <button
           type="button"
@@ -134,7 +134,7 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
         {attachments.length > 0 && (
           <ul className="space-y-1">
             {attachments.map((att, i) => (
-              <li key={i} className="group/item flex items-center gap-2 text-sm">
+              <li key={i} className="group/item flex items-center gap-sm text-sm">
                 <a
                   href={att.url}
                   target="_blank"

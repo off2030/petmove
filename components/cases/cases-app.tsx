@@ -361,7 +361,7 @@ function Inner() {
                       selectCase(null)
                     }
                   }}
-                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-xs text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <ArrowLeft size={16} />
                   목록
@@ -388,7 +388,7 @@ function Inner() {
                       )}
                     </span>
                     <div className="flex items-center gap-4">
-                      <label className="flex items-center gap-1 text-muted-foreground/50 select-none cursor-pointer">
+                      <label className="flex items-center gap-xs text-muted-foreground/50 select-none cursor-pointer">
                         <input
                           type="checkbox"
                           checked={includeSignature}

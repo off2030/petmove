@@ -95,7 +95,7 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-3 py-1 border-b border-border/40 last:border-0">
+    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-1 border-b border-border/40 last:border-0">
       <div className="pt-1 text-sm text-muted-foreground">모색</div>
       <div ref={containerRef} className="relative min-w-0">
         <div className="group/val relative w-fit">
@@ -117,7 +117,7 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
 
         {open && (
           <div className="absolute left-0 top-full mt-1 z-20 rounded-md border border-border/50 bg-background shadow-md p-3">
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div className="flex flex-wrap gap-sm mb-3">
               {COLORS.map((c) => {
                 const isSelected = selected.has(c.en)
                 return (
@@ -126,7 +126,7 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                     type="button"
                     onClick={() => toggle(c.en)}
                     className={cn(
-                      'px-3 py-1.5 rounded-md text-sm transition-colors border',
+                      'px-sm py-1.5 rounded-md text-sm transition-colors border',
                       isSelected
                         ? 'bg-foreground text-background border-foreground'
                         : 'bg-background text-foreground border-border/50 hover:bg-accent/60',
