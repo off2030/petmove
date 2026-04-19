@@ -9,7 +9,7 @@ import { useDarkMode } from '@/lib/use-dark-mode'
 export type TabId = 'cases' | 'todos' | 'calculator' | 'settings'
 
 export const NAV_ITEMS: Array<{ id: TabId; icon: typeof ClipboardList; label: string }> = [
-  { id: 'cases', icon: ClipboardList, label: '케이스' },
+  { id: 'cases', icon: ClipboardList, label: '고객리스트' },
   { id: 'todos', icon: CheckSquare, label: '할일' },
   { id: 'calculator', icon: CalculatorIcon, label: '비용 계산기' },
 ]
