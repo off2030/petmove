@@ -3,7 +3,7 @@ import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 
 export const metadata: Metadata = {
-  title: 'PetMove',
+  title: '펫무브워크',
   description: '반려동물 해외 이동 검역 관리',
 }
 
