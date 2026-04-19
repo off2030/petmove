@@ -29,8 +29,8 @@ export function Sidebar({
     <>
       <aside className="w-48 shrink-0 h-screen flex flex-col py-4 border-r border-border bg-background">
         {/* Logo */}
-        <div className="mb-6 px-4">
-          <h1 className="text-lg font-bold text-foreground">펫무브워크</h1>
+        <div className="mb-6 px-4 w-full">
+          <h1 className="text-lg font-bold text-foreground text-center">펫무브워크</h1>
         </div>
 
         {/* Top nav */}
