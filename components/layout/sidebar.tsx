@@ -28,6 +28,16 @@ export function Sidebar({
   return (
     <>
       <aside className="w-14 shrink-0 h-screen flex flex-col items-center py-4 border-r border-border bg-background">
+        {/* Logo */}
+        <div className="mb-6 flex items-center justify-center">
+          <div
+            title="펫무브워크"
+            className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-bold text-xs"
+          >
+            펫
+          </div>
+        </div>
+
         {/* Top nav */}
         <nav className="flex flex-col items-center gap-1 flex-1">
           {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
