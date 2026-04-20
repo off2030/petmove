@@ -41,6 +41,12 @@ interface CasesContextValue {
    */
   activeDestination: string | null
   setActiveDestination: (dest: string | null) => void
+  /**
+   * 신고 탭 자동 포함 대상 국가 목록. 설정 화면에서 편집 가능.
+   * app_settings.import_report_countries 에서 초기 로드.
+   */
+  importReportCountries: string[]
+  setImportReportCountries: (list: string[]) => void
 }
 
 const CasesContext = createContext<CasesContextValue | null>(null)
@@ -48,15 +54,18 @@ const CasesContext = createContext<CasesContextValue | null>(null)
 export function CasesProvider({
   initialCases,
   fieldDefs,
+  initialImportReportCountries,
   children,
 }: {
   initialCases: CaseRow[]
   fieldDefs: FieldDefinition[]
+  initialImportReportCountries: string[]
   children: React.ReactNode
 }) {
   const [cases, setCases] = useState<CaseRow[]>(initialCases)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [activeDestination, setActiveDestination] = useState<string | null>(null)
+  const [importReportCountries, setImportReportCountries] = useState<string[]>(initialImportReportCountries)
 
   const selectCase = useCallback((id: string | null) => {
     setSelectedId(id)
@@ -142,8 +151,10 @@ export function CasesProvider({
       updateLocalCaseField,
       activeDestination,
       setActiveDestination,
+      importReportCountries,
+      setImportReportCountries,
     }),
-    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination],
+    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination, importReportCountries],
   )
 
   return <CasesContext.Provider value={value}>{children}</CasesContext.Provider>

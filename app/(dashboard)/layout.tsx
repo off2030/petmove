@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
 import { CasesProvider } from '@/components/cases/cases-context'
 import { DashboardShell } from '@/components/layout/dashboard-shell'
+import { loadImportReportCountries } from '@/lib/import-report-config'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,13 +46,18 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [initialCases, fieldDefs] = await Promise.all([
+  const [initialCases, fieldDefs, importReportCountries] = await Promise.all([
     fetchAllCases(),
     fetchFieldDefs(),
+    loadImportReportCountries(),
   ])
 
   return (
-    <CasesProvider initialCases={initialCases} fieldDefs={fieldDefs}>
+    <CasesProvider
+      initialCases={initialCases}
+      fieldDefs={fieldDefs}
+      initialImportReportCountries={importReportCountries}
+    >
       <DashboardShell />
     </CasesProvider>
   )

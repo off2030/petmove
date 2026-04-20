@@ -4,10 +4,12 @@ import { useState } from 'react'
 import { TrashModal } from '@/components/cases/trash-modal'
 import { VaccineSection } from './vaccine-section'
 import { CompanySection } from './company-section'
+import { ImportReportSection } from './import-report-section'
 
 const TABS = [
   { id: 'company', label: '병원 정보' },
   { id: 'vaccines', label: '약품 관리' },
+  { id: 'import_report', label: '신고' },
   { id: 'data', label: '데이터 관리' },
 ] as const
 
@@ -87,6 +89,7 @@ export function SettingsApp() {
 
       {activeTab === 'company' && <CompanySection />}
       {activeTab === 'vaccines' && <VaccineSection />}
+      {activeTab === 'import_report' && <ImportReportSection />}
       {activeTab === 'data' && <DataSection />}
       </div>
     </div>

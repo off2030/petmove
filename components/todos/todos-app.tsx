@@ -325,21 +325,19 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
 
 /**
  * 신고 탭 자동 포함 규칙:
- *   - 목적지가 이 5개국 중 하나여야 하고,
+ *   - 목적지가 대상국(설정 > 신고) 중 하나여야 하고,
  *   - 출국일(departure_date) 이 기재되어 있어야 함.
  * 그 외 국가는 상세페이지에서 "신고 추가" 토글(`import_report_manual`)로 수동 포함.
  */
-const IMPORT_REPORT_COUNTRY_ORDER = ['일본', '하와이', '스위스', '태국', '필리핀']
-const IMPORT_REPORT_COUNTRIES = new Set(IMPORT_REPORT_COUNTRY_ORDER)
-
-function isImportReportCountry(row: CaseRow): boolean {
+function isImportReportCountry(row: CaseRow, countries: string[]): boolean {
   if (!row.destination) return false
+  const set = new Set(countries)
   const dests = row.destination.split(',').map(s => s.trim()).filter(Boolean)
-  return dests.some(d => IMPORT_REPORT_COUNTRIES.has(d))
+  return dests.some(d => set.has(d))
 }
 
-function isAutoImportReport(row: CaseRow): boolean {
-  return !!row.departure_date && isImportReportCountry(row)
+function isAutoImportReport(row: CaseRow, countries: string[]): boolean {
+  return !!row.departure_date && isImportReportCountry(row, countries)
 }
 
 function isManualImportReport(row: CaseRow): boolean {
@@ -515,7 +513,7 @@ function matchesQuery(row: CaseRow, q: string): boolean {
 }
 
 export function TodosApp() {
-  const { cases, updateLocalCaseField } = useCases()
+  const { cases, updateLocalCaseField, importReportCountries } = useCases()
   const [activeTab, setActiveTab] = useState<TabId>('inspection')
   const [query, setQuery] = useState('')
 
@@ -524,7 +522,7 @@ export function TodosApp() {
   const filteredCases = useMemo(() => {
     if (activeTab === 'import_report') {
       return cases
-        .filter(c => isAutoImportReport(c) || isManualImportReport(c))
+        .filter(c => isAutoImportReport(c, importReportCountries) || isManualImportReport(c))
         .filter(c => matchesQuery(c, q))
         .sort((a, b) => {
           // 1차: 완료(수입·수출 모두 done/na)는 무조건 미완료(시작전·진행중)보다 뒤.
@@ -890,6 +888,7 @@ function ImportReportAddPicker({
   cases: CaseRow[]
   onAdd: (caseId: string) => void | Promise<void>
 }) {
+  const { importReportCountries } = useCases()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [highlight, setHighlight] = useState(0)
@@ -908,7 +907,7 @@ function ImportReportAddPicker({
 
   const candidates = useMemo(() => {
     // 이미 자동/수동으로 포함돼 있으면 후보에서 뺀다.
-    const pool = cases.filter(c => !isAutoImportReport(c) && !isManualImportReport(c))
+    const pool = cases.filter(c => !isAutoImportReport(c, importReportCountries) && !isManualImportReport(c))
     const q = query.trim().toLowerCase()
     const filtered = !q ? pool : pool.filter(c => {
       const hay = [c.pet_name, c.pet_name_en, c.customer_name, c.destination]
@@ -917,7 +916,7 @@ function ImportReportAddPicker({
     })
     // 최신 접수순.
     return filtered.slice().sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? '')).slice(0, 30)
-  }, [cases, query])
+  }, [cases, query, importReportCountries])
 
   useEffect(() => { setHighlight(0) }, [query])
 

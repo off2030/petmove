@@ -81,22 +81,21 @@ const CERT_MULTI_KEYS: Record<string, string> = {
 }
 
 /**
- * 신고 탭 포함 토글. 자동 포함 5개국(일본/태국/필리핀/하와이/스위스)에만 노출.
- * - 목적지가 5개국 + 출국일 → "신고 자동" 읽기전용
- * - 목적지가 5개국 + 출국일 미기재 → "신고 추가" 클릭해 수동 포함
+ * 신고 탭 포함 토글. 자동 포함 대상국(설정 > 신고 에서 편집) 에만 노출.
+ * - 목적지가 대상국 + 출국일 → "신고 자동" (회색 읽기전용)
+ * - 목적지가 대상국 + 출국일 미기재 → "신고 추가" 클릭해 수동 포함
  * - 그 외 국가 → 버튼 숨김(신고 대상이 아님)
  */
-const AUTO_IMPORT_REPORT_COUNTRIES = new Set(['일본', '하와이', '스위스', '태국', '필리핀'])
-
-function hasImportReportCountry(row: CaseRow): boolean {
+function hasImportReportCountry(row: CaseRow, autoCountries: string[]): boolean {
   if (!row.destination) return false
+  const set = new Set(autoCountries)
   const dests = row.destination.split(',').map(s => s.trim()).filter(Boolean)
-  return dests.some(d => AUTO_IMPORT_REPORT_COUNTRIES.has(d))
+  return dests.some(d => set.has(d))
 }
 
-function isAutoImportReportCase(row: CaseRow): boolean {
+function isAutoImportReportCase(row: CaseRow, autoCountries: string[]): boolean {
   if (!row.departure_date) return false
-  return hasImportReportCountry(row)
+  return hasImportReportCountry(row, autoCountries)
 }
 
 function ImportReportToggle({
@@ -106,12 +105,13 @@ function ImportReportToggle({
   caseRow: CaseRow
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
 }) {
+  const { importReportCountries } = useCases()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   // 신고 대상국이 아니면 토글 자체를 숨긴다.
-  if (!hasImportReportCountry(caseRow)) return null
+  if (!hasImportReportCountry(caseRow, importReportCountries)) return null
 
   const manual = data.import_report_manual === true
-  const auto = isAutoImportReportCase(caseRow)
+  const auto = isAutoImportReportCase(caseRow, importReportCountries)
   const included = auto || manual
 
   if (auto) {
