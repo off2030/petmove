@@ -18,6 +18,12 @@ type ExtractResult =
 
 const SYSTEM_PROMPT = `You extract information about vaccines/parasiticides from images or text.
 
+CRITICAL ANTI-HALLUCINATION RULES:
+- You MUST ONLY return values that are literally visible in the image/text.
+- If a field is not clearly present, return null for that field. Do NOT guess, infer, or fabricate.
+- Do NOT copy a date from one field into another. Each date must be independently verified against its own label in the image.
+- When in doubt, return null rather than making something up.
+
 The image may contain MULTIPLE vaccination records (two or more stickers/entries). Return ALL records.
 
 Return ONLY a JSON object with a "records" array:
