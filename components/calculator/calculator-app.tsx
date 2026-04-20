@@ -173,6 +173,21 @@ export function CalculatorApp() {
                             autoFocus
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault()
+                                const first = filteredCountries[0]
+                                if (first) {
+                                  setCountry(first)
+                                  setDropOpen(false)
+                                  setSearch('')
+                                }
+                              } else if (e.key === 'Escape') {
+                                e.preventDefault()
+                                setDropOpen(false)
+                                setSearch('')
+                              }
+                            }}
                             placeholder="목적지 검색..."
                             className="h-9 w-full rounded-md border border-border bg-background py-2 pl-8 pr-2 text-sm outline-none focus:border-primary"
                           />
