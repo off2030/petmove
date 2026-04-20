@@ -3,7 +3,7 @@
  * Reads case row, resolves each field value via the mapping's transform,
  * and fills the PDF form.
  */
-import { PDFDocument, PDFName, PDFString, PDFDict, PDFBool, TextAlignment } from 'pdf-lib'
+import { PDFDocument, PDFName, PDFString, PDFDict, PDFBool, TextAlignment, PDFCheckBox, PDFDropdown, PDFTextField } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -31,7 +31,7 @@ import type { CaseRow } from '@/lib/supabase/types'
 // - Template/font changes not picked up → flip CACHE_ASSETS to false (dev)
 const PDF_SUBSET_FONT = true
 const PDF_CACHE_ASSETS = true
-const PDF_NEED_APPEARANCES: 'false' | 'true' | 'unset' = 'unset'
+const PDF_NEED_APPEARANCES: 'false' | 'true' | 'unset' = 'true'
 
 const assetCache: { template: Map<string, Buffer>; font: Buffer | null; signature: Map<string, Buffer> } = {
   template: new Map(),
@@ -1843,16 +1843,14 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
     const value = reformatDate(resolveFieldMulti(fieldName, form.fields, doc))
     let field
     try { field = pdfForm.getField(fieldName) } catch { continue }
-    const type = field.constructor.name
-    if (type === 'PDFCheckBox') {
-      if (value === true) (field as import('pdf-lib').PDFCheckBox).check()
-      else (field as import('pdf-lib').PDFCheckBox).uncheck()
-    } else if (type === 'PDFDropdown') {
+    if (field instanceof PDFCheckBox) {
+      if (value === true) field.check()
+      else field.uncheck()
+    } else if (field instanceof PDFDropdown) {
       if (typeof value === 'string' && value) {
-        const dd = field as import('pdf-lib').PDFDropdown
-        try { dd.select(value) } catch { /* option not found */ }
+        try { field.select(value) } catch { /* option not found */ }
       }
-    } else if (type === 'PDFTextField') {
+    } else if (field instanceof PDFTextField) {
       let text = typeof value === 'string' ? value : ''
       // Fall back to mapping.default when a transform returned empty.
       // This lets us set `"default": "N/A"` on row/slot fields that should
@@ -1860,10 +1858,9 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
       // test rows, skipped vaccine doses).
       if (!text && mapping.default) text = mapping.default
       // Always setText (even to '') so any template default text is cleared.
-      const tf = field as import('pdf-lib').PDFTextField
-      tf.setText(text)
+      field.setText(text)
       if (mapping.align) {
-        tf.setAlignment(
+        field.setAlignment(
           mapping.align === 'center' ? TextAlignment.Center
           : mapping.align === 'right' ? TextAlignment.Right
           : TextAlignment.Left,
@@ -1919,9 +1916,9 @@ async function applyFontFixes(
   drFonts.set(PDFName.of(fontName), fontRef)
 
   for (const field of pdfForm.getFields()) {
-    if (field.constructor.name !== 'PDFTextField') continue
+    if (!(field instanceof PDFTextField)) continue
     if (touchedFieldNames && !touchedFieldNames.has(field.getName())) continue
-    const tf = field as import('pdf-lib').PDFTextField
+    const tf = field
     const text = tf.getText() ?? ''
     // preserveTemplateText 모드: 템플릿 DA에 명시된 폰트 크기(>0)를 상한으로 사용
     // — 셀이 커서 autosize가 과도하게 확대되는 문제 방지. 단, 줄바꿈이 포함된
@@ -1957,8 +1954,8 @@ async function applyFontFixes(
     for (const name of touchedFieldNames) {
       try {
         const field = pdfForm.getField(name)
-        if (field.constructor.name === 'PDFTextField') {
-          ;(field as import('pdf-lib').PDFTextField).updateAppearances(customFont)
+        if (field instanceof PDFTextField) {
+          field.updateAppearances(customFont)
         }
       } catch { /* missing field — skip */ }
     }
@@ -2054,29 +2051,26 @@ export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillO
       missing.push(fieldName)
       continue
     }
-    const type = field.constructor.name
-    if (type === 'PDFCheckBox') {
-      if (value === true) (field as import('pdf-lib').PDFCheckBox).check()
-      else (field as import('pdf-lib').PDFCheckBox).uncheck()
+    if (field instanceof PDFCheckBox) {
+      if (value === true) field.check()
+      else field.uncheck()
       touchedFields.add(fieldName)
-    } else if (type === 'PDFDropdown') {
+    } else if (field instanceof PDFDropdown) {
       if (typeof value === 'string' && value) {
-        const dd = field as import('pdf-lib').PDFDropdown
-        try { dd.select(value) } catch { /* option not found */ }
+        try { field.select(value) } catch { /* option not found */ }
         touchedFields.add(fieldName)
       }
-    } else if (type === 'PDFTextField') {
+    } else if (field instanceof PDFTextField) {
       let text = typeof value === 'string' ? value : ''
       // Fall back to mapping.default when a transform returned empty.
       // Used for N/A placeholders on row/slot fields that shouldn't be blank.
       if (!text && mapping.default) text = mapping.default
-      const tf = field as import('pdf-lib').PDFTextField
       // preserveTemplateText: 매핑돼있지만 값이 빈 필드는 템플릿 값 유지
       if (form.preserveTemplateText && !text) continue
-      tf.setText(text)
+      field.setText(text)
       touchedFields.add(fieldName)
       if (mapping.align) {
-        tf.setAlignment(
+        field.setAlignment(
           mapping.align === 'center' ? TextAlignment.Center
           : mapping.align === 'right' ? TextAlignment.Right
           : TextAlignment.Left,
