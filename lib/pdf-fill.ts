@@ -31,7 +31,7 @@ import type { CaseRow } from '@/lib/supabase/types'
 // - Template/font changes not picked up → flip CACHE_ASSETS to false (dev)
 const PDF_SUBSET_FONT = true
 const PDF_CACHE_ASSETS = true
-const PDF_NEED_APPEARANCES: 'false' | 'true' | 'unset' = 'false'
+const PDF_NEED_APPEARANCES: 'false' | 'true' | 'unset' = 'unset'
 
 const assetCache: { template: Map<string, Buffer>; font: Buffer | null; signature: Map<string, Buffer> } = {
   template: new Map(),
@@ -54,30 +54,16 @@ async function loadTemplate(name: string): Promise<Buffer> {
     const cached = assetCache.template.get(name)
     if (cached) return cached
   }
-  const p = path.join(process.cwd(), 'data', 'pdf-templates', name)
-  try {
-    const buf = await readFile(p)
-    console.log(`[loadTemplate] ${name} → ${buf.length} bytes (path=${p})`)
-    if (PDF_CACHE_ASSETS) assetCache.template.set(name, buf)
-    return buf
-  } catch (e) {
-    console.error(`[loadTemplate] FAIL ${name} at ${p}:`, (e as Error).message)
-    throw e
-  }
+  const buf = await readFile(path.join(process.cwd(), 'data', 'pdf-templates', name))
+  if (PDF_CACHE_ASSETS) assetCache.template.set(name, buf)
+  return buf
 }
 
 async function loadFontBytes(): Promise<Buffer> {
   if (PDF_CACHE_ASSETS && assetCache.font) return assetCache.font
-  const p = path.join(process.cwd(), 'data', 'fonts', 'NanumGothic.ttf')
-  try {
-    const buf = await readFile(p)
-    console.log(`[loadFontBytes] ${buf.length} bytes (path=${p})`)
-    if (PDF_CACHE_ASSETS) assetCache.font = buf
-    return buf
-  } catch (e) {
-    console.error(`[loadFontBytes] FAIL at ${p}:`, (e as Error).message)
-    throw e
-  }
+  const buf = await readFile(path.join(process.cwd(), 'data', 'fonts', 'NanumGothic.ttf'))
+  if (PDF_CACHE_ASSETS) assetCache.font = buf
+  return buf
 }
 
 type FieldMapping = {
@@ -1898,14 +1884,6 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
     }
   }
 
-  // Bake form widgets into static page content so viewer-specific AcroForm
-  // rendering quirks in production cannot hide filled values.
-  try {
-    pdfForm.flatten()
-  } catch (e) {
-    console.warn(`[${formKey}] flatten failed, falling back to non-flat:`, (e as Error).message)
-  }
-
   const bytes = await pdf.save()
   const base64 = Buffer.from(bytes).toString('base64')
   const petNames = doc.cases
@@ -1985,15 +1963,7 @@ async function applyFontFixes(
       } catch { /* missing field — skip */ }
     }
   } else {
-    // 전체 경로: form-level updateFieldAppearances 는 Vercel Linux serverless
-    // 환경에서 일부 필드에 appearance stream 을 생성하지 못해 viewer 가 빈 필드로
-    // 렌더하는 이슈가 있음. per-field 로 호출해 생성 주체를 필드별로 분리.
-    for (const field of pdfForm.getFields()) {
-      if (field.constructor.name !== 'PDFTextField') continue
-      try {
-        ;(field as import('pdf-lib').PDFTextField).updateAppearances(customFont)
-      } catch { /* skip broken field */ }
-    }
+    pdfForm.updateFieldAppearances(customFont)
   }
 
   if (PDF_NEED_APPEARANCES === 'false') {
@@ -2151,14 +2121,6 @@ export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillO
   console.log(`  filled:`, filled)
   console.log(`  empty (no value resolved):`, empty)
   if (missing.length) console.warn(`  missing PDF fields:`, missing)
-
-  // Bake form widgets into static page content so viewer-specific AcroForm
-  // rendering quirks in production cannot hide filled values.
-  try {
-    pdfForm.flatten()
-  } catch (e) {
-    console.warn(`[${formKey}] flatten failed, falling back to non-flat:`, (e as Error).message)
-  }
 
   const bytes = await pdf.save()
   const base64 = Buffer.from(bytes).toString('base64')
