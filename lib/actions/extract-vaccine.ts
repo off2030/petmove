@@ -22,7 +22,22 @@ CRITICAL ANTI-HALLUCINATION RULES:
 - You MUST ONLY return values that are literally visible in the image/text.
 - If a field is not clearly present, return null for that field. Do NOT guess, infer, or fabricate.
 - Do NOT copy a date from one field into another. Each date must be independently verified against its own label in the image.
+- NEVER compute dates (e.g. date + 1 year). Only report dates that are literally printed/written.
 - When in doubt, return null rather than making something up.
+
+COMMON KOREAN TABLE FORMAT — BE AWARE:
+Korean vaccination record tables often have columns like:
+  제품명 | 제조사 | 제조번호 | 접종일자 | 면역유효기간
+  (Product | Manufacturer | Serial | Vaccination Date | Validity)
+
+In this format:
+- "접종일자" column → "date" field
+- "면역유효기간" column usually has CHECKBOXES like ☑1Y ☐2Y ☐3Y (not a date).
+  - If 1Y is checked → valid_until = "1년"
+  - If 2Y is checked → valid_until = "2년"
+  - If 3Y is checked → valid_until = "3년"
+- There is usually NO "expiry" (product shelf life) in this table — return expiry=null.
+- Do NOT compute expiry as "date + N years". That goes into valid_until as a duration string, not expiry.
 
 The image may contain MULTIPLE vaccination records (two or more stickers/entries). Return ALL records.
 
