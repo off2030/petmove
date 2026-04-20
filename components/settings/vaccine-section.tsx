@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import {
   getAllProducts,
+  getLatestProducts,
   type ExpiryStatus,
   type FlatProduct,
   type ProductSection,
@@ -73,11 +74,14 @@ export function VaccineSection() {
       })
   }, [products])
 
+  // 상단 요약 카운트는 "최근 제품 기준"으로만 계산.
+  // 연도별 과거 rabies batch, legacy Frontline Plus 등은 제외되고 제품 family+체중 variant 당 최신 1개만.
+  const latestProducts = useMemo(() => getLatestProducts(), [])
   const counts = useMemo(() => {
     const c = { expired: 0, urgent: 0, warning: 0, ok: 0, unknown: 0 }
-    for (const p of products) c[p.status]++
+    for (const p of latestProducts) c[p.status]++
     return c
-  }, [products])
+  }, [latestProducts])
 
   return (
     <div className="space-y-6">
@@ -95,14 +99,8 @@ export function VaccineSection() {
             30일 이내 {counts.urgent}
           </div>
         )}
-        {counts.warning > 0 && (
-          <div className="flex items-center gap-xs.5 px-sm py-1.5 rounded-lg bg-yellow-50 text-yellow-700">
-            <span className="w-2 h-2 rounded-full bg-yellow-500" />
-            90일 이내 {counts.warning}
-          </div>
-        )}
-        {counts.expired === 0 && counts.urgent === 0 && counts.warning === 0 && (
-          <div className="text-sm text-muted-foreground">모든 제품이 90일 이상 유효합니다.</div>
+        {counts.expired === 0 && counts.urgent === 0 && (
+          <div className="text-sm text-muted-foreground">최근 제품 기준 만료·30일 이내 제품 없음.</div>
         )}
       </div>
 
