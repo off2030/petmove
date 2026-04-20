@@ -10,6 +10,7 @@ import { labColor } from '@/lib/lab-color'
 import { extractTiterInfo } from '@/lib/actions/extract-titer'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
+import { resolveTiterLab, type InspectionLabRule } from '@/lib/inspection-config-defaults'
 
 interface TiterRecord {
   date: string | null
@@ -42,15 +43,13 @@ type TiterEditField = 'date' | 'value' | 'lab'
  */
 function autoDetectLab(
   destination: string | null | undefined,
-  overrides: { country: string; lab: string }[],
+  rules: InspectionLabRule[],
   defaultLab: string,
 ): string | null {
   if (!destination) return defaultLab
   const dests = destination.split(',').map(s => s.trim()).filter(Boolean)
   if (dests.length !== 1) return null
-  const country = dests[0]
-  const override = overrides.find(o => o.country === country)
-  return override?.lab ?? defaultLab
+  return resolveTiterLab(dests[0], rules, defaultLab)
 }
 
 export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
@@ -115,7 +114,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
       let nextRecords: TiterRecord[] = records
       if (targetIdx === null) {
         if (xValue) {
-          const detectedLab = autoDetectLab(destination, inspectionConfig.titerOverrides, inspectionConfig.titerDefault)
+          const detectedLab = autoDetectLab(destination, inspectionConfig.titerRules, inspectionConfig.titerDefault)
           nextRecords = [{ date: null, value: xValue, lab: detectedLab }]
         }
       } else {
@@ -214,7 +213,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
 
   function saveNewRecord(date: string) {
     if (!date) { setAddingNew(false); return }
-    const detectedLab = autoDetectLab(destination, inspectionConfig.titerOverrides, inspectionConfig.titerDefault)
+    const detectedLab = autoDetectLab(destination, inspectionConfig.titerRules, inspectionConfig.titerDefault)
     const next = [...records, { date, value: null, lab: detectedLab }]
     startSave(async () => {
       await saveRecords(next)
