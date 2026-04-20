@@ -15,6 +15,27 @@ export type GenerateMultiPdfResult =
   | { ok: true; docs: Array<{ pdf: string; filename: string }> }
   | { ok: false; error: string }
 
+/** 별지25와 별지25 EX는 타병원 접종 기록(other_hospital=true)을 제외해서 발급. */
+const OTHER_HOSPITAL_EXCLUDED_FORMS = new Set(['Form25', 'Form25AuNz'])
+/** 타병원 접종 체크를 노출하는 백신 데이터 키. */
+const OTHER_HOSPITAL_VACCINE_KEYS = ['rabies_dates', 'general_vaccine_dates', 'civ_dates', 'kennel_cough_dates']
+
+/** 타병원 접종 기록을 제외한 data 객체 반환. 해당 배열만 필터, 나머지는 그대로. */
+function stripOtherHospitalRecords(data: Record<string, unknown>): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...data }
+  for (const key of OTHER_HOSPITAL_VACCINE_KEYS) {
+    const arr = next[key]
+    if (!Array.isArray(arr)) continue
+    next[key] = arr.filter((rec) => {
+      if (rec && typeof rec === 'object' && !Array.isArray(rec)) {
+        return !(rec as { other_hospital?: boolean }).other_hospital
+      }
+      return true
+    })
+  }
+  return next
+}
+
 async function generate(
   formKey: string,
   caseId: string,
@@ -28,9 +49,12 @@ async function generate(
     .eq('id', caseId)
     .single()
   if (error || !row) return { ok: false, error: error?.message ?? '케이스를 찾을 수 없습니다' }
-  const caseRow = row as CaseRow
+  let caseRow = row as CaseRow
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const extraFields = (data.extra_visible_fields as string[]) ?? []
+  if (OTHER_HOSPITAL_EXCLUDED_FORMS.has(formKey)) {
+    caseRow = { ...caseRow, data: stripOtherHospitalRecords(data) }
+  }
   // 다중 목적지 케이스에서 UI 활성 목적지를 받아 그 나라 규칙만 적용.
   // 지정이 없으면 컬럼 전체 문자열을 사용(단일 목적지 케이스는 동작 동일).
   const destForRules = options?.destination ?? caseRow.destination

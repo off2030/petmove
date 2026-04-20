@@ -271,7 +271,12 @@ export default function ApplyPage() {
         color_en: p.selectedColors.map(ko => COLORS.find(c => c.ko === ko)?.en ?? ko).join(', '),
         sex: p.sex,
         weight: p.weight.trim(),
-        microchip: p.microchip.replace(/\D/g, '') || undefined,
+        microchip: (() => {
+          const d = p.microchip.replace(/\D/g, '')
+          return d.length === 15
+            ? `${d.slice(0,3)} ${d.slice(3,6)} ${d.slice(6,9)} ${d.slice(9,12)} ${d.slice(12)}`
+            : undefined
+        })(),
         microchip_implant_date: p.microchipDate || undefined,
         rabies_date: p.rabiesDate || undefined,
       })

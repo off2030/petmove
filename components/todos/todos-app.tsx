@@ -274,7 +274,29 @@ const INSPECTION_COLUMNS: TodoColumn[] = [
 ]
 
 const EXPORT_DOC_COLUMNS: TodoColumn[] = [
-  { key: 'vet_visit_date', label: '내원일', storage: 'data', type: 'date', width: 110 },
+  {
+    key: 'vet_visit_date',
+    label: '내원일',
+    storage: 'data',
+    type: 'date',
+    width: 110,
+    // 내원일이 7일 이내(포함 경과분)이고 준비상태 ≠ done 이면 주황.
+    cellClass: (row) => {
+      const data = (row.data ?? {}) as Record<string, unknown>
+      const visit = data.vet_visit_date
+      if (visit == null || String(visit) === '') return ''
+      const d = new Date(String(visit))
+      if (isNaN(d.getTime())) return ''
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      d.setHours(0, 0, 0, 0)
+      const diffDays = Math.floor((d.getTime() - today.getTime()) / 86400000)
+      if (diffDays > 7) return ''
+      const status = typeof data.export_doc_status === 'string' ? data.export_doc_status : 'not_started'
+      if (status === 'done') return ''
+      return 'text-orange-500'
+    },
+  },
   { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: 110 },
   {
     key: 'vet_available_date',
@@ -414,6 +436,25 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
       if (stored != null && String(stored) !== '') return String(stored)
       if (isJapan(row) && row.departure_date) return computeJapanImportDeadline(row.departure_date)
       return ''
+    },
+    // 기한이 7일 이내(포함 경과분)이고 수입·수출 상태가 모두 '진행중/완료'가 아닐 때 주황.
+    cellClass: (row) => {
+      const data = (row.data ?? {}) as Record<string, unknown>
+      const stored = data.import_deadline
+      const deadline = stored != null && String(stored) !== ''
+        ? String(stored)
+        : (isJapan(row) && row.departure_date ? computeJapanImportDeadline(row.departure_date) : '')
+      if (!deadline) return ''
+      const d = new Date(deadline)
+      if (isNaN(d.getTime())) return ''
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      d.setHours(0, 0, 0, 0)
+      const diffDays = Math.floor((d.getTime() - today.getTime()) / 86400000)
+      if (diffDays > 7) return ''
+      const suppressed = (s: string) => s === 'in_progress' || s === 'done'
+      if (suppressed(effectiveImportStatus(row)) || suppressed(effectiveExportStatus(row))) return ''
+      return 'text-orange-500'
     },
   },
   { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: 110 },

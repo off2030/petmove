@@ -20,6 +20,8 @@ interface VacRecord {
   expiry?: string | null
   /** Parasiticide product family selected by user (overrides date-based lookup). */
   product_id?: string | null
+  /** 타병원 접종 — 별지25 / 별지25 EX에서는 제외, 국가별 서류에는 포함. */
+  other_hospital?: boolean
 }
 
 interface Props {
@@ -188,30 +190,6 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     setDetailEdit(null)
     setExtractMsg(null)
     setDragOver(false)
-
-    // If this field is toggled but has no records, remove it from toggleable fields
-    if (records.length === 0) {
-      const labelToToggleKey: Record<string, string> = {
-        '종합백신': 'vaccine:general',
-        '광견병': 'vaccine:rabies',
-        'CIV': 'vaccine:civ',
-        '켄넬코프': 'vaccine:kennel',
-        '외부구충': 'vaccine:external_parasite',
-        '내부구충': 'vaccine:internal_parasite',
-        '심장사상충': 'vaccine:heartworm',
-      }
-      const toggleKey = labelToToggleKey[label]
-      if (toggleKey) {
-        const currentExtra = (data.extra_visible_fields as string[]) ?? []
-        if (currentExtra.includes(toggleKey)) {
-          const updated = currentExtra.filter(f => f !== toggleKey)
-          const extraVal = updated.length > 0 ? updated : null
-          updateCaseField(caseId, 'data', 'extra_visible_fields', extraVal).then((r) => {
-            if (r.ok) updateLocalCaseField(caseId, 'data', 'extra_visible_fields', extraVal)
-          })
-        }
-      }
-    }
   }, [caseId])
 
   async function saveRecords(next: VacRecord[]) {
@@ -298,6 +276,11 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     const next = records.map((r, i) => i === idx ? { ...r, [field]: value || null } : r)
     startSave(() => saveRecords(next))
     setDetailEdit(null)
+  }
+
+  function toggleOtherHospital(idx: number) {
+    const next = records.map((r, i) => i === idx ? { ...r, other_hospital: !r.other_hospital } : r)
+    startSave(() => saveRecords(next))
   }
 
   /** Apply a parasite product family selection. Handles combo sync to sibling array. */
@@ -706,6 +689,22 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                     </>
                   )}
                 </div>
+
+                {/* Row 3: 타병원 접종 체크 — 백신 항목(광견병/종합백신/CIV/켄넬코프)만. 별지25·별지25 EX에서 제외됨. */}
+                {OTHER_HOSPITAL_LABELS.has(label) && (
+                  <div className="ml-2 mt-0.5">
+                    <label className="inline-flex items-center gap-1 text-xs text-muted-foreground/70 hover:text-foreground cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={!!rec.other_hospital}
+                        onChange={() => toggleOtherHospital(oi)}
+                        disabled={saving}
+                        className="h-3 w-3 cursor-pointer"
+                      />
+                      타병원 접종
+                    </label>
+                  </div>
+                )}
               </div>
             )
           })}
@@ -714,6 +713,9 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     </div>
   )
 }
+
+/** 타병원 접종 체크박스를 노출할 백신 라벨. 별지25·별지25 EX에서 제외 대상. */
+const OTHER_HOSPITAL_LABELS = new Set(['광견병', '종합백신', 'CIV', '켄넬코프'])
 
 /* ── Parasite product dropdown ── */
 

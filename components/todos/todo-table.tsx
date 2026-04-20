@@ -31,6 +31,8 @@ export interface TodoColumn {
    * 식별 컬럼(동물명·고객명 등)에 사용.
    */
   readonly?: boolean
+  /** 표시 모드 셀에 추가로 붙일 className (예: 경고 색상). */
+  cellClass?: (row: CaseRow) => string
 }
 
 function getCellValue(row: CaseRow, col: TodoColumn): string {
@@ -106,9 +108,10 @@ function EditableCell({
 
   // Display mode
   if (!editing) {
+    const extraCls = col.cellClass?.(row) ?? ''
     return (
       <div
-        className="w-full px-1 py-1 text-base cursor-text whitespace-pre-wrap min-h-[24px]"
+        className={`w-full px-1 py-1 text-base cursor-text whitespace-pre-wrap min-h-[24px] ${extraCls}`}
         onClick={() => {
           setDraft(value)
           setEditing(true)

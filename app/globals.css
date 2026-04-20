@@ -28,6 +28,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     /* Sophisticated dark slate — not pure black */
     --background: 220 13% 11%;           /* ~#181c22 deep cool slate */
     --foreground: 210 15% 92%;

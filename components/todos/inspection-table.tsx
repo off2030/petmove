@@ -11,6 +11,18 @@ import { cn } from '@/lib/utils'
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
 
+/** 검사일이 오늘 기준 N일 이상 경과했는지. YYYY-MM-DD 기준. */
+function isOverdue(dateStr: string, days: number): boolean {
+  if (!dateStr) return false
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  d.setHours(0, 0, 0, 0)
+  const diffDays = Math.floor((today.getTime() - d.getTime()) / 86400000)
+  return diffDays >= days
+}
+
 /**
  * 검사 탭의 한 행. 한 케이스가 여러 행을 가질 수 있음
  * (광견병항체 + 전염병검사 KSVDL 등).
@@ -104,10 +116,12 @@ function DateCell({
   value,
   editable,
   onSave,
+  overdue = false,
 }: {
   value: string
   editable: boolean
   onSave: (v: string) => void
+  overdue?: boolean
 }) {
   const [editing, setEditing] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -119,9 +133,11 @@ function DateCell({
     onSave(v)
   }, [value, onSave])
 
+  const overdueCls = overdue && value ? 'text-orange-500' : ''
+
   if (!editable) {
     return (
-      <div className="w-full px-1 py-1 text-base truncate min-h-[24px] text-muted-foreground/80">
+      <div className={cn('w-full px-1 py-1 text-base truncate min-h-[24px] text-muted-foreground/80', overdueCls)}>
         {value || <span className="text-muted-foreground/50">—</span>}
       </div>
     )
@@ -130,7 +146,7 @@ function DateCell({
   if (!editing) {
     return (
       <div
-        className="w-full px-1 py-1 text-base cursor-text truncate min-h-[24px]"
+        className={cn('w-full px-1 py-1 text-base cursor-text truncate min-h-[24px]', overdueCls)}
         onClick={() => setEditing(true)}
       >
         {value || <span className="text-muted-foreground/50">—</span>}
@@ -440,6 +456,10 @@ export function InspectionTable({
                 value={row.date}
                 editable={row.dateEditable}
                 onSave={(v) => handleDateSave(row, v)}
+                overdue={
+                  ((row.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') === 'waiting'
+                  && isOverdue(row.date, 5)
+                }
               />
             </td>
             <td className="px-2 py-2" style={{ width: 100, minWidth: 100 }}>
