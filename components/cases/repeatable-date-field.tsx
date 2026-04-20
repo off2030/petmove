@@ -343,42 +343,46 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
       if (images.length === 0) return
       const result = await extractVaccineInfo({ imageBase64: images[0].base64, mediaType: images[0].mediaType })
       if (result.ok) {
-        const hasAny = result.data.date || result.data.valid_until || result.data.product || result.data.manufacturer || result.data.lot || result.data.expiry
-        if (!hasAny) {
+        const extracted = result.records
+        if (extracted.length === 0) {
           setExtractMsg('추출 실패: 약품 정보를 찾을 수 없습니다')
         } else if (targetIdx !== null) {
-          // 기존 레코드 업데이트 — 추출된 값이 있을 때만 덮어씀.
+          // 기존 레코드 업데이트 — 첫 번째 레코드만 사용 (카드별 업데이트 시 단일 레코드 가정)
+          const top = extracted[0]
           const next = records.map((r, i) => i === targetIdx ? {
             ...r,
-            date: result.data.date ?? r.date,
-            valid_until: result.data.valid_until ?? r.valid_until,
-            product: result.data.product ?? r.product,
-            manufacturer: result.data.manufacturer ?? r.manufacturer,
-            lot: result.data.lot ?? r.lot,
-            expiry: result.data.expiry ?? r.expiry,
+            date: top.date ?? r.date,
+            valid_until: top.valid_until ?? r.valid_until,
+            product: top.product ?? r.product,
+            manufacturer: top.manufacturer ?? r.manufacturer,
+            lot: top.lot ?? r.lot,
+            expiry: top.expiry ?? r.expiry,
           } : r)
           await saveRecords(next)
           setExtractMsg(`약품 정보가 업데이트되었습니다`)
         } else {
-          // 새 레코드 추가
-          const newRec: VacRecord = {
-            date: result.data.date ?? '',
-            valid_until: result.data.valid_until ?? null,
-            product: result.data.product,
-            manufacturer: result.data.manufacturer,
-            lot: result.data.lot,
-            expiry: result.data.expiry,
-          }
-          const next = [...records, newRec]
+          // 새 레코드 — 추출된 모든 항목을 각각 추가
+          const newRecs: VacRecord[] = extracted.map(e => ({
+            date: e.date ?? '',
+            valid_until: e.valid_until ?? null,
+            product: e.product,
+            manufacturer: e.manufacturer,
+            lot: e.lot,
+            expiry: e.expiry,
+          }))
+          const next = [...records, ...newRecs]
           await saveRecords(next)
-          const needsDate = !result.data.date
+          const firstMissingDateOffset = newRecs.findIndex(r => !r.date)
+          const anyMissingDate = firstMissingDateOffset !== -1
           setExtractMsg(
-            needsDate
-              ? `${label} 약품 정보가 추가되었습니다. 접종일을 입력하세요.`
-              : `${label} 정보가 추가되었습니다.`,
+            extracted.length > 1
+              ? `${label} 접종 ${extracted.length}건이 추가되었습니다${anyMissingDate ? '. 접종일을 입력하세요.' : '.'}`
+              : anyMissingDate
+                ? `${label} 약품 정보가 추가되었습니다. 접종일을 입력하세요.`
+                : `${label} 정보가 추가되었습니다.`,
           )
           setExpanded(true)
-          if (needsDate) setEditIdx(next.length - 1)
+          if (anyMissingDate) setEditIdx(records.length + firstMissingDateOffset)
         }
       } else {
         setExtractMsg('추출 실패: ' + result.error)

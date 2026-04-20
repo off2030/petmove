@@ -5,34 +5,60 @@ import { EXTRACTION_MODEL } from '@/lib/openai-config'
 
 export interface VaccineInfo {
   date: string | null           // YYYY-MM-DD (접종일)
-  valid_until: string | null    // YYYY-MM-DD (유효기간)
+  valid_until: string | null    // YYYY-MM-DD 또는 'Nyr'(예: '3년') (면역유효기간)
   product: string | null        // 제품명
   manufacturer: string | null   // 제조사
   lot: string | null            // 로트/배치 번호
-  expiry: string | null         // 제품 유효기간
+  expiry: string | null         // 제품 유효기간 (EXP 라벨)
 }
 
 type ExtractResult =
-  | { ok: true; data: VaccineInfo }
+  | { ok: true; records: VaccineInfo[] }
   | { ok: false; error: string }
 
-const SYSTEM_PROMPT = `You extract information about a vaccine/parasiticide from images or text.
+const SYSTEM_PROMPT = `You extract information about vaccines/parasiticides from images or text.
 
-Return ONLY a JSON object:
+The image may contain MULTIPLE vaccination records (two or more stickers/entries). Return ALL records.
+
+Return ONLY a JSON object with a "records" array:
 {
-  "date": "YYYY-MM-DD — date of administration (접종일/Vaccination Date/Date Given/투여일) or null",
-  "valid_until": "YYYY-MM-DD — immunity validity end date (면역유효기간/Valid Until/Next Due/다음접종일) or Nyr string like '1년'/'3년' if only a duration is given, or null",
-  "product": "Vaccine/product name (e.g. Rabisin, NexGard Spectra, Vanguard Canine DAPP+L4) or null",
-  "manufacturer": "Manufacturer (e.g. Boehringer Ingelheim, Merck, Zoetis) or null",
-  "lot": "Lot/batch number (SER/Serial/Batch number on the label) or null",
-  "expiry": "YYYY-MM-DD — product shelf-life expiry date (EXP/유효기한 on the label) or null"
+  "records": [
+    {
+      "date": "YYYY-MM-DD — administration/injection date or null",
+      "valid_until": "YYYY-MM-DD — immunity validity end date, or Nyr string like '1년'/'3년' if only a duration is given, or null",
+      "product": "Vaccine/product name (e.g. Rabisin, NexGard Spectra, Vanguard Canine DAPP+L4) or null",
+      "manufacturer": "Manufacturer (e.g. Boehringer Ingelheim, Merck, Zoetis) or null",
+      "lot": "Lot/batch number (SER/Serial/Batch on the label) or null",
+      "expiry": "YYYY-MM-DD — product shelf-life expiry ONLY, or null"
+    }
+  ]
 }
 
-Rules:
-- "date" = administration/injection date on the certificate or sticker. Convert any format to YYYY-MM-DD.
-- "valid_until" = next-due or validity-end date if shown. If only a duration like "3 years" or "1 year" is shown, return "3년" / "1년". Otherwise null.
-- "expiry" = product shelf life only (EXP/유효기한 label). Distinct from valid_until. Convert "05 JUL 26" → "2026-07-05".
-- "product" should be the full product name as shown on the label (Korean or English).
+If there's only ONE vaccination, still return a "records" array with one element.
+If there are TWO OR MORE distinct vaccinations (different dates, different stickers, clearly separate entries), return one record per vaccination in order of appearance (earliest date first when dates differ).
+
+Rules for disambiguating dates — READ CAREFULLY:
+
+"date" (administration) triggers:
+- Labels: "접종일", "주사일", "투여일", "Vaccination Date", "Date Given", "Date of Administration", "DOA"
+- On vaccination record stickers/certificates, the date entered by the vet.
+- If the image is a completed vaccination record/sticker (with owner/pet info, signature, stamp), ANY date on it is likely the administration date unless explicitly labeled otherwise.
+
+"expiry" (product shelf life) triggers ONLY these:
+- Explicit labels: "EXP", "Expiry", "Expiration", "유효기한", "사용기한", "Use By", "Best Before"
+- Printed on the vial/box by the manufacturer (not handwritten, not filled in)
+- If NO such explicit expiry label is present, "expiry" MUST be null.
+
+"valid_until" (immunity validity):
+- Labels: "면역유효기간", "Valid Until", "Next Due", "다음접종일", "Booster Due"
+- Duration like "3 years" / "1 year" / "3년" → return "3년" / "1년" string.
+
+When only ONE date is visible and it has no explicit expiry label → put it in "date", NOT "expiry".
+Never duplicate the same date across multiple fields.
+
+Other rules:
+- Convert all date formats to YYYY-MM-DD (e.g. "05 JUL 26" → "2026-07-05").
+- "product" = full product name on the label (Korean or English).
 - If the input is not vaccine/parasiticide related, return all nulls.
 - Return ONLY valid JSON, no markdown, no explanation.`
 
@@ -69,7 +95,7 @@ export async function extractVaccineInfo(input: {
 
     const response = await client.chat.completions.create({
       model: EXTRACTION_MODEL,
-      max_tokens: 300,
+      max_tokens: 800,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: userContent },
@@ -78,12 +104,17 @@ export async function extractVaccineInfo(input: {
 
     const text = response.choices[0]?.message?.content ?? ''
     const jsonStr = text.replace(/```json?\s*/g, '').replace(/```\s*/g, '').trim()
-    const parsed = JSON.parse(jsonStr) as VaccineInfo
+    const parsed = JSON.parse(jsonStr) as { records?: VaccineInfo[] } | VaccineInfo
 
-    const hasData = Object.values(parsed).some((v) => v !== null)
-    if (!hasData) return { ok: false, error: 'No vaccination info found' }
+    // 하위호환: 모델이 레거시 flat 객체를 반환하면 records 배열로 감쌈.
+    const records: VaccineInfo[] = Array.isArray((parsed as { records?: VaccineInfo[] }).records)
+      ? (parsed as { records: VaccineInfo[] }).records
+      : [parsed as VaccineInfo]
 
-    return { ok: true, data: parsed }
+    const nonEmpty = records.filter(r => r && Object.values(r).some(v => v !== null))
+    if (nonEmpty.length === 0) return { ok: false, error: 'No vaccination info found' }
+
+    return { ok: true, records: nonEmpty }
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
     return { ok: false, error: msg }
