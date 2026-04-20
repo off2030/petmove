@@ -29,7 +29,7 @@ import type { CaseRow } from '@/lib/supabase/types'
 // - Korean typing in browser breaks → flip SUBSET_FONT to false
 // - Fields appear blank in some viewer → flip NEED_APPEARANCES to 'true'
 // - Template/font changes not picked up → flip CACHE_ASSETS to false (dev)
-const PDF_SUBSET_FONT = false
+const PDF_SUBSET_FONT = true
 const PDF_CACHE_ASSETS = true
 const PDF_NEED_APPEARANCES: 'false' | 'true' | 'unset' = 'false'
 
