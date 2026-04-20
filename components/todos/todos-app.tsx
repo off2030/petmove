@@ -278,17 +278,17 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
   { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: 110 },
   {
     key: 'vet_available_date',
-    label: '내원 가능일',
+    label: '내원가능일',
     storage: 'data',
     type: 'date',
     width: 110,
-    // 저장된 값이 없으면 내원일 - 9일로 자동 계산하여 표시.
+    // 저장된 값이 없으면 출국일 - 9일로 자동 계산하여 표시.
     resolveValue: (row) => {
       const data = (row.data ?? {}) as Record<string, unknown>
       const stored = data.vet_available_date
       if (stored != null && String(stored) !== '') return String(stored)
-      const visit = data.vet_visit_date
-      if (typeof visit === 'string' && visit) return addDays(visit, -9)
+      const departure = row.departure_date
+      if (typeof departure === 'string' && departure) return addDays(departure, -9)
       return ''
     },
   },
@@ -551,7 +551,7 @@ export function TodosApp() {
     <div className="h-full overflow-hidden px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
       <div className="h-full mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl flex flex-col gap-md">
       {/* Tabs + search */}
-      <div className="flex items-end justify-between gap-md border-b border-border/60 shrink-0">
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-sm md:gap-md border-b border-border/60 shrink-0">
         <div className="flex gap-xs">
           {TABS.map((tab) => (
             <button
@@ -568,7 +568,7 @@ export function TodosApp() {
             </button>
           ))}
         </div>
-        <div className="relative w-56 mb-1">
+        <div className="relative w-full md:w-56 pb-2 md:pb-0 md:mb-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}

@@ -56,6 +56,36 @@ export async function updateCaseField(
       }
       return { ok: false, error: error.message }
     }
+
+    // 출국일이 저장되면 내원가능일(vet_available_date)을 자동으로 -9일로 설정
+    if (key === 'departure_date' && value) {
+      try {
+        const departureDate = new Date(String(value))
+        if (!isNaN(departureDate.getTime())) {
+          const availableDate = new Date(departureDate)
+          availableDate.setDate(availableDate.getDate() - 9)
+          const availableDateStr = availableDate.toISOString().split('T')[0]
+
+          const { data: row, error: fetchErr } = await supabase
+            .from('cases')
+            .select('data')
+            .eq('id', caseId)
+            .single()
+          if (!fetchErr && row) {
+            const current: Record<string, unknown> =
+              (row.data as Record<string, unknown> | null) ?? {}
+            const next = { ...current, vet_available_date: availableDateStr }
+
+            await supabase
+              .from('cases')
+              .update({ data: next })
+              .eq('id', caseId)
+          }
+        }
+      } catch {
+        // 날짜 계산 실패는 무시
+      }
+    }
   } else {
     const { data: row, error: fetchErr } = await supabase
       .from('cases')

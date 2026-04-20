@@ -465,7 +465,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
       onDragLeave={!expanded ? handleDragLeave : undefined}
       onDrop={!expanded ? handleDropNew : undefined}
       className={cn(
-        "grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 last:border-0 rounded-md transition-colors hover:bg-muted/60",
+        "grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 last:border-0 rounded-md transition-colors hover:bg-muted/60",
         !expanded && dragOver && "bg-accent/40 ring-2 ring-ring/30 ring-dashed",
       )}
     >

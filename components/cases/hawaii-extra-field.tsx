@@ -151,7 +151,7 @@ export function HawaiiExtraField({ caseId, caseRow }: { caseId: string; caseRow:
     const val = extra[key] ?? null
     const isEditing = editingField === key
     return (
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
         <span className="text-base text-primary pt-1">{label}</span>
         {isEditing ? (
           <InlineInput type={type} initial={val ?? ''} placeholder={placeholder} onSave={(v) => saveField(key, v)} onCancel={() => setEditingField(null)} />
@@ -186,7 +186,7 @@ export function HawaiiExtraField({ caseId, caseRow }: { caseId: string; caseRow:
       )}
     >
       {/* ── AI Input zone ── */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
         <span className="text-base text-primary pt-1">AI 입력</span>
         <div className="min-w-0 space-y-1">
           {showInput ? (

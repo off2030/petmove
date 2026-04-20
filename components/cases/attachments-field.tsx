@@ -107,7 +107,7 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+    <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
       <div className="flex items-center gap-xs pt-1">
         <span className="text-base text-primary">첨부파일</span>
         <button

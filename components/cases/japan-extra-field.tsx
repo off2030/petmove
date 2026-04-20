@@ -228,7 +228,7 @@ export function JapanExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
       )}
     >
       {/* ── Input zone ── */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
         <span className="text-base text-primary pt-1">AI 입력</span>
         <div className="min-w-0 space-y-1">
           {showInput ? (
@@ -291,7 +291,7 @@ export function JapanExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
       />
 
       {/* ── Email ── */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
         <span className="text-base text-primary pt-1">이메일</span>
         {editingField === 'email' ? (
           <InlineInput
@@ -321,7 +321,7 @@ export function JapanExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
       </div>
 
       {/* ── Address ── */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
         <span className="text-base text-primary pt-1">해외주소</span>
         {editingField === 'address_overseas' ? (
           <InlineInput
@@ -351,7 +351,7 @@ export function JapanExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
       </div>
 
       {/* ── Certificate No ── */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
         <span className="text-base text-primary pt-1">EQC No.</span>
         {editingField === 'certificate_no' ? (
           <InlineInput
@@ -394,7 +394,7 @@ function FlightBlock({ label, direction, flight, editingField, setEditingField, 
   onSave: (key: keyof FlightEntry, val: string | null) => void
 }) {
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+    <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
       <span className="text-base text-primary pt-1">{label}</span>
       <div className="min-w-0 space-y-0.5">
         {FLIGHT_FIELDS.map((f) => {

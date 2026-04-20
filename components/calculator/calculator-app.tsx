@@ -80,8 +80,8 @@ export function CalculatorApp() {
   return (
     <div className="h-full overflow-auto scrollbar-minimal px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
       <div className="mx-auto max-w-2xl flex flex-col gap-md">
-        {/* Tabs + toolbar — same row, like todos page */}
-        <div className="flex items-end justify-between gap-md border-b border-border/60 shrink-0">
+        {/* Tabs + toolbar — same row on desktop, stacked on mobile */}
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-sm md:gap-md border-b border-border/60 shrink-0">
           <div className="flex gap-xs">
             {MODES.map((m) => (
               <button
@@ -99,7 +99,7 @@ export function CalculatorApp() {
             ))}
           </div>
 
-          <div className="mb-1 flex items-center gap-2">
+          <div className="pb-2 md:pb-0 md:mb-1 flex items-center gap-2 flex-wrap">
             {mode === 'cost' && (
               <>
                 {canEdit && (

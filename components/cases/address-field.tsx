@@ -221,7 +221,7 @@ export function AddressField({
   return (
     <>
       {/* Korean address */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
+      <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
         <div className="pt-1 text-base text-primary">한국주소</div>
         <div className="flex items-center gap-sm min-w-0">
           {editingKr ? (
@@ -244,7 +244,7 @@ export function AddressField({
               </button>
             </div>
           ) : (
-            <div className="group/kr relative flex items-center gap-xs min-w-0 flex-1">
+            <div className="group/kr relative flex flex-wrap items-center gap-xs min-w-0 flex-1">
               <button type="button" onClick={krEmpty ? handleSearch : startEditKr}
                 className={cn('text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text', krEmpty && 'text-muted-foreground/60')}>
                 {krDisplay}
@@ -257,8 +257,8 @@ export function AddressField({
                 className="opacity-0 group-hover/kr:opacity-100 shrink-0" />
               {zipDisplay && (
                 <>
-                  <span className="text-muted-foreground/30 select-none mx-2">|</span>
-                  <div className="group/zip relative inline-flex items-baseline shrink-0">
+                  <span className="text-muted-foreground/30 select-none mx-2 hidden md:inline">|</span>
+                  <div className="group/zip relative inline-flex items-baseline shrink-0 basis-full md:basis-auto">
                     <span className="text-base text-primary mr-1">우편번호</span>
                     <span className="text-base">{zipDisplay}</span>
                     <CopyButton value={zipDisplay} className="ml-1 opacity-0 group-hover/zip:opacity-100" />
@@ -289,7 +289,7 @@ export function AddressField({
       )}
 
       {/* English address */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
+      <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
         <div className="pt-1 text-base text-primary">영문주소</div>
         <div className="min-w-0">
           {editingEn ? (

@@ -276,14 +276,14 @@ export function CaseList({
                       !isSelected && i === highlight && 'bg-muted/60',
                     )}
                   >
-                    <div className="grid grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm text-base">
+                    <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm text-base">
                       <span className="truncate font-medium text-foreground">
                         {c.customer_name}
                       </span>
                       <span className="truncate text-muted-foreground">
                         {c.pet_name ?? '—'}
                       </span>
-                      <span className="truncate inline-flex items-center gap-1 flex-wrap">
+                      <span className="truncate inline-flex items-center justify-end md:justify-start gap-1 flex-wrap">
                         {dests.length > 0 ? (
                           dests.map((d) => {
                             const tone = destColor(d)
@@ -300,7 +300,7 @@ export function CaseList({
                           <span className="text-muted-foreground">—</span>
                         )}
                       </span>
-                      <span className="font-mono text-[13px] text-muted-foreground tabular-nums">
+                      <span className="hidden md:block font-mono text-[13px] text-muted-foreground tabular-nums">
                         {c.microchip ?? '미등록'}
                       </span>
                     </div>

@@ -129,7 +129,7 @@ export function UKExtraField({ caseId, caseRow }: { caseId: string; caseRow: Cas
       )}
     >
       {/* ── AI Input zone ── */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
         <span className="text-base text-primary pt-1">AI 입력</span>
         <div className="min-w-0 space-y-1">
           {showInput ? (
@@ -170,7 +170,7 @@ export function UKExtraField({ caseId, caseRow }: { caseId: string; caseRow: Cas
       </div>
 
       {/* ── 해외주소 ── */}
-      <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
         <span className="text-base text-primary pt-1">해외주소</span>
         {editing ? (
           <AddressInput

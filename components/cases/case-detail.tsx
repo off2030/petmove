@@ -425,7 +425,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
+    <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
       <div className="flex items-center gap-xs pt-1">
         <span className="text-base text-primary">{spec.label}</span>
         {!showSecondary && (
@@ -507,7 +507,7 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   }
 
   return (
-    <div className="grid grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
+    <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
       <div className="flex items-center gap-xs pt-1">
         <span className="text-base text-primary">마이크로칩</span>
       </div>
