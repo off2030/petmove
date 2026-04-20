@@ -1,6 +1,6 @@
 'use client'
 
-import { Folder, CheckCircle2, Calculator, Settings, Moon, Sun, Menu } from 'lucide-react'
+import { Folder, CheckCircle2, LayoutGrid, Settings, Moon, Sun, Menu } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { countExpiringProducts } from '@/lib/vaccine-lookup'
 import { useDarkMode } from '@/lib/use-dark-mode'
@@ -10,7 +10,7 @@ export type TabId = 'cases' | 'todos' | 'calculator' | 'settings'
 export const NAV_ITEMS: Array<{ id: TabId; icon: typeof Folder; label: string }> = [
   { id: 'cases', icon: Folder, label: '홈' },
   { id: 'todos', icon: CheckCircle2, label: '할일' },
-  { id: 'calculator', icon: Calculator, label: '계산기' },
+  { id: 'calculator', icon: LayoutGrid, label: '도구' },
 ]
 
 export function TopBar({

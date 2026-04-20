@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { formatMicrochip } from '@/lib/fields'
 import type { CaseRow } from '@/lib/supabase/types'
 
 const ORG_ID = '00000000-0000-0000-0000-000000000001'
@@ -79,7 +80,7 @@ export async function applyCase(input: ApplyInput): Promise<
       pet_name: input.pet_name,
       pet_name_en: input.pet_name_en,
       destination: input.destination,
-      microchip: input.microchip || null,
+      microchip: formatMicrochip(input.microchip),
       status: 'applied',
       data,
     })

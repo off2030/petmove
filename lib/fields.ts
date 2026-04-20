@@ -1,6 +1,17 @@
 import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
 
 /**
+ * Normalize a microchip string to the canonical "NNN NNN NNN NNN NNN" form.
+ * Returns null for empty input or when the digit count isn't 15.
+ */
+export function formatMicrochip(raw: string | null | undefined): string | null {
+  if (!raw) return null
+  const digits = String(raw).replace(/\D/g, '')
+  if (digits.length !== 15) return null
+  return `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6,9)} ${digits.slice(9,12)} ${digits.slice(12)}`
+}
+
+/**
  * A unified "field" description shared across regular columns and JSONB data.
  * Used by the detail page to render + edit every field uniformly.
  */
@@ -323,9 +334,7 @@ export function renderFieldValue(spec: FieldSpec, raw: unknown): string {
 
   // Microchip formatting: 410100012271380 → 410 100 012 271 380
   if (spec.key === 'microchip') {
-    const digits = String(raw).replace(/\D/g, '')
-    if (digits.length === 15) return `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6,9)} ${digits.slice(9,12)} ${digits.slice(12)}`
-    return String(raw)
+    return formatMicrochip(String(raw)) ?? String(raw)
   }
 
   // Phone number formatting: 01012345678 → 010-1234-5678
@@ -368,11 +377,7 @@ export function coerceInputValue(spec: FieldSpec, input: string): unknown {
 
   // Microchip: must be exactly 15 digits, formatted as "NNN NNN NNN NNN NNN"
   if (spec.key === 'microchip') {
-    const digits = trimmed.replace(/\D/g, '')
-    if (digits.length !== 15) {
-      return null // validation will catch this
-    }
-    return `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6,9)} ${digits.slice(9,12)} ${digits.slice(12)}`
+    return formatMicrochip(trimmed) // null if invalid — validation catches it
   }
 
   if (spec.type === 'number') {

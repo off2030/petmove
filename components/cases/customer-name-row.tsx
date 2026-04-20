@@ -108,7 +108,7 @@ export function CustomerNameRow({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
       <div className="pt-1 text-base text-primary">성함</div>
 
       <div className="flex items-baseline gap-[10px] min-w-0 flex-wrap">

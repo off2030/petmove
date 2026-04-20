@@ -6,12 +6,14 @@ import { VaccineSection } from './vaccine-section'
 import { CompanySection } from './company-section'
 import { ImportReportSection } from './import-report-section'
 import { InspectionSection } from './inspection-section'
+import { DocumentsSection } from './documents-section'
 
 const TABS = [
   { id: 'company', label: '병원 정보' },
   { id: 'vaccines', label: '약품 관리' },
   { id: 'inspection', label: '검사' },
   { id: 'import_report', label: '신고' },
+  { id: 'documents', label: '서류' },
   { id: 'data', label: '데이터 관리' },
 ] as const
 
@@ -68,32 +70,33 @@ export function SettingsApp() {
   const [activeTab, setActiveTab] = useState<TabId>('company')
 
   return (
-    <div className="h-full overflow-auto scrollbar-minimal px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
-      <div className="mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl">
-      <h1 className="text-base font-semibold mb-6">설정</h1>
+    <div className="h-full overflow-hidden px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
+      <div className="h-full mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl flex flex-col gap-md">
+        <div className="flex gap-xs border-b border-border/60 shrink-0">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-md py-2 text-base font-medium transition-colors border-b-2 -mb-px ${
+                activeTab === tab.id
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-      <div className="flex gap-xs mb-6 border-b border-border">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-md py-2 text-base font-medium transition-colors border-b-2 -mb-px ${
-              activeTab === tab.id
-                ? 'border-foreground text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === 'company' && <CompanySection />}
-      {activeTab === 'vaccines' && <VaccineSection />}
-      {activeTab === 'inspection' && <InspectionSection />}
-      {activeTab === 'import_report' && <ImportReportSection />}
-      {activeTab === 'data' && <DataSection />}
+        <div className="flex-1 min-h-0 overflow-auto scrollbar-minimal">
+          {activeTab === 'company' && <CompanySection />}
+          {activeTab === 'vaccines' && <VaccineSection />}
+          {activeTab === 'inspection' && <InspectionSection />}
+          {activeTab === 'import_report' && <ImportReportSection />}
+          {activeTab === 'documents' && <DocumentsSection />}
+          {activeTab === 'data' && <DataSection />}
+        </div>
       </div>
     </div>
   )

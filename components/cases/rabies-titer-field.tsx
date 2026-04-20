@@ -10,7 +10,6 @@ import { labColor } from '@/lib/lab-color'
 import { extractTiterInfo } from '@/lib/actions/extract-titer'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
-import { resolveInspectionLab } from '@/lib/inspection-config-defaults'
 
 interface TiterRecord {
   date: string | null
@@ -49,7 +48,9 @@ function autoDetectLab(
   if (!destination) return defaultLab
   const dests = destination.split(',').map(s => s.trim()).filter(Boolean)
   if (dests.length !== 1) return null
-  return resolveInspectionLab(dests[0], overrides, defaultLab)
+  const country = dests[0]
+  const override = overrides.find(o => o.country === country)
+  return override?.lab ?? defaultLab
 }
 
 export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
@@ -228,20 +229,20 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        'grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0 rounded-md',
+        'grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0 rounded-md',
         dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
-      <div className="flex items-center gap-xs pt-1">
+      <div className="flex items-center gap-[6px] pt-1">
         <span className="text-base text-primary">광견병항체검사</span>
         <button
           type="button"
           onClick={() => setAddingNew(true)}
           disabled={saving || addingNew}
-          className="text-muted-foreground/40 hover:text-foreground text-lg font-semibold leading-none transition-colors disabled:opacity-30"
+          className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
           title="항체검사 추가"
         >
-          +
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         </button>
         <input
           ref={fileRef}
@@ -254,10 +255,10 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={extracting}
-          className="shrink-0 rounded-md p-0.5 text-muted-foreground/40 hover:text-foreground transition-colors disabled:opacity-30"
+          className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
           title="이미지/PDF로 항체검사 정보 추출"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
         </button>
       </div>
       <div className="min-w-0 space-y-0.5">
@@ -297,7 +298,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
         )}
 
         {dragOver && (
-          <div className="text-xs text-primary italic px-2 py-1">항체검사 결과 이미지를 여기에 드롭</div>
+          <div className="text-xs text-muted-foreground px-2 py-1">놓으면 자동 입력</div>
         )}
       </div>
     </div>

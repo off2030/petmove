@@ -4,27 +4,68 @@
 import {
   DEFAULT_INSPECTION_CONFIG,
   type InspectionConfig,
-  type InspectionLabOverride,
+  type InspectionLabRule,
 } from '@/lib/inspection-config-defaults'
 
 export { DEFAULT_INSPECTION_CONFIG }
-export type { InspectionConfig, InspectionLabOverride }
+export type { InspectionConfig, InspectionLabRule }
 
 const APP_SETTINGS_KEY = 'inspection_config'
 
-function isValidOverride(o: unknown): o is InspectionLabOverride {
-  return !!o && typeof o === 'object'
-    && typeof (o as InspectionLabOverride).country === 'string'
-    && typeof (o as InspectionLabOverride).lab === 'string'
+/** 단일 규칙 정규화. 신·구 포맷 모두 수용. 유효하지 않으면 null. */
+function normalizeRule(o: unknown): InspectionLabRule | null {
+  if (!o || typeof o !== 'object') return null
+  const r = o as Record<string, unknown>
+
+  // 신 포맷: { label?, countries: string[], labs: string[] }
+  if (Array.isArray(r.countries) && Array.isArray(r.labs)) {
+    const countries = r.countries
+      .filter((x): x is string => typeof x === 'string')
+      .map(x => x.trim())
+      .filter(Boolean)
+    const labs = r.labs
+      .filter((x): x is string => typeof x === 'string')
+      .map(x => x.trim())
+      .filter(Boolean)
+    if (countries.length === 0 || labs.length === 0) return null
+    const label = typeof r.label === 'string' && r.label.trim() ? r.label.trim() : undefined
+    // 중복 제거
+    const dedupCountries = Array.from(new Set(countries))
+    const dedupLabs = Array.from(new Set(labs))
+    return label ? { label, countries: dedupCountries, labs: dedupLabs } : { countries: dedupCountries, labs: dedupLabs }
+  }
+
+  // 구 포맷: { country: string, lab: string }
+  if (typeof r.country === 'string' && typeof r.lab === 'string') {
+    const country = r.country.trim()
+    const lab = r.lab.trim()
+    if (!country || !lab) return null
+    return { countries: [country], labs: [lab] }
+  }
+
+  return null
 }
 
-function isValidConfig(v: unknown): v is InspectionConfig {
-  if (!v || typeof v !== 'object') return false
-  const c = v as Partial<InspectionConfig>
-  return typeof c.titerDefault === 'string'
-    && typeof c.infectiousDefault === 'string'
-    && Array.isArray(c.titerOverrides) && c.titerOverrides.every(isValidOverride)
-    && Array.isArray(c.infectiousOverrides) && c.infectiousOverrides.every(isValidOverride)
+function normalizeRules(raw: unknown): InspectionLabRule[] {
+  if (!Array.isArray(raw)) return []
+  return raw.map(normalizeRule).filter((r): r is InspectionLabRule => r !== null)
+}
+
+function normalize(raw: unknown): InspectionConfig {
+  const src = (raw && typeof raw === 'object') ? (raw as Record<string, unknown>) : {}
+  const titerDefault = typeof src.titerDefault === 'string' && src.titerDefault.trim()
+    ? src.titerDefault.trim()
+    : DEFAULT_INSPECTION_CONFIG.titerDefault
+  // 구 포맷 키(titerOverrides/infectiousOverrides)도 수용
+  const titerRaw = Array.isArray(src.titerRules) ? src.titerRules
+    : Array.isArray(src.titerOverrides) ? src.titerOverrides : []
+  const infectiousRaw = Array.isArray(src.infectiousRules) ? src.infectiousRules
+    : Array.isArray(src.infectiousOverrides) ? src.infectiousOverrides : []
+  return {
+    titerDefault,
+    titerRules: normalizeRules(titerRaw),
+    infectiousRules: normalizeRules(infectiousRaw),
+  }
 }
 
 export async function loadInspectionConfig(): Promise<InspectionConfig> {
@@ -36,7 +77,7 @@ export async function loadInspectionConfig(): Promise<InspectionConfig> {
       .select('value')
       .eq('key', APP_SETTINGS_KEY)
       .maybeSingle()
-    if (data?.value && isValidConfig(data.value)) return data.value
+    if (data?.value) return normalize(data.value)
     return DEFAULT_INSPECTION_CONFIG
   } catch {
     return DEFAULT_INSPECTION_CONFIG
@@ -44,23 +85,7 @@ export async function loadInspectionConfig(): Promise<InspectionConfig> {
 }
 
 export async function saveInspectionConfig(config: InspectionConfig): Promise<InspectionConfig> {
-  // normalize: trim country, dedup per (country)
-  const dedupe = (list: InspectionLabOverride[]) => {
-    const seen = new Map<string, InspectionLabOverride>()
-    for (const o of list) {
-      const country = o.country.trim()
-      const lab = o.lab.trim()
-      if (!country || !lab) continue
-      seen.set(country, { country, lab })
-    }
-    return Array.from(seen.values())
-  }
-  const normalized: InspectionConfig = {
-    titerDefault: config.titerDefault.trim() || DEFAULT_INSPECTION_CONFIG.titerDefault,
-    titerOverrides: dedupe(config.titerOverrides),
-    infectiousDefault: config.infectiousDefault.trim() || DEFAULT_INSPECTION_CONFIG.infectiousDefault,
-    infectiousOverrides: dedupe(config.infectiousOverrides),
-  }
+  const normalized = normalize(config)
   const { createClient } = await import('@/lib/supabase/server')
   const supabase = await createClient()
   const { error } = await supabase

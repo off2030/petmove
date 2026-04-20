@@ -8,6 +8,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
+import { formatMicrochip } from '@/lib/fields'
 import type { CaseRow } from '@/lib/supabase/types'
 import { revalidatePath } from 'next/cache'
 
@@ -39,6 +40,12 @@ export async function createCaseWithData(
   for (const [k, v] of Object.entries(seed.column ?? {})) {
     if (!REGULAR_COLUMNS.has(k)) continue
     if (v === null || v === undefined || v === '') continue
+    if (k === 'microchip') {
+      const normalized = formatMicrochip(String(v))
+      if (!normalized) continue
+      cleanColumn[k] = normalized
+      continue
+    }
     cleanColumn[k] = v
   }
   const cleanData: Record<string, unknown> = {}

@@ -6,6 +6,7 @@ import type { CaseRow } from '@/lib/supabase/types'
 import { useCases } from '@/components/cases/cases-context'
 import { Input } from '@/components/ui/input'
 import { destColor } from '@/lib/destination-color'
+import { matchesDestinationKey } from '@/lib/destination-config'
 import { cn } from '@/lib/utils'
 import { TodoTable, type TodoColumn } from './todo-table'
 import { InspectionTable, type InspectionRow } from './inspection-table'
@@ -80,20 +81,20 @@ const LAB_OPTIONS = [
 ]
 
 /**
- * Auto-detect titer lab from destination using inspection config overrides.
- * 여러 목적지 중 override 가 있는 첫 국가의 lab 반환, 없으면 default.
+ * Auto-detect titer lab from destination using inspection config rules.
+ * 여러 목적지 중 규칙이 매칭되는 첫 국가의 첫 lab 반환, 없으면 default.
  */
 function autoDetectLab(
   destination: string | null | undefined,
-  overrides: { country: string; lab: string }[],
+  rules: import('@/lib/inspection-config-defaults').InspectionLabRule[],
   defaultLab: string,
 ): string {
   if (!destination) return defaultLab
   const dests = destination.split(',').map(s => s.trim()).filter(Boolean)
-  const map = new Map(overrides.map(o => [o.country, o.lab]))
   for (const d of dests) {
-    const hit = map.get(d)
-    if (hit) return hit
+    for (const r of rules) {
+      if (r.countries.includes(d) && r.labs.length > 0) return r.labs[0]
+    }
   }
   return defaultLab
 }
@@ -114,13 +115,13 @@ function resolveTiterDate(row: CaseRow): string {
 /** Read lab from inspection_lab, fallback to auto-detect from destination */
 function resolveInspectionLab(
   row: CaseRow,
-  overrides: { country: string; lab: string }[],
+  rules: import('@/lib/inspection-config-defaults').InspectionLabRule[],
   defaultLab: string,
 ): string {
   const data = (row.data ?? {}) as Record<string, unknown>
   const saved = data.inspection_lab
   if (saved) return String(saved)
-  return autoDetectLab(row.destination, overrides, defaultLab)
+  return autoDetectLab(row.destination, rules, defaultLab)
 }
 
 /** 검사 탭 공통 컷오프: 이 날짜 이후의 검사/출국만 탭에 올라감. */
@@ -137,15 +138,6 @@ function hasTiterDateAfterCutoff(row: CaseRow): boolean {
 function isInspectionDone(row: CaseRow): boolean {
   const data = (row.data ?? {}) as Record<string, unknown>
   return data.inspection_status === 'done'
-}
-
-const AU_KEYWORDS = ['호주', 'australia']
-const NZ_KEYWORDS = ['뉴질랜드', 'new zealand', 'nz']
-
-function matchesDestination(row: CaseRow, keywords: string[]): boolean {
-  if (!row.destination) return false
-  const dests = row.destination.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
-  return dests.some(d => keywords.some(k => d === k))
 }
 
 interface InfectiousRecord { date?: string | null; lab?: string | null }
@@ -185,7 +177,7 @@ function addDays(dateStr: string, days: number): string {
  */
 function buildInspectionRows(
   cases: CaseRow[],
-  titerOverrides: { country: string; lab: string }[],
+  titerRules: import('@/lib/inspection-config-defaults').InspectionLabRule[],
   titerDefault: string,
 ): InspectionRow[] {
   const rows: InspectionRow[] = []
@@ -196,15 +188,15 @@ function buildInspectionRows(
         id: `${c.id}:titer`,
         caseRow: c,
         kind: 'titer',
-        lab: resolveInspectionLab(c, titerOverrides, titerDefault),
+        lab: resolveInspectionLab(c, titerRules, titerDefault),
         date: resolveTiterDate(c),
         dateEditable: true,
         dateStorage: { kind: 'titer' },
       })
     }
     // 2) 전염병검사 — 호주/뉴질랜드
-    const isAU = matchesDestination(c, AU_KEYWORDS)
-    const isNZ = matchesDestination(c, NZ_KEYWORDS)
+    const isAU = matchesDestinationKey(c.destination, 'australia')
+    const isNZ = matchesDestinationKey(c.destination, 'new_zealand')
     if (isAU && !isInspectionDone(c)) {
       // 호주: 검사일(infectious ksvdl.date) 또는 출국일 중 하나라도 있으면 탭에 올림.
       // 날짜 컬럼은 검사일 있으면 그것, 없으면 빈 값(사용자가 탭에서 직접 입력).
@@ -366,8 +358,8 @@ function isManualImportReport(row: CaseRow): boolean {
 function compareByCountryOrder(a: CaseRow, b: CaseRow): number {
   const primaryDest = (row: CaseRow): string => {
     if (!row.destination) return ''
+    if (matchesDestinationKey(row.destination, 'japan')) return '일본'
     const dests = row.destination.split(',').map(s => s.trim()).filter(Boolean)
-    if (dests.includes('일본')) return '일본'
     return dests.slice().sort((x, y) => x.localeCompare(y, 'ko'))[0] ?? ''
   }
   const da = primaryDest(a)
@@ -384,9 +376,7 @@ function compareByCountryOrder(a: CaseRow, b: CaseRow): number {
 }
 
 function isJapan(row: CaseRow): boolean {
-  if (!row.destination) return false
-  const dests = row.destination.split(',').map(s => s.trim())
-  return dests.includes('일본')
+  return matchesDestinationKey(row.destination, 'japan')
 }
 
 /**
@@ -584,7 +574,7 @@ export function TodosApp() {
   }, [cases, activeTab, q])
 
   const inspectionRows = useMemo(
-    () => buildInspectionRows(cases, inspectionConfig.titerOverrides, inspectionConfig.titerDefault)
+    () => buildInspectionRows(cases, inspectionConfig.titerRules, inspectionConfig.titerDefault)
       .filter(r => matchesQuery(r.caseRow, q))
       .sort((a, b) => {
         const la = LAB_SORT_ORDER[a.lab] ?? 99

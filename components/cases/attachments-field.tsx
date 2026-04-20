@@ -107,17 +107,21 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
-      <div className="flex items-center gap-xs pt-1">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+      <div className="flex items-center gap-[6px] pt-1">
         <span className="text-base text-primary">첨부파일</span>
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="text-muted-foreground/40 hover:text-foreground text-lg font-semibold leading-none transition-colors"
+          className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors"
           title="파일 첨부"
         >
-          {uploading ? '...' : '+'}
+          {uploading ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          )}
         </button>
       </div>
       <div className="min-w-0">

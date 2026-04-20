@@ -6,7 +6,7 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { labColor } from '@/lib/lab-color'
-import { resolveInspectionLab } from '@/lib/inspection-config-defaults'
+import { resolveInspectionLabs } from '@/lib/inspection-config-defaults'
 
 interface InfectiousRecord {
   date: string | null
@@ -81,16 +81,12 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
 
   function saveNewRecord(date: string) {
     if (!date) { setAddingNew(false); return }
-    // 뉴질랜드는 APQA HQ + VBDDL 이중 검사로 특수 처리, 그 외는 설정 기반 resolve.
-    const isNZ = destination?.includes('뉴질랜드') || destination?.toLowerCase().includes('new zealand')
-    const defaultLab = resolveInspectionLab(
-      destination,
-      inspectionConfig.infectiousOverrides,
-      inspectionConfig.infectiousDefault,
-    )
-    const newRows: InfectiousRecord[] = isNZ
-      ? [{ date, lab: 'apqa_hq' }, { date, lab: 'vbddl' }]
-      : [{ date, lab: defaultLab }]
+    // 설정(전염병 규칙)에서 목적지별 검사기관 resolve. 규칙 여러 개면 각 lab별로 기록 생성.
+    // 매칭되는 규칙이 없으면 lab 미지정(null) 1건.
+    const labs = resolveInspectionLabs(destination, inspectionConfig.infectiousRules)
+    const newRows: InfectiousRecord[] = labs.length > 0
+      ? labs.map(lab => ({ date, lab }))
+      : [{ date, lab: null }]
     const next = [...records, ...newRows]
     startSave(async () => {
       await saveRecords(next)
@@ -99,17 +95,17 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
-      <div className="flex items-center gap-xs pt-1">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+      <div className="flex items-center gap-[6px] pt-1">
         <span className="text-base text-primary">전염병검사</span>
         <button
           type="button"
           onClick={() => setAddingNew(true)}
           disabled={saving || addingNew}
-          className="text-muted-foreground/40 hover:text-foreground text-lg font-semibold leading-none transition-colors disabled:opacity-30"
+          className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
           title="전염병검사 추가"
         >
-          +
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         </button>
       </div>
       <div className="min-w-0 space-y-0.5">

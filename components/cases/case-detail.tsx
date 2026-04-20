@@ -38,6 +38,21 @@ import { UKExtraField } from './uk-extra-field'
 import { OverseasAddressField } from './overseas-address-field'
 import { useCases } from './cases-context'
 
+type ExtraFieldProps = { caseId: string; caseRow: CaseRow }
+
+/** destOverride.extraSection 값 → 해당 국가 추가정보 컴포넌트. */
+const EXTRA_SECTION_COMPONENTS: Record<string, React.ComponentType<ExtraFieldProps>> = {
+  japan: JapanExtraField,
+  thailand: ThailandExtraField,
+  philippines: PhilippinesExtraField,
+  usa: UsaExtraField,
+  australia: AustraliaExtraField,
+  new_zealand: NewZealandExtraField,
+  hawaii: HawaiiExtraField,
+  switzerland: SwissExtraField,
+  uk: UKExtraField,
+}
+
 /**
  * Right-pane detail. No top title — destination gets a standalone prominent
  * display at the top, then the three groups (고객정보 / 동물정보 / 절차정보),
@@ -93,7 +108,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
       {groups.map((g) => (
         <React.Fragment key={g.group}>
         <section className="mb-7">
-          <div className="mb-2 flex items-center gap-xs">
+          <div className="mb-2 flex items-center gap-[6px]">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               {g.group}
             </h3>
@@ -253,108 +268,24 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
           </div>
         </section>
         {/* ─── 추가정보 — 절차정보 바로 뒤 ─── */}
-        {g.group === '절차정보' && destOverride?.extraSection === 'japan' && (
-          <section className="mb-7">
-            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              추가정보
-            </h3>
-            <div>
-              <JapanExtraField caseId={caseRow.id} caseRow={caseRow} />
-            </div>
-          </section>
-        )}
-        {g.group === '절차정보' && destOverride?.extraSection === 'thailand' && (
-          <section className="mb-7">
-            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              추가정보
-            </h3>
-            <div>
-              <ThailandExtraField caseId={caseRow.id} caseRow={caseRow} />
-            </div>
-          </section>
-        )}
-        {g.group === '절차정보' && destOverride?.extraSection === 'philippines' && (
-          <section className="mb-7">
-            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              추가정보
-            </h3>
-            <div>
-              <PhilippinesExtraField caseId={caseRow.id} caseRow={caseRow} />
-            </div>
-          </section>
-        )}
-        {g.group === '절차정보' && destOverride?.extraSection === 'usa' && (
-          <section className="mb-7">
-            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              추가정보
-            </h3>
-            <div>
-              <UsaExtraField caseId={caseRow.id} caseRow={caseRow} />
-            </div>
-          </section>
-        )}
-        {g.group === '절차정보' && destOverride?.extraSection === 'australia' && (
-          <section className="mb-7">
-            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              추가정보
-            </h3>
-            <div>
-              <AustraliaExtraField caseId={caseRow.id} caseRow={caseRow} />
-            </div>
-          </section>
-        )}
-        {g.group === '절차정보' && destOverride?.extraSection === 'new_zealand' && (
-          <section className="mb-7">
-            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              추가정보
-            </h3>
-            <div>
-              <NewZealandExtraField caseId={caseRow.id} caseRow={caseRow} />
-            </div>
-          </section>
-        )}
-        {g.group === '절차정보' && destOverride?.extraSection === 'hawaii' && (
-          <section className="mb-7">
-            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              추가정보
-            </h3>
-            <div>
-              <HawaiiExtraField caseId={caseRow.id} caseRow={caseRow} />
-            </div>
-          </section>
-        )}
-        {g.group === '절차정보' && destOverride?.extraSection === 'switzerland' && (
-          <section className="mb-7">
-            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              추가정보
-            </h3>
-            <div>
-              <SwissExtraField caseId={caseRow.id} caseRow={caseRow} />
-            </div>
-          </section>
-        )}
-        {g.group === '절차정보' && destOverride?.extraSection === 'uk' && (
-          <section className="mb-7">
-            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              추가정보
-            </h3>
-            <div>
-              <UKExtraField caseId={caseRow.id} caseRow={caseRow} />
-            </div>
-          </section>
-        )}
-        {g.group === '절차정보' && !destOverride?.extraSection && destOverride?.extraFields && destOverride.extraFields.length > 0 && (
-          <section className="mb-7">
-            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              추가정보
-            </h3>
-            <div>
-              {destOverride.extraFields.includes('address_overseas') && (
-                <OverseasAddressField caseId={caseRow.id} caseRow={caseRow} />
-              )}
-            </div>
-          </section>
-        )}
+        {g.group === '절차정보' && (() => {
+          const ExtraComp = destOverride?.extraSection ? EXTRA_SECTION_COMPONENTS[destOverride.extraSection] : null
+          const extraFieldsOnly = !destOverride?.extraSection && (destOverride?.extraFields?.length ?? 0) > 0
+          if (!ExtraComp && !extraFieldsOnly) return null
+          return (
+            <section className="mb-7">
+              <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                추가정보
+              </h3>
+              <div>
+                {ExtraComp && <ExtraComp caseId={caseRow.id} caseRow={caseRow} />}
+                {extraFieldsOnly && destOverride!.extraFields!.includes('address_overseas') && (
+                  <OverseasAddressField caseId={caseRow.id} caseRow={caseRow} />
+                )}
+              </div>
+            </section>
+          )
+        })()}
         </React.Fragment>
       ))}
 
@@ -425,14 +356,14 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
-      <div className="flex items-center gap-xs pt-1">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
+      <div className="flex items-center gap-[6px] pt-1">
         <span className="text-base text-primary">{spec.label}</span>
         {!showSecondary && (
           <button type="button" onClick={() => { setShowSecondary(true); setEditingSecondary(true); setSecVal(''); setSecError(null) }}
-            className="text-muted-foreground/40 hover:text-foreground text-lg font-semibold leading-none transition-colors"
+            className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors"
             title="보조 마이크로칩 추가">
-            +
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           </button>
         )}
       </div>
@@ -507,8 +438,8 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
-      <div className="flex items-center gap-xs pt-1">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
+      <div className="flex items-center gap-[6px] pt-1">
         <span className="text-base text-primary">마이크로칩</span>
       </div>
       <div className="group/item flex items-baseline gap-[10px] min-w-0 flex-wrap">
@@ -590,10 +521,10 @@ function FieldToggleMenu({ items, activeKeys, onToggle }: {
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
-        className="text-muted-foreground/40 hover:text-foreground text-xs font-medium leading-none transition-colors"
+        className="shrink-0 translate-y-[2px] text-muted-foreground/60 hover:text-foreground transition-colors"
         title="필드 추가/제거"
       >
-        +
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
       </button>
       {open && (
         <div className="absolute left-0 top-full mt-1 z-20 min-w-[140px] rounded-md border border-border bg-popover p-1 shadow-md">

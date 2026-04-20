@@ -459,11 +459,11 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
       onDragLeave={!expanded ? handleDragLeave : undefined}
       onDrop={!expanded ? handleDropNew : undefined}
       className={cn(
-        "grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 last:border-0 rounded-md transition-colors hover:bg-muted/60",
+        "grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 last:border-0 rounded-md transition-colors hover:bg-muted/60",
         !expanded && dragOver && "bg-accent/40 ring-2 ring-ring/30 ring-dashed",
       )}
     >
-      <div className="flex items-center gap-xs pt-1">
+      <div className="flex items-center gap-[6px] pt-1">
         {/* Label: click to toggle expanded */}
         <button
           type="button"
@@ -479,14 +479,14 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
           type="button"
           onClick={() => setAddingNew(true)}
           disabled={saving || addingNew}
-          className="text-muted-foreground/40 hover:text-foreground text-lg font-semibold leading-none transition-colors disabled:opacity-30"
+          className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
           title={`${label} 추가`}
         >
-          +
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         </button>
         <input ref={fileRef} type="file" accept="image/*,.pdf" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f, null); e.target.value = '' }} className="hidden" />
-        <button type="button" onClick={() => fileRef.current?.click()} disabled={extracting} className="shrink-0 rounded-md p-0.5 text-muted-foreground/40 hover:text-foreground transition-colors disabled:opacity-30" title="이미지/PDF로 약품 정보 추출">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        <button type="button" onClick={() => fileRef.current?.click()} disabled={extracting} className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30" title="이미지/PDF로 약품 정보 추출">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
         </button>
       </div>
 
@@ -553,7 +553,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
             </span>
           )}
           {dragOver && (
-            <span className="text-xs text-muted-foreground">이미지를 놓으면 자동 입력됩니다</span>
+            <span className="text-xs text-muted-foreground">놓으면 자동 입력</span>
           )}
         </div>
       )}

@@ -360,7 +360,7 @@ export function EditableField({
   ) : null
 
   return (
-    <div className={cn("grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0", clearable && "group/row")}>
+    <div className={cn("grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0", clearable && "group/row")}>
       <div className="text-base text-primary pt-1">{spec.label}</div>
       <div className="min-w-0 flex items-baseline gap-sm">
         {(() => {

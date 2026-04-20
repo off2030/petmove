@@ -129,7 +129,7 @@ export function UKExtraField({ caseId, caseRow }: { caseId: string; caseRow: Cas
       )}
     >
       {/* ── AI Input zone ── */}
-      <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
         <span className="text-base text-primary pt-1">AI 입력</span>
         <div className="min-w-0 space-y-1">
           {showInput ? (
@@ -165,12 +165,12 @@ export function UKExtraField({ caseId, caseRow }: { caseId: string; caseRow: Cas
               {extractMsg}
             </div>
           )}
-          {dragOver && <div className="text-xs text-muted-foreground">이미지/PDF를 놓으면 자동 입력됩니다</div>}
+          {dragOver && <div className="text-xs text-muted-foreground">놓으면 자동 입력</div>}
         </div>
       </div>
 
       {/* ── 해외주소 ── */}
-      <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
         <span className="text-base text-primary pt-1">해외주소</span>
         {editing ? (
           <AddressInput

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { useCases } from './cases-context'
 import { isExtractableFile } from '@/lib/file-to-base64'
 import { destColor } from '@/lib/destination-color'
+import { formatMicrochip } from '@/lib/fields'
 import { TrashModal } from './trash-modal'
 
 const INITIAL_VISIBLE = 100
@@ -301,7 +302,7 @@ export function CaseList({
                         )}
                       </span>
                       <span className="hidden md:block font-mono text-[13px] text-muted-foreground tabular-nums">
-                        {c.microchip ?? '미등록'}
+                        {formatMicrochip(c.microchip) ?? c.microchip ?? '미등록'}
                       </span>
                     </div>
                   </button>

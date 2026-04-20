@@ -1,21 +1,13 @@
 /**
- * 목적지별 상세페이지 필드 + 증명서 버튼 설정.
+ * 목적지별 상세페이지 필드 설정.
  *
  * - DEFAULT_CONFIG: 모든 국가 공통
  * - DESTINATION_OVERRIDES: 국가별 차이점만 기술
  *
  * 국가 추가 시 DESTINATION_OVERRIDES에 항목 추가만 하면 됨.
+ *
+ * 증명서 버튼은 `lib/cert-config-defaults.ts` / 설정 > 서류에서 관리.
  */
-
-// ── 증명서 버튼 타입 ──
-
-export interface CertButton {
-  key: string        // 고유 키 (서버 액션 매칭용)
-  label: string      // 버튼 표시 텍스트
-  type: 'single' | 'multi'  // single: 바로 생성, multi: 다이얼로그 (sibling 선택)
-  /** 이 버튼을 표시할 동물 종. 생략 시 모든 종에서 표시. */
-  species?: 'dog' | 'cat'
-}
 
 // ── 디폴트 (모든 국가 공통) ──
 
@@ -28,12 +20,6 @@ export const DEFAULT_CONFIG = {
   vaccines: ['rabies', 'rabies_titer'] as string[],
   기타정보: ['memo'],
   // payment는 항상 기타정보 하단에 표시
-
-  /** 디폴트 증명서 버튼 (모든 국가) */
-  certs: [
-    { key: 'form25', label: '별지25', type: 'single' },
-    { key: 'form25AuNz', label: '별지25 EX', type: 'single' },
-  ] as CertButton[],
 }
 
 // ── 국가별 오버라이드 ──
@@ -47,18 +33,12 @@ interface DestinationOverride {
   extraSection?: string
   /** 추가정보 섹션에 포함할 필드들 (해당 섹션이 없을 때 사용). */
   extraFields?: ('address_overseas')[]
-  /** 추가 증명서 버튼 (디폴트 뒤에 붙음) */
-  extraCerts?: CertButton[]
 }
 
 export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   japan: {
     keywords: ['일본', 'japan'],
     extraSection: 'japan',
-    extraCerts: [
-      { key: 'formAC', label: 'Form AC', type: 'single' },
-      { key: 'formRE', label: 'Form RE', type: 'single' },
-    ],
   },
   eu: {
     keywords: [
@@ -73,55 +53,30 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       'eu',
     ],
     extraFields: ['address_overseas'],
-    extraCerts: [
-      { key: 'annexIII', label: 'EU', type: 'multi' },
-    ],
   },
   switzerland: {
     // 스위스는 EU 솅겐 가입국이지만 통관은 별도. AnnexIII + 스위스 전용 BLV 신청서(CH) 동시 제출.
     keywords: ['스위스', 'switzerland'],
     extraSection: 'switzerland',
-    extraCerts: [
-      { key: 'annexIII', label: 'EU', type: 'multi' },
-      { key: 'ch', label: 'CH', type: 'single' },
-    ],
   },
   uk: {
     keywords: ['영국', 'uk', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland'],
     extraSection: 'uk',
-    extraCerts: [
-      { key: 'annexIII', label: 'EU', type: 'multi' },
-      { key: 'uk', label: 'UK', type: 'multi' },
-    ],
   },
   australia: {
     keywords: ['호주', 'australia'],
     vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'infectious_disease', 'internal_parasite', 'external_parasite'],
     extraSection: 'australia',
-    extraCerts: [
-      { key: 'idDeclaration', label: 'ID', type: 'single' },
-      { key: 'au', label: 'AU', type: 'single', species: 'dog' },
-      { key: 'au2', label: 'AU 2', type: 'single', species: 'dog' },
-      { key: 'auCat', label: 'AU', type: 'single', species: 'cat' },
-      { key: 'auCat2', label: 'AU 2', type: 'single', species: 'cat' },
-    ],
   },
   new_zealand: {
     keywords: ['뉴질랜드', 'new zealand', 'nz'],
     vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'kennel', 'infectious_disease', 'external_parasite', 'internal_parasite', 'heartworm'],
     extraSection: 'new_zealand',
-    extraCerts: [
-      { key: 'nz', label: 'NZ', type: 'single' },
-      { key: 'ovd', label: 'OVD', type: 'single' },
-    ],
   },
   thailand: {
     keywords: ['태국', 'thailand'],
     vaccines: ['rabies', 'rabies_titer', 'general'],
     extraSection: 'thailand',
-    extraCerts: [
-      { key: 'formR11', label: 'R.11', type: 'single' },
-    ],
   },
   philippines: {
     keywords: ['필리핀', 'philippines'],
@@ -132,16 +87,10 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 인도네시아는 별도 양식 없이 병원 발급 일반 영문 건강증명서(VHC) 제출.
     keywords: ['인도네시아', 'indonesia'],
     vaccines: ['rabies', 'rabies_titer'],
-    extraCerts: [
-      { key: 'vhc', label: 'VHC', type: 'single' },
-    ],
   },
   turkey: {
     keywords: ['터키', 'turkey', 'türkiye', 'turkiye'],
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
-    extraCerts: [
-      { key: 'vhc', label: 'VHC', type: 'single' },
-    ],
   },
   usa: {
     keywords: ['미국', 'usa', 'united states', 'america'],
@@ -162,9 +111,6 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   singapore: {
     keywords: ['싱가포르', 'singapore'],
     vaccines: ['rabies', 'rabies_titer', 'general', 'external_parasite', 'internal_parasite'],
-    extraCerts: [
-      { key: 'sgp', label: 'SGP', type: 'single' },
-    ],
   },
   hongkong: {
     keywords: ['홍콩', 'hong kong', 'hongkong'],
@@ -174,9 +120,6 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['하와이', 'hawaii'],
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
     extraSection: 'hawaii',
-    extraCerts: [
-      { key: 'aqs', label: 'AQS-279', type: 'single' },
-    ],
   },
   guam: {
     keywords: ['괌', 'guam'],
@@ -186,8 +129,6 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['브라질', 'brazil'],
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
   },
-  // ── 향후 추가 ──
-  // us: { keywords: ['미국', 'usa'], vaccines: [...], extraCerts: [...] },
 }
 
 // ── 헬퍼 함수 ──
@@ -211,6 +152,22 @@ export function getDestinationOverride(destination: string | null | undefined): 
     }
   }
   return null
+}
+
+/**
+ * 콤마 구분 목적지 중 하나라도 지정 오버라이드 키에 매칭되는지.
+ * 토큰 단위 exact-match (예: "호주, 일본" 에서 'japan' 키 → true).
+ */
+export function matchesDestinationKey(
+  destination: string | null | undefined,
+  key: keyof typeof DESTINATION_OVERRIDES,
+): boolean {
+  if (!destination) return false
+  const override = DESTINATION_OVERRIDES[key]
+  if (!override) return false
+  const tokens = parseDestinations(destination).map(t => t.toLowerCase())
+  const keywords = override.keywords.map(k => k.toLowerCase())
+  return tokens.some(t => keywords.includes(t))
 }
 
 /** 목적지별 허용 필드 키 Set. extraFields는 케이스별 토글된 추가 필드. */
@@ -262,12 +219,4 @@ export function getEffectiveVaccineList(destination: string | null | undefined, 
 export function getVaccineList(destination: string | null | undefined): string[] {
   const override = getDestinationOverride(destination)
   return override?.vaccines ?? DEFAULT_CONFIG.vaccines
-}
-
-/** 목적지별 증명서 버튼 목록 (디폴트 + 국가별 추가). species 지정 시 해당 종 전용 버튼만 포함. */
-export function getCertButtons(destination: string | null | undefined, species?: string | null): CertButton[] {
-  const override = getDestinationOverride(destination)
-  const all = [...DEFAULT_CONFIG.certs, ...(override?.extraCerts ?? [])]
-  if (!species) return all.filter(b => !b.species)
-  return all.filter(b => !b.species || b.species === species)
 }

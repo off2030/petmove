@@ -11,6 +11,7 @@ import {
 import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
 import { parseDestinations } from '@/lib/destination-config'
 import type { InspectionConfig } from '@/lib/inspection-config-defaults'
+import type { CertConfig } from '@/lib/cert-config-defaults'
 
 /**
  * Global client-side state for the cases app:
@@ -54,6 +55,11 @@ interface CasesContextValue {
    */
   inspectionConfig: InspectionConfig
   setInspectionConfig: (config: InspectionConfig) => void
+  /**
+   * 증명서 국가별 설정. app_settings.cert_config 에서 초기 로드.
+   */
+  certConfig: CertConfig
+  setCertConfig: (config: CertConfig) => void
 }
 
 const CasesContext = createContext<CasesContextValue | null>(null)
@@ -63,12 +69,14 @@ export function CasesProvider({
   fieldDefs,
   initialImportReportCountries,
   initialInspectionConfig,
+  initialCertConfig,
   children,
 }: {
   initialCases: CaseRow[]
   fieldDefs: FieldDefinition[]
   initialImportReportCountries: string[]
   initialInspectionConfig: InspectionConfig
+  initialCertConfig: CertConfig
   children: React.ReactNode
 }) {
   const [cases, setCases] = useState<CaseRow[]>(initialCases)
@@ -76,6 +84,7 @@ export function CasesProvider({
   const [activeDestination, setActiveDestination] = useState<string | null>(null)
   const [importReportCountries, setImportReportCountries] = useState<string[]>(initialImportReportCountries)
   const [inspectionConfig, setInspectionConfig] = useState<InspectionConfig>(initialInspectionConfig)
+  const [certConfig, setCertConfig] = useState<CertConfig>(initialCertConfig)
 
   const selectCase = useCallback((id: string | null) => {
     setSelectedId(id)
@@ -165,8 +174,10 @@ export function CasesProvider({
       setImportReportCountries,
       inspectionConfig,
       setInspectionConfig,
+      certConfig,
+      setCertConfig,
     }),
-    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination, importReportCountries, inspectionConfig],
+    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination, importReportCountries, inspectionConfig, certConfig],
   )
 
   return <CasesContext.Provider value={value}>{children}</CasesContext.Provider>

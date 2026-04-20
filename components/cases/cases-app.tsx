@@ -20,7 +20,7 @@ import { generateFormRE, generateFormAC, generateIdentificationDeclaration, gene
 import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-download'
 import { MultiFormDialog } from './multi-form-dialog'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { getCertButtons } from '@/lib/destination-config'
+import { resolveCerts } from '@/lib/cert-config-defaults'
 import type { CaseRow } from '@/lib/supabase/types'
 
 function downloadBase64Pdf(base64: string, filename: string) {
@@ -145,7 +145,7 @@ function ImportReportToggle({
 }
 
 function Inner() {
-  const { cases, selectedId, selectCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination } = useCases()
+  const { cases, selectedId, selectCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination, certConfig } = useCases()
   const selectedCase = useMemo(
     () => cases.find((c) => c.id === selectedId) ?? null,
     [cases, selectedId],
@@ -436,7 +436,7 @@ function Inner() {
                         />
                         서명
                       </label>
-                      {getCertButtons(activeDestination ?? selectedCase.destination, (selectedCase.data as Record<string, unknown>)?.species as string | undefined).map((btn) =>
+                      {resolveCerts(activeDestination ?? selectedCase.destination, certConfig, (selectedCase.data as Record<string, unknown>)?.species as string | undefined).map((btn) =>
                         btn.type === 'multi' ? (
                           <button
                             key={btn.key}

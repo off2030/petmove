@@ -4,6 +4,7 @@ import { CasesProvider } from '@/components/cases/cases-context'
 import { DashboardShell } from '@/components/layout/dashboard-shell'
 import { loadImportReportCountries } from '@/lib/import-report-config'
 import { loadInspectionConfig } from '@/lib/inspection-config'
+import { loadCertConfig } from '@/lib/cert-config'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,11 +48,12 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [initialCases, fieldDefs, importReportCountries, inspectionConfig] = await Promise.all([
+  const [initialCases, fieldDefs, importReportCountries, inspectionConfig, certConfig] = await Promise.all([
     fetchAllCases(),
     fetchFieldDefs(),
     loadImportReportCountries(),
     loadInspectionConfig(),
+    loadCertConfig(),
   ])
 
   return (
@@ -60,6 +62,7 @@ export default async function DashboardLayout({
       fieldDefs={fieldDefs}
       initialImportReportCountries={importReportCountries}
       initialInspectionConfig={inspectionConfig}
+      initialCertConfig={certConfig}
     >
       <DashboardShell />
     </CasesProvider>
