@@ -4285,15 +4285,15 @@
       "text_4gsyb":  { "source": "birth_date",    "transform": "age_ko",       "note": "p1 연령 — N살" },
       "text_5yzzg":  { "source": null,            "default": "1", "note": "p1 사육두수" },
       "text_6exxc":  { "source": null,            "default": "1", "note": "p1 의뢰두수" },
-      "text_7txrq":  { "source": null, "transform": "today_part:year",  "note": "p1 신청일 — 년" },
-      "text_8xwsm":  { "source": null, "transform": "today_part:month", "note": "p1 신청일 — 월" },
-      "text_15zdz":  { "source": null, "transform": "today_part:day",   "note": "p1 신청일 — 일" },
-      "text_12cw":   { "source": null, "transform": "today_part:year",  "note": "p2 개인정보 동의서 — 년" },
-      "text_16gnpk": { "source": null, "transform": "today_part:month", "note": "p2 개인정보 동의서 — 월" },
-      "text_17xwbs": { "source": null, "transform": "today_part:day",   "note": "p2 개인정보 동의서 — 일" },
-      "text_22cmqy": { "source": null, "transform": "today_part:year",  "note": "p3 개인정보 동의서 — 년" },
-      "text_13cclj": { "source": null, "transform": "today_part:month", "note": "p3 개인정보 동의서 — 월" },
-      "text_23ojdb": { "source": null, "transform": "today_part:day",   "note": "p3 개인정보 동의서 — 일" },
+      "text_7txrq":  { "source": "vet_visit_date", "transform": "date_part:year",  "note": "p1 신청일 — 년(내원일)" },
+      "text_8xwsm":  { "source": "vet_visit_date", "transform": "date_part:month", "note": "p1 신청일 — 월(내원일)" },
+      "text_15zdz":  { "source": "vet_visit_date", "transform": "date_part:day",   "note": "p1 신청일 — 일(내원일)" },
+      "text_12cw":   { "source": "vet_visit_date", "transform": "date_part:year",  "note": "p2 개인정보 동의서 — 년(내원일)" },
+      "text_16gnpk": { "source": "vet_visit_date", "transform": "date_part:month", "note": "p2 개인정보 동의서 — 월(내원일)" },
+      "text_17xwbs": { "source": "vet_visit_date", "transform": "date_part:day",   "note": "p2 개인정보 동의서 — 일(내원일)" },
+      "text_22cmqy": { "source": "vet_visit_date", "transform": "date_part:year",  "note": "p3 개인정보 동의서 — 년(내원일)" },
+      "text_13cclj": { "source": "vet_visit_date", "transform": "date_part:month", "note": "p3 개인정보 동의서 — 월(내원일)" },
+      "text_23ojdb": { "source": "vet_visit_date", "transform": "date_part:day",   "note": "p3 개인정보 동의서 — 일(내원일)" },
       "text_16rzpm": { "source": "customer_name", "note": "p3 개인정보 동의서 — 의뢰인 성명" }
     }
   },
@@ -4303,7 +4303,7 @@
     "filename": "APQA_HQ_En_{pet_name}.pdf",
     "dateFormat": "dmy",
     "fields": {
-      "text_1deys":  { "source": null, "transform": "today_ymd_slash", "note": "Date of Application — 신청일(오늘)" },
+      "text_1deys":  { "source": "vet_visit_date", "note": "Date of Application — 신청일(내원일, dmy 포맷 자동 변환)" },
       "text_3qzrv":  { "source": "customer_name_en", "note": "Owner Name — 보호자 영문" },
       "text_4awig":  { "source": "address_en",       "note": "Owner Address" },
       "text_5arog":  { "source": "phone", "transform": "phone_intl_kr", "note": "Owner Tel" },
@@ -4313,9 +4313,9 @@
       "text_8ciww":  { "source": "birth_date",       "note": "Date of Birth (dmy)" },
       "text_10ypae": { "source": "sex",   "transform": "sex_simple_en", "note": "Sex (Male/Female)" },
       "text_9pytp":  { "source": "infectious_date:apqa_hq",   "note": "Date of Blood Collection — APQA HQ 검사일 우선, 없으면 내원일" },
-      "text_12llof": { "source": null, "transform": "today_part:year",  "note": "하단 서명일 — 년" },
-      "text_15bg":   { "source": null, "transform": "today_part:month", "note": "하단 서명일 — 월" },
-      "text_16rebt": { "source": null, "transform": "today_part:day",   "note": "하단 서명일 — 일" }
+      "text_12llof": { "source": "vet_visit_date", "transform": "date_part:year",  "note": "하단 서명일 — 년(내원일)" },
+      "text_15bg":   { "source": "vet_visit_date", "transform": "date_part:month", "note": "하단 서명일 — 월(내원일)" },
+      "text_16rebt": { "source": "vet_visit_date", "transform": "date_part:day",   "note": "하단 서명일 — 일(내원일)" }
     }
   },
   "KSVDL": {

@@ -1055,6 +1055,21 @@ function resolveField(
     return ''
   }
 
+  // Part of a YYYY-MM-DD source value. `date_part:(day|month|year)`.
+  // 예: source="vet_visit_date" + transform="date_part:year" → "2026"
+  // raw 값이 비었거나 형식이 맞지 않으면 빈 문자열 반환.
+  const datePartMatch = transform?.match(/^date_part:(day|month|year)$/)
+  if (datePartMatch) {
+    const s = typeof raw === 'string' ? raw : ''
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+    if (!m) return ''
+    const part = datePartMatch[1]
+    if (part === 'year') return m[1]
+    if (part === 'month') return m[2]
+    if (part === 'day') return m[3]
+    return ''
+  }
+
   // Conditional static label — `label_if:<kind>:<label>`. Returns <label> only
   // when the matching `*_dates` array in `data` has entries, else empty.
   // Used by VHC's 6-row vaccination table so "Rabies"/"CIV"/etc. only appears
@@ -1883,6 +1898,14 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
     }
   }
 
+  // Bake form widgets into static page content so viewer-specific AcroForm
+  // rendering quirks in production cannot hide filled values.
+  try {
+    pdfForm.flatten()
+  } catch (e) {
+    console.warn(`[${formKey}] flatten failed, falling back to non-flat:`, (e as Error).message)
+  }
+
   const bytes = await pdf.save()
   const base64 = Buffer.from(bytes).toString('base64')
   const petNames = doc.cases
@@ -2128,6 +2151,14 @@ export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillO
   console.log(`  filled:`, filled)
   console.log(`  empty (no value resolved):`, empty)
   if (missing.length) console.warn(`  missing PDF fields:`, missing)
+
+  // Bake form widgets into static page content so viewer-specific AcroForm
+  // rendering quirks in production cannot hide filled values.
+  try {
+    pdfForm.flatten()
+  } catch (e) {
+    console.warn(`[${formKey}] flatten failed, falling back to non-flat:`, (e as Error).message)
+  }
 
   const bytes = await pdf.save()
   const base64 = Buffer.from(bytes).toString('base64')
