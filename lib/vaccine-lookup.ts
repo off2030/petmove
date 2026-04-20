@@ -246,9 +246,14 @@ export function daysUntilExpiry(expiry: string | null | undefined, now = new Dat
 
 // ─── All products (for management page) ───
 
+export type ProductSection = '접종' | '구충'
+export type ProductSpecies = 'common' | 'dog' | 'cat'
+
 export interface FlatProduct {
   category: string
   categoryLabel: string
+  section: ProductSection
+  species: ProductSpecies
   displayName: string
   manufacturer: string
   batch: string | null
@@ -258,45 +263,119 @@ export interface FlatProduct {
   meta: string // 연도/체중 등 추가 정보
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  rabies: '광견병',
-  comprehensive_dog: '종합백신 (강아지)',
-  comprehensive_cat: '종합백신 (고양이)',
-  civ: 'CIV 독감',
-  kennel_cough: '켄넬코프 (강아지)',
-  parasite_combo_dog: '내외부 구충 합제 (강아지)',
-  parasite_combo_cat: '내외부 구충 합제 (고양이)',
-  parasite_external_dog: '외부 구충 (강아지)',
-  parasite_external_cat: '외부 구충 (고양이)',
-  parasite_internal_dog: '내부 구충 (강아지)',
-  parasite_internal_cat: '내부 구충 (고양이)',
-  heartworm_dog: '심장사상충 (강아지)',
-  heartworm_cat: '심장사상충 (고양이)',
+interface CategoryMeta {
+  label: string
+  section: ProductSection
+  species: ProductSpecies
+}
+const CATEGORY_META: Record<string, CategoryMeta> = {
+  rabies:                { label: '광견병',                  section: '접종', species: 'common' },
+  comprehensive_dog:     { label: '종합백신 (강아지)',       section: '접종', species: 'dog' },
+  comprehensive_cat:     { label: '종합백신 (고양이)',       section: '접종', species: 'cat' },
+  civ:                   { label: 'CIV 독감',                section: '접종', species: 'dog' },
+  kennel_cough:          { label: '켄넬코프 (강아지)',       section: '접종', species: 'dog' },
+  parasite_internal_dog: { label: '내부 구충',               section: '구충', species: 'common' },
+  parasite_internal_cat: { label: '내부 구충',               section: '구충', species: 'common' },
+  parasite_external_dog: { label: '외부 구충 (강아지)',      section: '구충', species: 'dog' },
+  parasite_external_cat: { label: '외부 구충 (고양이)',      section: '구충', species: 'cat' },
+  parasite_combo_dog:    { label: '내외부 구충 합제 (강아지)', section: '구충', species: 'dog' },
+  parasite_combo_cat:    { label: '내외부 구충 합제 (고양이)', section: '구충', species: 'cat' },
+  heartworm_dog:         { label: '심장사상충 (강아지)',     section: '구충', species: 'dog' },
+  heartworm_cat:         { label: '심장사상충 (고양이)',     section: '구충', species: 'cat' },
+}
+
+
+/**
+ * 카테고리별 표시 정책:
+ *  - rabies(광견병): 전체 누적
+ *  - 기타 접종(comprehensive/civ/kennel_cough): 만료년도가 (현재년-2) 이상인 것만
+ *  - 구충제(parasite_, heartworm_ prefix): 제품(displayName+manufacturer) 별 가장 최신 만료 1건만
+ */
+function isParasiteCategory(category: string): boolean {
+  return category.startsWith('parasite_') || category.startsWith('heartworm_')
+}
+function isOtherVaccineCategory(category: string): boolean {
+  return (
+    category.startsWith('comprehensive_') ||
+    category === 'civ' ||
+    category === 'kennel_cough'
+  )
 }
 
 export function getAllProducts(now = new Date()): FlatProduct[] {
+  const currentYear = now.getFullYear()
+  const minYear = currentYear - 2
+
   const result: FlatProduct[] = []
   for (const [category, list] of Object.entries(DATA)) {
     if (!Array.isArray(list)) continue
-    const label = CATEGORY_LABELS[category] ?? category
-    for (const p of list as VaccineProduct[]) {
-      const meta: string[] = []
-      if (p.year) meta.push(`${p.year}년`)
-      if (p.size) meta.push(p.size)
+    const meta = CATEGORY_META[category]
+    if (!meta) continue
+    const label = meta.label
+
+    let items = list as VaccineProduct[]
+
+    // 기타 접종: 직전 2년분만 (만료일 기준)
+    if (isOtherVaccineCategory(category)) {
+      items = items.filter((p) => {
+        if (!p.expiry) return false
+        const y = Number(p.expiry.slice(0, 4))
+        return y >= minYear
+      })
+    }
+
+    // 구충제: 제품별 가장 최신 만료 1건
+    if (isParasiteCategory(category)) {
+      const latestByKey = new Map<string, VaccineProduct>()
+      for (const p of items) {
+        const key = `${p.product || p.vaccine || ''}|${p.manufacturer}`
+        const cur = latestByKey.get(key)
+        if (!cur) {
+          latestByKey.set(key, p)
+          continue
+        }
+        const a = cur.expiry ?? ''
+        const b = p.expiry ?? ''
+        if (b > a) latestByKey.set(key, p)
+      }
+      items = Array.from(latestByKey.values())
+    }
+
+    for (const p of items) {
+      const metaParts: string[] = []
+      if (p.year) metaParts.push(`${p.year}년`)
+      if (p.size) metaParts.push(p.size)
       result.push({
         category,
         categoryLabel: label,
+        section: meta.section,
+        species: meta.species,
         displayName: p.vaccine || p.product || '(이름 없음)',
         manufacturer: p.manufacturer,
         batch: p.batch,
         expiry: p.expiry,
         status: getExpiryStatus(p.expiry, now),
         daysLeft: daysUntilExpiry(p.expiry, now),
-        meta: meta.join(' · '),
+        meta: metaParts.join(' · '),
       })
     }
   }
-  return result
+
+  // 구충제: 강아지/고양이 통합 dedup — (라벨 + 제품명 + 제조사) 기준 최신 만료만 유지
+  const dedupKey = (p: FlatProduct) =>
+    `${p.categoryLabel}|${p.displayName}|${p.manufacturer}`
+  const latest = new Map<string, FlatProduct>()
+  const passthrough: FlatProduct[] = []
+  for (const p of result) {
+    if (!isParasiteCategory(p.category)) {
+      passthrough.push(p)
+      continue
+    }
+    const k = dedupKey(p)
+    const cur = latest.get(k)
+    if (!cur || (p.expiry ?? '') > (cur.expiry ?? '')) latest.set(k, p)
+  }
+  return [...passthrough, ...latest.values()]
 }
 
 /** 30일 이내 만료 or 이미 만료된 제품 개수 */

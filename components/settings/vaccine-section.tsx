@@ -1,7 +1,13 @@
 'use client'
 
 import { useMemo } from 'react'
-import { getAllProducts, type ExpiryStatus, type FlatProduct } from '@/lib/vaccine-lookup'
+import {
+  getAllProducts,
+  type ExpiryStatus,
+  type FlatProduct,
+  type ProductSection,
+  type ProductSpecies,
+} from '@/lib/vaccine-lookup'
 
 const STATUS_STYLES: Record<ExpiryStatus, { label: string; bg: string; text: string; dot: string }> = {
   expired: { label: '만료됨',       bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500' },
@@ -27,24 +33,44 @@ function StatusBadge({ status, daysLeft }: { status: ExpiryStatus; daysLeft: num
 export function VaccineSection() {
   const products = useMemo(() => getAllProducts(), [])
 
-  // 카테고리별로 그룹핑, 만료 심각도로 정렬
-  const grouped = useMemo(() => {
-    const map = new Map<string, FlatProduct[]>()
+  // 섹션(접종/구충) → 카테고리(공통→강아지→고양이) → 제품(만료 심각도) 순으로 그룹핑
+  const sections = useMemo(() => {
     const statusOrder: ExpiryStatus[] = ['expired', 'urgent', 'warning', 'ok', 'unknown']
+    const speciesOrder: ProductSpecies[] = ['common', 'dog', 'cat']
+    const sectionOrder: ProductSection[] = ['접종', '구충']
+
+    // 섹션 → 카테고리 라벨 → 제품들
+    const bySection = new Map<ProductSection, Map<string, FlatProduct[]>>()
     for (const p of products) {
-      if (!map.has(p.categoryLabel)) map.set(p.categoryLabel, [])
-      map.get(p.categoryLabel)!.push(p)
+      if (!bySection.has(p.section)) bySection.set(p.section, new Map())
+      const cats = bySection.get(p.section)!
+      if (!cats.has(p.categoryLabel)) cats.set(p.categoryLabel, [])
+      cats.get(p.categoryLabel)!.push(p)
     }
-    // 각 그룹 안에서 status 순 → expiry 오름차순
-    for (const list of map.values()) {
-      list.sort((a, b) => {
-        const sa = statusOrder.indexOf(a.status)
-        const sb = statusOrder.indexOf(b.status)
-        if (sa !== sb) return sa - sb
-        return (a.expiry ?? '9999') < (b.expiry ?? '9999') ? -1 : 1
+
+    return sectionOrder
+      .filter((s) => bySection.has(s))
+      .map((sectionName) => {
+        const cats = bySection.get(sectionName)!
+        // 카테고리 정렬: 공통 → 강아지 → 고양이, 그 안에서는 라벨 알파/가나다 순
+        const catEntries = Array.from(cats.entries())
+        catEntries.sort(([, a], [, b]) => {
+          const sa = speciesOrder.indexOf(a[0].species)
+          const sb = speciesOrder.indexOf(b[0].species)
+          if (sa !== sb) return sa - sb
+          return a[0].categoryLabel.localeCompare(b[0].categoryLabel, 'ko')
+        })
+        // 각 카테고리 내 제품 정렬
+        for (const [, list] of catEntries) {
+          list.sort((a, b) => {
+            const sa = statusOrder.indexOf(a.status)
+            const sb = statusOrder.indexOf(b.status)
+            if (sa !== sb) return sa - sb
+            return (a.expiry ?? '9999') < (b.expiry ?? '9999') ? -1 : 1
+          })
+        }
+        return { section: sectionName, categories: catEntries }
       })
-    }
-    return Array.from(map.entries())
   }, [products])
 
   const counts = useMemo(() => {
@@ -85,34 +111,39 @@ export function VaccineSection() {
         (향후 앱 내 편집 UI 추가 예정)
       </p>
 
-      {/* Groups */}
-      {grouped.map(([categoryLabel, list]) => (
-        <div key={categoryLabel} className="border border-border rounded-lg overflow-hidden">
-          <div className="bg-muted/50 px-md py-2 text-sm font-medium">{categoryLabel}</div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-xs text-muted-foreground">
-                <th className="text-left px-md py-2 font-medium">제품명</th>
-                <th className="text-left px-md py-2 font-medium">제조사</th>
-                <th className="text-left px-md py-2 font-medium">Batch</th>
-                <th className="text-left px-md py-2 font-medium">만료일</th>
-                <th className="text-left px-md py-2 font-medium">상태</th>
-                <th className="text-left px-md py-2 font-medium">기준</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((p, i) => (
-                <tr key={i} className="border-b border-border/50 last:border-0 hover:bg-accent/20">
-                  <td className="px-md py-2">{p.displayName}</td>
-                  <td className="px-md py-2 text-muted-foreground">{p.manufacturer}</td>
-                  <td className="px-md py-2 font-mono text-xs">{p.batch ?? '—'}</td>
-                  <td className="px-md py-2 text-muted-foreground">{p.expiry ?? '—'}</td>
-                  <td className="px-md py-2"><StatusBadge status={p.status} daysLeft={p.daysLeft} /></td>
-                  <td className="px-md py-2 text-xs text-muted-foreground">{p.meta}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Sections: 접종 / 구충 */}
+      {sections.map(({ section, categories }) => (
+        <div key={section} className="space-y-3">
+          <h2 className="text-base font-semibold border-b border-border pb-1">{section}</h2>
+          {categories.map(([categoryLabel, list]) => (
+            <div key={categoryLabel} className="border border-border rounded-lg overflow-hidden">
+              <div className="bg-muted/50 px-md py-2 text-sm font-medium">{categoryLabel}</div>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-xs text-muted-foreground">
+                    <th className="text-left px-md py-2 font-medium">제품명</th>
+                    <th className="text-left px-md py-2 font-medium">제조사</th>
+                    <th className="text-left px-md py-2 font-medium">Batch</th>
+                    <th className="text-left px-md py-2 font-medium">만료일</th>
+                    <th className="text-left px-md py-2 font-medium">상태</th>
+                    <th className="text-left px-md py-2 font-medium">기준</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {list.map((p, i) => (
+                    <tr key={i} className="border-b border-border/50 last:border-0 hover:bg-accent/20">
+                      <td className="px-md py-2">{p.displayName}</td>
+                      <td className="px-md py-2 text-muted-foreground">{p.manufacturer}</td>
+                      <td className="px-md py-2 font-mono text-xs">{p.batch ?? '—'}</td>
+                      <td className="px-md py-2 text-muted-foreground">{p.expiry ?? '—'}</td>
+                      <td className="px-md py-2"><StatusBadge status={p.status} daysLeft={p.daysLeft} /></td>
+                      <td className="px-md py-2 text-xs text-muted-foreground">{p.meta}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
         </div>
       ))}
     </div>
