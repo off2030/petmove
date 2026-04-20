@@ -42,3 +42,6 @@ yarn-debug.log*
 yarn-error.log*
 data/pdf-templates/test_*.pdf
 .claude/
+
+# 로컬 빌드 검증용 스크래치 복사본 (agent 도구가 만드는 경우 있음)
+_buildcheck2/
