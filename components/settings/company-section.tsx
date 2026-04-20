@@ -4,32 +4,31 @@ import { useEffect, useState, useTransition } from 'react'
 import { getCompanyInfo, updateCompanyInfo, resetCompanyInfo } from '@/lib/actions/company-info'
 import type { VetInfo, VetInfoKey } from '@/lib/vet-info'
 
+type Group = '병원 정보' | '수의사 정보'
+
 interface FieldDef {
   key: VetInfoKey
   label: string
-  group: '한글' | '영문' | '연락처' | '면허'
+  group: Group
   type?: 'text' | 'textarea'
 }
 
 const FIELDS: FieldDef[] = [
-  { key: 'clinic_ko', label: '업체명 (한글)', group: '한글' },
-  { key: 'name_ko', label: '대표자 (한글)', group: '한글' },
-  { key: 'address_ko', label: '주소 (한글)', group: '한글', type: 'textarea' },
+  // 병원 정보
+  { key: 'clinic_ko', label: '병원명 (한글)', group: '병원 정보' },
+  { key: 'clinic_en', label: '병원명 (영문)', group: '병원 정보' },
+  { key: 'address_ko', label: '주소 (한글)', group: '병원 정보', type: 'textarea' },
+  { key: 'address_en', label: '주소 (영문)', group: '병원 정보', type: 'textarea' },
+  { key: 'phone', label: '전화번호', group: '병원 정보' },
+  { key: 'email', label: '이메일', group: '병원 정보' },
 
-  { key: 'clinic_en', label: '업체명 (영문)', group: '영문' },
-  { key: 'name_en', label: '대표자 (영문)', group: '영문' },
-  { key: 'address_en', label: '주소 (영문)', group: '영문', type: 'textarea' },
-  { key: 'address_street_en', label: '주소 1줄 (영문)', group: '영문' },
-  { key: 'address_locality_en', label: '주소 2줄 (영문)', group: '영문' },
-
-  { key: 'phone', label: '전화번호', group: '연락처' },
-  { key: 'phone_intl', label: '전화번호 (국제)', group: '연락처' },
-  { key: 'email', label: '이메일', group: '연락처' },
-
-  { key: 'license_no', label: '면허번호', group: '면허' },
+  // 수의사 정보
+  { key: 'name_ko', label: '수의사 (한글)', group: '수의사 정보' },
+  { key: 'name_en', label: '수의사 (영문)', group: '수의사 정보' },
+  { key: 'license_no', label: '면허번호', group: '수의사 정보' },
 ]
 
-const GROUPS: Array<FieldDef['group']> = ['한글', '영문', '연락처', '면허']
+const GROUPS: Group[] = ['병원 정보', '수의사 정보']
 
 export function CompanySection() {
   const [info, setInfo] = useState<VetInfo | null>(null)
