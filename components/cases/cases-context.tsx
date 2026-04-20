@@ -10,6 +10,7 @@ import {
 } from 'react'
 import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
 import { parseDestinations } from '@/lib/destination-config'
+import type { InspectionConfig } from '@/lib/inspection-config-defaults'
 
 /**
  * Global client-side state for the cases app:
@@ -47,6 +48,12 @@ interface CasesContextValue {
    */
   importReportCountries: string[]
   setImportReportCountries: (list: string[]) => void
+  /**
+   * 광견병항체·전염병검사 기관 설정(국가별 오버라이드 포함).
+   * app_settings.inspection_config 에서 초기 로드.
+   */
+  inspectionConfig: InspectionConfig
+  setInspectionConfig: (config: InspectionConfig) => void
 }
 
 const CasesContext = createContext<CasesContextValue | null>(null)
@@ -55,17 +62,20 @@ export function CasesProvider({
   initialCases,
   fieldDefs,
   initialImportReportCountries,
+  initialInspectionConfig,
   children,
 }: {
   initialCases: CaseRow[]
   fieldDefs: FieldDefinition[]
   initialImportReportCountries: string[]
+  initialInspectionConfig: InspectionConfig
   children: React.ReactNode
 }) {
   const [cases, setCases] = useState<CaseRow[]>(initialCases)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [activeDestination, setActiveDestination] = useState<string | null>(null)
   const [importReportCountries, setImportReportCountries] = useState<string[]>(initialImportReportCountries)
+  const [inspectionConfig, setInspectionConfig] = useState<InspectionConfig>(initialInspectionConfig)
 
   const selectCase = useCallback((id: string | null) => {
     setSelectedId(id)
@@ -153,8 +163,10 @@ export function CasesProvider({
       setActiveDestination,
       importReportCountries,
       setImportReportCountries,
+      inspectionConfig,
+      setInspectionConfig,
     }),
-    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination, importReportCountries],
+    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination, importReportCountries, inspectionConfig],
   )
 
   return <CasesContext.Provider value={value}>{children}</CasesContext.Provider>

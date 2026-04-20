@@ -6,6 +6,7 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { labColor } from '@/lib/lab-color'
+import { resolveInspectionLab } from '@/lib/inspection-config-defaults'
 
 interface InfectiousRecord {
   date: string | null
@@ -20,19 +21,8 @@ const LABS = [
 
 const DATA_KEY = 'infectious_disease_records'
 
-/** Auto-detect lab based on destination */
-function autoDetectInfectiousLab(destination?: string | null): string {
-  if (!destination) return 'ksvdl'
-  const dests = destination.split(',').map(s => s.trim()).filter(Boolean)
-  // 호주 → KSVDL
-  if (dests.some(d => d === '호주' || d.toLowerCase() === 'australia')) return 'ksvdl'
-  // 뉴질랜드 → APQA HQ (VBDDL도 가능하지만 기본은 APQA HQ)
-  if (dests.some(d => d === '뉴질랜드' || d.toLowerCase() === 'new zealand')) return 'apqa_hq'
-  return 'ksvdl'
-}
-
 export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
-  const { updateLocalCaseField } = useCases()
+  const { updateLocalCaseField, inspectionConfig } = useCases()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
 
   // Read array (backward compat: old flat key)
@@ -91,10 +81,16 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
 
   function saveNewRecord(date: string) {
     if (!date) { setAddingNew(false); return }
+    // 뉴질랜드는 APQA HQ + VBDDL 이중 검사로 특수 처리, 그 외는 설정 기반 resolve.
     const isNZ = destination?.includes('뉴질랜드') || destination?.toLowerCase().includes('new zealand')
+    const defaultLab = resolveInspectionLab(
+      destination,
+      inspectionConfig.infectiousOverrides,
+      inspectionConfig.infectiousDefault,
+    )
     const newRows: InfectiousRecord[] = isNZ
       ? [{ date, lab: 'apqa_hq' }, { date, lab: 'vbddl' }]
-      : [{ date, lab: autoDetectInfectiousLab(destination) }]
+      : [{ date, lab: defaultLab }]
     const next = [...records, ...newRows]
     startSave(async () => {
       await saveRecords(next)

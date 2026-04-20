@@ -79,23 +79,23 @@ const LAB_OPTIONS = [
   { value: 'nz_combined', label: 'APQA HQ + VBDDL' },
 ]
 
-const EU_COUNTRIES = new Set([
-  '독일', '프랑스', '이탈리아', '스페인', '네덜란드', '벨기에', '오스트리아',
-  '스웨덴', '덴마크', '핀란드', '폴란드', '체코', '헝가리', '포르투갈',
-  '그리스', '루마니아', '불가리아', '크로아티아', '슬로바키아', '슬로베니아',
-  '리투아니아', '라트비아', '에스토니아', '룩셈부르크', '몰타', '키프로스',
-  '아일랜드', '영국',
-])
-
-/** Auto-detect lab from destination. Priority: 싱가포르 > EU > 일본/하와이 > 기타 */
-function autoDetectLab(destination?: string | null): string {
-  if (!destination) return 'krsl'
+/**
+ * Auto-detect titer lab from destination using inspection config overrides.
+ * 여러 목적지 중 override 가 있는 첫 국가의 lab 반환, 없으면 default.
+ */
+function autoDetectLab(
+  destination: string | null | undefined,
+  overrides: { country: string; lab: string }[],
+  defaultLab: string,
+): string {
+  if (!destination) return defaultLab
   const dests = destination.split(',').map(s => s.trim()).filter(Boolean)
-  // Priority order check across all destinations
-  if (dests.some(d => d === '싱가포르' || d.toLowerCase() === 'singapore')) return 'ksvdl_r'
-  if (dests.some(d => EU_COUNTRIES.has(d))) return 'apqa_hq'
-  if (dests.some(d => d === '일본' || d === '하와이' || d.toLowerCase() === 'japan' || d.toLowerCase() === 'hawaii')) return 'apqa_seoul'
-  return 'krsl'
+  const map = new Map(overrides.map(o => [o.country, o.lab]))
+  for (const d of dests) {
+    const hit = map.get(d)
+    if (hit) return hit
+  }
+  return defaultLab
 }
 
 /** Read the first titer record date from rabies_titer_records */
@@ -112,11 +112,15 @@ function resolveTiterDate(row: CaseRow): string {
 }
 
 /** Read lab from inspection_lab, fallback to auto-detect from destination */
-function resolveInspectionLab(row: CaseRow): string {
+function resolveInspectionLab(
+  row: CaseRow,
+  overrides: { country: string; lab: string }[],
+  defaultLab: string,
+): string {
   const data = (row.data ?? {}) as Record<string, unknown>
   const saved = data.inspection_lab
   if (saved) return String(saved)
-  return autoDetectLab(row.destination)
+  return autoDetectLab(row.destination, overrides, defaultLab)
 }
 
 /** 검사 탭 공통 컷오프: 이 날짜 이후의 검사/출국만 탭에 올라감. */
@@ -179,7 +183,11 @@ function addDays(dateStr: string, days: number): string {
  * - 전염병검사(호주): infectious_disease_records에 lab=ksvdl & date 존재 → 1행
  * - 전염병검사(뉴질랜드): 출국일이 있으면 APQA HQ+VBDDL 묶음 1행 (검사일 = 저장값 or 출국일-15일)
  */
-function buildInspectionRows(cases: CaseRow[]): InspectionRow[] {
+function buildInspectionRows(
+  cases: CaseRow[],
+  titerOverrides: { country: string; lab: string }[],
+  titerDefault: string,
+): InspectionRow[] {
   const rows: InspectionRow[] = []
   for (const c of cases) {
     // 1) 광견병항체
@@ -188,7 +196,7 @@ function buildInspectionRows(cases: CaseRow[]): InspectionRow[] {
         id: `${c.id}:titer`,
         caseRow: c,
         kind: 'titer',
-        lab: resolveInspectionLab(c),
+        lab: resolveInspectionLab(c, titerOverrides, titerDefault),
         date: resolveTiterDate(c),
         dateEditable: true,
         dateStorage: { kind: 'titer' },
@@ -249,16 +257,22 @@ const LAB_SORT_ORDER: Record<string, number> = {
   nz_combined: 6,
 }
 
-function compareByLab(a: CaseRow, b: CaseRow): number {
-  const labA = resolveInspectionLab(a)
-  const labB = resolveInspectionLab(b)
-  const orderA = LAB_SORT_ORDER[labA] ?? 99
-  const orderB = LAB_SORT_ORDER[labB] ?? 99
-  return orderA - orderB
-}
-
 const INSPECTION_COLUMNS: TodoColumn[] = [
-  { key: 'inspection_lab', label: '검사기관', storage: 'data', type: 'select', width: 160, options: LAB_OPTIONS, resolveValue: resolveInspectionLab },
+  // 검사 탭은 InspectionTable 로 렌더되므로 이 컬럼 집합은 실제로 그려지지 않음.
+  // 단순히 inspection_lab 원본만 반환해 TodoColumn 타입 만족시킴.
+  {
+    key: 'inspection_lab',
+    label: '검사기관',
+    storage: 'data',
+    type: 'select',
+    width: 160,
+    options: LAB_OPTIONS,
+    resolveValue: (row) => {
+      const data = (row.data ?? {}) as Record<string, unknown>
+      const v = data.inspection_lab
+      return typeof v === 'string' ? v : ''
+    },
+  },
   { key: 'rabies_titer_date', label: '검사일', storage: 'data', type: 'date', width: 120, resolveValue: resolveTiterDate },
   { key: 'pet_name', label: '동물', storage: 'column', type: 'text', width: 100 },
   { key: 'customer_name', label: '고객', storage: 'column', type: 'text', width: 100 },
@@ -513,7 +527,7 @@ function matchesQuery(row: CaseRow, q: string): boolean {
 }
 
 export function TodosApp() {
-  const { cases, updateLocalCaseField, importReportCountries } = useCases()
+  const { cases, updateLocalCaseField, importReportCountries, inspectionConfig } = useCases()
   const [activeTab, setActiveTab] = useState<TabId>('inspection')
   const [query, setQuery] = useState('')
 
@@ -570,14 +584,14 @@ export function TodosApp() {
   }, [cases, activeTab, q])
 
   const inspectionRows = useMemo(
-    () => buildInspectionRows(cases)
+    () => buildInspectionRows(cases, inspectionConfig.titerOverrides, inspectionConfig.titerDefault)
       .filter(r => matchesQuery(r.caseRow, q))
       .sort((a, b) => {
         const la = LAB_SORT_ORDER[a.lab] ?? 99
         const lb = LAB_SORT_ORDER[b.lab] ?? 99
         return la - lb
       }),
-    [cases, q],
+    [cases, q, inspectionConfig],
   )
 
   return (

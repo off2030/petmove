@@ -10,6 +10,7 @@ import { labColor } from '@/lib/lab-color'
 import { extractTiterInfo } from '@/lib/actions/extract-titer'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
+import { resolveInspectionLab } from '@/lib/inspection-config-defaults'
 
 interface TiterRecord {
   date: string | null
@@ -35,28 +36,24 @@ const DATA_KEY = 'rabies_titer_records'
 
 type TiterEditField = 'date' | 'value' | 'lab'
 
-const EU_COUNTRIES = new Set([
-  '독일', '프랑스', '이탈리아', '스페인', '네덜란드', '벨기에', '오스트리아',
-  '스웨덴', '덴마크', '핀란드', '폴란드', '체코', '헝가리', '포르투갈',
-  '그리스', '루마니아', '불가리아', '크로아티아', '슬로바키아', '슬로베니아',
-  '리투아니아', '라트비아', '에스토니아', '룩셈부르크', '몰타', '키프로스',
-  '아일랜드', '영국',
-])
-
-/** Auto-detect lab based on destination */
-function autoDetectLab(destination?: string | null): string | null {
-  if (!destination) return 'krsl'
+/**
+ * 광견병항체 검사기관 자동 감지.
+ * 설정(app_settings.inspection_config) 의 국가별 override 를 우선 적용, 없으면 default.
+ * 복수 목적지는 미지정(null) 반환.
+ */
+function autoDetectLab(
+  destination: string | null | undefined,
+  overrides: { country: string; lab: string }[],
+  defaultLab: string,
+): string | null {
+  if (!destination) return defaultLab
   const dests = destination.split(',').map(s => s.trim()).filter(Boolean)
-  if (dests.length !== 1) return null // 복수 목적지: 미지정
-  const d = dests[0]
-  if (d === '일본' || d === '하와이' || d.toLowerCase() === 'japan' || d.toLowerCase() === 'hawaii') return 'apqa_seoul'
-  if (d === '싱가포르' || d.toLowerCase() === 'singapore') return 'ksvdl_r'
-  if (EU_COUNTRIES.has(d)) return 'apqa_hq'
-  return 'krsl'
+  if (dests.length !== 1) return null
+  return resolveInspectionLab(dests[0], overrides, defaultLab)
 }
 
 export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
-  const { updateLocalCaseField } = useCases()
+  const { updateLocalCaseField, inspectionConfig } = useCases()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
 
   // Read array (backward compat: old flat keys)
@@ -117,7 +114,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
       let nextRecords: TiterRecord[] = records
       if (targetIdx === null) {
         if (xValue) {
-          const detectedLab = autoDetectLab(destination)
+          const detectedLab = autoDetectLab(destination, inspectionConfig.titerOverrides, inspectionConfig.titerDefault)
           nextRecords = [{ date: null, value: xValue, lab: detectedLab }]
         }
       } else {
@@ -216,7 +213,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
 
   function saveNewRecord(date: string) {
     if (!date) { setAddingNew(false); return }
-    const detectedLab = autoDetectLab(destination)
+    const detectedLab = autoDetectLab(destination, inspectionConfig.titerOverrides, inspectionConfig.titerDefault)
     const next = [...records, { date, value: null, lab: detectedLab }]
     startSave(async () => {
       await saveRecords(next)

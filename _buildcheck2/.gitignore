@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+
+# Environment (never commit secrets)
+.env
+.env.local
+.env*.local
+
+# Supabase local dev artifacts
+supabase/.temp/
+supabase/.branches/
+
+# Next.js (for when we add it)
+.next/
+out/
+dist/
+build/
+
+# TypeScript incremental build cache — regenerated on every tsc run,
+# causes noisy diffs and push conflicts across machines.
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# PDF analysis/debug output from test scripts
+data/pdf-analysis/
+data/test-*.pdf
+
+# Next.js auto-generated type reference — path changes per dev/build state
+next-env.d.ts
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+*.log
+.vscode/
+.idea/
+
+# npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+data/pdf-templates/test_*.pdf
+.claude/

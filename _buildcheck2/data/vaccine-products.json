@@ -1,0 +1,81 @@
+{
+  "_note": "백신/구충제 제품 정보. 접종일 또는 체중으로 lookup. 업데이트 시 이 파일만 편집하면 전 시스템 반영.",
+  "_schema": {
+    "_terminology": "expiry = 제품(바이알)의 실제 유효기한. 면역 유효기간(valid_until)은 접종일+1년으로 record 단계에서 계산하며 카탈로그 필드가 아님.",
+    "rabies": "광견병 - 연도별 자동 매핑 (접종일의 연도로 조회).",
+    "comprehensive_dog": "강아지 종합 - expiry 기준. 접종일 <= expiry 중 가장 빠른 것 선택.",
+    "comprehensive_cat": "고양이 종합 - 동일.",
+    "civ": "CIV 독감 - expiry 기준.",
+    "kennel_cough": "켄넬코프 - 강아지 전용, 단일 batch",
+    "parasite_combo_dog": "내외부 구충 합제 강아지 (NexGard Spectra) - 체중 범위로 조회",
+    "parasite_combo_cat": "내외부 구충 합제 고양이 (NexGard Cat Combo) - 체중 범위로 조회",
+    "parasite_external_dog": "외부 구충 강아지 (Frontline Plus) - expiry 기준",
+    "parasite_external_cat": "외부 구충 고양이 (Frontline Spray) - expiry 기준",
+    "parasite_internal_dog": "내부 구충 강아지 (Drontal Plus) - expiry 기준",
+    "parasite_internal_cat": "내부 구충 고양이 - expiry 기준",
+    "heartworm_dog": "심장사상충 강아지 (Heartgard Plus) - 체중 범위로 조회",
+    "heartworm_cat": "심장사상충 고양이 - 체중 범위로 조회"
+  },
+
+  "rabies": [
+    { "year": 2023, "vaccine": "Rabisin", "manufacturer": "Boehringer Ingelheim", "batch": "E19623", "expiry": "2025-01-06" },
+    { "year": 2024, "vaccine": "Rabisin", "manufacturer": "Boehringer Ingelheim", "batch": "E59694", "expiry": "2025-01-31" },
+    { "year": 2025, "vaccine": "Rabisin", "manufacturer": "Boehringer Ingelheim", "batch": "F52512", "expiry": "2026-06-15" },
+    { "year": 2026, "vaccine": "Rabisin", "manufacturer": "Boehringer Ingelheim", "batch": "G98321", "expiry": "2027-10-07" }
+  ],
+
+  "comprehensive_dog": [
+    { "vaccine": "Canishot DHPPL", "manufacturer": "CAVAC", "batch": "323 DPL 02", "expiry": "2025-06-07" },
+    { "vaccine": "Canishot DHPPL", "manufacturer": "CAVAC", "batch": "324 EDPL 07", "expiry": "2026-04-09" },
+    { "vaccine": "Canishot DHPPL", "manufacturer": "CAVAC", "batch": "325 DPL 01", "expiry": "2027-03-05" }
+  ],
+
+  "comprehensive_cat": [
+    { "vaccine": "Nobivac 1-HCPCH", "manufacturer": "MSD Animal Health", "batch": "02071456C", "expiry": "2025-10-13" },
+    { "vaccine": "Nobivac 1-HCPCH", "manufacturer": "MSD Animal Health", "batch": "02071481B", "expiry": "2026-10-02" }
+  ],
+
+  "civ": [
+    { "vaccine": "CaniFlu-Max", "manufacturer": "GCVP", "batch": "123CIV07Z", "expiry": "2025-09-06" },
+    { "vaccine": "Fluvax H3N2", "manufacturer": "CAVAC", "batch": "324CNFL03", "expiry": "2026-04-29" }
+  ],
+
+  "kennel_cough": [
+    { "vaccine": "Vanguard B", "manufacturer": "Zoetis", "batch": "791956", "expiry": "2028-01-12" }
+  ],
+
+  "parasite_combo_dog": [
+    { "id": "nexgard_spectra_dog", "product": "NexGard Spectra", "manufacturer": "Boehringer Ingelheim", "weightMin": 1.35, "weightMax": 3.5,  "size": "1.35-3.5kg", "batch": "G97530", "expiry": "2027-06" },
+    { "id": "nexgard_spectra_dog", "product": "NexGard Spectra", "manufacturer": "Boehringer Ingelheim", "weightMin": 3.5,  "weightMax": 7.5,  "size": "3.5-7.5kg", "batch": "H22417", "expiry": "2027-09" },
+    { "id": "nexgard_spectra_dog", "product": "NexGard Spectra", "manufacturer": "Boehringer Ingelheim", "weightMin": 7.5,  "weightMax": 15,   "size": "7.5-15kg",  "batch": "H26328", "expiry": "2027-09" },
+    { "id": "nexgard_spectra_dog", "product": "NexGard Spectra", "manufacturer": "Boehringer Ingelheim", "weightMin": 15,   "weightMax": 30,   "size": "15-30kg",   "batch": "H11662", "expiry": "2027-07" }
+  ],
+
+  "parasite_combo_cat": [
+    { "id": "nexgard_cat_combo_cat", "product": "NexGard Cat Combo", "manufacturer": "Boehringer Ingelheim", "weightMin": 0,   "weightMax": 2.5, "size": "~2.5kg",   "batch": "G21637A", "expiry": "2027-05" },
+    { "id": "nexgard_cat_combo_cat", "product": "NexGard Cat Combo", "manufacturer": "Boehringer Ingelheim", "weightMin": 2.5, "weightMax": 7.5, "size": "2.5-7.5kg", "batch": "G58432E", "expiry": "2027-10" }
+  ],
+
+  "parasite_external_dog": [
+    { "id": "frontline_plus_dog", "product": "Frontline Plus", "manufacturer": "Boehringer Ingelheim", "batch": "F74992C", "expiry": "2026-12-31" }
+  ],
+
+  "parasite_external_cat": [
+    { "id": "frontline_spray_cat", "product": "Frontline Spray", "manufacturer": "Boehringer Ingelheim", "batch": null, "expiry": null, "_note": "batch/expiry 추후 입력" }
+  ],
+
+  "parasite_internal_dog": [
+    { "id": "drontal_plus_dog", "product": "Drontal Plus", "manufacturer": "Elanco", "batch": "KV035S6", "expiry": "2026-03-08" },
+    { "id": "drontal_plus_dog", "product": "Drontal Plus", "manufacturer": "Elanco", "batch": "KVO53HV", "expiry": "2028-01-03" }
+  ],
+
+  "parasite_internal_cat": [],
+
+  "heartworm_dog": [
+    { "product": "Heartgard Plus (ivermectin 68mcg / pyrantel 57mg)",   "manufacturer": "Boehringer Ingelheim", "weightMin": 0,  "weightMax": 11, "size": "~11kg",    "batch": "F94293", "expiry": "2027-01" },
+    { "product": "Heartgard Plus (ivermectin 136mcg / pyrantel 114mg)", "manufacturer": "Boehringer Ingelheim", "weightMin": 11, "weightMax": 22, "size": "11-22kg",  "batch": "G33907", "expiry": "2027-05" },
+    { "product": "Heartgard Plus (ivermectin 272mcg / pyrantel 227mg)", "manufacturer": "Boehringer Ingelheim", "weightMin": 22, "weightMax": 45, "size": "22-45kg",  "batch": "G06564", "expiry": "2027-03" }
+  ],
+
+  "heartworm_cat": []
+}

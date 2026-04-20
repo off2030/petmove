@@ -3,6 +3,7 @@ import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
 import { CasesProvider } from '@/components/cases/cases-context'
 import { DashboardShell } from '@/components/layout/dashboard-shell'
 import { loadImportReportCountries } from '@/lib/import-report-config'
+import { loadInspectionConfig } from '@/lib/inspection-config'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,10 +47,11 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [initialCases, fieldDefs, importReportCountries] = await Promise.all([
+  const [initialCases, fieldDefs, importReportCountries, inspectionConfig] = await Promise.all([
     fetchAllCases(),
     fetchFieldDefs(),
     loadImportReportCountries(),
+    loadInspectionConfig(),
   ])
 
   return (
@@ -57,6 +59,7 @@ export default async function DashboardLayout({
       initialCases={initialCases}
       fieldDefs={fieldDefs}
       initialImportReportCountries={importReportCountries}
+      initialInspectionConfig={inspectionConfig}
     >
       <DashboardShell />
     </CasesProvider>

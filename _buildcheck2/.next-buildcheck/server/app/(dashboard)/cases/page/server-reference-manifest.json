@@ -1,0 +1,449 @@
+{
+  "node": {
+    "40aaf746aa7d4fff06848cb77e55826ad21b01bbb7": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "restoreCase",
+          "filename": "_buildcheck2/lib/actions/delete-case.ts"
+        }
+      },
+      "exportedName": "restoreCase",
+      "filename": "_buildcheck2/lib/actions/delete-case.ts"
+    },
+    "409a3969dbbbb43b9cad81655e2092c3f746ab788e": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "permanentDeleteCase",
+          "filename": "_buildcheck2/lib/actions/delete-case.ts"
+        }
+      },
+      "exportedName": "permanentDeleteCase",
+      "filename": "_buildcheck2/lib/actions/delete-case.ts"
+    },
+    "7814ee11057c03eac11fdff5caca2f0da8df9fe6a9": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "updateCaseField",
+          "filename": "_buildcheck2/lib/actions/cases.ts"
+        }
+      },
+      "exportedName": "updateCaseField",
+      "filename": "_buildcheck2/lib/actions/cases.ts"
+    },
+    "4024b6f7fbd5481a3e1c6d9bef37e00b3b87b8f435": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "extractVaccineInfo",
+          "filename": "_buildcheck2/lib/actions/extract-vaccine.ts"
+        }
+      },
+      "exportedName": "extractVaccineInfo",
+      "filename": "_buildcheck2/lib/actions/extract-vaccine.ts"
+    },
+    "40c98461887f00ffbb8beca0c95e8ec567f09fd6bf": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "extractFlightInfo",
+          "filename": "_buildcheck2/lib/actions/extract-flight.ts"
+        }
+      },
+      "exportedName": "extractFlightInfo",
+      "filename": "_buildcheck2/lib/actions/extract-flight.ts"
+    },
+    "4090aed3d4f77b268f1e1fff9200bcbfd7951a8d6e": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "extractHawaiiInfo",
+          "filename": "_buildcheck2/lib/actions/extract-hawaii.ts"
+        }
+      },
+      "exportedName": "extractHawaiiInfo",
+      "filename": "_buildcheck2/lib/actions/extract-hawaii.ts"
+    },
+    "402bc3aaebd2825811573aac4bbb5772a9d4c52100": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "extractAddress",
+          "filename": "_buildcheck2/lib/actions/extract-address.ts"
+        }
+      },
+      "exportedName": "extractAddress",
+      "filename": "_buildcheck2/lib/actions/extract-address.ts"
+    },
+    "006b5feda348fd53708776d6b81eaf3c023a27fca3": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "createCase",
+          "filename": "_buildcheck2/lib/actions/create-case.ts"
+        }
+      },
+      "exportedName": "createCase",
+      "filename": "_buildcheck2/lib/actions/create-case.ts"
+    },
+    "40cbceb711a94dd4f9208721fe940cee000f558b5b": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "createCaseWithData",
+          "filename": "_buildcheck2/lib/actions/create-case-with-data.ts"
+        }
+      },
+      "exportedName": "createCaseWithData",
+      "filename": "_buildcheck2/lib/actions/create-case-with-data.ts"
+    },
+    "408bdce11c447282b2d6e62b50d0fada92164cf5db": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "deleteCase",
+          "filename": "_buildcheck2/lib/actions/delete-case.ts"
+        }
+      },
+      "exportedName": "deleteCase",
+      "filename": "_buildcheck2/lib/actions/delete-case.ts"
+    },
+    "4083de314ae7933e8f630b59da14a17fde975334a2": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "duplicateCase",
+          "filename": "_buildcheck2/lib/actions/duplicate-case.ts"
+        }
+      },
+      "exportedName": "duplicateCase",
+      "filename": "_buildcheck2/lib/actions/duplicate-case.ts"
+    },
+    "40f33336fe48b32bed8f47e5db1923a50da174af6a": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "undoLastChange",
+          "filename": "_buildcheck2/lib/actions/cases.ts"
+        }
+      },
+      "exportedName": "undoLastChange",
+      "filename": "_buildcheck2/lib/actions/cases.ts"
+    },
+    "40de475773855b024c85041c748a769fcd45834289": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "extractAll",
+          "filename": "_buildcheck2/lib/actions/extract-all.ts"
+        }
+      },
+      "exportedName": "extractAll",
+      "filename": "_buildcheck2/lib/actions/extract-all.ts"
+    },
+    "40c39dc959fc33f355d97a3e53ae9d007c6735ecfb": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "lookupCaseByMicrochip",
+          "filename": "_buildcheck2/lib/actions/lookup-case-by-chip.ts"
+        }
+      },
+      "exportedName": "lookupCaseByMicrochip",
+      "filename": "_buildcheck2/lib/actions/lookup-case-by-chip.ts"
+    },
+    "601172c60eede897f10ab16d0503260238012ab498": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "generateFormRE",
+          "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+        }
+      },
+      "exportedName": "generateFormRE",
+      "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+    },
+    "603485bf4056c15bc97e7e76ea683d3957ea2ccba2": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "generateFormAC",
+          "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+        }
+      },
+      "exportedName": "generateFormAC",
+      "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+    },
+    "60e9a2e6d90df08fe1a6853bbdb34ee3f7e3231464": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "generateIdentificationDeclaration",
+          "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+        }
+      },
+      "exportedName": "generateIdentificationDeclaration",
+      "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+    },
+    "60a86a485a05c760e6da2e2a982f4b0edb051ebcce": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "generateForm25",
+          "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+        }
+      },
+      "exportedName": "generateForm25",
+      "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+    },
+    "60d1254f5216593484812ad2f0fe54b7e8a520c370": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "generateForm25AuNz",
+          "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+        }
+      },
+      "exportedName": "generateForm25AuNz",
+      "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+    },
+    "60746c43d3ca54ddd572f3c81a5a79b53a0f20257f": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "generateAU",
+          "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+        }
+      },
+      "exportedName": "generateAU",
+      "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+    },
+    "60737812c14d8edfe4aedfb80bb16613426a2a7ebf": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "generateAU2",
+          "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+        }
+      },
+      "exportedName": "generateAU2",
+      "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+    },
+    "60595fe4aa29ce96cc2f9007cf571fae1652d502d8": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "generateAUCat",
+          "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+        }
+      },
+      "exportedName": "generateAUCat",
+      "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+    },
+    "60da1aab397306ed905c52d799704220cc8112f7c4": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "generateAUCat2",
+          "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+        }
+      },
+      "exportedName": "generateAUCat2",
+      "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+    },
+    "60bae584cbf4e2452f82a005dca90f38a5532b107d": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "generateNZ",
+          "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+        }
+      },
+      "exportedName": "generateNZ",
+      "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+    },
+    "60e27f49b533128e9269435f58591c5eb7042fa1d8": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "generateOVD",
+          "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+        }
+      },
+      "exportedName": "generateOVD",
+      "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+    },
+    "60276193e6fb13d7707a096b84298a2b3df7e99520": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "generateSGP",
+          "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+        }
+      },
+      "exportedName": "generateSGP",
+      "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+    },
+    "60831499bfe130083c14595500049f2f25ae4e7617": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "generateAQS",
+          "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+        }
+      },
+      "exportedName": "generateAQS",
+      "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+    },
+    "60ddc0764acf4c2bb13ed224e5e74d7626e8843a14": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "generateCH",
+          "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+        }
+      },
+      "exportedName": "generateCH",
+      "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+    },
+    "60621b90e36246f9002185f9b5c79ce9fa253ccf62": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "generateFormR11",
+          "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+        }
+      },
+      "exportedName": "generateFormR11",
+      "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+    },
+    "60726bce2b8b6b05b1976afa06349a428eedb08bd7": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "generateVHC",
+          "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+        }
+      },
+      "exportedName": "generateVHC",
+      "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+    },
+    "60f11a0e24e0d006df3bcbb57eda66b2fe9345ed8c": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "previewSiblings",
+          "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+        }
+      },
+      "exportedName": "previewSiblings",
+      "filename": "_buildcheck2/lib/actions/generate-pdf.ts"
+    },
+    "00084d0cffd465951edc702c133ec601d3b2909bdd": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "getCompanyInfo",
+          "filename": "_buildcheck2/lib/actions/company-info.ts"
+        }
+      },
+      "exportedName": "getCompanyInfo",
+      "filename": "_buildcheck2/lib/actions/company-info.ts"
+    },
+    "40bf7ba61e1eac43b1c393351cceff1a5a431b39b5": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "updateCompanyInfo",
+          "filename": "_buildcheck2/lib/actions/company-info.ts"
+        }
+      },
+      "exportedName": "updateCompanyInfo",
+      "filename": "_buildcheck2/lib/actions/company-info.ts"
+    },
+    "008a57b7ae72a4894c05e0329df2cb2f38d36c7e55": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "resetCompanyInfo",
+          "filename": "_buildcheck2/lib/actions/company-info.ts"
+        }
+      },
+      "exportedName": "resetCompanyInfo",
+      "filename": "_buildcheck2/lib/actions/company-info.ts"
+    },
+    "602808f5ababa8aaa2d6205078843c5634b3974567": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "updateCalculatorItem",
+          "filename": "_buildcheck2/lib/actions/calculator.ts"
+        }
+      },
+      "exportedName": "updateCalculatorItem",
+      "filename": "_buildcheck2/lib/actions/calculator.ts"
+    },
+    "405651cb0b42fb88e8ae3009fb0e1be036097dcb1b": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "createCalculatorItem",
+          "filename": "_buildcheck2/lib/actions/calculator.ts"
+        }
+      },
+      "exportedName": "createCalculatorItem",
+      "filename": "_buildcheck2/lib/actions/calculator.ts"
+    },
+    "403ab0b78c2d0eafbab070ff948a14e90afe6328e8": {
+      "workers": {
+        "app/(dashboard)/cases/page": {
+          "moduleId": 45057,
+          "async": false,
+          "exportedName": "deleteCalculatorItem",
+          "filename": "_buildcheck2/lib/actions/calculator.ts"
+        }
+      },
+      "exportedName": "deleteCalculatorItem",
+      "filename": "_buildcheck2/lib/actions/calculator.ts"
+    }
+  },
+  "edge": {}
+}
