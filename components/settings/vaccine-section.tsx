@@ -104,11 +104,6 @@ export function VaccineSection() {
         )}
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        편집하려면 <code className="px-1 bg-muted rounded">data/vaccine-products.json</code> 파일을 수정하세요.
-        (향후 앱 내 편집 UI 추가 예정)
-      </p>
-
       {/* Sections: 접종 / 구충 */}
       {sections.map(({ section, categories }) => (
         <div key={section} className="space-y-3">
