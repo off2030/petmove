@@ -93,10 +93,6 @@ export function CompanySection() {
 
   return (
     <div className="rounded-xl border border-border/60 bg-card p-md shadow-sm max-w-2xl">
-      <p className="text-base text-muted-foreground mb-4">
-        회사 정보는 PDF 서류 출력 시 사용됩니다. 입력 후 다른 곳을 클릭하거나 Enter 를 누르면 저장됩니다.
-      </p>
-
       {GROUPS.map((group) => (
         <section key={group} className="mb-6">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
