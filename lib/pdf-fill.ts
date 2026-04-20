@@ -1962,7 +1962,15 @@ async function applyFontFixes(
       } catch { /* missing field — skip */ }
     }
   } else {
-    pdfForm.updateFieldAppearances(customFont)
+    // 전체 경로: form-level updateFieldAppearances 는 Vercel Linux serverless
+    // 환경에서 일부 필드에 appearance stream 을 생성하지 못해 viewer 가 빈 필드로
+    // 렌더하는 이슈가 있음. per-field 로 호출해 생성 주체를 필드별로 분리.
+    for (const field of pdfForm.getFields()) {
+      if (field.constructor.name !== 'PDFTextField') continue
+      try {
+        ;(field as import('pdf-lib').PDFTextField).updateAppearances(customFont)
+      } catch { /* skip broken field */ }
+    }
   }
 
   if (PDF_NEED_APPEARANCES === 'false') {
