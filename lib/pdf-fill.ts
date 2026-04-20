@@ -303,7 +303,11 @@ function todayYMDSlash(): string {
  */
 function sanitizeForFont(text: string): string {
   if (!text) return text
-  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  // NFD: 결합형 문자를 기본 글자 + combining mark 로 분해
+  // replace: combining mark 영역(U+0300–U+036F) 만 제거 — 한글 자모·한자 등은 영향 없음
+  // NFC: 한글 자모 분해된 형태(ㄱ+ㅏ+ㅇ)를 다시 precomposed 글자(강)로 재결합.
+  //      이 단계가 없으면 한글이 자모 단위로 PDF에 들어가 폰트가 glyph를 못 찾음.
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC')
 }
 
 /** rabies_dates: string[] 또는 {date, ...}[] 둘 다 지원 → 최신순 날짜 배열 */
