@@ -102,18 +102,45 @@ export function lookupKennelCough(): VaccineProduct | null {
   return DATA.kennel_cough[0] ?? null
 }
 
-export function lookupExternalParasite(species: 'dog' | 'cat', vaccinationDate: string): VaccineProduct | null {
-  const list = species === 'dog' ? DATA.parasite_external_dog : DATA.parasite_external_cat
+function lookupByWeightAndDate(
+  list: VaccineProduct[],
+  vaccinationDate: string,
+  weightKg = 0,
+): VaccineProduct | null {
   if (list.length === 0) return null
   if (list.length === 1) return list[0]
+  // 체중 범위가 있는 entry 를 먼저 weight 로 필터 → date 기준으로 pick.
+  // 체중 범위 entry 가 없거나 매칭 없으면 date 기준으로만 pick.
+  const hasWeightEntries = list.some(p => p.weightMin !== undefined || p.weightMax !== undefined)
+  if (hasWeightEntries && weightKg > 0) {
+    const strictlyWeighted = list.filter(p =>
+      (p.weightMin !== undefined || p.weightMax !== undefined) &&
+      (p.weightMin === undefined || weightKg >= p.weightMin) &&
+      (p.weightMax === undefined || weightKg <= p.weightMax)
+    )
+    if (strictlyWeighted.length > 0) {
+      return lookupByDateRange(strictlyWeighted, vaccinationDate) ?? strictlyWeighted[0]
+    }
+  }
   return lookupByDateRange(list, vaccinationDate)
 }
 
-export function lookupInternalParasite(species: 'dog' | 'cat', vaccinationDate: string): VaccineProduct | null {
+export function lookupExternalParasite(
+  species: 'dog' | 'cat',
+  vaccinationDate: string,
+  weightKg = 0,
+): VaccineProduct | null {
+  const list = species === 'dog' ? DATA.parasite_external_dog : DATA.parasite_external_cat
+  return lookupByWeightAndDate(list, vaccinationDate, weightKg)
+}
+
+export function lookupInternalParasite(
+  species: 'dog' | 'cat',
+  vaccinationDate: string,
+  weightKg = 0,
+): VaccineProduct | null {
   const list = species === 'dog' ? DATA.parasite_internal_dog : DATA.parasite_internal_cat
-  if (list.length === 0) return null
-  if (list.length === 1) return list[0]
-  return lookupByDateRange(list, vaccinationDate)
+  return lookupByWeightAndDate(list, vaccinationDate, weightKg)
 }
 
 // ─── Weight-based ───
@@ -196,20 +223,24 @@ export function lookupParasiteById(id: string, ctx: { date?: string; weightKg?: 
   const matches = list.filter(p => p.id === id)
 
   let pick: ParasiteSection | undefined
-  // 체중 범위 entry가 하나라도 있으면 weight 기반 선택을 우선 시도
+  // 체중 범위 있는 entry 가 있으면 strictly-weighted 매칭 우선.
+  // weight 범위 없는(legacy) entry 는 전 체중 대응 성격이라 strictly-weighted
+  // 매칭이 있으면 경쟁하지 않도록 제외.
   const hasWeightEntries = matches.some(p => p.weightMin !== undefined || p.weightMax !== undefined)
   if (hasWeightEntries && ctx.weightKg) {
-    const weighted = matches.filter(p =>
+    const strictlyWeighted = matches.filter(p =>
+      (p.weightMin !== undefined || p.weightMax !== undefined) &&
       (p.weightMin === undefined || ctx.weightKg! >= p.weightMin) &&
       (p.weightMax === undefined || ctx.weightKg! <= p.weightMax)
     )
-    // weight 매칭 내에서 date도 있으면 expiry 경과 안 된 것 중 가장 빠른 것
-    if (ctx.date) {
-      pick = weighted
-        .filter(p => p.expiry && ctx.date! <= p.expiry)
-        .sort((a, b) => (a.expiry! < b.expiry! ? -1 : 1))[0] ?? weighted[0]
-    } else {
-      pick = weighted[0]
+    if (strictlyWeighted.length > 0) {
+      if (ctx.date) {
+        pick = strictlyWeighted
+          .filter(p => p.expiry && ctx.date! <= p.expiry)
+          .sort((a, b) => (a.expiry! < b.expiry! ? -1 : 1))[0] ?? strictlyWeighted[0]
+      } else {
+        pick = strictlyWeighted[0]
+      }
     }
   }
   if (!pick && ctx.date) {

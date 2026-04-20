@@ -106,7 +106,7 @@ function getDetailHints(label: string, date: string, species: string, weightKg =
     }
   }
   if (label === '외부구충') {
-    const r = lookupExternalParasite(sp, date)
+    const r = lookupExternalParasite(sp, date, weightKg)
     if (!r) return {}
     return {
       product: r.product || undefined,
@@ -116,7 +116,7 @@ function getDetailHints(label: string, date: string, species: string, weightKg =
     }
   }
   if (label === '내부구충') {
-    const r = lookupInternalParasite(sp, date)
+    const r = lookupInternalParasite(sp, date, weightKg)
     if (!r) return {}
     return {
       product: r.product || undefined,

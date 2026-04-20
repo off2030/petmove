@@ -437,8 +437,8 @@ function buildOtherVaccineSequence(data: Record<string, unknown>, allowedVaccine
     }
     const p = hasSpecies
       ? (side === 'external'
-          ? lookupExternalParasite(species as 'dog' | 'cat', rec.date)
-          : lookupInternalParasite(species as 'dog' | 'cat', rec.date))
+          ? lookupExternalParasite(species as 'dog' | 'cat', rec.date, weightKg)
+          : lookupInternalParasite(species as 'dog' | 'cat', rec.date, weightKg))
       : null
     return { type: 'Parasiticide', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) }
   }
@@ -522,8 +522,8 @@ function buildExpandedVaccineSequence(data: Record<string, unknown>, maxPerType 
     }
     const p = hasSpecies
       ? (side === 'external'
-          ? lookupExternalParasite(species as 'dog' | 'cat', rec.date)
-          : lookupInternalParasite(species as 'dog' | 'cat', rec.date))
+          ? lookupExternalParasite(species as 'dog' | 'cat', rec.date, weightKg)
+          : lookupInternalParasite(species as 'dog' | 'cat', rec.date, weightKg))
       : null
     out.push({ type: 'Parasiticide', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
   }
@@ -1233,7 +1233,7 @@ function resolveField(
         return p?.product ?? ''
       }
       if (species === 'dog' || species === 'cat') {
-        const p = lookupInternalParasite(species, rec.date)
+        const p = lookupInternalParasite(species, rec.date, weightKg)
         return p?.product || p?.vaccine || ''
       }
       return ''
@@ -1262,12 +1262,13 @@ function resolveField(
       return resolveValidityTo(rec, date, 1)
     }
     const species = String(data.species ?? '').toLowerCase()
+    const weightKg = Number(String(data.weight ?? '').replace(/[^\d.]/g, '')) || 0
     let p: { vaccine?: string; product?: string; manufacturer?: string; batch?: string | null; expiry?: string | null; validityFrom?: string; validityTo?: string } | null = null
     if (kind === 'rabies') p = lookupRabies(date)
     else if (kind === 'civ') p = lookupCiv(date)
     else if (kind === 'comprehensive' && (species === 'dog' || species === 'cat')) p = lookupComprehensive(species, date)
-    else if (kind === 'ext_parasite' && (species === 'dog' || species === 'cat')) p = lookupExternalParasite(species, date)
-    else if (kind === 'int_parasite' && (species === 'dog' || species === 'cat')) p = lookupInternalParasite(species, date)
+    else if (kind === 'ext_parasite' && (species === 'dog' || species === 'cat')) p = lookupExternalParasite(species, date, weightKg)
+    else if (kind === 'int_parasite' && (species === 'dog' || species === 'cat')) p = lookupInternalParasite(species, date, weightKg)
     const merged = applyRecOverrides(rec, p)
     if (attr === 'name') return merged.name
     if (attr === 'manufacturer') return merged.manufacturer
@@ -1331,10 +1332,11 @@ function resolveField(
       return resolveValidityTo(rec, date, 1)
     }
     const species = String(data.species ?? '').toLowerCase()
+    const weightKg = Number(String(data.weight ?? '').replace(/[^\d.]/g, '')) || 0
     let p: { vaccine?: string; product?: string; manufacturer?: string; batch?: string | null; expiry?: string | null; validityFrom?: string; validityTo?: string } | null = null
     if (kind === 'rabies') p = lookupRabies(date)
-    else if (kind === 'ext_parasite' && (species === 'dog' || species === 'cat')) p = lookupExternalParasite(species, date)
-    else if (kind === 'int_parasite' && (species === 'dog' || species === 'cat')) p = lookupInternalParasite(species, date)
+    else if (kind === 'ext_parasite' && (species === 'dog' || species === 'cat')) p = lookupExternalParasite(species, date, weightKg)
+    else if (kind === 'int_parasite' && (species === 'dog' || species === 'cat')) p = lookupInternalParasite(species, date, weightKg)
     const merged = applyRecOverrides(rec, p)
     if (attr === 'name') return merged.name
     if (attr === 'manufacturer') return merged.manufacturer
