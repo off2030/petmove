@@ -293,6 +293,19 @@ function todayYMDSlash(): string {
   return `${y}/${mm}/${dd}`
 }
 
+/**
+ * 임베드 폰트(NanumGothic)에 없는 확장 라틴 글리프(예: ō, é, ñ, ü)를
+ * 분해 기반(NFD)으로 기본 글자 + combining mark 로 나눈 뒤 mark를 제거해 폰트가
+ * 렌더 가능한 문자로 낮춤. 한글·숫자·기본 라틴·기본 구두점은 영향 없음.
+ *
+ * 예: "Izumiōtsu" → "Izumiotsu", "São Paulo" → "Sao Paulo".
+ * 일본 한자·중국 한자·히라가나·가타카나 등 NFD로 해결 안 되는 글리프는 그대로 둠.
+ */
+function sanitizeForFont(text: string): string {
+  if (!text) return text
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
 /** rabies_dates: string[] 또는 {date, ...}[] 둘 다 지원 → 최신순 날짜 배열 */
 function sortedDesc(dates: unknown): string[] {
   if (!Array.isArray(dates)) return []
@@ -1872,6 +1885,7 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
       // show "N/A" whenever the underlying data is missing (e.g. optional
       // test rows, skipped vaccine doses).
       if (!text && mapping.default) text = mapping.default
+      text = sanitizeForFont(text)
       // Always setText (even to '') so any template default text is cleared.
       field.setText(text)
       if (mapping.align) {
@@ -1892,7 +1906,7 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
     for (const t of form.textOverlays) {
       const page = pages[t.page ?? 0]
       if (!page) continue
-      page.drawText(t.text, { x: t.x, y: t.y, size: t.size ?? 10, font: customFont })
+      page.drawText(sanitizeForFont(t.text), { x: t.x, y: t.y, size: t.size ?? 10, font: customFont })
     }
   }
 
@@ -2082,6 +2096,7 @@ export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillO
       if (!text && mapping.default) text = mapping.default
       // preserveTemplateText: 매핑돼있지만 값이 빈 필드는 템플릿 값 유지
       if (form.preserveTemplateText && !text) continue
+      text = sanitizeForFont(text)
       field.setText(text)
       touchedFields.add(fieldName)
       if (mapping.align) {
@@ -2121,7 +2136,7 @@ export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillO
     for (const t of form.textOverlays) {
       const page = pages[t.page ?? 0]
       if (!page) continue
-      page.drawText(t.text, { x: t.x, y: t.y, size: t.size ?? 10, font: customFont })
+      page.drawText(sanitizeForFont(t.text), { x: t.x, y: t.y, size: t.size ?? 10, font: customFont })
     }
   }
 
