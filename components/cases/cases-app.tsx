@@ -120,7 +120,7 @@ function ImportReportToggle({
         className="rounded-md px-2 py-1 text-muted-foreground/40 select-none cursor-default"
         title="목적지+출국일로 자동 포함됨"
       >
-        신고 자동
+        신고
       </span>
     )
   }
