@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { saveImportReportCountriesAction } from '@/lib/actions/import-report-config-action'
-import { DEFAULT_IMPORT_REPORT_COUNTRIES } from '@/lib/import-report-config'
+import { DEFAULT_IMPORT_REPORT_COUNTRIES } from '@/lib/import-report-defaults'
 
 export function ImportReportSection() {
   const { importReportCountries, setImportReportCountries } = useCases()

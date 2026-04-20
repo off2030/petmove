@@ -1,16 +1,14 @@
 /**
- * 신고 탭 자동 포함 국가 목록.
+ * 신고 탭 자동 포함 국가 목록 — 서버 전용 load/save.
  * Supabase `app_settings` 의 key='import_report_countries' 행에 저장.
- * 기본값은 DEFAULT_IMPORT_REPORT_COUNTRIES. 설정 화면에서 편집 가능.
+ * 기본값은 @/lib/import-report-defaults (client-safe). 설정 화면에서 편집 가능.
+ *
+ * 이 파일은 @/lib/supabase/server 를 참조하므로 client 컴포넌트에서 직접 import 금지.
+ * client 는 DEFAULT_IMPORT_REPORT_COUNTRIES 가 필요하면
+ * @/lib/import-report-defaults 에서 가져올 것.
  */
-
-export const DEFAULT_IMPORT_REPORT_COUNTRIES: string[] = [
-  '일본',
-  '하와이',
-  '스위스',
-  '태국',
-  '필리핀',
-]
+import { DEFAULT_IMPORT_REPORT_COUNTRIES } from '@/lib/import-report-defaults'
+export { DEFAULT_IMPORT_REPORT_COUNTRIES }
 
 const APP_SETTINGS_KEY = 'import_report_countries'
 
