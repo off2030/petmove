@@ -343,13 +343,15 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
       if (images.length === 0) return
       const result = await extractVaccineInfo({ imageBase64: images[0].base64, mediaType: images[0].mediaType })
       if (result.ok) {
-        const hasProduct = result.data.product || result.data.manufacturer || result.data.lot || result.data.expiry
-        if (!hasProduct) {
+        const hasAny = result.data.date || result.data.valid_until || result.data.product || result.data.manufacturer || result.data.lot || result.data.expiry
+        if (!hasAny) {
           setExtractMsg('추출 실패: 약품 정보를 찾을 수 없습니다')
         } else if (targetIdx !== null) {
-          // 기존 레코드 업데이트
+          // 기존 레코드 업데이트 — 추출된 값이 있을 때만 덮어씀.
           const next = records.map((r, i) => i === targetIdx ? {
             ...r,
+            date: result.data.date ?? r.date,
+            valid_until: result.data.valid_until ?? r.valid_until,
             product: result.data.product ?? r.product,
             manufacturer: result.data.manufacturer ?? r.manufacturer,
             lot: result.data.lot ?? r.lot,
@@ -360,8 +362,8 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
         } else {
           // 새 레코드 추가
           const newRec: VacRecord = {
-            date: '',
-            valid_until: null,
+            date: result.data.date ?? '',
+            valid_until: result.data.valid_until ?? null,
             product: result.data.product,
             manufacturer: result.data.manufacturer,
             lot: result.data.lot,
@@ -369,9 +371,14 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
           }
           const next = [...records, newRec]
           await saveRecords(next)
-          setExtractMsg(`${label} 약품 정보가 추가되었습니다. 접종일을 입력하세요.`)
+          const needsDate = !result.data.date
+          setExtractMsg(
+            needsDate
+              ? `${label} 약품 정보가 추가되었습니다. 접종일을 입력하세요.`
+              : `${label} 정보가 추가되었습니다.`,
+          )
           setExpanded(true)
-          setEditIdx(next.length - 1)
+          if (needsDate) setEditIdx(next.length - 1)
         }
       } else {
         setExtractMsg('추출 실패: ' + result.error)

@@ -16,13 +16,12 @@ type ExtractResult =
   | { ok: true; data: VaccineInfo }
   | { ok: false; error: string }
 
-const SYSTEM_PROMPT = `You extract PRODUCT information about a vaccine/parasiticide from images or text.
-The user will enter the administration date themselves — do NOT extract dates of administration.
+const SYSTEM_PROMPT = `You extract information about a vaccine/parasiticide from images or text.
 
 Return ONLY a JSON object:
 {
-  "date": null,
-  "valid_until": null,
+  "date": "YYYY-MM-DD — date of administration (접종일/Vaccination Date/Date Given/투여일) or null",
+  "valid_until": "YYYY-MM-DD — immunity validity end date (면역유효기간/Valid Until/Next Due/다음접종일) or Nyr string like '1년'/'3년' if only a duration is given, or null",
   "product": "Vaccine/product name (e.g. Rabisin, NexGard Spectra, Vanguard Canine DAPP+L4) or null",
   "manufacturer": "Manufacturer (e.g. Boehringer Ingelheim, Merck, Zoetis) or null",
   "lot": "Lot/batch number (SER/Serial/Batch number on the label) or null",
@@ -30,8 +29,9 @@ Return ONLY a JSON object:
 }
 
 Rules:
-- "date" and "valid_until" MUST always be null. The user enters these manually.
-- Only extract "expiry" (product shelf life, labeled EXP/유효기한). Convert dates like "05 JUL 26" → "2026-07-05".
+- "date" = administration/injection date on the certificate or sticker. Convert any format to YYYY-MM-DD.
+- "valid_until" = next-due or validity-end date if shown. If only a duration like "3 years" or "1 year" is shown, return "3년" / "1년". Otherwise null.
+- "expiry" = product shelf life only (EXP/유효기한 label). Distinct from valid_until. Convert "05 JUL 26" → "2026-07-05".
 - "product" should be the full product name as shown on the label (Korean or English).
 - If the input is not vaccine/parasiticide related, return all nulls.
 - Return ONLY valid JSON, no markdown, no explanation.`
