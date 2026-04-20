@@ -4,10 +4,9 @@ import { useEffect, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
 import {
   previewSiblings,
-  generateAnnexIIIMulti,
-  generateUKMulti,
   type SiblingPreview,
 } from '@/lib/actions/generate-pdf'
+import { downloadMultipartPdfRequest } from '@/lib/pdf-download'
 
 interface Props {
   caseId: string
@@ -15,11 +14,35 @@ interface Props {
   onClose: () => void
 }
 
-function downloadBase64Pdf(base64: string, filename: string) {
-  const link = document.createElement('a')
-  link.href = `data:application/pdf;base64,${base64}`
-  link.download = filename
-  link.click()
+function simulatePackCount(
+  formKey: 'AnnexIII' | 'UK',
+  cases: Array<{ rabiesDoseCount: number }>,
+): number {
+  const cap = formKey === 'AnnexIII' ? { animals: 3, vaccRows: 5 } : { animals: 5, vaccRows: 5 }
+  let docs = 0
+  let remaining = cases.slice()
+
+  while (remaining.length > 0) {
+    const fit: Array<{ rabiesDoseCount: number }> = []
+    const leftover: Array<{ rabiesDoseCount: number }> = []
+    let vaccRows = 0
+
+    for (const c of remaining) {
+      const doseCount = Math.max(1, c.rabiesDoseCount)
+      if (fit.length < cap.animals && vaccRows + doseCount <= cap.vaccRows) {
+        fit.push(c)
+        vaccRows += doseCount
+      } else {
+        leftover.push(c)
+      }
+    }
+
+    if (fit.length === 0) return docs
+    docs += 1
+    remaining = leftover
+  }
+
+  return docs
 }
 
 export function MultiFormDialog({ caseId, formKey, onClose }: Props) {
@@ -49,15 +72,19 @@ export function MultiFormDialog({ caseId, formKey, onClose }: Props) {
 
   function handleConfirm() {
     if (!preview) return
-    const ids = preview.cases.filter(c => selected.has(c.id)).map(c => c.id)
+    const selectedCases = preview.cases.filter(c => selected.has(c.id))
+    const ids = selectedCases.map(c => c.id)
     if (ids.length === 0) return
     startGen(async () => {
-      const result = formKey === 'AnnexIII'
-        ? await generateAnnexIIIMulti(ids)
-        : await generateUKMulti(ids)
-      if (!result.ok) { setError(result.error); return }
-      for (const doc of result.docs) downloadBase64Pdf(doc.pdf, doc.filename)
-      onClose()
+      try {
+        await downloadMultipartPdfRequest(
+          { kind: 'multi', formKey, caseIds: ids },
+          simulatePackCount(formKey, selectedCases),
+        )
+        onClose()
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.')
+      }
     })
   }
 

@@ -17,10 +17,10 @@ import { filesToBase64 } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { lookupCaseByMicrochip } from '@/lib/actions/lookup-case-by-chip'
 import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateOVD, generateSGP, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti } from '@/lib/actions/generate-pdf'
+import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-download'
 import { MultiFormDialog } from './multi-form-dialog'
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { getCertButtons } from '@/lib/destination-config'
-import type { CertButton } from '@/lib/destination-config'
 import type { CaseRow } from '@/lib/supabase/types'
 
 function downloadBase64Pdf(base64: string, filename: string) {
@@ -53,6 +53,25 @@ const CERT_ACTIONS: Record<string, CertAction> = {
   ch: generateCH,
   formR11: generateFormR11,
   vhc: generateVHC,
+}
+
+const CERT_FORM_KEYS: Record<string, string> = {
+  form25: 'Form25',
+  form25AuNz: 'Form25AuNz',
+  formRE: 'FormRE',
+  formAC: 'FormAC',
+  idDeclaration: 'IdentificationDeclaration',
+  au: 'AU',
+  au2: 'AU_2',
+  auCat: 'AU_Cat',
+  auCat2: 'AU_Cat_2',
+  nz: 'NZ',
+  ovd: 'OVD',
+  sgp: 'SGP',
+  aqs: 'AQS_279',
+  ch: 'CH',
+  formR11: 'Form_R11',
+  vhc: 'VHC',
 }
 
 /** Cert key → multi-form dialog formKey mapping */
@@ -282,9 +301,11 @@ function Inner() {
     if (!p.ok) { alert(p.error); return }
     if (p.preview.cases.length <= 1) {
       const ids = p.preview.cases.map(c => c.id)
-      const r = formKey === 'AnnexIII' ? await generateAnnexIIIMulti(ids) : await generateUKMulti(ids)
-      if (!r.ok) { alert(r.error); return }
-      for (const doc of r.docs) downloadBase64Pdf(doc.pdf, doc.filename)
+      try {
+        await downloadMultipartPdfRequest({ kind: 'multi', formKey, caseIds: ids }, p.preview.docCount)
+      } catch (error) {
+        alert(error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.')
+      }
       return
     }
     setMultiForm({ caseId, formKey })
@@ -430,14 +451,35 @@ function Inner() {
                             key={btn.key}
                             type="button"
                             onClick={async () => {
-                              const action = CERT_ACTIONS[btn.key]
-                              if (!action) return
-                              const r = await action(selectedCase.id, {
-                                includeSignature,
-                                destination: activeDestination ?? selectedCase.destination,
-                              })
-                              if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
-                              else alert(r.error)
+                              const formKey = CERT_FORM_KEYS[btn.key]
+                              if (!formKey) return
+                              try {
+                                await downloadPdfRequest({
+                                  kind: 'single',
+                                  formKey: formKey as
+                                    | 'Form25'
+                                    | 'Form25AuNz'
+                                    | 'FormRE'
+                                    | 'FormAC'
+                                    | 'IdentificationDeclaration'
+                                    | 'AU'
+                                    | 'AU_2'
+                                    | 'AU_Cat'
+                                    | 'AU_Cat_2'
+                                    | 'NZ'
+                                    | 'OVD'
+                                    | 'SGP'
+                                    | 'AQS_279'
+                                    | 'CH'
+                                    | 'Form_R11'
+                                    | 'VHC',
+                                  caseId: selectedCase.id,
+                                  includeSignature,
+                                  destination: activeDestination ?? selectedCase.destination,
+                                })
+                              } catch (error) {
+                                alert(error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.')
+                              }
                             }}
                             className="rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
                           >

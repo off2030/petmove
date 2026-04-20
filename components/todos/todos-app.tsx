@@ -10,13 +10,7 @@ import { cn } from '@/lib/utils'
 import { TodoTable, type TodoColumn } from './todo-table'
 import { InspectionTable, type InspectionRow } from './inspection-table'
 import { updateCaseField } from '@/lib/actions/cases'
-import {
-  generateInvoice,
-  generateESD,
-  generateInvoiceAndESD,
-  generateKsvdl,
-  generateNzInfectionPack,
-} from '@/lib/actions/generate-pdf'
+import { downloadPdfRequest, type PdfDownloadRequest } from '@/lib/pdf-download'
 
 function downloadBase64Pdf(base64: string, filename: string) {
   const link = document.createElement('a')
@@ -651,12 +645,12 @@ export function TodosApp() {
             <BulkApplyPicker
               label="KSVDL"
               rows={inspectionRows.filter(r => r.lab === 'ksvdl')}
-              action={generateKsvdl}
+              request={(caseId) => ({ kind: 'single', formKey: 'KSVDL', caseId })}
             />
             <BulkApplyPicker
               label="APQA HQ + VBDDL"
               rows={inspectionRows.filter(r => r.lab === 'nz_combined')}
-              action={generateNzInfectionPack}
+              request={(caseId) => ({ kind: 'bundle', variant: 'nz-infection-pack', caseId })}
             />
           </div>
         )}
@@ -683,8 +677,12 @@ function ShipmentDocsButton() {
   async function handle(opts: { tube_count: number; consignee_lab: string }) {
     setOpen(false)
     startBusy(async () => {
-      const r = await generateInvoiceAndESD(opts)
-      if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
+      const r = { ok: true, error: '' }
+      await downloadPdfRequest({ kind: 'shipment', variant: 'invoice-esd', ...opts }).catch((error) => {
+        r.ok = false
+        r.error = error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.'
+      })
+      if (r.ok) return
       else alert(`생성 실패: ${r.error}`)
     })
   }
@@ -813,11 +811,11 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
 function BulkApplyPicker({
   label,
   rows,
-  action,
+  request,
 }: {
   label: string
   rows: InspectionRow[]
-  action: (caseId: string) => Promise<{ ok: true; pdf: string; filename: string } | { ok: false; error: string }>
+  request: (caseId: string) => PdfDownloadRequest
 }) {
   const [open, setOpen] = useState(false)
   const [busy, startBusy] = useTransition()
@@ -837,8 +835,12 @@ function BulkApplyPicker({
   function pick(caseId: string) {
     setOpen(false)
     startBusy(async () => {
-      const r = await action(caseId)
-      if (r.ok) downloadBase64Pdf(r.pdf, r.filename)
+      const r = { ok: true, error: '' }
+      await downloadPdfRequest(request(caseId)).catch((error) => {
+        r.ok = false
+        r.error = error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.'
+      })
+      if (r.ok) return
       else alert(`생성 실패: ${r.error}`)
     })
   }
