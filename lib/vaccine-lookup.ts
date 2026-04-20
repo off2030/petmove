@@ -422,17 +422,21 @@ export function getAllProducts(now = new Date()): FlatProduct[] {
 }
 
 /**
- * 가장 최근 제품만 남긴 목록.
- * 제품 family(동일 라벨·제품명·제조사·체중범위) 내에서 expiry 가 가장 늦은 entry 1개만 유지.
- * 연도 기반(rabies) 제품은 연도 meta 를 키에서 제외해 최신 연도 entry 만 남음.
+ * 가장 최근 제품만 남긴 목록 (상단 요약·알림 카운트용).
+ * - 구충제·심장사상충: 체중 variant 별로 분리해 최신 expiry 1개씩.
+ *   예: NexGard Spectra 4개 weight variant 는 각각 별도 entry 로 유지.
+ * - 그 외(rabies/comprehensive/civ/kennel): 카테고리 단위로 최신 expiry 1개만.
+ *   제품명·제조사 다르더라도 카테고리 안의 최신 재고 기준. 예: CIV 에
+ *   CaniFlu-Max(구 재고, 만료) + Fluvax H3N2(신 재고) 있으면 Fluvax 만.
  */
 export function getLatestProducts(now = new Date()): FlatProduct[] {
   const all = getAllProducts(now)
   const latest = new Map<string, FlatProduct>()
   for (const p of all) {
-    // meta 에서 '년' 으로 끝나는 연도 부분 제거, 체중 범위는 유지.
     const sizeOnly = p.meta.split(' · ').filter(part => !/년$/.test(part)).join(' · ')
-    const key = `${p.category}|${p.displayName}|${p.manufacturer}|${sizeOnly}`
+    const key = isParasiteCategory(p.category)
+      ? `${p.category}|${sizeOnly}`
+      : p.category
     const cur = latest.get(key)
     if (!cur || (p.expiry ?? '') > (cur.expiry ?? '')) latest.set(key, p)
   }
