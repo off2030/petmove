@@ -6,8 +6,6 @@ import OpenAI from 'openai'
 const TITER_EXTRACTION_MODEL = process.env.OPENAI_TITER_MODEL?.trim() || 'gpt-4.1'
 
 export interface TiterInfo {
-  /** 검사일(채혈일) — Collection Date / 채혈일 / Date of Sampling */
-  date: string | null
   /** 검사수치 — 예: "3.0", "≥0.5 IU/mL", "2.48" */
   value: string | null
   /** 샘플수령일 — Date Received / 샘플수령일 (호주용) */
@@ -22,7 +20,6 @@ const SYSTEM_PROMPT = `You extract rabies antibody titer test result information
 
 Return ONLY a JSON object:
 {
-  "date": "YYYY-MM-DD — blood collection date (채혈일/Collection Date/Date of Sampling/Date of Collection) or null",
   "value": "Numerical titer result as a string (e.g. '3.0', '0.62', '≥0.5 IU/mL', '2.48') or null",
   "sample_received_date": "YYYY-MM-DD — date the laboratory received the sample (샘플수령일/Date Received/Received/Reception Date) or null"
 }
@@ -31,12 +28,16 @@ CRITICAL ANTI-HALLUCINATION RULES:
 - Return ONLY values literally visible in the image/text.
 - If a field is not clearly present, return null. Do NOT guess, infer, or fabricate.
 - NEVER compute or derive dates. Only what is literally printed/written.
-- Do NOT copy a date from one field into another.
+- Titer reports typically contain multiple dates (collection, received, tested, reported, printed). Match each date ONLY to its explicit label. Do NOT confuse them.
 
 FIELD GUIDELINES:
-- "date" (채혈일) is the date the blood sample was drawn from the animal. Labels: 채혈일, Collection Date, Date of Sampling, Date of Collection, Date of Sample Draw, Sample Date.
 - "value" is the rabies antibody titer numeric result. Typical forms: "0.6", "2.48", "≥0.5", "3.0 IU/mL". Include the unit (IU/mL) only if it appears next to the number, otherwise just the number as string. If multiple values (different methods), prefer the primary/FAVN value.
-- "sample_received_date" is when the testing lab received the sample. Labels: 샘플수령일, Date Received, Received, Reception Date, Arrival Date, Sample Received. Distinct from collection date.
+- "sample_received_date" is when the testing lab RECEIVED the sample. Labels: 샘플수령일, Date Received, Received, Reception Date, Arrival Date, Sample Received, Date of Receipt. This is DIFFERENT from:
+    * Collection Date / 채혈일 / Date of Sampling (when sample was drawn — do NOT use)
+    * Test Date / 검사일 (when lab tested — do NOT use)
+    * Report Date / 보고일 (when report was issued — do NOT use)
+    * Print Date (document printing time — do NOT use)
+  Return null if no "Received" equivalent label is present.
 - Convert all date formats to YYYY-MM-DD (e.g. "05 JUL 26" → "2026-07-05").
 - If the document is not a rabies antibody titer report, return all nulls.
 - Return ONLY valid JSON, no markdown, no explanation.`

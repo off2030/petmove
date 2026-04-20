@@ -109,38 +109,32 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
         setExtractMsg('추출 실패: ' + result.error)
         return
       }
-      const { date: xDate, value: xValue, sample_received_date: xReceived } = result.data
+      const { value: xValue, sample_received_date: xReceived } = result.data
       const existing = records[0]
       const targetIdx = existing ? 0 : null
 
-      // records 업데이트: 기존 값 보존, 빈 필드에만 채움
-      let nextRecords: TiterRecord[]
+      // records 업데이트: 기존 값 보존, 빈 필드에만 채움 (date 는 추출 대상 아님 — 수동 입력 유지)
+      let nextRecords: TiterRecord[] = records
       if (targetIdx === null) {
-        const detectedLab = autoDetectLab(destination)
-        nextRecords = [{
-          date: xDate ?? null,
-          value: xValue ?? null,
-          lab: detectedLab,
-        }]
+        if (xValue) {
+          const detectedLab = autoDetectLab(destination)
+          nextRecords = [{ date: null, value: xValue, lab: detectedLab }]
+        }
       } else {
         nextRecords = records.map((r, i) => i === targetIdx ? {
           ...r,
-          date: r.date || xDate || null,
           value: r.value || xValue || null,
         } : r)
       }
 
-      const msgs: string[] = []
-      const applied = { date: false, value: false, received: false }
+      const applied = { value: false, received: false }
       if (targetIdx === null) {
-        if (xDate) applied.date = true
         if (xValue) applied.value = true
-      } else {
-        if (xDate && !existing?.date) applied.date = true
-        if (xValue && !existing?.value) applied.value = true
+      } else if (xValue && !existing?.value) {
+        applied.value = true
       }
 
-      await saveRecords(nextRecords)
+      if (nextRecords !== records) await saveRecords(nextRecords)
 
       // 호주인 경우에만 sample_received_date 저장
       if (isAU && xReceived) {
@@ -156,7 +150,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
         }
       }
 
-      if (applied.date) msgs.push('검사일')
+      const msgs: string[] = []
       if (applied.value) msgs.push('수치')
       if (applied.received) msgs.push('샘플수령일')
       setExtractMsg(msgs.length > 0 ? `${msgs.join('·')} 업데이트됨` : '새로운 정보가 없습니다')
