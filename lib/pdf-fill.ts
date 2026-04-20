@@ -31,7 +31,7 @@ import type { CaseRow } from '@/lib/supabase/types'
 // - Template/font changes not picked up → flip CACHE_ASSETS to false (dev)
 const PDF_SUBSET_FONT = true
 const PDF_CACHE_ASSETS = true
-const PDF_NEED_APPEARANCES: 'false' | 'true' | 'unset' = 'unset'
+const PDF_NEED_APPEARANCES: 'false' | 'true' | 'unset' = 'true'
 
 const assetCache: { template: Map<string, Buffer>; font: Buffer | null; signature: Map<string, Buffer> } = {
   template: new Map(),
