@@ -54,16 +54,30 @@ async function loadTemplate(name: string): Promise<Buffer> {
     const cached = assetCache.template.get(name)
     if (cached) return cached
   }
-  const buf = await readFile(path.join(process.cwd(), 'data', 'pdf-templates', name))
-  if (PDF_CACHE_ASSETS) assetCache.template.set(name, buf)
-  return buf
+  const p = path.join(process.cwd(), 'data', 'pdf-templates', name)
+  try {
+    const buf = await readFile(p)
+    console.log(`[loadTemplate] ${name} → ${buf.length} bytes (path=${p})`)
+    if (PDF_CACHE_ASSETS) assetCache.template.set(name, buf)
+    return buf
+  } catch (e) {
+    console.error(`[loadTemplate] FAIL ${name} at ${p}:`, (e as Error).message)
+    throw e
+  }
 }
 
 async function loadFontBytes(): Promise<Buffer> {
   if (PDF_CACHE_ASSETS && assetCache.font) return assetCache.font
-  const buf = await readFile(path.join(process.cwd(), 'data', 'fonts', 'NanumGothic.ttf'))
-  if (PDF_CACHE_ASSETS) assetCache.font = buf
-  return buf
+  const p = path.join(process.cwd(), 'data', 'fonts', 'NanumGothic.ttf')
+  try {
+    const buf = await readFile(p)
+    console.log(`[loadFontBytes] ${buf.length} bytes (path=${p})`)
+    if (PDF_CACHE_ASSETS) assetCache.font = buf
+    return buf
+  } catch (e) {
+    console.error(`[loadFontBytes] FAIL at ${p}:`, (e as Error).message)
+    throw e
+  }
 }
 
 type FieldMapping = {
