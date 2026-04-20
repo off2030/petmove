@@ -767,8 +767,9 @@ function ProductDropdown({ value, defaultName, options, onChange, saving }: {
 
 /* ── Detail field (text or date, inline editable) ── */
 
-function DetailField({ value, hint, type, placeholder, isEditing, onStartEdit, onSave, onCancel, saving }: {
+function DetailField({ value, type, placeholder, isEditing, onStartEdit, onSave, onCancel, saving }: {
   value?: string | null
+  /** @deprecated lookup hint 표시는 제거됨. prop은 호출부 호환을 위해 남김. */
   hint?: string | null
   type?: 'text' | 'date'
   placeholder: string
@@ -779,14 +780,13 @@ function DetailField({ value, hint, type, placeholder, isEditing, onStartEdit, o
   saving: boolean
 }) {
   const hasValue = !!value
-  const hasHint = !value && !!hint
-  const display = value || hint || placeholder
+  const display = value || placeholder
 
   if (isEditing) {
     return type === 'date' ? (
-      <DateInput initial={value || hint || ''} onSave={(v) => onSave(v || null)} onCancel={onCancel} />
+      <DateInput initial={value || ''} onSave={(v) => onSave(v || null)} onCancel={onCancel} />
     ) : (
-      <TextInput initial={value || hint || ''} placeholder={placeholder} onSave={(v) => onSave(v || null)} onCancel={onCancel} saving={saving} />
+      <TextInput initial={value || ''} placeholder={placeholder} onSave={(v) => onSave(v || null)} onCancel={onCancel} saving={saving} />
     )
   }
 
@@ -794,8 +794,7 @@ function DetailField({ value, hint, type, placeholder, isEditing, onStartEdit, o
     <button type="button" onClick={onStartEdit}
       className={cn(
         'text-left rounded-md px-2 py-1 -mx-2 text-xs transition-colors hover:bg-accent/60 cursor-text',
-        !hasValue && !hasHint && 'text-muted-foreground/40 italic',
-        hasHint && 'text-muted-foreground/60',
+        !hasValue && 'text-muted-foreground/40 italic',
       )}>
       {display}
     </button>
