@@ -7,6 +7,9 @@ import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { CopyButton } from './copy-button'
 import { labColor } from '@/lib/lab-color'
+import { extractTiterInfo } from '@/lib/actions/extract-titer'
+import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
+import { uploadFileToNotes } from '@/lib/notes-upload'
 
 interface TiterRecord {
   date: string | null
@@ -74,12 +77,132 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
   const [editIdx, setEditIdx] = useState<number | null>(null)
   const [editField, setEditField] = useState<TiterEditField | null>(null)
   const [addingNew, setAddingNew] = useState(false)
+  const [extracting, setExtracting] = useState(false)
+  const [extractMsg, setExtractMsg] = useState<string | null>(null)
+  const [dragOver, setDragOver] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const rootRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     setEditIdx(null)
     setEditField(null)
     setAddingNew(false)
+    setExtractMsg(null)
+    setDragOver(false)
   }, [caseId])
+
+  const isAU = !!destination && destination.split(',').some(d => {
+    const t = d.trim().toLowerCase()
+    return t === '호주' || t === 'australia'
+  })
+
+  async function handleFile(file: File) {
+    if (!isExtractableFile(file)) return
+    setExtracting(true)
+    setExtractMsg(null)
+    uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField).catch(() => {})
+    try {
+      const images = await filesToBase64([file])
+      if (images.length === 0) return
+      const result = await extractTiterInfo({ imageBase64: images[0].base64, mediaType: images[0].mediaType })
+      if (!result.ok) {
+        setExtractMsg('추출 실패: ' + result.error)
+        return
+      }
+      const { date: xDate, value: xValue, sample_received_date: xReceived } = result.data
+      const existing = records[0]
+      const targetIdx = existing ? 0 : null
+
+      // records 업데이트: 기존 값 보존, 빈 필드에만 채움
+      let nextRecords: TiterRecord[]
+      if (targetIdx === null) {
+        const detectedLab = autoDetectLab(destination)
+        nextRecords = [{
+          date: xDate ?? null,
+          value: xValue ?? null,
+          lab: detectedLab,
+        }]
+      } else {
+        nextRecords = records.map((r, i) => i === targetIdx ? {
+          ...r,
+          date: r.date || xDate || null,
+          value: r.value || xValue || null,
+        } : r)
+      }
+
+      const msgs: string[] = []
+      const applied = { date: false, value: false, received: false }
+      if (targetIdx === null) {
+        if (xDate) applied.date = true
+        if (xValue) applied.value = true
+      } else {
+        if (xDate && !existing?.date) applied.date = true
+        if (xValue && !existing?.value) applied.value = true
+      }
+
+      await saveRecords(nextRecords)
+
+      // 호주인 경우에만 sample_received_date 저장
+      if (isAU && xReceived) {
+        const auPrev = (data.australia_extra as Record<string, unknown> | undefined) ?? {}
+        const auExistingReceived = typeof auPrev.sample_received_date === 'string' ? auPrev.sample_received_date : null
+        if (!auExistingReceived) {
+          const nextAu = { ...auPrev, sample_received_date: xReceived }
+          const r2 = await updateCaseField(caseId, 'data', 'australia_extra', nextAu)
+          if (r2.ok) {
+            updateLocalCaseField(caseId, 'data', 'australia_extra', nextAu)
+            applied.received = true
+          }
+        }
+      }
+
+      if (applied.date) msgs.push('검사일')
+      if (applied.value) msgs.push('수치')
+      if (applied.received) msgs.push('샘플수령일')
+      setExtractMsg(msgs.length > 0 ? `${msgs.join('·')} 업데이트됨` : '새로운 정보가 없습니다')
+    } catch (err) {
+      setExtractMsg('오류: ' + (err instanceof Error ? err.message : String(err)))
+    } finally {
+      setExtracting(false)
+      setTimeout(() => setExtractMsg(null), 4000)
+    }
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    if (!Array.from(e.dataTransfer.types).includes('Files')) return
+    e.preventDefault()
+    setDragOver(true)
+  }
+  function handleDragLeave(e: React.DragEvent) {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false)
+  }
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragOver(false)
+    const file = Array.from(e.dataTransfer.files).find(isExtractableFile)
+    if (file) handleFile(file)
+  }
+
+  // 루트 영역 hover 중일 때 Ctrl+V 붙여넣기 → 이미지 파일로 처리
+  useEffect(() => {
+    function onPaste(e: ClipboardEvent) {
+      if (!rootRef.current) return
+      const active = document.activeElement
+      if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return
+      if (!rootRef.current.matches(':hover')) return
+      const items = e.clipboardData?.items
+      if (!items) return
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile()
+          if (file) { e.preventDefault(); handleFile(file); return }
+        }
+      }
+    }
+    document.addEventListener('paste', onPaste)
+    return () => document.removeEventListener('paste', onPaste)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseId, records, destination])
 
   async function saveRecords(next: TiterRecord[]) {
     const val = next.length > 0 ? next : null
@@ -108,7 +231,16 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+    <div
+      ref={rootRef}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={cn(
+        'grid grid-cols-1 md:grid-cols-[140px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0 rounded-md',
+        dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
+      )}
+    >
       <div className="flex items-center gap-xs pt-1">
         <span className="text-base text-primary">광견병항체검사</span>
         <button
@@ -120,8 +252,31 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
         >
           +
         </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*,.pdf"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }}
+          className="hidden"
+        />
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={extracting}
+          className="shrink-0 rounded-md p-0.5 text-muted-foreground/40 hover:text-foreground transition-colors disabled:opacity-30"
+          title="이미지/PDF로 항체검사 정보 추출"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        </button>
       </div>
       <div className="min-w-0 space-y-0.5">
+        {extracting && (
+          <div className="text-xs text-muted-foreground/70 italic px-2 py-1">이미지에서 추출 중…</div>
+        )}
+        {extractMsg && (
+          <div className="text-xs text-muted-foreground px-2 py-1">{extractMsg}</div>
+        )}
+
         {records.map((rec, i) => (
           <TiterRow
             key={i}
@@ -143,11 +298,15 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
           />
         )}
 
-        {records.length === 0 && !addingNew && (
+        {records.length === 0 && !addingNew && !extracting && (
           <button type="button" onClick={() => setAddingNew(true)}
             className="text-left rounded-md px-2 py-1 -mx-2 text-base text-primary/60 transition-colors hover:bg-accent/60 cursor-pointer">
             —
           </button>
+        )}
+
+        {dragOver && (
+          <div className="text-xs text-primary italic px-2 py-1">항체검사 결과 이미지를 여기에 드롭</div>
         )}
       </div>
     </div>
