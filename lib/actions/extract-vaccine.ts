@@ -30,6 +30,53 @@ CRITICAL ANTI-HALLUCINATION RULES (apply to ALL formats — table, sticker, book
 
 Images may vary widely in format — vaccination booklets, individual vial labels, handwritten entries, printed certificates, clinic records, photos of boxes, etc. The rules above apply to all of them. Extract only what you can literally read; don't let format conventions tempt you to infer missing fields.
 
+CONCRETE EXAMPLES (follow these patterns):
+
+EXAMPLE 1 — Korean table row with validity checkbox:
+Image row shows: "Cani shot (RV-K) | Choong Ang Vaccine | 325 RUK 01 | 2023.10.30 | ☑1Y ☐2Y ☐3Y"
+No EXP/유효기한 label anywhere.
+
+WRONG output (do NOT do this):
+{
+  "date": "2023-10-30",
+  "valid_until": "2024-10-30",
+  "expiry": "2025-01-06",
+  "product": "Cani shot (RV-K)", "manufacturer": "Choong Ang Vaccine", "lot": "325 RUK 01"
+}
+Wrong because: valid_until was computed (forbidden), expiry was fabricated (not in image).
+
+CORRECT output:
+{
+  "date": "2023-10-30",
+  "valid_until": "1년",
+  "expiry": null,
+  "product": "Cani shot (RV-K)", "manufacturer": "Choong Ang Vaccine", "lot": "325 RUK 01"
+}
+
+EXAMPLE 2 — Vaccine vial label only (no administration context):
+Image shows vial printed with: "Rabisin | Boehringer Ingelheim | Lot G98321 | EXP 2027-05"
+No vaccination date, no validity checkbox.
+
+CORRECT output:
+{
+  "date": null,
+  "valid_until": null,
+  "expiry": "2027-05-01",
+  "product": "Rabisin", "manufacturer": "Boehringer Ingelheim", "lot": "G98321"
+}
+(expiry "2027-05" → "2027-05-01" conservative day=01 when only month is given)
+
+EXAMPLE 3 — Sticker with both vaccination date and explicit EXP:
+Image shows: "Injected: 2024-03-15 | EXP: 2026-12-31 | Product: X | Mfg: Y"
+
+CORRECT output:
+{
+  "date": "2024-03-15",
+  "valid_until": null,
+  "expiry": "2026-12-31",
+  ...
+}
+
 The image may contain MULTIPLE vaccination records (two or more stickers/entries). Return ALL records.
 
 Return ONLY a JSON object with a "records" array:
