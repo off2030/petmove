@@ -334,11 +334,12 @@ export function getAllProducts(now = new Date()): FlatProduct[] {
       })
     }
 
-    // 구충제: 제품별 가장 최신 만료 1건
+    // 구충제: 제품×체중범위 조합별 가장 최신 만료 1건
     if (isParasiteCategory(category)) {
       const latestByKey = new Map<string, VaccineProduct>()
       for (const p of items) {
-        const key = `${p.product || p.vaccine || ''}|${p.manufacturer}`
+        const weightKey = p.size ?? `${p.weightMin ?? ''}-${p.weightMax ?? ''}`
+        const key = `${p.product || p.vaccine || ''}|${p.manufacturer}|${weightKey}`
         const cur = latestByKey.get(key)
         if (!cur) {
           latestByKey.set(key, p)
@@ -371,9 +372,10 @@ export function getAllProducts(now = new Date()): FlatProduct[] {
     }
   }
 
-  // 구충제: 강아지/고양이 통합 dedup — (라벨 + 제품명 + 제조사) 기준 최신 만료만 유지
+  // 구충제: 강아지/고양이 통합 dedup — (라벨 + 제품명 + 제조사 + 체중범위/연도) 기준 최신 만료만 유지
+  // meta 에 size·year 가 포함돼 있어 체중 세분화된 variant 를 각각 별도로 보존함.
   const dedupKey = (p: FlatProduct) =>
-    `${p.categoryLabel}|${p.displayName}|${p.manufacturer}`
+    `${p.categoryLabel}|${p.displayName}|${p.manufacturer}|${p.meta}`
   const latest = new Map<string, FlatProduct>()
   const passthrough: FlatProduct[] = []
   for (const p of result) {
