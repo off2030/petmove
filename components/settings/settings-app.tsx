@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { TrashModal } from '@/components/cases/trash-modal'
 import { VaccineSection } from './vaccine-section'
+import { CompanySection } from './company-section'
 
 const TABS = [
   { id: 'company', label: '회사 정보' },
@@ -11,38 +12,6 @@ const TABS = [
 ] as const
 
 type TabId = (typeof TABS)[number]['id']
-
-function CompanySection() {
-  return (
-    <div className="rounded-xl border border-border/60 bg-card p-md shadow-sm max-w-2xl">
-      <p className="text-base text-muted-foreground mb-4">
-        회사 정보는 PDF 서류 출력 시 사용됩니다.
-      </p>
-      <div className="space-y-4">
-        {[
-          { label: '업체명', placeholder: 'PetMove' },
-          { label: '대표자', placeholder: '홍길동' },
-          { label: '연락처', placeholder: '010-0000-0000' },
-          { label: '이메일', placeholder: 'info@petmove.kr' },
-          { label: '주소', placeholder: '서울특별시 강남구...' },
-        ].map(({ label, placeholder }) => (
-          <div key={label}>
-            <label className="block text-base font-medium mb-1">{label}</label>
-            <input
-              type="text"
-              placeholder={placeholder}
-              className="w-full px-md py-2.5 border border-border rounded-md bg-background text-base focus:outline-none focus:ring-1 focus:ring-ring"
-              disabled
-            />
-          </div>
-        ))}
-      </div>
-      <p className="text-sm text-muted-foreground mt-4">
-        * 회사 정보 저장 기능은 추후 추가 예정입니다.
-      </p>
-    </div>
-  )
-}
 
 function DataSection() {
   const [showTrash, setShowTrash] = useState(false)
