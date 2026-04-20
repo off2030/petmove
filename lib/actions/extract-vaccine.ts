@@ -1,7 +1,9 @@
 'use server'
 
 import OpenAI from 'openai'
-import { DROP_CREATE_MODEL } from '@/lib/openai-config'
+
+/** 백신/구충제 이미지 추출 전용 고정밀 모델. env OPENAI_VACCINE_MODEL 로 오버라이드 가능. */
+const VACCINE_EXTRACTION_MODEL = process.env.OPENAI_VACCINE_MODEL?.trim() || 'gpt-4.1'
 
 export interface VaccineInfo {
   date: string | null           // YYYY-MM-DD (접종일)
@@ -104,7 +106,7 @@ export async function extractVaccineInfo(input: {
     }
 
     const response = await client.chat.completions.create({
-      model: DROP_CREATE_MODEL,
+      model: VACCINE_EXTRACTION_MODEL,
       max_tokens: 800,
       temperature: 0,
       messages: [
