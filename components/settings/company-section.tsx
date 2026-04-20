@@ -15,15 +15,15 @@ interface FieldDef {
 
 const FIELDS: FieldDef[] = [
   // 병원 정보
-  { key: 'clinic_ko', label: '병원명 (한글)', group: '병원 정보' },
+  { key: 'clinic_ko', label: '병원명', group: '병원 정보' },
   { key: 'clinic_en', label: '병원명 (영문)', group: '병원 정보' },
-  { key: 'address_ko', label: '주소 (한글)', group: '병원 정보', type: 'textarea' },
+  { key: 'address_ko', label: '주소', group: '병원 정보', type: 'textarea' },
   { key: 'address_en', label: '주소 (영문)', group: '병원 정보', type: 'textarea' },
   { key: 'phone', label: '전화번호', group: '병원 정보' },
   { key: 'email', label: '이메일', group: '병원 정보' },
 
   // 수의사 정보
-  { key: 'name_ko', label: '수의사 (한글)', group: '수의사 정보' },
+  { key: 'name_ko', label: '수의사', group: '수의사 정보' },
   { key: 'name_en', label: '수의사 (영문)', group: '수의사 정보' },
   { key: 'license_no', label: '면허번호', group: '수의사 정보' },
 ]
