@@ -196,19 +196,29 @@ export function lookupParasiteById(id: string, ctx: { date?: string; weightKg?: 
   const matches = list.filter(p => p.id === id)
 
   let pick: ParasiteSection | undefined
-  if (family.kind === 'combo' && ctx.weightKg) {
-    pick = matches.find(p =>
+  // 체중 범위 entry가 하나라도 있으면 weight 기반 선택을 우선 시도
+  const hasWeightEntries = matches.some(p => p.weightMin !== undefined || p.weightMax !== undefined)
+  if (hasWeightEntries && ctx.weightKg) {
+    const weighted = matches.filter(p =>
       (p.weightMin === undefined || ctx.weightKg! >= p.weightMin) &&
       (p.weightMax === undefined || ctx.weightKg! <= p.weightMax)
     )
-  } else if (ctx.date) {
+    // weight 매칭 내에서 date도 있으면 expiry 경과 안 된 것 중 가장 빠른 것
+    if (ctx.date) {
+      pick = weighted
+        .filter(p => p.expiry && ctx.date! <= p.expiry)
+        .sort((a, b) => (a.expiry! < b.expiry! ? -1 : 1))[0] ?? weighted[0]
+    } else {
+      pick = weighted[0]
+    }
+  }
+  if (!pick && ctx.date) {
     const candidates = matches
       .filter(p => p.expiry && ctx.date! <= p.expiry)
       .sort((a, b) => (a.expiry! < b.expiry! ? -1 : 1))
     pick = candidates[0] ?? matches[0]
-  } else {
-    pick = matches[0]
   }
+  if (!pick) pick = matches[0]
 
   // Use family info as a baseline so the dropdown selection at minimum
   // shows the product/manufacturer name even when no batch entry exists.

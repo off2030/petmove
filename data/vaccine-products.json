@@ -57,7 +57,9 @@
   ],
 
   "parasite_external_dog": [
-    { "id": "frontline_plus_dog", "product": "Frontline Plus", "manufacturer": "Boehringer Ingelheim", "batch": "F74992C", "expiry": "2026-12-31" }
+    { "id": "frontline_plus_dog", "product": "Frontline Plus", "manufacturer": "Boehringer Ingelheim", "batch": "F74992C", "expiry": "2026-12-31" },
+    { "id": "frontline_plus_dog", "product": "Frontline Plus for Dogs 10-20 kg", "manufacturer": "Boehringer Ingelheim", "weightMin": 10, "weightMax": 20, "size": "10-20kg", "batch": "G20536B", "expiry": "2027-05" },
+    { "id": "frontline_plus_dog", "product": "Frontline Plus for Dogs 20-40 kg", "manufacturer": "Boehringer Ingelheim", "weightMin": 20, "weightMax": 40, "size": "20-40kg", "batch": "F98640B", "expiry": "2027-03" }
   ],
 
   "parasite_external_cat": [
