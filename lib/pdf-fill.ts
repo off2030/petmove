@@ -646,6 +646,21 @@ function readSource(
     return cleaned.join(', ')
   }
 
+  // address_overseas: 국가별로 저장 위치가 top-level(data.address_overseas) vs
+  // 나라별 extra 객체(data.{japan,hawaii,philippines,thailand}_extra.address_overseas) 로
+  // 갈라져 있어, 두 경로 모두 확인하는 fallback.
+  if (source === 'address_overseas') {
+    const top = (data.address_overseas as string | null | undefined)
+    if (top != null && top !== '') return top
+    const nestedKeys = ['japan_extra', 'hawaii_extra', 'philippines_extra', 'thailand_extra']
+    for (const key of nestedKeys) {
+      const nested = data[key] as { address_overseas?: string | null } | undefined
+      const val = nested?.address_overseas
+      if (val != null && val !== '') return val
+    }
+    return ''
+  }
+
   // Composite animal description: "<breed>, <color>, <weight>kg".
   // Used by Identification Declaration's Description / Breed-color-size fields.
   // Drops empty parts; weight gets a "kg" suffix only when present.
