@@ -1883,6 +1883,12 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
     }
   }
 
+  try {
+    pdfForm.flatten()
+  } catch (e) {
+    console.warn(`[${formKey}] flatten failed, falling back to non-flat:`, (e as Error).message)
+  }
+
   const bytes = await pdf.save()
   const base64 = Buffer.from(bytes).toString('base64')
   const petNames = doc.cases
@@ -2120,6 +2126,15 @@ export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillO
   console.log(`  filled:`, filled)
   console.log(`  empty (no value resolved):`, empty)
   if (missing.length) console.warn(`  missing PDF fields:`, missing)
+
+  // 폼 flatten — form widget을 일반 PDF 드로잉 객체로 구움. Vercel Linux 환경에서
+  // updateFieldAppearances로 생성한 appearance stream을 일부 viewer가 못 읽어
+  // 필드 값이 안 보이는 이슈가 있어, flatten 으로 viewer 구현 의존성 제거.
+  try {
+    pdfForm.flatten()
+  } catch (e) {
+    console.warn(`[${formKey}] flatten failed, falling back to non-flat:`, (e as Error).message)
+  }
 
   const bytes = await pdf.save()
   const base64 = Buffer.from(bytes).toString('base64')
