@@ -37,6 +37,7 @@ import { SwissExtraField } from './switzerland-extra-field'
 import { UKExtraField } from './uk-extra-field'
 import { OverseasAddressField } from './overseas-address-field'
 import { useCases } from './cases-context'
+import { VerificationProvider, severityTextClass, tooltipText, useFieldVerification } from './verification-context'
 
 type ExtraFieldProps = { caseId: string; caseRow: CaseRow }
 
@@ -100,6 +101,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
   }
 
   return (
+    <VerificationProvider caseRow={caseRow} destination={viewDestination}>
     <div
       ref={scrollRef}
       className="flex-1 min-h-0 flex flex-col rounded-xl border border-border/60 bg-card p-md shadow-sm overflow-y-auto overflow-x-hidden scrollbar-minimal"
@@ -178,7 +180,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
                     {vaccineList.includes('general') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="종합백신" dataKey="general_vaccine_dates" legacyKey="general_vaccine" />}
                     {vaccineList.includes('civ') && data.species !== 'cat' && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="CIV" dataKey="civ_dates" />}
                     {vaccineList.includes('kennel') && data.species !== 'cat' && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="켄넬코프" dataKey="kennel_cough_dates" />}
-                    {vaccineList.includes('infectious_disease') && <InfectiousDiseaseField caseId={caseRow.id} caseRow={caseRow} destination={viewDestination} />}
+                    {vaccineList.includes('infectious_disease') && data.species !== 'cat' && <InfectiousDiseaseField caseId={caseRow.id} caseRow={caseRow} destination={viewDestination} />}
                     {vaccineList.includes('external_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="외부구충" dataKey="external_parasite_dates" hideValidUntil siblingKey="internal_parasite_dates" />}
                     {vaccineList.includes('internal_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="내부구충" dataKey="internal_parasite_dates" hideValidUntil siblingKey="external_parasite_dates" />}
                     {vaccineList.includes('heartworm') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="심장사상충" dataKey="heartworm_dates" hideValidUntil />}
@@ -290,6 +292,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
       ))}
 
     </div>
+    </VerificationProvider>
   )
 }
 
@@ -424,6 +427,9 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   const { updateLocalCaseField } = useCases()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const implantDate = (data.microchip_implant_date as string) || ''
+  const implantInfo = useFieldVerification('microchip_implant_date')
+  const implantColorCls = implantInfo ? severityTextClass(implantInfo.severity) : ''
+  const implantTitle = implantInfo ? tooltipText(implantInfo) : undefined
 
   const [editing, setEditing] = useState(false)
 
@@ -447,8 +453,12 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
           <MicrochipDateInput initial={implantDate} onSave={(v) => saveDate(v || null)} onCancel={() => setEditing(false)} />
         ) : (
           <span className="group/v relative inline-flex items-baseline">
-            <button type="button" onClick={() => setEditing(true)}
-              className={cn('text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer', !implantDate && 'text-muted-foreground/60')}>
+            <button type="button" onClick={() => setEditing(true)} title={implantTitle}
+              className={cn(
+                'text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer',
+                !implantDate && 'text-muted-foreground/60',
+                implantColorCls,
+              )}>
               {implantDate || '—'}
             </button>
             {implantDate && <CopyButton value={implantDate} className="ml-1 opacity-0 group-hover/v:opacity-100" />}

@@ -10,6 +10,7 @@ import { CopyButton } from './copy-button'
 import { extractVaccineInfo } from '@/lib/actions/extract-vaccine'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
+import { severityTextClass, tooltipText, useFieldVerification } from './verification-context'
 
 interface VacRecord {
   date: string
@@ -49,12 +50,22 @@ function readRecords(data: Record<string, unknown>, dataKey: string, legacyKey?:
   return []
 }
 
-/** 접종일 + 1년 → YYYY-MM-DD */
+/**
+ * 접종일 + 1년 유효기간의 **마지막 유효일** 반환.
+ * 달력 +1년 후 동일 MM-DD 에서 하루 뺌 (윤년 처리됨).
+ * 예: 2026-01-01 → 2026-12-31 (=접종일 +364일).
+ */
 function addOneYear(dateStr: string): string {
   if (!dateStr) return ''
   const parts = dateStr.split('-')
   if (parts.length < 3) return ''
-  return `${parseInt(parts[0], 10) + 1}-${parts[1]}-${parts[2]}`
+  const d = new Date(`${parseInt(parts[0], 10) + 1}-${parts[1]}-${parts[2]}T00:00:00Z`)
+  if (isNaN(d.getTime())) return ''
+  d.setUTCDate(d.getUTCDate() - 1)
+  const y = d.getUTCFullYear()
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 /** 라벨과 접종일로 lookup 데이터를 VacRecord 형태로 반환 (expanded view 힌트용) */
@@ -495,35 +506,19 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
         <div className="flex items-baseline gap-[10px] min-w-0 flex-wrap">
           {sortedForExpand.map((rec, si) => {
             const i = origIdx(si)
+            const path = `${dataKey}[${i}].date`
             return (
-              <div key={i} className="group/item inline-flex items-baseline gap-[10px]">
-                {si > 0 && <span className="text-muted-foreground/30 select-none">|</span>}
-                {editIdx === i ? (
-                  <DateInput
-                    initial={rec.date}
-                    onSave={(v) => { if (v) updateRecordDate(i, v); else { deleteRecord(i); setEditIdx(null) } }}
-                    onCancel={() => setEditIdx(null)}
-                  />
-                ) : (
-                  <span className="group/v relative inline-flex items-baseline">
-                    <button
-                      type="button"
-                      onClick={() => setEditIdx(i)}
-                      className="text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer"
-                    >
-                      {rec.date}
-                    </button>
-                    <CopyButton value={rec.date} className="ml-1 opacity-0 group-hover/v:opacity-100" />
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => deleteRecord(i)}
-                  className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100"
-                >
-                  ✕
-                </button>
-              </div>
+              <CollapsedDateChip
+                key={i}
+                separator={si > 0}
+                path={path}
+                date={rec.date}
+                editing={editIdx === i}
+                onStartEdit={() => setEditIdx(i)}
+                onSaveEdit={(v) => { if (v) updateRecordDate(i, v); else { deleteRecord(i); setEditIdx(null) } }}
+                onCancelEdit={() => setEditIdx(null)}
+                onDelete={() => deleteRecord(i)}
+              />
             )
           })}
 
@@ -619,10 +614,11 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                       onCancel={() => setEditIdx(null)}
                     />
                   ) : (
-                    <button type="button" onClick={() => setEditIdx(oi)}
-                      className="text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer">
-                      {rec.date}
-                    </button>
+                    <ExpandedDateButton
+                      path={`${dataKey}[${oi}].date`}
+                      date={rec.date}
+                      onClick={() => setEditIdx(oi)}
+                    />
                   )}
 
                   {!hideValidUntil && (
@@ -727,6 +723,73 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
 
 /** 타병원 접종 체크박스를 노출할 백신 라벨. 별지25·별지25 EX에서 제외 대상. */
 const OTHER_HOSPITAL_LABELS = new Set(['광견병', '종합백신', 'CIV', '켄넬코프'])
+
+/* ── Date chips (collapsed/expanded) with verification color ── */
+
+function CollapsedDateChip({ separator, path, date, editing, onStartEdit, onSaveEdit, onCancelEdit, onDelete }: {
+  separator: boolean
+  path: string
+  date: string
+  editing: boolean
+  onStartEdit: () => void
+  onSaveEdit: (v: string) => void
+  onCancelEdit: () => void
+  onDelete: () => void
+}) {
+  const info = useFieldVerification(path)
+  const colorCls = info ? severityTextClass(info.severity) : ''
+  const title = info ? tooltipText(info) : undefined
+
+  return (
+    <div className="group/item inline-flex items-baseline gap-[10px]">
+      {separator && <span className="text-muted-foreground/30 select-none">|</span>}
+      {editing ? (
+        <DateInput initial={date} onSave={onSaveEdit} onCancel={onCancelEdit} />
+      ) : (
+        <span className="group/v relative inline-flex items-baseline">
+          <button
+            type="button"
+            onClick={onStartEdit}
+            title={title}
+            className={cn(
+              'text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer',
+              colorCls,
+            )}
+          >
+            {date}
+          </button>
+          <CopyButton value={date} className="ml-1 opacity-0 group-hover/v:opacity-100" />
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={onDelete}
+        className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100"
+      >
+        ✕
+      </button>
+    </div>
+  )
+}
+
+function ExpandedDateButton({ path, date, onClick }: { path: string; date: string; onClick: () => void }) {
+  const info = useFieldVerification(path)
+  const colorCls = info ? severityTextClass(info.severity) : ''
+  const title = info ? tooltipText(info) : undefined
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className={cn(
+        'text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer',
+        colorCls,
+      )}
+    >
+      {date}
+    </button>
+  )
+}
 
 /* ── Parasite product dropdown ── */
 

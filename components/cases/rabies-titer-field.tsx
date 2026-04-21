@@ -11,6 +11,7 @@ import { extractTiterInfo } from '@/lib/actions/extract-titer'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { resolveTiterLab, type InspectionLabRule } from '@/lib/inspection-config-defaults'
+import { severityTextClass, tooltipText, useFieldVerification } from './verification-context'
 
 interface TiterRecord {
   date: string | null
@@ -272,6 +273,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
           <TiterRow
             key={i}
             record={rec}
+            recordIdx={i}
             isEditing={editIdx === i ? editField : null}
             onStartEdit={(f) => { setEditIdx(i); setEditField(f) }}
             onStopEdit={() => { setEditIdx(null); setEditField(null) }}
@@ -307,9 +309,10 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
 /* ── Single titer row: date | value | lab ── */
 
 function TiterRow({
-  record, isEditing, onStartEdit, onStopEdit, onUpdateField, onDelete, saving,
+  record, recordIdx, isEditing, onStartEdit, onStopEdit, onUpdateField, onDelete, saving,
 }: {
   record: TiterRecord
+  recordIdx: number
   isEditing: TiterEditField | null
   onStartEdit: (f: TiterEditField) => void
   onStopEdit: () => void
@@ -322,6 +325,9 @@ function TiterRow({
   const labObj = LABS.find(l => l.value === record.lab)
   const labDisplay = labObj?.label || record.lab || '—'
   const labTone = labColor(record.lab)
+  const dateInfo = useFieldVerification(`rabies_titer_records[${recordIdx}].date`)
+  const dateColorCls = dateInfo ? severityTextClass(dateInfo.severity) : ''
+  const dateTitle = dateInfo ? tooltipText(dateInfo) : undefined
 
   return (
     <div className="group/item flex items-baseline gap-[10px] min-w-0">
@@ -334,8 +340,12 @@ function TiterRow({
         />
       ) : (
         <span className="group/v inline-flex items-baseline">
-          <button type="button" onClick={() => onStartEdit('date')}
-            className={cn('text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer', dateDisplay === '—' && 'text-muted-foreground/60')}>
+          <button type="button" onClick={() => onStartEdit('date')} title={dateTitle}
+            className={cn(
+              'text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer',
+              dateDisplay === '—' && 'text-muted-foreground/60',
+              dateColorCls,
+            )}>
             {dateDisplay}
           </button>
           {dateDisplay !== '—' && <CopyButton value={dateDisplay} className="ml-1 opacity-0 group-hover/v:opacity-100" />}

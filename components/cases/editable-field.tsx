@@ -7,6 +7,7 @@ import { coerceInputValue, renderFieldValue } from '@/lib/fields'
 import { updateCaseField } from '@/lib/actions/cases'
 import { CopyButton } from '@/components/cases/copy-button'
 import { useCases } from '@/components/cases/cases-context'
+import { severityTextClass, tooltipText, useFieldVerification } from '@/components/cases/verification-context'
 
 /** Filter input by language */
 function filterByLang(str: string, lang?: 'ko' | 'en'): string {
@@ -324,22 +325,13 @@ export function EditableField({
           </button>
         </div>
       ) : (
-        <button
-          type="button"
+        <VerifiedDisplayButton
+          path={spec.key}
+          display={display}
+          isEmpty={isEmpty}
+          isLongText={spec.type === 'longtext'}
           onClick={handleEnterEdit}
-          className={cn(
-            'text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors',
-            'hover:bg-accent/60 cursor-text',
-            isEmpty && 'text-muted-foreground/60',
-          )}
-          title="클릭하여 편집"
-        >
-          {spec.type === 'longtext' ? (
-            <span className="whitespace-pre-wrap">{display}</span>
-          ) : (
-            display
-          )}
-        </button>
+        />
       )}
       {error && (
         <div className="mt-1 text-xs text-red-600">{error}</div>
@@ -385,6 +377,33 @@ export function EditableField({
         {!(spec.type === 'longtext') && !editing && clearButton}
       </div>
     </div>
+  )
+}
+
+function VerifiedDisplayButton({ path, display, isEmpty, isLongText, onClick }: {
+  path: string
+  display: string
+  isEmpty: boolean
+  isLongText: boolean
+  onClick: () => void
+}) {
+  const info = useFieldVerification(path)
+  const colorCls = info ? severityTextClass(info.severity) : ''
+  const title = info ? tooltipText(info) : '클릭하여 편집'
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors',
+        'hover:bg-accent/60 cursor-text',
+        isEmpty && 'text-muted-foreground/60',
+        colorCls,
+      )}
+      title={title}
+    >
+      {isLongText ? <span className="whitespace-pre-wrap">{display}</span> : display}
+    </button>
   )
 }
 
