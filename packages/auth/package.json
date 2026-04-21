@@ -1,0 +1,11 @@
+{
+  "name": "@petmove/auth",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Supabase Auth wrapper, OrgContext, login components",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
