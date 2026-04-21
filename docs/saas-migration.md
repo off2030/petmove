@@ -9,9 +9,9 @@
 ## 현재 상태
 
 - **날짜**: 2026-04-21
-- **완료된 Phase**: Phase 0 ✅
+- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅ (local, 아직 Vercel 반영 전)
 - **진행 중**: (없음)
-- **다음**: Phase 1 — 모노레포 재배치 (pnpm workspaces + Turborepo)
+- **다음**: Phase 1 마무리 — Vercel 배포 설정 업데이트 + master 병합 / 이후 Phase 2 (Supabase Auth + 네이버 로그인)
 
 ### Phase 0 완료 (2026-04-21)
 
@@ -26,14 +26,20 @@
 - [x] Vercel env 5종 동기화 + Redeploy
 - [x] 프로덕션(`petmove.vercel.app/cases`) 정상 동작 확인
 
-### Phase 1 시작 전 체크리스트
+### Phase 1 완료 — 모노레포 재배치 (2026-04-21, saas-migration 브랜치)
 
-1. `saas-migration` 브랜치 생성 (master 분기)
-2. pnpm workspaces + Turborepo 셋업
-3. 현재 `apps/admin`로 코드 이동
-4. `packages/{db,domain,auth,ui}` 빈 뼈대 생성
-5. 로컬 빌드·실행 확인
-6. Vercel 배포 설정 업데이트 (root directory 변경)
+- [x] `saas-migration` 브랜치 생성 (master 분기)
+- [x] pnpm(10.33.0) 설치 + `.npmrc` (`node-linker=hoisted` — Windows pnpm 호환)
+- [x] 코드 이동 → `apps/admin/` (app·components·lib·data·public·scripts + next/postcss/tailwind/tsconfig + .env.local/.env.example)
+- [x] 루트 `package.json`을 워크스페이스 루트로 축소 (turbo + supabase CLI만 유지) / `apps/admin/package.json`에 Next.js deps 이관
+- [x] `pnpm-workspace.yaml` (`apps/*`, `packages/*`)
+- [x] `turbo.json` (build/dev/lint/start tasks)
+- [x] `packages/{db,domain,auth,ui}/` 빈 뼈대 (`@petmove/*` scoped)
+- [x] 로컬 검증 — `pnpm -F admin build` 성공, `pnpm dev` (turbo) 구동, `/apply` 200, `/cases` 200
+- [ ] **Vercel 배포 설정 업데이트**: root directory `apps/admin`으로 변경, build command는 `pnpm -F admin build`, install command는 루트에서 `pnpm install`
+- [ ] PR 프리뷰로 Vercel 빌드 성공 확인 → master 병합 → 프로덕션 재배포
+
+**주의** — 새 컴퓨터·worktree에서 시작 시: Phase 0에서 로테이트된 키가 이 기기의 `.env.local`에 없을 수 있음. `apps/admin/.env.local`을 Supabase 대시보드 현재 키로 덮어쓸 것.
 
 매 Phase 끝날 때 이 섹션을 업데이트한다.
 
@@ -104,11 +110,11 @@ petmove/                      ← 모노레포 (pnpm workspaces + Turborepo)
 - [ ] `.env.local` 백업
 
 ### Phase 1 — 모노레포 재배치 (1일)
-- [ ] pnpm workspaces + Turborepo 셋업
-- [ ] 루트 코드를 `apps/admin/`로 이동
-- [ ] `packages/{db,domain,auth,ui}` 빈 뼈대 생성
-- [ ] 로컬에서 `pnpm -F admin dev` 정상 작동 확인
-- [ ] 배포 파이프라인(Vercel 등) 업데이트
+- [x] pnpm workspaces + Turborepo 셋업
+- [x] 루트 코드를 `apps/admin/`로 이동
+- [x] `packages/{db,domain,auth,ui}` 빈 뼈대 생성
+- [x] 로컬에서 `pnpm -F admin dev` 정상 작동 확인
+- [ ] 배포 파이프라인(Vercel 등) 업데이트 ← **다음 작업**
 - 기능 변화 0, 운영 영향 0
 
 ### Phase 2 — Supabase Auth + 네이버 로그인 ★ (2일)
