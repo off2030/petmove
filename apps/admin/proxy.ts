@@ -60,18 +60,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // super_admin 체크
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_super_admin')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (!profile?.is_super_admin) {
-    const denyUrl = new URL('/login', request.url)
-    denyUrl.searchParams.set('error', '권한이 없습니다')
-    return NextResponse.redirect(denyUrl)
-  }
+  // Phase 3 (memberships) 이전까지 super_admin 게이트 완화 — 로그인만 되면 통과.
+  // 접근 통제는 Supabase Dashboard 의 Invite user 로 초대받은 계정만 가능.
+  // Phase 3 에서 memberships 기반 체크로 교체.
 
   return response
 }
