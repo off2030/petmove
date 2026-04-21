@@ -8,10 +8,40 @@
 
 ## 현재 상태
 
-- **날짜**: 2026-04-21 (문서 작성)
-- **완료된 Phase**: (없음)
-- **진행 중**: Phase 0 준비 (브랜치·백업)
-- **다음**: Phase 1 — 모노레포 재배치
+- **날짜**: 2026-04-21
+- **완료된 Phase**: 없음
+- **진행 중**: Phase 0 (거의 끝, Vercel env 복구 중)
+- **다음**: Vercel env 수정 완료 → Phase 0 종료 → Phase 1 시작
+
+### Phase 0 진척
+
+- [x] 기존 작업 5개 커밋 + push (master)
+- [x] `.gitignore`에 백업 파일 패턴 추가
+- [x] DB 데이터 CSV 백업 (Table Editor → Export)
+- [x] DB 비밀번호 리셋 (`.env.local`에 `SUPABASE_DB_PASSWORD` 저장)
+- [x] Supabase Secret key 로테이트 (구 키 삭제)
+- [x] Supabase Publishable key 로테이트 (구 키 삭제)
+- [x] OpenAI Key 로테이트
+- [x] Kakao REST API Key 로테이트
+- [ ] **Vercel env 4종 값 동기화 + Redeploy** ← 다음에 할 것
+- [ ] 프로덕션(`petmove.vercel.app/cases`) 정상 동작 확인
+
+### 컴퓨터 재시작 후 할 일 (이어가기)
+
+1. `.env.local` 열어서 `SUPABASE_SERVICE_ROLE_KEY` 실제 값 확인
+   - 값이 `여기에_새_secret_key_붙여넣기` 플레이스홀더로 남아있으면 Supabase Dashboard → API Keys → 새 Secret key 생성 → 값 붙여넣기
+2. Vercel 대시보드 → Settings → Environment Variables 에서 4개 값을 `.env.local`과 동일하게:
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` ← `sb_publishable_jSZS8XF4...`
+   - `SUPABASE_SERVICE_ROLE_KEY` ← 새 sb_secret_...
+   - `OPENAI_API_KEY` ← 새 sk-proj-...
+   - `KAKAO_REST_API_KEY` ← `d09f09c097ed58ffefa70fc788fd263a` (신규 추가)
+3. Deployments → 최근 배포 ⋯ → Redeploy (Build Cache 해제)
+4. `https://petmove.vercel.app/cases` 접속해 케이스 목록·편집·AI 추출 확인
+5. 로컬 dev (`pnpm dev`)도 한 번 열어서 동작 확인
+
+### 현재 막혀있던 원인 (참고)
+
+프로덕션에서 `Error: Unregistered API key` 발생 — Supabase publishable key를 로테이트했는데 Vercel env는 Apr 13 그대로였음. `.env.local`에서도 `SUPABASE_SERVICE_ROLE_KEY` 라인이 실수로 사라진 상태라 추가 필요.
 
 매 Phase 끝날 때 이 섹션을 업데이트한다.
 
