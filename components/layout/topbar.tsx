@@ -1,8 +1,9 @@
 'use client'
 
-import { Folder, CheckCircle2, LayoutGrid, Settings, Menu } from 'lucide-react'
+import { Folder, CheckCircle2, LayoutGrid, Settings, Menu, Monitor, Sun, Moon } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { countExpiringProducts } from '@/lib/vaccine-lookup'
+import { useDarkMode } from '@/lib/use-dark-mode'
 
 export type TabId = 'cases' | 'todos' | 'calculator' | 'settings'
 
@@ -20,6 +21,7 @@ export function TopBar({
   onTabChange: (tab: TabId) => void
 }) {
   const expiringCount = useMemo(() => countExpiringProducts(), [])
+  const { mode, mounted, cycle } = useDarkMode()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -107,6 +109,17 @@ export function TopBar({
 
         {/* Right-side actions */}
         <div className="flex items-center gap-xs">
+          {mounted && (
+            <button
+              type="button"
+              onClick={cycle}
+              title={`테마: ${mode === 'system' ? '시스템' : mode === 'light' ? '라이트' : '다크'} (클릭하여 전환)`}
+              aria-label="테마 전환"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+            >
+              {mode === 'system' ? <Monitor size={18} /> : mode === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => onTabChange('settings')}
