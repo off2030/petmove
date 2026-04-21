@@ -33,9 +33,13 @@ function LoginForm() {
 
     // 네이버는 Supabase builtin 이 아니라 "커스텀 OIDC" provider 로 등록 예정.
     // Provider ID 는 Supabase Dashboard 에 설정한 slug ('naver') 와 맞춰야 함.
+    // Kakao: account_email 은 별도 검수 필요 — 일반 앱은 nickname+image 만.
+    const scopes =
+      provider === 'kakao' ? 'profile_nickname profile_image' : undefined
+
     const { error } = await supabaseBrowser.auth.signInWithOAuth({
       provider: provider === 'naver' ? ('naver' as 'google') : provider,
-      options: { redirectTo },
+      options: { redirectTo, scopes },
     })
 
     if (error) {
