@@ -222,6 +222,19 @@ function destinationRequiresTapeworm(dest: unknown): boolean {
   return dest.split(',').map(s => s.trim()).some(d => TAPEWORM_REQUIRED_DESTINATIONS.includes(d))
 }
 
+/** 호주·뉴질랜드 목적지 여부 — Form25 batch 란에 유효기간 병기 조건. */
+function destinationIsAuNz(dest: unknown): boolean {
+  if (typeof dest !== 'string' || !dest) return false
+  return dest.split(',').map(s => s.trim()).some(d => d === '호주' || d === '뉴질랜드')
+}
+
+/** batch + expiry 병기 포맷 ("batch / expiry"). expiry 없으면 batch만. */
+function joinBatchExpiry(batch: string, expiry: string): string {
+  if (!expiry) return batch
+  if (!batch) return expiry
+  return `${batch} / ${expiry}`
+}
+
 /** Echinococcus treatment is required for dogs only — cats are exempt. */
 function requiresTapewormForCase(caseRow: CaseRow, data: Record<string, unknown>): boolean {
   if (!destinationRequiresTapeworm(caseRow.destination)) return false
@@ -1159,7 +1172,12 @@ function resolveField(
     const attr = seqMatch[1] as keyof OtherVacEntry
     const idx = Number(seqMatch[2])
     const entry = buildOtherVaccineSequence(data, allowedVaccines)[idx]
-    return entry ? entry[attr] : ''
+    if (!entry) return ''
+    // AU/NZ: batch 란에 유효기간 병기
+    if (attr === 'serial' && destinationIsAuNz(caseRow.destination)) {
+      return joinBatchExpiry(entry.serial, entry.expiry)
+    }
+    return entry[attr]
   }
 
   // Form25AuNz expanded filler (8 slots, 3 doses per type).
@@ -1340,11 +1358,15 @@ function resolveField(
     const merged = applyRecOverrides(rec, p)
     if (attr === 'name') return merged.name
     if (attr === 'manufacturer') return merged.manufacturer
-    if (attr === 'serial') return merged.serial
+    if (attr === 'serial') {
+      // AU/NZ: batch 란에 유효기간 병기
+      if (destinationIsAuNz(caseRow.destination)) {
+        return joinBatchExpiry(merged.serial, merged.expiry ?? '')
+      }
+      return merged.serial
+    }
     if (attr === 'serial_with_expiry') {
-      const batch = merged.serial
-      const expiry = merged.expiry
-      return expiry ? (batch ? `${batch} / ${expiry}` : expiry) : batch
+      return joinBatchExpiry(merged.serial, merged.expiry ?? '')
     }
     if (attr === 'validity_from') return fmtDate(p?.validityFrom ?? '')
     if (attr === 'validity_to') return fmtDate(p?.validityTo ?? '')
