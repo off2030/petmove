@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,14 @@ import { Input } from '@/components/ui/input'
 type Provider = 'google' | 'kakao' | 'naver'
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const router = useRouter()
   const search = useSearchParams()
   const next = search.get('next') ?? '/cases'
