@@ -69,6 +69,18 @@ export function JapanExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
     setInputText('')
   }, [caseId])
 
+  // 기존 데이터 backfill — outbound.date는 있으나 data.return_date가 비어 있으면 동기화
+  // (sync 로직 추가 이전에 저장된 케이스 대응)
+  useEffect(() => {
+    if (extra.outbound.date && !data.return_date) {
+      syncReturnDate(extra.outbound.date)
+    }
+    if (extra.inbound.date && !caseRow.departure_date) {
+      syncDepartureDate(extra.inbound.date)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseId])
+
   /* ── Save ── */
 
   async function saveExtra(next: JapanExtra) {
@@ -90,12 +102,22 @@ export function JapanExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
     if (direction === 'inbound' && key === 'date' && value) {
       syncDepartureDate(value)
     }
+    // 일본 → 한국(outbound)의 날짜는 귀국일과 동일 — data.return_date에도 동기화
+    if (direction === 'outbound' && key === 'date' && value) {
+      syncReturnDate(value)
+    }
   }
 
   async function syncDepartureDate(date: string | null) {
     if (!date) return
     const r = await updateCaseField(caseId, 'column', 'departure_date', date)
     if (r.ok) updateLocalCaseField(caseId, 'column', 'departure_date', date)
+  }
+
+  async function syncReturnDate(date: string | null) {
+    if (!date) return
+    const r = await updateCaseField(caseId, 'data', 'return_date', date)
+    if (r.ok) updateLocalCaseField(caseId, 'data', 'return_date', date)
   }
 
   function saveEmail(value: string | null) {
@@ -135,6 +157,8 @@ export function JapanExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
         if (r.ok) updateLocalCaseField(caseId, 'data', DATA_KEY, merged)
         // inbound.date = 한국 출국일 → 케이스의 departure_date 컬럼에도 동기화
         if (result.data.inbound.date) await syncDepartureDate(result.data.inbound.date)
+        // outbound.date = 한국 귀국일 → data.return_date 에도 동기화
+        if (result.data.outbound.date) await syncReturnDate(result.data.outbound.date)
         setExtractMsg('항공편 정보가 입력되었습니다')
       } else {
         setExtractMsg('추출 실패: ' + result.error)
