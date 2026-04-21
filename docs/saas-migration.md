@@ -9,9 +9,9 @@
 ## 현재 상태
 
 - **날짜**: 2026-04-21
-- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅ (local, 아직 Vercel 반영 전)
+- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅
 - **진행 중**: (없음)
-- **다음**: Phase 1 마무리 — Vercel 배포 설정 업데이트 + master 병합 / 이후 Phase 2 (Supabase Auth + 네이버 로그인)
+- **다음**: Phase 2 — Supabase Auth + 네이버 로그인
 
 ### Phase 0 완료 (2026-04-21)
 
@@ -36,10 +36,26 @@
 - [x] `turbo.json` (build/dev/lint/start tasks)
 - [x] `packages/{db,domain,auth,ui}/` 빈 뼈대 (`@petmove/*` scoped)
 - [x] 로컬 검증 — `pnpm -F admin build` 성공, `pnpm dev` (turbo) 구동, `/apply` 200, `/cases` 200
-- [ ] **Vercel 배포 설정 업데이트**: root directory `apps/admin`으로 변경, build command는 `pnpm -F admin build`, install command는 루트에서 `pnpm install`
-- [ ] PR 프리뷰로 Vercel 빌드 성공 확인 → master 병합 → 프로덕션 재배포
+- [x] Vercel 배포 설정 업데이트 — Root Directory `apps/admin`, "Include files outside the root directory" Enabled (pnpm-workspace·packages/ 접근용), Turborepo 자동 감지
+- [x] PR #1 프리뷰 빌드 성공 → master 병합 (`b84aa38`) → `petmove.vercel.app/cases` 200
 
 **주의** — 새 컴퓨터·worktree에서 시작 시: Phase 0에서 로테이트된 키가 이 기기의 `.env.local`에 없을 수 있음. `apps/admin/.env.local`을 Supabase 대시보드 현재 키로 덮어쓸 것.
+
+### Phase 2 시작 전 체크리스트
+
+1. `phase-2-auth` 브랜치 생성 (master 분기)
+2. 네이버 개발자 앱 등록 (callback URL: `https://jxyalwbstsqpecavqfkb.supabase.co/auth/v1/callback`)
+3. Supabase Dashboard → Authentication → Providers:
+   - 커스텀 OIDC (네이버) 추가
+   - Google 활성화
+   - Kakao 활성화
+   - Email/Password 활성화 (백업)
+4. `profiles` 테이블 + `handle_new_user()` 트리거 migration 작성
+5. `/login` 페이지 (admin 앱) 구현 — 네이버·카카오·구글 버튼
+6. middleware 추가 (처음엔 **off** 상태로 배포)
+7. `pemove@naver.com`으로 첫 로그인 → `profiles` 로우 확인
+8. `update profiles set is_super_admin = true where email = 'pemove@naver.com'`
+9. middleware **on** → cutover
 
 매 Phase 끝날 때 이 섹션을 업데이트한다.
 
@@ -109,12 +125,12 @@ petmove/                      ← 모노레포 (pnpm workspaces + Turborepo)
 - [ ] `saas-migration` 브랜치 생성 (main은 현재 운영)
 - [ ] `.env.local` 백업
 
-### Phase 1 — 모노레포 재배치 (1일)
+### Phase 1 — 모노레포 재배치 (1일) ✅
 - [x] pnpm workspaces + Turborepo 셋업
 - [x] 루트 코드를 `apps/admin/`로 이동
 - [x] `packages/{db,domain,auth,ui}` 빈 뼈대 생성
 - [x] 로컬에서 `pnpm -F admin dev` 정상 작동 확인
-- [ ] 배포 파이프라인(Vercel 등) 업데이트 ← **다음 작업**
+- [x] 배포 파이프라인 Vercel 업데이트 (Root Directory = `apps/admin`)
 - 기능 변화 0, 운영 영향 0
 
 ### Phase 2 — Supabase Auth + 네이버 로그인 ★ (2일)
