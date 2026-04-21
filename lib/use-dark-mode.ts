@@ -2,40 +2,23 @@
 
 import { useEffect, useState } from 'react'
 
+/** OS 다크 모드 설정을 그대로 반영. 수동 토글 없음 — 시스템 설정 변경은 실시간 반영. */
 export function useDarkMode() {
   const [isDark, setIsDark] = useState(false)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    const html = document.documentElement
-    const stored = localStorage.getItem('theme')
-
-    const shouldBeDark = stored
-      ? stored === 'dark'
-      : window.matchMedia('(prefers-color-scheme: dark)').matches
-
-    setIsDark(shouldBeDark)
-    if (shouldBeDark) {
-      html.classList.add('dark')
-    } else {
-      html.classList.remove('dark')
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const apply = (dark: boolean) => {
+      setIsDark(dark)
+      document.documentElement.classList.toggle('dark', dark)
     }
+    apply(mq.matches)
     setMounted(true)
+    const onChange = (e: MediaQueryListEvent) => apply(e.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
   }, [])
 
-  const toggle = () => {
-    const html = document.documentElement
-    const newValue = !isDark
-    setIsDark(newValue)
-
-    if (newValue) {
-      html.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
-    } else {
-      html.classList.remove('dark')
-      localStorage.setItem('theme', 'light')
-    }
-  }
-
-  return { isDark, toggle, mounted }
+  return { isDark, mounted }
 }

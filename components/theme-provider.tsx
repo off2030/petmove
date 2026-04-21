@@ -16,13 +16,12 @@ export function ThemeProvider() {
         html.classList.remove('dark')
         return
       }
-      const theme = localStorage.getItem('theme')
-      const isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)
-      if (isDark) {
-        html.classList.add('dark')
-      } else {
-        html.classList.remove('dark')
-      }
+      const mq = window.matchMedia('(prefers-color-scheme: dark)')
+      const apply = (dark: boolean) => html.classList.toggle('dark', dark)
+      apply(mq.matches)
+      const onChange = (e: MediaQueryListEvent) => apply(e.matches)
+      mq.addEventListener('change', onChange)
+      return () => mq.removeEventListener('change', onChange)
     } catch (e) {}
   }, [pathname])
 

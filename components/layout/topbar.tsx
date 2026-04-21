@@ -1,9 +1,8 @@
 'use client'
 
-import { Folder, CheckCircle2, LayoutGrid, Settings, Moon, Sun, Menu } from 'lucide-react'
+import { Folder, CheckCircle2, LayoutGrid, Settings, Menu } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { countExpiringProducts } from '@/lib/vaccine-lookup'
-import { useDarkMode } from '@/lib/use-dark-mode'
 
 export type TabId = 'cases' | 'todos' | 'calculator' | 'settings'
 
@@ -21,7 +20,6 @@ export function TopBar({
   onTabChange: (tab: TabId) => void
 }) {
   const expiringCount = useMemo(() => countExpiringProducts(), [])
-  const { isDark, toggle, mounted } = useDarkMode()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -109,16 +107,6 @@ export function TopBar({
 
         {/* Right-side actions */}
         <div className="flex items-center gap-xs">
-          {mounted && (
-            <button
-              type="button"
-              onClick={toggle}
-              title={isDark ? '라이트 모드' : '다크 모드'}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
-            >
-              {isDark ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-          )}
           <button
             type="button"
             onClick={() => onTabChange('settings')}
