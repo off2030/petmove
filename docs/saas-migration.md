@@ -10,8 +10,8 @@
 
 - **날짜**: 2026-04-21
 - **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅ (Email 로그인 cutover 완료)
-- **진행 중**: (없음)
-- **다음**: Phase 2.5 — Google/Kakao/Naver 소셜 로그인 추가 or Phase 3 (멀티 테넌트 스키마)
+- **진행 중**: Phase 2.5 — Kakao OAuth 시도 중 **블로커**(비즈앱 미등록) — 아래 "Phase 2.5 Kakao 상태" 참조
+- **다음 세션 시작점**: 세 가지 선택지 중 결정 후 진행 (A. 비즈앱 등록 / B. Google 먼저 / C. 커스텀 Kakao OAuth 구현)
 
 ### Phase 0 완료 (2026-04-21)
 
@@ -66,12 +66,12 @@
 **미완료(다음 단계)**
 
 - [ ] Google OAuth provider 활성화 (GCP OAuth Client 생성 → Supabase Google provider 에 Client ID/Secret 등록)
-- [ ] Kakao OAuth provider 활성화 (Kakao Developers → REST API Key)
+- [~] Kakao OAuth provider 활성화 — **블로커**(비즈앱 미등록으로 `account_email` 검수 불가). 상세: 아래 "Phase 2.5 Kakao 상태"
 - [ ] 네이버 로그인 — **리스크 확인 필요**: 정식 OIDC `id_token` 대신 OAuth2 access_token → Supabase "Custom OIDC" 호환 안 될 수 있음
   - 대안 A: 자체 `/api/auth/naver` route → naver access_token → 이메일 조회 → Supabase admin API (service_role) 로 user 매칭 → magic link 세션 발급
   - 대안 B: 네이버 제외
 - [ ] 앱 헤더에 로그인 유저 표시 + 로그아웃 버튼 (현재 `/logout` 수동 URL 접속만 가능)
-- [ ] Supabase URL Configuration: Site URL + Redirect URL allowlist (OAuth 설정 시 필요)
+- [x] Supabase URL Configuration: Site URL + Redirect URL allowlist (Kakao 세팅하며 완료)
 
 **디버깅 노트**
 - 최초 로그인 실패 원인 2가지:
@@ -79,6 +79,62 @@
   2. `profiles_self_select` 정책의 EXISTS 자기 참조 → 재귀로 서버측 select 실패 → `super_admin` 체크 항상 false. 정책을 `auth.uid() = id` 단일 조건으로 단순화.
 
 매 Phase 끝날 때 이 섹션을 업데이트한다.
+
+### Phase 2.5 Kakao 상태 (2026-04-21, 블로커)
+
+**요약** — Kakao OAuth 버튼이 Supabase callback 까지는 도달하나, `account_email` 동의항목 미설정으로 KOE205. 비즈앱 전환 + 검수 없이는 해결 불가. 다음 세션에 아래 3개 경로 중 하나 선택 후 진행.
+
+**완료한 설정**
+
+- Supabase Dashboard → Authentication → Providers → **Kakao** Enabled
+  - Client ID: `d09f09c097ed58ffefa70fc788fd263a` (petmovework REST API key)
+  - Client Secret: petmovework 키에 붙여둔 것
+  - Callback URL(=Supabase 가 보여주는): `https://jxyalwbstsqpecavqfkb.supabase.co/auth/v1/callback`
+- Supabase Dashboard → Authentication → **URL Configuration**
+  - Site URL: `https://petmove.vercel.app`
+  - Redirect URLs: `https://petmove.vercel.app/auth/callback`, `http://localhost:3000/auth/callback`
+- Kakao Developers (앱 ID `1098838`, 이름 "펫무브")
+  - 앱 설정 → 플랫폼 키 → **petmovework (REST API)** 키 수정
+  - 카카오 로그인 리다이렉트 URI 등록: `https://jxyalwbstsqpecavqfkb.supabase.co/auth/v1/callback`
+  - 카카오 로그인 → 일반 → 사용 설정 **ON**, OpenID Connect OFF
+  - 동의항목
+    - `profile_nickname` → **선택 동의** (목적: "로그인 후 관리자 이름 표시")
+    - `profile_image` → **선택 동의**
+    - `account_email` → **권한 없음** (비즈앱만 설정 가능 — 클릭 불가)
+- 코드 커밋 `eb2fb68` — `apps/admin/app/login/page.tsx` 에서 Kakao 일 때만 `scopes='profile_nickname profile_image'` override (기본 `account_email` 포함을 피하려는 시도)
+
+**현재 블로커**
+
+- Supabase GoTrue 서버가 Kakao provider 기본 scope 에 `account_email` 을 **강제 머지**함. 클라이언트 `options.scopes` override 로 제외 불가 (실측: 2단계 인증 이후 KOE205 에러 메시지에 `account_email` 만 남음).
+- 앱이 **비즈앱 아님** (`추가 기능 신청` 페이지에서 "이 앱은 비즈 앱이 아닙니다"). 따라서 `account_email` 동의항목 자체를 설정할 수 없음.
+
+**다음 세션 — 선택지 3개**
+
+**경로 A — 비즈앱 전환 + account_email 검수** (정석)
+- 사업자등록번호 또는 단체 정보 등록 → 비즈앱 전환
+- `카카오 로그인 → 동의항목 → 카카오계정(이메일)` → 선택 동의 + 동의 목적 입력
+- 검수 제출 (사유·스크린샷·개인정보처리방침 URL 필요)
+- 승인까지 보통 1~3영업일
+- 완료되면 현재 설정으로 바로 동작
+
+**경로 B — Google OAuth 먼저** (우회)
+- Kakao 는 비즈앱 승인 대기로 두고, Google 로 Phase 2.5 마감
+- GCP Console → APIs & Services → OAuth consent screen + Credentials → OAuth Client ID (Web)
+  - Authorized redirect URI: `https://jxyalwbstsqpecavqfkb.supabase.co/auth/v1/callback`
+- Supabase → Authentication → Providers → Google → Client ID/Secret 붙여넣기
+- `apps/admin/app/login/page.tsx` Google 버튼은 이미 배선돼 있음 — provider 만 켜면 동작
+- 소요 1~2시간
+
+**경로 C — 커스텀 Kakao OAuth 라우트** (최후 수단)
+- Supabase GoTrue 의 기본 scope 강제를 우회하는 자체 구현
+- `apps/admin/app/api/auth/kakao/route.ts` 신설
+  - `GET`: `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=...&redirect_uri=...&scope=profile_nickname%20profile_image` 로 리다이렉트 (내가 원하는 scope 만)
+  - callback: code → `/oauth/token` → access_token → `/v2/user/me` 로 nickname+kakao_id 조회
+  - Supabase admin API (`supabaseAdmin.auth.admin.createUser` / `generateLink`) 로 유저 생성 + magic link 세션 발급
+- 구현·디버깅 최소 4~6시간, 이메일 없이 유저 매칭을 어떻게 할지 별도 결정 필요 (kakao_id 를 user metadata 에 저장)
+- 네이버 OIDC 비호환 대비 대안 A 와 동일 패턴이므로 재사용 여지 있음
+
+**권장** — B(Google) 로 Phase 2 마감 → A(비즈앱) 는 백그라운드에서 검수 대기 → 둘 다 끝나면 Phase 3 진입.
 
 ---
 
