@@ -9,9 +9,9 @@
 ## 현재 상태
 
 - **날짜**: 2026-04-21
-- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅
-- **진행 중**: Phase 2 (코드 작업 완료, 외부 설정 대기)
-- **다음**: Supabase Dashboard provider 설정 + 네이버 개발자 앱 등록 → cutover
+- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅ (Email 로그인 cutover 완료)
+- **진행 중**: (없음)
+- **다음**: Phase 2.5 — Google/Kakao/Naver 소셜 로그인 추가 or Phase 3 (멀티 테넌트 스키마)
 
 ### Phase 0 완료 (2026-04-21)
 
@@ -41,42 +41,42 @@
 
 **주의** — 새 컴퓨터·worktree에서 시작 시: Phase 0에서 로테이트된 키가 이 기기의 `.env.local`에 없을 수 있음. `apps/admin/.env.local`을 Supabase 대시보드 현재 키로 덮어쓸 것.
 
-### Phase 2 진행 체크리스트
+### Phase 2 완료 — Supabase Auth + Email 로그인 (2026-04-21)
 
-**코드 작업 (2026-04-21 완료)**
+**적용 커밋**
+- `624d0a5` — Auth 스캐폴딩 (profiles migration, /login, /auth/callback, /logout, proxy.ts)
+- `19e1e79` — /login Suspense 래핑 (useSearchParams prerender 이슈)
+- `1cdc3c6` — PR #2 merge to master
+- `9fb70f7` — browser client 을 `@supabase/ssr createBrowserClient` 로 전환 (SSR 쿠키 공유 필수)
+- `20260421000002_profiles_rls_fix.sql` — profiles RLS 자기참조 재귀 제거
 
-- [x] `phase-2-auth` 브랜치 생성 (master 분기)
-- [x] `profiles` 테이블 + `handle_new_user()` 트리거 migration (`20260421000001_profiles.sql`)
-  - RLS 활성화: 본인 로우 + super_admin 전체 select
-- [x] `/login` 페이지 — 네이버·카카오·구글 버튼 + 이메일 백업
-- [x] `/auth/callback` route handler — code→session 교환
-- [x] `/logout` route handler — signOut 후 /login 리다이렉트
-- [x] `proxy.ts` (Next 16 명칭, 구 middleware) — `AUTH_ENFORCED` env flag 로 on/off, super_admin 만 통과
-- [x] 로컬 검증: `/login` 200, `/cases` 200, `/apply` 200, 타입체크 통과
+**최종 계정**
+- Supabase Auth user: `petmove@naver.com` (ID `29b97da2-b3f5-4e28-854b-29eeb23504bf`)
+- `profiles.is_super_admin = true`
 
-**외부 설정 (사용자 작업)**
+**Vercel env**
+- `AUTH_ENFORCED=true` (Production only)
 
-- [ ] 네이버 개발자 앱 등록 (callback URL: `https://jxyalwbstsqpecavqfkb.supabase.co/auth/v1/callback`)
-- [ ] Supabase Dashboard → Authentication → Providers:
-  - [ ] Google 활성화
-  - [ ] Kakao 활성화
-  - [ ] Email/Password 활성화 (백업)
-  - [ ] 커스텀 OIDC (네이버) — id_token 호환성 문제 가능, 최후 순서
-- [ ] `supabase db push` 로 `profiles` migration 적용
-- [ ] Vercel env 추가: `AUTH_ENFORCED=false` (아직 cutover 전)
+**운영 엔드포인트**
+- `/login` — 네이버/카카오/구글 버튼 (아직 disabled) + 이메일 로그인
+- `/auth/callback` — OAuth code→session 교환 (소셜 추가 시 활성)
+- `/logout` — signOut 후 `/login` 리다이렉트
+- `proxy.ts` — 인증 + super_admin 체크, 미인증 시 `/login?next=<원경로>`
 
-**Cutover 절차**
+**미완료(다음 단계)**
 
-1. `pemove@naver.com` 으로 첫 로그인 (또는 Google/Kakao 계정) → `profiles` 로우 자동 생성 확인
-2. `update profiles set is_super_admin = true where email = '<첫 로그인 이메일>'`
-3. Vercel env `AUTH_ENFORCED=true` 로 변경 → Redeploy
-4. 로그아웃 후 재로그인 → `/cases` 접근 가능 확인
+- [ ] Google OAuth provider 활성화 (GCP OAuth Client 생성 → Supabase Google provider 에 Client ID/Secret 등록)
+- [ ] Kakao OAuth provider 활성화 (Kakao Developers → REST API Key)
+- [ ] 네이버 로그인 — **리스크 확인 필요**: 정식 OIDC `id_token` 대신 OAuth2 access_token → Supabase "Custom OIDC" 호환 안 될 수 있음
+  - 대안 A: 자체 `/api/auth/naver` route → naver access_token → 이메일 조회 → Supabase admin API (service_role) 로 user 매칭 → magic link 세션 발급
+  - 대안 B: 네이버 제외
+- [ ] 앱 헤더에 로그인 유저 표시 + 로그아웃 버튼 (현재 `/logout` 수동 URL 접속만 가능)
+- [ ] Supabase URL Configuration: Site URL + Redirect URL allowlist (OAuth 설정 시 필요)
 
-**리스크 — 네이버 OIDC**
-
-- 네이버는 정식 OIDC `id_token` 대신 OAuth2 access_token 중심 → Supabase 의 "Custom OIDC" 설정으로 동작 안 할 가능성.
-- **대안 A**: Google + Kakao + Email 로 출시 → 네이버는 Phase 2.5 로 분리.
-- **대안 B**: 자체 `/api/auth/naver` route 에서 naver OAuth2 → 이메일 조회 → Supabase admin API 로 user 생성/매칭 → magic link 세션 발급.
+**디버깅 노트**
+- 최초 로그인 실패 원인 2가지:
+  1. `lib/supabase/browser.ts` 가 `@supabase/supabase-js` 의 `createClient` 사용 → localStorage 저장 → middleware(server) 가 세션 못 봄. `@supabase/ssr createBrowserClient` 로 교체 후 해결.
+  2. `profiles_self_select` 정책의 EXISTS 자기 참조 → 재귀로 서버측 select 실패 → `super_admin` 체크 항상 false. 정책을 `auth.uid() = id` 단일 조건으로 단순화.
 
 매 Phase 끝날 때 이 섹션을 업데이트한다.
 
