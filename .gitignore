@@ -53,3 +53,4 @@ backup_*.csv
 *_rows.csv
 petmove_backup*/
 storage_backup/
+backups/
