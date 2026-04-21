@@ -45,3 +45,11 @@ data/pdf-templates/test_*.pdf
 
 # 로컬 빌드 검증용 스크래치 복사본 (agent 도구가 만드는 경우 있음)
 _buildcheck2/
+
+# DB 백업 파일 (실수로 repo 내부에 둬도 커밋 안 되게)
+backup_*.sql
+backup_*.json
+backup_*.csv
+*_rows.csv
+petmove_backup*/
+storage_backup/
