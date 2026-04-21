@@ -10,8 +10,8 @@
 
 - **날짜**: 2026-04-21
 - **완료된 Phase**: Phase 0 ✅, Phase 1 ✅
-- **진행 중**: (없음)
-- **다음**: Phase 2 — Supabase Auth + 네이버 로그인
+- **진행 중**: Phase 2 (코드 작업 완료, 외부 설정 대기)
+- **다음**: Supabase Dashboard provider 설정 + 네이버 개발자 앱 등록 → cutover
 
 ### Phase 0 완료 (2026-04-21)
 
@@ -41,21 +41,42 @@
 
 **주의** — 새 컴퓨터·worktree에서 시작 시: Phase 0에서 로테이트된 키가 이 기기의 `.env.local`에 없을 수 있음. `apps/admin/.env.local`을 Supabase 대시보드 현재 키로 덮어쓸 것.
 
-### Phase 2 시작 전 체크리스트
+### Phase 2 진행 체크리스트
 
-1. `phase-2-auth` 브랜치 생성 (master 분기)
-2. 네이버 개발자 앱 등록 (callback URL: `https://jxyalwbstsqpecavqfkb.supabase.co/auth/v1/callback`)
-3. Supabase Dashboard → Authentication → Providers:
-   - 커스텀 OIDC (네이버) 추가
-   - Google 활성화
-   - Kakao 활성화
-   - Email/Password 활성화 (백업)
-4. `profiles` 테이블 + `handle_new_user()` 트리거 migration 작성
-5. `/login` 페이지 (admin 앱) 구현 — 네이버·카카오·구글 버튼
-6. middleware 추가 (처음엔 **off** 상태로 배포)
-7. `pemove@naver.com`으로 첫 로그인 → `profiles` 로우 확인
-8. `update profiles set is_super_admin = true where email = 'pemove@naver.com'`
-9. middleware **on** → cutover
+**코드 작업 (2026-04-21 완료)**
+
+- [x] `phase-2-auth` 브랜치 생성 (master 분기)
+- [x] `profiles` 테이블 + `handle_new_user()` 트리거 migration (`20260421000001_profiles.sql`)
+  - RLS 활성화: 본인 로우 + super_admin 전체 select
+- [x] `/login` 페이지 — 네이버·카카오·구글 버튼 + 이메일 백업
+- [x] `/auth/callback` route handler — code→session 교환
+- [x] `/logout` route handler — signOut 후 /login 리다이렉트
+- [x] `proxy.ts` (Next 16 명칭, 구 middleware) — `AUTH_ENFORCED` env flag 로 on/off, super_admin 만 통과
+- [x] 로컬 검증: `/login` 200, `/cases` 200, `/apply` 200, 타입체크 통과
+
+**외부 설정 (사용자 작업)**
+
+- [ ] 네이버 개발자 앱 등록 (callback URL: `https://jxyalwbstsqpecavqfkb.supabase.co/auth/v1/callback`)
+- [ ] Supabase Dashboard → Authentication → Providers:
+  - [ ] Google 활성화
+  - [ ] Kakao 활성화
+  - [ ] Email/Password 활성화 (백업)
+  - [ ] 커스텀 OIDC (네이버) — id_token 호환성 문제 가능, 최후 순서
+- [ ] `supabase db push` 로 `profiles` migration 적용
+- [ ] Vercel env 추가: `AUTH_ENFORCED=false` (아직 cutover 전)
+
+**Cutover 절차**
+
+1. `pemove@naver.com` 으로 첫 로그인 (또는 Google/Kakao 계정) → `profiles` 로우 자동 생성 확인
+2. `update profiles set is_super_admin = true where email = '<첫 로그인 이메일>'`
+3. Vercel env `AUTH_ENFORCED=true` 로 변경 → Redeploy
+4. 로그아웃 후 재로그인 → `/cases` 접근 가능 확인
+
+**리스크 — 네이버 OIDC**
+
+- 네이버는 정식 OIDC `id_token` 대신 OAuth2 access_token 중심 → Supabase 의 "Custom OIDC" 설정으로 동작 안 할 가능성.
+- **대안 A**: Google + Kakao + Email 로 출시 → 네이버는 Phase 2.5 로 분리.
+- **대안 B**: 자체 `/api/auth/naver` route 에서 naver OAuth2 → 이메일 조회 → Supabase admin API 로 user 생성/매칭 → magic link 세션 발급.
 
 매 Phase 끝날 때 이 섹션을 업데이트한다.
 

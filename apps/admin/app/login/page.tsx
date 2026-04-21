@@ -1,0 +1,133 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { supabaseBrowser } from '@/lib/supabase/browser'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+
+type Provider = 'google' | 'kakao' | 'naver'
+
+export default function LoginPage() {
+  const router = useRouter()
+  const search = useSearchParams()
+  const next = search.get('next') ?? '/cases'
+
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  async function oauth(provider: Provider) {
+    setLoading(provider)
+    setError(null)
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`
+
+    // 네이버는 Supabase builtin 이 아니라 "커스텀 OIDC" provider 로 등록 예정.
+    // Provider ID 는 Supabase Dashboard 에 설정한 slug ('naver') 와 맞춰야 함.
+    const { error } = await supabaseBrowser.auth.signInWithOAuth({
+      provider: provider === 'naver' ? ('naver' as 'google') : provider,
+      options: { redirectTo },
+    })
+
+    if (error) {
+      setError(error.message)
+      setLoading(null)
+    }
+  }
+
+  async function emailLogin(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading('email')
+    setError(null)
+    const { error } = await supabaseBrowser.auth.signInWithPassword({
+      email,
+      password,
+    })
+    if (error) {
+      setError(error.message)
+      setLoading(null)
+      return
+    }
+    router.replace(next)
+    router.refresh()
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center p-md">
+      <div className="w-full max-w-sm space-y-lg rounded-lg border bg-card p-lg shadow-sm">
+        <div className="space-y-xs text-center">
+          <h1 className="text-xl font-semibold">펫무브워크 로그인</h1>
+          <p className="text-sm text-muted-foreground">
+            소셜 계정으로 로그인하세요.
+          </p>
+        </div>
+
+        <div className="space-y-sm">
+          <Button
+            className="w-full"
+            variant="outline"
+            disabled={loading !== null}
+            onClick={() => oauth('naver')}
+          >
+            {loading === 'naver' ? '이동 중…' : '네이버로 로그인'}
+          </Button>
+          <Button
+            className="w-full"
+            variant="outline"
+            disabled={loading !== null}
+            onClick={() => oauth('kakao')}
+          >
+            {loading === 'kakao' ? '이동 중…' : '카카오로 로그인'}
+          </Button>
+          <Button
+            className="w-full"
+            variant="outline"
+            disabled={loading !== null}
+            onClick={() => oauth('google')}
+          >
+            {loading === 'google' ? '이동 중…' : 'Google 로 로그인'}
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-sm text-xs text-muted-foreground">
+          <div className="h-px flex-1 bg-border" />
+          <span>또는 이메일</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        <form onSubmit={emailLogin} className="space-y-sm">
+          <Input
+            type="email"
+            placeholder="email@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+          />
+          <Input
+            type="password"
+            placeholder="비밀번호"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="current-password"
+          />
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading !== null || !email || !password}
+          >
+            {loading === 'email' ? '로그인 중…' : '이메일로 로그인'}
+          </Button>
+        </form>
+
+        {error && (
+          <p className="rounded border border-destructive/40 bg-destructive/10 p-sm text-xs text-destructive">
+            {error}
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
