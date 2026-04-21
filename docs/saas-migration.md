@@ -8,10 +8,12 @@
 
 ## 현재 상태
 
-- **날짜**: 2026-04-21
+- **날짜**: 2026-04-22
 - **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅ (Email 로그인 cutover 완료)
-- **진행 중**: Phase 2.5 — Kakao OAuth 시도 중 **블로커**(비즈앱 미등록) — 아래 "Phase 2.5 Kakao 상태" 참조
-- **다음 세션 시작점**: 세 가지 선택지 중 결정 후 진행 (A. 비즈앱 등록 / B. Google 먼저 / C. 커스텀 Kakao OAuth 구현)
+- **진행 중**:
+  - Phase 2.5 — Kakao OAuth 블로커(비즈앱 미등록) 보류 중 — 아래 "Phase 2.5 Kakao 상태" 참조
+  - Phase 2.6 — **Seoul 리전 이관** 착수 직전 (스펙 확정, 실행 대기) — 아래 "Phase 2.6 Seoul 리전 이관" 참조
+- **다음 세션 시작점**: "이어서 하자. Phase 2.6 Step 1 부터" → Claude 가 DB 덤프 + Storage/Auth 스크립트 준비 시작
 
 ### Phase 0 완료 (2026-04-21)
 
@@ -61,7 +63,9 @@
 - `/login` — 네이버/카카오/구글 버튼 (아직 disabled) + 이메일 로그인
 - `/auth/callback` — OAuth code→session 교환 (소셜 추가 시 활성)
 - `/logout` — signOut 후 `/login` 리다이렉트
-- `proxy.ts` — 인증 + super_admin 체크, 미인증 시 `/login?next=<원경로>`
+- `proxy.ts` — 인증 체크(로그인만 되면 통과, Phase 3 전까지 super_admin 게이트 완화 — `0ae0bf3`)
+  - 접근 통제는 Supabase Dashboard → Authentication → Users → "Add user" 로 초대받은 계정만 가능
+  - 현재 2명: `petmove@naver.com` (super_admin), `petmove.drive@gmail.com` (신규 직원 계정)
 
 **미완료(다음 단계)**
 
@@ -135,6 +139,72 @@
 - 네이버 OIDC 비호환 대비 대안 A 와 동일 패턴이므로 재사용 여지 있음
 
 **권장** — B(Google) 로 Phase 2 마감 → A(비즈앱) 는 백그라운드에서 검수 대기 → 둘 다 끝나면 Phase 3 진입.
+
+### Phase 2.6 Seoul 리전 이관 (2026-04-22, 실행 대기)
+
+**배경** — 현재 Supabase 프로젝트 리전이 `AWS ap-south-1` (뭄바이). 한국↔뭄바이 RTT 150~200ms 로 로그인·페이지 로딩 전반이 체감 느림. `ap-northeast-2` (Seoul) 로 이관하면 RTT 10~30ms.
+
+**이관 규모 (가볍다)**
+- DB: 0.035 GB (35 MB)
+- Storage: 0.018 GB (18 MB) — `attachments` 버킷 1개, public, UUID 폴더 구조 (케이스별)
+- Auth users: 2명 (`petmove@naver.com`, `petmove.drive@gmail.com`)
+- Plan: Free (Nano) — 새 프로젝트도 Free 로 생성 가능
+
+**이관이 건드리지 않는 것**
+- Vercel 프로젝트·도메인 (`petmove.vercel.app` 그대로)
+- Kakao Developers 앱 (단 Redirect URI 만 새 Supabase URL 로 교체 필요)
+- GitHub 레포·코드 (env 만 바뀜)
+
+**실행 순서 (총 30~40분)**
+
+**Step 1 (Claude) — 덤프 + 스크립트 준비**
+- `pg_dump` 로 기존 DB 전체 덤프 → `backups/pre-seoul-migration-YYYYMMDD.sql`
+- Storage 이관 스크립트 (`apps/admin/scripts/migrate-storage.ts`) — 기존→신규 버킷 파일 스트리밍 복사
+- Auth 유저 재생성 스크립트 (`apps/admin/scripts/migrate-auth-users.ts`) — service_role admin API 로 2명 생성, `is_super_admin` 플래그 복원
+- 실행용 체크리스트 문서
+
+**Step 2 (사용자) — 새 프로젝트 생성**
+- Supabase Dashboard → "New Project"
+- 이름: `petmove-seoul` (제안)
+- Region: **Northeast Asia (Seoul) / `ap-northeast-2`**
+- DB Password 설정 → Claude 에게 전달
+- API Keys 3종 복사 → Claude 에게 전달 (Project URL, Publishable, Secret)
+
+**Step 3 (Claude) — 스키마 + 데이터 + Storage + Auth 복원**
+- 새 프로젝트에 migrations 적용 (`supabase db push` 또는 덤프 restore)
+- `attachments` 버킷 생성 + 파일 복사 스크립트 실행
+- Auth 유저 2명 재생성 + `profiles.is_super_admin = true` 복원 (petmove@naver.com)
+- 로컬 `apps/admin/.env.local` 을 새 값으로 갱신 → `pnpm -F admin dev` 로 로그인·케이스 조회 검증
+
+**Step 4 (사용자) — 프로덕션 전환**
+- Vercel env 교체 (Redeploy):
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+  - `SUPABASE_SECRET_KEY`
+  - `SUPABASE_DB_PASSWORD`
+  - (`OPENAI_API_KEY`, `AUTH_ENFORCED` 는 그대로)
+- Supabase 새 프로젝트 → Authentication → URL Configuration:
+  - Site URL: `https://petmove.vercel.app`
+  - Redirect URLs: `https://petmove.vercel.app/auth/callback`, `http://localhost:3000/auth/callback`
+- Kakao Developers → petmovework REST API 키 수정 → Redirect URI 교체:
+  - 기존: `https://jxyalwbstsqpecavqfkb.supabase.co/auth/v1/callback`
+  - 신규: `https://<새프로젝트id>.supabase.co/auth/v1/callback`
+
+**Step 5 (Claude) — 검증**
+- 기존 vs 신규 테이블 row count 비교 쿼리
+- Storage 파일 개수 비교
+- 로그인 RTT 재측정 (지연 개선 확인)
+- 이상 없으면 기존 프로젝트는 **1~2주 보관 후 삭제** (롤백 여지 남김)
+
+**내일 재개 시 사전 점검**
+- `apps/admin/.env.local` 에 `SUPABASE_DB_PASSWORD` 있는지 (Phase 0 에서 저장됨)
+- `pg_dump --version` 동작 여부 (없으면 `supabase db dump` CLI 대체)
+- Storage 버킷 최상단 경고 "Clients can list all files" — 이관과 무관, Phase 5 RLS 정비 때 같이 처리
+
+**리스크**
+- Free 플랜이라 "Migrate project" 기능 없음 → 신규 프로젝트 생성 방식으로만 가능
+- Supabase 한 organization 당 Free 프로젝트 2개까지 허용 (현재 1개, 신규까지 2개 — 한도 내)
+- 전환 직후 Kakao OAuth Redirect URI 미갱신 시 로그인 깨짐 → Step 4 순서 엄수
 
 ---
 
