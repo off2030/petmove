@@ -7,6 +7,7 @@ import { CompanySection } from './company-section'
 import { ImportReportSection } from './import-report-section'
 import { InspectionSection } from './inspection-section'
 import { DocumentsSection } from './documents-section'
+import { VerificationSection } from './verification-section'
 
 const TABS = [
   { id: 'company', label: '병원 정보' },
@@ -14,6 +15,7 @@ const TABS = [
   { id: 'inspection', label: '검사' },
   { id: 'import_report', label: '신고' },
   { id: 'documents', label: '서류' },
+  { id: 'verification', label: '검증' },
   { id: 'data', label: '데이터 관리' },
 ] as const
 
@@ -95,6 +97,7 @@ export function SettingsApp() {
           {activeTab === 'inspection' && <InspectionSection />}
           {activeTab === 'import_report' && <ImportReportSection />}
           {activeTab === 'documents' && <DocumentsSection />}
+          {activeTab === 'verification' && <VerificationSection />}
           {activeTab === 'data' && <DataSection />}
         </div>
       </div>
