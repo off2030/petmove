@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Pretendard — 한글 글리프 전용. Google Fonts 미등록이라 jsdelivr CDN 경유.
+   latin 폰트(Inter Tight/Source Serif) 뒤 fallback 으로 스택. */
+@font-face {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 45 920;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2-subset/PretendardVariable.woff2') format('woff2-variations');
+}
+
 /* ─────────────────────────────────────────────────────────────
    PetMove — Editorial tone (펫무브워크 Design System)
    Parchment + Terracotta + Near-black. 모든 뉴트럴은 따뜻한 계열.
