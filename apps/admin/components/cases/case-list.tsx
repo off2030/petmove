@@ -369,8 +369,8 @@ export function CaseList({
                       )}
                     >
                       <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm">
-                        {/* Guardian — sans, normal weight (not bold) */}
-                        <span className="truncate font-sans font-normal text-[15px] leading-tight text-foreground/85">
+                        {/* Guardian — sans · 14px · Charcoal (near-black 85%) */}
+                        <span className="truncate font-sans font-normal text-[14px] leading-tight text-foreground/85">
                           {c.customer_name}
                         </span>
 
