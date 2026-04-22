@@ -7,12 +7,71 @@ import type { CaseRow } from '@/lib/supabase/types'
 import { Input } from '@/components/ui/input'
 import { useCases } from './cases-context'
 import { isExtractableFile } from '@/lib/file-to-base64'
-import { destColor } from '@/lib/destination-color'
 import { formatMicrochip } from '@/lib/fields'
 import { TrashModal } from './trash-modal'
 
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
+
+/** 한글 목적지 → ISO 국가 코드 (에디토리얼 prefix 표시용). 매칭 안 되면 null. */
+const COUNTRY_CODE_MAP: Record<string, string> = {
+  '일본': 'JP',
+  '미국': 'US',
+  '하와이': 'US',
+  '괌': 'GU',
+  '캐나다': 'CA',
+  '멕시코': 'MX',
+  '브라질': 'BR',
+  '영국': 'GB',
+  '프랑스': 'FR',
+  '독일': 'DE',
+  '이탈리아': 'IT',
+  '스페인': 'ES',
+  '네덜란드': 'NL',
+  '벨기에': 'BE',
+  '오스트리아': 'AT',
+  '스웨덴': 'SE',
+  '덴마크': 'DK',
+  '핀란드': 'FI',
+  '폴란드': 'PL',
+  '체코': 'CZ',
+  '헝가리': 'HU',
+  '포르투갈': 'PT',
+  '그리스': 'GR',
+  '루마니아': 'RO',
+  '불가리아': 'BG',
+  '크로아티아': 'HR',
+  '슬로바키아': 'SK',
+  '슬로베니아': 'SI',
+  '리투아니아': 'LT',
+  '라트비아': 'LV',
+  '에스토니아': 'EE',
+  '룩셈부르크': 'LU',
+  '몰타': 'MT',
+  '키프로스': 'CY',
+  '아일랜드': 'IE',
+  '스위스': 'CH',
+  '유럽연합': 'EU',
+  '유럽': 'EU',
+  '호주': 'AU',
+  '뉴질랜드': 'NZ',
+  '태국': 'TH',
+  '필리핀': 'PH',
+  '인도네시아': 'ID',
+  '싱가포르': 'SG',
+  '홍콩': 'HK',
+  '대만': 'TW',
+  '중국': 'CN',
+  '베트남': 'VN',
+  '터키': 'TR',
+  '러시아': 'RU',
+  '아랍에미레이트': 'AE',
+  '아랍에미리트': 'AE',
+}
+
+function destCode(name: string): string | null {
+  return COUNTRY_CODE_MAP[name.trim()] ?? null
+}
 
 /**
  * Left-pane list — Editorial tone.
@@ -125,7 +184,7 @@ export function CaseList({
     <div
       ref={rootRef}
       className={cn(
-        'relative flex h-full flex-col gap-md transition-colors',
+        'relative flex h-full flex-col gap-lg transition-colors',
         dragOver && 'ring-2 ring-primary/40 rounded-xl',
       )}
       onDragEnter={(e) => {
@@ -166,7 +225,19 @@ export function CaseList({
         </div>
       )}
 
-      {/* Search + actions — ABOVE the card */}
+      {/* Page header — editorial title + count */}
+      <div className="shrink-0 flex items-baseline justify-between gap-md">
+        <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
+          고객 정보
+        </h1>
+        <span className="text-muted-foreground text-[13px]">
+          <span className="font-serif italic">총</span>{' '}
+          <span className="font-mono tabular-nums">{cases.length.toLocaleString()}</span>
+          <span className="font-serif italic">건</span>
+        </span>
+      </div>
+
+      {/* Search + actions */}
       <div className="flex items-center gap-sm shrink-0">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -250,10 +321,10 @@ export function CaseList({
         </button>
       </div>
 
-      {/* Card: list + count — Editorial: border only, no shadow */}
-      <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border/60 bg-card">
+      {/* List — borderless, editorial */}
+      <div className="flex-1 min-h-0 flex flex-col">
         {/* Column header — editorial caption */}
-        <div className="shrink-0 px-lg pt-4 pb-3 border-b border-border/60">
+        <div className="shrink-0 px-lg pb-3 border-b border-border/60">
           <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80">
             <span>보호자</span>
             <span>반려동물</span>
@@ -297,20 +368,19 @@ export function CaseList({
                           {c.pet_name ?? '—'}
                         </span>
 
-                        {/* Destination — quieter chips with more air */}
-                        <span className="truncate inline-flex items-center justify-end md:justify-start gap-1.5 flex-wrap">
+                        {/* Destination — country code prefix + name */}
+                        <span className="truncate inline-flex items-center justify-end md:justify-start gap-2 flex-wrap">
                           {dests.length > 0 ? (
                             dests.map((d) => {
-                              const tone = destColor(d)
+                              const code = destCode(d)
                               return (
-                                <span
-                                  key={d}
-                                  className={cn(
-                                    'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium tracking-wide',
-                                    tone.bg, tone.text,
+                                <span key={d} className="inline-flex items-baseline gap-1 text-[14px]">
+                                  {code && (
+                                    <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                                      {code}
+                                    </span>
                                   )}
-                                >
-                                  {d}
+                                  <span className="text-foreground/85">{d}</span>
                                 </span>
                               )
                             })
@@ -338,13 +408,8 @@ export function CaseList({
         </div>
       </div>
 
-      {/* Footer — editorial caption */}
-      <div className="shrink-0 flex items-center justify-between text-[12px] text-muted-foreground">
-        <span className="tracking-wide">
-          <span className="font-serif italic mr-1">총</span>
-          <span className="font-mono tabular-nums">{filtered.length.toLocaleString()}</span>
-          <span className="font-serif italic ml-1">건</span>
-        </span>
+      {/* Footer — trash only (카운트는 상단 헤더로 이동) */}
+      <div className="shrink-0 flex items-center justify-end text-[12px] text-muted-foreground">
         <button
           type="button"
           onClick={() => setShowTrash(true)}
