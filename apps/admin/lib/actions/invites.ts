@@ -1,8 +1,17 @@
 'use server'
 
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
+import { sendEmail, inviteFromAddress } from '@/lib/email/resend'
+import { inviteEmailHtml, inviteEmailSubject } from '@/lib/email/invite-template'
+
+const ROLE_LABEL: Record<'owner' | 'admin' | 'member', string> = {
+  owner: '소유자',
+  admin: '관리자',
+  member: '멤버',
+}
 
 export type InviteRole = 'owner' | 'admin' | 'member'
 
@@ -92,11 +101,11 @@ export async function listMembers(): Promise<Result<MemberRow[]>> {
   }
 }
 
-/** 초대 생성 — owner/admin 권한 RLS 로 체크됨. */
+/** 초대 생성 — owner/admin 권한 RLS 로 체크됨. 이메일 발송은 best-effort. */
 export async function createInvite(input: {
   email: string
   role: InviteRole
-}): Promise<Result<{ token: string }>> {
+}): Promise<Result<{ token: string; emailSent: boolean; emailError?: string }>> {
   const email = normalizeEmail(input.email)
   if (!email || !email.includes('@')) {
     return { ok: false, error: '유효한 이메일이 아닙니다' }
@@ -110,10 +119,48 @@ export async function createInvite(input: {
     const { data, error } = await supabase
       .from('organization_invites')
       .insert({ org_id: orgId, email, role: input.role, created_by: user.id })
-      .select('token')
+      .select('token, expires_at')
       .single()
     if (error) return { ok: false, error: error.message }
-    return { ok: true, value: { token: data.token as string } }
+
+    const token = data.token as string
+    const expiresAt = new Date(data.expires_at as string)
+
+    // 조직 이름 조회 — 이메일 템플릿에 표시용. RLS 통과 (본인 멤버쉽의 org).
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('name')
+      .eq('id', orgId)
+      .maybeSingle()
+    const orgName = (org?.name as string | undefined) ?? '펫무브워크'
+
+    // 초대 링크 — 요청 origin 기반. 로컬 dev / Vercel preview / prod 모두 자동 대응.
+    const hdrs = await headers()
+    const host = hdrs.get('x-forwarded-host') || hdrs.get('host') || 'petmove.vercel.app'
+    const proto = hdrs.get('x-forwarded-proto') || 'https'
+    const inviteUrl = `${proto}://${host}/invite/${token}`
+
+    let emailSent = false
+    let emailError: string | undefined
+    try {
+      const result = await sendEmail({
+        from: inviteFromAddress(),
+        to: email,
+        subject: inviteEmailSubject(orgName),
+        html: inviteEmailHtml({
+          orgName,
+          inviteUrl,
+          roleLabel: ROLE_LABEL[input.role],
+          expiresAt,
+        }),
+        replyTo: user.email ?? undefined,
+      })
+      emailSent = result !== null
+    } catch (e) {
+      emailError = (e as Error).message
+    }
+
+    return { ok: true, value: { token, emailSent, emailError } }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }

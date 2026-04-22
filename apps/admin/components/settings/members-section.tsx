@@ -24,6 +24,7 @@ export function MembersSection() {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<InviteRole>('member')
   const [inviteError, setInviteError] = useState<string | null>(null)
+  const [inviteNotice, setInviteNotice] = useState<string | null>(null)
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
@@ -56,16 +57,25 @@ export function MembersSection() {
 
   function onCreate() {
     setInviteError(null)
+    setInviteNotice(null)
     startTransition(async () => {
       const r = await createInvite({ email, role })
       if (!r.ok) {
         setInviteError(r.error)
         return
       }
+      const targetEmail = email
       setEmail('')
       setRole('member')
       await refresh()
       await copy(r.value.token)
+      if (r.value.emailSent) {
+        setInviteNotice(`${targetEmail} 로 초대 이메일 발송 완료. 링크도 복사됨.`)
+      } else if (r.value.emailError) {
+        setInviteNotice(`이메일 발송 실패 (${r.value.emailError}) — 링크 복사는 완료.`)
+      } else {
+        setInviteNotice('링크가 복사되었습니다. 초대 대상에게 직접 전달해 주세요. (이메일 자동 발송 비활성화)')
+      }
     })
   }
 
@@ -190,8 +200,11 @@ export function MembersSection() {
         {inviteError && (
           <p className="mt-2 text-sm text-destructive">{inviteError}</p>
         )}
+        {inviteNotice && (
+          <p className="mt-2 text-sm text-muted-foreground">{inviteNotice}</p>
+        )}
         <p className="mt-2 text-xs text-muted-foreground">
-          초대 생성 시 링크가 자동 복사됩니다. 초대 대상에게 직접 전달해 주세요. 유효기간 7일.
+          초대 생성 시 링크가 자동 복사되고 이메일로도 발송됩니다 (환경 설정 시). 유효기간 7일.
         </p>
       </section>
     </div>
