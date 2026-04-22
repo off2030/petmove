@@ -352,7 +352,7 @@ export function CaseList({
                       onClick={() => { selectCase(c.id); setHighlight(-1) }}
                       className={cn(
                         'group block w-full px-lg py-4 text-left transition-colors',
-                        'hover:bg-muted/60',
+                        'hover:bg-muted',
                         isSelected && 'bg-accent',
                         !isSelected && i === highlight && 'bg-muted/60',
                       )}

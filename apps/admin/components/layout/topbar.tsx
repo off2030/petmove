@@ -50,14 +50,14 @@ export function TopBar({
   }, [userMenuOpen])
 
   return (
-    <header className="shrink-0 h-14 w-full flex items-center gap-lg px-md border-b border-border bg-[hsl(200_13%_91%)] dark:bg-[hsl(220_12%_15%)]">
+    <header className="shrink-0 h-14 w-full flex items-center gap-lg px-md border-b border-border/60 bg-background">
         {/* Mobile hamburger — left side, hidden on md+ */}
         <div className="relative md:hidden" ref={menuRef}>
           <button
             type="button"
             onClick={() => setMenuOpen((p) => !p)}
             aria-label="메뉴 열기"
-            className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+            className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
             <Menu size={20} />
           </button>
@@ -73,7 +73,7 @@ export function TopBar({
                     className={`w-full flex items-center gap-sm rounded-sm px-sm py-2 text-sm transition-colors ${
                       active
                         ? 'bg-accent text-foreground font-medium'
-                        : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                        : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                     }`}
                   >
                     <Icon size={16} className="shrink-0" />
@@ -109,7 +109,7 @@ export function TopBar({
                 className={`h-9 inline-flex items-center gap-sm px-sm rounded-md transition-colors text-sm font-medium whitespace-nowrap ${
                   active
                     ? 'bg-accent text-foreground'
-                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 }`}
               >
                 <Icon size={16} className="shrink-0" />
@@ -129,7 +129,7 @@ export function TopBar({
               href="/super-admin"
               title="Super Admin"
               aria-label="Super Admin"
-              className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
               <Shield size={18} />
             </a>
@@ -140,7 +140,7 @@ export function TopBar({
               onClick={cycle}
               title={`테마: ${mode === 'system' ? '시스템' : mode === 'light' ? '라이트' : '다크'} (클릭하여 전환)`}
               aria-label="테마 전환"
-              className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
               {mode === 'system' ? <Monitor size={18} /> : mode === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
@@ -152,7 +152,7 @@ export function TopBar({
             className={`relative h-9 w-9 inline-flex items-center justify-center rounded-md transition-colors ${
               activeTab === 'settings'
                 ? 'bg-accent text-foreground'
-                : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-foreground'
             }`}
           >
             <Settings size={18} />
@@ -168,7 +168,7 @@ export function TopBar({
               onClick={() => setUserMenuOpen((p) => !p)}
               title={userEmail ?? '계정'}
               aria-label="계정 메뉴"
-              className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
               <User size={18} />
             </button>
@@ -181,7 +181,7 @@ export function TopBar({
                 )}
                 <a
                   href="/logout"
-                  className="w-full flex items-center gap-sm rounded-sm px-sm py-2 text-sm text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+                  className="w-full flex items-center gap-sm rounded-sm px-sm py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                 >
                   <LogOut size={16} className="shrink-0" />
                   <span>로그아웃</span>
