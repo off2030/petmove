@@ -380,7 +380,7 @@ export function CaseList({
                                       {code}
                                     </span>
                                   )}
-                                  <span className="font-sans font-normal text-[15px] text-foreground/85">{d}</span>
+                                  <span className="font-serif font-normal text-[14px] text-foreground">{d}</span>
                                 </span>
                               )
                             })
