@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Search, Plus, X, Paperclip, Loader2, Trash2 } from 'lucide-react'
+import { Search, Plus, X, Paperclip, Loader2, History } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { CaseRow } from '@/lib/supabase/types'
 import { Input } from '@/components/ui/input'
@@ -225,16 +225,27 @@ export function CaseList({
         </div>
       )}
 
-      {/* Page header — editorial title + count */}
+      {/* Page header — editorial title + count + 복원 */}
       <div className="shrink-0 px-lg flex items-baseline justify-between gap-md">
         <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
           고객 정보
         </h1>
-        <span className="text-muted-foreground text-[13px]">
-          <span className="font-serif italic">총</span>{' '}
-          <span className="font-mono tabular-nums">{cases.length.toLocaleString()}</span>
-          <span className="font-serif italic">건</span>
-        </span>
+        <div className="flex items-center gap-md">
+          <span className="text-muted-foreground text-[13px]">
+            <span className="font-serif italic">총</span>{' '}
+            <span className="font-mono tabular-nums">{cases.length.toLocaleString()}</span>
+            <span className="font-serif italic">건</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowTrash(true)}
+            title="삭제된 항목 복원"
+            aria-label="삭제된 항목 복원"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          >
+            <History className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Search + actions */}
@@ -406,18 +417,6 @@ export function CaseList({
             </ul>
           )}
         </div>
-      </div>
-
-      {/* Footer — trash only (카운트는 상단 헤더로 이동) */}
-      <div className="shrink-0 flex items-center justify-end text-[12px] text-muted-foreground">
-        <button
-          type="button"
-          onClick={() => setShowTrash(true)}
-          title="휴지통"
-          className="inline-flex h-7 w-7 items-center justify-center rounded-full hover:bg-accent hover:text-foreground transition-colors"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
       </div>
 
       {showTrash && (
