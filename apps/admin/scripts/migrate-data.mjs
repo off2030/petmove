@@ -37,13 +37,24 @@ const src = createClient(SRC_URL, SRC_KEY)
 const dst = createClient(DST_URL, DST_KEY)
 
 // FK 순서대로 나열 — 선행 테이블이 위
+// transform: src 행을 dst 제약에 맞게 정리 (status 레거시 매핑, IDENTITY id 제거 등)
 const TABLES = [
   { name: 'organizations', conflict: 'id' },
   { name: 'field_definitions', conflict: 'id' },
-  { name: 'cases', conflict: 'id' },
+  {
+    name: 'cases',
+    conflict: 'id',
+    // 레거시 영문 status 'applied' → '진행중' (신규 프로젝트 제약: 진행중/완료/보류/취소)
+    transform: (r) => (r.status === 'applied' ? { ...r, status: '진행중' } : r),
+  },
   { name: 'case_history', conflict: 'id' },
   { name: 'app_settings', conflict: 'key' },
-  { name: 'calculator_items', conflict: 'id' },
+  {
+    name: 'calculator_items',
+    // id 가 GENERATED ALWAYS AS IDENTITY — 명시 삽입 불가. (country,item_name) 유니크로 upsert.
+    conflict: 'country,item_name',
+    transform: ({ id, ...rest }) => rest,
+  },
   { name: 'profiles', conflict: 'id' }, // auth 이관 후
 ]
 
@@ -82,10 +93,12 @@ async function migrateTable(t) {
     return { table: t.name, src: 0, ok: 0, fail: 0 }
   }
 
+  const prepared = t.transform ? rows.map(t.transform) : rows
+
   let ok = 0
   let fail = 0
-  for (let i = 0; i < rows.length; i += CHUNK) {
-    const chunk = rows.slice(i, i + CHUNK)
+  for (let i = 0; i < prepared.length; i += CHUNK) {
+    const chunk = prepared.slice(i, i + CHUNK)
     const { error } = await dst
       .from(t.name)
       .upsert(chunk, { onConflict: t.conflict, ignoreDuplicates: false })

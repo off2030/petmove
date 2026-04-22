@@ -12,8 +12,8 @@
 - **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅ (Email 로그인 cutover 완료)
 - **진행 중**:
   - Phase 2.5 — Kakao OAuth 블로커(비즈앱 미등록) 보류 중 — 아래 "Phase 2.5 Kakao 상태" 참조
-  - Phase 2.6 — **Seoul 리전 이관** 착수 직전 (스펙 확정, 실행 대기) — 아래 "Phase 2.6 Seoul 리전 이관" 참조
-- **다음 세션 시작점**: "이어서 하자. Phase 2.6 Step 1 부터" → Claude 가 DB 덤프 + Storage/Auth 스크립트 준비 시작
+  - Phase 2.6 — **Seoul 리전 이관** Step 1~4 완료 (데이터 100% 이관, Vercel env + Supabase URL Config 교체) — Kakao Provider 복제 + Redirect URI 추가만 다른 PC 에서 이어서. 아래 "Phase 2.6 Seoul 리전 이관" 참조
+- **다음 세션 시작점**: 아래 "Phase 2.6 — 남은 작업 (다른 PC 에서 이어서)" 섹션부터
 
 ### Phase 0 완료 (2026-04-21)
 
@@ -140,7 +140,60 @@
 
 **권장** — B(Google) 로 Phase 2 마감 → A(비즈앱) 는 백그라운드에서 검수 대기 → 둘 다 끝나면 Phase 3 진입.
 
-### Phase 2.6 Seoul 리전 이관 (2026-04-22, 실행 대기)
+### Phase 2.6 Seoul 리전 이관 (2026-04-22, Step 1~4 완료)
+
+**결과 요약**
+- 신규 프로젝트: `ugywxiyivfzflqkcnqvu` (ap-northeast-2 Seoul)
+- 기존 프로젝트: `jxyalwbstsqpecavqfkb` (ap-south-1 Mumbai) — **유지** (1~2주 보관 후 삭제)
+- 데이터 이관 검증: src/dst 전 테이블 행수 일치 (organizations 1, field_definitions 46, cases 1835, case_history 1106, app_settings 2, calculator_items 228, profiles 2)
+- Storage: 162/162 파일 복사
+- Auth: 2명 UUID 유지 생성 (임시 비번 발급됨 — 카카오 로그인 사용 중이므로 실사용엔 영향 없음)
+- Vercel env 3종 (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`) → Seoul 값으로 교체 + Redeploy 완료
+- Supabase Seoul Auth URL Configuration: Site URL + Redirect URLs 2개 등록 완료
+
+**실행 중 만난 이슈 & 해결**
+- 한글 문자 인코딩: `clip.exe` (Git Bash) → Windows 클립보드 경로에서 CP949 로 깨짐. PowerShell `Set-Clipboard` 로 해결 (스크립트는 UTF-8 그대로 보존됨)
+- `cases.status='applied'` 43행 → 제약 `('진행중','완료','보류','취소')` 위반. `migrate-data.mjs` `transform` 으로 `applied` → `진행중` 매핑
+- `calculator_items.id` 가 `generated always as identity` → 명시 삽입 불가. `transform` 으로 id 제거 + `(country,item_name)` 유니크를 conflict key 로 사용
+- `field_definitions` dst에 92행 (seed 46 + src 46 중복). `fix-field-defs-dedup.mjs` 로 src 에 없는 id (seed 측) 46행 삭제
+
+**Phase 2.6 — 남은 작업 (다른 PC 에서 이어서)**
+
+0. **사전 준비 (다른 PC)**
+   - `git pull` (이 커밋 포함)
+   - `apps/admin/.env.local` 은 gitignore 됨 → Bitwarden/이전 PC 에서 값 가져오거나 Supabase Dashboard 에서 재복사
+     - `NEW_SUPABASE_URL`, `NEW_SUPABASE_PUBLISHABLE_KEY`, `NEW_SUPABASE_SERVICE_ROLE_KEY`, `NEW_SUPABASE_DB_PASSWORD`
+     - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (구 Mumbai — rollback 및 이관 스크립트용)
+     - `OPENAI_API_KEY`, `KAKAO_REST_API_KEY`
+   - `pnpm install` (필요 시)
+
+1. **Supabase Seoul → Authentication → Providers → Kakao 복제**
+   - Mumbai 설정을 그대로 복사: `https://supabase.com/dashboard/project/jxyalwbstsqpecavqfkb/auth/providers` → Kakao → Client ID / Secret 복사
+   - Seoul: `https://supabase.com/dashboard/project/ugywxiyivfzflqkcnqvu/auth/providers` → Kakao → Enable + 같은 값 붙여넣기
+
+2. **Kakao Developers → Redirect URI 추가**
+   - `https://developers.kakao.com/console/app/1098838` → 카카오 로그인 → Redirect URI → 편집
+   - **추가** (기존 Mumbai 것은 rollback 대비 유지): `https://ugywxiyivfzflqkcnqvu.supabase.co/auth/v1/callback`
+
+3. **Production 검증**
+   - `https://petmove.vercel.app` 접속 → 이메일 로그인 (`petmove.drive@gmail.com` 비번 동일, Mumbai 프로젝트에서 썼던 비번 그대로 — Auth 이관 시 **임시 비번으로 재생성** 되었음에 주의)
+     - 기존 비번 안 먹히면 Supabase Dashboard → Authentication → Users → 해당 유저 ⋯ → "Send password recovery" 로 메일 발송
+   - 케이스 목록 1,835건, 재무 계산기 228행, 조직 설정 등 모두 보이는지 확인
+   - 카카오 로그인 버튼 클릭 → (이전 Phase 2.5 블로커인 KOE205 여전히 재현될 것 — 비즈앱 검수 전까지는 이메일로만 사용)
+   - 체감 속도: Mumbai 시절 대비 로그인/페이지 전환 빨라졌는지
+
+4. **최종**
+   - 1~2주 이상 정상 동작 확인 후 Mumbai 프로젝트 삭제 (Supabase Dashboard → 프로젝트 Settings → Delete)
+   - `.env.local` 에서 구 Mumbai 슬롯 (`NEXT_PUBLIC_SUPABASE_URL` 등) 제거 + `NEW_*` 를 정식 이름으로 리네임
+
+**참고 — Auth 비번**
+- `migrate-auth-users.mjs` 실행 시 2명에게 임시 비번이 새로 발급됨 (원래 Mumbai 비번은 bcrypt 해시라 이식 불가)
+- 가장 깔끔한 방법: Seoul Dashboard → Authentication → Users → 해당 유저 ⋯ → "Send password recovery" 메일 발송 후 각자 재설정
+- 임시 비번 값은 이관 당시 터미널 출력에 있음 — 커밋하지 않음
+
+---
+
+### Phase 2.6 Seoul 리전 이관 (초기 스펙 — 참고용)
 
 **배경** — 현재 Supabase 프로젝트 리전이 `AWS ap-south-1` (뭄바이). 한국↔뭄바이 RTT 150~200ms 로 로그인·페이지 로딩 전반이 체감 느림. `ap-northeast-2` (Seoul) 로 이관하면 RTT 10~30ms.
 
