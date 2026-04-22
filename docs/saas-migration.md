@@ -28,6 +28,61 @@
 
 **Phase 6 (Org 스위처 UI)** 는 단일 테넌트 맥락상 의도적 skip. 두 번째 테넌트 도입 시 구현.
 
+### 🎨 진행 중: Editorial 톤 디자인 리뉴얼 (branch: `design/editorial-tone`, PR #3)
+
+**다른 PC 에서 이어받는 방법**:
+
+```bash
+cd /c/dev/petmove   # 또는 원하는 경로
+git fetch origin
+git checkout design/editorial-tone
+git pull origin design/editorial-tone
+pnpm install        # 새 폰트 의존 반영 (next/font/google 은 이미 의존 관리됨)
+pnpm -F admin dev   # 로컬 확인 (http://localhost:3000)
+# 또는 Vercel Preview URL 로 바로:
+# https://petmove-git-design-editorial-tone-petmove.vercel.app
+```
+
+**적용 완료 항목** (PR #3 현재 상태):
+- ✅ 전체 톤: Parchment/Terracotta/Near-black (globals.css HSL 토큰)
+- ✅ 폰트 시스템: `next/font/google` — Inter Tight + Source Serif 4 + JetBrains Mono + Noto Sans/Serif KR + Pretendard(CDN). tailwind `font-sans/serif/mono` 가 CSS 변수 참조
+- ✅ 모든 화면 borderless — 카드박스 제거 (`rounded-xl border bg-card` → 배경 그대로)
+- ✅ 좌우 내측 `px-lg` 통일
+- ✅ 탭 active 색상 `border-primary text-primary` → `border-foreground text-foreground` (파란 primary 대신 near-black)
+- ✅ 토바: 배경 투명(`bg-background`), 워드마크 세리프, 유저 메뉴 추가
+- ✅ 호버 색상 진하게 (`/50` → 100%)
+
+**페이지별 반영 상태**:
+- `/cases` (홈): "고객 정보" 세리프 타이틀 + "총 N건" 이태릭 + 복원 History 아이콘 (상단 우측). 컬럼: 보호자(sans 16px Charcoal) · 반려동물(serif semibold 17px) · 목적지(prefix code+serif 16px) · 마이크로칩(mono). 검색창 pill 흰배경 placeholder "검색"
+- `/cases` 상세: 카드박스 제거, 목적지 prefix 스타일
+- `/todos`: "할 일" 세리프 타이틀, 카드박스 제거, 목적지 prefix 스타일
+- `/calculator`: "도구" 세리프 타이틀
+- `/settings`: "설정" 세리프 타이틀
+
+**공유 모듈**:
+- `apps/admin/lib/country-code.ts` — 한글 → ISO 코드 맵 (JP/DE/US 등 ~50국). case-list, destination-field, todos-app 모두 이 모듈 사용
+
+**남은 작업 후보** (PR 진행 중):
+- `/super-admin`, `/apply`, `/login` Editorial 톤 일관성 (아직 기존 스타일)
+- 모바일 반응형 확인
+- 다크모드 디테일 확인 (hairline border, shadow 제거로 구분선 약해진 곳 없는지)
+- PR merge 또는 추가 iteration 결정
+
+**PR 업데이트 + Vercel preview URL**:
+- PR: https://github.com/off2030/petmove/pull/3
+- Preview: https://petmove-git-design-editorial-tone-petmove.vercel.app
+- 매 푸시마다 Preview 자동 갱신
+
+**merge 방법** (만족 시):
+- GitHub PR 페이지 맨 아래 초록 **Merge pull request** → **Squash and merge** → **Confirm**
+- master 에 반영되면 `petmove.vercel.app` 자동 배포
+
+**포기 방법** (원복):
+- PR **Close pull request** → master 영향 0 (브랜치만 남음)
+- 로컬: `git checkout master` 로 복귀
+
+---
+
 ### 다음 세션 시작 체크리스트
 
 1. **최신 git log** — `git log --oneline -20` 으로 마지막 세션 커밋 확인
