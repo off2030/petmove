@@ -1,6 +1,6 @@
 'use client'
 
-import { Folder, CheckCircle2, LayoutGrid, Settings, Menu, Monitor, Sun, Moon } from 'lucide-react'
+import { Folder, CheckCircle2, LayoutGrid, Settings, Menu, Monitor, Sun, Moon, Shield } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { countExpiringProducts } from '@petmove/domain'
 import { useDarkMode } from '@/lib/use-dark-mode'
@@ -16,9 +16,11 @@ export const NAV_ITEMS: Array<{ id: TabId; icon: typeof Folder; label: string }>
 export function TopBar({
   activeTab,
   onTabChange,
+  isSuperAdmin = false,
 }: {
   activeTab: TabId
   onTabChange: (tab: TabId) => void
+  isSuperAdmin?: boolean
 }) {
   const expiringCount = useMemo(() => countExpiringProducts(), [])
   const { mode, mounted, cycle } = useDarkMode()
@@ -109,6 +111,16 @@ export function TopBar({
 
         {/* Right-side actions */}
         <div className="flex items-center gap-xs">
+          {isSuperAdmin && (
+            <a
+              href="/super-admin"
+              title="Super Admin"
+              aria-label="Super Admin"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+            >
+              <Shield size={18} />
+            </a>
+          )}
           {mounted && (
             <button
               type="button"

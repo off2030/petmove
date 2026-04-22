@@ -22,7 +22,7 @@ function pathToTab(pathname: string): TabId {
   return 'cases'
 }
 
-export function DashboardShell() {
+export function DashboardShell({ isSuperAdmin = false }: { isSuperAdmin?: boolean }) {
   const pathname = usePathname()
   const [activeTab, setActiveTab] = useState<TabId>(() => pathToTab(pathname))
   const [mounted, setMounted] = useState<Set<TabId>>(() => new Set([activeTab]))
@@ -60,7 +60,7 @@ export function DashboardShell() {
 
   return (
     <>
-      <TopBar activeTab={activeTab} onTabChange={handleTabChange} />
+      <TopBar activeTab={activeTab} onTabChange={handleTabChange} isSuperAdmin={isSuperAdmin} />
       <main className="flex-1 min-w-0 overflow-hidden">
         {mounted.has('cases') && (
           <div className="h-full" style={{ display: activeTab === 'cases' ? 'block' : 'none' }}>
