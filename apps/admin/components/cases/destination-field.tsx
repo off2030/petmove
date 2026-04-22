@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import destsData from '@/data/destinations.json'
-import { destColor } from '@/lib/destination-color'
+import { destCode } from '@/lib/country-code'
 import { CopyButton } from './copy-button'
 
 interface Dest {
@@ -115,24 +115,31 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
       </div>
       <div ref={containerRef} className="relative min-w-0">
         {selected.length > 0 ? (
-          <div className="group/val inline-flex items-center gap-xs flex-wrap">
+          <div className="group/val inline-flex items-center gap-md flex-wrap">
             {selected.map((ko) => {
-              const tone = destColor(ko)
+              const code = destCode(ko)
               const isActive = multi && (activeDestination ?? selected[0]) === ko
               return (
                 <span
                   key={ko}
                   className={cn(
-                    'group/chip inline-flex items-center gap-1 rounded px-2 py-1 text-base font-medium transition-all',
-                    tone.bg, tone.text,
-                    multi && !isActive && 'opacity-50 hover:opacity-80',
-                    isActive && 'ring-2 ring-offset-1 ring-current',
+                    'group/chip inline-flex items-baseline gap-1.5 transition-all',
+                    multi && !isActive && 'opacity-45 hover:opacity-80',
                   )}
                 >
+                  {code && (
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                      {code}
+                    </span>
+                  )}
                   <button
                     type="button"
                     onClick={() => { if (multi) setActiveDestination(ko) }}
-                    className="text-base cursor-pointer"
+                    className={cn(
+                      'font-serif text-[16px] text-foreground',
+                      multi && 'cursor-pointer',
+                      isActive && 'underline underline-offset-4 decoration-foreground/40',
+                    )}
                     title={multi ? '클릭하여 이 국가 항목 보기' : undefined}
                   >
                     {ko}
@@ -140,7 +147,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); removeDest(ko) }}
-                    className="opacity-0 group-hover/chip:opacity-70 hover:!opacity-100 leading-none text-base transition-opacity"
+                    className="opacity-0 group-hover/chip:opacity-70 hover:!opacity-100 leading-none text-sm text-muted-foreground transition-opacity"
                     title="삭제"
                   >
                     ×

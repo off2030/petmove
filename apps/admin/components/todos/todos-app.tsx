@@ -5,7 +5,7 @@ import { Search } from 'lucide-react'
 import type { CaseRow } from '@/lib/supabase/types'
 import { useCases } from '@/components/cases/cases-context'
 import { Input } from '@/components/ui/input'
-import { destColor } from '@/lib/destination-color'
+import { destCode } from '@/lib/country-code'
 import { matchesDestinationKey } from '@petmove/domain'
 import { cn } from '@/lib/utils'
 import { TodoTable, type TodoColumn } from './todo-table'
@@ -20,17 +20,22 @@ function downloadBase64Pdf(base64: string, filename: string) {
   link.click()
 }
 
-/** 목적지를 국가별 색상 배지로 렌더링 (홈/상세와 동일 패턴). */
+/** 목적지를 국가코드 prefix + 이름 Editorial 스타일로 렌더링 (홈/상세와 동일 패턴). */
 function renderDestinationBadges(value: string | null | undefined) {
   const dests = (value ?? '').split(',').map(s => s.trim()).filter(Boolean)
   if (dests.length === 0) return <span className="text-muted-foreground/50">—</span>
   return (
-    <span className="inline-flex items-center gap-1 flex-wrap">
+    <span className="inline-flex items-center gap-md flex-wrap">
       {dests.map(d => {
-        const tone = destColor(d)
+        const code = destCode(d)
         return (
-          <span key={d} className={cn('inline-flex items-center rounded px-2 py-0.5 text-xs font-medium', tone.bg, tone.text)}>
-            {d}
+          <span key={d} className="inline-flex items-baseline gap-1.5">
+            {code && (
+              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                {code}
+              </span>
+            )}
+            <span className="font-serif text-[15px] text-foreground">{d}</span>
           </span>
         )
       })}

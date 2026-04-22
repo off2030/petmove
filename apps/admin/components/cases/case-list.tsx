@@ -8,70 +8,11 @@ import { Input } from '@/components/ui/input'
 import { useCases } from './cases-context'
 import { isExtractableFile } from '@/lib/file-to-base64'
 import { formatMicrochip } from '@/lib/fields'
+import { destCode } from '@/lib/country-code'
 import { TrashModal } from './trash-modal'
 
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
-
-/** 한글 목적지 → ISO 국가 코드 (에디토리얼 prefix 표시용). 매칭 안 되면 null. */
-const COUNTRY_CODE_MAP: Record<string, string> = {
-  '일본': 'JP',
-  '미국': 'US',
-  '하와이': 'US',
-  '괌': 'GU',
-  '캐나다': 'CA',
-  '멕시코': 'MX',
-  '브라질': 'BR',
-  '영국': 'GB',
-  '프랑스': 'FR',
-  '독일': 'DE',
-  '이탈리아': 'IT',
-  '스페인': 'ES',
-  '네덜란드': 'NL',
-  '벨기에': 'BE',
-  '오스트리아': 'AT',
-  '스웨덴': 'SE',
-  '덴마크': 'DK',
-  '핀란드': 'FI',
-  '폴란드': 'PL',
-  '체코': 'CZ',
-  '헝가리': 'HU',
-  '포르투갈': 'PT',
-  '그리스': 'GR',
-  '루마니아': 'RO',
-  '불가리아': 'BG',
-  '크로아티아': 'HR',
-  '슬로바키아': 'SK',
-  '슬로베니아': 'SI',
-  '리투아니아': 'LT',
-  '라트비아': 'LV',
-  '에스토니아': 'EE',
-  '룩셈부르크': 'LU',
-  '몰타': 'MT',
-  '키프로스': 'CY',
-  '아일랜드': 'IE',
-  '스위스': 'CH',
-  '유럽연합': 'EU',
-  '유럽': 'EU',
-  '호주': 'AU',
-  '뉴질랜드': 'NZ',
-  '태국': 'TH',
-  '필리핀': 'PH',
-  '인도네시아': 'ID',
-  '싱가포르': 'SG',
-  '홍콩': 'HK',
-  '대만': 'TW',
-  '중국': 'CN',
-  '베트남': 'VN',
-  '터키': 'TR',
-  '러시아': 'RU',
-  '아랍에미레이트': 'AE',
-  '아랍에미리트': 'AE',
-}
-
-function destCode(name: string): string | null {
-  return COUNTRY_CODE_MAP[name.trim()] ?? null
-}
 
 /**
  * Left-pane list — Editorial tone.
