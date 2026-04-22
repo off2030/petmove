@@ -15,11 +15,17 @@ const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
 
 /**
- * Left-pane list. Everything is client-side:
- *   - live multi-term search (space-separated terms, AND semantics)
- *   - searches across every scalar field in the row (identity + data jsonb)
- *   - progressive rendering: 100 rows first, +100 on scroll
- *   - drag/drop, Ctrl+V paste, or 📎 button: drop files → new case auto-filled from AI extraction
+ * Left-pane list — Editorial tone.
+ *
+ * 행동(검색·드롭·Ctrl+V·무한스크롤·키보드 내비·휴지통)과 데이터 흐름은
+ * 원본과 100% 동일합니다. 변경된 것은 "어떻게 보이는가"뿐입니다:
+ *   - 보호자 이름: Source Serif 4 (Editorial primary)
+ *   - 반려동물 이름: italic secondary
+ *   - 마이크로칩: JetBrains Mono, faded tertiary
+ *   - 행 간격 여유, 구분선 hairline
+ *   - 검색창 pill, 아이콘 버튼 원형 테두리
+ *   - 카드 컨테이너 border-only (shadow 제거)
+ *   - 카운터는 소문자 에디토리얼 캡션
  */
 export function CaseList({
   onAdd,
@@ -46,8 +52,6 @@ export function CaseList({
     const raw = query.trim().toLowerCase()
     if (!raw) return cases
 
-    // If query has spaces, try exact phrase match first
-    // e.g., "000 000" should match "410 000 000 123 456", not every chip with a single "000"
     if (raw.includes(' ')) {
       const phraseMatch = cases.filter((c) =>
         buildSearchString(c).toLowerCase().includes(raw),
@@ -55,8 +59,6 @@ export function CaseList({
       if (phraseMatch.length > 0) return phraseMatch
     }
 
-    // Fallback: multi-term AND (each term must appear somewhere)
-    // e.g., "오유진 루이" → both "오유진" AND "루이" must be present
     const terms = raw.split(/\s+/).filter(Boolean)
     return cases.filter((c) => {
       const hay = buildSearchString(c).toLowerCase()
@@ -70,7 +72,7 @@ export function CaseList({
   const rootRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
-  const dragDepth = useRef(0) // 자식 위로 옮겨다닐 때 dragleave 깜빡임 방지
+  const dragDepth = useRef(0)
 
   function handleFiles(list: FileList | File[] | null | undefined) {
     if (!list || !onAddFromFiles) return
@@ -78,14 +80,10 @@ export function CaseList({
     if (files.length > 0) onAddFromFiles(files)
   }
 
-  // 전역 paste 리스너: 목록 화면이 실제로 보일 때만 동작.
-  // 상세페이지(selectedId !== null)에서 붙여넣으면 다른 컴포넌트(예: Japan AI 입력)가
-  // 같은 paste 이벤트를 먼저 처리하는데, 여기서도 반응하면 유령 새 케이스가 생김.
   useEffect(() => {
     if (!onAddFromFiles) return
-    if (selectedId !== null) return  // 상세 뷰일 땐 비활성
+    if (selectedId !== null) return
     function onPaste(e: ClipboardEvent) {
-      // input/textarea에 포커스돼 있으면 그쪽에 맡김
       const tag = (e.target as HTMLElement | null)?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA') return
       if (!e.clipboardData) return
@@ -106,7 +104,7 @@ export function CaseList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onAddFromFiles, selectedId])
 
-  // Infinite scroll via intersection observer
+  // Infinite scroll
   const sentinelRef = useRef<HTMLLIElement>(null)
   useEffect(() => {
     const node = sentinelRef.current
@@ -171,7 +169,7 @@ export function CaseList({
       {/* Search + actions — ABOVE the card */}
       <div className="flex items-center gap-sm shrink-0">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -205,14 +203,15 @@ export function CaseList({
               }
             }}
             autoFocus
-            placeholder="검색"
-            className="h-10 pl-9 pr-8 text-[15px] bg-card"
+            placeholder="이름·칩번호·도착지로 검색"
+            // Editorial pill: 살짝 둥근 필, 투명 배경, 호버에 hairline
+            className="h-11 pl-10 pr-9 text-[15px] bg-transparent border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
           />
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -234,7 +233,7 @@ export function CaseList({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               title="파일로 새 케이스 추가 (드래그·드롭 / Ctrl+V 도 가능)"
             >
               <Paperclip className="h-4 w-4" />
@@ -244,89 +243,115 @@ export function CaseList({
         <button
           type="button"
           onClick={() => onAdd?.()}
-          className="shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
           title="새 케이스 추가"
         >
           <Plus className="h-4 w-4" />
         </button>
       </div>
 
-      {/* Card: list + count */}
-      <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border/60 bg-card p-md shadow-sm">
-      {/* Scrollable list */}
-      <div className="flex-1 overflow-y-auto scrollbar-minimal -mx-md">
-        {visibleCases.length === 0 ? (
-          <div className="py-12 text-center text-sm text-muted-foreground">
-            결과가 없습니다
+      {/* Card: list + count — Editorial: border only, no shadow */}
+      <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border/60 bg-card">
+        {/* Column header — editorial caption */}
+        <div className="shrink-0 px-lg pt-4 pb-3 border-b border-border/60">
+          <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80">
+            <span>보호자</span>
+            <span>반려동물</span>
+            <span>도착지</span>
+            <span className="hidden md:block">마이크로칩</span>
           </div>
-        ) : (
-          <ul>
-            {visibleCases.map((c, i) => {
-              const isSelected = c.id === selectedId
-              const dest = c.destination
-              const dests = dest ? dest.split(',').map(s => s.trim()).filter(Boolean) : []
-              return (
-                <li key={c.id} data-case-idx={i} className="border-b border-border/60 last:border-b-0">
-                  <button
-                    type="button"
-                    onClick={() => { selectCase(c.id); setHighlight(-1) }}
-                    className={cn(
-                      'block w-full px-md py-2.5 text-left transition-colors',
-                      'hover:bg-muted/60',
-                      isSelected && 'bg-accent',
-                      !isSelected && i === highlight && 'bg-muted/60',
-                    )}
-                  >
-                    <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm text-base">
-                      <span className="truncate font-medium text-foreground">
-                        {c.customer_name}
-                      </span>
-                      <span className="truncate text-muted-foreground">
-                        {c.pet_name ?? '—'}
-                      </span>
-                      <span className="truncate inline-flex items-center justify-end md:justify-start gap-1 flex-wrap">
-                        {dests.length > 0 ? (
-                          dests.map((d) => {
-                            const tone = destColor(d)
-                            return (
-                              <span key={d} className={cn(
-                                'inline-flex items-center rounded px-2 py-0.5 text-xs font-medium',
-                                tone.bg, tone.text,
-                              )}>
-                                {d}
-                              </span>
-                            )
-                          })
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </span>
-                      <span className="hidden md:block font-mono text-[13px] text-muted-foreground tabular-nums">
-                        {formatMicrochip(c.microchip) ?? c.microchip ?? '미등록'}
-                      </span>
-                    </div>
-                  </button>
-                </li>
-              )
-            })}
-            {visible < filtered.length && (
-              <li ref={sentinelRef} className="h-10" />
-            )}
-          </ul>
-        )}
-      </div>
+        </div>
+
+        {/* Scrollable list */}
+        <div className="flex-1 overflow-y-auto scrollbar-minimal">
+          {visibleCases.length === 0 ? (
+            <div className="py-16 text-center text-sm text-muted-foreground italic font-serif">
+              결과가 없습니다
+            </div>
+          ) : (
+            <ul>
+              {visibleCases.map((c, i) => {
+                const isSelected = c.id === selectedId
+                const dest = c.destination
+                const dests = dest ? dest.split(',').map(s => s.trim()).filter(Boolean) : []
+                return (
+                  <li key={c.id} data-case-idx={i} className="border-b border-border/60 last:border-b-0">
+                    <button
+                      type="button"
+                      onClick={() => { selectCase(c.id); setHighlight(-1) }}
+                      className={cn(
+                        'group block w-full px-lg py-4 text-left transition-colors',
+                        'hover:bg-muted/60',
+                        isSelected && 'bg-accent',
+                        !isSelected && i === highlight && 'bg-muted/60',
+                      )}
+                    >
+                      <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm">
+                        {/* Guardian — serif primary */}
+                        <span className="truncate font-serif text-[17px] leading-tight text-foreground">
+                          {c.customer_name}
+                        </span>
+
+                        {/* Pet — italic secondary */}
+                        <span className="truncate font-serif italic text-[15px] text-foreground/75">
+                          {c.pet_name ?? '—'}
+                        </span>
+
+                        {/* Destination — quieter chips with more air */}
+                        <span className="truncate inline-flex items-center justify-end md:justify-start gap-1.5 flex-wrap">
+                          {dests.length > 0 ? (
+                            dests.map((d) => {
+                              const tone = destColor(d)
+                              return (
+                                <span
+                                  key={d}
+                                  className={cn(
+                                    'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium tracking-wide',
+                                    tone.bg, tone.text,
+                                  )}
+                                >
+                                  {d}
+                                </span>
+                              )
+                            })
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </span>
+
+                        {/* Microchip — hairline mono */}
+                        <span className="hidden md:block font-mono text-[12px] text-muted-foreground/80 tabular-nums tracking-wide">
+                          {formatMicrochip(c.microchip) ?? c.microchip ?? (
+                            <span className="italic font-serif tracking-normal">미등록</span>
+                          )}
+                        </span>
+                      </div>
+                    </button>
+                  </li>
+                )
+              })}
+              {visible < filtered.length && (
+                <li ref={sentinelRef} className="h-10" />
+              )}
+            </ul>
+          )}
+        </div>
       </div>
 
-      {/* Result count (left) + trash (right) — below the card */}
-      <div className="shrink-0 flex items-center justify-between text-[13px] text-muted-foreground">
-        <span>총 {filtered.length.toLocaleString()}건</span>
+      {/* Footer — editorial caption */}
+      <div className="shrink-0 flex items-center justify-between text-[12px] text-muted-foreground">
+        <span className="tracking-wide">
+          <span className="font-serif italic mr-1">총</span>
+          <span className="font-mono tabular-nums">{filtered.length.toLocaleString()}</span>
+          <span className="font-serif italic ml-1">건</span>
+        </span>
         <button
           type="button"
           onClick={() => setShowTrash(true)}
           title="휴지통"
-          className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-accent hover:text-foreground transition-colors"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-full hover:bg-accent hover:text-foreground transition-colors"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
 
@@ -342,7 +367,6 @@ export function CaseList({
 
 /**
  * Flatten a case row into one string we can case-insensitive substring match.
- * Includes regular columns + every scalar value in the data jsonb.
  */
 function buildSearchString(c: CaseRow): string {
   const chip = c.microchip ?? ''
@@ -352,7 +376,7 @@ function buildSearchString(c: CaseRow): string {
     c.pet_name ?? '',
     c.pet_name_en ?? '',
     chip,
-    chip.replace(/\s/g, ''), // 공백 없는 버전도 포함
+    chip.replace(/\s/g, ''),
     ...(c.microchip_extra ?? []),
     c.destination ?? '',
     c.status,

@@ -1,83 +1,48 @@
 /**
- * PetMove Design System
+ * PetMove Design System — Editorial 톤
  *
- * 홈화면(고객리스트)의 디자인 스타일을 기준으로 모든 페이지에 일관되게 적용합니다.
- *
- * ═══════════════════════════════════════════════════════════════════
- * 홈화면 (고객리스트) 디자인 스타일 정의
- * ═══════════════════════════════════════════════════════════════════
- *
- * 1. 페이지 레이아웃:
- *    - 외부 컨테이너: h-full overflow-hidden px-lg py-10
- *    - 내부 컨테이너: h-full mx-auto max-w-5xl
- *    - 반응형: 2xl:px-xl, 3xl:px-2xl, 4xl:px-3xl
- *              3xl:max-w-6xl, 4xl:max-w-7xl
- *
- * 2. 카드 컨테이너:
- *    - rounded-xl border border-border/60 bg-card p-md shadow-sm
- *
- * 3. 리스트 아이템/필드 행:
- *    - px-md py-2.5
- *    - border-b border-border/60 last:border-b-0
- *    - transition-colors
- *    - hover:bg-muted/60
- *
- * 4. 글씨 크기:
- *    - text-base (16px): 기본 텍스트, 필드 값, 필드 라벨
- *    - text-[15px]: 검색창
- *    - text-sm (14px): 보조 텍스트
- *    - text-xs (12px): 배지, 태그, 카운트
- *    - text-[13px]: 추가 정보 (마이크로칩 등)
- *
- * 5. 입력 필드:
- *    - h-10 px-3 text-[15px] bg-card
- *    - border border-border rounded-md
- *
- * 6. 버튼:
- *    - h-10 w-10 (icon button)
- *    - border border-border bg-card
- *    - hover:bg-accent transition-colors
- *
- * ═══════════════════════════════════════════════════════════════════
+ * 기본 구조/이름은 그대로 유지하고, 각 시맨틱 클래스 안의 Tailwind 값만
+ * 에디토리얼 톤으로 살짝 조정했습니다.
+ *   - 페이지 내부 컨테이너 max-w를 조금 좁혀 중앙 컬럼감(에디토리얼)
+ *   - 카드 라디우스 xl 유지, 음영 축소
+ *   - listItem 의 구분선은 여전히 border-border/60
+ *   - 제목/강조에는 font-serif 유틸리티를 병행 사용 (컴포넌트 측에서)
  */
 
 // ─── Layout ────────────────────────────────────────────────────
-/** 페이지 외부 컨테이너 (h-full overflow-hidden + padding) */
 export const pageContainer =
   'h-full overflow-hidden px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl'
 
-/** 페이지 내부 컨테이너 (mx-auto max-width) */
+// Editorial: 중앙 컬럼을 조금 좁게 (920–1120px)
 export const pageInnerContainer =
-  'h-full mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl'
+  'h-full mx-auto max-w-[920px] 3xl:max-w-[1040px] 4xl:max-w-[1120px]'
 
 // ─── Card ──────────────────────────────────────────────────────
-/** 카드 컨테이너 - 페이지의 메인 콘텐츠 영역 */
+// shadow 제거 — 에디토리얼 톤은 ring/border-only
 export const cardContainer =
-  'rounded-xl border border-border/60 bg-card p-md shadow-sm'
+  'rounded-xl border border-border/60 bg-card p-md'
 
 // ─── List Item ─────────────────────────────────────────────────
-/** 리스트 아이템/필드 행 스타일 */
+// 밀도 유지, 호버 톤만 따뜻한 muted
 export const listItem =
-  'px-md py-2.5 border-b border-border/60 last:border-b-0 transition-colors hover:bg-muted/60'
+  'px-md py-3 border-b border-border/60 last:border-b-0 transition-colors hover:bg-muted/60'
 
 // ─── Text Sizes ────────────────────────────────────────────────
-export const textBase = 'text-base'       // 16px - 기본
-export const textSearch = 'text-[15px]'   // 15px - 검색창
-export const textSm = 'text-sm'           // 14px - 보조
-export const textXs = 'text-xs'           // 12px - 배지
-export const textSecondary = 'text-[13px]' // 13px - 추가 정보
+export const textBase = 'text-base'
+export const textSearch = 'text-[15px]'
+export const textSm = 'text-sm'
+export const textXs = 'text-xs'
+export const textSecondary = 'text-[13px]'
 
 // ─── Input/Button ──────────────────────────────────────────────
+// bg 를 card 로 유지, rounded 만 full 에 가깝게(에디토리얼 필/필라 검색창 대비)
 export const inputField =
   'h-10 px-3 text-[15px] bg-card border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-ring'
 
 export const iconButton =
-  'h-10 w-10 inline-flex items-center justify-center rounded-md border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors'
+  'h-10 w-10 inline-flex items-center justify-center rounded-full border border-border/60 bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors'
 
 // ─── Tabs ──────────────────────────────────────────────────────
-/** 탭 컨테이너 */
 export const tabContainer = 'flex gap-xs mb-6 border-b border-border'
-
-/** 탭 버튼 (활성화/비활성화 상태에 따라 추가 클래스 필요) */
 export const tabButton =
   'px-md py-2 text-base font-medium transition-colors border-b-2 -mb-px'

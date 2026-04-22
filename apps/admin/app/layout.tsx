@@ -14,7 +14,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      {/*
+        Editorial 톤: 폰트는 globals.css 의 @import 에서 로드합니다.
+        변경 사항: body className 에 font-sans 명시(= Inter Tight).
+      */}
+      <body className="min-h-screen bg-background text-foreground antialiased font-sans">
         <ThemeProvider />
         <div className="flex flex-col h-screen">
           {children}

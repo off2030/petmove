@@ -1,54 +1,94 @@
+@import url("https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────
+   PetMove — Editorial tone (펫무브워크 Design System)
+   Parchment + Terracotta + Near-black. 모든 뉴트럴은 따뜻한 계열.
+   ───────────────────────────────────────────────────────────── */
+
 @layer base {
   :root {
-    /* Serene Authority — cool neutrals with muted sage anchor */
-    --background: 210 17% 98%;           /* #f8f9fa */
-    --foreground: 195 8% 19%;            /* #2d3335 on-surface */
-    --card: 0 0% 100%;                   /* #ffffff surface-container-lowest */
-    --card-foreground: 195 8% 19%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 195 8% 19%;
-    --primary: 180 19% 33%;              /* #456565 muted sage */
-    --primary-foreground: 178 100% 94%;  /* #e0fffe */
-    --secondary: 195 17% 95%;            /* #f1f4f5 surface-container-low */
-    --secondary-foreground: 195 8% 19%;
-    --muted: 205 13% 93%;                /* #ebeef0 surface-container */
-    --muted-foreground: 200 6% 40%;
-    --accent: 200 13% 91%;               /* #e5e9eb surface-container-high */
-    --accent-foreground: 195 8% 19%;
-    --destructive: 0 65% 50%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 203 14% 89%;               /* #dee3e6 surface-container-highest */
-    --input: 203 14% 89%;
-    --ring: 180 19% 33%;
+    /* Warm editorial palette — HSL pairs */
+
+    /* Page: Parchment #f5f4ed */
+    --background: 51 25% 94%;
+    /* Primary text: Near Black #141413 */
+    --foreground: 60 3% 8%;
+
+    /* Card: Ivory #faf9f5 */
+    --card: 48 33% 97%;
+    --card-foreground: 60 3% 8%;
+
+    --popover: 48 33% 97%;
+    --popover-foreground: 60 3% 8%;
+
+    /* Primary: Terracotta #c96442 */
+    --primary: 15 57% 53%;
+    /* Primary foreground: Ivory */
+    --primary-foreground: 48 33% 97%;
+
+    /* Secondary: Warm Sand #e8e6dc */
+    --secondary: 48 22% 88%;
+    --secondary-foreground: 60 3% 8%;
+
+    /* Muted: Border Cream #f0eee6 */
+    --muted: 47 25% 92%;
+    /* Muted foreground: Olive Gray #5e5d59 */
+    --muted-foreground: 48 4% 36%;
+
+    /* Accent: Warm Sand */
+    --accent: 48 22% 88%;
+    --accent-foreground: 60 3% 8%;
+
+    /* Destructive: Warm crimson #b53333 */
+    --destructive: 0 56% 45%;
+    --destructive-foreground: 48 33% 97%;
+
+    /* Border: #e8e6dc (warm) */
+    --border: 48 22% 88%;
+    --input: 48 22% 88%;
+    /* Ring (focus): keep the accessible cool blue #3898ec — the only cool color in the system */
+    --ring: 210 82% 57%;
+
     --radius: 0.5rem;
   }
 
   .dark {
     color-scheme: dark;
-    /* Sophisticated dark slate — not pure black */
-    --background: 220 13% 11%;           /* ~#181c22 deep cool slate */
-    --foreground: 210 15% 92%;
-    --card: 220 12% 14%;                 /* ~#1e2229 elevated card */
-    --card-foreground: 210 15% 92%;
-    --popover: 220 12% 14%;
-    --popover-foreground: 210 15% 92%;
-    --primary: 178 55% 75%;              /* softer muted sage for dark */
-    --primary-foreground: 220 13% 11%;
-    --secondary: 220 10% 17%;
-    --secondary-foreground: 210 15% 92%;
-    --muted: 220 10% 17%;
-    --muted-foreground: 215 10% 62%;
-    --accent: 220 10% 21%;
-    --accent-foreground: 210 15% 92%;
-    --destructive: 0 62% 40%;
-    --destructive-foreground: 210 15% 92%;
-    --border: 220 10% 22%;
-    --input: 220 10% 22%;
-    --ring: 178 55% 60%;
+    /* Near Black bg (#141413), parchment foreground */
+    --background: 60 3% 8%;
+    --foreground: 48 33% 97%;
+
+    /* Dark Surface #30302e */
+    --card: 60 3% 19%;
+    --card-foreground: 48 33% 97%;
+
+    --popover: 60 3% 19%;
+    --popover-foreground: 48 33% 97%;
+
+    /* On dark, primary = softer coral #d97757 */
+    --primary: 18 63% 60%;
+    --primary-foreground: 60 3% 8%;
+
+    --secondary: 60 3% 23%;
+    --secondary-foreground: 48 33% 97%;
+
+    --muted: 60 3% 19%;
+    /* Warm silver #b0aea5 */
+    --muted-foreground: 48 6% 66%;
+
+    --accent: 60 3% 23%;
+    --accent-foreground: 48 33% 97%;
+
+    --destructive: 0 56% 45%;
+    --destructive-foreground: 48 33% 97%;
+
+    --border: 60 3% 23%;
+    --input: 60 3% 23%;
+    --ring: 210 82% 57%;
   }
 }
 
@@ -58,32 +98,35 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
     font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+
+  /* Editorial serif — use via .font-serif on headlines and pet names */
+  .font-serif {
+    font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+    font-weight: 500;
+    letter-spacing: -0.1px;
+  }
+
+  .font-mono {
+    font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   }
 }
 
 @layer utilities {
-  /* Hide scrollbar but keep scroll behavior */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-  /* Minimal, almost-invisible scrollbar — stays subtle, highlights on hover */
   .scrollbar-minimal {
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--border)) transparent;
   }
-  .scrollbar-minimal::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  .scrollbar-minimal::-webkit-scrollbar-track {
-    background: transparent;
-  }
+  .scrollbar-minimal::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-minimal::-webkit-scrollbar-track { background: transparent; }
   .scrollbar-minimal::-webkit-scrollbar-thumb {
     background-color: hsl(var(--border));
     border-radius: 9999px;
