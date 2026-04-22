@@ -75,8 +75,15 @@ export function SettingsApp() {
 
   return (
     <div className="h-full overflow-hidden px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
-      <div className="h-full mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl flex flex-col gap-md">
-        <div className="flex gap-xs border-b border-border/60 shrink-0">
+      <div className="h-full mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl flex flex-col gap-lg">
+        {/* Page header — editorial title */}
+        <div className="shrink-0 px-lg">
+          <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
+            설정
+          </h1>
+        </div>
+
+        <div className="flex gap-xs border-b border-border/60 shrink-0 px-lg">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -84,7 +91,7 @@ export function SettingsApp() {
               onClick={() => setActiveTab(tab.id)}
               className={`px-md py-2 text-base font-medium transition-colors border-b-2 -mb-px ${
                 activeTab === tab.id
-                  ? 'border-primary text-primary'
+                  ? 'border-foreground text-foreground'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -93,7 +100,7 @@ export function SettingsApp() {
           ))}
         </div>
 
-        <div className="flex-1 min-h-0 overflow-auto scrollbar-minimal">
+        <div className="flex-1 min-h-0 overflow-auto scrollbar-minimal px-lg">
           {activeTab === 'company' && <CompanySection />}
           {activeTab === 'members' && <MembersSection />}
           {activeTab === 'vaccines' && <VaccineSection />}
