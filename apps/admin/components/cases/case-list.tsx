@@ -358,8 +358,8 @@ export function CaseList({
                       )}
                     >
                       <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm">
-                        {/* Guardian — sans, regular weight */}
-                        <span className="truncate font-sans text-[15px] leading-tight text-foreground">
+                        {/* Guardian — sans, normal weight (not bold) */}
+                        <span className="truncate font-sans font-normal text-[15px] leading-tight text-foreground/85">
                           {c.customer_name}
                         </span>
 
@@ -374,13 +374,13 @@ export function CaseList({
                             dests.map((d) => {
                               const code = destCode(d)
                               return (
-                                <span key={d} className="inline-flex items-baseline gap-1 text-[14px]">
+                                <span key={d} className="inline-flex items-baseline gap-1.5">
                                   {code && (
                                     <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
                                       {code}
                                     </span>
                                   )}
-                                  <span className="text-foreground/85">{d}</span>
+                                  <span className="font-sans font-normal text-[15px] text-foreground/85">{d}</span>
                                 </span>
                               )
                             })
