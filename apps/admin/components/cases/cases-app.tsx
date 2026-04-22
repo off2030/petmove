@@ -20,7 +20,7 @@ import { generateFormRE, generateFormAC, generateIdentificationDeclaration, gene
 import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-download'
 import { MultiFormDialog } from './multi-form-dialog'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { resolveCerts } from '@/lib/cert-config-defaults'
+import { resolveCerts } from '@petmove/domain'
 import type { CaseRow } from '@/lib/supabase/types'
 
 function downloadBase64Pdf(base64: string, filename: string) {

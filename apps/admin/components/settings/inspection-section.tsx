@@ -11,7 +11,7 @@ import {
   TITER_LABS,
   type InspectionConfig,
   type InspectionLabRule,
-} from '@/lib/inspection-config-defaults'
+} from '@petmove/domain'
 
 function labLabel(labs: { value: string; label: string }[], value: string): string {
   return labs.find(l => l.value === value)?.label ?? value

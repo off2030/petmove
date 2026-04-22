@@ -9,7 +9,7 @@ import {
   DEFAULT_CERT_CONFIG,
   type CertConfig,
   type CertRule,
-} from '@/lib/cert-config-defaults'
+} from '@petmove/domain'
 
 function certLabel(key: string): string {
   return ALL_CERTS.find(c => c.key === key)?.label ?? key

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { saveInspectionConfig } from '@/lib/inspection-config'
-import type { InspectionConfig } from '@/lib/inspection-config-defaults'
+import type { InspectionConfig } from '@petmove/domain'
 
 export type SaveResult =
   | { ok: true; config: InspectionConfig }

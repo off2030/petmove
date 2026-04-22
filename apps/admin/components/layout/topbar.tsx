@@ -2,7 +2,7 @@
 
 import { Folder, CheckCircle2, LayoutGrid, Settings, Menu, Monitor, Sun, Moon } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { countExpiringProducts } from '@/lib/vaccine-lookup'
+import { countExpiringProducts } from '@petmove/domain'
 import { useDarkMode } from '@/lib/use-dark-mode'
 
 export type TabId = 'cases' | 'todos' | 'calculator' | 'settings'

@@ -6,7 +6,7 @@ import type { CaseRow } from '@/lib/supabase/types'
 import { useCases } from '@/components/cases/cases-context'
 import { Input } from '@/components/ui/input'
 import { destColor } from '@/lib/destination-color'
-import { matchesDestinationKey } from '@/lib/destination-config'
+import { matchesDestinationKey } from '@petmove/domain'
 import { cn } from '@/lib/utils'
 import { TodoTable, type TodoColumn } from './todo-table'
 import { InspectionTable, type InspectionRow } from './inspection-table'
@@ -86,7 +86,7 @@ const LAB_OPTIONS = [
  */
 function autoDetectLab(
   destination: string | null | undefined,
-  rules: import('@/lib/inspection-config-defaults').InspectionLabRule[],
+  rules: import('@petmove/domain').InspectionLabRule[],
   defaultLab: string,
 ): string {
   if (!destination) return defaultLab
@@ -115,7 +115,7 @@ function resolveTiterDate(row: CaseRow): string {
 /** Read lab from inspection_lab, fallback to auto-detect from destination */
 function resolveInspectionLab(
   row: CaseRow,
-  rules: import('@/lib/inspection-config-defaults').InspectionLabRule[],
+  rules: import('@petmove/domain').InspectionLabRule[],
   defaultLab: string,
 ): string {
   const data = (row.data ?? {}) as Record<string, unknown>
@@ -177,7 +177,7 @@ function addDays(dateStr: string, days: number): string {
  */
 function buildInspectionRows(
   cases: CaseRow[],
-  titerRules: import('@/lib/inspection-config-defaults').InspectionLabRule[],
+  titerRules: import('@petmove/domain').InspectionLabRule[],
   titerDefault: string,
 ): InspectionRow[] {
   const rows: InspectionRow[] = []

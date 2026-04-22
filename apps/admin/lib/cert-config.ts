@@ -1,11 +1,11 @@
 /**
- * 증명서(서류) 설정 server-only load/save. client 는 @/lib/cert-config-defaults 사용.
+ * 증명서(서류) 설정 server-only load/save. client 는 @petmove/domain 사용.
  */
 import {
   DEFAULT_CERT_CONFIG,
   type CertConfig,
   type CertRule,
-} from '@/lib/cert-config-defaults'
+} from '@petmove/domain'
 
 export { DEFAULT_CERT_CONFIG }
 export type { CertConfig, CertRule }

@@ -8,7 +8,7 @@ import fontkit from '@pdf-lib/fontkit'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import mappings from '@/data/pdf-field-mappings.json'
-import { lookupRabies, lookupExternalParasite, lookupInternalParasite, lookupComprehensive, lookupCiv, lookupKennelCough, lookupParasiteById, getParasiteFamily } from '@/lib/vaccine-lookup'
+import { lookupRabies, lookupExternalParasite, lookupInternalParasite, lookupComprehensive, lookupCiv, lookupKennelCough, lookupParasiteById, getParasiteFamily } from '@petmove/domain'
 import { VET_INFO } from '@/lib/vet-info'
 import type { CaseRow } from '@/lib/supabase/types'
 

@@ -23,6 +23,9 @@ importers:
       '@pdf-lib/fontkit':
         specifier: ^1.1.1
         version: 1.1.1
+      '@petmove/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@supabase/ssr':
         specifier: ^0.10.2
         version: 0.10.2(@supabase/supabase-js@2.104.0)

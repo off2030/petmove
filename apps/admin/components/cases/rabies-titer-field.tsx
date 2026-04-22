@@ -10,7 +10,7 @@ import { labColor } from '@/lib/lab-color'
 import { extractTiterInfo } from '@/lib/actions/extract-titer'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
-import { resolveTiterLab, type InspectionLabRule } from '@/lib/inspection-config-defaults'
+import { resolveTiterLab, type InspectionLabRule } from '@petmove/domain'
 import { severityTextClass, tooltipText, useFieldVerification } from './verification-context'
 
 interface TiterRecord {

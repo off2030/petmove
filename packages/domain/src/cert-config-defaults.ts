@@ -3,7 +3,7 @@
  * 실제 load/save 는 @/lib/cert-config 에서 (서버 전용).
  */
 
-import { EU_COUNTRIES } from '@/lib/inspection-config-defaults'
+import { EU_COUNTRIES } from './inspection-config-defaults'
 
 export interface CertDefinition {
   key: string

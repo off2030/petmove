@@ -6,7 +6,7 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { labColor } from '@/lib/lab-color'
-import { resolveInspectionLabs } from '@/lib/inspection-config-defaults'
+import { resolveInspectionLabs } from '@petmove/domain'
 
 interface InfectiousRecord {
   date: string | null

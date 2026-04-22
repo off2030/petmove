@@ -9,7 +9,7 @@
 ## 현재 상태
 
 - **날짜**: 2026-04-22
-- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 2.6 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Phase 7 ✅ (app_settings → organization_settings 분리)
+- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 2.6 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Phase 7 ✅, Phase 8 ✅ (domain 패키지 추출 — 클라이언트 안전 도메인 로직)
 - **보류**:
   - Phase 2.5 — Kakao OAuth 블로커(비즈앱 미등록) 보류 중 — 아래 "Phase 2.5 Kakao 상태" 참조
   - Phase 2.6 잔여: Kakao Provider 복제 + Redirect URI 추가 (Kakao 비즈앱 블로커 해제 후 진행)
@@ -73,6 +73,22 @@
   - `lib/cert-config.ts`
   - `lib/import-report-config.ts`
 - `app_settings` 테이블은 당분간 유지 (정리는 Phase 8+ 또는 별도 clean-up)
+
+### Phase 8 완료 (2026-04-22)
+
+- [x] `packages/domain/src/` 로 client-safe 도메인 로직 이동:
+  - `destination-config.ts`
+  - `inspection-config-defaults.ts`
+  - `cert-config-defaults.ts`
+  - `import-report-defaults.ts`
+  - `vaccine-lookup.ts` + `data/vaccine-products.json`
+- [x] `packages/domain/src/index.ts` 에서 flat re-export
+- [x] `packages/domain/tsconfig.json` 추가
+- [x] `apps/admin/package.json` 에 `@petmove/domain: workspace:*` dep 추가
+- [x] admin 코드 21개 파일 import 경로 `@/lib/X` → `@petmove/domain` 으로 일괄 교체 (sed)
+- [x] admin 빌드 통과
+- **보류**: `procedure-checks/` 는 `CaseRow` 타입(DB-backed)에 의존 → 별도 Phase 에서 타입 분리 후 이동
+- **중복 주의**: `apps/admin/data/vaccine-products.json` 은 admin 스크립트들(test-*.mjs)이 사용 중이라 남김 (도메인 패키지에도 사본 유지)
 
 ### Phase 0 완료 (2026-04-21)
 

@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
 import type { CaseRow } from '@/lib/supabase/types'
-import { getEffectiveVaccineList } from '@/lib/destination-config'
+import { getEffectiveVaccineList } from '@petmove/domain'
 import { loadVetInfo } from '@/lib/vet-info'
 
 export type GeneratePdfResult =

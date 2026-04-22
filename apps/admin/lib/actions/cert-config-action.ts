@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { saveCertConfig } from '@/lib/cert-config'
-import type { CertConfig } from '@/lib/cert-config-defaults'
+import type { CertConfig } from '@petmove/domain'
 
 export type SaveResult =
   | { ok: true; config: CertConfig }

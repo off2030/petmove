@@ -1,11 +1,11 @@
 /**
- * 검사기관 설정 server-only load/save. client 는 @/lib/inspection-config-defaults 사용.
+ * 검사기관 설정 server-only load/save. client 는 @petmove/domain 사용.
  */
 import {
   DEFAULT_INSPECTION_CONFIG,
   type InspectionConfig,
   type InspectionLabRule,
-} from '@/lib/inspection-config-defaults'
+} from '@petmove/domain'
 
 export { DEFAULT_INSPECTION_CONFIG }
 export type { InspectionConfig, InspectionLabRule }

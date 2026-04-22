@@ -9,9 +9,9 @@ import {
   useState,
 } from 'react'
 import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
-import { parseDestinations } from '@/lib/destination-config'
-import type { InspectionConfig } from '@/lib/inspection-config-defaults'
-import type { CertConfig } from '@/lib/cert-config-defaults'
+import { parseDestinations } from '@petmove/domain'
+import type { InspectionConfig } from '@petmove/domain'
+import type { CertConfig } from '@petmove/domain'
 
 /**
  * Global client-side state for the cases app:

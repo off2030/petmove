@@ -8,7 +8,7 @@ import {
   HIDDEN_EN_KEYS,
   readCaseField,
 } from '@/lib/fields'
-import { getAllowedFields, getVaccineList, getEffectiveVaccineList, getDestinationOverride, TOGGLEABLE_FIELDS } from '@/lib/destination-config'
+import { getAllowedFields, getVaccineList, getEffectiveVaccineList, getDestinationOverride, TOGGLEABLE_FIELDS } from '@petmove/domain'
 import React, { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/utils'

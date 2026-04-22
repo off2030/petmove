@@ -8,7 +8,7 @@ import {
   type FlatProduct,
   type ProductSection,
   type ProductSpecies,
-} from '@/lib/vaccine-lookup'
+} from '@petmove/domain'
 
 const STATUS_STYLES: Record<ExpiryStatus, { label: string; bg: string; text: string; dot: string }> = {
   expired: { label: '만료됨',       bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500' },

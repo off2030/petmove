@@ -2,7 +2,7 @@
  * 백신/구충제 제품 조회. data/vaccine-products.json 기반.
  * 접종일 또는 체중으로 적절한 batch/제조사/제품명을 찾아 반환.
  */
-import productsData from '@/data/vaccine-products.json'
+import productsData from './data/vaccine-products.json'
 
 export interface VaccineProduct {
   vaccine?: string
