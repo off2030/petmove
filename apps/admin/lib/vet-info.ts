@@ -8,27 +8,32 @@
  * PDF 생성 server action 진입 시 loadVetInfo() 를 호출해 캐시를 갱신한다.
  */
 
+/**
+ * 빈 기본값. 실제 값은 organization_settings 의 company_info 에서 로드.
+ * 각 org 는 Settings → 병원 정보 에서 값 입력. 여러 테넌트 지원을 위해 여기에는
+ * 특정 조직 데이터를 하드코딩하지 않는다. 로잔 값은 DB seed 에 있음 (20260422000007_seed_rojan_company_info.sql).
+ */
 export const DEFAULT_VET_INFO = {
   // 한글
-  name_ko: '이진원',
-  clinic_ko: '로잔동물의료센터',
-  address_ko: '대한민국 서울시 관악구 관악로 29길 3, 수안빌딩 1층',
+  name_ko: '',
+  clinic_ko: '',
+  address_ko: '',
 
   // 영문
-  name_en: 'Jinwon Lee',
-  clinic_en: 'Lausanne Veterinary Medical Center',
-  address_en: '1st floor, 3, Gwanak-ro 29-gil, Gwanak-gu, Seoul, Republic of Korea',
+  name_en: '',
+  clinic_en: '',
+  address_en: '',
   /** 주소 1줄 (street) / 2줄 (locality) 분리 */
-  address_street_en: '1st floor, 3, Gwanak-ro 29-gil',
-  address_locality_en: 'Gwanak-gu, Seoul, Republic of Korea',
+  address_street_en: '',
+  address_locality_en: '',
 
   // 연락처
-  phone: '02-872-7588',
-  phone_intl: '+82-2-872-7588',
-  email: 'petmove@naver.com',
+  phone: '',
+  phone_intl: '',
+  email: '',
 
   // 면허
-  license_no: '9608',
+  license_no: '',
 } as const
 
 export type VetInfo = typeof DEFAULT_VET_INFO
