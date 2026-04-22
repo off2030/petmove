@@ -274,7 +274,7 @@ export function CaseList({
               }
             }}
             autoFocus
-            placeholder="이름·칩번호·도착지로 검색"
+            placeholder="이름·칩번호·목적지로 검색"
             // Editorial pill: 살짝 둥근 필, 카드 배경(흰색), hairline 보더
             className="h-11 pl-10 pr-9 text-[15px] bg-card border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
           />
@@ -328,7 +328,7 @@ export function CaseList({
           <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80">
             <span>보호자</span>
             <span>반려동물</span>
-            <span>도착지</span>
+            <span>목적지</span>
             <span className="hidden md:block">마이크로칩</span>
           </div>
         </div>

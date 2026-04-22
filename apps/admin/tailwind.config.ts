@@ -27,9 +27,9 @@ const config: Config = {
     extend: {
       // Editorial 톤: 폰트 스택 명시 — Tailwind `font-sans`/`font-serif`/`font-mono` 가 여기를 따라감
       fontFamily: {
-        sans: ['var(--font-sans)', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Arial', 'sans-serif'],
-        serif: ['var(--font-serif)', 'Georgia', '"Times New Roman"', 'serif'],
-        mono: ['var(--font-mono)', 'ui-monospace', '"SF Mono"', 'Menlo', 'monospace'],
+        sans: ['var(--font-sans)', 'var(--font-sans-kr)', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Arial', 'sans-serif'],
+        serif: ['var(--font-serif)', 'var(--font-serif-kr)', 'Georgia', '"Times New Roman"', 'serif'],
+        mono: ['var(--font-mono)', 'var(--font-sans-kr)', 'ui-monospace', '"SF Mono"', 'Menlo', 'monospace'],
       },
       spacing: {
         xs: '0.25rem',

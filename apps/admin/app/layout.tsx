@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter_Tight, Source_Serif_4, JetBrains_Mono } from 'next/font/google'
+import { Inter_Tight, Source_Serif_4, JetBrains_Mono, Noto_Sans_KR, Noto_Serif_KR } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 
@@ -24,6 +24,19 @@ const jetbrainsMono = JetBrains_Mono({
   variable: '--font-mono',
   display: 'swap',
 })
+// 한글 글리프 — latin 폰트 뒤 fallback 으로 사용. Pretendard 와 비슷한 현대 톤.
+const notoSansKr = Noto_Sans_KR({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-sans-kr',
+  display: 'swap',
+})
+const notoSerifKr = Noto_Serif_KR({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-serif-kr',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: '펫무브워크',
@@ -36,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ko" suppressHydrationWarning className={`${interTight.variable} ${sourceSerif.variable} ${jetbrainsMono.variable}`}>
+    <html lang="ko" suppressHydrationWarning className={`${interTight.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} ${notoSansKr.variable} ${notoSerifKr.variable}`}>
       <body className="min-h-screen bg-background text-foreground antialiased font-sans">
         <ThemeProvider />
         <div className="flex flex-col h-screen">
