@@ -43,16 +43,16 @@ async function fetchFieldDefs(): Promise<FieldDefinition[]> {
   return (data ?? []) as FieldDefinition[]
 }
 
-async function fetchIsSuperAdmin(): Promise<boolean> {
+async function fetchUserContext(): Promise<{ isSuperAdmin: boolean; email: string | null }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return false
+  if (!user) return { isSuperAdmin: false, email: null }
   const { data } = await supabase
     .from('profiles')
     .select('is_super_admin')
     .eq('id', user.id)
     .maybeSingle()
-  return !!data?.is_super_admin
+  return { isSuperAdmin: !!data?.is_super_admin, email: user.email ?? null }
 }
 
 export default async function DashboardLayout({
@@ -60,13 +60,13 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [initialCases, fieldDefs, importReportCountries, inspectionConfig, certConfig, isSuperAdmin] = await Promise.all([
+  const [initialCases, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx] = await Promise.all([
     fetchAllCases(),
     fetchFieldDefs(),
     loadImportReportCountries(),
     loadInspectionConfig(),
     loadCertConfig(),
-    fetchIsSuperAdmin(),
+    fetchUserContext(),
   ])
 
   return (
@@ -77,7 +77,7 @@ export default async function DashboardLayout({
       initialInspectionConfig={inspectionConfig}
       initialCertConfig={certConfig}
     >
-      <DashboardShell isSuperAdmin={isSuperAdmin} />
+      <DashboardShell isSuperAdmin={userCtx.isSuperAdmin} userEmail={userCtx.email} />
     </CasesProvider>
   )
 }

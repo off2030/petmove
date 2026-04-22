@@ -1,6 +1,6 @@
 'use client'
 
-import { Folder, CheckCircle2, LayoutGrid, Settings, Menu, Monitor, Sun, Moon, Shield } from 'lucide-react'
+import { Folder, CheckCircle2, LayoutGrid, Settings, Menu, Monitor, Sun, Moon, Shield, User, LogOut } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { countExpiringProducts } from '@petmove/domain'
 import { useDarkMode } from '@/lib/use-dark-mode'
@@ -17,15 +17,19 @@ export function TopBar({
   activeTab,
   onTabChange,
   isSuperAdmin = false,
+  userEmail,
 }: {
   activeTab: TabId
   onTabChange: (tab: TabId) => void
   isSuperAdmin?: boolean
+  userEmail?: string | null
 }) {
   const expiringCount = useMemo(() => countExpiringProducts(), [])
   const { mode, mounted, cycle } = useDarkMode()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!menuOpen) return
@@ -35,6 +39,15 @@ export function TopBar({
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [menuOpen])
+
+  useEffect(() => {
+    if (!userMenuOpen) return
+    function handler(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [userMenuOpen])
 
   return (
     <header className="shrink-0 h-14 w-full flex items-center gap-lg px-md border-b border-border bg-[hsl(200_13%_91%)] dark:bg-[hsl(220_12%_15%)]">
@@ -147,6 +160,35 @@ export function TopBar({
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-background" />
             )}
           </button>
+
+          {/* 유저 메뉴 — 이메일 + 로그아웃 */}
+          <div className="relative" ref={userMenuRef}>
+            <button
+              type="button"
+              onClick={() => setUserMenuOpen((p) => !p)}
+              title={userEmail ?? '계정'}
+              aria-label="계정 메뉴"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+            >
+              <User size={18} />
+            </button>
+            {userMenuOpen && (
+              <div className="absolute right-0 top-full mt-1 z-30 min-w-[220px] rounded-md border border-border bg-popover p-1 shadow-md">
+                {userEmail && (
+                  <div className="px-sm py-2 text-xs text-muted-foreground border-b border-border/60 mb-1 truncate">
+                    {userEmail}
+                  </div>
+                )}
+                <a
+                  href="/logout"
+                  className="w-full flex items-center gap-sm rounded-sm px-sm py-2 text-sm text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+                >
+                  <LogOut size={16} className="shrink-0" />
+                  <span>로그아웃</span>
+                </a>
+              </div>
+            )}
+          </div>
         </div>
       </header>
   )
