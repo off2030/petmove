@@ -9,11 +9,11 @@
 ## 현재 상태
 
 - **날짜**: 2026-04-22
-- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅ (Email 로그인 cutover 완료)
-- **진행 중**:
+- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅ (Email 로그인 cutover 완료), Phase 2.6 ✅ (Seoul 리전 이관 — Production 검증 완료)
+- **보류**:
   - Phase 2.5 — Kakao OAuth 블로커(비즈앱 미등록) 보류 중 — 아래 "Phase 2.5 Kakao 상태" 참조
-  - Phase 2.6 — **Seoul 리전 이관** Step 1~4 완료 (데이터 100% 이관, Vercel env + Supabase URL Config 교체) — Kakao Provider 복제 + Redirect URI 추가만 다른 PC 에서 이어서. 아래 "Phase 2.6 Seoul 리전 이관" 참조
-- **다음 세션 시작점**: 아래 "Phase 2.6 — 남은 작업 (다른 PC 에서 이어서)" 섹션부터
+  - Phase 2.6 잔여: Kakao Provider 복제 + Redirect URI 추가 (Kakao 비즈앱 블로커 해제 후 진행)
+- **다음 세션 시작점**: Phase 3 (memberships 기반 multi-tenant)
 
 ### Phase 0 완료 (2026-04-21)
 
@@ -157,7 +157,27 @@
 - `calculator_items.id` 가 `generated always as identity` → 명시 삽입 불가. `transform` 으로 id 제거 + `(country,item_name)` 유니크를 conflict key 로 사용
 - `field_definitions` dst에 92행 (seed 46 + src 46 중복). `fix-field-defs-dedup.mjs` 로 src 에 없는 id (seed 측) 46행 삭제
 
-**Phase 2.6 — 남은 작업 (다른 PC 에서 이어서)**
+**Phase 2.6 Production 검증 완료 (2026-04-22 두 번째 세션 / 신규 PC)**
+
+- [x] `apps/admin/.env.local` 재생성 (Mumbai = 정식 슬롯, Seoul = `NEW_*`)
+- [x] Vercel `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 불일치 발견 → Seoul 키로 교체 + Redeploy
+- [x] Auth 임시 비번 재설정 (`scripts/set-password.mjs` 신규 — service role 로 직접 갱신, recovery 플로우 없이 우회)
+- [x] **RLS 불일치 발견 + 임시 수정**
+  - Mumbai: `cases` / `case_history` / `field_definitions` / `organizations` 전부 RLS **off** (단일 기관이라 policy 없이 운영)
+  - Seoul: schema-consolidated 적용 시 RLS **on** 으로 생성됨 + policy 0개 → 전부 차단 → UI 에서 "총 0건"
+  - 임시 패치: Seoul SQL Editor 에서 위 4개 테이블 `DISABLE ROW LEVEL SECURITY` 실행 (Mumbai 와 동일 상태로 맞춤)
+  - Phase 3 memberships 기반 RLS 재도입 시 다시 enable 하고 policy 작성 — `apps/admin/proxy.ts` 주석에도 이미 명시됨
+- [x] 케이스 1,835건 / 계산기 228행 / 조직 설정 표시 확인
+
+**Phase 2.6 잔여 (Kakao 비즈앱 블로커 해제 후)**
+
+1. Supabase Seoul → Authentication → Providers → Kakao 복제
+2. Kakao Developers → Redirect URI 추가: `https://ugywxiyivfzflqkcnqvu.supabase.co/auth/v1/callback`
+3. 최종: 1~2주 정상 동작 확인 후 Mumbai 프로젝트 삭제 + `.env.local` 에서 `NEW_*` → 정식 이름 rename
+
+---
+
+**Phase 2.6 원본 체크리스트 (참고용 — 완료)**
 
 0. **사전 준비 (다른 PC)**
    - `git pull` (이 커밋 포함)
