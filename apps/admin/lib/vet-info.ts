@@ -56,10 +56,13 @@ export const VET_INFO = new Proxy({} as VetInfo, {
 export async function loadVetInfo(): Promise<VetInfo> {
   try {
     const { createClient } = await import('@/lib/supabase/server')
+    const { getActiveOrgId } = await import('@/lib/supabase/active-org')
     const supabase = await createClient()
+    const orgId = await getActiveOrgId()
     const { data } = await supabase
-      .from('app_settings')
+      .from('organization_settings')
       .select('value')
+      .eq('org_id', orgId)
       .eq('key', 'company_info')
       .maybeSingle()
     const override = (data?.value as Partial<VetInfo> | null) ?? {}
@@ -73,11 +76,13 @@ export async function loadVetInfo(): Promise<VetInfo> {
 /** 설정 화면에서 호출 — 부분 업데이트 후 캐시 갱신. */
 export async function saveVetInfo(patch: Partial<VetInfo>): Promise<VetInfo> {
   const { createClient } = await import('@/lib/supabase/server')
+  const { getActiveOrgId } = await import('@/lib/supabase/active-org')
   const supabase = await createClient()
+  const orgId = await getActiveOrgId()
   const merged: VetInfo = { ...getVetInfo(), ...patch }
   const { error } = await supabase
-    .from('app_settings')
-    .upsert({ key: 'company_info', value: merged, updated_at: new Date().toISOString() })
+    .from('organization_settings')
+    .upsert({ org_id: orgId, key: 'company_info', value: merged, updated_at: new Date().toISOString() })
   if (error) {
     console.error('[saveVetInfo] upsert error:', error)
     throw new Error(error.message)

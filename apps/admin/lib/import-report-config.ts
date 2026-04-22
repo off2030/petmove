@@ -16,10 +16,13 @@ const APP_SETTINGS_KEY = 'import_report_countries'
 export async function loadImportReportCountries(): Promise<string[]> {
   try {
     const { createClient } = await import('@/lib/supabase/server')
+    const { getActiveOrgId } = await import('@/lib/supabase/active-org')
     const supabase = await createClient()
+    const orgId = await getActiveOrgId()
     const { data } = await supabase
-      .from('app_settings')
+      .from('organization_settings')
       .select('value')
+      .eq('org_id', orgId)
       .eq('key', APP_SETTINGS_KEY)
       .maybeSingle()
     const stored = data?.value
@@ -36,10 +39,12 @@ export async function loadImportReportCountries(): Promise<string[]> {
 export async function saveImportReportCountries(list: string[]): Promise<string[]> {
   const normalized = Array.from(new Set(list.map((s) => s.trim()).filter(Boolean)))
   const { createClient } = await import('@/lib/supabase/server')
+  const { getActiveOrgId } = await import('@/lib/supabase/active-org')
   const supabase = await createClient()
+  const orgId = await getActiveOrgId()
   const { error } = await supabase
-    .from('app_settings')
-    .upsert({ key: APP_SETTINGS_KEY, value: normalized, updated_at: new Date().toISOString() })
+    .from('organization_settings')
+    .upsert({ org_id: orgId, key: APP_SETTINGS_KEY, value: normalized, updated_at: new Date().toISOString() })
   if (error) throw new Error(error.message)
   return normalized
 }

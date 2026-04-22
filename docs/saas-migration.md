@@ -9,11 +9,13 @@
 ## 현재 상태
 
 - **날짜**: 2026-04-22
-- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 2.6 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅ (RLS 활성화 + 정책 + 앱 org_id 주입)
+- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 2.6 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Phase 7 ✅ (app_settings → organization_settings 분리)
 - **보류**:
   - Phase 2.5 — Kakao OAuth 블로커(비즈앱 미등록) 보류 중 — 아래 "Phase 2.5 Kakao 상태" 참조
   - Phase 2.6 잔여: Kakao Provider 복제 + Redirect URI 추가 (Kakao 비즈앱 블로커 해제 후 진행)
-- **다음 세션 시작점**: Phase 6 (Org 컨텍스트 UI — 스위처, `useOrg()` 훅)
+  - Phase 6 (Org 스위처 UI) — 단일 테넌트라 실익 낮음. 두 번째 테넌트 도입 시 구현.
+  - **기술 부채**: `apps/admin/proxy.ts` 의 `AUTH_ENFORCED` 토글 (Phase 2 cutover 과도기). 로컬 env 에 없으면 무인증 접근 허용 → RLS 로 0건 보이고 save 시 "not authenticated" 혼란. Phase 6 이후 항상 enforce 로 변경 + 토글 제거.
+- **다음 세션 시작점**: Phase 8 (domain 패키지 추출) 또는 기술부채 처리
 
 ### Phase 3 완료 (2026-04-22)
 
@@ -59,6 +61,18 @@
 - [x] Seoul 에 Phase 5 RLS SQL 적용
 - [x] `petmove.vercel.app/cases` 1,835건 정상
 - [x] case 수정 → case_history insert org_id 채워짐 확인 (최근 5행 전부 로잔)
+
+### Phase 7 완료 (2026-04-22)
+
+- [x] `supabase/migrations/20260422000004_organization_settings.sql` — Mumbai + Seoul 적용
+- [x] `organization_settings(org_id, key, value jsonb)` 테이블 + RLS (본인 org or super_admin) + updated_at 트리거
+- [x] 기존 `app_settings` 2행 → `organization_settings` (로잔) 로 이관 — 양쪽 환경 동일
+- [x] 앱 코드 4개 교체 — `from('app_settings')` → `from('organization_settings').eq('org_id', orgId)`:
+  - `lib/vet-info.ts` (company_info)
+  - `lib/inspection-config.ts`
+  - `lib/cert-config.ts`
+  - `lib/import-report-config.ts`
+- `app_settings` 테이블은 당분간 유지 (정리는 Phase 8+ 또는 별도 clean-up)
 
 ### Phase 0 완료 (2026-04-21)
 

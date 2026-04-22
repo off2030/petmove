@@ -54,10 +54,13 @@ function normalize(raw: unknown): CertConfig {
 export async function loadCertConfig(): Promise<CertConfig> {
   try {
     const { createClient } = await import('@/lib/supabase/server')
+    const { getActiveOrgId } = await import('@/lib/supabase/active-org')
     const supabase = await createClient()
+    const orgId = await getActiveOrgId()
     const { data } = await supabase
-      .from('app_settings')
+      .from('organization_settings')
       .select('value')
+      .eq('org_id', orgId)
       .eq('key', APP_SETTINGS_KEY)
       .maybeSingle()
     if (data?.value) return normalize(data.value)
@@ -70,10 +73,12 @@ export async function loadCertConfig(): Promise<CertConfig> {
 export async function saveCertConfig(config: CertConfig): Promise<CertConfig> {
   const normalized = normalize(config)
   const { createClient } = await import('@/lib/supabase/server')
+  const { getActiveOrgId } = await import('@/lib/supabase/active-org')
   const supabase = await createClient()
+  const orgId = await getActiveOrgId()
   const { error } = await supabase
-    .from('app_settings')
-    .upsert({ key: APP_SETTINGS_KEY, value: normalized, updated_at: new Date().toISOString() })
+    .from('organization_settings')
+    .upsert({ org_id: orgId, key: APP_SETTINGS_KEY, value: normalized, updated_at: new Date().toISOString() })
   if (error) throw new Error(error.message)
   return normalized
 }
