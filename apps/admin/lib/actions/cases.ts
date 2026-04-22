@@ -29,8 +29,9 @@ export async function updateCaseField(
 
   const supabase = await createClient()
 
-  // Get old value for history
+  // Get old value for history. Also capture org_id for case_history insert.
   let oldValue: string | null = null
+  let orgId: string | null = null
 
   if (storage === 'column') {
     if (!REGULAR_COLUMNS.has(key)) {
@@ -44,6 +45,7 @@ export async function updateCaseField(
     if (row) {
       const v = (row as Record<string, unknown>)[key]
       oldValue = v != null ? String(v) : null
+      orgId = (row as { org_id: string }).org_id
     }
 
     const { error } = await supabase
@@ -89,7 +91,7 @@ export async function updateCaseField(
   } else {
     const { data: row, error: fetchErr } = await supabase
       .from('cases')
-      .select('data')
+      .select('org_id, data')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
@@ -97,6 +99,7 @@ export async function updateCaseField(
     const current: Record<string, unknown> =
       (row?.data as Record<string, unknown> | null) ?? {}
     oldValue = current[key] != null ? String(current[key]) : null
+    orgId = (row as { org_id: string }).org_id
 
     const next = { ...current }
     if (value === null || value === undefined || value === '') {
@@ -114,9 +117,10 @@ export async function updateCaseField(
 
   // Record history (skip if value unchanged)
   const newValue = value != null && value !== '' ? String(value) : null
-  if (oldValue !== newValue) {
+  if (oldValue !== newValue && orgId) {
     await supabase.from('case_history').insert({
       case_id: caseId,
+      org_id: orgId,
       field_key: key,
       field_storage: storage,
       old_value: oldValue,

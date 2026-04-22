@@ -8,11 +8,10 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
+import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { formatMicrochip } from '@/lib/fields'
 import type { CaseRow } from '@/lib/supabase/types'
 import { revalidatePath } from 'next/cache'
-
-const ORG_ID = '00000000-0000-0000-0000-000000000001'
 
 /** regular column으로 저장되는 키 (cases 테이블의 실제 컬럼) */
 const REGULAR_COLUMNS = new Set([
@@ -34,6 +33,7 @@ export async function createCaseWithData(
   seed: CaseSeed,
 ): Promise<{ ok: true; case: CaseRow } | { ok: false; error: string }> {
   const supabase = await createClient()
+  const orgId = await getActiveOrgId()
 
   // 정리: null/빈 문자열/undefined 제거
   const cleanColumn: Record<string, unknown> = {}
@@ -55,7 +55,7 @@ export async function createCaseWithData(
   }
 
   const insertRow = {
-    org_id: ORG_ID,
+    org_id: orgId,
     customer_name: '',
     status: 'applied',
     ...cleanColumn,

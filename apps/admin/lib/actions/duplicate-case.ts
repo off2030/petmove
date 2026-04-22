@@ -3,8 +3,6 @@
 import { createClient } from '@/lib/supabase/server'
 import type { CaseRow } from '@/lib/supabase/types'
 
-const ORG_ID = '00000000-0000-0000-0000-000000000001'
-
 /** 동물 개체 정보 키 (복제 시 제외) */
 const ANIMAL_DATA_KEYS = new Set([
   'birth_date', 'age', 'species', 'breed', 'breed_en',
@@ -38,7 +36,7 @@ export async function duplicateCase(sourceId: string): Promise<
   const { data, error } = await supabase
     .from('cases')
     .insert({
-      org_id: ORG_ID,
+      org_id: source.org_id,
       customer_name: source.customer_name,
       customer_name_en: source.customer_name_en,
       destination: source.destination,

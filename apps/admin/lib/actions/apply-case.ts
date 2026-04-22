@@ -4,6 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 import { formatMicrochip } from '@/lib/fields'
 import type { CaseRow } from '@/lib/supabase/types'
 
+// apply 는 공개(비인증) 플로우 — getActiveOrgId() 사용 불가.
+// Phase 5 RLS 활성화 시 이 엔드포인트만 service role 로 우회하거나 anon INSERT policy 추가 필요.
+// Phase 6+ 다중 테넌트 확장 시 /apply URL 이 org 선택을 받도록 수정.
 const ORG_ID = '00000000-0000-0000-0000-000000000001'
 
 interface ApplyInput {
