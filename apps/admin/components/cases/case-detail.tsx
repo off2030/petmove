@@ -104,7 +104,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
     <VerificationProvider caseRow={caseRow} destination={viewDestination}>
     <div
       ref={scrollRef}
-      className="flex-1 min-h-0 flex flex-col rounded-xl border border-border/60 bg-card p-md shadow-sm overflow-y-auto overflow-x-hidden scrollbar-minimal"
+      className="flex-1 min-h-0 flex flex-col px-lg py-md overflow-y-auto overflow-x-hidden scrollbar-minimal"
     >
       {/* ─── Sections ─── */}
       {groups.map((g) => (
