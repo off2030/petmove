@@ -48,31 +48,42 @@ export async function listInvites(): Promise<Result<InviteRow[]>> {
   }
 }
 
-/** 현재 org 의 멤버 목록 (profiles 조인). */
+/** 현재 org 의 멤버 목록. memberships → profiles 직접 FK 부재로 2회 쿼리 후 merge. */
 export async function listMembers(): Promise<Result<MemberRow[]>> {
   try {
     const supabase = await createClient()
     const orgId = await getActiveOrgId()
-    const { data, error } = await supabase
+    const { data: memRows, error: memErr } = await supabase
       .from('memberships')
-      .select('user_id, role, created_at, profiles!inner(email, name)')
+      .select('user_id, role, created_at')
       .eq('org_id', orgId)
       .order('created_at', { ascending: true })
-    if (error) return { ok: false, error: error.message }
-    type Row = {
-      user_id: string
-      role: InviteRole
-      created_at: string
-      profiles: { email: string; name: string | null } | { email: string; name: string | null }[] | null
+    if (memErr) return { ok: false, error: memErr.message }
+    const userIds = (memRows ?? []).map((r) => (r as { user_id: string }).user_id)
+    if (userIds.length === 0) return { ok: true, value: [] }
+
+    const { data: profRows, error: profErr } = await supabase
+      .from('profiles')
+      .select('id, email, name')
+      .in('id', userIds)
+    if (profErr) return { ok: false, error: profErr.message }
+    const profMap = new Map<string, { email: string; name: string | null }>()
+    for (const p of profRows ?? []) {
+      profMap.set((p as { id: string }).id, {
+        email: (p as { email: string }).email,
+        name: (p as { name: string | null }).name,
+      })
     }
-    const rows: MemberRow[] = ((data ?? []) as unknown as Row[]).map((r) => {
-      const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
+
+    const rows: MemberRow[] = (memRows ?? []).map((r) => {
+      const row = r as { user_id: string; role: InviteRole; created_at: string }
+      const prof = profMap.get(row.user_id)
       return {
-        user_id: r.user_id,
+        user_id: row.user_id,
         email: prof?.email ?? '',
         name: prof?.name ?? null,
-        role: r.role,
-        joined_at: r.created_at,
+        role: row.role,
+        joined_at: row.created_at,
       }
     })
     return { ok: true, value: rows }

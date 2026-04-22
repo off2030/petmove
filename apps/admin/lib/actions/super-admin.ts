@@ -93,26 +93,37 @@ export async function getOrgDetail(orgId: string): Promise<Result<OrgDetail>> {
     if (orgErr) return { ok: false, error: orgErr.message }
     if (!org) return { ok: false, error: '조직을 찾을 수 없음' }
 
+    // memberships → profiles 직접 FK 부재로 2회 쿼리 후 merge.
     const { data: memRows } = await admin
       .from('memberships')
-      .select('user_id, role, created_at, profiles!inner(email, name)')
+      .select('user_id, role, created_at')
       .eq('org_id', orgId)
       .order('created_at', { ascending: true })
 
-    type MemRaw = {
-      user_id: string
-      role: string
-      created_at: string
-      profiles: { email: string; name: string | null } | { email: string; name: string | null }[] | null
+    const userIds = (memRows ?? []).map((r) => (r as { user_id: string }).user_id)
+    const profMap = new Map<string, { email: string; name: string | null }>()
+    if (userIds.length > 0) {
+      const { data: profRows } = await admin
+        .from('profiles')
+        .select('id, email, name')
+        .in('id', userIds)
+      for (const p of profRows ?? []) {
+        profMap.set((p as { id: string }).id, {
+          email: (p as { email: string }).email,
+          name: (p as { name: string | null }).name,
+        })
+      }
     }
-    const members = ((memRows ?? []) as unknown as MemRaw[]).map((r) => {
-      const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
+
+    const members = (memRows ?? []).map((r) => {
+      const row = r as { user_id: string; role: string; created_at: string }
+      const prof = profMap.get(row.user_id)
       return {
-        user_id: r.user_id,
+        user_id: row.user_id,
         email: prof?.email ?? '',
         name: prof?.name ?? null,
-        role: r.role,
-        joined_at: r.created_at,
+        role: row.role,
+        joined_at: row.created_at,
       }
     })
 
