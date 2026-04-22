@@ -586,9 +586,16 @@ export function TodosApp() {
 
   return (
     <div className="h-full overflow-hidden px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
-      <div className="h-full mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl flex flex-col gap-md">
+      <div className="h-full mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl flex flex-col gap-lg">
+      {/* Page header — editorial title */}
+      <div className="shrink-0 px-lg">
+        <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
+          할 일
+        </h1>
+      </div>
+
       {/* Tabs + search */}
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-sm md:gap-md border-b border-border/60 shrink-0">
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-sm md:gap-md border-b border-border/60 shrink-0 px-lg">
         <div className="flex gap-xs">
           {TABS.map((tab) => (
             <button
@@ -597,7 +604,7 @@ export function TodosApp() {
               onClick={() => setActiveTab(tab.id)}
               className={`px-md py-2 text-base font-medium transition-colors border-b-2 -mb-px ${
                 activeTab === tab.id
-                  ? 'border-primary text-primary'
+                  ? 'border-foreground text-foreground'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -611,13 +618,13 @@ export function TodosApp() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="검색"
-            className="h-8 pl-9 text-sm bg-card"
+            className="h-8 pl-9 text-sm bg-card rounded-full"
           />
         </div>
       </div>
 
-      {/* Card — 홈/상세와 동일한 컨테이너 스타일 */}
-      <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border/60 bg-card p-md shadow-sm">
+      {/* Borderless list — editorial */}
+      <div className="flex-1 min-h-0 flex flex-col px-lg">
         <div className="flex-1 min-h-0 overflow-auto scrollbar-minimal">
           {activeTab === 'inspection' ? (
             <InspectionTable

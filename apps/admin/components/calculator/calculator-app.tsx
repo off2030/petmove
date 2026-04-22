@@ -79,9 +79,16 @@ export function CalculatorApp() {
 
   return (
     <div className="h-full overflow-auto scrollbar-minimal px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
-      <div className="mx-auto max-w-2xl flex flex-col gap-md">
+      <div className="mx-auto max-w-2xl flex flex-col gap-lg">
+        {/* Page header — editorial title */}
+        <div className="shrink-0 px-lg">
+          <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
+            도구
+          </h1>
+        </div>
+
         {/* Tabs + toolbar — same row on desktop, stacked on mobile */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-sm md:gap-md border-b border-border/60 shrink-0">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-sm md:gap-md border-b border-border/60 shrink-0 px-lg">
           <div className="flex gap-xs">
             {MODES.map((m) => (
               <button
@@ -90,7 +97,7 @@ export function CalculatorApp() {
                 onClick={() => setMode(m.value)}
                 className={`px-md py-2 text-base font-medium transition-colors border-b-2 -mb-px ${
                   mode === m.value
-                    ? 'border-primary text-primary'
+                    ? 'border-foreground text-foreground'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
               >

@@ -285,7 +285,7 @@ export function CaseList({
               }
             }}
             autoFocus
-            placeholder="이름·칩번호·목적지로 검색"
+            placeholder="검색"
             // Editorial pill: 살짝 둥근 필, 카드 배경(흰색), hairline 보더
             className="h-11 pl-10 pr-9 text-[15px] bg-card border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
           />
