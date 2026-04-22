@@ -9,11 +9,11 @@
 ## 현재 상태
 
 - **날짜**: 2026-04-22
-- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 2.6 ✅, Phase 3 ✅, Phase 4 ✅ (`case_history.org_id` 백필 + NOT NULL)
+- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 2.6 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅ (RLS 활성화 + 정책 + 앱 org_id 주입)
 - **보류**:
   - Phase 2.5 — Kakao OAuth 블로커(비즈앱 미등록) 보류 중 — 아래 "Phase 2.5 Kakao 상태" 참조
   - Phase 2.6 잔여: Kakao Provider 복제 + Redirect URI 추가 (Kakao 비즈앱 블로커 해제 후 진행)
-- **다음 세션 시작점**: Phase 5 (RLS 활성화 + 앱 쿼리에 org_id 필터/쓰기 시 주입 + super_admin 예외) — staging 검증 필수.
+- **다음 세션 시작점**: Phase 6 (Org 컨텍스트 UI — 스위처, `useOrg()` 훅)
 
 ### Phase 3 완료 (2026-04-22)
 
@@ -33,6 +33,32 @@
   - `calculator_items` — 국가별 견적 아이템, 플랫폼 공용 유지 (Phase 5 RLS 에서 authenticated 전체 select 로 처리)
   - `app_settings` — Phase 7 에서 `organization_settings` 로 분리 예정이라 보류
 - 앱 쿼리는 아직 org_id 필터 안 씀 → 운영 영향 0
+
+### Phase 5 완료 (2026-04-22)
+
+**코드 변경** (commit `aba72d6`):
+- `lib/supabase/active-org.ts` — `getActiveOrgId()` 헬퍼 (단일 org 전제, memberships 조회)
+- `create-case`, `create-case-with-data` — 하드코딩 ORG_ID → `getActiveOrgId()`
+- `duplicate-case` — `source.org_id` 상속 (cross-org 복제 차단)
+- `cases.updateCaseField` — case_history insert 에 org_id 주입 (Phase 4 NOT NULL 대응)
+- `apply-case` — 공개 플로우라 하드코딩 유지 (RLS 의 anon INSERT policy 로 허용)
+
+**DB 변경** (`supabase/migrations/20260422000003_phase5_rls.sql`):
+- 헬퍼 함수 2개: `is_super_admin()`, `is_org_member(org_id)` (둘 다 `security definer`)
+- cases / case_history / field_definitions / organizations / memberships / calculator_items / app_settings RLS enable + 정책 작성
+- 공개 `/apply` 용 anon INSERT policy (로잔 org 한정)
+- 롤백 파일: `20260422000003_phase5_rls_rollback.sql`
+
+**리허설 & 검증** (Mumbai = staging):
+- [x] Mumbai 에 Phase 3+4+5 catch-up 적용
+- [x] super_admin(`petmove@naver.com`) — 1,798건 표시 ✅
+- [x] 멤버십 없는 유저(`petmove.drive@gmail.com`) — 0건 ✅ (RLS 차단 증명)
+- [x] 멤버십 추가 후 — 1,798건 표시 ✅
+
+**Production 적용**:
+- [x] Seoul 에 Phase 5 RLS SQL 적용
+- [x] `petmove.vercel.app/cases` 1,835건 정상
+- [x] case 수정 → case_history insert org_id 채워짐 확인 (최근 5행 전부 로잔)
 
 ### Phase 0 완료 (2026-04-21)
 
