@@ -9,11 +9,11 @@
 ## 현재 상태
 
 - **날짜**: 2026-04-22
-- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 2.6 ✅, Phase 3 ✅ (memberships 스키마 + 로잔 단일 테넌트 시드)
+- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 2.6 ✅, Phase 3 ✅, Phase 4 ✅ (`case_history.org_id` 백필 + NOT NULL)
 - **보류**:
   - Phase 2.5 — Kakao OAuth 블로커(비즈앱 미등록) 보류 중 — 아래 "Phase 2.5 Kakao 상태" 참조
   - Phase 2.6 잔여: Kakao Provider 복제 + Redirect URI 추가 (Kakao 비즈앱 블로커 해제 후 진행)
-- **다음 세션 시작점**: Phase 4 (기존 cases 외 기관 소유 테이블들에 org_id 백필) — 단, `cases.org_id` 는 이미 채워져 있음. 대상 테이블 재확인 필요.
+- **다음 세션 시작점**: Phase 5 (RLS 활성화 + 앱 쿼리에 org_id 필터/쓰기 시 주입 + super_admin 예외) — staging 검증 필수.
 
 ### Phase 3 완료 (2026-04-22)
 
@@ -22,6 +22,17 @@
 - [x] `organizations` id=…001 이름을 "PetMove" → **"로잔동물의료센터"** rename
 - [x] `petmove@naver.com` → 로잔 `owner` row 삽입
 - 앱은 아직 memberships 안 씀 → 운영 영향 0. RLS 도 off 유지 (Phase 5 에서 enable + policy 작성)
+
+### Phase 4 완료 (2026-04-22)
+
+- [x] `supabase/migrations/20260422000002_case_history_org_id.sql` 생성 — Seoul 적용
+- [x] `case_history.org_id` 추가 (nullable) → `cases.org_id` 로 백필 → NOT NULL + index
+- [x] Seoul 백필 결과: 1,106행 전부 로잔 단일 org (distinct_orgs=1)
+- **스코프 판단**:
+  - `cases.org_id` / `field_definitions.org_id` 는 initial_schema 단계부터 존재 → 작업 없음
+  - `calculator_items` — 국가별 견적 아이템, 플랫폼 공용 유지 (Phase 5 RLS 에서 authenticated 전체 select 로 처리)
+  - `app_settings` — Phase 7 에서 `organization_settings` 로 분리 예정이라 보류
+- 앱 쿼리는 아직 org_id 필터 안 씀 → 운영 영향 0
 
 ### Phase 0 완료 (2026-04-21)
 
