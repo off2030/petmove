@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
-// Phase 2: 인증 게이팅 미들웨어.
-// AUTH_ENFORCED=true 로 설정될 때만 로그인 강제.
-// 설정 전에는 세션 쿠키만 갱신하고 통과시킴 (cutover 이전 안전).
-const AUTH_ENFORCED = process.env.AUTH_ENFORCED === 'true'
+// 인증 게이팅 미들웨어. 공개 경로 외 전부 로그인 필수.
+// 세밀한 접근 통제(org 소속 등)는 RLS 가 담당.
 
 const PUBLIC_PREFIXES = [
   '/login',
@@ -44,12 +42,9 @@ export async function proxy(request: NextRequest) {
     },
   )
 
-  // 세션 쿠키 갱신 (AUTH_ENFORCED 여부와 무관하게 필요)
   const {
     data: { user },
   } = await supabase.auth.getUser()
-
-  if (!AUTH_ENFORCED) return response
 
   const { pathname } = request.nextUrl
   if (isPublic(pathname)) return response
@@ -59,10 +54,6 @@ export async function proxy(request: NextRequest) {
     loginUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(loginUrl)
   }
-
-  // Phase 3 (memberships) 이전까지 super_admin 게이트 완화 — 로그인만 되면 통과.
-  // 접근 통제는 Supabase Dashboard 의 Invite user 로 초대받은 계정만 가능.
-  // Phase 3 에서 memberships 기반 체크로 교체.
 
   return response
 }
