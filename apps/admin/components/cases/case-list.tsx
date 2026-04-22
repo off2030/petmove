@@ -275,8 +275,8 @@ export function CaseList({
             }}
             autoFocus
             placeholder="이름·칩번호·도착지로 검색"
-            // Editorial pill: 살짝 둥근 필, 투명 배경, 호버에 hairline
-            className="h-11 pl-10 pr-9 text-[15px] bg-transparent border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
+            // Editorial pill: 살짝 둥근 필, 카드 배경(흰색), hairline 보더
+            className="h-11 pl-10 pr-9 text-[15px] bg-card border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
           />
           {query && (
             <button
@@ -358,13 +358,13 @@ export function CaseList({
                       )}
                     >
                       <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm">
-                        {/* Guardian — serif primary */}
-                        <span className="truncate font-serif text-[17px] leading-tight text-foreground">
+                        {/* Guardian — sans, regular weight */}
+                        <span className="truncate font-sans text-[15px] leading-tight text-foreground">
                           {c.customer_name}
                         </span>
 
-                        {/* Pet — italic secondary */}
-                        <span className="truncate font-serif italic text-[15px] text-foreground/75">
+                        {/* Pet — bold serif, editorial primary */}
+                        <span className="truncate font-serif font-semibold text-[17px] leading-tight text-foreground">
                           {c.pet_name ?? '—'}
                         </span>
 
