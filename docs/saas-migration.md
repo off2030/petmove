@@ -6,16 +6,101 @@
 
 ---
 
-## 현재 상태
+## 현재 상태 (2026-04-22 종료 시점)
 
-- **날짜**: 2026-04-22
-- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 2.6 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Phase 7 ✅, Phase 8 ✅, Phase 9 ✅ (Super Admin UI), Phase 10 ✅
-- **보류**:
-  - Phase 2.5 — Kakao OAuth 블로커(비즈앱 미등록) 보류 중 — 아래 "Phase 2.5 Kakao 상태" 참조
-  - Phase 2.6 잔여: Kakao Provider 복제 + Redirect URI 추가 (Kakao 비즈앱 블로커 해제 후 진행)
-  - Phase 6 (Org 스위처 UI) — 단일 테넌트라 실익 낮음. 두 번째 테넌트 도입 시 구현.
-  - **기술 부채**: `apps/admin/proxy.ts` 의 `AUTH_ENFORCED` 토글 (Phase 2 cutover 과도기). 로컬 env 에 없으면 무인증 접근 허용 → RLS 로 0건 보이고 save 시 "not authenticated" 혼란. Phase 6 이후 항상 enforce 로 변경 + 토글 제거.
-- **다음 세션 시작점**: Phase 8 (domain 패키지 추출) 또는 기술부채 처리
+### 핵심 로드맵 — 실질 완료
+
+| Phase | 상태 | 요약 |
+|---|---|---|
+| 0 보안 | ✅ | Supabase·OpenAI·Kakao key rotate, DB CSV 백업, Vercel env 동기화 |
+| 1 모노레포 | ✅ | `apps/admin` + `packages/{auth,db,domain,ui}` 스캐폴드, pnpm workspaces + Turborepo |
+| 2 Auth + Email 로그인 | ✅ | Supabase Auth, profiles, /login, /logout, /auth/callback |
+| 2.6 Seoul 이관 | ✅ | Mumbai (ap-south-1) → Seoul (ap-northeast-2) 데이터 + Vercel env 전환, 비번 재설정 |
+| 3 memberships | ✅ | `memberships(user_id, org_id, role)`, PetMove → "로잔동물의료센터" rename, petmove@naver.com owner seed |
+| 4 case_history.org_id | ✅ | 백필 + NOT NULL |
+| 5 RLS | ✅ | is_super_admin / is_org_member / is_org_admin 헬퍼, cases/case_history/field_definitions/organizations/memberships/calculator_items/app_settings 정책, anon `/apply` 허용 |
+| 7 organization_settings | ✅ | app_settings → org 별 분리, 4 config 파일 코드 전환 |
+| 8 domain 패키지 | ✅ | destination-config, cert/inspection/import-report defaults, vaccine-lookup, procedure-checks, CaseRow 등 DB 타입 모두 `@petmove/domain` 이동. admin/lib/supabase/types.ts 는 shim |
+| 9 Super Admin UI | ✅ | `/super-admin` 라우트, 전체 org 목록·생성·상세, is_super_admin 가드 |
+| 10 초대 플로우 | ✅ | `organization_invites`, service role 수락, `/invite/[token]`, Settings 멤버 탭 |
+| + 기술부채 | ✅ | `AUTH_ENFORCED` 토글 제거, 로그인 페이지 open-redirect 방어, vet-info 하드코딩 제거 + 로잔 seed |
+
+**Phase 6 (Org 스위처 UI)** 는 단일 테넌트 맥락상 의도적 skip. 두 번째 테넌트 도입 시 구현.
+
+### 다음 세션 시작 체크리스트
+
+1. **펜딩 SQL 2건 적용 확인** (양쪽 프로젝트 SQL Editor 에서 Run 했는지 확인)
+   - `supabase/migrations/20260422000006_drop_app_settings.sql` — app_settings 테이블 drop
+   - `supabase/migrations/20260422000007_seed_rojan_company_info.sql` — 로잔 company_info 완전 seed
+   - 링크: Mumbai `https://supabase.com/dashboard/project/jxyalwbstsqpecavqfkb/sql/new` / Seoul `https://supabase.com/dashboard/project/ugywxiyivfzflqkcnqvu/sql/new`
+
+2. **프로덕션 스모크 테스트** — `git log --oneline -20` 으로 오늘 커밋 확인 후:
+   - `petmove.vercel.app/cases` 1,835건 표시 (super_admin)
+   - `/settings` 멤버 탭 → 멤버 2명 + 초대 생성 동작
+   - `/super-admin` → 로잔 1개 org 표시, 멤버수·대기초대수 정확
+   - 병원 정보 12개 필드 모두 로드 (seed migration 적용 확인)
+   - 케이스 편집 → case_history org_id 주입 유지
+
+3. **Kakao 블로커 체크** — 비즈앱 검수 상태 확인. 해제됐으면 Phase 2.5/2.6 잔여 재개:
+   - Seoul Dashboard → Auth Providers → Kakao enable + Client ID/Secret 붙여넣기
+   - Kakao Developers → Redirect URI 에 `https://ugywxiyivfzflqkcnqvu.supabase.co/auth/v1/callback` 추가
+
+4. **Mumbai 삭제 일정 확인** — 2026-05-05 전후로 1~2주 정상 동작 검증 기간. 그 이후:
+   - Supabase Dashboard → Mumbai 프로젝트 Settings → Delete
+   - `apps/admin/.env.local` 에서 구 Mumbai 슬롯(`NEXT_PUBLIC_SUPABASE_URL` 등) 제거, `NEW_*` 를 정식 이름으로 rename
+   - Vercel env 도 동일 정리
+   - `apps/admin/scripts/migrate-*.mjs` 와 `rename-*.mjs` 는 역할 끝났으니 삭제
+
+### 마이그레이션 이후 남는 작업 (우선순위순)
+
+**SaaS 런칭 전제조건**
+- 결제/요금제 (Stripe/토스, plans 테이블, 사용량 미터링)
+- 공개 가입 플로우 (super_admin 수동 org 생성 → 고객 self-service 가입)
+- 이용약관·개인정보처리방침 페이지 (법적)
+- GDPR/KISA 개인정보보호법 준수 (삭제 요청, 내보내기, 동의)
+
+**Phase 11+ 확장**
+- `apps/portal` B2C 고객용 앱 (Phase 11)
+- i18n (현재 한국어 하드코딩)
+- 초대 이메일 자동 발송 (Resend/AWS SES) — 현재는 링크 수동 공유
+
+**운영 품질**
+- 에러 추적 (Sentry)
+- 사용량 분석 (PostHog/Plausible)
+- Audit log — super_admin 의 임시 기관 전환·조작 기록
+- 성능: `/cases` 가 전체 데이터 인메모리 로드 — 10,000+ 스케일 시 페이지네이션·가상 스크롤
+- 백업 자동화 (Phase 0 는 CSV 수동 내보내기)
+
+**UX 폴리싱**
+- 토스트 알림 시스템 (현재 인라인만)
+- CSV 내보내기 (Settings > 데이터 관리 탭 placeholder)
+- Super Admin UI 확장 — 임시 기관 전환(impersonation), 멤버 CRUD UI
+- Mobile 반응형 점검
+
+**코드 위생**
+- `apps/admin/scripts/import-xlsx.mjs` 하드코딩 ORG_ID (CLI 도구, 낮은 우선순위)
+- `apps/admin/data/vaccine-products.json` + `packages/domain/src/data/vaccine-products.json` 중복 (스크립트 전용, 허용 중)
+
+### 오늘 생성된 핵심 파일
+
+- `supabase/migrations/20260422000001_memberships.sql` ~ `20260422000007_seed_rojan_company_info.sql` (7개)
+- `apps/admin/lib/supabase/active-org.ts` — `getActiveOrgId()` 헬퍼
+- `apps/admin/lib/supabase/admin.ts` — service role client
+- `apps/admin/lib/actions/invites.ts` — create/list/revoke/accept/listMembers
+- `apps/admin/lib/actions/super-admin.ts` — listAllOrgs/getOrgDetail/createOrg
+- `apps/admin/scripts/set-password.mjs` — Auth 비번 직접 설정 (recovery 우회)
+- `apps/admin/app/invite/[token]/page.tsx` — 초대 수락 핸들러
+- `apps/admin/app/super-admin/page.tsx` + `components/super-admin/super-admin-app.tsx`
+- `apps/admin/components/settings/members-section.tsx` — 멤버 탭
+- `apps/admin/app/login/login-form.tsx` — 서버 가드 + 클라이언트 폼 분리
+
+### 재현 불가능한 결정 (복기용)
+
+- **Seoul RLS 불일치**: schema-consolidated 로 Seoul 생성 시 기본 RLS on 으로 테이블 생성 + policy 0개 → 전부 차단. Phase 5 직전 `DISABLE ROW LEVEL SECURITY` 수동 실행해서 Mumbai 와 맞춤 → Phase 5 에서 policy 작성 후 정식 enable
+- **Supabase direct DB hostname IPv4 불가**: `db.<ref>.supabase.co` 는 IPv6-only. `pg` 로 migration apply 시도는 실패. 이후 작업은 SQL Editor 로만
+- **Auth 비번 이관 한계**: `migrate-auth-users.mjs` 는 bcrypt 해시 이식 불가라 임시 비번 재생성. `set-password.mjs` 로 우회. recovery 플로우는 아직 없음 (Phase 11+)
+
+---
 
 ### Phase 3 완료 (2026-04-22)
 
