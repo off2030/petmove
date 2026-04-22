@@ -226,7 +226,7 @@ export function CaseList({
       )}
 
       {/* Page header — editorial title + count */}
-      <div className="shrink-0 flex items-baseline justify-between gap-md">
+      <div className="shrink-0 px-lg flex items-baseline justify-between gap-md">
         <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
           고객 정보
         </h1>

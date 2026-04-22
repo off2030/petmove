@@ -85,11 +85,11 @@ export function TopBar({
           )}
         </div>
 
-        {/* App name — click to go home */}
+        {/* App name — serif wordmark */}
         <button
           type="button"
           onClick={() => onTabChange('cases')}
-          className="text-base font-bold text-foreground whitespace-nowrap hover:opacity-70 transition-opacity"
+          className="font-serif text-[18px] font-medium tracking-tight text-foreground whitespace-nowrap hover:opacity-70 transition-opacity"
         >
           펫무브워크
         </button>
