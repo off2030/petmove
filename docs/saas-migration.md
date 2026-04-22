@@ -9,7 +9,7 @@
 ## 현재 상태
 
 - **날짜**: 2026-04-22
-- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 2.6 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Phase 7 ✅, Phase 8 ✅ (domain 패키지 추출 — 클라이언트 안전 도메인 로직)
+- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 2.6 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Phase 7 ✅, Phase 8 ✅, Phase 10 ✅ (초대·가입 플로우)
 - **보류**:
   - Phase 2.5 — Kakao OAuth 블로커(비즈앱 미등록) 보류 중 — 아래 "Phase 2.5 Kakao 상태" 참조
   - Phase 2.6 잔여: Kakao Provider 복제 + Redirect URI 추가 (Kakao 비즈앱 블로커 해제 후 진행)
@@ -89,6 +89,27 @@
 - [x] admin 빌드 통과
 - **보류**: `procedure-checks/` 는 `CaseRow` 타입(DB-backed)에 의존 → 별도 Phase 에서 타입 분리 후 이동
 - **중복 주의**: `apps/admin/data/vaccine-products.json` 은 admin 스크립트들(test-*.mjs)이 사용 중이라 남김 (도메인 패키지에도 사본 유지)
+
+### Phase 10 완료 (2026-04-22)
+
+**DB** (`supabase/migrations/20260422000005_organization_invites.sql`):
+- `organization_invites(id, org_id, email, role, token uuid unique, expires_at, created_at/by, accepted_at/by)` — token 기반 초대
+- 헬퍼 `is_org_admin(org_id)` (security definer) — owner/admin 여부
+- `memberships` SELECT 정책 확장 — 본인 + super_admin + 같은 org 의 owner/admin
+- invites RLS — 관리 권한은 owner/admin + super_admin. 수락 플로우는 service role 우회
+
+**코드**:
+- `lib/supabase/admin.ts` — `createAdminClient()` (service role, 토큰 기반 수락 등 신뢰 플로우 전용)
+- `lib/actions/invites.ts` — createInvite / listInvites / revokeInvite / listMembers / acceptInvite
+- `app/invite/[token]/page.tsx` — 수락 핸들러. 미로그인 시 `/login?next=/invite/TOKEN` 리다이렉트, 로그인 후 자동 수락 → /cases
+- `components/settings/members-section.tsx` — 멤버 목록 + 대기 초대 + 생성 폼 (초대 생성 시 링크 자동 복사)
+- settings-app: "멤버" 탭 추가
+
+**수락 플로우**:
+1. Owner/admin 이 Settings → 멤버 에서 이메일+역할 입력 → "초대 생성" → 링크 자동 복사
+2. 대상자에게 링크 공유 (이메일 발송은 수동 — Phase 11+ 에서 Resend 연동 검토)
+3. 대상자 링크 클릭 → 미로그인 시 `/login` → 로그인 후 `/invite/TOKEN` 자동 재진입 → acceptInvite → membership 자동 추가 → `/cases` 로
+4. 이메일 불일치 / 만료 / 이미 수락됨 시 에러 화면 표시
 
 ### Phase 0 완료 (2026-04-21)
 

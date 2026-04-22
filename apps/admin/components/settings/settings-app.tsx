@@ -8,9 +8,11 @@ import { ImportReportSection } from './import-report-section'
 import { InspectionSection } from './inspection-section'
 import { DocumentsSection } from './documents-section'
 import { VerificationSection } from './verification-section'
+import { MembersSection } from './members-section'
 
 const TABS = [
   { id: 'company', label: '병원 정보' },
+  { id: 'members', label: '멤버' },
   { id: 'vaccines', label: '약품 관리' },
   { id: 'inspection', label: '검사' },
   { id: 'import_report', label: '신고' },
@@ -93,6 +95,7 @@ export function SettingsApp() {
 
         <div className="flex-1 min-h-0 overflow-auto scrollbar-minimal">
           {activeTab === 'company' && <CompanySection />}
+          {activeTab === 'members' && <MembersSection />}
           {activeTab === 'vaccines' && <VaccineSection />}
           {activeTab === 'inspection' && <InspectionSection />}
           {activeTab === 'import_report' && <ImportReportSection />}
