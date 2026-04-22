@@ -369,8 +369,8 @@ export function CaseList({
                       )}
                     >
                       <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm">
-                        {/* Guardian — sans · 14px · Charcoal (near-black 85%) */}
-                        <span className="truncate font-sans font-normal text-[14px] leading-tight text-foreground/85">
+                        {/* Guardian — sans · 16px · Charcoal (near-black 85%) */}
+                        <span className="truncate font-sans font-normal text-[16px] leading-tight text-foreground/85">
                           {c.customer_name}
                         </span>
 
@@ -391,7 +391,7 @@ export function CaseList({
                                       {code}
                                     </span>
                                   )}
-                                  <span className="font-serif font-normal text-[15px] text-foreground">{d}</span>
+                                  <span className="font-serif font-normal text-[16px] text-foreground">{d}</span>
                                 </span>
                               )
                             })
