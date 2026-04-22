@@ -9,7 +9,7 @@
 ## 현재 상태
 
 - **날짜**: 2026-04-22
-- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 2.6 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Phase 7 ✅, Phase 8 ✅, Phase 10 ✅ (초대·가입 플로우)
+- **완료된 Phase**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 2.6 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Phase 7 ✅, Phase 8 ✅, Phase 9 ✅ (Super Admin UI), Phase 10 ✅
 - **보류**:
   - Phase 2.5 — Kakao OAuth 블로커(비즈앱 미등록) 보류 중 — 아래 "Phase 2.5 Kakao 상태" 참조
   - Phase 2.6 잔여: Kakao Provider 복제 + Redirect URI 추가 (Kakao 비즈앱 블로커 해제 후 진행)
@@ -110,6 +110,13 @@
 2. 대상자에게 링크 공유 (이메일 발송은 수동 — Phase 11+ 에서 Resend 연동 검토)
 3. 대상자 링크 클릭 → 미로그인 시 `/login` → 로그인 후 `/invite/TOKEN` 자동 재진입 → acceptInvite → membership 자동 추가 → `/cases` 로
 4. 이메일 불일치 / 만료 / 이미 수락됨 시 에러 화면 표시
+
+### Phase 9 완료 (2026-04-22)
+
+- `app/super-admin/page.tsx` — is_super_admin 체크 후 전체 조직 목록 표시 (비 super_admin 은 /cases 리다이렉트)
+- `components/super-admin/super-admin-app.tsx` — 좌측: 조직 목록 + 생성 폼, 우측: 선택 조직 상세 (멤버·대기 초대)
+- `lib/actions/super-admin.ts` — `listAllOrgs`, `getOrgDetail`, `createOrg` (전부 `requireSuperAdmin` 가드 + service role)
+- UI 진입점: 현재는 direct URL `/super-admin` 만. 토바 링크는 추가 안 함 (is_super_admin flag topbar 전달 플러밍 비용 대비 이득 낮음 — 북마크 권장)
 
 ### Phase 0 완료 (2026-04-21)
 
