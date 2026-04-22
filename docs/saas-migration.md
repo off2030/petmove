@@ -23,33 +23,113 @@
 | 8 domain 패키지 | ✅ | destination-config, cert/inspection/import-report defaults, vaccine-lookup, procedure-checks, CaseRow 등 DB 타입 모두 `@petmove/domain` 이동. admin/lib/supabase/types.ts 는 shim |
 | 9 Super Admin UI | ✅ | `/super-admin` 라우트, 전체 org 목록·생성·상세, is_super_admin 가드 |
 | 10 초대 플로우 | ✅ | `organization_invites`, service role 수락, `/invite/[token]`, Settings 멤버 탭 |
-| + 기술부채 | ✅ | `AUTH_ENFORCED` 토글 제거, 로그인 페이지 open-redirect 방어, vet-info 하드코딩 제거 + 로잔 seed |
+| 10 확장 Resend | ✅ | 초대 이메일 자동 발송 (`lib/email/resend.ts` + template), best-effort, `RESEND_API_KEY` 등록 완료. 샌드박스 상태 — 도메인 verify 시 외부 발송 |
+| + 기술부채 | ✅ | `AUTH_ENFORCED` 토글 제거, 로그인 open-redirect 방어, vet-info 하드코딩 제거 + 로잔 seed, profiles RLS super_admin 가시성 수정, memberships→profiles 중첩 select FK 부재 우회 (2회 쿼리 merge) |
 
 **Phase 6 (Org 스위처 UI)** 는 단일 테넌트 맥락상 의도적 skip. 두 번째 테넌트 도입 시 구현.
 
 ### 다음 세션 시작 체크리스트
 
-1. **펜딩 SQL 2건 적용 확인** (양쪽 프로젝트 SQL Editor 에서 Run 했는지 확인)
-   - `supabase/migrations/20260422000006_drop_app_settings.sql` — app_settings 테이블 drop
-   - `supabase/migrations/20260422000007_seed_rojan_company_info.sql` — 로잔 company_info 완전 seed
-   - 링크: Mumbai `https://supabase.com/dashboard/project/jxyalwbstsqpecavqfkb/sql/new` / Seoul `https://supabase.com/dashboard/project/ugywxiyivfzflqkcnqvu/sql/new`
+1. **최신 git log** — `git log --oneline -20` 으로 마지막 세션 커밋 확인
 
-2. **프로덕션 스모크 테스트** — `git log --oneline -20` 으로 오늘 커밋 확인 후:
-   - `petmove.vercel.app/cases` 1,835건 표시 (super_admin)
-   - `/settings` 멤버 탭 → 멤버 2명 + 초대 생성 동작
-   - `/super-admin` → 로잔 1개 org 표시, 멤버수·대기초대수 정확
-   - 병원 정보 12개 필드 모두 로드 (seed migration 적용 확인)
-   - 케이스 편집 → case_history org_id 주입 유지
+2. **펜딩 SQL 적용 확인** — 2026-04-22 세션에서 모두 양쪽 프로젝트 Run 확인됨:
+   - ~~`20260422000006_drop_app_settings.sql`~~ ✅
+   - ~~`20260422000007_seed_rojan_company_info.sql`~~ ✅
+   - ~~`20260422000008_profiles_policy_fix.sql`~~ ✅ (super_admin 타 프로필 SELECT 버그)
 
-3. **Kakao 블로커 체크** — 비즈앱 검수 상태 확인. 해제됐으면 Phase 2.5/2.6 잔여 재개:
-   - Seoul Dashboard → Auth Providers → Kakao enable + Client ID/Secret 붙여넣기
-   - Kakao Developers → Redirect URI 에 `https://ugywxiyivfzflqkcnqvu.supabase.co/auth/v1/callback` 추가
+3. **외부 설정 진행 여부** (아래 "외부 설정 잔여" 섹션 참조)
+   - Google OAuth (가장 빠름, 1시간 내)
+   - Resend 도메인 verify (도메인 소유 시)
+   - Kakao 비즈앱 검수 대기 상태
+   - Naver custom OIDC (복잡도 높음, 후순위)
 
-4. **Mumbai 삭제 일정 확인** — 2026-05-05 전후로 1~2주 정상 동작 검증 기간. 그 이후:
+4. **Mumbai 삭제 일정** — 2026-05-05 전후로 1~2주 정상 동작 검증 기간. 그 이후:
    - Supabase Dashboard → Mumbai 프로젝트 Settings → Delete
+   - Kakao Developers Redirect URI 에서 Mumbai `.../jxya.../auth/v1/callback` 제거
    - `apps/admin/.env.local` 에서 구 Mumbai 슬롯(`NEXT_PUBLIC_SUPABASE_URL` 등) 제거, `NEW_*` 를 정식 이름으로 rename
    - Vercel env 도 동일 정리
    - `apps/admin/scripts/migrate-*.mjs` 와 `rename-*.mjs` 는 역할 끝났으니 삭제
+
+5. **다음 구현 대상 후보** (우선순위 본인 판단):
+   - Phase 11 `apps/portal` B2C 스캐폴딩 (큰 스코프)
+   - Sentry 에러 추적 (오늘 본 bug 류 예방)
+   - 결제/요금제 기반 설계 (Stripe vs 토스)
+   - 토스트 알림 시스템 (인라인 에러 → 글로벌)
+   - CSV 내보내기 (Settings > 데이터 관리 placeholder 완성)
+
+### 외부 설정 잔여 (OAuth 프로바이더 + 이메일 도메인)
+
+로그인 버튼은 UI 에 이미 있음 (`/login` 페이지, Naver/Kakao/Google + 이메일). 하지만 프로바이더별 Supabase 설정 + 외부 콘솔 등록이 필요함.
+
+#### Google OAuth
+
+**현재 상태**: 미설정. 로그인 버튼 클릭 시 에러 예상. 코드는 `provider: 'google'` 로 signInWithOAuth 호출.
+
+**절차** (1회성):
+1. https://console.cloud.google.com → 새 프로젝트 생성 (예: `petmove-auth`)
+2. APIs & Services → OAuth consent screen → External → 앱 이름 `펫무브워크`, 지원 이메일 본인, 개발자 연락처
+   - Scopes: email, profile, openid (기본)
+   - Test users: 개발 중인 유저 추가 (Published 전)
+3. APIs & Services → Credentials → **Create Credentials** → OAuth 2.0 Client ID
+   - Application type: **Web application**
+   - Name: `Supabase Seoul`
+   - Authorized redirect URIs: `https://ugywxiyivfzflqkcnqvu.supabase.co/auth/v1/callback`
+4. 발급된 Client ID / Client Secret 복사
+5. https://supabase.com/dashboard/project/ugywxiyivfzflqkcnqvu/auth/providers → **Google** 토글 ON → Client ID / Secret 붙여넣기 → Save
+6. (Mumbai 삭제 전까지는 동일 작업을 Mumbai 에도 반복)
+7. production verify: `petmove.vercel.app/login` → "Google 로 로그인" 성공 확인
+
+**블로커**: 없음. 1시간 내 완료 가능.
+
+#### Kakao OAuth
+
+**현재 상태**: **블로커**. 비즈앱 미등록으로 KOE205 에러. Mumbai 에만 설정 완료, Seoul 미복제.
+
+**절차 (비즈앱 검수 통과 후)**:
+1. https://developers.kakao.com/console/app/1098838 — 카카오 앱 콘솔
+   - 비즈 전환 신청 (사업자등록증 필요) → 승인 (수일 소요)
+2. 앱 설정 → 카카오 로그인 → Redirect URI → **편집**:
+   - 추가: `https://ugywxiyivfzflqkcnqvu.supabase.co/auth/v1/callback` (Seoul)
+   - 기존 Mumbai `.../jxya.../auth/v1/callback` 은 Mumbai 삭제 시 함께 제거
+3. 동의 항목 → 이메일(account_email) 필수 체크 (비즈앱이어야 가능)
+4. Supabase Seoul Providers → Kakao 토글 ON → REST API 키 + Client Secret 붙여넣기
+5. Mumbai Kakao 설정(Client ID/Secret) 과 동일 값인지 확인 (같은 카카오 앱 사용)
+6. verify: `/login` → "카카오로 로그인" → KOE205 없이 진행
+
+**블로커**: 비즈앱 검수 (외부). 기간 불확실.
+
+#### Naver OAuth (커스텀 OIDC)
+
+**현재 상태**: 미설정. Supabase builtin 아님 — **Custom OIDC provider** 로 등록 필요.
+
+**절차**:
+1. https://developers.naver.com/apps → 애플리케이션 등록
+   - 애플리케이션 이름: `펫무브워크`
+   - 사용 API: **네이버 로그인**
+   - 환경: PC 웹
+   - 서비스 URL: `https://petmove.vercel.app`
+   - Callback URL: `https://ugywxiyivfzflqkcnqvu.supabase.co/auth/v1/callback`
+2. 등록 완료 후 Client ID / Client Secret 확인
+3. Supabase 는 Naver 를 built-in 지원 안 함 → **Custom OIDC** 로 등록:
+   - 현재 Supabase Custom OIDC 는 Enterprise 플랜 이상 또는 직접 JWT 교환 구현 필요
+   - **실용적 대안**: Naver ID 를 이메일로 변환해 이메일 로그인으로 우회, 또는 클라이언트에서 Naver SDK 직접 사용 → JWT 받아서 Supabase signInWithIdToken 호출
+   - 또는 `login-form.tsx` 의 Naver 버튼을 일단 숨김 처리 (Phase 11 이후 재검토)
+
+**블로커**: Supabase 플랜 업그레이드 OR 커스텀 OIDC 브릿지 구현. 비용·복잡도 있음.
+
+#### Resend 이메일 도메인 verify
+
+**현재 상태**: API 키 등록 완료. 샌드박스(`onboarding@resend.dev`) 로 본인(`off2030@gmail.com`) 에게만 발송 가능.
+
+**절차 (외부 발송 가능하게)**:
+1. 본인 소유 도메인 (예: `petmove.com`, `petmove.co.kr`) 준비
+2. https://resend.com/domains → **Add Domain** → 도메인 입력
+3. 제시되는 DNS 레코드 (MX, TXT SPF, TXT DKIM, 선택적으로 DMARC) 를 도메인 등록업체(가비아, Cloudflare 등) 콘솔에 추가
+4. Resend 콘솔에서 **Verify** → 녹색 체크 (보통 10분, 최대 24시간)
+5. Vercel env `INVITE_EMAIL_FROM=invites@petmove.com` 추가 + Redeploy
+6. 검증: 임의 이메일로 초대 생성 → 수신 확인
+
+**블로커**: 도메인 소유 필요.
 
 ### 마이그레이션 이후 남는 작업 (우선순위순)
 
@@ -62,7 +142,7 @@
 **Phase 11+ 확장**
 - `apps/portal` B2C 고객용 앱 (Phase 11)
 - i18n (현재 한국어 하드코딩)
-- 초대 이메일 자동 발송 (Resend/AWS SES) — 현재는 링크 수동 공유
+- ~~초대 이메일 자동 발송 (Resend/AWS SES)~~ **완료** — Resend 연동, 도메인 verify 만 대기
 
 **운영 품질**
 - 에러 추적 (Sentry)
@@ -80,6 +160,7 @@
 **코드 위생**
 - `apps/admin/scripts/import-xlsx.mjs` 하드코딩 ORG_ID (CLI 도구, 낮은 우선순위)
 - `apps/admin/data/vaccine-products.json` + `packages/domain/src/data/vaccine-products.json` 중복 (스크립트 전용, 허용 중)
+- Vercel env `AUTH_ENFORCED` (코드에서 제거됨, Vercel dashboard 에서 삭제하면 깔끔)
 
 ### 오늘 생성된 핵심 파일
 
