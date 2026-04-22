@@ -1,8 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ALL_PROCEDURE_CHECKS } from '@/lib/procedure-checks/registry'
-import type { CheckSeverity, ProcedureCheck } from '@/lib/procedure-checks/types'
+import { ALL_PROCEDURE_CHECKS } from '@petmove/domain'
+import type { CheckSeverity, ProcedureCheck } from '@petmove/domain'
 import { cn } from '@/lib/utils'
 
 const COUNTRY_LABELS: Record<string, string> = {

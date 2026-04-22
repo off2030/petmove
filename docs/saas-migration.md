@@ -87,7 +87,8 @@
 - [x] `apps/admin/package.json` 에 `@petmove/domain: workspace:*` dep 추가
 - [x] admin 코드 21개 파일 import 경로 `@/lib/X` → `@petmove/domain` 으로 일괄 교체 (sed)
 - [x] admin 빌드 통과
-- **보류**: `procedure-checks/` 는 `CaseRow` 타입(DB-backed)에 의존 → 별도 Phase 에서 타입 분리 후 이동
+- ~~**보류**: `procedure-checks/` 는 `CaseRow` 타입(DB-backed)에 의존 → 별도 Phase 에서 타입 분리 후 이동~~ **완료** — Phase 8 확장 commit 에서 처리
+- **Phase 8 확장 (2026-04-22)**: `packages/domain/src/types.ts` 에 `CaseRow`/`CaseStatus`/`FieldDefinition`/`CalculatorItem` 정의, `procedure-checks/` 를 `packages/domain/src/procedure-checks/` 로 이동. `apps/admin/lib/supabase/types.ts` 는 domain re-export shim 으로 변환 — 44개 admin 파일 import 경로 유지
 - **중복 주의**: `apps/admin/data/vaccine-products.json` 은 admin 스크립트들(test-*.mjs)이 사용 중이라 남김 (도메인 패키지에도 사본 유지)
 
 ### Phase 10 완료 (2026-04-22)

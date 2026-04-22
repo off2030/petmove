@@ -1,4 +1,4 @@
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '../types'
 import type { CheckResult, ProcedureCheck } from './types'
 
 /**

@@ -3,8 +3,8 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import type { CaseRow } from '@/lib/supabase/types'
 import { DESTINATION_OVERRIDES, matchesDestinationKey } from '@petmove/domain'
-import { getChecksForCountry } from '@/lib/procedure-checks/registry'
-import type { CheckResult, CheckSeverity, ProcedureCheck } from '@/lib/procedure-checks/types'
+import { getChecksForCountry } from '@petmove/domain'
+import type { CheckResult, CheckSeverity, ProcedureCheck } from '@petmove/domain'
 
 export interface CheckEntry {
   check: ProcedureCheck

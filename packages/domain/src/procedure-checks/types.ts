@@ -1,4 +1,4 @@
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '../types'
 
 export type CheckSeverity = 'blocker' | 'warning' | 'info'
 
