@@ -6,6 +6,7 @@ import {
   createOrg,
   getOrgDetail,
   listAllOrgs,
+  updateOrgBusinessNumber,
   type OrgDetail,
   type OrgSummary,
 } from '@/lib/actions/super-admin'
@@ -67,7 +68,7 @@ export function SuperAdminApp({ initialOrgs, userEmail }: Props) {
             {/* Page header — editorial title + count + refresh */}
             <div className="shrink-0 flex items-baseline justify-between gap-md">
               <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
-                조직 관리
+                조직 명부
               </h1>
               <div className="flex items-center gap-sm">
                 <button
@@ -178,9 +179,6 @@ export function SuperAdminApp({ initialOrgs, userEmail }: Props) {
                       <Plus className="h-4 w-4" />
                     </button>
                   </div>
-                  <p className="mt-sm text-[12px] font-serif italic text-muted-foreground">
-                    펫무브워크 운영자 계정은 조직 가입 없이 전체 조직을 관리합니다
-                  </p>
                 </div>
               </section>
 
@@ -198,8 +196,19 @@ export function SuperAdminApp({ initialOrgs, userEmail }: Props) {
                         {selected.name}
                       </h2>
                       <div className="mt-2 flex items-baseline gap-md flex-wrap text-[12px] text-muted-foreground">
-                        <span className="font-mono tabular-nums truncate max-w-full">
-                          {selected.id}
+                        <span className="inline-flex items-baseline gap-xs">
+                          <span className="font-serif italic">사업자번호</span>
+                          <BusinessNumberField
+                            orgId={selected.id}
+                            value={selected.business_number}
+                            onSaved={(next) =>
+                              setSelected((prev) =>
+                                prev && prev.id === selected.id
+                                  ? { ...prev, business_number: next }
+                                  : prev,
+                              )
+                            }
+                          />
                         </span>
                         <span>
                           <span className="font-serif italic">생성</span>{' '}
@@ -295,5 +304,61 @@ export function SuperAdminApp({ initialOrgs, userEmail }: Props) {
         </div>
       </main>
     </>
+  )
+}
+
+function BusinessNumberField({
+  orgId,
+  value,
+  onSaved,
+}: {
+  orgId: string
+  value: string | null
+  onSaved: (next: string | null) => void
+}) {
+  const [draft, setDraft] = useState(value ?? '')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function commit() {
+    const next = draft.trim()
+    const normalized = next === '' ? null : next
+    if (normalized === (value ?? null)) return
+    setSaving(true)
+    setError(null)
+    const r = await updateOrgBusinessNumber({ orgId, businessNumber: normalized })
+    setSaving(false)
+    if (!r.ok) {
+      setError(r.error)
+      setDraft(value ?? '')
+      return
+    }
+    onSaved(r.value.business_number)
+    setDraft(r.value.business_number ?? '')
+  }
+
+  return (
+    <span className="inline-flex items-baseline gap-xs">
+      <input
+        type="text"
+        inputMode="numeric"
+        placeholder="XXX-XX-XXXXX"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            ;(e.target as HTMLInputElement).blur()
+          } else if (e.key === 'Escape') {
+            setDraft(value ?? '')
+            ;(e.target as HTMLInputElement).blur()
+          }
+        }}
+        disabled={saving}
+        className="font-mono tabular-nums bg-transparent text-foreground placeholder:text-muted-foreground/50 border-b border-dotted border-border/70 focus:border-foreground/40 focus:outline-none w-[120px] disabled:opacity-60"
+      />
+      {error && <span className="text-destructive">{error}</span>}
+    </span>
   )
 }

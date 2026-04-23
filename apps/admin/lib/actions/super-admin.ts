@@ -16,6 +16,7 @@ export interface OrgSummary {
 export interface OrgDetail {
   id: string
   name: string
+  business_number: string | null
   created_at: string
   members: { user_id: string; email: string; name: string | null; role: string; joined_at: string }[]
   invites: { id: string; email: string; role: string; token: string; expires_at: string; created_at: string }[]
@@ -87,7 +88,7 @@ export async function getOrgDetail(orgId: string): Promise<Result<OrgDetail>> {
     const admin = createAdminClient()
     const { data: org, error: orgErr } = await admin
       .from('organizations')
-      .select('id, name, created_at')
+      .select('id, name, business_number, created_at')
       .eq('id', orgId)
       .maybeSingle()
     if (orgErr) return { ok: false, error: orgErr.message }
@@ -148,11 +149,35 @@ export async function getOrgDetail(orgId: string): Promise<Result<OrgDetail>> {
       value: {
         id: org.id as string,
         name: org.name as string,
+        business_number: (org.business_number as string | null) ?? null,
         created_at: org.created_at as string,
         members,
         invites,
       },
     }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+export async function updateOrgBusinessNumber(input: {
+  orgId: string
+  businessNumber: string | null
+}): Promise<Result<{ business_number: string | null }>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  const raw = (input.businessNumber ?? '').trim()
+  const normalized = raw === '' ? null : raw
+  try {
+    const admin = createAdminClient()
+    const { data, error } = await admin
+      .from('organizations')
+      .update({ business_number: normalized })
+      .eq('id', input.orgId)
+      .select('business_number')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: { business_number: (data.business_number as string | null) ?? null } }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }
