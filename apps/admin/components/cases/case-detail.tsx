@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { CopyButton } from './copy-button'
+import { DateTextField } from '@/components/ui/date-text-field'
 import { EditableField } from './editable-field'
 import { PairedField } from './paired-field'
 import { CustomerNameRow } from './customer-name-row'
@@ -107,11 +108,14 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
       className="flex-1 min-h-0 flex flex-col px-lg py-md overflow-y-auto overflow-x-hidden scrollbar-minimal"
     >
       {/* ─── Sections ─── */}
-      {groups.map((g) => (
+      {groups.map((g, groupIdx) => (
         <React.Fragment key={g.group}>
         <section className="mb-7">
-          <div className="mb-2 flex items-center gap-[6px]">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="mb-3 flex items-center gap-[10px]">
+            <span className="font-mono text-[12px] tracking-[1px] text-muted-foreground">
+              {String(groupIdx + 1).padStart(2, '0')}
+            </span>
+            <h3 className="font-serif text-[15px] font-medium uppercase tracking-[0.4px] text-foreground">
               {g.group}
             </h3>
             {g.group === '절차정보' && toggleableForDest.length > 0 && (
@@ -276,9 +280,14 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
           if (!ExtraComp && !extraFieldsOnly) return null
           return (
             <section className="mb-7">
-              <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                추가정보
-              </h3>
+              <div className="mb-3 flex items-center gap-[10px]">
+                <span className="font-mono text-[12px] tracking-[1px] text-muted-foreground">
+                  {String(groups.length + 1).padStart(2, '0')}
+                </span>
+                <h3 className="font-serif text-[15px] font-medium uppercase tracking-[0.4px] text-foreground">
+                  추가정보
+                </h3>
+              </div>
               <div>
                 {ExtraComp && <ExtraComp caseId={caseRow.id} caseRow={caseRow} />}
                 {extraFieldsOnly && destOverride!.extraFields!.includes('address_overseas') && (
@@ -359,9 +368,9 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60">
       <div className="flex items-center gap-[6px] pt-1">
-        <span className="text-base text-primary">{spec.label}</span>
+        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">{spec.label}</span>
         {!showSecondary && (
           <button type="button" onClick={() => { setShowSecondary(true); setEditingSecondary(true); setSecVal(''); setSecError(null) }}
             className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors"
@@ -395,7 +404,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
                 />
               ) : (
                 <button type="button" onClick={() => { setSecVal(secondary.replace(/\D/g, '')); setEditingSecondary(true); setSecError(null) }}
-                  className="text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text">
+                  className="text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-text">
                   {formatChip(secondary)}
                 </button>
               )}
@@ -444,9 +453,9 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60">
       <div className="flex items-center gap-[6px] pt-1">
-        <span className="text-base text-primary">마이크로칩</span>
+        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">마이크로칩</span>
       </div>
       <div className="group/item flex items-baseline gap-[10px] min-w-0 flex-wrap">
         {editing ? (
@@ -455,8 +464,8 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
           <span className="group/v relative inline-flex items-baseline">
             <button type="button" onClick={() => setEditing(true)} title={implantTitle}
               className={cn(
-                'text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer',
-                !implantDate && 'text-muted-foreground/60',
+                'text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
+                !implantDate && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60',
                 implantColorCls,
               )}>
               {implantDate || '—'}
@@ -479,28 +488,15 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
 function MicrochipDateInput({ initial, onSave, onCancel }: {
   initial: string; onSave: (v: string) => void; onCancel: () => void
 }) {
-  const ref = useRef<HTMLInputElement>(null)
-  useEffect(() => { ref.current?.focus() }, [])
-
-  function saveFromRef() {
-    const raw = (ref.current?.value ?? '').trim()
-    if (!raw) { onSave(''); return }
-    onSave(raw)
-  }
-
   return (
-    <input ref={ref} type="date" min="1900-01-01" max="2100-12-31" defaultValue={initial}
-      onChange={(e) => {
-        // 달력 picker "삭제" 버튼이나 segment 전체 백스페이스로 ''가 되면 즉시 저장.
-        if (e.target.value === '') saveFromRef()
-      }}
+    <DateTextField
+      autoFocus
+      value={initial}
+      onChange={(v) => onSave(v)}
+      onBlur={onCancel}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') { e.preventDefault(); saveFromRef() }
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
-      onBlur={() => setTimeout(() => {
-        saveFromRef()
-      }, 150)}
       className="w-36 bg-transparent border-0 border-b border-primary text-sm py-1 focus:outline-none"
     />
   )

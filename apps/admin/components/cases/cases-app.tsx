@@ -19,7 +19,7 @@ import { lookupCaseByMicrochip } from '@/lib/actions/lookup-case-by-chip'
 import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateOVD, generateSGP, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti } from '@/lib/actions/generate-pdf'
 import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-download'
 import { MultiFormDialog } from './multi-form-dialog'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Copy, Trash2 } from 'lucide-react'
 import { resolveCerts } from '@petmove/domain'
 import type { CaseRow } from '@/lib/supabase/types'
 
@@ -368,8 +368,8 @@ function Inner() {
                 </>
               )}
               <div className="h-full flex flex-col gap-4">
-              {/* Top menu bar: 목록 / 복원·복제·삭제 */}
-              <div className="h-9 shrink-0 flex items-center justify-between text-[13px] text-muted-foreground">
+              {/* Top menu bar: 목록 / 변경이력 · 복제 · 삭제 — Editorial 서브 메뉴 */}
+              <div className="h-9 shrink-0 flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => {
@@ -382,7 +382,7 @@ function Inner() {
                       selectCase(null)
                     }
                   }}
-                  className="rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
+                  className="px-2 py-1 font-mono text-[12px] uppercase tracking-[1.5px] text-muted-foreground hover:text-foreground transition-colors"
                 >
                   목록
                 </button>
@@ -392,16 +392,20 @@ function Inner() {
                     <button
                       type="button"
                       onClick={() => handleDuplicate(selectedCase.id)}
-                      className="rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
+                      title="복제"
+                      aria-label="복제"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                     >
-                      복제
+                      <Copy className="h-3.5 w-3.5" />
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDelete(selectedCase.id)}
-                      className="rounded-md px-2 py-1 hover:bg-accent hover:text-red-500 transition-colors"
+                      title="삭제"
+                      aria-label="삭제"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-red-500 transition-colors"
                     >
-                      삭제
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 )}

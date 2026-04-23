@@ -194,3 +194,105 @@ export async function undoLastChange(
   revalidatePath('/cases')
   return { ok: true, key: field_key, storage: field_storage as 'column' | 'data', restoredValue }
 }
+
+/**
+ * Restore a case to the state BEFORE the given history entry was created.
+ * Rolls back all changes at or after that point (bulk revert to a point-in-time).
+ * Returns the final state of each affected field so client can sync local state.
+ */
+export async function restoreToHistoryPoint(
+  caseId: string,
+  historyId: string,
+): Promise<
+  | {
+      ok: true
+      restored: Array<{ key: string; storage: 'column' | 'data'; value: string | null }>
+    }
+  | { ok: false; error: string }
+> {
+  if (!caseId || !historyId) return { ok: false, error: 'caseId and historyId are required' }
+
+  const supabase = await createClient()
+
+  // 1. Get the selected entry's changed_at (the boundary).
+  const { data: selected, error: selErr } = await supabase
+    .from('case_history')
+    .select('changed_at')
+    .eq('id', historyId)
+    .eq('case_id', caseId)
+    .single()
+  if (selErr || !selected) return { ok: false, error: '이력 항목을 찾을 수 없습니다' }
+
+  // 2. Fetch all entries at or after that point, newest first.
+  const { data: entries, error: fetchErr } = await supabase
+    .from('case_history')
+    .select('*')
+    .eq('case_id', caseId)
+    .gte('changed_at', selected.changed_at)
+    .order('changed_at', { ascending: false })
+  if (fetchErr) return { ok: false, error: fetchErr.message }
+  if (!entries || entries.length === 0) return { ok: false, error: '되돌릴 이력이 없습니다' }
+
+  // 3. Reduce to per-field final state.
+  //    entries are DESC (newest → oldest). Iterating in this order with .set() means
+  //    the OLDEST entry for each key wins — which is exactly what we want: the value
+  //    before any change in the selected range.
+  const finalByKey = new Map<
+    string,
+    { storage: 'column' | 'data'; key: string; value: string | null }
+  >()
+  for (const e of entries) {
+    finalByKey.set(`${e.field_storage}:${e.field_key}`, {
+      storage: e.field_storage as 'column' | 'data',
+      key: e.field_key,
+      value: e.old_value,
+    })
+  }
+
+  // 4. Separate column and data updates.
+  const columnUpdates: Record<string, unknown> = {}
+  const dataKeyUpdates = new Map<string, string | null>()
+  for (const f of finalByKey.values()) {
+    if (f.storage === 'column') {
+      if (REGULAR_COLUMNS.has(f.key)) columnUpdates[f.key] = f.value
+    } else {
+      dataKeyUpdates.set(f.key, f.value)
+    }
+  }
+
+  // 5. Apply column updates in a single UPDATE.
+  if (Object.keys(columnUpdates).length > 0) {
+    const { error } = await supabase.from('cases').update(columnUpdates).eq('id', caseId)
+    if (error) return { ok: false, error: error.message }
+  }
+
+  // 6. Apply data updates: read-merge-write.
+  if (dataKeyUpdates.size > 0) {
+    const { data: row, error: dFetchErr } = await supabase
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (dFetchErr) return { ok: false, error: dFetchErr.message }
+
+    const current: Record<string, unknown> = (row?.data as Record<string, unknown> | null) ?? {}
+    const next = { ...current }
+    for (const [k, v] of dataKeyUpdates) {
+      if (v === null) delete next[k]
+      else next[k] = v
+    }
+    const { error } = await supabase.from('cases').update({ data: next }).eq('id', caseId)
+    if (error) return { ok: false, error: error.message }
+  }
+
+  // 7. Delete consumed history entries.
+  const ids = entries.map((e) => e.id)
+  await supabase.from('case_history').delete().in('id', ids)
+
+  revalidatePath('/cases')
+
+  return {
+    ok: true,
+    restored: Array.from(finalByKey.values()),
+  }
+}

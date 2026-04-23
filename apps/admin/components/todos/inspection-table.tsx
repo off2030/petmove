@@ -1,12 +1,14 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Trash2 } from 'lucide-react'
 import type { CaseRow } from '@/lib/supabase/types'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from '@/components/cases/cases-context'
 import { labColor } from '@/lib/lab-color'
-import { destColor } from '@/lib/destination-color'
+import { destCode } from '@/lib/country-code'
 import { cn } from '@/lib/utils'
+import { DateTextField } from '@/components/ui/date-text-field'
 
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
@@ -41,6 +43,8 @@ export interface InspectionRow {
     | { kind: 'titer' }
     | { kind: 'infectious'; lab: string }
     | { kind: 'infectious_multi'; labs: string[] }
+  /** 삭제 버튼 클릭 시 case.data.inspection_dismissed 에 추가할 키. */
+  dismissKey: string
 }
 
 interface LabOption { value: string; label: string }
@@ -106,11 +110,19 @@ async function saveInfectiousDates(caseRow: CaseRow, labs: string[], newDate: st
   return val
 }
 
+/** YYYY-MM-DD → YYYY·MM·DD (editorial 구분자). */
+function formatDateDotted(v: string): string {
+  if (!v || v.length < 10) return v
+  return v.replace(/-/g, '\u00B7')
+}
+
 /**
  * Inline date editor — 상세페이지(editable-field.tsx)와 동일한 패턴.
  * Uncontrolled `defaultValue` + `autoFocus` 만 사용. `showPicker()`는 호출하지 않는다:
  * 달력 팝업으로 선택한 값 변경은 브라우저 native undo history에 기록되지 않아
  * Ctrl+Z 가 동작하지 않게 된다. 키보드 타이핑은 정상적으로 undo 됨.
+ *
+ * Editorial: Mono 12px tabular-nums, · 구분자. 빈값은 italic "—".
  */
 function DateCell({
   value,
@@ -124,21 +136,14 @@ function DateCell({
   overdue?: boolean
 }) {
   const [editing, setEditing] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  const commit = useCallback(() => {
-    setEditing(false)
-    const v = inputRef.current?.value ?? ''
-    if (v === value) return
-    onSave(v)
-  }, [value, onSave])
 
   const overdueCls = overdue && value ? 'text-orange-500' : ''
+  const baseCls = 'w-full px-1 py-1 font-mono text-[12px] tabular-nums tracking-[0.3px] truncate min-h-[24px]'
 
   if (!editable) {
     return (
-      <div className={cn('w-full px-1 py-1 text-base truncate min-h-[24px] text-muted-foreground/80', overdueCls)}>
-        {value || <span className="text-muted-foreground/50">—</span>}
+      <div className={cn(baseCls, 'text-muted-foreground/80', overdueCls)}>
+        {value ? formatDateDotted(value) : <span className="font-serif italic text-[15px] text-muted-foreground/40">—</span>}
       </div>
     )
   }
@@ -146,58 +151,72 @@ function DateCell({
   if (!editing) {
     return (
       <div
-        className={cn('w-full px-1 py-1 text-base cursor-text truncate min-h-[24px]', overdueCls)}
+        className={cn(baseCls, 'cursor-text', overdueCls)}
         onClick={() => setEditing(true)}
       >
-        {value || <span className="text-muted-foreground/50">—</span>}
+        {value ? formatDateDotted(value) : <span className="font-serif italic text-[15px] text-muted-foreground/40">—</span>}
       </div>
     )
   }
 
   return (
-    <input
-      ref={inputRef}
-      type="date"
-      min="1900-01-01"
-      max="2100-12-31"
-      defaultValue={value}
+    <DateTextField
       autoFocus
-      onChange={(e) => {
-        // 달력 picker "삭제" 버튼으로 ''가 되면 즉시 저장.
-        if (e.target.value === '') commit()
+      value={value}
+      onChange={(v) => {
+        if (v !== value) onSave(v)
+        setEditing(false)
       }}
-      onBlur={commit}
+      onBlur={() => setEditing(false)}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') commit()
-        if (e.key === 'Escape') setEditing(false)
+        if (e.key === 'Escape') { e.preventDefault(); setEditing(false) }
       }}
-      className="w-full bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
+      size="sm"
+      className="w-full bg-transparent border-0 border-b border-primary font-mono text-[12px] tabular-nums py-1 focus:outline-none"
     />
   )
 }
 
-/** Static text cell (read-only data from the case row). */
-function StaticCell({ value }: { value: string }) {
+/** Static text cell — 홈 화면과 동일한 typography. 빈값은 italic "—". */
+function StaticCell({ value, variant }: { value: string; variant?: 'pet' | 'customer' }) {
+  const cls =
+    variant === 'pet'
+      ? 'font-serif font-semibold text-[17px] leading-tight text-foreground'
+      : variant === 'customer'
+        ? 'font-sans font-normal text-[14px] leading-tight text-foreground/85'
+        : 'font-serif text-[15px] font-medium text-foreground'
   return (
-    <div className="w-full px-1 py-1 text-base truncate min-h-[24px]">
-      {value || <span className="text-muted-foreground/50">—</span>}
+    <div className={cn('w-full px-1 py-1 truncate min-h-[24px]', cls)}>
+      {value || <span className="italic font-normal text-muted-foreground/40">—</span>}
     </div>
   )
 }
 
-/** 목적지를 국가별 색상 배지로 표시 (홈/상세와 동일 패턴). */
+/** 목적지를 tan pill + MONO code + Serif 이름으로 렌더링 (상세페이지 DestinationField와 동일). 항상 한 줄. */
 function DestinationCell({ value }: { value: string | null | undefined }) {
   const dests = (value ?? '').split(',').map(s => s.trim()).filter(Boolean)
   if (dests.length === 0) {
-    return <div className="w-full px-1 py-1 text-base min-h-[24px]"><span className="text-muted-foreground/50">—</span></div>
+    return (
+      <div className="w-full px-1 py-1 min-h-[24px]">
+        <span className="font-serif italic text-[15px] text-muted-foreground/40">—</span>
+      </div>
+    )
   }
   return (
-    <div className="w-full px-1 py-1 min-h-[24px] flex items-center gap-1 flex-wrap">
+    <div className="w-full px-1 py-1 min-h-[24px] flex items-center gap-1.5 flex-nowrap whitespace-nowrap">
       {dests.map(d => {
-        const tone = destColor(d)
+        const code = destCode(d)
         return (
-          <span key={d} className={cn('inline-flex items-center rounded px-2 py-0.5 text-xs font-medium', tone.bg, tone.text)}>
-            {d}
+          <span
+            key={d}
+            className="inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 bg-[#E5D9C2] text-[#6B5A3A] whitespace-nowrap"
+          >
+            {code && (
+              <span className="font-mono text-[11px] uppercase tracking-[1px] text-[#7B7B5F]">
+                {code}
+              </span>
+            )}
+            <span className="font-serif text-[13px] text-[#6B5A3A]">{d}</span>
           </span>
         )
       })}
@@ -238,13 +257,19 @@ function MemoCell({ row, onUpdate }: {
     el.style.height = el.scrollHeight + 'px'
   }, [editing])
 
+  // "ASAP" 같은 긴급 메모는 Mono uppercase + 브랜드 색. 일반 메모는 Serif.
+  const isUrgent = /^ASAP$/i.test(initial.trim())
+  const displayCls = isUrgent
+    ? 'font-mono text-[12px] uppercase tracking-[1.3px] text-primary'
+    : 'font-serif text-[15px] text-foreground'
+
   if (!editing) {
     return (
       <div
-        className="w-full px-1 py-1 text-base cursor-text whitespace-pre-wrap min-h-[24px]"
+        className={cn('w-full px-1 py-1 cursor-text whitespace-pre-wrap min-h-[24px]', displayCls)}
         onClick={() => { setDraft(initial); setEditing(true) }}
       >
-        {initial || <span className="text-muted-foreground/50">—</span>}
+        {initial || <span className="font-serif italic text-muted-foreground/40">—</span>}
       </div>
     )
   }
@@ -267,7 +292,10 @@ function MemoCell({ row, onUpdate }: {
   )
 }
 
-/** Status badge + select. Per-case (공유 상태). */
+/**
+ * Status — 배지 없음. 이탤릭 세리프 + "검사중" 활성 상태만 브랜드 색으로 강조.
+ * 상세페이지의 Status 규칙과 동일.
+ */
 function StatusCell({ row, options, onUpdate }: {
   row: InspectionRow
   options: StatusOption[]
@@ -278,26 +306,90 @@ function StatusCell({ row, options, onUpdate }: {
   const opt = options.find(o => o.value === value)
   const label = opt?.label ?? '대기'
 
-  let cls = 'bg-[#D6D5D1] text-[#3E3E3A] dark:bg-[#3A3A37] dark:text-[#CACAC5]'
-  if (value === 'done') cls = 'bg-[#DBE4D6] text-[#3F5A35] dark:bg-[#364332] dark:text-[#C4D4B9]'
-  else if (value === 'testing') cls = 'bg-[#D6E0EA] text-[#3D5268] dark:bg-[#2F3D4D] dark:text-[#C4D1DE]'
+  // "검사중" → primary(테라코타, warm). "완료" → sage(차분한 녹색, cool 대비). 대기 → muted.
+  const isActive = value === 'testing'
+  const isDone = value === 'done'
+  const cls = isActive
+    ? 'font-serif italic text-[16px] text-primary'
+    : isDone
+    ? 'font-serif italic text-[16px] text-[#2E5A3E] dark:text-[#B5D4BE]'
+    : 'font-serif italic text-[16px] text-muted-foreground'
+
+  return <StatusPicker row={row} options={options} value={value} label={label} cls={cls} isDone={isDone} onUpdate={onUpdate} />
+}
+
+/** Editorial 커스텀 진행상태 드롭다운 — 네이티브 select 제거. */
+function StatusPicker({ row, options, value, label, cls, isDone, onUpdate }: {
+  row: InspectionRow
+  options: StatusOption[]
+  value: string
+  label: string
+  cls: string
+  isDone: boolean
+  onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [open])
+
+  async function pick(v: string) {
+    setOpen(false)
+    if (v === value) return
+    onUpdate(row.caseRow.id, 'data', 'inspection_status', v || null)
+    await updateCaseField(row.caseRow.id, 'data', 'inspection_status', v || null)
+  }
 
   return (
-    <div className="relative">
-      <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${cls}`}>{label}</span>
-      <select
-        value={value}
-        onChange={async (e) => {
-          const v = e.target.value
-          onUpdate(row.caseRow.id, 'data', 'inspection_status', v || null)
-          await updateCaseField(row.caseRow.id, 'data', 'inspection_status', v || null)
-        }}
-        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+    <div ref={ref} className="relative min-h-[24px] flex items-center">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={cn(cls, 'cursor-pointer rounded-md -mx-1 px-1 hover:bg-accent/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40')}
       >
-        {options.map(o => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
+        {value === 'testing' && <span className="not-italic mr-1">↻</span>}
+        {isDone && <span className="not-italic mr-1">✓</span>}
+        {label}
+      </button>
+      {open && (
+        <ul className="absolute left-0 top-full mt-1 z-30 min-w-[120px] rounded-md border border-border/60 bg-background py-1 shadow-md">
+          {options.map(o => {
+            const isCurrent = value === o.value
+            const optActive = o.value === 'testing'
+            const optDone = o.value === 'done'
+            const optCls = optActive
+              ? 'font-serif italic text-[15px] text-primary'
+              : optDone
+                ? 'font-serif italic text-[15px] text-[#2E5A3E] dark:text-[#B5D4BE]'
+                : 'font-serif italic text-[15px] text-muted-foreground'
+            return (
+              <li key={o.value}>
+                <button
+                  type="button"
+                  onClick={() => pick(o.value)}
+                  className={cn(
+                    'w-full text-left px-sm py-1.5 hover:bg-accent/60 transition-colors flex items-center gap-sm',
+                    isCurrent && 'bg-accent/40',
+                  )}
+                >
+                  <span className={optCls}>
+                    {optActive && <span className="not-italic mr-1">↻</span>}
+                    {optDone && <span className="not-italic mr-1">✓</span>}
+                    {o.label}
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </div>
   )
 }
@@ -308,20 +400,20 @@ function LabCell({ row, options, onUpdate }: {
   options: LabOption[]
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
 }) {
-  // Multi-lab row (e.g., NZ: APQA HQ + VBDDL) — render one chip per lab with its own tone.
+  // Editorial pill: rounded-full + MONO uppercase (목적지 pill과 동일 shape, 각 lab 고유 tone 유지).
+  const pillCls = 'inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap'
+
+  // Multi-lab row (e.g., NZ: APQA HQ + VBDDL) — render one chip per lab with its own tone. 항상 한 줄.
   if (row.dateStorage.kind === 'infectious_multi') {
     return (
-      <div className="w-full min-h-[24px] flex items-center gap-1 flex-wrap">
+      <div className="w-full min-h-[24px] flex items-center gap-1.5 flex-nowrap whitespace-nowrap">
         {row.dateStorage.labs.map(labVal => {
           const tone = labColor(labVal)
           const label = options.find(o => o.value === labVal)?.label ?? labVal
           return (
             <span
               key={labVal}
-              className={cn(
-                'inline-block text-xs rounded px-2 py-0.5 font-medium',
-                tone ? cn(tone.bg, tone.text) : 'bg-muted text-muted-foreground',
-              )}
+              className={cn(pillCls, tone ? cn(tone.bg, tone.text) : 'bg-muted text-muted-foreground')}
             >
               {label}
             </span>
@@ -336,12 +428,7 @@ function LabCell({ row, options, onUpdate }: {
 
   const chip = (
     <span
-      className={cn(
-        'inline-block text-xs truncate max-w-full',
-        tone
-          ? cn('rounded px-2 py-0.5 font-medium', tone.bg, tone.text)
-          : 'px-1 py-1',
-      )}
+      className={cn(pillCls, tone ? cn(tone.bg, tone.text) : 'bg-muted/60 text-muted-foreground')}
     >
       {label}
     </span>
@@ -351,22 +438,76 @@ function LabCell({ row, options, onUpdate }: {
     return <div className="w-full min-h-[24px] flex items-center">{chip}</div>
   }
 
+  return <LabPicker row={row} options={options} chip={chip} onUpdate={onUpdate} />
+}
+
+/** Editorial 커스텀 드롭다운 — 네이티브 select 제거. Lab pill 스타일 그대로 유지. */
+function LabPicker({ row, options, chip, onUpdate }: {
+  row: InspectionRow
+  options: LabOption[]
+  chip: React.ReactNode
+  onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [open])
+
+  async function pick(v: string) {
+    setOpen(false)
+    if (v === row.lab) return
+    onUpdate(row.caseRow.id, 'data', 'inspection_lab', v || null)
+    await updateCaseField(row.caseRow.id, 'data', 'inspection_lab', v || null)
+  }
+
   return (
-    <div className="relative min-h-[24px] flex items-center">
-      <div className="cursor-pointer">{chip}</div>
-      <select
-        value={row.lab}
-        onChange={async (e) => {
-          const v = e.target.value
-          onUpdate(row.caseRow.id, 'data', 'inspection_lab', v || null)
-          await updateCaseField(row.caseRow.id, 'data', 'inspection_lab', v || null)
-        }}
-        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+    <div ref={ref} className="relative min-h-[24px] flex items-center">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
       >
-        {options.map(o => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
+        {chip}
+      </button>
+      {open && (
+        <ul className="absolute left-0 top-full mt-1 z-30 min-w-[140px] rounded-md border border-border/60 bg-background py-1 shadow-md">
+          {options.map(o => {
+            const isCurrent = row.lab === o.value
+            const oTone = labColor(o.value)
+            return (
+              <li key={o.value}>
+                <button
+                  type="button"
+                  onClick={() => pick(o.value)}
+                  className={cn(
+                    'w-full text-left px-sm py-1.5 hover:bg-accent/60 transition-colors flex items-center gap-sm',
+                    isCurrent && 'bg-accent/40',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.8px] whitespace-nowrap',
+                      oTone ? cn(oTone.bg, oTone.text) : 'bg-muted/60 text-muted-foreground',
+                    )}
+                  >
+                    {o.label}
+                  </span>
+                  {isCurrent && (
+                    <span className="ml-auto text-primary text-xs" aria-hidden="true">✓</span>
+                  )}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </div>
   )
 }
@@ -374,12 +515,14 @@ function LabCell({ row, options, onUpdate }: {
 const COLUMNS = [
   { key: 'lab', label: '검사기관', width: 160 },
   { key: 'date', label: '검사일', width: 120 },
-  { key: 'pet_name', label: '동물', width: 100 },
-  { key: 'customer_name', label: '고객', width: 100 },
+  { key: 'pet_name', label: '반려동물', width: 100 },
+  { key: 'customer_name', label: '보호자', width: 100 },
   { key: 'destination', label: '목적지', width: 100 },
   { key: 'status', label: '진행상태', width: 110 },
   { key: 'departure_date', label: '출국일', width: 120 },
   { key: 'memo', label: '메모', width: 180 },
+  // 삭제(목록에서 숨기기) — 아이콘 전용, 헤더는 빈 값.
+  { key: '_dismiss', label: '', width: 40 },
 ]
 
 export function InspectionTable({
@@ -426,14 +569,27 @@ export function InspectionTable({
     }
   }, [onUpdate])
 
+  /** 행 삭제(숨기기). case 삭제가 아니라 case.data.inspection_dismissed 배열에 키 추가. */
+  const handleDismiss = useCallback(async (row: InspectionRow) => {
+    const data = (row.caseRow.data ?? {}) as Record<string, unknown>
+    const raw = data.inspection_dismissed
+    const current = Array.isArray(raw)
+      ? raw.filter((x): x is string => typeof x === 'string')
+      : []
+    if (current.includes(row.dismissKey)) return
+    const next = [...current, row.dismissKey]
+    onUpdate(row.caseRow.id, 'data', 'inspection_dismissed', next)
+    await updateCaseField(row.caseRow.id, 'data', 'inspection_dismissed', next)
+  }, [onUpdate])
+
   return (
-    <table className="w-full border-collapse text-base">
+    <table className="w-full border-collapse">
       <thead>
         <tr className="border-b border-border/60">
           {COLUMNS.map(col => (
             <th
               key={col.key}
-              className="text-left text-base font-medium text-primary px-2 py-2.5 whitespace-nowrap"
+              className="text-left font-sans font-normal text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80 px-2 py-2.5 whitespace-nowrap"
               style={{ width: col.width, minWidth: col.width }}
             >
               {col.label}
@@ -445,13 +601,13 @@ export function InspectionTable({
         {visibleRows.map(row => (
           <tr
             key={row.id}
-            className="border-b border-border/60 hover:bg-accent/30 transition-colors cursor-pointer"
+            className="group/insprow border-b border-dashed border-border/50 hover:bg-accent/60 transition-colors cursor-pointer"
             onClick={() => openCase(row.caseRow.id)}
           >
-            <td className="px-2 py-2" style={{ width: 160, minWidth: 160 }} onClick={(e) => e.stopPropagation()}>
+            <td className="px-2 py-4" style={{ width: 160, minWidth: 160 }} onClick={(e) => e.stopPropagation()}>
               <LabCell row={row} options={labOptions} onUpdate={onUpdate} />
             </td>
-            <td className="px-2 py-2" style={{ width: 120, minWidth: 120 }} onClick={(e) => e.stopPropagation()}>
+            <td className="px-2 py-4" style={{ width: 120, minWidth: 120 }} onClick={(e) => e.stopPropagation()}>
               <DateCell
                 value={row.date}
                 editable={row.dateEditable}
@@ -462,19 +618,19 @@ export function InspectionTable({
                 }
               />
             </td>
-            <td className="px-2 py-2" style={{ width: 100, minWidth: 100 }}>
-              <StaticCell value={row.caseRow.pet_name ?? ''} />
+            <td className="px-2 py-4" style={{ width: 100, minWidth: 100 }}>
+              <StaticCell value={row.caseRow.pet_name ?? ''} variant="pet" />
             </td>
-            <td className="px-2 py-2" style={{ width: 100, minWidth: 100 }}>
-              <StaticCell value={row.caseRow.customer_name ?? ''} />
+            <td className="px-2 py-4" style={{ width: 100, minWidth: 100 }}>
+              <StaticCell value={row.caseRow.customer_name ?? ''} variant="customer" />
             </td>
-            <td className="px-2 py-2" style={{ width: 100, minWidth: 100 }}>
+            <td className="px-2 py-4" style={{ width: 100, minWidth: 100 }}>
               <DestinationCell value={row.caseRow.destination} />
             </td>
-            <td className="px-2 py-2" style={{ width: 110, minWidth: 110 }} onClick={(e) => e.stopPropagation()}>
+            <td className="px-2 py-4" style={{ width: 110, minWidth: 110 }} onClick={(e) => e.stopPropagation()}>
               <StatusCell row={row} options={statusOptions} onUpdate={onUpdate} />
             </td>
-            <td className="px-2 py-2" style={{ width: 120, minWidth: 120 }} onClick={(e) => e.stopPropagation()}>
+            <td className="px-2 py-4" style={{ width: 120, minWidth: 120 }} onClick={(e) => e.stopPropagation()}>
               <DateCell
                 value={row.caseRow.departure_date ?? ''}
                 editable
@@ -485,8 +641,18 @@ export function InspectionTable({
                 }}
               />
             </td>
-            <td className="px-2 py-2" style={{ width: 180, minWidth: 180 }} onClick={(e) => e.stopPropagation()}>
+            <td className="px-2 py-4" style={{ width: 180, minWidth: 180 }} onClick={(e) => e.stopPropagation()}>
               <MemoCell row={row} onUpdate={onUpdate} />
+            </td>
+            <td className="px-2 py-4" style={{ width: 40, minWidth: 40 }} onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                onClick={() => handleDismiss(row)}
+                title="검사 목록에서 제거 (케이스는 보존)"
+                className="opacity-0 group-hover/insprow:opacity-60 hover:!opacity-100 text-muted-foreground hover:text-destructive transition-opacity inline-flex items-center justify-center h-6 w-6 rounded-full"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
             </td>
           </tr>
         ))}

@@ -1,6 +1,7 @@
 'use client'
 
 import { Folder, CheckCircle2, LayoutGrid, Settings, Menu, Monitor, Sun, Moon, Shield, User, LogOut } from 'lucide-react'
+import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { countExpiringProducts } from '@petmove/domain'
 import { useDarkMode } from '@/lib/use-dark-mode'
@@ -125,14 +126,15 @@ export function TopBar({
         {/* Right-side actions */}
         <div className="flex items-center gap-xs">
           {isSuperAdmin && (
-            <a
+            <Link
               href="/super-admin"
+              prefetch={false}
               title="Super Admin"
               aria-label="Super Admin"
               className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
               <Shield size={18} />
-            </a>
+            </Link>
           )}
           {mounted && (
             <button

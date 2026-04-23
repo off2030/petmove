@@ -171,12 +171,7 @@ export function CaseList({
         <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
           고객 정보
         </h1>
-        <div className="flex items-center gap-md">
-          <span className="text-muted-foreground text-[13px]">
-            <span className="font-serif italic">총</span>{' '}
-            <span className="font-mono tabular-nums">{cases.length.toLocaleString()}</span>
-            <span className="font-serif italic">건</span>
-          </span>
+        <div className="flex items-center gap-sm">
           <button
             type="button"
             onClick={() => setShowTrash(true)}
@@ -186,6 +181,11 @@ export function CaseList({
           >
             <History className="h-3.5 w-3.5" />
           </button>
+          <span className="text-muted-foreground text-[13px]">
+            <span className="font-serif italic">총</span>{' '}
+            <span className="font-mono tabular-nums">{cases.length.toLocaleString()}</span>
+            <span className="font-serif italic">건</span>
+          </span>
         </div>
       </div>
 
@@ -277,7 +277,7 @@ export function CaseList({
       <div className="flex-1 min-h-0 flex flex-col">
         {/* Column header — editorial caption */}
         <div className="shrink-0 px-lg pb-3 border-b border-border/60">
-          <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80">
+          <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm font-sans text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80">
             <span>보호자</span>
             <span>반려동물</span>
             <span>목적지</span>
@@ -304,9 +304,9 @@ export function CaseList({
                       onClick={() => { selectCase(c.id); setHighlight(-1) }}
                       className={cn(
                         'group block w-full px-lg py-4 text-left transition-colors',
-                        'hover:bg-muted',
+                        'hover:bg-accent',
                         isSelected && 'bg-accent',
-                        !isSelected && i === highlight && 'bg-muted/60',
+                        !isSelected && i === highlight && 'bg-accent/70',
                       )}
                     >
                       <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm">

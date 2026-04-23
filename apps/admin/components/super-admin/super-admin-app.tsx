@@ -88,7 +88,7 @@ export function SuperAdminApp({ initialOrgs }: Props) {
                         type="button"
                         onClick={() => select(o.id)}
                         disabled={pending}
-                        className={`w-full text-left px-md py-2 transition-colors hover:bg-muted/60 ${
+                        className={`w-full text-left px-md py-2 transition-colors hover:bg-accent/60 ${
                           selected?.id === o.id ? 'bg-muted/60' : ''
                         }`}
                       >

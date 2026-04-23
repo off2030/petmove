@@ -101,9 +101,9 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
-        <span className="text-base text-primary">목적지</span>
+        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">목적지</span>
         <button
           type="button"
           onClick={() => { setOpen(!open); setFreeMode(false); setQuery(''); setHighlightIdx(0) }}
@@ -123,12 +123,13 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                 <span
                   key={ko}
                   className={cn(
-                    'group/chip inline-flex items-baseline gap-1.5 transition-all',
+                    'group/chip inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 transition-all',
+                    'bg-[#E5D9C2] text-[#6B5A3A]',
                     multi && !isActive && 'opacity-45 hover:opacity-80',
                   )}
                 >
                   {code && (
-                    <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                    <span className="font-mono text-[13px] uppercase tracking-[1px] text-[#7B7B5F]">
                       {code}
                     </span>
                   )}
@@ -136,9 +137,9 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                     type="button"
                     onClick={() => { if (multi) setActiveDestination(ko) }}
                     className={cn(
-                      'font-serif text-[16px] text-foreground',
+                      'font-serif text-[15px] text-[#6B5A3A]',
                       multi && 'cursor-pointer',
-                      isActive && 'underline underline-offset-4 decoration-foreground/40',
+                      isActive && 'underline underline-offset-4 decoration-[#6B5A3A]/40',
                     )}
                     title={multi ? '클릭하여 이 국가 항목 보기' : undefined}
                   >
@@ -147,7 +148,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); removeDest(ko) }}
-                    className="opacity-0 group-hover/chip:opacity-70 hover:!opacity-100 leading-none text-sm text-muted-foreground transition-opacity"
+                    className="opacity-0 group-hover/chip:opacity-70 hover:!opacity-100 leading-none text-sm text-[#6B5A3A] transition-opacity"
                     title="삭제"
                   >
                     ×
@@ -161,7 +162,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
           <button
             type="button"
             onClick={() => { setOpen(!open); setFreeMode(false); setQuery(''); setHighlightIdx(0) }}
-            className="text-left rounded-md px-2 py-1 -mx-2 text-base text-primary/60 transition-colors hover:bg-accent/60 cursor-pointer"
+            className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground"
           >
             —
           </button>

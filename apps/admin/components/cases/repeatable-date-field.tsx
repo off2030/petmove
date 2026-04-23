@@ -11,6 +11,7 @@ import { extractVaccineInfo } from '@/lib/actions/extract-vaccine'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { severityTextClass, tooltipText, useFieldVerification } from './verification-context'
+import { DateTextField } from '@/components/ui/date-text-field'
 
 interface VacRecord {
   date: string
@@ -470,7 +471,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
       onDragLeave={!expanded ? handleDragLeave : undefined}
       onDrop={!expanded ? handleDropNew : undefined}
       className={cn(
-        "grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 last:border-0 rounded-md transition-colors hover:bg-muted/60",
+        "grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 last:border-0 rounded-md transition-colors hover:bg-accent/60",
         !expanded && dragOver && "bg-accent/40 ring-2 ring-ring/30 ring-dashed",
       )}
     >
@@ -480,7 +481,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
           type="button"
           onClick={() => { if (records.length > 0) setExpanded(!expanded) }}
           className={cn(
-            'text-base text-primary transition-colors',
+            'font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground transition-colors',
             records.length > 0 && 'hover:text-foreground cursor-pointer',
           )}
         >
@@ -535,7 +536,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
 
           {records.length === 0 && !addingNew && !extracting && (
             <button type="button" onClick={() => setAddingNew(true)}
-              className="text-left rounded-md px-2 py-1 -mx-2 text-base text-muted-foreground/60 transition-colors hover:bg-accent/60 cursor-pointer">
+              className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-base text-muted-foreground/60 transition-colors hover:bg-accent/60 cursor-pointer">
               —
             </button>
           )}
@@ -752,7 +753,7 @@ function CollapsedDateChip({ separator, path, date, editing, onStartEdit, onSave
             onClick={onStartEdit}
             title={title}
             className={cn(
-              'text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer',
+              'text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
               colorCls,
             )}
           >
@@ -782,7 +783,7 @@ function ExpandedDateButton({ path, date, onClick }: { path: string; date: strin
       onClick={onClick}
       title={title}
       className={cn(
-        'text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer',
+        'text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
         colorCls,
       )}
     >
@@ -924,46 +925,16 @@ function DateInput({ initial, onSave, onCancel }: {
   onSave: (v: string) => void
   onCancel: () => void
 }) {
-  const ref = useRef<HTMLInputElement>(null)
-
-  useEffect(() => { ref.current?.focus() }, [])
-
-  function saveFromRef() {
-    const raw = (ref.current?.value ?? '').trim()
-    if (!raw) { onSave(''); return }
-    const digits = raw.replace(/\D/g, '')
-    let dateStr = ''
-    if (digits.length === 8) dateStr = `${digits.slice(0,4)}-${digits.slice(4,6)}-${digits.slice(6,8)}`
-    else if (/^\d{4}[-./]\d{1,2}[-./]\d{1,2}$/.test(raw)) {
-      const parts = raw.split(/[-./]/)
-      dateStr = `${parts[0]}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`
-    } else {
-      dateStr = raw
-    }
-    const d = new Date(dateStr)
-    const year = parseInt(dateStr.split('-')[0], 10)
-    if (isNaN(d.getTime()) || year < 1900 || year > 2100) return
-    onSave(dateStr)
-  }
-
   return (
-    <input
-      ref={ref}
-      type="date"
-      min="1900-01-01"
-      max="2100-12-31"
-      defaultValue={initial}
-      onChange={(e) => {
-        // 달력 picker "삭제" 버튼이나 segment 전체 백스페이스로 ''가 되면 즉시 저장.
-        if (e.target.value === '') saveFromRef()
-      }}
+    <DateTextField
+      autoFocus
+      value={initial}
+      onChange={(v) => onSave(v)}
+      onBlur={onCancel}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') { e.preventDefault(); saveFromRef() }
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
-      onBlur={() => setTimeout(() => {
-        saveFromRef()
-      }, 150)}
+      size="sm"
       className="w-36 bg-transparent border-0 border-b border-primary text-xs py-1 focus:outline-none"
     />
   )

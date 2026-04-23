@@ -151,8 +151,8 @@ export function HawaiiExtraField({ caseId, caseRow }: { caseId: string; caseRow:
     const val = extra[key] ?? null
     const isEditing = editingField === key
     return (
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
-        <span className="text-base text-primary pt-1">{label}</span>
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1">{label}</span>
         {isEditing ? (
           <InlineInput type={type} initial={val ?? ''} placeholder={placeholder} onSave={(v) => saveField(key, v)} onCancel={() => setEditingField(null)} />
         ) : (
@@ -161,13 +161,25 @@ export function HawaiiExtraField({ caseId, caseRow }: { caseId: string; caseRow:
               type="button"
               onClick={() => setEditingField(key)}
               className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text',
+                'text-left rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text',
                 !val && 'text-muted-foreground/60',
               )}
             >
               {val || '—'}
             </button>
-            {val && <CopyButton value={String(val)} className="ml-1 opacity-0 group-hover/val:opacity-100" />}
+            {val && (
+              <>
+                <CopyButton value={String(val)} className="ml-1 opacity-0 group-hover/val:opacity-100" />
+                <button
+                  type="button"
+                  onClick={() => saveField(key, null)}
+                  className="ml-0.5 rounded p-0.5 text-muted-foreground/50 hover:text-foreground hover:bg-accent/60 opacity-0 group-hover/val:opacity-100 transition-opacity"
+                  title="삭제"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -186,8 +198,8 @@ export function HawaiiExtraField({ caseId, caseRow }: { caseId: string; caseRow:
       )}
     >
       {/* ── AI Input zone ── */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
-        <span className="text-base text-primary pt-1">AI 입력</span>
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1">AI 입력</span>
         <div className="min-w-0 space-y-1">
           {showInput ? (
             <div className="space-y-1">
@@ -209,7 +221,7 @@ export function HawaiiExtraField({ caseId, caseRow }: { caseId: string; caseRow:
                 type="button"
                 onClick={() => { setShowInput(true); setTimeout(() => textRef.current?.focus(), 50) }}
                 disabled={extracting}
-                className="text-left rounded-md px-2 py-1 -mx-2 text-base text-primary/60 italic transition-colors hover:bg-accent/60 cursor-pointer disabled:opacity-50"
+                className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground cursor-pointer disabled:opacity-50"
               >
                 {extracting ? '추출 중...' : '텍스트·이미지·PDF 붙여넣기'}
               </button>

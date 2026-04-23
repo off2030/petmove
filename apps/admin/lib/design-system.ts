@@ -18,14 +18,14 @@ export const pageInnerContainer =
   'h-full mx-auto max-w-[920px] 3xl:max-w-[1040px] 4xl:max-w-[1120px]'
 
 // ─── Card ──────────────────────────────────────────────────────
-// shadow 제거 — 에디토리얼 톤은 ring/border-only
+// 홈화면 톤 — 테두리/음영 없음, bg-card == bg-background (시각적으로 page와 동일)
 export const cardContainer =
-  'rounded-xl border border-border/60 bg-card p-md'
+  'rounded-xl bg-card p-md'
 
 // ─── List Item ─────────────────────────────────────────────────
 // 밀도 유지, 호버 톤만 따뜻한 muted
 export const listItem =
-  'px-md py-3 border-b border-border/60 last:border-b-0 transition-colors hover:bg-muted/60'
+  'px-md py-3 border-b border-border/60 last:border-b-0 transition-colors hover:bg-accent/60'
 
 // ─── Text Sizes ────────────────────────────────────────────────
 export const textBase = 'text-base'

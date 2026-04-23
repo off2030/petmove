@@ -82,20 +82,20 @@ export function CalculatorApp() {
       <div className="mx-auto max-w-2xl flex flex-col gap-lg">
         {/* Page header — editorial title */}
         <div className="shrink-0 px-lg">
-          <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
+          <h1 className="font-serif text-[32px] leading-tight tracking-tight text-foreground">
             도구
           </h1>
         </div>
 
         {/* Tabs + toolbar — same row on desktop, stacked on mobile */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-sm md:gap-md border-b border-border/60 shrink-0 px-lg">
-          <div className="flex gap-xs">
+          <div className="flex gap-md">
             {MODES.map((m) => (
               <button
                 key={m.value}
                 type="button"
                 onClick={() => setMode(m.value)}
-                className={`px-md py-2 text-base font-medium transition-colors border-b-2 -mb-px ${
+                className={`font-serif text-[17px] pb-2 border-b -mb-px transition-colors ${
                   mode === m.value
                     ? 'border-foreground text-foreground'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -113,19 +113,19 @@ export function CalculatorApp() {
                   <button
                     type="button"
                     onClick={() => setEditMode((v) => !v)}
-                    className={`inline-flex h-8 items-center gap-1.5 rounded-md border px-3 text-sm font-medium transition-colors ${
+                    className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3.5 text-sm transition-colors ${
                       editMode
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground'
+                        ? 'border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489]'
+                        : 'border-border/60 bg-transparent text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    <Pencil size={14} />
+                    <Pencil size={13} />
                     {editMode ? '수정 완료' : '가격 수정'}
                   </button>
                 )}
 
                 {/* Species segment */}
-                <div className="inline-flex rounded-md border border-border bg-card p-0.5">
+                <div className="inline-flex rounded-full border border-border/60 bg-transparent p-0.5">
                   {([
                     ['dog', '강아지'],
                     ['cat', '고양이'],
@@ -136,9 +136,9 @@ export function CalculatorApp() {
                         key={v}
                         type="button"
                         onClick={() => setSpecies(v)}
-                        className={`h-7 rounded px-3 text-sm font-medium transition-colors ${
+                        className={`h-7 rounded-full px-3 text-sm transition-colors ${
                           active
-                            ? 'bg-primary/10 text-primary'
+                            ? 'bg-[#D9A489] text-white dark:bg-[#C08C70]'
                             : 'text-muted-foreground hover:text-foreground'
                         }`}
                       >
@@ -153,18 +153,18 @@ export function CalculatorApp() {
                   <button
                     type="button"
                     onClick={() => setDropOpen((v) => !v)}
-                    className={`inline-flex h-8 items-center gap-1.5 rounded-md border bg-card px-3 text-sm font-medium transition-colors ${
+                    className={`inline-flex h-8 items-center gap-1.5 rounded-full border bg-transparent px-3.5 text-sm transition-colors ${
                       dropOpen
-                        ? 'border-primary text-primary'
+                        ? 'border-[#D9A489] text-[#A87862] dark:border-[#C08C70] dark:text-[#D9A489]'
                         : country
-                        ? 'border-border text-foreground hover:bg-accent'
-                        : 'border-border text-muted-foreground hover:bg-accent hover:text-foreground'
+                        ? 'border-border/60 text-foreground hover:text-foreground'
+                        : 'border-border/60 text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    <Search size={14} />
+                    <span className="h-1 w-1 rounded-full bg-current opacity-50" aria-hidden />
                     <span>{country || '목적지'}</span>
                     <ChevronDown
-                      size={14}
+                      size={13}
                       className={`transition-transform ${dropOpen ? 'rotate-180' : ''}`}
                     />
                   </button>
@@ -196,7 +196,7 @@ export function CalculatorApp() {
                               }
                             }}
                             placeholder="목적지 검색..."
-                            className="h-9 w-full rounded-md border border-border bg-background py-2 pl-8 pr-2 text-sm outline-none focus:border-primary"
+                            className="h-9 w-full rounded-md border border-border bg-background py-2 pl-8 pr-2 text-sm outline-none focus:border-[#D9A489] dark:focus:border-[#C08C70]"
                           />
                         </div>
                       </div>
@@ -234,7 +234,7 @@ export function CalculatorApp() {
             )}
 
             {mode === 'schedule' && (
-              <div className="inline-flex rounded-md border border-border bg-card p-0.5">
+              <div className="inline-flex rounded-full border border-border/60 bg-transparent p-0.5">
                 {SCHEDULE_COUNTRIES.map((c) => {
                   const active = scheduleCountry === c.value
                   return (
@@ -242,9 +242,9 @@ export function CalculatorApp() {
                       key={c.value}
                       type="button"
                       onClick={() => setScheduleCountry(c.value)}
-                      className={`h-7 rounded px-3 text-sm font-medium transition-colors ${
+                      className={`h-7 rounded-full px-3 text-sm transition-colors ${
                         active
-                          ? 'bg-primary/10 text-primary'
+                          ? 'bg-[#D9A489] text-white dark:bg-[#C08C70]'
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >

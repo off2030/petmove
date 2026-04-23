@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
+import { DateTextField } from '@/components/ui/date-text-field'
 
 interface PaymentRecord {
   amount: number
@@ -92,9 +93,9 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
-        <span className="text-base text-primary">결제</span>
+        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">결제</span>
         <button
           type="button"
           onClick={() => setAddingNew(true)}
@@ -137,7 +138,7 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
 
         {payments.length === 0 && !addingNew && (
           <button type="button" onClick={() => setAddingNew(true)}
-            className="text-left rounded-md px-2 py-1 -mx-2 text-base text-primary/60 transition-colors hover:bg-accent/60 cursor-pointer">
+            className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground">
             —
           </button>
         )}
@@ -182,7 +183,7 @@ function PaymentRow({
         />
       ) : (
         <button type="button" onClick={() => onStartEdit('amount')}
-          className={cn('text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text', amountDisplay === '—' && 'text-muted-foreground/60')}>
+          className={cn('text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-text', amountDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60')}>
           {amountDisplay}
         </button>
       )}
@@ -198,7 +199,7 @@ function PaymentRow({
         />
       ) : (
         <button type="button" onClick={() => onStartEdit('method')}
-          className={cn('text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer', methodDisplay === '—' && 'text-muted-foreground/60')}>
+          className={cn('text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer', methodDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60')}>
           {methodDisplay}
         </button>
       )}
@@ -211,11 +212,10 @@ function PaymentRow({
           initial={record.date || ''}
           onSave={(v) => { onUpdateField('date', v || null); onStopEdit() }}
           onCancel={onStopEdit}
-          saving={saving}
         />
       ) : (
         <button type="button" onClick={() => onStartEdit('date')}
-          className={cn('text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer', dateDisplay === '—' && 'text-muted-foreground/60')}>
+          className={cn('text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer', dateDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60')}>
           {dateDisplay}
         </button>
       )}
@@ -307,64 +307,20 @@ function MethodDropdown({ current, onSelect, onClose }: {
 
 /* ── Date input ── */
 
-function DateInput({ initial, onSave, onCancel, saving }: {
+function DateInput({ initial, onSave, onCancel }: {
   initial: string
   onSave: (v: string) => void
   onCancel: () => void
-  saving: boolean
 }) {
-  const ref = useRef<HTMLInputElement>(null)
-  const dateTypedRef = useRef(false)
-
-  useEffect(() => { ref.current?.focus() }, [])
-
-  function saveFromRef() {
-    const raw = (ref.current?.value ?? '').trim()
-    if (!raw) { onSave(''); return }
-    const digits = raw.replace(/\D/g, '')
-    let dateStr = ''
-    if (digits.length === 8) dateStr = `${digits.slice(0,4)}-${digits.slice(4,6)}-${digits.slice(6,8)}`
-    else if (/^\d{4}[-./]\d{1,2}[-./]\d{1,2}$/.test(raw)) {
-      const parts = raw.split(/[-./]/)
-      dateStr = `${parts[0]}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`
-    } else {
-      dateStr = raw
-    }
-    const d = new Date(dateStr)
-    const year = parseInt(dateStr.split('-')[0], 10)
-    if (isNaN(d.getTime()) || year < 1900 || year > 2100) return
-    onSave(dateStr)
-  }
-
   return (
-    <input
-      ref={ref}
-      type="date"
-      min="1900-01-01"
-      max="2100-12-31"
-      defaultValue={initial}
-      onChange={(e) => {
-        const v = e.target.value
-        // 빈 값(달력 "삭제" 또는 백스페이스)은 즉시 저장 → 부모에서 null 처리.
-        if (!v) { dateTypedRef.current = false; saveFromRef(); return }
-        const year = parseInt(v.split('-')[0], 10)
-        if (year < 1900 || year > 2100) { dateTypedRef.current = false; return }
-        if (dateTypedRef.current) {
-          onSave(v)
-          dateTypedRef.current = false
-        } else {
-          saveFromRef()
-        }
-      }}
+    <DateTextField
+      autoFocus
+      value={initial}
+      onChange={(v) => onSave(v)}
+      onBlur={onCancel}
       onKeyDown={(e) => {
-        dateTypedRef.current = true
-        if (e.key === 'Enter') { e.preventDefault(); saveFromRef() }
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
-      onBlur={() => setTimeout(() => {
-        // 빈 값이면 saveFromRef 가 onSave('') 로 호출 → 부모에서 삭제 처리.
-        saveFromRef()
-      }, 150)}
       className="w-36 bg-transparent border-0 border-b border-primary text-sm py-1 focus:outline-none"
     />
   )

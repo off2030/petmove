@@ -20,22 +20,25 @@ function downloadBase64Pdf(base64: string, filename: string) {
   link.click()
 }
 
-/** 목적지를 국가코드 prefix + 이름 Editorial 스타일로 렌더링 (홈/상세와 동일 패턴). */
+/** 목적지를 tan pill + MONO code + Serif 이름으로 렌더링 (상세페이지 DestinationField와 동일). 항상 한 줄. */
 function renderDestinationBadges(value: string | null | undefined) {
   const dests = (value ?? '').split(',').map(s => s.trim()).filter(Boolean)
   if (dests.length === 0) return <span className="text-muted-foreground/50">—</span>
   return (
-    <span className="inline-flex items-center gap-md flex-wrap">
+    <span className="inline-flex items-center gap-sm flex-nowrap whitespace-nowrap">
       {dests.map(d => {
         const code = destCode(d)
         return (
-          <span key={d} className="inline-flex items-baseline gap-1.5">
+          <span
+            key={d}
+            className="inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 bg-[#E5D9C2] text-[#6B5A3A] whitespace-nowrap"
+          >
             {code && (
-              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
+              <span className="font-mono text-[11px] uppercase tracking-[1px] text-[#7B7B5F]">
                 {code}
               </span>
             )}
-            <span className="font-serif text-[15px] text-foreground">{d}</span>
+            <span className="font-serif text-[13px] text-[#6B5A3A]">{d}</span>
           </span>
         )
       })}
@@ -139,10 +142,19 @@ function hasTiterDateAfterCutoff(row: CaseRow): boolean {
   return date >= INSPECTION_CUTOFF_DATE
 }
 
-/** Check if inspection is completed */
-function isInspectionDone(row: CaseRow): boolean {
+/**
+ * Read inspection_dismissed keys from case.data.
+ * 검사 탭에서 개별 삭제 버튼으로 숨긴 행들의 키 배열. 값: 'titer' | 'inf:ksvdl' | 'inf:nz' ...
+ */
+function getInspectionDismissedKeys(row: CaseRow): string[] {
   const data = (row.data ?? {}) as Record<string, unknown>
-  return data.inspection_status === 'done'
+  const arr = data.inspection_dismissed
+  if (!Array.isArray(arr)) return []
+  return arr.filter((x): x is string => typeof x === 'string')
+}
+
+function isInspectionRowDismissed(row: CaseRow, key: string): boolean {
+  return getInspectionDismissedKeys(row).includes(key)
 }
 
 interface InfectiousRecord { date?: string | null; lab?: string | null }
@@ -188,7 +200,8 @@ function buildInspectionRows(
   const rows: InspectionRow[] = []
   for (const c of cases) {
     // 1) 광견병항체
-    if (hasTiterDateAfterCutoff(c) && !isInspectionDone(c)) {
+    // 이전: 상태 완료(done)시 자동 제거. 지금: 개별 삭제 버튼(dismiss)으로만 제거.
+    if (hasTiterDateAfterCutoff(c) && !isInspectionRowDismissed(c, 'titer')) {
       rows.push({
         id: `${c.id}:titer`,
         caseRow: c,
@@ -197,12 +210,13 @@ function buildInspectionRows(
         date: resolveTiterDate(c),
         dateEditable: true,
         dateStorage: { kind: 'titer' },
+        dismissKey: 'titer',
       })
     }
     // 2) 전염병검사 — 호주/뉴질랜드
     const isAU = matchesDestinationKey(c.destination, 'australia')
     const isNZ = matchesDestinationKey(c.destination, 'new_zealand')
-    if (isAU && !isInspectionDone(c)) {
+    if (isAU && !isInspectionRowDismissed(c, 'inf:ksvdl')) {
       // 호주: 검사일(infectious ksvdl.date) 또는 출국일 중 하나라도 있으면 탭에 올림.
       // 날짜 컬럼은 검사일 있으면 그것, 없으면 빈 값(사용자가 탭에서 직접 입력).
       // 컷오프: 기준일(검사일 우선, 없으면 출국일) >= 2026-04-03.
@@ -218,10 +232,11 @@ function buildInspectionRows(
           date: existing?.date ?? '',
           dateEditable: true,
           dateStorage: { kind: 'infectious', lab: 'ksvdl' },
+          dismissKey: 'inf:ksvdl',
         })
       }
     }
-    if (isNZ && c.departure_date && !isInspectionDone(c)) {
+    if (isNZ && c.departure_date && !isInspectionRowDismissed(c, 'inf:nz')) {
       // 뉴질랜드: APQA HQ + VBDDL 두 검사기관을 한 행으로 묶어서 표시.
       // 검사일 수정 시 두 record(apqa_hq, vbddl)에 동시 저장.
       // 표시 날짜는 저장값 우선(apqa_hq → vbddl 순), 없으면 출국일 - 15일 자동.
@@ -237,6 +252,7 @@ function buildInspectionRows(
         date,
         dateEditable: true,
         dateStorage: { kind: 'infectious_multi', labs: ['apqa_hq', 'vbddl'] },
+        dismissKey: 'inf:nz',
       })
     }
   }
@@ -271,8 +287,8 @@ const INSPECTION_COLUMNS: TodoColumn[] = [
     },
   },
   { key: 'rabies_titer_date', label: '검사일', storage: 'data', type: 'date', width: 120, resolveValue: resolveTiterDate },
-  { key: 'pet_name', label: '동물', storage: 'column', type: 'text', width: 100 },
-  { key: 'customer_name', label: '고객', storage: 'column', type: 'text', width: 100 },
+  { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: 100 },
+  { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: 100 },
   { key: 'destination', label: '목적지', storage: 'column', type: 'text', width: 100 },
   { key: 'inspection_status', label: '진행상태', storage: 'data', type: 'select', width: 110, options: INSPECTION_STATUS_OPTIONS, defaultValue: 'waiting' },
   { key: 'inspection_memo', label: '메모', storage: 'data', type: 'text', width: 180 },
@@ -319,8 +335,8 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
       return ''
     },
   },
-  { key: 'pet_name', label: '동물', storage: 'column', type: 'text', width: 90, readonly: true },
-  { key: 'customer_name', label: '고객', storage: 'column', type: 'text', width: 90, readonly: true },
+  { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: 90, readonly: true },
+  { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: 90, readonly: true },
   {
     key: 'destination',
     label: '목적지',
@@ -422,8 +438,8 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     readonly: true,
     render: (row) => renderDestinationBadges(row.destination),
   },
-  { key: 'pet_name', label: '동물', storage: 'column', type: 'text', width: 90, readonly: true },
-  { key: 'customer_name', label: '고객', storage: 'column', type: 'text', width: 90, readonly: true },
+  { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: 90, readonly: true },
+  { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: 90, readonly: true },
   {
     key: 'import_deadline',
     label: '신고기한',
@@ -582,54 +598,66 @@ export function TodosApp() {
     () => buildInspectionRows(cases, inspectionConfig.titerRules, inspectionConfig.titerDefault)
       .filter(r => matchesQuery(r.caseRow, q))
       .sort((a, b) => {
-        const la = LAB_SORT_ORDER[a.lab] ?? 99
-        const lb = LAB_SORT_ORDER[b.lab] ?? 99
-        return la - lb
+        // 1차: 완료된 검사는 뒤로.
+        const aDone = ((a.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') === 'done'
+        const bDone = ((b.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') === 'done'
+        if (aDone !== bDone) return aDone ? 1 : -1
+        // 2차(완료 그룹): 검사일 최신(DESC) 순.
+        if (aDone && bDone) {
+          const da = a.date || ''
+          const db = b.date || ''
+          if (da !== db) return db.localeCompare(da)
+          return (LAB_SORT_ORDER[a.lab] ?? 99) - (LAB_SORT_ORDER[b.lab] ?? 99)
+        }
+        // 2차(미완료 그룹): 기존 lab 순서.
+        return (LAB_SORT_ORDER[a.lab] ?? 99) - (LAB_SORT_ORDER[b.lab] ?? 99)
       }),
     [cases, q, inspectionConfig],
   )
 
   return (
     <div className="h-full overflow-hidden px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
-      <div className="h-full mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl flex flex-col gap-lg">
-      {/* Page header — editorial title */}
-      <div className="shrink-0 px-lg">
-        <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
+      <div className="h-full mx-auto max-w-7xl flex flex-col gap-lg">
+      {/* Page header — editorial title + italic lead */}
+      <div className="shrink-0 px-lg flex items-baseline gap-md">
+        <h1 className="font-serif text-[32px] leading-tight tracking-tight text-foreground">
           할 일
         </h1>
+
       </div>
 
-      {/* Tabs + search */}
+      {/* Tabs + search — Editorial */}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-sm md:gap-md border-b border-border/60 shrink-0 px-lg">
-        <div className="flex gap-xs">
+        <div className="flex gap-md">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`px-md py-2 text-base font-medium transition-colors border-b-2 -mb-px ${
+              className={cn(
+                'px-1 py-2 font-serif text-[17px] transition-colors border-b -mb-px',
                 activeTab === tab.id
-                  ? 'border-foreground text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
+                  ? 'border-foreground text-foreground font-semibold'
+                  : 'border-transparent text-muted-foreground/70 hover:text-foreground',
+              )}
             >
               {tab.label}
             </button>
           ))}
         </div>
-        <div className="relative w-full md:w-56 pb-2 md:pb-0 md:mb-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="relative w-full md:w-64 pb-2 md:pb-0 md:mb-2">
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="검색"
-            className="h-8 pl-9 text-sm bg-card rounded-full"
+            className="h-10 pl-10 text-[15px] bg-card border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
           />
         </div>
       </div>
 
       {/* Borderless list — editorial */}
-      <div className="flex-1 min-h-0 flex flex-col px-lg">
+      <div className="flex-1 min-h-0 flex flex-col px-md">
         <div className="flex-1 min-h-0 overflow-auto scrollbar-minimal">
           {activeTab === 'inspection' ? (
             <InspectionTable
@@ -648,10 +676,15 @@ export function TodosApp() {
         </div>
       </div>
 
-      {/* Footer — 홈과 동일한 "총 N건" 패턴. h-7 로 고정해 탭별 footer 높이 편차 제거. */}
-      <div className="shrink-0 h-7 flex items-center justify-between text-[13px] text-muted-foreground">
+      {/* Footer — 홈과 동일한 "총 N건" 패턴 (Serif italic + Mono). h-7 로 고정해 탭별 footer 높이 편차 제거.
+          px-lg 로 헤더·탭 라인과 좌우 정렬 — 테이블 영역 안쪽에 배치. */}
+      <div className="shrink-0 h-7 px-lg flex items-center justify-between text-[13px] text-muted-foreground">
         <span>
-          총 {(activeTab === 'inspection' ? inspectionRows.length : filteredCases.length).toLocaleString()}건
+          <span className="font-serif italic">총</span>{' '}
+          <span className="font-mono tabular-nums">
+            {(activeTab === 'inspection' ? inspectionRows.length : filteredCases.length).toLocaleString()}
+          </span>
+          <span className="font-serif italic">건</span>
         </span>
         {activeTab === 'inspection' && (
           <div className="flex items-center gap-sm">
@@ -763,7 +796,7 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
                   onClick={() => setTubeCount(v)}
                   className={`flex-1 h-8 rounded border text-sm transition-colors ${
                     selected
-                      ? 'bg-[#5f5f5f] text-white border-[#5f5f5f]'
+                      ? 'bg-primary/10 text-primary border-primary/40 font-medium'
                       : 'bg-background text-foreground border-border/60 hover:bg-accent'
                   }`}
                 >
@@ -781,14 +814,23 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
           </label>
           <div className="space-y-2">
             {labs.map(lab => (
-              <label key={lab.value} className="flex items-center gap-sm cursor-pointer">
+              <label key={lab.value} className="flex items-center gap-sm cursor-pointer group">
                 <input
                   type="radio"
                   name="consignee_lab"
                   value={lab.value}
                   checked={selectedLab === lab.value}
                   onChange={(e) => setSelectedLab(e.target.value)}
-                  className="w-4 h-4"
+                  className="peer sr-only"
+                />
+                <span
+                  className={cn(
+                    'w-4 h-4 shrink-0 rounded-[3px] border border-border/80 bg-background transition-colors relative',
+                    'peer-checked:bg-primary peer-checked:border-primary',
+                    'peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background',
+                    "before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-primary-foreground before:text-[11px] before:font-bold before:leading-none before:opacity-0 peer-checked:before:opacity-100",
+                  )}
+                  aria-hidden="true"
                 />
                 <span className="text-sm text-foreground">{lab.label}</span>
               </label>
@@ -808,7 +850,7 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
           <button
             type="button"
             onClick={handleSubmit}
-            className="text-sm px-sm py-1.5 rounded-md bg-[#5f5f5f] text-white hover:bg-[#4a4a4a] transition-colors"
+            className="text-sm px-sm py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             생성
           </button>
@@ -833,38 +875,54 @@ function BulkApplyPicker({
 }) {
   const [open, setOpen] = useState(false)
   const [busy, startBusy] = useTransition()
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
 
+  // 다이얼로그 닫을 때 선택 초기화.
   useEffect(() => {
-    if (!open) return
-    function onClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onClickOutside)
-    return () => document.removeEventListener('mousedown', onClickOutside)
+    if (!open) setSelected(new Set())
   }, [open])
 
   const disabled = rows.length === 0
+  const allSelected = rows.length > 0 && selected.size === rows.length
 
-  function pick(caseId: string) {
+  function toggle(caseId: string) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(caseId)) next.delete(caseId)
+      else next.add(caseId)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(rows.map(r => r.caseRow.id)))
+  }
+
+  function handleGenerate() {
+    if (selected.size === 0) return
+    const ids = Array.from(selected)
     setOpen(false)
     startBusy(async () => {
-      const r = { ok: true, error: '' }
-      await downloadPdfRequest(request(caseId)).catch((error) => {
-        r.ok = false
-        r.error = error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.'
-      })
-      if (r.ok) return
-      else alert(`생성 실패: ${r.error}`)
+      const errors: string[] = []
+      for (const caseId of ids) {
+        try {
+          await downloadPdfRequest(request(caseId))
+        } catch (error) {
+          errors.push(error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.')
+        }
+      }
+      if (errors.length > 0) {
+        alert(`일부 실패 (${errors.length}/${ids.length}):\n${errors.join('\n')}`)
+      }
     })
   }
 
   return (
-    <div ref={containerRef} className="relative inline-block">
+    <div className="inline-block">
       {busy && <span className="text-[13px] text-muted-foreground mr-sm">생성 중...</span>}
       <button
         type="button"
-        onClick={() => !disabled && setOpen(o => !o)}
+        onClick={() => !disabled && setOpen(true)}
         disabled={disabled || busy}
         className="text-[13px] rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         title={disabled ? '대상 케이스가 없습니다' : `${label} 신청서 생성`}
@@ -872,21 +930,78 @@ function BulkApplyPicker({
         {label}
       </button>
       {open && (
-        <ul className="absolute right-0 bottom-full mb-1 z-20 w-72 max-h-72 overflow-y-auto scrollbar-minimal rounded-md border border-border/50 bg-background shadow-md py-1">
-          {rows.map(r => (
-            <li key={r.id}>
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="bg-background border border-border/60 rounded-lg shadow-lg p-6 max-w-sm w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-baseline justify-between mb-4">
+              <h2 className="text-base font-semibold text-primary">{label}</h2>
               <button
                 type="button"
-                onClick={() => pick(r.caseRow.id)}
-                className="w-full text-left px-sm py-1.5 text-sm hover:bg-accent/60 transition-colors"
+                onClick={toggleAll}
+                className="text-[12px] text-muted-foreground hover:text-foreground transition-colors"
               >
-                <span>{r.caseRow.pet_name ?? '—'}</span>
-                <span className="ml-2 text-muted-foreground">{r.caseRow.customer_name ?? ''}</span>
-                <span className="ml-2 text-xs text-muted-foreground/70">{r.caseRow.destination ?? ''}</span>
+                {allSelected ? '전체 해제' : '전체 선택'}
               </button>
-            </li>
-          ))}
-        </ul>
+            </div>
+            <ul className="max-h-80 overflow-y-auto scrollbar-minimal -mx-2 mb-4">
+              {rows.map(r => {
+                const isChecked = selected.has(r.caseRow.id)
+                return (
+                  <li key={r.id}>
+                    <label className="w-full px-sm py-2 rounded-md hover:bg-accent/60 transition-colors flex items-center gap-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => toggle(r.caseRow.id)}
+                        className="peer sr-only"
+                      />
+                      <span
+                        className={cn(
+                          'w-4 h-4 shrink-0 rounded-[3px] border border-border/80 bg-background transition-colors relative',
+                          'peer-checked:bg-primary peer-checked:border-primary',
+                          'peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background',
+                          "before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-primary-foreground before:text-[11px] before:font-bold before:leading-none before:opacity-0 peer-checked:before:opacity-100",
+                        )}
+                        aria-hidden="true"
+                      />
+                      <span className="font-serif font-semibold text-[15px] text-foreground">
+                        {r.caseRow.pet_name ?? '—'}
+                      </span>
+                      <span className="font-sans text-[13px] text-muted-foreground">
+                        {r.caseRow.customer_name ?? ''}
+                      </span>
+                      <span className="ml-auto font-mono text-[11px] tracking-[0.3px] text-muted-foreground/70">
+                        {r.caseRow.destination ?? ''}
+                      </span>
+                    </label>
+                  </li>
+                )
+              })}
+            </ul>
+            <div className="flex justify-end gap-sm">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="text-sm px-sm py-1.5 rounded-md border border-border/60 text-foreground hover:bg-accent transition-colors"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleGenerate}
+                disabled={selected.size === 0}
+                className="text-sm px-sm py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                생성{selected.size > 0 && ` (${selected.size})`}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
@@ -922,10 +1037,12 @@ function ImportReportAddPicker({
   }, [open])
 
   const candidates = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    // 검색어가 없으면 목록 표시 안 함 — "검색" 전용 UX.
+    if (!q) return []
     // 이미 자동/수동으로 포함돼 있으면 후보에서 뺀다.
     const pool = cases.filter(c => !isAutoImportReport(c, importReportCountries) && !isManualImportReport(c))
-    const q = query.trim().toLowerCase()
-    const filtered = !q ? pool : pool.filter(c => {
+    const filtered = pool.filter(c => {
       const hay = [c.pet_name, c.pet_name_en, c.customer_name, c.destination]
         .filter(Boolean).join(' ').toLowerCase()
       return hay.includes(q)
@@ -949,10 +1066,12 @@ function ImportReportAddPicker({
         onClick={() => setOpen(true)}
         className="text-[13px] text-muted-foreground rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
       >
-        + 추가
+        검색
       </button>
     )
   }
+
+  const hasQuery = query.trim() !== ''
 
   return (
     <div ref={containerRef} className="relative inline-block w-72">
@@ -967,29 +1086,31 @@ function ImportReportAddPicker({
           if (e.key === 'ArrowUp') { e.preventDefault(); setHighlight(i => Math.max(i - 1, 0)) }
           if (e.key === 'Enter' && candidates[highlight]) { e.preventDefault(); pick(candidates[highlight]) }
         }}
-        placeholder="동물/고객/목적지 검색"
+        placeholder="검색"
         className="w-full h-8 rounded border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
       />
-      {/* 푸터 우측 배치 — 드롭다운은 위로, 우측 정렬. */}
-      <ul className="absolute right-0 bottom-full mb-1 z-20 w-[22rem] max-h-72 overflow-y-auto scrollbar-minimal rounded-md border border-border/50 bg-background shadow-md py-1">
-        {candidates.length === 0 ? (
-          <li className="px-sm py-2 text-sm text-muted-foreground">결과 없음</li>
-        ) : (
-          candidates.map((c, i) => (
-            <li key={c.id}>
-              <button
-                type="button"
-                onClick={() => pick(c)}
-                className={`w-full text-left px-sm py-1.5 text-sm transition-colors ${i === highlight ? 'bg-accent' : 'hover:bg-accent/60'}`}
-              >
-                <span>{c.pet_name ?? '—'}</span>
-                <span className="ml-2 text-muted-foreground">{c.customer_name ?? ''}</span>
-                <span className="ml-2 text-xs text-muted-foreground/70">{c.destination ?? ''}</span>
-              </button>
-            </li>
-          ))
-        )}
-      </ul>
+      {/* 검색어가 있을 때만 결과 드롭다운 표시. 푸터 우측 → 위로 올라옴. */}
+      {hasQuery && (
+        <ul className="absolute right-0 bottom-full mb-1 z-20 w-[22rem] max-h-72 overflow-y-auto scrollbar-minimal rounded-md border border-border/50 bg-background shadow-md py-1">
+          {candidates.length === 0 ? (
+            <li className="px-sm py-2 text-sm text-muted-foreground">결과 없음</li>
+          ) : (
+            candidates.map((c, i) => (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  onClick={() => pick(c)}
+                  className={`w-full text-left px-sm py-1.5 text-sm transition-colors ${i === highlight ? 'bg-accent' : 'hover:bg-accent/60'}`}
+                >
+                  <span>{c.pet_name ?? '—'}</span>
+                  <span className="ml-2 text-muted-foreground">{c.customer_name ?? ''}</span>
+                  <span className="ml-2 text-xs text-muted-foreground/70">{c.destination ?? ''}</span>
+                </button>
+              </li>
+            ))
+          )}
+        </ul>
+      )}
     </div>
   )
 }

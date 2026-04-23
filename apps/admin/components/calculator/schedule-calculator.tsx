@@ -45,12 +45,10 @@ function DaysLabel({ date }: { date: string }) {
 function ResultRow({ label, date, note }: { label: string; date: string; note?: string }) {
   if (!date) return null
   return (
-    <div className="rounded-md border border-border/60 bg-background px-3 py-2.5">
+    <div className="rounded-md bg-card px-3 py-2.5">
       <div className="mb-1 text-xs text-muted-foreground">{label}</div>
-      <div className="flex items-center gap-3">
-        <span className="text-base font-medium tabular-nums">{formatDate(date)}</span>
-        <DaysLabel date={date} />
-      </div>
+      <div className="text-base font-medium tabular-nums">{formatDate(date)}</div>
+      <div className="mt-1"><DaysLabel date={date} /></div>
       {note && <div className="mt-1 text-xs text-muted-foreground">{note}</div>}
     </div>
   )
@@ -78,7 +76,7 @@ export function ScheduleCalculator({ country }: Props) {
   const [nzDepartureDate, setNzDepartureDate] = useState('')
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-md shadow-sm">
+    <div className="rounded-xl bg-card p-md">
       {country === 'japan' && (
         <div className="space-y-5">
           <div className="space-y-3">
@@ -89,7 +87,6 @@ export function ScheduleCalculator({ country }: Props) {
             <ResultRow
               label="출국 가능일 (검사일 + 180일)"
               date={addDays(jpTestDate, 180)}
-              note="이 날짜부터 일본 출국 가능"
             />
           </div>
 
@@ -103,7 +100,6 @@ export function ScheduleCalculator({ country }: Props) {
             <ResultRow
               label="수입 신고 마감 (출국일 - 40일)"
               date={addDays(jpDepartureDate, -40)}
-              note="이 날짜까지 일본 동물검역소에 사전 신고 완료"
             />
           </div>
         </div>

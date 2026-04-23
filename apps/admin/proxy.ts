@@ -42,12 +42,24 @@ export async function proxy(request: NextRequest) {
     },
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  // getUser() 는 내부적으로 refresh 를 시도한다. 구 환경(Mumbai 등)의 stale
+  // refresh token 이 쿠키에 남아있으면 "Invalid Refresh Token" 으로 throw 하고
+  // Next.js 에러 오버레이가 뜬다. 공개 경로는 auth 체크 자체를 건너뛰고,
+  // 보호 경로에서 실패하면 쿠키를 정리하며 /login 으로 보낸다.
   const { pathname } = request.nextUrl
   if (isPublic(pathname)) return response
+
+  let user = null
+  try {
+    const result = await supabase.auth.getUser()
+    user = result.data.user
+  } catch {
+    // stale / invalid refresh token — signOut 으로 쿠키 제거 후 /login
+    try { await supabase.auth.signOut() } catch { /* ignore */ }
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('next', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
 
   if (!user) {
     const loginUrl = new URL('/login', request.url)

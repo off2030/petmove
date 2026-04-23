@@ -23,6 +23,7 @@ const COLORS = colorsData as Color[]
 const SPECIES_OPTIONS = [
   { value: 'dog', label: '강아지' },
   { value: 'cat', label: '고양이' },
+  { value: 'other', label: '기타' },
 ]
 
 const SEX_OPTIONS = [
@@ -31,6 +32,16 @@ const SEX_OPTIONS = [
   { value: 'female', label: '암컷' },
   { value: 'male', label: '수컷' },
 ]
+
+// 모색 스와치용 HEX 매핑 (colors.json 의 ko 와 매칭)
+const COLOR_HEX: Record<string, string> = {
+  '흰색': '#FFFFFF',
+  '검정': '#141413',
+  '갈색': '#6D4A2B',
+  '황색': '#E8B84A',
+  '크림': '#F5E6C8',
+  '회색': '#9CA3AF',
+}
 
 interface PetForm {
   petName: string
@@ -55,25 +66,46 @@ function emptyPet(): PetForm {
 const pageShellClass =
   'min-h-screen bg-background text-foreground'
 const pageInnerClass =
-  'mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:px-8'
-const heroCardClass = cn(cardContainer, 'p-md')
-const sectionCardClass = cn(cardContainer, 'p-md')
+  'mx-auto w-full max-w-[680px] px-6 py-12 sm:px-8 lg:px-10'
+const sectionCardClass = cn(cardContainer, 'p-lg')
+const eyebrowNumClass =
+  'font-mono text-[12px] tracking-[1.3px] text-muted-foreground'
 const sectionTitleClass =
-  'text-base font-semibold text-primary mb-4 pb-3 border-b border-border/60'
-const inputClass =
-  'w-full h-10 rounded-md border border-border bg-card px-3 text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors'
-const selectClass =
-  'w-full h-10 rounded-md border border-border bg-card px-3 text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring appearance-none transition-colors'
+  'font-serif text-[15px] font-medium uppercase tracking-[0.4px] text-foreground'
+// Field row: vertical container with top divider between rows (first row has no top border)
+const fieldRowClass = 'py-4 border-t border-border/60 first:border-t-0 first:pt-1'
+// Header row: label left, REQ badge + hint on right
+const fieldHeaderClass = 'flex items-baseline justify-between gap-3 mb-2'
+// Label: serif (editorial tone)
 const labelClass =
-  'block text-sm font-medium text-primary mb-1.5'
-const surfaceButtonClass =
-  'inline-flex h-10 items-center rounded-md border border-border bg-card px-3 text-[15px] text-foreground transition-colors hover:bg-accent'
+  'font-serif text-[15px] text-foreground'
+// Right meta (REQ + hint) — stacked horizontally, right-aligned
+const fieldMetaClass = 'flex items-baseline gap-2 shrink-0'
+// 필수 표시 — 작은 badge, terracotta
+const reqIndicatorClass =
+  'font-serif italic text-[12px] text-primary'
+// Optional hint text on the right of header
+const hintRightClass =
+  'font-serif italic text-[12px] text-muted-foreground/80'
+// Borderless input — no box, relies on row divider
+// 공통 placeholder: serif italic, smaller, muted
+const placeholderClass =
+  'placeholder:font-serif placeholder:italic placeholder:font-normal placeholder:text-[14px] placeholder:text-muted-foreground/50'
+// 한국어 입력 — 홈화면 동물이름 서체
+const inputClass =
+  `w-full h-10 bg-transparent px-0 font-serif font-semibold text-[17px] leading-tight text-foreground ${placeholderClass} focus:outline-none transition-colors`
+// 영어 입력 — 상세페이지 품종 영어 italic 서체
+const inputEnClass =
+  `w-full h-10 bg-transparent px-0 font-serif italic text-[17px] text-foreground ${placeholderClass} focus:outline-none transition-colors`
+// 숫자/날짜 입력 — 상세페이지 mono 서체
+const numericInputClass =
+  `w-full h-10 bg-transparent px-0 font-mono text-[15px] tracking-[0.3px] tabular-nums text-foreground ${placeholderClass} focus:outline-none transition-colors`
 const chipButtonActive =
-  'border-[#3FB39D] bg-[#3FB39D] text-white'
+  'border-foreground bg-foreground text-background'
 const chipButtonInactive =
   'border-border bg-card text-foreground hover:bg-accent'
 const dropdownClass =
-  'mt-1 rounded-md border border-border/60 bg-card shadow-sm'
+  'mt-1 rounded-md border border-border/60 bg-popover shadow-sm'
 const dropdownRowClass =
   'w-full text-left px-md py-2.5 text-[15px] transition-colors hover:bg-accent'
 const dropdownRowActiveClass = 'bg-accent'
@@ -83,9 +115,51 @@ const primaryButtonClass = cn(
   'inline-flex items-center justify-center rounded-md font-medium transition-colors',
   'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
   'disabled:pointer-events-none disabled:opacity-50 select-none',
-  'w-full h-12 text-base',
-  'bg-[#3FB39D] text-white hover:bg-[#369C89]',
+  'w-full h-12 text-base tracking-[0.1px]',
+  'bg-primary text-primary-foreground hover:bg-primary/90',
 )
+
+/* ── Field Row helper — label(left) + REQ/hint(right) + input(below) ── */
+function FieldRow({
+  label,
+  required,
+  hint,
+  children,
+  className,
+}: {
+  label: React.ReactNode
+  required?: boolean
+  hint?: string
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div className={cn(fieldRowClass, className)}>
+      <div className={fieldHeaderClass}>
+        <span className={labelClass}>{label}</span>
+        <span className={fieldMetaClass}>
+          {hint && <span className={hintRightClass}>{hint}</span>}
+          {required && <span className={reqIndicatorClass}>필수</span>}
+        </span>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+/* ── Color swatch (for 모색 chips) ── */
+function ColorSwatch({ hex, selected }: { hex: string; selected?: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'inline-block h-[14px] w-[14px] shrink-0 rounded-full ring-1',
+        selected ? 'ring-white/40' : 'ring-black/15 dark:ring-white/20',
+      )}
+      style={{ backgroundColor: hex }}
+    />
+  )
+}
 
 export default function ApplyPage() {
   const [step, setStep] = useState(0) // 0=form, 1=done
@@ -292,11 +366,13 @@ export default function ApplyPage() {
   if (step === 1) {
     return (
       <div className={cn(pageShellClass, 'flex items-center justify-center px-4')}>
-        <div className={cn(heroCardClass, 'mx-auto w-full max-w-md text-center py-16')}>
-          <div className="text-5xl mb-4">&#10003;</div>
-          <h1 className="text-xl font-semibold text-primary mb-2">신청이 완료되었습니다</h1>
-          <p className="text-sm text-muted-foreground mb-8">
-            담당자가 확인 후 연락드리겠습니다.<br />
+        <div className="mx-auto w-full max-w-md text-center py-20">
+          <p className="font-mono text-[11px] uppercase tracking-[2px] text-muted-foreground mb-4">Completed</p>
+          <h1 className="font-serif text-2xl font-medium tracking-tight text-foreground mb-3">
+            신청이 접수되었습니다
+          </h1>
+          <p className="text-[15px] leading-relaxed text-muted-foreground mb-10">
+            담당자가 확인 후 연락드립니다.<br />
             감사합니다.
           </p>
           <button
@@ -307,9 +383,9 @@ export default function ApplyPage() {
               setCustomerName(''); setCustomerLastNameEn(''); setCustomerFirstNameEn(''); setPhone(''); setAddressKr(''); setAddressDetail(''); setAddressEn(''); setEmail('')
               setPetCount(1); setPets([emptyPet()])
             }}
-            className="text-sm text-primary hover:underline"
+            className="font-mono text-[12px] uppercase tracking-[1.5px] text-muted-foreground hover:text-foreground transition-colors"
           >
-            새 신청하기
+            새 신청 작성
           </button>
         </div>
       </div>
@@ -319,10 +395,15 @@ export default function ApplyPage() {
   return (
     <div className={pageShellClass}>
       <div className={pageInnerClass}>
-        {/* Header */}
-        <div className={cn(heroCardClass, 'mb-md text-center')}>
-          <h1 className="text-xl font-semibold tracking-tight text-[#2D8A78]">펫무브 등록 신청서</h1>
-        </div>
+        {/* Header — editorial magazine-style masthead */}
+        <header className="mb-10 text-center pb-8 border-b border-border/60">
+          <p className="font-mono text-[11px] uppercase tracking-[2.5px] text-muted-foreground mb-4">
+            PetMove · Registration
+          </p>
+          <h1 className="font-serif text-3xl font-medium tracking-tight text-foreground">
+            펫무브 등록 신청서
+          </h1>
+        </header>
 
         <form onSubmit={handleSubmit} className="space-y-md"
           onKeyDown={(e) => {
@@ -358,18 +439,20 @@ export default function ApplyPage() {
             }
           }}>
           {/* 1. 목적지 */}
-          <section className={cn(sectionCardClass, 'space-y-4')}>
-            <h2 className={sectionTitleClass}>어디로 가시나요?</h2>
-            <div>
-              <label className={labelClass}>목적지 <span className="text-red-500">*</span></label>
+          <section className={sectionCardClass}>
+            <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/60 mb-1">
+              <span className={eyebrowNumClass}>01</span>
+              <h2 className={sectionTitleClass}>어디로 가시나요?</h2>
+            </div>
+            <FieldRow label="목적지" required hint="검색 입력">
               {destination ? (
                 <button type="button" onClick={() => { setDestination(''); setDestQuery('') }}
-                  className={cn(surfaceButtonClass, 'w-full cursor-pointer justify-between')}>
-                  <span>{DESTS.find(d => d.ko === destination)?.ko ?? destination}</span>
-                  <span className="ml-2 text-muted-foreground">({DESTS.find(d => d.ko === destination)?.en ?? ''})</span>
+                  className="w-full flex items-baseline justify-between text-left h-10 text-foreground hover:opacity-70 transition-opacity">
+                  <span className="font-serif font-semibold text-[17px] leading-tight">{DESTS.find(d => d.ko === destination)?.ko ?? destination}</span>
+                  <span className="ml-2 font-serif italic text-[15px] text-muted-foreground">{DESTS.find(d => d.ko === destination)?.en ?? ''}</span>
                 </button>
               ) : (
-                <div>
+                <div className="relative">
                   <input
                     type="text"
                     data-search-field="dest"
@@ -385,11 +468,11 @@ export default function ApplyPage() {
                       }
                     }}
                     onBlur={() => setTimeout(() => { if (!destination) setDestQuery('') }, 300)}
-                    placeholder="국가명 검색 (예: 일본, Japan)"
+                    placeholder="예: 일본 · Japan"
                     className={inputClass}
                   />
                   {destQuery && (
-                    <ul className={cn(dropdownClass, 'max-h-48 overflow-y-auto')}>
+                    <ul className={cn(dropdownClass, 'absolute left-0 right-0 top-full z-20 max-h-48 overflow-y-auto')}>
                       {filteredDests.length === 0 ? (
                         <li className="px-md py-3 text-sm text-muted-foreground">검색 결과 없음</li>
                       ) : (
@@ -397,7 +480,7 @@ export default function ApplyPage() {
                           <li key={d.ko}>
                             <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setDestination(d.ko); setDestQuery(''); setDestHighlight(-1) }}
                               className={cn(dropdownRowClass, i === destHighlight && dropdownRowActiveClass)}>
-                              {d.ko} <span className="text-muted-foreground">{d.en}</span>
+                              {d.ko} <span className="font-serif italic text-muted-foreground ml-1">{d.en}</span>
                             </button>
                           </li>
                         ))
@@ -406,105 +489,106 @@ export default function ApplyPage() {
                   )}
                 </div>
               )}
-            </div>
+            </FieldRow>
           </section>
 
           {/* 2. 소유주 */}
-          <section className={cn(sectionCardClass, 'space-y-4')}>
-            <h2 className={sectionTitleClass}>소유주 정보</h2>
-            <div className="space-y-4">
-              <div>
-                <label className={labelClass}>성함 <span className="text-red-500">*</span></label>
-                <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value.replace(/\b[a-z]/g, c => c.toUpperCase()))}
-                  placeholder="홍길동" className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>영문성함 <span className="text-red-500">*</span></label>
-                <div className="flex gap-sm">
-                  <input type="text" value={customerLastNameEn}
-                    onCompositionStart={() => { composingRef.current = true }}
-                    onChange={(e) => handleEnInput(e, setCustomerLastNameEn, 'lastNameEn')}
-                    onCompositionEnd={(e) => handleEnCompositionEnd(e, setCustomerLastNameEn, 'lastNameEn')}
-                    placeholder="성 (Hong)" className={inputClass + ' flex-1'} />
-                  <input type="text" value={customerFirstNameEn}
-                    onCompositionStart={() => { composingRef.current = true }}
-                    onChange={(e) => handleEnInput(e, setCustomerFirstNameEn, 'firstNameEn')}
-                    onCompositionEnd={(e) => handleEnCompositionEnd(e, setCustomerFirstNameEn, 'firstNameEn')}
-                    placeholder="이름 (Gildong)" className={inputClass + ' flex-1'} />
-                </div>
-                {(enWarnings.lastNameEn || enWarnings.firstNameEn) && <p className="mt-1 text-xs text-red-500">{enWarnings.lastNameEn || enWarnings.firstNameEn}</p>}
-              </div>
-              <div>
-                <label className={labelClass}>전화번호 <span className="text-red-500">*</span></label>
-                <input type="tel" inputMode="numeric"
-                  value={phone.replace(/(\d{3})(\d{4})(\d{0,4})/, (_, a, b, c) => c ? `${a}-${b}-${c}` : b ? `${a}-${b}` : a)}
-                  maxLength={13}
-                  onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, '').slice(0, 11))}
-                  placeholder="010-1234-5678" className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>한국주소 <span className="text-red-500">*</span></label>
-                <div className="flex gap-sm">
-                  <input type="text" value={addressKr} onChange={(e) => setAddressKr(e.target.value)}
-                    placeholder="클릭하여 주소 검색" className={inputClass + ' flex-1 cursor-pointer'} readOnly
-                    onFocus={() => { if (!addressKr) handleAddrSearch() }} />
-                  <button type="button" onClick={handleAddrSearch}
-                    className="shrink-0 h-10 rounded-md border border-border bg-card px-md text-sm font-medium text-foreground transition-colors hover:bg-accent">
-                    주소 검색
-                  </button>
-                </div>
-                {addressKr && (
-                  <input ref={addrDetailRef} type="text" value={addressDetail} onChange={(e) => setAddressDetail(e.target.value)}
-                    placeholder="상세주소 (동/호수 등)"
-                    className={inputClass + ' mt-2'} />
-                )}
-                {addressEn && (
-                  <p className="mt-1 text-xs text-muted-foreground">{addressEn}</p>
-                )}
-              </div>
-              <div>
-                <label className={labelClass}>이메일 주소 <span className="text-red-500">*</span></label>
-                <input type="email" inputMode="email" value={email}
-                  onChange={(e) => setEmail(e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣A-Z]/g, (c) => c >= 'A' && c <= 'Z' ? c.toLowerCase() : ''))}
-                  onCompositionEnd={(e) => setEmail((e.target as HTMLInputElement).value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').toLowerCase())}
-                  placeholder="example@email.com" className={inputClass} />
-              </div>
+          <section className={sectionCardClass}>
+            <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/60 mb-1">
+              <span className={eyebrowNumClass}>02</span>
+              <h2 className={sectionTitleClass}>소유주 정보</h2>
             </div>
+            <FieldRow label="성함" required>
+              <input type="text" autoComplete="name" value={customerName} onChange={(e) => setCustomerName(e.target.value.replace(/\b[a-z]/g, c => c.toUpperCase()))}
+                placeholder="예: 홍길동" className={inputClass} />
+            </FieldRow>
+            <FieldRow label="영문성함" required hint="여권과 동일하게">
+              <div className="flex gap-sm">
+                <input type="text" autoComplete="family-name" value={customerLastNameEn}
+                  onCompositionStart={() => { composingRef.current = true }}
+                  onChange={(e) => handleEnInput(e, setCustomerLastNameEn, 'lastNameEn')}
+                  onCompositionEnd={(e) => handleEnCompositionEnd(e, setCustomerLastNameEn, 'lastNameEn')}
+                  placeholder="성 · Hong" className={inputEnClass + ' flex-1'} />
+                <input type="text" autoComplete="given-name" value={customerFirstNameEn}
+                  onCompositionStart={() => { composingRef.current = true }}
+                  onChange={(e) => handleEnInput(e, setCustomerFirstNameEn, 'firstNameEn')}
+                  onCompositionEnd={(e) => handleEnCompositionEnd(e, setCustomerFirstNameEn, 'firstNameEn')}
+                  placeholder="이름 · Gildong" className={inputEnClass + ' flex-1'} />
+              </div>
+              {(enWarnings.lastNameEn || enWarnings.firstNameEn) && <p className="mt-1.5 text-xs text-destructive">{enWarnings.lastNameEn || enWarnings.firstNameEn}</p>}
+            </FieldRow>
+            <FieldRow label="전화번호" required>
+              <input type="tel" inputMode="numeric" autoComplete="tel"
+                value={phone.replace(/(\d{3})(\d{4})(\d{0,4})/, (_, a, b, c) => c ? `${a}-${b}-${c}` : b ? `${a}-${b}` : a)}
+                maxLength={13}
+                onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, '').slice(0, 11))}
+                placeholder="010-0000-0000" className={numericInputClass} />
+            </FieldRow>
+            <FieldRow label="한국주소" required hint="검색 입력">
+              <div className="flex gap-sm items-center">
+                <input type="text" autoComplete="off" value={addressKr} onChange={(e) => setAddressKr(e.target.value)}
+                  placeholder="클릭하여 검색" className={inputClass + ' flex-1 cursor-pointer'} readOnly
+                  onFocus={() => { if (!addressKr) handleAddrSearch() }} />
+                <button type="button" onClick={handleAddrSearch}
+                  className="shrink-0 h-8 rounded-full border border-border/80 bg-transparent px-3 font-serif italic text-[12px] text-foreground transition-colors hover:bg-accent">
+                  주소 검색
+                </button>
+              </div>
+              {addressKr && (
+                <input ref={addrDetailRef} type="text" autoComplete="address-line2" value={addressDetail} onChange={(e) => setAddressDetail(e.target.value)}
+                  placeholder="상세주소 · 동/호수 등"
+                  className={inputClass + ' mt-1'} />
+              )}
+              {addressEn && (
+                <p className="mt-1 font-serif italic text-[15px] text-foreground">{addressEn}</p>
+              )}
+            </FieldRow>
+            <FieldRow label="이메일" required>
+              <input type="email" inputMode="email" autoComplete="email" value={email}
+                onChange={(e) => setEmail(e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣A-Z]/g, (c) => c >= 'A' && c <= 'Z' ? c.toLowerCase() : ''))}
+                onCompositionEnd={(e) => setEmail((e.target as HTMLInputElement).value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').toLowerCase())}
+                placeholder="example@email.com" className={inputEnClass} />
+            </FieldRow>
           </section>
 
           {/* 마리 수 선택 */}
-          <section className={cn(sectionCardClass, 'space-y-4')}>
-            <h2 className={sectionTitleClass}>동반 마리수</h2>
-            <div className="flex gap-sm">
-              {[1, 2, 3, 4, 5].map(n => (
-                <button key={n} type="button" onClick={() => handlePetCountChange(n)}
-                  className={`h-10 w-10 rounded-full border text-sm font-medium transition-colors ${petCount === n ? chipButtonActive : chipButtonInactive}`}>
-                  {n}
-                </button>
-              ))}
+          <section className={sectionCardClass}>
+            <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/60 mb-1">
+              <span className={eyebrowNumClass}>03</span>
+              <h2 className={sectionTitleClass}>동반 마리수</h2>
             </div>
+            <FieldRow label="마리수" required>
+              <div className="flex gap-sm">
+                {[1, 2, 3, 4, 5].map(n => (
+                  <button key={n} type="button" onClick={() => handlePetCountChange(n)}
+                    className={`h-10 w-10 rounded-full border font-mono text-sm tabular-nums transition-colors ${petCount === n ? chipButtonActive : chipButtonInactive}`}>
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </FieldRow>
           </section>
 
           {/* 3. 반려동물 (반복) */}
           {pets.map((pet, pi) => (
-          <section key={pi} className={cn(sectionCardClass, 'space-y-4')}>
-            <h2 className={sectionTitleClass}>
-              {pets.length > 1 ? `반려동물 정보 ${pi + 1}` : '반려동물 정보'}
-            </h2>
+          <section key={pi} className={sectionCardClass}>
+            <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/60 mb-1">
+              <span className={eyebrowNumClass}>{String(4 + pi).padStart(2, '0')}</span>
+              <h2 className={sectionTitleClass}>
+                {pets.length > 1 ? `반려동물 · ${pi + 1}` : '반려동물 정보'}
+              </h2>
+            </div>
             <PetFormSection
               pet={pet}
               index={pi}
               updatePet={updatePet}
               enWarnings={enWarnings}
-              showEnWarning={showEnWarning}
               composingRef={composingRef}
               handleEnInput={handleEnInput}
               handleEnCompositionEnd={handleEnCompositionEnd}
               breedHighlight={breedHighlights[pi] ?? -1}
               setBreedHighlight={(h: number) => setBreedHighlights(prev => ({ ...prev, [pi]: h }))}
               getFilteredBreeds={getFilteredBreeds}
-              inputClass={inputClass}
-              labelClass={labelClass}
             />
           </section>
           ))}
@@ -517,28 +601,30 @@ export default function ApplyPage() {
           )}
 
           {/* Submit */}
-          <button
-            type="submit"
-            disabled={submitting}
-            className={primaryButtonClass}
-          >
-            {submitting ? '제출 중...' : '정보 등록'}
-          </button>
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={submitting}
+              className={primaryButtonClass}
+            >
+              {submitting ? '제출 중…' : '정보 등록'}
+            </button>
+          </div>
 
-          <p className="text-center text-xs text-muted-foreground pb-8">
-            등록하신 정보는 서류 발급에 사용됩니다.
+          <p className="text-center font-mono text-[11px] uppercase tracking-[1.5px] text-muted-foreground pb-10">
+            등록하신 정보는 서류 발급에 사용됩니다
           </p>
         </form>
       </div>
 
       {/* Daum Postcode Modal */}
       {showAddrModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowAddrModal(false)}>
-          <div className={cn(cardContainer, 'relative mx-4 w-full max-w-lg overflow-hidden p-0')} onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-[2px]" onClick={() => setShowAddrModal(false)}>
+          <div className="relative mx-4 w-full max-w-lg overflow-hidden rounded-xl border border-border/60 bg-popover shadow-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-md py-3 border-b border-border/60">
-              <span className="text-sm font-medium text-primary">주소 검색</span>
+              <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">주소 검색</span>
               <button type="button" onClick={() => setShowAddrModal(false)}
-                className="text-muted-foreground hover:text-foreground text-lg">&times;</button>
+                className="text-muted-foreground hover:text-foreground text-lg leading-none">&times;</button>
             </div>
             <div ref={addrModalRef} className="h-[450px]" />
           </div>
@@ -550,77 +636,72 @@ export default function ApplyPage() {
 
 /* ── Pet Form Section (동물정보 + 선택항목) ── */
 
-function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, composingRef, handleEnInput, handleEnCompositionEnd, breedHighlight, setBreedHighlight, getFilteredBreeds, inputClass, labelClass }: {
+function PetFormSection({ pet, index, updatePet, enWarnings, composingRef, handleEnInput, handleEnCompositionEnd, breedHighlight, setBreedHighlight, getFilteredBreeds }: {
   pet: PetForm
   index: number
   updatePet: (idx: number, field: keyof PetForm, value: PetForm[keyof PetForm]) => void
   enWarnings: Record<string, string | null>
-  showEnWarning: (field: string, msg: string) => void
   composingRef: React.RefObject<boolean>
   handleEnInput: (e: React.ChangeEvent<HTMLInputElement>, setter: (v: string) => void, field: string) => void
   handleEnCompositionEnd: (e: React.CompositionEvent<HTMLInputElement>, setter: (v: string) => void, field: string) => void
   breedHighlight: number
   setBreedHighlight: (h: number) => void
   getFilteredBreeds: (pet: PetForm) => Breed[]
-  inputClass: string
-  labelClass: string
 }) {
   const filteredBreeds = getFilteredBreeds(pet)
   const warnKey = (f: string) => `pet${index}_${f}`
 
   return (
-    <div className="space-y-4">
+    <div>
       {/* 이름 */}
-      <div>
-        <label className={labelClass}>이름 <span className="text-red-500">*</span></label>
+      <FieldRow label="이름" required>
         <input type="text" value={pet.petName} onChange={(e) => updatePet(index, 'petName', e.target.value.replace(/\b[a-z]/g, c => c.toUpperCase()))}
-          placeholder="마루" className={inputClass} />
-      </div>
-      <div>
-        <label className={labelClass}>영문이름 <span className="text-red-500">*</span></label>
+          placeholder="예: 마루" className={inputClass} />
+      </FieldRow>
+
+      {/* 영문이름 */}
+      <FieldRow label="영문이름" required>
         <input type="text" value={pet.petNameEn}
           onCompositionStart={() => { composingRef.current = true }}
           onChange={(e) => handleEnInput(e, (v) => updatePet(index, 'petNameEn', v), warnKey('en'))}
           onCompositionEnd={(e) => handleEnCompositionEnd(e, (v) => updatePet(index, 'petNameEn', v), warnKey('en'))}
-          placeholder="Maru" className={inputClass} />
-        {enWarnings[warnKey('en')] && <p className="mt-1 text-xs text-red-500">{enWarnings[warnKey('en')]}</p>}
-      </div>
+          placeholder="예: Maru" className={inputEnClass} />
+        {enWarnings[warnKey('en')] && <p className="mt-1.5 text-xs text-destructive">{enWarnings[warnKey('en')]}</p>}
+      </FieldRow>
 
       {/* 생년월일 */}
-      <div>
-        <label className={labelClass}>생년월일 <span className="text-red-500">*</span></label>
+      <FieldRow label="생년월일" required>
         <DateTextField
           value={pet.birthDate}
           onChange={(v) => updatePet(index, 'birthDate', v)}
           placeholder="YYYY-MM-DD"
-          className={inputClass}
+          className={numericInputClass}
         />
-      </div>
+      </FieldRow>
 
       {/* 종 */}
-      <div>
-        <label className={labelClass}>종 <span className="text-red-500">*</span></label>
+      <FieldRow label="종" required>
         <div className="flex flex-wrap gap-sm">
           {SPECIES_OPTIONS.map(o => (
             <button key={o.value} type="button"
               onClick={() => { updatePet(index, 'species', o.value); if (pet.breed) { updatePet(index, 'breed', ''); updatePet(index, 'breedEn', ''); updatePet(index, 'breedQuery', '') } }}
-              className={`h-10 px-5 rounded-full border text-sm font-medium transition-colors ${pet.species === o.value ? chipButtonActive : chipButtonInactive}`}>
+              className={`h-9 px-5 rounded-full border text-[13px] font-medium transition-colors ${pet.species === o.value ? chipButtonActive : chipButtonInactive}`}>
               {o.label}
             </button>
           ))}
         </div>
-      </div>
+      </FieldRow>
 
       {/* 품종 */}
-      <div>
-        <label className={labelClass}>품종 <span className="text-red-500">*</span></label>
+      <FieldRow label="품종" required hint="검색 입력">
         {pet.breed ? (
           <button type="button" onClick={() => { updatePet(index, 'breed', ''); updatePet(index, 'breedEn', ''); updatePet(index, 'breedQuery', '') }}
-            className={cn(surfaceButtonClass, 'w-full cursor-pointer justify-between')}>
-            <span>{pet.breed}</span> <span className="ml-2 text-muted-foreground">{pet.breedEn}</span>
+            className="w-full flex items-baseline justify-between text-left h-10 text-foreground hover:opacity-70 transition-opacity">
+            <span className="font-serif font-semibold text-[17px] leading-tight">{pet.breed}</span>
+            <span className="ml-2 font-serif italic text-[15px] text-muted-foreground">{pet.breedEn}</span>
           </button>
         ) : (
-          <div>
+          <div className="relative">
             <input type="text" data-search-field="breed" value={pet.breedQuery}
               onChange={(e) => { updatePet(index, 'breedQuery', e.target.value); setBreedHighlight(-1) }}
               onKeyDown={(e) => {
@@ -633,100 +714,107 @@ function PetFormSection({ pet, index, updatePet, enWarnings, showEnWarning, comp
                 }
               }}
               onBlur={() => setTimeout(() => { if (!pet.breed) updatePet(index, 'breedQuery', '') }, 300)}
-              placeholder={pet.species ? '품종 검색 (예: 말티즈, Maltese)' : '종을 먼저 선택해주세요'}
-              disabled={!pet.species} className={inputClass} />
+              placeholder={pet.species ? '품종 검색 · 말티즈 / Maltese' : '종을 먼저 선택해주세요'}
+              disabled={!pet.species} className={cn(inputClass, !pet.species && 'opacity-50')} />
             {pet.breedQuery && filteredBreeds.length > 0 && (
-            <ul className={cn(dropdownClass, 'max-h-48 overflow-y-auto')}>
+              <ul className={cn(dropdownClass, 'absolute left-0 right-0 top-full z-20 max-h-48 overflow-y-auto')}>
                 {filteredBreeds.slice(0, 10).map((b, i) => (
                   <li key={`${b.type}:${b.en}`}>
                     <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { updatePet(index, 'breed', b.ko); updatePet(index, 'breedEn', b.en); updatePet(index, 'breedQuery', ''); setBreedHighlight(-1) }}
                       className={cn(dropdownRowClass, i === breedHighlight && dropdownRowActiveClass)}>
-                      {b.ko} <span className="text-muted-foreground">{b.en}</span>
+                      {b.ko} <span className="font-serif italic text-muted-foreground ml-1">{b.en}</span>
                     </button>
                   </li>
                 ))}
               </ul>
             )}
             {pet.breedQuery && filteredBreeds.length === 0 && (
-              <p className="mt-1 text-xs text-muted-foreground">검색 결과 없음</p>
+              <p className="mt-1 font-serif italic text-[12px] text-muted-foreground">검색 결과 없음</p>
             )}
           </div>
         )}
-      </div>
+      </FieldRow>
 
       {/* 모색 */}
-      <div>
-        <label className={labelClass}>모색 <span className="text-red-500">*</span> <span className="text-xs font-normal text-muted-foreground">가장 유사한 색상을 최대 3개까지 골라주세요</span></label>
+      <FieldRow label="모색" required hint="가장 비슷한 색상을 최대 3개까지 선택">
         <div className="flex flex-wrap gap-sm">
           {COLORS.map(c => {
             const selected = pet.selectedColors.includes(c.ko)
+            const disabled = !selected && pet.selectedColors.length >= 3
             return (
               <button key={c.ko} type="button"
                 onClick={() => {
                   if (selected) updatePet(index, 'selectedColors', pet.selectedColors.filter(v => v !== c.ko))
                   else if (pet.selectedColors.length < 3) updatePet(index, 'selectedColors', [...pet.selectedColors, c.ko])
                 }}
-                className={`h-10 px-md rounded-full border text-sm font-medium transition-colors ${selected ? chipButtonActive : chipButtonInactive} ${!selected && pet.selectedColors.length >= 3 ? 'opacity-40 cursor-not-allowed' : ''}`}>
+                className={cn(
+                  'h-9 pl-2 pr-4 inline-flex items-center gap-2 rounded-full border text-[13px] font-medium transition-colors',
+                  selected ? chipButtonActive : chipButtonInactive,
+                  disabled && 'opacity-40 cursor-not-allowed',
+                )}>
+                <ColorSwatch hex={COLOR_HEX[c.ko] ?? '#999999'} selected={selected} />
                 {c.ko}
               </button>
             )
           })}
         </div>
-      </div>
+      </FieldRow>
 
       {/* 성별 */}
-      <div>
-        <label className={labelClass}>성별 <span className="text-red-500">*</span></label>
+      <FieldRow label="성별" required>
         <div className="flex flex-wrap gap-sm">
           {SEX_OPTIONS.map(o => (
             <button key={o.value} type="button"
               onClick={() => updatePet(index, 'sex', o.value)}
-              className={`h-10 px-md rounded-full border text-sm font-medium transition-colors ${pet.sex === o.value ? chipButtonActive : chipButtonInactive}`}>
+              className={`h-9 px-md rounded-full border text-[13px] font-medium transition-colors ${pet.sex === o.value ? chipButtonActive : chipButtonInactive}`}>
               {o.label}
             </button>
           ))}
         </div>
-      </div>
+      </FieldRow>
 
       {/* 몸무게 */}
-      <div>
-        <label className={labelClass}>몸무게 (kg) <span className="text-red-500">*</span></label>
+      <FieldRow label="몸무게" required hint="kg">
         <input type="text" inputMode="decimal" value={pet.weight}
           onChange={(e) => updatePet(index, 'weight', e.target.value.replace(/[^\d.]/g, ''))}
-          placeholder="5" className={inputClass} />
-      </div>
+          placeholder="예: 5.2" className={numericInputClass} />
+      </FieldRow>
 
-      {/* 선택: 마이크로칩 */}
-      <div className="pt-2 mt-2 border-t border-gray-100">
-        <p className="text-xs text-muted-foreground mb-3">아시는 경우 작성해주세요</p>
-        <div className="space-y-4">
-          <div>
-            <label className={labelClass}>마이크로칩 번호</label>
-            <input type="text" inputMode="numeric"
-              value={pet.microchip.replace(/(\d{3})(?=\d)/g, '$1 ')}
-              onChange={(e) => updatePet(index, 'microchip', e.target.value.replace(/\D/g, '').slice(0, 15))}
-              placeholder="000 000 000 000 000" maxLength={19} className={inputClass} />
-          </div>
-          <div>
-            <label className={labelClass}>마이크로칩 삽입일</label>
-            <DateTextField
-              value={pet.microchipDate}
-              onChange={(v) => updatePet(index, 'microchipDate', v)}
-              placeholder="YYYY-MM-DD"
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className={labelClass}>최근 광견병 접종일 (1년 이내)</label>
-            <DateTextField
-              value={pet.rabiesDate}
-              onChange={(v) => updatePet(index, 'rabiesDate', v)}
-              placeholder="YYYY-MM-DD"
-              className={inputClass}
-            />
-          </div>
+      {/* 선택 항목 섹션 헤더 */}
+      <div className="pt-6 mt-4 border-t border-border/60">
+        <div className="flex items-baseline justify-between mb-1">
+          <span className="font-mono text-[11px] uppercase tracking-[1.6px] text-muted-foreground">Optional</span>
+          <span className="font-serif italic text-[12px] text-muted-foreground/80">아시는 부분만 작성해주세요</span>
         </div>
       </div>
+
+      {/* 마이크로칩 번호 */}
+      <FieldRow label="마이크로칩 번호" hint="15자리">
+        <input type="text" inputMode="numeric"
+          value={pet.microchip.replace(/(\d{3})(?=\d)/g, '$1 ')}
+          onChange={(e) => updatePet(index, 'microchip', e.target.value.replace(/\D/g, '').slice(0, 15))}
+          placeholder="000 000 000 000 000" maxLength={19} className={numericInputClass} />
+      </FieldRow>
+
+      {/* 마이크로칩 삽입일 */}
+      <FieldRow label="마이크로칩 삽입일">
+        <DateTextField
+          value={pet.microchipDate}
+          onChange={(v) => updatePet(index, 'microchipDate', v)}
+          placeholder="YYYY-MM-DD"
+          className={numericInputClass}
+        />
+      </FieldRow>
+
+      {/* 광견병 접종일 */}
+      <FieldRow label="최근 광견병 접종일" hint="최근 1년 이내">
+        <DateTextField
+          value={pet.rabiesDate}
+          onChange={(v) => updatePet(index, 'rabiesDate', v)}
+          placeholder="YYYY-MM-DD"
+          className={numericInputClass}
+        />
+      </FieldRow>
     </div>
   )
 }

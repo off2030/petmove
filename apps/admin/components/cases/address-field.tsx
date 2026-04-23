@@ -221,8 +221,8 @@ export function AddressField({
   return (
     <>
       {/* Korean address */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
-        <div className="pt-1 text-base text-primary">한국주소</div>
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60">
+        <div className="pt-1 font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">한국주소</div>
         <div className="flex items-center gap-sm min-w-0">
           {editingKr ? (
             <div className="flex items-center gap-sm flex-1">
@@ -246,7 +246,7 @@ export function AddressField({
           ) : (
             <div className="group/kr relative flex flex-wrap items-center gap-xs min-w-0 flex-1">
               <button type="button" onClick={krEmpty ? handleSearch : startEditKr}
-                className={cn('text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text', krEmpty && 'text-muted-foreground/60')}>
+                className={cn('text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text', krEmpty && 'text-muted-foreground/60')}>
                 {krDisplay}
               </button>
               <button type="button" onClick={handleSearch} disabled={!scriptLoaded || saving}
@@ -259,8 +259,8 @@ export function AddressField({
                 <>
                   <span className="text-muted-foreground/30 select-none mx-2 hidden md:inline">|</span>
                   <div className="group/zip relative inline-flex items-baseline shrink-0 basis-full md:basis-auto">
-                    <span className="text-base text-primary mr-1">우편번호</span>
-                    <span className="text-base">{zipDisplay}</span>
+                    <span className="font-sans text-[10px] uppercase tracking-[1px] text-muted-foreground mr-1">우편번호</span>
+                    <span className="font-mono text-[12px] tracking-[0.5px] text-foreground">{zipDisplay}</span>
                     <CopyButton value={zipDisplay} className="ml-1 opacity-0 group-hover/zip:opacity-100" />
                   </div>
                 </>
@@ -272,8 +272,8 @@ export function AddressField({
 
       {/* Detail address input */}
       {showDetail && (
-        <div className="grid grid-cols-[140px_1fr_auto] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
-          <div className="pt-1 text-base text-primary">상세 주소</div>
+        <div className="grid grid-cols-[140px_1fr_auto] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60">
+          <div className="pt-1 font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">상세 주소</div>
           <div className="flex items-center gap-sm">
             <input ref={detailRef} type="text" value={detailAddr} onChange={(e) => setDetailAddr(e.target.value)}
               placeholder="동/호수 입력"
@@ -289,8 +289,8 @@ export function AddressField({
       )}
 
       {/* English address */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60">
-        <div className="pt-1 text-base text-primary">영문주소</div>
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60">
+        <div className="pt-1 font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">영문주소</div>
         <div className="min-w-0">
           {editingEn ? (
             <>
@@ -324,7 +324,7 @@ export function AddressField({
           ) : (
             <div className="group/en relative w-fit">
               <button type="button" onClick={startEditEn}
-                className={cn('text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text', enEmpty && 'text-muted-foreground/60')}>
+                className={cn('text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text', enEmpty && 'text-muted-foreground/60')}>
                 {enDisplay}
               </button>
               <CopyButton value={enEmpty ? '' : enDisplay}

@@ -9,6 +9,7 @@ import { extractFlightInfo } from '@/lib/actions/extract-flight'
 import { CopyButton } from './copy-button'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
+import { DateTextField } from '@/components/ui/date-text-field'
 
 type ExtractOk = Extract<Awaited<ReturnType<typeof extractFlightInfo>>, { ok: true }>
 
@@ -201,9 +202,9 @@ export function ExtraFieldShell<T extends object>({
         dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
         <div className="flex items-center gap-[6px] pt-1">
-          <span className="text-base text-primary">AI 입력</span>
+          <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">AI 입력</span>
           <input ref={fileRef} type="file" accept="image/*,.pdf" multiple onChange={(e) => { if (e.target.files) handleFiles(Array.from(e.target.files)); e.target.value = '' }} className="hidden" />
           <button type="button" onClick={() => fileRef.current?.click()} disabled={extracting} className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30" title="이미지/PDF 첨부">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
@@ -227,7 +228,7 @@ export function ExtraFieldShell<T extends object>({
               type="button"
               onClick={() => { setShowInput(true); setTimeout(() => textRef.current?.focus(), 50) }}
               disabled={extracting}
-              className="text-left rounded-md px-2 py-1 -mx-2 text-base text-primary/60 italic transition-colors hover:bg-accent/60 cursor-pointer disabled:opacity-50"
+              className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground cursor-pointer disabled:opacity-50"
             >
               {extracting ? '추출 중...' : '—'}
             </button>
@@ -264,16 +265,16 @@ export interface FieldRowProps {
 
 export function FieldRow({
   label, value, isEditing, onStartEdit, onSave, onCancelEdit,
-  type = 'text', placeholder = '', options, uppercase, compact, compactLabelClass, allowDelete,
+  type = 'text', placeholder = '', options, uppercase, compact, compactLabelClass, allowDelete = true,
 }: FieldRowProps) {
   const isSelect = type === 'select'
   const display = isSelect && value ? (options?.find(o => o.value === value)?.label ?? value) : value
   const rowCls = compact
     ? 'flex items-center gap-sm'
-    : 'grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0'
+    : 'grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0'
   const labelCls = compact
-    ? (compactLabelClass ?? 'text-base text-primary/60 w-16 shrink-0')
-    : 'text-base text-primary pt-1'
+    ? (compactLabelClass ?? 'font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground w-16 shrink-0')
+    : 'font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1'
   return (
     <div className={rowCls}>
       <span className={labelCls}>{label}</span>
@@ -296,7 +297,7 @@ export function FieldRow({
             type="button"
             onClick={onStartEdit}
             className={cn(
-              'text-left rounded-md px-2 py-0.5 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text',
+              'text-left rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text',
               !value && 'text-muted-foreground/60',
             )}
           >
@@ -333,8 +334,24 @@ export function InlineInput({ type, initial, placeholder, onSave, onCancel, uppe
 }) {
   const ref = useRef<HTMLInputElement>(null)
   const [val, setVal] = useState(initial)
-  useEffect(() => { ref.current?.focus() }, [])
+  useEffect(() => { if (type !== 'date') ref.current?.focus() }, [type])
   function save() { onSave(val.trim() || null) }
+
+  if (type === 'date') {
+    return (
+      <DateTextField
+        autoFocus
+        value={initial}
+        onChange={(v) => onSave(v || null)}
+        onBlur={onCancel}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') { e.preventDefault(); onCancel() }
+        }}
+        className="h-7 w-full max-w-[320px] rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      />
+    )
+  }
+
   return (
     <input
       ref={ref}

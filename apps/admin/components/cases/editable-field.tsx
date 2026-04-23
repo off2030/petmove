@@ -8,6 +8,7 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { CopyButton } from '@/components/cases/copy-button'
 import { useCases } from '@/components/cases/cases-context'
 import { severityTextClass, tooltipText, useFieldVerification } from '@/components/cases/verification-context'
+import { DateTextField } from '@/components/ui/date-text-field'
 
 /** Filter input by language */
 function filterByLang(str: string, lang?: 'ko' | 'en'): string {
@@ -15,6 +16,20 @@ function filterByLang(str: string, lang?: 'ko' | 'en'): string {
   if (lang === 'en') return str.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').replace(/\b[a-z]/g, (c) => c.toUpperCase())
   // mixed (undefined): allow both, but auto-capitalize English words
   return str.replace(/\b[a-z]/g, (c) => c.toUpperCase())
+}
+
+/** Editorial value styling — derive from field spec */
+const MONO_VALUE_KEYS = new Set(['phone', 'microchip', 'weight', 'payment_amount', 'rabies_titer', 'rabies_titer_value'])
+const ITALIC_VALUE_KEYS = new Set(['sex', 'address_overseas'])
+
+function getValueClass(spec: FieldSpec): string {
+  if (spec.type === 'date' || MONO_VALUE_KEYS.has(spec.key)) {
+    return 'font-mono text-[15px] tracking-[0.3px] text-foreground'
+  }
+  if (ITALIC_VALUE_KEYS.has(spec.key)) {
+    return 'font-serif italic text-[17px] text-muted-foreground'
+  }
+  return 'font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground'
 }
 
 /** Auto-determine language filter from field spec */
@@ -198,10 +213,8 @@ export function EditableField({
   const composingRef = useRef(false) // IME composition state
   const effectiveLang = autoDetectLang(spec, lang) // true if keyboard was used (vs picker)
 
-  function saveDateFromRef() {
-    const el = inputRef.current as HTMLInputElement | null
-    // type="date" + min/max 가 이미 빈 문자열 또는 유효한 YYYY-MM-DD 만 보장.
-    const value = (el?.value ?? '').trim() || null
+  function saveDateValue(v: string) {
+    const value = v.trim() || null
     startSave(async () => {
       const result = await updateCaseField(caseId, spec.storage, spec.key, value)
       if (!result.ok) { setError(result.error); return }
@@ -234,7 +247,13 @@ export function EditableField({
             <button
               type="button"
               onClick={() => setEditing(!editing)}
-              className="text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer"
+              className={cn(
+                'text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/60 cursor-pointer',
+                spec.key === 'status'
+                  ? 'font-serif italic text-[16px] text-primary'
+                  : getValueClass(spec),
+                isEmpty && 'font-sans not-italic text-base font-normal tracking-normal text-muted-foreground/60',
+              )}
             >
               {display}
             </button>
@@ -245,7 +264,7 @@ export function EditableField({
                 <button
                   type="button"
                   onClick={() => { handleSelectChange_custom(null); setEditing(false) }}
-                  className="w-full text-left px-sm py-1.5 text-base text-muted-foreground hover:bg-accent/60 transition-colors"
+                  className="w-full text-left px-sm py-1.5 font-serif text-[15px] text-muted-foreground hover:bg-accent/60 transition-colors"
                 >
                   —
                 </button>
@@ -256,7 +275,7 @@ export function EditableField({
                     type="button"
                     onClick={() => { handleSelectChange_custom(opt.value); setEditing(false) }}
                     className={cn(
-                      'w-full text-left px-sm py-1.5 text-base hover:bg-accent/60 transition-colors',
+                      'w-full text-left px-sm py-1.5 font-serif text-[15px] tracking-[-0.1px] text-foreground hover:bg-accent/60 transition-colors',
                       String(rawValue) === opt.value && 'font-medium',
                     )}
                   >
@@ -268,25 +287,14 @@ export function EditableField({
           )}
         </div>
       ) : isDate && editing ? (
-        <input
-          ref={inputRef as React.RefObject<HTMLInputElement>}
-          type="date"
-          min="1900-01-01"
-          max="2100-12-31"
-          defaultValue={stringifyRaw(rawValue, spec)}
+        <DateTextField
           autoFocus
-          onChange={(e) => {
-            // 달력 picker "지우기" 버튼이나 segment 전체 백스페이스로 ''가 되면
-            // 즉시 null 저장. picker 가 blur 를 잡고 있어 onBlur 만으로는 저장이 늦거나 누락됨.
-            if (e.target.value === '') saveDateFromRef()
-          }}
+          value={stringifyRaw(rawValue, spec)}
+          onChange={saveDateValue}
+          onBlur={() => setEditing(false)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') { e.preventDefault(); saveDateFromRef() }
             if (e.key === 'Escape') { e.preventDefault(); handleCancel() }
           }}
-          onBlur={() => setTimeout(() => {
-            saveDateFromRef()
-          }, 150)}
           className="w-44 bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
         />
       ) : editing ? (
@@ -326,6 +334,7 @@ export function EditableField({
         </div>
       ) : (
         <VerifiedDisplayButton
+          spec={spec}
           path={spec.key}
           display={display}
           isEmpty={isEmpty}
@@ -352,8 +361,8 @@ export function EditableField({
   ) : null
 
   return (
-    <div className={cn("grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0", clearable && "group/row")}>
-      <div className="text-base text-primary pt-1">{spec.label}</div>
+    <div className={cn("grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0", clearable && "group/row")}>
+      <div className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1">{spec.label}</div>
       <div className="min-w-0 flex items-baseline gap-sm">
         {(() => {
           const noCopy = spec.type === 'longtext' || spec.key === 'select' || spec.key === 'status'
@@ -380,7 +389,8 @@ export function EditableField({
   )
 }
 
-function VerifiedDisplayButton({ path, display, isEmpty, isLongText, onClick }: {
+function VerifiedDisplayButton({ spec, path, display, isEmpty, isLongText, onClick }: {
+  spec: FieldSpec
   path: string
   display: string
   isEmpty: boolean
@@ -390,14 +400,16 @@ function VerifiedDisplayButton({ path, display, isEmpty, isLongText, onClick }: 
   const info = useFieldVerification(path)
   const colorCls = info ? severityTextClass(info.severity) : ''
   const title = info ? tooltipText(info) : '클릭하여 편집'
+  const valueCls = getValueClass(spec)
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        'text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors',
+        'text-left rounded-md px-2 py-1 -mx-2 transition-colors',
         'hover:bg-accent/60 cursor-text',
-        isEmpty && 'text-muted-foreground/60',
+        valueCls,
+        isEmpty && 'font-sans text-base font-normal tracking-normal not-italic text-muted-foreground/60',
         colorCls,
       )}
       title={title}
@@ -468,33 +480,8 @@ function renderInput(
       </select>
     )
   }
-  if (spec.type === 'date') {
-    return (
-      <input
-        ref={ref as React.RefObject<HTMLInputElement>}
-        type="date"
-        min="1900-01-01"
-        max="2100-12-31"
-        defaultValue={value}
-        onChange={(e) => {
-          // Only auto-save when a complete valid date is entered
-          const v = e.target.value
-          if (!v) return
-          const year = parseInt(v.split('-')[0], 10)
-          if (year >= 1900 && year <= 2100) {
-            saveFn?.(coerceInputValue(spec, v))
-          }
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') {
-            e.preventDefault()
-            onBlur()
-          }
-        }}
-        className="w-44 bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
-      />
-    )
-  }
+  // NOTE: spec.type === 'date' is handled by the dedicated `isDate && editing`
+  // branch in the caller via <DateTextField/>, so it never reaches renderInput.
   if (spec.key === 'phone') {
     return (
       <PhoneInput

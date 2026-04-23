@@ -30,7 +30,7 @@ function DataSection() {
     <div className="rounded-xl border border-border/60 bg-card p-md shadow-sm max-w-2xl">
       <div className="space-y-4">
         {/* Trash */}
-        <div className="border-b border-border/60 py-2.5 px-md transition-colors hover:bg-muted/60">
+        <div className="border-b border-border/60 py-2.5 px-md transition-colors hover:bg-accent/60">
           <h3 className="font-medium text-base mb-1">휴지통</h3>
           <p className="text-base text-muted-foreground mb-3">
             삭제된 케이스를 복원하거나 영구 삭제할 수 있습니다.
@@ -45,7 +45,7 @@ function DataSection() {
         </div>
 
         {/* Export */}
-        <div className="border-b border-border/60 py-2.5 px-md transition-colors hover:bg-muted/60 last:border-b-0">
+        <div className="border-b border-border/60 py-2.5 px-md transition-colors hover:bg-accent/60 last:border-b-0">
           <h3 className="font-medium text-base mb-1">데이터 내보내기</h3>
           <p className="text-base text-muted-foreground mb-3">
             전체 케이스 데이터를 CSV 파일로 내보냅니다.

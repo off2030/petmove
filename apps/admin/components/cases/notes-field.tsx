@@ -214,9 +214,9 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   /* ── Render ── */
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
-        <span className="text-base text-primary">메모</span>
+        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">메모</span>
         <button
           type="button"
           onClick={() => setAddingText(true)}
@@ -270,7 +270,7 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
               <button
                 type="button"
                 onClick={() => setEditIdx(i)}
-                className="text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text whitespace-pre-wrap flex-1 min-w-0"
+                className="text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text whitespace-pre-wrap flex-1 min-w-0"
               >
                 {note.content}
               </button>
@@ -297,7 +297,7 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
           <button
             type="button"
             onClick={() => setAddingText(true)}
-            className="text-left rounded-md px-2 py-1 -mx-2 text-base text-primary/60 italic transition-colors hover:bg-accent/60 cursor-pointer"
+            className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground cursor-pointer"
           >
             —
           </button>

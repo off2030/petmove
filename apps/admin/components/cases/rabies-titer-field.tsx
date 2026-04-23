@@ -12,6 +12,7 @@ import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { resolveTiterLab, type InspectionLabRule } from '@petmove/domain'
 import { severityTextClass, tooltipText, useFieldVerification } from './verification-context'
+import { DateTextField } from '@/components/ui/date-text-field'
 
 interface TiterRecord {
   date: string | null
@@ -229,12 +230,12 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        'grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-muted/60 last:border-0 rounded-md',
+        'grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0 rounded-md',
         dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
       <div className="flex items-center gap-[6px] pt-1">
-        <span className="text-base text-primary">광견병항체검사</span>
+        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">광견병항체검사</span>
         <button
           type="button"
           onClick={() => setAddingNew(true)}
@@ -293,7 +294,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
 
         {records.length === 0 && !addingNew && !extracting && (
           <button type="button" onClick={() => setAddingNew(true)}
-            className="text-left rounded-md px-2 py-1 -mx-2 text-base text-primary/60 transition-colors hover:bg-accent/60 cursor-pointer">
+            className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground">
             —
           </button>
         )}
@@ -342,8 +343,8 @@ function TiterRow({
         <span className="group/v inline-flex items-baseline">
           <button type="button" onClick={() => onStartEdit('date')} title={dateTitle}
             className={cn(
-              'text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-pointer',
-              dateDisplay === '—' && 'text-muted-foreground/60',
+              'text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
+              dateDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60',
               dateColorCls,
             )}>
             {dateDisplay}
@@ -365,7 +366,7 @@ function TiterRow({
       ) : (
         <span className="group/v inline-flex items-baseline">
           <button type="button" onClick={() => onStartEdit('value')}
-            className={cn('text-left rounded-md px-2 py-1 -mx-2 text-base transition-colors hover:bg-accent/60 cursor-text', valueDisplay === '—' && 'text-muted-foreground/60')}>
+            className={cn('text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-text', valueDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60')}>
             {valueDisplay}
           </button>
           {valueDisplay !== '—' && <CopyButton value={valueDisplay} className="ml-1 opacity-0 group-hover/v:opacity-100" />}
@@ -385,10 +386,10 @@ function TiterRow({
         <span className="group/v inline-flex items-baseline">
           <button type="button" onClick={() => onStartEdit('lab')}
             className={cn(
-              'text-left text-base cursor-pointer transition-all',
+              'text-left cursor-pointer transition-all',
               labTone
-                ? cn('rounded px-2 py-0.5 font-medium hover:opacity-80', labTone.bg, labTone.text)
-                : cn('rounded-md px-2 py-1 -mx-2 hover:bg-accent/60', labDisplay === '—' && 'text-muted-foreground/60'),
+                ? cn('inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap hover:opacity-80', labTone.bg, labTone.text)
+                : cn('text-base rounded-md px-2 py-1 -mx-2 hover:bg-accent/60', labDisplay === '—' && 'text-muted-foreground/60'),
             )}>
             {labDisplay}
           </button>
@@ -409,28 +410,15 @@ function TiterRow({
 function DateInput({ initial, onSave, onCancel }: {
   initial: string; onSave: (v: string) => void; onCancel: () => void
 }) {
-  const ref = useRef<HTMLInputElement>(null)
-  useEffect(() => { ref.current?.focus() }, [])
-
-  function saveFromRef() {
-    const raw = (ref.current?.value ?? '').trim()
-    if (!raw) { onSave(''); return }
-    onSave(raw)
-  }
-
   return (
-    <input ref={ref} type="date" min="1900-01-01" max="2100-12-31" defaultValue={initial}
-      onChange={(e) => {
-        // 달력 picker "삭제" 버튼이나 segment 전체 백스페이스로 ''가 되면 즉시 저장.
-        if (e.target.value === '') saveFromRef()
-      }}
+    <DateTextField
+      autoFocus
+      value={initial}
+      onChange={(v) => onSave(v)}
+      onBlur={onCancel}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') { e.preventDefault(); saveFromRef() }
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
-      onBlur={() => setTimeout(() => {
-        saveFromRef()
-      }, 150)}
       className="w-36 bg-transparent border-0 border-b border-primary text-sm py-1 focus:outline-none"
     />
   )

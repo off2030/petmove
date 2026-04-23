@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Check, Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import type { CalculatorItem } from '@/lib/supabase/types'
 import {
   updateCalculatorItem,
@@ -99,16 +99,22 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
   if (!effectiveCountry) return null
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-md shadow-sm">
-      <div className="overflow-hidden rounded-md border border-border/60 bg-background">
+    <div>
+    <div className="rounded-xl bg-card px-lg pt-md pb-sm">
+      <div>
         {visibleItems.map((it) => {
           const on = !!checked[it.id]
+          // Split "마이크로칩 (미니)" → main + meta
+          const m = it.item_name.match(/^(.+?)\s*(\([^)]+\))\s*$/)
+          const mainName = m ? m[1] : it.item_name
+          const meta = m ? m[2] : null
+
           return (
             <div
               key={it.id}
-              className={`flex items-center justify-between gap-3 border-b border-border/60 px-3 py-2.5 transition-colors last:border-b-0 ${
-                on ? 'bg-muted/40' : ''
-              } ${editMode ? '' : 'cursor-pointer hover:bg-muted/60'}`}
+              className={`flex items-center justify-between gap-3 border-b border-dotted border-border/70 py-3 last:border-b-0 transition-colors ${
+                editMode ? '' : 'cursor-pointer hover:bg-accent/30 -mx-sm px-sm rounded-sm'
+              }`}
               onClick={() => {
                 if (editMode) return
                 setChecked((c) => ({ ...c, [it.id]: !c[it.id] }))
@@ -117,13 +123,17 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 {!editMode && (
                   <div
-                    className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded border ${
+                    className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[3px] border transition-colors ${
                       on
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'border-border bg-card'
+                        ? 'border-[#D9A489] bg-[#D9A489] dark:border-[#C08C70] dark:bg-[#C08C70]'
+                        : 'border-border bg-transparent'
                     }`}
                   >
-                    {on && <Check size={11} strokeWidth={3} />}
+                    {on && (
+                      <span className="font-serif text-white text-[15px] leading-none -translate-y-[1px]">
+                        ✓
+                      </span>
+                    )}
                   </div>
                 )}
                 {editMode ? (
@@ -133,15 +143,20 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
                       const v = e.target.value.trim()
                       if (v && v !== it.item_name) saveItemField(it.id, { item_name: v })
                     }}
-                    className="h-8 w-full rounded border border-border bg-card px-2 text-sm font-medium outline-none focus:border-primary"
+                    className="h-8 w-full rounded border border-border bg-card px-2 font-serif text-[16px] outline-none focus:border-[#D9A489] dark:focus:border-[#C08C70]"
                   />
                 ) : (
                   <span
-                    className={`truncate text-base ${
+                    className={`truncate ${
                       on ? 'text-foreground' : 'text-muted-foreground/60 line-through'
                     }`}
                   >
-                    {it.item_name}
+                    <span className="font-serif text-[16px]">{mainName}</span>
+                    {meta && (
+                      <span className="font-serif italic text-[13px] text-[#6B6A3F] dark:text-[#B8B38A] ml-1">
+                        {meta}
+                      </span>
+                    )}
                   </span>
                 )}
               </div>
@@ -156,7 +171,7 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
                         if (Number.isFinite(v) && v >= 0 && v !== it.cost)
                           saveItemField(it.id, { cost: v })
                       }}
-                      className="h-8 w-28 rounded border border-border bg-card px-2 text-right text-sm font-medium tabular-nums outline-none focus:border-primary"
+                      className="h-8 w-28 rounded border border-border bg-card px-2 text-right font-mono text-[15px] tabular-nums outline-none focus:border-[#D9A489] dark:focus:border-[#C08C70]"
                     />
                     <button
                       type="button"
@@ -172,11 +187,14 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
                   </>
                 ) : (
                   <span
-                    className={`text-base font-medium tabular-nums ${
-                      on ? 'text-foreground' : 'text-muted-foreground/50'
+                    className={`inline-flex items-baseline ${
+                      on ? 'text-foreground' : 'text-muted-foreground/50 line-through'
                     }`}
                   >
-                    ₩{fmt(it.cost)}
+                    <span className="font-serif text-[13px] text-[#6B6A3F] dark:text-[#B8B38A] mr-[3px]">
+                      ₩
+                    </span>
+                    <span className="font-mono text-[15px] tabular-nums">{fmt(it.cost)}</span>
                   </span>
                 )}
               </div>
@@ -187,7 +205,7 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
           <button
             type="button"
             onClick={addItem}
-            className="flex w-full items-center justify-center gap-1.5 border-t border-border/60 bg-muted/30 px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="flex w-full items-center justify-center gap-1.5 border-t border-dotted border-border/70 pt-3 mt-1 font-serif text-[14px] text-muted-foreground transition-colors hover:text-foreground"
           >
             <Plus size={14} />
             항목 추가
@@ -195,29 +213,49 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
         )}
       </div>
 
-      {/* Total */}
-      <div className="mt-4 rounded-md border border-border/60 bg-background px-md py-3">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-muted-foreground">합계</span>
-          <span className="text-xl font-bold tabular-nums">₩{fmt(total)}</span>
+      {/* Total block — solid line above, inside same card */}
+      <div className="mt-md border-t border-border/60 pt-md space-y-3">
+        <div className="flex items-baseline justify-between">
+          <span className="font-serif text-[17px] text-foreground">합계</span>
+          <span className="inline-flex items-baseline text-foreground">
+            <span className="font-serif text-[18px] text-[#6B6A3F] dark:text-[#B8B38A] mr-1">
+              ₩
+            </span>
+            <span className="font-serif text-[22px] font-medium tabular-nums tracking-[0.2px]">
+              {fmt(total)}
+            </span>
+          </span>
         </div>
         {disc > 0 && disc < total && (
-          <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
+          <div className="flex items-baseline justify-between">
             <div className="flex items-center gap-2">
-              <span className="rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground">
+              <span className="rounded-[2px] bg-[#9B4A2D] px-1.5 py-[2px] font-mono text-[10px] font-bold tracking-[1.3px] text-white dark:bg-[#E0917A]">
                 현금 5%
               </span>
-              <span className="text-sm font-medium text-muted-foreground">현금할인가</span>
+              <span className="font-serif text-[16px] text-foreground">현금할인가</span>
             </div>
-            <span className="text-lg font-bold tabular-nums text-foreground">₩{fmt(disc)}</span>
+            <span className="inline-flex items-baseline text-foreground">
+              <span className="font-serif text-[15px] text-[#6B6A3F] dark:text-[#B8B38A] mr-1">
+                ₩
+              </span>
+              <span className="font-serif text-[19px] font-medium tabular-nums tracking-[0.2px]">
+                {fmt(disc)}
+              </span>
+            </span>
           </div>
         )}
       </div>
-      {disc > 0 && disc < total && (
-        <p className="mt-2 text-center text-xs text-muted-foreground">
-          {fmt(total - disc)}원 절약
-        </p>
-      )}
+    </div>
+    {disc > 0 && disc < total && (
+      <p className="mt-2 text-center">
+        <span className="font-mono text-[15px] font-semibold tabular-nums text-[#9B4A2D] dark:text-[#E0917A]">
+          {fmt(total - disc)}
+        </span>
+        <span className="font-serif italic text-[15px] text-[#6B6A3F] dark:text-[#B8B38A] ml-1">
+          원 절약
+        </span>
+      </p>
+    )}
     </div>
   )
 }

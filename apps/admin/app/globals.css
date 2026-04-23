@@ -26,10 +26,11 @@
     /* Primary text: Near Black #141413 */
     --foreground: 60 3% 8%;
 
-    /* Card: Ivory #faf9f5 */
-    --card: 48 33% 97%;
+    /* Card: same as page background (parchment) — home-screen style, no visual card fill */
+    --card: 51 25% 94%;
     --card-foreground: 60 3% 8%;
 
+    /* Popover stays ivory so dropdown/calendar panels still float above the page */
     --popover: 48 33% 97%;
     --popover-foreground: 60 3% 8%;
 
@@ -70,10 +71,11 @@
     --background: 60 3% 8%;
     --foreground: 48 33% 97%;
 
-    /* Dark Surface #30302e */
-    --card: 60 3% 19%;
+    /* Card matches page bg — no visual card fill */
+    --card: 60 3% 8%;
     --card-foreground: 48 33% 97%;
 
+    /* Popover lifts above page */
     --popover: 60 3% 19%;
     --popover-foreground: 48 33% 97%;
 
@@ -120,6 +122,20 @@
   .font-mono {
     font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   }
+}
+
+/* Chrome autofill 오버라이드 — 기본 yellow/blue 하이라이트가 에디토리얼 팔레트와 충돌.
+   배경을 페이지 bg 로 위조하고 텍스트 색은 foreground 유지. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: hsl(var(--foreground));
+  -webkit-box-shadow: 0 0 0 1000px hsl(var(--background)) inset;
+  caret-color: hsl(var(--foreground));
+  transition: background-color 9999s ease-in-out 0s;
 }
 
 @layer utilities {

@@ -4,9 +4,20 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CaseRow } from '@/lib/supabase/types'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from '@/components/cases/cases-context'
+import { cn } from '@/lib/utils'
+import { DateTextField } from '@/components/ui/date-text-field'
 
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
+
+function formatDateDotted(v: string): string {
+  if (!v || v.length < 10) return v
+  return v.replace(/-/g, '\u00B7')
+}
+
+function isUrgentText(v: string): boolean {
+  return /^ASAP$/i.test(v.trim())
+}
 
 export interface TodoColumn {
   key: string
@@ -50,17 +61,24 @@ function getCellValue(row: CaseRow, col: TodoColumn): string {
 
 function StatusBadge({ value, options }: { value: string; options: Array<{ value: string; label: string }> }) {
   const opt = options.find((o) => o.value === value)
-  if (!opt) return <span className="text-muted-foreground">—</span>
+  if (!opt) {
+    return <span className="font-serif italic text-[15px] text-muted-foreground/40">—</span>
+  }
 
-  // Juniper & Pearl 톤 — 저채도 (destination-color.ts 와 같은 팔레트).
-  let colorClass = 'bg-[#D6D5D1] text-[#3E3E3A] dark:bg-[#3A3A37] dark:text-[#CACAC5]' // charcoal — 기본/대기
-  if (value === 'done') colorClass = 'bg-[#DBE4D6] text-[#3F5A35] dark:bg-[#364332] dark:text-[#C4D4B9]' // olive — 완료
-  else if (value === 'in_progress' || value === 'testing') colorClass = 'bg-[#D6E0EA] text-[#3D5268] dark:bg-[#2F3D4D] dark:text-[#C4D1DE]' // blue — 진행 중
-  else if (value === 'na') colorClass = 'bg-[#E5D9C2] text-[#6B5A3A] dark:bg-[#4A412D] dark:text-[#DBCDB0]' // amber — N/A
-  else if (value === 'yes') colorClass = 'bg-[#EDD6D0] text-[#7A4A40] dark:bg-[#4D3631] dark:text-[#E3C4BE]' // red — 왕복
+  // Editorial tone: 배지 제거, 이탤릭 세리프로 표시.
+  // 진행 중 → primary(테라코타, warm). 완료 → sage(차분한 녹색, cool 대비). 그 외 → muted.
+  const isActive = value === 'in_progress' || value === 'testing'
+  const isDone = value === 'done'
+  const cls = isActive
+    ? 'font-serif italic text-[16px] text-primary'
+    : isDone
+    ? 'font-serif italic text-[16px] text-[#2E5A3E] dark:text-[#B5D4BE]'
+    : 'font-serif italic text-[16px] text-muted-foreground'
 
   return (
-    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${colorClass}`}>
+    <span className={cls}>
+      {isActive && <span className="not-italic mr-1">↻</span>}
+      {isDone && <span className="not-italic mr-1">✓</span>}
       {opt.label}
     </span>
   )
@@ -109,39 +127,42 @@ function EditableCell({
   // Display mode
   if (!editing) {
     const extraCls = col.cellClass?.(row) ?? ''
+    const urgent = !isDate && isUrgentText(value)
+    const displayCls = isDate
+      ? 'font-mono text-[12px] tabular-nums tracking-[0.3px] text-foreground'
+      : urgent
+      ? 'font-mono text-[12px] uppercase tracking-[1.3px] text-primary'
+      : 'font-serif text-[15px] font-medium text-foreground'
+    const displayVal = isDate ? formatDateDotted(value) : value
     return (
       <div
-        className={`w-full px-1 py-1 text-base cursor-text whitespace-pre-wrap min-h-[24px] ${extraCls}`}
+        className={cn(
+          'w-full px-1 py-1 cursor-text whitespace-pre-wrap min-h-[24px]',
+          displayCls,
+          extraCls,
+        )}
         onClick={() => {
           setDraft(value)
           setEditing(true)
         }}
       >
-        {value || <span className="text-muted-foreground/50">—</span>}
+        {value ? displayVal : <span className="font-serif italic font-normal text-[15px] text-muted-foreground/40">—</span>}
       </div>
     )
   }
 
-  // Date: uncontrolled (검사 패턴 통일). defaultValue + ref + Ctrl+Z 보존.
+  // Date: editorial calendar (DateTextField) — popover + text input in one.
   if (isDate) {
-    const commit = () => save(inputRef.current?.value ?? '')
     return (
-      <input
-        ref={inputRef}
-        type="date"
-        min="1900-01-01"
-        max="2100-12-31"
-        defaultValue={value}
+      <DateTextField
         autoFocus
-        onChange={(e) => {
-          // 달력 picker "삭제" 버튼으로 ''가 되면 즉시 저장.
-          if (e.target.value === '') commit()
-        }}
-        onBlur={commit}
+        value={value}
+        onChange={(v) => save(v)}
+        onBlur={() => setEditing(false)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') commit()
-          if (e.key === 'Escape') setEditing(false)
+          if (e.key === 'Escape') { e.preventDefault(); setEditing(false) }
         }}
+        size="sm"
         className="w-full bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
       />
     )
@@ -169,9 +190,16 @@ function EditableCell({
 
 function ReadonlyCell({ row, col }: { row: CaseRow; col: TodoColumn }) {
   const value = getCellValue(row, col)
+  // 홈 화면과 동일한 typography — 보호자는 Sans 16px, 반려동물은 Serif Semibold 17px.
+  const cls =
+    col.key === 'pet_name'
+      ? 'font-serif font-semibold text-[17px] leading-tight text-foreground'
+      : col.key === 'customer_name'
+        ? 'font-sans font-normal text-[14px] leading-tight text-foreground/85'
+        : 'font-serif text-[15px] font-medium text-foreground'
   return (
-    <div className="w-full px-1 py-1 text-base truncate min-h-[24px]">
-      {value || <span className="text-muted-foreground/50">—</span>}
+    <div className={cn('w-full px-1 py-1 truncate min-h-[24px]', cls)}>
+      {value || <span className="italic font-normal text-muted-foreground/40">—</span>}
     </div>
   )
 }
@@ -186,25 +214,78 @@ function SelectCell({
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
 }) {
   const value = getCellValue(row, col)
-  const opt = col.options?.find((o) => o.value === value)
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [open])
+
+  async function pick(v: string) {
+    setOpen(false)
+    if (v === value) return
+    onUpdate(row.id, col.storage, col.key, v || null)
+    await updateCaseField(row.id, col.storage, col.key, v || null)
+  }
 
   return (
-    <div className="relative">
-      <StatusBadge value={value} options={col.options!} />
-      <select
-        value={value}
-        onChange={async (e) => {
-          const newVal = e.target.value
-          onUpdate(row.id, col.storage, col.key, newVal || null)
-          await updateCaseField(row.id, col.storage, col.key, newVal || null)
-        }}
-        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="cursor-pointer rounded-md -mx-1 px-1 text-left min-h-[24px] flex items-center hover:bg-accent/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
       >
-        <option value="">—</option>
-        {col.options!.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
+        <StatusBadge value={value} options={col.options!} />
+      </button>
+      {open && (
+        <ul className="absolute left-0 top-full mt-1 z-30 min-w-[120px] rounded-md border border-border/60 bg-background py-1 shadow-md">
+          <li>
+            <button
+              type="button"
+              onClick={() => pick('')}
+              className={cn(
+                'w-full text-left px-sm py-1.5 hover:bg-accent/60 transition-colors flex items-center',
+                value === '' && 'bg-accent/40',
+              )}
+            >
+              <span className="font-serif italic text-[15px] text-muted-foreground/40">—</span>
+            </button>
+          </li>
+          {col.options!.map((o) => {
+            const isCurrent = value === o.value
+            const optActive = o.value === 'in_progress' || o.value === 'testing'
+            const optDone = o.value === 'done'
+            const optCls = optActive
+              ? 'font-serif italic text-[15px] text-primary'
+              : optDone
+                ? 'font-serif italic text-[15px] text-[#2E5A3E] dark:text-[#B5D4BE]'
+                : 'font-serif italic text-[15px] text-muted-foreground'
+            return (
+              <li key={o.value}>
+                <button
+                  type="button"
+                  onClick={() => pick(o.value)}
+                  className={cn(
+                    'w-full text-left px-sm py-1.5 hover:bg-accent/60 transition-colors flex items-center',
+                    isCurrent && 'bg-accent/40',
+                  )}
+                >
+                  <span className={optCls}>
+                    {optActive && <span className="not-italic mr-1">↻</span>}
+                    {optDone && <span className="not-italic mr-1">✓</span>}
+                    {o.label}
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </div>
   )
 }
@@ -246,13 +327,13 @@ export function TodoTable({
   const { openCase } = useCases()
 
   return (
-    <table className="w-full border-collapse text-base">
+    <table className="w-full border-collapse">
       <thead>
         <tr className="border-b border-border/60">
           {columns.map((col) => (
             <th
               key={col.key}
-              className="text-left text-base font-medium text-primary px-2 py-2.5 whitespace-nowrap"
+              className="text-left font-sans font-normal text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80 px-2 py-2.5 whitespace-nowrap"
               style={{ width: col.width, minWidth: col.width }}
             >
               {col.label}
@@ -264,7 +345,7 @@ export function TodoTable({
         {visibleCases.map((row) => (
           <tr
             key={row.id}
-            className="border-b border-border/60 hover:bg-accent/30 transition-colors cursor-pointer"
+            className="border-b border-dashed border-border/50 hover:bg-accent/60 transition-colors cursor-pointer"
             onClick={() => openCase(row.id)}
           >
             {columns.map((col) => {
@@ -275,12 +356,12 @@ export function TodoTable({
               return (
                 <td
                   key={col.key}
-                  className="px-2 py-2"
+                  className="px-2 py-4"
                   style={{ width: col.width, minWidth: col.width }}
                   {...tdProps}
                 >
                   {col.condition && !col.condition(row) ? (
-                    <span className="text-muted-foreground/30 text-base px-1">—</span>
+                    <span className="font-serif italic text-[15px] text-muted-foreground/30 px-1">—</span>
                   ) : col.type === 'custom' && col.render ? (
                     col.render(row, onUpdate)
                   ) : col.readonly ? (
@@ -297,14 +378,17 @@ export function TodoTable({
         ))}
         {visible < cases.length && (
           <tr ref={sentinelRef}>
-            <td colSpan={columns.length} className="text-center text-muted-foreground/50 py-2 text-[13px]">
-              {visible} / {cases.length}건
+            <td colSpan={columns.length} className="text-center font-mono text-[11px] tracking-[0.3px] text-muted-foreground/50 py-2">
+              <span className="tabular-nums">{visible}</span>
+              <span className="mx-1">/</span>
+              <span className="tabular-nums">{cases.length}</span>
+              <span className="font-serif italic ml-1">건</span>
             </td>
           </tr>
         )}
         {cases.length === 0 && (
           <tr>
-            <td colSpan={columns.length} className="text-center text-muted-foreground py-2xl">
+            <td colSpan={columns.length} className="text-center font-serif italic text-[15px] text-muted-foreground py-2xl">
               데이터가 없습니다
             </td>
           </tr>

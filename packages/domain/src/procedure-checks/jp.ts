@@ -283,9 +283,14 @@ export const JP_CHECKS: ProcedureCheck[] = [
       }
       const offending: string[] = ['departure_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
+      const message = !best
+        ? '항체검사일과 출국일을 확인할 수 없습니다.'
+        : best.days < 0
+          ? `항체검사일(${best.entry.date})이 출국일(${dep})보다 이후입니다. 채혈은 출국 전에 완료되어야 합니다.`
+          : `항체검사일로부터 출국일까지 ${best.days}일 — 180일 이상 필요합니다.`
       return {
         ok: false,
-        message: `항체검사일로부터 출국까지 최대 ${best?.days ?? '?'}일 — 180일 이상 필요.`,
+        message,
         fixHint: '출국일을 채혈일 + 180일 이후로 조정하거나 더 이른 항체검사가 필요합니다.',
         offendingPaths: offending,
       }
