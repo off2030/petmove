@@ -179,7 +179,7 @@ export function SuperAdminApp({ initialOrgs, userEmail }: Props) {
                     </button>
                   </div>
                   <p className="mt-sm text-[12px] font-serif italic text-muted-foreground">
-                    super_admin 은 별도 가입 없이도 모든 조직 접근 가능
+                    펫무브워크 운영자 계정은 조직 가입 없이 전체 조직을 관리합니다
                   </p>
                 </div>
               </section>
