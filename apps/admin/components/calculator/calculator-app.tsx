@@ -109,21 +109,6 @@ export function CalculatorApp() {
           <div className="pb-2 md:pb-0 md:mb-1 flex items-center gap-2 flex-wrap">
             {mode === 'cost' && (
               <>
-                {canEdit && (
-                  <button
-                    type="button"
-                    onClick={() => setEditMode((v) => !v)}
-                    className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3.5 text-sm transition-colors ${
-                      editMode
-                        ? 'border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489]'
-                        : 'border-border/60 bg-transparent text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <Pencil size={13} />
-                    {editMode ? '수정 완료' : '가격 수정'}
-                  </button>
-                )}
-
                 {/* Species segment */}
                 <div className="inline-flex rounded-full border border-border/60 bg-transparent p-0.5">
                   {([
@@ -230,6 +215,21 @@ export function CalculatorApp() {
                     </div>
                   )}
                 </div>
+
+                {canEdit && (
+                  <button
+                    type="button"
+                    onClick={() => setEditMode((v) => !v)}
+                    className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3.5 text-sm transition-colors ${
+                      editMode
+                        ? 'border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489]'
+                        : 'border-border/60 bg-transparent text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Pencil size={13} />
+                    {editMode ? '수정 완료' : '가격 수정'}
+                  </button>
+                )}
               </>
             )}
 
