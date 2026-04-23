@@ -19,7 +19,7 @@ const cashDiscount = (total: number) => Math.round((total * 0.95) / 10000) * 100
 
 interface Props {
   items: CalculatorItem[]
-  setItems: React.Dispatch<React.SetStateAction<CalculatorItem[] | null>>
+  setItems: React.Dispatch<React.SetStateAction<CalculatorItem[]>>
   species: 'dog' | 'cat'
   country: string
   editMode: boolean
@@ -56,18 +56,18 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
   async function saveItemField(id: number, patch: { item_name?: string; cost?: number }) {
     const prev = items.find((i) => i.id === id)
     if (!prev) return
-    setItems((arr) => (arr ? arr.map((i) => (i.id === id ? { ...i, ...patch } : i)) : arr))
+    setItems((arr) => arr.map((i) => (i.id === id ? { ...i, ...patch } : i)))
     const res = await updateCalculatorItem(id, patch)
     if (!res.ok) {
       alert(`저장 실패: ${res.error}`)
-      setItems((arr) => (arr ? arr.map((i) => (i.id === id ? prev : i)) : arr))
+      setItems((arr) => arr.map((i) => (i.id === id ? prev : i)))
     }
   }
 
   async function removeItem(id: number) {
     if (!confirm('이 항목을 삭제할까요?')) return
     const prev = items
-    setItems((arr) => (arr ? arr.filter((i) => i.id !== id) : arr))
+    setItems((arr) => arr.filter((i) => i.id !== id))
     const res = await deleteCalculatorItem(id)
     if (!res.ok) {
       alert(`삭제 실패: ${res.error}`)

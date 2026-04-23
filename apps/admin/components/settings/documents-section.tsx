@@ -147,12 +147,12 @@ export function DocumentsSection() {
   }
 
   return (
-    <div className="space-y-4 max-w-3xl">
+    <div className="space-y-lg max-w-3xl">
       {/* 디폴트 증명서 */}
-      <div className="border border-border/60 rounded-lg p-md space-y-3">
+      <div className="space-y-3">
         <div>
-          <h4 className="font-medium text-base">기본 증명서</h4>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h3 className="font-serif text-[17px] text-foreground pb-2 border-b border-border/60">기본 증명서</h3>
+          <p className="text-sm text-muted-foreground mt-sm">
             모든 국가의 상세페이지에 표시됩니다. 국가별 규칙은 이 목록에 추가로 붙습니다.
           </p>
         </div>
@@ -165,10 +165,10 @@ export function DocumentsSection() {
       </div>
 
       {/* 국가별 규칙 */}
-      <div className="border border-border/60 rounded-lg p-md space-y-4">
+      <div className="space-y-4">
         <div>
-          <h4 className="font-medium text-base">국가별 추가 증명서</h4>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h3 className="font-serif text-[17px] text-foreground pb-2 border-b border-border/60">국가별 추가 증명서</h3>
+          <p className="text-sm text-muted-foreground mt-sm">
             해당 국가(또는 국가 그룹)가 목적지인 경우 기본 증명서에 더해 표시됩니다.
           </p>
         </div>

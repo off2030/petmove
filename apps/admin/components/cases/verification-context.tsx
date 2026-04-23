@@ -1,10 +1,11 @@
 'use client'
 
-import { createContext, useContext, useMemo, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { CaseRow } from '@/lib/supabase/types'
 import { DESTINATION_OVERRIDES, matchesDestinationKey } from '@petmove/domain'
 import { getChecksForCountry } from '@petmove/domain'
 import type { CheckResult, CheckSeverity, ProcedureCheck } from '@petmove/domain'
+import { getDisabledCheckIds } from '@/lib/verification-disabled'
 
 export interface CheckEntry {
   check: ProcedureCheck
@@ -48,6 +49,17 @@ export function VerificationProvider({
   destination?: string | null
   children: ReactNode
 }) {
+  // 설정 탭에서 사용자가 끈 규칙 id. localStorage 라 mount 이후에만 채워짐.
+  const [disabledIds, setDisabledIdsState] = useState<Set<string>>(() => new Set())
+  useEffect(() => {
+    setDisabledIdsState(getDisabledCheckIds())
+    function onStorage(e: StorageEvent) {
+      if (e.key === 'verification-disabled-checks') setDisabledIdsState(getDisabledCheckIds())
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
   const value = useMemo<VerificationValue>(() => {
     const country = detectCountryKey(destination ?? caseRow.destination)
     const checks = country ? getChecksForCountry(country) : getChecksForCountry('all')
@@ -57,6 +69,7 @@ export function VerificationProvider({
 
     for (const check of checks) {
       if (!check.run) continue
+      if (disabledIds.has(check.id)) continue
       let result: CheckResult
       try {
         result = check.run({ caseRow })
@@ -83,7 +96,7 @@ export function VerificationProvider({
       getForPath: (p) => pathMap.get(p) ?? null,
       results,
     }
-  }, [caseRow, destination])
+  }, [caseRow, destination, disabledIds])
 
   return <VerificationCtx.Provider value={value}>{children}</VerificationCtx.Provider>
 }

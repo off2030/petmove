@@ -64,11 +64,11 @@ export function SuperAdminApp({ initialOrgs, userEmail }: Props) {
       <TopBar isSuperAdmin userEmail={userEmail} superAdminActive />
       <main className="flex-1 min-w-0 overflow-auto scrollbar-minimal bg-background">
         <div className="px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
-          <div className="mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl flex flex-col gap-lg">
+          <div className="mx-auto max-w-4xl 3xl:max-w-5xl 4xl:max-w-6xl flex flex-col gap-lg">
             {/* Page header — editorial title + count + refresh */}
             <div className="shrink-0 flex items-baseline justify-between gap-md">
               <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
-                조직 명부
+                조직 관리
               </h1>
               <div className="flex items-center gap-sm">
                 <button
@@ -101,7 +101,7 @@ export function SuperAdminApp({ initialOrgs, userEmail }: Props) {
                 {/* Orgs card — Editorial borderless */}
                 <div className="rounded-xl bg-card px-lg pt-md pb-sm">
                   <div className="flex items-baseline justify-between pb-sm border-b border-border/60 mb-sm">
-                    <h2 className="font-serif text-[17px] text-foreground">조직 목록</h2>
+                    <h2 className="font-serif text-[17px] text-foreground">목록</h2>
                     <span className="font-mono text-[12px] tabular-nums text-muted-foreground">
                       {orgs.length}
                     </span>

@@ -2,9 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, Pencil, Search } from 'lucide-react'
-import { supabaseBrowser } from '@/lib/supabase/browser'
-import type { CalculatorItem } from '@/lib/supabase/types'
-import { fetchCalculatorItems } from '@/lib/calculator-cache'
+import { useCalculatorData } from '@/components/providers/calculator-data-provider'
 import { Calculator } from './calculator'
 import { ScheduleCalculator, type ScheduleCountry } from './schedule-calculator'
 
@@ -22,9 +20,8 @@ const SCHEDULE_COUNTRIES: Array<{ value: ScheduleCountry; label: string }> = [
 ]
 
 export function CalculatorApp() {
+  const { items, setItems } = useCalculatorData()
   const [mode, setMode] = useState<Mode>('cost')
-  const [items, setItems] = useState<CalculatorItem[] | null>(null)
-  const [canEdit, setCanEdit] = useState(false)
 
   // Cost mode toolbar state (lifted)
   const [species, setSpecies] = useState<'dog' | 'cat'>('dog')
@@ -36,22 +33,6 @@ export function CalculatorApp() {
 
   // Schedule mode toolbar state
   const [scheduleCountry, setScheduleCountry] = useState<ScheduleCountry>('japan')
-
-  useEffect(() => {
-    let alive = true
-    ;(async () => {
-      const [rows, { data: userData }] = await Promise.all([
-        fetchCalculatorItems(),
-        supabaseBrowser.auth.getUser(),
-      ])
-      if (!alive) return
-      setItems(rows)
-      setCanEdit(!!userData?.user)
-    })()
-    return () => {
-      alive = false
-    }
-  }, [])
 
   useEffect(() => {
     if (!dropOpen) return
@@ -66,7 +47,6 @@ export function CalculatorApp() {
   }, [dropOpen])
 
   const countries = useMemo(() => {
-    if (!items) return []
     const seen = new Map<string, number>()
     for (const it of items) {
       if (it.country.includes('(고양이)')) continue
@@ -82,7 +62,7 @@ export function CalculatorApp() {
       <div className="mx-auto max-w-2xl flex flex-col gap-lg">
         {/* Page header — editorial title */}
         <div className="shrink-0 px-lg">
-          <h1 className="font-serif text-[32px] leading-tight tracking-tight text-foreground">
+          <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
             도구
           </h1>
         </div>
@@ -216,20 +196,18 @@ export function CalculatorApp() {
                   )}
                 </div>
 
-                {canEdit && (
-                  <button
-                    type="button"
-                    onClick={() => setEditMode((v) => !v)}
-                    className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3.5 text-sm transition-colors ${
-                      editMode
-                        ? 'border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489]'
-                        : 'border-border/60 bg-transparent text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <Pencil size={13} />
-                    {editMode ? '수정 완료' : '가격 수정'}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setEditMode((v) => !v)}
+                  className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3.5 text-sm transition-colors ${
+                    editMode
+                      ? 'border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489]'
+                      : 'border-border/60 bg-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Pencil size={13} />
+                  {editMode ? '수정 완료' : '가격 수정'}
+                </button>
               </>
             )}
 
@@ -259,17 +237,13 @@ export function CalculatorApp() {
 
         {/* Body */}
         {mode === 'cost' ? (
-          items === null ? (
-            <div className="text-sm text-muted-foreground">불러오는 중...</div>
-          ) : (
-            <Calculator
-              items={items}
-              setItems={setItems}
-              species={species}
-              country={country}
-              editMode={editMode}
-            />
-          )
+          <Calculator
+            items={items}
+            setItems={setItems}
+            species={species}
+            country={country}
+            editMode={editMode}
+          />
         ) : (
           <ScheduleCalculator country={scheduleCountry} />
         )}

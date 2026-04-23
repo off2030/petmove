@@ -1,144 +1,797 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { Image as ImageIcon, Pencil, Plus, Trash2, X } from 'lucide-react'
 import {
-  getAllProducts,
-  getLatestProducts,
+  PARASITE_FAMILIES,
+  daysUntilExpiry,
+  getExpiryStatus,
   type ExpiryStatus,
-  type FlatProduct,
-  type ProductSection,
-  type ProductSpecies,
 } from '@petmove/domain'
+import {
+  createOrgVaccineProduct,
+  deleteOrgVaccineProduct,
+  listOrgVaccineProducts,
+  updateOrgVaccineProduct,
+  type OrgVaccineProduct,
+  type OrgVaccineProductInput,
+} from '@/lib/actions/org-vaccine-products'
+import { extractVaccineInfo } from '@/lib/actions/extract-vaccine'
+import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 
-const STATUS_STYLES: Record<ExpiryStatus, { label: string; bg: string; text: string; dot: string }> = {
-  expired: { label: '만료됨',       bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500' },
-  urgent:  { label: '30일 이내',    bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500' },
-  warning: { label: '90일 이내',    bg: 'bg-yellow-50', text: 'text-yellow-700', dot: 'bg-yellow-500' },
-  ok:      { label: '정상',         bg: '',             text: 'text-muted-foreground', dot: 'bg-gray-300' },
-  unknown: { label: '정보 없음',    bg: '',             text: 'text-muted-foreground/50', dot: 'bg-gray-200' },
+type ProductSection = '접종' | '구충'
+type ProductSpecies = 'common' | 'dog' | 'cat'
+
+interface CategoryMeta {
+  label: string
+  section: ProductSection
+  species: ProductSpecies
+  kind: 'vaccine' | 'parasite'
+}
+
+const CATEGORY_META: Record<string, CategoryMeta> = {
+  rabies:                { label: '광견병',                  section: '접종', species: 'common', kind: 'vaccine' },
+  comprehensive_dog:     { label: '종합백신 (강아지)',       section: '접종', species: 'dog',    kind: 'vaccine' },
+  comprehensive_cat:     { label: '종합백신 (고양이)',       section: '접종', species: 'cat',    kind: 'vaccine' },
+  civ:                   { label: 'CIV 독감',                section: '접종', species: 'dog',    kind: 'vaccine' },
+  kennel_cough:          { label: '켄넬코프 (강아지)',       section: '접종', species: 'dog',    kind: 'vaccine' },
+  parasite_internal_dog: { label: '내부 구충 (강아지)',      section: '구충', species: 'dog',    kind: 'parasite' },
+  parasite_internal_cat: { label: '내부 구충 (고양이)',      section: '구충', species: 'cat',    kind: 'parasite' },
+  parasite_external_dog: { label: '외부 구충 (강아지)',      section: '구충', species: 'dog',    kind: 'parasite' },
+  parasite_external_cat: { label: '외부 구충 (고양이)',      section: '구충', species: 'cat',    kind: 'parasite' },
+  parasite_combo_dog:    { label: '내외부 구충 합제 (강아지)', section: '구충', species: 'dog',  kind: 'parasite' },
+  parasite_combo_cat:    { label: '내외부 구충 합제 (고양이)', section: '구충', species: 'cat',  kind: 'parasite' },
+  heartworm_dog:         { label: '심장사상충 (강아지)',     section: '구충', species: 'dog',    kind: 'parasite' },
+}
+
+const CATEGORY_ORDER: string[] = [
+  'rabies',
+  'comprehensive_dog',
+  'comprehensive_cat',
+  'civ',
+  'kennel_cough',
+  'parasite_internal_dog',
+  'parasite_internal_cat',
+  'parasite_external_dog',
+  'parasite_external_cat',
+  'parasite_combo_dog',
+  'parasite_combo_cat',
+  'heartworm_dog',
+]
+
+const SECTION_ORDER: ProductSection[] = ['접종', '구충']
+
+const STATUS_STYLES: Record<ExpiryStatus, { label: string; text: string; dot: string }> = {
+  expired: { label: '만료',    text: 'text-red-700',                dot: 'bg-red-500' },
+  urgent:  { label: 'D-',      text: 'text-orange-700',             dot: 'bg-orange-500' },
+  warning: { label: 'D-',      text: 'text-yellow-700',             dot: 'bg-yellow-500' },
+  ok:      { label: '정상',    text: 'text-muted-foreground',       dot: 'bg-gray-400' },
+  unknown: { label: '—',       text: 'text-muted-foreground/50',    dot: 'bg-gray-300' },
 }
 
 function StatusBadge({ status, daysLeft }: { status: ExpiryStatus; daysLeft: number | null }) {
   const s = STATUS_STYLES[status]
-  let extra = ''
-  if (status === 'expired' && daysLeft !== null) extra = ` (${Math.abs(daysLeft)}일 경과)`
-  else if ((status === 'urgent' || status === 'warning') && daysLeft !== null) extra = ` (D-${daysLeft})`
+  let text = s.label
+  if (status === 'expired' && daysLeft !== null) text = `-${Math.abs(daysLeft)}일`
+  else if ((status === 'urgent' || status === 'warning') && daysLeft !== null) text = `D-${daysLeft}`
   return (
-    <span className={`inline-flex items-center gap-xs.5 px-2 py-0.5 rounded text-xs font-medium ${s.bg} ${s.text}`}>
+    <span className={`inline-flex items-center gap-1.5 font-serif text-[13px] ${s.text}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-      {s.label}{extra}
+      {text}
     </span>
   )
 }
 
-export function VaccineSection() {
-  const products = useMemo(() => getAllProducts(), [])
+interface FormState {
+  category: string
+  vaccine: string
+  product: string
+  manufacturer: string
+  batch: string
+  expiry: string
+  year: string
+  weight_min: string
+  weight_max: string
+  size: string
+  parasite_id: string
+}
 
-  // 섹션(접종/구충) → 카테고리(공통→강아지→고양이) → 제품(만료 심각도) 순으로 그룹핑
-  const sections = useMemo(() => {
-    const statusOrder: ExpiryStatus[] = ['expired', 'urgent', 'warning', 'ok', 'unknown']
-    const speciesOrder: ProductSpecies[] = ['common', 'dog', 'cat']
-    const sectionOrder: ProductSection[] = ['접종', '구충']
+function blankForm(category = 'rabies'): FormState {
+  return {
+    category,
+    vaccine: '',
+    product: '',
+    manufacturer: '',
+    batch: '',
+    expiry: '',
+    year: '',
+    weight_min: '',
+    weight_max: '',
+    size: '',
+    parasite_id: '',
+  }
+}
 
-    // 섹션 → 카테고리 라벨 → 제품들
-    const bySection = new Map<ProductSection, Map<string, FlatProduct[]>>()
-    for (const p of products) {
-      if (!bySection.has(p.section)) bySection.set(p.section, new Map())
-      const cats = bySection.get(p.section)!
-      if (!cats.has(p.categoryLabel)) cats.set(p.categoryLabel, [])
-      cats.get(p.categoryLabel)!.push(p)
+function toFormState(p: OrgVaccineProduct): FormState {
+  return {
+    category: p.category,
+    vaccine: p.vaccine ?? '',
+    product: p.product ?? '',
+    manufacturer: p.manufacturer,
+    batch: p.batch ?? '',
+    expiry: p.expiry ?? '',
+    year: p.year != null ? String(p.year) : '',
+    weight_min: p.weight_min != null ? String(p.weight_min) : '',
+    weight_max: p.weight_max != null ? String(p.weight_max) : '',
+    size: p.size ?? '',
+    parasite_id: p.parasite_id ?? '',
+  }
+}
+
+function toInput(form: FormState): OrgVaccineProductInput {
+  const num = (s: string) => (s.trim() === '' ? null : Number(s))
+  const txt = (s: string) => (s.trim() === '' ? null : s.trim())
+  return {
+    category: form.category,
+    vaccine: txt(form.vaccine),
+    product: txt(form.product),
+    manufacturer: form.manufacturer.trim(),
+    batch: txt(form.batch),
+    expiry: txt(form.expiry),
+    year: num(form.year),
+    weight_min: num(form.weight_min),
+    weight_max: num(form.weight_max),
+    size: txt(form.size),
+    parasite_id: txt(form.parasite_id),
+  }
+}
+
+export function VaccineSection({
+  initialProducts = null,
+  isAdmin = false,
+}: {
+  initialProducts?: OrgVaccineProduct[] | null
+  isAdmin?: boolean
+} = {}) {
+  const [products, setProducts] = useState<OrgVaccineProduct[]>(initialProducts ?? [])
+  const [loading, setLoading] = useState(initialProducts === null)
+  const [error, setError] = useState<string | null>(null)
+  const [editing, setEditing] = useState<
+    | { mode: 'create'; initial: FormState }
+    | { mode: 'edit'; id: string; initial: FormState }
+    | null
+  >(null)
+  const [pending, startTransition] = useTransition()
+
+  // 이미지 추출 상태
+  const [extractingCategory, setExtractingCategory] = useState<string | null>(null)
+  const [extractMsg, setExtractMsg] = useState<{ kind: 'info' | 'error' | 'success'; text: string } | null>(null)
+  const [dragCategory, setDragCategory] = useState<string | null>(null)
+  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({})
+  const hoveredCategoryRef = useRef<string | null>(null)
+
+  async function refresh() {
+    setLoading(true)
+    const r = await listOrgVaccineProducts()
+    if (r.ok) {
+      setProducts(r.value)
+      setError(null)
+    } else {
+      setError(r.error)
     }
+    setLoading(false)
+  }
 
-    return sectionOrder
-      .filter((s) => bySection.has(s))
-      .map((sectionName) => {
-        const cats = bySection.get(sectionName)!
-        // 카테고리 정렬: 공통 → 강아지 → 고양이, 그 안에서는 라벨 알파/가나다 순
-        const catEntries = Array.from(cats.entries())
-        catEntries.sort(([, a], [, b]) => {
-          const sa = speciesOrder.indexOf(a[0].species)
-          const sb = speciesOrder.indexOf(b[0].species)
-          if (sa !== sb) return sa - sb
-          return a[0].categoryLabel.localeCompare(b[0].categoryLabel, 'ko')
-        })
-        // 각 카테고리 내 제품 정렬
-        for (const [, list] of catEntries) {
-          list.sort((a, b) => {
-            const sa = statusOrder.indexOf(a.status)
-            const sb = statusOrder.indexOf(b.status)
-            if (sa !== sb) return sa - sb
-            return (a.expiry ?? '9999') < (b.expiry ?? '9999') ? -1 : 1
-          })
+  // bootstrap 이 나중에 도착했을 때 반영.
+  useEffect(() => {
+    if (initialProducts) {
+      setProducts(initialProducts)
+      setLoading(false)
+    }
+  }, [initialProducts])
+
+  // prop 도 bootstrap 도 없으면 fallback fetch.
+  useEffect(() => {
+    if (initialProducts !== null) return
+    refresh()
+  }, [])
+
+  async function handleImageFiles(category: string, files: File[]) {
+    const extractable = files.filter(isExtractableFile)
+    if (extractable.length === 0) {
+      setExtractMsg({ kind: 'error', text: '이미지 또는 PDF 파일만 지원됩니다.' })
+      return
+    }
+    setExtractingCategory(category)
+    setExtractMsg({ kind: 'info', text: `${CATEGORY_META[category]?.label ?? category} · 이미지에서 제품 정보를 읽는 중…` })
+    try {
+      const images = await filesToBase64(extractable)
+      const meta = CATEGORY_META[category]
+      const kind = meta?.kind ?? 'vaccine'
+      let created = 0
+      const errors: string[] = []
+      for (const img of images) {
+        const r = await extractVaccineInfo({ imageBase64: img.base64, mediaType: img.mediaType })
+        if (!r.ok) {
+          errors.push(r.error)
+          continue
         }
-        return { section: sectionName, categories: catEntries }
+        for (const rec of r.records) {
+          const input: OrgVaccineProductInput = {
+            category,
+            vaccine: kind === 'vaccine' ? (rec.product ?? null) : null,
+            product: kind === 'parasite' ? (rec.product ?? null) : null,
+            manufacturer: (rec.manufacturer ?? '').trim() || '(미상)',
+            batch: rec.lot ?? null,
+            expiry: rec.expiry ?? null,
+            year: null,
+            weight_min: null,
+            weight_max: null,
+            size: null,
+            parasite_id: null,
+          }
+          const c = await createOrgVaccineProduct(input)
+          if (c.ok) created++
+          else errors.push(c.error)
+        }
+      }
+      await refresh()
+      if (created > 0) {
+        setExtractMsg({
+          kind: 'success',
+          text: `${created}개 제품 추가됨${errors.length > 0 ? ` (오류 ${errors.length}건: ${errors[0]})` : ''}`,
+        })
+      } else {
+        setExtractMsg({ kind: 'error', text: errors[0] ?? '추출된 정보가 없습니다.' })
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '알 수 없는 오류'
+      setExtractMsg({ kind: 'error', text: `추출 실패: ${msg}` })
+    } finally {
+      setExtractingCategory(null)
+    }
+  }
+
+  // 문서 전체 paste 이벤트 — 마우스가 올라가 있는 카테고리 카드로 라우팅
+  useEffect(() => {
+    function onPaste(e: ClipboardEvent) {
+      const cat = hoveredCategoryRef.current
+      if (!cat) return
+      const items = e.clipboardData?.items
+      if (!items) return
+      const files: File[] = []
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i]
+        if (it.kind === 'file') {
+          const f = it.getAsFile()
+          if (f) files.push(f)
+        }
+      }
+      if (files.length === 0) return
+      e.preventDefault()
+      handleImageFiles(cat, files)
+    }
+    document.addEventListener('paste', onPaste)
+    return () => document.removeEventListener('paste', onPaste)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const grouped = useMemo(() => {
+    const statusOrder: ExpiryStatus[] = ['expired', 'urgent', 'warning', 'ok', 'unknown']
+    const byCat = new Map<string, OrgVaccineProduct[]>()
+    for (const p of products) {
+      if (!byCat.has(p.category)) byCat.set(p.category, [])
+      byCat.get(p.category)!.push(p)
+    }
+    // Sort products inside each category by status then expiry
+    for (const list of byCat.values()) {
+      list.sort((a, b) => {
+        const sa = statusOrder.indexOf(getExpiryStatus(a.expiry))
+        const sb = statusOrder.indexOf(getExpiryStatus(b.expiry))
+        if (sa !== sb) return sa - sb
+        return (a.expiry ?? '9999') < (b.expiry ?? '9999') ? -1 : 1
       })
+    }
+    // Group by section with ordered categories
+    return SECTION_ORDER.map((section) => {
+      const cats = CATEGORY_ORDER
+        .filter((cat) => CATEGORY_META[cat]?.section === section)
+        .map((cat) => ({
+          category: cat,
+          meta: CATEGORY_META[cat],
+          list: byCat.get(cat) ?? [],
+        }))
+      return { section, categories: cats }
+    })
   }, [products])
 
-  // 상단 요약 카운트는 "최근 제품 기준"으로만 계산.
-  // 연도별 과거 rabies batch, legacy Frontline Plus 등은 제외되고 제품 family+체중 variant 당 최신 1개만.
-  const latestProducts = useMemo(() => getLatestProducts(), [])
+  // 카테고리(구충은 size 까지)별 "최신 만료일 제품" 만 집계 — 최신이 유효하면 과거 만료 제품은 무시.
   const counts = useMemo(() => {
+    const latestByKey = new Map<string, OrgVaccineProduct>()
+    for (const p of products) {
+      const isParasite = CATEGORY_META[p.category]?.kind === 'parasite'
+      const key = isParasite ? `${p.category}|${p.size ?? ''}` : p.category
+      const cur = latestByKey.get(key)
+      if (!cur || (p.expiry ?? '') > (cur.expiry ?? '')) latestByKey.set(key, p)
+    }
     const c = { expired: 0, urgent: 0, warning: 0, ok: 0, unknown: 0 }
-    for (const p of latestProducts) c[p.status]++
+    for (const p of latestByKey.values()) c[getExpiryStatus(p.expiry)]++
     return c
-  }, [latestProducts])
+  }, [products])
+
+  function onSave(form: FormState) {
+    if (!form.manufacturer.trim()) {
+      setError('제조사는 필수입니다.')
+      return
+    }
+    const input = toInput(form)
+    startTransition(async () => {
+      const r = editing?.mode === 'edit'
+        ? await updateOrgVaccineProduct(editing.id, input)
+        : await createOrgVaccineProduct(input)
+      if (!r.ok) {
+        setError(r.error)
+        return
+      }
+      setError(null)
+      setEditing(null)
+      await refresh()
+    })
+  }
+
+  function onDelete(id: string) {
+    if (!confirm('이 제품을 삭제하시겠습니까?')) return
+    startTransition(async () => {
+      const r = await deleteOrgVaccineProduct(id)
+      if (!r.ok) {
+        setError(r.error)
+        return
+      }
+      setError(null)
+      await refresh()
+    })
+  }
+
+  // Shared grid template — 카테고리가 달라도 열이 맞도록 모든 행에 동일 적용.
+  const gridCols = isAdmin
+    ? 'minmax(0,1.6fr) minmax(0,1fr) 110px 100px 150px minmax(0,0.9fr) 56px'
+    : 'minmax(0,1.6fr) minmax(0,1fr) 110px 100px 150px minmax(0,0.9fr)'
 
   return (
-    <div className="space-y-6">
-      {/* Summary */}
-      <div className="flex gap-md text-sm">
-        {counts.expired > 0 && (
-          <div className="flex items-center gap-xs.5 px-sm py-1.5 rounded-lg bg-red-50 text-red-700">
-            <span className="w-2 h-2 rounded-full bg-red-500" />
-            만료 {counts.expired}
-          </div>
-        )}
-        {counts.urgent > 0 && (
-          <div className="flex items-center gap-xs.5 px-sm py-1.5 rounded-lg bg-orange-50 text-orange-700">
-            <span className="w-2 h-2 rounded-full bg-orange-500" />
-            30일 이내 {counts.urgent}
-          </div>
-        )}
-        {counts.expired === 0 && counts.urgent === 0 && (
-          <div className="text-sm text-muted-foreground">최근 제품 기준 만료·30일 이내 제품 없음.</div>
-        )}
-      </div>
-
-      {/* Sections: 접종 / 구충 */}
-      {sections.map(({ section, categories }) => (
-        <div key={section} className="space-y-3">
-          <h2 className="text-base font-semibold border-b border-border pb-1">{section}</h2>
-          {categories.map(([categoryLabel, list]) => (
-            <div key={categoryLabel} className="border border-border rounded-lg overflow-hidden">
-              <div className="bg-muted/50 px-md py-2 text-sm font-medium">{categoryLabel}</div>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-xs text-muted-foreground">
-                    <th className="text-left px-md py-2 font-medium">제품명</th>
-                    <th className="text-left px-md py-2 font-medium">제조사</th>
-                    <th className="text-left px-md py-2 font-medium">Batch</th>
-                    <th className="text-left px-md py-2 font-medium">만료일</th>
-                    <th className="text-left px-md py-2 font-medium">상태</th>
-                    <th className="text-left px-md py-2 font-medium">기준</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {list.map((p, i) => (
-                    <tr key={i} className="border-b border-border/50 last:border-0 hover:bg-accent/20">
-                      <td className="px-md py-2">{p.displayName}</td>
-                      <td className="px-md py-2 text-muted-foreground">{p.manufacturer}</td>
-                      <td className="px-md py-2 font-mono text-xs">{p.batch ?? '—'}</td>
-                      <td className="px-md py-2 text-muted-foreground">{p.expiry ?? '—'}</td>
-                      <td className="px-md py-2"><StatusBadge status={p.status} daysLeft={p.daysLeft} /></td>
-                      <td className="px-md py-2 text-xs text-muted-foreground">{p.meta}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ))}
+    <div className="max-w-5xl pb-2xl">
+      {/* Editorial header */}
+      <header className="pb-xl flex items-end justify-between gap-md flex-wrap">
+        <h2 className="font-serif text-[28px] leading-tight text-foreground">약품</h2>
+        <div className="flex gap-xs flex-wrap">
+          {counts.expired > 0 && (
+            <span className="inline-flex items-center gap-xs font-serif text-[12px] px-2 py-0.5 rounded-full bg-red-50 text-red-700">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              만료 {counts.expired}
+            </span>
+          )}
+          {counts.urgent > 0 && (
+            <span className="inline-flex items-center gap-xs font-serif text-[12px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-700">
+              <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+              30일 이내 {counts.urgent}
+            </span>
+          )}
+          {counts.expired === 0 && counts.urgent === 0 && !loading && (
+            <span className="font-serif italic text-[12px] text-muted-foreground/70">만료·30일 이내 제품 없음.</span>
+          )}
         </div>
-      ))}
+      </header>
+
+      {error && (
+        <p className="mb-md font-serif text-[13px] text-destructive">{error}</p>
+      )}
+
+      {extractMsg && (
+        <div
+          className={`mb-md font-serif text-[13px] px-sm py-2 rounded flex items-center justify-between gap-sm ${
+            extractMsg.kind === 'error'
+              ? 'text-destructive bg-destructive/10'
+              : extractMsg.kind === 'success'
+              ? 'text-green-700 bg-green-50'
+              : 'italic text-muted-foreground bg-muted/60'
+          }`}
+        >
+          <span>{extractMsg.text}</span>
+          <button
+            type="button"
+            onClick={() => setExtractMsg(null)}
+            className="text-[12px] opacity-60 hover:opacity-100"
+          >
+            닫기
+          </button>
+        </div>
+      )}
+
+      <p className="mb-xl font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
+        제품 이미지·PDF 를 카테고리 박스에 드래그하거나 마우스를 올린 상태로 Ctrl+V 하면 AI 가 제품 정보를 자동으로 인식해 새 항목으로 추가합니다.
+      </p>
+
+      {loading ? (
+        <p className="font-serif italic text-[14px] text-muted-foreground">불러오는 중…</p>
+      ) : (
+        grouped.map(({ section, categories }) => {
+          const totalInSection = categories.reduce((sum, c) => sum + c.list.length, 0)
+          return (
+            <section key={section} className="mb-xl">
+              <div className="mb-2 flex items-baseline justify-between">
+                <span className="font-mono text-[11px] tracking-[1.8px] uppercase text-muted-foreground/70">
+                  {section} · {totalInSection}
+                </span>
+              </div>
+
+              {/* Shared column header */}
+              <div
+                className="grid gap-md py-2 border-y border-border/70 font-mono text-[10px] tracking-[1.5px] uppercase text-muted-foreground/70"
+                style={{ gridTemplateColumns: gridCols }}
+              >
+                <span>제품명</span>
+                <span>제조사</span>
+                <span>Batch</span>
+                <span>만료</span>
+                <span>상태</span>
+                <span>기준</span>
+                {isAdmin && <span />}
+              </div>
+
+              {categories.map(({ category, meta, list }) => {
+                const isExtracting = extractingCategory === category
+                const isDragOver = dragCategory === category
+                return (
+                  <div
+                    key={category}
+                    data-vaccine-category={category}
+                    onMouseEnter={() => { hoveredCategoryRef.current = category }}
+                    onMouseLeave={() => {
+                      if (hoveredCategoryRef.current === category) hoveredCategoryRef.current = null
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      if (dragCategory !== category) setDragCategory(category)
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault()
+                      if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                        setDragCategory((prev) => (prev === category ? null : prev))
+                      }
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setDragCategory(null)
+                      const files = Array.from(e.dataTransfer.files)
+                      if (files.length > 0) handleImageFiles(category, files)
+                    }}
+                    className={`transition-colors rounded-sm ${
+                      isDragOver ? 'bg-primary/5 ring-1 ring-primary/30' : ''
+                    }`}
+                  >
+                    {/* Category sub-header */}
+                    <div className="flex items-center justify-between pt-md pb-1 px-1">
+                      <div className="flex items-baseline gap-sm min-w-0">
+                        <span className="font-serif italic text-[15px] text-foreground truncate">{meta.label}</span>
+                        <span className="font-mono text-[10px] text-muted-foreground/50 shrink-0">{list.length}</span>
+                        {isExtracting && (
+                          <span className="font-serif italic text-[11px] text-muted-foreground animate-pulse shrink-0">추출 중…</span>
+                        )}
+                      </div>
+                      <input
+                        ref={(el) => { fileInputs.current[category] = el }}
+                        type="file"
+                        accept="image/*,application/pdf"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files ?? [])
+                          e.target.value = ''
+                          if (files.length > 0) handleImageFiles(category, files)
+                        }}
+                      />
+                      {isAdmin && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => fileInputs.current[category]?.click()}
+                            disabled={isExtracting}
+                            title="이미지·PDF 에서 자동 추가"
+                            className="inline-flex items-center gap-1 font-serif text-[11px] px-2 py-0.5 rounded-full border border-border/60 text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors disabled:opacity-40"
+                          >
+                            <ImageIcon className="h-3 w-3" />
+                            이미지
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setEditing({ mode: 'create', initial: blankForm(category) })
+                            }
+                            className="inline-flex items-center gap-1 font-serif text-[11px] px-2 py-0.5 rounded-full border border-border/60 text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
+                          >
+                            <Plus className="h-3 w-3" />
+                            추가
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {list.length === 0 ? (
+                      <div className="py-2 px-1 font-serif italic text-[13px] text-muted-foreground/60 border-b border-dotted border-border/60">
+                        등록된 제품 없음
+                      </div>
+                    ) : (
+                      list.map((p) => {
+                        const status = getExpiryStatus(p.expiry)
+                        const daysLeft = daysUntilExpiry(p.expiry)
+                        const metaParts: string[] = []
+                        if (p.year != null) metaParts.push(`${p.year}년`)
+                        if (p.size) metaParts.push(p.size)
+                        return (
+                          <div
+                            key={p.id}
+                            className="grid gap-md items-center py-2 border-b border-dotted border-border/60 hover:bg-accent transition-colors"
+                            style={{ gridTemplateColumns: gridCols }}
+                          >
+                            <div className="font-serif text-[15px] text-foreground truncate">
+                              {p.vaccine || p.product || '(이름 없음)'}
+                            </div>
+                            <div className="font-serif text-[14px] text-muted-foreground truncate">
+                              {p.manufacturer}
+                            </div>
+                            <div className="font-mono text-[12px] text-foreground truncate">{p.batch ?? '—'}</div>
+                            <div className="font-serif text-[13px] text-muted-foreground">{p.expiry ?? '—'}</div>
+                            <div><StatusBadge status={status} daysLeft={daysLeft} /></div>
+                            <div className="font-serif italic text-[12px] text-muted-foreground truncate">
+                              {metaParts.join(' · ') || '—'}
+                            </div>
+                            {isAdmin && (
+                              <div className="flex gap-0.5 justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setEditing({ mode: 'edit', id: p.id, initial: toFormState(p) })
+                                  }
+                                  className="p-1 rounded hover:bg-muted transition-colors"
+                                  title="수정"
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => onDelete(p.id)}
+                                  disabled={pending}
+                                  className="p-1 rounded hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
+                                  title="삭제"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })
+                    )}
+                  </div>
+                )
+              })}
+            </section>
+          )
+        })
+      )}
+
+      {!isAdmin && (
+        <p className="pt-md border-t border-border/60 font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
+          약품 추가·수정은 관리자만 가능합니다.
+        </p>
+      )}
+
+      {editing && (
+        <ProductFormModal
+          mode={editing.mode}
+          initial={editing.initial}
+          pending={pending}
+          onClose={() => setEditing(null)}
+          onSave={onSave}
+        />
+      )}
     </div>
+  )
+}
+
+interface ProductFormModalProps {
+  mode: 'create' | 'edit'
+  initial: FormState
+  pending: boolean
+  onClose: () => void
+  onSave: (form: FormState) => void
+}
+
+function ProductFormModal({ mode, initial, pending, onClose, onSave }: ProductFormModalProps) {
+  const [form, setForm] = useState<FormState>(initial)
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const kind = CATEGORY_META[form.category]?.kind ?? 'vaccine'
+  const parasiteOptions = PARASITE_FAMILIES.filter((f) =>
+    form.category.endsWith('_dog') ? f.species === 'dog' : form.category.endsWith('_cat') ? f.species === 'cat' : true
+  )
+
+  function update<K extends keyof FormState>(key: K, value: FormState[K]) {
+    setForm((f) => ({ ...f, [key]: value }))
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="bg-background rounded-lg shadow-lg w-full max-w-xl max-h-[90vh] overflow-auto">
+        <div className="flex items-center justify-between border-b border-border/60 px-lg py-3">
+          <h3 className="font-serif text-[17px]">{mode === 'create' ? '약품 추가' : '약품 수정'}</h3>
+          <button type="button" onClick={onClose} className="p-1 rounded hover:bg-muted">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="px-lg py-md space-y-md">
+          <Field label="카테고리">
+            <select
+              value={form.category}
+              onChange={(e) => update('category', e.target.value)}
+              disabled={mode === 'edit'}
+              className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background disabled:opacity-60"
+            >
+              {CATEGORY_ORDER.map((cat) => (
+                <option key={cat} value={cat}>
+                  {CATEGORY_META[cat].section} · {CATEGORY_META[cat].label}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          {kind === 'vaccine' ? (
+            <Field label="백신명 (vaccine)">
+              <input
+                value={form.vaccine}
+                onChange={(e) => update('vaccine', e.target.value)}
+                placeholder="예: Rabisin"
+                className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
+              />
+            </Field>
+          ) : (
+            <Field label="제품명 (product)">
+              <input
+                value={form.product}
+                onChange={(e) => update('product', e.target.value)}
+                placeholder="예: NexGard Spectra"
+                className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
+              />
+            </Field>
+          )}
+
+          <Field label="제조사 *">
+            <input
+              value={form.manufacturer}
+              onChange={(e) => update('manufacturer', e.target.value)}
+              placeholder="예: Boehringer Ingelheim"
+              className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
+              required
+            />
+          </Field>
+
+          <div className="grid grid-cols-2 gap-md">
+            <Field label="Batch">
+              <input
+                value={form.batch}
+                onChange={(e) => update('batch', e.target.value)}
+                placeholder="예: E19623"
+                className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background font-mono"
+              />
+            </Field>
+            <Field label="만료일 (YYYY-MM-DD 또는 YYYY-MM)">
+              <input
+                value={form.expiry}
+                onChange={(e) => update('expiry', e.target.value)}
+                placeholder="2027-06"
+                className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
+              />
+            </Field>
+          </div>
+
+          {form.category === 'rabies' && (
+            <Field label="연도 (year)">
+              <input
+                type="number"
+                value={form.year}
+                onChange={(e) => update('year', e.target.value)}
+                placeholder="2026"
+                className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
+              />
+            </Field>
+          )}
+
+          {kind === 'parasite' && (
+            <>
+              <div className="grid grid-cols-3 gap-md">
+                <Field label="체중 최소 (kg)">
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={form.weight_min}
+                    onChange={(e) => update('weight_min', e.target.value)}
+                    className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
+                  />
+                </Field>
+                <Field label="체중 최대 (kg)">
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={form.weight_max}
+                    onChange={(e) => update('weight_max', e.target.value)}
+                    className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
+                  />
+                </Field>
+                <Field label="표기 (size)">
+                  <input
+                    value={form.size}
+                    onChange={(e) => update('size', e.target.value)}
+                    placeholder="1.35-3.5kg"
+                    className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
+                  />
+                </Field>
+              </div>
+
+              <Field label="Parasite family ID (선택)">
+                <select
+                  value={form.parasite_id}
+                  onChange={(e) => update('parasite_id', e.target.value)}
+                  className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
+                >
+                  <option value="">(미지정)</option>
+                  {parasiteOptions.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.id} — {f.name} ({f.species}, {f.kind})
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-border/60 px-lg py-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-md py-1.5 text-sm rounded-md hover:bg-muted transition-colors"
+            disabled={pending}
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={() => onSave(form)}
+            disabled={pending || !form.manufacturer.trim()}
+            className="px-md py-1.5 text-sm rounded-md bg-accent hover:bg-accent/90 transition-colors disabled:opacity-50"
+          >
+            {mode === 'create' ? '추가' : '저장'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block space-y-1">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      {children}
+    </label>
   )
 }

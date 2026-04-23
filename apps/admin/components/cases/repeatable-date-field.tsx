@@ -5,7 +5,8 @@ import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
-import { lookupRabies, lookupComprehensive, lookupCiv, lookupKennelCough, lookupExternalParasite, lookupInternalParasite, lookupHeartworm, lookupParasiteById, listParasiteFamilies, getParasiteFamily } from '@petmove/domain'
+import { listParasiteFamilies, getParasiteFamily, type VaccineLookups } from '@petmove/domain'
+import { useVaccineLookups } from '@/components/providers/vaccine-data-provider'
 import { CopyButton } from './copy-button'
 import { extractVaccineInfo } from '@/lib/actions/extract-vaccine'
 import { uploadFileToNotes } from '@/lib/notes-upload'
@@ -70,11 +71,11 @@ function addOneYear(dateStr: string): string {
 }
 
 /** 라벨과 접종일로 lookup 데이터를 VacRecord 형태로 반환 (expanded view 힌트용) */
-function getDetailHints(label: string, date: string, species: string, weightKg = 0): Partial<VacRecord> {
+function getDetailHints(L: VaccineLookups, label: string, date: string, species: string, weightKg = 0): Partial<VacRecord> {
   if (!date) return {}
   const sp: 'dog' | 'cat' = species === 'cat' ? 'cat' : 'dog'
   if (label === '광견병') {
-    const r = lookupRabies(date)
+    const r = L.lookupRabies(date)
     if (!r) return {}
     return {
       product: r.vaccine || r.product || undefined,
@@ -85,7 +86,7 @@ function getDetailHints(label: string, date: string, species: string, weightKg =
     }
   }
   if (label === '종합백신') {
-    const r = lookupComprehensive(sp, date)
+    const r = L.lookupComprehensive(sp, date)
     if (!r) return {}
     return {
       product: r.vaccine || r.product || undefined,
@@ -96,7 +97,7 @@ function getDetailHints(label: string, date: string, species: string, weightKg =
     }
   }
   if (label === 'CIV') {
-    const r = lookupCiv(date)
+    const r = L.lookupCiv(date)
     if (!r) return {}
     return {
       product: r.vaccine || r.product || undefined,
@@ -107,7 +108,7 @@ function getDetailHints(label: string, date: string, species: string, weightKg =
     }
   }
   if (label === '켄넬코프') {
-    const r = lookupKennelCough()
+    const r = L.lookupKennelCough()
     if (!r) return {}
     return {
       product: r.vaccine || r.product || undefined,
@@ -118,7 +119,7 @@ function getDetailHints(label: string, date: string, species: string, weightKg =
     }
   }
   if (label === '외부구충') {
-    const r = lookupExternalParasite(sp, date, weightKg)
+    const r = L.lookupExternalParasite(sp, date, weightKg)
     if (!r) return {}
     return {
       product: r.product || undefined,
@@ -128,7 +129,7 @@ function getDetailHints(label: string, date: string, species: string, weightKg =
     }
   }
   if (label === '내부구충') {
-    const r = lookupInternalParasite(sp, date, weightKg)
+    const r = L.lookupInternalParasite(sp, date, weightKg)
     if (!r) return {}
     return {
       product: r.product || undefined,
@@ -138,7 +139,7 @@ function getDetailHints(label: string, date: string, species: string, weightKg =
     }
   }
   if (label === '심장사상충') {
-    const r = lookupHeartworm(sp, weightKg)
+    const r = L.lookupHeartworm(sp, weightKg)
     if (!r) return {}
     return {
       product: r.product || undefined,
@@ -151,8 +152,8 @@ function getDetailHints(label: string, date: string, species: string, weightKg =
 }
 
 /** Detail hints for a record that already has product_id picked. */
-function getDetailHintsById(productId: string, date: string, weightKg: number): Partial<VacRecord> {
-  const p = lookupParasiteById(productId, { date, weightKg })
+function getDetailHintsById(L: VaccineLookups, productId: string, date: string, weightKg: number): Partial<VacRecord> {
+  const p = L.lookupParasiteById(productId, { date, weightKg })
   if (!p) return {}
   return {
     product: p.product || undefined,
@@ -171,6 +172,7 @@ function parasiteKindFromLabel(label: string): 'external' | 'internal' | null {
 
 export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey, hideValidUntil, siblingKey }: Props) {
   const { updateLocalCaseField } = useCases()
+  const L = useVaccineLookups()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const records = readRecords(data, dataKey, legacyKey)
   const species = (data.species as string) || ''
@@ -584,8 +586,8 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
             const oi = origIdx(si)
             // If user picked a specific parasite product, hints come from that product family.
             const hints = rec.product_id
-              ? getDetailHintsById(rec.product_id, rec.date, weightKg)
-              : getDetailHints(label, rec.date, species, weightKg)
+              ? getDetailHintsById(L, rec.product_id, rec.date, weightKg)
+              : getDetailHints(L, label, rec.date, species, weightKg)
             return (
               <div
                 key={oi}

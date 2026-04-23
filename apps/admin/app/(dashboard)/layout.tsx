@@ -2,9 +2,13 @@ import { createClient } from '@/lib/supabase/server'
 import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
 import { CasesProvider } from '@/components/cases/cases-context'
 import { DashboardShell } from '@/components/layout/dashboard-shell'
+import { VaccineDataProvider } from '@/components/providers/vaccine-data-provider'
+import { CalculatorDataProvider } from '@/components/providers/calculator-data-provider'
 import { loadImportReportCountries } from '@/lib/import-report-config'
 import { loadInspectionConfig } from '@/lib/inspection-config'
 import { loadCertConfig } from '@/lib/cert-config'
+import { getOrgVaccineData } from '@/lib/vaccine-data'
+import { getCalculatorItems } from '@/lib/calculator-data'
 
 export const dynamic = 'force-dynamic'
 
@@ -60,13 +64,15 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [initialCases, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx] = await Promise.all([
+  const [initialCases, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, calculatorItems] = await Promise.all([
     fetchAllCases(),
     fetchFieldDefs(),
     loadImportReportCountries(),
     loadInspectionConfig(),
     loadCertConfig(),
     fetchUserContext(),
+    getOrgVaccineData(),
+    getCalculatorItems(),
   ])
 
   return (
@@ -77,7 +83,11 @@ export default async function DashboardLayout({
       initialInspectionConfig={inspectionConfig}
       initialCertConfig={certConfig}
     >
-      <DashboardShell isSuperAdmin={userCtx.isSuperAdmin} userEmail={userCtx.email} />
+      <VaccineDataProvider data={vaccineData}>
+        <CalculatorDataProvider initialItems={calculatorItems}>
+          <DashboardShell isSuperAdmin={userCtx.isSuperAdmin} userEmail={userCtx.email} />
+        </CalculatorDataProvider>
+      </VaccineDataProvider>
     </CasesProvider>
   )
 }

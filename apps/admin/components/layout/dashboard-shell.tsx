@@ -8,7 +8,6 @@ import { CasesApp } from '@/components/cases/cases-app'
 import { TodosApp } from '@/components/todos/todos-app'
 import { SettingsApp } from '@/components/settings/settings-app'
 import { CalculatorApp } from '@/components/calculator/calculator-app'
-import { fetchCalculatorItems } from '@/lib/calculator-cache'
 
 const MemoizedCases = memo(CasesApp)
 const MemoizedTodos = memo(TodosApp)
@@ -43,11 +42,6 @@ export function DashboardShell({
       return new Set([...prev, tab])
     })
     window.history.pushState(null, '', `/${tab}`)
-  }, [])
-
-  // 앱 진입 시 백그라운드 prefetch — 계산기 탭 첫 진입 시 즉시 표시되도록.
-  useEffect(() => {
-    fetchCalculatorItems().catch(() => {})
   }, [])
 
   // Handle browser back/forward

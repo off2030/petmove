@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
-import { Search } from 'lucide-react'
+import { MoreHorizontal, Plus, Search } from 'lucide-react'
 import type { CaseRow } from '@/lib/supabase/types'
 import { useCases } from '@/components/cases/cases-context'
 import { Input } from '@/components/ui/input'
@@ -620,7 +620,7 @@ export function TodosApp() {
       <div className="h-full mx-auto max-w-7xl flex flex-col gap-lg">
       {/* Page header — editorial title + italic lead */}
       <div className="shrink-0 px-lg flex items-baseline gap-md">
-        <h1 className="font-serif text-[32px] leading-tight tracking-tight text-foreground">
+        <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
           할 일
         </h1>
 
@@ -645,14 +645,25 @@ export function TodosApp() {
             </button>
           ))}
         </div>
-        <div className="relative w-full md:w-64 pb-2 md:pb-0 md:mb-2">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="검색"
-            className="h-10 pl-10 text-[15px] bg-card border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
-          />
+        <div className="flex items-center gap-sm w-full md:w-auto pb-2 md:pb-0 md:mb-2">
+          {activeTab === 'import_report' && (
+            <ImportReportAddPicker
+              cases={cases}
+              onAdd={async (caseId) => {
+                updateLocalCaseField(caseId, 'data', 'import_report_manual', true)
+                await updateCaseField(caseId, 'data', 'import_report_manual', true)
+              }}
+            />
+          )}
+          <div className="relative flex-1 md:w-64">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="검색"
+              className="h-10 pl-10 text-[15px] bg-card border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
+            />
+          </div>
         </div>
       </div>
 
@@ -687,31 +698,72 @@ export function TodosApp() {
           <span className="font-serif italic">건</span>
         </span>
         {activeTab === 'inspection' && (
-          <div className="flex items-center gap-sm">
-            <ShipmentDocsButton />
-            <BulkApplyPicker
-              label="KSVDL"
-              rows={inspectionRows.filter(r => r.lab === 'ksvdl')}
-              request={(caseId) => ({ kind: 'single', formKey: 'KSVDL', caseId })}
-            />
-            <BulkApplyPicker
-              label="APQA HQ + VBDDL"
-              rows={inspectionRows.filter(r => r.lab === 'nz_combined')}
-              request={(caseId) => ({ kind: 'bundle', variant: 'nz-infection-pack', caseId })}
-            />
-          </div>
-        )}
-        {activeTab === 'import_report' && (
-          <ImportReportAddPicker
-            cases={cases}
-            onAdd={async (caseId) => {
-              updateLocalCaseField(caseId, 'data', 'import_report_manual', true)
-              await updateCaseField(caseId, 'data', 'import_report_manual', true)
-            }}
-          />
+          <>
+            <div className="hidden md:flex items-center gap-sm">
+              <ShipmentDocsButton />
+              <BulkApplyPicker
+                label="KSVDL"
+                rows={inspectionRows.filter(r => r.lab === 'ksvdl')}
+                request={(caseId) => ({ kind: 'single', formKey: 'KSVDL', caseId })}
+              />
+              <BulkApplyPicker
+                label="APQA HQ + VBDDL"
+                rows={inspectionRows.filter(r => r.lab === 'nz_combined')}
+                request={(caseId) => ({ kind: 'bundle', variant: 'nz-infection-pack', caseId })}
+              />
+            </div>
+            <div className="md:hidden">
+              <InspectionFooterMobileMenu>
+                <ShipmentDocsButton />
+                <BulkApplyPicker
+                  label="KSVDL"
+                  rows={inspectionRows.filter(r => r.lab === 'ksvdl')}
+                  request={(caseId) => ({ kind: 'single', formKey: 'KSVDL', caseId })}
+                />
+                <BulkApplyPicker
+                  label="APQA HQ + VBDDL"
+                  rows={inspectionRows.filter(r => r.lab === 'nz_combined')}
+                  request={(caseId) => ({ kind: 'bundle', variant: 'nz-infection-pack', caseId })}
+                />
+              </InspectionFooterMobileMenu>
+            </div>
+          </>
         )}
       </div>
       </div>
+    </div>
+  )
+}
+
+/** 모바일 전용: 검사 탭 하단 액션을 ⋯ 메뉴 뒤로 접어 2줄 overflow 방지. */
+function InspectionFooterMobileMenu({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [open])
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        aria-label="더보기"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+      >
+        <MoreHorizontal size={16} />
+      </button>
+      {open && (
+        <div className="absolute right-0 bottom-full mb-2 z-50 flex flex-col items-stretch gap-1 rounded-md border border-border bg-popover shadow-lg p-1 min-w-[160px]">
+          {children}
+        </div>
+      )}
     </div>
   )
 }
@@ -1064,9 +1116,10 @@ function ImportReportAddPicker({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-[13px] text-muted-foreground rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
+        aria-label="신고 케이스 추가"
+        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border/70 bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
       >
-        검색
+        <Plus size={16} />
       </button>
     )
   }
@@ -1075,6 +1128,7 @@ function ImportReportAddPicker({
 
   return (
     <div ref={containerRef} className="relative inline-block w-72">
+      <Plus className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <input
         ref={inputRef}
         type="text"
@@ -1086,12 +1140,12 @@ function ImportReportAddPicker({
           if (e.key === 'ArrowUp') { e.preventDefault(); setHighlight(i => Math.max(i - 1, 0)) }
           if (e.key === 'Enter' && candidates[highlight]) { e.preventDefault(); pick(candidates[highlight]) }
         }}
-        placeholder="검색"
-        className="w-full h-8 rounded border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+        placeholder="신고 추가"
+        className="w-full h-10 rounded-full border border-border/70 bg-card pl-10 pr-3 text-[15px] focus-visible:outline-none focus-visible:border-foreground/40"
       />
-      {/* 검색어가 있을 때만 결과 드롭다운 표시. 푸터 우측 → 위로 올라옴. */}
+      {/* 검색어가 있을 때만 결과 드롭다운 표시. 상단 우측 → 아래로 펼침. */}
       {hasQuery && (
-        <ul className="absolute right-0 bottom-full mb-1 z-20 w-[22rem] max-h-72 overflow-y-auto scrollbar-minimal rounded-md border border-border/50 bg-background shadow-md py-1">
+        <ul className="absolute left-0 top-full mt-1 z-20 w-[22rem] max-h-72 overflow-y-auto scrollbar-minimal rounded-md border border-border/50 bg-background shadow-md py-1">
           {candidates.length === 0 ? (
             <li className="px-sm py-2 text-sm text-muted-foreground">결과 없음</li>
           ) : (

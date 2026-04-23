@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { TrashModal } from '@/components/cases/trash-modal'
 import { VaccineSection } from './vaccine-section'
 import { CompanySection } from './company-section'
@@ -9,9 +9,12 @@ import { InspectionSection } from './inspection-section'
 import { DocumentsSection } from './documents-section'
 import { VerificationSection } from './verification-section'
 import { MembersSection } from './members-section'
+import { ProfileSection } from './profile-section'
+import { getSettingsBootstrap, type SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 
 const TABS = [
-  { id: 'company', label: '병원 정보' },
+  { id: 'profile', label: '내 프로필' },
+  { id: 'company', label: '조직 정보' },
   { id: 'members', label: '멤버' },
   { id: 'vaccines', label: '약품 관리' },
   { id: 'inspection', label: '검사' },
@@ -27,37 +30,35 @@ function DataSection() {
   const [showTrash, setShowTrash] = useState(false)
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-md shadow-sm max-w-2xl">
-      <div className="space-y-4">
-        {/* Trash */}
-        <div className="border-b border-border/60 py-2.5 px-md transition-colors hover:bg-accent/60">
-          <h3 className="font-medium text-base mb-1">휴지통</h3>
-          <p className="text-base text-muted-foreground mb-3">
-            삭제된 케이스를 복원하거나 영구 삭제할 수 있습니다.
-          </p>
-          <button
-            type="button"
-            onClick={() => setShowTrash(true)}
-            className="px-md py-2.5 text-base bg-accent hover:bg-accent/90 rounded-md transition-colors"
-          >
-            휴지통 열기
-          </button>
-        </div>
+    <div className="max-w-2xl space-y-lg">
+      {/* Trash */}
+      <div>
+        <h3 className="font-serif text-[17px] text-foreground pb-2 border-b border-border/60 mb-sm">휴지통</h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          삭제된 케이스를 복원하거나 영구 삭제할 수 있습니다.
+        </p>
+        <button
+          type="button"
+          onClick={() => setShowTrash(true)}
+          className="h-9 px-md text-sm bg-accent hover:bg-accent/90 rounded-md transition-colors"
+        >
+          휴지통 열기
+        </button>
+      </div>
 
-        {/* Export */}
-        <div className="border-b border-border/60 py-2.5 px-md transition-colors hover:bg-accent/60 last:border-b-0">
-          <h3 className="font-medium text-base mb-1">데이터 내보내기</h3>
-          <p className="text-base text-muted-foreground mb-3">
-            전체 케이스 데이터를 CSV 파일로 내보냅니다.
-          </p>
-          <button
-            type="button"
-            className="px-md py-2.5 text-base bg-muted hover:bg-muted/80 rounded-md transition-colors opacity-50 cursor-not-allowed"
-            disabled
-          >
-            CSV 내보내기 (준비 중)
-          </button>
-        </div>
+      {/* Export */}
+      <div>
+        <h3 className="font-serif text-[17px] text-foreground pb-2 border-b border-border/60 mb-sm">데이터 내보내기</h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          전체 케이스 데이터를 CSV 파일로 내보냅니다.
+        </p>
+        <button
+          type="button"
+          className="h-9 px-md text-sm bg-muted hover:bg-muted/80 rounded-md transition-colors opacity-50 cursor-not-allowed"
+          disabled
+        >
+          CSV 내보내기 (준비 중)
+        </button>
       </div>
 
       {showTrash && (
@@ -70,8 +71,51 @@ function DataSection() {
   )
 }
 
+function hashToTab(): TabId | null {
+  if (typeof window === 'undefined') return null
+  const h = window.location.hash.replace(/^#/, '')
+  if (!h) return null
+  const match = TABS.find((t) => t.id === h)
+  return match ? (match.id as TabId) : null
+}
+
 export function SettingsApp() {
+  // 서버/클라이언트 일치를 위해 초기값은 'company' 고정. hash 는 mount 후 읽음.
   const [activeTab, setActiveTab] = useState<TabId>('company')
+  const [bootstrap, setBootstrap] = useState<SettingsBootstrap | null>(null)
+
+  // 최초 마운트 시 한 번만 전체 섹션 데이터를 병렬 fetch.
+  // 각 섹션은 initial prop 으로 받아 자체 useEffect fetch 를 스킵.
+  useEffect(() => {
+    let alive = true
+    getSettingsBootstrap().then((b) => {
+      if (alive) setBootstrap(b)
+    })
+    return () => { alive = false }
+  }, [])
+
+  // Hash-based deep linking: mount 직후 + hashchange 모두 대응.
+  useEffect(() => {
+    const initial = hashToTab()
+    if (initial) setActiveTab(initial)
+    function onHash() {
+      const t = hashToTab()
+      if (t) setActiveTab(t)
+    }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+
+  function handleTabClick(id: TabId) {
+    setActiveTab(id)
+    // 탭 전환 시 hash 도 맞춰 업데이트 (공유·새로고침 시 같은 탭 유지).
+    if (typeof window !== 'undefined') {
+      const next = `#${id}`
+      if (window.location.hash !== next) {
+        window.history.replaceState(null, '', window.location.pathname + next)
+      }
+    }
+  }
 
   return (
     <div className="h-full overflow-hidden px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
@@ -83,16 +127,16 @@ export function SettingsApp() {
           </h1>
         </div>
 
-        <div className="flex gap-xs border-b border-border/60 shrink-0 px-lg">
+        <div className="flex gap-md border-b border-border/60 shrink-0 px-lg">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-md py-2 text-base font-medium transition-colors border-b-2 -mb-px ${
+              onClick={() => handleTabClick(tab.id)}
+              className={`px-1 py-2 font-serif text-[17px] transition-colors border-b -mb-px ${
                 activeTab === tab.id
-                  ? 'border-foreground text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
+                  ? 'border-foreground text-foreground font-semibold'
+                  : 'border-transparent text-muted-foreground/70 hover:text-foreground'
               }`}
             >
               {tab.label}
@@ -101,9 +145,29 @@ export function SettingsApp() {
         </div>
 
         <div className="flex-1 min-h-0 overflow-auto scrollbar-minimal px-lg">
-          {activeTab === 'company' && <CompanySection />}
-          {activeTab === 'members' && <MembersSection />}
-          {activeTab === 'vaccines' && <VaccineSection />}
+          {activeTab === 'profile' && (
+            <ProfileSection initialProfile={bootstrap?.myProfile ?? null} />
+          )}
+          {activeTab === 'company' && (
+            <CompanySection
+              initialInfo={bootstrap?.companyInfo ?? null}
+              initialOrgType={bootstrap?.orgType ?? null}
+              isAdmin={bootstrap?.myRole?.isAdmin ?? false}
+            />
+          )}
+          {activeTab === 'members' && (
+            <MembersSection
+              initialMembers={bootstrap?.members ?? null}
+              initialInvites={bootstrap?.invites ?? null}
+              isAdmin={bootstrap?.myRole?.isAdmin ?? false}
+            />
+          )}
+          {activeTab === 'vaccines' && (
+            <VaccineSection
+              initialProducts={bootstrap?.vaccineProducts ?? null}
+              isAdmin={bootstrap?.myRole?.isAdmin ?? false}
+            />
+          )}
           {activeTab === 'inspection' && <InspectionSection />}
           {activeTab === 'import_report' && <ImportReportSection />}
           {activeTab === 'documents' && <DocumentsSection />}

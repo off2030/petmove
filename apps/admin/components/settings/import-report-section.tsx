@@ -45,9 +45,9 @@ export function ImportReportSection() {
   }
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-md shadow-sm max-w-2xl space-y-4">
+    <div className="max-w-2xl space-y-md">
       <div>
-        <h3 className="font-medium text-base mb-1">자동 포함 국가</h3>
+        <h3 className="font-serif text-[17px] text-foreground pb-2 border-b border-border/60 mb-sm">자동 포함 국가</h3>
         <p className="text-sm text-muted-foreground">
           이 목록에 있는 국가가 목적지이고 <b>출국일</b>이 입력된 케이스는 신고 탭에
           자동으로 올라갑니다. 그 외 국가는 상세페이지의 <b>신고</b> 버튼이나 신고 탭의

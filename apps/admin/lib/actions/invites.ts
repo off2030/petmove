@@ -7,13 +7,12 @@ import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { sendEmail, inviteFromAddress } from '@/lib/email/resend'
 import { inviteEmailHtml, inviteEmailSubject } from '@/lib/email/invite-template'
 
-const ROLE_LABEL: Record<'owner' | 'admin' | 'member', string> = {
-  owner: '소유자',
+const ROLE_LABEL: Record<'admin' | 'member', string> = {
   admin: '관리자',
   member: '멤버',
 }
 
-export type InviteRole = 'owner' | 'admin' | 'member'
+export type InviteRole = 'admin' | 'member'
 
 export interface InviteRow {
   id: string
@@ -101,7 +100,7 @@ export async function listMembers(): Promise<Result<MemberRow[]>> {
   }
 }
 
-/** 초대 생성 — owner/admin 권한 RLS 로 체크됨. 이메일 발송은 best-effort. */
+/** 초대 생성 — admin 권한 RLS 로 체크됨. 이메일 발송은 best-effort. */
 export async function createInvite(input: {
   email: string
   role: InviteRole

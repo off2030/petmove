@@ -34,6 +34,12 @@ export const DEFAULT_VET_INFO = {
 
   // 면허
   license_no: '',
+
+  // 운송회사 전용 (org_type='transport' 일 때만 UI 노출)
+  transport_company_ko: '',
+  transport_company_en: '',
+  transport_contact_ko: '',
+  transport_contact_en: '',
 } as const
 
 export type VetInfo = typeof DEFAULT_VET_INFO

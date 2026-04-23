@@ -1,9 +1,9 @@
 'use client'
 
-import { Folder, CheckCircle2, LayoutGrid, Settings, Menu, Monitor, Sun, Moon, Shield, User, LogOut } from 'lucide-react'
+import { Folder, CheckCircle2, LayoutGrid, Settings, Menu, Monitor, Sun, Moon, Shield, User, LogOut, UserCog } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { countExpiringProducts } from '@petmove/domain'
+import { useVaccineLookups } from '@/components/providers/vaccine-data-provider'
 import { useDarkMode } from '@/lib/use-dark-mode'
 import { cn } from '@/lib/utils'
 
@@ -40,7 +40,8 @@ export function TopBar({
   userEmail,
   superAdminActive = false,
 }: TopBarProps) {
-  const expiringCount = useMemo(() => countExpiringProducts(), [])
+  const vaccineLookups = useVaccineLookups()
+  const expiringCount = useMemo(() => vaccineLookups.countExpiringProducts(), [vaccineLookups])
   const { mode, mounted, cycle } = useDarkMode()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -260,6 +261,31 @@ export function TopBar({
                   <div className="px-sm py-2 text-xs text-muted-foreground border-b border-border/60 mb-1 truncate">
                     {userEmail}
                   </div>
+                )}
+                {onTabChange ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserMenuOpen(false)
+                      onTabChange('settings')
+                      window.history.replaceState(null, '', '/settings#profile')
+                      window.dispatchEvent(new HashChangeEvent('hashchange'))
+                    }}
+                    className="w-full flex items-center gap-sm rounded-sm px-sm py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  >
+                    <UserCog size={16} className="shrink-0" />
+                    <span>프로필 수정</span>
+                  </button>
+                ) : (
+                  <Link
+                    href="/settings#profile"
+                    prefetch={false}
+                    onClick={() => setUserMenuOpen(false)}
+                    className="w-full flex items-center gap-sm rounded-sm px-sm py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  >
+                    <UserCog size={16} className="shrink-0" />
+                    <span>프로필 수정</span>
+                  </Link>
                 )}
                 <a
                   href="/logout"

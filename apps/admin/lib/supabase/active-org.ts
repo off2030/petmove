@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 
 /**
@@ -7,8 +8,11 @@ import { createClient } from '@/lib/supabase/server'
  *
  * super_admin 은 memberships 가 0개여도 통과해야 하는 경우가 있으니 주의 —
  * 현재는 super_admin 도 memberships 보유 가정 (로잔 owner).
+ *
+ * React cache() 로 request-scoped 메모이즈 — 같은 서버 액션/RSC 렌더 안에서
+ * 여러 헬퍼가 호출해도 getUser() + memberships 쿼리는 한 번만 수행.
  */
-export async function getActiveOrgId(): Promise<string> {
+export const getActiveOrgId = cache(async (): Promise<string> => {
   const supabase = await createClient()
   const {
     data: { user },
@@ -26,4 +30,4 @@ export async function getActiveOrgId(): Promise<string> {
     throw new Error('multiple org memberships — Phase 6 org switcher 필요')
   }
   return rows[0].org_id as string
-}
+})

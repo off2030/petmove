@@ -1,9 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ALL_PROCEDURE_CHECKS } from '@petmove/domain'
 import type { CheckSeverity, ProcedureCheck } from '@petmove/domain'
 import { cn } from '@/lib/utils'
+import { getDisabledCheckIds, setDisabledCheckIds } from '@/lib/verification-disabled'
 
 const COUNTRY_LABELS: Record<string, string> = {
   all: '전 국가 공통',
@@ -35,6 +36,21 @@ type SortKey = 'added' | 'title'
 export function VerificationSection() {
   const [sort, setSort] = useState<SortKey>('added')
   const [query, setQuery] = useState('')
+  const [disabled, setDisabled] = useState<Set<string>>(() => new Set())
+
+  useEffect(() => {
+    setDisabled(getDisabledCheckIds())
+  }, [])
+
+  function toggleCheck(id: string, enabled: boolean) {
+    setDisabled((prev) => {
+      const next = new Set(prev)
+      if (enabled) next.delete(id)
+      else next.add(id)
+      setDisabledCheckIds(next)
+      return next
+    })
+  }
 
   const grouped = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -64,12 +80,15 @@ export function VerificationSection() {
   const total = ALL_PROCEDURE_CHECKS.length
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-md shadow-sm max-w-3xl">
+    <div className="max-w-3xl">
       <div className="mb-md">
-        <h2 className="text-base font-semibold">절차 검증</h2>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h3 className="font-serif text-[17px] text-foreground pb-2 border-b border-border/60">절차 검증</h3>
+        <p className="text-sm text-muted-foreground mt-sm">
           등록된 검증 규칙 목록입니다. 국가·상황별로 계속 업데이트됩니다.
-          {total > 0 && <> 현재 <strong>{total}</strong>개 등록.</>}
+          {total > 0 && <> 현재 <strong>{total}</strong>개 등록{disabled.size > 0 && <> · {disabled.size}개 사용 안 함</>}.</>}
+        </p>
+        <p className="text-xs text-muted-foreground mt-xs">
+          체크를 해제하면 해당 규칙은 케이스 화면 검증에서 제외됩니다. 이 설정은 이 브라우저에만 저장됩니다.
         </p>
       </div>
 
@@ -111,12 +130,25 @@ export function VerificationSection() {
                 <span className="text-muted-foreground font-normal">({grouped[country].length})</span>
               </h3>
               <ul className="space-y-1">
-                {grouped[country].map((c) => (
+                {grouped[country].map((c) => {
+                  const enabled = !disabled.has(c.id)
+                  return (
                   <li
                     key={c.id}
-                    className="rounded-md border border-border/40 p-sm hover:bg-muted/40 transition-colors"
+                    className={cn(
+                      'rounded-md border border-border/40 p-sm hover:bg-muted/40 transition-colors',
+                      !enabled && 'opacity-55',
+                    )}
                   >
                     <div className="flex items-start gap-sm">
+                      <input
+                        type="checkbox"
+                        checked={enabled}
+                        onChange={(e) => toggleCheck(c.id, e.target.checked)}
+                        aria-label={`${c.title} 사용`}
+                        title={enabled ? '사용 중 — 체크 해제하면 이 규칙을 끕니다' : '사용 안 함 — 체크하면 다시 켭니다'}
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                      />
                       <span
                         className={cn(
                           'shrink-0 text-xs px-1.5 py-0.5 rounded font-medium',
@@ -127,10 +159,13 @@ export function VerificationSection() {
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline gap-sm flex-wrap">
-                          <span className="font-medium">{c.title}</span>
+                          <span className={cn('font-medium', !enabled && 'line-through')}>{c.title}</span>
                           <span className="text-xs text-muted-foreground">{c.category}</span>
                           {!c.run && (
                             <span className="text-xs text-amber-600 dark:text-amber-400">미구현</span>
+                          )}
+                          {!enabled && (
+                            <span className="text-xs text-muted-foreground">사용 안 함</span>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground mt-0.5">{c.description}</p>
@@ -141,7 +176,8 @@ export function VerificationSection() {
                       </div>
                     </div>
                   </li>
-                ))}
+                  )
+                })}
               </ul>
             </section>
           ))}

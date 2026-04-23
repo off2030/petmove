@@ -8,7 +8,18 @@ import fontkit from '@pdf-lib/fontkit'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import mappings from '@/data/pdf-field-mappings.json'
-import { lookupRabies, lookupExternalParasite, lookupInternalParasite, lookupComprehensive, lookupCiv, lookupKennelCough, lookupParasiteById, getParasiteFamily } from '@petmove/domain'
+import { getParasiteFamily } from '@petmove/domain'
+import {
+  lookupRabies,
+  lookupExternalParasite,
+  lookupInternalParasite,
+  lookupComprehensive,
+  lookupCiv,
+  lookupKennelCough,
+  lookupParasiteById,
+  runWithOrgLookups,
+} from '@/lib/vaccine-lookups-scoped'
+import { getOrgVaccineLookups } from '@/lib/vaccine-data'
 import { VET_INFO } from '@/lib/vet-info'
 import type { CaseRow } from '@/lib/supabase/types'
 
@@ -1846,16 +1857,19 @@ function resolveFieldMulti(
 
 export async function fillPdfMulti(formKey: string, cases: CaseRow[]): Promise<FillResult[]> {
   if (cases.length === 0) return [{ ok: false, error: '대상 동물이 없습니다' }]
-  let docs: PackedDoc[]
-  try { docs = packCases(formKey, cases) }
-  catch (e) { return [{ ok: false, error: (e as Error).message }] }
+  const lookups = await getOrgVaccineLookups()
+  return runWithOrgLookups(lookups, async () => {
+    let docs: PackedDoc[]
+    try { docs = packCases(formKey, cases) }
+    catch (e) { return [{ ok: false, error: (e as Error).message }] }
 
-  const results: FillResult[] = []
-  for (let i = 0; i < docs.length; i++) {
-    const r = await fillOnePackedDoc(formKey, docs[i], docs.length > 1 ? i + 1 : 0)
-    results.push(r)
-  }
-  return results
+    const results: FillResult[] = []
+    for (let i = 0; i < docs.length; i++) {
+      const r = await fillOnePackedDoc(formKey, docs[i], docs.length > 1 ? i + 1 : 0)
+      results.push(r)
+    }
+    return results
+  })
 }
 
 async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: number): Promise<FillResult> {
@@ -2037,6 +2051,11 @@ export type FillOptions = {
 }
 
 export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillOptions): Promise<FillResult> {
+  const lookups = await getOrgVaccineLookups()
+  return runWithOrgLookups(lookups, () => fillPdfCore(formKey, caseRow, options))
+}
+
+async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOptions): Promise<FillResult> {
   const form = MAPS[formKey]
   if (!form) return { ok: false, error: `Unknown form: ${formKey}` }
 

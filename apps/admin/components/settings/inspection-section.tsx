@@ -122,10 +122,10 @@ function SectionBlock({
   }
 
   return (
-    <div className="border border-border/60 rounded-lg p-md space-y-4">
+    <div className="space-y-4">
       <div>
-        <h4 className="font-medium text-base">{title}</h4>
-        <p className="text-sm text-muted-foreground mt-1">{description}</p>
+        <h3 className="font-serif text-[17px] text-foreground pb-2 border-b border-border/60">{title}</h3>
+        <p className="text-sm text-muted-foreground mt-sm">{description}</p>
       </div>
 
       {/* Default */}
@@ -359,7 +359,7 @@ export function InspectionSection() {
   }
 
   return (
-    <div className="space-y-4 max-w-3xl">
+    <div className="space-y-lg max-w-3xl">
       <SectionBlock
         title="광견병항체검사"
         description="국가(또는 국가 그룹)별 항체검사 의뢰 기관. 규칙에 매칭되지 않으면 기본 검사기관으로 처리됩니다."
