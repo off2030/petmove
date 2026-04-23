@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { countExpiringProducts } from '@petmove/domain'
 import { useDarkMode } from '@/lib/use-dark-mode'
+import { cn } from '@/lib/utils'
 
 export type TabId = 'cases' | 'todos' | 'calculator' | 'settings'
 
@@ -14,17 +15,31 @@ export const NAV_ITEMS: Array<{ id: TabId; icon: typeof Folder; label: string }>
   { id: 'calculator', icon: LayoutGrid, label: '도구' },
 ]
 
+type TopBarProps = {
+  /**
+   * Currently active dashboard tab. `null`/undefined = no dashboard tab active
+   * (e.g. when mounted on /super-admin).
+   */
+  activeTab?: TabId | null
+  /**
+   * Callback-driven tab switching — used by `DashboardShell` to swap mounted
+   * panels without a full navigation. If omitted, tabs render as `<Link>` and
+   * trigger real navigation (used from standalone pages like /super-admin).
+   */
+  onTabChange?: (tab: TabId) => void
+  isSuperAdmin?: boolean
+  userEmail?: string | null
+  /** Highlight the Shield icon to indicate we're currently on /super-admin. */
+  superAdminActive?: boolean
+}
+
 export function TopBar({
-  activeTab,
+  activeTab = null,
   onTabChange,
   isSuperAdmin = false,
   userEmail,
-}: {
-  activeTab: TabId
-  onTabChange: (tab: TabId) => void
-  isSuperAdmin?: boolean
-  userEmail?: string | null
-}) {
+  superAdminActive = false,
+}: TopBarProps) {
   const expiringCount = useMemo(() => countExpiringProducts(), [])
   const { mode, mounted, cycle } = useDarkMode()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -50,6 +65,32 @@ export function TopBar({
     return () => document.removeEventListener('mousedown', handler)
   }, [userMenuOpen])
 
+  const tabClass = (active: boolean) =>
+    cn(
+      'h-9 inline-flex items-center gap-sm px-sm rounded-md transition-colors text-sm font-medium whitespace-nowrap',
+      active
+        ? 'bg-accent text-foreground'
+        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+    )
+
+  const mobileTabClass = (active: boolean) =>
+    cn(
+      'w-full flex items-center gap-sm rounded-sm px-sm py-2 text-sm transition-colors',
+      active
+        ? 'bg-accent text-foreground font-medium'
+        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+    )
+
+  const iconSlotClass = (active: boolean) =>
+    cn(
+      'relative h-9 w-9 inline-flex items-center justify-center rounded-md transition-colors',
+      active
+        ? 'bg-accent text-foreground'
+        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+    )
+
+  const settingsActive = activeTab === 'settings'
+
   return (
     <header className="shrink-0 h-14 w-full flex items-center gap-lg px-md border-b border-border/60 bg-background">
         {/* Mobile hamburger — left side, hidden on md+ */}
@@ -66,20 +107,30 @@ export function TopBar({
             <div className="absolute left-0 top-full mt-1 z-30 min-w-[160px] rounded-md border border-border bg-popover p-1 shadow-md">
               {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
                 const active = activeTab === id
+                if (onTabChange) {
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => { onTabChange(id); setMenuOpen(false) }}
+                      className={mobileTabClass(active)}
+                    >
+                      <Icon size={16} className="shrink-0" />
+                      <span>{label}</span>
+                    </button>
+                  )
+                }
                 return (
-                  <button
+                  <Link
                     key={id}
-                    type="button"
-                    onClick={() => { onTabChange(id); setMenuOpen(false) }}
-                    className={`w-full flex items-center gap-sm rounded-sm px-sm py-2 text-sm transition-colors ${
-                      active
-                        ? 'bg-accent text-foreground font-medium'
-                        : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                    }`}
+                    href={`/${id}`}
+                    prefetch={false}
+                    onClick={() => setMenuOpen(false)}
+                    className={mobileTabClass(active)}
                   >
                     <Icon size={16} className="shrink-0" />
                     <span>{label}</span>
-                  </button>
+                  </Link>
                 )
               })}
             </div>
@@ -87,13 +138,23 @@ export function TopBar({
         </div>
 
         {/* App name — serif wordmark */}
-        <button
-          type="button"
-          onClick={() => onTabChange('cases')}
-          className="font-serif text-[18px] font-medium tracking-tight text-foreground whitespace-nowrap hover:opacity-70 transition-opacity"
-        >
-          펫무브워크
-        </button>
+        {onTabChange ? (
+          <button
+            type="button"
+            onClick={() => onTabChange('cases')}
+            className="font-serif text-[18px] font-medium tracking-tight text-foreground whitespace-nowrap hover:opacity-70 transition-opacity"
+          >
+            펫무브워크
+          </button>
+        ) : (
+          <Link
+            href="/cases"
+            prefetch={false}
+            className="font-serif text-[18px] font-medium tracking-tight text-foreground whitespace-nowrap hover:opacity-70 transition-opacity"
+          >
+            펫무브워크
+          </Link>
+        )}
 
         {/* Spacer */}
         <div className="flex-1" />
@@ -102,20 +163,29 @@ export function TopBar({
         <nav className="hidden md:flex items-center gap-xs">
           {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
             const active = activeTab === id
+            if (onTabChange) {
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => onTabChange(id)}
+                  className={tabClass(active)}
+                >
+                  <Icon size={16} className="shrink-0" />
+                  <span>{label}</span>
+                </button>
+              )
+            }
             return (
-              <button
+              <Link
                 key={id}
-                type="button"
-                onClick={() => onTabChange(id)}
-                className={`h-9 inline-flex items-center gap-sm px-sm rounded-md transition-colors text-sm font-medium whitespace-nowrap ${
-                  active
-                    ? 'bg-accent text-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                }`}
+                href={`/${id}`}
+                prefetch={false}
+                className={tabClass(active)}
               >
                 <Icon size={16} className="shrink-0" />
                 <span>{label}</span>
-              </button>
+              </Link>
             )
           })}
         </nav>
@@ -131,7 +201,7 @@ export function TopBar({
               prefetch={false}
               title="Super Admin"
               aria-label="Super Admin"
-              className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              className={iconSlotClass(superAdminActive)}
             >
               <Shield size={18} />
             </Link>
@@ -147,21 +217,31 @@ export function TopBar({
               {mode === 'system' ? <Monitor size={18} /> : mode === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => onTabChange('settings')}
-            title="설정"
-            className={`relative h-9 w-9 inline-flex items-center justify-center rounded-md transition-colors ${
-              activeTab === 'settings'
-                ? 'bg-accent text-foreground'
-                : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-            }`}
-          >
-            <Settings size={18} />
-            {expiringCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-background" />
-            )}
-          </button>
+          {onTabChange ? (
+            <button
+              type="button"
+              onClick={() => onTabChange('settings')}
+              title="설정"
+              className={iconSlotClass(settingsActive)}
+            >
+              <Settings size={18} />
+              {expiringCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-background" />
+              )}
+            </button>
+          ) : (
+            <Link
+              href="/settings"
+              prefetch={false}
+              title="설정"
+              className={iconSlotClass(settingsActive)}
+            >
+              <Settings size={18} />
+              {expiringCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-background" />
+              )}
+            </Link>
+          )}
 
           {/* 유저 메뉴 — 이메일 + 로그아웃 */}
           <div className="relative" ref={userMenuRef}>

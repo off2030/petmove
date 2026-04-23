@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { Plus, RefreshCw } from 'lucide-react'
 import {
   createOrg,
   getOrgDetail,
@@ -8,12 +9,15 @@ import {
   type OrgDetail,
   type OrgSummary,
 } from '@/lib/actions/super-admin'
+import { TopBar } from '@/components/layout/topbar'
+import { cn } from '@/lib/utils'
 
 interface Props {
   initialOrgs: OrgSummary[]
+  userEmail: string | null
 }
 
-export function SuperAdminApp({ initialOrgs }: Props) {
+export function SuperAdminApp({ initialOrgs, userEmail }: Props) {
   const [orgs, setOrgs] = useState<OrgSummary[]>(initialOrgs)
   const [selected, setSelected] = useState<OrgDetail | null>(null)
   const [newOrgName, setNewOrgName] = useState('')
@@ -55,159 +59,241 @@ export function SuperAdminApp({ initialOrgs }: Props) {
   }
 
   return (
-    <div className="min-h-screen px-lg py-10 2xl:px-xl">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <header className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold">Super Admin</h1>
-            <p className="text-sm text-muted-foreground">전체 조직 관리. super_admin 전용.</p>
-          </div>
-          <a href="/cases" className="text-sm text-muted-foreground hover:text-foreground underline">
-            ← 대시보드로
-          </a>
-        </header>
-
-        {error && (
-          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-md py-2 text-sm text-destructive">
-            {error}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* 좌: 조직 목록 + 생성 폼 */}
-          <section className="lg:col-span-2 space-y-4">
-            <div className="rounded-xl border border-border/60 bg-card p-md">
-              <h2 className="font-medium text-base mb-2">조직 ({orgs.length})</h2>
-              {orgs.length === 0 ? (
-                <p className="text-sm text-muted-foreground">조직이 없습니다.</p>
-              ) : (
-                <ul className="divide-y divide-border/60 rounded-md border border-border/60">
-                  {orgs.map((o) => (
-                    <li key={o.id}>
-                      <button
-                        type="button"
-                        onClick={() => select(o.id)}
-                        disabled={pending}
-                        className={`w-full text-left px-md py-2 transition-colors hover:bg-accent/60 ${
-                          selected?.id === o.id ? 'bg-muted/60' : ''
-                        }`}
-                      >
-                        <div className="text-sm font-medium truncate">{o.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          멤버 {o.member_count} · 대기 초대 {o.pending_invite_count}
-                        </div>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            <div className="rounded-xl border border-border/60 bg-card p-md">
-              <h2 className="font-medium text-base mb-2">새 조직 생성</h2>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="조직 이름"
-                  value={newOrgName}
-                  onChange={(e) => setNewOrgName(e.target.value)}
-                  className="flex-1 px-md py-2 text-sm rounded-md border border-border/60 bg-background"
-                  disabled={pending}
-                />
+    <>
+      <TopBar isSuperAdmin userEmail={userEmail} superAdminActive />
+      <main className="flex-1 min-w-0 overflow-auto scrollbar-minimal bg-background">
+        <div className="px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
+          <div className="mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl flex flex-col gap-lg">
+            {/* Page header — editorial title + count + refresh */}
+            <div className="shrink-0 flex items-baseline justify-between gap-md">
+              <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
+                조직 관리
+              </h1>
+              <div className="flex items-center gap-sm">
                 <button
                   type="button"
-                  onClick={onCreate}
-                  disabled={pending || !newOrgName.trim()}
-                  className="px-md py-2 text-sm rounded-md bg-accent hover:bg-accent/90 transition-colors disabled:opacity-50"
+                  onClick={refresh}
+                  disabled={pending}
+                  title="새로고침"
+                  aria-label="새로고침"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors disabled:opacity-40"
                 >
-                  생성
+                  <RefreshCw className={cn('h-3.5 w-3.5', pending && 'animate-spin')} />
                 </button>
+                <span className="text-muted-foreground text-[13px]">
+                  <span className="font-serif italic">총</span>{' '}
+                  <span className="font-mono tabular-nums">{orgs.length.toLocaleString()}</span>{' '}
+                  <span className="font-serif italic">개</span>
+                </span>
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                생성 후 해당 조직에 멤버를 초대하려면 멤버 가입이 필요합니다. 본인(super_admin)은 별도 membership 없이도 모든 조직 접근 가능.
-              </p>
             </div>
 
-            <button
-              type="button"
-              onClick={refresh}
-              disabled={pending}
-              className="text-xs text-muted-foreground hover:text-foreground underline"
-            >
-              새로고침
-            </button>
-          </section>
-
-          {/* 우: 선택된 조직 상세 */}
-          <section className="lg:col-span-3">
-            {!selected ? (
-              <div className="rounded-xl border border-border/60 bg-card p-xl text-center text-sm text-muted-foreground">
-                왼쪽에서 조직을 선택하세요.
-              </div>
-            ) : (
-              <div className="rounded-xl border border-border/60 bg-card p-md space-y-6">
-                <header>
-                  <h2 className="text-lg font-semibold">{selected.name}</h2>
-                  <p className="text-xs text-muted-foreground font-mono">{selected.id}</p>
-                  <p className="text-xs text-muted-foreground">
-                    생성: {new Date(selected.created_at).toLocaleDateString()}
-                  </p>
-                </header>
-
-                <section>
-                  <h3 className="font-medium text-sm mb-2">멤버 ({selected.members.length})</h3>
-                  {selected.members.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">멤버 없음</p>
-                  ) : (
-                    <ul className="divide-y divide-border/60 rounded-md border border-border/60">
-                      {selected.members.map((m) => (
-                        <li
-                          key={m.user_id}
-                          className="px-md py-2 flex items-center justify-between gap-md"
-                        >
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium truncate">{m.name || m.email}</div>
-                            <div className="text-xs text-muted-foreground truncate">{m.email}</div>
-                          </div>
-                          <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">
-                            {m.role}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
-
-                <section>
-                  <h3 className="font-medium text-sm mb-2">
-                    대기 초대 ({selected.invites.length})
-                  </h3>
-                  {selected.invites.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">대기 중 초대 없음</p>
-                  ) : (
-                    <ul className="divide-y divide-border/60 rounded-md border border-border/60">
-                      {selected.invites.map((i) => (
-                        <li
-                          key={i.id}
-                          className="px-md py-2 flex items-center justify-between gap-md"
-                        >
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium truncate">{i.email}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {i.role} · 만료{' '}
-                              {new Date(i.expires_at).toLocaleDateString()}
-                            </div>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
+            {error && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-md py-2 text-[13px] text-destructive">
+                {error}
               </div>
             )}
-          </section>
+
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-lg">
+              {/* 좌: 조직 목록 + 생성 폼 */}
+              <section className="lg:col-span-2 flex flex-col gap-lg">
+                {/* Orgs card — Editorial borderless */}
+                <div className="rounded-xl bg-card px-lg pt-md pb-sm">
+                  <div className="flex items-baseline justify-between pb-sm border-b border-border/60 mb-sm">
+                    <h2 className="font-serif text-[17px] text-foreground">조직 목록</h2>
+                    <span className="font-mono text-[12px] tabular-nums text-muted-foreground">
+                      {orgs.length}
+                    </span>
+                  </div>
+                  {orgs.length === 0 ? (
+                    <p className="py-6 text-center font-serif italic text-[14px] text-muted-foreground">
+                      조직이 없습니다
+                    </p>
+                  ) : (
+                    <ul>
+                      {orgs.map((o) => {
+                        const isSel = selected?.id === o.id
+                        return (
+                          <li key={o.id}>
+                            <button
+                              type="button"
+                              onClick={() => select(o.id)}
+                              disabled={pending}
+                              className={cn(
+                                'block w-full text-left py-3 -mx-sm px-sm rounded-sm transition-colors border-b border-dotted border-border/70 last:border-b-0',
+                                isSel ? 'bg-accent' : 'hover:bg-accent/60',
+                                pending && 'disabled:opacity-70',
+                              )}
+                            >
+                              <div className="font-serif font-semibold text-[17px] leading-tight text-foreground truncate">
+                                {o.name}
+                              </div>
+                              <div className="mt-1 text-[12px] text-muted-foreground flex items-center gap-2">
+                                <span>
+                                  <span className="font-serif italic">멤버</span>{' '}
+                                  <span className="font-mono tabular-nums">{o.member_count}</span>
+                                </span>
+                                <span className="opacity-40">·</span>
+                                <span>
+                                  <span className="font-serif italic">대기</span>{' '}
+                                  <span className="font-mono tabular-nums">
+                                    {o.pending_invite_count}
+                                  </span>
+                                </span>
+                              </div>
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  )}
+                </div>
+
+                {/* New org */}
+                <div className="rounded-xl bg-card px-lg pt-md pb-md">
+                  <h2 className="font-serif text-[17px] text-foreground mb-sm">새 조직 추가</h2>
+                  <div className="flex items-center gap-sm">
+                    <input
+                      type="text"
+                      placeholder="조직 이름"
+                      value={newOrgName}
+                      onChange={(e) => setNewOrgName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && newOrgName.trim()) {
+                          e.preventDefault()
+                          onCreate()
+                        }
+                      }}
+                      disabled={pending}
+                      className="flex-1 h-10 bg-transparent px-0 font-serif font-semibold text-[17px] text-foreground placeholder:font-serif placeholder:italic placeholder:font-normal placeholder:text-[14px] placeholder:text-muted-foreground/50 border-b border-border focus:border-foreground/40 focus:outline-none transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={onCreate}
+                      disabled={pending || !newOrgName.trim()}
+                      aria-label="추가"
+                      title="추가"
+                      className="shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <p className="mt-sm text-[12px] font-serif italic text-muted-foreground">
+                    super_admin 은 별도 가입 없이도 모든 조직 접근 가능
+                  </p>
+                </div>
+              </section>
+
+              {/* 우: 선택된 조직 상세 */}
+              <section className="lg:col-span-3">
+                {!selected ? (
+                  <div className="rounded-xl bg-card px-lg py-16 text-center font-serif italic text-[14px] text-muted-foreground">
+                    왼쪽에서 조직을 선택하세요
+                  </div>
+                ) : (
+                  <div className="rounded-xl bg-card px-lg pt-md pb-md flex flex-col gap-lg">
+                    {/* Org header */}
+                    <header className="pb-md border-b border-border/60">
+                      <h2 className="font-serif text-[22px] leading-tight text-foreground">
+                        {selected.name}
+                      </h2>
+                      <div className="mt-2 flex items-baseline gap-md flex-wrap text-[12px] text-muted-foreground">
+                        <span className="font-mono tabular-nums truncate max-w-full">
+                          {selected.id}
+                        </span>
+                        <span>
+                          <span className="font-serif italic">생성</span>{' '}
+                          <span className="font-mono tabular-nums">
+                            {new Date(selected.created_at).toLocaleDateString('ko-KR')}
+                          </span>
+                        </span>
+                      </div>
+                    </header>
+
+                    {/* Members */}
+                    <section>
+                      <div className="flex items-baseline justify-between pb-sm border-b border-border/60 mb-sm">
+                        <h3 className="font-serif text-[17px] text-foreground">멤버</h3>
+                        <span className="font-mono text-[12px] tabular-nums text-muted-foreground">
+                          {selected.members.length}
+                        </span>
+                      </div>
+                      {selected.members.length === 0 ? (
+                        <p className="py-4 text-center text-[13px] font-serif italic text-muted-foreground">
+                          멤버 없음
+                        </p>
+                      ) : (
+                        <ul>
+                          {selected.members.map((m) => (
+                            <li
+                              key={m.user_id}
+                              className="flex items-center justify-between gap-md py-3 border-b border-dotted border-border/70 last:border-b-0"
+                            >
+                              <div className="min-w-0">
+                                <div className="font-serif font-semibold text-[17px] leading-tight truncate">
+                                  {m.name || m.email}
+                                </div>
+                                <div className="text-[13px] text-muted-foreground truncate">
+                                  {m.email}
+                                </div>
+                              </div>
+                              <span className="shrink-0 font-sans text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80">
+                                {m.role}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </section>
+
+                    {/* Invites */}
+                    <section>
+                      <div className="flex items-baseline justify-between pb-sm border-b border-border/60 mb-sm">
+                        <h3 className="font-serif text-[17px] text-foreground">대기 초대</h3>
+                        <span className="font-mono text-[12px] tabular-nums text-muted-foreground">
+                          {selected.invites.length}
+                        </span>
+                      </div>
+                      {selected.invites.length === 0 ? (
+                        <p className="py-4 text-center text-[13px] font-serif italic text-muted-foreground">
+                          대기 중 초대 없음
+                        </p>
+                      ) : (
+                        <ul>
+                          {selected.invites.map((i) => (
+                            <li
+                              key={i.id}
+                              className="flex items-center justify-between gap-md py-3 border-b border-dotted border-border/70 last:border-b-0"
+                            >
+                              <div className="min-w-0">
+                                <div className="font-serif font-semibold text-[16px] leading-tight truncate">
+                                  {i.email}
+                                </div>
+                                <div className="mt-0.5 flex items-center gap-2 flex-wrap text-[12px] text-muted-foreground">
+                                  <span className="font-sans uppercase tracking-[0.14em]">
+                                    {i.role}
+                                  </span>
+                                  <span className="opacity-40">·</span>
+                                  <span>
+                                    <span className="font-serif italic">만료</span>{' '}
+                                    <span className="font-mono tabular-nums">
+                                      {new Date(i.expires_at).toLocaleDateString('ko-KR')}
+                                    </span>
+                                  </span>
+                                </div>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </section>
+                  </div>
+                )}
+              </section>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </main>
+    </>
   )
 }

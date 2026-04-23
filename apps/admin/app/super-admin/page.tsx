@@ -20,5 +20,5 @@ export default async function SuperAdminPage() {
   const result = await listAllOrgs()
   const orgs = result.ok ? result.value : []
 
-  return <SuperAdminApp initialOrgs={orgs} />
+  return <SuperAdminApp initialOrgs={orgs} userEmail={user.email ?? null} />
 }
