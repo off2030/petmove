@@ -34,20 +34,20 @@ const QUARANTINE_OPTIONS = [
 
 const DATA_KEY = 'thailand_extra'
 
-export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
-  const shell = useExtraFieldShell<ThailandExtra>({
-    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY,
+export function ThailandExtraField({ caseId, caseRow, sectionNumber }: { caseId: string; caseRow: CaseRow; sectionNumber: string }) {
+  const shell = useExtraFieldShell<ThailandExtra, 'thailand'>({
+    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY, country: 'thailand',
     onExtract: (result, current, helpers) => {
       const merged = { ...current }
       if (result.data.address_overseas) merged.address_overseas = result.data.address_overseas
       if (result.data.passport_number) merged.passport_number = result.data.passport_number
       if (result.data.passport_expiry_date) merged.passport_expiry_date = result.data.passport_expiry_date
       if (result.data.passport_issuer) merged.passport_issuer = result.data.passport_issuer
-      if (result.data.inbound.flight_number) merged.arrival_flight_number = result.data.inbound.flight_number
-      if (result.data.inbound.date) merged.arrival_date = result.data.inbound.date
+      if (result.data.arrival_flight_number) merged.arrival_flight_number = result.data.arrival_flight_number
+      if (result.data.arrival_date) merged.arrival_date = result.data.arrival_date
       if (result.data.arrival_time) merged.arrival_time = result.data.arrival_time
       if (result.data.quarantine_location) merged.quarantine_location = result.data.quarantine_location
-      const departureDate = result.data.inbound.date ?? null
+      const departureDate = result.data.arrival_date ?? null
       return {
         merged,
         successMsg: '정보가 입력되었습니다',
@@ -66,7 +66,7 @@ export function ThailandExtraField({ caseId, caseRow }: { caseId: string; caseRo
   })
 
   return (
-    <ExtraFieldShell shell={shell} placeholder="정보를 붙여넣으세요 (Enter로 추출)">
+    <ExtraFieldShell shell={shell} sectionNumber={sectionNumber} placeholder="정보를 붙여넣으세요 (Enter로 추출)">
       <FieldRow label="해외주소" value={extra.address_overseas} {...rowProps('address_overseas')}
         placeholder="88/17 Rama IV Rd, Silom, Bangkok 10500, Thailand" />
       <FieldRow label="여권번호" value={extra.passport_number} {...rowProps('passport_number')} placeholder="M12345678" />

@@ -374,10 +374,65 @@ export function VaccineSection({
   const gridCols = 'minmax(0,1.6fr) minmax(0,1fr) 110px 100px 150px'
 
   return (
-    <div className="max-w-5xl pb-2xl">
+    <div
+      onDragOver={isAdmin ? (e) => { e.preventDefault(); if (!dragOver) setDragOver(true) } : undefined}
+      onDragLeave={isAdmin ? (e) => {
+        e.preventDefault()
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false)
+      } : undefined}
+      onDrop={isAdmin ? (e) => {
+        e.preventDefault()
+        setDragOver(false)
+        const files = Array.from(e.dataTransfer.files)
+        if (files.length > 0) handleImagesGlobal(files)
+      } : undefined}
+      className={`max-w-5xl pb-2xl rounded-md transition-colors ${dragOver ? 'bg-primary/5 ring-2 ring-primary/40 ring-dashed' : ''}`}
+    >
       {/* Editorial header */}
       <header className="pb-xl">
-        <h2 className="pmw-st__sec-title mb-md">약품</h2>
+        <div className="mb-md flex items-center gap-sm">
+          <h2 className="pmw-st__sec-title">약품</h2>
+          {isAdmin && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,application/pdf"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files ?? [])
+                  e.target.value = ''
+                  if (files.length > 0) handleImagesGlobal(files)
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={extracting}
+                title="이미지·PDF로 AI 추출"
+                className="shrink-0 translate-y-[2px] text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
+              >
+                <Paperclip className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setPicking(true)}
+                disabled={extracting}
+                title="약품 추가"
+                className="shrink-0 translate-y-[2px] text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+              {extracting && (
+                <span className="font-serif italic text-[12px] text-muted-foreground">이미지에서 제품 정보를 읽는 중…</span>
+              )}
+              {dragOver && !extracting && (
+                <span className="font-serif italic text-[12px] text-muted-foreground">놓으면 자동 분류</span>
+              )}
+            </>
+          )}
+        </div>
         <div className="flex gap-lg flex-wrap items-baseline">
           {counts.expired > 0 && <StatCount n={counts.expired} label="만료" color="var(--pmw-rust)" />}
           {counts.urgent > 0 && <StatCount n={counts.urgent} label="30일 이내" color="var(--pmw-amber)" />}
@@ -414,70 +469,6 @@ export function VaccineSection({
         </div>
       )}
 
-      {isAdmin && (
-        <div
-          onDragOver={(e) => {
-            e.preventDefault()
-            if (!dragOver) setDragOver(true)
-          }}
-          onDragLeave={(e) => {
-            e.preventDefault()
-            if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false)
-          }}
-          onDrop={(e) => {
-            e.preventDefault()
-            setDragOver(false)
-            const files = Array.from(e.dataTransfer.files)
-            if (files.length > 0) handleImagesGlobal(files)
-          }}
-          className={`mb-xl border border-dotted rounded-sm px-lg py-md transition-colors ${
-            dragOver ? 'border-primary/60 bg-primary/5' : 'border-border/60'
-          }`}
-        >
-          <div className="flex items-center justify-between gap-md flex-wrap">
-            <div className="flex items-center gap-sm min-w-0">
-              <Paperclip className="h-4 w-4 shrink-0" style={{ color: 'var(--pmw-olive-gray)' }} />
-              <p className="pmw-st__sec-lead">
-                {extracting
-                  ? '이미지에서 제품 정보를 읽는 중…'
-                  : '제품 이미지·PDF 를 이 영역에 드래그하거나 Ctrl+V 로 붙여넣으면 AI 가 카테고리를 자동 분류합니다.'}
-              </p>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,application/pdf"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                const files = Array.from(e.target.files ?? [])
-                e.target.value = ''
-                if (files.length > 0) handleImagesGlobal(files)
-              }}
-            />
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={extracting}
-                className="inline-flex items-center gap-1 pmw-st__btn px-2 py-0.5 rounded-full border border-border/60 hover:bg-muted/40 transition-colors disabled:opacity-40"
-              >
-                <Paperclip className="h-3 w-3" />
-                파일 선택
-              </button>
-              <button
-                type="button"
-                onClick={() => setPicking(true)}
-                disabled={extracting}
-                className="inline-flex items-center gap-1 pmw-st__btn px-2 py-0.5 rounded-full border border-border/60 hover:bg-muted/40 transition-colors disabled:opacity-40"
-              >
-                <Plus className="h-3 w-3" />
-                추가
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
 
       {loading ? (

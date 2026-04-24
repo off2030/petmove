@@ -6,6 +6,10 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { CopyButton } from './copy-button'
+import { extractExtra } from '@/lib/actions/extract-extra'
+import { uploadFileToNotes } from '@/lib/notes-upload'
+import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
+import { ExtraSectionShell } from './extra-field-shell'
 
 interface SwissExtra {
   entry_purpose: 'temporary' | 'relocation' | 'reentry' | null
@@ -46,7 +50,7 @@ const CROPPED_OPTIONS = [
   { value: 'both', label: '꼬리+귀' },
 ]
 
-export function SwissExtraField({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
+export function SwissExtraField({ caseId, caseRow, sectionNumber }: { caseId: string; caseRow: CaseRow; sectionNumber: string }) {
   const { updateLocalCaseField } = useCases()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const extra: SwissExtra = { ...EMPTY, ...((data[DATA_KEY] as Partial<SwissExtra>) ?? {}) }
@@ -56,8 +60,22 @@ export function SwissExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
   const showCropped = species !== 'cat'
 
   const [editingField, setEditingField] = useState<string | null>(null)
+  const [extracting, setExtracting] = useState(false)
+  const [extractMsg, setExtractMsg] = useState<string | null>(null)
+  const [showInput, setShowInput] = useState(false)
+  const [inputText, setInputText] = useState('')
+  const [dragOver, setDragOver] = useState(false)
+  const dropRef = useRef<HTMLDivElement>(null)
+  const textRef = useRef<HTMLTextAreaElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { setEditingField(null) }, [caseId])
+  useEffect(() => {
+    setEditingField(null)
+    setExtracting(false)
+    setExtractMsg(null)
+    setShowInput(false)
+    setInputText('')
+  }, [caseId])
 
   // 해외주소는 top-level data.address_overseas 에 단일 문자열로 저장.
   // PDF 생성 시 parse 해서 street / postcode / city 로 분리 출력.
@@ -80,6 +98,90 @@ export function SwissExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
     const r = await updateCaseField(caseId, 'data', 'address_overseas', v)
     if (r.ok) updateLocalCaseField(caseId, 'data', 'address_overseas', v)
     setEditingField(null)
+  }
+
+  async function tryExtract(input: { images?: { base64: string; mediaType: string }[]; text?: string }) {
+    setExtracting(true)
+    setExtractMsg(null)
+    try {
+      const result = await extractExtra({ country: 'switzerland', ...input })
+      if (result.ok) {
+        const merged: SwissExtra = { ...extra }
+        if (result.data.entry_date) merged.entry_date = result.data.entry_date
+        if (result.data.entry_airport) merged.entry_airport = result.data.entry_airport
+        if (result.data.email) merged.email = result.data.email
+        const r = await updateCaseField(caseId, 'data', DATA_KEY, merged)
+        if (r.ok) updateLocalCaseField(caseId, 'data', DATA_KEY, merged)
+        if (result.data.address_overseas) {
+          const addr = result.data.address_overseas
+          const r2 = await updateCaseField(caseId, 'data', 'address_overseas', addr)
+          if (r2.ok) updateLocalCaseField(caseId, 'data', 'address_overseas', addr)
+        }
+        setExtractMsg('정보가 입력되었습니다')
+      } else {
+        setExtractMsg('추출 실패: ' + result.error)
+      }
+    } catch (err) {
+      setExtractMsg('오류: ' + (err instanceof Error ? err.message : String(err)))
+    } finally {
+      setExtracting(false)
+      setTimeout(() => setExtractMsg(null), 4000)
+    }
+  }
+
+  async function handleFiles(files: File[]) {
+    const extractable = files.filter(isExtractableFile)
+    if (extractable.length === 0) return
+    for (const file of extractable) {
+      uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField).catch(() => {})
+    }
+    const images = await filesToBase64(extractable)
+    if (images.length > 0) tryExtract({ images })
+  }
+
+  function handleTextSubmit() {
+    const text = inputText.trim()
+    if (!text) return
+    setShowInput(false)
+    setInputText('')
+    tryExtract({ text })
+  }
+
+  useEffect(() => {
+    function handlePaste(e: ClipboardEvent) {
+      if (!dropRef.current) return
+      const active = document.activeElement
+      const inSection = dropRef.current.contains(active) || dropRef.current.matches(':hover')
+      if (!inSection) return
+      if (active instanceof HTMLInputElement || (active instanceof HTMLTextAreaElement && active !== textRef.current)) return
+      const items = e.clipboardData?.items
+      if (!items) return
+      const imageFiles: File[] = []
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile()
+          if (file) imageFiles.push(file)
+        }
+      }
+      if (imageFiles.length > 0) {
+        e.preventDefault()
+        handleFiles(imageFiles)
+      }
+    }
+    document.addEventListener('paste', handlePaste)
+    return () => document.removeEventListener('paste', handlePaste)
+  })
+
+  function handleDragOver(e: React.DragEvent) { e.preventDefault(); setDragOver(true) }
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault()
+    if (dropRef.current && !dropRef.current.contains(e.relatedTarget as Node)) setDragOver(false)
+  }
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragOver(false)
+    const files = Array.from(e.dataTransfer.files).filter(isExtractableFile)
+    if (files.length > 0) handleFiles(files)
   }
 
   function renderSelect(key: keyof SwissExtra, label: string, options: { value: string; label: string }[]) {
@@ -158,8 +260,65 @@ export function SwissExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
     )
   }
 
+  function renderText(key: keyof SwissExtra, label: string, placeholder: string) {
+    const val = extra[key] as string | null
+    const isEditing = editingField === key
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1">{label}</span>
+        {isEditing ? (
+          <InlineInput
+            type="text"
+            initial={val ?? ''}
+            placeholder={placeholder}
+            onSave={(v) => saveField(key, (v as SwissExtra[typeof key]))}
+            onCancel={() => setEditingField(null)}
+          />
+        ) : (
+          <div className="group/val inline-flex items-baseline">
+            <button
+              type="button"
+              onClick={() => setEditingField(key as string)}
+              className={cn(
+                'text-left rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text',
+                !val && 'text-muted-foreground/60',
+              )}
+            >
+              {val || '—'}
+            </button>
+            {val && (
+              <>
+                <CopyButton value={val} className="ml-1 opacity-0 group-hover/val:opacity-100" />
+                <ClearButton onClick={() => saveField(key, null as SwissExtra[typeof key])} />
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
-    <div className="mt-2 pt-2 border-t border-border/40 space-y-1">
+    <ExtraSectionShell
+      sectionNumber={sectionNumber}
+      placeholder="입국 정보를 붙여넣으세요 (Enter로 추출)"
+      dropRef={dropRef}
+      textRef={textRef}
+      fileRef={fileRef}
+      extracting={extracting}
+      extractMsg={extractMsg}
+      dragOver={dragOver}
+      inputText={inputText}
+      setInputText={setInputText}
+      showInput={showInput}
+      setShowInput={setShowInput}
+      handleFiles={handleFiles}
+      handleTextSubmit={handleTextSubmit}
+      handleDragOver={handleDragOver}
+      handleDragLeave={handleDragLeave}
+      handleDrop={handleDrop}
+    >
+      <div className="space-y-1">
       {renderSelect('entry_purpose', '입국목적', PURPOSE_OPTIONS)}
       {renderDate('entry_date', '입국일')}
       {renderSelect('entry_airport', '입국공항', AIRPORT_OPTIONS)}
@@ -200,46 +359,9 @@ export function SwissExtraField({ caseId, caseRow }: { caseId: string; caseRow: 
       {renderText('email', '이메일', 'owner@example.com')}
 
       {showCropped && renderSelect('cropped', '단미·단이', CROPPED_OPTIONS)}
-    </div>
-  )
-
-  function renderText(key: keyof SwissExtra, label: string, placeholder: string) {
-    const val = extra[key] as string | null
-    const isEditing = editingField === key
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
-        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1">{label}</span>
-        {isEditing ? (
-          <InlineInput
-            type="text"
-            initial={val ?? ''}
-            placeholder={placeholder}
-            onSave={(v) => saveField(key, (v as SwissExtra[typeof key]))}
-            onCancel={() => setEditingField(null)}
-          />
-        ) : (
-          <div className="group/val inline-flex items-baseline">
-            <button
-              type="button"
-              onClick={() => setEditingField(key as string)}
-              className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text',
-                !val && 'text-muted-foreground/60',
-              )}
-            >
-              {val || '—'}
-            </button>
-            {val && (
-              <>
-                <CopyButton value={val} className="ml-1 opacity-0 group-hover/val:opacity-100" />
-                <ClearButton onClick={() => saveField(key, null as SwissExtra[typeof key])} />
-              </>
-            )}
-          </div>
-        )}
       </div>
-    )
-  }
+    </ExtraSectionShell>
+  )
 }
 
 function ClearButton({ onClick }: { onClick: () => void }) {

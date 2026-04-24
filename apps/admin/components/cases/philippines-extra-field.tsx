@@ -23,9 +23,9 @@ const EMPTY: PhilippinesExtra = {
 
 const DATA_KEY = 'philippines_extra'
 
-export function PhilippinesExtraField({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
-  const shell = useExtraFieldShell<PhilippinesExtra>({
-    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY,
+export function PhilippinesExtraField({ caseId, caseRow, sectionNumber }: { caseId: string; caseRow: CaseRow; sectionNumber: string }) {
+  const shell = useExtraFieldShell<PhilippinesExtra, 'philippines'>({
+    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY, country: 'philippines',
     onExtract: (result, current) => {
       const merged = { ...current }
       if (result.data.email) merged.email = result.data.email
@@ -33,14 +33,14 @@ export function PhilippinesExtraField({ caseId, caseRow }: { caseId: string; cas
       if (result.data.postal_code) merged.postal_code = result.data.postal_code
       if (result.data.passport_number) merged.passport_number = result.data.passport_number
       if (result.data.passport_expiry_date) merged.passport_expiry_date = result.data.passport_expiry_date
-      if (result.data.inbound.arrival_airport) merged.arrival_airport = result.data.inbound.arrival_airport
+      if (result.data.arrival_airport) merged.arrival_airport = result.data.arrival_airport
       return { merged, successMsg: '정보가 입력되었습니다' }
     },
   })
   const { extra, editingField, setEditingField, saveField } = shell
 
   return (
-    <ExtraFieldShell shell={shell} placeholder="정보를 붙여넣으세요 (Enter로 추출)">
+    <ExtraFieldShell shell={shell} sectionNumber={sectionNumber} placeholder="정보를 붙여넣으세요 (Enter로 추출)">
       <FieldRow
         label="이메일주소"
         value={extra.email}

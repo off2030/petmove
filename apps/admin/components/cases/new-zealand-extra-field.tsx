@@ -13,12 +13,12 @@ const EMPTY: NewZealandExtra = {
 
 const DATA_KEY = 'new_zealand_extra'
 
-export function NewZealandExtraField({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
-  const shell = useExtraFieldShell<NewZealandExtra>({
-    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY,
+export function NewZealandExtraField({ caseId, caseRow, sectionNumber }: { caseId: string; caseRow: CaseRow; sectionNumber: string }) {
+  const shell = useExtraFieldShell<NewZealandExtra, 'new-zealand'>({
+    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY, country: 'new-zealand',
     onExtract: (result, current) => {
       const merged = { ...current }
-      if (result.data.nz_permit_no) merged.permit_no = result.data.nz_permit_no
+      if (result.data.permit_no) merged.permit_no = result.data.permit_no
       if (merged.permit_no === current.permit_no) {
         return { merged: null, noMatchMsg: '추출 실패: 뉴질랜드 관련 정보를 찾지 못했습니다' }
       }
@@ -28,7 +28,7 @@ export function NewZealandExtraField({ caseId, caseRow }: { caseId: string; case
   const { extra, editingField, setEditingField, saveField } = shell
 
   return (
-    <ExtraFieldShell shell={shell} placeholder="허가번호·도착공항 정보를 붙여넣으세요 (Enter로 추출)">
+    <ExtraFieldShell shell={shell} sectionNumber={sectionNumber} placeholder="허가번호·도착공항 정보를 붙여넣으세요 (Enter로 추출)">
       <FieldRow
         label="Permit No."
         value={extra.permit_no}

@@ -6,9 +6,10 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { CopyButton } from './copy-button'
-import { extractHawaiiInfo } from '@/lib/actions/extract-hawaii'
+import { extractExtra } from '@/lib/actions/extract-extra'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
+import { ExtraSectionShell } from './extra-field-shell'
 
 interface HawaiiExtra {
   passport_number: string | null
@@ -32,7 +33,7 @@ const EMPTY: HawaiiExtra = {
 
 const DATA_KEY = 'hawaii_extra'
 
-export function HawaiiExtraField({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
+export function HawaiiExtraField({ caseId, caseRow, sectionNumber }: { caseId: string; caseRow: CaseRow; sectionNumber: string }) {
   const { updateLocalCaseField } = useCases()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const extra: HawaiiExtra = (data[DATA_KEY] as HawaiiExtra) ?? { ...EMPTY }
@@ -61,11 +62,11 @@ export function HawaiiExtraField({ caseId, caseRow }: { caseId: string; caseRow:
 
   /* ── AI extraction ── */
 
-  async function tryExtract(input: { imageBase64?: string; mediaType?: string; text?: string }) {
+  async function tryExtract(input: { images?: { base64: string; mediaType: string }[]; text?: string }) {
     setExtracting(true)
     setExtractMsg(null)
     try {
-      const result = await extractHawaiiInfo(input)
+      const result = await extractExtra({ country: 'hawaii', ...input })
       if (result.ok) {
         const merged: HawaiiExtra = { ...extra }
         for (const [k, v] of Object.entries(result.data)) {
@@ -92,9 +93,7 @@ export function HawaiiExtraField({ caseId, caseRow }: { caseId: string; caseRow:
       uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField).catch(() => {})
     }
     const images = await filesToBase64(extractable)
-    for (const img of images) {
-      await tryExtract({ imageBase64: img.base64, mediaType: img.mediaType })
-    }
+    if (images.length > 0) await tryExtract({ images })
   }
 
   function handleTextSubmit() {
@@ -187,59 +186,25 @@ export function HawaiiExtraField({ caseId, caseRow }: { caseId: string; caseRow:
   }
 
   return (
-    <div
-      ref={dropRef}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      className={cn(
-        'mt-2 pt-2 border-t border-border/40 rounded-md transition-colors',
-        dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
-      )}
+    <ExtraSectionShell
+      sectionNumber={sectionNumber}
+      placeholder="여권/주소 정보를 붙여넣으세요 (Enter로 추출)"
+      dropRef={dropRef}
+      textRef={textRef}
+      fileRef={fileRef}
+      extracting={extracting}
+      extractMsg={extractMsg}
+      dragOver={dragOver}
+      inputText={inputText}
+      setInputText={setInputText}
+      showInput={showInput}
+      setShowInput={setShowInput}
+      handleFiles={handleFiles}
+      handleTextSubmit={handleTextSubmit}
+      handleDragOver={handleDragOver}
+      handleDragLeave={handleDragLeave}
+      handleDrop={handleDrop}
     >
-      {/* ── AI Input zone ── */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
-        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1">AI 입력</span>
-        <div className="min-w-0 space-y-1">
-          {showInput ? (
-            <div className="space-y-1">
-              <textarea
-                ref={textRef}
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTextSubmit() }
-                  if (e.key === 'Escape') { setShowInput(false); setInputText('') }
-                }}
-                placeholder="여권/주소 정보를 붙여넣으세요 (Enter로 추출)"
-                className="w-full min-h-[3rem] rounded-md border border-border/50 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-none"
-              />
-            </div>
-          ) : (
-            <div className="flex items-center gap-xs">
-              <button
-                type="button"
-                onClick={() => { setShowInput(true); setTimeout(() => textRef.current?.focus(), 50) }}
-                disabled={extracting}
-                className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground cursor-pointer disabled:opacity-50"
-              >
-                {extracting ? '추출 중...' : '텍스트·이미지·PDF 붙여넣기'}
-              </button>
-              <input ref={fileRef} type="file" accept="image/*,.pdf" multiple onChange={(e) => { if (e.target.files) handleFiles(Array.from(e.target.files)); e.target.value = '' }} className="hidden" />
-              <button type="button" onClick={() => fileRef.current?.click()} disabled={extracting} className="shrink-0 rounded-md p-1 text-muted-foreground/50 hover:text-foreground hover:bg-accent/60 transition-colors disabled:opacity-30" title="파일 첨부">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-              </button>
-            </div>
-          )}
-          {extractMsg && (
-            <div className={cn('text-xs', extractMsg.includes('실패') || extractMsg.includes('오류') ? 'text-red-600' : 'text-green-600')}>
-              {extractMsg}
-            </div>
-          )}
-          {dragOver && <div className="text-xs text-muted-foreground">놓으면 자동 입력</div>}
-        </div>
-      </div>
-
       {renderField('passport_number', '여권번호', 'text', '마지막 4자리')}
       {renderField('passport_issuing_country', '발행국가', 'text', 'Republic of Korea')}
       {renderField('passport_expiry_date', '만료일', 'date')}
@@ -247,7 +212,7 @@ export function HawaiiExtraField({ caseId, caseRow }: { caseId: string; caseRow:
       {renderField('email_address', '이메일주소', 'email')}
       {renderField('address_overseas', '해외주소', 'text')}
       {renderField('postal_code', '우편번호', 'text')}
-    </div>
+    </ExtraSectionShell>
   )
 }
 

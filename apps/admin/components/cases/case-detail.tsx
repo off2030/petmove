@@ -40,7 +40,7 @@ import { OverseasAddressField } from './overseas-address-field'
 import { useCases } from './cases-context'
 import { VerificationProvider, severityTextClass, tooltipText, useFieldVerification } from './verification-context'
 
-type ExtraFieldProps = { caseId: string; caseRow: CaseRow }
+type ExtraFieldProps = { caseId: string; caseRow: CaseRow; sectionNumber: string }
 
 /** destOverride.extraSection 값 → 해당 국가 추가정보 컴포넌트. */
 const EXTRA_SECTION_COMPONENTS: Record<string, React.ComponentType<ExtraFieldProps>> = {
@@ -278,19 +278,23 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
           const ExtraComp = destOverride?.extraSection ? EXTRA_SECTION_COMPONENTS[destOverride.extraSection] : null
           const extraFieldsOnly = !destOverride?.extraSection && (destOverride?.extraFields?.length ?? 0) > 0
           if (!ExtraComp && !extraFieldsOnly) return null
+          const sectionNumber = String(groups.length + 1).padStart(2, '0')
+          // ExtraComp가 있으면 자체 <section>과 헤더를 렌더. AI 입력 없는 extraFieldsOnly 모드는 여기서 직접 헤더 렌더.
+          if (ExtraComp) {
+            return <ExtraComp caseId={caseRow.id} caseRow={caseRow} sectionNumber={sectionNumber} />
+          }
           return (
             <section className="mb-7">
               <div className="mb-3 flex items-center gap-[10px]">
                 <span className="font-mono text-[12px] tracking-[1px] text-muted-foreground">
-                  {String(groups.length + 1).padStart(2, '0')}
+                  {sectionNumber}
                 </span>
                 <h3 className="font-serif text-[15px] font-medium uppercase tracking-[0.4px] text-foreground">
                   추가정보
                 </h3>
               </div>
               <div>
-                {ExtraComp && <ExtraComp caseId={caseRow.id} caseRow={caseRow} />}
-                {extraFieldsOnly && destOverride!.extraFields!.includes('address_overseas') && (
+                {destOverride!.extraFields!.includes('address_overseas') && (
                   <OverseasAddressField caseId={caseRow.id} caseRow={caseRow} />
                 )}
               </div>

@@ -5,13 +5,14 @@ import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
-import { extractFlightInfo } from '@/lib/actions/extract-flight'
+import { extractExtra } from '@/lib/actions/extract-extra'
+import type { Country, ResultMap } from '@/lib/actions/extract-extra'
 import { CopyButton } from './copy-button'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { DateTextField } from '@/components/ui/date-text-field'
 
-type ExtractOk = Extract<Awaited<ReturnType<typeof extractFlightInfo>>, { ok: true }>
+type ExtractOk<C extends Country> = { ok: true; data: ResultMap[C] }
 
 export interface ExtractOutcome<T> {
   /** 병합된 extra. null이면 "정보를 찾지 못했습니다" 메시지 표시. */
@@ -28,7 +29,7 @@ export interface ExtractHelpers {
   syncDepartureDate: (date: string | null) => Promise<void>
 }
 
-export type ExtractHandler<T> = (result: ExtractOk, current: T, helpers: ExtractHelpers) => ExtractOutcome<T>
+export type ExtractHandler<T, C extends Country> = (result: ExtractOk<C>, current: T, helpers: ExtractHelpers) => ExtractOutcome<T>
 
 function hasAnyValue(obj: unknown): boolean {
   if (obj === null || obj === undefined) return false
@@ -39,14 +40,15 @@ function hasAnyValue(obj: unknown): boolean {
   return false
 }
 
-export function useExtraFieldShell<T extends object>(params: {
+export function useExtraFieldShell<T extends object, C extends Country>(params: {
   caseId: string
   caseRow: CaseRow
   dataKey: string
   empty: T
-  onExtract: ExtractHandler<T>
+  country: C
+  onExtract: ExtractHandler<T, C>
 }) {
-  const { caseId, caseRow, dataKey, empty, onExtract } = params
+  const { caseId, caseRow, dataKey, empty, country, onExtract } = params
   const { updateLocalCaseField } = useCases()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const extra: T = (data[dataKey] as T) ?? empty
@@ -90,7 +92,7 @@ export function useExtraFieldShell<T extends object>(params: {
     setExtracting(true)
     setExtractMsg(null)
     try {
-      const result = await extractFlightInfo(input)
+      const result = await extractExtra({ country, ...input })
       if (result.ok) {
         const { merged, successMsg, noMatchMsg, afterSave } = onExtract(result, extra, { syncDepartureDate })
         if (merged === null) {
@@ -180,69 +182,149 @@ export function useExtraFieldShell<T extends object>(params: {
   }
 }
 
-export type ShellApi<T extends object> = ReturnType<typeof useExtraFieldShell<T>>
+export type ShellApi<T extends object, C extends Country = Country> = ReturnType<typeof useExtraFieldShell<T, C>>
 
-/** AI 입력 + 드래그드랍 감싸는 외곽 박스. children으로 국가별 필드 행을 받는다. */
-export function ExtraFieldShell<T extends object>({
-  shell, placeholder, children,
-}: { shell: ShellApi<T>; placeholder: string; children: React.ReactNode }) {
-  const {
-    dropRef, textRef, fileRef,
-    extracting, extractMsg, dragOver, inputText, setInputText, showInput, setShowInput,
-    handleFiles, handleTextSubmit, handleDragOver, handleDragLeave, handleDrop,
-  } = shell
+/**
+ * AI 입력(파일/텍스트)을 제목 우측 아이콘에 통합한 "추가정보" 섹션 래퍼.
+ * 기존 별도 "AI 입력" 행 제거 — 아이콘 클릭으로 파일 선택 또는 텍스트 입력 토글.
+ */
+export interface ExtraSectionShellProps {
+  sectionNumber: string
+  placeholder: string
+  children: React.ReactNode
+  dropRef: React.RefObject<HTMLDivElement | null>
+  textRef: React.RefObject<HTMLTextAreaElement | null>
+  fileRef: React.RefObject<HTMLInputElement | null>
+  extracting: boolean
+  extractMsg: string | null
+  dragOver: boolean
+  inputText: string
+  setInputText: (v: string) => void
+  showInput: boolean
+  setShowInput: (v: boolean | ((prev: boolean) => boolean)) => void
+  handleFiles: (files: File[]) => void
+  handleTextSubmit: () => void
+  handleDragOver: (e: React.DragEvent) => void
+  handleDragLeave: (e: React.DragEvent) => void
+  handleDrop: (e: React.DragEvent) => void
+}
+
+export function ExtraSectionShell({
+  sectionNumber, placeholder, children,
+  dropRef, textRef, fileRef,
+  extracting, extractMsg, dragOver,
+  inputText, setInputText, showInput, setShowInput,
+  handleFiles, handleTextSubmit, handleDragOver, handleDragLeave, handleDrop,
+}: ExtraSectionShellProps) {
   return (
-    <div
+    <section
       ref={dropRef}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        'mt-2 pt-2 border-t border-border/40 rounded-md transition-colors',
+        'mb-7 rounded-md transition-colors',
         dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
-        <div className="flex items-center gap-[6px] pt-1">
-          <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">AI 입력</span>
-          <input ref={fileRef} type="file" accept="image/*,.pdf" multiple onChange={(e) => { if (e.target.files) handleFiles(Array.from(e.target.files)); e.target.value = '' }} className="hidden" />
-          <button type="button" onClick={() => fileRef.current?.click()} disabled={extracting} className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30" title="이미지/PDF 첨부">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-          </button>
-        </div>
-        <div className="min-w-0 space-y-1">
-          {showInput ? (
-            <textarea
-              ref={textRef}
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTextSubmit() }
-                if (e.key === 'Escape') { setShowInput(false); setInputText('') }
-              }}
-              placeholder={placeholder}
-              className="w-full min-h-[3rem] rounded-md border border-border/50 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-none"
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={() => { setShowInput(true); setTimeout(() => textRef.current?.focus(), 50) }}
-              disabled={extracting}
-              className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground cursor-pointer disabled:opacity-50"
-            >
-              {extracting ? '추출 중...' : '—'}
-            </button>
+      <div className="mb-3 flex items-center gap-[10px]">
+        <span className="font-mono text-[12px] tracking-[1px] text-muted-foreground">
+          {sectionNumber}
+        </span>
+        <h3 className="font-serif text-[15px] font-medium uppercase tracking-[0.4px] text-foreground">
+          추가정보
+        </h3>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*,.pdf"
+          multiple
+          onChange={(e) => { if (e.target.files) handleFiles(Array.from(e.target.files)); e.target.value = '' }}
+          className="hidden"
+        />
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={extracting}
+          className="shrink-0 translate-y-[2px] text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
+          title="이미지·PDF로 AI 입력"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            const next = !showInput
+            setShowInput(next)
+            if (next) setTimeout(() => textRef.current?.focus(), 50)
+            else setInputText('')
+          }}
+          disabled={extracting}
+          className={cn(
+            'shrink-0 translate-y-[2px] transition-colors disabled:opacity-30',
+            showInput ? 'text-foreground' : 'text-muted-foreground/60 hover:text-foreground',
           )}
-          {extractMsg && (
-            <div className={cn('text-xs', extractMsg.includes('실패') || extractMsg.includes('오류') ? 'text-red-600' : 'text-green-600')}>
-              {extractMsg}
-            </div>
-          )}
-          {dragOver && <div className="text-xs text-muted-foreground">놓으면 자동 입력</div>}
-        </div>
+          title="텍스트로 AI 입력"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+        </button>
+        {extracting && (
+          <span className="font-sans text-[12px] italic text-muted-foreground">추출 중...</span>
+        )}
+        {extractMsg && (
+          <span className={cn(
+            'font-sans text-[12px]',
+            extractMsg.includes('실패') || extractMsg.includes('오류') ? 'text-red-600' : 'text-green-600',
+          )}>{extractMsg}</span>
+        )}
       </div>
+      {showInput && (
+        <div className="mb-2">
+          <textarea
+            ref={textRef}
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTextSubmit() }
+              if (e.key === 'Escape') { setShowInput(false); setInputText('') }
+            }}
+            placeholder={placeholder}
+            className="w-full min-h-[3rem] rounded-md border border-border/50 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-none"
+          />
+        </div>
+      )}
+      {dragOver && <div className="mb-2 text-xs text-muted-foreground">놓으면 자동 입력</div>}
+      <div>{children}</div>
+    </section>
+  )
+}
+
+/** @deprecated use ExtraSectionShell — keeps hook-based callers simple. */
+export function ExtraFieldShell<T extends object, C extends Country>({
+  shell, placeholder, sectionNumber, children,
+}: { shell: ShellApi<T, C>; placeholder: string; sectionNumber: string; children: React.ReactNode }) {
+  return (
+    <ExtraSectionShell
+      sectionNumber={sectionNumber}
+      placeholder={placeholder}
+      dropRef={shell.dropRef}
+      textRef={shell.textRef}
+      fileRef={shell.fileRef}
+      extracting={shell.extracting}
+      extractMsg={shell.extractMsg}
+      dragOver={shell.dragOver}
+      inputText={shell.inputText}
+      setInputText={shell.setInputText}
+      showInput={shell.showInput}
+      setShowInput={shell.setShowInput}
+      handleFiles={shell.handleFiles}
+      handleTextSubmit={shell.handleTextSubmit}
+      handleDragOver={shell.handleDragOver}
+      handleDragLeave={shell.handleDragLeave}
+      handleDrop={shell.handleDrop}
+    >
       {children}
-    </div>
+    </ExtraSectionShell>
   )
 }
 

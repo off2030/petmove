@@ -8,11 +8,6 @@
 import type { ExtractAllResult } from '@/lib/actions/extract-all'
 import type { CaseSeed } from '@/lib/actions/create-case-with-data'
 
-/** 항공편 정보가 하나라도 있는지 */
-function flightHasInfo(f: ExtractAllResult['inbound']): boolean {
-  return !!(f.date || f.departure_airport || f.arrival_airport || f.flight_number || f.transport)
-}
-
 /**
  * 마이크로칩 정규화: 정확히 15자리면 공백 포맷(`000 000 000 000 000`)으로,
  * 아니면 null. 부분추출된 잘못된 번호가 DB에 들어가 유령 케이스를 만드는 걸 방지.
@@ -56,8 +51,6 @@ export function extractResultToSeed(r: ExtractAllResult): CaseSeed {
   if (petNameEnClean) column.pet_name_en = petNameEnClean
   const chipNorm = normalizeMicrochip(r.microchip)
   if (chipNorm) column.microchip = chipNorm
-  if (r.destination) column.destination = r.destination
-  if (r.inbound?.date) column.departure_date = r.inbound.date
 
   // ── pet identity (data) ──
   if (r.species) data.species = r.species
@@ -68,7 +61,6 @@ export function extractResultToSeed(r: ExtractAllResult): CaseSeed {
   if (r.sex) data.sex = r.sex
   if (r.birth_date) data.birth_date = r.birth_date
   if (r.weight) data.weight = r.weight
-  if (r.microchip_implant_date) data.microchip_implant_date = r.microchip_implant_date
 
   // ── customer (data) ──
   if (r.customer_first_name_en) data.customer_first_name_en = r.customer_first_name_en
@@ -89,19 +81,6 @@ export function extractResultToSeed(r: ExtractAllResult): CaseSeed {
   if (r.address_en) data.address_en = r.address_en
   if (addressZip) data.address_zipcode = addressZip
   if (r.email) data.email = r.email
-
-  // ── overseas ──
-  if (r.address_overseas) data.address_overseas = r.address_overseas
-
-  // ── flights (data) ── Japan/Philippines extra-field가 쓰는 중첩 구조
-  if (flightHasInfo(r.inbound)) data.inbound = r.inbound
-  if (flightHasInfo(r.outbound)) data.outbound = r.outbound
-
-  // ── passport (data) ──
-  if (r.passport_number) data.passport_number = r.passport_number
-  if (r.passport_issue_date) data.passport_issue_date = r.passport_issue_date
-  if (r.passport_expiry_date) data.passport_expiry_date = r.passport_expiry_date
-  if (r.passport_nationality) data.passport_nationality = r.passport_nationality
 
   // undefined는 JSON 직렬화에서 제거됨 — 혹시 남아있으면 정리
   for (const k of Object.keys(data)) if (data[k] === undefined) delete data[k]

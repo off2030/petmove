@@ -17,14 +17,14 @@ const EMPTY: AustraliaExtra = {
 
 const DATA_KEY = 'australia_extra'
 
-export function AustraliaExtraField({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
-  const shell = useExtraFieldShell<AustraliaExtra>({
-    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY,
+export function AustraliaExtraField({ caseId, caseRow, sectionNumber }: { caseId: string; caseRow: CaseRow; sectionNumber: string }) {
+  const shell = useExtraFieldShell<AustraliaExtra, 'australia'>({
+    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY, country: 'australia',
     onExtract: (result, current) => {
       const merged = { ...current }
-      if (result.data.au_permit_no) merged.permit_no = result.data.au_permit_no
-      if (result.data.au_id_date) merged.id_date = result.data.au_id_date
-      if (result.data.au_sample_received_date) merged.sample_received_date = result.data.au_sample_received_date
+      if (result.data.permit_no) merged.permit_no = result.data.permit_no
+      if (result.data.id_date) merged.id_date = result.data.id_date
+      if (result.data.sample_received_date) merged.sample_received_date = result.data.sample_received_date
       const changed = merged.permit_no !== current.permit_no
         || merged.id_date !== current.id_date
         || merged.sample_received_date !== current.sample_received_date
@@ -35,7 +35,7 @@ export function AustraliaExtraField({ caseId, caseRow }: { caseId: string; caseR
   const { extra, editingField, setEditingField, saveField } = shell
 
   return (
-    <ExtraFieldShell shell={shell} placeholder="허가번호·샘플수령일·ID 확인일 정보를 붙여넣으세요 (Enter로 추출)">
+    <ExtraFieldShell shell={shell} sectionNumber={sectionNumber} placeholder="허가번호·샘플수령일·ID 확인일 정보를 붙여넣으세요 (Enter로 추출)">
       <FieldRow
         label="Permit No."
         value={extra.permit_no}
