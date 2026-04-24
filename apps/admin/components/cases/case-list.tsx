@@ -312,17 +312,10 @@ export function CaseList({
                       )}
                     >
                       {isNew && (
-                        <>
-                          <span
-                            aria-hidden
-                            className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary"
-                          />
-                          <span className="absolute right-3 top-3 inline-flex items-center rounded-sm border px-1.5 py-0.5 font-mono text-[9px] tracking-[1.3px] uppercase"
-                            style={{ borderColor: 'var(--pmw-rust)', color: 'var(--pmw-rust)' }}
-                          >
-                            신규
-                          </span>
-                        </>
+                        <span
+                          aria-hidden
+                          className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary"
+                        />
                       )}
                       <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm">
                         {/* Guardian — sans · 16px · Charcoal (near-black 85%) */}
