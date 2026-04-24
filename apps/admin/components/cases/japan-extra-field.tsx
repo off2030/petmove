@@ -427,7 +427,7 @@ function FlightBlock({ label, direction, flight, editingField, setEditingField, 
           const isEditing = editingField === fieldId
           return (
             <div key={f.key} className="flex items-center gap-sm">
-              <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground w-16 shrink-0">{f.label}</span>
+              <SectionLabel className="w-16 shrink-0">{f.label}</SectionLabel>
               {isEditing ? (
                 f.type === 'select' ? (
                   <SelectInput
