@@ -392,7 +392,12 @@ export default function ApplyPage() {
         const prefix = pets.length > 1 ? `반려동물 ${i + 1} ` : '반려동물 '
         parts.push(`${prefix}${labels.join(', ')}`)
       }
-      const summary = parts.length > 0 ? `${parts.join(', ')}을(를) 입력해주세요.` : ''
+      // 마지막 글자 받침 유무로 을/를 선택 (한글 음절: (code-0xAC00)%28 ≠ 0 이면 받침 있음).
+      const last = parts.length > 0 ? parts[parts.length - 1].slice(-1) : ''
+      const code = last.charCodeAt(0)
+      const hasJongseong = code >= 0xAC00 && code <= 0xD7A3 && (code - 0xAC00) % 28 !== 0
+      const particle = hasJongseong ? '을' : '를'
+      const summary = parts.length > 0 ? `${parts.join(', ')}${particle} 입력해주세요.` : ''
       setError(formatError ? `${summary} ${formatError}`.trim() : summary)
       // 첫 누락 항목으로 스크롤
       if (miss.size > 0) {
