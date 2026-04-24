@@ -92,7 +92,7 @@ export function EditableField({
   lang?: 'ko' | 'en'
   clearable?: boolean
 }) {
-  const { updateLocalCaseField } = useCases()
+  const { updateLocalCaseField, replaceLocalCaseData } = useCases()
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState<string>(stringifyRaw(rawValue, spec))
   const [saving, startSave] = useTransition()
@@ -219,6 +219,8 @@ export function EditableField({
       const result = await updateCaseField(caseId, spec.storage, spec.key, value)
       if (!result.ok) { setError(result.error); return }
       updateLocalCaseField(caseId, spec.storage, spec.key, value)
+      // 자동 채움 결과 반영 — 엔진이 다른 필드들을 채웠으면 data 통째 교체.
+      if (result.autoFilled) replaceLocalCaseData(caseId, result.autoFilled.data)
       setError(null)
       setEditing(false)
     })

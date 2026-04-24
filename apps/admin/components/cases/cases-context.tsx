@@ -39,6 +39,8 @@ interface CasesContextValue {
     key: string,
     value: unknown,
   ) => void
+  /** auto-fill 엔진 등 여러 필드가 한 번에 바뀔 때 data 객체 전체를 교체. */
+  replaceLocalCaseData: (caseId: string, data: Record<string, unknown>) => void
   /**
    * 선택된 케이스의 목적지 여럿 중 "현재 활성" 목적지. 단일 목적지면 그 값.
    * 상세페이지 필드 필터·증명서 버튼·검증 기준이 됨. DB 저장 안 함.
@@ -186,6 +188,15 @@ export function CasesProvider({
     })
   }, [])
 
+  const replaceLocalCaseData = useCallback(
+    (caseId: string, data: Record<string, unknown>) => {
+      setCases((prev) =>
+        prev.map((c) => (c.id === caseId ? { ...c, data, updated_at: new Date().toISOString() } : c)),
+      )
+    },
+    [],
+  )
+
   const updateLocalCaseField = useCallback(
     (
       caseId: string,
@@ -225,6 +236,7 @@ export function CasesProvider({
       addLocalCase,
       removeLocalCase,
       updateLocalCaseField,
+      replaceLocalCaseData,
       activeDestination,
       setActiveDestination,
       importReportCountries,
@@ -235,7 +247,7 @@ export function CasesProvider({
       setCertConfig,
       newCaseIds,
     }),
-    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination, importReportCountries, inspectionConfig, certConfig, newCaseIds],
+    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, replaceLocalCaseData, activeDestination, importReportCountries, inspectionConfig, certConfig, newCaseIds],
   )
 
   return <CasesContext.Provider value={value}>{children}</CasesContext.Provider>

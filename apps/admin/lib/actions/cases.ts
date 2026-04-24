@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { applyAutoFillRules } from '@/lib/auto-fill-engine'
 
 const REGULAR_COLUMNS = new Set([
   'customer_name',
@@ -14,7 +15,9 @@ const REGULAR_COLUMNS = new Set([
   'status',
 ])
 
-export type UpdateResult = { ok: true } | { ok: false; error: string }
+export type UpdateResult =
+  | { ok: true; autoFilled?: { data: Record<string, unknown> } }
+  | { ok: false; error: string }
 
 /**
  * Update a single field on a case. Records change in case_history for undo.
@@ -128,8 +131,37 @@ export async function updateCaseField(
     })
   }
 
+  // 자동 채움 규칙 적용 — 날짜 관련 필드가 변경됐을 때만.
+  // 체이닝은 엔진 내부에서 iter loop 로 처리.
+  const DATE_TRIGGER_KEYS = new Set([
+    'departure_date',
+    'vet_visit_date',
+    'rabies_dates',
+    'general_vaccine_dates',
+    'civ_dates',
+    'kennel_cough_dates',
+    'internal_parasite_dates',
+    'external_parasite_dates',
+    'heartworm_dates',
+  ])
+  let autoFilled: { data: Record<string, unknown> } | undefined
+  if (DATE_TRIGGER_KEYS.has(key)) {
+    try {
+      await applyAutoFillRules(supabase, caseId)
+      // auto-fill 이후 최신 data 를 다시 읽어 클라이언트 context 에 반영할 수 있게 리턴.
+      const { data: refreshed } = await supabase
+        .from('cases')
+        .select('data')
+        .eq('id', caseId)
+        .single()
+      if (refreshed) {
+        autoFilled = { data: (refreshed.data as Record<string, unknown> | null) ?? {} }
+      }
+    } catch { /* best-effort */ }
+  }
+
   revalidatePath('/cases')
-  return { ok: true }
+  return autoFilled ? { ok: true, autoFilled } : { ok: true }
 }
 
 /**
