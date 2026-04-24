@@ -74,14 +74,8 @@ export function LoginForm({ next }: { next: string }) {
           >
             {loading === 'naver' ? '이동 중…' : '네이버로 로그인'}
           </Button>
-          <Button
-            className="w-full"
-            variant="outline"
-            disabled={loading !== null}
-            onClick={() => oauth('kakao')}
-          >
-            {loading === 'kakao' ? '이동 중…' : '카카오로 로그인'}
-          </Button>
+          {/* 카카오 로그인: 비즈앱 검수 통과 전까지 비활성화 (KOE205).
+              Provider 설정/시크릿은 Bitwarden 백업 + Seoul Supabase 에 OFF 상태로 보관. */}
           <Button
             className="w-full"
             variant="outline"
