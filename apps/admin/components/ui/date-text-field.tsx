@@ -204,6 +204,18 @@ export function DateTextField({
             visibility: popPos ? 'visible' : 'hidden',
           }}
           className="z-50 rounded-xl border border-border/60 bg-popover shadow-md"
+          // mousedown preventDefault: input 이 blur 되면서 commitDraft("") → onChange("")
+          // → 부모의 saveNewDate("") 가 빈 값으로 호출되어 입력이 cancel 되는 것을 방지.
+          // click 이벤트는 mousedown 의 default(focus shift) 만 막아도 정상 발화함.
+          onMouseDown={(e) => {
+            // 단, Calendar 내부 인터랙션이 마우스 이벤트로 의존하지 않는 day 버튼은 click 으로 동작.
+            // preventDefault 가 click 까지 막지는 않으므로 안전.
+            if (e.target !== e.currentTarget) {
+              // 자식 클릭 시에도 input blur 막기 위해 preventDefault — 단, button 자체의
+              // click 은 별도 dispatch 로 정상 발화.
+            }
+            e.preventDefault()
+          }}
         >
           <Calendar
             mode="single"
