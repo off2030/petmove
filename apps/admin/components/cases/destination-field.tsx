@@ -128,22 +128,29 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                     multi && !isActive && 'opacity-45 hover:opacity-80',
                   )}
                 >
-                  {code && (
-                    <span className="font-mono text-[13px] uppercase tracking-[1px] text-[#7B7B5F]">
-                      {code}
-                    </span>
-                  )}
                   <button
                     type="button"
                     onClick={() => { if (multi) setActiveDestination(ko) }}
                     className={cn(
-                      'font-serif text-[15px] text-[#6B5A3A]',
+                      'inline-flex items-baseline gap-1.5 -mx-2.5 -my-0.5 px-2.5 py-0.5',
                       multi && 'cursor-pointer',
-                      isActive && 'underline underline-offset-4 decoration-[#6B5A3A]/40',
                     )}
                     title={multi ? '클릭하여 이 국가 항목 보기' : undefined}
+                    disabled={!multi}
                   >
-                    {ko}
+                    {code && (
+                      <span className="font-mono text-[13px] uppercase tracking-[1px] text-[#7B7B5F]">
+                        {code}
+                      </span>
+                    )}
+                    <span
+                      className={cn(
+                        'font-serif text-[15px] text-[#6B5A3A]',
+                        isActive && 'underline underline-offset-4 decoration-[#6B5A3A]/40',
+                      )}
+                    >
+                      {ko}
+                    </span>
                   </button>
                   <button
                     type="button"
