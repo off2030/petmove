@@ -6,6 +6,7 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { CopyButton } from './copy-button'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
+import { SectionLabel } from '@/components/ui/section-label'
 import breedsData from '@/data/breeds.json'
 
 interface Breed {
@@ -104,7 +105,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
-      <div className="pt-1 font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">품종</div>
+      <SectionLabel className="pt-1">품종</SectionLabel>
       <div ref={containerRef} className="relative min-w-0">
         {/* Display / trigger */}
         <div className="group/val relative w-fit">

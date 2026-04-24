@@ -4,6 +4,7 @@ import type { FieldSpec } from '@/lib/fields'
 import { renderFieldValue } from '@/lib/fields'
 import { EditableField } from './editable-field'
 import { CopyButton } from './copy-button'
+import { SectionLabel } from '@/components/ui/section-label'
 
 /**
  * One row that shows a Korean + English paired text field side-by-side.
@@ -31,7 +32,7 @@ export function PairedField({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
-      <div className="pt-1 font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">{koSpec.label}</div>
+      <SectionLabel className="pt-1">{koSpec.label}</SectionLabel>
 
       <div className="flex items-baseline gap-[10px] min-w-0 flex-wrap">
         {/* Korean half — no copy button */}

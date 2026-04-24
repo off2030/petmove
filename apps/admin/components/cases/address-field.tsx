@@ -8,6 +8,7 @@ import type { FieldSpec } from '@/lib/fields'
 import { updateCaseField } from '@/lib/actions/cases'
 import { CopyButton } from './copy-button'
 import { useCases } from './cases-context'
+import { SectionLabel } from '@/components/ui/section-label'
 
 declare global {
   interface Window {
@@ -222,7 +223,7 @@ export function AddressField({
     <>
       {/* Korean address */}
       <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60">
-        <div className="pt-1 font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">한국주소</div>
+        <SectionLabel className="pt-1">한국주소</SectionLabel>
         <div className="flex items-center gap-sm min-w-0">
           {editingKr ? (
             <div className="flex items-center gap-sm flex-1">
@@ -273,7 +274,7 @@ export function AddressField({
       {/* Detail address input */}
       {showDetail && (
         <div className="grid grid-cols-[140px_1fr_auto] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60">
-          <div className="pt-1 font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">상세 주소</div>
+          <SectionLabel className="pt-1">상세 주소</SectionLabel>
           <div className="flex items-center gap-sm">
             <input ref={detailRef} type="text" value={detailAddr} onChange={(e) => setDetailAddr(e.target.value)}
               placeholder="동/호수 입력"
@@ -290,7 +291,7 @@ export function AddressField({
 
       {/* English address */}
       <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60">
-        <div className="pt-1 font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">영문주소</div>
+        <SectionLabel className="pt-1">영문주소</SectionLabel>
         <div className="min-w-0">
           {editingEn ? (
             <>

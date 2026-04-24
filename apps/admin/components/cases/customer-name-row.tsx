@@ -8,6 +8,7 @@ import { EditableField } from './editable-field'
 import { CopyButton } from './copy-button'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
+import { SectionLabel } from '@/components/ui/section-label'
 
 /** Capitalize first letter of each word: "john doe" → "John Doe" */
 function capitalize(str: string): string {
@@ -109,7 +110,7 @@ export function CustomerNameRow({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
-      <div className="pt-1 font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">성함</div>
+      <SectionLabel className="pt-1">성함</SectionLabel>
 
       <div className="flex items-baseline gap-[10px] min-w-0 flex-wrap">
         {/* Korean name — standard inline EditableField */}

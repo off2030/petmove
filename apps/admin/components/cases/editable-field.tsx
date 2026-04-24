@@ -9,6 +9,7 @@ import { CopyButton } from '@/components/cases/copy-button'
 import { useCases } from '@/components/cases/cases-context'
 import { severityTextClass, tooltipText, useFieldVerification } from '@/components/cases/verification-context'
 import { DateTextField } from '@/components/ui/date-text-field'
+import { SectionLabel } from '@/components/ui/section-label'
 
 /** Filter input by language */
 function filterByLang(str: string, lang?: 'ko' | 'en'): string {
@@ -364,7 +365,7 @@ export function EditableField({
 
   return (
     <div className={cn("grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0", clearable && "group/row")}>
-      <div className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1">{spec.label}</div>
+      <SectionLabel className="pt-1">{spec.label}</SectionLabel>
       <div className="min-w-0 flex items-baseline gap-sm">
         {(() => {
           const noCopy = spec.type === 'longtext' || spec.key === 'select' || spec.key === 'status'
