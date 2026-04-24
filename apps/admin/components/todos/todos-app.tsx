@@ -598,19 +598,23 @@ export function TodosApp() {
     () => buildInspectionRows(cases, inspectionConfig.titerRules, inspectionConfig.titerDefault)
       .filter(r => matchesQuery(r.caseRow, q))
       .sort((a, b) => {
-        // 1차: 완료된 검사는 뒤로.
-        const aDone = ((a.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') === 'done'
-        const bDone = ((b.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') === 'done'
-        if (aDone !== bDone) return aDone ? 1 : -1
-        // 2차(완료 그룹): 검사일 최신(DESC) 순.
-        if (aDone && bDone) {
-          const da = a.date || ''
-          const db = b.date || ''
-          if (da !== db) return db.localeCompare(da)
-          return (LAB_SORT_ORDER[a.lab] ?? 99) - (LAB_SORT_ORDER[b.lab] ?? 99)
+        // 1순위: 검사실 (lab)
+        const labCmp = (LAB_SORT_ORDER[a.lab] ?? 99) - (LAB_SORT_ORDER[b.lab] ?? 99)
+        if (labCmp !== 0) return labCmp
+        // 2순위: 채혈일 (없으면 뒤로)
+        const da = a.date || ''
+        const db = b.date || ''
+        if (da !== db) {
+          if (!da) return 1
+          if (!db) return -1
+          return da.localeCompare(db)
         }
-        // 2차(미완료 그룹): 기존 lab 순서.
-        return (LAB_SORT_ORDER[a.lab] ?? 99) - (LAB_SORT_ORDER[b.lab] ?? 99)
+        // 3순위: 출국일 (없으면 뒤로)
+        const ea = a.caseRow.departure_date ?? ''
+        const eb = b.caseRow.departure_date ?? ''
+        if (!ea) return 1
+        if (!eb) return -1
+        return ea.localeCompare(eb)
       }),
     [cases, q, inspectionConfig],
   )
