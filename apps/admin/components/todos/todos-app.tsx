@@ -598,6 +598,10 @@ export function TodosApp() {
     () => buildInspectionRows(cases, inspectionConfig.titerRules, inspectionConfig.titerDefault)
       .filter(r => matchesQuery(r.caseRow, q))
       .sort((a, b) => {
+        // 0순위: 완료(done)는 무조건 가장 뒤
+        const aDone = ((a.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') === 'done'
+        const bDone = ((b.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') === 'done'
+        if (aDone !== bDone) return aDone ? 1 : -1
         // 1순위: 검사실 (lab)
         const labCmp = (LAB_SORT_ORDER[a.lab] ?? 99) - (LAB_SORT_ORDER[b.lab] ?? 99)
         if (labCmp !== 0) return labCmp
