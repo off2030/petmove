@@ -2,13 +2,8 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
-import { createClient } from '@supabase/supabase-js'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 import { restoreCase, permanentDeleteCase } from '@/lib/actions/delete-case'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-)
 
 interface TrashItem {
   id: string
@@ -28,7 +23,7 @@ export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRest
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase
+      const { data } = await supabaseBrowser
         .from('cases')
         .select('id, pet_name, customer_name, deleted_at')
         .not('deleted_at', 'is', null)
