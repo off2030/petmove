@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
-import { Image as ImageIcon, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Paperclip, Pencil, Plus, Trash2, X } from 'lucide-react'
 import {
   PARASITE_FAMILIES,
   daysUntilExpiry,
@@ -31,17 +31,16 @@ interface CategoryMeta {
 
 const CATEGORY_META: Record<string, CategoryMeta> = {
   rabies:                { label: '광견병',                  section: '접종', species: 'common', kind: 'vaccine' },
-  comprehensive_dog:     { label: '종합백신 (강아지)',       section: '접종', species: 'dog',    kind: 'vaccine' },
+  comprehensive_dog:     { label: '종합백신',                section: '접종', species: 'dog',    kind: 'vaccine' },
   comprehensive_cat:     { label: '종합백신 (고양이)',       section: '접종', species: 'cat',    kind: 'vaccine' },
   civ:                   { label: 'CIV 독감',                section: '접종', species: 'dog',    kind: 'vaccine' },
-  kennel_cough:          { label: '켄넬코프 (강아지)',       section: '접종', species: 'dog',    kind: 'vaccine' },
-  parasite_internal_dog: { label: '내부 구충 (강아지)',      section: '구충', species: 'dog',    kind: 'parasite' },
-  parasite_internal_cat: { label: '내부 구충 (고양이)',      section: '구충', species: 'cat',    kind: 'parasite' },
-  parasite_external_dog: { label: '외부 구충 (강아지)',      section: '구충', species: 'dog',    kind: 'parasite' },
+  kennel_cough:          { label: '켄넬코프',                section: '접종', species: 'dog',    kind: 'vaccine' },
+  parasite_internal_dog: { label: '내부 구충',               section: '구충', species: 'common', kind: 'parasite' },
+  parasite_external_dog: { label: '외부 구충',               section: '구충', species: 'dog',    kind: 'parasite' },
   parasite_external_cat: { label: '외부 구충 (고양이)',      section: '구충', species: 'cat',    kind: 'parasite' },
-  parasite_combo_dog:    { label: '내외부 구충 합제 (강아지)', section: '구충', species: 'dog',  kind: 'parasite' },
+  parasite_combo_dog:    { label: '내외부 구충 합제',         section: '구충', species: 'dog',   kind: 'parasite' },
   parasite_combo_cat:    { label: '내외부 구충 합제 (고양이)', section: '구충', species: 'cat',  kind: 'parasite' },
-  heartworm_dog:         { label: '심장사상충 (강아지)',     section: '구충', species: 'dog',    kind: 'parasite' },
+  heartworm_dog:         { label: '심장사상충',              section: '구충', species: 'dog',    kind: 'parasite' },
 }
 
 const CATEGORY_ORDER: string[] = [
@@ -51,7 +50,6 @@ const CATEGORY_ORDER: string[] = [
   'civ',
   'kennel_cough',
   'parasite_internal_dog',
-  'parasite_internal_cat',
   'parasite_external_dog',
   'parasite_external_cat',
   'parasite_combo_dog',
@@ -61,12 +59,13 @@ const CATEGORY_ORDER: string[] = [
 
 const SECTION_ORDER: ProductSection[] = ['접종', '구충']
 
-const STATUS_STYLES: Record<ExpiryStatus, { label: string; text: string; dot: string }> = {
-  expired: { label: '만료',    text: 'text-red-700',                dot: 'bg-red-500' },
-  urgent:  { label: 'D-',      text: 'text-orange-700',             dot: 'bg-orange-500' },
-  warning: { label: 'D-',      text: 'text-yellow-700',             dot: 'bg-yellow-500' },
-  ok:      { label: '정상',    text: 'text-muted-foreground',       dot: 'bg-gray-400' },
-  unknown: { label: '—',       text: 'text-muted-foreground/50',    dot: 'bg-gray-300' },
+// sage / amber / rust trio — warning 은 amber 를 olive 와 섞어 한 단계 연하게.
+const STATUS_STYLES: Record<ExpiryStatus, { label: string; color: string; dot: string }> = {
+  expired: { label: '만료', color: 'var(--pmw-rust)',        dot: 'var(--pmw-rust)' },
+  urgent:  { label: 'D-',   color: 'var(--pmw-amber)',       dot: 'var(--pmw-amber)' },
+  warning: { label: 'D-',   color: 'color-mix(in srgb, var(--pmw-amber) 70%, var(--pmw-olive-gray))', dot: 'color-mix(in srgb, var(--pmw-amber) 55%, var(--pmw-border-warm))' },
+  ok:      { label: '정상', color: 'var(--pmw-olive-gray)',  dot: 'var(--pmw-sage)' },
+  unknown: { label: '—',    color: 'var(--pmw-stone-gray)',  dot: 'color-mix(in srgb, var(--pmw-stone-gray) 70%, var(--pmw-parchment))' },
 }
 
 function StatusBadge({ status, daysLeft }: { status: ExpiryStatus; daysLeft: number | null }) {
@@ -75,9 +74,18 @@ function StatusBadge({ status, daysLeft }: { status: ExpiryStatus; daysLeft: num
   if (status === 'expired' && daysLeft !== null) text = `-${Math.abs(daysLeft)}일`
   else if ((status === 'urgent' || status === 'warning') && daysLeft !== null) text = `D-${daysLeft}`
   return (
-    <span className={`inline-flex items-center gap-1.5 font-serif text-[13px] ${s.text}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+    <span className="inline-flex items-center gap-1.5 font-serif text-[13px]" style={{ color: s.color }}>
+      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: s.dot }} />
       {text}
+    </span>
+  )
+}
+
+function StatCount({ n, label, color }: { n: number; label: string; color: string }) {
+  return (
+    <span className="inline-flex items-baseline gap-1.5">
+      <span className="font-serif text-[17px]" style={{ color }}>{n}</span>
+      <span className="font-serif text-[13px]" style={{ color: 'var(--pmw-olive-gray)' }}>{label}</span>
     </span>
   )
 }
@@ -163,12 +171,11 @@ export function VaccineSection({
   >(null)
   const [pending, startTransition] = useTransition()
 
-  // 이미지 추출 상태
-  const [extractingCategory, setExtractingCategory] = useState<string | null>(null)
+  // 이미지 추출 상태 — 전역 드롭존으로 통합
+  const [extracting, setExtracting] = useState(false)
   const [extractMsg, setExtractMsg] = useState<{ kind: 'info' | 'error' | 'success'; text: string } | null>(null)
-  const [dragCategory, setDragCategory] = useState<string | null>(null)
-  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({})
-  const hoveredCategoryRef = useRef<string | null>(null)
+  const [dragOver, setDragOver] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   async function refresh() {
     setLoading(true)
@@ -196,20 +203,19 @@ export function VaccineSection({
     refresh()
   }, [])
 
-  async function handleImageFiles(category: string, files: File[]) {
+  async function handleImagesGlobal(files: File[]) {
     const extractable = files.filter(isExtractableFile)
     if (extractable.length === 0) {
       setExtractMsg({ kind: 'error', text: '이미지 또는 PDF 파일만 지원됩니다.' })
       return
     }
-    setExtractingCategory(category)
-    setExtractMsg({ kind: 'info', text: `${CATEGORY_META[category]?.label ?? category} · 이미지에서 제품 정보를 읽는 중…` })
+    setExtracting(true)
+    setExtractMsg({ kind: 'info', text: `${extractable.length}개 파일에서 제품 정보를 읽는 중…` })
     try {
       const images = await filesToBase64(extractable)
-      const meta = CATEGORY_META[category]
-      const kind = meta?.kind ?? 'vaccine'
       let created = 0
       const errors: string[] = []
+      const unclassified: string[] = []
       for (const img of images) {
         const r = await extractVaccineInfo({ imageBase64: img.base64, mediaType: img.mediaType })
         if (!r.ok) {
@@ -217,6 +223,13 @@ export function VaccineSection({
           continue
         }
         for (const rec of r.records) {
+          const category = rec.category
+          const meta = category ? CATEGORY_META[category] : undefined
+          if (!category || !meta) {
+            unclassified.push(rec.product ?? '(이름 없음)')
+            continue
+          }
+          const kind = meta.kind
           const input: OrgVaccineProductInput = {
             category,
             vaccine: kind === 'vaccine' ? (rec.product ?? null) : null,
@@ -236,11 +249,16 @@ export function VaccineSection({
         }
       }
       await refresh()
+      const notes: string[] = []
+      if (unclassified.length > 0) notes.push(`분류 실패 ${unclassified.length}건 (${unclassified.slice(0, 2).join(', ')}${unclassified.length > 2 ? '…' : ''})`)
+      if (errors.length > 0) notes.push(`오류 ${errors.length}건: ${errors[0]}`)
       if (created > 0) {
         setExtractMsg({
           kind: 'success',
-          text: `${created}개 제품 추가됨${errors.length > 0 ? ` (오류 ${errors.length}건: ${errors[0]})` : ''}`,
+          text: `${created}개 제품 추가됨${notes.length > 0 ? ` · ${notes.join(' · ')}` : ''}`,
         })
+      } else if (unclassified.length > 0) {
+        setExtractMsg({ kind: 'error', text: `카테고리를 자동 분류하지 못했습니다. 수동으로 추가해 주세요. (${unclassified.slice(0, 2).join(', ')})` })
       } else {
         setExtractMsg({ kind: 'error', text: errors[0] ?? '추출된 정보가 없습니다.' })
       }
@@ -248,15 +266,14 @@ export function VaccineSection({
       const msg = err instanceof Error ? err.message : '알 수 없는 오류'
       setExtractMsg({ kind: 'error', text: `추출 실패: ${msg}` })
     } finally {
-      setExtractingCategory(null)
+      setExtracting(false)
     }
   }
 
-  // 문서 전체 paste 이벤트 — 마우스가 올라가 있는 카테고리 카드로 라우팅
+  // 문서 전체 paste 이벤트 — 전역으로 라우팅 (AI 가 카테고리 자동 분류)
   useEffect(() => {
+    if (!isAdmin) return
     function onPaste(e: ClipboardEvent) {
-      const cat = hoveredCategoryRef.current
-      if (!cat) return
       const items = e.clipboardData?.items
       if (!items) return
       const files: File[] = []
@@ -269,12 +286,12 @@ export function VaccineSection({
       }
       if (files.length === 0) return
       e.preventDefault()
-      handleImageFiles(cat, files)
+      handleImagesGlobal(files)
     }
     document.addEventListener('paste', onPaste)
     return () => document.removeEventListener('paste', onPaste)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [isAdmin])
 
   const grouped = useMemo(() => {
     const statusOrder: ExpiryStatus[] = ['expired', 'urgent', 'warning', 'ok', 'unknown']
@@ -354,29 +371,22 @@ export function VaccineSection({
 
   // Shared grid template — 카테고리가 달라도 열이 맞도록 모든 행에 동일 적용.
   const gridCols = isAdmin
-    ? 'minmax(0,1.6fr) minmax(0,1fr) 110px 100px 150px minmax(0,0.9fr) 56px'
-    : 'minmax(0,1.6fr) minmax(0,1fr) 110px 100px 150px minmax(0,0.9fr)'
+    ? 'minmax(0,1.6fr) minmax(0,1fr) 110px 100px 150px 56px'
+    : 'minmax(0,1.6fr) minmax(0,1fr) 110px 100px 150px'
 
   return (
     <div className="max-w-5xl pb-2xl">
       {/* Editorial header */}
-      <header className="pb-xl flex items-end justify-between gap-md flex-wrap">
-        <h2 className="font-serif text-[28px] leading-tight text-foreground">약품</h2>
-        <div className="flex gap-xs flex-wrap">
-          {counts.expired > 0 && (
-            <span className="inline-flex items-center gap-xs font-serif text-[12px] px-2 py-0.5 rounded-full bg-red-50 text-red-700">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-              만료 {counts.expired}
-            </span>
-          )}
-          {counts.urgent > 0 && (
-            <span className="inline-flex items-center gap-xs font-serif text-[12px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-700">
-              <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-              30일 이내 {counts.urgent}
-            </span>
-          )}
-          {counts.expired === 0 && counts.urgent === 0 && !loading && (
-            <span className="font-serif italic text-[12px] text-muted-foreground/70">만료·30일 이내 제품 없음.</span>
+      <header className="pb-xl">
+        <h2 className="pmw-st__sec-title mb-md">약품</h2>
+        <div className="flex gap-lg flex-wrap items-baseline">
+          {counts.expired > 0 && <StatCount n={counts.expired} label="만료" color="var(--pmw-rust)" />}
+          {counts.urgent > 0 && <StatCount n={counts.urgent} label="30일 이내" color="var(--pmw-amber)" />}
+          {counts.warning > 0 && <StatCount n={counts.warning} label="90일 이내" color="color-mix(in srgb, var(--pmw-amber) 70%, var(--pmw-olive-gray))" />}
+          {counts.ok > 0 && <StatCount n={counts.ok} label="정상" color="var(--pmw-olive-gray)" />}
+          {counts.unknown > 0 && <StatCount n={counts.unknown} label="정보 없음" color="var(--pmw-stone-gray)" />}
+          {!loading && counts.expired + counts.urgent + counts.warning + counts.ok + counts.unknown === 0 && (
+            <span className="pmw-st__sec-lead">등록된 제품 없음</span>
           )}
         </div>
       </header>
@@ -406,9 +416,60 @@ export function VaccineSection({
         </div>
       )}
 
-      <p className="mb-xl font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
-        제품 이미지·PDF 를 카테고리 박스에 드래그하거나 마우스를 올린 상태로 Ctrl+V 하면 AI 가 제품 정보를 자동으로 인식해 새 항목으로 추가합니다.
-      </p>
+      {isAdmin && (
+        <div
+          onDragOver={(e) => {
+            e.preventDefault()
+            if (!dragOver) setDragOver(true)
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault()
+            if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false)
+          }}
+          onDrop={(e) => {
+            e.preventDefault()
+            setDragOver(false)
+            const files = Array.from(e.dataTransfer.files)
+            if (files.length > 0) handleImagesGlobal(files)
+          }}
+          className={`mb-xl border border-dotted rounded-sm px-lg py-md transition-colors ${
+            dragOver ? 'border-primary/60 bg-primary/5' : 'border-border/60'
+          }`}
+        >
+          <div className="flex items-center justify-between gap-md flex-wrap">
+            <div className="flex items-center gap-sm min-w-0">
+              <Paperclip className="h-4 w-4 shrink-0" style={{ color: 'var(--pmw-olive-gray)' }} />
+              <p className="pmw-st__sec-lead">
+                {extracting
+                  ? '이미지에서 제품 정보를 읽는 중…'
+                  : '제품 이미지·PDF 를 이 영역에 드래그하거나 Ctrl+V 로 붙여넣으면 AI 가 카테고리를 자동 분류합니다.'}
+              </p>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,application/pdf"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? [])
+                e.target.value = ''
+                if (files.length > 0) handleImagesGlobal(files)
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={extracting}
+              className="inline-flex items-center gap-1 pmw-st__btn px-2 py-0.5 rounded-full border border-border/60 hover:bg-muted/40 transition-colors disabled:opacity-40 shrink-0"
+            >
+              <Paperclip className="h-3 w-3" />
+              파일 선택
+            </button>
+          </div>
+        </div>
+      )}
+
 
       {loading ? (
         <p className="font-serif italic text-[14px] text-muted-foreground">불러오는 중…</p>
@@ -417,135 +478,69 @@ export function VaccineSection({
           const totalInSection = categories.reduce((sum, c) => sum + c.list.length, 0)
           return (
             <section key={section} className="mb-xl">
-              <div className="mb-2 flex items-baseline justify-between">
-                <span className="font-mono text-[11px] tracking-[1.8px] uppercase text-muted-foreground/70">
-                  {section} · {totalInSection}
-                </span>
+              <div className="mb-2 flex items-baseline gap-sm">
+                <h3 className="font-serif text-[17px] text-foreground">{section}</h3>
+                <span className="pmw-st__tab-count">{totalInSection}</span>
               </div>
 
               {/* Shared column header */}
               <div
-                className="grid gap-md py-2 border-y border-border/70 font-mono text-[10px] tracking-[1.5px] uppercase text-muted-foreground/70"
+                className="grid gap-md py-2 border-y border-border/70 pmw-st__group-title"
                 style={{ gridTemplateColumns: gridCols }}
               >
                 <span>제품명</span>
                 <span>제조사</span>
-                <span>Batch</span>
+                <span>제품번호</span>
                 <span>만료</span>
                 <span>상태</span>
-                <span>기준</span>
                 {isAdmin && <span />}
               </div>
 
               {categories.map(({ category, meta, list }) => {
-                const isExtracting = extractingCategory === category
-                const isDragOver = dragCategory === category
                 return (
-                  <div
-                    key={category}
-                    data-vaccine-category={category}
-                    onMouseEnter={() => { hoveredCategoryRef.current = category }}
-                    onMouseLeave={() => {
-                      if (hoveredCategoryRef.current === category) hoveredCategoryRef.current = null
-                    }}
-                    onDragOver={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      if (dragCategory !== category) setDragCategory(category)
-                    }}
-                    onDragLeave={(e) => {
-                      e.preventDefault()
-                      if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                        setDragCategory((prev) => (prev === category ? null : prev))
-                      }
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      setDragCategory(null)
-                      const files = Array.from(e.dataTransfer.files)
-                      if (files.length > 0) handleImageFiles(category, files)
-                    }}
-                    className={`transition-colors rounded-sm ${
-                      isDragOver ? 'bg-primary/5 ring-1 ring-primary/30' : ''
-                    }`}
-                  >
+                  <div key={category} data-vaccine-category={category}>
                     {/* Category sub-header */}
                     <div className="flex items-center justify-between pt-md pb-1 px-1">
                       <div className="flex items-baseline gap-sm min-w-0">
-                        <span className="font-serif italic text-[15px] text-foreground truncate">{meta.label}</span>
-                        <span className="font-mono text-[10px] text-muted-foreground/50 shrink-0">{list.length}</span>
-                        {isExtracting && (
-                          <span className="font-serif italic text-[11px] text-muted-foreground animate-pulse shrink-0">추출 중…</span>
-                        )}
+                        <span className="pmw-st__group-title truncate">{meta.label}</span>
                       </div>
-                      <input
-                        ref={(el) => { fileInputs.current[category] = el }}
-                        type="file"
-                        accept="image/*,application/pdf"
-                        multiple
-                        className="hidden"
-                        onChange={(e) => {
-                          const files = Array.from(e.target.files ?? [])
-                          e.target.value = ''
-                          if (files.length > 0) handleImageFiles(category, files)
-                        }}
-                      />
                       {isAdmin && (
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => fileInputs.current[category]?.click()}
-                            disabled={isExtracting}
-                            title="이미지·PDF 에서 자동 추가"
-                            className="inline-flex items-center gap-1 font-serif text-[11px] px-2 py-0.5 rounded-full border border-border/60 text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors disabled:opacity-40"
-                          >
-                            <ImageIcon className="h-3 w-3" />
-                            이미지
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setEditing({ mode: 'create', initial: blankForm(category) })
-                            }
-                            className="inline-flex items-center gap-1 font-serif text-[11px] px-2 py-0.5 rounded-full border border-border/60 text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
-                          >
-                            <Plus className="h-3 w-3" />
-                            추가
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditing({ mode: 'create', initial: blankForm(category) })
+                          }
+                          className="inline-flex items-center gap-1 pmw-st__btn px-2 py-0.5 rounded-full border border-border/60 hover:bg-muted/40 transition-colors shrink-0"
+                        >
+                          <Plus className="h-3 w-3" />
+                          추가
+                        </button>
                       )}
                     </div>
 
                     {list.length === 0 ? (
-                      <div className="py-2 px-1 font-serif italic text-[13px] text-muted-foreground/60 border-b border-dotted border-border/60">
+                      <div className="py-2 px-1 pmw-st__btn-ghost border-b border-dotted border-border/60">
                         등록된 제품 없음
                       </div>
                     ) : (
                       list.map((p) => {
                         const status = getExpiryStatus(p.expiry)
                         const daysLeft = daysUntilExpiry(p.expiry)
-                        const metaParts: string[] = []
-                        if (p.year != null) metaParts.push(`${p.year}년`)
-                        if (p.size) metaParts.push(p.size)
                         return (
                           <div
                             key={p.id}
                             className="grid gap-md items-center py-2 border-b border-dotted border-border/60 hover:bg-accent transition-colors"
                             style={{ gridTemplateColumns: gridCols }}
                           >
-                            <div className="font-serif text-[15px] text-foreground truncate">
+                            <div className="font-serif text-[15px] truncate" style={{ color: 'var(--pmw-near-black)' }}>
                               {p.vaccine || p.product || '(이름 없음)'}
                             </div>
-                            <div className="font-serif text-[14px] text-muted-foreground truncate">
+                            <div className="font-serif text-[14px] truncate" style={{ color: 'var(--pmw-olive-gray)' }}>
                               {p.manufacturer}
                             </div>
-                            <div className="font-mono text-[12px] text-foreground truncate">{p.batch ?? '—'}</div>
-                            <div className="font-serif text-[13px] text-muted-foreground">{p.expiry ?? '—'}</div>
+                            <div className="font-mono text-[12px] tabular-nums tracking-[0.3px] truncate" style={{ color: 'var(--pmw-near-black)' }}>{p.batch ?? '—'}</div>
+                            <div className="font-mono text-[13px] tabular-nums tracking-[0.3px]" style={{ color: 'var(--pmw-olive-gray)' }}>{p.expiry ?? '—'}</div>
                             <div><StatusBadge status={status} daysLeft={daysLeft} /></div>
-                            <div className="font-serif italic text-[12px] text-muted-foreground truncate">
-                              {metaParts.join(' · ') || '—'}
-                            </div>
                             {isAdmin && (
                               <div className="flex gap-0.5 justify-end">
                                 <button
@@ -582,7 +577,7 @@ export function VaccineSection({
       )}
 
       {!isAdmin && (
-        <p className="pt-md border-t border-border/60 font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
+        <p className="pt-md border-t border-border/60 pmw-st__sec-lead">
           약품 추가·수정은 관리자만 가능합니다.
         </p>
       )}
@@ -620,8 +615,11 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave }: ProductFo
   }, [onClose])
 
   const kind = CATEGORY_META[form.category]?.kind ?? 'vaccine'
+  const parasiteCategorySpecies = CATEGORY_META[form.category]?.species ?? 'common'
   const parasiteOptions = PARASITE_FAMILIES.filter((f) =>
-    form.category.endsWith('_dog') ? f.species === 'dog' : form.category.endsWith('_cat') ? f.species === 'cat' : true
+    parasiteCategorySpecies === 'dog' ? f.species === 'dog'
+      : parasiteCategorySpecies === 'cat' ? f.species === 'cat'
+      : true
   )
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -703,17 +701,7 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave }: ProductFo
             </Field>
           </div>
 
-          {form.category === 'rabies' && (
-            <Field label="연도 (year)">
-              <input
-                type="number"
-                value={form.year}
-                onChange={(e) => update('year', e.target.value)}
-                placeholder="2026"
-                className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
-              />
-            </Field>
-          )}
+          {/* year 필드는 UI 에서 노출하지 않음 — 2026 G98321 이후 등록되는 신규 batch 는 date-range 매칭을 쓰므로 year 가 불필요. 기존 레코드의 year 값은 form state 에 보존되어 저장 시 유지됨. */}
 
           {kind === 'parasite' && (
             <>
@@ -746,7 +734,7 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave }: ProductFo
                 </Field>
               </div>
 
-              <Field label="Parasite family ID (선택)">
+              <Field label="Parasite family ID (선택사항)">
                 <select
                   value={form.parasite_id}
                   onChange={(e) => update('parasite_id', e.target.value)}
@@ -790,7 +778,7 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave }: ProductFo
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block space-y-1">
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="pmw-st__field-label">{label}</span>
       {children}
     </label>
   )

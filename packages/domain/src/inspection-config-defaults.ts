@@ -12,6 +12,11 @@ export interface InspectionLabRule {
   labs: string[]
 }
 
+export interface InspectionLabOption {
+  value: string
+  label: string
+}
+
 export interface InspectionConfig {
   /** 광견병항체검사 기본 검사기관. 규칙 매칭 없을 때 사용. */
   titerDefault: string
@@ -19,6 +24,10 @@ export interface InspectionConfig {
   titerRules: InspectionLabRule[]
   /** 전염병검사 국가별 규칙. 기본 검사기관 개념 없음 — 매칭되지 않으면 lab 미지정. */
   infectiousRules: InspectionLabRule[]
+  /** 광견병항체검사 사용자 정의 기관(`TITER_LABS` 에 없는 기관). 없으면 빈 배열/undef. */
+  customTiterLabs?: InspectionLabOption[]
+  /** 전염병검사 사용자 정의 기관(`INFECTIOUS_LABS` 에 없는 기관). 없으면 빈 배열/undef. */
+  customInfectiousLabs?: InspectionLabOption[]
 }
 
 export const TITER_LABS: { value: string; label: string }[] = [

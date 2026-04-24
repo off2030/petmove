@@ -5,23 +5,15 @@ import { X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { saveImportReportCountriesAction } from '@/lib/actions/import-report-config-action'
 import { DEFAULT_IMPORT_REPORT_COUNTRIES } from '@petmove/domain'
+import { DestinationPicker } from '@/components/ui/destination-picker'
 
 export function ImportReportSection() {
   const { importReportCountries, setImportReportCountries } = useCases()
   const [draft, setDraft] = useState<string[]>(importReportCountries)
-  const [input, setInput] = useState('')
   const [saving, startSave] = useTransition()
   const [msg, setMsg] = useState<string | null>(null)
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(importReportCountries)
-
-  function addCountry() {
-    const v = input.trim()
-    if (!v) return
-    if (draft.includes(v)) { setInput(''); return }
-    setDraft([...draft, v])
-    setInput('')
-  }
 
   function removeCountry(name: string) {
     setDraft(draft.filter(c => c !== name))
@@ -45,78 +37,85 @@ export function ImportReportSection() {
   }
 
   return (
-    <div className="max-w-2xl space-y-md">
-      <div>
-        <h3 className="font-serif text-[17px] text-foreground pb-2 border-b border-border/60 mb-sm">자동 포함 국가</h3>
-        <p className="text-sm text-muted-foreground">
-          이 목록에 있는 국가가 목적지이고 <b>출국일</b>이 입력된 케이스는 신고 탭에
-          자동으로 올라갑니다. 그 외 국가는 상세페이지의 <b>신고</b> 버튼이나 신고 탭의
-          <b> 신고 추가</b> 피커에서 수동으로 포함할 수 있습니다.
+    <div className="max-w-5xl pb-2xl">
+      {/* Editorial header */}
+      <header className="pb-xl">
+        <h2 className="font-serif text-[28px] leading-tight text-foreground">신고</h2>
+        <p className="pmw-st__sec-lead mt-2">
+          이 목록에 있는 목적지는 출국일이 입력되면 자동으로 신고 탭에 반영됩니다.
+          목록에 없는 곳은 상세페이지의 신고 버튼이나 신고 탭의 신고 추가 피커에서 수동으로 포함할 수 있습니다.
         </p>
+      </header>
+
+      {/* Section label */}
+      <div className="mb-2">
+        <span className="font-mono text-[11px] tracking-[1.8px] uppercase text-muted-foreground/70">
+          자동 포함 목적지 · {draft.length}
+        </span>
       </div>
 
-      {/* Current list */}
-      <div className="flex flex-wrap gap-xs">
-        {draft.length === 0 && (
-          <span className="text-sm text-muted-foreground/60 italic">목록이 비어있습니다. 자동 포함 대상 없음.</span>
-        )}
-        {draft.map(name => (
-          <span
-            key={name}
-            className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/50 px-2 py-1 text-sm"
-          >
-            {name}
-            <button
-              type="button"
-              onClick={() => removeCountry(name)}
-              className="text-muted-foreground/60 hover:text-red-500 transition-colors"
-              title="제거"
-            >
-              <X size={14} />
-            </button>
-          </span>
-        ))}
+      {/* Current list — 얇은 border pill */}
+      <div className="border-t border-border/70">
+        <div className="flex flex-wrap gap-1.5 py-3">
+          {draft.length === 0 ? (
+            <span className="font-serif italic text-[13px] text-muted-foreground/60">
+              목록이 비어있습니다.
+            </span>
+          ) : (
+            draft.map(name => (
+              <span
+                key={name}
+                className="inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 font-sans text-[12px]"
+                style={{
+                  borderColor: 'var(--pmw-border-warm)',
+                  color: 'var(--pmw-near-black)',
+                }}
+              >
+                {name}
+                <button
+                  type="button"
+                  onClick={() => removeCountry(name)}
+                  className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                  title="제거"
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            ))
+          )}
+        </div>
       </div>
 
-      {/* Add new */}
-      <div className="flex gap-xs">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') { e.preventDefault(); addCountry() }
-          }}
-          placeholder="국가명 입력 후 Enter (예: 독일)"
-          className="flex-1 h-9 rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-primary"
+      {/* Search-based picker — 검색/선택으로 추가 */}
+      <div className="pb-lg border-b border-border/60">
+        <DestinationPicker
+          values={draft}
+          onChange={setDraft}
+          hideSelectedChips
+          variant="underline"
+          placeholder="목적지 추가"
+          aria-label="목적지 추가"
         />
-        <button
-          type="button"
-          onClick={addCountry}
-          disabled={!input.trim()}
-          className="h-9 px-md rounded-md border border-border bg-card text-sm hover:bg-accent transition-colors disabled:opacity-40"
-        >
-          추가
-        </button>
       </div>
 
-      <div className="flex items-center justify-between pt-2">
+      {/* Footer actions */}
+      <div className="flex items-center justify-between pt-lg">
         <button
           type="button"
           onClick={resetToDefaults}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="pmw-st__btn-ghost hover:text-foreground transition-colors"
         >
           기본값으로 되돌리기
         </button>
-        <div className="flex items-center gap-xs">
-          {msg && <span className="text-sm text-muted-foreground">{msg}</span>}
+        <div className="flex items-center gap-md">
+          {msg && <span className="pmw-st__sec-lead">{msg}</span>}
           <button
             type="button"
             onClick={save}
             disabled={!dirty || saving}
-            className="h-9 px-md rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-40"
+            className="font-serif text-[14px] h-8 px-md rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {saving ? '저장 중…' : '저장'}
+            {saving ? '저장 중…' : '변경사항 저장'}
           </button>
         </div>
       </div>

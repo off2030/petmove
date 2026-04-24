@@ -242,7 +242,29 @@ export function createVaccineLookups(data: VaccineProductsData): VaccineLookups 
     if (!vaccinationDate) return null
     const year = Number(vaccinationDate.slice(0, 4))
     if (!year) return null
-    const entry = data.rabies.find(r => r.year === year)
+
+    // 광견병은 두 시대의 데이터가 혼재.
+    // (1) year 필드를 가진 구세대 레코드 — 접종 연도로 엄격 매칭. 2025년까지는 이 방식만.
+    // (2) 마지막 year 레코드(= 현재 G98321/2026)는 자기 year 이후 접종에 대해
+    //     expiry 까지 fallback 으로 계속 매칭. 즉 2027-10-07 전까지 G98321 이 선택됨.
+    // (3) year 필드가 없는 신규 레코드 — 다른 백신과 동일하게 date-range 매칭.
+    //     G98321 만료 후 등록될 신규 batch 가 여기에 해당.
+    const yearBased = data.rabies.filter(r => r.year != null)
+    const maxYear = yearBased.reduce((m, r) => Math.max(m, r.year!), 0)
+
+    let entry: VaccineProduct | undefined
+    if (year <= maxYear) {
+      entry = yearBased.find(r => r.year === year)
+    } else {
+      entry = yearBased
+        .filter(r => r.expiry && vaccinationDate <= r.expiry)
+        .sort((a, b) => (b.year! - a.year!))[0]
+      if (!entry) {
+        const noYearList = data.rabies.filter(r => r.year == null)
+        entry = lookupByDateRange(noYearList, vaccinationDate) ?? undefined
+      }
+    }
+
     if (!entry) return null
     return {
       ...entry,

@@ -19,6 +19,31 @@
 
 @layer base {
   :root {
+    /* ── PMW tokens (editorial spec) ──────────────────────────── */
+    /* Fonts: next/font 가 --font-* 를 주입 → 이름 있는 alias 로 노출 */
+    --pmw-font-serif: var(--font-serif), var(--font-serif-kr), Georgia, 'Times New Roman', serif;
+    --pmw-font-sans: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    --pmw-font-mono: var(--font-mono), 'Pretendard', ui-monospace, 'SF Mono', Menlo, monospace;
+
+    /* Neutral text */
+    --pmw-near-black: #1A1816;
+    --pmw-olive-gray: #7A776C;
+    --pmw-stone-gray: #9E9C91;
+
+    /* Accent — peach / terracotta */
+    --pmw-deep: #9B4A2D;
+    --pmw-clay-soft: #E8C9B6;
+
+    /* Status (sage/amber/rust 3색 trio) */
+    --pmw-sage: #5D6F4E;
+    --pmw-amber: #B97A1F;
+    --pmw-rust: #A04321;
+
+    /* Surface */
+    --pmw-border-warm: #D9D4C6;
+    --pmw-parchment: #F6F2E7;
+    --pmw-paper: #FBF8EE;
+
     /* Warm editorial palette — HSL pairs */
 
     /* Page: Parchment #f5f4ed */
@@ -66,6 +91,19 @@
   }
 
   .dark {
+    /* PMW tokens — dark mapping (reverse near-black/parchment) */
+    --pmw-near-black: #F4EFE2;
+    --pmw-olive-gray: #A8A498;
+    --pmw-stone-gray: #77746B;
+    --pmw-deep: #E0917A;
+    --pmw-clay-soft: #3B2C24;
+    --pmw-sage: #9FB38C;
+    --pmw-amber: #D9A55F;
+    --pmw-rust: #D47858;
+    --pmw-border-warm: #3A3631;
+    --pmw-parchment: #1E1C19;
+    --pmw-paper: #242220;
+
     color-scheme: dark;
     /* Near Black bg (#141413), parchment foreground */
     --background: 60 3% 8%;
@@ -136,6 +174,85 @@ select:-webkit-autofill {
   -webkit-box-shadow: 0 0 0 1000px hsl(var(--background)) inset;
   caret-color: hsl(var(--foreground));
   transition: background-color 9999s ease-in-out 0s;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PMW Editorial 타이포 스케일 (약품 관리 섹션 기준 — 다른 섹션에도 재사용)
+   ───────────────────────────────────────────────────────────── */
+@layer components {
+  .pmw-st__sec-title {
+    font-family: var(--pmw-font-serif);
+    font-size: 26px;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.3px;
+    color: var(--pmw-near-black);
+  }
+  .pmw-st__sec-lead {
+    font-family: var(--pmw-font-serif);
+    font-style: italic;
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--pmw-olive-gray);
+  }
+  .pmw-st__group-title {
+    font-family: var(--pmw-font-mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--pmw-olive-gray);
+  }
+  .pmw-st__field-label {
+    font-family: var(--pmw-font-serif);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--pmw-olive-gray);
+  }
+  .pmw-st__input {
+    font-family: var(--pmw-font-sans);
+    font-size: 14.5px;
+    color: var(--pmw-near-black);
+  }
+  .pmw-st__input-mono {
+    font-family: var(--pmw-font-mono);
+    font-size: 13.5px;
+    color: var(--pmw-near-black);
+  }
+  .pmw-st__btn {
+    font-family: var(--pmw-font-sans);
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--pmw-near-black);
+  }
+  .pmw-st__btn-ghost {
+    font-family: var(--pmw-font-serif);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--pmw-olive-gray);
+  }
+  .pmw-st__chip {
+    font-family: var(--pmw-font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--pmw-deep);
+    background-color: var(--pmw-clay-soft);
+  }
+  .pmw-st__tab-count {
+    font-family: var(--pmw-font-mono);
+    font-size: 10.5px;
+    color: var(--pmw-stone-gray);
+  }
+
+  /* Status text + dot helpers — sage/amber/rust trio */
+  .pmw-st__status--sage  { color: var(--pmw-sage); }
+  .pmw-st__status--amber { color: var(--pmw-amber); }
+  .pmw-st__status--rust  { color: var(--pmw-rust); }
+  .pmw-st__status--stone { color: var(--pmw-stone-gray); }
+  .pmw-st__dot--sage  { background-color: var(--pmw-sage); }
+  .pmw-st__dot--amber { background-color: var(--pmw-amber); }
+  .pmw-st__dot--rust  { background-color: var(--pmw-rust); }
+  .pmw-st__dot--stone { background-color: var(--pmw-stone-gray); }
 }
 
 @layer utilities {

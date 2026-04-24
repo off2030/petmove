@@ -12,7 +12,22 @@ export interface VaccineInfo {
   manufacturer: string | null   // 제조사
   lot: string | null            // 로트/배치 번호
   expiry: string | null         // 제품 유효기간 (EXP 라벨)
+  category: VaccineCategory | null  // 제품명 기반 카테고리
 }
+
+export type VaccineCategory =
+  | 'rabies'
+  | 'comprehensive_dog'
+  | 'comprehensive_cat'
+  | 'civ'
+  | 'kennel_cough'
+  | 'parasite_internal_dog'
+  | 'parasite_external_dog'
+  | 'parasite_external_cat'
+  | 'parasite_combo_dog'
+  | 'parasite_combo_cat'
+  | 'heartworm_dog'
+  | 'heartworm_cat'
 
 type ExtractResult =
   | { ok: true; records: VaccineInfo[] }
@@ -79,6 +94,28 @@ CORRECT output:
 
 The image may contain MULTIPLE vaccination records (two or more stickers/entries). Return ALL records.
 
+CATEGORY CLASSIFICATION — classify each record into ONE of these codes based on the product name/type:
+
+- "rabies" — 광견병 백신. Examples: Rabisin, Nobivac Rabies, Defensor, Canigen R, Biocan R
+- "comprehensive_dog" — 강아지 종합백신 (DHPPL/DHPP/DAPP/DAPPL). Examples: Vanguard Plus, Canigen DHPPi, Nobivac DHPPi, Canishot DHPPL, Duramune, Recombitek C
+- "comprehensive_cat" — 고양이 종합백신 (FVRCP). Examples: Nobivac Feline, Felocell, Purevax Feline, Fevac
+- "civ" — 개 인플루엔자 백신 (CIV). Examples: Nobivac Canine Flu, Vanguard CIV
+- "kennel_cough" — 켄넬코프 (Bordetella + Parainfluenza). Examples: Nobivac KC, Bronchi-Shield, Canigen KC
+- "parasite_internal_dog" — 내부 구충제 (강아지·고양이 구분 없음). Examples: Drontal Plus, Drontal Cat, Milbemax (internal only), Canex
+- "parasite_external_dog" — 강아지 외부 구충제 (벼룩/진드기). Examples: Frontline Plus Dog, Advantix, Bravecto (topical/chewable flea-tick only), Seresto Dog collar
+- "parasite_external_cat" — 고양이 외부 구충제. Examples: Frontline Plus Cat, Advantage Cat, Revolution Cat (if flea-only)
+- "parasite_combo_dog" — 강아지 내외부 합제 (both internal + external on one label). Examples: NexGard Spectra, Simparica Trio, Credelio Plus, Advocate Dog
+- "parasite_combo_cat" — 고양이 내외부 합제. Examples: Revolution Plus Cat, Advocate Cat, Broadline
+- "heartworm_dog" — 강아지 심장사상충 전용 (NOT a combo). Examples: Heartgard (ivermectin only), Interceptor (milbemycin only), Iverhart
+- "heartworm_cat" — 고양이 심장사상충 전용. Examples: Heartgard for Cats, Interceptor Cat
+
+Rules:
+- If the product is clearly a combo (e.g. NexGard Spectra covers fleas+ticks+heartworm+intestinal), pick "parasite_combo_*".
+- If you see "Heartgard Plus" (heartworm + hookworm/roundworm) treat as combo dewormer → "parasite_combo_dog".
+- Species hint: dog vs cat. If unclear from the product name, look for "canine"/"feline" or pictograms on the label.
+- If you genuinely cannot tell which category it belongs to, set category to null.
+- Do not invent categories not in this list.
+
 Return ONLY a JSON object with a "records" array:
 {
   "records": [
@@ -88,7 +125,8 @@ Return ONLY a JSON object with a "records" array:
       "product": "Vaccine/product name (e.g. Rabisin, NexGard Spectra, Vanguard Canine DAPP+L4) or null",
       "manufacturer": "Manufacturer (e.g. Boehringer Ingelheim, Merck, Zoetis) or null",
       "lot": "Lot/batch number (SER/Serial/Batch on the label) or null",
-      "expiry": "YYYY-MM-DD — product shelf-life expiry ONLY, or null"
+      "expiry": "YYYY-MM-DD — product shelf-life expiry ONLY, or null",
+      "category": "one of the category codes above, or null if unclear"
     }
   ]
 }

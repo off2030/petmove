@@ -4,11 +4,12 @@
 import {
   DEFAULT_INSPECTION_CONFIG,
   type InspectionConfig,
+  type InspectionLabOption,
   type InspectionLabRule,
 } from '@petmove/domain'
 
 export { DEFAULT_INSPECTION_CONFIG }
-export type { InspectionConfig, InspectionLabRule }
+export type { InspectionConfig, InspectionLabOption, InspectionLabRule }
 
 const APP_SETTINGS_KEY = 'inspection_config'
 
@@ -51,6 +52,29 @@ function normalizeRules(raw: unknown): InspectionLabRule[] {
   return raw.map(normalizeRule).filter((r): r is InspectionLabRule => r !== null)
 }
 
+function normalizeLabOption(o: unknown): InspectionLabOption | null {
+  if (!o || typeof o !== 'object') return null
+  const r = o as Record<string, unknown>
+  const value = typeof r.value === 'string' ? r.value.trim() : ''
+  const label = typeof r.label === 'string' ? r.label.trim() : ''
+  if (!value || !label) return null
+  return { value, label }
+}
+
+function normalizeLabOptions(raw: unknown): InspectionLabOption[] {
+  if (!Array.isArray(raw)) return []
+  const out: InspectionLabOption[] = []
+  const seen = new Set<string>()
+  for (const item of raw) {
+    const opt = normalizeLabOption(item)
+    if (opt && !seen.has(opt.value)) {
+      seen.add(opt.value)
+      out.push(opt)
+    }
+  }
+  return out
+}
+
 function normalize(raw: unknown): InspectionConfig {
   const src = (raw && typeof raw === 'object') ? (raw as Record<string, unknown>) : {}
   const titerDefault = typeof src.titerDefault === 'string' && src.titerDefault.trim()
@@ -61,10 +85,14 @@ function normalize(raw: unknown): InspectionConfig {
     : Array.isArray(src.titerOverrides) ? src.titerOverrides : []
   const infectiousRaw = Array.isArray(src.infectiousRules) ? src.infectiousRules
     : Array.isArray(src.infectiousOverrides) ? src.infectiousOverrides : []
+  const customTiterLabs = normalizeLabOptions(src.customTiterLabs)
+  const customInfectiousLabs = normalizeLabOptions(src.customInfectiousLabs)
   return {
     titerDefault,
     titerRules: normalizeRules(titerRaw),
     infectiousRules: normalizeRules(infectiousRaw),
+    ...(customTiterLabs.length > 0 ? { customTiterLabs } : {}),
+    ...(customInfectiousLabs.length > 0 ? { customInfectiousLabs } : {}),
   }
 }
 
