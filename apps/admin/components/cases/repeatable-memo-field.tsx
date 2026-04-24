@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
+import { SectionLabel } from '@/components/ui/section-label'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
@@ -63,7 +64,7 @@ export function RepeatableMemoField({ caseId, caseRow }: { caseId: string; caseR
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
-        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">메모</span>
+        <SectionLabel>메모</SectionLabel>
         <button
           type="button"
           onClick={() => setAddingNew(true)}

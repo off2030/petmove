@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
+import { SectionLabel } from '@/components/ui/section-label'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
@@ -235,7 +236,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
       )}
     >
       <div className="flex items-center gap-[6px] pt-1">
-        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">광견병항체검사</span>
+        <SectionLabel>광견병항체검사</SectionLabel>
         <button
           type="button"
           onClick={() => setAddingNew(true)}

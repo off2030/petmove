@@ -15,6 +15,7 @@ import { formatDate } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { CopyButton } from './copy-button'
 import { DateTextField } from '@/components/ui/date-text-field'
+import { SectionLabel } from '@/components/ui/section-label'
 import { EditableField } from './editable-field'
 import { PairedField } from './paired-field'
 import { CustomerNameRow } from './customer-name-row'
@@ -374,7 +375,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60">
       <div className="flex items-center gap-[6px] pt-1">
-        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">{spec.label}</span>
+        <SectionLabel>{spec.label}</SectionLabel>
         {!showSecondary && (
           <button type="button" onClick={() => { setShowSecondary(true); setEditingSecondary(true); setSecVal(''); setSecError(null) }}
             className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors"
@@ -459,7 +460,7 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60">
       <div className="flex items-center gap-[6px] pt-1">
-        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">마이크로칩</span>
+        <SectionLabel>마이크로칩</SectionLabel>
       </div>
       <div className="group/item flex items-baseline gap-[10px] min-w-0 flex-wrap">
         {editing ? (
