@@ -77,12 +77,12 @@ export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRest
             className="text-muted-foreground hover:text-foreground text-lg">&times;</button>
         </div>
 
-        {/* 검색 */}
+        {/* 검색 — 홈/할일 동일 스타일 */}
         {items.length > 0 && (
           <div className="px-5 py-3 border-b">
             <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
               placeholder="이름 검색" autoFocus
-              className="w-full h-9 rounded-md border border-border/50 bg-background px-sm text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30" />
+              className="w-full h-10 rounded-full border border-border/70 !bg-white px-4 text-[15px] focus-visible:outline-none focus-visible:border-foreground/40" />
           </div>
         )}
 
@@ -106,11 +106,11 @@ export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRest
                   </div>
                   <div className="flex items-center gap-sm">
                     <button type="button" onClick={() => handleRestore(item.id)} disabled={acting}
-                      className="text-xs text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50">
+                      className="text-xs text-primary/60 hover:text-primary hover:underline underline-offset-2 transition-colors disabled:opacity-50">
                       복원
                     </button>
                     <button type="button" onClick={() => handlePermanentDelete(item.id)} disabled={acting}
-                      className="text-xs text-muted-foreground/50 hover:text-red-500 transition-colors disabled:opacity-50">
+                      className="text-xs text-muted-foreground/50 hover:text-destructive transition-colors disabled:opacity-50">
                       영구삭제
                     </button>
                   </div>
