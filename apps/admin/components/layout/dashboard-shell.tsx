@@ -8,17 +8,21 @@ import { CasesApp } from '@/components/cases/cases-app'
 import { TodosApp } from '@/components/todos/todos-app'
 import { SettingsApp } from '@/components/settings/settings-app'
 import { CalculatorApp } from '@/components/calculator/calculator-app'
+import { SuperAdminApp } from '@/components/super-admin/super-admin-app'
 import type { SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
+import type { OrgSummary } from '@/lib/actions/super-admin'
 
 const MemoizedCases = memo(CasesApp)
 const MemoizedTodos = memo(TodosApp)
 const MemoizedSettings = memo(SettingsApp)
 const MemoizedCalculator = memo(CalculatorApp)
+const MemoizedSuperAdmin = memo(SuperAdminApp)
 
 function pathToTab(pathname: string): TabId {
   if (pathname.startsWith('/todos')) return 'todos'
   if (pathname.startsWith('/calculator')) return 'calculator'
   if (pathname.startsWith('/settings')) return 'settings'
+  if (pathname.startsWith('/super-admin')) return 'super-admin'
   return 'cases'
 }
 
@@ -26,10 +30,12 @@ export function DashboardShell({
   isSuperAdmin = false,
   userEmail,
   initialSettingsBootstrap = null,
+  initialOrgs = [],
 }: {
   isSuperAdmin?: boolean
   userEmail?: string | null
   initialSettingsBootstrap?: SettingsBootstrap | null
+  initialOrgs?: OrgSummary[]
 }) {
   const pathname = usePathname()
   const [activeTab, setActiveTab] = useState<TabId>(() => pathToTab(pathname))
@@ -83,6 +89,11 @@ export function DashboardShell({
 {mounted.has('settings') && (
           <div className="h-full" style={{ display: activeTab === 'settings' ? 'block' : 'none' }}>
             <MemoizedSettings initialBootstrap={initialSettingsBootstrap} />
+          </div>
+        )}
+        {isSuperAdmin && mounted.has('super-admin') && (
+          <div className="h-full" style={{ display: activeTab === 'super-admin' ? 'block' : 'none' }}>
+            <MemoizedSuperAdmin initialOrgs={initialOrgs} userEmail={userEmail ?? null} embedded />
           </div>
         )}
       </main>

@@ -7,7 +7,7 @@ import { useVaccineLookups } from '@/components/providers/vaccine-data-provider'
 import { useDarkMode } from '@/lib/use-dark-mode'
 import { cn } from '@/lib/utils'
 
-export type TabId = 'cases' | 'todos' | 'calculator' | 'settings'
+export type TabId = 'cases' | 'todos' | 'calculator' | 'settings' | 'super-admin'
 
 export const NAV_ITEMS: Array<{ id: TabId; icon: typeof Folder; label: string }> = [
   { id: 'cases', icon: Folder, label: '홈' },
@@ -197,15 +197,27 @@ export function TopBar({
         {/* Right-side actions */}
         <div className="flex items-center gap-xs">
           {isSuperAdmin && (
-            <Link
-              href="/super-admin"
-              prefetch={false}
-              title="Super Admin"
-              aria-label="Super Admin"
-              className={iconSlotClass(superAdminActive)}
-            >
-              <Shield size={18} />
-            </Link>
+            onTabChange ? (
+              <button
+                type="button"
+                onClick={() => onTabChange('super-admin')}
+                title="Super Admin"
+                aria-label="Super Admin"
+                className={iconSlotClass(superAdminActive || activeTab === 'super-admin')}
+              >
+                <Shield size={18} />
+              </button>
+            ) : (
+              <Link
+                href="/super-admin"
+                prefetch={false}
+                title="Super Admin"
+                aria-label="Super Admin"
+                className={iconSlotClass(superAdminActive)}
+              >
+                <Shield size={18} />
+              </Link>
+            )
           )}
           {mounted && (
             <button

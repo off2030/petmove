@@ -11,6 +11,7 @@ import { getOrgVaccineData } from '@/lib/vaccine-data'
 import { getCalculatorItems } from '@/lib/calculator-data'
 import { getSettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
+import { listAllOrgs, type OrgSummary } from '@/lib/actions/super-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -79,6 +80,13 @@ export default async function DashboardLayout({
     getActiveOrgId().catch(() => null),
   ])
 
+  // Super admin 이면 org 목록 prefetch — 탭 전환 시 즉시 표시.
+  let initialOrgs: OrgSummary[] = []
+  if (userCtx.isSuperAdmin) {
+    const r = await listAllOrgs().catch(() => ({ ok: false as const, error: 'failed' }))
+    if (r.ok) initialOrgs = r.value
+  }
+
   return (
     <CasesProvider
       initialCases={initialCases}
@@ -94,6 +102,7 @@ export default async function DashboardLayout({
             isSuperAdmin={userCtx.isSuperAdmin}
             userEmail={userCtx.email}
             initialSettingsBootstrap={settingsBootstrap}
+            initialOrgs={initialOrgs}
           />
         </CalculatorDataProvider>
       </VaccineDataProvider>

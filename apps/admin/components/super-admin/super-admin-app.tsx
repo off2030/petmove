@@ -16,9 +16,11 @@ import { cn } from '@/lib/utils'
 interface Props {
   initialOrgs: OrgSummary[]
   userEmail: string | null
+  /** DashboardShell 안에 삽입된 경우 내부 TopBar 생략. standalone 렌더링 때만 TopBar 포함. */
+  embedded?: boolean
 }
 
-export function SuperAdminApp({ initialOrgs, userEmail }: Props) {
+export function SuperAdminApp({ initialOrgs, userEmail, embedded = false }: Props) {
   const [orgs, setOrgs] = useState<OrgSummary[]>(initialOrgs)
   const [selected, setSelected] = useState<OrgDetail | null>(null)
   const [newOrgName, setNewOrgName] = useState('')
@@ -61,7 +63,7 @@ export function SuperAdminApp({ initialOrgs, userEmail }: Props) {
 
   return (
     <>
-      <TopBar isSuperAdmin userEmail={userEmail} superAdminActive />
+      {!embedded && <TopBar isSuperAdmin userEmail={userEmail} superAdminActive />}
       <main className="flex-1 min-w-0 overflow-auto scrollbar-minimal bg-background">
         <div className="px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
           <div className="mx-auto max-w-4xl 3xl:max-w-5xl 4xl:max-w-6xl flex flex-col gap-lg">
