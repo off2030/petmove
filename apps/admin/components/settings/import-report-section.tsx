@@ -93,7 +93,7 @@ export function ImportReportSection() {
           onChange={setDraft}
           hideSelectedChips
           variant="underline"
-          placeholder="목적지 추가 — 검색 (예: 독일, DE)"
+          placeholder="목적지 추가"
           aria-label="목적지 추가"
         />
       </div>
