@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { formatMicrochip } from '@/lib/fields'
 import type { CaseRow } from '@/lib/supabase/types'
 
@@ -43,7 +43,10 @@ interface ApplyInput {
 export async function applyCase(input: ApplyInput): Promise<
   { ok: true; caseId: string } | { ok: false; error: string }
 > {
-  const supabase = await createClient()
+  // 공개 신청폼 — anon key 로는 INSERT 후 SELECT (RETURNING) 단계가 cases_select RLS 에 막혀
+  // "RLS 위반" 에러가 발생하므로, 신뢰된 서버 액션 안에서 service-role 로 우회한다.
+  // org_id 는 코드에서 하드코딩 (사용자 입력 아님) 이므로 보안 영향 없음.
+  const supabase = createAdminClient()
 
   const data: Record<string, unknown> = {
     customer_last_name_en: input.customer_last_name_en,
