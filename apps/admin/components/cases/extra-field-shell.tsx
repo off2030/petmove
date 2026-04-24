@@ -347,7 +347,8 @@ export function InlineInput({ type, initial, placeholder, onSave, onCancel, uppe
         onKeyDown={(e) => {
           if (e.key === 'Escape') { e.preventDefault(); onCancel() }
         }}
-        className="h-7 w-full max-w-[320px] rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+        size="sm"
+        className="w-full max-w-[200px] bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
       />
     )
   }

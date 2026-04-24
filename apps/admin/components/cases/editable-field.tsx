@@ -586,7 +586,7 @@ function PhoneInput({ inputRef, initial, onChange, onKeyDown, onBlur, className 
       }}
       onKeyDown={onKeyDown}
       onBlur={() => { sync(); onBlur() }}
-      placeholder="010-0000-0000"
+      placeholder="010-1234-5678"
       maxLength={13}
       className={className}
     />
