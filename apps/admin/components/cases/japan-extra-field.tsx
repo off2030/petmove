@@ -9,6 +9,7 @@ import type { CaseRow } from '@/lib/supabase/types'
 import { extractFlightInfo } from '@/lib/actions/extract-flight'
 import type { FlightEntry, FlightExtractResult } from '@/lib/actions/extract-flight'
 import { CopyButton } from './copy-button'
+import { DateTextField } from '@/components/ui/date-text-field'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 
@@ -525,8 +526,24 @@ function InlineInput({ type, initial, placeholder, onSave, onCancel, uppercase }
 }) {
   const ref = useRef<HTMLInputElement>(null)
   const [val, setVal] = useState(initial)
-  useEffect(() => { ref.current?.focus() }, [])
+  useEffect(() => { if (type !== 'date') ref.current?.focus() }, [type])
   function save() { onSave(val.trim() || null) }
+
+  if (type === 'date') {
+    return (
+      <DateTextField
+        autoFocus
+        value={initial}
+        onChange={(v) => onSave(v || null)}
+        onBlur={onCancel}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') { e.preventDefault(); onCancel() }
+        }}
+        className="w-40 bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
+      />
+    )
+  }
+
   return (
     <input ref={ref} type={type} value={val}
       onChange={(e) => setVal(uppercase ? e.target.value.toUpperCase() : e.target.value)}
