@@ -204,7 +204,6 @@ export function DateTextField({
             visibility: popPos ? 'visible' : 'hidden',
           }}
           className="z-50 rounded-xl border border-border/60 bg-popover shadow-md"
-          onMouseDown={(e) => e.preventDefault()}
         >
           <Calendar
             mode="single"
