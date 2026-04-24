@@ -1,18 +1,18 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
-import { Plus, X } from 'lucide-react'
+import { Check, ChevronDown, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 import {
   listOrgAutoFillRules,
   createOrgAutoFillRule,
   updateOrgAutoFillRule,
   deleteOrgAutoFillRule,
   type AutoFillRule,
+  type AutoFillRuleInput,
 } from '@/lib/actions/org-auto-fill-rules'
 import { cn } from '@/lib/utils'
 
-// 목적지 옵션 — destination-config.ts 의 key 와 일치
 const DESTINATION_OPTIONS: { key: string; label: string }[] = [
   { key: 'hawaii', label: '하와이' },
   { key: 'australia', label: '호주' },
@@ -33,6 +33,10 @@ const DESTINATION_OPTIONS: { key: string; label: string }[] = [
   { key: 'uae', label: '아랍에미리트' },
   { key: 'guam', label: '괌' },
   { key: 'brazil', label: '브라질' },
+  { key: '아일랜드', label: '아일랜드' },
+  { key: '몰타', label: '몰타' },
+  { key: '노르웨이', label: '노르웨이' },
+  { key: '핀란드', label: '핀란드' },
 ]
 
 const SPECIES_OPTIONS: { key: string; label: string }[] = [
@@ -41,9 +45,7 @@ const SPECIES_OPTIONS: { key: string; label: string }[] = [
   { key: 'cat', label: '고양이' },
 ]
 
-// 트리거/타겟으로 사용 가능한 필드. label 은 UI 표시용.
-// 배열 필드는 "[0]" 같은 인덱스 suffix 로 특정 차수 지정 가능.
-const FIELD_OPTIONS: { key: string; label: string; array?: boolean }[] = [
+const FIELD_OPTIONS: { key: string; label: string }[] = [
   { key: 'departure_date', label: '출국일' },
   { key: 'vet_visit_date', label: '내원일' },
   { key: 'rabies_dates[0]', label: '광견병 1차' },
@@ -53,9 +55,9 @@ const FIELD_OPTIONS: { key: string; label: string; array?: boolean }[] = [
   { key: 'civ_dates[0]', label: 'CIV 1차' },
   { key: 'civ_dates[1]', label: 'CIV 2차' },
   { key: 'kennel_cough_dates[0]', label: '켄넬코프 1차' },
-  { key: 'internal_parasite_dates', label: '내부구충', array: true },
-  { key: 'external_parasite_dates', label: '외부구충', array: true },
-  { key: 'heartworm_dates', label: '심장사상충', array: true },
+  { key: 'internal_parasite_dates', label: '내부구충' },
+  { key: 'external_parasite_dates', label: '외부구충' },
+  { key: 'heartworm_dates', label: '심장사상충' },
 ]
 
 function destLabel(key: string): string {
@@ -72,12 +74,24 @@ function formatOffsets(offsets: number[]): string {
   return offsets.map((d) => (d === 0 ? '당일' : d > 0 ? `+${d}일` : `${d}일`)).join(', ')
 }
 
-export function AutomationSection({ isAdmin = false }: { isAdmin?: boolean }) {
-  const [rules, setRules] = useState<AutoFillRule[]>([])
-  const [loading, setLoading] = useState(true)
+interface DeletedRecord {
+  rule: AutoFillRule
+  at: number
+}
+
+export function AutomationSection({
+  isAdmin = false,
+  initialRules = null,
+}: {
+  isAdmin?: boolean
+  initialRules?: AutoFillRule[] | null
+}) {
+  const [rules, setRules] = useState<AutoFillRule[]>(initialRules ?? [])
+  const [loading, setLoading] = useState(initialRules == null)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   const [editing, setEditing] = useState<AutoFillRule | 'new' | null>(null)
+  const [deletedStack, setDeletedStack] = useState<DeletedRecord[]>([])
 
   async function refresh() {
     const r = await listOrgAutoFillRules()
@@ -87,20 +101,15 @@ export function AutomationSection({ isAdmin = false }: { isAdmin?: boolean }) {
   }
 
   useEffect(() => {
-    refresh()
-  }, [])
+    if (initialRules == null) refresh()
+  }, [initialRules])
 
-  function handleSave(input: Partial<AutoFillRule>) {
+  function handleSave(input: AutoFillRuleInput) {
     startTransition(async () => {
       if (editing === 'new') {
         const r = await createOrgAutoFillRule({
-          destination_key: input.destination_key!,
-          trigger_field: input.trigger_field!,
-          target_field: input.target_field!,
-          offsets_days: input.offsets_days!,
-          overwrite_existing: input.overwrite_existing ?? false,
-          enabled: input.enabled ?? true,
-          display_order: rules.filter((r) => r.destination_key === input.destination_key).length,
+          ...input,
+          display_order: rules.filter((x) => x.destination_key === input.destination_key).length,
         })
         if (!r.ok) { setError(r.error); return }
       } else if (editing) {
@@ -113,24 +122,52 @@ export function AutomationSection({ isAdmin = false }: { isAdmin?: boolean }) {
     })
   }
 
-  function handleDelete(id: string) {
-    if (!confirm('이 규칙을 삭제하시겠습니까?')) return
+  function handleDelete(rule: AutoFillRule) {
     startTransition(async () => {
-      const r = await deleteOrgAutoFillRule(id)
+      const r = await deleteOrgAutoFillRule(rule.id)
       if (!r.ok) { setError(r.error); return }
       setError(null)
+      // 복원 스택에 push
+      setDeletedStack((prev) => [{ rule, at: Date.now() }, ...prev].slice(0, 10))
+      await refresh()
+    })
+  }
+
+  function handleRestore() {
+    const top = deletedStack[0]
+    if (!top) return
+    startTransition(async () => {
+      const r = await createOrgAutoFillRule({
+        destination_key: top.rule.destination_key,
+        species_filter: top.rule.species_filter,
+        trigger_field: top.rule.trigger_field,
+        target_field: top.rule.target_field,
+        offsets_days: top.rule.offsets_days,
+        overwrite_existing: top.rule.overwrite_existing,
+        enabled: top.rule.enabled,
+        display_order: top.rule.display_order,
+      })
+      if (!r.ok) { setError(r.error); return }
+      setError(null)
+      setDeletedStack((prev) => prev.slice(1))
       await refresh()
     })
   }
 
   function handleToggle(rule: AutoFillRule) {
-    startTransition(async () => {
-      await updateOrgAutoFillRule(rule.id, { enabled: !rule.enabled })
-      await refresh()
+    const next = !rule.enabled
+    // 1) 즉시 로컬 갱신 — UI 는 바로 반응.
+    setRules((prev) => prev.map((r) => (r.id === rule.id ? { ...r, enabled: next } : r)))
+    // 2) 서버 동기화는 백그라운드. 실패 시 롤백.
+    void updateOrgAutoFillRule(rule.id, { enabled: next }).then((res) => {
+      if (!res.ok) {
+        setRules((prev) => prev.map((r) => (r.id === rule.id ? { ...r, enabled: !next } : r)))
+        setError(res.error)
+      }
     })
   }
 
-  // Group by destination_key
+  // Group by destination
   const grouped = new Map<string, AutoFillRule[]>()
   for (const r of rules) {
     if (!grouped.has(r.destination_key)) grouped.set(r.destination_key, [])
@@ -167,15 +204,23 @@ export function AutomationSection({ isAdmin = false }: { isAdmin?: boolean }) {
             {grouped.get(dk)!.map((r) => (
               <div
                 key={r.id}
+                role={isAdmin ? 'button' : undefined}
+                tabIndex={isAdmin ? 0 : undefined}
+                onClick={isAdmin && !pending ? () => handleToggle(r) : undefined}
+                onKeyDown={isAdmin && !pending ? (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggle(r) }
+                } : undefined}
+                title={isAdmin ? (r.enabled ? '활성 — 클릭하여 비활성' : '비활성 — 클릭하여 활성') : undefined}
                 className={cn(
-                  'grid grid-cols-[auto_1fr_auto] items-center gap-md py-3 border-b border-dotted border-border/60',
-                  !r.enabled && 'opacity-50',
+                  'grid grid-cols-[24px_56px_1fr_auto] items-center gap-md py-3 border-b border-dotted border-border/60 hover:bg-accent transition-colors group',
+                  isAdmin && 'cursor-pointer',
                 )}
               >
-                <span className="font-mono text-[10.5px] uppercase tracking-[0.6px] text-muted-foreground/80 min-w-[40px]">
+                <CheckBox checked={r.enabled} />
+                <span className={cn('font-mono text-[10.5px] uppercase tracking-[0.6px] text-muted-foreground/80', !r.enabled && 'opacity-50')}>
                   {speciesLabel(r.species_filter ?? 'all')}
                 </span>
-                <span className="font-serif text-[15px]">
+                <span className={cn('font-serif text-[15px]', !r.enabled && 'opacity-50')}>
                   <span className="text-foreground">{fieldLabel(r.trigger_field)}</span>
                   <span className="text-muted-foreground/60 mx-2">→</span>
                   <span className="text-foreground">{fieldLabel(r.target_field)}</span>
@@ -184,29 +229,23 @@ export function AutomationSection({ isAdmin = false }: { isAdmin?: boolean }) {
                   </span>
                 </span>
                 {isAdmin && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       type="button"
-                      onClick={() => handleToggle(r)}
-                      className="font-serif italic text-[12px] text-muted-foreground hover:text-foreground transition-colors"
-                      disabled={pending}
+                      onClick={(e) => { e.stopPropagation(); setEditing(r) }}
+                      title="편집"
+                      className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {r.enabled ? '켜짐' : '꺼짐'}
+                      <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => setEditing(r)}
-                      className="font-serif italic text-[12px] text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      편집
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(r.id)}
-                      className="font-serif italic text-[12px] text-muted-foreground/60 hover:text-destructive transition-colors"
+                      onClick={(e) => { e.stopPropagation(); handleDelete(r) }}
+                      title="삭제"
                       disabled={pending}
+                      className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-40"
                     >
-                      삭제
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 )}
@@ -217,7 +256,21 @@ export function AutomationSection({ isAdmin = false }: { isAdmin?: boolean }) {
       )}
 
       {isAdmin && (
-        <div className="flex items-center justify-end pt-md border-t border-border/60">
+        <div className="flex items-center justify-between pt-md border-t border-border/60">
+          <button
+            type="button"
+            onClick={handleRestore}
+            disabled={pending || deletedStack.length === 0}
+            title={
+              deletedStack.length > 0
+                ? `최근 삭제: ${destLabel(deletedStack[0].rule.destination_key)} · ${fieldLabel(deletedStack[0].rule.trigger_field)} → ${fieldLabel(deletedStack[0].rule.target_field)}`
+                : '최근 삭제한 규칙이 없습니다'
+            }
+            className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/60 hover:bg-muted/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <RotateCcw className="h-3 w-3" />
+            삭제 복원{deletedStack.length > 0 ? ` (${deletedStack.length})` : ''}
+          </button>
           <button
             type="button"
             onClick={() => setEditing('new')}
@@ -247,6 +300,99 @@ export function AutomationSection({ isAdmin = false }: { isAdmin?: boolean }) {
   )
 }
 
+/* ── Custom Editorial CheckBox (verification 탭과 동일 패턴) ── */
+
+function CheckBox({ checked }: { checked: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'inline-flex h-4 w-4 items-center justify-center rounded-sm border transition-colors',
+        checked ? 'border-foreground/60 bg-foreground/5' : 'border-border/70 bg-transparent',
+      )}
+    >
+      {checked && <Check className="h-3 w-3 text-foreground" strokeWidth={2.5} />}
+    </span>
+  )
+}
+
+/* ── Custom Editorial Dropdown ── */
+
+function EditorialSelect({
+  value,
+  options,
+  onChange,
+  placeholder = '선택',
+}: {
+  value: string
+  options: { key: string; label: string }[]
+  onChange: (v: string) => void
+  placeholder?: string
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onDoc(e: MouseEvent) {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  const current = options.find((o) => o.key === value)
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full inline-flex items-center justify-between gap-2 h-9 rounded-md border border-border/60 bg-background px-3 font-serif text-[14px] hover:border-foreground/40 transition-colors"
+      >
+        <span className={cn(!current && 'text-muted-foreground/60')}>{current?.label ?? placeholder}</span>
+        <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <ul
+          role="listbox"
+          className="absolute left-0 right-0 top-full mt-1 max-h-60 overflow-y-auto rounded-sm border border-border/70 bg-popover shadow-md py-1 z-30"
+        >
+          {options.map((o) => {
+            const active = o.key === value
+            return (
+              <li key={o.key}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange(o.key)
+                    setOpen(false)
+                  }}
+                  className={cn(
+                    'w-full text-left px-3 py-1.5 text-[14px] hover:bg-accent/40 transition-colors',
+                    active ? 'font-serif text-foreground' : 'font-serif text-muted-foreground',
+                  )}
+                >
+                  {o.label}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+/* ── Edit Modal ── */
+
 function RuleEditModal({
   initial,
   pending,
@@ -256,7 +402,7 @@ function RuleEditModal({
   initial: AutoFillRule | null
   pending: boolean
   onClose: () => void
-  onSave: (input: Partial<AutoFillRule>) => void
+  onSave: (input: AutoFillRuleInput) => void
 }) {
   const [destination, setDestination] = useState(initial?.destination_key ?? 'hawaii')
   const [species, setSpecies] = useState(initial?.species_filter ?? 'all')
@@ -306,24 +452,16 @@ function RuleEditModal({
 
         <div className="px-lg py-md space-y-md">
           <Field label="목적지">
-            <select value={destination} onChange={(e) => setDestination(e.target.value)} className={selectCls}>
-              {DESTINATION_OPTIONS.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
-            </select>
+            <EditorialSelect value={destination} onChange={setDestination} options={DESTINATION_OPTIONS} />
           </Field>
           <Field label="종">
-            <select value={species} onChange={(e) => setSpecies(e.target.value)} className={selectCls}>
-              {SPECIES_OPTIONS.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
-            </select>
+            <EditorialSelect value={species} onChange={setSpecies} options={SPECIES_OPTIONS} />
           </Field>
           <Field label="트리거 필드">
-            <select value={trigger} onChange={(e) => setTrigger(e.target.value)} className={selectCls}>
-              {FIELD_OPTIONS.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
-            </select>
+            <EditorialSelect value={trigger} onChange={setTrigger} options={FIELD_OPTIONS} />
           </Field>
           <Field label="타겟 필드">
-            <select value={target} onChange={(e) => setTarget(e.target.value)} className={selectCls}>
-              {FIELD_OPTIONS.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
-            </select>
+            <EditorialSelect value={target} onChange={setTarget} options={FIELD_OPTIONS} />
           </Field>
           <Field label="오프셋 (일, 쉼표 구분)" hint="예: -2 / 0 / 0, -29 / 14">
             <input
@@ -334,15 +472,23 @@ function RuleEditModal({
               className="w-full font-mono text-[14px] bg-transparent outline-none border-b border-border/60 focus:border-foreground/40 pb-1"
             />
           </Field>
-          <div className="flex items-center gap-md">
-            <label className="inline-flex items-center gap-sm font-serif text-[13px] text-muted-foreground">
-              <input type="checkbox" checked={overwrite} onChange={(e) => setOverwrite(e.target.checked)} />
+          <div className="flex items-center gap-md pt-1">
+            <button
+              type="button"
+              onClick={() => setOverwrite((v) => !v)}
+              className="inline-flex items-center gap-2 font-serif text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <CheckBox checked={overwrite} />
               기존 값 덮어쓰기
-            </label>
-            <label className="inline-flex items-center gap-sm font-serif text-[13px] text-muted-foreground">
-              <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setEnabled((v) => !v)}
+              className="inline-flex items-center gap-2 font-serif text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <CheckBox checked={enabled} />
               활성
-            </label>
+            </button>
           </div>
         </div>
 
@@ -359,8 +505,6 @@ function RuleEditModal({
     document.body,
   )
 }
-
-const selectCls = 'w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background'
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (

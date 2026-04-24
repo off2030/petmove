@@ -382,8 +382,7 @@ export function VaccineSection({
           {counts.expired > 0 && <StatCount n={counts.expired} label="만료" color="var(--pmw-rust)" />}
           {counts.urgent > 0 && <StatCount n={counts.urgent} label="30일 이내" color="var(--pmw-amber)" />}
           {counts.warning > 0 && <StatCount n={counts.warning} label="90일 이내" color="color-mix(in srgb, var(--pmw-amber) 70%, var(--pmw-olive-gray))" />}
-          {counts.ok > 0 && <StatCount n={counts.ok} label="정상" color="var(--pmw-olive-gray)" />}
-          {counts.unknown > 0 && <StatCount n={counts.unknown} label="정보 없음" color="var(--pmw-stone-gray)" />}
+          {counts.ok + counts.unknown > 0 && <StatCount n={counts.ok + counts.unknown} label="정상" color="var(--pmw-olive-gray)" />}
           {!loading && counts.expired + counts.urgent + counts.warning + counts.ok + counts.unknown === 0 && (
             <span className="pmw-st__sec-lead">등록된 제품 없음</span>
           )}

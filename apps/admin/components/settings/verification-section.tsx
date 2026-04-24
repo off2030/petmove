@@ -156,7 +156,7 @@ export function VerificationSection() {
                   onClick={() => toggleCheck(c.id)}
                   title={enabled ? '클릭하여 사용 안 함' : '클릭하여 다시 사용'}
                   className={cn(
-                    'w-full text-left grid grid-cols-[24px_1fr] items-start gap-md py-md border-b border-dotted border-border/60 hover:bg-accent/40 transition-colors',
+                    'w-full text-left grid grid-cols-[24px_1fr] items-start gap-md py-md border-b border-dotted border-border/60 hover:bg-accent transition-colors',
                   )}
                 >
                   <CheckBox checked={enabled} />

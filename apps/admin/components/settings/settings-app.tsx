@@ -232,7 +232,12 @@ export function SettingsApp({
           {activeTab === 'import_report' && <ImportReportSection />}
           {activeTab === 'documents' && <DocumentsSection />}
           {activeTab === 'verification' && <VerificationSection />}
-          {activeTab === 'automation' && <AutomationSection isAdmin={bootstrap?.myRole?.isAdmin ?? false} />}
+          {activeTab === 'automation' && (
+            <AutomationSection
+              isAdmin={bootstrap?.myRole?.isAdmin ?? false}
+              initialRules={bootstrap?.autoFillRules ?? null}
+            />
+          )}
           {activeTab === 'data' && <DataSection isSuperAdmin={bootstrap?.myRole?.isSuperAdmin ?? false} />}
         </div>
       </div>
