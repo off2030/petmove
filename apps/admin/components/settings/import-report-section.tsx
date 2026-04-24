@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { X } from 'lucide-react'
+import { useEffect, useState, useTransition } from 'react'
+import { createPortal } from 'react-dom'
+import { Plus, X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { saveImportReportCountriesAction } from '@/lib/actions/import-report-config-action'
 import { DEFAULT_IMPORT_REPORT_COUNTRIES } from '@petmove/domain'
@@ -12,6 +13,7 @@ export function ImportReportSection() {
   const [draft, setDraft] = useState<string[]>(importReportCountries)
   const [saving, startSave] = useTransition()
   const [msg, setMsg] = useState<string | null>(null)
+  const [addOpen, setAddOpen] = useState(false)
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(importReportCountries)
 
@@ -86,17 +88,28 @@ export function ImportReportSection() {
         </div>
       </div>
 
-      {/* Search-based picker — 검색/선택으로 추가 */}
-      <div className="pb-lg border-b border-border/60">
-        <DestinationPicker
-          values={draft}
-          onChange={setDraft}
-          hideSelectedChips
-          variant="underline"
-          placeholder="목적지"
-          aria-label="목적지"
-        />
+      {/* Add destination — modal trigger */}
+      <div className="pb-lg border-b border-border/60 flex items-center justify-end">
+        <button
+          type="button"
+          onClick={() => setAddOpen(true)}
+          className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/60 hover:bg-muted/40 transition-colors"
+        >
+          <Plus className="h-3 w-3" />
+          목적지 추가
+        </button>
       </div>
+
+      {addOpen && (
+        <DestinationAddModal
+          existing={draft}
+          onClose={() => setAddOpen(false)}
+          onAdd={(name) => {
+            if (!draft.includes(name)) setDraft([...draft, name])
+            setAddOpen(false)
+          }}
+        />
+      )}
 
       {/* Footer actions */}
       <div className="flex items-center justify-between pt-lg">
@@ -120,5 +133,68 @@ export function ImportReportSection() {
         </div>
       </div>
     </div>
+  )
+}
+
+/* ── Single Destination Add Modal ── */
+
+function DestinationAddModal({
+  existing,
+  onClose,
+  onAdd,
+}: {
+  existing: string[]
+  onClose: () => void
+  onAdd: (name: string) => void
+}) {
+  const [picked, setPicked] = useState<string[]>([])
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  if (!mounted) return null
+
+  // 사용자가 선택하면 즉시 추가하고 모달 닫기.
+  function handleChange(next: string[]) {
+    const added = next.find(n => !existing.includes(n) && !picked.includes(n))
+    if (added) {
+      onAdd(added)
+      return
+    }
+    setPicked(next)
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="bg-background rounded-sm border border-border/60 shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-border/60 px-lg py-3">
+          <h3 className="font-serif text-[15px] text-foreground">목적지 추가</h3>
+          <button type="button" onClick={onClose} className="p-1 rounded hover:bg-muted">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="px-lg py-md">
+          <label className="font-serif text-[13px] text-muted-foreground/80 block mb-1">목적지</label>
+          <DestinationPicker
+            values={picked}
+            onChange={handleChange}
+            hideSelectedChips
+            variant="underline"
+            placeholder="검색 (예: 독일, DE)"
+            aria-label="목적지"
+          />
+        </div>
+      </div>
+    </div>,
+    document.body,
   )
 }
