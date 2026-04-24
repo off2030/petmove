@@ -11,6 +11,7 @@ import { CopyButton } from './copy-button'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { DateTextField } from '@/components/ui/date-text-field'
+import { SectionLabel } from '@/components/ui/section-label'
 
 type ExtractOk<C extends Country> = { ok: true; data: ResultMap[C] }
 
@@ -341,25 +342,21 @@ export interface FieldRowProps {
   uppercase?: boolean
   /** FlightBlock sub-field처럼 좁은 layout 원할 때 */
   compact?: boolean
-  compactLabelClass?: string
   allowDelete?: boolean
 }
 
 export function FieldRow({
   label, value, isEditing, onStartEdit, onSave, onCancelEdit,
-  type = 'text', placeholder = '', options, uppercase, compact, compactLabelClass, allowDelete = true,
+  type = 'text', placeholder = '', options, uppercase, compact, allowDelete = true,
 }: FieldRowProps) {
   const isSelect = type === 'select'
   const display = isSelect && value ? (options?.find(o => o.value === value)?.label ?? value) : value
   const rowCls = compact
     ? 'flex items-center gap-sm'
     : 'grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0'
-  const labelCls = compact
-    ? (compactLabelClass ?? 'font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground w-16 shrink-0')
-    : 'font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1'
   return (
     <div className={rowCls}>
-      <span className={labelCls}>{label}</span>
+      <SectionLabel className={compact ? 'w-16 shrink-0' : 'pt-1'}>{label}</SectionLabel>
       {isEditing ? (
         isSelect ? (
           <SelectInput options={options ?? []} initial={value ?? ''} onSave={onSave} onCancel={onCancelEdit} />
