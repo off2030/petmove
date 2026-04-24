@@ -13,6 +13,7 @@ import { DateTextField } from '@/components/ui/date-text-field'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { ExtraSectionShell } from './extra-field-shell'
+import { SectionLabel } from '@/components/ui/section-label'
 
 /* ── Types ── */
 
@@ -285,7 +286,7 @@ export function JapanExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
 
       {/* ── Email ── */}
       <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
-        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1">이메일</span>
+        <SectionLabel className="pt-1">이메일</SectionLabel>
         {editingField === 'email' ? (
           <InlineInput
             type="text"
@@ -325,7 +326,7 @@ export function JapanExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
 
       {/* ── Address ── */}
       <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
-        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1">해외주소</span>
+        <SectionLabel className="pt-1">해외주소</SectionLabel>
         {editingField === 'address_overseas' ? (
           <InlineInput
             type="text"
@@ -365,7 +366,7 @@ export function JapanExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
 
       {/* ── Certificate No ── */}
       <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
-        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1">EQC No.</span>
+        <SectionLabel className="pt-1">EQC No.</SectionLabel>
         {editingField === 'certificate_no' ? (
           <InlineInput
             type="text"
@@ -418,7 +419,7 @@ function FlightBlock({ label, direction, flight, editingField, setEditingField, 
 }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
-      <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1">{label}</span>
+      <SectionLabel className="pt-1">{label}</SectionLabel>
       <div className="min-w-0 space-y-0.5">
         {FLIGHT_FIELDS.map((f) => {
           const fieldId = `${direction}.${f.key}`

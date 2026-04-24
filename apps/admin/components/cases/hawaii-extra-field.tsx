@@ -10,6 +10,7 @@ import { extractExtra } from '@/lib/actions/extract-extra'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { ExtraSectionShell } from './extra-field-shell'
+import { SectionLabel } from '@/components/ui/section-label'
 
 interface HawaiiExtra {
   passport_number: string | null
@@ -151,7 +152,7 @@ export function HawaiiExtraField({ caseId, caseRow, sectionNumber }: { caseId: s
     const isEditing = editingField === key
     return (
       <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
-        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1">{label}</span>
+        <SectionLabel className="pt-1">{label}</SectionLabel>
         {isEditing ? (
           <InlineInput type={type} initial={val ?? ''} placeholder={placeholder} onSave={(v) => saveField(key, v)} onCancel={() => setEditingField(null)} />
         ) : (

@@ -10,6 +10,7 @@ import { extractExtra } from '@/lib/actions/extract-extra'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { ExtraSectionShell } from './extra-field-shell'
+import { SectionLabel } from '@/components/ui/section-label'
 
 interface SwissExtra {
   entry_purpose: 'temporary' | 'relocation' | 'reentry' | null
@@ -190,7 +191,7 @@ export function SwissExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
     const display = val ? options.find(o => o.value === val)?.label ?? val : null
     return (
       <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
-        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1">{label}</span>
+        <SectionLabel className="pt-1">{label}</SectionLabel>
         {isEditing ? (
           <SelectInput
             options={options}
@@ -227,7 +228,7 @@ export function SwissExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
     const isEditing = editingField === key
     return (
       <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
-        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1">{label}</span>
+        <SectionLabel className="pt-1">{label}</SectionLabel>
         {isEditing ? (
           <InlineInput
             type="date"
@@ -265,7 +266,7 @@ export function SwissExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
     const isEditing = editingField === key
     return (
       <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
-        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1">{label}</span>
+        <SectionLabel className="pt-1">{label}</SectionLabel>
         {isEditing ? (
           <InlineInput
             type="text"
@@ -326,7 +327,7 @@ export function SwissExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
       {/* 해외주소 — 단일 문자열. "Rue du Lac 12, 1800 Vevey, Switzerland" 포맷.
           PDF 생성 시 자동 파싱해 Address/Postcode/City 로 분리 출력. */}
       <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
-        <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1">해외주소</span>
+        <SectionLabel className="pt-1">해외주소</SectionLabel>
         {editingField === 'address_overseas' ? (
           <InlineInput
             type="text"

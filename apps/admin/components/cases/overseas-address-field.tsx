@@ -6,6 +6,7 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { CopyButton } from './copy-button'
+import { SectionLabel } from '@/components/ui/section-label'
 
 const DATA_KEY = 'address_overseas'
 
@@ -27,7 +28,7 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
-      <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground pt-1">해외주소</span>
+      <SectionLabel className="pt-1">해외주소</SectionLabel>
       {editing ? (
         <AddressInput
           initial={value ?? ''}
