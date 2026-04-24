@@ -833,9 +833,9 @@ function ProductDropdown({ value, defaultName, options, onChange, saving }: {
 
 /* ── Detail field (text or date, inline editable) ── */
 
-function DetailField({ value, type, placeholder, isEditing, onStartEdit, onSave, onCancel, saving }: {
+function DetailField({ value, hint, type, placeholder, isEditing, onStartEdit, onSave, onCancel, saving }: {
   value?: string | null
-  /** @deprecated lookup hint 표시는 제거됨. prop은 호출부 호환을 위해 남김. */
+  /** lookup 으로 자동 추론된 값 — 사용자 입력(value) 없을 때 hint 를 옅게 표시. */
   hint?: string | null
   type?: 'text' | 'date'
   placeholder: string
@@ -846,7 +846,9 @@ function DetailField({ value, type, placeholder, isEditing, onStartEdit, onSave,
   saving: boolean
 }) {
   const hasValue = !!value
-  const display = value || placeholder
+  const hasHint = !hasValue && !!hint
+  // 우선순위: 사용자 입력 → 자동 추론 hint → placeholder
+  const display = value || hint || placeholder
 
   if (isEditing) {
     return type === 'date' ? (
@@ -858,9 +860,11 @@ function DetailField({ value, type, placeholder, isEditing, onStartEdit, onSave,
 
   return (
     <button type="button" onClick={onStartEdit}
+      title={hasHint ? '자동 추론값 — 클릭하여 직접 입력' : undefined}
       className={cn(
         'text-left rounded-md px-2 py-1 -mx-2 text-xs transition-colors hover:bg-accent/60 cursor-text',
-        !hasValue && 'text-muted-foreground/40 italic',
+        !hasValue && !hasHint && 'text-muted-foreground/40 italic',
+        hasHint && 'text-muted-foreground/70',
       )}>
       {display}
     </button>
