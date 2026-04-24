@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
@@ -540,17 +541,85 @@ function SelectInput({ options, initial, onSave, onCancel }: {
   options: { value: string; label: string }[]; initial: string
   onSave: (v: string | null) => void; onCancel: () => void
 }) {
-  const ref = useRef<HTMLSelectElement>(null)
-  useEffect(() => { ref.current?.focus() }, [])
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const [open, setOpen] = useState(true)
+
+  useEffect(() => {
+    triggerRef.current?.focus()
+  }, [])
+
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (!wrapRef.current?.contains(e.target as Node)) {
+        setOpen(false)
+        setTimeout(onCancel, 50)
+      }
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setOpen(false)
+        onCancel()
+      }
+    }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [onCancel])
+
+  const current = options.find((o) => o.value === initial)
+  const currentLabel = current?.label ?? '선택'
+
   return (
-    <select ref={ref} defaultValue={initial}
-      onChange={(e) => onSave(e.target.value || null)}
-      onBlur={() => setTimeout(onCancel, 150)}
-      onKeyDown={(e) => { if (e.key === 'Escape') onCancel() }}
-      className="h-7 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
-    >
-      <option value="">선택</option>
-      {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-    </select>
+    <div ref={wrapRef} className="relative inline-block">
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="h-7 inline-flex items-center gap-1.5 rounded-md border border-border/50 bg-background px-2 text-sm hover:border-foreground/40 focus-visible:outline-none focus-visible:border-foreground/40 transition-colors"
+      >
+        <span className={cn(!current && 'text-muted-foreground/70')}>{currentLabel}</span>
+        <ChevronDown className={cn('h-3 w-3 text-muted-foreground transition-transform', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <ul
+          role="listbox"
+          className="absolute left-0 top-full mt-1 min-w-full whitespace-nowrap rounded-sm border border-border/70 bg-popover shadow-md py-1 z-30"
+        >
+          <li>
+            <button
+              type="button"
+              onClick={() => { onSave(null); setOpen(false) }}
+              className={cn(
+                'w-full text-left px-3 py-1.5 text-sm font-serif italic hover:bg-accent/40 transition-colors',
+                !current ? 'text-foreground' : 'text-muted-foreground',
+              )}
+            >
+              선택
+            </button>
+          </li>
+          {options.map((o) => {
+            const active = o.value === initial
+            return (
+              <li key={o.value}>
+                <button
+                  type="button"
+                  onClick={() => { onSave(o.value); setOpen(false) }}
+                  className={cn(
+                    'w-full text-left px-3 py-1.5 text-sm hover:bg-accent/40 transition-colors',
+                    active ? 'font-serif text-foreground' : 'font-serif text-muted-foreground',
+                  )}
+                >
+                  {o.label}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
   )
 }
