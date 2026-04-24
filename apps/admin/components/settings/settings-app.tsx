@@ -8,6 +8,7 @@ import { ImportReportSection } from './import-report-section'
 import { InspectionSection } from './inspection-section'
 import { DocumentsSection } from './documents-section'
 import { VerificationSection } from './verification-section'
+import { AutomationSection } from './automation-section'
 import { MembersSection } from './members-section'
 import { ProfileSection } from './profile-section'
 import { getSettingsBootstrap, type SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
@@ -21,6 +22,7 @@ const TABS = [
   { id: 'import_report', label: '신고' },
   { id: 'documents', label: '서류' },
   { id: 'verification', label: '검증' },
+  { id: 'automation', label: '자동화' },
   { id: 'data', label: '데이터 관리' },
 ] as const
 
@@ -230,6 +232,7 @@ export function SettingsApp({
           {activeTab === 'import_report' && <ImportReportSection />}
           {activeTab === 'documents' && <DocumentsSection />}
           {activeTab === 'verification' && <VerificationSection />}
+          {activeTab === 'automation' && <AutomationSection isAdmin={bootstrap?.myRole?.isAdmin ?? false} />}
           {activeTab === 'data' && <DataSection isSuperAdmin={bootstrap?.myRole?.isSuperAdmin ?? false} />}
         </div>
       </div>
