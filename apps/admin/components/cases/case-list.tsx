@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Search, Plus, X, Paperclip, Loader2, History } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { CaseRow } from '@/lib/supabase/types'
@@ -13,6 +13,82 @@ import { TrashModal } from './trash-modal'
 
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
+
+interface CaseRowItemProps {
+  caseRow: CaseRow
+  index: number
+  isSelected: boolean
+  isNew: boolean
+  isHighlighted: boolean
+  onSelect: (id: string) => void
+}
+
+/**
+ * 메모이즈된 케이스 행. 같은 case 가 같은 상태로 들어오면 다시 렌더링되지 않음.
+ * 1797개 행 중 단 하나의 isSelected/isNew/필드 값만 바뀌어도 그 행만 다시 렌더링.
+ */
+const CaseRowItem = memo(function CaseRowItem({
+  caseRow: c,
+  index,
+  isSelected,
+  isNew,
+  isHighlighted,
+  onSelect,
+}: CaseRowItemProps) {
+  const dest = c.destination
+  const dests = dest ? dest.split(',').map((s) => s.trim()).filter(Boolean) : []
+  return (
+    <li data-case-idx={index} className="border-b border-border/60 last:border-b-0">
+      <button
+        type="button"
+        onClick={() => onSelect(c.id)}
+        className={cn(
+          'group relative block w-full px-lg py-4 text-left transition-colors',
+          'hover:bg-accent',
+          isSelected && 'bg-accent',
+          isHighlighted && 'bg-accent/70',
+          isNew && !isSelected && 'bg-primary/5',
+        )}
+      >
+        {isNew && (
+          <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary" />
+        )}
+        <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm">
+          <span className="truncate font-sans font-normal text-[16px] leading-tight text-foreground/85">
+            {c.customer_name}
+          </span>
+          <span className="truncate font-serif font-semibold text-[17px] leading-tight text-foreground">
+            {c.pet_name ?? '—'}
+          </span>
+          <span className="truncate inline-flex items-center justify-end md:justify-start gap-2 flex-wrap">
+            {dests.length > 0 ? (
+              dests.map((d) => {
+                const code = destCode(d)
+                return (
+                  <span key={d} className="inline-flex items-baseline gap-1.5">
+                    {code && (
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                        {code}
+                      </span>
+                    )}
+                    <span className="font-serif font-normal text-[16px] text-foreground">{d}</span>
+                  </span>
+                )
+              })
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            )}
+          </span>
+          <span className="hidden md:block font-mono text-[12px] text-muted-foreground/80 tabular-nums tracking-wide">
+            {formatMicrochip(c.microchip) ?? c.microchip ?? (
+              <span className="italic font-serif tracking-normal">미등록</span>
+            )}
+          </span>
+        </div>
+      </button>
+    </li>
+  )
+})
 
 /**
  * Left-pane list — Editorial tone.
@@ -42,6 +118,12 @@ export function CaseList({
   const [visible, setVisible] = useState(INITIAL_VISIBLE)
   const [highlight, setHighlight] = useState(-1)
   const [showTrash, setShowTrash] = useState(false)
+
+  // 안정적인 callback 으로 만들어 CaseRowItem 의 React.memo 가 정상 동작하도록 함.
+  const handleRowSelect = useCallback((id: string) => {
+    selectCase(id)
+    setHighlight(-1)
+  }, [selectCase])
 
   useEffect(() => {
     setVisible(INITIAL_VISIBLE)
@@ -293,73 +375,17 @@ export function CaseList({
             </div>
           ) : (
             <ul>
-              {visibleCases.map((c, i) => {
-                const isSelected = c.id === selectedId
-                const isNew = newCaseIds.has(c.id)
-                const dest = c.destination
-                const dests = dest ? dest.split(',').map(s => s.trim()).filter(Boolean) : []
-                return (
-                  <li key={c.id} data-case-idx={i} className="border-b border-border/60 last:border-b-0">
-                    <button
-                      type="button"
-                      onClick={() => { selectCase(c.id); setHighlight(-1) }}
-                      className={cn(
-                        'group relative block w-full px-lg py-4 text-left transition-colors',
-                        'hover:bg-accent',
-                        isSelected && 'bg-accent',
-                        !isSelected && i === highlight && 'bg-accent/70',
-                        isNew && !isSelected && 'bg-primary/5',
-                      )}
-                    >
-                      {isNew && (
-                        <span
-                          aria-hidden
-                          className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary"
-                        />
-                      )}
-                      <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm">
-                        {/* Guardian — sans · 16px · Charcoal (near-black 85%) */}
-                        <span className="truncate font-sans font-normal text-[16px] leading-tight text-foreground/85">
-                          {c.customer_name}
-                        </span>
-
-                        {/* Pet — bold serif, editorial primary */}
-                        <span className="truncate font-serif font-semibold text-[17px] leading-tight text-foreground">
-                          {c.pet_name ?? '—'}
-                        </span>
-
-                        {/* Destination — country code prefix + name */}
-                        <span className="truncate inline-flex items-center justify-end md:justify-start gap-2 flex-wrap">
-                          {dests.length > 0 ? (
-                            dests.map((d) => {
-                              const code = destCode(d)
-                              return (
-                                <span key={d} className="inline-flex items-baseline gap-1.5">
-                                  {code && (
-                                    <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                                      {code}
-                                    </span>
-                                  )}
-                                  <span className="font-serif font-normal text-[16px] text-foreground">{d}</span>
-                                </span>
-                              )
-                            })
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </span>
-
-                        {/* Microchip — hairline mono */}
-                        <span className="hidden md:block font-mono text-[12px] text-muted-foreground/80 tabular-nums tracking-wide">
-                          {formatMicrochip(c.microchip) ?? c.microchip ?? (
-                            <span className="italic font-serif tracking-normal">미등록</span>
-                          )}
-                        </span>
-                      </div>
-                    </button>
-                  </li>
-                )
-              })}
+              {visibleCases.map((c, i) => (
+                <CaseRowItem
+                  key={c.id}
+                  caseRow={c}
+                  index={i}
+                  isSelected={c.id === selectedId}
+                  isNew={newCaseIds.has(c.id)}
+                  isHighlighted={!!(c.id !== selectedId && i === highlight)}
+                  onSelect={handleRowSelect}
+                />
+              ))}
               {visible < filtered.length && (
                 <li ref={sentinelRef} className="h-10" />
               )}
