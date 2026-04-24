@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
@@ -94,6 +95,9 @@ export function CasesProvider({
   const [inspectionConfig, setInspectionConfig] = useState<InspectionConfig>(initialInspectionConfig)
   const [certConfig, setCertConfig] = useState<CertConfig>(initialCertConfig)
   const [newCaseIds, setNewCaseIds] = useState<Set<string>>(() => new Set())
+  // 본인이 직접 추가한(addLocalCase 또는 useEffect 내 직접 setCases) 케이스 id.
+  // Realtime INSERT 가 같은 행을 다시 가져왔을 때 중복 처리 + "신규" 표식을 막는다.
+  const selfAddedRef = useRef<Set<string>>(new Set())
 
   const selectCase = useCallback((id: string | null) => {
     setSelectedId(id)
@@ -120,6 +124,11 @@ export function CasesProvider({
         (payload) => {
           const row = payload.new as CaseRow
           if (!row?.id) return
+          // 본인이 추가한 케이스면 Realtime 콜백 무시 — 이미 addLocalCase 로 반영됨.
+          if (selfAddedRef.current.has(row.id)) {
+            selfAddedRef.current.delete(row.id)
+            return
+          }
           setCases((prev) => {
             if (prev.some((c) => c.id === row.id)) return prev
             return [row, ...prev]
@@ -163,6 +172,7 @@ export function CasesProvider({
   }, [selectedId, selectedCase?.destination])
 
   const addLocalCase = useCallback((newCase: CaseRow) => {
+    selfAddedRef.current.add(newCase.id)
     setCases((prev) => [newCase, ...prev])
     setSelectedId(newCase.id)
   }, [])
