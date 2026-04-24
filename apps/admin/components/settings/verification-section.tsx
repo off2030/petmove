@@ -117,7 +117,7 @@ export function VerificationSection() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="검색"
-            className="h-11 w-full pl-10 pr-9 text-[15px] !bg-white shadow-none border border-border/70 rounded-full focus-visible:outline-none focus-visible:ring-0 focus-visible:border-foreground/40 placeholder:text-muted-foreground/60"
+            className="h-11 w-full pl-10 pr-9 text-[15px] bg-card text-foreground shadow-none border border-border/70 rounded-full focus-visible:outline-none focus-visible:ring-0 focus-visible:border-foreground/40 placeholder:text-muted-foreground/60"
           />
           {query && (
             <button
@@ -218,7 +218,7 @@ function SortDropdown({ value, onChange }: { value: SortKey; onChange: (v: SortK
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="h-11 inline-flex items-center gap-2 rounded-full border border-border/70 !bg-white pl-4 pr-3 text-[14px] hover:border-foreground/40 transition-colors"
+        className="h-11 inline-flex items-center gap-2 rounded-full border border-border/70 bg-card text-foreground pl-4 pr-3 text-[14px] hover:border-foreground/40 transition-colors"
       >
         <span>{current.label}</span>
         <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', open && 'rotate-180')} />
