@@ -5,7 +5,7 @@ import type { CaseRow } from '@/lib/supabase/types'
 import { DESTINATION_OVERRIDES, matchesDestinationKey } from '@petmove/domain'
 import { getChecksForCountry } from '@petmove/domain'
 import type { CheckResult, CheckSeverity, ProcedureCheck } from '@petmove/domain'
-import { getDisabledCheckIds } from '@/lib/verification-disabled'
+import { listOrgDisabledChecks } from '@/lib/actions/org-disabled-checks'
 
 export interface CheckEntry {
   check: ProcedureCheck
@@ -49,15 +49,13 @@ export function VerificationProvider({
   destination?: string | null
   children: ReactNode
 }) {
-  // 설정 탭에서 사용자가 끈 규칙 id. localStorage 라 mount 이후에만 채워짐.
+  // 설정 탭에서 끈 규칙 id (조직 단위). 마운트 후 서버 액션으로 fetch — 잠깐 동안은 모든 체크가 실행될 수 있음.
   const [disabledIds, setDisabledIdsState] = useState<Set<string>>(() => new Set())
   useEffect(() => {
-    setDisabledIdsState(getDisabledCheckIds())
-    function onStorage(e: StorageEvent) {
-      if (e.key === 'verification-disabled-checks') setDisabledIdsState(getDisabledCheckIds())
-    }
-    window.addEventListener('storage', onStorage)
-    return () => window.removeEventListener('storage', onStorage)
+    void (async () => {
+      const r = await listOrgDisabledChecks()
+      if (r.ok) setDisabledIdsState(new Set(r.value))
+    })()
   }, [])
 
   const value = useMemo<VerificationValue>(() => {

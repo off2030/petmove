@@ -8,6 +8,7 @@ import { CasesApp } from '@/components/cases/cases-app'
 import { TodosApp } from '@/components/todos/todos-app'
 import { SettingsApp } from '@/components/settings/settings-app'
 import { CalculatorApp } from '@/components/calculator/calculator-app'
+import type { SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 
 const MemoizedCases = memo(CasesApp)
 const MemoizedTodos = memo(TodosApp)
@@ -24,9 +25,11 @@ function pathToTab(pathname: string): TabId {
 export function DashboardShell({
   isSuperAdmin = false,
   userEmail,
+  initialSettingsBootstrap = null,
 }: {
   isSuperAdmin?: boolean
   userEmail?: string | null
+  initialSettingsBootstrap?: SettingsBootstrap | null
 }) {
   const pathname = usePathname()
   const [activeTab, setActiveTab] = useState<TabId>(() => pathToTab(pathname))
@@ -79,7 +82,7 @@ export function DashboardShell({
         )}
 {mounted.has('settings') && (
           <div className="h-full" style={{ display: activeTab === 'settings' ? 'block' : 'none' }}>
-            <MemoizedSettings />
+            <MemoizedSettings initialBootstrap={initialSettingsBootstrap} />
           </div>
         )}
       </main>

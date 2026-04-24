@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
-import { Paperclip, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { ChevronRight, Paperclip, Plus, Trash2, X } from 'lucide-react'
 import {
   PARASITE_FAMILIES,
   daysUntilExpiry,
@@ -176,6 +176,7 @@ export function VaccineSection({
   const [extractMsg, setExtractMsg] = useState<{ kind: 'info' | 'error' | 'success'; text: string } | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [picking, setPicking] = useState(false)
 
   async function refresh() {
     setLoading(true)
@@ -370,9 +371,7 @@ export function VaccineSection({
   }
 
   // Shared grid template — 카테고리가 달라도 열이 맞도록 모든 행에 동일 적용.
-  const gridCols = isAdmin
-    ? 'minmax(0,1.6fr) minmax(0,1fr) 110px 100px 150px 56px'
-    : 'minmax(0,1.6fr) minmax(0,1fr) 110px 100px 150px'
+  const gridCols = 'minmax(0,1.6fr) minmax(0,1fr) 110px 100px 150px'
 
   return (
     <div className="max-w-5xl pb-2xl">
@@ -457,15 +456,26 @@ export function VaccineSection({
                 if (files.length > 0) handleImagesGlobal(files)
               }}
             />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={extracting}
-              className="inline-flex items-center gap-1 pmw-st__btn px-2 py-0.5 rounded-full border border-border/60 hover:bg-muted/40 transition-colors disabled:opacity-40 shrink-0"
-            >
-              <Paperclip className="h-3 w-3" />
-              파일 선택
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={extracting}
+                className="inline-flex items-center gap-1 pmw-st__btn px-2 py-0.5 rounded-full border border-border/60 hover:bg-muted/40 transition-colors disabled:opacity-40"
+              >
+                <Paperclip className="h-3 w-3" />
+                파일 선택
+              </button>
+              <button
+                type="button"
+                onClick={() => setPicking(true)}
+                disabled={extracting}
+                className="inline-flex items-center gap-1 pmw-st__btn px-2 py-0.5 rounded-full border border-border/60 hover:bg-muted/40 transition-colors disabled:opacity-40"
+              >
+                <Plus className="h-3 w-3" />
+                추가
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -493,29 +503,16 @@ export function VaccineSection({
                 <span>제품번호</span>
                 <span>만료</span>
                 <span>상태</span>
-                {isAdmin && <span />}
               </div>
 
               {categories.map(({ category, meta, list }) => {
                 return (
                   <div key={category} data-vaccine-category={category}>
                     {/* Category sub-header */}
-                    <div className="flex items-center justify-between pt-md pb-1 px-1">
-                      <div className="flex items-baseline gap-sm min-w-0">
-                        <span className="pmw-st__group-title truncate">{meta.label}</span>
-                      </div>
-                      {isAdmin && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setEditing({ mode: 'create', initial: blankForm(category) })
-                          }
-                          className="inline-flex items-center gap-1 pmw-st__btn px-2 py-0.5 rounded-full border border-border/60 hover:bg-muted/40 transition-colors shrink-0"
-                        >
-                          <Plus className="h-3 w-3" />
-                          추가
-                        </button>
-                      )}
+                    <div className="flex items-center pt-md pb-1 px-1">
+                      <span className="font-serif text-[13px] text-muted-foreground/80 truncate">
+                        {meta.label}
+                      </span>
                     </div>
 
                     {list.length === 0 ? (
@@ -541,29 +538,6 @@ export function VaccineSection({
                             <div className="font-mono text-[12px] tabular-nums tracking-[0.3px] truncate" style={{ color: 'var(--pmw-near-black)' }}>{p.batch ?? '—'}</div>
                             <div className="font-mono text-[13px] tabular-nums tracking-[0.3px]" style={{ color: 'var(--pmw-olive-gray)' }}>{p.expiry ?? '—'}</div>
                             <div><StatusBadge status={status} daysLeft={daysLeft} /></div>
-                            {isAdmin && (
-                              <div className="flex gap-0.5 justify-end">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setEditing({ mode: 'edit', id: p.id, initial: toFormState(p) })
-                                  }
-                                  className="p-1 rounded hover:bg-muted transition-colors"
-                                  title="수정"
-                                >
-                                  <Pencil className="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => onDelete(p.id)}
-                                  disabled={pending}
-                                  className="p-1 rounded hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
-                                  title="삭제"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            )}
                           </div>
                         )
                       })
@@ -582,6 +556,21 @@ export function VaccineSection({
         </p>
       )}
 
+      {picking && (
+        <CategoryPickerModal
+          products={products}
+          onClose={() => setPicking(false)}
+          onPickExisting={(p) => {
+            setPicking(false)
+            setEditing({ mode: 'edit', id: p.id, initial: toFormState(p) })
+          }}
+          onPickNew={(category) => {
+            setPicking(false)
+            setEditing({ mode: 'create', initial: blankForm(category) })
+          }}
+        />
+      )}
+
       {editing && (
         <ProductFormModal
           mode={editing.mode}
@@ -589,8 +578,168 @@ export function VaccineSection({
           pending={pending}
           onClose={() => setEditing(null)}
           onSave={onSave}
+          onDelete={
+            editing.mode === 'edit'
+              ? () => {
+                  const id = editing.id
+                  onDelete(id)
+                  setEditing(null)
+                }
+              : undefined
+          }
         />
       )}
+    </div>
+  )
+}
+
+interface CategoryPickerModalProps {
+  products: OrgVaccineProduct[]
+  onClose: () => void
+  onPickExisting: (p: OrgVaccineProduct) => void
+  onPickNew: (category: string) => void
+}
+
+function CategoryPickerModal({ products, onClose, onPickExisting, onPickNew }: CategoryPickerModalProps) {
+  const [section, setSection] = useState<ProductSection | null>(null)
+  const [category, setCategory] = useState<string | null>(null)
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        if (category) setCategory(null)
+        else if (section) setSection(null)
+        else onClose()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [category, section, onClose])
+
+  const productsInCategory = useMemo(() => {
+    if (!category) return []
+    const list = products.filter((p) => p.category === category)
+    list.sort((a, b) => (a.expiry ?? '9999') < (b.expiry ?? '9999') ? -1 : 1)
+    return list
+  }, [products, category])
+
+  const crumbs: { label: string; onClick?: () => void }[] = []
+  crumbs.push({ label: '카테고리', onClick: section ? () => { setSection(null); setCategory(null) } : undefined })
+  if (section) crumbs.push({ label: section, onClick: category ? () => setCategory(null) : undefined })
+  if (section && category) crumbs.push({ label: CATEGORY_META[category]?.label ?? category })
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="bg-background rounded-lg shadow-lg w-full max-w-xl max-h-[90vh] overflow-auto">
+        <div className="flex items-center justify-between border-b border-border/60 px-lg py-3">
+          <div className="flex items-center gap-1 min-w-0">
+            {crumbs.map((c, i) => (
+              <span key={i} className="flex items-center gap-1 min-w-0">
+                {i > 0 && <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />}
+                {c.onClick ? (
+                  <button
+                    type="button"
+                    onClick={c.onClick}
+                    className="font-serif text-[15px] hover:underline truncate"
+                    style={{ color: 'var(--pmw-olive-gray)' }}
+                  >
+                    {c.label}
+                  </button>
+                ) : (
+                  <span className="font-serif text-[15px] truncate">{c.label}</span>
+                )}
+              </span>
+            ))}
+          </div>
+          <button type="button" onClick={onClose} className="p-1 rounded hover:bg-muted shrink-0">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="px-lg py-md">
+          {!section && (
+            <div className="space-y-2">
+              {SECTION_ORDER.map((s) => {
+                const cnt = CATEGORY_ORDER.filter((c) => CATEGORY_META[c].section === s).length
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setSection(s)}
+                    className="w-full flex items-center justify-between px-md py-3 rounded-md border border-border/60 hover:bg-muted/40 transition-colors text-left"
+                  >
+                    <span className="font-serif text-[16px]">{s}</span>
+                    <span className="flex items-center gap-2">
+                      <span className="pmw-st__tab-count">{cnt}</span>
+                      <ChevronRight className="h-4 w-4 opacity-60" />
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {section && !category && (
+            <div className="space-y-2">
+              {CATEGORY_ORDER.filter((c) => CATEGORY_META[c].section === section).map((c) => {
+                const cnt = products.filter((p) => p.category === c).length
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCategory(c)}
+                    className="w-full flex items-center justify-between px-md py-3 rounded-md border border-border/60 hover:bg-muted/40 transition-colors text-left"
+                  >
+                    <span className="font-serif text-[15px]">{CATEGORY_META[c].label}</span>
+                    <span className="flex items-center gap-2">
+                      <span className="pmw-st__tab-count">{cnt}</span>
+                      <ChevronRight className="h-4 w-4 opacity-60" />
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {section && category && (
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => onPickNew(category)}
+                className="w-full flex items-center gap-2 px-md py-3 rounded-md border border-dashed border-border/60 hover:bg-muted/40 transition-colors text-left"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="font-serif text-[15px]">새 제품 추가</span>
+              </button>
+
+              {productsInCategory.length === 0 ? (
+                <p className="font-serif italic text-[13px] text-muted-foreground py-md text-center">
+                  등록된 제품 없음
+                </p>
+              ) : (
+                productsInCategory.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => onPickExisting(p)}
+                    className="w-full grid grid-cols-[1fr_auto_auto] items-center gap-3 px-md py-2.5 rounded-md border border-border/60 hover:bg-muted/40 transition-colors text-left"
+                  >
+                    <span className="font-serif text-[14px] truncate">
+                      {p.vaccine || p.product || '(이름 없음)'}
+                    </span>
+                    <span className="font-mono text-[12px] tabular-nums" style={{ color: 'var(--pmw-olive-gray)' }}>
+                      {p.batch ?? '—'}
+                    </span>
+                    <span className="font-mono text-[12px] tabular-nums" style={{ color: 'var(--pmw-olive-gray)' }}>
+                      {p.expiry ?? '—'}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -601,9 +750,10 @@ interface ProductFormModalProps {
   pending: boolean
   onClose: () => void
   onSave: (form: FormState) => void
+  onDelete?: () => void
 }
 
-function ProductFormModal({ mode, initial, pending, onClose, onSave }: ProductFormModalProps) {
+function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }: ProductFormModalProps) {
   const [form, setForm] = useState<FormState>(initial)
 
   useEffect(() => {
@@ -752,23 +902,38 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave }: ProductFo
           )}
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-border/60 px-lg py-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-md py-1.5 text-sm rounded-md hover:bg-muted transition-colors"
-            disabled={pending}
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            onClick={() => onSave(form)}
-            disabled={pending || !form.manufacturer.trim()}
-            className="px-md py-1.5 text-sm rounded-md bg-accent hover:bg-accent/90 transition-colors disabled:opacity-50"
-          >
-            {mode === 'create' ? '추가' : '저장'}
-          </button>
+        <div className="flex items-center border-t border-border/60 px-lg py-3">
+          {mode === 'edit' && onDelete && (
+            <button
+              type="button"
+              onClick={() => {
+                if (confirm('이 제품을 삭제하시겠습니까?')) onDelete()
+              }}
+              disabled={pending}
+              className="inline-flex items-center gap-1 px-md py-1.5 text-sm rounded-md text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              삭제
+            </button>
+          )}
+          <div className="ml-auto flex gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-md py-1.5 text-sm rounded-md hover:bg-muted transition-colors"
+              disabled={pending}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={() => onSave(form)}
+              disabled={pending || !form.manufacturer.trim()}
+              className="px-md py-1.5 text-sm rounded-md bg-accent hover:bg-accent/90 transition-colors disabled:opacity-50"
+            >
+              {mode === 'create' ? '추가' : '저장'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Calendar as CalendarIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { iconButton } from '@/lib/design-system'
@@ -66,6 +67,7 @@ export function DateTextField({
 }: Props) {
   const [draft, setDraft] = useState(value)
   const [open, setOpen] = useState(false)
+  const [popPos, setPopPos] = useState<{ top: number; left: number } | null>(null)
   const popRef = useRef<HTMLDivElement>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -74,12 +76,46 @@ export function DateTextField({
     setDraft(value)
   }, [value])
 
+  // Compute portal popover position when open. Right-align with input, flip up if not enough room below.
+  useLayoutEffect(() => {
+    if (!open || !wrapRef.current) return
+    function reposition() {
+      const wrap = wrapRef.current
+      if (!wrap) return
+      const rect = wrap.getBoundingClientRect()
+      const popW = popRef.current?.offsetWidth ?? 280
+      const popH = popRef.current?.offsetHeight ?? 320
+      const margin = 8
+      // Prefer right-aligned; fall back to left-aligned if it overflows left edge.
+      let left = rect.right - popW
+      if (left < margin) left = Math.min(rect.left, window.innerWidth - popW - margin)
+      if (left < margin) left = margin
+      // Default below; flip above if no room
+      let top = rect.bottom + 4
+      if (top + popH > window.innerHeight - margin) {
+        top = Math.max(margin, rect.top - popH - 4)
+      }
+      setPopPos({ top, left })
+    }
+    reposition()
+    // Re-measure after popover mounts (popRef.current was null on first run).
+    const id = window.requestAnimationFrame(reposition)
+    window.addEventListener('resize', reposition)
+    window.addEventListener('scroll', reposition, true)
+    return () => {
+      window.cancelAnimationFrame(id)
+      window.removeEventListener('resize', reposition)
+      window.removeEventListener('scroll', reposition, true)
+    }
+  }, [open])
+
   useEffect(() => {
     if (!open) return
     function onClick(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+      const target = e.target as Node
+      const inWrap = wrapRef.current?.contains(target)
+      const inPop = popRef.current?.contains(target)
+      if (!inWrap && !inPop) setOpen(false)
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') setOpen(false)
@@ -158,10 +194,17 @@ export function DateTextField({
       >
         <CalendarIcon size={iconSize} />
       </button>
-      {open && (
+      {open && typeof document !== 'undefined' && createPortal(
         <div
           ref={popRef}
-          className="absolute right-0 top-[calc(100%+4px)] z-50 rounded-xl border border-border/60 bg-popover shadow-md"
+          style={{
+            position: 'fixed',
+            top: popPos?.top ?? -9999,
+            left: popPos?.left ?? -9999,
+            visibility: popPos ? 'visible' : 'hidden',
+          }}
+          className="z-50 rounded-xl border border-border/60 bg-popover shadow-md"
+          onMouseDown={(e) => e.preventDefault()}
         >
           <Calendar
             mode="single"
@@ -209,7 +252,8 @@ export function DateTextField({
               </div>
             }
           />
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )

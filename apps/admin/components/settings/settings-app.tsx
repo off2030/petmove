@@ -26,39 +26,92 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]['id']
 
-function DataSection() {
+function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) {
   const [showTrash, setShowTrash] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
+
+  async function handleExport() {
+    setExporting(true)
+    setExportError(null)
+    try {
+      const { exportCasesXlsx } = await import('@/lib/actions/export-cases')
+      const r = await exportCasesXlsx()
+      if (!r.ok) {
+        setExportError(r.error)
+        return
+      }
+      const bin = atob(r.value.base64)
+      const bytes = new Uint8Array(bin.length)
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+      const blob = new Blob([bytes], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = r.value.filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      setExportError(e instanceof Error ? e.message : '알 수 없는 오류')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   return (
-    <div className="max-w-2xl space-y-lg">
-      {/* Trash */}
-      <div>
-        <h3 className="font-serif text-[17px] text-foreground pb-2 border-b border-border/60 mb-sm">휴지통</h3>
-        <p className="text-sm text-muted-foreground mb-3">
-          삭제된 케이스를 복원하거나 영구 삭제할 수 있습니다.
+    <div className="max-w-3xl pb-2xl">
+      {/* Editorial header */}
+      <header className="pb-xl">
+        <h2 className="font-serif text-[28px] leading-tight text-foreground">데이터 관리</h2>
+        <p className="pmw-st__sec-lead mt-2">
+          삭제된 케이스 복원과 데이터 내보내기를 관리합니다.
         </p>
-        <button
-          type="button"
-          onClick={() => setShowTrash(true)}
-          className="h-9 px-md text-sm bg-accent hover:bg-accent/90 rounded-md transition-colors"
-        >
-          휴지통 열기
-        </button>
-      </div>
+      </header>
 
-      {/* Export */}
-      <div>
-        <h3 className="font-serif text-[17px] text-foreground pb-2 border-b border-border/60 mb-sm">데이터 내보내기</h3>
-        <p className="text-sm text-muted-foreground mb-3">
-          전체 케이스 데이터를 CSV 파일로 내보냅니다.
-        </p>
-        <button
-          type="button"
-          className="h-9 px-md text-sm bg-muted hover:bg-muted/80 rounded-md transition-colors opacity-50 cursor-not-allowed"
-          disabled
-        >
-          CSV 내보내기 (준비 중)
-        </button>
+      <div className="space-y-md">
+        {/* Trash card */}
+        <div className="flex items-center justify-between gap-md rounded-sm border border-border/60 px-lg py-md">
+          <div className="min-w-0">
+            <h3 className="font-serif text-[16px] text-foreground">휴지통</h3>
+            <p className="pmw-st__sec-lead mt-1">
+              삭제된 케이스를 복원하거나 영구 삭제할 수 있습니다. 30일 후 자동 영구 삭제됩니다.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowTrash(true)}
+            className="shrink-0 h-9 px-4 rounded-full border border-border/70 bg-card text-[14px] hover:border-foreground/40 transition-colors"
+          >
+            휴지통 열기
+          </button>
+        </div>
+
+        {/* Export card — super_admin 전용 */}
+        {isSuperAdmin && (
+          <div className="flex items-center justify-between gap-md rounded-sm border border-border/60 px-lg py-md">
+            <div className="min-w-0">
+              <h3 className="font-serif text-[16px] text-foreground">데이터 내보내기</h3>
+              <p className="pmw-st__sec-lead mt-1">
+                활성 조직의 전체 케이스를 Excel(.xlsx)로 내려받습니다.
+              </p>
+              {exportError && (
+                <p className="mt-1 font-serif text-[13px] text-destructive">{exportError}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={exporting}
+              className="shrink-0 h-9 px-4 rounded-full border border-border/70 bg-card text-[14px] hover:border-foreground/40 transition-colors disabled:opacity-50"
+            >
+              {exporting ? '내보내는 중…' : 'Excel 내보내기'}
+            </button>
+          </div>
+        )}
       </div>
 
       {showTrash && (
@@ -79,20 +132,25 @@ function hashToTab(): TabId | null {
   return match ? (match.id as TabId) : null
 }
 
-export function SettingsApp() {
+export function SettingsApp({
+  initialBootstrap = null,
+}: {
+  initialBootstrap?: SettingsBootstrap | null
+} = {}) {
   // 서버/클라이언트 일치를 위해 초기값은 'company' 고정. hash 는 mount 후 읽음.
   const [activeTab, setActiveTab] = useState<TabId>('company')
-  const [bootstrap, setBootstrap] = useState<SettingsBootstrap | null>(null)
+  const [bootstrap, setBootstrap] = useState<SettingsBootstrap | null>(initialBootstrap)
 
-  // 최초 마운트 시 한 번만 전체 섹션 데이터를 병렬 fetch.
-  // 각 섹션은 initial prop 으로 받아 자체 useEffect fetch 를 스킵.
+  // 레이아웃에서 prop 으로 받았으면 fetch 스킵 — 첫 진입 lag 제거.
+  // prop 이 없을 때만(비정상 경로) 클라이언트에서 자체 fetch.
   useEffect(() => {
+    if (initialBootstrap) return
     let alive = true
     getSettingsBootstrap().then((b) => {
       if (alive) setBootstrap(b)
     })
     return () => { alive = false }
-  }, [])
+  }, [initialBootstrap])
 
   // Hash-based deep linking: mount 직후 + hashchange 모두 대응.
   useEffect(() => {
@@ -172,7 +230,7 @@ export function SettingsApp() {
           {activeTab === 'import_report' && <ImportReportSection />}
           {activeTab === 'documents' && <DocumentsSection />}
           {activeTab === 'verification' && <VerificationSection />}
-          {activeTab === 'data' && <DataSection />}
+          {activeTab === 'data' && <DataSection isSuperAdmin={bootstrap?.myRole?.isSuperAdmin ?? false} />}
         </div>
       </div>
     </div>

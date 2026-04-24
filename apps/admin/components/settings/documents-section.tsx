@@ -154,7 +154,7 @@ function OverflowPill({ count }: { count: number }) {
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="mb-2">
-      <span className="font-mono text-[11px] tracking-[1.8px] uppercase text-muted-foreground/70">
+      <span className="font-serif text-[13px] text-muted-foreground/80">
         {children}
       </span>
     </div>
@@ -337,10 +337,7 @@ export function DocumentsSection() {
                       title="목적지 편집"
                     >
                       {r.label && (
-                        <div
-                          className="font-serif italic text-[15px] mb-1.5 group-hover/row-edit:underline decoration-dotted underline-offset-2"
-                          style={{ color: 'var(--pmw-deep)' }}
-                        >
+                        <div className="font-serif text-[13px] text-muted-foreground mb-1.5 group-hover/row-edit:underline decoration-dotted underline-offset-2">
                           {r.label}
                         </div>
                       )}
@@ -380,7 +377,7 @@ export function DocumentsSection() {
         {/* Add new rule — dotted box */}
         <div className="mt-md border border-dotted rounded-sm" style={{ borderColor: 'var(--pmw-border-warm)' }}>
           <div className="grid grid-cols-[120px_1fr] items-center gap-md px-lg py-2.5 border-b border-dotted" style={{ borderColor: 'var(--pmw-border-warm)' }}>
-            <span className="pmw-st__field-label">그룹명</span>
+            <span className="font-serif text-[13px] text-muted-foreground">그룹명</span>
             <input
               type="text"
               value={newLabel}
@@ -390,7 +387,7 @@ export function DocumentsSection() {
             />
           </div>
           <div className="grid grid-cols-[120px_1fr] items-start gap-md px-lg py-2.5 border-b border-dotted" style={{ borderColor: 'var(--pmw-border-warm)' }}>
-            <span className="pmw-st__field-label pt-1.5">목적지</span>
+            <span className="font-serif text-[13px] text-muted-foreground pt-1.5">목적지</span>
             <DestinationPicker
               values={newCountries}
               onChange={setNewCountries}
@@ -400,7 +397,7 @@ export function DocumentsSection() {
             />
           </div>
           <div className="grid grid-cols-[120px_1fr] items-center gap-md px-lg py-2.5" style={{ borderColor: 'var(--pmw-border-warm)' }}>
-            <span className="pmw-st__field-label">추가 증명서</span>
+            <span className="font-serif text-[13px] text-muted-foreground">추가 증명서</span>
             <div>
               <CertMultiSelect
                 selected={newCerts}

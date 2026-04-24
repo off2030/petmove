@@ -12,6 +12,7 @@ import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
 import { parseDestinations } from '@petmove/domain'
 import type { InspectionConfig } from '@petmove/domain'
 import type { CertConfig } from '@petmove/domain'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 
 /**
  * Global client-side state for the cases app:
@@ -60,6 +61,11 @@ interface CasesContextValue {
    */
   certConfig: CertConfig
   setCertConfig: (config: CertConfig) => void
+  /**
+   * 신규(Realtime INSERT 로 들어온) 케이스 id 모음. 사용자가 해당 행을 선택하면 제거.
+   * 케이스 리스트에서 시각적 강조에 사용.
+   */
+  newCaseIds: Set<string>
 }
 
 const CasesContext = createContext<CasesContextValue | null>(null)
@@ -70,6 +76,7 @@ export function CasesProvider({
   initialImportReportCountries,
   initialInspectionConfig,
   initialCertConfig,
+  orgId = null,
   children,
 }: {
   initialCases: CaseRow[]
@@ -77,6 +84,7 @@ export function CasesProvider({
   initialImportReportCountries: string[]
   initialInspectionConfig: InspectionConfig
   initialCertConfig: CertConfig
+  orgId?: string | null
   children: React.ReactNode
 }) {
   const [cases, setCases] = useState<CaseRow[]>(initialCases)
@@ -85,10 +93,49 @@ export function CasesProvider({
   const [importReportCountries, setImportReportCountries] = useState<string[]>(initialImportReportCountries)
   const [inspectionConfig, setInspectionConfig] = useState<InspectionConfig>(initialInspectionConfig)
   const [certConfig, setCertConfig] = useState<CertConfig>(initialCertConfig)
+  const [newCaseIds, setNewCaseIds] = useState<Set<string>>(() => new Set())
 
   const selectCase = useCallback((id: string | null) => {
     setSelectedId(id)
+    if (id) {
+      setNewCaseIds((prev) => {
+        if (!prev.has(id)) return prev
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }
   }, [])
+
+  // ───── Realtime: 신청폼 신규 INSERT 구독 ─────
+  // 같은 org 의 새 케이스가 들어오면 cases 배열에 즉시 추가 + 신규 표식.
+  // 사용자가 행을 선택하면 표식 제거 (selectCase 안에서).
+  useEffect(() => {
+    if (!orgId) return
+    const channel = supabaseBrowser
+      .channel(`cases-realtime-${orgId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'cases', filter: `org_id=eq.${orgId}` },
+        (payload) => {
+          const row = payload.new as CaseRow
+          if (!row?.id) return
+          setCases((prev) => {
+            if (prev.some((c) => c.id === row.id)) return prev
+            return [row, ...prev]
+          })
+          setNewCaseIds((prev) => {
+            const next = new Set(prev)
+            next.add(row.id)
+            return next
+          })
+        },
+      )
+      .subscribe()
+    return () => {
+      supabaseBrowser.removeChannel(channel)
+    }
+  }, [orgId])
 
   // 검사/신고/서류 탭에서 행 클릭 시 호출. selectCase로 케이스 선택 후
   // /cases로 URL을 밀고 popstate를 발사해 DashboardShell이 탭 전환하도록 함.
@@ -176,8 +223,9 @@ export function CasesProvider({
       setInspectionConfig,
       certConfig,
       setCertConfig,
+      newCaseIds,
     }),
-    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination, importReportCountries, inspectionConfig, certConfig],
+    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination, importReportCountries, inspectionConfig, certConfig, newCaseIds],
   )
 
   return <CasesContext.Provider value={value}>{children}</CasesContext.Provider>

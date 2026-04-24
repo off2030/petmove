@@ -54,3 +54,4 @@ backup_*.csv
 petmove_backup*/
 storage_backup/
 backups/
+.vercel

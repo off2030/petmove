@@ -30,7 +30,7 @@ function sameSet(a: string[], b: string[]): boolean {
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="mb-2">
-      <span className="font-mono text-[11px] tracking-[1.8px] uppercase text-muted-foreground/70">
+      <span className="font-serif text-[13px] text-muted-foreground/80">
         {children}
       </span>
     </div>
@@ -117,7 +117,7 @@ function LabsAdminRow({
 
   return (
     <div className="grid grid-cols-[160px_1fr] items-start gap-md py-3 border-b border-border/60">
-      <span className="pmw-st__field-label pt-1">기관 목록</span>
+      <span className="font-serif text-[13px] text-muted-foreground pt-1">기관 목록</span>
       <div className="flex flex-wrap items-center gap-1.5">
         {defaults.map(d => {
           const tone = labColor(d.value)
@@ -321,7 +321,7 @@ function SectionBlock({
       {/* Default lab */}
       {hasDefault && (
         <div className="grid grid-cols-[160px_1fr] items-center gap-md py-3 border-b border-border/60">
-          <span className="pmw-st__field-label">기본 검사기관</span>
+          <span className="font-serif text-[13px] text-muted-foreground">기본 검사기관</span>
           <LabPillSelect
             value={defaultLab}
             onChange={onDefaultChange!}
@@ -383,10 +383,7 @@ function SectionBlock({
                     title="목적지 편집"
                   >
                     {r.label && (
-                      <div
-                        className="font-serif italic text-[15px] mb-1.5 group-hover/row-edit:underline decoration-dotted underline-offset-2"
-                        style={{ color: 'var(--pmw-deep)' }}
-                      >
+                      <div className="font-serif text-[13px] text-muted-foreground mb-1.5 group-hover/row-edit:underline decoration-dotted underline-offset-2">
                         {r.label}
                       </div>
                     )}

@@ -9,6 +9,8 @@ import { loadInspectionConfig } from '@/lib/inspection-config'
 import { loadCertConfig } from '@/lib/cert-config'
 import { getOrgVaccineData } from '@/lib/vaccine-data'
 import { getCalculatorItems } from '@/lib/calculator-data'
+import { getSettingsBootstrap } from '@/lib/actions/settings-bootstrap'
+import { getActiveOrgId } from '@/lib/supabase/active-org'
 
 export const dynamic = 'force-dynamic'
 
@@ -64,7 +66,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [initialCases, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, calculatorItems] = await Promise.all([
+  const [initialCases, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, calculatorItems, settingsBootstrap, orgId] = await Promise.all([
     fetchAllCases(),
     fetchFieldDefs(),
     loadImportReportCountries(),
@@ -73,6 +75,8 @@ export default async function DashboardLayout({
     fetchUserContext(),
     getOrgVaccineData(),
     getCalculatorItems(),
+    getSettingsBootstrap().catch(() => null),
+    getActiveOrgId().catch(() => null),
   ])
 
   return (
@@ -82,10 +86,15 @@ export default async function DashboardLayout({
       initialImportReportCountries={importReportCountries}
       initialInspectionConfig={inspectionConfig}
       initialCertConfig={certConfig}
+      orgId={orgId}
     >
       <VaccineDataProvider data={vaccineData}>
         <CalculatorDataProvider initialItems={calculatorItems}>
-          <DashboardShell isSuperAdmin={userCtx.isSuperAdmin} userEmail={userCtx.email} />
+          <DashboardShell
+            isSuperAdmin={userCtx.isSuperAdmin}
+            userEmail={userCtx.email}
+            initialSettingsBootstrap={settingsBootstrap}
+          />
         </CalculatorDataProvider>
       </VaccineDataProvider>
     </CasesProvider>

@@ -36,7 +36,7 @@ export function CaseList({
   onAddFromFiles?: (files: File[]) => void
   busy?: boolean
 }) {
-  const { cases, selectedId, selectCase } = useCases()
+  const { cases, selectedId, selectCase, newCaseIds } = useCases()
 
   const [query, setQuery] = useState('')
   const [visible, setVisible] = useState(INITIAL_VISIBLE)
@@ -295,6 +295,7 @@ export function CaseList({
             <ul>
               {visibleCases.map((c, i) => {
                 const isSelected = c.id === selectedId
+                const isNew = newCaseIds.has(c.id)
                 const dest = c.destination
                 const dests = dest ? dest.split(',').map(s => s.trim()).filter(Boolean) : []
                 return (
@@ -303,12 +304,26 @@ export function CaseList({
                       type="button"
                       onClick={() => { selectCase(c.id); setHighlight(-1) }}
                       className={cn(
-                        'group block w-full px-lg py-4 text-left transition-colors',
+                        'group relative block w-full px-lg py-4 text-left transition-colors',
                         'hover:bg-accent',
                         isSelected && 'bg-accent',
                         !isSelected && i === highlight && 'bg-accent/70',
+                        isNew && !isSelected && 'bg-primary/5',
                       )}
                     >
+                      {isNew && (
+                        <>
+                          <span
+                            aria-hidden
+                            className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary"
+                          />
+                          <span className="absolute right-3 top-3 inline-flex items-center rounded-sm border px-1.5 py-0.5 font-mono text-[9px] tracking-[1.3px] uppercase"
+                            style={{ borderColor: 'var(--pmw-rust)', color: 'var(--pmw-rust)' }}
+                          >
+                            신규
+                          </span>
+                        </>
+                      )}
                       <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm">
                         {/* Guardian — sans · 16px · Charcoal (near-black 85%) */}
                         <span className="truncate font-sans font-normal text-[16px] leading-tight text-foreground/85">

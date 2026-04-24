@@ -49,7 +49,7 @@ export function ImportReportSection() {
 
       {/* Section label */}
       <div className="mb-2">
-        <span className="font-mono text-[11px] tracking-[1.8px] uppercase text-muted-foreground/70">
+        <span className="font-serif text-[13px] text-muted-foreground/80">
           자동 포함 목적지 · {draft.length}
         </span>
       </div>
