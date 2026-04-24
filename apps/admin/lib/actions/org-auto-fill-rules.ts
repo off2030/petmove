@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 export interface AutoFillRule {
   id: string
   destination_key: string          // 'australia', 'us_hawaii', 'all'
+  species_filter: string           // 'all' | 'dog' | 'cat'
   trigger_field: string            // 'departure_date', 'civ_dates[0]', 'vet_visit_date'
   target_field: string             // 'vet_visit_date', 'parasite_internal_dates', 'civ_dates[1]'
   offsets_days: number[]           // [-2], [-28, -2], [14]
@@ -17,6 +18,7 @@ export interface AutoFillRule {
 
 export interface AutoFillRuleInput {
   destination_key: string
+  species_filter?: string
   trigger_field: string
   target_field: string
   offsets_days: number[]
@@ -27,7 +29,7 @@ export interface AutoFillRuleInput {
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 
-const SELECT_COLS = 'id, destination_key, trigger_field, target_field, offsets_days, overwrite_existing, enabled, display_order'
+const SELECT_COLS = 'id, destination_key, species_filter, trigger_field, target_field, offsets_days, overwrite_existing, enabled, display_order'
 
 export async function listOrgAutoFillRules(): Promise<Result<AutoFillRule[]>> {
   try {
