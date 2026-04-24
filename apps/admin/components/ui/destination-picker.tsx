@@ -25,6 +25,8 @@ interface DestinationPickerProps {
   /** `box` (기본) = border + paper bg / `underline` = 바닥 밑줄만. */
   variant?: 'box' | 'underline'
   'aria-label'?: string
+  /** mount 시 input 자동 포커스 + dropdown 열기. */
+  autoFocus?: boolean
 }
 
 export function DestinationPicker({
@@ -36,12 +38,18 @@ export function DestinationPicker({
   hideSelectedChips,
   variant = 'box',
   'aria-label': ariaLabel,
+  autoFocus,
 }: DestinationPickerProps) {
   const [input, setInput] = useState('')
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(!!autoFocus)
   const [highlightIdx, setHighlightIdx] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (autoFocus) inputRef.current?.focus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const filtered = useMemo(() => {
     const q = input.trim().toLowerCase()
