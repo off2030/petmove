@@ -432,7 +432,7 @@ function SectionBlock({
       )}
 
       {/* Add new rule — bordered card with separated input rows */}
-      <div className="mt-md border border-border/70 rounded-sm !bg-white">
+      <div className="mt-md border border-border/60 rounded-sm bg-muted/30">
         <div className="grid grid-cols-[120px_1fr] items-center gap-md px-lg py-3 border-b border-border/40">
           <span className="font-serif text-[13px] text-muted-foreground/80">그룹명</span>
           <input
