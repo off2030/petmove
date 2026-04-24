@@ -144,7 +144,7 @@ export function DateTextField({
   }
 
   return (
-    <div className="relative inline-block" ref={wrapRef}>
+    <div className="relative inline-block w-fit" ref={wrapRef}>
       <input
         ref={inputRef}
         type="text"
