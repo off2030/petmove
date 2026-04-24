@@ -337,7 +337,7 @@ export default function ApplyPage() {
     // 형식 오류 (누락 아님) — 별도 메시지로 처리.
     let formatError: string | null = null
     if (!miss.has('phone') && !/^010\d{8}$/.test(phone)) {
-      formatError = '전화번호는 010-0000-0000 형식(11자리)으로 입력해주세요.'
+      formatError = '전화번호는 010-1234-5678 형식으로 입력해주세요.'
       miss.add('phone') // 시각적 강조도 같이
     } else {
       for (let i = 0; i < pets.length; i++) {
@@ -614,7 +614,7 @@ export default function ApplyPage() {
                 value={phone.replace(/(\d{3})(\d{4})(\d{0,4})/, (_, a, b, c) => c ? `${a}-${b}-${c}` : b ? `${a}-${b}` : a)}
                 maxLength={13}
                 onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, '').slice(0, 11))}
-                placeholder="010-0000-0000" className={numericInputClass} />
+                placeholder="010-1234-5678" className={numericInputClass} />
             </FieldRow>
             <FieldRow label="한국주소" required hint="검색 입력" fieldKey="addressKr" missing={missing.has('addressKr')}>
               <div className="flex gap-sm items-center">
