@@ -5,6 +5,8 @@ import { createPortal } from 'react-dom'
 import { ChevronDown, Plus, X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { DestinationPicker } from '@/components/ui/destination-picker'
+import { PillButton } from '@/components/ui/pill-button'
+import { SectionHeader } from '@/components/ui/section-header'
 import { saveCertConfigAction } from '@/lib/actions/cert-config-action'
 import { cn } from '@/lib/utils'
 import {
@@ -251,7 +253,7 @@ export function DocumentsSection() {
     <div className="max-w-5xl pb-2xl">
       {/* Editorial header */}
       <header className="pb-xl">
-        <h2 className="font-serif text-[28px] leading-tight text-foreground">서류</h2>
+        <SectionHeader>서류</SectionHeader>
         <p className="pmw-st__sec-lead mt-2">
           케이스 상세페이지에 표시되는 증명서 구성을 관리합니다. 기본 증명서는 모든 케이스에 공통이며, 국가별 규칙은 목적지에 따라 추가됩니다.
         </p>
@@ -397,14 +399,9 @@ export function DocumentsSection() {
         </button>
         <div className="flex items-center gap-md">
           {msg && <span className="pmw-st__sec-lead">{msg}</span>}
-          <button
-            type="button"
-            onClick={save}
-            disabled={!dirty || saving}
-            className="font-serif text-[14px] h-8 px-md rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
+          <PillButton variant="solid" onClick={save} disabled={!dirty || saving}>
             {saving ? '저장 중…' : '변경사항 저장'}
-          </button>
+          </PillButton>
         </div>
       </div>
     </div>

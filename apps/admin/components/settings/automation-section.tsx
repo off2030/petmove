@@ -11,6 +11,7 @@ import {
   type AutoFillRule,
   type AutoFillRuleInput,
 } from '@/lib/actions/org-auto-fill-rules'
+import { SectionHeader } from '@/components/ui/section-header'
 import { cn } from '@/lib/utils'
 
 const DESTINATION_OPTIONS: { key: string; label: string }[] = [
@@ -178,7 +179,7 @@ export function AutomationSection({
   return (
     <div className="max-w-5xl pb-2xl">
       <header className="pb-xl">
-        <h2 className="font-serif text-[28px] leading-tight text-foreground">자동화</h2>
+        <SectionHeader>자동화</SectionHeader>
         <p className="pmw-st__sec-lead mt-2">
           목적지·종별 자동 채움 규칙. 트리거 필드에 날짜가 입력되면 타겟 필드가 오프셋 기준으로 자동으로 채워집니다.
         </p>

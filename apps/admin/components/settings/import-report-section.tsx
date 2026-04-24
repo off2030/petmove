@@ -6,6 +6,8 @@ import { useCases } from '@/components/cases/cases-context'
 import { saveImportReportCountriesAction } from '@/lib/actions/import-report-config-action'
 import { DEFAULT_IMPORT_REPORT_COUNTRIES } from '@petmove/domain'
 import { DestinationPicker } from '@/components/ui/destination-picker'
+import { PillButton } from '@/components/ui/pill-button'
+import { SectionHeader } from '@/components/ui/section-header'
 
 export function ImportReportSection() {
   const { importReportCountries, setImportReportCountries } = useCases()
@@ -40,7 +42,7 @@ export function ImportReportSection() {
     <div className="max-w-5xl pb-2xl">
       {/* Editorial header */}
       <header className="pb-xl">
-        <h2 className="font-serif text-[28px] leading-tight text-foreground">신고</h2>
+        <SectionHeader>신고</SectionHeader>
         <p className="pmw-st__sec-lead mt-2">
           이 목록에 있는 목적지는 출국일이 입력되면 자동으로 신고 탭에 반영됩니다.
           목록에 없는 곳은 상세페이지의 신고 버튼이나 신고 탭의 신고 추가 피커에서 수동으로 포함할 수 있습니다.
@@ -109,14 +111,9 @@ export function ImportReportSection() {
         </button>
         <div className="flex items-center gap-md">
           {msg && <span className="pmw-st__sec-lead">{msg}</span>}
-          <button
-            type="button"
-            onClick={save}
-            disabled={!dirty || saving}
-            className="font-serif text-[14px] h-8 px-md rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
+          <PillButton variant="solid" onClick={save} disabled={!dirty || saving}>
             {saving ? '저장 중…' : '변경사항 저장'}
-          </button>
+          </PillButton>
         </div>
       </div>
     </div>

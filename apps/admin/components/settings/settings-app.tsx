@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { TrashModal } from '@/components/cases/trash-modal'
+import { SectionHeader } from '@/components/ui/section-header'
 import { VaccineSection } from './vaccine-section'
 import { CompanySection } from './company-section'
 import { ImportReportSection } from './import-report-section'
@@ -68,7 +69,7 @@ function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) 
     <div className="max-w-3xl pb-2xl">
       {/* Editorial header */}
       <header className="pb-xl">
-        <h2 className="font-serif text-[28px] leading-tight text-foreground">데이터 관리</h2>
+        <SectionHeader>데이터 관리</SectionHeader>
         <p className="pmw-st__sec-lead mt-2">
           삭제된 케이스 복원과 데이터 내보내기를 관리합니다.
         </p>

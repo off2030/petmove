@@ -10,6 +10,9 @@ import {
   type InviteRow,
   type MemberRow,
 } from '@/lib/actions/invites'
+import { Avatar, avatarInitial } from '@/components/ui/avatar'
+import { PillButton } from '@/components/ui/pill-button'
+import { SectionHeader } from '@/components/ui/section-header'
 import { cn } from '@/lib/utils'
 
 const ROLE_LABEL: Record<InviteRole, string> = {
@@ -18,12 +21,6 @@ const ROLE_LABEL: Record<InviteRole, string> = {
 }
 
 const ROLE_OPTIONS: InviteRole[] = ['member', 'admin']
-
-function initialOf(s: string): string {
-  const trimmed = s.trim()
-  if (!trimmed) return '?'
-  return Array.from(trimmed)[0] ?? '?'
-}
 
 function formatExpiry(iso: string): string {
   const d = new Date(iso)
@@ -119,7 +116,7 @@ export function MembersSection({
     <div className="max-w-3xl pb-2xl">
       {/* Header */}
       <header className="pb-xl">
-        <h2 className="font-serif text-[28px] leading-tight text-foreground">멤버</h2>
+        <SectionHeader>멤버</SectionHeader>
       </header>
 
       {/* Active members */}
@@ -142,7 +139,7 @@ export function MembersSection({
                   key={m.user_id}
                   className="flex items-center gap-md py-3 border-b border-dotted border-border/60"
                 >
-                  <Avatar label={initialOf(hasRealName ? m.name! : m.email)} />
+                  <Avatar label={avatarInitial(hasRealName ? m.name! : m.email)} />
                   <div className="min-w-0 flex-1">
                     <div className="font-serif text-[16px] text-foreground truncate leading-tight">
                       {hasRealName ? m.name : m.email}
@@ -239,14 +236,9 @@ export function MembersSection({
               className="flex-1 bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/40 disabled:opacity-60"
             />
             <RoleSelect value={role} onChange={setRole} disabled={pending} />
-            <button
-              type="button"
-              onClick={onCreate}
-              disabled={pending || !email}
-              className="font-serif text-[14px] h-8 px-md rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
+            <PillButton variant="solid" onClick={onCreate} disabled={pending || !email}>
               초대 보내기
-            </button>
+            </PillButton>
           </div>
           {inviteError && (
             <p className="mt-sm font-serif text-[13px] text-destructive">{inviteError}</p>
@@ -343,17 +335,3 @@ function RoleSelect({
   )
 }
 
-function Avatar({ label, muted = false }: { label: string; muted?: boolean }) {
-  return (
-    <div
-      className={
-        'h-9 w-9 rounded-full flex items-center justify-center shrink-0 ' +
-        (muted
-          ? 'bg-muted/60 text-muted-foreground'
-          : 'bg-[#E5B89C]/45 text-[#9B4A2D] dark:bg-[#C08C70]/40 dark:text-[#E0917A]')
-      }
-    >
-      <span className="font-serif text-[14px]">{label}</span>
-    </div>
-  )
-}

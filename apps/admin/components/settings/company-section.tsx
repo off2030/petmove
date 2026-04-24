@@ -11,6 +11,7 @@ import {
   type OrgType,
 } from '@/lib/actions/company-info'
 import type { VetInfo, VetInfoKey } from '@/lib/vet-info'
+import { SectionHeader } from '@/components/ui/section-header'
 import { cn } from '@/lib/utils'
 
 interface FieldDef {
@@ -187,9 +188,7 @@ export function CompanySection({
     <div className="max-w-3xl pb-2xl">
       {/* Editorial header */}
       <header className="pb-xl">
-        <h2 className="font-serif text-[28px] leading-tight text-foreground">
-          {title}
-        </h2>
+        <SectionHeader>{title}</SectionHeader>
       </header>
 
       {/* Org type — subtle segmented control (admin only) */}

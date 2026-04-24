@@ -6,6 +6,8 @@ import { Plus, X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { DestinationPicker } from '@/components/ui/destination-picker'
 import { LabPillSelect, LabPillMultiSelect } from '@/components/ui/lab-pill-select'
+import { PillButton } from '@/components/ui/pill-button'
+import { SectionHeader } from '@/components/ui/section-header'
 import { labColor } from '@/lib/lab-color'
 import { cn } from '@/lib/utils'
 import { saveInspectionConfigAction } from '@/lib/actions/inspection-config-action'
@@ -664,7 +666,7 @@ export function InspectionSection() {
     <div className="max-w-5xl pb-2xl">
       {/* Editorial header */}
       <header className="pb-xl">
-        <h2 className="font-serif text-[28px] leading-tight text-foreground">검사</h2>
+        <SectionHeader>검사</SectionHeader>
         <p className="pmw-st__sec-lead mt-2">
           목적지별 광견병항체검사·전염병검사 의뢰 기관을 매핑합니다. 케이스 등록 시 자동 적용됩니다.
         </p>
@@ -713,14 +715,9 @@ export function InspectionSection() {
         </button>
         <div className="flex items-center gap-md">
           {msg && <span className="pmw-st__sec-lead">{msg}</span>}
-          <button
-            type="button"
-            onClick={save}
-            disabled={!dirty || saving}
-            className="font-serif text-[14px] h-8 px-md rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
+          <PillButton variant="solid" onClick={save} disabled={!dirty || saving}>
             {saving ? '저장 중…' : '변경사항 저장'}
-          </button>
+          </PillButton>
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { getMyProfile, updateMyProfile, type MyProfile } from '@/lib/actions/profile'
+import { SectionHeader } from '@/components/ui/section-header'
 import { cn } from '@/lib/utils'
 
 function formatSavedAgo(date: Date | null): string {
@@ -89,7 +90,7 @@ export function ProfileSection({
     <div className="max-w-3xl pb-2xl">
       {/* Header */}
       <header className="pb-xl">
-        <h2 className="font-serif text-[28px] leading-tight text-foreground">내 프로필</h2>
+        <SectionHeader>내 프로필</SectionHeader>
       </header>
 
       {/* Profile fields */}

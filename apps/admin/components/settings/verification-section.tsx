@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { Check, ChevronDown, Search, X } from 'lucide-react'
 import { ALL_PROCEDURE_CHECKS } from '@petmove/domain'
 import type { ProcedureCheck } from '@petmove/domain'
+import { SectionHeader } from '@/components/ui/section-header'
 import { cn } from '@/lib/utils'
 import { listOrgDisabledChecks, setOrgDisabledCheck } from '@/lib/actions/org-disabled-checks'
 
@@ -100,7 +101,7 @@ export function VerificationSection() {
     <div className="max-w-5xl pb-2xl">
       {/* Editorial header */}
       <header className="pb-xl">
-        <h2 className="font-serif text-[28px] leading-tight text-foreground">절차 검증</h2>
+        <SectionHeader>절차 검증</SectionHeader>
         <p className="pmw-st__sec-lead mt-2">
           국가·상황별 자동 검증 규칙. 케이스 저장 시 백그라운드로 실행됩니다.
         </p>
