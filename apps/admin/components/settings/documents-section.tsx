@@ -374,20 +374,20 @@ export function DocumentsSection() {
           </ul>
         )}
 
-        {/* Add new rule — dotted box */}
-        <div className="mt-md border border-dotted rounded-sm" style={{ borderColor: 'var(--pmw-border-warm)' }}>
-          <div className="grid grid-cols-[120px_1fr] items-center gap-md px-lg py-2.5 border-b border-dotted" style={{ borderColor: 'var(--pmw-border-warm)' }}>
-            <span className="font-serif text-[13px] text-muted-foreground">그룹명</span>
+        {/* Add new rule — bordered card with separated input rows */}
+        <div className="mt-md border border-border/70 rounded-sm !bg-white">
+          <div className="grid grid-cols-[120px_1fr] items-center gap-md px-lg py-3 border-b border-border/40">
+            <span className="font-serif text-[13px] text-muted-foreground/80">그룹명</span>
             <input
               type="text"
               value={newLabel}
               onChange={(e) => setNewLabel(e.target.value)}
               placeholder="예: 유럽연합 (선택사항)"
-              className="pmw-st__input bg-transparent outline-none border-0 w-full"
+              className="font-serif text-[15px] bg-transparent outline-none border-b border-transparent focus:border-foreground/40 w-full pb-1 transition-colors"
             />
           </div>
-          <div className="grid grid-cols-[120px_1fr] items-start gap-md px-lg py-2.5 border-b border-dotted" style={{ borderColor: 'var(--pmw-border-warm)' }}>
-            <span className="font-serif text-[13px] text-muted-foreground pt-1.5">목적지</span>
+          <div className="grid grid-cols-[120px_1fr] items-start gap-md px-lg py-3 border-b border-border/40">
+            <span className="font-serif text-[13px] text-muted-foreground/80 pt-1.5">목적지</span>
             <DestinationPicker
               values={newCountries}
               onChange={setNewCountries}
@@ -396,8 +396,8 @@ export function DocumentsSection() {
               variant="underline"
             />
           </div>
-          <div className="grid grid-cols-[120px_1fr] items-center gap-md px-lg py-2.5" style={{ borderColor: 'var(--pmw-border-warm)' }}>
-            <span className="font-serif text-[13px] text-muted-foreground">추가 증명서</span>
+          <div className="grid grid-cols-[120px_1fr] items-center gap-md px-lg py-3">
+            <span className="font-serif text-[13px] text-muted-foreground/80">추가 증명서</span>
             <div>
               <CertMultiSelect
                 selected={newCerts}
@@ -406,7 +406,7 @@ export function DocumentsSection() {
               />
             </div>
           </div>
-          <div className="flex items-center justify-end px-lg py-2.5 border-t border-dotted" style={{ borderColor: 'var(--pmw-border-warm)' }}>
+          <div className="flex items-center justify-end px-lg py-2.5 border-t border-border/40 bg-background/50">
             <button
               type="button"
               onClick={addRule}
