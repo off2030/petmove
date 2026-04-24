@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Plus, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { saveImportReportCountriesAction } from '@/lib/actions/import-report-config-action'
 import { DEFAULT_IMPORT_REPORT_COUNTRIES } from '@petmove/domain'
@@ -12,7 +12,6 @@ export function ImportReportSection() {
   const [draft, setDraft] = useState<string[]>(importReportCountries)
   const [saving, startSave] = useTransition()
   const [msg, setMsg] = useState<string | null>(null)
-  const [addOpen, setAddOpen] = useState(false)
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(importReportCountries)
 
@@ -87,28 +86,16 @@ export function ImportReportSection() {
         </div>
       </div>
 
-      {/* Add destination — left-aligned button + inline picker on click */}
+      {/* Add destination — always-visible search input */}
       <div className="pb-lg border-b border-border/60">
-        {addOpen ? (
-          <DestinationPicker
-            values={draft}
-            onChange={setDraft}
-            hideSelectedChips
-            variant="underline"
-            placeholder="검색 (예: 독일, DE)"
-            aria-label="목적지"
-            autoFocus
-          />
-        ) : (
-          <button
-            type="button"
-            onClick={() => setAddOpen(true)}
-            className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/60 hover:bg-muted/40 transition-colors"
-          >
-            <Plus className="h-3 w-3" />
-            목적지 추가
-          </button>
-        )}
+        <DestinationPicker
+          values={draft}
+          onChange={setDraft}
+          hideSelectedChips
+          variant="underline"
+          placeholder="목적지 추가 — 검색 (예: 독일, DE)"
+          aria-label="목적지 추가"
+        />
       </div>
 
       {/* Footer actions */}
