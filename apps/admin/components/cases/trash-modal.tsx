@@ -106,7 +106,7 @@ export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRest
                   </div>
                   <div className="flex items-center gap-sm">
                     <button type="button" onClick={() => handleRestore(item.id)} disabled={acting}
-                      className="text-xs text-primary/60 hover:text-primary hover:underline underline-offset-2 transition-colors disabled:opacity-50">
+                      className="text-xs text-primary hover:underline underline-offset-2 transition-colors disabled:opacity-50">
                       복원
                     </button>
                     <button type="button" onClick={() => handlePermanentDelete(item.id)} disabled={acting}
