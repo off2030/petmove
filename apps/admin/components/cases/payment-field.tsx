@@ -321,7 +321,7 @@ function DateInput({ initial, onSave, onCancel }: {
       onKeyDown={(e) => {
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
-      className="w-36 bg-transparent border-0 border-b border-primary text-sm py-1 focus:outline-none"
+      className="w-40 bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
     />
   )
 }

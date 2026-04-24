@@ -295,7 +295,7 @@ export function EditableField({
           onKeyDown={(e) => {
             if (e.key === 'Escape') { e.preventDefault(); handleCancel() }
           }}
-          className="w-44 bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
+          className="w-40 bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
         />
       ) : editing ? (
         <div className="flex items-start gap-sm">
