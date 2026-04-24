@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
+import { createPortal } from 'react-dom'
 import { Plus, X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { DestinationPicker } from '@/components/ui/destination-picker'
@@ -240,24 +241,15 @@ function SectionBlock({
   const hasDefault = defaultLab !== undefined && !!onDefaultChange
   const labs: InspectionLabOption[] = [...defaultLabs, ...customLabs]
 
-  // Add-new state
-  const [countries, setCountries] = useState<string[]>([])
-  const [labelInput, setLabelInput] = useState('')
-  const [selectedLabs, setSelectedLabs] = useState<string[]>([])
+  // Add-rule modal state
+  const [addOpen, setAddOpen] = useState(false)
 
   // 규칙 편집 상태 — 목적지 목록 편집 중인 row idx.
   const [editingIdx, setEditingIdx] = useState<number | null>(null)
 
-  function addRule() {
-    if (countries.length === 0 || selectedLabs.length === 0) return
-    const label = labelInput.trim() || undefined
-    const newRule: InspectionLabRule = label
-      ? { label, countries, labs: [...selectedLabs] }
-      : { countries, labs: [...selectedLabs] }
-    onRulesChange([...rules, newRule])
-    setCountries([])
-    setLabelInput('')
-    setSelectedLabs([])
+  function commitNewRule(rule: InspectionLabRule) {
+    onRulesChange([...rules, rule])
+    setAddOpen(false)
   }
 
   const hasEuRule = rules.some(r => r.label === '유럽연합' || sameSet(r.countries, EU_COUNTRIES))
@@ -431,74 +423,214 @@ function SectionBlock({
         </ul>
       )}
 
-      {/* Add new rule — bordered card with separated input rows */}
-      <div className="mt-md border border-border/60 rounded-sm bg-muted/30">
-        <div className="grid grid-cols-[120px_1fr] items-center gap-md px-lg py-3 border-b border-border/40">
-          <span className="font-serif text-[13px] text-muted-foreground/80">그룹명</span>
-          <input
-            type="text"
-            value={labelInput}
-            onChange={(e) => setLabelInput(e.target.value)}
-            placeholder="예: 유럽연합 (선택사항)"
-            className="font-serif text-[15px] bg-transparent outline-none border-b border-transparent focus:border-foreground/40 w-full pb-1 transition-colors"
-          />
+      {/* Add new rule — modal trigger */}
+      <div className="mt-md flex items-center justify-between">
+        <div>
+          {showEuPreset && !hasEuRule && (
+            <button
+              type="button"
+              onClick={addEuPreset}
+              className="pmw-st__btn-ghost hover:text-foreground transition-colors"
+              title={`유럽연합 ${EU_COUNTRIES.length}개국 프리셋 추가`}
+            >
+              + 유럽연합 프리셋
+            </button>
+          )}
         </div>
-        <div className="grid grid-cols-[120px_1fr] items-start gap-md px-lg py-3 border-b border-border/40">
-          <span className="font-serif text-[13px] text-muted-foreground/80 pt-1.5">목적지</span>
-          <DestinationPicker
-            values={countries}
-            onChange={setCountries}
-            placeholder="목적지 검색 (예: 독일, DE)"
-            aria-label="목적지"
-            variant="underline"
-          />
-        </div>
-        <div className="grid grid-cols-[120px_1fr] items-center gap-md px-lg py-3">
-          <span className="font-serif text-[13px] text-muted-foreground/80">검사기관</span>
-          <div>
-            {singleLab ? (
-              <LabPillSelect
-                value={selectedLabs[0] ?? ''}
-                onChange={(v) => setSelectedLabs(v ? [v] : [])}
-                options={labs}
-                placeholder="검사기관 선택"
-                aria-label="검사기관"
-              />
-            ) : (
-              <LabPillMultiSelect
-                values={selectedLabs}
-                onChange={setSelectedLabs}
-                options={labs}
-                placeholder="검사기관 선택"
-                aria-label="검사기관"
-              />
-            )}
-          </div>
-        </div>
-        <div className="flex items-center justify-between px-lg py-2.5 border-t border-border/40 bg-background/50">
-          <div>
-            {showEuPreset && !hasEuRule && (
+        <button
+          type="button"
+          onClick={() => setAddOpen(true)}
+          className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/60 hover:bg-muted/40 transition-colors"
+        >
+          <Plus className="h-3 w-3" />
+          규칙 추가
+        </button>
+      </div>
+
+      {addOpen && (
+        <RuleAddModal
+          labs={labs}
+          singleLab={!!singleLab}
+          onClose={() => setAddOpen(false)}
+          onSubmit={commitNewRule}
+        />
+      )}
+    </section>
+  )
+}
+
+/* ── Rule Add Modal: Step 1 (목적지 vs 그룹) → Step 2 (form) ── */
+
+function RuleAddModal({
+  labs,
+  singleLab,
+  onClose,
+  onSubmit,
+}: {
+  labs: InspectionLabOption[]
+  singleLab: boolean
+  onClose: () => void
+  onSubmit: (rule: InspectionLabRule) => void
+}) {
+  const [mode, setMode] = useState<'single' | 'group' | null>(null)
+  const [label, setLabel] = useState('')
+  const [countries, setCountries] = useState<string[]>([])
+  const [selectedLabs, setSelectedLabs] = useState<string[]>([])
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        if (mode) setMode(null)
+        else onClose()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [mode, onClose])
+
+  if (!mounted) return null
+
+  const canSubmit = countries.length > 0 && selectedLabs.length > 0 && (mode === 'single' || (mode === 'group' && countries.length >= 1))
+
+  function submit() {
+    if (!canSubmit) return
+    const trimmedLabel = label.trim()
+    const rule: InspectionLabRule = mode === 'group' && trimmedLabel
+      ? { label: trimmedLabel, countries, labs: [...selectedLabs] }
+      : { countries, labs: [...selectedLabs] }
+    onSubmit(rule)
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="bg-background rounded-sm border border-border/60 shadow-xl w-full max-w-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-border/60 px-lg py-3">
+          <div className="flex items-baseline gap-2">
+            {mode && (
               <button
                 type="button"
-                onClick={addEuPreset}
-                className="pmw-st__btn-ghost hover:text-foreground transition-colors"
-                title={`유럽연합 ${EU_COUNTRIES.length}개국 프리셋 추가`}
+                onClick={() => setMode(null)}
+                className="font-serif text-[15px] text-muted-foreground hover:text-foreground transition-colors"
               >
-                + 유럽연합 프리셋
+                규칙 추가
               </button>
             )}
+            {mode && <span className="font-serif text-[15px] text-muted-foreground/60">›</span>}
+            <h3 className="font-serif text-[15px] text-foreground">
+              {mode === 'single' ? '목적지 추가' : mode === 'group' ? '그룹 추가' : '규칙 추가'}
+            </h3>
           </div>
-          <button
-            type="button"
-            onClick={addRule}
-            disabled={countries.length === 0 || selectedLabs.length === 0}
-            className="pmw-st__btn px-md py-1 rounded-full border border-border/60 hover:bg-muted/40 transition-colors disabled:opacity-40"
-          >
-            규칙 추가
+          <button type="button" onClick={onClose} className="p-1 rounded hover:bg-muted">
+            <X className="h-4 w-4" />
           </button>
         </div>
+
+        <div className="px-lg py-md">
+          {!mode && (
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => setMode('single')}
+                className="w-full text-left px-md py-3 rounded-md border border-border/60 hover:bg-muted/40 transition-colors"
+              >
+                <div className="font-serif text-[15px] text-foreground">목적지 추가</div>
+                <div className="pmw-st__sec-lead mt-1">한 개의 목적지에 검사기관을 매핑합니다.</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('group')}
+                className="w-full text-left px-md py-3 rounded-md border border-border/60 hover:bg-muted/40 transition-colors"
+              >
+                <div className="font-serif text-[15px] text-foreground">그룹 추가</div>
+                <div className="pmw-st__sec-lead mt-1">여러 목적지를 한 그룹으로 묶어 같은 검사기관을 매핑합니다.</div>
+              </button>
+            </div>
+          )}
+
+          {mode && (
+            <div className="space-y-md">
+              {mode === 'group' && (
+                <div>
+                  <label className="font-serif text-[13px] text-muted-foreground/80 block mb-1">그룹명</label>
+                  <input
+                    type="text"
+                    value={label}
+                    onChange={(e) => setLabel(e.target.value)}
+                    placeholder="예: 유럽연합"
+                    autoFocus
+                    className="w-full font-serif text-[15px] bg-transparent outline-none border-b border-border/60 focus:border-foreground/40 pb-1 transition-colors"
+                  />
+                </div>
+              )}
+              <div>
+                <label className="font-serif text-[13px] text-muted-foreground/80 block mb-1">
+                  {mode === 'single' ? '목적지' : '목적지 (여러 개 선택)'}
+                </label>
+                <DestinationPicker
+                  values={countries}
+                  onChange={(next) => {
+                    if (mode === 'single' && next.length > 1) {
+                      setCountries([next[next.length - 1]])
+                    } else {
+                      setCountries(next)
+                    }
+                  }}
+                  placeholder="검색 (예: 독일, DE)"
+                  aria-label="목적지"
+                  variant="underline"
+                />
+              </div>
+              <div>
+                <label className="font-serif text-[13px] text-muted-foreground/80 block mb-1">검사기관</label>
+                {singleLab ? (
+                  <LabPillSelect
+                    value={selectedLabs[0] ?? ''}
+                    onChange={(v) => setSelectedLabs(v ? [v] : [])}
+                    options={labs}
+                    placeholder="검사기관 선택"
+                    aria-label="검사기관"
+                  />
+                ) : (
+                  <LabPillMultiSelect
+                    values={selectedLabs}
+                    onChange={setSelectedLabs}
+                    options={labs}
+                    placeholder="검사기관 선택"
+                    aria-label="검사기관"
+                  />
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {mode && (
+          <div className="flex items-center justify-end gap-sm border-t border-border/60 px-lg py-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-md py-1.5 text-sm font-serif text-muted-foreground hover:text-foreground transition-colors"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={submit}
+              disabled={!canSubmit}
+              className="px-md py-1.5 text-sm font-serif rounded-full border border-border/60 hover:bg-muted/40 transition-colors disabled:opacity-40"
+            >
+              추가
+            </button>
+          </div>
+        )}
       </div>
-    </section>
+    </div>,
+    document.body,
   )
 }
 
