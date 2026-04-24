@@ -53,9 +53,9 @@ const FIELD_OPTIONS: { key: string; label: string; array?: boolean }[] = [
   { key: 'civ_dates[0]', label: 'CIV 1차' },
   { key: 'civ_dates[1]', label: 'CIV 2차' },
   { key: 'kennel_cough_dates[0]', label: '켄넬코프 1차' },
-  { key: 'internal_parasite_dates', label: '내부구충 (모든 차수)', array: true },
-  { key: 'external_parasite_dates', label: '외부구충 (모든 차수)', array: true },
-  { key: 'heartworm_dates', label: '심장사상충 (모든 차수)', array: true },
+  { key: 'internal_parasite_dates', label: '내부구충', array: true },
+  { key: 'external_parasite_dates', label: '외부구충', array: true },
+  { key: 'heartworm_dates', label: '심장사상충', array: true },
 ]
 
 function destLabel(key: string): string {
