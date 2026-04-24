@@ -669,7 +669,7 @@ export function TodosApp() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="검색"
-              className="h-10 pl-10 text-[15px] bg-card border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
+              className="h-10 pl-10 text-[15px] !bg-white shadow-none border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
             />
           </div>
         </div>
