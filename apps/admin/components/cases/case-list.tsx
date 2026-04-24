@@ -310,7 +310,7 @@ export function CaseList({
             autoFocus
             placeholder="검색"
             // Editorial pill: 살짝 둥근 필, 카드 배경(흰색), hairline 보더
-            className="h-11 pl-10 pr-9 text-[15px] !bg-background shadow-none border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
+            className="h-11 pl-10 pr-9 text-[15px] !bg-white shadow-none border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
           />
           {query && (
             <button
