@@ -456,7 +456,7 @@ function CertRuleAddModal({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="bg-background rounded-sm border border-border/60 shadow-xl w-full max-w-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-background rounded-sm border border-border/60 shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-border/60 px-lg py-3">
           <div className="flex items-baseline gap-2">
             {mode && (
