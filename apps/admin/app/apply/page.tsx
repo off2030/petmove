@@ -126,20 +126,36 @@ function FieldRow({
   hint,
   children,
   className,
+  fieldKey,
+  missing = false,
 }: {
   label: React.ReactNode
   required?: boolean
   hint?: string
   children: React.ReactNode
   className?: string
+  /** 누락 시 scroll 대상으로 쓰는 식별자. */
+  fieldKey?: string
+  /** true 면 "작성 요청" 배지 + 좌측 accent 표시. */
+  missing?: boolean
 }) {
   return (
-    <div className={cn(fieldRowClass, className)}>
+    <div
+      className={cn(fieldRowClass, className, missing && 'relative pl-3 -ml-3 bg-primary/5 rounded-sm')}
+      data-field-key={fieldKey}
+    >
+      {missing && (
+        <span aria-hidden className="absolute left-0 top-2 bottom-2 w-[3px] bg-primary rounded" />
+      )}
       <div className={fieldHeaderClass}>
         <span className={labelClass}>{label}</span>
         <span className={fieldMetaClass}>
-          {hint && <span className={hintRightClass}>{hint}</span>}
-          {required && <span className={reqIndicatorClass}>필수</span>}
+          {hint && !missing && <span className={hintRightClass}>{hint}</span>}
+          {missing ? (
+            <span className="font-serif italic text-[12px] text-primary">작성 요청</span>
+          ) : (
+            required && <span className={reqIndicatorClass}>필수</span>
+          )}
         </span>
       </div>
       {children}
@@ -165,6 +181,7 @@ export default function ApplyPage() {
   const [step, setStep] = useState(0) // 0=form, 1=done
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [missing, setMissing] = useState<Set<string>>(() => new Set())
 
   // Form state
   const [destination, setDestination] = useState('')
@@ -296,30 +313,100 @@ export default function ApplyPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError(null)
 
-    // Validation
-    if (!destination) { setError('목적지를 선택해주세요.'); return }
-    if (!customerName.trim()) { setError('성함을 입력해주세요.'); return }
-    if (!customerLastNameEn.trim() || !customerFirstNameEn.trim()) { setError('영문 성과 이름을 모두 입력해주세요.'); return }
-    if (!phone.trim()) { setError('전화번호를 입력해주세요.'); return }
-    if (phone.length < 10 || phone.length > 11) { setError('전화번호는 10~11자리로 입력해주세요.'); return }
-    if (!addressKr.trim()) { setError('한국주소를 입력해주세요.'); return }
-    if (!email.trim()) { setError('이메일을 입력해주세요.'); return }
+    // Validation — 모든 누락 항목을 한 번에 수집해서 표시.
+    const miss = new Set<string>()
+    if (!destination) miss.add('destination')
+    if (!customerName.trim()) miss.add('customerName')
+    if (!customerLastNameEn.trim() || !customerFirstNameEn.trim()) miss.add('customerNameEn')
+    if (!phone.trim()) miss.add('phone')
+    if (!addressKr.trim()) miss.add('addressKr')
+    if (!email.trim()) miss.add('email')
     for (let i = 0; i < pets.length; i++) {
       const p = pets[i]
-      const label = pets.length > 1 ? `반려동물 ${i + 1}: ` : ''
-      if (!p.petName.trim()) { setError(`${label}이름을 입력해주세요.`); return }
-      if (!p.petNameEn.trim()) { setError(`${label}영문이름을 입력해주세요.`); return }
-      if (!p.birthDate) { setError(`${label}생년월일을 입력해주세요.`); return }
-      if (!p.species) { setError(`${label}종을 선택해주세요.`); return }
-      if (!p.breed.trim()) { setError(`${label}품종을 선택해주세요.`); return }
-      if (p.selectedColors.length === 0) { setError(`${label}모색을 선택해주세요.`); return }
-      if (!p.sex) { setError(`${label}성별을 선택해주세요.`); return }
-      if (!p.weight.trim()) { setError(`${label}몸무게를 입력해주세요.`); return }
-      if (p.microchip && p.microchip.length !== 15) { setError(`${label}마이크로칩 번호는 15자리 숫자여야 합니다.`); return }
+      if (!p.petName.trim()) miss.add(`pet${i}.petName`)
+      if (!p.petNameEn.trim()) miss.add(`pet${i}.petNameEn`)
+      if (!p.birthDate) miss.add(`pet${i}.birthDate`)
+      if (!p.species) miss.add(`pet${i}.species`)
+      if (!p.breed.trim()) miss.add(`pet${i}.breed`)
+      if (p.selectedColors.length === 0) miss.add(`pet${i}.colors`)
+      if (!p.sex) miss.add(`pet${i}.sex`)
+      if (!p.weight.trim()) miss.add(`pet${i}.weight`)
     }
 
+    // 형식 오류 (누락 아님) — 별도 메시지로 처리.
+    let formatError: string | null = null
+    if (!miss.has('phone') && !/^010\d{8}$/.test(phone)) {
+      formatError = '전화번호는 010-0000-0000 형식(11자리)으로 입력해주세요.'
+      miss.add('phone') // 시각적 강조도 같이
+    } else {
+      for (let i = 0; i < pets.length; i++) {
+        const p = pets[i]
+        if (p.microchip && p.microchip.length !== 15) {
+          const label = pets.length > 1 ? `반려동물 ${i + 1}: ` : ''
+          formatError = `${label}마이크로칩 번호는 15자리 숫자여야 합니다.`
+          break
+        }
+      }
+    }
+
+    if (miss.size > 0 || formatError) {
+      setMissing(miss)
+      // 누락 항목을 사람이 읽는 메시지로 정리.
+      const TOP_LABELS: Record<string, string> = {
+        destination: '목적지',
+        customerName: '성함',
+        customerNameEn: '영문성함',
+        phone: '전화번호',
+        addressKr: '한국주소',
+        email: '이메일',
+      }
+      const PET_LABELS: Record<string, string> = {
+        petName: '이름',
+        petNameEn: '영문이름',
+        birthDate: '생년월일',
+        species: '종',
+        breed: '품종',
+        colors: '모색',
+        sex: '성별',
+        weight: '몸무게',
+      }
+      const topMissing: string[] = []
+      const petMissing = new Map<number, string[]>()
+      for (const k of miss) {
+        const m = k.match(/^pet(\d+)\.(.+)$/)
+        if (m) {
+          const idx = Number(m[1])
+          const label = PET_LABELS[m[2]] ?? m[2]
+          if (!petMissing.has(idx)) petMissing.set(idx, [])
+          petMissing.get(idx)!.push(label)
+        } else if (TOP_LABELS[k]) {
+          topMissing.push(TOP_LABELS[k])
+        }
+      }
+      const parts: string[] = []
+      if (topMissing.length > 0) parts.push(topMissing.join(', '))
+      const petIdxs = Array.from(petMissing.keys()).sort((a, b) => a - b)
+      for (const i of petIdxs) {
+        const labels = petMissing.get(i)!
+        const prefix = pets.length > 1 ? `반려동물 ${i + 1} ` : '반려동물 '
+        parts.push(`${prefix}${labels.join(', ')}`)
+      }
+      const summary = parts.length > 0 ? `${parts.join(', ')}을(를) 입력해주세요.` : ''
+      setError(formatError ? `${summary} ${formatError}`.trim() : summary)
+      // 첫 누락 항목으로 스크롤
+      if (miss.size > 0) {
+        setTimeout(() => {
+          const first = Array.from(miss)[0]
+          const el = document.querySelector(`[data-field-key="${first}"]`) as HTMLElement | null
+          el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }, 50)
+      }
+      return
+    }
+
+    setMissing(new Set())
+    setError(null)
     setSubmitting(true)
     let allOk = true
     for (const p of pets) {
@@ -444,7 +531,7 @@ export default function ApplyPage() {
               <span className={eyebrowNumClass}>01</span>
               <h2 className={sectionTitleClass}>어디로 가시나요?</h2>
             </div>
-            <FieldRow label="목적지" required hint="검색 입력">
+            <FieldRow label="목적지" required hint="검색 입력" fieldKey="destination" missing={missing.has('destination')}>
               {destination ? (
                 <button type="button" onClick={() => { setDestination(''); setDestQuery('') }}
                   className="w-full flex items-baseline justify-between text-left h-10 text-foreground hover:opacity-70 transition-opacity">
@@ -498,11 +585,11 @@ export default function ApplyPage() {
               <span className={eyebrowNumClass}>02</span>
               <h2 className={sectionTitleClass}>소유주 정보</h2>
             </div>
-            <FieldRow label="성함" required>
+            <FieldRow label="성함" required fieldKey="customerName" missing={missing.has('customerName')}>
               <input type="text" autoComplete="name" value={customerName} onChange={(e) => setCustomerName(e.target.value.replace(/\b[a-z]/g, c => c.toUpperCase()))}
                 placeholder="예: 홍길동" className={inputClass} />
             </FieldRow>
-            <FieldRow label="영문성함" required hint="여권과 동일하게">
+            <FieldRow label="영문성함" required hint="여권과 동일하게" fieldKey="customerNameEn" missing={missing.has('customerNameEn')}>
               <div className="flex gap-sm">
                 <input type="text" autoComplete="family-name" value={customerLastNameEn}
                   onCompositionStart={() => { composingRef.current = true }}
@@ -517,14 +604,14 @@ export default function ApplyPage() {
               </div>
               {(enWarnings.lastNameEn || enWarnings.firstNameEn) && <p className="mt-1.5 text-xs text-destructive">{enWarnings.lastNameEn || enWarnings.firstNameEn}</p>}
             </FieldRow>
-            <FieldRow label="전화번호" required>
+            <FieldRow label="전화번호" required fieldKey="phone" missing={missing.has('phone')}>
               <input type="tel" inputMode="numeric" autoComplete="tel"
                 value={phone.replace(/(\d{3})(\d{4})(\d{0,4})/, (_, a, b, c) => c ? `${a}-${b}-${c}` : b ? `${a}-${b}` : a)}
                 maxLength={13}
                 onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, '').slice(0, 11))}
                 placeholder="010-0000-0000" className={numericInputClass} />
             </FieldRow>
-            <FieldRow label="한국주소" required hint="검색 입력">
+            <FieldRow label="한국주소" required hint="검색 입력" fieldKey="addressKr" missing={missing.has('addressKr')}>
               <div className="flex gap-sm items-center">
                 <input type="text" autoComplete="off" value={addressKr} onChange={(e) => setAddressKr(e.target.value)}
                   placeholder="클릭하여 검색" className={inputClass + ' flex-1 cursor-pointer'} readOnly
@@ -543,7 +630,7 @@ export default function ApplyPage() {
                 <p className="mt-1 font-serif italic text-[15px] text-foreground">{addressEn}</p>
               )}
             </FieldRow>
-            <FieldRow label="이메일" required>
+            <FieldRow label="이메일" required fieldKey="email" missing={missing.has('email')}>
               <input type="email" inputMode="email" autoComplete="email" value={email}
                 onChange={(e) => setEmail(e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣A-Z]/g, (c) => c >= 'A' && c <= 'Z' ? c.toLowerCase() : ''))}
                 onCompositionEnd={(e) => setEmail((e.target as HTMLInputElement).value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').toLowerCase())}
@@ -589,6 +676,7 @@ export default function ApplyPage() {
               breedHighlight={breedHighlights[pi] ?? -1}
               setBreedHighlight={(h: number) => setBreedHighlights(prev => ({ ...prev, [pi]: h }))}
               getFilteredBreeds={getFilteredBreeds}
+              missing={missing}
             />
           </section>
           ))}
@@ -636,7 +724,7 @@ export default function ApplyPage() {
 
 /* ── Pet Form Section (동물정보 + 선택항목) ── */
 
-function PetFormSection({ pet, index, updatePet, enWarnings, composingRef, handleEnInput, handleEnCompositionEnd, breedHighlight, setBreedHighlight, getFilteredBreeds }: {
+function PetFormSection({ pet, index, updatePet, enWarnings, composingRef, handleEnInput, handleEnCompositionEnd, breedHighlight, setBreedHighlight, getFilteredBreeds, missing }: {
   pet: PetForm
   index: number
   updatePet: (idx: number, field: keyof PetForm, value: PetForm[keyof PetForm]) => void
@@ -647,20 +735,23 @@ function PetFormSection({ pet, index, updatePet, enWarnings, composingRef, handl
   breedHighlight: number
   setBreedHighlight: (h: number) => void
   getFilteredBreeds: (pet: PetForm) => Breed[]
+  missing: Set<string>
 }) {
   const filteredBreeds = getFilteredBreeds(pet)
   const warnKey = (f: string) => `pet${index}_${f}`
+  const mk = (f: string) => `pet${index}.${f}`
+  const isMissing = (f: string) => missing.has(mk(f))
 
   return (
     <div>
       {/* 이름 */}
-      <FieldRow label="이름" required>
+      <FieldRow label="이름" required fieldKey={mk('petName')} missing={isMissing('petName')}>
         <input type="text" value={pet.petName} onChange={(e) => updatePet(index, 'petName', e.target.value.replace(/\b[a-z]/g, c => c.toUpperCase()))}
           placeholder="예: 마루" className={inputClass} />
       </FieldRow>
 
       {/* 영문이름 */}
-      <FieldRow label="영문이름" required>
+      <FieldRow label="영문이름" required fieldKey={mk('petNameEn')} missing={isMissing('petNameEn')}>
         <input type="text" value={pet.petNameEn}
           onCompositionStart={() => { composingRef.current = true }}
           onChange={(e) => handleEnInput(e, (v) => updatePet(index, 'petNameEn', v), warnKey('en'))}
@@ -670,7 +761,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, composingRef, handl
       </FieldRow>
 
       {/* 생년월일 */}
-      <FieldRow label="생년월일" required>
+      <FieldRow label="생년월일" required fieldKey={mk('birthDate')} missing={isMissing('birthDate')}>
         <DateTextField
           value={pet.birthDate}
           onChange={(v) => updatePet(index, 'birthDate', v)}
@@ -680,7 +771,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, composingRef, handl
       </FieldRow>
 
       {/* 종 */}
-      <FieldRow label="종" required>
+      <FieldRow label="종" required fieldKey={mk('species')} missing={isMissing('species')}>
         <div className="flex flex-wrap gap-sm">
           {SPECIES_OPTIONS.map(o => (
             <button key={o.value} type="button"
@@ -693,7 +784,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, composingRef, handl
       </FieldRow>
 
       {/* 품종 */}
-      <FieldRow label="품종" required hint="검색 입력">
+      <FieldRow label="품종" required hint="검색 입력" fieldKey={mk('breed')} missing={isMissing('breed')}>
         {pet.breed ? (
           <button type="button" onClick={() => { updatePet(index, 'breed', ''); updatePet(index, 'breedEn', ''); updatePet(index, 'breedQuery', '') }}
             className="w-full flex items-baseline justify-between text-left h-10 text-foreground hover:opacity-70 transition-opacity">
@@ -736,7 +827,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, composingRef, handl
       </FieldRow>
 
       {/* 모색 */}
-      <FieldRow label="모색" required hint="가장 비슷한 색상을 최대 3개까지 선택">
+      <FieldRow label="모색" required hint="가장 비슷한 색상을 최대 3개까지 선택" fieldKey={mk('colors')} missing={isMissing('colors')}>
         <div className="flex flex-wrap gap-sm">
           {COLORS.map(c => {
             const selected = pet.selectedColors.includes(c.ko)
@@ -761,7 +852,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, composingRef, handl
       </FieldRow>
 
       {/* 성별 */}
-      <FieldRow label="성별" required>
+      <FieldRow label="성별" required fieldKey={mk('sex')} missing={isMissing('sex')}>
         <div className="flex flex-wrap gap-sm">
           {SEX_OPTIONS.map(o => (
             <button key={o.value} type="button"
@@ -774,7 +865,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, composingRef, handl
       </FieldRow>
 
       {/* 몸무게 */}
-      <FieldRow label="몸무게" required hint="kg">
+      <FieldRow label="몸무게" required hint="kg" fieldKey={mk('weight')} missing={isMissing('weight')}>
         <input type="text" inputMode="decimal" value={pet.weight}
           onChange={(e) => updatePet(index, 'weight', e.target.value.replace(/[^\d.]/g, ''))}
           placeholder="예: 5.2" className={numericInputClass} />
