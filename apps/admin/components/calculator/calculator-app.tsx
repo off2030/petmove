@@ -76,7 +76,7 @@ export function CalculatorApp({
 
         {/* Tabs + toolbar — same row on desktop, stacked on mobile */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-sm md:gap-md border-b border-border/60 shrink-0 px-lg">
-          <div className="flex gap-md">
+          <div className="flex gap-xl">
             {MODES.map((m) => (
               <button
                 key={m.value}
