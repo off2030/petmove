@@ -309,6 +309,56 @@ export async function revokeOrgInvite(inviteId: string): Promise<Result<null>> {
   }
 }
 
+/**
+ * 조직 삭제 — cases 가 1건이라도 있으면 거부.
+ * memberships/invites/settings/products/auto_fill/disabled_checks/case_history
+ * 는 FK CASCADE 로 자동 정리. 강제 cascade 삭제는 SQL 직접 사용.
+ */
+export async function deleteOrg(input: {
+  orgId: string
+  expectedName: string
+}): Promise<Result<{ deletedName: string }>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  try {
+    const admin = createAdminClient()
+
+    const { data: org, error: orgErr } = await admin
+      .from('organizations')
+      .select('id, name')
+      .eq('id', input.orgId)
+      .maybeSingle()
+    if (orgErr) return { ok: false, error: orgErr.message }
+    if (!org) return { ok: false, error: '조직을 찾을 수 없음' }
+    if ((org.name as string) !== input.expectedName) {
+      return { ok: false, error: '조직 이름이 일치하지 않습니다' }
+    }
+
+    // cases RESTRICT 가드 — 미리 카운트해서 친절한 에러
+    const { count, error: cntErr } = await admin
+      .from('cases')
+      .select('id', { count: 'exact', head: true })
+      .eq('org_id', input.orgId)
+    if (cntErr) return { ok: false, error: cntErr.message }
+    if ((count ?? 0) > 0) {
+      return {
+        ok: false,
+        error: `케이스 ${count}건이 남아 있어 삭제할 수 없습니다. 케이스를 먼저 정리하세요.`,
+      }
+    }
+
+    const { error: delErr } = await admin
+      .from('organizations')
+      .delete()
+      .eq('id', input.orgId)
+    if (delErr) return { ok: false, error: delErr.message }
+
+    return { ok: true, value: { deletedName: org.name as string } }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 export async function createOrg(input: { name: string }): Promise<Result<{ id: string }>> {
   const gate = await requireSuperAdmin()
   if (!gate.ok) return gate

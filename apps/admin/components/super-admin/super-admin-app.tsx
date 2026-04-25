@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { Plus, RefreshCw } from 'lucide-react'
+import { Plus, RefreshCw, Trash2 } from 'lucide-react'
 import {
   createOrg,
+  deleteOrg,
   getOrgDetail,
   inviteToOrg,
   listAllOrgs,
@@ -91,6 +92,29 @@ export function SuperAdminApp({ initialOrgs, userEmail, currentUserId, embedded 
         return
       }
       reloadSelected()
+    })
+  }
+
+  function onDeleteOrg(org: OrgDetail) {
+    const typed = window.prompt(
+      `이 작업은 되돌릴 수 없습니다.\n조직과 모든 멤버·초대·설정·약품·자동화·이력이 영구 삭제됩니다.\n계속하려면 조직 이름을 정확히 입력하세요:\n\n${org.name}`,
+    )
+    if (typed === null) return
+    if (typed.trim() !== org.name) {
+      setError('조직 이름이 일치하지 않습니다')
+      return
+    }
+    setError(null)
+    setMemberError(null)
+    startTransition(async () => {
+      const r = await deleteOrg({ orgId: org.id, expectedName: org.name })
+      if (!r.ok) {
+        setError(r.error)
+        return
+      }
+      setSelected(null)
+      const listed = await listAllOrgs()
+      if (listed.ok) setOrgs(listed.value)
     })
   }
 
@@ -270,9 +294,21 @@ export function SuperAdminApp({ initialOrgs, userEmail, currentUserId, embedded 
                   <div className="rounded-xl bg-card px-lg pt-md pb-md flex flex-col gap-lg">
                     {/* Org header */}
                     <header className="pb-md border-b border-border/60">
-                      <h2 className="font-serif text-[22px] leading-tight text-foreground">
-                        {selected.name}
-                      </h2>
+                      <div className="flex items-start justify-between gap-md">
+                        <h2 className="font-serif text-[22px] leading-tight text-foreground">
+                          {selected.name}
+                        </h2>
+                        <button
+                          type="button"
+                          onClick={() => onDeleteOrg(selected)}
+                          disabled={pending}
+                          title="조직 삭제"
+                          aria-label="조직 삭제"
+                          className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-40"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                       <div className="mt-2 flex items-baseline gap-md flex-wrap text-[12px] text-muted-foreground">
                         <span className="inline-flex items-baseline gap-xs">
                           <span className="font-serif italic">사업자번호</span>
