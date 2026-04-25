@@ -11,7 +11,7 @@ import { CalculatorApp } from '@/components/calculator/calculator-app'
 import { SuperAdminApp } from '@/components/super-admin/super-admin-app'
 import { clearImpersonation } from '@/lib/actions/super-admin'
 import type { SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
-import type { OrgSummary } from '@/lib/actions/super-admin'
+import type { OrgSummary, SuperAdminEntry } from '@/lib/actions/super-admin'
 import type { ExternalLinksConfig } from '@petmove/domain'
 
 const MemoizedCases = memo(CasesApp)
@@ -34,6 +34,7 @@ export function DashboardShell({
   currentUserId = null,
   initialSettingsBootstrap = null,
   initialOrgs = [],
+  initialSuperAdmins = [],
   impersonation = null,
   initialExternalLinks,
 }: {
@@ -42,6 +43,7 @@ export function DashboardShell({
   currentUserId?: string | null
   initialSettingsBootstrap?: SettingsBootstrap | null
   initialOrgs?: OrgSummary[]
+  initialSuperAdmins?: SuperAdminEntry[]
   impersonation?: { orgId: string; orgName: string } | null
   initialExternalLinks: ExternalLinksConfig
 }) {
@@ -70,14 +72,19 @@ export function DashboardShell({
     window.history.pushState(null, '', `/${tab}`)
   }, [])
 
-  // Handle browser back/forward
+  // Handle browser back/forward.
+  // Defer state updates to next microtask: openCase()(cases-context) dispatches a
+  // synthetic popstate while React may still be mid-render, which otherwise
+  // triggers "Cannot update a component while rendering" warning.
   useEffect(() => {
     function onPopState() {
       const tab = pathToTab(window.location.pathname)
-      setActiveTab(tab)
-      setMounted((prev) => {
-        if (prev.has(tab)) return prev
-        return new Set([...prev, tab])
+      queueMicrotask(() => {
+        setActiveTab(tab)
+        setMounted((prev) => {
+          if (prev.has(tab)) return prev
+          return new Set([...prev, tab])
+        })
       })
     }
     window.addEventListener('popstate', onPopState)
@@ -126,7 +133,7 @@ export function DashboardShell({
         )}
         {isSuperAdmin && mounted.has('super-admin') && (
           <div className="h-full" style={{ display: activeTab === 'super-admin' ? 'block' : 'none' }}>
-            <MemoizedSuperAdmin initialOrgs={initialOrgs} userEmail={userEmail ?? null} currentUserId={currentUserId} embedded />
+            <MemoizedSuperAdmin initialOrgs={initialOrgs} initialSuperAdmins={initialSuperAdmins} userEmail={userEmail ?? null} currentUserId={currentUserId} embedded />
           </div>
         )}
       </main>

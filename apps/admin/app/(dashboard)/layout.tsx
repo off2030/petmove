@@ -4,7 +4,7 @@ import { CasesProvider } from '@/components/cases/cases-context'
 import { DashboardShell } from '@/components/layout/dashboard-shell'
 import { VaccineDataProvider } from '@/components/providers/vaccine-data-provider'
 import { CalculatorDataProvider } from '@/components/providers/calculator-data-provider'
-import { loadImportReportCountries } from '@/lib/import-report-config'
+import { loadImportReportCountries, loadImportReportButtonCountries } from '@/lib/import-report-config'
 import { loadInspectionConfig } from '@/lib/inspection-config'
 import { loadCertConfig } from '@/lib/cert-config'
 import { loadExternalLinks } from '@/lib/external-links'
@@ -12,7 +12,7 @@ import { getOrgVaccineData } from '@/lib/vaccine-data'
 import { getCalculatorItems } from '@/lib/calculator-data'
 import { getSettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 import { getActiveOrgId, getImpersonationInfo } from '@/lib/supabase/active-org'
-import { listAllOrgs, type OrgSummary } from '@/lib/actions/super-admin'
+import { listAllOrgs, listSuperAdminsAll, type OrgSummary, type SuperAdminEntry } from '@/lib/actions/super-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -85,10 +85,11 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [initialCases, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, calculatorItems, settingsBootstrap, orgId, impersonation, externalLinks] = await Promise.all([
+  const [initialCases, fieldDefs, importReportCountries, importReportButtonCountries, inspectionConfig, certConfig, userCtx, vaccineData, calculatorItems, settingsBootstrap, orgId, impersonation, externalLinks] = await Promise.all([
     fetchAllCases(),
     fetchFieldDefs(),
     loadImportReportCountries(),
+    loadImportReportButtonCountries(),
     loadInspectionConfig(),
     loadCertConfig(),
     fetchUserContext(),
@@ -100,11 +101,16 @@ export default async function DashboardLayout({
     loadExternalLinks(),
   ])
 
-  // Super admin 이면 org 목록 prefetch — 탭 전환 시 즉시 표시.
+  // Super admin 이면 org 목록 + 운영자 목록 prefetch — 탭 전환 시 즉시 표시 (불러오기 깜빡임 제거).
   let initialOrgs: OrgSummary[] = []
+  let initialSuperAdmins: SuperAdminEntry[] = []
   if (userCtx.isSuperAdmin) {
-    const r = await listAllOrgs().catch(() => ({ ok: false as const, error: 'failed' }))
-    if (r.ok) initialOrgs = r.value
+    const [orgsR, adminsR] = await Promise.all([
+      listAllOrgs().catch(() => ({ ok: false as const, error: 'failed' })),
+      listSuperAdminsAll().catch(() => ({ ok: false as const, error: 'failed' })),
+    ])
+    if (orgsR.ok) initialOrgs = orgsR.value
+    if (adminsR.ok) initialSuperAdmins = adminsR.value
   }
 
   return (
@@ -112,6 +118,7 @@ export default async function DashboardLayout({
       initialCases={initialCases}
       fieldDefs={fieldDefs}
       initialImportReportCountries={importReportCountries}
+      initialImportReportButtonCountries={importReportButtonCountries}
       initialInspectionConfig={inspectionConfig}
       initialCertConfig={certConfig}
       orgId={orgId}
@@ -124,6 +131,7 @@ export default async function DashboardLayout({
             currentUserId={userCtx.userId}
             initialSettingsBootstrap={settingsBootstrap}
             initialOrgs={initialOrgs}
+            initialSuperAdmins={initialSuperAdmins}
             impersonation={impersonation}
             initialExternalLinks={externalLinks}
           />

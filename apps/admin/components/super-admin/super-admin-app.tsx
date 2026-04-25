@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { Eye, Plus, RefreshCw, Trash2 } from 'lucide-react'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import {
   createOrg,
   deleteOrg,
@@ -26,6 +27,7 @@ import { cn } from '@/lib/utils'
 
 interface Props {
   initialOrgs: OrgSummary[]
+  initialSuperAdmins: SuperAdminEntry[]
   userEmail: string | null
   currentUserId: string | null
   /** DashboardShell 안에 삽입된 경우 내부 TopBar 생략. standalone 렌더링 때만 TopBar 포함. */
@@ -34,7 +36,8 @@ interface Props {
 
 const ROLE_LABEL: Record<InviteRole, string> = { admin: '관리자', member: '멤버' }
 
-export function SuperAdminApp({ initialOrgs, userEmail, currentUserId, embedded = false }: Props) {
+export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, currentUserId, embedded = false }: Props) {
+  const confirm = useConfirm()
   const [orgs, setOrgs] = useState<OrgSummary[]>(initialOrgs)
   const [selected, setSelected] = useState<OrgDetail | null>(null)
   const [newOrgName, setNewOrgName] = useState('')
@@ -89,8 +92,8 @@ export function SuperAdminApp({ initialOrgs, userEmail, currentUserId, embedded 
     })
   }
 
-  function onRemoveMember(orgId: string, userId: string, label: string) {
-    if (!confirm(`${label} 님을 조직에서 제거하시겠습니까?`)) return
+  async function onRemoveMember(orgId: string, userId: string, label: string) {
+    if (!await confirm({ message: `${label} 님을 조직에서 제거하시겠습니까?`, okLabel: '제거', variant: 'destructive' })) return
     setMemberError(null)
     startTransition(async () => {
       const r = await removeMemberFromOrg({ orgId, userId })
@@ -102,8 +105,8 @@ export function SuperAdminApp({ initialOrgs, userEmail, currentUserId, embedded 
     })
   }
 
-  function onRevokeInvite(inviteId: string) {
-    if (!confirm('초대를 취소하시겠습니까?')) return
+  async function onRevokeInvite(inviteId: string) {
+    if (!await confirm({ message: '초대를 취소하시겠습니까?', okLabel: '취소', variant: 'destructive' })) return
     startTransition(async () => {
       const r = await revokeOrgInvite(inviteId)
       if (!r.ok) {
@@ -233,7 +236,7 @@ export function SuperAdminApp({ initialOrgs, userEmail, currentUserId, embedded 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-lg">
               {/* 좌: SaaS 운영자 + 조직 목록 + 생성 폼 */}
               <section className="lg:col-span-2 flex flex-col gap-lg">
-                <SuperAdminsCard currentUserId={currentUserId} />
+                <SuperAdminsCard initialAdmins={initialSuperAdmins} currentUserId={currentUserId} />
 
                 {/* Orgs card — Editorial borderless */}
                 <div className="rounded-xl bg-card px-lg pt-md pb-sm">
@@ -537,18 +540,18 @@ export function SuperAdminApp({ initialOrgs, userEmail, currentUserId, embedded 
   )
 }
 
-function SuperAdminsCard({ currentUserId }: { currentUserId: string | null }) {
-  const [admins, setAdmins] = useState<SuperAdminEntry[] | null>(null)
+function SuperAdminsCard({
+  initialAdmins,
+  currentUserId,
+}: {
+  initialAdmins: SuperAdminEntry[]
+  currentUserId: string | null
+}) {
+  const confirm = useConfirm()
+  const [admins, setAdmins] = useState<SuperAdminEntry[]>(initialAdmins)
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
-
-  useEffect(() => {
-    startTransition(async () => {
-      const r = await listSuperAdminsAll()
-      if (r.ok) setAdmins(r.value)
-    })
-  }, [])
 
   function refresh() {
     startTransition(async () => {
@@ -570,9 +573,9 @@ function SuperAdminsCard({ currentUserId }: { currentUserId: string | null }) {
     })
   }
 
-  function onRevoke(entry: SuperAdminEntry) {
+  async function onRevoke(entry: SuperAdminEntry) {
     const label = entry.name && entry.name.trim() !== '' ? entry.name : entry.email
-    if (!confirm(`${label} 의 운영자 권한을 회수하시겠습니까?`)) return
+    if (!await confirm({ message: `${label} 의 운영자 권한을 회수하시겠습니까?`, okLabel: '회수', variant: 'destructive' })) return
     setError(null)
     startTransition(async () => {
       const r = await revokeSuperAdmin(entry.user_id)
@@ -589,12 +592,10 @@ function SuperAdminsCard({ currentUserId }: { currentUserId: string | null }) {
       <div className="flex items-baseline justify-between pb-sm border-b border-border/60 mb-sm">
         <h2 className="font-serif text-[17px] text-foreground">SaaS 운영자</h2>
         <span className="font-mono text-[12px] tabular-nums text-muted-foreground">
-          {admins?.length ?? 0}
+          {admins.length}
         </span>
       </div>
-      {admins === null ? (
-        <p className="py-2 font-serif italic text-[13px] text-muted-foreground">불러오는 중…</p>
-      ) : admins.length === 0 ? (
+      {admins.length === 0 ? (
         <p className="py-2 font-serif italic text-[13px] text-muted-foreground">없음</p>
       ) : (
         <ul>
