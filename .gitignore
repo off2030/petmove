@@ -55,3 +55,7 @@ petmove_backup*/
 storage_backup/
 backups/
 .vercel
+
+# Sentry Config File
+.env.sentry-build-plugin
+
