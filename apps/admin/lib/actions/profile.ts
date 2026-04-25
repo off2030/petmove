@@ -28,6 +28,38 @@ export async function getMyProfile(): Promise<MyProfile | null> {
   }
 }
 
+/**
+ * 비밀번호 설정 — magic link 가입자가 처음 비번 설정.
+ * supabase.auth.updateUser 후 profiles.password_set=true 마킹.
+ */
+export async function setMyPassword(password: string): Promise<
+  | { ok: true }
+  | { ok: false; error: string }
+> {
+  try {
+    if (!password || password.length < 8) {
+      return { ok: false, error: '비밀번호는 8자 이상이어야 합니다.' }
+    }
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { ok: false, error: '로그인이 필요합니다.' }
+
+    const { error: updErr } = await supabase.auth.updateUser({ password })
+    if (updErr) return { ok: false, error: updErr.message }
+
+    const { error: profErr } = await supabase
+      .from('profiles')
+      .update({ password_set: true, updated_at: new Date().toISOString() })
+      .eq('id', user.id)
+    if (profErr) return { ok: false, error: profErr.message }
+
+    revalidatePath('/', 'layout')
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+  }
+}
+
 export async function updateMyProfile(patch: { name?: string | null }): Promise<
   | { ok: true; profile: MyProfile }
   | { ok: false; error: string }

@@ -294,6 +294,87 @@ export async function removeMember(userId: string): Promise<Result<null>> {
   }
 }
 
+export interface InviteSummary {
+  email: string
+  role: InviteRole
+  orgName: string
+  expired: boolean
+  alreadyAccepted: boolean
+}
+
+/**
+ * 초대 토큰만 가지고 미로그인 사용자에게 표시할 정보.
+ * service role 사용 (수락자가 아직 anon).
+ */
+export async function getInviteSummary(token: string): Promise<Result<InviteSummary>> {
+  try {
+    const admin = createAdminClient()
+    const { data: invite, error } = await admin
+      .from('organization_invites')
+      .select('email, role, expires_at, accepted_at, org_id')
+      .eq('token', token)
+      .maybeSingle()
+    if (error) return { ok: false, error: error.message }
+    if (!invite) return { ok: false, error: '유효하지 않은 초대 링크' }
+
+    const { data: org } = await admin
+      .from('organizations')
+      .select('name')
+      .eq('id', invite.org_id as string)
+      .maybeSingle()
+
+    return {
+      ok: true,
+      value: {
+        email: invite.email as string,
+        role: invite.role as InviteRole,
+        orgName: (org?.name as string | undefined) ?? '펫무브워크',
+        expired: new Date(invite.expires_at as string).getTime() < Date.now(),
+        alreadyAccepted: !!invite.accepted_at,
+      },
+    }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * Magic link 발송 — invite.email 로 자동 (사용자 입력 불필요).
+ * Supabase Auth 가 SMTP 통해 발송 (Resend 또는 기본). signInWithOtp 사용.
+ */
+export async function sendInviteMagicLink(input: {
+  token: string
+  origin: string
+}): Promise<Result<{ email: string }>> {
+  try {
+    const admin = createAdminClient()
+    const { data: invite, error } = await admin
+      .from('organization_invites')
+      .select('email, expires_at, accepted_at')
+      .eq('token', input.token)
+      .maybeSingle()
+    if (error) return { ok: false, error: error.message }
+    if (!invite) return { ok: false, error: '유효하지 않은 초대 링크' }
+    if (invite.accepted_at) return { ok: false, error: '이미 수락된 초대' }
+    if (new Date(invite.expires_at as string).getTime() < Date.now()) {
+      return { ok: false, error: '만료된 초대' }
+    }
+
+    const supabase = await createClient()
+    const emailRedirectTo = `${input.origin}/auth/callback`
+    // next 는 cookie 로 (callback 에서 읽음). 여기서 호출자가 cookie 직접 set 어려우니
+    // 호출 측 (page.tsx) 이 cookie 설정 후 호출.
+    const { error: otpErr } = await supabase.auth.signInWithOtp({
+      email: invite.email as string,
+      options: { emailRedirectTo, shouldCreateUser: true },
+    })
+    if (otpErr) return { ok: false, error: otpErr.message }
+    return { ok: true, value: { email: invite.email as string } }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 /**
  * 초대 수락 — /invite/[token] 페이지에서 호출.
  * Service role 로 RLS 우회 (수락자는 아직 org 멤버가 아니므로 select 권한 없음).

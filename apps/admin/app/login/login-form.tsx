@@ -80,6 +80,30 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
     router.refresh()
   }
 
+  // Magic link 발송 — 비번 잊었거나 신규 가입 fallback.
+  // next 는 cookie 로 (Supabase OAuth/OTP 의 redirect_to allowlist 우회).
+  async function sendMagicLink() {
+    if (!email) {
+      setError('이메일을 먼저 입력하세요.')
+      return
+    }
+    setLoading('magic')
+    setError(null)
+    if (next && next !== '/cases') {
+      document.cookie = `pm_oauth_next=${encodeURIComponent(next)}; path=/; max-age=600; samesite=lax`
+    }
+    const { error } = await supabaseBrowser.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    })
+    setLoading(null)
+    if (error) {
+      setError(error.message)
+      return
+    }
+    setError(`${email} 로 로그인 링크를 발송했습니다. 메일을 확인하세요.`)
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center p-md">
       <div className="w-full max-w-sm space-y-lg rounded-lg border bg-card p-lg shadow-sm">
@@ -141,6 +165,14 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
           >
             {loading === 'email' ? '로그인 중…' : '이메일로 로그인'}
           </Button>
+          <button
+            type="button"
+            onClick={sendMagicLink}
+            disabled={loading !== null || !email}
+            className="w-full text-xs text-muted-foreground hover:text-foreground italic disabled:opacity-40"
+          >
+            {loading === 'magic' ? '발송 중…' : '비밀번호 없이 이메일로 로그인 링크 받기'}
+          </button>
         </form>
 
         {error && (
