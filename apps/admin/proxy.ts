@@ -9,6 +9,7 @@ const PUBLIC_PREFIXES = [
   '/auth/callback',
   '/logout',
   '/apply',
+  '/invite',  // 미로그인 사용자도 InviteJoin 카드 보고 OAuth/magic link 선택 가능해야 함
   '/_next',
   '/favicon',
   '/public',
