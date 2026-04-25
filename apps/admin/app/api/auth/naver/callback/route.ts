@@ -22,10 +22,16 @@ function loginRedirect(origin: string, error: string) {
 }
 
 export async function GET(request: Request) {
+  const t0 = Date.now()
+  const log = (label: string) => {
+    // Vercel function logs 에서 단계별 시간 확인용
+    console.log(`[naver-callback] ${label} t+${Date.now() - t0}ms`)
+  }
   const url = new URL(request.url)
   const code = url.searchParams.get('code')
   const stateParam = url.searchParams.get('state')
   const naverError = url.searchParams.get('error')
+  log('start')
 
   const cookieStore = await cookies()
   const expectedState = cookieStore.get('pm_naver_state')?.value
@@ -66,6 +72,7 @@ export async function GET(request: Request) {
   } catch (e) {
     return loginRedirect(url.origin, `naver_token: ${(e as Error).message}`)
   }
+  log('token-exchanged')
 
   // 2. access_token → user info (email, name)
   let email: string
@@ -87,6 +94,7 @@ export async function GET(request: Request) {
   } catch (e) {
     return loginRedirect(url.origin, `naver_me: ${(e as Error).message}`)
   }
+  log('user-info-fetched')
 
   // 3. Supabase user 조회/생성 — profiles 직접 query (auth.admin.listUsers 보다 훨씬 빠름)
   const admin = createAdminClient()
@@ -117,6 +125,7 @@ export async function GET(request: Request) {
   } catch (e) {
     return loginRedirect(url.origin, `naver_lookup: ${(e as Error).message}`)
   }
+  log('user-resolved')
 
   // 4. magic link 생성 → hashed_token 으로 verifyOtp → 세션 cookie set
   try {
@@ -127,6 +136,7 @@ export async function GET(request: Request) {
     if (linkErr || !linkData.properties?.hashed_token) {
       return loginRedirect(url.origin, `naver_link: ${linkErr?.message ?? 'no token'}`)
     }
+    log('link-generated')
     const supabase = await createClient()
     const { error: verifyErr } = await supabase.auth.verifyOtp({
       type: 'magiclink',
@@ -135,9 +145,11 @@ export async function GET(request: Request) {
     if (verifyErr) {
       return loginRedirect(url.origin, `naver_verify: ${verifyErr.message}`)
     }
+    log('otp-verified')
   } catch (e) {
     return loginRedirect(url.origin, `naver_session: ${(e as Error).message}`)
   }
 
+  log('done')
   return NextResponse.redirect(new URL(next, url.origin))
 }
