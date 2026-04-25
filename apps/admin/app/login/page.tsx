@@ -23,9 +23,14 @@ export default async function LoginPage({
   const errorParam = Array.isArray(params.error) ? params.error[0] : params.error
 
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // stale refresh token 이면 throw — /login 은 미로그인 진입이 정상이라 무시.
+  let user = null
+  try {
+    const result = await supabase.auth.getUser()
+    user = result.data.user
+  } catch {
+    user = null
+  }
 
   if (user) redirect(next)
 

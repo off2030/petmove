@@ -62,7 +62,15 @@ async function fetchFieldDefs(): Promise<FieldDefinition[]> {
 
 async function fetchUserContext(): Promise<{ isSuperAdmin: boolean; email: string | null; userId: string | null }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // proxy.ts 가 이미 인증 게이트 통과시킨 상태지만, getUser() 가 stale refresh token
+  // 으로 throw 할 수 있다 (Supabase SDK 내부 로깅 노이즈). 빈 ctx 로 폴백.
+  let user = null
+  try {
+    const result = await supabase.auth.getUser()
+    user = result.data.user
+  } catch {
+    user = null
+  }
   if (!user) return { isSuperAdmin: false, email: null, userId: null }
   const { data } = await supabase
     .from('profiles')
