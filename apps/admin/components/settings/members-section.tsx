@@ -7,6 +7,7 @@ import {
   listMembers,
   removeMember,
   revokeInvite,
+  updateMemberRole,
   type InviteRole,
   type InviteRow,
   type MemberRow,
@@ -130,6 +131,19 @@ export function MembersSection({
     })
   }
 
+  function onChangeRole(member: MemberRow, next: InviteRole) {
+    if (next === member.role) return
+    setRemoveError(null)
+    startTransition(async () => {
+      const r = await updateMemberRole({ userId: member.user_id, role: next })
+      if (!r.ok) {
+        setRemoveError(r.error)
+        return
+      }
+      await refresh()
+    })
+  }
+
   return (
     <div className="max-w-3xl pb-2xl">
       {/* Header */}
@@ -171,9 +185,17 @@ export function MembersSection({
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/60 text-muted-foreground">
-                      {ROLE_LABEL[m.role]}
-                    </span>
+                    {isAdmin && !isSelf ? (
+                      <RoleSelect
+                        value={m.role}
+                        onChange={(next) => onChangeRole(m, next)}
+                        disabled={pending}
+                      />
+                    ) : (
+                      <span className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/60 text-muted-foreground">
+                        {ROLE_LABEL[m.role]}
+                      </span>
+                    )}
                     {isSelf && (
                       <span className="font-serif italic text-[12px] text-muted-foreground/70">나</span>
                     )}
