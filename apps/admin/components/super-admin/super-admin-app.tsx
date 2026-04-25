@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { Plus, RefreshCw, Trash2 } from 'lucide-react'
+import { Eye, Plus, RefreshCw, Trash2 } from 'lucide-react'
 import {
   createOrg,
   deleteOrg,
@@ -10,6 +10,7 @@ import {
   listAllOrgs,
   removeMemberFromOrg,
   revokeOrgInvite,
+  setImpersonation,
   updateOrgBusinessNumber,
   updateOrgMemberRole,
   type OrgDetail,
@@ -106,6 +107,20 @@ export function SuperAdminApp({ initialOrgs, userEmail, currentUserId, embedded 
         return
       }
       reloadSelected()
+    })
+  }
+
+  function onImpersonate(org: OrgDetail) {
+    setError(null)
+    startTransition(async () => {
+      const r = await setImpersonation(org.id)
+      if (!r.ok) {
+        setError(r.error)
+        return
+      }
+      // hard reload — DashboardShell 의 탭 시스템이 SPA 라 router.push 로는 전환 안 됨.
+      // cookie 가 적용된 채로 케이스 페이지를 SSR 재호출.
+      window.location.href = '/cases'
     })
   }
 
@@ -312,16 +327,28 @@ export function SuperAdminApp({ initialOrgs, userEmail, currentUserId, embedded 
                         <h2 className="font-serif text-[22px] leading-tight text-foreground">
                           {selected.name}
                         </h2>
-                        <button
-                          type="button"
-                          onClick={() => onDeleteOrg(selected)}
-                          disabled={pending}
-                          title="조직 삭제"
-                          aria-label="조직 삭제"
-                          className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-40"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        <div className="shrink-0 flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => onImpersonate(selected)}
+                            disabled={pending}
+                            title="이 조직으로 보기 (임시 전환)"
+                            aria-label="이 조직으로 보기"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors disabled:opacity-40"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onDeleteOrg(selected)}
+                            disabled={pending}
+                            title="조직 삭제"
+                            aria-label="조직 삭제"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-40"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
                       <div className="mt-2 flex items-baseline gap-md flex-wrap text-[12px] text-muted-foreground">
                         <span className="inline-flex items-baseline gap-xs">

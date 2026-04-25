@@ -10,13 +10,21 @@ import { loadCertConfig } from '@/lib/cert-config'
 import { getOrgVaccineData } from '@/lib/vaccine-data'
 import { getCalculatorItems } from '@/lib/calculator-data'
 import { getSettingsBootstrap } from '@/lib/actions/settings-bootstrap'
-import { getActiveOrgId } from '@/lib/supabase/active-org'
+import { getActiveOrgId, getImpersonationInfo } from '@/lib/supabase/active-org'
 import { listAllOrgs, type OrgSummary } from '@/lib/actions/super-admin'
 
 export const dynamic = 'force-dynamic'
 
 async function fetchAllCases(): Promise<CaseRow[]> {
   const supabase = await createClient()
+  // active org 필터 — super_admin 도 impersonation 컨텍스트의 org 만 보도록.
+  // getActiveOrgId 는 cache() 라 같은 요청 안에서 중복 호출 안 됨.
+  let orgId: string | null = null
+  try {
+    orgId = await getActiveOrgId()
+  } catch {
+    return []
+  }
   const all: CaseRow[] = []
   const batchSize = 1000
   let from = 0
@@ -26,6 +34,7 @@ async function fetchAllCases(): Promise<CaseRow[]> {
       .select(
         'id, org_id, microchip, microchip_extra, customer_name, customer_name_en, pet_name, pet_name_en, destination, departure_date, status, data, created_at, updated_at, deleted_at',
       )
+      .eq('org_id', orgId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .range(from, from + batchSize - 1)
@@ -67,7 +76,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [initialCases, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, calculatorItems, settingsBootstrap, orgId] = await Promise.all([
+  const [initialCases, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, calculatorItems, settingsBootstrap, orgId, impersonation] = await Promise.all([
     fetchAllCases(),
     fetchFieldDefs(),
     loadImportReportCountries(),
@@ -78,6 +87,7 @@ export default async function DashboardLayout({
     getCalculatorItems(),
     getSettingsBootstrap().catch(() => null),
     getActiveOrgId().catch(() => null),
+    getImpersonationInfo().catch(() => null),
   ])
 
   // Super admin 이면 org 목록 prefetch — 탭 전환 시 즉시 표시.
@@ -104,6 +114,7 @@ export default async function DashboardLayout({
             currentUserId={userCtx.userId}
             initialSettingsBootstrap={settingsBootstrap}
             initialOrgs={initialOrgs}
+            impersonation={impersonation}
           />
         </CalculatorDataProvider>
       </VaccineDataProvider>

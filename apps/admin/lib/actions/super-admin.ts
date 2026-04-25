@@ -1,10 +1,12 @@
 'use server'
 
-import { headers } from 'next/headers'
+import { cookies, headers } from 'next/headers'
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail, inviteFromAddress } from '@/lib/email/resend'
 import { inviteEmailHtml, inviteEmailSubject } from '@/lib/email/invite-template'
+import { IMPERSONATION_COOKIE } from '@/lib/supabase/active-org'
 import type { InviteRole } from './invites'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
@@ -381,6 +383,51 @@ export async function deleteOrg(input: {
     if (delErr) return { ok: false, error: delErr.message }
 
     return { ok: true, value: { deletedName: org.name as string } }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * 임시 기관 전환 — super_admin 이 다른 org 컨텍스트로 settings/cases 등을 보기.
+ * cookie 기반 (httpOnly). 12시간 후 자동 만료.
+ */
+export async function setImpersonation(orgId: string): Promise<Result<null>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  try {
+    // org 실재 확인
+    const admin = createAdminClient()
+    const { data: org } = await admin
+      .from('organizations')
+      .select('id')
+      .eq('id', orgId)
+      .maybeSingle()
+    if (!org) return { ok: false, error: '조직을 찾을 수 없음' }
+
+    const cookieStore = await cookies()
+    cookieStore.set({
+      name: IMPERSONATION_COOKIE,
+      value: orgId,
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 12,
+    })
+    revalidatePath('/', 'layout')
+    return { ok: true, value: null }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/** 임시 기관 전환 해제 — 본인 home org 로 복귀. */
+export async function clearImpersonation(): Promise<Result<null>> {
+  try {
+    const cookieStore = await cookies()
+    cookieStore.delete(IMPERSONATION_COOKIE)
+    revalidatePath('/', 'layout')
+    return { ok: true, value: null }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }
