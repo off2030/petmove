@@ -40,6 +40,12 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
     setLoading(provider)
     setError(null)
 
+    // 네이버는 Supabase builtin 이 아니라 자체 라우트 사용.
+    if (provider === 'naver') {
+      window.location.href = `/api/auth/naver?next=${encodeURIComponent(next)}`
+      return
+    }
+
     // redirectTo 에 query 를 포함하면 Supabase 가 Redirect URLs allowlist 와 정확히
     // 매칭 못 해서 Site URL 로 fallback (ex: localhost 시도가 vercel 로 redirect).
     // 따라서 callback URL 은 query 없이 base 만 사용하고, next 는 cookie 로 전달.
@@ -53,7 +59,7 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
       provider === 'kakao' ? 'profile_nickname profile_image' : undefined
 
     const { error } = await supabaseBrowser.auth.signInWithOAuth({
-      provider: provider === 'naver' ? ('naver' as 'google') : provider,
+      provider,
       options: { redirectTo, scopes },
     })
 

@@ -31,6 +31,12 @@ export function InviteJoin({ token, summary }: { token: string; summary: InviteS
     }
   }
 
+  function onNaver() {
+    setLoading('naver')
+    // 네이버는 자체 라우트. cookie 는 거기서 별도 처리.
+    window.location.href = `/api/auth/naver?next=${encodeURIComponent(inviteNext)}`
+  }
+
   async function onMagicLink() {
     setLoading('magic')
     setError(null)
@@ -79,6 +85,14 @@ export function InviteJoin({ token, summary }: { token: string; summary: InviteS
         </div>
 
         <div className="space-y-sm">
+          <button
+            type="button"
+            onClick={onNaver}
+            disabled={loading !== null}
+            className="w-full rounded-md border border-border py-2.5 text-sm hover:bg-accent transition-colors disabled:opacity-40"
+          >
+            {loading === 'naver' ? '이동 중…' : '네이버로 가입/로그인'}
+          </button>
           <button
             type="button"
             onClick={onGoogle}
