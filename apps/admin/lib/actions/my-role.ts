@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 
 export type MyOrgRole = {
+  userId: string | null
   role: 'admin' | 'member' | null
   isAdmin: boolean
   isSuperAdmin: boolean
@@ -17,7 +18,7 @@ export async function getMyOrgRole(): Promise<MyOrgRole> {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { role: null, isAdmin: false, isSuperAdmin: false }
+    if (!user) return { userId: null, role: null, isAdmin: false, isSuperAdmin: false }
 
     const orgId = await getActiveOrgId()
     const [memRes, profRes] = await Promise.all([
@@ -37,8 +38,8 @@ export async function getMyOrgRole(): Promise<MyOrgRole> {
     const role = (memRes.data?.role as 'admin' | 'member' | undefined) ?? null
     const isSuperAdmin = Boolean(profRes.data?.is_super_admin)
     const isAdmin = role === 'admin' || isSuperAdmin
-    return { role, isAdmin, isSuperAdmin }
+    return { userId: user.id, role, isAdmin, isSuperAdmin }
   } catch {
-    return { role: null, isAdmin: false, isSuperAdmin: false }
+    return { userId: null, role: null, isAdmin: false, isSuperAdmin: false }
   }
 }

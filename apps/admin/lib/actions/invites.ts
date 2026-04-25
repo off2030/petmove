@@ -181,6 +181,34 @@ export async function revokeInvite(id: string): Promise<Result<null>> {
 }
 
 /**
+ * 멤버 제거 — 현재 org 의 membership 삭제.
+ * RLS 로 admin/super_admin 만 호출 가능. last-admin 보호는 DB 트리거 (P0001).
+ * 자기 자신 제거는 UI 사고 방지를 위해 액션 단에서 차단.
+ */
+export async function removeMember(userId: string): Promise<Result<null>> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { ok: false, error: '인증 필요' }
+    if (user.id === userId) return { ok: false, error: '자기 자신은 제거할 수 없습니다' }
+
+    const orgId = await getActiveOrgId()
+    const { error } = await supabase
+      .from('memberships')
+      .delete()
+      .eq('org_id', orgId)
+      .eq('user_id', userId)
+    if (error) {
+      if (error.code === 'P0001') return { ok: false, error: error.message }
+      return { ok: false, error: error.message }
+    }
+    return { ok: true, value: null }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
  * 초대 수락 — /invite/[token] 페이지에서 호출.
  * Service role 로 RLS 우회 (수락자는 아직 org 멤버가 아니므로 select 권한 없음).
  * 이메일 일치 검증 후 membership 생성.

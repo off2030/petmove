@@ -221,6 +221,7 @@ export function SettingsApp({
               initialMembers={bootstrap?.members ?? null}
               initialInvites={bootstrap?.invites ?? null}
               isAdmin={bootstrap?.myRole?.isAdmin ?? false}
+              currentUserId={bootstrap?.myRole?.userId ?? null}
             />
           )}
           {activeTab === 'vaccines' && (

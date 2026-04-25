@@ -5,6 +5,7 @@ import {
   createInvite,
   listInvites,
   listMembers,
+  removeMember,
   revokeInvite,
   type InviteRole,
   type InviteRow,
@@ -31,10 +32,12 @@ export function MembersSection({
   initialMembers = null,
   initialInvites = null,
   isAdmin = false,
+  currentUserId = null,
 }: {
   initialMembers?: MemberRow[] | null
   initialInvites?: InviteRow[] | null
   isAdmin?: boolean
+  currentUserId?: string | null
 } = {}) {
   const [members, setMembers] = useState<MemberRow[]>(initialMembers ?? [])
   const [invites, setInvites] = useState<InviteRow[]>(initialInvites ?? [])
@@ -44,6 +47,7 @@ export function MembersSection({
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [inviteNotice, setInviteNotice] = useState<string | null>(null)
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
+  const [removeError, setRemoveError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
   async function refresh() {
@@ -112,6 +116,20 @@ export function MembersSection({
     })
   }
 
+  function onRemove(member: MemberRow) {
+    const label = member.name && member.name.trim() !== '' ? member.name : member.email
+    if (!confirm(`${label} 님을 조직에서 제거하시겠습니까?`)) return
+    setRemoveError(null)
+    startTransition(async () => {
+      const r = await removeMember(member.user_id)
+      if (!r.ok) {
+        setRemoveError(r.error)
+        return
+      }
+      await refresh()
+    })
+  }
+
   return (
     <div className="max-w-3xl pb-2xl">
       {/* Header */}
@@ -132,8 +150,10 @@ export function MembersSection({
           ) : members.length === 0 ? (
             <p className="font-serif italic text-[14px] text-muted-foreground py-4">멤버가 없습니다.</p>
           ) : (
-            members.map((m) => {
+          <>
+            {members.map((m) => {
               const hasRealName = !!m.name && m.name.trim() !== '' && m.name !== m.email
+              const isSelf = currentUserId !== null && m.user_id === currentUserId
               return (
                 <div
                   key={m.user_id}
@@ -150,12 +170,31 @@ export function MembersSection({
                       </div>
                     )}
                   </div>
-                  <span className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/60 text-muted-foreground shrink-0">
-                    {ROLE_LABEL[m.role]}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/60 text-muted-foreground">
+                      {ROLE_LABEL[m.role]}
+                    </span>
+                    {isSelf && (
+                      <span className="font-serif italic text-[12px] text-muted-foreground/70">나</span>
+                    )}
+                    {isAdmin && !isSelf && (
+                      <button
+                        type="button"
+                        onClick={() => onRemove(m)}
+                        disabled={pending}
+                        className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/60 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
+                      >
+                        제거
+                      </button>
+                    )}
+                  </div>
                 </div>
               )
-            })
+            })}
+            {removeError && (
+              <p className="font-serif text-[13px] text-destructive py-2">{removeError}</p>
+            )}
+          </>
           )}
         </div>
       </section>
