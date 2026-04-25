@@ -88,16 +88,17 @@ export async function GET(request: Request) {
     return loginRedirect(url.origin, `naver_me: ${(e as Error).message}`)
   }
 
-  // 3. Supabase user 조회/생성
+  // 3. Supabase user 조회/생성 — profiles 직접 query (auth.admin.listUsers 보다 훨씬 빠름)
   const admin = createAdminClient()
-  // listUsers 는 페이지네이션. email 정확 매칭이 없는 SDK 함수도 있지만 단순 fallback:
   let userId: string | null = null
   try {
-    // pagination — 작은 SaaS 라 일단 1페이지 (1000명) 가정. 나중에 필요시 확장.
-    const { data } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
-    const found = data.users.find((u) => (u.email ?? '').toLowerCase() === email)
-    if (found) {
-      userId = found.id
+    const { data: existing } = await admin
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle()
+    if (existing) {
+      userId = existing.id as string
     } else {
       const { data: created, error: createErr } = await admin.auth.admin.createUser({
         email,
@@ -109,12 +110,8 @@ export async function GET(request: Request) {
         return loginRedirect(url.origin, `naver_create: ${createErr?.message ?? 'unknown'}`)
       }
       userId = created.user.id
-      // profiles trigger 가 자동 생성되지만 name 보강
       if (name) {
-        await admin
-          .from('profiles')
-          .update({ name })
-          .eq('id', userId)
+        await admin.from('profiles').update({ name }).eq('id', userId)
       }
     }
   } catch (e) {
