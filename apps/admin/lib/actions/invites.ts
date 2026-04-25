@@ -32,6 +32,12 @@ export interface MemberRow {
   joined_at: string
 }
 
+export interface SuperAdminRow {
+  user_id: string
+  email: string
+  name: string | null
+}
+
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 
 function normalizeEmail(email: string): string {
@@ -95,6 +101,44 @@ export async function listMembers(): Promise<Result<MemberRow[]>> {
       }
     })
     return { ok: true, value: rows }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * super_admin profiles 전체. 멤버 탭의 "운영자" 배지·별도 섹션 표시용.
+ * admin 또는 super_admin 만 호출 가능 (멤버는 운영자 명단에 접근 X).
+ */
+export async function listSuperAdmins(): Promise<Result<SuperAdminRow[]>> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { ok: false, error: '인증 필요' }
+
+    const orgId = await getActiveOrgId()
+    const [memRes, profRes] = await Promise.all([
+      supabase.from('memberships').select('role').eq('user_id', user.id).eq('org_id', orgId).maybeSingle(),
+      supabase.from('profiles').select('is_super_admin').eq('id', user.id).maybeSingle(),
+    ])
+    const isAdmin = memRes.data?.role === 'admin' || profRes.data?.is_super_admin === true
+    if (!isAdmin) return { ok: false, error: '권한 없음' }
+
+    const admin = createAdminClient()
+    const { data, error } = await admin
+      .from('profiles')
+      .select('id, email, name, created_at')
+      .eq('is_super_admin', true)
+      .order('created_at', { ascending: true })
+    if (error) return { ok: false, error: error.message }
+    return {
+      ok: true,
+      value: (data ?? []).map((p) => ({
+        user_id: p.id as string,
+        email: p.email as string,
+        name: (p.name as string | null) ?? null,
+      })),
+    }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }

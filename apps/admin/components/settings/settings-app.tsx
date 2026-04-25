@@ -220,6 +220,7 @@ export function SettingsApp({
             <MembersSection
               initialMembers={bootstrap?.members ?? null}
               initialInvites={bootstrap?.invites ?? null}
+              initialSuperAdmins={bootstrap?.superAdmins ?? null}
               isAdmin={bootstrap?.myRole?.isAdmin ?? false}
               currentUserId={bootstrap?.myRole?.userId ?? null}
             />

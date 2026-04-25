@@ -5,12 +5,14 @@ import {
   createInvite,
   listInvites,
   listMembers,
+  listSuperAdmins,
   removeMember,
   revokeInvite,
   updateMemberRole,
   type InviteRole,
   type InviteRow,
   type MemberRow,
+  type SuperAdminRow,
 } from '@/lib/actions/invites'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { PillButton } from '@/components/ui/pill-button'
@@ -32,16 +34,19 @@ function formatExpiry(iso: string): string {
 export function MembersSection({
   initialMembers = null,
   initialInvites = null,
+  initialSuperAdmins = null,
   isAdmin = false,
   currentUserId = null,
 }: {
   initialMembers?: MemberRow[] | null
   initialInvites?: InviteRow[] | null
+  initialSuperAdmins?: SuperAdminRow[] | null
   isAdmin?: boolean
   currentUserId?: string | null
 } = {}) {
   const [members, setMembers] = useState<MemberRow[]>(initialMembers ?? [])
   const [invites, setInvites] = useState<InviteRow[]>(initialInvites ?? [])
+  const [superAdmins, setSuperAdmins] = useState<SuperAdminRow[]>(initialSuperAdmins ?? [])
   const [loading, setLoading] = useState(initialMembers === null && initialInvites === null)
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<InviteRole>('member')
@@ -53,22 +58,28 @@ export function MembersSection({
 
   async function refresh() {
     setLoading(true)
-    const [m, i] = await Promise.all([listMembers(), listInvites()])
+    const [m, i, s] = await Promise.all([listMembers(), listInvites(), listSuperAdmins()])
     if (m.ok) setMembers(m.value)
     if (i.ok) setInvites(i.value)
+    if (s.ok) setSuperAdmins(s.value)
     setLoading(false)
   }
 
   useEffect(() => {
     if (initialMembers) setMembers(initialMembers)
     if (initialInvites) setInvites(initialInvites)
+    if (initialSuperAdmins) setSuperAdmins(initialSuperAdmins)
     if (initialMembers || initialInvites) setLoading(false)
-  }, [initialMembers, initialInvites])
+  }, [initialMembers, initialInvites, initialSuperAdmins])
 
   useEffect(() => {
     if (initialMembers !== null || initialInvites !== null) return
     refresh()
   }, [])
+
+  const superAdminIds = new Set(superAdmins.map((s) => s.user_id))
+  const memberIds = new Set(members.map((m) => m.user_id))
+  const externalSuperAdmins = superAdmins.filter((s) => !memberIds.has(s.user_id))
 
   function inviteLink(token: string): string {
     if (typeof window === 'undefined') return ''
@@ -196,6 +207,14 @@ export function MembersSection({
                         {ROLE_LABEL[m.role]}
                       </span>
                     )}
+                    {superAdminIds.has(m.user_id) && (
+                      <span
+                        title="SaaS 운영자 — 모든 조직 데이터 접근 권한"
+                        className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-primary/40 bg-primary/5 text-primary/80"
+                      >
+                        운영자
+                      </span>
+                    )}
                     {isSelf && (
                       <span className="font-serif italic text-[12px] text-muted-foreground/70">나</span>
                     )}
@@ -220,6 +239,49 @@ export function MembersSection({
           )}
         </div>
       </section>
+
+      {/* External super_admins (조직 외 SaaS 운영자) — admin 만 표시 */}
+      {isAdmin && externalSuperAdmins.length > 0 && (
+        <section className="mb-xl">
+          <div className="mb-2">
+            <span className="font-serif text-[13px] text-muted-foreground/80">
+              SaaS 운영자 (조직 외) · {externalSuperAdmins.length}
+            </span>
+          </div>
+          <div className="border-t border-border/70">
+            {externalSuperAdmins.map((s) => {
+              const hasRealName = !!s.name && s.name.trim() !== '' && s.name !== s.email
+              return (
+                <div
+                  key={s.user_id}
+                  className="flex items-center gap-md py-3 border-b border-dotted border-border/60"
+                >
+                  <Avatar label={avatarInitial(hasRealName ? s.name! : s.email)} muted />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-serif text-[16px] text-foreground truncate leading-tight">
+                      {hasRealName ? s.name : s.email}
+                    </div>
+                    {hasRealName && (
+                      <div className="font-serif italic text-[13px] text-muted-foreground truncate mt-0.5">
+                        {s.email}
+                      </div>
+                    )}
+                  </div>
+                  <span
+                    title="SaaS 운영자 — 모든 조직 데이터 접근 권한"
+                    className="shrink-0 font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-primary/40 bg-primary/5 text-primary/80"
+                  >
+                    운영자
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+          <p className="font-serif italic text-[12px] text-muted-foreground/70 mt-2 leading-relaxed">
+            조직 멤버는 아니지만 SaaS 운영을 위해 모든 조직 데이터에 접근할 수 있습니다.
+          </p>
+        </section>
+      )}
 
       {/* Pending invites */}
       <section className="mb-xl">
