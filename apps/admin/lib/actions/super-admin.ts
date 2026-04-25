@@ -266,6 +266,33 @@ export async function inviteToOrg(input: {
   }
 }
 
+/** super_admin 이 임의의 조직 멤버 role 변경. last-admin 트리거가 처리. */
+export async function updateOrgMemberRole(input: {
+  orgId: string
+  userId: string
+  role: InviteRole
+}): Promise<Result<null>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user?.id === input.userId) {
+      return { ok: false, error: '자기 자신의 역할은 변경할 수 없습니다' }
+    }
+    const admin = createAdminClient()
+    const { error } = await admin
+      .from('memberships')
+      .update({ role: input.role })
+      .eq('org_id', input.orgId)
+      .eq('user_id', input.userId)
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: null }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 /** super_admin 이 임의의 조직 멤버 제거. 자기 자신 + last-admin 보호 동일. */
 export async function removeMemberFromOrg(input: {
   orgId: string

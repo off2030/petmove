@@ -11,6 +11,7 @@ import {
   removeMemberFromOrg,
   revokeOrgInvite,
   updateOrgBusinessNumber,
+  updateOrgMemberRole,
   type OrgDetail,
   type OrgSummary,
 } from '@/lib/actions/super-admin'
@@ -67,6 +68,19 @@ export function SuperAdminApp({ initialOrgs, userEmail, currentUserId, embedded 
       const [detail, listed] = await Promise.all([getOrgDetail(selected.id), listAllOrgs()])
       if (detail.ok) setSelected(detail.value)
       if (listed.ok) setOrgs(listed.value)
+    })
+  }
+
+  function onChangeMemberRole(orgId: string, userId: string, current: InviteRole, next: InviteRole) {
+    if (next === current) return
+    setMemberError(null)
+    startTransition(async () => {
+      const r = await updateOrgMemberRole({ orgId, userId, role: next })
+      if (!r.ok) {
+        setMemberError(r.error)
+        return
+      }
+      reloadSelected()
     })
   }
 
@@ -363,20 +377,31 @@ export function SuperAdminApp({ initialOrgs, userEmail, currentUserId, embedded 
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-1.5 shrink-0">
-                                  <span className="font-sans text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80">
-                                    {m.role}
-                                  </span>
                                   {isSelf ? (
-                                    <span className="font-serif italic text-[12px] text-muted-foreground/70">나</span>
+                                    <>
+                                      <span className="font-sans text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80">
+                                        {m.role}
+                                      </span>
+                                      <span className="font-serif italic text-[12px] text-muted-foreground/70">나</span>
+                                    </>
                                   ) : (
-                                    <button
-                                      type="button"
-                                      onClick={() => onRemoveMember(selected.id, m.user_id, m.name || m.email)}
-                                      disabled={pending}
-                                      className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/60 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
-                                    >
-                                      제거
-                                    </button>
+                                    <>
+                                      <RoleSelect
+                                        value={m.role as InviteRole}
+                                        onChange={(next) =>
+                                          onChangeMemberRole(selected.id, m.user_id, m.role as InviteRole, next)
+                                        }
+                                        disabled={pending}
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => onRemoveMember(selected.id, m.user_id, m.name || m.email)}
+                                        disabled={pending}
+                                        className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/60 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
+                                      >
+                                        제거
+                                      </button>
+                                    </>
                                   )}
                                 </div>
                               </li>
