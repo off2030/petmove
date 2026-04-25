@@ -388,6 +388,108 @@ export async function deleteOrg(input: {
   }
 }
 
+export interface SuperAdminEntry {
+  user_id: string
+  email: string
+  name: string | null
+}
+
+/** 모든 super_admin 목록. requireSuperAdmin 가드. */
+export async function listSuperAdminsAll(): Promise<Result<SuperAdminEntry[]>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  try {
+    const admin = createAdminClient()
+    const { data, error } = await admin
+      .from('profiles')
+      .select('id, email, name, created_at')
+      .eq('is_super_admin', true)
+      .order('created_at', { ascending: true })
+    if (error) return { ok: false, error: error.message }
+    return {
+      ok: true,
+      value: (data ?? []).map((p) => ({
+        user_id: p.id as string,
+        email: p.email as string,
+        name: (p.name as string | null) ?? null,
+      })),
+    }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/** super_admin 권한 부여 — 이메일로 profiles 찾기. profile 없으면 에러. */
+export async function grantSuperAdmin(input: { email: string }): Promise<Result<SuperAdminEntry>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  const email = input.email.trim().toLowerCase()
+  if (!email || !email.includes('@')) {
+    return { ok: false, error: '유효한 이메일이 아닙니다' }
+  }
+  try {
+    const admin = createAdminClient()
+    const { data: profile, error: findErr } = await admin
+      .from('profiles')
+      .select('id, email, name, is_super_admin')
+      .eq('email', email)
+      .maybeSingle()
+    if (findErr) return { ok: false, error: findErr.message }
+    if (!profile) {
+      return { ok: false, error: '해당 이메일의 사용자가 없습니다 — 먼저 로그인 1회 필요' }
+    }
+    if (profile.is_super_admin) {
+      return { ok: false, error: '이미 운영자입니다' }
+    }
+    const { error: updErr } = await admin
+      .from('profiles')
+      .update({ is_super_admin: true })
+      .eq('id', profile.id as string)
+    if (updErr) return { ok: false, error: updErr.message }
+    return {
+      ok: true,
+      value: {
+        user_id: profile.id as string,
+        email: profile.email as string,
+        name: (profile.name as string | null) ?? null,
+      },
+    }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/** super_admin 권한 회수. 자기 자신 + 마지막 운영자 차단. */
+export async function revokeSuperAdmin(userId: string): Promise<Result<null>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user?.id === userId) {
+      return { ok: false, error: '자기 자신의 운영자 권한은 회수할 수 없습니다' }
+    }
+
+    const admin = createAdminClient()
+    const { count } = await admin
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_super_admin', true)
+    if ((count ?? 0) <= 1) {
+      return { ok: false, error: '최소 1명의 운영자가 남아 있어야 합니다' }
+    }
+
+    const { error } = await admin
+      .from('profiles')
+      .update({ is_super_admin: false })
+      .eq('id', userId)
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: null }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 /**
  * 임시 기관 전환 — super_admin 이 다른 org 컨텍스트로 settings/cases 등을 보기.
  * cookie 기반 (httpOnly). 12시간 후 자동 만료.

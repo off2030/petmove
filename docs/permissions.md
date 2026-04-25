@@ -50,7 +50,7 @@
 | `case_history` | `M(org) ∨ SA` | `M(org) ∨ SA` | `M(org) ∨ SA` | `M(org) ∨ SA` |
 | `field_definitions` | `org_id IS NULL ∨ M(org) ∨ SA` | `SA` | `SA` | `SA` |
 | `organizations` | `M(id) ∨ SA` | `SA` | `SA` | `SA` |
-| `memberships` | 본인 ∨ `SA` ∨ `A(org)` | `SA` | `A(org) ∨ SA` | `A(org) ∨ SA` |
+| `memberships` | 본인 ∨ `SA` ∨ `M(org)` | `SA` | `A(org) ∨ SA` | `A(org) ∨ SA` |
 | `organization_invites` | `A(org) ∨ SA` | `A(org) ∨ SA` | (없음 — service role) | `A(org) ∨ SA` |
 | `organization_settings` | `M(org) ∨ SA` | `A(org) ∨ SA` | `A(org) ∨ SA` | `A(org) ∨ SA` |
 | `org_vaccine_products` | `M(org) ∨ SA` | `A(org) ∨ SA` | `A(org) ∨ SA` | `A(org) ∨ SA` |

@@ -6,15 +6,19 @@ import {
   createOrg,
   deleteOrg,
   getOrgDetail,
+  grantSuperAdmin,
   inviteToOrg,
   listAllOrgs,
+  listSuperAdminsAll,
   removeMemberFromOrg,
   revokeOrgInvite,
+  revokeSuperAdmin,
   setImpersonation,
   updateOrgBusinessNumber,
   updateOrgMemberRole,
   type OrgDetail,
   type OrgSummary,
+  type SuperAdminEntry,
 } from '@/lib/actions/super-admin'
 import type { InviteRole } from '@/lib/actions/invites'
 import { TopBar } from '@/components/layout/topbar'
@@ -227,8 +231,10 @@ export function SuperAdminApp({ initialOrgs, userEmail, currentUserId, embedded 
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-lg">
-              {/* 좌: 조직 목록 + 생성 폼 */}
+              {/* 좌: SaaS 운영자 + 조직 목록 + 생성 폼 */}
               <section className="lg:col-span-2 flex flex-col gap-lg">
+                <SuperAdminsCard currentUserId={currentUserId} />
+
                 {/* Orgs card — Editorial borderless */}
                 <div className="rounded-xl bg-card px-lg pt-md pb-sm">
                   <div className="flex items-baseline justify-between pb-sm border-b border-border/60 mb-sm">
@@ -528,6 +534,135 @@ export function SuperAdminApp({ initialOrgs, userEmail, currentUserId, embedded 
         </div>
       </main>
     </>
+  )
+}
+
+function SuperAdminsCard({ currentUserId }: { currentUserId: string | null }) {
+  const [admins, setAdmins] = useState<SuperAdminEntry[] | null>(null)
+  const [email, setEmail] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [pending, startTransition] = useTransition()
+
+  useEffect(() => {
+    startTransition(async () => {
+      const r = await listSuperAdminsAll()
+      if (r.ok) setAdmins(r.value)
+    })
+  }, [])
+
+  function refresh() {
+    startTransition(async () => {
+      const r = await listSuperAdminsAll()
+      if (r.ok) setAdmins(r.value)
+    })
+  }
+
+  function onGrant() {
+    setError(null)
+    startTransition(async () => {
+      const r = await grantSuperAdmin({ email })
+      if (!r.ok) {
+        setError(r.error)
+        return
+      }
+      setEmail('')
+      refresh()
+    })
+  }
+
+  function onRevoke(entry: SuperAdminEntry) {
+    const label = entry.name && entry.name.trim() !== '' ? entry.name : entry.email
+    if (!confirm(`${label} 의 운영자 권한을 회수하시겠습니까?`)) return
+    setError(null)
+    startTransition(async () => {
+      const r = await revokeSuperAdmin(entry.user_id)
+      if (!r.ok) {
+        setError(r.error)
+        return
+      }
+      refresh()
+    })
+  }
+
+  return (
+    <div className="rounded-xl bg-card px-lg pt-md pb-md">
+      <div className="flex items-baseline justify-between pb-sm border-b border-border/60 mb-sm">
+        <h2 className="font-serif text-[17px] text-foreground">SaaS 운영자</h2>
+        <span className="font-mono text-[12px] tabular-nums text-muted-foreground">
+          {admins?.length ?? 0}
+        </span>
+      </div>
+      {admins === null ? (
+        <p className="py-2 font-serif italic text-[13px] text-muted-foreground">불러오는 중…</p>
+      ) : admins.length === 0 ? (
+        <p className="py-2 font-serif italic text-[13px] text-muted-foreground">없음</p>
+      ) : (
+        <ul>
+          {admins.map((a) => {
+            const isSelf = currentUserId !== null && a.user_id === currentUserId
+            return (
+              <li
+                key={a.user_id}
+                className="flex items-center justify-between gap-md py-2 border-b border-dotted border-border/60 last:border-b-0"
+              >
+                <div className="min-w-0">
+                  <div className="font-serif text-[15px] leading-tight truncate">
+                    {a.name || a.email}
+                  </div>
+                  {a.name && (
+                    <div className="font-serif italic text-[12px] text-muted-foreground truncate">
+                      {a.email}
+                    </div>
+                  )}
+                </div>
+                {isSelf ? (
+                  <span className="shrink-0 font-serif italic text-[12px] text-muted-foreground/70">나</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onRevoke(a)}
+                    disabled={pending}
+                    className="shrink-0 font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/60 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
+                  >
+                    회수
+                  </button>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+
+      {/* Grant form */}
+      <div className="mt-md pt-sm border-t border-border/60 flex items-center gap-sm">
+        <input
+          type="email"
+          placeholder="email@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && email && !pending) {
+              e.preventDefault()
+              onGrant()
+            }
+          }}
+          disabled={pending}
+          className="flex-1 bg-transparent font-serif text-[14px] text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/40 disabled:opacity-60"
+        />
+        <button
+          type="button"
+          onClick={onGrant}
+          disabled={pending || !email}
+          className="shrink-0 inline-flex h-7 items-center px-3 rounded-full border border-foreground/40 bg-transparent font-serif text-[12px] text-foreground hover:bg-accent transition-colors disabled:opacity-40"
+        >
+          권한 부여
+        </button>
+      </div>
+      {error && <p className="mt-sm font-serif text-[12px] text-destructive">{error}</p>}
+      <p className="mt-sm font-serif italic text-[11px] text-muted-foreground/70 leading-relaxed">
+        대상자가 먼저 1회 로그인해야 권한 부여 가능. 운영자는 모든 조직 데이터에 접근합니다.
+      </p>
+    </div>
   )
 }
 
