@@ -655,9 +655,10 @@ petmove/                      ← 모노레포 (pnpm workspaces + Turborepo)
 - **RLS**로 DB 레벨에서 기관 경계 강제.
 
 ### 2. 사용자 권한
-- **기관 내 역할**: `owner` / `admin` / `member` / `viewer`
+- **기관 내 역할**: `admin` / `member` (초기엔 owner 포함 3-tier 였으나 의미상 owner==admin 이라 통합됨)
 - **SaaS 전역 권한**: `profiles.is_super_admin = true` → 모든 기관 접근 (운영자용)
 - 두 축 분리. super_admin은 RLS 정책에서 예외 조항으로 처리.
+- **상세 매트릭스·헬퍼 함수·서버 액션 가드는 [`docs/permissions.md`](permissions.md) 참조** (단일 출처).
 
 ### 3. 인증
 - **Supabase Auth** 기반
