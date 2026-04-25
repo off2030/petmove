@@ -53,22 +53,9 @@
 
 **Phase 6 (Org 스위처 UI)** 는 단일 테넌트 맥락상 의도적 skip. 두 번째 테넌트 도입 시 구현. (대신 super_admin impersonation 으로 다른 org 컨텍스트 보기 가능)
 
-### 🎨 진행 중: Editorial 톤 디자인 리뉴얼 (branch: `design/editorial-tone`, PR #3)
+### 🎨 Editorial 톤 디자인 리뉴얼 — PR #3 머지 완료 (2026-04-23)
 
-**다른 PC 에서 이어받는 방법**:
-
-```bash
-cd /c/dev/petmove   # 또는 원하는 경로
-git fetch origin
-git checkout design/editorial-tone
-git pull origin design/editorial-tone
-pnpm install        # 새 폰트 의존 반영 (next/font/google 은 이미 의존 관리됨)
-pnpm -F admin dev   # 로컬 확인 (http://localhost:3000)
-# 또는 Vercel Preview URL 로 바로:
-# https://petmove-git-design-editorial-tone-petmove.vercel.app
-```
-
-**적용 완료 항목** (PR #3 현재 상태):
+**적용 완료 항목**:
 - ✅ 전체 톤: Parchment/Terracotta/Near-black (globals.css HSL 토큰)
 - ✅ 폰트 시스템: `next/font/google` — Inter Tight + Source Serif 4 + JetBrains Mono + Noto Sans/Serif KR + Pretendard(CDN). tailwind `font-sans/serif/mono` 가 CSS 변수 참조
 - ✅ 모든 화면 borderless — 카드박스 제거 (`rounded-xl border bg-card` → 배경 그대로)
@@ -87,24 +74,12 @@ pnpm -F admin dev   # 로컬 확인 (http://localhost:3000)
 **공유 모듈**:
 - `apps/admin/lib/country-code.ts` — 한글 → ISO 코드 맵 (JP/DE/US 등 ~50국). case-list, destination-field, todos-app 모두 이 모듈 사용
 
-**남은 작업 후보** (PR 진행 중):
+**남은 폴리싱 후보** (필요 시 별도 작업):
 - `/super-admin`, `/apply`, `/login` Editorial 톤 일관성 (아직 기존 스타일)
 - 모바일 반응형 확인
 - 다크모드 디테일 확인 (hairline border, shadow 제거로 구분선 약해진 곳 없는지)
-- PR merge 또는 추가 iteration 결정
 
-**PR 업데이트 + Vercel preview URL**:
-- PR: https://github.com/off2030/petmove/pull/3
-- Preview: https://petmove-git-design-editorial-tone-petmove.vercel.app
-- 매 푸시마다 Preview 자동 갱신
-
-**merge 방법** (만족 시):
-- GitHub PR 페이지 맨 아래 초록 **Merge pull request** → **Squash and merge** → **Confirm**
-- master 에 반영되면 `petmove.vercel.app` 자동 배포
-
-**포기 방법** (원복):
-- PR **Close pull request** → master 영향 0 (브랜치만 남음)
-- 로컬: `git checkout master` 로 복귀
+**PR**: https://github.com/off2030/petmove/pull/3 (merged)
 
 ---
 
@@ -136,7 +111,6 @@ pnpm -F admin dev   # 로컬 확인 (http://localhost:3000)
    - Sentry 에러 추적 (오늘 본 bug 류 예방)
    - 결제/요금제 기반 설계 (Stripe vs 토스)
    - 토스트 알림 시스템 (인라인 에러 → 글로벌)
-   - CSV 내보내기 (Settings > 데이터 관리 placeholder 완성)
 
 ### 외부 설정 잔여 (OAuth 프로바이더 + 이메일 도메인)
 
@@ -234,7 +208,6 @@ pnpm -F admin dev   # 로컬 확인 (http://localhost:3000)
 
 **UX 폴리싱**
 - 토스트 알림 시스템 (현재 인라인만)
-- CSV 내보내기 (Settings > 데이터 관리 탭 placeholder)
 - Super Admin UI 확장 — 임시 기관 전환(impersonation), 멤버 CRUD UI
 - Mobile 반응형 점검
 
