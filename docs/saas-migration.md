@@ -200,7 +200,7 @@
 - ~~초대 이메일 자동 발송 (Resend/AWS SES)~~ **완료** — Resend 연동, 도메인 verify 만 대기
 
 **운영 품질**
-- 에러 추적 (Sentry)
+- ~~에러 추적 (Sentry)~~ **완료** (2026-04-25) — `@sentry/nextjs` v10, `enabled: production` 가드, `/monitoring` tunnel, global-error.tsx. 프로젝트: `javascript-nextjs` (org `petmove`)
 - 사용량 분석 (PostHog/Plausible)
 - Audit log — super_admin 의 임시 기관 전환·조작 기록
 - 성능: `/cases` 가 전체 데이터 인메모리 로드 — 10,000+ 스케일 시 페이지네이션·가상 스크롤
