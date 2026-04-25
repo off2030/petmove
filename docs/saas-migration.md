@@ -24,7 +24,17 @@
 
 **CSV/Excel 내보내기** — Settings 데이터 관리 탭에 이미 구현돼있음 (`exportCasesXlsx`). placeholder 표기 제거.
 
-**핵심 커밋** (오늘): `f944e51` (vercel.json icn1) → `e40b66b` (Sentry 통합) → `373be4c` (검증 라우트 제거)
+**도구 → 바로가기 탭 신설** — 검역·검사·배송 등 자주 쓰는 외부 사이트 링크 모음
+- 4개 카테고리 기본값 (신고 기관/검사기관/배송/운영) + 13개 기본 링크 — `packages/domain/external-links-defaults.ts`
+- 조직별 추가/편집/삭제 (`organization_settings.external_links` JSONB, cert-config 패턴)
+- read/edit 토글 UI, 링크 클릭 시 `target=_blank` 새 탭
+- 분류 변경: 농림축산검역본부 → 검사기관, "검역·수입 신고 기관" → "신고 기관"
+- 다음 손볼 후보: 탭 간격 미세조정 (gap-xl 도 좁아 보임), 드래그 reorder
+
+**stale refresh token console 노이즈 억제** — Next.js 16 dev overlay 가 Supabase SDK 의
+`AuthApiError: Invalid Refresh Token: Refresh Token Not Found` 를 빨갛게 띄우던 문제. proxy.ts 는 이미 catch 했지만 SDK 가 throw 전 console.error 로 찍어 Next.js 가 캐치. /login 페이지 + dashboard layout `fetchUserContext` 의 `getUser()` 를 try/catch 로 감싸서 전파 차단.
+
+**핵심 커밋** (오늘): `f944e51` (vercel.json icn1) → `e40b66b` (Sentry 통합) → `373be4c` (검증 라우트 제거) → `3496809` (바로가기 탭) → `bd2a45d` (auth 노이즈 억제)
 
 ---
 
