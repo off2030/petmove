@@ -318,18 +318,19 @@ export function MembersSection({
                   </div>
                   {isAdmin && (
                     <div className="flex gap-1.5 shrink-0">
-                      <PillButton
+                      <button
+                        type="button"
                         onClick={() => copy(inv.token)}
                         disabled={expired}
-                        className="disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+                        className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-foreground/30 text-foreground/80 hover:bg-muted/40 hover:text-foreground hover:border-foreground/50 transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-foreground/80 disabled:hover:border-foreground/30"
                       >
                         {copiedToken === inv.token ? '복사됨' : '링크 복사'}
-                      </PillButton>
+                      </button>
                       <button
                         type="button"
                         onClick={() => onRevoke(inv.id)}
                         disabled={pending}
-                        className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/60 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
+                        className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-foreground/30 text-foreground/80 hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
                       >
                         취소
                       </button>
