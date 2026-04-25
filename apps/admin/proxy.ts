@@ -7,6 +7,7 @@ import { createServerClient } from '@supabase/ssr'
 const PUBLIC_PREFIXES = [
   '/login',
   '/auth/callback',
+  '/api/auth',  // OAuth 시작/callback 라우트 — 미로그인 통과
   '/logout',
   '/apply',
   '/invite',  // 미로그인 사용자도 InviteJoin 카드 보고 OAuth/magic link 선택 가능해야 함
