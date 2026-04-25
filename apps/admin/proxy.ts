@@ -88,13 +88,13 @@ export async function proxy(request: NextRequest) {
     const isSuperAdmin = !!profRes.data?.is_super_admin
     const memberCount = memRes.count ?? 0
 
-    // 비밀번호 강제 가드 — magic link 로 가입한 이메일 사용자는 비번 설정 후 진행.
-    // OAuth-only (예: Google 만 사용) 가입자는 user.app_metadata.providers 에 'email' 없음 → 우회.
+    // 비밀번호 강제 가드 — magic link 만 가입한 사용자는 비번 설정 후 진행.
+    // OAuth provider (google/naver/kakao) 도 가지고 있으면 우회 — 그쪽으로 매번 로그인 가능.
     // /set-password 자체는 NO_MEMBERSHIP_OK_PREFIXES 로 위에서 우회됨.
     const providers: string[] = (user.app_metadata?.providers as string[] | undefined) ?? []
-    const isEmailUser = providers.includes('email')
+    const hasOnlyEmailProvider = providers.length > 0 && providers.every((p) => p === 'email')
     const passwordSet = (profRes.data as { password_set?: boolean } | null)?.password_set ?? false
-    if (isEmailUser && !passwordSet && pathname !== '/set-password') {
+    if (hasOnlyEmailProvider && !passwordSet && pathname !== '/set-password') {
       const url = new URL('/set-password', request.url)
       url.searchParams.set('next', pathname)
       return NextResponse.redirect(url)
