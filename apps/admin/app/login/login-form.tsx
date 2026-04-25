@@ -39,11 +39,16 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
   async function oauth(provider: Provider) {
     setLoading(provider)
     setError(null)
-    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`
 
-    // 네이버는 Supabase builtin 이 아니라 "커스텀 OIDC" provider 로 등록 예정.
-    // Provider ID 는 Supabase Dashboard 에 설정한 slug ('naver') 와 맞춰야 함.
-    // Kakao: account_email 은 별도 검수 필요 — 일반 앱은 nickname+image 만.
+    // redirectTo 에 query 를 포함하면 Supabase 가 Redirect URLs allowlist 와 정확히
+    // 매칭 못 해서 Site URL 로 fallback (ex: localhost 시도가 vercel 로 redirect).
+    // 따라서 callback URL 은 query 없이 base 만 사용하고, next 는 cookie 로 전달.
+    const redirectTo = `${window.location.origin}/auth/callback`
+    if (next && next !== '/cases') {
+      // 600초 안에 callback 이 소비. SameSite=Lax 로 OAuth redirect 통과 보장.
+      document.cookie = `pm_oauth_next=${encodeURIComponent(next)}; path=/; max-age=600; samesite=lax`
+    }
+
     const scopes =
       provider === 'kakao' ? 'profile_nickname profile_image' : undefined
 
