@@ -44,11 +44,24 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()
 }
 
-/** 현재 org 의 pending + 만료되지 않은 초대 목록. */
+const EXPIRED_INVITE_RETENTION_MS = 7 * 24 * 60 * 60 * 1000
+
+/** 현재 org 의 pending 초대 목록 (수락·만료 무관). 만료 후 7일 지난 초대는 호출 시 자동 cleanup. */
 export async function listInvites(): Promise<Result<InviteRow[]>> {
   try {
     const supabase = await createClient()
     const orgId = await getActiveOrgId()
+
+    // best-effort cleanup — 만료 후 7일 지난 미수락 초대 삭제. 권한·네트워크 오류는 무시.
+    const cutoff = new Date(Date.now() - EXPIRED_INVITE_RETENTION_MS).toISOString()
+    await supabase
+      .from('organization_invites')
+      .delete()
+      .eq('org_id', orgId)
+      .is('accepted_at', null)
+      .lt('expires_at', cutoff)
+      .then(() => undefined, () => undefined)
+
     const { data, error } = await supabase
       .from('organization_invites')
       .select('id, email, role, token, expires_at, created_at, accepted_at')
