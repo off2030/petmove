@@ -1,30 +1,41 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { Plus, RefreshCw } from 'lucide-react'
 import {
   createOrg,
   getOrgDetail,
+  inviteToOrg,
   listAllOrgs,
+  removeMemberFromOrg,
+  revokeOrgInvite,
   updateOrgBusinessNumber,
   type OrgDetail,
   type OrgSummary,
 } from '@/lib/actions/super-admin'
+import type { InviteRole } from '@/lib/actions/invites'
 import { TopBar } from '@/components/layout/topbar'
 import { cn } from '@/lib/utils'
 
 interface Props {
   initialOrgs: OrgSummary[]
   userEmail: string | null
+  currentUserId: string | null
   /** DashboardShell 안에 삽입된 경우 내부 TopBar 생략. standalone 렌더링 때만 TopBar 포함. */
   embedded?: boolean
 }
 
-export function SuperAdminApp({ initialOrgs, userEmail, embedded = false }: Props) {
+const ROLE_LABEL: Record<InviteRole, string> = { admin: '관리자', member: '멤버' }
+
+export function SuperAdminApp({ initialOrgs, userEmail, currentUserId, embedded = false }: Props) {
   const [orgs, setOrgs] = useState<OrgSummary[]>(initialOrgs)
   const [selected, setSelected] = useState<OrgDetail | null>(null)
   const [newOrgName, setNewOrgName] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<InviteRole>('member')
+  const [inviteNotice, setInviteNotice] = useState<string | null>(null)
+  const [memberError, setMemberError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
   function refresh() {
@@ -36,6 +47,8 @@ export function SuperAdminApp({ initialOrgs, userEmail, embedded = false }: Prop
 
   function select(id: string) {
     setError(null)
+    setMemberError(null)
+    setInviteNotice(null)
     startTransition(async () => {
       const r = await getOrgDetail(id)
       if (!r.ok) {
@@ -44,6 +57,69 @@ export function SuperAdminApp({ initialOrgs, userEmail, embedded = false }: Prop
         return
       }
       setSelected(r.value)
+    })
+  }
+
+  function reloadSelected() {
+    if (!selected) return
+    startTransition(async () => {
+      const [detail, listed] = await Promise.all([getOrgDetail(selected.id), listAllOrgs()])
+      if (detail.ok) setSelected(detail.value)
+      if (listed.ok) setOrgs(listed.value)
+    })
+  }
+
+  function onRemoveMember(orgId: string, userId: string, label: string) {
+    if (!confirm(`${label} 님을 조직에서 제거하시겠습니까?`)) return
+    setMemberError(null)
+    startTransition(async () => {
+      const r = await removeMemberFromOrg({ orgId, userId })
+      if (!r.ok) {
+        setMemberError(r.error)
+        return
+      }
+      reloadSelected()
+    })
+  }
+
+  function onRevokeInvite(inviteId: string) {
+    if (!confirm('초대를 취소하시겠습니까?')) return
+    startTransition(async () => {
+      const r = await revokeOrgInvite(inviteId)
+      if (!r.ok) {
+        setMemberError(r.error)
+        return
+      }
+      reloadSelected()
+    })
+  }
+
+  function onCreateInvite(orgId: string) {
+    setInviteNotice(null)
+    setMemberError(null)
+    startTransition(async () => {
+      const r = await inviteToOrg({ orgId, email: inviteEmail, role: inviteRole })
+      if (!r.ok) {
+        setMemberError(r.error)
+        return
+      }
+      const targetEmail = inviteEmail
+      setInviteEmail('')
+      setInviteRole('member')
+      try {
+        const url = `${window.location.origin}/invite/${r.value.token}`
+        await navigator.clipboard.writeText(url)
+      } catch {
+        // ignore copy failure
+      }
+      if (r.value.emailSent) {
+        setInviteNotice(`${targetEmail} 로 초대 이메일 발송 완료. 링크도 복사됨.`)
+      } else if (r.value.emailError) {
+        setInviteNotice(`이메일 발송 실패 (${r.value.emailError}) — 링크 복사는 완료.`)
+      } else {
+        setInviteNotice('링크가 복사되었습니다. 초대 대상에게 직접 전달해 주세요.')
+      }
+      reloadSelected()
     })
   }
 
@@ -235,25 +311,45 @@ export function SuperAdminApp({ initialOrgs, userEmail, embedded = false }: Prop
                         </p>
                       ) : (
                         <ul>
-                          {selected.members.map((m) => (
-                            <li
-                              key={m.user_id}
-                              className="flex items-center justify-between gap-md py-3 border-b border-dotted border-border/70 last:border-b-0"
-                            >
-                              <div className="min-w-0">
-                                <div className="font-serif font-semibold text-[17px] leading-tight truncate">
-                                  {m.name || m.email}
+                          {selected.members.map((m) => {
+                            const isSelf = currentUserId !== null && m.user_id === currentUserId
+                            return (
+                              <li
+                                key={m.user_id}
+                                className="flex items-center justify-between gap-md py-3 border-b border-dotted border-border/70 last:border-b-0"
+                              >
+                                <div className="min-w-0">
+                                  <div className="font-serif font-semibold text-[17px] leading-tight truncate">
+                                    {m.name || m.email}
+                                  </div>
+                                  <div className="text-[13px] text-muted-foreground truncate">
+                                    {m.email}
+                                  </div>
                                 </div>
-                                <div className="text-[13px] text-muted-foreground truncate">
-                                  {m.email}
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <span className="font-sans text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80">
+                                    {m.role}
+                                  </span>
+                                  {isSelf ? (
+                                    <span className="font-serif italic text-[12px] text-muted-foreground/70">나</span>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => onRemoveMember(selected.id, m.user_id, m.name || m.email)}
+                                      disabled={pending}
+                                      className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/60 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
+                                    >
+                                      제거
+                                    </button>
+                                  )}
                                 </div>
-                              </div>
-                              <span className="shrink-0 font-sans text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80">
-                                {m.role}
-                              </span>
-                            </li>
-                          ))}
+                              </li>
+                            )
+                          })}
                         </ul>
+                      )}
+                      {memberError && (
+                        <p className="font-serif text-[13px] text-destructive py-2">{memberError}</p>
                       )}
                     </section>
 
@@ -293,9 +389,47 @@ export function SuperAdminApp({ initialOrgs, userEmail, embedded = false }: Prop
                                   </span>
                                 </div>
                               </div>
+                              <button
+                                type="button"
+                                onClick={() => onRevokeInvite(i.id)}
+                                disabled={pending}
+                                className="shrink-0 font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/60 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
+                              >
+                                취소
+                              </button>
                             </li>
                           ))}
                         </ul>
+                      )}
+
+                      {/* New invite form */}
+                      <div className="pt-md mt-sm border-t border-border/60 flex items-center gap-sm">
+                        <input
+                          type="email"
+                          placeholder="email@example.com"
+                          value={inviteEmail}
+                          onChange={(e) => setInviteEmail(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && inviteEmail && !pending) {
+                              e.preventDefault()
+                              onCreateInvite(selected.id)
+                            }
+                          }}
+                          disabled={pending}
+                          className="flex-1 bg-transparent font-serif text-[15px] text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/40 disabled:opacity-60"
+                        />
+                        <RoleSelect value={inviteRole} onChange={setInviteRole} disabled={pending} />
+                        <button
+                          type="button"
+                          onClick={() => onCreateInvite(selected.id)}
+                          disabled={pending || !inviteEmail}
+                          className="shrink-0 inline-flex h-8 items-center px-3 rounded-full border border-foreground/40 bg-transparent font-serif text-[13px] text-foreground hover:bg-accent transition-colors disabled:opacity-40"
+                        >
+                          초대 보내기
+                        </button>
+                      </div>
+                      {inviteNotice && (
+                        <p className="mt-sm font-serif italic text-[13px] text-muted-foreground">{inviteNotice}</p>
                       )}
                     </section>
                   </div>
@@ -306,6 +440,77 @@ export function SuperAdminApp({ initialOrgs, userEmail, embedded = false }: Prop
         </div>
       </main>
     </>
+  )
+}
+
+function RoleSelect({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: InviteRole
+  onChange: (v: InviteRole) => void
+  disabled?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const options: InviteRole[] = ['member', 'admin']
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        disabled={disabled}
+        className={cn(
+          'inline-flex items-center gap-1.5 h-8 pl-3 pr-2 rounded-full border border-border/60 bg-transparent font-serif text-[14px] text-foreground transition-colors',
+          'hover:bg-muted/40 focus:outline-none focus:border-primary/50',
+          'disabled:opacity-60 disabled:cursor-not-allowed',
+          open && 'border-foreground/40 bg-muted/30',
+        )}
+      >
+        <span>{ROLE_LABEL[value]}</span>
+        <svg
+          aria-hidden
+          viewBox="0 0 12 12"
+          className={cn('h-3 w-3 text-muted-foreground transition-transform', open && 'rotate-180')}
+        >
+          <path d="M2 4.5l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute right-0 bottom-full mb-1 z-20 min-w-[120px] rounded-md border border-border bg-popover py-1 shadow-md">
+          {options.map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => {
+                onChange(r)
+                setOpen(false)
+              }}
+              className={cn(
+                'w-full text-left px-3 py-1.5 font-serif text-[14px] transition-colors',
+                value === r
+                  ? 'text-foreground bg-muted/40'
+                  : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground',
+              )}
+            >
+              {ROLE_LABEL[r]}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 

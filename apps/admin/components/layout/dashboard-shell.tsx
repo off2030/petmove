@@ -29,11 +29,13 @@ function pathToTab(pathname: string): TabId {
 export function DashboardShell({
   isSuperAdmin = false,
   userEmail,
+  currentUserId = null,
   initialSettingsBootstrap = null,
   initialOrgs = [],
 }: {
   isSuperAdmin?: boolean
   userEmail?: string | null
+  currentUserId?: string | null
   initialSettingsBootstrap?: SettingsBootstrap | null
   initialOrgs?: OrgSummary[]
 }) {
@@ -93,7 +95,7 @@ export function DashboardShell({
         )}
         {isSuperAdmin && mounted.has('super-admin') && (
           <div className="h-full" style={{ display: activeTab === 'super-admin' ? 'block' : 'none' }}>
-            <MemoizedSuperAdmin initialOrgs={initialOrgs} userEmail={userEmail ?? null} embedded />
+            <MemoizedSuperAdmin initialOrgs={initialOrgs} userEmail={userEmail ?? null} currentUserId={currentUserId} embedded />
           </div>
         )}
       </main>

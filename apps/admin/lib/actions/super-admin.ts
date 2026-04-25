@@ -1,9 +1,19 @@
 'use server'
 
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendEmail, inviteFromAddress } from '@/lib/email/resend'
+import { inviteEmailHtml, inviteEmailSubject } from '@/lib/email/invite-template'
+import type { InviteRole } from './invites'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
+
+const ROLE_LABEL: Record<InviteRole, string> = { admin: '관리자', member: '멤버' }
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase()
+}
 
 export interface OrgSummary {
   id: string
@@ -178,6 +188,122 @@ export async function updateOrgBusinessNumber(input: {
       .single()
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: { business_number: (data.business_number as string | null) ?? null } }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * super_admin 이 임의의 조직에 초대 생성. service role 로 RLS 우회.
+ * 이메일 발송은 best-effort (실패해도 초대 자체는 생성됨).
+ */
+export async function inviteToOrg(input: {
+  orgId: string
+  email: string
+  role: InviteRole
+}): Promise<Result<{ token: string; emailSent: boolean; emailError?: string }>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  const email = normalizeEmail(input.email)
+  if (!email || !email.includes('@')) {
+    return { ok: false, error: '유효한 이메일이 아닙니다' }
+  }
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    const admin = createAdminClient()
+
+    const { data, error } = await admin
+      .from('organization_invites')
+      .insert({
+        org_id: input.orgId,
+        email,
+        role: input.role,
+        created_by: user?.id ?? null,
+      })
+      .select('token, expires_at')
+      .single()
+    if (error) return { ok: false, error: error.message }
+
+    const token = data.token as string
+    const expiresAt = new Date(data.expires_at as string)
+
+    const { data: org } = await admin
+      .from('organizations')
+      .select('name')
+      .eq('id', input.orgId)
+      .maybeSingle()
+    const orgName = (org?.name as string | undefined) ?? '펫무브워크'
+
+    const hdrs = await headers()
+    const host = hdrs.get('x-forwarded-host') || hdrs.get('host') || 'petmove.vercel.app'
+    const proto = hdrs.get('x-forwarded-proto') || 'https'
+    const inviteUrl = `${proto}://${host}/invite/${token}`
+
+    let emailSent = false
+    let emailError: string | undefined
+    try {
+      const result = await sendEmail({
+        from: inviteFromAddress(),
+        to: email,
+        subject: inviteEmailSubject(orgName),
+        html: inviteEmailHtml({
+          orgName,
+          inviteUrl,
+          roleLabel: ROLE_LABEL[input.role],
+          expiresAt,
+        }),
+        replyTo: user?.email ?? undefined,
+      })
+      emailSent = result !== null
+    } catch (e) {
+      emailError = (e as Error).message
+    }
+
+    return { ok: true, value: { token, emailSent, emailError } }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/** super_admin 이 임의의 조직 멤버 제거. 자기 자신 + last-admin 보호 동일. */
+export async function removeMemberFromOrg(input: {
+  orgId: string
+  userId: string
+}): Promise<Result<null>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user?.id === input.userId) {
+      return { ok: false, error: '자기 자신은 제거할 수 없습니다' }
+    }
+    const admin = createAdminClient()
+    const { error } = await admin
+      .from('memberships')
+      .delete()
+      .eq('org_id', input.orgId)
+      .eq('user_id', input.userId)
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: null }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/** super_admin 이 임의의 초대 취소. */
+export async function revokeOrgInvite(inviteId: string): Promise<Result<null>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  try {
+    const admin = createAdminClient()
+    const { error } = await admin
+      .from('organization_invites')
+      .delete()
+      .eq('id', inviteId)
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: null }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }

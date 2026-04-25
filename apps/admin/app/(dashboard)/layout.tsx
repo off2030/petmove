@@ -50,16 +50,16 @@ async function fetchFieldDefs(): Promise<FieldDefinition[]> {
   return (data ?? []) as FieldDefinition[]
 }
 
-async function fetchUserContext(): Promise<{ isSuperAdmin: boolean; email: string | null }> {
+async function fetchUserContext(): Promise<{ isSuperAdmin: boolean; email: string | null; userId: string | null }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { isSuperAdmin: false, email: null }
+  if (!user) return { isSuperAdmin: false, email: null, userId: null }
   const { data } = await supabase
     .from('profiles')
     .select('is_super_admin')
     .eq('id', user.id)
     .maybeSingle()
-  return { isSuperAdmin: !!data?.is_super_admin, email: user.email ?? null }
+  return { isSuperAdmin: !!data?.is_super_admin, email: user.email ?? null, userId: user.id }
 }
 
 export default async function DashboardLayout({
@@ -101,6 +101,7 @@ export default async function DashboardLayout({
           <DashboardShell
             isSuperAdmin={userCtx.isSuperAdmin}
             userEmail={userCtx.email}
+            currentUserId={userCtx.userId}
             initialSettingsBootstrap={settingsBootstrap}
             initialOrgs={initialOrgs}
           />
