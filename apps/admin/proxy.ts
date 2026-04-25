@@ -14,8 +14,16 @@ const PUBLIC_PREFIXES = [
   '/public',
 ]
 
+// 인증은 필요하지만 멤버십 0 인 신규 사용자도 진입 가능한 경로.
+// 초대 수락 페이지가 대표적 — 멤버십을 *얻기 위한* 페이지라 게이트로 막으면 데드락.
+const NO_MEMBERSHIP_OK_PREFIXES = ['/invite']
+
 function isPublic(pathname: string) {
   return PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))
+}
+
+function bypassMembershipGate(pathname: string) {
+  return NO_MEMBERSHIP_OK_PREFIXES.some((p) => pathname.startsWith(p))
 }
 
 export async function proxy(request: NextRequest) {
@@ -65,6 +73,34 @@ export async function proxy(request: NextRequest) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(loginUrl)
+  }
+
+  // Invite-only 게이트: 멤버십 0 + super_admin 아님 → 차단.
+  // 외부인이 OAuth 로 들어와도 빈 화면 대신 /login?error=invite_required 로 보냄.
+  // 초대 수락 진행 중인 /invite/* 는 우회.
+  if (!bypassMembershipGate(pathname)) {
+    const [profRes, memRes] = await Promise.all([
+      supabase.from('profiles').select('is_super_admin').eq('id', user.id).maybeSingle(),
+      supabase.from('memberships').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+    ])
+    const isSuperAdmin = !!profRes.data?.is_super_admin
+    const memberCount = memRes.count ?? 0
+    if (!isSuperAdmin && memberCount === 0) {
+      try { await supabase.auth.signOut() } catch { /* ignore */ }
+      const loginUrl = new URL('/login', request.url)
+      loginUrl.searchParams.set('error', 'invite_required')
+      const redirectRes = NextResponse.redirect(loginUrl)
+      // supabase signOut() 이 만료시킨 cookies 를 redirect 응답에 복사.
+      // (NextResponse.next 로 만들어진 `response` 에만 반영돼 있어서 그대로면 cookie 가 안 사라짐)
+      response.cookies.getAll().forEach((c) => {
+        redirectRes.cookies.set(c.name, c.value, {
+          path: '/',
+          expires: new Date(0),
+          maxAge: 0,
+        })
+      })
+      return redirectRes
+    }
   }
 
   return response

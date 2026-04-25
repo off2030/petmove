@@ -8,13 +8,22 @@ import { Input } from '@/components/ui/input'
 
 type Provider = 'google' | 'kakao' | 'naver'
 
-export function LoginForm({ next }: { next: string }) {
+const ERROR_MESSAGES: Record<string, string> = {
+  invite_required: '이 서비스는 초대받은 사용자만 사용할 수 있습니다. 관리자에게 초대를 요청하세요.',
+}
+
+function resolveError(raw: string | null): string | null {
+  if (!raw) return null
+  return ERROR_MESSAGES[raw] ?? raw
+}
+
+export function LoginForm({ next, initialError = null }: { next: string; initialError?: string | null }) {
   const router = useRouter()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(resolveError(initialError))
 
   async function oauth(provider: Provider) {
     setLoading(provider)

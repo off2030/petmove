@@ -20,6 +20,7 @@ export default async function LoginPage({
 }) {
   const params = await searchParams
   const next = sanitizeNext(params.next)
+  const errorParam = Array.isArray(params.error) ? params.error[0] : params.error
 
   const supabase = await createClient()
   const {
@@ -28,5 +29,5 @@ export default async function LoginPage({
 
   if (user) redirect(next)
 
-  return <LoginForm next={next} />
+  return <LoginForm next={next} initialError={errorParam ?? null} />
 }
