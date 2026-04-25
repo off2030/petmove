@@ -6,6 +6,57 @@
 
 ---
 
+## ⚠️ 진행 중: Seoul 보충 마이그레이션 (2026-04-25)
+
+**상황** — Vercel env Production 을 Seoul (`ugywxiyivfzflqkcnqvu`) 로 전환 완료. 하지만 Seoul DB 가
+Phase 2.6 (2026-04-22) 시점에서 멈춰 있어서 그 이후 추가된 18개 마이그레이션 + Mumbai 변경 데이터가
+없는 상태. 증상: 조직관리에서 `business_number does not exist`, 프로필 이름 공란, 약품관리/자동화 빈 목록.
+
+**Google OAuth** — Seoul 에 enable 완료 (GCP Client ID / Secret 등록됨). Mumbai 는 enable 안 함
+(어차피 Seoul 로 가는 중이라 불필요).
+
+### 다음 컴퓨터에서 이어받기
+
+```bash
+cd /c/dev/petmove   # 또는 원하는 경로
+git pull origin master
+pnpm install        # 신규 의존 없음, 안전
+```
+
+`apps/admin/.env.local` 에 다음 4개 키가 있어야 함 (Bitwarden / 이전 PC 에서 복사):
+- `NEXT_PUBLIC_SUPABASE_URL` = Mumbai URL (`https://jxyalwbstsqpecavqfkb.supabase.co`)
+- `SUPABASE_SERVICE_ROLE_KEY` = Mumbai service role
+- `NEW_SUPABASE_URL` = Seoul URL (`https://ugywxiyivfzflqkcnqvu.supabase.co`)
+- `NEW_SUPABASE_SERVICE_ROLE_KEY` = Seoul service role
+
+### Step 1 — Seoul SQL Editor 에 보충 마이그레이션 적용
+
+1. https://supabase.com/dashboard/project/ugywxiyivfzflqkcnqvu/sql/new
+2. `apps/admin/scripts/seoul-catchup.sql` 전체 복사 → SQL Editor 붙여넣기 → **Run**
+3. "Success" 확인 (18개 마이그레이션, 모두 idempotent — 부분 적용돼 있어도 안전)
+
+### Step 2 — Mumbai → Seoul 데이터 동기화
+
+```bash
+pnpm -F admin exec node scripts/sync-mumbai-to-seoul.mjs
+```
+
+테이블별 ok/total 표시되며 마지막에 `✓ 동기화 완료` 출력되면 성공.
+
+### Step 3 — 검증
+
+`https://petmove.vercel.app` 새로고침 → 다음 페이지 모두 정상 표시 확인:
+- 설정 → 내 프로필: 이름이 채워짐
+- 설정 → 약품 관리: 백신·구충 제품 목록
+- 설정 → 자동화: 28+ 규칙 표시
+- super-admin → 조직 관리: 사업자번호 표시 (에러 없음)
+
+### Step 4 — Mumbai 삭제 (1~2주 안정 후, 2026-05-05 이후)
+
+문서 내 "Mumbai 삭제 일정" 섹션 참조.
+
+---
+
 ## 현재 상태 (2026-04-22 종료 시점)
 
 ### 핵심 로드맵 — 실질 완료
