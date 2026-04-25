@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { Button } from '@/components/ui/button'
@@ -24,6 +24,17 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(resolveError(initialError))
+
+  // 차단 결과로 표시된 에러 파라미터는 한 번만 보여주고 URL 에서 제거.
+  // 새로고침/공유 시 미리 차단된 것처럼 보이는 UX 문제 방지.
+  useEffect(() => {
+    if (!initialError || typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    if (url.searchParams.has('error')) {
+      url.searchParams.delete('error')
+      window.history.replaceState(null, '', url.pathname + url.search)
+    }
+  }, [initialError])
 
   async function oauth(provider: Provider) {
     setLoading(provider)
