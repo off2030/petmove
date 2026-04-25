@@ -19,7 +19,7 @@ export const PillButton = forwardRef<HTMLButtonElement, PillButtonProps>(
     const styles =
       variant === 'solid'
         ? 'h-8 px-md font-serif text-[14px] bg-foreground text-background hover:bg-foreground/90'
-        : 'font-serif text-[12px] px-2.5 py-0.5 border border-border/60 text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+        : 'font-serif text-[12px] px-2.5 py-0.5 border border-foreground/30 text-foreground/80 hover:bg-muted/40 hover:text-foreground hover:border-foreground/50'
     return (
       <button
         ref={ref}
