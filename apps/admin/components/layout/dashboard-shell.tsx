@@ -12,6 +12,7 @@ import { SuperAdminApp } from '@/components/super-admin/super-admin-app'
 import { clearImpersonation } from '@/lib/actions/super-admin'
 import type { SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 import type { OrgSummary } from '@/lib/actions/super-admin'
+import type { ExternalLinksConfig } from '@petmove/domain'
 
 const MemoizedCases = memo(CasesApp)
 const MemoizedTodos = memo(TodosApp)
@@ -34,6 +35,7 @@ export function DashboardShell({
   initialSettingsBootstrap = null,
   initialOrgs = [],
   impersonation = null,
+  initialExternalLinks,
 }: {
   isSuperAdmin?: boolean
   userEmail?: string | null
@@ -41,6 +43,7 @@ export function DashboardShell({
   initialSettingsBootstrap?: SettingsBootstrap | null
   initialOrgs?: OrgSummary[]
   impersonation?: { orgId: string; orgName: string } | null
+  initialExternalLinks: ExternalLinksConfig
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -113,7 +116,7 @@ export function DashboardShell({
         )}
         {mounted.has('calculator') && (
           <div className="h-full" style={{ display: activeTab === 'calculator' ? 'block' : 'none' }}>
-            <MemoizedCalculator />
+            <MemoizedCalculator initialExternalLinks={initialExternalLinks} />
           </div>
         )}
 {mounted.has('settings') && (

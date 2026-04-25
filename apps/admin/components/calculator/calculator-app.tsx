@@ -5,12 +5,15 @@ import { ChevronDown, Pencil, Search } from 'lucide-react'
 import { useCalculatorData } from '@/components/providers/calculator-data-provider'
 import { Calculator } from './calculator'
 import { ScheduleCalculator, type ScheduleCountry } from './schedule-calculator'
+import { ExternalLinks } from './external-links'
+import type { ExternalLinksConfig } from '@petmove/domain'
 
-type Mode = 'cost' | 'schedule'
+type Mode = 'cost' | 'schedule' | 'links'
 
 const MODES: Array<{ value: Mode; label: string }> = [
   { value: 'cost', label: '비용' },
   { value: 'schedule', label: '일정' },
+  { value: 'links', label: '바로가기' },
 ]
 
 const SCHEDULE_COUNTRIES: Array<{ value: ScheduleCountry; label: string }> = [
@@ -19,7 +22,11 @@ const SCHEDULE_COUNTRIES: Array<{ value: ScheduleCountry; label: string }> = [
   { value: 'nz', label: '뉴질랜드' },
 ]
 
-export function CalculatorApp() {
+export function CalculatorApp({
+  initialExternalLinks,
+}: {
+  initialExternalLinks: ExternalLinksConfig
+}) {
   const { items, setItems } = useCalculatorData()
   const [mode, setMode] = useState<Mode>('cost')
 
@@ -236,7 +243,7 @@ export function CalculatorApp() {
         </div>
 
         {/* Body */}
-        {mode === 'cost' ? (
+        {mode === 'cost' && (
           <Calculator
             items={items}
             setItems={setItems}
@@ -244,8 +251,12 @@ export function CalculatorApp() {
             country={country}
             editMode={editMode}
           />
-        ) : (
-          <ScheduleCalculator country={scheduleCountry} />
+        )}
+        {mode === 'schedule' && <ScheduleCalculator country={scheduleCountry} />}
+        {mode === 'links' && (
+          <div className="px-lg">
+            <ExternalLinks initialConfig={initialExternalLinks} />
+          </div>
         )}
       </div>
     </div>

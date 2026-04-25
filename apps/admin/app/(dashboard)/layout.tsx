@@ -7,6 +7,7 @@ import { CalculatorDataProvider } from '@/components/providers/calculator-data-p
 import { loadImportReportCountries } from '@/lib/import-report-config'
 import { loadInspectionConfig } from '@/lib/inspection-config'
 import { loadCertConfig } from '@/lib/cert-config'
+import { loadExternalLinks } from '@/lib/external-links'
 import { getOrgVaccineData } from '@/lib/vaccine-data'
 import { getCalculatorItems } from '@/lib/calculator-data'
 import { getSettingsBootstrap } from '@/lib/actions/settings-bootstrap'
@@ -76,7 +77,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [initialCases, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, calculatorItems, settingsBootstrap, orgId, impersonation] = await Promise.all([
+  const [initialCases, fieldDefs, importReportCountries, inspectionConfig, certConfig, userCtx, vaccineData, calculatorItems, settingsBootstrap, orgId, impersonation, externalLinks] = await Promise.all([
     fetchAllCases(),
     fetchFieldDefs(),
     loadImportReportCountries(),
@@ -88,6 +89,7 @@ export default async function DashboardLayout({
     getSettingsBootstrap().catch(() => null),
     getActiveOrgId().catch(() => null),
     getImpersonationInfo().catch(() => null),
+    loadExternalLinks(),
   ])
 
   // Super admin 이면 org 목록 prefetch — 탭 전환 시 즉시 표시.
@@ -115,6 +117,7 @@ export default async function DashboardLayout({
             initialSettingsBootstrap={settingsBootstrap}
             initialOrgs={initialOrgs}
             impersonation={impersonation}
+            initialExternalLinks={externalLinks}
           />
         </CalculatorDataProvider>
       </VaccineDataProvider>
