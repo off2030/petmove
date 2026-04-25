@@ -109,13 +109,17 @@ export function MembersSection({
       setEmail('')
       setRole('member')
       await refresh()
-      await copy(r.value.token)
+      // 자동 복사 시도 — 브라우저 보안 정책상 비동기 흐름에서는 실패할 수 있음 (user gesture 잃음).
+      // 실패하면 사용자가 옆 "링크 복사" 버튼을 직접 눌러야 함.
+      void copy(r.value.token)
       if (r.value.emailSent) {
-        setInviteNotice(`${targetEmail} 로 초대 이메일 발송 완료. 링크도 복사됨.`)
+        setInviteNotice(`${targetEmail} 로 초대 이메일 발송 완료.`)
       } else if (r.value.emailError) {
-        setInviteNotice(`이메일 발송 실패 (${r.value.emailError}) — 링크 복사는 완료.`)
+        setInviteNotice(
+          `이메일 자동 발송 실패 — 옆 "링크 복사" 버튼으로 링크를 받아 직접 전달해 주세요.`,
+        )
       } else {
-        setInviteNotice('링크가 복사되었습니다. 초대 대상에게 직접 전달해 주세요.')
+        setInviteNotice('초대가 생성되었습니다. 옆 "링크 복사" 버튼으로 링크를 받아 전달해 주세요.')
       }
     })
   }
