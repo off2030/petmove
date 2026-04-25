@@ -46,8 +46,12 @@
 | 10 초대 플로우 | ✅ | `organization_invites`, service role 수락, `/invite/[token]`, Settings 멤버 탭 |
 | 10 확장 Resend | ✅ | 초대 이메일 자동 발송 (`lib/email/resend.ts` + template), best-effort, `RESEND_API_KEY` 등록 완료. 샌드박스 상태 — 도메인 verify 시 외부 발송 |
 | + 기술부채 | ✅ | `AUTH_ENFORCED` 토글 제거, 로그인 open-redirect 방어, vet-info 하드코딩 제거 + 로잔 seed, profiles RLS super_admin 가시성 수정, memberships→profiles 중첩 select FK 부재 우회 (2회 쿼리 merge) |
+| + 멤버 관리 강화 (2026-04-25) | ✅ | settings 멤버 탭: 제거/role 변경/super_admin 배지/만료 초대 자동 cleanup. memberships SELECT 정책 확장 (member 도 같은 org 명단 조회) |
+| + Super Admin 확장 (2026-04-25) | ✅ | 다른 조직 멤버 제거·초대·role 변경, 조직 삭제 (cases RESTRICT), impersonation (cookie 기반 임시 기관 전환), SaaS 운영자 추가/회수 UI |
+| + Invite-only 가드 (2026-04-25) | ✅ | proxy.ts middleware 가 멤버십 0 + super_admin 아닌 사용자 차단 + signOut + 한국어 안내. /invite/* 우회. OAuth callback next 는 cookie 로 (allowlist 매칭 우회) |
+| + 권한 모델 docs (2026-04-25) | ✅ | `docs/permissions.md` 단일 출처 — RLS 매트릭스, 헬퍼 함수, 서버 액션 가드, anon 정책, 권한 추가 체크리스트 |
 
-**Phase 6 (Org 스위처 UI)** 는 단일 테넌트 맥락상 의도적 skip. 두 번째 테넌트 도입 시 구현.
+**Phase 6 (Org 스위처 UI)** 는 단일 테넌트 맥락상 의도적 skip. 두 번째 테넌트 도입 시 구현. (대신 super_admin impersonation 으로 다른 org 컨텍스트 보기 가능)
 
 ### 🎨 진행 중: Editorial 톤 디자인 리뉴얼 (branch: `design/editorial-tone`, PR #3)
 
@@ -114,8 +118,8 @@ pnpm -F admin dev   # 로컬 확인 (http://localhost:3000)
    - ~~`20260422000008_profiles_policy_fix.sql`~~ ✅ (super_admin 타 프로필 SELECT 버그)
 
 3. **외부 설정 진행 여부** (아래 "외부 설정 잔여" 섹션 참조)
-   - Google OAuth (가장 빠름, 1시간 내)
-   - Resend 도메인 verify (도메인 소유 시)
+   - ~~Google OAuth~~ ✅ 완료 (2026-04-25)
+   - Resend 도메인 verify (도메인 소유 시) — 미완. 현재 샌드박스라 본인 외 발송 안 됨, 링크 직접 전달로 우회
    - Kakao 비즈앱 검수 대기 상태
    - Naver custom OIDC (복잡도 높음, 후순위)
 
@@ -140,7 +144,7 @@ pnpm -F admin dev   # 로컬 확인 (http://localhost:3000)
 
 #### Google OAuth
 
-**현재 상태**: 미설정. 로그인 버튼 클릭 시 에러 예상. 코드는 `provider: 'google'` 로 signInWithOAuth 호출.
+**현재 상태**: ✅ Seoul 활성화 완료 (2026-04-25). GCP OAuth Client + Supabase Provider 등록됨. invite-only 가드와 함께 동작 — 외부인이 Google 로그인 시도해도 즉시 차단.
 
 **절차** (1회성):
 1. https://console.cloud.google.com → 새 프로젝트 생성 (예: `petmove-auth`)
