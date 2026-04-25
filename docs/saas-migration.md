@@ -6,6 +6,28 @@
 
 ---
 
+## ✅ 2026-04-25 세션 요약
+
+**네이버 로그인 성능** — production callback 4초 → 2초.
+- Vercel function region 이 기본값 `iad1` (Washington D.C.) 였음. 한국에서 호출 + 함수 안에서 네이버/Supabase (모두 Seoul) 5번 왕복 = ~1초 순수 RTT 손실
+- `apps/admin/vercel.json` 추가: `{"regions":["icn1"]}` → callback Function Invocation 3.82s → 1.62s
+- 추가 병렬화 (profiles + generateLink) 가능하지만 신규 사용자 race risk 있어 보류
+
+**Sentry 에러 추적 통합** — `@sentry/nextjs` v10, Org `petmove`, Project `javascript-nextjs`
+- Vercel env 3종 (`SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_AUTH_TOKEN`) 등록
+- `enabled: production` 가드 — 로컬·CI 에서는 noop
+- Client tunnel `/monitoring` (애드블럭 우회), source map 업로드 활성
+- 검증: `/api/sentry-test` → Sentry Issues 캡쳐 OK → 검증 라우트 제거 (커밋 `373be4c`)
+- 다음: Sentry → Alerts 에서 Slack/이메일 알림 연동 (선택)
+
+**Editorial 톤 디자인 PR #3** — 이미 머지됨 (2026-04-23). docs 갱신.
+
+**CSV/Excel 내보내기** — Settings 데이터 관리 탭에 이미 구현돼있음 (`exportCasesXlsx`). placeholder 표기 제거.
+
+**핵심 커밋** (오늘): `f944e51` (vercel.json icn1) → `e40b66b` (Sentry 통합) → `373be4c` (검증 라우트 제거)
+
+---
+
 ## ✅ Seoul 보충 마이그레이션 완료 (2026-04-25)
 
 **배경** — Vercel env Production 을 Seoul (`ugywxiyivfzflqkcnqvu`) 로 전환했지만 Seoul DB 가 Phase 2.6
@@ -107,10 +129,13 @@
    - [ ] Kakao Developers Redirect URI 에서 Mumbai `.../jxya.../auth/v1/callback` 제거
 
 5. **다음 구현 대상 후보** (우선순위 본인 판단):
-   - Phase 11 `apps/portal` B2C 스캐폴딩 (큰 스코프)
-   - Sentry 에러 추적 (오늘 본 bug 류 예방)
+   - Phase 11 `apps/portal` B2C 스캐폴딩 (큰 스코프 — admin 과 분리된 고객용 Next.js 앱)
    - 결제/요금제 기반 설계 (Stripe vs 토스)
+   - 이용약관·개인정보처리방침 페이지 (런칭 전제)
    - 토스트 알림 시스템 (인라인 에러 → 글로벌)
+   - Sentry Slack/이메일 알림 연동 (Issues 자동 알림)
+   - Editorial 톤 일관성 마무리 (`/super-admin`, `/apply`, `/login`)
+   - 모바일 반응형 점검
 
 ### 외부 설정 잔여 (OAuth 프로바이더 + 이메일 도메인)
 
