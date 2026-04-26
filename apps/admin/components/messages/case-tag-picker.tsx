@@ -20,7 +20,10 @@ export function CaseTagPicker({
   const [query, setQuery] = useState('')
   const [items, setItems] = useState<CasePickerItem[]>([])
   const [highlight, setHighlight] = useState(0)
-  const [pos, setPos] = useState<{ right: number; bottom: number } | null>(null)
+  type Pos =
+    | { right: number; top: number; maxHeight: number }
+    | { right: number; bottom: number; maxHeight: number }
+  const [pos, setPos] = useState<Pos | null>(null)
   const [, startFetch] = useTransition()
   const containerRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLSpanElement>(null)
@@ -28,15 +31,21 @@ export function CaseTagPicker({
   const inputRef = useRef<HTMLInputElement>(null)
 
   // 트리거 위치 측정 — 팝업을 fixed 로 띄워 부모의 overflow:hidden 을 우회.
+  // 위/아래 중 여유 큰 쪽으로 펼치고, max-height 로 뷰포트를 넘지 않게 제한.
   useEffect(() => {
     if (!open) return
     function measure() {
       const rect = triggerRef.current?.getBoundingClientRect()
       if (!rect) return
-      setPos({
-        right: Math.max(8, window.innerWidth - rect.right),
-        bottom: Math.max(8, window.innerHeight - rect.top + 4),
-      })
+      const right = Math.max(8, window.innerWidth - rect.right)
+      const gap = 4
+      const above = rect.top - 8 - gap
+      const below = window.innerHeight - rect.bottom - 8 - gap
+      if (above >= below) {
+        setPos({ right, bottom: window.innerHeight - rect.top + gap, maxHeight: Math.max(180, above) })
+      } else {
+        setPos({ right, top: rect.bottom + gap, maxHeight: Math.max(180, below) })
+      }
     }
     measure()
     window.addEventListener('resize', measure)
@@ -88,10 +97,17 @@ export function CaseTagPicker({
     ? createPortal(
         <div
           ref={popupRef}
-          style={{ position: 'fixed', right: pos.right, bottom: pos.bottom, width: '22rem' }}
-          className="z-50 rounded-md border border-border/50 bg-popover shadow-md"
+          style={{
+            position: 'fixed',
+            right: pos.right,
+            top: 'top' in pos ? pos.top : undefined,
+            bottom: 'bottom' in pos ? pos.bottom : undefined,
+            width: '22rem',
+            maxHeight: pos.maxHeight,
+          }}
+          className="z-50 rounded-md border border-border/50 bg-popover shadow-md flex flex-col overflow-hidden"
         >
-          <div className="px-sm py-sm border-b border-border/40 relative">
+          <div className="shrink-0 px-sm py-sm border-b border-border/40 relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <input
               ref={inputRef}
@@ -117,7 +133,7 @@ export function CaseTagPicker({
               className="w-full h-8 rounded-md bg-card pl-8 pr-3 text-[13px] focus-visible:outline-none border border-transparent focus-visible:border-foreground/30"
             />
           </div>
-          <ul className="max-h-72 overflow-y-auto scrollbar-minimal py-1">
+          <ul className="flex-1 min-h-0 overflow-y-auto scrollbar-minimal py-1">
             {visible.length === 0 ? (
               <li className="px-sm py-2 text-[13px] text-muted-foreground">
                 {query.trim() ? '결과 없음' : '최근 케이스부터 표시됩니다'}
