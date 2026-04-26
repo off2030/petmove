@@ -13,12 +13,11 @@ import { MessagesApp } from '@/components/messages/messages-app'
 import { SuperAdminApp } from '@/components/super-admin/super-admin-app'
 import { clearImpersonation } from '@/lib/actions/super-admin'
 import { listMyConversations } from '@/lib/actions/chat'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 import type { SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 import type { OrgSummary, SuperAdminEntry } from '@/lib/actions/super-admin'
 import type { ConversationListItem } from '@/lib/actions/chat'
 import type { ExternalLinksConfig } from '@petmove/domain'
-
-const CONV_POLL_MS = 5000
 
 const MemoizedCases = memo(CasesApp)
 const MemoizedTodos = memo(TodosApp)
@@ -64,16 +63,25 @@ export function DashboardShell({
   const [endingImpersonation, startEndImpersonation] = useTransition()
   const [conversations, setConversations] = useState<ConversationListItem[]>(initialConversations)
 
-  // 5s 폴링 — 메시지 탭 미오픈이어도 TopBar 알람 갱신을 위해 항상 실행.
+  // Realtime — 새 메시지/대화방 변동 시 TopBar 알람 갱신.
+  // RLS 가 postgres_changes 에 적용되므로 본인 참여 대화방 이벤트만 도달.
   useEffect(() => {
     let alive = true
-    const tick = async () => {
+    const refetch = async () => {
       const r = await listMyConversations()
       if (!alive) return
       if (r.ok) setConversations(r.value)
     }
-    const id = setInterval(tick, CONV_POLL_MS)
-    return () => { alive = false; clearInterval(id) }
+    refetch()
+    const channel = supabaseBrowser
+      .channel('topbar-conversations')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => { refetch() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => { refetch() })
+      .subscribe()
+    return () => {
+      alive = false
+      void supabaseBrowser.removeChannel(channel)
+    }
   }, [])
 
   const messagesUnread = useMemo(

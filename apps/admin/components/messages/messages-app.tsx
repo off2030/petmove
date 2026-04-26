@@ -25,8 +25,6 @@ import {
 import { CaseTagPicker } from './case-tag-picker'
 import { PageShell } from '@/components/ui/page-shell'
 
-const POLL_INTERVAL_MS = 5000
-
 export function MessagesApp({
   conversations,
   setConversations,
@@ -56,16 +54,31 @@ export function MessagesApp({
     [],
   )
 
+  // 활성 대화방 메시지 — 첫 로드 + Realtime 구독.
+  // INSERT/UPDATE/DELETE 이벤트가 오면 silent refetch (sender_name·signed URL 등 join 필요).
+  // RLS 가 messages_select 정책으로 본인 채널 외 차단.
   useEffect(() => {
     if (!activeConvId) {
       setMessages([])
       return
     }
-    refreshMessages(activeConvId, caseFilter?.id ?? null)
-    const id = setInterval(() => {
-      refreshMessages(activeConvId, caseFilter?.id ?? null, { silent: true })
-    }, POLL_INTERVAL_MS)
-    return () => clearInterval(id)
+    const convId = activeConvId
+    const caseId = caseFilter?.id ?? null
+    refreshMessages(convId, caseId)
+
+    const channel = supabaseBrowser
+      .channel(`messages:${convId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages', filter: `conv_id=eq.${convId}` },
+        () => {
+          refreshMessages(convId, caseId, { silent: true })
+        },
+      )
+      .subscribe()
+    return () => {
+      void supabaseBrowser.removeChannel(channel)
+    }
   }, [activeConvId, caseFilter?.id, refreshMessages])
 
   useEffect(() => {
