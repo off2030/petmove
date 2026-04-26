@@ -80,6 +80,13 @@ export function MessagesApp({
           refreshMessages(convId, caseId, { silent: true })
         },
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'message_reads', filter: `conv_id=eq.${convId}` },
+        () => {
+          refreshMessages(convId, caseId, { silent: true })
+        },
+      )
       .subscribe()
     return () => {
       void supabaseBrowser.removeChannel(channel)
