@@ -168,6 +168,7 @@ export function DashboardShell({
               conversations={conversations}
               setConversations={setConversations}
               currentUserId={currentUserId}
+              isActive={activeTab === 'messages'}
             />
           </div>
         )}

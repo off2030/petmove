@@ -29,10 +29,12 @@ export function MessagesApp({
   conversations,
   setConversations,
   currentUserId,
+  isActive,
 }: {
   conversations: ConversationListItem[]
   setConversations: Dispatch<SetStateAction<ConversationListItem[]>>
   currentUserId: string | null
+  isActive: boolean
 }) {
   const [activeConvId, setActiveConvId] = useState<string | null>(null)
   const [caseFilter, setCaseFilter] = useState<{ id: string; label: string } | null>(null)
@@ -81,14 +83,16 @@ export function MessagesApp({
     }
   }, [activeConvId, caseFilter?.id, refreshMessages])
 
+  // 메시지 탭이 활성일 때만 read 처리 — 백그라운드에서 새 톡이 와도
+  // 플로팅 배지가 사라지지 않도록.
   useEffect(() => {
-    if (!activeConvId) return
+    if (!activeConvId || !isActive) return
     markConversationRead(activeConvId).then(() => {
       setConversations((prev) =>
         prev.map((c) => (c.id === activeConvId ? { ...c, unread_count: 0 } : c)),
       )
     })
-  }, [activeConvId, messages.length])
+  }, [activeConvId, messages.length, isActive])
 
   const onSelectConv = useCallback((convId: string) => {
     setActiveConvId(convId)
