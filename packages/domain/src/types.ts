@@ -1,6 +1,6 @@
 // DB 스키마 기반 공통 타입. procedure-checks 및 admin 전역에서 사용.
 
-export type CaseStatus = '신규' | '진행중' | '보류' | '완료' | '취소'
+export type CaseStatus = 'Applied' | 'In Progress' | 'Completed' | 'On Hold' | 'Cancelled'
 
 export interface CaseRow {
   id: string

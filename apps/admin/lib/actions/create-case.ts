@@ -15,7 +15,7 @@ export async function createCase(): Promise<
     .insert({
       org_id: orgId,
       customer_name: '',
-      status: 'applied',
+      status: 'Applied',
       data: {},
     })
     .select('*')

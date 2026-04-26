@@ -82,7 +82,7 @@ async function generateStandalone(
     customer_name: '', customer_name_en: null,
     pet_name: null, pet_name_en: null,
     destination: null, departure_date: null,
-    status: '신규', data: {},
+    status: 'Applied', data: {},
     created_at: '', updated_at: '',
   }
   return fillPdf(formKey, stub, { extras })

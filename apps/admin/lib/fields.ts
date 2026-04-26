@@ -113,11 +113,11 @@ export const REGULAR_COLUMN_SPECS: FieldSpec[] = [
     groupOrder: 2,
     order: -2, // before destination (-1)
     options: [
-      { value: 'applied', label_ko: 'Applied' },
-      { value: '진행중', label_ko: 'In Progress' },
-      { value: '완료', label_ko: 'Completed' },
-      { value: '보류', label_ko: 'On Hold' },
-      { value: '취소', label_ko: 'Cancelled' },
+      { value: 'Applied', label_ko: 'Applied' },
+      { value: 'In Progress', label_ko: 'In Progress' },
+      { value: 'Completed', label_ko: 'Completed' },
+      { value: 'On Hold', label_ko: 'On Hold' },
+      { value: 'Cancelled', label_ko: 'Cancelled' },
     ],
   },
 ]
