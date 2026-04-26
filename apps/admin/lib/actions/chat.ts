@@ -89,7 +89,7 @@ function caseLabelFrom(c: {
 }): string {
   const name = c.pet_name || c.pet_name_en || ''
   const dest = c.destination || ''
-  const chip = c.microchip ? `#${c.microchip.slice(-6)}` : ''
+  const chip = c.microchip ? `#${c.microchip.slice(-3)}` : ''
   const parts = [name, dest, chip].filter(Boolean)
   return parts.length > 0 ? parts.join(' · ') : '(이름 없음)'
 }
