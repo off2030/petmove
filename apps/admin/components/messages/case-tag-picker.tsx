@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { createPortal } from 'react-dom'
 import { Search } from 'lucide-react'
 import { listCasesForPicker, type CasePickerItem } from '@/lib/actions/chat'
 
@@ -19,15 +20,41 @@ export function CaseTagPicker({
   const [query, setQuery] = useState('')
   const [items, setItems] = useState<CasePickerItem[]>([])
   const [highlight, setHighlight] = useState(0)
+  const [pos, setPos] = useState<{ right: number; bottom: number } | null>(null)
   const [, startFetch] = useTransition()
   const containerRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLSpanElement>(null)
+  const popupRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // 트리거 위치 측정 — 팝업을 fixed 로 띄워 부모의 overflow:hidden 을 우회.
+  useEffect(() => {
+    if (!open) return
+    function measure() {
+      const rect = triggerRef.current?.getBoundingClientRect()
+      if (!rect) return
+      setPos({
+        right: Math.max(8, window.innerWidth - rect.right),
+        bottom: Math.max(8, window.innerHeight - rect.top + 4),
+      })
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    window.addEventListener('scroll', measure, true)
+    return () => {
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('scroll', measure, true)
+    }
+  }, [open])
 
   useEffect(() => {
     if (!open) return
     inputRef.current?.focus()
     function onClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false)
+      const t = e.target as Node
+      if (containerRef.current?.contains(t)) return
+      if (popupRef.current?.contains(t)) return
+      setOpen(false)
     }
     document.addEventListener('mousedown', onClickOutside)
     return () => document.removeEventListener('mousedown', onClickOutside)
@@ -57,11 +84,13 @@ export function CaseTagPicker({
     setQuery('')
   }
 
-  return (
-    <div ref={containerRef} className="relative inline-block">
-      <span onClick={() => setOpen((v) => !v)}>{trigger}</span>
-      {open && (
-        <div className="absolute right-0 bottom-full mb-1 z-30 w-[22rem] rounded-md border border-border/50 bg-popover shadow-md">
+  const popup = open && pos && typeof document !== 'undefined'
+    ? createPortal(
+        <div
+          ref={popupRef}
+          style={{ position: 'fixed', right: pos.right, bottom: pos.bottom, width: '22rem' }}
+          className="z-50 rounded-md border border-border/50 bg-popover shadow-md"
+        >
           <div className="px-sm py-sm border-b border-border/40 relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -110,8 +139,15 @@ export function CaseTagPicker({
               ))
             )}
           </ul>
-        </div>
-      )}
+        </div>,
+        document.body,
+      )
+    : null
+
+  return (
+    <div ref={containerRef} className="relative inline-block">
+      <span ref={triggerRef} onClick={() => setOpen((v) => !v)}>{trigger}</span>
+      {popup}
     </div>
   )
 }
