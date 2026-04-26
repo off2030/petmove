@@ -294,7 +294,10 @@ function ConversationRow({
           {displayName}
         </span>
         {last && (
-          <span className="font-mono text-[11px] text-muted-foreground/70 shrink-0">
+          <span
+            className="font-mono text-[11px] text-muted-foreground/70 shrink-0"
+            suppressHydrationWarning
+          >
             {formatRelative(last.created_at)}
           </span>
         )}
@@ -840,7 +843,7 @@ function MessageItem({
       </div>
       <div className={cn('flex items-center gap-1.5 px-sm mt-0.5 font-mono text-[10px] text-muted-foreground/50')}>
         {isOwn && isReadByOther && <span className="text-muted-foreground/70">읽음</span>}
-        <span>{formatTime(msg.created_at)}</span>
+        <span suppressHydrationWarning>{formatTime(msg.created_at)}</span>
       </div>
     </li>
   )
