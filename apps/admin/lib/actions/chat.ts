@@ -32,6 +32,7 @@ export interface ConversationListItem {
   unread_count: number
   last_message_at: string | null
   created_at: string
+  pinned_message_id: string | null
 }
 
 export interface MessageRow {
@@ -53,6 +54,8 @@ export interface ConversationMessagesResult {
   messages: MessageRow[]
   /** 상대방이 마지막으로 읽은 시각 — 본인 메시지의 "읽음" 표시 기준. */
   other_last_read_at: string | null
+  /** 공지로 지정된 메시지 (200개 limit 밖이어도 별도 조회) */
+  pinned_message: MessageRow | null
 }
 
 export interface CasePickerItem {
@@ -105,7 +108,7 @@ export async function listMyConversations(): Promise<Result<ConversationListItem
   const supabase = await createClient()
   const { data: convs, error } = await supabase
     .from('conversations')
-    .select('id, user_a_id, user_b_id, last_message_at, created_at')
+    .select('id, user_a_id, user_b_id, last_message_at, created_at, pinned_message_id')
     .order('last_message_at', { ascending: false, nullsFirst: false })
   if (error) return { ok: false, error: error.message }
   if (!convs || convs.length === 0) return { ok: true, value: [] }
@@ -227,6 +230,7 @@ export async function listMyConversations(): Promise<Result<ConversationListItem
       unread_count: unreadByConv.get(c.id as string) ?? 0,
       last_message_at: (c.last_message_at as string | null) ?? null,
       created_at: c.created_at as string,
+      pinned_message_id: (c.pinned_message_id as string | null) ?? null,
     }
   })
 
@@ -336,7 +340,7 @@ export async function listConversationMessages(input: {
   // user_id=auth.uid() 제약이라 admin client 로 조회 (대화 멤버는 알 권리가 있음).
   const { data: convRow } = await supabase
     .from('conversations')
-    .select('user_a_id, user_b_id')
+    .select('user_a_id, user_b_id, pinned_message_id')
     .eq('id', input.convId)
     .maybeSingle()
   let otherLastReadAt: string | null = null
@@ -354,7 +358,83 @@ export async function listConversationMessages(input: {
     otherLastReadAt = (read?.last_read_at as string | null) ?? null
   }
 
-  return { ok: true, value: { messages, other_last_read_at: otherLastReadAt } }
+  // 공지 메시지 — 현재 messages 배열에서 먼저 찾고, 없으면 별도 조회 (limit 밖일 수 있음)
+  let pinnedMessage: MessageRow | null = null
+  const pinnedId = (convRow?.pinned_message_id as string | null) ?? null
+  if (pinnedId) {
+    pinnedMessage = messages.find((m) => m.id === pinnedId) ?? null
+    if (!pinnedMessage) {
+      const { data: pinnedRow } = await supabase
+        .from('messages')
+        .select(
+          'id, conv_id, sender_user_id, case_id, content, file_url, file_name, created_at, edited_at, deleted_at',
+        )
+        .eq('id', pinnedId)
+        .maybeSingle()
+      if (pinnedRow) {
+        const senderId = pinnedRow.sender_user_id as string | null
+        let senderName: string | null = null
+        if (senderId) {
+          if (nameMap.has(senderId)) {
+            senderName = nameMap.get(senderId) ?? null
+          } else {
+            const { data: prof } = await admin
+              .from('profiles')
+              .select('name, email')
+              .eq('id', senderId)
+              .maybeSingle()
+            senderName =
+              (prof?.name as string | null) ?? (prof?.email as string | null) ?? null
+          }
+        }
+        let caseLabel: string | null = null
+        const cid = pinnedRow.case_id as string | null
+        if (cid) {
+          if (labelMap.has(cid)) {
+            caseLabel = labelMap.get(cid) ?? null
+          } else {
+            const { data: caseRow } = await supabase
+              .from('cases')
+              .select('id, pet_name, pet_name_en, destination, microchip')
+              .eq('id', cid)
+              .maybeSingle()
+            if (caseRow) caseLabel = caseLabelFrom(caseRow as Parameters<typeof caseLabelFrom>[0])
+          }
+        }
+        let signedFileUrl: string | null = null
+        const fp = pinnedRow.file_url as string | null
+        if (fp) {
+          if (fileUrlMap.has(fp)) {
+            signedFileUrl = fileUrlMap.get(fp) ?? null
+          } else {
+            const { data: signed } = await admin.storage
+              .from('chat-files')
+              .createSignedUrl(fp, CHAT_FILE_URL_TTL)
+            signedFileUrl = signed?.signedUrl ?? null
+          }
+        }
+        pinnedMessage = {
+          id: pinnedRow.id as string,
+          conv_id: pinnedRow.conv_id as string,
+          sender_user_id: senderId,
+          sender_name: senderName,
+          case_id: cid,
+          case_label: caseLabel,
+          content: (pinnedRow.content as string | null) ?? null,
+          file_url: signedFileUrl,
+          file_name: (pinnedRow.file_name as string | null) ?? null,
+          created_at: pinnedRow.created_at as string,
+          edited_at: (pinnedRow.edited_at as string | null) ?? null,
+          deleted_at: (pinnedRow.deleted_at as string | null) ?? null,
+        }
+      }
+    }
+  }
+
+  return {
+    ok: true,
+    value: { messages, other_last_read_at: otherLastReadAt, pinned_message: pinnedMessage },
+  }
 }
 
 /** 메시지 전송. content / fileUrl 둘 중 하나는 필수. */
@@ -502,6 +582,39 @@ export async function deleteMessage(messageId: string): Promise<Result<null>> {
     .update({ deleted_at: new Date().toISOString() })
     .eq('id', messageId)
     .eq('sender_user_id', auth.userId)
+  if (error) return { ok: false, error: error.message }
+  return { ok: true, value: null }
+}
+
+/**
+ * 메시지를 채팅방 공지로 지정 (또는 해제 — msgId=null).
+ * 양쪽 사용자 모두 등록/해제 가능, 동시 1개만.
+ * RLS 가 conversation 참여자만 update 허용. 메시지가 같은 채널인지도 검증.
+ */
+export async function pinMessage(input: {
+  convId: string
+  msgId: string | null
+}): Promise<Result<null>> {
+  const auth = await requireUser()
+  if (!auth.ok) return auth
+  const supabase = await createClient()
+
+  if (input.msgId) {
+    const { data: msg, error: msgErr } = await supabase
+      .from('messages')
+      .select('id, conv_id')
+      .eq('id', input.msgId)
+      .maybeSingle()
+    if (msgErr) return { ok: false, error: msgErr.message }
+    if (!msg || (msg.conv_id as string) !== input.convId) {
+      return { ok: false, error: '메시지를 찾을 수 없거나 다른 채널입니다' }
+    }
+  }
+
+  const { error } = await supabase
+    .from('conversations')
+    .update({ pinned_message_id: input.msgId })
+    .eq('id', input.convId)
   if (error) return { ok: false, error: error.message }
   return { ok: true, value: null }
 }

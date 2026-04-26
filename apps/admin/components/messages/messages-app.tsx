@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type Dispatch, type SetStateAction } from 'react'
-import { Paperclip, Plus, Search, Send, Tag, Trash2, X } from 'lucide-react'
+import { Bookmark, Paperclip, Plus, Search, Send, Tag, Trash2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { useConfirm } from '@/components/ui/confirm-dialog'
@@ -16,6 +16,7 @@ import {
   listMyConversations,
   listOrgsForDmPicker,
   markConversationRead,
+  pinMessage,
   sendMessage,
   type ConversationListItem,
   type MemberPickerItem,
@@ -40,6 +41,7 @@ export function MessagesApp({
   const [caseFilter, setCaseFilter] = useState<{ id: string; label: string } | null>(null)
   const [messages, setMessages] = useState<MessageRow[]>([])
   const [otherLastReadAt, setOtherLastReadAt] = useState<string | null>(null)
+  const [pinnedMessage, setPinnedMessage] = useState<MessageRow | null>(null)
   const [loadingMessages, setLoadingMessages] = useState(false)
   const [showNewDm, setShowNewDm] = useState(false)
 
@@ -50,6 +52,7 @@ export function MessagesApp({
       if (r.ok) {
         setMessages(r.value.messages)
         setOtherLastReadAt(r.value.other_last_read_at)
+        setPinnedMessage(r.value.pinned_message)
       }
       if (!opts?.silent) setLoadingMessages(false)
     },
@@ -104,6 +107,15 @@ export function MessagesApp({
     [conversations, activeConvId],
   )
 
+  // 상대방이 공지를 변경하면 conversations 의 pinned_message_id 가 갱신되어
+  // 여기로 흘러 들어옴. 현재 표시 중인 pinned 와 다르면 silent refetch.
+  const activePinnedId = activeConv?.pinned_message_id ?? null
+  useEffect(() => {
+    if (!activeConvId) return
+    if ((pinnedMessage?.id ?? null) === activePinnedId) return
+    refreshMessages(activeConvId, caseFilter?.id ?? null, { silent: true })
+  }, [activePinnedId, activeConvId, caseFilter?.id, pinnedMessage?.id, refreshMessages])
+
   async function handleNewDmCreated(convId: string) {
     setShowNewDm(false)
     // 채널 목록 새로고침 후 활성화
@@ -138,6 +150,7 @@ export function MessagesApp({
             <ThreadPane
               conv={activeConv}
               messages={messages}
+              pinnedMessage={pinnedMessage}
               otherLastReadAt={otherLastReadAt}
               loading={loadingMessages}
               currentUserId={currentUserId}
@@ -160,6 +173,14 @@ export function MessagesApp({
                 setMessages([])
                 setCaseFilter(null)
                 setConversations((prev) => prev.filter((c) => c.id !== deletedId))
+              }}
+              onPinChange={async (msgId) => {
+                const r = await pinMessage({ convId: activeConv.id, msgId })
+                if (!r.ok) {
+                  alert(`공지 처리 실패: ${r.error}`)
+                  return
+                }
+                await refreshMessages(activeConv.id, caseFilter?.id ?? null, { silent: true })
               }}
             />
           ) : (
@@ -536,6 +557,7 @@ function useTypingChannel(convId: string, currentUserId: string | null) {
 function ThreadPane({
   conv,
   messages,
+  pinnedMessage,
   otherLastReadAt,
   loading,
   currentUserId,
@@ -544,9 +566,11 @@ function ThreadPane({
   onMessageSent,
   onMessageDeleted,
   onDeleted,
+  onPinChange,
 }: {
   conv: ConversationListItem
   messages: MessageRow[]
+  pinnedMessage: MessageRow | null
   otherLastReadAt: string | null
   loading: boolean
   currentUserId: string | null
@@ -555,6 +579,7 @@ function ThreadPane({
   onMessageSent: (m: MessageRow) => void
   onMessageDeleted: (msgId: string) => void
   onDeleted: () => void
+  onPinChange: (msgId: string | null) => Promise<void>
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const confirm = useConfirm()
@@ -655,6 +680,32 @@ function ThreadPane({
         </div>
       </div>
 
+      {pinnedMessage && !pinnedMessage.deleted_at && (
+        <div className="shrink-0 flex items-start gap-sm px-md py-2 bg-accent/40 border-b border-border/40">
+          <Bookmark size={14} className="shrink-0 mt-0.5 text-muted-foreground fill-current" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-sm mb-0.5">
+              <span className="text-[11px] font-medium text-muted-foreground">공지</span>
+              {pinnedMessage.sender_name && (
+                <span className="text-[11px] text-muted-foreground/60">— {pinnedMessage.sender_name}</span>
+              )}
+            </div>
+            <p className="text-[12px] text-foreground line-clamp-2 whitespace-pre-wrap break-words">
+              {pinnedMessage.content ?? (pinnedMessage.file_name ? `📎 ${pinnedMessage.file_name}` : '')}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onPinChange(null)}
+            aria-label="공지 해제"
+            title="공지 해제"
+            className="shrink-0 inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-accent transition-colors"
+          >
+            <X size={12} />
+          </button>
+        </div>
+      )}
+
       <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-minimal px-md py-md bg-background">
         {loading ? (
           <div className="text-center text-muted-foreground/70 text-[13px] py-md">불러오는 중…</div>
@@ -668,6 +719,7 @@ function ThreadPane({
               const isOwn = m.sender_user_id === currentUserId
               const isReadByOther =
                 isOwn && !!otherLastReadAt && new Date(m.created_at) <= new Date(otherLastReadAt)
+              const isPinned = pinnedMessage?.id === m.id
               return (
                 <MessageItem
                   key={m.id}
@@ -675,7 +727,9 @@ function ThreadPane({
                   isOwn={isOwn}
                   showSender={i === 0 || messages[i - 1].sender_user_id !== m.sender_user_id}
                   isReadByOther={isReadByOther}
+                  isPinned={isPinned}
                   onDelete={isOwn ? () => handleMessageDelete(m.id) : undefined}
+                  onPin={() => onPinChange(isPinned ? null : m.id)}
                 />
               )
             })}
@@ -703,13 +757,17 @@ function MessageItem({
   isOwn,
   showSender,
   isReadByOther,
+  isPinned,
   onDelete,
+  onPin,
 }: {
   msg: MessageRow
   isOwn: boolean
   showSender: boolean
   isReadByOther: boolean
+  isPinned: boolean
   onDelete?: () => void
+  onPin?: () => void
 }) {
   if (msg.deleted_at) {
     return (
@@ -752,17 +810,33 @@ function MessageItem({
             </a>
           )}
         </div>
-        {isOwn && onDelete && (
-          <button
-            type="button"
-            onClick={onDelete}
-            aria-label="메시지 삭제"
-            title="메시지 삭제"
-            className="shrink-0 opacity-0 group-hover:opacity-100 inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-opacity"
-          >
-            <Trash2 size={12} />
-          </button>
-        )}
+        <div className="shrink-0 inline-flex items-center gap-0.5">
+          {onPin && !msg.deleted_at && (
+            <button
+              type="button"
+              onClick={onPin}
+              aria-label={isPinned ? '공지 해제' : '공지로 등록'}
+              title={isPinned ? '공지 해제' : '공지로 등록'}
+              className={cn(
+                'inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-opacity',
+                isPinned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+              )}
+            >
+              <Bookmark size={12} className={isPinned ? 'fill-current' : ''} />
+            </button>
+          )}
+          {isOwn && onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              aria-label="메시지 삭제"
+              title="메시지 삭제"
+              className="opacity-0 group-hover:opacity-100 inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-opacity"
+            >
+              <Trash2 size={12} />
+            </button>
+          )}
+        </div>
       </div>
       <div className={cn('flex items-center gap-1.5 px-sm mt-0.5 font-mono text-[10px] text-muted-foreground/50')}>
         {isOwn && isReadByOther && <span className="text-muted-foreground/70">읽음</span>}
