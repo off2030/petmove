@@ -723,7 +723,7 @@ function MessageItem({
           {msg.sender_name ?? '(탈퇴한 사용자)'}
         </span>
       )}
-      <div className={cn('flex items-end gap-1', isOwn && 'flex-row-reverse')}>
+      <div className={cn('flex items-end gap-1 w-full', isOwn && 'flex-row-reverse')}>
         <div className={cn('max-w-[70%] rounded-lg px-sm py-1.5', isOwn ? 'bg-primary text-primary-foreground' : 'bg-accent text-foreground')}>
           {msg.case_label && (
             <div className={cn(
