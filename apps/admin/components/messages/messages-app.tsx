@@ -541,26 +541,30 @@ function ThreadPane({
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const confirm = useConfirm()
-  const [deleting, startDelete] = useTransition()
+  const [deleting, setDeleting] = useState(false)
   const { otherTyping, emitTyping } = useTypingChannel(conv.id, currentUserId)
 
-  function handleDelete() {
-    startDelete(async () => {
-      const ok = await confirm({
-        message: '이 대화방을 완전히 삭제하시겠습니까?',
-        description: '메시지·첨부파일이 모두 제거되고 상대방에게서도 사라집니다. 복구할 수 없습니다.',
-        okLabel: '삭제',
-        cancelLabel: '취소',
-        variant: 'destructive',
-      })
-      if (!ok) return
+  async function handleDelete() {
+    if (deleting) return
+    const ok = await confirm({
+      message: '이 대화방을 완전히 삭제하시겠습니까?',
+      description: '메시지·첨부파일이 모두 제거되고 상대방에게서도 사라집니다. 복구할 수 없습니다.',
+      okLabel: '삭제',
+      cancelLabel: '취소',
+      variant: 'destructive',
+    })
+    if (!ok) return
+    setDeleting(true)
+    try {
       const r = await deleteConversation({ convId: conv.id })
       if (!r.ok) {
         alert(`삭제 실패: ${r.error}`)
         return
       }
       onDeleted()
-    })
+    } finally {
+      setDeleting(false)
+    }
   }
 
   async function handleMessageDelete(msgId: string) {
