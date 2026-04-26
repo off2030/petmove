@@ -10,7 +10,7 @@
     "db:push": "supabase db push",
     "db:reset": "supabase db reset",
     "db:diff": "supabase db diff",
-    "db:link": "supabase link --project-ref jxyalwbstsqpecavqfkb"
+    "db:link": "supabase link --project-ref ugywxiyivfzflqkcnqvu"
   },
   "devDependencies": {
     "supabase": "^2.89.1",

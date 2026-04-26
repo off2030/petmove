@@ -6,18 +6,17 @@
  * 사용:
  *   pnpm -F admin exec node scripts/set-password.mjs <email> <new-password>
  *
- * Seoul 프로젝트(NEW_*) 에 적용. 구 Mumbai 프로젝트는 건드리지 않음.
  */
 import dotenv from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
 
 dotenv.config({ path: '.env.local' })
 
-const URL = process.env.NEW_SUPABASE_URL
-const KEY = process.env.NEW_SUPABASE_SERVICE_ROLE_KEY
+const URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 if (!URL || !KEY) {
-  console.error('NEW_SUPABASE_URL / NEW_SUPABASE_SERVICE_ROLE_KEY 누락')
+  console.error('NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 누락')
   process.exit(1)
 }
 
