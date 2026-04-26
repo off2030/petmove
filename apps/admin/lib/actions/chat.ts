@@ -49,6 +49,12 @@ export interface MessageRow {
   deleted_at: string | null
 }
 
+export interface ConversationMessagesResult {
+  messages: MessageRow[]
+  /** 상대방이 마지막으로 읽은 시각 — 본인 메시지의 "읽음" 표시 기준. */
+  other_last_read_at: string | null
+}
+
 export interface CasePickerItem {
   id: string
   label: string
@@ -235,7 +241,7 @@ export async function listConversationMessages(input: {
   convId: string
   caseId?: string | null
   limit?: number
-}): Promise<Result<MessageRow[]>> {
+}): Promise<Result<ConversationMessagesResult>> {
   const auth = await requireUser()
   if (!auth.ok) return auth
   const supabase = await createClient()
@@ -311,7 +317,7 @@ export async function listConversationMessages(input: {
     if (u.path && u.signedUrl) fileUrlMap.set(u.path, u.signedUrl)
   }
 
-  const value: MessageRow[] = rows.map((r) => ({
+  const messages: MessageRow[] = rows.map((r) => ({
     id: r.id as string,
     conv_id: r.conv_id as string,
     sender_user_id: (r.sender_user_id as string | null) ?? null,
@@ -326,7 +332,29 @@ export async function listConversationMessages(input: {
     deleted_at: (r.deleted_at as string | null) ?? null,
   }))
 
-  return { ok: true, value }
+  // 상대방의 last_read_at — 본인 메시지의 "읽음" 표시용. message_reads RLS 가
+  // user_id=auth.uid() 제약이라 admin client 로 조회 (대화 멤버는 알 권리가 있음).
+  const { data: convRow } = await supabase
+    .from('conversations')
+    .select('user_a_id, user_b_id')
+    .eq('id', input.convId)
+    .maybeSingle()
+  let otherLastReadAt: string | null = null
+  if (convRow) {
+    const otherUserId =
+      (convRow.user_a_id as string) === auth.userId
+        ? (convRow.user_b_id as string)
+        : (convRow.user_a_id as string)
+    const { data: read } = await admin
+      .from('message_reads')
+      .select('last_read_at')
+      .eq('conv_id', input.convId)
+      .eq('user_id', otherUserId)
+      .maybeSingle()
+    otherLastReadAt = (read?.last_read_at as string | null) ?? null
+  }
+
+  return { ok: true, value: { messages, other_last_read_at: otherLastReadAt } }
 }
 
 /** 메시지 전송. content / fileUrl 둘 중 하나는 필수. */

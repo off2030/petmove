@@ -9,6 +9,7 @@ import { useConfirm } from '@/components/ui/confirm-dialog'
 const MAX_CHAT_FILE_BYTES = 25 * 1024 * 1024
 import {
   deleteConversation,
+  deleteMessage,
   getOrCreateDM,
   listConversationMessages,
   listMembersForDmPicker,
@@ -38,6 +39,7 @@ export function MessagesApp({
   const [activeConvId, setActiveConvId] = useState<string | null>(null)
   const [caseFilter, setCaseFilter] = useState<{ id: string; label: string } | null>(null)
   const [messages, setMessages] = useState<MessageRow[]>([])
+  const [otherLastReadAt, setOtherLastReadAt] = useState<string | null>(null)
   const [loadingMessages, setLoadingMessages] = useState(false)
   const [showNewDm, setShowNewDm] = useState(false)
 
@@ -45,7 +47,10 @@ export function MessagesApp({
     async (convId: string, caseId: string | null, opts?: { silent?: boolean }) => {
       if (!opts?.silent) setLoadingMessages(true)
       const r = await listConversationMessages({ convId, caseId })
-      if (r.ok) setMessages(r.value)
+      if (r.ok) {
+        setMessages(r.value.messages)
+        setOtherLastReadAt(r.value.other_last_read_at)
+      }
       if (!opts?.silent) setLoadingMessages(false)
     },
     [],
@@ -116,6 +121,7 @@ export function MessagesApp({
             <ThreadPane
               conv={activeConv}
               messages={messages}
+              otherLastReadAt={otherLastReadAt}
               loading={loadingMessages}
               currentUserId={currentUserId}
               caseFilter={caseFilter}
@@ -123,6 +129,13 @@ export function MessagesApp({
               onMessageSent={(m) => {
                 setMessages((prev) => [...prev, m])
                 refreshMessages(activeConv.id, caseFilter?.id ?? null, { silent: true })
+              }}
+              onMessageDeleted={(msgId) => {
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === msgId ? { ...m, deleted_at: new Date().toISOString() } : m,
+                  ),
+                )
               }}
               onDeleted={() => {
                 const deletedId = activeConv.id
@@ -451,31 +464,85 @@ function NewDmModal({
 }
 
 // ─────────────────────────────────────────────────
+// 작성 중… (Realtime broadcast)
+// ─────────────────────────────────────────────────
+// 채널 = `chat:{convId}`. 본인 외의 사용자가 typing 이벤트를 보내면 4s 동안 표시.
+// emit 은 2s 간격으로 throttle — textarea 매 keystroke 마다 호출돼도 부담 없음.
+
+function useTypingChannel(convId: string, currentUserId: string | null) {
+  const [otherTyping, setOtherTyping] = useState(false)
+  const lastEmitRef = useRef(0)
+  const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const channelRef = useRef<ReturnType<typeof supabaseBrowser.channel> | null>(null)
+
+  useEffect(() => {
+    if (!convId || !currentUserId) return
+    const channel = supabaseBrowser.channel(`chat:${convId}`, {
+      config: { broadcast: { self: false } },
+    })
+    channel.on('broadcast', { event: 'typing' }, (payload) => {
+      const fromUserId = (payload.payload as { user_id?: string } | null)?.user_id
+      if (!fromUserId || fromUserId === currentUserId) return
+      setOtherTyping(true)
+      if (clearTimerRef.current) clearTimeout(clearTimerRef.current)
+      clearTimerRef.current = setTimeout(() => setOtherTyping(false), 4000)
+    })
+    channel.subscribe()
+    channelRef.current = channel
+    return () => {
+      if (clearTimerRef.current) clearTimeout(clearTimerRef.current)
+      channel.unsubscribe()
+      channelRef.current = null
+      setOtherTyping(false)
+    }
+  }, [convId, currentUserId])
+
+  const emitTyping = useCallback(() => {
+    if (!currentUserId || !channelRef.current) return
+    const now = Date.now()
+    if (now - lastEmitRef.current < 2000) return
+    lastEmitRef.current = now
+    void channelRef.current.send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { user_id: currentUserId },
+    })
+  }, [currentUserId])
+
+  return { otherTyping, emitTyping }
+}
+
+// ─────────────────────────────────────────────────
 // 스레드 패널
 // ─────────────────────────────────────────────────
 
 function ThreadPane({
   conv,
   messages,
+  otherLastReadAt,
   loading,
   currentUserId,
   caseFilter,
   onCaseFilterChange,
   onMessageSent,
+  onMessageDeleted,
   onDeleted,
 }: {
   conv: ConversationListItem
   messages: MessageRow[]
+  otherLastReadAt: string | null
   loading: boolean
   currentUserId: string | null
   caseFilter: { id: string; label: string } | null
   onCaseFilterChange: (v: { id: string; label: string } | null) => void
   onMessageSent: (m: MessageRow) => void
+  onMessageDeleted: (msgId: string) => void
   onDeleted: () => void
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const confirm = useConfirm()
   const [deleting, startDelete] = useTransition()
+  const { otherTyping, emitTyping } = useTypingChannel(conv.id, currentUserId)
 
   function handleDelete() {
     startDelete(async () => {
@@ -496,11 +563,27 @@ function ThreadPane({
     })
   }
 
+  async function handleMessageDelete(msgId: string) {
+    const ok = await confirm({
+      message: '이 메시지를 삭제하시겠습니까?',
+      description: '상대방 화면에서도 "삭제된 메시지" 로 표시됩니다.',
+      okLabel: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
+    const r = await deleteMessage(msgId)
+    if (!r.ok) {
+      alert(`삭제 실패: ${r.error}`)
+      return
+    }
+    onMessageDeleted(msgId)
+  }
+
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
     el.scrollTop = el.scrollHeight
-  }, [messages.length])
+  }, [messages.length, otherTyping])
 
   const headerName = conv.other_user.name ?? conv.other_user.email ?? '(이름 없음)'
 
@@ -560,19 +643,36 @@ function ThreadPane({
           </div>
         ) : (
           <ul className="space-y-2">
-            {messages.map((m, i) => (
-              <MessageItem
-                key={m.id}
-                msg={m}
-                isOwn={m.sender_user_id === currentUserId}
-                showSender={i === 0 || messages[i - 1].sender_user_id !== m.sender_user_id}
-              />
-            ))}
+            {messages.map((m, i) => {
+              const isOwn = m.sender_user_id === currentUserId
+              const isReadByOther =
+                isOwn && !!otherLastReadAt && new Date(m.created_at) <= new Date(otherLastReadAt)
+              return (
+                <MessageItem
+                  key={m.id}
+                  msg={m}
+                  isOwn={isOwn}
+                  showSender={i === 0 || messages[i - 1].sender_user_id !== m.sender_user_id}
+                  isReadByOther={isReadByOther}
+                  onDelete={isOwn ? () => handleMessageDelete(m.id) : undefined}
+                />
+              )
+            })}
           </ul>
+        )}
+        {otherTyping && (
+          <div className="mt-2 px-sm text-[12px] italic font-serif text-muted-foreground/70">
+            작성 중…
+          </div>
         )}
       </div>
 
-      <Composer convId={conv.id} onMessageSent={onMessageSent} caseFilter={caseFilter} />
+      <Composer
+        convId={conv.id}
+        onMessageSent={onMessageSent}
+        caseFilter={caseFilter}
+        onTextChange={emitTyping}
+      />
     </>
   )
 }
@@ -581,10 +681,14 @@ function MessageItem({
   msg,
   isOwn,
   showSender,
+  isReadByOther,
+  onDelete,
 }: {
   msg: MessageRow
   isOwn: boolean
   showSender: boolean
+  isReadByOther: boolean
+  onDelete?: () => void
 }) {
   if (msg.deleted_at) {
     return (
@@ -596,39 +700,53 @@ function MessageItem({
     )
   }
   return (
-    <li className={cn('flex flex-col', isOwn ? 'items-end' : 'items-start')}>
+    <li className={cn('flex flex-col group', isOwn ? 'items-end' : 'items-start')}>
       {showSender && !isOwn && (
         <span className="text-[11px] text-muted-foreground/70 px-sm mb-0.5">
           {msg.sender_name ?? '(탈퇴한 사용자)'}
         </span>
       )}
-      <div className={cn('max-w-[70%] rounded-lg px-sm py-1.5', isOwn ? 'bg-primary text-primary-foreground' : 'bg-accent text-foreground')}>
-        {msg.case_label && (
-          <div className={cn(
-            'inline-flex items-center gap-1 rounded-full px-2 py-0.5 mb-1 text-[10px] font-mono',
-            isOwn ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-[#E5D9C2] text-[#6B5A3A]',
-          )}>
-            <Tag size={9} />
-            <span className="font-serif">{msg.case_label}</span>
-          </div>
-        )}
-        {msg.content && (
-          <p className="whitespace-pre-wrap break-words text-[14px] leading-relaxed">{msg.content}</p>
-        )}
-        {msg.file_url && (
-          <a
-            href={msg.file_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[12px] underline opacity-90 hover:opacity-100 block mt-1"
+      <div className={cn('flex items-end gap-1', isOwn && 'flex-row-reverse')}>
+        <div className={cn('max-w-[70%] rounded-lg px-sm py-1.5', isOwn ? 'bg-primary text-primary-foreground' : 'bg-accent text-foreground')}>
+          {msg.case_label && (
+            <div className={cn(
+              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 mb-1 text-[10px] font-mono',
+              isOwn ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-[#E5D9C2] text-[#6B5A3A]',
+            )}>
+              <Tag size={9} />
+              <span className="font-serif">{msg.case_label}</span>
+            </div>
+          )}
+          {msg.content && (
+            <p className="whitespace-pre-wrap break-words text-[14px] leading-relaxed">{msg.content}</p>
+          )}
+          {msg.file_url && (
+            <a
+              href={msg.file_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[12px] underline opacity-90 hover:opacity-100 block mt-1"
+            >
+              📎 {msg.file_name ?? '첨부파일'}
+            </a>
+          )}
+        </div>
+        {isOwn && onDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            aria-label="메시지 삭제"
+            title="메시지 삭제"
+            className="shrink-0 opacity-0 group-hover:opacity-100 inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-opacity"
           >
-            📎 {msg.file_name ?? '첨부파일'}
-          </a>
+            <Trash2 size={12} />
+          </button>
         )}
       </div>
-      <span className="text-[10px] text-muted-foreground/50 px-sm mt-0.5 font-mono">
-        {formatTime(msg.created_at)}
-      </span>
+      <div className={cn('flex items-center gap-1.5 px-sm mt-0.5 font-mono text-[10px] text-muted-foreground/50')}>
+        {isOwn && isReadByOther && <span className="text-muted-foreground/70">읽음</span>}
+        <span>{formatTime(msg.created_at)}</span>
+      </div>
     </li>
   )
 }
@@ -637,10 +755,12 @@ function Composer({
   convId,
   onMessageSent,
   caseFilter,
+  onTextChange,
 }: {
   convId: string
   onMessageSent: (m: MessageRow) => void
   caseFilter: { id: string; label: string } | null
+  onTextChange?: () => void
 }) {
   const [text, setText] = useState('')
   const [tag, setTag] = useState<{ id: string; label: string } | null>(null)
@@ -795,7 +915,10 @@ function Composer({
         <textarea
           ref={taRef}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value)
+            onTextChange?.()
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault()
