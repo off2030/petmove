@@ -18,6 +18,7 @@ import {
 } from '@/lib/actions/org-vaccine-products'
 import { extractVaccineInfo } from '@/lib/actions/extract-vaccine'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 type ProductSection = '접종' | '구충'
 type ProductSpecies = 'common' | 'dog' | 'cat'
@@ -161,6 +162,7 @@ export function VaccineSection({
   initialProducts?: OrgVaccineProduct[] | null
   isAdmin?: boolean
 } = {}) {
+  const confirm = useConfirm()
   const [products, setProducts] = useState<OrgVaccineProduct[]>(initialProducts ?? [])
   const [loading, setLoading] = useState(initialProducts === null)
   const [error, setError] = useState<string | null>(null)
@@ -357,8 +359,8 @@ export function VaccineSection({
     })
   }
 
-  function onDelete(id: string) {
-    if (!confirm('이 제품을 삭제하시겠습니까?')) return
+  async function onDelete(id: string) {
+    if (!await confirm({ message: '이 제품을 삭제하시겠습니까?', okLabel: '삭제', variant: 'destructive' })) return
     startTransition(async () => {
       const r = await deleteOrgVaccineProduct(id)
       if (!r.ok) {
@@ -744,6 +746,7 @@ interface ProductFormModalProps {
 }
 
 function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }: ProductFormModalProps) {
+  const confirm = useConfirm()
   const [form, setForm] = useState<FormState>(initial)
 
   useEffect(() => {
@@ -896,8 +899,8 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }:
           {mode === 'edit' && onDelete && (
             <button
               type="button"
-              onClick={() => {
-                if (confirm('이 제품을 삭제하시겠습니까?')) onDelete()
+              onClick={async () => {
+                if (await confirm({ message: '이 제품을 삭제하시겠습니까?', okLabel: '삭제', variant: 'destructive' })) onDelete()
               }}
               disabled={pending}
               className="inline-flex items-center gap-1 px-md py-1.5 text-sm rounded-md text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"

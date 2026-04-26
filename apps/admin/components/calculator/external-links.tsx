@@ -124,10 +124,11 @@ export function ExternalLinks({ initialConfig }: { initialConfig: ExternalLinksC
           <button
             type="button"
             onClick={startEdit}
-            className="flex items-center gap-1 px-2 py-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="편집"
+            title="편집"
+            className="flex items-center px-2 py-1 text-muted-foreground hover:text-foreground transition-colors"
           >
             <Pencil className="w-3.5 h-3.5" />
-            편집
           </button>
         </div>
 

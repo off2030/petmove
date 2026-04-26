@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { History } from 'lucide-react'
 import { useCases } from './cases-context'
 import { restoreToHistoryPoint } from '@/lib/actions/cases'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 interface HistoryEntry {
   id: string
@@ -17,6 +18,7 @@ interface HistoryEntry {
 
 export function CaseHistory({ caseId }: { caseId: string }) {
   const { updateLocalCaseField } = useCases()
+  const confirm = useConfirm()
   const [entries, setEntries] = useState<HistoryEntry[]>([])
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -55,9 +57,11 @@ export function CaseHistory({ caseId }: { caseId: string }) {
 
   async function handleRestoreToPoint(entry: HistoryEntry) {
     if (restoring) return
-    const confirmed = confirm(
-      `${formatTime(entry.changed_at)} 시점 이후의 모든 변경을 되돌립니다.\n계속하시겠습니까?`,
-    )
+    const confirmed = await confirm({
+      message: `${formatTime(entry.changed_at)} 시점 이후의 모든 변경을 되돌립니다.`,
+      description: '계속하시겠습니까?',
+      okLabel: '되돌리기',
+    })
     if (!confirmed) return
 
     setRestoring(true)

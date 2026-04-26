@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter_Tight, Source_Serif_4, JetBrains_Mono, Noto_Sans_KR, Noto_Serif_KR } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
+import { ConfirmProvider } from '@/components/ui/confirm-dialog'
 
 // next/font — 동일 오리진에서 폰트 서빙, Turbopack/CSS @import 이슈 우회.
 // CSS 변수로 노출해서 tailwind fontFamily 가 참조.
@@ -52,9 +53,11 @@ export default function RootLayout({
     <html lang="ko" suppressHydrationWarning className={`${interTight.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} ${notoSansKr.variable} ${notoSerifKr.variable}`}>
       <body className="min-h-screen bg-background text-foreground antialiased font-sans">
         <ThemeProvider />
-        <div className="flex flex-col h-screen">
-          {children}
-        </div>
+        <ConfirmProvider>
+          <div className="flex flex-col h-screen">
+            {children}
+          </div>
+        </ConfirmProvider>
       </body>
     </html>
   )

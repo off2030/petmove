@@ -17,6 +17,7 @@ import {
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { PillButton } from '@/components/ui/pill-button'
 import { SectionHeader } from '@/components/ui/section-header'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
 
 const ROLE_LABEL: Record<InviteRole, string> = {
@@ -44,6 +45,7 @@ export function MembersSection({
   isAdmin?: boolean
   currentUserId?: string | null
 } = {}) {
+  const confirm = useConfirm()
   const [members, setMembers] = useState<MemberRow[]>(initialMembers ?? [])
   const [invites, setInvites] = useState<InviteRow[]>(initialInvites ?? [])
   const [superAdmins, setSuperAdmins] = useState<SuperAdminRow[]>(initialSuperAdmins ?? [])
@@ -124,17 +126,17 @@ export function MembersSection({
     })
   }
 
-  function onRevoke(id: string) {
-    if (!confirm('초대를 취소하시겠습니까?')) return
+  async function onRevoke(id: string) {
+    if (!await confirm({ message: '초대를 취소하시겠습니까?', okLabel: '취소', variant: 'destructive' })) return
     startTransition(async () => {
       await revokeInvite(id)
       await refresh()
     })
   }
 
-  function onRemove(member: MemberRow) {
+  async function onRemove(member: MemberRow) {
     const label = member.name && member.name.trim() !== '' ? member.name : member.email
-    if (!confirm(`${label} 님을 조직에서 제거하시겠습니까?`)) return
+    if (!await confirm({ message: `${label} 님을 조직에서 제거하시겠습니까?`, okLabel: '제거', variant: 'destructive' })) return
     setRemoveError(null)
     startTransition(async () => {
       const r = await removeMember(member.user_id)

@@ -200,7 +200,7 @@ export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, curr
   return (
     <>
       {!embedded && <TopBar isSuperAdmin userEmail={userEmail} superAdminActive />}
-      <main className="flex-1 min-w-0 overflow-auto scrollbar-minimal bg-background">
+      <main className="flex-1 min-h-0 min-w-0 h-full overflow-auto scrollbar-minimal bg-background">
         <div className="px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
           <div className="mx-auto max-w-4xl 3xl:max-w-5xl 4xl:max-w-6xl flex flex-col gap-lg">
             {/* Page header — editorial title + count + refresh */}

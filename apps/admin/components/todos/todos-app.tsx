@@ -12,6 +12,7 @@ import { TodoTable, type TodoColumn } from './todo-table'
 import { InspectionTable, type InspectionRow } from './inspection-table'
 import { updateCaseField } from '@/lib/actions/cases'
 import { downloadPdfRequest, type PdfDownloadRequest } from '@/lib/pdf-download'
+import { PageShell, PageTabs } from '@/components/ui/page-shell'
 
 function downloadBase64Pdf(base64: string, filename: string) {
   const link = document.createElement('a')
@@ -132,31 +133,6 @@ function resolveInspectionLab(
   return autoDetectLab(row.destination, rules, defaultLab)
 }
 
-/** 검사 탭 공통 컷오프: 이 날짜 이후의 검사/출국만 탭에 올라감. */
-const INSPECTION_CUTOFF_DATE = '2026-04-03'
-
-/** Check if case has titer date on or after cutoff */
-function hasTiterDateAfterCutoff(row: CaseRow): boolean {
-  const date = resolveTiterDate(row)
-  if (!date) return false
-  return date >= INSPECTION_CUTOFF_DATE
-}
-
-/**
- * Read inspection_dismissed keys from case.data.
- * 검사 탭에서 개별 삭제 버튼으로 숨긴 행들의 키 배열. 값: 'titer' | 'inf:ksvdl' | 'inf:nz' ...
- */
-function getInspectionDismissedKeys(row: CaseRow): string[] {
-  const data = (row.data ?? {}) as Record<string, unknown>
-  const arr = data.inspection_dismissed
-  if (!Array.isArray(arr)) return []
-  return arr.filter((x): x is string => typeof x === 'string')
-}
-
-function isInspectionRowDismissed(row: CaseRow, key: string): boolean {
-  return getInspectionDismissedKeys(row).includes(key)
-}
-
 interface InfectiousRecord { date?: string | null; lab?: string | null }
 
 function readInfectiousRecords(row: CaseRow): InfectiousRecord[] {
@@ -188,8 +164,8 @@ function addDays(dateStr: string, days: number): string {
 /**
  * 검사 탭에 뿌릴 행 목록을 케이스별로 펼친다.
  * 공통 규칙: 상세페이지에서 검사일을 지우면 탭에서도 사라진다.
- * - 광견병항체: titer 기록 컷오프 이후 & 진행상태 ≠ done → 1행
- * - 전염병검사(호주): infectious_disease_records에 lab=ksvdl & date 존재 → 1행
+ * - 광견병항체: titer 기록이 있으면 1행
+ * - 전염병검사(호주): 검사일 또는 출국일이 있으면 1행
  * - 전염병검사(뉴질랜드): 출국일이 있으면 APQA HQ+VBDDL 묶음 1행 (검사일 = 저장값 or 출국일-15일)
  */
 function buildInspectionRows(
@@ -200,30 +176,28 @@ function buildInspectionRows(
   const rows: InspectionRow[] = []
   for (const c of cases) {
     // 1) 광견병항체
-    // 이전: 상태 완료(done)시 자동 제거. 지금: 개별 삭제 버튼(dismiss)으로만 제거.
-    if (hasTiterDateAfterCutoff(c) && !isInspectionRowDismissed(c, 'titer')) {
+    const titerDate = resolveTiterDate(c)
+    if (titerDate) {
       rows.push({
         id: `${c.id}:titer`,
         caseRow: c,
         kind: 'titer',
         lab: resolveInspectionLab(c, titerRules, titerDefault),
-        date: resolveTiterDate(c),
+        date: titerDate,
         dateEditable: true,
         dateStorage: { kind: 'titer' },
-        dismissKey: 'titer',
       })
     }
     // 2) 전염병검사 — 호주/뉴질랜드
     const isAU = matchesDestinationKey(c.destination, 'australia')
     const isNZ = matchesDestinationKey(c.destination, 'new_zealand')
-    if (isAU && !isInspectionRowDismissed(c, 'inf:ksvdl')) {
+    if (isAU) {
       // 호주: 검사일(infectious ksvdl.date) 또는 출국일 중 하나라도 있으면 탭에 올림.
       // 날짜 컬럼은 검사일 있으면 그것, 없으면 빈 값(사용자가 탭에서 직접 입력).
-      // 컷오프: 기준일(검사일 우선, 없으면 출국일) >= 2026-04-03.
       const recs = readInfectiousRecords(c)
       const existing = recs.find(r => r.lab === 'ksvdl')
       const referenceDate = existing?.date || c.departure_date
-      if (referenceDate && referenceDate >= INSPECTION_CUTOFF_DATE) {
+      if (referenceDate) {
         rows.push({
           id: `${c.id}:inf:ksvdl`,
           caseRow: c,
@@ -232,11 +206,10 @@ function buildInspectionRows(
           date: existing?.date ?? '',
           dateEditable: true,
           dateStorage: { kind: 'infectious', lab: 'ksvdl' },
-          dismissKey: 'inf:ksvdl',
         })
       }
     }
-    if (isNZ && c.departure_date && !isInspectionRowDismissed(c, 'inf:nz')) {
+    if (isNZ && c.departure_date) {
       // 뉴질랜드: APQA HQ + VBDDL 두 검사기관을 한 행으로 묶어서 표시.
       // 검사일 수정 시 두 record(apqa_hq, vbddl)에 동시 저장.
       // 표시 날짜는 저장값 우선(apqa_hq → vbddl 순), 없으면 출국일 - 15일 자동.
@@ -252,7 +225,6 @@ function buildInspectionRows(
         date,
         dateEditable: true,
         dateStorage: { kind: 'infectious_multi', labs: ['apqa_hq', 'vbddl'] },
-        dismissKey: 'inf:nz',
       })
     }
   }
@@ -263,12 +235,15 @@ function buildInspectionRows(
 const LAB_SORT_ORDER: Record<string, number> = {
   krsl: 0,
   apqa_seoul: 1,
-  apqa_hq: 2,
-  ksvdl_r: 3,
-  ksvdl: 4,
-  vbddl: 5,
-  nz_combined: 6,
+  ksvdl_r: 2,
+  ksvdl: 3,
+  apqa_hq: 4,
+  vbddl: 4,
+  nz_combined: 4,
 }
+
+// 모든 데이터 컬럼은 통일 너비.
+const BASE_COL_W = 106
 
 const INSPECTION_COLUMNS: TodoColumn[] = [
   // 검사 탭은 InspectionTable 로 렌더되므로 이 컬럼 집합은 실제로 그려지지 않음.
@@ -278,7 +253,7 @@ const INSPECTION_COLUMNS: TodoColumn[] = [
     label: '검사기관',
     storage: 'data',
     type: 'select',
-    width: 160,
+    width: BASE_COL_W,
     options: LAB_OPTIONS,
     resolveValue: (row) => {
       const data = (row.data ?? {}) as Record<string, unknown>
@@ -286,21 +261,22 @@ const INSPECTION_COLUMNS: TodoColumn[] = [
       return typeof v === 'string' ? v : ''
     },
   },
-  { key: 'rabies_titer_date', label: '검사일', storage: 'data', type: 'date', width: 120, resolveValue: resolveTiterDate },
-  { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: 100 },
-  { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: 100 },
-  { key: 'destination', label: '목적지', storage: 'column', type: 'text', width: 100 },
-  { key: 'inspection_status', label: '진행상태', storage: 'data', type: 'select', width: 110, options: INSPECTION_STATUS_OPTIONS, defaultValue: 'waiting' },
-  { key: 'inspection_memo', label: '메모', storage: 'data', type: 'text', width: 180 },
+  { key: 'rabies_titer_date', label: '검사일', storage: 'data', type: 'date', width: BASE_COL_W, resolveValue: resolveTiterDate },
+  { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: BASE_COL_W },
+  { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: BASE_COL_W },
+  { key: 'destination', label: '목적지', storage: 'column', type: 'text', width: BASE_COL_W },
+  { key: 'inspection_status', label: '진행상태', storage: 'data', type: 'select', width: BASE_COL_W, options: INSPECTION_STATUS_OPTIONS, defaultValue: 'waiting' },
+  { key: 'inspection_memo', label: '메모', storage: 'data', type: 'text', width: BASE_COL_W },
 ]
 
+const EXPORT_DOC_COL_W = BASE_COL_W + 18
 const EXPORT_DOC_COLUMNS: TodoColumn[] = [
   {
     key: 'vet_visit_date',
     label: '내원일',
     storage: 'data',
     type: 'date',
-    width: 110,
+    width: EXPORT_DOC_COL_W,
     // 내원일이 7일 이내(포함 경과분)이고 준비상태 ≠ done 이면 주황.
     cellClass: (row) => {
       const data = (row.data ?? {}) as Record<string, unknown>
@@ -318,13 +294,13 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
       return 'text-orange-500'
     },
   },
-  { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: 110 },
+  { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: EXPORT_DOC_COL_W },
   {
     key: 'vet_available_date',
     label: '내원가능일',
     storage: 'data',
     type: 'date',
-    width: 110,
+    width: EXPORT_DOC_COL_W,
     // 저장된 값이 없으면 출국일 - 9일로 자동 계산하여 표시.
     resolveValue: (row) => {
       const data = (row.data ?? {}) as Record<string, unknown>
@@ -335,19 +311,19 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
       return ''
     },
   },
-  { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: 90, readonly: true },
-  { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: 90, readonly: true },
+  { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: EXPORT_DOC_COL_W, readonly: true },
+  { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: EXPORT_DOC_COL_W, readonly: true },
   {
     key: 'destination',
     label: '목적지',
     storage: 'column',
     type: 'custom',
-    width: 120,
+    width: EXPORT_DOC_COL_W,
     readonly: true,
     render: (row) => renderDestinationBadges(row.destination),
   },
-  { key: 'export_doc_status', label: '준비상태', storage: 'data', type: 'select', width: 100, options: STATUS_OPTIONS, defaultValue: 'not_started' },
-  { key: 'export_doc_memo', label: '메모', storage: 'data', type: 'text', width: 180 },
+  { key: 'export_doc_status', label: '준비상태', storage: 'data', type: 'select', width: EXPORT_DOC_COL_W, options: STATUS_OPTIONS, defaultValue: 'not_started' },
+  { key: 'export_doc_memo', label: '메모', storage: 'data', type: 'text', width: EXPORT_DOC_COL_W },
 ]
 
 /**
@@ -434,18 +410,18 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     label: '목적지',
     storage: 'column',
     type: 'custom',
-    width: 100,
+    width: BASE_COL_W,
     readonly: true,
     render: (row) => renderDestinationBadges(row.destination),
   },
-  { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: 90, readonly: true },
-  { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: 90, readonly: true },
+  { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: BASE_COL_W, readonly: true },
+  { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: BASE_COL_W, readonly: true },
   {
     key: 'import_deadline',
     label: '신고기한',
     storage: 'data',
     type: 'date',
-    width: 110,
+    width: BASE_COL_W,
     // 일본: 저장된 값이 없으면 출국일 - 40일로 자동 계산하여 표시.
     resolveValue: (row) => {
       const data = (row.data ?? {}) as Record<string, unknown>
@@ -474,14 +450,14 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
       return 'text-orange-500'
     },
   },
-  { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: 110 },
-  { key: 'return_date', label: '귀국일', storage: 'data', type: 'date', width: 110 },
+  { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: BASE_COL_W },
+  { key: 'return_date', label: '귀국일', storage: 'data', type: 'date', width: BASE_COL_W },
   {
     key: 'import_import_status',
     label: '수입',
     storage: 'data',
     type: 'select',
-    width: 80,
+    width: BASE_COL_W,
     options: STATUS_WITH_NA,
     resolveValue: effectiveImportStatus,
   },
@@ -490,11 +466,11 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     label: '수출',
     storage: 'data',
     type: 'select',
-    width: 80,
+    width: BASE_COL_W,
     options: STATUS_WITH_NA,
     resolveValue: effectiveExportStatus,
   },
-  { key: 'import_memo', label: '메모', storage: 'data', type: 'text', width: 180 },
+  { key: 'import_memo', label: '메모', storage: 'data', type: 'text', width: BASE_COL_W + 6 },
   {
     key: 'import_report_manual_remove',
     label: '',
@@ -504,7 +480,7 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     // 수동 포함(import_report_manual=true)인 케이스에만 ✕ 버튼 노출.
     // 자동 포함 케이스에는 출국일이나 목적지를 지워야 탭에서 빠지므로 버튼 숨김.
     render: (row, onUpdate) => {
-      if (!isManualImportReport(row)) return <span className="text-muted-foreground/20 text-sm">—</span>
+      if (!isManualImportReport(row)) return null
       return (
         <button
           type="button"
@@ -602,18 +578,22 @@ export function TodosApp() {
         const aDone = ((a.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') === 'done'
         const bDone = ((b.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') === 'done'
         if (aDone !== bDone) return aDone ? 1 : -1
-        // 1순위: 검사실 (lab)
-        const labCmp = (LAB_SORT_ORDER[a.lab] ?? 99) - (LAB_SORT_ORDER[b.lab] ?? 99)
-        if (labCmp !== 0) return labCmp
-        // 2순위: 채혈일 (없으면 뒤로)
         const da = a.date || ''
         const db = b.date || ''
+        // 완료 그룹: 검사일 최신순(DESC)만 적용
+        if (aDone && bDone) {
+          if (!da) return 1
+          if (!db) return -1
+          return db.localeCompare(da)
+        }
+        // 비완료 그룹: 1) 검사기관 → 2) 검사일 최신순(DESC) → 3) 출국일
+        const labCmp = (LAB_SORT_ORDER[a.lab] ?? 99) - (LAB_SORT_ORDER[b.lab] ?? 99)
+        if (labCmp !== 0) return labCmp
         if (da !== db) {
           if (!da) return 1
           if (!db) return -1
-          return da.localeCompare(db)
+          return db.localeCompare(da)
         }
-        // 3순위: 출국일 (없으면 뒤로)
         const ea = a.caseRow.departure_date ?? ''
         const eb = b.caseRow.departure_date ?? ''
         if (!ea) return 1
@@ -623,91 +603,55 @@ export function TodosApp() {
     [cases, q, inspectionConfig],
   )
 
-  return (
-    <div className="h-full overflow-hidden px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
-      <div className="h-full mx-auto max-w-7xl flex flex-col gap-lg">
-      {/* Page header — editorial title + italic lead */}
-      <div className="shrink-0 px-lg flex items-baseline gap-md">
-        <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
-          할 일
-        </h1>
-
+  const right = (
+    <>
+      {activeTab === 'import_report' && (
+        <ImportReportAddPicker
+          cases={cases}
+          onAdd={async (caseId) => {
+            updateLocalCaseField(caseId, 'data', 'import_report_manual', true)
+            await updateCaseField(caseId, 'data', 'import_report_manual', true)
+          }}
+        />
+      )}
+      <div className="relative flex-1 md:w-64">
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="검색"
+          className="h-10 pl-10 text-[15px] bg-popover text-foreground shadow-none border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
+        />
       </div>
+    </>
+  )
 
-      {/* Tabs + search — Editorial */}
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-sm md:gap-md border-b border-border/60 shrink-0 px-lg">
-        <div className="flex gap-md">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                'px-1 py-2 font-serif text-[17px] transition-colors border-b -mb-px',
-                activeTab === tab.id
-                  ? 'border-foreground text-foreground font-semibold'
-                  : 'border-transparent text-muted-foreground/70 hover:text-foreground',
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-sm w-full md:w-auto pb-2 md:pb-0 md:mb-2">
-          {activeTab === 'import_report' && (
-            <ImportReportAddPicker
-              cases={cases}
-              onAdd={async (caseId) => {
-                updateLocalCaseField(caseId, 'data', 'import_report_manual', true)
-                await updateCaseField(caseId, 'data', 'import_report_manual', true)
-              }}
+  const footer = (
+    <div className="shrink-0 h-7 px-lg flex items-center justify-between text-[13px] text-muted-foreground">
+      <span>
+        <span className="font-serif italic">총</span>{' '}
+        <span className="font-mono tabular-nums">
+          {(activeTab === 'inspection' ? inspectionRows.length : filteredCases.length).toLocaleString()}
+        </span>
+        <span className="font-serif italic">건</span>
+      </span>
+      {activeTab === 'inspection' && (
+        <>
+          <div className="hidden md:flex items-center gap-sm">
+            <ShipmentDocsButton />
+            <BulkApplyPicker
+              label="KSVDL"
+              rows={inspectionRows.filter(r => r.lab === 'ksvdl')}
+              request={(caseId) => ({ kind: 'single', formKey: 'KSVDL', caseId })}
             />
-          )}
-          <div className="relative flex-1 md:w-64">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="검색"
-              className="h-10 pl-10 text-[15px] bg-card text-foreground shadow-none border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
+            <BulkApplyPicker
+              label="APQA HQ + VBDDL"
+              rows={inspectionRows.filter(r => r.lab === 'nz_combined')}
+              request={(caseId) => ({ kind: 'bundle', variant: 'nz-infection-pack', caseId })}
             />
           </div>
-        </div>
-      </div>
-
-      {/* Borderless list — editorial */}
-      <div className="flex-1 min-h-0 flex flex-col px-md">
-        <div className="flex-1 min-h-0 overflow-auto scrollbar-minimal">
-          {activeTab === 'inspection' ? (
-            <InspectionTable
-              rows={inspectionRows}
-              labOptions={LAB_OPTIONS}
-              statusOptions={INSPECTION_STATUS_OPTIONS}
-              onUpdate={updateLocalCaseField}
-            />
-          ) : (
-            <TodoTable
-              cases={filteredCases}
-              columns={COLUMNS_MAP[activeTab]}
-              onUpdate={updateLocalCaseField}
-            />
-          )}
-        </div>
-      </div>
-
-      {/* Footer — 홈과 동일한 "총 N건" 패턴 (Serif italic + Mono). h-7 로 고정해 탭별 footer 높이 편차 제거.
-          px-lg 로 헤더·탭 라인과 좌우 정렬 — 테이블 영역 안쪽에 배치. */}
-      <div className="shrink-0 h-7 px-lg flex items-center justify-between text-[13px] text-muted-foreground">
-        <span>
-          <span className="font-serif italic">총</span>{' '}
-          <span className="font-mono tabular-nums">
-            {(activeTab === 'inspection' ? inspectionRows.length : filteredCases.length).toLocaleString()}
-          </span>
-          <span className="font-serif italic">건</span>
-        </span>
-        {activeTab === 'inspection' && (
-          <>
-            <div className="hidden md:flex items-center gap-sm">
+          <div className="md:hidden">
+            <InspectionFooterMobileMenu>
               <ShipmentDocsButton />
               <BulkApplyPicker
                 label="KSVDL"
@@ -719,27 +663,36 @@ export function TodosApp() {
                 rows={inspectionRows.filter(r => r.lab === 'nz_combined')}
                 request={(caseId) => ({ kind: 'bundle', variant: 'nz-infection-pack', caseId })}
               />
-            </div>
-            <div className="md:hidden">
-              <InspectionFooterMobileMenu>
-                <ShipmentDocsButton />
-                <BulkApplyPicker
-                  label="KSVDL"
-                  rows={inspectionRows.filter(r => r.lab === 'ksvdl')}
-                  request={(caseId) => ({ kind: 'single', formKey: 'KSVDL', caseId })}
-                />
-                <BulkApplyPicker
-                  label="APQA HQ + VBDDL"
-                  rows={inspectionRows.filter(r => r.lab === 'nz_combined')}
-                  request={(caseId) => ({ kind: 'bundle', variant: 'nz-infection-pack', caseId })}
-                />
-              </InspectionFooterMobileMenu>
-            </div>
-          </>
+            </InspectionFooterMobileMenu>
+          </div>
+        </>
+      )}
+    </div>
+  )
+
+  return (
+    <PageShell
+      title="할 일"
+      tabs={<PageTabs tabs={TABS} value={activeTab} onChange={setActiveTab} right={right} />}
+      footer={footer}
+    >
+      <div className="px-md">
+        {activeTab === 'inspection' ? (
+          <InspectionTable
+            rows={inspectionRows}
+            labOptions={LAB_OPTIONS}
+            statusOptions={INSPECTION_STATUS_OPTIONS}
+            onUpdate={updateLocalCaseField}
+          />
+        ) : (
+          <TodoTable
+            cases={filteredCases}
+            columns={COLUMNS_MAP[activeTab]}
+            onUpdate={updateLocalCaseField}
+          />
         )}
       </div>
-      </div>
-    </div>
+    </PageShell>
   )
 }
 

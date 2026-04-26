@@ -327,7 +327,7 @@ export function TodoTable({
   const { openCase } = useCases()
 
   return (
-    <table className="w-full border-collapse">
+    <table className="w-full border-collapse table-fixed">
       <thead>
         <tr className="border-b border-border/60">
           {columns.map((col) => (
@@ -345,7 +345,7 @@ export function TodoTable({
         {visibleCases.map((row) => (
           <tr
             key={row.id}
-            className="border-b border-dashed border-border/50 hover:bg-accent/60 transition-colors cursor-pointer"
+            className="border-b border-dashed border-border/50 hover:bg-accent transition-colors cursor-pointer"
             onClick={() => openCase(row.id)}
           >
             {columns.map((col) => {

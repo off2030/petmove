@@ -54,6 +54,12 @@ interface CasesContextValue {
   importReportCountries: string[]
   setImportReportCountries: (list: string[]) => void
   /**
+   * 상세페이지에 신고 버튼이 노출되는 국가 목록.
+   * app_settings.import_report_button_countries 에서 초기 로드.
+   */
+  importReportButtonCountries: string[]
+  setImportReportButtonCountries: (list: string[]) => void
+  /**
    * 광견병항체·전염병검사 기관 설정(국가별 오버라이드 포함).
    * app_settings.inspection_config 에서 초기 로드.
    */
@@ -77,6 +83,7 @@ export function CasesProvider({
   initialCases,
   fieldDefs,
   initialImportReportCountries,
+  initialImportReportButtonCountries,
   initialInspectionConfig,
   initialCertConfig,
   orgId = null,
@@ -85,6 +92,7 @@ export function CasesProvider({
   initialCases: CaseRow[]
   fieldDefs: FieldDefinition[]
   initialImportReportCountries: string[]
+  initialImportReportButtonCountries: string[]
   initialInspectionConfig: InspectionConfig
   initialCertConfig: CertConfig
   orgId?: string | null
@@ -94,6 +102,7 @@ export function CasesProvider({
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [activeDestination, setActiveDestination] = useState<string | null>(null)
   const [importReportCountries, setImportReportCountries] = useState<string[]>(initialImportReportCountries)
+  const [importReportButtonCountries, setImportReportButtonCountries] = useState<string[]>(initialImportReportButtonCountries)
   const [inspectionConfig, setInspectionConfig] = useState<InspectionConfig>(initialInspectionConfig)
   const [certConfig, setCertConfig] = useState<CertConfig>(initialCertConfig)
   const [newCaseIds, setNewCaseIds] = useState<Set<string>>(() => new Set())
@@ -241,13 +250,15 @@ export function CasesProvider({
       setActiveDestination,
       importReportCountries,
       setImportReportCountries,
+      importReportButtonCountries,
+      setImportReportButtonCountries,
       inspectionConfig,
       setInspectionConfig,
       certConfig,
       setCertConfig,
       newCaseIds,
     }),
-    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, replaceLocalCaseData, activeDestination, importReportCountries, inspectionConfig, certConfig, newCaseIds],
+    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, replaceLocalCaseData, activeDestination, importReportCountries, importReportButtonCountries, inspectionConfig, certConfig, newCaseIds],
   )
 
   return <CasesContext.Provider value={value}>{children}</CasesContext.Provider>

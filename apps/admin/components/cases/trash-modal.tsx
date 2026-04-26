@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { restoreCase, permanentDeleteCase } from '@/lib/actions/delete-case'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 interface TrashItem {
   id: string
@@ -13,6 +14,7 @@ interface TrashItem {
 }
 
 export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRestore: () => void }) {
+  const confirm = useConfirm()
   const [items, setItems] = useState<TrashItem[]>([])
   const [loading, setLoading] = useState(true)
   const [acting, startAction] = useTransition()
@@ -51,8 +53,14 @@ export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRest
     })
   }
 
-  function handlePermanentDelete(id: string) {
-    if (!confirm('영구 삭제하면 복구할 수 없습니다. 계속하시겠습니까?')) return
+  async function handlePermanentDelete(id: string) {
+    const ok = await confirm({
+      message: '영구 삭제하면 복구할 수 없습니다.',
+      description: '계속하시겠습니까?',
+      okLabel: '영구 삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
     startAction(async () => {
       const r = await permanentDeleteCase(id)
       if (r.ok) {
@@ -82,7 +90,7 @@ export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRest
           <div className="px-5 py-3 border-b">
             <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
               placeholder="이름 검색" autoFocus
-              className="w-full h-10 rounded-full border border-border/70 bg-card text-foreground px-4 text-[15px] focus-visible:outline-none focus-visible:border-foreground/40" />
+              className="w-full h-10 rounded-full border border-border/70 bg-popover text-foreground px-4 text-[15px] focus-visible:outline-none focus-visible:border-foreground/40" />
           </div>
         )}
 

@@ -3,33 +3,57 @@
 import { useState, useTransition } from 'react'
 import { X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
-import { saveImportReportCountriesAction } from '@/lib/actions/import-report-config-action'
-import { DEFAULT_IMPORT_REPORT_COUNTRIES } from '@petmove/domain'
+import {
+  saveImportReportCountriesAction,
+  saveImportReportButtonCountriesAction,
+} from '@/lib/actions/import-report-config-action'
+import {
+  DEFAULT_IMPORT_REPORT_COUNTRIES,
+  DEFAULT_IMPORT_REPORT_BUTTON_COUNTRIES,
+} from '@petmove/domain'
 import { DestinationPicker } from '@/components/ui/destination-picker'
 import { PillButton } from '@/components/ui/pill-button'
 import { SectionHeader } from '@/components/ui/section-header'
 
 export function ImportReportSection() {
-  const { importReportCountries, setImportReportCountries } = useCases()
-  const [draft, setDraft] = useState<string[]>(importReportCountries)
+  return (
+    <div className="max-w-5xl pb-2xl">
+      <header className="pb-xl">
+        <SectionHeader>신고</SectionHeader>
+        <p className="pmw-st__sec-lead mt-2">
+          상세페이지 신고 버튼 노출국과, 출국일 입력 시 자동 포함되는 국가를 따로 관리합니다.
+          신고 탭의 추가 피커는 국가 제한 없이 모든 케이스를 검색할 수 있습니다.
+        </p>
+      </header>
+
+      <ButtonCountriesEditor />
+      <div className="h-2xl" />
+      <AutoCountriesEditor />
+    </div>
+  )
+}
+
+function ButtonCountriesEditor() {
+  const { importReportButtonCountries, setImportReportButtonCountries } = useCases()
+  const [draft, setDraft] = useState<string[]>(importReportButtonCountries)
   const [saving, startSave] = useTransition()
   const [msg, setMsg] = useState<string | null>(null)
 
-  const dirty = JSON.stringify(draft) !== JSON.stringify(importReportCountries)
+  const dirty = JSON.stringify(draft) !== JSON.stringify(importReportButtonCountries)
 
   function removeCountry(name: string) {
     setDraft(draft.filter(c => c !== name))
   }
 
   function resetToDefaults() {
-    setDraft([...DEFAULT_IMPORT_REPORT_COUNTRIES])
+    setDraft([...DEFAULT_IMPORT_REPORT_BUTTON_COUNTRIES])
   }
 
   function save() {
     startSave(async () => {
-      const r = await saveImportReportCountriesAction(draft)
+      const r = await saveImportReportButtonCountriesAction(draft)
       if (r.ok) {
-        setImportReportCountries(r.countries)
+        setImportReportButtonCountries(r.countries)
         setMsg('저장되었습니다.')
         setTimeout(() => setMsg(null), 2500)
       } else {
@@ -39,24 +63,16 @@ export function ImportReportSection() {
   }
 
   return (
-    <div className="max-w-5xl pb-2xl">
-      {/* Editorial header */}
-      <header className="pb-xl">
-        <SectionHeader>신고</SectionHeader>
-        <p className="pmw-st__sec-lead mt-2">
-          이 목록에 있는 목적지는 출국일이 입력되면 자동으로 신고 탭에 반영됩니다.
-          목록에 없는 곳은 상세페이지의 신고 버튼이나 신고 탭의 신고 추가 피커에서 수동으로 포함할 수 있습니다.
-        </p>
-      </header>
-
-      {/* Section label */}
-      <div className="mb-2">
+    <section>
+      <div className="mb-2 flex items-baseline justify-between">
         <span className="font-serif text-[13px] text-muted-foreground/80">
-          자동 포함 목적지 · {draft.length}
+          신고 버튼 노출 목적지 · {draft.length}
+        </span>
+        <span className="font-serif text-[12px] text-muted-foreground/60">
+          상세페이지에 신고 버튼이 보이는 국가
         </span>
       </div>
 
-      {/* Current list — 얇은 border pill */}
       <div className="border-t border-border/70">
         <div className="flex flex-wrap gap-1.5 py-3">
           {draft.length === 0 ? (
@@ -88,7 +104,6 @@ export function ImportReportSection() {
         </div>
       </div>
 
-      {/* Add destination — always-visible search input */}
       <div className="pb-lg border-b border-border/60">
         <DestinationPicker
           values={draft}
@@ -96,11 +111,10 @@ export function ImportReportSection() {
           hideSelectedChips
           variant="underline"
           placeholder="목적지 추가"
-          aria-label="목적지 추가"
+          aria-label="신고 버튼 노출 목적지 추가"
         />
       </div>
 
-      {/* Footer actions */}
       <div className="flex items-center justify-between pt-lg">
         <button
           type="button"
@@ -116,7 +130,119 @@ export function ImportReportSection() {
           </PillButton>
         </div>
       </div>
-    </div>
+    </section>
   )
 }
 
+function AutoCountriesEditor() {
+  const { importReportCountries, setImportReportCountries, importReportButtonCountries } = useCases()
+  const [draft, setDraft] = useState<string[]>(importReportCountries)
+  const [saving, startSave] = useTransition()
+  const [msg, setMsg] = useState<string | null>(null)
+
+  const dirty = JSON.stringify(draft) !== JSON.stringify(importReportCountries)
+  const buttonSet = new Set(importReportButtonCountries)
+  const orphans = draft.filter(c => !buttonSet.has(c))
+
+  function removeCountry(name: string) {
+    setDraft(draft.filter(c => c !== name))
+  }
+
+  function resetToDefaults() {
+    setDraft([...DEFAULT_IMPORT_REPORT_COUNTRIES])
+  }
+
+  function save() {
+    startSave(async () => {
+      const r = await saveImportReportCountriesAction(draft)
+      if (r.ok) {
+        setImportReportCountries(r.countries)
+        setMsg('저장되었습니다.')
+        setTimeout(() => setMsg(null), 2500)
+      } else {
+        setMsg('저장 실패: ' + r.error)
+      }
+    })
+  }
+
+  return (
+    <section>
+      <div className="mb-2 flex items-baseline justify-between">
+        <span className="font-serif text-[13px] text-muted-foreground/80">
+          출국일 자동 포함 목적지 · {draft.length}
+        </span>
+        <span className="font-serif text-[12px] text-muted-foreground/60">
+          출국일 입력 시 신고 탭에 자동 진입
+        </span>
+      </div>
+
+      <div className="border-t border-border/70">
+        <div className="flex flex-wrap gap-1.5 py-3">
+          {draft.length === 0 ? (
+            <span className="font-serif italic text-[13px] text-muted-foreground/60">
+              목록이 비어있습니다.
+            </span>
+          ) : (
+            draft.map(name => {
+              const isOrphan = !buttonSet.has(name)
+              return (
+                <span
+                  key={name}
+                  className="inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 font-sans text-[12px]"
+                  style={{
+                    borderColor: isOrphan ? 'hsl(var(--destructive) / 0.5)' : 'var(--pmw-border-warm)',
+                    color: isOrphan ? 'hsl(var(--destructive))' : 'var(--pmw-near-black)',
+                  }}
+                  title={isOrphan ? '신고 버튼 노출 목록에 없는 국가입니다' : undefined}
+                >
+                  {name}
+                  <button
+                    type="button"
+                    onClick={() => removeCountry(name)}
+                    className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                    title="제거"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              )
+            })
+          )}
+        </div>
+      </div>
+
+      <div className="pb-lg border-b border-border/60">
+        <DestinationPicker
+          values={draft}
+          onChange={setDraft}
+          hideSelectedChips
+          variant="underline"
+          placeholder="목적지 추가"
+          aria-label="자동 포함 목적지 추가"
+        />
+      </div>
+
+      {orphans.length > 0 && (
+        <p className="mt-md font-serif text-[12px] text-destructive">
+          {orphans.join(', ')} 은(는) 신고 버튼 노출 목록에 없습니다. 자동 포함은 동작하지만 상세페이지에 신고 버튼이 표시되지 않습니다.
+        </p>
+      )}
+
+      <div className="flex items-center justify-between pt-lg">
+        <button
+          type="button"
+          onClick={resetToDefaults}
+          className="pmw-st__btn-ghost hover:text-foreground transition-colors"
+        >
+          기본값으로 되돌리기
+        </button>
+        <div className="flex items-center gap-md">
+          {msg && <span className="pmw-st__sec-lead">{msg}</span>}
+          <PillButton variant="solid" onClick={save} disabled={!dirty || saving}>
+            {saving ? '저장 중…' : '변경사항 저장'}
+          </PillButton>
+        </div>
+      </div>
+    </section>
+  )
+}

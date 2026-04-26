@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Trash2 } from 'lucide-react'
 import type { CaseRow } from '@/lib/supabase/types'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from '@/components/cases/cases-context'
@@ -43,8 +42,6 @@ export interface InspectionRow {
     | { kind: 'titer' }
     | { kind: 'infectious'; lab: string }
     | { kind: 'infectious_multi'; labs: string[] }
-  /** 삭제 버튼 클릭 시 case.data.inspection_dismissed 에 추가할 키. */
-  dismissKey: string
 }
 
 interface LabOption { value: string; label: string }
@@ -512,17 +509,17 @@ function LabPicker({ row, options, chip, onUpdate }: {
   )
 }
 
+// 모든 데이터 컬럼 통일 너비.
+const BASE_W = 116
 const COLUMNS = [
-  { key: 'lab', label: '검사기관', width: 160 },
-  { key: 'date', label: '검사일', width: 120 },
-  { key: 'pet_name', label: '반려동물', width: 100 },
-  { key: 'customer_name', label: '보호자', width: 100 },
-  { key: 'destination', label: '목적지', width: 100 },
-  { key: 'status', label: '진행상태', width: 110 },
-  { key: 'departure_date', label: '출국일', width: 120 },
-  { key: 'memo', label: '메모', width: 180 },
-  // 삭제(목록에서 숨기기) — 아이콘 전용, 헤더는 빈 값.
-  { key: '_dismiss', label: '', width: 40 },
+  { key: 'lab', label: '검사기관', width: 146 },
+  { key: 'date', label: '검사일', width: BASE_W },
+  { key: 'pet_name', label: '반려동물', width: BASE_W },
+  { key: 'customer_name', label: '보호자', width: BASE_W },
+  { key: 'destination', label: '목적지', width: 146 },
+  { key: 'status', label: '진행상태', width: BASE_W },
+  { key: 'departure_date', label: '출국일', width: BASE_W },
+  { key: 'memo', label: '메모', width: 120 },
 ]
 
 export function InspectionTable({
@@ -569,21 +566,8 @@ export function InspectionTable({
     }
   }, [onUpdate])
 
-  /** 행 삭제(숨기기). case 삭제가 아니라 case.data.inspection_dismissed 배열에 키 추가. */
-  const handleDismiss = useCallback(async (row: InspectionRow) => {
-    const data = (row.caseRow.data ?? {}) as Record<string, unknown>
-    const raw = data.inspection_dismissed
-    const current = Array.isArray(raw)
-      ? raw.filter((x): x is string => typeof x === 'string')
-      : []
-    if (current.includes(row.dismissKey)) return
-    const next = [...current, row.dismissKey]
-    onUpdate(row.caseRow.id, 'data', 'inspection_dismissed', next)
-    await updateCaseField(row.caseRow.id, 'data', 'inspection_dismissed', next)
-  }, [onUpdate])
-
   return (
-    <table className="w-full border-collapse">
+    <table className="w-full border-collapse table-fixed">
       <thead>
         <tr className="border-b border-border/60">
           {COLUMNS.map(col => (
@@ -601,13 +585,13 @@ export function InspectionTable({
         {visibleRows.map(row => (
           <tr
             key={row.id}
-            className="group/insprow border-b border-dashed border-border/50 hover:bg-accent/60 transition-colors cursor-pointer"
+            className="group/insprow border-b border-dashed border-border/50 hover:bg-accent transition-colors cursor-pointer"
             onClick={() => openCase(row.caseRow.id)}
           >
-            <td className="px-2 py-4" style={{ width: 160, minWidth: 160 }} onClick={(e) => e.stopPropagation()}>
+            <td className="px-2 py-4" style={{ width: 146, minWidth: 146 }} onClick={(e) => e.stopPropagation()}>
               <LabCell row={row} options={labOptions} onUpdate={onUpdate} />
             </td>
-            <td className="px-2 py-4" style={{ width: 120, minWidth: 120 }} onClick={(e) => e.stopPropagation()}>
+            <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }} onClick={(e) => e.stopPropagation()}>
               <DateCell
                 value={row.date}
                 editable={row.dateEditable}
@@ -618,19 +602,19 @@ export function InspectionTable({
                 }
               />
             </td>
-            <td className="px-2 py-4" style={{ width: 100, minWidth: 100 }}>
+            <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }}>
               <StaticCell value={row.caseRow.pet_name ?? ''} variant="pet" />
             </td>
-            <td className="px-2 py-4" style={{ width: 100, minWidth: 100 }}>
+            <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }}>
               <StaticCell value={row.caseRow.customer_name ?? ''} variant="customer" />
             </td>
-            <td className="px-2 py-4" style={{ width: 100, minWidth: 100 }}>
+            <td className="px-2 py-4" style={{ width: 146, minWidth: 146 }}>
               <DestinationCell value={row.caseRow.destination} />
             </td>
-            <td className="px-2 py-4" style={{ width: 110, minWidth: 110 }} onClick={(e) => e.stopPropagation()}>
+            <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }} onClick={(e) => e.stopPropagation()}>
               <StatusCell row={row} options={statusOptions} onUpdate={onUpdate} />
             </td>
-            <td className="px-2 py-4" style={{ width: 120, minWidth: 120 }} onClick={(e) => e.stopPropagation()}>
+            <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }} onClick={(e) => e.stopPropagation()}>
               <DateCell
                 value={row.caseRow.departure_date ?? ''}
                 editable
@@ -641,18 +625,8 @@ export function InspectionTable({
                 }}
               />
             </td>
-            <td className="px-2 py-4" style={{ width: 180, minWidth: 180 }} onClick={(e) => e.stopPropagation()}>
+            <td className="px-2 py-4" style={{ width: 120, minWidth: 120 }} onClick={(e) => e.stopPropagation()}>
               <MemoCell row={row} onUpdate={onUpdate} />
-            </td>
-            <td className="px-2 py-4" style={{ width: 40, minWidth: 40 }} onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                onClick={() => handleDismiss(row)}
-                title="검사 목록에서 제거 (케이스는 보존)"
-                className="opacity-0 group-hover/insprow:opacity-60 hover:!opacity-100 text-muted-foreground hover:text-destructive transition-opacity inline-flex items-center justify-center h-6 w-6 rounded-full"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
             </td>
           </tr>
         ))}

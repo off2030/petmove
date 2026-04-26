@@ -22,6 +22,7 @@ import { MultiFormDialog } from './multi-form-dialog'
 import { ChevronLeft, ChevronRight, Copy, Trash2 } from 'lucide-react'
 import { resolveCerts } from '@petmove/domain'
 import type { CaseRow } from '@/lib/supabase/types'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 function downloadBase64Pdf(base64: string, filename: string) {
   const link = document.createElement('a')
@@ -81,21 +82,24 @@ const CERT_MULTI_KEYS: Record<string, string> = {
 }
 
 /**
- * 신고 탭 포함 토글. 자동 포함 대상국(설정 > 신고 에서 편집) 에만 노출.
- * - 목적지가 대상국 + 출국일 → "신고 자동" (회색 읽기전용)
- * - 목적지가 대상국 + 출국일 미기재 → "신고 추가" 클릭해 수동 포함
- * - 그 외 국가 → 버튼 숨김(신고 대상이 아님)
+ * 신고 탭 포함 토글. 두 종류의 국가 목록을 사용한다(설정 > 신고 에서 편집):
+ *  - buttonCountries: 신고 버튼이 노출되는 국가
+ *  - autoCountries:   buttonCountries 의 부분집합. 출국일 입력 시 자동 포함
+ *
+ * - buttonCountries 아님 → 버튼 숨김(신고 대상이 아님)
+ * - autoCountries + 출국일 → "신고 자동" (회색 읽기전용)
+ * - 그 외(buttonCountries 안에 있고 자동 조건 미충족) → "신고 추가" 클릭해 수동 포함
  */
-function hasImportReportCountry(row: CaseRow, autoCountries: string[]): boolean {
+function hasCountryIn(row: CaseRow, countries: string[]): boolean {
   if (!row.destination) return false
-  const set = new Set(autoCountries)
+  const set = new Set(countries)
   const dests = row.destination.split(',').map(s => s.trim()).filter(Boolean)
   return dests.some(d => set.has(d))
 }
 
 function isAutoImportReportCase(row: CaseRow, autoCountries: string[]): boolean {
   if (!row.departure_date) return false
-  return hasImportReportCountry(row, autoCountries)
+  return hasCountryIn(row, autoCountries)
 }
 
 function ImportReportToggle({
@@ -105,10 +109,10 @@ function ImportReportToggle({
   caseRow: CaseRow
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
 }) {
-  const { importReportCountries } = useCases()
+  const { importReportCountries, importReportButtonCountries } = useCases()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
-  // 신고 대상국이 아니면 토글 자체를 숨긴다.
-  if (!hasImportReportCountry(caseRow, importReportCountries)) return null
+  // 신고 버튼 노출국이 아니면 토글 자체를 숨긴다.
+  if (!hasCountryIn(caseRow, importReportButtonCountries)) return null
 
   const manual = data.import_report_manual === true
   const auto = isAutoImportReportCase(caseRow, importReportCountries)
@@ -146,6 +150,7 @@ function ImportReportToggle({
 
 function Inner() {
   const { cases, selectedId, selectCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination, certConfig } = useCases()
+  const confirm = useConfirm()
   const selectedCase = useMemo(
     () => cases.find((c) => c.id === selectedId) ?? null,
     [cases, selectedId],
@@ -172,6 +177,8 @@ function Inner() {
     const result = await createCase()
     if (result.ok) {
       addLocalCase(result.case)
+    } else {
+      alert(`케이스 생성 실패: ${result.error}`)
     }
   }, [addLocalCase])
 
@@ -285,13 +292,13 @@ function Inner() {
   }, [addLocalCase, selectCase])
 
   const handleDelete = useCallback(async (id: string) => {
-    if (!confirm('이 케이스를 삭제하시겠습니까?')) return
+    if (!await confirm({ message: '이 케이스를 삭제하시겠습니까?', okLabel: '삭제', variant: 'destructive' })) return
     const result = await deleteCase(id)
     if (result.ok) {
       removeLocalCase(id)
       selectCase(null)
     }
-  }, [removeLocalCase, selectCase])
+  }, [removeLocalCase, selectCase, confirm])
 
   // Annex III / UK: if the case has siblings (same customer + destination +
   // departure date), show the multi-animal preview modal. Otherwise skip the

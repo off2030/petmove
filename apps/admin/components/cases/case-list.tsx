@@ -10,6 +10,7 @@ import { isExtractableFile } from '@/lib/file-to-base64'
 import { formatMicrochip } from '@/lib/fields'
 import { destCode } from '@/lib/country-code'
 import { TrashModal } from './trash-modal'
+import { LIST_ROW_BASE } from '@/components/ui/list-row'
 
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
@@ -309,7 +310,7 @@ export function CaseList({
             }}
             autoFocus
             placeholder="검색"
-            className="h-11 pl-10 pr-9 text-[15px] bg-card text-foreground shadow-none border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
+            className="h-11 pl-10 pr-9 text-[15px] bg-popover text-foreground shadow-none border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
           />
           {query && (
             <button

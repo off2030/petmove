@@ -118,7 +118,7 @@ export function VerificationSection() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="검색"
-            className="h-11 w-full pl-10 pr-9 text-[15px] bg-card text-foreground shadow-none border border-border/70 rounded-full focus-visible:outline-none focus-visible:ring-0 focus-visible:border-foreground/40 placeholder:text-muted-foreground/60"
+            className="h-11 w-full pl-10 pr-9 text-[15px] bg-popover text-foreground shadow-none border border-border/70 rounded-full focus-visible:outline-none focus-visible:ring-0 focus-visible:border-foreground/40 placeholder:text-muted-foreground/60"
           />
           {query && (
             <button

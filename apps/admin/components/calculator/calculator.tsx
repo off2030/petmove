@@ -8,6 +8,8 @@ import {
   createCalculatorItem,
   deleteCalculatorItem,
 } from '@/lib/actions/calculator'
+import { ListRow } from '@/components/ui/list-row'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 const CAT_VARIANTS: Record<string, string> = {
   '호주': '호주(고양이)',
@@ -26,6 +28,7 @@ interface Props {
 }
 
 export function Calculator({ items, setItems, species, country, editMode }: Props) {
+  const confirm = useConfirm()
   const [checked, setChecked] = useState<Record<number, boolean>>({})
 
   const effectiveCountry = useMemo(() => {
@@ -65,7 +68,7 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
   }
 
   async function removeItem(id: number) {
-    if (!confirm('이 항목을 삭제할까요?')) return
+    if (!await confirm({ message: '이 항목을 삭제할까요?', okLabel: '삭제', variant: 'destructive' })) return
     const prev = items
     setItems((arr) => arr.filter((i) => i.id !== id))
     const res = await deleteCalculatorItem(id)
@@ -100,7 +103,7 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
 
   return (
     <div>
-    <div className="rounded-xl bg-card px-lg pt-md pb-sm">
+    <div>
       <div>
         {visibleItems.map((it) => {
           const on = !!checked[it.id]
@@ -110,15 +113,15 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
           const meta = m ? m[2] : null
 
           return (
-            <div
+            <ListRow
               key={it.id}
-              className={`flex items-center justify-between gap-3 border-b border-dotted border-border/70 py-3 last:border-b-0 transition-colors ${
-                editMode ? '' : 'cursor-pointer hover:bg-accent/30 -mx-sm px-sm rounded-sm'
-              }`}
-              onClick={() => {
-                if (editMode) return
-                setChecked((c) => ({ ...c, [it.id]: !c[it.id] }))
-              }}
+              interactive={!editMode}
+              onClick={
+                editMode
+                  ? undefined
+                  : () => setChecked((c) => ({ ...c, [it.id]: !c[it.id] }))
+              }
+              className="flex items-center justify-between gap-3"
             >
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 {!editMode && (
@@ -198,14 +201,14 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
                   </span>
                 )}
               </div>
-            </div>
+            </ListRow>
           )
         })}
         {editMode && (
           <button
             type="button"
             onClick={addItem}
-            className="flex w-full items-center justify-center gap-1.5 border-t border-dotted border-border/70 pt-3 mt-1 font-serif text-[14px] text-muted-foreground transition-colors hover:text-foreground"
+            className="flex w-full items-center justify-center gap-1.5 border-t border-border/60 px-lg pt-3 mt-1 font-serif text-[14px] text-muted-foreground transition-colors hover:text-foreground"
           >
             <Plus size={14} />
             항목 추가
@@ -213,8 +216,8 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
         )}
       </div>
 
-      {/* Total block — solid line above, inside same card */}
-      <div className="mt-md border-t border-border/60 pt-md space-y-3">
+      {/* Total block — solid line above */}
+      <div className="mt-md border-t border-border/60 px-lg pt-md space-y-3">
         <div className="flex items-baseline justify-between">
           <span className="font-serif text-[17px] text-foreground">합계</span>
           <span className="inline-flex items-baseline text-foreground">
