@@ -9,6 +9,7 @@ export interface MyProfile {
   name: string | null
   avatar_url: string | null
   provider: string | null
+  dm_visible: boolean
 }
 
 export async function getMyProfile(): Promise<MyProfile | null> {
@@ -18,7 +19,7 @@ export async function getMyProfile(): Promise<MyProfile | null> {
     if (!user) return null
     const { data } = await supabase
       .from('profiles')
-      .select('id, email, name, avatar_url, provider')
+      .select('id, email, name, avatar_url, provider, dm_visible')
       .eq('id', user.id)
       .maybeSingle()
     if (!data) return null
@@ -79,7 +80,7 @@ export async function updateMyProfile(patch: { name?: string | null }): Promise<
       .from('profiles')
       .update(update)
       .eq('id', user.id)
-      .select('id, email, name, avatar_url, provider')
+      .select('id, email, name, avatar_url, provider, dm_visible')
       .maybeSingle()
     if (error) return { ok: false, error: error.message }
     if (!data) return { ok: false, error: '프로필을 찾을 수 없습니다.' }

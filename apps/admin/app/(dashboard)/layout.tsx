@@ -13,6 +13,7 @@ import { getCalculatorItems } from '@/lib/calculator-data'
 import { getSettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 import { getActiveOrgId, getImpersonationInfo } from '@/lib/supabase/active-org'
 import { listAllOrgs, listSuperAdminsAll, type OrgSummary, type SuperAdminEntry } from '@/lib/actions/super-admin'
+import { listMyConversations, type ConversationListItem } from '@/lib/actions/chat'
 
 export const dynamic = 'force-dynamic'
 
@@ -85,7 +86,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [initialCases, fieldDefs, importReportCountries, importReportButtonCountries, inspectionConfig, certConfig, userCtx, vaccineData, calculatorItems, settingsBootstrap, orgId, impersonation, externalLinks] = await Promise.all([
+  const [initialCases, fieldDefs, importReportCountries, importReportButtonCountries, inspectionConfig, certConfig, userCtx, vaccineData, calculatorItems, settingsBootstrap, orgId, impersonation, externalLinks, convsR] = await Promise.all([
     fetchAllCases(),
     fetchFieldDefs(),
     loadImportReportCountries(),
@@ -99,7 +100,9 @@ export default async function DashboardLayout({
     getActiveOrgId().catch(() => null),
     getImpersonationInfo().catch(() => null),
     loadExternalLinks(),
+    listMyConversations().catch(() => ({ ok: false as const, error: 'failed' })),
   ])
+  const initialConversations: ConversationListItem[] = convsR.ok ? convsR.value : []
 
   // Super admin 이면 org 목록 + 운영자 목록 prefetch — 탭 전환 시 즉시 표시 (불러오기 깜빡임 제거).
   let initialOrgs: OrgSummary[] = []
@@ -134,6 +137,7 @@ export default async function DashboardLayout({
             initialSuperAdmins={initialSuperAdmins}
             impersonation={impersonation}
             initialExternalLinks={externalLinks}
+            initialConversations={initialConversations}
           />
         </CalculatorDataProvider>
       </VaccineDataProvider>

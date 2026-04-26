@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { getMyProfile, updateMyProfile, type MyProfile } from '@/lib/actions/profile'
+import { updateMyDmVisibility } from '@/lib/actions/chat'
 import { SectionHeader } from '@/components/ui/section-header'
 import { cn } from '@/lib/utils'
 
@@ -146,6 +147,19 @@ export function ProfileSection({
         </div>
       </section>
 
+      {/* DM visibility toggle */}
+      <section className="mb-xl">
+        <SectionLabel>Messaging</SectionLabel>
+        <div className="border-t border-border/70">
+          <DmVisibilityRow
+            value={profile.dm_visible}
+            onChange={(next) => setProfile((p) => (p ? { ...p, dm_visible: next } : p))}
+            onError={(msg) => setError(msg)}
+            onSaved={() => setLastSaved(new Date())}
+          />
+        </div>
+      </section>
+
       {error && (
         <p className="font-serif text-[13px] text-destructive mb-md">{error}</p>
       )}
@@ -176,6 +190,62 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
       <span className="font-mono text-[11px] tracking-[1.8px] uppercase text-muted-foreground/70">
         {children}
       </span>
+    </div>
+  )
+}
+
+function DmVisibilityRow({
+  value,
+  onChange,
+  onError,
+  onSaved,
+}: {
+  value: boolean
+  onChange: (next: boolean) => void
+  onError: (msg: string | null) => void
+  onSaved: () => void
+}) {
+  const [pending, startTransition] = useTransition()
+
+  function toggle() {
+    const next = !value
+    onChange(next)
+    onError(null)
+    startTransition(async () => {
+      const r = await updateMyDmVisibility({ visible: next })
+      if (!r.ok) {
+        onChange(!next)
+        onError(r.error)
+      } else {
+        onSaved()
+      }
+    })
+  }
+
+  return (
+    <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/60">
+      <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
+        검색 노출
+      </label>
+      <div className="flex items-baseline gap-md">
+        <button
+          type="button"
+          onClick={toggle}
+          disabled={pending}
+          className={cn(
+            'h-8 px-md font-serif text-[14px] rounded-full border transition-colors',
+            value
+              ? 'border-primary/50 bg-primary/10 text-primary'
+              : 'border-border/60 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+            pending && 'opacity-60',
+          )}
+        >
+          {value ? '검색에 노출됨' : '검색에서 숨김'}
+        </button>
+        <span className="font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
+          끄면 다른 사용자가 새 대화 만들기에서 본인을 찾을 수 없습니다. 기존 대화는 영향 없음.
+        </span>
+      </div>
     </div>
   )
 }

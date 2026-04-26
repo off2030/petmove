@@ -10,8 +10,13 @@ import {
   hasCompanyInfoDefault,
   type OrgType,
 } from '@/lib/actions/company-info'
+import {
+  getActiveOrgDmVisibility,
+  updateActiveOrgDmVisibility,
+} from '@/lib/actions/chat'
 import type { VetInfo, VetInfoKey } from '@/lib/vet-info'
 import { SectionHeader } from '@/components/ui/section-header'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
 
 interface FieldDef {
@@ -70,6 +75,7 @@ export function CompanySection({
   initialOrgType?: OrgType | null
   isAdmin?: boolean
 } = {}) {
+  const confirm = useConfirm()
   const [info, setInfo] = useState<VetInfo | null>(initialInfo)
   const [orgType, setOrgType] = useState<OrgType | null>(initialOrgType)
   const [drafts, setDrafts] = useState<Partial<Record<VetInfoKey, string>>>({})
@@ -158,7 +164,7 @@ export function CompanySection({
   }
 
   async function handleReset() {
-    if (!confirm('회사 정보를 기본값으로 되돌릴까요?')) return
+    if (!await confirm({ message: '회사 정보를 기본값으로 되돌릴까요?', okLabel: '되돌리기' })) return
     setError(null)
     const r = await resetCompanyInfo()
     if (r.ok) {
@@ -291,6 +297,19 @@ export function CompanySection({
         </p>
       )}
 
+      {/* DM 노출 — admin 만 변경 */}
+      {isAdmin && (
+        <section className="mb-xl">
+          <SectionLabel>Messaging</SectionLabel>
+          <div className="border-t border-border/70">
+            <OrgDmVisibilityRow
+              onError={setError}
+              onSaved={() => setLastSaved(new Date())}
+            />
+          </div>
+        </section>
+      )}
+
       {error && (
         <p className="font-serif text-[13px] text-destructive mb-md">{error}</p>
       )}
@@ -322,6 +341,70 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
       <span className="font-mono text-[11px] tracking-[1.8px] uppercase text-muted-foreground/70">
         {children}
       </span>
+    </div>
+  )
+}
+
+function OrgDmVisibilityRow({
+  onError,
+  onSaved,
+}: {
+  onError: (msg: string | null) => void
+  onSaved: () => void
+}) {
+  const [value, setValue] = useState<boolean | null>(null)
+  const [pending, startTransition] = useTransition()
+
+  useEffect(() => {
+    let alive = true
+    getActiveOrgDmVisibility().then((r) => {
+      if (!alive) return
+      if (r.ok) setValue(r.value)
+      else onError(r.error)
+    })
+    return () => { alive = false }
+  }, [])
+
+  function toggle() {
+    if (value === null) return
+    const next = !value
+    setValue(next)
+    onError(null)
+    startTransition(async () => {
+      const r = await updateActiveOrgDmVisibility({ visible: next })
+      if (!r.ok) {
+        setValue(!next)
+        onError(r.error)
+      } else {
+        onSaved()
+      }
+    })
+  }
+
+  return (
+    <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/60">
+      <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
+        검색 노출
+      </label>
+      <div className="flex items-baseline gap-md">
+        <button
+          type="button"
+          onClick={toggle}
+          disabled={pending || value === null}
+          className={cn(
+            'h-8 px-md font-serif text-[14px] rounded-full border transition-colors',
+            value
+              ? 'border-primary/50 bg-primary/10 text-primary'
+              : 'border-border/60 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+            (pending || value === null) && 'opacity-60',
+          )}
+        >
+          {value === null ? '불러오는 중…' : value ? '검색에 노출됨' : '검색에서 숨김'}
+        </button>
+        <span className="font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
+          끄면 외부 조직 사용자가 새 대화 만들기에서 우리 조직을 찾을 수 없습니다. 같은 조직 내부 검색은 영향 없음.
+        </span>
+      </div>
     </div>
   )
 }

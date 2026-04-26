@@ -1,18 +1,19 @@
 'use client'
 
-import { Folder, CheckCircle2, LayoutGrid, Settings, Menu, Monitor, Sun, Moon, Shield, User, LogOut, UserCog } from 'lucide-react'
+import { Folder, CheckCircle2, LayoutGrid, MessageSquare, Settings, Menu, Monitor, Sun, Moon, Shield, User, LogOut, UserCog } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useVaccineLookups } from '@/components/providers/vaccine-data-provider'
 import { useDarkMode } from '@/lib/use-dark-mode'
 import { cn } from '@/lib/utils'
 
-export type TabId = 'cases' | 'todos' | 'calculator' | 'settings' | 'super-admin'
+export type TabId = 'cases' | 'todos' | 'calculator' | 'messages' | 'settings' | 'super-admin'
 
 export const NAV_ITEMS: Array<{ id: TabId; icon: typeof Folder; label: string }> = [
   { id: 'cases', icon: Folder, label: '홈' },
   { id: 'todos', icon: CheckCircle2, label: '할일' },
   { id: 'calculator', icon: LayoutGrid, label: '도구' },
+  { id: 'messages', icon: MessageSquare, label: '메시지' },
 ]
 
 type TopBarProps = {
@@ -31,6 +32,8 @@ type TopBarProps = {
   userEmail?: string | null
   /** Highlight the Shield icon to indicate we're currently on /super-admin. */
   superAdminActive?: boolean
+  /** 메시지 탭 위 안 읽은 메시지 수 — 0 이면 뱃지 미표시. */
+  messagesUnread?: number
 }
 
 export function TopBar({
@@ -39,6 +42,7 @@ export function TopBar({
   isSuperAdmin = false,
   userEmail,
   superAdminActive = false,
+  messagesUnread = 0,
 }: TopBarProps) {
   const vaccineLookups = useVaccineLookups()
   const expiringCount = useMemo(() => vaccineLookups.countExpiringProducts(), [vaccineLookups])
@@ -68,11 +72,20 @@ export function TopBar({
 
   const tabClass = (active: boolean) =>
     cn(
-      'h-9 inline-flex items-center gap-sm px-sm rounded-md transition-colors text-sm font-medium whitespace-nowrap',
+      'relative h-9 inline-flex items-center gap-sm px-sm rounded-md transition-colors text-sm font-medium whitespace-nowrap',
       active
         ? 'bg-accent text-foreground'
         : 'text-muted-foreground hover:bg-accent hover:text-foreground',
     )
+
+  function tabBadge(id: TabId) {
+    if (id !== 'messages' || messagesUnread <= 0) return null
+    return (
+      <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white font-mono text-[10px] font-semibold leading-none">
+        {messagesUnread > 99 ? '99+' : messagesUnread}
+      </span>
+    )
+  }
 
   const mobileTabClass = (active: boolean) =>
     cn(
@@ -118,6 +131,7 @@ export function TopBar({
                     >
                       <Icon size={16} className="shrink-0" />
                       <span>{label}</span>
+                      {tabBadge(id)}
                     </button>
                   )
                 }
@@ -131,6 +145,7 @@ export function TopBar({
                   >
                     <Icon size={16} className="shrink-0" />
                     <span>{label}</span>
+                    {tabBadge(id)}
                   </Link>
                 )
               })}
@@ -174,6 +189,7 @@ export function TopBar({
                 >
                   <Icon size={16} className="shrink-0" />
                   <span>{label}</span>
+                  {tabBadge(id)}
                 </button>
               )
             }
@@ -186,6 +202,7 @@ export function TopBar({
               >
                 <Icon size={16} className="shrink-0" />
                 <span>{label}</span>
+                {tabBadge(id)}
               </Link>
             )
           })}

@@ -1,28 +1,36 @@
 'use client'
 
-import { memo, useCallback, useEffect, useState, useTransition } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import { MessageSquare } from 'lucide-react'
 import { TopBar, type TabId } from './topbar'
 import { useCases } from '@/components/cases/cases-context'
 import { CasesApp } from '@/components/cases/cases-app'
 import { TodosApp } from '@/components/todos/todos-app'
 import { SettingsApp } from '@/components/settings/settings-app'
 import { CalculatorApp } from '@/components/calculator/calculator-app'
+import { MessagesApp } from '@/components/messages/messages-app'
 import { SuperAdminApp } from '@/components/super-admin/super-admin-app'
 import { clearImpersonation } from '@/lib/actions/super-admin'
+import { listMyConversations } from '@/lib/actions/chat'
 import type { SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 import type { OrgSummary, SuperAdminEntry } from '@/lib/actions/super-admin'
+import type { ConversationListItem } from '@/lib/actions/chat'
 import type { ExternalLinksConfig } from '@petmove/domain'
+
+const CONV_POLL_MS = 5000
 
 const MemoizedCases = memo(CasesApp)
 const MemoizedTodos = memo(TodosApp)
 const MemoizedSettings = memo(SettingsApp)
 const MemoizedCalculator = memo(CalculatorApp)
+const MemoizedMessages = memo(MessagesApp)
 const MemoizedSuperAdmin = memo(SuperAdminApp)
 
 function pathToTab(pathname: string): TabId {
   if (pathname.startsWith('/todos')) return 'todos'
   if (pathname.startsWith('/calculator')) return 'calculator'
+  if (pathname.startsWith('/messages')) return 'messages'
   if (pathname.startsWith('/settings')) return 'settings'
   if (pathname.startsWith('/super-admin')) return 'super-admin'
   return 'cases'
@@ -37,6 +45,7 @@ export function DashboardShell({
   initialSuperAdmins = [],
   impersonation = null,
   initialExternalLinks,
+  initialConversations = [],
 }: {
   isSuperAdmin?: boolean
   userEmail?: string | null
@@ -46,12 +55,31 @@ export function DashboardShell({
   initialSuperAdmins?: SuperAdminEntry[]
   impersonation?: { orgId: string; orgName: string } | null
   initialExternalLinks: ExternalLinksConfig
+  initialConversations?: ConversationListItem[]
 }) {
   const router = useRouter()
   const pathname = usePathname()
   const [activeTab, setActiveTab] = useState<TabId>(() => pathToTab(pathname))
   const [mounted, setMounted] = useState<Set<TabId>>(() => new Set([activeTab]))
   const [endingImpersonation, startEndImpersonation] = useTransition()
+  const [conversations, setConversations] = useState<ConversationListItem[]>(initialConversations)
+
+  // 5s 폴링 — 메시지 탭 미오픈이어도 TopBar 알람 갱신을 위해 항상 실행.
+  useEffect(() => {
+    let alive = true
+    const tick = async () => {
+      const r = await listMyConversations()
+      if (!alive) return
+      if (r.ok) setConversations(r.value)
+    }
+    const id = setInterval(tick, CONV_POLL_MS)
+    return () => { alive = false; clearInterval(id) }
+  }, [])
+
+  const messagesUnread = useMemo(
+    () => conversations.reduce((s, c) => s + c.unread_count, 0),
+    [conversations],
+  )
 
   const onEndImpersonation = useCallback(() => {
     startEndImpersonation(async () => {
@@ -109,7 +137,7 @@ export function DashboardShell({
           </button>
         </div>
       )}
-      <TopBar activeTab={activeTab} onTabChange={handleTabChange} isSuperAdmin={isSuperAdmin} userEmail={userEmail} />
+      <TopBar activeTab={activeTab} onTabChange={handleTabChange} isSuperAdmin={isSuperAdmin} userEmail={userEmail} messagesUnread={messagesUnread} />
       <main className="flex-1 min-w-0 overflow-hidden">
         {mounted.has('cases') && (
           <div className="h-full" style={{ display: activeTab === 'cases' ? 'block' : 'none' }}>
@@ -126,6 +154,15 @@ export function DashboardShell({
             <MemoizedCalculator initialExternalLinks={initialExternalLinks} />
           </div>
         )}
+        {mounted.has('messages') && (
+          <div className="h-full" style={{ display: activeTab === 'messages' ? 'block' : 'none' }}>
+            <MemoizedMessages
+              conversations={conversations}
+              setConversations={setConversations}
+              currentUserId={currentUserId}
+            />
+          </div>
+        )}
 {mounted.has('settings') && (
           <div className="h-full" style={{ display: activeTab === 'settings' ? 'block' : 'none' }}>
             <MemoizedSettings initialBootstrap={initialSettingsBootstrap} />
@@ -137,6 +174,22 @@ export function DashboardShell({
           </div>
         )}
       </main>
+      {activeTab !== 'messages' && (
+        <button
+          type="button"
+          onClick={() => handleTabChange('messages')}
+          aria-label="채팅 열기"
+          title={messagesUnread > 0 ? `안 읽은 메시지 ${messagesUnread}개` : '채팅'}
+          className="fixed bottom-6 right-6 z-40 h-14 w-14 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:scale-105 active:scale-95 transition-transform"
+        >
+          <MessageSquare size={22} />
+          {messagesUnread > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full bg-red-500 text-white font-mono text-[11px] font-semibold leading-none flex items-center justify-center ring-2 ring-background">
+              {messagesUnread > 99 ? '99+' : messagesUnread}
+            </span>
+          )}
+        </button>
+      )}
     </>
   )
 }
