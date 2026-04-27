@@ -11,7 +11,6 @@ export type SaveResult = { ok: true; countries: string[] } | { ok: false; error:
 function revalidateAll() {
   revalidatePath('/settings')
   revalidatePath('/cases')
-  revalidatePath('/todos')
 }
 
 export async function saveImportReportCountriesAction(list: string[]): Promise<SaveResult> {

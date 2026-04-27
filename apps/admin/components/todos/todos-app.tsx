@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
-import { MoreHorizontal, Plus, Search } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import { Menu, MoreHorizontal, Plus, Search } from 'lucide-react'
 import type { CaseRow } from '@/lib/supabase/types'
 import { useCases } from '@/components/cases/cases-context'
 import { Input } from '@/components/ui/input'
@@ -47,13 +48,13 @@ function renderDestinationBadges(value: string | null | undefined) {
   )
 }
 
-const TABS = [
+export const TABS = [
   { id: 'inspection', label: '검사' },
   { id: 'import_report', label: '신고' },
   { id: 'export_doc', label: '서류' },
 ] as const
 
-type TabId = (typeof TABS)[number]['id']
+export type TabId = (typeof TABS)[number]['id']
 
 const INSPECTION_STATUS_OPTIONS = [
   { value: 'waiting', label: '대기' },
@@ -520,10 +521,22 @@ function matchesQuery(row: CaseRow, q: string): boolean {
   return hay.includes(q)
 }
 
-export function TodosApp() {
+export function TodosApp({
+  embedded = false,
+  tab: forcedTab,
+  query: forcedQuery,
+}: {
+  embedded?: boolean
+  tab?: TabId
+  query?: string
+} = {}) {
   const { cases, updateLocalCaseField, importReportCountries, inspectionConfig } = useCases()
-  const [activeTab, setActiveTab] = useState<TabId>('inspection')
-  const [query, setQuery] = useState('')
+  const [internalTab, setInternalTab] = useState<TabId>('inspection')
+  const [internalQuery, setInternalQuery] = useState('')
+  const activeTab = forcedTab ?? internalTab
+  const setActiveTab = setInternalTab
+  const query = forcedQuery ?? internalQuery
+  const setQuery = setInternalQuery
 
   const q = query.trim().toLowerCase()
 
@@ -565,7 +578,7 @@ export function TodosApp() {
         return 0
       }
       return cases
-        .filter((c) => !!c.departure_date)
+        .filter((c) => !!c.departure_date || !!visitDate(c))
         .filter(c => matchesQuery(c, q))
         .sort((a, b) => {
           const ga = groupOf(a)
@@ -635,7 +648,7 @@ export function TodosApp() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="검색"
-          className="h-10 pl-10 text-[15px] bg-popover text-foreground shadow-none border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
+          className="h-10 pl-10 text-[15px] bg-popover text-foreground shadow-none border-border/80 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
         />
       </div>
     </>
@@ -656,12 +669,12 @@ export function TodosApp() {
             <ShipmentDocsButton />
             <BulkApplyPicker
               label="KSVDL"
-              rows={inspectionRows.filter(r => r.lab === 'ksvdl')}
+                    rows={inspectionRows.filter(r => r.lab === 'ksvdl')}
               request={(caseId) => ({ kind: 'single', formKey: 'KSVDL', caseId })}
             />
             <BulkApplyPicker
-              label="APQA HQ + VBDDL"
-              rows={inspectionRows.filter(r => r.lab === 'nz_combined')}
+              label="VBDDL + APQA HQ"
+                    rows={inspectionRows.filter(r => r.lab === 'nz_combined')}
               request={(caseId) => ({ kind: 'bundle', variant: 'nz-infection-pack', caseId })}
             />
           </div>
@@ -674,7 +687,7 @@ export function TodosApp() {
                 request={(caseId) => ({ kind: 'single', formKey: 'KSVDL', caseId })}
               />
               <BulkApplyPicker
-                label="APQA HQ + VBDDL"
+                label="VBDDL + APQA HQ"
                 rows={inspectionRows.filter(r => r.lab === 'nz_combined')}
                 request={(caseId) => ({ kind: 'bundle', variant: 'nz-infection-pack', caseId })}
               />
@@ -685,36 +698,167 @@ export function TodosApp() {
     </div>
   )
 
+  const body = (
+    <div className="px-md">
+      {activeTab === 'inspection' ? (
+        <InspectionTable
+          rows={inspectionRows}
+          labOptions={LAB_OPTIONS}
+          statusOptions={INSPECTION_STATUS_OPTIONS}
+          onUpdate={updateLocalCaseField}
+        />
+      ) : (
+        <TodoTable
+          cases={filteredCases}
+          columns={COLUMNS_MAP[activeTab]}
+          onUpdate={updateLocalCaseField}
+          rowClass={
+            activeTab === 'import_report'
+              ? (row) => (isImportReportComplete(row) ? 'opacity-50 hover:opacity-100' : '')
+              : activeTab === 'export_doc'
+              ? (row) => (isPastDeparture(row) ? 'opacity-50 hover:opacity-100' : '')
+              : undefined
+          }
+        />
+      )}
+    </div>
+  )
+
+  if (embedded) {
+    return body
+  }
+
   return (
     <PageShell
       title="할 일"
       tabs={<PageTabs tabs={TABS} value={activeTab} onChange={setActiveTab} right={right} />}
       footer={footer}
     >
-      <div className="px-md">
-        {activeTab === 'inspection' ? (
-          <InspectionTable
-            rows={inspectionRows}
-            labOptions={LAB_OPTIONS}
-            statusOptions={INSPECTION_STATUS_OPTIONS}
-            onUpdate={updateLocalCaseField}
-          />
-        ) : (
-          <TodoTable
-            cases={filteredCases}
-            columns={COLUMNS_MAP[activeTab]}
-            onUpdate={updateLocalCaseField}
-            rowClass={
-              activeTab === 'import_report'
-                ? (row) => (isImportReportComplete(row) ? 'opacity-50 hover:opacity-100' : '')
-                : activeTab === 'export_doc'
-                ? (row) => (isPastDeparture(row) ? 'opacity-50 hover:opacity-100' : '')
-                : undefined
-            }
-          />
-        )}
-      </div>
+      {body}
     </PageShell>
+  )
+}
+
+/**
+ * 신고 모드 "+ 신고 추가" 픽커. 홈화면 신고 모드 검색창 옆에서 사용.
+ * 자동 포함 안 된 케이스를 수동으로 신고 탭에 올린다.
+ */
+export function TodosImportReportAdd() {
+  const { cases, updateLocalCaseField } = useCases()
+  return (
+    <ImportReportAddPicker
+      cases={cases}
+      onAdd={async (caseId) => {
+        updateLocalCaseField(caseId, 'data', 'import_report_manual', true)
+        await updateCaseField(caseId, 'data', 'import_report_manual', true)
+      }}
+    />
+  )
+}
+
+/**
+ * 검사 모드 검색창 우측 — "신청서" 단일 메뉴 버튼.
+ * 클릭 시 드롭다운에 Invoice / KSVDL / VBDDL + APQA HQ 항목 표시,
+ * 각 항목 클릭 시 해당 다이얼로그를 연다. 검사 완료(done) 케이스는 후보에서 제외.
+ */
+export function TodosInspectionActions({ query }: { query: string }) {
+  const { cases, inspectionConfig } = useCases()
+  const q = query.trim().toLowerCase()
+  const inspectionRows = useMemo(
+    () =>
+      buildInspectionRows(cases, inspectionConfig.titerRules, inspectionConfig.titerDefault)
+        .filter((r) => matchesQuery(r.caseRow, q)),
+    [cases, q, inspectionConfig],
+  )
+  const pendingRows = inspectionRows.filter(
+    (r) => ((r.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') !== 'done',
+  )
+  const ksvdlRows = pendingRows.filter((r) => r.lab === 'ksvdl')
+  const nzRows = pendingRows.filter((r) => r.lab === 'nz_combined')
+
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [activeDialog, setActiveDialog] = useState<'invoice' | 'ksvdl' | 'vbddl_apqa' | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function handler(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [menuOpen])
+
+  const itemClass = (disabled: boolean) =>
+    cn(
+      'w-full text-left px-sm py-2 text-sm rounded-sm transition-colors',
+      disabled
+        ? 'text-muted-foreground/40 cursor-not-allowed'
+        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+    )
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => setMenuOpen((p) => !p)}
+        title="검사 신청서"
+        aria-label="검사 신청서 메뉴"
+        className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-popover text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+      >
+        <Menu className="h-4 w-4" />
+      </button>
+      {menuOpen && (
+        <div className="absolute right-0 top-full mt-1 z-30 min-w-[180px] rounded-md border border-border bg-popover p-1 shadow-md">
+          <button
+            type="button"
+            onClick={() => { setActiveDialog('invoice'); setMenuOpen(false) }}
+            className={itemClass(false)}
+          >
+            Invoice
+          </button>
+          <button
+            type="button"
+            onClick={() => { if (ksvdlRows.length > 0) { setActiveDialog('ksvdl'); setMenuOpen(false) } }}
+            disabled={ksvdlRows.length === 0}
+            className={itemClass(ksvdlRows.length === 0)}
+            title={ksvdlRows.length === 0 ? '대상 케이스가 없습니다' : undefined}
+          >
+            KSVDL
+          </button>
+          <button
+            type="button"
+            onClick={() => { if (nzRows.length > 0) { setActiveDialog('vbddl_apqa'); setMenuOpen(false) } }}
+            disabled={nzRows.length === 0}
+            className={itemClass(nzRows.length === 0)}
+            title={nzRows.length === 0 ? '대상 케이스가 없습니다' : undefined}
+          >
+            VBDDL + APQA HQ
+          </button>
+        </div>
+      )}
+      {activeDialog === 'invoice' && (
+        <InvoiceDialog onClose={() => setActiveDialog(null)} />
+      )}
+      {activeDialog === 'ksvdl' && (
+        <BulkApplyDialog
+          label="KSVDL"
+          rows={ksvdlRows}
+          request={(caseId) => ({ kind: 'single', formKey: 'KSVDL', caseId })}
+          onClose={() => setActiveDialog(null)}
+        />
+      )}
+      {activeDialog === 'vbddl_apqa' && (
+        <BulkApplyDialog
+          label="VBDDL + APQA HQ"
+          rows={nzRows}
+          request={(caseId) => ({ kind: 'bundle', variant: 'nz-infection-pack', caseId })}
+          onClose={() => setActiveDialog(null)}
+        />
+      )}
+    </div>
   )
 }
 
@@ -776,7 +920,9 @@ function ShipmentDocsButton() {
         type="button"
         onClick={() => setOpen(true)}
         disabled={busy}
-        className="text-[13px] rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors disabled:opacity-50"
+        title="Invoice + ESD 생성"
+        aria-label="Invoice 생성"
+        className="shrink-0 inline-flex h-11 px-4 items-center justify-center rounded-full border border-border/80 bg-popover text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50 text-[14px] font-serif"
       >
         Invoice
       </button>
@@ -810,9 +956,10 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
     onSubmit({ tube_count: n, consignee_lab: selectedLab })
   }
 
-  return (
+  if (typeof document === 'undefined') return null
+  return createPortal(
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-      <div className="bg-background border border-border/60 rounded-lg shadow-lg p-6 max-w-sm w-full mx-4">
+      <div className="bg-background border border-border/80 rounded-lg shadow-lg p-6 max-w-sm w-full mx-4">
         <h2 className="text-base font-semibold text-primary mb-4">인보이스</h2>
 
         {/* 검체수 */}
@@ -832,7 +979,7 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
                   className={`flex-1 h-8 rounded border text-sm transition-colors ${
                     selected
                       ? 'bg-primary/10 text-primary border-primary/40 font-medium'
-                      : 'bg-background text-foreground border-border/60 hover:bg-accent'
+                      : 'bg-background text-foreground border-border/80 hover:bg-accent'
                   }`}
                 >
                   {n}
@@ -878,7 +1025,7 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
           <button
             type="button"
             onClick={onClose}
-            className="text-sm px-sm py-1.5 rounded-md border border-border/60 text-foreground hover:bg-accent transition-colors"
+            className="text-sm px-sm py-1.5 rounded-md border border-border/80 text-foreground hover:bg-accent transition-colors"
           >
             취소
           </button>
@@ -891,8 +1038,151 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
+}
+
+/**
+ * 검사 신청서 케이스 선택 다이얼로그 (트리거 없음). open 상태는 외부에서 관리.
+ * 메뉴 → 다이얼로그 패턴에서 사용.
+ */
+function BulkApplyDialog({
+  label,
+  rows,
+  request,
+  onClose,
+}: {
+  label: string
+  rows: InspectionRow[]
+  request: (caseId: string) => PdfDownloadRequest
+  onClose: () => void
+}) {
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const allSelected = rows.length > 0 && selected.size === rows.length
+
+  function toggle(caseId: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(caseId)) next.delete(caseId)
+      else next.add(caseId)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.caseRow.id)))
+  }
+
+  async function handleGenerate() {
+    if (selected.size === 0) return
+    const ids = Array.from(selected)
+    onClose()
+    const errors: string[] = []
+    for (const caseId of ids) {
+      try {
+        await downloadPdfRequest(request(caseId))
+      } catch (error) {
+        errors.push(error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.')
+      }
+    }
+    if (errors.length > 0) {
+      alert(`일부 실패 (${errors.length}/${ids.length}):\n${errors.join('\n')}`)
+    }
+  }
+
+  if (typeof document === 'undefined') return null
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center"
+      onClick={onClose}
+    >
+      <div
+        className="bg-background border border-border/80 rounded-lg shadow-lg p-6 max-w-sm w-full mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="text-base font-semibold text-primary">{label}</h2>
+          <button
+            type="button"
+            onClick={toggleAll}
+            className="text-[12px] text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {allSelected ? '전체 해제' : '전체 선택'}
+          </button>
+        </div>
+        <ul className="max-h-80 overflow-y-auto scrollbar-minimal -mx-2 mb-4">
+          {rows.map((r) => {
+            const isChecked = selected.has(r.caseRow.id)
+            return (
+              <li key={r.id}>
+                <label className="w-full px-sm py-2 rounded-md hover:bg-accent/60 transition-colors flex items-center gap-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => toggle(r.caseRow.id)}
+                    className="peer sr-only"
+                  />
+                  <span
+                    className={cn(
+                      'w-4 h-4 shrink-0 rounded-[3px] border border-border/80 bg-background transition-colors relative',
+                      'peer-checked:bg-primary peer-checked:border-primary',
+                      'peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background',
+                      "before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-primary-foreground before:text-[11px] before:font-bold before:leading-none before:opacity-0 peer-checked:before:opacity-100",
+                    )}
+                    aria-hidden="true"
+                  />
+                  <span className="font-serif font-semibold text-[15px] text-foreground">
+                    {r.caseRow.pet_name ?? '—'}
+                  </span>
+                  <span className="font-sans text-[13px] text-muted-foreground">
+                    {r.caseRow.customer_name ?? ''}
+                  </span>
+                  <span className="ml-auto font-mono text-[11px] tracking-[0.3px] text-muted-foreground/70">
+                    {r.caseRow.destination ?? ''}
+                  </span>
+                </label>
+              </li>
+            )
+          })}
+        </ul>
+        <div className="flex justify-end gap-sm">
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-sm px-sm py-1.5 rounded-md border border-border/80 text-foreground hover:bg-accent transition-colors"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={selected.size === 0}
+            className="text-sm px-sm py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            생성{selected.size > 0 && ` (${selected.size})`}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+/**
+ * Invoice + ESD 생성 다이얼로그 래퍼. ShipmentDocsDialog 에 submit 핸들러를 붙여
+ * 외부에서 open 제어 가능하게 만듦.
+ */
+function InvoiceDialog({ onClose }: { onClose: () => void }) {
+  async function handle(opts: { tube_count: number; consignee_lab: string }) {
+    onClose()
+    try {
+      await downloadPdfRequest({ kind: 'shipment', variant: 'invoice-esd', ...opts })
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.')
+    }
+  }
+  return <ShipmentDocsDialog onClose={onClose} onSubmit={handle} />
 }
 
 /**
@@ -959,18 +1249,19 @@ function BulkApplyPicker({
         type="button"
         onClick={() => !disabled && setOpen(true)}
         disabled={disabled || busy}
-        className="text-[13px] rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         title={disabled ? '대상 케이스가 없습니다' : `${label} 신청서 생성`}
+        aria-label={`${label} 신청서 생성`}
+        className="shrink-0 inline-flex h-11 px-4 items-center justify-center rounded-full border border-border/80 bg-popover text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-[14px] font-serif whitespace-nowrap"
       >
         {label}
       </button>
-      {open && (
+      {open && typeof document !== 'undefined' && createPortal(
         <div
           className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center"
           onClick={() => setOpen(false)}
         >
           <div
-            className="bg-background border border-border/60 rounded-lg shadow-lg p-6 max-w-sm w-full mx-4"
+            className="bg-background border border-border/80 rounded-lg shadow-lg p-6 max-w-sm w-full mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-baseline justify-between mb-4">
@@ -1022,7 +1313,7 @@ function BulkApplyPicker({
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="text-sm px-sm py-1.5 rounded-md border border-border/60 text-foreground hover:bg-accent transition-colors"
+                className="text-sm px-sm py-1.5 rounded-md border border-border/80 text-foreground hover:bg-accent transition-colors"
               >
                 취소
               </button>
@@ -1036,7 +1327,8 @@ function BulkApplyPicker({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )
@@ -1100,9 +1392,9 @@ function ImportReportAddPicker({
         type="button"
         onClick={() => setOpen(true)}
         aria-label="신고 케이스 추가"
-        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border/70 bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+        className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-popover text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
       >
-        <Plus size={16} />
+        <Plus className="h-4 w-4" />
       </button>
     )
   }
@@ -1124,11 +1416,11 @@ function ImportReportAddPicker({
           if (e.key === 'Enter' && candidates[highlight]) { e.preventDefault(); pick(candidates[highlight]) }
         }}
         placeholder="신고 추가"
-        className="w-full h-10 rounded-full border border-border/70 bg-card pl-10 pr-3 text-[15px] focus-visible:outline-none focus-visible:border-foreground/40"
+        className="w-full h-10 rounded-full border border-border/80 bg-card pl-10 pr-3 text-[15px] focus-visible:outline-none focus-visible:border-foreground/40"
       />
       {/* 검색어가 있을 때만 결과 드롭다운 표시. 상단 우측 → 아래로 펼침. */}
       {hasQuery && (
-        <ul className="absolute left-0 top-full mt-1 z-20 w-[22rem] max-h-72 overflow-y-auto scrollbar-minimal rounded-md border border-border/50 bg-background shadow-md py-1">
+        <ul className="absolute left-0 top-full mt-1 z-20 w-[22rem] max-h-72 overflow-y-auto scrollbar-minimal rounded-md border border-border/80 bg-background shadow-md py-1">
           {candidates.length === 0 ? (
             <li className="px-sm py-2 text-sm text-muted-foreground">결과 없음</li>
           ) : (

@@ -1,17 +1,16 @@
 'use client'
 
-import { Folder, CheckCircle2, LayoutGrid, MessageSquare, Settings, Menu, Monitor, Sun, Moon, Shield, User, LogOut, UserCog } from 'lucide-react'
+import { Folder, LayoutGrid, MessageSquare, Settings, Menu, Monitor, Sun, Moon, Shield, User, LogOut, UserCog } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useVaccineLookups } from '@/components/providers/vaccine-data-provider'
 import { useDarkMode } from '@/lib/use-dark-mode'
 import { cn } from '@/lib/utils'
 
-export type TabId = 'cases' | 'todos' | 'calculator' | 'messages' | 'settings' | 'super-admin'
+export type TabId = 'cases' | 'calculator' | 'messages' | 'settings' | 'super-admin'
 
 export const NAV_ITEMS: Array<{ id: TabId; icon: typeof Folder; label: string }> = [
   { id: 'cases', icon: Folder, label: '홈' },
-  { id: 'todos', icon: CheckCircle2, label: '할일' },
   { id: 'calculator', icon: LayoutGrid, label: '도구' },
   { id: 'messages', icon: MessageSquare, label: '메시지' },
 ]
@@ -105,8 +104,15 @@ export function TopBar({
 
   const settingsActive = activeTab === 'settings'
 
+  // 홈 탭 클릭 시 case-list 의 mode 도 '목록'으로 리셋 (검사/신고/서류 모드 해제).
+  function dispatchHomeReset() {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('home-list-reset'))
+    }
+  }
+
   return (
-    <header className="shrink-0 h-14 w-full flex items-center gap-lg px-md border-b border-border/60 bg-background">
+    <header className="shrink-0 h-14 w-full flex items-center gap-lg px-md border-b border-border/80 bg-background">
         {/* Mobile hamburger — left side, hidden on md+ */}
         <div className="relative md:hidden" ref={menuRef}>
           <button
@@ -126,7 +132,11 @@ export function TopBar({
                     <button
                       key={id}
                       type="button"
-                      onClick={() => { onTabChange(id); setMenuOpen(false) }}
+                      onClick={() => {
+                        onTabChange(id)
+                        if (id === 'cases') dispatchHomeReset()
+                        setMenuOpen(false)
+                      }}
                       className={mobileTabClass(active)}
                     >
                       <Icon size={16} className="shrink-0" />
@@ -140,7 +150,10 @@ export function TopBar({
                     key={id}
                     href={`/${id}`}
                     prefetch={false}
-                    onClick={() => setMenuOpen(false)}
+                    onClick={() => {
+                      if (id === 'cases') dispatchHomeReset()
+                      setMenuOpen(false)
+                    }}
                     className={mobileTabClass(active)}
                   >
                     <Icon size={16} className="shrink-0" />
@@ -153,11 +166,11 @@ export function TopBar({
           )}
         </div>
 
-        {/* App name — serif wordmark */}
+        {/* App name — serif wordmark. 항상 홈 목록 모드로 복귀 (검사/신고/서류 모드도 리셋). */}
         {onTabChange ? (
           <button
             type="button"
-            onClick={() => onTabChange('cases')}
+            onClick={() => { onTabChange('cases'); dispatchHomeReset() }}
             className="font-serif text-[18px] font-medium tracking-tight text-foreground whitespace-nowrap hover:opacity-70 transition-opacity"
           >
             펫무브워크
@@ -166,6 +179,7 @@ export function TopBar({
           <Link
             href="/cases"
             prefetch={false}
+            onClick={dispatchHomeReset}
             className="font-serif text-[18px] font-medium tracking-tight text-foreground whitespace-nowrap hover:opacity-70 transition-opacity"
           >
             펫무브워크
@@ -184,7 +198,10 @@ export function TopBar({
                 <button
                   key={id}
                   type="button"
-                  onClick={() => onTabChange(id)}
+                  onClick={() => {
+                    onTabChange(id)
+                    if (id === 'cases') dispatchHomeReset()
+                  }}
                   className={tabClass(active)}
                 >
                   <Icon size={16} className="shrink-0" />
@@ -198,6 +215,7 @@ export function TopBar({
                 key={id}
                 href={`/${id}`}
                 prefetch={false}
+                onClick={() => { if (id === 'cases') dispatchHomeReset() }}
                 className={tabClass(active)}
               >
                 <Icon size={16} className="shrink-0" />
@@ -287,7 +305,7 @@ export function TopBar({
             {userMenuOpen && (
               <div className="absolute right-0 top-full mt-1 z-30 min-w-[220px] rounded-md border border-border bg-popover p-1 shadow-md">
                 {userEmail && (
-                  <div className="px-sm py-2 text-xs text-muted-foreground border-b border-border/60 mb-1 truncate">
+                  <div className="px-sm py-2 text-xs text-muted-foreground border-b border-border/80 mb-1 truncate">
                     {userEmail}
                   </div>
                 )}

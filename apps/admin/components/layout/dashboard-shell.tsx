@@ -6,7 +6,6 @@ import { MessageSquare } from 'lucide-react'
 import { TopBar, type TabId } from './topbar'
 import { useCases } from '@/components/cases/cases-context'
 import { CasesApp } from '@/components/cases/cases-app'
-import { TodosApp } from '@/components/todos/todos-app'
 import { SettingsApp } from '@/components/settings/settings-app'
 import { CalculatorApp } from '@/components/calculator/calculator-app'
 import { MessagesApp } from '@/components/messages/messages-app'
@@ -20,14 +19,12 @@ import type { ConversationListItem } from '@/lib/actions/chat'
 import type { ExternalLinksConfig } from '@petmove/domain'
 
 const MemoizedCases = memo(CasesApp)
-const MemoizedTodos = memo(TodosApp)
 const MemoizedSettings = memo(SettingsApp)
 const MemoizedCalculator = memo(CalculatorApp)
 const MemoizedMessages = memo(MessagesApp)
 const MemoizedSuperAdmin = memo(SuperAdminApp)
 
 function pathToTab(pathname: string): TabId {
-  if (pathname.startsWith('/todos')) return 'todos'
   if (pathname.startsWith('/calculator')) return 'calculator'
   if (pathname.startsWith('/messages')) return 'messages'
   if (pathname.startsWith('/settings')) return 'settings'
@@ -160,11 +157,6 @@ export function DashboardShell({
         {mounted.has('cases') && (
           <div className="h-full" style={{ display: activeTab === 'cases' ? 'block' : 'none' }}>
             <MemoizedCases />
-          </div>
-        )}
-        {mounted.has('todos') && (
-          <div className="h-full" style={{ display: activeTab === 'todos' ? 'block' : 'none' }}>
-            <MemoizedTodos />
           </div>
         )}
         {mounted.has('calculator') && (

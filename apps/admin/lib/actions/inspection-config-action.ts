@@ -13,7 +13,6 @@ export async function saveInspectionConfigAction(config: InspectionConfig): Prom
     const saved = await saveInspectionConfig(config)
     revalidatePath('/settings')
     revalidatePath('/cases')
-    revalidatePath('/todos')
     return { ok: true, config: saved }
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : '저장 실패' }

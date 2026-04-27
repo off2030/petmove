@@ -11,6 +11,9 @@ import { formatMicrochip } from '@/lib/fields'
 import { destCode } from '@/lib/country-code'
 import { TrashModal } from './trash-modal'
 import { LIST_ROW_BASE } from '@/components/ui/list-row'
+import { TodosApp, TodosInspectionActions, TodosImportReportAdd, TABS as TODOS_TABS, type TabId as TodosTabId } from '@/components/todos/todos-app'
+
+type ListMode = 'cases' | TodosTabId
 
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
@@ -39,7 +42,7 @@ const CaseRowItem = memo(function CaseRowItem({
   const dest = c.destination
   const dests = dest ? dest.split(',').map((s) => s.trim()).filter(Boolean) : []
   return (
-    <li data-case-idx={index} className="border-b border-border/60 last:border-b-0">
+    <li data-case-idx={index} className="border-b border-border/80 last:border-b-0">
       <button
         type="button"
         onClick={() => onSelect(c.id)}
@@ -119,6 +122,15 @@ export function CaseList({
   const [visible, setVisible] = useState(INITIAL_VISIBLE)
   const [highlight, setHighlight] = useState(-1)
   const [showTrash, setShowTrash] = useState(false)
+  const [mode, setMode] = useState<ListMode>('cases')
+  const isTodosMode = mode !== 'cases'
+
+  // 펫무브워크 wordmark 클릭 시 항상 목록 모드로 복귀.
+  useEffect(() => {
+    function onReset() { setMode('cases') }
+    window.addEventListener('home-list-reset', onReset)
+    return () => window.removeEventListener('home-list-reset', onReset)
+  }, [])
 
   // 안정적인 callback 으로 만들어 CaseRowItem 의 React.memo 가 정상 동작하도록 함.
   const handleRowSelect = useCallback((id: string) => {
@@ -166,6 +178,7 @@ export function CaseList({
   useEffect(() => {
     if (!onAddFromFiles) return
     if (selectedId !== null) return
+    if (isTodosMode) return
     function onPaste(e: ClipboardEvent) {
       const tag = (e.target as HTMLElement | null)?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA') return
@@ -185,7 +198,7 @@ export function CaseList({
     window.addEventListener('paste', onPaste)
     return () => window.removeEventListener('paste', onPaste)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onAddFromFiles, selectedId])
+  }, [onAddFromFiles, selectedId, isTodosMode])
 
   // Infinite scroll
   const sentinelRef = useRef<HTMLLIElement>(null)
@@ -212,13 +225,13 @@ export function CaseList({
         dragOver && 'ring-2 ring-primary/40 rounded-xl',
       )}
       onDragEnter={(e) => {
-        if (!onAddFromFiles || selectedId !== null) return
+        if (!onAddFromFiles || selectedId !== null || isTodosMode) return
         if (!Array.from(e.dataTransfer.types).includes('Files')) return
         dragDepth.current += 1
         setDragOver(true)
       }}
       onDragOver={(e) => {
-        if (!onAddFromFiles || selectedId !== null) return
+        if (!onAddFromFiles || selectedId !== null || isTodosMode) return
         if (Array.from(e.dataTransfer.types).includes('Files')) e.preventDefault()
       }}
       onDragLeave={() => {
@@ -226,7 +239,7 @@ export function CaseList({
         if (dragDepth.current === 0) setDragOver(false)
       }}
       onDrop={(e) => {
-        if (!onAddFromFiles || selectedId !== null) return
+        if (!onAddFromFiles || selectedId !== null || isTodosMode) return
         e.preventDefault()
         dragDepth.current = 0
         setDragOver(false)
@@ -234,7 +247,7 @@ export function CaseList({
       }}
     >
       {/* Drag overlay */}
-      {dragOver && onAddFromFiles && (
+      {dragOver && onAddFromFiles && !isTodosMode && (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-primary/10 backdrop-blur-[1px]">
           <div className="text-sm text-primary font-medium">여기에 놓으면 새 케이스로 읽어옵니다</div>
         </div>
@@ -249,26 +262,46 @@ export function CaseList({
         </div>
       )}
 
-      {/* Page header — editorial title + count + 복원 */}
+      {/* Page header — editorial title + 모드 탭 (실험) */}
       <div className="shrink-0 px-lg flex items-baseline justify-between gap-md">
-        <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
+        <button
+          type="button"
+          onClick={() => setMode('cases')}
+          className="font-serif text-[26px] leading-tight tracking-tight text-foreground hover:opacity-70 transition-opacity"
+          title="목록 화면으로 이동"
+        >
           고객 정보
-        </h1>
-        <div className="flex items-center gap-sm">
+        </button>
+        <div className="flex items-baseline gap-md">
           <button
             type="button"
-            onClick={() => setShowTrash(true)}
-            title="삭제된 항목 복원"
-            aria-label="삭제된 항목 복원"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            onClick={() => setMode('cases')}
+            className={cn(
+              'font-serif text-[15px] transition-colors',
+              mode === 'cases'
+                ? 'text-foreground font-semibold'
+                : 'text-muted-foreground/70 hover:text-foreground',
+            )}
+            title="고객 목록"
           >
-            <History className="h-3.5 w-3.5" />
+            목록
           </button>
-          <span className="text-muted-foreground text-[13px]">
-            <span className="font-serif italic">총</span>{' '}
-            <span className="font-mono tabular-nums">{cases.length.toLocaleString()}</span>
-            <span className="font-serif italic">건</span>
-          </span>
+          <span className="text-muted-foreground/30 text-[13px]">·</span>
+          {TODOS_TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setMode(t.id)}
+              className={cn(
+                'font-serif text-[15px] transition-colors',
+                mode === t.id
+                  ? 'text-foreground font-semibold'
+                  : 'text-muted-foreground/70 hover:text-foreground',
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -280,6 +313,10 @@ export function CaseList({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
+              if (isTodosMode) {
+                if (e.key === 'Escape') setQuery('')
+                return
+              }
               if (e.key === 'ArrowDown') {
                 e.preventDefault()
                 setHighlight(h => {
@@ -310,7 +347,7 @@ export function CaseList({
             }}
             autoFocus
             placeholder="검색"
-            className="h-11 pl-10 pr-9 text-[15px] bg-popover text-foreground shadow-none border-border/70 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
+            className="h-11 pl-10 pr-9 text-[15px] bg-popover text-foreground shadow-none border-border/80 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
           />
           {query && (
             <button
@@ -322,7 +359,9 @@ export function CaseList({
             </button>
           )}
         </div>
-        {onAddFromFiles && (
+        {mode === 'inspection' && <TodosInspectionActions query={query} />}
+        {mode === 'import_report' && <TodosImportReportAdd />}
+        {onAddFromFiles && !isTodosMode && (
           <>
             <input
               ref={fileInputRef}
@@ -338,60 +377,95 @@ export function CaseList({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-popover text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               title="파일로 새 케이스 추가 (드래그·드롭 / Ctrl+V 도 가능)"
             >
               <Paperclip className="h-4 w-4" />
             </button>
           </>
         )}
-        <button
-          type="button"
-          onClick={() => onAdd?.()}
-          className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-          title="새 케이스 추가"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
+        {!isTodosMode && (
+          <button
+            type="button"
+            onClick={() => onAdd?.()}
+            className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-popover text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            title="새 케이스 추가"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
-      {/* List — borderless, editorial */}
-      <div className="flex-1 min-h-0 flex flex-col">
-        {/* Column header — editorial caption */}
-        <div className="shrink-0 px-lg pb-3 border-b border-border/60">
-          <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm font-sans text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80">
-            <span>보호자</span>
-            <span>반려동물</span>
-            <span>목적지</span>
-            <span className="hidden md:block">마이크로칩</span>
+      {/* List / Todos body */}
+      {isTodosMode ? (
+        <div className="flex-1 min-h-0 overflow-auto scrollbar-minimal">
+          <TodosApp embedded tab={mode as TodosTabId} query={query} />
+        </div>
+      ) : (
+        <div className="flex-1 min-h-0 flex flex-col">
+          {/* Column header — editorial caption */}
+          <div className="shrink-0 px-lg pb-3 border-b border-border/80">
+            <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)_minmax(0,5fr)_168px] items-center gap-sm font-sans text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80">
+              <span>보호자</span>
+              <span>반려동물</span>
+              <span>목적지</span>
+              <span className="hidden md:block">마이크로칩</span>
+            </div>
+          </div>
+
+          {/* Scrollable list */}
+          <div className="flex-1 overflow-y-auto scrollbar-minimal">
+            {visibleCases.length === 0 ? (
+              <div className="py-16 text-center text-sm text-muted-foreground italic font-serif">
+                결과가 없습니다
+              </div>
+            ) : (
+              <ul>
+                {visibleCases.map((c, i) => (
+                  <CaseRowItem
+                    key={c.id}
+                    caseRow={c}
+                    index={i}
+                    isSelected={c.id === selectedId}
+                    isNew={newCaseIds.has(c.id)}
+                    isHighlighted={!!(c.id !== selectedId && i === highlight)}
+                    onSelect={handleRowSelect}
+                  />
+                ))}
+                {visible < filtered.length && (
+                  <li ref={sentinelRef} className="h-10" />
+                )}
+              </ul>
+            )}
           </div>
         </div>
+      )}
 
-        {/* Scrollable list */}
-        <div className="flex-1 overflow-y-auto scrollbar-minimal">
-          {visibleCases.length === 0 ? (
-            <div className="py-16 text-center text-sm text-muted-foreground italic font-serif">
-              결과가 없습니다
-            </div>
-          ) : (
-            <ul>
-              {visibleCases.map((c, i) => (
-                <CaseRowItem
-                  key={c.id}
-                  caseRow={c}
-                  index={i}
-                  isSelected={c.id === selectedId}
-                  isNew={newCaseIds.has(c.id)}
-                  isHighlighted={!!(c.id !== selectedId && i === highlight)}
-                  onSelect={handleRowSelect}
-                />
-              ))}
-              {visible < filtered.length && (
-                <li ref={sentinelRef} className="h-10" />
-              )}
-            </ul>
-          )}
-        </div>
+      {/* Footer */}
+      <div className="shrink-0 h-7 px-lg flex items-center justify-between text-[13px] text-muted-foreground">
+        {isTodosMode ? (
+          <>
+            <span />
+            <span />
+          </>
+        ) : (
+          <>
+            <span>
+              <span className="font-serif italic">총</span>{' '}
+              <span className="font-mono tabular-nums">{cases.length.toLocaleString()}</span>
+              <span className="font-serif italic">건</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowTrash(true)}
+              title="삭제된 항목 복원"
+              className="inline-flex h-7 items-center gap-1.5 px-2 rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            >
+              <History className="h-3.5 w-3.5" />
+              <span className="font-serif text-[13px]">복원</span>
+            </button>
+          </>
+        )}
       </div>
 
       {showTrash && (
