@@ -294,10 +294,12 @@ export function TodoTable({
   cases,
   columns,
   onUpdate,
+  rowClass,
 }: {
   cases: CaseRow[]
   columns: TodoColumn[]
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
+  rowClass?: (row: CaseRow) => string
 }) {
   const [visible, setVisible] = useState(INITIAL_VISIBLE)
   const sentinelRef = useRef<HTMLTableRowElement>(null)
@@ -345,7 +347,10 @@ export function TodoTable({
         {visibleCases.map((row) => (
           <tr
             key={row.id}
-            className="border-b border-dashed border-border/50 hover:bg-accent transition-colors cursor-pointer"
+            className={cn(
+              'border-b border-dashed border-border/50 hover:bg-accent transition-colors cursor-pointer',
+              rowClass?.(row),
+            )}
             onClick={() => openCase(row.id)}
           >
             {columns.map((col) => {

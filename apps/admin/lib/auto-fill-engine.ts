@@ -1,5 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { DESTINATION_OVERRIDES, matchesDestinationKey } from '@petmove/domain'
+import {
+  DESTINATION_OVERRIDES,
+  matchesDestinationKey,
+  resolveInspectionLabs,
+  type InspectionLabRule,
+} from '@petmove/domain'
 
 /**
  * 자동 채움 엔진.
@@ -24,6 +29,9 @@ const ARRAY_DATE_FIELDS = new Set([
   'external_parasite_dates',
   'heartworm_dates',
 ])
+
+// {date, lab} 구조 — 목적지 → lab 자동 해석 후 entry 생성
+const LAB_ARRAY_FIELDS = new Set(['infectious_disease_records'])
 
 interface RuleRow {
   id: string
@@ -119,6 +127,8 @@ function applyRuleToData(
   rule: RuleRow,
   triggerDate: string,
   writtenTargets: Set<string>,
+  destination: string | null,
+  infectiousRules: InspectionLabRule[],
 ): Record<string, unknown> {
   const { arrayName, index } = parsePath(rule.target_field)
   const offsets = rule.offsets_days
@@ -128,6 +138,25 @@ function applyRuleToData(
     // wait — 실제로 이 경로는 arrayName !== null && index === null 만 매치함.
     // 하지만 parsePath 는 '[n]' 있을 때만 arrayName 반환. 없으면 arrayName=null.
     // => 도달 안 함. 대신 아래 'else' 에서 처리.
+  }
+
+  // {date, lab} 배열 — 목적지 매칭 lab 으로 entry 생성 (saveNewRecord 와 동일 동작)
+  if (!arrayName && LAB_ARRAY_FIELDS.has(rule.target_field)) {
+    const existing = (data[rule.target_field] as Array<{ date?: string; lab?: string | null }> | undefined) ?? []
+    const hasAnyDate = existing.some((e) => e?.date)
+    if (hasAnyDate && !rule.overwrite_existing) return data
+    const labs = resolveInspectionLabs(destination, infectiousRules)
+    const newEntries: Array<{ date: string; lab: string | null }> = []
+    for (const off of offsets) {
+      const date = addDays(triggerDate, off)
+      if (labs.length > 0) {
+        for (const lab of labs) newEntries.push({ date, lab })
+      } else {
+        newEntries.push({ date, lab: null })
+      }
+    }
+    writtenTargets.add(rule.target_field)
+    return { ...data, [rule.target_field]: newEntries }
   }
 
   // 타겟이 배열 전체 (raw): trigger_field 가 'internal_parasite_dates' 같은 이름
@@ -196,6 +225,27 @@ export async function applyAutoFillRules(
     if (rulesErr) return { ok: false, error: rulesErr.message }
     const rules = (rulesRaw ?? []) as RuleRow[]
 
+    // 검사기관 매핑 — infectious_disease_records 타겟 처리에 필요
+    let infectiousRules: InspectionLabRule[] = []
+    if (rules.some((r) => LAB_ARRAY_FIELDS.has(r.target_field))) {
+      const { data: settingsRow } = await supabase
+        .from('organization_settings')
+        .select('value')
+        .eq('org_id', orgId)
+        .eq('key', 'inspection_config')
+        .maybeSingle()
+      const raw = (settingsRow as { value?: { infectiousRules?: unknown } } | null)?.value?.infectiousRules
+      if (Array.isArray(raw)) {
+        infectiousRules = raw.filter(
+          (r): r is InspectionLabRule =>
+            !!r &&
+            typeof r === 'object' &&
+            Array.isArray((r as { countries?: unknown }).countries) &&
+            Array.isArray((r as { labs?: unknown }).labs),
+        )
+      }
+    }
+
     // 매칭 필터: 목적지 + 종
     const matchedRules = rules.filter(
       (r) => destinationMatches(r.destination_key, destination) && speciesMatches(r.species_filter, species),
@@ -215,7 +265,7 @@ export async function applyAutoFillRules(
         if (processedTriggers.has(triggerKey)) continue
         const triggerDate = readTriggerDate({ destination, data: dataMut }, triggerKey)
         if (!triggerDate) continue
-        dataMut = applyRuleToData(dataMut, rule, triggerDate, written)
+        dataMut = applyRuleToData(dataMut, rule, triggerDate, written, destination, infectiousRules)
       }
       if (written.size === 0) break
       for (const t of written) {

@@ -56,6 +56,7 @@ const FIELD_OPTIONS: { key: string; label: string }[] = [
   { key: 'civ_dates[0]', label: 'CIV 1차' },
   { key: 'civ_dates[1]', label: 'CIV 2차' },
   { key: 'kennel_cough_dates[0]', label: '켄넬코프 1차' },
+  { key: 'infectious_disease_records', label: '전염병검사일' },
   { key: 'internal_parasite_dates', label: '내부구충' },
   { key: 'external_parasite_dates', label: '외부구충' },
   { key: 'heartworm_dates', label: '심장사상충' },
@@ -324,17 +325,26 @@ function EditorialSelect({
   options,
   onChange,
   placeholder = '선택',
+  searchable = false,
 }: {
   value: string
   options: { key: string; label: string }[]
   onChange: (v: string) => void
   placeholder?: string
+  searchable?: boolean
 }) {
   const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const [activeIdx, setActiveIdx] = useState(0)
   const ref = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      setQuery('')
+      setActiveIdx(0)
+      return
+    }
     function onDoc(e: MouseEvent) {
       if (!ref.current?.contains(e.target as Node)) setOpen(false)
     }
@@ -343,13 +353,28 @@ function EditorialSelect({
     }
     document.addEventListener('mousedown', onDoc)
     document.addEventListener('keydown', onKey)
+    if (searchable) inputRef.current?.focus()
     return () => {
       document.removeEventListener('mousedown', onDoc)
       document.removeEventListener('keydown', onKey)
     }
-  }, [open])
+  }, [open, searchable])
 
   const current = options.find((o) => o.key === value)
+
+  const filtered = searchable && query
+    ? options.filter((o) => {
+        const q = query.toLowerCase()
+        return o.label.toLowerCase().includes(q) || o.key.toLowerCase().includes(q)
+      })
+    : options
+
+  function commit(idx: number) {
+    const o = filtered[idx]
+    if (!o) return
+    onChange(o.key)
+    setOpen(false)
+  }
 
   return (
     <div ref={ref} className="relative">
@@ -362,31 +387,60 @@ function EditorialSelect({
         <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', open && 'rotate-180')} />
       </button>
       {open && (
-        <ul
-          role="listbox"
-          className="absolute left-0 right-0 top-full mt-1 max-h-60 overflow-y-auto rounded-sm border border-border/70 bg-popover shadow-md py-1 z-30"
-        >
-          {options.map((o) => {
-            const active = o.key === value
-            return (
-              <li key={o.key}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChange(o.key)
-                    setOpen(false)
-                  }}
-                  className={cn(
-                    'w-full text-left px-3 py-1.5 text-[14px] hover:bg-accent/40 transition-colors',
-                    active ? 'font-serif text-foreground' : 'font-serif text-muted-foreground',
-                  )}
-                >
-                  {o.label}
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+        <div className="absolute left-0 right-0 top-full mt-1 rounded-sm border border-border/70 bg-popover shadow-md z-30">
+          {searchable && (
+            <div className="border-b border-border/50 px-2 py-1.5">
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => { setQuery(e.target.value); setActiveIdx(0) }}
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault()
+                    setActiveIdx((i) => Math.min(i + 1, filtered.length - 1))
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault()
+                    setActiveIdx((i) => Math.max(i - 1, 0))
+                  } else if (e.key === 'Enter') {
+                    e.preventDefault()
+                    commit(activeIdx)
+                  }
+                }}
+                placeholder="검색…"
+                className="w-full bg-transparent outline-none font-serif text-[13px] px-1 py-0.5 placeholder:text-muted-foreground/50"
+              />
+            </div>
+          )}
+          <ul
+            role="listbox"
+            className="max-h-60 overflow-y-auto py-1"
+          >
+            {filtered.length === 0 && (
+              <li className="px-3 py-1.5 font-serif italic text-[13px] text-muted-foreground/50">결과 없음</li>
+            )}
+            {filtered.map((o, i) => {
+              const active = o.key === value
+              const highlighted = searchable && i === activeIdx
+              return (
+                <li key={o.key}>
+                  <button
+                    type="button"
+                    onClick={() => commit(i)}
+                    onMouseEnter={() => searchable && setActiveIdx(i)}
+                    className={cn(
+                      'w-full text-left px-3 py-1.5 text-[14px] transition-colors',
+                      highlighted ? 'bg-accent/40' : 'hover:bg-accent/40',
+                      active ? 'font-serif text-foreground' : 'font-serif text-muted-foreground',
+                    )}
+                  >
+                    {o.label}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
       )}
     </div>
   )
@@ -453,7 +507,7 @@ function RuleEditModal({
 
         <div className="px-lg py-md space-y-md">
           <Field label="목적지">
-            <EditorialSelect value={destination} onChange={setDestination} options={DESTINATION_OPTIONS} />
+            <EditorialSelect value={destination} onChange={setDestination} options={DESTINATION_OPTIONS} searchable />
           </Field>
           <Field label="종">
             <EditorialSelect value={species} onChange={setSpecies} options={SPECIES_OPTIONS} />

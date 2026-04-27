@@ -582,10 +582,15 @@ export function InspectionTable({
         </tr>
       </thead>
       <tbody>
-        {visibleRows.map(row => (
+        {visibleRows.map(row => {
+          const isDone = ((row.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') === 'done'
+          return (
           <tr
             key={row.id}
-            className="group/insprow border-b border-dashed border-border/50 hover:bg-accent transition-colors cursor-pointer"
+            className={cn(
+              'group/insprow border-b border-dashed border-border/50 hover:bg-accent transition-colors cursor-pointer',
+              isDone && 'opacity-50 hover:opacity-100',
+            )}
             onClick={() => openCase(row.caseRow.id)}
           >
             <td className="px-2 py-4" style={{ width: 146, minWidth: 146 }} onClick={(e) => e.stopPropagation()}>
@@ -629,7 +634,8 @@ export function InspectionTable({
               <MemoCell row={row} onUpdate={onUpdate} />
             </td>
           </tr>
-        ))}
+          )
+        })}
         {visible < rows.length && (
           <tr ref={sentinelRef}>
             <td colSpan={COLUMNS.length} className="text-center text-muted-foreground/50 py-2 text-[13px]">

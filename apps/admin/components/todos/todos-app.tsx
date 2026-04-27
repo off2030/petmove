@@ -403,6 +403,13 @@ function isImportReportComplete(row: CaseRow): boolean {
   return done(effectiveImportStatus(row)) && done(effectiveExportStatus(row))
 }
 
+/** 출국일이 오늘보다 전 = 이미 출국한 케이스. */
+function isPastDeparture(row: CaseRow): boolean {
+  const dep = row.departure_date
+  if (!dep) return false
+  return dep < new Date().toISOString().slice(0, 10)
+}
+
 
 const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
   {
@@ -543,27 +550,35 @@ export function TodosApp() {
         })
     }
     if (activeTab === 'export_doc') {
+      const todayStr = new Date().toISOString().slice(0, 10)
       const visitDate = (c: CaseRow) => {
         const d = (c.data ?? {}) as Record<string, unknown>
         const v = d.vet_visit_date
         return typeof v === 'string' && v ? v : ''
       }
+      // 0=상단(내원일 미래), 1=중단(내원일 지남/없음, 출국일 미래), 2=하단(출국일 지남).
+      const groupOf = (c: CaseRow): 0 | 1 | 2 => {
+        const dep = c.departure_date ?? ''
+        if (dep && dep < todayStr) return 2
+        const v = visitDate(c)
+        if (!v || v < todayStr) return 1
+        return 0
+      }
       return cases
         .filter((c) => !!c.departure_date)
         .filter(c => matchesQuery(c, q))
         .sort((a, b) => {
-          const va = visitDate(a)
-          const vb = visitDate(b)
+          const ga = groupOf(a)
+          const gb = groupOf(b)
+          if (ga !== gb) return ga - gb
           const da = a.departure_date ?? ''
           const db = b.departure_date ?? ''
-          // 1차: 내원일 있는 그룹 위, 없는 그룹 아래.
-          if (!!va !== !!vb) return va ? -1 : 1
-          // 2차: 내원일 있는 그룹은 내원일 빠른 순(asc), 동일하면 출국일 빠른 순.
-          if (va && vb) {
-            const cmp = va.localeCompare(vb)
+          if (ga === 0) {
+            // 상단: 내원일 asc, 동일하면 출국일 asc.
+            const cmp = visitDate(a).localeCompare(visitDate(b))
             return cmp !== 0 ? cmp : da.localeCompare(db)
           }
-          // 2차: 내원일 없는 그룹은 출국일 빠른 순.
+          // 중단·하단: 출국일 asc.
           return da.localeCompare(db)
         })
     }
@@ -689,6 +704,13 @@ export function TodosApp() {
             cases={filteredCases}
             columns={COLUMNS_MAP[activeTab]}
             onUpdate={updateLocalCaseField}
+            rowClass={
+              activeTab === 'import_report'
+                ? (row) => (isImportReportComplete(row) ? 'opacity-50 hover:opacity-100' : '')
+                : activeTab === 'export_doc'
+                ? (row) => (isPastDeparture(row) ? 'opacity-50 hover:opacity-100' : '')
+                : undefined
+            }
           />
         )}
       </div>
