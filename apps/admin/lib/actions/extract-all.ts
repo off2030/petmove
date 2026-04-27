@@ -102,13 +102,24 @@ Return ONE JSON object following the provided schema. For each field set the bes
 - customer_last_name_en: English family name only
 - phone: phone number as written (010-XXXX-XXXX or +82...)
 - address_kr: Korean domestic address. If a postal code is visible, put it in address_zipcode and keep the address itself zipcode-free.
-- address_en: English-translated/romanized version of the Korean address. REQUIRED whenever address_kr is present — never return address_en as null if address_kr has a value. Romanize road names (벚꽃로 → Beotkkot-ro), district (구 → -gu), city (시 → -si), province (도 → -do). Example: "서울시 금천구 벚꽃로 40, 102동 504호" → "40 Beotkkot-ro, Geumcheon-gu, Seoul, 102-504".
+- address_en: English-translated/romanized version of the address. Romanize road names (벚꽃로 → Beotkkot-ro), district (구 → -gu), city (시 → -si), province (도 → -do). Example: "서울시 금천구 벚꽃로 40, 102동 504호" → "40 Beotkkot-ro, Geumcheon-gu, Seoul, 102-504".
 - address_zipcode: Korean postal code, 5 or 6 digits only (no parentheses, no "우편번호" prefix). Look for "(06234)", "우편번호 06234", "[06234]", or a standalone 5-6 digit number next to the address. null if not visible.
 - email: email address
+
+=== KOREAN ↔ ENGLISH FIELD PAIRING ===
+Many fields come in pairs — e.g. (customer_name, customer_name_en), (pet_name, pet_name_en), (breed, breed_en), (color, color_en), (address_kr, address_en).
+
+For every pair, the rule is INDEPENDENT extraction + bidirectional fill:
+- If only Korean/original-script value is in the document → fill the Korean side AND derive the English/romanized side too.
+- If only English/Latin/romanized value is in the document → fill the English side. Leave the Korean side null (do NOT invent Korean).
+- If both are in the document → fill both verbatim.
+
+Never skip an English-side value just because the Korean counterpart is missing. A Latin-only document (e.g. customs / import notification / overseas form) should still produce a fully populated *_en cluster (customer_name_en, address_en, pet_name_en, breed_en, color_en) even when every Korean field is null.
 
 === RULES ===
 - Dates: always YYYY-MM-DD.
 - Do NOT invent data. Anything not clearly present → null.
+- When multiple person/address blocks appear (applicant vs shipper/consignor vs consignee/destination), the OWNER is the applicant/notifier — the person submitting the document, not the shipping intermediary.
 - If multiple images contradict each other, prefer the value from the more authoritative document (microchip cert > vet book > KakaoTalk).
 - Return ONLY valid JSON matching the schema.`
 
