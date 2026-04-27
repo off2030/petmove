@@ -1436,15 +1436,22 @@ function resolveField(
     const key = vetMatch[1]
     if (key === 'invoice_shipper_block') {
       const v = VET_INFO
-      return [
-        v.clinic_en,
-        v.address_en,
-        `Tel: ${v.phone_intl}`,
-        `Email: ${v.email}`,
-        `Veterinarian: ${v.name_en} (License No. ${v.license_no})`,
-      ].join('\n')
+      const lines: string[] = []
+      if (v.name_en) lines.push(`Contact Name: ${v.name_en}`)
+      const addr = [v.clinic_en, v.address_en].filter(Boolean).join(', ')
+      if (addr) lines.push(`Company name/Address: ${addr}`)
+      const telParts: string[] = []
+      if (v.phone_intl) telParts.push(`Tel. ${v.phone_intl}`)
+      if (v.email) telParts.push(`email: ${v.email}`)
+      if (telParts.length) lines.push(telParts.join(' / '))
+      // MID 는 custom_fields 의 label "MID" (대소문자 무시) 에서 조회.
+      const midField = (v.custom_fields ?? []).find(
+        (f) => f.label.trim().toLowerCase() === 'mid',
+      )
+      if (midField?.value) lines.push(`MID: ${midField.value}`)
+      return lines.join('\n')
     }
-    const v = (VET_INFO as Record<string, unknown>)[key]
+    const v = (VET_INFO as unknown as Record<string, unknown>)[key]
     return v == null ? '' : String(v)
   }
 

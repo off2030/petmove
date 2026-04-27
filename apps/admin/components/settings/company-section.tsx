@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
+import { Plus, X } from 'lucide-react'
 import {
   getCompanyInfo,
   updateCompanyInfo,
@@ -14,7 +15,7 @@ import {
   getActiveOrgDmVisibility,
   updateActiveOrgDmVisibility,
 } from '@/lib/actions/chat'
-import type { VetInfo, VetInfoKey } from '@/lib/vet-info'
+import type { CustomField, VetInfo, VetInfoKey } from '@/lib/vet-info'
 import { SectionHeader } from '@/components/ui/section-header'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
@@ -38,12 +39,14 @@ const HOSPITAL_FIELDS: FieldDef[] = [
   { key: 'clinic_en', label: '영문 병원명', group: 'Clinic' },
   { key: 'address_ko', label: '주소', group: 'Clinic', type: 'textarea' },
   { key: 'address_en', label: '영문 주소', group: 'Clinic', type: 'textarea' },
+  { key: 'postal_code', label: '우편번호', group: 'Clinic' },
   { key: 'phone', label: '전화', group: 'Clinic' },
   { key: 'email', label: '이메일', group: 'Clinic' },
 
   { key: 'name_ko', label: '수의사', group: 'Veterinarian' },
   { key: 'name_en', label: '영문명', group: 'Veterinarian' },
   { key: 'license_no', label: '면허번호', group: 'Veterinarian' },
+  { key: 'mobile_phone', label: '휴대폰', group: 'Veterinarian' },
 ]
 
 const TRANSPORT_FIELDS: FieldDef[] = [
@@ -51,6 +54,8 @@ const TRANSPORT_FIELDS: FieldDef[] = [
   { key: 'transport_company_en', label: '영문 회사명', group: 'Company' },
   { key: 'transport_contact_ko', label: '담당자', group: 'Company' },
   { key: 'transport_contact_en', label: '영문명', group: 'Company' },
+  { key: 'postal_code', label: '우편번호', group: 'Company' },
+  { key: 'mobile_phone', label: '휴대폰', group: 'Company' },
 ]
 
 function formatSavedAgo(date: Date | null): string {
@@ -147,6 +152,43 @@ export function CompanySection({
         setError(r.error)
       }
     })
+  }
+
+  /** custom_fields 통째로 교체 저장. 각 row 의 label/value blur 마다 호출. */
+  function saveCustomFields(next: CustomField[]) {
+    if (!info) return
+    setError(null)
+    startTransition(async () => {
+      const r = await updateCompanyInfo({ custom_fields: next })
+      if (r.ok) {
+        setInfo(r.info)
+        setLastSaved(new Date())
+      } else {
+        setError(r.error)
+      }
+    })
+  }
+
+  function addCustomField() {
+    if (!info || !isAdmin) return
+    const id = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
+      ? crypto.randomUUID()
+      : `cf_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    const next = [...(info.custom_fields ?? []), { id, label: '', value: '' }]
+    setInfo({ ...info, custom_fields: next })
+  }
+
+  function updateCustomField(id: string, patch: Partial<CustomField>) {
+    if (!info) return
+    const next = (info.custom_fields ?? []).map((f) => f.id === id ? { ...f, ...patch } : f)
+    setInfo({ ...info, custom_fields: next })
+  }
+
+  function removeCustomField(id: string) {
+    if (!info) return
+    const next = (info.custom_fields ?? []).filter((f) => f.id !== id)
+    setInfo({ ...info, custom_fields: next })
+    saveCustomFields(next)
   }
 
   async function handleOrgTypeChange(next: OrgType) {
@@ -297,6 +339,40 @@ export function CompanySection({
         </p>
       )}
 
+      {/* 사용자 정의 추가 필드 — 라벨/값 자유 입력 */}
+      <section className="mb-xl">
+        <SectionLabel>Additional</SectionLabel>
+        <div className="border-t border-border/80">
+          {(info.custom_fields ?? []).map((f) => (
+            <CustomFieldRow
+              key={f.id}
+              field={f}
+              isAdmin={isAdmin}
+              onChange={(patch) => updateCustomField(f.id, patch)}
+              onCommit={() => saveCustomFields(info.custom_fields ?? [])}
+              onRemove={() => removeCustomField(f.id)}
+            />
+          ))}
+          {isAdmin && (
+            <div className="py-3 border-b border-dotted border-border/80">
+              <button
+                type="button"
+                onClick={addCustomField}
+                className="inline-flex items-center gap-xs font-serif text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Plus size={14} />
+                <span>정보 추가</span>
+              </button>
+            </div>
+          )}
+          {!isAdmin && (info.custom_fields ?? []).length === 0 && (
+            <p className="py-3 font-serif italic text-[12px] text-muted-foreground/60">
+              추가 정보가 없습니다.
+            </p>
+          )}
+        </div>
+      </section>
+
       {/* DM 노출 — admin 만 변경 */}
       {isAdmin && (
         <section className="mb-xl">
@@ -331,6 +407,66 @@ export function CompanySection({
           {formatSavedAgo(lastSaved)}
         </span>
       </div>
+    </div>
+  )
+}
+
+function CustomFieldRow({
+  field,
+  isAdmin,
+  onChange,
+  onCommit,
+  onRemove,
+}: {
+  field: CustomField
+  isAdmin: boolean
+  onChange: (patch: Partial<CustomField>) => void
+  onCommit: () => void
+  onRemove: () => void
+}) {
+  return (
+    <div className="grid grid-cols-[150px_1fr_auto] items-baseline gap-md py-3 border-b border-dotted border-border/80 group">
+      <input
+        type="text"
+        value={field.label}
+        onChange={(e) => onChange({ label: e.target.value })}
+        onBlur={onCommit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+        }}
+        placeholder={isAdmin ? '항목명' : ''}
+        readOnly={!isAdmin}
+        className={cn(
+          'w-full bg-transparent font-serif text-[13px] leading-none text-muted-foreground pt-0.5 border-0 px-0 py-1 focus:outline-none focus:ring-0 placeholder:text-muted-foreground/30',
+          !isAdmin && 'cursor-default',
+        )}
+      />
+      <input
+        type="text"
+        value={field.value}
+        onChange={(e) => onChange({ value: e.target.value })}
+        onBlur={onCommit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+        }}
+        placeholder={isAdmin ? '—' : ''}
+        readOnly={!isAdmin}
+        className={cn(
+          'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/30',
+          !isAdmin && 'cursor-default',
+        )}
+      />
+      {isAdmin && (
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label="항목 삭제"
+          title="삭제"
+          className="opacity-0 group-hover:opacity-100 inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive transition-all"
+        >
+          <X size={14} />
+        </button>
+      )}
     </div>
   )
 }
@@ -392,14 +528,14 @@ function OrgDmVisibilityRow({
           onClick={toggle}
           disabled={pending || value === null}
           className={cn(
-            'h-8 px-md font-serif text-[14px] rounded-full border transition-colors',
+            'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
             value
               ? 'border-primary/50 bg-primary/10 text-primary'
               : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
             (pending || value === null) && 'opacity-60',
           )}
         >
-          {value === null ? '불러오는 중…' : value ? '검색에 노출됨' : '검색에서 숨김'}
+          {value === null ? '불러오는 중…' : value ? '검색 노출' : '검색 숨김'}
         </button>
         <span className="font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
           끄면 외부 조직 사용자가 새 대화 만들기에서 우리 조직을 찾을 수 없습니다. 같은 조직 내부 검색은 영향 없음.

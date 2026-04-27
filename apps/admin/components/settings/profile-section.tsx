@@ -233,14 +233,14 @@ function DmVisibilityRow({
           onClick={toggle}
           disabled={pending}
           className={cn(
-            'h-8 px-md font-serif text-[14px] rounded-full border transition-colors',
+            'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
             value
               ? 'border-primary/50 bg-primary/10 text-primary'
               : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
             pending && 'opacity-60',
           )}
         >
-          {value ? '검색에 노출됨' : '검색에서 숨김'}
+          {value ? '검색 노출' : '검색 숨김'}
         </button>
         <span className="font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
           끄면 다른 사용자가 새 대화 만들기에서 본인을 찾을 수 없습니다. 기존 대화는 영향 없음.
