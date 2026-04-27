@@ -43,7 +43,7 @@ export default async function InviteAcceptPage({ params }: Props) {
 function InviteError({ message }: { message: string }) {
   return (
     <div className="min-h-screen flex items-center justify-center p-lg">
-      <div className="max-w-md w-full space-y-md rounded-xl border border-border/60 bg-card p-xl shadow-sm text-center">
+      <div className="max-w-md w-full space-y-md rounded-xl border border-border/80 bg-card p-xl shadow-sm text-center">
         <h1 className="text-xl font-semibold">초대 수락 실패</h1>
         <p className="text-base text-muted-foreground">{message}</p>
         <a

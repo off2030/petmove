@@ -104,7 +104,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <SectionLabel className="pt-1">품종</SectionLabel>
       <div ref={containerRef} className="relative min-w-0">
         {/* Display / trigger */}
@@ -127,7 +127,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
 
         {/* Dropdown */}
         {open && !freeMode && (
-          <div className="absolute left-0 top-full mt-1 z-20 w-72 rounded-md border border-border/50 bg-background shadow-md">
+          <div className="absolute left-0 top-full mt-1 z-20 w-72 rounded-md border border-border/80 bg-background shadow-md">
             {/* Search input */}
             <div className="p-2 border-b border-border/30">
               <input
@@ -156,7 +156,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                   }
                 }}
                 placeholder="품종 검색 (한글/영문)"
-                className="w-full h-8 rounded border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+                className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
               />
             </div>
             {/* Options list */}
@@ -196,7 +196,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
 
         {/* Free input mode */}
         {open && freeMode && (
-          <div className="absolute left-0 top-full mt-1 z-20 w-72 rounded-md border border-border/50 bg-background shadow-md p-3">
+          <div className="absolute left-0 top-full mt-1 z-20 w-72 rounded-md border border-border/80 bg-background shadow-md p-3">
             <div className="space-y-2">
               <input
                 type="text"
@@ -208,7 +208,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                   if (e.key === 'Enter') saveFree()
                   if (e.key === 'Escape') { setFreeMode(false); setOpen(false) }
                 }}
-                className="w-full h-8 rounded border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+                className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
               />
               <input
                 type="text"
@@ -219,7 +219,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                   if (e.key === 'Enter') saveFree()
                   if (e.key === 'Escape') { setFreeMode(false); setOpen(false) }
                 }}
-                className="w-full h-8 rounded border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+                className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
               />
               <button
                 type="button"

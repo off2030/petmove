@@ -201,7 +201,7 @@ export function CompanySection({
       {isAdmin && (
         <section className="mb-xl">
           <SectionLabel>Organization</SectionLabel>
-          <div className="border-t border-border/70 pt-md flex items-center gap-xs">
+          <div className="border-t border-border/80 pt-md flex items-center gap-xs">
             {(['hospital', 'transport'] as const).map((t) => (
               <button
                 key={t}
@@ -212,7 +212,7 @@ export function CompanySection({
                   'h-8 px-md font-serif text-[14px] rounded-full border transition-colors',
                   orgType === t
                     ? 'border-primary/50 bg-primary/10 text-primary'
-                    : 'border-border/60 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+                    : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
                   savingOrgType && 'opacity-60',
                 )}
               >
@@ -233,13 +233,13 @@ export function CompanySection({
       {groups.map((group) => (
         <section key={group} className="mb-xl">
           <SectionLabel>{group}</SectionLabel>
-          <div className="border-t border-border/70">
+          <div className="border-t border-border/80">
             {fields.filter((f) => f.group === group).map((f) => {
               const saving = savingKey === f.key
               return (
                 <div
                   key={f.key}
-                  className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/60"
+                  className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80"
                 >
                   <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
                     {f.label}
@@ -301,7 +301,7 @@ export function CompanySection({
       {isAdmin && (
         <section className="mb-xl">
           <SectionLabel>Messaging</SectionLabel>
-          <div className="border-t border-border/70">
+          <div className="border-t border-border/80">
             <OrgDmVisibilityRow
               onError={setError}
               onSaved={() => setLastSaved(new Date())}
@@ -315,7 +315,7 @@ export function CompanySection({
       )}
 
       {/* Footer — reset + save status */}
-      <div className="flex items-center justify-between pt-md border-t border-border/60">
+      <div className="flex items-center justify-between pt-md border-t border-border/80">
         {isAdmin && hasDefault ? (
           <button
             type="button"
@@ -382,7 +382,7 @@ function OrgDmVisibilityRow({
   }
 
   return (
-    <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/60">
+    <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
       <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
         검색 노출
       </label>
@@ -395,7 +395,7 @@ function OrgDmVisibilityRow({
             'h-8 px-md font-serif text-[14px] rounded-full border transition-colors',
             value
               ? 'border-primary/50 bg-primary/10 text-primary'
-              : 'border-border/60 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+              : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
             (pending || value === null) && 'opacity-60',
           )}
         >

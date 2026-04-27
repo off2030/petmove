@@ -90,7 +90,7 @@ export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRest
           <div className="px-5 py-3 border-b">
             <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
               placeholder="이름 검색" autoFocus
-              className="w-full h-10 rounded-full border border-border/70 bg-popover text-foreground px-4 text-[15px] focus-visible:outline-none focus-visible:border-foreground/40" />
+              className="w-full h-10 rounded-full border border-border/80 bg-popover text-foreground px-4 text-[15px] focus-visible:outline-none focus-visible:border-foreground/40" />
           </div>
         )}
 

@@ -97,7 +97,7 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel>전염병검사</SectionLabel>
         <button
@@ -237,7 +237,7 @@ function LabDropdown({ current, onSelect, onClose }: {
 
   return (
     <div ref={ref} className="relative">
-      <ul className="absolute left-0 top-0 z-20 min-w-[200px] rounded-md border border-border/50 bg-background py-1 shadow-md">
+      <ul className="absolute left-0 top-0 z-20 min-w-[200px] rounded-md border border-border/80 bg-background py-1 shadow-md">
         <li><button type="button" onClick={() => onSelect(null)}
           className="w-full text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors">—</button></li>
         {LABS.map(l => (

@@ -208,7 +208,7 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
           <button
             type="button"
             onClick={addItem}
-            className="flex w-full items-center justify-center gap-1.5 border-t border-border/60 px-lg pt-3 mt-1 font-serif text-[14px] text-muted-foreground transition-colors hover:text-foreground"
+            className="flex w-full items-center justify-center gap-1.5 border-t border-border/80 px-lg pt-3 mt-1 font-serif text-[14px] text-muted-foreground transition-colors hover:text-foreground"
           >
             <Plus size={14} />
             항목 추가
@@ -217,7 +217,7 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
       </div>
 
       {/* Total block — solid line above */}
-      <div className="mt-md border-t border-border/60 px-lg pt-md space-y-3">
+      <div className="mt-md border-t border-border/80 px-lg pt-md space-y-3">
         <div className="flex items-baseline justify-between">
           <span className="font-serif text-[17px] text-foreground">합계</span>
           <span className="inline-flex items-baseline text-foreground">

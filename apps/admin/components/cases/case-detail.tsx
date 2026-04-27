@@ -373,7 +373,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel>{spec.label}</SectionLabel>
         {!showSecondary && (
@@ -405,7 +405,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
                   onKeyDown={(e) => { if (e.key === 'Enter') saveSecondary(); if (e.key === 'Escape') { setEditingSecondary(false); setSecError(null); if (!secondary) setShowSecondary(false) } }}
                   onBlur={() => setTimeout(() => saveSecondary(), 150)}
                   placeholder="보조칩 번호"
-                  className="w-44 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+                  className="w-44 h-8 rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
                 />
               ) : (
                 <button type="button" onClick={() => { setSecVal(secondary.replace(/\D/g, '')); setEditingSecondary(true); setSecError(null) }}
@@ -458,7 +458,7 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel>마이크로칩</SectionLabel>
       </div>

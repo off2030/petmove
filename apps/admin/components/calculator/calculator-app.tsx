@@ -69,7 +69,7 @@ export function CalculatorApp({
     mode === 'cost' ? (
       <>
         {/* Species segment */}
-        <div className="inline-flex rounded-full border border-border/60 bg-transparent p-0.5">
+        <div className="inline-flex rounded-full border border-border/80 bg-transparent p-0.5">
           {([
             ['dog', '강아지'],
             ['cat', '고양이'],
@@ -101,8 +101,8 @@ export function CalculatorApp({
               dropOpen
                 ? 'border-[#D9A489] text-[#A87862] dark:border-[#C08C70] dark:text-[#D9A489]'
                 : country
-                ? 'border-border/60 text-foreground hover:text-foreground'
-                : 'border-border/60 text-muted-foreground hover:text-foreground'
+                ? 'border-border/80 text-foreground hover:text-foreground'
+                : 'border-border/80 text-muted-foreground hover:text-foreground'
             }`}
           >
             <span className="h-1 w-1 rounded-full bg-current opacity-50" aria-hidden />
@@ -181,7 +181,7 @@ export function CalculatorApp({
           className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3.5 text-sm transition-colors ${
             editMode
               ? 'border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489]'
-              : 'border-border/60 bg-transparent text-muted-foreground hover:text-foreground'
+              : 'border-border/80 bg-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
           <Pencil size={13} />
@@ -189,7 +189,7 @@ export function CalculatorApp({
         </button>
       </>
     ) : mode === 'schedule' ? (
-      <div className="inline-flex rounded-full border border-border/60 bg-transparent p-0.5">
+      <div className="inline-flex rounded-full border border-border/80 bg-transparent p-0.5">
         {SCHEDULE_COUNTRIES.map((c) => {
           const active = scheduleCountry === c.value
           return (

@@ -284,7 +284,7 @@ function MemoCell({ row, onUpdate }: {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commit(draft) }
         if (e.key === 'Escape') setEditing(false)
       }}
-      className="w-full min-h-[2rem] rounded-md border border-border/50 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-none"
+      className="w-full min-h-[2rem] rounded-md border border-border/80 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-none"
     />
   )
 }
@@ -356,7 +356,7 @@ function StatusPicker({ row, options, value, label, cls, isDone, onUpdate }: {
         {label}
       </button>
       {open && (
-        <ul className="absolute left-0 top-full mt-1 z-30 min-w-[120px] rounded-md border border-border/60 bg-background py-1 shadow-md">
+        <ul className="absolute left-0 top-full mt-1 z-30 min-w-[120px] rounded-md border border-border/80 bg-background py-1 shadow-md">
           {options.map(o => {
             const isCurrent = value === o.value
             const optActive = o.value === 'testing'
@@ -474,7 +474,7 @@ function LabPicker({ row, options, chip, onUpdate }: {
         {chip}
       </button>
       {open && (
-        <ul className="absolute left-0 top-full mt-1 z-30 min-w-[140px] rounded-md border border-border/60 bg-background py-1 shadow-md">
+        <ul className="absolute left-0 top-full mt-1 z-30 min-w-[140px] rounded-md border border-border/80 bg-background py-1 shadow-md">
           {options.map(o => {
             const isCurrent = row.lab === o.value
             const oTone = labColor(o.value)
@@ -569,7 +569,7 @@ export function InspectionTable({
   return (
     <table className="w-full border-collapse table-fixed">
       <thead>
-        <tr className="border-b border-border/60">
+        <tr className="border-b border-border/80">
           {COLUMNS.map(col => (
             <th
               key={col.key}
@@ -588,7 +588,7 @@ export function InspectionTable({
           <tr
             key={row.id}
             className={cn(
-              'group/insprow border-b border-dashed border-border/50 hover:bg-accent transition-colors cursor-pointer',
+              'group/insprow border-b border-dashed border-border/80 hover:bg-accent transition-colors cursor-pointer',
               isDone && 'opacity-50 hover:opacity-100',
             )}
             onClick={() => openCase(row.caseRow.id)}

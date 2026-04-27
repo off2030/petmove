@@ -220,7 +220,7 @@ export function ExternalLinks({ initialConfig }: { initialConfig: ExternalLinksC
               value={cat.label}
               onChange={(e) => updateCategory(catIdx, { label: e.target.value })}
               placeholder="카테고리 이름"
-              className="flex-1 font-serif text-[18px] bg-transparent border-b border-border/60 px-1 py-1 focus:border-foreground outline-none transition-colors"
+              className="flex-1 font-serif text-[18px] bg-transparent border-b border-border/80 px-1 py-1 focus:border-foreground outline-none transition-colors"
             />
             <button
               type="button"
@@ -295,7 +295,7 @@ export function ExternalLinks({ initialConfig }: { initialConfig: ExternalLinksC
       <button
         type="button"
         onClick={addCategory}
-        className="self-start flex items-center gap-1 px-2 py-1.5 text-[13px] text-muted-foreground hover:text-foreground border border-dashed border-border/60 rounded transition-colors"
+        className="self-start flex items-center gap-1 px-2 py-1.5 text-[13px] text-muted-foreground hover:text-foreground border border-dashed border-border/80 rounded transition-colors"
       >
         <Plus className="w-3.5 h-3.5" />
         카테고리 추가

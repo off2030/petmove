@@ -118,7 +118,7 @@ export function VerificationSection() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="검색"
-            className="h-11 w-full pl-10 pr-9 text-[15px] bg-popover text-foreground shadow-none border border-border/70 rounded-full focus-visible:outline-none focus-visible:ring-0 focus-visible:border-foreground/40 placeholder:text-muted-foreground/60"
+            className="h-11 w-full pl-10 pr-9 text-[15px] bg-popover text-foreground shadow-none border border-border/80 rounded-full focus-visible:outline-none focus-visible:ring-0 focus-visible:border-foreground/40 placeholder:text-muted-foreground/60"
           />
           {query && (
             <button
@@ -142,7 +142,7 @@ export function VerificationSection() {
       ) : (
         countries.map((country) => (
           <section key={country} className="mb-xl">
-            <div className="flex items-baseline gap-2 pb-2 border-b border-border/70 font-serif text-[13px] text-muted-foreground/80">
+            <div className="flex items-baseline gap-2 pb-2 border-b border-border/80 font-serif text-[13px] text-muted-foreground/80">
               <span>{countryLabel(country)}</span>
               <span className="opacity-60">·</span>
               <span className="opacity-60">{grouped[country].length}</span>
@@ -157,7 +157,7 @@ export function VerificationSection() {
                   onClick={() => toggleCheck(c.id)}
                   title={enabled ? '클릭하여 사용 안 함' : '클릭하여 다시 사용'}
                   className={cn(
-                    'w-full text-left grid grid-cols-[24px_1fr] items-start gap-md py-md border-b border-dotted border-border/60 hover:bg-accent transition-colors',
+                    'w-full text-left grid grid-cols-[24px_1fr] items-start gap-md py-md border-b border-dotted border-border/80 hover:bg-accent transition-colors',
                   )}
                 >
                   <CheckBox checked={enabled} />
@@ -219,7 +219,7 @@ function SortDropdown({ value, onChange }: { value: SortKey; onChange: (v: SortK
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="h-11 inline-flex items-center gap-2 rounded-full border border-border/70 bg-card text-foreground pl-4 pr-3 text-[14px] hover:border-foreground/40 transition-colors"
+        className="h-11 inline-flex items-center gap-2 rounded-full border border-border/80 bg-card text-foreground pl-4 pr-3 text-[14px] hover:border-foreground/40 transition-colors"
       >
         <span>{current.label}</span>
         <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', open && 'rotate-180')} />
@@ -227,7 +227,7 @@ function SortDropdown({ value, onChange }: { value: SortKey; onChange: (v: SortK
       {open && (
         <ul
           role="listbox"
-          className="absolute right-0 top-full mt-1 min-w-[140px] rounded-sm border border-border/70 bg-card shadow-md py-1 z-10"
+          className="absolute right-0 top-full mt-1 min-w-[140px] rounded-sm border border-border/80 bg-card shadow-md py-1 z-10"
         >
           {SORT_OPTIONS.map((o) => {
             const active = o.value === value
@@ -261,7 +261,7 @@ function CheckBox({ checked }: { checked: boolean }) {
       aria-hidden
       className={cn(
         'mt-1 inline-flex h-4 w-4 items-center justify-center rounded-sm border transition-colors',
-        checked ? 'border-foreground/60 bg-foreground/5' : 'border-border/70 bg-transparent',
+        checked ? 'border-foreground/60 bg-foreground/5' : 'border-border/80 bg-transparent',
       )}
     >
       {checked && <Check className="h-3 w-3 text-foreground" strokeWidth={2.5} />}

@@ -102,7 +102,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel>목적지</SectionLabel>
         <button
@@ -177,7 +177,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
         )}
 
         {open && !freeMode && (
-          <div className="absolute left-0 top-full mt-1 z-20 w-64 rounded-md border border-border/50 bg-background shadow-md">
+          <div className="absolute left-0 top-full mt-1 z-20 w-64 rounded-md border border-border/80 bg-background shadow-md">
             <div className="p-2 border-b border-border/30">
               <input
                 ref={inputRef}
@@ -203,7 +203,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                   }
                 }}
                 placeholder="국가 검색 (한글/영문)"
-                className="w-full h-8 rounded border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+                className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
               />
             </div>
             <ul ref={listRef} className="max-h-60 overflow-y-auto scrollbar-minimal py-1">
@@ -252,7 +252,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
         )}
 
         {open && freeMode && (
-          <div className="absolute left-0 top-full mt-1 z-20 w-64 rounded-md border border-border/50 bg-background shadow-md p-3">
+          <div className="absolute left-0 top-full mt-1 z-20 w-64 rounded-md border border-border/80 bg-background shadow-md p-3">
             <input
               type="text"
               value={freeVal}
@@ -263,7 +263,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                 if (e.key === 'Enter') saveFree()
                 if (e.key === 'Escape') { setFreeMode(false); setOpen(false) }
               }}
-              className="w-full h-8 rounded border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+              className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
             />
             <button type="button" onClick={saveFree}
               className="mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors">

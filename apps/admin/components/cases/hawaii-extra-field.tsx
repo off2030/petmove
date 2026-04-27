@@ -151,7 +151,7 @@ export function HawaiiExtraField({ caseId, caseRow, sectionNumber }: { caseId: s
     const val = extra[key] ?? null
     const isEditing = editingField === key
     return (
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
         <SectionLabel className="pt-1">{label}</SectionLabel>
         {isEditing ? (
           <InlineInput type={type} initial={val ?? ''} placeholder={placeholder} onSave={(v) => saveField(key, v)} onCancel={() => setEditingField(null)} />
@@ -239,7 +239,7 @@ function InlineInput({ type, initial, placeholder, onSave, onCancel }: {
       }}
       onBlur={() => setTimeout(() => onSave(val.trim() || null), 150)}
       placeholder={placeholder}
-      className="h-7 w-full max-w-[320px] rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="h-7 w-full max-w-[320px] rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
   )
 }

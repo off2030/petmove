@@ -487,7 +487,7 @@ export function VaccineSection({
 
               {/* Shared column header */}
               <div
-                className="grid gap-md py-2 border-y border-border/70 pmw-st__group-title"
+                className="grid gap-md py-2 border-y border-border/80 pmw-st__group-title"
                 style={{ gridTemplateColumns: gridCols }}
               >
                 <span>제품명</span>
@@ -508,7 +508,7 @@ export function VaccineSection({
                     </div>
 
                     {list.length === 0 ? (
-                      <div className="py-2 px-1 pmw-st__btn-ghost border-b border-dotted border-border/60">
+                      <div className="py-2 px-1 pmw-st__btn-ghost border-b border-dotted border-border/80">
                         등록된 제품 없음
                       </div>
                     ) : (
@@ -518,7 +518,7 @@ export function VaccineSection({
                         return (
                           <div
                             key={p.id}
-                            className="grid gap-md items-center py-2 border-b border-dotted border-border/60 hover:bg-accent transition-colors"
+                            className="grid gap-md items-center py-2 border-b border-dotted border-border/80 hover:bg-accent transition-colors"
                             style={{ gridTemplateColumns: gridCols }}
                           >
                             <div className="font-serif text-[15px] truncate" style={{ color: 'var(--pmw-near-black)' }}>
@@ -543,7 +543,7 @@ export function VaccineSection({
       )}
 
       {!isAdmin && (
-        <p className="pt-md border-t border-border/60 pmw-st__sec-lead">
+        <p className="pt-md border-t border-border/80 pmw-st__sec-lead">
           약품 추가·수정은 관리자만 가능합니다.
         </p>
       )}
@@ -623,7 +623,7 @@ function CategoryPickerModal({ products, onClose, onPickExisting, onPickNew }: C
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="bg-background rounded-lg shadow-lg w-full max-w-xl max-h-[90vh] overflow-auto">
-        <div className="flex items-center justify-between border-b border-border/60 px-lg py-3">
+        <div className="flex items-center justify-between border-b border-border/80 px-lg py-3">
           <div className="flex items-center gap-1 min-w-0">
             {crumbs.map((c, i) => (
               <span key={i} className="flex items-center gap-1 min-w-0">
@@ -658,7 +658,7 @@ function CategoryPickerModal({ products, onClose, onPickExisting, onPickNew }: C
                     key={s}
                     type="button"
                     onClick={() => setSection(s)}
-                    className="w-full flex items-center justify-between px-md py-3 rounded-md border border-border/60 hover:bg-muted/40 transition-colors text-left"
+                    className="w-full flex items-center justify-between px-md py-3 rounded-md border border-border/80 hover:bg-muted/40 transition-colors text-left"
                   >
                     <span className="font-serif text-[16px]">{s}</span>
                     <span className="flex items-center gap-2">
@@ -680,7 +680,7 @@ function CategoryPickerModal({ products, onClose, onPickExisting, onPickNew }: C
                     key={c}
                     type="button"
                     onClick={() => setCategory(c)}
-                    className="w-full flex items-center justify-between px-md py-3 rounded-md border border-border/60 hover:bg-muted/40 transition-colors text-left"
+                    className="w-full flex items-center justify-between px-md py-3 rounded-md border border-border/80 hover:bg-muted/40 transition-colors text-left"
                   >
                     <span className="font-serif text-[15px]">{CATEGORY_META[c].label}</span>
                     <span className="flex items-center gap-2">
@@ -698,7 +698,7 @@ function CategoryPickerModal({ products, onClose, onPickExisting, onPickNew }: C
               <button
                 type="button"
                 onClick={() => onPickNew(category)}
-                className="w-full flex items-center gap-2 px-md py-3 rounded-md border border-dashed border-border/60 hover:bg-muted/40 transition-colors text-left"
+                className="w-full flex items-center gap-2 px-md py-3 rounded-md border border-dashed border-border/80 hover:bg-muted/40 transition-colors text-left"
               >
                 <Plus className="h-4 w-4" />
                 <span className="font-serif text-[15px]">새 제품 추가</span>
@@ -714,7 +714,7 @@ function CategoryPickerModal({ products, onClose, onPickExisting, onPickNew }: C
                     key={p.id}
                     type="button"
                     onClick={() => onPickExisting(p)}
-                    className="w-full grid grid-cols-[1fr_auto_auto] items-center gap-3 px-md py-2.5 rounded-md border border-border/60 hover:bg-muted/40 transition-colors text-left"
+                    className="w-full grid grid-cols-[1fr_auto_auto] items-center gap-3 px-md py-2.5 rounded-md border border-border/80 hover:bg-muted/40 transition-colors text-left"
                   >
                     <span className="font-serif text-[14px] truncate">
                       {p.vaccine || p.product || '(이름 없음)'}
@@ -772,7 +772,7 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }:
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="bg-background rounded-lg shadow-lg w-full max-w-xl max-h-[90vh] overflow-auto">
-        <div className="flex items-center justify-between border-b border-border/60 px-lg py-3">
+        <div className="flex items-center justify-between border-b border-border/80 px-lg py-3">
           <h3 className="font-serif text-[17px]">{mode === 'create' ? '약품 추가' : '약품 수정'}</h3>
           <button type="button" onClick={onClose} className="p-1 rounded hover:bg-muted">
             <X className="h-4 w-4" />
@@ -785,7 +785,7 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }:
               value={form.category}
               onChange={(e) => update('category', e.target.value)}
               disabled={mode === 'edit'}
-              className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background disabled:opacity-60"
+              className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background disabled:opacity-60"
             >
               {CATEGORY_ORDER.map((cat) => (
                 <option key={cat} value={cat}>
@@ -801,7 +801,7 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }:
                 value={form.vaccine}
                 onChange={(e) => update('vaccine', e.target.value)}
                 placeholder="예: Rabisin"
-                className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
+                className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background"
               />
             </Field>
           ) : (
@@ -810,7 +810,7 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }:
                 value={form.product}
                 onChange={(e) => update('product', e.target.value)}
                 placeholder="예: NexGard Spectra"
-                className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
+                className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background"
               />
             </Field>
           )}
@@ -820,7 +820,7 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }:
               value={form.manufacturer}
               onChange={(e) => update('manufacturer', e.target.value)}
               placeholder="예: Boehringer Ingelheim"
-              className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
+              className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background"
               required
             />
           </Field>
@@ -831,7 +831,7 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }:
                 value={form.batch}
                 onChange={(e) => update('batch', e.target.value)}
                 placeholder="예: E19623"
-                className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background font-mono"
+                className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background font-mono"
               />
             </Field>
             <Field label="만료일 (YYYY-MM-DD 또는 YYYY-MM)">
@@ -839,7 +839,7 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }:
                 value={form.expiry}
                 onChange={(e) => update('expiry', e.target.value)}
                 placeholder="2027-06"
-                className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
+                className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background"
               />
             </Field>
           </div>
@@ -855,7 +855,7 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }:
                     step="0.01"
                     value={form.weight_min}
                     onChange={(e) => update('weight_min', e.target.value)}
-                    className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
+                    className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background"
                   />
                 </Field>
                 <Field label="체중 최대 (kg)">
@@ -864,7 +864,7 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }:
                     step="0.01"
                     value={form.weight_max}
                     onChange={(e) => update('weight_max', e.target.value)}
-                    className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
+                    className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background"
                   />
                 </Field>
                 <Field label="표기 (size)">
@@ -872,7 +872,7 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }:
                     value={form.size}
                     onChange={(e) => update('size', e.target.value)}
                     placeholder="1.35-3.5kg"
-                    className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
+                    className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background"
                   />
                 </Field>
               </div>
@@ -881,7 +881,7 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }:
                 <select
                   value={form.parasite_id}
                   onChange={(e) => update('parasite_id', e.target.value)}
-                  className="w-full px-sm py-1.5 text-sm rounded-md border border-border/60 bg-background"
+                  className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background"
                 >
                   <option value="">(미지정)</option>
                   {parasiteOptions.map((f) => (
@@ -895,7 +895,7 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }:
           )}
         </div>
 
-        <div className="flex items-center border-t border-border/60 px-lg py-3">
+        <div className="flex items-center border-t border-border/80 px-lg py-3">
           {mode === 'edit' && onDelete && (
             <button
               type="button"

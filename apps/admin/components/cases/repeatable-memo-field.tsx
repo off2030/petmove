@@ -62,7 +62,7 @@ export function RepeatableMemoField({ caseId, caseRow }: { caseId: string; caseR
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel>메모</SectionLabel>
         <button
@@ -153,7 +153,7 @@ function MemoInput({ initial, onSave, onCancel, saving }: {
       }}
       onBlur={() => setTimeout(() => { if (!saving) onSave(val.trim()) }, 150)}
       placeholder="메모 입력 (Shift+Enter로 줄바꿈)"
-      className="w-full min-h-[2rem] rounded-md border border-border/50 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-none"
+      className="w-full min-h-[2rem] rounded-md border border-border/80 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-none"
     />
   )
 }

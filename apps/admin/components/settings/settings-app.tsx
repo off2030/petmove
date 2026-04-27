@@ -77,7 +77,7 @@ function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) 
 
       <div className="space-y-md">
         {/* Trash card */}
-        <div className="flex items-center justify-between gap-md rounded-sm border border-border/60 px-lg py-md">
+        <div className="flex items-center justify-between gap-md rounded-sm border border-border/80 px-lg py-md">
           <div className="min-w-0">
             <h3 className="font-serif text-[16px] text-foreground">휴지통</h3>
             <p className="pmw-st__sec-lead mt-1">
@@ -87,7 +87,7 @@ function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) 
           <button
             type="button"
             onClick={() => setShowTrash(true)}
-            className="shrink-0 h-9 px-4 rounded-full border border-border/70 bg-card text-[14px] hover:border-foreground/40 transition-colors"
+            className="shrink-0 h-9 px-4 rounded-full border border-border/80 bg-card text-[14px] hover:border-foreground/40 transition-colors"
           >
             휴지통 열기
           </button>
@@ -95,7 +95,7 @@ function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) 
 
         {/* Export card — super_admin 전용 */}
         {isSuperAdmin && (
-          <div className="flex items-center justify-between gap-md rounded-sm border border-border/60 px-lg py-md">
+          <div className="flex items-center justify-between gap-md rounded-sm border border-border/80 px-lg py-md">
             <div className="min-w-0">
               <h3 className="font-serif text-[16px] text-foreground">데이터 내보내기</h3>
               <p className="pmw-st__sec-lead mt-1">
@@ -109,7 +109,7 @@ function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) 
               type="button"
               onClick={handleExport}
               disabled={exporting}
-              className="shrink-0 h-9 px-4 rounded-full border border-border/70 bg-card text-[14px] hover:border-foreground/40 transition-colors disabled:opacity-50"
+              className="shrink-0 h-9 px-4 rounded-full border border-border/80 bg-card text-[14px] hover:border-foreground/40 transition-colors disabled:opacity-50"
             >
               {exporting ? '내보내는 중…' : 'Excel 내보내기'}
             </button>
@@ -188,7 +188,7 @@ export function SettingsApp({
           </h1>
         </div>
 
-        <div className="flex gap-md border-b border-border/60 shrink-0 px-lg">
+        <div className="flex gap-md border-b border-border/80 shrink-0 px-lg">
           {TABS.map((tab) => (
             <button
               key={tab.id}

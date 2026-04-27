@@ -96,7 +96,7 @@ function CertMultiSelect({
           <button
             type="button"
             onClick={() => setOpen(o => !o)}
-            className="inline-flex items-center gap-1 rounded-sm border border-dashed border-border/60 px-2 py-0.5 font-sans text-[12px] text-muted-foreground hover:text-foreground hover:border-border transition-colors"
+            className="inline-flex items-center gap-1 rounded-sm border border-dashed border-border/80 px-2 py-0.5 font-sans text-[12px] text-muted-foreground hover:text-foreground hover:border-border transition-colors"
             aria-haspopup="listbox"
             aria-expanded={open}
           >
@@ -262,7 +262,7 @@ export function DocumentsSection() {
       {/* 기본 증명서 */}
       <section className="mb-xl">
         <SectionLabel>기본 증명서</SectionLabel>
-        <div className="border-t border-border/70 pt-3 space-y-2">
+        <div className="border-t border-border/80 pt-3 space-y-2">
           <p className="font-serif italic text-[13px] text-muted-foreground">
             모든 국가의 상세페이지에 표시됩니다. 국가별 규칙은 이 목록에 추가로 붙습니다.
           </p>
@@ -278,7 +278,7 @@ export function DocumentsSection() {
       {/* 국가별 규칙 */}
       <section className="mb-xl">
         <SectionLabel>국가별 추가 증명서</SectionLabel>
-        <div className="border-t border-border/70 pt-3 mb-3">
+        <div className="border-t border-border/80 pt-3 mb-3">
           <p className="font-serif italic text-[13px] text-muted-foreground">
             해당 국가(또는 국가 그룹)가 목적지인 경우 기본 증명서에 더해 표시됩니다.
           </p>
@@ -294,7 +294,7 @@ export function DocumentsSection() {
               return (
                 <li
                   key={i}
-                  className="grid grid-cols-[1fr_auto_auto] items-start gap-md py-3 border-b border-border/60"
+                  className="grid grid-cols-[1fr_auto_auto] items-start gap-md py-3 border-b border-border/80"
                 >
                   {/* Left: group label + destination pills (click to edit) */}
                   {editingIdx === i ? (
@@ -304,7 +304,7 @@ export function DocumentsSection() {
                         value={r.label ?? ''}
                         onChange={(e) => setRuleLabel(i, e.target.value)}
                         placeholder="그룹명 (선택사항)"
-                        className="pmw-st__input bg-transparent outline-none border-b border-border/60 font-serif italic text-[15px] px-0.5 py-0.5 w-full max-w-[240px]"
+                        className="pmw-st__input bg-transparent outline-none border-b border-border/80 font-serif italic text-[15px] px-0.5 py-0.5 w-full max-w-[240px]"
                         style={{ color: 'var(--pmw-deep)' }}
                       />
                       <DestinationPicker
@@ -373,7 +373,7 @@ export function DocumentsSection() {
           <button
             type="button"
             onClick={() => setAddOpen(true)}
-            className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/60 hover:bg-muted/40 transition-colors"
+            className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/80 hover:bg-muted/40 transition-colors"
           >
             <Plus className="h-3 w-3" />
             규칙 추가
@@ -389,7 +389,7 @@ export function DocumentsSection() {
       )}
 
       {/* Footer actions */}
-      <div className="flex items-center justify-between pt-lg border-t border-border/60">
+      <div className="flex items-center justify-between pt-lg border-t border-border/80">
         <button
           type="button"
           onClick={resetToDefaults}
@@ -453,8 +453,8 @@ function CertRuleAddModal({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="bg-background rounded-sm border border-border/60 shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-border/60 px-lg py-3">
+      <div className="bg-background rounded-sm border border-border/80 shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-border/80 px-lg py-3">
           <div className="flex items-baseline gap-2">
             {mode && (
               <button
@@ -481,7 +481,7 @@ function CertRuleAddModal({
               <button
                 type="button"
                 onClick={() => setMode('single')}
-                className="w-full text-left px-md py-3 rounded-md border border-border/60 hover:bg-muted/40 transition-colors"
+                className="w-full text-left px-md py-3 rounded-md border border-border/80 hover:bg-muted/40 transition-colors"
               >
                 <div className="font-serif text-[15px] text-foreground">목적지 추가</div>
                 <div className="pmw-st__sec-lead mt-1">한 개의 목적지에 추가 증명서를 매핑합니다.</div>
@@ -489,7 +489,7 @@ function CertRuleAddModal({
               <button
                 type="button"
                 onClick={() => setMode('group')}
-                className="w-full text-left px-md py-3 rounded-md border border-border/60 hover:bg-muted/40 transition-colors"
+                className="w-full text-left px-md py-3 rounded-md border border-border/80 hover:bg-muted/40 transition-colors"
               >
                 <div className="font-serif text-[15px] text-foreground">그룹 추가</div>
                 <div className="pmw-st__sec-lead mt-1">여러 목적지를 한 그룹으로 묶어 같은 증명서를 매핑합니다.</div>
@@ -508,7 +508,7 @@ function CertRuleAddModal({
                     onChange={(e) => setLabel(e.target.value)}
                     placeholder="예: 유럽연합"
                     autoFocus
-                    className="w-full font-serif text-[15px] bg-transparent outline-none border-b border-border/60 focus:border-foreground/40 pb-1 transition-colors"
+                    className="w-full font-serif text-[15px] bg-transparent outline-none border-b border-border/80 focus:border-foreground/40 pb-1 transition-colors"
                   />
                 </div>
               )}
@@ -543,7 +543,7 @@ function CertRuleAddModal({
         </div>
 
         {mode && (
-          <div className="flex items-center justify-end gap-sm border-t border-border/60 px-lg py-3">
+          <div className="flex items-center justify-end gap-sm border-t border-border/80 px-lg py-3">
             <button
               type="button"
               onClick={onClose}
@@ -555,7 +555,7 @@ function CertRuleAddModal({
               type="button"
               onClick={submit}
               disabled={!canSubmit}
-              className="px-md py-1.5 text-sm font-serif rounded-full border border-border/60 hover:bg-muted/40 transition-colors disabled:opacity-40"
+              className="px-md py-1.5 text-sm font-serif rounded-full border border-border/80 hover:bg-muted/40 transition-colors disabled:opacity-40"
             >
               추가
             </button>

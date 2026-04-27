@@ -31,7 +31,7 @@ export function PairedField({
   const enDisplay = enSpec ? renderFieldValue(enSpec, enRaw) : ''
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <SectionLabel className="pt-1">{koSpec.label}</SectionLabel>
 
       <div className="flex items-baseline gap-[10px] min-w-0 flex-wrap">

@@ -96,7 +96,7 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <SectionLabel className="pt-1">모색</SectionLabel>
       <div ref={containerRef} className="relative min-w-0">
         <div className="group/val relative w-fit">
@@ -117,7 +117,7 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
         </div>
 
         {open && (
-          <div className="absolute left-0 top-full mt-1 z-20 rounded-md border border-border/50 bg-background shadow-md p-3">
+          <div className="absolute left-0 top-full mt-1 z-20 rounded-md border border-border/80 bg-background shadow-md p-3">
             <div className="flex flex-wrap gap-sm mb-3">
               {COLORS.map((c) => {
                 const isSelected = selected.has(c.en)
@@ -130,7 +130,7 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                       'px-sm py-1.5 rounded-md text-sm transition-colors border',
                       isSelected
                         ? 'bg-foreground text-background border-foreground'
-                        : 'bg-background text-foreground border-border/50 hover:bg-accent/60',
+                        : 'bg-background text-foreground border-border/80 hover:bg-accent/60',
                     )}
                   >
                     {c.en}

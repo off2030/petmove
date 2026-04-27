@@ -262,7 +262,7 @@ export function EditableField({
             </button>
           </div>
           {editing && (
-            <ul className="absolute left-0 top-full mt-1 z-20 min-w-[120px] rounded-md border border-border/50 bg-background py-1 shadow-md">
+            <ul className="absolute left-0 top-full mt-1 z-20 min-w-[120px] rounded-md border border-border/80 bg-background py-1 shadow-md">
               <li>
                 <button
                   type="button"
@@ -364,7 +364,7 @@ export function EditableField({
   ) : null
 
   return (
-    <div className={cn("grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0", clearable && "group/row")}>
+    <div className={cn("grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0", clearable && "group/row")}>
       <SectionLabel className="pt-1">{spec.label}</SectionLabel>
       <div className="min-w-0 flex items-baseline gap-sm">
         {(() => {
@@ -449,7 +449,7 @@ function renderInput(
     : lang === 'en' ? '영문만 입력 가능'
     : undefined
   const commonClass =
-    'flex-1 h-8 rounded-md border border-border/50 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
+    'flex-1 h-8 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
 
   if (spec.type === 'longtext') {
     return (
@@ -460,7 +460,7 @@ function renderInput(
         onKeyDown={onKeyDown}
         onBlur={onBlur}
         rows={3}
-        className="flex-1 min-h-[4.5rem] rounded-md border border-border/50 bg-background p-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-y"
+        className="flex-1 min-h-[4.5rem] rounded-md border border-border/80 bg-background p-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-y"
       />
     )
   }

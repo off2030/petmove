@@ -94,7 +94,7 @@ export function PillMultiSelect({
         onKeyDown={onKey}
         className={cn(
           'inline-flex items-center gap-1 transition-colors outline-none disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-1 focus-visible:ring-foreground/20',
-          'h-8 pl-md pr-2 rounded-full border border-border/60 bg-background/60 hover:bg-muted/40 pmw-st__input',
+          'h-8 pl-md pr-2 rounded-full border border-border/80 bg-background/60 hover:bg-muted/40 pmw-st__input',
         )}
       >
         <span className="truncate">

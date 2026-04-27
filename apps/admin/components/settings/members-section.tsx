@@ -175,7 +175,7 @@ export function MembersSection({
             활성 멤버 · {members.length}
           </span>
         </div>
-        <div className="border-t border-border/70">
+        <div className="border-t border-border/80">
           {loading ? (
             <p className="font-serif italic text-[14px] text-muted-foreground py-4">불러오는 중…</p>
           ) : members.length === 0 ? (
@@ -188,7 +188,7 @@ export function MembersSection({
               return (
                 <div
                   key={m.user_id}
-                  className="flex items-center gap-md py-3 border-b border-dotted border-border/60"
+                  className="flex items-center gap-md py-3 border-b border-dotted border-border/80"
                 >
                   <Avatar label={avatarInitial(hasRealName ? m.name! : m.email)} />
                   <div className="min-w-0 flex-1">
@@ -209,7 +209,7 @@ export function MembersSection({
                         disabled={pending}
                       />
                     ) : (
-                      <span className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/60 text-muted-foreground">
+                      <span className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/80 text-muted-foreground">
                         {ROLE_LABEL[m.role]}
                       </span>
                     )}
@@ -229,7 +229,7 @@ export function MembersSection({
                         type="button"
                         onClick={() => onRemove(m)}
                         disabled={pending}
-                        className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/60 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
+                        className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/80 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
                       >
                         제거
                       </button>
@@ -254,13 +254,13 @@ export function MembersSection({
               SaaS 운영자 (조직 외) · {externalSuperAdmins.length}
             </span>
           </div>
-          <div className="border-t border-border/70">
+          <div className="border-t border-border/80">
             {externalSuperAdmins.map((s) => {
               const hasRealName = !!s.name && s.name.trim() !== '' && s.name !== s.email
               return (
                 <div
                   key={s.user_id}
-                  className="flex items-center gap-md py-3 border-b border-dotted border-border/60"
+                  className="flex items-center gap-md py-3 border-b border-dotted border-border/80"
                 >
                   <Avatar label={avatarInitial(hasRealName ? s.name! : s.email)} muted />
                   <div className="min-w-0 flex-1">
@@ -296,7 +296,7 @@ export function MembersSection({
             대기 중 초대 · {invites.length}
           </span>
         </div>
-        <div className="border-t border-border/70">
+        <div className="border-t border-border/80">
           {invites.length === 0 ? (
             <p className="font-serif italic text-[14px] text-muted-foreground py-4">대기 중인 초대가 없습니다.</p>
           ) : (
@@ -305,7 +305,7 @@ export function MembersSection({
               return (
                 <div
                   key={inv.id}
-                  className="flex items-center gap-md py-3 border-b border-dotted border-border/60"
+                  className="flex items-center gap-md py-3 border-b border-dotted border-border/80"
                 >
                   <Avatar label="?" muted />
                   <div className="min-w-0 flex-1">
@@ -351,7 +351,7 @@ export function MembersSection({
 
       {/* Invite form — admin only */}
       {isAdmin ? (
-        <section className="pt-md border-t border-border/60">
+        <section className="pt-md border-t border-border/80">
           <div className="flex items-center gap-sm">
             <input
               type="email"
@@ -380,7 +380,7 @@ export function MembersSection({
           </p>
         </section>
       ) : (
-        <p className="pt-md border-t border-border/60 font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
+        <p className="pt-md border-t border-border/80 font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
           멤버 초대는 관리자만 가능합니다.
         </p>
       )}
@@ -416,7 +416,7 @@ function RoleSelect({
         onClick={() => setOpen((p) => !p)}
         disabled={disabled}
         className={cn(
-          'inline-flex items-center gap-1.5 h-8 pl-3 pr-2 rounded-full border border-border/60 bg-transparent font-serif text-[14px] text-foreground transition-colors',
+          'inline-flex items-center gap-1.5 h-8 pl-3 pr-2 rounded-full border border-border/80 bg-transparent font-serif text-[14px] text-foreground transition-colors',
           'hover:bg-muted/40 focus:outline-none focus:border-primary/50',
           'disabled:opacity-60 disabled:cursor-not-allowed',
           open && 'border-foreground/40 bg-muted/30',

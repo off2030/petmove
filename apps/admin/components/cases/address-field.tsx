@@ -217,12 +217,12 @@ export function AddressField({
   }
 
   const inputClass =
-    'flex-1 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
+    'flex-1 h-8 rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
 
   return (
     <>
       {/* Korean address */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60">
         <SectionLabel className="pt-1">한국주소</SectionLabel>
         <div className="flex items-center gap-sm min-w-0">
           {editingKr ? (
@@ -273,7 +273,7 @@ export function AddressField({
 
       {/* Detail address input */}
       {showDetail && (
-        <div className="grid grid-cols-[140px_1fr_auto] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60">
+        <div className="grid grid-cols-[140px_1fr_auto] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60">
           <SectionLabel className="pt-1">상세 주소</SectionLabel>
           <div className="flex items-center gap-sm">
             <input ref={detailRef} type="text" value={detailAddr} onChange={(e) => setDetailAddr(e.target.value)}
@@ -290,7 +290,7 @@ export function AddressField({
       )}
 
       {/* English address */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60">
         <SectionLabel className="pt-1">영문주소</SectionLabel>
         <div className="min-w-0">
           {editingEn ? (
@@ -342,7 +342,7 @@ export function AddressField({
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30" onClick={() => setShowModal(false)} />
           <div className="relative bg-background rounded-lg shadow-lg overflow-hidden" style={{ width: '500px', height: '500px' }}>
-            <div className="flex items-center justify-between px-md py-2 border-b border-border/50">
+            <div className="flex items-center justify-between px-md py-2 border-b border-border/80">
               <span className="text-sm font-medium">주소 검색</span>
               <button type="button" onClick={() => setShowModal(false)}
                 className="text-sm text-muted-foreground hover:text-foreground">

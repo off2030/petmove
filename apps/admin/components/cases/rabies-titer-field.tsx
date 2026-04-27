@@ -231,7 +231,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        'grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0 rounded-md',
+        'grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0 rounded-md',
         dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
@@ -438,7 +438,7 @@ function ValueInput({ initial, onSave, onCancel, saving }: {
       onKeyDown={(e) => { if (e.key === 'Enter') onSave(val.trim()); if (e.key === 'Escape') onCancel() }}
       onBlur={() => setTimeout(() => { if (!saving) onSave(val.trim()) }, 150)}
       placeholder="수치"
-      className="w-20 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="w-20 h-8 rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
   )
 }
@@ -455,7 +455,7 @@ function LabDropdown({ current, onSelect, onClose }: {
 
   return (
     <div ref={ref} className="relative">
-      <ul className="absolute left-0 top-0 z-20 min-w-[160px] rounded-md border border-border/50 bg-background py-1 shadow-md">
+      <ul className="absolute left-0 top-0 z-20 min-w-[160px] rounded-md border border-border/80 bg-background py-1 shadow-md">
         <li><button type="button" onClick={() => onSelect(null)}
           className="w-full text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors">—</button></li>
         {LABS.map(l => (

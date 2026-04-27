@@ -73,7 +73,7 @@ export function LabPillSelect({
                 'font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap',
                 tone ? cn(tone.bg, tone.text) : 'bg-muted/60 text-muted-foreground',
               )
-            : 'border border-dashed border-border/60 text-muted-foreground font-mono text-[11px] uppercase tracking-[1px]',
+            : 'border border-dashed border-border/80 text-muted-foreground font-mono text-[11px] uppercase tracking-[1px]',
         )}
       >
         <span>{selected?.label ?? placeholder ?? '선택'}</span>
@@ -182,7 +182,7 @@ export function LabPillMultiSelect({
         className={cn(
           'inline-flex items-center gap-1.5 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-40 transition-colors',
           selectedOptions.length === 0
-            ? 'border border-dashed border-border/60 text-muted-foreground font-mono text-[11px] uppercase tracking-[1px] px-2.5 py-0.5'
+            ? 'border border-dashed border-border/80 text-muted-foreground font-mono text-[11px] uppercase tracking-[1px] px-2.5 py-0.5'
             : 'px-0.5 py-0.5',
         )}
       >

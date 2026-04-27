@@ -94,7 +94,7 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel>결제</SectionLabel>
         <button
@@ -264,7 +264,7 @@ function AmountInput({ initial, onSave, onCancel, saving }: {
       }}
       onBlur={() => setTimeout(() => { if (!saving) save() }, 150)}
       placeholder="금액"
-      className="w-28 h-8 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="w-28 h-8 rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
   )
 }
@@ -288,7 +288,7 @@ function MethodDropdown({ current, onSelect, onClose }: {
 
   return (
     <div ref={ref} className="relative">
-      <ul className="absolute left-0 top-0 z-20 min-w-[140px] rounded-md border border-border/50 bg-background py-1 shadow-md">
+      <ul className="absolute left-0 top-0 z-20 min-w-[140px] rounded-md border border-border/80 bg-background py-1 shadow-md">
         <li>
           <button type="button" onClick={() => onSelect(null)}
             className="w-full text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors">—</button>

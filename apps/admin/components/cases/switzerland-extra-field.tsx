@@ -190,7 +190,7 @@ export function SwissExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
     const isEditing = editingField === key
     const display = val ? options.find(o => o.value === val)?.label ?? val : null
     return (
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
         <SectionLabel className="pt-1">{label}</SectionLabel>
         {isEditing ? (
           <SelectInput
@@ -227,7 +227,7 @@ export function SwissExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
     const val = extra[key] as string | null
     const isEditing = editingField === key
     return (
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
         <SectionLabel className="pt-1">{label}</SectionLabel>
         {isEditing ? (
           <InlineInput
@@ -265,7 +265,7 @@ export function SwissExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
     const val = extra[key] as string | null
     const isEditing = editingField === key
     return (
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
         <SectionLabel className="pt-1">{label}</SectionLabel>
         {isEditing ? (
           <InlineInput
@@ -326,7 +326,7 @@ export function SwissExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
 
       {/* 해외주소 — 단일 문자열. "Rue du Lac 12, 1800 Vevey, Switzerland" 포맷.
           PDF 생성 시 자동 파싱해 Address/Postcode/City 로 분리 출력. */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
         <SectionLabel className="pt-1">해외주소</SectionLabel>
         {editingField === 'address_overseas' ? (
           <InlineInput
@@ -403,7 +403,7 @@ function InlineInput({ type, initial, placeholder, onSave, onCancel }: {
       }}
       onBlur={() => setTimeout(() => onSave(val.trim() || null), 150)}
       placeholder={placeholder}
-      className="h-7 w-full max-w-[320px] rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="h-7 w-full max-w-[320px] rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
   )
 }
@@ -423,7 +423,7 @@ function SelectInput({ options, initial, onSave, onCancel }: {
       onChange={(e) => onSave(e.target.value || null)}
       onBlur={() => setTimeout(onCancel, 150)}
       onKeyDown={(e) => { if (e.key === 'Escape') onCancel() }}
-      className="h-7 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="h-7 rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     >
       <option value="">선택</option>
       {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}

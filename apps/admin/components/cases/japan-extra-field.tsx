@@ -285,7 +285,7 @@ export function JapanExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
       />
 
       {/* ── Email ── */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
         <SectionLabel className="pt-1">이메일</SectionLabel>
         {editingField === 'email' ? (
           <InlineInput
@@ -325,7 +325,7 @@ export function JapanExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
       </div>
 
       {/* ── Address ── */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
         <SectionLabel className="pt-1">해외주소</SectionLabel>
         {editingField === 'address_overseas' ? (
           <InlineInput
@@ -365,7 +365,7 @@ export function JapanExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
       </div>
 
       {/* ── Certificate No ── */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
         <SectionLabel className="pt-1">EQC No.</SectionLabel>
         {editingField === 'certificate_no' ? (
           <InlineInput
@@ -418,7 +418,7 @@ function FlightBlock({ label, direction, flight, editingField, setEditingField, 
   onSave: (key: keyof FlightEntry, val: string | null) => void
 }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <SectionLabel className="pt-1">{label}</SectionLabel>
       <div className="min-w-0 space-y-0.5">
         {FLIGHT_FIELDS.map((f) => {
@@ -517,7 +517,7 @@ function InlineInput({ type, initial, placeholder, onSave, onCancel, uppercase }
       onChange={(e) => setVal(uppercase ? e.target.value.toUpperCase() : e.target.value)}
       onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); save() }; if (e.key === 'Escape') onCancel() }}
       onBlur={() => setTimeout(save, 150)} placeholder={placeholder}
-      className="h-7 w-36 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="h-7 w-36 rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
   )
 }
@@ -564,7 +564,7 @@ function SelectInput({ options, initial, onSave, onCancel }: {
         ref={triggerRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="h-7 inline-flex items-center gap-1.5 rounded-md border border-border/50 bg-background px-2 text-sm hover:border-foreground/40 focus-visible:outline-none focus-visible:border-foreground/40 transition-colors"
+        className="h-7 inline-flex items-center gap-1.5 rounded-md border border-border/80 bg-background px-2 text-sm hover:border-foreground/40 focus-visible:outline-none focus-visible:border-foreground/40 transition-colors"
       >
         <span className={cn(!current && 'text-muted-foreground/70')}>{currentLabel}</span>
         <ChevronDown className={cn('h-3 w-3 text-muted-foreground transition-transform', open && 'rotate-180')} />
@@ -572,7 +572,7 @@ function SelectInput({ options, initial, onSave, onCancel }: {
       {open && (
         <ul
           role="listbox"
-          className="absolute left-0 top-full mt-1 min-w-full whitespace-nowrap rounded-sm border border-border/70 bg-popover shadow-md py-1 z-30"
+          className="absolute left-0 top-full mt-1 min-w-full whitespace-nowrap rounded-sm border border-border/80 bg-popover shadow-md py-1 z-30"
         >
           <li>
             <button

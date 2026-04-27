@@ -90,7 +90,7 @@ export function ScheduleCalculator({ country }: Props) {
             />
           </div>
 
-          <div className="border-t border-border/60" />
+          <div className="border-t border-border/80" />
 
           <div className="space-y-3">
             <div>

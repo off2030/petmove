@@ -140,7 +140,7 @@ export function UKExtraField({ caseId, caseRow, sectionNumber }: { caseId: strin
       handleDrop={handleDrop}
     >
       {/* ── 해외주소 ── */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
         <SectionLabel className="pt-1">해외주소</SectionLabel>
         {editing ? (
           <AddressInput
@@ -200,7 +200,7 @@ function AddressInput({ initial, onSave, onCancel }: {
       }}
       onBlur={() => setTimeout(() => onSave(val.trim() || null), 150)}
       placeholder="Destination address"
-      className="h-7 w-full max-w-[400px] rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      className="h-7 w-full max-w-[400px] rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
   )
 }

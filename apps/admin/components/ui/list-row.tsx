@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils'
  * 단순 div 행은 아래 `<ListRow>` 사용.
  */
 export const LIST_ROW_BASE =
-  'border-b border-border/60 last:border-b-0 px-lg py-4 transition-colors'
+  'border-b border-border/80 last:border-b-0 px-lg py-4 transition-colors'
 
 export const LIST_ROW_INTERACTIVE = 'cursor-pointer hover:bg-accent'
 

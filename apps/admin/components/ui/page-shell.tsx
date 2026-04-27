@@ -69,7 +69,7 @@ export function PageTabs<T extends string>({
   right?: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-sm md:gap-md border-b border-border/60 shrink-0 px-lg">
+    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-sm md:gap-md border-b border-border/80 shrink-0 px-lg">
       <div className="flex gap-lg">
         {tabs.map((tab) => (
           <button

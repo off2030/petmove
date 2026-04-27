@@ -73,7 +73,7 @@ function ButtonCountriesEditor() {
         </span>
       </div>
 
-      <div className="border-t border-border/70">
+      <div className="border-t border-border/80">
         <div className="flex flex-wrap gap-1.5 py-3">
           {draft.length === 0 ? (
             <span className="font-serif italic text-[13px] text-muted-foreground/60">
@@ -104,7 +104,7 @@ function ButtonCountriesEditor() {
         </div>
       </div>
 
-      <div className="pb-lg border-b border-border/60">
+      <div className="pb-lg border-b border-border/80">
         <DestinationPicker
           values={draft}
           onChange={setDraft}
@@ -176,7 +176,7 @@ function AutoCountriesEditor() {
         </span>
       </div>
 
-      <div className="border-t border-border/70">
+      <div className="border-t border-border/80">
         <div className="flex flex-wrap gap-1.5 py-3">
           {draft.length === 0 ? (
             <span className="font-serif italic text-[13px] text-muted-foreground/60">
@@ -211,7 +211,7 @@ function AutoCountriesEditor() {
         </div>
       </div>
 
-      <div className="pb-lg border-b border-border/60">
+      <div className="pb-lg border-b border-border/80">
         <DestinationPicker
           values={draft}
           onChange={setDraft}

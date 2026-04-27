@@ -109,7 +109,7 @@ export function CaseHistory({ caseId }: { caseId: string }) {
           <div className="absolute inset-0 bg-black/30" onClick={() => setOpen(false)} />
           <div className="relative bg-background rounded-lg shadow-lg w-[620px] max-h-[460px] flex flex-col">
             {/* Header */}
-            <div className="flex items-baseline justify-between px-5 py-3 border-b border-border/50">
+            <div className="flex items-baseline justify-between px-5 py-3 border-b border-border/80">
               <div className="flex items-baseline gap-sm">
                 <span className="font-serif text-[17px] font-medium text-foreground">변경 이력</span>
                 <span className="font-serif italic text-[13px] text-muted-foreground/70">
@@ -171,7 +171,7 @@ export function CaseHistory({ caseId }: { caseId: string }) {
             <div className="shrink-0 px-5 py-2 border-t border-border/40">
               <p className="font-serif italic text-[12px] text-muted-foreground/70">
                 한 단계씩 되돌리려면{' '}
-                <kbd className="font-mono not-italic text-[10px] uppercase tracking-[1px] px-1.5 py-0.5 rounded border border-border/60 bg-muted/40 text-foreground/80">
+                <kbd className="font-mono not-italic text-[10px] uppercase tracking-[1px] px-1.5 py-0.5 rounded border border-border/80 bg-muted/40 text-foreground/80">
                   Ctrl · Z
                 </kbd>
               </p>

@@ -116,7 +116,7 @@ export function CaseTagPicker({
             width: '22rem',
             maxHeight: pos.maxHeight,
           }}
-          className="z-50 rounded-md border border-border/50 bg-popover shadow-md flex flex-col overflow-hidden"
+          className="z-50 rounded-md border border-border/80 bg-popover shadow-md flex flex-col overflow-hidden"
         >
           <div className="shrink-0 px-sm py-sm border-b border-border/40 relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />

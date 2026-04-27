@@ -183,7 +183,7 @@ function EditableCell({
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save(draft) }
         if (e.key === 'Escape') setEditing(false)
       }}
-      className="w-full min-h-[2rem] rounded-md border border-border/50 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-none"
+      className="w-full min-h-[2rem] rounded-md border border-border/80 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-none"
     />
   )
 }
@@ -243,7 +243,7 @@ function SelectCell({
         <StatusBadge value={value} options={col.options!} />
       </button>
       {open && (
-        <ul className="absolute left-0 top-full mt-1 z-30 min-w-[120px] rounded-md border border-border/60 bg-background py-1 shadow-md">
+        <ul className="absolute left-0 top-full mt-1 z-30 min-w-[120px] rounded-md border border-border/80 bg-background py-1 shadow-md">
           <li>
             <button
               type="button"
@@ -331,7 +331,7 @@ export function TodoTable({
   return (
     <table className="w-full border-collapse table-fixed">
       <thead>
-        <tr className="border-b border-border/60">
+        <tr className="border-b border-border/80">
           {columns.map((col) => (
             <th
               key={col.key}
@@ -348,7 +348,7 @@ export function TodoTable({
           <tr
             key={row.id}
             className={cn(
-              'border-b border-dashed border-border/50 hover:bg-accent transition-colors cursor-pointer',
+              'border-b border-dashed border-border/80 hover:bg-accent transition-colors cursor-pointer',
               rowClass?.(row),
             )}
             onClick={() => openCase(row.id)}

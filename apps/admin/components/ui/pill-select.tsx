@@ -129,7 +129,7 @@ export function PillSelect({
 
   const variantBtn =
     variant === 'pill'
-      ? 'h-8 pl-md pr-2 rounded-full border border-border/60 bg-background/60 hover:bg-muted/40 pmw-st__input'
+      ? 'h-8 pl-md pr-2 rounded-full border border-border/80 bg-background/60 hover:bg-muted/40 pmw-st__input'
       : variant === 'chip'
       ? 'px-2 py-0.5 rounded-sm pmw-st__chip'
       : 'px-2 py-0.5 rounded-sm border border-dotted text-[11px] font-sans'

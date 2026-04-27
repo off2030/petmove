@@ -240,7 +240,7 @@ export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, curr
 
                 {/* Orgs card — Editorial borderless */}
                 <div className="rounded-xl bg-card px-lg pt-md pb-sm">
-                  <div className="flex items-baseline justify-between pb-sm border-b border-border/60 mb-sm">
+                  <div className="flex items-baseline justify-between pb-sm border-b border-border/80 mb-sm">
                     <h2 className="font-serif text-[17px] text-foreground">목록</h2>
                     <span className="font-mono text-[12px] tabular-nums text-muted-foreground">
                       {orgs.length}
@@ -261,7 +261,7 @@ export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, curr
                               onClick={() => select(o.id)}
                               disabled={pending}
                               className={cn(
-                                'block w-full text-left py-3 -mx-sm px-sm rounded-sm transition-colors border-b border-dotted border-border/70 last:border-b-0',
+                                'block w-full text-left py-3 -mx-sm px-sm rounded-sm transition-colors border-b border-dotted border-border/80 last:border-b-0',
                                 isSel ? 'bg-accent' : 'hover:bg-accent/60',
                                 pending && 'disabled:opacity-70',
                               )}
@@ -314,7 +314,7 @@ export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, curr
                       disabled={pending || !newOrgName.trim()}
                       aria-label="추가"
                       title="추가"
-                      className="shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+                      className="shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/80 bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
                     >
                       <Plus className="h-4 w-4" />
                     </button>
@@ -331,7 +331,7 @@ export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, curr
                 ) : (
                   <div className="rounded-xl bg-card px-lg pt-md pb-md flex flex-col gap-lg">
                     {/* Org header */}
-                    <header className="pb-md border-b border-border/60">
+                    <header className="pb-md border-b border-border/80">
                       <div className="flex items-start justify-between gap-md">
                         <h2 className="font-serif text-[22px] leading-tight text-foreground">
                           {selected.name}
@@ -385,7 +385,7 @@ export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, curr
 
                     {/* Members */}
                     <section>
-                      <div className="flex items-baseline justify-between pb-sm border-b border-border/60 mb-sm">
+                      <div className="flex items-baseline justify-between pb-sm border-b border-border/80 mb-sm">
                         <h3 className="font-serif text-[17px] text-foreground">멤버</h3>
                         <span className="font-mono text-[12px] tabular-nums text-muted-foreground">
                           {selected.members.length}
@@ -402,7 +402,7 @@ export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, curr
                             return (
                               <li
                                 key={m.user_id}
-                                className="flex items-center justify-between gap-md py-3 border-b border-dotted border-border/70 last:border-b-0"
+                                className="flex items-center justify-between gap-md py-3 border-b border-dotted border-border/80 last:border-b-0"
                               >
                                 <div className="min-w-0">
                                   <div className="font-serif font-semibold text-[17px] leading-tight truncate">
@@ -433,7 +433,7 @@ export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, curr
                                         type="button"
                                         onClick={() => onRemoveMember(selected.id, m.user_id, m.name || m.email)}
                                         disabled={pending}
-                                        className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/60 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
+                                        className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/80 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
                                       >
                                         제거
                                       </button>
@@ -452,7 +452,7 @@ export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, curr
 
                     {/* Invites */}
                     <section>
-                      <div className="flex items-baseline justify-between pb-sm border-b border-border/60 mb-sm">
+                      <div className="flex items-baseline justify-between pb-sm border-b border-border/80 mb-sm">
                         <h3 className="font-serif text-[17px] text-foreground">대기 초대</h3>
                         <span className="font-mono text-[12px] tabular-nums text-muted-foreground">
                           {selected.invites.length}
@@ -467,7 +467,7 @@ export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, curr
                           {selected.invites.map((i) => (
                             <li
                               key={i.id}
-                              className="flex items-center justify-between gap-md py-3 border-b border-dotted border-border/70 last:border-b-0"
+                              className="flex items-center justify-between gap-md py-3 border-b border-dotted border-border/80 last:border-b-0"
                             >
                               <div className="min-w-0">
                                 <div className="font-serif font-semibold text-[16px] leading-tight truncate">
@@ -490,7 +490,7 @@ export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, curr
                                 type="button"
                                 onClick={() => onRevokeInvite(i.id)}
                                 disabled={pending}
-                                className="shrink-0 font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/60 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
+                                className="shrink-0 font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/80 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
                               >
                                 취소
                               </button>
@@ -500,7 +500,7 @@ export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, curr
                       )}
 
                       {/* New invite form */}
-                      <div className="pt-md mt-sm border-t border-border/60 flex items-center gap-sm">
+                      <div className="pt-md mt-sm border-t border-border/80 flex items-center gap-sm">
                         <input
                           type="email"
                           placeholder="email@example.com"
@@ -589,7 +589,7 @@ function SuperAdminsCard({
 
   return (
     <div className="rounded-xl bg-card px-lg pt-md pb-md">
-      <div className="flex items-baseline justify-between pb-sm border-b border-border/60 mb-sm">
+      <div className="flex items-baseline justify-between pb-sm border-b border-border/80 mb-sm">
         <h2 className="font-serif text-[17px] text-foreground">SaaS 운영자</h2>
         <span className="font-mono text-[12px] tabular-nums text-muted-foreground">
           {admins.length}
@@ -604,7 +604,7 @@ function SuperAdminsCard({
             return (
               <li
                 key={a.user_id}
-                className="flex items-center justify-between gap-md py-2 border-b border-dotted border-border/60 last:border-b-0"
+                className="flex items-center justify-between gap-md py-2 border-b border-dotted border-border/80 last:border-b-0"
               >
                 <div className="min-w-0">
                   <div className="font-serif text-[15px] leading-tight truncate">
@@ -623,7 +623,7 @@ function SuperAdminsCard({
                     type="button"
                     onClick={() => onRevoke(a)}
                     disabled={pending}
-                    className="shrink-0 font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/60 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
+                    className="shrink-0 font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/80 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
                   >
                     회수
                   </button>
@@ -635,7 +635,7 @@ function SuperAdminsCard({
       )}
 
       {/* Grant form */}
-      <div className="mt-md pt-sm border-t border-border/60 flex items-center gap-sm">
+      <div className="mt-md pt-sm border-t border-border/80 flex items-center gap-sm">
         <input
           type="email"
           placeholder="email@example.com"
@@ -697,7 +697,7 @@ function RoleSelect({
         onClick={() => setOpen((p) => !p)}
         disabled={disabled}
         className={cn(
-          'inline-flex items-center gap-1.5 h-8 pl-3 pr-2 rounded-full border border-border/60 bg-transparent font-serif text-[14px] text-foreground transition-colors',
+          'inline-flex items-center gap-1.5 h-8 pl-3 pr-2 rounded-full border border-border/80 bg-transparent font-serif text-[14px] text-foreground transition-colors',
           'hover:bg-muted/40 focus:outline-none focus:border-primary/50',
           'disabled:opacity-60 disabled:cursor-not-allowed',
           open && 'border-foreground/40 bg-muted/30',
@@ -787,7 +787,7 @@ function BusinessNumberField({
           }
         }}
         disabled={saving}
-        className="font-mono tabular-nums bg-transparent text-foreground placeholder:text-muted-foreground/50 border-b border-dotted border-border/70 focus:border-foreground/40 focus:outline-none w-[120px] disabled:opacity-60"
+        className="font-mono tabular-nums bg-transparent text-foreground placeholder:text-muted-foreground/50 border-b border-dotted border-border/80 focus:border-foreground/40 focus:outline-none w-[120px] disabled:opacity-60"
       />
       {error && <span className="text-destructive">{error}</span>}
     </span>

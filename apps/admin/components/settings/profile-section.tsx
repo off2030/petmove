@@ -97,9 +97,9 @@ export function ProfileSection({
       {/* Profile fields */}
       <section className="mb-xl">
         <SectionLabel>Account</SectionLabel>
-        <div className="border-t border-border/70">
+        <div className="border-t border-border/80">
           {/* Name (editable) */}
-          <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/60">
+          <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
             <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
               이름
             </label>
@@ -121,7 +121,7 @@ export function ProfileSection({
           </div>
 
           {/* Email (read-only) */}
-          <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/60">
+          <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
             <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
               이메일
             </label>
@@ -135,7 +135,7 @@ export function ProfileSection({
 
           {/* Provider (read-only) */}
           {profile.provider && (
-            <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/60">
+            <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
               <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
                 로그인 방식
               </label>
@@ -150,7 +150,7 @@ export function ProfileSection({
       {/* DM visibility toggle */}
       <section className="mb-xl">
         <SectionLabel>Messaging</SectionLabel>
-        <div className="border-t border-border/70">
+        <div className="border-t border-border/80">
           <DmVisibilityRow
             value={profile.dm_visible}
             onChange={(next) => setProfile((p) => (p ? { ...p, dm_visible: next } : p))}
@@ -165,7 +165,7 @@ export function ProfileSection({
       )}
 
       {/* Footer — save status */}
-      <div className="flex items-center justify-end pt-md border-t border-border/60">
+      <div className="flex items-center justify-end pt-md border-t border-border/80">
         <span className="font-serif italic text-[12px] text-muted-foreground/60">
           {formatSavedAgo(lastSaved)}
         </span>
@@ -223,7 +223,7 @@ function DmVisibilityRow({
   }
 
   return (
-    <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/60">
+    <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
       <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
         검색 노출
       </label>
@@ -236,7 +236,7 @@ function DmVisibilityRow({
             'h-8 px-md font-serif text-[14px] rounded-full border transition-colors',
             value
               ? 'border-primary/50 bg-primary/10 text-primary'
-              : 'border-border/60 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+              : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
             pending && 'opacity-60',
           )}
         >

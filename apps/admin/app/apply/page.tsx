@@ -73,7 +73,7 @@ const eyebrowNumClass =
 const sectionTitleClass =
   'font-serif text-[15px] font-medium uppercase tracking-[0.4px] text-foreground'
 // Field row: vertical container with top divider between rows (first row has no top border)
-const fieldRowClass = 'py-4 border-t border-border/60 first:border-t-0 first:pt-1'
+const fieldRowClass = 'py-4 border-t border-border/80 first:border-t-0 first:pt-1'
 // Header row: label left, REQ badge + hint on right
 const fieldHeaderClass = 'flex items-baseline justify-between gap-3 mb-2'
 // Label: serif (editorial tone)
@@ -105,7 +105,7 @@ const chipButtonActive =
 const chipButtonInactive =
   'border-border bg-card text-foreground hover:bg-accent'
 const dropdownClass =
-  'mt-1 rounded-md border border-border/60 bg-popover shadow-sm'
+  'mt-1 rounded-md border border-border/80 bg-popover shadow-sm'
 const dropdownRowClass =
   'w-full text-left px-md py-2.5 text-[15px] transition-colors hover:bg-accent'
 const dropdownRowActiveClass = 'bg-accent'
@@ -488,7 +488,7 @@ export default function ApplyPage() {
     <div className={pageShellClass}>
       <div className={pageInnerClass}>
         {/* Header — editorial magazine-style masthead */}
-        <header className="mb-10 text-center pb-8 border-b border-border/60">
+        <header className="mb-10 text-center pb-8 border-b border-border/80">
           <p className="font-mono text-[11px] uppercase tracking-[2.5px] text-muted-foreground mb-4">
             PetMove · Registration
           </p>
@@ -532,7 +532,7 @@ export default function ApplyPage() {
           }}>
           {/* 1. 목적지 */}
           <section className={sectionCardClass}>
-            <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/60 mb-1">
+            <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/80 mb-1">
               <span className={eyebrowNumClass}>01</span>
               <h2 className={sectionTitleClass}>어디로 가시나요?</h2>
             </div>
@@ -586,7 +586,7 @@ export default function ApplyPage() {
 
           {/* 2. 소유주 */}
           <section className={sectionCardClass}>
-            <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/60 mb-1">
+            <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/80 mb-1">
               <span className={eyebrowNumClass}>02</span>
               <h2 className={sectionTitleClass}>소유주 정보</h2>
             </div>
@@ -645,7 +645,7 @@ export default function ApplyPage() {
 
           {/* 마리 수 선택 */}
           <section className={sectionCardClass}>
-            <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/60 mb-1">
+            <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/80 mb-1">
               <span className={eyebrowNumClass}>03</span>
               <h2 className={sectionTitleClass}>동반 마리수</h2>
             </div>
@@ -664,7 +664,7 @@ export default function ApplyPage() {
           {/* 3. 반려동물 (반복) */}
           {pets.map((pet, pi) => (
           <section key={pi} className={sectionCardClass}>
-            <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/60 mb-1">
+            <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/80 mb-1">
               <span className={eyebrowNumClass}>{String(4 + pi).padStart(2, '0')}</span>
               <h2 className={sectionTitleClass}>
                 {pets.length > 1 ? `반려동물 · ${pi + 1}` : '반려동물 정보'}
@@ -713,8 +713,8 @@ export default function ApplyPage() {
       {/* Daum Postcode Modal */}
       {showAddrModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-[2px]" onClick={() => setShowAddrModal(false)}>
-          <div className="relative mx-4 w-full max-w-lg overflow-hidden rounded-xl border border-border/60 bg-popover shadow-md" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-md py-3 border-b border-border/60">
+          <div className="relative mx-4 w-full max-w-lg overflow-hidden rounded-xl border border-border/80 bg-popover shadow-md" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-md py-3 border-b border-border/80">
               <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">주소 검색</span>
               <button type="button" onClick={() => setShowAddrModal(false)}
                 className="text-muted-foreground hover:text-foreground text-lg leading-none">&times;</button>
@@ -877,7 +877,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, composingRef, handl
       </FieldRow>
 
       {/* 선택 항목 섹션 헤더 */}
-      <div className="pt-6 mt-4 border-t border-border/60">
+      <div className="pt-6 mt-4 border-t border-border/80">
         <div className="flex items-baseline justify-between mb-1">
           <span className="font-mono text-[11px] uppercase tracking-[1.6px] text-muted-foreground">Optional</span>
           <span className="font-serif italic text-[12px] text-muted-foreground/80">아시는 부분만 작성해주세요</span>

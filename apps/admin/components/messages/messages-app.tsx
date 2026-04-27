@@ -181,14 +181,14 @@ export function MessagesApp({
 
   return (
     <PageShell title="메시지">
-      <div className="h-full mx-lg flex flex-row min-h-0 border border-border/60 rounded-lg overflow-hidden bg-card">
+      <div className="h-full mx-lg flex flex-row min-h-0 border border-border/80 rounded-lg overflow-hidden bg-card">
         <InboxListPane
           items={conversations}
           activeId={activeId}
           onSelect={onSelect}
           onNewConv={() => setShowNewConv(true)}
         />
-        <div className="flex-1 min-w-0 min-h-0 flex flex-col border-l border-border/60">
+        <div className="flex-1 min-w-0 min-h-0 flex flex-col border-l border-border/80 bg-popover">
           {activeConv ? (
             <ThreadPane
               key={activeConv.id}
@@ -347,7 +347,7 @@ function InboxListPane({
               onChange={(e) => setQuery(e.target.value)}
               placeholder="이름 / 조직 / 그룹 검색"
               autoFocus
-              className="w-full h-8 rounded-full border border-border/70 bg-popover pl-8 pr-3 text-[13px] focus-visible:outline-none focus-visible:border-foreground/40"
+              className="w-full h-8 rounded-full border border-border/80 bg-popover pl-8 pr-3 text-[13px] focus-visible:outline-none focus-visible:border-foreground/40"
             />
           </div>
         </div>
@@ -538,10 +538,10 @@ function NewConversationModal({
       onClick={onClose}
     >
       <div
-        className="w-[460px] max-h-[80vh] flex flex-col rounded-lg border border-border/60 bg-popover shadow-xl"
+        className="w-[460px] max-h-[80vh] flex flex-col rounded-lg border border-border/80 bg-popover shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="shrink-0 flex items-center justify-between px-md py-sm border-b border-border/60">
+        <div className="shrink-0 flex items-center justify-between px-md py-sm border-b border-border/80">
           <h2 className="font-serif text-[16px] text-foreground">새 대화</h2>
           <button
             type="button"
@@ -563,7 +563,7 @@ function NewConversationModal({
               maxLength={NAME_MAX}
               onChange={(e) => setName(e.target.value)}
               placeholder="비워두면 멤버 이름으로 표시"
-              className="w-full h-8 rounded-md border border-border/60 bg-card px-sm text-[13px] focus-visible:outline-none focus-visible:border-foreground/40"
+              className="w-full h-8 rounded-md border border-border/80 bg-card px-sm text-[13px] focus-visible:outline-none focus-visible:border-foreground/40"
             />
           </div>
         )}
@@ -617,7 +617,7 @@ function NewConversationModal({
               value={orgQuery}
               onChange={(e) => setOrgQuery(e.target.value)}
               placeholder="조직 이름"
-              className="w-full h-8 rounded-md border border-border/60 bg-card pl-8 pr-3 text-[13px] focus-visible:outline-none focus-visible:border-foreground/40"
+              className="w-full h-8 rounded-md border border-border/80 bg-card pl-8 pr-3 text-[13px] focus-visible:outline-none focus-visible:border-foreground/40"
             />
           ) : (
             <input
@@ -625,7 +625,7 @@ function NewConversationModal({
               value={memberQuery}
               onChange={(e) => setMemberQuery(e.target.value)}
               placeholder={`${selectedOrg?.name ?? ''} — 이름 / 이메일`}
-              className="w-full h-8 rounded-md border border-border/60 bg-card pl-8 pr-3 text-[13px] focus-visible:outline-none focus-visible:border-foreground/40"
+              className="w-full h-8 rounded-md border border-border/80 bg-card pl-8 pr-3 text-[13px] focus-visible:outline-none focus-visible:border-foreground/40"
             />
           )}
         </div>
@@ -709,7 +709,7 @@ function NewConversationModal({
           )}
         </div>
 
-        <div className="shrink-0 px-md py-sm border-t border-border/60 flex items-center justify-between gap-sm">
+        <div className="shrink-0 px-md py-sm border-t border-border/80 flex items-center justify-between gap-sm">
           <span className="text-[12px] text-muted-foreground/70">
             {selected.length === 0
               ? '1명 = 1:1 / 2명+ = 그룹'
@@ -1023,7 +1023,7 @@ function ThreadPane({
 
   return (
     <>
-      <div className="shrink-0 px-md py-sm min-h-[60px] flex items-center justify-between gap-md bg-white border-b border-border/60">
+      <div className="shrink-0 px-md py-sm min-h-[60px] flex items-center justify-between gap-md bg-white border-b border-border/80">
         <div className="min-w-0 flex items-center gap-sm">
           <Avatar label={headerAvatarLabel} />
           {editingName ? (
@@ -1043,7 +1043,7 @@ function ThreadPane({
                 }
               }}
               placeholder="대화방 이름 (선택)"
-              className="font-serif text-[16px] bg-transparent border-b border-border/60 focus-visible:outline-none focus-visible:border-foreground/40 min-w-0"
+              className="font-serif text-[16px] bg-transparent border-b border-border/80 focus-visible:outline-none focus-visible:border-foreground/40 min-w-0"
             />
           ) : (
             <button
@@ -1107,7 +1107,7 @@ function ThreadPane({
             {showActionMenu && (
               <div
                 role="menu"
-                className="absolute right-0 top-full mt-1 w-44 rounded-md border border-border/60 bg-popover shadow-md py-1 z-30"
+                className="absolute right-0 top-full mt-1 w-44 rounded-md border border-border/80 bg-popover shadow-md py-1 z-30"
               >
                 <button
                   type="button"
@@ -1169,7 +1169,7 @@ function ThreadPane({
       </div>
 
       {showSearch && (
-        <div className="shrink-0 border-b border-border/60 bg-white">
+        <div className="shrink-0 border-b border-border/80 bg-white">
           <div className="flex items-center gap-sm px-md py-sm">
             <Search size={14} className="shrink-0 text-muted-foreground" />
             <input
@@ -1331,8 +1331,8 @@ function ThreadPane({
         </div>
 
         {showMembers && (
-          <aside className="w-[240px] shrink-0 flex flex-col border-l border-border/60 bg-background min-h-0">
-            <div className="shrink-0 flex items-center justify-between px-md py-sm border-b border-border/60">
+          <aside className="w-[240px] shrink-0 flex flex-col border-l border-border/80 bg-background min-h-0">
+            <div className="shrink-0 flex items-center justify-between px-md py-sm border-b border-border/80">
               <span className="font-serif text-[14px]">멤버 ({totalCount})</span>
               <button
                 type="button"
@@ -1462,7 +1462,7 @@ function MessageItem({
             'max-w-[70%] rounded-lg px-sm py-1.5',
             isOwn
               ? 'bg-[var(--pmw-clay-soft)] text-foreground'
-              : 'bg-popover text-foreground border border-border/50',
+              : 'bg-popover text-foreground border border-border/80',
           )}
         >
           {msg.content && (
@@ -1620,9 +1620,9 @@ function Composer({
   }
 
   return (
-    <div className="shrink-0 bg-white border-t border-border/60 px-md pt-sm pb-md">
+    <div className="shrink-0 bg-white border-t border-border/80 px-md pt-sm pb-md">
       {attachment && (
-        <div className="mb-2 inline-flex items-center gap-1 rounded-md border border-border/60 bg-card pl-2 pr-1 py-1 text-[12px]">
+        <div className="mb-2 inline-flex items-center gap-1 rounded-md border border-border/80 bg-card pl-2 pr-1 py-1 text-[12px]">
           <Paperclip size={12} className="text-muted-foreground" />
           <span className="truncate max-w-[240px]">{attachment.name}</span>
           <button
@@ -1652,11 +1652,11 @@ function Composer({
           disabled={uploading || !!attachment}
           aria-label="파일 첨부"
           title="파일 첨부 (최대 25MB)"
-          className="shrink-0 h-9 w-9 inline-flex items-center justify-center rounded-full bg-secondary text-foreground hover:bg-secondary/70 transition-colors disabled:opacity-40"
+          className="shrink-0 h-9 w-9 inline-flex items-center justify-center rounded-full bg-popover border border-border/80 text-foreground hover:bg-accent transition-colors disabled:opacity-40"
         >
           <Paperclip size={18} />
         </button>
-        <div className="flex-1 flex items-center gap-1 rounded-2xl bg-popover border border-border/50 px-md py-1.5">
+        <div className="flex-1 flex items-center gap-1 rounded-2xl bg-popover border border-border/80 px-md py-1.5">
           <textarea
             ref={taRef}
             value={text}
@@ -1758,10 +1758,10 @@ function AddMemberModal({
       onClick={onClose}
     >
       <div
-        className="w-[420px] max-h-[80vh] flex flex-col rounded-lg border border-border/60 bg-popover shadow-xl"
+        className="w-[420px] max-h-[80vh] flex flex-col rounded-lg border border-border/80 bg-popover shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="shrink-0 flex items-center justify-between px-md py-sm border-b border-border/60">
+        <div className="shrink-0 flex items-center justify-between px-md py-sm border-b border-border/80">
           <h2 className="font-serif text-[16px] text-foreground">
             {step === 'org' ? '멤버 초대 — 조직' : `멤버 초대 — ${selectedOrg?.name ?? ''}`}
           </h2>
@@ -1799,7 +1799,7 @@ function AddMemberModal({
               value={orgQuery}
               onChange={(e) => setOrgQuery(e.target.value)}
               placeholder="조직 이름"
-              className="w-full h-8 rounded-md border border-border/60 bg-card pl-8 pr-3 text-[13px] focus-visible:outline-none focus-visible:border-foreground/40"
+              className="w-full h-8 rounded-md border border-border/80 bg-card pl-8 pr-3 text-[13px] focus-visible:outline-none focus-visible:border-foreground/40"
             />
           ) : (
             <input
@@ -1807,7 +1807,7 @@ function AddMemberModal({
               value={memberQuery}
               onChange={(e) => setMemberQuery(e.target.value)}
               placeholder="이름 / 이메일"
-              className="w-full h-8 rounded-md border border-border/60 bg-card pl-8 pr-3 text-[13px] focus-visible:outline-none focus-visible:border-foreground/40"
+              className="w-full h-8 rounded-md border border-border/80 bg-card pl-8 pr-3 text-[13px] focus-visible:outline-none focus-visible:border-foreground/40"
             />
           )}
         </div>

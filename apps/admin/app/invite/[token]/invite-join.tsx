@@ -53,7 +53,7 @@ export function InviteJoin({ token, summary }: { token: string; summary: InviteS
   if (magicSent) {
     return (
       <div className="min-h-screen flex items-center justify-center p-lg">
-        <div className="max-w-md w-full space-y-md rounded-xl border border-border/60 bg-card p-xl shadow-sm text-center">
+        <div className="max-w-md w-full space-y-md rounded-xl border border-border/80 bg-card p-xl shadow-sm text-center">
           <h1 className="text-xl font-semibold">메일을 확인하세요</h1>
           <p className="text-sm text-muted-foreground">
             <span className="font-mono">{summary.email}</span> 로 로그인 링크를 보냈습니다.
@@ -75,7 +75,7 @@ export function InviteJoin({ token, summary }: { token: string; summary: InviteS
 
   return (
     <div className="min-h-screen flex items-center justify-center p-lg">
-      <div className="max-w-md w-full space-y-lg rounded-xl border border-border/60 bg-card p-xl shadow-sm">
+      <div className="max-w-md w-full space-y-lg rounded-xl border border-border/80 bg-card p-xl shadow-sm">
         <div className="text-center space-y-xs">
           <h1 className="text-xl font-semibold">{summary.orgName}</h1>
           <p className="text-sm text-muted-foreground">

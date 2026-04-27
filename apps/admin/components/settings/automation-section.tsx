@@ -198,7 +198,7 @@ export function AutomationSection({
       ) : (
         sortedDests.map((dk) => (
           <section key={dk} className="mb-xl">
-            <div className="flex items-baseline gap-2 pb-2 border-b border-border/70">
+            <div className="flex items-baseline gap-2 pb-2 border-b border-border/80">
               <span className="font-serif text-[15px] text-foreground">{destLabel(dk)}</span>
               <span className="opacity-60 text-muted-foreground">·</span>
               <span className="opacity-60 text-muted-foreground text-[13px]">{grouped.get(dk)!.length}</span>
@@ -214,7 +214,7 @@ export function AutomationSection({
                 } : undefined}
                 title={isAdmin ? (r.enabled ? '활성 — 클릭하여 비활성' : '비활성 — 클릭하여 활성') : undefined}
                 className={cn(
-                  'grid grid-cols-[24px_56px_1fr_auto] items-center gap-md py-3 border-b border-dotted border-border/60 hover:bg-accent transition-colors group',
+                  'grid grid-cols-[24px_56px_1fr_auto] items-center gap-md py-3 border-b border-dotted border-border/80 hover:bg-accent transition-colors group',
                   isAdmin && 'cursor-pointer',
                 )}
               >
@@ -258,7 +258,7 @@ export function AutomationSection({
       )}
 
       {isAdmin && (
-        <div className="flex items-center justify-between pt-md border-t border-border/60">
+        <div className="flex items-center justify-between pt-md border-t border-border/80">
           <button
             type="button"
             onClick={handleRestore}
@@ -268,7 +268,7 @@ export function AutomationSection({
                 ? `최근 삭제: ${destLabel(deletedStack[0].rule.destination_key)} · ${fieldLabel(deletedStack[0].rule.trigger_field)} → ${fieldLabel(deletedStack[0].rule.target_field)}`
                 : '최근 삭제한 규칙이 없습니다'
             }
-            className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/60 hover:bg-muted/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/80 hover:bg-muted/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <RotateCcw className="h-3 w-3" />
             삭제 복원{deletedStack.length > 0 ? ` (${deletedStack.length})` : ''}
@@ -276,7 +276,7 @@ export function AutomationSection({
           <button
             type="button"
             onClick={() => setEditing('new')}
-            className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/60 hover:bg-muted/40 transition-colors"
+            className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/80 hover:bg-muted/40 transition-colors"
           >
             <Plus className="h-3 w-3" />
             규칙 추가
@@ -285,7 +285,7 @@ export function AutomationSection({
       )}
 
       {!isAdmin && (
-        <p className="pt-md border-t border-border/60 pmw-st__sec-lead">
+        <p className="pt-md border-t border-border/80 pmw-st__sec-lead">
           자동화 규칙 편집은 관리자만 가능합니다.
         </p>
       )}
@@ -310,7 +310,7 @@ function CheckBox({ checked }: { checked: boolean }) {
       aria-hidden
       className={cn(
         'inline-flex h-4 w-4 items-center justify-center rounded-sm border transition-colors',
-        checked ? 'border-foreground/60 bg-foreground/5' : 'border-border/70 bg-transparent',
+        checked ? 'border-foreground/60 bg-foreground/5' : 'border-border/80 bg-transparent',
       )}
     >
       {checked && <Check className="h-3 w-3 text-foreground" strokeWidth={2.5} />}
@@ -381,15 +381,15 @@ function EditorialSelect({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full inline-flex items-center justify-between gap-2 h-9 rounded-md border border-border/60 bg-background px-3 font-serif text-[14px] hover:border-foreground/40 transition-colors"
+        className="w-full inline-flex items-center justify-between gap-2 h-9 rounded-md border border-border/80 bg-background px-3 font-serif text-[14px] hover:border-foreground/40 transition-colors"
       >
         <span className={cn(!current && 'text-muted-foreground/60')}>{current?.label ?? placeholder}</span>
         <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', open && 'rotate-180')} />
       </button>
       {open && (
-        <div className="absolute left-0 right-0 top-full mt-1 rounded-sm border border-border/70 bg-popover shadow-md z-30">
+        <div className="absolute left-0 right-0 top-full mt-1 rounded-sm border border-border/80 bg-popover shadow-md z-30">
           {searchable && (
-            <div className="border-b border-border/50 px-2 py-1.5">
+            <div className="border-b border-border/80 px-2 py-1.5">
               <input
                 ref={inputRef}
                 type="text"
@@ -497,8 +497,8 @@ function RuleEditModal({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="bg-background rounded-sm border border-border/60 shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-border/60 px-lg py-3">
+      <div className="bg-background rounded-sm border border-border/80 shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-border/80 px-lg py-3">
           <h3 className="font-serif text-[17px]">{initial ? '규칙 수정' : '규칙 추가'}</h3>
           <button type="button" onClick={onClose} className="p-1 rounded hover:bg-muted">
             <X className="h-4 w-4" />
@@ -524,7 +524,7 @@ function RuleEditModal({
               value={offsetsText}
               onChange={(e) => setOffsetsText(e.target.value)}
               placeholder="0, -29"
-              className="w-full font-mono text-[14px] bg-transparent outline-none border-b border-border/60 focus:border-foreground/40 pb-1"
+              className="w-full font-mono text-[14px] bg-transparent outline-none border-b border-border/80 focus:border-foreground/40 pb-1"
             />
           </Field>
           <div className="flex items-center gap-md pt-1">
@@ -547,11 +547,11 @@ function RuleEditModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-sm border-t border-border/60 px-lg py-3">
+        <div className="flex items-center justify-end gap-sm border-t border-border/80 px-lg py-3">
           <button type="button" onClick={onClose} className="px-md py-1.5 text-sm font-serif text-muted-foreground hover:text-foreground" disabled={pending}>
             취소
           </button>
-          <button type="button" onClick={submit} disabled={pending} className="px-md py-1.5 text-sm font-serif rounded-full border border-border/60 hover:bg-muted/40 transition-colors disabled:opacity-40">
+          <button type="button" onClick={submit} disabled={pending} className="px-md py-1.5 text-sm font-serif rounded-full border border-border/80 hover:bg-muted/40 transition-colors disabled:opacity-40">
             {initial ? '저장' : '추가'}
           </button>
         </div>

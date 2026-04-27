@@ -109,7 +109,7 @@ export function CustomerNameRow({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/60 transition-colors hover:bg-accent/60 last:border-0">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <SectionLabel className="pt-1">성함</SectionLabel>
 
       <div className="flex items-baseline gap-[10px] min-w-0 flex-wrap">
@@ -158,7 +158,7 @@ export function CustomerNameRow({
                 placeholder="이름 (First)"
                 autoFocus
                 onKeyDown={handleKeyDown}
-                className="h-8 w-28 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+                className="h-8 w-28 rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
               />
               <input
                 type="text"
@@ -180,7 +180,7 @@ export function CustomerNameRow({
                 }}
                 placeholder="성 (Last)"
                 onKeyDown={handleKeyDown}
-                className="h-8 w-28 rounded-md border border-border/50 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+                className="h-8 w-28 rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
               />
               <button
                 type="button"

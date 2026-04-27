@@ -203,7 +203,7 @@ export function DateTextField({
             left: popPos?.left ?? -9999,
             visibility: popPos ? 'visible' : 'hidden',
           }}
-          className="z-50 rounded-xl border border-border/60 bg-popover shadow-md"
+          className="z-50 rounded-xl border border-border/80 bg-popover shadow-md"
           // mousedown preventDefault: input 이 blur 되면서 commitDraft("") → onChange("")
           // → 부모의 saveNewDate("") 가 빈 값으로 호출되어 입력이 cancel 되는 것을 방지.
           // click 이벤트는 mousedown 의 default(focus shift) 만 막아도 정상 발화함.
@@ -234,7 +234,7 @@ export function DateTextField({
             }}
             defaultMonth={selectedDate ?? new Date()}
             footer={
-              <div className="mt-2 flex items-center justify-between border-t border-border/60 pt-2 px-1">
+              <div className="mt-2 flex items-center justify-between border-t border-border/80 pt-2 px-1">
                 <button
                   type="button"
                   className="font-serif italic text-[13px] text-muted-foreground hover:text-foreground transition-colors"

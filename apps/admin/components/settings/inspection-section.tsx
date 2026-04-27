@@ -119,7 +119,7 @@ function LabsAdminRow({
   }
 
   return (
-    <div className="grid grid-cols-[160px_1fr] items-start gap-md py-3 border-b border-border/60">
+    <div className="grid grid-cols-[160px_1fr] items-start gap-md py-3 border-b border-border/80">
       <span className="font-serif text-[13px] text-muted-foreground pt-1">기관 목록</span>
       <div className="flex flex-wrap items-center gap-1.5">
         {defaults.map(d => {
@@ -165,7 +165,7 @@ function LabsAdminRow({
                 if (e.key === 'Escape') { e.preventDefault(); setAdding(false); setError(null) }
               }}
               placeholder="식별자 (mylab)"
-              className="pmw-st__input bg-transparent outline-none border-b border-border/60 w-[120px] text-[12px] px-1 py-0.5"
+              className="pmw-st__input bg-transparent outline-none border-b border-border/80 w-[120px] text-[12px] px-1 py-0.5"
               autoFocus
             />
             <input
@@ -177,7 +177,7 @@ function LabsAdminRow({
                 if (e.key === 'Escape') { e.preventDefault(); setAdding(false); setError(null) }
               }}
               placeholder="표시명 (MyLab)"
-              className="pmw-st__input bg-transparent outline-none border-b border-border/60 w-[120px] text-[12px] px-1 py-0.5"
+              className="pmw-st__input bg-transparent outline-none border-b border-border/80 w-[120px] text-[12px] px-1 py-0.5"
             />
             <button
               type="button"
@@ -200,7 +200,7 @@ function LabsAdminRow({
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 border border-dashed border-border/60 text-muted-foreground hover:text-foreground hover:border-border transition-colors font-mono text-[11px] uppercase tracking-[1px]"
+            className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 border border-dashed border-border/80 text-muted-foreground hover:text-foreground hover:border-border transition-colors font-mono text-[11px] uppercase tracking-[1px]"
             title="검사기관 추가"
           >
             <Plus size={11} />
@@ -302,7 +302,7 @@ function SectionBlock({
     <section className="mb-xl">
       {/* Section label */}
       <SectionLabel>{title}</SectionLabel>
-      <div className="border-t border-border/70" />
+      <div className="border-t border-border/80" />
 
       {/* 기관 목록 (기본 + 사용자 정의) + 추가 */}
       <LabsAdminRow
@@ -314,7 +314,7 @@ function SectionBlock({
 
       {/* Default lab */}
       {hasDefault && (
-        <div className="grid grid-cols-[160px_1fr] items-center gap-md py-3 border-b border-border/60">
+        <div className="grid grid-cols-[160px_1fr] items-center gap-md py-3 border-b border-border/80">
           <span className="font-serif text-[13px] text-muted-foreground">기본 검사기관</span>
           <LabPillSelect
             value={defaultLab}
@@ -340,7 +340,7 @@ function SectionBlock({
             return (
               <li
                 key={i}
-                className="grid grid-cols-[1fr_auto_auto] items-start gap-md py-3 border-b border-border/60"
+                className="grid grid-cols-[1fr_auto_auto] items-start gap-md py-3 border-b border-border/80"
               >
                 {/* Left: group label + destination pills (click to edit) */}
                 {editingIdx === i ? (
@@ -350,7 +350,7 @@ function SectionBlock({
                       value={r.label ?? ''}
                       onChange={(e) => setRuleLabel(i, e.target.value)}
                       placeholder="그룹명 (선택사항)"
-                      className="pmw-st__input bg-transparent outline-none border-b border-border/60 font-serif italic text-[15px] px-0.5 py-0.5 w-full max-w-[240px]"
+                      className="pmw-st__input bg-transparent outline-none border-b border-border/80 font-serif italic text-[15px] px-0.5 py-0.5 w-full max-w-[240px]"
                       style={{ color: 'var(--pmw-deep)' }}
                     />
                     <DestinationPicker
@@ -442,7 +442,7 @@ function SectionBlock({
         <button
           type="button"
           onClick={() => setAddOpen(true)}
-          className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/60 hover:bg-muted/40 transition-colors"
+          className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/80 hover:bg-muted/40 transition-colors"
         >
           <Plus className="h-3 w-3" />
           규칙 추가
@@ -510,8 +510,8 @@ function RuleAddModal({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="bg-background rounded-sm border border-border/60 shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-border/60 px-lg py-3">
+      <div className="bg-background rounded-sm border border-border/80 shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-border/80 px-lg py-3">
           <div className="flex items-baseline gap-2">
             {mode && (
               <button
@@ -538,7 +538,7 @@ function RuleAddModal({
               <button
                 type="button"
                 onClick={() => setMode('single')}
-                className="w-full text-left px-md py-3 rounded-md border border-border/60 hover:bg-muted/40 transition-colors"
+                className="w-full text-left px-md py-3 rounded-md border border-border/80 hover:bg-muted/40 transition-colors"
               >
                 <div className="font-serif text-[15px] text-foreground">목적지 추가</div>
                 <div className="pmw-st__sec-lead mt-1">한 개의 목적지에 검사기관을 매핑합니다.</div>
@@ -546,7 +546,7 @@ function RuleAddModal({
               <button
                 type="button"
                 onClick={() => setMode('group')}
-                className="w-full text-left px-md py-3 rounded-md border border-border/60 hover:bg-muted/40 transition-colors"
+                className="w-full text-left px-md py-3 rounded-md border border-border/80 hover:bg-muted/40 transition-colors"
               >
                 <div className="font-serif text-[15px] text-foreground">그룹 추가</div>
                 <div className="pmw-st__sec-lead mt-1">여러 목적지를 한 그룹으로 묶어 같은 검사기관을 매핑합니다.</div>
@@ -565,7 +565,7 @@ function RuleAddModal({
                     onChange={(e) => setLabel(e.target.value)}
                     placeholder="예: 유럽연합"
                     autoFocus
-                    className="w-full font-serif text-[15px] bg-transparent outline-none border-b border-border/60 focus:border-foreground/40 pb-1 transition-colors"
+                    className="w-full font-serif text-[15px] bg-transparent outline-none border-b border-border/80 focus:border-foreground/40 pb-1 transition-colors"
                   />
                 </div>
               )}
@@ -612,7 +612,7 @@ function RuleAddModal({
         </div>
 
         {mode && (
-          <div className="flex items-center justify-end gap-sm border-t border-border/60 px-lg py-3">
+          <div className="flex items-center justify-end gap-sm border-t border-border/80 px-lg py-3">
             <button
               type="button"
               onClick={onClose}
@@ -624,7 +624,7 @@ function RuleAddModal({
               type="button"
               onClick={submit}
               disabled={!canSubmit}
-              className="px-md py-1.5 text-sm font-serif rounded-full border border-border/60 hover:bg-muted/40 transition-colors disabled:opacity-40"
+              className="px-md py-1.5 text-sm font-serif rounded-full border border-border/80 hover:bg-muted/40 transition-colors disabled:opacity-40"
             >
               추가
             </button>
@@ -705,7 +705,7 @@ export function InspectionSection() {
       />
 
       {/* Footer actions */}
-      <div className="flex items-center justify-between pt-lg border-t border-border/60">
+      <div className="flex items-center justify-between pt-lg border-t border-border/80">
         <button
           type="button"
           onClick={resetToDefaults}
