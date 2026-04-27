@@ -8,13 +8,18 @@ import { listCasesForPicker, type CasePickerItem } from '@/lib/actions/chat'
 /**
  * 케이스 picker — 부모는 trigger 요소만 넘기고, 클릭 시 dropdown 펼침.
  * onPick 호출 시 자동으로 닫힘.
+ *
+ * items 가 주어지면 그 정적 목록을 클라이언트에서 필터 (필터용 — 즉시 표시).
+ * 없으면 listCasesForPicker 로 서버 fetch (작성 시 새 태그용).
  */
 export function CaseTagPicker({
   trigger,
   onPick,
+  items: staticItems,
 }: {
   trigger: React.ReactNode
   onPick: (c: { id: string; label: string }) => void
+  items?: CasePickerItem[]
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -69,9 +74,15 @@ export function CaseTagPicker({
     return () => document.removeEventListener('mousedown', onClickOutside)
   }, [open])
 
-  // 입력 변경 시 fetch (간단 debounce)
+  // 정적 items 모드 — 클라이언트 필터 (즉시).
+  // 그 외엔 서버 fetch (debounce).
   useEffect(() => {
     if (!open) return
+    if (staticItems) {
+      const q = query.trim().toLowerCase()
+      setItems(q ? staticItems.filter((c) => c.label.toLowerCase().includes(q)) : staticItems)
+      return
+    }
     const id = setTimeout(() => {
       startFetch(async () => {
         const r = await listCasesForPicker({ search: query })
@@ -79,7 +90,7 @@ export function CaseTagPicker({
       })
     }, 150)
     return () => clearTimeout(id)
-  }, [query, open])
+  }, [query, open, staticItems])
 
   useEffect(() => {
     setHighlight(0)
@@ -136,7 +147,11 @@ export function CaseTagPicker({
           <ul className="flex-1 min-h-0 overflow-y-auto scrollbar-minimal py-1">
             {visible.length === 0 ? (
               <li className="px-sm py-2 text-[13px] text-muted-foreground">
-                {query.trim() ? '결과 없음' : '최근 케이스부터 표시됩니다'}
+                {query.trim()
+                  ? '결과 없음'
+                  : staticItems
+                    ? '이 대화방에서 태그된 케이스가 없습니다'
+                    : '최근 케이스부터 표시됩니다'}
               </li>
             ) : (
               visible.map((c, i) => (

@@ -6,21 +6,27 @@ import { getActiveOrgId } from '@/lib/supabase/active-org'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 
-/** 첨부 signed URL TTL — 1 시간 (목록 한 번 가져오면 그 안엔 유효) */
 const CHAT_FILE_URL_TTL = 60 * 60
+const NAME_MAX = 50
 
-/**
- * Phase A — 1:1 DM. 채널 = (user_a_id < user_b_id) 정렬된 두 사용자 짝.
- * "상대" 는 항상 본인이 아닌 user_a/user_b 쪽.
- */
+// ─────────────────────────────────────────────────
+// 타입
+// 1:1 = participants.length === 1 (본인 외 1명)
+// N:N = participants.length >= 2 (본인 외 2+)
+// ─────────────────────────────────────────────────
+
+export interface Participant {
+  user_id: string
+  name: string | null
+  email: string | null
+  org_name: string | null
+}
+
 export interface ConversationListItem {
   id: string
-  other_user: {
-    id: string
-    name: string | null
-    email: string | null
-    org_name: string | null
-  }
+  name: string | null
+  /** 본인 제외 참여자. 1:1 이면 length 1, 그룹이면 2+. */
+  participants: Participant[]
   last_message:
     | {
         content: string | null
@@ -37,7 +43,7 @@ export interface ConversationListItem {
 
 export interface MessageRow {
   id: string
-  conv_id: string
+  conversation_id: string
   sender_user_id: string | null
   sender_name: string | null
   case_id: string | null
@@ -52,9 +58,10 @@ export interface MessageRow {
 
 export interface ConversationMessagesResult {
   messages: MessageRow[]
-  /** 상대방이 마지막으로 읽은 시각 — 본인 메시지의 "읽음" 표시 기준. */
-  other_last_read_at: string | null
-  /** 공지로 지정된 메시지 (200개 limit 밖이어도 별도 조회) */
+  /** 본인 제외 참여자. */
+  participants: Participant[]
+  /** 모든 참여자(본인 포함)의 last_read_at — 본인 메시지의 "읽음 N명" 계산용. */
+  reads: Array<{ user_id: string; last_read_at: string }>
   pinned_message: MessageRow | null
 }
 
@@ -74,6 +81,10 @@ export interface MemberPickerItem {
   email: string | null
 }
 
+// ─────────────────────────────────────────────────
+// 헬퍼
+// ─────────────────────────────────────────────────
+
 async function requireUser(): Promise<{ ok: true; userId: string } | { ok: false; error: string }> {
   const supabase = await createClient()
   const {
@@ -83,7 +94,6 @@ async function requireUser(): Promise<{ ok: true; userId: string } | { ok: false
   return { ok: true, userId: user.id }
 }
 
-/** 케이스 식별 라벨 — picker / 메시지 칩에서 사용 */
 function caseLabelFrom(c: {
   pet_name: string | null
   pet_name_en: string | null
@@ -97,64 +107,34 @@ function caseLabelFrom(c: {
   return parts.length > 0 ? parts.join(' · ') : '(이름 없음)'
 }
 
-/**
- * 인박스용 채널 목록 — 상대 사용자 정보 + 안 읽은 카운트 포함.
- * RLS 가 본인이 한 쪽인 채널만 통과시킴.
- */
-export async function listMyConversations(): Promise<Result<ConversationListItem[]>> {
-  const auth = await requireUser()
-  if (!auth.ok) return auth
+function normalizeName(input: string | null | undefined): string | null {
+  if (!input) return null
+  const t = input.trim()
+  if (!t) return null
+  return t.slice(0, NAME_MAX)
+}
 
-  const supabase = await createClient()
-  const { data: convs, error } = await supabase
-    .from('conversations')
-    .select('id, user_a_id, user_b_id, last_message_at, created_at, pinned_message_id')
-    .order('last_message_at', { ascending: false, nullsFirst: false })
-  if (error) return { ok: false, error: error.message }
-  if (!convs || convs.length === 0) return { ok: true, value: [] }
+/** 사용자 ID 들의 프로필 + 조직명 매핑. admin client 로 RLS 우회. */
+async function loadParticipantInfo(
+  userIds: string[],
+): Promise<Map<string, { name: string | null; email: string | null; org_name: string | null }>> {
+  const result = new Map<string, { name: string | null; email: string | null; org_name: string | null }>()
+  if (userIds.length === 0) return result
 
-  const convIds = convs.map((c) => c.id as string)
-  const otherUserIds = Array.from(
-    new Set(
-      convs.map((c) =>
-        (c.user_a_id as string) === auth.userId ? (c.user_b_id as string) : (c.user_a_id as string),
-      ),
-    ),
-  )
-
-  // 상대 사용자 — admin 클라이언트로 조회 (RLS 우회 — 검색 picker 와 달리 dm_visible 무관, 이미 채널 멤버임)
   const admin = createAdminClient()
-  const [profRes, lastMsgRes, readsRes] = await Promise.all([
-    admin
-      .from('profiles')
-      .select('id, name, email')
-      .in('id', otherUserIds),
-    supabase
-      .from('messages')
-      .select('id, conv_id, sender_user_id, content, file_url, created_at')
-      .in('conv_id', convIds)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false }),
-    supabase.from('message_reads').select('conv_id, last_read_at').in('conv_id', convIds),
+  const [profsRes, memsRes] = await Promise.all([
+    admin.from('profiles').select('id, name, email').in('id', userIds),
+    admin.from('memberships').select('user_id, org_id').in('user_id', userIds),
   ])
 
-  if (profRes.error) return { ok: false, error: profRes.error.message }
-  if (lastMsgRes.error) return { ok: false, error: lastMsgRes.error.message }
-  if (readsRes.error) return { ok: false, error: readsRes.error.message }
-
-  // 상대 사용자별 첫 조직 이름 — 단순화: memberships 첫 조직 사용
-  const memRes = await admin
-    .from('memberships')
-    .select('user_id, org_id')
-    .in('user_id', otherUserIds)
-  const orgIds = Array.from(new Set((memRes.data ?? []).map((m) => m.org_id as string)))
+  const orgIds = Array.from(new Set((memsRes.data ?? []).map((m) => m.org_id as string)))
   const orgNameMap = new Map<string, string>()
   if (orgIds.length > 0) {
     const { data: orgs } = await admin.from('organizations').select('id, name').in('id', orgIds)
     for (const o of orgs ?? []) orgNameMap.set(o.id as string, o.name as string)
   }
   const userOrgName = new Map<string, string>()
-  for (const m of memRes.data ?? []) {
+  for (const m of memsRes.data ?? []) {
     const uid = m.user_id as string
     if (userOrgName.has(uid)) continue
     const oid = m.org_id as string
@@ -162,20 +142,93 @@ export async function listMyConversations(): Promise<Result<ConversationListItem
     if (name) userOrgName.set(uid, name)
   }
 
-  const profMap = new Map<string, { name: string | null; email: string | null }>()
-  for (const p of profRes.data ?? []) {
-    profMap.set(p.id as string, {
+  for (const p of profsRes.data ?? []) {
+    const uid = p.id as string
+    result.set(uid, {
       name: (p.name as string | null) ?? null,
       email: (p.email as string | null) ?? null,
+      org_name: userOrgName.get(uid) ?? null,
     })
   }
+  // 프로필 없는 사용자도 빈 항목으로
+  for (const uid of userIds) {
+    if (!result.has(uid)) result.set(uid, { name: null, email: null, org_name: null })
+  }
+  return result
+}
+
+// ─────────────────────────────────────────────────
+// 인박스
+// ─────────────────────────────────────────────────
+
+export async function listMyConversations(): Promise<Result<ConversationListItem[]>> {
+  const auth = await requireUser()
+  if (!auth.ok) return auth
+  const supabase = await createClient()
+
+  // 본인 참여 conv id
+  const { data: myParts, error: mpErr } = await supabase
+    .from('conversation_participants')
+    .select('conversation_id')
+    .eq('user_id', auth.userId)
+  if (mpErr) return { ok: false, error: mpErr.message }
+  const convIds = (myParts ?? []).map((r) => r.conversation_id as string)
+  if (convIds.length === 0) return { ok: true, value: [] }
+
+  const [convsRes, allPartsRes, lastMsgRes, readsRes] = await Promise.all([
+    supabase
+      .from('conversations')
+      .select('id, name, last_message_at, created_at, pinned_message_id')
+      .in('id', convIds)
+      .order('last_message_at', { ascending: false, nullsFirst: false }),
+    supabase
+      .from('conversation_participants')
+      .select('conversation_id, user_id')
+      .in('conversation_id', convIds),
+    supabase
+      .from('messages')
+      .select('id, conversation_id, sender_user_id, content, file_url, created_at')
+      .in('conversation_id', convIds)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('message_reads')
+      .select('conversation_id, last_read_at')
+      .eq('user_id', auth.userId)
+      .in('conversation_id', convIds),
+  ])
+
+  if (convsRes.error) return { ok: false, error: convsRes.error.message }
+  if (allPartsRes.error) return { ok: false, error: allPartsRes.error.message }
+  if (lastMsgRes.error) return { ok: false, error: lastMsgRes.error.message }
+  if (readsRes.error) return { ok: false, error: readsRes.error.message }
+
+  const allUserIds = Array.from(new Set((allPartsRes.data ?? []).map((p) => p.user_id as string)))
+  const profMap = await loadParticipantInfo(allUserIds)
+
+  // 그룹별 참여자 (본인 제외)
+  const partsByConv = new Map<string, Participant[]>()
+  for (const p of allPartsRes.data ?? []) {
+    const cid = p.conversation_id as string
+    const uid = p.user_id as string
+    if (uid === auth.userId) continue
+    const prof = profMap.get(uid) ?? { name: null, email: null, org_name: null }
+    const list = partsByConv.get(cid) ?? []
+    list.push({ user_id: uid, ...prof })
+    partsByConv.set(cid, list)
+  }
+
+  // 그룹별 마지막 메시지
+  const senderNameMap = new Map<string, string | null>()
+  senderNameMap.set(auth.userId, null) // 본인 메시지는 sender_name=null (UI 에서 "나" 처리)
+  for (const [uid, prof] of profMap) senderNameMap.set(uid, prof.name ?? prof.email ?? null)
 
   const lastByConv = new Map<
     string,
     { content: string | null; file_url: string | null; sender_user_id: string | null; created_at: string }
   >()
   for (const m of lastMsgRes.data ?? []) {
-    const k = m.conv_id as string
+    const k = m.conversation_id as string
     if (!lastByConv.has(k)) {
       lastByConv.set(k, {
         content: m.content as string | null,
@@ -187,38 +240,28 @@ export async function listMyConversations(): Promise<Result<ConversationListItem
   }
 
   const readsByConv = new Map<string, string>()
-  for (const r of readsRes.data ?? [])
-    readsByConv.set(r.conv_id as string, r.last_read_at as string)
+  for (const r of readsRes.data ?? []) readsByConv.set(r.conversation_id as string, r.last_read_at as string)
 
   const unreadByConv = new Map<string, number>()
   for (const m of lastMsgRes.data ?? []) {
-    const k = m.conv_id as string
+    const k = m.conversation_id as string
     const lastRead = readsByConv.get(k)
-    if (!lastRead || (m.created_at as string) > lastRead) {
-      if ((m.sender_user_id as string | null) !== auth.userId) {
-        unreadByConv.set(k, (unreadByConv.get(k) ?? 0) + 1)
-      }
+    const msgCreated = m.created_at as string
+    const sender = m.sender_user_id as string | null
+    const isFromOther = sender !== auth.userId
+    const isAfterRead = !lastRead || msgCreated > lastRead
+    if (isAfterRead && isFromOther) {
+      unreadByConv.set(k, (unreadByConv.get(k) ?? 0) + 1)
     }
   }
 
-  // 마지막 메시지 sender 이름 — 본인이거나 상대 (둘뿐)
-  const senderNameMap = new Map<string, string | null>()
-  senderNameMap.set(auth.userId, null) // 본인 — 표시 불필요
-  for (const [uid, p] of profMap) senderNameMap.set(uid, p.name ?? p.email ?? null)
-
-  const value: ConversationListItem[] = convs.map((c) => {
-    const otherId =
-      (c.user_a_id as string) === auth.userId ? (c.user_b_id as string) : (c.user_a_id as string)
-    const last = lastByConv.get(c.id as string) ?? null
-    const prof = profMap.get(otherId)
+  const value: ConversationListItem[] = (convsRes.data ?? []).map((c) => {
+    const cid = c.id as string
+    const last = lastByConv.get(cid) ?? null
     return {
-      id: c.id as string,
-      other_user: {
-        id: otherId,
-        name: prof?.name ?? null,
-        email: prof?.email ?? null,
-        org_name: userOrgName.get(otherId) ?? null,
-      },
+      id: cid,
+      name: (c.name as string | null) ?? null,
+      participants: partsByConv.get(cid) ?? [],
       last_message: last
         ? {
             content: last.content,
@@ -227,7 +270,7 @@ export async function listMyConversations(): Promise<Result<ConversationListItem
             created_at: last.created_at,
           }
         : null,
-      unread_count: unreadByConv.get(c.id as string) ?? 0,
+      unread_count: unreadByConv.get(cid) ?? 0,
       last_message_at: (c.last_message_at as string | null) ?? null,
       created_at: c.created_at as string,
       pinned_message_id: (c.pinned_message_id as string | null) ?? null,
@@ -237,10 +280,10 @@ export async function listMyConversations(): Promise<Result<ConversationListItem
   return { ok: true, value }
 }
 
-/**
- * 채널의 메시지 목록 — case_id 옵션 필터.
- * messages.file_url 은 storage 경로 (`{conv_id}/...`) — 여기서 signed URL 로 변환.
- */
+// ─────────────────────────────────────────────────
+// 메시지
+// ─────────────────────────────────────────────────
+
 export async function listConversationMessages(input: {
   convId: string
   caseId?: string | null
@@ -253,15 +296,12 @@ export async function listConversationMessages(input: {
   let q = supabase
     .from('messages')
     .select(
-      'id, conv_id, sender_user_id, case_id, content, file_url, file_name, created_at, edited_at, deleted_at',
+      'id, conversation_id, sender_user_id, case_id, content, file_url, file_name, created_at, edited_at, deleted_at',
     )
-    .eq('conv_id', input.convId)
+    .eq('conversation_id', input.convId)
     .order('created_at', { ascending: true })
     .limit(input.limit ?? 200)
-
-  if (input.caseId) {
-    q = q.eq('case_id', input.caseId)
-  }
+  if (input.caseId) q = q.eq('case_id', input.caseId)
 
   const { data, error } = await q
   if (error) return { ok: false, error: error.message }
@@ -278,10 +318,23 @@ export async function listConversationMessages(input: {
   )
 
   const admin = createAdminClient()
-  const [profsRes, casesRes, signedUrls] = await Promise.all([
-    senderIds.length > 0
-      ? admin.from('profiles').select('id, name, email').in('id', senderIds)
-      : Promise.resolve({ data: [] as { id: string; name: string | null; email: string | null }[], error: null }),
+  const [signedUrls, partsRes, readsRes, convRes, casesRes] = await Promise.all([
+    filePaths.length > 0
+      ? admin.storage.from('chat-files').createSignedUrls(filePaths, CHAT_FILE_URL_TTL)
+      : Promise.resolve({ data: [] as { path: string | null; signedUrl: string }[], error: null }),
+    supabase
+      .from('conversation_participants')
+      .select('user_id')
+      .eq('conversation_id', input.convId),
+    supabase
+      .from('message_reads')
+      .select('user_id, last_read_at')
+      .eq('conversation_id', input.convId),
+    supabase
+      .from('conversations')
+      .select('pinned_message_id')
+      .eq('id', input.convId)
+      .maybeSingle(),
     caseIds.length > 0
       ? supabase
           .from('cases')
@@ -297,17 +350,24 @@ export async function listConversationMessages(input: {
           }[],
           error: null,
         }),
-    filePaths.length > 0
-      ? admin.storage.from('chat-files').createSignedUrls(filePaths, CHAT_FILE_URL_TTL)
-      : Promise.resolve({ data: [] as { path: string | null; signedUrl: string }[], error: null }),
   ])
 
-  const nameMap = new Map<string, string>()
-  for (const p of profsRes.data ?? [])
-    nameMap.set(
-      (p as { id: string }).id,
-      ((p as { name: string | null }).name ?? (p as { email: string | null }).email ?? '') as string,
-    )
+  if (partsRes.error) return { ok: false, error: partsRes.error.message }
+  if (readsRes.error) return { ok: false, error: readsRes.error.message }
+
+  const memberUserIds = (partsRes.data ?? []).map((r) => r.user_id as string)
+  const allUserIdsForName = Array.from(new Set([...senderIds, ...memberUserIds]))
+  const profMap = await loadParticipantInfo(allUserIdsForName)
+
+  const participants: Participant[] = memberUserIds
+    .filter((uid) => uid !== auth.userId)
+    .map((uid) => {
+      const prof = profMap.get(uid) ?? { name: null, email: null, org_name: null }
+      return { user_id: uid, ...prof }
+    })
+
+  const nameMap = new Map<string, string | null>()
+  for (const [uid, prof] of profMap) nameMap.set(uid, prof.name ?? prof.email ?? null)
 
   const labelMap = new Map<string, string>()
   for (const c of casesRes.data ?? [])
@@ -323,7 +383,7 @@ export async function listConversationMessages(input: {
 
   const messages: MessageRow[] = rows.map((r) => ({
     id: r.id as string,
-    conv_id: r.conv_id as string,
+    conversation_id: r.conversation_id as string,
     sender_user_id: (r.sender_user_id as string | null) ?? null,
     sender_name: r.sender_user_id ? nameMap.get(r.sender_user_id as string) ?? null : null,
     case_id: (r.case_id as string | null) ?? null,
@@ -336,38 +396,16 @@ export async function listConversationMessages(input: {
     deleted_at: (r.deleted_at as string | null) ?? null,
   }))
 
-  // 상대방의 last_read_at — 본인 메시지의 "읽음" 표시용. message_reads RLS 가
-  // user_id=auth.uid() 제약이라 admin client 로 조회 (대화 멤버는 알 권리가 있음).
-  const { data: convRow } = await supabase
-    .from('conversations')
-    .select('user_a_id, user_b_id, pinned_message_id')
-    .eq('id', input.convId)
-    .maybeSingle()
-  let otherLastReadAt: string | null = null
-  if (convRow) {
-    const otherUserId =
-      (convRow.user_a_id as string) === auth.userId
-        ? (convRow.user_b_id as string)
-        : (convRow.user_a_id as string)
-    const { data: read } = await admin
-      .from('message_reads')
-      .select('last_read_at')
-      .eq('conv_id', input.convId)
-      .eq('user_id', otherUserId)
-      .maybeSingle()
-    otherLastReadAt = (read?.last_read_at as string | null) ?? null
-  }
-
-  // 공지 메시지 — 현재 messages 배열에서 먼저 찾고, 없으면 별도 조회 (limit 밖일 수 있음)
+  // 공지 — 200개 limit 안에 있으면 재사용, 없으면 별도 조회
   let pinnedMessage: MessageRow | null = null
-  const pinnedId = (convRow?.pinned_message_id as string | null) ?? null
+  const pinnedId = (convRes.data?.pinned_message_id as string | null) ?? null
   if (pinnedId) {
     pinnedMessage = messages.find((m) => m.id === pinnedId) ?? null
     if (!pinnedMessage) {
       const { data: pinnedRow } = await supabase
         .from('messages')
         .select(
-          'id, conv_id, sender_user_id, case_id, content, file_url, file_name, created_at, edited_at, deleted_at',
+          'id, conversation_id, sender_user_id, case_id, content, file_url, file_name, created_at, edited_at, deleted_at',
         )
         .eq('id', pinnedId)
         .maybeSingle()
@@ -375,24 +413,21 @@ export async function listConversationMessages(input: {
         const senderId = pinnedRow.sender_user_id as string | null
         let senderName: string | null = null
         if (senderId) {
-          if (nameMap.has(senderId)) {
-            senderName = nameMap.get(senderId) ?? null
-          } else {
+          if (nameMap.has(senderId)) senderName = nameMap.get(senderId) ?? null
+          else {
             const { data: prof } = await admin
               .from('profiles')
               .select('name, email')
               .eq('id', senderId)
               .maybeSingle()
-            senderName =
-              (prof?.name as string | null) ?? (prof?.email as string | null) ?? null
+            senderName = (prof?.name as string | null) ?? (prof?.email as string | null) ?? null
           }
         }
         let caseLabel: string | null = null
         const cid = pinnedRow.case_id as string | null
         if (cid) {
-          if (labelMap.has(cid)) {
-            caseLabel = labelMap.get(cid) ?? null
-          } else {
+          if (labelMap.has(cid)) caseLabel = labelMap.get(cid) ?? null
+          else {
             const { data: caseRow } = await supabase
               .from('cases')
               .select('id, pet_name, pet_name_en, destination, microchip')
@@ -404,9 +439,8 @@ export async function listConversationMessages(input: {
         let signedFileUrl: string | null = null
         const fp = pinnedRow.file_url as string | null
         if (fp) {
-          if (fileUrlMap.has(fp)) {
-            signedFileUrl = fileUrlMap.get(fp) ?? null
-          } else {
+          if (fileUrlMap.has(fp)) signedFileUrl = fileUrlMap.get(fp) ?? null
+          else {
             const { data: signed } = await admin.storage
               .from('chat-files')
               .createSignedUrl(fp, CHAT_FILE_URL_TTL)
@@ -415,7 +449,7 @@ export async function listConversationMessages(input: {
         }
         pinnedMessage = {
           id: pinnedRow.id as string,
-          conv_id: pinnedRow.conv_id as string,
+          conversation_id: pinnedRow.conversation_id as string,
           sender_user_id: senderId,
           sender_name: senderName,
           case_id: cid,
@@ -431,13 +465,14 @@ export async function listConversationMessages(input: {
     }
   }
 
-  return {
-    ok: true,
-    value: { messages, other_last_read_at: otherLastReadAt, pinned_message: pinnedMessage },
-  }
+  const reads = (readsRes.data ?? []).map((r) => ({
+    user_id: r.user_id as string,
+    last_read_at: r.last_read_at as string,
+  }))
+
+  return { ok: true, value: { messages, participants, reads, pinned_message: pinnedMessage } }
 }
 
-/** 메시지 전송. content / fileUrl 둘 중 하나는 필수. */
 export async function sendMessage(input: {
   convId: string
   content?: string | null
@@ -450,11 +485,8 @@ export async function sendMessage(input: {
 
   const content = (input.content ?? '').trim()
   const fileUrl = input.fileUrl ?? null
-  if (!content && !fileUrl) {
-    return { ok: false, error: '내용 또는 첨부파일이 필요합니다' }
-  }
+  if (!content && !fileUrl) return { ok: false, error: '내용 또는 첨부파일이 필요합니다' }
 
-  // case_label snapshot — 케이스가 나중에 삭제되어도 텍스트 보존
   let caseLabel: string | null = null
   const caseId = input.caseId ?? null
   if (caseId) {
@@ -471,7 +503,7 @@ export async function sendMessage(input: {
   const { data, error } = await supabase
     .from('messages')
     .insert({
-      conv_id: input.convId,
+      conversation_id: input.convId,
       sender_user_id: auth.userId,
       case_id: caseId,
       case_label: caseLabel,
@@ -480,7 +512,7 @@ export async function sendMessage(input: {
       file_name: input.fileName ?? null,
     })
     .select(
-      'id, conv_id, sender_user_id, case_id, case_label, content, file_url, file_name, created_at, edited_at, deleted_at',
+      'id, conversation_id, sender_user_id, case_id, case_label, content, file_url, file_name, created_at, edited_at, deleted_at',
     )
     .single()
   if (error) return { ok: false, error: error.message }
@@ -489,7 +521,7 @@ export async function sendMessage(input: {
     ok: true,
     value: {
       id: data.id as string,
-      conv_id: data.conv_id as string,
+      conversation_id: data.conversation_id as string,
       sender_user_id: data.sender_user_id as string | null,
       sender_name: null,
       case_id: (data.case_id as string | null) ?? null,
@@ -504,7 +536,6 @@ export async function sendMessage(input: {
   }
 }
 
-/** 채널 읽음 마킹 — 인박스 안 읽은 카운트 0 으로. */
 export async function markConversationRead(convId: string): Promise<Result<null>> {
   const auth = await requireUser()
   if (!auth.ok) return auth
@@ -512,16 +543,284 @@ export async function markConversationRead(convId: string): Promise<Result<null>
   const { error } = await supabase
     .from('message_reads')
     .upsert(
-      { user_id: auth.userId, conv_id: convId, last_read_at: new Date().toISOString() },
-      { onConflict: 'user_id,conv_id' },
+      { user_id: auth.userId, conversation_id: convId, last_read_at: new Date().toISOString() },
+      { onConflict: 'user_id,conversation_id' },
     )
   if (error) return { ok: false, error: error.message }
   return { ok: true, value: null }
 }
 
+export async function pinMessage(input: {
+  convId: string
+  msgId: string | null
+}): Promise<Result<null>> {
+  const auth = await requireUser()
+  if (!auth.ok) return auth
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('conversations')
+    .update({ pinned_message_id: input.msgId })
+    .eq('id', input.convId)
+  if (error) return { ok: false, error: error.message }
+  return { ok: true, value: null }
+}
+
+export async function deleteMessage(messageId: string): Promise<Result<null>> {
+  const auth = await requireUser()
+  if (!auth.ok) return auth
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('messages')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', messageId)
+  if (error) return { ok: false, error: error.message }
+  return { ok: true, value: null }
+}
+
+export async function editMessage(input: {
+  messageId: string
+  content: string
+}): Promise<Result<null>> {
+  const auth = await requireUser()
+  if (!auth.ok) return auth
+  const content = input.content.trim()
+  if (!content) return { ok: false, error: '내용이 비어 있습니다' }
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('messages')
+    .update({ content, edited_at: new Date().toISOString() })
+    .eq('id', input.messageId)
+  if (error) return { ok: false, error: error.message }
+  return { ok: true, value: null }
+}
+
+// ─────────────────────────────────────────────────
+// 검색 — 대화방 내 메시지 풀텍스트
+// ─────────────────────────────────────────────────
+
+export interface MessageSearchHit {
+  id: string
+  conversation_id: string
+  sender_user_id: string | null
+  sender_name: string | null
+  case_label: string | null
+  content: string | null
+  has_file: boolean
+  created_at: string
+}
+
+export async function searchMessagesInConversation(input: {
+  convId: string
+  query: string
+  limit?: number
+}): Promise<Result<MessageSearchHit[]>> {
+  const auth = await requireUser()
+  if (!auth.ok) return auth
+  const q = input.query.trim()
+  if (!q) return { ok: true, value: [] }
+
+  // ILIKE wildcard 이스케이프 — 사용자가 '%' / '_' / '\\' 입력해도 리터럴로 매칭
+  const escaped = q.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_')
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('messages')
+    .select('id, conversation_id, sender_user_id, content, file_url, case_label, created_at')
+    .eq('conversation_id', input.convId)
+    .is('deleted_at', null)
+    .ilike('content', `%${escaped}%`)
+    .order('created_at', { ascending: false })
+    .limit(input.limit ?? 100)
+  if (error) return { ok: false, error: error.message }
+  const rows = data ?? []
+
+  const senderIds = Array.from(
+    new Set(rows.map((r) => r.sender_user_id as string | null).filter((v): v is string => !!v)),
+  )
+  const profMap = await loadParticipantInfo(senderIds)
+  const nameMap = new Map<string, string | null>()
+  for (const [uid, prof] of profMap) nameMap.set(uid, prof.name ?? prof.email ?? null)
+
+  const value: MessageSearchHit[] = rows.map((r) => ({
+    id: r.id as string,
+    conversation_id: r.conversation_id as string,
+    sender_user_id: (r.sender_user_id as string | null) ?? null,
+    sender_name: r.sender_user_id ? nameMap.get(r.sender_user_id as string) ?? null : null,
+    case_label: (r.case_label as string | null) ?? null,
+    content: (r.content as string | null) ?? null,
+    has_file: !!(r.file_url as string | null),
+    created_at: r.created_at as string,
+  }))
+  return { ok: true, value }
+}
+
+// ─────────────────────────────────────────────────
+// 대화방 — 생성/이름/멤버
+// ─────────────────────────────────────────────────
+
 /**
- * 대화방 완전 삭제 — 첨부 + 메시지 + 채널 모두 제거. 양측 모두에서 사라짐.
- * 참여자 또는 super_admin 만 가능.
+ * 1:1 DM 가져오기 또는 생성. 본인+상대 둘만 있는 대화방을 찾고, 없으면 새로 만든다.
+ */
+export async function getOrCreateDM(input: {
+  otherUserId: string
+}): Promise<Result<{ id: string; created: boolean }>> {
+  const auth = await requireUser()
+  if (!auth.ok) return auth
+  if (input.otherUserId === auth.userId) {
+    return { ok: false, error: '본인과는 DM 할 수 없습니다' }
+  }
+
+  const supabase = await createClient()
+  // 본인이 참여하는 모든 conv 중에서 상대도 참여하고, 참여자가 정확히 2명인 것 찾기
+  const { data: myParts, error: mpErr } = await supabase
+    .from('conversation_participants')
+    .select('conversation_id')
+    .eq('user_id', auth.userId)
+  if (mpErr) return { ok: false, error: mpErr.message }
+  const myConvIds = (myParts ?? []).map((r) => r.conversation_id as string)
+
+  if (myConvIds.length > 0) {
+    const { data: shared } = await supabase
+      .from('conversation_participants')
+      .select('conversation_id')
+      .eq('user_id', input.otherUserId)
+      .in('conversation_id', myConvIds)
+    const sharedConvIds = (shared ?? []).map((r) => r.conversation_id as string)
+    if (sharedConvIds.length > 0) {
+      const { data: counts } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .in('conversation_id', sharedConvIds)
+      const countByConv = new Map<string, number>()
+      for (const r of counts ?? []) {
+        const cid = r.conversation_id as string
+        countByConv.set(cid, (countByConv.get(cid) ?? 0) + 1)
+      }
+      const dmConvId = sharedConvIds.find((cid) => countByConv.get(cid) === 2) ?? null
+      if (dmConvId) {
+        return { ok: true, value: { id: dmConvId, created: false } }
+      }
+    }
+  }
+
+  // 새로 생성 — admin client 로 participants 부트스트랩 (RLS chicken-and-egg)
+  const { data: convRow, error: convErr } = await supabase
+    .from('conversations')
+    .insert({ name: null, created_by: auth.userId })
+    .select('id')
+    .single()
+  if (convErr) return { ok: false, error: convErr.message }
+  const convId = convRow.id as string
+
+  const admin = createAdminClient()
+  const { error: partErr } = await admin
+    .from('conversation_participants')
+    .insert([
+      { conversation_id: convId, user_id: auth.userId },
+      { conversation_id: convId, user_id: input.otherUserId },
+    ])
+  if (partErr) {
+    await admin.from('conversations').delete().eq('id', convId)
+    return { ok: false, error: partErr.message }
+  }
+  return { ok: true, value: { id: convId, created: true } }
+}
+
+/**
+ * N+1 명 대화방 생성 (본인 + memberIds). 1:1 도 가능하지만 보통 getOrCreateDM 이 더 적절.
+ */
+export async function createConversation(input: {
+  name?: string | null
+  memberIds: string[]
+}): Promise<Result<{ conversationId: string }>> {
+  const auth = await requireUser()
+  if (!auth.ok) return auth
+
+  const others = Array.from(new Set(input.memberIds.filter((id) => id && id !== auth.userId)))
+  if (others.length < 1) {
+    return { ok: false, error: '본인 외 최소 1명이 필요합니다' }
+  }
+
+  const supabase = await createClient()
+  const { data: convRow, error: convErr } = await supabase
+    .from('conversations')
+    .insert({
+      name: normalizeName(input.name),
+      created_by: auth.userId,
+    })
+    .select('id')
+    .single()
+  if (convErr) return { ok: false, error: convErr.message }
+  const convId = convRow.id as string
+
+  const admin = createAdminClient()
+  const rows = [auth.userId, ...others].map((uid) => ({ conversation_id: convId, user_id: uid }))
+  const { error: partErr } = await admin.from('conversation_participants').insert(rows)
+  if (partErr) {
+    await admin.from('conversations').delete().eq('id', convId)
+    return { ok: false, error: partErr.message }
+  }
+
+  return { ok: true, value: { conversationId: convId } }
+}
+
+export async function renameConversation(input: {
+  convId: string
+  name: string | null
+}): Promise<Result<null>> {
+  const auth = await requireUser()
+  if (!auth.ok) return auth
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('conversations')
+    .update({ name: normalizeName(input.name) })
+    .eq('id', input.convId)
+  if (error) return { ok: false, error: error.message }
+  return { ok: true, value: null }
+}
+
+export async function addParticipant(input: {
+  convId: string
+  userId: string
+}): Promise<Result<null>> {
+  const auth = await requireUser()
+  if (!auth.ok) return auth
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('conversation_participants')
+    .insert({ conversation_id: input.convId, user_id: input.userId })
+  if (error) {
+    if (error.code === '23505') return { ok: false, error: '이미 참여 중입니다' }
+    return { ok: false, error: error.message }
+  }
+  return { ok: true, value: null }
+}
+
+export async function removeParticipant(input: {
+  convId: string
+  userId: string
+}): Promise<Result<null>> {
+  const auth = await requireUser()
+  if (!auth.ok) return auth
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('conversation_participants')
+    .delete()
+    .eq('conversation_id', input.convId)
+    .eq('user_id', input.userId)
+  if (error) return { ok: false, error: error.message }
+  return { ok: true, value: null }
+}
+
+export async function leaveConversation(convId: string): Promise<Result<null>> {
+  const auth = await requireUser()
+  if (!auth.ok) return auth
+  return removeParticipant({ convId, userId: auth.userId })
+}
+
+/**
+ * 대화방 완전 삭제 — 메시지 + 첨부 + 멤버 cascade.
+ * 멤버 누구나 삭제 가능 (오너십 개념 없음). super_admin 도 가능.
  */
 export async function deleteConversation(input: { convId: string }): Promise<Result<null>> {
   const auth = await requireUser()
@@ -530,39 +829,23 @@ export async function deleteConversation(input: { convId: string }): Promise<Res
   const supabase = await createClient()
   const { data: conv, error: convErr } = await supabase
     .from('conversations')
-    .select('id, user_a_id, user_b_id')
+    .select('id')
     .eq('id', input.convId)
     .maybeSingle()
   if (convErr) return { ok: false, error: convErr.message }
   if (!conv) return { ok: false, error: '대화방을 찾을 수 없습니다' }
 
-  const isParticipant =
-    conv.user_a_id === auth.userId || conv.user_b_id === auth.userId
-  if (!isParticipant) {
-    const { data: prof } = await supabase
-      .from('profiles')
-      .select('is_super_admin')
-      .eq('id', auth.userId)
-      .maybeSingle()
-    if (!prof?.is_super_admin) {
-      return { ok: false, error: '대화 참여자만 삭제할 수 있습니다' }
-    }
-  }
-
-  // Storage 객체 정리 — {convId}/ 폴더의 모든 파일
   const admin = createAdminClient()
-  const { data: files, error: lsErr } = await admin.storage
+
+  // 첨부 정리 — chat-files/<convId>/...
+  const { data: files } = await admin.storage
     .from('chat-files')
     .list(input.convId, { limit: 1000 })
-  if (lsErr) return { ok: false, error: `파일 목록 조회 실패: ${lsErr.message}` }
   if (files && files.length > 0) {
     const paths = files.map((f) => `${input.convId}/${f.name}`)
-    const rmRes = await admin.storage.from('chat-files').remove(paths)
-    if (rmRes.error) return { ok: false, error: `파일 삭제 실패: ${rmRes.error.message}` }
+    await admin.storage.from('chat-files').remove(paths)
   }
 
-  // 채널 삭제 — messages + message_reads cascade.
-  // admin client 사용 (참여자 RLS DELETE 정책 별도로 안 만든 채로 작동).
   const { error: delErr } = await admin
     .from('conversations')
     .delete()
@@ -572,55 +855,14 @@ export async function deleteConversation(input: { convId: string }): Promise<Res
   return { ok: true, value: null }
 }
 
-/** 본인 메시지 soft delete. */
-export async function deleteMessage(messageId: string): Promise<Result<null>> {
-  const auth = await requireUser()
-  if (!auth.ok) return auth
-  const supabase = await createClient()
-  const { error } = await supabase
-    .from('messages')
-    .update({ deleted_at: new Date().toISOString() })
-    .eq('id', messageId)
-    .eq('sender_user_id', auth.userId)
-  if (error) return { ok: false, error: error.message }
-  return { ok: true, value: null }
-}
+// ─────────────────────────────────────────────────
+// Picker — 케이스 / 조직 / 멤버
+// ─────────────────────────────────────────────────
 
-/**
- * 메시지를 채팅방 공지로 지정 (또는 해제 — msgId=null).
- * 양쪽 사용자 모두 등록/해제 가능, 동시 1개만.
- * RLS 가 conversation 참여자만 update 허용. 메시지가 같은 채널인지도 검증.
- */
-export async function pinMessage(input: {
-  convId: string
-  msgId: string | null
-}): Promise<Result<null>> {
-  const auth = await requireUser()
-  if (!auth.ok) return auth
-  const supabase = await createClient()
-
-  if (input.msgId) {
-    const { data: msg, error: msgErr } = await supabase
-      .from('messages')
-      .select('id, conv_id')
-      .eq('id', input.msgId)
-      .maybeSingle()
-    if (msgErr) return { ok: false, error: msgErr.message }
-    if (!msg || (msg.conv_id as string) !== input.convId) {
-      return { ok: false, error: '메시지를 찾을 수 없거나 다른 채널입니다' }
-    }
-  }
-
-  const { error } = await supabase
-    .from('conversations')
-    .update({ pinned_message_id: input.msgId })
-    .eq('id', input.convId)
-  if (error) return { ok: false, error: error.message }
-  return { ok: true, value: null }
-}
-
-/** 케이스 picker — 본인 active org 의 케이스 (RLS). */
-export async function listCasesForPicker(input: { search?: string; limit?: number }): Promise<Result<CasePickerItem[]>> {
+export async function listCasesForPicker(input: {
+  search?: string
+  limit?: number
+}): Promise<Result<CasePickerItem[]>> {
   const auth = await requireUser()
   if (!auth.ok) return auth
 
@@ -649,15 +891,9 @@ export async function listCasesForPicker(input: { search?: string; limit?: numbe
   return { ok: true, value }
 }
 
-// ─────────────────────────────────────────────────
-// DM picker — 조직 → 멤버 drilldown
-// ─────────────────────────────────────────────────
-
-/**
- * DM picker 1단계: 조직 목록. dm_visible=true 인 조직만.
- * 본인 소속 조직도 포함 (같은 조직 내부 DM).
- */
-export async function listOrgsForDmPicker(input: { search?: string; limit?: number } = {}): Promise<Result<OrgPickerItem[]>> {
+export async function listOrgsForDmPicker(
+  input: { search?: string; limit?: number } = {},
+): Promise<Result<OrgPickerItem[]>> {
   const auth = await requireUser()
   if (!auth.ok) return auth
 
@@ -670,9 +906,7 @@ export async function listOrgsForDmPicker(input: { search?: string; limit?: numb
     .limit(input.limit ?? 100)
 
   const search = (input.search ?? '').trim()
-  if (search) {
-    q = q.ilike('name', `%${search}%`)
-  }
+  if (search) q = q.ilike('name', `%${search}%`)
 
   const { data, error } = await q
   if (error) return { ok: false, error: error.message }
@@ -683,10 +917,6 @@ export async function listOrgsForDmPicker(input: { search?: string; limit?: numb
   return { ok: true, value }
 }
 
-/**
- * DM picker 2단계: 특정 조직의 멤버. 멤버 본인 dm_visible=true 만.
- * 호출자 본인은 제외.
- */
 export async function listMembersForDmPicker(input: {
   orgId: string
   search?: string
@@ -715,9 +945,7 @@ export async function listMembersForDmPicker(input: {
     .limit(input.limit ?? 100)
 
   const search = (input.search ?? '').trim()
-  if (search) {
-    q = q.or(`name.ilike.%${search}%,email.ilike.%${search}%`)
-  }
+  if (search) q = q.or(`name.ilike.%${search}%,email.ilike.%${search}%`)
 
   const { data, error } = await q
   if (error) return { ok: false, error: error.message }
@@ -729,48 +957,10 @@ export async function listMembersForDmPicker(input: {
   return { ok: true, value }
 }
 
-/**
- * 상대 사용자와 DM 채널 가져오기 또는 생성 (idempotent).
- * (user_a_id < user_b_id) 자동 정렬.
- */
-export async function getOrCreateDM(input: { otherUserId: string }): Promise<Result<{ id: string; created: boolean }>> {
-  const auth = await requireUser()
-  if (!auth.ok) return auth
-
-  if (input.otherUserId === auth.userId) {
-    return { ok: false, error: '본인과는 DM 할 수 없습니다' }
-  }
-
-  const [a, b] =
-    auth.userId < input.otherUserId
-      ? [auth.userId, input.otherUserId]
-      : [input.otherUserId, auth.userId]
-
-  const supabase = await createClient()
-  const { data: existing } = await supabase
-    .from('conversations')
-    .select('id')
-    .eq('user_a_id', a)
-    .eq('user_b_id', b)
-    .maybeSingle()
-  if (existing) {
-    return { ok: true, value: { id: existing.id as string, created: false } }
-  }
-
-  const { data, error } = await supabase
-    .from('conversations')
-    .insert({ user_a_id: a, user_b_id: b })
-    .select('id')
-    .single()
-  if (error) return { ok: false, error: error.message }
-  return { ok: true, value: { id: data.id as string, created: true } }
-}
-
 // ─────────────────────────────────────────────────
 // dm_visible 토글
 // ─────────────────────────────────────────────────
 
-/** 활성 조직의 dm_visible 값 — 설정 화면 초기값 로드용. */
 export async function getActiveOrgDmVisibility(): Promise<Result<boolean>> {
   const auth = await requireUser()
   if (!auth.ok) return auth
@@ -790,7 +980,6 @@ export async function getActiveOrgDmVisibility(): Promise<Result<boolean>> {
   return { ok: true, value: !!data?.dm_visible }
 }
 
-/** 본인 검색 노출 토글. */
 export async function updateMyDmVisibility(input: { visible: boolean }): Promise<Result<null>> {
   const auth = await requireUser()
   if (!auth.ok) return auth
@@ -804,8 +993,9 @@ export async function updateMyDmVisibility(input: { visible: boolean }): Promise
   return { ok: true, value: null }
 }
 
-/** 활성 조직의 dm_visible 토글 — 활성 조직의 admin 만 가능. */
-export async function updateActiveOrgDmVisibility(input: { visible: boolean }): Promise<Result<null>> {
+export async function updateActiveOrgDmVisibility(input: {
+  visible: boolean
+}): Promise<Result<null>> {
   let orgId: string
   try {
     orgId = await getActiveOrgId()
@@ -815,8 +1005,10 @@ export async function updateActiveOrgDmVisibility(input: { visible: boolean }): 
   return updateOrgDmVisibility({ orgId, visible: input.visible })
 }
 
-/** 조직 검색 노출 토글 — 해당 조직의 admin 만 가능. */
-export async function updateOrgDmVisibility(input: { orgId: string; visible: boolean }): Promise<Result<null>> {
+export async function updateOrgDmVisibility(input: {
+  orgId: string
+  visible: boolean
+}): Promise<Result<null>> {
   const auth = await requireUser()
   if (!auth.ok) return auth
 

@@ -63,20 +63,30 @@ export function DashboardShell({
   const [endingImpersonation, startEndImpersonation] = useTransition()
   const [conversations, setConversations] = useState<ConversationListItem[]>(initialConversations)
 
-  // Realtime — 새 메시지/대화방 변동 시 TopBar 알람 갱신.
+  // Realtime — 통합 채팅 (1:1/그룹 같은 테이블).
   // RLS 가 postgres_changes 에 적용되므로 본인 참여 대화방 이벤트만 도달.
   useEffect(() => {
     let alive = true
     const refetch = async () => {
       const r = await listMyConversations()
-      if (!alive) return
-      if (r.ok) setConversations(r.value)
+      if (!alive || !r.ok) return
+      setConversations(r.value)
     }
     refetch()
     const channel = supabaseBrowser
-      .channel('topbar-conversations')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => { refetch() })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => { refetch() })
+      .channel('topbar-inbox')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, refetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, refetch)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'conversation_participants' },
+        refetch,
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'message_reads' },
+        refetch,
+      )
       .subscribe()
     return () => {
       alive = false
