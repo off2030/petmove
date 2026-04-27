@@ -125,10 +125,18 @@ Never skip an English-side value just because the Korean counterpart is missing.
 
 export async function extractAll(input: {
   images: { base64: string; mediaType: string }[]
+  /**
+   * 선택적 — PDF 의 selectable text 레이어 (파일별 1개 문자열).
+   * vision OCR 보다 100% 정확하므로 모델이 우선 참고하도록 prompt 에 텍스트 블록으로 함께 주입.
+   * 스캔 PDF 처럼 텍스트 레이어가 없는 입력은 빈 배열이면 됨.
+   */
+  pdfTexts?: string[]
 }): Promise<Result> {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) return { ok: false, error: 'OPENAI_API_KEY not configured' }
-  if (!input.images?.length) return { ok: false, error: 'No images provided' }
+  if (!input.images?.length && !input.pdfTexts?.length) {
+    return { ok: false, error: 'No images or text provided' }
+  }
 
   const client = new OpenAI({ apiKey })
 
@@ -140,9 +148,18 @@ export async function extractAll(input: {
         image_url: { url: `data:${img.mediaType};base64,${img.base64}` },
       })
     }
+    if (input.pdfTexts && input.pdfTexts.length > 0) {
+      userContent.push({
+        type: 'text',
+        text:
+          'The following text was extracted directly from the PDF text layer (100% accurate, no OCR errors). ' +
+          'Prefer values from this text over anything you might read from the rendered images:\n\n' +
+          input.pdfTexts.map((t, i) => `=== PDF #${i + 1} ===\n${t}`).join('\n\n'),
+      })
+    }
     userContent.push({
       type: 'text',
-      text: 'Extract everything you can from these images and merge into the JSON schema.',
+      text: 'Extract everything you can and merge into the JSON schema.',
     })
 
     const response = await client.chat.completions.create({

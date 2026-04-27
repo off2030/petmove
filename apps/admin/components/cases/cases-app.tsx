@@ -13,7 +13,7 @@ import { duplicateCase } from '@/lib/actions/duplicate-case'
 import { undoLastChange, updateCaseField } from '@/lib/actions/cases'
 import { extractAll } from '@/lib/actions/extract-all'
 import { extractResultToSeed } from '@/lib/extract-to-seed'
-import { filesToBase64 } from '@/lib/file-to-base64'
+import { filesToBase64, filesToPdfText } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { lookupCaseByMicrochip } from '@/lib/actions/lookup-case-by-chip'
 import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateOVD, generateSGP, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti } from '@/lib/actions/generate-pdf'
@@ -211,10 +211,15 @@ function Inner() {
     setAddingFromFiles(true)
     try {
       // 1. 파일 → AI 입력용 이미지 배열
-      const images = await filesToBase64(files)
+      const [images, pdfTexts] = await Promise.all([
+        filesToBase64(files),
+        filesToPdfText(files),
+      ])
 
       // 2. 추출 (실패해도 빈 케이스는 만든다 — 사용자가 수동 입력할 수 있도록)
-      const extract = images.length > 0 ? await extractAll({ images }) : { ok: false as const, error: 'no images' }
+      const extract = images.length > 0 || pdfTexts.length > 0
+        ? await extractAll({ images, pdfTexts })
+        : { ok: false as const, error: 'no images' }
       const seed = extract.ok ? extractResultToSeed(extract.data) : { column: {}, data: {} }
 
       // 3. 마이크로칩으로 기존 케이스 찾기 — 있으면 그쪽에 파일만 추가

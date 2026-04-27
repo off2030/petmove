@@ -4,7 +4,7 @@
  * - PDF: pdfjs-dist로 페이지별 JPEG base64
  */
 
-import { pdfToImages } from './pdf-to-images'
+import { pdfToImages, pdfToText } from './pdf-to-images'
 
 const MAX_PX = 1200
 const JPEG_QUALITY = 0.85
@@ -56,4 +56,23 @@ export async function filesToBase64(
     }
   }
   return results
+}
+
+/**
+ * 파일 목록 중 PDF 들의 selectable text 레이어를 추출해 파일별로 모은다.
+ * 텍스트 레이어가 없거나 짧은 PDF (스캔본) 는 결과에서 자동 제외된다.
+ * vision OCR 입력에 함께 곁들여 모델이 작은 글자도 정확히 읽도록 돕는 용도.
+ */
+export async function filesToPdfText(files: File[]): Promise<string[]> {
+  const texts: string[] = []
+  for (const file of files) {
+    if (file.type !== 'application/pdf') continue
+    try {
+      const t = await pdfToText(file)
+      if (t) texts.push(`# ${file.name}\n${t}`)
+    } catch {
+      // 텍스트 레이어 추출 실패는 조용히 무시 — vision OCR 폴백
+    }
+  }
+  return texts
 }
