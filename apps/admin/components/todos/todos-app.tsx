@@ -163,18 +163,35 @@ function addDays(dateStr: string, days: number): string {
 }
 
 /**
+ * 설정의 infectiousRules에서 특정 국가(예: '뉴질랜드') 규칙의 labs 배열을 찾는다.
+ * 표시 순서는 사용자가 설정 → 전염병 규칙에서 멀티 선택한 순서를 그대로 따른다.
+ * 매칭 규칙 없거나 labs 비어 있으면 fallback 반환.
+ */
+function findInfectiousLabs(
+  rules: import('@petmove/domain').InspectionLabRule[],
+  country: string,
+  fallback: string[],
+): string[] {
+  const rule = rules.find(r => r.countries.includes(country))
+  return rule && rule.labs.length > 0 ? [...rule.labs] : fallback
+}
+
+/**
  * 검사 탭에 뿌릴 행 목록을 케이스별로 펼친다.
  * 공통 규칙: 상세페이지에서 검사일을 지우면 탭에서도 사라진다.
  * - 광견병항체: titer 기록이 있으면 1행
  * - 전염병검사(호주): 검사일 또는 출국일이 있으면 1행
- * - 전염병검사(뉴질랜드): 출국일이 있으면 APQA HQ+VBDDL 묶음 1행 (검사일 = 저장값 or 출국일-15일)
+ * - 전염병검사(뉴질랜드): 출국일이 있으면 묶음 1행 (검사일 = 저장값 or 출국일-15일).
+ *   묶음 내 검사기관 표시 순서는 설정의 뉴질랜드 규칙 labs 순서를 따름.
  */
 function buildInspectionRows(
   cases: CaseRow[],
   titerRules: import('@petmove/domain').InspectionLabRule[],
   titerDefault: string,
+  infectiousRules: import('@petmove/domain').InspectionLabRule[],
 ): InspectionRow[] {
   const rows: InspectionRow[] = []
+  const nzLabs = findInfectiousLabs(infectiousRules, '뉴질랜드', ['apqa_hq', 'vbddl'])
   for (const c of cases) {
     // 1) 광견병항체
     const titerDate = resolveTiterDate(c)
@@ -211,11 +228,11 @@ function buildInspectionRows(
       }
     }
     if (isNZ && c.departure_date) {
-      // 뉴질랜드: APQA HQ + VBDDL 두 검사기관을 한 행으로 묶어서 표시.
-      // 검사일 수정 시 두 record(apqa_hq, vbddl)에 동시 저장.
-      // 표시 날짜는 저장값 우선(apqa_hq → vbddl 순), 없으면 출국일 - 15일 자동.
+      // 뉴질랜드: 설정 labs 순서대로 묶음 한 행으로 표시.
+      // 검사일 수정 시 묶음 내 모든 record에 동시 저장.
+      // 표시 날짜는 저장값 우선(설정 순서대로 첫 hit), 없으면 출국일 - 15일 자동.
       const recs = readInfectiousRecords(c)
-      const existing = recs.find(r => r.lab === 'apqa_hq') ?? recs.find(r => r.lab === 'vbddl')
+      const existing = nzLabs.map(lab => recs.find(r => r.lab === lab)).find(Boolean)
       const autoDate = computeNZInspectionDate(c.departure_date)
       const date = existing?.date || autoDate
       rows.push({
@@ -225,7 +242,7 @@ function buildInspectionRows(
         lab: 'nz_combined',
         date,
         dateEditable: true,
-        dateStorage: { kind: 'infectious_multi', labs: ['apqa_hq', 'vbddl'] },
+        dateStorage: { kind: 'infectious_multi', labs: nzLabs },
       })
     }
   }
@@ -599,7 +616,7 @@ export function TodosApp({
   }, [cases, activeTab, q])
 
   const inspectionRows = useMemo(
-    () => buildInspectionRows(cases, inspectionConfig.titerRules, inspectionConfig.titerDefault)
+    () => buildInspectionRows(cases, inspectionConfig.titerRules, inspectionConfig.titerDefault, inspectionConfig.infectiousRules)
       .filter(r => matchesQuery(r.caseRow, q))
       .sort((a, b) => {
         // 0순위: 완료(done)는 무조건 가장 뒤
@@ -766,15 +783,22 @@ export function TodosInspectionActions({ query }: { query: string }) {
   const q = query.trim().toLowerCase()
   const inspectionRows = useMemo(
     () =>
-      buildInspectionRows(cases, inspectionConfig.titerRules, inspectionConfig.titerDefault)
+      buildInspectionRows(cases, inspectionConfig.titerRules, inspectionConfig.titerDefault, inspectionConfig.infectiousRules)
         .filter((r) => matchesQuery(r.caseRow, q)),
     [cases, q, inspectionConfig],
   )
   const pendingRows = inspectionRows.filter(
-    (r) => ((r.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') !== 'done',
+    (r) => ((r.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') === 'waiting',
   )
   const ksvdlRows = pendingRows.filter((r) => r.lab === 'ksvdl')
   const nzRows = pendingRows.filter((r) => r.lab === 'nz_combined')
+  // Invoice 활성화: KSVDL-R(titer) · KSVDL(호주 infectious) · VBDDL(뉴질랜드 묶음) 중 한 건이라도 진행 중이면 활성.
+  const invoiceRows = pendingRows.filter(
+    (r) =>
+      (r.kind === 'titer' && r.lab === 'ksvdl_r') ||
+      r.lab === 'ksvdl' ||
+      r.lab === 'nz_combined',
+  )
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeDialog, setActiveDialog] = useState<'invoice' | 'ksvdl' | 'vbddl_apqa' | null>(null)
@@ -814,8 +838,10 @@ export function TodosInspectionActions({ query }: { query: string }) {
         <div className="absolute right-0 top-full mt-1 z-30 min-w-[180px] rounded-md border border-border bg-popover p-1 shadow-md">
           <button
             type="button"
-            onClick={() => { setActiveDialog('invoice'); setMenuOpen(false) }}
-            className={itemClass(false)}
+            onClick={() => { if (invoiceRows.length > 0) { setActiveDialog('invoice'); setMenuOpen(false) } }}
+            disabled={invoiceRows.length === 0}
+            className={itemClass(invoiceRows.length === 0)}
+            title={invoiceRows.length === 0 ? '대상 케이스가 없습니다' : undefined}
           >
             Invoice
           </button>

@@ -238,22 +238,22 @@ export async function generateInvoiceAndESD(opts: ShipmentOpts): Promise<Generat
 }
 
 /**
- * 뉴질랜드 전염병검사 3종(APQA HQ + APQA HQ En + VBDDL) 병합 PDF.
+ * 뉴질랜드 전염병검사 3종(VBDDL + APQA HQ + APQA HQ En) 병합 PDF.
  * 검사 탭 "신청" 버튼에서 한 번에 다운로드.
  */
 export async function generateNzInfectionPack(caseId: string, opts?: GenerateOpts): Promise<GeneratePdfResult> {
   const { PDFDocument } = await import('pdf-lib')
-  const [apqaHq, apqaHqEn, vbddl] = await Promise.all([
+  const [vbddl, apqaHq, apqaHqEn] = await Promise.all([
+    generateVbddl(caseId, opts),
     generateApqaHq(caseId, opts),
     generateApqaHqEn(caseId, opts),
-    generateVbddl(caseId, opts),
   ])
+  if (!vbddl.ok) return vbddl
   if (!apqaHq.ok) return apqaHq
   if (!apqaHqEn.ok) return apqaHqEn
-  if (!vbddl.ok) return vbddl
 
   const merged = await PDFDocument.create()
-  for (const r of [apqaHq, apqaHqEn, vbddl]) {
+  for (const r of [vbddl, apqaHq, apqaHqEn]) {
     const doc = await PDFDocument.load(Buffer.from(r.pdf, 'base64'))
     const pages = await merged.copyPages(doc, doc.getPageIndices())
     pages.forEach(p => merged.addPage(p))
@@ -262,7 +262,7 @@ export async function generateNzInfectionPack(caseId: string, opts?: GenerateOpt
   return {
     ok: true,
     pdf: Buffer.from(pdfBytes).toString('base64'),
-    filename: apqaHq.filename.replace(/^APQA_HQ_/, 'NZ_Infection_'),
+    filename: vbddl.filename.replace(/^VBDDL_/, 'NZ_Infection_'),
   }
 }
 
