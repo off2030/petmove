@@ -1,7 +1,15 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type FormEvent,
+  type SetStateAction,
+} from 'react'
+import { Check, Plus, Trash2, X } from 'lucide-react'
 import type { CalculatorItem } from '@/lib/supabase/types'
 import {
   updateCalculatorItem,
@@ -10,6 +18,7 @@ import {
 } from '@/lib/actions/calculator'
 import { ListRow } from '@/components/ui/list-row'
 import { useConfirm } from '@/components/ui/confirm-dialog'
+import { cn } from '@/lib/utils'
 
 const CAT_VARIANTS: Record<string, string> = {
   '호주': '호주(고양이)',
@@ -21,7 +30,7 @@ const cashDiscount = (total: number) => Math.round((total * 0.95) / 10000) * 100
 
 interface Props {
   items: CalculatorItem[]
-  setItems: React.Dispatch<React.SetStateAction<CalculatorItem[]>>
+  setItems: Dispatch<SetStateAction<CalculatorItem[]>>
   species: 'dog' | 'cat'
   country: string
   editMode: boolean
@@ -30,6 +39,20 @@ interface Props {
 export function Calculator({ items, setItems, species, country, editMode }: Props) {
   const confirm = useConfirm()
   const [checked, setChecked] = useState<Record<number, boolean>>({})
+  const [addOpen, setAddOpen] = useState(false)
+  const [addName, setAddName] = useState('')
+  const [addCost, setAddCost] = useState('')
+  const [addSaving, setAddSaving] = useState(false)
+  const [addMenuOpen, setAddMenuOpen] = useState(false)
+  const [addMenuPlacement, setAddMenuPlacement] = useState<'top' | 'bottom'>('bottom')
+  const [query, setQuery] = useState('')
+  const [highlightIdx, setHighlightIdx] = useState(0)
+  const [freeMode, setFreeMode] = useState(false)
+  const [freeName, setFreeName] = useState('')
+  const addMenuRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const freeInputRef = useRef<HTMLInputElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
 
   const effectiveCountry = useMemo(() => {
     if (!country) return ''
@@ -53,8 +76,53 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
     setChecked(next)
   }, [effectiveCountry]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (!addMenuOpen) return
+    const onDown = (e: MouseEvent) => {
+      if (addMenuRef.current && !addMenuRef.current.contains(e.target as Node)) {
+        setAddMenuOpen(false)
+        setFreeMode(false)
+      }
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [addMenuOpen])
+
+  useEffect(() => {
+    if (!addMenuOpen) return
+    if (freeMode) freeInputRef.current?.focus()
+    else searchInputRef.current?.focus()
+  }, [addMenuOpen, freeMode])
+
   const total = visibleItems.reduce((s, it) => s + (checked[it.id] ? it.cost : 0), 0)
   const disc = total > 0 ? cashDiscount(total) : 0
+  const usedMenuOptions = useMemo(() => {
+    const visibleNames = new Set(visibleItems.map((it) => it.item_name))
+    const seen = new Set<string>()
+    return items
+      .filter((it) => !visibleNames.has(it.item_name))
+      .filter((it) => {
+        if (seen.has(it.item_name)) return false
+        seen.add(it.item_name)
+        return true
+      })
+      .sort((a, b) => a.item_name.localeCompare(b.item_name, 'ko-KR'))
+  }, [items, visibleItems])
+  const filteredMenuOptions = useMemo(() => {
+    const keyword = query.trim()
+    if (!keyword) return usedMenuOptions
+    return usedMenuOptions.filter((it) => it.item_name.includes(keyword))
+  }, [query, usedMenuOptions])
+
+  function openAddMenu() {
+    const rect = addMenuRef.current?.getBoundingClientRect()
+    if (rect) {
+      const below = window.innerHeight - rect.bottom
+      const above = rect.top
+      setAddMenuPlacement(below < 280 && above > below ? 'top' : 'bottom')
+    }
+    setAddMenuOpen(true)
+  }
 
   async function saveItemField(id: number, patch: { item_name?: string; cost?: number }) {
     const prev = items.find((i) => i.id === id)
@@ -78,25 +146,70 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
     }
   }
 
-  async function addItem() {
-    if (!effectiveCountry) return
-    const name = prompt('새 항목 이름을 입력하세요')?.trim()
+  function resetAddForm() {
+    setAddOpen(false)
+    setAddName('')
+    setAddCost('')
+    setAddMenuOpen(false)
+    setQuery('')
+    setHighlightIdx(0)
+    setFreeMode(false)
+    setFreeName('')
+  }
+
+  function selectMenu(item: CalculatorItem) {
+    setAddName(item.item_name)
+    setAddCost(String(item.cost))
+    setAddMenuOpen(false)
+    setQuery('')
+    setHighlightIdx(0)
+  }
+
+  function startFreeMode() {
+    setFreeMode(true)
+    setFreeName(addName)
+  }
+
+  function saveFreeMode() {
+    const name = freeName.trim()
     if (!name) return
-    const costStr = prompt('비용(원)을 입력하세요', '50000')?.trim()
+    setAddName(name)
+    setAddMenuOpen(false)
+    setFreeMode(false)
+    setQuery('')
+  }
+
+  async function addItem(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!effectiveCountry) return
+    const name = addName.trim()
+    if (!name) return
+    if (visibleItems.some((it) => it.item_name === name)) {
+      alert('이미 이 목적지에 추가된 메뉴입니다')
+      return
+    }
+    const costStr = addCost.trim()
     if (!costStr) return
     const cost = Number(costStr.replace(/[^\d]/g, ''))
     if (!Number.isFinite(cost) || cost < 0) return alert('유효하지 않은 금액입니다')
     const nextOrder = (visibleItems[visibleItems.length - 1]?.item_order ?? -1) + 1
     const countryOrder = items.find((i) => i.country === effectiveCountry)?.country_order ?? 999
+    setAddSaving(true)
     const res = await createCalculatorItem({
       country: effectiveCountry,
       item_name: name,
       cost,
       item_order: nextOrder,
       country_order: countryOrder,
-    })
+    }).catch((error: unknown) => ({
+      ok: false as const,
+      error: error instanceof Error ? error.message : '추가 중 오류가 발생했습니다',
+    }))
+    setAddSaving(false)
     if (!res.ok) return alert(`추가 실패: ${res.error}`)
-    window.location.reload()
+    setItems((arr) => [...arr, res.data])
+    setChecked((c) => ({ ...c, [res.data.id]: true }))
+    resetAddForm()
   }
 
   if (!effectiveCountry) return null
@@ -167,14 +280,16 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
                 {editMode ? (
                   <>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       defaultValue={it.cost}
                       onBlur={(e) => {
-                        const v = Number(e.target.value)
+                        const v = Number(e.target.value.replace(/[^\d]/g, ''))
                         if (Number.isFinite(v) && v >= 0 && v !== it.cost)
                           saveItemField(it.id, { cost: v })
                       }}
-                      className="h-8 w-28 rounded border border-border bg-card px-2 text-right font-mono text-[15px] tabular-nums outline-none focus:border-[#D9A489] dark:focus:border-[#C08C70]"
+                      className="number-input-no-spinner h-8 w-28 rounded border border-border bg-card px-2 text-right font-mono text-[15px] tabular-nums outline-none focus:border-[#D9A489] dark:focus:border-[#C08C70]"
                     />
                     <button
                       type="button"
@@ -205,14 +320,182 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
           )
         })}
         {editMode && (
-          <button
-            type="button"
-            onClick={addItem}
-            className="flex w-full items-center justify-center gap-1.5 border-t border-border/80 px-lg pt-3 mt-1 font-serif text-[14px] text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Plus size={14} />
-            항목 추가
-          </button>
+          <div className="border-t border-border/80 px-lg pt-3 mt-1">
+            {addOpen ? (
+              <form onSubmit={addItem} className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_8rem_auto]">
+                  <div>
+                    <div className="relative" ref={addMenuRef}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (addMenuOpen) {
+                            setAddMenuOpen(false)
+                            setFreeMode(false)
+                          } else {
+                            openAddMenu()
+                          }
+                        }}
+                        className={cn(
+                          'h-8 w-full text-left rounded border border-border bg-card px-2 font-serif text-[16px] outline-none transition-colors focus:border-[#D9A489] dark:focus:border-[#C08C70]',
+                          !addName && 'text-muted-foreground/60',
+                        )}
+                      >
+                        {addName || '메뉴 선택'}
+                      </button>
+
+                      {addMenuOpen && !freeMode && (
+                        <div
+                          className={cn(
+                            'absolute left-0 z-50 w-72 rounded-md border border-border/80 bg-background shadow-md',
+                            addMenuPlacement === 'top'
+                              ? 'bottom-[calc(100%+4px)]'
+                              : 'top-[calc(100%+4px)]',
+                          )}
+                        >
+                          <div className="p-2 border-b border-border/30">
+                            <input
+                              ref={searchInputRef}
+                              type="text"
+                              value={query}
+                              onChange={(e) => { setQuery(e.target.value); setHighlightIdx(0) }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Escape') {
+                                  setAddMenuOpen(false)
+                                }
+                                if (e.key === 'ArrowDown') {
+                                  e.preventDefault()
+                                  setHighlightIdx((i) => {
+                                    const next = Math.min(i + 1, filteredMenuOptions.length - 1)
+                                    setTimeout(() => {
+                                      listRef.current?.children[next]?.scrollIntoView({ block: 'nearest' })
+                                    }, 0)
+                                    return next
+                                  })
+                                }
+                                if (e.key === 'ArrowUp') {
+                                  e.preventDefault()
+                                  setHighlightIdx((i) => Math.max(i - 1, 0))
+                                }
+                                if (e.key === 'Enter') {
+                                  e.preventDefault()
+                                  if (filteredMenuOptions.length > 0) selectMenu(filteredMenuOptions[highlightIdx])
+                                }
+                              }}
+                              placeholder="메뉴 검색"
+                              className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+                            />
+                          </div>
+                          <ul ref={listRef} className="max-h-60 overflow-y-auto scrollbar-minimal py-1">
+                            {filteredMenuOptions.length === 0 ? (
+                              <li className="px-sm py-2 text-sm text-muted-foreground">검색 결과 없음</li>
+                            ) : (
+                              filteredMenuOptions.map((it, i) => (
+                                <li key={`${it.country}-${it.item_name}`}>
+                                  <button
+                                    type="button"
+                                    onClick={() => selectMenu(it)}
+                                    className={cn(
+                                      'w-full text-left px-sm py-1.5 text-sm transition-colors',
+                                      i === highlightIdx ? 'bg-accent' : 'hover:bg-accent/60',
+                                    )}
+                                  >
+                                    <span>{it.item_name}</span>
+                                    <span className="ml-2 text-muted-foreground">
+                                      {it.country} · ₩{fmt(it.cost)}
+                                    </span>
+                                  </button>
+                                </li>
+                              ))
+                            )}
+                          </ul>
+                          <div className="border-t border-border/30 py-1">
+                            <button
+                              type="button"
+                              onClick={startFreeMode}
+                              className="w-full text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors"
+                            >
+                              직접 입력
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {addMenuOpen && freeMode && (
+                        <div
+                          className={cn(
+                            'absolute left-0 z-50 w-72 rounded-md border border-border/80 bg-background shadow-md p-3',
+                            addMenuPlacement === 'top'
+                              ? 'bottom-[calc(100%+4px)]'
+                              : 'top-[calc(100%+4px)]',
+                          )}
+                        >
+                          <div className="space-y-2">
+                            <input
+                              ref={freeInputRef}
+                              type="text"
+                              value={freeName}
+                              onChange={(e) => setFreeName(e.target.value)}
+                              placeholder="새 메뉴 이름"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') saveFreeMode()
+                                if (e.key === 'Escape') { setFreeMode(false); setAddMenuOpen(false) }
+                              }}
+                              className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+                            />
+                            <button
+                              type="button"
+                              onClick={saveFreeMode}
+                              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              저장
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={addCost}
+                    onChange={(e) => setAddCost(e.target.value)}
+                    placeholder="비용"
+                    className="number-input-no-spinner h-8 w-full rounded border border-border bg-card px-2 text-right font-mono text-[15px] tabular-nums outline-none focus:border-[#D9A489] dark:focus:border-[#C08C70]"
+                  />
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="submit"
+                      disabled={addSaving}
+                      className="rounded p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
+                      title="추가"
+                    >
+                      <Check size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetAddForm}
+                      disabled={addSaving}
+                      className="rounded p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
+                      title="취소"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAddOpen(true)}
+                className="flex w-full items-center justify-center gap-1.5 font-serif text-[14px] text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Plus size={14} />
+                메뉴 추가
+              </button>
+            )}
+          </div>
         )}
       </div>
 

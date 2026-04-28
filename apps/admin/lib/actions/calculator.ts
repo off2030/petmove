@@ -3,7 +3,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export type CalcResult = { ok: true } | { ok: false; error: string }
+import type { CalculatorItem } from '@/lib/supabase/types'
+
+export type CalcResult<T = undefined> =
+  | (T extends undefined ? { ok: true } : { ok: true; data: T })
+  | { ok: false; error: string }
 
 async function requireAuth() {
   const supabase = await createClient()
@@ -30,15 +34,19 @@ export async function createCalculatorItem(input: {
   cost: number
   item_order: number
   country_order: number
-}): Promise<CalcResult> {
+}): Promise<CalcResult<CalculatorItem>> {
   const auth = await requireAuth()
   if (!auth.ok) return auth
-  const { error } = await auth.supabase
+  const { data, error } = await auth.supabase
     .from('calculator_items')
     .insert(input)
-  if (error) return { ok: false, error: error.message }
+    .select('*')
+    .single()
+  if (error || !data) {
+    return { ok: false, error: error?.message ?? '추가된 항목을 불러오지 못했습니다' }
+  }
   revalidatePath('/calculator')
-  return { ok: true }
+  return { ok: true, data: data as CalculatorItem }
 }
 
 export async function deleteCalculatorItem(id: number): Promise<CalcResult> {

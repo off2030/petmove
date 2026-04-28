@@ -184,6 +184,10 @@ export function AddressField({
     startSave(async () => {
       const r = await updateCaseField(caseId, 'data', krSpec.key, full)
       if (r.ok) updateLocalCaseField(caseId, 'data', krSpec.key, full)
+      // Save detail separately so 2-line address forms (e.g. APQA HQ 사육농장)
+      // can split road (line 1) and detail (line 2) without heuristic parsing.
+      const r2 = await updateCaseField(caseId, 'data', 'address_detail_kr', detail)
+      if (r2.ok) updateLocalCaseField(caseId, 'data', 'address_detail_kr', detail)
       setShowDetail(false)
     })
   }

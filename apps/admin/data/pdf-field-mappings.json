@@ -4299,11 +4299,12 @@
     "fields": {
       "text_18zcrf": { "source": null, "transform": "vet:name_ko",     "note": "p1 신청인 — 성 명 (조직 대표 한글)" },
       "text_19edhq": { "source": null, "transform": "vet:clinic_ko",   "note": "p1 신청인 — 업소명 (병원명 한글)" },
+      "text_20kjdz": { "source": null, "transform": "vet:address_ko",  "note": "p1 신청인 — 주소 (조직 한글주소). 2026-04 템플릿 업데이트로 추가된 필드" },
       "text_20cujy": { "source": null, "transform": "vet:phone",       "note": "p1 신청인 — 일반전화 (유선)" },
       "text_21qftc": { "source": null, "transform": "vet:mobile_phone","note": "p1 신청인 — 휴대전화" },
       "text_1es":    { "source": "customer_name", "note": "p1 사육농장 성명 — 고객명" },
-      "text_2clia":  { "source": "address_kr",    "note": "p1 사육농장 주소 (한국주소)" },
-      "text_3vgcl":  { "source": null,            "note": "p1 사육농장 주소 2줄째 (장문일 때 수동)" },
+      "text_2clia":  { "source": "address_kr",    "transform": "address_kr_strip_detail", "note": "p1 사육농장 주소 1줄째 — address_kr 에서 상세주소 suffix 제거" },
+      "text_3vgcl":  { "source": "address_kr", "transform": "address_kr_detail_only", "note": "p1 사육농장 주소 2줄째 — 상세주소 (동/호수). address_detail_kr 우선, 없으면 '…로/길 N' 뒤를 휴리스틱 분리" },
       "text_13zhub": { "source": "sex",           "transform": "sex_label_ko", "note": "p1 가축 성별 (암/수)" },
       "text_4gsyb":  { "source": "birth_date",    "transform": "age_ko",       "note": "p1 연령 — N살" },
       "text_5yzzg":  { "source": null,            "default": "1", "note": "p1 사육두수" },
@@ -4317,7 +4318,9 @@
       "text_22cmqy": { "source": "vet_visit_date", "transform": "date_part:year",  "note": "p3 개인정보 동의서 — 년(내원일)" },
       "text_13cclj": { "source": "vet_visit_date", "transform": "date_part:month", "note": "p3 개인정보 동의서 — 월(내원일)" },
       "text_23ojdb": { "source": "vet_visit_date", "transform": "date_part:day",   "note": "p3 개인정보 동의서 — 일(내원일)" },
-      "text_16rzpm": { "source": "customer_name", "note": "p3 개인정보 동의서 — 의뢰인 성명" }
+      "text_28gkff": { "source": "customer_name", "note": "p3 개인정보 동의서 — 의뢰인 성명. 2026-04-28 22:14 템플릿 업데이트로 text_16rzpm 에서 키 변경" },
+      "text_25bdfh": { "source": null, "transform": "vet:name_ko", "note": "p1 하단 — 신청인 서명란 성명 (조직 대표 한글). 2026-04 템플릿 업데이트로 추가" },
+      "text_23lxmi": { "source": null, "transform": "vet:name_ko", "note": "p2 개인정보 동의서 — 수의사 성명 (vet 본인이 동의·서명). 2026-04-28 22:14 템플릿 업데이트로 text_26tjbw 에서 키 변경" }
     }
   },
   "APQA_HQ_En": {
@@ -4383,7 +4386,7 @@
   },
   "VBDDL": {
     "template": "VBDDL.pdf",
-    "description": "Vector Borne Disease Diagnostic Lab (NC State) — Submission Form. 레이슈마니아 등 매개체 매개 질병 검사용. Clinic 정보 정적 인쇄, 환자 정보만 자동 채움.",
+    "description": "Vector Borne Disease Diagnostic Lab (NC State) — Submission Form. 레이슈마니아 등 매개체 매개 질병 검사용. 2026-04 템플릿 업데이트로 CLINIC INFORMATION 섹션이 form field 화 되어 조직 정보 자동 채움.",
     "filename": "VBDDL_{pet_name}.pdf",
     "dateFormat": "ymd_slash",
     "fields": {
@@ -4393,7 +4396,20 @@
       "text_4knts": { "source": "sex", "transform": "sex_simple_en", "note": "Sex" },
       "text_5cgsl": { "source": "customer_name_en", "note": "Owner First & Last Name" },
       "text_6tvwn": { "source": "microchip",     "note": "Microchip Number" },
-      "text_7vwtc": { "source": "breed_en",      "note": "Breed" }
+      "text_7vwtc": { "source": "breed_en",      "note": "Breed" },
+
+      "text_23muxl": { "source": null, "transform": "vet:clinic_en",          "note": "CLINIC NAME (영문 병원명)" },
+      "text_11wmtu": { "source": null, "transform": "vet:custom:VBDDL Account No.|VBDDL Account|Account No.|Account No|Account Number", "note": "ACCOUNT # — custom_fields 에서 라벨 매칭 (VBDDL 우선, fallback Account No./Number)" },
+      "text_12isnv": { "source": null, "transform": "vet:name_en",            "note": "DVM FIRST & LAST NAME" },
+      "text_13hni":  { "source": null, "transform": "vet:phone_intl",         "note": "CLINIC PHONE (국제전화)" },
+      "text_14nokq": { "source": null, "transform": "vet:address_street_en",  "note": "CLINIC ADDRESS — 1줄 (street)" },
+      "text_15zuer": { "source": null, "transform": "vet:address_locality_en","note": "CLINIC ADDRESS — 2줄 (locality, 비어있을 수 있음)" },
+      "text_16cvip": { "source": null, "transform": "vet:email",              "note": "CONTACT EMAIL" },
+      "text_17reop": { "source": null, "transform": "vet:email",              "note": "BILLING EMAIL — Contact 와 동일 처리" },
+      "text_18pzvu": { "source": null, "transform": "vet:city",               "note": "CITY" },
+      "text_19wsjg": { "source": null, "transform": "vet:postal_code",        "note": "ZIP/POSTAL CODE" },
+      "text_20lekp": { "source": null, "default": "REPUBLIC OF KOREA",        "note": "COUNTRY" },
+      "text_21rqvo": { "source": null, "default": "",                         "note": "STATE/REGION/PROVINCE — Korea 미사용 (빈 값)" }
     }
   },
   "ESD": {

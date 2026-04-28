@@ -752,6 +752,33 @@ function resolveField(
   const { source, transform } = mapping
   const raw = source ? readSource(source, caseRow, data) : null
 
+  // 한글 도로명 주소를 도로명+번지(base)와 건물명/호수(detail) 로 분리.
+  // address_detail_kr 가 저장돼 있으면 그걸로 분리, 없으면 "...로/길 N(-N)?" 패턴 뒤를 detail 로 휴리스틱 분리.
+  // 예) "경기도 남양주시 다산순환로333 아이파크 2402-103" → base="…다산순환로333", detail="아이파크 2402-103"
+  function splitKrAddress(full: string, stored: string): { base: string; detail: string } {
+    const f = full.trim()
+    const s = stored.trim()
+    if (s && f.endsWith(s)) return { base: f.slice(0, -s.length).trim(), detail: s }
+    const m = f.match(/^(.+?[로길]\s*\d+(?:-\d+)?)[,，\s]+(.+)$/)
+    if (m) return { base: m[1].trim(), detail: m[2].trim() }
+    return { base: f, detail: '' }
+  }
+
+  // address_kr_strip_detail — 1줄째 (도로명+번지). detail 부분을 제거.
+  // 2-line 한국주소 폼(예: APQA HQ 사육농장)에서 1줄에 도로명, 2줄에 상세주소(동/호수)를 분리해 넣을 때 사용.
+  if (transform === 'address_kr_strip_detail') {
+    const full = String(raw ?? '').trim()
+    const stored = String((data.address_detail_kr ?? '') as string).trim()
+    return splitKrAddress(full, stored).base
+  }
+
+  // address_kr_detail_only — 2줄째 (상세주소). address_detail_kr 우선, 없으면 휴리스틱 분리.
+  if (transform === 'address_kr_detail_only') {
+    const full = String(raw ?? '').trim()
+    const stored = String((data.address_detail_kr ?? '') as string).trim()
+    return splitKrAddress(full, stored).detail
+  }
+
   // Date fallback to today when source is empty (e.g. 내원일 없으면 발급일을 오늘로)
   if (transform === 'date_or_today') {
     if (raw && String(raw).trim()) return String(raw)
@@ -1540,6 +1567,15 @@ function resolveField(
       const segs = full.split(',').map(s => s.trim()).filter(Boolean)
       if (segs.length < 2) return full
       return segs[segs.length - 2]
+    }
+    // vet:address_ko — 한글주소에서 leading/trailing 국가명("대한민국"/"한국"/"Republic of Korea"
+    // /"Korea") 제거. 국내 신청서(APQA HQ 등) 에서는 국가 표기가 불필요하므로 자동 제거.
+    if (key === 'address_ko') {
+      const addr = String(VET_INFO.address_ko ?? '').trim()
+      return addr
+        .replace(/[,，\s]*(?:대한민국|한국|Republic of Korea|South Korea|Korea)\s*$/i, '')
+        .replace(/^\s*(?:대한민국|한국|Republic of Korea|South Korea|Korea)[,，\s]+/i, '')
+        .trim()
     }
     // vet:custom:<label> — custom_fields 에서 라벨로 값 조회 (대소문자/공백 무시).
     // 여러 라벨을 `|` 로 구분해 fallback 지정 가능 (예: "KSVDL Account No.|Account No.").

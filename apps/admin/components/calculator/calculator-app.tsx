@@ -105,7 +105,6 @@ export function CalculatorApp({
                 : 'border-border/80 text-muted-foreground hover:text-foreground'
             }`}
           >
-            <span className="h-1 w-1 rounded-full bg-current opacity-50" aria-hidden />
             <span>{country || '목적지'}</span>
             <ChevronDown
               size={13}
@@ -185,7 +184,7 @@ export function CalculatorApp({
           }`}
         >
           <Pencil size={13} />
-          {editMode ? '수정 완료' : '가격 수정'}
+          {editMode ? '저장' : '편집'}
         </button>
       </>
     ) : mode === 'schedule' ? (
