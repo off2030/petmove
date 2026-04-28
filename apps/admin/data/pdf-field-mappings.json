@@ -467,9 +467,10 @@
       "owner_name": {
         "source": "customer_name_en"
       },
-      "owner_phone": {
+      "text_73xhcg": {
         "source": "phone",
-        "transform": "phone_dash"
+        "transform": "phone_dash",
+        "note": "Owner phone (구 owner_phone)"
       },
       "owner_address": {
         "source": "address_en"
@@ -505,16 +506,19 @@
         "source": "sex",
         "transform": "checkbox:eq:spayed_female"
       },
-      "age_years": {
+      "text_77oecj": {
         "source": "birth_date",
-        "transform": "age_years"
+        "transform": "age_years",
+        "note": "Age years (구 age_years)"
       },
-      "age_months": {
+      "text_75ntsy": {
         "source": "birth_date",
-        "transform": "age_months"
+        "transform": "age_months",
+        "note": "Age months (구 age_months)"
       },
-      "birth_date": {
-        "source": "birth_date"
+      "text_81fpfb": {
+        "source": "birth_date",
+        "note": "Birth date (구 birth_date)"
       },
       "color_marks": {
         "source": "color_en"
@@ -548,11 +552,14 @@
         "source": "microchip",
         "transform": "checkbox:falsy"
       },
-      "microchip_number": {
-        "source": "microchip"
+      "text_78pnvw": {
+        "source": "microchip_combined",
+        "align": "left",
+        "note": "Microchip number — 3자리 단위 스페이스 그룹핑, 보조칩 있으면 '<primary> / <secondary>'. 새 템플릿에서 폭 75→163 확장, 좌측 정렬 (구 microchip_number)"
       },
-      "microchip_implant_date": {
-        "source": "microchip_implant_date"
+      "text_79snvi": {
+        "source": "microchip_implant_date",
+        "note": "Microchip implant date (구 microchip_implant_date)"
       },
       "rabies1_product": {
         "source": "rabies_dates",
@@ -737,9 +744,10 @@
         "source": null,
         "transform": "vet:name_en"
       },
-      "issue_date": {
+      "text_80lodv": {
         "source": "vet_visit_date",
-        "transform": "date_or_today"
+        "transform": "date_or_today",
+        "note": "Issue date — 발급일=내원일 (구 issue_date)"
       }
     },
     "signatures": [
@@ -762,12 +770,14 @@
       "owner_name": {
         "source": "customer_name_en"
       },
-      "owner_phone": {
+      "text_91ldww": {
         "source": "phone",
-        "transform": "phone_dash"
+        "transform": "phone_dash",
+        "note": "Owner phone (구 owner_phone)"
       },
-      "owner_address": {
-        "source": "address_en"
+      "text_93npor": {
+        "source": "address_en",
+        "note": "Owner address (구 owner_address)"
       },
       "species_dog": {
         "source": "species",
@@ -781,8 +791,9 @@
         "source": null,
         "note": "견/묘 외 — 수기 기입"
       },
-      "species_other_text": {
-        "source": null
+      "text_97vgtj": {
+        "source": null,
+        "note": "Species other text (구 species_other_text)"
       },
       "sex_male": {
         "source": "sex",
@@ -800,25 +811,27 @@
         "source": "sex",
         "transform": "checkbox:eq:spayed_female"
       },
-      "age_years": {
+      "text_95bvdf": {
         "source": "birth_date",
-        "transform": "age_years"
+        "transform": "age_years",
+        "note": "Age years (구 age_years)"
       },
-      "age_months": {
+      "text_96yzlw": {
         "source": "birth_date",
-        "transform": "age_months"
+        "transform": "age_months",
+        "note": "Age months (구 age_months)"
       },
-      "birth_date": {
-        "source": "birth_date"
+      "text_94psqd": {
+        "source": "color_en",
+        "note": "Color/marks (구 color_marks)"
       },
-      "color_marks": {
-        "source": "color_en"
+      "text_98jnmr": {
+        "source": "breed_en",
+        "note": "Breed (구 breed)"
       },
-      "breed": {
-        "source": "breed_en"
-      },
-      "pet_name": {
-        "source": "pet_name_en"
+      "text_99fpna": {
+        "source": "pet_name_en",
+        "note": "Pet name (구 pet_name)"
       },
       "weight_under_5kg": {
         "source": "weight",
@@ -832,8 +845,9 @@
         "source": "weight",
         "transform": "cmp:num:ge:10"
       },
-      "weight_kg": {
-        "source": "weight"
+      "text_101xuqh": {
+        "source": "weight",
+        "note": "Weight kg (구 weight_kg)"
       },
       "microchip_yes": {
         "source": "microchip",
@@ -843,8 +857,10 @@
         "source": "microchip",
         "transform": "checkbox:falsy"
       },
-      "microchip_number": {
-        "source": "microchip"
+      "text_103mjxj": {
+        "source": "microchip_combined",
+        "align": "left",
+        "note": "Microchip number — 3자리 단위 스페이스 그룹핑, 보조칩 있으면 '<primary> / <secondary>'. 새 템플릿에서 폭 93→162 확장, 좌측 정렬 (구 microchip_number)"
       },
       "rabies1_product": {
         "source": "rabies_dates",
@@ -1096,17 +1112,20 @@
       "hospital_address3": {
         "source": null
       },
-      "vet_license_number": {
+      "text_106cfap": {
         "source": null,
-        "default": "9608"
+        "default": "9608",
+        "note": "Vet license number (구 vet_license_number)"
       },
-      "vet_name": {
+      "text_105qnjy": {
         "source": null,
-        "transform": "vet:name_en"
+        "transform": "vet:name_en",
+        "note": "Vet name (구 vet_name)"
       },
-      "issue_date": {
+      "text_104mwhr": {
         "source": "vet_visit_date",
-        "transform": "date_or_today"
+        "transform": "date_or_today",
+        "note": "Issue date — 발급일=내원일 (구 issue_date)"
       }
     },
     "signatures": [
@@ -4274,10 +4293,14 @@
   },
   "APQA_HQ": {
     "template": "APQA_HQ.pdf",
-    "description": "농림축산검역본부 혈청검사 신청서 (한국 서식). 별지 제2호서식 — 전염병검사(브루셀라/렙토스피라 등) 의뢰용. 3페이지 (신청서 + 의뢰인 동의서 + 여분 동의서).",
+    "description": "농림축산검역본부 혈청검사 신청서 (한국 서식). 별지 제2호서식 — 전염병검사(브루셀라/렙토스피라 등) 의뢰용. 3페이지 (신청서 + 의뢰인 동의서 + 여분 동의서). 신청인 섹션은 조직 정보(성명/업소명/전화) 자동 채움.",
     "filename": "APQA_HQ_{pet_name}.pdf",
     "dateFormat": "ymd_slash",
     "fields": {
+      "text_18zcrf": { "source": null, "transform": "vet:name_ko",     "note": "p1 신청인 — 성 명 (조직 대표 한글)" },
+      "text_19edhq": { "source": null, "transform": "vet:clinic_ko",   "note": "p1 신청인 — 업소명 (병원명 한글)" },
+      "text_20cujy": { "source": null, "transform": "vet:phone",       "note": "p1 신청인 — 일반전화 (유선)" },
+      "text_21qftc": { "source": null, "transform": "vet:mobile_phone","note": "p1 신청인 — 휴대전화" },
       "text_1es":    { "source": "customer_name", "note": "p1 사육농장 성명 — 고객명" },
       "text_2clia":  { "source": "address_kr",    "note": "p1 사육농장 주소 (한국주소)" },
       "text_3vgcl":  { "source": null,            "note": "p1 사육농장 주소 2줄째 (장문일 때 수동)" },
@@ -4299,7 +4322,7 @@
   },
   "APQA_HQ_En": {
     "template": "APQA_HQ_En.pdf",
-    "description": "농림축산검역본부 혈청검사 신청서 (영문). Serological Test Application Form — 상대국(수출국) 검역 제출용. 1페이지.",
+    "description": "농림축산검역본부 혈청검사 신청서 (영문). Serological Test Application Form — 상대국(수출국) 검역 제출용. 1페이지. Veterinarian 섹션은 조직 정보(병원명/수의사 한·영, 주소, 전화) 자동 채움.",
     "filename": "APQA_HQ_En_{pet_name}.pdf",
     "dateFormat": "dmy",
     "fields": {
@@ -4315,7 +4338,15 @@
       "text_9pytp":  { "source": "infectious_date:apqa_hq",   "note": "Date of Blood Collection — APQA HQ 검사일 우선, 없으면 내원일" },
       "text_12llof": { "source": "vet_visit_date", "transform": "date_part:year",  "note": "하단 서명일 — 년(내원일)" },
       "text_15bg":   { "source": "vet_visit_date", "transform": "date_part:month", "note": "하단 서명일 — 월(내원일)" },
-      "text_16rebt": { "source": "vet_visit_date", "transform": "date_part:day",   "note": "하단 서명일 — 일(내원일)" }
+      "text_16rebt": { "source": "vet_visit_date", "transform": "date_part:day",   "note": "하단 서명일 — 일(내원일)" },
+
+      "text_15ezfw": { "source": null, "transform": "vet:clinic_ko",    "note": "Veterinarian 섹션 — 동물병원 (한글)" },
+      "text_16ymor": { "source": null, "transform": "vet:name_ko",      "note": "Veterinarian 섹션 — 수의사 (한글)" },
+      "text_18uzoz": { "source": null, "transform": "vet:clinic_en",    "note": "Veterinarian 섹션 — Animal Hospital (영문)" },
+      "text_17cugg": { "source": null, "transform": "vet:name_en",      "note": "Veterinarian 섹션 — Veterinarian (영문)" },
+      "text_19oudn": { "source": null, "transform": "vet:address_en",   "note": "Veterinarian 섹션 — Address" },
+      "text_21onur": { "source": null, "transform": "vet:phone",        "note": "Veterinarian 섹션 — Tel (유선)" },
+      "text_22uizo": { "source": null, "transform": "vet:mobile_phone", "note": "Veterinarian 섹션 — Cell phone" }
     }
   },
   "KSVDL": {
@@ -4338,7 +4369,7 @@
       "checkbox_14aovq": { "source": "general_vaccine_dates", "transform": "checkbox:empty_array", "note": "Leptospira Canicola — 종합백신 접종 없을 때만 체크" },
       "checkbox_13esom": { "source": null, "transform": "checkbox:always_true", "note": "Leishmania Infantum — 항상 체크" },
 
-      "text_15nlbm": { "source": null, "transform": "vet:custom:Account No.", "note": "Account No. — 조직 추가 정보의 'Account No.' 라벨에서 조회 (없으면 빈값)" },
+      "text_15nlbm": { "source": null, "transform": "vet:custom:KSVDL Account No.|KSVDL Accout No.|Account No.|Account No|Account Number", "note": "KSVDL Account # — custom_fields 에서 라벨 매칭 (KSVDL 우선, 일반 Account 류 fallback. 사용자 오타 'Accout' 도 허용)" },
       "text_16xqrw": { "source": null, "transform": "vet:name_en", "note": "Veterinarian Name — 좌표상 위쪽(y=610) 'Veterinarian' 라벨 행" },
       "text_17xqpz": { "source": null, "transform": "vet:clinic_en", "note": "Clinic Name — 좌표상 아래쪽(y=595) 'Clinic/Company' 라벨 행" },
       "text_18xiun": { "source": null, "transform": "vet:address_street_en", "note": "Clinic Address — 조직 정보의 영문 주소 (street 부분)" },
@@ -4367,14 +4398,21 @@
   },
   "ESD": {
     "template": "ESD.pdf",
-    "description": "Exempt Specimen Declaration — 혈청 등 진단 검체를 해외 실험실(KSVDL/VBDDL 등)로 FedEx 발송 시 세관 통관용 수의사 선언서. 튜브 갯수와 수신 실험실만 가변.",
+    "description": "Exempt Specimen Declaration — 혈청 등 진단 검체를 해외 실험실(KSVDL/VBDDL 등)로 FedEx 발송 시 세관 통관용 수의사 선언서. 가변 항목: 튜브 갯수, 수신 실험실, 조직 정보(이름/주소/연락처/면허). 종(species) 은 템플릿 기본값 유지.",
     "filename": "ESD_{tube_count}tubes.pdf",
     "dateFormat": "mdy_slash",
     "fields": {
-      "text_1ataj": { "source": null, "transform": "today_ymd_slash",       "note": "Date of Letter (오늘)" },
-      "text_2gscn": { "source": "consignee_lab", "transform": "lab_shipping:name", "note": "수신 실험실 이름만" },
-      "text_3fefc": { "source": "tube_count", "note": "0.5 mL × N tubes 의 N" },
-      "text_4vgcf": { "source": null, "note": "FedEx AWB No. (수동 — 배송 예약 후 입력)" }
+      "text_1ataj":  { "source": null, "transform": "today_ymd_slash",          "note": "Date of Letter (오늘)" },
+      "text_2gscn":  { "source": "consignee_lab", "transform": "lab_shipping:name", "note": "수신 실험실 이름만" },
+      "text_3fefc":  { "source": "tube_count", "note": "0.5 mL × N tubes 의 N" },
+      "text_4vgcf":  { "source": null, "note": "FedEx AWB No. (수동 — 배송 예약 후 입력)" },
+      "text_5nmoy":  { "source": null, "transform": "vet:clinic_en",            "note": "병원명 (영문)" },
+      "text_7cclj":  { "source": null, "transform": "vet:address_en",           "note": "병원 주소 (영문 한 줄)" },
+      "text_8xjgc":  { "source": null, "transform": "vet:esd_contact_block",    "note": "Tel. {phone} / Email. {email}" },
+      "text_9aivq":  { "source": "species", "transform": "esd_species_list",    "note": "종 목록 (예: dog; / cat; / dog; cat;)" },
+      "text_10eksn": { "source": "species", "transform": "esd_species_adj",     "note": "종 형용사형 (canine / feline / canine and feline)" },
+      "text_11ubqr": { "source": null, "transform": "vet:name_en",              "note": "수의사 이름 (영문, 직함 포함)" },
+      "text_13mvqw": { "source": null, "transform": "vet:esd_license_block",    "note": "Veterinary License No. {n} ({country})" }
     },
     "signatures": [
       { "image": "lausanne.png", "page": 0, "x": 72, "y": 180, "w": 120, "h": 34 }

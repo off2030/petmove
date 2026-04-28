@@ -71,6 +71,7 @@ type ShipmentPdfBody = {
   variant: 'invoice' | 'esd' | 'invoice-esd'
   tube_count: number
   consignee_lab?: string
+  species?: ('dog' | 'cat')[]
 }
 
 type BundlePdfBody = {
@@ -151,6 +152,7 @@ export async function POST(req: NextRequest) {
       const opts = {
         tube_count: body.tube_count,
         consignee_lab: body.consignee_lab,
+        species: body.species,
       }
       const result =
         body.variant === 'invoice'

@@ -586,11 +586,13 @@ export function TodosApp({
         const v = d.vet_visit_date
         return typeof v === 'string' && v ? v : ''
       }
-      // 0=상단(내원일 미래), 1=중단(내원일 지남/없음, 출국일 미래), 2=하단(출국일 지남).
+      // 0=상단(내원일 미래), 1=중단(내원일 지남/없음, 출국일 미래), 2=하단(출국일 지남
+      //   또는 출국일이 비어있고 내원일이 이미 지난 경우 — 후자도 마무리된 케이스로 간주).
       const groupOf = (c: CaseRow): 0 | 1 | 2 => {
         const dep = c.departure_date ?? ''
         if (dep && dep < todayStr) return 2
         const v = visitDate(c)
+        if (!dep && v && v < todayStr) return 2
         if (!v || v < todayStr) return 1
         return 0
       }
@@ -921,12 +923,12 @@ function InspectionFooterMobileMenu({ children }: { children: React.ReactNode })
   )
 }
 
-/** 검사 탭 하단 — Invoice + ESD 생성 버튼. 튜브 갯수 + 수신 실험실 다이얼로그. */
+/** 검사 탭 하단 — Invoice + ESD 생성 버튼. 튜브 갯수 + 수신 실험실 + 종 다이얼로그. */
 function ShipmentDocsButton() {
   const [open, setOpen] = useState(false)
   const [busy, startBusy] = useTransition()
 
-  async function handle(opts: { tube_count: number; consignee_lab: string }) {
+  async function handle(opts: { tube_count: number; consignee_lab: string; species: ('dog' | 'cat')[] }) {
     setOpen(false)
     startBusy(async () => {
       const r = { ok: true, error: '' }
@@ -957,21 +959,35 @@ function ShipmentDocsButton() {
   )
 }
 
-/** 검사 탭 하단 배송서류 다이얼로그 — 튜브 갯수 + 수신 실험실 선택. */
+/** 검사 탭 하단 배송서류 다이얼로그 — 튜브 갯수 + 수신 실험실 + 종 선택. */
 interface ShipmentDocsDialogProps {
   onClose: () => void
-  onSubmit: (opts: { tube_count: number; consignee_lab: string }) => void
+  onSubmit: (opts: { tube_count: number; consignee_lab: string; species: ('dog' | 'cat')[] }) => void
 }
 
 function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
   const [tubeCount, setTubeCount] = useState('1')
   const [selectedLab, setSelectedLab] = useState('ksvdl_r')
+  const [selectedSpecies, setSelectedSpecies] = useState<Set<'dog' | 'cat'>>(new Set(['dog']))
 
   const labs = [
     { value: 'ksvdl_r', label: 'KSVDL-R' },
     { value: 'ksvdl', label: 'KSVDL' },
     { value: 'vbddl', label: 'VBDDL' },
   ]
+  const speciesOptions: { value: 'dog' | 'cat'; label: string }[] = [
+    { value: 'dog', label: '개 (canine)' },
+    { value: 'cat', label: '고양이 (feline)' },
+  ]
+
+  function toggleSpecies(s: 'dog' | 'cat') {
+    setSelectedSpecies(prev => {
+      const next = new Set(prev)
+      if (next.has(s)) next.delete(s)
+      else next.add(s)
+      return next
+    })
+  }
 
   function handleSubmit() {
     const n = Math.trunc(Number(tubeCount))
@@ -979,7 +995,12 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
       alert('1~5 사이 숫자를 선택하세요')
       return
     }
-    onSubmit({ tube_count: n, consignee_lab: selectedLab })
+    if (selectedSpecies.size === 0) {
+      alert('종을 1개 이상 선택하세요')
+      return
+    }
+    const species = (['dog', 'cat'] as const).filter(s => selectedSpecies.has(s))
+    onSubmit({ tube_count: n, consignee_lab: selectedLab, species })
   }
 
   if (typeof document === 'undefined') return null
@@ -1041,6 +1062,36 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
                   aria-hidden="true"
                 />
                 <span className="text-sm text-foreground">{lab.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* 종 (ESD 검체 표기) — 혼합 발송이면 둘 다 체크 */}
+        <div className="mb-5">
+          <label className="text-sm font-medium text-primary mb-2 block">
+            종
+          </label>
+          <div className="space-y-2">
+            {speciesOptions.map(sp => (
+              <label key={sp.value} className="flex items-center gap-sm cursor-pointer group">
+                <input
+                  type="checkbox"
+                  value={sp.value}
+                  checked={selectedSpecies.has(sp.value)}
+                  onChange={() => toggleSpecies(sp.value)}
+                  className="peer sr-only"
+                />
+                <span
+                  className={cn(
+                    'w-4 h-4 shrink-0 rounded-[3px] border border-border/80 bg-background transition-colors relative',
+                    'peer-checked:bg-primary peer-checked:border-primary',
+                    'peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background',
+                    "before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-primary-foreground before:text-[11px] before:font-bold before:leading-none before:opacity-0 peer-checked:before:opacity-100",
+                  )}
+                  aria-hidden="true"
+                />
+                <span className="text-sm text-foreground">{sp.label}</span>
               </label>
             ))}
           </div>
@@ -1200,7 +1251,7 @@ function BulkApplyDialog({
  * 외부에서 open 제어 가능하게 만듦.
  */
 function InvoiceDialog({ onClose }: { onClose: () => void }) {
-  async function handle(opts: { tube_count: number; consignee_lab: string }) {
+  async function handle(opts: { tube_count: number; consignee_lab: string; species: ('dog' | 'cat')[] }) {
     onClose()
     try {
       await downloadPdfRequest({ kind: 'shipment', variant: 'invoice-esd', ...opts })

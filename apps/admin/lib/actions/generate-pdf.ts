@@ -162,6 +162,8 @@ export type ShipmentOpts = {
   tube_count: number
   /** 수신 실험실 코드 (ksvdl / ksvdl_r / vbddl). 비워두면 Consignee 공란. */
   consignee_lab?: string
+  /** ESD 종 표기. ['dog'] / ['cat'] / ['dog','cat'] (혼합 발송). 미지정 시 ['dog']. */
+  species?: ('dog' | 'cat')[]
 }
 
 function generateShipperExportRef(): string {
@@ -183,10 +185,12 @@ export async function generateInvoice(opts: ShipmentOpts): Promise<GeneratePdfRe
 }
 
 export async function generateESD(opts: ShipmentOpts): Promise<GeneratePdfResult> {
+  const species = opts.species && opts.species.length > 0 ? opts.species : ['dog']
   const r = await generateStandalone('ESD', {
     tube_count: opts.tube_count,
     consignee_lab: opts.consignee_lab ?? '',
     shipper_export_ref: generateShipperExportRef(),
+    species,
   })
   if (r.ok) r.filename = `ESD_${opts.tube_count}tubes.pdf`
   return r

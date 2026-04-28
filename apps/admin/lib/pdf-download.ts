@@ -38,6 +38,8 @@ export type ShipmentPdfRequest = {
   variant: 'invoice' | 'esd' | 'invoice-esd'
   tube_count: number
   consignee_lab?: string
+  /** ESD 종 표기. 미지정 시 ['dog']. */
+  species?: ('dog' | 'cat')[]
 }
 
 export type BundlePdfRequest = {

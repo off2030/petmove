@@ -634,6 +634,24 @@ function readSource(
     return /-do$/i.test(last) && secondLast ? secondLast : last
   }
 
+  // Microchip with optional secondary chip — "primary / secondary" when both exist,
+  // primary alone otherwise. caseRow.microchip 은 컬럼, microchip_secondary 는 data jsonb.
+  // 출력 포맷: 3자리 단위 스페이스 그룹핑 (예: "123 456 789 012 345").
+  if (source === 'microchip_combined') {
+    const fmt = (raw: string): string => {
+      const digits = raw.replace(/\D/g, '')
+      if (!digits) return ''
+      // 15자리 ISO 11784 표준이면 5그룹 × 3자리. 그 외 길이도 3자리씩 좌→우 그룹핑.
+      return digits.replace(/(\d{3})(?=\d)/g, '$1 ')
+    }
+    const primary = fmt(String((caseRow as unknown as Record<string, unknown>).microchip ?? ''))
+    const secondary = fmt(String(data.microchip_secondary ?? ''))
+    if (!primary && !secondary) return ''
+    if (!secondary) return primary
+    if (!primary) return secondary
+    return `${primary} / ${secondary}`
+  }
+
   // address_zipcode with fallback: if not stored separately, try to extract
   // "(XXXXX) ..." prefix from address_kr, or numeric-only segment from address_en.
   if (source === 'address_zipcode') {
@@ -1065,6 +1083,25 @@ function resolveField(
     return fmtPhoneIntlKr(raw)
   }
 
+  // ESD 종 표기 — extras.species 배열 (['dog'] | ['cat'] | ['dog','cat']) 을 받아
+  // 두 가지 포맷으로 변환.
+  // - esd_species_list: "dog;" / "cat;" / "dog; cat;"  (기존 템플릿 스타일)
+  // - esd_species_adj:  "canine" / "feline" / "canine and feline"
+  if (transform === 'esd_species_list' || transform === 'esd_species_adj') {
+    const arr: string[] = Array.isArray(raw)
+      ? (raw as unknown[]).map(s => String(s).trim().toLowerCase()).filter(Boolean)
+      : (typeof raw === 'string' && raw.trim()) ? [raw.trim().toLowerCase()] : []
+    if (transform === 'esd_species_list') {
+      if (arr.length === 0) return 'pet;'
+      return arr.map(s => `${s};`).join(' ')
+    }
+    const ADJ: Record<string, string> = { dog: 'canine', cat: 'feline' }
+    const adjs = arr.map(s => ADJ[s] || s).filter(Boolean)
+    if (adjs.length === 0) return 'pet'
+    if (adjs.length === 1) return adjs[0]
+    return adjs.join(' and ')
+  }
+
   // Today's date (no source needed). Returns YYYY/MM/DD.
   if (transform === 'today_ymd_slash') {
     return todayYMDSlash()
@@ -1432,12 +1469,33 @@ function resolveField(
   const vetMatch = transform?.match(/^vet:(.+)$/)
   if (vetMatch) {
     const key = vetMatch[1]
+    // ESD "Tel. {phone} / Email. {email}" 한 줄 — 신규 ESD 템플릿 text_8xjgc 용
+    if (key === 'esd_contact_block') {
+      const v = VET_INFO
+      const parts: string[] = []
+      if (v.phone_intl) parts.push(`Tel. ${v.phone_intl}`)
+      if (v.email) parts.push(`Email. ${v.email}`)
+      return parts.join(' / ')
+    }
+
+    // ESD "Veterinary License No. {n} ({country})" — 신규 ESD 템플릿 text_13mvqw 용.
+    // 국가는 address_en 의 마지막 콤마 segment 에서 추출 (별도 country 필드 없음).
+    if (key === 'esd_license_block') {
+      const v = VET_INFO
+      if (!v.license_no) return ''
+      const segs = String(v.address_en || '').split(',').map(s => s.trim()).filter(Boolean)
+      const country = segs[segs.length - 1] || ''
+      return country
+        ? `Veterinary License No. ${v.license_no} (${country})`
+        : `Veterinary License No. ${v.license_no}`
+    }
+
     if (key === 'invoice_shipper_block') {
       const v = VET_INFO
       const lines: string[] = []
       if (v.name_en) lines.push(`Contact Name: ${v.name_en}`)
 
-      // 주소: clinic_en + address_en + postal_code (address_en 안에 우편번호가 없으면 끝에 추가)
+      // 주소: clinic_en + address_en + postal_code (라벨 없이 한 줄)
       const addrParts: string[] = []
       if (v.clinic_en) addrParts.push(v.clinic_en)
       if (v.address_en) addrParts.push(v.address_en)
@@ -1445,28 +1503,18 @@ function resolveField(
       if (v.postal_code && !addrLine.includes(v.postal_code)) {
         addrLine = addrLine ? `${addrLine} ${v.postal_code}` : v.postal_code
       }
-      if (addrLine) lines.push(`Company name/Address: ${addrLine}`)
+      if (addrLine) lines.push(addrLine)
 
-      // Tel(유선) / Mobile / email — 입력된 값만 슬래시로 연결
+      // Tel / email 한 줄 (Mobile 은 셀 오버플로우 방지 위해 SHIPPER 에서 제외)
       const contactParts: string[] = []
       if (v.phone_intl) contactParts.push(`Tel. ${v.phone_intl}`)
-      if (v.mobile_phone) {
-        const mobileIntl = fmtPhoneIntlKr(v.mobile_phone)
-        contactParts.push(`Mobile: ${mobileIntl || v.mobile_phone}`)
-      }
       if (v.email) contactParts.push(`email: ${v.email}`)
       if (contactParts.length) lines.push(contactParts.join(' / '))
 
-      // Account No. / MID — custom_fields 에서 라벨 매칭으로 조회 (대소문자 무시)
+      // MID — custom_fields 에서 라벨 매칭 (대소문자 무시)
       const customs = v.custom_fields ?? []
-      const findCustom = (label: string) =>
-        customs.find((f) => f.label.trim().toLowerCase() === label.toLowerCase())?.value
-      const accountNo = findCustom('account no.') || findCustom('account no') || findCustom('account number')
-      const mid = findCustom('mid')
-      const idParts: string[] = []
-      if (accountNo) idParts.push(`Account No.: ${accountNo}`)
-      if (mid) idParts.push(`MID: ${mid}`)
-      if (idParts.length) lines.push(idParts.join(' / '))
+      const mid = customs.find((f) => f.label.trim().toLowerCase() === 'mid')?.value
+      if (mid) lines.push(`MID: ${mid}`)
 
       return lines.join('\n')
     }
@@ -1493,14 +1541,18 @@ function resolveField(
       if (segs.length < 2) return full
       return segs[segs.length - 2]
     }
-    // vet:custom:<label> — custom_fields 에서 라벨로 값 조회 (대소문자 무시).
+    // vet:custom:<label> — custom_fields 에서 라벨로 값 조회 (대소문자/공백 무시).
+    // 여러 라벨을 `|` 로 구분해 fallback 지정 가능 (예: "KSVDL Account No.|Account No.").
+    // 첫 매칭 라벨의 값을 반환. 사용자가 라벨을 다르게 적었거나 오타 보정용.
     const customMatch = key.match(/^custom:(.+)$/)
     if (customMatch) {
-      const wanted = customMatch[1].trim().toLowerCase()
-      const field = (VET_INFO.custom_fields ?? []).find(
-        (f) => f.label.trim().toLowerCase() === wanted,
-      )
-      return field?.value ?? ''
+      const wanted = customMatch[1].split('|').map(s => s.trim().toLowerCase()).filter(Boolean)
+      const customs = VET_INFO.custom_fields ?? []
+      for (const w of wanted) {
+        const field = customs.find((f) => f.label.trim().toLowerCase() === w)
+        if (field?.value) return field.value
+      }
+      return ''
     }
     const v = (VET_INFO as unknown as Record<string, unknown>)[key]
     return v == null ? '' : String(v)
@@ -1695,7 +1747,9 @@ function computeMaxFontSize(
   const isMultiline = tf.isMultiline()
   const HORIZ_PAD = 2
   const VERT_PAD = 0.5
-  const HEIGHT_MULT = 0.9
+  // 셀 높이 대비 폰트 상한 — NanumGothic 의 descender(g, j, ;, p 등)가 셀 하단에서
+  // 잘리지 않도록 0.8 까지만 사용. (이전 0.9 는 ESD text_9aivq "dog;" 에서 descender 클리핑.)
+  const HEIGHT_MULT = 0.8
   const MIN_SIZE = 5
   const MAX_SIZE = 24
 
@@ -2049,10 +2103,10 @@ async function applyFontFixes(
     if (touchedFieldNames && !touchedFieldNames.has(field.getName())) continue
     const tf = field
     const text = tf.getText() ?? ''
-    // preserveTemplateText 모드: 템플릿 DA에 명시된 폰트 크기(>0)를 상한으로 사용
-    // — 셀이 커서 autosize가 과도하게 확대되는 문제 방지. 단, 줄바꿈이 포함된
-    // 멀티라인 텍스트는 실제 줄 수에 맞춰 더 줄여야 마지막 줄이 잘리지 않음
-    // (예: Invoice Consignee 블록 5줄이 66pt 셀에 담기려면 ~9pt 필요).
+    // preserveTemplateText 모드: 템플릿 DA에 명시된 폰트 크기(>0)를 상한으로 사용.
+    // 멀티라인은 폭 기반 wrap 시뮬레이션으로 실제 visual line 수를 반영해 줄여야
+    // 마지막 줄이 잘리지 않음 (예: Invoice SHIPPER 블록 — 주소가 길어 wrap 되면 4 logical
+    // lines 가 6+ visual lines 로 늘어나서, 단순 height/lines 공식은 과대 추정함).
     let size: number | null = null
     if (touchedFieldNames) {
       const existingDa = field.acroField.dict.get(PDFName.of('DA'))
@@ -2061,12 +2115,27 @@ async function applyFontFixes(
       const daSize = m ? parseFloat(m[1]) : 0
       if (daSize > 0) {
         size = daSize
-        if (tf.isMultiline() && text.includes('\n')) {
-          const lines = text.split('\n').length
-          const h = tf.acroField.getWidgets()[0]?.getRectangle().height ?? 0
-          if (lines > 1 && h > 0) {
-            const fit = Math.max(5, Math.floor(((h - 4) / lines / 1.3) * 2) / 2)
-            size = Math.min(daSize, fit)
+        if (tf.isMultiline()) {
+          const rect = tf.acroField.getWidgets()[0]?.getRectangle()
+          if (rect) {
+            // padding 8: 위·아래 여유. leading 1.4: pdf-lib 실제 렌더 leading 에 근접해야
+            // 마지막 줄이 셀 밑으로 밀려나지 않음. safety 0.94: width 추정 오차 + 폰트
+            // ascent/descent 차 보정.
+            const availW = Math.max(1, rect.width - 4)
+            const availH = Math.max(1, rect.height - 8)
+            const logical = text.split('\n')
+            let s = daSize
+            for (let i = 0; i < 12; i++) {
+              let totalLines = 0
+              for (const ln of logical) {
+                const w = customFont.widthOfTextAtSize(ln || ' ', s)
+                totalLines += Math.max(1, Math.ceil(w / availW))
+              }
+              const needed = totalLines * s * 1.4
+              if (needed <= availH) break
+              s *= (availH / needed) * 0.94
+            }
+            size = Math.max(5, Math.min(daSize, Math.floor(s * 2) / 2))
           }
         }
       }
