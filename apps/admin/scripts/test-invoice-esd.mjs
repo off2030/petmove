@@ -10,9 +10,31 @@ const VET_INFO = {
   name_en: 'Jinwon Lee',
   clinic_en: 'Lausanne Veterinary Medical Center',
   address_en: '1st floor, 3, Gwanak-ro 29-gil, Gwanak-gu, Seoul, Republic of Korea',
+  postal_code: '08801',
   phone_intl: '+82-2-872-7588',
+  mobile_phone: '010-1234-5678',
   email: 'petmove@naver.com',
   license_no: '9608',
+  custom_fields: [
+    { id: '1', label: 'Account No.', value: 'FX-987654' },
+    { id: '2', label: 'MID', value: 'MID-12345' },
+  ],
+}
+
+function fmtPhoneIntlKr(raw) {
+  let s = String(raw ?? '').replace(/\D/g, '')
+  if (!s) return ''
+  if (s.startsWith('82')) s = s.slice(2)
+  if (s.startsWith('0')) s = s.slice(1)
+  if (!s) return ''
+  const areaLen = s.startsWith('2') ? 1 : 2
+  const area = s.slice(0, areaLen)
+  const rest = s.slice(areaLen)
+  if (!rest) return `+82-${area}`
+  const tailLen = rest.length >= 7 ? 4 : 3
+  const mid = rest.slice(0, rest.length - tailLen)
+  const tail = rest.slice(rest.length - tailLen)
+  return `+82-${area}-${mid}-${tail}`
 }
 
 const LAB_SHIPPING = {
@@ -47,7 +69,34 @@ function resolve(mp, data) {
   if ((m = transform?.match(/^vet:(.+)$/))) {
     const k = m[1]
     if (k === 'invoice_shipper_block') {
-      return [VET_INFO.clinic_en, VET_INFO.address_en, `Tel: ${VET_INFO.phone_intl}`, `Email: ${VET_INFO.email}`, `Veterinarian: ${VET_INFO.name_en} (License No. ${VET_INFO.license_no})`].join('\n')
+      const v = VET_INFO
+      const lines = []
+      if (v.name_en) lines.push(`Contact Name: ${v.name_en}`)
+      const addrParts = []
+      if (v.clinic_en) addrParts.push(v.clinic_en)
+      if (v.address_en) addrParts.push(v.address_en)
+      let addrLine = addrParts.join(', ')
+      if (v.postal_code && !addrLine.includes(v.postal_code)) {
+        addrLine = addrLine ? `${addrLine} ${v.postal_code}` : v.postal_code
+      }
+      if (addrLine) lines.push(`Company name/Address: ${addrLine}`)
+      const contactParts = []
+      if (v.phone_intl) contactParts.push(`Tel. ${v.phone_intl}`)
+      if (v.mobile_phone) {
+        const mobileIntl = fmtPhoneIntlKr(v.mobile_phone)
+        contactParts.push(`Mobile: ${mobileIntl || v.mobile_phone}`)
+      }
+      if (v.email) contactParts.push(`email: ${v.email}`)
+      if (contactParts.length) lines.push(contactParts.join(' / '))
+      const customs = v.custom_fields ?? []
+      const findCustom = (label) => customs.find(f => f.label.trim().toLowerCase() === label.toLowerCase())?.value
+      const accountNo = findCustom('account no.') || findCustom('account no') || findCustom('account number')
+      const mid = findCustom('mid')
+      const idParts = []
+      if (accountNo) idParts.push(`Account No.: ${accountNo}`)
+      if (mid) idParts.push(`MID: ${mid}`)
+      if (idParts.length) lines.push(idParts.join(' / '))
+      return lines.join('\n')
     }
     return VET_INFO[k] ?? ''
   }
