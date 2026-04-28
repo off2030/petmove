@@ -4320,7 +4320,7 @@
   },
   "KSVDL": {
     "template": "KSVDL.pdf",
-    "description": "Kansas State Veterinary Diagnostic Laboratory — Canine Export Submission Form. 뉴질랜드·호주 수출용 브루셀라/렙토스피라/레이슈마니아 등 혈청검사. Clinic 정보는 템플릿에 정적 인쇄, Owner 정보만 자동 채움.",
+    "description": "Kansas State Veterinary Diagnostic Laboratory — Canine Export Submission Form. 뉴질랜드·호주 수출용 브루셀라/렙토스피라/레이슈마니아 등 혈청검사. Owner 정보 + Veterinarian/Clinic 정보 (조직 설정 기반) 자동 채움.",
     "filename": "KSVDL_{pet_name}.pdf",
     "dateFormat": "ymd_slash",
     "fields": {
@@ -4329,14 +4329,25 @@
       "text_3qoui":  { "source": "address_city",   "note": "Owner City" },
       "text_4nppi":  { "source": "address_zipcode","note": "Owner ZIP" },
       "text_5lbxm":  { "source": null, "default": "REPUBLIC OF KOREA", "note": "Owner Country" },
-      "text_6znme":  { "source": "phone", "transform": "phone_intl_kr", "note": "Owner Cell phone" },
+      "text_6znme":  { "source": "email", "note": "Owner Email — 새 템플릿에서 phone 자리가 email 로 바뀜" },
       "text_7gray":  { "source": "species", "transform": "en", "note": "Species (Dog/Cat)" },
       "text_8gaow":  { "source": "pet_name_en",    "note": "Animal Name" },
       "text_9fsoj":  { "source": "microchip",      "note": "Microchip Number" },
       "text_10toag": { "source": "infectious_date:ksvdl", "transform": "date_mdy_compact", "note": "Date Blood Drawn — MMDDYYYY 포맷 (KSVDL 검사일 우선, 없으면 내원일)" },
       "checkbox_11rcln": { "source": "sex", "transform": "checkbox:in:male|female", "note": "Canine Brucellosis — 중성화 안된 경우만 체크 (sex=male/female)" },
       "checkbox_14aovq": { "source": "general_vaccine_dates", "transform": "checkbox:empty_array", "note": "Leptospira Canicola — 종합백신 접종 없을 때만 체크" },
-      "checkbox_13esom": { "source": null, "transform": "checkbox:always_true", "note": "Leishmania Infantum — 항상 체크" }
+      "checkbox_13esom": { "source": null, "transform": "checkbox:always_true", "note": "Leishmania Infantum — 항상 체크" },
+
+      "text_15nlbm": { "source": null, "transform": "vet:custom:Account No.", "note": "Account No. — 조직 추가 정보의 'Account No.' 라벨에서 조회 (없으면 빈값)" },
+      "text_16xqrw": { "source": null, "transform": "vet:clinic_en", "note": "Clinic Name — 조직 정보의 영문 병원명" },
+      "text_17xqpz": { "source": null, "transform": "vet:name_en", "note": "Veterinarian Name — 조직 정보의 수의사 영문명" },
+      "text_18xiun": { "source": null, "transform": "vet:address_street_en", "note": "Clinic Address — 조직 정보의 영문 주소 (street 부분)" },
+      "text_19titx": { "source": null, "transform": "vet:city", "note": "Clinic City — 영문주소 끝에서 두 번째 세그먼트 (Seoul 등)" },
+      "text_21bks":  { "source": null, "default": "", "note": "State (Korea 미사용 — 빈 값)" },
+      "text_20raaj": { "source": null, "transform": "vet:postal_code", "note": "Clinic ZIP — 조직 정보의 우편번호" },
+      "text_22keil": { "source": null, "default": "REPUBLIC OF KOREA", "note": "Clinic Country" },
+      "text_23tavm": { "source": null, "transform": "vet:phone_intl", "note": "Clinic Phone — 조직 정보의 국제전화 번호" },
+      "text_25douc": { "source": "phone", "transform": "phone_intl_kr", "note": "Owner Cell phone — 새 템플릿에서 옮겨진 위치 (text_6znme 자리에서)" }
     }
   },
   "VBDDL": {
@@ -4377,6 +4388,7 @@
     "fields": {
       "Text2":  { "source": null, "transform": "today_ymd_slash", "note": "Date of Exportation (오늘)" },
       "Text3":  { "source": "shipper_export_ref", "note": "Shipper's Export References (LVMCYYYYMMDD)" },
+      "Text4":  { "source": null, "transform": "vet:invoice_shipper_block", "note": "SHIPPER/EXPORTER — 조직 정보 (이름/주소/연락처/Account·MID)" },
       "Text5":  { "source": "consignee_lab", "transform": "lab_shipping:block", "note": "Consignee — 수신 실험실 전체 블록" },
       "Text16": { "source": "tube_count", "note": "QTY — 튜브 갯수 숫자" },
       "Text20": { "source": "tube_count", "transform": "invoice_total_value", "note": "Total Value — tube_count × 1.00" },

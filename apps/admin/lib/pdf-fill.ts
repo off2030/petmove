@@ -1438,18 +1438,71 @@ function resolveField(
       const v = VET_INFO
       const lines: string[] = []
       if (v.name_en) lines.push(`Contact Name: ${v.name_en}`)
-      const addr = [v.clinic_en, v.address_en].filter(Boolean).join(', ')
-      if (addr) lines.push(`Company name/Address: ${addr}`)
-      const telParts: string[] = []
-      if (v.phone_intl) telParts.push(`Tel. ${v.phone_intl}`)
-      if (v.email) telParts.push(`email: ${v.email}`)
-      if (telParts.length) lines.push(telParts.join(' / '))
-      // MID 는 custom_fields 의 label "MID" (대소문자 무시) 에서 조회.
-      const midField = (v.custom_fields ?? []).find(
-        (f) => f.label.trim().toLowerCase() === 'mid',
-      )
-      if (midField?.value) lines.push(`MID: ${midField.value}`)
+
+      // 주소: clinic_en + address_en + postal_code (address_en 안에 우편번호가 없으면 끝에 추가)
+      const addrParts: string[] = []
+      if (v.clinic_en) addrParts.push(v.clinic_en)
+      if (v.address_en) addrParts.push(v.address_en)
+      let addrLine = addrParts.join(', ')
+      if (v.postal_code && !addrLine.includes(v.postal_code)) {
+        addrLine = addrLine ? `${addrLine} ${v.postal_code}` : v.postal_code
+      }
+      if (addrLine) lines.push(`Company name/Address: ${addrLine}`)
+
+      // Tel(유선) / Mobile / email — 입력된 값만 슬래시로 연결
+      const contactParts: string[] = []
+      if (v.phone_intl) contactParts.push(`Tel. ${v.phone_intl}`)
+      if (v.mobile_phone) {
+        const mobileIntl = fmtPhoneIntlKr(v.mobile_phone)
+        contactParts.push(`Mobile: ${mobileIntl || v.mobile_phone}`)
+      }
+      if (v.email) contactParts.push(`email: ${v.email}`)
+      if (contactParts.length) lines.push(contactParts.join(' / '))
+
+      // Account No. / MID — custom_fields 에서 라벨 매칭으로 조회 (대소문자 무시)
+      const customs = v.custom_fields ?? []
+      const findCustom = (label: string) =>
+        customs.find((f) => f.label.trim().toLowerCase() === label.toLowerCase())?.value
+      const accountNo = findCustom('account no.') || findCustom('account no') || findCustom('account number')
+      const mid = findCustom('mid')
+      const idParts: string[] = []
+      if (accountNo) idParts.push(`Account No.: ${accountNo}`)
+      if (mid) idParts.push(`MID: ${mid}`)
+      if (idParts.length) lines.push(idParts.join(' / '))
+
       return lines.join('\n')
+    }
+    // address_street_en / address_locality_en 가 빈 값이면 address_en 을 콤마로
+    // 분리해 반환 (address_part:street/locality 와 동일 규칙).
+    if (key === 'address_street_en' || key === 'address_locality_en') {
+      const explicit = String((VET_INFO as unknown as Record<string, unknown>)[key] ?? '')
+      if (explicit) return explicit
+      const full = String(VET_INFO.address_en ?? '').trim()
+      if (!full) return ''
+      const segs = full.split(',').map(s => s.trim()).filter(Boolean)
+      if (segs.length <= 1) return key === 'address_street_en' ? full : ''
+      const streetCount = Math.max(1, segs.length - 3)
+      return key === 'address_street_en'
+        ? segs.slice(0, streetCount).join(', ')
+        : segs.slice(streetCount).join(', ')
+    }
+    // vet:city — address_en 의 끝에서 두 번째 콤마 세그먼트 (한국 주소 기준
+    // "..., Gwanak-gu, Seoul, Republic of Korea" → "Seoul"). 마지막 세그먼트는 국가로 가정.
+    if (key === 'city') {
+      const full = String(VET_INFO.address_en ?? '').trim()
+      if (!full) return ''
+      const segs = full.split(',').map(s => s.trim()).filter(Boolean)
+      if (segs.length < 2) return full
+      return segs[segs.length - 2]
+    }
+    // vet:custom:<label> — custom_fields 에서 라벨로 값 조회 (대소문자 무시).
+    const customMatch = key.match(/^custom:(.+)$/)
+    if (customMatch) {
+      const wanted = customMatch[1].trim().toLowerCase()
+      const field = (VET_INFO.custom_fields ?? []).find(
+        (f) => f.label.trim().toLowerCase() === wanted,
+      )
+      return field?.value ?? ''
     }
     const v = (VET_INFO as unknown as Record<string, unknown>)[key]
     return v == null ? '' : String(v)
