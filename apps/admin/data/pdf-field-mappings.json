@@ -642,7 +642,7 @@
       "other1_product_type": {
         "source": null,
         "transform": "other_vacc_seq:type[0]",
-        "note": "종합백신→외부→내부 순서로 최신 1건씩, 없는 타입 skip"
+        "note": "종합→독감→켄넬코프→외부→내부→심장사상충 순서, 카테고리당 최신 1건, 없는 타입 skip"
       },
       "other1_product_name": {
         "source": null,
@@ -908,7 +908,7 @@
       "other1_product_type": {
         "source": null,
         "transform": "expanded_vacc_seq:type[0]",
-        "note": "8슬롯: 종합→CIV→켄넬코프(미구현)→외부→내부, 각 타입 최대 3회차"
+        "note": "8슬롯: 종합→독감(CIV)→켄넬코프→외부→내부→심장사상충, 각 타입 최대 3회차"
       },
       "other1_product_name": {
         "source": null,
@@ -4327,9 +4327,9 @@
       "text_1jqev":  { "source": "customer_name_en", "note": "Owner Name" },
       "text_2pghn":  { "source": "address_en", "transform": "address_part:street", "note": "Owner Address — 도로명 부분" },
       "text_3qoui":  { "source": "address_city",   "note": "Owner City" },
-      "text_4nppi":  { "source": "address_zipcode","note": "Owner ZIP" },
+      "text_4nppi":  { "source": "address_zipcode","note": "Owner ZIP — 비어있으면 address_kr/address_en 에서 자동 추출" },
       "text_5lbxm":  { "source": null, "default": "REPUBLIC OF KOREA", "note": "Owner Country" },
-      "text_6znme":  { "source": "email", "note": "Owner Email — 새 템플릿에서 phone 자리가 email 로 바뀜" },
+      "text_6znme":  { "source": "phone", "transform": "phone_intl_kr", "note": "Owner Cell phone — 좌표상 우측 (x=461) Cell 칸" },
       "text_7gray":  { "source": "species", "transform": "en", "note": "Species (Dog/Cat)" },
       "text_8gaow":  { "source": "pet_name_en",    "note": "Animal Name" },
       "text_9fsoj":  { "source": "microchip",      "note": "Microchip Number" },
@@ -4339,15 +4339,15 @@
       "checkbox_13esom": { "source": null, "transform": "checkbox:always_true", "note": "Leishmania Infantum — 항상 체크" },
 
       "text_15nlbm": { "source": null, "transform": "vet:custom:Account No.", "note": "Account No. — 조직 추가 정보의 'Account No.' 라벨에서 조회 (없으면 빈값)" },
-      "text_16xqrw": { "source": null, "transform": "vet:clinic_en", "note": "Clinic Name — 조직 정보의 영문 병원명" },
-      "text_17xqpz": { "source": null, "transform": "vet:name_en", "note": "Veterinarian Name — 조직 정보의 수의사 영문명" },
+      "text_16xqrw": { "source": null, "transform": "vet:name_en", "note": "Veterinarian Name — 좌표상 위쪽(y=610) 'Veterinarian' 라벨 행" },
+      "text_17xqpz": { "source": null, "transform": "vet:clinic_en", "note": "Clinic Name — 좌표상 아래쪽(y=595) 'Clinic/Company' 라벨 행" },
       "text_18xiun": { "source": null, "transform": "vet:address_street_en", "note": "Clinic Address — 조직 정보의 영문 주소 (street 부분)" },
       "text_19titx": { "source": null, "transform": "vet:city", "note": "Clinic City — 영문주소 끝에서 두 번째 세그먼트 (Seoul 등)" },
       "text_21bks":  { "source": null, "default": "", "note": "State (Korea 미사용 — 빈 값)" },
       "text_20raaj": { "source": null, "transform": "vet:postal_code", "note": "Clinic ZIP — 조직 정보의 우편번호" },
       "text_22keil": { "source": null, "default": "REPUBLIC OF KOREA", "note": "Clinic Country" },
       "text_23tavm": { "source": null, "transform": "vet:phone_intl", "note": "Clinic Phone — 조직 정보의 국제전화 번호" },
-      "text_25douc": { "source": "phone", "transform": "phone_intl_kr", "note": "Owner Cell phone — 새 템플릿에서 옮겨진 위치 (text_6znme 자리에서)" }
+      "text_25douc": { "source": null, "default": "", "note": "Owner Phone (유선) — 좌표상 좌측 (x=335) Phone 칸. 별도 유선 데이터 없어 빈 값" }
     }
   },
   "VBDDL": {

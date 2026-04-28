@@ -253,11 +253,11 @@ function buildInspectionRows(
 const LAB_SORT_ORDER: Record<string, number> = {
   krsl: 0,
   apqa_seoul: 1,
-  ksvdl_r: 2,
-  ksvdl: 3,
-  apqa_hq: 4,
-  vbddl: 4,
-  nz_combined: 4,
+  apqa_hq: 2,
+  vbddl: 2,
+  nz_combined: 2,
+  ksvdl_r: 3,
+  ksvdl: 4,
 }
 
 // 모든 데이터 컬럼은 통일 너비.

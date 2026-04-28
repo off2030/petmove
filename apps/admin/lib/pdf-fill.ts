@@ -16,6 +16,7 @@ import {
   lookupComprehensive,
   lookupCiv,
   lookupKennelCough,
+  lookupHeartworm,
   lookupParasiteById,
   runWithOrgLookups,
 } from '@/lib/vaccine-lookups-scoped'
@@ -440,130 +441,113 @@ interface OtherVacEntry {
   expiry: string
   date: string
 }
-function buildOtherVaccineSequence(data: Record<string, unknown>, allowedVaccines?: string[]): OtherVacEntry[] {
-  const species = String(data.species ?? '').toLowerCase()
-  const hasSpecies = species === 'dog' || species === 'cat'
-  const weightKg = Number(String(data.weight ?? '').replace(/[^\d.]/g, '')) || 0
-  const out: OtherVacEntry[] = []
-
-  // 1. 종합백신 (Comprehensive — Vaccination)
-  const gvRec = (!allowedVaccines || allowedVaccines.includes('general')) ? sortedDescRecords(data.general_vaccine_dates)[0] : undefined
-  if (gvRec) {
-    const p = hasSpecies ? lookupComprehensive(species as 'dog' | 'cat', gvRec.date) : null
-    out.push({ type: 'Vaccination', ...applyRecOverrides(gvRec, p), date: fmtDate(gvRec.date) })
-  }
-
-  // 2/3. Parasiticides — pick latest of each side, dedupe combo across sides.
-  const buildParasite = (rec: ParasiteRecord, side: 'external' | 'internal'): OtherVacEntry => {
-    if (rec.product_id) {
-      const p = lookupParasiteById(rec.product_id, { date: rec.date, weightKg })
-      return { type: 'Parasiticide', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) }
-    }
-    const p = hasSpecies
-      ? (side === 'external'
-          ? lookupExternalParasite(species as 'dog' | 'cat', rec.date, weightKg)
-          : lookupInternalParasite(species as 'dog' | 'cat', rec.date, weightKg))
-      : null
-    return { type: 'Parasiticide', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) }
-  }
-
-  const seenComboKeys = new Set<string>()
-  const dedupKey = (rec: ParasiteRecord): string | null => {
-    if (!rec.product_id) return null
-    return getParasiteFamily(rec.product_id)?.kind === 'combo'
-      ? `${rec.product_id}@${rec.date}`
-      : null
-  }
-
-  const ext = (!allowedVaccines || allowedVaccines.includes('external_parasite')) ? sortedDescRecords(data.external_parasite_dates)[0] : undefined
-  if (ext) {
-    const k = dedupKey(ext)
-    if (k) seenComboKeys.add(k)
-    out.push(buildParasite(ext, 'external'))
-  }
-
-  const int = (!allowedVaccines || allowedVaccines.includes('internal_parasite')) ? sortedDescRecords(data.internal_parasite_dates)[0] : undefined
-  if (int) {
-    const k = dedupKey(int)
-    if (!(k && seenComboKeys.has(k))) {
-      out.push(buildParasite(int, 'internal'))
-    }
-  }
-
-  return out
-}
-
 /**
- * 확장된 버전 — 호주/뉴질랜드/괌용 별지 제25호 서식(8슬롯)에서 사용.
- * 우선순위: 종합백신 → CIV → 켄넬코프 → 외부구충 → 내부구충.
- * 각 타입당 최대 maxPerType(기본 3)회차를 과거→최신 순으로 출력.
- * 콤보 구충제는 external에서만 표시, internal 동기화 기록은 스킵.
+ * 별지 제25호 (Form25 / Form25AuNz) "기타 예방접종 및 기생충 처치내역" 슬롯 시퀀스.
+ *
+ * 표시 순서 (사용자 요구):
+ *   종합백신 → 독감(CIV) → 켄넬코프 → 외부구충 → 내부구충 → 심장사상충
+ * (광견병은 별도 dedicated 슬롯이라 여기 포함하지 않음.)
+ *
+ * 각 타입당 최대 `maxPerType` 회차까지, 슬롯에 들어가는 순서는
+ * 과거→최신 (oldest→newest of the latest N). 비어있는 카테고리는 스킵하고
+ * 다음 카테고리를 앞으로 당김.
+ *
+ * 콤보 외/내 구충제는 external 측에서 한 번만 표시 (internal 측 동일 record 스킵).
+ *
+ * - Form25 (3슬롯): maxPerType=1 — 카테고리당 최신 1건씩
+ * - Form25AuNz (8슬롯): maxPerType=3 — 카테고리당 최신 3회차
  */
-function buildExpandedVaccineSequence(data: Record<string, unknown>, maxPerType = 3, allowedVaccines?: string[]): OtherVacEntry[] {
+function buildVaccineSequenceUnified(
+  data: Record<string, unknown>,
+  maxPerType: number,
+  allowedVaccines?: string[],
+): OtherVacEntry[] {
   const species = String(data.species ?? '').toLowerCase()
   const hasSpecies = species === 'dog' || species === 'cat'
   const weightKg = Number(String(data.weight ?? '').replace(/[^\d.]/g, '')) || 0
   const out: OtherVacEntry[] = []
+  const allowed = (k: string) => !allowedVaccines || allowedVaccines.includes(k)
 
-  // Helper: pick latest N records (by date), returned in ascending (oldest→newest) order.
+  // 최근 maxPerType 회차를 과거→최신 순으로 반환.
   const latestAscending = (records: unknown): ParasiteRecord[] => {
     const sorted = sortedDescRecords(records).slice(0, maxPerType)
     return sorted.slice().reverse()
   }
 
   // 1. 종합백신 (Vaccination)
-  for (const rec of ((!allowedVaccines || allowedVaccines.includes('general')) ? latestAscending(data.general_vaccine_dates) : [])) {
-    const p = hasSpecies ? lookupComprehensive(species as 'dog' | 'cat', rec.date) : null
-    out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
+  if (allowed('general')) {
+    for (const rec of latestAscending(data.general_vaccine_dates)) {
+      const p = hasSpecies ? lookupComprehensive(species as 'dog' | 'cat', rec.date) : null
+      out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
+    }
   }
 
-  // 2. CIV (Vaccination)
-  for (const rec of ((!allowedVaccines || allowedVaccines.includes('civ')) ? latestAscending(data.civ_dates) : [])) {
-    const p = lookupCiv(rec.date)
-    out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
+  // 2. 독감 CIV (Vaccination)
+  if (allowed('civ')) {
+    for (const rec of latestAscending(data.civ_dates)) {
+      const p = lookupCiv(rec.date)
+      out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
+    }
   }
 
   // 3. 켄넬코프 (Vaccination)
-  for (const rec of ((!allowedVaccines || allowedVaccines.includes('kennel')) ? latestAscending(data.kennel_cough_dates) : [])) {
-    const p = lookupKennelCough()
-    out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
+  if (allowed('kennel')) {
+    for (const rec of latestAscending(data.kennel_cough_dates)) {
+      const p = lookupKennelCough()
+      out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
+    }
   }
 
-  // Collect combo keys from external so internal can skip duplicates.
-  const externalRecords = (!allowedVaccines || allowedVaccines.includes('external_parasite')) ? latestAscending(data.external_parasite_dates) : []
+  // 4. 외부구충 (Parasiticide) — combos included here.
+  const externalRecords = allowed('external_parasite') ? latestAscending(data.external_parasite_dates) : []
   const comboKeysFromExternal = new Set<string>()
   for (const rec of externalRecords) {
     if (rec.product_id && getParasiteFamily(rec.product_id)?.kind === 'combo') {
       comboKeysFromExternal.add(`${rec.product_id}@${rec.date}`)
     }
   }
-
-  const pushParasite = (rec: ParasiteRecord, side: 'external' | 'internal') => {
+  const pushParasite = (rec: ParasiteRecord, side: 'external' | 'internal' | 'heartworm') => {
     if (rec.product_id) {
       const p = lookupParasiteById(rec.product_id, { date: rec.date, weightKg })
       out.push({ type: 'Parasiticide', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
       return
     }
-    const p = hasSpecies
-      ? (side === 'external'
-          ? lookupExternalParasite(species as 'dog' | 'cat', rec.date, weightKg)
-          : lookupInternalParasite(species as 'dog' | 'cat', rec.date, weightKg))
-      : null
+    let p: { vaccine?: string; product?: string; manufacturer?: string; batch?: string | null; expiry?: string | null } | null = null
+    if (hasSpecies) {
+      if (side === 'external') p = lookupExternalParasite(species as 'dog' | 'cat', rec.date, weightKg)
+      else if (side === 'internal') p = lookupInternalParasite(species as 'dog' | 'cat', rec.date, weightKg)
+      else p = lookupHeartworm(species as 'dog' | 'cat', weightKg)
+    }
     out.push({ type: 'Parasiticide', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
   }
-
-  // 4. 외부구충 (Parasiticide) — combos included here.
   for (const rec of externalRecords) pushParasite(rec, 'external')
 
-  // 5. 내부구충 (Parasiticide) — skip records that were already emitted via external combo.
-  for (const rec of ((!allowedVaccines || allowedVaccines.includes('internal_parasite')) ? latestAscending(data.internal_parasite_dates) : [])) {
-    if (rec.product_id && getParasiteFamily(rec.product_id)?.kind === 'combo') {
-      if (comboKeysFromExternal.has(`${rec.product_id}@${rec.date}`)) continue
+  // 5. 내부구충 (Parasiticide) — external 콤보로 이미 출력된 record 는 스킵.
+  if (allowed('internal_parasite')) {
+    for (const rec of latestAscending(data.internal_parasite_dates)) {
+      if (rec.product_id && getParasiteFamily(rec.product_id)?.kind === 'combo') {
+        if (comboKeysFromExternal.has(`${rec.product_id}@${rec.date}`)) continue
+      }
+      pushParasite(rec, 'internal')
     }
-    pushParasite(rec, 'internal')
+  }
+
+  // 6. 심장사상충 (Parasiticide)
+  if (allowed('heartworm')) {
+    for (const rec of latestAscending(data.heartworm_dates)) {
+      pushParasite(rec, 'heartworm')
+    }
   }
 
   return out
+}
+
+function buildOtherVaccineSequence(data: Record<string, unknown>, allowedVaccines?: string[]): OtherVacEntry[] {
+  return buildVaccineSequenceUnified(data, 1, allowedVaccines)
+}
+
+function buildExpandedVaccineSequence(data: Record<string, unknown>, maxPerType = 3, allowedVaccines?: string[]): OtherVacEntry[] {
+  return buildVaccineSequenceUnified(data, maxPerType, allowedVaccines)
 }
 
 interface TiterRec { date: string | null; value: string | null; lab: string | null }
@@ -648,6 +632,20 @@ function readSource(
     const last = cleaned[cleaned.length - 1] ?? ''
     const secondLast = cleaned[cleaned.length - 2] ?? ''
     return /-do$/i.test(last) && secondLast ? secondLast : last
+  }
+
+  // address_zipcode with fallback: if not stored separately, try to extract
+  // "(XXXXX) ..." prefix from address_kr, or numeric-only segment from address_en.
+  if (source === 'address_zipcode') {
+    const stored = String(data.address_zipcode ?? '').trim()
+    if (stored) return stored
+    const krAddr = String(data.address_kr ?? '')
+    const km = krAddr.match(/^\s*[\(\[]?\s*(\d{5,6})\s*[\)\]]?/)
+    if (km) return km[1]
+    const enAddr = String(data.address_en ?? '')
+    const em = enAddr.match(/(?:^|[\s,])(\d{5,6})(?:[\s,]|$)/)
+    if (em) return em[1]
+    return ''
   }
 
   // Composite "Post code / Place" — "<zipcode> <city>" for EU forms that combine
