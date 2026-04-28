@@ -44,6 +44,32 @@ export interface InspectionRow {
     | { kind: 'infectious_multi'; labs: string[] }
 }
 
+/**
+ * 행별 진행상태 저장 키. 같은 케이스에 항체검사/전염병검사가 동시에 올라온 경우
+ * 각 검사의 상태가 독립적으로 관리되도록 분리.
+ */
+export function inspectionStatusKey(row: InspectionRow): string {
+  if (row.dateStorage.kind === 'titer') return 'inspection_status_titer'
+  if (row.dateStorage.kind === 'infectious') return `inspection_status_inf_${row.dateStorage.lab}`
+  if (row.dateStorage.kind === 'infectious_multi') {
+    return `inspection_status_inf_${[...row.dateStorage.labs].sort().join('_')}`
+  }
+  return 'inspection_status'
+}
+
+/**
+ * 행 진행상태 조회. 행별 키 우선, 없으면 legacy `inspection_status` 폴백
+ * (단일 검사만 있던 시절의 데이터 호환). 둘 다 없으면 기본 'waiting'.
+ */
+export function readInspectionStatus(row: InspectionRow): string {
+  const data = (row.caseRow.data ?? {}) as Record<string, unknown>
+  const v = data[inspectionStatusKey(row)]
+  if (typeof v === 'string') return v
+  const legacy = data.inspection_status
+  if (typeof legacy === 'string') return legacy
+  return 'waiting'
+}
+
 interface LabOption { value: string; label: string }
 
 interface StatusOption { value: string; label: string }
@@ -298,8 +324,7 @@ function StatusCell({ row, options, onUpdate }: {
   options: StatusOption[]
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
 }) {
-  const data = (row.caseRow.data ?? {}) as Record<string, unknown>
-  const value = typeof data.inspection_status === 'string' ? (data.inspection_status as string) : 'waiting'
+  const value = readInspectionStatus(row)
   const opt = options.find(o => o.value === value)
   const label = opt?.label ?? '대기'
 
@@ -340,8 +365,9 @@ function StatusPicker({ row, options, value, label, cls, isDone, onUpdate }: {
   async function pick(v: string) {
     setOpen(false)
     if (v === value) return
-    onUpdate(row.caseRow.id, 'data', 'inspection_status', v || null)
-    await updateCaseField(row.caseRow.id, 'data', 'inspection_status', v || null)
+    const key = inspectionStatusKey(row)
+    onUpdate(row.caseRow.id, 'data', key, v || null)
+    await updateCaseField(row.caseRow.id, 'data', key, v || null)
   }
 
   return (
@@ -583,7 +609,7 @@ export function InspectionTable({
       </thead>
       <tbody>
         {visibleRows.map(row => {
-          const isDone = ((row.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') === 'done'
+          const isDone = readInspectionStatus(row) === 'done'
           return (
           <tr
             key={row.id}
@@ -602,7 +628,7 @@ export function InspectionTable({
                 editable={row.dateEditable}
                 onSave={(v) => handleDateSave(row, v)}
                 overdue={
-                  ((row.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') === 'waiting'
+                  readInspectionStatus(row) === 'waiting'
                   && isOverdue(row.date, 5)
                 }
               />

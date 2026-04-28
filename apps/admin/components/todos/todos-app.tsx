@@ -10,7 +10,7 @@ import { destCode } from '@/lib/country-code'
 import { matchesDestinationKey } from '@petmove/domain'
 import { cn } from '@/lib/utils'
 import { TodoTable, type TodoColumn } from './todo-table'
-import { InspectionTable, type InspectionRow } from './inspection-table'
+import { InspectionTable, readInspectionStatus, type InspectionRow } from './inspection-table'
 import { updateCaseField } from '@/lib/actions/cases'
 import { downloadPdfRequest, type PdfDownloadRequest } from '@/lib/pdf-download'
 import { PageShell, PageTabs } from '@/components/ui/page-shell'
@@ -620,8 +620,8 @@ export function TodosApp({
       .filter(r => matchesQuery(r.caseRow, q))
       .sort((a, b) => {
         // 0순위: 완료(done)는 무조건 가장 뒤
-        const aDone = ((a.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') === 'done'
-        const bDone = ((b.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') === 'done'
+        const aDone = readInspectionStatus(a) === 'done'
+        const bDone = readInspectionStatus(b) === 'done'
         if (aDone !== bDone) return aDone ? 1 : -1
         const da = a.date || ''
         const db = b.date || ''
@@ -788,7 +788,7 @@ export function TodosInspectionActions({ query }: { query: string }) {
     [cases, q, inspectionConfig],
   )
   const pendingRows = inspectionRows.filter(
-    (r) => ((r.caseRow.data as Record<string, unknown> | null)?.inspection_status ?? 'waiting') === 'waiting',
+    (r) => readInspectionStatus(r) === 'waiting',
   )
   const ksvdlRows = pendingRows.filter((r) => r.lab === 'ksvdl')
   const nzRows = pendingRows.filter((r) => r.lab === 'nz_combined')
