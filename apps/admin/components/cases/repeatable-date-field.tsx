@@ -163,10 +163,11 @@ function getDetailHintsById(L: VaccineLookups, productId: string, date: string, 
   }
 }
 
-/** label → 'external' | 'internal' | null (for parasiticide rows only) */
-function parasiteKindFromLabel(label: string): 'external' | 'internal' | null {
+/** label → 'external' | 'internal' | 'heartworm' | null (for parasiticide rows only) */
+function parasiteKindFromLabel(label: string): 'external' | 'internal' | 'heartworm' | null {
   if (label === '외부구충') return 'external'
   if (label === '내부구충') return 'internal'
+  if (label === '심장사상충') return 'heartworm'
   return null
 }
 

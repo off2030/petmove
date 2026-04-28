@@ -17,6 +17,7 @@ import {
 } from '@petmove/domain'
 import { createClient } from '@/lib/supabase/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
+import { loadVaccineDefaults, type VaccineDefaults } from '@/lib/vaccine-defaults'
 
 interface OrgProductRow {
   id: string
@@ -77,8 +78,13 @@ export const getOrgVaccineData = cache(async (): Promise<VaccineProductsData> =>
   }
 })
 
-/** Server helper: active org 의 org-scoped lookup bundle 을 반환. */
+/** Server helper: active org 의 org-scoped lookup bundle 을 반환. defaults 도 함께 바인딩. */
 export async function getOrgVaccineLookups(): Promise<VaccineLookups> {
-  const data = await getOrgVaccineData()
-  return createVaccineLookups(data)
+  const [data, defaults] = await Promise.all([getOrgVaccineData(), getOrgVaccineDefaults()])
+  return createVaccineLookups(data, defaults)
 }
+
+/** active org 의 vaccine defaults — 같은 요청 내에서 cache. */
+export const getOrgVaccineDefaults = cache(async (): Promise<VaccineDefaults> => {
+  return loadVaccineDefaults()
+})

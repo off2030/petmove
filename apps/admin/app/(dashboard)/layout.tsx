@@ -8,7 +8,7 @@ import { loadImportReportCountries, loadImportReportButtonCountries } from '@/li
 import { loadInspectionConfig } from '@/lib/inspection-config'
 import { loadCertConfig } from '@/lib/cert-config'
 import { loadExternalLinks } from '@/lib/external-links'
-import { getOrgVaccineData } from '@/lib/vaccine-data'
+import { getOrgVaccineData, getOrgVaccineDefaults } from '@/lib/vaccine-data'
 import { getCalculatorItems } from '@/lib/calculator-data'
 import { getSettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 import { getActiveOrgId, getImpersonationInfo } from '@/lib/supabase/active-org'
@@ -86,7 +86,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [initialCases, fieldDefs, importReportCountries, importReportButtonCountries, inspectionConfig, certConfig, userCtx, vaccineData, calculatorItems, settingsBootstrap, orgId, impersonation, externalLinks, convsR] = await Promise.all([
+  const [initialCases, fieldDefs, importReportCountries, importReportButtonCountries, inspectionConfig, certConfig, userCtx, vaccineData, vaccineDefaults, calculatorItems, settingsBootstrap, orgId, impersonation, externalLinks, convsR] = await Promise.all([
     fetchAllCases(),
     fetchFieldDefs(),
     loadImportReportCountries(),
@@ -95,6 +95,7 @@ export default async function DashboardLayout({
     loadCertConfig(),
     fetchUserContext(),
     getOrgVaccineData(),
+    getOrgVaccineDefaults(),
     getCalculatorItems(),
     getSettingsBootstrap().catch(() => null),
     getActiveOrgId().catch(() => null),
@@ -126,7 +127,7 @@ export default async function DashboardLayout({
       initialCertConfig={certConfig}
       orgId={orgId}
     >
-      <VaccineDataProvider data={vaccineData}>
+      <VaccineDataProvider data={vaccineData} defaults={vaccineDefaults}>
         <CalculatorDataProvider initialItems={calculatorItems}>
           <DashboardShell
             isSuperAdmin={userCtx.isSuperAdmin}

@@ -133,8 +133,17 @@ export function getParasiteFamily(id: string): ParasiteFamily | null {
   return PARASITE_FAMILIES.find(p => p.id === id) ?? null
 }
 
-/** Families applicable to a (species, kind) — defaults + combo (combo applies to both kinds). */
-export function listParasiteFamilies(species: 'dog' | 'cat', kind: 'external' | 'internal'): ParasiteFamily[] {
+/**
+ * Families applicable to a (species, kind) — defaults + combo (combo applies to both kinds).
+ *
+ * 'heartworm' 탭은 콤보 제품 (NexGard Spectra / NexGard Cat Combo) 만 노출.
+ * 단일 heartworm 제품 (Heartgard Plus 등) 은 PARASITE_FAMILIES 에 등록돼 있지 않아도
+ * heartworm_* 카탈로그의 weight 매칭 fallback (lookupHeartworm) 으로 default 자동 표시됨.
+ */
+export function listParasiteFamilies(species: 'dog' | 'cat', kind: 'external' | 'internal' | 'heartworm'): ParasiteFamily[] {
+  if (kind === 'heartworm') {
+    return PARASITE_FAMILIES.filter(p => p.species === species && p.kind === 'combo')
+  }
   return PARASITE_FAMILIES.filter(p =>
     p.species === species && (p.kind === kind || p.kind === 'combo')
   )
@@ -193,6 +202,28 @@ function isOtherVaccineCategory(category: string): boolean {
 
 // ─── Factory: org-scoped lookup bundle ───
 
+/**
+ * 약품관리 — 기본 약품 설정. 케이스 상세 외부/내부/심장사상충 row 에 날짜만
+ * 입력했을 때 자동 채울 브랜드명을 (kind, species) 별로 지정.
+ *
+ * 값은 catalog row 의 product/vaccine 필드와 brand-normalized 매칭됨
+ * (trailing `(...)` 성분 표기는 매칭 시 무시).
+ */
+export interface VaccineDefaults {
+  external_dog?: string
+  external_cat?: string
+  internal_dog?: string
+  internal_cat?: string
+  heartworm_dog?: string
+  heartworm_cat?: string
+}
+
+/** Catalog product/vaccine 이름에서 trailing 괄호 (성분·용량 표기) 제거. */
+function brandKey(name: string | undefined | null): string {
+  if (!name) return ''
+  return name.replace(/\s*\([^)]*\)\s*$/, '').trim().toLowerCase()
+}
+
 export interface VaccineLookups {
   lookupRabies: (vaccinationDate: string) => RabiesLookupResult | null
   lookupComprehensive: (species: 'dog' | 'cat', vaccinationDate: string) => VaccineProduct | null
@@ -208,7 +239,7 @@ export interface VaccineLookups {
   countExpiringProducts: (now?: Date) => number
 }
 
-export function createVaccineLookups(data: VaccineProductsData): VaccineLookups {
+export function createVaccineLookups(data: VaccineProductsData, defaults: VaccineDefaults = {}): VaccineLookups {
   function lookupByDateRange(list: VaccineProduct[], vaccinationDate: string): VaccineProduct | null {
     if (!vaccinationDate) return null
     const candidates = list
@@ -286,13 +317,42 @@ export function createVaccineLookups(data: VaccineProductsData): VaccineLookups 
     return data.kennel_cough[0] ?? null
   }
 
+  /**
+   * 카탈로그 list 와 콤보 list 에서 디폴트 브랜드명 매칭되는 entry 를 우선 시도.
+   * 디폴트 매칭 실패 시 strict list 만으로 weight fallback.
+   *
+   * 콤보 카테고리도 옵션에 포함하는 이유: 사용자가 "외부구충 디폴트" 로 NexGard
+   * Spectra 같은 콤보 제품을 지정할 수 있게 함.
+   */
+  function lookupParasiteWithDefault(
+    strictList: VaccineProduct[],
+    comboList: VaccineProduct[],
+    defaultName: string | undefined,
+    vaccinationDate: string,
+    weightKg: number,
+  ): VaccineProduct | null {
+    if (defaultName) {
+      const target = brandKey(defaultName)
+      const candidates = [...strictList, ...comboList].filter(
+        p => brandKey(p.product) === target || brandKey(p.vaccine) === target,
+      )
+      if (candidates.length > 0) {
+        const match = lookupByWeightAndDate(candidates, vaccinationDate, weightKg)
+        if (match) return match
+      }
+    }
+    return lookupByWeightAndDate(strictList, vaccinationDate, weightKg)
+  }
+
   function lookupExternalParasite(
     species: 'dog' | 'cat',
     vaccinationDate: string,
     weightKg = 0,
   ): VaccineProduct | null {
-    const list = species === 'dog' ? data.parasite_external_dog : data.parasite_external_cat
-    return lookupByWeightAndDate(list, vaccinationDate, weightKg)
+    const strict = species === 'dog' ? data.parasite_external_dog : data.parasite_external_cat
+    const combo = species === 'dog' ? data.parasite_combo_dog : data.parasite_combo_cat
+    const def = species === 'dog' ? defaults.external_dog : defaults.external_cat
+    return lookupParasiteWithDefault(strict, combo, def, vaccinationDate, weightKg)
   }
 
   function lookupInternalParasite(
@@ -300,8 +360,13 @@ export function createVaccineLookups(data: VaccineProductsData): VaccineLookups 
     vaccinationDate: string,
     weightKg = 0,
   ): VaccineProduct | null {
-    const list = species === 'dog' ? data.parasite_internal_dog : data.parasite_internal_cat
-    return lookupByWeightAndDate(list, vaccinationDate, weightKg)
+    // 내부구충은 `parasite_internal_dog` 가 강아지·고양이 공용 catch-all 풀 (CATEGORY_META
+    // species='common'). `parasite_internal_cat` 는 거의 안 쓰임. 양쪽 species 모두 두 풀
+    // 합쳐서 검색해야 Drontal Plus 같은 공용 제품이 고양이 케이스에도 잡힘.
+    const strict = [...data.parasite_internal_dog, ...data.parasite_internal_cat]
+    const combo = species === 'dog' ? data.parasite_combo_dog : data.parasite_combo_cat
+    const def = species === 'dog' ? defaults.internal_dog : defaults.internal_cat
+    return lookupParasiteWithDefault(strict, combo, def, vaccinationDate, weightKg)
   }
 
   function lookupParasiteCombo(species: 'dog' | 'cat', weightKg: number): VaccineProduct | null {
@@ -315,11 +380,27 @@ export function createVaccineLookups(data: VaccineProductsData): VaccineLookups 
 
   function lookupHeartworm(species: 'dog' | 'cat', weightKg: number): VaccineProduct | null {
     if (!weightKg || weightKg <= 0) return null
-    const list = species === 'dog' ? data.heartworm_dog : data.heartworm_cat
-    return list.find(p =>
+    const strict = species === 'dog' ? data.heartworm_dog : data.heartworm_cat
+    const combo = species === 'dog' ? data.parasite_combo_dog : data.parasite_combo_cat
+    const def = species === 'dog' ? defaults.heartworm_dog : defaults.heartworm_cat
+    if (def) {
+      const target = brandKey(def)
+      const candidates = [...strict, ...combo].filter(
+        p => brandKey(p.product) === target || brandKey(p.vaccine) === target,
+      )
+      const match = candidates.find(p =>
+        (p.weightMin === undefined || weightKg >= p.weightMin) &&
+        (p.weightMax === undefined || weightKg <= p.weightMax),
+      )
+      if (match) return match
+    }
+    const direct = strict.find(p =>
       (p.weightMin === undefined || weightKg >= p.weightMin) &&
-      (p.weightMax === undefined || weightKg <= p.weightMax)
+      (p.weightMax === undefined || weightKg <= p.weightMax),
     ) ?? null
+    if (direct) return direct
+    // 디폴트도 strict 카탈로그도 매치 안되면 콤보로 fallback (heartworm_cat=[] 시드 대응).
+    return lookupParasiteCombo(species, weightKg)
   }
 
   function lookupParasiteById(id: string, ctx: { date?: string; weightKg?: number }): VaccineProduct | null {

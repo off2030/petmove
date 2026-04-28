@@ -19,6 +19,10 @@ import {
 import { extractVaccineInfo } from '@/lib/actions/extract-vaccine'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { useConfirm } from '@/components/ui/confirm-dialog'
+import { cn } from '@/lib/utils'
+import { useVaccineDefaults } from '@/components/providers/vaccine-data-provider'
+import { updateVaccineDefault } from '@/lib/actions/vaccine-defaults'
+import type { VaccineDefaults } from '@petmove/domain'
 
 type ProductSection = '접종' | '구충'
 type ProductSpecies = 'common' | 'dog' | 'cat'
@@ -473,6 +477,10 @@ export function VaccineSection({
 
 
 
+      {!loading && isAdmin && (
+        <DefaultsSection products={products} />
+      )}
+
       {loading ? (
         <p className="font-serif italic text-[14px] text-muted-foreground">불러오는 중…</p>
       ) : (
@@ -515,10 +523,24 @@ export function VaccineSection({
                       list.map((p) => {
                         const status = getExpiryStatus(p.expiry)
                         const daysLeft = daysUntilExpiry(p.expiry)
+                        const rowClickable = isAdmin
                         return (
                           <div
                             key={p.id}
-                            className="grid gap-md items-center py-2 border-b border-dotted border-border/80 hover:bg-accent transition-colors"
+                            role={rowClickable ? 'button' : undefined}
+                            tabIndex={rowClickable ? 0 : undefined}
+                            onClick={rowClickable ? () => setEditing({ mode: 'edit', id: p.id, initial: toFormState(p) }) : undefined}
+                            onKeyDown={rowClickable ? (e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                setEditing({ mode: 'edit', id: p.id, initial: toFormState(p) })
+                              }
+                            } : undefined}
+                            title={rowClickable ? '클릭하여 수정·삭제' : undefined}
+                            className={cn(
+                              'grid gap-md items-center py-2 border-b border-dotted border-border/80 hover:bg-accent transition-colors',
+                              rowClickable && 'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 rounded-sm',
+                            )}
                             style={{ gridTemplateColumns: gridCols }}
                           >
                             <div className="font-serif text-[15px] truncate" style={{ color: 'var(--pmw-near-black)' }}>
@@ -939,5 +961,91 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="pmw-st__field-label">{label}</span>
       {children}
     </label>
+  )
+}
+
+/**
+ * 카테고리 product/vaccine 이름에서 trailing 괄호 제거 = "브랜드 키".
+ * 같은 브랜드의 weight-tier batch 들을 하나로 묶기 위함.
+ */
+function brandLabel(p: OrgVaccineProduct): string {
+  const raw = (p.vaccine || p.product || '').trim()
+  return raw.replace(/\s*\([^)]*\)\s*$/, '').trim()
+}
+
+// 내부구충은 `parasite_internal_dog` 가 강아지·고양이 공용 catch-all (CATEGORY_META species='common').
+// 그래서 internal_cat 슬롯도 dog 카테고리에 등록된 공용 약품 (Drontal Plus 등) 을 옵션에 노출.
+const DEFAULT_SLOTS: { key: keyof VaccineDefaults; label: string; species: 'dog' | 'cat'; categories: string[] }[] = [
+  { key: 'external_dog',  label: '외부구충 (강아지)',  species: 'dog', categories: ['parasite_external_dog', 'parasite_combo_dog'] },
+  { key: 'external_cat',  label: '외부구충 (고양이)',  species: 'cat', categories: ['parasite_external_cat', 'parasite_combo_cat'] },
+  { key: 'internal_dog',  label: '내부구충 (강아지)',  species: 'dog', categories: ['parasite_internal_dog', 'parasite_internal_cat', 'parasite_combo_dog'] },
+  { key: 'internal_cat',  label: '내부구충 (고양이)',  species: 'cat', categories: ['parasite_internal_dog', 'parasite_internal_cat', 'parasite_combo_cat'] },
+  { key: 'heartworm_dog', label: '심장사상충 (강아지)', species: 'dog', categories: ['heartworm_dog', 'parasite_combo_dog'] },
+  { key: 'heartworm_cat', label: '심장사상충 (고양이)', species: 'cat', categories: ['heartworm_cat', 'parasite_combo_cat'] },
+]
+
+/**
+ * 디폴트 약품 설정 — 외/내/심장사상충 × 강아지/고양이 6 슬롯.
+ * 케이스 상세에서 날짜만 입력했을 때 자동 채워질 브랜드를 지정.
+ * 옵션 = 그 슬롯에 적용 가능한 카테고리 (strict + combo) 에 등록된 unique 브랜드.
+ */
+function DefaultsSection({ products }: { products: OrgVaccineProduct[] }) {
+  const initial = useVaccineDefaults()
+  const [values, setValues] = useState<VaccineDefaults>(initial)
+  const [savingKey, setSavingKey] = useState<keyof VaccineDefaults | null>(null)
+  const [msg, setMsg] = useState<string | null>(null)
+
+  // initial 이 layout HMR 등으로 갱신되면 sync.
+  useEffect(() => { setValues(initial) }, [initial])
+
+  async function handleChange(key: keyof VaccineDefaults, raw: string) {
+    const next = raw || undefined
+    setValues((s) => ({ ...s, [key]: next }))
+    setSavingKey(key)
+    const r = await updateVaccineDefault({ [key]: next ?? '' } as Partial<VaccineDefaults>)
+    setSavingKey(null)
+    if (!r.ok) {
+      setMsg(`저장 실패: ${r.error}`)
+      setValues(initial)
+    } else {
+      setMsg(null)
+    }
+  }
+
+  return (
+    <section className="mb-xl border-b border-border/80 pb-lg">
+      <div className="mb-2 flex items-baseline gap-sm">
+        <h3 className="font-serif text-[17px] text-foreground">기본 약품</h3>
+        <span className="pmw-st__sec-lead">상세페이지에서 날짜 입력 시 자동 채움</span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-lg gap-y-2">
+        {DEFAULT_SLOTS.map((slot) => {
+          const matching = products.filter((p) => slot.categories.includes(p.category))
+          const brands = Array.from(new Set(matching.map(brandLabel).filter(Boolean))).sort()
+          const current = values[slot.key] ?? ''
+          return (
+            <div key={slot.key} className="flex items-baseline gap-sm">
+              <span className="font-serif text-[14px] text-muted-foreground/80 w-[140px] shrink-0">{slot.label}</span>
+              <select
+                value={current}
+                onChange={(e) => handleChange(slot.key, e.target.value)}
+                disabled={savingKey === slot.key}
+                className="flex-1 px-sm py-1 text-sm rounded-md border border-border/80 bg-background disabled:opacity-50"
+              >
+                <option value="">(미지정)</option>
+                {brands.map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+                {/* 현재 저장된 값이 옵션에 없으면 (카탈로그에서 삭제된 경우) 그래도 표시 */}
+                {current && !brands.includes(current) && (
+                  <option value={current}>{current} (등록 안 됨)</option>
+                )}
+              </select>
+            </div>
+          )
+        })}
+      </div>
+      {msg && <p className="mt-2 font-serif text-[12px] text-destructive">{msg}</p>}
+    </section>
   )
 }

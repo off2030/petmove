@@ -40,16 +40,39 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['일본', 'japan'],
     extraSection: 'japan',
   },
+  // Tapeworm 6개국: 영국·아일랜드·몰타·북아일랜드·노르웨이·핀란드.
+  // EU/EEA 입국 시 출국 24-120시간 전 praziquantel 류 촌충약 필수 (EU Reg 2018/772).
+  // → 상세페이지에 내부구충 기본 표시. eu 보다 먼저 매칭되어야 하므로 위에 둠.
+  ireland: {
+    keywords: ['아일랜드', 'ireland'],
+    vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
+    extraFields: ['address_overseas'],
+  },
+  malta: {
+    keywords: ['몰타', 'malta'],
+    vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
+    extraFields: ['address_overseas'],
+  },
+  norway: {
+    keywords: ['노르웨이', 'norway'],
+    vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
+    extraFields: ['address_overseas'],
+  },
+  finland: {
+    keywords: ['핀란드', 'finland'],
+    vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
+    extraFields: ['address_overseas'],
+  },
   eu: {
     keywords: [
       '유럽연합', '프랑스', '독일', '이탈리아', '스페인', '네덜란드', '벨기에', '오스트리아',
       '스웨덴', '덴마크', '폴란드', '체코', '포르투갈', '그리스',
-      '헝가리', '아일랜드', '루마니아', '불가리아', '크로아티아', '슬로바키아',
-      '슬로베니아', '리투아니아', '라트비아', '에스토니아', '룩셈부르크', '키프로스', '몰타',
+      '헝가리', '루마니아', '불가리아', '크로아티아', '슬로바키아',
+      '슬로베니아', '리투아니아', '라트비아', '에스토니아', '룩셈부르크', '키프로스',
       'france', 'germany', 'italy', 'spain', 'netherlands', 'belgium', 'austria',
       'sweden', 'denmark', 'poland', 'czech', 'portugal', 'greece',
-      'hungary', 'ireland', 'romania', 'bulgaria', 'croatia', 'slovakia',
-      'slovenia', 'lithuania', 'latvia', 'estonia', 'luxembourg', 'cyprus', 'malta',
+      'hungary', 'romania', 'bulgaria', 'croatia', 'slovakia',
+      'slovenia', 'lithuania', 'latvia', 'estonia', 'luxembourg', 'cyprus',
       'eu',
     ],
     extraFields: ['address_overseas'],
@@ -60,7 +83,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     extraSection: 'switzerland',
   },
   uk: {
-    keywords: ['영국', 'uk', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland'],
+    keywords: ['영국', '북아일랜드', 'uk', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland'],
+    vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
     extraSection: 'uk',
   },
   australia: {

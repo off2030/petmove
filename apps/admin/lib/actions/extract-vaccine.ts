@@ -76,10 +76,10 @@ CORRECT output:
 {
   "date": null,
   "valid_until": null,
-  "expiry": "2027-05-01",
+  "expiry": "2027-05-31",
   "product": "Rabisin", "manufacturer": "Boehringer Ingelheim", "lot": "G98321"
 }
-(expiry "2027-05" → "2027-05-01" conservative day=01 when only month is given)
+(expiry "2027-05" → "2027-05-31" — pharma convention: month-only EXP means valid through the LAST day of that month. Use that month's last day: Jan/Mar/May/Jul/Aug/Oct/Dec=31, Apr/Jun/Sep/Nov=30, Feb=28 or 29 in leap years.)
 
 EXAMPLE 3 — Sticker with both vaccination date and explicit EXP:
 Image shows: "Injected: 2024-03-15 | EXP: 2026-12-31 | Product: X | Mfg: Y"
@@ -155,6 +155,7 @@ Never duplicate the same date across multiple fields.
 
 Other rules:
 - Convert all date formats to YYYY-MM-DD (e.g. "05 JUL 26" → "2026-07-05").
+- For "expiry" specifically: when the label shows only month + year (no day), use the LAST day of that month (pharma standard: month-only EXP means valid through end of month). Examples: "EXP 2027-05" → "2027-05-31"; "EXP 03/2026" → "2026-03-31"; "EXP FEB 2027" → "2027-02-28". This rule applies ONLY to "expiry", NOT to "date" or "valid_until".
 - "product" = full product name on the label (Korean or English).
 - If the input is not vaccine/parasiticide related, return all nulls.
 - Return ONLY valid JSON, no markdown, no explanation.`
