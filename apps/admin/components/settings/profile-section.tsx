@@ -1,10 +1,47 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { getMyProfile, updateMyProfile, type MyProfile } from '@/lib/actions/profile'
 import { updateMyDmVisibility } from '@/lib/actions/chat'
 import { SectionHeader } from '@/components/ui/section-header'
+import { Avatar, avatarInitial } from '@/components/ui/avatar'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 import { cn } from '@/lib/utils'
+
+const AVATAR_MAX_BYTES = 20 * 1024 * 1024
+const AVATAR_ACCEPT = 'image/png,image/jpeg,image/webp,image/gif'
+const AVATAR_TARGET_PX = 512
+const AVATAR_JPEG_QUALITY = 0.9
+
+async function resizeAvatar(file: File): Promise<Blob> {
+  const url = URL.createObjectURL(file)
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image()
+      el.onload = () => resolve(el)
+      el.onerror = () => reject(new Error('이미지를 읽을 수 없습니다.'))
+      el.src = url
+    })
+    const side = Math.min(img.naturalWidth, img.naturalHeight)
+    const sx = (img.naturalWidth - side) / 2
+    const sy = (img.naturalHeight - side) / 2
+    const canvas = document.createElement('canvas')
+    canvas.width = AVATAR_TARGET_PX
+    canvas.height = AVATAR_TARGET_PX
+    const ctx = canvas.getContext('2d')
+    if (!ctx) throw new Error('Canvas 2D 미지원 브라우저')
+    ctx.drawImage(img, sx, sy, side, side, 0, 0, AVATAR_TARGET_PX, AVATAR_TARGET_PX)
+    return await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error('이미지 변환 실패'))),
+        'image/jpeg',
+        AVATAR_JPEG_QUALITY,
+      )
+    })
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
 
 function formatSavedAgo(date: Date | null): string {
   if (!date) return ''
@@ -98,6 +135,15 @@ export function ProfileSection({
       <section className="mb-xl">
         <SectionLabel>Account</SectionLabel>
         <div className="border-t border-border/80">
+          {/* Avatar */}
+          <AvatarRow
+            profile={profile}
+            onChange={(url) =>
+              setProfile((p) => (p ? { ...p, avatar_url: url } : p))
+            }
+            onSaved={() => setLastSaved(new Date())}
+            onError={(msg) => setError(msg)}
+          />
           {/* Name (editable) */}
           <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
             <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
@@ -190,6 +236,148 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
       <span className="font-mono text-[11px] tracking-[1.8px] uppercase text-muted-foreground/70">
         {children}
       </span>
+    </div>
+  )
+}
+
+function AvatarRow({
+  profile,
+  onChange,
+  onSaved,
+  onError,
+}: {
+  profile: MyProfile
+  onChange: (url: string | null) => void
+  onSaved: () => void
+  onError: (msg: string | null) => void
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [, startTransition] = useTransition()
+
+  const label = avatarInitial(profile.name || profile.email || '?')
+
+  function pickFile() {
+    fileInputRef.current?.click()
+  }
+
+  async function handleFile(file: File) {
+    if (file.size > AVATAR_MAX_BYTES) {
+      onError(`파일이 너무 큽니다 (최대 20MB). 현재 ${(file.size / 1024 / 1024).toFixed(1)}MB`)
+      return
+    }
+    setBusy(true)
+    onError(null)
+    try {
+      let blob: Blob
+      try {
+        blob = await resizeAvatar(file)
+      } catch (e) {
+        onError(`이미지 처리 실패: ${e instanceof Error ? e.message : String(e)}`)
+        return
+      }
+      const path = `${profile.id}/${crypto.randomUUID()}.jpg`
+      const up = await supabaseBrowser.storage
+        .from('user-avatars')
+        .upload(path, blob, { cacheControl: '3600', upsert: false, contentType: 'image/jpeg' })
+      if (up.error) {
+        onError(`업로드 실패: ${up.error.message}`)
+        return
+      }
+      const { data: pub } = supabaseBrowser.storage.from('user-avatars').getPublicUrl(path)
+      const publicUrl = pub.publicUrl
+      const oldUrl = profile.avatar_url
+      const r = await updateMyProfile({ avatar_url: publicUrl })
+      if (!r.ok) {
+        onError(r.error)
+        await supabaseBrowser.storage.from('user-avatars').remove([path])
+        return
+      }
+      onChange(publicUrl)
+      onSaved()
+      // 이전 파일 정리 (실패해도 무시)
+      if (oldUrl) {
+        const oldPath = oldUrl.split('/user-avatars/')[1]
+        if (oldPath) await supabaseBrowser.storage.from('user-avatars').remove([oldPath])
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function handleRemove() {
+    const oldUrl = profile.avatar_url
+    if (!oldUrl) return
+    setBusy(true)
+    onError(null)
+    startTransition(async () => {
+      const r = await updateMyProfile({ avatar_url: null })
+      setBusy(false)
+      if (!r.ok) {
+        onError(r.error)
+        return
+      }
+      onChange(null)
+      onSaved()
+      const oldPath = oldUrl.split('/user-avatars/')[1]
+      if (oldPath) await supabaseBrowser.storage.from('user-avatars').remove([oldPath])
+    })
+  }
+
+  return (
+    <div className="grid grid-cols-[150px_1fr] items-center gap-md py-3 border-b border-dotted border-border/80">
+      <label className="font-serif text-[13px] text-muted-foreground leading-none">
+        프로필 이미지
+      </label>
+      <div className="flex items-center gap-md">
+        <div className="relative">
+          <Avatar
+            label={label}
+            imageUrl={profile.avatar_url}
+            size="md"
+          />
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={AVATAR_ACCEPT}
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0]
+            if (f) void handleFile(f)
+            e.target.value = ''
+          }}
+        />
+        <button
+          type="button"
+          onClick={pickFile}
+          disabled={busy}
+          className={cn(
+            'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
+            'border-border/80 text-foreground hover:bg-muted/40',
+            busy && 'opacity-60',
+          )}
+        >
+          {profile.avatar_url ? '이미지 변경' : '이미지 업로드'}
+        </button>
+        {profile.avatar_url && (
+          <button
+            type="button"
+            onClick={handleRemove}
+            disabled={busy}
+            className={cn(
+              'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
+              'border-border/80 text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40',
+              busy && 'opacity-60',
+            )}
+          >
+            제거
+          </button>
+        )}
+        <span className="font-serif italic text-[12px] text-muted-foreground/70">
+          PNG · JPG · WebP · GIF · 자동 512px 리사이즈
+        </span>
+      </div>
     </div>
   )
 }

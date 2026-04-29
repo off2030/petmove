@@ -15,6 +15,7 @@ import {
 } from 'react'
 import {
   Bookmark,
+  Check,
   Menu,
   MessageSquarePlus,
   Paperclip,
@@ -182,14 +183,16 @@ export function MessagesApp({
 
   return (
     <PageShell title="메시지">
-      <div className="h-full mx-lg flex flex-row min-h-0 border border-border/80 rounded-lg overflow-hidden bg-card">
-        <InboxListPane
-          items={conversations}
-          activeId={activeId}
-          onSelect={onSelect}
-          onNewConv={() => setShowNewConv(true)}
-        />
-        <div className="flex-1 min-w-0 min-h-0 flex flex-col border-l border-border/80 bg-popover">
+      <div className="h-full mx-lg flex flex-row min-h-0 gap-md">
+        <div className="shrink-0 min-h-0 flex flex-col border border-border/80 rounded-lg overflow-hidden bg-[var(--pmw-sage-paper)]">
+          <InboxListPane
+            items={conversations}
+            activeId={activeId}
+            onSelect={onSelect}
+            onNewConv={() => setShowNewConv(true)}
+          />
+        </div>
+        <div className="flex-1 min-w-0 min-h-0 flex flex-col border border-border/80 rounded-lg overflow-hidden bg-[var(--pmw-sage-paper)]">
           {activeConv ? (
             <ThreadPane
               key={activeConv.id}
@@ -309,7 +312,7 @@ function InboxListPane({
   }, [items, query])
 
   return (
-    <aside className="w-[280px] shrink-0 flex flex-col min-h-0 bg-popover">
+    <aside className="w-[280px] shrink-0 flex flex-col min-h-0">
       <div className="shrink-0 px-md py-sm min-h-[60px] flex items-center justify-between">
         <h2 className="font-serif text-[18px] font-semibold text-foreground">채팅</h2>
         <div className="flex items-center gap-0.5">
@@ -389,17 +392,20 @@ function ConversationRow({
   const isGroup = conv.participants.length >= 2
   const subtitle = isGroup ? null : conv.participants[0]?.org_name ?? null
   const avatarLabel = avatarInitial(displayName || '?')
+  const avatarImage = isGroup ? null : conv.participants[0]?.avatar_url ?? null
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
         'w-full text-left px-md py-sm border-b border-border/40 transition-colors flex items-center gap-sm',
-        active ? 'bg-accent/70' : 'hover:bg-accent/40',
+        active
+          ? 'bg-[var(--pmw-sage-soft)]'
+          : 'hover:bg-[var(--pmw-sage-soft)]/50',
       )}
     >
       <span className="shrink-0">
-        <Avatar label={avatarLabel} />
+        <Avatar label={avatarLabel} imageUrl={avatarImage} tone="sage" />
       </span>
       <span className="flex-1 min-w-0">
         <span className="block font-serif text-[15px] text-foreground truncate leading-normal">
@@ -908,6 +914,7 @@ function ThreadPane({
   const otherHasRealName = !!(other?.name && other.name.trim() && other.name !== other.email)
   const otherDisplayName = otherHasRealName ? (other?.name ?? '') : (other?.email ?? '')
   const headerAvatarLabel = avatarInitial(isGroup ? headerTitle : otherDisplayName || '?')
+  const headerAvatarImage = isGroup ? null : other?.avatar_url ?? null
   const headerSubtitle = isGroup ? `${totalCount}명` : other?.org_name ?? null
 
   const readsByUser = useMemo(() => {
@@ -1024,9 +1031,9 @@ function ThreadPane({
 
   return (
     <>
-      <div className="shrink-0 px-md py-sm min-h-[60px] flex items-center justify-between gap-md bg-white border-b border-border/80">
+      <div className="shrink-0 px-md py-sm min-h-[60px] flex items-center justify-between gap-md border-b border-[var(--pmw-border-warm)]">
         <div className="min-w-0 flex items-center gap-sm">
-          <Avatar label={headerAvatarLabel} />
+          <Avatar label={headerAvatarLabel} imageUrl={headerAvatarImage} tone="sage" />
           {editingName ? (
             <input
               autoFocus
@@ -1170,7 +1177,7 @@ function ThreadPane({
       </div>
 
       {showSearch && (
-        <div className="shrink-0 border-b border-border/80 bg-white">
+        <div className="shrink-0 border-b border-[var(--pmw-border-warm)]">
           <div className="flex items-center gap-sm px-md py-sm">
             <Search size={14} className="shrink-0 text-muted-foreground" />
             <input
@@ -1276,7 +1283,7 @@ function ThreadPane({
         <div className="flex-1 min-w-0 min-h-0 flex flex-col">
           <div
             ref={scrollRef}
-            className="flex-1 min-h-0 overflow-y-auto scrollbar-minimal px-md py-md bg-white"
+            className="flex-1 min-h-0 overflow-y-auto scrollbar-minimal px-md py-md"
           >
             {loading ? (
               <div className="text-center text-muted-foreground/70 text-[13px] py-md">
@@ -1359,7 +1366,7 @@ function ThreadPane({
                     key={p.user_id}
                     className="group/member px-md py-2 border-b border-border/30 flex items-center gap-sm last:border-b-0"
                   >
-                    <Avatar size="sm" label={avatarInitial(displayName)} />
+                    <Avatar size="sm" label={avatarInitial(displayName)} imageUrl={p.avatar_url} tone="sage" />
                     <div className="min-w-0 flex-1">
                       <div className="text-[13px] font-serif text-foreground truncate leading-tight">
                         {displayName}
@@ -1444,6 +1451,11 @@ function MessageItem({
     )
   }
   const unreadByOthers = isOwn && isGroup && memberCount > 0 ? memberCount - readCount : 0
+  const showRead =
+    isOwn &&
+    ((!isGroup && isReadByOther) ||
+      (isGroup && memberCount > 0 && unreadByOthers === 0))
+  const groupUnreadBadge = isOwn && isGroup && unreadByOthers > 0 ? unreadByOthers : null
   return (
     <li
       id={`msg-${msg.id}`}
@@ -1453,17 +1465,22 @@ function MessageItem({
       )}
     >
       {showSender && !isOwn && (
-        <span className="text-[11px] text-muted-foreground/70 px-sm mb-0.5">
+        <span className="text-[12px] text-muted-foreground/70 mb-1">
           {msg.sender_name ?? '(탈퇴한 사용자)'}
         </span>
       )}
-      <div className={cn('flex items-end gap-1 w-full', isOwn && 'flex-row-reverse')}>
+      <div
+        className={cn(
+          'flex items-end gap-1.5 max-w-full',
+          isOwn && 'flex-row-reverse',
+        )}
+      >
         <div
           className={cn(
-            'max-w-[70%] rounded-lg px-sm py-1.5',
+            'max-w-[70%] rounded-2xl px-3 py-1.5',
             isOwn
-              ? 'bg-[var(--pmw-clay-soft)] text-foreground'
-              : 'bg-popover text-foreground border border-border/80',
+              ? 'bg-[var(--pmw-clay-soft)] dark:bg-[#252527] text-foreground'
+              : 'bg-[var(--pmw-sage-soft)] text-foreground',
           )}
         >
           {msg.content && (
@@ -1482,7 +1499,29 @@ function MessageItem({
             </a>
           )}
         </div>
-        <div className="shrink-0 inline-flex items-center gap-0.5">
+        <div
+          className={cn(
+            'shrink-0 flex items-center gap-1 pb-0.5 font-mono text-[10px] text-muted-foreground/60 whitespace-nowrap',
+            isOwn && 'flex-row-reverse',
+          )}
+        >
+          {isOwn && (
+            <Check
+              size={11}
+              strokeWidth={2.5}
+              className={cn(showRead ? 'text-muted-foreground/80' : 'text-muted-foreground/40')}
+            />
+          )}
+          {showRead && <span>읽음</span>}
+          {groupUnreadBadge !== null && <span>{groupUnreadBadge}</span>}
+          <span suppressHydrationWarning>{formatTime(msg.created_at)}</span>
+        </div>
+        <div
+          className={cn(
+            'shrink-0 inline-flex items-center gap-0.5 self-center',
+            isOwn && 'flex-row-reverse',
+          )}
+        >
           {onPin && !msg.deleted_at && (
             <button
               type="button"
@@ -1509,22 +1548,6 @@ function MessageItem({
             </button>
           )}
         </div>
-      </div>
-      <div
-        className={cn(
-          'flex items-center gap-1.5 px-sm mt-0.5 font-mono text-[10px] text-muted-foreground/50',
-        )}
-      >
-        {isOwn && !isGroup && isReadByOther && (
-          <span className="text-muted-foreground/70">읽음</span>
-        )}
-        {isOwn && isGroup && unreadByOthers > 0 && (
-          <span className="text-muted-foreground/70">{unreadByOthers}</span>
-        )}
-        {isOwn && isGroup && unreadByOthers === 0 && memberCount > 0 && (
-          <span className="text-muted-foreground/70">읽음</span>
-        )}
-        <span suppressHydrationWarning>{formatTime(msg.created_at)}</span>
       </div>
     </li>
   )
@@ -1621,9 +1644,9 @@ function Composer({
   }
 
   return (
-    <div className="shrink-0 bg-white border-t border-border/80 px-md pt-sm pb-md">
+    <div className="shrink-0 px-md pt-sm pb-md border-t border-[var(--pmw-border-warm)]">
       {attachment && (
-        <div className="mb-2 inline-flex items-center gap-1 rounded-md border border-border/80 bg-card pl-2 pr-1 py-1 text-[12px]">
+        <div className="mb-2 inline-flex items-center gap-1 rounded-full border border-border/80 bg-popover pl-2 pr-1 py-1 text-[12px]">
           <Paperclip size={12} className="text-muted-foreground" />
           <span className="truncate max-w-[240px]">{attachment.name}</span>
           <button
@@ -1646,53 +1669,50 @@ function Composer({
           e.target.value = ''
         }}
       />
-      <div className="flex items-center gap-sm">
+      <div className="flex items-end gap-1 rounded-full bg-popover border border-border/80 pl-1 pr-1 py-1">
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading || !!attachment}
           aria-label="파일 첨부"
           title="파일 첨부 (최대 25MB)"
-          className="shrink-0 h-9 w-9 inline-flex items-center justify-center rounded-full bg-popover border border-border/80 text-foreground hover:bg-accent transition-colors disabled:opacity-40"
+          className="shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40"
         >
-          <Paperclip size={18} />
+          <Paperclip size={16} />
         </button>
         <ScanButton
           disabled={uploading || !!attachment}
           title="스캔하여 첨부"
-          className="h-9 w-9 inline-flex items-center justify-center rounded-full bg-popover border border-border/80 text-foreground hover:bg-accent transition-colors disabled:opacity-40 p-0"
+          className="h-8 w-8 inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40 p-0"
           onScanned={(file) => handleFile(file)}
         />
-
-        <div className="flex-1 flex items-center gap-1 rounded-2xl bg-popover border border-border/80 px-md py-1.5">
-          <textarea
-            ref={taRef}
-            value={text}
-            onChange={(e) => {
-              setText(e.target.value)
-              onTextChange?.()
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-                e.preventDefault()
-                send()
-              }
-            }}
-            placeholder={uploading ? '업로드 중…' : '메시지 입력'}
-            rows={1}
-            disabled={uploading}
-            className="flex-1 resize-none bg-transparent text-[14px] text-foreground focus-visible:outline-none max-h-32 scrollbar-minimal disabled:opacity-60 placeholder:text-muted-foreground/60"
-          />
-          <button
-            type="button"
-            onClick={send}
-            disabled={pending || uploading || (!text.trim() && !attachment)}
-            className="shrink-0 inline-flex items-center justify-center h-7 w-7 rounded-full text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-colors disabled:opacity-40"
-            aria-label="전송"
-          >
-            <Send size={16} />
-          </button>
-        </div>
+        <textarea
+          ref={taRef}
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value)
+            onTextChange?.()
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+              e.preventDefault()
+              send()
+            }
+          }}
+          placeholder={uploading ? '업로드 중…' : '메시지 입력'}
+          rows={1}
+          disabled={uploading}
+          className="flex-1 resize-none bg-transparent px-1 py-1.5 text-[14px] text-foreground focus-visible:outline-none max-h-32 scrollbar-minimal disabled:opacity-60 placeholder:text-muted-foreground/60"
+        />
+        <button
+          type="button"
+          onClick={send}
+          disabled={pending || uploading || (!text.trim() && !attachment)}
+          className="shrink-0 inline-flex items-center justify-center h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40"
+          aria-label="전송"
+        >
+          <Send size={16} />
+        </button>
       </div>
     </div>
   )

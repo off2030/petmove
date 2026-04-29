@@ -29,7 +29,7 @@ function countryLabel(k: string): string {
 
 type SortKey = 'added' | 'title'
 
-export function VerificationSection() {
+export function VerificationSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) {
   const [sort, setSort] = useState<SortKey>('added')
   const [query, setQuery] = useState('')
   const [disabled, setDisabled] = useState<Set<string>>(() => new Set())
@@ -45,6 +45,7 @@ export function VerificationSection() {
   }, [])
 
   function toggleCheck(id: string) {
+    if (!isSuperAdmin) return
     const wasDisabled = disabled.has(id)
     // Optimistic update
     setDisabled((prev) => {
@@ -104,6 +105,7 @@ export function VerificationSection() {
         <SectionHeader>절차 검증</SectionHeader>
         <p className="pmw-st__sec-lead mt-2">
           국가·상황별 자동 검증 규칙. 케이스 저장 시 백그라운드로 실행됩니다.
+          {!isSuperAdmin && ' 변경은 슈퍼 관리자만 가능합니다.'}
         </p>
         {error && (
           <p className="mt-2 font-serif text-[13px] text-destructive">저장 실패: {error}</p>
@@ -155,9 +157,19 @@ export function VerificationSection() {
                   key={c.id}
                   type="button"
                   onClick={() => toggleCheck(c.id)}
-                  title={enabled ? '클릭하여 사용 안 함' : '클릭하여 다시 사용'}
+                  disabled={!isSuperAdmin}
+                  title={
+                    !isSuperAdmin
+                      ? '슈퍼 관리자만 변경 가능'
+                      : enabled
+                        ? '클릭하여 사용 안 함'
+                        : '클릭하여 다시 사용'
+                  }
                   className={cn(
-                    'w-full text-left grid grid-cols-[24px_1fr] items-start gap-md py-md border-b border-dotted border-border/80 hover:bg-accent transition-colors',
+                    'w-full text-left grid grid-cols-[24px_1fr] items-start gap-md py-md border-b border-dotted border-border/80 transition-colors',
+                    isSuperAdmin
+                      ? 'hover:bg-accent cursor-pointer'
+                      : 'cursor-default',
                   )}
                 >
                   <CheckBox checked={enabled} />

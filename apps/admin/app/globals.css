@@ -36,6 +36,8 @@
 
     /* Status (sage/amber/rust 3색 trio) */
     --pmw-sage: #5D6F4E;
+    --pmw-sage-soft: #D0D6C4;
+    --pmw-sage-paper: #EAECE4;
     --pmw-amber: #B97A1F;
     --pmw-rust: #A04321;
 
@@ -98,6 +100,8 @@
     --pmw-deep: #E0917A;
     --pmw-clay-soft: #3B2C24;
     --pmw-sage: #9FB38C;
+    --pmw-sage-soft: #3A3A3D;
+    --pmw-sage-paper: #1A1A1C;
     --pmw-amber: #D9A55F;
     --pmw-rust: #D47858;
     --pmw-border-warm: #3A3631;

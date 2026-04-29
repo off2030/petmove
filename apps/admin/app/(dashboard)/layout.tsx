@@ -61,7 +61,13 @@ async function fetchFieldDefs(): Promise<FieldDefinition[]> {
   return (data ?? []) as FieldDefinition[]
 }
 
-async function fetchUserContext(): Promise<{ isSuperAdmin: boolean; email: string | null; userId: string | null }> {
+async function fetchUserContext(): Promise<{
+  isSuperAdmin: boolean
+  email: string | null
+  userId: string | null
+  name: string | null
+  avatarUrl: string | null
+}> {
   const supabase = await createClient()
   // proxy.ts 가 이미 인증 게이트 통과시킨 상태지만, getUser() 가 stale refresh token
   // 으로 throw 할 수 있다 (Supabase SDK 내부 로깅 노이즈). 빈 ctx 로 폴백.
@@ -72,13 +78,19 @@ async function fetchUserContext(): Promise<{ isSuperAdmin: boolean; email: strin
   } catch {
     user = null
   }
-  if (!user) return { isSuperAdmin: false, email: null, userId: null }
+  if (!user) return { isSuperAdmin: false, email: null, userId: null, name: null, avatarUrl: null }
   const { data } = await supabase
     .from('profiles')
-    .select('is_super_admin')
+    .select('is_super_admin, name, avatar_url')
     .eq('id', user.id)
     .maybeSingle()
-  return { isSuperAdmin: !!data?.is_super_admin, email: user.email ?? null, userId: user.id }
+  return {
+    isSuperAdmin: !!data?.is_super_admin,
+    email: user.email ?? null,
+    userId: user.id,
+    name: (data?.name as string | null) ?? null,
+    avatarUrl: (data?.avatar_url as string | null) ?? null,
+  }
 }
 
 export default async function DashboardLayout({
@@ -132,6 +144,8 @@ export default async function DashboardLayout({
           <DashboardShell
             isSuperAdmin={userCtx.isSuperAdmin}
             userEmail={userCtx.email}
+            userName={userCtx.name}
+            userAvatarUrl={userCtx.avatarUrl}
             currentUserId={userCtx.userId}
             initialSettingsBootstrap={settingsBootstrap}
             initialOrgs={initialOrgs}

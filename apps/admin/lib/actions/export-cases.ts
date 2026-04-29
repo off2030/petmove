@@ -33,6 +33,16 @@ export async function exportCasesXlsx(): Promise<
 > {
   try {
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { ok: false, error: '인증 필요' }
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('is_super_admin')
+      .eq('id', user.id)
+      .maybeSingle()
+    if (!prof?.is_super_admin) {
+      return { ok: false, error: '데이터 내보내기는 슈퍼 관리자만 가능합니다.' }
+    }
     const orgId = await getActiveOrgId()
     const [casesRes, orgRes] = await Promise.all([
       supabase

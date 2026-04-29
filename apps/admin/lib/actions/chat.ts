@@ -20,6 +20,7 @@ export interface Participant {
   name: string | null
   email: string | null
   org_name: string | null
+  avatar_url: string | null
 }
 
 export interface ConversationListItem {
@@ -115,15 +116,22 @@ function normalizeName(input: string | null | undefined): string | null {
 }
 
 /** 사용자 ID 들의 프로필 + 조직명 매핑. admin client 로 RLS 우회. */
+type ParticipantInfo = {
+  name: string | null
+  email: string | null
+  org_name: string | null
+  avatar_url: string | null
+}
+
 async function loadParticipantInfo(
   userIds: string[],
-): Promise<Map<string, { name: string | null; email: string | null; org_name: string | null }>> {
-  const result = new Map<string, { name: string | null; email: string | null; org_name: string | null }>()
+): Promise<Map<string, ParticipantInfo>> {
+  const result = new Map<string, ParticipantInfo>()
   if (userIds.length === 0) return result
 
   const admin = createAdminClient()
   const [profsRes, memsRes] = await Promise.all([
-    admin.from('profiles').select('id, name, email').in('id', userIds),
+    admin.from('profiles').select('id, name, email, avatar_url').in('id', userIds),
     admin.from('memberships').select('user_id, org_id').in('user_id', userIds),
   ])
 
@@ -148,11 +156,13 @@ async function loadParticipantInfo(
       name: (p.name as string | null) ?? null,
       email: (p.email as string | null) ?? null,
       org_name: userOrgName.get(uid) ?? null,
+      avatar_url: (p.avatar_url as string | null) ?? null,
     })
   }
   // 프로필 없는 사용자도 빈 항목으로
   for (const uid of userIds) {
-    if (!result.has(uid)) result.set(uid, { name: null, email: null, org_name: null })
+    if (!result.has(uid))
+      result.set(uid, { name: null, email: null, org_name: null, avatar_url: null })
   }
   return result
 }
@@ -212,7 +222,7 @@ export async function listMyConversations(): Promise<Result<ConversationListItem
     const cid = p.conversation_id as string
     const uid = p.user_id as string
     if (uid === auth.userId) continue
-    const prof = profMap.get(uid) ?? { name: null, email: null, org_name: null }
+    const prof = profMap.get(uid) ?? { name: null, email: null, org_name: null, avatar_url: null }
     const list = partsByConv.get(cid) ?? []
     list.push({ user_id: uid, ...prof })
     partsByConv.set(cid, list)
@@ -362,7 +372,7 @@ export async function listConversationMessages(input: {
   const participants: Participant[] = memberUserIds
     .filter((uid) => uid !== auth.userId)
     .map((uid) => {
-      const prof = profMap.get(uid) ?? { name: null, email: null, org_name: null }
+      const prof = profMap.get(uid) ?? { name: null, email: null, org_name: null, avatar_url: null }
       return { user_id: uid, ...prof }
     })
 

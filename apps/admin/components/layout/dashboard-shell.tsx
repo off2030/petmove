@@ -11,6 +11,7 @@ import { CalculatorApp } from '@/components/calculator/calculator-app'
 import { MessagesApp } from '@/components/messages/messages-app'
 import { SuperAdminApp } from '@/components/super-admin/super-admin-app'
 import { clearImpersonation } from '@/lib/actions/super-admin'
+import { migrateMyOAuthAvatar } from '@/lib/actions/profile'
 import { listMyConversations } from '@/lib/actions/chat'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import type { SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
@@ -35,6 +36,8 @@ function pathToTab(pathname: string): TabId {
 export function DashboardShell({
   isSuperAdmin = false,
   userEmail,
+  userName = null,
+  userAvatarUrl = null,
   currentUserId = null,
   initialSettingsBootstrap = null,
   initialOrgs = [],
@@ -45,6 +48,8 @@ export function DashboardShell({
 }: {
   isSuperAdmin?: boolean
   userEmail?: string | null
+  userName?: string | null
+  userAvatarUrl?: string | null
   currentUserId?: string | null
   initialSettingsBootstrap?: SettingsBootstrap | null
   initialOrgs?: OrgSummary[]
@@ -59,6 +64,22 @@ export function DashboardShell({
   const [mounted, setMounted] = useState<Set<TabId>>(() => new Set([activeTab]))
   const [endingImpersonation, startEndImpersonation] = useTransition()
   const [conversations, setConversations] = useState<ConversationListItem[]>(initialConversations)
+  const [resolvedAvatarUrl, setResolvedAvatarUrl] = useState<string | null>(userAvatarUrl ?? null)
+
+  // OAuth 가입 시 박힌 외부 avatar URL(Google CDN 등)을 우리 user-avatars 버킷으로 이전.
+  // 이미 우리 버킷이거나 비어있으면 no-op. 한 번 성공하면 DB 가 우리 URL로 갱신되어 이후 무동작.
+  useEffect(() => {
+    if (!userAvatarUrl) return
+    if (userAvatarUrl.includes('/storage/v1/object/public/user-avatars/')) return
+    let alive = true
+    migrateMyOAuthAvatar()
+      .then((r) => {
+        if (!alive) return
+        if (r.ok) setResolvedAvatarUrl(r.avatar_url)
+      })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [userAvatarUrl])
 
   // Realtime — 통합 채팅 (1:1/그룹 같은 테이블).
   // RLS 가 postgres_changes 에 적용되므로 본인 참여 대화방 이벤트만 도달.
@@ -152,7 +173,7 @@ export function DashboardShell({
           </button>
         </div>
       )}
-      <TopBar activeTab={activeTab} onTabChange={handleTabChange} isSuperAdmin={isSuperAdmin} userEmail={userEmail} messagesUnread={messagesUnread} />
+      <TopBar activeTab={activeTab} onTabChange={handleTabChange} isSuperAdmin={isSuperAdmin} userEmail={userEmail} userName={userName} userAvatarUrl={resolvedAvatarUrl} messagesUnread={messagesUnread} />
       <main className="flex-1 min-w-0 overflow-hidden">
         {mounted.has('cases') && (
           <div className="h-full" style={{ display: activeTab === 'cases' ? 'block' : 'none' }}>

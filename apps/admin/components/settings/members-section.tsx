@@ -190,7 +190,7 @@ export function MembersSection({
                   key={m.user_id}
                   className="flex items-center gap-md py-3 border-b border-dotted border-border/80"
                 >
-                  <Avatar label={avatarInitial(hasRealName ? m.name! : m.email)} />
+                  <Avatar label={avatarInitial(hasRealName ? m.name! : m.email)} imageUrl={m.avatar_url} />
                   <div className="min-w-0 flex-1">
                     <div className="font-serif text-[16px] text-foreground truncate leading-tight">
                       {hasRealName ? m.name : m.email}
@@ -262,7 +262,7 @@ export function MembersSection({
                   key={s.user_id}
                   className="flex items-center gap-md py-3 border-b border-dotted border-border/80"
                 >
-                  <Avatar label={avatarInitial(hasRealName ? s.name! : s.email)} muted />
+                  <Avatar label={avatarInitial(hasRealName ? s.name! : s.email)} imageUrl={s.avatar_url} muted />
                   <div className="min-w-0 flex-1">
                     <div className="font-serif text-[16px] text-foreground truncate leading-tight">
                       {hasRealName ? s.name : s.email}

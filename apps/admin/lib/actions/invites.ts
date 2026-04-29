@@ -28,6 +28,7 @@ export interface MemberRow {
   user_id: string
   email: string
   name: string | null
+  avatar_url: string | null
   role: InviteRole
   joined_at: string
 }
@@ -36,6 +37,7 @@ export interface SuperAdminRow {
   user_id: string
   email: string
   name: string | null
+  avatar_url: string | null
 }
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
@@ -91,14 +93,15 @@ export async function listMembers(): Promise<Result<MemberRow[]>> {
 
     const { data: profRows, error: profErr } = await supabase
       .from('profiles')
-      .select('id, email, name')
+      .select('id, email, name, avatar_url')
       .in('id', userIds)
     if (profErr) return { ok: false, error: profErr.message }
-    const profMap = new Map<string, { email: string; name: string | null }>()
+    const profMap = new Map<string, { email: string; name: string | null; avatar_url: string | null }>()
     for (const p of profRows ?? []) {
       profMap.set((p as { id: string }).id, {
         email: (p as { email: string }).email,
         name: (p as { name: string | null }).name,
+        avatar_url: (p as { avatar_url: string | null }).avatar_url ?? null,
       })
     }
 
@@ -109,6 +112,7 @@ export async function listMembers(): Promise<Result<MemberRow[]>> {
         user_id: row.user_id,
         email: prof?.email ?? '',
         name: prof?.name ?? null,
+        avatar_url: prof?.avatar_url ?? null,
         role: row.role,
         joined_at: row.created_at,
       }
@@ -140,7 +144,7 @@ export async function listSuperAdmins(): Promise<Result<SuperAdminRow[]>> {
     const admin = createAdminClient()
     const { data, error } = await admin
       .from('profiles')
-      .select('id, email, name, created_at')
+      .select('id, email, name, avatar_url, created_at')
       .eq('is_super_admin', true)
       .order('created_at', { ascending: true })
     if (error) return { ok: false, error: error.message }
@@ -150,6 +154,7 @@ export async function listSuperAdmins(): Promise<Result<SuperAdminRow[]>> {
         user_id: p.id as string,
         email: p.email as string,
         name: (p.name as string | null) ?? null,
+        avatar_url: (p.avatar_url as string | null) ?? null,
       })),
     }
   } catch (e) {

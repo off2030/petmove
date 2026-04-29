@@ -485,10 +485,6 @@ export function VaccineSection({
 
 
 
-      {!loading && isAdmin && (
-        <DefaultsSection products={products} />
-      )}
-
       {loading ? (
         <p className="font-serif italic text-[14px] text-muted-foreground">불러오는 중…</p>
       ) : (
@@ -570,6 +566,10 @@ export function VaccineSection({
             </section>
           )
         })
+      )}
+
+      {!loading && isAdmin && (
+        <DefaultsSection products={products} />
       )}
 
       {!isAdmin && (
@@ -1007,7 +1007,7 @@ function DefaultsSection({ products }: { products: OrgVaccineProduct[] }) {
   return (
     <section className="mb-xl border-b border-border/80 pb-lg">
       <div className="mb-2 flex items-baseline gap-sm">
-        <h3 className="font-serif text-[17px] text-foreground">기본 약품</h3>
+        <h3 className="font-serif text-[17px] text-foreground">구충 디폴트 설정</h3>
         <span className="pmw-st__sec-lead">상세페이지에서 날짜 입력 시 자동 채움</span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-lg gap-y-2">

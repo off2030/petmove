@@ -24,7 +24,7 @@ const TABS = [
   { id: 'documents', label: '서류' },
   { id: 'verification', label: '검증' },
   { id: 'automation', label: '자동화' },
-  { id: 'data', label: '데이터 관리' },
+  { id: 'data', label: '데이터' },
 ] as const
 
 type TabId = (typeof TABS)[number]['id']
@@ -140,8 +140,8 @@ export function SettingsApp({
 }: {
   initialBootstrap?: SettingsBootstrap | null
 } = {}) {
-  // 서버/클라이언트 일치를 위해 초기값은 'company' 고정. hash 는 mount 후 읽음.
-  const [activeTab, setActiveTab] = useState<TabId>('company')
+  // 서버/클라이언트 일치를 위해 초기값은 'profile' 고정. hash 는 mount 후 읽음.
+  const [activeTab, setActiveTab] = useState<TabId>('profile')
   const [bootstrap, setBootstrap] = useState<SettingsBootstrap | null>(initialBootstrap)
 
   // 레이아웃에서 prop 으로 받았으면 fetch 스킵 — 첫 진입 lag 제거.
@@ -234,7 +234,7 @@ export function SettingsApp({
           {activeTab === 'inspection' && <InspectionSection />}
           {activeTab === 'import_report' && <ImportReportSection />}
           {activeTab === 'documents' && <DocumentsSection />}
-          {activeTab === 'verification' && <VerificationSection />}
+          {activeTab === 'verification' && <VerificationSection isSuperAdmin={bootstrap?.myRole?.isSuperAdmin ?? false} />}
           {activeTab === 'automation' && (
             <AutomationSection
               isAdmin={bootstrap?.myRole?.isAdmin ?? false}

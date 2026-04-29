@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useVaccineLookups } from '@/components/providers/vaccine-data-provider'
 import { useDarkMode } from '@/lib/use-dark-mode'
+import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 
 export type TabId = 'cases' | 'calculator' | 'messages' | 'settings' | 'super-admin'
@@ -29,6 +30,8 @@ type TopBarProps = {
   onTabChange?: (tab: TabId) => void
   isSuperAdmin?: boolean
   userEmail?: string | null
+  userName?: string | null
+  userAvatarUrl?: string | null
   /** Highlight the Shield icon to indicate we're currently on /super-admin. */
   superAdminActive?: boolean
   /** 메시지 탭 위 안 읽은 메시지 수 — 0 이면 뱃지 미표시. */
@@ -40,6 +43,8 @@ export function TopBar({
   onTabChange,
   isSuperAdmin = false,
   userEmail,
+  userName = null,
+  userAvatarUrl = null,
   superAdminActive = false,
   messagesUnread = 0,
 }: TopBarProps) {
@@ -300,7 +305,15 @@ export function TopBar({
               aria-label="계정 메뉴"
               className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
-              <User size={18} />
+              {userAvatarUrl || userName || userEmail ? (
+                <Avatar
+                  size="sm"
+                  label={avatarInitial(userName || userEmail || '?')}
+                  imageUrl={userAvatarUrl}
+                />
+              ) : (
+                <User size={18} />
+              )}
             </button>
             {userMenuOpen && (
               <div className="absolute right-0 top-full mt-1 z-30 min-w-[220px] rounded-md border border-border bg-popover p-1 shadow-md">
