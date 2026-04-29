@@ -7,6 +7,7 @@ import {
   type SiblingPreview,
 } from '@/lib/actions/generate-pdf'
 import { downloadMultipartPdfRequest } from '@/lib/pdf-download'
+import { DialogFooter } from '@/components/ui/dialog-footer'
 
 interface Props {
   caseId: string
@@ -123,24 +124,14 @@ export function MultiFormDialog({ caseId, formKey, onClose }: Props) {
               ))}
             </div>
 
-            <div className="flex justify-end gap-sm">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={generating}
-                className="px-sm py-1.5 text-sm rounded-md border border-border hover:bg-accent/60 transition-colors disabled:opacity-50"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirm}
-                disabled={generating || selected.size === 0}
-                className="px-sm py-1.5 text-sm rounded-md bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-50"
-              >
-                {generating ? '생성 중…' : '발급'}
-              </button>
-            </div>
+            <DialogFooter
+              onCancel={onClose}
+              onPrimary={handleConfirm}
+              primaryLabel="발급"
+              savingLabel="생성 중…"
+              primaryDisabled={selected.size === 0}
+              saving={generating}
+            />
           </>
         )}
       </div>

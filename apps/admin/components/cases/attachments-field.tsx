@@ -2,6 +2,7 @@
 
 import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react'
 import { SectionLabel } from '@/components/ui/section-label'
+import { ScanButton } from '@/components/ui/scan-button'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
@@ -41,16 +42,15 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
 
   useEffect(() => { setError(null) }, [caseId])
 
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files
-    if (!files || files.length === 0) return
+  async function uploadFiles(files: File[]) {
+    if (files.length === 0) return
 
     setUploading(true)
     setError(null)
 
     const newAttachments = [...attachments]
 
-    for (const file of Array.from(files)) {
+    for (const file of files) {
       // Upload to Supabase Storage
       // Sanitize filename: replace non-ASCII and spaces with underscores
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
@@ -82,7 +82,12 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
     if (r.ok) updateLocalCaseField(caseId, 'data', 'attachments', newAttachments)
 
     setUploading(false)
-    // Reset file input
+  }
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    await uploadFiles(Array.from(files))
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -124,6 +129,10 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           )}
         </button>
+        <ScanButton
+          disabled={uploading}
+          onScanned={(file) => uploadFiles([file])}
+        />
       </div>
       <div className="min-w-0">
         {/* Hidden file input */}

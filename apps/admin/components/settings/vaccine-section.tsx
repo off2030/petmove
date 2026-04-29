@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
-import { ChevronRight, Paperclip, Plus, Trash2, X } from 'lucide-react'
+import { ChevronRight, Paperclip, Plus, X } from 'lucide-react'
+import { ScanButton } from '@/components/ui/scan-button'
 import {
   PARASITE_FAMILIES,
   daysUntilExpiry,
@@ -19,6 +20,7 @@ import {
 import { extractVaccineInfo } from '@/lib/actions/extract-vaccine'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { useConfirm } from '@/components/ui/confirm-dialog'
+import { DialogFooter } from '@/components/ui/dialog-footer'
 import { cn } from '@/lib/utils'
 import { useVaccineDefaults } from '@/components/providers/vaccine-data-provider'
 import { updateVaccineDefault } from '@/lib/actions/vaccine-defaults'
@@ -421,6 +423,12 @@ export function VaccineSection({
               >
                 <Paperclip className="h-4 w-4" />
               </button>
+              <ScanButton
+                disabled={extracting}
+                title="스캔하여 AI 추출"
+                className="translate-y-[2px]"
+                onScanned={(file) => handleImagesGlobal([file])}
+              />
               <button
                 type="button"
                 onClick={() => setPicking(true)}
@@ -917,39 +925,23 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }:
           )}
         </div>
 
-        <div className="flex items-center border-t border-border/80 px-lg py-3">
-          {mode === 'edit' && onDelete && (
-            <button
-              type="button"
-              onClick={async () => {
-                if (await confirm({ message: '이 제품을 삭제하시겠습니까?', okLabel: '삭제', variant: 'destructive' })) onDelete()
-              }}
-              disabled={pending}
-              className="inline-flex items-center gap-1 px-md py-1.5 text-sm rounded-md text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              삭제
-            </button>
-          )}
-          <div className="ml-auto flex gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-md py-1.5 text-sm rounded-md hover:bg-muted transition-colors"
-              disabled={pending}
-            >
-              취소
-            </button>
-            <button
-              type="button"
-              onClick={() => onSave(form)}
-              disabled={pending || !form.manufacturer.trim()}
-              className="px-md py-1.5 text-sm rounded-md bg-accent hover:bg-accent/90 transition-colors disabled:opacity-50"
-            >
-              {mode === 'create' ? '추가' : '저장'}
-            </button>
-          </div>
-        </div>
+        <DialogFooter
+          bordered
+          onCancel={onClose}
+          onPrimary={() => onSave(form)}
+          primaryLabel={mode === 'create' ? '추가' : '저장'}
+          primaryDisabled={!form.manufacturer.trim()}
+          saving={pending}
+          destructive={
+            mode === 'edit' && onDelete
+              ? {
+                  onClick: async () => {
+                    if (await confirm({ message: '이 제품을 삭제하시겠습니까?', okLabel: '삭제', variant: 'destructive' })) onDelete()
+                  },
+                }
+              : undefined
+          }
+        />
       </div>
     </div>
   )

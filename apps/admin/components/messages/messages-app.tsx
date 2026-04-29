@@ -30,6 +30,7 @@ import {
 import { cn } from '@/lib/utils'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { useConfirm } from '@/components/ui/confirm-dialog'
+import { ScanButton } from '@/components/ui/scan-button'
 import {
   addParticipant,
   createConversation,
@@ -1656,6 +1657,13 @@ function Composer({
         >
           <Paperclip size={18} />
         </button>
+        <ScanButton
+          disabled={uploading || !!attachment}
+          title="스캔하여 첨부"
+          className="h-9 w-9 inline-flex items-center justify-center rounded-full bg-popover border border-border/80 text-foreground hover:bg-accent transition-colors disabled:opacity-40 p-0"
+          onScanned={(file) => handleFile(file)}
+        />
+
         <div className="flex-1 flex items-center gap-1 rounded-2xl bg-popover border border-border/80 px-md py-1.5">
           <textarea
             ref={taRef}

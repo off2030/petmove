@@ -1,11 +1,17 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { ExternalLink as ExternalLinkIcon, Plus, Trash2, Pencil, Check, X } from 'lucide-react'
+import { forwardRef, useEffect, useImperativeHandle, useState, useTransition } from 'react'
+import { ExternalLink as ExternalLinkIcon, Plus, Trash2 } from 'lucide-react'
 import type { ExternalLink, ExternalLinkCategory, ExternalLinksConfig } from '@petmove/domain'
 import { saveExternalLinksAction } from '@/lib/actions/external-links-action'
 
-type Mode = 'view' | 'edit'
+export type ExternalLinksMode = 'view' | 'edit'
+
+export interface ExternalLinksHandle {
+  startEdit: () => void
+  cancelEdit: () => void
+  save: () => void
+}
 
 function genId(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 8)}`
@@ -19,12 +25,29 @@ function emptyCategory(): ExternalLinkCategory {
   return { id: genId('cat'), label: '새 카테고리', links: [] }
 }
 
-export function ExternalLinks({ initialConfig }: { initialConfig: ExternalLinksConfig }) {
-  const [mode, setMode] = useState<Mode>('view')
+export const ExternalLinks = forwardRef<
+  ExternalLinksHandle,
+  {
+    initialConfig: ExternalLinksConfig
+    onModeChange?: (mode: ExternalLinksMode) => void
+    onSavingChange?: (saving: boolean) => void
+  }
+>(function ExternalLinks({ initialConfig, onModeChange, onSavingChange }, ref) {
+  const [mode, setMode] = useState<ExternalLinksMode>('view')
   const [config, setConfig] = useState<ExternalLinksConfig>(initialConfig)
   const [draft, setDraft] = useState<ExternalLinksConfig>(initialConfig)
   const [error, setError] = useState<string | null>(null)
   const [saving, startSave] = useTransition()
+
+  useEffect(() => {
+    onModeChange?.(mode)
+  }, [mode, onModeChange])
+
+  useEffect(() => {
+    onSavingChange?.(saving)
+  }, [saving, onSavingChange])
+
+  useImperativeHandle(ref, () => ({ startEdit, cancelEdit, save }))
 
   function startEdit() {
     setDraft(structuredClone(config))
@@ -117,24 +140,13 @@ export function ExternalLinks({ initialConfig }: { initialConfig: ExternalLinksC
   if (mode === 'view') {
     return (
       <div className="flex flex-col gap-xl">
-        <div className="flex items-center justify-between">
-          <p className="font-serif italic text-[14px] text-muted-foreground">
-            업무에 자주 쓰는 외부 사이트
-          </p>
-          <button
-            type="button"
-            onClick={startEdit}
-            aria-label="편집"
-            title="편집"
-            className="flex items-center px-2 py-1 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Pencil className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        <p className="font-serif italic text-[14px] text-muted-foreground">
+          업무에 자주 쓰는 외부 사이트
+        </p>
 
         {config.categories.length === 0 ? (
           <p className="font-serif text-[14px] text-muted-foreground italic">
-            아직 등록된 링크가 없습니다. "편집" 으로 추가하세요.
+            아직 등록된 링크가 없습니다. 상단의 "편집" 으로 추가하세요.
           </p>
         ) : (
           config.categories.map((cat) => (
@@ -186,26 +198,14 @@ export function ExternalLinks({ initialConfig }: { initialConfig: ExternalLinksC
         <p className="font-serif italic text-[14px] text-muted-foreground">
           편집 중 — 변경사항은 "저장" 시 적용
         </p>
-        <div className="flex items-center gap-xs">
-          <button
-            type="button"
-            onClick={cancelEdit}
-            disabled={saving}
-            className="flex items-center gap-1 px-2 py-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
-          >
-            <X className="w-3.5 h-3.5" />
-            취소
-          </button>
-          <button
-            type="button"
-            onClick={save}
-            disabled={saving}
-            className="flex items-center gap-1 px-2 py-1 text-[13px] text-foreground hover:bg-muted/40 rounded transition-colors disabled:opacity-40"
-          >
-            <Check className="w-3.5 h-3.5" />
-            {saving ? '저장 중…' : '저장'}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={cancelEdit}
+          disabled={saving}
+          className="px-md py-1.5 text-sm font-serif text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+        >
+          취소
+        </button>
       </div>
 
       {error && (
@@ -302,4 +302,4 @@ export function ExternalLinks({ initialConfig }: { initialConfig: ExternalLinksC
       </button>
     </div>
   )
-}
+})

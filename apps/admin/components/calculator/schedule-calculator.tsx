@@ -34,22 +34,34 @@ function daysFromToday(dateStr: string): number | null {
   return Math.round((target.getTime() - today.getTime()) / 86400000)
 }
 
-function DaysLabel({ date }: { date: string }) {
-  const d = daysFromToday(date)
-  if (d === null) return null
-  if (d === 0) return <span className="text-xs font-medium text-emerald-600">오늘</span>
-  if (d > 0) return <span className="text-xs font-medium text-blue-600">D-{d}</span>
-  return <span className="text-xs font-medium text-red-600">D+{Math.abs(d)} (경과)</span>
-}
-
-function ResultRow({ label, date, note }: { label: string; date: string; note?: string }) {
+function InlineResult({ label, date }: { label?: string; date: string }) {
   if (!date) return null
+  const d = daysFromToday(date)
+  let dText = ''
+  let dClass = 'text-muted-foreground'
+  if (d !== null) {
+    if (d === 0) {
+      dText = '오늘'
+      dClass = 'text-emerald-600'
+    } else if (d > 0) {
+      dText = `D-${d}`
+      dClass = 'text-blue-600'
+    } else {
+      dText = `D+${Math.abs(d)} (경과)`
+      dClass = 'text-red-600'
+    }
+  }
   return (
-    <div className="rounded-md bg-card px-3 py-2.5">
-      <div className="mb-1 text-xs text-muted-foreground">{label}</div>
-      <div className="text-base font-medium tabular-nums">{formatDate(date)}</div>
-      <div className="mt-1"><DaysLabel date={date} /></div>
-      {note && <div className="mt-1 text-xs text-muted-foreground">{note}</div>}
+    <div className="flex items-center gap-2 whitespace-nowrap text-sm">
+      {label && (
+        <>
+          <span className="text-muted-foreground">{label}</span>
+          <span className="text-muted-foreground/40">/</span>
+        </>
+      )}
+      <span className="font-medium tabular-nums">{formatDate(date)}</span>
+      <span className="text-muted-foreground/40">/</span>
+      <span className={`font-medium ${dClass}`}>{dText}</span>
     </div>
   )
 }
@@ -63,6 +75,47 @@ const dateInputClass =
 
 function DateInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return <DateTextField value={value} onChange={onChange} className={dateInputClass} />
+}
+
+interface ResultSpec {
+  label?: string
+  date: string
+  note?: string
+}
+
+function InputBlock({
+  inputLabel,
+  inputValue,
+  onChange,
+  results,
+}: {
+  inputLabel: string
+  inputValue: string
+  onChange: (v: string) => void
+  results: ResultSpec[]
+}) {
+  return (
+    <div>
+      <Label>{inputLabel}</Label>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="min-w-[14rem] flex-1">
+          <DateInput value={inputValue} onChange={onChange} />
+        </div>
+        {results.some((r) => r.date) && (
+          <div className="flex flex-col gap-1.5">
+            {results.map((r, i) => (
+              <div key={i}>
+                <InlineResult label={r.label} date={r.date} />
+                {r.note && r.date && (
+                  <div className="mt-0.5 text-xs text-muted-foreground">{r.note}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 interface Props {
@@ -79,59 +132,45 @@ export function ScheduleCalculator({ country }: Props) {
     <div className="rounded-xl bg-card p-md">
       {country === 'japan' && (
         <div className="space-y-5">
-          <div className="space-y-3">
-            <div>
-              <Label>광견병 항체검사일</Label>
-              <DateInput value={jpTestDate} onChange={setJpTestDate} />
-            </div>
-            <ResultRow
-              label="출국 가능일 (검사일 + 180일)"
-              date={addDays(jpTestDate, 180)}
-            />
-          </div>
+          <InputBlock
+            inputLabel="광견병 항체검사일"
+            inputValue={jpTestDate}
+            onChange={setJpTestDate}
+            results={[{ label: '출국 가능일', date: addDays(jpTestDate, 180) }]}
+          />
 
           <div className="border-t border-border/80" />
 
-          <div className="space-y-3">
-            <div>
-              <Label>출국 예정일</Label>
-              <DateInput value={jpDepartureDate} onChange={setJpDepartureDate} />
-            </div>
-            <ResultRow
-              label="수입 신고 마감 (출국일 - 40일)"
-              date={addDays(jpDepartureDate, -40)}
-            />
-          </div>
+          <InputBlock
+            inputLabel="출국 예정일"
+            inputValue={jpDepartureDate}
+            onChange={setJpDepartureDate}
+            results={[{ label: '신고 마감일', date: addDays(jpDepartureDate, -40) }]}
+          />
         </div>
       )}
 
       {country === 'australia' && (
-        <div className="space-y-3">
-          <div>
-            <Label>출국 예정일</Label>
-            <DateInput value={auDepartureDate} onChange={setAuDepartureDate} />
-          </div>
-          <ResultRow
-            label="전염병검사 가능 시작일 (출국일 포함 45일 이내)"
-            date={addDays(auDepartureDate, -44)}
-            note="이 날짜부터 출국일 사이에 검사 완료 필요"
-          />
-          <ResultRow label="검사 마감 (출국일)" date={auDepartureDate} />
-        </div>
+        <InputBlock
+          inputLabel="출국 예정일"
+          inputValue={auDepartureDate}
+          onChange={setAuDepartureDate}
+          results={[{ label: '전염병검사일', date: addDays(auDepartureDate, -44) }]}
+        />
       )}
 
       {country === 'nz' && (
-        <div className="space-y-3">
-          <div>
-            <Label>출국 예정일</Label>
-            <DateInput value={nzDepartureDate} onChange={setNzDepartureDate} />
-          </div>
-          <ResultRow
-            label="전염병검사 가능일 (출국일 - 15일)"
-            date={addDays(nzDepartureDate, -15)}
-            note="APQA HQ + VBDDL 동시 검사"
-          />
-        </div>
+        <InputBlock
+          inputLabel="출국 예정일"
+          inputValue={nzDepartureDate}
+          onChange={setNzDepartureDate}
+          results={[
+            {
+              label: '전염병검사일',
+              date: addDays(nzDepartureDate, -15),
+            },
+          ]}
+        />
       )}
     </div>
   )

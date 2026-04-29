@@ -6,6 +6,7 @@ import { Menu, MoreHorizontal, Plus, Search } from 'lucide-react'
 import type { CaseRow } from '@/lib/supabase/types'
 import { useCases } from '@/components/cases/cases-context'
 import { Input } from '@/components/ui/input'
+import { DialogFooter } from '@/components/ui/dialog-footer'
 import { destCode } from '@/lib/country-code'
 import { matchesDestinationKey } from '@petmove/domain'
 import { cn } from '@/lib/utils'
@@ -1098,22 +1099,7 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
         </div>
 
         {/* 버튼 */}
-        <div className="flex gap-sm justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-sm px-sm py-1.5 rounded-md border border-border/80 text-foreground hover:bg-accent transition-colors"
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            className="text-sm px-sm py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            생성
-          </button>
-        </div>
+        <DialogFooter onCancel={onClose} onPrimary={handleSubmit} primaryLabel="생성" />
       </div>
     </div>,
     document.body,
@@ -1223,23 +1209,12 @@ function BulkApplyDialog({
             )
           })}
         </ul>
-        <div className="flex justify-end gap-sm">
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-sm px-sm py-1.5 rounded-md border border-border/80 text-foreground hover:bg-accent transition-colors"
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={selected.size === 0}
-            className="text-sm px-sm py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            생성{selected.size > 0 && ` (${selected.size})`}
-          </button>
-        </div>
+        <DialogFooter
+          onCancel={onClose}
+          onPrimary={handleGenerate}
+          primaryLabel={selected.size > 0 ? `생성 (${selected.size})` : '생성'}
+          primaryDisabled={selected.size === 0}
+        />
       </div>
     </div>,
     document.body,
@@ -1386,23 +1361,12 @@ function BulkApplyPicker({
                 )
               })}
             </ul>
-            <div className="flex justify-end gap-sm">
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="text-sm px-sm py-1.5 rounded-md border border-border/80 text-foreground hover:bg-accent transition-colors"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={handleGenerate}
-                disabled={selected.size === 0}
-                className="text-sm px-sm py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                생성{selected.size > 0 && ` (${selected.size})`}
-              </button>
-            </div>
+            <DialogFooter
+              onCancel={() => setOpen(false)}
+              onPrimary={handleGenerate}
+              primaryLabel={selected.size > 0 ? `생성 (${selected.size})` : '생성'}
+              primaryDisabled={selected.size === 0}
+            />
           </div>
         </div>,
         document.body,

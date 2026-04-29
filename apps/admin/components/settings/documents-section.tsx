@@ -7,6 +7,7 @@ import { useCases } from '@/components/cases/cases-context'
 import { DestinationPicker } from '@/components/ui/destination-picker'
 import { PillButton } from '@/components/ui/pill-button'
 import { SectionHeader } from '@/components/ui/section-header'
+import { DialogFooter } from '@/components/ui/dialog-footer'
 import { saveCertConfigAction } from '@/lib/actions/cert-config-action'
 import { cn } from '@/lib/utils'
 import {
@@ -543,23 +544,13 @@ function CertRuleAddModal({
         </div>
 
         {mode && (
-          <div className="flex items-center justify-end gap-sm border-t border-border/80 px-lg py-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-md py-1.5 text-sm font-serif text-muted-foreground hover:text-foreground transition-colors"
-            >
-              취소
-            </button>
-            <button
-              type="button"
-              onClick={submit}
-              disabled={!canSubmit}
-              className="px-md py-1.5 text-sm font-serif rounded-full border border-border/80 hover:bg-muted/40 transition-colors disabled:opacity-40"
-            >
-              추가
-            </button>
-          </div>
+          <DialogFooter
+            bordered
+            onCancel={onClose}
+            onPrimary={submit}
+            primaryLabel="추가"
+            primaryDisabled={!canSubmit}
+          />
         )}
       </div>
     </div>,

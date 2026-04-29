@@ -1,11 +1,15 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, Pencil, Search } from 'lucide-react'
 import { useCalculatorData } from '@/components/providers/calculator-data-provider'
 import { Calculator } from './calculator'
 import { ScheduleCalculator, type ScheduleCountry } from './schedule-calculator'
-import { ExternalLinks } from './external-links'
+import {
+  ExternalLinks,
+  type ExternalLinksHandle,
+  type ExternalLinksMode,
+} from './external-links'
 import { PageShell, PageTabs } from '@/components/ui/page-shell'
 import type { ExternalLinksConfig } from '@petmove/domain'
 
@@ -41,6 +45,13 @@ export function CalculatorApp({
 
   // Schedule mode toolbar state
   const [scheduleCountry, setScheduleCountry] = useState<ScheduleCountry>('japan')
+
+  // Links mode toolbar state (controlled from inside ExternalLinks via ref + callbacks)
+  const linksRef = useRef<ExternalLinksHandle>(null)
+  const [linksMode, setLinksMode] = useState<ExternalLinksMode>('view')
+  const [linksSaving, setLinksSaving] = useState(false)
+  const onLinksModeChange = useCallback((m: ExternalLinksMode) => setLinksMode(m), [])
+  const onLinksSavingChange = useCallback((s: boolean) => setLinksSaving(s), [])
 
   useEffect(() => {
     if (!dropOpen) return
@@ -207,6 +218,23 @@ export function CalculatorApp({
           )
         })}
       </div>
+    ) : mode === 'links' ? (
+      <button
+        type="button"
+        onClick={() => {
+          if (linksMode === 'edit') linksRef.current?.save()
+          else linksRef.current?.startEdit()
+        }}
+        disabled={linksSaving}
+        className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3.5 text-sm transition-colors disabled:opacity-50 ${
+          linksMode === 'edit'
+            ? 'border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489]'
+            : 'border-border/80 bg-transparent text-muted-foreground hover:text-foreground'
+        }`}
+      >
+        <Pencil size={13} />
+        {linksMode === 'edit' ? (linksSaving ? '저장 중…' : '저장') : '편집'}
+      </button>
     ) : undefined
 
   return (
@@ -226,7 +254,12 @@ export function CalculatorApp({
       {mode === 'schedule' && <ScheduleCalculator country={scheduleCountry} />}
       {mode === 'links' && (
         <div className="px-lg">
-          <ExternalLinks initialConfig={initialExternalLinks} />
+          <ExternalLinks
+            ref={linksRef}
+            initialConfig={initialExternalLinks}
+            onModeChange={onLinksModeChange}
+            onSavingChange={onLinksSavingChange}
+          />
         </div>
       )}
     </PageShell>
