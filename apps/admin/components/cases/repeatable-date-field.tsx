@@ -288,13 +288,31 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
   }
 
   function updateRecordField(idx: number, field: keyof VacRecord, value: string | null) {
-    const next = records.map((r, i) => i === idx ? { ...r, [field]: value || null } : r)
+    // 빈 문자열은 "명시적으로 비움"을 의미 — 자동 추론값(hint) 폴백을 막는다.
+    // null 은 "값 없음" — 자동 추론값이 hint 로 표시.
+    const next = records.map((r, i) => i === idx ? { ...r, [field]: value } : r)
     startSave(() => saveRecords(next))
     setDetailEdit(null)
   }
 
   function toggleOtherHospital(idx: number) {
-    const next = records.map((r, i) => i === idx ? { ...r, other_hospital: !r.other_hospital } : r)
+    const next = records.map((r, i) => {
+      if (i !== idx) return r
+      const nextOther = !r.other_hospital
+      if (!nextOther) {
+        // 타병원 → 본 병원 전환: "명시 비움(빈 문자열)" 상태의 detail 필드를 null 로 되돌려
+        // 자동 추론값(hint)이 다시 표시되게 한다. 사용자가 직접 입력한 값은 보존.
+        return {
+          ...r,
+          other_hospital: false,
+          product: r.product === '' ? null : r.product,
+          manufacturer: r.manufacturer === '' ? null : r.manufacturer,
+          lot: r.lot === '' ? null : r.lot,
+          expiry: r.expiry === '' ? null : r.expiry,
+        }
+      }
+      return { ...r, other_hospital: true }
+    })
     startSave(() => saveRecords(next))
   }
 
@@ -589,6 +607,9 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
             const hints = rec.product_id
               ? getDetailHintsById(L, rec.product_id, rec.date, weightKg)
               : getDetailHints(L, label, rec.date, species, weightKg)
+            // 타병원 접종이면 자동 추론 hint 를 표시하지 않음 (디폴트로 비움).
+            // 사용자가 명시적으로 입력한 값은 보존되고, 체크 해제 시 다시 hint 가 나타남.
+            const suppressHints = !!rec.other_hospital
             return (
               <div
                 key={oi}
@@ -653,6 +674,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                     <DetailField
                       value={rec.product}
                       hint={hints.product}
+                      suppressHint={suppressHints}
                       placeholder="제품명"
                       isEditing={detailEdit?.idx === oi && detailEdit?.field === 'product'}
                       onStartEdit={() => setDetailEdit({ idx: oi, field: 'product' })}
@@ -665,6 +687,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                   <DetailField
                     value={rec.manufacturer}
                     hint={hints.manufacturer}
+                    suppressHint={suppressHints}
                     placeholder="제조사"
                     isEditing={detailEdit?.idx === oi && detailEdit?.field === 'manufacturer'}
                     onStartEdit={() => setDetailEdit({ idx: oi, field: 'manufacturer' })}
@@ -676,6 +699,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                   <DetailField
                     value={rec.lot}
                     hint={hints.lot}
+                    suppressHint={suppressHints}
                     placeholder="제품번호"
                     isEditing={detailEdit?.idx === oi && detailEdit?.field === 'lot'}
                     onStartEdit={() => setDetailEdit({ idx: oi, field: 'lot' })}
@@ -689,6 +713,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                       <DetailField
                         value={rec.expiry}
                         hint={hints.expiry}
+                        suppressHint={suppressHints}
                         type="date"
                         placeholder="유효기간"
                         isEditing={detailEdit?.idx === oi && detailEdit?.field === 'expiry'}
@@ -834,10 +859,12 @@ function ProductDropdown({ value, defaultName, options, onChange, saving }: {
 
 /* ── Detail field (text or date, inline editable) ── */
 
-function DetailField({ value, hint, type, placeholder, isEditing, onStartEdit, onSave, onCancel, saving }: {
+function DetailField({ value, hint, suppressHint, type, placeholder, isEditing, onStartEdit, onSave, onCancel, saving }: {
   value?: string | null
   /** lookup 으로 자동 추론된 값 — 사용자 입력(value) 없을 때 hint 를 옅게 표시. */
   hint?: string | null
+  /** true 면 hint 표시 억제 (예: 타병원 접종 record 의 detail 필드). */
+  suppressHint?: boolean
   type?: 'text' | 'date'
   placeholder: string
   isEditing: boolean
@@ -846,26 +873,35 @@ function DetailField({ value, hint, type, placeholder, isEditing, onStartEdit, o
   onCancel: () => void
   saving: boolean
 }) {
-  const hasValue = !!value
-  const hasHint = !hasValue && !!hint
-  // 우선순위: 사용자 입력 → 자동 추론 hint → placeholder
-  const display = value || hint || placeholder
+  const effectiveHint = suppressHint ? null : hint
+  const cleared = value === ''
+  const hasValue = !cleared && !!value
+  const hasHint = !hasValue && !cleared && !!effectiveHint
+  // 우선순위: 사용자 입력 > "명시적으로 비움" > 자동 추론 hint > placeholder
+  const display = hasValue ? (value as string) : cleared ? '—' : (effectiveHint || placeholder)
 
   if (isEditing) {
     return type === 'date' ? (
-      <DateInput initial={value || ''} onSave={(v) => onSave(v || null)} onCancel={onCancel} />
+      <DateInput initial={value || ''} onSave={(v) => onSave(v)} onCancel={onCancel} onClearAuto={() => onSave(null)} />
     ) : (
-      <TextInput initial={value || ''} placeholder={placeholder} onSave={(v) => onSave(v || null)} onCancel={onCancel} saving={saving} />
+      <TextInput initial={value || ''} placeholder={placeholder} onSave={(v) => onSave(v)} onCancel={onCancel} saving={saving} onClearAuto={() => onSave(null)} />
     )
   }
 
   return (
     <button type="button" onClick={onStartEdit}
-      title={hasHint ? '자동 추론값 — 클릭하여 직접 입력' : undefined}
+      title={
+        hasHint
+          ? '자동 추론값 — 클릭하여 직접 입력'
+          : cleared
+          ? '명시적으로 비움 — 클릭하여 입력'
+          : undefined
+      }
       className={cn(
         'text-left rounded-md px-2 py-1 -mx-2 text-xs transition-colors hover:bg-accent/60 cursor-text',
-        !hasValue && !hasHint && 'text-muted-foreground/40 italic',
+        !hasValue && !hasHint && !cleared && 'text-muted-foreground/40 italic',
         hasHint && 'text-muted-foreground/70',
+        cleared && 'text-muted-foreground/50',
       )}>
       {display}
     </button>
@@ -907,41 +943,85 @@ function ValidUntilSelector({ value, onChange, saving }: {
 
 /* ── Text input ── */
 
-function TextInput({ initial, placeholder, onSave, onCancel, saving }: {
-  initial: string; placeholder: string; onSave: (v: string) => void; onCancel: () => void; saving: boolean
+function TextInput({ initial, placeholder, onSave, onCancel, saving, onClearAuto }: {
+  initial: string
+  placeholder: string
+  onSave: (v: string) => void
+  onCancel: () => void
+  saving: boolean
+  /** 있으면 입력칸 옆에 "자동" 버튼 노출 — 클릭 시 값을 null 로 되돌려 자동 추론값 사용. */
+  onClearAuto?: () => void
 }) {
   const [val, setVal] = useState(initial)
   const ref = useRef<HTMLInputElement>(null)
+  const submittedRef = useRef(false)
   useEffect(() => { ref.current?.focus() }, [])
 
+  const submit = (v: string) => {
+    if (submittedRef.current) return
+    submittedRef.current = true
+    // 변경 없으면 저장 안 함 — 자동 추론값(hint) 표시 상태에서 클릭만 하고 빠져나갈 때
+    // initial='' 이라 빈 문자열을 명시 비움으로 저장해버리는 버그 방지.
+    if (v === initial) {
+      onCancel()
+      return
+    }
+    onSave(v)
+  }
+
   return (
-    <input ref={ref} type="text" value={val}
-      onChange={(e) => setVal(e.target.value)}
-      onKeyDown={(e) => { if (e.key === 'Enter') onSave(val.trim()); if (e.key === 'Escape') onCancel() }}
-      onBlur={() => setTimeout(() => { if (!saving) onSave(val.trim()) }, 150)}
-      placeholder={placeholder}
-      className="w-28 h-7 rounded-md border border-border/80 bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
-    />
+    <span className="inline-flex items-center gap-1">
+      <input ref={ref} type="text" value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') submit(val.trim()); if (e.key === 'Escape') onCancel() }}
+        onBlur={() => setTimeout(() => { if (!saving) submit(val.trim()) }, 150)}
+        placeholder={placeholder}
+        className="w-28 h-7 rounded-md border border-border/80 bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      />
+      {onClearAuto && (
+        <button
+          type="button"
+          onMouseDown={(e) => { e.preventDefault(); submittedRef.current = true; onClearAuto() }}
+          title="자동 추론값으로 되돌리기"
+          className="h-7 px-1.5 rounded text-[10px] text-muted-foreground/60 hover:text-foreground hover:bg-accent/60 transition-colors whitespace-nowrap"
+        >
+          자동
+        </button>
+      )}
+    </span>
   )
 }
 
 /* ── Date input ── */
 
-function DateInput({ initial, onSave, onCancel }: {
+function DateInput({ initial, onSave, onCancel, onClearAuto }: {
   initial: string
   onSave: (v: string) => void
   onCancel: () => void
+  onClearAuto?: () => void
 }) {
   return (
-    <DateTextField
-      autoFocus
-      value={initial}
-      onChange={(v) => onSave(v)}
-      onBlur={onCancel}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') { e.preventDefault(); onCancel() }
-      }}
-      className="w-40 bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
-    />
+    <span className="inline-flex items-center gap-1">
+      <DateTextField
+        autoFocus
+        value={initial}
+        onChange={(v) => onSave(v)}
+        onBlur={onCancel}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') { e.preventDefault(); onCancel() }
+        }}
+        className="w-40 bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
+      />
+      {onClearAuto && (
+        <button
+          type="button"
+          onMouseDown={(e) => { e.preventDefault(); onClearAuto() }}
+          title="자동 추론값으로 되돌리기"
+          className="h-7 px-1.5 rounded text-[10px] text-muted-foreground/60 hover:text-foreground hover:bg-accent/60 transition-colors whitespace-nowrap"
+        >
+          자동
+        </button>
+      )}
+    </span>
   )
 }

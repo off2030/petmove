@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { CopyButton } from './copy-button'
 import { useCases } from './cases-context'
+import { useDetailViewSettings } from '@/components/providers/detail-view-settings-provider'
 import type { CaseRow } from '@/lib/supabase/types'
 import { SectionLabel } from '@/components/ui/section-label'
 import breedsData from '@/data/breeds.json'
@@ -25,13 +26,25 @@ const ALL_BREEDS = breedsData as Breed[]
  */
 export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
   const { updateLocalCaseField } = useCases()
+  const { settings: detailViewSettings } = useDetailViewSettings()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const breedKo = (data.breed as string) ?? ''
   const breedEn = (data.breed_en as string) ?? ''
   const species = (data.species as string) ?? '' // 'dog' or 'cat'
 
-  const display = breedEn || breedKo || '—'
-  const isEmpty = display === '—'
+  const bilingual = detailViewSettings.breed_bilingual && breedKo && breedEn
+  const fallback = breedEn || breedKo || '—'
+  const isEmpty = !bilingual && fallback === '—'
+  const copyText = bilingual ? `${breedKo} | ${breedEn}` : (isEmpty ? '' : fallback)
+  const display = bilingual ? (
+    <>
+      {breedKo}
+      <span className="text-muted-foreground/30 mx-1.5 select-none">|</span>
+      {breedEn}
+    </>
+  ) : (
+    fallback
+  )
 
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -120,7 +133,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
             {display}
           </button>
           <CopyButton
-            value={isEmpty ? '' : display}
+            value={copyText}
             className="absolute left-full top-0.5 ml-1 z-10 opacity-0 group-hover/val:opacity-100"
           />
         </div>

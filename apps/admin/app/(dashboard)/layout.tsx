@@ -4,6 +4,7 @@ import { CasesProvider } from '@/components/cases/cases-context'
 import { DashboardShell } from '@/components/layout/dashboard-shell'
 import { VaccineDataProvider } from '@/components/providers/vaccine-data-provider'
 import { CalculatorDataProvider } from '@/components/providers/calculator-data-provider'
+import { DetailViewSettingsProvider } from '@/components/providers/detail-view-settings-provider'
 import { loadImportReportCountries, loadImportReportButtonCountries } from '@/lib/import-report-config'
 import { loadInspectionConfig } from '@/lib/inspection-config'
 import { loadCertConfig } from '@/lib/cert-config'
@@ -139,23 +140,25 @@ export default async function DashboardLayout({
       initialCertConfig={certConfig}
       orgId={orgId}
     >
-      <VaccineDataProvider data={vaccineData} defaults={vaccineDefaults}>
-        <CalculatorDataProvider initialItems={calculatorItems}>
-          <DashboardShell
-            isSuperAdmin={userCtx.isSuperAdmin}
-            userEmail={userCtx.email}
-            userName={userCtx.name}
-            userAvatarUrl={userCtx.avatarUrl}
-            currentUserId={userCtx.userId}
-            initialSettingsBootstrap={settingsBootstrap}
-            initialOrgs={initialOrgs}
-            initialSuperAdmins={initialSuperAdmins}
-            impersonation={impersonation}
-            initialExternalLinks={externalLinks}
-            initialConversations={initialConversations}
-          />
-        </CalculatorDataProvider>
-      </VaccineDataProvider>
+      <DetailViewSettingsProvider initialSettings={settingsBootstrap?.detailViewSettings}>
+        <VaccineDataProvider data={vaccineData} defaults={vaccineDefaults}>
+          <CalculatorDataProvider initialItems={calculatorItems}>
+            <DashboardShell
+              isSuperAdmin={userCtx.isSuperAdmin}
+              userEmail={userCtx.email}
+              userName={userCtx.name}
+              userAvatarUrl={userCtx.avatarUrl}
+              currentUserId={userCtx.userId}
+              initialSettingsBootstrap={settingsBootstrap}
+              initialOrgs={initialOrgs}
+              initialSuperAdmins={initialSuperAdmins}
+              impersonation={impersonation}
+              initialExternalLinks={externalLinks}
+              initialConversations={initialConversations}
+            />
+          </CalculatorDataProvider>
+        </VaccineDataProvider>
+      </DetailViewSettingsProvider>
     </CasesProvider>
   )
 }

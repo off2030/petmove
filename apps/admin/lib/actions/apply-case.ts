@@ -74,7 +74,8 @@ export async function applyCase(input: ApplyInput): Promise<
     data.microchip_implant_date = input.microchip_implant_date
   }
   if (input.rabies_date) {
-    data.rabies_dates = [input.rabies_date]
+    // 신청폼으로 들어온 광견병 접종은 본 병원에서 이뤄지지 않았으므로 타병원 접종으로 표시.
+    data.rabies_dates = [{ date: input.rabies_date, other_hospital: true }]
   }
 
   const { data: row, error } = await supabase

@@ -12,6 +12,7 @@ import { VerificationSection } from './verification-section'
 import { AutomationSection } from './automation-section'
 import { MembersSection } from './members-section'
 import { ProfileSection } from './profile-section'
+import { DetailViewSection } from './detail-view-section'
 import { getSettingsBootstrap, type SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 
 const TABS = [
@@ -24,6 +25,7 @@ const TABS = [
   { id: 'documents', label: '서류' },
   { id: 'verification', label: '검증' },
   { id: 'automation', label: '자동화' },
+  { id: 'detail_view', label: '상세뷰' },
   { id: 'data', label: '데이터' },
 ] as const
 
@@ -240,6 +242,9 @@ export function SettingsApp({
               isAdmin={bootstrap?.myRole?.isAdmin ?? false}
               initialRules={bootstrap?.autoFillRules ?? null}
             />
+          )}
+          {activeTab === 'detail_view' && (
+            <DetailViewSection initialSettings={bootstrap?.detailViewSettings} />
           )}
           {activeTab === 'data' && <DataSection isSuperAdmin={bootstrap?.myRole?.isSuperAdmin ?? false} />}
         </div>

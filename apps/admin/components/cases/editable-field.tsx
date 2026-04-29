@@ -7,6 +7,7 @@ import { coerceInputValue, renderFieldValue } from '@/lib/fields'
 import { updateCaseField } from '@/lib/actions/cases'
 import { CopyButton } from '@/components/cases/copy-button'
 import { useCases } from '@/components/cases/cases-context'
+import { useDetailViewSettings } from '@/components/providers/detail-view-settings-provider'
 import { severityTextClass, tooltipText, useFieldVerification } from '@/components/cases/verification-context'
 import { DateTextField } from '@/components/ui/date-text-field'
 import { SectionLabel } from '@/components/ui/section-label'
@@ -94,6 +95,7 @@ export function EditableField({
   clearable?: boolean
 }) {
   const { updateLocalCaseField, replaceLocalCaseData } = useCases()
+  const { settings: detailViewSettings } = useDetailViewSettings()
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState<string>(stringifyRaw(rawValue, spec))
   const [saving, startSave] = useTransition()
@@ -127,6 +129,28 @@ export function EditableField({
 
   const display = renderFieldValue(spec, rawValue)
   const isEmpty = display === '—'
+
+  // 상세뷰 설정: 종/성별 select 를 "한글 | 영문" 으로 병기.
+  const bilingualSelect = (() => {
+    if (spec.type !== 'select' || !spec.options || rawValue == null || rawValue === '') return null
+    const enabled =
+      (spec.key === 'species' && detailViewSettings.species_bilingual) ||
+      (spec.key === 'sex' && detailViewSettings.sex_bilingual)
+    if (!enabled) return null
+    const opt = spec.options.find((o) => o.value === rawValue)
+    if (!opt || !opt.label_en) return null
+    return { ko: opt.label_ko, en: opt.label_en }
+  })()
+  const displayNode: React.ReactNode = bilingualSelect ? (
+    <>
+      {bilingualSelect.ko}
+      <span className="text-muted-foreground/30 mx-1.5 select-none">|</span>
+      {bilingualSelect.en}
+    </>
+  ) : (
+    display
+  )
+  const copyDisplay = bilingualSelect ? `${bilingualSelect.ko} | ${bilingualSelect.en}` : display
 
   function handleClear() {
     startSave(async () => {
@@ -258,7 +282,7 @@ export function EditableField({
                 isEmpty && 'font-sans not-italic text-base font-normal tracking-normal text-muted-foreground/60',
               )}
             >
-              {display}
+              {displayNode}
             </button>
           </div>
           {editing && (
@@ -339,7 +363,7 @@ export function EditableField({
         <VerifiedDisplayButton
           spec={spec}
           path={spec.key}
-          display={display}
+          display={displayNode}
           isEmpty={isEmpty}
           isLongText={spec.type === 'longtext'}
           onClick={handleEnterEdit}
@@ -380,7 +404,7 @@ export function EditableField({
             <div className="group/val flex items-baseline gap-xs w-fit">
               {valueCell}
               <CopyButton
-                value={isEmpty ? '' : display}
+                value={isEmpty ? '' : copyDisplay}
                 className="shrink-0 opacity-0 group-hover/val:opacity-100"
               />
             </div>
@@ -395,7 +419,7 @@ export function EditableField({
 function VerifiedDisplayButton({ spec, path, display, isEmpty, isLongText, onClick }: {
   spec: FieldSpec
   path: string
-  display: string
+  display: React.ReactNode
   isEmpty: boolean
   isLongText: boolean
   onClick: () => void

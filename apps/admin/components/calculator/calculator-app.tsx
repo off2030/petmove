@@ -1,9 +1,16 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronDown, Pencil, Search } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { ChevronDown, Menu, Pencil, Plus, Printer, Search, Copy, Trash2 } from 'lucide-react'
 import { useCalculatorData } from '@/components/providers/calculator-data-provider'
+import {
+  addCalculatorDestination,
+  cloneCalculatorDestination,
+  deleteCalculatorDestination,
+} from '@/lib/actions/calculator'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import { Calculator } from './calculator'
+import { CalculatorOutputModal } from './calculator-output-modal'
 import { ScheduleCalculator, type ScheduleCountry } from './schedule-calculator'
 import {
   ExternalLinks,
@@ -33,6 +40,7 @@ export function CalculatorApp({
   initialExternalLinks: ExternalLinksConfig
 }) {
   const { items, setItems } = useCalculatorData()
+  const confirm = useConfirm()
   const [mode, setMode] = useState<Mode>('cost')
 
   // Cost mode toolbar state (lifted)
@@ -42,6 +50,14 @@ export function CalculatorApp({
   const [dropOpen, setDropOpen] = useState(false)
   const [search, setSearch] = useState('')
   const dropRef = useRef<HTMLDivElement>(null)
+  // 목적지 메뉴 (복제/추가/삭제/출력) state
+  const [destMenuOpen, setDestMenuOpen] = useState(false)
+  const [destAction, setDestAction] = useState<'clone' | 'add' | null>(null)
+  const [outputOpen, setOutputOpen] = useState(false)
+  const [destName, setDestName] = useState('')
+  const [destError, setDestError] = useState<string | null>(null)
+  const [destPending, startDestTransition] = useTransition()
+  const destMenuRef = useRef<HTMLDivElement>(null)
 
   // Schedule mode toolbar state
   const [scheduleCountry, setScheduleCountry] = useState<ScheduleCountry>('japan')
@@ -64,6 +80,87 @@ export function CalculatorApp({
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
   }, [dropOpen])
+
+  // 목적지 메뉴 / 인라인 폼 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!destMenuOpen && !destAction) return
+    const onDown = (e: MouseEvent) => {
+      if (destMenuRef.current && !destMenuRef.current.contains(e.target as Node)) {
+        setDestMenuOpen(false)
+        setDestAction(null)
+        setDestName('')
+        setDestError(null)
+      }
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [destMenuOpen, destAction])
+
+  function resetDestMenu() {
+    setDestMenuOpen(false)
+    setDestAction(null)
+    setDestName('')
+    setDestError(null)
+  }
+
+  function handleClone() {
+    const target = destName.trim()
+    if (!country || !target) return
+    setDestError(null)
+    startDestTransition(async () => {
+      const r = await cloneCalculatorDestination({ source: country, target })
+      if (!r.ok) {
+        setDestError(r.error)
+        return
+      }
+      setItems((prev) => [...prev, ...r.data])
+      setCountry(target)
+      resetDestMenu()
+      setEditMode(true)
+    })
+  }
+
+  function handleAddDestination() {
+    const target = destName.trim()
+    if (!target) return
+    setDestError(null)
+    startDestTransition(async () => {
+      const r = await addCalculatorDestination({ target })
+      if (!r.ok) {
+        setDestError(r.error)
+        return
+      }
+      setItems((prev) => [...prev, r.data])
+      setCountry(target)
+      resetDestMenu()
+      setEditMode(true)
+    })
+  }
+
+  async function handleDeleteDestination() {
+    if (!country) return
+    setDestMenuOpen(false)
+    const ok = await confirm({
+      message: `"${country}" 목적지를 삭제하시겠습니까?`,
+      description: '이 목적지의 모든 비용 항목이 함께 삭제됩니다. 되돌릴 수 없습니다.',
+      okLabel: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
+    startDestTransition(async () => {
+      const r = await deleteCalculatorDestination({ country })
+      if (!r.ok) {
+        setDestError(r.error)
+        return
+      }
+      const deleted = new Set(r.data.deletedIds)
+      setItems((prev) => prev.filter((it) => !deleted.has(it.id)))
+      // 다른 목적지로 자동 전환
+      const remaining = countries.filter((c) => c !== country)
+      setCountry(remaining[0] ?? '')
+      resetDestMenu()
+    })
+  }
 
   const countries = useMemo(() => {
     const seen = new Map<string, number>()
@@ -197,6 +294,131 @@ export function CalculatorApp({
           <Pencil size={13} />
           {editMode ? '저장' : '편집'}
         </button>
+
+        {/* 목적지 메뉴 — 복제 / 추가 / 삭제 */}
+        <div className="relative" ref={destMenuRef}>
+          <button
+            type="button"
+            onClick={() => {
+              if (destAction) return
+              setDestMenuOpen((v) => !v)
+            }}
+            aria-label="목적지 메뉴"
+            title="목적지 메뉴"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/80 bg-transparent text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Menu size={14} />
+          </button>
+          {destMenuOpen && !destAction && (
+            <div className="absolute right-0 top-[calc(100%+4px)] z-50 w-44 overflow-hidden rounded-md border border-border bg-popover shadow-lg py-1">
+              <button
+                type="button"
+                disabled={!country}
+                onClick={() => {
+                  setDestAction('clone')
+                  setDestMenuOpen(false)
+                  setDestName('')
+                  setDestError(null)
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-accent transition-colors disabled:opacity-40 disabled:pointer-events-none"
+              >
+                <Copy size={14} className="text-muted-foreground" />
+                <span>복제</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDestAction('add')
+                  setDestMenuOpen(false)
+                  setDestName('')
+                  setDestError(null)
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-accent transition-colors"
+              >
+                <Plus size={14} className="text-muted-foreground" />
+                <span>추가</span>
+              </button>
+              <button
+                type="button"
+                disabled={!country}
+                onClick={() => {
+                  void handleDeleteDestination()
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+              >
+                <Trash2 size={14} />
+                <span>삭제</span>
+              </button>
+              <button
+                type="button"
+                disabled={!country}
+                onClick={() => {
+                  setDestMenuOpen(false)
+                  setOutputOpen(true)
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-accent transition-colors disabled:opacity-40 disabled:pointer-events-none"
+              >
+                <Printer size={14} className="text-muted-foreground" />
+                <span>출력</span>
+              </button>
+            </div>
+          )}
+          {destAction && (
+            <div className="absolute right-0 top-[calc(100%+4px)] z-50 w-72 rounded-md border border-border bg-popover shadow-lg p-3 space-y-2">
+              <div className="text-[12px] text-muted-foreground">
+                {destAction === 'clone'
+                  ? `"${country}" → 새 목적지 이름`
+                  : '새 목적지 이름'}
+              </div>
+              <input
+                autoFocus
+                value={destName}
+                onChange={(e) => {
+                  setDestName(e.target.value)
+                  setDestError(null)
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    if (destAction === 'clone') handleClone()
+                    else handleAddDestination()
+                  } else if (e.key === 'Escape') {
+                    e.preventDefault()
+                    resetDestMenu()
+                  }
+                }}
+                disabled={destPending}
+                placeholder="목적지 이름"
+                className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none focus:border-[#D9A489] dark:focus:border-[#C08C70] disabled:opacity-50"
+              />
+              {destError && (
+                <div className="text-[12px] text-destructive">{destError}</div>
+              )}
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={destAction === 'clone' ? handleClone : handleAddDestination}
+                  disabled={destPending || !destName.trim()}
+                  className="flex-1 h-8 rounded-md bg-[#D9A489] text-white text-sm hover:bg-[#C8957A] disabled:opacity-50 dark:bg-[#C08C70] dark:hover:bg-[#A87862] transition-colors"
+                >
+                  {destPending
+                    ? '처리 중…'
+                    : destAction === 'clone'
+                      ? '복제'
+                      : '추가'}
+                </button>
+                <button
+                  type="button"
+                  onClick={resetDestMenu}
+                  disabled={destPending}
+                  className="h-8 rounded-md border border-border px-3 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors disabled:opacity-50"
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </>
     ) : mode === 'schedule' ? (
       <div className="inline-flex rounded-full border border-border/80 bg-transparent p-0.5">
@@ -261,6 +483,14 @@ export function CalculatorApp({
             onSavingChange={onLinksSavingChange}
           />
         </div>
+      )}
+      {outputOpen && country && (
+        <CalculatorOutputModal
+          initialCountry={country}
+          initialSpecies={species}
+          allItems={items}
+          onClose={() => setOutputOpen(false)}
+        />
       )}
     </PageShell>
   )

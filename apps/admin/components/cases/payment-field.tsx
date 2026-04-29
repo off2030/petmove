@@ -1,17 +1,29 @@
 'use client'
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, useTransition } from 'react'
+import { Calculator as CalculatorIcon } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { DateTextField } from '@/components/ui/date-text-field'
+import { useCalculatorData } from '@/components/providers/calculator-data-provider'
+import {
+  CalculatorOutputModal,
+  type EstimateSnapshot,
+} from '@/components/calculator/calculator-output-modal'
 
 interface PaymentRecord {
   amount: number
   method: string | null
   date: string | null
+}
+
+function firstDestination(raw: string | null): string | null {
+  if (!raw) return null
+  const tok = raw.split(',').map((s) => s.trim()).filter(Boolean)
+  return tok[0] ?? null
 }
 
 const METHODS = [
@@ -25,8 +37,15 @@ export interface PaymentFieldHandle {
 }
 
 export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; caseRow: CaseRow; hideAddButton?: boolean }>(function PaymentField({ caseId, caseRow, hideAddButton }, ref) {
-  const { updateLocalCaseField } = useCases()
+  const { updateLocalCaseField, activeDestination } = useCases()
+  const { items: calcItems } = useCalculatorData()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
+
+  const species: 'dog' | 'cat' = data.species === 'cat' ? 'cat' : 'dog'
+  const country = activeDestination ?? firstDestination(caseRow.destination)
+  const savedEstimate = (data.estimate as EstimateSnapshot | undefined) ?? null
+
+  const [estimateOpen, setEstimateOpen] = useState(false)
 
   // Read payments array (backward compat: old flat keys → array)
   function readPayments(): PaymentRecord[] {
@@ -93,6 +112,21 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
     })
   }
 
+  async function handleSaveEstimate({ amount, estimate }: { amount: number; estimate: EstimateSnapshot }) {
+    const today = new Date().toISOString().slice(0, 10)
+    const method = estimate.priceMode === 'cash' ? 'cash' : 'card'
+    const next = [...payments, { amount, method, date: today }]
+    await new Promise<void>((resolve) => {
+      startSave(async () => {
+        await savePayments(next)
+        const r = await updateCaseField(caseId, 'data', 'estimate', estimate)
+        if (r.ok) updateLocalCaseField(caseId, 'data', 'estimate', estimate)
+        setEstimateOpen(false)
+        resolve()
+      })
+    })
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
@@ -105,6 +139,15 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
           title="결제 추가"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <button
+          type="button"
+          onClick={() => setEstimateOpen(true)}
+          disabled={!country}
+          className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
+          title={country ? '비용 안내' : '목적지를 먼저 선택해주세요'}
+        >
+          <CalculatorIcon size={15} />
         </button>
       </div>
       <div className="min-w-0 space-y-0.5">
@@ -144,6 +187,20 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
           </button>
         )}
       </div>
+
+      {estimateOpen && country && (
+        <CalculatorOutputModal
+          initialCountry={country}
+          initialSpecies={species}
+          allItems={calcItems}
+          initialEstimate={savedEstimate}
+          onSaveAsPayment={handleSaveEstimate}
+          saving={saving}
+          customerName={(caseRow as { customer_name?: string | null }).customer_name ?? null}
+          petName={(caseRow as { pet_name?: string | null }).pet_name ?? null}
+          onClose={() => setEstimateOpen(false)}
+        />
+      )}
     </div>
   )
 })
@@ -277,6 +334,7 @@ function MethodDropdown({ current, onSelect, onClose }: {
   onClose: () => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
+  const [openUp, setOpenUp] = useState(false)
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -286,9 +344,22 @@ function MethodDropdown({ current, onSelect, onClose }: {
     return () => document.removeEventListener('mousedown', onClick)
   }, [onClose])
 
+  // 아래 공간이 부족하면 위로 펼침 — 스크롤 컨테이너 끝에서 잘림 방지.
+  useEffect(() => {
+    if (!ref.current) return
+    const rect = ref.current.getBoundingClientRect()
+    const dropdownHeight = (METHODS.length + 1) * 36 + 16
+    if (rect.bottom + dropdownHeight > window.innerHeight - 16) setOpenUp(true)
+  }, [])
+
   return (
     <div ref={ref} className="relative">
-      <ul className="absolute left-0 top-0 z-20 min-w-[140px] rounded-md border border-border/80 bg-background py-1 shadow-md">
+      <ul
+        className={cn(
+          'absolute left-0 z-20 min-w-[140px] rounded-md border border-border/80 bg-background py-1 shadow-md',
+          openUp ? 'bottom-full mb-1' : 'top-0',
+        )}
+      >
         <li>
           <button type="button" onClick={() => onSelect(null)}
             className="w-full text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors">—</button>
