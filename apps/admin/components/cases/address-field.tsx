@@ -226,7 +226,7 @@ export function AddressField({
   return (
     <>
       {/* Korean address */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
         <SectionLabel className="pt-1">한국주소</SectionLabel>
         <div className="flex items-center gap-sm min-w-0">
           {editingKr ? (
@@ -294,7 +294,7 @@ export function AddressField({
       )}
 
       {/* English address */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60">
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
         <SectionLabel className="pt-1">영문주소</SectionLabel>
         <div className="min-w-0">
           {editingEn ? (

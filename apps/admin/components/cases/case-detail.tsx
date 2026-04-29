@@ -111,12 +111,17 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
       {/* ─── Sections ─── */}
       {groups.map((g, groupIdx) => (
         <React.Fragment key={g.group}>
-        <section className="mb-7">
-          <div className="mb-3 flex items-center gap-[10px]">
-            <span className="font-mono text-[12px] tracking-[1px] text-muted-foreground">
+        <section
+          className={cn(
+            'mb-10',
+            groupIdx > 0 && 'pt-10 border-t border-border/60',
+          )}
+        >
+          <div className="mb-4 flex items-baseline gap-3">
+            <span className="font-mono text-[14px] tracking-[1.2px] text-muted-foreground/80">
               {String(groupIdx + 1).padStart(2, '0')}
             </span>
-            <h3 className="font-serif text-[15px] font-medium uppercase tracking-[0.4px] text-foreground">
+            <h3 className="font-serif text-[20px] font-medium tracking-tight text-foreground">
               {g.group}
             </h3>
             {g.group === '절차정보' && toggleableForDest.length > 0 && (
@@ -285,12 +290,12 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
             return <ExtraComp caseId={caseRow.id} caseRow={caseRow} sectionNumber={sectionNumber} />
           }
           return (
-            <section className="mb-7">
-              <div className="mb-3 flex items-center gap-[10px]">
-                <span className="font-mono text-[12px] tracking-[1px] text-muted-foreground">
+            <section className="mb-10 pt-10 border-t border-border/60">
+              <div className="mb-4 flex items-baseline gap-3">
+                <span className="font-mono text-[14px] tracking-[1.2px] text-muted-foreground/80">
                   {sectionNumber}
                 </span>
-                <h3 className="font-serif text-[15px] font-medium uppercase tracking-[0.4px] text-foreground">
+                <h3 className="font-serif text-[20px] font-medium tracking-tight text-foreground">
                   추가정보
                 </h3>
               </div>

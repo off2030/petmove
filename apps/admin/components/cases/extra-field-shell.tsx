@@ -224,15 +224,15 @@ export function ExtraSectionShell({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        'mb-7 rounded-md transition-colors',
+        'mb-10 pt-10 border-t border-border/60 rounded-md transition-colors',
         dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
-      <div className="mb-3 flex items-center gap-[10px]">
-        <span className="font-mono text-[12px] tracking-[1px] text-muted-foreground">
+      <div className="mb-4 flex items-baseline gap-3">
+        <span className="font-mono text-[14px] tracking-[1.2px] text-muted-foreground/80">
           {sectionNumber}
         </span>
-        <h3 className="font-serif text-[15px] font-medium uppercase tracking-[0.4px] text-foreground">
+        <h3 className="font-serif text-[20px] font-medium tracking-tight text-foreground">
           추가정보
         </h3>
         <input
