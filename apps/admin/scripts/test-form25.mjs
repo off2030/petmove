@@ -229,7 +229,6 @@ const caseRow = {
   microchip_extra: [],
   destination: '호주',
   departure_date: null,
-  status: '진행중',
   org_id: 'x', created_at: '', updated_at: '',
   data: {
     phone: '01012345678',

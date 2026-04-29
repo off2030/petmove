@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { SectionLabel } from '@/components/ui/section-label'
 import { ScanButton } from '@/components/ui/scan-button'
-import { cn } from '@/lib/utils'
+import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
@@ -15,6 +15,7 @@ import { uploadFileToNotes } from '@/lib/notes-upload'
 import { resolveTiterLab, type InspectionLabRule } from '@petmove/domain'
 import { severityTextClass, tooltipText, useFieldVerification } from './verification-context'
 import { DateTextField } from '@/components/ui/date-text-field'
+import { useSectionEditMode } from './section-edit-mode-context'
 
 interface TiterRecord {
   date: string | null
@@ -58,6 +59,7 @@ function autoDetectLab(
 
 export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
   const { updateLocalCaseField, inspectionConfig } = useCases()
+  const editMode = useSectionEditMode()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
 
   // Read array (backward compat: old flat keys)
@@ -228,86 +230,97 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
   return (
     <div
       ref={rootRef}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      onDragOver={editMode ? handleDragOver : undefined}
+      onDragLeave={editMode ? handleDragLeave : undefined}
+      onDrop={editMode ? handleDrop : undefined}
       className={cn(
         'grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0 rounded-md',
-        dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
+        editMode && dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel>광견병항체검사</SectionLabel>
-        <button
-          type="button"
-          onClick={() => setAddingNew(true)}
-          disabled={saving || addingNew}
-          className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
-          title="항체검사 추가"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        </button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*,.pdf"
-          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }}
-          className="hidden"
-        />
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={extracting}
-          className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
-          title="이미지/PDF로 항체검사 정보 추출"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-        </button>
-        <ScanButton
-          disabled={extracting}
-          title="스캔하여 항체검사 정보 추출"
-          onScanned={(file) => handleFile(file)}
-        />
       </div>
-      <div className="min-w-0 space-y-0.5">
-        {extracting && (
-          <div className="text-xs text-muted-foreground/70 italic px-2 py-1">이미지에서 추출 중…</div>
-        )}
-        {extractMsg && (
-          <div className="text-xs text-muted-foreground px-2 py-1">{extractMsg}</div>
-        )}
+      <div className="min-w-0 flex items-start gap-md">
+        <div className="flex-1 min-w-0 space-y-0.5">
+          {extracting && (
+            <div className="text-xs text-muted-foreground/70 italic px-2 py-1">이미지에서 추출 중…</div>
+          )}
+          {extractMsg && (
+            <div className="text-xs text-muted-foreground px-2 py-1">{extractMsg}</div>
+          )}
 
-        {records.map((rec, i) => (
-          <TiterRow
-            key={i}
-            record={rec}
-            recordIdx={i}
-            isEditing={editIdx === i ? editField : null}
-            onStartEdit={(f) => { setEditIdx(i); setEditField(f) }}
-            onStopEdit={() => { setEditIdx(null); setEditField(null) }}
-            onUpdateField={(f, v) => updateRecord(i, f, v)}
-            onDelete={() => deleteRecord(i)}
-            saving={saving}
-          />
-        ))}
+          {records.map((rec, i) => (
+            <TiterRow
+              key={i}
+              record={rec}
+              recordIdx={i}
+              isEditing={editIdx === i ? editField : null}
+              onStartEdit={(f) => { setEditIdx(i); setEditField(f) }}
+              onStopEdit={() => { setEditIdx(null); setEditField(null) }}
+              onUpdateField={(f, v) => updateRecord(i, f, v)}
+              onDelete={() => deleteRecord(i)}
+              saving={saving}
+            />
+          ))}
 
-        {addingNew && (
-          <DateInput
-            initial=""
-            onSave={saveNewRecord}
-            onCancel={() => setAddingNew(false)}
-          />
-        )}
+          {addingNew && (
+            <DateInput
+              initial=""
+              onSave={saveNewRecord}
+              onCancel={() => setAddingNew(false)}
+            />
+          )}
 
-        {records.length === 0 && !addingNew && !extracting && (
-          <button type="button" onClick={() => setAddingNew(true)}
-            className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground">
-            —
-          </button>
-        )}
+          {records.length === 0 && !addingNew && !extracting && (
+            editMode ? (
+              <button type="button" onClick={() => setAddingNew(true)}
+                className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground">
+                —
+              </button>
+            ) : (
+              <span className="px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/40">—</span>
+            )
+          )}
 
-        {dragOver && (
-          <div className="text-xs text-muted-foreground px-2 py-1">놓으면 자동 입력</div>
+          {dragOver && (
+            <div className="text-xs text-muted-foreground px-2 py-1">놓으면 자동 입력</div>
+          )}
+        </div>
+        {editMode && (
+          <div className="shrink-0 flex items-center gap-[6px]">
+            <button
+              type="button"
+              onClick={() => setAddingNew(true)}
+              disabled={saving || addingNew}
+              className={roundIconBtn}
+              title="항체검사 추가"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*,.pdf"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={extracting}
+              className={roundIconBtn}
+              title="이미지/PDF로 항체검사 정보 추출"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <ScanButton
+              disabled={extracting}
+              title="스캔하여 항체검사 정보 추출"
+              onScanned={(file) => handleFile(file)}
+              className={roundIconBtn}
+            />
+          </div>
         )}
       </div>
     </div>
@@ -328,6 +341,7 @@ function TiterRow({
   onDelete: () => void
   saving: boolean
 }) {
+  const editMode = useSectionEditMode()
   const dateDisplay = record.date || '—'
   const valueDisplay = record.value || '—'
   const labObj = LABS.find(l => l.value === record.lab)
@@ -336,11 +350,13 @@ function TiterRow({
   const dateInfo = useFieldVerification(`rabies_titer_records[${recordIdx}].date`)
   const dateColorCls = dateInfo ? severityTextClass(dateInfo.severity) : ''
   const dateTitle = dateInfo ? tooltipText(dateInfo) : undefined
+  const showLab = editMode || labDisplay !== '—'
+  const showValue = editMode || valueDisplay !== '—'
 
   return (
     <div className="group/item flex items-baseline gap-[10px] min-w-0">
       {/* Date (채혈일) */}
-      {isEditing === 'date' ? (
+      {editMode && isEditing === 'date' ? (
         <DateInput
           initial={record.date || ''}
           onSave={(v) => { if (!v) onDelete(); else onUpdateField('date', v); onStopEdit() }}
@@ -348,66 +364,101 @@ function TiterRow({
         />
       ) : (
         <span className="group/v inline-flex items-baseline">
-          <button type="button" onClick={() => onStartEdit('date')} title={dateTitle}
-            className={cn(
-              'text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
-              dateDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60',
-              dateColorCls,
-            )}>
-            {dateDisplay}
-          </button>
+          {editMode ? (
+            <button type="button" onClick={() => onStartEdit('date')} title={dateTitle}
+              className={cn(
+                'text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
+                dateDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60',
+                dateColorCls,
+              )}>
+              {dateDisplay}
+            </button>
+          ) : (
+            <span title={dateTitle}
+              className={cn(
+                'inline-block rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground',
+                dateDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/40',
+                dateColorCls,
+              )}>
+              {dateDisplay}
+            </span>
+          )}
           {dateDisplay !== '—' && <CopyButton value={dateDisplay} className="ml-1 opacity-0 group-hover/v:opacity-100" />}
         </span>
       )}
 
-      <span className="text-muted-foreground/30 select-none">|</span>
-
-      {/* Value (수치) */}
-      {isEditing === 'value' ? (
-        <ValueInput
-          initial={record.value || ''}
-          onSave={(v) => { onUpdateField('value', v || null); onStopEdit() }}
-          onCancel={onStopEdit}
-          saving={saving}
-        />
-      ) : (
-        <span className="group/v inline-flex items-baseline">
-          <button type="button" onClick={() => onStartEdit('value')}
-            className={cn('text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-text', valueDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60')}>
-            {valueDisplay}
-          </button>
-          {valueDisplay !== '—' && <CopyButton value={valueDisplay} className="ml-1 opacity-0 group-hover/v:opacity-100" />}
-        </span>
-      )}
-
-      <span className="text-muted-foreground/30 select-none">|</span>
+      {showLab && <span className="text-muted-foreground/30 select-none">|</span>}
 
       {/* Lab (검사기관) */}
-      {isEditing === 'lab' ? (
-        <LabDropdown
-          current={record.lab}
-          onSelect={(v) => { onUpdateField('lab', v); onStopEdit() }}
-          onClose={onStopEdit}
-        />
-      ) : (
-        <span className="group/v inline-flex items-baseline">
-          <button type="button" onClick={() => onStartEdit('lab')}
-            className={cn(
-              'text-left cursor-pointer transition-all',
-              labTone
-                ? cn('inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap hover:opacity-80', labTone.bg, labTone.text)
-                : cn('text-base rounded-md px-2 py-1 -mx-2 hover:bg-accent/60', labDisplay === '—' && 'text-muted-foreground/60'),
-            )}>
-            {labDisplay}
-          </button>
-          {labDisplay !== '—' && <CopyButton value={labDisplay} className="ml-1 opacity-0 group-hover/v:opacity-100" />}
-        </span>
+      {showLab && (
+        editMode && isEditing === 'lab' ? (
+          <LabDropdown
+            current={record.lab}
+            onSelect={(v) => { onUpdateField('lab', v); onStopEdit() }}
+            onClose={onStopEdit}
+          />
+        ) : (
+          <span className="group/v inline-flex items-baseline">
+            {editMode ? (
+              <button type="button" onClick={() => onStartEdit('lab')}
+                className={cn(
+                  'text-left cursor-pointer transition-all',
+                  labTone
+                    ? cn('inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap hover:opacity-80', labTone.bg, labTone.text)
+                    : cn('text-base rounded-md px-2 py-1 -mx-2 hover:bg-accent/60', labDisplay === '—' && 'text-muted-foreground/60'),
+                )}>
+                {labDisplay}
+              </button>
+            ) : (
+              <span
+                className={cn(
+                  'inline-block transition-all',
+                  labTone
+                    ? cn('items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap', labTone.bg, labTone.text)
+                    : cn('text-base rounded-md px-2 py-1 -mx-2', labDisplay === '—' && 'text-muted-foreground/40'),
+                )}>
+                {labDisplay}
+              </span>
+            )}
+            {labDisplay !== '—' && <CopyButton value={labDisplay} className="ml-1 opacity-0 group-hover/v:opacity-100" />}
+          </span>
+        )
       )}
 
-      <button type="button" onClick={onDelete}
-        className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 ml-1 opacity-0 group-hover/item:opacity-100">
-        ✕
-      </button>
+      {showValue && <span className="text-muted-foreground/30 select-none">|</span>}
+
+      {/* Value (결과수치) */}
+      {showValue && (
+        editMode && isEditing === 'value' ? (
+          <ValueInput
+            initial={record.value || ''}
+            onSave={(v) => { onUpdateField('value', v || null); onStopEdit() }}
+            onCancel={onStopEdit}
+            saving={saving}
+          />
+        ) : (
+          <span className="group/v inline-flex items-baseline">
+            {editMode ? (
+              <button type="button" onClick={() => onStartEdit('value')}
+                className={cn('text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-text', valueDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60')}>
+                {valueDisplay}
+              </button>
+            ) : (
+              <span className={cn('inline-block rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground', valueDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/40')}>
+                {valueDisplay}
+              </span>
+            )}
+            {valueDisplay !== '—' && <CopyButton value={valueDisplay} className="ml-1 opacity-0 group-hover/v:opacity-100" />}
+          </span>
+        )
+      )}
+
+      {editMode && (
+        <button type="button" onClick={onDelete}
+          className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 ml-1 opacity-0 group-hover/item:opacity-100">
+          ✕
+        </button>
+      )}
     </div>
   )
 }

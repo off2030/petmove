@@ -88,7 +88,6 @@ export async function applyCase(input: ApplyInput): Promise<
       pet_name_en: input.pet_name_en,
       destination: input.destination,
       microchip: formatMicrochip(input.microchip),
-      status: 'Applied',
       data,
     })
     .select('id')

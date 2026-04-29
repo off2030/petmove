@@ -11,6 +11,7 @@ import { useDetailViewSettings } from '@/components/providers/detail-view-settin
 import { severityTextClass, tooltipText, useFieldVerification } from '@/components/cases/verification-context'
 import { DateTextField } from '@/components/ui/date-text-field'
 import { SectionLabel } from '@/components/ui/section-label'
+import { useSectionEditMode } from '@/components/cases/section-edit-mode-context'
 
 /** Filter input by language */
 function filterByLang(str: string, lang?: 'ko' | 'en'): string {
@@ -96,6 +97,7 @@ export function EditableField({
 }) {
   const { updateLocalCaseField, replaceLocalCaseData } = useCases()
   const { settings: detailViewSettings } = useDetailViewSettings()
+  const editMode = useSectionEditMode()
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState<string>(stringifyRaw(rawValue, spec))
   const [saving, startSave] = useTransition()
@@ -163,6 +165,7 @@ export function EditableField({
   }
 
   function handleEnterEdit() {
+    if (!editMode) return
     if (spec.key === 'age') return // age is auto-calculated, not editable
     setError(null)
     setValue(stringifyRaw(rawValue, spec))
@@ -271,21 +274,31 @@ export function EditableField({
           }}
         >
           <div className="relative w-fit">
-            <button
-              type="button"
-              onClick={() => setEditing(!editing)}
-              className={cn(
-                'text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/60 cursor-pointer',
-                spec.key === 'status'
-                  ? 'font-serif italic text-[16px] text-primary'
-                  : getValueClass(spec),
-                isEmpty && 'font-sans not-italic text-base font-normal tracking-normal text-muted-foreground/60',
-              )}
-            >
-              {displayNode}
-            </button>
+            {editMode ? (
+              <button
+                type="button"
+                onClick={() => setEditing(!editing)}
+                className={cn(
+                  'text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/60 cursor-pointer',
+                  getValueClass(spec),
+                  isEmpty && 'font-sans not-italic text-base font-normal tracking-normal text-muted-foreground/60',
+                )}
+              >
+                {displayNode}
+              </button>
+            ) : (
+              <span
+                className={cn(
+                  'inline-block rounded-md px-2 py-1 -mx-2',
+                  getValueClass(spec),
+                  isEmpty && 'font-sans not-italic text-base font-normal tracking-normal text-muted-foreground/60',
+                )}
+              >
+                {displayNode}
+              </span>
+            )}
           </div>
-          {editing && (
+          {editMode && editing && (
             <ul className="absolute left-0 top-full mt-1 z-20 min-w-[120px] rounded-md border border-border/80 bg-background py-1 shadow-md">
               <li>
                 <button
@@ -377,7 +390,7 @@ export function EditableField({
 
   if (inline) return valueCell
 
-  const clearButton = clearable && !isEmpty && !editing ? (
+  const clearButton = clearable && !isEmpty && !editing && editMode ? (
     <button
       type="button"
       onClick={handleClear}
@@ -392,10 +405,9 @@ export function EditableField({
       <SectionLabel className="pt-1">{spec.label}</SectionLabel>
       <div className="min-w-0 flex items-baseline gap-sm">
         {(() => {
-          const noCopy = spec.type === 'longtext' || spec.key === 'select' || spec.key === 'status'
+          const noCopy = spec.type === 'longtext' || spec.key === 'select'
           if ((isDate && editing) || (isSelect && editing) || editing) return valueCell
           // longtext 만 inline clearButton — 긴 텍스트 wrap 때문에 외부 절대배치가 어색함.
-          // status 등 select 는 noCopy 라도 외부 clearButton 만 사용(아래 411) → 중복 방지.
           if (spec.type === 'longtext') return <>{valueCell}{clearButton}</>
           if (noCopy) return valueCell
           // CopyButton 을 flex 흐름에 두어 뒤따르는 ✕ 와 겹치지 않게 한다
@@ -424,10 +436,26 @@ function VerifiedDisplayButton({ spec, path, display, isEmpty, isLongText, onCli
   isLongText: boolean
   onClick: () => void
 }) {
+  const editMode = useSectionEditMode()
   const info = useFieldVerification(path)
   const colorCls = info ? severityTextClass(info.severity) : ''
-  const title = info ? tooltipText(info) : '클릭하여 편집'
+  const title = info ? tooltipText(info) : (editMode ? '클릭하여 편집' : undefined)
   const valueCls = getValueClass(spec)
+  if (!editMode) {
+    if (isEmpty) return null
+    return (
+      <span
+        className={cn(
+          'inline-block rounded-md px-2 py-1 -mx-2',
+          valueCls,
+          colorCls,
+        )}
+        title={title}
+      >
+        {isLongText ? <span className="whitespace-pre-wrap">{display}</span> : display}
+      </span>
+    )
+  }
   return (
     <button
       type="button"

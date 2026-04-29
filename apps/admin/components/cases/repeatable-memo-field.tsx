@@ -2,15 +2,17 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { SectionLabel } from '@/components/ui/section-label'
-import { cn } from '@/lib/utils'
+import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
+import { useSectionEditMode } from './section-edit-mode-context'
 
 const DATA_KEY = 'memos'
 
 export function RepeatableMemoField({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
   const { updateLocalCaseField } = useCases()
+  const editMode = useSectionEditMode()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
 
   function readMemos(): string[] {
@@ -65,59 +67,75 @@ export function RepeatableMemoField({ caseId, caseRow }: { caseId: string; caseR
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel>메모</SectionLabel>
-        <button
-          type="button"
-          onClick={() => setAddingNew(true)}
-          disabled={saving || addingNew}
-          className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
-          title="메모 추가"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        </button>
       </div>
-      <div className="min-w-0 space-y-1">
-        {memos.map((m, i) => (
-          <div key={i} className="group/item flex items-start gap-sm">
-            {editIdx === i ? (
-              <MemoInput
-                initial={m}
-                onSave={(v) => updateMemo(i, v)}
-                onCancel={() => setEditIdx(null)}
-                saving={saving}
-              />
-            ) : (
-              <button
-                type="button"
-                onClick={() => setEditIdx(i)}
-                className="text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text whitespace-pre-wrap flex-1 min-w-0"
-              >
-                {m}
+      <div className="min-w-0 flex items-start gap-md">
+        <div className="flex-1 min-w-0 space-y-1">
+          {memos.map((m, i) => (
+            <div key={i} className="group/item flex items-start gap-sm">
+              {editMode && editIdx === i ? (
+                <MemoInput
+                  initial={m}
+                  onSave={(v) => updateMemo(i, v)}
+                  onCancel={() => setEditIdx(null)}
+                  saving={saving}
+                />
+              ) : editMode ? (
+                <button
+                  type="button"
+                  onClick={() => setEditIdx(i)}
+                  className="text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text whitespace-pre-wrap flex-1 min-w-0"
+                >
+                  {m}
+                </button>
+              ) : (
+                <span className="rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground whitespace-pre-wrap flex-1 min-w-0">
+                  {m}
+                </span>
+              )}
+              {editMode && (
+                <button
+                  type="button"
+                  onClick={() => deleteMemo(i)}
+                  className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 mt-1 opacity-0 group-hover/item:opacity-100"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+
+          {addingNew && (
+            <MemoInput
+              initial=""
+              onSave={saveNewMemo}
+              onCancel={() => setAddingNew(false)}
+              saving={saving}
+            />
+          )}
+
+          {memos.length === 0 && !addingNew && (
+            editMode ? (
+              <button type="button" onClick={() => setAddingNew(true)}
+                className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground cursor-pointer">
+                —
               </button>
-            )}
+            ) : (
+              <span className="px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/40">—</span>
+            )
+          )}
+        </div>
+        {editMode && (
+          <div className="shrink-0 flex items-center gap-[6px]">
             <button
               type="button"
-              onClick={() => deleteMemo(i)}
-              className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 mt-1 opacity-0 group-hover/item:opacity-100"
+              onClick={() => setAddingNew(true)}
+              disabled={saving || addingNew}
+              className={roundIconBtn}
+              title="메모 추가"
             >
-              ✕
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             </button>
           </div>
-        ))}
-
-        {addingNew && (
-          <MemoInput
-            initial=""
-            onSave={saveNewMemo}
-            onCancel={() => setAddingNew(false)}
-            saving={saving}
-          />
-        )}
-
-        {memos.length === 0 && !addingNew && (
-          <button type="button" onClick={() => setAddingNew(true)}
-            className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground cursor-pointer">
-            —
-          </button>
         )}
       </div>
     </div>

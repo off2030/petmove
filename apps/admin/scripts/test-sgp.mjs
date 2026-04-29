@@ -115,7 +115,6 @@ const c = {
   customer_name: '홍길동', customer_name_en: 'Gildong Hong',
   pet_name: '코코', pet_name_en: 'Coco',
   destination: 'Singapore', departure_date: '2026-06-01',
-  status: '진행중',
   vet_visit_date: '2026-04-15',
   data: {
     species: 'dog', breed_en: 'Maltese', color_en: 'White',

@@ -3,7 +3,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, useTransition } from 'react'
 import { Calculator as CalculatorIcon } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
-import { cn } from '@/lib/utils'
+import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
@@ -13,6 +13,7 @@ import {
   CalculatorOutputModal,
   type EstimateSnapshot,
 } from '@/components/calculator/calculator-output-modal'
+import { useSectionEditMode } from './section-edit-mode-context'
 
 interface PaymentRecord {
   amount: number
@@ -38,6 +39,7 @@ export interface PaymentFieldHandle {
 
 export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; caseRow: CaseRow; hideAddButton?: boolean }>(function PaymentField({ caseId, caseRow, hideAddButton }, ref) {
   const { updateLocalCaseField, activeDestination } = useCases()
+  const editMode = useSectionEditMode()
   const { items: calcItems } = useCalculatorData()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
 
@@ -131,60 +133,70 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel>결제</SectionLabel>
-        <button
-          type="button"
-          onClick={() => setAddingNew(true)}
-          disabled={saving || addingNew}
-          className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
-          title="결제 추가"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        </button>
-        <button
-          type="button"
-          onClick={() => setEstimateOpen(true)}
-          disabled={!country}
-          className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
-          title={country ? '비용 안내' : '목적지를 먼저 선택해주세요'}
-        >
-          <CalculatorIcon size={15} />
-        </button>
       </div>
-      <div className="min-w-0 space-y-0.5">
-        {payments.map((p, i) => (
-          <PaymentRow
-            key={i}
-            record={p}
-            isEditing={editIdx === i ? editField : null}
-            onStartEdit={(field) => { setEditIdx(i); setEditField(field) }}
-            onStopEdit={() => { setEditIdx(null); setEditField(null) }}
-            onUpdateField={(field, value) => updatePayment(i, field, value)}
-            onDelete={() => deletePayment(i)}
-            saving={saving}
-          />
-        ))}
-
-        {/* New row being added — amount input only, not yet saved */}
-        {addingNew && (
-          <div className="flex items-baseline gap-[10px] min-w-0">
-            <AmountInput
-              initial={0}
-              onSave={(v) => saveNewPayment(v)}
-              onCancel={() => setAddingNew(false)}
+      <div className="min-w-0 flex items-start gap-md">
+        <div className="flex-1 min-w-0 space-y-0.5">
+          {payments.map((p, i) => (
+            <PaymentRow
+              key={i}
+              record={p}
+              isEditing={editIdx === i ? editField : null}
+              onStartEdit={(field) => { setEditIdx(i); setEditField(field) }}
+              onStopEdit={() => { setEditIdx(null); setEditField(null) }}
+              onUpdateField={(field, value) => updatePayment(i, field, value)}
+              onDelete={() => deletePayment(i)}
               saving={saving}
             />
-            <span className="text-muted-foreground/30 select-none">|</span>
-            <span className="text-sm text-muted-foreground/60">미입력</span>
-            <span className="text-muted-foreground/30 select-none">|</span>
-            <span className="text-sm text-muted-foreground/60">미입력</span>
-          </div>
-        )}
+          ))}
 
-        {payments.length === 0 && !addingNew && (
-          <button type="button" onClick={() => setAddingNew(true)}
-            className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground">
-            —
-          </button>
+          {/* New row being added — amount input only, not yet saved */}
+          {addingNew && (
+            <div className="flex items-baseline gap-[10px] min-w-0">
+              <AmountInput
+                initial={0}
+                onSave={(v) => saveNewPayment(v)}
+                onCancel={() => setAddingNew(false)}
+                saving={saving}
+              />
+              <span className="text-muted-foreground/30 select-none">|</span>
+              <span className="text-sm text-muted-foreground/60">미입력</span>
+              <span className="text-muted-foreground/30 select-none">|</span>
+              <span className="text-sm text-muted-foreground/60">미입력</span>
+            </div>
+          )}
+
+          {payments.length === 0 && !addingNew && (
+            editMode ? (
+              <button type="button" onClick={() => setAddingNew(true)}
+                className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground">
+                —
+              </button>
+            ) : (
+              <span className="px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/40">—</span>
+            )
+          )}
+        </div>
+        {editMode && (
+          <div className="shrink-0 flex items-center gap-[6px]">
+            <button
+              type="button"
+              onClick={() => setAddingNew(true)}
+              disabled={saving || addingNew}
+              className={roundIconBtn}
+              title="결제 추가"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => setEstimateOpen(true)}
+              disabled={!country}
+              className={roundIconBtn}
+              title={country ? '비용 안내' : '목적지를 먼저 선택해주세요'}
+            >
+              <CalculatorIcon size={15} />
+            </button>
+          </div>
         )}
       </div>
 

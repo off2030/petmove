@@ -11,6 +11,7 @@ import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { ExtraSectionShell } from './extra-field-shell'
 import { SectionLabel } from '@/components/ui/section-label'
+import { useSectionEditMode } from './section-edit-mode-context'
 
 interface HawaiiExtra {
   passport_number: string | null
@@ -147,42 +148,21 @@ export function HawaiiExtraField({ caseId, caseRow, sectionNumber }: { caseId: s
     if (files.length > 0) handleFiles(files)
   }
 
-  const renderField = (key: keyof HawaiiExtra, label: string, type: 'text' | 'date' | 'email' = 'text', placeholder = '') => {
+  function renderField(key: keyof HawaiiExtra, label: string, type: 'text' | 'date' | 'email' = 'text', placeholder = '') {
     const val = extra[key] ?? null
     const isEditing = editingField === key
     return (
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
-        <SectionLabel className="pt-1">{label}</SectionLabel>
-        {isEditing ? (
-          <InlineInput type={type} initial={val ?? ''} placeholder={placeholder} onSave={(v) => saveField(key, v)} onCancel={() => setEditingField(null)} />
-        ) : (
-          <div className="group/val inline-flex items-baseline">
-            <button
-              type="button"
-              onClick={() => setEditingField(key)}
-              className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text',
-                !val && 'text-muted-foreground/60',
-              )}
-            >
-              {val || '—'}
-            </button>
-            {val && (
-              <>
-                <CopyButton value={String(val)} className="ml-1 opacity-0 group-hover/val:opacity-100" />
-                <button
-                  type="button"
-                  onClick={() => saveField(key, null)}
-                  className="ml-0.5 rounded p-0.5 text-muted-foreground/50 hover:text-foreground hover:bg-accent/60 opacity-0 group-hover/val:opacity-100 transition-opacity"
-                  title="삭제"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                </button>
-              </>
-            )}
-          </div>
-        )}
-      </div>
+      <HawaiiFieldRow
+        key={key as string}
+        label={label}
+        value={val}
+        isEditing={isEditing}
+        onStartEdit={() => setEditingField(key)}
+        onCancelEdit={() => setEditingField(null)}
+        onSave={(v) => saveField(key, v)}
+        type={type}
+        placeholder={placeholder}
+      />
     )
   }
 
@@ -214,6 +194,60 @@ export function HawaiiExtraField({ caseId, caseRow, sectionNumber }: { caseId: s
       {renderField('address_overseas', '해외주소', 'text')}
       {renderField('postal_code', '우편번호', 'text')}
     </ExtraSectionShell>
+  )
+}
+
+function HawaiiFieldRow({ label, value, isEditing, onStartEdit, onCancelEdit, onSave, type, placeholder }: {
+  label: string
+  value: string | null
+  isEditing: boolean
+  onStartEdit: () => void
+  onCancelEdit: () => void
+  onSave: (v: string | null) => void
+  type: 'text' | 'date' | 'email'
+  placeholder: string
+}) {
+  const editMode = useSectionEditMode()
+  const valueCls = cn(
+    'rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground',
+    !value && 'text-muted-foreground/60',
+  )
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
+      <SectionLabel className="pt-1">{label}</SectionLabel>
+      {editMode && isEditing ? (
+        <InlineInput type={type} initial={value ?? ''} placeholder={placeholder} onSave={onSave} onCancel={onCancelEdit} />
+      ) : (
+        <div className="group/val inline-flex items-baseline">
+          {editMode ? (
+            <button
+              type="button"
+              onClick={onStartEdit}
+              className={cn('text-left transition-colors hover:bg-accent/60 cursor-text', valueCls)}
+            >
+              {value || '—'}
+            </button>
+          ) : (
+            <span className={valueCls}>{value || '—'}</span>
+          )}
+          {value && (
+            <>
+              <CopyButton value={String(value)} className="ml-1 opacity-0 group-hover/val:opacity-100" />
+              {editMode && (
+                <button
+                  type="button"
+                  onClick={() => onSave(null)}
+                  className="ml-0.5 rounded p-0.5 text-muted-foreground/50 hover:text-foreground hover:bg-accent/60 opacity-0 group-hover/val:opacity-100 transition-opacity"
+                  title="삭제"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 

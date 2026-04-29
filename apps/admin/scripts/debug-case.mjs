@@ -94,7 +94,6 @@ for (const row of dbMatches) {
   console.log(`  customer_name   : ${row.customer_name}`)
   console.log(`  pet_name        : ${row.pet_name}`)
   console.log(`  destination     : ${row.destination}`)
-  console.log(`  status          : ${row.status}`)
   console.log(`  created_at      : ${row.created_at}`)
   console.log(`  data (jsonb):`)
   for (const [k, v] of Object.entries(row.data ?? {})) {

@@ -492,7 +492,6 @@ function buildSearchString(c: CaseRow): string {
     chip.replace(/\s/g, ''),
     ...(c.microchip_extra ?? []),
     c.destination ?? '',
-    c.status,
   ]
   if (c.data && typeof c.data === 'object') {
     for (const v of Object.values(c.data as Record<string, unknown>)) {

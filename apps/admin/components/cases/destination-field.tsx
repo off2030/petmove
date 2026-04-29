@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { SectionLabel } from '@/components/ui/section-label'
-import { cn } from '@/lib/utils'
+import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import destsData from '@/data/destinations.json'
 import { destCode } from '@/lib/country-code'
 import { CopyButton } from './copy-button'
+import { useSectionEditMode } from './section-edit-mode-context'
 
 interface Dest {
   ko: string
@@ -30,6 +31,7 @@ function joinDests(arr: string[]): string | null {
 
 export function DestinationField({ caseId, destination }: { caseId: string; destination: string | null }) {
   const { updateLocalCaseField, activeDestination, setActiveDestination } = useCases()
+  const editMode = useSectionEditMode()
 
   const selected = parseDests(destination)
   const multi = selected.length > 1
@@ -105,16 +107,9 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel>목적지</SectionLabel>
-        <button
-          type="button"
-          onClick={() => { setOpen(!open); setFreeMode(false); setQuery(''); setHighlightIdx(0) }}
-          className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors"
-          title="목적지 추가"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        </button>
       </div>
-      <div ref={containerRef} className="relative min-w-0">
+      <div ref={containerRef} className="relative min-w-0 flex items-start gap-md">
+        <div className="flex-1 min-w-0">
         {selected.length > 0 ? (
           <div className="group/val inline-flex items-center gap-md flex-wrap">
             {selected.map((ko) => {
@@ -153,20 +148,22 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                       {ko}
                     </span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); removeDest(ko) }}
-                    className="opacity-0 group-hover/chip:opacity-70 hover:!opacity-100 leading-none text-sm text-[#6B5A3A] transition-opacity"
-                    title="삭제"
-                  >
-                    ×
-                  </button>
+                  {editMode && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); removeDest(ko) }}
+                      className="opacity-0 group-hover/chip:opacity-70 hover:!opacity-100 leading-none text-sm text-[#6B5A3A] transition-opacity"
+                      title="삭제"
+                    >
+                      ×
+                    </button>
+                  )}
                 </span>
               )
             })}
             <CopyButton value={display} className="opacity-0 group-hover/val:opacity-100" />
           </div>
-        ) : (
+        ) : editMode ? (
           <button
             type="button"
             onClick={() => { setOpen(!open); setFreeMode(false); setQuery(''); setHighlightIdx(0) }}
@@ -174,6 +171,8 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
           >
             —
           </button>
+        ) : (
+          <span className="px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/40">—</span>
         )}
 
         {open && !freeMode && (
@@ -268,6 +267,19 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
             <button type="button" onClick={saveFree}
               className="mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
               저장
+            </button>
+          </div>
+        )}
+        </div>
+        {editMode && (
+          <div className="shrink-0 flex items-center gap-[6px]">
+            <button
+              type="button"
+              onClick={() => { setOpen(!open); setFreeMode(false); setQuery(''); setHighlightIdx(0) }}
+              className={roundIconBtn}
+              title="목적지 추가"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             </button>
           </div>
         )}

@@ -43,7 +43,6 @@ export async function duplicateCase(sourceId: string): Promise<
       microchip: null,
       pet_name: null,
       pet_name_en: null,
-      status: 'Applied',
       data: newData,
     })
     .select('*')

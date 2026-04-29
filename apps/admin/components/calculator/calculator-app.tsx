@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
-import { ChevronDown, Menu, Pencil, Plus, Printer, Search, Copy, Trash2 } from 'lucide-react'
+import { ChevronDown, Menu, Plus, Printer, Search, Copy, Trash2 } from 'lucide-react'
+import { EditModeButton } from '@/components/ui/edit-mode-button'
 import { useCalculatorData } from '@/components/providers/calculator-data-provider'
 import {
   addCalculatorDestination,
@@ -282,18 +283,7 @@ export function CalculatorApp({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => setEditMode((v) => !v)}
-          className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3.5 text-sm transition-colors ${
-            editMode
-              ? 'border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489]'
-              : 'border-border/80 bg-transparent text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Pencil size={13} />
-          {editMode ? '저장' : '편집'}
-        </button>
+        <EditModeButton editMode={editMode} onToggle={() => setEditMode((v) => !v)} />
 
         {/* 목적지 메뉴 — 복제 / 추가 / 삭제 */}
         <div className="relative" ref={destMenuRef}>
@@ -441,22 +431,14 @@ export function CalculatorApp({
         })}
       </div>
     ) : mode === 'links' ? (
-      <button
-        type="button"
-        onClick={() => {
+      <EditModeButton
+        editMode={linksMode === 'edit'}
+        onToggle={() => {
           if (linksMode === 'edit') linksRef.current?.save()
           else linksRef.current?.startEdit()
         }}
-        disabled={linksSaving}
-        className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3.5 text-sm transition-colors disabled:opacity-50 ${
-          linksMode === 'edit'
-            ? 'border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489]'
-            : 'border-border/80 bg-transparent text-muted-foreground hover:text-foreground'
-        }`}
-      >
-        <Pencil size={13} />
-        {linksMode === 'edit' ? (linksSaving ? '저장 중…' : '저장') : '편집'}
-      </button>
+        saving={linksSaving}
+      />
     ) : undefined
 
   return (

@@ -57,7 +57,6 @@ export async function createCaseWithData(
   const insertRow = {
     org_id: orgId,
     customer_name: '',
-    status: 'Applied',
     ...cleanColumn,
     data: cleanData,
   }

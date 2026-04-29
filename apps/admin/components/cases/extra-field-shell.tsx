@@ -12,6 +12,8 @@ import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { DateTextField } from '@/components/ui/date-text-field'
 import { SectionLabel } from '@/components/ui/section-label'
+import { EditModeButton } from '@/components/ui/edit-mode-button'
+import { SectionEditModeProvider, useSectionEditMode } from './section-edit-mode-context'
 
 type ExtractOk<C extends Country> = { ok: true; data: ResultMap[C] }
 
@@ -217,15 +219,18 @@ export function ExtraSectionShell({
   inputText, setInputText, showInput, setShowInput,
   handleFiles, handleTextSubmit, handleDragOver, handleDragLeave, handleDrop,
 }: ExtraSectionShellProps) {
+  const [editMode, setEditMode] = useState(false)
+  // 읽기 모드에서는 AI 입력창도 닫음.
+  useEffect(() => { if (!editMode) setShowInput(false) }, [editMode, setShowInput])
   return (
     <section
       ref={dropRef}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      onDragOver={editMode ? handleDragOver : undefined}
+      onDragLeave={editMode ? handleDragLeave : undefined}
+      onDrop={editMode ? handleDrop : undefined}
       className={cn(
         'mb-10 pt-10 border-t border-border/60 rounded-md transition-colors',
-        dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
+        editMode && dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
       <div className="mb-4 flex items-baseline gap-3">
@@ -243,32 +248,36 @@ export function ExtraSectionShell({
           onChange={(e) => { if (e.target.files) handleFiles(Array.from(e.target.files)); e.target.value = '' }}
           className="hidden"
         />
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={extracting}
-          className="shrink-0 translate-y-[2px] text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
-          title="이미지·PDF로 AI 입력"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            const next = !showInput
-            setShowInput(next)
-            if (next) setTimeout(() => textRef.current?.focus(), 50)
-            else setInputText('')
-          }}
-          disabled={extracting}
-          className={cn(
-            'shrink-0 translate-y-[2px] transition-colors disabled:opacity-30',
-            showInput ? 'text-foreground' : 'text-muted-foreground/60 hover:text-foreground',
-          )}
-          title="텍스트로 AI 입력"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-        </button>
+        {editMode && (
+          <>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={extracting}
+              className="shrink-0 translate-y-[2px] text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
+              title="이미지·PDF로 AI 입력"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const next = !showInput
+                setShowInput(next)
+                if (next) setTimeout(() => textRef.current?.focus(), 50)
+                else setInputText('')
+              }}
+              disabled={extracting}
+              className={cn(
+                'shrink-0 translate-y-[2px] transition-colors disabled:opacity-30',
+                showInput ? 'text-foreground' : 'text-muted-foreground/60 hover:text-foreground',
+              )}
+              title="텍스트로 AI 입력"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+            </button>
+          </>
+        )}
         {extracting && (
           <span className="font-sans text-[12px] italic text-muted-foreground">추출 중...</span>
         )}
@@ -278,8 +287,9 @@ export function ExtraSectionShell({
             extractMsg.includes('실패') || extractMsg.includes('오류') ? 'text-red-600' : 'text-green-600',
           )}>{extractMsg}</span>
         )}
+        <EditModeButton editMode={editMode} onToggle={() => setEditMode((p) => !p)} className="ml-auto" />
       </div>
-      {showInput && (
+      {editMode && showInput && (
         <div className="mb-2">
           <textarea
             ref={textRef}
@@ -294,8 +304,10 @@ export function ExtraSectionShell({
           />
         </div>
       )}
-      {dragOver && <div className="mb-2 text-xs text-muted-foreground">놓으면 자동 입력</div>}
-      <div>{children}</div>
+      {editMode && dragOver && <div className="mb-2 text-xs text-muted-foreground">놓으면 자동 입력</div>}
+      <SectionEditModeProvider value={editMode}>
+        <div>{children}</div>
+      </SectionEditModeProvider>
     </section>
   )
 }
@@ -349,15 +361,20 @@ export function FieldRow({
   label, value, isEditing, onStartEdit, onSave, onCancelEdit,
   type = 'text', placeholder = '', options, uppercase, compact, allowDelete = true,
 }: FieldRowProps) {
+  const editMode = useSectionEditMode()
   const isSelect = type === 'select'
   const display = isSelect && value ? (options?.find(o => o.value === value)?.label ?? value) : value
   const rowCls = compact
     ? 'flex items-center gap-sm'
     : 'grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0'
+  const valueCls = cn(
+    'rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground',
+    !value && 'text-muted-foreground/60',
+  )
   return (
     <div className={rowCls}>
       <SectionLabel className={compact ? 'w-16 shrink-0' : 'pt-1'}>{label}</SectionLabel>
-      {isEditing ? (
+      {isEditing && editMode ? (
         isSelect ? (
           <SelectInput options={options ?? []} initial={value ?? ''} onSave={onSave} onCancel={onCancelEdit} />
         ) : (
@@ -372,20 +389,21 @@ export function FieldRow({
         )
       ) : (
         <div className="group/val inline-flex items-baseline">
-          <button
-            type="button"
-            onClick={onStartEdit}
-            className={cn(
-              'text-left rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text',
-              !value && 'text-muted-foreground/60',
-            )}
-          >
-            {display || '—'}
-          </button>
+          {editMode ? (
+            <button
+              type="button"
+              onClick={onStartEdit}
+              className={cn('text-left transition-colors hover:bg-accent/60 cursor-text', valueCls)}
+            >
+              {display || '—'}
+            </button>
+          ) : (
+            <span className={valueCls}>{display || '—'}</span>
+          )}
           {value && (
             <>
               <CopyButton value={String(display)} className="ml-1 opacity-0 group-hover/val:opacity-100" />
-              {allowDelete && (
+              {editMode && allowDelete && (
                 <button
                   type="button"
                   onClick={() => onSave(null)}

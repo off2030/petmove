@@ -3,11 +3,12 @@
 import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react'
 import { SectionLabel } from '@/components/ui/section-label'
 import { ScanButton } from '@/components/ui/scan-button'
-import { cn } from '@/lib/utils'
+import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { createClient } from '@supabase/supabase-js'
+import { useSectionEditMode } from './section-edit-mode-context'
 
 interface Attachment {
   name: string
@@ -28,6 +29,7 @@ export interface AttachmentsFieldHandle {
 
 export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: string; caseRow: CaseRow; hideAddButton?: boolean }>(function AttachmentsField({ caseId, caseRow, hideAddButton }, ref) {
   const { updateLocalCaseField } = useCases()
+  const editMode = useSectionEditMode()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const attachments = (data.attachments as Attachment[]) ?? []
 
@@ -116,70 +118,84 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel>첨부파일</SectionLabel>
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors"
-          title="파일 첨부"
-        >
-          {uploading ? (
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-          ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-          )}
-        </button>
-        <ScanButton
-          disabled={uploading}
-          onScanned={(file) => uploadFiles([file])}
-        />
       </div>
-      <div className="min-w-0">
-        {/* Hidden file input */}
-        <input
-          ref={fileRef}
-          type="file"
-          multiple
-          onChange={handleUpload}
-          className="hidden"
-        />
+      <div className="min-w-0 flex items-start gap-md">
+        <div className="flex-1 min-w-0">
+          {/* Hidden file input */}
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            onChange={handleUpload}
+            className="hidden"
+          />
 
-        {/* File list */}
-        {attachments.length > 0 && (
-          <ul className="space-y-1">
-            {attachments.map((att, i) => (
-              <li key={i} className="group/item flex items-center gap-sm text-sm">
-                <a
-                  href={att.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-foreground hover:underline truncate"
-                >
-                  {att.name}
-                </a>
-                <span className="text-xs text-muted-foreground shrink-0">
-                  {formatSize(att.size)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(i)}
-                  className="text-xs text-muted-foreground/50 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100"
-                >
-                  ✕
-                </button>
-              </li>
-            ))}
-          </ul>
+          {/* File list */}
+          {attachments.length > 0 && (
+            <ul className="space-y-1">
+              {attachments.map((att, i) => (
+                <li key={i} className="group/item flex items-center gap-sm text-sm">
+                  <a
+                    href={att.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-foreground hover:underline truncate"
+                  >
+                    {att.name}
+                  </a>
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {formatSize(att.size)}
+                  </span>
+                  {editMode && (
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(i)}
+                      className="text-xs text-muted-foreground/50 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {attachments.length === 0 && (
+            editMode ? (
+              <button type="button" onClick={() => fileRef.current?.click()}
+                className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground cursor-pointer">
+                —
+              </button>
+            ) : (
+              <span className="px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/40">—</span>
+            )
+          )}
+
+          {error && <div className="mt-1 text-xs text-red-600">{error}</div>}
+        </div>
+
+        {editMode && (
+          <div className="shrink-0 flex items-center gap-[6px]">
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className={roundIconBtn}
+              title="파일 첨부"
+            >
+              {uploading ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              )}
+            </button>
+            <ScanButton
+              disabled={uploading}
+              onScanned={(file) => uploadFiles([file])}
+              className={roundIconBtn}
+            />
+          </div>
         )}
-
-        {attachments.length === 0 && (
-          <button type="button" onClick={() => fileRef.current?.click()}
-            className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground cursor-pointer">
-            —
-          </button>
-        )}
-
-        {error && <div className="mt-1 text-xs text-red-600">{error}</div>}
       </div>
     </div>
   )

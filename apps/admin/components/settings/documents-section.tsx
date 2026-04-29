@@ -321,7 +321,7 @@ export function DocumentsSection() {
                           onClick={() => setEditingIdx(null)}
                           className="pmw-st__btn-ghost hover:text-foreground transition-colors text-[11px]"
                         >
-                          편집 완료
+                          저장
                         </button>
                       </div>
                     </div>

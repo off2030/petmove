@@ -269,7 +269,6 @@ function rowToCase(row, rowNumber) {
       pet_name: nonEmpty(raw.pet_name),
       pet_name_en: nonEmpty(raw.pet_name_en),
       destination: nonEmpty(raw.destination),
-      status: '신규',
       data,
       ...(created_at ? { created_at } : {}),
     },

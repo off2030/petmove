@@ -16,7 +16,6 @@ const sampleCase = {
   microchip_extra: [],
   destination: '일본',
   departure_date: null,
-  status: '진행중',
   org_id: 'x', created_at: '', updated_at: '',
   vet_visit_date: '2026-04-10',
   data: {

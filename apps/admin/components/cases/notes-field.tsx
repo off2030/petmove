@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { SectionLabel } from '@/components/ui/section-label'
 import { ScanButton } from '@/components/ui/scan-button'
-import { cn } from '@/lib/utils'
+import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { supabaseBrowser as supabase } from '@/lib/supabase/browser'
+import { useSectionEditMode } from './section-edit-mode-context'
 
 /* ── Types ── */
 
@@ -41,6 +42,7 @@ const DATA_KEY = 'notes'
 
 export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
   const { updateLocalCaseField } = useCases()
+  const editMode = useSectionEditMode()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const notes = readNotes(data)
 
@@ -215,138 +217,163 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
 
   /* ── Render ── */
 
+  const hasContent = notes.length > 0 || addingText || uploading
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel>메모</SectionLabel>
-        <button
-          type="button"
-          onClick={() => setAddingText(true)}
-          disabled={saving || uploading || addingText}
-          className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
-          title="메모 추가"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        </button>
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
-          title="파일 첨부"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-        </button>
-        <ScanButton
-          disabled={uploading}
-          onScanned={(file) => uploadFiles([file])}
-        />
       </div>
 
-      <div
-        ref={dropRef}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={cn(
-          'min-w-0 space-y-1 rounded-md transition-colors',
-          dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
-        )}
-      >
-        {/* Hidden file input */}
-        <input
-          ref={fileRef}
-          type="file"
-          multiple
-          onChange={handleInputChange}
-          className="hidden"
-        />
+      <div className="min-w-0 flex items-start gap-md">
+        <div
+          ref={dropRef}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={cn(
+            'flex-1 min-w-0 space-y-1 rounded-md transition-colors',
+            dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
+          )}
+        >
+          {/* Hidden file input */}
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            onChange={handleInputChange}
+            className="hidden"
+          />
 
-        {/* ── Text memos ── */}
-        {notes.map((note, i) => note.type === 'text' && (
-          <div key={i} className="group/item flex items-start gap-sm">
-            {editIdx === i ? (
-              <NoteTextInput
-                initial={note.content}
-                onSave={(v) => updateText(i, v)}
-                onCancel={() => setEditIdx(null)}
-                saving={saving}
-              />
-            ) : (
+          {/* ── Text memos ── */}
+          {notes.map((note, i) => note.type === 'text' && (
+            <div key={i} className="group/item flex items-start gap-sm">
+              {editMode && editIdx === i ? (
+                <NoteTextInput
+                  initial={note.content}
+                  onSave={(v) => updateText(i, v)}
+                  onCancel={() => setEditIdx(null)}
+                  saving={saving}
+                />
+              ) : editMode ? (
+                <button
+                  type="button"
+                  onClick={() => setEditIdx(i)}
+                  className="text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text whitespace-pre-wrap flex-1 min-w-0"
+                >
+                  {note.content}
+                </button>
+              ) : (
+                <span className="rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground whitespace-pre-wrap flex-1 min-w-0">
+                  {note.content}
+                </span>
+              )}
+              {editMode && (
+                <button
+                  type="button"
+                  onClick={() => deleteNote(i)}
+                  className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 mt-1 opacity-0 group-hover/item:opacity-100"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+
+          {/* ── Text input (new) ── */}
+          {addingText && (
+            <NoteTextInput
+              initial=""
+              onSave={saveNewText}
+              onCancel={() => setAddingText(false)}
+              saving={saving}
+            />
+          )}
+
+          {/* ── Empty placeholder (edit mode only) ── */}
+          {!hasContent && !dragOver && (
+            editMode ? (
               <button
                 type="button"
-                onClick={() => setEditIdx(i)}
-                className="text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text whitespace-pre-wrap flex-1 min-w-0"
+                onClick={() => setAddingText(true)}
+                className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground cursor-pointer"
               >
-                {note.content}
+                —
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => deleteNote(i)}
-              className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 mt-1 opacity-0 group-hover/item:opacity-100"
-            >
-              ✕
-            </button>
-          </div>
-        ))}
+            ) : (
+              <span className="px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/40">—</span>
+            )
+          )}
 
-        {/* ── Text input (new or placeholder) ── */}
-        {addingText ? (
-          <NoteTextInput
-            initial=""
-            onSave={saveNewText}
-            onCancel={() => setAddingText(false)}
-            saving={saving}
-          />
-        ) : !dragOver && (
-          <button
-            type="button"
-            onClick={() => setAddingText(true)}
-            className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground cursor-pointer"
-          >
-            —
-          </button>
-        )}
-
-        {/* ── File attachments ── */}
-        {notes.map((note, i) => note.type === 'file' && (
-          <div key={i} className="group/item flex items-start gap-sm">
-            <div className="flex items-center gap-sm flex-1 min-w-0 py-1">
-              <span className="text-muted-foreground/60 text-xs shrink-0">📎</span>
-              <a
-                href={note.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-foreground hover:underline truncate"
-              >
-                {note.name}
-              </a>
-              <span className="text-xs text-muted-foreground shrink-0">
-                {formatSize(note.size)}
-              </span>
+          {/* ── File attachments ── */}
+          {notes.map((note, i) => note.type === 'file' && (
+            <div key={i} className="group/item flex items-start gap-sm">
+              <div className="flex items-center gap-sm flex-1 min-w-0 py-1">
+                <span className="text-muted-foreground/60 text-xs shrink-0">📎</span>
+                <a
+                  href={note.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-foreground hover:underline truncate"
+                >
+                  {note.name}
+                </a>
+                <span className="text-xs text-muted-foreground shrink-0">
+                  {formatSize(note.size)}
+                </span>
+              </div>
+              {editMode && (
+                <button
+                  type="button"
+                  onClick={() => deleteNote(i)}
+                  className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 mt-1 opacity-0 group-hover/item:opacity-100"
+                >
+                  ✕
+                </button>
+              )}
             </div>
+          ))}
+
+          {uploading && (
+            <div className="text-xs text-muted-foreground py-1">업로드 중...</div>
+          )}
+
+          {dragOver && (
+            <div className="text-xs text-muted-foreground text-center py-2">
+              놓으면 첨부
+            </div>
+          )}
+
+          {error && <div className="mt-1 text-xs text-red-600">{error}</div>}
+        </div>
+
+        {editMode && (
+          <div className="shrink-0 flex items-center gap-[6px]">
             <button
               type="button"
-              onClick={() => deleteNote(i)}
-              className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 mt-1 opacity-0 group-hover/item:opacity-100"
+              onClick={() => setAddingText(true)}
+              disabled={saving || uploading || addingText}
+              className={roundIconBtn}
+              title="메모 추가"
             >
-              ✕
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             </button>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className={roundIconBtn}
+              title="파일 첨부"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <ScanButton
+              disabled={uploading}
+              onScanned={(file) => uploadFiles([file])}
+              className={roundIconBtn}
+            />
           </div>
-        ))}
-
-        {uploading && (
-          <div className="text-xs text-muted-foreground py-1">업로드 중...</div>
         )}
-
-        {dragOver && (
-          <div className="text-xs text-muted-foreground text-center py-2">
-            놓으면 첨부
-          </div>
-        )}
-
-        {error && <div className="mt-1 text-xs text-red-600">{error}</div>}
       </div>
     </div>
   )

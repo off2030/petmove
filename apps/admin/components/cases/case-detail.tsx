@@ -10,12 +10,13 @@ import {
 } from '@/lib/fields'
 import { getAllowedFields, getVaccineList, getEffectiveVaccineList, getDestinationOverride, TOGGLEABLE_FIELDS } from '@petmove/domain'
 import React, { useEffect, useRef, useState } from 'react'
-import { cn } from '@/lib/utils'
+import { cn, roundIconBtn } from '@/lib/utils'
 import { formatDate } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { CopyButton } from './copy-button'
 import { DateTextField } from '@/components/ui/date-text-field'
 import { SectionLabel } from '@/components/ui/section-label'
+import { EditModeButton } from '@/components/ui/edit-mode-button'
 import { EditableField } from './editable-field'
 import { PairedField } from './paired-field'
 import { CustomerNameRow } from './customer-name-row'
@@ -40,6 +41,7 @@ import { UKExtraField } from './uk-extra-field'
 import { OverseasAddressField } from './overseas-address-field'
 import { useCases } from './cases-context'
 import { VerificationProvider, severityTextClass, tooltipText, useFieldVerification } from './verification-context'
+import { SectionEditModeProvider, useSectionEditMode } from './section-edit-mode-context'
 
 type ExtraFieldProps = { caseId: string; caseRow: CaseRow; sectionNumber: string }
 
@@ -66,6 +68,9 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
   const allSpecs = buildFieldSpecs(fieldDefs)
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const extraFields = (data.extra_visible_fields as string[]) ?? []
+  const [procedureEditMode, setProcedureEditMode] = useState(false)
+  // 케이스 전환 시 편집 모드 초기화 — 다음 케이스는 다시 읽기 모드로 시작.
+  useEffect(() => { setProcedureEditMode(false) }, [caseRow.id])
 
   // 다중 목적지 케이스는 활성 목적지 하나만 기준으로 필드·백신을 결정한다.
   // 활성값이 아직 비어있으면(초기 렌더) caseRow.destination 전체를 그대로 넘겨
@@ -109,7 +114,11 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
       className="flex-1 min-h-0 flex flex-col px-lg py-md overflow-y-auto overflow-x-hidden scrollbar-minimal"
     >
       {/* ─── Sections ─── */}
-      {groups.map((g, groupIdx) => (
+      {groups.map((g, groupIdx) => {
+        const isProcedure = g.group === '절차정보'
+        // 절차정보만 편집 모드 토글 적용. 그 외 그룹은 항상 편집 가능.
+        const sectionEditMode = isProcedure ? procedureEditMode : true
+        return (
         <React.Fragment key={g.group}>
         <section
           className={cn(
@@ -124,14 +133,21 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
             <h3 className="font-serif text-[20px] font-medium tracking-tight text-foreground">
               {g.group}
             </h3>
-            {g.group === '절차정보' && toggleableForDest.length > 0 && (
+            {isProcedure && procedureEditMode && toggleableForDest.length > 0 && (
               <FieldToggleMenu
                 items={toggleableForDest}
                 activeKeys={extraFields}
                 onToggle={toggleField}
               />
             )}
+            {isProcedure && (
+              <EditModeToggle
+                editMode={procedureEditMode}
+                onToggle={() => setProcedureEditMode((p) => !p)}
+              />
+            )}
           </div>
+          <SectionEditModeProvider value={sectionEditMode}>
           <div>
             {g.items.map((spec) => {
               // 기타정보 is handled specially — after all its items we append Attachments + Payment
@@ -261,8 +277,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
                   />
                 )
               }
-              // Status 는 항상 값을 가져야 하므로 삭제 버튼 제외.
-              const isClearable = (g.group === '절차정보' || g.group === '기타정보') && spec.key !== 'status'
+              const isClearable = g.group === '절차정보' || g.group === '기타정보'
               return (
                 <EditableField
                   key={`${spec.storage}:${spec.key}`}
@@ -278,6 +293,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
               <PaymentField caseId={caseRow.id} caseRow={caseRow} />
             )}
           </div>
+          </SectionEditModeProvider>
         </section>
         {/* ─── 추가정보 — 절차정보 바로 뒤 ─── */}
         {g.group === '절차정보' && (() => {
@@ -290,25 +306,17 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
             return <ExtraComp caseId={caseRow.id} caseRow={caseRow} sectionNumber={sectionNumber} />
           }
           return (
-            <section className="mb-10 pt-10 border-t border-border/60">
-              <div className="mb-4 flex items-baseline gap-3">
-                <span className="font-mono text-[14px] tracking-[1.2px] text-muted-foreground/80">
-                  {sectionNumber}
-                </span>
-                <h3 className="font-serif text-[20px] font-medium tracking-tight text-foreground">
-                  추가정보
-                </h3>
-              </div>
-              <div>
-                {destOverride!.extraFields!.includes('address_overseas') && (
-                  <OverseasAddressField caseId={caseRow.id} caseRow={caseRow} />
-                )}
-              </div>
-            </section>
+            <SimpleExtraSection
+              caseId={caseRow.id}
+              caseRow={caseRow}
+              sectionNumber={sectionNumber}
+              showOverseasAddress={destOverride!.extraFields!.includes('address_overseas')}
+            />
           )
         })()}
         </React.Fragment>
-      ))}
+        )
+      })}
 
     </div>
     </VerificationProvider>
@@ -316,10 +324,52 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
 }
 
 /**
+ * 추가정보 — extraSection 컴포넌트가 없는 단순 케이스(예: address_overseas 1개) 전용 wrapper.
+ * 자체 편집 모드 토글을 갖는다.
+ */
+function SimpleExtraSection({ caseId, caseRow, sectionNumber, showOverseasAddress }: {
+  caseId: string
+  caseRow: CaseRow
+  sectionNumber: string
+  showOverseasAddress: boolean
+}) {
+  const [editMode, setEditMode] = useState(false)
+  useEffect(() => { setEditMode(false) }, [caseRow.id])
+  return (
+    <section className="mb-10 pt-10 border-t border-border/60">
+      <div className="mb-4 flex items-baseline gap-3">
+        <span className="font-mono text-[14px] tracking-[1.2px] text-muted-foreground/80">
+          {sectionNumber}
+        </span>
+        <h3 className="font-serif text-[20px] font-medium tracking-tight text-foreground">
+          추가정보
+        </h3>
+        <EditModeToggle editMode={editMode} onToggle={() => setEditMode(!editMode)} />
+      </div>
+      <SectionEditModeProvider value={editMode}>
+        <div>
+          {showOverseasAddress && (
+            <OverseasAddressField caseId={caseId} caseRow={caseRow} />
+          )}
+        </div>
+      </SectionEditModeProvider>
+    </section>
+  )
+}
+
+/**
+ * 섹션 헤더의 편집 모드 토글 — 공용 EditModeButton 사용.
+ */
+function EditModeToggle({ editMode, onToggle }: { editMode: boolean; onToggle: () => void }) {
+  return <EditModeButton editMode={editMode} onToggle={onToggle} className="ml-auto" />
+}
+
+/**
  * Microchip: main chip + optional secondary chip (+ button to add)
  */
 function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: CaseRow; spec: FieldSpec }) {
   const { updateLocalCaseField } = useCases()
+  const editMode = useSectionEditMode()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const secondary = (data.microchip_secondary as string) || ''
   const [showSecondary, setShowSecondary] = useState(!!secondary)
@@ -381,59 +431,69 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel>{spec.label}</SectionLabel>
-        {!showSecondary && (
-          <button type="button" onClick={() => { setShowSecondary(true); setEditingSecondary(true); setSecVal(''); setSecError(null) }}
-            className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors"
-            title="보조 마이크로칩 추가">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-          </button>
-        )}
       </div>
-      <div className="min-w-0">
-        <div className="flex items-baseline gap-[30px]">
-          {/* Main chip */}
-          <div className="group/val relative w-fit">
-            <EditableField caseId={caseId} spec={spec} rawValue={readCaseField(caseRow, spec)} inline />
-            <CopyButton
-              value={caseRow.microchip ? String(caseRow.microchip).replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{3})(\d{3})/, '$1 $2 $3 $4 $5') : ''}
-              className="absolute left-full top-0.5 ml-1 z-10 opacity-0 group-hover/val:opacity-100"
-            />
-          </div>
-
-          {/* Secondary chip — pipe separated, same line */}
-          {showSecondary && (
-            <div className="group/item inline-flex items-baseline gap-[6px]">
-              <span className="text-muted-foreground/30 select-none">|</span>
-              {editingSecondary ? (
-                <input ref={secRef} type="text" inputMode="numeric" value={secVal}
-                  onChange={(e) => handleSecChange(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') saveSecondary(); if (e.key === 'Escape') { setEditingSecondary(false); setSecError(null); if (!secondary) setShowSecondary(false) } }}
-                  onBlur={() => setTimeout(() => saveSecondary(), 150)}
-                  placeholder="보조칩 번호"
-                  className="w-44 h-8 rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
-                />
-              ) : (
-                <button type="button" onClick={() => { setSecVal(secondary.replace(/\D/g, '')); setEditingSecondary(true); setSecError(null) }}
-                  className="text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-text">
-                  {formatChip(secondary)}
-                </button>
-              )}
+      <div className="min-w-0 flex items-start gap-md">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-[30px]">
+            {/* Main chip */}
+            <div className="group/val relative w-fit">
+              <EditableField caseId={caseId} spec={spec} rawValue={readCaseField(caseRow, spec)} inline />
               <CopyButton
-                value={formatChip(secondary)}
-                className="shrink-0 opacity-0 group-hover/item:opacity-100"
+                value={caseRow.microchip ? String(caseRow.microchip).replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{3})(\d{3})/, '$1 $2 $3 $4 $5') : ''}
+                className="absolute left-full top-0.5 ml-1 z-10 opacity-0 group-hover/val:opacity-100"
               />
-              <button type="button" onClick={async () => {
-                const r = await updateCaseField(caseId, 'data', 'microchip_secondary', null)
-                if (r.ok) updateLocalCaseField(caseId, 'data', 'microchip_secondary', null)
-                setShowSecondary(false)
-                setSecError(null)
-              }} className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100">
-                ✕
-              </button>
             </div>
-          )}
+
+            {/* Secondary chip — pipe separated, same line */}
+            {showSecondary && (
+              <div className="group/item inline-flex items-baseline gap-[6px]">
+                <span className="text-muted-foreground/30 select-none">|</span>
+                {editingSecondary ? (
+                  <input ref={secRef} type="text" inputMode="numeric" value={secVal}
+                    onChange={(e) => handleSecChange(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') saveSecondary(); if (e.key === 'Escape') { setEditingSecondary(false); setSecError(null); if (!secondary) setShowSecondary(false) } }}
+                    onBlur={() => setTimeout(() => saveSecondary(), 150)}
+                    placeholder="보조칩 번호"
+                    className="w-44 h-8 rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+                  />
+                ) : editMode ? (
+                  <button type="button" onClick={() => { setSecVal(secondary.replace(/\D/g, '')); setEditingSecondary(true); setSecError(null) }}
+                    className="text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-text">
+                    {formatChip(secondary)}
+                  </button>
+                ) : (
+                  <span className="rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground">
+                    {formatChip(secondary)}
+                  </span>
+                )}
+                <CopyButton
+                  value={formatChip(secondary)}
+                  className="shrink-0 opacity-0 group-hover/item:opacity-100"
+                />
+                {editMode && (
+                  <button type="button" onClick={async () => {
+                    const r = await updateCaseField(caseId, 'data', 'microchip_secondary', null)
+                    if (r.ok) updateLocalCaseField(caseId, 'data', 'microchip_secondary', null)
+                    setShowSecondary(false)
+                    setSecError(null)
+                  }} className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100">
+                    ✕
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+          {secError && <div className="mt-1 text-xs text-red-600">{secError}</div>}
         </div>
-        {secError && <div className="mt-1 text-xs text-red-600">{secError}</div>}
+        {editMode && !showSecondary && (
+          <div className="shrink-0 flex items-center gap-[6px]">
+            <button type="button" onClick={() => { setShowSecondary(true); setEditingSecondary(true); setSecVal(''); setSecError(null) }}
+              className={roundIconBtn}
+              title="보조 마이크로칩 추가">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -444,6 +504,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
  */
 function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
   const { updateLocalCaseField } = useCases()
+  const editMode = useSectionEditMode()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const implantDate = (data.microchip_implant_date as string) || ''
   const implantInfo = useFieldVerification('microchip_implant_date')
@@ -472,19 +533,30 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
           <MicrochipDateInput initial={implantDate} onSave={(v) => saveDate(v || null)} onCancel={() => setEditing(false)} />
         ) : (
           <span className="group/v relative inline-flex items-baseline">
-            <button type="button" onClick={() => setEditing(true)} title={implantTitle}
-              className={cn(
-                'text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
-                !implantDate && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60',
-                implantColorCls,
-              )}>
-              {implantDate || '—'}
-            </button>
+            {editMode ? (
+              <button type="button" onClick={() => setEditing(true)} title={implantTitle}
+                className={cn(
+                  'text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
+                  !implantDate && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60',
+                  implantColorCls,
+                )}>
+                {implantDate || '—'}
+              </button>
+            ) : (
+              <span title={implantTitle}
+                className={cn(
+                  'rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground',
+                  !implantDate && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60',
+                  implantColorCls,
+                )}>
+                {implantDate || '—'}
+              </span>
+            )}
             {implantDate && <CopyButton value={implantDate} className="ml-1 opacity-0 group-hover/v:opacity-100" />}
           </span>
         )}
 
-        {implantDate && !editing && (
+        {editMode && implantDate && !editing && (
           <button type="button" onClick={() => saveDate(null)}
             className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100">
             ✕
@@ -537,10 +609,10 @@ function FieldToggleMenu({ items, activeKeys, onToggle }: {
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
-        className="shrink-0 translate-y-[2px] text-muted-foreground/60 hover:text-foreground transition-colors"
+        className="shrink-0 inline-flex items-center rounded-md px-2 py-0.5 text-[11px] tracking-[0.6px] uppercase text-muted-foreground/70 hover:text-foreground hover:bg-accent/60 transition-colors"
         title="필드 추가/제거"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        추가
       </button>
       {open && (
         <div className="absolute left-0 top-full mt-1 z-20 min-w-[140px] rounded-md border border-border bg-popover p-1 shadow-md">

@@ -14,6 +14,7 @@ import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { ExtraSectionShell } from './extra-field-shell'
 import { SectionLabel } from '@/components/ui/section-label'
+import { useSectionEditMode } from './section-edit-mode-context'
 
 /* ── Types ── */
 
@@ -285,125 +286,95 @@ export function JapanExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
       />
 
       {/* ── Email ── */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
-        <SectionLabel className="pt-1">이메일</SectionLabel>
-        {editingField === 'email' ? (
-          <InlineInput
-            type="text"
-            initial={extra.email ?? ''}
-            placeholder="email@example.com"
-            onSave={(v) => saveEmail(v)}
-            onCancel={() => setEditingField(null)}
-          />
-        ) : (
-          <div className="group/val relative inline-flex items-baseline">
-            <button
-              type="button"
-              onClick={() => setEditingField('email')}
-              className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text',
-                !extra.email && 'text-muted-foreground/60',
-              )}
-            >
-              {extra.email || '—'}
-            </button>
-            {extra.email && (
-              <>
-                <CopyButton value={extra.email} className="ml-1 opacity-0 group-hover/val:opacity-100" />
-                <button
-                  type="button"
-                  onClick={() => saveEmail(null)}
-                  className="ml-0.5 rounded p-0.5 text-muted-foreground/50 hover:text-foreground hover:bg-accent/60 opacity-0 group-hover/val:opacity-100 transition-opacity"
-                  title="삭제"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                </button>
-              </>
-            )}
-          </div>
-        )}
-      </div>
+      <JapanTextRow
+        label="이메일"
+        value={extra.email}
+        placeholder="email@example.com"
+        editing={editingField === 'email'}
+        onStartEdit={() => setEditingField('email')}
+        onSave={(v) => saveEmail(v)}
+        onCancelEdit={() => setEditingField(null)}
+      />
 
       {/* ── Address ── */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
-        <SectionLabel className="pt-1">해외주소</SectionLabel>
-        {editingField === 'address_overseas' ? (
-          <InlineInput
-            type="text"
-            initial={extra.address_overseas ?? ''}
-            placeholder="Destination address in Japan"
-            onSave={(v) => saveAddress(v)}
-            onCancel={() => setEditingField(null)}
-          />
-        ) : (
-          <div className="group/val relative inline-flex items-baseline">
-            <button
-              type="button"
-              onClick={() => setEditingField('address_overseas')}
-              className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text',
-                !extra.address_overseas && 'text-muted-foreground/60',
-              )}
-            >
-              {extra.address_overseas || '—'}
-            </button>
-            {extra.address_overseas && (
-              <>
-                <CopyButton value={extra.address_overseas} className="ml-1 opacity-0 group-hover/val:opacity-100" />
-                <button
-                  type="button"
-                  onClick={() => saveAddress(null)}
-                  className="ml-0.5 rounded p-0.5 text-muted-foreground/50 hover:text-foreground hover:bg-accent/60 opacity-0 group-hover/val:opacity-100 transition-opacity"
-                  title="삭제"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                </button>
-              </>
-            )}
-          </div>
-        )}
-      </div>
+      <JapanTextRow
+        label="해외주소"
+        value={extra.address_overseas}
+        placeholder="Destination address in Japan"
+        editing={editingField === 'address_overseas'}
+        onStartEdit={() => setEditingField('address_overseas')}
+        onSave={(v) => saveAddress(v)}
+        onCancelEdit={() => setEditingField(null)}
+      />
 
       {/* ── Certificate No ── */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
-        <SectionLabel className="pt-1">EQC No.</SectionLabel>
-        {editingField === 'certificate_no' ? (
-          <InlineInput
-            type="text"
-            initial={extra.certificate_no ?? ''}
-            placeholder=""
-            onSave={(v) => saveCertificate(v)}
-            onCancel={() => setEditingField(null)}
-          />
-        ) : (
-          <div className="group/val relative inline-flex items-baseline">
-            <button
-              type="button"
-              onClick={() => setEditingField('certificate_no')}
-              className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text',
-                !extra.certificate_no && 'text-muted-foreground/60',
-              )}
-            >
-              {extra.certificate_no || '—'}
+      <JapanTextRow
+        label="EQC No."
+        value={extra.certificate_no}
+        placeholder=""
+        editing={editingField === 'certificate_no'}
+        onStartEdit={() => setEditingField('certificate_no')}
+        onSave={(v) => saveCertificate(v)}
+        onCancelEdit={() => setEditingField(null)}
+      />
+    </ExtraSectionShell>
+  )
+}
+
+/* ── Generic text row for Japan (email/address/certificate) ── */
+
+function JapanTextRow({ label, value, placeholder, editing, onStartEdit, onSave, onCancelEdit }: {
+  label: string
+  value: string | null
+  placeholder: string
+  editing: boolean
+  onStartEdit: () => void
+  onSave: (v: string | null) => void
+  onCancelEdit: () => void
+}) {
+  const editMode = useSectionEditMode()
+  const valueCls = cn(
+    'rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground',
+    !value && 'text-muted-foreground/60',
+  )
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
+      <SectionLabel className="pt-1">{label}</SectionLabel>
+      {editMode && editing ? (
+        <InlineInput
+          type="text"
+          initial={value ?? ''}
+          placeholder={placeholder}
+          onSave={onSave}
+          onCancel={onCancelEdit}
+        />
+      ) : (
+        <div className="group/val relative inline-flex items-baseline">
+          {editMode ? (
+            <button type="button" onClick={onStartEdit} className={cn('text-left transition-colors hover:bg-accent/60 cursor-text', valueCls)}>
+              {value || '—'}
             </button>
-            {extra.certificate_no && (
-              <>
-                <CopyButton value={extra.certificate_no} className="ml-1 opacity-0 group-hover/val:opacity-100" />
+          ) : (
+            <span className={valueCls}>{value || '—'}</span>
+          )}
+          {value && (
+            <>
+              <CopyButton value={value} className="ml-1 opacity-0 group-hover/val:opacity-100" />
+              {editMode && (
                 <button
                   type="button"
-                  onClick={() => saveCertificate(null)}
+                  onClick={() => onSave(null)}
                   className="ml-0.5 rounded p-0.5 text-muted-foreground/50 hover:text-foreground hover:bg-accent/60 opacity-0 group-hover/val:opacity-100 transition-opacity"
                   title="삭제"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                 </button>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-    </ExtraSectionShell>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -417,6 +388,7 @@ function FlightBlock({ label, direction, flight, editingField, setEditingField, 
   setEditingField: (v: string | null) => void
   onSave: (key: keyof FlightEntry, val: string | null) => void
 }) {
+  const editMode = useSectionEditMode()
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <SectionLabel className="pt-1">{label}</SectionLabel>
@@ -425,10 +397,17 @@ function FlightBlock({ label, direction, flight, editingField, setEditingField, 
           const fieldId = `${direction}.${f.key}`
           const val = flight[f.key] ?? null
           const isEditing = editingField === fieldId
+          const displayText = f.type === 'select' && val
+            ? TRANSPORT_OPTIONS.find((o) => o.value === val)?.label ?? val
+            : val || '—'
+          const valueCls = cn(
+            'rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground',
+            !val && 'text-muted-foreground/60',
+          )
           return (
             <div key={f.key} className="flex items-center gap-sm">
               <SectionLabel className="w-16 shrink-0">{f.label}</SectionLabel>
-              {isEditing ? (
+              {editMode && isEditing ? (
                 f.type === 'select' ? (
                   <SelectInput
                     options={TRANSPORT_OPTIONS}
@@ -448,32 +427,33 @@ function FlightBlock({ label, direction, flight, editingField, setEditingField, 
                 )
               ) : (
                 <div className="group/val relative inline-flex items-baseline">
-                  <button
-                    type="button"
-                    onClick={() => setEditingField(fieldId)}
-                    className={cn(
-                      'text-left rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text',
-                      !val && 'text-muted-foreground/60',
-                    )}
-                  >
-                    {f.type === 'select' && val
-                      ? TRANSPORT_OPTIONS.find((o) => o.value === val)?.label ?? val
-                      : val || '—'}
-                  </button>
+                  {editMode ? (
+                    <button
+                      type="button"
+                      onClick={() => setEditingField(fieldId)}
+                      className={cn('text-left transition-colors hover:bg-accent/60 cursor-text', valueCls)}
+                    >
+                      {displayText}
+                    </button>
+                  ) : (
+                    <span className={valueCls}>{displayText}</span>
+                  )}
                   {val && (
                     <>
                       <CopyButton
                         value={f.type === 'select' ? TRANSPORT_OPTIONS.find((o) => o.value === val)?.label ?? val : val}
                         className="ml-1 opacity-0 group-hover/val:opacity-100"
                       />
-                      <button
-                        type="button"
-                        onClick={() => onSave(f.key, null)}
-                        className="ml-0.5 rounded p-0.5 text-muted-foreground/50 hover:text-foreground hover:bg-accent/60 opacity-0 group-hover/val:opacity-100 transition-opacity"
-                        title="삭제"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                      </button>
+                      {editMode && (
+                        <button
+                          type="button"
+                          onClick={() => onSave(f.key, null)}
+                          className="ml-0.5 rounded p-0.5 text-muted-foreground/50 hover:text-foreground hover:bg-accent/60 opacity-0 group-hover/val:opacity-100 transition-opacity"
+                          title="삭제"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                      )}
                     </>
                   )}
                 </div>

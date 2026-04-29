@@ -7,11 +7,13 @@ import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { CopyButton } from './copy-button'
 import { SectionLabel } from '@/components/ui/section-label'
+import { useSectionEditMode } from './section-edit-mode-context'
 
 const DATA_KEY = 'address_overseas'
 
 export function OverseasAddressField({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
   const { updateLocalCaseField } = useCases()
+  const editMode = useSectionEditMode()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const value = (data[DATA_KEY] as string | null) ?? null
 
@@ -29,7 +31,7 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <SectionLabel className="pt-1">해외주소</SectionLabel>
-      {editing ? (
+      {editMode && editing ? (
         <AddressInput
           initial={value ?? ''}
           onSave={save}
@@ -37,27 +39,40 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
         />
       ) : (
         <div className="group/val inline-flex items-baseline">
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className={cn(
-              'text-left rounded-md px-2 py-0.5 -mx-2 font-serif italic text-[17px] text-muted-foreground transition-colors hover:bg-accent/60 cursor-text',
-              !value && 'font-sans not-italic text-base text-muted-foreground/60',
-            )}
-          >
-            {value || '—'}
-          </button>
+          {editMode ? (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className={cn(
+                'text-left rounded-md px-2 py-0.5 -mx-2 font-serif italic text-[17px] text-muted-foreground transition-colors hover:bg-accent/60 cursor-text',
+                !value && 'font-sans not-italic text-base text-muted-foreground/60',
+              )}
+            >
+              {value || '—'}
+            </button>
+          ) : (
+            <span
+              className={cn(
+                'inline-block rounded-md px-2 py-0.5 -mx-2 font-serif italic text-[17px] text-muted-foreground',
+                !value && 'font-sans not-italic text-base text-muted-foreground/40',
+              )}
+            >
+              {value || '—'}
+            </span>
+          )}
           {value && (
             <>
               <CopyButton value={value} className="ml-1 opacity-0 group-hover/val:opacity-100" />
-              <button
-                type="button"
-                onClick={() => save(null)}
-                className="ml-0.5 rounded p-0.5 text-muted-foreground/50 hover:text-foreground hover:bg-accent/60 opacity-0 group-hover/val:opacity-100 transition-opacity"
-                title="삭제"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-              </button>
+              {editMode && (
+                <button
+                  type="button"
+                  onClick={() => save(null)}
+                  className="ml-0.5 rounded p-0.5 text-muted-foreground/50 hover:text-foreground hover:bg-accent/60 opacity-0 group-hover/val:opacity-100 transition-opacity"
+                  title="삭제"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+              )}
             </>
           )}
         </div>

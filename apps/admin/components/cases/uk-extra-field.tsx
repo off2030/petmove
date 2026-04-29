@@ -11,6 +11,7 @@ import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { ExtraSectionShell } from './extra-field-shell'
 import { SectionLabel } from '@/components/ui/section-label'
+import { useSectionEditMode } from './section-edit-mode-context'
 
 const DATA_KEY = 'address_overseas'
 
@@ -140,43 +141,69 @@ export function UKExtraField({ caseId, caseRow, sectionNumber }: { caseId: strin
       handleDrop={handleDrop}
     >
       {/* ── 해외주소 ── */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
-        <SectionLabel className="pt-1">해외주소</SectionLabel>
-        {editing ? (
-          <AddressInput
-            initial={address ?? ''}
-            onSave={saveAddress}
-            onCancel={() => setEditing(false)}
-          />
-        ) : (
-          <div className="group/val inline-flex items-baseline">
+      <UKAddressRow
+        address={address}
+        editing={editing}
+        onStartEdit={() => setEditing(true)}
+        onCancelEdit={() => setEditing(false)}
+        onSave={saveAddress}
+      />
+    </ExtraSectionShell>
+  )
+}
+
+function UKAddressRow({ address, editing, onStartEdit, onCancelEdit, onSave }: {
+  address: string | null
+  editing: boolean
+  onStartEdit: () => void
+  onCancelEdit: () => void
+  onSave: (v: string | null) => void
+}) {
+  const editMode = useSectionEditMode()
+  const valueCls = cn(
+    'rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground',
+    !address && 'text-muted-foreground/60',
+  )
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
+      <SectionLabel className="pt-1">해외주소</SectionLabel>
+      {editMode && editing ? (
+        <AddressInput
+          initial={address ?? ''}
+          onSave={onSave}
+          onCancel={onCancelEdit}
+        />
+      ) : (
+        <div className="group/val inline-flex items-baseline">
+          {editMode ? (
             <button
               type="button"
-              onClick={() => setEditing(true)}
-              className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text',
-                !address && 'text-muted-foreground/60',
-              )}
+              onClick={onStartEdit}
+              className={cn('text-left transition-colors hover:bg-accent/60 cursor-text', valueCls)}
             >
               {address || '—'}
             </button>
-            {address && (
-              <>
-                <CopyButton value={address} className="ml-1 opacity-0 group-hover/val:opacity-100" />
+          ) : (
+            <span className={valueCls}>{address || '—'}</span>
+          )}
+          {address && (
+            <>
+              <CopyButton value={address} className="ml-1 opacity-0 group-hover/val:opacity-100" />
+              {editMode && (
                 <button
                   type="button"
-                  onClick={() => saveAddress(null)}
+                  onClick={() => onSave(null)}
                   className="ml-0.5 rounded p-0.5 text-muted-foreground/50 hover:text-foreground hover:bg-accent/60 opacity-0 group-hover/val:opacity-100 transition-opacity"
                   title="삭제"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                 </button>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-    </ExtraSectionShell>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 

@@ -104,22 +104,6 @@ export const REGULAR_COLUMN_SPECS: FieldSpec[] = [
     groupOrder: 2,
     order: 9999, // bottom of 절차정보
   },
-  {
-    key: 'status',
-    storage: 'column',
-    label: 'Status',
-    type: 'select',
-    group: '절차정보',
-    groupOrder: 2,
-    order: -2, // before destination (-1)
-    options: [
-      { value: 'Applied', label_ko: 'Applied' },
-      { value: 'In Progress', label_ko: 'In Progress' },
-      { value: 'Completed', label_ko: 'Completed' },
-      { value: 'On Hold', label_ko: 'On Hold' },
-      { value: 'Cancelled', label_ko: 'Cancelled' },
-    ],
-  },
 ]
 
 /**

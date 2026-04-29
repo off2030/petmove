@@ -168,7 +168,6 @@ const caseRow = {
   microchip_extra: ['900123456789012'],
   destination: DEST_OVERRIDE || '유럽연합',
   departure_date: '2026-05-15',
-  status: '진행중',
   org_id: 'x', created_at: '', updated_at: '',
   vet_visit_date: '2026-04-20',
   data: {

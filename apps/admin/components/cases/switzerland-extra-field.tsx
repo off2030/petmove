@@ -11,6 +11,7 @@ import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { ExtraSectionShell } from './extra-field-shell'
 import { SectionLabel } from '@/components/ui/section-label'
+import { useSectionEditMode } from './section-edit-mode-context'
 
 interface SwissExtra {
   entry_purpose: 'temporary' | 'relocation' | 'reentry' | null
@@ -187,115 +188,51 @@ export function SwissExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
 
   function renderSelect(key: keyof SwissExtra, label: string, options: { value: string; label: string }[]) {
     const val = extra[key] as string | null
-    const isEditing = editingField === key
-    const display = val ? options.find(o => o.value === val)?.label ?? val : null
     return (
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
-        <SectionLabel className="pt-1">{label}</SectionLabel>
-        {isEditing ? (
-          <SelectInput
-            options={options}
-            initial={val ?? ''}
-            onSave={(v) => saveField(key, (v as SwissExtra[typeof key]))}
-            onCancel={() => setEditingField(null)}
-          />
-        ) : (
-          <div className="group/val inline-flex items-baseline">
-            <button
-              type="button"
-              onClick={() => setEditingField(key as string)}
-              className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text',
-                !val && 'text-muted-foreground/60',
-              )}
-            >
-              {display || '—'}
-            </button>
-            {display && (
-              <>
-                <CopyButton value={display} className="ml-1 opacity-0 group-hover/val:opacity-100" />
-                <ClearButton onClick={() => saveField(key, null as SwissExtra[typeof key])} />
-              </>
-            )}
-          </div>
-        )}
-      </div>
+      <SwissFieldRow
+        key={key as string}
+        label={label}
+        value={val}
+        type="select"
+        options={options}
+        isEditing={editingField === key}
+        onStartEdit={() => setEditingField(key as string)}
+        onCancelEdit={() => setEditingField(null)}
+        onSave={(v) => saveField(key, (v as SwissExtra[typeof key]))}
+      />
     )
   }
 
   function renderDate(key: keyof SwissExtra, label: string) {
     const val = extra[key] as string | null
-    const isEditing = editingField === key
     return (
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
-        <SectionLabel className="pt-1">{label}</SectionLabel>
-        {isEditing ? (
-          <InlineInput
-            type="date"
-            initial={val ?? ''}
-            placeholder=""
-            onSave={(v) => saveField(key, (v as SwissExtra[typeof key]))}
-            onCancel={() => setEditingField(null)}
-          />
-        ) : (
-          <div className="group/val inline-flex items-baseline">
-            <button
-              type="button"
-              onClick={() => setEditingField(key as string)}
-              className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text',
-                !val && 'text-muted-foreground/60',
-              )}
-            >
-              {val || '—'}
-            </button>
-            {val && (
-              <>
-                <CopyButton value={val} className="ml-1 opacity-0 group-hover/val:opacity-100" />
-                <ClearButton onClick={() => saveField(key, null as SwissExtra[typeof key])} />
-              </>
-            )}
-          </div>
-        )}
-      </div>
+      <SwissFieldRow
+        key={key as string}
+        label={label}
+        value={val}
+        type="date"
+        isEditing={editingField === key}
+        onStartEdit={() => setEditingField(key as string)}
+        onCancelEdit={() => setEditingField(null)}
+        onSave={(v) => saveField(key, (v as SwissExtra[typeof key]))}
+      />
     )
   }
 
   function renderText(key: keyof SwissExtra, label: string, placeholder: string) {
     const val = extra[key] as string | null
-    const isEditing = editingField === key
     return (
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
-        <SectionLabel className="pt-1">{label}</SectionLabel>
-        {isEditing ? (
-          <InlineInput
-            type="text"
-            initial={val ?? ''}
-            placeholder={placeholder}
-            onSave={(v) => saveField(key, (v as SwissExtra[typeof key]))}
-            onCancel={() => setEditingField(null)}
-          />
-        ) : (
-          <div className="group/val inline-flex items-baseline">
-            <button
-              type="button"
-              onClick={() => setEditingField(key as string)}
-              className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text',
-                !val && 'text-muted-foreground/60',
-              )}
-            >
-              {val || '—'}
-            </button>
-            {val && (
-              <>
-                <CopyButton value={val} className="ml-1 opacity-0 group-hover/val:opacity-100" />
-                <ClearButton onClick={() => saveField(key, null as SwissExtra[typeof key])} />
-              </>
-            )}
-          </div>
-        )}
-      </div>
+      <SwissFieldRow
+        key={key as string}
+        label={label}
+        value={val}
+        type="text"
+        placeholder={placeholder}
+        isEditing={editingField === key}
+        onStartEdit={() => setEditingField(key as string)}
+        onCancelEdit={() => setEditingField(null)}
+        onSave={(v) => saveField(key, (v as SwissExtra[typeof key]))}
+      />
     )
   }
 
@@ -326,42 +263,74 @@ export function SwissExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
 
       {/* 해외주소 — 단일 문자열. "Rue du Lac 12, 1800 Vevey, Switzerland" 포맷.
           PDF 생성 시 자동 파싱해 Address/Postcode/City 로 분리 출력. */}
-      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
-        <SectionLabel className="pt-1">해외주소</SectionLabel>
-        {editingField === 'address_overseas' ? (
-          <InlineInput
-            type="text"
-            initial={addressValue ?? ''}
-            placeholder="Rue du Lac 12, 1800 Vevey, Switzerland"
-            onSave={(v) => saveAddress(v)}
-            onCancel={() => setEditingField(null)}
-          />
-        ) : (
-          <div className="group/val inline-flex items-baseline">
-            <button
-              type="button"
-              onClick={() => setEditingField('address_overseas')}
-              className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text',
-                !addressValue && 'text-muted-foreground/60',
-              )}
-            >
-              {addressValue || '—'}
-            </button>
-            {addressValue && (
-              <>
-                <CopyButton value={addressValue} className="ml-1 opacity-0 group-hover/val:opacity-100" />
-                <ClearButton onClick={() => saveAddress(null)} />
-              </>
-            )}
-          </div>
-        )}
-      </div>
+      <SwissFieldRow
+        label="해외주소"
+        value={addressValue}
+        type="text"
+        placeholder="Rue du Lac 12, 1800 Vevey, Switzerland"
+        isEditing={editingField === 'address_overseas'}
+        onStartEdit={() => setEditingField('address_overseas')}
+        onCancelEdit={() => setEditingField(null)}
+        onSave={(v) => saveAddress(v)}
+      />
       {renderText('email', '이메일', 'owner@example.com')}
 
       {showCropped && renderSelect('cropped', '단미·단이', CROPPED_OPTIONS)}
       </div>
     </ExtraSectionShell>
+  )
+}
+
+function SwissFieldRow({
+  label, value, type, options, placeholder, isEditing, onStartEdit, onCancelEdit, onSave,
+}: {
+  label: string
+  value: string | null
+  type: 'text' | 'date' | 'select'
+  options?: { value: string; label: string }[]
+  placeholder?: string
+  isEditing: boolean
+  onStartEdit: () => void
+  onCancelEdit: () => void
+  onSave: (v: string | null) => void
+}) {
+  const editMode = useSectionEditMode()
+  const display = type === 'select' && value ? options?.find(o => o.value === value)?.label ?? value : value
+  const valueCls = cn(
+    'rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground',
+    !value && 'text-muted-foreground/60',
+  )
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
+      <SectionLabel className="pt-1">{label}</SectionLabel>
+      {editMode && isEditing ? (
+        type === 'select' ? (
+          <SelectInput options={options ?? []} initial={value ?? ''} onSave={onSave} onCancel={onCancelEdit} />
+        ) : (
+          <InlineInput type={type} initial={value ?? ''} placeholder={placeholder ?? ''} onSave={onSave} onCancel={onCancelEdit} />
+        )
+      ) : (
+        <div className="group/val inline-flex items-baseline">
+          {editMode ? (
+            <button
+              type="button"
+              onClick={onStartEdit}
+              className={cn('text-left transition-colors hover:bg-accent/60 cursor-text', valueCls)}
+            >
+              {display || '—'}
+            </button>
+          ) : (
+            <span className={valueCls}>{display || '—'}</span>
+          )}
+          {display && (
+            <>
+              <CopyButton value={display} className="ml-1 opacity-0 group-hover/val:opacity-100" />
+              {editMode && <ClearButton onClick={() => onSave(null)} />}
+            </>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 

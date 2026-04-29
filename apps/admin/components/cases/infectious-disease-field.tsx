@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { SectionLabel } from '@/components/ui/section-label'
-import { cn } from '@/lib/utils'
+import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { labColor } from '@/lib/lab-color'
 import { resolveInspectionLabs } from '@petmove/domain'
 import { DateTextField } from '@/components/ui/date-text-field'
+import { useSectionEditMode } from './section-edit-mode-context'
 
 interface InfectiousRecord {
   date: string | null
@@ -25,6 +26,7 @@ const DATA_KEY = 'infectious_disease_records'
 
 export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
   const { updateLocalCaseField, inspectionConfig } = useCases()
+  const editMode = useSectionEditMode()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
 
   // Read array (backward compat: old flat key)
@@ -100,43 +102,53 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel>전염병검사</SectionLabel>
-        <button
-          type="button"
-          onClick={() => setAddingNew(true)}
-          disabled={saving || addingNew}
-          className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
-          title="전염병검사 추가"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        </button>
       </div>
-      <div className="min-w-0 space-y-0.5">
-        {records.map((rec, i) => (
-          <InfectiousRow
-            key={i}
-            record={rec}
-            isEditing={editIdx === i ? editField : null}
-            onStartEdit={(f) => { setEditIdx(i); setEditField(f) }}
-            onStopEdit={() => { setEditIdx(null); setEditField(null) }}
-            onUpdateField={(f, v) => updateRecord(i, f, v)}
-            onDelete={() => deleteRecord(i)}
-            saving={saving}
-          />
-        ))}
+      <div className="min-w-0 flex items-start gap-md">
+        <div className="flex-1 min-w-0 space-y-0.5">
+          {records.map((rec, i) => (
+            <InfectiousRow
+              key={i}
+              record={rec}
+              isEditing={editIdx === i ? editField : null}
+              onStartEdit={(f) => { setEditIdx(i); setEditField(f) }}
+              onStopEdit={() => { setEditIdx(null); setEditField(null) }}
+              onUpdateField={(f, v) => updateRecord(i, f, v)}
+              onDelete={() => deleteRecord(i)}
+              saving={saving}
+            />
+          ))}
 
-        {addingNew && (
-          <DateInput
-            initial=""
-            onSave={saveNewRecord}
-            onCancel={() => setAddingNew(false)}
-          />
-        )}
+          {addingNew && (
+            <DateInput
+              initial=""
+              onSave={saveNewRecord}
+              onCancel={() => setAddingNew(false)}
+            />
+          )}
 
-        {records.length === 0 && !addingNew && (
-          <button type="button" onClick={() => setAddingNew(true)}
-            className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground">
-            —
-          </button>
+          {records.length === 0 && !addingNew && (
+            editMode ? (
+              <button type="button" onClick={() => setAddingNew(true)}
+                className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground">
+                —
+              </button>
+            ) : (
+              <span className="px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/40">—</span>
+            )
+          )}
+        </div>
+        {editMode && (
+          <div className="shrink-0 flex items-center gap-[6px]">
+            <button
+              type="button"
+              onClick={() => setAddingNew(true)}
+              disabled={saving || addingNew}
+              className={roundIconBtn}
+              title="전염병검사 추가"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+          </div>
         )}
       </div>
     </div>
@@ -156,6 +168,7 @@ function InfectiousRow({
   onDelete: () => void
   saving: boolean
 }) {
+  const editMode = useSectionEditMode()
   const dateDisplay = record.date || '—'
   const labObj = LABS.find(l => l.value === record.lab)
   const labDisplay = labObj?.label || record.lab || '—'
@@ -164,29 +177,33 @@ function InfectiousRow({
   return (
     <div className="group/item flex items-baseline gap-[10px] min-w-0">
       {/* Date */}
-      {isEditing === 'date' ? (
+      {editMode && isEditing === 'date' ? (
         <DateInput
           initial={record.date || ''}
           onSave={(v) => { if (!v) onDelete(); else onUpdateField('date', v); onStopEdit() }}
           onCancel={onStopEdit}
         />
-      ) : (
+      ) : editMode ? (
         <button type="button" onClick={() => onStartEdit('date')}
           className={cn('text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer', dateDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60')}>
           {dateDisplay}
         </button>
+      ) : (
+        <span className={cn('inline-block rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground', dateDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/40')}>
+          {dateDisplay}
+        </span>
       )}
 
       <span className="text-muted-foreground/30 select-none">|</span>
 
       {/* Lab */}
-      {isEditing === 'lab' ? (
+      {editMode && isEditing === 'lab' ? (
         <LabDropdown
           current={record.lab}
           onSelect={(v) => { onUpdateField('lab', v); onStopEdit() }}
           onClose={onStopEdit}
         />
-      ) : (
+      ) : editMode ? (
         <button type="button" onClick={() => onStartEdit('lab')}
           className={cn(
             'text-left cursor-pointer transition-all',
@@ -196,12 +213,24 @@ function InfectiousRow({
           )}>
           {labDisplay}
         </button>
+      ) : (
+        <span
+          className={cn(
+            'inline-block transition-all',
+            labTone
+              ? cn('items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap', labTone.bg, labTone.text)
+              : cn('text-base rounded-md px-2 py-1 -mx-2', labDisplay === '—' && 'text-muted-foreground/40'),
+          )}>
+          {labDisplay}
+        </span>
       )}
 
-      <button type="button" onClick={onDelete}
-        className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 ml-1 opacity-0 group-hover/item:opacity-100">
-        ✕
-      </button>
+      {editMode && (
+        <button type="button" onClick={onDelete}
+          className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 ml-1 opacity-0 group-hover/item:opacity-100">
+          ✕
+        </button>
+      )}
     </div>
   )
 }

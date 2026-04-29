@@ -9,7 +9,6 @@ type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 const TOP_COLS = [
   'id',
   'org_id',
-  'status',
   'customer_name',
   'customer_name_en',
   'pet_name',

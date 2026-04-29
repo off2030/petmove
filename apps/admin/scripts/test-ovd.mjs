@@ -130,7 +130,6 @@ const c = {
   pet_name_en: 'Coco',
   destination: 'New Zealand',
   departure_date: '2026-06-01',
-  status: '진행중',
   org_id: '', created_at: '', updated_at: '',
   vet_visit_date: '2026-04-15',
   data: {

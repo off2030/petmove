@@ -1,7 +1,5 @@
 // DB 스키마 기반 공통 타입. procedure-checks 및 admin 전역에서 사용.
 
-export type CaseStatus = 'Applied' | 'In Progress' | 'Completed' | 'On Hold' | 'Cancelled'
-
 export interface CaseRow {
   id: string
   org_id: string
@@ -13,7 +11,6 @@ export interface CaseRow {
   pet_name_en: string | null
   destination: string | null
   departure_date: string | null
-  status: CaseStatus
   data: Record<string, unknown>
   created_at: string
   updated_at: string

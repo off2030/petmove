@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { cn } from '@/lib/utils'
+import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
@@ -13,6 +13,7 @@ import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { severityTextClass, tooltipText, useFieldVerification } from './verification-context'
 import { DateTextField } from '@/components/ui/date-text-field'
+import { useSectionEditMode } from './section-edit-mode-context'
 
 interface VacRecord {
   date: string
@@ -173,6 +174,7 @@ function parasiteKindFromLabel(label: string): 'external' | 'internal' | 'heartw
 
 export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey, hideValidUntil, siblingKey }: Props) {
   const { updateLocalCaseField } = useCases()
+  const editMode = useSectionEditMode()
   const L = useVaccineLookups()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const records = readRecords(data, dataKey, legacyKey)
@@ -488,12 +490,12 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
   return (
     <div
       ref={rootRef}
-      onDragOver={!expanded ? handleDragOver : undefined}
-      onDragLeave={!expanded ? handleDragLeave : undefined}
-      onDrop={!expanded ? handleDropNew : undefined}
+      onDragOver={editMode && !expanded ? handleDragOver : undefined}
+      onDragLeave={editMode && !expanded ? handleDragLeave : undefined}
+      onDrop={editMode && !expanded ? handleDropNew : undefined}
       className={cn(
         "grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 rounded-md transition-colors hover:bg-accent/60",
-        !expanded && dragOver && "bg-accent/40 ring-2 ring-ring/30 ring-dashed",
+        editMode && !expanded && dragOver && "bg-accent/40 ring-2 ring-ring/30 ring-dashed",
       )}
     >
       <div className="flex items-center gap-[6px] pt-1">
@@ -508,24 +510,14 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
         >
           {label}{expanded ? ' ▾' : ''}
         </button>
-        <button
-          type="button"
-          onClick={() => setAddingNew(true)}
-          disabled={saving || addingNew}
-          className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
-          title={`${label} 추가`}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        </button>
-        <input ref={fileRef} type="file" accept="image/*,.pdf" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f, null); e.target.value = '' }} className="hidden" />
-        <button type="button" onClick={() => fileRef.current?.click()} disabled={extracting} className="shrink-0 rounded-md p-1 text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30" title="이미지/PDF로 약품 정보 추출">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-        </button>
       </div>
+
+      <div className="min-w-0 flex items-start gap-md">
+        <input ref={fileRef} type="file" accept="image/*,.pdf" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f, null); e.target.value = '' }} className="hidden" />
 
       {/* Collapsed view: dates inline (newest first) */}
       {!expanded && (
-        <div className="flex items-baseline gap-[10px] min-w-0 flex-wrap">
+        <div className="flex-1 flex items-baseline gap-[10px] min-w-0 flex-wrap">
           {sortedForExpand.map((rec, si) => {
             const i = origIdx(si)
             const path = `${dataKey}[${i}].date`
@@ -556,10 +548,14 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
           )}
 
           {records.length === 0 && !addingNew && !extracting && (
-            <button type="button" onClick={() => setAddingNew(true)}
-              className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-base text-muted-foreground/60 transition-colors hover:bg-accent/60 cursor-pointer">
-              —
-            </button>
+            editMode ? (
+              <button type="button" onClick={() => setAddingNew(true)}
+                className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-base text-muted-foreground/60 transition-colors hover:bg-accent/60 cursor-pointer">
+                —
+              </button>
+            ) : (
+              <span className="px-2 py-1 -mx-2 font-sans text-base text-muted-foreground/40">—</span>
+            )
           )}
           {extracting && (
             <span className="text-xs text-muted-foreground">추출 중...</span>
@@ -577,7 +573,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
 
       {/* Expanded view: detail cards, newest first */}
       {expanded && (
-        <div className="min-w-0 space-y-2">
+        <div className="flex-1 min-w-0 space-y-2">
           {addingNew && (
             <div className="flex items-baseline gap-sm">
               <DateInput
@@ -589,17 +585,19 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
           )}
 
           {/* Drop zone for NEW record */}
-          <div
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDropNew}
-            className={cn(
-              "text-xs text-muted-foreground/50 italic px-2 py-1 rounded-md border border-dashed border-border/40 transition-colors",
-              dragOver && "bg-accent/40 ring-2 ring-ring/30 ring-dashed text-foreground",
-            )}
-          >
-            {dragOver ? '새 기록으로 추가됩니다' : '이미지를 여기 드롭 → 새 접종 기록 추가'}
-          </div>
+          {editMode && (
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDropNew}
+              className={cn(
+                "text-xs text-muted-foreground/50 italic px-2 py-1 rounded-md border border-dashed border-border/40 transition-colors",
+                dragOver && "bg-accent/40 ring-2 ring-ring/30 ring-dashed text-foreground",
+              )}
+            >
+              {dragOver ? '새 기록으로 추가됩니다' : '이미지를 여기 드롭 → 새 접종 기록 추가'}
+            </div>
+          )}
 
           {sortedForExpand.map((rec, si) => {
             const oi = origIdx(si)
@@ -614,20 +612,20 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
               <div
                 key={oi}
                 data-record-idx={oi}
-                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverIdx(oi) }}
-                onDragLeave={(e) => {
+                onDragOver={editMode ? (e) => { e.preventDefault(); e.stopPropagation(); setDragOverIdx(oi) } : undefined}
+                onDragLeave={editMode ? (e) => {
                   e.preventDefault(); e.stopPropagation()
                   if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverIdx(null)
-                }}
-                onDrop={(e) => {
+                } : undefined}
+                onDrop={editMode ? (e) => {
                   e.preventDefault(); e.stopPropagation()
                   setDragOverIdx(null)
                   const file = Array.from(e.dataTransfer.files).find(isExtractableFile)
                   if (file) handleFile(file, oi)
-                }}
+                } : undefined}
                 className={cn(
                   "group/item rounded-md transition-colors",
-                  dragOverIdx === oi && "bg-accent/40 ring-2 ring-ring/30 ring-dashed",
+                  editMode && dragOverIdx === oi && "bg-accent/40 ring-2 ring-ring/30 ring-dashed",
                 )}
               >
                 {/* Row 1: date + valid_until */}
@@ -654,10 +652,12 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                     />
                   )}
 
-                  <button type="button" onClick={() => deleteRecord(oi)}
-                    className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100 ml-auto">
-                    ✕
-                  </button>
+                  {editMode && (
+                    <button type="button" onClick={() => deleteRecord(oi)}
+                      className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100 ml-auto">
+                      ✕
+                    </button>
+                  )}
                 </div>
 
                 {/* Row 2: 제품명 | 제조사 | 제품번호 | 유효기간 */}
@@ -727,18 +727,22 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                 </div>
 
                 {/* Row 3: 타병원 접종 체크 — 백신 항목(광견병/종합백신/CIV/켄넬코프)만. 별지25·별지25 EX에서 제외됨. */}
-                {OTHER_HOSPITAL_LABELS.has(label) && (
+                {OTHER_HOSPITAL_LABELS.has(label) && (editMode || rec.other_hospital) && (
                   <div className="ml-2 mt-0.5">
-                    <label className="inline-flex items-center gap-1 text-xs text-muted-foreground/70 hover:text-foreground cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={!!rec.other_hospital}
-                        onChange={() => toggleOtherHospital(oi)}
-                        disabled={saving}
-                        className="h-3 w-3 cursor-pointer"
-                      />
-                      타병원 접종
-                    </label>
+                    {editMode ? (
+                      <label className="inline-flex items-center gap-1 text-xs text-muted-foreground/70 hover:text-foreground cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={!!rec.other_hospital}
+                          onChange={() => toggleOtherHospital(oi)}
+                          disabled={saving}
+                          className="h-3 w-3 cursor-pointer"
+                        />
+                        타병원 접종
+                      </label>
+                    ) : (
+                      <span className="text-xs text-muted-foreground/70">타병원 접종</span>
+                    )}
                   </div>
                 )}
               </div>
@@ -746,6 +750,24 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
           })}
         </div>
       )}
+
+        {editMode && (
+          <div className="shrink-0 flex items-center gap-[6px]">
+            <button
+              type="button"
+              onClick={() => setAddingNew(true)}
+              disabled={saving || addingNew}
+              className={roundIconBtn}
+              title={`${label} 추가`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            <button type="button" onClick={() => fileRef.current?.click()} disabled={extracting} className={roundIconBtn} title="이미지/PDF로 약품 정보 추출">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -765,6 +787,7 @@ function CollapsedDateChip({ separator, path, date, editing, onStartEdit, onSave
   onCancelEdit: () => void
   onDelete: () => void
 }) {
+  const editMode = useSectionEditMode()
   const info = useFieldVerification(path)
   const colorCls = info ? severityTextClass(info.severity) : ''
   const title = info ? tooltipText(info) : undefined
@@ -776,35 +799,63 @@ function CollapsedDateChip({ separator, path, date, editing, onStartEdit, onSave
         <DateInput initial={date} onSave={onSaveEdit} onCancel={onCancelEdit} />
       ) : (
         <span className="group/v relative inline-flex items-baseline">
-          <button
-            type="button"
-            onClick={onStartEdit}
-            title={title}
-            className={cn(
-              'text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
-              colorCls,
-            )}
-          >
-            {date}
-          </button>
+          {editMode ? (
+            <button
+              type="button"
+              onClick={onStartEdit}
+              title={title}
+              className={cn(
+                'text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
+                colorCls,
+              )}
+            >
+              {date}
+            </button>
+          ) : (
+            <span
+              title={title}
+              className={cn(
+                'rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground',
+                colorCls,
+              )}
+            >
+              {date}
+            </span>
+          )}
           <CopyButton value={date} className="ml-1 opacity-0 group-hover/v:opacity-100" />
         </span>
       )}
-      <button
-        type="button"
-        onClick={onDelete}
-        className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100"
-      >
-        ✕
-      </button>
+      {editMode && (
+        <button
+          type="button"
+          onClick={onDelete}
+          className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100"
+        >
+          ✕
+        </button>
+      )}
     </div>
   )
 }
 
 function ExpandedDateButton({ path, date, onClick }: { path: string; date: string; onClick: () => void }) {
+  const editMode = useSectionEditMode()
   const info = useFieldVerification(path)
   const colorCls = info ? severityTextClass(info.severity) : ''
   const title = info ? tooltipText(info) : undefined
+  if (!editMode) {
+    return (
+      <span
+        title={title}
+        className={cn(
+          'rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground',
+          colorCls,
+        )}
+      >
+        {date}
+      </span>
+    )
+  }
   return (
     <button
       type="button"
@@ -829,11 +880,24 @@ function ProductDropdown({ value, defaultName, options, onChange, saving }: {
   onChange: (id: string | null) => void
   saving: boolean
 }) {
+  const editMode = useSectionEditMode()
   const selected = value ? options.find(o => o.id === value) : null
   // Display: explicit pick = product name in normal color; default = "(자동)" hint
   const display = selected
     ? `${selected.name}${selected.kind === 'combo' ? ' (콤보)' : ''}`
     : (defaultName ? `(자동: ${defaultName})` : '제품명')
+
+  if (!editMode) {
+    if (!selected && !defaultName) return null
+    return (
+      <span className={cn(
+        'inline-block rounded-md px-2 py-1 -mx-2 text-xs',
+        !selected && 'text-muted-foreground/70',
+      )} title={display}>
+        {display}
+      </span>
+    )
+  }
 
   return (
     <select
@@ -873,6 +937,7 @@ function DetailField({ value, hint, suppressHint, type, placeholder, isEditing, 
   onCancel: () => void
   saving: boolean
 }) {
+  const editMode = useSectionEditMode()
   const effectiveHint = suppressHint ? null : hint
   const cleared = value === ''
   const hasValue = !cleared && !!value
@@ -885,6 +950,19 @@ function DetailField({ value, hint, suppressHint, type, placeholder, isEditing, 
       <DateInput initial={value || ''} onSave={(v) => onSave(v)} onCancel={onCancel} onClearAuto={() => onSave(null)} />
     ) : (
       <TextInput initial={value || ''} placeholder={placeholder} onSave={(v) => onSave(v)} onCancel={onCancel} saving={saving} onClearAuto={() => onSave(null)} />
+    )
+  }
+
+  if (!editMode) {
+    // 읽기 모드: hint(자동 추론)는 표시하되 placeholder/cleared/—는 숨김.
+    if (!hasValue && !hasHint) return null
+    return (
+      <span className={cn(
+        'inline-block rounded-md px-2 py-1 -mx-2 text-xs',
+        hasHint && 'text-muted-foreground/70',
+      )}>
+        {display}
+      </span>
     )
   }
 
@@ -915,9 +993,20 @@ function ValidUntilSelector({ value, onChange, saving }: {
   onChange: (v: string | null) => void
   saving: boolean
 }) {
+  const editMode = useSectionEditMode()
   // null/빈값은 1년 기본. "N년" 패턴이면 N 추출, 그 외 legacy 값은 선택 없음.
   const match = value?.match(/^(\d+)\s*년$/)
   const current = match ? match[1] : value ? null : '1'
+
+  if (!editMode) {
+    if (!current) return null
+    return (
+      <span className="inline-block rounded-md px-2 py-0.5 text-xs text-muted-foreground/70" title={`유효기간 ${current}년`}>
+        {current}년
+      </span>
+    )
+  }
+
   return (
     <div className="inline-flex items-center gap-0.5 rounded-md border border-border/40 bg-background/50 p-0.5">
       {['1', '2', '3'].map(n => (

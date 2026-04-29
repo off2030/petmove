@@ -12,7 +12,6 @@ const REGULAR_COLUMNS = new Set([
   'microchip',
   'destination',
   'departure_date',
-  'status',
 ])
 
 export type UpdateResult =
