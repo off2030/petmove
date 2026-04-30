@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useTransition } from 'react'
+import { Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { FieldSpec } from '@/lib/fields'
 import { coerceInputValue, renderFieldValue } from '@/lib/fields'
@@ -23,7 +24,7 @@ function filterByLang(str: string, lang?: 'ko' | 'en'): string {
 
 /** Editorial value styling — derive from field spec */
 const MONO_VALUE_KEYS = new Set(['phone', 'microchip', 'weight', 'payment_amount', 'rabies_titer', 'rabies_titer_value'])
-const ITALIC_VALUE_KEYS = new Set(['sex', 'address_overseas'])
+const ITALIC_VALUE_KEYS = new Set(['address_overseas'])
 
 function getValueClass(spec: FieldSpec): string {
   if (spec.type === 'date' || MONO_VALUE_KEYS.has(spec.key)) {
@@ -87,6 +88,7 @@ export function EditableField({
   inline = false,
   lang,
   clearable = false,
+  compact = false,
 }: {
   caseId: string
   spec: FieldSpec
@@ -94,6 +96,8 @@ export function EditableField({
   inline?: boolean
   lang?: 'ko' | 'en'
   clearable?: boolean
+  /** 그룹 내부 sub-row 용 — 좁은 라벨 너비(100px), 더 작은 padding, border-bottom 없음. */
+  compact?: boolean
 }) {
   const { updateLocalCaseField, replaceLocalCaseData } = useCases()
   const { settings: detailViewSettings } = useDetailViewSettings()
@@ -102,16 +106,30 @@ export function EditableField({
   const [value, setValue] = useState<string>(stringifyRaw(rawValue, spec))
   const [saving, startSave] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [savedFlash, setSavedFlash] = useState(false)
 
   const inputRef = useRef<
     HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
   >(null)
+  const selectWrapRef = useRef<HTMLDivElement>(null)
 
   // Reset editing when case changes (caseId changes)
   useEffect(() => {
     setEditing(false)
     setError(null)
   }, [caseId])
+
+  // Select 드롭다운: 외부 클릭으로 닫기.
+  useEffect(() => {
+    if (!editing || spec.type !== 'select') return
+    function onClick(e: MouseEvent) {
+      if (selectWrapRef.current && !selectWrapRef.current.contains(e.target as Node)) {
+        setEditing(false)
+      }
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [editing, spec.type])
 
   useEffect(() => {
     if (!editing) setValue(stringifyRaw(rawValue, spec))
@@ -145,23 +163,32 @@ export function EditableField({
   })()
   const displayNode: React.ReactNode = bilingualSelect ? (
     <>
-      {bilingualSelect.ko}
+      <span className="text-muted-foreground">{bilingualSelect.ko}</span>
       <span className="text-muted-foreground/30 mx-1.5 select-none">|</span>
-      {bilingualSelect.en}
+      <span className="italic text-foreground">{bilingualSelect.en}</span>
     </>
+  ) : isEmpty ? (
+    // 빈 값일 때: '—' 대신 투명 placeholder — 클릭 영역은 유지하면서 시각적 잡음 제거.
+    // 좌측 라벨 클릭으로도 편집 진입 가능 (SectionLabel onClick).
+    <span className="inline-block min-w-[2.5rem] select-none" aria-hidden>&nbsp;</span>
   ) : (
     display
   )
   const copyDisplay = bilingualSelect ? `${bilingualSelect.ko} | ${bilingualSelect.en}` : display
 
   function handleClear() {
-    startSave(async () => {
+    // Optimistic — UI 즉시 반영. 실패 시 rollback.
+    const prevValue = rawValue
+    updateLocalCaseField(caseId, spec.storage, spec.key, null)
+    setError(null)
+    setEditing(false)
+    void (async () => {
       const result = await updateCaseField(caseId, spec.storage, spec.key, null)
-      if (!result.ok) { setError(result.error); return }
-      updateLocalCaseField(caseId, spec.storage, spec.key, null)
-      setError(null)
-      setEditing(false)
-    })
+      if (!result.ok) {
+        updateLocalCaseField(caseId, spec.storage, spec.key, prevValue)
+        setError(result.error)
+      }
+    })()
   }
 
   function handleEnterEdit() {
@@ -189,21 +216,20 @@ export function EditableField({
     }
 
     const coerced = coerceInputValue(spec, value)
-    startSave(async () => {
-      const result = await updateCaseField(
-        caseId,
-        spec.storage,
-        spec.key,
-        coerced,
-      )
+    const prev = rawValue
+    // Optimistic — UI 즉시 반영. 실패 시 rollback.
+    updateLocalCaseField(caseId, spec.storage, spec.key, coerced)
+    setError(null)
+    setEditing(false)
+    setSavedFlash(true)
+    setTimeout(() => setSavedFlash(false), 1500)
+    void (async () => {
+      const result = await updateCaseField(caseId, spec.storage, spec.key, coerced)
       if (!result.ok) {
+        updateLocalCaseField(caseId, spec.storage, spec.key, prev)
         setError(result.error)
-        return
       }
-      updateLocalCaseField(caseId, spec.storage, spec.key, coerced)
-      setError(null)
-      setEditing(false)
-    })
+    })()
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -218,13 +244,16 @@ export function EditableField({
 
   /** Save without closing edit mode (used by date inputs that auto-save on change) */
   function autoSave(coerced: unknown) {
-    startSave(async () => {
+    const prev = rawValue
+    updateLocalCaseField(caseId, spec.storage, spec.key, coerced)
+    setError(null)
+    void (async () => {
       const result = await updateCaseField(caseId, spec.storage, spec.key, coerced)
-      if (!result.ok) { setError(result.error); return }
-      updateLocalCaseField(caseId, spec.storage, spec.key, coerced)
-      setError(null)
-      // Don't close editing — date inputs stay open until Esc or clicking elsewhere
-    })
+      if (!result.ok) {
+        updateLocalCaseField(caseId, spec.storage, spec.key, prev)
+        setError(result.error)
+      }
+    })()
   }
 
   function handleBlur() {
@@ -238,41 +267,47 @@ export function EditableField({
   // Select fields: always render as inline dropdown (no edit mode toggle)
   const isSelect = spec.type === 'select' && spec.options
   const isDate = spec.type === 'date'
+  const isPhone = spec.key === 'phone'
   const composingRef = useRef(false) // IME composition state
   const effectiveLang = autoDetectLang(spec, lang) // true if keyboard was used (vs picker)
 
   function saveDateValue(v: string) {
     const value = v.trim() || null
-    startSave(async () => {
+    const prev = rawValue
+    updateLocalCaseField(caseId, spec.storage, spec.key, value)
+    setError(null)
+    setEditing(false)
+    void (async () => {
       const result = await updateCaseField(caseId, spec.storage, spec.key, value)
-      if (!result.ok) { setError(result.error); return }
-      updateLocalCaseField(caseId, spec.storage, spec.key, value)
+      if (!result.ok) {
+        updateLocalCaseField(caseId, spec.storage, spec.key, prev)
+        setError(result.error)
+        return
+      }
       // 자동 채움 결과 반영 — 엔진이 다른 필드들을 채웠으면 data 통째 교체.
       if (result.autoFilled) replaceLocalCaseData(caseId, result.autoFilled.data)
-      setError(null)
-      setEditing(false)
-    })
+    })()
   }
 
   function handleSelectChange_custom(val: string | null) {
     const coerced = val ? coerceInputValue(spec, val) : null
-    startSave(async () => {
+    const prev = rawValue
+    updateLocalCaseField(caseId, spec.storage, spec.key, coerced)
+    setError(null)
+    void (async () => {
       const result = await updateCaseField(caseId, spec.storage, spec.key, coerced)
-      if (!result.ok) { setError(result.error); return }
-      updateLocalCaseField(caseId, spec.storage, spec.key, coerced)
-      setError(null)
-    })
+      if (!result.ok) {
+        updateLocalCaseField(caseId, spec.storage, spec.key, prev)
+        setError(result.error)
+      }
+    })()
   }
 
   const valueCell = (
     <div className="min-w-0">
       {isSelect ? (
         // Custom dropdown: looks like plain text, click shows options
-        <div className="relative"
-          onBlur={(e) => {
-            if (!e.currentTarget.contains(e.relatedTarget as Node)) setEditing(false)
-          }}
-        >
+        <div className="relative" ref={selectWrapRef}>
           <div className="relative w-fit">
             {editMode ? (
               <button
@@ -299,23 +334,14 @@ export function EditableField({
             )}
           </div>
           {editMode && editing && (
-            <ul className="absolute left-0 top-full mt-1 z-20 min-w-[120px] rounded-md border border-border/80 bg-background py-1 shadow-md">
-              <li>
-                <button
-                  type="button"
-                  onClick={() => { handleSelectChange_custom(null); setEditing(false) }}
-                  className="w-full text-left px-sm py-1.5 font-serif text-[15px] text-muted-foreground hover:bg-accent/60 transition-colors"
-                >
-                  —
-                </button>
-              </li>
+            <ul className="absolute left-0 top-full mt-1 z-20 w-max max-w-[400px] rounded-md border border-border/80 bg-background py-1 shadow-md">
               {spec.options!.map((opt) => (
                 <li key={opt.value}>
                   <button
                     type="button"
                     onClick={() => { handleSelectChange_custom(opt.value); setEditing(false) }}
                     className={cn(
-                      'w-full text-left px-sm py-1.5 font-serif text-[15px] tracking-[-0.1px] text-foreground hover:bg-accent/60 transition-colors',
+                      'w-full text-left px-sm py-1.5 font-serif text-[15px] tracking-[-0.1px] text-foreground hover:bg-accent/60 transition-colors whitespace-nowrap',
                       String(rawValue) === opt.value && 'font-medium',
                     )}
                   >
@@ -327,17 +353,40 @@ export function EditableField({
           )}
         </div>
       ) : isDate && editing ? (
-        <DateTextField
-          autoFocus
-          value={stringifyRaw(rawValue, spec)}
-          onChange={saveDateValue}
-          onBlur={() => setEditing(false)}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') { e.preventDefault(); handleCancel() }
-          }}
-          className="w-40 bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
-        />
+        <div className="flex items-start gap-sm">
+          <DateTextField
+            autoFocus
+            value={stringifyRaw(rawValue, spec)}
+            onChange={saveDateValue}
+            onBlur={() => setEditing(false)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') { e.preventDefault(); handleCancel() }
+            }}
+            className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+          />
+        </div>
+      ) : isPhone && editing ? (
+        <div className="flex items-start gap-sm">
+          <PhoneInput
+            inputRef={inputRef as React.RefObject<HTMLInputElement>}
+            initial={value}
+            onChange={setValue}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            className="flex-1 h-8 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+          />
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex h-7 items-center justify-center rounded px-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
+          >
+            {saving ? '...' : '저장'}
+          </button>
+        </div>
       ) : editing ? (
+        // 박스폼 — 모든 편집은 동일한 박스 + 저장 버튼 패턴으로 통일.
         <div className="flex items-start gap-sm">
           {renderInput(spec, value, (v, fromCompositionEnd) => {
             if (composingRef.current && !fromCompositionEnd) { setValue(v); return }
@@ -373,14 +422,24 @@ export function EditableField({
           </button>
         </div>
       ) : (
-        <VerifiedDisplayButton
-          spec={spec}
-          path={spec.key}
-          display={displayNode}
-          isEmpty={isEmpty}
-          isLongText={spec.type === 'longtext'}
-          onClick={handleEnterEdit}
-        />
+        <span className="inline-flex items-baseline">
+          <VerifiedDisplayButton
+            spec={spec}
+            path={spec.key}
+            display={displayNode}
+            isEmpty={isEmpty}
+            isLongText={spec.type === 'longtext'}
+            onClick={handleEnterEdit}
+          />
+          {savedFlash && (
+            <span
+              className="ml-2 text-emerald-600 text-sm select-none"
+              aria-label="저장됨"
+            >
+              ✓
+            </span>
+          )}
+        </span>
       )}
       {error && (
         <div className="mt-1 text-xs text-red-600">{error}</div>
@@ -394,18 +453,34 @@ export function EditableField({
     <button
       type="button"
       onClick={handleClear}
-      className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/row:opacity-100"
+      title="삭제"
+      className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover/row:opacity-70 hover:!opacity-100"
     >
-      ✕
+      <Trash2 size={13} />
     </button>
   ) : null
 
+  // 라벨 클릭으로 편집 진입 — 빈 값일 때 좌측 라벨만 보여서 사용자가 어디를 눌러야 할지 모르는 상황을 해결.
+  const labelOnClick = (() => {
+    if (!editMode) return undefined
+    if (spec.key === 'age') return undefined
+    if (editing) return undefined
+    if (isSelect) return () => setEditing(true)
+    return handleEnterEdit
+  })()
+
   return (
-    <div className={cn("grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0", clearable && "group/row")}>
-      <SectionLabel className="pt-1">{spec.label}</SectionLabel>
+    <div className={cn(
+      compact
+        ? "grid grid-cols-1 md:grid-cols-[100px_1fr] items-baseline gap-md py-1"
+        : "grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0",
+      clearable && "group/row",
+    )}>
+      <SectionLabel className={compact ? undefined : "pt-1"} onClick={labelOnClick}>{spec.label}</SectionLabel>
       <div className="min-w-0 flex items-baseline gap-sm">
         {(() => {
-          const noCopy = spec.type === 'longtext' || spec.key === 'select'
+          // 절차정보 그룹은 CopyButton 표시 안 함 (사용자 요청).
+          const noCopy = spec.type === 'longtext' || spec.key === 'select' || spec.group === '절차정보'
           if ((isDate && editing) || (isSelect && editing) || editing) return valueCell
           // longtext 만 inline clearButton — 긴 텍스트 wrap 때문에 외부 절대배치가 어색함.
           if (spec.type === 'longtext') return <>{valueCell}{clearButton}</>
@@ -494,14 +569,21 @@ function renderInput(
   lang?: 'ko' | 'en',
   saveFn?: (coerced: unknown) => void,
   composingRef?: React.RefObject<boolean>,
+  inline = false,
 ) {
   const placeholder = DIGITS_ONLY_KEYS.has(spec.key) ? '숫자'
     : DIGITS_SPACE_KEYS.has(spec.key) ? '숫자'
     : NUMERIC_KEYS.has(spec.key) || spec.type === 'number' ? '숫자'
     : lang === 'en' ? '영문만 입력 가능'
     : undefined
-  const commonClass =
-    'flex-1 h-8 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
+  const commonClass = inline
+    ? cn(
+        getValueClass(spec),
+        'bg-transparent border-0 outline-none rounded-md',
+        'px-2 py-1 -mx-2 w-full min-w-0',
+        'focus:bg-accent/40',
+      )
+    : 'flex-1 h-8 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
 
   if (spec.type === 'longtext') {
     return (
@@ -512,7 +594,14 @@ function renderInput(
         onKeyDown={onKeyDown}
         onBlur={onBlur}
         rows={3}
-        className="flex-1 min-h-[4.5rem] rounded-md border border-border/80 bg-background p-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-y"
+        className={inline
+          ? cn(
+              getValueClass(spec),
+              'bg-transparent border-0 outline-none rounded-md',
+              'p-2 -mx-2 w-full min-h-[4.5rem] resize-y',
+              'focus:bg-accent/40',
+            )
+          : 'flex-1 min-h-[4.5rem] rounded-md border border-border/80 bg-background p-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-y'}
       />
     )
   }

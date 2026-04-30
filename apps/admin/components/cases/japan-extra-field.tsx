@@ -222,8 +222,12 @@ export function JapanExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
         return
       }
 
-      // Text paste — only if textarea is focused
-      if (active === textRef.current) return // let textarea handle it normally
+      if (active === textRef.current) return
+      const text = e.clipboardData?.getData('text/plain')?.trim()
+      if (text && text.length > 10) {
+        e.preventDefault()
+        tryExtract({ text })
+      }
     }
     document.addEventListener('paste', handlePaste)
     return () => document.removeEventListener('paste', handlePaste)
@@ -487,7 +491,7 @@ function InlineInput({ type, initial, placeholder, onSave, onCancel, uppercase }
         onKeyDown={(e) => {
           if (e.key === 'Escape') { e.preventDefault(); onCancel() }
         }}
-        className="w-40 bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
+        className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
       />
     )
   }

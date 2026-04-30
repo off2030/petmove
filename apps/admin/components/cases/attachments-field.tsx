@@ -93,19 +93,20 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  async function handleDelete(idx: number) {
+  function handleDelete(idx: number) {
     const att = attachments[idx]
-    // Extract path from URL
-    const urlParts = att.url.split('/attachments/')
-    const path = urlParts[urlParts.length - 1]
-
-    // Delete from storage
-    await supabase.storage.from('attachments').remove([path])
-
-    // Update case data
     const newAttachments = attachments.filter((_, i) => i !== idx)
-    const r = await updateCaseField(caseId, 'data', 'attachments', newAttachments.length > 0 ? newAttachments : null)
-    if (r.ok) updateLocalCaseField(caseId, 'data', 'attachments', newAttachments.length > 0 ? newAttachments : null)
+    const nextVal = newAttachments.length > 0 ? newAttachments : null
+    const prev = attachments
+    // Optimistic — UI 즉시 반영. 스토리지 삭제는 백그라운드.
+    updateLocalCaseField(caseId, 'data', 'attachments', nextVal)
+    void (async () => {
+      const urlParts = att.url.split('/attachments/')
+      const path = urlParts[urlParts.length - 1]
+      void supabase.storage.from('attachments').remove([path])
+      const r = await updateCaseField(caseId, 'data', 'attachments', nextVal)
+      if (!r.ok) updateLocalCaseField(caseId, 'data', 'attachments', prev)
+    })()
   }
 
   function formatSize(bytes: number) {

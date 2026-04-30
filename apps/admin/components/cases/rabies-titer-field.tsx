@@ -1,13 +1,12 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
+import { Trash2 } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
-import { ScanButton } from '@/components/ui/scan-button'
-import { cn, roundIconBtn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
-import { CopyButton } from './copy-button'
 import { labColor } from '@/lib/lab-color'
 import { extractTiterInfo } from '@/lib/actions/extract-titer'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
@@ -99,15 +98,11 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
     return t === '호주' || t === 'australia'
   })
 
-  async function handleFile(file: File) {
-    if (!isExtractableFile(file)) return
+  async function runTiterExtract(input: { imageBase64?: string; mediaType?: string; text?: string }) {
     setExtracting(true)
     setExtractMsg(null)
-    uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField).catch(() => {})
     try {
-      const images = await filesToBase64([file])
-      if (images.length === 0) return
-      const result = await extractTiterInfo({ imageBase64: images[0].base64, mediaType: images[0].mediaType })
+      const result = await extractTiterInfo(input)
       if (!result.ok) {
         setExtractMsg('추출 실패: ' + result.error)
         return
@@ -145,11 +140,10 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
         const auExistingReceived = typeof auPrev.sample_received_date === 'string' ? auPrev.sample_received_date : null
         if (!auExistingReceived) {
           const nextAu = { ...auPrev, sample_received_date: xReceived }
-          const r2 = await updateCaseField(caseId, 'data', 'australia_extra', nextAu)
-          if (r2.ok) {
-            updateLocalCaseField(caseId, 'data', 'australia_extra', nextAu)
-            applied.received = true
-          }
+          // Optimistic — UI 즉시 반영.
+          updateLocalCaseField(caseId, 'data', 'australia_extra', nextAu)
+          applied.received = true
+          void updateCaseField(caseId, 'data', 'australia_extra', nextAu)
         }
       }
 
@@ -163,6 +157,14 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
       setExtracting(false)
       setTimeout(() => setExtractMsg(null), 4000)
     }
+  }
+
+  async function handleFile(file: File) {
+    if (!isExtractableFile(file)) return
+    uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField).catch(() => {})
+    const images = await filesToBase64([file])
+    if (images.length === 0) return
+    await runTiterExtract({ imageBase64: images[0].base64, mediaType: images[0].mediaType })
   }
 
   function handleDragOver(e: React.DragEvent) {
@@ -195,6 +197,11 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
           if (file) { e.preventDefault(); handleFile(file); return }
         }
       }
+      const text = e.clipboardData?.getData('text/plain')?.trim()
+      if (text && text.length > 10) {
+        e.preventDefault()
+        void runTiterExtract({ text })
+      }
     }
     document.addEventListener('paste', onPaste)
     return () => document.removeEventListener('paste', onPaste)
@@ -203,33 +210,37 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
 
   async function saveRecords(next: TiterRecord[]) {
     const val = next.length > 0 ? next : null
+    // Optimistic — UI 즉시 반영. 실패 시 rollback.
+    const prevSnapshot = records
+    updateLocalCaseField(caseId, 'data', DATA_KEY, val)
     const r = await updateCaseField(caseId, 'data', DATA_KEY, val)
-    if (r.ok) updateLocalCaseField(caseId, 'data', DATA_KEY, val)
+    if (!r.ok) {
+      updateLocalCaseField(caseId, 'data', DATA_KEY, prevSnapshot.length > 0 ? prevSnapshot : null)
+    }
   }
 
   function deleteRecord(idx: number) {
     const next = records.filter((_, i) => i !== idx)
-    startSave(() => saveRecords(next))
+    saveRecords(next).catch(() => {})
   }
 
   function updateRecord(idx: number, field: keyof TiterRecord, value: unknown) {
     const next = records.map((rec, i) => i === idx ? { ...rec, [field]: value || null } : rec)
-    startSave(() => saveRecords(next))
+    saveRecords(next).catch(() => {})
   }
 
   function saveNewRecord(date: string) {
     if (!date) { setAddingNew(false); return }
     const detectedLab = autoDetectLab(destination, inspectionConfig.titerRules, inspectionConfig.titerDefault)
     const next = [...records, { date, value: null, lab: detectedLab }]
-    startSave(async () => {
-      await saveRecords(next)
-      setAddingNew(false)
-    })
+    setAddingNew(false)
+    saveRecords(next).catch(() => {})
   }
 
   return (
     <div
       ref={rootRef}
+      data-paste-section="rabies-titer"
       onDragOver={editMode ? handleDragOver : undefined}
       onDragLeave={editMode ? handleDragLeave : undefined}
       onDrop={editMode ? handleDrop : undefined}
@@ -239,88 +250,52 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
       )}
     >
       <div className="flex items-center gap-[6px] pt-1">
-        <SectionLabel>광견병항체검사</SectionLabel>
+        <SectionLabel
+          onClick={editMode ? () => setAddingNew(true) : undefined}
+          title={editMode ? '항체검사 추가' : undefined}
+        >
+          광견병항체검사
+        </SectionLabel>
       </div>
-      <div className="min-w-0 flex items-start gap-md">
-        <div className="flex-1 min-w-0 space-y-0.5">
-          {extracting && (
-            <div className="text-xs text-muted-foreground/70 italic px-2 py-1">이미지에서 추출 중…</div>
-          )}
-          {extractMsg && (
-            <div className="text-xs text-muted-foreground px-2 py-1">{extractMsg}</div>
-          )}
+      <div className="min-w-0 flex-1 space-y-0.5">
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*,.pdf"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }}
+          className="hidden"
+        />
+        {extracting && (
+          <div className="text-xs text-muted-foreground/70 italic px-2 py-1">이미지에서 추출 중…</div>
+        )}
+        {extractMsg && (
+          <div className="text-xs text-muted-foreground px-2 py-1">{extractMsg}</div>
+        )}
 
-          {records.map((rec, i) => (
-            <TiterRow
-              key={i}
-              record={rec}
-              recordIdx={i}
-              isEditing={editIdx === i ? editField : null}
-              onStartEdit={(f) => { setEditIdx(i); setEditField(f) }}
-              onStopEdit={() => { setEditIdx(null); setEditField(null) }}
-              onUpdateField={(f, v) => updateRecord(i, f, v)}
-              onDelete={() => deleteRecord(i)}
-              saving={saving}
-            />
-          ))}
+        {records.map((rec, i) => (
+          <TiterRow
+            key={i}
+            record={rec}
+            recordIdx={i}
+            isEditing={editIdx === i ? editField : null}
+            onStartEdit={(f) => { setEditIdx(i); setEditField(f) }}
+            onStopEdit={() => { setEditIdx(null); setEditField(null) }}
+            onUpdateField={(f, v) => updateRecord(i, f, v)}
+            onDelete={() => deleteRecord(i)}
+            saving={saving}
+          />
+        ))}
 
-          {addingNew && (
-            <DateInput
-              initial=""
-              onSave={saveNewRecord}
-              onCancel={() => setAddingNew(false)}
-            />
-          )}
+        {addingNew && (
+          <DateInput
+            initial=""
+            onSave={saveNewRecord}
+            onCancel={() => setAddingNew(false)}
+          />
+        )}
 
-          {records.length === 0 && !addingNew && !extracting && (
-            editMode ? (
-              <button type="button" onClick={() => setAddingNew(true)}
-                className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground">
-                —
-              </button>
-            ) : (
-              <span className="px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/40">—</span>
-            )
-          )}
-
-          {dragOver && (
-            <div className="text-xs text-muted-foreground px-2 py-1">놓으면 자동 입력</div>
-          )}
-        </div>
-        {editMode && (
-          <div className="shrink-0 flex items-center gap-[6px]">
-            <button
-              type="button"
-              onClick={() => setAddingNew(true)}
-              disabled={saving || addingNew}
-              className={roundIconBtn}
-              title="항체검사 추가"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-            </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*,.pdf"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }}
-              className="hidden"
-            />
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={extracting}
-              className={roundIconBtn}
-              title="이미지/PDF로 항체검사 정보 추출"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-            </button>
-            <ScanButton
-              disabled={extracting}
-              title="스캔하여 항체검사 정보 추출"
-              onScanned={(file) => handleFile(file)}
-              className={roundIconBtn}
-            />
-          </div>
+        {dragOver && (
+          <div className="text-xs text-muted-foreground px-2 py-1">놓으면 자동 입력</div>
         )}
       </div>
     </div>
@@ -343,7 +318,7 @@ function TiterRow({
 }) {
   const editMode = useSectionEditMode()
   const dateDisplay = record.date || '—'
-  const valueDisplay = record.value || '—'
+  const valueDisplay = record.value ? `${record.value} IU/ml` : 'IU/ml'
   const labObj = LABS.find(l => l.value === record.lab)
   const labDisplay = labObj?.label || record.lab || '—'
   const labTone = labColor(record.lab)
@@ -383,7 +358,6 @@ function TiterRow({
               {dateDisplay}
             </span>
           )}
-          {dateDisplay !== '—' && <CopyButton value={dateDisplay} className="ml-1 opacity-0 group-hover/v:opacity-100" />}
         </span>
       )}
 
@@ -420,7 +394,6 @@ function TiterRow({
                 {labDisplay}
               </span>
             )}
-            {labDisplay !== '—' && <CopyButton value={labDisplay} className="ml-1 opacity-0 group-hover/v:opacity-100" />}
           </span>
         )
       )}
@@ -440,23 +413,26 @@ function TiterRow({
           <span className="group/v inline-flex items-baseline">
             {editMode ? (
               <button type="button" onClick={() => onStartEdit('value')}
-                className={cn('text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-text', valueDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60')}>
+                className={cn('text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-text', !record.value && 'font-sans italic text-[13px] font-normal tracking-normal text-muted-foreground/60')}>
                 {valueDisplay}
               </button>
             ) : (
-              <span className={cn('inline-block rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground', valueDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/40')}>
+              <span className={cn('inline-block rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground', !record.value && 'font-sans italic text-[13px] font-normal tracking-normal text-muted-foreground/40')}>
                 {valueDisplay}
               </span>
             )}
-            {valueDisplay !== '—' && <CopyButton value={valueDisplay} className="ml-1 opacity-0 group-hover/v:opacity-100" />}
           </span>
         )
       )}
 
       {editMode && (
-        <button type="button" onClick={onDelete}
-          className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 ml-1 opacity-0 group-hover/item:opacity-100">
-          ✕
+        <button
+          type="button"
+          onClick={onDelete}
+          title="기록 삭제"
+          className="shrink-0 inline-flex items-center justify-center rounded-md p-1 ml-3 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover/item:opacity-70 hover:!opacity-100"
+        >
+          <Trash2 size={13} />
         </button>
       )}
     </div>
@@ -477,7 +453,7 @@ function DateInput({ initial, onSave, onCancel }: {
       onKeyDown={(e) => {
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
-      className="w-40 bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
+      className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
   )
 }

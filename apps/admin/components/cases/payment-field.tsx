@@ -1,7 +1,7 @@
 'use client'
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, useTransition } from 'react'
-import { Calculator as CalculatorIcon } from 'lucide-react'
+import { Calculator as CalculatorIcon, Trash2 } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
 import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
@@ -85,18 +85,23 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
 
   async function savePayments(next: PaymentRecord[]) {
     const val = next.length > 0 ? next : null
+    // Optimistic — UI 즉시 반영. 실패 시 rollback.
+    const prevSnapshot = payments
+    updateLocalCaseField(caseId, 'data', 'payments', val)
     const r = await updateCaseField(caseId, 'data', 'payments', val)
-    if (r.ok) updateLocalCaseField(caseId, 'data', 'payments', val)
+    if (!r.ok) {
+      updateLocalCaseField(caseId, 'data', 'payments', prevSnapshot.length > 0 ? prevSnapshot : null)
+    }
   }
 
   function deletePayment(idx: number) {
     const next = payments.filter((_, i) => i !== idx)
-    startSave(() => savePayments(next))
+    savePayments(next).catch(() => {})
   }
 
   function updatePayment(idx: number, field: keyof PaymentRecord, value: unknown) {
     const next = payments.map((p, i) => i === idx ? { ...p, [field]: value } : p)
-    startSave(() => savePayments(next))
+    savePayments(next).catch(() => {})
   }
 
   // New row: save only when amount is entered
@@ -108,31 +113,30 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
     }
     const today = new Date().toISOString().slice(0, 10)
     const next = [...payments, { amount, method: 'cash', date: today }]
-    startSave(async () => {
-      await savePayments(next)
-      setAddingNew(false)
-    })
+    setAddingNew(false)
+    savePayments(next).catch(() => {})
   }
 
-  async function handleSaveEstimate({ amount, estimate }: { amount: number; estimate: EstimateSnapshot }) {
+  function handleSaveEstimate({ amount, estimate }: { amount: number; estimate: EstimateSnapshot }) {
     const today = new Date().toISOString().slice(0, 10)
     const method = estimate.priceMode === 'cash' ? 'cash' : 'card'
     const next = [...payments, { amount, method, date: today }]
-    await new Promise<void>((resolve) => {
-      startSave(async () => {
-        await savePayments(next)
-        const r = await updateCaseField(caseId, 'data', 'estimate', estimate)
-        if (r.ok) updateLocalCaseField(caseId, 'data', 'estimate', estimate)
-        setEstimateOpen(false)
-        resolve()
-      })
-    })
+    // Optimistic — UI 즉시 반영.
+    updateLocalCaseField(caseId, 'data', 'estimate', estimate)
+    setEstimateOpen(false)
+    savePayments(next).catch(() => {})
+    void updateCaseField(caseId, 'data', 'estimate', estimate)
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
-        <SectionLabel>결제</SectionLabel>
+        <SectionLabel
+          onClick={editMode ? () => setAddingNew(true) : undefined}
+          title={editMode ? '결제 추가' : undefined}
+        >
+          결제
+        </SectionLabel>
       </div>
       <div className="min-w-0 flex items-start gap-md">
         <div className="flex-1 min-w-0 space-y-0.5">
@@ -158,46 +162,25 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
                 onCancel={() => setAddingNew(false)}
                 saving={saving}
               />
+              {editMode && (
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setEstimateOpen(true)}
+                  disabled={!country}
+                  className={roundIconBtn}
+                  title={country ? '비용 안내' : '목적지를 먼저 선택해주세요'}
+                >
+                  <CalculatorIcon size={15} />
+                </button>
+              )}
               <span className="text-muted-foreground/30 select-none">|</span>
               <span className="text-sm text-muted-foreground/60">미입력</span>
               <span className="text-muted-foreground/30 select-none">|</span>
               <span className="text-sm text-muted-foreground/60">미입력</span>
             </div>
           )}
-
-          {payments.length === 0 && !addingNew && (
-            editMode ? (
-              <button type="button" onClick={() => setAddingNew(true)}
-                className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground">
-                —
-              </button>
-            ) : (
-              <span className="px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/40">—</span>
-            )
-          )}
         </div>
-        {editMode && (
-          <div className="shrink-0 flex items-center gap-[6px]">
-            <button
-              type="button"
-              onClick={() => setAddingNew(true)}
-              disabled={saving || addingNew}
-              className={roundIconBtn}
-              title="결제 추가"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-            </button>
-            <button
-              type="button"
-              onClick={() => setEstimateOpen(true)}
-              disabled={!country}
-              className={roundIconBtn}
-              title={country ? '비용 안내' : '목적지를 먼저 선택해주세요'}
-            >
-              <CalculatorIcon size={15} />
-            </button>
-          </div>
-        )}
       </div>
 
       {estimateOpen && country && (
@@ -294,9 +277,10 @@ function PaymentRow({
       <button
         type="button"
         onClick={onDelete}
-        className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 ml-1 opacity-0 group-hover/item:opacity-100"
+        title="삭제"
+        className="shrink-0 inline-flex items-center justify-center rounded-md p-1 ml-1 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover/item:opacity-70 hover:!opacity-100"
       >
-        ✕
+        <Trash2 size={13} />
       </button>
     </div>
   )
@@ -405,7 +389,7 @@ function DateInput({ initial, onSave, onCancel }: {
       onKeyDown={(e) => {
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
-      className="w-40 bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
+      className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
   )
 }

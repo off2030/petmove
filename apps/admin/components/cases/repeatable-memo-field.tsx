@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
+import { Trash2 } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
-import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
@@ -33,109 +33,92 @@ export function RepeatableMemoField({ caseId, caseRow }: { caseId: string; caseR
 
   async function saveMemos(next: string[]) {
     const val = next.length > 0 ? next : null
-    // Clear legacy flat key
+    // Optimistic — UI 즉시 반영. 실패 시 rollback.
+    const prevSnapshot = memos
+    updateLocalCaseField(caseId, 'data', DATA_KEY, val)
+    // Clear legacy flat key (fire-and-forget)
     if (data.memo) {
-      await updateCaseField(caseId, 'data', 'memo', null)
       updateLocalCaseField(caseId, 'data', 'memo', null)
+      updateCaseField(caseId, 'data', 'memo', null).catch(() => {})
     }
     const r = await updateCaseField(caseId, 'data', DATA_KEY, val)
-    if (r.ok) updateLocalCaseField(caseId, 'data', DATA_KEY, val)
+    if (!r.ok) {
+      updateLocalCaseField(caseId, 'data', DATA_KEY, prevSnapshot.length > 0 ? prevSnapshot : null)
+    }
   }
 
   function deleteMemo(idx: number) {
     const next = memos.filter((_, i) => i !== idx)
-    startSave(() => saveMemos(next))
+    saveMemos(next).catch(() => {})
   }
 
   function updateMemo(idx: number, value: string) {
     if (!value.trim()) { deleteMemo(idx); return }
     const next = memos.map((m, i) => i === idx ? value : m)
-    startSave(() => saveMemos(next))
+    saveMemos(next).catch(() => {})
     setEditIdx(null)
   }
 
   function saveNewMemo(value: string) {
     if (!value.trim()) { setAddingNew(false); return }
     const next = [...memos, value]
-    startSave(async () => {
-      await saveMemos(next)
-      setAddingNew(false)
-    })
+    setAddingNew(false)
+    saveMemos(next).catch(() => {})
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
-        <SectionLabel>메모</SectionLabel>
+        <SectionLabel
+          onClick={editMode ? () => setAddingNew(true) : undefined}
+          title={editMode ? '메모 추가' : undefined}
+        >
+          메모
+        </SectionLabel>
       </div>
-      <div className="min-w-0 flex items-start gap-md">
-        <div className="flex-1 min-w-0 space-y-1">
-          {memos.map((m, i) => (
-            <div key={i} className="group/item flex items-start gap-sm">
-              {editMode && editIdx === i ? (
-                <MemoInput
-                  initial={m}
-                  onSave={(v) => updateMemo(i, v)}
-                  onCancel={() => setEditIdx(null)}
-                  saving={saving}
-                />
-              ) : editMode ? (
-                <button
-                  type="button"
-                  onClick={() => setEditIdx(i)}
-                  className="text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text whitespace-pre-wrap flex-1 min-w-0"
-                >
-                  {m}
-                </button>
-              ) : (
-                <span className="rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground whitespace-pre-wrap flex-1 min-w-0">
-                  {m}
-                </span>
-              )}
-              {editMode && (
-                <button
-                  type="button"
-                  onClick={() => deleteMemo(i)}
-                  className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 mt-1 opacity-0 group-hover/item:opacity-100"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          ))}
-
-          {addingNew && (
-            <MemoInput
-              initial=""
-              onSave={saveNewMemo}
-              onCancel={() => setAddingNew(false)}
-              saving={saving}
-            />
-          )}
-
-          {memos.length === 0 && !addingNew && (
-            editMode ? (
-              <button type="button" onClick={() => setAddingNew(true)}
-                className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground cursor-pointer">
-                —
+      <div className="min-w-0 flex-1 space-y-1">
+        {memos.map((m, i) => (
+          <div key={i} className="group/item flex items-start gap-sm">
+            {editMode && editIdx === i ? (
+              <MemoInput
+                initial={m}
+                onSave={(v) => updateMemo(i, v)}
+                onCancel={() => setEditIdx(null)}
+                saving={saving}
+              />
+            ) : editMode ? (
+              <button
+                type="button"
+                onClick={() => setEditIdx(i)}
+                className="text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text whitespace-pre-wrap flex-1 min-w-0"
+              >
+                {m}
               </button>
             ) : (
-              <span className="px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/40">—</span>
-            )
-          )}
-        </div>
-        {editMode && (
-          <div className="shrink-0 flex items-center gap-[6px]">
-            <button
-              type="button"
-              onClick={() => setAddingNew(true)}
-              disabled={saving || addingNew}
-              className={roundIconBtn}
-              title="메모 추가"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-            </button>
+              <span className="rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground whitespace-pre-wrap flex-1 min-w-0">
+                {m}
+              </span>
+            )}
+            {editMode && (
+              <button
+                type="button"
+                onClick={() => deleteMemo(i)}
+                title="삭제"
+                className="shrink-0 inline-flex items-center justify-center rounded-md p-1 mt-1 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover/item:opacity-70 hover:!opacity-100"
+              >
+                <Trash2 size={13} />
+              </button>
+            )}
           </div>
+        ))}
+
+        {addingNew && (
+          <MemoInput
+            initial=""
+            onSave={saveNewMemo}
+            onCancel={() => setAddingNew(false)}
+            saving={saving}
+          />
         )}
       </div>
     </div>

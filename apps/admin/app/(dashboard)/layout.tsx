@@ -5,6 +5,7 @@ import { DashboardShell } from '@/components/layout/dashboard-shell'
 import { VaccineDataProvider } from '@/components/providers/vaccine-data-provider'
 import { CalculatorDataProvider } from '@/components/providers/calculator-data-provider'
 import { DetailViewSettingsProvider } from '@/components/providers/detail-view-settings-provider'
+import { DestinationOverridesProvider } from '@/components/providers/destination-overrides-provider'
 import { loadImportReportCountries, loadImportReportButtonCountries } from '@/lib/import-report-config'
 import { loadInspectionConfig } from '@/lib/inspection-config'
 import { loadCertConfig } from '@/lib/cert-config'
@@ -141,6 +142,7 @@ export default async function DashboardLayout({
       orgId={orgId}
     >
       <DetailViewSettingsProvider initialSettings={settingsBootstrap?.detailViewSettings}>
+        <DestinationOverridesProvider initialConfig={settingsBootstrap?.destinationOverrides}>
         <VaccineDataProvider data={vaccineData} defaults={vaccineDefaults}>
           <CalculatorDataProvider initialItems={calculatorItems}>
             <DashboardShell
@@ -158,6 +160,7 @@ export default async function DashboardLayout({
             />
           </CalculatorDataProvider>
         </VaccineDataProvider>
+        </DestinationOverridesProvider>
       </DetailViewSettingsProvider>
     </CasesProvider>
   )

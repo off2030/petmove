@@ -40,7 +40,7 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
   rabies:                { label: '광견병',                  section: '접종', species: 'common', kind: 'vaccine' },
   comprehensive_dog:     { label: '종합백신',                section: '접종', species: 'dog',    kind: 'vaccine' },
   comprehensive_cat:     { label: '종합백신 (고양이)',       section: '접종', species: 'cat',    kind: 'vaccine' },
-  civ:                   { label: 'CIV 독감',                section: '접종', species: 'dog',    kind: 'vaccine' },
+  civ:                   { label: '독감',                     section: '접종', species: 'dog',    kind: 'vaccine' },
   kennel_cough:          { label: '켄넬코프',                section: '접종', species: 'dog',    kind: 'vaccine' },
   parasite_internal_dog: { label: '내부 구충',               section: '구충', species: 'common', kind: 'parasite' },
   parasite_external_dog: { label: '외부 구충',               section: '구충', species: 'dog',    kind: 'parasite' },
@@ -212,21 +212,14 @@ export function VaccineSection({
     refresh()
   }, [])
 
-  async function handleImagesGlobal(files: File[]) {
-    const extractable = files.filter(isExtractableFile)
-    if (extractable.length === 0) {
-      setExtractMsg({ kind: 'error', text: '이미지 또는 PDF 파일만 지원됩니다.' })
-      return
-    }
+  async function processVaccineExtracts(inputs: Array<{ imageBase64?: string; mediaType?: string; text?: string }>) {
     setExtracting(true)
-    setExtractMsg({ kind: 'info', text: `${extractable.length}개 파일에서 제품 정보를 읽는 중…` })
     try {
-      const images = await filesToBase64(extractable)
       let created = 0
       const errors: string[] = []
       const unclassified: string[] = []
-      for (const img of images) {
-        const r = await extractVaccineInfo({ imageBase64: img.base64, mediaType: img.mediaType })
+      for (const inp of inputs) {
+        const r = await extractVaccineInfo(inp)
         if (!r.ok) {
           errors.push(r.error)
           continue
@@ -279,10 +272,28 @@ export function VaccineSection({
     }
   }
 
+  async function handleImagesGlobal(files: File[]) {
+    const extractable = files.filter(isExtractableFile)
+    if (extractable.length === 0) {
+      setExtractMsg({ kind: 'error', text: '이미지 또는 PDF 파일만 지원됩니다.' })
+      return
+    }
+    setExtractMsg({ kind: 'info', text: `${extractable.length}개 파일에서 제품 정보를 읽는 중…` })
+    const images = await filesToBase64(extractable)
+    await processVaccineExtracts(images.map(img => ({ imageBase64: img.base64, mediaType: img.mediaType })))
+  }
+
+  async function handleTextGlobal(text: string) {
+    setExtractMsg({ kind: 'info', text: '복사한 텍스트에서 제품 정보를 읽는 중…' })
+    await processVaccineExtracts([{ text }])
+  }
+
   // 문서 전체 paste 이벤트 — 전역으로 라우팅 (AI 가 카테고리 자동 분류)
   useEffect(() => {
     if (!isAdmin) return
     function onPaste(e: ClipboardEvent) {
+      const active = document.activeElement
+      if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return
       const items = e.clipboardData?.items
       if (!items) return
       const files: File[] = []
@@ -293,9 +304,16 @@ export function VaccineSection({
           if (f) files.push(f)
         }
       }
-      if (files.length === 0) return
-      e.preventDefault()
-      handleImagesGlobal(files)
+      if (files.length > 0) {
+        e.preventDefault()
+        handleImagesGlobal(files)
+        return
+      }
+      const text = e.clipboardData?.getData('text/plain')?.trim()
+      if (text && text.length > 10) {
+        e.preventDefault()
+        handleTextGlobal(text)
+      }
     }
     document.addEventListener('paste', onPaste)
     return () => document.removeEventListener('paste', onPaste)

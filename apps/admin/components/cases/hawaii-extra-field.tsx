@@ -131,6 +131,11 @@ export function HawaiiExtraField({ caseId, caseRow, sectionNumber }: { caseId: s
       }
 
       if (active === textRef.current) return
+      const text = e.clipboardData?.getData('text/plain')?.trim()
+      if (text && text.length > 10) {
+        e.preventDefault()
+        tryExtract({ text })
+      }
     }
     document.addEventListener('paste', handlePaste)
     return () => document.removeEventListener('paste', handlePaste)

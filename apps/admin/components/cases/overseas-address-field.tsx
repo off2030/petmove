@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
@@ -21,16 +22,24 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
 
   useEffect(() => { setEditing(false) }, [caseId])
 
-  async function save(v: string | null) {
+  function save(v: string | null) {
     const val = v?.trim() || null
-    const r = await updateCaseField(caseId, 'data', DATA_KEY, val)
-    if (r.ok) updateLocalCaseField(caseId, 'data', DATA_KEY, val)
+    const prev = value
+    // Optimistic
+    updateLocalCaseField(caseId, 'data', DATA_KEY, val)
     setEditing(false)
+    void (async () => {
+      const r = await updateCaseField(caseId, 'data', DATA_KEY, val)
+      if (!r.ok) updateLocalCaseField(caseId, 'data', DATA_KEY, prev)
+    })()
   }
+
+  // 라벨 클릭으로도 편집 진입 — 빈 값일 때 클릭 영역 잘 안 보이는 문제 해결.
+  const labelOnClick = editMode && !editing ? () => setEditing(true) : undefined
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
-      <SectionLabel className="pt-1">해외주소</SectionLabel>
+      <SectionLabel className="pt-1" onClick={labelOnClick}>해외주소</SectionLabel>
       {editMode && editing ? (
         <AddressInput
           initial={value ?? ''}
@@ -48,7 +57,7 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
                 !value && 'font-sans not-italic text-base text-muted-foreground/60',
               )}
             >
-              {value || '—'}
+              {value || <span className="inline-block min-w-[6rem] select-none" aria-hidden>&nbsp;</span>}
             </button>
           ) : (
             <span
@@ -57,7 +66,7 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
                 !value && 'font-sans not-italic text-base text-muted-foreground/40',
               )}
             >
-              {value || '—'}
+              {value || <span className="inline-block min-w-[2.5rem] select-none" aria-hidden>&nbsp;</span>}
             </span>
           )}
           {value && (
@@ -67,10 +76,10 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
                 <button
                   type="button"
                   onClick={() => save(null)}
-                  className="ml-0.5 rounded p-0.5 text-muted-foreground/50 hover:text-foreground hover:bg-accent/60 opacity-0 group-hover/val:opacity-100 transition-opacity"
+                  className="ml-0.5 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 opacity-0 group-hover/val:opacity-70 hover:!opacity-100 transition-colors"
                   title="삭제"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                  <Trash2 size={13} />
                 </button>
               )}
             </>
@@ -90,18 +99,28 @@ function AddressInput({ initial, onSave, onCancel }: {
   const [val, setVal] = useState(initial)
   useEffect(() => { ref.current?.focus() }, [])
   return (
-    <input
-      ref={ref}
-      type="text"
-      value={val}
-      onChange={(e) => setVal(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') { e.preventDefault(); onSave(val) }
-        if (e.key === 'Escape') onCancel()
-      }}
-      onBlur={() => setTimeout(() => onSave(val), 150)}
-      placeholder="Destination address"
-      className="h-7 w-full max-w-[400px] rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
-    />
+    <div className="flex items-start gap-sm">
+      <input
+        ref={ref}
+        type="text"
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); onSave(val) }
+          if (e.key === 'Escape') onCancel()
+        }}
+        onBlur={() => setTimeout(() => onSave(val), 150)}
+        placeholder="Destination address"
+        className="flex-1 h-8 max-w-[400px] rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+      />
+      <button
+        type="button"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => onSave(val)}
+        className="inline-flex h-7 items-center justify-center rounded px-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+      >
+        저장
+      </button>
+    </div>
   )
 }

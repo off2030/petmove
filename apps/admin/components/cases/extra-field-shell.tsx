@@ -12,7 +12,6 @@ import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { DateTextField } from '@/components/ui/date-text-field'
 import { SectionLabel } from '@/components/ui/section-label'
-import { EditModeButton } from '@/components/ui/edit-mode-button'
 import { SectionEditModeProvider, useSectionEditMode } from './section-edit-mode-context'
 
 type ExtractOk<C extends Country> = { ok: true; data: ResultMap[C] }
@@ -76,9 +75,12 @@ export function useExtraFieldShell<T extends object, C extends Country>(params: 
 
   async function saveExtra(next: T) {
     const val = hasAnyValue(next) ? next : null
-    const r = await updateCaseField(caseId, 'data', dataKey, val)
-    if (r.ok) updateLocalCaseField(caseId, 'data', dataKey, val)
+    // Optimistic — UI 즉시 반영. 실패 시 rollback.
+    const prev = data[dataKey]
+    updateLocalCaseField(caseId, 'data', dataKey, val)
     setEditingField(null)
+    const r = await updateCaseField(caseId, 'data', dataKey, val)
+    if (!r.ok) updateLocalCaseField(caseId, 'data', dataKey, prev)
   }
 
   function saveField<K extends keyof T>(key: K, value: string | null) {
@@ -87,8 +89,9 @@ export function useExtraFieldShell<T extends object, C extends Country>(params: 
 
   async function syncDepartureDate(date: string | null) {
     if (!date) return
-    const r = await updateCaseField(caseId, 'column', 'departure_date', date)
-    if (r.ok) updateLocalCaseField(caseId, 'column', 'departure_date', date)
+    // Optimistic — UI 즉시 반영.
+    updateLocalCaseField(caseId, 'column', 'departure_date', date)
+    void updateCaseField(caseId, 'column', 'departure_date', date)
   }
 
   async function tryExtract(input: { images?: { base64: string; mediaType: string }[]; text?: string }) {
@@ -101,8 +104,9 @@ export function useExtraFieldShell<T extends object, C extends Country>(params: 
         if (merged === null) {
           setExtractMsg(noMatchMsg ?? '추출 실패: 관련 정보를 찾지 못했습니다')
         } else {
-          const r = await updateCaseField(caseId, 'data', dataKey, merged)
-          if (r.ok) updateLocalCaseField(caseId, 'data', dataKey, merged)
+          // Optimistic — UI 즉시 반영.
+          updateLocalCaseField(caseId, 'data', dataKey, merged)
+          void updateCaseField(caseId, 'data', dataKey, merged)
           if (afterSave) await afterSave()
           setExtractMsg(successMsg ?? '정보가 입력되었습니다')
         }
@@ -154,6 +158,13 @@ export function useExtraFieldShell<T extends object, C extends Country>(params: 
       if (imageFiles.length > 0) {
         e.preventDefault()
         handleFiles(imageFiles)
+        return
+      }
+      if (active === textRef.current) return
+      const text = e.clipboardData?.getData('text/plain')?.trim()
+      if (text && text.length > 10) {
+        e.preventDefault()
+        tryExtract({ text })
       }
     }
     document.addEventListener('paste', handlePaste)
@@ -219,18 +230,16 @@ export function ExtraSectionShell({
   inputText, setInputText, showInput, setShowInput,
   handleFiles, handleTextSubmit, handleDragOver, handleDragLeave, handleDrop,
 }: ExtraSectionShellProps) {
-  const [editMode, setEditMode] = useState(false)
-  // 읽기 모드에서는 AI 입력창도 닫음.
-  useEffect(() => { if (!editMode) setShowInput(false) }, [editMode, setShowInput])
   return (
     <section
       ref={dropRef}
-      onDragOver={editMode ? handleDragOver : undefined}
-      onDragLeave={editMode ? handleDragLeave : undefined}
-      onDrop={editMode ? handleDrop : undefined}
+      data-paste-section="extra"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       className={cn(
         'mb-10 pt-10 border-t border-border/60 rounded-md transition-colors',
-        editMode && dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
+        dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
       <div className="mb-4 flex items-baseline gap-3">
@@ -248,36 +257,32 @@ export function ExtraSectionShell({
           onChange={(e) => { if (e.target.files) handleFiles(Array.from(e.target.files)); e.target.value = '' }}
           className="hidden"
         />
-        {editMode && (
-          <>
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={extracting}
-              className="shrink-0 translate-y-[2px] text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
-              title="이미지·PDF로 AI 입력"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const next = !showInput
-                setShowInput(next)
-                if (next) setTimeout(() => textRef.current?.focus(), 50)
-                else setInputText('')
-              }}
-              disabled={extracting}
-              className={cn(
-                'shrink-0 translate-y-[2px] transition-colors disabled:opacity-30',
-                showInput ? 'text-foreground' : 'text-muted-foreground/60 hover:text-foreground',
-              )}
-              title="텍스트로 AI 입력"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-            </button>
-          </>
-        )}
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={extracting}
+          className="shrink-0 translate-y-[2px] text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
+          title="이미지·PDF로 AI 입력"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            const next = !showInput
+            setShowInput(next)
+            if (next) setTimeout(() => textRef.current?.focus(), 50)
+            else setInputText('')
+          }}
+          disabled={extracting}
+          className={cn(
+            'shrink-0 translate-y-[2px] transition-colors disabled:opacity-30',
+            showInput ? 'text-foreground' : 'text-muted-foreground/60 hover:text-foreground',
+          )}
+          title="텍스트로 AI 입력"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+        </button>
         {extracting && (
           <span className="font-sans text-[12px] italic text-muted-foreground">추출 중...</span>
         )}
@@ -287,9 +292,8 @@ export function ExtraSectionShell({
             extractMsg.includes('실패') || extractMsg.includes('오류') ? 'text-red-600' : 'text-green-600',
           )}>{extractMsg}</span>
         )}
-        <EditModeButton editMode={editMode} onToggle={() => setEditMode((p) => !p)} className="ml-auto" />
       </div>
-      {editMode && showInput && (
+      {showInput && (
         <div className="mb-2">
           <textarea
             ref={textRef}
@@ -304,8 +308,8 @@ export function ExtraSectionShell({
           />
         </div>
       )}
-      {editMode && dragOver && <div className="mb-2 text-xs text-muted-foreground">놓으면 자동 입력</div>}
-      <SectionEditModeProvider value={editMode}>
+      {dragOver && <div className="mb-2 text-xs text-muted-foreground">놓으면 자동 입력</div>}
+      <SectionEditModeProvider value={true}>
         <div>{children}</div>
       </SectionEditModeProvider>
     </section>
@@ -444,7 +448,7 @@ export function InlineInput({ type, initial, placeholder, onSave, onCancel, uppe
         onKeyDown={(e) => {
           if (e.key === 'Escape') { e.preventDefault(); onCancel() }
         }}
-        className="w-40 bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
+        className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
       />
     )
   }

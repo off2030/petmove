@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
+import { Trash2, Paperclip } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
-import { ScanButton } from '@/components/ui/scan-button'
 import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
@@ -66,21 +66,26 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
 
   async function saveNotes(next: NoteItem[]) {
     const val = next.length > 0 ? next : null
-    // Clear legacy keys on first save
+    // Optimistic — UI 즉시 반영. 실패 시 rollback.
+    const prevSnapshot = notes
+    updateLocalCaseField(caseId, 'data', DATA_KEY, val)
+    // Clear legacy keys on first save (fire-and-forget)
     if (data.memo) {
-      await updateCaseField(caseId, 'data', 'memo', null)
       updateLocalCaseField(caseId, 'data', 'memo', null)
+      updateCaseField(caseId, 'data', 'memo', null).catch(() => {})
     }
     if (data.memos) {
-      await updateCaseField(caseId, 'data', 'memos', null)
       updateLocalCaseField(caseId, 'data', 'memos', null)
+      updateCaseField(caseId, 'data', 'memos', null).catch(() => {})
     }
     if (data.attachments) {
-      await updateCaseField(caseId, 'data', 'attachments', null)
       updateLocalCaseField(caseId, 'data', 'attachments', null)
+      updateCaseField(caseId, 'data', 'attachments', null).catch(() => {})
     }
     const r = await updateCaseField(caseId, 'data', DATA_KEY, val)
-    if (r.ok) updateLocalCaseField(caseId, 'data', DATA_KEY, val)
+    if (!r.ok) {
+      updateLocalCaseField(caseId, 'data', DATA_KEY, prevSnapshot.length > 0 ? prevSnapshot : null)
+    }
   }
 
   /* ── Text actions ── */
@@ -98,7 +103,7 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
     const next = notes.map((n, i) =>
       i === idx && n.type === 'text' ? { ...n, content: value } : n,
     )
-    startSave(() => saveNotes(next))
+    saveNotes(next).catch(() => {})
     setEditIdx(null)
   }
 
@@ -203,16 +208,16 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
 
   /* ── Delete ── */
 
-  async function deleteNote(idx: number) {
+  function deleteNote(idx: number) {
     const note = notes[idx]
-    // If file, delete from storage
+    const next = notes.filter((_, i) => i !== idx)
+    // Optimistic — saveNotes 가 즉시 로컬 반영. 스토리지 삭제는 백그라운드.
+    saveNotes(next).catch(() => {})
     if (note.type === 'file') {
       const urlParts = note.url.split('/attachments/')
       const path = urlParts[urlParts.length - 1]
-      await supabase.storage.from('attachments').remove([path])
+      void supabase.storage.from('attachments').remove([path])
     }
-    const next = notes.filter((_, i) => i !== idx)
-    startSave(() => saveNotes(next))
   }
 
   /* ── Render ── */
@@ -222,7 +227,12 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
-        <SectionLabel>메모</SectionLabel>
+        <SectionLabel
+          onClick={editMode ? () => setAddingText(true) : undefined}
+          title={editMode ? '메모 추가' : undefined}
+        >
+          메모
+        </SectionLabel>
       </div>
 
       <div className="min-w-0 flex items-start gap-md">
@@ -272,37 +282,36 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                 <button
                   type="button"
                   onClick={() => deleteNote(i)}
-                  className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 mt-1 opacity-0 group-hover/item:opacity-100"
+                  title="삭제"
+                  className="shrink-0 inline-flex items-center justify-center rounded-md p-1 mt-1 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover/item:opacity-70 hover:!opacity-100"
                 >
-                  ✕
+                  <Trash2 size={13} />
                 </button>
               )}
             </div>
           ))}
 
-          {/* ── Text input (new) ── */}
+          {/* ── Text input (new) — 입력칸 우측 중앙에 클립 아이콘으로 파일 첨부 ── */}
           {addingText && (
-            <NoteTextInput
-              initial=""
-              onSave={saveNewText}
-              onCancel={() => setAddingText(false)}
-              saving={saving}
-            />
-          )}
-
-          {/* ── Empty placeholder (edit mode only) ── */}
-          {!hasContent && !dragOver && (
-            editMode ? (
+            <div className="flex items-center gap-sm">
+              <div className="flex-1 min-w-0">
+                <NoteTextInput
+                  initial=""
+                  onSave={saveNewText}
+                  onCancel={() => setAddingText(false)}
+                  saving={saving}
+                />
+              </div>
               <button
                 type="button"
-                onClick={() => setAddingText(true)}
-                className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground cursor-pointer"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => fileRef.current?.click()}
+                className={roundIconBtn}
+                title="파일 첨부"
               >
-                —
+                <Paperclip size={14} />
               </button>
-            ) : (
-              <span className="px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/40">—</span>
-            )
+            </div>
           )}
 
           {/* ── File attachments ── */}
@@ -326,9 +335,10 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                 <button
                   type="button"
                   onClick={() => deleteNote(i)}
-                  className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 mt-1 opacity-0 group-hover/item:opacity-100"
+                  title="삭제"
+                  className="shrink-0 inline-flex items-center justify-center rounded-md p-1 mt-1 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover/item:opacity-70 hover:!opacity-100"
                 >
-                  ✕
+                  <Trash2 size={13} />
                 </button>
               )}
             </div>
@@ -347,33 +357,6 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
           {error && <div className="mt-1 text-xs text-red-600">{error}</div>}
         </div>
 
-        {editMode && (
-          <div className="shrink-0 flex items-center gap-[6px]">
-            <button
-              type="button"
-              onClick={() => setAddingText(true)}
-              disabled={saving || uploading || addingText}
-              className={roundIconBtn}
-              title="메모 추가"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-            </button>
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className={roundIconBtn}
-              title="파일 첨부"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-            </button>
-            <ScanButton
-              disabled={uploading}
-              onScanned={(file) => uploadFiles([file])}
-              className={roundIconBtn}
-            />
-          </div>
-        )}
       </div>
     </div>
   )

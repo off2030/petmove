@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
+import { Trash2 } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
-import { cn, roundIconBtn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
@@ -52,13 +53,19 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
 
   async function saveRecords(next: InfectiousRecord[]) {
     const val = next.length > 0 ? next : null
+    // Optimistic — UI 즉시 반영. 실패 시 rollback.
+    const prevSnapshot = records
+    updateLocalCaseField(caseId, 'data', DATA_KEY, val)
     // Also clear legacy flat key if it exists
     if (data.infectious_disease_test) {
-      await updateCaseField(caseId, 'data', 'infectious_disease_test', null)
       updateLocalCaseField(caseId, 'data', 'infectious_disease_test', null)
+      updateCaseField(caseId, 'data', 'infectious_disease_test', null).catch(() => {})
     }
     const r = await updateCaseField(caseId, 'data', DATA_KEY, val)
-    if (r.ok) updateLocalCaseField(caseId, 'data', DATA_KEY, val)
+    if (!r.ok) {
+      updateLocalCaseField(caseId, 'data', DATA_KEY, prevSnapshot.length > 0 ? prevSnapshot : null)
+      return
+    }
 
     // If clearing all records, remove from toggleable fields
     if (val === null) {
@@ -75,12 +82,12 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
 
   function deleteRecord(idx: number) {
     const next = records.filter((_, i) => i !== idx)
-    startSave(() => saveRecords(next))
+    saveRecords(next).catch(() => {})
   }
 
   function updateRecord(idx: number, field: keyof InfectiousRecord, value: unknown) {
     const next = records.map((rec, i) => i === idx ? { ...rec, [field]: value || null } : rec)
-    startSave(() => saveRecords(next))
+    saveRecords(next).catch(() => {})
   }
 
   function saveNewRecord(date: string) {
@@ -92,99 +99,109 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
       ? labs.map(lab => ({ date, lab }))
       : [{ date, lab: null }]
     const next = [...records, ...newRows]
-    startSave(async () => {
-      await saveRecords(next)
-      setAddingNew(false)
-    })
+    setAddingNew(false)
+    saveRecords(next).catch(() => {})
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
-        <SectionLabel>전염병검사</SectionLabel>
+        <SectionLabel
+          onClick={editMode ? () => setAddingNew(true) : undefined}
+          title={editMode ? '전염병검사 추가' : undefined}
+        >
+          전염병검사
+        </SectionLabel>
       </div>
-      <div className="min-w-0 flex items-start gap-md">
-        <div className="flex-1 min-w-0 space-y-0.5">
-          {records.map((rec, i) => (
-            <InfectiousRow
-              key={i}
-              record={rec}
-              isEditing={editIdx === i ? editField : null}
-              onStartEdit={(f) => { setEditIdx(i); setEditField(f) }}
-              onStopEdit={() => { setEditIdx(null); setEditField(null) }}
-              onUpdateField={(f, v) => updateRecord(i, f, v)}
-              onDelete={() => deleteRecord(i)}
-              saving={saving}
-            />
-          ))}
+      <div className="min-w-0 flex-1 space-y-0.5">
+        {/* 같은 날짜의 기록은 하나의 행으로 묶고 lab 만 옆에 나열한다. */}
+        {groupByDate(records).map((group) => (
+          <InfectiousGroup
+            key={group.date ?? `null-${group.indices.join('_')}`}
+            date={group.date}
+            indices={group.indices}
+            records={records}
+            editIdx={editIdx}
+            editField={editField}
+            onStartEdit={(idx, f) => { setEditIdx(idx); setEditField(f) }}
+            onStopEdit={() => { setEditIdx(null); setEditField(null) }}
+            onUpdateField={(idx, f, v) => updateRecord(idx, f, v)}
+            onUpdateGroupDate={(newDate) => {
+              // 같은 날짜를 공유하는 모든 기록의 date 갱신.
+              const next = records.map((r, i) => group.indices.includes(i) ? { ...r, date: newDate || null } : r)
+              saveRecords(next).catch(() => {})
+              setEditIdx(null); setEditField(null)
+            }}
+            onDelete={(idx) => deleteRecord(idx)}
+            saving={saving}
+          />
+        ))}
 
-          {addingNew && (
-            <DateInput
-              initial=""
-              onSave={saveNewRecord}
-              onCancel={() => setAddingNew(false)}
-            />
-          )}
-
-          {records.length === 0 && !addingNew && (
-            editMode ? (
-              <button type="button" onClick={() => setAddingNew(true)}
-                className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground">
-                —
-              </button>
-            ) : (
-              <span className="px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/40">—</span>
-            )
-          )}
-        </div>
-        {editMode && (
-          <div className="shrink-0 flex items-center gap-[6px]">
-            <button
-              type="button"
-              onClick={() => setAddingNew(true)}
-              disabled={saving || addingNew}
-              className={roundIconBtn}
-              title="전염병검사 추가"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-            </button>
-          </div>
+        {addingNew && (
+          <DateInput
+            initial=""
+            onSave={saveNewRecord}
+            onCancel={() => setAddingNew(false)}
+          />
         )}
       </div>
     </div>
   )
 }
 
-/* ── Single row: date | lab ── */
+/* ── 같은 날짜끼리 묶기. 빈 날짜(null)는 각자 독립 그룹. ── */
+function groupByDate(records: InfectiousRecord[]): { date: string | null; indices: number[] }[] {
+  const result: { date: string | null; indices: number[] }[] = []
+  records.forEach((rec, i) => {
+    if (!rec.date) {
+      result.push({ date: null, indices: [i] })
+      return
+    }
+    const existing = result.find((g) => g.date === rec.date)
+    if (existing) existing.indices.push(i)
+    else result.push({ date: rec.date, indices: [i] })
+  })
+  return result
+}
 
-function InfectiousRow({
-  record, isEditing, onStartEdit, onStopEdit, onUpdateField, onDelete, saving,
+/* ── 한 행: 날짜 + (같은 날짜의 모든) lab 들 ── */
+
+function InfectiousGroup({
+  date, indices, records, editIdx, editField,
+  onStartEdit, onStopEdit, onUpdateField, onUpdateGroupDate, onDelete, saving,
 }: {
-  record: InfectiousRecord
-  isEditing: 'date' | 'lab' | null
-  onStartEdit: (f: 'date' | 'lab') => void
+  date: string | null
+  indices: number[]
+  records: InfectiousRecord[]
+  editIdx: number | null
+  editField: 'date' | 'lab' | null
+  onStartEdit: (idx: number, f: 'date' | 'lab') => void
   onStopEdit: () => void
-  onUpdateField: (f: keyof InfectiousRecord, v: unknown) => void
-  onDelete: () => void
+  onUpdateField: (idx: number, f: keyof InfectiousRecord, v: unknown) => void
+  onUpdateGroupDate: (v: string) => void
+  onDelete: (idx: number) => void
   saving: boolean
 }) {
   const editMode = useSectionEditMode()
-  const dateDisplay = record.date || '—'
-  const labObj = LABS.find(l => l.value === record.lab)
-  const labDisplay = labObj?.label || record.lab || '—'
-  const labTone = labColor(record.lab)
+  const dateDisplay = date || '—'
+  // date 행 편집은 그룹의 첫 인덱스를 기준으로 표시.
+  const dateEditingIdx = indices[0]
+  const dateIsEditing = editIdx === dateEditingIdx && editField === 'date'
 
   return (
     <div className="group/item flex items-baseline gap-[10px] min-w-0">
-      {/* Date */}
-      {editMode && isEditing === 'date' ? (
+      {/* Date — 그룹당 1번만 표시 */}
+      {editMode && dateIsEditing ? (
         <DateInput
-          initial={record.date || ''}
-          onSave={(v) => { if (!v) onDelete(); else onUpdateField('date', v); onStopEdit() }}
+          initial={date || ''}
+          onSave={(v) => {
+            if (!v) { indices.forEach(onDelete); onStopEdit(); return }
+            onUpdateGroupDate(v)
+          }}
           onCancel={onStopEdit}
         />
       ) : editMode ? (
-        <button type="button" onClick={() => onStartEdit('date')}
+        <button type="button" onClick={() => onStartEdit(dateEditingIdx, 'date')}
           className={cn('text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer', dateDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60')}>
           {dateDisplay}
         </button>
@@ -194,43 +211,58 @@ function InfectiousRow({
         </span>
       )}
 
-      <span className="text-muted-foreground/30 select-none">|</span>
-
-      {/* Lab */}
-      {editMode && isEditing === 'lab' ? (
-        <LabDropdown
-          current={record.lab}
-          onSelect={(v) => { onUpdateField('lab', v); onStopEdit() }}
-          onClose={onStopEdit}
-        />
-      ) : editMode ? (
-        <button type="button" onClick={() => onStartEdit('lab')}
-          className={cn(
-            'text-left cursor-pointer transition-all',
-            labTone
-              ? cn('inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap hover:opacity-80', labTone.bg, labTone.text)
-              : cn('text-base rounded-md px-2 py-1 -mx-2 hover:bg-accent/60', labDisplay === '—' && 'text-muted-foreground/60'),
-          )}>
-          {labDisplay}
-        </button>
-      ) : (
-        <span
-          className={cn(
-            'inline-block transition-all',
-            labTone
-              ? cn('items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap', labTone.bg, labTone.text)
-              : cn('text-base rounded-md px-2 py-1 -mx-2', labDisplay === '—' && 'text-muted-foreground/40'),
-          )}>
-          {labDisplay}
-        </span>
-      )}
-
-      {editMode && (
-        <button type="button" onClick={onDelete}
-          className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 ml-1 opacity-0 group-hover/item:opacity-100">
-          ✕
-        </button>
-      )}
+      {/* Labs — | 로 구분하여 나열 */}
+      {indices.map((idx, n) => {
+        const rec = records[idx]
+        const labObj = LABS.find(l => l.value === rec.lab)
+        const labDisplay = labObj?.label || rec.lab || '—'
+        const labTone = labColor(rec.lab)
+        const labIsEditing = editIdx === idx && editField === 'lab'
+        return (
+          <span key={idx} className="group/lab inline-flex items-baseline gap-[10px]">
+            <span className="text-muted-foreground/30 select-none">|</span>
+            {editMode && labIsEditing ? (
+              <LabDropdown
+                current={rec.lab}
+                onSelect={(v) => { onUpdateField(idx, 'lab', v); onStopEdit() }}
+                onClose={onStopEdit}
+              />
+            ) : editMode ? (
+              <button type="button" onClick={() => onStartEdit(idx, 'lab')}
+                className={cn(
+                  'text-left cursor-pointer transition-all',
+                  labTone
+                    ? cn('inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap hover:opacity-80', labTone.bg, labTone.text)
+                    : cn('text-base rounded-md px-2 py-1 -mx-2 hover:bg-accent/60', labDisplay === '—' && 'text-muted-foreground/60'),
+                )}>
+                {labDisplay}
+              </button>
+            ) : (
+              <span
+                className={cn(
+                  'inline-block transition-all',
+                  labTone
+                    ? cn('items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap', labTone.bg, labTone.text)
+                    : cn('text-base rounded-md px-2 py-1 -mx-2', labDisplay === '—' && 'text-muted-foreground/40'),
+                )}>
+                {labDisplay}
+              </span>
+            )}
+            {editMode && (
+              <button
+                type="button"
+                onClick={() => onDelete(idx)}
+                title="삭제"
+                className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover/lab:opacity-70 hover:!opacity-100"
+              >
+                <Trash2 size={13} />
+              </button>
+            )}
+            {/* suppress unused warning */}
+            <span className="hidden">{n}</span>
+          </span>
+        )
+      })}
     </div>
   )
 }
@@ -249,7 +281,7 @@ function DateInput({ initial, onSave, onCancel }: {
       onKeyDown={(e) => {
         if (e.key === 'Escape') { e.preventDefault(); onCancel() }
       }}
-      className="w-40 bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
+      className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
     />
   )
 }

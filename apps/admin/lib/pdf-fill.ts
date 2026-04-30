@@ -3,7 +3,7 @@
  * Reads case row, resolves each field value via the mapping's transform,
  * and fills the PDF form.
  */
-import { PDFDocument, PDFName, PDFString, PDFDict, PDFBool, TextAlignment, PDFCheckBox, PDFDropdown, PDFTextField } from 'pdf-lib'
+import { PDFDocument, PDFName, PDFString, PDFDict, PDFBool, TextAlignment, PDFCheckBox, PDFDropdown, PDFTextField, PDFRadioGroup } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -703,6 +703,66 @@ function readSource(
     return cleaned.join(', ')
   }
 
+  // 한국 영문 주소를 4칸 분해 (street/state) — city/zip은 별도 source 활용
+  if (source === 'address_en_street') {
+    const s = String(data.address_en ?? '').trim()
+    if (!s) return ''
+    const parts = s.split(',').map(seg => seg.trim()).filter(Boolean)
+    return parts[0] ?? ''
+  }
+  if (source === 'address_en_state') {
+    const s = String(data.address_en ?? '').trim()
+    if (!s) return ''
+    const parts = s.split(',').map(seg => seg.trim()).filter(Boolean)
+    if (parts.length > 0 && /^republic of korea$/i.test(parts[parts.length - 1])) parts.pop()
+    return parts[parts.length - 1] ?? ''
+  }
+
+  // 해외 주소(address_overseas) 4칸 분해 — "Street, City, ST" 형식 가정
+  if (source === 'address_overseas_street') {
+    const s = String(data.address_overseas ?? '').trim()
+    if (!s) return ''
+    const parts = s.split(',').map(seg => seg.trim()).filter(Boolean)
+    return parts[0] ?? ''
+  }
+  if (source === 'address_overseas_city') {
+    const s = String(data.address_overseas ?? '').trim()
+    if (!s) return ''
+    const parts = s.split(',').map(seg => seg.trim()).filter(Boolean)
+    if (parts.length < 2) return ''
+    return parts[parts.length - 2] ?? ''
+  }
+  if (source === 'address_overseas_state') {
+    const s = String(data.address_overseas ?? '').trim()
+    if (!s) return ''
+    const parts = s.split(',').map(seg => seg.trim()).filter(Boolean)
+    if (parts.length < 2) return ''
+    return parts[parts.length - 1] ?? ''
+  }
+  // city → 하와이 섬 매핑 (Honolulu → Oahu 등)
+  if (source === 'address_overseas_island') {
+    const s = String(data.address_overseas ?? '').trim()
+    if (!s) return ''
+    const parts = s.split(',').map(seg => seg.trim()).filter(Boolean)
+    if (parts.length < 2) return ''
+    const city = (parts[parts.length - 2] ?? '').toLowerCase()
+    const HAWAII_ISLAND_MAP: Record<string, string> = {
+      honolulu: 'Oahu', waikiki: 'Oahu', kailua: 'Oahu', kaneohe: 'Oahu',
+      'pearl city': 'Oahu', ewa: 'Oahu', waianae: 'Oahu', haleiwa: 'Oahu',
+      mililani: 'Oahu', wahiawa: 'Oahu', aiea: 'Oahu',
+      lahaina: 'Maui', kahului: 'Maui', wailuku: 'Maui', kihei: 'Maui',
+      hana: 'Maui', paia: 'Maui', makawao: 'Maui',
+      hilo: 'Hawaii', kona: 'Hawaii', 'kailua-kona': 'Hawaii',
+      waimea: 'Hawaii', pahoa: 'Hawaii', volcano: 'Hawaii',
+      lihue: 'Kauai', kapaa: 'Kauai', princeville: 'Kauai', poipu: 'Kauai', hanalei: 'Kauai',
+      kaunakakai: 'Molokai', 'lanai city': 'Lanai',
+    }
+    for (const [key, island] of Object.entries(HAWAII_ISLAND_MAP)) {
+      if (city.includes(key)) return island
+    }
+    return ''
+  }
+
   // address_overseas: 국가별로 저장 위치가 top-level(data.address_overseas) vs
   // 나라별 extra 객체(data.{japan,hawaii,philippines,thailand}_extra.address_overseas) 로
   // 갈라져 있어, 두 경로 모두 확인하는 fallback.
@@ -730,6 +790,117 @@ function readSource(
     if (color) parts.push(color)
     if (weightRaw) parts.push(`${weightRaw}kg`)
     return parts.join(', ')
+  }
+
+  // ── 통합 추가정보 fallback ──
+  // 통합 리팩터로 추가정보가 top-level 키(data.entry_date 등)로 이전됐지만,
+  // PDF 매핑은 여전히 country_extra 객체 + 레거시 키(arrival_date 등)를 참조.
+  // 각 country_extra source 에 대해, nested 우선 + 없으면 unified top-level fallback.
+  if (source === 'thailand_extra') {
+    const nested = ((data.thailand_extra as Record<string, unknown>) ?? {})
+    return {
+      ...nested,
+      address_overseas: nested.address_overseas ?? data.address_overseas,
+      passport_number: nested.passport_number ?? data.passport_number,
+      passport_expiry_date: nested.passport_expiry_date ?? data.passport_expiry_date,
+      passport_issuer: nested.passport_issuer ?? data.passport_issuer,
+      arrival_date: nested.arrival_date ?? data.entry_date,
+      arrival_time: nested.arrival_time ?? data.entry_time,
+      arrival_flight_number: nested.arrival_flight_number ?? data.entry_flight_number,
+      arrival_airport: nested.arrival_airport ?? data.entry_airport,
+      // 검역소·도착지 = 입국공항 (Bangkok=BKK, Phuket=HKT, Chiang Mai=CNX 의미적 동일).
+      quarantine_location: nested.quarantine_location ?? data.entry_airport,
+    }
+  }
+  if (source === 'switzerland_extra') {
+    const nested = ((data.switzerland_extra as Record<string, unknown>) ?? {})
+    return {
+      ...nested,
+      entry_date: nested.entry_date ?? data.entry_date,
+      entry_airport: nested.entry_airport ?? data.entry_airport,
+      entry_purpose: nested.entry_purpose ?? data.entry_purpose,
+      cropped: nested.cropped ?? data.cropped,
+      email: nested.email ?? data.email,
+    }
+  }
+  if (source === 'australia_extra') {
+    const nested = ((data.australia_extra as Record<string, unknown>) ?? {})
+    return {
+      ...nested,
+      permit_no: nested.permit_no ?? data.permit_no,
+      id_date: nested.id_date ?? data.id_date,
+      sample_received_date: nested.sample_received_date ?? data.sample_received_date,
+    }
+  }
+  if (source === 'new_zealand_extra') {
+    const nested = ((data.new_zealand_extra as Record<string, unknown>) ?? {})
+    return {
+      ...nested,
+      permit_no: nested.permit_no ?? data.permit_no,
+    }
+  }
+  // 일본/필리핀/미국/하와이는 현재 PDF 매핑에 직접 source 사용 안 됨 (있어도 동일 패턴 적용).
+  if (source === 'japan_extra') {
+    const nested = ((data.japan_extra as Record<string, unknown>) ?? {})
+    const inb = (nested.inbound as Record<string, unknown> | undefined) ?? {}
+    const outb = (nested.outbound as Record<string, unknown> | undefined) ?? {}
+    return {
+      ...nested,
+      address_overseas: nested.address_overseas ?? data.address_overseas,
+      email: nested.email ?? data.email,
+      certificate_no: nested.certificate_no ?? data.certificate_no,
+      inbound: {
+        ...inb,
+        date: inb.date ?? data.entry_date,
+        departure_airport: inb.departure_airport ?? data.entry_departure_airport,
+        arrival_airport: inb.arrival_airport ?? data.entry_airport,
+        flight_number: inb.flight_number ?? data.entry_flight_number,
+        transport: inb.transport ?? data.entry_transport,
+      },
+      outbound: {
+        ...outb,
+        date: outb.date ?? data.return_date,
+        departure_airport: outb.departure_airport ?? data.return_departure_airport,
+        arrival_airport: outb.arrival_airport ?? data.return_arrival_airport,
+        flight_number: outb.flight_number ?? data.return_flight_number,
+        transport: outb.transport ?? data.return_transport,
+      },
+    }
+  }
+  if (source === 'usa_extra') {
+    const nested = ((data.usa_extra as Record<string, unknown>) ?? {})
+    return {
+      ...nested,
+      passport_number: nested.passport_number ?? data.passport_number,
+      birth_date: nested.birth_date ?? data.holder_birth_date,
+      us_phone: nested.us_phone ?? data.overseas_phone,
+      arrival_date: nested.arrival_date ?? data.entry_date,
+    }
+  }
+  if (source === 'philippines_extra') {
+    const nested = ((data.philippines_extra as Record<string, unknown>) ?? {})
+    return {
+      ...nested,
+      address_overseas: nested.address_overseas ?? data.address_overseas,
+      email: nested.email ?? data.email,
+      postal_code: nested.postal_code ?? data.postal_code,
+      passport_number: nested.passport_number ?? data.passport_number,
+      passport_expiry_date: nested.passport_expiry_date ?? data.passport_expiry_date,
+      arrival_airport: nested.arrival_airport ?? data.entry_airport,
+    }
+  }
+  if (source === 'hawaii_extra') {
+    const nested = ((data.hawaii_extra as Record<string, unknown>) ?? {})
+    return {
+      ...nested,
+      address_overseas: nested.address_overseas ?? data.address_overseas,
+      postal_code: nested.postal_code ?? data.postal_code,
+      email_address: nested.email_address ?? data.email,
+      passport_number: nested.passport_number ?? data.passport_number,
+      passport_expiry_date: nested.passport_expiry_date ?? data.passport_expiry_date,
+      passport_issuing_country: nested.passport_issuing_country ?? data.passport_issuing_country ?? data.passport_issuer,
+      date_of_birth: nested.date_of_birth ?? data.holder_birth_date,
+    }
   }
 
   const fromRow = (caseRow as unknown as Record<string, unknown>)[source]
@@ -889,6 +1060,17 @@ function resolveField(
     if (!raw || typeof raw !== 'object') return ''
     const v = (raw as Record<string, unknown>)[jsonMatch[1]]
     return v == null ? '' : String(v)
+  }
+
+  // Last 4 digits of a string field from a JSON object source.
+  // Pattern: `json_last_4_digits:<key>` — extracts raw[key], strips non-digits, returns last 4.
+  // Used by Hawaii AQS-279 "LAST 4 DIGITS ONLY" field for passport number.
+  const jsonLast4Match = transform?.match(/^json_last_4_digits:(.+)$/)
+  if (jsonLast4Match) {
+    if (!raw || typeof raw !== 'object') return ''
+    const v = (raw as Record<string, unknown>)[jsonLast4Match[1]]
+    const s = String(v ?? '').replace(/\D/g, '')
+    return s.length >= 4 ? s.slice(-4) : s
   }
 
   // Korean address parser — splits an English-romanized Korean address into
@@ -1459,6 +1641,19 @@ function resolveField(
   }
   // "Male" / "Female" / "Neutered male" / "Spayed female" — readable English label
   // for lab/dropdown forms. Preserves neuter status; title case, space (no underscore).
+  // Just "Male" or "Female" — neutered/spayed status ignored. Used by forms
+  // that have a separate SPAY/NEUTERED checkbox/radio (e.g. AQS-279).
+  if (transform === 'sex_basic_en') {
+    const s = String(raw ?? '').toLowerCase()
+    if (s === 'male' || s === 'neutered_male') return 'Male'
+    if (s === 'female' || s === 'spayed_female') return 'Female'
+    return ''
+  }
+  // 'YES' / 'NO' — for radio/checkbox to indicate neutered status.
+  if (transform === 'sex_neutered_yn') {
+    const s = String(raw ?? '').toLowerCase()
+    return (s === 'neutered_male' || s === 'spayed_female') ? 'YES' : 'NO'
+  }
   if (transform === 'sex_simple_en' || transform === 'sex_simple') {
     const s = String(raw ?? '').toLowerCase()
     if (s === 'male') return 'Male'
@@ -2061,7 +2256,11 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
     const value = reformatDate(resolveFieldMulti(fieldName, form.fields, doc))
     let field
     try { field = pdfForm.getField(fieldName) } catch { continue }
-    if (field instanceof PDFCheckBox) {
+    if (field instanceof PDFRadioGroup) {
+      if (typeof value === 'string' && value) {
+        try { field.select(value) } catch { /* option not found */ }
+      }
+    } else if (field instanceof PDFCheckBox) {
       if (value === true) field.check()
       else field.uncheck()
     } else if (field instanceof PDFDropdown) {
@@ -2290,7 +2489,12 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
       missing.push(fieldName)
       continue
     }
-    if (field instanceof PDFCheckBox) {
+    if (field instanceof PDFRadioGroup) {
+      if (typeof value === 'string' && value) {
+        try { field.select(value) } catch { /* option not found */ }
+        touchedFields.add(fieldName)
+      }
+    } else if (field instanceof PDFCheckBox) {
       if (value === true) field.check()
       else field.uncheck()
       touchedFields.add(fieldName)

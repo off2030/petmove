@@ -1,13 +1,14 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
+import { createPortal } from 'react-dom'
+import { Paperclip, Plus, Trash2 } from 'lucide-react'
 import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { listParasiteFamilies, getParasiteFamily, type VaccineLookups } from '@petmove/domain'
 import { useVaccineLookups } from '@/components/providers/vaccine-data-provider'
-import { CopyButton } from './copy-button'
 import { extractVaccineInfo } from '@/lib/actions/extract-vaccine'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
@@ -35,6 +36,8 @@ interface Props {
   dataKey: string
   legacyKey?: string
   hideValidUntil?: boolean // 구충 등 유효기간 불필요한 항목
+  /** 광견병 외 접종은 1년 고정. 셀렉터 비활성, 표시만 "1년". */
+  lockOneYearValidity?: boolean
   /** Sibling parasite kind data key (for combo sync). e.g. external→internal */
   siblingKey?: string
 }
@@ -97,7 +100,7 @@ function getDetailHints(L: VaccineLookups, label: string, date: string, species:
       valid_until: addOneYear(date),
     }
   }
-  if (label === 'CIV') {
+  if (label === '독감') {
     const r = L.lookupCiv(date)
     if (!r) return {}
     return {
@@ -172,8 +175,8 @@ function parasiteKindFromLabel(label: string): 'external' | 'internal' | 'heartw
   return null
 }
 
-export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey, hideValidUntil, siblingKey }: Props) {
-  const { updateLocalCaseField } = useCases()
+export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey, hideValidUntil, lockOneYearValidity, siblingKey }: Props) {
+  const { updateLocalCaseField, replaceLocalCaseData } = useCases()
   const editMode = useSectionEditMode()
   const L = useVaccineLookups()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -191,11 +194,14 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
   const [saving, startSave] = useTransition()
   const [editIdx, setEditIdx] = useState<number | null>(null)
   const [addingNew, setAddingNew] = useState(false)
-  const [expanded, setExpanded] = useState(false)
   const [extracting, setExtracting] = useState(false)
   const [extractMsg, setExtractMsg] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
+  // 항목 클릭 시 열리는 편집 팝업.
+  const [modalOpen, setModalOpen] = useState(false)
+  // 클립 아이콘 클릭 시 — 어느 레코드로 추출할지 (null 이면 새 기록).
+  const pendingTargetIdxRef = useRef<number | null>(null)
 
   // Which detail field is being edited (in expanded view)
   const [detailEdit, setDetailEdit] = useState<{ idx: number; field: keyof VacRecord } | null>(null)
@@ -203,28 +209,51 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
   useEffect(() => {
     setEditIdx(null)
     setAddingNew(false)
-    setExpanded(false)
     setDetailEdit(null)
     setExtractMsg(null)
     setDragOver(false)
+    setModalOpen(false)
   }, [caseId])
+
+  function openEditModal() {
+    if (!editMode) return
+    setModalOpen(true)
+    // 빈 상태에서 모달 열면 새 입력칸 자동 노출.
+    if (records.length === 0) setAddingNew(true)
+  }
+  function closeEditModal() {
+    setModalOpen(false)
+    setAddingNew(false)
+    setEditIdx(null)
+    setDetailEdit(null)
+  }
 
   async function saveRecords(next: VacRecord[]) {
     const val = next.length > 0 ? next : null
+    // Optimistic — UI 즉시 반영. 서버 응답이 늦어도 토글이 즉시 반응함.
+    const prevSnapshot = records
+    updateLocalCaseField(caseId, 'data', dataKey, val)
     if (legacyKey && data[legacyKey]) {
-      await updateCaseField(caseId, 'data', legacyKey, null)
       updateLocalCaseField(caseId, 'data', legacyKey, null)
+      updateCaseField(caseId, 'data', legacyKey, null).catch(() => {})
     }
     const r = await updateCaseField(caseId, 'data', dataKey, val)
-    if (r.ok) updateLocalCaseField(caseId, 'data', dataKey, val)
+    if (!r.ok) {
+      // 실패 시 rollback.
+      updateLocalCaseField(caseId, 'data', dataKey, prevSnapshot.length > 0 ? prevSnapshot : null)
+    } else if (r.autoFilled?.data) {
+      // 자동 채움 결과를 로컬 케이스 컨텍스트에 통째 반영.
+      replaceLocalCaseData(caseId, r.autoFilled.data)
+    }
 
     // If clearing all records, remove this field from toggleable fields
     if (val === null) {
       const labelToToggleKey: Record<string, string> = {
         '종합백신': 'vaccine:general',
         '광견병': 'vaccine:rabies',
-        'CIV': 'vaccine:civ',
+        '독감': 'vaccine:civ',
         '켄넬코프': 'vaccine:kennel',
+        '코로나': 'vaccine:covid',
         '외부구충': 'vaccine:external_parasite',
         '내부구충': 'vaccine:internal_parasite',
         '심장사상충': 'vaccine:heartworm',
@@ -246,8 +275,9 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
   async function saveSiblingRecords(next: VacRecord[]) {
     if (!siblingKey) return
     const val = next.length > 0 ? next : null
-    const r = await updateCaseField(caseId, 'data', siblingKey, val)
-    if (r.ok) updateLocalCaseField(caseId, 'data', siblingKey, val)
+    // Optimistic — UI 즉시 반영.
+    updateLocalCaseField(caseId, 'data', siblingKey, val)
+    void updateCaseField(caseId, 'data', siblingKey, val)
   }
 
   function readSiblingRecords(): VacRecord[] {
@@ -260,7 +290,8 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
   function deleteRecord(idx: number) {
     const removed = records[idx]
     const next = records.filter((_, i) => i !== idx)
-    startSave(async () => {
+    // useTransition 없이 직접 호출 — saveRecords 의 optimistic update 가 즉시 반영.
+    void (async () => {
       await saveRecords(next)
       // If the deleted entry was a combo product, remove its mirror on the other side.
       if (removed?.product_id && getParasiteFamily(removed.product_id)?.kind === 'combo' && siblingKey) {
@@ -268,14 +299,14 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
         const sibNext = sib.filter(r => !(r.date === removed.date && r.product_id === removed.product_id))
         if (sibNext.length !== sib.length) await saveSiblingRecords(sibNext)
       }
-    })
+    })()
   }
 
   function updateRecordDate(idx: number, value: string) {
     const target = records[idx]
     const oldDate = target?.date
     const next = records.map((r, i) => i === idx ? { ...r, date: value } : r)
-    startSave(async () => {
+    void (async () => {
       await saveRecords(next)
       // Keep combo mirror's date in sync.
       if (target?.product_id && getParasiteFamily(target.product_id)?.kind === 'combo' && siblingKey) {
@@ -285,7 +316,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
         )
         if (JSON.stringify(sibNext) !== JSON.stringify(sib)) await saveSiblingRecords(sibNext)
       }
-    })
+    })()
     setEditIdx(null)
   }
 
@@ -293,7 +324,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     // 빈 문자열은 "명시적으로 비움"을 의미 — 자동 추론값(hint) 폴백을 막는다.
     // null 은 "값 없음" — 자동 추론값이 hint 로 표시.
     const next = records.map((r, i) => i === idx ? { ...r, [field]: value } : r)
-    startSave(() => saveRecords(next))
+    saveRecords(next).catch(() => {})
     setDetailEdit(null)
   }
 
@@ -315,7 +346,8 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
       }
       return { ...r, other_hospital: true }
     })
-    startSave(() => saveRecords(next))
+    // useTransition 없이 직접 호출 — saveRecords 내부에서 optimistic update 가 즉시 적용됨.
+    saveRecords(next).catch(() => {})
   }
 
   /** Apply a parasite product family selection. Handles combo sync to sibling array. */
@@ -330,7 +362,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
       ? { date: r.date, valid_until: r.valid_until ?? null, product_id: newProductId }
       : r)
 
-    startSave(async () => {
+    void (async () => {
       await saveRecords(next)
       if (!siblingKey) { setDetailEdit(null); return }
 
@@ -351,16 +383,14 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
 
       if (sibNext !== sib) await saveSiblingRecords(sibNext)
       setDetailEdit(null)
-    })
+    })()
   }
 
   function saveNewDate(value: string) {
     if (!value) { setAddingNew(false); return }
     const next = [...records, { date: value }]
-    startSave(async () => {
-      await saveRecords(next)
-      setAddingNew(false)
-    })
+    setAddingNew(false)
+    saveRecords(next).catch(() => {})
   }
 
   /* ── AI extraction (image drop) ── */
@@ -368,15 +398,11 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
   /**
    * targetIdx가 null이면 새 레코드 추가, 숫자면 해당 레코드의 약품 정보만 업데이트.
    */
-  async function handleFile(file: File, targetIdx: number | null) {
-    if (!isExtractableFile(file)) return
+  async function runVacExtract(input: { imageBase64?: string; mediaType?: string; text?: string }, targetIdx: number | null) {
     setExtracting(true)
     setExtractMsg(null)
-    uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField).catch(() => {})
     try {
-      const images = await filesToBase64([file])
-      if (images.length === 0) return
-      const result = await extractVaccineInfo({ imageBase64: images[0].base64, mediaType: images[0].mediaType })
+      const result = await extractVaccineInfo(input)
       if (result.ok) {
         const extracted = result.records
         if (extracted.length === 0) {
@@ -416,7 +442,6 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                 ? `${label} 약품 정보가 추가되었습니다. 접종일을 입력하세요.`
                 : `${label} 정보가 추가되었습니다.`,
           )
-          setExpanded(true)
           if (anyMissingDate) setEditIdx(records.length + firstMissingDateOffset)
         }
       } else {
@@ -430,43 +455,60 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     }
   }
 
+  async function handleFile(file: File, targetIdx: number | null) {
+    if (!isExtractableFile(file)) return
+    uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField).catch(() => {})
+    const images = await filesToBase64([file])
+    if (images.length === 0) return
+    await runVacExtract({ imageBase64: images[0].base64, mediaType: images[0].mediaType }, targetIdx)
+  }
+
   // ── Paste (Ctrl+V) ──
-  // 루트 div 또는 확장 뷰의 각 카드에 hover 중일 때 붙여넣으면 해당 영역으로 전달
+  // 모달이 열려 있으면 (모달 안에서) 항상 동작.
+  // 모달이 닫혀있으면 인라인 영역(rootRef) 위에 hover 중일 때만 동작.
   const rootRef = useRef<HTMLDivElement | null>(null)
+  const modalRef = useRef<HTMLDivElement | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   useEffect(() => {
     function handlePaste(e: ClipboardEvent) {
-      if (!rootRef.current) return
-      // 컴포넌트 내 input/textarea가 포커스 중이면 무시 (기본 동작 유지)
       const active = document.activeElement
       if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return
-      // 이 컴포넌트 위에 hover 중일 때만 처리
-      if (!rootRef.current.matches(':hover')) return
+
+      // 모달 열림 우선 — 모달 영역에 paste.
+      const inModal = modalOpen && !!modalRef.current
+      const inRoot = !modalOpen && rootRef.current?.matches(':hover')
+      if (!inModal && !inRoot) return
 
       const items = e.clipboardData?.items
       if (!items) return
+      // 호버된 카드(모달 안 또는 인라인) 가 있으면 해당 레코드, 아니면 null(새 기록).
+      const container = inModal ? modalRef.current : rootRef.current
+      const hoveredCard = container?.querySelector('[data-record-idx]:hover') as HTMLElement | null
+      let targetIdx: number | null = null
+      if (hoveredCard) {
+        const idx = Number(hoveredCard.dataset.recordIdx)
+        if (!Number.isNaN(idx)) targetIdx = idx
+      }
       for (const item of Array.from(items)) {
         if (item.type.startsWith('image/')) {
           const file = item.getAsFile()
           if (file) {
             e.preventDefault()
-            // 호버된 카드가 있으면 해당 레코드에, 아니면 새 기록으로 추가
-            // dragOverIdx는 드래그 전용이므로, hover 중인 카드를 별도로 찾음
-            const hoveredCard = rootRef.current.querySelector('[data-record-idx]:hover') as HTMLElement | null
-            if (hoveredCard) {
-              const idx = Number(hoveredCard.dataset.recordIdx)
-              if (!Number.isNaN(idx)) { handleFile(file, idx); return }
-            }
-            handleFile(file, null)
+            handleFile(file, targetIdx)
             return
           }
         }
+      }
+      const text = e.clipboardData?.getData('text/plain')?.trim()
+      if (text && text.length > 10) {
+        e.preventDefault()
+        void runVacExtract({ text }, targetIdx)
       }
     }
     document.addEventListener('paste', handlePaste)
     return () => document.removeEventListener('paste', handlePaste)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [records, caseId])
+  }, [records, caseId, modalOpen])
 
   function handleDragOver(e: React.DragEvent) { e.preventDefault(); setDragOver(true) }
   function handleDragLeave(e: React.DragEvent) {
@@ -490,353 +532,330 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
   return (
     <div
       ref={rootRef}
-      onDragOver={editMode && !expanded ? handleDragOver : undefined}
-      onDragLeave={editMode && !expanded ? handleDragLeave : undefined}
-      onDrop={editMode && !expanded ? handleDropNew : undefined}
-      className={cn(
-        "grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 rounded-md transition-colors hover:bg-accent/60",
-        editMode && !expanded && dragOver && "bg-accent/40 ring-2 ring-ring/30 ring-dashed",
-      )}
+      data-paste-section="repeatable-date"
+      className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 rounded-md transition-colors hover:bg-accent/60"
     >
       <div className="flex items-center gap-[6px] pt-1">
-        {/* Label: click to toggle expanded */}
+        {/* Label: 클릭 시 편집 모달 열림. */}
         <button
           type="button"
-          onClick={() => { if (records.length > 0) setExpanded(!expanded) }}
+          onClick={openEditModal}
+          disabled={!editMode || saving}
           className={cn(
             'font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground transition-colors',
-            records.length > 0 && 'hover:text-foreground cursor-pointer',
+            editMode && 'hover:text-foreground cursor-pointer',
           )}
+          title={editMode ? `${label} 편집` : undefined}
         >
-          {label}{expanded ? ' ▾' : ''}
+          {label}
         </button>
       </div>
 
-      <div className="min-w-0 flex items-start gap-md">
-        <input ref={fileRef} type="file" accept="image/*,.pdf" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f, null); e.target.value = '' }} className="hidden" />
+      {/* 인라인: 날짜 chips 만 (간결). 클릭하면 모달 열림. */}
+      <div className="min-w-0 flex items-baseline gap-[10px] flex-wrap pt-1">
+        <input ref={fileRef} type="file" accept="image/*,.pdf" onChange={(e) => {
+          const f = e.target.files?.[0]
+          if (f) handleFile(f, pendingTargetIdxRef.current)
+          e.target.value = ''
+          pendingTargetIdxRef.current = null
+        }} className="hidden" />
+        {sortedForExpand.length === 0 ? null : (
+          sortedForExpand.map((rec, si) => (
+            <InlineDateChip
+              key={si}
+              path={`${dataKey}[${origIdx(si)}].date`}
+              date={rec.date}
+              separator={si > 0}
+              onClick={openEditModal}
+            />
+          ))
+        )}
+      </div>
 
-      {/* Collapsed view: dates inline (newest first) */}
-      {!expanded && (
-        <div className="flex-1 flex items-baseline gap-[10px] min-w-0 flex-wrap">
-          {sortedForExpand.map((rec, si) => {
-            const i = origIdx(si)
-            const path = `${dataKey}[${i}].date`
-            return (
-              <CollapsedDateChip
-                key={i}
-                separator={si > 0}
-                path={path}
-                date={rec.date}
-                editing={editIdx === i}
-                onStartEdit={() => setEditIdx(i)}
-                onSaveEdit={(v) => { if (v) updateRecordDate(i, v); else { deleteRecord(i); setEditIdx(null) } }}
-                onCancelEdit={() => setEditIdx(null)}
-                onDelete={() => deleteRecord(i)}
-              />
-            )
-          })}
-
-          {addingNew && (
-            <>
-              {records.length > 0 && <span className="text-muted-foreground/30 select-none">|</span>}
-              <DateInput
-                initial=""
-                onSave={saveNewDate}
-                onCancel={() => setAddingNew(false)}
-              />
-            </>
-          )}
-
-          {records.length === 0 && !addingNew && !extracting && (
-            editMode ? (
-              <button type="button" onClick={() => setAddingNew(true)}
-                className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-base text-muted-foreground/60 transition-colors hover:bg-accent/60 cursor-pointer">
-                —
-              </button>
-            ) : (
-              <span className="px-2 py-1 -mx-2 font-sans text-base text-muted-foreground/40">—</span>
-            )
-          )}
-          {extracting && (
-            <span className="text-xs text-muted-foreground">추출 중...</span>
-          )}
-          {extractMsg && (
-            <span className={cn('text-xs ml-2', extractMsg.includes('실패') || extractMsg.includes('오류') ? 'text-red-600' : 'text-green-600')}>
-              {extractMsg}
-            </span>
-          )}
-          {dragOver && (
-            <span className="text-xs text-muted-foreground">놓으면 자동 입력</span>
-          )}
-        </div>
-      )}
-
-      {/* Expanded view: detail cards, newest first */}
-      {expanded && (
-        <div className="flex-1 min-w-0 space-y-2">
-          {addingNew && (
-            <div className="flex items-baseline gap-sm">
-              <DateInput
-                initial=""
-                onSave={saveNewDate}
-                onCancel={() => setAddingNew(false)}
-              />
+      {/* 편집 모달 — 클릭 시 createPortal 로 띄움. */}
+      {modalOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-md">
+          <div className="absolute inset-0 bg-black/40" onClick={closeEditModal} />
+          <div
+            ref={modalRef}
+            data-paste-section="repeatable-date-modal"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDropNew}
+            className={cn(
+              "relative w-full max-w-3xl max-h-[90vh] flex flex-col rounded-lg border border-border/80 bg-background shadow-xl transition-colors",
+              dragOver && "bg-accent/40 ring-2 ring-ring/30 ring-dashed",
+            )}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between gap-md px-md py-3 border-b border-border/80">
+              <h2 className="font-serif text-[18px] text-foreground">{label}</h2>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => { pendingTargetIdxRef.current = null; fileRef.current?.click() }}
+                  disabled={extracting}
+                  className={roundIconBtn}
+                  title="이미지/PDF 로 새 기록 추출"
+                >
+                  <Paperclip size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAddingNew(true)}
+                  disabled={addingNew || saving}
+                  className={roundIconBtn}
+                  title="기록 추가"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
             </div>
-          )}
 
-          {/* Drop zone for NEW record */}
-          {editMode && (
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDropNew}
-              className={cn(
-                "text-xs text-muted-foreground/50 italic px-2 py-1 rounded-md border border-dashed border-border/40 transition-colors",
-                dragOver && "bg-accent/40 ring-2 ring-ring/30 ring-dashed text-foreground",
-              )}
-            >
-              {dragOver ? '새 기록으로 추가됩니다' : '이미지를 여기 드롭 → 새 접종 기록 추가'}
-            </div>
-          )}
-
-          {sortedForExpand.map((rec, si) => {
-            const oi = origIdx(si)
-            // If user picked a specific parasite product, hints come from that product family.
-            const hints = rec.product_id
-              ? getDetailHintsById(L, rec.product_id, rec.date, weightKg)
-              : getDetailHints(L, label, rec.date, species, weightKg)
-            // 타병원 접종이면 자동 추론 hint 를 표시하지 않음 (디폴트로 비움).
-            // 사용자가 명시적으로 입력한 값은 보존되고, 체크 해제 시 다시 hint 가 나타남.
-            const suppressHints = !!rec.other_hospital
-            return (
-              <div
-                key={oi}
-                data-record-idx={oi}
-                onDragOver={editMode ? (e) => { e.preventDefault(); e.stopPropagation(); setDragOverIdx(oi) } : undefined}
-                onDragLeave={editMode ? (e) => {
-                  e.preventDefault(); e.stopPropagation()
-                  if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverIdx(null)
-                } : undefined}
-                onDrop={editMode ? (e) => {
-                  e.preventDefault(); e.stopPropagation()
-                  setDragOverIdx(null)
-                  const file = Array.from(e.dataTransfer.files).find(isExtractableFile)
-                  if (file) handleFile(file, oi)
-                } : undefined}
-                className={cn(
-                  "group/item rounded-md transition-colors",
-                  editMode && dragOverIdx === oi && "bg-accent/40 ring-2 ring-ring/30 ring-dashed",
-                )}
-              >
-                {/* Row 1: date + valid_until */}
-                <div className="flex items-baseline gap-[10px]">
-                  {editIdx === oi ? (
-                    <DateInput
-                      initial={rec.date}
-                      onSave={(v) => { if (v) updateRecordDate(oi, v); else { deleteRecord(oi); setEditIdx(null) } }}
-                      onCancel={() => setEditIdx(null)}
-                    />
-                  ) : (
-                    <ExpandedDateButton
-                      path={`${dataKey}[${oi}].date`}
-                      date={rec.date}
-                      onClick={() => setEditIdx(oi)}
-                    />
-                  )}
-
-                  {!hideValidUntil && (
-                    <ValidUntilSelector
-                      value={rec.valid_until}
-                      onChange={(v) => updateRecordField(oi, 'valid_until', v)}
-                      saving={saving}
-                    />
-                  )}
-
-                  {editMode && (
-                    <button type="button" onClick={() => deleteRecord(oi)}
-                      className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100 ml-auto">
-                      ✕
-                    </button>
-                  )}
+            {/* Body */}
+            <div className="flex-1 overflow-auto px-md py-md space-y-2 scrollbar-minimal">
+              {addingNew && (
+                <div className="flex items-baseline gap-sm">
+                  <DateInput
+                    initial=""
+                    onSave={saveNewDate}
+                    onCancel={() => setAddingNew(false)}
+                  />
                 </div>
+              )}
 
-                {/* Row 2: 제품명 | 제조사 | 제품번호 | 유효기간 */}
-                <div className="flex items-baseline gap-[10px] ml-2 mt-0.5">
-                  {productOptions.length > 0 ? (
-                    <ProductDropdown
-                      value={rec.product_id ?? null}
-                      defaultName={hints.product ?? null}
-                      options={productOptions}
-                      onChange={(id) => updateProductId(oi, id)}
-                      saving={saving}
-                    />
-                  ) : (
-                    <DetailField
-                      value={rec.product}
-                      hint={hints.product}
-                      suppressHint={suppressHints}
-                      placeholder="제품명"
-                      isEditing={detailEdit?.idx === oi && detailEdit?.field === 'product'}
-                      onStartEdit={() => setDetailEdit({ idx: oi, field: 'product' })}
-                      onSave={(v) => updateRecordField(oi, 'product', v)}
-                      onCancel={() => setDetailEdit(null)}
-                      saving={saving}
-                    />
-                  )}
-                  <span className="text-muted-foreground/30 select-none">|</span>
-                  <DetailField
-                    value={rec.manufacturer}
-                    hint={hints.manufacturer}
-                    suppressHint={suppressHints}
-                    placeholder="제조사"
-                    isEditing={detailEdit?.idx === oi && detailEdit?.field === 'manufacturer'}
-                    onStartEdit={() => setDetailEdit({ idx: oi, field: 'manufacturer' })}
-                    onSave={(v) => updateRecordField(oi, 'manufacturer', v)}
-                    onCancel={() => setDetailEdit(null)}
-                    saving={saving}
-                  />
-                  <span className="text-muted-foreground/30 select-none">|</span>
-                  <DetailField
-                    value={rec.lot}
-                    hint={hints.lot}
-                    suppressHint={suppressHints}
-                    placeholder="제품번호"
-                    isEditing={detailEdit?.idx === oi && detailEdit?.field === 'lot'}
-                    onStartEdit={() => setDetailEdit({ idx: oi, field: 'lot' })}
-                    onSave={(v) => updateRecordField(oi, 'lot', v)}
-                    onCancel={() => setDetailEdit(null)}
-                    saving={saving}
-                  />
-                  {!hideValidUntil && (
-                    <>
+              {extracting && (
+                <div className="text-xs text-muted-foreground">추출 중...</div>
+              )}
+              {extractMsg && (
+                <div className={cn('text-xs', extractMsg.includes('실패') || extractMsg.includes('오류') ? 'text-red-600' : 'text-green-600')}>
+                  {extractMsg}
+                </div>
+              )}
+              {dragOver && (
+                <div className="text-xs text-muted-foreground italic">놓으면 자동 입력</div>
+              )}
+
+              {sortedForExpand.length === 0 && !addingNew && !extracting && (
+                <div className="text-[13px] italic text-muted-foreground/60">기록이 없습니다. 위의 "추가" 버튼으로 새 기록을 추가하세요.</div>
+              )}
+
+              {sortedForExpand.map((rec, si) => {
+                const oi = origIdx(si)
+                const hints = rec.product_id
+                  ? getDetailHintsById(L, rec.product_id, rec.date, weightKg)
+                  : getDetailHints(L, label, rec.date, species, weightKg)
+                const suppressHints = !!rec.other_hospital
+                return (
+                  <div
+                    key={oi}
+                    data-record-idx={oi}
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverIdx(oi) }}
+                    onDragLeave={(e) => {
+                      e.preventDefault(); e.stopPropagation()
+                      if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverIdx(null)
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault(); e.stopPropagation()
+                      setDragOverIdx(null)
+                      const file = Array.from(e.dataTransfer.files).find(isExtractableFile)
+                      if (file) handleFile(file, oi)
+                    }}
+                    className={cn(
+                      "group/item rounded-md p-2 border border-border/40 transition-colors",
+                      dragOverIdx === oi && "bg-accent/40 ring-2 ring-ring/30 ring-dashed",
+                    )}
+                  >
+                    {/* Row 1: date + valid_until */}
+                    <div className="flex items-baseline gap-[10px]">
+                      {editIdx === oi ? (
+                        <DateInput
+                          initial={rec.date}
+                          onSave={(v) => { if (v) updateRecordDate(oi, v); else { deleteRecord(oi); setEditIdx(null) } }}
+                          onCancel={() => setEditIdx(null)}
+                        />
+                      ) : (
+                        <ExpandedDateButton
+                          path={`${dataKey}[${oi}].date`}
+                          date={rec.date}
+                          onClick={() => setEditIdx(oi)}
+                        />
+                      )}
+
+                      {!hideValidUntil && (
+                        <ValidUntilSelector
+                          value={rec.valid_until}
+                          onChange={(v) => updateRecordField(oi, 'valid_until', v)}
+                          saving={saving}
+                          locked={lockOneYearValidity}
+                        />
+                      )}
+
+                      <div className="flex items-center gap-1 ml-auto">
+                        <button
+                          type="button"
+                          onClick={() => { pendingTargetIdxRef.current = oi; fileRef.current?.click() }}
+                          disabled={extracting}
+                          title="이 기록에 이미지/PDF 추출"
+                          className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-foreground hover:bg-accent/40 transition-colors disabled:opacity-50"
+                        >
+                          <Paperclip size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteRecord(oi)}
+                          title="삭제"
+                          className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Row 2: 제품명 | 제조사 | 제품번호 | 유효기간 */}
+                    <div className="flex items-baseline gap-[10px] ml-2 mt-1 flex-wrap">
+                      {productOptions.length > 0 ? (
+                        <ProductDropdown
+                          value={rec.product_id ?? null}
+                          defaultName={hints.product ?? null}
+                          options={productOptions}
+                          onChange={(id) => updateProductId(oi, id)}
+                          saving={saving}
+                        />
+                      ) : (
+                        <DetailField
+                          value={rec.product}
+                          hint={hints.product}
+                          suppressHint={suppressHints}
+                          placeholder="제품명"
+                          isEditing={detailEdit?.idx === oi && detailEdit?.field === 'product'}
+                          onStartEdit={() => setDetailEdit({ idx: oi, field: 'product' })}
+                          onSave={(v) => updateRecordField(oi, 'product', v)}
+                          onCancel={() => setDetailEdit(null)}
+                          saving={saving}
+                        />
+                      )}
                       <span className="text-muted-foreground/30 select-none">|</span>
                       <DetailField
-                        value={rec.expiry}
-                        hint={hints.expiry}
+                        value={rec.manufacturer}
+                        hint={hints.manufacturer}
                         suppressHint={suppressHints}
-                        type="date"
-                        placeholder="유효기간"
-                        isEditing={detailEdit?.idx === oi && detailEdit?.field === 'expiry'}
-                        onStartEdit={() => setDetailEdit({ idx: oi, field: 'expiry' })}
-                        onSave={(v) => updateRecordField(oi, 'expiry', v)}
+                        placeholder="제조사"
+                        isEditing={detailEdit?.idx === oi && detailEdit?.field === 'manufacturer'}
+                        onStartEdit={() => setDetailEdit({ idx: oi, field: 'manufacturer' })}
+                        onSave={(v) => updateRecordField(oi, 'manufacturer', v)}
                         onCancel={() => setDetailEdit(null)}
                         saving={saving}
                       />
-                    </>
-                  )}
-                </div>
+                      <span className="text-muted-foreground/30 select-none">|</span>
+                      <DetailField
+                        value={rec.lot}
+                        hint={hints.lot}
+                        suppressHint={suppressHints}
+                        placeholder="제품번호"
+                        isEditing={detailEdit?.idx === oi && detailEdit?.field === 'lot'}
+                        onStartEdit={() => setDetailEdit({ idx: oi, field: 'lot' })}
+                        onSave={(v) => updateRecordField(oi, 'lot', v)}
+                        onCancel={() => setDetailEdit(null)}
+                        saving={saving}
+                      />
+                      {!hideValidUntil && (
+                        <>
+                          <span className="text-muted-foreground/30 select-none">|</span>
+                          <DetailField
+                            value={rec.expiry}
+                            hint={hints.expiry}
+                            suppressHint={suppressHints}
+                            type="date"
+                            placeholder="유효기간"
+                            isEditing={detailEdit?.idx === oi && detailEdit?.field === 'expiry'}
+                            onStartEdit={() => setDetailEdit({ idx: oi, field: 'expiry' })}
+                            onSave={(v) => updateRecordField(oi, 'expiry', v)}
+                            onCancel={() => setDetailEdit(null)}
+                            saving={saving}
+                          />
+                        </>
+                      )}
+                    </div>
 
-                {/* Row 3: 타병원 접종 체크 — 백신 항목(광견병/종합백신/CIV/켄넬코프)만. 별지25·별지25 EX에서 제외됨. */}
-                {OTHER_HOSPITAL_LABELS.has(label) && (editMode || rec.other_hospital) && (
-                  <div className="ml-2 mt-0.5">
-                    {editMode ? (
-                      <label className="inline-flex items-center gap-1 text-xs text-muted-foreground/70 hover:text-foreground cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={!!rec.other_hospital}
-                          onChange={() => toggleOtherHospital(oi)}
-                          disabled={saving}
-                          className="h-3 w-3 cursor-pointer"
-                        />
-                        타병원 접종
-                      </label>
-                    ) : (
-                      <span className="text-xs text-muted-foreground/70">타병원 접종</span>
+                    {/* Row 3: 타병원 접종 체크 */}
+                    {OTHER_HOSPITAL_LABELS.has(label) && (
+                      <div className="ml-2 mt-1">
+                        <button
+                          type="button"
+                          onClick={() => toggleOtherHospital(oi)}
+                          aria-pressed={!!rec.other_hospital}
+                          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/70 hover:text-foreground cursor-pointer select-none"
+                        >
+                          <span
+                            className={cn(
+                              'inline-flex items-center justify-center w-3.5 h-3.5 rounded-sm border transition-colors',
+                              rec.other_hospital
+                                ? 'bg-[#D9A489] border-[#D9A489] dark:bg-[#C08C70] dark:border-[#C08C70]'
+                                : 'border-foreground/40 bg-transparent',
+                            )}
+                          >
+                            {rec.other_hospital && (
+                              <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                <path d="M2.5 6L5 8.5L9.5 4" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </span>
+                          타병원 접종
+                        </button>
+                      </div>
                     )}
                   </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
+                )
+              })}
+            </div>
 
-        {editMode && (
-          <div className="shrink-0 flex items-center gap-[6px]">
-            <button
-              type="button"
-              onClick={() => setAddingNew(true)}
-              disabled={saving || addingNew}
-              className={roundIconBtn}
-              title={`${label} 추가`}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-            </button>
-            <button type="button" onClick={() => fileRef.current?.click()} disabled={extracting} className={roundIconBtn} title="이미지/PDF로 약품 정보 추출">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-            </button>
+            {/* Footer */}
+            <div className="flex items-center gap-2 px-md py-2 border-t border-border/80 bg-background/95">
+              <button
+                type="button"
+                onClick={closeEditModal}
+                className="h-7 px-3 rounded-full border border-border/80 bg-card text-[13px] text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
+              >
+                닫기
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>,
+        document.body,
+      )}
     </div>
   )
 }
 
-/** 타병원 접종 체크박스를 노출할 백신 라벨. 별지25·별지25 EX에서 제외 대상. */
-const OTHER_HOSPITAL_LABELS = new Set(['광견병', '종합백신', 'CIV', '켄넬코프'])
+/* ── 인라인 날짜 chip (verification color 적용) ── */
 
-/* ── Date chips (collapsed/expanded) with verification color ── */
-
-function CollapsedDateChip({ separator, path, date, editing, onStartEdit, onSaveEdit, onCancelEdit, onDelete }: {
-  separator: boolean
-  path: string
-  date: string
-  editing: boolean
-  onStartEdit: () => void
-  onSaveEdit: (v: string) => void
-  onCancelEdit: () => void
-  onDelete: () => void
-}) {
+function InlineDateChip({ path, date, separator, onClick }: { path: string; date: string; separator: boolean; onClick?: () => void }) {
   const editMode = useSectionEditMode()
   const info = useFieldVerification(path)
   const colorCls = info ? severityTextClass(info.severity) : ''
   const title = info ? tooltipText(info) : undefined
-
+  const baseCls = cn('font-mono text-[15px] tracking-[0.3px] text-foreground', colorCls)
   return (
-    <div className="group/item inline-flex items-baseline gap-[10px]">
+    <span className="inline-flex items-baseline gap-[10px]">
       {separator && <span className="text-muted-foreground/30 select-none">|</span>}
-      {editing ? (
-        <DateInput initial={date} onSave={onSaveEdit} onCancel={onCancelEdit} />
-      ) : (
-        <span className="group/v relative inline-flex items-baseline">
-          {editMode ? (
-            <button
-              type="button"
-              onClick={onStartEdit}
-              title={title}
-              className={cn(
-                'text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
-                colorCls,
-              )}
-            >
-              {date}
-            </button>
-          ) : (
-            <span
-              title={title}
-              className={cn(
-                'rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground',
-                colorCls,
-              )}
-            >
-              {date}
-            </span>
-          )}
-          <CopyButton value={date} className="ml-1 opacity-0 group-hover/v:opacity-100" />
-        </span>
-      )}
-      {editMode && (
-        <button
-          type="button"
-          onClick={onDelete}
-          className="text-xs text-muted-foreground/40 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100"
+      {editMode && onClick ? (
+        <button type="button" onClick={onClick} title={title}
+          className={cn('rounded-md px-1 py-0.5 -mx-1 hover:bg-accent/60 transition-colors cursor-pointer', baseCls)}
         >
-          ✕
+          {date}
         </button>
+      ) : (
+        <span title={title} className={baseCls}>{date}</span>
       )}
-    </div>
+    </span>
   )
 }
+
+/** 타병원 접종 체크박스를 노출할 백신 라벨. 별지25·별지25 EX에서 제외 대상. */
+const OTHER_HOSPITAL_LABELS = new Set(['광견병', '종합백신', '독감', '켄넬코프'])
+
+/* ── Date button with verification color ── */
 
 function ExpandedDateButton({ path, date, onClick }: { path: string; date: string; onClick: () => void }) {
   const editMode = useSectionEditMode()
@@ -988,15 +1007,25 @@ function DetailField({ value, hint, suppressHint, type, placeholder, isEditing, 
 
 /* ── Valid-until selector (1년 / 2년 / 3년) ── */
 
-function ValidUntilSelector({ value, onChange, saving }: {
+function ValidUntilSelector({ value, onChange, saving, locked }: {
   value?: string | null
   onChange: (v: string | null) => void
   saving: boolean
+  locked?: boolean
 }) {
   const editMode = useSectionEditMode()
   // null/빈값은 1년 기본. "N년" 패턴이면 N 추출, 그 외 legacy 값은 선택 없음.
   const match = value?.match(/^(\d+)\s*년$/)
   const current = match ? match[1] : value ? null : '1'
+
+  // 광견병 외 접종은 1년 고정 — 셀렉터 비활성, 표시만.
+  if (locked) {
+    return (
+      <span className="inline-block rounded-md px-2 py-0.5 text-xs text-muted-foreground/70" title="유효기간 1년 (고정)">
+        1년
+      </span>
+    )
+  }
 
   if (!editMode) {
     if (!current) return null
@@ -1099,7 +1128,7 @@ function DateInput({ initial, onSave, onCancel, onClearAuto }: {
         onKeyDown={(e) => {
           if (e.key === 'Escape') { e.preventDefault(); onCancel() }
         }}
-        className="w-40 bg-transparent border-0 border-b border-primary text-base py-1 focus:outline-none"
+        className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
       />
       {onClearAuto && (
         <button

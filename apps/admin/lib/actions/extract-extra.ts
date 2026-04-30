@@ -70,6 +70,8 @@ export interface HawaiiResult {
   email_address: string | null
   address_overseas: string | null
   postal_code: string | null
+  phone: string | null
+  entry_date: string | null
 }
 
 export interface UkResult {
@@ -207,6 +209,7 @@ const SCHEMAS: { [C in Country]: Record<string, unknown> } = {
     required: [
       'passport_number', 'passport_issuing_country', 'passport_expiry_date',
       'date_of_birth', 'email_address', 'address_overseas', 'postal_code',
+      'phone', 'entry_date',
     ],
     properties: {
       passport_number: nullable(),
@@ -216,6 +219,8 @@ const SCHEMAS: { [C in Country]: Record<string, unknown> } = {
       email_address: nullable(),
       address_overseas: nullable(),
       postal_code: nullable(),
+      phone: nullable(),
+      entry_date: nullable(),
     },
   },
   uk: {
@@ -303,13 +308,15 @@ Determine direction BY AIRPORTS, not by date order.${COMMON_RULES}
 - IMPORTANT: If the image is ONLY an Export Quarantine Certificate, extract certificate_no only and set flight fields to null (the cert contains old trip data).`,
 
   hawaii: `You extract Hawaii entry form fields from images or text.${COMMON_RULES}
-- passport_number: LAST 4 DIGITS only (e.g. "M12345678" → "5678"). Never the full number.
-- passport_issuing_country: Issuing country full English name (e.g. "Republic of Korea"). Map codes like KOR → "Republic of Korea".
+- passport_number: FULL passport number as written (e.g. "M218A9542"). Korean passports start with a letter (M/S/R/DP/O/TP) followed by 8 digits. Do NOT truncate or take only last 4 digits — always return the full number.
+- passport_issuing_country: Issuing country full English name (e.g. "Republic of Korea"). Map codes like KOR → "Republic of Korea". Korean labels: "발행국가", "국적", "Issuing Country", "Nationality".
 - passport_expiry_date: Passport EXPIRY date ("기간만료일" / "Date of expiry"), YYYY-MM-DD. NOT date of issue.
-- date_of_birth: Holder's DATE OF BIRTH ("생년월일" / "Date of birth"), YYYY-MM-DD.
+- date_of_birth: Holder's DATE OF BIRTH ("생년월일" / "소유주 생년월일" / "Date of birth"), YYYY-MM-DD. If only YYMMDD (e.g. "930120"), expand: years 30-99 → 19xx, years 00-29 → 20xx.
 - email_address: Email address.
 - address_overseas: Overseas address in English (street + city + state if present). EXCLUDE postal code.
-- postal_code: Postal/ZIP code.`,
+- postal_code: Postal/ZIP code.
+- phone: Holder's phone number for Hawaii entry. Accept any format the user wrote — international ("+1-808-555-0199"), digits only ("18085550199" or "8085550199"), with separators. Return as written, do not reformat.
+- entry_date: Date of arrival in Hawaii, YYYY-MM-DD. Labels include "도착", "입국일", "arrival", "하와이 도착". If TWO dates appear like "출국 5/10, 도착 5/10" or "departure/arrival" pair, use the ARRIVAL date. CRITICAL — if year is missing (e.g. just "5/10" or "May 10"): output the next upcoming occurrence AFTER today's date. NEVER output a year in the past.`,
 
   uk: `You extract the overseas destination address for UK pet-import from images or text.${COMMON_RULES}
 - address_overseas: UK destination address in English, including postal code if visible. Return null if no address found.`,
@@ -351,6 +358,9 @@ export async function extractExtra<C extends Country>(input: ExtractInput<C>): P
         : 'Extract the information from the image(s) above.',
     })
 
+    const today = new Date().toISOString().slice(0, 10)
+    const systemContent = `Today is ${today} (UTC). When inferring missing year/date components, prefer the next upcoming date — never a past date.\n\n${PROMPTS[input.country]}`
+
     const response = await client.chat.completions.create({
       model: EXTRACTION_MODEL,
       max_tokens: 800,
@@ -363,7 +373,7 @@ export async function extractExtra<C extends Country>(input: ExtractInput<C>): P
         },
       },
       messages: [
-        { role: 'system', content: PROMPTS[input.country] },
+        { role: 'system', content: systemContent },
         { role: 'user', content: userContent },
       ],
     })

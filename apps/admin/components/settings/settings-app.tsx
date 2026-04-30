@@ -17,15 +17,15 @@ import { getSettingsBootstrap, type SettingsBootstrap } from '@/lib/actions/sett
 
 const TABS = [
   { id: 'profile', label: '내 프로필' },
-  { id: 'company', label: '조직 정보' },
+  { id: 'company', label: '조직정보' },
   { id: 'members', label: '멤버' },
-  { id: 'vaccines', label: '약품 관리' },
+  { id: 'detail_view', label: '상세' },
+  { id: 'vaccines', label: '약품관리' },
   { id: 'inspection', label: '검사' },
   { id: 'import_report', label: '신고' },
   { id: 'documents', label: '서류' },
-  { id: 'verification', label: '검증' },
   { id: 'automation', label: '자동화' },
-  { id: 'detail_view', label: '상세뷰' },
+  { id: 'verification', label: '검증' },
   { id: 'data', label: '데이터' },
 ] as const
 

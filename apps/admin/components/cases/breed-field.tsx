@@ -33,24 +33,23 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   const species = (data.species as string) ?? '' // 'dog' or 'cat'
 
   const bilingual = detailViewSettings.breed_bilingual && breedKo && breedEn
-  const fallback = breedEn || breedKo || '—'
-  const isEmpty = !bilingual && fallback === '—'
+  const fallback = breedKo || breedEn || ''
+  const isEmpty = !bilingual && !fallback
   const copyText = bilingual ? `${breedKo} | ${breedEn}` : (isEmpty ? '' : fallback)
   const display = bilingual ? (
     <>
-      {breedKo}
+      <span className="text-muted-foreground">{breedKo}</span>
       <span className="text-muted-foreground/30 mx-1.5 select-none">|</span>
-      {breedEn}
+      <span className="italic text-foreground">{breedEn}</span>
     </>
+  ) : isEmpty ? (
+    <span className="inline-block min-w-[2.5rem] select-none" aria-hidden>&nbsp;</span>
   ) : (
     fallback
   )
 
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const [freeMode, setFreeMode] = useState(false)
-  const [freeKo, setFreeKo] = useState('')
-  const [freeEn, setFreeEn] = useState('')
   const [highlightIdx, setHighlightIdx] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -68,7 +67,6 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   useEffect(() => {
     setOpen(false)
     setQuery('')
-    setFreeMode(false)
   }, [caseId])
 
   // Focus input when opened
@@ -82,49 +80,39 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
     function onClick(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false)
-        setFreeMode(false)
       }
     }
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
   }, [open])
 
-  async function selectBreed(breed: Breed) {
+  function selectBreed(breed: Breed) {
     setOpen(false)
     setQuery('')
-    // Save both ko and en
-    const r1 = await updateCaseField(caseId, 'data', 'breed', breed.ko)
-    if (r1.ok) updateLocalCaseField(caseId, 'data', 'breed', breed.ko)
-    const r2 = await updateCaseField(caseId, 'data', 'breed_en', breed.en)
-    if (r2.ok) updateLocalCaseField(caseId, 'data', 'breed_en', breed.en)
-  }
-
-  async function saveFree() {
-    const ko = freeKo.trim()
-    const en = freeEn.trim()
-    if (!ko && !en) return
-    setOpen(false)
-    setFreeMode(false)
-    setQuery('')
-    if (ko) {
-      const r = await updateCaseField(caseId, 'data', 'breed', ko)
-      if (r.ok) updateLocalCaseField(caseId, 'data', 'breed', ko)
-    }
-    if (en) {
-      const r = await updateCaseField(caseId, 'data', 'breed_en', en)
-      if (r.ok) updateLocalCaseField(caseId, 'data', 'breed_en', en)
-    }
+    // Optimistic — UI 즉시 반영.
+    updateLocalCaseField(caseId, 'data', 'breed', breed.ko)
+    updateLocalCaseField(caseId, 'data', 'breed_en', breed.en)
+    void (async () => {
+      await updateCaseField(caseId, 'data', 'breed', breed.ko)
+      await updateCaseField(caseId, 'data', 'breed_en', breed.en)
+    })()
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
-      <SectionLabel className="pt-1">품종</SectionLabel>
+      <SectionLabel
+        className="pt-1"
+        onClick={() => { setOpen(!open); setQuery('') }}
+        title={isEmpty ? '품종 추가' : '품종 변경'}
+      >
+        품종
+      </SectionLabel>
       <div ref={containerRef} className="relative min-w-0">
         {/* Display / trigger */}
         <div className="group/val relative w-fit">
           <button
             type="button"
-            onClick={() => { setOpen(!open); setFreeMode(false); setQuery('') }}
+            onClick={() => { setOpen(!open); setQuery('') }}
             className={cn(
               'text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
               isEmpty && 'text-muted-foreground/60',
@@ -139,7 +127,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
         </div>
 
         {/* Dropdown */}
-        {open && !freeMode && (
+        {open && (
           <div className="absolute left-0 top-full mt-1 z-20 w-72 rounded-md border border-border/80 bg-background shadow-md">
             {/* Search input */}
             <div className="p-2 border-b border-border/30">
@@ -194,54 +182,6 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                 ))
               )}
             </ul>
-            {/* 기타 option */}
-            <div className="border-t border-border/30 py-1">
-              <button
-                type="button"
-                onClick={() => { setFreeMode(true); setFreeKo(''); setFreeEn('') }}
-                className="w-full text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors"
-              >
-                기타 (직접 입력)
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Free input mode */}
-        {open && freeMode && (
-          <div className="absolute left-0 top-full mt-1 z-20 w-72 rounded-md border border-border/80 bg-background shadow-md p-3">
-            <div className="space-y-2">
-              <input
-                type="text"
-                value={freeKo}
-                onChange={(e) => setFreeKo(e.target.value)}
-                placeholder="품종 (한글)"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') saveFree()
-                  if (e.key === 'Escape') { setFreeMode(false); setOpen(false) }
-                }}
-                className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
-              />
-              <input
-                type="text"
-                value={freeEn}
-                onChange={(e) => setFreeEn(e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').replace(/\b[a-z]/g, c => c.toUpperCase()))}
-                placeholder="품종 (영문)"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') saveFree()
-                  if (e.key === 'Escape') { setFreeMode(false); setOpen(false) }
-                }}
-                className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
-              />
-              <button
-                type="button"
-                onClick={saveFree}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                저장
-              </button>
-            </div>
           </div>
         )}
       </div>

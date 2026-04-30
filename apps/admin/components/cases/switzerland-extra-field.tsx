@@ -168,6 +168,13 @@ export function SwissExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
       if (imageFiles.length > 0) {
         e.preventDefault()
         handleFiles(imageFiles)
+        return
+      }
+      if (active === textRef.current) return
+      const text = e.clipboardData?.getData('text/plain')?.trim()
+      if (text && text.length > 10) {
+        e.preventDefault()
+        tryExtract({ text })
       }
     }
     document.addEventListener('paste', handlePaste)

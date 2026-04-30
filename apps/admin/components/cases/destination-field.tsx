@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { Trash2 } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
-import { cn, roundIconBtn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import destsData from '@/data/destinations.json'
 import { destCode } from '@/lib/country-code'
-import { CopyButton } from './copy-button'
 import { useSectionEditMode } from './section-edit-mode-context'
 
 interface Dest {
@@ -48,8 +48,6 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [highlightIdx, setHighlightIdx] = useState(0)
-  const [freeMode, setFreeMode] = useState(false)
-  const [freeVal, setFreeVal] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
@@ -60,13 +58,13 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     return d.ko.toLowerCase().includes(q) || d.en.toLowerCase().includes(q) || (d.alias ?? []).some(a => a.toLowerCase().includes(q))
   })
 
-  useEffect(() => { setOpen(false); setQuery(''); setFreeMode(false) }, [caseId])
+  useEffect(() => { setOpen(false); setQuery('') }, [caseId])
   useEffect(() => { if (open && inputRef.current) inputRef.current.focus() }, [open])
   useEffect(() => {
     if (!open) return
     function onClick(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false); setFreeMode(false)
+        setOpen(false)
       }
     }
     document.addEventListener('mousedown', onClick)
@@ -93,20 +91,15 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     await updateCaseField(caseId, 'column', 'destination', val)
   }
 
-  async function saveFree() {
-    const v = freeVal.trim()
-    if (!v) return
-    setFreeMode(false); setQuery('')
-    const next = selected.includes(v) ? selected : [...selected, v]
-    const val = joinDests(next)
-    updateLocalCaseField(caseId, 'column', 'destination', val)
-    await updateCaseField(caseId, 'column', 'destination', val)
-  }
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
-        <SectionLabel>목적지</SectionLabel>
+        <SectionLabel
+          onClick={editMode ? () => { setOpen(true); setQuery(''); setHighlightIdx(0) } : undefined}
+          title={editMode ? '목적지 추가' : undefined}
+        >
+          목적지
+        </SectionLabel>
       </div>
       <div ref={containerRef} className="relative min-w-0 flex items-start gap-md">
         <div className="flex-1 min-w-0">
@@ -139,12 +132,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                         {code}
                       </span>
                     )}
-                    <span
-                      className={cn(
-                        'font-serif text-[15px] text-[#6B5A3A]',
-                        isActive && 'underline underline-offset-4 decoration-[#6B5A3A]/40',
-                      )}
-                    >
+                    <span className="font-serif text-[15px] text-[#6B5A3A]">
                       {ko}
                     </span>
                   </button>
@@ -152,30 +140,19 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); removeDest(ko) }}
-                      className="opacity-0 group-hover/chip:opacity-70 hover:!opacity-100 leading-none text-sm text-[#6B5A3A] transition-opacity"
-                      title="삭제"
+                      className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-[#6B5A3A]/60 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover/chip:opacity-70 hover:!opacity-100"
+                      title="목적지 삭제"
                     >
-                      ×
+                      <Trash2 size={12} />
                     </button>
                   )}
                 </span>
               )
             })}
-            <CopyButton value={display} className="opacity-0 group-hover/val:opacity-100" />
           </div>
-        ) : editMode ? (
-          <button
-            type="button"
-            onClick={() => { setOpen(!open); setFreeMode(false); setQuery(''); setHighlightIdx(0) }}
-            className="text-left rounded-md px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/50 transition-colors hover:text-muted-foreground"
-          >
-            —
-          </button>
-        ) : (
-          <span className="px-2 py-1 -mx-2 font-sans text-[13px] italic text-muted-foreground/40">—</span>
-        )}
+        ) : null}
 
-        {open && !freeMode && (
+        {open && (
           <div className="absolute left-0 top-full mt-1 z-20 w-64 rounded-md border border-border/80 bg-background shadow-md">
             <div className="p-2 border-b border-border/30">
               <input
@@ -231,14 +208,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                 })
               )}
             </ul>
-            <div className="border-t border-border/30 py-1 flex">
-              <button
-                type="button"
-                onClick={() => { setFreeMode(true); setFreeVal('') }}
-                className="flex-1 text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors"
-              >
-                기타 (직접 입력)
-              </button>
+            <div className="border-t border-border/30 py-1 flex justify-end">
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -249,40 +219,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
             </div>
           </div>
         )}
-
-        {open && freeMode && (
-          <div className="absolute left-0 top-full mt-1 z-20 w-64 rounded-md border border-border/80 bg-background shadow-md p-3">
-            <input
-              type="text"
-              value={freeVal}
-              onChange={(e) => setFreeVal(e.target.value)}
-              placeholder="국가명 입력"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') saveFree()
-                if (e.key === 'Escape') { setFreeMode(false); setOpen(false) }
-              }}
-              className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
-            />
-            <button type="button" onClick={saveFree}
-              className="mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
-              저장
-            </button>
-          </div>
-        )}
         </div>
-        {editMode && (
-          <div className="shrink-0 flex items-center gap-[6px]">
-            <button
-              type="button"
-              onClick={() => { setOpen(!open); setFreeMode(false); setQuery(''); setHighlightIdx(0) }}
-              className={roundIconBtn}
-              title="목적지 추가"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-            </button>
-          </div>
-        )}
       </div>
     </div>
   )

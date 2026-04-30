@@ -64,6 +64,8 @@ export function AddressField({
   const [detailAddr, setDetailAddr] = useState('')
   const [enError, setEnError] = useState<string | null>(null)
   const [showDetail, setShowDetail] = useState(false)
+  const [krFlash, setKrFlash] = useState(false)
+  const [enFlash, setEnFlash] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
   const detailRef = useRef<HTMLInputElement>(null)
   const krInputRef = useRef<HTMLInputElement>(null)
@@ -143,30 +145,27 @@ export function AddressField({
           const city = isProvince && secondLast ? secondLast : last
           const province = isProvince ? last : secondLast
 
-          startSave(async () => {
-            // Main addresses
-            const r1 = await updateCaseField(caseId, 'data', krSpec.key, krWithZip)
-            if (r1.ok) updateLocalCaseField(caseId, 'data', krSpec.key, krWithZip)
-            if (enSpec && en) {
-              const r2 = await updateCaseField(caseId, 'data', enSpec.key, en)
-              if (r2.ok) updateLocalCaseField(caseId, 'data', enSpec.key, en)
-            }
-            // Address components (hidden from UI, used for document generation)
-            const components: Record<string, string> = {
-              address_zipcode: data.zonecode,
-              address_city: city,
-              address_province: province,
-              address_country: country,
-              address_sido: data.sido,
-              address_sigungu: data.sigungu,
-            }
+          // Optimistic — UI 즉시 반영. 서버 저장은 백그라운드.
+          updateLocalCaseField(caseId, 'data', krSpec.key, krWithZip)
+          if (enSpec && en) updateLocalCaseField(caseId, 'data', enSpec.key, en)
+          const components: Record<string, string> = {
+            address_zipcode: data.zonecode,
+            address_city: city,
+            address_province: province,
+            address_country: country,
+            address_sido: data.sido,
+            address_sigungu: data.sigungu,
+          }
+          for (const [key, val] of Object.entries(components)) {
+            if (val) updateLocalCaseField(caseId, 'data', key, val)
+          }
+          void (async () => {
+            await updateCaseField(caseId, 'data', krSpec.key, krWithZip)
+            if (enSpec && en) await updateCaseField(caseId, 'data', enSpec.key, en)
             for (const [key, val] of Object.entries(components)) {
-              if (val) {
-                const r = await updateCaseField(caseId, 'data', key, val)
-                if (r.ok) updateLocalCaseField(caseId, 'data', key, val)
-              }
+              if (val) await updateCaseField(caseId, 'data', key, val)
             }
-          })
+          })()
 
           setDetailAddr('')
           setShowDetail(true)
@@ -181,15 +180,16 @@ export function AddressField({
     if (!detail) { setShowDetail(false); return }
     const currentKr = String(krRaw ?? '')
     const full = currentKr ? `${currentKr} ${detail}` : detail
-    startSave(async () => {
+    // Optimistic
+    updateLocalCaseField(caseId, 'data', krSpec.key, full)
+    updateLocalCaseField(caseId, 'data', 'address_detail_kr', detail)
+    setShowDetail(false)
+    void (async () => {
       const r = await updateCaseField(caseId, 'data', krSpec.key, full)
-      if (r.ok) updateLocalCaseField(caseId, 'data', krSpec.key, full)
-      // Save detail separately so 2-line address forms (e.g. APQA HQ 사육농장)
-      // can split road (line 1) and detail (line 2) without heuristic parsing.
+      if (!r.ok) updateLocalCaseField(caseId, 'data', krSpec.key, currentKr || null)
       const r2 = await updateCaseField(caseId, 'data', 'address_detail_kr', detail)
-      if (r2.ok) updateLocalCaseField(caseId, 'data', 'address_detail_kr', detail)
-      setShowDetail(false)
-    })
+      if (!r2.ok) updateLocalCaseField(caseId, 'data', 'address_detail_kr', null)
+    })()
   }
 
   function startEditKr() {
@@ -199,11 +199,17 @@ export function AddressField({
   }
   function saveKr() {
     const v = krVal.trim() || null
-    startSave(async () => {
+    const current = String(krRaw ?? '').trim() || null
+    if (v === current) { setEditingKr(false); return }
+    // Optimistic
+    updateLocalCaseField(caseId, 'data', krSpec.key, v)
+    setEditingKr(false)
+    setKrFlash(true)
+    setTimeout(() => setKrFlash(false), 1500)
+    void (async () => {
       const r = await updateCaseField(caseId, 'data', krSpec.key, v)
-      if (r.ok) updateLocalCaseField(caseId, 'data', krSpec.key, v)
-      setEditingKr(false)
-    })
+      if (!r.ok) updateLocalCaseField(caseId, 'data', krSpec.key, current)
+    })()
   }
   function startEditEn() {
     setEnVal(String(enRaw ?? ''))
@@ -213,21 +219,33 @@ export function AddressField({
   function saveEn() {
     if (!enSpec) return
     const v = enVal.trim() || null
-    startSave(async () => {
+    const current = String(enRaw ?? '').trim() || null
+    if (v === current) { setEditingEn(false); return }
+    // Optimistic
+    updateLocalCaseField(caseId, 'data', enSpec.key, v)
+    setEditingEn(false)
+    setEnFlash(true)
+    setTimeout(() => setEnFlash(false), 1500)
+    void (async () => {
       const r = await updateCaseField(caseId, 'data', enSpec.key, v)
-      if (r.ok) updateLocalCaseField(caseId, 'data', enSpec.key, v)
-      setEditingEn(false)
-    })
+      if (!r.ok) updateLocalCaseField(caseId, 'data', enSpec.key, current)
+    })()
   }
 
   const inputClass =
-    'flex-1 h-8 rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
+    'flex-1 h-8 max-w-[480px] rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
 
   return (
     <>
       {/* Korean address */}
       <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
-        <SectionLabel className="pt-1">한국주소</SectionLabel>
+        <SectionLabel
+          className="pt-1"
+          onClick={editingKr ? undefined : (krEmpty ? handleSearch : startEditKr)}
+          title={krEmpty ? '클릭하여 주소 검색' : '클릭하여 편집'}
+        >
+          한국주소
+        </SectionLabel>
         <div className="flex items-center gap-sm min-w-0">
           {editingKr ? (
             <div className="flex items-center gap-sm flex-1">
@@ -240,20 +258,31 @@ export function AddressField({
                   if (e.key === 'Enter') saveKr()
                   if (e.key === 'Escape') setEditingKr(false)
                 }}
-                onBlur={() => setTimeout(() => setEditingKr(false), 150)}
+                onBlur={() => setTimeout(() => { if (!saving) saveKr() }, 150)}
                 className={inputClass}
               />
               <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={saveKr} disabled={saving}
                 className="shrink-0 inline-flex h-7 items-center rounded px-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50">
                 {saving ? '...' : '저장'}
               </button>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={handleSearch} disabled={!scriptLoaded || saving}
+                className="shrink-0 inline-flex h-7 items-center rounded px-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50">
+                주소검색
+              </button>
             </div>
           ) : (
             <div className="group/kr relative flex flex-wrap items-center gap-xs min-w-0 flex-1">
               <button type="button" onClick={krEmpty ? handleSearch : startEditKr}
                 className={cn('text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text', krEmpty && 'text-muted-foreground/60')}>
-                {krDisplay}
+                {krEmpty ? (
+                  <span className="inline-block min-w-[3rem] select-none" aria-hidden>&nbsp;</span>
+                ) : (
+                  krDisplay
+                )}
               </button>
+              {krFlash && (
+                <span className="text-emerald-600 text-sm select-none" aria-label="저장됨">✓</span>
+              )}
               <button type="button" onClick={handleSearch} disabled={!scriptLoaded || saving}
                 className="shrink-0 inline-flex h-7 items-center rounded px-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50 opacity-0 group-hover/kr:opacity-100">
                 검색
@@ -295,7 +324,13 @@ export function AddressField({
 
       {/* English address */}
       <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
-        <SectionLabel className="pt-1">영문주소</SectionLabel>
+        <SectionLabel
+          className="pt-1"
+          onClick={editingEn ? undefined : startEditEn}
+          title="클릭하여 편집"
+        >
+          영문주소
+        </SectionLabel>
         <div className="min-w-0">
           {editingEn ? (
             <>
@@ -317,7 +352,7 @@ export function AddressField({
                     }
                   }}
                   onKeyDown={(e) => { if (e.key === 'Enter') saveEn(); if (e.key === 'Escape') setEditingEn(false) }}
-                  onBlur={() => setTimeout(() => setEditingEn(false), 150)}
+                  onBlur={() => setTimeout(() => { if (!saving) saveEn() }, 150)}
                   className={inputClass} />
                 <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={saveEn} disabled={saving}
                   className="shrink-0 inline-flex h-7 items-center rounded px-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50">
@@ -327,11 +362,18 @@ export function AddressField({
               {enError && <div className="mt-1 text-xs text-red-600">{enError}</div>}
             </>
           ) : (
-            <div className="group/en relative w-fit">
+            <div className="group/en relative w-fit inline-flex items-baseline">
               <button type="button" onClick={startEditEn}
                 className={cn('text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-text', enEmpty && 'text-muted-foreground/60')}>
-                {enDisplay}
+                {enEmpty ? (
+                  <span className="inline-block min-w-[3rem] select-none" aria-hidden>&nbsp;</span>
+                ) : (
+                  enDisplay
+                )}
               </button>
+              {enFlash && (
+                <span className="ml-2 text-emerald-600 text-sm select-none" aria-label="저장됨">✓</span>
+              )}
               <CopyButton value={enEmpty ? '' : enDisplay}
                 className="absolute left-full top-0.5 ml-1 z-10 opacity-0 group-hover/en:opacity-100" />
             </div>

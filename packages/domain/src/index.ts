@@ -1,5 +1,6 @@
 export * from './types'
 export * from './destination-config'
+export * from './destination-overrides-types'
 export * from './inspection-config-defaults'
 export * from './cert-config-defaults'
 export * from './import-report-defaults'

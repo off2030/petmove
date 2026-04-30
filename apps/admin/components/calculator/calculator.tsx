@@ -38,7 +38,14 @@ interface Props {
 
 export function Calculator({ items, setItems, species, country, editMode }: Props) {
   const confirm = useConfirm()
-  const [checked, setChecked] = useState<Record<number, boolean>>({})
+  // 첫 렌더부터 모든 항목 체크 ON 상태로 시작 — 마운트 직후 effect 가 실행되면서
+  // 잠시 모두 unchecked(취소선)로 보였다가 채워지는 깜박임 방지.
+  const [checked, setChecked] = useState<Record<number, boolean>>(() => {
+    const effCountry = species === 'cat' && CAT_VARIANTS[country] ? CAT_VARIANTS[country] : country
+    const next: Record<number, boolean> = {}
+    items.filter((i) => i.country === effCountry).forEach((it) => { next[it.id] = true })
+    return next
+  })
   const [addOpen, setAddOpen] = useState(false)
   const [addName, setAddName] = useState('')
   const [addCost, setAddCost] = useState('')

@@ -30,15 +30,17 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   const colorEn = (data.color_en as string) ?? ''
 
   const bilingual = detailViewSettings.color_bilingual && colorKo && colorEn
-  const fallback = colorEn || colorKo || '—'
-  const isEmpty = !bilingual && fallback === '—'
+  const fallback = colorKo || colorEn || ''
+  const isEmpty = !bilingual && !fallback
   const copyText = bilingual ? `${colorKo} | ${colorEn}` : (isEmpty ? '' : fallback)
   const display = bilingual ? (
     <>
-      {colorKo}
+      <span className="text-muted-foreground">{colorKo}</span>
       <span className="text-muted-foreground/30 mx-1.5 select-none">|</span>
-      {colorEn}
+      <span className="italic text-foreground">{colorEn}</span>
     </>
+  ) : isEmpty ? (
+    <span className="inline-block min-w-[2.5rem] select-none" aria-hidden>&nbsp;</span>
   ) : (
     fallback
   )
@@ -95,22 +97,31 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
     })
   }
 
-  async function save() {
+  function save() {
     const selectedColors = COLORS.filter(c => selected.has(c.en))
     const ko = selectedColors.map(c => c.ko).join(', ')
     const en = selectedColors.map(c => c.en).join(', ')
 
     setOpen(false)
 
-    const r1 = await updateCaseField(caseId, 'data', 'color', ko || null)
-    if (r1.ok) updateLocalCaseField(caseId, 'data', 'color', ko || null)
-    const r2 = await updateCaseField(caseId, 'data', 'color_en', en || null)
-    if (r2.ok) updateLocalCaseField(caseId, 'data', 'color_en', en || null)
+    // Optimistic — UI 즉시 반영.
+    updateLocalCaseField(caseId, 'data', 'color', ko || null)
+    updateLocalCaseField(caseId, 'data', 'color_en', en || null)
+    void (async () => {
+      await updateCaseField(caseId, 'data', 'color', ko || null)
+      await updateCaseField(caseId, 'data', 'color_en', en || null)
+    })()
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
-      <SectionLabel className="pt-1">모색</SectionLabel>
+      <SectionLabel
+        className="pt-1"
+        onClick={() => setOpen(!open)}
+        title={isEmpty ? '모색 추가' : '모색 변경'}
+      >
+        모색
+      </SectionLabel>
       <div ref={containerRef} className="relative min-w-0">
         <div className="group/val relative w-fit">
           <button
@@ -146,7 +157,7 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                         : 'bg-background text-foreground border-border/80 hover:bg-accent/60',
                     )}
                   >
-                    {c.en}
+                    {c.ko}
                   </button>
                 )
               })}
@@ -154,7 +165,7 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">
                 {selected.size > 0
-                  ? COLORS.filter(c => selected.has(c.en)).map(c => c.en).join(', ')
+                  ? COLORS.filter(c => selected.has(c.en)).map(c => c.ko).join(', ')
                   : '가장 가까운 색상을 1~3개 선택하세요'}
               </span>
               <button

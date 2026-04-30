@@ -2403,22 +2403,22 @@
         "align": "center",
         "note": "p4 Declaration — ID verification date (180일 전, dmy)"
       },
-      "text_82dwak": {
+      "text_82tjdb": {
         "source": null,
         "default": "N/A",
         "note": "p3 Babesia canis rossi — Treatment date (한국발은 항상 N/A)"
       },
-      "text_83ftvk": {
+      "text_83cwwy": {
         "source": null,
         "default": "N/A",
         "note": "p3 Babesia canis rossi — Product name"
       },
-      "text_84vemx": {
+      "text_84yeik": {
         "source": null,
         "default": "N/A",
         "note": "p3 Babesia canis rossi — Active ingredient(s)"
       },
-      "text_85tscx": {
+      "text_85pjyr": {
         "source": null,
         "default": "N/A",
         "note": "p3 Babesia canis rossi — Dose rate"
@@ -2875,22 +2875,22 @@
         "note": "p4 Declaration — ID verification date — 공란 유지",
         "source": null
       },
-      "text_82dwak": {
+      "text_82tjdb": {
         "source": null,
         "default": "N/A",
         "note": "p3 Babesia canis rossi — Treatment date (한국발은 항상 N/A)"
       },
-      "text_83ftvk": {
+      "text_83cwwy": {
         "source": null,
         "default": "N/A",
         "note": "p3 Babesia canis rossi — Product name"
       },
-      "text_84vemx": {
+      "text_84yeik": {
         "source": null,
         "default": "N/A",
         "note": "p3 Babesia canis rossi — Active ingredient(s)"
       },
-      "text_85tscx": {
+      "text_85pjyr": {
         "source": null,
         "default": "N/A",
         "note": "p3 Babesia canis rossi — Dose rate"
@@ -3859,7 +3859,22 @@
       },
       "SEXRow1": {
         "source": "sex",
-        "note": "p1 Section 2: Sex"
+        "transform": "sex_basic_en",
+        "note": "p1 Section 2: Sex (Male/Female 만 — 중성화 여부는 별도 SPAY/NEUTERED 라디오)"
+      },
+      "undefined": {
+        "source": "sex",
+        "transform": "sex_neutered_yn",
+        "note": "p1 Section 2: SPAY/NEUTERED? — neutered_male/spayed_female 면 YES, 외 NO. PDF 필드 이름이 빈값(\"undefined\") 이라 그대로 키로 사용."
+      },
+      "COUNTRY FROMRow1": {
+        "source": null,
+        "default": "Republic of Korea",
+        "note": "p1 Section 2: Country of origin (수출국가)"
+      },
+      "OTHER MICROCHIP NUMBERRED": {
+        "source": "microchip_secondary",
+        "note": "p1 Section 2: 보조 마이크로칩 번호 (윗줄 — PDF 필드명 RED 가 윗줄)"
       },
       "BREED": {
         "source": "breed_en",
@@ -3883,15 +3898,20 @@
         "transform": "last_4_digits",
         "note": "p1 Section 2: Last 4 digits of microchip"
       },
+      "LAST 4 DIGITS ONLY": {
+        "source": "hawaii_extra",
+        "transform": "json_last_4_digits:passport_number",
+        "note": "p1 Section 3: Owner ID last 4 digits (passport)"
+      },
       "TYPE": {
         "source": null,
-        "default": "RABIES",
-        "note": "p1 Section 2: Vaccine type"
+        "default": "Passport",
+        "note": "p1 Section 3: Owner ID type"
       },
       "EXPIRATION DATE": {
-        "source": "rabies_dates",
-        "transform": "array[0]",
-        "note": "p1 Section 2: Rabies vaccine expiration date"
+        "source": "hawaii_extra",
+        "transform": "json:passport_expiry_date",
+        "note": "p1 Section 3: Owner passport expiration date"
       },
       "FIRST": {
         "source": "customer_name_en",
@@ -3909,44 +3929,45 @@
         "note": "p1 Section 3: Primary owner last name"
       },
       "OWNER DATE of BIRTH": {
-        "source": null,
-        "note": "p1 Section 3: Owner DOB - 수동입력"
+        "source": "hawaii_extra",
+        "transform": "json:date_of_birth",
+        "note": "p1 Section 3: Owner DOB"
       },
       "NUMBER and STREET": {
-        "source": "address_en",
-        "note": "p1 Section 3: Owner street address"
+        "source": "address_en_street",
+        "note": "p1 Section 3: Owner street (한국 주소 첫 토큰)"
       },
       "CITY": {
-        "source": null,
-        "note": "p1 Section 3: Owner city - 수동입력"
+        "source": "address_city",
+        "note": "p1 Section 3: Owner city (한국 시·구)"
       },
       "STATE": {
-        "source": null,
-        "note": "p1 Section 3: Owner state - 수동입력"
+        "source": "address_en_state",
+        "note": "p1 Section 3: Owner state (한국 도/광역시)"
       },
       "ZIP": {
-        "source": null,
-        "note": "p1 Section 3: Owner ZIP - 수동입력"
+        "source": "address_zipcode",
+        "note": "p1 Section 3: Owner ZIP (한국 우편번호)"
       },
       "EMAIL ADDRESS": {
         "source": "email",
         "note": "p1 Section 3: Owner email"
       },
       "HAWAII ADDRESS": {
-        "source": "address_overseas",
-        "note": "p1 HAWAII ADDRESS section: Street address (해외주소 거리명)"
+        "source": "address_overseas_street",
+        "note": "p1 HAWAII ADDRESS: Street address (해외주소 첫 토큰)"
       },
       "CITY_2": {
-        "source": null,
-        "note": "p1 HAWAII ADDRESS section: City (하와이 도시명) - 수동입력"
+        "source": "address_overseas_city",
+        "note": "p1 HAWAII ADDRESS: City (해외주소 도시)"
       },
       "ISLAND": {
-        "source": null,
-        "note": "p1 HAWAII ADDRESS section: Island (하와이 섬) - 수동입력"
+        "source": "address_overseas_island",
+        "note": "p1 HAWAII ADDRESS: Island (city → island 자동 매핑)"
       },
       "ZIP_2": {
-        "source": null,
-        "note": "p1 HAWAII ADDRESS section: ZIP (하와이 우편번호) - 수동입력"
+        "source": "postal_code",
+        "note": "p1 HAWAII ADDRESS: ZIP (postal_code 키)"
       },
       "EMAIL ADDRESS HAWAII ADDRESS": {
         "source": null,
