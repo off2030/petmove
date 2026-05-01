@@ -527,7 +527,7 @@ function Inner() {
               <div className="shrink-0 pt-2 text-[13px] text-muted-foreground flex items-center justify-between flex-wrap gap-y-2 max-md:peer-focus-within:hidden">
                 {selectedCase ? (
                   <>
-                    <span>
+                    <span className="hidden md:inline">
                       접수일 {formatDate(selectedCase.created_at)}
                       {selectedCase.updated_at !== selectedCase.created_at && (
                         <span className="ml-4">수정일 {formatDate(selectedCase.updated_at)}</span>
