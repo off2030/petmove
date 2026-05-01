@@ -2984,11 +2984,6 @@
         "transform": "vaccine:rabies:date[0]",
         "note": "p2 Rabies Row 1 date — oldest dose (1회 접종이면 여기만)"
       },
-      "text_38hidk": {
-        "source": "rabies_dates",
-        "transform": "vaccine:rabies:date[1]",
-        "note": "p2 Rabies Row 2 date — 2nd dose. 1회 접종이면 공란 (N/A 없음)"
-      },
       "text_19bpxy": {
         "source": "rabies_dates",
         "transform": "vaccine_combined:rabies:name",
@@ -3221,11 +3216,6 @@
         "source": "rabies_dates",
         "transform": "vaccine:rabies:date[0]",
         "note": "p2 Rabies Row 1 date — oldest dose (1회 접종이면 여기만)"
-      },
-      "text_38hidk": {
-        "source": "rabies_dates",
-        "transform": "vaccine:rabies:date[1]",
-        "note": "p2 Rabies Row 2 date — 2nd dose. 1회 접종이면 공란 (N/A 없음)"
       },
       "text_19bpxy": {
         "source": "rabies_dates",
