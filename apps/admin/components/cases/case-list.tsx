@@ -273,22 +273,23 @@ export function CaseList({
         </div>
       )}
 
-      {/* Page header — editorial title + 모드 탭 (실험) */}
-      <div className="shrink-0 px-lg flex items-baseline justify-between gap-md">
+      {/* Page header — editorial title + 모드 탭 (실험)
+          모바일은 좁아서 좌측 "고객 정보" 큰 타이틀 숨김. 우측 "목록" 탭이 같은 동작이라 중복. */}
+      <div className="shrink-0 px-md md:px-lg flex items-baseline justify-between gap-sm md:gap-md">
         <button
           type="button"
           onClick={() => setMode('cases')}
-          className="font-serif text-[26px] leading-tight tracking-tight text-foreground hover:opacity-70 transition-opacity"
+          className="hidden md:inline-block font-serif text-[26px] leading-tight tracking-tight text-foreground hover:opacity-70 transition-opacity"
           title="목록 화면으로 이동"
         >
           고객 정보
         </button>
-        <div className="flex items-baseline gap-md">
+        <div className="flex items-baseline gap-sm md:gap-md">
           <button
             type="button"
             onClick={() => setMode('cases')}
             className={cn(
-              'font-serif text-[15px] transition-colors',
+              'font-serif text-[14px] md:text-[15px] transition-colors',
               mode === 'cases'
                 ? 'text-foreground font-semibold'
                 : 'text-muted-foreground/70 hover:text-foreground',
@@ -304,7 +305,7 @@ export function CaseList({
               type="button"
               onClick={() => setMode(t.id)}
               className={cn(
-                'font-serif text-[15px] transition-colors',
+                'font-serif text-[14px] md:text-[15px] transition-colors',
                 mode === t.id
                   ? 'text-foreground font-semibold'
                   : 'text-muted-foreground/70 hover:text-foreground',
