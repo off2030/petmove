@@ -4215,6 +4215,7 @@
     "description": "Switzerland (BLV) Import authorisation application — 스위스 연방 식품안전 수의청 반려동물 입국 신청서. 한국→스위스 반려동물 수출시 제출 (Application form(스위스).pdf).",
     "filename": "CH_{pet_name}.pdf",
     "dateFormat": "dmy",
+    "flatten": true,
     "fields": {
       "text_1pdjr":  { "source": "address_en_no_country",  "note": "§1 Applicant — Address (Country label on form is static, so strip trailing 'Republic of Korea')" },
       "text_2fvow":  { "source": "customer_last_name_en", "note": "§1 Applicant — Name (last)" },
