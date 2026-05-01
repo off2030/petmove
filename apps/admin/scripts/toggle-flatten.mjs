@@ -15,12 +15,29 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs'
 
+// flatten 적용 = 발급 PDF 의 폼 필드를 페이지 컨텐트로 굳혀 발급 후 편집
+// 차단. 공식 제출용 증명서는 모두 ON.
+//
+// 제외 대상 (의도적):
+//  - CH: 보호자가 발급받아 제출 전 직접 편집하는 신청서
+//  - Invoice: preserveTemplateText 와의 상호작용 미검증 — 별도 점검 후 결정
 const OFFICIAL_CERTS = [
+  // 호주
   'AU', 'AU_2', 'AU_Cat', 'AU_Cat_2',
-  'NZ', 'NZ_2', 'OVD',
-  'Form25', 'Form25AuNz',
-  'FormRE', 'FormAC',
   'IdentificationDeclaration',
+  // 뉴질랜드
+  'NZ', 'NZ_2', 'OVD',
+  // 한국 발급
+  'Form25', 'Form25AuNz',
+  'APQA_HQ', 'APQA_HQ_En',
+  // 일본
+  'FormRE', 'FormAC',
+  // EU·영국·스위스(증명서 본체 — CH 신청서는 제외)
+  'AnnexIII', 'UK',
+  // 기타 국가
+  'SGP', 'AQS_279', 'Form_R11', 'VHC',
+  // 검사 의뢰서 + 운송 부속서류
+  'KSVDL', 'VBDDL', 'ESD',
 ]
 
 const mode = process.argv[2]

@@ -1149,6 +1149,7 @@
     "description": "ANNEX III — EU/영국/스위스/아일랜드 수입용 반려동물 건강증명서",
     "filename": "Annex_III_{pet_name}.pdf",
     "dateFormat": "dmy",
+    "flatten": true,
     "fields": {
       "I1_consignor_name": {
         "source": "customer_name_en"
@@ -1518,6 +1519,7 @@
     "description": "영국 수입용 반려동물 건강증명서 (GB pet health certificate)",
     "filename": "UK_{pet_name}.pdf",
     "dateFormat": "dmy",
+    "flatten": true,
     "fields": {
       "I1_consignor_name": {
         "source": "customer_name_en"
@@ -3797,6 +3799,7 @@
     "description": "Singapore 수출용 반려동물 건강증명서 (Veterinary Certificate for Import of Dogs and Cats — Schedule III). 개/고양이 공통 양식. 성별은 폼에 plain text라 수의사가 직접 동그라미 침.",
     "filename": "SGP_{pet_name}.pdf",
     "dateFormat": "dmy",
+    "flatten": true,
     "fields": {
       "text_1vqxe": { "source": null, "note": "p1 NParks/AVS Import Licence No. (수동입력)" },
       "text_2dlhd": { "source": null, "note": "p1 Veterinary Certificate No. (수동입력)" },
@@ -3844,6 +3847,7 @@
     "description": "Hawaii 입주 신고서 (Animal Quarantine Station AQS-279 — Dog and Cat Entry Form for Hawaii). Page 1: 1) PLANNED DATE OF ARRIVAL, 2) PET INFORMATION, 3) PRIMARY OWNER INFORMATION. Page 3: Print Name & Date",
     "filename": "AQS_279_{pet_name}.pdf",
     "dateFormat": "dmy",
+    "flatten": true,
     "fields": {
       "1 PLANNED DATE OF ARRIVAL": {
         "source": "departure_date",
@@ -4005,6 +4009,7 @@
     "description": "태국 동물 수입/수출/경유 신청서 (Department of Livestock Development Form R.1/1). 방콕/푸켓/치앙마이 공항 검역소 앞. 증명서 발행일은 신청일(PDF 생성 시점). 불력(B.E.) = 서기 + 543.",
     "filename": "Form_R11_{pet_name}.pdf",
     "dateFormat": "dmy",
+    "flatten": true,
     "fields": {
       "text_5gwje": {
         "source": null,
@@ -4262,6 +4267,7 @@
     "description": "Veterinary Health Certificate — 범용 영문 건강증명서. 인도네시아 등 특수 양식이 없는 국가 공통으로 사용. 보호자·동물·접종/구충·광견병항체·수의사 선언서로 구성.",
     "filename": "VHC_{pet_name}.pdf",
     "dateFormat": "dmy",
+    "flatten": true,
     "fields": {
       "owner_name":    { "source": "customer_name_en", "note": "§I Owner name" },
       "owner_address": { "source": "address_en",       "note": "§I Owner address" },
@@ -4341,6 +4347,7 @@
     "description": "농림축산검역본부 혈청검사 신청서 (한국 서식). 별지 제2호서식 — 전염병검사(브루셀라/렙토스피라 등) 의뢰용. 3페이지 (신청서 + 의뢰인 동의서 + 여분 동의서). 신청인 섹션은 조직 정보(성명/업소명/전화) 자동 채움.",
     "filename": "APQA_HQ_{pet_name}.pdf",
     "dateFormat": "ymd_slash",
+    "flatten": true,
     "fields": {
       "text_18zcrf": { "source": null, "transform": "vet:name_ko",     "note": "p1 신청인 — 성 명 (조직 대표 한글)" },
       "text_19edhq": { "source": null, "transform": "vet:clinic_ko",   "note": "p1 신청인 — 업소명 (병원명 한글)" },
@@ -4373,6 +4380,7 @@
     "description": "농림축산검역본부 혈청검사 신청서 (영문). Serological Test Application Form — 상대국(수출국) 검역 제출용. 1페이지. Veterinarian 섹션은 조직 정보(병원명/수의사 한·영, 주소, 전화) 자동 채움.",
     "filename": "APQA_HQ_En_{pet_name}.pdf",
     "dateFormat": "dmy",
+    "flatten": true,
     "fields": {
       "text_1deys":  { "source": "vet_visit_date", "note": "Date of Application — 신청일(내원일, dmy 포맷 자동 변환)" },
       "text_3qzrv":  { "source": "customer_name_en", "note": "Owner Name — 보호자 영문" },
@@ -4402,6 +4410,7 @@
     "description": "Kansas State Veterinary Diagnostic Laboratory — Canine Export Submission Form. 뉴질랜드·호주 수출용 브루셀라/렙토스피라/레이슈마니아 등 혈청검사. Owner 정보 + Veterinarian/Clinic 정보 (조직 설정 기반) 자동 채움.",
     "filename": "KSVDL_{pet_name}.pdf",
     "dateFormat": "ymd_slash",
+    "flatten": true,
     "fields": {
       "text_1jqev":  { "source": "customer_name_en", "note": "Owner Name" },
       "text_2pghn":  { "source": "address_en", "transform": "address_part:street", "note": "Owner Address — 도로명 부분" },
@@ -4434,6 +4443,7 @@
     "description": "Vector Borne Disease Diagnostic Lab (NC State) — Submission Form. 레이슈마니아 등 매개체 매개 질병 검사용. 2026-04 템플릿 업데이트로 CLINIC INFORMATION + PATIENT INFORMATION 섹션이 모두 form field 화 (23개 텍스트 필드). PATIENT ID·LAB REF NUMBER 는 수동 입력, SAMPLE TYPE 은 'Serum' 기본값, SPECIES 자동 채움.",
     "filename": "VBDDL_{pet_name}.pdf",
     "dateFormat": "ymd_slash",
+    "flatten": true,
     "fields": {
       "text_1dhys":  { "source": null, "transform": "vet:clinic_en",          "note": "CLINIC NAME (영문 병원명)" },
       "text_2ptht":  { "source": null, "transform": "vet:name_en",            "note": "DVM FIRST & LAST NAME" },
@@ -4466,6 +4476,7 @@
     "description": "Exempt Specimen Declaration — 혈청 등 진단 검체를 해외 실험실(KSVDL/VBDDL 등)로 FedEx 발송 시 세관 통관용 수의사 선언서. 가변 항목: 튜브 갯수, 수신 실험실, 조직 정보(이름/주소/연락처/면허). 종(species) 은 템플릿 기본값 유지.",
     "filename": "ESD_{tube_count}tubes.pdf",
     "dateFormat": "mdy_slash",
+    "flatten": true,
     "fields": {
       "text_1ataj":  { "source": null, "transform": "today_ymd_slash",          "note": "Date of Letter (오늘)" },
       "text_2gscn":  { "source": "consignee_lab", "transform": "lab_shipping:name", "note": "수신 실험실 이름만" },
