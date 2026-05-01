@@ -203,7 +203,6 @@ const PARASITE_PRODUCT_INFO: Record<string, { ingredient: string; dose: string }
   frontline_plus_dog:  { ingredient: 'Fipronil', dose: '1 vial' },
   frontline_spray_cat: { ingredient: 'Fipronil', dose: '1 vial' },
   drontal_plus_dog:    { ingredient: 'Pyrantel Pamoate, Praziquantel, Febantel', dose: '1 tablet per 10 kg body weight' },
-  drontal_plus_cat:    { ingredient: 'Pyrantel Pamoate, Praziquantel', dose: '1 tablet per 4 kg body weight' },
 }
 
 /** sex code → English label used by Annex III (N. = neutered/spayed). */
@@ -1293,7 +1292,7 @@ function resolveField(
     const species = String(data.species ?? '').toLowerCase()
     const defaultIds: Record<'external' | 'internal', Record<string, string>> = {
       external: { dog: 'frontline_plus_dog', cat: 'frontline_spray_cat' },
-      internal: { dog: 'drontal_plus_dog',   cat: 'drontal_plus_cat' },
+      internal: { dog: 'drontal_plus_dog' }, // 고양이 내부구충 default 등록된 family 없음 — rec.product_id 필요.
     }
     const pid = rec.product_id || defaultIds[side][species]
     const info = pid ? PARASITE_PRODUCT_INFO[pid] : undefined

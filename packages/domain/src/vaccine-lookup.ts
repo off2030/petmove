@@ -118,15 +118,20 @@ export interface ParasiteFamily {
   manufacturer: string
   species: 'dog' | 'cat'
   kind: ParasiteKind
+  /**
+   * 같은 family 안에 체중대(tier)별 batch 가 다를 수 있는지.
+   * true 면 catalog 폼에서 체중 최소/최대/표기(size) 입력칸 노출.
+   * false 면 한 batch 가 모든 체중을 커버 (Drontal Plus, Frontline Spray 등).
+   */
+  hasWeightTiers: boolean
 }
 
 export const PARASITE_FAMILIES: ParasiteFamily[] = [
-  { id: 'frontline_plus_dog',  name: 'Frontline Plus',  manufacturer: 'Boehringer Ingelheim', species: 'dog', kind: 'external' },
-  { id: 'frontline_spray_cat', name: 'Frontline Spray', manufacturer: 'Boehringer Ingelheim', species: 'cat', kind: 'external' },
-  { id: 'drontal_plus_dog',    name: 'Drontal Plus',    manufacturer: 'Elanco',                species: 'dog', kind: 'internal' },
-  { id: 'drontal_plus_cat',    name: 'Drontal Plus',    manufacturer: 'Elanco',                species: 'cat', kind: 'internal' },
-  { id: 'nexgard_spectra_dog',  name: 'NexGard Spectra',   manufacturer: 'Boehringer Ingelheim', species: 'dog', kind: 'combo' },
-  { id: 'nexgard_cat_combo_cat', name: 'NexGard Cat Combo', manufacturer: 'Boehringer Ingelheim', species: 'cat', kind: 'combo' },
+  { id: 'frontline_plus_dog',   name: 'Frontline Plus',    manufacturer: 'Boehringer Ingelheim', species: 'dog', kind: 'external', hasWeightTiers: true },
+  { id: 'frontline_spray_cat',  name: 'Frontline Spray',   manufacturer: 'Boehringer Ingelheim', species: 'cat', kind: 'external', hasWeightTiers: false },
+  { id: 'drontal_plus_dog',     name: 'Drontal Plus',      manufacturer: 'Elanco',                species: 'dog', kind: 'internal', hasWeightTiers: false },
+  { id: 'nexgard_spectra_dog',  name: 'NexGard Spectra',   manufacturer: 'Boehringer Ingelheim', species: 'dog', kind: 'combo',    hasWeightTiers: true },
+  { id: 'nexgard_cat_combo_cat', name: 'NexGard Cat Combo', manufacturer: 'Boehringer Ingelheim', species: 'cat', kind: 'combo',   hasWeightTiers: true },
 ]
 
 export function getParasiteFamily(id: string): ParasiteFamily | null {

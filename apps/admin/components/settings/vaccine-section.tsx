@@ -149,6 +149,10 @@ function toInput(form: FormState): OrgVaccineProductInput {
   const num = (s: string) => (s.trim() === '' ? null : Number(s))
   const txt = (s: string) => (s.trim() === '' ? null : s.trim())
   const kind = CATEGORY_META[form.category]?.kind ?? 'vaccine'
+  // Family 가 weight tier 없는 약이면 체중·size 무관하게 null 저장 — UI 가 숨겨도 폼 state 에
+  // 남아있을 수 있으므로 저장 단계에서 안전망.
+  const family = form.parasite_id ? PARASITE_FAMILIES.find((f) => f.id === form.parasite_id) : null
+  const weightless = family ? !family.hasWeightTiers : false
   return {
     category: form.category,
     vaccine: kind === 'vaccine' ? txt(form.vaccine) : null,
@@ -157,9 +161,9 @@ function toInput(form: FormState): OrgVaccineProductInput {
     batch: txt(form.batch),
     expiry: txt(form.expiry),
     year: num(form.year),
-    weight_min: num(form.weight_min),
-    weight_max: num(form.weight_max),
-    size: txt(form.size),
+    weight_min: weightless ? null : num(form.weight_min),
+    weight_max: weightless ? null : num(form.weight_max),
+    size: weightless ? null : txt(form.size),
     parasite_id: txt(form.parasite_id),
   }
 }
@@ -872,10 +876,31 @@ function ProductFormModal({ mode, initial, pending, fromExtract, extractRemainin
       : parasiteCategorySpecies === 'cat' ? f.species === 'cat'
       : true
   )
+  const selectedFamily = form.parasite_id ? PARASITE_FAMILIES.find((f) => f.id === form.parasite_id) ?? null : null
+  // family 미선택 시엔 보수적으로 weight 필드 노출 (사용자가 수동 입력 가능),
+  // family 선택됐고 그게 weight tier 없는 약(Drontal/Frontline Spray 등)이면 숨김.
+  const showWeightFields = !selectedFamily || selectedFamily.hasWeightTiers
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }))
   }
+
+  // 제품명·제조사 변경 시 family ID 자동 매칭 — 사용자가 아직 직접 고르지 않았을 때만.
+  useEffect(() => {
+    if (kind !== 'parasite') return
+    if (form.parasite_id) return
+    const productLc = form.product.trim().toLowerCase()
+    const mfgLc = form.manufacturer.trim().toLowerCase()
+    if (!productLc || !mfgLc) return
+    const match = parasiteOptions.find(
+      (f) => f.name.toLowerCase() === productLc && f.manufacturer.toLowerCase() === mfgLc,
+    )
+    if (match) {
+      setForm((f) => ({ ...f, parasite_id: match.id }))
+    }
+    // parasiteOptions 는 category 의 species 가 바뀔 때만 변하므로 의존성에서 제외.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.product, form.manufacturer, kind, form.parasite_id])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -973,35 +998,6 @@ function ProductFormModal({ mode, initial, pending, fromExtract, extractRemainin
 
           {kind === 'parasite' && (
             <>
-              <div className="grid grid-cols-3 gap-md">
-                <Field label="체중 최소 (kg)">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={form.weight_min}
-                    onChange={(e) => update('weight_min', e.target.value)}
-                    className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background"
-                  />
-                </Field>
-                <Field label="체중 최대 (kg)">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={form.weight_max}
-                    onChange={(e) => update('weight_max', e.target.value)}
-                    className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background"
-                  />
-                </Field>
-                <Field label="표기 (size)">
-                  <input
-                    value={form.size}
-                    onChange={(e) => update('size', e.target.value)}
-                    placeholder="1.35-3.5kg"
-                    className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background"
-                  />
-                </Field>
-              </div>
-
               <Field label="Parasite family ID (선택사항)">
                 <select
                   value={form.parasite_id}
@@ -1016,6 +1012,37 @@ function ProductFormModal({ mode, initial, pending, fromExtract, extractRemainin
                   ))}
                 </select>
               </Field>
+
+              {showWeightFields && (
+                <div className="grid grid-cols-3 gap-md">
+                  <Field label="체중 최소 (kg)">
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={form.weight_min}
+                      onChange={(e) => update('weight_min', e.target.value)}
+                      className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background"
+                    />
+                  </Field>
+                  <Field label="체중 최대 (kg)">
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={form.weight_max}
+                      onChange={(e) => update('weight_max', e.target.value)}
+                      className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background"
+                    />
+                  </Field>
+                  <Field label="표기 (size)">
+                    <input
+                      value={form.size}
+                      onChange={(e) => update('size', e.target.value)}
+                      placeholder="1.35-3.5kg"
+                      className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background"
+                    />
+                  </Field>
+                </div>
+              )}
             </>
           )}
         </div>
