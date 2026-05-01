@@ -530,7 +530,7 @@ function Inner() {
                         <span className="ml-4">수정일 {formatDate(selectedCase.updated_at)}</span>
                       )}
                     </span>
-                    <div className="flex items-center gap-1 flex-wrap justify-end">
+                    <div className="flex items-center gap-1 flex-nowrap overflow-x-auto scrollbar-hide pr-20 justify-start w-full md:w-auto md:flex-wrap md:overflow-visible md:pr-0 md:justify-end">
                       <label className="flex items-center gap-xs select-none cursor-pointer rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors">
                         <input
                           type="checkbox"
