@@ -1043,6 +1043,25 @@ function resolveField(
     return date ? fmtDate(date) : ''
   }
 
+  // NZ Model Veterinary Certificate (10a/10b) — 단일/부스터 분기.
+  //  - rabies:primary_date          : 단일 회차일 때만 그 날짜
+  //  - rabies:booster_date_latest   : 2회차 이상일 때 가장 최신 접종일
+  //  - rabies:booster_date_previous : 2회차 이상일 때 그 직전 접종일
+  // 비조건이면 빈 문자열 → 템플릿이 (10a)/(10b) 둘 중 하나만 자연스럽게 채워짐.
+  const nzRabiesMatch = transform?.match(/^rabies:(primary_date|booster_date_latest|booster_date_previous)$/)
+  if (nzRabiesMatch && source === 'rabies_dates') {
+    const allDates = sortedDesc(raw) // 최신순 (newest first)
+    const variant = nzRabiesMatch[1]
+    if (variant === 'primary_date') {
+      if (allDates.length !== 1) return ''
+      return fmtDate(allDates[0])
+    }
+    if (allDates.length < 2) return ''
+    if (variant === 'booster_date_latest') return fmtDate(allDates[0])
+    if (variant === 'booster_date_previous') return fmtDate(allDates[1])
+    return ''
+  }
+
   // Strip trailing country name from address (e.g. ", Republic of Korea" / ", South Korea" / ", Korea")
   if (transform === 'strip_country') {
     return String(raw ?? '').replace(/,?\s*(Republic of Korea|South Korea|Korea)\s*\.?\s*$/i, '').trim()
@@ -2054,6 +2073,15 @@ function resolveField(
     // Format date-looking fields (YYYY-MM-DD) for Japan forms
     if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return fmtDate(raw)
     return raw
+  }
+  // 시스템 가드 — transform 핸들러 미구현 / 매칭 실패로 객체·배열이 fall-through 되면
+  // String() 이 "[object Object]" / "[object Object],..." 출력. 그것보단 빈 문자열이 안전.
+  // 매핑에 새 transform 이름을 추가했는데 핸들러가 없으면 PDF 에 나타나지 않으므로 디버깅 용이.
+  if (typeof raw === 'object') {
+    if (typeof console !== 'undefined' && transform) {
+      console.warn(`[pdf-fill] transform "${transform}" 핸들러 미구현 또는 매칭 실패 — 빈 값 반환 (source=${source ?? '?'})`)
+    }
+    return ''
   }
   return String(raw)
 }
