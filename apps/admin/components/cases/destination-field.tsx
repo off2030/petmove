@@ -91,6 +91,21 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     await updateCaseField(caseId, 'column', 'destination', val)
   }
 
+  async function reorderDests(fromIdx: number, toIdx: number) {
+    if (fromIdx === toIdx) return
+    if (fromIdx < 0 || fromIdx >= selected.length) return
+    if (toIdx < 0 || toIdx >= selected.length) return
+    const next = selected.slice()
+    const [moved] = next.splice(fromIdx, 1)
+    next.splice(toIdx, 0, moved)
+    const val = joinDests(next)
+    updateLocalCaseField(caseId, 'column', 'destination', val)
+    await updateCaseField(caseId, 'column', 'destination', val)
+  }
+
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
+  const [overIdx, setOverIdx] = useState<number | null>(null)
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
@@ -105,16 +120,43 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
         <div className="flex-1 min-w-0">
         {selected.length > 0 ? (
           <div className="group/val inline-flex items-center gap-md flex-wrap">
-            {selected.map((ko) => {
+            {selected.map((ko, idx) => {
               const code = destCode(ko)
               const isActive = multi && (activeDestination ?? selected[0]) === ko
+              const isDragOver = multi && editMode && overIdx === idx && dragIdx !== null && dragIdx !== idx
               return (
                 <span
                   key={ko}
+                  draggable={multi && editMode}
+                  onDragStart={(e) => {
+                    if (!multi || !editMode) return
+                    setDragIdx(idx)
+                    e.dataTransfer.effectAllowed = 'move'
+                    e.dataTransfer.setData('text/plain', String(idx))
+                  }}
+                  onDragOver={(e) => {
+                    if (!multi || !editMode || dragIdx === null) return
+                    e.preventDefault()
+                    e.dataTransfer.dropEffect = 'move'
+                    if (overIdx !== idx) setOverIdx(idx)
+                  }}
+                  onDragLeave={() => {
+                    if (overIdx === idx) setOverIdx(null)
+                  }}
+                  onDrop={(e) => {
+                    if (!multi || !editMode || dragIdx === null) return
+                    e.preventDefault()
+                    void reorderDests(dragIdx, idx)
+                    setDragIdx(null); setOverIdx(null)
+                  }}
+                  onDragEnd={() => { setDragIdx(null); setOverIdx(null) }}
                   className={cn(
                     'group/chip inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 transition-all',
                     'bg-[#E5D9C2] text-[#6B5A3A]',
                     multi && !isActive && 'opacity-45 hover:opacity-80',
+                    multi && editMode && 'cursor-grab active:cursor-grabbing',
+                    dragIdx === idx && 'opacity-30',
+                    isDragOver && 'ring-2 ring-[#6B5A3A]/50',
                   )}
                 >
                   <button

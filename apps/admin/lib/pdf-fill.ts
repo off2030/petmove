@@ -85,6 +85,8 @@ type FieldMapping = {
   note?: string
   /** Text alignment in the rendered widget. Default is left (PDF default). */
   align?: 'left' | 'center' | 'right'
+  /** 케이스의 species 가 이 값일 때만 채움. 다른 종이면 빈 값 (또는 default). */
+  speciesOnly?: 'dog' | 'cat'
 }
 
 type SignatureOverlay = {
@@ -920,7 +922,13 @@ function resolveField(
   data: Record<string, unknown>,
   allowedVaccines?: string[],
 ): Resolved {
-  const { source, transform } = mapping
+  const { source, transform, speciesOnly } = mapping
+  // species 가드 — 종이 안 맞으면 default(없으면 빈) 반환. 강아지·고양이 공용 양식에서
+  // 해당 종 전용 필드(예: SGP 의 Canine/Feline 백신 행)를 제어할 때 사용.
+  if (speciesOnly) {
+    const sp = String(data.species ?? '').toLowerCase()
+    if (sp !== speciesOnly) return mapping.default ?? ''
+  }
   const raw = source ? readSource(source, caseRow, data) : null
 
   // 한글 도로명 주소를 도로명+번지(base)와 건물명/호수(detail) 로 분리.

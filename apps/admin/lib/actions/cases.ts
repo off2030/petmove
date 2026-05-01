@@ -130,6 +130,42 @@ export async function updateCaseField(
     })
   }
 
+  // 서류 탭 상태 자동 리셋 — 재출국으로 간주되는 변경 시 'done' 상태를 클리어.
+  //  · 내원일(vet_visit_date) 이 변경되면 무조건 리셋
+  //  · 출국일(departure_date) 이 변경되었고 내원일이 비었거나 이미 지난 경우 리셋
+  // export_doc_status 가 'done' 일 때만 동작. 현재값이 actually 변경된 경우만.
+  const isVetVisit = storage === 'data' && key === 'vet_visit_date'
+  const isDeparture = storage === 'column' && key === 'departure_date'
+  if ((isVetVisit || isDeparture) && oldValue !== newValue) {
+    const { data: row } = await supabase
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (row) {
+      const current: Record<string, unknown> =
+        (row.data as Record<string, unknown> | null) ?? {}
+      if (current.export_doc_status === 'done') {
+        let shouldReset = false
+        if (isVetVisit) {
+          shouldReset = true
+        } else {
+          const visit = typeof current.vet_visit_date === 'string' ? current.vet_visit_date : ''
+          const today = new Date().toISOString().slice(0, 10)
+          if (!visit || visit < today) shouldReset = true
+        }
+        if (shouldReset) {
+          const next = { ...current }
+          delete next.export_doc_status
+          await supabase
+            .from('cases')
+            .update({ data: next })
+            .eq('id', caseId)
+        }
+      }
+    }
+  }
+
   // 자동 채움 규칙 적용 — 날짜 관련 필드가 변경됐을 때만.
   // 체이닝은 엔진 내부에서 iter loop 로 처리.
   const DATE_TRIGGER_KEYS = new Set([

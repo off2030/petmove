@@ -336,24 +336,42 @@ export async function fetchSiblings(caseId: string): Promise<
   if (pivotErr || !pivot) return { ok: false, error: pivotErr?.message ?? '케이스를 찾을 수 없습니다' }
   const p = pivot as CaseRow
 
+  // 1차 필터: customer_name + destination 일치 (server side)
   let q = supabase
     .from('cases')
     .select('*')
     .eq('customer_name', p.customer_name)
   q = p.destination ? q.eq('destination', p.destination) : q.is('destination', null)
-  q = p.departure_date ? q.eq('departure_date', p.departure_date) : q.is('departure_date', null)
   const { data: rows, error } = await q
   if (error) return { ok: false, error: error.message }
 
+  // 2차 필터: 출국일 OR 내원일 일치 (vet_visit_date 가 data jsonb 안이라 client side)
+  const pivotVet = readVetVisitDate(p)
+  const matchesPivot = (c: CaseRow): boolean => {
+    const cVet = readVetVisitDate(c)
+    const sameDeparture = p.departure_date
+      ? c.departure_date === p.departure_date
+      : !c.departure_date
+    const sameVet = pivotVet ? cVet === pivotVet : !cVet
+    return sameDeparture || sameVet
+  }
+
   const all = (rows ?? []) as CaseRow[]
+  const matched = all.filter(matchesPivot)
   // Pivot first, rest by created_at ascending (stable ordering).
   const sorted = [
     p,
-    ...all
+    ...matched
       .filter(r => r.id !== p.id)
       .sort((a, b) => (a.created_at ?? '').localeCompare(b.created_at ?? '')),
   ]
   return { ok: true, siblings: sorted }
+}
+
+function readVetVisitDate(c: CaseRow): string | null {
+  const data = (c.data ?? {}) as Record<string, unknown>
+  const v = data.vet_visit_date
+  return typeof v === 'string' && v ? v : null
 }
 
 export async function previewSiblings(caseId: string, formKey: 'AnnexIII' | 'UK'): Promise<

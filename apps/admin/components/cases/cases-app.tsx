@@ -90,11 +90,17 @@ const CERT_MULTI_KEYS: Record<string, string> = {
  * - autoCountries + 출국일 → "신고 자동" (회색 읽기전용)
  * - 그 외(buttonCountries 안에 있고 자동 조건 미충족) → "신고 추가" 클릭해 수동 포함
  */
-function hasCountryIn(row: CaseRow, countries: string[]): boolean {
-  if (!row.destination) return false
-  const set = new Set(countries)
+/** 케이스의 표시 순서상 첫 번째 destination 만 추출. multi 일 때 신고/서류 탭은 이 값만 사용. */
+function firstDestination(row: CaseRow): string | null {
+  if (!row.destination) return null
   const dests = row.destination.split(',').map(s => s.trim()).filter(Boolean)
-  return dests.some(d => set.has(d))
+  return dests[0] ?? null
+}
+
+function hasCountryIn(row: CaseRow, countries: string[]): boolean {
+  const first = firstDestination(row)
+  if (!first) return false
+  return countries.includes(first)
 }
 
 function isAutoImportReportCase(row: CaseRow, autoCountries: string[]): boolean {
@@ -116,7 +122,33 @@ function ImportReportToggle({
 
   const manual = data.import_report_manual === true
   const auto = isAutoImportReportCase(caseRow, importReportCountries)
+  const dismissed = data.import_report_dismissed === true
   const included = auto || manual
+
+  // "신고 내리기" 로 비활성화된 상태 — 회색 라벨 + 리셋 버튼.
+  if (dismissed) {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <span
+          className="rounded-md px-2 py-1 text-muted-foreground/40 select-none cursor-default line-through"
+          title="신고 탭에서 내려진 상태"
+        >
+          신고
+        </span>
+        <button
+          type="button"
+          onClick={async () => {
+            onUpdate(caseRow.id, 'data', 'import_report_dismissed', null)
+            await updateCaseField(caseRow.id, 'data', 'import_report_dismissed', null)
+          }}
+          className="rounded-md px-1.5 py-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors text-[13px]"
+          title="신고 탭으로 다시 올리기"
+        >
+          ↻ 리셋
+        </button>
+      </span>
+    )
+  }
 
   if (auto) {
     return (
@@ -452,7 +484,7 @@ function Inner() {
                         />
                         서명
                       </label>
-                      {resolveCerts(activeDestination ?? selectedCase.destination, certConfig, (selectedCase.data as Record<string, unknown>)?.species as string | undefined).map((btn) =>
+                      {resolveCerts(firstDestination(selectedCase), certConfig, (selectedCase.data as Record<string, unknown>)?.species as string | undefined).map((btn) =>
                         btn.type === 'multi' ? (
                           <button
                             key={btn.key}
@@ -491,7 +523,7 @@ function Inner() {
                                     | 'VHC',
                                   caseId: selectedCase.id,
                                   includeSignature,
-                                  destination: activeDestination ?? selectedCase.destination,
+                                  destination: firstDestination(selectedCase),
                                 })
                               } catch (error) {
                                 alert(error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.')

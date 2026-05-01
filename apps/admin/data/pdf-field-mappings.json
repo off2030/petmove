@@ -3806,18 +3806,18 @@
       "text_6vatu": { "source": "birth_date",  "note": "p1 Age or Date of Birth" },
       "text_7nvqf": { "source": "color_en",    "note": "p1 Colour" },
       "text_9qhaf": { "source": "microchip",   "note": "p1 Microchip Number" },
-      "text_10ehnj": { "source": null,         "note": "p1 Microchip scan date (수동입력)" },
+      "text_10ehnj": { "source": "vet_visit_date", "note": "p1 Microchip scan date (내원일 자동)" },
 
       "text_11qfuf": { "source": null, "default": "JINWON LEE",       "note": "p1 Section III — Vet name (BLOCK LETTERS)" },
       "text_12gljs": { "source": null, "default": "Republic of Korea", "note": "p1 Section III — Country/region of export" },
 
-      "text_13vpdl": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p1 Canine distemper virus date" },
-      "text_14yyzu": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p1 Canine adenovirus type 1 date" },
-      "text_15ggyf": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p1 Canine parvovirus type 2 date" },
+      "text_13vpdl": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "speciesOnly": "dog", "note": "p1 Canine distemper virus date (강아지 전용)" },
+      "text_14yyzu": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "speciesOnly": "dog", "note": "p1 Canine adenovirus type 1 date (강아지 전용)" },
+      "text_15ggyf": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "speciesOnly": "dog", "note": "p1 Canine parvovirus type 2 date (강아지 전용)" },
 
-      "text_16wkhs": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p2 Feline Calicivirus date" },
-      "text_17ffjz": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p2 Feline Herpesvirus-1 date" },
-      "text_18uqim": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "note": "p2 Feline Panleukopenia date" },
+      "text_16wkhs": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "speciesOnly": "cat", "note": "p2 Feline Calicivirus date (고양이 전용)" },
+      "text_17ffjz": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "speciesOnly": "cat", "note": "p2 Feline Herpesvirus-1 date (고양이 전용)" },
+      "text_18uqim": { "source": "general_vaccine_dates", "transform": "vaccine_desc:comprehensive:date[0]", "speciesOnly": "cat", "note": "p2 Feline Panleukopenia date (고양이 전용)" },
 
       "text_19jz":   { "source": "rabies_dates",         "transform": "vaccine_desc:rabies:date[0]", "note": "p2 Rabies vaccination date" },
       "text_20olqh": { "source": "rabies_titer_records", "transform": "array[0].date",              "note": "p2 Blood sampling date (RNATT)" },

@@ -23,29 +23,134 @@ function downloadBase64Pdf(base64: string, filename: string) {
   link.click()
 }
 
-/** 목적지를 tan pill + MONO code + Serif 이름으로 렌더링 (상세페이지 DestinationField와 동일). 항상 한 줄. */
-function renderDestinationBadges(value: string | null | undefined) {
-  const dests = (value ?? '').split(',').map(s => s.trim()).filter(Boolean)
-  if (dests.length === 0) return <span className="text-muted-foreground/50">—</span>
+/**
+ * 신고/서류 탭 목적지 셀 — 기본은 첫 번째 목적지를 보여주고, 다중 목적지인 경우
+ * 칩을 클릭해 드롭다운에서 다른 목적지로 변경 가능. 선택값은 탭별로 케이스 data에
+ * 저장되며 (`<overrideKey>`), 저장값이 더이상 유효하지 않으면 첫 번째 목적지로 폴백.
+ *
+ * dismissAction: 옵션. 드롭다운 하단에 "X 내리기" 항목 추가. 신고 탭에서 사용해
+ * 케이스를 탭에서 명시적으로 제외하는 용도.
+ */
+function DestinationCell({
+  row,
+  overrideKey,
+  onUpdate,
+  dismissAction,
+}: {
+  row: CaseRow
+  overrideKey: string
+  onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
+  dismissAction?: { label: string; dismissKey: string }
+}) {
+  const dests = (row.destination ?? '').split(',').map(s => s.trim()).filter(Boolean)
+  const data = (row.data ?? {}) as Record<string, unknown>
+  const overrideRaw = data[overrideKey]
+  const override = typeof overrideRaw === 'string' ? overrideRaw : null
+  const active = override && dests.includes(override) ? override : dests[0] ?? null
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [open])
+
+  if (!active) return <span className="text-muted-foreground/50">—</span>
+  const isMulti = dests.length > 1
+  const code = destCode(active)
+  const hasDropdown = isMulti || !!dismissAction
+
+  const chipInner = (
+    <>
+      {code && (
+        <span className="font-mono text-[11px] uppercase tracking-[1px] text-[#7B7B5F]">{code}</span>
+      )}
+      <span className="font-serif text-[13px] text-[#6B5A3A]">{active}</span>
+    </>
+  )
+
+  if (!hasDropdown) {
+    return (
+      <span className="inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 bg-[#E5D9C2] text-[#6B5A3A] whitespace-nowrap">
+        {chipInner}
+      </span>
+    )
+  }
+
+  async function pick(d: string) {
+    setOpen(false)
+    // 첫 번째 목적지 선택 시에는 override를 비워 default 동작으로 되돌린다.
+    const val = d === dests[0] ? null : d
+    onUpdate(row.id, 'data', overrideKey, val)
+    await updateCaseField(row.id, 'data', overrideKey, val)
+  }
+
+  async function dismiss() {
+    if (!dismissAction) return
+    setOpen(false)
+    onUpdate(row.id, 'data', dismissAction.dismissKey, true)
+    await updateCaseField(row.id, 'data', dismissAction.dismissKey, true)
+  }
+
   return (
-    <span className="inline-flex items-center gap-sm flex-nowrap whitespace-nowrap">
-      {dests.map(d => {
-        const code = destCode(d)
-        return (
-          <span
-            key={d}
-            className="inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 bg-[#E5D9C2] text-[#6B5A3A] whitespace-nowrap"
-          >
-            {code && (
-              <span className="font-mono text-[11px] uppercase tracking-[1px] text-[#7B7B5F]">
-                {code}
-              </span>
-            )}
-            <span className="font-serif text-[13px] text-[#6B5A3A]">{d}</span>
-          </span>
-        )
-      })}
-    </span>
+    <div ref={containerRef} className="relative inline-block">
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setOpen(o => !o) }}
+        className="inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 bg-[#E5D9C2] text-[#6B5A3A] whitespace-nowrap hover:brightness-95 transition-all cursor-pointer"
+        title={isMulti ? `다른 목적지로 변경 (총 ${dests.length}개)` : '메뉴'}
+      >
+        {chipInner}
+        <span className="ml-0.5 text-[10px] text-[#6B5A3A]/60">▾</span>
+      </button>
+      {open && (
+        <ul
+          className="absolute left-0 top-full mt-1 z-30 min-w-[160px] rounded-md border border-border/80 bg-background py-1 shadow-md"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {isMulti && dests.map(d => {
+            const isCurrent = d === active
+            const dCode = destCode(d)
+            return (
+              <li key={d}>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); void pick(d) }}
+                  className={cn(
+                    'w-full text-left px-sm py-1.5 text-sm transition-colors flex items-center gap-1.5',
+                    isCurrent ? 'bg-accent/40' : 'hover:bg-accent/60',
+                  )}
+                >
+                  {dCode && (
+                    <span className="font-mono text-[11px] uppercase tracking-[1px] text-muted-foreground">{dCode}</span>
+                  )}
+                  <span className="font-serif text-[14px]">{d}</span>
+                  {isCurrent && <span className="ml-auto text-[#6B5A3A]/70">✓</span>}
+                </button>
+              </li>
+            )
+          })}
+          {dismissAction && (
+            <>
+              {isMulti && <li><div className="my-1 border-t border-border/60" /></li>}
+              <li>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); void dismiss() }}
+                  className="w-full text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 hover:text-foreground transition-colors flex items-center gap-1.5"
+                >
+                  <span className="font-serif text-[14px]">{dismissAction.label}</span>
+                </button>
+              </li>
+            </>
+          )}
+        </ul>
+      )}
+    </div>
   )
 }
 
@@ -339,7 +444,9 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
     type: 'custom',
     width: EXPORT_DOC_COL_W,
     readonly: true,
-    render: (row) => renderDestinationBadges(row.destination),
+    render: (row, onUpdate) => (
+      <DestinationCell row={row} overrideKey="export_doc_active_dest" onUpdate={onUpdate} />
+    ),
   },
   { key: 'export_doc_status', label: '준비상태', storage: 'data', type: 'select', width: EXPORT_DOC_COL_W, options: STATUS_OPTIONS, defaultValue: 'not_started' },
   { key: 'export_doc_memo', label: '메모', storage: 'data', type: 'text', width: EXPORT_DOC_COL_W },
@@ -365,6 +472,12 @@ function isAutoImportReport(row: CaseRow, countries: string[]): boolean {
 function isManualImportReport(row: CaseRow): boolean {
   const data = (row.data ?? {}) as Record<string, unknown>
   return data.import_report_manual === true
+}
+
+/** 사용자가 "신고 내리기" 로 명시적으로 비활성화한 케이스. 신고 탭에서 숨김. */
+function isDismissedImportReport(row: CaseRow): boolean {
+  const data = (row.data ?? {}) as Record<string, unknown>
+  return data.import_report_dismissed === true
 }
 
 /**
@@ -438,7 +551,14 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     type: 'custom',
     width: BASE_COL_W,
     readonly: true,
-    render: (row) => renderDestinationBadges(row.destination),
+    render: (row, onUpdate) => (
+      <DestinationCell
+        row={row}
+        overrideKey="import_report_active_dest"
+        onUpdate={onUpdate}
+        dismissAction={{ label: '신고 내리기', dismissKey: 'import_report_dismissed' }}
+      />
+    ),
   },
   { key: 'pet_name', label: '반려동물', storage: 'column', type: 'text', width: BASE_COL_W, readonly: true },
   { key: 'customer_name', label: '보호자', storage: 'column', type: 'text', width: BASE_COL_W, readonly: true },
@@ -561,7 +681,7 @@ export function TodosApp({
   const filteredCases = useMemo(() => {
     if (activeTab === 'import_report') {
       return cases
-        .filter(c => isAutoImportReport(c, importReportCountries) || isManualImportReport(c))
+        .filter(c => (isAutoImportReport(c, importReportCountries) || isManualImportReport(c)) && !isDismissedImportReport(c))
         .filter(c => matchesQuery(c, q))
         .sort((a, b) => {
           // 1차: 완료(수입·수출 모두 done/na)는 무조건 미완료(시작전·진행중)보다 뒤.
@@ -657,8 +777,11 @@ export function TodosApp({
         <ImportReportAddPicker
           cases={cases}
           onAdd={async (caseId) => {
+            // 다시 추가 시 dismissed 플래그도 함께 클리어
             updateLocalCaseField(caseId, 'data', 'import_report_manual', true)
+            updateLocalCaseField(caseId, 'data', 'import_report_dismissed', null)
             await updateCaseField(caseId, 'data', 'import_report_manual', true)
+            await updateCaseField(caseId, 'data', 'import_report_dismissed', null)
           }}
         />
       )}
@@ -769,8 +892,11 @@ export function TodosImportReportAdd() {
     <ImportReportAddPicker
       cases={cases}
       onAdd={async (caseId) => {
+        // 다시 추가 시 dismissed 플래그도 함께 클리어
         updateLocalCaseField(caseId, 'data', 'import_report_manual', true)
+        updateLocalCaseField(caseId, 'data', 'import_report_dismissed', null)
         await updateCaseField(caseId, 'data', 'import_report_manual', true)
+        await updateCaseField(caseId, 'data', 'import_report_dismissed', null)
       }}
     />
   )
@@ -1408,8 +1534,12 @@ function ImportReportAddPicker({
     const q = query.trim().toLowerCase()
     // 검색어가 없으면 목록 표시 안 함 — "검색" 전용 UX.
     if (!q) return []
-    // 이미 자동/수동으로 포함돼 있으면 후보에서 뺀다.
-    const pool = cases.filter(c => !isAutoImportReport(c, importReportCountries) && !isManualImportReport(c))
+    // 신고 탭에 이미 보이는 케이스는 후보에서 뺀다 (탭 필터와 동일 조건).
+    // dismissed 케이스는 탭에 안 보이므로 picker 후보에 다시 포함되어 재추가 가능.
+    const pool = cases.filter(c => {
+      const visible = (isAutoImportReport(c, importReportCountries) || isManualImportReport(c)) && !isDismissedImportReport(c)
+      return !visible
+    })
     const filtered = pool.filter(c => {
       const hay = [c.pet_name, c.pet_name_en, c.customer_name, c.destination]
         .filter(Boolean).join(' ').toLowerCase()
