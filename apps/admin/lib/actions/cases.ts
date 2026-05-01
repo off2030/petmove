@@ -130,10 +130,15 @@ export async function updateCaseField(
     })
   }
 
-  // 서류 탭 상태 자동 리셋 — 재출국으로 간주되는 변경 시 'done' 상태를 클리어.
-  //  · 내원일(vet_visit_date) 이 변경되면 무조건 리셋
-  //  · 출국일(departure_date) 이 변경되었고 내원일이 비었거나 이미 지난 경우 리셋
-  // export_doc_status 가 'done' 일 때만 동작. 현재값이 actually 변경된 경우만.
+  // 서류/신고 탭 상태 자동 리셋 — 재출국으로 간주되는 변경 시 'done' 상태를 클리어.
+  //
+  // 서류(export_doc_status='done'):
+  //  · 내원일(vet_visit_date) 변경 → 무조건 리셋
+  //  · 출국일(departure_date) 변경 + 내원일 비었거나 이미 지난 경우 → 리셋
+  //
+  // 신고(import_import_status='done' 또는 import_export_status='done'):
+  //  · 출국일(departure_date) 변경 + 이전 값이 과거(=이미 다녀온 케이스) → 둘 다 + dismissed 플래그까지 클리어
+  //  · 단순 오타 수정(둘 다 미래) 이나 첫 등록(이전 값 없음)은 리셋 안 함
   const isVetVisit = storage === 'data' && key === 'vet_visit_date'
   const isDeparture = storage === 'column' && key === 'departure_date'
   if ((isVetVisit || isDeparture) && oldValue !== newValue) {
@@ -145,23 +150,43 @@ export async function updateCaseField(
     if (row) {
       const current: Record<string, unknown> =
         (row.data as Record<string, unknown> | null) ?? {}
+      const today = new Date().toISOString().slice(0, 10)
+      const next = { ...current }
+      let mutated = false
+
+      // 서류 리셋
       if (current.export_doc_status === 'done') {
         let shouldReset = false
         if (isVetVisit) {
           shouldReset = true
         } else {
           const visit = typeof current.vet_visit_date === 'string' ? current.vet_visit_date : ''
-          const today = new Date().toISOString().slice(0, 10)
           if (!visit || visit < today) shouldReset = true
         }
         if (shouldReset) {
-          const next = { ...current }
           delete next.export_doc_status
-          await supabase
-            .from('cases')
-            .update({ data: next })
-            .eq('id', caseId)
+          mutated = true
         }
+      }
+
+      // 신고 리셋 (출국일 변경 시에만)
+      if (isDeparture) {
+        const wasPast = !!oldValue && oldValue < today
+        const someDone =
+          current.import_import_status === 'done' || current.import_export_status === 'done'
+        if (wasPast && someDone) {
+          delete next.import_import_status
+          delete next.import_export_status
+          delete next.import_report_dismissed
+          mutated = true
+        }
+      }
+
+      if (mutated) {
+        await supabase
+          .from('cases')
+          .update({ data: next })
+          .eq('id', caseId)
       }
     }
   }

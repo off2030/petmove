@@ -99,7 +99,7 @@ export function EditableField({
   /** 그룹 내부 sub-row 용 — 좁은 라벨 너비(100px), 더 작은 padding, border-bottom 없음. */
   compact?: boolean
 }) {
-  const { updateLocalCaseField, replaceLocalCaseData } = useCases()
+  const { updateLocalCaseField, replaceLocalCaseData, activeDestination } = useCases()
   const { settings: detailViewSettings } = useDetailViewSettings()
   const editMode = useSectionEditMode()
   const [editing, setEditing] = useState(false)
@@ -286,6 +286,22 @@ export function EditableField({
       }
       // 자동 채움 결과 반영 — 엔진이 다른 필드들을 채웠으면 data 통째 교체.
       if (result.autoFilled) replaceLocalCaseData(caseId, result.autoFilled.data)
+
+      // 출국일/내원일 입력 시 활성 목적지를 캡처해 서류/신고 탭의 active_dest에 영속 저장.
+      // 사용자가 칩 클릭으로 바꾼 활성이 있고 비어있지 않은 새 값일 때만.
+      // 항상 동기화 — 신고국이면 자동 포함, 비-신고국이면 자동 포함 안 됨 (filter에서 판정).
+      const isDeparture = spec.key === 'departure_date'
+      const isVetVisit = spec.key === 'vet_visit_date'
+      if ((isDeparture || isVetVisit) && value && activeDestination) {
+        updateLocalCaseField(caseId, 'data', 'export_doc_active_dest', activeDestination)
+        await updateCaseField(caseId, 'data', 'export_doc_active_dest', activeDestination)
+        if (isDeparture) {
+          // 항상 active로 sync — 신고국 여부는 isAutoImportReport에서 판정.
+          // 비-신고국으로 sync되면 stale 신고 자동 포함이 사라짐.
+          updateLocalCaseField(caseId, 'data', 'import_report_active_dest', activeDestination)
+          await updateCaseField(caseId, 'data', 'import_report_active_dest', activeDestination)
+        }
+      }
     })()
   }
 

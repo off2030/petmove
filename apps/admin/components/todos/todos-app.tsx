@@ -465,8 +465,19 @@ function isImportReportCountry(row: CaseRow, countries: string[]): boolean {
   return dests.some(d => set.has(d))
 }
 
+/**
+ * 자동 포함 판정 — 활성 목적지(import_report_active_dest)가 영속 저장돼 있으면
+ * 그 국가 기준으로만 판정. 비-신고국으로 명시 저장된 경우 자동 포함 안 됨.
+ * 저장값 없으면(레거시) 기존대로 ANY-매칭으로 폴백.
+ */
 function isAutoImportReport(row: CaseRow, countries: string[]): boolean {
-  return !!row.departure_date && isImportReportCountry(row, countries)
+  if (!row.departure_date) return false
+  const data = (row.data ?? {}) as Record<string, unknown>
+  const active = data.import_report_active_dest
+  if (typeof active === 'string' && active) {
+    return countries.includes(active)
+  }
+  return isImportReportCountry(row, countries)
 }
 
 function isManualImportReport(row: CaseRow): boolean {
