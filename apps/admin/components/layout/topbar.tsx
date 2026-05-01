@@ -218,64 +218,6 @@ export function TopBar({
 
               <div className="h-px bg-border my-2" aria-hidden />
 
-              {/* 슈퍼어드민 — 권한 있을 때만 */}
-              {isSuperAdmin && (
-                onTabChange ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onTabChange('super-admin')
-                      setMenuOpen(false)
-                    }}
-                    className={mobileTabClass(superAdminActive || activeTab === 'super-admin')}
-                  >
-                    <Shield size={16} className="shrink-0" />
-                    <span>슈퍼 어드민</span>
-                  </button>
-                ) : (
-                  <Link
-                    href="/super-admin"
-                    prefetch={false}
-                    onClick={() => setMenuOpen(false)}
-                    className={mobileTabClass(superAdminActive)}
-                  >
-                    <Shield size={16} className="shrink-0" />
-                    <span>슈퍼 어드민</span>
-                  </Link>
-                )
-              )}
-
-              {/* 설정 — 만료 임박 약품 있으면 dot */}
-              {onTabChange ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onTabChange('settings')
-                    setMenuOpen(false)
-                  }}
-                  className={mobileTabClass(settingsActive)}
-                >
-                  <Settings size={16} className="shrink-0" />
-                  <span>설정</span>
-                  {expiringCount > 0 && (
-                    <span className="ml-auto w-2 h-2 rounded-full bg-red-500" aria-label="확인 필요" />
-                  )}
-                </button>
-              ) : (
-                <Link
-                  href="/settings"
-                  prefetch={false}
-                  onClick={() => setMenuOpen(false)}
-                  className={mobileTabClass(settingsActive)}
-                >
-                  <Settings size={16} className="shrink-0" />
-                  <span>설정</span>
-                  {expiringCount > 0 && (
-                    <span className="ml-auto w-2 h-2 rounded-full bg-red-500" aria-label="확인 필요" />
-                  )}
-                </Link>
-              )}
-
               {/* 다크모드 토글 — system / light / dark 순환 */}
               {mounted && (
                 <button
