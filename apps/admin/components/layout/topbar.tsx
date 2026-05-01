@@ -216,19 +216,7 @@ export function TopBar({
                 )
               })}
 
-              <div className="h-px bg-border my-2" aria-hidden />
-
-              {/* 다크모드 토글 — system / light / dark 순환 */}
-              {mounted && (
-                <button
-                  type="button"
-                  onClick={cycle}
-                  className={mobileTabClass(false)}
-                >
-                  {mode === 'system' ? <Monitor size={16} className="shrink-0" /> : mode === 'dark' ? <Moon size={16} className="shrink-0" /> : <Sun size={16} className="shrink-0" />}
-                  <span>테마: {mode === 'system' ? '시스템' : mode === 'light' ? '라이트' : '다크'}</span>
-                </button>
-              )}
+              {/* 다크모드 토글은 topbar 우측 끝(모바일 전용 버튼)으로 이전됨 */}
             </nav>
 
             {/* 푸터 — 프로필 + 로그아웃 */}
@@ -309,6 +297,21 @@ export function TopBar({
 
         {/* Spacer */}
         <div className="flex-1" />
+
+        {/* 모바일 전용 — topbar 우측 끝 다크모드 + (향후) 팔레트.
+            데스크톱은 아래 우측 아이콘 영역에 동일 기능 있어 별개. */}
+        {mounted && (
+          <button
+            type="button"
+            onClick={cycle}
+            title={`테마: ${mode === 'system' ? '시스템' : mode === 'light' ? '라이트' : '다크'} (클릭하여 전환)`}
+            aria-label="테마 전환"
+            className="md:hidden h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          >
+            {mode === 'system' ? <Monitor size={18} /> : mode === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+        )}
+        {/* TODO(palette): 사용자별 커스텀 색상 picker — 컴포넌트 만들어지면 여기에 md:hidden 으로 추가 */}
 
         {/* Nav tabs — right side, hidden on mobile (replaced by hamburger) */}
         <nav className="hidden md:flex items-center gap-xs">
