@@ -314,22 +314,19 @@ export function CaseList({
               {t.label}
             </button>
           ))}
-          {/* 복원(휴지통) — cases 모드에서만, 탭 우측 끝 아이콘 */}
-          {mode === 'cases' && (
-            <>
-              <span className="text-muted-foreground/30 text-[13px]">·</span>
-              <button
-                type="button"
-                onClick={() => setShowTrash(true)}
-                title="삭제된 항목 복원"
-                aria-label="삭제된 항목 복원"
-                className="self-center -my-1 p-1 rounded text-muted-foreground/70 hover:text-foreground transition-colors"
-              >
-                <History className="h-4 w-4" />
-              </button>
-            </>
-          )}
         </div>
+        {/* 복원(휴지통) — cases 모드에서만, 헤더 우측 끝 (justify-between 의 마지막 자식) */}
+        {mode === 'cases' && (
+          <button
+            type="button"
+            onClick={() => setShowTrash(true)}
+            title="삭제된 항목 복원"
+            aria-label="삭제된 항목 복원"
+            className="self-center -my-1 p-1 rounded text-muted-foreground/70 hover:text-foreground transition-colors"
+          >
+            <History className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Search + actions */}
