@@ -1394,6 +1394,69 @@ function resolveField(
     return ''
   }
 
+  // OVD 전용 — `titer_part[N]:(date_day|date_month|date_year|value_b0|value_b1|value_b2|value_a0|value_a1)`.
+  // rabies_titer_records[N] 의 date 를 일/월/년 분리, value 를 XXX.XX 형식으로 5칸 분해.
+  const titerPartMatch = transform?.match(/^titer_part\[(\d+)\]:(date_(?:day|month|year)|value_(?:b[0-2]|a[01]))$/)
+  if (titerPartMatch && source === 'rabies_titer_records') {
+    const idx = Number(titerPartMatch[1])
+    const key = titerPartMatch[2]
+    const rec = sortedTiters(raw)[idx]
+    if (!rec) return ''
+    if (key.startsWith('date_')) {
+      const dm = (rec.date ?? '').match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/)
+      if (!dm) return ''
+      if (key === 'date_year') return dm[1]
+      if (key === 'date_month') return dm[2].padStart(2, '0')
+      return dm[3].padStart(2, '0')
+    }
+    const num = Number(String(rec.value ?? '').replace(/[^\d.]/g, ''))
+    if (!Number.isFinite(num)) return ''
+    const [b, a] = num.toFixed(2).split('.')
+    const p = b.padStart(3, ' ')
+    if (key === 'value_b0') return p[0]?.trim() ?? ''
+    if (key === 'value_b1') return p[1]?.trim() ?? ''
+    if (key === 'value_b2') return p[2] ?? ''
+    if (key === 'value_a0') return a[0] ?? ''
+    if (key === 'value_a1') return a[1] ?? ''
+    return ''
+  }
+
+  // OVD 전용 — `ovd_vacc[N]:(date_day|date_month|date_year|batch|expiry_day|expiry_month|expiry_year|doi_1y|doi_2y|doi_3y)`.
+  // rabies_dates 에서 최근 2회차를 추려 [0]=과거, [1]=최신 슬롯에 매핑. 1회차밖에 없으면 [0]만 채움.
+  // DOI(면역기간) 는 record 의 valid_until 우선 (예: "3년"), 없으면 1년 default.
+  const ovdVaccMatch = transform?.match(/^ovd_vacc\[(\d+)\]:(date_(?:day|month|year)|batch|expiry_(?:day|month|year)|doi_1y|doi_2y|doi_3y)$/)
+  if (ovdVaccMatch && source === 'rabies_dates') {
+    const idx = Number(ovdVaccMatch[1])
+    const attr = ovdVaccMatch[2]
+    const ascRecs = sortedAscRecords(raw)
+    const recent2 = ascRecs.length >= 2 ? ascRecs.slice(-2) : ascRecs
+    const rec = recent2[idx]
+    const isCheckbox = attr.startsWith('doi_')
+    if (!rec || !rec.date) return isCheckbox ? false : ''
+    if (isCheckbox) {
+      const validYears = parseValidYears(rec) ?? 1
+      if (attr === 'doi_1y') return validYears === 1
+      if (attr === 'doi_2y') return validYears === 2
+      if (attr === 'doi_3y') return validYears === 3
+      return false
+    }
+    if (attr === 'batch') {
+      const p = lookupRabies(rec.date)
+      const merged = applyRecOverrides(rec, p)
+      return merged.serial ?? ''
+    }
+    // date_(day|month|year) → 접종일, expiry_(day|month|year) → 카탈로그 lookup 의 expiry
+    const target = attr.startsWith('date_')
+      ? rec.date
+      : (lookupRabies(rec.date)?.expiry ?? '')
+    const dm = target.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/)
+    if (!dm) return ''
+    const part = attr.split('_')[1]
+    if (part === 'year') return dm[1]
+    if (part === 'month') return dm[2].padStart(2, '0')
+    return dm[3].padStart(2, '0')
+  }
+
   // Conditional static label — `label_if:<kind>:<label>`. Returns <label> only
   // when the matching `*_dates` array in `data` has entries, else empty.
   // Used by VHC's 6-row vaccination table so "Rabies"/"CIV"/etc. only appears
