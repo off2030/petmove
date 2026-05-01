@@ -33,7 +33,8 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   const species = (data.species as string) ?? '' // 'dog' or 'cat'
 
   const bilingual = detailViewSettings.breed_bilingual && breedKo && breedEn
-  const fallback = breedKo || breedEn || ''
+  // 한영 병기 OFF 의 디폴트는 "영문만" — 영문 우선, 영문 없을 때만 한글 폴백.
+  const fallback = breedEn || breedKo || ''
   const isEmpty = !bilingual && !fallback
   const copyText = bilingual ? `${breedKo} | ${breedEn}` : (isEmpty ? '' : fallback)
   const display = bilingual ? (

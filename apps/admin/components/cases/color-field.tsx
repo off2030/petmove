@@ -30,7 +30,8 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   const colorEn = (data.color_en as string) ?? ''
 
   const bilingual = detailViewSettings.color_bilingual && colorKo && colorEn
-  const fallback = colorKo || colorEn || ''
+  // 한영 병기 OFF 의 디폴트는 "영문만" — 영문 우선, 영문 없을 때만 한글 폴백.
+  const fallback = colorEn || colorKo || ''
   const isEmpty = !bilingual && !fallback
   const copyText = bilingual ? `${colorKo} | ${colorEn}` : (isEmpty ? '' : fallback)
   const display = bilingual ? (
