@@ -115,6 +115,15 @@ type FormMapping = {
    * Invoice처럼 pre-filled content가 많은 서식에 사용.
    */
   preserveTemplateText?: boolean
+  /**
+   * true면 발급 직전에 pdfForm.flatten() 호출 — 모든 폼 필드(text/checkbox)를
+   * 페이지 컨텐트로 평탄화. 발급 후 위변조·우발 편집 방지, 리더별 렌더링
+   * 일관성 확보. 단점: 발급 후 수정 불가.
+   *
+   * 원상복구: 이 키만 매핑 JSON 에서 빼면 해당 form 만 복원. 전체 비활성화는
+   * fillPdfCore 의 `if (form.flatten)` 블록만 무력화하면 됨.
+   */
+  flatten?: boolean
   fields: Record<string, FieldMapping>
   /** Optional signature/stamp image overlays — applied only when caller opts in. */
   signatures?: SignatureOverlay[]
@@ -2428,6 +2437,11 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
     }
   }
 
+  // 평탄화 — solo 경로와 동일.
+  if (form.flatten) {
+    pdfForm.flatten()
+  }
+
   const bytes = await pdf.save()
   const base64 = Buffer.from(bytes).toString('base64')
   const petNames = doc.cases
@@ -2712,6 +2726,14 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
   console.log(`  filled:`, filled)
   console.log(`  empty (no value resolved):`, empty)
   if (missing.length) console.warn(`  missing PDF fields:`, missing)
+
+  // 평탄화 — 폼 필드를 페이지 컨텐트로 굳혀 발급 후 편집·위변조 차단.
+  // 적용 form 은 pdf-field-mappings.json 의 form 별 "flatten": true 로 결정.
+  // 전체 무력화하려면 이 if 블록만 비활성화. 개별 form 만 끄려면 JSON 에서
+  // 해당 키 제거.
+  if (form.flatten) {
+    pdfForm.flatten()
+  }
 
   const bytes = await pdf.save()
   const base64 = Buffer.from(bytes).toString('base64')

@@ -176,6 +176,7 @@
     "description": "Japan re-entry certificate (from non-designated region)",
     "filename": "FormRE_{pet_name}.pdf",
     "dateFormat": "ymd_slash",
+    "flatten": true,
     "fields": {
       "consignor_name": {
         "source": "customer_name_en"
@@ -463,6 +464,7 @@
     "description": "별지 제25호서식 — 예방접종 및 건강증명서",
     "filename": "접종 및 건강증명서_{pet_name}.pdf",
     "dateFormat": "ymd_slash",
+    "flatten": true,
     "fields": {
       "owner_name": {
         "source": "customer_name_en"
@@ -766,6 +768,7 @@
     "description": "별지 제25호서식 (호주/뉴질랜드/괌) — 예방접종 및 건강증명서 확장판",
     "filename": "접종 및 건강증명서_{pet_name}.pdf",
     "dateFormat": "ymd_slash",
+    "flatten": true,
     "fields": {
       "owner_name": {
         "source": "customer_name_en"
@@ -1956,6 +1959,7 @@
     "description": "Australia 수출용 반려견 건강증명서 (Veterinary health certificate for the export of dogs from Republic of Korea to Australia) — 강아지 전용",
     "filename": "AU_{pet_name}.pdf",
     "dateFormat": "dmmmy",
+    "flatten": true,
     "fields": {
       "text_1wcec": {
         "source": "australia_extra",
@@ -2429,6 +2433,7 @@
     "description": "Australia 수출용 반려견 건강증명서 — ID Date 없는 버전",
     "filename": "AU2_{pet_name}.pdf",
     "dateFormat": "dmmmy",
+    "flatten": true,
     "fields": {
       "text_1wcec": {
         "source": "australia_extra",
@@ -2902,6 +2907,7 @@
     "description": "Australia 수출용 반려묘 건강증명서 (Veterinary health certificate for the export of cats from Republic of Korea to Australia) — 고양이 전용",
     "filename": "AU_{pet_name}.pdf",
     "dateFormat": "dmmmy",
+    "flatten": true,
     "fields": {
       "text_1bgqg": {
         "source": "australia_extra",
@@ -3134,6 +3140,7 @@
     "description": "Australia 수출용 반려묘 건강증명서 — ID Date 없는 버전",
     "filename": "AU2_{pet_name}.pdf",
     "dateFormat": "dmmmy",
+    "flatten": true,
     "fields": {
       "text_1bgqg": {
         "source": "australia_extra",
@@ -3366,6 +3373,7 @@
     "description": "New Zealand 수출용 반려동물 건강증명서 (Model Veterinary Certificate A - Cats and Dogs). 개/고양이 공통 양식",
     "filename": "NZ_{pet_name}.pdf",
     "dateFormat": "dmmmy",
+    "flatten": true,
     "fields": {
       "Text2": {
         "source": "new_zealand_extra",
@@ -3576,6 +3584,7 @@
     "description": "New Zealand 수출용 반려동물 건강증명서 — 광견병 2회 접종 버전",
     "filename": "NZ_{pet_name}.pdf",
     "dateFormat": "dmmmy",
+    "flatten": true,
     "fields": {
       "Text2": {
         "source": "new_zealand_extra",
@@ -4117,6 +4126,7 @@
     "description": "New Zealand Official Veterinarian Declaration (OVD) — 광견병 접종/항체검사 선언서. NZ 보조서류",
     "filename": "OVD_{pet_name}.pdf",
     "dateFormat": "dmy",
+    "flatten": true,
     "fields": {
       "text_1barn": { "source": null, "transform": "today_ymd_slash", "note": "Registered Vet 서명일 — 버튼 클릭한 오늘 날짜 (DD/MM/YYYY). OVD는 발급일=내원일 규칙의 예외" },
 
