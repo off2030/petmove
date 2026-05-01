@@ -674,10 +674,17 @@ function renderInput(
       />
     )
   }
+  // 모바일 키보드 분기 — 이메일은 영문/@ 키보드, microchip 은 숫자 키패드.
+  const isEmail = EMAIL_KEYS.has(spec.key)
+  const isDigitsSpace = DIGITS_SPACE_KEYS.has(spec.key)
   return (
     <input
       ref={ref as React.RefObject<HTMLInputElement>}
-      type="text"
+      type={isEmail ? 'email' : 'text'}
+      inputMode={isEmail ? 'email' : isDigitsSpace ? 'numeric' : undefined}
+      autoCapitalize={isEmail ? 'off' : undefined}
+      autoCorrect={isEmail ? 'off' : undefined}
+      spellCheck={isEmail ? false : undefined}
       value={value}
       onChange={(e) => setValue(e.target.value)}
       onCompositionStart={() => { if (composingRef) composingRef.current = true }}
