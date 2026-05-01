@@ -200,6 +200,8 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
   // 항목 클릭 시 열리는 편집 팝업.
   const [modalOpen, setModalOpen] = useState(false)
+  // 모달 열릴 때 records 스냅샷 — 변경 감지용 (닫기 vs 저장 버튼 토글).
+  const initialRecordsRef = useRef<string>('[]')
   // 클립 아이콘 클릭 시 — 어느 레코드로 추출할지 (null 이면 새 기록).
   const pendingTargetIdxRef = useRef<number | null>(null)
 
@@ -217,6 +219,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
 
   function openEditModal() {
     if (!editMode) return
+    initialRecordsRef.current = JSON.stringify(records)
     setModalOpen(true)
     // 빈 상태에서 모달 열면 새 입력칸 자동 노출.
     if (records.length === 0) setAddingNew(true)
@@ -812,13 +815,23 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
 
             {/* Footer */}
             <div className="flex items-center gap-2 px-md py-2 border-t border-border/80 bg-background/95">
-              <button
-                type="button"
-                onClick={closeEditModal}
-                className="h-7 px-3 rounded-full border border-border/80 bg-card text-[13px] text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
-              >
-                닫기
-              </button>
+              {(() => {
+                const hasChanges = JSON.stringify(records) !== initialRecordsRef.current
+                return (
+                  <button
+                    type="button"
+                    onClick={closeEditModal}
+                    className={cn(
+                      'h-7 px-3 rounded-full border text-[13px] transition-colors',
+                      hasChanges
+                        ? 'border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] hover:bg-[#D9A489]/25 dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489] dark:hover:bg-[#C08C70]/25'
+                        : 'border-border/80 bg-card text-muted-foreground hover:text-foreground hover:border-foreground/40',
+                    )}
+                  >
+                    {hasChanges ? '저장' : '닫기'}
+                  </button>
+                )
+              })()}
             </div>
           </div>
         </div>,
