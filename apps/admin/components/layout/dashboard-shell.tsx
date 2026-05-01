@@ -174,7 +174,7 @@ export function DashboardShell({
         </div>
       )}
       <TopBar activeTab={activeTab} onTabChange={handleTabChange} isSuperAdmin={isSuperAdmin} userEmail={userEmail} userName={userName} userAvatarUrl={resolvedAvatarUrl} messagesUnread={messagesUnread} />
-      <main className="flex-1 min-w-0 overflow-hidden">
+      <main className="peer flex-1 min-w-0 overflow-hidden">
         {mounted.has('cases') && (
           <div className="h-full" style={{ display: activeTab === 'cases' ? 'block' : 'none' }}>
             <MemoizedCases />
@@ -212,7 +212,7 @@ export function DashboardShell({
           onClick={() => handleTabChange('messages')}
           aria-label="채팅 열기"
           title={messagesUnread > 0 ? `안 읽은 메시지 ${messagesUnread}개` : '채팅'}
-          className="fixed bottom-6 right-6 z-40 h-14 w-14 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:scale-105 active:scale-95 transition-transform"
+          className="fixed bottom-6 right-6 z-40 h-14 w-14 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:scale-105 active:scale-95 transition-transform max-md:peer-focus-within:hidden"
         >
           <MessageSquare size={22} />
           {messagesUnread > 0 && (
