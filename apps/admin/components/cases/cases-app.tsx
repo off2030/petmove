@@ -121,7 +121,7 @@ function ImportReportToggle({
   // "신고 내리기" 로 비활성화된 상태 — 회색 라벨 + 리셋 버튼.
   if (dismissed) {
     return (
-      <span className="inline-flex items-center gap-1">
+      <span className="shrink-0 whitespace-nowrap inline-flex items-center gap-1">
         <span
           className="rounded-md px-2 py-1 text-muted-foreground/40 select-none cursor-default line-through"
           title="신고 탭에서 내려진 상태"
@@ -146,7 +146,7 @@ function ImportReportToggle({
   if (auto) {
     return (
       <span
-        className="rounded-md px-2 py-1 text-muted-foreground/40 select-none cursor-default"
+        className="shrink-0 whitespace-nowrap rounded-md px-2 py-1 text-muted-foreground/40 select-none cursor-default"
         title={`${focusDest} 자동 포함됨 (출국일+신고 대상국)`}
       >
         신고
@@ -169,8 +169,8 @@ function ImportReportToggle({
         }
       }}
       className={included
-        ? 'rounded-md px-2 py-1 text-blue-500/70 hover:bg-accent hover:text-blue-600 transition-colors'
-        : 'rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors'}
+        ? 'shrink-0 whitespace-nowrap rounded-md px-2 py-1 text-blue-500/70 hover:bg-accent hover:text-blue-600 transition-colors'
+        : 'shrink-0 whitespace-nowrap rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors'}
       title={included ? `신고 탭에서 제거 (${focusDest})` : `신고 탭에 추가 (${focusDest})`}
     >
       {label}
@@ -531,7 +531,7 @@ function Inner() {
                       )}
                     </span>
                     <div className="flex items-center gap-1 flex-nowrap overflow-x-auto scrollbar-hide pr-20 justify-start w-full md:w-auto md:flex-wrap md:overflow-visible md:pr-0 md:justify-end">
-                      <label className="flex items-center gap-xs select-none cursor-pointer rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors">
+                      <label className="shrink-0 whitespace-nowrap flex items-center gap-xs select-none cursor-pointer rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors">
                         <input
                           type="checkbox"
                           checked={includeSignature}
@@ -548,7 +548,7 @@ function Inner() {
                               key={btn.key}
                               type="button"
                               onClick={() => handleMultiForm(selectedCase.id, (CERT_MULTI_KEYS[btn.key] ?? btn.key) as 'AnnexIII' | 'UK')}
-                              className="rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
+                              className="shrink-0 whitespace-nowrap rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
                             >
                               {btn.label}
                             </button>
@@ -583,7 +583,7 @@ function Inner() {
                                 }
                                 void downloadCertPdf(formKey, selectedCase.id, focusDest)
                               }}
-                              className="rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
+                              className="shrink-0 whitespace-nowrap rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
                             >
                               {btn.label}
                             </button>
