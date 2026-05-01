@@ -2399,9 +2399,8 @@
       "text_81sjir": {
         "source": "australia_extra",
         "transform": "json:id_date",
-        "default": "N/A",
         "align": "center",
-        "note": "p4 Declaration — ID verification date (180일 전, dmy)"
+        "note": "p4 Declaration — ID verification date (180일 전, dmy). id_date 미입력 시 공란."
       },
       "text_82tjdb": {
         "source": null,
@@ -2868,9 +2867,8 @@
       "text_80csoo": {
         "source": "australia_extra",
         "transform": "json:id_date",
-        "default": "N/A",
         "align": "center",
-        "note": "p4 Declaration — dog exported from Australia date. AU_2 는 부스터 버전이라 ID 날짜를 첫 줄(수출 날짜) 칸에 채움 — AU 단일 버전과 구분"
+        "note": "p4 Declaration — dog exported from Australia date. AU_2 는 부스터 버전이라 ID 날짜를 첫 줄(수출 날짜) 칸에 채움 — AU 단일 버전과 구분. id_date 미입력 시 공란."
       },
       "text_81sjir": {
         "align": "center",
@@ -3126,9 +3124,8 @@
       "text_43dkwt": {
         "source": "australia_extra",
         "transform": "json:id_date",
-        "default": "N/A",
         "align": "center",
-        "note": "p3 Declaration — ID verification date (180일 전)"
+        "note": "p3 Declaration — ID verification date (180일 전). id_date 미입력 시 공란."
       }
     }
   },
@@ -3354,9 +3351,8 @@
       "text_42bwxb": {
         "source": "australia_extra",
         "transform": "json:id_date",
-        "default": "N/A",
         "align": "center",
-        "note": "p3 Declaration — cat exported from Australia date. AU_Cat_2 는 부스터 버전이라 ID 날짜를 첫 줄(수출 날짜) 칸에 채움 — AU_Cat 단일 버전과 구분"
+        "note": "p3 Declaration — cat exported from Australia date. AU_Cat_2 는 부스터 버전이라 ID 날짜를 첫 줄(수출 날짜) 칸에 채움 — AU_Cat 단일 버전과 구분. id_date 미입력 시 공란."
       },
       "text_43dkwt": {
         "align": "center",
