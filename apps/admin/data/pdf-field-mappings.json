@@ -2866,13 +2866,15 @@
         "note": "p4 Internal parasite 2 dose rate"
       },
       "text_80csoo": {
-        "source": null,
+        "source": "australia_extra",
+        "transform": "json:id_date",
+        "default": "N/A",
         "align": "center",
-        "note": "p4 Declaration — dog exported from Australia date — 공란 유지"
+        "note": "p4 Declaration — dog exported from Australia date. AU_2 는 부스터 버전이라 ID 날짜를 첫 줄(수출 날짜) 칸에 채움 — AU 단일 버전과 구분"
       },
       "text_81sjir": {
         "align": "center",
-        "note": "p4 Declaration — ID verification date — 공란 유지",
+        "note": "p4 Declaration — ID verification date — 공란 유지 (id_date 는 첫 줄에 채움)",
         "source": null
       },
       "text_82tjdb": {
@@ -3350,13 +3352,15 @@
         "note": "p3 Internal parasite 2 dose"
       },
       "text_42bwxb": {
-        "source": null,
+        "source": "australia_extra",
+        "transform": "json:id_date",
+        "default": "N/A",
         "align": "center",
-        "note": "p3 Declaration — cat exported from Australia date — 공란 유지"
+        "note": "p3 Declaration — cat exported from Australia date. AU_Cat_2 는 부스터 버전이라 ID 날짜를 첫 줄(수출 날짜) 칸에 채움 — AU_Cat 단일 버전과 구분"
       },
       "text_43dkwt": {
         "align": "center",
-        "note": "p3 Declaration — ID verification date — 공란 유지",
+        "note": "p3 Declaration — ID verification date — 공란 유지 (id_date 는 첫 줄에 채움)",
         "source": null
       }
     }
