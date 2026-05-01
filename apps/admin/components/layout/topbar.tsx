@@ -176,9 +176,10 @@ export function TopBar({
               </button>
             </div>
 
-            {/* 메인 nav + 보조 메뉴 (스크롤 가능) */}
+            {/* 메인 nav + 보조 메뉴 (스크롤 가능)
+                홈/도구/메시지는 데스크톱 우측 nav 와 동일하게 텍스트만 (87259c2 와 일관). */}
             <nav className="flex-1 overflow-y-auto p-2 flex flex-col gap-xs">
-              {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
+              {NAV_ITEMS.map(({ id, label }) => {
                 const active = activeTab === id
                 const close = () => setMenuOpen(false)
                 if (onTabChange) {
@@ -193,7 +194,6 @@ export function TopBar({
                       }}
                       className={mobileTabClass(active)}
                     >
-                      <Icon size={16} className="shrink-0" />
                       <span>{label}</span>
                       {tabBadge(id)}
                     </button>
@@ -210,7 +210,6 @@ export function TopBar({
                     }}
                     className={mobileTabClass(active)}
                   >
-                    <Icon size={16} className="shrink-0" />
                     <span>{label}</span>
                     {tabBadge(id)}
                   </Link>
