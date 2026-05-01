@@ -3,7 +3,7 @@
  * Reads case row, resolves each field value via the mapping's transform,
  * and fills the PDF form.
  */
-import { PDFDocument, PDFName, PDFString, PDFDict, PDFBool, TextAlignment, PDFCheckBox, PDFDropdown, PDFTextField, PDFRadioGroup } from 'pdf-lib'
+import { PDFDocument, PDFName, PDFString, PDFDict, PDFBool, TextAlignment, PDFCheckBox, PDFDropdown, PDFTextField, PDFRadioGroup, drawCheckMark, rgb, pushGraphicsState, popGraphicsState } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -2439,6 +2439,7 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
 
   // 평탄화 — solo 경로와 동일.
   if (form.flatten) {
+    forceRegenerateButtonAppearances(pdfForm)
     pdfForm.flatten()
   }
 
@@ -2450,6 +2451,52 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
   const partSuffix = partNumber > 0 ? `_part${partNumber}` : ''
   const filename = form.filename.replace('{pet_name}', `${petNames}${partSuffix}`)
   return { ok: true, pdf: base64, filename }
+}
+
+/**
+ * Flatten 직전 호출 — 체크박스 on-state appearance 를 "체크마크만" 그리는
+ * 커스텀 provider 로 강제 재생성한다.
+ *
+ * Why: Acrobat 으로 만든 폼 템플릿의 /Yes_xxxx 외관은 종종 빈 사각형 외곽선만
+ * 담고 있다. flatten 은 그 외관을 페이지에 굳히므로 체크 표시가 사라진다.
+ * (예: AU.pdf /Yes_gepv = "0 0 224 15 re s" 한 줄)
+ *
+ * pdf-lib 기본 provider 를 그대로 쓰면 체크마크는 그려지지만 박스 외곽선까지
+ * 함께 그려서, 템플릿에 인쇄된 박스와 겹쳐 두 줄로 보인다. 따라서 외곽선 없이
+ * 체크마크만 그리는 provider 를 사용한다.
+ *
+ * Off state: 빈 외관 (템플릿의 인쇄 박스만 보이도록).
+ */
+function forceRegenerateButtonAppearances(pdfForm: import('pdf-lib').PDFForm): void {
+  const black = rgb(0, 0, 0)
+  for (const field of pdfForm.getFields()) {
+    if (!(field instanceof PDFCheckBox)) continue
+    try {
+      field.updateAppearances((_cb, widget) => {
+        const rect = widget.getRectangle()
+        // 회전된 checkbox 는 사용 폼에 없음 — 단순 좌표계 (origin = widget 좌하단).
+        const size = Math.min(rect.width, rect.height)
+        const onMark = [
+          pushGraphicsState(),
+          ...drawCheckMark({
+            x: rect.width / 2,
+            y: rect.height / 2,
+            size: size / 2,
+            thickness: 1.5,
+            color: black,
+          }),
+          popGraphicsState(),
+        ]
+        const empty = [pushGraphicsState(), popGraphicsState()]
+        return {
+          normal: { on: onMark, off: empty },
+          down:   { on: onMark, off: empty },
+        }
+      })
+    } catch { /* keep template appearance on failure */ }
+  }
+  // 라디오 그룹은 일단 손대지 않음 — 현 사용 form 에 라디오 케이스 없고,
+  // 라디오는 widget 별 onValue 가 다양해 별도 처리가 필요함.
 }
 
 /** Shared font/appearance post-processing extracted so both single and multi paths use it.
@@ -2732,6 +2779,7 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
   // 전체 무력화하려면 이 if 블록만 비활성화. 개별 form 만 끄려면 JSON 에서
   // 해당 키 제거.
   if (form.flatten) {
+    forceRegenerateButtonAppearances(pdfForm)
     pdfForm.flatten()
   }
 
