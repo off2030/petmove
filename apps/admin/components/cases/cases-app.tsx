@@ -511,8 +511,11 @@ function Inner() {
                 )}
               </div>
 
-              {/* Card (scrolls inside) — 홈과 동일 패턴 */}
-              <div className="flex-1 min-h-0 flex flex-col">
+              {/* Card (scrolls inside) — 홈과 동일 패턴
+                  peer: 모바일에서 카드 내부 input/textarea 포커스 시
+                  형제 footer 가 max-md:peer-focus-within:hidden 으로 숨겨져
+                  키보드 올라온 좁은 공간을 확보. 데스크톱(md+) 무영향. */}
+              <div className="peer flex-1 min-h-0 flex flex-col">
                 {selectedCase ? (
                   <CaseDetail caseRow={selectedCase} scrollRef={detailScrollRef} />
                 ) : (
@@ -521,7 +524,7 @@ function Inner() {
               </div>
 
               {/* Footer: 접수일/수정일 + 이력/삭제 */}
-              <div className="shrink-0 pt-2 text-[13px] text-muted-foreground flex items-center justify-between flex-wrap gap-y-2">
+              <div className="shrink-0 pt-2 text-[13px] text-muted-foreground flex items-center justify-between flex-wrap gap-y-2 max-md:peer-focus-within:hidden">
                 {selectedCase ? (
                   <>
                     <span>
