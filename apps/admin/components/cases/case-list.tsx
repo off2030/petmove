@@ -64,21 +64,32 @@ const CaseRowItem = memo(function CaseRowItem({
           <span className="truncate font-serif font-semibold text-[17px] leading-tight text-foreground">
             {c.pet_name ?? '—'}
           </span>
-          <span className="truncate inline-flex items-center justify-end md:justify-start gap-2 flex-wrap">
+          <span className="truncate inline-flex items-center justify-end md:justify-start gap-2 flex-nowrap">
             {dests.length > 0 ? (
-              dests.map((d) => {
-                const code = destCode(d)
-                return (
-                  <span key={d} className="inline-flex items-baseline gap-1.5">
-                    {code && (
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                        {code}
-                      </span>
-                    )}
-                    <span className="font-serif font-normal text-[16px] text-foreground">{d}</span>
+              <>
+                {(() => {
+                  const primary = dests[0]
+                  const code = destCode(primary)
+                  return (
+                    <span key={primary} className="inline-flex items-baseline gap-1.5">
+                      {code && (
+                        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                          {code}
+                        </span>
+                      )}
+                      <span className="font-serif font-normal text-[16px] text-foreground">{primary}</span>
+                    </span>
+                  )
+                })()}
+                {dests.length > 1 && (
+                  <span
+                    className="font-mono text-[11px] tabular-nums text-muted-foreground/60"
+                    title={dests.slice(1).join(', ')}
+                  >
+                    +{dests.length - 1}
                   </span>
-                )
-              })
+                )}
+              </>
             ) : (
               <span className="text-muted-foreground">—</span>
             )}

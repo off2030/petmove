@@ -5,9 +5,9 @@ import type { CaseRow } from '@/lib/supabase/types'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from '@/components/cases/cases-context'
 import { labColor } from '@/lib/lab-color'
-import { destCode } from '@/lib/country-code'
 import { cn } from '@/lib/utils'
 import { DateTextField } from '@/components/ui/date-text-field'
+import { DestinationCell } from './destination-cell'
 
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
@@ -233,38 +233,6 @@ function StaticCell({ value, variant }: { value: string; variant?: 'pet' | 'cust
   return (
     <div className={cn('w-full px-1 py-1 truncate min-h-[24px]', cls)}>
       {value || <span className="italic font-normal text-muted-foreground/40">—</span>}
-    </div>
-  )
-}
-
-/** 목적지를 tan pill + MONO code + Serif 이름으로 렌더링 (상세페이지 DestinationField와 동일). 항상 한 줄. */
-function DestinationCell({ value }: { value: string | null | undefined }) {
-  const dests = (value ?? '').split(',').map(s => s.trim()).filter(Boolean)
-  if (dests.length === 0) {
-    return (
-      <div className="w-full px-1 py-1 min-h-[24px]">
-        <span className="font-serif italic text-[15px] text-muted-foreground/40">—</span>
-      </div>
-    )
-  }
-  return (
-    <div className="w-full px-1 py-1 min-h-[24px] flex items-center gap-1.5 flex-nowrap whitespace-nowrap">
-      {dests.map(d => {
-        const code = destCode(d)
-        return (
-          <span
-            key={d}
-            className="inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 bg-[#E5D9C2] text-[#6B5A3A] whitespace-nowrap"
-          >
-            {code && (
-              <span className="font-mono text-[11px] uppercase tracking-[1px] text-[#7B7B5F]">
-                {code}
-              </span>
-            )}
-            <span className="font-serif text-[13px] text-[#6B5A3A]">{d}</span>
-          </span>
-        )
-      })}
     </div>
   )
 }
@@ -668,7 +636,7 @@ export function InspectionTable({
               <StaticCell value={row.caseRow.customer_name ?? ''} variant="customer" />
             </td>
             <td className="px-2 py-4" style={{ width: 146, minWidth: 146 }}>
-              <DestinationCell value={row.caseRow.destination} />
+              <DestinationCell row={row.caseRow} overrideKey="inspection_active_dest" onUpdate={onUpdate} />
             </td>
             <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }} onClick={(e) => e.stopPropagation()}>
               <StatusCell row={row} options={statusOptions} onUpdate={onUpdate} />

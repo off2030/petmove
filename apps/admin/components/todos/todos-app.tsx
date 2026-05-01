@@ -12,6 +12,7 @@ import { matchesDestinationKey } from '@petmove/domain'
 import { cn } from '@/lib/utils'
 import { TodoTable, type TodoColumn } from './todo-table'
 import { InspectionTable, readInspectionStatus, type InspectionRow } from './inspection-table'
+import { DestinationCell } from './destination-cell'
 import { updateCaseField } from '@/lib/actions/cases'
 import { downloadPdfRequest, type PdfDownloadRequest } from '@/lib/pdf-download'
 import { PageShell, PageTabs } from '@/components/ui/page-shell'
@@ -23,136 +24,7 @@ function downloadBase64Pdf(base64: string, filename: string) {
   link.click()
 }
 
-/**
- * 신고/서류 탭 목적지 셀 — 기본은 첫 번째 목적지를 보여주고, 다중 목적지인 경우
- * 칩을 클릭해 드롭다운에서 다른 목적지로 변경 가능. 선택값은 탭별로 케이스 data에
- * 저장되며 (`<overrideKey>`), 저장값이 더이상 유효하지 않으면 첫 번째 목적지로 폴백.
- *
- * dismissAction: 옵션. 드롭다운 하단에 "X 내리기" 항목 추가. 신고 탭에서 사용해
- * 케이스를 탭에서 명시적으로 제외하는 용도.
- */
-function DestinationCell({
-  row,
-  overrideKey,
-  onUpdate,
-  dismissAction,
-}: {
-  row: CaseRow
-  overrideKey: string
-  onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
-  dismissAction?: { label: string; dismissKey: string }
-}) {
-  const dests = (row.destination ?? '').split(',').map(s => s.trim()).filter(Boolean)
-  const data = (row.data ?? {}) as Record<string, unknown>
-  const overrideRaw = data[overrideKey]
-  const override = typeof overrideRaw === 'string' ? overrideRaw : null
-  const active = override && dests.includes(override) ? override : dests[0] ?? null
-  const [open, setOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    function onClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onClickOutside)
-    return () => document.removeEventListener('mousedown', onClickOutside)
-  }, [open])
-
-  if (!active) return <span className="text-muted-foreground/50">—</span>
-  const isMulti = dests.length > 1
-  const code = destCode(active)
-  const hasDropdown = isMulti || !!dismissAction
-
-  const chipInner = (
-    <>
-      {code && (
-        <span className="font-mono text-[11px] uppercase tracking-[1px] text-[#7B7B5F]">{code}</span>
-      )}
-      <span className="font-serif text-[13px] text-[#6B5A3A]">{active}</span>
-    </>
-  )
-
-  if (!hasDropdown) {
-    return (
-      <span className="inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 bg-[#E5D9C2] text-[#6B5A3A] whitespace-nowrap">
-        {chipInner}
-      </span>
-    )
-  }
-
-  async function pick(d: string) {
-    setOpen(false)
-    // 첫 번째 목적지 선택 시에는 override를 비워 default 동작으로 되돌린다.
-    const val = d === dests[0] ? null : d
-    onUpdate(row.id, 'data', overrideKey, val)
-    await updateCaseField(row.id, 'data', overrideKey, val)
-  }
-
-  async function dismiss() {
-    if (!dismissAction) return
-    setOpen(false)
-    onUpdate(row.id, 'data', dismissAction.dismissKey, true)
-    await updateCaseField(row.id, 'data', dismissAction.dismissKey, true)
-  }
-
-  return (
-    <div ref={containerRef} className="relative inline-block">
-      <button
-        type="button"
-        onClick={(e) => { e.stopPropagation(); setOpen(o => !o) }}
-        className="inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 bg-[#E5D9C2] text-[#6B5A3A] whitespace-nowrap hover:brightness-95 transition-all cursor-pointer"
-        title={isMulti ? `다른 목적지로 변경 (총 ${dests.length}개)` : '메뉴'}
-      >
-        {chipInner}
-        <span className="ml-0.5 text-[10px] text-[#6B5A3A]/60">▾</span>
-      </button>
-      {open && (
-        <ul
-          className="absolute left-0 top-full mt-1 z-30 min-w-[160px] rounded-md border border-border/80 bg-background py-1 shadow-md"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {isMulti && dests.map(d => {
-            const isCurrent = d === active
-            const dCode = destCode(d)
-            return (
-              <li key={d}>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); void pick(d) }}
-                  className={cn(
-                    'w-full text-left px-sm py-1.5 text-sm transition-colors flex items-center gap-1.5',
-                    isCurrent ? 'bg-accent/40' : 'hover:bg-accent/60',
-                  )}
-                >
-                  {dCode && (
-                    <span className="font-mono text-[11px] uppercase tracking-[1px] text-muted-foreground">{dCode}</span>
-                  )}
-                  <span className="font-serif text-[14px]">{d}</span>
-                  {isCurrent && <span className="ml-auto text-[#6B5A3A]/70">✓</span>}
-                </button>
-              </li>
-            )
-          })}
-          {dismissAction && (
-            <>
-              {isMulti && <li><div className="my-1 border-t border-border/60" /></li>}
-              <li>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); void dismiss() }}
-                  className="w-full text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 hover:text-foreground transition-colors flex items-center gap-1.5"
-                >
-                  <span className="font-serif text-[14px]">{dismissAction.label}</span>
-                </button>
-              </li>
-            </>
-          )}
-        </ul>
-      )}
-    </div>
-  )
-}
+/* DestinationCell 은 ./destination-cell 로 이동 — 검사·신고·서류·목록 공통 사용. */
 
 export const TABS = [
   { id: 'inspection', label: '검사' },
