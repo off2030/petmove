@@ -48,7 +48,7 @@ import { uploadFileToNotes } from '@/lib/notes-upload'
  * display at the top, then the three groups (고객정보 / 동물정보 / 절차정보),
  * then a footer with timestamps.
  */
-export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef?: React.Ref<HTMLDivElement> }) {
+export function CaseDetail({ caseRow, scrollRef, simpleMode }: { caseRow: CaseRow; scrollRef?: React.Ref<HTMLDivElement>; simpleMode?: boolean }) {
   const { fieldDefs, updateLocalCaseField, activeDestination } = useCases()
   const { config: destOverridesConfig } = useDestinationOverrides()
   const allSpecs = buildFieldSpecs(fieldDefs)
@@ -110,6 +110,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
     <VerificationProvider caseRow={caseRow} destination={viewDestination}>
     <div
       ref={scrollRef}
+      data-simple-mode={simpleMode ? 'true' : undefined}
       className="flex-1 min-h-0 flex flex-col px-lg py-md overflow-y-auto overflow-x-hidden scrollbar-minimal"
     >
       {/* ─── Sections ─── */}
