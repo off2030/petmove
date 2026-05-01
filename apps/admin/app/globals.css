@@ -297,68 +297,45 @@ select:-webkit-autofill {
  * 인쇄된 텍스트처럼 정보만 보여주는 read-only 표시 모드.
  * 원상복구 = 토글 OFF (data-attribute 제거) 또는 이 블록 통째 삭제.
  */
-
-/* 1) icon-only 버튼·링크 (svg 만 들어있고 텍스트 없음) → 통째 숨김.
- *    CopyButton, Paperclip, Scan, Plus, Trash 등 모든 어포던스 아이콘. */
-[data-simple-mode] button:has(svg):not(:has(span:not(:empty))):not(:has(*:not(svg):not(span))),
-[data-simple-mode] a:has(> svg):not(:has(span:not(:empty))) {
-  display: none !important;
-}
-
-/* 2) 버튼/입력의 클릭·키보드 인터랙션 차단 */
 [data-simple-mode] button,
 [data-simple-mode] [role="button"],
 [data-simple-mode] input,
 [data-simple-mode] select,
 [data-simple-mode] textarea {
-  pointer-events: none !important;
+  pointer-events: none;
 }
-
-/* 3) hover 배경·반투명 강조 효과 모두 무효화 */
+/* 편집 행위에 쓰이는 UI 요소 자체를 화면에서 제거 */
+[data-simple-mode] [data-edit-affordance],
+[data-simple-mode] .copy-btn,
+[data-simple-mode] [aria-label*="추가"],
+[data-simple-mode] [aria-label*="삭제"],
+[data-simple-mode] [aria-label*="편집"],
+[data-simple-mode] [aria-label*="추출"],
+[data-simple-mode] [aria-label*="스캔"] {
+  display: none !important;
+}
+/* hover 효과·dotted 점선·dashed ring 무력화 */
 [data-simple-mode] *:hover {
   background-color: transparent !important;
 }
-
-/* 4) 점선·대시 보더 (drop zone, dotted divider 등) 가시화 제거 */
 [data-simple-mode] .border-dashed,
 [data-simple-mode] .border-dotted {
   border-style: solid !important;
   border-color: transparent !important;
 }
-
-/* 5) 빈 placeholder ("미입력", "—") 옅게 */
+/* 빈 placeholder (— / 미입력 등) 가독성 — 옅게 */
 [data-simple-mode] .text-muted-foreground\/40,
 [data-simple-mode] .text-muted-foreground\/60 {
   opacity: 0.55;
 }
-
-/* 6) 클릭 가능해 보이는 커서 제거 */
+/* 클릭 가능 cursor 제거 */
 [data-simple-mode] .cursor-pointer,
 [data-simple-mode] .cursor-text {
   cursor: default !important;
 }
-
-/* 7) 포커스 ring 비활성 */
+/* 포커스 ring 비활성 (탭 이동해도 시각 강조 없음) */
 [data-simple-mode] *:focus,
 [data-simple-mode] *:focus-visible {
   outline: none !important;
   box-shadow: none !important;
-}
-
-/* 8) 첨부·캘린더 등 옅은 아이콘 — 인쇄용 텍스트엔 노이즈라 숨김 */
-[data-simple-mode] svg.lucide-paperclip,
-[data-simple-mode] svg.lucide-camera,
-[data-simple-mode] svg.lucide-plus,
-[data-simple-mode] svg.lucide-trash-2,
-[data-simple-mode] svg.lucide-edit,
-[data-simple-mode] svg.lucide-x,
-[data-simple-mode] svg.lucide-chevron-down,
-[data-simple-mode] svg.lucide-chevron-right,
-[data-simple-mode] svg.lucide-copy {
-  display: none !important;
-}
-
-/* 9) 행 우측에만 호버로 나타나던 트래시·복사 영역의 여백·크기 회수 */
-[data-simple-mode] .opacity-0 {
-  display: none !important;
 }
