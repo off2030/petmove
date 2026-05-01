@@ -11,7 +11,7 @@ import {
 import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, extraFieldMatchesSpecies, findCustomDestination, EXTRA_FIELD_DEFS, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, SWISS_ENTRY_AIRPORT_OPTIONS, THAILAND_ENTRY_AIRPORT_OPTIONS, type ExtraFieldDef } from '@petmove/domain'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import React, { useEffect, useRef, useState } from 'react'
-import { Paperclip, Trash2, ChevronDown } from 'lucide-react'
+import { Trash2, ChevronDown } from 'lucide-react'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/utils'
@@ -526,8 +526,8 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, entries, destinati
   const [extracting, setExtracting] = useState(false)
   const [extractMsg, setExtractMsg] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
-  // 타이틀 클릭 시 토글 — 노출되면 "전체 삭제" 버튼 등장.
-  const [showActions, setShowActions] = useState(false)
+  // 값 있을 때만 의미있음 — 타이틀 클릭으로 삭제 버튼 노출 토글.
+  const [showDelete, setShowDelete] = useState(false)
   const sectionRef = useRef<HTMLElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -685,36 +685,33 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, entries, destinati
         <span className="font-mono text-[14px] tracking-[1.2px] text-muted-foreground/80">
           {sectionNumber}
         </span>
+        {/* 타이틀 클릭 — 값 있으면 삭제 버튼 노출, 없으면 바로 파일 선택창. */}
         <button
           type="button"
-          onClick={() => setShowActions((v) => !v)}
-          title="섹션 액션 토글"
-          className="font-serif text-[20px] font-medium tracking-tight text-foreground hover:text-muted-foreground cursor-pointer transition-colors"
+          onClick={() => {
+            if (hasAnyValue) setShowDelete((v) => !v)
+            else if (country) fileRef.current?.click()
+          }}
+          disabled={!hasAnyValue && (!country || extracting)}
+          title={hasAnyValue ? '클릭하여 삭제 버튼 표시' : country ? '클릭하여 이미지·PDF 자동 추출' : undefined}
+          className="font-serif text-[20px] font-medium tracking-tight text-foreground hover:text-muted-foreground cursor-pointer transition-colors disabled:cursor-default disabled:hover:text-foreground"
         >
           추가정보
         </button>
-        {/* 둘 중 하나만 — 값 있으면 삭제, 없으면 추출. 타이틀 클릭으로 토글. */}
-        {showActions && (hasAnyValue ? (
+        {hasAnyValue && showDelete && (
           <button
             type="button"
-            onClick={clearAllFields}
+            onClick={async () => {
+              await clearAllFields()
+              setShowDelete(false)
+            }}
             title="이 섹션의 모든 필드 비우기"
             className="shrink-0 inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-serif text-[12px] text-destructive/80 hover:text-destructive hover:bg-destructive/10 transition-colors"
           >
             <Trash2 className="h-3.5 w-3.5" />
             전체 삭제
           </button>
-        ) : country ? (
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={extracting}
-            title="이미지·PDF 첨부하여 자동 추출"
-            className="shrink-0 translate-y-[2px] text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
-          >
-            <Paperclip className="h-4 w-4" />
-          </button>
-        ) : null)}
+        )}
         {extracting && (
           <span className="font-sans text-[12px] italic text-muted-foreground">추출 중...</span>
         )}
