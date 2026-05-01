@@ -215,17 +215,38 @@ function autoDetectLab(
   return defaultLab
 }
 
-/** Read the first titer record date from rabies_titer_records */
-function resolveTiterDate(row: CaseRow): string {
+interface TiterEntry { date: string; lab: string | null; recordIdx: number }
+
+/**
+ * 케이스의 모든 광견병항체 record 를 검사 탭 행 생성용으로 정규화.
+ * record 가 없으면 legacy flat key 를 1건으로 폴백 (record idx 0).
+ */
+function readAllTiterEntries(row: CaseRow): TiterEntry[] {
   const data = (row.data ?? {}) as Record<string, unknown>
   const records = data.rabies_titer_records
   if (Array.isArray(records) && records.length > 0) {
-    const first = records[0] as { date?: string }
-    return first.date ?? ''
+    const out: TiterEntry[] = []
+    records.forEach((r, idx) => {
+      if (!r || typeof r !== 'object') return
+      const rec = r as { date?: string | null; lab?: string | null }
+      if (typeof rec.date === 'string' && rec.date) {
+        out.push({ date: rec.date, lab: typeof rec.lab === 'string' ? rec.lab : null, recordIdx: idx })
+      }
+    })
+    return out
   }
-  // Legacy flat key fallback
+  // Legacy flat key fallback (record idx 0).
   const legacy = data.rabies_titer_test_date
-  return legacy ? String(legacy) : ''
+  if (legacy) {
+    return [{ date: String(legacy), lab: null, recordIdx: 0 }]
+  }
+  return []
+}
+
+/** 첫 record 의 date — 컬럼 resolveValue 호환용 (`rabies_titer_date` 컬럼). */
+function resolveTiterDate(row: CaseRow): string {
+  const entries = readAllTiterEntries(row)
+  return entries.length > 0 ? entries[0].date : ''
 }
 
 /** Read lab from inspection_lab, fallback to auto-detect from destination */
@@ -299,17 +320,18 @@ function buildInspectionRows(
   const rows: InspectionRow[] = []
   const nzLabs = findInfectiousLabs(infectiousRules, '뉴질랜드', ['apqa_hq', 'vbddl'])
   for (const c of cases) {
-    // 1) 광견병항체
-    const titerDate = resolveTiterDate(c)
-    if (titerDate) {
+    // 1) 광견병항체 — record 마다 별도 행. 재검사 등으로 record 가 여러 개면 각각 추적.
+    const titerEntries = readAllTiterEntries(c)
+    for (const entry of titerEntries) {
       rows.push({
-        id: `${c.id}:titer`,
+        id: `${c.id}:titer:${entry.recordIdx}`,
         caseRow: c,
         kind: 'titer',
-        lab: resolveInspectionLab(c, titerRules, titerDefault),
-        date: titerDate,
+        // record 별 lab 우선, 없으면 case-level inspection_lab (구 데이터), 그것도 없으면 자동 감지.
+        lab: entry.lab || resolveInspectionLab(c, titerRules, titerDefault),
+        date: entry.date,
         dateEditable: true,
-        dateStorage: { kind: 'titer' },
+        dateStorage: { kind: 'titer', recordIdx: entry.recordIdx },
       })
     }
     // 2) 전염병검사 — 호주/뉴질랜드

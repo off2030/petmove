@@ -39,17 +39,17 @@ export interface InspectionRow {
   dateEditable: boolean
   /** 날짜 수정 시 어느 저장소를 업데이트할지. */
   dateStorage:
-    | { kind: 'titer' }
+    | { kind: 'titer'; recordIdx: number }
     | { kind: 'infectious'; lab: string }
     | { kind: 'infectious_multi'; labs: string[] }
 }
 
 /**
  * 행별 진행상태 저장 키. 같은 케이스에 항체검사/전염병검사가 동시에 올라온 경우
- * 각 검사의 상태가 독립적으로 관리되도록 분리.
+ * 각 검사의 상태가 독립적으로 관리되도록 분리. 항체검사는 record 인덱스별.
  */
 export function inspectionStatusKey(row: InspectionRow): string {
-  if (row.dateStorage.kind === 'titer') return 'inspection_status_titer'
+  if (row.dateStorage.kind === 'titer') return `inspection_status_titer_${row.dateStorage.recordIdx}`
   if (row.dateStorage.kind === 'infectious') return `inspection_status_inf_${row.dateStorage.lab}`
   if (row.dateStorage.kind === 'infectious_multi') {
     return `inspection_status_inf_${[...row.dateStorage.labs].sort().join('_')}`
@@ -58,13 +58,18 @@ export function inspectionStatusKey(row: InspectionRow): string {
 }
 
 /**
- * 행 진행상태 조회. 행별 키 우선, 없으면 legacy `inspection_status` 폴백
- * (단일 검사만 있던 시절의 데이터 호환). 둘 다 없으면 기본 'waiting'.
+ * 행 진행상태 조회. 행별 키 우선, 없으면 legacy 폴백.
+ * - 항체검사 record idx 0: `inspection_status_titer` (재검사 도입 전 단일행 시절) 도 폴백.
+ * - 더 오래된 케이스: `inspection_status` (탭 통합 전) 폴백.
  */
 export function readInspectionStatus(row: InspectionRow): string {
   const data = (row.caseRow.data ?? {}) as Record<string, unknown>
   const v = data[inspectionStatusKey(row)]
   if (typeof v === 'string') return v
+  if (row.dateStorage.kind === 'titer' && row.dateStorage.recordIdx === 0) {
+    const legacyTiter = data.inspection_status_titer
+    if (typeof legacyTiter === 'string') return legacyTiter
+  }
   const legacy = data.inspection_status
   if (typeof legacy === 'string') return legacy
   return 'waiting'
@@ -75,27 +80,40 @@ interface LabOption { value: string; label: string }
 interface StatusOption { value: string; label: string }
 
 /**
- * Update rabies_titer_records[0].date. Empty newDate → record 자체를 삭제(행 사라짐).
+ * Update rabies_titer_records[idx].date. Empty newDate → 그 record 삭제(행 사라짐).
  * 다른 곳들과 의미 일관성: 날짜 비움 = 그 회차 정보 사라짐.
  */
 function computeTiterNext(
   current: Array<{ date?: string | null; value?: string | null; lab?: string | null }>,
   newDate: string,
+  idx: number,
 ): Array<{ date?: string | null; value?: string | null; lab?: string | null }> {
-  if (!newDate) return current.slice(1)
-  const head = current[0] ?? { date: null, value: null, lab: null }
-  return [{ ...head, date: newDate }, ...current.slice(1)]
+  if (!newDate) return current.filter((_, i) => i !== idx)
+  const target = current[idx] ?? { date: null, value: null, lab: null }
+  return current.map((r, i) => i === idx ? { ...target, date: newDate } : r)
 }
 
-async function saveTiterDate(caseRow: CaseRow, newDate: string): Promise<Array<{ date?: string | null; value?: string | null; lab?: string | null }> | null> {
+async function saveTiterDate(caseRow: CaseRow, idx: number, newDate: string): Promise<Array<{ date?: string | null; value?: string | null; lab?: string | null }> | null> {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const current = Array.isArray(data.rabies_titer_records)
     ? (data.rabies_titer_records as Array<{ date?: string | null; value?: string | null; lab?: string | null }>)
     : []
-  const next = computeTiterNext(current, newDate)
+  const next = computeTiterNext(current, newDate, idx)
   const val = next.length > 0 ? next : null
   await updateCaseField(caseRow.id, 'data', 'rabies_titer_records', val)
   return val
+}
+
+/** Update rabies_titer_records[idx].lab. */
+async function saveTiterLab(caseRow: CaseRow, idx: number, newLab: string | null): Promise<Array<{ date?: string | null; value?: string | null; lab?: string | null }> | null> {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const current = Array.isArray(data.rabies_titer_records)
+    ? (data.rabies_titer_records as Array<{ date?: string | null; value?: string | null; lab?: string | null }>)
+    : []
+  if (idx >= current.length) return current.length > 0 ? current : null
+  const next = current.map((r, i) => i === idx ? { ...r, lab: newLab } : r)
+  await updateCaseField(caseRow.id, 'data', 'rabies_titer_records', next)
+  return next
 }
 
 /**
@@ -486,8 +504,14 @@ function LabPicker({ row, options, chip, onUpdate }: {
   async function pick(v: string) {
     setOpen(false)
     if (v === row.lab) return
-    onUpdate(row.caseRow.id, 'data', 'inspection_lab', v || null)
-    await updateCaseField(row.caseRow.id, 'data', 'inspection_lab', v || null)
+    if (row.dateStorage.kind === 'titer') {
+      // record 별 lab 저장 — 옛 case-level inspection_lab 키는 더 이상 쓰지 않음.
+      const val = await saveTiterLab(row.caseRow, row.dateStorage.recordIdx, v || null)
+      onUpdate(row.caseRow.id, 'data', 'rabies_titer_records', val)
+    } else {
+      onUpdate(row.caseRow.id, 'data', 'inspection_lab', v || null)
+      await updateCaseField(row.caseRow.id, 'data', 'inspection_lab', v || null)
+    }
   }
 
   return (
@@ -581,7 +605,7 @@ export function InspectionTable({
 
   const handleDateSave = useCallback(async (row: InspectionRow, v: string) => {
     if (row.dateStorage.kind === 'titer') {
-      const val = await saveTiterDate(row.caseRow, v)
+      const val = await saveTiterDate(row.caseRow, row.dateStorage.recordIdx, v)
       onUpdate(row.caseRow.id, 'data', 'rabies_titer_records', val)
     } else {
       const labs = row.dateStorage.kind === 'infectious_multi'
