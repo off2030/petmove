@@ -18,6 +18,21 @@ export type UpdateResult =
   | { ok: true; autoFilled?: { data: Record<string, unknown> } }
   | { ok: false; error: string }
 
+// case_history.old_value/new_value 는 text 컬럼.
+// column storage 는 원래 text 라 그대로 저장. data storage 는 jsonb 이므로 JSON 직렬화.
+// 과거(2026-04 이전) 엔트리는 String(value) 로 저장돼 배열·객체가 깨진 형태 — 역직렬화 시 fallback.
+function serializeForHistory(storage: 'column' | 'data', value: unknown): string | null {
+  if (value === null || value === undefined || value === '') return null
+  if (storage === 'column') return String(value)
+  return JSON.stringify(value)
+}
+
+function deserializeFromHistory(storage: 'column' | 'data', raw: string | null): unknown {
+  if (raw === null) return null
+  if (storage === 'column') return raw
+  try { return JSON.parse(raw) } catch { return raw }
+}
+
 /**
  * Update a single field on a case. Records change in case_history for undo.
  */
@@ -46,7 +61,7 @@ export async function updateCaseField(
       .single()
     if (row) {
       const v = (row as Record<string, unknown>)[key]
-      oldValue = v != null ? String(v) : null
+      oldValue = serializeForHistory('column', v)
       orgId = (row as { org_id: string }).org_id
     }
 
@@ -100,7 +115,7 @@ export async function updateCaseField(
 
     const current: Record<string, unknown> =
       (row?.data as Record<string, unknown> | null) ?? {}
-    oldValue = current[key] != null ? String(current[key]) : null
+    oldValue = serializeForHistory('data', current[key])
     orgId = (row as { org_id: string }).org_id
 
     const next = { ...current }
@@ -118,7 +133,7 @@ export async function updateCaseField(
   }
 
   // Record history (skip if value unchanged)
-  const newValue = value != null && value !== '' ? String(value) : null
+  const newValue = serializeForHistory(storage, value)
   if (oldValue !== newValue && orgId) {
     await supabase.from('case_history').insert({
       case_id: caseId,
@@ -249,10 +264,11 @@ export async function undoLastChange(
   if (histErr || !entry) return { ok: false, error: '되돌릴 변경 이력이 없습니다' }
 
   const { field_key, field_storage, old_value } = entry
-  const restoredValue = old_value
+  const storage = field_storage as 'column' | 'data'
+  const restoredValue = deserializeFromHistory(storage, old_value)
 
   // Restore the old value
-  if (field_storage === 'column') {
+  if (storage === 'column') {
     const { error } = await supabase
       .from('cases')
       .update({ [field_key]: restoredValue })
@@ -298,7 +314,7 @@ export async function restoreToHistoryPoint(
 ): Promise<
   | {
       ok: true
-      restored: Array<{ key: string; storage: 'column' | 'data'; value: string | null }>
+      restored: Array<{ key: string; storage: 'column' | 'data'; value: unknown }>
     }
   | { ok: false; error: string }
 > {
@@ -331,19 +347,20 @@ export async function restoreToHistoryPoint(
   //    before any change in the selected range.
   const finalByKey = new Map<
     string,
-    { storage: 'column' | 'data'; key: string; value: string | null }
+    { storage: 'column' | 'data'; key: string; value: unknown }
   >()
   for (const e of entries) {
-    finalByKey.set(`${e.field_storage}:${e.field_key}`, {
-      storage: e.field_storage as 'column' | 'data',
+    const storage = e.field_storage as 'column' | 'data'
+    finalByKey.set(`${storage}:${e.field_key}`, {
+      storage,
       key: e.field_key,
-      value: e.old_value,
+      value: deserializeFromHistory(storage, e.old_value),
     })
   }
 
   // 4. Separate column and data updates.
   const columnUpdates: Record<string, unknown> = {}
-  const dataKeyUpdates = new Map<string, string | null>()
+  const dataKeyUpdates = new Map<string, unknown>()
   for (const f of finalByKey.values()) {
     if (f.storage === 'column') {
       if (REGULAR_COLUMNS.has(f.key)) columnUpdates[f.key] = f.value
@@ -370,7 +387,7 @@ export async function restoreToHistoryPoint(
     const current: Record<string, unknown> = (row?.data as Record<string, unknown> | null) ?? {}
     const next = { ...current }
     for (const [k, v] of dataKeyUpdates) {
-      if (v === null) delete next[k]
+      if (v === null || v === undefined) delete next[k]
       else next[k] = v
     }
     const { error } = await supabase.from('cases').update({ data: next }).eq('id', caseId)
