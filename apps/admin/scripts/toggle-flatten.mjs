@@ -35,8 +35,8 @@ const OFFICIAL_CERTS = [
   'AnnexIII', 'UK', 'CH',
   // 기타 국가
   'SGP', 'AQS_279', 'Form_R11', 'VHC',
-  // 검사 의뢰서 + 운송 부속서류
-  'KSVDL', 'VBDDL', 'ESD',
+  // 검사 의뢰서
+  'KSVDL', 'VBDDL',
 ]
 
 const mode = process.argv[2]

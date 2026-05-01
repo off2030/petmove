@@ -4477,7 +4477,6 @@
     "description": "Exempt Specimen Declaration — 혈청 등 진단 검체를 해외 실험실(KSVDL/VBDDL 등)로 FedEx 발송 시 세관 통관용 수의사 선언서. 가변 항목: 튜브 갯수, 수신 실험실, 조직 정보(이름/주소/연락처/면허). 종(species) 은 템플릿 기본값 유지.",
     "filename": "ESD_{tube_count}tubes.pdf",
     "dateFormat": "mdy_slash",
-    "flatten": true,
     "fields": {
       "text_1ataj":  { "source": null, "transform": "today_ymd_slash",          "note": "Date of Letter (오늘)" },
       "text_2gscn":  { "source": "consignee_lab", "transform": "lab_shipping:name", "note": "수신 실험실 이름만" },
