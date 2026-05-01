@@ -130,6 +130,8 @@ export const PARASITE_FAMILIES: ParasiteFamily[] = [
   { id: 'frontline_plus_dog',   name: 'Frontline Plus',    manufacturer: 'Boehringer Ingelheim', species: 'dog', kind: 'external', hasWeightTiers: true },
   { id: 'frontline_spray_cat',  name: 'Frontline Spray',   manufacturer: 'Boehringer Ingelheim', species: 'cat', kind: 'external', hasWeightTiers: false },
   { id: 'drontal_plus_dog',     name: 'Drontal Plus',      manufacturer: 'Elanco',                species: 'dog', kind: 'internal', hasWeightTiers: false },
+  { id: 'panacur_dog',          name: 'Panacur',           manufacturer: 'Intervet',              species: 'dog', kind: 'internal', hasWeightTiers: false },
+  { id: 'panacur_cat',          name: 'Panacur',           manufacturer: 'Intervet',              species: 'cat', kind: 'internal', hasWeightTiers: false },
   { id: 'nexgard_spectra_dog',  name: 'NexGard Spectra',   manufacturer: 'Boehringer Ingelheim', species: 'dog', kind: 'combo',    hasWeightTiers: true },
   { id: 'nexgard_cat_combo_cat', name: 'NexGard Cat Combo', manufacturer: 'Boehringer Ingelheim', species: 'cat', kind: 'combo',   hasWeightTiers: true },
 ]

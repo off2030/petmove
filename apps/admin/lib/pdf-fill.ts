@@ -203,6 +203,8 @@ const PARASITE_PRODUCT_INFO: Record<string, { ingredient: string; dose: string }
   frontline_plus_dog:  { ingredient: 'Fipronil', dose: '1 vial' },
   frontline_spray_cat: { ingredient: 'Fipronil', dose: '1 vial' },
   drontal_plus_dog:    { ingredient: 'Pyrantel Pamoate, Praziquantel, Febantel', dose: '1 tablet per 10 kg body weight' },
+  panacur_dog:         { ingredient: 'Fenbendazole', dose: '1 tablet (500 mg) per 10 kg body weight' },
+  panacur_cat:         { ingredient: 'Fenbendazole', dose: '1 tablet (500 mg) per 10 kg body weight' },
 }
 
 /** sex code → English label used by Annex III (N. = neutered/spayed). */
