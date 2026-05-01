@@ -59,8 +59,12 @@ export function inspectionStatusKey(row: InspectionRow): string {
 
 /**
  * 행 진행상태 조회. 행별 키 우선, 없으면 legacy 폴백.
- * - 항체검사 record idx 0: `inspection_status_titer` (재검사 도입 전 단일행 시절) 도 폴백.
- * - 더 오래된 케이스: `inspection_status` (탭 통합 전) 폴백.
+ *
+ * legacy 폴백은 record idx 0 (또는 단일 검사) 에만 적용 — 재검사로 추가된
+ * record idx ≥ 1 은 옛 단일 'done' 상태를 상속하면 안 됨.
+ *  - titer idx 0: `inspection_status_titer` (단일행 시절) → `inspection_status` (탭 통합 전).
+ *  - infectious: 새 키만. (lab 별 키 자체가 modern 이라 legacy 매핑 모호.)
+ *  - titer idx ≥ 1: legacy 무시, 신규 record 는 'waiting' 출발.
  */
 export function readInspectionStatus(row: InspectionRow): string {
   const data = (row.caseRow.data ?? {}) as Record<string, unknown>
@@ -69,9 +73,9 @@ export function readInspectionStatus(row: InspectionRow): string {
   if (row.dateStorage.kind === 'titer' && row.dateStorage.recordIdx === 0) {
     const legacyTiter = data.inspection_status_titer
     if (typeof legacyTiter === 'string') return legacyTiter
+    const legacy = data.inspection_status
+    if (typeof legacy === 'string') return legacy
   }
-  const legacy = data.inspection_status
-  if (typeof legacy === 'string') return legacy
   return 'waiting'
 }
 
