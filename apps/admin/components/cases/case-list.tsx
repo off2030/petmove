@@ -315,18 +315,6 @@ export function CaseList({
             </button>
           ))}
         </div>
-        {/* 복원(휴지통) — cases 모드에서만, 헤더 우측 끝 (justify-between 의 마지막 자식) */}
-        {mode === 'cases' && (
-          <button
-            type="button"
-            onClick={() => setShowTrash(true)}
-            title="삭제된 항목 복원"
-            aria-label="삭제된 항목 복원"
-            className="self-center -my-1 p-1 rounded text-muted-foreground/70 hover:text-foreground transition-colors"
-          >
-            <History className="h-4 w-4" />
-          </button>
-        )}
       </div>
 
       {/* Search + actions */}
@@ -467,6 +455,33 @@ export function CaseList({
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      <div className="shrink-0 h-7 px-lg flex items-center justify-between text-[13px] text-muted-foreground">
+        {isTodosMode ? (
+          <>
+            <span />
+            <span />
+          </>
+        ) : (
+          <>
+            <span>
+              <span className="font-serif italic">총</span>{' '}
+              <span className="font-mono tabular-nums">{cases.length.toLocaleString()}</span>
+              <span className="font-serif italic">건</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowTrash(true)}
+              title="삭제된 항목 복원"
+              className="inline-flex h-7 items-center gap-1.5 px-2 rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            >
+              <History className="h-3.5 w-3.5" />
+              <span className="font-serif text-[13px]">복원</span>
+            </button>
+          </>
+        )}
+      </div>
 
       {showTrash && (
         <TrashModal
