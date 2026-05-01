@@ -315,6 +315,18 @@ export function CaseList({
             </button>
           ))}
         </div>
+        {/* 모바일 전용 — 복원(휴지통) 버튼. cases 모드에서만 헤더 우측 끝에. 데스크톱은 푸터에 그대로. */}
+        {mode === 'cases' && (
+          <button
+            type="button"
+            onClick={() => setShowTrash(true)}
+            title="삭제된 항목 복원"
+            aria-label="삭제된 항목 복원"
+            className="md:hidden self-center -my-1 p-1 rounded text-muted-foreground/70 hover:text-foreground transition-colors"
+          >
+            <History className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Search + actions */}
@@ -456,8 +468,8 @@ export function CaseList({
         </div>
       )}
 
-      {/* Footer */}
-      <div className="shrink-0 h-7 px-lg flex items-center justify-between text-[13px] text-muted-foreground">
+      {/* Footer — 데스크톱 전용. 모바일은 헤더 우측의 복원 아이콘으로 대체. */}
+      <div className="shrink-0 h-7 px-lg hidden md:flex items-center justify-between text-[13px] text-muted-foreground">
         {isTodosMode ? (
           <>
             <span />
