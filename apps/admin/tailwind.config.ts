@@ -39,6 +39,13 @@ const config: Config = {
         xl: '2rem',
         '2xl': '3rem',
         '3xl': '4rem',
+        // 모바일 — iOS HIG 44pt / Android Material 48dp 절충값. min-h-touch / min-w-touch / p-touch 로 사용
+        touch: '2.75rem', // 44px
+        // safe-area aliases — globals.css :root 에서 정의된 var(--safe-*) 참조
+        'safe-t': 'var(--safe-top)',
+        'safe-r': 'var(--safe-right)',
+        'safe-b': 'var(--safe-bottom)',
+        'safe-l': 'var(--safe-left)',
       },
       colors: {
         border: 'hsl(var(--border))',

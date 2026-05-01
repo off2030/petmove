@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter_Tight, Source_Serif_4, JetBrains_Mono, Noto_Sans_KR, Noto_Serif_KR } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
@@ -44,6 +44,15 @@ export const metadata: Metadata = {
   description: '반려동물 해외 이동 검역 관리',
 }
 
+// 모바일 대응 — width=device-width + viewport-fit=cover (iOS safe-area 진입조건)
+// interactive-widget=resizes-content — Android 키보드 올라올 때 viewport resize 대신 콘텐츠만
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  interactiveWidget: 'resizes-content',
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -51,10 +60,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko" suppressHydrationWarning className={`${interTight.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} ${notoSansKr.variable} ${notoSerifKr.variable}`}>
-      <body className="min-h-screen bg-background text-foreground antialiased font-sans">
+      <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
         <ThemeProvider />
         <ConfirmProvider>
-          <div className="flex flex-col h-screen">
+          <div className="flex flex-col h-dvh">
             {children}
           </div>
         </ConfirmProvider>
