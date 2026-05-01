@@ -11,7 +11,8 @@ import {
 import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, extraFieldMatchesSpecies, findCustomDestination, EXTRA_FIELD_DEFS, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, SWISS_ENTRY_AIRPORT_OPTIONS, THAILAND_ENTRY_AIRPORT_OPTIONS, type ExtraFieldDef } from '@petmove/domain'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import React, { useEffect, useRef, useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { Paperclip, Trash2 } from 'lucide-react'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
@@ -474,15 +475,47 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, entries, destinati
   destination: string | null | undefined
 }) {
   const { updateLocalCaseField } = useCases()
+  const confirm = useConfirm()
   const segments = groupExtraEntries(entries)
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const [extracting, setExtracting] = useState(false)
   const [extractMsg, setExtractMsg] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
+  // 타이틀 클릭 시 토글 — 노출되면 "전체 삭제" 버튼 등장.
+  const [showActions, setShowActions] = useState(false)
   const sectionRef = useRef<HTMLElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const country = destinationToCountry(destination)
+
+  // 이 섹션이 차지하는 모든 데이터 키 — 그룹 항목까지 평탄화.
+  const allKeys = (() => {
+    const keys: string[] = []
+    for (const seg of segments) {
+      if (seg.type === 'flat') keys.push(seg.entry.key)
+      else for (const item of seg.items) keys.push(item.key)
+    }
+    return keys
+  })()
+  const hasAnyValue = allKeys.some((k) => {
+    const v = data[k]
+    return v !== null && v !== undefined && v !== ''
+  })
+
+  async function clearAllFields() {
+    if (!await confirm({
+      message: '추가정보의 모든 필드를 비웁니다.',
+      description: '되돌리려면 Ctrl+Z',
+      okLabel: '전체 삭제',
+      variant: 'destructive',
+    })) return
+    for (const k of allKeys) {
+      updateLocalCaseField(caseId, 'data', k, null)
+    }
+    void (async () => {
+      for (const k of allKeys) await updateCaseField(caseId, 'data', k, null)
+    })()
+  }
 
   async function tryExtract(input: { images?: { base64: string; mediaType: string }[]; text?: string }) {
     if (!country) { setExtractMsg('이 목적지는 자동 추출 미지원'); setTimeout(() => setExtractMsg(null), 3000); return }
@@ -609,16 +642,34 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, entries, destinati
         </span>
         <button
           type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={extracting}
-          title={country ? '이미지·PDF 첨부하여 자동 추출' : undefined}
-          className={cn(
-            'font-serif text-[20px] font-medium tracking-tight text-foreground transition-colors',
-            country && 'hover:text-muted-foreground cursor-pointer',
-          )}
+          onClick={() => setShowActions((v) => !v)}
+          title="섹션 액션 토글"
+          className="font-serif text-[20px] font-medium tracking-tight text-foreground hover:text-muted-foreground cursor-pointer transition-colors"
         >
           추가정보
         </button>
+        {country && (
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={extracting}
+            title="이미지·PDF 첨부하여 자동 추출"
+            className="shrink-0 translate-y-[2px] text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
+          >
+            <Paperclip className="h-4 w-4" />
+          </button>
+        )}
+        {showActions && hasAnyValue && (
+          <button
+            type="button"
+            onClick={clearAllFields}
+            title="이 섹션의 모든 필드 비우기"
+            className="shrink-0 inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-serif text-[12px] text-destructive/80 hover:text-destructive hover:bg-destructive/10 transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            전체 삭제
+          </button>
+        )}
         {extracting && (
           <span className="font-sans text-[12px] italic text-muted-foreground">추출 중...</span>
         )}
