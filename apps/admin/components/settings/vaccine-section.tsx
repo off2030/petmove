@@ -43,6 +43,7 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
   civ:                   { label: '독감',                     section: '접종', species: 'dog',    kind: 'vaccine' },
   kennel_cough:          { label: '켄넬코프',                section: '접종', species: 'dog',    kind: 'vaccine' },
   parasite_internal_dog: { label: '내부 구충',               section: '구충', species: 'common', kind: 'parasite' },
+  parasite_internal_cat: { label: '내부 구충 (고양이)',      section: '구충', species: 'cat',    kind: 'parasite' },
   parasite_external_dog: { label: '외부 구충',               section: '구충', species: 'dog',    kind: 'parasite' },
   parasite_external_cat: { label: '외부 구충 (고양이)',      section: '구충', species: 'cat',    kind: 'parasite' },
   parasite_combo_dog:    { label: '내외부 구충 합제',         section: '구충', species: 'dog',   kind: 'parasite' },
@@ -57,6 +58,7 @@ const CATEGORY_ORDER: string[] = [
   'civ',
   'kennel_cough',
   'parasite_internal_dog',
+  'parasite_internal_cat',
   'parasite_external_dog',
   'parasite_external_cat',
   'parasite_combo_dog',
@@ -146,10 +148,11 @@ function toFormState(p: OrgVaccineProduct): FormState {
 function toInput(form: FormState): OrgVaccineProductInput {
   const num = (s: string) => (s.trim() === '' ? null : Number(s))
   const txt = (s: string) => (s.trim() === '' ? null : s.trim())
+  const kind = CATEGORY_META[form.category]?.kind ?? 'vaccine'
   return {
     category: form.category,
-    vaccine: txt(form.vaccine),
-    product: txt(form.product),
+    vaccine: kind === 'vaccine' ? txt(form.vaccine) : null,
+    product: kind === 'parasite' ? txt(form.product) : null,
     manufacturer: form.manufacturer.trim(),
     batch: txt(form.batch),
     expiry: txt(form.expiry),
@@ -158,6 +161,33 @@ function toInput(form: FormState): OrgVaccineProductInput {
     weight_max: num(form.weight_max),
     size: txt(form.size),
     parasite_id: txt(form.parasite_id),
+  }
+}
+
+interface ExtractedRecord {
+  product: string | null
+  manufacturer: string | null
+  lot: string | null
+  expiry: string | null
+}
+
+function extractToFormState(rec: ExtractedRecord): FormState {
+  // 분류 실패한 항목은 대체로 구충제이므로 default 카테고리로 parasite_internal_dog 선택.
+  // 사용자가 모달에서 적절한 카테고리로 바꿀 수 있음. vaccine/product 양쪽에 채워두면
+  // kind 가 어떤 쪽이든 입력 칸에 미리 표시됨 (저장 시 toInput 이 한쪽만 보냄).
+  const name = rec.product ?? ''
+  return {
+    category: 'parasite_internal_dog',
+    vaccine: name,
+    product: name,
+    manufacturer: rec.manufacturer ?? '',
+    batch: rec.lot ?? '',
+    expiry: rec.expiry ?? '',
+    year: '',
+    weight_min: '',
+    weight_max: '',
+    size: '',
+    parasite_id: '',
   }
 }
 
@@ -173,7 +203,7 @@ export function VaccineSection({
   const [loading, setLoading] = useState(initialProducts === null)
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<
-    | { mode: 'create'; initial: FormState }
+    | { mode: 'create'; initial: FormState; fromExtract?: boolean }
     | { mode: 'edit'; id: string; initial: FormState }
     | null
   >(null)
@@ -185,6 +215,18 @@ export function VaccineSection({
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [picking, setPicking] = useState(false)
+  // AI 가 카테고리 분류에 실패한 추출 결과 — 모달로 하나씩 처리.
+  const [extractQueue, setExtractQueue] = useState<ExtractedRecord[]>([])
+
+  function closeOrAdvance() {
+    if (extractQueue.length === 0) {
+      setEditing(null)
+      return
+    }
+    const [next, ...rest] = extractQueue
+    setExtractQueue(rest)
+    setEditing({ mode: 'create', initial: extractToFormState(next), fromExtract: true })
+  }
 
   async function refresh() {
     setLoading(true)
@@ -217,7 +259,7 @@ export function VaccineSection({
     try {
       let created = 0
       const errors: string[] = []
-      const unclassified: string[] = []
+      const unclassifiedRecs: ExtractedRecord[] = []
       for (const inp of inputs) {
         const r = await extractVaccineInfo(inp)
         if (!r.ok) {
@@ -228,7 +270,12 @@ export function VaccineSection({
           const category = rec.category
           const meta = category ? CATEGORY_META[category] : undefined
           if (!category || !meta) {
-            unclassified.push(rec.product ?? '(이름 없음)')
+            unclassifiedRecs.push({
+              product: rec.product,
+              manufacturer: rec.manufacturer,
+              lot: rec.lot,
+              expiry: rec.expiry,
+            })
             continue
           }
           const kind = meta.kind
@@ -252,17 +299,23 @@ export function VaccineSection({
       }
       await refresh()
       const notes: string[] = []
-      if (unclassified.length > 0) notes.push(`분류 실패 ${unclassified.length}건 (${unclassified.slice(0, 2).join(', ')}${unclassified.length > 2 ? '…' : ''})`)
+      if (unclassifiedRecs.length > 0) notes.push(`분류 필요 ${unclassifiedRecs.length}건`)
       if (errors.length > 0) notes.push(`오류 ${errors.length}건: ${errors[0]}`)
       if (created > 0) {
         setExtractMsg({
           kind: 'success',
           text: `${created}개 제품 추가됨${notes.length > 0 ? ` · ${notes.join(' · ')}` : ''}`,
         })
-      } else if (unclassified.length > 0) {
-        setExtractMsg({ kind: 'error', text: `카테고리를 자동 분류하지 못했습니다. 수동으로 추가해 주세요. (${unclassified.slice(0, 2).join(', ')})` })
+      } else if (unclassifiedRecs.length > 0) {
+        setExtractMsg({ kind: 'info', text: `${unclassifiedRecs.length}건은 카테고리를 직접 골라주세요.` })
       } else {
         setExtractMsg({ kind: 'error', text: errors[0] ?? '추출된 정보가 없습니다.' })
+      }
+      // 분류 실패 항목을 큐에 넣고 첫 항목 모달 열기.
+      if (unclassifiedRecs.length > 0) {
+        const [first, ...rest] = unclassifiedRecs
+        setExtractQueue(rest)
+        setEditing({ mode: 'create', initial: extractToFormState(first), fromExtract: true })
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : '알 수 없는 오류'
@@ -378,8 +431,8 @@ export function VaccineSection({
         return
       }
       setError(null)
-      setEditing(null)
       await refresh()
+      closeOrAdvance()
     })
   }
 
@@ -613,17 +666,21 @@ export function VaccineSection({
 
       {editing && (
         <ProductFormModal
+          key={editing.mode === 'edit' ? `edit-${editing.id}` : `create-${extractQueue.length}`}
           mode={editing.mode}
           initial={editing.initial}
           pending={pending}
-          onClose={() => setEditing(null)}
+          fromExtract={editing.mode === 'create' && editing.fromExtract === true}
+          extractRemaining={extractQueue.length}
+          onSkipAll={extractQueue.length > 0 ? () => { setExtractQueue([]); setEditing(null) } : undefined}
+          onClose={closeOrAdvance}
           onSave={onSave}
           onDelete={
             editing.mode === 'edit'
               ? () => {
                   const id = editing.id
                   onDelete(id)
-                  setEditing(null)
+                  closeOrAdvance()
                 }
               : undefined
           }
@@ -788,12 +845,15 @@ interface ProductFormModalProps {
   mode: 'create' | 'edit'
   initial: FormState
   pending: boolean
+  fromExtract?: boolean
+  extractRemaining?: number
+  onSkipAll?: () => void
   onClose: () => void
   onSave: (form: FormState) => void
   onDelete?: () => void
 }
 
-function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }: ProductFormModalProps) {
+function ProductFormModal({ mode, initial, pending, fromExtract, extractRemaining, onSkipAll, onClose, onSave, onDelete }: ProductFormModalProps) {
   const confirm = useConfirm()
   const [form, setForm] = useState<FormState>(initial)
 
@@ -827,13 +887,30 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }:
           </button>
         </div>
 
+        {fromExtract && (
+          <div className="border-b border-border/80 bg-muted/40 px-lg py-2 flex items-center justify-between gap-sm">
+            <span className="font-serif italic text-[13px] text-muted-foreground">
+              AI 가 카테고리를 자동 분류하지 못했습니다. 카테고리를 골라주세요.
+              {extractRemaining && extractRemaining > 0 ? ` (남은 ${extractRemaining}건)` : ''}
+            </span>
+            {onSkipAll && (
+              <button
+                type="button"
+                onClick={onSkipAll}
+                className="font-serif text-[12px] text-muted-foreground/80 hover:text-foreground underline"
+              >
+                모두 건너뛰기
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="px-lg py-md space-y-md">
           <Field label="카테고리">
             <select
               value={form.category}
               onChange={(e) => update('category', e.target.value)}
-              disabled={mode === 'edit'}
-              className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background disabled:opacity-60"
+              className="w-full px-sm py-1.5 text-sm rounded-md border border-border/80 bg-background"
             >
               {CATEGORY_ORDER.map((cat) => (
                 <option key={cat} value={cat}>
@@ -946,6 +1023,7 @@ function ProductFormModal({ mode, initial, pending, onClose, onSave, onDelete }:
         <DialogFooter
           bordered
           onCancel={onClose}
+          cancelLabel={fromExtract ? '건너뛰기' : '취소'}
           onPrimary={() => onSave(form)}
           primaryLabel={mode === 'create' ? '추가' : '저장'}
           primaryDisabled={!form.manufacturer.trim()}
