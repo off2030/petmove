@@ -24,6 +24,8 @@ export type SinglePdfRequest = {
   caseId: string
   includeSignature?: boolean
   destination?: string | null
+  /** 별지 25호 (3슬롯) / 별지 25 EX (2슬롯) 의 dedicated 광견병 슬롯 선택. sortedAsc 기준 인덱스. */
+  rabiesIndices?: number[]
 }
 
 export type MultiPdfRequest = {

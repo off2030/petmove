@@ -19,6 +19,7 @@ import { lookupCaseByMicrochip } from '@/lib/actions/lookup-case-by-chip'
 import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateOVD, generateSGP, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti } from '@/lib/actions/generate-pdf'
 import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-download'
 import { MultiFormDialog } from './multi-form-dialog'
+import { RabiesSelectDialog, RABIES_SLOT_CAP } from './rabies-select-dialog'
 import { ChevronLeft, ChevronRight, Copy, Trash2 } from 'lucide-react'
 import { resolveCerts } from '@petmove/domain'
 import type { CaseRow } from '@/lib/supabase/types'
@@ -194,6 +195,11 @@ function Inner() {
   }, [cases, selectedCase])
   const detailScrollRef = useRef<HTMLDivElement>(null)
   const [multiForm, setMultiForm] = useState<{ caseId: string; formKey: 'AnnexIII' | 'UK' } | null>(null)
+  // 별지 25호/EX 의 광견병 슬롯이 부족할 때 띄우는 선택 모달.
+  const [rabiesPick, setRabiesPick] = useState<
+    | { caseId: string; formKey: 'Form25' | 'Form25AuNz'; rabiesDates: unknown; destination: string | null; cap: number }
+    | null
+  >(null)
   const [includeSignature, setIncludeSignature] = useState(false)
   const [addingFromFiles, setAddingFromFiles] = useState(false)
 
@@ -317,6 +323,40 @@ function Inner() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [selectedId, updateLocalCaseField, prevCase, nextCase, selectCase])
 
+  const downloadCertPdf = useCallback(
+    async (formKey: string, caseId: string, destination: string | null, rabiesIndices?: number[]) => {
+      try {
+        await downloadPdfRequest({
+          kind: 'single',
+          formKey: formKey as
+            | 'Form25'
+            | 'Form25AuNz'
+            | 'FormRE'
+            | 'FormAC'
+            | 'IdentificationDeclaration'
+            | 'AU'
+            | 'AU_2'
+            | 'AU_Cat'
+            | 'AU_Cat_2'
+            | 'NZ'
+            | 'OVD'
+            | 'SGP'
+            | 'AQS_279'
+            | 'CH'
+            | 'Form_R11'
+            | 'VHC',
+          caseId,
+          includeSignature,
+          destination,
+          ...(rabiesIndices ? { rabiesIndices } : {}),
+        })
+      } catch (error) {
+        alert(error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.')
+      }
+    },
+    [includeSignature],
+  )
+
   const handleDuplicate = useCallback(async (id: string) => {
     const result = await duplicateCase(id)
     if (result.ok) {
@@ -379,6 +419,23 @@ function Inner() {
             onClose={() => setMultiForm(null)}
           />
         )}
+
+        <RabiesSelectDialog
+          open={!!rabiesPick}
+          formLabel={
+            rabiesPick?.formKey === 'Form25AuNz' ? '별지 25호 EX (호주/뉴질랜드)' : '별지 25호'
+          }
+          slotCount={rabiesPick?.cap ?? 3}
+          rabiesDates={rabiesPick?.rabiesDates}
+          onClose={(indices) => {
+            const pick = rabiesPick
+            setRabiesPick(null)
+            if (pick && indices) {
+              void downloadCertPdf(pick.formKey, pick.caseId, pick.destination, indices)
+            }
+          }}
+        />
+
 
         {/* Panel 2: Detail (full width = 50% of 200%) */}
         <div className="w-1/2 h-full">
@@ -495,36 +552,32 @@ function Inner() {
                           <button
                             key={btn.key}
                             type="button"
-                            onClick={async () => {
+                            onClick={() => {
                               const formKey = CERT_FORM_KEYS[btn.key]
                               if (!formKey) return
-                              try {
-                                await downloadPdfRequest({
-                                  kind: 'single',
-                                  formKey: formKey as
-                                    | 'Form25'
-                                    | 'Form25AuNz'
-                                    | 'FormRE'
-                                    | 'FormAC'
-                                    | 'IdentificationDeclaration'
-                                    | 'AU'
-                                    | 'AU_2'
-                                    | 'AU_Cat'
-                                    | 'AU_Cat_2'
-                                    | 'NZ'
-                                    | 'OVD'
-                                    | 'SGP'
-                                    | 'AQS_279'
-                                    | 'CH'
-                                    | 'Form_R11'
-                                    | 'VHC',
-                                  caseId: selectedCase.id,
-                                  includeSignature,
-                                  destination: firstDestination(selectedCase),
+                              const cap = RABIES_SLOT_CAP[formKey]
+                              if (cap !== undefined) {
+                                const dataObj = (selectedCase.data ?? {}) as Record<string, unknown>
+                                const rabiesAll = Array.isArray(dataObj.rabies_dates) ? dataObj.rabies_dates : []
+                                // 별지 25호/EX 는 타병원 접종 제외하므로 그 수만 cap 비교.
+                                const rabies = rabiesAll.filter((r) => {
+                                  if (r && typeof r === 'object' && !Array.isArray(r)) {
+                                    return !(r as { other_hospital?: boolean }).other_hospital
+                                  }
+                                  return true
                                 })
-                              } catch (error) {
-                                alert(error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.')
+                                if (rabies.length > cap) {
+                                  setRabiesPick({
+                                    caseId: selectedCase.id,
+                                    formKey: formKey as 'Form25' | 'Form25AuNz',
+                                    rabiesDates: dataObj.rabies_dates,
+                                    destination: firstDestination(selectedCase),
+                                    cap,
+                                  })
+                                  return
+                                }
                               }
+                              void downloadCertPdf(formKey, selectedCase.id, firstDestination(selectedCase))
                             }}
                             className="rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
                           >

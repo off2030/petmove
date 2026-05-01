@@ -476,6 +476,18 @@ function buildVaccineSequenceUnified(
     return sorted.slice().reverse()
   }
 
+  // 0. 광견병 overflow — Form25 dedicated 슬롯에 안 들어간 추가 광견병 접종.
+  // 사용자 선택 결과 (FillOptions.rabiesIndices) 에 따라 fillPdfCore 가 미리
+  // 채워두는 키. 카테고리 cap 적용 안 함 — 모두 chronological asc 순으로 prepend.
+  const rabiesOverflow = data.rabies_overflow
+  if (Array.isArray(rabiesOverflow) && rabiesOverflow.length > 0) {
+    for (const rec of rabiesOverflow as ParasiteRecord[]) {
+      if (!rec?.date) continue
+      const p = lookupRabies(rec.date)
+      out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
+    }
+  }
+
   // 1. 종합백신 (Vaccination)
   if (allowed('general')) {
     for (const rec of latestAscending(data.general_vaccine_dates)) {
@@ -2418,6 +2430,13 @@ export type FillOptions = {
   allowedVaccines?: string[]
   /** 추가 필드 (예: Invoice/ESD의 tube_count). caseRow.data 에 병합되어 source 로 읽힘. */
   extras?: Record<string, unknown>
+  /**
+   * Form25 (3슬롯) / Form25AuNz (2슬롯) 의 dedicated 광견병 슬롯에 들어갈
+   * 접종을 선택. 인덱스는 rabies_dates 를 날짜 오름차순 정렬한 후의 위치.
+   * 미지정 시 처음부터 슬롯 수 만큼 채움 (기존 동작).
+   * 선택되지 않은 접종은 "기타 예방접종" 시퀀스 앞에 prepend 되어 표시.
+   */
+  rabiesIndices?: number[]
 }
 
 export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillOptions): Promise<FillResult> {
@@ -2443,10 +2462,27 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
 
   const pdfForm = pdf.getForm()
   const data = { ...(caseRow.data ?? {}), ...(options?.extras ?? {}) } as Record<string, unknown>
+
+  // 광견병 dedicated 슬롯 선택 처리 — rabiesIndices 가 주어지면 sortedAsc 기준
+  // 그 인덱스에 해당하는 records 만 rabies_dates 에 남기고, 나머지는
+  // rabies_overflow 키로 옮겨 buildVaccineSequenceUnified 가 prepend 하도록.
+  if (options?.rabiesIndices) {
+    const allAsc = sortedAscRecords(data.rabies_dates)
+    const idxSet = new Set(options.rabiesIndices)
+    const selected: ParasiteRecord[] = []
+    const overflow: ParasiteRecord[] = []
+    allAsc.forEach((rec, i) => {
+      if (idxSet.has(i)) selected.push(rec)
+      else overflow.push(rec)
+    })
+    data.rabies_dates = selected
+    data.rabies_overflow = overflow
+  }
+
   // extras(예: tube_count, consignee_lab)는 resolveField가 `caseRow.data` 를
   // 통해 읽으므로, solo fill 경로에서도 extras 가 적용되도록 data 를 주입한
   // 사본을 만들어 soloDoc 에 전달한다.
-  const caseRowWithExtras: CaseRow = options?.extras ? { ...caseRow, data } : caseRow
+  const caseRowWithExtras: CaseRow = options?.extras || options?.rabiesIndices ? { ...caseRow, data } : caseRow
 
   // Date reformatter for form-level dateFormat override (e.g. Annex III uses dd/mm/yyyy).
   // Converts a stand-alone YYYY-MM-DD or YYYY/MM/DD token to dd/mm/yyyy.

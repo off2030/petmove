@@ -57,6 +57,8 @@ type SinglePdfBody = {
   caseId: string
   includeSignature?: boolean
   destination?: string | null
+  /** 별지 25호/EX 의 dedicated 광견병 슬롯 선택 (sortedAsc 기준 인덱스). */
+  rabiesIndices?: number[]
 }
 
 type MultiPdfBody = {
@@ -143,6 +145,7 @@ export async function POST(req: NextRequest) {
       const result = await generate(body.caseId, {
         includeSignature: body.includeSignature,
         destination: body.destination,
+        rabiesIndices: body.rabiesIndices,
       })
       if (!result.ok) return jsonError(result.error, 500)
       return pdfResponse(result.pdf, result.filename)

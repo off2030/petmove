@@ -45,7 +45,7 @@ function stripOtherHospitalRecords(data: Record<string, unknown>): Record<string
 async function generate(
   formKey: string,
   caseId: string,
-  options?: { includeSignature?: boolean; destination?: string | null; extras?: Record<string, unknown> },
+  options?: { includeSignature?: boolean; destination?: string | null; extras?: Record<string, unknown>; rabiesIndices?: number[] },
 ): Promise<GeneratePdfResult> {
   await loadVetInfo()
   const supabase = await createClient()
@@ -72,6 +72,7 @@ async function generate(
     includeSignature: options?.includeSignature,
     allowedVaccines,
     extras: options?.extras,
+    rabiesIndices: options?.rabiesIndices,
   })
 }
 
@@ -98,7 +99,12 @@ async function generateStandalone(
 }
 
 /** 모든 generate* 진입점의 공통 옵션. UI 활성 목적지를 destination 으로 전달. */
-export type GenerateOpts = { includeSignature?: boolean; destination?: string | null }
+export type GenerateOpts = {
+  includeSignature?: boolean
+  destination?: string | null
+  /** 별지 25호/EX 의 dedicated 광견병 슬롯에 들어갈 접종 선택. sortedAsc 기준 인덱스. */
+  rabiesIndices?: number[]
+}
 
 export async function generateFormRE(caseId: string, opts?: GenerateOpts) {
   return generate('FormRE', caseId, opts)
