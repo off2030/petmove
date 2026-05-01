@@ -57,6 +57,20 @@ const TRANSPORT_OPTIONS: ExtraFieldOption[] = [
   { value: 'Cargo(Sea)', label: 'Cargo (Sea)' },
 ]
 
+/** Switzerland(BLV) 신청서가 허용하는 입국공항 — Zürich/Geneva/Basel. PDF mapping checkbox 값과 동일. */
+export const SWISS_ENTRY_AIRPORT_OPTIONS: ExtraFieldOption[] = [
+  { value: 'zurich', label: 'Zürich' },
+  { value: 'geneva', label: 'Geneva' },
+  { value: 'basel', label: 'Basel' },
+]
+
+/** 태국 검역소·도착공항 — Bangkok(BKK)/Phuket(HKT)/Chiang Mai(CNX). 값은 Form R.11 quarantine_location 과 동일. */
+export const THAILAND_ENTRY_AIRPORT_OPTIONS: ExtraFieldOption[] = [
+  { value: 'Bangkok', label: 'Bangkok (BKK)' },
+  { value: 'Phuket', label: 'Phuket (HKT)' },
+  { value: 'Chiang Mai', label: 'Chiang Mai (CNX)' },
+]
+
 export const EXTRA_FIELD_DEFS: Record<string, ExtraFieldDef> = {
   // ── 연락처 / 주소 ──
   address_overseas: { key: 'address_overseas', label: '해외주소', type: 'text' },

@@ -8,7 +8,7 @@ import {
   HIDDEN_EN_KEYS,
   readCaseField,
 } from '@/lib/fields'
-import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, extraFieldMatchesSpecies, findCustomDestination, EXTRA_FIELD_DEFS, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, type ExtraFieldDef } from '@petmove/domain'
+import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, extraFieldMatchesSpecies, findCustomDestination, EXTRA_FIELD_DEFS, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, SWISS_ENTRY_AIRPORT_OPTIONS, THAILAND_ENTRY_AIRPORT_OPTIONS, type ExtraFieldDef } from '@petmove/domain'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import React, { useEffect, useRef, useState } from 'react'
 import { Trash2 } from 'lucide-react'
@@ -300,7 +300,10 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
               caseId={caseRow.id}
               caseRow={caseRow}
               sectionNumber={sectionNumber}
-              entries={extraEntries.map((e) => EXTRA_FIELD_DEFS[e.key]).filter((d): d is ExtraFieldDef => !!d)}
+              entries={extraEntries
+                .map((e) => EXTRA_FIELD_DEFS[e.key])
+                .filter((d): d is ExtraFieldDef => !!d)
+                .map((d) => applyDestinationFieldOverride(d, viewDestination))}
               destination={viewDestination}
             />
           )
@@ -349,6 +352,19 @@ function groupExtraEntries(entries: ExtraFieldDef[]): ExtraSegment[] {
       ? { type: 'flat' as const, entry: seg.items[0] }
       : seg
   ))
+}
+
+/** 목적지별 ExtraFieldDef 오버라이드 — 같은 키라도 국가별로 type/options 가 달라질 때 적용. */
+function applyDestinationFieldOverride(def: ExtraFieldDef, destination: string | null | undefined): ExtraFieldDef {
+  if (!destination) return def
+  const override = getDestinationOverride(destination)
+  if (override?.extraSection === 'switzerland' && def.key === 'entry_airport') {
+    return { ...def, type: 'select', options: SWISS_ENTRY_AIRPORT_OPTIONS, placeholder: undefined }
+  }
+  if (override?.extraSection === 'thailand' && def.key === 'entry_airport') {
+    return { ...def, type: 'select', options: THAILAND_ENTRY_AIRPORT_OPTIONS, placeholder: undefined }
+  }
+  return def
 }
 
 function buildSpecForExtra(def: ExtraFieldDef, useShortLabel: boolean): FieldSpec {
@@ -779,7 +795,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
     else if (!secRaw) { setSecVal(''); setEditingSec(true); setError(null) }
   }
 
-  const inputCls = 'w-44 h-8 rounded-md border border-border/80 bg-background px-2 text-sm font-mono tracking-[0.3px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
+  const inputCls = 'w-52 h-8 rounded-md border border-border/80 bg-background px-2 text-sm font-mono tracking-[0.3px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
   const showMain = editingMain || !!mainRaw
   const showSec = editingSec || !!secRaw
 

@@ -538,53 +538,56 @@ function Inner() {
                         />
                         서명
                       </label>
-                      {resolveCerts(firstDestination(selectedCase), certConfig, (selectedCase.data as Record<string, unknown>)?.species as string | undefined).map((btn) =>
-                        btn.type === 'multi' ? (
-                          <button
-                            key={btn.key}
-                            type="button"
-                            onClick={() => handleMultiForm(selectedCase.id, (CERT_MULTI_KEYS[btn.key] ?? btn.key) as 'AnnexIII' | 'UK')}
-                            className="rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
-                          >
-                            {btn.label}
-                          </button>
-                        ) : (
-                          <button
-                            key={btn.key}
-                            type="button"
-                            onClick={() => {
-                              const formKey = CERT_FORM_KEYS[btn.key]
-                              if (!formKey) return
-                              const cap = RABIES_SLOT_CAP[formKey]
-                              if (cap !== undefined) {
-                                const dataObj = (selectedCase.data ?? {}) as Record<string, unknown>
-                                const rabiesAll = Array.isArray(dataObj.rabies_dates) ? dataObj.rabies_dates : []
-                                // 별지 25호/EX 는 타병원 접종 제외하므로 그 수만 cap 비교.
-                                const rabies = rabiesAll.filter((r) => {
-                                  if (r && typeof r === 'object' && !Array.isArray(r)) {
-                                    return !(r as { other_hospital?: boolean }).other_hospital
-                                  }
-                                  return true
-                                })
-                                if (rabies.length > cap) {
-                                  setRabiesPick({
-                                    caseId: selectedCase.id,
-                                    formKey: formKey as 'Form25' | 'Form25AuNz',
-                                    rabiesDates: dataObj.rabies_dates,
-                                    destination: firstDestination(selectedCase),
-                                    cap,
+                      {(() => {
+                        const focusDest = activeDestination ?? firstDestination(selectedCase)
+                        return resolveCerts(focusDest, certConfig, (selectedCase.data as Record<string, unknown>)?.species as string | undefined).map((btn) =>
+                          btn.type === 'multi' ? (
+                            <button
+                              key={btn.key}
+                              type="button"
+                              onClick={() => handleMultiForm(selectedCase.id, (CERT_MULTI_KEYS[btn.key] ?? btn.key) as 'AnnexIII' | 'UK')}
+                              className="rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
+                            >
+                              {btn.label}
+                            </button>
+                          ) : (
+                            <button
+                              key={btn.key}
+                              type="button"
+                              onClick={() => {
+                                const formKey = CERT_FORM_KEYS[btn.key]
+                                if (!formKey) return
+                                const cap = RABIES_SLOT_CAP[formKey]
+                                if (cap !== undefined) {
+                                  const dataObj = (selectedCase.data ?? {}) as Record<string, unknown>
+                                  const rabiesAll = Array.isArray(dataObj.rabies_dates) ? dataObj.rabies_dates : []
+                                  // 별지 25호/EX 는 타병원 접종 제외하므로 그 수만 cap 비교.
+                                  const rabies = rabiesAll.filter((r) => {
+                                    if (r && typeof r === 'object' && !Array.isArray(r)) {
+                                      return !(r as { other_hospital?: boolean }).other_hospital
+                                    }
+                                    return true
                                   })
-                                  return
+                                  if (rabies.length > cap) {
+                                    setRabiesPick({
+                                      caseId: selectedCase.id,
+                                      formKey: formKey as 'Form25' | 'Form25AuNz',
+                                      rabiesDates: dataObj.rabies_dates,
+                                      destination: focusDest,
+                                      cap,
+                                    })
+                                    return
+                                  }
                                 }
-                              }
-                              void downloadCertPdf(formKey, selectedCase.id, firstDestination(selectedCase))
-                            }}
-                            className="rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
-                          >
-                            {btn.label}
-                          </button>
-                        ),
-                      )}
+                                void downloadCertPdf(formKey, selectedCase.id, focusDest)
+                              }}
+                              className="rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
+                            >
+                              {btn.label}
+                            </button>
+                          ),
+                        )
+                      })()}
                       <ImportReportToggle caseRow={selectedCase} onUpdate={updateLocalCaseField} />
                     </div>
                   </>

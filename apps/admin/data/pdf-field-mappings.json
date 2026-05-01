@@ -4193,7 +4193,9 @@
       "text_2fvow":  { "source": "customer_last_name_en", "note": "§1 Applicant — Name (last)" },
       "text_3yfsn":  { "source": "customer_first_name_en","note": "§1 Applicant — First name" },
       "text_4xfzz":  { "source": "postcode_place",        "note": "§1 Applicant — Post code / Place (address_zipcode + city)" },
+      "text_35dgve": { "source": null, "default": "Republic of Korea", "note": "§1 Applicant — Country (신청자 거주국 = 한국)" },
       "text_5mmcj":  { "source": "phone", "transform": "phone_intl_kr", "note": "§1 Applicant — Telephone" },
+      "text_36aqtq": { "source": "email", "note": "§1 Applicant — E-Mail (고객 이메일)" },
 
       "text_6xuns":  { "source": "switzerland_extra", "transform": "json:entry_date", "note": "§2 Entry — Date of entry" },
 

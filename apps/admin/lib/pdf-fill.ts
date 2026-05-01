@@ -8,7 +8,7 @@ import fontkit from '@pdf-lib/fontkit'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import mappings from '@/data/pdf-field-mappings.json'
-import { getParasiteFamily } from '@petmove/domain'
+import { getParasiteFamily, PARASITE_FAMILIES } from '@petmove/domain'
 import {
   lookupRabies,
   lookupExternalParasite,
@@ -201,10 +201,10 @@ const SPECIES_EN: Record<string, string> = { dog: 'Dog', cat: 'Cat' }
  */
 const PARASITE_PRODUCT_INFO: Record<string, { ingredient: string; dose: string }> = {
   frontline_plus_dog:  { ingredient: 'Fipronil', dose: '1 vial' },
-  frontline_spray_cat: { ingredient: 'Fipronil', dose: '1 vial' },
-  drontal_plus_dog:    { ingredient: 'Pyrantel Pamoate, Praziquantel, Febantel', dose: '1 tablet per 10 kg body weight' },
-  panacur_dog:         { ingredient: 'Fenbendazole', dose: '1 tablet (500 mg) per 10 kg body weight' },
-  panacur_cat:         { ingredient: 'Fenbendazole', dose: '1 tablet (500 mg) per 10 kg body weight' },
+  frontline_spray_cat: { ingredient: 'Fipronil', dose: '3-6 ml/kg BW' },
+  drontal_plus_dog:    { ingredient: 'Pyrantel Pamoate, Praziquantel, Febantel', dose: '1 tablet/10 kg BW' },
+  panacur_dog:         { ingredient: 'Fenbendazole', dose: '50 mg/kg BW' },
+  panacur_cat:         { ingredient: 'Fenbendazole', dose: '50 mg/kg BW' },
 }
 
 /** sex code → English label used by Annex III (N. = neutered/spayed). */
@@ -1279,10 +1279,9 @@ function resolveField(
 
   // Active ingredient / dose-rate lookup for AU parasite rows.
   // Pattern: `parasite_info:(external|internal):(ingredient|dose)[<n>]` (desc order)
-  // Resolves the product by (1) rec.product_id when set, (2) falling back to
-  // species+kind→default product_id mapping so records saved without an
-  // explicit product selection still render (matches the Product name
-  // column's species/date-based lookup behavior).
+  // Resolves the product by (1) rec.product_id when set, (2) catalog lookup via
+  // lookupExternal/InternalParasite (matches the Product name column's behavior),
+  // (3) species+kind→default product_id fallback.
   const parInfoMatch = transform?.match(/^parasite_info:(external|internal):(ingredient|dose)\[(\d+)\]$/)
   if (parInfoMatch) {
     const side = parInfoMatch[1] as 'external' | 'internal'
@@ -1292,11 +1291,29 @@ function resolveField(
     const rec = records[idx]
     if (!rec) return ''
     const species = String(data.species ?? '').toLowerCase()
+    const weightKg = Number(String(data.weight ?? '').replace(/[^\d.]/g, '')) || 0
     const defaultIds: Record<'external' | 'internal', Record<string, string>> = {
       external: { dog: 'frontline_plus_dog', cat: 'frontline_spray_cat' },
-      internal: { dog: 'drontal_plus_dog' }, // 고양이 내부구충 default 등록된 family 없음 — rec.product_id 필요.
+      internal: { dog: 'drontal_plus_dog' },
     }
-    const pid = rec.product_id || defaultIds[side][species]
+    let catalogId: string | undefined
+    if (!rec.product_id && rec.date && (species === 'dog' || species === 'cat')) {
+      const p = side === 'external'
+        ? lookupExternalParasite(species, rec.date, weightKg)
+        : lookupInternalParasite(species, rec.date, weightKg)
+      catalogId = p?.id
+      if (!catalogId && p) {
+        // Org DB 에 parasite_id 가 비어 있어도 product/vaccine 이름으로 family 역추적.
+        const target = String(p.product ?? p.vaccine ?? '').trim().toLowerCase()
+        if (target) {
+          const fam = PARASITE_FAMILIES.find(f =>
+            f.species === species && f.kind === side && f.name.toLowerCase() === target
+          )
+          catalogId = fam?.id
+        }
+      }
+    }
+    const pid = rec.product_id || catalogId || defaultIds[side][species]
     const info = pid ? PARASITE_PRODUCT_INFO[pid] : undefined
     if (!info) return ''
     if (attr === 'ingredient') return info.ingredient
