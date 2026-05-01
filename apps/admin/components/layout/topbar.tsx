@@ -1,6 +1,6 @@
 'use client'
 
-import { Folder, LayoutGrid, MessageSquare, Settings, Menu, Monitor, Sun, Moon, Shield, User, LogOut, UserCog } from 'lucide-react'
+import { Folder, LayoutGrid, MessageSquare, Settings, Menu, Monitor, Sun, Moon, Shield, User, LogOut, UserCog, X } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useVaccineLookups } from '@/components/providers/vaccine-data-provider'
@@ -52,17 +52,23 @@ export function TopBar({
   const expiringCount = useMemo(() => vaccineLookups.countExpiringProducts(), [vaccineLookups])
   const { mode, mounted, cycle } = useDarkMode()
   const [menuOpen, setMenuOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
 
+  // Drawer 가 열렸을 때 — ESC 키로 닫고, body scroll 잠금.
+  // outside-click 은 backdrop 이 처리하므로 별도 mousedown handler 불필요.
   useEffect(() => {
     if (!menuOpen) return
-    function handler(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setMenuOpen(false)
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    document.addEventListener('keydown', onKey)
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prevOverflow
+    }
   }, [menuOpen])
 
   useEffect(() => {
@@ -119,19 +125,62 @@ export function TopBar({
   return (
     <header className="shrink-0 h-14 w-full flex items-center gap-lg px-md border-b border-border/80 bg-background">
         {/* Mobile hamburger — left side, hidden on md+ */}
-        <div className="relative md:hidden" ref={menuRef}>
-          <button
-            type="button"
-            onClick={() => setMenuOpen((p) => !p)}
-            aria-label="메뉴 열기"
-            className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          aria-label="메뉴 열기"
+          aria-expanded={menuOpen}
+          className="md:hidden h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+        >
+          <Menu size={20} />
+        </button>
+
+        {/* Mobile drawer — backdrop + slide-in panel.
+            항상 마운트하고 transform/opacity 로 enter/exit (애니메이션 자연스럽게). */}
+        <div
+          className={cn(
+            'fixed inset-0 z-50 md:hidden transition-opacity duration-200',
+            menuOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
+          )}
+          aria-hidden={!menuOpen}
+        >
+          {/* Backdrop — 클릭 시 닫힘 */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setMenuOpen(false)}
+          />
+
+          {/* Panel — 좌측에서 슬라이드, safe-area 패딩 */}
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-label="메인 메뉴"
+            className={cn(
+              'absolute left-0 top-0 bottom-0 w-[280px] max-w-[85vw] flex flex-col bg-popover border-r border-border shadow-xl',
+              'transform transition-transform duration-200 pt-safe-t pb-safe-b pl-safe-l',
+              menuOpen ? 'translate-x-0' : '-translate-x-full',
+            )}
           >
-            <Menu size={20} />
-          </button>
-          {menuOpen && (
-            <div className="absolute left-0 top-full mt-1 z-30 min-w-[160px] rounded-md border border-border bg-popover p-1 shadow-md">
+            {/* Drawer 헤더 — 로고 + 닫기 */}
+            <div className="shrink-0 flex items-center justify-between h-14 px-md border-b border-border/80">
+              <span className="font-serif text-[18px] font-medium tracking-tight text-foreground">
+                펫무브워크
+              </span>
+              <button
+                type="button"
+                onClick={() => setMenuOpen(false)}
+                aria-label="메뉴 닫기"
+                className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* 메인 nav + 보조 메뉴 (스크롤 가능) */}
+            <nav className="flex-1 overflow-y-auto p-2 flex flex-col gap-xs">
               {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
                 const active = activeTab === id
+                const close = () => setMenuOpen(false)
                 if (onTabChange) {
                   return (
                     <button
@@ -140,7 +189,7 @@ export function TopBar({
                       onClick={() => {
                         onTabChange(id)
                         if (id === 'cases') dispatchHomeReset()
-                        setMenuOpen(false)
+                        close()
                       }}
                       className={mobileTabClass(active)}
                     >
@@ -157,7 +206,7 @@ export function TopBar({
                     prefetch={false}
                     onClick={() => {
                       if (id === 'cases') dispatchHomeReset()
-                      setMenuOpen(false)
+                      close()
                     }}
                     className={mobileTabClass(active)}
                   >
@@ -167,8 +216,134 @@ export function TopBar({
                   </Link>
                 )
               })}
+
+              <div className="h-px bg-border my-2" aria-hidden />
+
+              {/* 슈퍼어드민 — 권한 있을 때만 */}
+              {isSuperAdmin && (
+                onTabChange ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onTabChange('super-admin')
+                      setMenuOpen(false)
+                    }}
+                    className={mobileTabClass(superAdminActive || activeTab === 'super-admin')}
+                  >
+                    <Shield size={16} className="shrink-0" />
+                    <span>슈퍼 어드민</span>
+                  </button>
+                ) : (
+                  <Link
+                    href="/super-admin"
+                    prefetch={false}
+                    onClick={() => setMenuOpen(false)}
+                    className={mobileTabClass(superAdminActive)}
+                  >
+                    <Shield size={16} className="shrink-0" />
+                    <span>슈퍼 어드민</span>
+                  </Link>
+                )
+              )}
+
+              {/* 설정 — 만료 임박 약품 있으면 dot */}
+              {onTabChange ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onTabChange('settings')
+                    setMenuOpen(false)
+                  }}
+                  className={mobileTabClass(settingsActive)}
+                >
+                  <Settings size={16} className="shrink-0" />
+                  <span>설정</span>
+                  {expiringCount > 0 && (
+                    <span className="ml-auto w-2 h-2 rounded-full bg-red-500" aria-label="확인 필요" />
+                  )}
+                </button>
+              ) : (
+                <Link
+                  href="/settings"
+                  prefetch={false}
+                  onClick={() => setMenuOpen(false)}
+                  className={mobileTabClass(settingsActive)}
+                >
+                  <Settings size={16} className="shrink-0" />
+                  <span>설정</span>
+                  {expiringCount > 0 && (
+                    <span className="ml-auto w-2 h-2 rounded-full bg-red-500" aria-label="확인 필요" />
+                  )}
+                </Link>
+              )}
+
+              {/* 다크모드 토글 — system / light / dark 순환 */}
+              {mounted && (
+                <button
+                  type="button"
+                  onClick={cycle}
+                  className={mobileTabClass(false)}
+                >
+                  {mode === 'system' ? <Monitor size={16} className="shrink-0" /> : mode === 'dark' ? <Moon size={16} className="shrink-0" /> : <Sun size={16} className="shrink-0" />}
+                  <span>테마: {mode === 'system' ? '시스템' : mode === 'light' ? '라이트' : '다크'}</span>
+                </button>
+              )}
+            </nav>
+
+            {/* 푸터 — 프로필 + 로그아웃 */}
+            <div className="shrink-0 border-t border-border/80 p-2 space-y-1">
+              {(userAvatarUrl || userName || userEmail) && (
+                <div className="flex items-center gap-sm px-sm py-2">
+                  <Avatar
+                    size="sm"
+                    label={avatarInitial(userName || userEmail || '?')}
+                    imageUrl={userAvatarUrl}
+                  />
+                  <div className="flex-1 min-w-0">
+                    {userName ? (
+                      <>
+                        <div className="text-sm font-medium text-foreground truncate">{userName}</div>
+                        {userEmail && (
+                          <div className="text-xs text-muted-foreground truncate">{userEmail}</div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-sm text-foreground truncate">{userEmail}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+              {onTabChange ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false)
+                    onTabChange('settings')
+                    window.history.replaceState(null, '', '/settings#profile')
+                    window.dispatchEvent(new HashChangeEvent('hashchange'))
+                  }}
+                  className={mobileTabClass(false)}
+                >
+                  <UserCog size={16} className="shrink-0" />
+                  <span>프로필 수정</span>
+                </button>
+              ) : (
+                <Link
+                  href="/settings#profile"
+                  prefetch={false}
+                  onClick={() => setMenuOpen(false)}
+                  className={mobileTabClass(false)}
+                >
+                  <UserCog size={16} className="shrink-0" />
+                  <span>프로필 수정</span>
+                </Link>
+              )}
+              <a href="/logout" className={mobileTabClass(false)}>
+                <LogOut size={16} className="shrink-0" />
+                <span>로그아웃</span>
+              </a>
             </div>
-          )}
+          </aside>
         </div>
 
         {/* App name — serif wordmark. 항상 홈 목록 모드로 복귀 (검사/신고/서류 모드도 리셋). */}
@@ -229,11 +404,11 @@ export function TopBar({
           })}
         </nav>
 
-        {/* Vertical divider */}
-        <div className="h-6 w-px bg-foreground/20" aria-hidden />
+        {/* Vertical divider — 데스크톱 전용 (모바일은 drawer 로 통합) */}
+        <div className="hidden md:block h-6 w-px bg-foreground/20" aria-hidden />
 
-        {/* Right-side actions */}
-        <div className="flex items-center gap-xs">
+        {/* Right-side actions — 모바일에서는 drawer 안으로 이전, 여기선 숨김 */}
+        <div className="hidden md:flex items-center gap-xs">
           {isSuperAdmin && (
             onTabChange ? (
               <button
