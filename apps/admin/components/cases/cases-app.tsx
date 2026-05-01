@@ -201,10 +201,6 @@ function Inner() {
     | null
   >(null)
   const [includeSignature, setIncludeSignature] = useState(false)
-  // 심플 모드 — 상세 패널에서 모든 편집 어포던스(버튼·copy 아이콘·hover 등)
-  // 숨기고 인쇄된 텍스트처럼 정보만 표시. CSS 의 [data-simple-mode] selector 가
-  // 일괄 처리.
-  const [simpleMode, setSimpleMode] = useState(false)
   const [addingFromFiles, setAddingFromFiles] = useState(false)
 
   // Reset detail scroll to top when selected case changes
@@ -516,7 +512,7 @@ function Inner() {
               {/* Card (scrolls inside) — 홈과 동일 패턴 */}
               <div className="flex-1 min-h-0 flex flex-col">
                 {selectedCase ? (
-                  <CaseDetail caseRow={selectedCase} scrollRef={detailScrollRef} simpleMode={simpleMode} />
+                  <CaseDetail caseRow={selectedCase} scrollRef={detailScrollRef} />
                 ) : (
                   <CaseDetailEmpty />
                 )}
@@ -533,14 +529,6 @@ function Inner() {
                       )}
                     </span>
                     <div className="flex items-center gap-1 flex-wrap justify-end">
-                      <button
-                        type="button"
-                        onClick={() => setSimpleMode((v) => !v)}
-                        title={simpleMode ? '편집 모드로 전환' : '심플 모드로 전환 (편집 UI 숨김)'}
-                        className="rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
-                      >
-                        {simpleMode ? '편집' : '심플'}
-                      </button>
                       <label className="flex items-center gap-xs select-none cursor-pointer rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors">
                         <input
                           type="checkbox"
