@@ -196,7 +196,7 @@ export function TopBar({
 
         {/* Nav tabs — right side, hidden on mobile (replaced by hamburger) */}
         <nav className="hidden md:flex items-center gap-xs">
-          {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
+          {NAV_ITEMS.map(({ id, label }) => {
             const active = activeTab === id
             if (onTabChange) {
               return (
@@ -209,7 +209,6 @@ export function TopBar({
                   }}
                   className={tabClass(active)}
                 >
-                  <Icon size={16} className="shrink-0" />
                   <span>{label}</span>
                   {tabBadge(id)}
                 </button>
@@ -223,7 +222,6 @@ export function TopBar({
                 onClick={() => { if (id === 'cases') dispatchHomeReset() }}
                 className={tabClass(active)}
               >
-                <Icon size={16} className="shrink-0" />
                 <span>{label}</span>
                 {tabBadge(id)}
               </Link>
