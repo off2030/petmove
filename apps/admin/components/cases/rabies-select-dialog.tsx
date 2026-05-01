@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import { cn } from '@/lib/utils'
@@ -79,7 +80,11 @@ export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, on
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
-  if (!open) return null
+  // Portal — case 패널의 translateX 가 fixed containing block 을 만들어
+  // 모달이 좌측으로 밀리는 문제 회피.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  if (!open || !mounted) return null
 
   const overflowCount = sorted.length - selected.size
   const canConfirm = selected.size > 0 && selected.size <= slotCount
@@ -98,7 +103,7 @@ export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, on
     })
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="bg-background rounded-lg shadow-lg w-full max-w-md max-h-[90vh] overflow-auto">
         <div className="flex items-center justify-between border-b border-border/80 px-lg py-3">
@@ -158,7 +163,8 @@ export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, on
           primaryDisabled={!canConfirm}
         />
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
