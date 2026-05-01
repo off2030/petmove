@@ -181,22 +181,23 @@ export function SettingsApp({
   }
 
   return (
-    <div className="h-full overflow-hidden px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
+    <div className="h-full overflow-hidden px-md md:px-lg py-md md:py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
       <div className="h-full mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl flex flex-col gap-lg">
         {/* Page header — editorial title */}
-        <div className="shrink-0 px-lg">
+        <div className="shrink-0 px-md md:px-lg">
           <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
             설정
           </h1>
         </div>
 
-        <div className="flex gap-md border-b border-border/80 shrink-0 px-lg">
+        {/* 탭 — 모바일은 가로 스크롤(좌우 swipe). 글자 줄바꿈 방지 (whitespace-nowrap + shrink-0). */}
+        <div className="flex gap-md border-b border-border/80 shrink-0 px-md md:px-lg overflow-x-auto scrollbar-hide">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => handleTabClick(tab.id)}
-              className={`px-1 py-2 font-serif text-[17px] transition-colors border-b -mb-px ${
+              className={`shrink-0 whitespace-nowrap px-1 py-2 font-serif text-[15px] md:text-[17px] transition-colors border-b -mb-px ${
                 activeTab === tab.id
                   ? 'border-foreground text-foreground font-semibold'
                   : 'border-transparent text-muted-foreground/70 hover:text-foreground'
@@ -207,7 +208,7 @@ export function SettingsApp({
           ))}
         </div>
 
-        <div className="flex-1 min-h-0 overflow-auto scrollbar-minimal px-lg">
+        <div className="flex-1 min-h-0 overflow-auto scrollbar-minimal px-md md:px-lg">
           {activeTab === 'profile' && (
             <ProfileSection initialProfile={bootstrap?.myProfile ?? null} />
           )}
