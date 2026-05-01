@@ -233,7 +233,7 @@ export function AddressField({
   }
 
   const inputClass =
-    'flex-1 h-8 max-w-[480px] rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
+    'flex-1 min-w-0 h-8 max-w-[480px] rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30'
 
   return (
     <>
