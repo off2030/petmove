@@ -648,18 +648,8 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, entries, destinati
         >
           추가정보
         </button>
-        {country && (
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={extracting}
-            title="이미지·PDF 첨부하여 자동 추출"
-            className="shrink-0 translate-y-[2px] text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
-          >
-            <Paperclip className="h-4 w-4" />
-          </button>
-        )}
-        {showActions && hasAnyValue && (
+        {/* 둘 중 하나만 — 값 있으면 삭제, 없으면 추출. 타이틀 클릭으로 토글. */}
+        {showActions && (hasAnyValue ? (
           <button
             type="button"
             onClick={clearAllFields}
@@ -669,7 +659,17 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, entries, destinati
             <Trash2 className="h-3.5 w-3.5" />
             전체 삭제
           </button>
-        )}
+        ) : country ? (
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={extracting}
+            title="이미지·PDF 첨부하여 자동 추출"
+            className="shrink-0 translate-y-[2px] text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
+          >
+            <Paperclip className="h-4 w-4" />
+          </button>
+        ) : null)}
         {extracting && (
           <span className="font-sans text-[12px] italic text-muted-foreground">추출 중...</span>
         )}
