@@ -19,7 +19,8 @@ const OFFICIAL_CERTS = [
   'AU', 'AU_2', 'AU_Cat', 'AU_Cat_2',
   'NZ', 'NZ_2', 'OVD',
   'Form25', 'Form25AuNz',
-  'FormRE',
+  'FormRE', 'FormAC',
+  'IdentificationDeclaration',
 ]
 
 const mode = process.argv[2]
