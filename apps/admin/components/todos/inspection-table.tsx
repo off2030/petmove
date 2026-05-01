@@ -60,10 +60,12 @@ export function inspectionStatusKey(row: InspectionRow): string {
 /**
  * 행 진행상태 조회. 행별 키 우선, 없으면 legacy 폴백.
  *
- * legacy 폴백은 record idx 0 (또는 단일 검사) 에만 적용 — 재검사로 추가된
- * record idx ≥ 1 은 옛 단일 'done' 상태를 상속하면 안 됨.
- *  - titer idx 0: `inspection_status_titer` (단일행 시절) → `inspection_status` (탭 통합 전).
- *  - infectious: 새 키만. (lab 별 키 자체가 modern 이라 legacy 매핑 모호.)
+ * legacy `inspection_status` 폴백은 케이스당 행 1개로 보장되는 경우에만 적용 —
+ * 재검사로 추가된 titer record idx ≥ 1 만 상속을 막으면 됨 (단일행 시절 'done'
+ * 이 신규 회차로 잘못 번지는 문제).
+ *  - titer idx 0: `inspection_status_titer` → `inspection_status`.
+ *  - infectious / infectious_multi: 케이스당 행 1개 (호주 ksvdl / 뉴질랜드 묶음)
+ *    → `inspection_status` 폴백 안전. 옛 케이스 done 상태 유지.
  *  - titer idx ≥ 1: legacy 무시, 신규 record 는 'waiting' 출발.
  */
 export function readInspectionStatus(row: InspectionRow): string {
@@ -73,6 +75,10 @@ export function readInspectionStatus(row: InspectionRow): string {
   if (row.dateStorage.kind === 'titer' && row.dateStorage.recordIdx === 0) {
     const legacyTiter = data.inspection_status_titer
     if (typeof legacyTiter === 'string') return legacyTiter
+    const legacy = data.inspection_status
+    if (typeof legacy === 'string') return legacy
+  }
+  if (row.dateStorage.kind === 'infectious' || row.dateStorage.kind === 'infectious_multi') {
     const legacy = data.inspection_status
     if (typeof legacy === 'string') return legacy
   }
