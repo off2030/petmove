@@ -219,7 +219,7 @@ export function TopBar({
               {/* 다크모드 토글은 topbar 우측 끝(모바일 전용 버튼)으로 이전됨 */}
             </nav>
 
-            {/* 푸터 — 프로필 + 로그아웃 */}
+            {/* 푸터 — 사용자 정보 + 로그아웃 (프로필 수정은 데스크톱 우측 메뉴에서만) */}
             <div className="shrink-0 border-t border-border/80 p-2 space-y-1">
               {(userAvatarUrl || userName || userEmail) && (
                 <div className="flex items-center gap-sm px-sm py-2">
@@ -241,31 +241,6 @@ export function TopBar({
                     )}
                   </div>
                 </div>
-              )}
-              {onTabChange ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMenuOpen(false)
-                    onTabChange('settings')
-                    window.history.replaceState(null, '', '/settings#profile')
-                    window.dispatchEvent(new HashChangeEvent('hashchange'))
-                  }}
-                  className={mobileTabClass(false)}
-                >
-                  <UserCog size={16} className="shrink-0" />
-                  <span>프로필 수정</span>
-                </button>
-              ) : (
-                <Link
-                  href="/settings#profile"
-                  prefetch={false}
-                  onClick={() => setMenuOpen(false)}
-                  className={mobileTabClass(false)}
-                >
-                  <UserCog size={16} className="shrink-0" />
-                  <span>프로필 수정</span>
-                </Link>
               )}
               <a href="/logout" className={mobileTabClass(false)}>
                 <LogOut size={16} className="shrink-0" />
