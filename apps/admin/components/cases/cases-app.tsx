@@ -405,7 +405,7 @@ function Inner() {
       >
         {/* Panel 1: List (full width = 50% of 200%) */}
         <div className="w-1/2 h-full">
-          <div className="h-full overflow-hidden px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
+          <div className="h-full overflow-hidden px-md md:px-lg py-md md:py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
             <div className="h-full mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl">
               <CaseList onAdd={handleAdd} onAddFromFiles={handleAddFromFiles} busy={addingFromFiles} />
             </div>
@@ -439,17 +439,19 @@ function Inner() {
 
         {/* Panel 2: Detail (full width = 50% of 200%) */}
         <div className="w-1/2 h-full">
-          <div className="h-full overflow-hidden px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
+          <div className="h-full overflow-hidden px-md md:px-lg py-md md:py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
             <div className="relative h-full mx-auto max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl">
               {selectedCase && (
                 <>
+                  {/* 데스크톱 전용 — 컨테이너 바깥쪽 화살표. 모바일에선 화면 밖이라 숨김
+                      (모바일은 좌측 슬라이드로 목록 복귀 → 다른 케이스 선택 흐름). */}
                   <button
                     type="button"
                     onClick={() => prevCase && selectCase(prevCase.id)}
                     disabled={!prevCase}
                     aria-label="이전 케이스 (Ctrl+←)"
                     title="이전 케이스 (Ctrl+←)"
-                    className="absolute -left-12 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+                    className="hidden md:block absolute -left-12 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
                   >
                     <ChevronLeft size={24} />
                   </button>
@@ -459,7 +461,7 @@ function Inner() {
                     disabled={!nextCase}
                     aria-label="다음 케이스 (Ctrl+→)"
                     title="다음 케이스 (Ctrl+→)"
-                    className="absolute -right-12 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+                    className="hidden md:block absolute -right-12 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
                   >
                     <ChevronRight size={24} />
                   </button>

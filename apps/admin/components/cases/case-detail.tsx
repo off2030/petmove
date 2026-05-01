@@ -11,7 +11,7 @@ import {
 import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, extraFieldMatchesSpecies, findCustomDestination, EXTRA_FIELD_DEFS, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, SWISS_ENTRY_AIRPORT_OPTIONS, THAILAND_ENTRY_AIRPORT_OPTIONS, type ExtraFieldDef } from '@petmove/domain'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import React, { useEffect, useRef, useState } from 'react'
-import { Paperclip, Trash2 } from 'lucide-react'
+import { Paperclip, Trash2, ChevronDown } from 'lucide-react'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/utils'
@@ -43,6 +43,9 @@ import { uploadFileToNotes } from '@/lib/notes-upload'
 
 // EXTRA_SECTION_COMPONENTS 라우팅은 통합 리팩터로 제거됨 — 모든 destination 이 SimpleExtraSection 사용.
 
+// 모바일 collapse 펼침 상태 — 모든 케이스 공유 (사용자 선호도 유지). 케이스별이 아닌 섹션 그룹별 키.
+const COLLAPSED_KEY = 'petmove:case-detail:collapsed-sections'
+
 /**
  * Right-pane detail. No top title — destination gets a standalone prominent
  * display at the top, then the three groups (고객정보 / 동물정보 / 절차정보),
@@ -55,6 +58,31 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const extraFields = (data.extra_visible_fields as string[]) ?? []
   const speciesValue = (data.species as string) ?? ''
+
+  // 모바일 — 섹션 collapse. 데스크톱은 항상 펼침(`md:block` 으로 hidden 무시).
+  // localStorage 에 펼침 상태 영속 — 사용자가 매번 같은 섹션 다시 접지 않아도 됨.
+  // 저장은 토글 시점에 동기적으로 (useEffect 로 하면 마운트 시 빈 Set 으로 덮어쓰는 race 발생).
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set())
+  useEffect(() => {
+    // 마운트 시 1회 로드만. 저장은 toggleCollapsed 안에서.
+    try {
+      const raw = localStorage.getItem(COLLAPSED_KEY)
+      if (!raw) return
+      const arr = JSON.parse(raw)
+      if (Array.isArray(arr)) setCollapsed(new Set(arr))
+    } catch {}
+  }, [])
+  const toggleCollapsed = (group: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      if (next.has(group)) next.delete(group)
+      else next.add(group)
+      try {
+        localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...next]))
+      } catch {}
+      return next
+    })
+  }
 
   // 다중 목적지 케이스는 활성 목적지 하나만 기준으로 필드·백신을 결정한다.
   // 활성값이 아직 비어있으면(초기 렌더) caseRow.destination 전체를 그대로 넘겨
@@ -110,7 +138,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
     <VerificationProvider caseRow={caseRow} destination={viewDestination}>
     <div
       ref={scrollRef}
-      className="flex-1 min-h-0 flex flex-col px-lg py-md overflow-y-auto overflow-x-hidden scrollbar-minimal"
+      className="flex-1 min-h-0 flex flex-col px-md md:px-lg py-md overflow-y-auto overflow-x-hidden scrollbar-minimal"
     >
       {/* ─── Sections ─── */}
       {groups.map((g, groupIdx) => {
@@ -139,9 +167,22 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
                 {g.group}
               </h3>
             )}
+            {/* 모바일 — 섹션 collapse 토글. 데스크톱에선 숨김(항상 펼침). */}
+            <button
+              type="button"
+              onClick={() => toggleCollapsed(g.group)}
+              aria-expanded={!collapsed.has(g.group)}
+              aria-label={collapsed.has(g.group) ? `${g.group} 펼치기` : `${g.group} 접기`}
+              className="md:hidden ml-auto self-center -mr-1 p-1 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            >
+              <ChevronDown
+                size={18}
+                className={cn('transition-transform', collapsed.has(g.group) && '-rotate-90')}
+              />
+            </button>
           </div>
           <SectionEditModeProvider value={true}>
-          <div>
+          <div className={cn(collapsed.has(g.group) && 'hidden md:block')}>
             {g.items.map((spec) => {
               // 기타정보 is handled specially — after all its items we append Attachments + Payment
               // (see below after the map)
@@ -306,6 +347,8 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
                 .filter((d): d is ExtraFieldDef => !!d)
                 .map((d) => applyDestinationFieldOverride(d, viewDestination))}
               destination={viewDestination}
+              isCollapsed={collapsed.has('추가정보')}
+              onToggleCollapsed={() => toggleCollapsed('추가정보')}
             />
           )
         })()}
@@ -467,12 +510,14 @@ function mapExtractResultToUnified(country: Country, result: Record<string, unkn
   return out
 }
 
-function SimpleExtraSection({ caseId, caseRow, sectionNumber, entries, destination }: {
+function SimpleExtraSection({ caseId, caseRow, sectionNumber, entries, destination, isCollapsed, onToggleCollapsed }: {
   caseId: string
   caseRow: CaseRow
   sectionNumber: string
   entries: ExtraFieldDef[]
   destination: string | null | undefined
+  isCollapsed: boolean
+  onToggleCollapsed: () => void
 }) {
   const { updateLocalCaseField } = useCases()
   const confirm = useConfirm()
@@ -679,12 +724,25 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, entries, destinati
             extractMsg.includes('실패') || extractMsg.includes('오류') || extractMsg.includes('미지원') || extractMsg.includes('찾지') ? 'text-red-600' : 'text-green-600',
           )}>{extractMsg}</span>
         )}
+        {/* 모바일 — 섹션 collapse 토글. 데스크톱에선 숨김(항상 펼침). */}
+        <button
+          type="button"
+          onClick={onToggleCollapsed}
+          aria-expanded={!isCollapsed}
+          aria-label={isCollapsed ? '추가정보 펼치기' : '추가정보 접기'}
+          className="md:hidden ml-auto self-center -mr-1 p-1 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+        >
+          <ChevronDown
+            size={18}
+            className={cn('transition-transform', isCollapsed && '-rotate-90')}
+          />
+        </button>
       </div>
-      {dragOver && (
+      {dragOver && !isCollapsed && (
         <div className="mb-2 text-xs text-muted-foreground">놓으면 자동 입력</div>
       )}
       <SectionEditModeProvider value={true}>
-        <div>
+        <div className={cn(isCollapsed && 'hidden md:block')}>
           {segments.map((seg) => {
             if (seg.type === 'group') {
               return (
