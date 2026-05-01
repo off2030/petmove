@@ -228,7 +228,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 항체검사 시기',
     description:
-      '채혈일은 2차 접종일과 같거나 이후, 그리고 2차 접종의 면역 유효기간 이내여야 함.',
+      '채혈일은 2차 접종일 이후이며, 2차부터 끊김 없이 이어진 부스터 chain 의 면역 유효기간 이내여야 함.',
     severity: 'blocker',
     addedAt: '2026-04-21',
     run: ({ caseRow }) => {
@@ -238,7 +238,17 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (rabies.length < 2 || titers.length === 0) return SKIP
 
       const second = rabies[1]
-      const secondValidUntil = resolveValidUntil(second.date, second.valid_until)
+      // 2차부터 시작해 매 부스터가 직전 면역기간 안에 들어왔다면 chain 이 이어진 것으로 보고
+      // 가장 최신 부스터의 valid_until 까지 면역 인정. 어디선가 끊기면 거기서 멈춤.
+      let chainEnd = resolveValidUntil(second.date, second.valid_until)
+      for (let i = 2; i < rabies.length; i++) {
+        const dose = rabies[i]
+        if (dose.date <= chainEnd) {
+          chainEnd = resolveValidUntil(dose.date, dose.valid_until)
+        } else {
+          break
+        }
+      }
 
       const offendingPaths: string[] = []
       const problems: string[] = []
@@ -247,9 +257,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
         if (t.date < second.date) {
           offendingPaths.push(path)
           problems.push(`채혈일(${t.date}) < 2차 접종일(${second.date})`)
-        } else if (secondValidUntil && t.date > secondValidUntil) {
+        } else if (chainEnd && t.date > chainEnd) {
           offendingPaths.push(path)
-          problems.push(`채혈일(${t.date}) > 2차 유효기간(${secondValidUntil})`)
+          problems.push(`채혈일(${t.date}) > 부스터 chain 면역기간(${chainEnd})`)
         }
       }
       if (offendingPaths.length > 0) {
