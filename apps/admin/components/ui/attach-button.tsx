@@ -50,15 +50,6 @@ export function AttachButton({
     const files = Array.from(fileList)
     if (files.length === 0) return
     const mobile = isMobile()
-    // TEMP DIAGNOSTIC — 스캔 미적용 원인 추적용. 한 번 확인 후 제거.
-    const first = files[0]
-    if (typeof window !== 'undefined') {
-      const w = window.innerWidth
-      alert(
-        `[debug] mobile=${mobile} (vw=${w}) | files=${files.length} | ` +
-          `firstType="${first?.type ?? '<empty>'}" name="${first?.name ?? '<no-name>'}"`,
-      )
-    }
     let imageRouted = false
     for (const f of files) {
       // 모바일 + 이미지 + 첫 이미지 → ScanFlow. 이후 파일은 직통.
