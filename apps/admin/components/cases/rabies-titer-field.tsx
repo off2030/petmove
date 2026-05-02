@@ -427,36 +427,43 @@ function TiterRow({
 
       {/* Value (결과수치) */}
       {showValue && (
-        editMode && isEditing === 'value' ? (
-          <span className="inline-flex items-center gap-1">
+        <span className="inline-flex items-center gap-1">
+          {editMode && isEditing === 'value' ? (
             <ValueInput
               initial={record.value || ''}
               onSave={(v) => { onUpdateField('value', v || null); onStopEdit() }}
               onCancel={onStopEdit}
               saving={saving}
             />
-            <AttachButton
-              accept="image/*,.pdf"
-              onFile={onAttachFile}
-              disabled={extracting}
-              title="이미지/PDF 로 자동 입력 (자동 크롭)"
-              className="h-6 w-6 text-muted-foreground/60"
-            />
-          </span>
-        ) : (
-          <span className="group/v inline-flex items-baseline">
-            {editMode ? (
-              <button type="button" onClick={() => onStartEdit('value')}
-                className={cn('text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-text', !record.value && 'font-sans italic text-[13px] font-normal tracking-normal text-muted-foreground/60')}>
-                {valueDisplay}
-              </button>
-            ) : (
-              <span className={cn('inline-block rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground', !record.value && 'font-sans italic text-[13px] font-normal tracking-normal text-muted-foreground/40')}>
-                {valueDisplay}
-              </span>
-            )}
-          </span>
-        )
+          ) : (
+            <span className="group/v inline-flex items-baseline">
+              {editMode ? (
+                <button type="button" onClick={() => onStartEdit('value')}
+                  className={cn('text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-text', !record.value && 'font-sans italic text-[13px] font-normal tracking-normal text-muted-foreground/60')}>
+                  {valueDisplay}
+                </button>
+              ) : (
+                <span className={cn('inline-block rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground', !record.value && 'font-sans italic text-[13px] font-normal tracking-normal text-muted-foreground/40')}>
+                  {valueDisplay}
+                </span>
+              )}
+            </span>
+          )}
+          {/* AttachButton — 편집 모드 진입 시 보이지만, picker 가 비동기로 열리는 동안
+              ValueInput onBlur → 언마운트로 input.onChange 가 유실되는 문제 방지 위해
+              항상 mount, visibility 로만 토글. */}
+          {editMode && (
+            <span className={cn('inline-flex', isEditing !== 'value' && 'invisible pointer-events-none')}>
+              <AttachButton
+                accept="image/*,.pdf"
+                onFile={onAttachFile}
+                disabled={extracting}
+                title="이미지/PDF 로 자동 입력 (자동 크롭)"
+                className="h-6 w-6 text-muted-foreground/60"
+              />
+            </span>
+          )}
+        </span>
       )}
 
       {editMode && (
