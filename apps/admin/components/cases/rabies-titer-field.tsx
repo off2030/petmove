@@ -113,10 +113,12 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
 
       // records 업데이트: 기존 값 보존, 빈 필드에만 채움 (date 는 추출 대상 아님 — 수동 입력 유지)
       let nextRecords: TiterRecord[] = records
+      let createdNewRecord = false
       if (targetIdx === null) {
         if (xValue) {
           const detectedLab = autoDetectLab(destination, inspectionConfig.titerRules, inspectionConfig.titerDefault)
           nextRecords = [{ date: null, value: xValue, lab: detectedLab }]
+          createdNewRecord = true
         }
       } else {
         nextRecords = records.map((r, i) => i === targetIdx ? {
@@ -132,7 +134,15 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
         applied.value = true
       }
 
-      if (nextRecords !== records) await saveRecords(nextRecords)
+      if (nextRecords !== records) {
+        await saveRecords(nextRecords)
+        // 새 record 가 idx 0 에 생성된 경우 — saveNewRecord 와 동일하게
+        // legacy 'done' 상속 방지 위해 명시적 'waiting' 저장.
+        if (createdNewRecord) {
+          updateLocalCaseField(caseId, 'data', 'inspection_status_titer_0', 'waiting')
+          void updateCaseField(caseId, 'data', 'inspection_status_titer_0', 'waiting')
+        }
+      }
 
       // 호주인 경우에만 sample_received_date 저장
       if (isAU && xReceived) {
