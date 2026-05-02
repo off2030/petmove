@@ -6,6 +6,7 @@ import { updateMyDmVisibility } from '@/lib/actions/chat'
 import { SectionHeader } from '@/components/ui/section-header'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { supabaseBrowser } from '@/lib/supabase/browser'
+import { PushPermission } from '@/components/pwa/push-permission'
 import { cn } from '@/lib/utils'
 
 const AVATAR_MAX_BYTES = 20 * 1024 * 1024
@@ -203,6 +204,24 @@ export function ProfileSection({
             onError={(msg) => setError(msg)}
             onSaved={() => setLastSaved(new Date())}
           />
+        </div>
+      </section>
+
+      {/* Push notification permission */}
+      <section className="mb-xl">
+        <SectionLabel>Notifications</SectionLabel>
+        <div className="border-t border-border/80">
+          <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
+            <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
+              푸시 알림
+            </label>
+            <div className="flex flex-col gap-1">
+              <PushPermission />
+              <span className="font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
+                홈 화면에 추가한 PWA 또는 데스크톱 브라우저에서 백그라운드 알림을 받습니다.
+              </span>
+            </div>
+          </div>
         </div>
       </section>
 
