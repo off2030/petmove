@@ -1902,6 +1902,10 @@ function Composer({
           placeholder={uploading ? '업로드 중…' : '메시지 입력'}
           rows={1}
           disabled={uploading}
+          spellCheck={false}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
           className="flex-1 resize-none bg-transparent px-1 py-1.5 text-[14px] text-foreground focus-visible:outline-none max-h-32 scrollbar-minimal disabled:opacity-60 placeholder:text-muted-foreground/60"
         />
         <button
