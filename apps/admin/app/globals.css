@@ -53,8 +53,9 @@
     /* Primary text: Near Black #141413 */
     --foreground: 60 3% 8%;
 
-    /* Card: same as page background (parchment) — home-screen style, no visual card fill */
-    --card: 51 25% 94%;
+    /* Card: 페이지보다 살짝 밝은 cream — "raised paper" 느낌. hairline border + 미세 shadow 가
+       editorial 매거진 톤 (NYT/Atlantic 카드 스타일). */
+    --card: 47 50% 97%;
     --card-foreground: 60 3% 8%;
 
     /* Popover stays ivory so dropdown/calendar panels still float above the page */
@@ -107,6 +108,22 @@
     --pmw-avatar-fg: 16 56% 39%;         /* #9B4A2D — 아바타 이니셜 */
     --pmw-code-label: 60 13% 43%;        /* #7B7B5F — destination code 라벨 */
 
+    /* 텍스트 색 4-tier (warm 계열) — 매거진 잉크 톤 */
+    --pmw-text-primary:    32 14% 9%;    /* #1A1612 warm black */
+    --pmw-text-secondary:  43 15% 32%;   /* #5E5847 warm dark olive */
+    --pmw-text-tertiary:   42 11% 51%;   /* #918975 warm gray */
+    --pmw-text-disabled:   42 22% 72%;   /* #C8BFA8 warm light */
+
+    /* Typography 스케일 — Editorial (서체가 주인공: serif 헤더 + sans 본문 + italic 시그니처) */
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.005em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.6;   --pmw-tracking-sm:   0.005em;
+    --pmw-text-base: 15px;   --pmw-leading-base: 1.6;   --pmw-tracking-base: 0;
+    --pmw-text-md:   16px;   --pmw-leading-md:   1.6;   --pmw-tracking-md:   0;
+    --pmw-text-lg:   22px;   --pmw-leading-lg:   1.3;   --pmw-tracking-lg:   -0.015em;
+    --pmw-text-xl:   28px;   --pmw-leading-xl:   1.2;   --pmw-tracking-xl:   -0.02em;
+    --pmw-text-2xl:  36px;   --pmw-leading-2xl:  1.15;  --pmw-tracking-2xl:  -0.02em;
+
     /* ── Mobile — safe-area-inset alias (iOS notch/home-indicator)
        env() 를 직접 못 쓰는 utility-first Tailwind 환경에서 var() 로 우회.
        Android/데스크톱은 0px 폴백. */
@@ -137,8 +154,8 @@
     --background: 60 3% 8%;
     --foreground: 48 33% 97%;
 
-    /* Card matches page bg — no visual card fill */
-    --card: 60 3% 8%;
+    /* Card 살짝 밝은 톤 — dark 매거진 카드 (페이지보다 약간 위로 떠 있는 paper) */
+    --card: 60 4% 12%;
     --card-foreground: 48 33% 97%;
 
     /* Popover lifts above page */
@@ -179,6 +196,22 @@
     --pmw-avatar-bg: 21 40% 60%;         /* #C08C70 */
     --pmw-avatar-fg: 11 64% 68%;         /* #E0917A */
     --pmw-code-label: 60 8% 60%;
+
+    /* 텍스트 색 4-tier (warm 계열, dark 반전) */
+    --pmw-text-primary:    48 33% 97%;   /* #FAF9F5 cream parchment */
+    --pmw-text-secondary:  44 14% 73%;   /* #C5BEAA warm light */
+    --pmw-text-tertiary:   42 11% 51%;   /* #918975 warm gray (light/dark 동일 — 중립 톤) */
+    --pmw-text-disabled:   43 12% 35%;   /* #5E5847 warm dark olive */
+
+    /* Typography 스케일 (size/leading/tracking 은 light/dark 무관) */
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.005em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.6;   --pmw-tracking-sm:   0.005em;
+    --pmw-text-base: 15px;   --pmw-leading-base: 1.6;   --pmw-tracking-base: 0;
+    --pmw-text-md:   16px;   --pmw-leading-md:   1.6;   --pmw-tracking-md:   0;
+    --pmw-text-lg:   22px;   --pmw-leading-lg:   1.3;   --pmw-tracking-lg:   -0.015em;
+    --pmw-text-xl:   28px;   --pmw-leading-xl:   1.2;   --pmw-tracking-xl:   -0.02em;
+    --pmw-text-2xl:  36px;   --pmw-leading-2xl:  1.15;  --pmw-tracking-2xl:  -0.02em;
   }
 
   /* ═════════════════════════════════════════════════════════════
@@ -562,12 +595,29 @@
     font-style: normal;
   }
 
-  /* flat / neumorphism body baseline — letter-spacing + line-height 를 body 에 부여하면
-     모든 자식 텍스트가 inherit. flat 은 타이트, neumorphism 은 generous. */
-  [data-skin="flat"] body,
-  [data-skin="neumorphism"] body {
-    letter-spacing: var(--pmw-tracking-base);
-    line-height: var(--pmw-leading-base);
+  /* 모든 스킨 body baseline — letter-spacing + line-height 를 body 에 부여하면
+     모든 자식 텍스트가 inherit. 스킨별로 token 값이 다르므로 자동으로 분기.
+     - editorial: 자연 spacing + line-height 1.6 (매거진 톤)
+     - flat: -0.011em + 1.5 (Linear 타이트)
+     - neumorphism: 0 + 1.65 (Soft generous) */
+  body {
+    letter-spacing: var(--pmw-tracking-base, normal);
+    line-height: var(--pmw-leading-base, 1.5);
+  }
+
+  /* Editorial card "raised paper" — hairline border 는 base layer 에서 이미 적용됨 (* { border-border }).
+     여기서 미세 shadow 추가 — 1px y-offset, 거의 투명한 warm shadow (paper 위에 살짝 떠 있는 느낌).
+     editorial 만 — :not([data-skin]) 로 다른 스킨 영향 X. */
+  html:not([data-skin]) .bg-card,
+  html:not([data-skin]) .bg-popover {
+    box-shadow: 0 1px 3px rgba(60, 50, 35, 0.04), 0 1px 2px rgba(60, 50, 35, 0.03);
+  }
+
+  /* Editorial 채팅 버블 — iMessage 솔리드 대신 warm tint. 매거진 톤 (subtle, 따뜻한 종이).
+     own: clay 15% 투명 (tinted accent). other: 기존 muted (warm sand) 그대로 (이미 editorial 톤). */
+  html:not([data-skin]) [data-bubble="own"] {
+    background-color: hsl(var(--pmw-accent) / 0.18);
+    color: hsl(var(--foreground));
   }
 
   /* Neumorphism 컴포넌트 그림자 — 변수 swap 만으로 안 되는 부분 */
