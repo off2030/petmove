@@ -313,25 +313,12 @@ export async function listConversationMessages(input: {
     .limit(input.limit ?? 200)
   if (input.caseId) q = q.eq('case_id', input.caseId)
 
-  const { data, error } = await q
-  if (error) return { ok: false, error: error.message }
-  const rows = data ?? []
-
-  const senderIds = Array.from(
-    new Set(rows.map((r) => r.sender_user_id as string | null).filter((v): v is string => !!v)),
-  )
-  const caseIds = Array.from(
-    new Set(rows.map((r) => r.case_id as string | null).filter((v): v is string => !!v)),
-  )
-  const filePaths = Array.from(
-    new Set(rows.map((r) => r.file_url as string | null).filter((v): v is string => !!v)),
-  )
-
   const admin = createAdminClient()
-  const [signedUrls, partsRes, readsRes, convRes, casesRes] = await Promise.all([
-    filePaths.length > 0
-      ? admin.storage.from('chat-files').createSignedUrls(filePaths, CHAT_FILE_URL_TTL)
-      : Promise.resolve({ data: [] as { path: string | null; signedUrl: string }[], error: null }),
+
+  // Wave 1 — 서로 의존 없는 4개 쿼리를 한번에. 기존엔 messages 를 await
+  // 한 뒤 5개 Promise.all 을 또 await 했어서 직렬 RTT 가 많았음.
+  const [msgsRes, partsRes, readsRes, convRes] = await Promise.all([
+    q,
     supabase
       .from('conversation_participants')
       .select('user_id')
@@ -345,6 +332,31 @@ export async function listConversationMessages(input: {
       .select('pinned_message_id')
       .eq('id', input.convId)
       .maybeSingle(),
+  ])
+
+  if (msgsRes.error) return { ok: false, error: msgsRes.error.message }
+  if (partsRes.error) return { ok: false, error: partsRes.error.message }
+  if (readsRes.error) return { ok: false, error: readsRes.error.message }
+  const rows = msgsRes.data ?? []
+
+  const senderIds = Array.from(
+    new Set(rows.map((r) => r.sender_user_id as string | null).filter((v): v is string => !!v)),
+  )
+  const caseIds = Array.from(
+    new Set(rows.map((r) => r.case_id as string | null).filter((v): v is string => !!v)),
+  )
+  const filePaths = Array.from(
+    new Set(rows.map((r) => r.file_url as string | null).filter((v): v is string => !!v)),
+  )
+  const memberUserIds = (partsRes.data ?? []).map((r) => r.user_id as string)
+  const allUserIdsForName = Array.from(new Set([...senderIds, ...memberUserIds]))
+
+  // Wave 2 — messages 와 participants 결과에 의존하는 4개를 병렬.
+  // 기존 loadParticipantInfo 의 profiles+memberships 도 여기로 합쳐 RTT 1회 절감.
+  const [signedUrls, casesRes, profsRes, memsRes] = await Promise.all([
+    filePaths.length > 0
+      ? admin.storage.from('chat-files').createSignedUrls(filePaths, CHAT_FILE_URL_TTL)
+      : Promise.resolve({ data: [] as { path: string | null; signedUrl: string }[], error: null }),
     caseIds.length > 0
       ? supabase
           .from('cases')
@@ -360,14 +372,52 @@ export async function listConversationMessages(input: {
           }[],
           error: null,
         }),
+    allUserIdsForName.length > 0
+      ? admin.from('profiles').select('id, name, email, avatar_url').in('id', allUserIdsForName)
+      : Promise.resolve({
+          data: [] as { id: string; name: string | null; email: string | null; avatar_url: string | null }[],
+          error: null,
+        }),
+    allUserIdsForName.length > 0
+      ? admin.from('memberships').select('user_id, org_id').in('user_id', allUserIdsForName)
+      : Promise.resolve({
+          data: [] as { user_id: string; org_id: string }[],
+          error: null,
+        }),
   ])
 
-  if (partsRes.error) return { ok: false, error: partsRes.error.message }
-  if (readsRes.error) return { ok: false, error: readsRes.error.message }
+  // Wave 3 — orgs (memberships 결과 의존). 한번 더 RTT 지만 회피하려면 schema FK join
+  // 이 필요해 일단 유지.
+  const orgIds = Array.from(new Set((memsRes.data ?? []).map((m) => m.org_id as string)))
+  const orgsRes = orgIds.length > 0
+    ? await admin.from('organizations').select('id, name').in('id', orgIds)
+    : { data: [] as { id: string; name: string }[], error: null }
 
-  const memberUserIds = (partsRes.data ?? []).map((r) => r.user_id as string)
-  const allUserIdsForName = Array.from(new Set([...senderIds, ...memberUserIds]))
-  const profMap = await loadParticipantInfo(allUserIdsForName)
+  // profMap 조립 — 기존 loadParticipantInfo 와 동일 결과.
+  const orgNameMap = new Map<string, string>()
+  for (const o of orgsRes.data ?? []) orgNameMap.set(o.id as string, o.name as string)
+  const userOrgName = new Map<string, string>()
+  for (const m of memsRes.data ?? []) {
+    const uid = m.user_id as string
+    if (userOrgName.has(uid)) continue
+    const oid = m.org_id as string
+    const name = orgNameMap.get(oid)
+    if (name) userOrgName.set(uid, name)
+  }
+  const profMap = new Map<string, ParticipantInfo>()
+  for (const p of profsRes.data ?? []) {
+    const uid = p.id as string
+    profMap.set(uid, {
+      name: (p.name as string | null) ?? null,
+      email: (p.email as string | null) ?? null,
+      org_name: userOrgName.get(uid) ?? null,
+      avatar_url: (p.avatar_url as string | null) ?? null,
+    })
+  }
+  for (const uid of allUserIdsForName) {
+    if (!profMap.has(uid))
+      profMap.set(uid, { name: null, email: null, org_name: null, avatar_url: null })
+  }
 
   const participants: Participant[] = memberUserIds
     .filter((uid) => uid !== auth.userId)
