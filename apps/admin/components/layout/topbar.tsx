@@ -58,6 +58,8 @@ export function TopBar({
   const userMenuRef = useRef<HTMLDivElement>(null)
   const [skinMenuOpen, setSkinMenuOpen] = useState(false)
   const skinMenuRef = useRef<HTMLDivElement>(null)
+  const [skinMenuOpenMobile, setSkinMenuOpenMobile] = useState(false)
+  const skinMenuRefMobile = useRef<HTMLDivElement>(null)
 
   // Drawer 가 열렸을 때 — ESC 키로 닫고, body scroll 잠금.
   // outside-click 은 backdrop 이 처리하므로 별도 mousedown handler 불필요.
@@ -92,6 +94,15 @@ export function TopBar({
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [skinMenuOpen])
+
+  useEffect(() => {
+    if (!skinMenuOpenMobile) return
+    function handler(e: MouseEvent) {
+      if (skinMenuRefMobile.current && !skinMenuRefMobile.current.contains(e.target as Node)) setSkinMenuOpenMobile(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [skinMenuOpenMobile])
 
   const tabClass = (active: boolean) =>
     cn(
@@ -299,7 +310,42 @@ export function TopBar({
             {mode === 'system' ? <Monitor size={18} /> : mode === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
         )}
-        {/* TODO(palette): 사용자별 커스텀 색상 picker — 컴포넌트 만들어지면 여기에 md:hidden 으로 추가 */}
+        {skinMounted && (
+          <div className="md:hidden relative" ref={skinMenuRefMobile}>
+            <button
+              type="button"
+              onClick={() => setSkinMenuOpenMobile((p) => !p)}
+              title={`스킨: ${SKIN_LABELS[skin]} (클릭하여 변경)`}
+              aria-label="스킨 선택"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            >
+              <Palette size={18} />
+            </button>
+            {skinMenuOpenMobile && (
+              <div className="absolute right-0 top-full mt-1 z-30 min-w-[160px] rounded-md border border-border bg-popover p-1 shadow-md">
+                {SKIN_LIST.map((s: Skin) => {
+                  const active = s === skin
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => { setSkin(s); setSkinMenuOpenMobile(false) }}
+                      className={cn(
+                        'w-full flex items-center gap-sm rounded-sm px-sm py-2 text-sm transition-colors',
+                        active
+                          ? 'bg-accent text-foreground font-medium'
+                          : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                      )}
+                    >
+                      <Check size={14} className={cn('shrink-0', active ? 'opacity-100' : 'opacity-0')} />
+                      <span>{SKIN_LABELS[s]}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Nav tabs — right side, hidden on mobile (replaced by hamburger) */}
         <nav className="hidden md:flex items-center gap-xs">
