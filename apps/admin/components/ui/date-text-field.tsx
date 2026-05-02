@@ -54,6 +54,11 @@ interface Props {
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
   /** Size preset. `sm` is used by dense editor rows (todo tables, etc.). */
   size?: 'default' | 'sm'
+  /**
+   * 캘린더 popover 의 '삭제' 버튼 클릭 시 confirm 팝업 생략.
+   * 부모(record 컬렉션 등)가 자체적으로 삭제 confirm 을 처리하는 경우 true.
+   */
+  skipClearConfirm?: boolean
 }
 
 export function DateTextField({
@@ -65,6 +70,7 @@ export function DateTextField({
   onBlur: onBlurExt,
   onKeyDown,
   size = 'default',
+  skipClearConfirm = false,
 }: Props) {
   const [draft, setDraft] = useState(value)
   const [open, setOpen] = useState(false)
@@ -133,19 +139,15 @@ export function DateTextField({
   const iconSize = size === 'sm' ? 14 : 18
   const confirm = useConfirm()
   async function handleClear() {
-    if (!value) {
-      // 빈 값이면 confirm 없이 바로 닫기.
-      setDraft('')
-      onChange('')
-      setOpen(false)
-      return
+    // skipClearConfirm 또는 빈 값이면 confirm 생략 — 부모가 record 단위 confirm 처리.
+    if (!skipClearConfirm && value) {
+      const ok = await confirm({
+        message: '날짜를 삭제하시겠습니까?',
+        okLabel: '삭제',
+        variant: 'destructive',
+      })
+      if (!ok) return
     }
-    const ok = await confirm({
-      message: '날짜를 삭제하시겠습니까?',
-      okLabel: '삭제',
-      variant: 'destructive',
-    })
-    if (!ok) return
     setDraft('')
     onChange('')
     setOpen(false)

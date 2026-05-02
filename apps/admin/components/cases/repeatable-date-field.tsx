@@ -1144,6 +1144,7 @@ function DateInput({ initial, onSave, onCancel, onClearAuto }: {
         onKeyDown={(e) => {
           if (e.key === 'Escape') { e.preventDefault(); onCancel() }
         }}
+        skipClearConfirm
         className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
       />
       {onClearAuto && (
