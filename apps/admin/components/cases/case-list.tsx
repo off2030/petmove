@@ -372,7 +372,6 @@ export function CaseList({
                 if (cases.length > 0) selectCase(cases[0].id)
               }
             }}
-            autoFocus
             placeholder="검색"
             className="h-11 pl-10 pr-9 text-[15px] bg-popover text-foreground shadow-none border-border/80 rounded-full focus-visible:ring-0 focus-visible:border-foreground/40"
           />
