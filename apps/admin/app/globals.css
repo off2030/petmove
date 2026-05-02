@@ -225,13 +225,20 @@ select:-webkit-autofill {
   }
   .pmw-st__input {
     font-family: var(--pmw-font-sans);
-    font-size: 16px;
+    font-size: 14.5px;
     color: var(--pmw-near-black);
   }
   .pmw-st__input-mono {
     font-family: var(--pmw-font-mono);
-    font-size: 16px;
+    font-size: 13.5px;
     color: var(--pmw-near-black);
+  }
+  /* 모바일에서만 16px — iOS Safari 입력 포커스 시 자동 줌 방지(≥16px). */
+  @media (max-width: 767px) {
+    .pmw-st__input,
+    .pmw-st__input-mono {
+      font-size: 16px;
+    }
   }
   .pmw-st__btn {
     font-family: var(--pmw-font-sans);
