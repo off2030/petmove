@@ -117,6 +117,17 @@ export function DashboardShell({
     [conversations],
   )
 
+  // PWA 홈 화면 아이콘 뱃지 — iOS 16.4+ / Android Chrome standalone 에서만 실제 표시.
+  useEffect(() => {
+    if (typeof navigator === 'undefined') return
+    const nav = navigator as Navigator & {
+      setAppBadge?: (n?: number) => Promise<void>
+      clearAppBadge?: () => Promise<void>
+    }
+    if (messagesUnread > 0) nav.setAppBadge?.(messagesUnread).catch(() => {})
+    else nav.clearAppBadge?.().catch(() => {})
+  }, [messagesUnread])
+
   const onEndImpersonation = useCallback(() => {
     startEndImpersonation(async () => {
       await clearImpersonation()

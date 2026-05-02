@@ -7,7 +7,7 @@ import type { MetadataRoute } from 'next'
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: '펫무브워크',
-    short_name: '펫무브',
+    short_name: '펫무브워크',
     description: '반려동물 해외 이동 검역 관리',
     start_url: '/',
     display: 'standalone',
