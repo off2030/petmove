@@ -16,6 +16,7 @@ import { resolveTiterLab, type InspectionLabRule } from '@petmove/domain'
 import { severityTextClass, tooltipText, useFieldVerification } from './verification-context'
 import { DateTextField } from '@/components/ui/date-text-field'
 import { useSectionEditMode } from './section-edit-mode-context'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 interface TiterRecord {
   date: string | null
@@ -60,6 +61,7 @@ function autoDetectLab(
 export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
   const { updateLocalCaseField, inspectionConfig } = useCases()
   const editMode = useSectionEditMode()
+  const confirm = useConfirm()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
 
   // Read array (backward compat: old flat keys)
@@ -229,7 +231,14 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
     }
   }
 
-  function deleteRecord(idx: number) {
+  async function deleteRecord(idx: number) {
+    const target = records[idx]
+    const ok = await confirm({
+      message: `광견병항체검사${target?.date ? ` (${target.date})` : ''} 기록을 삭제하시겠습니까?`,
+      okLabel: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
     const next = records.filter((_, i) => i !== idx)
     saveRecords(next).catch(() => {})
   }
@@ -274,15 +283,6 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
         >
           광견병항체검사
         </SectionLabel>
-        {editMode && (
-          <AttachButton
-            accept="image/*,.pdf"
-            onFile={handleFile}
-            disabled={extracting}
-            title="이미지/PDF 로 자동 입력 (자동 크롭)"
-            className="md:hidden h-6 w-6 text-muted-foreground/60"
-          />
-        )}
       </div>
       <div className="min-w-0 flex-1 space-y-0.5">
         {extracting && (
@@ -303,6 +303,8 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
             onUpdateField={(f, v) => updateRecord(i, f, v)}
             onDelete={() => deleteRecord(i)}
             saving={saving}
+            onAttachFile={handleFile}
+            extracting={extracting}
           />
         ))}
 
@@ -326,6 +328,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
 
 function TiterRow({
   record, recordIdx, isEditing, onStartEdit, onStopEdit, onUpdateField, onDelete, saving,
+  onAttachFile, extracting,
 }: {
   record: TiterRecord
   recordIdx: number
@@ -335,6 +338,8 @@ function TiterRow({
   onUpdateField: (f: keyof TiterRecord, v: unknown) => void
   onDelete: () => void
   saving: boolean
+  onAttachFile: (file: File) => void
+  extracting: boolean
 }) {
   const editMode = useSectionEditMode()
   const dateDisplay = record.date || '—'
@@ -423,12 +428,21 @@ function TiterRow({
       {/* Value (결과수치) */}
       {showValue && (
         editMode && isEditing === 'value' ? (
-          <ValueInput
-            initial={record.value || ''}
-            onSave={(v) => { onUpdateField('value', v || null); onStopEdit() }}
-            onCancel={onStopEdit}
-            saving={saving}
-          />
+          <span className="inline-flex items-center gap-1">
+            <ValueInput
+              initial={record.value || ''}
+              onSave={(v) => { onUpdateField('value', v || null); onStopEdit() }}
+              onCancel={onStopEdit}
+              saving={saving}
+            />
+            <AttachButton
+              accept="image/*,.pdf"
+              onFile={onAttachFile}
+              disabled={extracting}
+              title="이미지/PDF 로 자동 입력 (자동 크롭)"
+              className="h-6 w-6 text-muted-foreground/60"
+            />
+          </span>
         ) : (
           <span className="group/v inline-flex items-baseline">
             {editMode ? (
