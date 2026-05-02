@@ -182,7 +182,7 @@ export function MessagesApp({
   }
 
   return (
-    <PageShell title="메시지" hideTitleMobile={!!activeConv}>
+    <PageShell title="메시지" hideTitleMobile>
       <div className="h-full mx-0 md:mx-lg flex flex-row min-h-0 gap-0 md:gap-md">
         {/* List — 모바일은 thread 활성 시 숨김, 아니면 풀폭. 데스크톱은 항상 280px. */}
         <div className={cn(
