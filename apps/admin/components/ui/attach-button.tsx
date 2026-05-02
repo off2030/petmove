@@ -7,6 +7,9 @@ import { cn } from '@/lib/utils'
 const ScanFlow = lazy(() =>
   import('@/lib/scanner/scan-flow').then((m) => ({ default: m.ScanFlow })),
 )
+const ScanFlowEasy = lazy(() =>
+  import('@/lib/scanner/scan-flow-easy').then((m) => ({ default: m.ScanFlowEasy })),
+)
 
 interface AttachButtonProps {
   /** 선택된 파일 — 이미지면 (모바일 한정) ScanFlow 통과 후 호출됨. */
@@ -24,6 +27,13 @@ interface AttachButtonProps {
   triggerRef?: RefObject<(() => void) | null>
   /** 버튼 자체를 숨기고 picker / ScanFlow 만 mount. triggerRef 와 함께 사용. */
   hidden?: boolean
+  /**
+   * 크롭 모드.
+   * - 'free' (기본): 박스 코너 드래그로 자유 조정 (react-image-crop). 일반 문서.
+   * - 'fixed': 박스 풀 사이즈 고정, 이미지 줌/팬으로 맞춤 (react-easy-crop).
+   *   접종/구충 카드처럼 작은 영수증성 문서에 빠른 캡처가 필요할 때.
+   */
+  cropMode?: 'free' | 'fixed'
 }
 
 /**
@@ -43,6 +53,7 @@ export function AttachButton({
   children,
   triggerRef,
   hidden,
+  cropMode = 'free',
 }: AttachButtonProps) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [scanSource, setScanSource] = useState<File | null>(null)
@@ -107,14 +118,25 @@ export function AttachButton({
       )}
       {scanSource && (
         <Suspense fallback={null}>
-          <ScanFlow
-            source={scanSource}
-            onClose={() => setScanSource(null)}
-            onConfirm={(file) => {
-              onFile(file)
-              setScanSource(null)
-            }}
-          />
+          {cropMode === 'fixed' ? (
+            <ScanFlowEasy
+              source={scanSource}
+              onClose={() => setScanSource(null)}
+              onConfirm={(file) => {
+                onFile(file)
+                setScanSource(null)
+              }}
+            />
+          ) : (
+            <ScanFlow
+              source={scanSource}
+              onClose={() => setScanSource(null)}
+              onConfirm={(file) => {
+                onFile(file)
+                setScanSource(null)
+              }}
+            />
+          )}
         </Suspense>
       )}
     </>
