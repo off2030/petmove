@@ -369,7 +369,7 @@ function TiterRow({
   const showValue = editMode || valueDisplay !== '—'
 
   return (
-    <div className="group/item flex items-baseline gap-[10px] min-w-0 overflow-x-auto whitespace-nowrap scrollbar-minimal">
+    <div className="group/item flex items-baseline gap-[10px] min-w-0 overflow-x-auto whitespace-nowrap scrollbar-hide">
       {/* Date (채혈일) */}
       {editMode && isEditing === 'date' ? (
         <DateInput

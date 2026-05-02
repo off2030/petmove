@@ -562,7 +562,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
 
       {/* 인라인: 날짜 chips 만 (간결). 클릭하면 모달 열림.
           많아질 경우 줄 바꿈 대신 가로 스크롤. */}
-      <div className="min-w-0 flex items-baseline gap-[10px] pt-1 overflow-x-auto whitespace-nowrap scrollbar-minimal">
+      <div className="min-w-0 flex items-baseline gap-[10px] pt-1 overflow-x-auto whitespace-nowrap scrollbar-hide">
         {sortedForExpand.length === 0 ? null : (
           sortedForExpand.map((rec, si) => (
             <InlineDateChip

@@ -212,7 +212,7 @@ export function PairedField({
             {error && <div className="w-full text-xs text-red-600">{error}</div>}
           </div>
         ) : (
-          <div className="flex items-baseline gap-[10px] min-w-0 overflow-x-auto whitespace-nowrap scrollbar-minimal">
+          <div className="flex items-baseline gap-[10px] min-w-0 overflow-x-auto whitespace-nowrap scrollbar-hide">
             <div className="group/ko inline-flex items-baseline">
               {editMode ? (
                 <button

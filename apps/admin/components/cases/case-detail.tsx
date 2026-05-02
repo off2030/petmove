@@ -913,7 +913,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
         </SectionLabel>
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex items-baseline gap-[20px] overflow-x-auto whitespace-nowrap scrollbar-minimal">
+        <div className="flex items-baseline gap-[20px] overflow-x-auto whitespace-nowrap scrollbar-hide">
           {/* Main chip */}
           {showMain && (
             <div className="group/main inline-flex items-baseline gap-[6px]">
@@ -1081,7 +1081,7 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
           마이크로칩
         </SectionLabel>
       </div>
-      <div className="group/item flex items-baseline gap-[10px] min-w-0 overflow-x-auto whitespace-nowrap scrollbar-minimal">
+      <div className="group/item flex items-baseline gap-[10px] min-w-0 overflow-x-auto whitespace-nowrap scrollbar-hide">
         {editing ? (
           <MicrochipDateInput initial={implantDate} onSave={(v) => saveDate(v || null)} onCancel={() => setEditing(false)} />
         ) : (
