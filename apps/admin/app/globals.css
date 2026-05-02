@@ -49,70 +49,74 @@
     /* Warm editorial palette — HSL pairs */
 
     /* Page: Parchment #f5f4ed */
-    --background: 51 25% 94%;
-    /* Primary text: Near Black #141413 */
-    --foreground: 60 3% 8%;
+    /* === Editorial fresh design: "Warm Stationery / Library" ===
+       매거진·편지지·도서관 톤. 따뜻한 종이 + 깊은 burgundy 액센트.
+       ============================================================ */
 
-    /* Card: 페이지보다 살짝 밝은 cream — "raised paper" 느낌. hairline border + 미세 shadow 가
-       editorial 매거진 톤 (NYT/Atlantic 카드 스타일). */
-    --card: 47 50% 97%;
-    --card-foreground: 60 3% 8%;
+    /* Page bg: 따뜻한 bone (#F4EDE0) — 종이 느낌 강함 */
+    --background: 32 30% 92%;
+    /* Primary text: 깊은 warm ink (#28201A) — 갈색 ondertone, 책 잉크 톤 */
+    --foreground: 29 19% 13%;
 
-    /* Popover stays ivory so dropdown/calendar panels still float above the page */
-    --popover: 48 33% 97%;
-    --popover-foreground: 60 3% 8%;
+    /* Card: 페이지보다 명확히 밝은 cream (#FBF7ED) — "raised paper" */
+    --card: 40 56% 96%;
+    --card-foreground: 29 19% 13%;
 
-    /* Primary: Terracotta #c96442 */
-    --primary: 15 57% 53%;
-    /* Primary foreground: Ivory */
-    --primary-foreground: 48 33% 97%;
+    /* Popover: 가장 밝은 ivory — dropdown 떠 있음 */
+    --popover: 40 56% 96%;
+    --popover-foreground: 29 19% 13%;
 
-    /* Secondary: Warm Sand #e8e6dc */
-    --secondary: 48 22% 88%;
-    --secondary-foreground: 60 3% 8%;
+    /* Primary: 깊은 burgundy (#7A2E2E) — 매거진 시그니처 액센트 */
+    --primary: 0 46% 33%;
+    --primary-foreground: 32 30% 92%;
 
-    /* Muted: Border Cream #f0eee6 */
-    --muted: 47 25% 92%;
-    /* Muted foreground: Olive Gray #5e5d59 */
-    --muted-foreground: 48 4% 36%;
+    /* Secondary: warm sand (#E8DEC4) */
+    --secondary: 40 36% 84%;
+    --secondary-foreground: 29 19% 13%;
 
-    /* Accent: Warm Sand */
-    --accent: 48 22% 88%;
-    --accent-foreground: 60 3% 8%;
+    /* Muted: 살짝 더 옅은 sand (#EFE7D2) */
+    --muted: 39 38% 88%;
+    /* Muted foreground: warm dark olive (#6B5F4F) */
+    --muted-foreground: 35 15% 36%;
 
-    /* Destructive: Warm crimson #b53333 */
-    --destructive: 0 56% 45%;
-    --destructive-foreground: 48 33% 97%;
+    /* Accent: warm sand */
+    --accent: 40 36% 84%;
+    --accent-foreground: 29 19% 13%;
 
-    /* Border: #e8e6dc (warm) */
-    --border: 48 22% 88%;
-    --input: 48 22% 88%;
-    /* Ring (focus): keep the accessible cool blue #3898ec — the only cool color in the system */
-    --ring: 210 82% 57%;
+    /* Destructive: rust red (#A04525) */
+    --destructive: 16 64% 38%;
+    --destructive-foreground: 32 30% 92%;
+
+    /* Border: warm hairline (#D9CFB8) */
+    --border: 40 26% 79%;
+    --input: 40 26% 79%;
+    /* Ring (focus): 깊은 ink blue (#2F4459) — 매거진 cool 액센트 */
+    --ring: 215 32% 27%;
 
     --radius: 0.5rem;
 
     /* ── Semantic 색 토큰 (HSL 컴포넌트만 — Tailwind opacity modifier 'bg-pmw-accent/15' 호환).
        하드코딩된 editorial brand 색을 의미 기반 토큰으로 추출 — 다른 스킨에서 다른 값 정의 가능.
        각 스킨이 같은 의미 다른 색으로 매핑. */
-    --pmw-accent: 24 49% 69%;            /* clay #D9A489 — 편집 모드/액센트 surface */
-    --pmw-accent-fg: 0 0% 100%;          /* white — solid accent 위 고대비 텍스트/아이콘 */
-    --pmw-accent-strong: 22 27% 52%;     /* #A87862 — tinted accent 위 텍스트 + hover */
-    --pmw-tag-bg: 39 44% 83%;            /* #E5D9C2 — pill/tag 배경 */
-    --pmw-tag-fg: 36 30% 33%;            /* #6B5A3A — pill/tag 텍스트 */
-    --pmw-cal-today: 59 26% 33%;         /* #6B6A3F — 캘린더 오늘 */
-    --pmw-cal-sunday: 18 41% 51%;        /* #B8724D — 일요일 */
-    --pmw-cal-saturday: 220 27% 30%;     /* #384560 — 토요일 */
-    --pmw-positive: 138 33% 27%;         /* #2E5A3E — 성공/긍정 */
-    --pmw-avatar-bg: 22 60% 76%;         /* #E5B89C — 기본 아바타 배경 */
-    --pmw-avatar-fg: 16 56% 39%;         /* #9B4A2D — 아바타 이니셜 */
-    --pmw-code-label: 60 13% 43%;        /* #7B7B5F — destination code 라벨 */
+    /* PMW semantic — Warm Stationery 팔레트 */
+    --pmw-accent: 30 36% 65%;            /* #C9A580 muted clay — 편집 모드/surface */
+    --pmw-accent-fg: 32 30% 92%;         /* #F4EDE0 cream — solid accent 위 */
+    --pmw-accent-strong: 32 30% 43%;     /* #8C6F4E warm brown — tinted/hover */
+    --pmw-tag-bg: 40 36% 83%;            /* #E5D9C2 warm cream */
+    --pmw-tag-fg: 35 27% 30%;            /* #5E4D38 dark olive */
+    --pmw-cal-today: 49 30% 42%;         /* #8B7E4F olive */
+    --pmw-cal-sunday: 16 56% 40%;        /* #A04A2D rust orange */
+    --pmw-cal-saturday: 215 32% 27%;     /* #2F4459 ink blue */
+    --pmw-positive: 120 20% 31%;         /* #3F5F3F forest green */
+    --pmw-avatar-bg: 33 41% 78%;         /* #DEC8AE warm peach */
+    --pmw-avatar-fg: 24 53% 28%;         /* #6B4521 deep brown */
+    --pmw-code-label: 32 16% 49%;        /* #918068 warm gray */
 
-    /* 텍스트 색 4-tier (warm 계열) — 매거진 잉크 톤 */
-    --pmw-text-primary:    32 14% 9%;    /* #1A1612 warm black */
-    --pmw-text-secondary:  43 15% 32%;   /* #5E5847 warm dark olive */
-    --pmw-text-tertiary:   42 11% 51%;   /* #918975 warm gray */
-    --pmw-text-disabled:   42 22% 72%;   /* #C8BFA8 warm light */
+    /* 텍스트 색 4-tier — warm 잉크 */
+    --pmw-text-primary:    29 19% 13%;   /* #28201A deep ink */
+    --pmw-text-secondary:  35 15% 36%;   /* #6B5F4F warm dark olive */
+    --pmw-text-tertiary:   32 11% 58%;   /* #9F968A warm gray */
+    --pmw-text-disabled:   39 19% 73%;   /* #C9C0AE warm light */
 
     /* Typography 스케일 — Editorial (서체가 주인공: serif 헤더 + sans 본문 + italic 시그니처) */
     --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
@@ -150,58 +154,60 @@
     --pmw-paper: #242220;
 
     color-scheme: dark;
-    /* Near Black bg (#141413), parchment foreground */
-    --background: 60 3% 8%;
-    --foreground: 48 33% 97%;
+    /* Page bg: deep warm dark (#1A1612) — 책 잉크 종이의 reverse */
+    --background: 32 14% 9%;
+    /* Foreground: cream (#F4EDE0) */
+    --foreground: 32 30% 92%;
 
-    /* Card 살짝 밝은 톤 — dark 매거진 카드 (페이지보다 약간 위로 떠 있는 paper) */
-    --card: 60 4% 12%;
-    --card-foreground: 48 33% 97%;
+    /* Card 살짝 밝은 dark warm (#211C18) — 페이지보다 위로 떠 있는 paper */
+    --card: 30 12% 12%;
+    --card-foreground: 32 30% 92%;
 
-    /* Popover lifts above page */
-    --popover: 60 3% 19%;
-    --popover-foreground: 48 33% 97%;
+    /* Popover: 가장 밝은 dark warm (#2C251F) */
+    --popover: 30 18% 15%;
+    --popover-foreground: 32 30% 92%;
 
-    /* On dark, primary = softer coral #d97757 */
-    --primary: 18 63% 60%;
-    --primary-foreground: 60 3% 8%;
+    /* Primary: lighter burgundy (#B85555) — dark 에선 lift */
+    --primary: 0 41% 53%;
+    --primary-foreground: 32 30% 92%;
 
-    --secondary: 60 3% 23%;
-    --secondary-foreground: 48 33% 97%;
+    /* Secondary/muted: deep warm gray (#3D3530) */
+    --secondary: 25 12% 21%;
+    --secondary-foreground: 32 30% 92%;
 
-    --muted: 60 3% 19%;
-    /* Warm silver #b0aea5 */
-    --muted-foreground: 48 6% 66%;
+    --muted: 25 12% 21%;
+    /* Muted foreground: warm light (#B8AC97) */
+    --muted-foreground: 36 18% 66%;
 
-    --accent: 60 3% 23%;
-    --accent-foreground: 48 33% 97%;
+    --accent: 25 12% 21%;
+    --accent-foreground: 32 30% 92%;
 
-    --destructive: 0 56% 45%;
-    --destructive-foreground: 48 33% 97%;
+    --destructive: 14 51% 53%;
+    --destructive-foreground: 32 30% 92%;
 
-    --border: 60 3% 23%;
-    --input: 60 3% 23%;
-    --ring: 210 82% 57%;
+    --border: 25 12% 21%;
+    --input: 25 12% 21%;
+    --ring: 213 24% 53%;
 
-    /* Semantic 토큰 dark 매핑 */
-    --pmw-accent: 21 40% 60%;            /* #C08C70 */
-    --pmw-accent-fg: 48 33% 97%;         /* parchment — solid accent 위 고대비 */
-    --pmw-accent-strong: 24 49% 69%;     /* #D9A489 — tinted accent 위 텍스트 */
-    --pmw-tag-bg: 36 30% 33%;            /* dark inversion */
-    --pmw-tag-fg: 39 44% 83%;
-    --pmw-cal-today: 53 26% 63%;         /* #B8B38A */
-    --pmw-cal-sunday: 18 56% 64%;        /* #D69070 */
-    --pmw-cal-saturday: 219 19% 63%;     /* #8E9BB5 */
-    --pmw-positive: 134 26% 77%;         /* #B5D4BE */
-    --pmw-avatar-bg: 21 40% 60%;         /* #C08C70 */
-    --pmw-avatar-fg: 11 64% 68%;         /* #E0917A */
-    --pmw-code-label: 60 8% 60%;
+    /* PMW semantic — Warm Stationery dark */
+    --pmw-accent: 30 38% 71%;            /* #D4B69A lighter clay */
+    --pmw-accent-fg: 32 14% 9%;          /* deep dark — solid accent 위 */
+    --pmw-accent-strong: 30 30% 58%;     /* #B89876 muted clay */
+    --pmw-tag-bg: 25 12% 21%;            /* dark warm */
+    --pmw-tag-fg: 40 36% 83%;            /* warm cream */
+    --pmw-cal-today: 47 30% 65%;         /* #C5B98A light olive */
+    --pmw-cal-sunday: 16 47% 58%;        /* #C77E5E light rust */
+    --pmw-cal-saturday: 213 17% 61%;     /* #8E9BAB light ink */
+    --pmw-positive: 113 17% 60%;         /* #8FA888 light forest */
+    --pmw-avatar-bg: 30 22% 28%;         /* dark warm peach */
+    --pmw-avatar-fg: 33 41% 78%;         /* light peach */
+    --pmw-code-label: 36 14% 60%;        /* warm gray */
 
-    /* 텍스트 색 4-tier (warm 계열, dark 반전) */
-    --pmw-text-primary:    48 33% 97%;   /* #FAF9F5 cream parchment */
-    --pmw-text-secondary:  44 14% 73%;   /* #C5BEAA warm light */
-    --pmw-text-tertiary:   42 11% 51%;   /* #918975 warm gray (light/dark 동일 — 중립 톤) */
-    --pmw-text-disabled:   43 12% 35%;   /* #5E5847 warm dark olive */
+    /* 텍스트 색 4-tier (warm dark) */
+    --pmw-text-primary:    32 30% 92%;   /* cream */
+    --pmw-text-secondary:  36 18% 66%;   /* warm light */
+    --pmw-text-tertiary:   32 11% 50%;   /* warm med gray */
+    --pmw-text-disabled:   25 12% 30%;   /* dark warm gray */
 
     /* Typography 스케일 (size/leading/tracking 은 light/dark 무관) */
     --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
