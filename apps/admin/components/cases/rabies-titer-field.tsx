@@ -43,6 +43,17 @@ const DATA_KEY = 'rabies_titer_records'
 type TiterEditField = 'date' | 'value' | 'lab'
 
 /**
+ * 검사 수치에서 단위(IU/mL) 와 비교 부호 외 잡문자 제거.
+ * 표시 시 항상 ' IU/ml' 가 덧붙으므로, 저장 값엔 절대 단위를 남기지 않는다.
+ * 예: "41.59 IU/ml" → "41.59", "≥0.5 IU/mL" → "≥0.5".
+ */
+function stripTiterUnit(value: string | null | undefined): string | null {
+  if (!value) return null
+  const cleaned = value.replace(/\s*IU\s*\/\s*m[lL]\s*/gi, '').trim()
+  return cleaned || null
+}
+
+/**
  * 광견병항체 검사기관 자동 감지.
  * 설정(app_settings.inspection_config) 의 국가별 override 를 우선 적용, 없으면 default.
  * 복수 목적지는 미지정(null) 반환.
@@ -109,7 +120,9 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
         setExtractMsg('추출 실패: ' + result.error)
         return
       }
-      const { value: xValue, sample_received_date: xReceived } = result.data
+      // 추출된 value 에서 단위(IU/mL) 제거 — 표시 시 항상 ' IU/ml' 가 덧붙어 중복 방지.
+      const xValue = stripTiterUnit(result.data.value)
+      const { sample_received_date: xReceived } = result.data
       const existing = records[0]
       const targetIdx = existing ? 0 : null
 
@@ -343,7 +356,9 @@ function TiterRow({
 }) {
   const editMode = useSectionEditMode()
   const dateDisplay = record.date || '—'
-  const valueDisplay = record.value ? `${record.value} IU/ml` : 'IU/ml'
+  // legacy 데이터에 단위가 포함된 경우(과거 추출 결과) 도 중복 표시 방지.
+  const cleanValue = stripTiterUnit(record.value)
+  const valueDisplay = cleanValue ? `${cleanValue} IU/ml` : 'IU/ml'
   const labObj = LABS.find(l => l.value === record.lab)
   const labDisplay = labObj?.label || record.lab || '—'
   const labTone = labColor(record.lab)
