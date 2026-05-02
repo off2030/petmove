@@ -116,8 +116,8 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">
       <div className="flex items-center gap-[6px] pt-1">
         <SectionLabel
-          onClick={editMode ? () => setAddingNew(true) : undefined}
-          title={editMode ? '전염병검사 추가' : undefined}
+          onClick={editMode && records.length === 0 ? () => setAddingNew(true) : undefined}
+          title={editMode && records.length === 0 ? '전염병검사 추가' : undefined}
         >
           전염병검사
         </SectionLabel>
@@ -198,7 +198,7 @@ function InfectiousGroup({
   const dateIsEditing = editIdx === dateEditingIdx && editField === 'date'
 
   return (
-    <div className="group/item flex items-baseline gap-[10px] min-w-0">
+    <div className="group/item flex items-baseline gap-[10px] min-w-0 overflow-x-auto whitespace-nowrap scrollbar-hide">
       {/* Date — 그룹당 1번만 표시 */}
       {editMode && dateIsEditing ? (
         <DateInput
