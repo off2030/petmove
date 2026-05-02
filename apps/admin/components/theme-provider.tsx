@@ -3,10 +3,13 @@
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 
-/** 외부 고객용 페이지 — OS 다크 모드 설정 무시하고 항상 라이트 강제. */
-const FORCE_LIGHT_PATHS = ['/apply']
+/** 외부 고객용 페이지 — OS 다크 모드와 운영자가 고른 스킨 모두 무시하고 항상 기본 라이트. */
+const FORCE_DEFAULT_PATHS = ['/apply']
 
 type Mode = 'system' | 'light' | 'dark'
+type Skin = 'editorial' | 'clinical' | 'mono'
+
+const VALID_SKINS: Skin[] = ['editorial', 'clinical', 'mono']
 
 function readMode(): Mode {
   try {
@@ -16,11 +19,25 @@ function readMode(): Mode {
   return 'system'
 }
 
-function applyEffective(mode: Mode) {
+function readSkin(): Skin {
+  try {
+    const v = localStorage.getItem('skin')
+    if (v && (VALID_SKINS as string[]).includes(v)) return v as Skin
+  } catch {}
+  return 'editorial'
+}
+
+function applyEffective(mode: Mode, skin: Skin, forceDefault: boolean) {
+  const html = document.documentElement
   const dark =
-    mode === 'dark' ||
-    (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  document.documentElement.classList.toggle('dark', dark)
+    !forceDefault && (
+      mode === 'dark' ||
+      (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    )
+  html.classList.toggle('dark', dark)
+  const effSkin = forceDefault ? 'editorial' : skin
+  if (effSkin === 'editorial') html.removeAttribute('data-skin')
+  else html.setAttribute('data-skin', effSkin)
 }
 
 export function ThemeProvider() {
@@ -28,23 +45,21 @@ export function ThemeProvider() {
 
   useEffect(() => {
     try {
-      const html = document.documentElement
-      if (FORCE_LIGHT_PATHS.some((p) => pathname?.startsWith(p))) {
-        html.classList.remove('dark')
-        return
-      }
-      applyEffective(readMode())
+      const forceDefault = FORCE_DEFAULT_PATHS.some((p) => pathname?.startsWith(p))
+      applyEffective(readMode(), readSkin(), forceDefault)
 
       const mq = window.matchMedia('(prefers-color-scheme: dark)')
-      const onMq = () => { if (readMode() === 'system') applyEffective('system') }
-      const onTheme = () => applyEffective(readMode())
+      const onMq = () => { if (readMode() === 'system') applyEffective(readMode(), readSkin(), forceDefault) }
+      const onChange = () => applyEffective(readMode(), readSkin(), forceDefault)
       mq.addEventListener('change', onMq)
-      window.addEventListener('themechange', onTheme)
-      window.addEventListener('storage', onTheme)
+      window.addEventListener('themechange', onChange)
+      window.addEventListener('skinchange', onChange)
+      window.addEventListener('storage', onChange)
       return () => {
         mq.removeEventListener('change', onMq)
-        window.removeEventListener('themechange', onTheme)
-        window.removeEventListener('storage', onTheme)
+        window.removeEventListener('themechange', onChange)
+        window.removeEventListener('skinchange', onChange)
+        window.removeEventListener('storage', onChange)
       }
     } catch (e) {}
   }, [pathname])
