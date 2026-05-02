@@ -21,6 +21,7 @@ export function PageShell({
   footer,
   maxWidth = '5xl',
   hideTitleMobile = false,
+  mobileFlush = false,
   children,
 }: {
   title: string
@@ -30,6 +31,8 @@ export function PageShell({
   maxWidth?: '5xl' | '7xl'
   /** 모바일에서 타이틀 행을 숨겨 좁은 화면 공간을 본문에 양보. (예: 메시지 thread 활성 시) */
   hideTitleMobile?: boolean
+  /** 모바일에서 셸 외곽 padding 과 row gap 을 제거해 본문이 viewport 에 딱 붙도록. */
+  mobileFlush?: boolean
   children: React.ReactNode
 }) {
   const maxClass =
@@ -38,8 +41,15 @@ export function PageShell({
       : 'max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl'
 
   return (
-    <div className="h-full overflow-hidden px-md md:px-lg py-md md:py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
-      <div className={cn('h-full mx-auto flex flex-col gap-md md:gap-lg', maxClass)}>
+    <div className={cn(
+      'h-full overflow-hidden md:px-lg md:py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl',
+      mobileFlush ? 'px-0 py-0' : 'px-md py-md',
+    )}>
+      <div className={cn(
+        'h-full mx-auto flex flex-col md:gap-lg',
+        maxClass,
+        mobileFlush ? 'gap-0' : 'gap-md',
+      )}>
         <div className={cn(
           'shrink-0 px-sm md:px-lg flex items-baseline justify-between gap-md',
           hideTitleMobile && 'hidden md:flex',

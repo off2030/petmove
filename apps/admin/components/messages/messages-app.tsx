@@ -182,11 +182,11 @@ export function MessagesApp({
   }
 
   return (
-    <PageShell title="메시지" hideTitleMobile>
+    <PageShell title="메시지" hideTitleMobile mobileFlush>
       <div className="h-full mx-0 md:mx-lg flex flex-row min-h-0 gap-0 md:gap-md">
         {/* List — 모바일은 thread 활성 시 숨김, 아니면 풀폭. 데스크톱은 항상 280px. */}
         <div className={cn(
-          'min-h-0 flex flex-col border border-border/80 md:rounded-lg overflow-hidden bg-[var(--pmw-sage-paper)]',
+          'min-h-0 flex flex-col md:border md:border-border/80 md:rounded-lg overflow-hidden bg-[var(--pmw-sage-paper)]',
           'md:shrink-0',
           activeConv ? 'hidden md:flex' : 'flex flex-1 md:flex-none',
         )}>
@@ -199,7 +199,7 @@ export function MessagesApp({
         </div>
         {/* Thread — 모바일은 thread 활성 시만, 데스크톱은 항상. */}
         <div className={cn(
-          'flex-1 min-w-0 min-h-0 flex-col border border-border/80 md:rounded-lg overflow-hidden bg-[var(--pmw-sage-paper)]',
+          'flex-1 min-w-0 min-h-0 flex-col md:border md:border-border/80 md:rounded-lg overflow-hidden bg-[var(--pmw-sage-paper)]',
           activeConv ? 'flex' : 'hidden md:flex',
         )}>
           {activeConv ? (
