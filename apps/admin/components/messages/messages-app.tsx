@@ -60,6 +60,7 @@ import {
 import { PageShell } from '@/components/ui/page-shell'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { getCachedConv, setCachedConv, deleteCachedConv } from '@/lib/messages/cache-idb'
+import { AttachButton } from '@/components/ui/attach-button'
 
 const MAX_CHAT_FILE_BYTES = 25 * 1024 * 1024
 const NAME_MAX = 50
@@ -1775,7 +1776,6 @@ function Composer({
   } | null>(null)
   const [uploading, setUploading] = useState(false)
   const taRef = useRef<HTMLTextAreaElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setText('')
@@ -1865,27 +1865,13 @@ function Composer({
           </button>
         </div>
       )}
-      <input
-        ref={fileInputRef}
-        type="file"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0]
-          if (f) handleFile(f)
-          e.target.value = ''
-        }}
-      />
       <div className="flex items-end gap-1 rounded-full bg-popover border border-border/80 pl-1 pr-1 py-1">
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
+        <AttachButton
+          onFile={handleFile}
           disabled={uploading || !!attachment}
-          aria-label="파일 첨부"
           title="파일 첨부 (최대 25MB)"
-          className="shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40"
-        >
-          <Paperclip size={16} />
-        </button>
+          className="h-8 w-8 rounded-full"
+        />
         <textarea
           ref={taRef}
           value={text}

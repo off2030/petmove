@@ -2,7 +2,7 @@
 
 import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react'
 import { SectionLabel } from '@/components/ui/section-label'
-import { ScanButton } from '@/components/ui/scan-button'
+import { AttachButton } from '@/components/ui/attach-button'
 import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
@@ -177,24 +177,19 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
 
         {editMode && (
           <div className="shrink-0 flex items-center gap-[6px]">
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
+            <AttachButton
+              multiple
+              onFile={(file) => uploadFiles([file])}
               disabled={uploading}
-              className={roundIconBtn}
               title="파일 첨부"
+              className={roundIconBtn}
             >
               {uploading ? (
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
               ) : (
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
               )}
-            </button>
-            <ScanButton
-              disabled={uploading}
-              onScanned={(file) => uploadFiles([file])}
-              className={roundIconBtn}
-            />
+            </AttachButton>
           </div>
         )}
       </div>

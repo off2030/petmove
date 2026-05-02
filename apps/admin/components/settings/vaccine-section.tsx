@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { ChevronRight, Paperclip, Plus, X } from 'lucide-react'
-import { ScanButton } from '@/components/ui/scan-button'
+import { AttachButton } from '@/components/ui/attach-button'
 import {
   PARASITE_FAMILIES,
   daysUntilExpiry,
@@ -217,7 +217,6 @@ export function VaccineSection({
   const [extracting, setExtracting] = useState(false)
   const [extractMsg, setExtractMsg] = useState<{ kind: 'info' | 'error' | 'success'; text: string } | null>(null)
   const [dragOver, setDragOver] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [picking, setPicking] = useState(false)
   // AI 가 카테고리 분류에 실패한 추출 결과 — 모달로 하나씩 처리.
   const [extractQueue, setExtractQueue] = useState<ExtractedRecord[]>([])
@@ -477,33 +476,16 @@ export function VaccineSection({
           <h2 className="pmw-st__sec-title">약품</h2>
           {isAdmin && (
             <>
-              <input
-                ref={fileInputRef}
-                type="file"
+              <AttachButton
                 accept="image/*,application/pdf"
                 multiple
-                className="hidden"
-                onChange={(e) => {
-                  const files = Array.from(e.target.files ?? [])
-                  e.target.value = ''
-                  if (files.length > 0) handleImagesGlobal(files)
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onFile={(file) => handleImagesGlobal([file])}
                 disabled={extracting}
-                title="이미지·PDF로 AI 추출"
-                className="shrink-0 translate-y-[2px] text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
+                title="이미지·PDF로 AI 추출 (모바일 카메라 시 자동 크롭)"
+                className="translate-y-[2px] text-muted-foreground/60"
               >
                 <Paperclip className="h-4 w-4" />
-              </button>
-              <ScanButton
-                disabled={extracting}
-                title="스캔하여 AI 추출"
-                className="translate-y-[2px]"
-                onScanned={(file) => handleImagesGlobal([file])}
-              />
+              </AttachButton>
               <button
                 type="button"
                 onClick={() => setPicking(true)}

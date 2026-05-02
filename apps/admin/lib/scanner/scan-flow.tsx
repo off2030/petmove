@@ -256,6 +256,13 @@ export function ScanFlow({ source, onConfirm, onClose }: ScanFlowProps) {
             <RotateCcw size={14} />
             자동 인식 위치로
           </button>
+          <button
+            type="button"
+            onClick={() => onConfirm(source)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/20 px-3 py-1.5 hover:bg-white/10 transition-colors"
+          >
+            원본 사용
+          </button>
         </div>
       )}
     </div>,

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { Trash2, Paperclip } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
+import { AttachButton } from '@/components/ui/attach-button'
 import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
@@ -302,15 +303,14 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                   saving={saving}
                 />
               </div>
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => fileRef.current?.click()}
+              <AttachButton
+                multiple
+                onFile={(file) => uploadFiles([file])}
                 className={roundIconBtn}
                 title="파일 첨부"
               >
                 <Paperclip size={14} />
-              </button>
+              </AttachButton>
             </div>
           )}
 
