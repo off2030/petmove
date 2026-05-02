@@ -33,6 +33,13 @@ export function setSkin(skin: Skin) {
   window.dispatchEvent(new Event(EVENT))
 }
 
+/** 다음 스킨으로 순환 — editorial → clinical → mono → editorial. */
+export function cycleSkin() {
+  const current = readSkin()
+  const next = SKIN_LIST[(SKIN_LIST.indexOf(current) + 1) % SKIN_LIST.length]
+  setSkin(next)
+}
+
 export function useSkin() {
   const [skin, setSkinState] = useState<Skin>('editorial')
   const [mounted, setMounted] = useState(false)
