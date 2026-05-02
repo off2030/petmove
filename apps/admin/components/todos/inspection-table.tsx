@@ -7,6 +7,7 @@ import { useCases } from '@/components/cases/cases-context'
 import { labColor } from '@/lib/lab-color'
 import { cn } from '@/lib/utils'
 import { DateTextField } from '@/components/ui/date-text-field'
+import { DropdownSelect } from '@/components/ui/dropdown-select'
 import { DestinationCell } from './destination-cell'
 
 const INITIAL_VISIBLE = 100
@@ -339,7 +340,7 @@ function StatusCell({ row, options, onUpdate }: {
   return <StatusPicker row={row} options={options} value={value} label={label} cls={cls} isDone={isDone} onUpdate={onUpdate} />
 }
 
-/** Editorial 커스텀 진행상태 드롭다운 — 네이티브 select 제거. */
+/** Editorial 커스텀 진행상태 드롭다운 — 통일 DropdownSelect 사용. */
 function StatusPicker({ row, options, value, label, cls, isDone, onUpdate }: {
   row: InspectionRow
   options: StatusOption[]
@@ -349,71 +350,47 @@ function StatusPicker({ row, options, value, label, cls, isDone, onUpdate }: {
   isDone: boolean
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
 }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    function onClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onClickOutside)
-    return () => document.removeEventListener('mousedown', onClickOutside)
-  }, [open])
-
   async function pick(v: string) {
-    setOpen(false)
     if (v === value) return
     const key = inspectionStatusKey(row)
     onUpdate(row.caseRow.id, 'data', key, v || null)
     await updateCaseField(row.caseRow.id, 'data', key, v || null)
   }
-
   return (
-    <div ref={ref} className="relative min-h-[24px] flex items-center">
-      <button
-        type="button"
-        data-status-pill
-        data-status-active={value === 'testing' ? 'true' : undefined}
-        onClick={() => setOpen(o => !o)}
-        className={cn(cls, 'cursor-pointer rounded-md -mx-1 px-1 hover:bg-accent/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40')}
-      >
-        {value === 'testing' && <span className="not-italic mr-1">↻</span>}
-        {isDone && <span className="not-italic mr-1">✓</span>}
-        {label}
-      </button>
-      {open && (
-        <ul className="absolute left-0 top-full mt-1 z-30 min-w-[120px] rounded-md border border-border/80 bg-background py-1 shadow-md">
-          {options.map(o => {
-            const isCurrent = value === o.value
-            const optActive = o.value === 'testing'
-            const optDone = o.value === 'done'
-            const optCls = optActive
-              ? 'font-serif italic text-[15px] text-primary'
-              : optDone
-                ? 'font-serif italic text-[15px] text-pmw-positive'
-                : 'font-serif italic text-[15px] text-muted-foreground'
-            return (
-              <li key={o.value}>
-                <button
-                  type="button"
-                  onClick={() => pick(o.value)}
-                  className={cn(
-                    'w-full text-left px-sm py-1.5 hover:bg-accent/60 transition-colors flex items-center gap-sm',
-                    isCurrent && 'bg-accent/40',
-                  )}
-                >
-                  <span className={optCls}>
-                    {optActive && <span className="not-italic mr-1">↻</span>}
-                    {optDone && <span className="not-italic mr-1">✓</span>}
-                    {o.label}
-                  </span>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
+    <div className="min-h-[24px] flex items-center">
+      <DropdownSelect
+        value={value}
+        options={options}
+        onChange={pick}
+        triggerClassName={cn(cls, '-mx-1 px-1')}
+        triggerProps={{
+          'data-status-pill': '',
+          ...(value === 'testing' ? { 'data-status-active': 'true' } : {}),
+        } as React.ButtonHTMLAttributes<HTMLButtonElement>}
+        renderTrigger={() => (
+          <>
+            {value === 'testing' && <span className="not-italic mr-1">↻</span>}
+            {isDone && <span className="not-italic mr-1">✓</span>}
+            {label}
+          </>
+        )}
+        renderOption={(o) => {
+          const optActive = o.value === 'testing'
+          const optDone = o.value === 'done'
+          const optCls = optActive
+            ? 'font-serif italic text-[15px] text-primary'
+            : optDone
+              ? 'font-serif italic text-[15px] text-pmw-positive'
+              : 'font-serif italic text-[15px] text-muted-foreground'
+          return (
+            <span className={optCls}>
+              {optActive && <span className="not-italic mr-1">↻</span>}
+              {optDone && <span className="not-italic mr-1">✓</span>}
+              {o.label}
+            </span>
+          )
+        }}
+      />
     </div>
   )
 }

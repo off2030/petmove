@@ -10,6 +10,7 @@ import { extractExtra } from '@/lib/actions/extract-extra'
 import type { FlightEntry } from '@/lib/actions/extract-extra'
 import { CopyButton } from './copy-button'
 import { DateTextField } from '@/components/ui/date-text-field'
+import { DropdownSelect } from '@/components/ui/dropdown-select'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { ExtraSectionShell } from './extra-field-shell'
@@ -525,89 +526,35 @@ function InlineInput({ type, initial, placeholder, onSave, onCancel, uppercase }
   )
 }
 
-function SelectInput({ options, initial, onSave, onCancel }: {
+/** SelectInput — DropdownSelect 기반. '선택' (clear) 옵션 추가 + japan extra 스타일. */
+function SelectInput({ options, initial, onSave, onCancel: _onCancel }: {
   options: { value: string; label: string }[]; initial: string
   onSave: (v: string | null) => void; onCancel: () => void
 }) {
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const triggerRef = useRef<HTMLButtonElement>(null)
-  const [open, setOpen] = useState(true)
-
-  useEffect(() => {
-    triggerRef.current?.focus()
-  }, [])
-
-  useEffect(() => {
-    function onDoc(e: MouseEvent) {
-      if (!wrapRef.current?.contains(e.target as Node)) {
-        setOpen(false)
-        setTimeout(onCancel, 50)
-      }
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        setOpen(false)
-        onCancel()
-      }
-    }
-    document.addEventListener('mousedown', onDoc)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDoc)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [onCancel])
-
+  const optsWithClear = [{ value: '', label: '선택' }, ...options]
   const current = options.find((o) => o.value === initial)
-  const currentLabel = current?.label ?? '선택'
-
   return (
-    <div ref={wrapRef} className="relative inline-block">
-      <button
-        ref={triggerRef}
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="h-7 inline-flex items-center gap-1.5 rounded-md border border-border/80 bg-background px-2 text-sm hover:border-foreground/40 focus-visible:outline-none focus-visible:border-foreground/40 transition-colors"
-      >
-        <span className={cn(!current && 'text-muted-foreground/70')}>{currentLabel}</span>
-        <ChevronDown className={cn('h-3 w-3 text-muted-foreground transition-transform', open && 'rotate-180')} />
-      </button>
-      {open && (
-        <ul
-          role="listbox"
-          className="absolute left-0 top-full mt-1 min-w-full whitespace-nowrap rounded-sm border border-border/80 bg-popover shadow-md py-1 z-30"
-        >
-          <li>
-            <button
-              type="button"
-              onClick={() => { onSave(null); setOpen(false) }}
-              className={cn(
-                'w-full text-left px-3 py-1.5 text-sm font-serif italic hover:bg-accent/40 transition-colors',
-                !current ? 'text-foreground' : 'text-muted-foreground',
-              )}
-            >
-              선택
-            </button>
-          </li>
-          {options.map((o) => {
-            const active = o.value === initial
-            return (
-              <li key={o.value}>
-                <button
-                  type="button"
-                  onClick={() => { onSave(o.value); setOpen(false) }}
-                  className={cn(
-                    'w-full text-left px-3 py-1.5 text-sm hover:bg-accent/40 transition-colors',
-                    active ? 'font-serif text-foreground' : 'font-serif text-muted-foreground',
-                  )}
-                >
-                  {o.label}
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+    <DropdownSelect
+      value={initial}
+      options={optsWithClear}
+      onChange={(v) => onSave(v || null)}
+      triggerClassName="h-7 inline-flex items-center gap-1.5 rounded-md border border-border/80 bg-background px-2 text-sm hover:border-foreground/40"
+      menuClassName="min-w-full whitespace-nowrap"
+      renderTrigger={() => (
+        <>
+          <span className={cn(!current && 'text-muted-foreground/70')}>{current?.label ?? '선택'}</span>
+          <ChevronDown className="h-3 w-3 text-muted-foreground" />
+        </>
       )}
-    </div>
+      renderOption={(o) => (
+        <span className={cn(
+          'font-serif text-sm',
+          o.value === '' ? 'italic' : '',
+          o.value === initial ? 'text-foreground' : 'text-muted-foreground',
+        )}>
+          {o.label}
+        </span>
+      )}
+    />
   )
 }

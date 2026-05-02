@@ -9,7 +9,7 @@ import { CopyButton } from './copy-button'
 import { extractExtra } from '@/lib/actions/extract-extra'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
-import { ExtraSectionShell } from './extra-field-shell'
+import { ExtraSectionShell, SelectInput } from './extra-field-shell'
 import { SectionLabel } from '@/components/ui/section-label'
 import { useSectionEditMode } from './section-edit-mode-context'
 import { useConfirm } from '@/components/ui/confirm-dialog'
@@ -394,25 +394,4 @@ function InlineInput({ type, initial, placeholder, onSave, onCancel }: {
   )
 }
 
-function SelectInput({ options, initial, onSave, onCancel }: {
-  options: { value: string; label: string }[]
-  initial: string
-  onSave: (v: string | null) => void
-  onCancel: () => void
-}) {
-  const ref = useRef<HTMLSelectElement>(null)
-  useEffect(() => { ref.current?.focus() }, [])
-  return (
-    <select
-      ref={ref}
-      defaultValue={initial}
-      onChange={(e) => onSave(e.target.value || null)}
-      onBlur={() => setTimeout(onCancel, 150)}
-      onKeyDown={(e) => { if (e.key === 'Escape') onCancel() }}
-      className="h-7 rounded-md border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
-    >
-      <option value="">선택</option>
-      {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-    </select>
-  )
-}
+// SelectInput 은 extra-field-shell.tsx 에서 import — 중복 제거.
