@@ -8,6 +8,7 @@ import type { CaseRow } from '@/lib/supabase/types'
 import { extractExtra } from '@/lib/actions/extract-extra'
 import type { Country, ResultMap } from '@/lib/actions/extract-extra'
 import { CopyButton } from './copy-button'
+import { AttachButton } from '@/components/ui/attach-button'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { DateTextField } from '@/components/ui/date-text-field'
@@ -249,23 +250,16 @@ export function ExtraSectionShell({
         <h3 className="font-serif text-[20px] font-medium tracking-tight text-foreground">
           추가정보
         </h3>
-        <input
-          ref={fileRef}
-          type="file"
+        <AttachButton
           accept="image/*,.pdf"
           multiple
-          onChange={(e) => { if (e.target.files) handleFiles(Array.from(e.target.files)); e.target.value = '' }}
-          className="hidden"
-        />
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
+          onFile={(file) => handleFiles([file])}
           disabled={extracting}
-          className="shrink-0 translate-y-[2px] text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
-          title="이미지·PDF로 AI 입력"
+          title="이미지·PDF로 AI 입력 (모바일 카메라 시 자동 크롭)"
+          className="translate-y-[2px] text-muted-foreground/60 hover:text-foreground"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-        </button>
+        </AttachButton>
         <button
           type="button"
           onClick={() => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { lazy, Suspense, useRef, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { Paperclip } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -20,6 +20,10 @@ interface AttachButtonProps {
   className?: string
   /** 기본 Paperclip 아이콘 대신 다른 children. */
   children?: ReactNode
+  /** 외부에서 picker 를 열고 싶을 때 — `.current()` 호출하면 파일 선택창 오픈. */
+  triggerRef?: RefObject<(() => void) | null>
+  /** 버튼 자체를 숨기고 picker / ScanFlow 만 mount. triggerRef 와 함께 사용. */
+  hidden?: boolean
 }
 
 /**
@@ -37,9 +41,20 @@ export function AttachButton({
   title = '파일 첨부',
   className,
   children,
+  triggerRef,
+  hidden,
 }: AttachButtonProps) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [scanSource, setScanSource] = useState<File | null>(null)
+
+  // 외부에서 .current() 호출하면 picker 열림.
+  useEffect(() => {
+    if (!triggerRef) return
+    triggerRef.current = () => fileRef.current?.click()
+    return () => {
+      if (triggerRef) triggerRef.current = null
+    }
+  }, [triggerRef])
 
   function isMobile(): boolean {
     if (typeof window === 'undefined') return false
@@ -75,19 +90,21 @@ export function AttachButton({
           e.target.value = ''
         }}
       />
-      <button
-        type="button"
-        onClick={() => fileRef.current?.click()}
-        disabled={disabled}
-        title={title}
-        aria-label={title}
-        className={cn(
-          'shrink-0 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40',
-          className,
-        )}
-      >
-        {children ?? <Paperclip size={16} />}
-      </button>
+      {!hidden && (
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={disabled}
+          title={title}
+          aria-label={title}
+          className={cn(
+            'shrink-0 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40',
+            className,
+          )}
+        >
+          {children ?? <Paperclip size={16} />}
+        </button>
+      )}
       {scanSource && (
         <Suspense fallback={null}>
           <ScanFlow

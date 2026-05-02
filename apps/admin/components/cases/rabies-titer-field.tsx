@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { Trash2 } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
+import { AttachButton } from '@/components/ui/attach-button'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
@@ -82,7 +83,6 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
   const [extracting, setExtracting] = useState(false)
   const [extractMsg, setExtractMsg] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
   const rootRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -256,15 +256,17 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
         >
           광견병항체검사
         </SectionLabel>
+        {editMode && (
+          <AttachButton
+            accept="image/*,.pdf"
+            onFile={handleFile}
+            disabled={extracting}
+            title="이미지/PDF 로 자동 입력 (모바일 카메라 시 자동 크롭)"
+            className="h-6 w-6 text-muted-foreground/60"
+          />
+        )}
       </div>
       <div className="min-w-0 flex-1 space-y-0.5">
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*,.pdf"
-          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }}
-          className="hidden"
-        />
         {extracting && (
           <div className="text-xs text-muted-foreground/70 italic px-2 py-1">이미지에서 추출 중…</div>
         )}

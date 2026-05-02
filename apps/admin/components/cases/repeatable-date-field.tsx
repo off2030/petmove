@@ -13,6 +13,7 @@ import { extractVaccineInfo } from '@/lib/actions/extract-vaccine'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { severityTextClass, tooltipText, useFieldVerification } from './verification-context'
+import { AttachButton } from '@/components/ui/attach-button'
 import { DateTextField } from '@/components/ui/date-text-field'
 import { useSectionEditMode } from './section-edit-mode-context'
 
@@ -202,8 +203,6 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
   const [modalOpen, setModalOpen] = useState(false)
   // 모달 열릴 때 records 스냅샷 — 변경 감지용 (닫기 vs 저장 버튼 토글).
   const initialRecordsRef = useRef<string>('[]')
-  // 클립 아이콘 클릭 시 — 어느 레코드로 추출할지 (null 이면 새 기록).
-  const pendingTargetIdxRef = useRef<number | null>(null)
 
   // Which detail field is being edited (in expanded view)
   const [detailEdit, setDetailEdit] = useState<{ idx: number; field: keyof VacRecord } | null>(null)
@@ -471,7 +470,6 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
   // 모달이 닫혀있으면 인라인 영역(rootRef) 위에 hover 중일 때만 동작.
   const rootRef = useRef<HTMLDivElement | null>(null)
   const modalRef = useRef<HTMLDivElement | null>(null)
-  const fileRef = useRef<HTMLInputElement>(null)
   useEffect(() => {
     function handlePaste(e: ClipboardEvent) {
       const active = document.activeElement
@@ -556,12 +554,6 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
 
       {/* 인라인: 날짜 chips 만 (간결). 클릭하면 모달 열림. */}
       <div className="min-w-0 flex items-baseline gap-[10px] flex-wrap pt-1">
-        <input ref={fileRef} type="file" accept="image/*,.pdf" onChange={(e) => {
-          const f = e.target.files?.[0]
-          if (f) handleFile(f, pendingTargetIdxRef.current)
-          e.target.value = ''
-          pendingTargetIdxRef.current = null
-        }} className="hidden" />
         {sortedForExpand.length === 0 ? null : (
           sortedForExpand.map((rec, si) => (
             <InlineDateChip
@@ -594,15 +586,15 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
             <div className="flex items-center justify-between gap-md px-md py-3 border-b border-border/80">
               <h2 className="font-serif text-[18px] text-foreground">{label}</h2>
               <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => { pendingTargetIdxRef.current = null; fileRef.current?.click() }}
+                <AttachButton
+                  accept="image/*,.pdf"
+                  onFile={(f) => handleFile(f, null)}
                   disabled={extracting}
                   className={roundIconBtn}
-                  title="이미지/PDF 로 새 기록 추출"
+                  title="이미지/PDF 로 새 기록 추출 (모바일 카메라 시 자동 크롭)"
                 >
                   <Paperclip size={14} />
-                </button>
+                </AttachButton>
                 <button
                   type="button"
                   onClick={() => setAddingNew(true)}
@@ -695,15 +687,15 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                       )}
 
                       <div className="flex items-center gap-1 ml-auto">
-                        <button
-                          type="button"
-                          onClick={() => { pendingTargetIdxRef.current = oi; fileRef.current?.click() }}
+                        <AttachButton
+                          accept="image/*,.pdf"
+                          onFile={(f) => handleFile(f, oi)}
                           disabled={extracting}
-                          title="이 기록에 이미지/PDF 추출"
-                          className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-foreground hover:bg-accent/40 transition-colors disabled:opacity-50"
+                          title="이 기록에 이미지/PDF 추출 (모바일 카메라 시 자동 크롭)"
+                          className="shrink-0 p-1 text-muted-foreground/50 hover:text-foreground hover:bg-accent/40"
                         >
                           <Paperclip size={13} />
-                        </button>
+                        </AttachButton>
                         <button
                           type="button"
                           onClick={() => deleteRecord(oi)}

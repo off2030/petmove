@@ -10,6 +10,7 @@ import { isExtractableFile } from '@/lib/file-to-base64'
 import { formatMicrochip } from '@/lib/fields'
 import { destCode } from '@/lib/country-code'
 import { TrashModal } from './trash-modal'
+import { AttachButton } from '@/components/ui/attach-button'
 import { LIST_ROW_BASE } from '@/components/ui/list-row'
 import { TodosApp, TodosInspectionActions, TodosImportReportAdd, TABS as TODOS_TABS, type TabId as TodosTabId } from '@/components/todos/todos-app'
 
@@ -176,7 +177,6 @@ export function CaseList({
 
   // ── File drop / paste / attach ─────────────────────────────────
   const rootRef = useRef<HTMLDivElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
   const dragDepth = useRef(0)
 
@@ -388,27 +388,15 @@ export function CaseList({
         {mode === 'inspection' && <TodosInspectionActions query={query} />}
         {mode === 'import_report' && <TodosImportReportAdd />}
         {onAddFromFiles && !isTodosMode && (
-          <>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/*,application/pdf"
-              className="hidden"
-              onChange={(e) => {
-                handleFiles(e.target.files)
-                if (fileInputRef.current) fileInputRef.current.value = ''
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-popover text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-              title="파일로 새 케이스 추가 (드래그·드롭 / Ctrl+V 도 가능)"
-            >
-              <Paperclip className="h-4 w-4" />
-            </button>
-          </>
+          <AttachButton
+            multiple
+            accept="image/*,application/pdf"
+            onFile={(f) => handleFiles([f])}
+            className="h-11 w-11 rounded-full border border-border/80 bg-popover"
+            title="파일로 새 케이스 추가 (드래그·드롭 / Ctrl+V / 모바일 카메라 시 자동 크롭)"
+          >
+            <Paperclip className="h-4 w-4" />
+          </AttachButton>
         )}
         {!isTodosMode && (
           <button

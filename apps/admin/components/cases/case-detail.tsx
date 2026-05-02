@@ -13,6 +13,7 @@ import { useDestinationOverrides } from '@/components/providers/destination-over
 import React, { useEffect, useRef, useState } from 'react'
 import { Trash2, ChevronDown } from 'lucide-react'
 import { useConfirm } from '@/components/ui/confirm-dialog'
+import { AttachButton } from '@/components/ui/attach-button'
 import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
@@ -529,7 +530,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, entries, destinati
   // 값 있을 때만 의미있음 — 타이틀 클릭으로 삭제 버튼 노출 토글.
   const [showDelete, setShowDelete] = useState(false)
   const sectionRef = useRef<HTMLElement>(null)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const attachTriggerRef = useRef<(() => void) | null>(null)
 
   const country = destinationToCountry(destination)
 
@@ -670,16 +671,12 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, entries, destinati
         dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
-      <input
-        ref={fileRef}
-        type="file"
+      <AttachButton
         accept="image/*,.pdf"
         multiple
-        onChange={(e) => {
-          if (e.target.files) handleFiles(Array.from(e.target.files))
-          e.target.value = ''
-        }}
-        className="hidden"
+        hidden
+        triggerRef={attachTriggerRef}
+        onFile={(f) => handleFiles([f])}
       />
       <div className="mb-4 flex items-baseline gap-3">
         <span className="font-mono text-[14px] tracking-[1.2px] text-muted-foreground/80">
@@ -690,7 +687,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, entries, destinati
           type="button"
           onClick={() => {
             if (hasAnyValue) setShowDelete((v) => !v)
-            else if (country) fileRef.current?.click()
+            else if (country) attachTriggerRef.current?.()
           }}
           disabled={!hasAnyValue && (!country || extracting)}
           title={hasAnyValue ? '클릭하여 삭제 버튼 표시' : country ? '클릭하여 이미지·PDF 자동 추출' : undefined}
