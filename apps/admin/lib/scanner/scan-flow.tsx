@@ -3,14 +3,14 @@
 /**
  * 모바일 이미지 첨부 시 표시되는 자르기(crop) 모달.
  *
- * 이전 버전은 jscanify + OpenCV 로 4점 자유 사각형 + 원근 보정. 너무 무겁고
- * (~5MB OpenCV wasm) 자동검출이 자주 빗나가 사용자 불편. 일반적인 직사각형
- * 크롭으로 단순화.
+ * react-image-crop — 박스 코너/엣지 손잡이로 자유롭게 크기·위치 조정.
+ * 세로 문서·가로 영수증 등 어떤 비율이든 사용자가 맞출 수 있음.
  */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import Cropper, { type Area } from 'react-easy-crop'
+import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop'
+import 'react-image-crop/dist/ReactCrop.css'
 import { Check, Loader2, X } from 'lucide-react'
 
 interface ScanFlowProps {
@@ -21,16 +21,14 @@ interface ScanFlowProps {
 
 export function ScanFlow({ source, onConfirm, onClose }: ScanFlowProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
-  const [crop, setCrop] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
-  const [zoom, setZoom] = useState(1)
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
+  const [crop, setCrop] = useState<Crop>()
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null)
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
+  const imgRef = useRef<HTMLImageElement | null>(null)
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     const url = URL.createObjectURL(source)
@@ -38,15 +36,31 @@ export function ScanFlow({ source, onConfirm, onClose }: ScanFlowProps) {
     return () => URL.revokeObjectURL(url)
   }, [source])
 
-  const onCropComplete = useCallback((_area: Area, areaPx: Area) => {
-    setCroppedAreaPixels(areaPx)
-  }, [])
+  function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+    const { naturalWidth, naturalHeight } = e.currentTarget
+    // 기본 크롭 박스 — 이미지 중앙 80% 영역.
+    const initial: Crop = {
+      unit: '%',
+      x: 10,
+      y: 10,
+      width: 80,
+      height: 80,
+    }
+    setCrop(initial)
+    setCompletedCrop({
+      unit: 'px',
+      x: naturalWidth * 0.1,
+      y: naturalHeight * 0.1,
+      width: naturalWidth * 0.8,
+      height: naturalHeight * 0.8,
+    })
+  }
 
   async function handleConfirm() {
-    if (!imageUrl || !croppedAreaPixels) return
+    if (!imageUrl || !completedCrop || !imgRef.current) return
     setProcessing(true)
     try {
-      const blob = await cropImageToBlob(imageUrl, croppedAreaPixels)
+      const blob = await cropImageToBlob(imgRef.current, completedCrop)
       const baseName = source.name.replace(/\.[^.]+$/, '') || 'crop'
       const file = new File([blob], `${baseName}_crop.jpg`, { type: 'image/jpeg' })
       onConfirm(file)
@@ -76,7 +90,7 @@ export function ScanFlow({ source, onConfirm, onClose }: ScanFlowProps) {
         <button
           type="button"
           onClick={handleConfirm}
-          disabled={processing || !croppedAreaPixels}
+          disabled={processing || !completedCrop || completedCrop.width === 0 || completedCrop.height === 0}
           aria-label="확인"
           className="rounded-full p-2 hover:bg-white/10 transition-colors disabled:opacity-30"
         >
@@ -84,7 +98,7 @@ export function ScanFlow({ source, onConfirm, onClose }: ScanFlowProps) {
         </button>
       </div>
 
-      <div className="flex-1 relative overflow-hidden bg-black">
+      <div className="flex-1 relative overflow-auto bg-black flex items-center justify-center p-2">
         {error && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 text-center text-white">
             <span className="text-sm">{error}</span>
@@ -98,18 +112,21 @@ export function ScanFlow({ source, onConfirm, onClose }: ScanFlowProps) {
           </div>
         )}
         {imageUrl && !error && (
-          <Cropper
-            image={imageUrl}
+          <ReactCrop
             crop={crop}
-            zoom={zoom}
-            aspect={undefined}
-            onCropChange={setCrop}
-            onZoomChange={setZoom}
-            onCropComplete={onCropComplete}
-            objectFit="contain"
-            showGrid
-            restrictPosition={false}
-          />
+            onChange={(_, percent) => setCrop(percent)}
+            onComplete={(c) => setCompletedCrop(c)}
+            keepSelection
+            ruleOfThirds
+          >
+            <img
+              ref={imgRef}
+              src={imageUrl}
+              alt=""
+              onLoad={onImageLoad}
+              className="max-h-[calc(100vh-7rem)] max-w-full select-none"
+            />
+          </ReactCrop>
         )}
       </div>
 
@@ -129,31 +146,22 @@ export function ScanFlow({ source, onConfirm, onClose }: ScanFlowProps) {
 }
 
 /**
- * 원본 이미지에서 픽셀 영역을 잘라 jpeg blob 으로 반환.
+ * 화면에 렌더된 이미지에서 표시 좌표(crop)를 자연 픽셀 좌표로 변환해 잘라냄.
  */
-async function cropImageToBlob(imageUrl: string, area: Area): Promise<Blob> {
-  const img = new Image()
-  await new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve()
-    img.onerror = () => reject(new Error('이미지를 불러올 수 없습니다'))
-    img.src = imageUrl
-  })
+async function cropImageToBlob(img: HTMLImageElement, crop: PixelCrop): Promise<Blob> {
+  const scaleX = img.naturalWidth / img.width
+  const scaleY = img.naturalHeight / img.height
+  const sx = crop.x * scaleX
+  const sy = crop.y * scaleY
+  const sw = crop.width * scaleX
+  const sh = crop.height * scaleY
+
   const canvas = document.createElement('canvas')
-  canvas.width = Math.max(1, Math.round(area.width))
-  canvas.height = Math.max(1, Math.round(area.height))
+  canvas.width = Math.max(1, Math.round(sw))
+  canvas.height = Math.max(1, Math.round(sh))
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('canvas 컨텍스트 생성 실패')
-  ctx.drawImage(
-    img,
-    area.x,
-    area.y,
-    area.width,
-    area.height,
-    0,
-    0,
-    canvas.width,
-    canvas.height,
-  )
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
       (b) => (b ? resolve(b) : reject(new Error('canvas → blob 실패'))),
