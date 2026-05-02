@@ -7,6 +7,7 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { useSectionEditMode } from './section-edit-mode-context'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 const DATA_KEY = 'memos'
 
@@ -50,6 +51,16 @@ export function RepeatableMemoField({ caseId, caseRow }: { caseId: string; caseR
   function deleteMemo(idx: number) {
     const next = memos.filter((_, i) => i !== idx)
     saveMemos(next).catch(() => {})
+  }
+
+  const confirm = useConfirm()
+  async function confirmDeleteMemo(idx: number) {
+    const ok = await confirm({
+      message: '메모를 삭제하시겠습니까?',
+      okLabel: '삭제',
+      variant: 'destructive',
+    })
+    if (ok) deleteMemo(idx)
   }
 
   function updateMemo(idx: number, value: string) {
@@ -102,7 +113,7 @@ export function RepeatableMemoField({ caseId, caseRow }: { caseId: string; caseR
             {editMode && (
               <button
                 type="button"
-                onClick={() => deleteMemo(i)}
+                onClick={() => confirmDeleteMemo(i)}
                 title="삭제"
                 className="shrink-0 inline-flex items-center justify-center rounded-md p-1 mt-1 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover/item:opacity-70 hover:!opacity-100"
               >

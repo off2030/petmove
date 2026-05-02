@@ -16,6 +16,7 @@ import { severityTextClass, tooltipText, useFieldVerification } from './verifica
 import { AttachButton } from '@/components/ui/attach-button'
 import { DateTextField } from '@/components/ui/date-text-field'
 import { useSectionEditMode } from './section-edit-mode-context'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 interface VacRecord {
   date: string
@@ -179,6 +180,7 @@ function parasiteKindFromLabel(label: string): 'external' | 'internal' | 'heartw
 export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey, hideValidUntil, lockOneYearValidity, siblingKey }: Props) {
   const { updateLocalCaseField, replaceLocalCaseData } = useCases()
   const editMode = useSectionEditMode()
+  const confirm = useConfirm()
   const L = useVaccineLookups()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const records = readRecords(data, dataKey, legacyKey)
@@ -289,8 +291,14 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     return raw.map(item => (typeof item === 'string' ? { date: item } : (item as VacRecord)))
   }
 
-  function deleteRecord(idx: number) {
+  async function deleteRecord(idx: number) {
     const removed = records[idx]
+    const ok = await confirm({
+      message: `${label}${removed?.date ? ` (${removed.date})` : ''} 기록을 삭제하시겠습니까?`,
+      okLabel: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
     const next = records.filter((_, i) => i !== idx)
     // useTransition 없이 직접 호출 — saveRecords 의 optimistic update 가 즉시 반영.
     void (async () => {

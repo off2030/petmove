@@ -14,6 +14,7 @@ import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { DateTextField } from '@/components/ui/date-text-field'
 import { SectionLabel } from '@/components/ui/section-label'
 import { SectionEditModeProvider, useSectionEditMode } from './section-edit-mode-context'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 type ExtractOk<C extends Country> = { ok: true; data: ResultMap[C] }
 
@@ -360,7 +361,16 @@ export function FieldRow({
   type = 'text', placeholder = '', options, uppercase, compact, allowDelete = true,
 }: FieldRowProps) {
   const editMode = useSectionEditMode()
+  const confirm = useConfirm()
   const isSelect = type === 'select'
+  async function handleDelete() {
+    const ok = await confirm({
+      message: `${label} 정보를 삭제하시겠습니까?`,
+      okLabel: '삭제',
+      variant: 'destructive',
+    })
+    if (ok) onSave(null)
+  }
   const display = isSelect && value ? (options?.find(o => o.value === value)?.label ?? value) : value
   const rowCls = compact
     ? 'flex items-center gap-sm'
@@ -404,7 +414,7 @@ export function FieldRow({
               {editMode && allowDelete && (
                 <button
                   type="button"
-                  onClick={() => onSave(null)}
+                  onClick={handleDelete}
                   className="ml-0.5 rounded p-0.5 text-muted-foreground/50 hover:text-foreground hover:bg-accent/60 opacity-0 group-hover/val:opacity-100 transition-opacity"
                   title="삭제"
                 >

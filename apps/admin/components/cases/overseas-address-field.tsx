@@ -9,12 +9,22 @@ import type { CaseRow } from '@/lib/supabase/types'
 import { CopyButton } from './copy-button'
 import { SectionLabel } from '@/components/ui/section-label'
 import { useSectionEditMode } from './section-edit-mode-context'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 const DATA_KEY = 'address_overseas'
 
 export function OverseasAddressField({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
   const { updateLocalCaseField } = useCases()
   const editMode = useSectionEditMode()
+  const confirm = useConfirm()
+  async function handleDelete() {
+    const ok = await confirm({
+      message: '해외주소 정보를 삭제하시겠습니까?',
+      okLabel: '삭제',
+      variant: 'destructive',
+    })
+    if (ok) save(null)
+  }
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const value = (data[DATA_KEY] as string | null) ?? null
 
@@ -75,7 +85,7 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
               {editMode && (
                 <button
                   type="button"
-                  onClick={() => save(null)}
+                  onClick={handleDelete}
                   className="ml-0.5 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 opacity-0 group-hover/val:opacity-70 hover:!opacity-100 transition-colors"
                   title="삭제"
                 >

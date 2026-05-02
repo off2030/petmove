@@ -9,6 +9,7 @@ import { useCases } from './cases-context'
 import destsData from '@/data/destinations.json'
 import { destCode } from '@/lib/country-code'
 import { useSectionEditMode } from './section-edit-mode-context'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 interface Dest {
   ko: string
@@ -32,6 +33,7 @@ function joinDests(arr: string[]): string | null {
 export function DestinationField({ caseId, destination }: { caseId: string; destination: string | null }) {
   const { updateLocalCaseField, activeDestination, setActiveDestination } = useCases()
   const editMode = useSectionEditMode()
+  const confirm = useConfirm()
 
   const selected = parseDests(destination)
   const multi = selected.length > 1
@@ -85,6 +87,12 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
   }
 
   async function removeDest(ko: string) {
+    const ok = await confirm({
+      message: `목적지 "${ko}"를 삭제하시겠습니까?`,
+      okLabel: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
     const next = selected.filter(s => s !== ko)
     const val = joinDests(next)
     updateLocalCaseField(caseId, 'column', 'destination', val)

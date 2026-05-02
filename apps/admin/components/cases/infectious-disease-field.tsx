@@ -11,6 +11,7 @@ import { labColor } from '@/lib/lab-color'
 import { resolveInspectionLabs } from '@petmove/domain'
 import { DateTextField } from '@/components/ui/date-text-field'
 import { useSectionEditMode } from './section-edit-mode-context'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 interface InfectiousRecord {
   date: string | null
@@ -28,6 +29,7 @@ const DATA_KEY = 'infectious_disease_records'
 export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
   const { updateLocalCaseField, inspectionConfig } = useCases()
   const editMode = useSectionEditMode()
+  const confirm = useConfirm()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
 
   // Read array (backward compat: old flat key)
@@ -80,7 +82,14 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
     }
   }
 
-  function deleteRecord(idx: number) {
+  async function deleteRecord(idx: number) {
+    const target = records[idx]
+    const ok = await confirm({
+      message: `전염병검사${target?.date ? ` (${target.date})` : ''} 기록을 삭제하시겠습니까?`,
+      okLabel: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
     const next = records.filter((_, i) => i !== idx)
     saveRecords(next).catch(() => {})
   }

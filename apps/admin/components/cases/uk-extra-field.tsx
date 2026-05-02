@@ -12,6 +12,7 @@ import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { ExtraSectionShell } from './extra-field-shell'
 import { SectionLabel } from '@/components/ui/section-label'
 import { useSectionEditMode } from './section-edit-mode-context'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 const DATA_KEY = 'address_overseas'
 
@@ -165,6 +166,15 @@ function UKAddressRow({ address, editing, onStartEdit, onCancelEdit, onSave }: {
   onSave: (v: string | null) => void
 }) {
   const editMode = useSectionEditMode()
+  const confirm = useConfirm()
+  async function handleDelete() {
+    const ok = await confirm({
+      message: '해외주소 정보를 삭제하시겠습니까?',
+      okLabel: '삭제',
+      variant: 'destructive',
+    })
+    if (ok) onSave(null)
+  }
   const valueCls = cn(
     'rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground',
     !address && 'text-muted-foreground/60',
@@ -197,7 +207,7 @@ function UKAddressRow({ address, editing, onStartEdit, onCancelEdit, onSave }: {
               {editMode && (
                 <button
                   type="button"
-                  onClick={() => onSave(null)}
+                  onClick={handleDelete}
                   className="ml-0.5 rounded p-0.5 text-muted-foreground/50 hover:text-foreground hover:bg-accent/60 opacity-0 group-hover/val:opacity-100 transition-opacity"
                   title="삭제"
                 >

@@ -14,6 +14,7 @@ import {
   type EstimateSnapshot,
 } from '@/components/calculator/calculator-output-modal'
 import { useSectionEditMode } from './section-edit-mode-context'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 interface PaymentRecord {
   amount: number
@@ -40,6 +41,7 @@ export interface PaymentFieldHandle {
 export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; caseRow: CaseRow; hideAddButton?: boolean }>(function PaymentField({ caseId, caseRow, hideAddButton }, ref) {
   const { updateLocalCaseField, activeDestination } = useCases()
   const editMode = useSectionEditMode()
+  const confirm = useConfirm()
   const { items: calcItems } = useCalculatorData()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
 
@@ -94,7 +96,13 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
     }
   }
 
-  function deletePayment(idx: number) {
+  async function deletePayment(idx: number) {
+    const ok = await confirm({
+      message: '결제 기록을 삭제하시겠습니까?',
+      okLabel: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
     const next = payments.filter((_, i) => i !== idx)
     savePayments(next).catch(() => {})
   }

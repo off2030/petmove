@@ -13,6 +13,7 @@ import { severityTextClass, tooltipText, useFieldVerification } from '@/componen
 import { DateTextField } from '@/components/ui/date-text-field'
 import { SectionLabel } from '@/components/ui/section-label'
 import { useSectionEditMode } from '@/components/cases/section-edit-mode-context'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 /** Filter input by language */
 function filterByLang(str: string, lang?: 'ko' | 'en'): string {
@@ -101,6 +102,7 @@ export function EditableField({
 }) {
   const { updateLocalCaseField, replaceLocalCaseData, activeDestination } = useCases()
   const { settings: detailViewSettings } = useDetailViewSettings()
+  const confirm = useConfirm()
   const editMode = useSectionEditMode()
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState<string>(stringifyRaw(rawValue, spec))
@@ -176,7 +178,13 @@ export function EditableField({
   )
   const copyDisplay = bilingualSelect ? `${bilingualSelect.ko} | ${bilingualSelect.en}` : display
 
-  function handleClear() {
+  async function handleClear() {
+    const ok = await confirm({
+      message: `${spec.label} 정보를 삭제하시겠습니까?`,
+      okLabel: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
     // Optimistic — UI 즉시 반영. 실패 시 rollback.
     const prevValue = rawValue
     updateLocalCaseField(caseId, spec.storage, spec.key, null)

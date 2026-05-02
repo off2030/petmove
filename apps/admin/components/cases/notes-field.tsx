@@ -10,6 +10,7 @@ import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { supabaseBrowser as supabase } from '@/lib/supabase/browser'
 import { useSectionEditMode } from './section-edit-mode-context'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 /* ── Types ── */
 
@@ -209,8 +210,15 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
 
   /* ── Delete ── */
 
-  function deleteNote(idx: number) {
+  const confirm = useConfirm()
+  async function deleteNote(idx: number) {
     const note = notes[idx]
+    const ok = await confirm({
+      message: note.type === 'file' ? '첨부파일을 삭제하시겠습니까?' : '메모를 삭제하시겠습니까?',
+      okLabel: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
     const next = notes.filter((_, i) => i !== idx)
     // Optimistic — saveNotes 가 즉시 로컬 반영. 스토리지 삭제는 백그라운드.
     saveNotes(next).catch(() => {})

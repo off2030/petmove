@@ -12,6 +12,7 @@ import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { ExtraSectionShell } from './extra-field-shell'
 import { SectionLabel } from '@/components/ui/section-label'
 import { useSectionEditMode } from './section-edit-mode-context'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 interface SwissExtra {
   entry_purpose: 'temporary' | 'relocation' | 'reentry' | null
@@ -302,6 +303,15 @@ function SwissFieldRow({
   onSave: (v: string | null) => void
 }) {
   const editMode = useSectionEditMode()
+  const confirm = useConfirm()
+  async function handleDelete() {
+    const ok = await confirm({
+      message: `${label} 정보를 삭제하시겠습니까?`,
+      okLabel: '삭제',
+      variant: 'destructive',
+    })
+    if (ok) onSave(null)
+  }
   const display = type === 'select' && value ? options?.find(o => o.value === value)?.label ?? value : value
   const valueCls = cn(
     'rounded-md px-2 py-0.5 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground',
@@ -332,7 +342,7 @@ function SwissFieldRow({
           {display && (
             <>
               <CopyButton value={display} className="ml-1 opacity-0 group-hover/val:opacity-100" />
-              {editMode && <ClearButton onClick={() => onSave(null)} />}
+              {editMode && <ClearButton onClick={handleDelete} />}
             </>
           )}
         </div>
