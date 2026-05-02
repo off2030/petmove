@@ -38,7 +38,7 @@
 
     /* Status (forest / olive / rust trio) */
     --pmw-sage: #3F5F3F;             /* forest green (positive) */
-    --pmw-sage-soft: #DCDDC9;        /* muted sage warm */
+    --pmw-sage-soft: #E8DEC4;        /* warm cream sand — 채팅 active row, 녹색기 X */
     --pmw-sage-paper: #F2EEE0;       /* warm cream paper — 채팅 패널 배경 */
     --pmw-amber: #8B7E4F;            /* olive (calendar today) */
     --pmw-rust: #A04525;             /* rust red (destructive) */
@@ -655,11 +655,12 @@
     box-shadow: 0 1px 3px rgba(60, 50, 35, 0.04), 0 1px 2px rgba(60, 50, 35, 0.03);
   }
 
-  /* Editorial 채팅 버블 — iMessage 솔리드 대신 warm tint. 매거진 톤 (subtle, 따뜻한 종이).
-     own: clay 15% 투명 (tinted accent). other: 기존 muted (warm sand) 그대로 (이미 editorial 톤). */
+  /* Editorial 채팅 버블 — burgundy 시그니처 액센트로 own/other 명확 구분.
+     own: burgundy 12% tint + deep burgundy text (내 "목소리" — 매거진 액센트와 연결).
+     other: 기존 muted (warm sand) 그대로 (상대방 "목소리" — 중성 종이). */
   html:not([data-skin]) [data-bubble="own"] {
-    background-color: hsl(var(--pmw-accent) / 0.18);
-    color: hsl(var(--foreground));
+    background-color: hsl(var(--primary) / 0.12);
+    color: hsl(var(--primary));
   }
 
   /* Neumorphism 컴포넌트 그림자 — 변수 swap 만으로 안 되는 부분 */
