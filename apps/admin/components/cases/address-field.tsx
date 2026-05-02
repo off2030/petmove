@@ -248,7 +248,7 @@ export function AddressField({
         </SectionLabel>
         <div className="flex items-center gap-sm min-w-0">
           {editingKr ? (
-            <div className="flex items-center gap-sm flex-1">
+            <div className="flex items-center gap-sm flex-1 min-w-0">
               <input
                 ref={krInputRef}
                 type="text"
@@ -308,7 +308,7 @@ export function AddressField({
       {showDetail && (
         <div className="grid grid-cols-[140px_1fr_auto] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60">
           <SectionLabel className="pt-1">상세 주소</SectionLabel>
-          <div className="flex items-center gap-sm">
+          <div className="flex items-center gap-sm min-w-0">
             <input ref={detailRef} type="text" value={detailAddr} onChange={(e) => setDetailAddr(e.target.value)}
               placeholder="동/호수 입력"
               onKeyDown={(e) => { if (e.key === 'Enter') handleDetailSave(); if (e.key === 'Escape') setShowDetail(false) }}
@@ -334,7 +334,7 @@ export function AddressField({
         <div className="min-w-0">
           {editingEn ? (
             <>
-              <div className="flex items-center gap-sm">
+              <div className="flex items-center gap-sm min-w-0">
                 <input ref={enInputRef} type="text" value={enVal}
                   onChange={(e) => {
                     if (composingRef.current) { setEnVal(e.target.value); return }
