@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { ChevronDown, Plus, Search, X } from 'lucide-react'
 import type { CalculatorItem } from '@/lib/supabase/types'
 import { cn } from '@/lib/utils'
+import { Checkbox } from '@/components/ui/checkbox'
 
 const fmt = (n: number) => n.toLocaleString('ko-KR')
 const cashDiscount = (total: number) => Math.round((total * 0.95) / 10000) * 10000
@@ -375,22 +376,11 @@ export function CalculatorOutputModal({
                   key={r.id}
                   className="grid grid-cols-[28px_1fr_140px] items-center gap-2 px-3 py-1.5 border-b border-border/40 last:border-b-0"
                 >
-                  <button
-                    type="button"
-                    onClick={() => updateRow(r.id, { enabled: !on })}
-                    aria-label={on ? '비활성화' : '활성화'}
-                    className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[3px] border transition-colors ${
-                      on
-                        ? 'border-pmw-accent bg-pmw-accent'
-                        : 'border-border bg-transparent'
-                    }`}
-                  >
-                    {on && (
-                      <span className="font-serif text-white text-[15px] leading-none -translate-y-[1px]">
-                        ✓
-                      </span>
-                    )}
-                  </button>
+                  <Checkbox
+                    checked={on}
+                    onChange={() => updateRow(r.id, { enabled: !on })}
+                    label={on ? '비활성화' : '활성화'}
+                  />
                   <input
                     value={r.name}
                     onChange={(e) => updateRow(r.id, { name: e.target.value })}

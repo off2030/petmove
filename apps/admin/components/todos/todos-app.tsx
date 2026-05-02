@@ -1086,10 +1086,10 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
                 />
                 <span
                   className={cn(
-                    'w-4 h-4 shrink-0 rounded-[3px] border border-border/80 bg-background transition-colors relative',
-                    'peer-checked:bg-primary peer-checked:border-primary',
+                    'w-[22px] h-[22px] shrink-0 rounded-[3px] border border-foreground/40 bg-transparent transition-colors relative',
+                    'peer-checked:bg-pmw-accent peer-checked:border-pmw-accent',
                     'peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background',
-                    "before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-primary-foreground before:text-[11px] before:font-bold before:leading-none before:opacity-0 peer-checked:before:opacity-100",
+                    "before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-pmw-accent-foreground before:text-[14px] before:font-bold before:leading-none before:opacity-0 peer-checked:before:opacity-100",
                   )}
                   aria-hidden="true"
                 />
@@ -1116,10 +1116,10 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
                 />
                 <span
                   className={cn(
-                    'w-4 h-4 shrink-0 rounded-[3px] border border-border/80 bg-background transition-colors relative',
-                    'peer-checked:bg-primary peer-checked:border-primary',
+                    'w-[22px] h-[22px] shrink-0 rounded-[3px] border border-foreground/40 bg-transparent transition-colors relative',
+                    'peer-checked:bg-pmw-accent peer-checked:border-pmw-accent',
                     'peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background',
-                    "before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-primary-foreground before:text-[11px] before:font-bold before:leading-none before:opacity-0 peer-checked:before:opacity-100",
+                    "before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-pmw-accent-foreground before:text-[14px] before:font-bold before:leading-none before:opacity-0 peer-checked:before:opacity-100",
                   )}
                   aria-hidden="true"
                 />
@@ -1219,10 +1219,10 @@ function BulkApplyDialog({
                   />
                   <span
                     className={cn(
-                      'w-4 h-4 shrink-0 rounded-[3px] border border-border/80 bg-background transition-colors relative',
-                      'peer-checked:bg-primary peer-checked:border-primary',
+                      'w-[22px] h-[22px] shrink-0 rounded-[3px] border border-foreground/40 bg-transparent transition-colors relative',
+                      'peer-checked:bg-pmw-accent peer-checked:border-pmw-accent',
                       'peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background',
-                      "before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-primary-foreground before:text-[11px] before:font-bold before:leading-none before:opacity-0 peer-checked:before:opacity-100",
+                      "before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-pmw-accent-foreground before:text-[14px] before:font-bold before:leading-none before:opacity-0 peer-checked:before:opacity-100",
                     )}
                     aria-hidden="true"
                   />
@@ -1371,10 +1371,10 @@ function BulkApplyPicker({
                       />
                       <span
                         className={cn(
-                          'w-4 h-4 shrink-0 rounded-[3px] border border-border/80 bg-background transition-colors relative',
-                          'peer-checked:bg-primary peer-checked:border-primary',
+                          'w-[22px] h-[22px] shrink-0 rounded-[3px] border border-foreground/40 bg-transparent transition-colors relative',
+                          'peer-checked:bg-pmw-accent peer-checked:border-pmw-accent',
                           'peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background',
-                          "before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-primary-foreground before:text-[11px] before:font-bold before:leading-none before:opacity-0 peer-checked:before:opacity-100",
+                          "before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-pmw-accent-foreground before:text-[14px] before:font-bold before:leading-none before:opacity-0 peer-checked:before:opacity-100",
                         )}
                         aria-hidden="true"
                       />

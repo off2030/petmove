@@ -17,6 +17,7 @@ import { AttachButton } from '@/components/ui/attach-button'
 import { DateTextField } from '@/components/ui/date-text-field'
 import { useSectionEditMode } from './section-edit-mode-context'
 import { useConfirm } from '@/components/ui/confirm-dialog'
+import { Checkbox } from '@/components/ui/checkbox'
 
 interface VacRecord {
   date: string
@@ -786,27 +787,18 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
 
                     {/* Row 3: 타병원 접종 체크 */}
                     {OTHER_HOSPITAL_LABELS.has(label) && (
-                      <div className="ml-2 mt-1">
+                      <div className="ml-2 mt-1 inline-flex items-center gap-1.5">
+                        <Checkbox
+                          size="sm"
+                          checked={!!rec.other_hospital}
+                          onChange={() => toggleOtherHospital(oi)}
+                          label="타병원 접종"
+                        />
                         <button
                           type="button"
                           onClick={() => toggleOtherHospital(oi)}
-                          aria-pressed={!!rec.other_hospital}
-                          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/70 hover:text-foreground cursor-pointer select-none"
+                          className="text-xs text-muted-foreground/70 hover:text-foreground cursor-pointer select-none"
                         >
-                          <span
-                            className={cn(
-                              'inline-flex items-center justify-center w-3.5 h-3.5 rounded-sm border transition-colors',
-                              rec.other_hospital
-                                ? 'bg-pmw-accent border-pmw-accent'
-                                : 'border-foreground/40 bg-transparent',
-                            )}
-                          >
-                            {rec.other_hospital && (
-                              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="text-pmw-accent-foreground">
-                                <path d="M2.5 6L5 8.5L9.5 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            )}
-                          </span>
                           타병원 접종
                         </button>
                       </div>

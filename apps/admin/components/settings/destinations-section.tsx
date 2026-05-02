@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, Trash2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { DialogFooter } from '@/components/ui/dialog-footer'
 import { saveDestinationOverridesAction } from '@/lib/actions/destination-overrides-action'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import {
@@ -495,34 +496,14 @@ function DestinationEditModal({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center gap-2 px-md py-2 border-t border-border/80 bg-background/95">
-          <button
-            type="button"
-            onClick={handleSave}
-            className="h-7 px-3 rounded-full bg-pmw-accent text-pmw-accent-foreground text-[13px] hover:opacity-90 transition-opacity"
-          >
-            저장
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-7 px-3 rounded-full border border-border/80 bg-card text-[13px] text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
-          >
-            취소
-          </button>
-          {error && <span className="text-sm text-destructive">{error}</span>}
-          {onDelete && (
-            <button
-              type="button"
-              onClick={onDelete}
-              title="목적지 삭제"
-              className="ml-auto inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
-            >
-              <Trash2 size={14} />
-            </button>
-          )}
-        </div>
+        {/* Footer — 표준 DialogFooter */}
+        <DialogFooter
+          bordered
+          onCancel={onClose}
+          onPrimary={handleSave}
+          destructive={onDelete ? { onClick: onDelete } : undefined}
+        />
+        {error && <div className="px-lg pb-2 text-sm text-destructive">{error}</div>}
       </div>
     </div>,
     document.body,

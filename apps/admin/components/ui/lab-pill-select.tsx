@@ -234,13 +234,18 @@ export function LabPillMultiSelect({
                 )}
               >
                 <span
-                  className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-sm border"
-                  style={{
-                    borderColor: isSelected ? 'var(--pmw-deep)' : 'var(--pmw-border-warm)',
-                    backgroundColor: isSelected ? 'var(--pmw-deep)' : 'transparent',
-                  }}
+                  className={cn(
+                    'inline-flex items-center justify-center w-3.5 h-3.5 rounded-sm border shrink-0',
+                    isSelected
+                      ? 'bg-pmw-accent border-pmw-accent text-pmw-accent-foreground'
+                      : 'border-foreground/40 bg-transparent',
+                  )}
                 >
-                  {isSelected && <Check size={10} color="white" strokeWidth={3} />}
+                  {isSelected && (
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                      <path d="M2.5 6L5 8.5L9.5 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
                 </span>
                 <span
                   className={cn(

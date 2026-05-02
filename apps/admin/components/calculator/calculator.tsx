@@ -17,6 +17,7 @@ import {
   deleteCalculatorItem,
 } from '@/lib/actions/calculator'
 import { ListRow } from '@/components/ui/list-row'
+import { Checkbox } from '@/components/ui/checkbox'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
 
@@ -245,19 +246,11 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
             >
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 {!editMode && (
-                  <div
-                    className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[3px] border transition-colors ${
-                      on
-                        ? 'border-pmw-accent bg-pmw-accent'
-                        : 'border-border bg-transparent'
-                    }`}
-                  >
-                    {on && (
-                      <span className="font-serif text-pmw-accent-foreground text-[15px] leading-none -translate-y-[1px]">
-                        ✓
-                      </span>
-                    )}
-                  </div>
+                  <Checkbox
+                    checked={on}
+                    onChange={() => setChecked((c) => ({ ...c, [it.id]: !c[it.id] }))}
+                    label={it.item_name}
+                  />
                 )}
                 {editMode ? (
                   <input
