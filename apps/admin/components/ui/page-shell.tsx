@@ -20,6 +20,7 @@ export function PageShell({
   tabs,
   footer,
   maxWidth = '5xl',
+  hideTitleMobile = false,
   children,
 }: {
   title: string
@@ -27,6 +28,8 @@ export function PageShell({
   tabs?: React.ReactNode
   footer?: React.ReactNode
   maxWidth?: '5xl' | '7xl'
+  /** 모바일에서 타이틀 행을 숨겨 좁은 화면 공간을 본문에 양보. (예: 메시지 thread 활성 시) */
+  hideTitleMobile?: boolean
   children: React.ReactNode
 }) {
   const maxClass =
@@ -37,7 +40,10 @@ export function PageShell({
   return (
     <div className="h-full overflow-hidden px-md md:px-lg py-md md:py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
       <div className={cn('h-full mx-auto flex flex-col gap-md md:gap-lg', maxClass)}>
-        <div className="shrink-0 px-sm md:px-lg flex items-baseline justify-between gap-md">
+        <div className={cn(
+          'shrink-0 px-sm md:px-lg flex items-baseline justify-between gap-md',
+          hideTitleMobile && 'hidden md:flex',
+        )}>
           <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
             {title}
           </h1>

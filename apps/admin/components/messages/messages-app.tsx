@@ -32,7 +32,6 @@ import {
 import { cn } from '@/lib/utils'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { useConfirm } from '@/components/ui/confirm-dialog'
-import { ScanButton } from '@/components/ui/scan-button'
 import {
   addParticipant,
   createConversation,
@@ -183,7 +182,7 @@ export function MessagesApp({
   }
 
   return (
-    <PageShell title="메시지">
+    <PageShell title="메시지" hideTitleMobile={!!activeConv}>
       <div className="h-full mx-0 md:mx-lg flex flex-row min-h-0 gap-0 md:gap-md">
         {/* List — 모바일은 thread 활성 시 숨김, 아니면 풀폭. 데스크톱은 항상 280px. */}
         <div className={cn(
@@ -1677,7 +1676,9 @@ function Composer({
         })
         setText('')
         setAttachment(null)
-        taRef.current?.focus()
+        // 모바일 키보드를 끊지 않으려면 send 버튼이 textarea 포커스를 빼앗지
+        // 않아야 함 (onMouseDown preventDefault). 여기서 focus() 재호출하면
+        // 키보드가 한번 닫혔다 다시 열림.
       } else {
         alert(`전송 실패: ${r.error}`)
       }
@@ -1721,12 +1722,6 @@ function Composer({
         >
           <Paperclip size={16} />
         </button>
-        <ScanButton
-          disabled={uploading || !!attachment}
-          title="스캔하여 첨부"
-          className="h-8 w-8 inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40 p-0"
-          onScanned={(file) => handleFile(file)}
-        />
         <textarea
           ref={taRef}
           value={text}
@@ -1747,6 +1742,7 @@ function Composer({
         />
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={send}
           disabled={pending || uploading || (!text.trim() && !attachment)}
           className="shrink-0 inline-flex items-center justify-center h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40"
