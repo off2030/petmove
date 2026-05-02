@@ -232,9 +232,17 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
   function saveNewRecord(date: string) {
     if (!date) { setAddingNew(false); return }
     const detectedLab = autoDetectLab(destination, inspectionConfig.titerRules, inspectionConfig.titerDefault)
+    const newIdx = records.length
     const next = [...records, { date, value: null, lab: detectedLab }]
     setAddingNew(false)
-    saveRecords(next).catch(() => {})
+    void (async () => {
+      await saveRecords(next)
+      // 새 회차의 진행상태를 'waiting' 으로 명시 — readInspectionStatus 의
+      // legacy 폴백 (옛 케이스가 'done' 보유) 이 새 record 에 번지지 않도록.
+      const statusKey = `inspection_status_titer_${newIdx}`
+      updateLocalCaseField(caseId, 'data', statusKey, 'waiting')
+      void updateCaseField(caseId, 'data', statusKey, 'waiting')
+    })()
   }
 
   return (

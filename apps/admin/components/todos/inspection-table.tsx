@@ -73,18 +73,13 @@ export function readInspectionStatus(row: InspectionRow): string {
   const v = data[inspectionStatusKey(row)]
   if (typeof v === 'string') return v
   if (row.dateStorage.kind === 'titer' && row.dateStorage.recordIdx === 0) {
-    // rabies_titer_records 배열이 있으면 modern → 각 record 가 독립 상태.
-    // 옛 단일 'done' 키를 새 회차가 상속하면 안 되므로 폴백 안 함.
-    // 배열이 없는 순수 legacy 케이스만 폴백 허용.
-    const hasModernArray =
-      Array.isArray(data.rabies_titer_records) &&
-      (data.rabies_titer_records as unknown[]).length > 0
-    if (!hasModernArray) {
-      const legacyTiter = data.inspection_status_titer
-      if (typeof legacyTiter === 'string') return legacyTiter
-      const legacy = data.inspection_status
-      if (typeof legacy === 'string') return legacy
-    }
+    // idx 0 는 옛 단일행 시절 부터 있었을 가능성이 있으므로 legacy 폴백 유지.
+    // 새 회차가 옛 'done' 을 상속하지 않게 하려면 saveNewRecord 가
+    // inspection_status_titer_<newIdx> 를 'waiting' 으로 명시 저장 (rabies-titer-field).
+    const legacyTiter = data.inspection_status_titer
+    if (typeof legacyTiter === 'string') return legacyTiter
+    const legacy = data.inspection_status
+    if (typeof legacy === 'string') return legacy
   }
   if (row.dateStorage.kind === 'infectious' || row.dateStorage.kind === 'infectious_multi') {
     const legacy = data.inspection_status
