@@ -169,7 +169,7 @@ function ImportReportToggle({
         }
       }}
       className={included
-        ? 'shrink-0 whitespace-nowrap rounded-md px-2 py-1 text-blue-500/70 hover:bg-accent hover:text-blue-600 transition-colors'
+        ? 'shrink-0 whitespace-nowrap rounded-md px-2 py-1 text-pmw-info/70 hover:bg-accent hover:text-pmw-info transition-colors'
         : 'shrink-0 whitespace-nowrap rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors'}
       title={included ? `신고 탭에서 제거 (${focusDest})` : `신고 탭에 추가 (${focusDest})`}
     >
@@ -503,7 +503,7 @@ function Inner() {
                       onClick={() => handleDelete(selectedCase.id)}
                       title="삭제"
                       aria-label="삭제"
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-red-500 transition-colors"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-destructive transition-colors"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

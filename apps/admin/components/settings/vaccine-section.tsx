@@ -525,7 +525,7 @@ export function VaccineSection({
             extractMsg.kind === 'error'
               ? 'text-destructive bg-destructive/10'
               : extractMsg.kind === 'success'
-              ? 'text-green-700 bg-green-50'
+              ? 'text-pmw-positive bg-pmw-positive/10'
               : 'italic text-muted-foreground bg-muted/60'
           }`}
         >

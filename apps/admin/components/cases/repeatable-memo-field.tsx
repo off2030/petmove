@@ -115,7 +115,7 @@ export function RepeatableMemoField({ caseId, caseRow }: { caseId: string; caseR
                 type="button"
                 onClick={() => confirmDeleteMemo(i)}
                 title="삭제"
-                className="shrink-0 inline-flex items-center justify-center rounded-md p-1 mt-1 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover/item:opacity-70 hover:!opacity-100"
+                className="shrink-0 inline-flex items-center justify-center rounded-md p-1 mt-1 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover/item:opacity-70 hover:!opacity-100"
               >
                 <Trash2 size={13} />
               </button>

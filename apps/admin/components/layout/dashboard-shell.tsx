@@ -169,7 +169,7 @@ export function DashboardShell({
   return (
     <>
       {impersonation && (
-        <div className="shrink-0 flex items-center justify-center gap-md px-md py-1.5 bg-amber-100 dark:bg-amber-900/40 border-b border-amber-300 dark:border-amber-700/50 text-amber-900 dark:text-amber-100 text-[13px] font-serif">
+        <div className="shrink-0 flex items-center justify-center gap-md px-md py-1.5 bg-pmw-warning-bg border-b border-pmw-warning/40 text-pmw-warning-foreground text-[13px] font-serif">
           <span>
             <span className="italic">임시 보기 중</span>{' '}
             <span className="font-semibold">{impersonation.orgName}</span>
@@ -178,7 +178,7 @@ export function DashboardShell({
             type="button"
             onClick={onEndImpersonation}
             disabled={endingImpersonation}
-            className="px-2 py-0.5 rounded-full border border-amber-400/60 dark:border-amber-500/40 text-[12px] hover:bg-amber-200/60 dark:hover:bg-amber-800/40 transition-colors disabled:opacity-40"
+            className="px-2 py-0.5 rounded-full border border-pmw-warning/50 text-[12px] hover:bg-pmw-warning/10 transition-colors disabled:opacity-40"
           >
             원래대로
           </button>
@@ -227,7 +227,7 @@ export function DashboardShell({
         >
           <MessageSquare size={22} />
           {messagesUnread > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full bg-red-500 text-white font-mono text-[11px] font-semibold leading-none flex items-center justify-center ring-2 ring-background">
+            <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full bg-destructive text-white font-mono text-[11px] font-semibold leading-none flex items-center justify-center ring-2 ring-background">
               {messagesUnread > 99 ? '99+' : messagesUnread}
             </span>
           )}

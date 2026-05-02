@@ -19,19 +19,19 @@ const TONES = {
   coral:      { bg: 'bg-[#EFD0C5] dark:bg-[#4F3328]', text: 'text-[#7A4733] dark:text-[#E5BFAE]' },
   mustard:    { bg: 'bg-[#DFD0A5] dark:bg-[#443B22]', text: 'text-[#5E4F25] dark:text-[#D4C28F]' },
 
-  // 유럽 — 블루 계열
-  blue:       { bg: 'bg-[#D6E0EA] dark:bg-[#2F3D4D]', text: 'text-[#3D5268] dark:text-[#C4D1DE]' },
-  navy:       { bg: 'bg-[#D4D9E2] dark:bg-[#343A48]', text: 'text-[#384560] dark:text-[#C2C9D6]' },
-  indigo:     { bg: 'bg-[#D8D6E4] dark:bg-[#3A374C]', text: 'text-[#4B4A6D] dark:text-[#C6C3D6]' },
-  teal:       { bg: 'bg-[#D2DEDC] dark:bg-[#2F4442]', text: 'text-[#3F5A57] dark:text-[#BED0CE]' },
-  slate:      { bg: 'bg-[#D4DCE0] dark:bg-[#363F45]', text: 'text-[#3F4F58] dark:text-[#C5CFD3]' },
-  steel:      { bg: 'bg-[#CFDBE5] dark:bg-[#2D3D49]', text: 'text-[#385262] dark:text-[#BCCDD8]' },
+  // 유럽 — warm-leaning gray/blue (cool 톤 다운)
+  blue:       { bg: 'bg-[#DBDFE2] dark:bg-[#3B3F45]', text: 'text-[#475260] dark:text-[#C4CAD2]' },
+  navy:       { bg: 'bg-[#D8DAE0] dark:bg-[#3A3D45]', text: 'text-[#42485C] dark:text-[#C2C5CE]' },
+  indigo:     { bg: 'bg-[#DEDADD] dark:bg-[#3F3A40]', text: 'text-[#544D62] dark:text-[#C9C2CD]' },
+  teal:       { bg: 'bg-[#D5DDD8] dark:bg-[#36403B]', text: 'text-[#42554C] dark:text-[#BFCBC4]' },
+  slate:      { bg: 'bg-[#DAD8D5] dark:bg-[#3A3937]', text: 'text-[#4D4A45] dark:text-[#C5C2BD]' },
+  steel:      { bg: 'bg-[#D6D8DC] dark:bg-[#393A40]', text: 'text-[#42495A] dark:text-[#BFC4CB]' },
 
-  // 미주 — 그린 계열
-  olive:      { bg: 'bg-[#DBE4D6] dark:bg-[#364332]', text: 'text-[#3F5A35] dark:text-[#C4D4B9]' },
-  sage:       { bg: 'bg-[#D6DFD2] dark:bg-[#333E2F]', text: 'text-[#42563B] dark:text-[#C0CFB8]' },
-  mint:       { bg: 'bg-[#D0DFD7] dark:bg-[#2D4138]', text: 'text-[#3A5A4A] dark:text-[#BED2C6]' },
-  forest:     { bg: 'bg-[#CCD8C6] dark:bg-[#2C3A28]', text: 'text-[#3A4D32] dark:text-[#BBC9B0]' },
+  // 미주 — warm olive 계열
+  olive:      { bg: 'bg-[#DFE0CB] dark:bg-[#42432B]', text: 'text-[#4A5028] dark:text-[#CDD0B0]' },
+  sage:       { bg: 'bg-[#D8DBC9] dark:bg-[#3D402D]', text: 'text-[#4D5230] dark:text-[#C5C9B0]' },
+  mint:       { bg: 'bg-[#D2DECC] dark:bg-[#363D2C]', text: 'text-[#42523A] dark:text-[#BCC9B0]' },
+  forest:     { bg: 'bg-[#CBD8C2] dark:bg-[#2C3528]', text: 'text-[#3A4A2C] dark:text-[#B6C5A8]' },
 
   // 오세아니아 — 퍼플 계열
   violet:     { bg: 'bg-[#DDD4E2] dark:bg-[#3D344A]', text: 'text-[#564776] dark:text-[#C9C0DB]' },

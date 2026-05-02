@@ -92,7 +92,7 @@ export function TopBar({
   function tabBadge(id: TabId) {
     if (id !== 'messages' || messagesUnread <= 0) return null
     return (
-      <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white font-mono text-[10px] font-semibold leading-none">
+      <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-white font-mono text-[10px] font-semibold leading-none">
         {messagesUnread > 99 ? '99+' : messagesUnread}
       </span>
     )
@@ -375,7 +375,7 @@ export function TopBar({
             >
               <Settings size={18} />
               {expiringCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-background" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-destructive ring-2 ring-background" />
               )}
             </button>
           ) : (
@@ -387,7 +387,7 @@ export function TopBar({
             >
               <Settings size={18} />
               {expiringCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-background" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-destructive ring-2 ring-background" />
               )}
             </Link>
           )}

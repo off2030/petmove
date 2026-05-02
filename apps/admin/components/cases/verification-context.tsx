@@ -112,9 +112,9 @@ export function useVerificationResults(): CheckEntry[] {
 
 /** severity → 텍스트 색상 (밝기 대응). */
 export function severityTextClass(s: CheckSeverity): string {
-  if (s === 'blocker') return 'text-red-600 dark:text-red-400'
-  if (s === 'warning') return 'text-amber-600 dark:text-amber-400'
-  return 'text-sky-600 dark:text-sky-400'
+  if (s === 'blocker') return 'text-destructive'
+  if (s === 'warning') return 'text-pmw-warning'
+  return 'text-pmw-info'
 }
 
 /** 툴팁 텍스트 (title 속성용) — 체크 메시지만 간결하게. */

@@ -209,7 +209,7 @@ export function PairedField({
             >
               {saving ? '...' : '저장'}
             </button>
-            {error && <div className="w-full text-xs text-red-600">{error}</div>}
+            {error && <div className="w-full text-xs text-destructive">{error}</div>}
           </div>
         ) : (
           <div className="flex items-baseline gap-[10px] min-w-0 overflow-x-auto whitespace-nowrap scrollbar-hide">
@@ -234,7 +234,7 @@ export function PairedField({
                 <span className={valueCls}>{koDisplay}</span>
               )}
               {savedFlash && (
-                <span className="ml-2 text-emerald-600 text-sm select-none" aria-label="저장됨">✓</span>
+                <span className="ml-2 text-pmw-positive text-sm select-none" aria-label="저장됨">✓</span>
               )}
             </div>
 

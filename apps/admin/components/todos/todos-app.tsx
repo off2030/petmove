@@ -309,7 +309,7 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
       if (diffDays > 7) return ''
       const status = typeof data.export_doc_status === 'string' ? data.export_doc_status : 'not_started'
       if (status === 'done') return ''
-      return 'text-orange-500'
+      return 'text-pmw-warning'
     },
   },
   { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: EXPORT_DOC_COL_W },
@@ -498,7 +498,7 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
       if (diffDays > 7) return ''
       const suppressed = (s: string) => s === 'in_progress' || s === 'done'
       if (suppressed(effectiveImportStatus(row)) || suppressed(effectiveExportStatus(row))) return ''
-      return 'text-orange-500'
+      return 'text-pmw-warning'
     },
   },
   { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: BASE_COL_W },
@@ -540,7 +540,7 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
             onUpdate(row.id, 'data', 'import_report_manual', null)
             await updateCaseField(row.id, 'data', 'import_report_manual', null)
           }}
-          className="text-sm text-muted-foreground/40 hover:text-red-500 transition-colors"
+          className="text-sm text-muted-foreground/40 hover:text-destructive transition-colors"
           title="신고 탭에서 제거"
         >
           ✕

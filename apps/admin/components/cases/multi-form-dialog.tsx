@@ -105,7 +105,7 @@ export function MultiFormDialog({ caseId, formKey, onClose }: Props) {
 
         {loading && <div className="text-sm text-muted-foreground">불러오는 중…</div>}
 
-        {error && <div className="text-sm text-red-600">{error}</div>}
+        {error && <div className="text-sm text-destructive">{error}</div>}
 
         {preview && (
           <>

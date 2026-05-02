@@ -42,13 +42,13 @@ function InlineResult({ label, date }: { label?: string; date: string }) {
   if (d !== null) {
     if (d === 0) {
       dText = '오늘'
-      dClass = 'text-emerald-600'
+      dClass = 'text-pmw-positive'
     } else if (d > 0) {
       dText = `D-${d}`
-      dClass = 'text-blue-600'
+      dClass = 'text-pmw-info'
     } else {
       dText = `D+${Math.abs(d)} (경과)`
-      dClass = 'text-red-600'
+      dClass = 'text-destructive'
     }
   }
   return (

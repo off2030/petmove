@@ -135,7 +135,7 @@ export function PushPermission() {
         {busy ? '처리 중…' : subscribed ? '알림 끄기' : '알림 켜기'}
       </button>
       {error && (
-        <div className="font-serif text-[12px] text-red-600">{error}</div>
+        <div className="font-serif text-[12px] text-destructive">{error}</div>
       )}
     </div>
   )

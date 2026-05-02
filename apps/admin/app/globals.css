@@ -120,6 +120,12 @@
     --pmw-text-tertiary:   32 11% 58%;   /* #9F968A warm gray */
     --pmw-text-disabled:   39 19% 73%;   /* #C9C0AE warm light */
 
+    /* Warning/overdue/info — semantic 보조 색 */
+    --pmw-warning: 36 67% 37%;           /* #A0741F warm honey amber — text */
+    --pmw-warning-bg: 39 70% 88%;        /* #F1E5C4 light cream — banner bg */
+    --pmw-warning-fg: 35 50% 22%;        /* #5A4520 dark amber — banner text */
+    --pmw-info: 215 32% 35%;             /* #3D5274 ink blue — links/info */
+
     /* Typography 스케일 — Editorial (서체가 주인공: serif 헤더 + sans 본문 + italic 시그니처) */
     --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
     --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.005em;
@@ -210,6 +216,12 @@
     --pmw-text-secondary:  36 18% 66%;   /* warm light */
     --pmw-text-tertiary:   32 11% 50%;   /* warm med gray */
     --pmw-text-disabled:   25 12% 30%;   /* dark warm gray */
+
+    /* Warning/info dark */
+    --pmw-warning: 36 60% 60%;           /* #C9A05E light honey */
+    --pmw-warning-bg: 35 25% 18%;        /* dark warm */
+    --pmw-warning-fg: 39 70% 80%;        /* light cream */
+    --pmw-info: 215 35% 60%;             /* light ink blue */
 
     /* Typography 스케일 (size/leading/tracking 은 light/dark 무관) */
     --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
@@ -361,6 +373,12 @@
     --pmw-text-secondary:  240 4% 46%;     /* zinc-500 — 라벨 */
     --pmw-text-tertiary:   240 5% 65%;     /* zinc-400 — 메타 */
     --pmw-text-disabled:   240 5% 84%;     /* zinc-300 — 비활성 */
+
+    /* Warning/info — Linear/Notion 톤 (saturated but not loud) */
+    --pmw-warning: 32 95% 44%;             /* amber-500 vivid */
+    --pmw-warning-bg: 48 100% 96%;         /* amber-50 */
+    --pmw-warning-fg: 26 88% 25%;          /* amber-900 */
+    --pmw-info: 217 91% 50%;               /* blue-500 */
   }
 
   [data-skin="flat"].dark {
@@ -427,6 +445,11 @@
     --pmw-text-secondary:  240 5% 65%;
     --pmw-text-tertiary:   240 5% 50%;
     --pmw-text-disabled:   240 4% 35%;
+
+    --pmw-warning: 38 92% 60%;
+    --pmw-warning-bg: 32 65% 18%;
+    --pmw-warning-fg: 38 92% 80%;
+    --pmw-info: 217 91% 65%;
   }
 
   /* ─────────────────────────────────────────────────────────────
@@ -516,6 +539,12 @@
     --pmw-text-secondary:  225 11% 40%;    /* #5A6072 */
     --pmw-text-tertiary:   222 12% 60%;    /* #8E94A3 */
     --pmw-text-disabled:   218 12% 73%;    /* #B0B7C2 */
+
+    /* Warning/info — soft, blue-gray 팔레트와 어울리게 muted */
+    --pmw-warning: 32 50% 50%;             /* muted amber */
+    --pmw-warning-bg: 35 35% 90%;          /* light cream blend */
+    --pmw-warning-fg: 32 40% 30%;
+    --pmw-info: 220 30% 45%;
   }
 
   [data-skin="neumorphism"].dark {
@@ -585,6 +614,11 @@
     --pmw-text-secondary:  218 14% 75%;
     --pmw-text-tertiary:   222 12% 60%;
     --pmw-text-disabled:   220 12% 35%;
+
+    --pmw-warning: 32 45% 65%;
+    --pmw-warning-bg: 220 12% 22%;
+    --pmw-warning-fg: 35 45% 75%;
+    --pmw-info: 220 30% 65%;
   }
 
   /* font-mono 가 sans 폰트로 평탄화된 스킨 — Inter/Manrope 는 기본 proportional 이라

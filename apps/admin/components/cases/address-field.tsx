@@ -281,7 +281,7 @@ export function AddressField({
                 )}
               </button>
               {krFlash && (
-                <span className="text-emerald-600 text-sm select-none" aria-label="저장됨">✓</span>
+                <span className="text-pmw-positive text-sm select-none" aria-label="저장됨">✓</span>
               )}
               <button type="button" onClick={handleSearch} disabled={!scriptLoaded || saving}
                 className="shrink-0 inline-flex h-7 items-center rounded px-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50 opacity-0 group-hover/kr:opacity-100">
@@ -359,7 +359,7 @@ export function AddressField({
                   {saving ? '...' : '저장'}
                 </button>
               </div>
-              {enError && <div className="mt-1 text-xs text-red-600">{enError}</div>}
+              {enError && <div className="mt-1 text-xs text-destructive">{enError}</div>}
             </>
           ) : (
             <div className="group/en relative w-fit inline-flex items-baseline">
@@ -372,7 +372,7 @@ export function AddressField({
                 )}
               </button>
               {enFlash && (
-                <span className="ml-2 text-emerald-600 text-sm select-none" aria-label="저장됨">✓</span>
+                <span className="ml-2 text-pmw-positive text-sm select-none" aria-label="저장됨">✓</span>
               )}
               <CopyButton value={enEmpty ? '' : enDisplay}
                 className="absolute left-full top-0.5 ml-1 z-10 opacity-0 group-hover/en:opacity-100" />

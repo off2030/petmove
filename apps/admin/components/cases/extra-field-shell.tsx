@@ -284,7 +284,7 @@ export function ExtraSectionShell({
         {extractMsg && (
           <span className={cn(
             'font-sans text-[12px]',
-            extractMsg.includes('실패') || extractMsg.includes('오류') ? 'text-red-600' : 'text-green-600',
+            extractMsg.includes('실패') || extractMsg.includes('오류') ? 'text-destructive' : 'text-pmw-positive',
           )}>{extractMsg}</span>
         )}
       </div>

@@ -134,8 +134,8 @@ export function DestinationsArea() {
 
       <div className="flex items-center gap-md min-h-[20px]">
         {saving && <span className="text-sm text-muted-foreground">저장 중...</span>}
-        {error && <span className="text-sm text-red-600">{error}</span>}
-        {!saving && !error && savedFlash && <span className="text-sm text-emerald-600">저장됨 ✓</span>}
+        {error && <span className="text-sm text-destructive">{error}</span>}
+        {!saving && !error && savedFlash && <span className="text-sm text-pmw-positive">저장됨 ✓</span>}
       </div>
 
       {/* Edit existing */}
@@ -511,13 +511,13 @@ function DestinationEditModal({
           >
             취소
           </button>
-          {error && <span className="text-sm text-red-600">{error}</span>}
+          {error && <span className="text-sm text-destructive">{error}</span>}
           {onDelete && (
             <button
               type="button"
               onClick={onDelete}
               title="목적지 삭제"
-              className="ml-auto inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+              className="ml-auto inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
             >
               <Trash2 size={14} />
             </button>
@@ -670,7 +670,7 @@ function ChipList({
             type="button"
             onClick={() => onRemove(k)}
             title="삭제"
-            className="rounded-full p-0.5 text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+            className="rounded-full p-0.5 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
           >
             <X size={11} />
           </button>

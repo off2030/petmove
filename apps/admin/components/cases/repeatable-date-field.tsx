@@ -633,7 +633,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                 <div className="text-xs text-muted-foreground">추출 중...</div>
               )}
               {extractMsg && (
-                <div className={cn('text-xs', extractMsg.includes('실패') || extractMsg.includes('오류') ? 'text-red-600' : 'text-green-600')}>
+                <div className={cn('text-xs', extractMsg.includes('실패') || extractMsg.includes('오류') ? 'text-destructive' : 'text-pmw-positive')}>
                   {extractMsg}
                 </div>
               )}
@@ -711,7 +711,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                           type="button"
                           onClick={() => deleteRecord(oi)}
                           title="삭제"
-                          className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                          className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
                         >
                           <Trash2 size={13} />
                         </button>

@@ -571,7 +571,7 @@ function ConversationRow({
         )}
       </span>
       {conv.unread_count > 0 && (
-        <span className="shrink-0 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-red-500 text-white font-mono text-[10px] font-semibold">
+        <span className="shrink-0 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-destructive text-white font-mono text-[10px] font-semibold">
           {conv.unread_count > 99 ? '99+' : conv.unread_count}
         </span>
       )}
@@ -2134,7 +2134,7 @@ function highlightSnippet(text: string, query: string): ReactNode {
     <>
       {start > 0 && '…'}
       {visible.slice(0, matchOffset)}
-      <mark className="bg-yellow-200 dark:bg-yellow-700/60 text-foreground rounded-sm px-0.5">
+      <mark className="bg-pmw-warning-bg dark:bg-pmw-warning/60 text-foreground rounded-sm px-0.5">
         {visible.slice(matchOffset, matchOffset + query.length)}
       </mark>
       {visible.slice(matchOffset + query.length)}

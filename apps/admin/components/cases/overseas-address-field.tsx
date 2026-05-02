@@ -86,7 +86,7 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="ml-0.5 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 opacity-0 group-hover/val:opacity-70 hover:!opacity-100 transition-colors"
+                  className="ml-0.5 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover/val:opacity-70 hover:!opacity-100 transition-colors"
                   title="삭제"
                 >
                   <Trash2 size={13} />

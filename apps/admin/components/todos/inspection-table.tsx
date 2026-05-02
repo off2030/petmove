@@ -191,7 +191,7 @@ function DateCell({
 }) {
   const [editing, setEditing] = useState(false)
 
-  const overdueCls = overdue && value ? 'text-orange-500' : ''
+  const overdueCls = overdue && value ? 'text-pmw-warning' : ''
   const baseCls = 'w-full px-1 py-1 font-mono text-[12px] tabular-nums tracking-[0.3px] truncate min-h-[24px]'
 
   if (!editable) {

@@ -14,6 +14,11 @@ const config: Config = {
     'text-pmw-text-secondary',
     'text-pmw-text-tertiary',
     'text-pmw-text-disabled',
+    'text-pmw-warning',
+    'bg-pmw-warning-bg',
+    'text-pmw-warning-foreground',
+    'border-pmw-warning',
+    'text-pmw-info',
   ],
   theme: {
     container: {
@@ -84,6 +89,10 @@ const config: Config = {
         'pmw-text-secondary': 'hsl(var(--pmw-text-secondary, var(--muted-foreground)))',
         'pmw-text-tertiary':  'hsl(var(--pmw-text-tertiary, var(--muted-foreground)))',
         'pmw-text-disabled':  'hsl(var(--pmw-text-disabled, var(--muted-foreground)))',
+        // Warning / info — Tailwind 의 orange-*/amber-*/blue-* 하드코딩 대체. 스킨별로 적합한 톤으로 분기.
+        'pmw-warning':        { DEFAULT: 'hsl(var(--pmw-warning))',         foreground: 'hsl(var(--pmw-warning-fg))' },
+        'pmw-warning-bg':     'hsl(var(--pmw-warning-bg))',
+        'pmw-info':           'hsl(var(--pmw-info))',
       },
       borderRadius: {
         lg: 'var(--radius)',

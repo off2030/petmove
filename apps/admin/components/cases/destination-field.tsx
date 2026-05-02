@@ -190,7 +190,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); removeDest(ko) }}
-                      className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-pmw-tag-foreground/60 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover/chip:opacity-70 hover:!opacity-100"
+                      className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-pmw-tag-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover/chip:opacity-70 hover:!opacity-100"
                       title="목적지 삭제"
                     >
                       <Trash2 size={12} />

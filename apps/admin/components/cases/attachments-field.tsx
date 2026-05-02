@@ -151,7 +151,7 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
                     <button
                       type="button"
                       onClick={() => handleDelete(i)}
-                      className="text-xs text-muted-foreground/50 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover/item:opacity-100"
+                      className="text-xs text-muted-foreground/50 hover:text-destructive transition-colors shrink-0 opacity-0 group-hover/item:opacity-100"
                     >
                       ✕
                     </button>
@@ -172,7 +172,7 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
             )
           )}
 
-          {error && <div className="mt-1 text-xs text-red-600">{error}</div>}
+          {error && <div className="mt-1 text-xs text-destructive">{error}</div>}
         </div>
 
         {editMode && (

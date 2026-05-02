@@ -715,7 +715,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, entries, destinati
         {extractMsg && (
           <span className={cn(
             'font-sans text-[12px]',
-            extractMsg.includes('실패') || extractMsg.includes('오류') || extractMsg.includes('미지원') || extractMsg.includes('찾지') ? 'text-red-600' : 'text-green-600',
+            extractMsg.includes('실패') || extractMsg.includes('오류') || extractMsg.includes('미지원') || extractMsg.includes('찾지') ? 'text-destructive' : 'text-pmw-positive',
           )}>{extractMsg}</span>
         )}
         {/* 모바일 — 섹션 collapse 토글. 데스크톱에선 숨김(항상 펼침). */}
@@ -956,7 +956,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
                 <CopyButton value={formatChip(mainRaw)} className="shrink-0 opacity-0 group-hover/main:opacity-100" />
               )}
               {flashed === 'main' && !editingMain && (
-                <span className="text-emerald-600 text-sm select-none" aria-label="저장됨">✓</span>
+                <span className="text-pmw-positive text-sm select-none" aria-label="저장됨">✓</span>
               )}
             </div>
           )}
@@ -1004,7 +1004,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
                 <CopyButton value={formatChip(secRaw)} className="shrink-0 opacity-0 group-hover/sec:opacity-100" />
               )}
               {flashed === 'sec' && !editingSec && (
-                <span className="text-emerald-600 text-sm select-none" aria-label="저장됨">✓</span>
+                <span className="text-pmw-positive text-sm select-none" aria-label="저장됨">✓</span>
               )}
               {editMode && secRaw && !editingSec && (
                 <button
@@ -1019,7 +1019,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
                     })()
                   }}
                   title="보조칩 삭제"
-                  className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover/sec:opacity-70 hover:!opacity-100"
+                  className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover/sec:opacity-70 hover:!opacity-100"
                 >
                   <Trash2 size={13} />
                 </button>
@@ -1027,7 +1027,7 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
             </div>
           )}
         </div>
-        {error && <div className="mt-1 text-xs text-red-600">{error}</div>}
+        {error && <div className="mt-1 text-xs text-destructive">{error}</div>}
       </div>
     </div>
   )
@@ -1113,7 +1113,7 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
             type="button"
             onClick={handleDelete}
             title="삭제"
-            className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover/item:opacity-70 hover:!opacity-100"
+            className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover/item:opacity-70 hover:!opacity-100"
           >
             <Trash2 size={13} />
           </button>
