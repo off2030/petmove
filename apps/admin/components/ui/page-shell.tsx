@@ -35,9 +35,9 @@ export function PageShell({
       : 'max-w-5xl 3xl:max-w-6xl 4xl:max-w-7xl'
 
   return (
-    <div className="h-full overflow-hidden px-lg py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
-      <div className={cn('h-full mx-auto flex flex-col gap-lg', maxClass)}>
-        <div className="shrink-0 px-lg flex items-baseline justify-between gap-md">
+    <div className="h-full overflow-hidden px-md md:px-lg py-md md:py-10 2xl:px-xl 3xl:px-2xl 4xl:px-3xl">
+      <div className={cn('h-full mx-auto flex flex-col gap-md md:gap-lg', maxClass)}>
+        <div className="shrink-0 px-sm md:px-lg flex items-baseline justify-between gap-md">
           <h1 className="font-serif text-[26px] leading-tight tracking-tight text-foreground">
             {title}
           </h1>
@@ -69,7 +69,7 @@ export function PageTabs<T extends string>({
   right?: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-sm md:gap-md border-b border-border/80 shrink-0 px-lg">
+    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-sm md:gap-md border-b border-border/80 shrink-0 px-sm md:px-lg">
       <div className="flex gap-lg">
         {tabs.map((tab) => (
           <button

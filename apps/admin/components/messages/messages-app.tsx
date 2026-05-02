@@ -14,6 +14,7 @@ import {
   type SetStateAction,
 } from 'react'
 import {
+  ArrowLeft,
   Bookmark,
   Check,
   Menu,
@@ -183,8 +184,13 @@ export function MessagesApp({
 
   return (
     <PageShell title="메시지">
-      <div className="h-full mx-lg flex flex-row min-h-0 gap-md">
-        <div className="shrink-0 min-h-0 flex flex-col border border-border/80 rounded-lg overflow-hidden bg-[var(--pmw-sage-paper)]">
+      <div className="h-full mx-0 md:mx-lg flex flex-row min-h-0 gap-0 md:gap-md">
+        {/* List — 모바일은 thread 활성 시 숨김, 아니면 풀폭. 데스크톱은 항상 280px. */}
+        <div className={cn(
+          'min-h-0 flex flex-col border border-border/80 md:rounded-lg overflow-hidden bg-[var(--pmw-sage-paper)]',
+          'md:shrink-0',
+          activeConv ? 'hidden md:flex' : 'flex flex-1 md:flex-none',
+        )}>
           <InboxListPane
             items={conversations}
             activeId={activeId}
@@ -192,7 +198,11 @@ export function MessagesApp({
             onNewConv={() => setShowNewConv(true)}
           />
         </div>
-        <div className="flex-1 min-w-0 min-h-0 flex flex-col border border-border/80 rounded-lg overflow-hidden bg-[var(--pmw-sage-paper)]">
+        {/* Thread — 모바일은 thread 활성 시만, 데스크톱은 항상. */}
+        <div className={cn(
+          'flex-1 min-w-0 min-h-0 flex-col border border-border/80 md:rounded-lg overflow-hidden bg-[var(--pmw-sage-paper)]',
+          activeConv ? 'flex' : 'hidden md:flex',
+        )}>
           {activeConv ? (
             <ThreadPane
               key={activeConv.id}
@@ -203,6 +213,7 @@ export function MessagesApp({
               pinnedMessage={pinnedMessage}
               loading={loadingMessages}
               currentUserId={currentUserId}
+              onClose={() => setActiveId(null)}
               onMessageSent={(m) => {
                 setMessages((prev) => [...prev, m])
                 refresh(activeConv.id, { silent: true })
@@ -312,7 +323,7 @@ function InboxListPane({
   }, [items, query])
 
   return (
-    <aside className="w-[280px] shrink-0 flex flex-col min-h-0">
+    <aside className="w-full md:w-[280px] md:shrink-0 flex flex-col min-h-0">
       <div className="shrink-0 px-md py-sm min-h-[60px] flex items-center justify-between">
         <h2 className="font-serif text-[18px] font-semibold text-foreground">채팅</h2>
         <div className="flex items-center gap-0.5">
@@ -797,6 +808,7 @@ function ThreadPane({
   pinnedMessage,
   loading,
   currentUserId,
+  onClose,
   onMessageSent,
   onMessageDeleted,
   onLeftOrDeleted,
@@ -811,6 +823,7 @@ function ThreadPane({
   pinnedMessage: MessageRow | null
   loading: boolean
   currentUserId: string | null
+  onClose: () => void
   onMessageSent: (m: MessageRow) => void
   onMessageDeleted: (msgId: string) => void
   onLeftOrDeleted: () => void
@@ -1033,6 +1046,15 @@ function ThreadPane({
     <>
       <div className="shrink-0 px-md py-sm min-h-[60px] flex items-center justify-between gap-md border-b border-[var(--pmw-border-warm)]">
         <div className="min-w-0 flex items-center gap-sm">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="목록으로"
+            title="목록으로"
+            className="md:hidden -ml-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </button>
           <Avatar label={headerAvatarLabel} imageUrl={headerAvatarImage} tone="sage" />
           {editingName ? (
             <input
@@ -1338,19 +1360,38 @@ function ThreadPane({
           />
         </div>
 
+        {/* 모바일 backdrop — 클릭 시 닫기. 데스크톱에선 인라인 패널이라 불필요. */}
         {showMembers && (
-          <aside className="w-[240px] shrink-0 flex flex-col border-l border-border/80 bg-background min-h-0">
+          <div
+            className="md:hidden fixed inset-0 z-30 bg-black/30"
+            onClick={() => setShowMembers(false)}
+            aria-hidden="true"
+          />
+        )}
+        {showMembers && (
+          <aside className="flex flex-col border-l border-border/80 bg-background min-h-0 md:w-[240px] md:shrink-0 max-md:fixed max-md:inset-y-0 max-md:right-0 max-md:w-[85%] max-md:max-w-[320px] max-md:z-40 max-md:shadow-xl">
             <div className="shrink-0 flex items-center justify-between px-md py-sm border-b border-border/80">
               <span className="font-serif text-[14px]">멤버 ({totalCount})</span>
-              <button
-                type="button"
-                onClick={() => setShowAddMember(true)}
-                aria-label="멤버 초대"
-                title="멤버 초대"
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-              >
-                <UserPlus size={14} />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setShowAddMember(true)}
+                  aria-label="멤버 초대"
+                  title="멤버 초대"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                >
+                  <UserPlus size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowMembers(false)}
+                  aria-label="닫기"
+                  title="닫기"
+                  className="md:hidden inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
             </div>
             <ul className="flex-1 overflow-y-auto scrollbar-minimal">
               <li className="px-md py-2 border-b border-border/30 flex items-center gap-sm">
