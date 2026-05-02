@@ -913,25 +913,35 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
         </SectionLabel>
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex items-baseline gap-[20px] flex-wrap">
+        <div className="flex items-baseline gap-[20px] overflow-x-auto whitespace-nowrap scrollbar-minimal">
           {/* Main chip */}
           {showMain && (
             <div className="group/main inline-flex items-baseline gap-[6px]">
               {editingMain ? (
-                <input
-                  ref={mainRef}
-                  type="text"
-                  inputMode="numeric"
-                  value={mainVal}
-                  onChange={(e) => setMainVal(filterDigits(e.target.value))}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') saveChip('main')
-                    if (e.key === 'Escape') { setEditingMain(false); setError(null) }
-                  }}
-                  onBlur={() => setTimeout(() => saveChip('main'), 150)}
-                  placeholder="마이크로칩 번호"
-                  className={inputCls}
-                />
+                <span className="inline-flex items-center gap-sm">
+                  <input
+                    ref={mainRef}
+                    type="text"
+                    inputMode="numeric"
+                    value={mainVal}
+                    onChange={(e) => setMainVal(filterDigits(e.target.value))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveChip('main')
+                      if (e.key === 'Escape') { setEditingMain(false); setError(null) }
+                    }}
+                    onBlur={() => setTimeout(() => saveChip('main'), 150)}
+                    placeholder="마이크로칩 번호"
+                    className={inputCls}
+                  />
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => saveChip('main')}
+                    className="shrink-0 whitespace-nowrap inline-flex h-7 items-center justify-center rounded border px-2 text-[11px] border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] hover:bg-[#D9A489]/25 dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489] dark:hover:bg-[#C08C70]/25 transition-colors disabled:opacity-50"
+                  >
+                    저장
+                  </button>
+                </span>
               ) : editMode ? (
                 <button type="button" onClick={() => { setMainVal(mainRaw); setEditingMain(true); setError(null) }}
                   className="text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-text">
@@ -956,20 +966,30 @@ function MicrochipField({ caseId, caseRow, spec }: { caseId: string; caseRow: Ca
             <div className="group/sec inline-flex items-baseline gap-[6px]">
               {showMain && <span className="text-muted-foreground/30 select-none">|</span>}
               {editingSec ? (
-                <input
-                  ref={secRef}
-                  type="text"
-                  inputMode="numeric"
-                  value={secVal}
-                  onChange={(e) => setSecVal(filterDigits(e.target.value))}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') saveChip('sec')
-                    if (e.key === 'Escape') { setEditingSec(false); setError(null) }
-                  }}
-                  onBlur={() => setTimeout(() => saveChip('sec'), 150)}
-                  placeholder="보조칩 번호"
-                  className={inputCls}
-                />
+                <span className="inline-flex items-center gap-sm">
+                  <input
+                    ref={secRef}
+                    type="text"
+                    inputMode="numeric"
+                    value={secVal}
+                    onChange={(e) => setSecVal(filterDigits(e.target.value))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveChip('sec')
+                      if (e.key === 'Escape') { setEditingSec(false); setError(null) }
+                    }}
+                    onBlur={() => setTimeout(() => saveChip('sec'), 150)}
+                    placeholder="보조칩 번호"
+                    className={inputCls}
+                  />
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => saveChip('sec')}
+                    className="shrink-0 whitespace-nowrap inline-flex h-7 items-center justify-center rounded border px-2 text-[11px] border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] hover:bg-[#D9A489]/25 dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489] dark:hover:bg-[#C08C70]/25 transition-colors disabled:opacity-50"
+                  >
+                    저장
+                  </button>
+                </span>
               ) : editMode ? (
                 <button type="button" onClick={() => { setSecVal(secRaw); setEditingSec(true); setError(null) }}
                   className="text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-text">
@@ -1061,7 +1081,7 @@ function MicrochipDatesRow({ caseId, caseRow }: { caseId: string; caseRow: CaseR
           마이크로칩
         </SectionLabel>
       </div>
-      <div className="group/item flex items-baseline gap-[10px] min-w-0 flex-wrap">
+      <div className="group/item flex items-baseline gap-[10px] min-w-0 overflow-x-auto whitespace-nowrap scrollbar-minimal">
         {editing ? (
           <MicrochipDateInput initial={implantDate} onSave={(v) => saveDate(v || null)} onCancel={() => setEditing(false)} />
         ) : (

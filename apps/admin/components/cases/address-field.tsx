@@ -262,11 +262,11 @@ export function AddressField({
                 className={inputClass}
               />
               <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={saveKr} disabled={saving}
-                className="shrink-0 inline-flex h-7 items-center rounded border px-2 text-[11px] border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] hover:bg-[#D9A489]/25 dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489] dark:hover:bg-[#C08C70]/25 transition-colors disabled:opacity-50">
+                className="shrink-0 whitespace-nowrap inline-flex h-7 items-center rounded border px-2 text-[11px] border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] hover:bg-[#D9A489]/25 dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489] dark:hover:bg-[#C08C70]/25 transition-colors disabled:opacity-50">
                 {saving ? '...' : '저장'}
               </button>
               <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={handleSearch} disabled={!scriptLoaded || saving}
-                className="shrink-0 inline-flex h-7 items-center rounded border px-2 text-[11px] border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] hover:bg-[#D9A489]/25 dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489] dark:hover:bg-[#C08C70]/25 transition-colors disabled:opacity-50">
+                className="shrink-0 whitespace-nowrap inline-flex h-7 items-center rounded border px-2 text-[11px] border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] hover:bg-[#D9A489]/25 dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489] dark:hover:bg-[#C08C70]/25 transition-colors disabled:opacity-50">
                 주소검색
               </button>
             </div>
@@ -314,7 +314,7 @@ export function AddressField({
               onKeyDown={(e) => { if (e.key === 'Enter') handleDetailSave(); if (e.key === 'Escape') setShowDetail(false) }}
               className={inputClass} />
             <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={handleDetailSave} disabled={saving}
-              className="shrink-0 inline-flex h-7 items-center rounded border px-2 text-[11px] border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] hover:bg-[#D9A489]/25 dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489] dark:hover:bg-[#C08C70]/25 transition-colors disabled:opacity-50">
+              className="shrink-0 whitespace-nowrap inline-flex h-7 items-center rounded border px-2 text-[11px] border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] hover:bg-[#D9A489]/25 dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489] dark:hover:bg-[#C08C70]/25 transition-colors disabled:opacity-50">
               {saving ? '...' : '저장'}
             </button>
           </div>
@@ -355,7 +355,7 @@ export function AddressField({
                   onBlur={() => setTimeout(() => { if (!saving) saveEn() }, 150)}
                   className={inputClass} />
                 <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={saveEn} disabled={saving}
-                  className="shrink-0 inline-flex h-7 items-center rounded border px-2 text-[11px] border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] hover:bg-[#D9A489]/25 dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489] dark:hover:bg-[#C08C70]/25 transition-colors disabled:opacity-50">
+                  className="shrink-0 whitespace-nowrap inline-flex h-7 items-center rounded border px-2 text-[11px] border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] hover:bg-[#D9A489]/25 dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489] dark:hover:bg-[#C08C70]/25 transition-colors disabled:opacity-50">
                   {saving ? '...' : '저장'}
                 </button>
               </div>
