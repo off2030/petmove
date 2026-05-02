@@ -9,7 +9,7 @@
  *   - GET HTML 문서 → network-first (실패 시 cache).
  *   - POST / Server Actions / Supabase → 항상 network 직통.
  */
-const VERSION = 'v2'
+const VERSION = 'v3'
 const STATIC_CACHE = `static-${VERSION}`
 const PAGE_CACHE = `page-${VERSION}`
 
