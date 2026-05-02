@@ -1698,7 +1698,7 @@ const MessageItem = memo(function MessageItem({
               href={msg.file_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[12px] underline opacity-90 hover:opacity-100 block mt-1"
+              className="text-[12px] underline opacity-90 hover:opacity-100 block mt-1 break-all"
             >
               📎 {msg.file_name ?? '첨부파일'}
             </a>
