@@ -16,6 +16,9 @@ const PUBLIC_PREFIXES = [
   '/public',
   '/manifest.webmanifest',  // PWA manifest — 미로그인에도 brower 가 fetch
   '/sw.js',  // Service Worker — origin scope 등록 위해 미로그인 통과 필요
+  '/apple-icon',  // app/apple-icon.tsx 동적 생성 — iOS 홈 화면 아이콘 (확장자 없어 matcher 통과)
+  '/icon',  // app/icon.tsx 동적 생성 — 일반 favicon/Android 아이콘 PNG
+  '/offline',  // SW 가 install 시 prefetch 해서 오프라인 폴백으로 사용 — 미인증 통과 필수
 ]
 
 // 인증은 필요하지만 멤버십 0 인 신규 사용자도 진입 가능한 경로.

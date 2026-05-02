@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- maskable purpose: full-bleed 배경 + 안전영역(80%)에 로고. Android 가 동그라미/사각형 등으로 자유롭게 crop. -->
+  <rect width="512" height="512" fill="#A56D54"/>
+  <text x="256" y="272" text-anchor="middle" dominant-baseline="central" font-family="Source Serif 4, Source Serif Pro, Georgia, serif" font-weight="500" font-size="200" fill="#F5F4ED">P</text>
+</svg>

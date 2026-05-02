@@ -16,11 +16,26 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: 'ko',
     orientation: 'portrait',
     icons: [
+      // 일반 — 둥근 사각 P 로고. SVG 가 우선, PNG 는 SVG 미지원 브라우저 대비.
       {
         src: '/icon.svg',
         sizes: 'any',
         type: 'image/svg+xml',
         purpose: 'any',
+      },
+      {
+        src: '/icon',
+        sizes: '192x192',
+        type: 'image/png',
+        purpose: 'any',
+      },
+      // maskable — Android 적응형 아이콘 (둥근/사각/물방울 등 자유 crop).
+      // 안전영역(80%)에 P 배치 + full-bleed 배경.
+      {
+        src: '/icon-maskable.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
+        purpose: 'maskable',
       },
     ],
   }

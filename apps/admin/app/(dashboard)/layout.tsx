@@ -16,6 +16,7 @@ import { getSettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 import { getActiveOrgId, getImpersonationInfo } from '@/lib/supabase/active-org'
 import { listAllOrgs, listSuperAdminsAll, type OrgSummary, type SuperAdminEntry } from '@/lib/actions/super-admin'
 import { listMyConversations, type ConversationListItem } from '@/lib/actions/chat'
+import { InstallPrompt } from '@/components/pwa/install-prompt'
 
 export const dynamic = 'force-dynamic'
 
@@ -158,6 +159,7 @@ export default async function DashboardLayout({
               initialExternalLinks={externalLinks}
               initialConversations={initialConversations}
             />
+            <InstallPrompt />
           </CalculatorDataProvider>
         </VaccineDataProvider>
         </DestinationOverridesProvider>

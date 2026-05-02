@@ -43,15 +43,28 @@ const notoSerifKr = Noto_Serif_KR({
 export const metadata: Metadata = {
   title: '펫무브워크',
   description: '반려동물 해외 이동 검역 관리',
+  // iOS Safari "홈 화면에 추가" 시 standalone 진입 + 상태바/타이틀
+  appleWebApp: {
+    capable: true,
+    title: '펫무브워크',
+    statusBarStyle: 'default',
+  },
+  // Next 16 은 deprecated 처리해서 mobile-web-app-capable 만 출력하지만,
+  // iOS < 16.4 에서 standalone 진입하려면 legacy apple- 접두 버전이 필요.
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+  },
 }
 
 // 모바일 대응 — width=device-width + viewport-fit=cover (iOS safe-area 진입조건)
 // interactive-widget=resizes-content — Android 키보드 올라올 때 viewport resize 대신 콘텐츠만
+// themeColor — Android Chrome 주소창/상태바 색. manifest 에도 있지만 head 직접 표기가 더 빠름.
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
   interactiveWidget: 'resizes-content',
+  themeColor: '#F5F4ED',
 }
 
 export default function RootLayout({
