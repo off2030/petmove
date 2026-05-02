@@ -25,26 +25,28 @@
     --pmw-font-sans: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
     --pmw-font-mono: var(--font-mono), 'Pretendard', ui-monospace, 'SF Mono', Menlo, monospace;
 
+    /* === Warm Stationery raw PMW 토큰 — 채팅 패널 / 카드 surface 등 직접 참조용 === */
+
     /* Neutral text */
-    --pmw-near-black: #1A1816;
-    --pmw-olive-gray: #7A776C;
-    --pmw-stone-gray: #9E9C91;
+    --pmw-near-black: #28201A;       /* warm ink */
+    --pmw-olive-gray: #6B5F4F;       /* warm dark olive */
+    --pmw-stone-gray: #918975;       /* warm gray */
 
-    /* Accent — peach / terracotta */
-    --pmw-deep: #9B4A2D;
-    --pmw-clay-soft: #E8C9B6;
+    /* Accent — burgundy / clay */
+    --pmw-deep: #7A2E2E;             /* deep burgundy (primary 와 일치) */
+    --pmw-clay-soft: #E5D9C2;        /* warm cream tag */
 
-    /* Status (sage/amber/rust 3색 trio) */
-    --pmw-sage: #5D6F4E;
-    --pmw-sage-soft: #D0D6C4;
-    --pmw-sage-paper: #EAECE4;
-    --pmw-amber: #B97A1F;
-    --pmw-rust: #A04321;
+    /* Status (forest / olive / rust trio) */
+    --pmw-sage: #3F5F3F;             /* forest green (positive) */
+    --pmw-sage-soft: #DCDDC9;        /* muted sage warm */
+    --pmw-sage-paper: #F2EEE0;       /* warm cream paper — 채팅 패널 배경 */
+    --pmw-amber: #8B7E4F;            /* olive (calendar today) */
+    --pmw-rust: #A04525;             /* rust red (destructive) */
 
     /* Surface */
-    --pmw-border-warm: #D9D4C6;
-    --pmw-parchment: #F6F2E7;
-    --pmw-paper: #FBF8EE;
+    --pmw-border-warm: #D9CFB8;      /* warm hairline */
+    --pmw-parchment: #F4EDE0;        /* page bg */
+    --pmw-paper: #FBF7ED;            /* card bg */
 
     /* Warm editorial palette — HSL pairs */
 
@@ -138,20 +140,20 @@
   }
 
   .dark {
-    /* PMW tokens — dark mapping (reverse near-black/parchment) */
-    --pmw-near-black: #F4EFE2;
-    --pmw-olive-gray: #A8A498;
-    --pmw-stone-gray: #77746B;
-    --pmw-deep: #E0917A;
-    --pmw-clay-soft: #3B2C24;
-    --pmw-sage: #9FB38C;
-    --pmw-sage-soft: #3A3A3D;
-    --pmw-sage-paper: #1A1A1C;
-    --pmw-amber: #D9A55F;
-    --pmw-rust: #D47858;
-    --pmw-border-warm: #3A3631;
-    --pmw-parchment: #1E1C19;
-    --pmw-paper: #242220;
+    /* === Warm Stationery raw PMW 토큰 dark === */
+    --pmw-near-black: #F4EDE0;       /* cream */
+    --pmw-olive-gray: #B8AC97;       /* warm light */
+    --pmw-stone-gray: #918975;       /* warm gray */
+    --pmw-deep: #B85555;             /* lighter burgundy */
+    --pmw-clay-soft: #3D3530;        /* dark warm */
+    --pmw-sage: #8FA888;             /* light forest */
+    --pmw-sage-soft: #2C2925;        /* dark warm soft */
+    --pmw-sage-paper: #1F1B17;       /* deep warm paper */
+    --pmw-amber: #C5B98A;            /* light olive */
+    --pmw-rust: #C46347;             /* light rust */
+    --pmw-border-warm: #3D3530;      /* dark warm hairline */
+    --pmw-parchment: #1A1612;        /* page bg dark */
+    --pmw-paper: #221F1B;            /* card bg dark */
 
     color-scheme: dark;
     /* Page bg: deep warm dark (#1A1612) — 책 잉크 종이의 reverse */
