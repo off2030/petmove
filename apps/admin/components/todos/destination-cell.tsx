@@ -55,15 +55,15 @@ export function DestinationCell({
   const chipInner = (
     <>
       {code && (
-        <span className="font-mono text-[11px] uppercase tracking-[1px] text-[#7B7B5F]">{code}</span>
+        <span className="font-mono text-[11px] uppercase tracking-[1px] text-pmw-code">{code}</span>
       )}
-      <span className="font-serif text-[13px] text-[#6B5A3A]">{active}</span>
+      <span className="font-serif text-[13px] text-pmw-tag-foreground">{active}</span>
     </>
   )
 
   if (!hasDropdown) {
     return (
-      <span className="inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 bg-[#E5D9C2] text-[#6B5A3A] whitespace-nowrap">
+      <span className="inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 bg-pmw-tag text-pmw-tag-foreground whitespace-nowrap">
         {chipInner}
       </span>
     )
@@ -89,11 +89,11 @@ export function DestinationCell({
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); setOpen(o => !o) }}
-        className="inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 bg-[#E5D9C2] text-[#6B5A3A] whitespace-nowrap hover:brightness-95 transition-all cursor-pointer"
+        className="inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 bg-pmw-tag text-pmw-tag-foreground whitespace-nowrap hover:brightness-95 transition-all cursor-pointer"
         title={isMulti ? `다른 목적지로 변경 (총 ${dests.length}개)` : '메뉴'}
       >
         {chipInner}
-        <span className="ml-0.5 text-[10px] text-[#6B5A3A]/60">▾</span>
+        <span className="ml-0.5 text-[10px] text-pmw-tag-foreground/60">▾</span>
       </button>
       {open && (
         <ul
@@ -117,7 +117,7 @@ export function DestinationCell({
                     <span className="font-mono text-[11px] uppercase tracking-[1px] text-muted-foreground">{dCode}</span>
                   )}
                   <span className="font-serif text-[14px]">{d}</span>
-                  {isCurrent && <span className="ml-auto text-[#6B5A3A]/70">✓</span>}
+                  {isCurrent && <span className="ml-auto text-pmw-tag-foreground/70">✓</span>}
                 </button>
               </li>
             )

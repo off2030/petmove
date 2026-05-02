@@ -333,7 +333,7 @@ function StatusCell({ row, options, onUpdate }: {
   const cls = isActive
     ? 'font-serif italic text-[16px] text-primary'
     : isDone
-    ? 'font-serif italic text-[16px] text-[#2E5A3E] dark:text-[#B5D4BE]'
+    ? 'font-serif italic text-[16px] text-pmw-positive'
     : 'font-serif italic text-[16px] text-muted-foreground'
 
   return <StatusPicker row={row} options={options} value={value} label={label} cls={cls} isDone={isDone} onUpdate={onUpdate} />
@@ -373,6 +373,8 @@ function StatusPicker({ row, options, value, label, cls, isDone, onUpdate }: {
     <div ref={ref} className="relative min-h-[24px] flex items-center">
       <button
         type="button"
+        data-status-pill
+        data-status-active={value === 'testing' ? 'true' : undefined}
         onClick={() => setOpen(o => !o)}
         className={cn(cls, 'cursor-pointer rounded-md -mx-1 px-1 hover:bg-accent/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40')}
       >
@@ -389,7 +391,7 @@ function StatusPicker({ row, options, value, label, cls, isDone, onUpdate }: {
             const optCls = optActive
               ? 'font-serif italic text-[15px] text-primary'
               : optDone
-                ? 'font-serif italic text-[15px] text-[#2E5A3E] dark:text-[#B5D4BE]'
+                ? 'font-serif italic text-[15px] text-pmw-positive'
                 : 'font-serif italic text-[15px] text-muted-foreground'
             return (
               <li key={o.value}>

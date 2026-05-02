@@ -7,9 +7,9 @@ import { usePathname } from 'next/navigation'
 const FORCE_DEFAULT_PATHS = ['/apply']
 
 type Mode = 'system' | 'light' | 'dark'
-type Skin = 'editorial' | 'clinical' | 'mono'
+type Skin = 'editorial' | 'flat' | 'neumorphism'
 
-const VALID_SKINS: Skin[] = ['editorial', 'clinical', 'mono']
+const VALID_SKINS: Skin[] = ['editorial', 'flat', 'neumorphism']
 
 function readMode(): Mode {
   try {

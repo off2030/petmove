@@ -237,7 +237,7 @@ export function CalculatorOutputModal({
                   onClick={() => setDocType(v)}
                   className={`h-7 rounded-full px-3 text-sm transition-colors ${
                     active
-                      ? 'bg-[#D9A489] text-white dark:bg-[#C08C70]'
+                      ? 'bg-pmw-accent text-pmw-accent-foreground'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
@@ -265,7 +265,7 @@ export function CalculatorOutputModal({
                 onClick={() => setCountryOpen((v) => !v)}
                 className={`inline-flex h-9 w-full items-center justify-between gap-2 rounded-md border bg-background px-3 text-sm transition-colors ${
                   countryOpen
-                    ? 'border-[#D9A489] dark:border-[#C08C70]'
+                    ? 'border-pmw-accent'
                     : 'border-border/80 hover:border-foreground/40'
                 }`}
               >
@@ -303,7 +303,7 @@ export function CalculatorOutputModal({
                           }
                         }}
                         placeholder="목적지 검색..."
-                        className="h-9 w-full rounded-md border border-border bg-background py-2 pl-8 pr-2 text-sm outline-none focus:border-[#D9A489] dark:focus:border-[#C08C70]"
+                        className="h-9 w-full rounded-md border border-border bg-background py-2 pl-8 pr-2 text-sm outline-none focus:border-pmw-accent"
                       />
                     </div>
                   </div>
@@ -350,7 +350,7 @@ export function CalculatorOutputModal({
                     onClick={() => setSpecies(v)}
                     className={`h-7 rounded-full px-3 text-sm transition-colors ${
                       active
-                        ? 'bg-[#D9A489] text-white dark:bg-[#C08C70]'
+                        ? 'bg-pmw-accent text-pmw-accent-foreground'
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
@@ -381,7 +381,7 @@ export function CalculatorOutputModal({
                     aria-label={on ? '비활성화' : '활성화'}
                     className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[3px] border transition-colors ${
                       on
-                        ? 'border-[#D9A489] bg-[#D9A489] dark:border-[#C08C70] dark:bg-[#C08C70]'
+                        ? 'border-pmw-accent bg-pmw-accent'
                         : 'border-border bg-transparent'
                     }`}
                   >
@@ -446,7 +446,7 @@ export function CalculatorOutputModal({
                           }
                         }}
                         placeholder="항목 검색..."
-                        className="h-9 w-full rounded-md border border-border bg-background py-2 pl-8 pr-2 text-sm outline-none focus:border-[#D9A489] dark:focus:border-[#C08C70]"
+                        className="h-9 w-full rounded-md border border-border bg-background py-2 pl-8 pr-2 text-sm outline-none focus:border-pmw-accent"
                       />
                     </div>
                   </div>
@@ -511,7 +511,7 @@ export function CalculatorOutputModal({
                     className={cn(
                       'rounded-md border px-3 py-2.5 text-left transition-colors',
                       active
-                        ? 'border-[#D9A489] bg-[#D9A489]/10 dark:border-[#C08C70] dark:bg-[#C08C70]/10'
+                        ? 'border-pmw-accent bg-pmw-accent/10'
                         : 'border-border/80 hover:bg-accent',
                     )}
                   >
@@ -546,7 +546,7 @@ export function CalculatorOutputModal({
               'h-8 rounded-full px-4 text-sm transition-colors disabled:opacity-50',
               onSaveAsPayment
                 ? 'border border-border/80 bg-transparent text-foreground hover:bg-accent'
-                : 'bg-[#D9A489] text-white hover:bg-[#C8957A] dark:bg-[#C08C70] dark:hover:bg-[#A87862]',
+                : 'bg-pmw-accent text-pmw-accent-foreground hover:bg-pmw-accent-strong',
             )}
           >
             PDF 출력
@@ -568,7 +568,7 @@ export function CalculatorOutputModal({
                 })
               }}
               disabled={saving || enabledRows.length === 0 || printableTotal <= 0}
-              className="h-8 rounded-full bg-[#D9A489] px-4 text-sm text-white hover:bg-[#C8957A] disabled:opacity-50 dark:bg-[#C08C70] dark:hover:bg-[#A87862] transition-colors"
+              className="h-8 rounded-full bg-pmw-accent px-4 text-sm text-pmw-accent-foreground hover:bg-pmw-accent-strong disabled:opacity-50 transition-colors"
             >
               {saving ? '저장 중…' : '저장'}
             </button>

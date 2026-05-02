@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter_Tight, Source_Serif_4, JetBrains_Mono, Noto_Sans_KR, Noto_Serif_KR } from 'next/font/google'
+import { Inter, Inter_Tight, Manrope, Source_Serif_4, JetBrains_Mono, Noto_Sans_KR, Noto_Serif_KR } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 import { ConfirmProvider } from '@/components/ui/confirm-dialog'
@@ -9,8 +9,25 @@ import { ServiceWorkerRegister } from '@/components/sw-register'
 // CSS 변수로 노출해서 tailwind fontFamily 가 참조.
 const interTight = Inter_Tight({
   subsets: ['latin'],
-  weight: ['400', '500', '600'],
+  weight: ['400', '500', '600', '700'],
+  style: ['normal', 'italic'],
   variable: '--font-sans',
+  display: 'swap',
+})
+// flat 스킨 전용 — Linear/Notion 톤. Inter Tight 보다 넓은 여백, 차분한 인상.
+// italic 미로드 — flat 은 italic 안 씀 (CSS 로 .italic strip), 30~40KB 절약.
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-sans-flat',
+  display: 'swap',
+})
+// neumorphism 스킨 전용 — geometric + 살짝 둥근 모서리. soft shadow 와 조화.
+// Manrope 는 Google Fonts 에 italic 없음 — italic 사용 시 synthetic 발생 (의도된 한계).
+const manrope = Manrope({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-sans-neu',
   display: 'swap',
 })
 const sourceSerif = Source_Serif_4({
@@ -22,20 +39,20 @@ const sourceSerif = Source_Serif_4({
 })
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
-  weight: ['400', '500'],
+  weight: ['400', '500', '700'],
   variable: '--font-mono',
   display: 'swap',
 })
 // 한글 글리프 — latin 폰트 뒤 fallback 으로 사용. Pretendard 와 비슷한 현대 톤.
 const notoSansKr = Noto_Sans_KR({
   subsets: ['latin'],
-  weight: ['400', '500', '600'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-sans-kr',
   display: 'swap',
 })
 const notoSerifKr = Noto_Serif_KR({
   subsets: ['latin'],
-  weight: ['400', '500', '600'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-serif-kr',
   display: 'swap',
 })
@@ -73,7 +90,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ko" suppressHydrationWarning className={`${interTight.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} ${notoSansKr.variable} ${notoSerifKr.variable}`}>
+    <html lang="ko" suppressHydrationWarning className={`${interTight.variable} ${inter.variable} ${manrope.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} ${notoSansKr.variable} ${notoSerifKr.variable}`}>
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
         <ThemeProvider />
         <ServiceWorkerRegister />

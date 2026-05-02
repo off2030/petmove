@@ -3,17 +3,17 @@
 import { useEffect, useState } from 'react'
 
 /** 색·radius·폰트가 함께 바뀌는 비주얼 스킨. dark 모드와 직교. */
-export type Skin = 'editorial' | 'clinical' | 'mono'
+export type Skin = 'editorial' | 'flat' | 'neumorphism'
 
 const STORAGE_KEY = 'skin'
 const EVENT = 'skinchange'
 
-export const SKIN_LIST: Skin[] = ['editorial', 'clinical', 'mono']
+export const SKIN_LIST: Skin[] = ['editorial', 'flat', 'neumorphism']
 
 export const SKIN_LABELS: Record<Skin, string> = {
   editorial: '에디토리얼',
-  clinical: '클리니컬',
-  mono: '모노',
+  flat: '플랫',
+  neumorphism: '뉴모피즘',
 }
 
 function readSkin(): Skin {

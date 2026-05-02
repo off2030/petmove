@@ -160,11 +160,11 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                   onDragEnd={() => { setDragIdx(null); setOverIdx(null) }}
                   className={cn(
                     'group/chip inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 transition-all',
-                    'bg-[#E5D9C2] text-[#6B5A3A]',
+                    'bg-pmw-tag text-pmw-tag-foreground',
                     multi && !isActive && 'opacity-45 hover:opacity-80',
                     multi && editMode && 'cursor-grab active:cursor-grabbing',
                     dragIdx === idx && 'opacity-30',
-                    isDragOver && 'ring-2 ring-[#6B5A3A]/50',
+                    isDragOver && 'ring-2 ring-pmw-tag-foreground/50',
                   )}
                 >
                   <button
@@ -178,11 +178,11 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                     disabled={!multi}
                   >
                     {code && (
-                      <span className="font-mono text-[13px] uppercase tracking-[1px] text-[#7B7B5F]">
+                      <span className="font-mono text-[13px] uppercase tracking-[1px] text-pmw-code">
                         {code}
                       </span>
                     )}
-                    <span className="font-serif text-[15px] text-[#6B5A3A]">
+                    <span className="font-serif text-[15px] text-pmw-tag-foreground">
                       {ko}
                     </span>
                   </button>
@@ -190,7 +190,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); removeDest(ko) }}
-                      className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-[#6B5A3A]/60 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover/chip:opacity-70 hover:!opacity-100"
+                      className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-pmw-tag-foreground/60 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover/chip:opacity-70 hover:!opacity-100"
                       title="목적지 삭제"
                     >
                       <Trash2 size={12} />

@@ -797,13 +797,13 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                             className={cn(
                               'inline-flex items-center justify-center w-3.5 h-3.5 rounded-sm border transition-colors',
                               rec.other_hospital
-                                ? 'bg-[#D9A489] border-[#D9A489] dark:bg-[#C08C70] dark:border-[#C08C70]'
+                                ? 'bg-pmw-accent border-pmw-accent'
                                 : 'border-foreground/40 bg-transparent',
                             )}
                           >
                             {rec.other_hospital && (
-                              <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                                <path d="M2.5 6L5 8.5L9.5 4" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="text-pmw-accent-foreground">
+                                <path d="M2.5 6L5 8.5L9.5 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             )}
                           </span>
@@ -827,7 +827,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                     className={cn(
                       'h-7 px-3 rounded-full border text-[13px] transition-colors',
                       hasChanges
-                        ? 'border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] hover:bg-[#D9A489]/25 dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489] dark:hover:bg-[#C08C70]/25'
+                        ? 'border-pmw-accent bg-pmw-accent/15 text-pmw-accent-strong hover:bg-pmw-accent/25'
                         : 'border-border/80 bg-card text-muted-foreground hover:text-foreground hover:border-foreground/40',
                     )}
                   >
@@ -1063,7 +1063,7 @@ function ValidUntilSelector({ value, onChange, saving, locked }: {
           className={cn(
             'text-xs px-2 py-0.5 rounded transition-colors',
             current === n
-              ? 'bg-[#5f5f5f] text-white'
+              ? 'bg-foreground text-background'
               : 'text-muted-foreground/70 hover:bg-accent/60 hover:text-foreground',
           )}
           title={`유효기간 ${n}년`}

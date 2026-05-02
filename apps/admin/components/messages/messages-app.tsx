@@ -1681,11 +1681,12 @@ const MessageItem = memo(function MessageItem({
         )}
       >
         <div
+          data-bubble={isOwn ? 'own' : 'other'}
           className={cn(
             'max-w-[70%] rounded-2xl px-3 py-1.5',
             isOwn
-              ? 'bg-[var(--pmw-clay-soft)] dark:bg-[#252527] text-foreground'
-              : 'bg-[var(--pmw-sage-soft)] text-foreground',
+              ? 'bg-pmw-accent text-pmw-accent-foreground'
+              : 'bg-muted text-foreground',
           )}
         >
           {msg.content && (

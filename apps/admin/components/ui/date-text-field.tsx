@@ -267,7 +267,7 @@ export function DateTextField({
                 </button>
                 <button
                   type="button"
-                  className="font-serif italic text-[13px] text-[#6B6A3F] dark:text-[#B8B38A] hover:text-foreground transition-colors"
+                  className="font-serif italic text-[13px] text-pmw-cal-today hover:text-foreground transition-colors"
                   onClick={() => {
                     const s = formatDateToStr(new Date())
                     setDraft(s)

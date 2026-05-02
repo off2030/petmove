@@ -72,7 +72,7 @@ function StatusBadge({ value, options }: { value: string; options: Array<{ value
   const cls = isActive
     ? 'font-serif italic text-[16px] text-primary'
     : isDone
-    ? 'font-serif italic text-[16px] text-[#2E5A3E] dark:text-[#B5D4BE]'
+    ? 'font-serif italic text-[16px] text-pmw-positive'
     : 'font-serif italic text-[16px] text-muted-foreground'
 
   return (
@@ -240,6 +240,8 @@ function SelectCell({
     <div ref={ref} className="relative">
       <button
         type="button"
+        data-status-pill
+        data-status-active={(value === 'in_progress' || value === 'testing') ? 'true' : undefined}
         onClick={() => setOpen((o) => !o)}
         className="cursor-pointer rounded-md -mx-1 px-1 text-left min-h-[24px] flex items-center hover:bg-accent/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
       >
@@ -247,18 +249,6 @@ function SelectCell({
       </button>
       {open && (
         <ul className="absolute left-0 top-full mt-1 z-30 min-w-[120px] rounded-md border border-border/80 bg-background py-1 shadow-md">
-          <li>
-            <button
-              type="button"
-              onClick={() => pick('')}
-              className={cn(
-                'w-full text-left px-sm py-1.5 hover:bg-accent/60 transition-colors flex items-center',
-                value === '' && 'bg-accent/40',
-              )}
-            >
-              <span className="font-serif italic text-[15px] text-muted-foreground/40">—</span>
-            </button>
-          </li>
           {col.options!.map((o) => {
             const isCurrent = value === o.value
             const optActive = o.value === 'in_progress' || o.value === 'testing'
@@ -266,7 +256,7 @@ function SelectCell({
             const optCls = optActive
               ? 'font-serif italic text-[15px] text-primary'
               : optDone
-                ? 'font-serif italic text-[15px] text-[#2E5A3E] dark:text-[#B5D4BE]'
+                ? 'font-serif italic text-[15px] text-pmw-positive'
                 : 'font-serif italic text-[15px] text-muted-foreground'
             return (
               <li key={o.value}>

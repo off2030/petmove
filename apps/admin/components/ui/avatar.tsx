@@ -25,10 +25,11 @@ export function Avatar({
     ? 'bg-muted/60 text-muted-foreground'
     : tone === 'sage'
       ? 'bg-[var(--pmw-sage-soft)] text-[var(--pmw-sage)] dark:text-[var(--pmw-olive-gray)] border border-[var(--pmw-sage)]/30 dark:border-[var(--pmw-stone-gray)]/70'
-      : 'bg-[#E5B89C]/45 text-[#9B4A2D] dark:bg-[#C08C70]/40 dark:text-[#E0917A]'
+      : 'bg-pmw-avatar/45 text-pmw-avatar-foreground dark:bg-pmw-avatar/40'
   if (imageUrl) {
     return (
       <div
+        data-avatar
         className={cn(
           'rounded-full overflow-hidden shrink-0 bg-muted/40',
           dim,
@@ -40,7 +41,7 @@ export function Avatar({
     )
   }
   return (
-    <div className={cn('rounded-full flex items-center justify-center shrink-0', dim, toneClass, className)}>
+    <div data-avatar className={cn('rounded-full flex items-center justify-center shrink-0', dim, toneClass, className)}>
       <span className={cn('font-serif', textSize)}>{label}</span>
     </div>
   )

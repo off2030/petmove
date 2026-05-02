@@ -210,7 +210,7 @@ export function DestinationPicker({
                     isHighlighted && 'bg-accent/60',
                   )}
                 >
-                  <span className="font-mono text-[11px] uppercase tracking-[1px] text-[#7B7B5F] w-6 shrink-0">
+                  <span className="font-mono text-[11px] uppercase tracking-[1px] text-pmw-code w-6 shrink-0">
                     {code ?? ''}
                   </span>
                   <span className="font-serif text-[14px]" style={{ color: 'var(--pmw-near-black)' }}>

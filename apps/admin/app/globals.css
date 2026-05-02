@@ -91,6 +91,22 @@
 
     --radius: 0.5rem;
 
+    /* ── Semantic 색 토큰 (HSL 컴포넌트만 — Tailwind opacity modifier 'bg-pmw-accent/15' 호환).
+       하드코딩된 editorial brand 색을 의미 기반 토큰으로 추출 — 다른 스킨에서 다른 값 정의 가능.
+       각 스킨이 같은 의미 다른 색으로 매핑. */
+    --pmw-accent: 24 49% 69%;            /* clay #D9A489 — 편집 모드/액센트 surface */
+    --pmw-accent-fg: 0 0% 100%;          /* white — solid accent 위 고대비 텍스트/아이콘 */
+    --pmw-accent-strong: 22 27% 52%;     /* #A87862 — tinted accent 위 텍스트 + hover */
+    --pmw-tag-bg: 39 44% 83%;            /* #E5D9C2 — pill/tag 배경 */
+    --pmw-tag-fg: 36 30% 33%;            /* #6B5A3A — pill/tag 텍스트 */
+    --pmw-cal-today: 59 26% 33%;         /* #6B6A3F — 캘린더 오늘 */
+    --pmw-cal-sunday: 18 41% 51%;        /* #B8724D — 일요일 */
+    --pmw-cal-saturday: 220 27% 30%;     /* #384560 — 토요일 */
+    --pmw-positive: 138 33% 27%;         /* #2E5A3E — 성공/긍정 */
+    --pmw-avatar-bg: 22 60% 76%;         /* #E5B89C — 기본 아바타 배경 */
+    --pmw-avatar-fg: 16 56% 39%;         /* #9B4A2D — 아바타 이니셜 */
+    --pmw-code-label: 60 13% 43%;        /* #7B7B5F — destination code 라벨 */
+
     /* ── Mobile — safe-area-inset alias (iOS notch/home-indicator)
        env() 를 직접 못 쓰는 utility-first Tailwind 환경에서 var() 로 우회.
        Android/데스크톱은 0px 폴백. */
@@ -149,164 +165,445 @@
     --border: 60 3% 23%;
     --input: 60 3% 23%;
     --ring: 210 82% 57%;
+
+    /* Semantic 토큰 dark 매핑 */
+    --pmw-accent: 21 40% 60%;            /* #C08C70 */
+    --pmw-accent-fg: 48 33% 97%;         /* parchment — solid accent 위 고대비 */
+    --pmw-accent-strong: 24 49% 69%;     /* #D9A489 — tinted accent 위 텍스트 */
+    --pmw-tag-bg: 36 30% 33%;            /* dark inversion */
+    --pmw-tag-fg: 39 44% 83%;
+    --pmw-cal-today: 53 26% 63%;         /* #B8B38A */
+    --pmw-cal-sunday: 18 56% 64%;        /* #D69070 */
+    --pmw-cal-saturday: 219 19% 63%;     /* #8E9BB5 */
+    --pmw-positive: 134 26% 77%;         /* #B5D4BE */
+    --pmw-avatar-bg: 21 40% 60%;         /* #C08C70 */
+    --pmw-avatar-fg: 11 64% 68%;         /* #E0917A */
+    --pmw-code-label: 60 8% 60%;
   }
 
+  /* ═════════════════════════════════════════════════════════════
+     스킨 추가 체크리스트 — 새 스킨 추가 시 빠뜨리면 안 되는 axis
+     ═════════════════════════════════════════════════════════════
+     [data-skin="X"] 와 [data-skin="X"].dark 두 블록 모두 정의:
+
+     1. shadcn 색 토큰 (HSL 컴포넌트만):
+        --background, --foreground, --card, --card-foreground,
+        --popover, --popover-foreground, --primary, --primary-foreground,
+        --secondary, --secondary-foreground, --muted, --muted-foreground,
+        --accent, --accent-foreground, --destructive, --destructive-foreground,
+        --border, --input, --ring
+
+     2. PMW semantic 토큰 (HSL 컴포넌트만 — opacity modifier 호환):
+        --pmw-accent, --pmw-accent-fg, --pmw-accent-strong,
+        --pmw-tag-bg, --pmw-tag-fg,
+        --pmw-cal-today, --pmw-cal-sunday, --pmw-cal-saturday,
+        --pmw-positive, --pmw-avatar-bg, --pmw-avatar-fg, --pmw-code-label
+
+     3. PMW raw 색 토큰 (직접 var() 참조용 — #hex):
+        --pmw-near-black, --pmw-olive-gray, --pmw-stone-gray,
+        --pmw-deep, --pmw-clay-soft, --pmw-sage, --pmw-sage-soft,
+        --pmw-sage-paper, --pmw-amber, --pmw-rust, --pmw-border-warm,
+        --pmw-parchment, --pmw-paper
+
+     4. 폰트 (Tailwind 가 실제로 쓰는 변수 — --pmw-font-* 가 아님):
+        --font-sans     (font-sans 클래스가 참조)
+        --font-serif    (font-serif 클래스가 참조)
+        --font-serif-kr (한글 serif fallback)
+        --font-mono     (font-mono 클래스가 참조)
+        — sans 폰트로 mono 평탄화 시 .font-mono { font-variant-numeric: tabular-nums }
+
+     5. radius:
+        --radius
+
+     6. Typography 스케일 (flat 이 reference 모델):
+        --pmw-text-{2xs,xs,sm,base,md,lg,xl,2xl}     8 tier 사이즈
+        --pmw-leading-{각각}                          tier 별 line-height
+        --pmw-tracking-{각각}                         tier 별 letter-spacing
+        — body 에 baseline 적용: [data-skin="X"] body { letter-spacing: var(...); line-height: var(...) }
+        — 각 컴포넌트는 className 에 size 명시 (text-base 또는 text-[Xpx])
+
+     7. 텍스트 색 4-tier (Linear 모델):
+        --pmw-text-primary    본문
+        --pmw-text-secondary  라벨, 부제
+        --pmw-text-tertiary   메타, 비활성 직전
+        --pmw-text-disabled   비활성
+        — Tailwind 클래스: text-pmw-text-primary 등
+        — 정의 안 하는 스킨은 자동으로 --foreground / --muted-foreground 로 fallback
+
+     8. (선택) italic / bold 전략:
+        — italic 안 쓰는 스킨: [data-skin="X"] .italic { font-style: normal }
+        — Manrope / Plus Jakarta 등 italic 없는 폰트 쓸 때 필수
+
+     9. (선택) 컴포넌트 그림자/테두리:
+        — neumorphism 처럼 .bg-card 에 dual shadow 등 적용 시
+        — 스킨 블록 뒤에 [data-skin="X"] .target { ... } 별도 규칙
+
+     ═════════════════════════════════════════════════════════════ */
+
   /* ─────────────────────────────────────────────────────────────
-     Skin: clinical — 화이트 + 쿨 민트, all-sans, 작은 radius.
-     병원/임상 톤. data-skin 속성으로 선택, dark 클래스와 직교.
+     Skin: flat — Linear / Notion / Stripe 류 미니멀.
+     순백 + zinc grays + 검정 solid primary. 단일 sans (Inter), 작은 radius.
+     채도 거의 0 — destructive 만 빨간색 유지. italic 미사용.
      ───────────────────────────────────────────────────────────── */
-  [data-skin="clinical"] {
+  [data-skin="flat"] {
+    /* Inter Tight → Inter (regular) — Linear/Notion 톤.
+       --font-sans/serif/serif-kr/mono 모두 sans 로 평탄화 — Linear/Notion 처럼 한 폰트로 통일.
+       Inter 의 tabular 숫자(OpenType tnum) 가 JetBrains Mono 정렬 대체. */
+    --font-sans: var(--font-sans-flat);
+    --font-serif: var(--font-sans-flat), Pretendard;
+    --font-serif-kr: var(--font-sans-kr);
+    --font-mono: var(--font-sans-flat);
     --pmw-font-serif: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
 
-    --pmw-near-black: #0F172A;
-    --pmw-olive-gray: #475569;
-    --pmw-stone-gray: #94A3B8;
-    --pmw-deep: #0F766E;
-    --pmw-clay-soft: #CCFBF1;
-    --pmw-sage: #10B981;
-    --pmw-sage-soft: #D1FAE5;
-    --pmw-sage-paper: #F0FDF4;
-    --pmw-amber: #D97706;
+    --pmw-near-black: #09090B;
+    --pmw-olive-gray: #71717A;
+    --pmw-stone-gray: #A1A1AA;
+    --pmw-deep: #18181B;
+    --pmw-clay-soft: #F4F4F5;
+    --pmw-sage: #18181B;
+    --pmw-sage-soft: #F4F4F5;
+    --pmw-sage-paper: #FAFAFA;
+    --pmw-amber: #18181B;
     --pmw-rust: #DC2626;
-    --pmw-border-warm: #E2E8F0;
+    --pmw-border-warm: #E4E4E7;
     --pmw-parchment: #FFFFFF;
-    --pmw-paper: #F8FAFC;
+    --pmw-paper: #FFFFFF;
 
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --foreground: 240 10% 4%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 240 10% 4%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 173 80% 26%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    --popover-foreground: 240 10% 4%;
+    --primary: 240 6% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 10% 4%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 240 5% 96%;
+    --accent-foreground: 240 10% 4%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 173 80% 36%;
-    --radius: 0.375rem;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 240 10% 4%;
+    --radius: 0.5rem;
+
+    /* Semantic 토큰 — flat (Linear/Notion 톤. 채도 0, 주말만 subtle 컬러) */
+    --pmw-accent: 240 6% 10%;
+    --pmw-accent-fg: 0 0% 98%;
+    --pmw-accent-strong: 240 5% 26%;
+    --pmw-tag-bg: 240 5% 96%;
+    --pmw-tag-fg: 240 6% 25%;
+    --pmw-cal-today: 240 6% 10%;
+    --pmw-cal-sunday: 0 65% 55%;
+    --pmw-cal-saturday: 220 50% 45%;
+    --pmw-positive: 142 60% 35%;
+    --pmw-avatar-bg: 240 5% 92%;
+    --pmw-avatar-fg: 240 6% 25%;
+    --pmw-code-label: 240 4% 46%;
+
+    /* Typography 스케일 — Linear/Notion 모델
+       (각 사이즈에 맞는 line-height + tracking + weight 조합) */
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.4;   --pmw-tracking-2xs:  0;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.5;   --pmw-tracking-xs:   -0.005em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.5;   --pmw-tracking-sm:   -0.011em;
+    --pmw-text-base: 14px;   --pmw-leading-base: 1.5;   --pmw-tracking-base: -0.011em;
+    --pmw-text-md:   15px;   --pmw-leading-md:   1.55;  --pmw-tracking-md:   -0.011em;
+    --pmw-text-lg:   18px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.015em;
+    --pmw-text-xl:   22px;   --pmw-leading-xl:   1.3;   --pmw-tracking-xl:   -0.02em;
+    --pmw-text-2xl:  28px;   --pmw-leading-2xl:  1.2;   --pmw-tracking-2xl:  -0.025em;
+
+    /* 텍스트 색 4-tier (Linear) */
+    --pmw-text-primary:    240 10% 4%;     /* zinc-950 — 본문 */
+    --pmw-text-secondary:  240 4% 46%;     /* zinc-500 — 라벨 */
+    --pmw-text-tertiary:   240 5% 65%;     /* zinc-400 — 메타 */
+    --pmw-text-disabled:   240 5% 84%;     /* zinc-300 — 비활성 */
   }
 
-  [data-skin="clinical"].dark {
-    --pmw-near-black: #F1F5F9;
-    --pmw-olive-gray: #94A3B8;
-    --pmw-stone-gray: #64748B;
-    --pmw-deep: #14B8A6;
-    --pmw-clay-soft: #134E4A;
-    --pmw-sage: #34D399;
-    --pmw-sage-soft: #134E4A;
-    --pmw-sage-paper: #0F172A;
-    --pmw-amber: #F59E0B;
-    --pmw-rust: #F87171;
-    --pmw-border-warm: #1E293B;
-    --pmw-parchment: #0F172A;
-    --pmw-paper: #1E293B;
+  [data-skin="flat"].dark {
+    --pmw-near-black: #FAFAFA;
+    --pmw-olive-gray: #A1A1AA;
+    --pmw-stone-gray: #71717A;
+    --pmw-deep: #FAFAFA;
+    --pmw-clay-soft: #27272A;
+    --pmw-sage: #FAFAFA;
+    --pmw-sage-soft: #27272A;
+    --pmw-sage-paper: #18181B;
+    --pmw-amber: #FAFAFA;
+    --pmw-rust: #EF4444;
+    --pmw-border-warm: #27272A;
+    --pmw-parchment: #09090B;
+    --pmw-paper: #18181B;
 
     color-scheme: dark;
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 173 58% 51%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 4%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 4%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 6% 10%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 63% 41%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 22%;
-    --input: 217 33% 22%;
-    --ring: 173 58% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 240 5% 84%;
+
+    --pmw-accent: 0 0% 98%;
+    --pmw-accent-fg: 240 6% 10%;
+    --pmw-accent-strong: 240 5% 84%;
+    --pmw-tag-bg: 240 4% 16%;
+    --pmw-tag-fg: 240 5% 84%;
+    --pmw-cal-today: 0 0% 98%;
+    --pmw-cal-sunday: 0 65% 65%;
+    --pmw-cal-saturday: 220 50% 65%;
+    --pmw-positive: 142 50% 60%;
+    --pmw-avatar-bg: 240 4% 22%;
+    --pmw-avatar-fg: 240 5% 84%;
+    --pmw-code-label: 240 5% 65%;
+
+    /* Typography 스케일 + tracking — light 와 동일 (사이즈는 light/dark 무관) */
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.4;   --pmw-tracking-2xs:  0;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.5;   --pmw-tracking-xs:   -0.005em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.5;   --pmw-tracking-sm:   -0.011em;
+    --pmw-text-base: 14px;   --pmw-leading-base: 1.5;   --pmw-tracking-base: -0.011em;
+    --pmw-text-md:   15px;   --pmw-leading-md:   1.55;  --pmw-tracking-md:   -0.011em;
+    --pmw-text-lg:   18px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.015em;
+    --pmw-text-xl:   22px;   --pmw-leading-xl:   1.3;   --pmw-tracking-xl:   -0.02em;
+    --pmw-text-2xl:  28px;   --pmw-leading-2xl:  1.2;   --pmw-tracking-2xl:  -0.025em;
+
+    /* 텍스트 색 4-tier (dark 반전) */
+    --pmw-text-primary:    0 0% 98%;
+    --pmw-text-secondary:  240 5% 65%;
+    --pmw-text-tertiary:   240 5% 50%;
+    --pmw-text-disabled:   240 4% 35%;
   }
 
   /* ─────────────────────────────────────────────────────────────
-     Skin: mono — 종이 + 잉크, 무채색, radius 0. 인쇄물 느낌.
-     primary 도 잉크 톤이라 강조색 거의 없음.
+     Skin: neumorphism — soft monochrome + 양각/음각 그림자.
+     Page 와 카드가 동일 배경색이어야 그림자로 깊이 표현. radius 크게.
+     컴포넌트별 box-shadow override 필요 (단순 변수 swap 만으론 부족).
      ───────────────────────────────────────────────────────────── */
-  [data-skin="mono"] {
-    --pmw-near-black: #1A1A1A;
-    --pmw-olive-gray: #525252;
-    --pmw-stone-gray: #A3A3A3;
-    --pmw-deep: #1A1A1A;
-    --pmw-clay-soft: #E5E5E5;
-    --pmw-sage: #525252;
-    --pmw-sage-soft: #E5E5E5;
-    --pmw-sage-paper: #F5F5F5;
-    --pmw-amber: #525252;
-    --pmw-rust: #1A1A1A;
-    --pmw-border-warm: #D4D4D4;
-    --pmw-parchment: #FAFAF7;
-    --pmw-paper: #FFFFFF;
+  [data-skin="neumorphism"] {
+    /* Inter Tight → Manrope — geometric + 살짝 둥근 모서리. soft shadow 와 조화.
+       sans/serif/mono 모두 Manrope 로 평탄화 — soft 한 톤 일관 유지.
+       Manrope 의 tabular 숫자(tnum) 가 JetBrains Mono 정렬 대체. */
+    --font-sans: var(--font-sans-neu);
+    --font-serif: var(--font-sans-neu), Pretendard;
+    --font-serif-kr: var(--font-sans-kr);
+    --font-mono: var(--font-sans-neu);
+    --pmw-font-serif: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
 
-    --background: 60 5% 98%;
-    --foreground: 0 0% 10%;
-    --card: 60 5% 98%;
-    --card-foreground: 0 0% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
-    --primary: 0 0% 10%;
-    --primary-foreground: 60 5% 98%;
-    --secondary: 0 0% 92%;
-    --secondary-foreground: 0 0% 10%;
-    --muted: 0 0% 95%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 0 0% 92%;
-    --accent-foreground: 0 0% 10%;
-    --destructive: 0 0% 10%;
-    --destructive-foreground: 60 5% 98%;
-    --border: 0 0% 85%;
-    --input: 0 0% 85%;
-    --ring: 0 0% 10%;
-    --radius: 0;
+    --pmw-near-black: #2C3037;
+    --pmw-olive-gray: #5A6072;
+    --pmw-stone-gray: #8E94A3;
+    --pmw-deep: #4A5568;
+    --pmw-clay-soft: #DDE3EB;
+    --pmw-sage: #5A6072;
+    --pmw-sage-soft: #DDE3EB;
+    --pmw-sage-paper: #E8ECF1;
+    --pmw-amber: #5A6072;
+    --pmw-rust: #B85450;
+    --pmw-border-warm: #E8ECF1;
+    --pmw-parchment: #E8ECF1;
+    --pmw-paper: #E8ECF1;
+
+    /* 그림자 토큰 — light/dark 에서 base 색만 갈아끼우면 raised/pressed 자동 갱신.
+       범위는 카드·팝오버·인풋 surface 에 한정 (버튼·채팅 제외) — 깊이는 원래 톤 유지. */
+    --neu-shadow-light: #ffffff;
+    --neu-shadow-dark: #c7cdd6;
+    --neu-raised: 6px 6px 14px var(--neu-shadow-dark), -6px -6px 14px var(--neu-shadow-light);
+    --neu-raised-sm: 3px 3px 7px var(--neu-shadow-dark), -3px -3px 7px var(--neu-shadow-light);
+    --neu-pressed: inset 3px 3px 6px var(--neu-shadow-dark), inset -3px -3px 6px var(--neu-shadow-light);
+
+    --background: 218 21% 92%;
+    --foreground: 220 12% 20%;
+    --card: 218 21% 92%;
+    --card-foreground: 220 12% 20%;
+    --popover: 218 21% 92%;
+    --popover-foreground: 220 12% 20%;
+    --primary: 220 14% 31%;
+    --primary-foreground: 218 21% 92%;
+    --secondary: 218 21% 92%;
+    --secondary-foreground: 220 12% 20%;
+    --muted: 218 21% 92%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 218 21% 92%;
+    --accent-foreground: 220 12% 20%;
+    --destructive: 0 60% 52%;
+    --destructive-foreground: 218 21% 92%;
+    --border: 218 21% 92%;          /* 배경과 동색 → 시각적으로 사라짐 */
+    --input: 218 21% 92%;
+    --ring: 220 14% 31%;
+    --radius: 1rem;
+
+    /* Semantic 토큰 — neumorphism (blue-gray monochrome) */
+    --pmw-accent: 220 14% 31%;
+    --pmw-accent-fg: 218 21% 92%;
+    --pmw-accent-strong: 220 12% 20%;
+    --pmw-tag-bg: 218 21% 92%;
+    --pmw-tag-fg: 220 14% 31%;
+    --pmw-cal-today: 220 14% 31%;
+    --pmw-cal-sunday: 0 50% 55%;
+    --pmw-cal-saturday: 220 35% 45%;
+    --pmw-positive: 142 30% 40%;
+    --pmw-avatar-bg: 218 21% 88%;
+    --pmw-avatar-fg: 220 14% 31%;
+    --pmw-code-label: 220 9% 46%;
+
+    /* Typography 스케일 — neumorphism (Soft UI 톤. 큰 size, generous leading, 자연 spacing) */
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.01em;
+    --pmw-text-sm:   14px;   --pmw-leading-sm:   1.6;   --pmw-tracking-sm:   0;
+    --pmw-text-base: 15px;   --pmw-leading-base: 1.65;  --pmw-tracking-base: 0;
+    --pmw-text-md:   16px;   --pmw-leading-md:   1.6;   --pmw-tracking-md:   0;
+    --pmw-text-lg:   20px;   --pmw-leading-lg:   1.5;   --pmw-tracking-lg:   -0.01em;
+    --pmw-text-xl:   26px;   --pmw-leading-xl:   1.4;   --pmw-tracking-xl:   -0.015em;
+    --pmw-text-2xl:  34px;   --pmw-leading-2xl:  1.3;   --pmw-tracking-2xl:  -0.02em;
+
+    /* 텍스트 색 4-tier (낮은 대비 의도 — 부드러움 우선) */
+    --pmw-text-primary:    220 12% 20%;    /* #2C3037 dark blue-gray */
+    --pmw-text-secondary:  225 11% 40%;    /* #5A6072 */
+    --pmw-text-tertiary:   222 12% 60%;    /* #8E94A3 */
+    --pmw-text-disabled:   218 12% 73%;    /* #B0B7C2 */
   }
 
-  [data-skin="mono"].dark {
-    --pmw-near-black: #FAFAF7;
-    --pmw-olive-gray: #A3A3A3;
-    --pmw-stone-gray: #525252;
-    --pmw-deep: #FAFAF7;
-    --pmw-clay-soft: #262626;
-    --pmw-sage: #A3A3A3;
-    --pmw-sage-soft: #262626;
-    --pmw-sage-paper: #171717;
-    --pmw-amber: #A3A3A3;
-    --pmw-rust: #FAFAF7;
-    --pmw-border-warm: #404040;
-    --pmw-parchment: #0A0A0A;
-    --pmw-paper: #171717;
+  [data-skin="neumorphism"].dark {
+    --pmw-near-black: #E8ECF1;
+    --pmw-olive-gray: #8E94A3;
+    --pmw-stone-gray: #5A6072;
+    --pmw-deep: #BFC6D1;
+    --pmw-clay-soft: #353B45;
+    --pmw-sage: #8E94A3;
+    --pmw-sage-soft: #353B45;
+    --pmw-sage-paper: #2C3037;
+    --pmw-amber: #BFC6D1;
+    --pmw-rust: #E07876;
+    --pmw-border-warm: #2C3037;
+    --pmw-parchment: #2C3037;
+    --pmw-paper: #2C3037;
+
+    --neu-shadow-light: #353B45;
+    --neu-shadow-dark: #1A1E24;
 
     color-scheme: dark;
-    --background: 0 0% 6%;
-    --foreground: 60 5% 96%;
-    --card: 0 0% 6%;
-    --card-foreground: 60 5% 96%;
-    --popover: 0 0% 12%;
-    --popover-foreground: 60 5% 96%;
-    --primary: 60 5% 96%;
-    --primary-foreground: 0 0% 6%;
-    --secondary: 0 0% 16%;
-    --secondary-foreground: 60 5% 96%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 0 0% 16%;
-    --accent-foreground: 60 5% 96%;
-    --destructive: 60 5% 96%;
-    --destructive-foreground: 0 0% 6%;
-    --border: 0 0% 22%;
-    --input: 0 0% 22%;
-    --ring: 60 5% 96%;
+    --background: 220 12% 20%;
+    --foreground: 218 21% 92%;
+    --card: 220 12% 20%;
+    --card-foreground: 218 21% 92%;
+    --popover: 220 12% 20%;
+    --popover-foreground: 218 21% 92%;
+    --primary: 218 21% 80%;
+    --primary-foreground: 220 12% 20%;
+    --secondary: 220 12% 20%;
+    --secondary-foreground: 218 21% 92%;
+    --muted: 220 12% 20%;
+    --muted-foreground: 218 12% 65%;
+    --accent: 220 12% 20%;
+    --accent-foreground: 218 21% 92%;
+    --destructive: 0 60% 60%;
+    --destructive-foreground: 220 12% 20%;
+    --border: 220 12% 20%;
+    --input: 220 12% 20%;
+    --ring: 218 21% 80%;
+
+    --pmw-accent: 218 21% 80%;
+    --pmw-accent-fg: 220 12% 20%;
+    --pmw-accent-strong: 218 21% 92%;
+    --pmw-tag-bg: 220 12% 25%;
+    --pmw-tag-fg: 218 21% 80%;
+    --pmw-cal-today: 218 21% 80%;
+    --pmw-cal-sunday: 0 50% 65%;
+    --pmw-cal-saturday: 220 35% 65%;
+    --pmw-positive: 142 25% 60%;
+    --pmw-avatar-bg: 220 12% 28%;
+    --pmw-avatar-fg: 218 21% 80%;
+    --pmw-code-label: 218 12% 60%;
+
+    /* Typography 스케일 — light 와 동일 (사이즈는 mode 무관) */
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.01em;
+    --pmw-text-sm:   14px;   --pmw-leading-sm:   1.6;   --pmw-tracking-sm:   0;
+    --pmw-text-base: 15px;   --pmw-leading-base: 1.65;  --pmw-tracking-base: 0;
+    --pmw-text-md:   16px;   --pmw-leading-md:   1.6;   --pmw-tracking-md:   0;
+    --pmw-text-lg:   20px;   --pmw-leading-lg:   1.5;   --pmw-tracking-lg:   -0.01em;
+    --pmw-text-xl:   26px;   --pmw-leading-xl:   1.4;   --pmw-tracking-xl:   -0.015em;
+    --pmw-text-2xl:  34px;   --pmw-leading-2xl:  1.3;   --pmw-tracking-2xl:  -0.02em;
+
+    /* 텍스트 색 4-tier (dark 반전, 그래도 낮은 대비 유지) */
+    --pmw-text-primary:    218 21% 92%;
+    --pmw-text-secondary:  218 14% 75%;
+    --pmw-text-tertiary:   222 12% 60%;
+    --pmw-text-disabled:   220 12% 35%;
+  }
+
+  /* font-mono 가 sans 폰트로 평탄화된 스킨 — Inter/Manrope 는 기본 proportional 이라
+     숫자 폭이 달라져 가격·날짜 정렬이 깨짐. tabular-nums 강제로 monospace 정렬 복원. */
+  [data-skin="flat"] .font-mono,
+  [data-skin="neumorphism"] .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* flat / neumorphism 은 italic 미사용 (각각 Linear/Notion·Soft UI 컨벤션).
+     editorial 시절 italic class 161곳이 박혀있어도 활성 시 자동으로 normal 렌더.
+     - flat: Inter italic 미로드 → strip 으로 의도 명확화
+     - neumorphism: Manrope 자체에 italic 없음 → strip 으로 synthetic 기울임 회피 */
+  [data-skin="flat"] .italic,
+  [data-skin="neumorphism"] .italic {
+    font-style: normal;
+  }
+
+  /* flat / neumorphism body baseline — letter-spacing + line-height 를 body 에 부여하면
+     모든 자식 텍스트가 inherit. flat 은 타이트, neumorphism 은 generous. */
+  [data-skin="flat"] body,
+  [data-skin="neumorphism"] body {
+    letter-spacing: var(--pmw-tracking-base);
+    line-height: var(--pmw-leading-base);
+  }
+
+  /* Neumorphism 컴포넌트 그림자 — 변수 swap 만으로 안 되는 부분 */
+  [data-skin="neumorphism"] .bg-card,
+  [data-skin="neumorphism"] .bg-popover {
+    box-shadow: var(--neu-raised);
+    border-color: transparent;
+  }
+
+  [data-skin="neumorphism"] input:not([type='checkbox']):not([type='radio']),
+  [data-skin="neumorphism"] textarea,
+  [data-skin="neumorphism"] select {
+    box-shadow: var(--neu-pressed);
+    border-color: transparent;
+  }
+
+  /* neumorphism 양각/음각은 surface container (카드·팝오버·인풋·아바타) 에만 적용.
+     버튼·채팅 버블 등 인터랙션 요소는 평평하게 유지 — 화면 전체가 그림자로 시끄러워지는 것 방지. */
+
+  /* 아바타 — circular surface, soft UI 시그니처. raised 로 "살짝 떠 있는" 느낌.
+     이미지 아바타가 overflow-hidden 으로 inset 을 가리는 문제 회피. */
+  [data-skin="neumorphism"] [data-avatar] {
+    box-shadow: var(--neu-raised-sm);
+  }
+
+  /* 상태 pill — 검사/신고/서류 탭의 진행상태·수입·수출 컬럼.
+     기본 raised (양각, "떠 있는 마커") + 진행중 (data-status-active=true) 만 inset (음각, "현재 작업 중인 stamp"). */
+  [data-skin="neumorphism"] [data-status-pill] {
+    background-color: hsl(var(--muted));
+    padding: 4px 12px;
+    border-radius: 999px;
+    box-shadow: var(--neu-raised-sm);
+    margin: 0;  /* 기존 -mx-1 무력화 */
+  }
+  [data-skin="neumorphism"] [data-status-pill][data-status-active="true"] {
+    box-shadow: var(--neu-pressed);
   }
 }
 
@@ -331,6 +628,17 @@
 
   .font-mono {
     font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  /* input[type="search"] 의 브라우저 기본 X(clear) 버튼 제거 — 앱이 자체 X 버튼을 그리므로 중복 회피.
+     WebKit (Chrome/Safari/Edge) 와 Firefox 양쪽 처리. */
+  input[type="search"]::-webkit-search-cancel-button,
+  input[type="search"]::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input[type="search"]::-ms-clear {
+    display: none;
   }
 }
 

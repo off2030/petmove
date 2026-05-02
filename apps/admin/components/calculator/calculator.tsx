@@ -248,12 +248,12 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
                   <div
                     className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[3px] border transition-colors ${
                       on
-                        ? 'border-[#D9A489] bg-[#D9A489] dark:border-[#C08C70] dark:bg-[#C08C70]'
+                        ? 'border-pmw-accent bg-pmw-accent'
                         : 'border-border bg-transparent'
                     }`}
                   >
                     {on && (
-                      <span className="font-serif text-white text-[15px] leading-none -translate-y-[1px]">
+                      <span className="font-serif text-pmw-accent-foreground text-[15px] leading-none -translate-y-[1px]">
                         ✓
                       </span>
                     )}
@@ -266,7 +266,7 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
                       const v = e.target.value.trim()
                       if (v && v !== it.item_name) saveItemField(it.id, { item_name: v })
                     }}
-                    className="h-8 w-full rounded border border-border bg-card px-2 font-serif text-[16px] outline-none focus:border-[#D9A489] dark:focus:border-[#C08C70]"
+                    className="h-8 w-full rounded border border-border bg-card px-2 font-serif text-[16px] outline-none focus:border-pmw-accent"
                   />
                 ) : (
                   <span
@@ -276,7 +276,7 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
                   >
                     <span className="font-serif text-[16px]">{mainName}</span>
                     {meta && (
-                      <span className="font-serif italic text-[13px] text-[#6B6A3F] dark:text-[#B8B38A] ml-1">
+                      <span className="font-serif italic text-[13px] text-pmw-cal-today ml-1">
                         {meta}
                       </span>
                     )}
@@ -296,7 +296,7 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
                         if (Number.isFinite(v) && v >= 0 && v !== it.cost)
                           saveItemField(it.id, { cost: v })
                       }}
-                      className="number-input-no-spinner h-8 w-28 rounded border border-border bg-card px-2 text-right font-mono text-[15px] tabular-nums outline-none focus:border-[#D9A489] dark:focus:border-[#C08C70]"
+                      className="number-input-no-spinner h-8 w-28 rounded border border-border bg-card px-2 text-right font-mono text-[15px] tabular-nums outline-none focus:border-pmw-accent"
                     />
                     <button
                       type="button"
@@ -316,7 +316,7 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
                       on ? 'text-foreground' : 'text-muted-foreground/50 line-through'
                     }`}
                   >
-                    <span className="font-serif text-[13px] text-[#6B6A3F] dark:text-[#B8B38A] mr-[3px]">
+                    <span className="font-serif text-[13px] text-pmw-cal-today mr-[3px]">
                       ₩
                     </span>
                     <span className="font-mono text-[15px] tabular-nums">{fmt(it.cost)}</span>
@@ -344,7 +344,7 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
                           }
                         }}
                         className={cn(
-                          'h-8 w-full text-left rounded border border-border bg-card px-2 font-serif text-[16px] outline-none transition-colors focus:border-[#D9A489] dark:focus:border-[#C08C70]',
+                          'h-8 w-full text-left rounded border border-border bg-card px-2 font-serif text-[16px] outline-none transition-colors focus:border-pmw-accent',
                           !addName && 'text-muted-foreground/60',
                         )}
                       >
@@ -469,7 +469,7 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
                     value={addCost}
                     onChange={(e) => setAddCost(e.target.value)}
                     placeholder="비용"
-                    className="number-input-no-spinner h-8 w-full rounded border border-border bg-card px-2 text-right font-mono text-[15px] tabular-nums outline-none focus:border-[#D9A489] dark:focus:border-[#C08C70]"
+                    className="number-input-no-spinner h-8 w-full rounded border border-border bg-card px-2 text-right font-mono text-[15px] tabular-nums outline-none focus:border-pmw-accent"
                   />
                   <div className="flex items-center gap-1">
                     <button
@@ -511,7 +511,7 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
         <div className="flex items-baseline justify-between">
           <span className="font-serif text-[17px] text-foreground">합계</span>
           <span className="inline-flex items-baseline text-foreground">
-            <span className="font-serif text-[18px] text-[#6B6A3F] dark:text-[#B8B38A] mr-1">
+            <span className="font-serif text-[18px] text-pmw-cal-today mr-1">
               ₩
             </span>
             <span className="font-serif text-[22px] font-medium tabular-nums tracking-[0.2px]">
@@ -522,13 +522,13 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
         {disc > 0 && disc < total && (
           <div className="flex items-baseline justify-between">
             <div className="flex items-center gap-2">
-              <span className="rounded-[2px] bg-[#9B4A2D] px-1.5 py-[2px] font-mono text-[10px] font-bold tracking-[1.3px] text-white dark:bg-[#E0917A]">
+              <span className="rounded-[2px] bg-pmw-avatar-foreground px-1.5 py-[2px] font-mono text-[10px] font-bold tracking-[1.3px] text-background">
                 현금 5%
               </span>
               <span className="font-serif text-[16px] text-foreground">현금할인가</span>
             </div>
             <span className="inline-flex items-baseline text-foreground">
-              <span className="font-serif text-[15px] text-[#6B6A3F] dark:text-[#B8B38A] mr-1">
+              <span className="font-serif text-[15px] text-pmw-cal-today mr-1">
                 ₩
               </span>
               <span className="font-serif text-[19px] font-medium tabular-nums tracking-[0.2px]">
@@ -541,10 +541,10 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
     </div>
     {disc > 0 && disc < total && (
       <p className="mt-2 text-center">
-        <span className="font-mono text-[15px] font-semibold tabular-nums text-[#9B4A2D] dark:text-[#E0917A]">
+        <span className="font-mono text-[15px] font-semibold tabular-nums text-pmw-avatar-foreground">
           {fmt(total - disc)}
         </span>
-        <span className="font-serif italic text-[15px] text-[#6B6A3F] dark:text-[#B8B38A] ml-1">
+        <span className="font-serif italic text-[15px] text-pmw-cal-today ml-1">
           원 절약
         </span>
       </p>

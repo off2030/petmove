@@ -449,7 +449,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
                     className={cn(
                       'h-7 px-3 rounded-full border text-[13px] transition-colors',
                       hasChanges
-                        ? 'border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] hover:bg-[#D9A489]/25 dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489] dark:hover:bg-[#C08C70]/25'
+                        ? 'border-pmw-accent bg-pmw-accent/15 text-pmw-accent-strong hover:bg-pmw-accent/25'
                         : 'border-border/80 bg-card text-muted-foreground hover:text-foreground hover:border-foreground/40',
                     )}
                   >

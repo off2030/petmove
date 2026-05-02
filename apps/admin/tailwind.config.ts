@@ -7,6 +7,14 @@ const config: Config = {
     './components/**/*.{ts,tsx}',
     './lib/**/*.{ts,tsx}',
   ],
+  // 스킨이 정의하는 색·typography tier 클래스 — 사용처 없어도 항상 생성.
+  // 새 컴포넌트가 token 을 쓰려고 하는데 클래스 없는 상황 방지.
+  safelist: [
+    'text-pmw-text-primary',
+    'text-pmw-text-secondary',
+    'text-pmw-text-tertiary',
+    'text-pmw-text-disabled',
+  ],
   theme: {
     container: {
       center: true,
@@ -60,6 +68,22 @@ const config: Config = {
         accent:      { DEFAULT: 'hsl(var(--accent))',      foreground: 'hsl(var(--accent-foreground))' },
         popover:     { DEFAULT: 'hsl(var(--popover))',     foreground: 'hsl(var(--popover-foreground))' },
         card:        { DEFAULT: 'hsl(var(--card))',        foreground: 'hsl(var(--card-foreground))' },
+        // PMW semantic 토큰 — 스킨별 다른 색이지만 의미는 동일.
+        // bg-pmw-accent/15 같은 opacity modifier 쓰려고 hsl(var()) 래핑.
+        'pmw-accent':         { DEFAULT: 'hsl(var(--pmw-accent))',         foreground: 'hsl(var(--pmw-accent-fg))' },
+        'pmw-accent-strong':  'hsl(var(--pmw-accent-strong))',
+        'pmw-tag':            { DEFAULT: 'hsl(var(--pmw-tag-bg))',         foreground: 'hsl(var(--pmw-tag-fg))' },
+        'pmw-cal-today':      'hsl(var(--pmw-cal-today))',
+        'pmw-cal-sunday':     'hsl(var(--pmw-cal-sunday))',
+        'pmw-cal-saturday':   'hsl(var(--pmw-cal-saturday))',
+        'pmw-positive':       'hsl(var(--pmw-positive))',
+        'pmw-avatar':         { DEFAULT: 'hsl(var(--pmw-avatar-bg))',      foreground: 'hsl(var(--pmw-avatar-fg))' },
+        'pmw-code':           'hsl(var(--pmw-code-label))',
+        // 텍스트 4-tier (Linear 모델) — 스킨이 정의한 곳에서만 의미. editorial 은 fallback 으로 muted-foreground 사용.
+        'pmw-text-primary':   'hsl(var(--pmw-text-primary, var(--foreground)))',
+        'pmw-text-secondary': 'hsl(var(--pmw-text-secondary, var(--muted-foreground)))',
+        'pmw-text-tertiary':  'hsl(var(--pmw-text-tertiary, var(--muted-foreground)))',
+        'pmw-text-disabled':  'hsl(var(--pmw-text-disabled, var(--muted-foreground)))',
       },
       borderRadius: {
         lg: 'var(--radius)',

@@ -191,7 +191,7 @@ export function CalculatorApp({
                 onClick={() => setSpecies(v)}
                 className={`h-7 rounded-full px-3 text-sm transition-colors ${
                   active
-                    ? 'bg-[#D9A489] text-white dark:bg-[#C08C70]'
+                    ? 'bg-pmw-accent text-pmw-accent-foreground'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -208,7 +208,7 @@ export function CalculatorApp({
             onClick={() => setDropOpen((v) => !v)}
             className={`inline-flex h-8 items-center gap-1.5 rounded-full border bg-transparent px-3.5 text-sm transition-colors ${
               dropOpen
-                ? 'border-[#D9A489] text-[#A87862] dark:border-[#C08C70] dark:text-[#D9A489]'
+                ? 'border-pmw-accent text-pmw-accent-strong'
                 : country
                 ? 'border-border/80 text-foreground hover:text-foreground'
                 : 'border-border/80 text-muted-foreground hover:text-foreground'
@@ -248,7 +248,7 @@ export function CalculatorApp({
                       }
                     }}
                     placeholder="목적지 검색..."
-                    className="h-9 w-full rounded-md border border-border bg-background py-2 pl-8 pr-2 text-sm outline-none focus:border-[#D9A489] dark:focus:border-[#C08C70]"
+                    className="h-9 w-full rounded-md border border-border bg-background py-2 pl-8 pr-2 text-sm outline-none focus:border-pmw-accent"
                   />
                 </div>
               </div>
@@ -379,7 +379,7 @@ export function CalculatorApp({
                 }}
                 disabled={destPending}
                 placeholder="목적지 이름"
-                className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none focus:border-[#D9A489] dark:focus:border-[#C08C70] disabled:opacity-50"
+                className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none focus:border-pmw-accent disabled:opacity-50"
               />
               {destError && (
                 <div className="text-[12px] text-destructive">{destError}</div>
@@ -389,7 +389,7 @@ export function CalculatorApp({
                   type="button"
                   onClick={destAction === 'clone' ? handleClone : handleAddDestination}
                   disabled={destPending || !destName.trim()}
-                  className="flex-1 h-8 rounded-md bg-[#D9A489] text-white text-sm hover:bg-[#C8957A] disabled:opacity-50 dark:bg-[#C08C70] dark:hover:bg-[#A87862] transition-colors"
+                  className="flex-1 h-8 rounded-md bg-pmw-accent text-pmw-accent-foreground text-sm hover:bg-pmw-accent-strong disabled:opacity-50 transition-colors"
                 >
                   {destPending
                     ? '처리 중…'
@@ -421,7 +421,7 @@ export function CalculatorApp({
               onClick={() => setScheduleCountry(c.value)}
               className={`h-7 rounded-full px-3 text-sm transition-colors ${
                 active
-                  ? 'bg-[#D9A489] text-white dark:bg-[#C08C70]'
+                  ? 'bg-pmw-accent text-pmw-accent-foreground'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >

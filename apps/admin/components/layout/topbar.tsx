@@ -1,11 +1,11 @@
 'use client'
 
-import { Folder, LayoutGrid, MessageSquare, Settings, Menu, Monitor, Sun, Moon, Shield, User, LogOut, UserCog, X, Palette } from 'lucide-react'
+import { Folder, LayoutGrid, MessageSquare, Settings, Menu, Monitor, Sun, Moon, Shield, User, LogOut, UserCog, X } from 'lucide-react'
+import { SkinPicker } from './skin-picker'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useVaccineLookups } from '@/components/providers/vaccine-data-provider'
 import { useDarkMode } from '@/lib/use-dark-mode'
-import { useSkin, cycleSkin, SKIN_LABELS } from '@/lib/use-skin'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 
@@ -52,7 +52,6 @@ export function TopBar({
   const vaccineLookups = useVaccineLookups()
   const expiringCount = useMemo(() => vaccineLookups.countExpiringProducts(), [vaccineLookups])
   const { mode, mounted, cycle } = useDarkMode()
-  const { skin, mounted: skinMounted } = useSkin()
   const [menuOpen, setMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
@@ -289,17 +288,7 @@ export function TopBar({
             {mode === 'system' ? <Monitor size={18} /> : mode === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
         )}
-        {skinMounted && (
-          <button
-            type="button"
-            onClick={cycleSkin}
-            title={`스킨: ${SKIN_LABELS[skin]} (클릭하여 전환)`}
-            aria-label="스킨 전환"
-            className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-          >
-            <Palette size={18} />
-          </button>
-        )}
+        <SkinPicker />
         </div>
 
         {/* Nav tabs — right side, hidden on mobile (replaced by hamburger) */}
@@ -376,17 +365,7 @@ export function TopBar({
               {mode === 'system' ? <Monitor size={18} /> : mode === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
           )}
-          {skinMounted && (
-            <button
-              type="button"
-              onClick={cycleSkin}
-              title={`스킨: ${SKIN_LABELS[skin]} (클릭하여 전환)`}
-              aria-label="스킨 전환"
-              className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-            >
-              <Palette size={18} />
-            </button>
-          )}
+          <SkinPicker />
           {onTabChange ? (
             <button
               type="button"

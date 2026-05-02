@@ -500,7 +500,7 @@ function DestinationEditModal({
           <button
             type="button"
             onClick={handleSave}
-            className="h-7 px-3 rounded-full bg-[#D9A489] text-white dark:bg-[#C08C70] text-[13px] hover:opacity-90 transition-opacity"
+            className="h-7 px-3 rounded-full bg-pmw-accent text-pmw-accent-foreground text-[13px] hover:opacity-90 transition-opacity"
           >
             저장
           </button>

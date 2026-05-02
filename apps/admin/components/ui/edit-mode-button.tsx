@@ -26,7 +26,7 @@ export function EditModeButton({
       className={cn(
         'inline-flex h-8 items-center gap-1.5 rounded-full border px-3.5 text-sm transition-colors disabled:opacity-50',
         editMode
-          ? 'border-[#D9A489] bg-[#D9A489]/15 text-[#A87862] dark:border-[#C08C70] dark:bg-[#C08C70]/15 dark:text-[#D9A489]'
+          ? 'border-pmw-accent bg-pmw-accent/15 text-pmw-accent-strong'
           : 'border-border/80 bg-transparent text-muted-foreground hover:text-foreground',
         className,
       )}
