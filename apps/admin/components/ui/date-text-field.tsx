@@ -6,6 +6,7 @@ import { Calendar as CalendarIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { iconButton } from '@/lib/design-system'
 import { Calendar } from './calendar'
+import { useConfirm } from './confirm-dialog'
 
 function normalizeDateInput(raw: string) {
   const digits = raw.replace(/\D/g, '').slice(0, 8)
@@ -130,6 +131,26 @@ export function DateTextField({
 
   const selectedDate = parseDate(value)
   const iconSize = size === 'sm' ? 14 : 18
+  const confirm = useConfirm()
+  async function handleClear() {
+    if (!value) {
+      // 빈 값이면 confirm 없이 바로 닫기.
+      setDraft('')
+      onChange('')
+      setOpen(false)
+      return
+    }
+    const ok = await confirm({
+      message: '날짜를 삭제하시겠습니까?',
+      okLabel: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
+    setDraft('')
+    onChange('')
+    setOpen(false)
+    setTimeout(() => inputRef.current?.blur(), 0)
+  }
 
   function commitDraft() {
     if (!draft) {
@@ -238,12 +259,7 @@ export function DateTextField({
                 <button
                   type="button"
                   className="font-serif italic text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={() => {
-                    setDraft('')
-                    onChange('')
-                    setOpen(false)
-                    setTimeout(() => inputRef.current?.blur(), 0)
-                  }}
+                  onClick={handleClear}
                 >
                   삭제
                 </button>
