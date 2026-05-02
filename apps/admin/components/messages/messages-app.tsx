@@ -2,6 +2,7 @@
 
 import {
   forwardRef,
+  memo,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -81,11 +82,27 @@ export function MessagesApp({
   const [loadingMessages, setLoadingMessages] = useState(false)
   const [showNewConv, setShowNewConv] = useState(false)
 
+  // convId 별 마지막 fetch 결과 캐시 — 같은 방을 재진입하면 즉시 표시 후
+  // background refresh 만 수행해 첫 진입 외에는 로딩 깜빡임 제거.
+  type ConvSnapshot = {
+    messages: MessageRow[]
+    participants: Participant[]
+    reads: Array<{ user_id: string; last_read_at: string }>
+    pinned_message: MessageRow | null
+  }
+  const cacheRef = useRef<Map<string, ConvSnapshot>>(new Map())
+
   const refresh = useCallback(
     async (convId: string, opts?: { silent?: boolean }) => {
       if (!opts?.silent) setLoadingMessages(true)
       const r = await listConversationMessages({ convId })
       if (r.ok) {
+        cacheRef.current.set(convId, {
+          messages: r.value.messages,
+          participants: r.value.participants,
+          reads: r.value.reads,
+          pinned_message: r.value.pinned_message,
+        })
         setMessages(r.value.messages)
         setParticipants(r.value.participants)
         setReads(r.value.reads)
@@ -96,7 +113,20 @@ export function MessagesApp({
     [],
   )
 
-  // 활성 대화방 — 첫 로드 + Realtime
+  // realtime 이벤트가 짧은 시간에 여러 번 와도 한번만 refetch.
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const scheduleRefresh = useCallback(
+    (convId: string) => {
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
+      refreshTimerRef.current = setTimeout(() => {
+        refreshTimerRef.current = null
+        refresh(convId, { silent: true })
+      }, 200)
+    },
+    [refresh],
+  )
+
+  // 활성 대화방 — 캐시 우선 표시 + 첫 로드 + Realtime
   useEffect(() => {
     if (!activeId) {
       setMessages([])
@@ -106,14 +136,41 @@ export function MessagesApp({
       return
     }
     const convId = activeId
-    refresh(convId)
 
+    // 1) 캐시 hit → 즉시 표시. miss → loading 띄우고 fetch.
+    const cached = cacheRef.current.get(convId)
+    if (cached) {
+      setMessages(cached.messages)
+      setParticipants(cached.participants)
+      setReads(cached.reads)
+      setPinnedMessage(cached.pinned_message)
+      refresh(convId, { silent: true })
+    } else {
+      refresh(convId)
+    }
+
+    // 2) Realtime — 본인이 보낸 INSERT 는 이미 낙관적으로 추가했으므로 skip,
+    //    그 외 모든 변경은 200ms debounce 로 묶어 1회 refetch.
     const channel = supabaseBrowser
       .channel(`conv:${convId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'messages', filter: `conversation_id=eq.${convId}` },
-        () => refresh(convId, { silent: true }),
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${convId}` },
+        (payload) => {
+          const sender = (payload.new as { sender_user_id?: string } | null)?.sender_user_id
+          if (sender && sender === currentUserId) return
+          scheduleRefresh(convId)
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${convId}` },
+        () => scheduleRefresh(convId),
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${convId}` },
+        () => scheduleRefresh(convId),
       )
       .on(
         'postgres_changes',
@@ -123,7 +180,13 @@ export function MessagesApp({
           table: 'message_reads',
           filter: `conversation_id=eq.${convId}`,
         },
-        () => refresh(convId, { silent: true }),
+        (payload) => {
+          const userId =
+            (payload.new as { user_id?: string } | null)?.user_id ??
+            (payload.old as { user_id?: string } | null)?.user_id
+          if (userId && userId === currentUserId) return
+          scheduleRefresh(convId)
+        },
       )
       .on(
         'postgres_changes',
@@ -133,13 +196,17 @@ export function MessagesApp({
           table: 'conversation_participants',
           filter: `conversation_id=eq.${convId}`,
         },
-        () => refresh(convId, { silent: true }),
+        () => scheduleRefresh(convId),
       )
       .subscribe()
     return () => {
       void supabaseBrowser.removeChannel(channel)
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current)
+        refreshTimerRef.current = null
+      }
     }
-  }, [activeId, refresh])
+  }, [activeId, currentUserId, refresh, scheduleRefresh])
 
   // 메시지 탭이 활성일 때만 read 처리
   useEffect(() => {
@@ -214,8 +281,14 @@ export function MessagesApp({
               currentUserId={currentUserId}
               onClose={() => setActiveId(null)}
               onMessageSent={(m) => {
-                setMessages((prev) => [...prev, m])
-                refresh(activeConv.id, { silent: true })
+                // 낙관적 추가 + cache 동기화. realtime 자체 echo 는 스킵되므로
+                // 명시적 refresh() 불필요 — UI flash 제거.
+                setMessages((prev) => {
+                  const next = [...prev, m]
+                  const snap = cacheRef.current.get(activeConv.id)
+                  if (snap) cacheRef.current.set(activeConv.id, { ...snap, messages: next })
+                  return next
+                })
               }}
               onMessageDeleted={(msgId) => {
                 setMessages((prev) =>
@@ -231,6 +304,7 @@ export function MessagesApp({
                 setParticipants([])
                 setReads([])
                 setPinnedMessage(null)
+                cacheRef.current.delete(leftId)
                 setConversations((prev) => prev.filter((c) => c.id !== leftId))
               }}
               onPinChange={async (msgId) => {
@@ -880,11 +954,14 @@ function ThreadPane({
     }
   }, [showActionMenu])
 
+  // 메시지 길이 변경시에만 자동 스크롤. otherTyping 토글로는 스크롤하지
+  // 않음 — 사용자가 위로 스크롤해서 과거 메시지 보고 있을 때 상대 입력
+  // 표시가 떠도 강제 하단 이동 안 일어남.
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
     el.scrollTop = el.scrollHeight
-  }, [messages.length, otherTyping])
+  }, [messages.length])
 
   // 검색 — 250ms debounce
   useEffect(() => {
@@ -941,15 +1018,26 @@ function ThreadPane({
     return readsByUser.get(participants[0].user_id) ?? null
   }, [isGroup, participants, readsByUser])
 
-  function readCountFor(msg: MessageRow): number {
-    if (!currentUserId || msg.sender_user_id !== currentUserId) return 0
-    let count = 0
+  // 메시지별 readCount 를 한 번에 계산 — 매 렌더 O(n×m) 재계산 회피.
+  // participants/reads/messages 가 바뀔 때만 재계산.
+  const readCountByMsgId = useMemo(() => {
+    const out = new Map<string, number>()
+    if (!currentUserId) return out
+    // 참여자별 last_read_at 의 ms 값을 미리 구해 비교 비용 낮춤.
+    const participantReadMs: number[] = []
     for (const p of participants) {
       const rd = readsByUser.get(p.user_id)
-      if (rd && new Date(msg.created_at) <= new Date(rd)) count += 1
+      if (rd) participantReadMs.push(new Date(rd).getTime())
     }
-    return count
-  }
+    for (const m of messages) {
+      if (m.sender_user_id !== currentUserId) continue
+      const created = new Date(m.created_at).getTime()
+      let count = 0
+      for (const ms of participantReadMs) if (created <= ms) count += 1
+      out.set(m.id, count)
+    }
+    return out
+  }, [currentUserId, messages, participants, readsByUser])
 
   async function handleRename() {
     const next = draftName.trim().slice(0, NAME_MAX) || null
@@ -1023,7 +1111,7 @@ function ThreadPane({
     onMembersChanged()
   }
 
-  async function handleMessageDelete(msgId: string) {
+  const handleMessageDelete = useCallback(async (msgId: string) => {
     const ok = await confirm({
       message: '이 메시지를 삭제하시겠습니까?',
       description: isGroup
@@ -1039,7 +1127,16 @@ function ThreadPane({
       return
     }
     onMessageDeleted(msgId)
-  }
+  }, [confirm, isGroup, onMessageDeleted])
+
+  // 메시지별 onPin/onDelete 콜백을 매 렌더마다 새로 만들면 React.memo 가
+  // 깨짐. (msgId, currentlyPinned) 시그니처로 통일해 안정 ref 유지.
+  const handleTogglePin = useCallback(
+    (msgId: string, currentlyPinned: boolean) => {
+      void onPinChange(currentlyPinned ? null : msgId)
+    },
+    [onPinChange],
+  )
 
   return (
     <>
@@ -1321,7 +1418,7 @@ function ThreadPane({
                   const showSender =
                     i === 0 || messages[i - 1].sender_user_id !== m.sender_user_id
                   const isPinned = pinnedMessage?.id === m.id
-                  const readCount = readCountFor(m)
+                  const readCount = readCountByMsgId.get(m.id) ?? 0
                   const isReadByOther =
                     !isGroup &&
                     isOwn &&
@@ -1338,18 +1435,17 @@ function ThreadPane({
                       readCount={readCount}
                       memberCount={memberCount}
                       isPinned={isPinned}
-                      onDelete={isOwn ? () => handleMessageDelete(m.id) : undefined}
-                      onPin={() => onPinChange(isPinned ? null : m.id)}
+                      onDelete={isOwn ? handleMessageDelete : undefined}
+                      onPin={handleTogglePin}
                     />
                   )
                 })}
               </ul>
             )}
-            {otherTyping && (
-              <div className="mt-2 px-sm text-[12px] italic font-serif text-muted-foreground/70">
-                작성 중…
-              </div>
-            )}
+            {/* 항상 자리를 차지해 표시/숨김 시 레이아웃 시프트 없음. */}
+            <div className="mt-2 px-sm text-[12px] italic font-serif text-muted-foreground/70 h-4" aria-live="polite">
+              {otherTyping ? '작성 중…' : ''}
+            </div>
           </div>
 
           <Composer
@@ -1458,7 +1554,7 @@ function ThreadPane({
   )
 }
 
-function MessageItem({
+const MessageItem = memo(function MessageItem({
   msg,
   isOwn,
   showSender,
@@ -1478,8 +1574,8 @@ function MessageItem({
   readCount: number
   memberCount: number
   isPinned: boolean
-  onDelete?: () => void
-  onPin?: () => void
+  onDelete?: (msgId: string) => void
+  onPin?: (msgId: string, currentlyPinned: boolean) => void
 }) {
   if (msg.deleted_at) {
     return (
@@ -1565,7 +1661,7 @@ function MessageItem({
           {onPin && !msg.deleted_at && (
             <button
               type="button"
-              onClick={onPin}
+              onClick={() => onPin(msg.id, isPinned)}
               aria-label={isPinned ? '공지 해제' : '공지로 등록'}
               title={isPinned ? '공지 해제' : '공지로 등록'}
               className={cn(
@@ -1579,7 +1675,7 @@ function MessageItem({
           {isOwn && onDelete && (
             <button
               type="button"
-              onClick={onDelete}
+              onClick={() => onDelete(msg.id)}
               aria-label="메시지 삭제"
               title="메시지 삭제"
               className="opacity-0 group-hover:opacity-100 inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-opacity"
@@ -1591,7 +1687,7 @@ function MessageItem({
       </div>
     </li>
   )
-}
+})
 
 function Composer({
   convId,
