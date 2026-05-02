@@ -222,7 +222,7 @@ export async function updateCaseField(
   let autoFilled: { data: Record<string, unknown> } | undefined
   if (DATE_TRIGGER_KEYS.has(key)) {
     try {
-      await applyAutoFillRules(supabase, caseId)
+      await applyAutoFillRules(supabase, caseId, key)
       // auto-fill 이후 최신 data 를 다시 읽어 클라이언트 context 에 반영할 수 있게 리턴.
       const { data: refreshed } = await supabase
         .from('cases')

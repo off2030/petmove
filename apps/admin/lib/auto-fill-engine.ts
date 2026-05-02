@@ -193,10 +193,14 @@ function applyRuleToData(
 
 /**
  * Entry point — 필드 변경 후 호출. 매칭되는 규칙 실행 + chaining.
+ *
+ * `userEditedKey` 가 주어지면 그 필드를 target 으로 갖는 규칙은 건너뜀.
+ * 사용자가 방금 직접 수정한 값을 자동화가 다시 덮어쓰지 못하게 하기 위함.
  */
 export async function applyAutoFillRules(
   supabase: SupabaseClient,
   caseId: string,
+  userEditedKey?: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
     const { data: row, error: fetchErr } = await supabase
@@ -246,10 +250,17 @@ export async function applyAutoFillRules(
       }
     }
 
-    // 매칭 필터: 목적지 + 종
-    const matchedRules = rules.filter(
-      (r) => destinationMatches(r.destination_key, destination) && speciesMatches(r.species_filter, species),
-    )
+    // 매칭 필터: 목적지 + 종 + (사용자가 방금 수정한 필드를 target 으로 갖는 규칙 제외)
+    const matchedRules = rules.filter((r) => {
+      if (!destinationMatches(r.destination_key, destination)) return false
+      if (!speciesMatches(r.species_filter, species)) return false
+      if (userEditedKey) {
+        const { arrayName } = parsePath(r.target_field)
+        const targetBase = arrayName ?? r.target_field
+        if (targetBase === userEditedKey) return false
+      }
+      return true
+    })
     if (matchedRules.length === 0) return { ok: true }
 
     // 반복적으로 적용 — 새로 쓴 필드가 다른 규칙의 trigger 에 해당하면 한 번 더.
