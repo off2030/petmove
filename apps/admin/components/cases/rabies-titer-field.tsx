@@ -261,8 +261,8 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
             accept="image/*,.pdf"
             onFile={handleFile}
             disabled={extracting}
-            title="이미지/PDF 로 자동 입력 (모바일 카메라 시 자동 크롭)"
-            className="h-6 w-6 text-muted-foreground/60"
+            title="이미지/PDF 로 자동 입력 (자동 크롭)"
+            className="md:hidden h-6 w-6 text-muted-foreground/60"
           />
         )}
       </div>
