@@ -561,21 +561,12 @@ function TiterRecordRow({
 
       {/* Value */}
       {isEditing === 'value' ? (
-        <span className="inline-flex items-center gap-1">
-          <ValueInput
-            initial={cleanValue || ''}
-            onSave={(v) => { onUpdateField('value', v || null); onStopEdit() }}
-            onCancel={onStopEdit}
-            saving={saving}
-          />
-          <AttachButton
-            accept="image/*,.pdf"
-            onFile={onAttachFile}
-            disabled={extracting}
-            title="이미지/PDF 로 자동 입력"
-            className="h-6 w-6 text-muted-foreground/60"
-          />
-        </span>
+        <ValueInput
+          initial={cleanValue || ''}
+          onSave={(v) => { onUpdateField('value', v || null); onStopEdit() }}
+          onCancel={onStopEdit}
+          saving={saving}
+        />
       ) : (
         <button type="button" onClick={() => onStartEdit('value')}
           className={cn(
