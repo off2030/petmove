@@ -76,6 +76,21 @@ function isValidCorners(c: Corners | null | undefined): c is Corners {
   )
 }
 
+/**
+ * 검출된 4점의 bounding box 가 이미지의 일정 비율 이상을 차지해야 의미있는
+ * 검출. jscanify 가 이상한 작은 영역(다른 종이 조각, 그림자 등)을 잡으면
+ * 4점이 좁게 뭉치는데, fullback (이미지 전체) 으로 돌려 사용자가 직접
+ * 모서리를 잡도록 유도.
+ */
+function isReasonableQuad(c: Corners, imgW: number, imgH: number): boolean {
+  const xs = CORNER_KEYS.map((k) => c[k].x)
+  const ys = CORNER_KEYS.map((k) => c[k].y)
+  const w = Math.max(...xs) - Math.min(...xs)
+  const h = Math.max(...ys) - Math.min(...ys)
+  // 가로·세로 모두 이미지의 25% 이상 차지해야 인정.
+  return w >= imgW * 0.25 && h >= imgH * 0.25
+}
+
 export function ScanFlow({ source, onConfirm, onClose }: ScanFlowProps) {
   const [stage, setStage] = useState<Stage>('loading')
   const [error, setError] = useState<string | null>(null)
@@ -121,7 +136,10 @@ export function ScanFlow({ source, onConfirm, onClose }: ScanFlowProps) {
           mat.delete()
         }
 
-        if (!isValidCorners(detected)) {
+        if (
+          !isValidCorners(detected) ||
+          !isReasonableQuad(detected, img.naturalWidth, img.naturalHeight)
+        ) {
           detected = fallbackCorners(img.naturalWidth, img.naturalHeight)
         }
 
