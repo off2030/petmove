@@ -59,6 +59,7 @@ import {
 } from '@/lib/actions/chat'
 import { PageShell } from '@/components/ui/page-shell'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
+import { getCachedConv, setCachedConv, deleteCachedConv } from '@/lib/messages/cache-idb'
 
 const MAX_CHAT_FILE_BYTES = 25 * 1024 * 1024
 const NAME_MAX = 50
@@ -97,12 +98,15 @@ export function MessagesApp({
       if (!opts?.silent) setLoadingMessages(true)
       const r = await listConversationMessages({ convId })
       if (r.ok) {
-        cacheRef.current.set(convId, {
+        const snap = {
           messages: r.value.messages,
           participants: r.value.participants,
           reads: r.value.reads,
           pinned_message: r.value.pinned_message,
-        })
+        }
+        cacheRef.current.set(convId, snap)
+        // IDB 영속 저장 (silent fail) — 다음 세션/새로고침에서도 즉시 표시.
+        void setCachedConv(convId, snap)
         setMessages(r.value.messages)
         setParticipants(r.value.participants)
         setReads(r.value.reads)
@@ -126,6 +130,50 @@ export function MessagesApp({
     [refresh],
   )
 
+  // 대화목록이 채워지면 — 모든 conv 의 메시지를 백그라운드 prefetch.
+  // 사용자가 어떤 대화를 탭하든 in-memory cache hit → 즉시 표시.
+  // 동시 요청이 많으면 서버 부담 → 동시 3개로 제한 + 이미 캐시 있으면 skip.
+  const prefetchedRef = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    if (!isActive || conversations.length === 0) return
+    let canceled = false
+    const PARALLEL = 3
+    const queue = conversations
+      .map((c) => c.id)
+      .filter((id) => !cacheRef.current.has(id) && !prefetchedRef.current.has(id))
+    if (queue.length === 0) return
+
+    async function worker() {
+      while (!canceled) {
+        const id = queue.shift()
+        if (!id) return
+        prefetchedRef.current.add(id)
+        try {
+          const r = await listConversationMessages({ convId: id })
+          if (canceled) return
+          if (r.ok) {
+            const snap = {
+              messages: r.value.messages,
+              participants: r.value.participants,
+              reads: r.value.reads,
+              pinned_message: r.value.pinned_message,
+            }
+            cacheRef.current.set(id, snap)
+            void setCachedConv(id, snap)
+          }
+        } catch {
+          // ignore — 사용자가 직접 탭했을 때 다시 fetch.
+        }
+      }
+    }
+
+    const workers = Array.from({ length: Math.min(PARALLEL, queue.length) }, () => worker())
+    void Promise.all(workers)
+    return () => {
+      canceled = true
+    }
+  }, [isActive, conversations])
+
   // 활성 대화방 — 캐시 우선 표시 + 첫 로드 + Realtime
   useEffect(() => {
     if (!activeId) {
@@ -137,7 +185,7 @@ export function MessagesApp({
     }
     const convId = activeId
 
-    // 1) 캐시 hit → 즉시 표시. miss → loading 띄우고 fetch.
+    // 1) in-memory 캐시 우선. miss 면 IDB 조회 후 hydrate. 둘 다 miss 면 loading.
     const cached = cacheRef.current.get(convId)
     if (cached) {
       setMessages(cached.messages)
@@ -146,6 +194,25 @@ export function MessagesApp({
       setPinnedMessage(cached.pinned_message)
       refresh(convId, { silent: true })
     } else {
+      // 네트워크 fetch 와 IDB 조회를 동시에 시작. 보통 IDB 가 먼저 끝나
+      // 즉시 화면이 채워지고, 잠시 뒤 fetch 가 최신 데이터로 덮음.
+      // 만약 fetch 가 먼저 끝났으면 (in-memory cache 존재) IDB 응답 무시.
+      void getCachedConv(convId).then((snap) => {
+        if (!snap) return
+        if (cacheRef.current.has(convId)) return
+        const restored = {
+          messages: snap.messages,
+          participants: snap.participants,
+          reads: snap.reads,
+          pinned_message: snap.pinned_message,
+        }
+        cacheRef.current.set(convId, restored)
+        setMessages(restored.messages)
+        setParticipants(restored.participants)
+        setReads(restored.reads)
+        setPinnedMessage(restored.pinned_message)
+        setLoadingMessages(false)
+      })
       refresh(convId)
     }
 
@@ -305,6 +372,7 @@ export function MessagesApp({
                 setReads([])
                 setPinnedMessage(null)
                 cacheRef.current.delete(leftId)
+                void deleteCachedConv(leftId)
                 setConversations((prev) => prev.filter((c) => c.id !== leftId))
               }}
               onPinChange={async (msgId) => {

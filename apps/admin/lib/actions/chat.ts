@@ -306,7 +306,7 @@ export async function listConversationMessages(input: {
   let q = supabase
     .from('messages')
     .select(
-      'id, conversation_id, sender_user_id, case_id, content, file_url, file_name, created_at, edited_at, deleted_at',
+      'id, conversation_id, sender_user_id, sender_name, case_id, content, file_url, file_name, created_at, edited_at, deleted_at',
     )
     .eq('conversation_id', input.convId)
     .order('created_at', { ascending: true })
@@ -339,9 +339,6 @@ export async function listConversationMessages(input: {
   if (readsRes.error) return { ok: false, error: readsRes.error.message }
   const rows = msgsRes.data ?? []
 
-  const senderIds = Array.from(
-    new Set(rows.map((r) => r.sender_user_id as string | null).filter((v): v is string => !!v)),
-  )
   const caseIds = Array.from(
     new Set(rows.map((r) => r.case_id as string | null).filter((v): v is string => !!v)),
   )
@@ -349,10 +346,10 @@ export async function listConversationMessages(input: {
     new Set(rows.map((r) => r.file_url as string | null).filter((v): v is string => !!v)),
   )
   const memberUserIds = (partsRes.data ?? []).map((r) => r.user_id as string)
-  const allUserIdsForName = Array.from(new Set([...senderIds, ...memberUserIds]))
 
   // Wave 2 — messages 와 participants 결과에 의존하는 4개를 병렬.
-  // 기존 loadParticipantInfo 의 profiles+memberships 도 여기로 합쳐 RTT 1회 절감.
+  // sender_name 은 messages 컬럼에서 직접 오므로 profiles 는 participants
+  // 만 조회 (그룹 헤더 아바타/소속 표시용).
   const [signedUrls, casesRes, profsRes, memsRes] = await Promise.all([
     filePaths.length > 0
       ? admin.storage.from('chat-files').createSignedUrls(filePaths, CHAT_FILE_URL_TTL)
@@ -372,14 +369,14 @@ export async function listConversationMessages(input: {
           }[],
           error: null,
         }),
-    allUserIdsForName.length > 0
-      ? admin.from('profiles').select('id, name, email, avatar_url').in('id', allUserIdsForName)
+    memberUserIds.length > 0
+      ? admin.from('profiles').select('id, name, email, avatar_url').in('id', memberUserIds)
       : Promise.resolve({
           data: [] as { id: string; name: string | null; email: string | null; avatar_url: string | null }[],
           error: null,
         }),
-    allUserIdsForName.length > 0
-      ? admin.from('memberships').select('user_id, org_id').in('user_id', allUserIdsForName)
+    memberUserIds.length > 0
+      ? admin.from('memberships').select('user_id, org_id').in('user_id', memberUserIds)
       : Promise.resolve({
           data: [] as { user_id: string; org_id: string }[],
           error: null,
@@ -414,7 +411,7 @@ export async function listConversationMessages(input: {
       avatar_url: (p.avatar_url as string | null) ?? null,
     })
   }
-  for (const uid of allUserIdsForName) {
+  for (const uid of memberUserIds) {
     if (!profMap.has(uid))
       profMap.set(uid, { name: null, email: null, org_name: null, avatar_url: null })
   }
@@ -426,6 +423,7 @@ export async function listConversationMessages(input: {
       return { user_id: uid, ...prof }
     })
 
+  // 백필 누락 (구버전 row) 폴백용 — 참여자 이름만 보유.
   const nameMap = new Map<string, string | null>()
   for (const [uid, prof] of profMap) nameMap.set(uid, prof.name ?? prof.email ?? null)
 
@@ -445,7 +443,10 @@ export async function listConversationMessages(input: {
     id: r.id as string,
     conversation_id: r.conversation_id as string,
     sender_user_id: (r.sender_user_id as string | null) ?? null,
-    sender_name: r.sender_user_id ? nameMap.get(r.sender_user_id as string) ?? null : null,
+    // 우선 row 컬럼 (비정규화). 빈 경우 (구버전 미백필) 만 nameMap 폴백.
+    sender_name:
+      (r.sender_name as string | null) ??
+      (r.sender_user_id ? nameMap.get(r.sender_user_id as string) ?? null : null),
     case_id: (r.case_id as string | null) ?? null,
     case_label: r.case_id ? labelMap.get(r.case_id as string) ?? null : null,
     content: (r.content as string | null) ?? null,
@@ -465,14 +466,14 @@ export async function listConversationMessages(input: {
       const { data: pinnedRow } = await supabase
         .from('messages')
         .select(
-          'id, conversation_id, sender_user_id, case_id, content, file_url, file_name, created_at, edited_at, deleted_at',
+          'id, conversation_id, sender_user_id, sender_name, case_id, content, file_url, file_name, created_at, edited_at, deleted_at',
         )
         .eq('id', pinnedId)
         .maybeSingle()
       if (pinnedRow) {
         const senderId = pinnedRow.sender_user_id as string | null
-        let senderName: string | null = null
-        if (senderId) {
+        let senderName: string | null = (pinnedRow.sender_name as string | null) ?? null
+        if (!senderName && senderId) {
           if (nameMap.has(senderId)) senderName = nameMap.get(senderId) ?? null
           else {
             const { data: prof } = await admin
@@ -547,24 +548,33 @@ export async function sendMessage(input: {
   const fileUrl = input.fileUrl ?? null
   if (!content && !fileUrl) return { ok: false, error: '내용 또는 첨부파일이 필요합니다' }
 
-  let caseLabel: string | null = null
-  const caseId = input.caseId ?? null
-  if (caseId) {
-    const supabase = await createClient()
-    const { data: c } = await supabase
-      .from('cases')
-      .select('pet_name, pet_name_en, destination, microchip')
-      .eq('id', caseId)
-      .maybeSingle()
-    if (c) caseLabel = caseLabelFrom(c as Parameters<typeof caseLabelFrom>[0])
-  }
-
   const supabase = await createClient()
+  const caseId = input.caseId ?? null
+  const admin = createAdminClient()
+  // 본인 이름 + caseLabel 을 한꺼번에 lookup — insert 시 row 에 박아 read 경로
+  // 의 profiles JOIN 을 제거.
+  const [caseRes, profRes] = await Promise.all([
+    caseId
+      ? supabase
+          .from('cases')
+          .select('pet_name, pet_name_en, destination, microchip')
+          .eq('id', caseId)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    admin.from('profiles').select('name, email').eq('id', auth.userId).maybeSingle(),
+  ])
+  const caseLabel = caseRes.data
+    ? caseLabelFrom(caseRes.data as Parameters<typeof caseLabelFrom>[0])
+    : null
+  const senderName =
+    (profRes.data?.name as string | null) ?? (profRes.data?.email as string | null) ?? null
+
   const { data, error } = await supabase
     .from('messages')
     .insert({
       conversation_id: input.convId,
       sender_user_id: auth.userId,
+      sender_name: senderName,
       case_id: caseId,
       case_label: caseLabel,
       content: content || null,
@@ -572,7 +582,7 @@ export async function sendMessage(input: {
       file_name: input.fileName ?? null,
     })
     .select(
-      'id, conversation_id, sender_user_id, case_id, case_label, content, file_url, file_name, created_at, edited_at, deleted_at',
+      'id, conversation_id, sender_user_id, sender_name, case_id, case_label, content, file_url, file_name, created_at, edited_at, deleted_at',
     )
     .single()
   if (error) return { ok: false, error: error.message }
@@ -583,7 +593,7 @@ export async function sendMessage(input: {
       id: data.id as string,
       conversation_id: data.conversation_id as string,
       sender_user_id: data.sender_user_id as string | null,
-      sender_name: null,
+      sender_name: (data.sender_name as string | null) ?? null,
       case_id: (data.case_id as string | null) ?? null,
       case_label: (data.case_label as string | null) ?? null,
       content: (data.content as string | null) ?? null,
@@ -685,7 +695,7 @@ export async function searchMessagesInConversation(input: {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('messages')
-    .select('id, conversation_id, sender_user_id, content, file_url, case_label, created_at')
+    .select('id, conversation_id, sender_user_id, sender_name, content, file_url, case_label, created_at')
     .eq('conversation_id', input.convId)
     .is('deleted_at', null)
     .ilike('content', `%${escaped}%`)
@@ -694,18 +704,27 @@ export async function searchMessagesInConversation(input: {
   if (error) return { ok: false, error: error.message }
   const rows = data ?? []
 
-  const senderIds = Array.from(
-    new Set(rows.map((r) => r.sender_user_id as string | null).filter((v): v is string => !!v)),
+  // sender_name 백필 누락 폴백 — 비어있는 row 만 profile lookup.
+  const missingSenderIds = Array.from(
+    new Set(
+      rows
+        .filter((r) => !r.sender_name && r.sender_user_id)
+        .map((r) => r.sender_user_id as string),
+    ),
   )
-  const profMap = await loadParticipantInfo(senderIds)
   const nameMap = new Map<string, string | null>()
-  for (const [uid, prof] of profMap) nameMap.set(uid, prof.name ?? prof.email ?? null)
+  if (missingSenderIds.length > 0) {
+    const profMap = await loadParticipantInfo(missingSenderIds)
+    for (const [uid, prof] of profMap) nameMap.set(uid, prof.name ?? prof.email ?? null)
+  }
 
   const value: MessageSearchHit[] = rows.map((r) => ({
     id: r.id as string,
     conversation_id: r.conversation_id as string,
     sender_user_id: (r.sender_user_id as string | null) ?? null,
-    sender_name: r.sender_user_id ? nameMap.get(r.sender_user_id as string) ?? null : null,
+    sender_name:
+      (r.sender_name as string | null) ??
+      (r.sender_user_id ? nameMap.get(r.sender_user_id as string) ?? null : null),
     case_label: (r.case_label as string | null) ?? null,
     content: (r.content as string | null) ?? null,
     has_file: !!(r.file_url as string | null),
