@@ -8,11 +8,15 @@ import { useEffect, useState } from 'react'
 
 const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
 
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+// Uint8Array<ArrayBuffer> 명시 — TS 6 의 strict 타이핑이 Uint8Array<ArrayBufferLike>
+// 로 추론하면 PushManager.subscribe 의 applicationServerKey: BufferSource 와 호환 X
+// (BufferSource 의 backing buffer 는 SharedArrayBuffer 가 아닌 ArrayBuffer 강제).
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
   const raw = atob(base64)
-  const arr = new Uint8Array(raw.length)
+  const buffer = new ArrayBuffer(raw.length)
+  const arr = new Uint8Array(buffer)
   for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i)
   return arr
 }
