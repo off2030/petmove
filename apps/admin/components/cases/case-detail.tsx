@@ -10,7 +10,7 @@ import {
 } from '@/lib/fields'
 import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, extraFieldMatchesSpecies, findCustomDestination, EXTRA_FIELD_DEFS, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, SWISS_ENTRY_AIRPORT_OPTIONS, THAILAND_ENTRY_AIRPORT_OPTIONS, type ExtraFieldDef } from '@petmove/domain'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Trash2, ChevronDown } from 'lucide-react'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { AttachButton } from '@/components/ui/attach-button'
@@ -54,7 +54,9 @@ const COLLAPSED_KEY = 'petmove:case-detail:collapsed-sections'
 export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef?: React.Ref<HTMLDivElement> }) {
   const { fieldDefs, updateLocalCaseField, activeDestination } = useCases()
   const { config: destOverridesConfig } = useDestinationOverrides()
-  const allSpecs = buildFieldSpecs(fieldDefs)
+  // fieldDefs 는 컨텍스트에서 stable — 매 렌더마다 buildFieldSpecs 호출 회피.
+  // 입력마다 case-detail 가 재렌더되는데 fieldDefs 자체는 안 바뀌므로 큰 절약.
+  const allSpecs = useMemo(() => buildFieldSpecs(fieldDefs), [fieldDefs])
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const extraFields = (data.extra_visible_fields as string[]) ?? []
   const speciesValue = (data.species as string) ?? ''
