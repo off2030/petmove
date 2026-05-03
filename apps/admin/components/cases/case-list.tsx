@@ -493,8 +493,18 @@ export function CaseList({
 
 /**
  * Flatten a case row into one string we can case-insensitive substring match.
+ *
+ * Cached on the CaseRow object identity. immutable update 패턴 (cases-context
+ * updateLocalCaseField) 이라 case 가 바뀌면 새 reference → cache miss → 재계산.
+ * 변경 안 된 case 는 cache hit → JSON.stringify 비용 회피. 1000+ rows 에서
+ * 검색 타이핑할 때 매 키스트로크마다 모든 case 의 data 객체를 stringify 하던
+ * 것을 일회성으로 줄임.
  */
+const searchStringCache = new WeakMap<CaseRow, string>()
+
 function buildSearchString(c: CaseRow): string {
+  const cached = searchStringCache.get(c)
+  if (cached !== undefined) return cached
   const chip = c.microchip ?? ''
   const parts: string[] = [
     c.customer_name,
@@ -516,5 +526,7 @@ function buildSearchString(c: CaseRow): string {
       }
     }
   }
-  return parts.join(' ')
+  const result = parts.join(' ')
+  searchStringCache.set(c, result)
+  return result
 }
