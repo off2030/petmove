@@ -3,13 +3,15 @@
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 
-/** 외부 고객용 페이지 — OS 다크 모드와 운영자가 고른 스킨 모두 무시하고 항상 기본 라이트. */
-const FORCE_DEFAULT_PATHS = ['/apply']
+/** 외부 고객용 페이지 — OS 다크 모드와 운영자가 고른 스킨 모두 무시하고 항상 editorial.
+ *  - /apply: 등록 신청서 (보호자 등 외부)
+ *  - /share: 매직 링크 정보 입력 폼 (외부 동물병원·운송사·보호자 등) */
+const FORCE_DEFAULT_PATHS = ['/apply', '/share']
 
 type Mode = 'system' | 'light' | 'dark'
-type Skin = 'editorial' | 'flat' | 'neumorphism'
+type Skin = 'editorial' | 'flat' | 'neumorphism' | 'glassmorphism' | 'art-deco' | 'foggy-pastel' | 'hygge' | 'scandi-minimal' | 'bento' | 'sakura' | 'baby-blue'
 
-const VALID_SKINS: Skin[] = ['editorial', 'flat', 'neumorphism']
+const VALID_SKINS: Skin[] = ['editorial', 'flat', 'neumorphism', 'glassmorphism', 'art-deco', 'foggy-pastel', 'hygge', 'scandi-minimal', 'bento', 'sakura', 'baby-blue']
 
 function readMode(): Mode {
   try {

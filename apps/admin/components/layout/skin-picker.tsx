@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Palette, Check } from 'lucide-react'
 import { useSkin, setSkin, SKIN_LIST, SKIN_LABELS, type Skin } from '@/lib/use-skin'
 
@@ -10,34 +11,56 @@ const SKIN_PREVIEW: Record<Skin, { bg: string; accent: string }> = {
   editorial: { bg: '#F5F4ED', accent: '#9B4A2D' },
   flat: { bg: '#FFFFFF', accent: '#18181B' },
   neumorphism: { bg: '#E8ECF1', accent: '#4A5568' },
+  glassmorphism: { bg: 'linear-gradient(135deg,#C7D2FE,#A78BFA)', accent: '#4F46E5' },
+  'art-deco': { bg: '#0F1B30', accent: '#C9A961' },
+  'foggy-pastel': { bg: '#D5DBE0', accent: '#5C6B7C' },
+  hygge: { bg: '#EFE6D6', accent: '#B89070' },
+  'scandi-minimal': { bg: '#E8E5DD', accent: '#1F1F1B' },
+  bento: { bg: '#E5DFD0', accent: '#2A241B' },
+  sakura: { bg: 'linear-gradient(180deg,#FCE4EC,#F8D0DA)', accent: 'linear-gradient(180deg,#F5C0CB,#E8A0B0)' },
+  'baby-blue': { bg: '#DCE7F2', accent: '#4A7AB8' },
 }
 
 export function SkinPicker() {
   const { skin, mounted } = useSkin()
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null)
+
+  // 드롭다운 위치 — 트리거 버튼 기준 viewport 좌표.
+  useEffect(() => {
+    if (!open) return
+    const t = triggerRef.current
+    if (!t) return
+    const r = t.getBoundingClientRect()
+    setPos({ top: r.bottom + 4, right: window.innerWidth - r.right })
+    const onResize = () => {
+      const rr = t.getBoundingClientRect()
+      setPos({ top: rr.bottom + 4, right: window.innerWidth - rr.right })
+    }
+    window.addEventListener('resize', onResize)
+    window.addEventListener('scroll', onResize, true)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      window.removeEventListener('scroll', onResize, true)
+    }
+  }, [open])
 
   useEffect(() => {
     if (!open) return
-    const onDoc = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false)
-    }
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
-    document.addEventListener('mousedown', onDoc)
     document.addEventListener('keydown', onEsc)
-    return () => {
-      document.removeEventListener('mousedown', onDoc)
-      document.removeEventListener('keydown', onEsc)
-    }
+    return () => document.removeEventListener('keydown', onEsc)
   }, [open])
 
   if (!mounted) return null
 
   return (
-    <div ref={ref} className="relative">
+    <>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
         title={`스킨: ${SKIN_LABELS[skin]}`}
@@ -47,37 +70,47 @@ export function SkinPicker() {
       >
         <Palette size={18} />
       </button>
-      {open && (
-        <div
-          role="menu"
-          className="absolute right-0 top-full mt-1 z-50 w-44 rounded-md border border-border bg-popover shadow-md p-1"
-        >
-          {SKIN_LIST.map((s) => {
-            const preview = SKIN_PREVIEW[s]
-            const active = s === skin
-            return (
-              <button
-                key={s}
-                type="button"
-                role="menuitemradio"
-                aria-checked={active}
-                onClick={() => {
-                  setSkin(s)
-                  setOpen(false)
-                }}
-                className="w-full flex items-center gap-sm px-sm py-1.5 rounded-sm font-serif text-[13px] text-foreground hover:bg-accent"
-              >
-                <span className="w-6 h-6 rounded-sm border border-border/60 overflow-hidden flex shrink-0">
-                  <span className="flex-1" style={{ background: preview.bg }} />
-                  <span className="flex-1" style={{ background: preview.accent }} />
-                </span>
-                <span className="flex-1 text-left">{SKIN_LABELS[s]}</span>
-                {active && <Check size={13} className="text-foreground/60" />}
-              </button>
-            )
-          })}
-        </div>
+      {open && pos && createPortal(
+        <>
+          {/* Backdrop — 메뉴 외부 클릭 시 닫힘. 메뉴 자체보다 z-index 낮음. */}
+          <div
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-[100]"
+            aria-hidden="true"
+          />
+          <div
+            role="menu"
+            style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 101 }}
+            className="w-44 rounded-md border border-border bg-popover shadow-md p-1"
+          >
+            {SKIN_LIST.map((s) => {
+              const preview = SKIN_PREVIEW[s]
+              const active = s === skin
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={active}
+                  onClick={() => {
+                    setSkin(s)
+                    setOpen(false)
+                  }}
+                  className="w-full flex items-center gap-sm px-sm py-1.5 rounded-sm font-serif text-[13px] text-foreground hover:bg-accent"
+                >
+                  <span className="w-6 h-6 rounded-sm border border-border/60 overflow-hidden flex shrink-0">
+                    <span className="flex-1" style={{ background: preview.bg }} />
+                    <span className="flex-1" style={{ background: preview.accent }} />
+                  </span>
+                  <span className="flex-1 text-left">{SKIN_LABELS[s]}</span>
+                  {active && <Check size={13} className="text-foreground/60" />}
+                </button>
+              )
+            })}
+          </div>
+        </>,
+        document.body,
       )}
-    </div>
+    </>
   )
 }
