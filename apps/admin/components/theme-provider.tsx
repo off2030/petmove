@@ -9,9 +9,9 @@ import { usePathname } from 'next/navigation'
 const FORCE_DEFAULT_PATHS = ['/apply', '/share']
 
 type Mode = 'system' | 'light' | 'dark'
-type Skin = 'editorial' | 'flat' | 'neumorphism' | 'glassmorphism' | 'art-deco' | 'foggy-pastel' | 'hygge' | 'scandi-minimal' | 'bento' | 'sakura' | 'baby-blue'
+type Skin = 'editorial' | 'flat' | 'neumorphism' | 'glassmorphism' | 'art-deco' | 'foggy-pastel' | 'hygge' | 'scandi-minimal' | 'sakura' | 'baby-blue'
 
-const VALID_SKINS: Skin[] = ['editorial', 'flat', 'neumorphism', 'glassmorphism', 'art-deco', 'foggy-pastel', 'hygge', 'scandi-minimal', 'bento', 'sakura', 'baby-blue']
+const VALID_SKINS: Skin[] = ['editorial', 'flat', 'neumorphism', 'glassmorphism', 'art-deco', 'foggy-pastel', 'hygge', 'scandi-minimal', 'sakura', 'baby-blue']
 
 function readMode(): Mode {
   try {

@@ -1622,187 +1622,6 @@
   }
 
   /* ─────────────────────────────────────────────────────────────
-     Skin: bento — Apple Vision Pro · iOS 17 트렌드.
-     큼직한 둥근 모서리 (20-24px), 따뜻한 베이지, 큰 디스플레이 타이포,
-     다크 pill 버튼. 요즘 가장 트렌디한 정돈된 톤.
-     ───────────────────────────────────────────────────────────── */
-  [data-skin="bento"] {
-    /* Inter — modern geometric sans (Apple SF Pro 톤). */
-    --font-sans: var(--font-sans-flat);
-    --font-serif: var(--font-sans-flat), Pretendard;
-    --font-serif-kr: var(--font-sans-kr);
-    --font-mono: var(--font-sans-flat);
-    --pmw-font-serif: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-
-    --pmw-near-black: #2A241B;       /* warm dark almost-black */
-    --pmw-olive-gray: #5A4F3F;
-    --pmw-stone-gray: #8B8170;
-    --pmw-deep: #2A241B;
-    --pmw-clay-soft: #F0EAD8;
-    --pmw-sage: #2A241B;
-    --pmw-sage-soft: #E0D8C4;
-    --pmw-sage-paper: #F0EAD8;
-    --pmw-amber: #5A4F3F;
-    --pmw-rust: #B85450;
-    --pmw-border-warm: #D4CDB8;
-    --pmw-parchment: #E5DFD0;        /* warm beige page bg */
-    --pmw-paper: #F0EAD8;            /* lighter beige card */
-
-    --background: 42 28% 85%;        /* #E5DFD0 warm beige */
-    --foreground: 32 22% 13%;        /* #2A241B warm dark */
-    --card: 44 35% 90%;              /* #F0EAD8 lighter beige */
-    --card-foreground: 32 22% 13%;
-    --popover: 44 38% 92%;
-    --popover-foreground: 32 22% 13%;
-    --primary: 32 22% 13%;           /* dark warm brown button */
-    --primary-foreground: 44 35% 92%;
-    --secondary: 42 22% 80%;
-    --secondary-foreground: 32 22% 13%;
-    --muted: 42 22% 80%;
-    --muted-foreground: 35 18% 35%;
-    --accent: 42 22% 78%;
-    --accent-foreground: 32 22% 13%;
-    --destructive: 14 60% 45%;
-    --destructive-foreground: 44 35% 92%;
-    --border: 38 22% 75%;
-    --input: 38 22% 75%;
-    --ring: 32 22% 13%;
-    --radius: 1.5rem;                /* 24px — bento 시그니처 큰 radius */
-
-    /* Semantic 토큰 — bento (warm beige + dark brown) */
-    --pmw-accent: 32 22% 13%;
-    --pmw-accent-fg: 44 35% 92%;
-    --pmw-accent-strong: 32 22% 8%;
-    --pmw-tag-bg: 42 22% 80%;
-    --pmw-tag-fg: 32 22% 18%;
-    --pmw-cal-today: 32 22% 13%;
-    --pmw-cal-sunday: 14 55% 48%;
-    --pmw-cal-saturday: 215 35% 38%;
-    --pmw-positive: 142 35% 38%;
-    --pmw-avatar-bg: 38 25% 78%;
-    --pmw-avatar-fg: 32 22% 18%;
-    --pmw-code-label: 35 18% 35%;
-
-    /* Typography 스케일 — bento (큰 디스플레이, 일반 본문) */
-    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.04em;
-    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.55;  --pmw-tracking-xs:   0.02em;
-    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.55;  --pmw-tracking-sm:   0;
-    --pmw-text-base: 14px;   --pmw-leading-base: 1.6;   --pmw-tracking-base: 0;
-    --pmw-text-md:   16px;   --pmw-leading-md:   1.55;  --pmw-tracking-md:   -0.005em;
-    --pmw-text-lg:   24px;   --pmw-leading-lg:   1.25;  --pmw-tracking-lg:   -0.015em;
-    --pmw-text-xl:   34px;   --pmw-leading-xl:   1.15;  --pmw-tracking-xl:   -0.02em;
-    --pmw-text-2xl:  48px;   --pmw-leading-2xl:  1.05;  --pmw-tracking-2xl:  -0.025em;
-
-    --pmw-text-primary:    32 22% 13%;
-    --pmw-text-secondary:  35 18% 35%;
-    --pmw-text-tertiary:   38 14% 50%;
-    --pmw-text-disabled:   42 22% 72%;
-
-    --pmw-warning: 32 70% 38%;
-    --pmw-warning-bg: 38 50% 84%;
-    --pmw-warning-fg: 28 60% 22%;
-    --pmw-info: 215 50% 38%;
-
-    /* Chip 6-tone bento — warm + soft 톤 */
-    --pmw-chip-red-bg:     14 50% 85%;
-    --pmw-chip-red-fg:     14 55% 32%;
-    --pmw-chip-amber-bg:   38 50% 84%;
-    --pmw-chip-amber-fg:   28 55% 28%;
-    --pmw-chip-olive-bg:   75 30% 80%;
-    --pmw-chip-olive-fg:   85 35% 25%;
-    --pmw-chip-blue-bg:    216 30% 82%;
-    --pmw-chip-blue-fg:    218 40% 28%;
-    --pmw-chip-plum-bg:    288 22% 82%;
-    --pmw-chip-plum-fg:    280 35% 30%;
-    --pmw-chip-neutral-bg: 42 22% 80%;
-    --pmw-chip-neutral-fg: 32 22% 22%;
-  }
-
-  [data-skin="bento"].dark {
-    /* dark — Apple iOS17 다크 톤 (warm dark + 같은 cream button text) */
-    --pmw-near-black: #F0EAD8;
-    --pmw-olive-gray: #B0A688;
-    --pmw-stone-gray: #8B8170;
-    --pmw-deep: #F0EAD8;
-    --pmw-clay-soft: #2A241B;
-    --pmw-sage: #B0A688;
-    --pmw-sage-soft: #2A241B;
-    --pmw-sage-paper: #1A1612;
-    --pmw-amber: #C5BC9E;
-    --pmw-rust: #C46347;
-    --pmw-border-warm: #3D372D;
-    --pmw-parchment: #14110D;
-    --pmw-paper: #1F1B14;
-
-    color-scheme: dark;
-    --background: 32 22% 8%;
-    --foreground: 42 28% 88%;
-    --card: 32 18% 12%;
-    --card-foreground: 42 28% 88%;
-    --popover: 32 18% 14%;
-    --popover-foreground: 42 28% 88%;
-    --primary: 42 28% 88%;           /* cream "ink" 반전 */
-    --primary-foreground: 32 22% 8%;
-    --secondary: 32 14% 18%;
-    --secondary-foreground: 42 28% 88%;
-    --muted: 32 14% 18%;
-    --muted-foreground: 38 22% 65%;
-    --accent: 32 14% 22%;
-    --accent-foreground: 42 28% 88%;
-    --destructive: 14 55% 55%;
-    --destructive-foreground: 42 28% 88%;
-    --border: 32 14% 26%;
-    --input: 32 14% 26%;
-    --ring: 42 28% 88%;
-
-    --pmw-accent: 42 28% 88%;
-    --pmw-accent-fg: 32 22% 8%;
-    --pmw-accent-strong: 42 35% 95%;
-    --pmw-tag-bg: 32 14% 22%;
-    --pmw-tag-fg: 42 28% 80%;
-    --pmw-cal-today: 42 28% 88%;
-    --pmw-cal-sunday: 14 55% 65%;
-    --pmw-cal-saturday: 215 35% 65%;
-    --pmw-positive: 142 30% 60%;
-    --pmw-avatar-bg: 32 18% 25%;
-    --pmw-avatar-fg: 38 30% 78%;
-    --pmw-code-label: 38 22% 65%;
-
-    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.04em;
-    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.55;  --pmw-tracking-xs:   0.02em;
-    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.55;  --pmw-tracking-sm:   0;
-    --pmw-text-base: 14px;   --pmw-leading-base: 1.6;   --pmw-tracking-base: 0;
-    --pmw-text-md:   16px;   --pmw-leading-md:   1.55;  --pmw-tracking-md:   -0.005em;
-    --pmw-text-lg:   24px;   --pmw-leading-lg:   1.25;  --pmw-tracking-lg:   -0.015em;
-    --pmw-text-xl:   34px;   --pmw-leading-xl:   1.15;  --pmw-tracking-xl:   -0.02em;
-    --pmw-text-2xl:  48px;   --pmw-leading-2xl:  1.05;  --pmw-tracking-2xl:  -0.025em;
-
-    --pmw-text-primary:    42 28% 88%;
-    --pmw-text-secondary:  38 22% 65%;
-    --pmw-text-tertiary:   38 14% 50%;
-    --pmw-text-disabled:   32 14% 28%;
-
-    --pmw-warning: 38 60% 65%;
-    --pmw-warning-bg: 32 25% 18%;
-    --pmw-warning-fg: 38 65% 80%;
-    --pmw-info: 215 35% 60%;
-
-    /* Chip 6-tone bento dark */
-    --pmw-chip-red-bg:     14 25% 22%;
-    --pmw-chip-red-fg:     14 55% 78%;
-    --pmw-chip-amber-bg:   28 22% 22%;
-    --pmw-chip-amber-fg:   38 55% 78%;
-    --pmw-chip-olive-bg:   85 18% 22%;
-    --pmw-chip-olive-fg:   75 35% 78%;
-    --pmw-chip-blue-bg:    218 18% 22%;
-    --pmw-chip-blue-fg:    216 30% 80%;
-    --pmw-chip-plum-bg:    280 14% 22%;
-    --pmw-chip-plum-fg:    288 30% 80%;
-    --pmw-chip-neutral-bg: 32 14% 22%;
-    --pmw-chip-neutral-fg: 38 25% 78%;
-  }
-
-  /* ─────────────────────────────────────────────────────────────
      Skin: sakura — 일본 벚꽃 감성. 파스텔 핑크 그라디언트 + 한자/한글 혼용.
      가는 산세리프, 정적/섬세. 스파·차·일본 화장품 톤.
      ───────────────────────────────────────────────────────────── */
@@ -2123,7 +1942,6 @@
   [data-skin="foggy-pastel"] .font-mono,
   [data-skin="hygge"] .font-mono,
   [data-skin="scandi-minimal"] .font-mono,
-  [data-skin="bento"] .font-mono,
   [data-skin="sakura"] .font-mono,
   [data-skin="baby-blue"] .font-mono {
     font-variant-numeric: tabular-nums;
@@ -2136,7 +1954,6 @@
   [data-skin="foggy-pastel"] .italic,
   [data-skin="hygge"] .italic,
   [data-skin="scandi-minimal"] .italic,
-  [data-skin="bento"] .italic,
   [data-skin="sakura"] .italic,
   [data-skin="baby-blue"] .italic {
     font-style: normal;
@@ -2449,47 +2266,6 @@
   background-color: hsl(var(--primary) / 0.06);
   color: hsl(var(--primary));
   border: 1px solid hsl(var(--primary) / 0.16);
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Bento — Apple Vision Pro / iOS 17 톤. warm beige bg + 큰 둥근 카드.
-   카드 시그니처: 24px radius (1.5rem). 버튼: dark pill (very rounded).
-   ───────────────────────────────────────────────────────────── */
-
-[data-skin="bento"] {
-  background-color: #E5DFD0;
-  background-image: none;
-  min-height: 100%;
-}
-[data-skin="bento"].dark {
-  background-color: #14110D;
-}
-
-/* 카드 — 큰 radius + soft warm 그림자 (iOS17 카드 톤) */
-[data-skin="bento"] .bg-card,
-[data-skin="bento"] .bg-popover {
-  border: 1px solid hsl(var(--border) / 0.4);
-  box-shadow: 0 4px 16px -4px rgba(60, 50, 35, 0.08),
-              0 2px 6px -2px rgba(60, 50, 35, 0.05);
-}
-[data-skin="bento"].dark .bg-card,
-[data-skin="bento"].dark .bg-popover {
-  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.4),
-              0 2px 6px -2px rgba(0, 0, 0, 0.25);
-}
-
-/* Primary — dark pill 버튼 (very rounded). filled bg, font weight 500. */
-[data-skin="bento"] .bg-primary {
-  font-weight: 500;
-  letter-spacing: -0.005em;
-  border-radius: 9999px;          /* full pill — bento 시그니처 */
-  box-shadow: 0 1px 2px rgba(60, 50, 35, 0.12);
-}
-
-/* 채팅 own bubble — warm dark tint */
-[data-skin="bento"] [data-bubble="own"] {
-  background-color: hsl(var(--primary) / 0.10);
-  color: hsl(var(--primary));
 }
 
 /* ─────────────────────────────────────────────────────────────

@@ -16,7 +16,6 @@ const SKIN_PREVIEW: Record<Skin, { bg: string; accent: string }> = {
   'foggy-pastel': { bg: '#D5DBE0', accent: '#5C6B7C' },
   hygge: { bg: '#EFE6D6', accent: '#B89070' },
   'scandi-minimal': { bg: '#E8E5DD', accent: '#1F1F1B' },
-  bento: { bg: '#E5DFD0', accent: '#2A241B' },
   sakura: { bg: 'linear-gradient(180deg,#FCE4EC,#F8D0DA)', accent: 'linear-gradient(180deg,#F5C0CB,#E8A0B0)' },
   'baby-blue': { bg: '#DCE7F2', accent: '#4A7AB8' },
 }
