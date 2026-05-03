@@ -8,8 +8,6 @@ import { cn } from '@/lib/utils'
 /**
  * 검사기관 전용 드롭다운 — 할일→검사 탭의 LabCell/LabPicker 와 동일한 시각 언어.
  * `labColor(value)` 를 트리거에 반영해 각 기관 고유 tone 의 rounded-full pill 로 렌더링.
- *
- * 설정 페이지에서 PillSelect/PillMultiSelect 대신 검사기관 필드 전용으로 사용.
  */
 
 export interface LabOption {

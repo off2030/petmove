@@ -2768,11 +2768,7 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
     }
   }
 
-  console.log(`\n[${formKey}] case=${caseRow.id}`)
-  console.log(`  case.data keys:`, Object.keys(data))
-  console.log(`  filled:`, filled)
-  console.log(`  empty (no value resolved):`, empty)
-  if (missing.length) console.warn(`  missing PDF fields:`, missing)
+  if (missing.length) console.warn(`[${formKey}] missing PDF fields:`, missing)
 
   // 평탄화 — 폼 필드를 페이지 컨텐트로 굳혀 발급 후 편집·위변조 차단.
   // 적용 form 은 pdf-field-mappings.json 의 form 별 "flatten": true 로 결정.

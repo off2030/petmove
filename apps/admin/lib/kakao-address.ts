@@ -73,18 +73,12 @@ export async function lookupKoreanZipcode(
       }
       const json = (await res.json()) as KakaoResponse
       const doc = json.documents?.[0]
-      if (!doc) {
-        console.log(`[kakao-address] no match for query="${query}"`)
-        continue
-      }
+      if (!doc) continue
       const zipcode =
         doc.road_address?.zone_no?.trim() ||
         doc.address?.zip_code?.trim() ||
         null
-      if (zipcode) {
-        console.log(`[kakao-address] hit "${query}" → ${zipcode}`)
-        return { zipcode }
-      }
+      if (zipcode) return { zipcode }
     } catch (err) {
       console.warn(`[kakao-address] fetch failed for query="${query}"`, err)
     }

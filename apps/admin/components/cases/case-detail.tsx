@@ -570,9 +570,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, entries, destinati
     try {
       const result = await extractExtra({ country, ...input })
       if (!result.ok) { setExtractMsg('추출 실패: ' + result.error); return }
-      console.log('[extract]', country, 'raw:', result.data)
       const unified = mapExtractResultToUnified(country, result.data as unknown as Record<string, unknown>)
-      console.log('[extract] unified:', unified)
       const keys = Object.keys(unified)
       if (keys.length === 0) { setExtractMsg('관련 정보를 찾지 못했습니다'); return }
       // Optimistic — 모든 키 일괄 로컬 반영 후 백그라운드 저장.
