@@ -92,6 +92,7 @@ async function generateStandalone(
     customer_name: '', customer_name_en: null,
     pet_name: null, pet_name_en: null,
     destination: null, departure_date: null,
+    assigned_to: null,
     data: {},
     created_at: '', updated_at: '',
   }
