@@ -35,7 +35,12 @@ export function Checkbox({ checked, onChange, disabled, size = 'md', className, 
       aria-checked={checked}
       aria-label={label}
       disabled={disabled}
-      onClick={() => onChange?.(!checked)}
+      onClick={(e) => {
+        // 체크박스가 행/카드 등 클릭 가능한 부모 안에 있는 경우 부모 onClick 이 같이 발화하면
+        // 두 번 토글돼 원래 상태로 복귀(=동작 안 하는 것처럼 보임). 항상 전파 차단.
+        e.stopPropagation()
+        onChange?.(!checked)
+      }}
       className={cn(
         'inline-flex items-center justify-center border transition-colors shrink-0',
         'disabled:opacity-50 disabled:cursor-not-allowed',
