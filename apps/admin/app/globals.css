@@ -126,6 +126,21 @@
     --pmw-warning-fg: 35 50% 22%;        /* #5A4520 dark amber — banner text */
     --pmw-info: 215 32% 35%;             /* #3D5274 ink blue — links/info */
 
+    /* Chip 6-tone universal palette — 검사기관·목적지 chip 통합.
+       editorial: warm cream variants (Warm Stationery 톤 일관). */
+    --pmw-chip-red-bg:     16 50% 88%;   /* warm rose cream */
+    --pmw-chip-red-fg:     14 47% 38%;   /* dark rust */
+    --pmw-chip-amber-bg:   40 36% 83%;   /* warm cream */
+    --pmw-chip-amber-fg:   35 27% 30%;   /* dark olive brown */
+    --pmw-chip-olive-bg:   75 30% 84%;   /* warm sage cream */
+    --pmw-chip-olive-fg:   85 30% 28%;   /* dark olive */
+    --pmw-chip-blue-bg:    216 25% 87%;  /* warm-leaning cream blue */
+    --pmw-chip-blue-fg:    218 28% 31%;  /* dark navy */
+    --pmw-chip-plum-bg:    288 22% 86%;  /* warm cream plum */
+    --pmw-chip-plum-fg:    280 25% 35%;  /* dark plum */
+    --pmw-chip-neutral-bg: 36 14% 84%;   /* warm gray */
+    --pmw-chip-neutral-fg: 36 9% 28%;    /* dark warm gray */
+
     /* Typography 스케일 — Editorial (서체가 주인공: serif 헤더 + sans 본문 + italic 시그니처) */
     --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
     --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.005em;
@@ -222,6 +237,20 @@
     --pmw-warning-bg: 35 25% 18%;        /* dark warm */
     --pmw-warning-fg: 39 70% 80%;        /* light cream */
     --pmw-info: 215 35% 60%;             /* light ink blue */
+
+    /* Chip 6-tone editorial dark */
+    --pmw-chip-red-bg:     14 30% 22%;
+    --pmw-chip-red-fg:     16 65% 78%;
+    --pmw-chip-amber-bg:   35 25% 22%;
+    --pmw-chip-amber-fg:   40 50% 78%;
+    --pmw-chip-olive-bg:   85 18% 20%;
+    --pmw-chip-olive-fg:   75 30% 78%;
+    --pmw-chip-blue-bg:    218 18% 22%;
+    --pmw-chip-blue-fg:    216 28% 80%;
+    --pmw-chip-plum-bg:    280 14% 22%;
+    --pmw-chip-plum-fg:    288 25% 80%;
+    --pmw-chip-neutral-bg: 36 9% 22%;
+    --pmw-chip-neutral-fg: 36 14% 78%;
 
     /* Typography 스케일 (size/leading/tracking 은 light/dark 무관) */
     --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
@@ -379,6 +408,20 @@
     --pmw-warning-bg: 38 60% 95%;          /* light amber tint */
     --pmw-warning-fg: 28 70% 22%;          /* deep amber */
     --pmw-info: 217 65% 45%;               /* muted blue (Linear 시그니처보다 차분) */
+
+    /* Chip 6-tone flat — zinc + 살짝 hue tint (Linear/Notion 톤) */
+    --pmw-chip-red-bg:     0 70% 95%;
+    --pmw-chip-red-fg:     0 60% 35%;
+    --pmw-chip-amber-bg:   38 70% 92%;
+    --pmw-chip-amber-fg:   28 65% 30%;
+    --pmw-chip-olive-bg:   90 30% 92%;
+    --pmw-chip-olive-fg:   90 35% 28%;
+    --pmw-chip-blue-bg:    215 60% 94%;
+    --pmw-chip-blue-fg:    218 55% 35%;
+    --pmw-chip-plum-bg:    280 35% 93%;
+    --pmw-chip-plum-fg:    280 35% 35%;
+    --pmw-chip-neutral-bg: 240 5% 94%;
+    --pmw-chip-neutral-fg: 240 6% 28%;
   }
 
   [data-skin="flat"].dark {
@@ -450,6 +493,20 @@
     --pmw-warning-bg: 32 65% 18%;
     --pmw-warning-fg: 38 92% 80%;
     --pmw-info: 217 91% 65%;
+
+    /* Chip 6-tone flat dark */
+    --pmw-chip-red-bg:     0 30% 18%;
+    --pmw-chip-red-fg:     0 70% 78%;
+    --pmw-chip-amber-bg:   28 25% 18%;
+    --pmw-chip-amber-fg:   38 70% 78%;
+    --pmw-chip-olive-bg:   90 18% 16%;
+    --pmw-chip-olive-fg:   90 35% 78%;
+    --pmw-chip-blue-bg:    218 20% 18%;
+    --pmw-chip-blue-fg:    215 55% 78%;
+    --pmw-chip-plum-bg:    280 18% 18%;
+    --pmw-chip-plum-fg:    280 40% 78%;
+    --pmw-chip-neutral-bg: 240 4% 18%;
+    --pmw-chip-neutral-fg: 240 5% 78%;
   }
 
   /* ─────────────────────────────────────────────────────────────
@@ -545,6 +602,20 @@
     --pmw-warning-bg: 35 35% 90%;          /* light cream blend */
     --pmw-warning-fg: 32 40% 30%;
     --pmw-info: 220 30% 45%;
+
+    /* Chip 6-tone neumorphism — blue-gray monochrome 톤. saturation 더 낮춤. */
+    --pmw-chip-red-bg:     8 18% 87%;
+    --pmw-chip-red-fg:     8 28% 38%;
+    --pmw-chip-amber-bg:   38 18% 87%;
+    --pmw-chip-amber-fg:   30 28% 32%;
+    --pmw-chip-olive-bg:   90 14% 87%;
+    --pmw-chip-olive-fg:   85 22% 32%;
+    --pmw-chip-blue-bg:    218 25% 87%;
+    --pmw-chip-blue-fg:    218 28% 32%;
+    --pmw-chip-plum-bg:    280 14% 87%;
+    --pmw-chip-plum-fg:    280 22% 35%;
+    --pmw-chip-neutral-bg: 220 9% 87%;
+    --pmw-chip-neutral-fg: 220 9% 32%;
   }
 
   [data-skin="neumorphism"].dark {
@@ -619,6 +690,20 @@
     --pmw-warning-bg: 220 12% 22%;
     --pmw-warning-fg: 35 45% 75%;
     --pmw-info: 220 30% 65%;
+
+    /* Chip 6-tone neumorphism dark */
+    --pmw-chip-red-bg:     8 14% 22%;
+    --pmw-chip-red-fg:     8 30% 78%;
+    --pmw-chip-amber-bg:   30 14% 22%;
+    --pmw-chip-amber-fg:   38 28% 78%;
+    --pmw-chip-olive-bg:   85 12% 22%;
+    --pmw-chip-olive-fg:   90 22% 78%;
+    --pmw-chip-blue-bg:    218 14% 22%;
+    --pmw-chip-blue-fg:    218 28% 78%;
+    --pmw-chip-plum-bg:    280 12% 22%;
+    --pmw-chip-plum-fg:    280 22% 78%;
+    --pmw-chip-neutral-bg: 220 9% 22%;
+    --pmw-chip-neutral-fg: 220 9% 78%;
   }
 
   /* font-mono 가 sans 폰트로 평탄화된 스킨 — Inter/Manrope 는 기본 proportional 이라
