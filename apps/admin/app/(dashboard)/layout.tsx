@@ -37,7 +37,7 @@ async function fetchAllCases(): Promise<CaseRow[]> {
     const { data, error } = await supabase
       .from('cases')
       .select(
-        'id, org_id, microchip, microchip_extra, customer_name, customer_name_en, pet_name, pet_name_en, destination, departure_date, data, created_at, updated_at, deleted_at',
+        'id, org_id, microchip, microchip_extra, customer_name, customer_name_en, pet_name, pet_name_en, destination, departure_date, assigned_to, data, created_at, updated_at, deleted_at',
       )
       .eq('org_id', orgId)
       .is('deleted_at', null)
@@ -141,6 +141,13 @@ export default async function DashboardLayout({
       initialInspectionConfig={inspectionConfig}
       initialCertConfig={certConfig}
       orgId={orgId}
+      caseAssigneeEnabled={settingsBootstrap?.caseAssigneeEnabled ?? false}
+      orgMembers={(settingsBootstrap?.members ?? []).map((m) => ({
+        user_id: m.user_id,
+        name: m.name,
+        email: m.email,
+      }))}
+      sharePresets={settingsBootstrap?.sharePresets ?? []}
     >
       <DetailViewSettingsProvider initialSettings={settingsBootstrap?.detailViewSettings}>
         <DestinationOverridesProvider initialConfig={settingsBootstrap?.destinationOverrides}>

@@ -14,6 +14,7 @@ import { parseDestinations } from '@petmove/domain'
 import type { InspectionConfig } from '@petmove/domain'
 import type { CertConfig } from '@petmove/domain'
 import { supabaseBrowser } from '@/lib/supabase/browser'
+import type { SharePreset } from '@/lib/share-presets-types'
 
 /**
  * Global client-side state for the cases app:
@@ -75,6 +76,15 @@ interface CasesContextValue {
    * 케이스 리스트에서 시각적 강조에 사용.
    */
   newCaseIds: Set<string>
+  /**
+   * 케이스 담당자 기능 (organization_settings.case_assignee.enabled).
+   * true 일 때만 케이스 상세에 담당자 드롭다운 노출.
+   */
+  caseAssigneeEnabled: boolean
+  /** 본인 조직 멤버 목록 — 담당자 picker 옵션. */
+  orgMembers: Array<{ user_id: string; name: string | null; email: string }>
+  /** 공유 링크 발급 시 빠른 선택용 사용자 정의 프리셋. */
+  sharePresets: SharePreset[]
 }
 
 const CasesContext = createContext<CasesContextValue | null>(null)
@@ -87,6 +97,9 @@ export function CasesProvider({
   initialInspectionConfig,
   initialCertConfig,
   orgId = null,
+  caseAssigneeEnabled = false,
+  orgMembers = [],
+  sharePresets = [],
   children,
 }: {
   initialCases: CaseRow[]
@@ -96,6 +109,9 @@ export function CasesProvider({
   initialInspectionConfig: InspectionConfig
   initialCertConfig: CertConfig
   orgId?: string | null
+  caseAssigneeEnabled?: boolean
+  orgMembers?: Array<{ user_id: string; name: string | null; email: string }>
+  sharePresets?: SharePreset[]
   children: React.ReactNode
 }) {
   const [cases, setCases] = useState<CaseRow[]>(initialCases)
@@ -257,8 +273,11 @@ export function CasesProvider({
       certConfig,
       setCertConfig,
       newCaseIds,
+      caseAssigneeEnabled,
+      orgMembers,
+      sharePresets,
     }),
-    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, replaceLocalCaseData, activeDestination, importReportCountries, importReportButtonCountries, inspectionConfig, certConfig, newCaseIds],
+    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, replaceLocalCaseData, activeDestination, importReportCountries, importReportButtonCountries, inspectionConfig, certConfig, newCaseIds, caseAssigneeEnabled, orgMembers, sharePresets],
   )
 
   return <CasesContext.Provider value={value}>{children}</CasesContext.Provider>

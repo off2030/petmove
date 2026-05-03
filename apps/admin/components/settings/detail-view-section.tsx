@@ -10,6 +10,7 @@ import { SectionHeader } from '@/components/ui/section-header'
 import { cn } from '@/lib/utils'
 import { useDetailViewSettings } from '@/components/providers/detail-view-settings-provider'
 import { DestinationsArea } from './destinations-section'
+import { SharePresetsSection } from './share-presets-section'
 
 export function DetailViewSection({
   initialSettings = DETAIL_VIEW_DEFAULTS,
@@ -99,6 +100,9 @@ export function DetailViewSection({
 
       {/* 목적지별 표시정보 — 같은 탭에 통합 */}
       <DestinationsArea />
+
+      {/* 공유 링크 프리셋 */}
+      <SharePresetsSection />
     </div>
   )
 }

@@ -13,12 +13,14 @@ import { AutomationSection } from './automation-section'
 import { MembersSection } from './members-section'
 import { ProfileSection } from './profile-section'
 import { DetailViewSection } from './detail-view-section'
+import { TransfersSection } from './transfers-section'
 import { getSettingsBootstrap, type SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 
 const TABS = [
   { id: 'profile', label: '내 프로필' },
   { id: 'company', label: '조직정보' },
   { id: 'members', label: '멤버' },
+  { id: 'transfers', label: '전달' },
   { id: 'detail_view', label: '상세' },
   { id: 'vaccines', label: '약품관리' },
   { id: 'inspection', label: '검사' },
@@ -244,6 +246,7 @@ export function SettingsApp({
               initialRules={bootstrap?.autoFillRules ?? null}
             />
           )}
+          {activeTab === 'transfers' && <TransfersSection />}
           {activeTab === 'detail_view' && (
             <DetailViewSection initialSettings={bootstrap?.detailViewSettings} />
           )}

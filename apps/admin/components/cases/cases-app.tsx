@@ -20,7 +20,10 @@ import { generateFormRE, generateFormAC, generateIdentificationDeclaration, gene
 import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-download'
 import { MultiFormDialog } from './multi-form-dialog'
 import { RabiesSelectDialog, RABIES_SLOT_CAP } from './rabies-select-dialog'
-import { ChevronLeft, ChevronRight, Copy, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Copy, Link2, Send, Trash2 } from 'lucide-react'
+import { TransferDialog } from './transfer-dialog'
+import { AssigneePicker } from './assignee-picker'
+import { ShareLinkDialog } from './share-link-dialog'
 import { resolveCerts } from '@petmove/domain'
 import type { CaseRow } from '@/lib/supabase/types'
 import { useConfirm } from '@/components/ui/confirm-dialog'
@@ -179,7 +182,7 @@ function ImportReportToggle({
 }
 
 function Inner() {
-  const { cases, selectedId, selectCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination, certConfig } = useCases()
+  const { cases, selectedId, selectCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination, certConfig, caseAssigneeEnabled, orgMembers } = useCases()
   const confirm = useConfirm()
   const selectedCase = useMemo(
     () => cases.find((c) => c.id === selectedId) ?? null,
@@ -195,6 +198,8 @@ function Inner() {
   }, [cases, selectedCase])
   const detailScrollRef = useRef<HTMLDivElement>(null)
   const [multiForm, setMultiForm] = useState<{ caseId: string; formKey: 'AnnexIII' | 'UK' } | null>(null)
+  const [transferOpen, setTransferOpen] = useState<{ caseId: string; label: string } | null>(null)
+  const [shareOpen, setShareOpen] = useState<{ case: CaseRow; label: string } | null>(null)
   // 별지 25호/EX 의 광견병 슬롯이 부족할 때 띄우는 선택 모달.
   const [rabiesPick, setRabiesPick] = useState<
     | { caseId: string; formKey: 'Form25' | 'Form25AuNz'; rabiesDates: unknown; destination: string | null; cap: number }
@@ -420,6 +425,22 @@ function Inner() {
           />
         )}
 
+        {transferOpen && (
+          <TransferDialog
+            caseId={transferOpen.caseId}
+            caseLabel={transferOpen.label}
+            onClose={() => setTransferOpen(null)}
+          />
+        )}
+
+        {shareOpen && (
+          <ShareLinkDialog
+            caseRow={shareOpen.case}
+            caseLabel={shareOpen.label}
+            onClose={() => setShareOpen(null)}
+          />
+        )}
+
         <RabiesSelectDialog
           open={!!rabiesPick}
           formLabel={
@@ -488,7 +509,41 @@ function Inner() {
                 </button>
                 {selectedCase && (
                   <div className="flex items-center gap-1">
+                    {caseAssigneeEnabled && (
+                      <AssigneePicker
+                        caseId={selectedCase.id}
+                        currentAssigneeId={selectedCase.assigned_to ?? null}
+                        members={orgMembers}
+                        onChanged={(next) =>
+                          updateLocalCaseField(selectedCase.id, 'column', 'assigned_to', next)
+                        }
+                      />
+                    )}
                     <CaseHistory caseId={selectedCase.id} />
+                    <button
+                      type="button"
+                      onClick={() => setShareOpen({
+                        case: selectedCase,
+                        label: `${selectedCase.customer_name || '(이름 없음)'}${selectedCase.pet_name ? ` / ${selectedCase.pet_name}` : ''}`,
+                      })}
+                      title="공유 링크 (외부 정보 입력)"
+                      aria-label="공유 링크"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    >
+                      <Link2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTransferOpen({
+                        caseId: selectedCase.id,
+                        label: `${selectedCase.customer_name || '(이름 없음)'}${selectedCase.pet_name ? ` / ${selectedCase.pet_name}` : ''}`,
+                      })}
+                      title="다른 조직으로 전달"
+                      aria-label="다른 조직으로 전달"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleDuplicate(selectedCase.id)}

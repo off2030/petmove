@@ -184,6 +184,24 @@ export function DashboardShell({
           </button>
         </div>
       )}
+      {!userName && userEmail && (
+        <div className="shrink-0 flex items-center justify-center gap-md px-md py-1.5 bg-amber-500/10 border-b border-amber-500/30 text-amber-900 dark:text-amber-300 text-[13px] font-serif">
+          <span>
+            <span className="italic">프로필 이름이 비어 있어 다른 멤버에게 이메일로 표시됩니다.</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              handleTabChange('settings')
+              window.history.replaceState(null, '', '/settings#profile')
+              window.dispatchEvent(new HashChangeEvent('hashchange'))
+            }}
+            className="px-2 py-0.5 rounded-full border border-amber-500/50 text-[12px] hover:bg-amber-500/10 transition-colors"
+          >
+            이름 설정
+          </button>
+        </div>
+      )}
       <TopBar activeTab={activeTab} onTabChange={handleTabChange} isSuperAdmin={isSuperAdmin} userEmail={userEmail} userName={userName} userAvatarUrl={resolvedAvatarUrl} messagesUnread={messagesUnread} />
       <main className="peer flex-1 min-w-0 overflow-hidden">
         {mounted.has('cases') && (

@@ -52,6 +52,11 @@ export interface MessageRow {
   content: string | null
   file_url: string | null
   file_name: string | null
+  /**
+   * 케이스 핸드오프 메시지 — 다른 조직으로 케이스 정보를 전달하는 카드.
+   * 값이 있으면 UI 가 카드 형태로 렌더링하고 수신자에게 수락/거부 버튼을 노출.
+   */
+  transfer_id: string | null
   created_at: string
   edited_at: string | null
   deleted_at: string | null
@@ -306,7 +311,7 @@ export async function listConversationMessages(input: {
   let q = supabase
     .from('messages')
     .select(
-      'id, conversation_id, sender_user_id, case_id, content, file_url, file_name, created_at, edited_at, deleted_at',
+      'id, conversation_id, sender_user_id, case_id, content, file_url, file_name, transfer_id, created_at, edited_at, deleted_at',
     )
     .eq('conversation_id', input.convId)
     .order('created_at', { ascending: true })
@@ -451,6 +456,7 @@ export async function listConversationMessages(input: {
     content: (r.content as string | null) ?? null,
     file_url: r.file_url ? fileUrlMap.get(r.file_url as string) ?? null : null,
     file_name: (r.file_name as string | null) ?? null,
+    transfer_id: ((r as { transfer_id?: string | null }).transfer_id as string | null) ?? null,
     created_at: r.created_at as string,
     edited_at: (r.edited_at as string | null) ?? null,
     deleted_at: (r.deleted_at as string | null) ?? null,
@@ -465,7 +471,7 @@ export async function listConversationMessages(input: {
       const { data: pinnedRow } = await supabase
         .from('messages')
         .select(
-          'id, conversation_id, sender_user_id, case_id, content, file_url, file_name, created_at, edited_at, deleted_at',
+          'id, conversation_id, sender_user_id, case_id, content, file_url, file_name, transfer_id, created_at, edited_at, deleted_at',
         )
         .eq('id', pinnedId)
         .maybeSingle()
@@ -517,6 +523,7 @@ export async function listConversationMessages(input: {
           content: (pinnedRow.content as string | null) ?? null,
           file_url: signedFileUrl,
           file_name: (pinnedRow.file_name as string | null) ?? null,
+          transfer_id: ((pinnedRow as { transfer_id?: string | null }).transfer_id as string | null) ?? null,
           created_at: pinnedRow.created_at as string,
           edited_at: (pinnedRow.edited_at as string | null) ?? null,
           deleted_at: (pinnedRow.deleted_at as string | null) ?? null,
@@ -572,7 +579,7 @@ export async function sendMessage(input: {
       file_name: input.fileName ?? null,
     })
     .select(
-      'id, conversation_id, sender_user_id, case_id, case_label, content, file_url, file_name, created_at, edited_at, deleted_at',
+      'id, conversation_id, sender_user_id, case_id, case_label, content, file_url, file_name, transfer_id, created_at, edited_at, deleted_at',
     )
     .single()
   if (error) return { ok: false, error: error.message }
@@ -589,6 +596,7 @@ export async function sendMessage(input: {
       content: (data.content as string | null) ?? null,
       file_url: (data.file_url as string | null) ?? null,
       file_name: (data.file_name as string | null) ?? null,
+      transfer_id: ((data as { transfer_id?: string | null }).transfer_id as string | null) ?? null,
       created_at: data.created_at as string,
       edited_at: (data.edited_at as string | null) ?? null,
       deleted_at: (data.deleted_at as string | null) ?? null,

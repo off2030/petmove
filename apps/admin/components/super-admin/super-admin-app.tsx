@@ -23,6 +23,7 @@ import {
 } from '@/lib/actions/super-admin'
 import type { InviteRole } from '@/lib/actions/invites'
 import { TopBar } from '@/components/layout/topbar'
+import { PillButton } from '@/components/ui/pill-button'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -46,7 +47,23 @@ export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, curr
   const [inviteRole, setInviteRole] = useState<InviteRole>('member')
   const [inviteNotice, setInviteNotice] = useState<string | null>(null)
   const [memberError, setMemberError] = useState<string | null>(null)
+  const [copiedToken, setCopiedToken] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+
+  function inviteLink(token: string): string {
+    if (typeof window === 'undefined') return ''
+    return `${window.location.origin}/invite/${token}`
+  }
+
+  async function copyInviteLink(token: string) {
+    try {
+      await navigator.clipboard.writeText(inviteLink(token))
+      setCopiedToken(token)
+      setTimeout(() => setCopiedToken(null), 2000)
+    } catch {
+      // ignore
+    }
+  }
 
   function refresh() {
     startTransition(async () => {
@@ -486,14 +503,21 @@ export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, curr
                                   </span>
                                 </div>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => onRevokeInvite(i.id)}
-                                disabled={pending}
-                                className="shrink-0 font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/80 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
-                              >
-                                취소
-                              </button>
+                              <div className="flex gap-1.5 shrink-0">
+                                <PillButton
+                                  onClick={() => copyInviteLink(i.token)}
+                                  disabled={pending}
+                                >
+                                  {copiedToken === i.token ? '복사됨' : '링크 복사'}
+                                </PillButton>
+                                <PillButton
+                                  onClick={() => onRevokeInvite(i.id)}
+                                  disabled={pending}
+                                  className="hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive"
+                                >
+                                  취소
+                                </PillButton>
+                              </div>
                             </li>
                           ))}
                         </ul>

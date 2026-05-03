@@ -11,6 +11,7 @@ export interface CaseRow {
   pet_name_en: string | null
   destination: string | null
   departure_date: string | null
+  assigned_to: string | null
   data: Record<string, unknown>
   created_at: string
   updated_at: string

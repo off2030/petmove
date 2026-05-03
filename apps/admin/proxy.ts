@@ -11,6 +11,7 @@ const PUBLIC_PREFIXES = [
   '/logout',
   '/apply',
   '/invite',  // 미로그인 사용자도 InviteJoin 카드 보고 OAuth/magic link 선택 가능해야 함
+  '/share',   // 외부 정보 입력용 매직 링크 — 토큰 게이팅, 비인증 통과
   '/_next',
   '/favicon',
   '/public',

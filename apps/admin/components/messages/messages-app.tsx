@@ -33,6 +33,7 @@ import {
 import { cn } from '@/lib/utils'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { useConfirm } from '@/components/ui/confirm-dialog'
+import { HandoffCard } from './handoff-card'
 import {
   addParticipant,
   createConversation,
@@ -1498,6 +1499,7 @@ function ThreadPane({
                       key={m.id}
                       msg={m}
                       isOwn={isOwn}
+                      currentUserId={currentUserId}
                       showSender={showSender}
                       isGroup={isGroup}
                       isReadByOther={isReadByOther}
@@ -1626,6 +1628,7 @@ function ThreadPane({
 const MessageItem = memo(function MessageItem({
   msg,
   isOwn,
+  currentUserId,
   showSender,
   isGroup,
   isReadByOther,
@@ -1637,6 +1640,7 @@ const MessageItem = memo(function MessageItem({
 }: {
   msg: MessageRow
   isOwn: boolean
+  currentUserId: string | null
   showSender: boolean
   isGroup: boolean
   isReadByOther: boolean
@@ -1680,31 +1684,40 @@ const MessageItem = memo(function MessageItem({
           isOwn && 'flex-row-reverse',
         )}
       >
-        <div
-          data-bubble={isOwn ? 'own' : 'other'}
-          className={cn(
-            'max-w-[70%] rounded-2xl px-3 py-1.5',
-            isOwn
-              ? 'bg-pmw-accent text-pmw-accent-foreground'
-              : 'bg-muted text-foreground',
-          )}
-        >
-          {msg.content && (
-            <p className="whitespace-pre-wrap break-words text-[14px] leading-relaxed">
-              {msg.content}
-            </p>
-          )}
-          {msg.file_url && (
-            <a
-              href={msg.file_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[12px] underline opacity-90 hover:opacity-100 block mt-1 break-all"
-            >
-              📎 {msg.file_name ?? '첨부파일'}
-            </a>
-          )}
-        </div>
+        {msg.transfer_id ? (
+          <HandoffCard
+            transferId={msg.transfer_id}
+            currentUserId={currentUserId}
+            isOwn={isOwn}
+            caseLabel={msg.case_label}
+          />
+        ) : (
+          <div
+            data-bubble={isOwn ? 'own' : 'other'}
+            className={cn(
+              'max-w-[70%] rounded-2xl px-3 py-1.5',
+              isOwn
+                ? 'bg-pmw-accent text-pmw-accent-foreground'
+                : 'bg-muted text-foreground',
+            )}
+          >
+            {msg.content && (
+              <p className="whitespace-pre-wrap break-words text-[14px] leading-relaxed">
+                {msg.content}
+              </p>
+            )}
+            {msg.file_url && (
+              <a
+                href={msg.file_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[12px] underline opacity-90 hover:opacity-100 block mt-1 break-all"
+              >
+                📎 {msg.file_name ?? '첨부파일'}
+              </a>
+            )}
+          </div>
+        )}
         <div
           className={cn(
             'shrink-0 flex items-center gap-1 pb-0.5 font-mono text-[10px] text-muted-foreground/60 whitespace-nowrap',
