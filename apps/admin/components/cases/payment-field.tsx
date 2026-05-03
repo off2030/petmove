@@ -8,6 +8,7 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { DateTextField } from '@/components/ui/date-text-field'
+import { DropdownSelect } from '@/components/ui/dropdown-select'
 import { useCalculatorData } from '@/components/providers/calculator-data-provider'
 import {
   CalculatorOutputModal,
@@ -251,19 +252,17 @@ function PaymentRow({
 
       <span className="text-muted-foreground/30 select-none">|</span>
 
-      {/* Method */}
-      {isEditing === 'method' ? (
-        <MethodDropdown
-          current={record.method}
-          onSelect={(v) => { onUpdateField('method', v); onStopEdit() }}
-          onClose={onStopEdit}
-        />
-      ) : (
-        <button type="button" onClick={() => onStartEdit('method')}
-          className={cn('text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer', methodDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60')}>
-          {methodDisplay}
-        </button>
-      )}
+      {/* Method — DropdownSelect 통일 */}
+      <DropdownSelect
+        value={record.method ?? ''}
+        options={[{ value: '', label: '—' }, ...METHODS]}
+        onChange={(v) => onUpdateField('method', v || null)}
+        triggerClassName={cn(
+          'text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground hover:bg-accent/60',
+          methodDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60',
+        )}
+        renderTrigger={() => methodDisplay}
+      />
 
       <span className="text-muted-foreground/30 select-none">|</span>
 
@@ -332,54 +331,7 @@ function AmountInput({ initial, onSave, onCancel, saving }: {
 
 /* ── Method dropdown ── */
 
-function MethodDropdown({ current, onSelect, onClose }: {
-  current: string | null
-  onSelect: (v: string | null) => void
-  onClose: () => void
-}) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [openUp, setOpenUp] = useState(false)
-
-  useEffect(() => {
-    function onClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
-    }
-    document.addEventListener('mousedown', onClick)
-    return () => document.removeEventListener('mousedown', onClick)
-  }, [onClose])
-
-  // 아래 공간이 부족하면 위로 펼침 — 스크롤 컨테이너 끝에서 잘림 방지.
-  useEffect(() => {
-    if (!ref.current) return
-    const rect = ref.current.getBoundingClientRect()
-    const dropdownHeight = (METHODS.length + 1) * 36 + 16
-    if (rect.bottom + dropdownHeight > window.innerHeight - 16) setOpenUp(true)
-  }, [])
-
-  return (
-    <div ref={ref} className="relative">
-      <ul
-        className={cn(
-          'absolute left-0 z-20 min-w-[140px] rounded-md border border-border/80 bg-background py-1 shadow-md',
-          openUp ? 'bottom-full mb-1' : 'top-0',
-        )}
-      >
-        <li>
-          <button type="button" onClick={() => onSelect(null)}
-            className="w-full text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors">—</button>
-        </li>
-        {METHODS.map(m => (
-          <li key={m.value}>
-            <button type="button" onClick={() => onSelect(m.value)}
-              className={cn('w-full text-left px-sm py-1.5 text-sm hover:bg-accent/60 transition-colors', current === m.value && 'font-medium')}>
-              {m.label}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
+// MethodDropdown 제거 — DropdownSelect 통일.
 
 /* ── Date input ── */
 

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { Paperclip, Plus, Trash2 } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
 import { AttachButton } from '@/components/ui/attach-button'
+import { DropdownSelect } from '@/components/ui/dropdown-select'
 import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
@@ -538,24 +539,19 @@ function TiterRecordRow({
 
       <span className="text-muted-foreground/30 select-none">|</span>
 
-      {/* Lab */}
-      {isEditing === 'lab' ? (
-        <LabDropdown
-          current={record.lab}
-          onSelect={(v) => { onUpdateField('lab', v); onStopEdit() }}
-          onClose={onStopEdit}
-        />
-      ) : (
-        <button type="button" onClick={() => onStartEdit('lab')}
-          className={cn(
-            'text-left cursor-pointer transition-all',
-            labTone
-              ? cn('inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap hover:opacity-80', labTone.bg, labTone.text)
-              : cn('text-base rounded-md px-2 py-1 -mx-2 hover:bg-accent/60', labDisplay === '—' && 'text-muted-foreground/60'),
-          )}>
-          {labDisplay}
-        </button>
-      )}
+      {/* Lab — DropdownSelect 통일. trigger 가 lab chip. */}
+      <DropdownSelect
+        value={record.lab ?? ''}
+        options={[{ value: '', label: '—' }, ...LABS]}
+        onChange={(v) => onUpdateField('lab', v || null)}
+        triggerClassName={cn(
+          'text-left',
+          labTone
+            ? cn('inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap hover:opacity-80', labTone.bg, labTone.text)
+            : cn('text-base rounded-md px-2 py-1 -mx-2 hover:bg-accent/60', labDisplay === '—' && 'text-muted-foreground/60'),
+        )}
+        renderTrigger={() => labDisplay}
+      />
 
       <span className="text-muted-foreground/30 select-none">|</span>
 
@@ -645,27 +641,4 @@ function ValueInput({ initial, onSave, onCancel, saving }: {
   )
 }
 
-function LabDropdown({ current, onSelect, onClose }: {
-  current: string | null; onSelect: (v: string | null) => void; onClose: () => void
-}) {
-  const ref = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    function onClick(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) onClose() }
-    document.addEventListener('mousedown', onClick)
-    return () => document.removeEventListener('mousedown', onClick)
-  }, [onClose])
-
-  return (
-    <div ref={ref} className="relative">
-      <ul className="absolute left-0 top-0 z-20 min-w-[160px] rounded-md border border-border/80 bg-background py-1 shadow-md">
-        <li><button type="button" onClick={() => onSelect(null)}
-          className="w-full text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors">—</button></li>
-        {LABS.map(l => (
-          <li key={l.value}><button type="button" onClick={() => onSelect(l.value)}
-            className={cn('w-full text-left px-sm py-1.5 text-sm hover:bg-accent/60 transition-colors', current === l.value && 'font-medium')}>
-            {l.label}</button></li>
-        ))}
-      </ul>
-    </div>
-  )
-}
+// LabDropdown 제거 — DropdownSelect (components/ui/dropdown-select.tsx) 로 통일.

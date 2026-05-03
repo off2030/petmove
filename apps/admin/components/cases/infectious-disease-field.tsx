@@ -10,6 +10,7 @@ import type { CaseRow } from '@/lib/supabase/types'
 import { labColor } from '@/lib/lab-color'
 import { resolveInspectionLabs } from '@petmove/domain'
 import { DateTextField } from '@/components/ui/date-text-field'
+import { DropdownSelect } from '@/components/ui/dropdown-select'
 import { useSectionEditMode } from './section-edit-mode-context'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 
@@ -230,22 +231,19 @@ function InfectiousGroup({
         return (
           <span key={idx} className="group/lab inline-flex items-baseline gap-[10px]">
             <span className="text-muted-foreground/30 select-none">|</span>
-            {editMode && labIsEditing ? (
-              <LabDropdown
-                current={rec.lab}
-                onSelect={(v) => { onUpdateField(idx, 'lab', v); onStopEdit() }}
-                onClose={onStopEdit}
-              />
-            ) : editMode ? (
-              <button type="button" onClick={() => onStartEdit(idx, 'lab')}
-                className={cn(
-                  'text-left cursor-pointer transition-all',
+            {editMode ? (
+              <DropdownSelect
+                value={rec.lab ?? ''}
+                options={[{ value: '', label: '—' }, ...LABS]}
+                onChange={(v) => onUpdateField(idx, 'lab', v || null)}
+                triggerClassName={cn(
+                  'text-left',
                   labTone
                     ? cn('inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-[1px] whitespace-nowrap hover:opacity-80', labTone.bg, labTone.text)
                     : cn('text-base rounded-md px-2 py-1 -mx-2 hover:bg-accent/60', labDisplay === '—' && 'text-muted-foreground/60'),
-                )}>
-                {labDisplay}
-              </button>
+                )}
+                renderTrigger={() => labDisplay}
+              />
             ) : (
               <span
                 className={cn(
@@ -296,27 +294,4 @@ function DateInput({ initial, onSave, onCancel }: {
   )
 }
 
-function LabDropdown({ current, onSelect, onClose }: {
-  current: string | null; onSelect: (v: string | null) => void; onClose: () => void
-}) {
-  const ref = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    function onClick(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) onClose() }
-    document.addEventListener('mousedown', onClick)
-    return () => document.removeEventListener('mousedown', onClick)
-  }, [onClose])
-
-  return (
-    <div ref={ref} className="relative">
-      <ul className="absolute left-0 top-0 z-20 min-w-[200px] rounded-md border border-border/80 bg-background py-1 shadow-md">
-        <li><button type="button" onClick={() => onSelect(null)}
-          className="w-full text-left px-sm py-1.5 text-sm text-muted-foreground hover:bg-accent/60 transition-colors">—</button></li>
-        {LABS.map(l => (
-          <li key={l.value}><button type="button" onClick={() => onSelect(l.value)}
-            className={cn('w-full text-left px-sm py-1.5 text-sm hover:bg-accent/60 transition-colors', current === l.value && 'font-medium')}>
-            {l.label}</button></li>
-        ))}
-      </ul>
-    </div>
-  )
-}
+// LabDropdown 제거 — DropdownSelect 통일.
