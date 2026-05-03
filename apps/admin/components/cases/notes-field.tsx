@@ -48,7 +48,7 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const notes = readNotes(data)
 
-  const [saving, startSave] = useTransition()
+  const [saving] = useTransition()
   const [editIdx, setEditIdx] = useState<number | null>(null)
   const [addingText, setAddingText] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -230,8 +230,6 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   }
 
   /* ── Render ── */
-
-  const hasContent = notes.length > 0 || addingText || uploading
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 transition-colors hover:bg-accent/60 last:border-0">

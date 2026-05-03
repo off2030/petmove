@@ -195,7 +195,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
   // Sort: newest first for expanded view
   const sortedForExpand = [...records].sort((a, b) => (b.date || '').localeCompare(a.date || ''))
 
-  const [saving, startSave] = useTransition()
+  const [saving] = useTransition()
   const [editIdx, setEditIdx] = useState<number | null>(null)
   const [addingNew, setAddingNew] = useState(false)
   const [extracting, setExtracting] = useState(false)

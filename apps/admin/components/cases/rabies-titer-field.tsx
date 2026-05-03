@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
 import { Paperclip, Plus, Trash2 } from 'lucide-react'
-import { SectionLabel } from '@/components/ui/section-label'
 import { AttachButton } from '@/components/ui/attach-button'
 import { DropdownSelect } from '@/components/ui/dropdown-select'
 import { cn, roundIconBtn } from '@/lib/utils'
@@ -82,7 +81,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
   const records = readRecords()
   const sortedForExpand = [...records].sort((a, b) => (b.date || '').localeCompare(a.date || ''))
 
-  const [saving, startSave] = useTransition()
+  const [saving] = useTransition()
   const [editIdx, setEditIdx] = useState<number | null>(null)
   const [editField, setEditField] = useState<'date' | 'value' | 'lab' | null>(null)
   const [addingNew, setAddingNew] = useState(false)

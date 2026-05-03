@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Check, ChevronDown } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { labColor } from '@/lib/lab-color'
 import { cn } from '@/lib/utils'
 

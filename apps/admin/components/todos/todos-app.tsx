@@ -7,7 +7,6 @@ import type { CaseRow } from '@/lib/supabase/types'
 import { useCases } from '@/components/cases/cases-context'
 import { Input } from '@/components/ui/input'
 import { DialogFooter } from '@/components/ui/dialog-footer'
-import { destCode } from '@/lib/country-code'
 import { matchesDestinationKey } from '@petmove/domain'
 import { cn } from '@/lib/utils'
 import { TodoTable, type TodoColumn } from './todo-table'
@@ -17,12 +16,6 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { downloadPdfRequest, type PdfDownloadRequest } from '@/lib/pdf-download'
 import { PageShell, PageTabs } from '@/components/ui/page-shell'
 
-function downloadBase64Pdf(base64: string, filename: string) {
-  const link = document.createElement('a')
-  link.href = `data:application/pdf;base64,${base64}`
-  link.download = filename
-  link.click()
-}
 
 /* DestinationCell 은 ./destination-cell 로 이동 — 검사·신고·서류·목록 공통 사용. */
 
@@ -51,11 +44,6 @@ const STATUS_WITH_NA = [
   { value: 'na', label: 'N/A' },
   { value: 'in_progress', label: '진행 중' },
   { value: 'done', label: '완료' },
-]
-
-const ROUND_TRIP_OPTIONS = [
-  { value: 'yes', label: '왕복' },
-  { value: 'no', label: '편도' },
 ]
 
 const LAB_OPTIONS = [

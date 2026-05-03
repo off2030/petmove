@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
-import { Plus, Trash2, X } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import { saveDestinationOverridesAction } from '@/lib/actions/destination-overrides-action'

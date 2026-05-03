@@ -227,7 +227,7 @@ export interface ExtraSectionShellProps {
 
 export function ExtraSectionShell({
   sectionNumber, placeholder, children,
-  dropRef, textRef, fileRef,
+  dropRef, textRef, fileRef: _fileRef,
   extracting, extractMsg, dragOver,
   inputText, setInputText, showInput, setShowInput,
   handleFiles, handleTextSubmit, handleDragOver, handleDragLeave, handleDrop,

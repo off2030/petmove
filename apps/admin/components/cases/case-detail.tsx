@@ -15,7 +15,6 @@ import { Trash2, ChevronDown } from 'lucide-react'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { AttachButton } from '@/components/ui/attach-button'
 import { cn } from '@/lib/utils'
-import { formatDate } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { CopyButton } from './copy-button'
 import { DateTextField } from '@/components/ui/date-text-field'
@@ -92,7 +91,6 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
 
   const allowedFields = getAllowedFields(viewDestination, extraFields)
   const vaccineEntries = getEffectiveVaccineEntries(viewDestination, extraFields, destOverridesConfig)
-  const destOverride = getDestinationOverride(viewDestination)
   // 커스텀 목적지가 매칭되면 baseVaccines = 커스텀의 entries — 토글 메뉴는 이미 들어간 키 제외하고 노출.
   const customDest = findCustomDestination(viewDestination, destOverridesConfig)
   const baseVaccineKeys = customDest

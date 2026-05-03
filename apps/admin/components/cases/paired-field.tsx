@@ -47,7 +47,7 @@ export function PairedField({
   const [editing, setEditing] = useState(false)
   const [koVal, setKoVal] = useState(asString(koRaw))
   const [enVal, setEnVal] = useState(asString(enRaw))
-  const [saving, startSave] = useTransition()
+  const [saving] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [savedFlash, setSavedFlash] = useState(false)
   const koRef = useRef<HTMLInputElement>(null)

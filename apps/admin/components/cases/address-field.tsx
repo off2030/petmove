@@ -54,7 +54,7 @@ export function AddressField({
 }) {
   const { updateLocalCaseField } = useCases()
   const [scriptLoaded, setScriptLoaded] = useState(false)
-  const [saving, startSave] = useTransition()
+  const [saving] = useTransition()
   const composingRef = useRef(false)
   const [showModal, setShowModal] = useState(false)
   const [editingKr, setEditingKr] = useState(false)

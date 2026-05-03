@@ -9,7 +9,6 @@ import { PillButton } from '@/components/ui/pill-button'
 import { SectionHeader } from '@/components/ui/section-header'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import { saveCertConfigAction } from '@/lib/actions/cert-config-action'
-import { cn } from '@/lib/utils'
 import {
   ALL_CERTS,
   DEFAULT_CERT_CONFIG,

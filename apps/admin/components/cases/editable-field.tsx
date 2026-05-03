@@ -106,7 +106,7 @@ export function EditableField({
   const editMode = useSectionEditMode()
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState<string>(stringifyRaw(rawValue, spec))
-  const [saving, startSave] = useTransition()
+  const [saving] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [savedFlash, setSavedFlash] = useState(false)
 

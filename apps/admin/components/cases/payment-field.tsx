@@ -39,7 +39,7 @@ export interface PaymentFieldHandle {
   triggerAdd: () => void
 }
 
-export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; caseRow: CaseRow; hideAddButton?: boolean }>(function PaymentField({ caseId, caseRow, hideAddButton }, ref) {
+export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; caseRow: CaseRow }>(function PaymentField({ caseId, caseRow }, ref) {
   const { updateLocalCaseField, activeDestination } = useCases()
   const editMode = useSectionEditMode()
   const confirm = useConfirm()
@@ -67,7 +67,7 @@ export const PaymentField = forwardRef<PaymentFieldHandle, { caseId: string; cas
 
   const payments = readPayments()
 
-  const [saving, startSave] = useTransition()
+  const [saving] = useTransition()
 
   // Edit state
   const [editIdx, setEditIdx] = useState<number | null>(null)

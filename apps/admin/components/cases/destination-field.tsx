@@ -45,7 +45,6 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
         return matched ? matched.en : ko
       }).join(', ')
     : '—'
-  const isEmpty = display === '—'
 
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')

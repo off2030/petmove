@@ -106,18 +106,6 @@ function speciesMatches(ruleSpecies: string, caseSpecies: string): boolean {
 }
 
 /**
- * 트리거 필드와 사용자가 변경한 필드가 같은 "패밀리" 인지 판정.
- * - 스칼라 (departure_date): exact match
- * - 배열 인덱스 (rabies_dates[0]): changedField == 'rabies_dates' 이면 match
- * - 배열 전체 (internal_parasite_dates — trigger 으로 사용되지 않음)
- */
-function triggerMatchesChange(triggerField: string, changedField: string): boolean {
-  const { arrayName } = parsePath(triggerField)
-  if (arrayName) return arrayName === changedField
-  return triggerField === changedField
-}
-
-/**
  * 타겟 필드에 새 값을 써넣은 data 객체를 반환. 기존 값이 있고 overwrite=false 면
  * 그대로 유지. 쓴 필드는 writtenTargets 에 기록해서 chain 을 위한 "바뀐 필드"
  * 로 추적.

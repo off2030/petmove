@@ -11,7 +11,6 @@ import { formatMicrochip } from '@/lib/fields'
 import { destCode } from '@/lib/country-code'
 import { TrashModal } from './trash-modal'
 import { AttachButton } from '@/components/ui/attach-button'
-import { LIST_ROW_BASE } from '@/components/ui/list-row'
 import { TodosApp, TodosInspectionActions, TodosImportReportAdd, TABS as TODOS_TABS, type TabId as TodosTabId } from '@/components/todos/todos-app'
 
 type ListMode = 'cases' | TodosTabId

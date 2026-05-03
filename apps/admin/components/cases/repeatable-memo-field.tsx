@@ -23,7 +23,7 @@ export function RepeatableMemoField({ caseId, caseRow }: { caseId: string; caseR
   }
 
   const memos = readMemos()
-  const [saving, startSave] = useTransition()
+  const [saving] = useTransition()
   const [editIdx, setEditIdx] = useState<number | null>(null)
   const [addingNew, setAddingNew] = useState(false)
 

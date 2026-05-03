@@ -2,7 +2,6 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatMicrochip } from '@/lib/fields'
-import type { CaseRow } from '@/lib/supabase/types'
 
 // apply 는 공개(비인증) 플로우 — getActiveOrgId() 사용 불가.
 // Phase 5 RLS 활성화 시 이 엔드포인트만 service role 로 우회하거나 anon INSERT policy 추가 필요.

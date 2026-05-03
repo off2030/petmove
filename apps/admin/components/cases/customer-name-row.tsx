@@ -59,7 +59,7 @@ export function CustomerNameRow({
   const [koVal, setKoVal] = useState(koName)
   const [firstVal, setFirstVal] = useState(firstName)
   const [lastVal, setLastVal] = useState(lastName)
-  const [saving, startSave] = useTransition()
+  const [saving] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [savedFlash, setSavedFlash] = useState(false)
 

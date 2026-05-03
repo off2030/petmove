@@ -98,7 +98,6 @@ function EditableCell({
   const value = getCellValue(row, col)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value)
-  const inputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const isDate = col.type === 'date'
 

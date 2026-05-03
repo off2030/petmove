@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 import { ChevronRight, Paperclip, Plus, X } from 'lucide-react'
 import { AttachButton } from '@/components/ui/attach-button'
 import {

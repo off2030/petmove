@@ -3,7 +3,7 @@
 import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react'
 import { SectionLabel } from '@/components/ui/section-label'
 import { AttachButton } from '@/components/ui/attach-button'
-import { cn, roundIconBtn } from '@/lib/utils'
+import { roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
@@ -27,7 +27,7 @@ export interface AttachmentsFieldHandle {
   uploading: boolean
 }
 
-export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: string; caseRow: CaseRow; hideAddButton?: boolean }>(function AttachmentsField({ caseId, caseRow, hideAddButton }, ref) {
+export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: string; caseRow: CaseRow }>(function AttachmentsField({ caseId, caseRow }, ref) {
   const { updateLocalCaseField } = useCases()
   const editMode = useSectionEditMode()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
