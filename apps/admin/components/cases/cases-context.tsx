@@ -15,6 +15,7 @@ import type { InspectionConfig } from '@petmove/domain'
 import type { CertConfig } from '@petmove/domain'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import type { SharePreset } from '@/lib/share-presets-types'
+import { DEFAULT_TODO_COLUMNS_CONFIG, type TodoColumnsConfig } from '@/lib/todo-columns-config'
 
 /**
  * Global client-side state for the cases app:
@@ -85,6 +86,12 @@ interface CasesContextValue {
   orgMembers: Array<{ user_id: string; name: string | null; email: string }>
   /** 공유 링크 발급 시 빠른 선택용 사용자 정의 프리셋. */
   sharePresets: SharePreset[]
+  /**
+   * 검사/신고/서류 탭 컬럼 표시 설정. organization_settings.todo_columns_config.
+   * hiddenColumns[tab] 에 들어있는 키는 테이블 헤더·셀에서 제외.
+   */
+  todoColumnsConfig: TodoColumnsConfig
+  setTodoColumnsConfig: (config: TodoColumnsConfig) => void
 }
 
 const CasesContext = createContext<CasesContextValue | null>(null)
@@ -96,6 +103,7 @@ export function CasesProvider({
   initialImportReportButtonCountries,
   initialInspectionConfig,
   initialCertConfig,
+  initialTodoColumnsConfig = DEFAULT_TODO_COLUMNS_CONFIG,
   orgId = null,
   caseAssigneeEnabled = false,
   orgMembers = [],
@@ -108,6 +116,7 @@ export function CasesProvider({
   initialImportReportButtonCountries: string[]
   initialInspectionConfig: InspectionConfig
   initialCertConfig: CertConfig
+  initialTodoColumnsConfig?: TodoColumnsConfig
   orgId?: string | null
   caseAssigneeEnabled?: boolean
   orgMembers?: Array<{ user_id: string; name: string | null; email: string }>
@@ -121,6 +130,7 @@ export function CasesProvider({
   const [importReportButtonCountries, setImportReportButtonCountries] = useState<string[]>(initialImportReportButtonCountries)
   const [inspectionConfig, setInspectionConfig] = useState<InspectionConfig>(initialInspectionConfig)
   const [certConfig, setCertConfig] = useState<CertConfig>(initialCertConfig)
+  const [todoColumnsConfig, setTodoColumnsConfig] = useState<TodoColumnsConfig>(initialTodoColumnsConfig)
   const [newCaseIds, setNewCaseIds] = useState<Set<string>>(() => new Set())
   // 본인이 직접 추가한(addLocalCase 또는 useEffect 내 직접 setCases) 케이스 id.
   // Realtime INSERT 가 같은 행을 다시 가져왔을 때 중복 처리 + "신규" 표식을 막는다.
@@ -276,8 +286,10 @@ export function CasesProvider({
       caseAssigneeEnabled,
       orgMembers,
       sharePresets,
+      todoColumnsConfig,
+      setTodoColumnsConfig,
     }),
-    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, replaceLocalCaseData, activeDestination, importReportCountries, importReportButtonCountries, inspectionConfig, certConfig, newCaseIds, caseAssigneeEnabled, orgMembers, sharePresets],
+    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, replaceLocalCaseData, activeDestination, importReportCountries, importReportButtonCountries, inspectionConfig, certConfig, newCaseIds, caseAssigneeEnabled, orgMembers, sharePresets, todoColumnsConfig],
   )
 
   return <CasesContext.Provider value={value}>{children}</CasesContext.Provider>

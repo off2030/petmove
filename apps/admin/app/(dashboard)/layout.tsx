@@ -140,6 +140,7 @@ export default async function DashboardLayout({
       initialImportReportButtonCountries={importReportButtonCountries}
       initialInspectionConfig={inspectionConfig}
       initialCertConfig={certConfig}
+      initialTodoColumnsConfig={settingsBootstrap?.todoColumnsConfig}
       orgId={orgId}
       caseAssigneeEnabled={settingsBootstrap?.caseAssigneeEnabled ?? false}
       orgMembers={(settingsBootstrap?.members ?? []).map((m) => ({

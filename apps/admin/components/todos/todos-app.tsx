@@ -563,7 +563,7 @@ export function TodosApp({
   tab?: TabId
   query?: string
 } = {}) {
-  const { cases, updateLocalCaseField, importReportCountries, inspectionConfig } = useCases()
+  const { cases, updateLocalCaseField, importReportCountries, inspectionConfig, todoColumnsConfig } = useCases()
   const [internalTab, setInternalTab] = useState<TabId>('inspection')
   const [internalQuery, setInternalQuery] = useState('')
   const activeTab = forcedTab ?? internalTab
@@ -649,13 +649,13 @@ export function TodosApp({
           if (!db) return -1
           return db.localeCompare(da)
         }
-        // 비완료 그룹: 1) 검사기관 → 2) 검사일 최신순(DESC) → 3) 출국일
+        // 비완료 그룹: 1) 검사기관 → 2) 검사일 ASC(가까운 검사일 먼저) → 3) 출국일
         const labCmp = (LAB_SORT_ORDER[a.lab] ?? 99) - (LAB_SORT_ORDER[b.lab] ?? 99)
         if (labCmp !== 0) return labCmp
         if (da !== db) {
           if (!da) return 1
           if (!db) return -1
-          return db.localeCompare(da)
+          return da.localeCompare(db)
         }
         const ea = a.caseRow.departure_date ?? ''
         const eb = b.caseRow.departure_date ?? ''
@@ -754,11 +754,14 @@ export function TodosApp({
           labOptions={LAB_OPTIONS}
           statusOptions={INSPECTION_STATUS_OPTIONS}
           onUpdate={updateLocalCaseField}
+          hiddenColumns={todoColumnsConfig.hiddenColumns.inspection}
         />
       ) : (
         <TodoTable
           cases={filteredCases}
-          columns={COLUMNS_MAP[activeTab]}
+          columns={COLUMNS_MAP[activeTab].filter(
+            (col) => !todoColumnsConfig.hiddenColumns[activeTab].includes(col.key),
+          )}
           onUpdate={updateLocalCaseField}
           rowClass={
             activeTab === 'import_report'

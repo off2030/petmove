@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
+import { TodoColumnsToggle } from './todo-columns-toggle'
 import { DestinationPicker } from '@/components/ui/destination-picker'
 import { LabPillSelect, LabPillMultiSelect } from '@/components/ui/lab-pill-select'
 import { PillButton } from '@/components/ui/pill-button'
@@ -693,6 +694,12 @@ export function InspectionSection() {
         }
         rules={draft.infectiousRules}
         onRulesChange={(infectiousRules) => setDraft({ ...draft, infectiousRules })}
+      />
+
+      <TodoColumnsToggle
+        tabId="inspection"
+        title="검사 탭 표시 컬럼"
+        description="검사 탭 테이블에 표시할 컬럼을 선택합니다. 모두 체크가 기본값."
       />
 
       {/* Footer actions */}

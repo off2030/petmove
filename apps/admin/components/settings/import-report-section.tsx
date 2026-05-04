@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
+import { TodoColumnsToggle } from './todo-columns-toggle'
 import {
   saveImportReportCountriesAction,
   saveImportReportButtonCountriesAction,
@@ -29,6 +30,12 @@ export function ImportReportSection() {
       <ButtonCountriesEditor />
       <div className="h-2xl" />
       <AutoCountriesEditor />
+      <div className="h-2xl" />
+      <TodoColumnsToggle
+        tabId="import_report"
+        title="신고 탭 표시 컬럼"
+        description="신고 탭 테이블에 표시할 컬럼을 선택합니다. 모두 체크가 기본값."
+      />
     </div>
   )
 }

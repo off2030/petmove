@@ -537,12 +537,17 @@ export function InspectionTable({
   labOptions,
   statusOptions,
   onUpdate,
+  hiddenColumns = [],
 }: {
   rows: InspectionRow[]
   labOptions: LabOption[]
   statusOptions: StatusOption[]
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
+  /** 설정 → 검사 에서 숨김 처리된 컬럼 key. */
+  hiddenColumns?: string[]
 }) {
+  const hidden = new Set(hiddenColumns)
+  const visibleColumns = COLUMNS.filter(c => !hidden.has(c.key))
   const [visible, setVisible] = useState(INITIAL_VISIBLE)
   const sentinelRef = useRef<HTMLTableRowElement>(null)
   const { openCase } = useCases()
@@ -580,7 +585,7 @@ export function InspectionTable({
     <table className="w-full border-collapse table-fixed">
       <thead>
         <tr className="border-b border-border/80">
-          {COLUMNS.map(col => (
+          {visibleColumns.map(col => (
             <th
               key={col.key}
               className="text-left font-sans font-normal text-[11px] uppercase tracking-[0.14em] text-muted-foreground/80 px-2 py-2.5 whitespace-nowrap"
@@ -603,59 +608,75 @@ export function InspectionTable({
             )}
             onClick={() => openCase(row.caseRow.id)}
           >
-            <td className="px-2 py-4" style={{ width: 146, minWidth: 146 }} onClick={(e) => e.stopPropagation()}>
-              <LabCell row={row} options={labOptions} onUpdate={onUpdate} />
-            </td>
-            <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }} onClick={(e) => e.stopPropagation()}>
-              <DateCell
-                value={row.date}
-                editable={row.dateEditable}
-                onSave={(v) => handleDateSave(row, v)}
-                overdue={
-                  readInspectionStatus(row) === 'waiting'
-                  && isOverdue(row.date, 5)
-                }
-              />
-            </td>
-            <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }}>
-              <StaticCell value={row.caseRow.pet_name ?? ''} variant="pet" />
-            </td>
-            <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }}>
-              <StaticCell value={row.caseRow.customer_name ?? ''} variant="customer" />
-            </td>
-            <td className="px-2 py-4" style={{ width: 146, minWidth: 146 }}>
-              <DestinationCell row={row.caseRow} overrideKey="inspection_active_dest" onUpdate={onUpdate} />
-            </td>
-            <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }} onClick={(e) => e.stopPropagation()}>
-              <StatusCell row={row} options={statusOptions} onUpdate={onUpdate} />
-            </td>
-            <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }} onClick={(e) => e.stopPropagation()}>
-              <DateCell
-                value={row.caseRow.departure_date ?? ''}
-                editable
-                onSave={async (v) => {
-                  const next = v || null
-                  onUpdate(row.caseRow.id, 'column', 'departure_date', next)
-                  await updateCaseField(row.caseRow.id, 'column', 'departure_date', next)
-                }}
-              />
-            </td>
-            <td className="px-2 py-4" style={{ width: 120, minWidth: 120 }} onClick={(e) => e.stopPropagation()}>
-              <MemoCell row={row} onUpdate={onUpdate} />
-            </td>
+            {!hidden.has('lab') && (
+              <td className="px-2 py-4" style={{ width: 146, minWidth: 146 }} onClick={(e) => e.stopPropagation()}>
+                <LabCell row={row} options={labOptions} onUpdate={onUpdate} />
+              </td>
+            )}
+            {!hidden.has('date') && (
+              <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }} onClick={(e) => e.stopPropagation()}>
+                <DateCell
+                  value={row.date}
+                  editable={row.dateEditable}
+                  onSave={(v) => handleDateSave(row, v)}
+                  overdue={
+                    readInspectionStatus(row) === 'waiting'
+                    && isOverdue(row.date, 5)
+                  }
+                />
+              </td>
+            )}
+            {!hidden.has('pet_name') && (
+              <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }}>
+                <StaticCell value={row.caseRow.pet_name ?? ''} variant="pet" />
+              </td>
+            )}
+            {!hidden.has('customer_name') && (
+              <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }}>
+                <StaticCell value={row.caseRow.customer_name ?? ''} variant="customer" />
+              </td>
+            )}
+            {!hidden.has('destination') && (
+              <td className="px-2 py-4" style={{ width: 146, minWidth: 146 }}>
+                <DestinationCell row={row.caseRow} overrideKey="inspection_active_dest" onUpdate={onUpdate} />
+              </td>
+            )}
+            {!hidden.has('status') && (
+              <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }} onClick={(e) => e.stopPropagation()}>
+                <StatusCell row={row} options={statusOptions} onUpdate={onUpdate} />
+              </td>
+            )}
+            {!hidden.has('departure_date') && (
+              <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }} onClick={(e) => e.stopPropagation()}>
+                <DateCell
+                  value={row.caseRow.departure_date ?? ''}
+                  editable
+                  onSave={async (v) => {
+                    const next = v || null
+                    onUpdate(row.caseRow.id, 'column', 'departure_date', next)
+                    await updateCaseField(row.caseRow.id, 'column', 'departure_date', next)
+                  }}
+                />
+              </td>
+            )}
+            {!hidden.has('memo') && (
+              <td className="px-2 py-4" style={{ width: 120, minWidth: 120 }} onClick={(e) => e.stopPropagation()}>
+                <MemoCell row={row} onUpdate={onUpdate} />
+              </td>
+            )}
           </tr>
           )
         })}
         {visible < rows.length && (
           <tr ref={sentinelRef}>
-            <td colSpan={COLUMNS.length} className="text-center text-muted-foreground/50 py-2 text-[13px]">
+            <td colSpan={visibleColumns.length} className="text-center text-muted-foreground/50 py-2 text-[13px]">
               {visible} / {rows.length}건
             </td>
           </tr>
         )}
         {rows.length === 0 && (
           <tr>
-            <td colSpan={COLUMNS.length} className="text-center text-muted-foreground py-2xl">
+            <td colSpan={visibleColumns.length} className="text-center text-muted-foreground py-2xl">
               데이터가 없습니다
             </td>
           </tr>
