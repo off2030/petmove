@@ -8,7 +8,7 @@ import {
   TODO_COLUMN_META,
   type TodoTabId,
   type TodoColumnsConfig,
-} from '@/lib/todo-columns-config'
+} from '@/lib/todo-columns-config-types'
 import { cn } from '@/lib/utils'
 
 /**

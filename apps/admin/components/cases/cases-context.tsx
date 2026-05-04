@@ -15,7 +15,7 @@ import type { InspectionConfig } from '@petmove/domain'
 import type { CertConfig } from '@petmove/domain'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import type { SharePreset } from '@/lib/share-presets-types'
-import { DEFAULT_TODO_COLUMNS_CONFIG, type TodoColumnsConfig } from '@/lib/todo-columns-config'
+import { DEFAULT_TODO_COLUMNS_CONFIG, type TodoColumnsConfig } from '@/lib/todo-columns-config-types'
 
 /**
  * Global client-side state for the cases app:
