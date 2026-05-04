@@ -1465,7 +1465,7 @@
     --primary-foreground: 0 0% 100%;
     --secondary: 343 65% 92%;
     --secondary-foreground: 340 40% 25%;
-    --muted: 343 65% 92%;
+    --muted: 343 60% 86%;            /* 채팅 상대 풍선 — background(94%) 대비 진하게 */
     --muted-foreground: 340 25% 45%;
     --accent: 348 65% 88%;
     --accent-foreground: 348 50% 30%;
@@ -1649,7 +1649,7 @@
     --primary-foreground: 0 0% 100%;
     --secondary: 215 50% 90%;
     --secondary-foreground: 215 45% 30%;
-    --muted: 215 50% 92%;
+    --muted: 215 45% 84%;            /* 채팅 상대 풍선 — background(90%) 대비 진하게 */
     --muted-foreground: 215 25% 42%;
     --accent: 215 55% 88%;
     --accent-foreground: 215 45% 30%;
@@ -1928,9 +1928,9 @@
   box-shadow: 0 2px 6px -1px rgba(63, 72, 85, 0.12);
 }
 
-/* 채팅 own bubble — soft gray-blue tint */
+/* 채팅 own bubble — gray-blue 명확한 tint (other bg-muted 와 시각 구분) */
 [data-skin="foggy-pastel"] [data-bubble="own"] {
-  background-color: hsl(var(--primary) / 0.12);
+  background-color: hsl(var(--primary) / 0.22);
   color: hsl(var(--primary));
 }
 
