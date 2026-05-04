@@ -4,6 +4,7 @@ import {
   generateAnnexIIIMulti,
   generateApqaHq,
   generateApqaHqEn,
+  generateApqaHqEu,
   generateAU,
   generateAU2,
   generateAUCat,
@@ -52,6 +53,7 @@ type SinglePdfBody = {
     | 'VHC'
     | 'APQA_HQ'
     | 'APQA_HQ_En'
+    | 'APQA_HQ_EU'
     | 'KSVDL'
     | 'VBDDL'
   caseId: string
@@ -105,6 +107,7 @@ const SINGLE_GENERATORS = {
   VHC: generateVHC,
   APQA_HQ: generateApqaHq,
   APQA_HQ_En: generateApqaHqEn,
+  APQA_HQ_EU: generateApqaHqEu,
   KSVDL: generateKsvdl,
   VBDDL: generateVbddl,
 } as const

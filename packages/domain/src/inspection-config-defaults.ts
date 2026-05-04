@@ -34,6 +34,7 @@ export const TITER_LABS: { value: string; label: string }[] = [
   { value: 'krsl', label: 'KRSL' },
   { value: 'apqa_seoul', label: 'APQA Seoul' },
   { value: 'apqa_hq', label: 'APQA HQ' },
+  { value: 'apqa_eu', label: 'APQA EU' },
   { value: 'ksvdl_r', label: 'KSVDL-R' },
 ]
 
@@ -63,8 +64,9 @@ export const DEFAULT_INSPECTION_CONFIG: InspectionConfig = {
     { countries: ['싱가포르'], labs: ['ksvdl_r'] },
     { countries: ['일본'], labs: ['apqa_seoul'] },
     { countries: ['하와이'], labs: ['apqa_seoul'] },
-    { label: '유럽연합', countries: [...EU_COUNTRIES], labs: ['apqa_hq'] },
-    { countries: ['영국'], labs: ['apqa_hq'] },
+    { label: '유럽연합', countries: [...EU_COUNTRIES], labs: ['apqa_eu'] },
+    { countries: ['영국'], labs: ['apqa_eu'] },
+    { countries: ['스위스'], labs: ['apqa_eu'] },
   ],
   infectiousRules: [
     { countries: ['호주'], labs: ['ksvdl'] },

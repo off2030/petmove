@@ -162,6 +162,9 @@ export async function generateApqaHq(caseId: string, opts?: GenerateOpts) {
 export async function generateApqaHqEn(caseId: string, opts?: GenerateOpts) {
   return generate('APQA_HQ_En', caseId, opts)
 }
+export async function generateApqaHqEu(caseId: string, opts?: GenerateOpts) {
+  return generate('APQA_HQ_EU', caseId, opts)
+}
 export async function generateKsvdl(caseId: string, opts?: GenerateOpts) {
   return generate('KSVDL', caseId, opts)
 }

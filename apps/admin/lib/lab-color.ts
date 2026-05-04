@@ -20,6 +20,7 @@ const LAB_TO_TONE: Record<string, ToneKey> = {
   krsl: 'olive',
   apqa_seoul: 'amber',
   apqa_hq: 'olive',
+  apqa_eu: 'blue',
   ksvdl_r: 'red',
   ksvdl: 'olive',
   vbddl: 'plum',

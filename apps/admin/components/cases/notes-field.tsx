@@ -385,22 +385,33 @@ function NoteTextInput({ initial, onSave, onCancel, saving }: {
   }, [])
 
   return (
-    <textarea
-      ref={ref}
-      value={val}
-      onChange={(e) => {
-        setVal(e.target.value)
-        e.target.style.height = 'auto'
-        e.target.style.height = e.target.scrollHeight + 'px'
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSave(val.trim()) }
-        if (e.key === 'Escape') onCancel()
-      }}
-      onBlur={() => setTimeout(() => { if (!saving) onSave(val.trim()) }, 150)}
-      placeholder="메모 입력 (Shift+Enter로 줄바꿈)"
-      className="w-full min-h-[2rem] rounded-md border border-border/80 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-none"
-    />
+    <div className="flex items-start gap-sm flex-1 min-w-0">
+      <textarea
+        ref={ref}
+        value={val}
+        onChange={(e) => {
+          setVal(e.target.value)
+          e.target.style.height = 'auto'
+          e.target.style.height = e.target.scrollHeight + 'px'
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSave(val.trim()) }
+          if (e.key === 'Escape') onCancel()
+        }}
+        onBlur={() => setTimeout(() => { if (!saving) onSave(val.trim()) }, 150)}
+        placeholder="메모 입력 (Shift+Enter로 줄바꿈)"
+        className="flex-1 min-w-0 min-h-[2rem] rounded-md border border-border/80 bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 resize-none"
+      />
+      <button
+        type="button"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => onSave(val.trim())}
+        disabled={saving}
+        className="shrink-0 whitespace-nowrap inline-flex h-7 items-center justify-center rounded border px-2 text-[11px] border-pmw-accent bg-pmw-accent/15 text-pmw-accent-strong hover:bg-pmw-accent/25 transition-colors disabled:opacity-50"
+      >
+        {saving ? '...' : '저장'}
+      </button>
+    </div>
   )
 }
 

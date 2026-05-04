@@ -19,6 +19,7 @@ export type SinglePdfRequest = {
     | 'VHC'
     | 'APQA_HQ'
     | 'APQA_HQ_En'
+    | 'APQA_HQ_EU'
     | 'KSVDL'
     | 'VBDDL'
   caseId: string

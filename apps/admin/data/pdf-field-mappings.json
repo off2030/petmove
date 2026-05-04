@@ -4406,6 +4406,42 @@
       "text_22uizo": { "source": null, "transform": "vet:mobile_phone", "note": "Veterinarian 섹션 — Cell phone" }
     }
   },
+  "APQA_HQ_EU": {
+    "template": "APQA_HQ_EU.pdf",
+    "description": "농림축산검역본부 광견병중화항체검사 신청서 (EU/영국/스위스 수출용). 시료채취 내역서 1장 + 의뢰인 동의서 2장. 광견병항체가검사를 검역본부에 의뢰할 때 사용.",
+    "filename": "APQA_HQ_EU_{pet_name}.pdf",
+    "dateFormat": "ymd_slash",
+    "flatten": true,
+    "fields": {
+      "text_12cw":   { "source": null, "transform": "today_part:year",  "note": "p1 동의서 — 년 (작성일=오늘)" },
+      "text_16gnpk": { "source": null, "transform": "today_part:month", "note": "p1 동의서 — 월 (작성일=오늘)" },
+      "text_17xwbs": { "source": null, "transform": "today_part:day",   "note": "p1 동의서 — 일 (작성일=오늘)" },
+      "text_23lxmi": { "source": null, "transform": "vet:name_ko", "note": "p1 동의서 — 수의사 성명 (vet 본인이 동의·서명)" },
+
+      "text_22cmqy": { "source": null, "transform": "today_part:year",  "note": "p2 동의서 — 년 (작성일=오늘)" },
+      "text_13cclj": { "source": null, "transform": "today_part:month", "note": "p2 동의서 — 월 (작성일=오늘)" },
+      "text_23ojdb": { "source": null, "transform": "today_part:day",   "note": "p2 동의서 — 일 (작성일=오늘)" },
+      "text_28gkff": { "source": "customer_name", "note": "p2 동의서 — 의뢰인 성명 (보호자)" },
+
+      "text_17lqxa": { "source": "titer_date:apqa_eu", "note": "p3 시료채취일 — APQA EU titer 기록 우선, 없으면 내원일" },
+      "text_16qnfk": { "source": null, "transform": "vet:name_ko", "note": "p3 시료채취자 — 수의사 성명" },
+      "text_13iwcg": { "source": null, "transform": "vet:phone", "note": "p3 시료채취자 연락처" },
+      "text_14ncuf": { "source": null, "transform": "vet:address_ko", "note": "p3 시료채취지 소재지 — 병원 주소(한글, 국가명 자동 제거)" },
+      "text_12fbrd": { "source": null, "transform": "vet:phone", "note": "p3 시료채취지 연락처 — 병원 전화" },
+      "text_15whxc": { "source": null, "transform": "vet:name_ko", "note": "p3 시료채취지 대표자 — 수의사 본인" },
+      "text_10btuk": { "source": "breed", "transform": "species_breed_ko", "note": "p3 사육현황 — 축종 및 품종 (예: '개(말티즈)')" },
+      "text_11btrf": { "source": null, "default": "1두", "note": "p3 사육현황 — 사육규모" },
+      "text_9crdj":  { "source": "breed", "transform": "species_breed_count_ko", "note": "p3 시료채취 내역 — 축종(품종) 및 두수 (예: '개(말티즈) 1두')" },
+      "text_4oelt":  { "source": null, "default": "경정맥 채혈", "note": "p3 시료채취 내역 표 — 첫째 칸 (채혈 방법)" },
+      "text_7fpga":  { "source": null, "default": "마이크로칩 번호", "note": "p3 시료채취 내역 표 — 둘째 칸 헤더" },
+      "text_5mahn":  { "source": null, "default": "5ml(Serum 1ml)", "note": "p3 시료채취 내역 표 — 채혈량 (관행상 5ml 채혈 → 1ml 혈청 분주)" },
+      "text_8xjks":  { "source": "microchip", "note": "p3 시료채취 내역 표 — 마이크로칩 번호" },
+      "text_6ieqj":  { "source": null, "default": "냉장", "note": "p3 시료채취 내역 표 — 보관 조건" },
+      "text_3anhy":  { "source": null, "default": "광견병중화항체검사", "note": "p3 의뢰하는 검사 방법 (FAVN 광견병중화항체검사)" },
+      "text_1qjxg":  { "source": null, "transform": "vet:clinic_ko", "note": "p3 의뢰자(기관) — 병원명 한글" },
+      "text_2cexu":  { "source": null, "transform": "today_ymd_slash", "note": "p3 의뢰 일자 (작성일=오늘, YYYY/MM/DD)" }
+    }
+  },
   "KSVDL": {
     "template": "KSVDL.pdf",
     "description": "Kansas State Veterinary Diagnostic Laboratory — Canine Export Submission Form. 뉴질랜드·호주 수출용 브루셀라/렙토스피라/레이슈마니아 등 혈청검사. Owner 정보 + Veterinarian/Clinic 정보 (조직 설정 기반) 자동 채움.",

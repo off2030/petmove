@@ -3,7 +3,7 @@
  * Reads case row, resolves each field value via the mapping's transform,
  * and fills the PDF form.
  */
-import { PDFDocument, PDFName, PDFString, PDFDict, PDFBool, TextAlignment, PDFCheckBox, PDFDropdown, PDFTextField, PDFRadioGroup, drawCheckMark, rgb, pushGraphicsState, popGraphicsState } from 'pdf-lib'
+import { PDFDocument, PDFName, PDFString, PDFDict, PDFRef, PDFRawStream, PDFBool, TextAlignment, PDFCheckBox, PDFDropdown, PDFTextField, PDFRadioGroup, drawCheckMark, rgb, pushGraphicsState, popGraphicsState } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -143,6 +143,7 @@ const LAB_INFO: Record<string, { name: string; country: string }> = {
   krsl:        { name: 'Komipharm Rabies Serology Laboratory', country: 'Republic of Korea' },
   apqa_seoul:  { name: 'Animal and Plant Quarantine Agency (APQA) Seoul Office', country: 'Republic of Korea' },
   apqa_hq:     { name: 'Animal and Plant Quarantine Agency (APQA)', country: 'Republic of Korea' },
+  apqa_eu:     { name: 'Animal and Plant Quarantine Agency (APQA)', country: 'Republic of Korea' },
   ksvdl_r:     { name: 'Kansas State Rabies Laboratory', country: 'United States of America' },
   ksvdl:       { name: 'Kansas Veterinary Diagnostic Laboratory', country: 'United States of America' },
   vbddl:       { name: 'Vector Borne Disease Diagnostic Laboratory', country: 'United States of America' },
@@ -639,6 +640,22 @@ function readSource(
     if (Array.isArray(recs)) {
       const rec = (recs as Array<{ lab?: string; date?: string | null }>).find(r => r.lab === lab)
       if (rec?.date) return rec.date
+    }
+    return data.vet_visit_date ?? ''
+  }
+
+  // Lab-specific titer collection date from rabies_titer_records.
+  // Pattern: `titer_date:<lab>` (e.g. apqa_hq, krsl, ksvdl_r).
+  // 여러 레코드면 최신(date 내림차순 첫 번째) 사용. 매칭 없으면 vet_visit_date.
+  const titerDateMatch = source.match(/^titer_date:(.+)$/)
+  if (titerDateMatch) {
+    const lab = titerDateMatch[1]
+    const recs = data.rabies_titer_records
+    if (Array.isArray(recs)) {
+      const matched = (recs as Array<{ lab?: string; date?: string | null }>)
+        .filter(r => r.lab === lab && r.date)
+        .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+      if (matched[0]?.date) return matched[0].date
     }
     return data.vet_visit_date ?? ''
   }
@@ -1814,6 +1831,18 @@ function resolveField(
     return a.years === 0 ? `${a.months}개월` : `${a.years}살`
   }
 
+  // 검역본부 EU 시료채취 내역서용 — "축종(품종)". species_ko + "(" + breed + ")".
+  // species 가 dog/cat 이 아니면 breed 만 반환. breed 비어 있으면 species_ko 만.
+  if (transform === 'species_breed_ko' || transform === 'species_breed_count_ko') {
+    const sp = String(data.species ?? '').toLowerCase()
+    const speciesKo = sp === 'dog' ? '개' : sp === 'cat' ? '고양이' : ''
+    const breed = String(raw ?? '').trim()
+    const head = speciesKo && breed
+      ? `${speciesKo}(${breed})`
+      : speciesKo || breed
+    return transform === 'species_breed_count_ko' ? `${head} 1두`.trim() : head
+  }
+
   // Vet info central lookup. `vet:<key>` — returns VET_INFO[key] as string.
   // Special: `vet:invoice_shipper_block` returns a multi-line block formatted
   // for the FedEx Commercial Invoice "SHIPPER/EXPORTER" cell.
@@ -2440,6 +2469,7 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
   // 평탄화 — solo 경로와 동일.
   if (form.flatten) {
     forceRegenerateButtonAppearances(pdfForm)
+    sanitizeMalformedWidgets(pdf, pdfForm)
     pdfForm.flatten()
   }
 
@@ -2451,6 +2481,43 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
   const partSuffix = partNumber > 0 ? `_part${partNumber}` : ''
   const filename = form.filename.replace('{pet_name}', `${petNames}${partSuffix}`)
   return { ok: true, pdf: base64, filename }
+}
+
+/**
+ * Flatten 직전 호출 — AP 엔트리는 있는데 N(Normal Appearance)이 누락되거나
+ * 잘못된 타입인 위젯에 빈 XObject Form 외관을 강제로 채워넣는다.
+ *
+ * Why: 일부 템플릿(예: AQS_279 의 "Signature of Primary Owner" 서명 필드)은
+ * AP dict 만 있고 N 키가 비어 있다. pdfForm.flatten() 은 모든 widget 의
+ * normal appearance ref 를 요구하므로 이런 위젯에서 즉시 throw:
+ *   - "Unexpected N type: undefined" (PDFAnnotation.getNormalAppearance)
+ *   - "Failed to extract appearance ref" (PDFForm.findWidgetAppearanceRef — N 이
+ *     ref 가 아닌 dict 일 때)
+ *
+ * AP 자체를 지우거나 빈 dict 를 넣어도 ensureAP/findWidgetAppearanceRef 가
+ * 다시 throw 하므로, 위젯 rect 크기의 빈 Form XObject 스트림을 등록해
+ * AP/N 에 그 ref 를 박아넣는다. 시각적으로는 빈 칸이라 템플릿 인쇄 그대로.
+ */
+function sanitizeMalformedWidgets(pdf: PDFDocument, pdfForm: import('pdf-lib').PDFForm): void {
+  for (const field of pdfForm.getFields()) {
+    for (const widget of field.acroField.getWidgets()) {
+      const dict = widget.dict
+      const AP = dict.lookupMaybe(PDFName.of('AP'), PDFDict)
+      if (!AP) continue
+      const N = AP.get(PDFName.of('N'))
+      if (N instanceof PDFRef || N instanceof PDFDict) continue
+      const rect = widget.getRectangle()
+      const xobj = pdf.context.obj({
+        Type: 'XObject',
+        Subtype: 'Form',
+        FormType: 1,
+        BBox: [0, 0, rect.width, rect.height],
+        Resources: pdf.context.obj({}),
+      }) as PDFDict
+      const stream = PDFRawStream.of(xobj, new Uint8Array(0))
+      AP.set(PDFName.of('N'), pdf.context.register(stream))
+    }
+  }
 }
 
 /**
@@ -2776,6 +2843,7 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
   // 해당 키 제거.
   if (form.flatten) {
     forceRegenerateButtonAppearances(pdfForm)
+    sanitizeMalformedWidgets(pdf, pdfForm)
     pdfForm.flatten()
   }
 

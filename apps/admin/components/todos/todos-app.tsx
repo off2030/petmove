@@ -40,7 +40,7 @@ const STATUS_OPTIONS = [
 ]
 
 const STATUS_WITH_NA = [
-  { value: 'not_started', label: '시작 전' },
+  { value: 'not_started', label: '대기중' },
   { value: 'na', label: 'N/A' },
   { value: 'in_progress', label: '진행 중' },
   { value: 'done', label: '완료' },
@@ -50,6 +50,7 @@ const LAB_OPTIONS = [
   { value: 'krsl', label: 'KRSL' },
   { value: 'apqa_seoul', label: 'APQA Seoul' },
   { value: 'apqa_hq', label: 'APQA HQ' },
+  { value: 'apqa_eu', label: 'APQA EU' },
   { value: 'ksvdl_r', label: 'KSVDL-R' },
   { value: 'ksvdl', label: 'KSVDL' },
   { value: 'vbddl', label: 'VBDDL' },
@@ -241,11 +242,12 @@ function buildInspectionRows(
 const LAB_SORT_ORDER: Record<string, number> = {
   krsl: 0,
   apqa_seoul: 1,
-  apqa_hq: 2,
-  ksvdl_r: 3,
-  ksvdl: 4,
-  vbddl: 5,
-  nz_combined: 5,
+  apqa_eu: 2,
+  apqa_hq: 3,
+  ksvdl_r: 4,
+  ksvdl: 5,
+  vbddl: 6,
+  nz_combined: 6,
 }
 
 // 모든 데이터 컬럼은 통일 너비.
@@ -403,14 +405,14 @@ function isJapan(row: CaseRow): boolean {
 
 /**
  * 신고 탭 상태 디폴트 — 저장된 값이 있으면 그대로, 없으면:
- *   - 수입: 출국일 있으면 'not_started', 없으면 'na'
+ *   - 수입: 항상 'not_started' (대기중) — 출국일 미정이어도 활성으로 표시
  *   - 수출(일본만): 귀국일 있으면 'not_started', 없으면 'na'
  */
 function effectiveImportStatus(row: CaseRow): string {
   const data = (row.data ?? {}) as Record<string, unknown>
   const stored = data.import_import_status
   if (stored != null && String(stored) !== '') return String(stored)
-  return row.departure_date ? 'not_started' : 'na'
+  return 'not_started'
 }
 
 function effectiveExportStatus(row: CaseRow): string {
@@ -713,6 +715,11 @@ export function TodosApp({
                     rows={inspectionRows.filter(r => r.lab === 'nz_combined')}
               request={(caseId) => ({ kind: 'bundle', variant: 'nz-infection-pack', caseId })}
             />
+            <BulkApplyPicker
+              label="APQA EU"
+              rows={inspectionRows.filter(r => r.kind === 'titer' && r.lab === 'apqa_eu')}
+              request={(caseId) => ({ kind: 'single', formKey: 'APQA_HQ_EU', caseId })}
+            />
           </div>
           <div className="md:hidden">
             <InspectionFooterMobileMenu>
@@ -726,6 +733,11 @@ export function TodosApp({
                 label="VBDDL + APQA HQ"
                 rows={inspectionRows.filter(r => r.lab === 'nz_combined')}
                 request={(caseId) => ({ kind: 'bundle', variant: 'nz-infection-pack', caseId })}
+              />
+              <BulkApplyPicker
+                label="APQA EU"
+                rows={inspectionRows.filter(r => r.kind === 'titer' && r.lab === 'apqa_hq')}
+                request={(caseId) => ({ kind: 'single', formKey: 'APQA_HQ_EU', caseId })}
               />
             </InspectionFooterMobileMenu>
           </div>
@@ -814,6 +826,9 @@ export function TodosInspectionActions({ query }: { query: string }) {
   )
   const ksvdlRows = pendingRows.filter((r) => r.lab === 'ksvdl')
   const nzRows = pendingRows.filter((r) => r.lab === 'nz_combined')
+  // APQA EU titer 행 = EU/영국/스위스 광견병중화항체검사 신청 대상.
+  // inspection-config 의 titerRules 가 EU·UK·CH → apqa_eu 로 매핑.
+  const euApqaRows = pendingRows.filter((r) => r.kind === 'titer' && r.lab === 'apqa_eu')
   // Invoice 활성화: KSVDL-R(titer) · KSVDL(호주 infectious) · VBDDL(뉴질랜드 묶음) 중 한 건이라도 진행 중이면 활성.
   const invoiceRows = pendingRows.filter(
     (r) =>
@@ -823,7 +838,7 @@ export function TodosInspectionActions({ query }: { query: string }) {
   )
 
   const [menuOpen, setMenuOpen] = useState(false)
-  const [activeDialog, setActiveDialog] = useState<'invoice' | 'ksvdl' | 'vbddl_apqa' | null>(null)
+  const [activeDialog, setActiveDialog] = useState<'invoice' | 'ksvdl' | 'vbddl_apqa' | 'apqa_eu' | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -885,6 +900,15 @@ export function TodosInspectionActions({ query }: { query: string }) {
           >
             VBDDL + APQA HQ
           </button>
+          <button
+            type="button"
+            onClick={() => { if (euApqaRows.length > 0) { setActiveDialog('apqa_eu'); setMenuOpen(false) } }}
+            disabled={euApqaRows.length === 0}
+            className={itemClass(euApqaRows.length === 0)}
+            title={euApqaRows.length === 0 ? '대상 케이스가 없습니다' : undefined}
+          >
+            APQA EU
+          </button>
         </div>
       )}
       {activeDialog === 'invoice' && (
@@ -903,6 +927,14 @@ export function TodosInspectionActions({ query }: { query: string }) {
           label="VBDDL + APQA HQ"
           rows={nzRows}
           request={(caseId) => ({ kind: 'bundle', variant: 'nz-infection-pack', caseId })}
+          onClose={() => setActiveDialog(null)}
+        />
+      )}
+      {activeDialog === 'apqa_eu' && (
+        <BulkApplyDialog
+          label="APQA EU"
+          rows={euApqaRows}
+          request={(caseId) => ({ kind: 'single', formKey: 'APQA_HQ_EU', caseId })}
           onClose={() => setActiveDialog(null)}
         />
       )}
