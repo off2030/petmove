@@ -1,7 +1,7 @@
 # 설정 화면 리팩터링 계획 (work in progress)
 
-> 마지막 업데이트: 2026-05-04 (phase 3a 완료 — SettingsField 도입 + profile/company 변환)
-> 다음 시작점: 카테고리 헤더 UI 합의 / inspection·detail-view row 통일 / vaccine 통합 패턴
+> 마지막 업데이트: 2026-05-04 (phase 3 완료 — row 컴포넌트 3종 + 모든 row 패턴 흡수)
+> 다음 시작점: phase 4 — 카테고리 헤더 UI / vaccine 통합 패턴 / section-label 통합 (모두 디자인 합의 필요)
 
 ## 배경
 
@@ -109,28 +109,58 @@
 
 8. ❌ **vaccine-section** — 제외. 외곽 div 가 drag-and-drop 컨테이너 (handlers + dynamic className). SettingsShell 의 폭 제어 책임과 다른 SRP 라 별도 패턴 유지. 후속에서 `SettingsShell asChild` 같은 패턴이 필요해지면 그때 합치는 식.
 
-## phase 3a — 완료 (2026-05-04)
+## phase 3 — 완료 (2026-05-04)
 
-`SettingsField` 컴포넌트 도입 + profile / company 의 row 패턴 변환.
+settings 안의 반복 row 패턴 3종을 layout 컴포넌트로 추출. 시각 회귀 미미.
 
-1. ✅ **`SettingsField` 추가** — `grid grid-cols-[150px_1fr] gap-md py-3 border-b border-dotted` 패턴.
-   - `align="baseline"` (default): input/text 행. 라벨이 input baseline 정렬.
-   - `align="center"`: avatar 등 비-텍스트 컨트롤.
-   - 컨트롤은 children 슬롯 — 단일 input ~ 복합 배치까지 자유.
+### 3a — `SettingsField` 도입 + profile/company
 
-2. ✅ **profile-section** — 6개 row 변환:
-   - AvatarRow → `<SettingsField label="프로필 이미지" align="center">`
-   - 이름 / 이메일 / 로그인 방식 / 푸시 알림 / 검색 노출 → `<SettingsField label="…">`
+1. ✅ **`SettingsField`** — `grid grid-cols-[150px_1fr] gap-md py-3 border-b border-dotted`.
+   - `align="baseline"` (default) / `"center"` / `"start"` (3b 에서 추가).
+   - 짧은 라벨 좌측 + 컨트롤 우측. 단일 input ~ (button + status text) 복합 자유.
 
-3. ✅ **company-section** — fields.map 의 동적 row + OrgDmVisibilityRow 변환.
-   - HOSPITAL_FIELDS / TRANSPORT_FIELDS 의 11~6개 행 → `<SettingsField key label>`
-   - CustomFieldRow 는 `[150px_1fr_auto]` (3-col) 라 그대로 유지.
+2. ✅ **profile-section** — AvatarRow / 이름 / 이메일 / 로그인 방식 / 푸시 알림 /
+   검색 노출 — 6개 row 모두 SettingsField 로.
 
-## phase 3 이후 (합의 필요)
+3. ✅ **company-section** — fields.map 의 11~6개 동적 row + OrgDmVisibilityRow.
+   CustomFieldRow 는 `[150px_1fr_auto]` (3-col) 패턴이라 그대로.
+
+### 3b — inspection 의 다른 톤 row 통일
+
+4. ✅ **`SettingsField align="start"`** 추가 — wrap chips 등 여러 줄로 늘어나는 행.
+
+5. ✅ **inspection-section** — LabsAdminRow / 기본 검사기관 행을 SettingsField 로.
+   라벨 폭 160→150px / solid→dotted / items-start 보존. 시각 통일.
+
+### 3c — `SettingsListRow` 도입 + detail-view
+
+6. ✅ **`SettingsListRow`** — `grid grid-cols-[1fr_auto] py-3 border-b border-dotted`.
+   title + 긴 description 좌측 + 짧은 컨트롤 우측. SettingsField (단순 라벨) 와는 별개,
+   SettingsRow (rounded-card) 와도 별개의 list-style.
+
+7. ✅ **detail-view-section** — 한·영 병기 / 담당자 기능 토글 행 → SettingsListRow.
+
+### 3d — `SettingsRow` 첫 사용처
+
+8. ✅ **DataSection** (settings-app.tsx 안) — 휴지통 / 데이터 내보내기 카드 →
+   `SettingsRow` (rounded-card 패턴). exportError 는 description ReactNode 안에 block span.
+
+## row 컴포넌트 사용 가이드
+
+settings 안의 row 종류는 3종으로 정리됨:
+
+| 컴포넌트 | 패턴 | 사용처 예시 |
+|---|---|---|
+| `SettingsField` | `[150px_1fr]` + dotted | 짧은 라벨 + 입력 (이름/이메일/검사기관) |
+| `SettingsListRow` | `[1fr_auto]` + dotted | title + 긴 description + 토글 (detail-view) |
+| `SettingsRow` | rounded-card | 카드 형태 (휴지통/내보내기) |
+
+3-col 또는 더 복잡한 패턴 (CustomFieldRow / cert rule list / automation rule list)
+은 호출처마다 칼럼 의미가 달라 추출하지 않음.
+
+## phase 4 이후 (합의 필요)
 
 - 카테고리 헤더 UI 도입 — 사이드바 vs 탭 + 그룹 헤더 결정
-- inspection-section row 패턴 — `[160px_1fr]` + solid border + items-start 로 SettingsField 와 시각이 다름. 일관 통일할지 별도 디자인 유지할지 결정 필요.
-- detail-view-section row 패턴도 SettingsField 적용 가능성 검토.
 - ui/section-label vs SettingsSectionLabel 통합 — cases 화면 톤도 합의 후
 - vaccine-section 통합 패턴 (`SettingsShell asChild` 또는 별도 컴포넌트)
 
@@ -144,9 +174,9 @@
 | 메뉴 UI | phase 0~1 동안 **상단 평면 탭 유지** — phase 2 에서 카테고리 헤더 도입 검토 |
 | `SettingsRow` variants | **4개** (toggle/input/chips/static) — 일단 메타데이터, 마이그레이션 진행하며 분기 |
 
-## 관련 파일 (phase 2 완료 시점)
+## 관련 파일 (phase 3 완료 시점)
 
-- `apps/admin/components/settings/settings-layout.tsx` — **신규**. Shell(size: md/lg)/Section/Row/Footer + Label 두 종.
+- `apps/admin/components/settings/settings-layout.tsx` — **신규**. Shell(size: md/lg) / Section / Row (card) / ListRow / Field (align: baseline/center/start) / Footer + Label 두 종.
 - `apps/admin/components/settings/settings-app.tsx` — 진입점, TABS 메타데이터(category) 적용. DataSection 도 Shell 적용.
 - `apps/admin/components/settings/detail-view-section.tsx` — 상세 (카테고리 4개 통합). Shell `className="max-w-4xl"`.
 - `apps/admin/components/settings/inspection-section.tsx` — 검사 + 컬럼 토글. Shell size="lg" + Label serif.
