@@ -172,7 +172,7 @@ export function SharePresetsSection({
     <section className="mt-2xl">
       <div className="flex items-baseline justify-between mb-2 gap-md flex-wrap">
         <h3 className="font-serif text-[18px] text-foreground inline-flex items-center gap-sm">
-          공유 링크 프리셋
+          공유
           {isDirty && (
             <span className="font-mono text-[10.5px] uppercase tracking-[1.2px] px-1.5 py-0.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400">
               변경됨

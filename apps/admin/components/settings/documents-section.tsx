@@ -6,7 +6,6 @@ import { ChevronDown, Plus, X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { DestinationPicker } from '@/components/ui/destination-picker'
 import { PillButton } from '@/components/ui/pill-button'
-import { SectionHeader } from '@/components/ui/section-header'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import { saveCertConfigAction } from '@/lib/actions/cert-config-action'
 import {
@@ -250,14 +249,13 @@ export function DocumentsSection() {
   }
 
   return (
-    <div className="max-w-5xl pb-2xl">
-      {/* Editorial header */}
-      <header className="pb-xl">
-        <SectionHeader>서류</SectionHeader>
-        <p className="pmw-st__sec-lead mt-2">
-          케이스 상세페이지에 표시되는 증명서 구성을 관리합니다. 기본 증명서는 모든 케이스에 공통이며, 국가별 규칙은 목적지에 따라 추가됩니다.
+    <section className="mt-2xl pt-xl border-t border-border/40">
+      <div className="mb-md">
+        <h3 className="font-serif text-[18px] text-foreground">증명서</h3>
+        <p className="pmw-st__sec-lead mt-1">
+          케이스 상세페이지에 표시되는 증명서 버튼 구성. 기본 증명서는 모든 케이스에 공통이며, 국가별 규칙은 목적지에 따라 추가됩니다.
         </p>
-      </header>
+      </div>
 
       {/* 기본 증명서 */}
       <section className="mb-xl">
@@ -404,7 +402,7 @@ export function DocumentsSection() {
           </PillButton>
         </div>
       </div>
-    </div>
+    </section>
   )
 }
 

@@ -83,17 +83,18 @@ export function DetailViewSection({
   return (
     <div className="max-w-4xl pb-2xl">
       <header className="pb-xl">
-        <SectionHeader>상세뷰 설정</SectionHeader>
+        <SectionHeader>상세</SectionHeader>
         <p className="pmw-st__sec-lead mt-2">
-          케이스 상세 페이지에 표시되는 정보를 설정합니다. 기본 표기 모드와 목적지별 표시 항목을 한곳에서 관리해요.
+          케이스 상세 페이지의 표시·공유·증명서 구성을 한곳에서 관리합니다.
         </p>
         {error && (
           <p className="mt-2 font-serif text-[13px] text-destructive">저장 실패: {error}</p>
         )}
       </header>
 
-      <section>
-        <h3 className="font-serif text-[18px] text-foreground mb-2">상세뷰 기본 설정</h3>
+      {/* ── 기본 ── */}
+      <section className="mb-2xl">
+        <h3 className="font-serif text-[18px] text-foreground mb-2">기본</h3>
         <div className="border-t border-border/80">
           <div className="grid grid-cols-[1fr_auto] items-center gap-md py-3 border-b border-dotted border-border/80">
             <div className="flex flex-col gap-0.5">
@@ -116,7 +117,6 @@ export function DetailViewSection({
               {allOn ? 'ON' : 'OFF'}
             </button>
           </div>
-          {/* 담당자 기능 — 전달 탭에서 이전 */}
           <div className="grid grid-cols-[1fr_auto] items-center gap-md py-3 border-b border-dotted border-border/80">
             <div className="flex flex-col gap-0.5">
               <span className="font-serif text-[15px] text-foreground">담당자 기능</span>
@@ -146,14 +146,14 @@ export function DetailViewSection({
         </div>
       </section>
 
-      {/* 목적지별 표시정보 — 같은 탭에 통합 */}
+      {/* ── 공유 ── */}
+      <SharePresetsSection />
+
+      {/* ── 목적지 ── */}
       <DestinationsArea />
 
-      {/* 증명서 버튼 생성 규칙 — 기존 "서류" 탭 내용 통합 */}
+      {/* ── 증명서 ── */}
       <DocumentsSection />
-
-      {/* 공유 링크 프리셋 */}
-      <SharePresetsSection />
     </div>
   )
 }
