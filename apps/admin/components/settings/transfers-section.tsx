@@ -71,17 +71,10 @@ export function TransfersSection() {
         )}
       </header>
 
-      {/* 받은 전달 */}
+      {/* 보낸 전달 */}
       <section className="mb-2xl">
         <div className="flex items-baseline justify-between mb-2">
-          <h3 className="font-serif text-[18px] text-foreground">
-            받은 전달
-            {pendingCount > 0 && (
-              <span className="ml-2 inline-flex h-5 min-w-5 px-1.5 items-center justify-center rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-400 font-mono text-[11px]">
-                {pendingCount}
-              </span>
-            )}
-          </h3>
+          <h3 className="font-serif text-[18px] text-foreground">보낸 전달</h3>
           <button
             type="button"
             onClick={refresh}
@@ -91,6 +84,33 @@ export function TransfersSection() {
             새로고침
           </button>
         </div>
+        <div className="border-t border-border/80">
+          {loading ? (
+            <p className="font-serif italic text-[14px] text-muted-foreground py-4">불러오는 중…</p>
+          ) : !sent || sent.length === 0 ? (
+            <p className="font-serif italic text-[14px] text-muted-foreground py-4">보낸 전달이 없습니다.</p>
+          ) : (
+            sent.map((t) => (
+              <SentRow
+                key={t.id}
+                transfer={t}
+                onOpenSource={(caseId) => openCase(caseId)}
+              />
+            ))
+          )}
+        </div>
+      </section>
+
+      {/* 받은 전달 */}
+      <section>
+        <h3 className="font-serif text-[18px] text-foreground mb-2">
+          받은 전달
+          {pendingCount > 0 && (
+            <span className="ml-2 inline-flex h-5 min-w-5 px-1.5 items-center justify-center rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-400 font-mono text-[11px]">
+              {pendingCount}
+            </span>
+          )}
+        </h3>
         <p className="mt-1 mb-2 font-serif italic text-[12px] text-muted-foreground/70">
           수락·거부는 메시지 화면의 케이스 카드에서 진행합니다.
         </p>
@@ -105,26 +125,6 @@ export function TransfersSection() {
                 key={t.id}
                 transfer={t}
                 onOpenTarget={(caseId) => openCase(caseId)}
-              />
-            ))
-          )}
-        </div>
-      </section>
-
-      {/* 보낸 전달 */}
-      <section>
-        <h3 className="font-serif text-[18px] text-foreground mb-2">보낸 전달</h3>
-        <div className="border-t border-border/80">
-          {loading ? (
-            <p className="font-serif italic text-[14px] text-muted-foreground py-4">불러오는 중…</p>
-          ) : !sent || sent.length === 0 ? (
-            <p className="font-serif italic text-[14px] text-muted-foreground py-4">보낸 전달이 없습니다.</p>
-          ) : (
-            sent.map((t) => (
-              <SentRow
-                key={t.id}
-                transfer={t}
-                onOpenSource={(caseId) => openCase(caseId)}
               />
             ))
           )}
