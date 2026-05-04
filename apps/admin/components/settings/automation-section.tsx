@@ -11,7 +11,7 @@ import {
   type AutoFillRule,
   type AutoFillRuleInput,
 } from '@/lib/actions/org-auto-fill-rules'
-import { SettingsShell, SettingsSection } from './settings-layout'
+import { SettingsShell, SettingsSection, SettingsSubsectionTitle } from './settings-layout'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import { cn } from '@/lib/utils'
 
@@ -199,10 +199,10 @@ export function AutomationSection({
         ) : (
           sortedDests.map((dk) => (
             <section key={dk} className="mb-xl">
-              <div className="flex items-baseline gap-2 pb-2 border-b border-border/80">
-                <span className="font-serif text-[15px] text-foreground">{destLabel(dk)}</span>
-                <span className="opacity-60 text-muted-foreground">·</span>
-                <span className="opacity-60 text-muted-foreground text-[13px]">{grouped.get(dk)!.length}</span>
+              <div className="flex items-baseline gap-2 pb-2 border-b border-border/80 mb-2">
+                <SettingsSubsectionTitle>{destLabel(dk)}</SettingsSubsectionTitle>
+                <span className="text-muted-foreground/60">·</span>
+                <span className="font-serif text-[13px] text-muted-foreground/60">{grouped.get(dk)!.length}</span>
               </div>
               {grouped.get(dk)!.map((r) => (
                 <div

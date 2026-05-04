@@ -21,7 +21,7 @@ import {
   SettingsSection,
   SettingsFooter,
   SettingsField,
-  SettingsSectionLabelSerif as SectionLabel,
+  SettingsSubsectionTitle as SectionLabel,
 } from './settings-layout'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
@@ -250,7 +250,7 @@ export function CompanySection({
         {/* Org type — subtle segmented control (admin only) */}
         {isAdmin && (
           <section className="mb-xl">
-            <SectionLabel>조직</SectionLabel>
+            <SectionLabel className="mb-2">조직</SectionLabel>
             <div className="border-t border-border/80 pt-md flex items-center gap-xs">
               {(['hospital', 'transport'] as const).map((t) => (
                 <button
@@ -282,7 +282,7 @@ export function CompanySection({
         {/* Field groups */}
         {groups.map((group) => (
           <section key={group} className="mb-xl">
-            <SectionLabel>{GROUP_LABELS[group] ?? group}</SectionLabel>
+            <SectionLabel className="mb-2">{GROUP_LABELS[group] ?? group}</SectionLabel>
             <div className="border-t border-border/80">
               {fields.filter((f) => f.group === group).map((f) => {
                 const saving = savingKey === f.key
@@ -343,7 +343,7 @@ export function CompanySection({
 
         {/* 사용자 정의 추가 필드 — 라벨/값 자유 입력 */}
         <section className="mb-xl">
-          <SectionLabel>추가 정보</SectionLabel>
+          <SectionLabel className="mb-2">추가 정보</SectionLabel>
           <div className="border-t border-border/80">
             {(info.custom_fields ?? []).map((f) => (
               <CustomFieldRow
@@ -378,7 +378,7 @@ export function CompanySection({
         {/* DM 노출 — admin 만 변경 */}
         {isAdmin && (
           <section className="mb-xl">
-            <SectionLabel>메시지</SectionLabel>
+            <SectionLabel className="mb-2">메시지</SectionLabel>
             <div className="border-t border-border/80">
               <OrgDmVisibilityRow
                 onError={setError}

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { Check, ChevronDown, Search, X } from 'lucide-react'
 import { ALL_PROCEDURE_CHECKS } from '@petmove/domain'
 import type { ProcedureCheck } from '@petmove/domain'
-import { SettingsShell, SettingsSection } from './settings-layout'
+import { SettingsShell, SettingsSection, SettingsSubsectionTitle } from './settings-layout'
 import { cn } from '@/lib/utils'
 import { listOrgDisabledChecks, setOrgDisabledCheck } from '@/lib/actions/org-disabled-checks'
 
@@ -145,10 +145,10 @@ export function VerificationSection({ isSuperAdmin = false }: { isSuperAdmin?: b
         ) : (
           countries.map((country) => (
             <section key={country} className="mb-xl">
-              <div className="flex items-baseline gap-2 pb-2 border-b border-border/80 font-serif text-[13px] text-muted-foreground/80">
-                <span>{countryLabel(country)}</span>
-                <span className="opacity-60">·</span>
-                <span className="opacity-60">{grouped[country].length}</span>
+              <div className="flex items-baseline gap-2 pb-2 border-b border-border/80 mb-2">
+                <SettingsSubsectionTitle>{countryLabel(country)}</SettingsSubsectionTitle>
+                <span className="text-muted-foreground/60">·</span>
+                <span className="font-serif text-[13px] text-muted-foreground/60">{grouped[country].length}</span>
               </div>
 
               {grouped[country].map((c) => {

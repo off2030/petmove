@@ -14,7 +14,7 @@ import {
 } from '@petmove/domain'
 import { DestinationPicker } from '@/components/ui/destination-picker'
 import { PillButton } from '@/components/ui/pill-button'
-import { SettingsShell, SettingsSection } from './settings-layout'
+import { SettingsShell, SettingsSection, SettingsSubsectionTitle } from './settings-layout'
 
 export function ImportReportSection() {
   return (
@@ -68,10 +68,8 @@ function ButtonCountriesEditor() {
 
   return (
     <section>
-      <div className="mb-2 flex items-baseline justify-between">
-        <span className="font-serif text-[13px] text-muted-foreground/80">
-          신고 버튼 노출 목적지 · {draft.length}
-        </span>
+      <div className="mb-2 flex items-baseline justify-between gap-md flex-wrap">
+        <SettingsSubsectionTitle>신고 버튼 노출 목적지 · {draft.length}</SettingsSubsectionTitle>
         <span className="font-serif text-[12px] text-muted-foreground/60">
           상세페이지에 신고 버튼이 보이는 국가
         </span>
@@ -171,10 +169,8 @@ function AutoCountriesEditor() {
 
   return (
     <section>
-      <div className="mb-2 flex items-baseline justify-between">
-        <span className="font-serif text-[13px] text-muted-foreground/80">
-          출국일 자동 포함 목적지 · {draft.length}
-        </span>
+      <div className="mb-2 flex items-baseline justify-between gap-md flex-wrap">
+        <SettingsSubsectionTitle>출국일 자동 포함 목적지 · {draft.length}</SettingsSubsectionTitle>
         <span className="font-serif text-[12px] text-muted-foreground/60">
           출국일 입력 시 신고 탭에 자동 진입
         </span>

@@ -21,6 +21,8 @@ import { extractVaccineInfo } from '@/lib/actions/extract-vaccine'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { DialogFooter } from '@/components/ui/dialog-footer'
+import { SectionHeader } from '@/components/ui/section-header'
+import { SettingsSubsectionTitle } from './settings-layout'
 import { cn } from '@/lib/utils'
 import { useVaccineDefaults } from '@/components/providers/vaccine-data-provider'
 import { updateVaccineDefault } from '@/lib/actions/vaccine-defaults'
@@ -473,7 +475,7 @@ export function VaccineSection({
       {/* Editorial header */}
       <header className="pb-xl">
         <div className="mb-md flex items-center gap-sm">
-          <h2 className="pmw-st__sec-title">약품</h2>
+          <SectionHeader>약품</SectionHeader>
           {isAdmin && (
             <>
               <AttachButton
@@ -550,7 +552,7 @@ export function VaccineSection({
           return (
             <section key={section} className="mb-xl">
               <div className="mb-2 flex items-baseline gap-sm">
-                <h3 className="font-serif text-[17px] text-foreground">{section}</h3>
+                <SettingsSubsectionTitle>{section}</SettingsSubsectionTitle>
                 <span className="pmw-st__tab-count">{totalInSection}</span>
               </div>
 
@@ -1112,7 +1114,7 @@ function DefaultsSection({ products }: { products: OrgVaccineProduct[] }) {
   return (
     <section className="mb-xl border-b border-border/80 pb-lg">
       <div className="mb-2 flex items-baseline gap-sm">
-        <h3 className="font-serif text-[17px] text-foreground">구충 디폴트 설정</h3>
+        <SettingsSubsectionTitle>구충 디폴트 설정</SettingsSubsectionTitle>
         <span className="pmw-st__sec-lead">상세페이지에서 날짜 입력 시 자동 채움</span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-lg gap-y-2">
