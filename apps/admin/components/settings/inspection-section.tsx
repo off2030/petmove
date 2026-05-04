@@ -14,6 +14,7 @@ import {
   SettingsSection,
   SettingsField,
   SettingsSectionLabelSerif as SectionLabel,
+  SettingsSubsectionTitle,
 } from './settings-layout'
 import { labColor } from '@/lib/lab-color'
 import { cn } from '@/lib/utils'
@@ -295,8 +296,7 @@ function SectionBlock({
 
   return (
     <section className="mb-xl">
-      {/* Section label */}
-      <SectionLabel>{title}</SectionLabel>
+      <SettingsSubsectionTitle className="mb-2">{title}</SettingsSubsectionTitle>
       <div className="border-t border-border/80" />
 
       {/* 기관 목록 (기본 + 사용자 정의) + 추가 */}

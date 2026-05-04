@@ -214,30 +214,11 @@ export function SettingsSubsectionTitle({
 }
 
 /**
- * 설정 화면 전용 small-cap 라벨 (mono / uppercase 톤).
- * 짧은 영어 카테고리 라벨에 사용 — `Account` / `Organization` / `Messaging` 등.
- * `cases/*` 의 `ui/section-label.tsx`(12px / 1.3px) 와는 별개.
- */
-export function SettingsSectionLabel({
-  children,
-  className,
-}: {
-  children: React.ReactNode
-  className?: string
-}) {
-  return (
-    <div className={cn('mb-2', className)}>
-      <span className="font-mono text-[11px] tracking-[1.8px] uppercase text-muted-foreground/70">
-        {children}
-      </span>
-    </div>
-  )
-}
-
-/**
- * 설정 화면 전용 serif 라벨.
- * 한국어 그룹 헤더에 사용 — `기본 증명서` / `검사기관` 등.
- * mono 라벨과 달리 uppercase·tracking 없이 본문 톤에 가까움.
+ * 설정 화면 전용 sub-group 라벨 (serif 13px / 한국어 톤).
+ * sub-section 헤더보다 작은 위계 — `기본 증명서` / `계정` / `검사기관` 등.
+ * SettingsSubsectionTitle (18px h3) 보다 작은 sub-group 구분에 사용.
+ *
+ * (예전엔 영어 카테고리용 mono uppercase variant 도 있었지만 한국어 통일로 제거.)
  */
 export function SettingsSectionLabelSerif({
   children,

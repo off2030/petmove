@@ -8,7 +8,7 @@ import {
   SettingsSection,
   SettingsFooter,
   SettingsField,
-  SettingsSectionLabel as SectionLabel,
+  SettingsSectionLabelSerif as SectionLabel,
 } from './settings-layout'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { supabaseBrowser } from '@/lib/supabase/browser'
@@ -136,7 +136,7 @@ export function ProfileSection({
       <SettingsSection title="내 프로필">
         {/* Profile fields */}
         <section className="mb-xl">
-          <SectionLabel>Account</SectionLabel>
+          <SectionLabel>계정</SectionLabel>
           <div className="border-t border-border/80">
             {/* Avatar */}
             <AvatarRow
@@ -189,7 +189,7 @@ export function ProfileSection({
 
         {/* DM visibility toggle */}
         <section className="mb-xl">
-          <SectionLabel>Messaging</SectionLabel>
+          <SectionLabel>메시지</SectionLabel>
           <div className="border-t border-border/80">
             <DmVisibilityRow
               value={profile.dm_visible}
@@ -202,7 +202,7 @@ export function ProfileSection({
 
         {/* Push notification permission */}
         <section className="mb-xl">
-          <SectionLabel>Notifications</SectionLabel>
+          <SectionLabel>알림</SectionLabel>
           <div className="border-t border-border/80">
             <SettingsField label="푸시 알림">
               <div className="flex flex-col gap-1">
