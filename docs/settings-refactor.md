@@ -1,7 +1,7 @@
 # 설정 화면 리팩터링 계획 (work in progress)
 
-> 마지막 업데이트: 2026-05-04 (phase 1 완료)
-> 다음 시작점: phase 2 — 무거운 섹션(detail-view / inspection / import-report) 변환
+> 마지막 업데이트: 2026-05-04 (phase 2 완료)
+> 다음 시작점: phase 3 — `SettingsRow`/`SettingsField` 도입 + 카테고리 헤더 UI 합의
 
 ## 배경
 
@@ -89,12 +89,32 @@
    - 페이지 헤더 `pb-xl` 로 통일 (settings 표준 톤).
    - `SettingsFooter` default 에 `border-t border-border/80 pt-md` 포함 — 호출처 단순화.
 
-## phase 2 이후 (부분 합의 필요)
+## phase 2 — 완료 (2026-05-04)
 
-- detail-view-section / inspection-section / import-report-section 변환 (무거움 — sub-group 다수)
-- 카테고리 헤더 UI 도입 — 이때 사이드바 vs 탭 + 그룹 헤더 결정
-- `SettingsRow` 사용처 도입 — 현재 `<div className="grid grid-cols-[150px_1fr] …">` 패턴이 settings 안에 반복됨. variant 분기 또는 별도 `SettingsField` 컴포넌트 추출 검토.
-- ui/section-label vs SettingsSectionLabel 통합 — phase 2+ 에서 cases 화면 톤도 합의 후
+무거운 섹션을 `SettingsShell` + `SettingsSection` 규격으로 전환. 외곽만 표준화, row 패턴 통일은 phase 3+.
+
+1. ✅ **`SettingsShell` size prop 추가** — `md` (3xl, default) / `lg` (5xl). 4xl 등 중간 폭은 `className="max-w-4xl"` override.
+
+2. ✅ **verification-section** → `SettingsShell size="lg"` + `SettingsSection`. description 에 ReactNode (super_admin 분기) 활용.
+
+3. ✅ **automation-section** → `SettingsShell size="lg"` + `SettingsSection`.
+
+4. ✅ **export-doc-section** → `SettingsShell size="lg"` + `SettingsSection`. (단순 — 컬럼 토글만)
+
+5. ✅ **import-report-section** → `SettingsShell size="lg"` + `SettingsSection`. ButtonCountriesEditor / AutoCountriesEditor / TodoColumnsToggle 그대로.
+
+6. ✅ **inspection-section** → `SettingsShell size="lg"` + `SettingsSection`. SectionBlock 두 개 (광견병항체/전염병) 그대로.
+
+7. ✅ **detail-view-section** → `SettingsShell className="max-w-4xl"` + `SettingsSection`. 4xl 폭 보존 위해 className override.
+
+8. ❌ **vaccine-section** — 제외. 외곽 div 가 drag-and-drop 컨테이너 (handlers + dynamic className). SettingsShell 의 폭 제어 책임과 다른 SRP 라 별도 패턴 유지. 후속에서 `SettingsShell asChild` 같은 패턴이 필요해지면 그때 합치는 식.
+
+## phase 3 이후 (합의 필요)
+
+- 카테고리 헤더 UI 도입 — 사이드바 vs 탭 + 그룹 헤더 결정
+- `SettingsRow` / `SettingsField` 도입 — 현재 `<div className="grid grid-cols-[150px_1fr] …">` 패턴이 settings 안에 반복됨. variant 분기 또는 별도 `SettingsField` 컴포넌트 추출 검토.
+- ui/section-label vs SettingsSectionLabel 통합 — cases 화면 톤도 합의 후
+- vaccine-section 통합 패턴 (`SettingsShell asChild` 또는 별도 컴포넌트)
 
 ## 결정 — phase 0 시점 합의
 
@@ -106,19 +126,22 @@
 | 메뉴 UI | phase 0~1 동안 **상단 평면 탭 유지** — phase 2 에서 카테고리 헤더 도입 검토 |
 | `SettingsRow` variants | **4개** (toggle/input/chips/static) — 일단 메타데이터, 마이그레이션 진행하며 분기 |
 
-## 관련 파일 (phase 1 완료 시점)
+## 관련 파일 (phase 2 완료 시점)
 
-- `apps/admin/components/settings/settings-layout.tsx` — **신규**. Shell/Section/Row/Footer + Label 두 종.
-- `apps/admin/components/settings/settings-app.tsx` — 진입점, TABS 메타데이터(category) 적용 완료.
-- `apps/admin/components/settings/detail-view-section.tsx` — 상세 탭 (카테고리 4개 통합됨).
-- `apps/admin/components/settings/inspection-section.tsx` — 검사 + 컬럼 토글. Label serif 통일.
-- `apps/admin/components/settings/import-report-section.tsx` — 신고 + 컬럼 토글.
-- `apps/admin/components/settings/export-doc-section.tsx` — 서류 (컬럼 토글 전용).
-- `apps/admin/components/settings/transfers-section.tsx` — 전달 (보낸→받은 순서). SettingsShell 적용.
-- `apps/admin/components/settings/members-section.tsx` — 멤버 / 초대. SettingsShell 적용.
-- `apps/admin/components/settings/company-section.tsx` — Label mono 통일 + SettingsShell.
-- `apps/admin/components/settings/profile-section.tsx` — Label mono 통일 + SettingsShell.
-- `apps/admin/components/settings/documents-section.tsx` — Label serif 통일.
+- `apps/admin/components/settings/settings-layout.tsx` — **신규**. Shell(size: md/lg)/Section/Row/Footer + Label 두 종.
+- `apps/admin/components/settings/settings-app.tsx` — 진입점, TABS 메타데이터(category) 적용. DataSection 도 Shell 적용.
+- `apps/admin/components/settings/detail-view-section.tsx` — 상세 (카테고리 4개 통합). Shell `className="max-w-4xl"`.
+- `apps/admin/components/settings/inspection-section.tsx` — 검사 + 컬럼 토글. Shell size="lg" + Label serif.
+- `apps/admin/components/settings/import-report-section.tsx` — 신고 + 컬럼 토글. Shell size="lg".
+- `apps/admin/components/settings/export-doc-section.tsx` — 서류 (컬럼 토글 전용). Shell size="lg".
+- `apps/admin/components/settings/automation-section.tsx` — 자동화 규칙. Shell size="lg".
+- `apps/admin/components/settings/verification-section.tsx` — 절차 검증. Shell size="lg".
+- `apps/admin/components/settings/transfers-section.tsx` — 전달. Shell.
+- `apps/admin/components/settings/members-section.tsx` — 멤버 / 초대. Shell.
+- `apps/admin/components/settings/company-section.tsx` — Shell + Label mono.
+- `apps/admin/components/settings/profile-section.tsx` — Shell + Label mono.
+- `apps/admin/components/settings/documents-section.tsx` — Label serif.
+- `apps/admin/components/settings/vaccine-section.tsx` — **제외** (drag-drop 컨테이너 SRP).
 - `apps/admin/components/settings/todo-columns-toggle.tsx` — 컬럼 토글 공통 컴포넌트.
 - `apps/admin/components/ui/section-label.tsx` — `cases/*` 전용. settings 와는 별개로 유지.
 - `apps/admin/components/ui/page-shell.tsx` — 다른 페이지의 공통 셸 (설정엔 미사용).

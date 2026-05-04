@@ -8,9 +8,12 @@ import { TodoColumnsToggle } from './todo-columns-toggle'
 import { DestinationPicker } from '@/components/ui/destination-picker'
 import { LabPillSelect, LabPillMultiSelect } from '@/components/ui/lab-pill-select'
 import { PillButton } from '@/components/ui/pill-button'
-import { SectionHeader } from '@/components/ui/section-header'
 import { DialogFooter } from '@/components/ui/dialog-footer'
-import { SettingsSectionLabelSerif as SectionLabel } from './settings-layout'
+import {
+  SettingsShell,
+  SettingsSection,
+  SettingsSectionLabelSerif as SectionLabel,
+} from './settings-layout'
 import { labColor } from '@/lib/lab-color'
 import { cn } from '@/lib/utils'
 import { saveInspectionConfigAction } from '@/lib/actions/inspection-config-action'
@@ -645,69 +648,66 @@ export function InspectionSection() {
   }
 
   return (
-    <div className="max-w-5xl pb-2xl">
-      {/* Editorial header */}
-      <header className="pb-xl">
-        <SectionHeader>검사</SectionHeader>
-        <p className="pmw-st__sec-lead mt-2">
-          목적지별 광견병항체검사·전염병검사 의뢰 기관을 매핑합니다. 케이스 등록 시 자동 적용됩니다.
-        </p>
-      </header>
+    <SettingsShell size="lg">
+      <SettingsSection
+        title="검사"
+        description="목적지별 광견병항체검사·전염병검사 의뢰 기관을 매핑합니다. 케이스 등록 시 자동 적용됩니다."
+      >
+        <SectionBlock
+          title="광견병항체검사"
+          defaultLabs={TITER_LABS}
+          customLabs={draft.customTiterLabs ?? []}
+          onCustomLabsChange={(customTiterLabs) =>
+            setDraft({
+              ...draft,
+              customTiterLabs: customTiterLabs.length > 0 ? customTiterLabs : undefined,
+            })
+          }
+          defaultLab={draft.titerDefault}
+          rules={draft.titerRules}
+          onDefaultChange={(lab) => setDraft({ ...draft, titerDefault: lab })}
+          onRulesChange={(titerRules) => setDraft({ ...draft, titerRules })}
+          showEuPreset
+          singleLab
+        />
 
-      <SectionBlock
-        title="광견병항체검사"
-        defaultLabs={TITER_LABS}
-        customLabs={draft.customTiterLabs ?? []}
-        onCustomLabsChange={(customTiterLabs) =>
-          setDraft({
-            ...draft,
-            customTiterLabs: customTiterLabs.length > 0 ? customTiterLabs : undefined,
-          })
-        }
-        defaultLab={draft.titerDefault}
-        rules={draft.titerRules}
-        onDefaultChange={(lab) => setDraft({ ...draft, titerDefault: lab })}
-        onRulesChange={(titerRules) => setDraft({ ...draft, titerRules })}
-        showEuPreset
-        singleLab
-      />
+        <SectionBlock
+          title="전염병검사"
+          defaultLabs={INFECTIOUS_LABS}
+          customLabs={draft.customInfectiousLabs ?? []}
+          onCustomLabsChange={(customInfectiousLabs) =>
+            setDraft({
+              ...draft,
+              customInfectiousLabs: customInfectiousLabs.length > 0 ? customInfectiousLabs : undefined,
+            })
+          }
+          rules={draft.infectiousRules}
+          onRulesChange={(infectiousRules) => setDraft({ ...draft, infectiousRules })}
+        />
 
-      <SectionBlock
-        title="전염병검사"
-        defaultLabs={INFECTIOUS_LABS}
-        customLabs={draft.customInfectiousLabs ?? []}
-        onCustomLabsChange={(customInfectiousLabs) =>
-          setDraft({
-            ...draft,
-            customInfectiousLabs: customInfectiousLabs.length > 0 ? customInfectiousLabs : undefined,
-          })
-        }
-        rules={draft.infectiousRules}
-        onRulesChange={(infectiousRules) => setDraft({ ...draft, infectiousRules })}
-      />
+        <TodoColumnsToggle
+          tabId="inspection"
+          title="검사 탭 표시 컬럼"
+          description="검사 탭 테이블에 표시할 컬럼을 선택합니다. 모두 체크가 기본값."
+        />
 
-      <TodoColumnsToggle
-        tabId="inspection"
-        title="검사 탭 표시 컬럼"
-        description="검사 탭 테이블에 표시할 컬럼을 선택합니다. 모두 체크가 기본값."
-      />
-
-      {/* Footer actions */}
-      <div className="flex items-center justify-between pt-lg border-t border-border/80">
-        <button
-          type="button"
-          onClick={resetToDefaults}
-          className="pmw-st__btn-ghost hover:text-foreground transition-colors"
-        >
-          기본값으로 되돌리기
-        </button>
-        <div className="flex items-center gap-md">
-          {msg && <span className="pmw-st__sec-lead">{msg}</span>}
-          <PillButton variant="solid" onClick={save} disabled={!dirty || saving}>
-            {saving ? '저장 중…' : '변경사항 저장'}
-          </PillButton>
+        {/* Footer actions */}
+        <div className="flex items-center justify-between pt-lg border-t border-border/80">
+          <button
+            type="button"
+            onClick={resetToDefaults}
+            className="pmw-st__btn-ghost hover:text-foreground transition-colors"
+          >
+            기본값으로 되돌리기
+          </button>
+          <div className="flex items-center gap-md">
+            {msg && <span className="pmw-st__sec-lead">{msg}</span>}
+            <PillButton variant="solid" onClick={save} disabled={!dirty || saving}>
+              {saving ? '저장 중…' : '변경사항 저장'}
+            </PillButton>
+          </div>
         </div>
-      </div>
-    </div>
+      </SettingsSection>
+    </SettingsShell>
   )
 }

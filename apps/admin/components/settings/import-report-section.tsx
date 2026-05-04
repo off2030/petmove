@@ -14,29 +14,26 @@ import {
 } from '@petmove/domain'
 import { DestinationPicker } from '@/components/ui/destination-picker'
 import { PillButton } from '@/components/ui/pill-button'
-import { SectionHeader } from '@/components/ui/section-header'
+import { SettingsShell, SettingsSection } from './settings-layout'
 
 export function ImportReportSection() {
   return (
-    <div className="max-w-5xl pb-2xl">
-      <header className="pb-xl">
-        <SectionHeader>신고</SectionHeader>
-        <p className="pmw-st__sec-lead mt-2">
-          상세페이지 신고 버튼 노출국과, 출국일 입력 시 자동 포함되는 국가를 따로 관리합니다.
-          신고 탭의 추가 피커는 국가 제한 없이 모든 케이스를 검색할 수 있습니다.
-        </p>
-      </header>
-
-      <ButtonCountriesEditor />
-      <div className="h-2xl" />
-      <AutoCountriesEditor />
-      <div className="h-2xl" />
-      <TodoColumnsToggle
-        tabId="import_report"
-        title="신고 탭 표시 컬럼"
-        description="신고 탭 테이블에 표시할 컬럼을 선택합니다. 모두 체크가 기본값."
-      />
-    </div>
+    <SettingsShell size="lg">
+      <SettingsSection
+        title="신고"
+        description="상세페이지 신고 버튼 노출국과, 출국일 입력 시 자동 포함되는 국가를 따로 관리합니다. 신고 탭의 추가 피커는 국가 제한 없이 모든 케이스를 검색할 수 있습니다."
+      >
+        <ButtonCountriesEditor />
+        <div className="h-2xl" />
+        <AutoCountriesEditor />
+        <div className="h-2xl" />
+        <TodoColumnsToggle
+          tabId="import_report"
+          title="신고 탭 표시 컬럼"
+          description="신고 탭 테이블에 표시할 컬럼을 선택합니다. 모두 체크가 기본값."
+        />
+      </SettingsSection>
+    </SettingsShell>
   )
 }
 

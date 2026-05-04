@@ -6,7 +6,7 @@ import {
   DETAIL_VIEW_DEFAULTS,
   type DetailViewSettings,
 } from '@/lib/detail-view-settings-types'
-import { SectionHeader } from '@/components/ui/section-header'
+import { SettingsShell, SettingsSection } from './settings-layout'
 import { cn } from '@/lib/utils'
 import { useDetailViewSettings } from '@/components/providers/detail-view-settings-provider'
 import { DestinationsArea } from './destinations-section'
@@ -81,79 +81,78 @@ export function DetailViewSection({
   }
 
   return (
-    <div className="max-w-4xl pb-2xl">
-      <header className="pb-xl">
-        <SectionHeader>상세</SectionHeader>
-        <p className="pmw-st__sec-lead mt-2">
-          케이스 상세 페이지의 표시·공유·증명서 구성을 한곳에서 관리합니다.
-        </p>
+    <SettingsShell className="max-w-4xl">
+      <SettingsSection
+        title="상세"
+        description="케이스 상세 페이지의 표시·공유·증명서 구성을 한곳에서 관리합니다."
+      >
         {error && (
-          <p className="mt-2 font-serif text-[13px] text-destructive">저장 실패: {error}</p>
+          <p className="-mt-md mb-md font-serif text-[13px] text-destructive">저장 실패: {error}</p>
         )}
-      </header>
 
-      {/* ── 기본 ── */}
-      <section className="mb-2xl">
-        <h3 className="font-serif text-[18px] text-foreground mb-2">기본</h3>
-        <div className="border-t border-border/80">
-          <div className="grid grid-cols-[1fr_auto] items-center gap-md py-3 border-b border-dotted border-border/80">
-            <div className="flex flex-col gap-0.5">
-              <span className="font-serif text-[15px] text-foreground">한·영 병기</span>
-              <span className="font-serif italic text-[12px] text-muted-foreground/70">
-                종·품종·모색·성별을 "한글 | 영문" 으로 함께 표시
-              </span>
+        {/* ── 기본 ── */}
+        <section className="mb-2xl">
+          <h3 className="font-serif text-[18px] text-foreground mb-2">기본</h3>
+          <div className="border-t border-border/80">
+            <div className="grid grid-cols-[1fr_auto] items-center gap-md py-3 border-b border-dotted border-border/80">
+              <div className="flex flex-col gap-0.5">
+                <span className="font-serif text-[15px] text-foreground">한·영 병기</span>
+                <span className="font-serif italic text-[12px] text-muted-foreground/70">
+                  종·품종·모색·성별을 "한글 | 영문" 으로 함께 표시
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={toggleBilingual}
+                aria-pressed={allOn}
+                className={cn(
+                  'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
+                  allOn
+                    ? 'border-primary/50 bg-primary/10 text-primary'
+                    : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+                )}
+              >
+                {allOn ? 'ON' : 'OFF'}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={toggleBilingual}
-              aria-pressed={allOn}
-              className={cn(
-                'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
-                allOn
-                  ? 'border-primary/50 bg-primary/10 text-primary'
-                  : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
-              )}
-            >
-              {allOn ? 'ON' : 'OFF'}
-            </button>
-          </div>
-          <div className="grid grid-cols-[1fr_auto] items-center gap-md py-3 border-b border-dotted border-border/80">
-            <div className="flex flex-col gap-0.5">
-              <span className="font-serif text-[15px] text-foreground">담당자 기능</span>
-              <span className="font-serif italic text-[12px] text-muted-foreground/70">
-                ON 시 케이스 상세에 담당자 선택 메뉴가 노출되고, 다른 조직에서 멤버 지정해 보낸 전달이 자동 배정됩니다.
-              </span>
+            <div className="grid grid-cols-[1fr_auto] items-center gap-md py-3 border-b border-dotted border-border/80">
+              <div className="flex flex-col gap-0.5">
+                <span className="font-serif text-[15px] text-foreground">담당자 기능</span>
+                <span className="font-serif italic text-[12px] text-muted-foreground/70">
+                  ON 시 케이스 상세에 담당자 선택 메뉴가 노출되고, 다른 조직에서 멤버 지정해 보낸 전달이 자동 배정됩니다.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={toggleAssignee}
+                aria-pressed={assigneeEnabled}
+                className={cn(
+                  'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
+                  assigneeEnabled
+                    ? 'border-primary/50 bg-primary/10 text-primary'
+                    : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+                )}
+              >
+                {assigneeEnabled ? 'ON' : 'OFF'}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={toggleAssignee}
-              aria-pressed={assigneeEnabled}
-              className={cn(
-                'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
-                assigneeEnabled
-                  ? 'border-primary/50 bg-primary/10 text-primary'
-                  : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
-              )}
-            >
-              {assigneeEnabled ? 'ON' : 'OFF'}
-            </button>
           </div>
-        </div>
-        <div className="flex items-center justify-end pt-2">
-          <span className="font-serif italic text-[12px] text-muted-foreground/60">
-            {savedAt ? `자동 저장됨 · ${savedAt.toLocaleTimeString()}` : ''}
-          </span>
-        </div>
-      </section>
+          <div className="flex items-center justify-end pt-2">
+            <span className="font-serif italic text-[12px] text-muted-foreground/60">
+              {savedAt ? `자동 저장됨 · ${savedAt.toLocaleTimeString()}` : ''}
+            </span>
+          </div>
+        </section>
 
-      {/* ── 공유 ── */}
-      <SharePresetsSection />
+        {/* ── 공유 ── */}
+        <SharePresetsSection />
 
-      {/* ── 목적지 ── */}
-      <DestinationsArea />
+        {/* ── 목적지 ── */}
+        <DestinationsArea />
 
-      {/* ── 증명서 ── */}
-      <DocumentsSection />
-    </div>
+        {/* ── 증명서 ── */}
+        <DocumentsSection />
+      </SettingsSection>
+    </SettingsShell>
   )
 }

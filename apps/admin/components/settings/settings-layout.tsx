@@ -15,15 +15,24 @@ import { SectionHeader } from '@/components/ui/section-header'
  *   </SettingsShell>
  */
 
-/** 페이지 컨테이너 — max-width + 하단 padding. 모든 설정 섹션의 최외곽. */
+/**
+ * 페이지 컨테이너 — max-width + 하단 padding. 모든 설정 섹션의 최외곽.
+ * - `md` (default, 3xl): profile / company / members / transfers / DataSection 등 폼 위주.
+ * - `lg` (5xl): inspection / import_report / export_doc / automation / verification 등
+ *   다목적지 칩 / 테이블·리스트가 들어가는 섹션.
+ * 4xl(detail-view) 같은 중간 폭은 `className="max-w-4xl"` 로 override.
+ */
 export function SettingsShell({
   children,
+  size = 'md',
   className,
 }: {
   children: React.ReactNode
+  size?: 'md' | 'lg'
   className?: string
 }) {
-  return <div className={cn('max-w-3xl pb-2xl', className)}>{children}</div>
+  const widthCls = size === 'lg' ? 'max-w-5xl' : 'max-w-3xl'
+  return <div className={cn(widthCls, 'pb-2xl', className)}>{children}</div>
 }
 
 /**

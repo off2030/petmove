@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { Check, ChevronDown, Search, X } from 'lucide-react'
 import { ALL_PROCEDURE_CHECKS } from '@petmove/domain'
 import type { ProcedureCheck } from '@petmove/domain'
-import { SectionHeader } from '@/components/ui/section-header'
+import { SettingsShell, SettingsSection } from './settings-layout'
 import { cn } from '@/lib/utils'
 import { listOrgDisabledChecks, setOrgDisabledCheck } from '@/lib/actions/org-disabled-checks'
 
@@ -99,103 +99,105 @@ export function VerificationSection({ isSuperAdmin = false }: { isSuperAdmin?: b
   const total = ALL_PROCEDURE_CHECKS.length
 
   return (
-    <div className="max-w-5xl pb-2xl">
-      {/* Editorial header */}
-      <header className="pb-xl">
-        <SectionHeader>절차 검증</SectionHeader>
-        <p className="pmw-st__sec-lead mt-2">
-          국가·상황별 자동 검증 규칙. 케이스 저장 시 백그라운드로 실행됩니다.
-          {!isSuperAdmin && ' 변경은 슈퍼 관리자만 가능합니다.'}
-        </p>
+    <SettingsShell size="lg">
+      <SettingsSection
+        title="절차 검증"
+        description={
+          <>
+            국가·상황별 자동 검증 규칙. 케이스 저장 시 백그라운드로 실행됩니다.
+            {!isSuperAdmin && ' 변경은 슈퍼 관리자만 가능합니다.'}
+          </>
+        }
+      >
         {error && (
-          <p className="mt-2 font-serif text-[13px] text-destructive">저장 실패: {error}</p>
+          <p className="-mt-md mb-md font-serif text-[13px] text-destructive">저장 실패: {error}</p>
         )}
-      </header>
 
-      <div className="flex items-center gap-sm mb-md">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="검색"
-            className="h-11 w-full pl-10 pr-9 text-[15px] bg-popover text-foreground shadow-none border border-border/80 rounded-full focus-visible:outline-none focus-visible:ring-0 focus-visible:border-foreground/40 placeholder:text-muted-foreground/60"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
+        <div className="flex items-center gap-sm mb-md">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="검색"
+              className="h-11 w-full pl-10 pr-9 text-[15px] bg-popover text-foreground shadow-none border border-border/80 rounded-full focus-visible:outline-none focus-visible:ring-0 focus-visible:border-foreground/40 placeholder:text-muted-foreground/60"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+          <SortDropdown value={sort} onChange={setSort} />
         </div>
-        <SortDropdown value={sort} onChange={setSort} />
-      </div>
 
-      {total === 0 ? (
-        <p className="pmw-st__sec-lead py-md">
-          등록된 검증이 아직 없습니다.
-        </p>
-      ) : countries.length === 0 ? (
-        <p className="pmw-st__sec-lead py-md">검색 결과 없음.</p>
-      ) : (
-        countries.map((country) => (
-          <section key={country} className="mb-xl">
-            <div className="flex items-baseline gap-2 pb-2 border-b border-border/80 font-serif text-[13px] text-muted-foreground/80">
-              <span>{countryLabel(country)}</span>
-              <span className="opacity-60">·</span>
-              <span className="opacity-60">{grouped[country].length}</span>
-            </div>
+        {total === 0 ? (
+          <p className="pmw-st__sec-lead py-md">
+            등록된 검증이 아직 없습니다.
+          </p>
+        ) : countries.length === 0 ? (
+          <p className="pmw-st__sec-lead py-md">검색 결과 없음.</p>
+        ) : (
+          countries.map((country) => (
+            <section key={country} className="mb-xl">
+              <div className="flex items-baseline gap-2 pb-2 border-b border-border/80 font-serif text-[13px] text-muted-foreground/80">
+                <span>{countryLabel(country)}</span>
+                <span className="opacity-60">·</span>
+                <span className="opacity-60">{grouped[country].length}</span>
+              </div>
 
-            {grouped[country].map((c) => {
-              const enabled = !disabled.has(c.id)
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => toggleCheck(c.id)}
-                  disabled={!isSuperAdmin}
-                  title={
-                    !isSuperAdmin
-                      ? '슈퍼 관리자만 변경 가능'
-                      : enabled
-                        ? '클릭하여 사용 안 함'
-                        : '클릭하여 다시 사용'
-                  }
-                  className={cn(
-                    'w-full text-left grid grid-cols-[24px_1fr] items-start gap-md py-md border-b border-dotted border-border/80 transition-colors',
-                    isSuperAdmin
-                      ? 'hover:bg-accent cursor-pointer'
-                      : 'cursor-default',
-                  )}
-                >
-                  <CheckBox checked={enabled} />
-                  <div className={cn('min-w-0', !enabled && 'opacity-55')}>
-                    <div className="flex items-baseline gap-sm flex-wrap">
-                      <span
-                        className={cn('font-serif text-[16px] text-foreground', !enabled && 'line-through')}
-                      >
-                        {c.title}
-                      </span>
-                      <span className="font-mono text-[10.5px] tracking-[0.6px] uppercase text-muted-foreground/70">
-                        {c.category}
-                      </span>
+              {grouped[country].map((c) => {
+                const enabled = !disabled.has(c.id)
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => toggleCheck(c.id)}
+                    disabled={!isSuperAdmin}
+                    title={
+                      !isSuperAdmin
+                        ? '슈퍼 관리자만 변경 가능'
+                        : enabled
+                          ? '클릭하여 사용 안 함'
+                          : '클릭하여 다시 사용'
+                    }
+                    className={cn(
+                      'w-full text-left grid grid-cols-[24px_1fr] items-start gap-md py-md border-b border-dotted border-border/80 transition-colors',
+                      isSuperAdmin
+                        ? 'hover:bg-accent cursor-pointer'
+                        : 'cursor-default',
+                    )}
+                  >
+                    <CheckBox checked={enabled} />
+                    <div className={cn('min-w-0', !enabled && 'opacity-55')}>
+                      <div className="flex items-baseline gap-sm flex-wrap">
+                        <span
+                          className={cn('font-serif text-[16px] text-foreground', !enabled && 'line-through')}
+                        >
+                          {c.title}
+                        </span>
+                        <span className="font-mono text-[10.5px] tracking-[0.6px] uppercase text-muted-foreground/70">
+                          {c.category}
+                        </span>
+                      </div>
+                      <p className="pmw-st__sec-lead mt-1">{c.description}</p>
+                      <div className="font-mono text-[10.5px] tracking-[0.6px] text-muted-foreground/70 mt-2">
+                        {c.id}
+                      </div>
                     </div>
-                    <p className="pmw-st__sec-lead mt-1">{c.description}</p>
-                    <div className="font-mono text-[10.5px] tracking-[0.6px] text-muted-foreground/70 mt-2">
-                      {c.id}
-                    </div>
-                  </div>
-                </button>
-              )
-            })}
-          </section>
-        ))
-      )}
-    </div>
+                  </button>
+                )
+              })}
+            </section>
+          ))
+        )}
+      </SettingsSection>
+    </SettingsShell>
   )
 }
 

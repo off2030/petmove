@@ -11,7 +11,7 @@ import {
   type AutoFillRule,
   type AutoFillRuleInput,
 } from '@/lib/actions/org-auto-fill-rules'
-import { SectionHeader } from '@/components/ui/section-header'
+import { SettingsShell, SettingsSection } from './settings-layout'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import { cn } from '@/lib/utils'
 
@@ -181,127 +181,126 @@ export function AutomationSection({
   const sortedDests = Array.from(grouped.keys()).sort((a, b) => destLabel(a).localeCompare(destLabel(b), 'ko'))
 
   return (
-    <div className="max-w-5xl pb-2xl">
-      <header className="pb-xl">
-        <SectionHeader>자동화</SectionHeader>
-        <p className="pmw-st__sec-lead mt-2">
-          목적지·종별 자동 채움 규칙. 트리거 필드에 날짜가 입력되면 타겟 필드가 오프셋 기준으로 자동으로 채워집니다.
-        </p>
+    <SettingsShell size="lg">
+      <SettingsSection
+        title="자동화"
+        description="목적지·종별 자동 채움 규칙. 트리거 필드에 날짜가 입력되면 타겟 필드가 오프셋 기준으로 자동으로 채워집니다."
+      >
         {error && (
-          <p className="mt-2 font-serif text-[13px] text-destructive">{error}</p>
+          <p className="-mt-md mb-md font-serif text-[13px] text-destructive">{error}</p>
         )}
-      </header>
 
-      {loading ? (
-        <p className="font-serif italic text-[14px] text-muted-foreground">불러오는 중…</p>
-      ) : rules.length === 0 ? (
-        <p className="font-serif italic text-[14px] text-muted-foreground/60 mb-md">
-          아직 등록된 규칙이 없습니다.
-        </p>
-      ) : (
-        sortedDests.map((dk) => (
-          <section key={dk} className="mb-xl">
-            <div className="flex items-baseline gap-2 pb-2 border-b border-border/80">
-              <span className="font-serif text-[15px] text-foreground">{destLabel(dk)}</span>
-              <span className="opacity-60 text-muted-foreground">·</span>
-              <span className="opacity-60 text-muted-foreground text-[13px]">{grouped.get(dk)!.length}</span>
-            </div>
-            {grouped.get(dk)!.map((r) => (
-              <div
-                key={r.id}
-                role={isAdmin ? 'button' : undefined}
-                tabIndex={isAdmin ? 0 : undefined}
-                onClick={isAdmin && !pending ? () => handleToggle(r) : undefined}
-                onKeyDown={isAdmin && !pending ? (e) => {
-                  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggle(r) }
-                } : undefined}
-                title={isAdmin ? (r.enabled ? '활성 — 클릭하여 비활성' : '비활성 — 클릭하여 활성') : undefined}
-                className={cn(
-                  'grid grid-cols-[24px_56px_1fr_auto] items-center gap-md py-3 border-b border-dotted border-border/80 hover:bg-accent transition-colors group',
-                  isAdmin && 'cursor-pointer',
-                )}
-              >
-                <CheckBox checked={r.enabled} />
-                <span className={cn('font-mono text-[10.5px] uppercase tracking-[0.6px] text-muted-foreground/80', !r.enabled && 'opacity-50')}>
-                  {speciesLabel(r.species_filter ?? 'all')}
-                </span>
-                <span className={cn('font-serif text-[15px]', !r.enabled && 'opacity-50')}>
-                  <span className="text-foreground">{fieldLabel(r.trigger_field)}</span>
-                  <span className="text-muted-foreground/60 mx-2">→</span>
-                  <span className="text-foreground">{fieldLabel(r.target_field)}</span>
-                  <span className="font-mono text-[12px] text-muted-foreground/80 ml-2">
-                    · {formatOffsets(r.offsets_days)}
-                  </span>
-                </span>
-                {isAdmin && (
-                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); setEditing(r) }}
-                      title="편집"
-                      className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); handleDelete(r) }}
-                      title="삭제"
-                      disabled={pending}
-                      className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-40"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                )}
+        {loading ? (
+          <p className="font-serif italic text-[14px] text-muted-foreground">불러오는 중…</p>
+        ) : rules.length === 0 ? (
+          <p className="font-serif italic text-[14px] text-muted-foreground/60 mb-md">
+            아직 등록된 규칙이 없습니다.
+          </p>
+        ) : (
+          sortedDests.map((dk) => (
+            <section key={dk} className="mb-xl">
+              <div className="flex items-baseline gap-2 pb-2 border-b border-border/80">
+                <span className="font-serif text-[15px] text-foreground">{destLabel(dk)}</span>
+                <span className="opacity-60 text-muted-foreground">·</span>
+                <span className="opacity-60 text-muted-foreground text-[13px]">{grouped.get(dk)!.length}</span>
               </div>
-            ))}
-          </section>
-        ))
-      )}
-
-      {isAdmin && (
-        <div className="flex items-center justify-between pt-md border-t border-border/80">
-          <button
-            type="button"
-            onClick={handleRestore}
-            disabled={pending || deletedStack.length === 0}
-            title={
-              deletedStack.length > 0
-                ? `최근 삭제: ${destLabel(deletedStack[0].rule.destination_key)} · ${fieldLabel(deletedStack[0].rule.trigger_field)} → ${fieldLabel(deletedStack[0].rule.target_field)}`
-                : '최근 삭제한 규칙이 없습니다'
-            }
-            className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/80 hover:bg-muted/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <RotateCcw className="h-3 w-3" />
-            삭제 복원{deletedStack.length > 0 ? ` (${deletedStack.length})` : ''}
-          </button>
-          <button
-            type="button"
-            onClick={() => setEditing('new')}
-            className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/80 hover:bg-muted/40 transition-colors"
-          >
-            <Plus className="h-3 w-3" />
-            규칙 추가
-          </button>
-        </div>
-      )}
-
-      {!isAdmin && (
-        <p className="pt-md border-t border-border/80 pmw-st__sec-lead">
-          자동화 규칙 편집은 관리자만 가능합니다.
-        </p>
-      )}
-
-      {editing && (
-        <RuleEditModal
-          initial={editing === 'new' ? null : editing}
-          pending={pending}
-          onClose={() => setEditing(null)}
-          onSave={handleSave}
-        />
-      )}
-    </div>
+              {grouped.get(dk)!.map((r) => (
+                <div
+                  key={r.id}
+                  role={isAdmin ? 'button' : undefined}
+                  tabIndex={isAdmin ? 0 : undefined}
+                  onClick={isAdmin && !pending ? () => handleToggle(r) : undefined}
+                  onKeyDown={isAdmin && !pending ? (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggle(r) }
+                  } : undefined}
+                  title={isAdmin ? (r.enabled ? '활성 — 클릭하여 비활성' : '비활성 — 클릭하여 활성') : undefined}
+                  className={cn(
+                    'grid grid-cols-[24px_56px_1fr_auto] items-center gap-md py-3 border-b border-dotted border-border/80 hover:bg-accent transition-colors group',
+                    isAdmin && 'cursor-pointer',
+                  )}
+                >
+                  <CheckBox checked={r.enabled} />
+                  <span className={cn('font-mono text-[10.5px] uppercase tracking-[0.6px] text-muted-foreground/80', !r.enabled && 'opacity-50')}>
+                    {speciesLabel(r.species_filter ?? 'all')}
+                  </span>
+                  <span className={cn('font-serif text-[15px]', !r.enabled && 'opacity-50')}>
+                    <span className="text-foreground">{fieldLabel(r.trigger_field)}</span>
+                    <span className="text-muted-foreground/60 mx-2">→</span>
+                    <span className="text-foreground">{fieldLabel(r.target_field)}</span>
+                    <span className="font-mono text-[12px] text-muted-foreground/80 ml-2">
+                      · {formatOffsets(r.offsets_days)}
+                    </span>
+                  </span>
+                  {isAdmin && (
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setEditing(r) }}
+                        title="편집"
+                        className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleDelete(r) }}
+                        title="삭제"
+                        disabled={pending}
+                        className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-40"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </section>
+          ))
+        )}
+  
+        {isAdmin && (
+          <div className="flex items-center justify-between pt-md border-t border-border/80">
+            <button
+              type="button"
+              onClick={handleRestore}
+              disabled={pending || deletedStack.length === 0}
+              title={
+                deletedStack.length > 0
+                  ? `최근 삭제: ${destLabel(deletedStack[0].rule.destination_key)} · ${fieldLabel(deletedStack[0].rule.trigger_field)} → ${fieldLabel(deletedStack[0].rule.target_field)}`
+                  : '최근 삭제한 규칙이 없습니다'
+              }
+              className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/80 hover:bg-muted/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <RotateCcw className="h-3 w-3" />
+              삭제 복원{deletedStack.length > 0 ? ` (${deletedStack.length})` : ''}
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing('new')}
+              className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/80 hover:bg-muted/40 transition-colors"
+            >
+              <Plus className="h-3 w-3" />
+              규칙 추가
+            </button>
+          </div>
+        )}
+  
+        {!isAdmin && (
+          <p className="pt-md border-t border-border/80 pmw-st__sec-lead">
+            자동화 규칙 편집은 관리자만 가능합니다.
+          </p>
+        )}
+  
+        {editing && (
+          <RuleEditModal
+            initial={editing === 'new' ? null : editing}
+            pending={pending}
+            onClose={() => setEditing(null)}
+            onSave={handleSave}
+          />
+        )}
+      </SettingsSection>
+    </SettingsShell>
   )
 }
 
