@@ -27,10 +27,10 @@ import { getSettingsBootstrap, type SettingsBootstrap } from '@/lib/actions/sett
 type TabCategory = 'account' | 'case' | 'work' | 'data'
 
 const CATEGORY_LABELS: Record<TabCategory, string> = {
-  account: 'Account',
-  case: 'Case',
-  work: 'Work',
-  data: 'Data',
+  account: '계정·조직',
+  case: '케이스',
+  work: '업무',
+  data: '데이터',
 }
 
 const CATEGORY_ORDER: readonly TabCategory[] = ['account', 'case', 'work', 'data'] as const
@@ -202,6 +202,10 @@ export function SettingsApp({
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
+  // activeTab 의 category 도출. 미존재(데이터 비정상) 시 첫 카테고리.
+  const activeCategory: TabCategory =
+    TABS.find((t) => t.id === activeTab)?.category ?? CATEGORY_ORDER[0]
+
   function handleTabClick(id: TabId) {
     setActiveTab(id)
     // 탭 전환 시 hash 도 맞춰 업데이트 (공유·새로고침 시 같은 탭 유지).
@@ -223,38 +227,48 @@ export function SettingsApp({
           </h1>
         </div>
 
-        {/* 탭 — 4개 카테고리 그룹(Account/Case/Work/Data) 으로 묶음.
-             모바일은 가로 스크롤(좌우 swipe). 글자 줄바꿈 방지 (whitespace-nowrap + shrink-0).
-             active 탭의 border-bottom 이 외부 border-b 위로 올라오는 효과 (-mb-px). */}
+        {/* 2단계 nav — 상단 카테고리(4개) 만 큰 탭으로, active 카테고리의 sub-tab 은 아래 행에.
+             현재 activeTab 의 category 가 activeCategory.
+             모바일 가로 스크롤 (settings 는 데스크톱 전용이지만 안전 차원). */}
         <div className="border-b border-border/80 shrink-0 px-md md:px-lg overflow-x-auto scrollbar-hide">
           <div className="flex gap-lg">
-            {CATEGORY_ORDER.map((cat) => {
-              const tabs = TABS.filter((t) => t.category === cat)
-              if (tabs.length === 0) return null
-              return (
-                <div key={cat} className="flex flex-col shrink-0">
-                  <span className="font-mono text-[10px] uppercase tracking-[1.4px] text-muted-foreground/50 pb-0.5 self-start">
-                    {CATEGORY_LABELS[cat]}
-                  </span>
-                  <div className="flex gap-md -mb-px">
-                    {tabs.map((tab) => (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => handleTabClick(tab.id)}
-                        className={`shrink-0 whitespace-nowrap px-1 py-2 font-serif text-[15px] md:text-[17px] transition-colors border-b ${
-                          activeTab === tab.id
-                            ? 'border-foreground text-foreground font-semibold'
-                            : 'border-transparent text-muted-foreground/70 hover:text-foreground'
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )
-            })}
+            {CATEGORY_ORDER.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => {
+                  const first = TABS.find((t) => t.category === cat)
+                  if (first) handleTabClick(first.id)
+                }}
+                className={`shrink-0 whitespace-nowrap px-1 py-2 font-serif text-[15px] md:text-[17px] transition-colors border-b -mb-px ${
+                  activeCategory === cat
+                    ? 'border-foreground text-foreground font-semibold'
+                    : 'border-transparent text-muted-foreground/70 hover:text-foreground'
+                }`}
+              >
+                {CATEGORY_LABELS[cat]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* sub-tab row — active 카테고리의 탭들만 표시. */}
+        <div className="shrink-0 px-md md:px-lg overflow-x-auto scrollbar-hide">
+          <div className="flex gap-md flex-wrap">
+            {TABS.filter((t) => t.category === activeCategory).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleTabClick(tab.id)}
+                className={`shrink-0 whitespace-nowrap px-2 py-1 font-serif text-[14px] rounded-full border transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-foreground/40 bg-foreground/5 text-foreground font-semibold'
+                    : 'border-transparent text-muted-foreground/70 hover:text-foreground hover:bg-muted/40'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
 
