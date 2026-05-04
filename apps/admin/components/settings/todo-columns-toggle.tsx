@@ -9,6 +9,7 @@ import {
   type TodoTabId,
   type TodoColumnsConfig,
 } from '@/lib/todo-columns-config-types'
+import { SettingsSectionLabelSerif } from './settings-layout'
 import { cn } from '@/lib/utils'
 
 /**
@@ -57,9 +58,7 @@ export function TodoColumnsToggle({
 
   return (
     <section className="mb-xl">
-      <div className="mb-2">
-        <span className="font-serif text-[13px] text-muted-foreground/80">{title}</span>
-      </div>
+      <SettingsSectionLabelSerif>{title}</SettingsSectionLabelSerif>
       <p className="font-serif italic text-[13px] text-muted-foreground mb-3">
         {description ?? '체크된 컬럼만 테이블에 표시됩니다.'}
       </p>

@@ -16,7 +16,7 @@ import {
 } from '@/lib/actions/invites'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { PillButton } from '@/components/ui/pill-button'
-import { SettingsShell, SettingsSection } from './settings-layout'
+import { SettingsShell, SettingsSection, SettingsSectionLabelSerif } from './settings-layout'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
 
@@ -166,11 +166,7 @@ export function MembersSection({
       <SettingsSection title="멤버">
         {/* Active members */}
         <section className="mb-xl">
-          <div className="mb-2">
-            <span className="font-serif text-[13px] text-muted-foreground/80">
-              활성 멤버 · {members.length}
-            </span>
-          </div>
+          <SettingsSectionLabelSerif>활성 멤버 · {members.length}</SettingsSectionLabelSerif>
           <div className="border-t border-border/80">
             {loading ? (
               <p className="font-serif italic text-[14px] text-muted-foreground py-4">불러오는 중…</p>
@@ -245,11 +241,9 @@ export function MembersSection({
         {/* External super_admins (조직 외 SaaS 운영자) — admin 만 표시 */}
         {isAdmin && externalSuperAdmins.length > 0 && (
           <section className="mb-xl">
-            <div className="mb-2">
-              <span className="font-serif text-[13px] text-muted-foreground/80">
-                SaaS 운영자 (조직 외) · {externalSuperAdmins.length}
-              </span>
-            </div>
+            <SettingsSectionLabelSerif>
+              SaaS 운영자 (조직 외) · {externalSuperAdmins.length}
+            </SettingsSectionLabelSerif>
             <div className="border-t border-border/80">
               {externalSuperAdmins.map((s) => {
                 const hasRealName = !!s.name && s.name.trim() !== '' && s.name !== s.email
@@ -287,11 +281,7 @@ export function MembersSection({
   
         {/* Pending invites */}
         <section className="mb-xl">
-          <div className="mb-2">
-            <span className="font-serif text-[13px] text-muted-foreground/80">
-              대기 중 초대 · {invites.length}
-            </span>
-          </div>
+          <SettingsSectionLabelSerif>대기 중 초대 · {invites.length}</SettingsSectionLabelSerif>
           <div className="border-t border-border/80">
             {invites.length === 0 ? (
               <p className="font-serif italic text-[14px] text-muted-foreground py-4">대기 중인 초대가 없습니다.</p>
