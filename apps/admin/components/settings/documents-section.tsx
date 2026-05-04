@@ -7,7 +7,10 @@ import { useCases } from '@/components/cases/cases-context'
 import { DestinationPicker } from '@/components/ui/destination-picker'
 import { PillButton } from '@/components/ui/pill-button'
 import { DialogFooter } from '@/components/ui/dialog-footer'
-import { SettingsSectionLabelSerif as SectionLabel } from './settings-layout'
+import {
+  SettingsSectionLabelSerif as SectionLabel,
+  SettingsSubsectionTitle,
+} from './settings-layout'
 import { saveCertConfigAction } from '@/lib/actions/cert-config-action'
 import {
   ALL_CERTS,
@@ -242,7 +245,7 @@ export function DocumentsSection() {
   return (
     <section className="mt-2xl pt-xl border-t border-border/40">
       <div className="mb-md">
-        <h3 className="font-serif text-[18px] text-foreground">증명서</h3>
+        <SettingsSubsectionTitle>증명서</SettingsSubsectionTitle>
         <p className="pmw-st__sec-lead mt-1">
           케이스 상세페이지에 표시되는 증명서 버튼 구성. 기본 증명서는 모든 케이스에 공통이며, 국가별 규칙은 목적지에 따라 추가됩니다.
         </p>

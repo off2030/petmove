@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DialogFooter } from '@/components/ui/dialog-footer'
+import { SettingsSubsectionTitle } from './settings-layout'
 import { saveDestinationOverridesAction } from '@/lib/actions/destination-overrides-action'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import {
@@ -101,7 +102,7 @@ export function DestinationsArea() {
   return (
     <section className="mt-2xl pt-xl border-t border-border/40">
       <div className="mb-md">
-        <h3 className="font-serif text-[18px] text-foreground">목적지</h3>
+        <SettingsSubsectionTitle>목적지</SettingsSubsectionTitle>
         <p className="pmw-st__sec-lead mt-1">
           케이스 목적지에 따라 절차정보·추가정보 영역에 표시할 항목을 종별로 설정합니다. 항목을 클릭하여 편집하세요.
         </p>

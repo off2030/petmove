@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { SettingsShell, SettingsSection } from './settings-layout'
+import { SettingsShell, SettingsSection, SettingsSubsectionTitle } from './settings-layout'
 import { cn } from '@/lib/utils'
 import {
   listReceivedTransfers,
@@ -72,7 +72,7 @@ export function TransfersSection() {
         {/* 보낸 전달 */}
         <section className="mb-2xl">
           <div className="flex items-baseline justify-between mb-2">
-            <h3 className="font-serif text-[18px] text-foreground">보낸 전달</h3>
+            <SettingsSubsectionTitle>보낸 전달</SettingsSubsectionTitle>
             <button
               type="button"
               onClick={refresh}
@@ -101,14 +101,14 @@ export function TransfersSection() {
 
         {/* 받은 전달 */}
         <section>
-          <h3 className="font-serif text-[18px] text-foreground mb-2">
+          <SettingsSubsectionTitle className="mb-2">
             받은 전달
             {pendingCount > 0 && (
               <span className="ml-2 inline-flex h-5 min-w-5 px-1.5 items-center justify-center rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-400 font-mono text-[11px]">
                 {pendingCount}
               </span>
             )}
-          </h3>
+          </SettingsSubsectionTitle>
           <p className="mt-1 mb-2 font-serif italic text-[12px] text-muted-foreground/70">
             수락·거부는 메시지 화면의 케이스 카드에서 진행합니다.
           </p>

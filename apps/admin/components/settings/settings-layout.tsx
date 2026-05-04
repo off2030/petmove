@@ -192,6 +192,28 @@ export function SettingsListRow({
 }
 
 /**
+ * sub-section 제목 — settings 안 sub-group 의 한국어 h3.
+ * `font-serif text-[18px] text-foreground` 패턴이 transfers / detail-view /
+ * documents / share-presets / destinations 등 7곳 이상에서 반복.
+ *
+ * `<SettingsSectionLabel>` (mono uppercase) / `<SettingsSectionLabelSerif>`
+ * (작은 serif 13px) 와는 별개의 큰 sub-title.
+ */
+export function SettingsSubsectionTitle({
+  children,
+  className,
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <h3 className={cn('font-serif text-[18px] text-foreground', className)}>
+      {children}
+    </h3>
+  )
+}
+
+/**
  * 설정 화면 전용 small-cap 라벨 (mono / uppercase 톤).
  * 짧은 영어 카테고리 라벨에 사용 — `Account` / `Organization` / `Messaging` 등.
  * `cases/*` 의 `ui/section-label.tsx`(12px / 1.3px) 와는 별개.

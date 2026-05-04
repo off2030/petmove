@@ -6,7 +6,12 @@ import {
   DETAIL_VIEW_DEFAULTS,
   type DetailViewSettings,
 } from '@/lib/detail-view-settings-types'
-import { SettingsShell, SettingsSection, SettingsListRow } from './settings-layout'
+import {
+  SettingsShell,
+  SettingsSection,
+  SettingsListRow,
+  SettingsSubsectionTitle,
+} from './settings-layout'
 import { cn } from '@/lib/utils'
 import { useDetailViewSettings } from '@/components/providers/detail-view-settings-provider'
 import { DestinationsArea } from './destinations-section'
@@ -92,7 +97,7 @@ export function DetailViewSection({
 
         {/* ── 기본 ── */}
         <section className="mb-2xl">
-          <h3 className="font-serif text-[18px] text-foreground mb-2">기본</h3>
+          <SettingsSubsectionTitle className="mb-2">기본</SettingsSubsectionTitle>
           <div className="border-t border-border/80">
             <SettingsListRow
               title="한·영 병기"

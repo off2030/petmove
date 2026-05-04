@@ -6,6 +6,7 @@ import { useCases } from '@/components/cases/cases-context'
 import { listSharePresets, saveSharePresets } from '@/lib/actions/share-presets'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
+import { SettingsSubsectionTitle } from './settings-layout'
 import { EXTRA_FIELD_KEY_LABELS, ALL_EXTRA_FIELD_KEYS } from '@petmove/domain'
 import {
   SHARE_VACCINE_GROUPS,
@@ -171,7 +172,7 @@ export function SharePresetsSection({
   return (
     <section className="mt-2xl">
       <div className="flex items-baseline justify-between mb-2 gap-md flex-wrap">
-        <h3 className="font-serif text-[18px] text-foreground inline-flex items-center gap-sm">
+        <SettingsSubsectionTitle className="inline-flex items-center gap-sm">
           공유
           {isDirty && (
             <span className="font-mono text-[10.5px] uppercase tracking-[1.2px] px-1.5 py-0.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400">
@@ -183,7 +184,7 @@ export function SharePresetsSection({
               저장됨 · {savedAt.toLocaleTimeString()}
             </span>
           )}
-        </h3>
+        </SettingsSubsectionTitle>
         <div className="flex items-center gap-sm">
           <button
             type="button"
