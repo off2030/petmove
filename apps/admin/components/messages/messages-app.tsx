@@ -140,9 +140,11 @@ export function MessagesApp({
   // 대화목록이 채워지면 — 모든 conv 의 메시지를 백그라운드 prefetch.
   // 사용자가 어떤 대화를 탭하든 in-memory cache hit → 즉시 표시.
   // 동시 요청이 많으면 서버 부담 → 동시 3개로 제한 + 이미 캐시 있으면 skip.
+  // dashboard-shell 이 messages 탭을 항상 pre-mount 하므로 isActive 가
+  // false 여도(=다른 탭 보고 있어도) 워커가 돌아 첫 로그인 시점부터 캐시 적재.
   const prefetchedRef = useRef<Set<string>>(new Set())
   useEffect(() => {
-    if (!isActive || conversations.length === 0) return
+    if (conversations.length === 0) return
     let canceled = false
     const PARALLEL = 3
     const queue = conversations
@@ -180,7 +182,7 @@ export function MessagesApp({
     return () => {
       canceled = true
     }
-  }, [isActive, conversations])
+  }, [conversations])
 
   // 활성 대화방 — 캐시 우선 표시 + 첫 로드 + Realtime
   useEffect(() => {

@@ -61,7 +61,9 @@ export function DashboardShell({
   const router = useRouter()
   const pathname = usePathname()
   const [activeTab, setActiveTab] = useState<TabId>(() => pathToTab(pathname))
-  const [mounted, setMounted] = useState<Set<TabId>>(() => new Set([activeTab]))
+  // 'messages' 는 항상 프리마운트 — 첫 로그인 시점부터 백그라운드 prefetch 워커가
+  // 돌아 채팅창을 어떤 시점에 열어도 캐시 적중. 보이지는 않음 (display:none).
+  const [mounted, setMounted] = useState<Set<TabId>>(() => new Set([activeTab, 'messages']))
   const [endingImpersonation, startEndImpersonation] = useTransition()
   const [conversations, setConversations] = useState<ConversationListItem[]>(initialConversations)
   const [resolvedAvatarUrl, setResolvedAvatarUrl] = useState<string | null>(userAvatarUrl ?? null)
