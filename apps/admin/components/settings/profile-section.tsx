@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import { getMyProfile, updateMyProfile, type MyProfile } from '@/lib/actions/profile'
 import { updateMyDmVisibility } from '@/lib/actions/chat'
 import { SectionHeader } from '@/components/ui/section-header'
+import { SettingsSectionLabel as SectionLabel } from './settings-layout'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { PushPermission } from '@/components/pwa/push-permission'
@@ -247,16 +248,6 @@ function providerLabel(provider: string): string {
     case 'naver': return 'Naver'
     default: return provider
   }
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mb-2">
-      <span className="font-mono text-[11px] tracking-[1.8px] uppercase text-muted-foreground/70">
-        {children}
-      </span>
-    </div>
-  )
 }
 
 function AvatarRow({

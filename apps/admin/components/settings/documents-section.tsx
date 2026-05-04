@@ -7,6 +7,7 @@ import { useCases } from '@/components/cases/cases-context'
 import { DestinationPicker } from '@/components/ui/destination-picker'
 import { PillButton } from '@/components/ui/pill-button'
 import { DialogFooter } from '@/components/ui/dialog-footer'
+import { SettingsSectionLabelSerif as SectionLabel } from './settings-layout'
 import { saveCertConfigAction } from '@/lib/actions/cert-config-action'
 import {
   ALL_CERTS,
@@ -152,16 +153,6 @@ function OverflowPill({ count }: { count: number }) {
   )
 }
 
-/** Editorial small-cap section label — profile/company 와 동일 스타일. */
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mb-2">
-      <span className="font-serif text-[13px] text-muted-foreground/80">
-        {children}
-      </span>
-    </div>
-  )
-}
 
 export function DocumentsSection() {
   const { certConfig, setCertConfig } = useCases()

@@ -17,6 +17,7 @@ import {
 } from '@/lib/actions/chat'
 import type { CustomField, VetInfo, VetInfoKey } from '@/lib/vet-info'
 import { SectionHeader } from '@/components/ui/section-header'
+import { SettingsSectionLabel as SectionLabel } from './settings-layout'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
 
@@ -467,16 +468,6 @@ function CustomFieldRow({
           <X size={14} />
         </button>
       )}
-    </div>
-  )
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mb-2">
-      <span className="font-mono text-[11px] tracking-[1.8px] uppercase text-muted-foreground/70">
-        {children}
-      </span>
     </div>
   )
 }

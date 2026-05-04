@@ -16,22 +16,51 @@ import { DetailViewSection } from './detail-view-section'
 import { TransfersSection } from './transfers-section'
 import { getSettingsBootstrap, type SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 
-const TABS = [
-  { id: 'profile', label: '내 프로필' },
-  { id: 'company', label: '조직정보' },
-  { id: 'members', label: '멤버' },
-  { id: 'detail_view', label: '상세' },
-  { id: 'transfers', label: '전달' },
-  { id: 'vaccines', label: '약품관리' },
-  { id: 'inspection', label: '검사' },
-  { id: 'import_report', label: '신고' },
-  { id: 'export_doc', label: '서류' },
-  { id: 'automation', label: '자동화' },
-  { id: 'verification', label: '검증' },
-  { id: 'data', label: '데이터' },
+/**
+ * 설정 탭 메타데이터.
+ *
+ * - category: 4개 그룹(`account` 계정·조직 / `case` 케이스 / `work` 업무 / `data` 데이터).
+ *   현재 UI 에는 노출되지 않음 — 모델만 잡아두고 카테고리 헤더는 phase 1+ 에서 도입.
+ * - visibility: `super_admin` 인 경우 슈퍼 어드민에게만 노출. 미지정 = 전체 노출.
+ *   (조직 admin 만 보이는 탭은 현재 없으므로 옵션에 포함하지 않음.)
+ */
+type TabCategory = 'account' | 'case' | 'work' | 'data'
+
+type TabDef = {
+  id:
+    | 'profile'
+    | 'company'
+    | 'members'
+    | 'detail_view'
+    | 'transfers'
+    | 'vaccines'
+    | 'inspection'
+    | 'import_report'
+    | 'export_doc'
+    | 'automation'
+    | 'verification'
+    | 'data'
+  label: string
+  category: TabCategory
+  visibility?: 'super_admin'
+}
+
+const TABS: readonly TabDef[] = [
+  { id: 'profile', label: '내 프로필', category: 'account' },
+  { id: 'company', label: '조직정보', category: 'account' },
+  { id: 'members', label: '멤버', category: 'account' },
+  { id: 'detail_view', label: '상세', category: 'case' },
+  { id: 'transfers', label: '전달', category: 'case' },
+  { id: 'vaccines', label: '약품관리', category: 'case' },
+  { id: 'inspection', label: '검사', category: 'work' },
+  { id: 'import_report', label: '신고', category: 'work' },
+  { id: 'export_doc', label: '서류', category: 'work' },
+  { id: 'automation', label: '자동화', category: 'work' },
+  { id: 'verification', label: '검증', category: 'data' },
+  { id: 'data', label: '데이터', category: 'data' },
 ] as const
 
-type TabId = (typeof TABS)[number]['id']
+type TabId = TabDef['id']
 
 function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) {
   const [showTrash, setShowTrash] = useState(false)

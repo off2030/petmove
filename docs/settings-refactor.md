@@ -1,7 +1,7 @@
 # 설정 화면 리팩터링 계획 (work in progress)
 
-> 작업 중단 시점: 2026-05-04
-> 다음 시작점: phase 0 실행 또는 분류안 합의
+> 마지막 업데이트: 2026-05-04 (phase 0 완료)
+> 다음 시작점: phase 1 — profile/company 를 SettingsLayout 규격으로 변환
 
 ## 배경
 
@@ -36,28 +36,39 @@
 
 5. **점진적 이전이 PR 분할 기준이어야**: phase 0 메타데이터/공통 컴포넌트 → phase 1 가벼운 섹션(profile/company) 변환 → phase 2 무거운 섹션. 한 PR에 다 넣으면 리뷰 어렵고 회귀 리스크 큼.
 
-## 다음 단계 — phase 0 (가시 변화 최소, 골격만)
+## phase 0 — 완료 (2026-05-04)
 
-1. **신규 파일** `apps/admin/components/settings/settings-layout.tsx`:
+가시 변화 최소, 골격만 추출. 모든 항목은 후속 마이그레이션의 발판.
+
+1. ✅ **신규 파일** `apps/admin/components/settings/settings-layout.tsx`:
    - `SettingsShell` (max-width + pb-2xl 컨테이너)
-   - `SettingsSection` (h3 + description + 슬롯)
-   - `SettingsRow` (variants: `toggle` | `input` | `chips` | `static`)
+   - `SettingsSection` (h2 + description + 슬롯)
+   - `SettingsRow` (variants: `toggle` | `input` | `chips` | `static` — 일단 메타데이터, 레이아웃 동일)
    - `SettingsFooter` (저장 버튼 영역)
-   - 일단 export만, 사용처 0 — 점진 마이그레이션용
+   - `SettingsSectionLabel` (mono 11px / 1.8px / uppercase — 영어 카테고리 라벨)
+   - `SettingsSectionLabelSerif` (serif 13px — 한국어 그룹 헤더)
+   - 사용처는 라벨 4개 + 마이그레이션 0 — Shell/Section/Row/Footer 는 phase 1 부터 적용.
 
-2. **`settings-app.tsx`의 TABS를 메타데이터 객체로**:
+2. ✅ **`settings-app.tsx` 의 TABS 메타데이터화**:
    ```ts
    type TabDef = {
-     id: string
+     id: '…'
      label: string
      category: 'account' | 'case' | 'work' | 'data'
-     visibility?: 'admin' | 'super_admin'
-     // component 는 lazy 또는 직접 import
+     visibility?: 'super_admin'
    }
    ```
-   카테고리 헤더는 phase 1 까지는 노출 안 함 — 모델만 바꿈.
+   카테고리 매핑(합의):
+   - `account`: profile / company / members
+   - `case`: detail_view / transfers / **vaccines**
+   - `work`: inspection / import_report / export_doc / automation
+   - `data`: verification / data
+   카테고리 헤더는 phase 1 까지는 노출 안 함 — 모델만 잡아둠.
 
-3. **`section-label.tsx` 단일화**: 각 섹션이 자체 정의한 `SectionLabel` 제거하고 import 통일.
+3. ✅ **자체 정의 `SectionLabel` 단일화**:
+   - company / profile (mono) → `SettingsSectionLabel`
+   - documents / inspection (serif) → `SettingsSectionLabelSerif`
+   - 각 파일의 자체 정의 함수 제거. cases 화면의 `ui/section-label.tsx`(12px / 1.3px) 와는 별개로 유지 — 두 화면의 라벨 톤이 본래 다르게 잡혀 있어 통합 결정은 phase 2+.
 
 ## phase 1 이후 (부분 합의 필요)
 
@@ -66,32 +77,28 @@
 - 카테고리 헤더 UI 도입 — 이때 사이드바 vs 탭 + 그룹 헤더 결정
 - 무거운 섹션의 분리 (재배치) — phase 1 끝나고 별도 PR
 
-## 결정 미정 사항 (다음 컴퓨터에서 합의)
+## 결정 — phase 0 시점 합의
 
-| 항목 | 옵션 A | 옵션 B |
-|---|---|---|
-| 카테고리 수 | 3~4개 (압축) | 6개 (사용자 제안 그대로) |
-| 카테고리 매핑 | `계정·조직` / `케이스` / `업무` / `데이터` | `계정` / `조직` / `케이스` / `업무` / `약품` / `관리` |
-| 상세 탭 | 현재처럼 통합 유지 | 케이스 카테고리 내 별도 메뉴로 재분리 |
-| 메뉴 UI | 상단 평면 탭 유지 | 좌측 사이드바 + 그룹 헤더 |
-| `SettingsRow` variants | 4개 (toggle/input/chips/static) | 더 세분화 필요 시 추가 |
+| 항목 | 결정 |
+|---|---|
+| 카테고리 수 | **4개** (계정·조직 / 케이스 / 업무 / 데이터) |
+| 약품(`vaccines`) | **케이스** 카테고리 — 케이스 입력에서 참조하는 마스터 데이터 |
+| 상세 탭 | 현재처럼 **통합 유지** |
+| 메뉴 UI | phase 0~1 동안 **상단 평면 탭 유지** — phase 2 에서 카테고리 헤더 도입 검토 |
+| `SettingsRow` variants | **4개** (toggle/input/chips/static) — 일단 메타데이터, 마이그레이션 진행하며 분기 |
 
-## 시작 명령 (다른 컴퓨터에서)
+## 관련 파일 (phase 0 완료 시점)
 
-```bash
-git pull origin master
-# 이 문서를 다시 읽고 결정 미정 사항부터 합의
-# 합의 후 phase 0 의 settings-layout.tsx 작성부터 시작
-```
-
-## 관련 파일 (현재 상태)
-
-- `apps/admin/components/settings/settings-app.tsx` — 진입점, TABS 평면 배열
-- `apps/admin/components/settings/detail-view-section.tsx` — 상세 탭 (카테고리 4개 통합됨)
-- `apps/admin/components/settings/inspection-section.tsx` — 검사 + 컬럼 토글
-- `apps/admin/components/settings/import-report-section.tsx` — 신고 + 컬럼 토글
-- `apps/admin/components/settings/export-doc-section.tsx` — 서류 (컬럼 토글 전용)
-- `apps/admin/components/settings/transfers-section.tsx` — 전달 (보낸→받은 순서)
-- `apps/admin/components/settings/todo-columns-toggle.tsx` — 컬럼 토글 공통 컴포넌트
-- `apps/admin/components/ui/section-label.tsx` — 라벨 컴포넌트 (현재 단편적 사용)
-- `apps/admin/components/ui/page-shell.tsx` — 다른 페이지의 공통 셸 (설정엔 미사용)
+- `apps/admin/components/settings/settings-layout.tsx` — **신규**. Shell/Section/Row/Footer + Label 두 종.
+- `apps/admin/components/settings/settings-app.tsx` — 진입점, TABS 메타데이터(category) 적용 완료.
+- `apps/admin/components/settings/detail-view-section.tsx` — 상세 탭 (카테고리 4개 통합됨).
+- `apps/admin/components/settings/inspection-section.tsx` — 검사 + 컬럼 토글. Label serif 통일.
+- `apps/admin/components/settings/import-report-section.tsx` — 신고 + 컬럼 토글.
+- `apps/admin/components/settings/export-doc-section.tsx` — 서류 (컬럼 토글 전용).
+- `apps/admin/components/settings/transfers-section.tsx` — 전달 (보낸→받은 순서).
+- `apps/admin/components/settings/company-section.tsx` — Label mono 통일.
+- `apps/admin/components/settings/profile-section.tsx` — Label mono 통일.
+- `apps/admin/components/settings/documents-section.tsx` — Label serif 통일.
+- `apps/admin/components/settings/todo-columns-toggle.tsx` — 컬럼 토글 공통 컴포넌트.
+- `apps/admin/components/ui/section-label.tsx` — `cases/*` 전용. settings 와는 별개로 유지.
+- `apps/admin/components/ui/page-shell.tsx` — 다른 페이지의 공통 셸 (설정엔 미사용).

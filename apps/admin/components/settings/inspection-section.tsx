@@ -10,6 +10,7 @@ import { LabPillSelect, LabPillMultiSelect } from '@/components/ui/lab-pill-sele
 import { PillButton } from '@/components/ui/pill-button'
 import { SectionHeader } from '@/components/ui/section-header'
 import { DialogFooter } from '@/components/ui/dialog-footer'
+import { SettingsSectionLabelSerif as SectionLabel } from './settings-layout'
 import { labColor } from '@/lib/lab-color'
 import { cn } from '@/lib/utils'
 import { saveInspectionConfigAction } from '@/lib/actions/inspection-config-action'
@@ -29,17 +30,6 @@ function sameSet(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false
   const s = new Set(a)
   return b.every(x => s.has(x))
-}
-
-/** Editorial small-cap section label — profile/company 와 동일 스타일. */
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mb-2">
-      <span className="font-serif text-[13px] text-muted-foreground/80">
-        {children}
-      </span>
-    </div>
-  )
 }
 
 /** 신고 탭과 동일 — 얇은 border + sans 12px. */
