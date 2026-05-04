@@ -712,7 +712,7 @@ function NewConversationModal({
       onClick={onClose}
     >
       <div
-        className="w-[460px] max-h-[80vh] flex flex-col rounded-lg border border-border/80 bg-popover shadow-xl"
+        className="w-[460px] max-w-[calc(100%-2rem)] max-h-[80vh] flex flex-col rounded-lg border border-border/80 bg-popover shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="shrink-0 flex items-center justify-between px-md py-sm border-b border-border/80">
@@ -2013,7 +2013,7 @@ function AddMemberModal({
       onClick={onClose}
     >
       <div
-        className="w-[420px] max-h-[80vh] flex flex-col rounded-lg border border-border/80 bg-popover shadow-xl"
+        className="w-[420px] max-w-[calc(100%-2rem)] max-h-[80vh] flex flex-col rounded-lg border border-border/80 bg-popover shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="shrink-0 flex items-center justify-between px-md py-sm border-b border-border/80">
