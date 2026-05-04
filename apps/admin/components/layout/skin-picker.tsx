@@ -10,7 +10,6 @@ import { useSkin, setSkin, SKIN_LIST, SKIN_LABELS, type Skin } from '@/lib/use-s
 const SKIN_PREVIEW: Record<Skin, { bg: string; accent: string }> = {
   editorial: { bg: '#F5F4ED', accent: '#9B4A2D' },
   flat: { bg: '#FFFFFF', accent: '#18181B' },
-  neumorphism: { bg: '#E8ECF1', accent: '#4A5568' },
   glassmorphism: { bg: 'linear-gradient(135deg,#C7D2FE,#A78BFA)', accent: '#4F46E5' },
   'art-deco': { bg: '#0F1B30', accent: '#C9A961' },
   'foggy-pastel': { bg: '#D5DBE0', accent: '#5C6B7C' },

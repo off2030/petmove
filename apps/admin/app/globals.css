@@ -317,7 +317,6 @@
         — Manrope / Plus Jakarta 등 italic 없는 폰트 쓸 때 필수
 
      9. (선택) 컴포넌트 그림자/테두리:
-        — neumorphism 처럼 .bg-card 에 dual shadow 등 적용 시
         — 스킨 블록 뒤에 [data-skin="X"] .target { ... } 별도 규칙
 
      ═════════════════════════════════════════════════════════════ */
@@ -509,202 +508,6 @@
     --pmw-chip-neutral-fg: 240 5% 78%;
   }
 
-  /* ─────────────────────────────────────────────────────────────
-     Skin: neumorphism — soft monochrome + 양각/음각 그림자.
-     Page 와 카드가 동일 배경색이어야 그림자로 깊이 표현. radius 크게.
-     컴포넌트별 box-shadow override 필요 (단순 변수 swap 만으론 부족).
-     ───────────────────────────────────────────────────────────── */
-  [data-skin="neumorphism"] {
-    /* Inter Tight → Manrope — geometric + 살짝 둥근 모서리. soft shadow 와 조화.
-       sans/serif/mono 모두 Manrope 로 평탄화 — soft 한 톤 일관 유지.
-       Manrope 의 tabular 숫자(tnum) 가 JetBrains Mono 정렬 대체. */
-    --font-sans: var(--font-sans-neu);
-    --font-serif: var(--font-sans-neu), Pretendard;
-    --font-serif-kr: var(--font-sans-kr);
-    --font-mono: var(--font-sans-neu);
-    --pmw-font-serif: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-
-    --pmw-near-black: #2C3037;
-    --pmw-olive-gray: #5A6072;
-    --pmw-stone-gray: #8E94A3;
-    --pmw-deep: #4A5568;
-    --pmw-clay-soft: #DDE3EB;       /* surface tint */
-    --pmw-sage: #5A6072;
-    --pmw-sage-soft: #D2D9E2;       /* chat active row — paper 보다 한 단계 진함 */
-    --pmw-sage-paper: #E8ECF1;       /* chat panel bg = page bg (neumorphism 동색 원칙) */
-    --pmw-amber: #5A6072;
-    --pmw-rust: #B85450;
-    --pmw-border-warm: #E8ECF1;
-    --pmw-parchment: #E8ECF1;
-    --pmw-paper: #E8ECF1;
-
-    /* 그림자 토큰 — light/dark 에서 base 색만 갈아끼우면 raised/pressed 자동 갱신.
-       범위는 카드·팝오버·인풋 surface 에 한정 (버튼·채팅 제외) — 깊이는 원래 톤 유지. */
-    --neu-shadow-light: #ffffff;
-    --neu-shadow-dark: #c7cdd6;
-    --neu-raised: 6px 6px 14px var(--neu-shadow-dark), -6px -6px 14px var(--neu-shadow-light);
-    --neu-raised-sm: 3px 3px 7px var(--neu-shadow-dark), -3px -3px 7px var(--neu-shadow-light);
-    --neu-pressed: inset 3px 3px 6px var(--neu-shadow-dark), inset -3px -3px 6px var(--neu-shadow-light);
-
-    --background: 218 21% 92%;
-    --foreground: 220 12% 20%;
-    --card: 218 21% 92%;
-    --card-foreground: 220 12% 20%;
-    --popover: 218 21% 92%;
-    --popover-foreground: 220 12% 20%;
-    --primary: 220 14% 31%;
-    --primary-foreground: 218 21% 92%;
-    --secondary: 218 21% 92%;
-    --secondary-foreground: 220 12% 20%;
-    --muted: 218 21% 92%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 218 21% 92%;
-    --accent-foreground: 220 12% 20%;
-    --destructive: 0 60% 52%;
-    --destructive-foreground: 218 21% 92%;
-    --border: 218 21% 92%;          /* 배경과 동색 → 시각적으로 사라짐 */
-    --input: 218 21% 92%;
-    --ring: 220 14% 31%;
-    --radius: 1rem;
-
-    /* Semantic 토큰 — neumorphism (blue-gray monochrome) */
-    --pmw-accent: 220 14% 31%;
-    --pmw-accent-fg: 218 21% 92%;
-    --pmw-accent-strong: 220 12% 20%;
-    --pmw-tag-bg: 218 21% 92%;
-    --pmw-tag-fg: 220 14% 31%;
-    --pmw-cal-today: 220 14% 31%;
-    --pmw-cal-sunday: 0 50% 55%;
-    --pmw-cal-saturday: 220 35% 45%;
-    --pmw-positive: 142 30% 40%;
-    --pmw-avatar-bg: 218 21% 88%;
-    --pmw-avatar-fg: 220 14% 31%;
-    --pmw-code-label: 220 9% 46%;
-
-    /* Typography 스케일 — neumorphism (Soft UI 톤. 큰 size, generous leading, 자연 spacing) */
-    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
-    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.01em;
-    --pmw-text-sm:   14px;   --pmw-leading-sm:   1.6;   --pmw-tracking-sm:   0;
-    --pmw-text-base: 15px;   --pmw-leading-base: 1.65;  --pmw-tracking-base: 0;
-    --pmw-text-md:   16px;   --pmw-leading-md:   1.6;   --pmw-tracking-md:   0;
-    --pmw-text-lg:   20px;   --pmw-leading-lg:   1.5;   --pmw-tracking-lg:   -0.01em;
-    --pmw-text-xl:   26px;   --pmw-leading-xl:   1.4;   --pmw-tracking-xl:   -0.015em;
-    --pmw-text-2xl:  34px;   --pmw-leading-2xl:  1.3;   --pmw-tracking-2xl:  -0.02em;
-
-    /* 텍스트 색 4-tier (낮은 대비 의도 — 부드러움 우선) */
-    --pmw-text-primary:    220 12% 20%;    /* #2C3037 dark blue-gray */
-    --pmw-text-secondary:  225 11% 40%;    /* #5A6072 */
-    --pmw-text-tertiary:   222 12% 60%;    /* #8E94A3 */
-    --pmw-text-disabled:   218 12% 73%;    /* #B0B7C2 */
-
-    /* Warning/info — soft, blue-gray 팔레트와 어울리게 muted */
-    --pmw-warning: 32 50% 50%;             /* muted amber */
-    --pmw-warning-bg: 35 35% 90%;          /* light cream blend */
-    --pmw-warning-fg: 32 40% 30%;
-    --pmw-info: 220 30% 45%;
-
-    /* Chip 6-tone neumorphism — blue-gray monochrome 톤. saturation 더 낮춤. */
-    --pmw-chip-red-bg:     8 18% 87%;
-    --pmw-chip-red-fg:     8 28% 38%;
-    --pmw-chip-amber-bg:   38 18% 87%;
-    --pmw-chip-amber-fg:   30 28% 32%;
-    --pmw-chip-olive-bg:   90 14% 87%;
-    --pmw-chip-olive-fg:   85 22% 32%;
-    --pmw-chip-blue-bg:    218 25% 87%;
-    --pmw-chip-blue-fg:    218 28% 32%;
-    --pmw-chip-plum-bg:    280 14% 87%;
-    --pmw-chip-plum-fg:    280 22% 35%;
-    --pmw-chip-neutral-bg: 220 9% 87%;
-    --pmw-chip-neutral-fg: 220 9% 32%;
-  }
-
-  [data-skin="neumorphism"].dark {
-    --pmw-near-black: #E8ECF1;
-    --pmw-olive-gray: #8E94A3;
-    --pmw-stone-gray: #5A6072;
-    --pmw-deep: #BFC6D1;
-    --pmw-clay-soft: #353B45;
-    --pmw-sage: #8E94A3;
-    --pmw-sage-soft: #353B45;
-    --pmw-sage-paper: #2C3037;
-    --pmw-amber: #BFC6D1;
-    --pmw-rust: #E07876;
-    --pmw-border-warm: #2C3037;
-    --pmw-parchment: #2C3037;
-    --pmw-paper: #2C3037;
-
-    --neu-shadow-light: #353B45;
-    --neu-shadow-dark: #1A1E24;
-
-    color-scheme: dark;
-    --background: 220 12% 20%;
-    --foreground: 218 21% 92%;
-    --card: 220 12% 20%;
-    --card-foreground: 218 21% 92%;
-    --popover: 220 12% 20%;
-    --popover-foreground: 218 21% 92%;
-    --primary: 218 21% 80%;
-    --primary-foreground: 220 12% 20%;
-    --secondary: 220 12% 20%;
-    --secondary-foreground: 218 21% 92%;
-    --muted: 220 12% 20%;
-    --muted-foreground: 218 12% 65%;
-    --accent: 220 12% 20%;
-    --accent-foreground: 218 21% 92%;
-    --destructive: 0 60% 60%;
-    --destructive-foreground: 220 12% 20%;
-    --border: 220 12% 20%;
-    --input: 220 12% 20%;
-    --ring: 218 21% 80%;
-
-    --pmw-accent: 218 21% 80%;
-    --pmw-accent-fg: 220 12% 20%;
-    --pmw-accent-strong: 218 21% 92%;
-    --pmw-tag-bg: 220 12% 25%;
-    --pmw-tag-fg: 218 21% 80%;
-    --pmw-cal-today: 218 21% 80%;
-    --pmw-cal-sunday: 0 50% 65%;
-    --pmw-cal-saturday: 220 35% 65%;
-    --pmw-positive: 142 25% 60%;
-    --pmw-avatar-bg: 220 12% 28%;
-    --pmw-avatar-fg: 218 21% 80%;
-    --pmw-code-label: 218 12% 60%;
-
-    /* Typography 스케일 — light 와 동일 (사이즈는 mode 무관) */
-    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
-    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.01em;
-    --pmw-text-sm:   14px;   --pmw-leading-sm:   1.6;   --pmw-tracking-sm:   0;
-    --pmw-text-base: 15px;   --pmw-leading-base: 1.65;  --pmw-tracking-base: 0;
-    --pmw-text-md:   16px;   --pmw-leading-md:   1.6;   --pmw-tracking-md:   0;
-    --pmw-text-lg:   20px;   --pmw-leading-lg:   1.5;   --pmw-tracking-lg:   -0.01em;
-    --pmw-text-xl:   26px;   --pmw-leading-xl:   1.4;   --pmw-tracking-xl:   -0.015em;
-    --pmw-text-2xl:  34px;   --pmw-leading-2xl:  1.3;   --pmw-tracking-2xl:  -0.02em;
-
-    /* 텍스트 색 4-tier (dark 반전, 그래도 낮은 대비 유지) */
-    --pmw-text-primary:    218 21% 92%;
-    --pmw-text-secondary:  218 14% 75%;
-    --pmw-text-tertiary:   222 12% 60%;
-    --pmw-text-disabled:   220 12% 35%;
-
-    --pmw-warning: 32 45% 65%;
-    --pmw-warning-bg: 220 12% 22%;
-    --pmw-warning-fg: 35 45% 75%;
-    --pmw-info: 220 30% 65%;
-
-    /* Chip 6-tone neumorphism dark */
-    --pmw-chip-red-bg:     8 14% 22%;
-    --pmw-chip-red-fg:     8 30% 78%;
-    --pmw-chip-amber-bg:   30 14% 22%;
-    --pmw-chip-amber-fg:   38 28% 78%;
-    --pmw-chip-olive-bg:   85 12% 22%;
-    --pmw-chip-olive-fg:   90 22% 78%;
-    --pmw-chip-blue-bg:    218 14% 22%;
-    --pmw-chip-blue-fg:    218 28% 78%;
-    --pmw-chip-plum-bg:    280 12% 22%;
-    --pmw-chip-plum-fg:    280 22% 78%;
-    --pmw-chip-neutral-bg: 220 9% 22%;
-    --pmw-chip-neutral-fg: 220 9% 78%;
-  }
 
   /* ─────────────────────────────────────────────────────────────
      Skin: glassmorphism — iOS / macOS Big Sur 류 frosted glass.
@@ -1936,7 +1739,6 @@
 
   /* font-mono 가 sans 폰트로 평탄화된 스킨 — baby-blue 추가. */
   [data-skin="flat"] .font-mono,
-  [data-skin="neumorphism"] .font-mono,
   [data-skin="glassmorphism"] .font-mono,
   [data-skin="art-deco"] .font-mono,
   [data-skin="foggy-pastel"] .font-mono,
@@ -1949,7 +1751,6 @@
 
   /* italic 미사용 스킨 — baby-blue 추가. */
   [data-skin="flat"] .italic,
-  [data-skin="neumorphism"] .italic,
   [data-skin="glassmorphism"] .italic,
   [data-skin="foggy-pastel"] .italic,
   [data-skin="hygge"] .italic,
@@ -1962,8 +1763,7 @@
   /* 모든 스킨 body baseline — letter-spacing + line-height 를 body 에 부여하면
      모든 자식 텍스트가 inherit. 스킨별로 token 값이 다르므로 자동으로 분기.
      - editorial: 자연 spacing + line-height 1.6 (매거진 톤)
-     - flat: -0.011em + 1.5 (Linear 타이트)
-     - neumorphism: 0 + 1.65 (Soft generous) */
+     - flat: -0.011em + 1.5 (Linear 타이트) */
   body {
     letter-spacing: var(--pmw-tracking-base, normal);
     line-height: var(--pmw-leading-base, 1.5);
@@ -1983,50 +1783,6 @@
   html:not([data-skin]) [data-bubble="own"] {
     background-color: hsl(var(--primary) / 0.12);
     color: hsl(var(--primary));
-  }
-
-  /* Neumorphism 컴포넌트 그림자 — 변수 swap 만으로 안 되는 부분 */
-  [data-skin="neumorphism"] .bg-card,
-  [data-skin="neumorphism"] .bg-popover {
-    box-shadow: var(--neu-raised);
-    border-color: transparent;
-  }
-
-  [data-skin="neumorphism"] input:not([type='checkbox']):not([type='radio']),
-  [data-skin="neumorphism"] textarea,
-  [data-skin="neumorphism"] select {
-    box-shadow: var(--neu-pressed);
-    border-color: transparent;
-  }
-
-  /* neumorphism 양각/음각은 surface container (카드·팝오버·인풋·아바타) 에만 적용.
-     버튼·채팅 버블 등 인터랙션 요소는 평평하게 유지 — 화면 전체가 그림자로 시끄러워지는 것 방지. */
-
-  /* 아바타 — circular surface, soft UI 시그니처. raised 로 "살짝 떠 있는" 느낌.
-     이미지 아바타가 overflow-hidden 으로 inset 을 가리는 문제 회피. */
-  [data-skin="neumorphism"] [data-avatar] {
-    box-shadow: var(--neu-raised-sm);
-  }
-
-  /* 상태 pill — 검사/신고/서류 탭의 진행상태·수입·수출 컬럼.
-     기본 raised (양각, "떠 있는 마커") + 진행중 (data-status-active=true) 만 inset (음각, "현재 작업 중인 stamp"). */
-  [data-skin="neumorphism"] [data-status-pill] {
-    background-color: hsl(var(--muted));
-    padding: 4px 12px;
-    border-radius: 999px;
-    box-shadow: var(--neu-raised-sm);
-    margin: 0;  /* 기존 -mx-1 무력화 */
-  }
-  [data-skin="neumorphism"] [data-status-pill][data-status-active="true"] {
-    box-shadow: var(--neu-pressed);
-  }
-
-  /* 둥근 아이콘 버튼 (검색바 옆 첨부/+ 등) — 양각이 아닌 음각으로.
-     bg-popover 의 raised 오버라이드. rounded-full 조건으로 일반 버튼 영향 X. */
-  [data-skin="neumorphism"] button.rounded-full.bg-popover,
-  [data-skin="neumorphism"] button.rounded-full.bg-card {
-    box-shadow: var(--neu-pressed);
-    border-color: transparent;
   }
 
 }

@@ -22,8 +22,7 @@ const inter = Inter({
   variable: '--font-sans-flat',
   display: 'swap',
 })
-// neumorphism 스킨 전용 — geometric + 살짝 둥근 모서리. soft shadow 와 조화.
-// Manrope 는 Google Fonts 에 italic 없음 — italic 사용 시 synthetic 발생 (의도된 한계).
+// hygge 스킨 전용 — soft geometric. italic 없음 (CSS 로 .italic strip).
 const manrope = Manrope({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
