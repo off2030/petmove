@@ -214,11 +214,15 @@ export function SettingsSubsectionTitle({
 }
 
 /**
- * 설정 화면 전용 sub-group 라벨 (serif 13px / 한국어 톤).
- * sub-section 헤더보다 작은 위계 — `기본 증명서` / `계정` / `검사기관` 등.
- * SettingsSubsectionTitle (18px h3) 보다 작은 sub-group 구분에 사용.
+ * 설정 화면 전용 sub-group 라벨 (L4) — `계정` / `메시지` / `검사기관` 등.
  *
- * (예전엔 영어 카테고리용 mono uppercase variant 도 있었지만 한국어 통일로 제거.)
+ * 위계:
+ *  - L3 SettingsSubsectionTitle (18px h3, 큰 sub-section)
+ *  - **L4 SettingsSectionLabelSerif (14px / foreground / medium, 작은 sub-group)**
+ *  - L5 SettingsField label (13px / muted-foreground, 행 라벨)
+ *
+ * 행 라벨(L5) 과 시각 구분이 명확하도록 +1px / foreground color / medium
+ * weight + 큰 mb-3 spacing.
  */
 export function SettingsSectionLabelSerif({
   children,
@@ -228,8 +232,8 @@ export function SettingsSectionLabelSerif({
   className?: string
 }) {
   return (
-    <div className={cn('mb-2', className)}>
-      <span className="font-serif text-[13px] text-muted-foreground/80">
+    <div className={cn('mb-3', className)}>
+      <span className="font-serif text-[14px] font-medium text-foreground">
         {children}
       </span>
     </div>
