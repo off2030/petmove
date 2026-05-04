@@ -1,7 +1,7 @@
 # 설정 화면 리팩터링 계획 (work in progress)
 
-> 마지막 업데이트: 2026-05-04 (phase 0 완료)
-> 다음 시작점: phase 1 — profile/company 를 SettingsLayout 규격으로 변환
+> 마지막 업데이트: 2026-05-04 (phase 1 완료)
+> 다음 시작점: phase 2 — 무거운 섹션(detail-view / inspection / import-report) 변환
 
 ## 배경
 
@@ -70,12 +70,27 @@
    - documents / inspection (serif) → `SettingsSectionLabelSerif`
    - 각 파일의 자체 정의 함수 제거. cases 화면의 `ui/section-label.tsx`(12px / 1.3px) 와는 별개로 유지 — 두 화면의 라벨 톤이 본래 다르게 잡혀 있어 통합 결정은 phase 2+.
 
-## phase 1 이후 (부분 합의 필요)
+## phase 1 — 완료 (2026-05-04)
 
-- profile-section / company-section 을 `SettingsLayout` 규격으로 변환 (가벼움)
-- detail-view-section / inspection-section / import-report-section 변환 (무거움)
+가벼운 섹션을 `SettingsShell` / `SettingsSection` / `SettingsFooter` 규격으로 전환. 시각 회귀 미미.
+
+1. ✅ **profile-section** → `SettingsShell` + `SettingsSection title="내 프로필"` + `SettingsFooter`. sub-group 라벨(Account/Messaging/Notifications)은 children 으로 직접 배치.
+
+2. ✅ **company-section** → `SettingsShell` + `SettingsSection title={title}` + `SettingsFooter className="justify-between"` (reset 좌측 / save status 우측).
+
+3. ✅ **DataSection** (settings-app.tsx 안) → `SettingsShell` + `SettingsSection title="데이터 관리" description="…"`.
+
+4. ✅ **`settings-layout.tsx` 조정**:
+   - `SettingsSection` 의 `space-y-md` body wrapper 제거 — card-list / dotted-list / mixed 패턴 모두 흡수.
+   - 페이지 헤더 `pb-xl` 로 통일 (settings 표준 톤).
+   - `SettingsFooter` default 에 `border-t border-border/80 pt-md` 포함 — 호출처 단순화.
+
+## phase 2 이후 (부분 합의 필요)
+
+- detail-view-section / inspection-section / import-report-section 변환 (무거움 — sub-group 다수)
 - 카테고리 헤더 UI 도입 — 이때 사이드바 vs 탭 + 그룹 헤더 결정
-- 무거운 섹션의 분리 (재배치) — phase 1 끝나고 별도 PR
+- `SettingsRow` 사용처 도입 — 현재 `<div className="grid grid-cols-[150px_1fr] …">` 패턴이 settings 안에 반복됨. variant 분기 또는 별도 `SettingsField` 컴포넌트 추출 검토.
+- ui/section-label vs SettingsSectionLabel 통합 — phase 2+ 에서 cases 화면 톤도 합의 후
 
 ## 결정 — phase 0 시점 합의
 
@@ -87,7 +102,7 @@
 | 메뉴 UI | phase 0~1 동안 **상단 평면 탭 유지** — phase 2 에서 카테고리 헤더 도입 검토 |
 | `SettingsRow` variants | **4개** (toggle/input/chips/static) — 일단 메타데이터, 마이그레이션 진행하며 분기 |
 
-## 관련 파일 (phase 0 완료 시점)
+## 관련 파일 (phase 1 완료 시점)
 
 - `apps/admin/components/settings/settings-layout.tsx` — **신규**. Shell/Section/Row/Footer + Label 두 종.
 - `apps/admin/components/settings/settings-app.tsx` — 진입점, TABS 메타데이터(category) 적용 완료.

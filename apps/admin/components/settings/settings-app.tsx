@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { TrashModal } from '@/components/cases/trash-modal'
-import { SectionHeader } from '@/components/ui/section-header'
+import { SettingsShell, SettingsSection } from './settings-layout'
 import { VaccineSection } from './vaccine-section'
 import { CompanySection } from './company-section'
 import { ImportReportSection } from './import-report-section'
@@ -99,56 +99,53 @@ function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) 
   }
 
   return (
-    <div className="max-w-3xl pb-2xl">
-      {/* Editorial header */}
-      <header className="pb-xl">
-        <SectionHeader>데이터 관리</SectionHeader>
-        <p className="pmw-st__sec-lead mt-2">
-          삭제된 케이스 복원과 데이터 내보내기를 관리합니다.
-        </p>
-      </header>
-
-      <div className="space-y-md">
-        {/* Trash card */}
-        <div className="flex items-center justify-between gap-md rounded-sm border border-border/80 px-lg py-md">
-          <div className="min-w-0">
-            <h3 className="font-serif text-[16px] text-foreground">휴지통</h3>
-            <p className="pmw-st__sec-lead mt-1">
-              삭제된 케이스를 복원하거나 영구 삭제할 수 있습니다. 30일 후 자동 영구 삭제됩니다.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowTrash(true)}
-            className="shrink-0 h-9 px-4 rounded-full border border-border/80 bg-card text-[14px] hover:border-foreground/40 transition-colors"
-          >
-            휴지통 열기
-          </button>
-        </div>
-
-        {/* Export card — super_admin 전용 */}
-        {isSuperAdmin && (
+    <SettingsShell>
+      <SettingsSection
+        title="데이터 관리"
+        description="삭제된 케이스 복원과 데이터 내보내기를 관리합니다."
+      >
+        <div className="space-y-md">
+          {/* Trash card */}
           <div className="flex items-center justify-between gap-md rounded-sm border border-border/80 px-lg py-md">
             <div className="min-w-0">
-              <h3 className="font-serif text-[16px] text-foreground">데이터 내보내기</h3>
+              <h3 className="font-serif text-[16px] text-foreground">휴지통</h3>
               <p className="pmw-st__sec-lead mt-1">
-                활성 조직의 전체 케이스를 Excel(.xlsx)로 내려받습니다.
+                삭제된 케이스를 복원하거나 영구 삭제할 수 있습니다. 30일 후 자동 영구 삭제됩니다.
               </p>
-              {exportError && (
-                <p className="mt-1 font-serif text-[13px] text-destructive">{exportError}</p>
-              )}
             </div>
             <button
               type="button"
-              onClick={handleExport}
-              disabled={exporting}
-              className="shrink-0 h-9 px-4 rounded-full border border-border/80 bg-card text-[14px] hover:border-foreground/40 transition-colors disabled:opacity-50"
+              onClick={() => setShowTrash(true)}
+              className="shrink-0 h-9 px-4 rounded-full border border-border/80 bg-card text-[14px] hover:border-foreground/40 transition-colors"
             >
-              {exporting ? '내보내는 중…' : 'Excel 내보내기'}
+              휴지통 열기
             </button>
           </div>
-        )}
-      </div>
+
+          {/* Export card — super_admin 전용 */}
+          {isSuperAdmin && (
+            <div className="flex items-center justify-between gap-md rounded-sm border border-border/80 px-lg py-md">
+              <div className="min-w-0">
+                <h3 className="font-serif text-[16px] text-foreground">데이터 내보내기</h3>
+                <p className="pmw-st__sec-lead mt-1">
+                  활성 조직의 전체 케이스를 Excel(.xlsx)로 내려받습니다.
+                </p>
+                {exportError && (
+                  <p className="mt-1 font-serif text-[13px] text-destructive">{exportError}</p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={handleExport}
+                disabled={exporting}
+                className="shrink-0 h-9 px-4 rounded-full border border-border/80 bg-card text-[14px] hover:border-foreground/40 transition-colors disabled:opacity-50"
+              >
+                {exporting ? '내보내는 중…' : 'Excel 내보내기'}
+              </button>
+            </div>
+          )}
+        </div>
+      </SettingsSection>
 
       {showTrash && (
         <TrashModal
@@ -156,7 +153,7 @@ function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) 
           onRestore={() => window.location.reload()}
         />
       )}
-    </div>
+    </SettingsShell>
   )
 }
 

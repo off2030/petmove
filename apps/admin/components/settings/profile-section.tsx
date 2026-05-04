@@ -3,8 +3,12 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { getMyProfile, updateMyProfile, type MyProfile } from '@/lib/actions/profile'
 import { updateMyDmVisibility } from '@/lib/actions/chat'
-import { SectionHeader } from '@/components/ui/section-header'
-import { SettingsSectionLabel as SectionLabel } from './settings-layout'
+import {
+  SettingsShell,
+  SettingsSection,
+  SettingsFooter,
+  SettingsSectionLabel as SectionLabel,
+} from './settings-layout'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { PushPermission } from '@/components/pwa/push-permission'
@@ -118,125 +122,121 @@ export function ProfileSection({
 
   if (!profile) {
     return (
-      <div className="max-w-3xl">
+      <SettingsShell>
         <p className="font-serif italic text-sm text-muted-foreground">불러오는 중…</p>
-      </div>
+      </SettingsShell>
     )
   }
 
   const nameValue = draft ?? displayName(profile)
 
   return (
-    <div className="max-w-3xl pb-2xl">
-      {/* Header */}
-      <header className="pb-xl">
-        <SectionHeader>내 프로필</SectionHeader>
-      </header>
-
-      {/* Profile fields */}
-      <section className="mb-xl">
-        <SectionLabel>Account</SectionLabel>
-        <div className="border-t border-border/80">
-          {/* Avatar */}
-          <AvatarRow
-            profile={profile}
-            onChange={(url) =>
-              setProfile((p) => (p ? { ...p, avatar_url: url } : p))
-            }
-            onSaved={() => setLastSaved(new Date())}
-            onError={(msg) => setError(msg)}
-          />
-          {/* Name (editable) */}
-          <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
-            <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
-              이름
-            </label>
-            <input
-              type="text"
-              value={nameValue}
-              onChange={(e) => setDraft(e.target.value)}
-              onBlur={handleSave}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-                if (e.key === 'Escape') setDraft(null)
-              }}
-              placeholder="—"
-              className={cn(
-                'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 transition-colors placeholder:text-muted-foreground/30',
-                saving && 'opacity-60',
-              )}
+    <SettingsShell>
+      <SettingsSection title="내 프로필">
+        {/* Profile fields */}
+        <section className="mb-xl">
+          <SectionLabel>Account</SectionLabel>
+          <div className="border-t border-border/80">
+            {/* Avatar */}
+            <AvatarRow
+              profile={profile}
+              onChange={(url) =>
+                setProfile((p) => (p ? { ...p, avatar_url: url } : p))
+              }
+              onSaved={() => setLastSaved(new Date())}
+              onError={(msg) => setError(msg)}
             />
-          </div>
-
-          {/* Email (read-only) */}
-          <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
-            <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
-              이메일
-            </label>
-            <div className="flex items-baseline gap-xs">
-              <span className="font-serif text-[15px] text-foreground">{profile.email}</span>
-              <span className="font-mono text-[10px] tracking-[1.3px] uppercase text-muted-foreground/60">
-                인증됨
-              </span>
-            </div>
-          </div>
-
-          {/* Provider (read-only) */}
-          {profile.provider && (
+            {/* Name (editable) */}
             <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
               <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
-                로그인 방식
+                이름
               </label>
-              <span className="font-serif text-[15px] text-muted-foreground">
-                {providerLabel(profile.provider)}
-              </span>
+              <input
+                type="text"
+                value={nameValue}
+                onChange={(e) => setDraft(e.target.value)}
+                onBlur={handleSave}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+                  if (e.key === 'Escape') setDraft(null)
+                }}
+                placeholder="—"
+                className={cn(
+                  'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 transition-colors placeholder:text-muted-foreground/30',
+                  saving && 'opacity-60',
+                )}
+              />
             </div>
-          )}
-        </div>
-      </section>
 
-      {/* DM visibility toggle */}
-      <section className="mb-xl">
-        <SectionLabel>Messaging</SectionLabel>
-        <div className="border-t border-border/80">
-          <DmVisibilityRow
-            value={profile.dm_visible}
-            onChange={(next) => setProfile((p) => (p ? { ...p, dm_visible: next } : p))}
-            onError={(msg) => setError(msg)}
-            onSaved={() => setLastSaved(new Date())}
-          />
-        </div>
-      </section>
+            {/* Email (read-only) */}
+            <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
+              <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
+                이메일
+              </label>
+              <div className="flex items-baseline gap-xs">
+                <span className="font-serif text-[15px] text-foreground">{profile.email}</span>
+                <span className="font-mono text-[10px] tracking-[1.3px] uppercase text-muted-foreground/60">
+                  인증됨
+                </span>
+              </div>
+            </div>
 
-      {/* Push notification permission */}
-      <section className="mb-xl">
-        <SectionLabel>Notifications</SectionLabel>
-        <div className="border-t border-border/80">
-          <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
-            <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
-              푸시 알림
-            </label>
-            <div className="flex flex-col gap-1">
-              <PushPermission />
-              <span className="font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
-                홈 화면에 추가한 PWA 또는 데스크톱 브라우저에서 백그라운드 알림을 받습니다.
-              </span>
+            {/* Provider (read-only) */}
+            {profile.provider && (
+              <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
+                <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
+                  로그인 방식
+                </label>
+                <span className="font-serif text-[15px] text-muted-foreground">
+                  {providerLabel(profile.provider)}
+                </span>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* DM visibility toggle */}
+        <section className="mb-xl">
+          <SectionLabel>Messaging</SectionLabel>
+          <div className="border-t border-border/80">
+            <DmVisibilityRow
+              value={profile.dm_visible}
+              onChange={(next) => setProfile((p) => (p ? { ...p, dm_visible: next } : p))}
+              onError={(msg) => setError(msg)}
+              onSaved={() => setLastSaved(new Date())}
+            />
+          </div>
+        </section>
+
+        {/* Push notification permission */}
+        <section className="mb-xl">
+          <SectionLabel>Notifications</SectionLabel>
+          <div className="border-t border-border/80">
+            <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
+              <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
+                푸시 알림
+              </label>
+              <div className="flex flex-col gap-1">
+                <PushPermission />
+                <span className="font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
+                  홈 화면에 추가한 PWA 또는 데스크톱 브라우저에서 백그라운드 알림을 받습니다.
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {error && (
-        <p className="font-serif text-[13px] text-destructive mb-md">{error}</p>
-      )}
+        {error && (
+          <p className="font-serif text-[13px] text-destructive mb-md">{error}</p>
+        )}
+      </SettingsSection>
 
-      {/* Footer — save status */}
-      <div className="flex items-center justify-end pt-md border-t border-border/80">
+      <SettingsFooter>
         <span className="font-serif italic text-[12px] text-muted-foreground/60">
           {formatSavedAgo(lastSaved)}
         </span>
-      </div>
-    </div>
+      </SettingsFooter>
+    </SettingsShell>
   )
 }
 

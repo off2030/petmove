@@ -16,8 +16,12 @@ import {
   updateActiveOrgDmVisibility,
 } from '@/lib/actions/chat'
 import type { CustomField, VetInfo, VetInfoKey } from '@/lib/vet-info'
-import { SectionHeader } from '@/components/ui/section-header'
-import { SettingsSectionLabel as SectionLabel } from './settings-layout'
+import {
+  SettingsShell,
+  SettingsSection,
+  SettingsFooter,
+  SettingsSectionLabel as SectionLabel,
+} from './settings-layout'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
 
@@ -221,9 +225,9 @@ export function CompanySection({
 
   if (!info || !orgType) {
     return (
-      <div className="max-w-3xl">
+      <SettingsShell>
         <p className="font-serif italic text-sm text-muted-foreground">불러오는 중...</p>
-      </div>
+      </SettingsShell>
     )
   }
 
@@ -234,165 +238,161 @@ export function CompanySection({
   const title = isTransport ? '운송회사 정보' : '병원 정보'
 
   return (
-    <div className="max-w-3xl pb-2xl">
-      {/* Editorial header */}
-      <header className="pb-xl">
-        <SectionHeader>{title}</SectionHeader>
-      </header>
-
-      {/* Org type — subtle segmented control (admin only) */}
-      {isAdmin && (
-        <section className="mb-xl">
-          <SectionLabel>Organization</SectionLabel>
-          <div className="border-t border-border/80 pt-md flex items-center gap-xs">
-            {(['hospital', 'transport'] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => handleOrgTypeChange(t)}
-                disabled={savingOrgType}
-                className={cn(
-                  'h-8 px-md font-serif text-[14px] rounded-full border transition-colors',
-                  orgType === t
-                    ? 'border-primary/50 bg-primary/10 text-primary'
-                    : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
-                  savingOrgType && 'opacity-60',
-                )}
-              >
-                {t === 'hospital' ? '동물병원' : '운송회사'}
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {!isAdmin && (
-        <p className="mb-xl font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
-          조직 정보는 관리자만 수정할 수 있습니다. 변경이 필요하면 조직 관리자에게 요청해 주세요.
-        </p>
-      )}
-
-      {/* Field groups */}
-      {groups.map((group) => (
-        <section key={group} className="mb-xl">
-          <SectionLabel>{group}</SectionLabel>
-          <div className="border-t border-border/80">
-            {fields.filter((f) => f.group === group).map((f) => {
-              const saving = savingKey === f.key
-              return (
-                <div
-                  key={f.key}
-                  className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80"
-                >
-                  <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
-                    {f.label}
-                  </label>
-                  {f.type === 'textarea' ? (
-                    <textarea
-                      value={valueOf(f.key)}
-                      onChange={(e) => handleChange(f.key, e.target.value)}
-                      onBlur={() => handleSave(f.key)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Escape') {
-                          setDrafts((d) => { const { [f.key]: _, ...rest } = d; return rest })
-                        }
-                      }}
-                      rows={1}
-                      placeholder={isAdmin ? '—' : ''}
-                      readOnly={!isAdmin}
-                      className={cn(
-                        'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground resize-y border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 transition-colors placeholder:text-muted-foreground/30',
-                        saving && 'opacity-60',
-                        !isAdmin && 'cursor-default',
-                      )}
-                    />
-                  ) : (
-                    <input
-                      type="text"
-                      value={valueOf(f.key)}
-                      onChange={(e) => handleChange(f.key, e.target.value)}
-                      onBlur={() => handleSave(f.key)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-                        if (e.key === 'Escape') {
-                          setDrafts((d) => { const { [f.key]: _, ...rest } = d; return rest })
-                        }
-                      }}
-                      placeholder={isAdmin ? '—' : ''}
-                      readOnly={!isAdmin}
-                      className={cn(
-                        'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 transition-colors placeholder:text-muted-foreground/30',
-                        saving && 'opacity-60',
-                        !isAdmin && 'cursor-default',
-                      )}
-                    />
+    <SettingsShell>
+      <SettingsSection title={title}>
+        {/* Org type — subtle segmented control (admin only) */}
+        {isAdmin && (
+          <section className="mb-xl">
+            <SectionLabel>Organization</SectionLabel>
+            <div className="border-t border-border/80 pt-md flex items-center gap-xs">
+              {(['hospital', 'transport'] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => handleOrgTypeChange(t)}
+                  disabled={savingOrgType}
+                  className={cn(
+                    'h-8 px-md font-serif text-[14px] rounded-full border transition-colors',
+                    orgType === t
+                      ? 'border-primary/50 bg-primary/10 text-primary'
+                      : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+                    savingOrgType && 'opacity-60',
                   )}
-                </div>
-              )
-            })}
-          </div>
-        </section>
-      ))}
-
-      {isTransport && (
-        <p className="font-serif italic text-[12px] text-muted-foreground/70 -mt-md mb-xl leading-relaxed max-w-md">
-          운송회사는 회사 정보만 입력합니다. 병원 정보가 비어 있으면 PDF 의 병원·수의사 필드는 빈 값으로 출력됩니다.
-        </p>
-      )}
-
-      {/* 사용자 정의 추가 필드 — 라벨/값 자유 입력 */}
-      <section className="mb-xl">
-        <SectionLabel>Additional</SectionLabel>
-        <div className="border-t border-border/80">
-          {(info.custom_fields ?? []).map((f) => (
-            <CustomFieldRow
-              key={f.id}
-              field={f}
-              isAdmin={isAdmin}
-              onChange={(patch) => updateCustomField(f.id, patch)}
-              onCommit={() => saveCustomFields(info.custom_fields ?? [])}
-              onRemove={() => removeCustomField(f.id)}
-            />
-          ))}
-          {isAdmin && (
-            <div className="py-3 border-b border-dotted border-border/80">
-              <button
-                type="button"
-                onClick={addCustomField}
-                className="inline-flex items-center gap-xs font-serif text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Plus size={14} />
-                <span>정보 추가</span>
-              </button>
+                >
+                  {t === 'hospital' ? '동물병원' : '운송회사'}
+                </button>
+              ))}
             </div>
-          )}
-          {!isAdmin && (info.custom_fields ?? []).length === 0 && (
-            <p className="py-3 font-serif italic text-[12px] text-muted-foreground/60">
-              추가 정보가 없습니다.
-            </p>
-          )}
-        </div>
-      </section>
+          </section>
+        )}
 
-      {/* DM 노출 — admin 만 변경 */}
-      {isAdmin && (
+        {!isAdmin && (
+          <p className="mb-xl font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
+            조직 정보는 관리자만 수정할 수 있습니다. 변경이 필요하면 조직 관리자에게 요청해 주세요.
+          </p>
+        )}
+
+        {/* Field groups */}
+        {groups.map((group) => (
+          <section key={group} className="mb-xl">
+            <SectionLabel>{group}</SectionLabel>
+            <div className="border-t border-border/80">
+              {fields.filter((f) => f.group === group).map((f) => {
+                const saving = savingKey === f.key
+                return (
+                  <div
+                    key={f.key}
+                    className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80"
+                  >
+                    <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
+                      {f.label}
+                    </label>
+                    {f.type === 'textarea' ? (
+                      <textarea
+                        value={valueOf(f.key)}
+                        onChange={(e) => handleChange(f.key, e.target.value)}
+                        onBlur={() => handleSave(f.key)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') {
+                            setDrafts((d) => { const { [f.key]: _, ...rest } = d; return rest })
+                          }
+                        }}
+                        rows={1}
+                        placeholder={isAdmin ? '—' : ''}
+                        readOnly={!isAdmin}
+                        className={cn(
+                          'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground resize-y border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 transition-colors placeholder:text-muted-foreground/30',
+                          saving && 'opacity-60',
+                          !isAdmin && 'cursor-default',
+                        )}
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value={valueOf(f.key)}
+                        onChange={(e) => handleChange(f.key, e.target.value)}
+                        onBlur={() => handleSave(f.key)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+                          if (e.key === 'Escape') {
+                            setDrafts((d) => { const { [f.key]: _, ...rest } = d; return rest })
+                          }
+                        }}
+                        placeholder={isAdmin ? '—' : ''}
+                        readOnly={!isAdmin}
+                        className={cn(
+                          'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 transition-colors placeholder:text-muted-foreground/30',
+                          saving && 'opacity-60',
+                          !isAdmin && 'cursor-default',
+                        )}
+                      />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+        ))}
+
+        {isTransport && (
+          <p className="font-serif italic text-[12px] text-muted-foreground/70 -mt-md mb-xl leading-relaxed max-w-md">
+            운송회사는 회사 정보만 입력합니다. 병원 정보가 비어 있으면 PDF 의 병원·수의사 필드는 빈 값으로 출력됩니다.
+          </p>
+        )}
+
+        {/* 사용자 정의 추가 필드 — 라벨/값 자유 입력 */}
         <section className="mb-xl">
-          <SectionLabel>Messaging</SectionLabel>
+          <SectionLabel>Additional</SectionLabel>
           <div className="border-t border-border/80">
-            <OrgDmVisibilityRow
-              onError={setError}
-              onSaved={() => setLastSaved(new Date())}
-            />
+            {(info.custom_fields ?? []).map((f) => (
+              <CustomFieldRow
+                key={f.id}
+                field={f}
+                isAdmin={isAdmin}
+                onChange={(patch) => updateCustomField(f.id, patch)}
+                onCommit={() => saveCustomFields(info.custom_fields ?? [])}
+                onRemove={() => removeCustomField(f.id)}
+              />
+            ))}
+            {isAdmin && (
+              <div className="py-3 border-b border-dotted border-border/80">
+                <button
+                  type="button"
+                  onClick={addCustomField}
+                  className="inline-flex items-center gap-xs font-serif text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Plus size={14} />
+                  <span>정보 추가</span>
+                </button>
+              </div>
+            )}
+            {!isAdmin && (info.custom_fields ?? []).length === 0 && (
+              <p className="py-3 font-serif italic text-[12px] text-muted-foreground/60">
+                추가 정보가 없습니다.
+              </p>
+            )}
           </div>
         </section>
-      )}
 
-      {error && (
-        <p className="font-serif text-[13px] text-destructive mb-md">{error}</p>
-      )}
+        {/* DM 노출 — admin 만 변경 */}
+        {isAdmin && (
+          <section className="mb-xl">
+            <SectionLabel>Messaging</SectionLabel>
+            <div className="border-t border-border/80">
+              <OrgDmVisibilityRow
+                onError={setError}
+                onSaved={() => setLastSaved(new Date())}
+              />
+            </div>
+          </section>
+        )}
 
-      {/* Footer — reset + save status */}
-      <div className="flex items-center justify-between pt-md border-t border-border/80">
+        {error && (
+          <p className="font-serif text-[13px] text-destructive mb-md">{error}</p>
+        )}
+      </SettingsSection>
+
+      <SettingsFooter className="justify-between">
         {isAdmin && hasDefault ? (
           <button
             type="button"
@@ -407,8 +407,8 @@ export function CompanySection({
         <span className="font-serif italic text-[12px] text-muted-foreground/60">
           {formatSavedAgo(lastSaved)}
         </span>
-      </div>
-    </div>
+      </SettingsFooter>
+    </SettingsShell>
   )
 }
 

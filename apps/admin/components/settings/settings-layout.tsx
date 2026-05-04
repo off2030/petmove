@@ -28,7 +28,8 @@ export function SettingsShell({
 
 /**
  * 섹션 — 헤더(h2 + description) + 본문 슬롯.
- * 한 섹션 안에 여러 SettingsRow 가 들어감.
+ * 본문은 card-list / dotted-list / mixed 등 각 페이지의 row 패턴이 달라
+ * 자체 spacing wrapper 를 두지 않음. 필요하면 children 측에서 `space-y-md` 등을 부여.
  */
 export function SettingsSection({
   title,
@@ -42,12 +43,12 @@ export function SettingsSection({
   className?: string
 }) {
   return (
-    <section className={cn('pb-xl', className)}>
-      <header className="pb-md">
+    <section className={className}>
+      <header className="pb-xl">
         <SectionHeader>{title}</SectionHeader>
         {description ? <p className="pmw-st__sec-lead mt-2">{description}</p> : null}
       </header>
-      <div className="space-y-md">{children}</div>
+      {children}
     </section>
   )
 }
@@ -134,7 +135,11 @@ export function SettingsSectionLabelSerif({
   )
 }
 
-/** 저장/취소 버튼 영역. 보통 섹션 하단 또는 SettingsShell 하단. */
+/**
+ * 저장 상태 / 보조 액션 / reset 버튼 영역. 보통 SettingsShell 하단.
+ * 본문과 시각적으로 분리되도록 상단 border + pt-md 가 default.
+ * 양쪽 정렬이 필요하면 `<SettingsFooter className="justify-between">`.
+ */
 export function SettingsFooter({
   children,
   className,
@@ -143,7 +148,12 @@ export function SettingsFooter({
   className?: string
 }) {
   return (
-    <footer className={cn('mt-lg flex items-center justify-end gap-sm', className)}>
+    <footer
+      className={cn(
+        'flex items-center justify-end gap-sm border-t border-border/80 pt-md',
+        className,
+      )}
+    >
       {children}
     </footer>
   )
