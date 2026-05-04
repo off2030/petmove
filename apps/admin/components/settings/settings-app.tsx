@@ -61,11 +61,11 @@ const TABS: readonly TabDef[] = [
   { id: 'detail_view', label: '상세', category: 'case' },
   { id: 'transfers', label: '전달', category: 'case' },
   { id: 'vaccines', label: '약품관리', category: 'case' },
+  { id: 'automation', label: '자동화', category: 'case' },
+  { id: 'verification', label: '검증', category: 'case' },
   { id: 'inspection', label: '검사', category: 'work' },
   { id: 'import_report', label: '신고', category: 'work' },
   { id: 'export_doc', label: '서류', category: 'work' },
-  { id: 'automation', label: '자동화', category: 'work' },
-  { id: 'verification', label: '검증', category: 'data' },
   { id: 'data', label: '데이터', category: 'data' },
 ] as const
 
