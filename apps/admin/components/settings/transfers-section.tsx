@@ -9,10 +9,6 @@ import {
   type TransferStatus,
   type TransferWithContext,
 } from '@/lib/actions/transfers'
-import {
-  getCaseAssigneeEnabled,
-  setCaseAssigneeEnabled,
-} from '@/lib/actions/transfer-settings'
 import { useCases } from '@/components/cases/cases-context'
 
 const STATUS_LABEL: Record<TransferStatus, string> = {
@@ -41,21 +37,18 @@ export function TransfersSection() {
   const { openCase } = useCases()
   const [received, setReceived] = useState<TransferWithContext[] | null>(null)
   const [sent, setSent] = useState<TransferWithContext[] | null>(null)
-  const [assigneeEnabled, setAssigneeEnabled] = useState<boolean>(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   async function refresh() {
     setLoading(true)
     setError(null)
-    const [r, s, a] = await Promise.all([
+    const [r, s] = await Promise.all([
       listReceivedTransfers(),
       listSentTransfers(),
-      getCaseAssigneeEnabled(),
     ])
     if (r.ok) setReceived(r.value); else setError(r.error)
     if (s.ok) setSent(s.value); else setError((prev) => prev ?? s.error)
-    if (a.ok) setAssigneeEnabled(a.value)
     setLoading(false)
   }
 
@@ -65,16 +58,6 @@ export function TransfersSection() {
     () => received?.filter((t) => t.status === 'pending').length ?? 0,
     [received],
   )
-
-  async function toggleAssignee() {
-    const next = !assigneeEnabled
-    setAssigneeEnabled(next)
-    const r = await setCaseAssigneeEnabled(next)
-    if (!r.ok) {
-      setAssigneeEnabled(!next)
-      setError(r.error)
-    }
-  }
 
   return (
     <div className="max-w-3xl pb-2xl">
@@ -87,34 +70,6 @@ export function TransfersSection() {
           <p className="mt-2 font-serif text-[13px] text-destructive">{error}</p>
         )}
       </header>
-
-      {/* 담당자 기능 토글 */}
-      <section className="mb-2xl">
-        <h3 className="font-serif text-[18px] text-foreground mb-2">담당자 기능</h3>
-        <div className="border-t border-border/80">
-          <div className="grid grid-cols-[1fr_auto] items-center gap-md py-3 border-b border-dotted border-border/80">
-            <div className="flex flex-col gap-0.5">
-              <span className="font-serif text-[15px] text-foreground">케이스 담당자 설정</span>
-              <span className="font-serif italic text-[12px] text-muted-foreground/70">
-                ON 시 케이스 상세에 담당자 선택 메뉴가 노출되고, 다른 조직에서 멤버 지정해 보낸 전달이 자동 배정됩니다.
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={toggleAssignee}
-              aria-pressed={assigneeEnabled}
-              className={cn(
-                'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
-                assigneeEnabled
-                  ? 'border-primary/50 bg-primary/10 text-primary'
-                  : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
-              )}
-            >
-              {assigneeEnabled ? 'ON' : 'OFF'}
-            </button>
-          </div>
-        </div>
-      </section>
 
       {/* 받은 전달 */}
       <section className="mb-2xl">

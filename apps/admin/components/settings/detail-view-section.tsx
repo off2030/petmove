@@ -12,6 +12,10 @@ import { useDetailViewSettings } from '@/components/providers/detail-view-settin
 import { DestinationsArea } from './destinations-section'
 import { SharePresetsSection } from './share-presets-section'
 import { DocumentsSection } from './documents-section'
+import {
+  getCaseAssigneeEnabled,
+  setCaseAssigneeEnabled,
+} from '@/lib/actions/transfer-settings'
 
 export function DetailViewSection({
   initialSettings = DETAIL_VIEW_DEFAULTS,
@@ -21,11 +25,32 @@ export function DetailViewSection({
   const { settings, setSettings } = useDetailViewSettings()
   const [error, setError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
+  const [assigneeEnabled, setAssigneeEnabled] = useState<boolean>(false)
 
   useEffect(() => {
     setSettings(initialSettings)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // 담당자 기능 토글 — 전달 탭에서 이전됨.
+  useEffect(() => {
+    let cancelled = false
+    void getCaseAssigneeEnabled().then((r) => {
+      if (!cancelled && r.ok) setAssigneeEnabled(r.value)
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  async function toggleAssignee() {
+    const next = !assigneeEnabled
+    setAssigneeEnabled(next)
+    setError(null)
+    const r = await setCaseAssigneeEnabled(next)
+    if (!r.ok) {
+      setAssigneeEnabled(!next)
+      setError(r.error)
+    }
+  }
 
   // 4개 필드 (종/품종/모색/성별) 의 한·영 병기 토글을 하나로 통합.
   // ON 판단: 모두 true 일 때만 ON, 그 외는 OFF.
@@ -89,6 +114,28 @@ export function DetailViewSection({
               )}
             >
               {allOn ? 'ON' : 'OFF'}
+            </button>
+          </div>
+          {/* 담당자 기능 — 전달 탭에서 이전 */}
+          <div className="grid grid-cols-[1fr_auto] items-center gap-md py-3 border-b border-dotted border-border/80">
+            <div className="flex flex-col gap-0.5">
+              <span className="font-serif text-[15px] text-foreground">담당자 기능</span>
+              <span className="font-serif italic text-[12px] text-muted-foreground/70">
+                ON 시 케이스 상세에 담당자 선택 메뉴가 노출되고, 다른 조직에서 멤버 지정해 보낸 전달이 자동 배정됩니다.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={toggleAssignee}
+              aria-pressed={assigneeEnabled}
+              className={cn(
+                'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
+                assigneeEnabled
+                  ? 'border-primary/50 bg-primary/10 text-primary'
+                  : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+              )}
+            >
+              {assigneeEnabled ? 'ON' : 'OFF'}
             </button>
           </div>
         </div>
