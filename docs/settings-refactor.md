@@ -80,7 +80,11 @@
 
 3. ✅ **DataSection** (settings-app.tsx 안) → `SettingsShell` + `SettingsSection title="데이터 관리" description="…"`.
 
-4. ✅ **`settings-layout.tsx` 조정**:
+4. ✅ **transfers-section** → `SettingsShell` + `SettingsSection title="전달" description="…"`. 보낸/받은 sub-group 은 children 으로 유지.
+
+5. ✅ **members-section** → `SettingsShell` + `SettingsSection title="멤버"`. 활성 멤버 / 외부 super_admin / 대기 초대 / 초대 입력 sub-group 은 children 으로 유지.
+
+6. ✅ **`settings-layout.tsx` 조정**:
    - `SettingsSection` 의 `space-y-md` body wrapper 제거 — card-list / dotted-list / mixed 패턴 모두 흡수.
    - 페이지 헤더 `pb-xl` 로 통일 (settings 표준 톤).
    - `SettingsFooter` default 에 `border-t border-border/80 pt-md` 포함 — 호출처 단순화.
@@ -110,9 +114,10 @@
 - `apps/admin/components/settings/inspection-section.tsx` — 검사 + 컬럼 토글. Label serif 통일.
 - `apps/admin/components/settings/import-report-section.tsx` — 신고 + 컬럼 토글.
 - `apps/admin/components/settings/export-doc-section.tsx` — 서류 (컬럼 토글 전용).
-- `apps/admin/components/settings/transfers-section.tsx` — 전달 (보낸→받은 순서).
-- `apps/admin/components/settings/company-section.tsx` — Label mono 통일.
-- `apps/admin/components/settings/profile-section.tsx` — Label mono 통일.
+- `apps/admin/components/settings/transfers-section.tsx` — 전달 (보낸→받은 순서). SettingsShell 적용.
+- `apps/admin/components/settings/members-section.tsx` — 멤버 / 초대. SettingsShell 적용.
+- `apps/admin/components/settings/company-section.tsx` — Label mono 통일 + SettingsShell.
+- `apps/admin/components/settings/profile-section.tsx` — Label mono 통일 + SettingsShell.
 - `apps/admin/components/settings/documents-section.tsx` — Label serif 통일.
 - `apps/admin/components/settings/todo-columns-toggle.tsx` — 컬럼 토글 공통 컴포넌트.
 - `apps/admin/components/ui/section-label.tsx` — `cases/*` 전용. settings 와는 별개로 유지.

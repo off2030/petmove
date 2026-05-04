@@ -16,7 +16,7 @@ import {
 } from '@/lib/actions/invites'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { PillButton } from '@/components/ui/pill-button'
-import { SectionHeader } from '@/components/ui/section-header'
+import { SettingsShell, SettingsSection } from './settings-layout'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
 
@@ -162,223 +162,220 @@ export function MembersSection({
   }
 
   return (
-    <div className="max-w-3xl pb-2xl">
-      {/* Header */}
-      <header className="pb-xl">
-        <SectionHeader>멤버</SectionHeader>
-      </header>
-
-      {/* Active members */}
-      <section className="mb-xl">
-        <div className="mb-2">
-          <span className="font-serif text-[13px] text-muted-foreground/80">
-            활성 멤버 · {members.length}
-          </span>
-        </div>
-        <div className="border-t border-border/80">
-          {loading ? (
-            <p className="font-serif italic text-[14px] text-muted-foreground py-4">불러오는 중…</p>
-          ) : members.length === 0 ? (
-            <p className="font-serif italic text-[14px] text-muted-foreground py-4">멤버가 없습니다.</p>
-          ) : (
-          <>
-            {members.map((m) => {
-              const hasRealName = !!m.name && m.name.trim() !== '' && m.name !== m.email
-              const isSelf = currentUserId !== null && m.user_id === currentUserId
-              return (
-                <div
-                  key={m.user_id}
-                  className="flex items-center gap-md py-3 border-b border-dotted border-border/80"
-                >
-                  <Avatar label={avatarInitial(hasRealName ? m.name! : m.email)} imageUrl={m.avatar_url} />
-                  <div className="min-w-0 flex-1">
-                    <div className="font-serif text-[16px] text-foreground truncate leading-tight">
-                      {hasRealName ? m.name : m.email}
-                    </div>
-                    {hasRealName && (
-                      <div className="font-serif italic text-[13px] text-muted-foreground truncate mt-0.5">
-                        {m.email}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {isAdmin && !isSelf ? (
-                      <RoleSelect
-                        value={m.role}
-                        onChange={(next) => onChangeRole(m, next)}
-                        disabled={pending}
-                      />
-                    ) : (
-                      <span className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/80 text-muted-foreground">
-                        {ROLE_LABEL[m.role]}
-                      </span>
-                    )}
-                    {superAdminIds.has(m.user_id) && (
-                      <span
-                        title="SaaS 운영자 — 모든 조직 데이터 접근 권한"
-                        className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-primary/40 bg-primary/5 text-primary/80"
-                      >
-                        운영자
-                      </span>
-                    )}
-                    {isSelf && (
-                      <span className="font-serif italic text-[12px] text-muted-foreground/70">나</span>
-                    )}
-                    {isAdmin && !isSelf && (
-                      <button
-                        type="button"
-                        onClick={() => onRemove(m)}
-                        disabled={pending}
-                        className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/80 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
-                      >
-                        제거
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-            {removeError && (
-              <p className="font-serif text-[13px] text-destructive py-2">{removeError}</p>
-            )}
-          </>
-          )}
-        </div>
-      </section>
-
-      {/* External super_admins (조직 외 SaaS 운영자) — admin 만 표시 */}
-      {isAdmin && externalSuperAdmins.length > 0 && (
+    <SettingsShell>
+      <SettingsSection title="멤버">
+        {/* Active members */}
         <section className="mb-xl">
           <div className="mb-2">
             <span className="font-serif text-[13px] text-muted-foreground/80">
-              SaaS 운영자 (조직 외) · {externalSuperAdmins.length}
+              활성 멤버 · {members.length}
             </span>
           </div>
           <div className="border-t border-border/80">
-            {externalSuperAdmins.map((s) => {
-              const hasRealName = !!s.name && s.name.trim() !== '' && s.name !== s.email
-              return (
-                <div
-                  key={s.user_id}
-                  className="flex items-center gap-md py-3 border-b border-dotted border-border/80"
-                >
-                  <Avatar label={avatarInitial(hasRealName ? s.name! : s.email)} imageUrl={s.avatar_url} muted />
-                  <div className="min-w-0 flex-1">
-                    <div className="font-serif text-[16px] text-foreground truncate leading-tight">
-                      {hasRealName ? s.name : s.email}
-                    </div>
-                    {hasRealName && (
-                      <div className="font-serif italic text-[13px] text-muted-foreground truncate mt-0.5">
-                        {s.email}
-                      </div>
-                    )}
-                  </div>
-                  <span
-                    title="SaaS 운영자 — 모든 조직 데이터 접근 권한"
-                    className="shrink-0 font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-primary/40 bg-primary/5 text-primary/80"
+            {loading ? (
+              <p className="font-serif italic text-[14px] text-muted-foreground py-4">불러오는 중…</p>
+            ) : members.length === 0 ? (
+              <p className="font-serif italic text-[14px] text-muted-foreground py-4">멤버가 없습니다.</p>
+            ) : (
+            <>
+              {members.map((m) => {
+                const hasRealName = !!m.name && m.name.trim() !== '' && m.name !== m.email
+                const isSelf = currentUserId !== null && m.user_id === currentUserId
+                return (
+                  <div
+                    key={m.user_id}
+                    className="flex items-center gap-md py-3 border-b border-dotted border-border/80"
                   >
-                    운영자
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-          <p className="font-serif italic text-[12px] text-muted-foreground/70 mt-2 leading-relaxed">
-            조직 멤버는 아니지만 SaaS 운영을 위해 모든 조직 데이터에 접근할 수 있습니다.
-          </p>
-        </section>
-      )}
-
-      {/* Pending invites */}
-      <section className="mb-xl">
-        <div className="mb-2">
-          <span className="font-serif text-[13px] text-muted-foreground/80">
-            대기 중 초대 · {invites.length}
-          </span>
-        </div>
-        <div className="border-t border-border/80">
-          {invites.length === 0 ? (
-            <p className="font-serif italic text-[14px] text-muted-foreground py-4">대기 중인 초대가 없습니다.</p>
-          ) : (
-            invites.map((inv) => {
-              const expired = new Date(inv.expires_at).getTime() < Date.now()
-              return (
-                <div
-                  key={inv.id}
-                  className="flex items-center gap-md py-3 border-b border-dotted border-border/80"
-                >
-                  <Avatar label="?" muted />
-                  <div className="min-w-0 flex-1">
-                    <div className="font-serif text-[16px] text-foreground truncate leading-tight">
-                      {inv.email}
+                    <Avatar label={avatarInitial(hasRealName ? m.name! : m.email)} imageUrl={m.avatar_url} />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-serif text-[16px] text-foreground truncate leading-tight">
+                        {hasRealName ? m.name : m.email}
+                      </div>
+                      {hasRealName && (
+                        <div className="font-serif italic text-[13px] text-muted-foreground truncate mt-0.5">
+                          {m.email}
+                        </div>
+                      )}
                     </div>
-                    <div className="font-serif text-[13px] text-muted-foreground mt-0.5">
-                      {ROLE_LABEL[inv.role]}
-                      {' · '}
-                      {expired ? (
-                        <span className="italic text-destructive">만료됨</span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {isAdmin && !isSelf ? (
+                        <RoleSelect
+                          value={m.role}
+                          onChange={(next) => onChangeRole(m, next)}
+                          disabled={pending}
+                        />
                       ) : (
-                        <span>만료 {formatExpiry(inv.expires_at)}</span>
+                        <span className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/80 text-muted-foreground">
+                          {ROLE_LABEL[m.role]}
+                        </span>
+                      )}
+                      {superAdminIds.has(m.user_id) && (
+                        <span
+                          title="SaaS 운영자 — 모든 조직 데이터 접근 권한"
+                          className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-primary/40 bg-primary/5 text-primary/80"
+                        >
+                          운영자
+                        </span>
+                      )}
+                      {isSelf && (
+                        <span className="font-serif italic text-[12px] text-muted-foreground/70">나</span>
+                      )}
+                      {isAdmin && !isSelf && (
+                        <button
+                          type="button"
+                          onClick={() => onRemove(m)}
+                          disabled={pending}
+                          className="font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-border/80 text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors disabled:opacity-40"
+                        >
+                          제거
+                        </button>
                       )}
                     </div>
                   </div>
-                  {isAdmin && (
-                    <div className="flex gap-1.5 shrink-0">
-                      <PillButton onClick={() => copy(inv.token)} disabled={expired}>
-                        {copiedToken === inv.token ? '복사됨' : '링크 복사'}
-                      </PillButton>
-                      <PillButton
-                        onClick={() => onRevoke(inv.id)}
-                        disabled={pending}
-                        className="hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive"
-                      >
-                        취소
-                      </PillButton>
-                    </div>
-                  )}
-                </div>
-              )
-            })
-          )}
-        </div>
-      </section>
-
-      {/* Invite form — admin only */}
-      {isAdmin ? (
-        <section className="pt-md border-t border-border/80">
-          <div className="flex items-center gap-sm">
-            <input
-              type="email"
-              placeholder="email@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && email && !pending) onCreate()
-              }}
-              disabled={pending}
-              className="flex-1 bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/40 disabled:opacity-60"
-            />
-            <RoleSelect value={role} onChange={setRole} disabled={pending} />
-            <PillButton variant="solid" onClick={onCreate} disabled={pending || !email}>
-              초대 보내기
-            </PillButton>
+                )
+              })}
+              {removeError && (
+                <p className="font-serif text-[13px] text-destructive py-2">{removeError}</p>
+              )}
+            </>
+            )}
           </div>
-          {inviteError && (
-            <p className="mt-sm font-serif text-[13px] text-destructive">{inviteError}</p>
-          )}
-          {inviteNotice && (
-            <p className="mt-sm font-serif italic text-[13px] text-muted-foreground">{inviteNotice}</p>
-          )}
-          <p className="mt-sm font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
-            유효기간 7일. 초대 생성 시 링크가 클립보드에 복사되고 이메일로도 발송됩니다.
-          </p>
         </section>
-      ) : (
-        <p className="pt-md border-t border-border/80 font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
-          멤버 초대는 관리자만 가능합니다.
-        </p>
-      )}
-    </div>
+  
+        {/* External super_admins (조직 외 SaaS 운영자) — admin 만 표시 */}
+        {isAdmin && externalSuperAdmins.length > 0 && (
+          <section className="mb-xl">
+            <div className="mb-2">
+              <span className="font-serif text-[13px] text-muted-foreground/80">
+                SaaS 운영자 (조직 외) · {externalSuperAdmins.length}
+              </span>
+            </div>
+            <div className="border-t border-border/80">
+              {externalSuperAdmins.map((s) => {
+                const hasRealName = !!s.name && s.name.trim() !== '' && s.name !== s.email
+                return (
+                  <div
+                    key={s.user_id}
+                    className="flex items-center gap-md py-3 border-b border-dotted border-border/80"
+                  >
+                    <Avatar label={avatarInitial(hasRealName ? s.name! : s.email)} imageUrl={s.avatar_url} muted />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-serif text-[16px] text-foreground truncate leading-tight">
+                        {hasRealName ? s.name : s.email}
+                      </div>
+                      {hasRealName && (
+                        <div className="font-serif italic text-[13px] text-muted-foreground truncate mt-0.5">
+                          {s.email}
+                        </div>
+                      )}
+                    </div>
+                    <span
+                      title="SaaS 운영자 — 모든 조직 데이터 접근 권한"
+                      className="shrink-0 font-serif text-[12px] px-2.5 py-0.5 rounded-full border border-primary/40 bg-primary/5 text-primary/80"
+                    >
+                      운영자
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+            <p className="font-serif italic text-[12px] text-muted-foreground/70 mt-2 leading-relaxed">
+              조직 멤버는 아니지만 SaaS 운영을 위해 모든 조직 데이터에 접근할 수 있습니다.
+            </p>
+          </section>
+        )}
+  
+        {/* Pending invites */}
+        <section className="mb-xl">
+          <div className="mb-2">
+            <span className="font-serif text-[13px] text-muted-foreground/80">
+              대기 중 초대 · {invites.length}
+            </span>
+          </div>
+          <div className="border-t border-border/80">
+            {invites.length === 0 ? (
+              <p className="font-serif italic text-[14px] text-muted-foreground py-4">대기 중인 초대가 없습니다.</p>
+            ) : (
+              invites.map((inv) => {
+                const expired = new Date(inv.expires_at).getTime() < Date.now()
+                return (
+                  <div
+                    key={inv.id}
+                    className="flex items-center gap-md py-3 border-b border-dotted border-border/80"
+                  >
+                    <Avatar label="?" muted />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-serif text-[16px] text-foreground truncate leading-tight">
+                        {inv.email}
+                      </div>
+                      <div className="font-serif text-[13px] text-muted-foreground mt-0.5">
+                        {ROLE_LABEL[inv.role]}
+                        {' · '}
+                        {expired ? (
+                          <span className="italic text-destructive">만료됨</span>
+                        ) : (
+                          <span>만료 {formatExpiry(inv.expires_at)}</span>
+                        )}
+                      </div>
+                    </div>
+                    {isAdmin && (
+                      <div className="flex gap-1.5 shrink-0">
+                        <PillButton onClick={() => copy(inv.token)} disabled={expired}>
+                          {copiedToken === inv.token ? '복사됨' : '링크 복사'}
+                        </PillButton>
+                        <PillButton
+                          onClick={() => onRevoke(inv.id)}
+                          disabled={pending}
+                          className="hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive"
+                        >
+                          취소
+                        </PillButton>
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </section>
+  
+        {/* Invite form — admin only */}
+        {isAdmin ? (
+          <section className="pt-md border-t border-border/80">
+            <div className="flex items-center gap-sm">
+              <input
+                type="email"
+                placeholder="email@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && email && !pending) onCreate()
+                }}
+                disabled={pending}
+                className="flex-1 bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/40 disabled:opacity-60"
+              />
+              <RoleSelect value={role} onChange={setRole} disabled={pending} />
+              <PillButton variant="solid" onClick={onCreate} disabled={pending || !email}>
+                초대 보내기
+              </PillButton>
+            </div>
+            {inviteError && (
+              <p className="mt-sm font-serif text-[13px] text-destructive">{inviteError}</p>
+            )}
+            {inviteNotice && (
+              <p className="mt-sm font-serif italic text-[13px] text-muted-foreground">{inviteNotice}</p>
+            )}
+            <p className="mt-sm font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
+              유효기간 7일. 초대 생성 시 링크가 클립보드에 복사되고 이메일로도 발송됩니다.
+            </p>
+          </section>
+        ) : (
+          <p className="pt-md border-t border-border/80 font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
+            멤버 초대는 관리자만 가능합니다.
+          </p>
+        )}
+      </SettingsSection>
+    </SettingsShell>
   )
 }
 
