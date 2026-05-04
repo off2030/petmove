@@ -151,6 +151,47 @@ export function SettingsField({
 }
 
 /**
+ * title + description 좌측 / 컨트롤 우측 의 list-style 행.
+ * `grid grid-cols-[1fr_auto] gap-md py-3 border-b border-dotted` 패턴.
+ *
+ * - SettingsField 와 차이: 좌측이 짧은 라벨이 아니라 title + 긴 description.
+ * - SettingsRow (card-style) 와 차이: rounded-card 가 아닌 dotted-list.
+ *
+ * 토글 / 단일 button 등 짧은 컨트롤을 우측에 두는 detail-view-section 같은
+ * "explanation + switch" 패턴에 사용.
+ */
+export function SettingsListRow({
+  title,
+  description,
+  children,
+  className,
+}: {
+  title: React.ReactNode
+  description?: React.ReactNode
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div
+      className={cn(
+        'grid grid-cols-[1fr_auto] items-center gap-md py-3 border-b border-dotted border-border/80',
+        className,
+      )}
+    >
+      <div className="flex flex-col gap-0.5">
+        <span className="font-serif text-[15px] text-foreground">{title}</span>
+        {description ? (
+          <span className="font-serif italic text-[12px] text-muted-foreground/70">
+            {description}
+          </span>
+        ) : null}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+/**
  * 설정 화면 전용 small-cap 라벨 (mono / uppercase 톤).
  * 짧은 영어 카테고리 라벨에 사용 — `Account` / `Organization` / `Messaging` 등.
  * `cases/*` 의 `ui/section-label.tsx`(12px / 1.3px) 와는 별개.

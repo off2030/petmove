@@ -6,7 +6,7 @@ import {
   DETAIL_VIEW_DEFAULTS,
   type DetailViewSettings,
 } from '@/lib/detail-view-settings-types'
-import { SettingsShell, SettingsSection } from './settings-layout'
+import { SettingsShell, SettingsSection, SettingsListRow } from './settings-layout'
 import { cn } from '@/lib/utils'
 import { useDetailViewSettings } from '@/components/providers/detail-view-settings-provider'
 import { DestinationsArea } from './destinations-section'
@@ -94,13 +94,10 @@ export function DetailViewSection({
         <section className="mb-2xl">
           <h3 className="font-serif text-[18px] text-foreground mb-2">기본</h3>
           <div className="border-t border-border/80">
-            <div className="grid grid-cols-[1fr_auto] items-center gap-md py-3 border-b border-dotted border-border/80">
-              <div className="flex flex-col gap-0.5">
-                <span className="font-serif text-[15px] text-foreground">한·영 병기</span>
-                <span className="font-serif italic text-[12px] text-muted-foreground/70">
-                  종·품종·모색·성별을 "한글 | 영문" 으로 함께 표시
-                </span>
-              </div>
+            <SettingsListRow
+              title="한·영 병기"
+              description='종·품종·모색·성별을 "한글 | 영문" 으로 함께 표시'
+            >
               <button
                 type="button"
                 onClick={toggleBilingual}
@@ -114,14 +111,11 @@ export function DetailViewSection({
               >
                 {allOn ? 'ON' : 'OFF'}
               </button>
-            </div>
-            <div className="grid grid-cols-[1fr_auto] items-center gap-md py-3 border-b border-dotted border-border/80">
-              <div className="flex flex-col gap-0.5">
-                <span className="font-serif text-[15px] text-foreground">담당자 기능</span>
-                <span className="font-serif italic text-[12px] text-muted-foreground/70">
-                  ON 시 케이스 상세에 담당자 선택 메뉴가 노출되고, 다른 조직에서 멤버 지정해 보낸 전달이 자동 배정됩니다.
-                </span>
-              </div>
+            </SettingsListRow>
+            <SettingsListRow
+              title="담당자 기능"
+              description="ON 시 케이스 상세에 담당자 선택 메뉴가 노출되고, 다른 조직에서 멤버 지정해 보낸 전달이 자동 배정됩니다."
+            >
               <button
                 type="button"
                 onClick={toggleAssignee}
@@ -135,7 +129,7 @@ export function DetailViewSection({
               >
                 {assigneeEnabled ? 'ON' : 'OFF'}
               </button>
-            </div>
+            </SettingsListRow>
           </div>
           <div className="flex items-center justify-end pt-2">
             <span className="font-serif italic text-[12px] text-muted-foreground/60">
