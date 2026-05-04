@@ -60,14 +60,12 @@ export function TodoColumnsToggle({
       <div className="mb-2">
         <span className="font-serif text-[13px] text-muted-foreground/80">{title}</span>
       </div>
-      <div className="border-t border-border/80 pt-3 mb-3">
-        <p className="font-serif italic text-[13px] text-muted-foreground">
-          {description ?? '체크된 컬럼만 테이블에 표시됩니다.'}
-        </p>
-        {error && (
-          <p className="mt-1 font-serif text-[12px] text-destructive">저장 실패: {error}</p>
-        )}
-      </div>
+      <p className="font-serif italic text-[13px] text-muted-foreground mb-3">
+        {description ?? '체크된 컬럼만 테이블에 표시됩니다.'}
+      </p>
+      {error && (
+        <p className="-mt-2 mb-2 font-serif text-[12px] text-destructive">저장 실패: {error}</p>
+      )}
       <ul className="grid grid-cols-2 md:grid-cols-3 gap-x-md gap-y-1.5">
         {meta.map((col) => {
           const visible = !hidden.has(col.key)
