@@ -1,7 +1,7 @@
 # 설정 화면 리팩터링 계획 (work in progress)
 
-> 마지막 업데이트: 2026-05-04 (phase 3 완료 — row 컴포넌트 3종 + 모든 row 패턴 흡수)
-> 다음 시작점: phase 4 — 카테고리 헤더 UI / vaccine 통합 패턴 / section-label 통합 (모두 디자인 합의 필요)
+> 마지막 업데이트: 2026-05-05 (phase 4a 완료 — 카테고리 그룹 헤더 시각화)
+> 다음 시작점: vaccine drag-drop 통합 / section-label cases 통합 (위험)
 
 ## 배경
 
@@ -158,11 +158,49 @@ settings 안의 row 종류는 3종으로 정리됨:
 3-col 또는 더 복잡한 패턴 (CustomFieldRow / cert rule list / automation rule list)
 은 호출처마다 칼럼 의미가 달라 추출하지 않음.
 
-## phase 4 이후 (합의 필요)
+## phase 4a — 완료 (2026-05-05) — 카테고리 그룹 헤더
 
-- 카테고리 헤더 UI 도입 — 사이드바 vs 탭 + 그룹 헤더 결정
-- ui/section-label vs SettingsSectionLabel 통합 — cases 화면 톤도 합의 후
-- vaccine-section 통합 패턴 (`SettingsShell asChild` 또는 별도 컴포넌트)
+phase 0 에서 잡아둔 카테고리 메타데이터(account/case/work/data) 를 처음 화면에 노출.
+12개 평면 탭이 4 그룹으로 묶임.
+
+데스크톱 / 모바일 동일 (모바일은 가로 스크롤로 모든 그룹 같이 흐름):
+```
+ACCOUNT          CASE              WORK                       DATA
+─────────────────────────────────────────────────────────────────
+[프 조 멤]    [상 전 약]    [검 신 서 자]    [검 데]
+```
+
+구현:
+- `CATEGORY_LABELS` / `CATEGORY_ORDER` 상수 추가 (settings-app.tsx).
+- 외부 wrapper 에 border-b, 각 카테고리 column 안 탭 row 에 `-mb-px` 로 active 탭 border 가 외부 border 위로 올라옴.
+- 카테고리 라벨: `font-mono text-[10px] uppercase tracking-[1.4px] text-muted-foreground/50` — settings 안 다른 mono 라벨과 톤 일치.
+
+## phase 4 이후 (합의 필요 / 보류)
+
+- ui/section-label vs SettingsSectionLabel 통합 — cases 화면 톤도 합의 후 (cases 19개 영향, 회귀 위험)
+- vaccine-section drag-drop 분리 — 분석 결과 SettingsShell 분리 시 시각 회귀
+  (drag effect ring 폭이 max-w-5xl → full-width 로 늘어남). 외곽 div 가
+  max-w-5xl pb-2xl + drag handlers + ring effect 를 한 번에 들고 있는 게
+  SRP 측면 정확. **현 상태 유지 결정.**
+
+## 결과 요약 — settings-layout 컴포넌트 9종
+
+phase 0~4a 통해 settings 화면의 모든 반복 wrapper / row / 라벨 패턴이
+`apps/admin/components/settings/settings-layout.tsx` 한 파일로 추출됨.
+
+| 컴포넌트 | 용도 |
+|---|---|
+| `SettingsShell` (size: md/lg) | 페이지 외곽 (max-width + pb) |
+| `SettingsSection` | h2 + description + 본문 슬롯 |
+| `SettingsSubsectionTitle` | sub-group h3 (한국어, font-serif text-[18px]) |
+| `SettingsSectionLabel` | 영어 카테고리 라벨 (mono uppercase 11px) |
+| `SettingsSectionLabelSerif` | 한국어 그룹 라벨 (serif 13px) |
+| `SettingsField` (align: baseline/center/start) | 짧은 라벨 + 입력 행 |
+| `SettingsListRow` | title + 긴 description + 토글 |
+| `SettingsRow` | rounded-card 행 |
+| `SettingsFooter` | 하단 보조 액션 / status |
+
+vaccine-section 만 별도 패턴 (drag-drop 컨테이너 SRP). 그 외 11개 메뉴는 모두 표준 사용.
 
 ## 결정 — phase 0 시점 합의
 
