@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
+import { getTransfersByIds, type TransferWithContext } from './transfers'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 
@@ -69,6 +70,11 @@ export interface ConversationMessagesResult {
   /** 모든 참여자(본인 포함)의 last_read_at — 본인 메시지의 "읽음 N명" 계산용. */
   reads: Array<{ user_id: string; last_read_at: string }>
   pinned_message: MessageRow | null
+  /**
+   * 메시지에 포함된 transfer_id 들의 enriched 카드 데이터 — key=transfer.id.
+   * 채팅창 진입 시 핸드오프 카드가 별도 fetch 없이 즉시 렌더되도록 prefetch.
+   */
+  transfers: Record<string, TransferWithContext>
 }
 
 export interface CasePickerItem {
@@ -537,7 +543,21 @@ export async function listConversationMessages(input: {
     last_read_at: r.last_read_at as string,
   }))
 
-  return { ok: true, value: { messages, participants, reads, pinned_message: pinnedMessage } }
+  // 핸드오프 카드용 transfer 데이터 prefetch — messages·pinned 양쪽에서 모음.
+  // 같은 listConversationMessages RTT 안에서 끝나 채팅 진입 시 카드가 즉시 렌더됨.
+  const transferIds = new Set<string>()
+  for (const m of messages) if (m.transfer_id) transferIds.add(m.transfer_id)
+  if (pinnedMessage?.transfer_id) transferIds.add(pinnedMessage.transfer_id)
+  const transfers: Record<string, TransferWithContext> = {}
+  if (transferIds.size > 0) {
+    const tr = await getTransfersByIds(Array.from(transferIds))
+    if (tr.ok) for (const t of tr.value) transfers[t.id] = t
+  }
+
+  return {
+    ok: true,
+    value: { messages, participants, reads, pinned_message: pinnedMessage, transfers },
+  }
 }
 
 export async function sendMessage(input: {

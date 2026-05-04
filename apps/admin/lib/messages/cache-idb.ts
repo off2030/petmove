@@ -12,6 +12,7 @@
  */
 
 import type { MessageRow, Participant } from '@/lib/actions/chat'
+import type { TransferWithContext } from '@/lib/actions/transfers'
 
 const DB_NAME = 'petmove-messages'
 const DB_VERSION = 1
@@ -22,6 +23,8 @@ export type ConvSnapshot = {
   participants: Participant[]
   reads: Array<{ user_id: string; last_read_at: string }>
   pinned_message: MessageRow | null
+  /** 핸드오프 카드 데이터 — key=transfer.id. 없으면 빈 객체. */
+  transfers: Record<string, TransferWithContext>
   cachedAt: number
 }
 

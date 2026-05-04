@@ -36,6 +36,11 @@ interface Props {
   isOwn: boolean
   /** 메시지 안에 첨부됐던 노트(=case_label 또는 message.content). 카드 헤더에 표시. */
   caseLabel?: string | null
+  /**
+   * 부모(messages-app)가 listConversationMessages 안에서 함께 prefetch 한 transfer 데이터.
+   * 있으면 spinner·초기 fetch 생략 → 채팅 진입 시 카드가 즉시 렌더.
+   */
+  preloaded?: TransferWithContext | null
 }
 
 /**
@@ -45,10 +50,12 @@ interface Props {
  * - accepted → 받은 케이스 열기 (수신자) / "수락됨" 표시 (송신자)
  * - rejected/cancelled → 상태만 표시
  */
-export function HandoffCard({ transferId, currentUserId, isOwn, caseLabel }: Props) {
+export function HandoffCard({ transferId, currentUserId, isOwn, caseLabel, preloaded }: Props) {
   const confirm = useConfirm()
   const { openCase } = useCases()
-  const [transfer, setTransfer] = useState<TransferWithContext | null | 'loading'>('loading')
+  const [transfer, setTransfer] = useState<TransferWithContext | null | 'loading'>(
+    preloaded ?? 'loading',
+  )
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
@@ -63,7 +70,18 @@ export function HandoffCard({ transferId, currentUserId, isOwn, caseLabel }: Pro
     }
   }
 
-  useEffect(() => { void refresh() }, [transferId])
+  // preloaded 가 있으면 초기 fetch 생략 — 부모가 prefetch 해 spinner 깜빡임 제거.
+  // transferId 가 바뀌면(=다른 메시지) 다시 seed. 동일 카드 내 accept/reject 후엔
+  // 로컬 refresh() 결과가 우선이라 parent 의 stale preloaded 가 덮어쓰지 않음.
+  useEffect(() => {
+    if (preloaded) {
+      setTransfer(preloaded)
+      setError(null)
+      return
+    }
+    void refresh()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transferId])
 
   if (transfer === 'loading') {
     return (

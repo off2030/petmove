@@ -820,6 +820,26 @@ export async function getTransfer(id: string): Promise<Result<TransferWithContex
   }
 }
 
+/**
+ * 여러 전송 행을 한번에 enriched 로 — 채팅창 핸드오프 카드 prefetch 용.
+ * RLS 가 from/to org 멤버만 select 허용 → 권한 없는 id 는 결과에서 빠짐.
+ */
+export async function getTransfersByIds(ids: string[]): Promise<Result<TransferWithContext[]>> {
+  if (ids.length === 0) return { ok: true, value: [] }
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('case_transfers')
+      .select('*')
+      .in('id', ids)
+    if (error) return { ok: false, error: error.message }
+    const enriched = await enrichTransfers((data ?? []) as TransferRow[])
+    return { ok: true, value: enriched }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 /** 받은 전송 중 pending 개수 — 헤더 뱃지용. */
 export async function countPendingReceived(): Promise<Result<number>> {
   try {

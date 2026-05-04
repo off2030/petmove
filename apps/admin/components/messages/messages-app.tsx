@@ -58,6 +58,7 @@ import {
   type OrgPickerItem,
   type Participant,
 } from '@/lib/actions/chat'
+import type { TransferWithContext } from '@/lib/actions/transfers'
 import { PageShell } from '@/components/ui/page-shell'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { getCachedConv, setCachedConv, deleteCachedConv } from '@/lib/messages/cache-idb'
@@ -82,6 +83,7 @@ export function MessagesApp({
   const [participants, setParticipants] = useState<Participant[]>([])
   const [reads, setReads] = useState<Array<{ user_id: string; last_read_at: string }>>([])
   const [pinnedMessage, setPinnedMessage] = useState<MessageRow | null>(null)
+  const [transfers, setTransfers] = useState<Record<string, TransferWithContext>>({})
   const [loadingMessages, setLoadingMessages] = useState(false)
   const [showNewConv, setShowNewConv] = useState(false)
 
@@ -92,6 +94,7 @@ export function MessagesApp({
     participants: Participant[]
     reads: Array<{ user_id: string; last_read_at: string }>
     pinned_message: MessageRow | null
+    transfers: Record<string, TransferWithContext>
   }
   const cacheRef = useRef<Map<string, ConvSnapshot>>(new Map())
 
@@ -105,6 +108,7 @@ export function MessagesApp({
           participants: r.value.participants,
           reads: r.value.reads,
           pinned_message: r.value.pinned_message,
+          transfers: r.value.transfers,
         }
         cacheRef.current.set(convId, snap)
         // IDB 영속 저장 (silent fail) — 다음 세션/새로고침에서도 즉시 표시.
@@ -113,6 +117,7 @@ export function MessagesApp({
         setParticipants(r.value.participants)
         setReads(r.value.reads)
         setPinnedMessage(r.value.pinned_message)
+        setTransfers(r.value.transfers)
       }
       if (!opts?.silent) setLoadingMessages(false)
     },
@@ -159,6 +164,7 @@ export function MessagesApp({
               participants: r.value.participants,
               reads: r.value.reads,
               pinned_message: r.value.pinned_message,
+              transfers: r.value.transfers,
             }
             cacheRef.current.set(id, snap)
             void setCachedConv(id, snap)
@@ -183,6 +189,7 @@ export function MessagesApp({
       setParticipants([])
       setReads([])
       setPinnedMessage(null)
+      setTransfers({})
       return
     }
     const convId = activeId
@@ -194,6 +201,7 @@ export function MessagesApp({
       setParticipants(cached.participants)
       setReads(cached.reads)
       setPinnedMessage(cached.pinned_message)
+      setTransfers(cached.transfers ?? {})
       refresh(convId, { silent: true })
     } else {
       // 네트워크 fetch 와 IDB 조회를 동시에 시작. 보통 IDB 가 먼저 끝나
@@ -207,12 +215,14 @@ export function MessagesApp({
           participants: snap.participants,
           reads: snap.reads,
           pinned_message: snap.pinned_message,
+          transfers: snap.transfers ?? {},
         }
         cacheRef.current.set(convId, restored)
         setMessages(restored.messages)
         setParticipants(restored.participants)
         setReads(restored.reads)
         setPinnedMessage(restored.pinned_message)
+        setTransfers(restored.transfers)
         setLoadingMessages(false)
       })
       refresh(convId)
@@ -346,6 +356,7 @@ export function MessagesApp({
               participants={participants}
               reads={reads}
               pinnedMessage={pinnedMessage}
+              transfers={transfers}
               loading={loadingMessages}
               currentUserId={currentUserId}
               onClose={() => setActiveId(null)}
@@ -949,6 +960,7 @@ function ThreadPane({
   participants,
   reads,
   pinnedMessage,
+  transfers,
   loading,
   currentUserId,
   onClose,
@@ -964,6 +976,7 @@ function ThreadPane({
   participants: Participant[]
   reads: Array<{ user_id: string; last_read_at: string }>
   pinnedMessage: MessageRow | null
+  transfers: Record<string, TransferWithContext>
   loading: boolean
   currentUserId: string | null
   onClose: () => void
@@ -1494,6 +1507,9 @@ function ThreadPane({
                     isOwn &&
                     !!otherLastReadAt &&
                     new Date(m.created_at) <= new Date(otherLastReadAt)
+                  const preloadedTransfer = m.transfer_id
+                    ? transfers[m.transfer_id] ?? null
+                    : null
                   return (
                     <MessageItem
                       key={m.id}
@@ -1506,6 +1522,7 @@ function ThreadPane({
                       readCount={readCount}
                       memberCount={memberCount}
                       isPinned={isPinned}
+                      preloadedTransfer={preloadedTransfer}
                       onDelete={isOwn ? handleMessageDelete : undefined}
                       onPin={handleTogglePin}
                     />
@@ -1635,6 +1652,7 @@ const MessageItem = memo(function MessageItem({
   readCount,
   memberCount,
   isPinned,
+  preloadedTransfer,
   onDelete,
   onPin,
 }: {
@@ -1647,6 +1665,7 @@ const MessageItem = memo(function MessageItem({
   readCount: number
   memberCount: number
   isPinned: boolean
+  preloadedTransfer: TransferWithContext | null
   onDelete?: (msgId: string) => void
   onPin?: (msgId: string, currentlyPinned: boolean) => void
 }) {
@@ -1690,6 +1709,7 @@ const MessageItem = memo(function MessageItem({
             currentUserId={currentUserId}
             isOwn={isOwn}
             caseLabel={msg.case_label}
+            preloaded={preloadedTransfer}
           />
         ) : (
           <div
