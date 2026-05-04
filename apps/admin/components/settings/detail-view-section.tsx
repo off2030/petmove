@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import { useDetailViewSettings } from '@/components/providers/detail-view-settings-provider'
 import { DestinationsArea } from './destinations-section'
 import { SharePresetsSection } from './share-presets-section'
+import { DocumentsSection } from './documents-section'
 
 export function DetailViewSection({
   initialSettings = DETAIL_VIEW_DEFAULTS,
@@ -100,6 +101,9 @@ export function DetailViewSection({
 
       {/* 목적지별 표시정보 — 같은 탭에 통합 */}
       <DestinationsArea />
+
+      {/* 증명서 버튼 생성 규칙 — 기존 "서류" 탭 내용 통합 */}
+      <DocumentsSection />
 
       {/* 공유 링크 프리셋 */}
       <SharePresetsSection />

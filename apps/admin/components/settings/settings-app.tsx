@@ -7,7 +7,6 @@ import { VaccineSection } from './vaccine-section'
 import { CompanySection } from './company-section'
 import { ImportReportSection } from './import-report-section'
 import { InspectionSection } from './inspection-section'
-import { DocumentsSection } from './documents-section'
 import { VerificationSection } from './verification-section'
 import { AutomationSection } from './automation-section'
 import { MembersSection } from './members-section'
@@ -25,7 +24,6 @@ const TABS = [
   { id: 'vaccines', label: '약품관리' },
   { id: 'inspection', label: '검사' },
   { id: 'import_report', label: '신고' },
-  { id: 'documents', label: '서류' },
   { id: 'automation', label: '자동화' },
   { id: 'verification', label: '검증' },
   { id: 'data', label: '데이터' },
@@ -238,7 +236,6 @@ export function SettingsApp({
           )}
           {activeTab === 'inspection' && <InspectionSection />}
           {activeTab === 'import_report' && <ImportReportSection />}
-          {activeTab === 'documents' && <DocumentsSection />}
           {activeTab === 'verification' && <VerificationSection isSuperAdmin={bootstrap?.myRole?.isSuperAdmin ?? false} />}
           {activeTab === 'automation' && (
             <AutomationSection
