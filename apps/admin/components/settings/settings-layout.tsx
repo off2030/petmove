@@ -107,7 +107,8 @@ export function SettingsRow({
  * `grid grid-cols-[150px_1fr] py-3 border-b border-dotted border-border/80` 패턴을 흡수.
  *
  * - `align="baseline"` (default): input/text 행. 라벨이 input baseline 에 정렬됨.
- * - `align="center"`: avatar 등 비-텍스트 컨트롤 행.
+ * - `align="center"`: avatar / 단일 button 행.
+ * - `align="start"`: 우측이 wrap chips 등 여러 줄로 늘어나는 행 — 라벨이 첫 줄 top 에 정렬.
  *
  * 컨트롤은 children 슬롯 — 단일 input 부터 (button + status text) 같은
  * 복합 배치까지 전부 호출처에서 자유롭게 구성.
@@ -119,15 +120,19 @@ export function SettingsField({
   className,
 }: {
   label: React.ReactNode
-  align?: 'baseline' | 'center'
+  align?: 'baseline' | 'center' | 'start'
   children: React.ReactNode
   className?: string
 }) {
+  const alignCls =
+    align === 'center' ? 'items-center'
+    : align === 'start' ? 'items-start'
+    : 'items-baseline'
   return (
     <div
       className={cn(
         'grid grid-cols-[150px_1fr] gap-md py-3 border-b border-dotted border-border/80',
-        align === 'center' ? 'items-center' : 'items-baseline',
+        alignCls,
         className,
       )}
     >
@@ -135,6 +140,7 @@ export function SettingsField({
         className={cn(
           'font-serif text-[13px] text-muted-foreground leading-none',
           align === 'baseline' && 'pt-0.5',
+          align === 'start' && 'pt-1',
         )}
       >
         {label}

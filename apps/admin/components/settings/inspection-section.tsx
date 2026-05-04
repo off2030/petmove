@@ -12,6 +12,7 @@ import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   SettingsShell,
   SettingsSection,
+  SettingsField,
   SettingsSectionLabelSerif as SectionLabel,
 } from './settings-layout'
 import { labColor } from '@/lib/lab-color'
@@ -114,8 +115,7 @@ function LabsAdminRow({
   }
 
   return (
-    <div className="grid grid-cols-[160px_1fr] items-start gap-md py-3 border-b border-border/80">
-      <span className="font-serif text-[13px] text-muted-foreground pt-1">기관 목록</span>
+    <SettingsField label="기관 목록" align="start">
       <div className="flex flex-wrap items-center gap-1.5">
         {defaults.map(d => {
           const tone = labColor(d.value)
@@ -208,7 +208,7 @@ function LabsAdminRow({
           </span>
         )}
       </div>
-    </div>
+    </SettingsField>
   )
 }
 
@@ -309,15 +309,14 @@ function SectionBlock({
 
       {/* Default lab */}
       {hasDefault && (
-        <div className="grid grid-cols-[160px_1fr] items-center gap-md py-3 border-b border-border/80">
-          <span className="font-serif text-[13px] text-muted-foreground">기본 검사기관</span>
+        <SettingsField label="기본 검사기관" align="center">
           <LabPillSelect
             value={defaultLab}
             onChange={onDefaultChange!}
             options={labs}
             aria-label="기본 검사기관"
           />
-        </div>
+        </SettingsField>
       )}
 
       {/* Rules list */}
