@@ -292,8 +292,13 @@ export function EditableField({
         setError(result.error)
         return
       }
-      // 자동 채움 결과 반영 — 엔진이 다른 필드들을 채웠으면 data 통째 교체.
-      if (result.autoFilled) replaceLocalCaseData(caseId, result.autoFilled.data)
+      // 자동 채움 결과 반영 — 엔진이 다른 필드들을 채웠으면 data 통째 교체 + 컬럼도 갱신.
+      if (result.autoFilled) {
+        replaceLocalCaseData(caseId, result.autoFilled.data)
+        for (const [k, v] of Object.entries(result.autoFilled.columns ?? {})) {
+          updateLocalCaseField(caseId, 'column', k, v)
+        }
+      }
 
       // 출국일/내원일 입력 시 활성 목적지를 캡처해 서류/신고 탭의 active_dest에 영속 저장.
       // 사용자가 칩 클릭으로 바꾼 활성이 있고 비어있지 않은 새 값일 때만.

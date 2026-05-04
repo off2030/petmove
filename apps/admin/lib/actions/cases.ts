@@ -15,7 +15,7 @@ const REGULAR_COLUMNS = new Set([
 ])
 
 export type UpdateResult =
-  | { ok: true; autoFilled?: { data: Record<string, unknown> } }
+  | { ok: true; autoFilled?: { data: Record<string, unknown>; columns?: Record<string, unknown> } }
   | { ok: false; error: string }
 
 // case_history.old_value/new_value 는 text 컬럼.
@@ -208,6 +208,7 @@ export async function updateCaseField(
 
   // 자동 채움 규칙 적용 — 날짜 관련 필드가 변경됐을 때만.
   // 체이닝은 엔진 내부에서 iter loop 로 처리.
+  // entry_date: 통합 입국일 — 일본·하와이·태국·스위스 모두 같은 키. 출국일과 동기화 규칙 트리거.
   const DATE_TRIGGER_KEYS = new Set([
     'departure_date',
     'vet_visit_date',
@@ -218,19 +219,25 @@ export async function updateCaseField(
     'internal_parasite_dates',
     'external_parasite_dates',
     'heartworm_dates',
+    'entry_date',
   ])
-  let autoFilled: { data: Record<string, unknown> } | undefined
+  let autoFilled: { data: Record<string, unknown>; columns?: Record<string, unknown> } | undefined
   if (DATE_TRIGGER_KEYS.has(key)) {
     try {
       await applyAutoFillRules(supabase, caseId, key)
-      // auto-fill 이후 최신 data 를 다시 읽어 클라이언트 context 에 반영할 수 있게 리턴.
+      // auto-fill 이후 최신 data + 엔진이 쓸 수 있는 컬럼 (departure_date) 을 같이 읽어
+      // 클라이언트 context 에 반영할 수 있게 리턴.
       const { data: refreshed } = await supabase
         .from('cases')
-        .select('data')
+        .select('data, departure_date')
         .eq('id', caseId)
         .single()
       if (refreshed) {
-        autoFilled = { data: (refreshed.data as Record<string, unknown> | null) ?? {} }
+        const r = refreshed as { data: Record<string, unknown> | null; departure_date: string | null }
+        autoFilled = {
+          data: r.data ?? {},
+          columns: { departure_date: r.departure_date ?? null },
+        }
       }
     } catch { /* best-effort */ }
   }

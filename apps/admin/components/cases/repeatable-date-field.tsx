@@ -247,8 +247,11 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
       // 실패 시 rollback.
       updateLocalCaseField(caseId, 'data', dataKey, prevSnapshot.length > 0 ? prevSnapshot : null)
     } else if (r.autoFilled?.data) {
-      // 자동 채움 결과를 로컬 케이스 컨텍스트에 통째 반영.
+      // 자동 채움 결과를 로컬 케이스 컨텍스트에 통째 반영 + 컬럼도 갱신.
       replaceLocalCaseData(caseId, r.autoFilled.data)
+      for (const [k, v] of Object.entries(r.autoFilled.columns ?? {})) {
+        updateLocalCaseField(caseId, 'column', k, v)
+      }
     }
 
     // If clearing all records, remove this field from toggleable fields

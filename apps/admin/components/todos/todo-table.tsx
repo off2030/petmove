@@ -94,7 +94,7 @@ function EditableCell({
   col: TodoColumn
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
 }) {
-  const { replaceLocalCaseData } = useCases()
+  const { replaceLocalCaseData, updateLocalCaseField } = useCases()
   const value = getCellValue(row, col)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value)
@@ -113,9 +113,14 @@ function EditableCell({
       setEditing(false)
       const result = await updateCaseField(row.id, col.storage, col.key, saveVal)
       // 자동 채움/리셋 결과 반영 — 서버에서 다른 필드(예: export_doc_status)가 바뀌었을 수 있음.
-      if (result.ok && result.autoFilled) replaceLocalCaseData(row.id, result.autoFilled.data)
+      if (result.ok && result.autoFilled) {
+        replaceLocalCaseData(row.id, result.autoFilled.data)
+        for (const [k, v] of Object.entries(result.autoFilled.columns ?? {})) {
+          updateLocalCaseField(row.id, 'column', k, v)
+        }
+      }
     },
-    [row.id, col.storage, col.key, value, onUpdate, replaceLocalCaseData],
+    [row.id, col.storage, col.key, value, onUpdate, replaceLocalCaseData, updateLocalCaseField],
   )
 
   useEffect(() => {
