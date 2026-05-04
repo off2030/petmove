@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { TrashModal } from '@/components/cases/trash-modal'
-import { SettingsShell, SettingsSection } from './settings-layout'
+import { SettingsShell, SettingsSection, SettingsRow } from './settings-layout'
 import { VaccineSection } from './vaccine-section'
 import { CompanySection } from './company-section'
 import { ImportReportSection } from './import-report-section'
@@ -105,14 +105,10 @@ function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) 
         description="삭제된 케이스 복원과 데이터 내보내기를 관리합니다."
       >
         <div className="space-y-md">
-          {/* Trash card */}
-          <div className="flex items-center justify-between gap-md rounded-sm border border-border/80 px-lg py-md">
-            <div className="min-w-0">
-              <h3 className="font-serif text-[16px] text-foreground">휴지통</h3>
-              <p className="pmw-st__sec-lead mt-1">
-                삭제된 케이스를 복원하거나 영구 삭제할 수 있습니다. 30일 후 자동 영구 삭제됩니다.
-              </p>
-            </div>
+          <SettingsRow
+            title="휴지통"
+            description="삭제된 케이스를 복원하거나 영구 삭제할 수 있습니다. 30일 후 자동 영구 삭제됩니다."
+          >
             <button
               type="button"
               onClick={() => setShowTrash(true)}
@@ -120,20 +116,20 @@ function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) 
             >
               휴지통 열기
             </button>
-          </div>
+          </SettingsRow>
 
-          {/* Export card — super_admin 전용 */}
           {isSuperAdmin && (
-            <div className="flex items-center justify-between gap-md rounded-sm border border-border/80 px-lg py-md">
-              <div className="min-w-0">
-                <h3 className="font-serif text-[16px] text-foreground">데이터 내보내기</h3>
-                <p className="pmw-st__sec-lead mt-1">
+            <SettingsRow
+              title="데이터 내보내기"
+              description={
+                <>
                   활성 조직의 전체 케이스를 Excel(.xlsx)로 내려받습니다.
-                </p>
-                {exportError && (
-                  <p className="mt-1 font-serif text-[13px] text-destructive">{exportError}</p>
-                )}
-              </div>
+                  {exportError && (
+                    <span className="block mt-1 font-serif text-[13px] text-destructive">{exportError}</span>
+                  )}
+                </>
+              }
+            >
               <button
                 type="button"
                 onClick={handleExport}
@@ -142,7 +138,7 @@ function DataSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) 
               >
                 {exporting ? '내보내는 중…' : 'Excel 내보내기'}
               </button>
-            </div>
+            </SettingsRow>
           )}
         </div>
       </SettingsSection>
