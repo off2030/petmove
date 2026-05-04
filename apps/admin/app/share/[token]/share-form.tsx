@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { CheckCircle2, Plus, X } from 'lucide-react'
 import { submitShareLink } from '@/lib/actions/share-links'
 import type {
@@ -48,6 +48,11 @@ export function ShareForm({ initial }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [pending, startTransition] = useTransition()
+  const [expiresLabel, setExpiresLabel] = useState('')
+
+  useEffect(() => {
+    setExpiresLabel(new Date(view.expires_at).toLocaleString('ko-KR'))
+  }, [view.expires_at])
 
   // 상태 사전 차단
   if (view.status === 'submitted' || done) {
@@ -157,8 +162,8 @@ export function ShareForm({ initial }: Props) {
           {pending ? '제출 중…' : '제출하기'}
         </button>
 
-        <p className="font-serif italic text-[12px] text-muted-foreground/70 text-center">
-          만료: {new Date(view.expires_at).toLocaleString('ko-KR')}
+        <p className="font-serif italic text-[12px] text-muted-foreground/70 text-center" suppressHydrationWarning>
+          만료: {expiresLabel}
         </p>
       </form>
     </div>
