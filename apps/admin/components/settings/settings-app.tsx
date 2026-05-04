@@ -26,6 +26,15 @@ import { getSettingsBootstrap, type SettingsBootstrap } from '@/lib/actions/sett
  */
 type TabCategory = 'account' | 'case' | 'work' | 'data'
 
+const CATEGORY_LABELS: Record<TabCategory, string> = {
+  account: 'Account',
+  case: 'Case',
+  work: 'Work',
+  data: 'Data',
+}
+
+const CATEGORY_ORDER: readonly TabCategory[] = ['account', 'case', 'work', 'data'] as const
+
 type TabDef = {
   id:
     | 'profile'
@@ -214,22 +223,39 @@ export function SettingsApp({
           </h1>
         </div>
 
-        {/* 탭 — 모바일은 가로 스크롤(좌우 swipe). 글자 줄바꿈 방지 (whitespace-nowrap + shrink-0). */}
-        <div className="flex gap-md border-b border-border/80 shrink-0 px-md md:px-lg overflow-x-auto scrollbar-hide">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => handleTabClick(tab.id)}
-              className={`shrink-0 whitespace-nowrap px-1 py-2 font-serif text-[15px] md:text-[17px] transition-colors border-b -mb-px ${
-                activeTab === tab.id
-                  ? 'border-foreground text-foreground font-semibold'
-                  : 'border-transparent text-muted-foreground/70 hover:text-foreground'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* 탭 — 4개 카테고리 그룹(Account/Case/Work/Data) 으로 묶음.
+             모바일은 가로 스크롤(좌우 swipe). 글자 줄바꿈 방지 (whitespace-nowrap + shrink-0).
+             active 탭의 border-bottom 이 외부 border-b 위로 올라오는 효과 (-mb-px). */}
+        <div className="border-b border-border/80 shrink-0 px-md md:px-lg overflow-x-auto scrollbar-hide">
+          <div className="flex gap-lg">
+            {CATEGORY_ORDER.map((cat) => {
+              const tabs = TABS.filter((t) => t.category === cat)
+              if (tabs.length === 0) return null
+              return (
+                <div key={cat} className="flex flex-col shrink-0">
+                  <span className="font-mono text-[10px] uppercase tracking-[1.4px] text-muted-foreground/50 pb-0.5 self-start">
+                    {CATEGORY_LABELS[cat]}
+                  </span>
+                  <div className="flex gap-md -mb-px">
+                    {tabs.map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => handleTabClick(tab.id)}
+                        className={`shrink-0 whitespace-nowrap px-1 py-2 font-serif text-[15px] md:text-[17px] transition-colors border-b ${
+                          activeTab === tab.id
+                            ? 'border-foreground text-foreground font-semibold'
+                            : 'border-transparent text-muted-foreground/70 hover:text-foreground'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
 
         <div className="flex-1 min-h-0 overflow-auto scrollbar-minimal px-md md:px-lg">
