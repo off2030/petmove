@@ -7,6 +7,7 @@ import {
   SettingsShell,
   SettingsSection,
   SettingsFooter,
+  SettingsField,
   SettingsSectionLabel as SectionLabel,
 } from './settings-layout'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
@@ -147,10 +148,7 @@ export function ProfileSection({
               onError={(msg) => setError(msg)}
             />
             {/* Name (editable) */}
-            <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
-              <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
-                이름
-              </label>
+            <SettingsField label="이름">
               <input
                 type="text"
                 value={nameValue}
@@ -166,31 +164,25 @@ export function ProfileSection({
                   saving && 'opacity-60',
                 )}
               />
-            </div>
+            </SettingsField>
 
             {/* Email (read-only) */}
-            <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
-              <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
-                이메일
-              </label>
+            <SettingsField label="이메일">
               <div className="flex items-baseline gap-xs">
                 <span className="font-serif text-[15px] text-foreground">{profile.email}</span>
                 <span className="font-mono text-[10px] tracking-[1.3px] uppercase text-muted-foreground/60">
                   인증됨
                 </span>
               </div>
-            </div>
+            </SettingsField>
 
             {/* Provider (read-only) */}
             {profile.provider && (
-              <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
-                <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
-                  로그인 방식
-                </label>
+              <SettingsField label="로그인 방식">
                 <span className="font-serif text-[15px] text-muted-foreground">
                   {providerLabel(profile.provider)}
                 </span>
-              </div>
+              </SettingsField>
             )}
           </div>
         </section>
@@ -212,17 +204,14 @@ export function ProfileSection({
         <section className="mb-xl">
           <SectionLabel>Notifications</SectionLabel>
           <div className="border-t border-border/80">
-            <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
-              <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
-                푸시 알림
-              </label>
+            <SettingsField label="푸시 알림">
               <div className="flex flex-col gap-1">
                 <PushPermission />
                 <span className="font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
                   홈 화면에 추가한 PWA 또는 데스크톱 브라우저에서 백그라운드 알림을 받습니다.
                 </span>
               </div>
-            </div>
+            </SettingsField>
           </div>
         </section>
 
@@ -335,10 +324,7 @@ function AvatarRow({
   }
 
   return (
-    <div className="grid grid-cols-[150px_1fr] items-center gap-md py-3 border-b border-dotted border-border/80">
-      <label className="font-serif text-[13px] text-muted-foreground leading-none">
-        프로필 이미지
-      </label>
+    <SettingsField label="프로필 이미지" align="center">
       <div className="flex items-center gap-md">
         <div className="relative">
           <Avatar
@@ -388,7 +374,7 @@ function AvatarRow({
           PNG · JPG · WebP · GIF · 자동 512px 리사이즈
         </span>
       </div>
-    </div>
+    </SettingsField>
   )
 }
 
@@ -421,10 +407,7 @@ function DmVisibilityRow({
   }
 
   return (
-    <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
-      <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
-        검색 노출
-      </label>
+    <SettingsField label="검색 노출">
       <div className="flex items-baseline gap-md">
         <button
           type="button"
@@ -444,6 +427,6 @@ function DmVisibilityRow({
           끄면 다른 사용자가 새 대화 만들기에서 본인을 찾을 수 없습니다. 기존 대화는 영향 없음.
         </span>
       </div>
-    </div>
+    </SettingsField>
   )
 }

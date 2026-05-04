@@ -1,7 +1,7 @@
 # 설정 화면 리팩터링 계획 (work in progress)
 
-> 마지막 업데이트: 2026-05-04 (phase 2 완료)
-> 다음 시작점: phase 3 — `SettingsRow`/`SettingsField` 도입 + 카테고리 헤더 UI 합의
+> 마지막 업데이트: 2026-05-04 (phase 3a 완료 — SettingsField 도입 + profile/company 변환)
+> 다음 시작점: 카테고리 헤더 UI 합의 / inspection·detail-view row 통일 / vaccine 통합 패턴
 
 ## 배경
 
@@ -109,10 +109,28 @@
 
 8. ❌ **vaccine-section** — 제외. 외곽 div 가 drag-and-drop 컨테이너 (handlers + dynamic className). SettingsShell 의 폭 제어 책임과 다른 SRP 라 별도 패턴 유지. 후속에서 `SettingsShell asChild` 같은 패턴이 필요해지면 그때 합치는 식.
 
+## phase 3a — 완료 (2026-05-04)
+
+`SettingsField` 컴포넌트 도입 + profile / company 의 row 패턴 변환.
+
+1. ✅ **`SettingsField` 추가** — `grid grid-cols-[150px_1fr] gap-md py-3 border-b border-dotted` 패턴.
+   - `align="baseline"` (default): input/text 행. 라벨이 input baseline 정렬.
+   - `align="center"`: avatar 등 비-텍스트 컨트롤.
+   - 컨트롤은 children 슬롯 — 단일 input ~ 복합 배치까지 자유.
+
+2. ✅ **profile-section** — 6개 row 변환:
+   - AvatarRow → `<SettingsField label="프로필 이미지" align="center">`
+   - 이름 / 이메일 / 로그인 방식 / 푸시 알림 / 검색 노출 → `<SettingsField label="…">`
+
+3. ✅ **company-section** — fields.map 의 동적 row + OrgDmVisibilityRow 변환.
+   - HOSPITAL_FIELDS / TRANSPORT_FIELDS 의 11~6개 행 → `<SettingsField key label>`
+   - CustomFieldRow 는 `[150px_1fr_auto]` (3-col) 라 그대로 유지.
+
 ## phase 3 이후 (합의 필요)
 
 - 카테고리 헤더 UI 도입 — 사이드바 vs 탭 + 그룹 헤더 결정
-- `SettingsRow` / `SettingsField` 도입 — 현재 `<div className="grid grid-cols-[150px_1fr] …">` 패턴이 settings 안에 반복됨. variant 분기 또는 별도 `SettingsField` 컴포넌트 추출 검토.
+- inspection-section row 패턴 — `[160px_1fr]` + solid border + items-start 로 SettingsField 와 시각이 다름. 일관 통일할지 별도 디자인 유지할지 결정 필요.
+- detail-view-section row 패턴도 SettingsField 적용 가능성 검토.
 - ui/section-label vs SettingsSectionLabel 통합 — cases 화면 톤도 합의 후
 - vaccine-section 통합 패턴 (`SettingsShell asChild` 또는 별도 컴포넌트)
 

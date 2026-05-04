@@ -103,6 +103,48 @@ export function SettingsRow({
 }
 
 /**
+ * 라벨 + 컨트롤 행. profile / company / inspection 등에서 반복되는
+ * `grid grid-cols-[150px_1fr] py-3 border-b border-dotted border-border/80` 패턴을 흡수.
+ *
+ * - `align="baseline"` (default): input/text 행. 라벨이 input baseline 에 정렬됨.
+ * - `align="center"`: avatar 등 비-텍스트 컨트롤 행.
+ *
+ * 컨트롤은 children 슬롯 — 단일 input 부터 (button + status text) 같은
+ * 복합 배치까지 전부 호출처에서 자유롭게 구성.
+ */
+export function SettingsField({
+  label,
+  align = 'baseline',
+  children,
+  className,
+}: {
+  label: React.ReactNode
+  align?: 'baseline' | 'center'
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div
+      className={cn(
+        'grid grid-cols-[150px_1fr] gap-md py-3 border-b border-dotted border-border/80',
+        align === 'center' ? 'items-center' : 'items-baseline',
+        className,
+      )}
+    >
+      <label
+        className={cn(
+          'font-serif text-[13px] text-muted-foreground leading-none',
+          align === 'baseline' && 'pt-0.5',
+        )}
+      >
+        {label}
+      </label>
+      {children}
+    </div>
+  )
+}
+
+/**
  * 설정 화면 전용 small-cap 라벨 (mono / uppercase 톤).
  * 짧은 영어 카테고리 라벨에 사용 — `Account` / `Organization` / `Messaging` 등.
  * `cases/*` 의 `ui/section-label.tsx`(12px / 1.3px) 와는 별개.

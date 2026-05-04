@@ -20,6 +20,7 @@ import {
   SettingsShell,
   SettingsSection,
   SettingsFooter,
+  SettingsField,
   SettingsSectionLabel as SectionLabel,
 } from './settings-layout'
 import { useConfirm } from '@/components/ui/confirm-dialog'
@@ -280,13 +281,7 @@ export function CompanySection({
               {fields.filter((f) => f.group === group).map((f) => {
                 const saving = savingKey === f.key
                 return (
-                  <div
-                    key={f.key}
-                    className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80"
-                  >
-                    <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
-                      {f.label}
-                    </label>
+                  <SettingsField key={f.key} label={f.label}>
                     {f.type === 'textarea' ? (
                       <textarea
                         value={valueOf(f.key)}
@@ -327,7 +322,7 @@ export function CompanySection({
                         )}
                       />
                     )}
-                  </div>
+                  </SettingsField>
                 )
               })}
             </div>
@@ -509,10 +504,7 @@ function OrgDmVisibilityRow({
   }
 
   return (
-    <div className="grid grid-cols-[150px_1fr] items-baseline gap-md py-3 border-b border-dotted border-border/80">
-      <label className="font-serif text-[13px] text-muted-foreground pt-0.5 leading-none">
-        검색 노출
-      </label>
+    <SettingsField label="검색 노출">
       <div className="flex items-baseline gap-md">
         <button
           type="button"
@@ -532,6 +524,6 @@ function OrgDmVisibilityRow({
           끄면 외부 조직 사용자가 새 대화 만들기에서 우리 조직을 찾을 수 없습니다. 같은 조직 내부 검색은 영향 없음.
         </span>
       </div>
-    </div>
+    </SettingsField>
   )
 }
