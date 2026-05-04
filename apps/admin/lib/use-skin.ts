@@ -8,7 +8,7 @@ export type Skin = 'editorial' | 'flat' | 'neumorphism' | 'glassmorphism' | 'art
 const STORAGE_KEY = 'skin'
 const EVENT = 'skinchange'
 
-export const SKIN_LIST: Skin[] = ['editorial', 'flat', 'neumorphism', 'glassmorphism', 'art-deco', 'foggy-pastel', 'hygge', 'scandi-minimal', 'sakura', 'baby-blue']
+export const SKIN_LIST: Skin[] = ['editorial', 'art-deco', 'sakura', 'flat', 'neumorphism', 'glassmorphism', 'foggy-pastel', 'hygge', 'scandi-minimal', 'baby-blue']
 
 export const SKIN_LABELS: Record<Skin, string> = {
   editorial: '에디토리얼',
