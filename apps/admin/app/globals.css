@@ -794,17 +794,21 @@
     --pmw-warning-fg: 28 60% 18%;
     --pmw-info: 215 50% 22%;
 
-    /* Chip 6-tone art-deco — 모두 cream/gold 톤 */
-    --pmw-chip-red-bg:     14 50% 80%;
+    /* Chip 8-tone art-deco — 모두 cream/gold 톤 */
+    --pmw-chip-red-bg:     14 50% 80%;   /* terracotta cream (KSVDL-R) */
     --pmw-chip-red-fg:     14 55% 28%;
-    --pmw-chip-amber-bg:   38 55% 78%;
+    --pmw-chip-amber-bg:   38 55% 78%;   /* gold (APQA Seoul) */
     --pmw-chip-amber-fg:   28 55% 22%;
-    --pmw-chip-olive-bg:   75 30% 75%;
+    --pmw-chip-olive-bg:   75 30% 75%;   /* gold-olive (KRSL) */
     --pmw-chip-olive-fg:   85 35% 22%;
-    --pmw-chip-blue-bg:    215 30% 78%;
+    --pmw-chip-moss-bg:    115 22% 74%;  /* sage on cream (APQA HQ) */
+    --pmw-chip-moss-fg:    120 35% 22%;
+    --pmw-chip-blue-bg:    215 30% 78%;  /* deco navy tint (APQA EU) */
     --pmw-chip-blue-fg:    215 50% 18%;
-    --pmw-chip-plum-bg:    288 22% 78%;
+    --pmw-chip-plum-bg:    288 22% 78%;  /* dusty plum (VBDDL) */
     --pmw-chip-plum-fg:    280 35% 25%;
+    --pmw-chip-mauve-bg:   25 32% 76%;   /* warm walnut on cream (KSVDL) */
+    --pmw-chip-mauve-fg:   22 45% 24%;
     --pmw-chip-neutral-bg: 42 30% 75%;
     --pmw-chip-neutral-fg: 215 30% 22%;
   }
@@ -877,17 +881,21 @@
     --pmw-warning-fg: 38 70% 80%;
     --pmw-info: 215 50% 65%;
 
-    /* Chip 6-tone art-deco dark — gold accent + dark navy 변형 */
+    /* Chip 8-tone art-deco dark — gold accent + dark navy 변형 */
     --pmw-chip-red-bg:     14 25% 22%;
     --pmw-chip-red-fg:     14 55% 78%;
     --pmw-chip-amber-bg:   38 35% 25%;
     --pmw-chip-amber-fg:   38 60% 75%;
     --pmw-chip-olive-bg:   85 18% 22%;
     --pmw-chip-olive-fg:   75 35% 78%;
+    --pmw-chip-moss-bg:    115 18% 22%;
+    --pmw-chip-moss-fg:    115 35% 78%;
     --pmw-chip-blue-bg:    215 35% 28%;
     --pmw-chip-blue-fg:    215 50% 78%;
     --pmw-chip-plum-bg:    280 18% 25%;
     --pmw-chip-plum-fg:    288 35% 80%;
+    --pmw-chip-mauve-bg:   22 22% 24%;
+    --pmw-chip-mauve-fg:   25 50% 78%;
     --pmw-chip-neutral-bg: 215 25% 26%;
     --pmw-chip-neutral-fg: 42 35% 78%;
   }
