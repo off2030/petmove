@@ -1969,7 +1969,15 @@
   box-shadow: 0 2px 6px -1px rgba(80, 60, 40, 0.14);
 }
 
-/* hygge own bubble — default solid accent (--pmw-accent) 사용. 진한 terracotta. */
+/* hygge — own/other 색 swap (own 옅게 / other 짙은 액센트로). */
+[data-skin="hygge"] [data-bubble="own"] {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+[data-skin="hygge"] [data-bubble="other"] {
+  background-color: hsl(var(--pmw-accent)) !important;
+  color: hsl(var(--pmw-accent-fg)) !important;
+}
 
 /* ─────────────────────────────────────────────────────────────
    Scandi Minimal — Acne / Kinfolk 톤. warm off-white bg + 순백 카드.
@@ -2013,7 +2021,15 @@
   color: hsl(var(--primary-foreground));
 }
 
-/* scandi-minimal own bubble — default solid accent. 진한 모노 톤. */
+/* scandi-minimal — own/other 색 swap (own 옅게 / other 짙은 모노 액센트로). */
+[data-skin="scandi-minimal"] [data-bubble="own"] {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+[data-skin="scandi-minimal"] [data-bubble="other"] {
+  background-color: hsl(var(--pmw-accent)) !important;
+  color: hsl(var(--pmw-accent-fg)) !important;
+}
 
 /* ─────────────────────────────────────────────────────────────
    Sakura — 파스텔 핑크 그라디언트 bg + 순백 카드 + 핑크 그라디언트 버튼.
@@ -2062,7 +2078,15 @@
   background-image: var(--sakura-btn-grad-hover);
 }
 
-/* sakura own bubble — default solid accent. 진한 sakura pink. */
+/* sakura — own/other 색 swap (own 옅게 / other 짙은 sakura pink로). */
+[data-skin="sakura"] [data-bubble="own"] {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+[data-skin="sakura"] [data-bubble="other"] {
+  background-color: hsl(var(--pmw-accent)) !important;
+  color: hsl(var(--pmw-accent-fg)) !important;
+}
 
 /* ─────────────────────────────────────────────────────────────
    Pastel — Baby Blue 단일 (헬스케어/핀테크 톤).
@@ -2088,7 +2112,15 @@
   border-radius: 0.625rem;
   box-shadow: 0 2px 6px -1px rgba(44, 74, 111, 0.16);
 }
-/* baby-blue own bubble — default solid accent. 진한 mid blue. */
+/* baby-blue — own/other 색 swap (own 옅게 / other 짙은 mid blue로). */
+[data-skin="baby-blue"] [data-bubble="own"] {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+[data-skin="baby-blue"] [data-bubble="other"] {
+  background-color: hsl(var(--pmw-accent)) !important;
+  color: hsl(var(--pmw-accent-fg)) !important;
+}
 
 @layer base {
   * {
