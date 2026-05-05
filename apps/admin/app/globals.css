@@ -38,8 +38,8 @@
 
     /* Status (forest / olive / rust trio) */
     --pmw-sage: #3F5F3F;             /* forest green (positive) */
-    --pmw-sage-soft: #E8DEC4;        /* warm cream sand — 채팅 active row, 녹색기 X */
-    --pmw-sage-paper: #F2EEE0;       /* warm cream paper — 채팅 패널 배경 */
+    --pmw-sage-soft: hsl(35 22% 86%); /* warm stone — 채팅 active row, page bg 와 같은 family */
+    --pmw-sage-paper: hsl(32 30% 92%); /* page bg(--background) 와 동일 — border만 경계 */
     --pmw-amber: #8B7E4F;            /* olive (calendar today) */
     --pmw-rust: #A04525;             /* rust red (destructive) */
 
@@ -76,8 +76,8 @@
     --secondary: 40 36% 84%;
     --secondary-foreground: 29 19% 13%;
 
-    /* Muted: 살짝 더 옅은 sand (#EFE7D2) */
-    --muted: 39 38% 88%;
+    /* Muted: page bg 와 같은 family, 채도 ↓ — 상대 말풍선 */
+    --muted: 36 22% 86%;
     /* Muted foreground: warm dark olive (#6B5F4F) */
     --muted-foreground: 35 15% 36%;
 
@@ -126,18 +126,22 @@
     --pmw-warning-fg: 35 50% 22%;        /* #5A4520 dark amber — banner text */
     --pmw-info: 215 32% 35%;             /* #3D5274 ink blue — links/info */
 
-    /* Chip 6-tone universal palette — 검사기관·목적지 chip 통합.
+    /* Chip 8-tone universal palette — 검사기관·목적지 chip 통합.
        editorial: warm cream variants (Warm Stationery 톤 일관). */
-    --pmw-chip-red-bg:     16 50% 88%;   /* warm rose cream */
-    --pmw-chip-red-fg:     14 47% 38%;   /* dark rust */
-    --pmw-chip-amber-bg:   40 36% 83%;   /* warm cream */
+    --pmw-chip-red-bg:     348 24% 86%;  /* dusty rose (KSVDL-R) */
+    --pmw-chip-red-fg:     348 36% 34%;  /* dark rose */
+    --pmw-chip-amber-bg:   40 36% 83%;   /* warm cream (APQA Seoul) */
     --pmw-chip-amber-fg:   35 27% 30%;   /* dark olive brown */
-    --pmw-chip-olive-bg:   75 30% 84%;   /* warm sage cream */
-    --pmw-chip-olive-fg:   85 30% 28%;   /* dark olive */
-    --pmw-chip-blue-bg:    216 25% 87%;  /* warm-leaning cream blue */
+    --pmw-chip-olive-bg:   212 12% 82%;  /* slate ink cream (KRSL) */
+    --pmw-chip-olive-fg:   218 22% 30%;  /* dark slate ink */
+    --pmw-chip-moss-bg:    90 16% 84%;   /* muted sage olive (APQA HQ) */
+    --pmw-chip-moss-fg:    95 22% 30%;   /* dark sage */
+    --pmw-chip-blue-bg:    216 25% 87%;  /* warm-leaning cream blue (APQA EU) */
     --pmw-chip-blue-fg:    218 28% 31%;  /* dark navy */
-    --pmw-chip-plum-bg:    288 22% 86%;  /* warm cream plum */
-    --pmw-chip-plum-fg:    280 25% 35%;  /* dark plum */
+    --pmw-chip-plum-bg:    30 8% 84%;    /* warm stone grey (VBDDL) */
+    --pmw-chip-plum-fg:    32 14% 30%;   /* dark warm stone */
+    --pmw-chip-mauve-bg:   25 14% 80%;   /* warm walnut (KSVDL) */
+    --pmw-chip-mauve-fg:   25 26% 28%;   /* dark walnut */
     --pmw-chip-neutral-bg: 36 14% 84%;   /* warm gray */
     --pmw-chip-neutral-fg: 36 9% 28%;    /* dark warm gray */
 
@@ -238,17 +242,21 @@
     --pmw-warning-fg: 39 70% 80%;        /* light cream */
     --pmw-info: 215 35% 60%;             /* light ink blue */
 
-    /* Chip 6-tone editorial dark */
-    --pmw-chip-red-bg:     14 30% 22%;
-    --pmw-chip-red-fg:     16 65% 78%;
+    /* Chip 8-tone editorial dark */
+    --pmw-chip-red-bg:     348 20% 22%;  /* dusty rose (KSVDL-R) */
+    --pmw-chip-red-fg:     348 36% 80%;
     --pmw-chip-amber-bg:   35 25% 22%;
     --pmw-chip-amber-fg:   40 50% 78%;
-    --pmw-chip-olive-bg:   85 18% 20%;
-    --pmw-chip-olive-fg:   75 30% 78%;
+    --pmw-chip-olive-bg:   215 12% 22%;  /* slate ink (KRSL) */
+    --pmw-chip-olive-fg:   216 20% 80%;
+    --pmw-chip-moss-bg:    90 14% 22%;   /* muted sage olive (APQA HQ) */
+    --pmw-chip-moss-fg:    95 26% 78%;
     --pmw-chip-blue-bg:    218 18% 22%;
     --pmw-chip-blue-fg:    216 28% 80%;
-    --pmw-chip-plum-bg:    280 14% 22%;
-    --pmw-chip-plum-fg:    288 25% 80%;
+    --pmw-chip-plum-bg:    30 8% 22%;    /* warm stone grey (VBDDL) */
+    --pmw-chip-plum-fg:    32 16% 78%;
+    --pmw-chip-mauve-bg:   25 14% 22%;   /* warm walnut (KSVDL) */
+    --pmw-chip-mauve-fg:   25 30% 78%;
     --pmw-chip-neutral-bg: 36 9% 22%;
     --pmw-chip-neutral-fg: 36 14% 78%;
 
@@ -1941,12 +1949,15 @@
     box-shadow: 0 1px 3px rgba(60, 50, 35, 0.04), 0 1px 2px rgba(60, 50, 35, 0.03);
   }
 
-  /* Editorial 채팅 버블 — burgundy 시그니처 액센트로 own/other 명확 구분.
-     own: burgundy 12% tint + deep burgundy text (내 "목소리" — 매거진 액센트와 연결).
-     other: 기존 muted (warm sand) 그대로 (상대방 "목소리" — 중성 종이). */
+  /* Editorial 채팅 버블 — own/other 모두 warm stone family 로 통일.
+     own: 약간 더 진한 stone (page bg 위 한 단계 lift). text 는 기본 foreground. */
   html:not([data-skin]) [data-bubble="own"] {
-    background-color: hsl(var(--primary) / 0.12);
-    color: hsl(var(--primary));
+    background-color: hsl(28 20% 80%);
+    color: hsl(var(--foreground));
+  }
+  html:not([data-skin]).dark [data-bubble="own"] {
+    background-color: hsl(28 12% 30%);
+    color: hsl(var(--foreground));
   }
 
 }
