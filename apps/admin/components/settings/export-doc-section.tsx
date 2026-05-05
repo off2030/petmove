@@ -16,8 +16,8 @@ export function ExportDocSection() {
       >
         <TodoColumnsToggle
           tabId="export_doc"
-          title="서류 탭 표시 컬럼"
-          description="서류 탭 테이블에 표시할 컬럼을 선택합니다. 모두 체크가 기본값."
+          title="표시 항목 설정"
+          description="서류 탭 테이블에 표시할 항목을 선택합니다. 모두 체크가 기본값."
         />
       </SettingsSection>
     </SettingsShell>

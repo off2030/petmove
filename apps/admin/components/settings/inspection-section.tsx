@@ -652,6 +652,12 @@ export function InspectionSection() {
         title="검사"
         description="목적지별 광견병항체검사·전염병검사 의뢰 기관을 매핑합니다. 케이스 등록 시 자동 적용됩니다."
       >
+        <TodoColumnsToggle
+          tabId="inspection"
+          title="표시 항목 설정"
+          description="검사 탭 테이블에 표시할 항목을 선택합니다. 모두 체크가 기본값."
+        />
+
         <SectionBlock
           title="광견병항체검사"
           defaultLabs={TITER_LABS}
@@ -682,12 +688,6 @@ export function InspectionSection() {
           }
           rules={draft.infectiousRules}
           onRulesChange={(infectiousRules) => setDraft({ ...draft, infectiousRules })}
-        />
-
-        <TodoColumnsToggle
-          tabId="inspection"
-          title="검사 탭 표시 컬럼"
-          description="검사 탭 테이블에 표시할 컬럼을 선택합니다. 모두 체크가 기본값."
         />
 
         {/* Footer actions */}
