@@ -46,6 +46,8 @@ const STATUS_WITH_NA = [
   { value: 'done', label: '완료' },
 ]
 
+// nz_combined 은 실제 lab 이 아닌 NZ 묶음 행 식별용 내부 마커 (정렬·필터용).
+// 칩은 multi-lab 분기에서 apqa_hq/vbddl 각각 렌더되므로 옵션·색상 매핑 모두 불필요.
 const LAB_OPTIONS = [
   { value: 'krsl', label: 'KRSL' },
   { value: 'apqa_seoul', label: 'APQA Seoul' },
@@ -54,7 +56,6 @@ const LAB_OPTIONS = [
   { value: 'ksvdl_r', label: 'KSVDL-R' },
   { value: 'ksvdl', label: 'KSVDL' },
   { value: 'vbddl', label: 'VBDDL' },
-  { value: 'nz_combined', label: 'APQA HQ + VBDDL' },
 ]
 
 /**
@@ -437,6 +438,19 @@ function isPastDeparture(row: CaseRow): boolean {
   return dep < new Date().toISOString().slice(0, 10)
 }
 
+/**
+ * 출국일 미정 + 준비상태 완료 + 내원일 경과 = 사실상 마무리된 케이스.
+ * 서류 탭에서 dim 처리하고 정렬상 하단으로 보낸다.
+ */
+function isExportDocFinishedNoDeparture(row: CaseRow): boolean {
+  if (row.departure_date) return false
+  const data = (row.data ?? {}) as Record<string, unknown>
+  if (data.export_doc_status !== 'done') return false
+  const v = data.vet_visit_date
+  if (typeof v !== 'string' || !v) return false
+  return v < new Date().toISOString().slice(0, 10)
+}
+
 
 const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
   {
@@ -602,14 +616,15 @@ export function TodosApp({
         const v = d.vet_visit_date
         return typeof v === 'string' && v ? v : ''
       }
-      // 0=상단(내원일 미래), 1=중단(내원일 지남/없음, 출국일 미래), 2=하단(출국일 지남
-      //   또는 출국일이 비어있고 내원일이 이미 지난 경우 — 후자도 마무리된 케이스로 간주).
-      const groupOf = (c: CaseRow): 0 | 1 | 2 => {
+      // 0=내원일 미래, 1=내원일 미정, 2=내원일 경과(출국일 미경과), 3=하단(출국일 지남
+      //   또는 출국일 미정 + 준비상태 완료 + 내원일 경과 — 후자도 마무리된 케이스로 간주).
+      const groupOf = (c: CaseRow): 0 | 1 | 2 | 3 => {
         const dep = c.departure_date ?? ''
-        if (dep && dep < todayStr) return 2
+        if (dep && dep < todayStr) return 3
+        if (isExportDocFinishedNoDeparture(c)) return 3
         const v = visitDate(c)
-        if (!dep && v && v < todayStr) return 2
-        if (!v || v < todayStr) return 1
+        if (!v) return 1
+        if (v < todayStr) return 2
         return 0
       }
       return cases
@@ -767,7 +782,7 @@ export function TodosApp({
             activeTab === 'import_report'
               ? (row) => (isImportReportComplete(row) ? 'opacity-50 hover:opacity-100' : '')
               : activeTab === 'export_doc'
-              ? (row) => (isPastDeparture(row) ? 'opacity-50 hover:opacity-100' : '')
+              ? (row) => (isPastDeparture(row) || isExportDocFinishedNoDeparture(row) ? 'opacity-50 hover:opacity-100' : '')
               : undefined
           }
         />
