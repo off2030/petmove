@@ -18,6 +18,21 @@ type ListMode = 'cases' | TodosTabId
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
 
+/** 시간대별 한국어 인사. */
+function greetingByHour(h: number): string {
+  if (h < 5) return '깊은 밤이에요'
+  if (h < 12) return '좋은 아침이에요'
+  if (h < 17) return '좋은 오후예요'
+  if (h < 21) return '좋은 저녁이에요'
+  return '늦은 밤이에요'
+}
+
+/** 오늘 날짜를 "2026년 5월 5일 화요일" 형태로. */
+function todayLabel(d: Date): string {
+  const wk = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()]
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${wk}요일`
+}
+
 interface CaseRowItemProps {
   caseRow: CaseRow
   index: number
@@ -269,6 +284,19 @@ export function CaseList({
             <Loader2 className="h-4 w-4 animate-spin" />
             파일에서 정보 추출 중…
           </div>
+        </div>
+      )}
+
+      {/* Hero welcome — 데스크톱·cases 모드 한정. 시간대별 인사 + 오늘 날짜 + 케이스 수.
+          밋밋한 첫 화면에 시각 anchor 추가. */}
+      {mode === 'cases' && (
+        <div className="hidden md:block shrink-0 px-md md:px-lg -mb-1">
+          <h1 className="font-serif text-[34px] leading-[1.15] tracking-tight text-foreground">
+            {greetingByHour(new Date().getHours())}
+          </h1>
+          <p className="mt-1 font-serif italic text-[13px] text-muted-foreground/80">
+            {todayLabel(new Date())} · 등록 케이스 {cases.length}건
+          </p>
         </div>
       )}
 
