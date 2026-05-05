@@ -1614,6 +1614,170 @@
   }
 
   /* ─────────────────────────────────────────────────────────────
+     Skin: aurora — lavender ↔ peach 파스텔 그라디언트.
+     모던 geometric 타이포 + floating cards (white surface + soft shadow).
+     ───────────────────────────────────────────────────────────── */
+  [data-skin="aurora"] {
+    /* Manrope — modern geometric, 부드러운 곡선. */
+    --font-sans: var(--font-sans-neu);
+    --font-serif: var(--font-sans-neu), Pretendard;
+    --font-serif-kr: var(--font-sans-kr);
+    --font-mono: var(--font-sans-neu);
+    --pmw-font-serif: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+
+    --pmw-near-black: #4A3D5C;       /* deep plum */
+    --pmw-olive-gray: #7B6B92;
+    --pmw-stone-gray: #B5A5C7;
+    --pmw-deep: #8A7DC5;             /* lavender purple primary */
+    --pmw-clay-soft: #EFE5DA;
+    --pmw-sage: #8A7DC5;
+    --pmw-sage-soft: #E5D9EE;
+    --pmw-sage-paper: #FAEEE0;       /* peach paper */
+    --pmw-amber: #E8A88B;             /* peach accent */
+    --pmw-rust: #D87060;
+    --pmw-border-warm: #E8DDF0;
+    --pmw-parchment: #F5EAE0;
+    --pmw-paper: #FFFFFF;             /* pure white card */
+
+    /* Aurora 그라디언트 — body bg 에 별도 rule */
+    --aurora-grad: linear-gradient(135deg, #D9DBF0 0%, #F0DDC9 100%);
+    --aurora-grad-dark: linear-gradient(135deg, #2A2540 0%, #3D2D2D 100%);
+
+    --background: 250 35% 88%;       /* #D9DBF0 lavender mist fallback */
+    --foreground: 270 22% 30%;       /* deep plum */
+    --card: 0 0% 100%;
+    --card-foreground: 270 22% 30%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 270 22% 30%;
+    --primary: 256 35% 63%;          /* lavender purple */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 250 30% 90%;
+    --secondary-foreground: 270 22% 30%;
+    --muted: 25 50% 90%;             /* peach muted (other 풍선 톤) */
+    --muted-foreground: 270 15% 45%;
+    --accent: 256 50% 88%;
+    --accent-foreground: 256 35% 35%;
+    --destructive: 0 73% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 250 30% 85%;
+    --input: 250 30% 85%;
+    --ring: 256 35% 63%;
+    --radius: 1rem;                  /* 부드러운 모서리 — floating card 톤 */
+
+    /* Semantic 토큰 — aurora */
+    --pmw-accent: 256 35% 63%;
+    --pmw-accent-fg: 0 0% 100%;
+    --pmw-accent-strong: 256 40% 45%;
+    --pmw-tag-bg: 256 50% 92%;
+    --pmw-tag-fg: 256 35% 38%;
+    --pmw-cal-today: 256 35% 63%;
+    --pmw-cal-sunday: 0 60% 60%;
+    --pmw-cal-saturday: 220 50% 55%;
+    --pmw-positive: 142 35% 50%;
+    --pmw-avatar-bg: 250 30% 88%;
+    --pmw-avatar-fg: 256 35% 38%;
+    --pmw-code-label: 270 15% 50%;
+
+    /* 텍스트 색 4-tier */
+    --pmw-text-primary:    270 22% 30%;
+    --pmw-text-secondary:  270 15% 45%;
+    --pmw-text-tertiary:   270 12% 60%;
+    --pmw-text-disabled:   270 10% 75%;
+
+    --pmw-warning: 32 70% 55%;
+    --pmw-warning-bg: 32 50% 92%;
+    --pmw-warning-fg: 32 50% 35%;
+    --pmw-info: 220 50% 55%;
+
+    /* Chip 6-tone aurora — 파스텔 톤, lavender·peach 와 어울리게 */
+    --pmw-chip-red-bg:     8 50% 90%;
+    --pmw-chip-red-fg:     8 50% 38%;
+    --pmw-chip-amber-bg:   30 60% 90%;
+    --pmw-chip-amber-fg:   30 50% 35%;
+    --pmw-chip-olive-bg:   90 30% 90%;
+    --pmw-chip-olive-fg:   90 30% 32%;
+    --pmw-chip-blue-bg:    220 45% 90%;
+    --pmw-chip-blue-fg:    220 40% 38%;
+    --pmw-chip-plum-bg:    280 35% 90%;
+    --pmw-chip-plum-fg:    280 35% 38%;
+    --pmw-chip-neutral-bg: 250 25% 90%;
+    --pmw-chip-neutral-fg: 270 20% 35%;
+  }
+
+  [data-skin="aurora"].dark {
+    --pmw-near-black: #EFE5DA;
+    --pmw-olive-gray: #C7B5DA;
+    --pmw-stone-gray: #7B6B92;
+    --pmw-deep: #B5A8E0;
+    --pmw-clay-soft: #2D2438;
+    --pmw-sage: #B5A8E0;
+    --pmw-sage-soft: #3D2D40;
+    --pmw-sage-paper: #2A2540;
+    --pmw-amber: #E8B89A;
+    --pmw-rust: #E08070;
+    --pmw-border-warm: #3D3050;
+    --pmw-parchment: #2A2540;
+    --pmw-paper: #1F1B2E;
+
+    color-scheme: dark;
+    --background: 270 25% 14%;       /* deep dusk plum */
+    --foreground: 270 30% 88%;
+    --card: 270 22% 18%;
+    --card-foreground: 270 30% 88%;
+    --popover: 270 22% 18%;
+    --popover-foreground: 270 30% 88%;
+    --primary: 256 45% 75%;
+    --primary-foreground: 270 25% 14%;
+    --secondary: 270 22% 18%;
+    --secondary-foreground: 270 30% 88%;
+    --muted: 25 25% 22%;             /* dusk peach */
+    --muted-foreground: 270 18% 70%;
+    --accent: 256 35% 28%;
+    --accent-foreground: 256 45% 80%;
+    --destructive: 0 65% 60%;
+    --destructive-foreground: 270 25% 14%;
+    --border: 270 20% 25%;
+    --input: 270 20% 25%;
+    --ring: 256 45% 75%;
+
+    --pmw-accent: 256 45% 75%;
+    --pmw-accent-fg: 270 25% 14%;
+    --pmw-accent-strong: 256 55% 88%;
+    --pmw-tag-bg: 256 30% 25%;
+    --pmw-tag-fg: 256 45% 80%;
+    --pmw-cal-today: 256 45% 75%;
+    --pmw-cal-sunday: 0 55% 70%;
+    --pmw-cal-saturday: 220 50% 70%;
+    --pmw-positive: 142 35% 65%;
+    --pmw-avatar-bg: 270 22% 25%;
+    --pmw-avatar-fg: 256 45% 80%;
+    --pmw-code-label: 270 18% 65%;
+
+    --pmw-text-primary:    270 30% 88%;
+    --pmw-text-secondary:  270 18% 70%;
+    --pmw-text-tertiary:   270 12% 55%;
+    --pmw-text-disabled:   270 10% 35%;
+
+    --pmw-warning: 32 60% 70%;
+    --pmw-warning-bg: 32 30% 25%;
+    --pmw-warning-fg: 32 60% 78%;
+    --pmw-info: 220 50% 70%;
+
+    --pmw-chip-red-bg:     8 30% 25%;
+    --pmw-chip-red-fg:     8 50% 78%;
+    --pmw-chip-amber-bg:   30 30% 25%;
+    --pmw-chip-amber-fg:   30 50% 78%;
+    --pmw-chip-olive-bg:   90 20% 25%;
+    --pmw-chip-olive-fg:   90 30% 78%;
+    --pmw-chip-blue-bg:    220 30% 25%;
+    --pmw-chip-blue-fg:    220 40% 78%;
+    --pmw-chip-plum-bg:    280 25% 25%;
+    --pmw-chip-plum-fg:    280 35% 78%;
+    --pmw-chip-neutral-bg: 250 18% 25%;
+    --pmw-chip-neutral-fg: 270 20% 78%;
+  }
+
+  /* ─────────────────────────────────────────────────────────────
      Pastel — Baby Blue 단일 (헬스케어/핀테크 톤).
      ───────────────────────────────────────────────────────────── */
 
@@ -2082,6 +2246,43 @@
 
 /* scandi-minimal own bubble — 약간 옅게 (near-black 이라 0.7 정도면 진한 회색). */
 [data-skin="scandi-minimal"] [data-bubble="own"] {
+  background-color: hsl(var(--primary) / 0.75);
+  color: hsl(var(--primary-foreground));
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Aurora — lavender ↔ peach 파스텔 그라디언트 + floating cards.
+   ───────────────────────────────────────────────────────────── */
+
+[data-skin="aurora"] {
+  background-image: var(--aurora-grad);
+  background-color: transparent;
+  background-size: 100% 100%;
+  min-height: 100%;
+}
+[data-skin="aurora"] body {
+  background-color: transparent;
+  background-image: none;
+}
+[data-skin="aurora"].dark {
+  background-image: var(--aurora-grad-dark);
+}
+
+/* 카드 / 팝오버 — 순백 surface + soft floating shadow (이미지의 floating cards 톤) */
+[data-skin="aurora"] .bg-card,
+[data-skin="aurora"] .bg-popover {
+  border: 1px solid hsl(var(--border) / 0.4);
+  box-shadow: 0 8px 24px -8px rgba(74, 61, 92, 0.12),
+              0 4px 12px -4px rgba(74, 61, 92, 0.08);
+}
+[data-skin="aurora"].dark .bg-card,
+[data-skin="aurora"].dark .bg-popover {
+  border: 1px solid hsl(var(--border) / 0.6);
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.4);
+}
+
+/* aurora own bubble — solid lavender 보다 약간 옅게 (피그마 톤). */
+[data-skin="aurora"] [data-bubble="own"] {
   background-color: hsl(var(--primary) / 0.75);
   color: hsl(var(--primary-foreground));
 }

@@ -17,6 +17,7 @@ const SKIN_PREVIEW: Record<Skin, { bg: string; accent: string }> = {
   'scandi-minimal': { bg: '#E8E5DD', accent: '#1F1F1B' },
   sakura: { bg: 'linear-gradient(180deg,#FCE4EC,#F8D0DA)', accent: 'linear-gradient(180deg,#F5C0CB,#E8A0B0)' },
   'baby-blue': { bg: '#DCE7F2', accent: '#4A7AB8' },
+  aurora: { bg: 'linear-gradient(135deg,#D9DBF0,#F0DDC9)', accent: '#8A7DC5' },
 }
 
 export function SkinPicker() {
