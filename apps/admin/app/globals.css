@@ -1928,9 +1928,9 @@
   box-shadow: 0 2px 6px -1px rgba(63, 72, 85, 0.12);
 }
 
-/* 채팅 own bubble — gray-blue 명확한 tint (other bg-muted 와 시각 구분) */
+/* 채팅 own bubble — gray-blue tint (사용자 피드백 — 약간 더 짙게) */
 [data-skin="foggy-pastel"] [data-bubble="own"] {
-  background-color: hsl(var(--primary) / 0.22);
+  background-color: hsl(var(--primary) / 0.35);
   color: hsl(var(--primary));
 }
 
@@ -2062,7 +2062,29 @@
   background-image: var(--sakura-btn-grad-hover);
 }
 
-/* sakura own bubble — default 사용 (own = solid sakura pink, other = bg-muted). */
+/* sakura own bubble — solid 보다 약간 옅게 (사용자 피드백 — 너무 짙었음). */
+[data-skin="sakura"] [data-bubble="own"] {
+  background-color: hsl(var(--primary) / 0.75);
+  color: hsl(var(--primary-foreground));
+}
+
+/* flat own bubble — 약간 옅게 (사용자 피드백). */
+[data-skin="flat"] [data-bubble="own"] {
+  background-color: hsl(var(--primary) / 0.85);
+  color: hsl(var(--primary-foreground));
+}
+
+/* glassmorphism own bubble — 약간 옅게 (사용자 피드백). */
+[data-skin="glassmorphism"] [data-bubble="own"] {
+  background-color: hsl(var(--primary) / 0.75);
+  color: hsl(var(--primary-foreground));
+}
+
+/* scandi-minimal own bubble — 약간 옅게 (near-black 이라 0.7 정도면 진한 회색). */
+[data-skin="scandi-minimal"] [data-bubble="own"] {
+  background-color: hsl(var(--primary) / 0.75);
+  color: hsl(var(--primary-foreground));
+}
 
 /* ─────────────────────────────────────────────────────────────
    Pastel — Baby Blue 단일 (헬스케어/핀테크 톤).
