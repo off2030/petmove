@@ -18,30 +18,6 @@ type ListMode = 'cases' | TodosTabId
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
 
-/** departure_date 기준 4-bucket 통계. 첫 화면 stat 카드 용. */
-function bucketCases(cases: CaseRow[]): { total: number; upcoming: number; done: number; noDate: number } {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  let upcoming = 0
-  let done = 0
-  let noDate = 0
-  for (const c of cases) {
-    if (!c.departure_date) {
-      noDate++
-      continue
-    }
-    const d = new Date(c.departure_date)
-    if (Number.isNaN(d.getTime())) {
-      noDate++
-      continue
-    }
-    d.setHours(0, 0, 0, 0)
-    if (d.getTime() >= today.getTime()) upcoming++
-    else done++
-  }
-  return { total: cases.length, upcoming, done, noDate }
-}
-
 interface CaseRowItemProps {
   caseRow: CaseRow
   index: number
@@ -295,32 +271,6 @@ export function CaseList({
           </div>
         </div>
       )}
-
-      {/* Stat 카드 row — 데스크톱·cases 모드 한정. departure_date 기준 4-bucket.
-          밋밋한 첫 화면에 시각 anchor 추가 + 진행 현황 한눈에. */}
-      {mode === 'cases' && (() => {
-        const stats = bucketCases(cases)
-        return (
-          <div className="hidden md:grid shrink-0 px-md md:px-lg grid-cols-4 gap-md">
-            <div className="rounded-lg border border-border/80 bg-card px-md py-3">
-              <div className="font-mono text-[11px] uppercase tracking-[1.4px] text-muted-foreground/70">전체</div>
-              <div className="mt-1 font-serif text-[26px] tabular-nums leading-none text-foreground">{stats.total}</div>
-            </div>
-            <div className="rounded-lg border border-primary/30 bg-primary/8 px-md py-3" style={{ backgroundColor: 'hsl(var(--primary) / 0.08)' }}>
-              <div className="font-mono text-[11px] uppercase tracking-[1.4px] text-primary/80">출국 예정</div>
-              <div className="mt-1 font-serif text-[26px] tabular-nums leading-none text-primary">{stats.upcoming}</div>
-            </div>
-            <div className="rounded-lg border border-border/80 bg-muted px-md py-3">
-              <div className="font-mono text-[11px] uppercase tracking-[1.4px] text-muted-foreground/70">출국 완료</div>
-              <div className="mt-1 font-serif text-[26px] tabular-nums leading-none text-muted-foreground">{stats.done}</div>
-            </div>
-            <div className="rounded-lg border px-md py-3" style={{ borderColor: 'hsl(var(--pmw-warning) / 0.4)', backgroundColor: 'hsl(var(--pmw-warning) / 0.08)' }}>
-              <div className="font-mono text-[11px] uppercase tracking-[1.4px]" style={{ color: 'hsl(var(--pmw-warning-fg))' }}>출국일 미정</div>
-              <div className="mt-1 font-serif text-[26px] tabular-nums leading-none" style={{ color: 'hsl(var(--pmw-warning-fg))' }}>{stats.noDate}</div>
-            </div>
-          </div>
-        )
-      })()}
 
       {/* Page header — editorial title + 모드 탭 (실험)
           모바일은 좁아서 좌측 "고객 정보" 큰 타이틀 숨김. 우측 "목록" 탭이 같은 동작이라 중복. */}
