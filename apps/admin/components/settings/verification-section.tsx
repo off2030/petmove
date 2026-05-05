@@ -1,10 +1,16 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
-import { Check, ChevronDown, Search, X } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { ALL_PROCEDURE_CHECKS } from '@petmove/domain'
 import type { ProcedureCheck } from '@petmove/domain'
-import { SettingsShell, SettingsSection, SettingsSubsectionTitle } from './settings-layout'
+import {
+  SettingsCheckBox,
+  SettingsSearchInput,
+  SettingsShell,
+  SettingsSection,
+  SettingsSubsectionTitle,
+} from './settings-layout'
 import { cn } from '@/lib/utils'
 import { listOrgDisabledChecks, setOrgDisabledCheck } from '@/lib/actions/org-disabled-checks'
 
@@ -22,7 +28,6 @@ const COUNTRY_LABELS: Record<string, string> = {
   taiwan: '대만',
   hongkong: '홍콩',
 }
-
 function countryLabel(k: string): string {
   return COUNTRY_LABELS[k] ?? k
 }
@@ -100,39 +105,13 @@ export function VerificationSection({ isSuperAdmin = false }: { isSuperAdmin?: b
 
   return (
     <SettingsShell size="lg">
-      <SettingsSection
-        title="절차 검증"
-        description={
-          <>
-            국가·상황별 자동 검증 규칙. 케이스 저장 시 백그라운드로 실행됩니다.
-            {!isSuperAdmin && ' 변경은 슈퍼 관리자만 가능합니다.'}
-          </>
-        }
-      >
+      <SettingsSection title="절차 검증">
         {error && (
           <p className="-mt-md mb-md font-serif text-[13px] text-destructive">저장 실패: {error}</p>
         )}
 
         <div className="flex items-center gap-sm mb-md">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="검색"
-              className="h-11 w-full pl-10 pr-9 text-[15px] bg-popover text-foreground shadow-none border border-border/80 rounded-full focus-visible:outline-none focus-visible:ring-0 focus-visible:border-foreground/40 placeholder:text-muted-foreground/60"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
+          <SettingsSearchInput value={query} onChange={setQuery} className="flex-1" />
           <SortDropdown value={sort} onChange={setSort} />
         </div>
 
@@ -173,7 +152,7 @@ export function VerificationSection({ isSuperAdmin = false }: { isSuperAdmin?: b
                         : 'cursor-default',
                     )}
                   >
-                    <CheckBox checked={enabled} />
+                    <SettingsCheckBox checked={enabled} className="mt-1" />
                     <div className={cn('min-w-0', !enabled && 'opacity-55')}>
                       <div className="flex items-baseline gap-sm flex-wrap">
                         <span
@@ -196,11 +175,16 @@ export function VerificationSection({ isSuperAdmin = false }: { isSuperAdmin?: b
             </section>
           ))
         )}
+
+        {!isSuperAdmin && (
+          <p className="pt-md border-t border-border/80 pmw-st__sec-lead">
+            검증 규칙 변경은 슈퍼 관리자만 가능합니다.
+          </p>
+        )}
       </SettingsSection>
     </SettingsShell>
   )
 }
-
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'added', label: '최근 추가순' },
   { value: 'title', label: '제목순' },
@@ -266,19 +250,5 @@ function SortDropdown({ value, onChange }: { value: SortKey; onChange: (v: SortK
         </ul>
       )}
     </div>
-  )
-}
-
-function CheckBox({ checked }: { checked: boolean }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        'mt-1 inline-flex h-4 w-4 items-center justify-center rounded-sm border transition-colors',
-        checked ? 'border-foreground/60 bg-foreground/5' : 'border-border/80 bg-transparent',
-      )}
-    >
-      {checked && <Check className="h-3 w-3 text-foreground" strokeWidth={2.5} />}
-    </span>
   )
 }

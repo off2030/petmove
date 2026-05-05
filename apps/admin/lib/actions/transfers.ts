@@ -19,6 +19,15 @@ type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 
 export type TransferStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled'
 
+const TRANSFER_VISIBLE_LIMIT = 5
+const TRANSFER_SEARCH_CANDIDATE_LIMIT = 500
+const TRANSFER_STATUS_SEARCH_LABEL: Record<TransferStatus, string> = {
+  pending: '대기',
+  accepted: '수락',
+  rejected: '거부',
+  cancelled: '취소',
+}
+
 export interface TransferRow {
   id: string
   source_case_id: string
@@ -541,21 +550,21 @@ export async function acceptTransfer(
 // 조회
 // ─────────────────────────────────────────────────
 
-/** 현재 조직의 받은 전송 (pending + history 모두). */
-export async function listReceivedTransfers(): Promise<Result<TransferWithContext[]>> {
+/** 현재 조직의 받은 전송. 기본은 최근 5건, 검색 시 후보 기록을 넓혀 찾은 뒤 5건 반환. */
+export async function listReceivedTransfers(query?: string): Promise<Result<TransferWithContext[]>> {
   try {
     const orgId = await getActiveOrgId()
-    return await listTransfersByOrg('to', orgId)
+    return await listTransfersByOrg('to', orgId, query)
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }
 }
 
-/** 현재 조직의 보낸 전송 (pending + history 모두). */
-export async function listSentTransfers(): Promise<Result<TransferWithContext[]>> {
+/** 현재 조직의 보낸 전송. 기본은 최근 5건, 검색 시 후보 기록을 넓혀 찾은 뒤 5건 반환. */
+export async function listSentTransfers(query?: string): Promise<Result<TransferWithContext[]>> {
   try {
     const orgId = await getActiveOrgId()
-    return await listTransfersByOrg('from', orgId)
+    return await listTransfersByOrg('from', orgId, query)
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }
@@ -581,18 +590,22 @@ export async function listTransfersForCase(caseId: string): Promise<Result<Trans
 async function listTransfersByOrg(
   side: 'from' | 'to',
   orgId: string,
+  query?: string,
 ): Promise<Result<TransferWithContext[]>> {
   const supabase = await createClient()
   const col = side === 'from' ? 'from_org_id' : 'to_org_id'
+  const q = query?.trim() ?? ''
   const { data, error } = await supabase
     .from('case_transfers')
     .select('*')
     .eq(col, orgId)
     .order('created_at', { ascending: false })
-    .limit(200)
+    .limit(q ? TRANSFER_SEARCH_CANDIDATE_LIMIT : TRANSFER_VISIBLE_LIMIT)
   if (error) return { ok: false, error: error.message }
+
   const enriched = await enrichTransfers((data ?? []) as TransferRow[])
-  return { ok: true, value: enriched }
+  const filtered = q ? enriched.filter((t) => transferMatchesQuery(t, q)) : enriched
+  return { ok: true, value: filtered.slice(0, TRANSFER_VISIBLE_LIMIT) }
 }
 
 /** 전송 행에 조직명·유저명·원본 케이스 일부를 붙임. service role 사용 (상대 조직 정보 조회 위해). */
@@ -646,6 +659,46 @@ async function enrichTransfers(rows: TransferRow[]): Promise<TransferWithContext
     to_user_name: r.to_user_id ? userMap.get(r.to_user_id) ?? null : null,
     responded_by_name: r.responded_by ? userMap.get(r.responded_by) ?? null : null,
   }))
+}
+
+function valueForSearch(value: unknown): string {
+  if (value == null) return ''
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
+  }
+  if (Array.isArray(value)) return value.map(valueForSearch).join(' ')
+  if (typeof value === 'object') {
+    return Object.values(value as Record<string, unknown>).map(valueForSearch).join(' ')
+  }
+  return ''
+}
+
+function transferMatchesQuery(t: TransferWithContext, query: string): boolean {
+  const q = query.toLowerCase()
+  const snap = t.payload_snapshot
+  const pieces = [
+    t.id,
+    t.status,
+    TRANSFER_STATUS_SEARCH_LABEL[t.status],
+    t.note,
+    t.response_note,
+    t.from_org_name,
+    t.to_org_name,
+    t.from_user_name,
+    t.to_user_name,
+    t.responded_by_name,
+    t.source_case?.customer_name,
+    t.source_case?.pet_name,
+    t.source_case?.microchip,
+    snap.customer_name,
+    snap.customer_name_en,
+    snap.pet_name,
+    snap.pet_name_en,
+    snap.microchip,
+    ...snap.microchip_extra,
+    valueForSearch(snap.data),
+  ]
+  return pieces.some((piece) => piece?.toLowerCase().includes(q))
 }
 
 // ─────────────────────────────────────────────────

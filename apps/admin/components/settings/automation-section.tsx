@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, ChevronDown, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react'
+import { ChevronDown, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 import {
   listOrgAutoFillRules,
   createOrgAutoFillRule,
@@ -11,7 +11,13 @@ import {
   type AutoFillRule,
   type AutoFillRuleInput,
 } from '@/lib/actions/org-auto-fill-rules'
-import { SettingsShell, SettingsSection, SettingsSubsectionTitle } from './settings-layout'
+import {
+  SettingsActionButton,
+  SettingsCheckBox,
+  SettingsShell,
+  SettingsSection,
+  SettingsSubsectionTitle,
+} from './settings-layout'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import { cn } from '@/lib/utils'
 
@@ -182,10 +188,7 @@ export function AutomationSection({
 
   return (
     <SettingsShell size="lg">
-      <SettingsSection
-        title="자동화"
-        description="목적지·종별 자동 채움 규칙. 트리거 필드에 날짜가 입력되면 타겟 필드가 오프셋 기준으로 자동으로 채워집니다."
-      >
+      <SettingsSection title="자동화">
         {error && (
           <p className="-mt-md mb-md font-serif text-[13px] text-destructive">{error}</p>
         )}
@@ -219,7 +222,7 @@ export function AutomationSection({
                     isAdmin && 'cursor-pointer',
                   )}
                 >
-                  <CheckBox checked={r.enabled} />
+                  <SettingsCheckBox checked={r.enabled} />
                   <span className={cn('font-mono text-[10.5px] uppercase tracking-[0.6px] text-muted-foreground/80', !r.enabled && 'opacity-50')}>
                     {speciesLabel(r.species_filter ?? 'all')}
                   </span>
@@ -260,8 +263,7 @@ export function AutomationSection({
   
         {isAdmin && (
           <div className="flex items-center justify-between pt-md border-t border-border/80">
-            <button
-              type="button"
+            <SettingsActionButton
               onClick={handleRestore}
               disabled={pending || deletedStack.length === 0}
               title={
@@ -269,19 +271,14 @@ export function AutomationSection({
                   ? `최근 삭제: ${destLabel(deletedStack[0].rule.destination_key)} · ${fieldLabel(deletedStack[0].rule.trigger_field)} → ${fieldLabel(deletedStack[0].rule.target_field)}`
                   : '최근 삭제한 규칙이 없습니다'
               }
-              className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/80 hover:bg-muted/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <RotateCcw className="h-3 w-3" />
               삭제 복원{deletedStack.length > 0 ? ` (${deletedStack.length})` : ''}
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditing('new')}
-              className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/80 hover:bg-muted/40 transition-colors"
-            >
+            </SettingsActionButton>
+            <SettingsActionButton onClick={() => setEditing('new')}>
               <Plus className="h-3 w-3" />
               규칙 추가
-            </button>
+            </SettingsActionButton>
           </div>
         )}
   
@@ -301,22 +298,6 @@ export function AutomationSection({
         )}
       </SettingsSection>
     </SettingsShell>
-  )
-}
-
-/* ── Custom Editorial CheckBox (verification 탭과 동일 패턴) ── */
-
-function CheckBox({ checked }: { checked: boolean }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        'inline-flex h-4 w-4 items-center justify-center rounded-sm border transition-colors',
-        checked ? 'border-foreground/60 bg-foreground/5' : 'border-border/80 bg-transparent',
-      )}
-    >
-      {checked && <Check className="h-3 w-3 text-foreground" strokeWidth={2.5} />}
-    </span>
   )
 }
 
@@ -535,7 +516,7 @@ function RuleEditModal({
               onClick={() => setOverwrite((v) => !v)}
               className="inline-flex items-center gap-2 font-serif text-[13px] text-muted-foreground hover:text-foreground transition-colors"
             >
-              <CheckBox checked={overwrite} />
+              <SettingsCheckBox checked={overwrite} />
               기존 값 덮어쓰기
             </button>
             <button
@@ -543,7 +524,7 @@ function RuleEditModal({
               onClick={() => setEnabled((v) => !v)}
               className="inline-flex items-center gap-2 font-serif text-[13px] text-muted-foreground hover:text-foreground transition-colors"
             >
-              <CheckBox checked={enabled} />
+              <SettingsCheckBox checked={enabled} />
               활성
             </button>
           </div>

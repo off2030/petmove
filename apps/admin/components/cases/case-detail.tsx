@@ -116,6 +116,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
 
   const sectionSpecs = allSpecs.filter((s) => {
     if (HIDDEN_EN_KEYS.has(s.key)) return false
+    if (s.key === 'age') return false // birth_date 옆에 인라인 표시
     if (!allowedFields.has(s.key)) return false
     return true
   })
@@ -243,8 +244,8 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
                     {showVaccine('kennel') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="켄넬코프" dataKey="kennel_cough_dates" lockOneYearValidity />}
                     {showVaccine('covid') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="코로나" dataKey="covid_dates" lockOneYearValidity />}
                     {showVaccine('infectious_disease') && <InfectiousDiseaseField caseId={caseRow.id} caseRow={caseRow} destination={viewDestination} />}
-                    {showVaccine('external_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="외부구충" dataKey="external_parasite_dates" hideValidUntil siblingKey="internal_parasite_dates" />}
-                    {showVaccine('internal_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="내부구충" dataKey="internal_parasite_dates" hideValidUntil siblingKey="external_parasite_dates" />}
+                    {showVaccine('external_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="외부구충" dataKey="external_parasite_dates" hideValidUntil />}
+                    {showVaccine('internal_parasite') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="내부구충" dataKey="internal_parasite_dates" hideValidUntil />}
                     {showVaccine('heartworm') && <RepeatableDateField caseId={caseRow.id} caseRow={caseRow} label="심장사상충" dataKey="heartworm_dates" hideValidUntil />}
                   </div>
                 )

@@ -283,7 +283,7 @@ export function CaseList({
         >
           고객 정보
         </button>
-        <div className="flex items-baseline gap-sm md:gap-md">
+        <div className="flex items-baseline gap-3 md:gap-md">
           <button
             type="button"
             onClick={() => setMode('cases')}

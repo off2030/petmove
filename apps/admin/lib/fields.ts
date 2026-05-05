@@ -278,7 +278,7 @@ export function readCaseField(row: CaseRow, spec: FieldSpec): unknown {
   return (data as Record<string, unknown>)[spec.key] ?? null
 }
 
-function calculateAge(birthDateStr: string): string {
+export function calculateAge(birthDateStr: string): string {
   const birth = new Date(birthDateStr)
   if (isNaN(birth.getTime())) return ''
   const now = new Date()

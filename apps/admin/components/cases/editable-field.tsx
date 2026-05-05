@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useTransition } from 'react'
 import { Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { FieldSpec } from '@/lib/fields'
-import { coerceInputValue, renderFieldValue } from '@/lib/fields'
+import { calculateAge, coerceInputValue, renderFieldValue } from '@/lib/fields'
 import { updateCaseField } from '@/lib/actions/cases'
 import { CopyButton } from '@/components/cases/copy-button'
 import { useCases } from '@/components/cases/cases-context'
@@ -527,6 +527,20 @@ export function EditableField({
           )
         })()}
         {!(spec.type === 'longtext') && !editing && clearButton}
+        {spec.key === 'birth_date' && !editing && !isEmpty && (() => {
+          const age = typeof rawValue === 'string' ? calculateAge(rawValue) : ''
+          if (!age) return null
+          return (
+            <>
+              <span className="text-muted-foreground/30 select-none mx-2 hidden md:inline">|</span>
+              <div className="group/age relative inline-flex items-baseline shrink-0">
+                <span className="font-sans text-[10px] uppercase tracking-[1px] text-muted-foreground mr-1">연령</span>
+                <span className="font-mono text-[12px] tracking-[0.5px] text-foreground">{age}</span>
+                <CopyButton value={age} className="ml-1 opacity-0 group-hover/age:opacity-100" />
+              </div>
+            </>
+          )
+        })()}
       </div>
     </div>
   )

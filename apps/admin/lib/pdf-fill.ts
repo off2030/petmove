@@ -3,7 +3,7 @@
  * Reads case row, resolves each field value via the mapping's transform,
  * and fills the PDF form.
  */
-import { PDFDocument, PDFName, PDFString, PDFDict, PDFRef, PDFRawStream, PDFBool, TextAlignment, PDFCheckBox, PDFDropdown, PDFTextField, PDFRadioGroup, drawCheckMark, rgb, pushGraphicsState, popGraphicsState } from 'pdf-lib'
+import { PDFDocument, PDFName, PDFString, PDFHexString, PDFDict, PDFRef, PDFRawStream, PDFBool, PDFArray, PDFNumber, TextAlignment, PDFCheckBox, PDFDropdown, PDFTextField, PDFRadioGroup, drawCheckMark, rgb, pushGraphicsState, popGraphicsState } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -42,7 +42,9 @@ import type { CaseRow } from '@/lib/supabase/types'
 // - Fields appear blank in some viewer → flip NEED_APPEARANCES to 'true'
 // - Template/font changes not picked up → flip CACHE_ASSETS to false (dev)
 const PDF_SUBSET_FONT = true
-const PDF_CACHE_ASSETS = true
+// dev 모드에서는 디스크 변경을 즉시 반영해야 함 (템플릿 hot-edit 시 서버 재시작 불필요).
+// production 에서만 메모리 캐시 활성화.
+const PDF_CACHE_ASSETS = process.env.NODE_ENV === 'production'
 const PDF_NEED_APPEARANCES: 'false' | 'true' | 'unset' = 'true'
 
 const assetCache: { template: Map<string, Buffer>; font: Buffer | null; signature: Map<string, Buffer> } = {
@@ -1967,6 +1969,43 @@ function resolveField(
     return formatLabShipping(code, attr)
   }
 
+  // 목적지 → 영어 국가명 (대문자). KSVDL "Country Being Sent To" 등에 사용.
+  // 한국어 destination ("호주") → "AUSTRALIA". 매칭 안 되면 입력값 그대로 대문자화.
+  if (transform === 'destination_en') {
+    const dest = String(raw ?? '').trim()
+    if (!dest) return ''
+    const map: Record<string, string> = {
+      '호주': 'AUSTRALIA',
+      '뉴질랜드': 'NEW ZEALAND',
+      '일본': 'JAPAN',
+      '영국': 'UNITED KINGDOM',
+      '북아일랜드': 'NORTHERN IRELAND',
+      '아일랜드': 'IRELAND',
+      '몰타': 'MALTA',
+      '노르웨이': 'NORWAY',
+      '핀란드': 'FINLAND',
+      '스위스': 'SWITZERLAND',
+      '미국': 'UNITED STATES',
+      '하와이': 'HAWAII',
+      '괌': 'GUAM',
+      '멕시코': 'MEXICO',
+      '러시아': 'RUSSIA',
+      '태국': 'THAILAND',
+      '필리핀': 'PHILIPPINES',
+      '인도네시아': 'INDONESIA',
+      '인도': 'INDIA',
+      '터키': 'TURKEY',
+      '아랍에미레이트': 'UNITED ARAB EMIRATES',
+      '아랍에미리트': 'UNITED ARAB EMIRATES',
+      '싱가포르': 'SINGAPORE',
+      '홍콩': 'HONG KONG',
+      '브라질': 'BRAZIL',
+    }
+    // 다중 destination ("호주, 뉴질랜드") 첫 매칭만 사용.
+    const first = dest.split(',').map(s => s.trim()).find(Boolean) ?? dest
+    return map[first] ?? first.toUpperCase()
+  }
+
   // Invoice specimen description — "Non-infectious canine serum (0.5 mL × N tubes)"
   // where N comes from the numeric source (tube_count).
   if (transform === 'invoice_specimen_desc') {
@@ -2470,6 +2509,7 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
   if (form.flatten) {
     forceRegenerateButtonAppearances(pdfForm)
     sanitizeMalformedWidgets(pdf, pdfForm)
+    flattenFreeTextAnnotations(pdf, customFont)
     pdfForm.flatten()
   }
 
@@ -2481,6 +2521,79 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
   const partSuffix = partNumber > 0 ? `_part${partNumber}` : ''
   const filename = form.filename.replace('{pet_name}', `${petNames}${partSuffix}`)
   return { ok: true, pdf: base64, filename }
+}
+
+/**
+ * Flatten 직전 호출 — `/FreeText` 등 비-위젯 annotation 을 페이지 content stream
+ * 에 직접 그리고 annotation 자체는 제거한다.
+ *
+ * Why: Acrobat 에서 "텍스트 추가" 로 끼워둔 V 체크 같은 FreeText 는 폼 위젯이
+ * 아니라 별도 annotation 이라 `pdfForm.flatten()` 이 손대지 않는다. 게다가
+ * Acrobat 이 저장한 FreeText 는 보통 AP(appearance stream) 가 비어있어 뷰어가
+ * 화면 표시 시점에 즉석 렌더링한다. 그 결과 화면에는 보이지만 인쇄나 일부
+ * 뷰어에서는 누락된다 (KSVDL 의 BILL TO/Yes·No/E-Mail V 표시 케이스).
+ *
+ * 본 함수는 FreeText 의 Contents 를 customFont 로 페이지에 직접 drawText 한 후
+ * 페이지 Annots 배열에서 해당 항목을 제거해 인쇄·뷰어 호환을 보장한다.
+ * Contents 가 비어있는 FreeText 는 그냥 제거.
+ */
+function flattenFreeTextAnnotations(
+  pdf: PDFDocument,
+  customFont: import('pdf-lib').PDFFont,
+): void {
+  for (const page of pdf.getPages()) {
+    const annots = page.node.Annots()
+    if (!annots) continue
+    const keepRefs: (PDFRef | PDFDict)[] = []
+    let mutated = false
+    for (let i = 0; i < annots.size(); i++) {
+      const entry = annots.get(i)
+      let dict: unknown = entry
+      if (entry instanceof PDFRef) dict = pdf.context.lookup(entry)
+      if (!(dict instanceof PDFDict)) {
+        if (entry instanceof PDFRef || entry instanceof PDFDict) keepRefs.push(entry)
+        continue
+      }
+      const subtype = dict.lookup(PDFName.of('Subtype'))
+      const subtypeStr = subtype instanceof PDFName ? subtype.asString() : ''
+      if (subtypeStr !== '/FreeText') {
+        if (entry instanceof PDFRef || entry instanceof PDFDict) keepRefs.push(entry)
+        continue
+      }
+      mutated = true
+      const contentsRaw = dict.lookup(PDFName.of('Contents'))
+      const contents =
+        contentsRaw instanceof PDFString ? contentsRaw.asString() :
+        contentsRaw instanceof PDFHexString ? contentsRaw.decodeText() : ''
+      const rect = dict.lookup(PDFName.of('Rect'))
+      if (contents && rect instanceof PDFArray && rect.size() >= 4) {
+        const x0 = (rect.get(0) as PDFNumber).asNumber()
+        const y0 = (rect.get(1) as PDFNumber).asNumber()
+        const x1 = (rect.get(2) as PDFNumber).asNumber()
+        const y1 = (rect.get(3) as PDFNumber).asNumber()
+        const w = Math.max(0, x1 - x0)
+        const h = Math.max(0, y1 - y0)
+        // Parse font size from DA if present (e.g. "/Helv 10 Tf 0 g") — fallback height-based.
+        const da = dict.lookup(PDFName.of('DA'))
+        const daStr = da instanceof PDFString ? da.asString() : ''
+        const m = daStr.match(/\s(\d+(?:\.\d+)?)\s+Tf/)
+        const daSize = m ? parseFloat(m[1]) : 0
+        const size = Math.max(6, Math.min(daSize > 0 ? daSize : h * 0.85, h > 0 ? h * 0.95 : 12))
+        const text = sanitizeForFont(contents)
+        const textW = customFont.widthOfTextAtSize(text, size)
+        // Center the glyph within the rect (Acrobat FreeText V 마크 패턴).
+        const cx = x0 + Math.max(0, (w - textW) / 2)
+        const cy = y0 + Math.max(0, (h - size) / 2)
+        page.drawText(text, { x: cx, y: cy, size, font: customFont })
+      }
+    }
+    if (mutated) {
+      // Rebuild annots array with only kept entries.
+      // PDFArray has no direct removeAt, so clear-and-push.
+      while (annots.size() > 0) annots.remove(0)
+      for (const r of keepRefs) annots.push(r)
+    }
+  }
 }
 
 /**
@@ -2844,6 +2957,7 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
   if (form.flatten) {
     forceRegenerateButtonAppearances(pdfForm)
     sanitizeMalformedWidgets(pdf, pdfForm)
+    flattenFreeTextAnnotations(pdf, customFont)
     pdfForm.flatten()
   }
 

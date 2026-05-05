@@ -8,6 +8,7 @@ import { DestinationPicker } from '@/components/ui/destination-picker'
 import { PillButton } from '@/components/ui/pill-button'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
+  SettingsActionButton,
   SettingsSectionLabelSerif as SectionLabel,
   SettingsSubsectionTitle,
 } from './settings-layout'
@@ -26,11 +27,7 @@ function certLabel(key: string): string {
 function DestinationPill({ name }: { name: string }) {
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 font-sans text-[12px] whitespace-nowrap"
-      style={{
-        borderColor: 'var(--pmw-border-warm)',
-        color: 'var(--pmw-near-black)',
-      }}
+      className="inline-flex h-8 items-center gap-1 rounded-full border border-border/80 bg-card px-3 font-serif text-[13px] text-foreground whitespace-nowrap"
     >
       {name}
     </span>
@@ -145,11 +142,7 @@ const COUNTRY_PREVIEW_MAX = 4
 function OverflowPill({ count }: { count: number }) {
   return (
     <span
-      className="inline-flex items-center rounded-sm border px-2 py-0.5 font-sans text-[12px]"
-      style={{
-        borderColor: 'var(--pmw-border-warm)',
-        color: 'var(--pmw-near-black)',
-      }}
+      className="inline-flex h-8 items-center rounded-full border border-border/80 bg-card px-3 font-serif text-[13px] text-foreground whitespace-nowrap"
     >
       +{count}개국
     </span>
@@ -362,14 +355,10 @@ export function DocumentsSection() {
 
         {/* Add new rule — modal trigger */}
         <div className="mt-md flex items-center justify-end">
-          <button
-            type="button"
-            onClick={() => setAddOpen(true)}
-            className="inline-flex items-center gap-1 pmw-st__btn px-3 py-1 rounded-full border border-border/80 hover:bg-muted/40 transition-colors"
-          >
+          <SettingsActionButton onClick={() => setAddOpen(true)}>
             <Plus className="h-3 w-3" />
             규칙 추가
-          </button>
+          </SettingsActionButton>
         </div>
       </section>
 

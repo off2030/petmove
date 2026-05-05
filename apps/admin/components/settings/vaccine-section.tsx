@@ -22,7 +22,11 @@ import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import { SectionHeader } from '@/components/ui/section-header'
-import { SettingsSubsectionTitle } from './settings-layout'
+import {
+  SETTINGS_ACTION_BUTTON_CLASS,
+  SettingsActionButton,
+  SettingsSubsectionTitle,
+} from './settings-layout'
 import { cn } from '@/lib/utils'
 import { useVaccineDefaults } from '@/components/providers/vaccine-data-provider'
 import { updateVaccineDefault } from '@/lib/actions/vaccine-defaults'
@@ -474,36 +478,36 @@ export function VaccineSection({
     >
       {/* Editorial header */}
       <header className="pb-xl">
-        <div className="mb-md flex items-center gap-sm">
-          <SectionHeader>약품</SectionHeader>
+        <div className="mb-md flex items-center justify-between gap-md flex-wrap">
+          <SectionHeader>약품관리</SectionHeader>
           {isAdmin && (
-            <>
+            <div className="flex items-center gap-sm flex-wrap">
               <AttachButton
                 accept="image/*,application/pdf"
                 multiple
                 onFile={(file) => handleImagesGlobal([file])}
                 disabled={extracting}
                 title="이미지·PDF로 AI 추출 (모바일 카메라 시 자동 크롭)"
-                className="translate-y-[2px] text-muted-foreground/60"
+                className={SETTINGS_ACTION_BUTTON_CLASS}
               >
-                <Paperclip className="h-4 w-4" />
+                <Paperclip className="h-3.5 w-3.5" />
+                이미지
               </AttachButton>
-              <button
-                type="button"
+              <SettingsActionButton
                 onClick={() => setPicking(true)}
                 disabled={extracting}
                 title="약품 추가"
-                className="shrink-0 translate-y-[2px] text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
               >
-                <Plus className="h-4 w-4" />
-              </button>
+                <Plus className="h-3.5 w-3.5" />
+                약품 추가
+              </SettingsActionButton>
               {extracting && (
                 <span className="font-serif italic text-[12px] text-muted-foreground">이미지에서 제품 정보를 읽는 중…</span>
               )}
               {dragOver && !extracting && (
                 <span className="font-serif italic text-[12px] text-muted-foreground">놓으면 자동 분류</span>
               )}
-            </>
+            </div>
           )}
         </div>
         <div className="flex gap-lg flex-wrap items-baseline">

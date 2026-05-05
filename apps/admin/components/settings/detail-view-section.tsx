@@ -11,8 +11,8 @@ import {
   SettingsSection,
   SettingsListRow,
   SettingsSubsectionTitle,
+  SettingsToggleButton,
 } from './settings-layout'
-import { cn } from '@/lib/utils'
 import { useDetailViewSettings } from '@/components/providers/detail-view-settings-provider'
 import { DestinationsArea } from './destinations-section'
 import { SharePresetsSection } from './share-presets-section'
@@ -87,10 +87,7 @@ export function DetailViewSection({
 
   return (
     <SettingsShell className="max-w-4xl">
-      <SettingsSection
-        title="상세"
-        description="케이스 상세 페이지의 표시·공유·증명서 구성을 한곳에서 관리합니다."
-      >
+      <SettingsSection title="상세">
         {error && (
           <p className="-mt-md mb-md font-serif text-[13px] text-destructive">저장 실패: {error}</p>
         )}
@@ -103,37 +100,13 @@ export function DetailViewSection({
               title="한·영 병기"
               description='종·품종·모색·성별을 "한글 | 영문" 으로 함께 표시'
             >
-              <button
-                type="button"
-                onClick={toggleBilingual}
-                aria-pressed={allOn}
-                className={cn(
-                  'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
-                  allOn
-                    ? 'border-primary/50 bg-primary/10 text-primary'
-                    : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
-                )}
-              >
-                {allOn ? 'ON' : 'OFF'}
-              </button>
+              <SettingsToggleButton pressed={allOn} onClick={toggleBilingual} />
             </SettingsListRow>
             <SettingsListRow
-              title="담당자 기능"
+              title="담당자 표시"
               description="ON 시 케이스 상세에 담당자 선택 메뉴가 노출되고, 다른 조직에서 멤버 지정해 보낸 전달이 자동 배정됩니다."
             >
-              <button
-                type="button"
-                onClick={toggleAssignee}
-                aria-pressed={assigneeEnabled}
-                className={cn(
-                  'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
-                  assigneeEnabled
-                    ? 'border-primary/50 bg-primary/10 text-primary'
-                    : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
-                )}
-              >
-                {assigneeEnabled ? 'ON' : 'OFF'}
-              </button>
+              <SettingsToggleButton pressed={assigneeEnabled} onClick={toggleAssignee} />
             </SettingsListRow>
           </div>
           <div className="flex items-center justify-end pt-2">

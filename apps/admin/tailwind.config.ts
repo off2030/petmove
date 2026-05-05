@@ -23,8 +23,10 @@ const config: Config = {
     'bg-pmw-chip-red', 'text-pmw-chip-red-foreground',
     'bg-pmw-chip-amber', 'text-pmw-chip-amber-foreground',
     'bg-pmw-chip-olive', 'text-pmw-chip-olive-foreground',
+    'bg-pmw-chip-moss', 'text-pmw-chip-moss-foreground',
     'bg-pmw-chip-blue', 'text-pmw-chip-blue-foreground',
     'bg-pmw-chip-plum', 'text-pmw-chip-plum-foreground',
+    'bg-pmw-chip-mauve', 'text-pmw-chip-mauve-foreground',
     'bg-pmw-chip-neutral', 'text-pmw-chip-neutral-foreground',
   ],
   theme: {
@@ -100,12 +102,14 @@ const config: Config = {
         'pmw-warning':        { DEFAULT: 'hsl(var(--pmw-warning))',         foreground: 'hsl(var(--pmw-warning-fg))' },
         'pmw-warning-bg':     'hsl(var(--pmw-warning-bg))',
         'pmw-info':           'hsl(var(--pmw-info))',
-        // Chip 6-tone universal palette — 검사기관·목적지 chip 통합. 스킨별 자동 분기.
+        // Chip 8-tone universal palette — 검사기관·목적지 chip 통합. 스킨별 자동 분기.
         'pmw-chip-red':     { DEFAULT: 'hsl(var(--pmw-chip-red-bg))',     foreground: 'hsl(var(--pmw-chip-red-fg))' },
         'pmw-chip-amber':   { DEFAULT: 'hsl(var(--pmw-chip-amber-bg))',   foreground: 'hsl(var(--pmw-chip-amber-fg))' },
         'pmw-chip-olive':   { DEFAULT: 'hsl(var(--pmw-chip-olive-bg))',   foreground: 'hsl(var(--pmw-chip-olive-fg))' },
+        'pmw-chip-moss':    { DEFAULT: 'hsl(var(--pmw-chip-moss-bg))',    foreground: 'hsl(var(--pmw-chip-moss-fg))' },
         'pmw-chip-blue':    { DEFAULT: 'hsl(var(--pmw-chip-blue-bg))',    foreground: 'hsl(var(--pmw-chip-blue-fg))' },
         'pmw-chip-plum':    { DEFAULT: 'hsl(var(--pmw-chip-plum-bg))',    foreground: 'hsl(var(--pmw-chip-plum-fg))' },
+        'pmw-chip-mauve':   { DEFAULT: 'hsl(var(--pmw-chip-mauve-bg))',   foreground: 'hsl(var(--pmw-chip-mauve-fg))' },
         'pmw-chip-neutral': { DEFAULT: 'hsl(var(--pmw-chip-neutral-bg))', foreground: 'hsl(var(--pmw-chip-neutral-fg))' },
       },
       borderRadius: {

@@ -7,7 +7,7 @@ import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
-import { listParasiteFamilies, getParasiteFamily, type VaccineLookups } from '@petmove/domain'
+import { listParasiteFamilies, type VaccineLookups } from '@petmove/domain'
 import { useVaccineLookups } from '@/components/providers/vaccine-data-provider'
 import { extractVaccineInfo } from '@/lib/actions/extract-vaccine'
 import { uploadFileToNotes } from '@/lib/notes-upload'
@@ -41,8 +41,6 @@ interface Props {
   hideValidUntil?: boolean // 구충 등 유효기간 불필요한 항목
   /** 광견병 외 접종은 1년 고정. 셀렉터 비활성, 표시만 "1년". */
   lockOneYearValidity?: boolean
-  /** Sibling parasite kind data key (for combo sync). e.g. external→internal */
-  siblingKey?: string
 }
 
 /** Normalize: string[] or VacRecord[] or legacy flat key → VacRecord[] */
@@ -178,7 +176,7 @@ function parasiteKindFromLabel(label: string): 'external' | 'internal' | 'heartw
   return null
 }
 
-export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey, hideValidUntil, lockOneYearValidity, siblingKey }: Props) {
+export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey, hideValidUntil, lockOneYearValidity }: Props) {
   const { updateLocalCaseField, replaceLocalCaseData } = useCases()
   const editMode = useSectionEditMode()
   const confirm = useConfirm()
@@ -279,22 +277,6 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     }
   }
 
-  /** Persist updates to the sibling parasite array (combo sync). */
-  async function saveSiblingRecords(next: VacRecord[]) {
-    if (!siblingKey) return
-    const val = next.length > 0 ? next : null
-    // Optimistic — UI 즉시 반영.
-    updateLocalCaseField(caseId, 'data', siblingKey, val)
-    void updateCaseField(caseId, 'data', siblingKey, val)
-  }
-
-  function readSiblingRecords(): VacRecord[] {
-    if (!siblingKey) return []
-    const raw = data[siblingKey]
-    if (!Array.isArray(raw)) return []
-    return raw.map(item => (typeof item === 'string' ? { date: item } : (item as VacRecord)))
-  }
-
   async function deleteRecord(idx: number) {
     const removed = records[idx]
     const ok = await confirm({
@@ -305,32 +287,12 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     if (!ok) return
     const next = records.filter((_, i) => i !== idx)
     // useTransition 없이 직접 호출 — saveRecords 의 optimistic update 가 즉시 반영.
-    void (async () => {
-      await saveRecords(next)
-      // If the deleted entry was a combo product, remove its mirror on the other side.
-      if (removed?.product_id && getParasiteFamily(removed.product_id)?.kind === 'combo' && siblingKey) {
-        const sib = readSiblingRecords()
-        const sibNext = sib.filter(r => !(r.date === removed.date && r.product_id === removed.product_id))
-        if (sibNext.length !== sib.length) await saveSiblingRecords(sibNext)
-      }
-    })()
+    saveRecords(next).catch(() => {})
   }
 
   function updateRecordDate(idx: number, value: string) {
-    const target = records[idx]
-    const oldDate = target?.date
     const next = records.map((r, i) => i === idx ? { ...r, date: value } : r)
-    void (async () => {
-      await saveRecords(next)
-      // Keep combo mirror's date in sync.
-      if (target?.product_id && getParasiteFamily(target.product_id)?.kind === 'combo' && siblingKey) {
-        const sib = readSiblingRecords()
-        const sibNext = sib.map(r =>
-          r.product_id === target.product_id && r.date === oldDate ? { ...r, date: value } : r,
-        )
-        if (JSON.stringify(sibNext) !== JSON.stringify(sib)) await saveSiblingRecords(sibNext)
-      }
-    })()
+    saveRecords(next).catch(() => {})
     setEditIdx(null)
   }
 
@@ -364,40 +326,18 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     saveRecords(next).catch(() => {})
   }
 
-  /** Apply a parasite product family selection. Handles combo sync to sibling array. */
+  /** Apply a parasite product family selection. */
   function updateProductId(idx: number, newProductId: string | null) {
-    const target = records[idx]
-    if (!target) return
-    const oldFamily = target.product_id ? getParasiteFamily(target.product_id) : null
-    const newFamily = newProductId ? getParasiteFamily(newProductId) : null
+    if (!records[idx]) return
 
     // Clear product/manufacturer/lot/expiry overrides so hints take over for the new product.
     const next = records.map((r, i) => i === idx
       ? { date: r.date, valid_until: r.valid_until ?? null, product_id: newProductId }
       : r)
 
-    void (async () => {
-      await saveRecords(next)
-      if (!siblingKey) { setDetailEdit(null); return }
-
-      const sib = readSiblingRecords()
-      let sibNext = sib
-
-      // If the previous selection was combo, remove its mirror on the other side.
-      if (oldFamily?.kind === 'combo' && oldFamily.id !== newFamily?.id) {
-        sibNext = sibNext.filter(r => !(r.date === target.date && r.product_id === oldFamily.id))
-      }
-
-      // If the new selection is combo, ensure a mirror entry exists on the other side.
-      if (newFamily?.kind === 'combo') {
-        // Replace any existing entry with the same date on sibling (per "교체" policy).
-        sibNext = sibNext.filter(r => r.date !== target.date)
-        sibNext.push({ date: target.date, product_id: newFamily.id })
-      }
-
-      if (sibNext !== sib) await saveSiblingRecords(sibNext)
-      setDetailEdit(null)
-    })()
+    saveRecords(next)
+      .catch(() => {})
+      .finally(() => setDetailEdit(null))
   }
 
   function saveNewDate(value: string) {

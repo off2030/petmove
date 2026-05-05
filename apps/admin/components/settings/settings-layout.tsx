@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils'
 import { SectionHeader } from '@/components/ui/section-header'
+import { Check, Search, X } from 'lucide-react'
 
 /**
  * 설정 화면 공통 골격. 점진 마이그레이션용 — 일단 export 만 두고
@@ -59,6 +60,109 @@ export function SettingsSection({
       </header>
       {children}
     </section>
+  )
+}
+
+export function SettingsSearchInput({
+  value,
+  onChange,
+  placeholder = '검색',
+  className,
+}: {
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  className?: string
+}) {
+  return (
+    <div className={cn('relative', className)}>
+      <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="h-11 w-full pl-10 pr-9 text-[15px] bg-popover text-foreground shadow-none border border-border/80 rounded-full focus-visible:outline-none focus-visible:ring-0 focus-visible:border-foreground/40 placeholder:text-muted-foreground/60"
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors"
+          aria-label="검색어 지우기"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  )
+}
+
+export const SETTINGS_ACTION_BUTTON_CLASS =
+  'inline-flex h-8 items-center gap-1 rounded-full border border-border/80 bg-card px-3 font-serif text-[13px] text-foreground transition-colors hover:border-foreground/40 hover:bg-muted/40 disabled:opacity-40 disabled:cursor-not-allowed'
+
+export function SettingsActionButton({
+  children,
+  className,
+  type = 'button',
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      type={type}
+      className={cn(SETTINGS_ACTION_BUTTON_CLASS, className)}
+      {...props}
+    >
+      {children}
+    </button>
+  )
+}
+
+export function SettingsToggleButton({
+  pressed,
+  children,
+  className,
+  type = 'button',
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  pressed: boolean
+}) {
+  return (
+    <button
+      type={type}
+      aria-pressed={pressed}
+      className={cn(
+        'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
+        pressed
+          ? 'border-primary/50 bg-primary/10 text-primary'
+          : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+        className,
+      )}
+      {...props}
+    >
+      {children ?? (pressed ? 'ON' : 'OFF')}
+    </button>
+  )
+}
+
+export function SettingsCheckBox({
+  checked,
+  className,
+}: {
+  checked: boolean
+  className?: string
+}) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'inline-flex h-4 w-4 items-center justify-center rounded-sm border transition-colors',
+        checked ? 'border-foreground/60 bg-foreground/5' : 'border-border/80 bg-transparent',
+        className,
+      )}
+    >
+      {checked && <Check className="h-3 w-3 text-foreground" strokeWidth={2.5} />}
+    </span>
   )
 }
 

@@ -1,7 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { SettingsShell, SettingsSection, SettingsSubsectionTitle } from './settings-layout'
+import { RotateCcw } from 'lucide-react'
+import {
+  SettingsActionButton,
+  SettingsSearchInput,
+  SettingsShell,
+  SettingsSection,
+  SettingsSubsectionTitle,
+} from './settings-layout'
 import { cn } from '@/lib/utils'
 import {
   listReceivedTransfers,
@@ -39,20 +46,44 @@ export function TransfersSection() {
   const [sent, setSent] = useState<TransferWithContext[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
 
-  async function refresh() {
+  async function load(searchText: string) {
     setLoading(true)
     setError(null)
     const [r, s] = await Promise.all([
-      listReceivedTransfers(),
-      listSentTransfers(),
+      listReceivedTransfers(searchText),
+      listSentTransfers(searchText),
     ])
     if (r.ok) setReceived(r.value); else setError(r.error)
     if (s.ok) setSent(s.value); else setError((prev) => prev ?? s.error)
     setLoading(false)
   }
 
-  useEffect(() => { refresh() }, [])
+  function refresh() {
+    void load(query)
+  }
+
+  useEffect(() => {
+    let cancelled = false
+    const id = window.setTimeout(() => {
+      setLoading(true)
+      setError(null)
+      void Promise.all([
+        listReceivedTransfers(query),
+        listSentTransfers(query),
+      ]).then(([r, s]) => {
+        if (cancelled) return
+        if (r.ok) setReceived(r.value); else setError(r.error)
+        if (s.ok) setSent(s.value); else setError((prev) => prev ?? s.error)
+        setLoading(false)
+      })
+    }, query.trim() ? 250 : 0)
+    return () => {
+      cancelled = true
+      window.clearTimeout(id)
+    }
+  }, [query])
 
   const pendingCount = useMemo(
     () => received?.filter((t) => t.status === 'pending').length ?? 0,
@@ -61,32 +92,34 @@ export function TransfersSection() {
 
   return (
     <SettingsShell>
-      <SettingsSection
-        title="전달"
-        description="다른 조직으로 보낸 / 받은 케이스 전달 내역을 관리합니다."
-      >
+      <SettingsSection title="전달">
         {error && (
           <p className="-mt-md mb-md font-serif text-[13px] text-destructive">{error}</p>
         )}
+
+        <SettingsSearchInput
+          value={query}
+          onChange={setQuery}
+          placeholder="고객, 반려동물, 조직, 메모, 마이크로칩 검색"
+          className="mb-lg"
+        />
 
         {/* 보낸 전달 */}
         <section className="mb-2xl">
           <div className="flex items-baseline justify-between mb-2">
             <SettingsSubsectionTitle>보낸 전달</SettingsSubsectionTitle>
-            <button
-              type="button"
-              onClick={refresh}
-              disabled={loading}
-              className="font-mono text-[10.5px] uppercase tracking-[1.2px] text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
-            >
+            <SettingsActionButton onClick={refresh} disabled={loading}>
+              <RotateCcw className="h-3.5 w-3.5" />
               새로고침
-            </button>
+            </SettingsActionButton>
           </div>
           <div className="border-t border-border/80">
             {loading ? (
               <p className="font-serif italic text-[14px] text-muted-foreground py-4">불러오는 중…</p>
             ) : !sent || sent.length === 0 ? (
-              <p className="font-serif italic text-[14px] text-muted-foreground py-4">보낸 전달이 없습니다.</p>
+              <p className="font-serif italic text-[14px] text-muted-foreground py-4">
+                {query.trim() ? '검색 결과가 없습니다.' : '보낸 전달이 없습니다.'}
+              </p>
             ) : (
               sent.map((t) => (
                 <SentRow
@@ -116,7 +149,9 @@ export function TransfersSection() {
             {loading ? (
               <p className="font-serif italic text-[14px] text-muted-foreground py-4">불러오는 중…</p>
             ) : !received || received.length === 0 ? (
-              <p className="font-serif italic text-[14px] text-muted-foreground py-4">받은 전달이 없습니다.</p>
+              <p className="font-serif italic text-[14px] text-muted-foreground py-4">
+                {query.trim() ? '검색 결과가 없습니다.' : '받은 전달이 없습니다.'}
+              </p>
             ) : (
               received.map((t) => (
                 <ReceivedRow

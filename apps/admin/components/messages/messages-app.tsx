@@ -426,11 +426,14 @@ export function MessagesApp({
 
 function EmptyState() {
   return (
-    <div className="h-full flex items-center justify-center text-muted-foreground">
-      <div className="text-center">
-        <p className="font-serif text-[18px]">대화를 선택하세요</p>
-        <p className="font-mono text-[12px] mt-1 text-muted-foreground/70">
-          왼쪽 상단의 + 버튼으로 새 대화를 시작할 수 있습니다
+    <div className="h-full flex items-center justify-center px-md">
+      <div className="text-center max-w-[420px]">
+        <p className="font-serif italic text-[26px] leading-snug text-foreground/80">
+          “대화를 선택하세요.”
+        </p>
+        <div className="mx-auto mt-md w-10 border-t border-pmw-accent/60" />
+        <p className="mt-md font-mono text-[10px] tracking-[0.22em] uppercase text-muted-foreground/60">
+          왼쪽 상단 + 로 새 대화 시작
         </p>
       </div>
     </div>
@@ -557,9 +560,10 @@ function ConversationRow({
 }) {
   const displayName = displayNameFor(conv)
   const isGroup = conv.participants.length >= 2
-  const subtitle = isGroup ? null : conv.participants[0]?.org_name ?? null
+  const orgLabel = isGroup ? `${conv.participants.length}명 그룹` : conv.participants[0]?.org_name ?? null
   const avatarLabel = avatarInitial(displayName || '?')
   const avatarImage = isGroup ? null : conv.participants[0]?.avatar_url ?? null
+  const timeLabel = conv.last_message_at ? formatTime(conv.last_message_at) : null
   return (
     <button
       type="button"
@@ -575,12 +579,14 @@ function ConversationRow({
         <Avatar label={avatarLabel} imageUrl={avatarImage} tone="sage" />
       </span>
       <span className="flex-1 min-w-0">
-        <span className="block font-serif text-[15px] text-foreground truncate leading-normal">
+        <span className="block font-serif text-[15px] font-medium text-foreground truncate leading-tight">
           {displayName}
         </span>
-        {subtitle && (
-          <span className="block font-serif italic text-[12px] text-muted-foreground truncate leading-normal mt-0.5">
-            {subtitle}
+        {(orgLabel || timeLabel) && (
+          <span className="mt-1 block font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground/70 truncate leading-tight">
+            {orgLabel}
+            {orgLabel && timeLabel && <span className="mx-1.5 text-muted-foreground/40">·</span>}
+            {timeLabel && <span suppressHydrationWarning>{timeLabel}</span>}
           </span>
         )}
       </span>
@@ -1090,6 +1096,15 @@ function ThreadPane({
   const headerAvatarLabel = avatarInitial(isGroup ? headerTitle : otherDisplayName || '?')
   const headerAvatarImage = isGroup ? null : other?.avatar_url ?? null
   const headerSubtitle = isGroup ? `${totalCount}명` : other?.org_name ?? null
+  // 매거진 article header — "SINCE 2026-04-12" 캡스 메타라인.
+  const sinceLabel = useMemo(() => {
+    if (!conv.created_at) return null
+    const d = new Date(conv.created_at)
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `Since ${y}-${m}-${day}`
+  }, [conv.created_at])
 
   const readsByUser = useMemo(() => {
     const map = new Map<string, string>()
@@ -1267,7 +1282,7 @@ function ThreadPane({
               title="이름 변경"
             >
               <span className="flex items-center gap-1 min-w-0">
-                <span className="font-serif text-[16px] text-foreground truncate leading-normal min-w-0">
+                <span className="font-serif text-[18px] font-medium text-foreground truncate leading-tight min-w-0">
                   {headerTitle}
                 </span>
                 <Pencil
@@ -1275,9 +1290,11 @@ function ThreadPane({
                   className="shrink-0 text-muted-foreground/40 opacity-0 group-hover/name:opacity-100 transition-opacity"
                 />
               </span>
-              {headerSubtitle && (
-                <span className="font-serif italic text-[12px] text-muted-foreground truncate leading-normal mt-0.5">
+              {(headerSubtitle || sinceLabel) && (
+                <span className="mt-1 block font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground/70 truncate leading-tight">
                   {headerSubtitle}
+                  {headerSubtitle && sinceLabel && <span className="mx-1.5 text-muted-foreground/40">·</span>}
+                  {sinceLabel}
                 </span>
               )}
             </button>
@@ -1717,7 +1734,7 @@ const MessageItem = memo(function MessageItem({
           <div
             data-bubble={isOwn ? 'own' : 'other'}
             className={cn(
-              'max-w-[70%] rounded-2xl px-3 py-1.5',
+              'max-w-[70%] rounded-md px-3 py-1.5',
               isOwn
                 ? 'bg-pmw-accent text-pmw-accent-foreground'
                 : 'bg-muted text-foreground',
@@ -1742,7 +1759,7 @@ const MessageItem = memo(function MessageItem({
         )}
         <div
           className={cn(
-            'shrink-0 flex items-center gap-1 pb-0.5 font-mono text-[10px] text-muted-foreground/60 whitespace-nowrap',
+            'shrink-0 flex items-center gap-1 pb-0.5 font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground/60 whitespace-nowrap',
             isOwn && 'flex-row-reverse',
           )}
         >
@@ -1901,12 +1918,12 @@ function Composer({
           </button>
         </div>
       )}
-      <div className="flex items-end gap-1 rounded-full bg-popover border border-border/80 pl-1 pr-1 py-1">
+      <div className="flex items-end gap-1 rounded-md bg-popover border border-border/80 pl-1 pr-1 py-1 focus-within:border-pmw-accent/60 transition-colors">
         <AttachButton
           onFile={handleFile}
           disabled={uploading || !!attachment}
           title="파일 첨부 (최대 25MB)"
-          className="h-8 w-8 rounded-full"
+          className="h-8 w-8 rounded-md"
         />
         <textarea
           ref={taRef}
@@ -1928,17 +1945,19 @@ function Composer({
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
-          className="flex-1 resize-none bg-transparent px-1 py-1.5 text-[14px] text-foreground focus-visible:outline-none max-h-32 scrollbar-minimal disabled:opacity-60 placeholder:text-muted-foreground/60"
+          className="flex-1 resize-none bg-transparent px-2 py-1.5 text-[14px] text-foreground focus-visible:outline-none max-h-32 scrollbar-minimal disabled:opacity-60 placeholder:text-muted-foreground/60 placeholder:italic"
         />
         <button
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={send}
           disabled={pending || uploading || (!text.trim() && !attachment)}
-          className="shrink-0 inline-flex items-center justify-center h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40"
+          className="shrink-0 inline-flex items-center justify-center h-8 px-3 rounded-md border border-pmw-accent/60 text-pmw-accent hover:bg-pmw-accent hover:text-pmw-accent-foreground transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-pmw-accent font-mono text-[10px] tracking-[0.18em] uppercase"
           aria-label="전송"
+          title="전송 (Enter)"
         >
-          <Send size={16} />
+          <Send size={13} className="mr-1" />
+          <span>Send</span>
         </button>
       </div>
     </div>
