@@ -2,8 +2,13 @@ import type { CaseRow } from '../types'
 
 export type CheckSeverity = 'blocker' | 'warning' | 'info'
 
-/** destination-config 의 키와 동일. 'all' 은 전 국가 공통. */
-export type CountryKey = string | 'all'
+/**
+ * destination-config 의 키와 동일.
+ * - 단일 문자열: 한 국가 전용 (예: 'japan')
+ * - 배열: 같은 규칙을 여러 국가에 등록 (예: EU 패밀리 ['eu','uk','switzerland',...])
+ * - 'all': 전 국가 공통
+ */
+export type CountryKey = string | string[] | 'all'
 
 export interface ProcedureCheck {
   /** 전역 유일 id. `<국가코드>.<이름>` 형식 권장. 예: 'jp.rabies-titer-validity' */

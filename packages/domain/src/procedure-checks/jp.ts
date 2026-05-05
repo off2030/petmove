@@ -1,5 +1,13 @@
-import type { CaseRow } from '../types'
-import type { CheckResult, ProcedureCheck } from './types'
+import type { ProcedureCheck } from './types'
+import {
+  addOneYear,
+  addYears,
+  daysBetween,
+  readRabiesEntries,
+  readTiterEntries,
+  resolveValidUntil,
+  SKIP,
+} from './utils'
 
 /**
  * 일본 수출 관련 절차 검증.
@@ -13,78 +21,6 @@ import type { CheckResult, ProcedureCheck } from './types'
  * 3) run 있으면 실제 검증, 없으면 카탈로그 표시만
  * 4) offendingPaths 로 문제 필드 경로를 알려주면 상세페이지에서 색상·툴팁 표시
  */
-
-interface RabiesEntry {
-  date: string
-  valid_until?: string | null
-  originalIndex: number
-}
-
-interface TiterEntry {
-  date: string
-  originalIndex: number
-}
-
-function readRabiesEntries(caseRow: CaseRow): RabiesEntry[] {
-  const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const raw = data.rabies_dates
-  if (!Array.isArray(raw)) return []
-  return raw
-    .map((r, originalIndex) => {
-      const rec = typeof r === 'string' ? { date: r } : (r as { date?: string; valid_until?: string | null })
-      return { date: rec.date ?? '', valid_until: rec.valid_until ?? null, originalIndex }
-    })
-    .filter((r) => typeof r.date === 'string' && r.date.length >= 10)
-    .sort((a, b) => a.date.localeCompare(b.date))
-}
-
-function readTiterEntries(caseRow: CaseRow): TiterEntry[] {
-  const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const raw = data.rabies_titer_records
-  if (!Array.isArray(raw)) return []
-  return raw
-    .map((r, originalIndex) => {
-      const rec = r as { date?: string | null }
-      return { date: rec?.date ?? '', originalIndex }
-    })
-    .filter((r) => typeof r.date === 'string' && r.date.length >= 10)
-}
-
-/** 면역 유효기간 끝 ('YYYY-MM-DD'). valid_until 있으면 그대로, 없으면 date + 1년. */
-function resolveValidUntil(date: string, validUntil?: string | null): string {
-  return validUntil || addOneYear(date)
-}
-
-/**
- * 'YYYY-MM-DD' + N년 유효기간의 **마지막 유효일** 반환.
- * 달력 +N년 후 동일 MM-DD 에서 하루 뺌 (윤년 처리됨).
- * 예: 2026-01-01 +1년 → 2026-12-31, +2년 → 2027-12-31.
- */
-function addYears(dateStr: string, n: number): string {
-  const parts = dateStr.split('-')
-  if (parts.length < 3) return ''
-  const d = new Date(`${parseInt(parts[0], 10) + n}-${parts[1]}-${parts[2]}T00:00:00Z`)
-  if (isNaN(d.getTime())) return ''
-  d.setUTCDate(d.getUTCDate() - 1)
-  const y = d.getUTCFullYear()
-  const m = String(d.getUTCMonth() + 1).padStart(2, '0')
-  const day = String(d.getUTCDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
-function addOneYear(dateStr: string): string {
-  return addYears(dateStr, 1)
-}
-
-function daysBetween(aISO: string, bISO: string): number | null {
-  const a = new Date(aISO).getTime()
-  const b = new Date(bISO).getTime()
-  if (isNaN(a) || isNaN(b)) return null
-  return Math.round((b - a) / 86400000)
-}
-
-/** 필수 입력이 누락된 경우 사용할 결과 — 통과로 간주해 어떤 표시도 안 함. */
-const SKIP: CheckResult = { ok: true, message: '입력 대기 — 검증 대상 아님' }
 
 export const JP_CHECKS: ProcedureCheck[] = [
   {

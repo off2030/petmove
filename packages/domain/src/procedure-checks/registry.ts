@@ -1,5 +1,8 @@
+import { AU_CHECKS } from './au'
+import { EU_CHECKS } from './eu'
 import { JP_CHECKS } from './jp'
-import type { CheckContext, CheckResult, ProcedureCheck } from './types'
+import { SG_CHECKS } from './sg'
+import type { CheckContext, CheckResult, CountryKey, ProcedureCheck } from './types'
 
 /**
  * 모든 절차 검증의 단일 레지스트리.
@@ -10,20 +13,38 @@ import type { CheckContext, CheckResult, ProcedureCheck } from './types'
  */
 export const ALL_PROCEDURE_CHECKS: ProcedureCheck[] = [
   ...JP_CHECKS,
+  ...SG_CHECKS,
+  ...EU_CHECKS,
+  ...AU_CHECKS,
 ]
 
-/** 국가 키로 그룹화. 'all' 은 공통. */
+/** check 의 country 가 target 키에 매칭되는지. 'all' 또는 배열에 포함되면 true. */
+export function checkAppliesTo(checkCountry: CountryKey, target: string): boolean {
+  if (checkCountry === 'all') return true
+  if (Array.isArray(checkCountry)) return checkCountry.includes(target)
+  return checkCountry === target
+}
+
+/** 한 체크가 등록된 모든 국가 키 (단일 → [k], 배열 → 그대로, 'all' → ['all']). */
+export function checkCountryKeys(checkCountry: CountryKey): string[] {
+  if (Array.isArray(checkCountry)) return checkCountry
+  return [checkCountry]
+}
+
+/** 국가 키로 그룹화. 'all' 은 공통. 다중 국가 규칙은 각 국가에 모두 등록됨. */
 export function groupChecksByCountry(): Record<string, ProcedureCheck[]> {
   const out: Record<string, ProcedureCheck[]> = {}
   for (const c of ALL_PROCEDURE_CHECKS) {
-    ;(out[c.country] ??= []).push(c)
+    for (const k of checkCountryKeys(c.country)) {
+      ;(out[k] ??= []).push(c)
+    }
   }
   return out
 }
 
 /** 특정 국가 케이스에 적용될 체크 = 해당 국가 + 'all'. */
 export function getChecksForCountry(country: string): ProcedureCheck[] {
-  return ALL_PROCEDURE_CHECKS.filter((c) => c.country === country || c.country === 'all')
+  return ALL_PROCEDURE_CHECKS.filter((c) => checkAppliesTo(c.country, country))
 }
 
 /** run 이 정의된 체크만 실행하고 결과 반환. */
