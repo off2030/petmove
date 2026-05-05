@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 import {
@@ -14,6 +14,7 @@ import {
 import {
   SettingsActionButton,
   SettingsCheckBox,
+  SettingsSearchInput,
   SettingsShell,
   SettingsSection,
   SettingsSubsectionTitle,
@@ -90,6 +91,44 @@ interface DeletedRecord {
   at: number
 }
 
+type StatusFilter = 'all' | 'enabled' | 'disabled'
+
+const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
+  { value: 'all', label: '전체' },
+  { value: 'enabled', label: '활성' },
+  { value: 'disabled', label: '비활성' },
+]
+
+function searchTokens(query: string): string[] {
+  return query.trim().toLowerCase().split(/\s+/).filter(Boolean)
+}
+
+function fieldOrder(key: string): number {
+  const index = FIELD_OPTIONS.findIndex((f) => f.key === key)
+  return index === -1 ? FIELD_OPTIONS.length : index
+}
+
+function destinationScopeOrder(key: string): number {
+  return key === 'all' ? -1 : 0
+}
+
+function ruleSearchText(rule: AutoFillRule): string {
+  return [
+    rule.destination_key,
+    destLabel(rule.destination_key),
+    rule.species_filter ?? 'all',
+    speciesLabel(rule.species_filter ?? 'all'),
+    rule.trigger_field,
+    fieldLabel(rule.trigger_field),
+    rule.target_field,
+    fieldLabel(rule.target_field),
+    formatOffsets(rule.offsets_days),
+    rule.offsets_days.join(' '),
+    rule.enabled ? '활성 enabled on' : '비활성 disabled off',
+    rule.overwrite_existing ? '덮어쓰기 overwrite' : '',
+  ].join(' ').toLowerCase()
+}
+
 export function AutomationSection({
   isAdmin = false,
   initialRules = null,
@@ -103,6 +142,8 @@ export function AutomationSection({
   const [pending, startTransition] = useTransition()
   const [editing, setEditing] = useState<AutoFillRule | 'new' | null>(null)
   const [deletedStack, setDeletedStack] = useState<DeletedRecord[]>([])
+  const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
 
   async function refresh() {
     const r = await listOrgAutoFillRules()
@@ -178,13 +219,44 @@ export function AutomationSection({
     })
   }
 
-  // Group by destination
-  const grouped = new Map<string, AutoFillRule[]>()
-  for (const r of rules) {
-    if (!grouped.has(r.destination_key)) grouped.set(r.destination_key, [])
-    grouped.get(r.destination_key)!.push(r)
-  }
-  const sortedDests = Array.from(grouped.keys()).sort((a, b) => destLabel(a).localeCompare(destLabel(b), 'ko'))
+  const filteredRules = useMemo(() => {
+    const tokens = searchTokens(query)
+    return [...rules]
+      .filter((rule) => {
+        if (statusFilter === 'enabled' && !rule.enabled) return false
+        if (statusFilter === 'disabled' && rule.enabled) return false
+        if (tokens.length === 0) return true
+        const text = ruleSearchText(rule)
+        return tokens.every((token) => text.includes(token))
+      })
+      .sort((a, b) => {
+        if (a.enabled !== b.enabled) return a.enabled ? -1 : 1
+        const scope = destinationScopeOrder(a.destination_key) - destinationScopeOrder(b.destination_key)
+        if (scope !== 0) return scope
+        const dest = destLabel(a.destination_key).localeCompare(destLabel(b.destination_key), 'ko')
+        if (dest !== 0) return dest
+        const trigger = fieldOrder(a.trigger_field) - fieldOrder(b.trigger_field)
+        if (trigger !== 0) return trigger
+        const target = fieldLabel(a.target_field).localeCompare(fieldLabel(b.target_field), 'ko')
+        if (target !== 0) return target
+        return a.display_order - b.display_order
+      })
+  }, [query, rules, statusFilter])
+
+  const grouped = useMemo(() => {
+    const out = new Map<string, AutoFillRule[]>()
+    for (const r of filteredRules) {
+      if (!out.has(r.destination_key)) out.set(r.destination_key, [])
+      out.get(r.destination_key)!.push(r)
+    }
+    return out
+  }, [filteredRules])
+
+  const sortedDests = Array.from(grouped.keys()).sort((a, b) => {
+    const scope = destinationScopeOrder(a) - destinationScopeOrder(b)
+    if (scope !== 0) return scope
+    return destLabel(a).localeCompare(destLabel(b), 'ko')
+  })
 
   return (
     <SettingsShell size="lg">
@@ -193,12 +265,29 @@ export function AutomationSection({
           <p className="-mt-md mb-md font-serif text-[13px] text-destructive">{error}</p>
         )}
 
+        <div className="mb-md space-y-2">
+          <div className="flex items-center gap-sm">
+            <SettingsSearchInput
+              value={query}
+              onChange={setQuery}
+              placeholder="트리거, 대상 필드, 목적지 검색"
+              className="flex-1"
+            />
+            <StatusFilterPills value={statusFilter} onChange={setStatusFilter} />
+          </div>
+          <p className="pmw-st__sec-lead px-1">
+            검색 대상: 트리거 필드, 대상 필드, 목적지, 종, 오프셋, 활성 상태. 공백으로 여러 단어를 넣으면 모두 포함된 규칙만 보여줍니다.
+          </p>
+        </div>
+
         {loading ? (
           <p className="font-serif italic text-[14px] text-muted-foreground">불러오는 중…</p>
         ) : rules.length === 0 ? (
           <p className="font-serif italic text-[14px] text-muted-foreground/60 mb-md">
             아직 등록된 규칙이 없습니다.
           </p>
+        ) : filteredRules.length === 0 ? (
+          <p className="pmw-st__sec-lead py-md">검색 결과 없음.</p>
         ) : (
           sortedDests.map((dk) => (
             <section key={dk} className="mb-xl">
@@ -298,6 +387,34 @@ export function AutomationSection({
         )}
       </SettingsSection>
     </SettingsShell>
+  )
+}
+
+function StatusFilterPills({
+  value,
+  onChange,
+}: {
+  value: StatusFilter
+  onChange: (value: StatusFilter) => void
+}) {
+  return (
+    <div className="flex shrink-0 items-center gap-1 rounded-full border border-border/80 bg-card p-1">
+      {STATUS_FILTERS.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          onClick={() => onChange(option.value)}
+          className={cn(
+            'h-8 rounded-full px-3 font-serif text-[13px] transition-colors',
+            value === option.value
+              ? 'bg-foreground text-background'
+              : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
   )
 }
 

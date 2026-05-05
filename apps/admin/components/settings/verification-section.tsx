@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
-import { ChevronDown } from 'lucide-react'
-import { ALL_PROCEDURE_CHECKS } from '@petmove/domain'
+import { useEffect, useMemo, useState, useTransition } from 'react'
+import { ALL_PROCEDURE_CHECKS, checkCountryKeys } from '@petmove/domain'
 import type { ProcedureCheck } from '@petmove/domain'
 import {
   SettingsCheckBox,
@@ -22,6 +21,11 @@ const COUNTRY_LABELS: Record<string, string> = {
   australia: '호주',
   new_zealand: '뉴질랜드',
   uk: '영국',
+  switzerland: '스위스',
+  ireland: '아일랜드',
+  malta: '몰타',
+  norway: '노르웨이',
+  finland: '핀란드',
   usa: '미국',
   canada: '캐나다',
   china: '중국',
@@ -32,11 +36,56 @@ function countryLabel(k: string): string {
   return COUNTRY_LABELS[k] ?? k
 }
 
-type SortKey = 'added' | 'title'
+type StatusFilter = 'all' | 'enabled' | 'disabled'
+
+const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
+  { value: 'all', label: '전체' },
+  { value: 'enabled', label: '활성' },
+  { value: 'disabled', label: '비활성' },
+]
+
+const SEVERITY_LABELS: Record<string, string> = {
+  blocker: '필수 오류 차단',
+  warning: '경고',
+  info: '안내 정보',
+}
+
+const SEVERITY_ORDER: Record<string, number> = {
+  blocker: 0,
+  warning: 1,
+  info: 2,
+}
+
+const CATEGORY_ORDER = ['마이크로칩', '광견병', '접종', '검사', '서류', '일정', '출국']
+
+function searchTokens(query: string): string[] {
+  return query.trim().toLowerCase().split(/\s+/).filter(Boolean)
+}
+
+function categoryOrder(category: string): number {
+  const index = CATEGORY_ORDER.findIndex((keyword) => category.includes(keyword))
+  return index === -1 ? CATEGORY_ORDER.length : index
+}
+
+function checkSearchText(check: ProcedureCheck, enabled: boolean): string {
+  const keys = checkCountryKeys(check.country)
+  const labels = keys.map(countryLabel)
+  return [
+    check.title,
+    check.description,
+    check.category,
+    check.id,
+    ...keys,
+    ...labels,
+    check.severity,
+    SEVERITY_LABELS[check.severity] ?? check.severity,
+    enabled ? '활성 enabled on' : '비활성 disabled off',
+  ].join(' ').toLowerCase()
+}
 
 export function VerificationSection({ isSuperAdmin = false }: { isSuperAdmin?: boolean } = {}) {
-  const [sort, setSort] = useState<SortKey>('added')
   const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [disabled, setDisabled] = useState<Set<string>>(() => new Set())
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
@@ -77,23 +126,35 @@ export function VerificationSection({ isSuperAdmin = false }: { isSuperAdmin?: b
   }
 
   const grouped = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    const filtered = q
-      ? ALL_PROCEDURE_CHECKS.filter((c) =>
-          [c.title, c.description, c.category, c.id].some((s) => s.toLowerCase().includes(q)),
-        )
-      : ALL_PROCEDURE_CHECKS
+    const tokens = searchTokens(query)
+    const filtered = ALL_PROCEDURE_CHECKS.filter((check) => {
+      const enabled = !disabled.has(check.id)
+      if (statusFilter === 'enabled' && !enabled) return false
+      if (statusFilter === 'disabled' && enabled) return false
+      if (tokens.length === 0) return true
+      const text = checkSearchText(check, enabled)
+      return tokens.every((token) => text.includes(token))
+    })
     const out: Record<string, ProcedureCheck[]> = {}
-    for (const c of filtered) (out[c.country] ??= []).push(c)
+    for (const c of filtered) {
+      for (const k of checkCountryKeys(c.country)) {
+        ;(out[k] ??= []).push(c)
+      }
+    }
     for (const list of Object.values(out)) {
-      list.sort((a, b) =>
-        sort === 'added'
-          ? b.addedAt.localeCompare(a.addedAt)
-          : a.title.localeCompare(b.title, 'ko'),
-      )
+      list.sort((a, b) => {
+        const aEnabled = !disabled.has(a.id)
+        const bEnabled = !disabled.has(b.id)
+        if (aEnabled !== bEnabled) return aEnabled ? -1 : 1
+        const severity = SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]
+        if (severity !== 0) return severity
+        const category = categoryOrder(a.category) - categoryOrder(b.category)
+        if (category !== 0) return category
+        return a.title.localeCompare(b.title, 'ko')
+      })
     }
     return out
-  }, [sort, query])
+  }, [disabled, query, statusFilter])
 
   const countries = Object.keys(grouped).sort((a, b) => {
     if (a === 'all') return -1
@@ -110,9 +171,19 @@ export function VerificationSection({ isSuperAdmin = false }: { isSuperAdmin?: b
           <p className="-mt-md mb-md font-serif text-[13px] text-destructive">저장 실패: {error}</p>
         )}
 
-        <div className="flex items-center gap-sm mb-md">
-          <SettingsSearchInput value={query} onChange={setQuery} className="flex-1" />
-          <SortDropdown value={sort} onChange={setSort} />
+        <div className="mb-md space-y-2">
+          <div className="flex items-center gap-sm">
+            <SettingsSearchInput
+              value={query}
+              onChange={setQuery}
+              placeholder="규칙명, 메시지, 목적지 검색"
+              className="flex-1"
+            />
+            <StatusFilterPills value={statusFilter} onChange={setStatusFilter} />
+          </div>
+          <p className="pmw-st__sec-lead px-1">
+            검색 대상: 규칙명, 설명 메시지, 목적지, 절차명, 심각도, 활성 상태. 공백으로 여러 단어를 넣으면 모두 포함된 규칙만 보여줍니다.
+          </p>
         </div>
 
         {total === 0 ? (
@@ -163,6 +234,9 @@ export function VerificationSection({ isSuperAdmin = false }: { isSuperAdmin?: b
                         <span className="font-mono text-[10.5px] tracking-[0.6px] uppercase text-muted-foreground/70">
                           {c.category}
                         </span>
+                        <span className="font-mono text-[10.5px] tracking-[0.6px] uppercase text-muted-foreground/70">
+                          {SEVERITY_LABELS[c.severity] ?? c.severity}
+                        </span>
                       </div>
                       <p className="pmw-st__sec-lead mt-1">{c.description}</p>
                       <div className="font-mono text-[10.5px] tracking-[0.6px] text-muted-foreground/70 mt-2">
@@ -185,70 +259,31 @@ export function VerificationSection({ isSuperAdmin = false }: { isSuperAdmin?: b
     </SettingsShell>
   )
 }
-const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: 'added', label: '최근 추가순' },
-  { value: 'title', label: '제목순' },
-]
 
-function SortDropdown({ value, onChange }: { value: SortKey; onChange: (v: SortKey) => void }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    function onDoc(e: MouseEvent) {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false)
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('mousedown', onDoc)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDoc)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open])
-
-  const current = SORT_OPTIONS.find((o) => o.value === value) ?? SORT_OPTIONS[0]
-
+function StatusFilterPills({
+  value,
+  onChange,
+}: {
+  value: StatusFilter
+  onChange: (value: StatusFilter) => void
+}) {
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="h-11 inline-flex items-center gap-2 rounded-full border border-border/80 bg-card text-foreground pl-4 pr-3 text-[14px] hover:border-foreground/40 transition-colors"
-      >
-        <span>{current.label}</span>
-        <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', open && 'rotate-180')} />
-      </button>
-      {open && (
-        <ul
-          role="listbox"
-          className="absolute right-0 top-full mt-1 min-w-[140px] rounded-sm border border-border/80 bg-card shadow-md py-1 z-10"
+    <div className="flex shrink-0 items-center gap-1 rounded-full border border-border/80 bg-card p-1">
+      {STATUS_FILTERS.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          onClick={() => onChange(option.value)}
+          className={cn(
+            'h-8 rounded-full px-3 font-serif text-[13px] transition-colors',
+            value === option.value
+              ? 'bg-foreground text-background'
+              : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+          )}
         >
-          {SORT_OPTIONS.map((o) => {
-            const active = o.value === value
-            return (
-              <li key={o.value}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChange(o.value)
-                    setOpen(false)
-                  }}
-                  className={cn(
-                    'w-full text-left px-3 py-1.5 text-[14px] hover:bg-accent/40 transition-colors',
-                    active ? 'font-serif text-foreground' : 'font-serif text-muted-foreground',
-                  )}
-                >
-                  {o.label}
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
+          {option.label}
+        </button>
+      ))}
     </div>
   )
 }
