@@ -12,7 +12,6 @@ const SKIN_PREVIEW: Record<Skin, { bg: string; accent: string }> = {
   flat: { bg: '#FFFFFF', accent: '#18181B' },
   glassmorphism: { bg: 'linear-gradient(135deg,#C7D2FE,#A78BFA)', accent: '#4F46E5' },
   'art-deco': { bg: '#0F1B30', accent: '#C9A961' },
-  'foggy-pastel': { bg: '#D5DBE0', accent: '#5C6B7C' },
   hygge: { bg: '#EFE6D6', accent: '#B89070' },
   'scandi-minimal': { bg: '#E8E5DD', accent: '#1F1F1B' },
   sakura: { bg: 'linear-gradient(180deg,#FCE4EC,#F8D0DA)', accent: 'linear-gradient(180deg,#F5C0CB,#E8A0B0)' },

@@ -901,186 +901,6 @@
   }
 
   /* ─────────────────────────────────────────────────────────────
-     Skin: foggy-pastel — 차가운 안개·피요르드.
-     그레이블루 · 차콜 · 오프화이트 + light weight + 부드러운 큰 모서리.
-     명상·웰니스·테크 스타트업 톤 (Headspace/Linear soft).
-     ───────────────────────────────────────────────────────────── */
-  [data-skin="foggy-pastel"] {
-    /* Inter — modern sans, light weight 사용. */
-    --font-sans: var(--font-sans-flat);
-    --font-serif: var(--font-sans-flat), Pretendard;
-    --font-serif-kr: var(--font-sans-kr);
-    --font-mono: var(--font-sans-flat);
-    --pmw-font-serif: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-
-    --pmw-near-black: #3F4855;       /* charcoal */
-    --pmw-olive-gray: #6B7280;
-    --pmw-stone-gray: #9CA3AF;
-    --pmw-deep: #5C6B7C;             /* gray-blue */
-    --pmw-clay-soft: #E8EDF1;
-    --pmw-sage: #5C6B7C;
-    --pmw-sage-soft: #DDE3E8;
-    --pmw-sage-paper: #EDF0F2;       /* off-white card */
-    --pmw-amber: #6B7280;
-    --pmw-rust: #B85450;
-    --pmw-border-warm: #C7CDD3;      /* light gray hairline */
-    --pmw-parchment: #D5DBE0;
-    --pmw-paper: #EDF0F2;
-
-    --background: 210 12% 86%;       /* #D5DBE0 foggy gray-blue */
-    --foreground: 215 14% 28%;       /* #3F4855 charcoal */
-    --card: 210 14% 95%;             /* #EEF1F4 off-white */
-    --card-foreground: 215 14% 28%;
-    --popover: 210 16% 97%;
-    --popover-foreground: 215 14% 28%;
-    --primary: 210 14% 42%;          /* #5C6B7C gray-blue button */
-    --primary-foreground: 210 14% 95%;
-    --secondary: 210 14% 88%;
-    --secondary-foreground: 215 14% 28%;
-    --muted: 210 14% 88%;
-    --muted-foreground: 215 10% 48%;
-    --accent: 210 14% 88%;
-    --accent-foreground: 215 14% 28%;
-    --destructive: 0 60% 52%;
-    --destructive-foreground: 210 14% 95%;
-    --border: 210 14% 80%;
-    --input: 210 14% 80%;
-    --ring: 210 14% 42%;
-    --radius: 1rem;                  /* 부드러운 큰 모서리 */
-
-    /* Semantic 토큰 — foggy-pastel (gray-blue) */
-    --pmw-accent: 210 14% 42%;
-    --pmw-accent-fg: 210 14% 95%;
-    --pmw-accent-strong: 215 14% 28%;
-    --pmw-tag-bg: 210 14% 88%;
-    --pmw-tag-fg: 215 14% 32%;
-    --pmw-cal-today: 210 14% 42%;
-    --pmw-cal-sunday: 0 50% 55%;
-    --pmw-cal-saturday: 215 35% 50%;
-    --pmw-positive: 158 35% 42%;
-    --pmw-avatar-bg: 210 14% 82%;
-    --pmw-avatar-fg: 215 14% 28%;
-    --pmw-code-label: 215 10% 48%;
-
-    /* Typography 스케일 — foggy (light weight, generous leading) */
-    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
-    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.01em;
-    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.6;   --pmw-tracking-sm:   0;
-    --pmw-text-base: 14px;   --pmw-leading-base: 1.65;  --pmw-tracking-base: 0;
-    --pmw-text-md:   15px;   --pmw-leading-md:   1.65;  --pmw-tracking-md:   0;
-    --pmw-text-lg:   20px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.01em;
-    --pmw-text-xl:   28px;   --pmw-leading-xl:   1.25;  --pmw-tracking-xl:   -0.015em;
-    --pmw-text-2xl:  36px;   --pmw-leading-2xl:  1.15;  --pmw-tracking-2xl:  -0.02em;
-
-    --pmw-text-primary:    215 14% 28%;
-    --pmw-text-secondary:  215 10% 48%;
-    --pmw-text-tertiary:   215 8% 60%;
-    --pmw-text-disabled:   210 12% 78%;
-
-    --pmw-warning: 32 60% 45%;
-    --pmw-warning-bg: 38 50% 90%;
-    --pmw-warning-fg: 28 60% 25%;
-    --pmw-info: 215 50% 45%;
-
-    /* Chip 6-tone foggy-pastel — pastel cool 톤 */
-    --pmw-chip-red-bg:     0 35% 88%;
-    --pmw-chip-red-fg:     0 45% 38%;
-    --pmw-chip-amber-bg:   38 40% 86%;
-    --pmw-chip-amber-fg:   28 50% 32%;
-    --pmw-chip-olive-bg:   158 25% 85%;
-    --pmw-chip-olive-fg:   158 35% 30%;
-    --pmw-chip-blue-bg:    215 35% 88%;
-    --pmw-chip-blue-fg:    215 45% 32%;
-    --pmw-chip-plum-bg:    270 22% 88%;
-    --pmw-chip-plum-fg:    270 35% 35%;
-    --pmw-chip-neutral-bg: 210 14% 88%;
-    --pmw-chip-neutral-fg: 215 14% 30%;
-  }
-
-  [data-skin="foggy-pastel"].dark {
-    --pmw-near-black: #E8EDF1;
-    --pmw-olive-gray: #9CA3AF;
-    --pmw-stone-gray: #6B7280;
-    --pmw-deep: #C7CDD3;
-    --pmw-clay-soft: #2A2F36;
-    --pmw-sage: #9CA3AF;
-    --pmw-sage-soft: #2A2F36;
-    --pmw-sage-paper: #1F232A;
-    --pmw-amber: #C7CDD3;
-    --pmw-rust: #E07876;
-    --pmw-border-warm: #2A2F36;
-    --pmw-parchment: #1F232A;
-    --pmw-paper: #2A2F36;
-
-    color-scheme: dark;
-    --background: 215 16% 14%;
-    --foreground: 210 14% 88%;
-    --card: 215 14% 18%;
-    --card-foreground: 210 14% 88%;
-    --popover: 215 14% 22%;
-    --popover-foreground: 210 14% 88%;
-    --primary: 210 14% 70%;
-    --primary-foreground: 215 16% 14%;
-    --secondary: 215 14% 22%;
-    --secondary-foreground: 210 14% 88%;
-    --muted: 215 14% 22%;
-    --muted-foreground: 210 12% 65%;
-    --accent: 215 14% 26%;
-    --accent-foreground: 210 14% 88%;
-    --destructive: 0 60% 60%;
-    --destructive-foreground: 210 14% 88%;
-    --border: 215 14% 28%;
-    --input: 215 14% 28%;
-    --ring: 210 14% 70%;
-
-    --pmw-accent: 210 14% 70%;
-    --pmw-accent-fg: 215 16% 14%;
-    --pmw-accent-strong: 210 14% 88%;
-    --pmw-tag-bg: 215 14% 22%;
-    --pmw-tag-fg: 210 14% 80%;
-    --pmw-cal-today: 210 14% 70%;
-    --pmw-cal-sunday: 0 50% 65%;
-    --pmw-cal-saturday: 215 35% 65%;
-    --pmw-positive: 158 30% 60%;
-    --pmw-avatar-bg: 215 14% 28%;
-    --pmw-avatar-fg: 210 14% 80%;
-    --pmw-code-label: 210 12% 65%;
-
-    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
-    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.01em;
-    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.6;   --pmw-tracking-sm:   0;
-    --pmw-text-base: 14px;   --pmw-leading-base: 1.65;  --pmw-tracking-base: 0;
-    --pmw-text-md:   15px;   --pmw-leading-md:   1.65;  --pmw-tracking-md:   0;
-    --pmw-text-lg:   20px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.01em;
-    --pmw-text-xl:   28px;   --pmw-leading-xl:   1.25;  --pmw-tracking-xl:   -0.015em;
-    --pmw-text-2xl:  36px;   --pmw-leading-2xl:  1.15;  --pmw-tracking-2xl:  -0.02em;
-
-    --pmw-text-primary:    210 14% 88%;
-    --pmw-text-secondary:  210 12% 65%;
-    --pmw-text-tertiary:   210 10% 50%;
-    --pmw-text-disabled:   215 14% 32%;
-
-    --pmw-warning: 38 60% 65%;
-    --pmw-warning-bg: 32 35% 22%;
-    --pmw-warning-fg: 38 60% 80%;
-    --pmw-info: 215 60% 65%;
-
-    /* Chip 6-tone foggy-pastel dark */
-    --pmw-chip-red-bg:     0 18% 22%;
-    --pmw-chip-red-fg:     0 50% 78%;
-    --pmw-chip-amber-bg:   28 18% 22%;
-    --pmw-chip-amber-fg:   38 50% 78%;
-    --pmw-chip-olive-bg:   158 18% 22%;
-    --pmw-chip-olive-fg:   158 35% 75%;
-    --pmw-chip-blue-bg:    215 22% 25%;
-    --pmw-chip-blue-fg:    215 50% 80%;
-    --pmw-chip-plum-bg:    270 14% 24%;
-    --pmw-chip-plum-fg:    270 35% 80%;
-    --pmw-chip-neutral-bg: 215 14% 24%;
-    --pmw-chip-neutral-fg: 210 14% 78%;
-  }
-
-  /* ─────────────────────────────────────────────────────────────
      Skin: hygge — 덴마크 휘게. 따뜻한 베이지·테라코타·우드톤.
      부드러운 큰 모서리 + soft warm 색감. 카페·살림·라이프스타일 톤.
      ───────────────────────────────────────────────────────────── */
@@ -1757,7 +1577,6 @@
   [data-skin="flat"] .font-mono,
   [data-skin="glassmorphism"] .font-mono,
   [data-skin="art-deco"] .font-mono,
-  [data-skin="foggy-pastel"] .font-mono,
   [data-skin="hygge"] .font-mono,
   [data-skin="scandi-minimal"] .font-mono,
   [data-skin="sakura"] .font-mono,
@@ -1768,7 +1587,6 @@
   /* italic 미사용 스킨 — baby-blue 추가. */
   [data-skin="flat"] .italic,
   [data-skin="glassmorphism"] .italic,
-  [data-skin="foggy-pastel"] .italic,
   [data-skin="hygge"] .italic,
   [data-skin="scandi-minimal"] .italic,
   [data-skin="baby-blue"] .italic {
@@ -1909,47 +1727,6 @@
   background-color: hsl(var(--accent-foreground) / 0.10);
   color: hsl(var(--foreground));
   border: 1px solid hsl(var(--border) / 0.5);
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Foggy Pastel — 차가운 안개 톤. 솔리드 그레이블루 bg + 부드러운 카드.
-   카드 그림자 매우 부드럽게 (안개에 떠있는 느낌). 버튼 solid filled (둥근).
-   ───────────────────────────────────────────────────────────── */
-
-[data-skin="foggy-pastel"] {
-  background-color: #D5DBE0;
-  background-image: none;
-  min-height: 100%;
-}
-[data-skin="foggy-pastel"].dark {
-  background-color: #1F232A;
-}
-
-/* 카드 — soft 떠있는 (안개 위) 그림자 */
-[data-skin="foggy-pastel"] .bg-card,
-[data-skin="foggy-pastel"] .bg-popover {
-  border: 1px solid hsl(var(--border) / 0.4);
-  box-shadow: 0 4px 16px -4px rgba(63, 72, 85, 0.10),
-              0 2px 6px -2px rgba(63, 72, 85, 0.06);
-}
-[data-skin="foggy-pastel"].dark .bg-card,
-[data-skin="foggy-pastel"].dark .bg-popover {
-  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.35),
-              0 2px 6px -2px rgba(0, 0, 0, 0.20);
-}
-
-/* Primary — solid gray-blue, light weight, 큰 radius (둥근 pill 톤) */
-[data-skin="foggy-pastel"] .bg-primary {
-  font-weight: 400;
-  letter-spacing: 0;
-  border-radius: 0.75rem;
-  box-shadow: 0 2px 6px -1px rgba(63, 72, 85, 0.12);
-}
-
-/* 채팅 own bubble — gray-blue tint (사용자 피드백 — 약간 더 짙게) */
-[data-skin="foggy-pastel"] [data-bubble="own"] {
-  background-color: hsl(var(--primary) / 0.35);
-  color: hsl(var(--primary));
 }
 
 /* ─────────────────────────────────────────────────────────────
