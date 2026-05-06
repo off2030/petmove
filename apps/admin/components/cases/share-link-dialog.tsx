@@ -27,6 +27,7 @@ import {
   shareLinkStatus,
   SHARE_VACCINE_GROUPS,
   SHARE_HIDDEN_BY_VACCINE_GROUPS,
+  SHARE_RECIPIENT_LABEL_OVERRIDE,
   type ShareLinkRow,
   type ShareLinkStatus,
 } from '@/lib/share-links-types'
@@ -100,14 +101,8 @@ const SHARE_EXCLUDED_KEYS = new Set([
   'address_overseas',
 ])
 
-/** 컬럼 spec 의 기본 라벨을 외부 수신자용 친화 라벨로 덮어쓰기. */
-const COLUMN_LABEL_OVERRIDE: Record<string, string> = {
-  customer_name:    '보호자 이름 (한글)',
-  customer_name_en: '보호자 이름 (영문)',
-  pet_name:         '반려동물 이름 (한글)',
-  pet_name_en:      '반려동물 이름 (영문)',
-  microchip:        '마이크로칩 번호',
-}
+// 다이얼로그 칩 라벨도 수신자에게 실제 보일 라벨(SHARE_RECIPIENT_LABEL_OVERRIDE)을 그대로 노출 —
+// 발신자가 "고객이 어떻게 볼지" 미리 확인할 수 있도록 단일 진실 공급원으로 통합.
 
 /** 카테고리 별로 allowedFields(=목적지 필터) 를 적용할지. 절차정보만 적용 — 고객·동물 정보는 모든 케이스 공통이라 필터 없이 전부 노출. */
 const CATEGORY_APPLIES_DESTINATION_FILTER: Record<string, boolean> = {
@@ -201,7 +196,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
       // 백신/검사/구충 매핑 키는 합성 그룹이 흡수하므로 vaccineApplies 로 제외 판정.
       const vaccineKey = FIELD_TO_VACCINE_KEY[spec.key]
       if (vaccineKey && !vaccineApplies(vaccineKey)) continue
-      const label = COLUMN_LABEL_OVERRIDE[spec.key] ?? spec.label
+      const label = SHARE_RECIPIENT_LABEL_OVERRIDE[spec.key] ?? spec.label
       buckets[category].push({
         key: spec.key,
         label,

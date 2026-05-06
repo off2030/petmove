@@ -192,3 +192,21 @@ export const SHARE_COLUMN_META: Record<string, ShareColumnFieldMeta> = {
   destination:      { key: 'destination',      label: '도착 국가', type: 'text' },
   departure_date:   { key: 'departure_date',   label: '출국일', type: 'date' },
 }
+
+/**
+ * 외부 수신자에게 보여줄 라벨 — 등록신청서(/apply)와 일치시켜 같은 보호자가 일관되게 보도록.
+ * 다이얼로그(필드 픽), 프리셋 편집기, 수신자 폼 3곳에서 동일하게 사용 (단일 진실 공급원).
+ *
+ * 내부 라벨이 이미 등록신청서와 동일한 항목(phone/email/address_kr/address_en/birth_date/
+ * species/breed/sex/color/microchip) 은 override 불필요 — meta.label / field_definitions.label
+ * 그대로 표시됨.
+ */
+export const SHARE_RECIPIENT_LABEL_OVERRIDE: Record<string, string> = {
+  // 고객정보 — '보호자 이름' 을 '성함' 으로, 영문판은 외국인 수신자 위해 (English) 보강.
+  customer_name:    '성함',
+  customer_name_en: '영문성함 (English)',
+  // 동물정보 — '반려동물 이름' 을 '이름' 으로 (등록신청서 동일). 몸무게는 share 폼에 힌트 영역이 없어 단위 inline.
+  pet_name:         '이름',
+  pet_name_en:      '영문이름 (English)',
+  weight:           '몸무게 (kg)',
+}

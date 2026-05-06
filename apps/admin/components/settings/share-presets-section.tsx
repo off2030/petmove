@@ -11,6 +11,7 @@ import { EXTRA_FIELD_KEY_LABELS, ALL_EXTRA_FIELD_KEYS, EXTRA_FIELD_DEFS } from '
 import {
   SHARE_VACCINE_GROUPS,
   SHARE_HIDDEN_BY_VACCINE_GROUPS,
+  SHARE_RECIPIENT_LABEL_OVERRIDE,
 } from '@/lib/share-links-types'
 import { buildFieldSpecs } from '@/lib/fields'
 import type { SharePreset } from '@/lib/share-presets-types'
@@ -23,15 +24,6 @@ const SPEC_GROUP_TO_CATEGORY: Record<string, typeof CATEGORIES[number]> = {
   '고객정보': '고객정보',
   '동물정보': '동물정보',
   '절차정보': '절차정보',
-}
-
-/** 컬럼 spec 의 기본 라벨을 외부 수신자용 친화 라벨로 덮어쓰기. share-link-dialog 와 동일. */
-const COLUMN_LABEL_OVERRIDE: Record<string, string> = {
-  customer_name:    '보호자 이름 (한글)',
-  customer_name_en: '보호자 이름 (영문)',
-  pet_name:         '반려동물 이름 (한글)',
-  pet_name_en:      '반려동물 이름 (영문)',
-  microchip:        '마이크로칩 번호',
 }
 
 /** share-link-dialog 와 동일한 제외 목록 — 외부 수신자가 채울 일 없는 필드. */
@@ -100,7 +92,7 @@ export function SharePresetsSection({
       if (SHARE_HIDDEN_BY_VACCINE_GROUPS.has(spec.key)) continue
       const category = SPEC_GROUP_TO_CATEGORY[spec.group]
       if (!category) continue
-      const label = COLUMN_LABEL_OVERRIDE[spec.key] ?? spec.label
+      const label = SHARE_RECIPIENT_LABEL_OVERRIDE[spec.key] ?? spec.label
       buckets[category].push({ key: spec.key, label, order: spec.order, groupOrder: spec.groupOrder })
     }
 

@@ -20,6 +20,7 @@ import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
 import {
   SHARE_COLUMN_FIELDS as COLUMN_FIELDS,
   SHARE_COLUMN_META as COLUMN_META,
+  SHARE_RECIPIENT_LABEL_OVERRIDE as RECIPIENT_LABEL_OVERRIDE,
   shareLinkStatus,
   SHARE_VACCINE_GROUPS,
   type ShareFieldSpec,
@@ -56,23 +57,6 @@ const FIELD_DEF_CATEGORY: Record<string, string> = {
   '절차/예방접종': '절차정보',
   '절차/검사': '절차정보',
   '절차/구충': '절차정보',
-}
-
-/**
- * 외부 수신자에게 보여줄 라벨 — 내부 라벨(field_definitions / COLUMN_META)을 등록신청서(/apply)와 일치시킨다.
- * /apply 와 /share 둘 다 같은 보호자가 작성하므로 라벨 일관성으로 신뢰감 향상.
- *
- * 내부 라벨이 이미 등록신청서와 동일한 항목(phone/email/address_kr/address_en/birth_date/species/breed/sex/color/microchip)
- * 은 override 불필요 — meta.label 이 그대로 표시됨.
- */
-const RECIPIENT_LABEL_OVERRIDE: Record<string, string> = {
-  // 고객정보 — '보호자 이름' 을 '성함' 으로, 영문판은 외국인 수신자 위해 (English) 보강.
-  customer_name:    '성함',
-  customer_name_en: '영문성함 (English)',
-  // 동물정보 — '반려동물 이름' 을 '이름' 으로 (등록신청서 동일). 몸무게는 share 폼에 힌트 영역이 없어 단위 inline.
-  pet_name:         '이름',
-  pet_name_en:      '영문이름 (English)',
-  weight:           '몸무게 (kg)',
 }
 
 async function buildFieldSpecs(
