@@ -190,6 +190,12 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['브라질', 'brazil'],
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
   },
+  china: {
+    // 한국 = GACC 비지정 국가 → 광견병 항체검사 필수.
+    // 중국은 1년 라이선스 백신만 인정 (2년/3년 거부).
+    keywords: ['중국', 'china'],
+    vaccines: ['rabies', 'rabies_titer'],
+  },
 }
 
 // ── 헬퍼 함수 ──
