@@ -154,12 +154,12 @@ export const PH_CHECKS: ProcedureCheck[] = [
 
   // ── 종합백신 ──
   {
-    id: 'ph.general-vaccine-21days-before-arrival',
+    id: 'ph.general-vaccine-prime-21days-before-arrival',
     country: COUNTRY,
     category: '종합백신',
-    title: '종합백신 출국(=도착) 3주(21일) 이전 완료',
+    title: '종합백신 1차 접종은 출국 21일 이전 완료 (부스터 면제)',
     description:
-      '종합백신(강아지 DHLPPi / 고양이 FVRCP) 가장 최근 접종이 출국일 기준 21일(3주) 이전 완료. (필리핀 BAI 실무 기준)',
+      '종합백신(강아지 DHLPPi / 고양이 FVRCP) 1차 접종이 출국일 기준 21일 이전 완료. **부스터(2차+) 는 즉시 출국 가능 — BAI 면제** (광견병 부스터 면제 정책 동일 적용).',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -167,18 +167,23 @@ export const PH_CHECKS: ProcedureCheck[] = [
       const entries = readGeneralVaccineEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
-      const latest = entries[entries.length - 1]
-      const days = daysBetween(latest.date, dep)
+      // BAI: 부스터(2차+) 는 시점 제한 없음 — 단일 도즈(1차)만 21일 검증.
+      if (entries.length >= 2) {
+        return { ok: true, message: `종합백신 ${entries.length}회 접종 — 부스터 BAI 면제 (즉시 출국 가능).` }
+      }
+
+      const first = entries[0]
+      const days = daysBetween(first.date, dep)
       if (days === null) return SKIP
       if (days < 21) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date}) → 출국(${dep}): ${days}일 (≥21일 필요).`,
-          fixHint: `출국일을 ${latest.date} 기준 21일 이후로 조정하거나 부스터를 더 일찍 접종.`,
-          offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
+          message: `1차 종합백신(${first.date}) → 출국(${dep}): ${days}일 (≥21일 필요).`,
+          fixHint: `출국일을 ${first.date} 기준 21일 이후로 조정하거나 2차(부스터) 접종 추가 (부스터는 시점 제한 없음).`,
+          offendingPaths: ['departure_date', `general_vaccine_dates[${first.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `최근 종합백신(${latest.date}) → 출국(${dep}): ${days}일.` }
+      return { ok: true, message: `1차 종합백신(${first.date}) → 출국(${dep}): ${days}일.` }
     },
   },
   {
