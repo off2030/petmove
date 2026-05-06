@@ -318,7 +318,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
     <div
       ref={rootRef}
       data-paste-section="rabies-titer"
-      className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 rounded-md transition-colors hover:bg-accent/60"
+      className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors hover:bg-accent/60"
     >
       <div className="flex items-center gap-[6px] pt-1">
         <button
