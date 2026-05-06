@@ -1556,42 +1556,42 @@
     --pmw-parchment: #1F0913;
     --pmw-paper: #2D0F1A;
 
-    /* dark 그라디언트 — 와인 채도 낮춰 plum/dusk 톤 */
-    --sakura-grad: linear-gradient(180deg, #241620 0%, #19111A 100%);
+    /* dark 그라디언트 — 와인 채도 더 낮춰 무채에 가까운 plum */
+    --sakura-grad: linear-gradient(180deg, #1E181E 0%, #15131A 100%);
     --sakura-btn-grad: linear-gradient(180deg, #C5798A 0%, #A0364B 100%);
     --sakura-btn-grad-hover: linear-gradient(180deg, #DC889B 0%, #B5455B 100%);
 
     color-scheme: dark;
-    --background: 340 25% 9%;
+    --background: 340 12% 9%;
     --foreground: 343 80% 94%;
-    --card: 340 20% 15%;
+    --card: 340 10% 15%;
     --card-foreground: 343 80% 94%;
-    --popover: 340 20% 18%;
+    --popover: 340 10% 18%;
     --popover-foreground: 343 80% 94%;
     --primary: 348 60% 65%;          /* lighter sakura */
-    --primary-foreground: 340 25% 9%;
-    --secondary: 340 15% 22%;
+    --primary-foreground: 340 12% 9%;
+    --secondary: 340 8% 22%;
     --secondary-foreground: 343 80% 94%;
-    --muted: 340 15% 22%;
+    --muted: 340 8% 22%;
     --muted-foreground: 343 30% 70%;
-    --accent: 340 15% 26%;
+    --accent: 340 8% 26%;
     --accent-foreground: 343 80% 94%;
     --destructive: 0 73% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 340 15% 28%;
-    --input: 340 15% 28%;
+    --border: 340 8% 28%;
+    --input: 340 8% 28%;
     --ring: 348 60% 65%;
 
     --pmw-accent: 348 60% 65%;
-    --pmw-accent-fg: 340 25% 9%;
+    --pmw-accent-fg: 340 12% 9%;
     --pmw-accent-strong: 343 80% 90%;
-    --pmw-tag-bg: 340 15% 22%;
+    --pmw-tag-bg: 340 8% 22%;
     --pmw-tag-fg: 343 70% 80%;
     --pmw-cal-today: 348 60% 65%;
     --pmw-cal-sunday: 0 70% 65%;
     --pmw-cal-saturday: 217 60% 65%;
     --pmw-positive: 142 35% 60%;
-    --pmw-avatar-bg: 340 15% 28%;
+    --pmw-avatar-bg: 340 8% 28%;
     --pmw-avatar-fg: 343 70% 85%;
     --pmw-code-label: 343 30% 70%;
 
@@ -1607,7 +1607,7 @@
     --pmw-text-primary:    343 80% 94%;
     --pmw-text-secondary:  343 30% 70%;
     --pmw-text-tertiary:   343 22% 55%;
-    --pmw-text-disabled:   340 15% 32%;
+    --pmw-text-disabled:   340 8% 32%;
 
     --pmw-warning: 38 65% 65%;
     --pmw-warning-bg: 32 35% 22%;
@@ -2214,7 +2214,7 @@
 }
 [data-skin="sakura"].dark {
   background-image: var(--sakura-grad);
-  background-color: #19111A;
+  background-color: #15131A;
 }
 
 /* 카드 — 순백 + soft pink 그림자 */
