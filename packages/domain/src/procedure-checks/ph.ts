@@ -94,9 +94,9 @@ export const PH_CHECKS: ProcedureCheck[] = [
     id: 'ph.rabies-21days-before-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 접종은 출국(=도착) 3주(21일) 이전 완료',
+    title: '광견병 1차 접종은 출국 21일 이전 완료',
     description:
-      '가장 최근 광견병 접종이 출국일 기준 21일(3주) 이전 완료. (필리핀 BAI 실무 기준)',
+      'BAI 공식: "initial rabies vaccination should not be less than 14 days prior to application of the SPSIC". SPSIC 신청은 보통 출국 7-14일 전 → 합산 출국 21일 이전 (보수 dep proxy). **annual booster 는 즉시 출국 가능 (BAI 면제)** — 부스터 면제 로직은 별도 룰 권장.',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
