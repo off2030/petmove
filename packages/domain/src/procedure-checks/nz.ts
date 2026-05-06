@@ -74,12 +74,12 @@ export const NZ_CHECKS: ProcedureCheck[] = [
 
   // ── 광견병 ──
   {
-    id: 'nz.rabies-prime-after-91days-old',
+    id: 'nz.rabies-prime-after-3months-old',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종 생후 91일령 이상',
+    title: '광견병 1차 접종 생후 3개월령(캘린더) 이상',
     description:
-      '광견병 1차 접종은 생후 최소 91일 이후 (안전 기준). (MPI: "at least three months old" — JP/SG/AU 와 일관되게 91일로 보수 해석)',
+      '광견병 1차 접종은 생년월일 기준 캘린더 3개월(`addMonths(birth, 3)`) 이후. (MPI: "at least three months old" — 월 단위 명시이므로 일수 근사 대신 정확한 캘린더 월 계산.)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -89,17 +89,18 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       if (!birth || rabies.length === 0) return SKIP
 
       const first = rabies[0]
+      const earliestValid = addMonths(birth, 3)
+      if (!earliestValid) return SKIP
       const age = daysBetween(birth, first.date)
-      if (age === null) return SKIP
-      if (age < 91) {
+      if (first.date < earliestValid) {
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 생후 ${age}일령 — 최소 91일령 이상 필요.`,
-          fixHint: `${birth} 기준 91일 이후로 1차 접종일을 조정하세요.`,
+          message: `1차 접종일(${first.date}) — 3개월령(${earliestValid}) 이전. 생후 ${age ?? '?'}일.`,
+          fixHint: `${birth} 기준 3개월(${earliestValid}) 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${age}일령.` }
+      return { ok: true, message: `1차 접종일(${first.date}) ≥ 3개월령(${earliestValid}). 생후 ${age}일.` }
     },
   },
   {
