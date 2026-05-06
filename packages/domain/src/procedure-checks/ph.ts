@@ -91,12 +91,12 @@ export const PH_CHECKS: ProcedureCheck[] = [
     },
   },
   {
-    id: 'ph.rabies-21days-before-arrival',
+    id: 'ph.rabies-prime-21days-before-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종은 출국 21일 이전 완료',
+    title: '광견병 1차 접종은 출국 21일 이전 완료 (부스터 면제)',
     description:
-      'BAI 공식: "initial rabies vaccination should not be less than 14 days prior to application of the SPSIC". SPSIC 신청은 보통 출국 7-14일 전 → 합산 출국 21일 이전 (보수 dep proxy). **annual booster 는 즉시 출국 가능 (BAI 면제)** — 부스터 면제 로직은 별도 룰 권장.',
+      'BAI 공식: "initial rabies vaccination should not be less than 14 days prior to application of the SPSIC". SPSIC 신청 ≈ 출국 7-14일 전 → 합산 21일 (dep proxy). **annual booster (2차+) 는 즉시 출국 가능 — BAI 면제** ("animals may be shipped immediately upon vaccination").',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -104,18 +104,23 @@ export const PH_CHECKS: ProcedureCheck[] = [
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
-      const latest = rabies[rabies.length - 1]
-      const days = daysBetween(latest.date, dep)
+      // BAI: 부스터(2차+) 는 시점 제한 없음 — 단일 도즈(1차)만 21일 검증.
+      if (rabies.length >= 2) {
+        return { ok: true, message: `광견병 ${rabies.length}회 접종 — 부스터 BAI 면제 (즉시 출국 가능).` }
+      }
+
+      const first = rabies[0]
+      const days = daysBetween(first.date, dep)
       if (days === null) return SKIP
       if (days < 21) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date}) → 출국(${dep}): ${days}일 (≥21일 필요).`,
-          fixHint: `출국일을 ${latest.date} 기준 21일 이후로 조정하거나 부스터를 더 일찍 접종.`,
-          offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
+          message: `1차 접종(${first.date}) → 출국(${dep}): ${days}일 (≥21일 필요).`,
+          fixHint: `출국일을 ${first.date} 기준 21일 이후로 조정하거나 2차(부스터) 접종 추가 (부스터는 시점 제한 없음).`,
+          offendingPaths: ['departure_date', `rabies_dates[${first.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `최근 접종(${latest.date}) → 출국(${dep}): ${days}일.` }
+      return { ok: true, message: `1차 접종(${first.date}) → 출국(${dep}): ${days}일.` }
     },
   },
   {
