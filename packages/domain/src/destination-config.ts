@@ -196,6 +196,11 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['중국', 'china'],
     vaccines: ['rabies', 'rabies_titer'],
   },
+  taiwan: {
+    // BAPHIQ — 광견병 항체검사 필수, 채혈일 + 180일 후 도착, 7일 격리 (수입허가 20일 전 신청 시 면제).
+    keywords: ['대만', 'taiwan'],
+    vaccines: ['rabies', 'rabies_titer'],
+  },
 }
 
 // ── 헬퍼 함수 ──
