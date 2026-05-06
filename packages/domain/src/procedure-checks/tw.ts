@@ -88,34 +88,6 @@ export const TW_CHECKS: ProcedureCheck[] = [
     },
   },
   {
-    id: 'tw.rabies-30days-before-arrival',
-    country: COUNTRY,
-    category: '광견병',
-    title: '광견병 접종은 출국(=도착) 30일 이전 완료',
-    description:
-      '가장 최근 광견병 접종이 출국일 기준 30일 이전 완료. (petmove 가이드: "30일~1년 이내 접종")',
-    severity: 'blocker',
-    addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
-      const rabies = readRabiesEntries(caseRow)
-      if (!dep || rabies.length === 0) return SKIP
-
-      const latest = rabies[rabies.length - 1]
-      const days = daysBetween(latest.date, dep)
-      if (days === null) return SKIP
-      if (days < 30) {
-        return {
-          ok: false,
-          message: `최근 접종(${latest.date}) → 출국(${dep}): ${days}일 (≥30일 필요).`,
-          fixHint: `출국일을 ${latest.date} 기준 30일 이후로 조정하거나 부스터를 더 일찍 접종.`,
-          offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
-        }
-      }
-      return { ok: true, message: `최근 접종(${latest.date}) → 출국(${dep}): ${days}일.` }
-    },
-  },
-  {
     id: 'tw.rabies-not-expired-on-arrival',
     country: COUNTRY,
     category: '광견병',
@@ -177,47 +149,6 @@ export const TW_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: '모든 RNATT 채혈이 광견병 접종 이후.' }
-    },
-  },
-  {
-    id: 'tw.rnatt-result-min-0.5',
-    country: COUNTRY,
-    category: '광견병',
-    title: '항체검사 결과 ≥ 0.5 IU/ml',
-    description:
-      'RNATT 결과 ≥ 0.5 IU/ml. 미달 시 재접종 + 재검사 필요. (petmove 가이드)',
-    severity: 'blocker',
-    addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
-      const titers = readTiterEntries(caseRow)
-      if (titers.length === 0) return SKIP
-
-      const offending: string[] = []
-      const problems: string[] = []
-      let anyValid = false
-      for (const t of titers) {
-        if (t.value === null || t.value === undefined || t.value === '') continue
-        const num = parseFloat(String(t.value).replace(/[^\d.]/g, ''))
-        if (isNaN(num)) continue
-        if (num >= 0.5) {
-          anyValid = true
-        } else {
-          offending.push(`rabies_titer_records[${t.originalIndex}].value`)
-          problems.push(`${t.date} 결과 ${num} IU/ml (<0.5)`)
-        }
-      }
-      if (anyValid) {
-        return { ok: true, message: '하나 이상의 RNATT 결과가 ≥0.5 IU/ml.' }
-      }
-      if (problems.length > 0) {
-        return {
-          ok: false,
-          message: problems.join(' / '),
-          fixHint: '재접종 후 RNATT 재검사 필요.',
-          offendingPaths: offending,
-        }
-      }
-      return SKIP
     },
   },
   {
