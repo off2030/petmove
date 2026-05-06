@@ -233,6 +233,7 @@ function SelectCell({
       value={value}
       options={col.options!}
       onChange={pick}
+      portal
       triggerClassName="-mx-1 px-1 text-left min-h-[24px] flex items-center"
       triggerProps={{
         'data-status-pill': '',

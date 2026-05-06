@@ -362,6 +362,7 @@ function StatusPicker({ row, options, value, label, cls, isDone, onUpdate }: {
         value={value}
         options={options}
         onChange={pick}
+        portal
         triggerClassName={cn(cls, '-mx-1 px-1')}
         triggerProps={{
           'data-status-pill': '',

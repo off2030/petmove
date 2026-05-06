@@ -285,6 +285,14 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                   {note.content}
                 </span>
               )}
+              {note.createdAt && (
+                <span
+                  title={formatMemoDateFull(note.createdAt)}
+                  className="shrink-0 mt-2 font-mono text-[10px] tracking-[0.3px] tabular-nums text-muted-foreground/50 whitespace-nowrap"
+                >
+                  {formatMemoDate(note.createdAt)}
+                </span>
+              )}
               {editMode && (
                 <button
                   type="button"
@@ -419,6 +427,30 @@ function formatSize(bytes: number) {
   if (bytes < 1024) return bytes + 'B'
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + 'KB'
   return (bytes / (1024 * 1024)).toFixed(1) + 'MB'
+}
+
+/** 메모 날짜 — 컴팩트 YY·MM·DD (Editorial 토큰 dot). 빈 문자열은 빈 결과. */
+function formatMemoDate(iso: string): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  const yy = String(d.getFullYear()).slice(-2)
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yy}·${mm}·${dd}`
+}
+
+/** 호버 시 보여줄 풀 시간 — 'YYYY-MM-DD HH:mm'. */
+function formatMemoDateFull(iso: string): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  const y = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mi = String(d.getMinutes()).padStart(2, '0')
+  return `${y}-${mm}-${dd} ${hh}:${mi}`
 }
 
 /**
