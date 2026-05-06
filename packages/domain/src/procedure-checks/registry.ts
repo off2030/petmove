@@ -1,6 +1,8 @@
 import { AU_CHECKS } from './au'
 import { EU_CHECKS } from './eu'
+import { HI_CHECKS } from './hi'
 import { JP_CHECKS } from './jp'
+import { NZ_CHECKS } from './nz'
 import { SG_CHECKS } from './sg'
 import type { CheckContext, CheckResult, CountryKey, ProcedureCheck } from './types'
 
@@ -16,6 +18,8 @@ export const ALL_PROCEDURE_CHECKS: ProcedureCheck[] = [
   ...SG_CHECKS,
   ...EU_CHECKS,
   ...AU_CHECKS,
+  ...NZ_CHECKS,
+  ...HI_CHECKS,
 ]
 
 /** check 의 country 가 target 키에 매칭되는지. 'all' 또는 배열에 포함되면 true. */
