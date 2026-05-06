@@ -202,10 +202,30 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
   }
 
   async function handleFile(file: File, targetIdx: number | null) {
-    if (!isExtractableFile(file)) return
+    if (!isExtractableFile(file)) {
+      setExtractMsg(`지원하지 않는 파일 형식: ${file.type || '(unknown)'}`)
+      setTimeout(() => setExtractMsg(null), 4000)
+      return
+    }
     uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField).catch(() => {})
-    const images = await filesToBase64([file])
-    if (images.length === 0) return
+    setExtracting(true)
+    setExtractMsg(null)
+    let images: { base64: string; mediaType: string }[]
+    try {
+      images = await filesToBase64([file])
+    } catch (err) {
+      setExtractMsg(`이미지 변환 오류: ${err instanceof Error ? err.message : String(err)}`)
+      setTimeout(() => setExtractMsg(null), 4000)
+      setExtracting(false)
+      return
+    }
+    if (images.length === 0) {
+      setExtractMsg('이미지 변환 결과 없음')
+      setTimeout(() => setExtractMsg(null), 4000)
+      setExtracting(false)
+      return
+    }
+    // runTiterExtract 가 setExtracting / setExtractMsg 자체 관리 (try/finally).
     await runTiterExtract({ imageBase64: images[0].base64, mediaType: images[0].mediaType }, targetIdx)
   }
 
