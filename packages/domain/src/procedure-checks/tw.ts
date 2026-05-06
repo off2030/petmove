@@ -59,12 +59,12 @@ export const TW_CHECKS: ProcedureCheck[] = [
 
   // ── 광견병 ──
   {
-    id: 'tw.rabies-prime-after-91days-old',
+    id: 'tw.rabies-prime-after-90days-old',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종 생후 91일령 이상',
+    title: '광견병 1차 접종 생후 90일령 이상',
     description:
-      '광견병 1차 접종은 생후 최소 91일 이후 (보수 기준). 불활화(사독) 백신만 인정. (petmove + JP/SG/AU/NZ/CN 와 일관)',
+      '광견병 1차 접종은 생후 최소 90일 이후. 불활화(사독) 백신만 인정. (APHIA 공식)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -76,11 +76,11 @@ export const TW_CHECKS: ProcedureCheck[] = [
       const first = rabies[0]
       const age = daysBetween(birth, first.date)
       if (age === null) return SKIP
-      if (age < 91) {
+      if (age < 90) {
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 생후 ${age}일령 — 최소 91일령 이상 필요.`,
-          fixHint: `${birth} 기준 91일 이후로 1차 접종일을 조정하세요.`,
+          message: `1차 접종일(${first.date})이 생후 ${age}일령 — 최소 90일령 이상 필요.`,
+          fixHint: `${birth} 기준 90일 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
