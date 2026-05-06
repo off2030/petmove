@@ -187,8 +187,9 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
       if (SHARE_HIDDEN_BY_VACCINE_GROUPS.has(d.key)) continue // 합성 그룹이 흡수
       const category = GROUP_TO_CATEGORY[d.group_name ?? '']
       if (!category) continue // 메모·기타·미매칭은 제외
-      // 백신/검사/구충 매핑 키는 vaccineEntries 검사 (목적지별 필요한 백신만 노출).
-      // 그 외(고객·동물·기본정보 — email, address, breed 등)는 카테고리 안에 모두 노출.
+      // 목적지·케이스 토글에 포함된 필드만 노출 (case-detail 과 동일 기준).
+      if (!allowedFields.has(d.key)) continue
+      // 백신/검사/구충 매핑 키는 vaccineEntries 검사 — 목적지별 필요한 백신만 노출.
       const vaccineKey = FIELD_TO_VACCINE_KEY[d.key]
       if (vaccineKey && !vaccineApplies(vaccineKey)) continue
       buckets[category].push({ key: d.key, label: d.label, order: 1000 + d.display_order })
@@ -333,7 +334,8 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
   async function handleRevoke(id: string) {
     if (!await confirm({
       message: '이 링크를 취소하시겠습니까? 링크가 더 이상 동작하지 않습니다.',
-      okLabel: '취소',
+      okLabel: '링크 취소',
+      cancelLabel: '닫기',
       variant: 'destructive',
     })) return
     startTransition(async () => {
