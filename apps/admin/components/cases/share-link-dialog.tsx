@@ -14,7 +14,7 @@ import {
   getEffectiveExtraFieldEntries,
   vaccineMatchesSpecies,
   extraFieldMatchesSpecies,
-  EXTRA_FIELD_KEY_LABELS,
+  EXTRA_FIELD_DEFS,
 } from '@petmove/domain'
 import type { CaseRow } from '@/lib/supabase/types'
 import {
@@ -139,7 +139,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
   // 4개 카테고리로 정규화 — field_definitions.group_name 또는 컬럼 키 → 카테고리.
   // 매칭 안되는 필드(메모 등)는 표시 자체에서 제외 (return null).
   const groupedFields = useMemo(() => {
-    type Field = { key: string; label: string; order: number }
+    type Field = { key: string; label: string; order: number; subgroup?: string }
     const buckets: Record<typeof CATEGORIES[number], Field[]> = {
       '고객정보': [],
       '동물정보': [],
@@ -203,21 +203,44 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     }
 
     // 4) 목적지별 추가 필드 (일본 입국일·항공편, EU 해외주소, 호주 입국공항 등)
-    //    EXTRA_FIELD_DEFS 의 key 를 그대로 사용. 종 필터 적용.
+    //    case-detail 과 동일: 같은 group 키를 가진 항목이 2개 이상일 때만 묶어 표시(shortLabel),
+    //    1개뿐이면 그룹 헤더 없이 전체 라벨로 평면 표시(예: 스위스/태국/USA 의 단일 entry_*).
+    const groupCounts = new Map<string, number>()
+    for (const entry of extraFieldEntries) {
+      if (!extraFieldMatchesSpecies(entry, speciesValue)) continue
+      const g = EXTRA_FIELD_DEFS[entry.key]?.group
+      if (g) groupCounts.set(g, (groupCounts.get(g) ?? 0) + 1)
+    }
     let extraOrder = 2000
     for (const entry of extraFieldEntries) {
       if (!extraFieldMatchesSpecies(entry, speciesValue)) continue
-      const label = EXTRA_FIELD_KEY_LABELS[entry.key] ?? entry.key
-      buckets['추가정보'].push({ key: entry.key, label, order: extraOrder++ })
+      const def = EXTRA_FIELD_DEFS[entry.key]
+      const useGroup = !!def?.group && (groupCounts.get(def.group) ?? 0) >= 2
+      const label = useGroup && def?.shortLabel ? def.shortLabel : (def?.label ?? entry.key)
+      buckets['추가정보'].push({
+        key: entry.key,
+        label,
+        subgroup: useGroup ? def!.group : undefined,
+        order: extraOrder++,
+      })
     }
 
     // 카테고리 내 정렬 — 컬럼(0~) → data/synthetic(1000+display_order)
     for (const c of CATEGORIES) buckets[c].sort((a, b) => a.order - b.order)
 
-    return CATEGORIES.map((c) => ({
-      category: c,
-      fields: buckets[c].map(({ key, label }) => ({ key, label })),
-    })).filter((g) => g.fields.length > 0)
+    // 카테고리별로 연속된 같은 subgroup 끼리 블록으로 묶기 (subgroup 없는 항목은 단일 블록).
+    return CATEGORIES.map((c) => {
+      const blocks: { subgroup?: string; fields: { key: string; label: string }[] }[] = []
+      for (const f of buckets[c]) {
+        const last = blocks[blocks.length - 1]
+        if (last && last.subgroup === f.subgroup) {
+          last.fields.push({ key: f.key, label: f.label })
+        } else {
+          blocks.push({ subgroup: f.subgroup, fields: [{ key: f.key, label: f.label }] })
+        }
+      }
+      return { category: c, blocks }
+    }).filter((g) => g.blocks.length > 0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fieldDefs, allowedFields, vaccineEntries, extraFieldEntries, speciesValue])
 
@@ -244,7 +267,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
   /** 프리셋 — 현재 케이스에서 적용 가능한 키만 추출 (목적지·종 필터 통과한 키만). */
   const allAvailableKeys = useMemo(() => {
     const set = new Set<string>()
-    for (const g of groupedFields) for (const f of g.fields) set.add(f.key)
+    for (const g of groupedFields) for (const b of g.blocks) for (const f of b.fields) set.add(f.key)
     return set
   }, [groupedFields])
 
@@ -449,25 +472,36 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
               {groupedFields.map((g) => (
                 <div key={g.category}>
                   <p className="font-serif text-[12px] text-muted-foreground/80 mb-1">{g.category}</p>
-                  <div className="flex flex-wrap gap-1">
-                    {g.fields.map((f) => {
-                      const active = selectedKeys.has(f.key)
-                      return (
-                        <button
-                          key={f.key}
-                          type="button"
-                          onClick={() => toggleField(f.key)}
-                          className={cn(
-                            'h-7 px-2.5 rounded-full border font-serif text-[12px] transition-colors',
-                            active
-                              ? 'border-foreground bg-foreground text-background'
-                              : 'border-border/80 text-muted-foreground hover:bg-accent hover:text-foreground',
-                          )}
-                        >
-                          {f.label}
-                        </button>
-                      )
-                    })}
+                  <div className="space-y-1.5">
+                    {g.blocks.map((block, bi) => (
+                      <div key={block.subgroup ?? `__flat-${bi}`}>
+                        {block.subgroup && (
+                          <p className="font-serif text-[11px] text-muted-foreground/70 ml-0.5 mb-0.5">
+                            {block.subgroup}
+                          </p>
+                        )}
+                        <div className={cn('flex flex-wrap gap-1', block.subgroup && 'pl-3')}>
+                          {block.fields.map((f) => {
+                            const active = selectedKeys.has(f.key)
+                            return (
+                              <button
+                                key={f.key}
+                                type="button"
+                                onClick={() => toggleField(f.key)}
+                                className={cn(
+                                  'h-7 px-2.5 rounded-full border font-serif text-[12px] transition-colors',
+                                  active
+                                    ? 'border-foreground bg-foreground text-background'
+                                    : 'border-border/80 text-muted-foreground hover:bg-accent hover:text-foreground',
+                                )}
+                              >
+                                {f.label}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}

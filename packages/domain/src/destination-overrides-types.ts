@@ -95,7 +95,7 @@ export const EXTRA_FIELD_DEFS: Record<string, ExtraFieldDef> = {
   entry_transport: { key: 'entry_transport', label: '운송방법', type: 'select', options: TRANSPORT_OPTIONS, group: '입국 항공편', shortLabel: '운송방법' },
   entry_flight_number: { key: 'entry_flight_number', label: '입국 항공편', type: 'text', placeholder: 'KE659', group: '입국 항공편', shortLabel: '항공편명' },
   // ── 입국 기타 (평면) ──
-  entry_time: { key: 'entry_time', label: '입국시간', type: 'time', placeholder: 'HH:mm' },
+  entry_time: { key: 'entry_time', label: '입국시간', type: 'time', placeholder: 'HH:mm', group: '입국 항공편', shortLabel: '시간' },
   entry_purpose: {
     key: 'entry_purpose',
     label: '입국목적',
