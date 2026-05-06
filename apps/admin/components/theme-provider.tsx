@@ -9,9 +9,13 @@ import { usePathname } from 'next/navigation'
 const FORCE_DEFAULT_PATHS = ['/apply', '/share']
 
 type Mode = 'system' | 'light' | 'dark'
-type Skin = 'editorial' | 'flat' | 'glassmorphism' | 'art-deco' | 'foggy-pastel' | 'hygge' | 'scandi-minimal' | 'sakura' | 'baby-blue' | 'aurora'
+type Skin = 'editorial' | 'flat' | 'glassmorphism' | 'art-deco' | 'foggy-pastel' | 'hygge' | 'scandi-minimal' | 'sakura' | 'baby-blue'
 
-const VALID_SKINS: Skin[] = ['editorial', 'art-deco', 'sakura', 'aurora', 'flat', 'glassmorphism', 'foggy-pastel', 'hygge', 'scandi-minimal', 'baby-blue']
+// 가나다 순 — use-skin.ts SKIN_LIST 와 동기화 유지.
+const VALID_SKINS: Skin[] = [
+  'glassmorphism', 'sakura', 'baby-blue', 'scandi-minimal',
+  'art-deco', 'editorial', 'foggy-pastel', 'flat', 'hygge',
+]
 
 function readMode(): Mode {
   try {
