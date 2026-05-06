@@ -100,7 +100,7 @@ export function EditableField({
   /** 그룹 내부 sub-row 용 — 좁은 라벨 너비(100px), 더 작은 padding, border-bottom 없음. */
   compact?: boolean
 }) {
-  const { updateLocalCaseField, replaceLocalCaseData, activeDestination } = useCases()
+  const { cases, updateLocalCaseField, replaceLocalCaseData, activeDestination } = useCases()
   const { settings: detailViewSettings } = useDetailViewSettings()
   const confirm = useConfirm()
   const editMode = useSectionEditMode()
@@ -537,6 +537,21 @@ export function EditableField({
                 <span className="font-sans text-[10px] uppercase tracking-[1px] text-muted-foreground mr-1">연령</span>
                 <span className="font-mono text-[12px] tracking-[0.5px] text-foreground">{age}</span>
                 <CopyButton value={age} className="ml-1 opacity-0 group-hover/age:opacity-100" />
+              </div>
+            </>
+          )
+        })()}
+        {spec.key === 'phone' && !editing && (() => {
+          const row = cases.find((c) => c.id === caseId)
+          const email = (row?.data as Record<string, unknown> | undefined)?.email
+          if (typeof email !== 'string' || !email.trim()) return null
+          return (
+            <>
+              <span className="text-muted-foreground/30 select-none mx-2 hidden md:inline">|</span>
+              <div className="group/email relative inline-flex items-baseline shrink-0 min-w-0">
+                <span className="font-sans text-[10px] uppercase tracking-[1px] text-muted-foreground mr-1 shrink-0">이메일</span>
+                <span className="font-mono text-[12px] tracking-[0.5px] text-foreground truncate">{email}</span>
+                <CopyButton value={email} className="ml-1 opacity-0 group-hover/email:opacity-100 shrink-0" />
               </div>
             </>
           )

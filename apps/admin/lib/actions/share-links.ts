@@ -39,6 +39,39 @@ type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 // 헬퍼 — field_definitions 기반 spec 생성
 // ─────────────────────────────────────────────────
 
+/** column 키 → 카테고리 매핑 (share-link-dialog 와 동일한 좌표계). destination 은 외부 수신자 입력 대상 아님 → 매핑 없음. */
+const COLUMN_CATEGORY: Record<string, string> = {
+  customer_name:    '고객정보',
+  customer_name_en: '고객정보',
+  pet_name:         '동물정보',
+  pet_name_en:      '동물정보',
+  microchip:        '동물정보',
+  departure_date:   '절차정보',
+}
+/** field_definitions.group_name → 카테고리. */
+const FIELD_DEF_CATEGORY: Record<string, string> = {
+  '기본정보': '고객정보',
+  '동물정보': '동물정보',
+  '절차/식별': '절차정보',
+  '절차/예방접종': '절차정보',
+  '절차/검사': '절차정보',
+  '절차/구충': '절차정보',
+}
+
+/**
+ * 외부 수신자에게 보여줄 라벨 — 내부 라벨(field_definitions / COLUMN_META)을 친근한 톤으로 덮어쓰기.
+ * 내부 운영자가 보는 라벨과 분리해 share 폼에서만 적용.
+ */
+const RECIPIENT_LABEL_OVERRIDE: Record<string, string> = {
+  // 고객정보
+  customer_name:    '성함 (한글)',
+  customer_name_en: '성함 (영문 / English)',
+  phone:            '휴대폰 번호',
+  email:            '이메일 주소',
+  address_kr:       '거주지 주소 (한국)',
+  address_en:       '거주지 주소 (영문)',
+}
+
 async function buildFieldSpecs(
   fieldKeys: string[],
   caseRow: CaseRow,
@@ -74,6 +107,7 @@ async function buildFieldSpecs(
         max_entries: vax.max_entries,
         hide_valid_until: vax.hide_valid_until,
         current_value: extractVaccineEntries(vax, data),
+        category: '절차정보',
       })
       continue
     }
@@ -83,10 +117,11 @@ async function buildFieldSpecs(
       if (!meta) continue
       out.push({
         key,
-        label: meta.label,
+        label: RECIPIENT_LABEL_OVERRIDE[key] ?? meta.label,
         storage: 'column',
         type: meta.type,
         current_value: (caseRow as unknown as Record<string, unknown>)[key] ?? null,
+        category: COLUMN_CATEGORY[key],
       })
       continue
     }
@@ -95,11 +130,12 @@ async function buildFieldSpecs(
     if (def) {
       out.push({
         key,
-        label: def.label,
+        label: RECIPIENT_LABEL_OVERRIDE[key] ?? def.label,
         storage: 'data',
         type: def.type,
         options: def.options ?? undefined,
         current_value: data[key] ?? null,
+        category: FIELD_DEF_CATEGORY[def.group_name ?? ''],
       })
       continue
     }
@@ -113,6 +149,8 @@ async function buildFieldSpecs(
         type: mapExtraType(extra.type),
         options: extra.options?.map((o) => ({ value: o.value, label_ko: o.label })),
         current_value: data[key] ?? null,
+        category: '추가정보',
+        subgroup: extra.group,
       })
       continue
     }

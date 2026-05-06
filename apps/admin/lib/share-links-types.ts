@@ -38,6 +38,10 @@ export interface ShareFieldSpec {
   max_entries?: number
   /** date_array 인 경우: 면역유효기간 입력 숨김 (구충·심장사상충). */
   hide_valid_until?: boolean
+  /** 공유 폼 그룹핑 — '고객정보' | '동물정보' | '절차정보' | '추가정보'. 미지정 시 카테고리 헤더 없이 표시. */
+  category?: string
+  /** 공유 폼 서브그룹 — '입국 항공편' | '출국 항공편' 등 (EXTRA_FIELD_DEFS.group). */
+  subgroup?: string
 }
 
 /**

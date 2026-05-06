@@ -7,45 +7,42 @@ import { listSharePresets, saveSharePresets } from '@/lib/actions/share-presets'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
 import { SettingsSubsectionTitle } from './settings-layout'
-import { EXTRA_FIELD_KEY_LABELS, ALL_EXTRA_FIELD_KEYS } from '@petmove/domain'
+import { EXTRA_FIELD_KEY_LABELS, ALL_EXTRA_FIELD_KEYS, EXTRA_FIELD_DEFS } from '@petmove/domain'
 import {
   SHARE_VACCINE_GROUPS,
   SHARE_HIDDEN_BY_VACCINE_GROUPS,
 } from '@/lib/share-links-types'
+import { buildFieldSpecs } from '@/lib/fields'
 import type { SharePreset } from '@/lib/share-presets-types'
 
 /** 카테고리 정렬 (직접 선택과 동일). */
 const CATEGORIES = ['고객정보', '동물정보', '절차정보', '추가정보'] as const
 
-/** 컬럼 → 카테고리·라벨 매핑. */
-const COLUMN_TO_CATEGORY: Record<string, typeof CATEGORIES[number]> = {
-  customer_name:    '고객정보',
-  customer_name_en: '고객정보',
-  pet_name:         '동물정보',
-  pet_name_en:      '동물정보',
-  microchip:        '동물정보',
-  departure_date:   '추가정보',
+/** spec.group → 카테고리 (기타정보 = 메모는 폼 별도 필드). */
+const SPEC_GROUP_TO_CATEGORY: Record<string, typeof CATEGORIES[number]> = {
+  '고객정보': '고객정보',
+  '동물정보': '동물정보',
+  '절차정보': '절차정보',
 }
-const COLUMN_LABEL: Record<string, string> = {
+
+/** 컬럼 spec 의 기본 라벨을 외부 수신자용 친화 라벨로 덮어쓰기. share-link-dialog 와 동일. */
+const COLUMN_LABEL_OVERRIDE: Record<string, string> = {
   customer_name:    '보호자 이름 (한글)',
   customer_name_en: '보호자 이름 (영문)',
   pet_name:         '반려동물 이름 (한글)',
   pet_name_en:      '반려동물 이름 (영문)',
   microchip:        '마이크로칩 번호',
-  departure_date:   '출국일',
 }
 
-/** field_definitions group_name → 카테고리. 메모/매칭없음은 제외. */
-const GROUP_TO_CATEGORY: Record<string, typeof CATEGORIES[number]> = {
-  '기본정보': '고객정보',
-  '동물정보': '동물정보',
-  '절차/식별': '절차정보',
-  '절차/예방접종': '절차정보',
-  '절차/검사': '절차정보',
-  '절차/구충': '절차정보',
-}
-
-const SHARE_EXCLUDED_KEYS = new Set(['age', 'rabies_3'])
+/** share-link-dialog 와 동일한 제외 목록 — 외부 수신자가 채울 일 없는 필드. */
+const SHARE_EXCLUDED_KEYS = new Set([
+  'age', 'rabies_3', 'destination', 'memo', 'notes',
+  'customer_first_name_en', 'customer_last_name_en',
+  'breed_en', 'color_en', 'sex_en',
+  'payment_amount', 'payment_method', 'payments',
+  'microchip_secondary', 'japan_extra',
+  'address_overseas',
+])
 
 function genId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -85,40 +82,74 @@ export function SharePresetsSection({
     [presets, savedPresets],
   )
 
-  /** 모든 가능 필드 — 카테고리 그룹별, 목적지 무관 (조직 단위 프리셋이라 전체 노출). */
+  /** 모든 가능 필드 — 카테고리 그룹별, 목적지 무관 (조직 단위 프리셋이라 전체 노출).
+   *  case-detail / share-link-dialog 와 동일한 좌표계(buildFieldSpecs)로 정렬. */
   const groupedFields = useMemo(() => {
-    type Field = { key: string; label: string; order: number }
+    type Field = { key: string; label: string; order: number; groupOrder: number; subgroup?: string }
     const buckets: Record<typeof CATEGORIES[number], Field[]> = {
       '고객정보': [],
       '동물정보': [],
       '절차정보': [],
       '추가정보': [],
     }
-    let columnOrder = 0
-    for (const [key, category] of Object.entries(COLUMN_TO_CATEGORY)) {
-      buckets[category].push({ key, label: COLUMN_LABEL[key], order: columnOrder++ })
-    }
-    for (const d of fieldDefs) {
-      if (d.type === 'multiselect') continue
-      if (SHARE_EXCLUDED_KEYS.has(d.key)) continue
-      if (SHARE_HIDDEN_BY_VACCINE_GROUPS.has(d.key)) continue
-      const category = GROUP_TO_CATEGORY[d.group_name ?? '']
+
+    // 1) 컬럼 + jsonb — case-detail 와 동일 정렬
+    const allSpecs = buildFieldSpecs(fieldDefs)
+    for (const spec of allSpecs) {
+      if (SHARE_EXCLUDED_KEYS.has(spec.key)) continue
+      if (SHARE_HIDDEN_BY_VACCINE_GROUPS.has(spec.key)) continue
+      const category = SPEC_GROUP_TO_CATEGORY[spec.group]
       if (!category) continue
-      buckets[category].push({ key: d.key, label: d.label, order: 1000 + d.display_order })
+      const label = COLUMN_LABEL_OVERRIDE[spec.key] ?? spec.label
+      buckets[category].push({ key: spec.key, label, order: spec.order, groupOrder: spec.groupOrder })
     }
+
+    // 2) 합성 백신 그룹 — 조직 단위라 모두 노출.
     for (const g of SHARE_VACCINE_GROUPS) {
-      buckets['절차정보'].push({ key: g.key, label: g.label, order: 1000 + g.display_order })
+      buckets['절차정보'].push({ key: g.key, label: g.label, order: g.display_order, groupOrder: 2 })
     }
-    let extraOrder = 2000
+
+    // 3) EXTRA 필드 — 같은 group 메타 2개 이상이면 subgroup 으로 묶어 표시 (case-detail / dialog 와 동일).
+    const groupCounts = new Map<string, number>()
     for (const key of ALL_EXTRA_FIELD_KEYS) {
-      const label = EXTRA_FIELD_KEY_LABELS[key] ?? key
-      buckets['추가정보'].push({ key, label, order: extraOrder++ })
+      if (key === 'email') continue // 고객정보 전용
+      const g = EXTRA_FIELD_DEFS[key]?.group
+      if (g) groupCounts.set(g, (groupCounts.get(g) ?? 0) + 1)
     }
-    for (const c of CATEGORIES) buckets[c].sort((a, b) => a.order - b.order)
-    return CATEGORIES.map((c) => ({
-      category: c,
-      fields: buckets[c].map(({ key, label }) => ({ key, label })),
-    })).filter((g) => g.fields.length > 0)
+    let extraOrder = 0
+    for (const key of ALL_EXTRA_FIELD_KEYS) {
+      if (key === 'email') continue // 고객정보 전용 (field_definitions 기본정보)
+      const def = EXTRA_FIELD_DEFS[key]
+      const useGroup = !!def?.group && (groupCounts.get(def.group) ?? 0) >= 2
+      const label = useGroup && def?.shortLabel ? def.shortLabel : (EXTRA_FIELD_KEY_LABELS[key] ?? key)
+      buckets['추가정보'].push({
+        key,
+        label,
+        subgroup: useGroup ? def!.group : undefined,
+        order: extraOrder++,
+        groupOrder: 99,
+      })
+    }
+
+    for (const c of CATEGORIES) {
+      buckets[c].sort((a, b) => {
+        if (a.groupOrder !== b.groupOrder) return a.groupOrder - b.groupOrder
+        return a.order - b.order
+      })
+    }
+    return CATEGORIES.map((c) => {
+      // 같은 subgroup 끼리 블록으로 묶어 반환 (직접 선택의 그룹 표시와 일치).
+      const blocks: { subgroup?: string; fields: { key: string; label: string }[] }[] = []
+      for (const f of buckets[c]) {
+        const last = blocks[blocks.length - 1]
+        if (last && last.subgroup === f.subgroup) {
+          last.fields.push({ key: f.key, label: f.label })
+        } else {
+          blocks.push({ subgroup: f.subgroup, fields: [{ key: f.key, label: f.label }] })
+        }
+      }
+      return { category: c, blocks }
+    }).filter((g) => g.blocks.length > 0)
   }, [fieldDefs])
 
   function addPreset() {
@@ -254,31 +285,42 @@ export function SharePresetsSection({
                 </div>
 
                 {expanded && (
-                  <div className="mt-3 space-y-md pl-9">
+                  <div className="mt-3 space-y-lg pl-9">
                     {groupedFields.map((g) => (
                       <div key={g.category}>
-                        <p className="font-serif text-[12px] text-muted-foreground/80 mb-1">
+                        <h5 className="font-serif text-[14px] font-medium text-foreground mb-2">
                           {g.category}
-                        </p>
-                        <div className="flex flex-wrap gap-1">
-                          {g.fields.map((f) => {
-                            const active = p.field_keys.includes(f.key)
-                            return (
-                              <button
-                                key={f.key}
-                                type="button"
-                                onClick={() => toggleField(p.id, f.key)}
-                                className={cn(
-                                  'h-7 px-2.5 rounded-full border font-serif text-[12px] transition-colors',
-                                  active
-                                    ? 'border-foreground bg-foreground text-background'
-                                    : 'border-border/80 text-muted-foreground hover:bg-accent hover:text-foreground',
-                                )}
-                              >
-                                {f.label}
-                              </button>
-                            )
-                          })}
+                        </h5>
+                        <div className="space-y-2 pl-2 border-l border-border/40">
+                          {g.blocks.map((block, bi) => (
+                            <div key={block.subgroup ?? `__flat-${bi}`} className="pl-2">
+                              {block.subgroup && (
+                                <p className="font-mono text-[10px] uppercase tracking-[1.1px] text-muted-foreground/70 mb-1">
+                                  {block.subgroup}
+                                </p>
+                              )}
+                              <div className="flex flex-wrap gap-1">
+                                {block.fields.map((f) => {
+                                  const active = p.field_keys.includes(f.key)
+                                  return (
+                                    <button
+                                      key={f.key}
+                                      type="button"
+                                      onClick={() => toggleField(p.id, f.key)}
+                                      className={cn(
+                                        'h-7 px-2.5 rounded-full border font-serif text-[12px] transition-colors',
+                                        active
+                                          ? 'border-foreground bg-foreground text-background'
+                                          : 'border-border/80 text-muted-foreground hover:bg-accent hover:text-foreground',
+                                      )}
+                                    >
+                                      {f.label}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     ))}

@@ -335,7 +335,9 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
         {/* ─── 추가정보 — 절차정보 바로 뒤. 모든 destination 이 일반 SimpleExtraSection 사용. ─── */}
         {g.group === '절차정보' && (() => {
           // extraFields entries — 커스텀 우선, 폴백 하드코딩. 종 필터 적용.
+          // email 은 고객정보(전화번호 옆) 에 표시되므로 추가정보에서 제외.
           const extraEntries = getEffectiveExtraFieldEntries(viewDestination, destOverridesConfig)
+            .filter((e) => e.key !== 'email')
             .filter((e) => extraFieldMatchesSpecies(e, speciesValue))
           if (extraEntries.length === 0) return null
           const sectionNumber = String(groups.length + 1).padStart(2, '0')

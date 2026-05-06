@@ -126,11 +126,33 @@ export function ShareForm({ initial }: Props) {
           )}
         </header>
 
-        {/* 필드 입력 */}
+        {/* 필드 입력 — 카테고리/서브그룹별로 묶어 표시. 카테고리·서브그룹 단일이면 헤더 생략. */}
         <div className="space-y-md">
-          {view.fields.map((f) => (
-            <FieldInput key={f.key} field={f} value={values[f.key]} onChange={(v) => update(f.key, v)} />
-          ))}
+          {(() => {
+            const grouped = groupFields(view.fields)
+            const showCategoryHeaders = grouped.length >= 2
+            return grouped.map((cat) => (
+              <div key={cat.category ?? '__none'} className="space-y-md">
+                {showCategoryHeaders && cat.category && (
+                  <h2 className="font-mono text-[10.5px] uppercase tracking-[1.2px] text-foreground/80 pt-md">
+                    {cat.category}
+                  </h2>
+                )}
+                {cat.blocks.map((block, bi) => (
+                  <div key={bi} className="space-y-md">
+                    {cat.showSubgroupHeaders && block.subgroup && (
+                      <p className="font-mono text-[10px] uppercase tracking-[1.1px] text-muted-foreground/70 pt-1">
+                        {block.subgroup}
+                      </p>
+                    )}
+                    {block.fields.map((f) => (
+                      <FieldInput key={f.key} field={f} value={values[f.key]} onChange={(v) => update(f.key, v)} />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            ))
+          })()}
         </div>
 
         {/* 메모 */}
@@ -168,6 +190,51 @@ export function ShareForm({ initial }: Props) {
       </form>
     </div>
   )
+}
+
+/**
+ * 필드 배열을 카테고리(고객정보·동물정보·절차정보·추가정보) → 서브그룹(입국 항공편·출국 항공편)
+ * 순으로 그룹핑한다. 등장 순서를 보존하며, 카테고리 미지정 항목은 '__none' 버킷으로 모음.
+ *
+ * 카테고리·서브그룹은 ShareFieldSpec.category/subgroup 메타로 결정 — 없으면 헤더 없이 평면 출력.
+ */
+type GroupedBlock = { subgroup?: string; fields: ShareFieldSpec[] }
+type GroupedCategory = {
+  category?: string
+  blocks: GroupedBlock[]
+  /** 같은 카테고리 안에 서로 다른 subgroup 이 2개 이상일 때만 헤더 표시. */
+  showSubgroupHeaders: boolean
+}
+
+function groupFields(fields: ShareFieldSpec[]): GroupedCategory[] {
+  // Pass 1: 카테고리별 버킷 (등장 순서 보존)
+  const byCategory = new Map<string, ShareFieldSpec[]>()
+  for (const f of fields) {
+    const cat = f.category ?? '__none'
+    const arr = byCategory.get(cat) ?? []
+    arr.push(f)
+    byCategory.set(cat, arr)
+  }
+  // Pass 2: 카테고리 내부에서 연속된 같은 subgroup 끼리 블록화
+  const result: GroupedCategory[] = []
+  for (const [category, items] of byCategory) {
+    const blocks: GroupedBlock[] = []
+    for (const f of items) {
+      const last = blocks[blocks.length - 1]
+      if (last && last.subgroup === f.subgroup) {
+        last.fields.push(f)
+      } else {
+        blocks.push({ subgroup: f.subgroup, fields: [f] })
+      }
+    }
+    const distinctSubgroups = new Set(items.map((f) => f.subgroup).filter((s): s is string => !!s))
+    result.push({
+      category: category === '__none' ? undefined : category,
+      blocks,
+      showSubgroupHeaders: distinctSubgroups.size >= 2,
+    })
+  }
+  return result
 }
 
 function Centered({ children }: { children: React.ReactNode }) {
