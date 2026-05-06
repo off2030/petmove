@@ -60,12 +60,12 @@ export const TH_CHECKS: ProcedureCheck[] = [
 
   // ── 광견병 ──
   {
-    id: 'th.rabies-prime-after-91days-old',
+    id: 'th.rabies-prime-after-12weeks',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종 생후 91일령 이상',
+    title: '광견병 1차 접종 생후 12주(84일) 이상',
     description:
-      '광견병 1차 접종은 생후 최소 91일(3개월) 이후. 불활화(사독) 또는 재조합 백신만 인정. (petmove 가이드)',
+      '광견병 1차 접종은 생후 최소 12주(84일) 이후. 불활화(사독) 또는 재조합 백신만 인정. (DLD 공식: "at least 3 months old or 12 weeks or 84 days at time of administered")',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -77,11 +77,11 @@ export const TH_CHECKS: ProcedureCheck[] = [
       const first = rabies[0]
       const age = daysBetween(birth, first.date)
       if (age === null) return SKIP
-      if (age < 91) {
+      if (age < 84) {
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 생후 ${age}일령 — 최소 91일령 이상 필요.`,
-          fixHint: `${birth} 기준 91일 이후로 1차 접종일을 조정하세요.`,
+          message: `1차 접종일(${first.date})이 생후 ${age}일령 — 최소 84일령(12주) 이상 필요.`,
+          fixHint: `${birth} 기준 84일 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
