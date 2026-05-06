@@ -69,6 +69,11 @@ export function readCivEntries(caseRow: CaseRow): VaccineEntry[] {
   return readVaccineDateArray(caseRow, 'civ_dates')
 }
 
+/** 켄넬코프 (Bordetella) — `general_vaccine_dates` 와 동일 shape. */
+export function readKennelCoughEntries(caseRow: CaseRow): VaccineEntry[] {
+  return readVaccineDateArray(caseRow, 'kennel_cough_dates')
+}
+
 /** date + valid_until 형태의 백신 array 공통 reader. */
 function readVaccineDateArray(caseRow: CaseRow, key: string): VaccineEntry[] {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -124,6 +129,11 @@ export function readExternalParasiteEntries(caseRow: CaseRow): ParasiteEntry[] {
 
 export function readInternalParasiteEntries(caseRow: CaseRow): ParasiteEntry[] {
   return readSimpleDatedArray(caseRow, 'internal_parasite_dates')
+}
+
+/** 심장사상충 — `[{date}]` 형식. NZ heartworm 검사·예방 투약 통합 기록. */
+export function readHeartwormEntries(caseRow: CaseRow): ParasiteEntry[] {
+  return readSimpleDatedArray(caseRow, 'heartworm_dates')
 }
 
 function readSimpleDatedArray(caseRow: CaseRow, key: string): ParasiteEntry[] {
