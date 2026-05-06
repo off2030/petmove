@@ -1445,12 +1445,12 @@
      가는 산세리프, 정적/섬세. 스파·차·일본 화장품 톤.
      ───────────────────────────────────────────────────────────── */
   [data-skin="sakura"] {
-    /* Inter — light weight 톤. */
-    --font-sans: var(--font-sans-flat);
-    --font-serif: var(--font-sans-flat), Pretendard;
-    --font-serif-kr: var(--font-sans-kr);
-    --font-mono: var(--font-sans-flat);
-    --pmw-font-serif: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    /* Source Serif 4 — art-deco 와 동일. --font-serif 자체 redefine 금지. */
+    --font-sans: var(--font-serif);
+    --font-mono: var(--font-serif);
+    --pmw-font-serif: var(--font-serif), var(--font-serif-kr), Georgia, 'Times New Roman', serif;
+    --pmw-font-sans: var(--font-serif), var(--font-serif-kr), Georgia, 'Times New Roman', serif;
+    --pmw-font-mono: var(--font-serif), var(--font-serif-kr), Georgia, 'Times New Roman', serif;
 
     --pmw-near-black: #5C2839;       /* deep sakura plum */
     --pmw-olive-gray: #8B5A6A;
@@ -1935,7 +1935,6 @@
   [data-skin="foggy-pastel"] .italic,
   [data-skin="hygge"] .italic,
   [data-skin="scandi-minimal"] .italic,
-  [data-skin="sakura"] .italic,
   [data-skin="baby-blue"] .italic {
     font-style: normal;
   }
