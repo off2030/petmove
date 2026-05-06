@@ -153,33 +153,52 @@ export function CasesProvider({
   // 사용자가 행을 선택하면 표식 제거 (selectCase 안에서).
   useEffect(() => {
     if (!orgId) return
-    const channel = supabaseBrowser
-      .channel(`cases-realtime-${orgId}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'cases', filter: `org_id=eq.${orgId}` },
-        (payload) => {
-          const row = payload.new as CaseRow
-          if (!row?.id) return
+    let closed = false
+    let channel: ReturnType<typeof supabaseBrowser.channel> | null = null
+
+    async function subscribeCases() {
+      const {
+        data: { session },
+      } = await supabaseBrowser.auth.getSession()
+
+      if (closed || !session?.access_token) return
+
+      // Ensure the postgres_changes join carries the authenticated JWT.
+      // Without this, the first join can race as anon and RLS hides inserts.
+      await supabaseBrowser.realtime.setAuth(session.access_token)
+      if (closed) return
+
+      channel = supabaseBrowser
+        .channel(`cases-realtime-${orgId}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'cases', filter: `org_id=eq.${orgId}` },
+          (payload) => {
+            const row = payload.new as CaseRow
+            if (!row?.id) return
           // 본인이 추가한 케이스면 Realtime 콜백 무시 — 이미 addLocalCase 로 반영됨.
-          if (selfAddedRef.current.has(row.id)) {
-            selfAddedRef.current.delete(row.id)
-            return
-          }
-          setCases((prev) => {
-            if (prev.some((c) => c.id === row.id)) return prev
-            return [row, ...prev]
-          })
-          setNewCaseIds((prev) => {
-            const next = new Set(prev)
-            next.add(row.id)
-            return next
-          })
-        },
-      )
-      .subscribe()
+            if (selfAddedRef.current.has(row.id)) {
+              selfAddedRef.current.delete(row.id)
+              return
+            }
+            setCases((prev) => {
+              if (prev.some((c) => c.id === row.id)) return prev
+              return [row, ...prev]
+            })
+            setNewCaseIds((prev) => {
+              const next = new Set(prev)
+              next.add(row.id)
+              return next
+            })
+          },
+        )
+        .subscribe()
+    }
+
+    void subscribeCases()
     return () => {
-      supabaseBrowser.removeChannel(channel)
+      closed = true
+      if (channel) void supabaseBrowser.removeChannel(channel)
     }
   }, [orgId])
 
