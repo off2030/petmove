@@ -14,28 +14,48 @@ export function isExtractableFile(file: File): boolean {
   return file.type.startsWith('image/') || file.type === 'application/pdf'
 }
 
-/** 단일 이미지 파일을 base64로 변환 (canvas 리사이즈) */
-export function imageToBase64(file: File): Promise<{ base64: string; mediaType: string }> {
-  return new Promise((resolve, reject) => {
+/**
+ * 단일 이미지 파일을 base64로 변환 (canvas 리사이즈).
+ *
+ * iOS Safari 호환:
+ *  - `img.decode()` 사용 — `img.onload` 가 blob URL 에서 가끔 발화 안 하는 WebKit 버그 회피
+ *  - objectURL 항상 revoke (메모리 누수 방지)
+ *  - canvas/toDataURL 실패 시 명시적 에러 메시지
+ */
+export async function imageToBase64(file: File): Promise<{ base64: string; mediaType: string }> {
+  const url = URL.createObjectURL(file)
+  try {
     const img = new Image()
-    img.onload = () => {
-      let w = img.width, h = img.height
-      if (w > MAX_PX || h > MAX_PX) {
-        const ratio = Math.min(MAX_PX / w, MAX_PX / h)
-        w = Math.round(w * ratio)
-        h = Math.round(h * ratio)
-      }
-      const canvas = document.createElement('canvas')
-      canvas.width = w
-      canvas.height = h
-      const ctx = canvas.getContext('2d')!
-      ctx.drawImage(img, 0, 0, w, h)
-      const dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY)
-      resolve({ base64: dataUrl.split(',')[1], mediaType: 'image/jpeg' })
+    img.src = url
+    if (typeof img.decode === 'function') {
+      await img.decode()
+    } else {
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve()
+        img.onerror = () => reject(new Error('이미지 로드 실패'))
+      })
     }
-    img.onerror = reject
-    img.src = URL.createObjectURL(file)
-  })
+    let w = img.naturalWidth || img.width
+    let h = img.naturalHeight || img.height
+    if (!w || !h) throw new Error('이미지 크기를 읽을 수 없습니다')
+    if (w > MAX_PX || h > MAX_PX) {
+      const ratio = Math.min(MAX_PX / w, MAX_PX / h)
+      w = Math.round(w * ratio)
+      h = Math.round(h * ratio)
+    }
+    const canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')
+    if (!ctx) throw new Error('canvas 컨텍스트 생성 실패')
+    ctx.drawImage(img, 0, 0, w, h)
+    const dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY)
+    if (!dataUrl || !dataUrl.startsWith('data:')) throw new Error('canvas → dataURL 변환 실패')
+    const comma = dataUrl.indexOf(',')
+    return { base64: dataUrl.slice(comma + 1), mediaType: 'image/jpeg' }
+  } finally {
+    URL.revokeObjectURL(url)
+  }
 }
 
 /**
