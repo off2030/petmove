@@ -2,7 +2,6 @@ import type { ProcedureCheck } from './types'
 import {
   daysBetween,
   readGeneralVaccineEntries,
-  readInternalParasiteEntries,
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
@@ -92,12 +91,12 @@ export const PH_CHECKS: ProcedureCheck[] = [
     },
   },
   {
-    id: 'ph.rabies-14days-before-arrival',
+    id: 'ph.rabies-21days-before-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 접종은 출국(=도착) 14일 이전 완료',
+    title: '광견병 접종은 출국(=도착) 3주(21일) 이전 완료',
     description:
-      '가장 최근 광견병 접종이 출국일 기준 14일 이전 완료 (SPSIC 신청 기준 — dep proxy). (petmove 가이드: "SPSIC 신청 기준 최소 14일 전 완료")',
+      '가장 최근 광견병 접종이 출국일 기준 21일(3주) 이전 완료. (필리핀 BAI 실무 기준)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -108,11 +107,11 @@ export const PH_CHECKS: ProcedureCheck[] = [
       const latest = rabies[rabies.length - 1]
       const days = daysBetween(latest.date, dep)
       if (days === null) return SKIP
-      if (days < 14) {
+      if (days < 21) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date}) → 출국(${dep}): ${days}일 (≥14일 필요).`,
-          fixHint: `출국일을 ${latest.date} 기준 14일 이후로 조정하거나 부스터를 더 일찍 접종.`,
+          message: `최근 접종(${latest.date}) → 출국(${dep}): ${days}일 (≥21일 필요).`,
+          fixHint: `출국일을 ${latest.date} 기준 21일 이후로 조정하거나 부스터를 더 일찍 접종.`,
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -123,9 +122,9 @@ export const PH_CHECKS: ProcedureCheck[] = [
     id: 'ph.rabies-not-expired-on-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: '도착일에 광견병 면역 유효 (1년 이내)',
+    title: '도착일에 광견병 면역 유효 (접종일 포함 1년 = 364일까지)',
     description:
-      '최근 광견병 접종 면역 유효기간(1년)이 도착일 이전 만료되지 않아야 함. valid_until 명시 시 그 값, 미명시 시 디폴트 1년 (`addOneYear`).',
+      '최근 광견병 접종 면역 유효기간이 도착일 이전 만료되지 않아야 함. **접종일 포함 1년 = +364일**까지 허용. valid_until 명시 시 그 값 사용, 미명시 시 디폴트 1년 (`addOneYear` = +364).',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -150,12 +149,12 @@ export const PH_CHECKS: ProcedureCheck[] = [
 
   // ── 종합백신 ──
   {
-    id: 'ph.general-vaccine-14days-before-arrival',
+    id: 'ph.general-vaccine-21days-before-arrival',
     country: COUNTRY,
     category: '종합백신',
-    title: '종합백신 출국(=도착) 14일 이전 완료',
+    title: '종합백신 출국(=도착) 3주(21일) 이전 완료',
     description:
-      '종합백신(강아지 DHLPPi / 고양이 FVRCP) 가장 최근 접종이 출국일 기준 14일 이전 완료. (petmove 가이드: "SPSIC 신청 기준 최소 14일 전")',
+      '종합백신(강아지 DHLPPi / 고양이 FVRCP) 가장 최근 접종이 출국일 기준 21일(3주) 이전 완료. (필리핀 BAI 실무 기준)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -166,11 +165,11 @@ export const PH_CHECKS: ProcedureCheck[] = [
       const latest = entries[entries.length - 1]
       const days = daysBetween(latest.date, dep)
       if (days === null) return SKIP
-      if (days < 14) {
+      if (days < 21) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date}) → 출국(${dep}): ${days}일 (≥14일 필요).`,
-          fixHint: `출국일을 ${latest.date} 기준 14일 이후로 조정하거나 부스터를 더 일찍 접종.`,
+          message: `최근 종합백신(${latest.date}) → 출국(${dep}): ${days}일 (≥21일 필요).`,
+          fixHint: `출국일을 ${latest.date} 기준 21일 이후로 조정하거나 부스터를 더 일찍 접종.`,
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
@@ -181,9 +180,9 @@ export const PH_CHECKS: ProcedureCheck[] = [
     id: 'ph.general-vaccine-not-expired-on-arrival',
     country: COUNTRY,
     category: '종합백신',
-    title: '도착일에 종합백신 면역 유효',
+    title: '도착일에 종합백신 면역 유효 (접종일 포함 1년 = 364일까지)',
     description:
-      '최근 종합백신 면역 유효기간이 도착일 이전 만료되지 않아야 함. valid_until 명시 시 그 값 사용, 미명시 시 디폴트 1년.',
+      '최근 종합백신 면역 유효기간이 도착일 이전 만료되지 않아야 함. **접종일 포함 1년 = +364일**까지 허용. valid_until 명시 시 그 값, 미명시 시 디폴트 1년 (`addOneYear` = +364).',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -203,51 +202,6 @@ export const PH_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `최근 종합백신(${latest.date}) 유효기간(${validUntil}) ≥ 출국일(${dep}).` }
-    },
-  },
-
-  // ── 구충 ──
-  {
-    id: 'ph.internal-parasite-7to91days-before-arrival',
-    country: COUNTRY,
-    category: '구충',
-    title: '내부구충은 출국 7~91일 사이 (SPSIC 신청 기준)',
-    description:
-      '내부구충(nematodes + cestodes) 가장 최근 치료가 출국일 기준 7일 이상 ~ 91일 이내 (SPSIC 신청 기준 — dep proxy). (petmove 가이드: "SPSIC 신청일 기준 91일 이내 ~ 7일 이내에 치료 실시")',
-    severity: 'blocker',
-    addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
-      const entries = readInternalParasiteEntries(caseRow)
-      if (!dep || entries.length === 0) return SKIP
-
-      const latest = entries[entries.length - 1]
-      const days = daysBetween(latest.date, dep)
-      if (days === null) return SKIP
-      if (days < 0) {
-        return {
-          ok: false,
-          message: `내부구충(${latest.date})이 출국일(${dep})보다 늦음.`,
-          offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
-        }
-      }
-      if (days < 7) {
-        return {
-          ok: false,
-          message: `최근 내부구충(${latest.date}) → 출국(${dep}): ${days}일 — 7일 이상 필요.`,
-          fixHint: '구충 시점을 더 앞으로 조정 (출국 7일 이전).',
-          offendingPaths: ['departure_date', `internal_parasite_dates[${latest.originalIndex}].date`],
-        }
-      }
-      if (days > 91) {
-        return {
-          ok: false,
-          message: `최근 내부구충(${latest.date}) → 출국(${dep}): ${days}일 — 91일 이내 필요.`,
-          fixHint: `재구충 또는 출국일을 ${latest.date} 기준 91일 이내로 조정.`,
-          offendingPaths: ['departure_date', `internal_parasite_dates[${latest.originalIndex}].date`],
-        }
-      }
-      return { ok: true, message: `최근 내부구충(${latest.date}) → 출국(${dep}): ${days}일.` }
     },
   },
 
@@ -316,21 +270,5 @@ export const PH_CHECKS: ProcedureCheck[] = [
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
     },
-  },
-
-  // ── 안내(경고) ──
-  {
-    id: 'ph.spsic-permit-info',
-    country: COUNTRY,
-    category: '서류',
-    title: 'SPSIC 수입허가증 신청 (출발 1-2주 전, 60일 유효)',
-    description:
-      'BAI SPSIC: Intercommerce 사이트로 온라인 신청. 발행일로부터 60일 유효, 1회 최대 3마리. 시스템에 SPSIC 신청 추적 데이터 없음 → 안내 경고.',
-    severity: 'warning',
-    addedAt: '2026-05-06',
-    run: () => ({
-      ok: true,
-      message: 'SPSIC 수입허가증 신청이 출발 1-2주 전 완료되었는지 별도 확인 필요.',
-    }),
   },
 ]
