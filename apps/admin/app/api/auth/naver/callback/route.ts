@@ -88,7 +88,12 @@ export async function GET(request: Request) {
     return loginRedirect(url.origin, `naver_me: ${(e as Error).message}`)
   }
 
-  // 3. Supabase user 조회/생성 — profiles 직접 query (auth.admin.listUsers 보다 훨씬 빠름)
+  // 3. Supabase user 조회/생성 — profiles 직접 query (auth.admin.listUsers 보다 훨씬 빠름).
+  //
+  // 같은 이메일로 다른 provider (email magic link, google) 로 가입한 사용자가 있으면
+  // 자동으로 그 계정에 매핑된다. Naver developers 정책상 이메일은 본인 검증을 거친
+  // 값만 반환하므로 이메일 탈취로 인한 계정 hijack 위험은 낮다. 의도된 동작.
+  // 매핑 시 console 에 한 줄 남겨 추후 운영 로그(Vercel functions) 에서 추적 가능.
   const admin = createAdminClient()
   let userId: string | null = null
   try {
@@ -99,6 +104,18 @@ export async function GET(request: Request) {
       .maybeSingle()
     if (existing) {
       userId = existing.id as string
+      // 기존 user 의 app_metadata.providers 에 'naver' 가 누락돼 있으면 append.
+      // 누락 시 미들웨어 hasOnlyEmailProvider 가 true 로 잘못 평가되어 Naver 로
+      // 로그인한 사용자가 /set-password 로 강제 리다이렉트되는 혼란이 발생.
+      const { data: userResp } = await admin.auth.admin.getUserById(userId)
+      const currentMeta = (userResp?.user?.app_metadata ?? {}) as Record<string, unknown>
+      const currentProviders = (currentMeta.providers as string[] | undefined) ?? []
+      if (!currentProviders.includes('naver')) {
+        console.log(`[naver-auth] linking naver to existing user ${userId} (${email})`)
+        await admin.auth.admin.updateUserById(userId, {
+          app_metadata: { ...currentMeta, providers: [...currentProviders, 'naver'] },
+        })
+      }
     } else {
       const { data: created, error: createErr } = await admin.auth.admin.createUser({
         email,
