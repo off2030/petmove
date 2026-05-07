@@ -3,16 +3,10 @@
  * 증명서 템플릿에 들어가는 서명란·연락처 정보를 한 곳에서 관리한다.
  * 모든 PDF 매핑은 transform "vet:<key>" 로 이 값을 참조한다.
  *
- * 기본값은 아래 DEFAULT_VET_INFO. Supabase `organization_settings` 의
+ * 기본값은 아래 DEFAULT_VET_INFO. Supabase `app_settings` 의
  * key='company_info' 행에 저장된 override 값으로 덮어쓸 수 있다.
- *
- * Multi-tenancy 안전: PDF 생성 경로는 runWithVetInfo() 로 ALS 바인딩 후 실행.
- * module-level _cached 는 fallback (settings 페이지 등 single-tenant 컨텍스트)
- * 으로만 의미. 동시에 두 조직 사용자가 PDF 를 생성해도 서로의 vet info 가
- * 섞이지 않는다.
+ * PDF 생성 server action 진입 시 loadVetInfo() 를 호출해 캐시를 갱신한다.
  */
-import 'server-only'
-import { AsyncLocalStorage } from 'node:async_hooks'
 
 /**
  * 사용자가 임의로 추가하는 조직 메타데이터(주차정보·세무번호 등 고정 필드 외).
@@ -99,47 +93,24 @@ export type VetInfoKey = Exclude<keyof VetInfo, 'custom_fields' | 'transport_cus
 
 let _cached: VetInfo = DEFAULT_VET_INFO
 
-/**
- * Request-scoped VetInfo binding.
- *
- * PDF 생성 진입점은 반드시 `runWithVetInfo(info, () => fillPdf(...))` 안에서 실행.
- * Module-level _cached 만 쓰면 동시에 두 조직 사용자가 PDF 를 생성할 때 한쪽 요청
- * 도중에 다른쪽 loadVetInfo() 가 _cached 를 덮어써, 첫 요청의 PDF 가 다른 조직
- * 데이터로 채워지는 데이터 누설 race 가 발생한다. ALS 로 요청 단위 격리 보장.
- */
-const vetInfoStore = new AsyncLocalStorage<VetInfo>()
-
-/** ALS 컨텍스트에 vet info 를 바인딩한 채로 fn 실행. fn 안에서 호출되는 모든
- *  `getVetInfo()` / `VET_INFO` 접근은 이 info 를 본다. */
-export function runWithVetInfo<T>(info: VetInfo, fn: () => Promise<T>): Promise<T> {
-  return vetInfoStore.run(info, fn)
-}
-
-/** Sync access — ALS 컨텍스트 우선, 없으면 module cache fallback. PDF 생성 경로
- *  에서는 항상 ALS 가 채워져 있음. settings 페이지 등 single-tenant 컨텍스트에서는
- *  cache fallback 으로도 안전. */
+/** Sync access for PDF mapping code. 항상 즉시 반환. */
 export function getVetInfo(): VetInfo {
-  return vetInfoStore.getStore() ?? _cached
+  return _cached
 }
 
-/** Legacy export — getVetInfo() 위임. ALS 컨텍스트가 있으면 그쪽 우선. */
+/** Legacy export — 점진적으로 getVetInfo() 로 마이그레이션. */
 export const VET_INFO = new Proxy({} as VetInfo, {
   get(_t, key) {
-    return (getVetInfo() as unknown as Record<string, unknown>)[key as string]
+    return (_cached as unknown as Record<string, unknown>)[key as string]
   },
 })
 
 /**
- * Supabase 에서 override 를 읽어 VetInfo 반환. module cache 도 함께 갱신 (legacy
- * 경로 호환 — settings 페이지 등에서 VET_INFO 즉시 접근하는 곳을 위함).
- *
- * PDF 생성 경로에서는 반환값을 받아 `runWithVetInfo(info, ...)` 로 감싸야
- * multi-tenant race 가 차단된다. 반환값을 무시하고 cache 만 의존하면 안전하지 않음.
- *
- * 실패 시 기본값 반환 + cache 갱신.
+ * Supabase 에서 override 를 읽어 캐시를 갱신.
+ * 각 PDF 생성 server action 진입 시 await 한 번 호출.
+ * 실패 시 기본값 유지.
  */
 export async function loadVetInfo(): Promise<VetInfo> {
-  let info: VetInfo = DEFAULT_VET_INFO
   try {
     const { createClient } = await import('@/lib/supabase/server')
     const { getActiveOrgId } = await import('@/lib/supabase/active-org')
@@ -152,37 +123,20 @@ export async function loadVetInfo(): Promise<VetInfo> {
       .eq('key', 'company_info')
       .maybeSingle()
     const override = (data?.value as Partial<VetInfo> | null) ?? {}
-    info = { ...DEFAULT_VET_INFO, ...override }
+    _cached = { ...DEFAULT_VET_INFO, ...override }
   } catch {
-    info = DEFAULT_VET_INFO
+    _cached = DEFAULT_VET_INFO
   }
-  _cached = info
-  return info
+  return _cached
 }
 
-/**
- * 설정 화면에서 호출 — 부분 업데이트 후 캐시 갱신.
- *
- * 중요: merge base 는 module-level _cached 가 아니라 **DB 현재 값** 사용.
- * _cached 는 프로세스 시작 직후 / 재시작 / 다른 조직 사용자의 loadVetInfo 호출로
- * 비어 있거나 다른 조직 데이터로 오염될 수 있음. 그 상태에서 patch 만 merge 하면
- * 다른 모든 필드가 DEFAULT_VET_INFO(빈 문자열)로 덮어써져 DB row 가 통째로 wipe 됨
- * → 이후 PDF 생성 시 vet:* transform 들이 빈 값 반환 → Invoice/ESD/증명서에
- * 조직·수의사 정보가 들어가지 않음.
- */
+/** 설정 화면에서 호출 — 부분 업데이트 후 캐시 갱신. */
 export async function saveVetInfo(patch: Partial<VetInfo>): Promise<VetInfo> {
   const { createClient } = await import('@/lib/supabase/server')
   const { getActiveOrgId } = await import('@/lib/supabase/active-org')
   const supabase = await createClient()
   const orgId = await getActiveOrgId()
-  const { data: existingRow } = await supabase
-    .from('organization_settings')
-    .select('value')
-    .eq('org_id', orgId)
-    .eq('key', 'company_info')
-    .maybeSingle()
-  const existing = (existingRow?.value as Partial<VetInfo> | null) ?? {}
-  const merged: VetInfo = { ...DEFAULT_VET_INFO, ...existing, ...patch }
+  const merged: VetInfo = { ...getVetInfo(), ...patch }
   const { error } = await supabase
     .from('organization_settings')
     .upsert({ org_id: orgId, key: 'company_info', value: merged, updated_at: new Date().toISOString() })
@@ -190,6 +144,6 @@ export async function saveVetInfo(patch: Partial<VetInfo>): Promise<VetInfo> {
     console.error('[saveVetInfo] upsert error:', error)
     throw new Error(error.message)
   }
-  _cached = merged
+  _cached = { ...DEFAULT_VET_INFO, ...merged }
   return _cached
 }

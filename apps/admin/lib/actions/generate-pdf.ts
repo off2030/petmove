@@ -1,10 +1,10 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { fillPdf, fillPdfMulti, forceRegenerateButtonAppearances, sanitizeMalformedWidgets } from '@/lib/pdf-fill'
+import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
 import type { CaseRow } from '@/lib/supabase/types'
 import { getEffectiveVaccineList } from '@petmove/domain'
-import { loadVetInfo, runWithVetInfo } from '@/lib/vet-info'
+import { loadVetInfo } from '@/lib/vet-info'
 
 export type GeneratePdfResult =
   | { ok: true; pdf: string; filename: string }
@@ -47,34 +47,32 @@ async function generate(
   caseId: string,
   options?: { includeSignature?: boolean; destination?: string | null; extras?: Record<string, unknown>; rabiesIndices?: number[] },
 ): Promise<GeneratePdfResult> {
-  const vetInfo = await loadVetInfo()
-  return runWithVetInfo(vetInfo, async () => {
-    const supabase = await createClient()
-    const { data: row, error } = await supabase
-      .from('cases')
-      .select('*')
-      .eq('id', caseId)
-      .single()
-    if (error || !row) return { ok: false, error: error?.message ?? '케이스를 찾을 수 없습니다' }
-    let caseRow = row as CaseRow
-    const data = (caseRow.data ?? {}) as Record<string, unknown>
-    const extraFields = (data.extra_visible_fields as string[]) ?? []
-    if (OTHER_HOSPITAL_EXCLUDED_FORMS.has(formKey)) {
-      caseRow = { ...caseRow, data: stripOtherHospitalRecords(data) }
-    }
-    // 다중 목적지 케이스에서 UI 활성 목적지를 받아 그 나라 규칙만 적용.
-    // 지정이 없으면 컬럼 전체 문자열을 사용(단일 목적지 케이스는 동작 동일).
-    // Form25/Form25AuNz 는 한국 수출검역증명서 — 목적지 필터 없이 모든 백신 포함.
-    const destForRules = options?.destination ?? caseRow.destination
-    const allowedVaccines = ALL_VACCINES_FORMS.has(formKey)
-      ? undefined
-      : getEffectiveVaccineList(destForRules, extraFields)
-    return fillPdf(formKey, caseRow, {
-      includeSignature: options?.includeSignature,
-      allowedVaccines,
-      extras: options?.extras,
-      rabiesIndices: options?.rabiesIndices,
-    })
+  await loadVetInfo()
+  const supabase = await createClient()
+  const { data: row, error } = await supabase
+    .from('cases')
+    .select('*')
+    .eq('id', caseId)
+    .single()
+  if (error || !row) return { ok: false, error: error?.message ?? '케이스를 찾을 수 없습니다' }
+  let caseRow = row as CaseRow
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const extraFields = (data.extra_visible_fields as string[]) ?? []
+  if (OTHER_HOSPITAL_EXCLUDED_FORMS.has(formKey)) {
+    caseRow = { ...caseRow, data: stripOtherHospitalRecords(data) }
+  }
+  // 다중 목적지 케이스에서 UI 활성 목적지를 받아 그 나라 규칙만 적용.
+  // 지정이 없으면 컬럼 전체 문자열을 사용(단일 목적지 케이스는 동작 동일).
+  // Form25/Form25AuNz 는 한국 수출검역증명서 — 목적지 필터 없이 모든 백신 포함.
+  const destForRules = options?.destination ?? caseRow.destination
+  const allowedVaccines = ALL_VACCINES_FORMS.has(formKey)
+    ? undefined
+    : getEffectiveVaccineList(destForRules, extraFields)
+  return fillPdf(formKey, caseRow, {
+    includeSignature: options?.includeSignature,
+    allowedVaccines,
+    extras: options?.extras,
+    rabiesIndices: options?.rabiesIndices,
   })
 }
 
@@ -87,20 +85,18 @@ async function generateStandalone(
   formKey: string,
   extras: Record<string, unknown>,
 ): Promise<GeneratePdfResult> {
-  const vetInfo = await loadVetInfo()
-  return runWithVetInfo(vetInfo, async () => {
-    const stub: CaseRow = {
-      id: 'standalone', org_id: '',
-      microchip: null, microchip_extra: [],
-      customer_name: '', customer_name_en: null,
-      pet_name: null, pet_name_en: null,
-      destination: null, departure_date: null,
-      assigned_to: null,
-      data: {},
-      created_at: '', updated_at: '',
-    }
-    return fillPdf(formKey, stub, { extras })
-  })
+  await loadVetInfo()
+  const stub: CaseRow = {
+    id: 'standalone', org_id: '',
+    microchip: null, microchip_extra: [],
+    customer_name: '', customer_name_en: null,
+    pet_name: null, pet_name_en: null,
+    destination: null, departure_date: null,
+    assigned_to: null,
+    data: {},
+    created_at: '', updated_at: '',
+  }
+  return fillPdf(formKey, stub, { extras })
 }
 
 /** 모든 generate* 진입점의 공통 옵션. UI 활성 목적지를 destination 으로 전달. */
@@ -235,28 +231,6 @@ export async function generateInvoiceAndESD(opts: ShipmentOpts): Promise<Generat
   const invoicePdf = await PDFDocument.load(Buffer.from(invoiceResult.pdf, 'base64'))
   const esdPdf = await PDFDocument.load(Buffer.from(esdResult.pdf, 'base64'))
 
-  // copyPages 는 AcroForm 구조를 잃어버림 — viewer 가 NeedAppearances=true 에 의존해
-  // 동적 렌더링하던 필드(특히 ESD 의 vet:name_en / vet:esd_license_block)는 병합 후
-  // 재생성 불가능해 invisible 로 표시됨. 병합 직전 flatten 으로 페이지 content stream
-  // 에 베이크. 단독 ESD/Invoice 발급 경로는 그대로 form field 유지(사용자 편집 가능).
-  //
-  // flatten 직전에 fillPdfCore 와 동일한 prep 필수:
-  //   - forceRegenerateButtonAppearances: 체크박스 widget 의 Yes/Off ref 를 모두 채움
-  //     (Invoice 의 Check Box26 처럼 /Yes 만 있고 /Off 가 없는 incomplete AP dict
-  //      → flatten 의 findWidgetAppearanceRef 가 throw 하는 사고 차단)
-  //   - sanitizeMalformedWidgets: AP/N 이 stream 도 ref 도 dict 도 아닌 widget 에
-  //     빈 XObject ref 를 박아넣음
-  //
-  // updateFieldAppearances:false — 단독 PDF 가 이미 customFont(NanumGothic) 로 정확한
-  // AP 를 베이크해 둔 상태이므로 flatten 의 auto regeneration(default Helvetica) 으로
-  // 덮어써져 빈 <> Tj 가 되지 않도록 차단.
-  for (const p of [invoicePdf, esdPdf]) {
-    const f = p.getForm()
-    forceRegenerateButtonAppearances(f)
-    sanitizeMalformedWidgets(p, f)
-    f.flatten({ updateFieldAppearances: false })
-  }
-
   const mergedPdf = await PDFDocument.create()
   const invoicePages = await mergedPdf.copyPages(invoicePdf, invoicePdf.getPageIndices())
   const esdPages = await mergedPdf.copyPages(esdPdf, esdPdf.getPageIndices())
@@ -275,9 +249,7 @@ export async function generateInvoiceAndESD(opts: ShipmentOpts): Promise<Generat
     customsPages.forEach(page => mergedPdf.addPage(page))
   }
 
-  // updateFieldAppearances:false — flatten 후 form 이 비어있고 페이지 content 에 텍스트가
-  // 이미 베이크돼 있으므로 auto regeneration 은 의미 없을 뿐 아니라 잠재적 사고 위험.
-  const pdfBytes = await mergedPdf.save({ updateFieldAppearances: false })
+  const pdfBytes = await mergedPdf.save()
   const base64 = Buffer.from(pdfBytes).toString('base64')
 
   const suffix = opts.consignee_lab === 'ksvdl_r' ? '+Customs' : ''
@@ -306,11 +278,10 @@ export async function generateNzInfectionPack(caseId: string, opts?: GenerateOpt
   const merged = await PDFDocument.create()
   for (const r of [vbddl, apqaHq, apqaHqEn]) {
     const doc = await PDFDocument.load(Buffer.from(r.pdf, 'base64'))
-    // 단독 PDF 들은 모두 flatten=true 라 form 없음 — 안전하게 그대로 copyPages.
     const pages = await merged.copyPages(doc, doc.getPageIndices())
     pages.forEach(p => merged.addPage(p))
   }
-  const pdfBytes = await merged.save({ updateFieldAppearances: false })
+  const pdfBytes = await merged.save()
   return {
     ok: true,
     pdf: Buffer.from(pdfBytes).toString('base64'),
@@ -465,24 +436,22 @@ async function generateMulti(
   caseIds: string[],
 ): Promise<GenerateMultiPdfResult> {
   if (caseIds.length === 0) return { ok: false, error: '대상 동물이 없습니다' }
-  const vetInfo = await loadVetInfo()
-  return runWithVetInfo(vetInfo, async () => {
-    const supabase = await createClient()
-    const { data: rows, error } = await supabase.from('cases').select('*').in('id', caseIds)
-    if (error) return { ok: false, error: error.message }
-    // Preserve the order of caseIds.
-    const byId = new Map((rows ?? []).map(r => [(r as CaseRow).id, r as CaseRow]))
-    const ordered = caseIds.map(id => byId.get(id)).filter((c): c is CaseRow => !!c)
-    if (ordered.length === 0) return { ok: false, error: '대상 동물을 찾을 수 없습니다' }
+  await loadVetInfo()
+  const supabase = await createClient()
+  const { data: rows, error } = await supabase.from('cases').select('*').in('id', caseIds)
+  if (error) return { ok: false, error: error.message }
+  // Preserve the order of caseIds.
+  const byId = new Map((rows ?? []).map(r => [(r as CaseRow).id, r as CaseRow]))
+  const ordered = caseIds.map(id => byId.get(id)).filter((c): c is CaseRow => !!c)
+  if (ordered.length === 0) return { ok: false, error: '대상 동물을 찾을 수 없습니다' }
 
-    const results = await fillPdfMulti(formKey, ordered)
-    const docs: Array<{ pdf: string; filename: string }> = []
-    for (const r of results) {
-      if (!r.ok) return { ok: false, error: r.error }
-      docs.push({ pdf: r.pdf, filename: r.filename })
-    }
-    return { ok: true, docs }
-  })
+  const results = await fillPdfMulti(formKey, ordered)
+  const docs: Array<{ pdf: string; filename: string }> = []
+  for (const r of results) {
+    if (!r.ok) return { ok: false, error: r.error }
+    docs.push({ pdf: r.pdf, filename: r.filename })
+  }
+  return { ok: true, docs }
 }
 
 export async function generateAnnexIIIMulti(caseIds: string[]) {
