@@ -76,6 +76,14 @@ export interface ShareVaccineGroup {
    * case detail 의 RepeatableDateField hideValidUntil prop 과 동일.
    */
   hide_valid_until?: boolean
+  /**
+   * 케이스 상세에 "타병원 접종" 체크박스가 있는 그룹인지 — repeatable-date-field 의
+   * OTHER_HOSPITAL_LABELS 와 동일 집합. share 폼은 이 플래그가 true 일 때만:
+   *   - prefill 시 기존 other_hospital=true 항목만 노출
+   *   - 제출 시 본인 기록 보존하고 수신자 입력에 other_hospital=true 강제
+   * 구충(외부/내부)처럼 체크박스가 없는 그룹은 수신자 입력을 단순 append 한다.
+   */
+  has_other_hospital?: boolean
 }
 
 // 합성 그룹의 display_order 는 field_definitions seed 좌표계 (vaccine 40~45, 검사 50, 구충 60+) 와 맞춤.
@@ -88,6 +96,7 @@ export const SHARE_VACCINE_GROUPS: ShareVaccineGroup[] = [
     source_keys: ['rabies_dates', 'rabies_1', 'rabies_2', 'rabies_3'],
     storage_mode: 'array',
     array_key: 'rabies_dates',
+    has_other_hospital: true,
   },
   {
     key: '__comprehensive',
@@ -100,6 +109,7 @@ export const SHARE_VACCINE_GROUPS: ShareVaccineGroup[] = [
     ],
     storage_mode: 'array',
     array_key: 'general_vaccine_dates',
+    has_other_hospital: true,
   },
   {
     key: '__civ',
@@ -108,6 +118,7 @@ export const SHARE_VACCINE_GROUPS: ShareVaccineGroup[] = [
     source_keys: ['civ_dates', 'civ', 'civ_2'],
     storage_mode: 'array',
     array_key: 'civ_dates',
+    has_other_hospital: true,
   },
   {
     key: '__kennel_cough',
@@ -116,6 +127,7 @@ export const SHARE_VACCINE_GROUPS: ShareVaccineGroup[] = [
     source_keys: ['kennel_cough_dates'],
     storage_mode: 'array',
     array_key: 'kennel_cough_dates',
+    has_other_hospital: true,
   },
   {
     key: '__external_parasite',
@@ -238,7 +250,6 @@ export const SHARE_RECIPIENT_LABEL_OVERRIDE: Record<string, string> = {
  * - microchip_secondary, japan_extra: 내부/legacy 컨테이너
  * - address_overseas: 추가정보 전용 (4번 블록에서 처리)
  * - vet_visit_date: 발신 조직 내부의 발급일 — 외부 수신자가 채울 항목 아님.
- * - departure_date: 출국일은 발신 조직이 결정 — 외부 수신자가 채울 항목 아님.
  */
 export const SHARE_EXCLUDED_KEYS = new Set([
   'age', 'rabies_3', 'destination', 'memo', 'notes',
@@ -248,5 +259,4 @@ export const SHARE_EXCLUDED_KEYS = new Set([
   'microchip_secondary', 'japan_extra',
   'address_overseas',
   'vet_visit_date',
-  'departure_date',
 ])

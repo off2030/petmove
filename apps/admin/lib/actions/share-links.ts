@@ -15,6 +15,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { formatMicrochip } from '@/lib/fields'
+import breedsData from '@/data/breeds.json'
+import colorsData from '@/data/colors.json'
 import {
   getEffectiveExtraFieldEntries,
   type DestinationExtraFieldEntry,
@@ -163,8 +165,14 @@ const VACCINE_GROUP_BY_KEY = new Map<string, ShareVaccineGroup>(
 
 /**
  * 백신·구충 그룹의 현재 값을 ShareVaccineEntry[] 로 추출 — UI 미리채우기용.
- * 케이스 데이터의 객체 entry({date, product, lot, expiry, ...}) 를 그대로 보존,
- * 레거시 단일 키(rabies_1 등)는 date 만 있는 entry 로 변환.
+ *
+ * group.has_other_hospital 에 따라 동작이 갈린다:
+ *   - true (광견병/종합백신/독감/켄넬코프): 본인 병원 기록은 노출하지 않고
+ *     other_hospital=true 항목만 prefill — 수신자가 타병원 기록만 편집/추가.
+ *   - false (외부구충/내부구충): 케이스 상세에 "타병원 접종" 체크박스 자체가 없어
+ *     본인/타병원 구분이 없다. 기존 기록을 모두 prefill 해 수신자가 그대로 보고 편집.
+ *
+ * 레거시 단일 키(rabies_1, comprehensive, external_parasite_1 등)는 share 폼에서 미노출.
  */
 function extractVaccineEntries(
   group: ShareVaccineGroup,
@@ -175,34 +183,21 @@ function extractVaccineEntries(
     const arr = data[group.array_key]
     if (Array.isArray(arr)) {
       for (const item of arr) {
-        if (typeof item === 'string') {
-          entries.push({ date: item })
-        } else if (item && typeof item === 'object') {
-          const obj = item as Record<string, unknown>
-          const date = typeof obj.date === 'string' ? obj.date : ''
-          if (!date) continue
-          entries.push({
-            date,
-            valid_until: typeof obj.valid_until === 'string' ? obj.valid_until : null,
-            product: typeof obj.product === 'string' ? obj.product : null,
-            manufacturer: typeof obj.manufacturer === 'string' ? obj.manufacturer : null,
-            lot: typeof obj.lot === 'string' ? obj.lot : null,
-            expiry: typeof obj.expiry === 'string' ? obj.expiry : null,
-            other_hospital: typeof obj.other_hospital === 'boolean' ? obj.other_hospital : null,
-          })
-        }
+        if (!item || typeof item !== 'object' || Array.isArray(item)) continue
+        const obj = item as Record<string, unknown>
+        if (group.has_other_hospital && obj.other_hospital !== true) continue
+        const date = typeof obj.date === 'string' ? obj.date : ''
+        if (!date) continue
+        entries.push({
+          date,
+          valid_until: typeof obj.valid_until === 'string' ? obj.valid_until : null,
+          product: typeof obj.product === 'string' ? obj.product : null,
+          manufacturer: typeof obj.manufacturer === 'string' ? obj.manufacturer : null,
+          lot: typeof obj.lot === 'string' ? obj.lot : null,
+          expiry: typeof obj.expiry === 'string' ? obj.expiry : null,
+          other_hospital: group.has_other_hospital ? true : null,
+        })
       }
-    }
-    // legacy 단일 키 (1차/2차/3차) 포함
-    for (const k of group.source_keys) {
-      if (k === group.array_key) continue
-      const v = data[k]
-      if (typeof v === 'string' && v) entries.push({ date: v })
-    }
-  } else if (group.storage_mode === 'split_singles' && group.split_keys) {
-    for (const k of group.split_keys) {
-      const v = data[k]
-      if (typeof v === 'string' && v) entries.push({ date: v })
     }
   }
   return entries
@@ -416,11 +411,16 @@ export async function submitShareLink(
     const colUpdate: Record<string, unknown> = {}
     const dataUpdate: Record<string, unknown> = {}
 
-    // 합성 백신·구충 키 → 실제 저장 키 매핑 먼저 처리 (data 영역에 누적)
+    // 합성 백신·구충 그룹 — merge 단계에서 케이스 현재 데이터와 결합해야 하므로
+    // 여기서는 그룹별 정규화된 entries 만 모아둔다.
+    //   - has_other_hospital=true: 본인 기록(other_hospital !== true) 보존 + 타병원 부분만 교체.
+    //   - has_other_hospital=false: 본인/타병원 구분 없이 기존 기록에 단순 append.
+    const vaccineSubmissions: { group: ShareVaccineGroup; entries: ShareVaccineEntry[] }[] = []
     for (const group of SHARE_VACCINE_GROUPS) {
       if (!allowed.has(group.key)) continue
       const raw = input.values[group.key]
       if (!Array.isArray(raw)) continue
+      const flagOther = group.has_other_hospital === true
       const entries: ShareVaccineEntry[] = []
       for (const item of raw as unknown[]) {
         if (item && typeof item === 'object') {
@@ -434,33 +434,16 @@ export async function submitShareLink(
             manufacturer: cleanString(obj.manufacturer),
             lot: cleanString(obj.lot),
             expiry: cleanString(obj.expiry),
-            other_hospital: typeof obj.other_hospital === 'boolean' ? obj.other_hospital : null,
+            other_hospital: flagOther ? true : null,
           })
         } else if (typeof item === 'string' && item.trim()) {
-          entries.push({ date: item.trim() })
+          entries.push({ date: item.trim(), other_hospital: flagOther ? true : null })
         }
       }
       if (group.storage_mode === 'array' && group.array_key) {
-        // VacRecord 호환 객체 배열로 저장 — 외부 입력은 항상 타병원 접종 플래그
-        dataUpdate[group.array_key] = entries.map((e) => {
-          const rec: Record<string, unknown> = {
-            date: e.date,
-            other_hospital: e.other_hospital ?? true,
-          }
-          if (e.valid_until) rec.valid_until = e.valid_until
-          if (e.product) rec.product = e.product
-          if (e.manufacturer) rec.manufacturer = e.manufacturer
-          if (e.lot) rec.lot = e.lot
-          if (e.expiry) rec.expiry = e.expiry
-          return rec
-        })
-        // legacy 단일 키 (rabies_1/2/3, civ, parasite_1/2 등) 정리
-        for (const k of group.source_keys) {
-          if (k === group.array_key) continue
-          dataUpdate[k] = null
-        }
+        vaccineSubmissions.push({ group, entries })
       } else if (group.storage_mode === 'split_singles' && group.split_keys) {
-        // 종합백신 패턴 — 각 차수별 단일 필드로. 상세는 미저장(케이스 상세에 표시 위치 없음).
+        // split_singles 는 현재 SHARE_VACCINE_GROUPS 에 없지만 타입상 보존.
         const max = group.max_entries ?? group.split_keys.length
         for (let i = 0; i < group.split_keys.length; i++) {
           dataUpdate[group.split_keys[i]] = i < max && entries[i] ? entries[i].date : null
@@ -485,9 +468,24 @@ export async function submitShareLink(
       }
     }
 
+    // breed/color 한글 → 영문 자동 보정 (SHARE_EXCLUDED_KEYS 의 "영문은 자동 보정" 의도).
+    // share form 은 ko 만 저장 → PDF 의 breed_en/color_en 을 함께 채워줘야 ID 등 영문 양식이 비지 않음.
+    if (typeof dataUpdate.breed === 'string' && dataUpdate.breed.trim()) {
+      const ko = dataUpdate.breed.trim()
+      const matched = (breedsData as Array<{ ko: string; en: string }>).find((b) => b.ko === ko)
+      if (matched) dataUpdate.breed_en = matched.en
+    }
+    if (typeof dataUpdate.color === 'string' && dataUpdate.color.trim()) {
+      const kos = dataUpdate.color.split(',').map((s) => s.trim()).filter(Boolean)
+      const colors = colorsData as Array<{ ko: string; en: string }>
+      const ens = kos.map((ko) => colors.find((c) => c.ko === ko)?.en ?? ko)
+      dataUpdate.color_en = ens.join(', ')
+    }
+
     // 현재 case data 와 머지 — null 은 키 삭제로 취급
     const updates: Record<string, unknown> = { ...colUpdate }
-    if (Object.keys(dataUpdate).length > 0) {
+    const needsDataRead = Object.keys(dataUpdate).length > 0 || vaccineSubmissions.length > 0
+    if (needsDataRead) {
       const { data: caseRow } = await admin
         .from('cases')
         .select('data')
@@ -498,6 +496,36 @@ export async function submitShareLink(
       for (const [k, v] of Object.entries(dataUpdate)) {
         if (v === null || v === undefined) delete merged[k]
         else merged[k] = v
+      }
+      // 백신 array_key 합치기 — 그룹별 분기:
+      //   - has_other_hospital=true (광견병/종합백신/독감/켄넬코프): 본인 기록 보존,
+      //     타병원 부분만 수신자 제출로 교체. 빈 제출은 기존 타병원 기록 삭제 의미.
+      //   - has_other_hospital=false (외부구충/내부구충): prefill 로 기존 기록을 그대로
+      //     수신자에게 보여줬으므로 제출값으로 전체 array 를 replace 한다. (append 하면
+      //     prefill 된 기록과 중복 발생.) 본인/타병원 구분이 없는 그룹이라 안전.
+      for (const { group, entries } of vaccineSubmissions) {
+        if (!group.array_key) continue
+        const existing = Array.isArray(merged[group.array_key])
+          ? (merged[group.array_key] as unknown[])
+          : []
+        const flagOther = group.has_other_hospital === true
+        const baseRecords = flagOther
+          ? existing.filter((item) => {
+              if (!item || typeof item !== 'object' || Array.isArray(item)) return true
+              return (item as { other_hospital?: boolean }).other_hospital !== true
+            })
+          : []
+        const recipientRecords = entries.map((e) => {
+          const rec: Record<string, unknown> = { date: e.date }
+          if (flagOther) rec.other_hospital = true
+          if (e.valid_until) rec.valid_until = e.valid_until
+          if (e.product) rec.product = e.product
+          if (e.manufacturer) rec.manufacturer = e.manufacturer
+          if (e.lot) rec.lot = e.lot
+          if (e.expiry) rec.expiry = e.expiry
+          return rec
+        })
+        merged[group.array_key] = [...baseRecords, ...recipientRecords]
       }
       updates.data = merged
     }
