@@ -9,22 +9,24 @@ import {
 } from './utils'
 
 /**
- * 인도네시아 (Karantina Pertanian — Agricultural Quarantine Agency) 절차 검증.
+ * 인도네시아 (BARANTIN / Karantina Indonesia — Indonesian Quarantine Agency, 구 Karantina Pertanian) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/indonesia-pet-travel-guide/)
- *  — 자카르타 입국 전제. 준비 기간 최소 2~3개월.
+ * 출처:
+ *  - karantinaindonesia.go.id "Impor Hewan dan Produk Hewan" — https://karantinaindonesia.go.id/hal/Impor-Hewan-dan-Produk-Hewan
+ *  - embassyofindonesia.org "Pet Animal Quarantine" — https://www.embassyofindonesia.org/pet-animal-quarantine/
+ *  - Soekarno-Hatta Karantina Pertanian — https://soekarnohatta.karantina.pertanian.go.id/layanan/karantina-hewan/persyaratan-karantina-hewan
+ *  - Permentan No. 15 Tahun 2021 (동물·동물성제품 반입·반출)
+ *
+ * ⚠️ **발리·NTB·NTT·Maluku·Papua·Kalbar 직접 반입 금지**. 한국발은 **자카르타 CGK 한정**.
  *
  * 핵심 룰:
- *  - 마이크로칩: ISO 표준, **모든 절차 중 가장 먼저** (필수)
- *  - 광견병: 1차 보수적(91일 AND 캘린더 3개월) + 출국일 면역 유효(1년)
- *  - **RNATT 필수**: 채혈 ≥ 광견병 + 30일 (petmove 미명시 → EU/TR/IL/UA 와 일관된 보수적 기준)
- *  - 건강증명서: 출국 10일 이내
- *
- * 별도 (시스템 검증 제외):
- *  - 종합백신/구충: petmove 미명시
- *  - RNATT 결과치 ≥0.5 IU/ml: 검사기관 fail 처리, 시스템 검증 불필요 (전 국가 일관)
- *  - 광견병 출국 wait period: petmove 미명시 → 룰 제외
- *  - 수입허가증, 격리(1~2주): 사무 절차
+ *  - 마이크로칩: 실무상 ISO 11784/11785 요구 (BARANTIN 1차 명문 미확인)
+ *  - 광견병: 출국 30일 이상 ~ 12개월 이내, 생후 90일 이상, 임신·수유 중 불가
+ *  - **RNATT ≥ 0.5 IU/ml** (BARANTIN 명시), 채혈 ≥ 광견병 + 30일 (보수)
+ *  - 건강증명서 출국 10일 이내 (보수 ≤9, 1차 일자 명문 모호)
+ *  - BARANTIN IKH 14일 격리 (요건 미충족 시 최대 4-6개월)
+ *  - 수입허가 (Surat Persetujuan Pemasukan): 발급 후 3개월 유효, 처리 1-2개월
+ *  - 도착 2일 전 PPK Online 사전 통보
  *
  * 컨벤션 (RU/MX/IL 와 동일):
  *  - 필수 입력 누락 시 SKIP
@@ -41,7 +43,7 @@ export const ID_CHECKS: ProcedureCheck[] = [
     category: '마이크로칩',
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
-      'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (petmove 가이드: "모든 절차 중 가장 먼저")',
+      'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (BARANTIN 운용 표준 — 광견병 백신·항체검사 식별 연계 필요)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -70,7 +72,7 @@ export const ID_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
-      'petmove 가이드 + Karantina Pertanian 정량 미명시 — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
+      'BARANTIN: "at least 90 days old at the time of export/shipment" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -105,7 +107,7 @@ export const ID_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일에 광견병 면역 유효',
     description:
-      '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함. (petmove 가이드: "유효기간 1년")',
+      '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함. (BARANTIN: "vaccination performed at least 30 days and not more than 1 year prior to export/shipment")',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -135,7 +137,7 @@ export const ID_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '항체검사는 광견병 접종 30일 이후',
     description:
-      'RNATT 채혈일은 직전 광견병 접종으로부터 30일 이후. (petmove 미명시 → EU/TR/IL/UA 와 일관된 보수적 기준)',
+      'RNATT 채혈일은 직전 광견병 접종으로부터 30일 이후. (BARANTIN 본문 명시 부재 — EU/TR/IL/UA OIE 표준 차용 보수적 기준)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -176,9 +178,9 @@ export const ID_CHECKS: ProcedureCheck[] = [
     id: 'id.vet-visit-within-10days',
     country: COUNTRY,
     category: '일정',
-    title: '건강증명서(내원일)는 출국 10일 이내',
+    title: '건강증명서(내원일)는 출국 10일 이내 (보수: 9일 전부터)',
     description:
-      '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내. (petmove 가이드: "탑승 전 10일 이내")',
+      'BARANTIN 자체 일자 명시 모호. 한국 APQA endorsement 10일 룰 + 사용자 보수 N-1 → ≤9 적용.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -198,11 +200,11 @@ export const ID_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['vet_visit_date'],
         }
       }
-      if (diff > 10) {
+      if (diff > 9) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 10일 이내 필요.`,
-          fixHint: `내원일을 ${dep} 기준 10일 전 이후로 조정.`,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 10일 이내(≤9일 전) 필요.`,
+          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정.`,
           offendingPaths: ['vet_visit_date'],
         }
       }

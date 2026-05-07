@@ -10,19 +10,29 @@ import {
 } from './utils'
 
 /**
- * 중국 (GACC — General Administration of Customs of China) 절차 검증.
+ * 중국 (GACC — General Administration of Customs of China, 海关总署) 절차 검증.
  *
- * 한국 = **비지정 국가** → 광견병 항체검사(RNATT) 필수.
- *  - 지정 19개국 (호주·NZ·미국 등) 은 항체검사 면제 + 격리 면제
- *  - 비지정국에서 입국 시: 요건 충족 → 격리 면제, 미충족 → 최대 30일 격리
+ * 한국 = **비지정국** → 광견병 항체검사(RNATT) 필수.
+ *  - 지정 19개국 (호주·NZ·미국·일본·홍콩·싱가포르 등) 은 RNATT 면제 + 격리 면제
+ *  - 비지정국에서 입국 시: 마이크로칩 + RNATT ≥0.5 IU/ml + 현장검역 합격 → 격리 면제,
+ *    미충족 시 GACC 지정 격리시설에서 30일
  *
- * 출처: GACC + petmove 가이드 (https://www.petmove.co.kr/docs/china-pet-travel-guide/)
+ * 출처:
+ *  - GACC 公告 2019年第5号 — http://www.customs.gov.cn/customs/302249/302266/302267/2167536/index.html
+ *  - GACC 채신 실험실 명단 (2025-08-15 갱신) — http://www.customs.gov.cn/dzs/2746776/3323864/index.html
  *
- * ⚠️ 핵심 차별 룰:
- *  - **1년 라이선스 광견병 백신만 인정** (2년·3년 백신 거부)
- *  - RNATT 유효기간 = 채혈일 기준 1년 (도착일까지 유효)
- *  - 1인당 1마리 제한 (시스템 검증 대상 아님)
- *  - 도시별 격리 운영 차이 (베이징=검역소, 상하이=7일 검역소+23일 자택) — info
+ * ⚠️ 핵심 룰:
+ *  - **항체가 ≥ 0.5 IU/ml** (GACC 2019 No.5 제2조 명시)
+ *  - **GACC 채신 명단 lab** 발급 보고서 (한국 lab 미포함 → 일본/미국 등 송부)
+ *  - **마이크로칩 ISO 11784/11785, 15자리** (제1조 명시)
+ *  - **1인당 1회 1마리** 한도 (제1조)
+ *  - 입경 14일 이내 임상검사 (해관 답변; 한국 APQA 10일 룰이 더 strict, 보수 ≤9 적용)
+ *
+ * 운용 룰 (GACC 본문 명문 부재 — 실무·OIE 기반 보수 적용):
+ *  - 광견병 1차 ≥ 생후 91일령 (OIE 표준)
+ *  - 광견병 2회 접종, 30일~1년 간격, RNATT 충족 위해 사실상 필요
+ *  - 1년 라이선스 백신만 인정 (실무 — GACC 본문은 "유효기간 내"만 명시)
+ *  - RNATT 유효기간 1년 (실무 — GACC 본문 미명시)
  *
  * 컨벤션 (NZ/HI 와 동일):
  *  - 필수 입력 누락 시 SKIP
@@ -69,7 +79,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
-      'petmove 가이드 + GACC 정량 미명시 — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요. 출생일에 따라 어느 쪽이 더 엄격한지 달라지므로 AND 결합.',
+      'GACC 2019 No.5 본문 정량 미명시 (OIE 표준 차용) — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요. 출생일에 따라 어느 쪽이 더 엄격한지 달라지므로 AND 결합.',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -104,7 +114,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 2회 접종 (1차 + 부스터)',
     description:
-      '광견병 백신은 최소 2회 (1차 + 부스터). 2차는 1차 30일 후 ~ 1년 이내. (petmove 가이드)',
+      '광견병 백신은 최소 2회 (1차 + 부스터). 2차는 1차 30일 후 ~ 1년 이내. (GACC 2019 No.5 본문은 횟수 미명시 — RNATT ≥0.5 IU/ml 충족 위해 OIE 표준상 사실상 필요)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -174,7 +184,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '1년 라이선스 광견병 백신만 인정 (2년/3년 거부)',
     description:
-      '중국은 면역 유효기간 2년·3년짜리 광견병 백신을 인정하지 않음. valid_until 이 접종일 + 364일(접종일 포함 1년) 초과면 거부. (petmove 가이드: "면역 유효기간 2년 혹은 3년짜리 광견병 예방접종은 인정하지 않으며")',
+      '실무상 면역 유효기간 2년·3년짜리 광견병 백신을 인정하지 않음. valid_until 이 접종일 + 364일(접종일 포함 1년) 초과면 거부. (GACC 본문은 "유효기간 내"만 명시 — 일부 입국항 운용 거부 사례 존재, 보수 적용)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -213,7 +223,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '도착일에 광견병 면역 유효',
     description:
-      '최근 광견병 접종의 면역 유효기간이 도착일 이전 만료되지 않아야 함. 만료 시 추가 부스터 필요. (petmove 가이드: "도착일 이전에 면역 유효기간이 만료되는 경우 추가 접종")',
+      '최근 광견병 접종의 면역 유효기간이 도착일 이전 만료되지 않아야 함. 만료 시 추가 부스터 필요. (GACC: "유효한 광견병 백신 접종 증명서" 입경일 기준 유효)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -243,7 +253,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '항체검사는 광견병 접종 이후',
     description:
-      'RNATT 채혈일은 직전 광견병 접종 이후여야 함 (2차 접종 후 시행 권장). (petmove 가이드)',
+      'RNATT 채혈일은 직전 광견병 접종 이후여야 함 (2차 접종 후 시행 권장). (GACC 채신 lab 보고서 표준)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -278,7 +288,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '항체검사 유효기간 1년 — 도착일까지 유효',
     description:
-      'RNATT 결과는 채혈일 기준 1년간 유효. 도착일이 채혈일 + 1년(365일) 이내여야 함. (petmove 가이드: "유효기간: 채혈일 기준 1년")',
+      'RNATT 결과는 채혈일 기준 1년간 유효 (실무 기준). 도착일이 채혈일 + 1년 이내여야 함. (GACC 본문 미명시 — 실무 운용상 1년 한도 보수 적용)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -311,7 +321,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
     category: '일정',
     title: '건강증명서(내원일)는 출국 10일 이내 (한국 APQA)',
     description:
-      '한국 APQA 검역 endorsement: 출국일 기준 10일 이내(`≤9`). 출발 7-9일 전 권장. (petmove 가이드 + 한국 검역본부 공통 룰)',
+      'GACC: 입경 14일 이내 임상검사. 한국 APQA endorsement는 10일 이내가 더 strict — 보수 ≤9일 적용 (출발 7-9일 전 권장).',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {

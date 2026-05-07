@@ -8,17 +8,21 @@ import {
 } from './utils'
 
 /**
- * 태국 (DLD — Department of Livestock Development) 절차 검증.
+ * 태국 (DLD — Department of Livestock Development, กรมปศุสัตว์) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/thai/) + 태국정부관광청.
+ * 출처:
+ *  - DLD AQS-Suvarnabhumi 공식 안내 — http://aqs-suvarn-dld.go.th/wp/en/import-en/importation-of-pet-dog-and-cat/
+ *  - 태국 외교부(MFA) 공식 PDF (Revised 30 Jan 2025) —
+ *    https://image.mfa.go.th/mfa/0/91fPdh6NtO/About-Thailand/Bringing_Pets_to_Thailand/All_Airports_-_Instructions_for_Bringing_Dog-Cat-Rabbit_into_Thailand_from_the_USA_(Revised_30Jan2025).pdf
+ *  - DLD AQI 영문 PDF — https://aqi.dld.go.th/webnew/images/stories/document/data-import-export/importation_eng.pdf
  *
  * ⚠️ 핵심:
- *  - **광견병 접종 출발 21일 전 완료** + 생후 91일 이상
- *  - 종합백신 (DHPPL/FVRCP) 출발 21일 전 완료
- *  - **광견병 항체검사 (RNATT)**: 태국 입국엔 비필수 → 검증 미적용 (한국 귀국용은 별도 흐름)
- *  - R7 import permit: 출발 7영업일 ~ 60일 전 신청 (별도 데이터 추적 미구현 → info)
- *  - 한국 APQA 검역: 출국일 10일 이내 (출발 7-9일 전 권장)
- *  - 강아지 렙토스피라: DHPPL 미포함 시 출발 30일 이내 음성 검사 (lepto 데이터 필드 부재 → 미적용)
+ *  - **광견병 접종 출발 21일 전 완료** (1차 또는 단절 시; 유효 부스터 면제) + 생후 12주(84일) 이상
+ *  - 종합백신 (개 DHPPL / 고양이 Panleukopenia 포함 FVRCP) 출발 21일 전 완료
+ *  - **광견병 항체검사 (RNATT)**: 태국 입국엔 비필수 (한국 귀국용은 별도 흐름)
+ *  - R7 import permit: 출발 7영업일 ~ 60일 전 신청, 60일 유효 (별도 데이터 추적 미구현 → info)
+ *  - 한국 APQA 검역: 출국 10일 이내 (보수 ≤9). DLD 자체 일자 명문 없음.
+ *  - 핏불 계열 수입 금지
  *
  * 컨벤션 (NZ/HI/CN 와 동일):
  *  - 필수 입력 누락 시 SKIP
@@ -94,7 +98,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종은 출국(=도착) 21일 이전 완료',
     description:
-      '가장 최근 광견병 접종이 도착일 기준 21일 이전 완료. (petmove 가이드: "태국 입국일 기준 최소 21일 전에 접종 완료")',
+      '가장 최근 광견병 접종이 도착일 기준 21일 이전 완료. (DLD: "primary or discontinuity vaccination must wait for 21 days before departure. Valid booster vaccination, waiting period not required" — 보수적으로 모든 경우 21일 적용)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -152,7 +156,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     category: '종합백신',
     title: '종합백신 출국(=도착) 21일 이전 완료',
     description:
-      '종합백신(강아지 DHPPL / 고양이 FVRCP) 가장 최근 접종이 도착일 기준 21일 이전 완료. (petmove 가이드: "태국 입국일 기준 최소 21일 전")',
+      '종합백신(강아지 DHPPL / 고양이 Panleukopenia 포함 FVRCP) 가장 최근 접종이 도착일 기준 21일 이전 완료. (DLD: 광견병과 동일 21일 룰 적용 — 1차/단절 시. 유효 부스터 면제하나 보수적으로 모든 경우 적용)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -210,7 +214,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     category: '일정',
     title: '건강증명서(내원일)는 출국 10일 이내 (한국 APQA)',
     description:
-      '한국 APQA 검역 endorsement: 출국일 기준 10일 이내(`≤9`). 출발 7-9일 전 권장. (petmove 가이드 + 한국 검역본부 공통 룰)',
+      'DLD 자체 일자 명문 없음. 한국 APQA 검역 endorsement: 출국일 기준 10일 이내(`≤9`). 출발 7-9일 전 권장. (사용자 보수 N-1 적용)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {

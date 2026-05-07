@@ -15,18 +15,24 @@ import {
 } from './utils'
 
 /**
- * 괌 (USDA APHIS / Guam Customs) 절차 검증.
+ * 괌 (Guam DOAG — Department of Agriculture, Animal Health Division / USDA APHIS) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/guam-pet-travel-guide/).
+ * 출처:
+ *  - Guam DOAG Pet Import Brochure (Rev. 2024-08-09) —
+ *    https://doag.guam.gov/wp-doag-content/uploads/2025/08/AH-PET-IMPORT-BROCHURE-FINAL-REV08092024.pdf
+ *  - Guam DOAG Animal Health/Animal Control — https://doag.guam.gov/animal-health-animal-control/
+ *  - Guam CQA Pet Import Requirements — https://cqa.guam.gov/pet-import-requirements-3/
+ *  - 9 GAR Animal Regulations — https://guamcourts.gov/compileroflaws/GAR/09GAR/09GAR001-3.pdf
  *
- * ⚠️ 핵심:
- *  - 마이크로칩 (ISO 11784/11785) ≤ 광견병 1차
- *  - 광견병: 평생 ≥2회, 1차 ≥생후 91일, 2차는 1차 + 30일 이후, 1년 유효
- *  - **RNATT**: 2차 접종 후 10일 이상 + ≥0.5 IU/ml + lab 수령일부터 **120일 후** 도착
+ * ⚠️ 핵심 (한국 = non-exempt):
+ *  - 마이크로칩 (ISO 11784/11785 또는 AVID/HomeAgain) ≤ 광견병 1차
+ *  - 광견병: 평생 ≥2회 (1차 + 부스터), 1차 ≥생후 3개월(90일), 도즈 간 ≥30일, 1년/3년 라벨
+ *  - **RNATT (OIE-FAVN)**: 직전 접종 후 10일+ + ≥0.5 IU/mL (홈 검역 직행은 ≥1.0) + 검체 lab 수령일부터 **120일 후** 도착, 36개월 이내
  *  - 종합백신·켄넬코프: 도착 ≥10일 이전 + 1년 유효
- *  - 내·외부구충 + 심장사상충: 도착 14일 이내(`≤13`) 치료
- *  - 한국 APQA 검역: 출국 10일 이내
- *  - 격리 면제 위해 위 모든 조건 충족 (미충족 시 최대 120일 격리)
+ *  - 내·외부구충 + 심장사상충: 도착 14일 이내(`≤13`) 치료. Revolution 단독 진드기 처치 불가
+ *  - 한국 APQA 검역: 출국 10일 이내(보수 ≤9)
+ *  - DOAG 서류 도착 10일 이전 수령 (Entry Permit $185~$244)
+ *  - 격리 면제 위해 위 모든 조건 충족 (미충족 시 기본 120일 상업 격리)
  *
  * 컨벤션 (다른 국가 룰과 동일):
  *  - "X일 이내" → `dep - X ≤ N-1`
@@ -77,7 +83,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 생후 3개월령(캘린더) 이상',
     description:
-      '광견병 1차 접종은 생년월일 기준 캘린더 3개월(`addMonths(birth, 3)`) 이후. (petmove 가이드: "3개월령 이후") 91일 근사 대신 정확한 월 계산.',
+      '광견병 1차 접종은 생년월일 기준 캘린더 3개월(`addMonths(birth, 3)`) 이후. (DOAG: "shall not be given less than 3 months of age") 91일 근사 대신 정확한 월 계산.',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -130,7 +136,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 도즈 간 30일 이상 간격 (최소 1개월)',
     description:
-      '연속된 광견병 접종 간 간격 ≥30일 (1개월). (petmove 가이드: "1차 광견병 예방접종과 최소 한달 이상의 간격")',
+      '연속된 광견병 접종 간 간격 ≥30일 (1개월). (DOAG Brochure 2024-08-09 운용. 참고: HI는 strict ">30 days = ≥31일"이며 GU 동일 강화 검토 권고)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -202,7 +208,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '항체검사는 직전 광견병 접종 후 10일 이상 경과',
     description:
-      'RNATT 채혈일은 직전 광견병 접종 후 10일 이상 경과해야 함. (petmove 가이드: "2차 광견병 예방접종 후 10일 이상 지나서 실시")',
+      'RNATT 채혈일은 직전 광견병 접종 후 10일 이상 경과해야 함. (DOAG: 항체 형성 시간 운용 권장)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -243,7 +249,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: 'RNATT 채혈일부터 120일 경과 후 도착',
     description:
-      'RNATT 채혈일(lab 수령일 proxy)로부터 120일 경과 후에 괌 도착해야 함 (격리 면제 핵심 조건). (petmove 가이드: "검사 기관에서 샘플을 받은 날을 기준으로 120일 이후에 괌에 입국")',
+      'RNATT 채혈일(lab 수령일 proxy)로부터 120일 경과 후에 괌 도착해야 함 (격리 면제 핵심 조건). (DOAG: "the day that the laboratory receives the OIE-FAVN sample counts as the first day for the 120-day countdown" — 채혈일 proxy는 lab 수령일보다 며칠 빨라 less strict, 보수 마진 검토 권고)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -420,7 +426,7 @@ function buildWithin14DaysRule(opts: {
     country: COUNTRY,
     category: '구충',
     title: `${opts.label}은 출국 14일 이내(${'`≤13`'})`,
-    description: `${opts.label} 가장 최근 처치가 출국일 14일 이내(\`≤13\`). (petmove 가이드: "괌 도착 14일 이내")`,
+    description: `${opts.label} 가장 최근 처치가 출국일 14일 이내(\`≤13\`). (DOAG: "treated ... within 14 days of arrival on Guam")`,
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {

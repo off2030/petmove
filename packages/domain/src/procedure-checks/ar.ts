@@ -8,22 +8,25 @@ import {
 } from './utils'
 
 /**
- * 아르헨티나 (SENASA) 절차 검증.
+ * 아르헨티나 (SENASA — Servicio Nacional de Sanidad y Calidad Agroalimentaria) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/argentina-pet-travel-guide/)
- *  — "공식 기준 부재 — 사례 기반"
+ * 출처:
+ *  - SENASA "Ingresos con perros y/o gatos" — https://www.argentina.gob.ar/senasa/informacion-al-viajero/ingresar-o-regresar-al-pais/ingresos-con-perros-yo-gatos
+ *  - SENASA "Requisitos por destino: Corea" — https://www.argentina.gob.ar/senasa/informacion-al-viajero/viajar-al-exterior/envios-al-exterior-perros-yo-gatos/requisitos-particulares-por-destino/asia/corea
  *
- * 핵심 룰:
- *  - 마이크로칩 ≤ 광견병 1차 (아르헨티나 입국 면제, 한국 수출검역 사실상 필수)
- *  - 광견병 1차 ≥ 생후 91일령 (안전기준 — petmove 미명시)
- *  - 광견병 출국 30일 이상 전 (petmove "출국일 기준 최소 30일 전")
- *  - 출국일 광견병 면역 유효 (1년 디폴트)
- *  - 건강증명서 ≤ 출국 10일 이내 (petmove 명시)
+ * 핵심 룰 (SENASA — 모든 출발국 동일 기본 요건):
+ *  - 마이크로칩: SENASA 명시 의무 부재 (식별 권장). 한국 수출검역에서 사실상 필수
+ *  - 광견병: 3개월(90일) 이상 (SENASA: "edad mínima ... 3 meses"), 1차 후 21일 권장 (보수 30일 적용)
+ *  - 광견병 면역 유효 (제조사 라벨, 통상 1년)
+ *  - 건강증명서: CVI 발급일 전 10일 이내 (SENASA: "Certificado de Salud emitido dentro de los 10 días previos")
+ *  - CVI 자체는 발급·합법화일로부터 60일 유효
+ *  - APQA 영사확인 또는 아포스티유 합법화 권장
  *
- * 별도 (시스템 검증 제외):
- *  - RNATT: 아르헨티나 입국 면제 (한국 귀국 시는 필요 — 별도 워크플로)
- *  - 종합백신/구충: petmove 미명시
- *  - 도착 후 공항 동물검역소 심사: 사무 절차
+ * 별도 (시스템 검증 제외 또는 추가 권고):
+ *  - RNATT: SENASA 입국 의무 아님 (한국 귀국용 별도)
+ *  - 종합백신: SENASA 의무 아님
+ *  - 내·외부 구충: CVI 발급일 전 15일 이내 (SENASA 명시 — 신규 룰 추가 권고)
+ *  - 수입허가: 개·고양이 불요. 격리 없음
  *
  * 컨벤션: 필수 입력 누락 시 SKIP. 유효기간 1년 = 접종일 + 364일까지.
  */
@@ -64,7 +67,7 @@ export const AR_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
-      'petmove 가이드 + SENASA 정량 미명시 — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
+      'SENASA: "La edad mínima para la vacunación antirrábica en Argentina es de tres (3) meses" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -99,7 +102,7 @@ export const AR_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
-      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (petmove 가이드: "출국일 기준 최소 30일 전")',
+      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (SENASA: "inmunidad vigente" — 1차 후 21일 권장, 보수적으로 30일 적용)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -153,9 +156,9 @@ export const AR_CHECKS: ProcedureCheck[] = [
     id: 'ar.vet-visit-within-10days',
     country: COUNTRY,
     category: '일정',
-    title: '건강증명서(내원일)는 출국 10일 이내',
+    title: '건강증명서(내원일)는 출국 10일 이내 (보수: 9일 전부터)',
     description:
-      '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내. (petmove 가이드 명시)',
+      'SENASA: "Certificado de Salud ... emitido dentro de los 10 (diez) días previos a la fecha de emisión del CVI" — 사용자 보수 N-1 → ≤9 적용.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -175,11 +178,11 @@ export const AR_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['vet_visit_date'],
         }
       }
-      if (diff > 10) {
+      if (diff > 9) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 10일 이내 필요.`,
-          fixHint: `내원일을 ${dep} 기준 10일 전 이후로 조정.`,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 10일 이내(≤9일 전) 필요.`,
+          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정.`,
           offendingPaths: ['vet_visit_date'],
         }
       }

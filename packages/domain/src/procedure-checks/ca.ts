@@ -10,20 +10,22 @@ import {
 /**
  * 캐나다 (CFIA — Canadian Food Inspection Agency, CBSA — Canada Border Services Agency) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/canada-pet-travel-guide/)
+ * 출처:
+ *  - CFIA "Bringing animals to Canada" — https://inspection.canada.ca/en/importing-food-plants-animals/pets
+ *  - CFIA Import Reference Document — https://inspection.canada.ca/en/animal-health/terrestrial-animals/imports/import-policies/general/reference-document
+ *  - CBSA Travelling with animals — https://www.cbsa-asfc.gc.ca/services/fpa-apa/animals-animaux-eng.html
  *
  * 핵심 룰:
- *  - 마이크로칩: 캐나다 입국 면제, 한국 수출검역 사실상 필수
- *  - 광견병: 1차 보수적(91일 AND 캘린더 3개월) + 출국일 면역 유효
- *  - 건강증명서: 출국 10일 이내
+ *  - 마이크로칩: CFIA 개인용 의무 아님, 한국 수출검역(APQA)에서 식별 필요
+ *  - 광견병: 3개월 미만 면제, 3개월 이상 의무 + 도착일 유효 (보수 91일 AND 캘린더 3개월)
+ *  - 건강증명서: CFIA 별도 일자 의무 부재. 한국 APQA endorsement 10일 이내 적용 (보수 ≤9)
  *
  * 별도 (시스템 검증 제외):
- *  - RNATT: 캐나다 입국 면제 (한국 귀국용 — 별도 워크플로)
- *  - 종합백신/구충: petmove 미명시
- *  - 광견병 출국 wait period, 1년 라이선스: petmove 미명시 → 룰 제외
- *  - CBSA 도착 서류검사: 사무 절차
+ *  - RNATT: CFIA 입국 의무 아님 (고양이 옵션). 한국 귀국용은 별도 흐름
+ *  - 종합백신/구충: CFIA 의무 아님
+ *  - 상업용 8개월 미만 강아지(고위험국) 금지: 동적 확인 필요
  *
- * 컨벤션 (KH/MN/VN 사례기반 5국과 유사):
+ * 컨벤션:
  *  - 필수 입력 누락 시 SKIP
  *  - 유효기간 1년 = 접종일 + 364일까지 인정
  */
@@ -67,7 +69,7 @@ export const CA_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
-      'petmove 가이드 "생후 3개월령" — 보수적으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
+      'CFIA: 3개월 이상 강아지·고양이는 광견병 백신 의무 (3개월 미만 면제). 보수적으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요. (CFIA Import Reference Document)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -130,9 +132,9 @@ export const CA_CHECKS: ProcedureCheck[] = [
     id: 'ca.vet-visit-within-10days',
     country: COUNTRY,
     category: '일정',
-    title: '건강증명서(내원일)는 출국 10일 이내',
+    title: '건강증명서(내원일)는 출국 10일 이내 (보수: 9일 전부터)',
     description:
-      '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내. (petmove 가이드: "탑승 전 10일 이내")',
+      '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내(`≤9`). CFIA는 별도 일자 의무 명문 없음 — 한국 APQA endorsement 10일 룰 + 사용자 보수 N-1 적용.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -152,11 +154,11 @@ export const CA_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['vet_visit_date'],
         }
       }
-      if (diff > 10) {
+      if (diff > 9) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 10일 이내 필요.`,
-          fixHint: `내원일을 ${dep} 기준 10일 전 이후로 조정.`,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 10일 이내(≤9일 전) 필요.`,
+          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정.`,
           offendingPaths: ['vet_visit_date'],
         }
       }

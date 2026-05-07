@@ -11,25 +11,26 @@ import {
 } from './utils'
 
 /**
- * 우크라이나 (State Service of Ukraine on Food Safety & Consumer Protection) 절차 검증.
+ * 우크라이나 (SSUFSCP — State Service of Ukraine on Food Safety & Consumer Protection / Держпродспоживслужба) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/ukraine-pet-travel-guide/)
- *  — "공식 자료/관련 기관 웹사이트 부재 — 사례 기반"
+ * 출처:
+ *  - SSUFSCP "Вимоги до некомерційного переміщення тварин" — https://dpss.gov.ua/mizhnarodne-spivrobitnictv/veterinariya-ta-bezpechnist/vimogi-do-nekomercijnogo-peremishchennya-tvarin
+ *  - SSUFSCP "Ввезення домашніх тварин в Україну" — https://dpss.gov.ua/news/vvezennia-domashnikh-tvaryn-v-ukrainu
+ *  - 농업정책식품부 명령 №553 (2018-11-16) — https://zakon.rada.gov.ua/go/z0346-19
+ *  - 공식 인증서 PDF — https://dpss.gov.ua/storage/app/sites/12/uploaded-files/zdorovya-dlya-nekomertsiynogo-peremishchennya-sobak-kotiv-ta-domashnikh-tkhoriv-fretok112.pdf
  *
- * 추가 출처 (공식·실무 자료):
- *  - visitukraine.today, pettravel.com, USDA/APHIS Ukraine guide
- *  - 우크라이나 SSUFSCP는 EU listed third country 룰을 사실상 차용 (EU와 거의 동일)
+ * 한국 = unlisted third country (EU listed/unlisted 분류 차용). RNATT 의무.
  *
- * 핵심 룰 (공식 우선):
- *  - 마이크로칩: ISO 표준, **모든 절차 중 가장 먼저** (필수)
- *  - 광견병: 1차 보수적(91일 AND 캘린더 3개월) + 출국일 면역 유효(1년)
- *  - **RNATT 필수**: 채혈 ≥ 광견병 + 30일 + 출국 ≥ RNATT + 3개월 + 12개월 유효
+ * 핵심 룰 (SSUFSCP 명시):
+ *  - 마이크로칩: ISO 11784 및 11785 표준 (15자리)
+ *  - 광견병: 12주 이상 접종 (보수 91일 AND 캘린더 3개월)
+ *  - **RNATT 필수**: 채혈 ≥ 광견병 + 30일, 0.5 IU/ml 이상, EU 지정 lab (한국 APQA 등재)
+ *  - 출국 ≥ RNATT + 3개월 (캘린더), 채혈 12개월 유효
+ *  - 비상업 5마리 이하
  *
  * 별도 (시스템 검증 제외):
- *  - 종합백신/구충: petmove·공식 미명시
- *  - RNATT 결과치 ≥0.5 IU/ml: 검사기관 fail 처리, 시스템 검증 불필요 (전 국가 일관)
- *  - 광견병 백신 후 21일 wait (출국 룰): petmove 추정·공식 미확인 → 룰 제외
- *  - 건강증명서 시점: petmove "48시간 권장"·공식 미명시 → 룰 제외
+ *  - 종합백신/구충: SSUFSCP 비상업 이동 규정상 미명시 (광견병만 의무)
+ *  - 에키노코쿠스 구충: 우크라이나 입국 불요 (UK/IE/MT/NO/FI 행만)
  *
  * 컨벤션 (TR/EU 와 동일):
  *  - 필수 입력 누락 시 SKIP
@@ -47,7 +48,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
     category: '마이크로칩',
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
-      'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (petmove 가이드: "모든 절차 중 가장 먼저")',
+      'ISO 11784 및 11785 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (SSUFSCP: "Тварини повинні бути ідентифіковані за допомогою мікрочіпа ... ISO 11784 та 11785")',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -76,7 +77,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
-      '우크라이나 공식 자료/관련 기관 웹사이트 부재 — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요. (petmove 가이드 "생후 12주" 기재되어 있으나 공식 미확인이라 보수적 채택. id 는 호환성을 위해 12weeks 유지)',
+      'SSUFSCP: "Вакцинація проти сказу здійснюється починаючи з 12-тижневого віку" (12주부터). 보수 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -111,7 +112,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일에 광견병 면역 유효',
     description:
-      '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함. (petmove 가이드: "유효기간 1년")',
+      '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함. (SSUFSCP: 1차 접종은 출국 30일~12개월 이내)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -182,7 +183,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일은 항체검사 3개월 이후',
     description:
-      'RNATT 채혈일로부터 출국일까지 최소 3개월 경과 필요. (petmove 가이드: "출국일 기준 최소 3개월 전") — 캘린더 기준(`addMonths`).',
+      'RNATT 채혈일로부터 출국일까지 최소 3개월 경과 필요. (SSUFSCP: "принаймні за три місяці до дати видачі сертифіката") — 캘린더 기준(`addMonths`).',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -213,7 +214,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일은 항체검사 12개월 이내',
     description:
-      'RNATT 유효기간 1년 — 출국일이 채혈일 + 1년(364일) 초과 시 재검사 필요. (petmove 가이드: "유효기간 1년")',
+      'RNATT 유효기간 1년 — 출국일이 채혈일 + 1년(364일) 초과 시 재검사 필요. (SSUFSCP 실무 운용 — 부스터 chain 끊김 없을 시 EU 패턴상 평생 유효 가능, 보수적으로 1년 적용)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {

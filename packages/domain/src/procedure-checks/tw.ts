@@ -8,15 +8,19 @@ import {
 } from './utils'
 
 /**
- * 대만 (BAPHIQ — Bureau of Animal and Plant Health Inspection and Quarantine) 절차 검증.
+ * 대만 (APHIA — Animal and Plant Health Inspection Agency, 2023년 BAPHIQ에서 개칭) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/taiwan-pet-travel-guide/) + 주한국 대만대표부.
+ * 출처:
+ *  - APHIA "Quarantine for Dogs & Cats" — https://www.aphia.gov.tw/en/ws.php?id=14261
+ *  - APHIA "Procedure for Importation of Dogs/Cats" PDF —
+ *    https://pet-epermit.aphia.gov.tw/files/other/information_80asfiledownload1_4d09f517-bcfe-4c98-83d9-4e1cd9df61a1.pdf
+ *  - APHIA "Importation of Dogs or Cats FAQ" — https://www.aphia.gov.tw/office/khaphia/en/ws.php?id=738
  *
- * ⚠️ 핵심:
- *  - 마이크로칩 (ISO 11784/11785 또는 AVID-10/9/15자리) ≤ 광견병 1차
- *  - 광견병: 생후 91일령 이상, 출국 30일 ~ 1년 사이, 불활화 백신만 인정
- *  - **RNATT**: 채혈일부터 **180일 경과 후** 도착, ≥0.5 IU/ml
- *  - 한국 APQA 검역: 출국 10일 이내
+ * ⚠️ 핵심 (한국 = 광견병 발생국 분류):
+ *  - 마이크로칩: ISO 11784/11785 (15자리) ≤ 광견병 1차. AVID 등 비ISO 칩은 보조 ISO 칩 추가 식재 권고
+ *  - 광견병: 생후 90일령 이상, 불활화 백신만 인정, 1차는 선적 90일~1년 / 부스터는 30일~1년
+ *  - **RNATT**: 채혈일부터 **180일 경과 후** 도착, ≥0.5 IU/ml, APHIA 채신 명단 lab
+ *  - 한국 APQA 검역: 출국 10일 이내(보수 ≤9)
  *  - 격리 기본 7일 (수입허가증 20일 전 신청 + RNATT 180일 충족 시 면제 가능)
  *  - 개·고양이 동일 요건
  *
@@ -35,7 +39,7 @@ export const TW_CHECKS: ProcedureCheck[] = [
     category: '마이크로칩',
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
-      '마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. ISO 11784/11785 또는 AVID-10/9/15자리 허용. (대만 BAPHIQ)',
+      '마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. ISO 11784/11785 (15자리) 표준. AVID 등 비ISO 칩은 보조 ISO 칩 추가 식재 권고. (APHIA)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -123,7 +127,7 @@ export const TW_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '항체검사는 광견병 접종 이후',
     description:
-      'RNATT 채혈일은 직전 광견병 접종 이후여야 함. (petmove 가이드)',
+      'RNATT 채혈일은 직전 광견병 접종 이후여야 함. (APHIA Procedure)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -157,7 +161,7 @@ export const TW_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: 'RNATT 채혈일부터 180일 경과 후 도착',
     description:
-      'RNATT 채혈일로부터 180일 경과 후에 대만 도착해야 함 (격리 면제 핵심 조건). 미충족 시 추가 격리. (petmove + 대만대표부: "채혈일로부터 180일이 경과한 후")',
+      'RNATT 채혈일로부터 180일 경과 후에 대만 도착해야 함 (격리 면제 핵심 조건). 미충족 시 추가 격리. (APHIA: "the blood sampling date should be no less than 180 days … prior to shipment")',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {

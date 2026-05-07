@@ -13,18 +13,25 @@ import {
 /**
  * 튀르키예 (Türkiye / Tarım ve Orman Bakanlığı — Ministry of Agriculture & Forestry) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/turkey-pet-travel-guide/)
+ * 출처:
+ *  - Tarım ve Orman Bakanlığı — https://www.tarimorman.gov.tr/
+ *  - 터키 외교부 공관 안내(LA, NY) — https://losangeles-cg.mfa.gov.tr/Mission/ShowInfoNote/410171, https://newyork-cg.mfa.gov.tr/Mission/ShowInfoNote/254102
+ *  - CFIA 터키 수출 — https://inspection.canada.ca/en/animal-health/terrestrial-animals/exports/pets/republic-turkiye
+ *  - EU Reg. 576/2013 (unlisted third country 차용)
+ *
+ * 한국 = unlisted third country (EU 분류 차용). RNATT 의무.
  *
  * 핵심 룰:
- *  - 마이크로칩: ISO 표준, **모든 절차 중 가장 먼저** (필수)
- *  - 광견병: 1차 ≥ 생후 12주(84일, EU 동일) + 출국 30일 전 + 출국일 면역 유효
- *  - **RNATT 필수** (튀르키예 입국 자체 요건): 채혈 ≥ 광견병 + 30일 + 출국 ≤ 채혈 + 1년
+ *  - 마이크로칩 (ISO 11784/11785) ≤ 광견병 1차
+ *  - 광견병: 1차 ≥ 생후 12주(84일, EU Reg 576/2013 일치) + 출국 30일 전 + 출국일 면역 유효
+ *  - **RNATT 필수**: 채혈 ≥ 광견병 + 30일, 0.5 IU/ml 이상, 출국 ≤ 채혈 + 1년
  *  - 구충: 외부(진드기) + 내부(촌충) 출국 30일 이내
- *  - 건강증명서: **출국 48시간(2일) 이내** — 매우 strict
+ *  - 건강증명서: **공식 배서 출국 48시간(2일) 이내** (보수 ≤1) — Tarım Bakanlığı 명시. 임상검사는 96시간 이내(별도)
+ *  - 핏불·도사·도고 아르헨티노·필라 등 견종 수입 금지 (추가 권고)
  *
- * 별도 (시스템 검증 제외):
- *  - 종합백신: petmove 미명시
- *  - RNATT 결과치 ≥0.5 IU/ml: 검사기관 fail 처리, 시스템 검증 불필요 (전 국가 일관)
+ * 별도 (시스템 검증 제외 또는 추가 권고):
+ *  - 종합백신: 권고 (의무 명문 부재)
+ *  - **RNATT 후 3개월(90일) 대기** (2025-strict, unlisted): 신규 룰 추가 권고
  *  - 1인 2마리 제한, 도착 공항 수입검역: 사무 절차
  *
  * 컨벤션 (EU 와 동일):
@@ -42,7 +49,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
     category: '마이크로칩',
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
-      'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (petmove 가이드: "모든 절차 중 가장 먼저")',
+      'ISO 11784/11785 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (Tarım ve Orman Bakanlığı / EU Reg 576/2013 차용)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -71,7 +78,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 생후 12주(84일) 이상',
     description:
-      '광견병 1차 접종은 생후 최소 12주(84일) 이후. (petmove 가이드: "생후 12주 이후" — EU Reg 576/2013 동일 기준)',
+      '광견병 1차 접종은 생후 최소 12주(84일) 이후. (Tarım ve Orman Bakanlığı / EU Reg 576/2013 동일 기준 — "at least 12 weeks old")',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -100,7 +107,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
-      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (petmove 가이드: "출국 30일 이전")',
+      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (Tarım ve Orman Bakanlığı: "vaccination certificate must be issued not later than thirty (30) days prior to the entry")',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -128,7 +135,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일에 광견병 면역 유효',
     description:
-      '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함. (petmove 가이드: "1년 이내 유효")',
+      '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함. (Tarım Bakanlığı / EU 표준 — 제조사 라벨 또는 1년)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -158,7 +165,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '항체검사는 광견병 접종 30일 이후',
     description:
-      'RNATT 채혈일은 직전 광견병 접종으로부터 30일 이후. (petmove 가이드: "백신 후 최소 30일 경과")',
+      'RNATT 채혈일은 직전 광견병 접종으로부터 30일 이후. (EU Reg 576/2013 Annex IV "at least 30 days after vaccination" 차용)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -199,7 +206,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일은 항체검사 12개월 이내',
     description:
-      'RNATT 유효기간 1년 — 출국일이 채혈일 + 1년(364일) 초과 시 재검사 필요. (petmove 가이드: "1년 유효")',
+      'RNATT 유효기간 1년 — 출국일이 채혈일 + 1년(364일) 초과 시 재검사 필요. (Tarım Bakanlığı 운용)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -231,7 +238,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
     category: '구충',
     title: '외부구충(진드기)은 출국 포함 30일 이내 (29일 전 이후)',
     description:
-      '진드기에 효과적인 외부 기생충 치료제 처치는 출국 포함 30일 이내 = 출국일 기준 29일 전 이후. (petmove 가이드: "출국 30일 이내")',
+      '진드기에 효과적인 외부 기생충 치료제 처치는 출국 포함 30일 이내 = 출국일 기준 29일 전 이후. (Tarım Bakanlığı / EU 표준)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -266,7 +273,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
     category: '구충',
     title: '내부구충(촌충)은 출국 포함 30일 이내 (29일 전 이후)',
     description:
-      '촌충에 효과적인 내부 구충제 처치는 출국 포함 30일 이내 = 출국일 기준 29일 전 이후. (petmove 가이드: "출국 30일 이내")',
+      '촌충에 효과적인 내부 구충제 처치는 출국 포함 30일 이내 = 출국일 기준 29일 전 이후. (Tarım Bakanlığı / EU 표준)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -303,7 +310,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
     category: '일정',
     title: '건강증명서(내원일)는 출국 48시간(2일) 이내',
     description:
-      '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 48시간(2일) 이내. (petmove 가이드: "출국일 기준 48시간 이내") — 다른 국가(10일)보다 매우 strict.',
+      '공식 수의사 배서 발급은 출국일(항공기 탑승) 기준 48시간(2일) 이내. (Tarım Bakanlığı / 외교부 공관: "issued and filled out by the competent official veterinary authority within 2 days before your departure") — 다른 국가(10일)보다 매우 strict. 임상검사 자체는 96시간 이내(별도).',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {

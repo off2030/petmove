@@ -11,13 +11,18 @@ import {
 /**
  * 러시아 (Rosselkhoznadzor / EAEU 관세동맹) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/russia-pet-travel-guide/)
+ * 출처:
+ *  - Rosselkhoznadzor "О вакцинации против бешенства" — https://fsvps.gov.ru/news/o-vakcinacii-zhivotnyh-protiv-beshenstva-pri-vvoze-sobak-i-koshek/
+ *  - Rosselkhoznadzor "Инструкция: как ввезти домашнее животное в Россию" — https://fsvps.gov.ru/puteshestvujushhim-s-pitomcami-vvoz-vyvo/instrukcija-kak-vvezti-domashnee-zhivotnoe-v-rossiju/
+ *  - EAEU 결정 No.317 (2010-06-18) 제15장 — https://cis-legislation.com/document.fwx?rgn=31443
  *
  * 핵심 룰:
- *  - 마이크로칩: ISO 표준, 한국 수출검역에서 사실상 필수
- *  - 광견병 1차 ≥ 생후 91일령 (petmove 미명시 → JP/SG/CN/AU 일관 안전 기준)
- *  - 광견병/종합백신 공통: **유효기간 1년만 인정** + 출국일 면역 유효
- *  - 건강증명서: 출국일 10일 이내 내원 (petmove 명시)
+ *  - 마이크로칩: EAEU 결정 명시 의무 부재. ISO 11784/11785 권장 (실무 표준)
+ *  - 광견병: 생후 12주(3개월) 이상 + 출국 30일 이상 ~ 12개월 이내 (Rosselkhoznadzor 명시)
+ *  - 광견병 백신 유효: "재접종 주기 12개월 초과 백신도 최종 접종일 기준 12개월 이내" (사실상 1년 룰)
+ *  - 종합백신: EAEU 결정 명문 부재 (운용 보수)
+ *  - 건강증명서: **EAEU "선적 5일 이내 임상검진" 명시** (보수 ≤4)
+ *  - 개인용 1인 2마리 한도 (3마리+ 상업용)
  *
  * RNATT 는 러시아 입국에 면제 (한국 귀국 시 필요하나 별도 워크플로) → 시스템 검증 제외.
  *
@@ -65,7 +70,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
-      'petmove 가이드 + Rosselkhoznadzor 정량 미명시 — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
+      'Rosselkhoznadzor: "вакцинация против бешенства осуществляется начиная с 12-недельного возраста" (12주 이상). 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -100,7 +105,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '1년 라이선스 광견병 백신만 인정 (3년 거부)',
     description:
-      '러시아는 면역 유효기간 3년짜리 광견병 백신을 인정하지 않음. valid_until 이 접종일 + 364일(1년) 초과면 거부. (petmove 가이드: "유효기간은 무조건 1년입니다")',
+      'Rosselkhoznadzor: "재접종 주기 12개월 초과 백신은 최종 접종일로부터 12개월 이내일 때만 인정". 사실상 1년 룰. valid_until 이 접종일 + 364일(1년) 초과면 거부. (일부 지역지부는 항체검사 첨부 시 3년 인정 사례 — 보수 적용)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -169,7 +174,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
     category: '종합백신',
     title: '종합백신 접종 필수',
     description:
-      '종합백신 접종 기록 필요. 강아지: DHPPL+파라인플루엔자 / 고양이: FVRCP. (petmove 가이드)',
+      '종합백신 접종 기록 필요. 강아지: DHPPL+파라인플루엔자 / 고양이: FVRCP. (EAEU 결정 No.317 명시 의무 부재 — 운용 보수)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -257,9 +262,9 @@ export const RU_CHECKS: ProcedureCheck[] = [
     id: 'ru.vet-visit-within-10days',
     country: COUNTRY,
     category: '일정',
-    title: '건강증명서(내원일)는 출국 10일 이내',
+    title: '임상검진은 출국 5일 이내 (보수: 4일 전부터)',
     description:
-      '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내. (petmove 가이드: "출국 직전 항공기 탑승 전 10일 이내")',
+      'EAEU 결정 No.317 제15장: "клинического осмотра в течение 5 дней перед отправкой" (선적 5일 이내 임상검진). 사용자 보수 N-1 → ≤4 적용. **타국 10일 룰과 다름 — 러시아 특별 규정**.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -279,11 +284,11 @@ export const RU_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['vet_visit_date'],
         }
       }
-      if (diff > 10) {
+      if (diff > 4) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 10일 이내 필요.`,
-          fixHint: `내원일을 ${dep} 기준 10일 전 이후로 조정.`,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 5일 이내(≤4일 전) 필요 (EAEU).`,
+          fixHint: `내원일을 ${dep} 기준 4일 전 이후로 조정. **러시아는 EAEU 5일 룰 적용 — 타국 10일과 다름**.`,
           offendingPaths: ['vet_visit_date'],
         }
       }

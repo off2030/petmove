@@ -11,20 +11,28 @@ import {
 /**
  * 이스라엘 (Veterinary Services & Animal Health, Ministry of Agriculture) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/israel-pet-travel-guide/)
+ * 출처:
+ *  - gov.il "Importing Dogs" — https://www.gov.il/en/pages/importdogs
+ *  - gov.il "Import Dogs Policy" — https://www.gov.il/en/Departments/General/importdogs
+ *  - gov.il MOAG Pro 126 — https://www.gov.il/en/departments/policies/moag-pro-126
+ *  - gov.il "Rabies Lab" — https://www.gov.il/en/pages/rabies-lab-meda
+ *
+ * 한국 = 광견병 위험국가 (이스라엘 분류). RNATT 의무.
  *
  * 핵심 룰:
- *  - 마이크로칩: ISO 표준, **모든 절차 중 가장 먼저** (필수)
- *  - 광견병: 1차 보수적(91일 AND 캘린더 3개월) + **출국 30일 전** (1차 또는 chain 끊김 후 재접종 시) + 1년 유효
- *  - **RNATT 필수**: 채혈 ≥ 광견병 + 30일. 광견병 면역 유효 기간 동안 RNATT 도 유효 (chain 유지 시).
- *  - 건강증명서: 출국 10일 이내
+ *  - 마이크로칩 (ISO 11784/11785) ≤ 광견병 1차
+ *  - 광견병: 1차 12주 이상(보수 91일 AND 캘린더 3개월) + 출국 30일 전 + 출국일 면역 유효
+ *  - **RNATT 필수**: 채혈 ≥ 광견병 + 30일, 0.5 IU/ml 이상, EU/WOAH 인증 lab
+ *  - **입국 시 만 4개월(약 17주) 이상**, 동물 소유 90일 이상 (trafficking 방지)
+ *  - 건강증명서: 출국 10일 이내 (보수 ≤9). 민간 수의사 검진 + 정부 수의관 배서
+ *  - 출국 48시간 전 Ben Gurion 검역소 사전 통보
+ *  - 3마리 이상 동반 시 사전 Import License 필수 (1974 동물질병규칙)
+ *  - Pitbull, Argentine Dogo, Fila Brasileiro, Tosa, Staffordshire, Rottweiler 등 견종 수입 금지
  *
  * 별도 (시스템 검증 제외):
- *  - 종합백신/구충: petmove 미명시
- *  - RNATT 결과치 ≥0.5 IU/ml: 검사기관 fail 처리, 시스템 검증 불필요 (전 국가 일관)
+ *  - 종합백신/구충: gov.il 의무 명문 부재
  *  - 부스터 chain 유지 시 wait period 15일 단축: 정확한 chain 추적 불가 → 보수적으로 30일 단일 적용
- *  - RNATT 별도 만료: petmove "백신 면역 유효기간 동안 유지" → 광견병 면역 만료 룰로 자연 cover
- *  - 2마리 초과 수입허가, 사전 신고 2일, 입국 후 5일 등록: 사무 절차
+ *  - RNATT 입국 후 추가 대기 없음 (EU/일본과 다름)
  *
  * 컨벤션 (UA/RU/MX 와 동일):
  *  - 필수 입력 누락 시 SKIP
@@ -41,7 +49,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
     category: '마이크로칩',
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
-      'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (petmove 가이드: "모든 절차 중 가장 먼저", "광견병 1차 시기는 마이크로칩 삽입 후")',
+      'ISO 11784/11785 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (gov.il 수의국 — 비ISO 칩 시 자체 리더기 동반)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -70,7 +78,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
-      'petmove 가이드 + 이스라엘 검역 정량 미명시 — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
+      'gov.il 수의국: "12주 이상 접종" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -105,7 +113,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종 후 대기 (1차/chain끊김 30일, chain 유효 부스터 15일)',
     description:
-      '최근 광견병 접종 후 출국까지 대기 — chain 유효한 부스터 = 15일, 1차 또는 chain 끊김 후 재접종 = 30일. (petmove 가이드: "접종 후 대기 30일 이상, 부스터백신은 15일 이상"). chain 유효성 = 직전 접종 valid_until 이내 후속 접종.',
+      '최근 광견병 접종 후 출국까지 대기 — chain 유효한 부스터 = 15일, 1차 또는 chain 끊김 후 재접종 = 30일. (gov.il: 1차 후 30일, 연속 부스터 14일 단축 가능). chain 유효성 = 직전 접종 valid_until 이내 후속 접종.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -143,7 +151,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일에 광견병 면역 유효',
     description:
-      '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함. (petmove 가이드: "유효기간 1년")',
+      '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함. (gov.il 수의국: 백신 in-force 상태 필수)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -173,7 +181,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '항체검사는 광견병 접종 30일 이후',
     description:
-      'RNATT 채혈일은 직전 광견병 접종으로부터 30일 이후. (petmove 가이드: "광견병 예방접종 후 30일 이상")',
+      'RNATT 채혈일은 직전 광견병 접종으로부터 30일 이후. (gov.il: "rabies neutralizing antibody titer ... taken at least 30 days after vaccination")',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -214,9 +222,9 @@ export const IL_CHECKS: ProcedureCheck[] = [
     id: 'il.vet-visit-within-10days',
     country: COUNTRY,
     category: '일정',
-    title: '건강증명서(내원일)는 출국 10일 이내',
+    title: '건강증명서(내원일)는 출국 10일 이내 (보수: 9일 전부터)',
     description:
-      '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내. (petmove 가이드: "탑승 전 10일 이내")',
+      'gov.il: "health check and Israeli specific health certificate signed by a private vet and endorsed by a government vet within ten days prior to arrival" — 사용자 보수 N-1 → ≤9 적용.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -236,11 +244,11 @@ export const IL_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['vet_visit_date'],
         }
       }
-      if (diff > 10) {
+      if (diff > 9) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 10일 이내 필요.`,
-          fixHint: `내원일을 ${dep} 기준 10일 전 이후로 조정.`,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 10일 이내(≤9일 전) 필요.`,
+          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정.`,
           offendingPaths: ['vet_visit_date'],
         }
       }

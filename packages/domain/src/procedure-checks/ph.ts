@@ -10,18 +10,22 @@ import {
 /**
  * 필리핀 (BAI — Bureau of Animal Industry) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/ph/) + 한국 BAI 안내.
+ * 출처:
+ *  - BAI Pet Import 페이지 — https://www.bai.gov.ph/Stakeholders/PetImport
+ *  - BAI MC No. 49 (2022) "Streamlining the SPS Import Clearance for Dogs and Cats" —
+ *    https://ww2.bai.gov.ph/media/gwvj4njp/memorandum-circular-no-49-streamlining-the-sps-import-clearance-application-requirements-of-dogs-and-cats-for-one-time-importation-2022.pdf
+ *  - BAI Citizen's Charter 2024 (3rd Ed.) — https://ww2.bai.gov.ph/media/bdybdoyx/2024-bai-citizen-s-charter.pdf
  *
  * ⚠️ 핵심:
- *  - 마이크로칩 (ISO 11784/11785) ≤ 광견병 1차
- *  - 광견병: 생후 12주(84일) 이상, 출발 14일 이전 완료, 1년 유효
- *  - 종합백신 (개 DHLPPi / 고양이 FVRCP): 출발 14일 이전 완료, 1년 유효
- *  - 내부구충: 출발 7-91일 사이 치료 (SPSIC 신청 기준 — dep proxy)
- *  - 출국 시 만 4개월 이상 (SPSIC 신청 자격)
- *  - 한국 APQA 검역: 출국 10일 이내
- *  - SPSIC import permit: 출발 1-2주 전 신청, 60일 유효 (별도 데이터 추적 미구현 → info)
+ *  - 마이크로칩 (ISO 호환) ≤ 광견병 1차 (BAI MC 49)
+ *  - 광견병: 생후 12주(84일) 이상, 1차는 SPSIC 신청 14일 전 (≈ 출국 21일 전 합산), 1년 유효, 부스터 즉시 출국 가능
+ *  - 종합백신 (개 DHLPPi / 고양이 FVRCP): 1차는 SPSIC 신청 14일 전, 1년 유효, 부스터 즉시 가능
+ *  - 내·외부구충: SPSIC 신청 기준 7~91일 (BAI MC 49 명시 의무)
+ *  - 출국 시 만 4개월(120일) 이상 (SPSIC 신청 자격)
+ *  - 한국 APQA 검역: 출국 10일 이내(보수 ≤9)
+ *  - SPSIC import permit: 60일 유효, 1회 3마리 한도
  *
- * RNATT: 필리핀 입국엔 비필수 (한국 귀국용은 별도 흐름) → 검증 미적용. TH 와 동일 정책.
+ * RNATT: BAI 입국 의무 아님 (한국 귀국용 별도 흐름) → 검증 미적용.
  *
  * 컨벤션 (NZ/HI/CN/TH 와 동일):
  *  - "X일 이내" → `dep - X ≤ N-1`
@@ -67,7 +71,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 생후 12주(84일) 이상',
     description:
-      '광견병 1차 접종은 생후 최소 12주(84일) 이후. (petmove 가이드 + EU 동일 기준)',
+      '광견병 1차 접종은 생후 최소 12주(84일) 이후. (BAI MC 49 — EU Reg 576/2013 동일 기준)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -222,7 +226,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     category: '일정',
     title: '출국일 시점 만 120일(약 4개월) 이상',
     description:
-      '필리핀 SPSIC 신청 자격: 생후 120일(약 4개월) 이상. (petmove 가이드: "생후 120일 이상의 강아지·고양이만 신청 가능")',
+      '필리핀 SPSIC 신청 자격: 생후 120일(약 4개월) 이상. (BAI MC 49: "Only dogs and cats that are 120 days and above at the time of SPSIC application")',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -250,7 +254,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     category: '일정',
     title: '건강증명서(내원일)는 출국 10일 이내 (한국 APQA)',
     description:
-      '한국 APQA 검역 endorsement: 출국일 기준 10일 이내(`≤9`). 출발 7-9일 전 권장. (petmove 가이드 + 한국 검역본부 공통 룰)',
+      '한국 APQA 검역 endorsement: 출국일 기준 10일 이내(`≤9`). 출발 7-9일 전 권장. (사용자 보수 N-1 적용)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {

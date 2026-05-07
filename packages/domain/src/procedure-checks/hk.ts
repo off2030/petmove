@@ -11,22 +11,26 @@ import {
 /**
  * 홍콩 (AFCD — Agriculture, Fisheries & Conservation Department) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/hongkong-pet-travel-guide/)
+ * 출처:
+ *  - AFCD Group II 페이지 — https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_ipab/qua_ie_ipab_idc/qua_ie_ipab_idc_Group_II.html
+ *  - DC-02v05 Group II Terms (Jun-2025) — https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_ipab/qua_ie_ipab_idc/files/DC_02v05_Terms_for_import_G2_Jun25B.pdf
+ *  - VC-DC2 Health Certificate (Oct-2025) — https://www.afcd.gov.hk/english/quarantine/qua_ie/qua_ie_ipab/qua_ie_ipab_idc/files/VC_DC2_Oct_25E.pdf
  *
- * 한국 = Group II (격리 면제, RNATT 면제) — AFCD 분류.
+ * 한국 = Group II (38개국 명단 명시 포함). 격리 면제, RNATT 면제 가능.
  *
  * 핵심 룰:
- *  - 마이크로칩: ISO 표준, **모든 절차 중 가장 먼저 시행** (필수)
- *  - 광견병: 1차 보수적(91일 AND 캘린더 3개월) + 출국 30일 전 + 1년 유효
+ *  - 마이크로칩: ISO 11784/11785 또는 AVID 호환 (DC-02v05 명시)
+ *  - 광견병: "at least 90 days old" (보수 91일 AND 캘린더 3개월) + 출국 30일 전 + 1년 유효
  *  - 종합백신: **필수**, 출국 14일 전 + 1년 유효
- *      · 강아지: DHP (distemper/hepatitis/parvo)
- *      · 고양이: FVRCP (panleukopenia/herpesvirus/calicivirus)
- *  - 건강증명서: 출국일 10일 이내
+ *      · 강아지: DHP (Distemper, Infectious Canine Hepatitis, Parvovirus)
+ *      · 고양이: Feline Panleukopenia + Feline Respiratory Disease (FVRCP)
+ *  - 건강증명서(VC-DC2): 출국일 14일 이내. 한국 APQA 10일 + 사용자 보수 N-1 → ≤9 적용
+ *  - 거주 요건: 한국에서 출국 전 180일 이상 연속 거주 (또는 출생 이후)
  *
- * 별도 (시스템 검증 제외):
- *  - RNATT: 한국 = Group II → 면제 (한국 귀국용은 별도 워크플로)
- *  - 구충: petmove 미명시
- *  - 수입허가증(6개월 유효), 화물 운송 한정: 사무 절차
+ * 별도 (시스템 검증 제외 또는 추가 권고):
+ *  - RNATT: Group II 면제 (한국 귀국용은 별도 워크플로)
+ *  - 내·외부 기생충: 출국 14일 이내 처치 (VC-DC2 명시 의무) — 신규 룰 추가 권고
+ *  - Special Permit (Form AF240, 6개월 유효): 사무 절차
  *
  * 컨벤션 (BR/MX/RU 와 동일):
  *  - 필수 입력 누락 시 SKIP
@@ -43,7 +47,7 @@ export const HK_CHECKS: ProcedureCheck[] = [
     category: '마이크로칩',
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
-      'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (petmove 가이드: "모든 절차 중 가장 먼저")',
+      'ISO 11784/11785 또는 AVID 호환 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (AFCD DC-02v05: "implanted with a microchip ... compliant with ISO or AVID standards")',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -72,7 +76,7 @@ export const HK_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
-      'petmove 가이드 + AFCD 정량 미명시 — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
+      'AFCD DC-02v05: "the animal was at least 90 days old when it was vaccinated" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -107,7 +111,7 @@ export const HK_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
-      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (petmove 가이드: "출국 최소 30일 전 접종")',
+      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (AFCD DC-02v05: "vaccinated against rabies not less than 30 days ... prior to export")',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -165,7 +169,7 @@ export const HK_CHECKS: ProcedureCheck[] = [
     category: '종합백신',
     title: '종합백신 접종 필수',
     description:
-      '종합백신 접종 기록 필요. 강아지: DHP(distemper/hepatitis/parvo), 고양이: FVRCP(panleukopenia/herpesvirus/calicivirus). (petmove 가이드 명시)',
+      '종합백신 접종 기록 필요. 강아지: DHP (Distemper, Infectious Canine Hepatitis, Parvovirus), 고양이: Feline Panleukopenia + Feline Respiratory Disease (FVRCP). (AFCD DC-02v05 / VC-DC2 명시)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -186,7 +190,7 @@ export const HK_CHECKS: ProcedureCheck[] = [
     category: '종합백신',
     title: '종합백신은 출국일 14일 이상 전 접종',
     description:
-      '종합백신 접종일로부터 출국일까지 최소 14일 경과 필요. (petmove 가이드: "출국 최소 14일 전")',
+      '종합백신 접종일로부터 출국일까지 최소 14일 경과 필요. (AFCD: "vaccinated ... not less than 14 days and not more than 1 year before importation")',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -242,9 +246,9 @@ export const HK_CHECKS: ProcedureCheck[] = [
     id: 'hk.vet-visit-within-10days',
     country: COUNTRY,
     category: '일정',
-    title: '건강증명서(내원일)는 출국 10일 이내',
+    title: '건강증명서(내원일)는 출국 10일 이내 (보수: 9일 전부터)',
     description:
-      '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내. (petmove 가이드: "출국일 기준 10일 이내")',
+      'AFCD VC-DC2: "not more than 14 days before export". 한국 APQA endorsement 10일 룰 + 사용자 보수 N-1 → ≤9 적용.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -264,11 +268,11 @@ export const HK_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['vet_visit_date'],
         }
       }
-      if (diff > 10) {
+      if (diff > 9) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 10일 이내 필요.`,
-          fixHint: `내원일을 ${dep} 기준 10일 전 이후로 조정.`,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 10일 이내(≤9일 전) 필요.`,
+          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정.`,
           offendingPaths: ['vet_visit_date'],
         }
       }

@@ -31,9 +31,9 @@ export const SG_CHECKS: ProcedureCheck[] = [
     id: 'sg.vet-visit-within-7days-of-departure',
     country: 'singapore',
     category: '일정',
-    title: '내원일은 출국일 7일 이내',
+    title: '내원일은 출국일 7일 이내 (보수: 6일 전부터)',
     description:
-      '수의사 검진·증명서 발급은 출국일 기준 7일 이내여야 함. (Schedule III IV(a)(i)(ii))',
+      '수의사 검진·증명서 발급은 출국일 기준 7일 이내(`≤6`)여야 함. (NParks/AVS Schedule III IV(a)(i)(ii) "not more than seven (7) days prior to export" — 사용자 보수 N-1 적용)',
     severity: 'blocker',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
@@ -53,11 +53,11 @@ export const SG_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['vet_visit_date'],
         }
       }
-      if (diff > 7) {
+      if (diff > 6) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 7일 이내 필요.`,
-          fixHint: `내원일을 ${dep} 기준 7일 전 이후로 조정하세요.`,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 7일 이내(≤6일 전) 필요.`,
+          fixHint: `내원일을 ${dep} 기준 6일 전 이후로 조정하세요.`,
           offendingPaths: ['vet_visit_date'],
         }
       }

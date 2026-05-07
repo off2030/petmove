@@ -8,23 +8,24 @@ import {
 } from './utils'
 
 /**
- * 우즈베키스탄 절차 검증.
+ * 우즈베키스탄 (State Vet Service / Davlat veterinariya qo'mitasi) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/uzbekistan-pet-travel-guide/)
- *  — "공식 자료/관련 기관 웹사이트 없음 — 사례 기반"
+ * ⚠️ 1차 정부 영문 문서 부분 공개. 수치는 USDA APHIS 정부 2차 요약과 한국 QIA 안내 의존 (운용 룰). 출국 6주 전 한국 QIA + 우즈베키스탄 대사관 개별 확인 권장.
  *
- * 핵심 룰:
- *  - 마이크로칩 ≤ 광견병 1차 (우즈베키스탄 권장, 한국 수출검역 사실상 필수)
- *  - 광견병 1차 ≥ 생후 91일령 (안전기준 — petmove 미명시)
- *  - 광견병 출국 30일 이상 전 (petmove "출국일 기준 최소 30일 전")
- *  - 1년 라이선스 광견병만 인정 (petmove "유효기간 1년")
- *  - 출국일 광견병 면역 유효
- *  - 건강증명서 ≤ 출국 10일 이내 (petmove 명시)
+ * 출처:
+ *  - State Vet Service — https://gov.uz/en/vetgov
+ *  - USDA APHIS Uzbekistan — https://www.aphis.usda.gov/live-animal-export/export-live-animals-uzbekistan
+ *
+ * 핵심 룰 (운용·관행 기반):
+ *  - 마이크로칩: ISO 11784/11785 권장 (1차 명문 미확인)
+ *  - 광견병 1차 ≥ 생후 3개월(보수 91일 AND 캘린더 3개월)
+ *  - 광견병: 출국 30일 이상 ~ 12개월 이내 (USDA APHIS)
+ *  - 1년 라이선스 백신만 인정 (1차 명문 미확인 — 통념상 12개월, 보수 적용)
+ *  - 건강증명서 ≤ 출국 10일 이내 (보수 ≤9)
  *
  * 별도 (시스템 검증 제외):
- *  - RNATT: 우즈베키스탄 입국 면제 (한국 귀국용)
- *  - 종합백신/구충: petmove 미명시
- *  - 도착 후 공항 동물검역소 심사: 사무 절차
+ *  - RNATT: 우즈베키스탄 입국 면제
+ *  - 종합백신/구충: 명문 의무 부재
  *
  * 컨벤션: 필수 입력 누락 시 SKIP. 유효기간 1년 = 접종일 + 364일까지.
  */
@@ -65,7 +66,7 @@ export const UZ_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
-      'petmove 가이드 + 우즈베키스탄 공식 자료 부재 — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
+      'USDA APHIS 우즈베키스탄: "over 3 months of age" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -100,7 +101,7 @@ export const UZ_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
-      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (petmove 가이드: "출국일 기준 최소 30일 전")',
+      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (USDA APHIS: "between 30 days and 12 months prior to entering Uzbekistan")',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -128,7 +129,7 @@ export const UZ_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '1년 라이선스 광견병 백신만 인정 (3년 거부)',
     description:
-      '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 364일 초과면 거부. (petmove 가이드: "유효기간은 1년")',
+      '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 364일 초과면 거부. (1차 정부 명문 미확인 — 통념·관행상 12개월 기준, 보수 적용)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -193,9 +194,9 @@ export const UZ_CHECKS: ProcedureCheck[] = [
     id: 'uz.vet-visit-within-10days',
     country: COUNTRY,
     category: '일정',
-    title: '건강증명서(내원일)는 출국 10일 이내',
+    title: '건강증명서(내원일)는 출국 10일 이내 (보수: 9일 전부터)',
     description:
-      '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내. (petmove 가이드 명시)',
+      'USDA APHIS Uzbekistan: "within 10 days of entry". 한국 APQA endorsement + 사용자 보수 N-1 → ≤9 적용.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -215,11 +216,11 @@ export const UZ_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['vet_visit_date'],
         }
       }
-      if (diff > 10) {
+      if (diff > 9) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 10일 이내 필요.`,
-          fixHint: `내원일을 ${dep} 기준 10일 전 이후로 조정.`,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 10일 이내(≤9일 전) 필요.`,
+          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정.`,
           offendingPaths: ['vet_visit_date'],
         }
       }

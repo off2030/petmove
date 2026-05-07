@@ -224,9 +224,9 @@ export const AU_CHECKS: ProcedureCheck[] = [
     id: 'au.vet-visit-within-5days-of-departure',
     country: COUNTRY,
     category: '일정',
-    title: '내원일은 출국일 5일 이내',
+    title: '내원일은 출국일 5일 이내 (보수: 4일 전부터)',
     description:
-      '동물 건강증명서 endorsement 는 출국일 기준 5일 이내. (DAFF: "endorsed within 5 days before the dog\'s export date")',
+      '동물 건강증명서 endorsement 는 출국일 기준 5일 이내(`≤4`). (DAFF: "endorsed within 5 days before the dog\'s export date" — 사용자 보수 N-1 적용)',
     severity: 'blocker',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
@@ -246,11 +246,11 @@ export const AU_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['vet_visit_date'],
         }
       }
-      if (diff > 5) {
+      if (diff > 4) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 5일 이내 필요.`,
-          fixHint: `내원일을 ${dep} 기준 5일 전 이후로 조정.`,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 5일 이내(≤4일 전) 필요.`,
+          fixHint: `내원일을 ${dep} 기준 4일 전 이후로 조정.`,
           offendingPaths: ['vet_visit_date'],
         }
       }

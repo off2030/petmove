@@ -217,7 +217,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['모로코', 'morocco'],
     vaccines: ['rabies', 'rabies_titer'],
   },
-  // 사례기반 제3국 패밀리 — 공식 자료 부족, petmove "사례기반 최소 입국 룰"
+  // 1차 정부 영문 자료 부분 공개 패밀리 — USDA APHIS / 한국 QIA 정부 2차 안내·운용 룰 의존
   mongolia: {
     keywords: ['몽골', 'mongolia'],
     vaccines: ['rabies', 'rabies_titer'],
