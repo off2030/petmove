@@ -416,7 +416,7 @@ function buildSpecForExtra(def: ExtraFieldDef, useShortLabel: boolean): FieldSpe
   const isSelect = def.type === 'select' && def.options
   const specType: FieldSpec['type'] =
     isSelect ? 'select'
-    : def.type === 'time' || def.type === 'email' ? 'text'
+    : def.type === 'email' ? 'text'
     : def.type
   return {
     key: def.key,

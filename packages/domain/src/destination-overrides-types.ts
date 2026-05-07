@@ -88,6 +88,10 @@ export const EXTRA_FIELD_DEFS: Record<string, ExtraFieldDef> = {
   permit_no: { key: 'permit_no', label: '수입허가번호', type: 'text' },
   id_date: { key: 'id_date', label: 'ID 날짜', type: 'date' },
   sample_received_date: { key: 'sample_received_date', label: '샘플수령일', type: 'date' },
+  // ── 절차 ──
+  // EU 촌충국가(영국·아일랜드·몰타·노르웨이·핀란드)의 praziquantel 투여 시각.
+  // 구충일은 절차정보의 internal_parasite_dates 에 저장되고, 시각은 별도로 추가정보 영역에 표시.
+  deworming_time: { key: 'deworming_time', label: '구충시간', type: 'time', placeholder: '00:00' },
   // ── 출국 항공편 (그룹) — 한국 출발 → 도착국 도착. 보호자 시점으로 라벨 통일.
   //    표시 순서: 날짜 → 항공편명 → 출발/도착공항 → 운송방법 → 시간. ──
   entry_date: { key: 'entry_date', label: '도착일', type: 'date', group: '출국 항공편', shortLabel: '날짜' },

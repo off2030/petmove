@@ -67,22 +67,22 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   ireland: {
     keywords: ['아일랜드', 'ireland'],
     vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
-    extraFields: ['address_overseas'],
+    extraFields: ['address_overseas', 'deworming_time'],
   },
   malta: {
     keywords: ['몰타', 'malta'],
     vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
-    extraFields: ['address_overseas'],
+    extraFields: ['address_overseas', 'deworming_time'],
   },
   norway: {
     keywords: ['노르웨이', 'norway'],
     vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
-    extraFields: ['address_overseas'],
+    extraFields: ['address_overseas', 'deworming_time'],
   },
   finland: {
     keywords: ['핀란드', 'finland'],
     vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
-    extraFields: ['address_overseas'],
+    extraFields: ['address_overseas', 'deworming_time'],
   },
   eu: {
     keywords: [
@@ -108,7 +108,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['영국', '북아일랜드', 'uk', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland'],
     vaccines: ['rabies', 'rabies_titer', 'internal_parasite'],
     extraSection: 'uk',
-    extraFields: ['address_overseas'],
+    extraFields: ['address_overseas', 'deworming_time'],
   },
   australia: {
     keywords: ['호주', 'australia'],

@@ -1641,7 +1641,13 @@ function resolveField(
       const mc = (caseRow as unknown as Record<string, unknown>).microchip
       return typeof mc === 'string' ? mc : ''
     }
-    if (attr === 'date') return fmtDate(rec.date)
+    if (attr === 'date') {
+      const dateStr = fmtDate(rec.date)
+      // 구충시간 (data.deworming_time, "HH:MM") 을 결합. multi-case path 가
+      // newIdx=0 을 강제하므로 행 인덱스에 의존하지 않고 항상 결합 (case-level 1 필드).
+      const t = typeof data.deworming_time === 'string' ? data.deworming_time.trim() : ''
+      return t ? `${dateStr}, ${t}` : dateStr
+    }
     if (attr === 'vet') return 'Jinwon Lee'
     if (attr === 'product') {
       if (rec.product?.trim()) return rec.product.trim()
@@ -2407,14 +2413,15 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
 
   const pdfForm = pdf.getForm()
 
-  const toDmy = (s: string): string => s.replace(/^(\d{4})[-/](\d{2})[-/](\d{2})$/, '$3/$2/$1')
+  // Anchor only at the start so trailing content (예: ", 14:30" 시간 병기) 가 보존된다.
+  const toDmy = (s: string): string => s.replace(/^(\d{4})[-/](\d{2})[-/](\d{2})/, '$3/$2/$1')
   const toMdy = (s: string): string =>
-    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/, (_, y, m, d) => `${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}/${y}`)
+    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/, (_, y, m, d) => `${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}/${y}`)
   const toSlashYmd2 = (s: string): string =>
-    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/, (_, y, m, d) => `${y}/${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`)
+    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/, (_, y, m, d) => `${y}/${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`)
   const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const toDmmmY = (s: string): string =>
-    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/, (_, y, m, d) => `${String(d).padStart(2, '0')}/${MONTHS_SHORT[Number(m) - 1] ?? m}/${y}`)
+    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/, (_, y, m, d) => `${String(d).padStart(2, '0')}/${MONTHS_SHORT[Number(m) - 1] ?? m}/${y}`)
   // vaccine_combined may join multiple dates with " / ". Apply the format to
   // each part so combined expiry/booster fields render in the form's date style.
   const eachPart = (fn: (s: string) => string) => (s: string) =>
@@ -2733,15 +2740,16 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
 
   // Date reformatter for form-level dateFormat override (e.g. Annex III uses dd/mm/yyyy).
   // Converts a stand-alone YYYY-MM-DD or YYYY/MM/DD token to dd/mm/yyyy.
+  // Anchor only at start — trailing 시간 병기 (", 14:30") 보존.
   const toDmy = (s: string): string =>
-    s.replace(/^(\d{4})[-/](\d{2})[-/](\d{2})$/, '$3/$2/$1')
+    s.replace(/^(\d{4})[-/](\d{2})[-/](\d{2})/, '$3/$2/$1')
   const toMdy_1 = (s: string): string =>
-    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/, (_, y, m, d) => `${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}/${y}`)
+    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/, (_, y, m, d) => `${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}/${y}`)
   const toSlashYmd = (s: string): string =>
-    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/, (_, y, m, d) => `${y}/${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`)
+    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/, (_, y, m, d) => `${y}/${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`)
   const MONTHS_SHORT_1 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const toDmmmY_1 = (s: string): string =>
-    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/, (_, y, m, d) => `${String(d).padStart(2, '0')}/${MONTHS_SHORT_1[Number(m) - 1] ?? m}/${y}`)
+    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/, (_, y, m, d) => `${String(d).padStart(2, '0')}/${MONTHS_SHORT_1[Number(m) - 1] ?? m}/${y}`)
   const reformatDate = form.dateFormat === 'dmy'
     ? (s: unknown): unknown => (typeof s === 'string' ? toDmy(s) : s)
     : form.dateFormat === 'mdy_slash'

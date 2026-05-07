@@ -19,7 +19,7 @@ export interface FieldSpec {
   key: string
   storage: 'column' | 'data'      // which storage backs this field
   label: string
-  type: 'text' | 'longtext' | 'date' | 'number' | 'select'
+  type: 'text' | 'longtext' | 'date' | 'time' | 'number' | 'select'
   group: string
   groupOrder: number              // lower = earlier in the detail page
   order: number                   // order within a group

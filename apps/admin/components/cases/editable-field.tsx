@@ -28,7 +28,7 @@ const MONO_VALUE_KEYS = new Set(['phone', 'microchip', 'weight', 'payment_amount
 const ITALIC_VALUE_KEYS = new Set(['address_overseas'])
 
 function getValueClass(spec: FieldSpec): string {
-  if (spec.type === 'date' || MONO_VALUE_KEYS.has(spec.key)) {
+  if (spec.type === 'date' || spec.type === 'time' || MONO_VALUE_KEYS.has(spec.key)) {
     return 'font-mono text-[15px] tracking-[0.3px] text-foreground'
   }
   if (ITALIC_VALUE_KEYS.has(spec.key)) {
@@ -716,6 +716,19 @@ function renderInput(
       />
     )
   }
+  if (spec.type === 'time') {
+    return (
+      <TimeInput
+        inputRef={ref as React.RefObject<HTMLInputElement>}
+        initial={value}
+        onChange={setValue}
+        onKeyDown={onKeyDown}
+        onBlur={onBlur}
+        onSave={saveFn}
+        className={commonClass}
+      />
+    )
+  }
   // 모바일 키보드 분기 — 이메일은 영문/@ 키보드, microchip 은 숫자 키패드.
   const isEmail = EMAIL_KEYS.has(spec.key)
   const isDigitsSpace = DIGITS_SPACE_KEYS.has(spec.key)
@@ -738,6 +751,79 @@ function renderInput(
       onBlur={onBlur}
       placeholder={placeholder}
       className={commonClass}
+    />
+  )
+}
+
+/**
+ * 24h time input — HH:MM, browser locale 무시. 숫자만 받아 자동 포맷.
+ * 0-23 시 / 0-59 분 범위 외 입력은 blur 에서 잘라냄.
+ * blur 즉시 onSave 호출 — date 필드와 동일하게 Enter 없이도 저장된다.
+ */
+function TimeInput({ inputRef, initial, onChange, onKeyDown, onBlur, onSave, className }: {
+  inputRef: React.RefObject<HTMLInputElement | null>
+  initial: string
+  onChange: (v: string) => void
+  onKeyDown: (e: React.KeyboardEvent) => void
+  onBlur: () => void
+  onSave?: (coerced: unknown) => void
+  className: string
+}) {
+  const localRef = useRef<HTMLInputElement>(null)
+  const ref = inputRef || localRef
+
+  function formatTime(digits: string): string {
+    const d = digits.slice(0, 4)
+    if (d.length <= 2) return d
+    return `${d.slice(0, 2)}:${d.slice(2)}`
+  }
+
+  function normalize(raw: string): string {
+    const digits = raw.replace(/\D/g, '').slice(0, 4)
+    if (digits.length === 0) return ''
+    const hh = Math.min(parseInt(digits.slice(0, 2) || '0', 10), 23)
+    const mm = digits.length > 2
+      ? Math.min(parseInt(digits.slice(2, 4), 10), 59)
+      : null
+    const hhStr = String(hh).padStart(2, '0')
+    if (mm === null) return hhStr
+    return `${hhStr}:${String(mm).padStart(2, '0')}`
+  }
+
+  function sync() {
+    const el = ref.current
+    if (!el) return
+    const digits = el.value.replace(/\D/g, '').slice(0, 4)
+    const formatted = formatTime(digits)
+    el.value = formatted
+    onChange(formatted)
+  }
+
+  useEffect(() => {
+    if (ref.current) ref.current.value = initial
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <input
+      ref={ref}
+      type="text"
+      inputMode="numeric"
+      defaultValue={initial}
+      onChange={sync}
+      onKeyDown={onKeyDown}
+      onBlur={() => {
+        const el = ref.current
+        if (el) {
+          const norm = normalize(el.value)
+          el.value = norm
+          onChange(norm)
+          if (onSave) onSave(norm === '' ? null : norm)
+        }
+        onBlur()
+      }}
+      placeholder="00:00"
+      maxLength={5}
+      className={className}
     />
   )
 }
