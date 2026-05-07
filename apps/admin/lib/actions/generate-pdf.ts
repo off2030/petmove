@@ -235,6 +235,13 @@ export async function generateInvoiceAndESD(opts: ShipmentOpts): Promise<Generat
   const invoicePdf = await PDFDocument.load(Buffer.from(invoiceResult.pdf, 'base64'))
   const esdPdf = await PDFDocument.load(Buffer.from(esdResult.pdf, 'base64'))
 
+  // copyPages 는 AcroForm 구조를 잃어버림 — viewer 가 NeedAppearances=true 에 의존해
+  // 동적 렌더링하던 필드(특히 ESD 의 vet:name_en / vet:esd_license_block)는 병합 후
+  // 재생성 불가능해 invisible 로 표시됨. 병합 직전 flatten 으로 페이지 content stream
+  // 에 베이크. 단독 ESD/Invoice 발급 경로는 그대로 form field 유지(사용자 편집 가능).
+  invoicePdf.getForm().flatten()
+  esdPdf.getForm().flatten()
+
   const mergedPdf = await PDFDocument.create()
   const invoicePages = await mergedPdf.copyPages(invoicePdf, invoicePdf.getPageIndices())
   const esdPages = await mergedPdf.copyPages(esdPdf, esdPdf.getPageIndices())
