@@ -247,12 +247,6 @@ function destinationRequiresTapeworm(dest: unknown): boolean {
   return dest.split(',').map(s => s.trim()).some(d => TAPEWORM_REQUIRED_DESTINATIONS.includes(d))
 }
 
-/** 호주·뉴질랜드 목적지 여부 — Form25 batch 란에 유효기간 병기 조건. */
-function destinationIsAuNz(dest: unknown): boolean {
-  if (typeof dest !== 'string' || !dest) return false
-  return dest.split(',').map(s => s.trim()).some(d => d === '호주' || d === '뉴질랜드')
-}
-
 /** batch + expiry 병기 포맷 ("batch / expiry"). expiry 없으면 batch만. */
 function joinBatchExpiry(batch: string, expiry: string): string {
   if (!expiry) return batch
@@ -628,6 +622,21 @@ function readSource(
     if (legacy != null && legacy !== '') return legacy
     // Final fallback to Korean name
     return (caseRow as unknown as Record<string, unknown>).customer_name ?? ''
+  }
+
+  // Split English name parts — share form 은 합본 column 에만 저장하므로 (CustomerNameEnInput
+  // 의 "Last First" 순서) data 분리 필드가 비면 legacy column 을 같은 순서로 분해해 폴백.
+  // apply 경로는 data 분리 저장이 항상 되므로 폴백 미발동.
+  if (source === 'customer_first_name_en' || source === 'customer_last_name_en') {
+    const direct = String((data[source] as string | undefined) ?? '').trim()
+    if (direct) return direct
+    const legacy = String(
+      ((caseRow as unknown as Record<string, unknown>).customer_name_en as string | undefined) ?? '',
+    ).trim()
+    if (!legacy) return ''
+    const parts = legacy.split(/\s+/).filter(Boolean)
+    if (source === 'customer_last_name_en') return parts[0] ?? ''
+    return parts.slice(1).join(' ')
   }
 
   // Lab-specific inspection date from infectious_disease_records.
@@ -1574,10 +1583,6 @@ function resolveField(
     const idx = Number(seqMatch[2])
     const entry = buildOtherVaccineSequence(data, allowedVaccines)[idx]
     if (!entry) return ''
-    // AU/NZ: batch 란에 유효기간 병기
-    if (attr === 'serial' && destinationIsAuNz(caseRow.destination)) {
-      return joinBatchExpiry(entry.serial, entry.expiry)
-    }
     return entry[attr]
   }
 
@@ -1765,13 +1770,7 @@ function resolveField(
     const merged = applyRecOverrides(rec, p)
     if (attr === 'name') return merged.name
     if (attr === 'manufacturer') return merged.manufacturer
-    if (attr === 'serial') {
-      // AU/NZ: batch 란에 유효기간 병기
-      if (destinationIsAuNz(caseRow.destination)) {
-        return joinBatchExpiry(merged.serial, merged.expiry ?? '')
-      }
-      return merged.serial
-    }
+    if (attr === 'serial') return merged.serial
     if (attr === 'serial_with_expiry') {
       return joinBatchExpiry(merged.serial, merged.expiry ?? '')
     }
