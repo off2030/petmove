@@ -8,6 +8,8 @@ export interface ShareLinkRow {
   token: string
   template: string | null
   field_keys: string[]
+  field_ids: string[] | null
+  destination_scope: string | null
   title: string | null
   created_by: string | null
   created_at: string
@@ -28,6 +30,7 @@ export function shareLinkStatus(row: ShareLinkRow): ShareLinkStatus {
 }
 
 export interface ShareFieldSpec {
+  id: string
   key: string
   label: string
   storage: 'column' | 'data' | 'synthetic'
@@ -156,6 +159,7 @@ export interface ShareVaccineEntry {
   manufacturer?: string | null
   lot?: string | null
   expiry?: string | null
+  other_hospital?: boolean | null
 }
 
 /** 합성 그룹이 흡수하는 키들 — 다이얼로그·폼에서 개별 노출 차단. */
@@ -167,6 +171,7 @@ export interface ShareLinkPublicView {
   token: string
   case_label: string
   org_name: string
+  org_name_en: string
   title: string | null
   fields: ShareFieldSpec[]
   status: ShareLinkStatus

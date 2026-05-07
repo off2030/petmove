@@ -35,10 +35,15 @@ export default async function ShareLinkPage({ params }: Props) {
 
 function ShareError({ message }: { message: string }) {
   return (
-    <div className="min-h-screen flex items-center justify-center p-lg">
-      <div className="max-w-md w-full space-y-md rounded-xl border border-border/80 bg-card p-xl shadow-sm text-center">
-        <h1 className="font-serif text-[20px] font-medium">링크를 사용할 수 없습니다</h1>
-        <p className="font-serif text-[14px] text-muted-foreground">{message}</p>
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-4">
+      <div className="mx-auto w-full max-w-md py-20 text-center">
+        <p className="mb-4 font-mono text-[11px] uppercase tracking-[2px] text-muted-foreground">
+          Unavailable
+        </p>
+        <h1 className="mb-3 font-serif text-2xl font-medium tracking-tight text-foreground">
+          링크를 사용할 수 없습니다
+        </h1>
+        <p className="text-[15px] leading-relaxed text-muted-foreground">{message}</p>
       </div>
     </div>
   )

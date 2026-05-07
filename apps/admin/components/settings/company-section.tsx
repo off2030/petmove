@@ -66,8 +66,8 @@ const TRANSPORT_FIELDS: FieldDef[] = [
   { key: 'transport_company_en', label: '영문 회사명', group: 'Company' },
   { key: 'transport_contact_ko', label: '담당자', group: 'Company' },
   { key: 'transport_contact_en', label: '영문명', group: 'Company' },
-  { key: 'postal_code', label: '우편번호', group: 'Company' },
-  { key: 'mobile_phone', label: '휴대폰', group: 'Company' },
+  { key: 'transport_postal_code', label: '우편번호', group: 'Company' },
+  { key: 'transport_mobile_phone', label: '휴대폰', group: 'Company' },
 ]
 
 function formatSavedAgo(date: Date | null): string {
@@ -166,12 +166,25 @@ export function CompanySection({
     })
   }
 
+  /**
+   * 추가 정보 키 — active org_type 별로 독립 저장.
+   * hospital → custom_fields (legacy 호환)
+   * transport → transport_custom_fields
+   */
+  const customFieldsKey: 'custom_fields' | 'transport_custom_fields' =
+    orgType === 'transport' ? 'transport_custom_fields' : 'custom_fields'
+
+  function getCustomFields(source: VetInfo | null): CustomField[] {
+    if (!source) return []
+    return source[customFieldsKey] ?? []
+  }
+
   /** custom_fields 통째로 교체 저장. 각 row 의 label/value blur 마다 호출. */
   function saveCustomFields(next: CustomField[]) {
     if (!info) return
     setError(null)
     startTransition(async () => {
-      const r = await updateCompanyInfo({ custom_fields: next })
+      const r = await updateCompanyInfo({ [customFieldsKey]: next } as Partial<VetInfo>)
       if (r.ok) {
         setInfo(r.info)
         setLastSaved(new Date())
@@ -186,20 +199,20 @@ export function CompanySection({
     const id = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
       ? crypto.randomUUID()
       : `cf_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-    const next = [...(info.custom_fields ?? []), { id, label: '', value: '' }]
-    setInfo({ ...info, custom_fields: next })
+    const next = [...getCustomFields(info), { id, label: '', value: '' }]
+    setInfo({ ...info, [customFieldsKey]: next })
   }
 
   function updateCustomField(id: string, patch: Partial<CustomField>) {
     if (!info) return
-    const next = (info.custom_fields ?? []).map((f) => f.id === id ? { ...f, ...patch } : f)
-    setInfo({ ...info, custom_fields: next })
+    const next = getCustomFields(info).map((f) => f.id === id ? { ...f, ...patch } : f)
+    setInfo({ ...info, [customFieldsKey]: next })
   }
 
   function removeCustomField(id: string) {
     if (!info) return
-    const next = (info.custom_fields ?? []).filter((f) => f.id !== id)
-    setInfo({ ...info, custom_fields: next })
+    const next = getCustomFields(info).filter((f) => f.id !== id)
+    setInfo({ ...info, [customFieldsKey]: next })
     saveCustomFields(next)
   }
 
@@ -345,13 +358,13 @@ export function CompanySection({
         <section className="mb-xl">
           <SectionLabel className="mb-2">추가 정보</SectionLabel>
           <div className="border-t border-border/80">
-            {(info.custom_fields ?? []).map((f) => (
+            {getCustomFields(info).map((f) => (
               <CustomFieldRow
                 key={f.id}
                 field={f}
                 isAdmin={isAdmin}
                 onChange={(patch) => updateCustomField(f.id, patch)}
-                onCommit={() => saveCustomFields(info.custom_fields ?? [])}
+                onCommit={() => saveCustomFields(getCustomFields(info))}
                 onRemove={() => removeCustomField(f.id)}
               />
             ))}
@@ -367,7 +380,7 @@ export function CompanySection({
                 </button>
               </div>
             )}
-            {!isAdmin && (info.custom_fields ?? []).length === 0 && (
+            {!isAdmin && getCustomFields(info).length === 0 && (
               <p className="py-3 font-serif italic text-[12px] text-muted-foreground/60">
                 추가 정보가 없습니다.
               </p>

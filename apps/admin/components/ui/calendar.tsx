@@ -25,7 +25,7 @@ export function Calendar({
     <DayPicker
       locale={ko}
       showOutsideDays={showOutsideDays}
-      className={cn('relative p-3 font-sans', className)}
+      className={cn('relative p-3 font-sans bg-card text-card-foreground', className)}
       modifiers={{
         sunday: (date) => date.getDay() === 0,
         saturday: (date) => date.getDay() === 6,
@@ -63,12 +63,12 @@ export function Calendar({
           'font-mono text-[13px] tabular-nums',
           'transition-colors',
           'hover:bg-accent/60',
-          'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-pmw-accent',
+          'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30',
           'disabled:opacity-30 disabled:pointer-events-none',
         ),
         selected: cn(
-          '[&>button]:bg-pmw-accent [&>button]:!text-pmw-accent-foreground [&>button]:font-semibold',
-          '[&>button]:hover:bg-pmw-accent-strong',
+          '[&>button]:!bg-primary [&>button]:!text-primary-foreground [&>button]:font-semibold',
+          '[&>button]:hover:!bg-primary/90',
         ),
         today: '[&>button]:font-serif [&>button]:italic [&>button]:!text-pmw-cal-today',
         outside: '[&>button]:opacity-40',

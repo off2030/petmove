@@ -748,7 +748,7 @@ function PetFormSection({ pet, index, updatePet, enWarnings, composingRef, handl
   const isMissing = (f: string) => missing.has(mk(f))
 
   return (
-    <div>
+    <>
       {/* 이름 */}
       <FieldRow label="이름" required fieldKey={mk('petName')} missing={isMissing('petName')}>
         <input type="text" value={pet.petName} onChange={(e) => updatePet(index, 'petName', e.target.value.replace(/\b[a-z]/g, c => c.toUpperCase()))}
@@ -911,6 +911,6 @@ function PetFormSection({ pet, index, updatePet, enWarnings, composingRef, handl
           className={numericInputClass}
         />
       </FieldRow>
-    </div>
+    </>
   )
 }

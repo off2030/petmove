@@ -50,6 +50,8 @@ type Result<T> = { ok: true; value: T } | { ok: false; error: string }
  */
 async function buildFieldSpecs(
   fieldKeys: string[],
+  fieldIds: string[] | null | undefined,
+  destinationScope: string | null | undefined,
   caseRow: CaseRow,
   extraEntries: DestinationExtraFieldEntry[],
 ): Promise<ShareFieldSpec[]> {
@@ -59,14 +61,17 @@ async function buildFieldSpecs(
 
   const descriptors = buildShareFieldDescriptors({
     fieldDefs,
+    destinationScope,
     extraFieldEntries: extraEntries,
     caseScoped: null,
   })
 
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const out: ShareFieldSpec[] = []
+  const hasResolvedIds = !!fieldIds?.some((id) => id.includes(':'))
+  const idFilter = hasResolvedIds ? new Set(fieldIds) : null
   for (const d of descriptors) {
-    if (!allKeys.has(d.key)) continue
+    if (idFilter ? !idFilter.has(d.id) : !allKeys.has(d.key)) continue
     out.push(toShareFieldSpec(d, caseRow, data))
   }
   return out
@@ -91,6 +96,7 @@ function toShareFieldSpec(
   data: Record<string, unknown>,
 ): ShareFieldSpec {
   const base = {
+    id: d.id,
     key: d.key,
     label: d.label,
     category: d.category,
@@ -182,6 +188,7 @@ function extractVaccineEntries(
             manufacturer: typeof obj.manufacturer === 'string' ? obj.manufacturer : null,
             lot: typeof obj.lot === 'string' ? obj.lot : null,
             expiry: typeof obj.expiry === 'string' ? obj.expiry : null,
+            other_hospital: typeof obj.other_hospital === 'boolean' ? obj.other_hospital : null,
           })
         }
       }
@@ -216,6 +223,8 @@ export interface CreateShareLinkInput {
   caseId: string
   template: string | null
   fieldKeys: string[]
+  fieldIds?: string[]
+  destinationScope?: string | null
   title?: string | null
   expiresInDays?: number
 }
@@ -254,6 +263,8 @@ export async function createShareLink(
         org_id: orgId,
         template: input.template,
         field_keys: input.fieldKeys,
+        field_ids: input.fieldIds ?? input.fieldKeys,
+        destination_scope: input.destinationScope?.trim() || null,
         title: input.title?.trim() || null,
         created_by: user.id,
         expires_at: expiresAt,
@@ -338,18 +349,22 @@ export async function getShareLinkByToken(
     if (!caseRow) return { ok: false, error: '연결된 케이스를 찾을 수 없습니다' }
     const { data: orgRow } = await admin
       .from('organizations')
-      .select('name')
+      .select('name, name_en')
       .eq('id', row.org_id)
       .maybeSingle()
 
     // 추가정보 표시 순서를 case-detail 과 일치시키려면 destination 별 extraFields entries 가
     // 필요. 조직 custom override 까지 합쳐 effective entries 를 산출.
     const destOverrides = await loadDestinationOverridesByOrg(admin, row.org_id)
-    const extraEntries = getEffectiveExtraFieldEntries(
-      (caseRow as CaseRow).destination,
-      destOverrides,
+    const destinationScope = row.destination_scope || (caseRow as CaseRow).destination
+    const extraEntries = getEffectiveExtraFieldEntries(destinationScope, destOverrides)
+    const fields = await buildFieldSpecs(
+      row.field_keys,
+      row.field_ids,
+      destinationScope,
+      caseRow as CaseRow,
+      extraEntries,
     )
-    const fields = await buildFieldSpecs(row.field_keys, caseRow as CaseRow, extraEntries)
 
     return {
       ok: true,
@@ -357,6 +372,7 @@ export async function getShareLinkByToken(
         token: row.token,
         case_label: caseLabelFrom(caseRow as CaseRow),
         org_name: (orgRow?.name as string | undefined) ?? '',
+        org_name_en: (orgRow?.name_en as string | undefined) ?? '',
         title: row.title,
         fields,
         status,
@@ -418,6 +434,7 @@ export async function submitShareLink(
             manufacturer: cleanString(obj.manufacturer),
             lot: cleanString(obj.lot),
             expiry: cleanString(obj.expiry),
+            other_hospital: typeof obj.other_hospital === 'boolean' ? obj.other_hospital : null,
           })
         } else if (typeof item === 'string' && item.trim()) {
           entries.push({ date: item.trim() })
@@ -426,7 +443,10 @@ export async function submitShareLink(
       if (group.storage_mode === 'array' && group.array_key) {
         // VacRecord 호환 객체 배열로 저장 — 외부 입력은 항상 타병원 접종 플래그
         dataUpdate[group.array_key] = entries.map((e) => {
-          const rec: Record<string, unknown> = { date: e.date, other_hospital: true }
+          const rec: Record<string, unknown> = {
+            date: e.date,
+            other_hospital: e.other_hospital ?? true,
+          }
           if (e.valid_until) rec.valid_until = e.valid_until
           if (e.product) rec.product = e.product
           if (e.manufacturer) rec.manufacturer = e.manufacturer
@@ -453,6 +473,11 @@ export async function submitShareLink(
       if (VACCINE_GROUP_BY_KEY.has(key)) continue // 위에서 처리됨
       const value = normalizeValue(key, raw)
       if (value === undefined) continue
+      // 빈 값으로 기존 데이터를 덮어쓰지 않기 — share 폼은 "입력"용 (삭제 의도 X).
+      // 사용자 실수(예: 일부만 채워서 제출)로 다른 필드가 NULL 되는 사고 방지.
+      if (value === null) continue
+      if (typeof value === 'string' && value.trim() === '') continue
+      if (Array.isArray(value) && value.length === 0) continue
       if (SHARE_COLUMN_FIELDS.has(key)) {
         colUpdate[key] = value
       } else {
@@ -499,6 +524,10 @@ export async function submitShareLink(
       })
       .eq('id', row.id)
     if (markErr) return { ok: false, error: markErr.message }
+
+    // 발신자 측 케이스 상세에 즉시 반영되도록 캐시 무효화
+    revalidatePath('/cases')
+    revalidatePath(`/cases/${row.case_id}`)
 
     return { ok: true, value: null }
   } catch (e) {

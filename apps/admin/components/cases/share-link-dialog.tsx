@@ -93,14 +93,15 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
   const groupedFields = useMemo(
     () => buildShareFieldLayout({
       fieldDefs,
+      destinationScope: destination,
       extraFieldEntries,
       caseScoped: { allowedFields, vaccineApplies, speciesValue },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [fieldDefs, allowedFields, vaccineEntries, extraFieldEntries, speciesValue],
+    [fieldDefs, destination, allowedFields, vaccineEntries, extraFieldEntries, speciesValue],
   )
 
-  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(() => new Set())
+  const [selectedFieldIds, setSelectedFieldIds] = useState<Set<string>>(() => new Set())
   const [title, setTitle] = useState('')
   const [expiresInDays, setExpiresInDays] = useState(30)
 
@@ -127,47 +128,79 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     return set
   }, [groupedFields])
 
+  const fieldsByKey = useMemo(() => {
+    const map = new Map<string, Array<{ id: string; key: string; label: string }>>()
+    for (const g of groupedFields) {
+      for (const b of g.blocks) {
+        for (const f of b.fields) {
+          const list = map.get(f.key) ?? []
+          list.push(f)
+          map.set(f.key, list)
+        }
+      }
+    }
+    return map
+  }, [groupedFields])
+
+  const selectedFields = useMemo(() => {
+    const out: Array<{ id: string; key: string; label: string }> = []
+    for (const g of groupedFields) {
+      for (const b of g.blocks) {
+        for (const f of b.fields) {
+          if (selectedFieldIds.has(f.id)) out.push(f)
+        }
+      }
+    }
+    return out
+  }, [groupedFields, selectedFieldIds])
+
   function applicableKeysForPreset(preset: SharePreset): string[] {
     return preset.field_keys.filter((k) => allAvailableKeys.has(k))
+  }
+
+  function applicableFieldIdsForPreset(preset: SharePreset): string[] {
+    return preset.field_keys.flatMap((k) => fieldsByKey.get(k)?.map((f) => f.id) ?? [])
   }
 
   /** 프리셋이 현재 모두 선택돼 있는지 (적용 가능한 키 한정). */
   function isPresetFullySelected(preset: SharePreset): boolean {
     const keys = applicableKeysForPreset(preset)
     if (keys.length === 0) return false
-    return keys.every((k) => selectedKeys.has(k))
+    const ids = applicableFieldIdsForPreset(preset)
+    return ids.length > 0 && ids.every((id) => selectedFieldIds.has(id))
   }
 
   /** 빠른 선택 — 프리셋 토글식. 적용 가능한 키만 추가/제거. 다른 선택은 보존. */
   function pickPreset(preset: SharePreset) {
     const keys = applicableKeysForPreset(preset)
     if (keys.length === 0) return
-    setSelectedKeys((prev) => {
+    const ids = applicableFieldIdsForPreset(preset)
+    setSelectedFieldIds((prev) => {
       const next = new Set(prev)
-      if (keys.every((k) => next.has(k))) {
-        for (const k of keys) next.delete(k)
+      if (ids.every((id) => next.has(id))) {
+        for (const id of ids) next.delete(id)
       } else {
-        for (const k of keys) next.add(k)
+        for (const id of ids) next.add(id)
       }
       return next
     })
   }
 
-  function toggleField(key: string) {
-    setSelectedKeys((prev) => {
+  function toggleField(id: string) {
+    setSelectedFieldIds((prev) => {
       const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
 
   function clearAll() {
-    setSelectedKeys(new Set())
+    setSelectedFieldIds(new Set())
   }
 
   function handleCreate() {
-    if (selectedKeys.size === 0) {
+    if (selectedFieldIds.size === 0) {
       setError('최소 1개 이상의 필드를 선택해주세요')
       return
     }
@@ -179,7 +212,9 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
       const r = await createShareLink({
         caseId,
         template: templateLabel,
-        fieldKeys: Array.from(selectedKeys),
+        fieldKeys: selectedFields.map((f) => f.key),
+        fieldIds: selectedFields.map((f) => f.id),
+        destinationScope: destination,
         title: title.trim() || null,
         expiresInDays,
       })
@@ -194,7 +229,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
         // best-effort
       }
       // 폼 초기화
-      setSelectedKeys(new Set())
+      setSelectedFieldIds(new Set())
       setTitle('')
       await refresh()
     })
@@ -301,7 +336,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                     </button>
                   )
                 })}
-                {selectedKeys.size > 0 && (
+                {selectedFieldIds.size > 0 && (
                   <button
                     type="button"
                     onClick={clearAll}
@@ -321,7 +356,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                 직접 선택
               </h3>
               <span className="font-mono text-[10.5px] text-muted-foreground/70">
-                {selectedKeys.size} 개 선택됨
+                {selectedFieldIds.size} 개 선택됨
               </span>
             </div>
             <div className="space-y-lg">
@@ -340,12 +375,12 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
                         )}
                         <div className="flex flex-wrap gap-1">
                           {block.fields.map((f) => {
-                            const active = selectedKeys.has(f.key)
+                            const active = selectedFieldIds.has(f.id)
                             return (
                               <button
-                                key={f.key}
+                                key={f.id}
                                 type="button"
-                                onClick={() => toggleField(f.key)}
+                                onClick={() => toggleField(f.id)}
                                 className={cn(
                                   'h-7 px-2.5 rounded-full border font-serif text-[12px] transition-colors',
                                   active
@@ -482,7 +517,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
             primaryLabel="링크 만들기"
             savingLabel="만드는 중…"
             saving={pending}
-            primaryDisabled={selectedKeys.size === 0}
+            primaryDisabled={selectedFieldIds.size === 0}
           />
         </div>
       </div>

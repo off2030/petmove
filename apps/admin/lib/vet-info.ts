@@ -43,13 +43,19 @@ export interface VetInfo {
   license_no: string
 
   // 운송회사 전용 (org_type='transport' 일 때만 UI 노출)
+  // 우편번호·휴대폰은 동물병원과 분리해 독립 저장 — 한 조직이 양쪽 토글 사이에서
+  // 실수로 서로의 값을 덮어쓰지 않도록.
   transport_company_ko: string
   transport_company_en: string
   transport_contact_ko: string
   transport_contact_en: string
+  transport_postal_code: string
+  transport_mobile_phone: string
 
-  /** 사용자 정의 추가 필드. UI 의 "정보 추가 +" 로 자유롭게 늘릴 수 있음. */
+  /** 사용자 정의 추가 필드 — 동물병원 토글에서 입력. UI 의 "정보 추가 +" 로 자유롭게 늘릴 수 있음. */
   custom_fields?: CustomField[]
+  /** 사용자 정의 추가 필드 — 운송회사 토글에서 입력. 동물병원과 독립 저장. */
+  transport_custom_fields?: CustomField[]
 }
 
 /**
@@ -76,11 +82,14 @@ export const DEFAULT_VET_INFO: VetInfo = {
   transport_company_en: '',
   transport_contact_ko: '',
   transport_contact_en: '',
+  transport_postal_code: '',
+  transport_mobile_phone: '',
   custom_fields: [],
+  transport_custom_fields: [],
 }
 
 /** custom_fields 를 제외한 단순 문자열 필드 키. UI 에서 input/textarea 로 편집됨. */
-export type VetInfoKey = Exclude<keyof VetInfo, 'custom_fields'>
+export type VetInfoKey = Exclude<keyof VetInfo, 'custom_fields' | 'transport_custom_fields'>
 
 let _cached: VetInfo = DEFAULT_VET_INFO
 

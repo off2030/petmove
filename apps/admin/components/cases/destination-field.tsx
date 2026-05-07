@@ -160,7 +160,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                   className={cn(
                     'group/chip inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 transition-all',
                     'bg-pmw-tag text-pmw-tag-foreground',
-                    multi && !isActive && 'opacity-45 hover:opacity-80',
+                    multi && isActive && 'ring-1 ring-pmw-accent/45',
                     multi && editMode && 'cursor-grab active:cursor-grabbing',
                     dragIdx === idx && 'opacity-30',
                     isDragOver && 'ring-2 ring-pmw-tag-foreground/50',
@@ -170,8 +170,9 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                     type="button"
                     onClick={() => { if (multi) setActiveDestination(ko) }}
                     className={cn(
-                      'inline-flex items-baseline gap-1.5 -mx-2.5 -my-0.5 px-2.5 py-0.5',
+                      'inline-flex items-baseline gap-1.5 -mx-2.5 -my-0.5 px-2.5 py-0.5 transition-opacity',
                       multi && 'cursor-pointer',
+                      multi && !isActive && 'opacity-55 group-hover/chip:opacity-90',
                     )}
                     title={multi ? '클릭하여 이 국가 항목 보기' : undefined}
                     disabled={!multi}

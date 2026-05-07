@@ -339,6 +339,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
           // descriptor.subgroup 이 그대로 SimpleExtraSection 의 group/flat 분기 입력. species·email 필터는 빌더가 처리.
           const extraDescriptors = buildShareFieldDescriptors({
             fieldDefs,
+            destinationScope: viewDestination,
             extraFieldEntries: getEffectiveExtraFieldEntries(viewDestination, destOverridesConfig),
             caseScoped: { allowedFields, vaccineApplies: () => false, speciesValue },
           }).filter((d) => d.category === '추가정보')
@@ -349,12 +350,15 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
           for (const d of extraDescriptors) {
             if (d.source.kind !== 'extra') continue
             const def = applyDestinationFieldOverride(d.source.def, viewDestination)
+            // useShortLabel 은 빌더가 destination 별로 결정한 값을 그대로 신뢰
+            // (일본만 'shortLabel' — 날짜/시간/항공편명, 그 외는 풀라벨 — 도착일/도착시간).
+            const groupUseShortLabel = d.source.useShortLabel
             if (d.subgroup) {
               const last = segments[segments.length - 1]
               if (last && last.type === 'group' && last.name === d.subgroup) {
                 last.items.push(def)
               } else {
-                segments.push({ type: 'group', name: d.subgroup, items: [def] })
+                segments.push({ type: 'group', name: d.subgroup, items: [def], useShortLabel: groupUseShortLabel })
               }
             } else {
               segments.push({ type: 'flat', entry: def })
@@ -392,7 +396,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
  * case-detail 은 descriptor.subgroup 인접 묶음으로 ExtraSegment 를 구성한다.
  */
 type ExtraSegment =
-  | { type: 'group'; name: string; items: ExtraFieldDef[] }
+  | { type: 'group'; name: string; items: ExtraFieldDef[]; useShortLabel: boolean }
   | { type: 'flat'; entry: ExtraFieldDef }
 
 /** 목적지별 ExtraFieldDef 오버라이드 — 같은 키라도 국가별로 type/options 가 달라질 때 적용. */
@@ -739,6 +743,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
                   caseRow={caseRow}
                   groupName={seg.name}
                   items={seg.items}
+                  useShortLabel={seg.useShortLabel}
                 />
               )
             }
@@ -765,11 +770,13 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
 }
 
 /** group 메타데이터로 묶인 추가정보 항목들 — 좌측 그룹명 + 우측 sub-row 스택. */
-function ExtraGroupRow({ caseId, caseRow, groupName, items }: {
+function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel }: {
   caseId: string
   caseRow: CaseRow
   groupName: string
   items: ExtraFieldDef[]
+  /** 빌더가 destination 별로 결정한 라벨 모드 — 일본만 true(날짜/시간), 그 외 false(도착일/도착시간). */
+  useShortLabel: boolean
 }) {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   return (
@@ -780,7 +787,7 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items }: {
       </span>
       <div className="min-w-0">
         {items.map((def) => {
-          const spec = buildSpecForExtra(def, true)
+          const spec = buildSpecForExtra(def, useShortLabel)
           const rawValue = readEffectiveExtraValue(data, def.key)
           return (
             <EditableField

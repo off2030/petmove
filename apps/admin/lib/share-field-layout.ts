@@ -109,6 +109,7 @@ export type ShareDescriptorSource =
 
 /** 평탄 descriptor — 좌표가 박힌 단일 권위 단위. 출력은 (groupOrder, order) 사전식 정렬. */
 export interface ShareFieldDescriptor {
+  id: string
   key: string
   label: string
   category: ShareCategory
@@ -120,7 +121,7 @@ export interface ShareFieldDescriptor {
 
 export interface ShareFieldLayoutBlock {
   subgroup?: string
-  fields: { key: string; label: string }[]
+  fields: { id: string; key: string; label: string }[]
 }
 
 export interface ShareFieldLayoutCategory {
@@ -130,6 +131,8 @@ export interface ShareFieldLayoutCategory {
 
 export interface ShareFieldLayoutOptions {
   fieldDefs: FieldDefinition[]
+  /** Destination tab/scope used to resolve destination-dependent fields. */
+  destinationScope?: string | null
   /** 추가정보 영역에 표시할 destination 별 entries (조직 override 적용된 effective). */
   extraFieldEntries: DestinationExtraFieldEntry[]
   /**
@@ -152,7 +155,8 @@ export interface ShareFieldLayoutOptions {
 export function buildShareFieldDescriptors(
   opts: ShareFieldLayoutOptions,
 ): ShareFieldDescriptor[] {
-  const { fieldDefs, extraFieldEntries, caseScoped } = opts
+  const { fieldDefs, destinationScope, extraFieldEntries, caseScoped } = opts
+  const scope = normalizeShareScope(destinationScope)
   const speciesValue = caseScoped?.speciesValue ?? ''
   const out: ShareFieldDescriptor[] = []
 
@@ -175,6 +179,7 @@ export function buildShareFieldDescriptors(
       const meta = SHARE_COLUMN_META[spec.key]
       if (!meta) continue
       out.push({
+        id: makeShareFieldId(scope, category, spec.key, dSourceKindForStorage(spec.storage)),
         key: spec.key, label, category,
         groupOrder: spec.groupOrder, order: spec.order,
         source: { kind: 'column', meta },
@@ -183,6 +188,7 @@ export function buildShareFieldDescriptors(
       const def = fieldDefByKey.get(spec.key)
       if (!def) continue
       out.push({
+        id: makeShareFieldId(scope, category, spec.key, 'data'),
         key: spec.key, label, category,
         groupOrder: spec.groupOrder, order: spec.order,
         source: { kind: 'data', def },
@@ -197,6 +203,7 @@ export function buildShareFieldDescriptors(
       if (vk && !caseScoped.vaccineApplies(vk)) continue
     }
     out.push({
+      id: makeShareFieldId(scope, '절차정보', g.key, 'synthetic-vaccine'),
       key: g.key, label: g.label, category: '절차정보',
       groupOrder: 2, order: g.display_order,
       source: { kind: 'synthetic-vaccine', group: g },
@@ -218,16 +225,22 @@ export function buildShareFieldDescriptors(
     const def = EXTRA_FIELD_DEFS[entry.key]
     if (!def) continue
     const useGroup = !!def.group && (groupCounts.get(def.group) ?? 0) >= 2
-    const label = useGroup && def.shortLabel
-      ? def.shortLabel
+    // 일본은 항공편 필드가 많아 shortLabel(날짜/시간/항공편명)이 더 가독성 좋음.
+    // 태국/미국 등은 같은 그룹이어도 풀라벨(도착일/도착시간)을 그대로 노출.
+    // scope 는 한글('일본') 또는 영문('japan') 둘 다 들어올 수 있어 둘 다 매칭.
+    const isJapan = scope === 'japan' || scope.includes('일본')
+    const useShortLabel = useGroup && !!def.shortLabel && isJapan
+    const label = useShortLabel
+      ? (def.shortLabel as string)
       : (SHARE_RECIPIENT_LABEL_OVERRIDE[entry.key] ?? def.label)
     out.push({
+      id: makeShareFieldId(scope, '추가정보', entry.key, 'extra'),
       key: entry.key, label,
       category: '추가정보',
       subgroup: useGroup ? def.group : undefined,
       groupOrder: 99,
       order: extraOrder++,
-      source: { kind: 'extra', def, useShortLabel: useGroup },
+      source: { kind: 'extra', def, useShortLabel },
     })
   }
 
@@ -260,9 +273,9 @@ export function groupShareDescriptorsByCategory(
     for (const d of items) {
       const last = blocks[blocks.length - 1]
       if (last && last.subgroup === d.subgroup) {
-        last.fields.push({ key: d.key, label: d.label })
+        last.fields.push({ id: d.id, key: d.key, label: d.label })
       } else {
-        blocks.push({ subgroup: d.subgroup, fields: [{ key: d.key, label: d.label }] })
+        blocks.push({ subgroup: d.subgroup, fields: [{ id: d.id, key: d.key, label: d.label }] })
       }
     }
     result.push({ category: c, blocks })
@@ -275,4 +288,28 @@ export function buildShareFieldLayout(
   opts: ShareFieldLayoutOptions,
 ): ShareFieldLayoutCategory[] {
   return groupShareDescriptorsByCategory(buildShareFieldDescriptors(opts))
+}
+
+function normalizeShareScope(scope: string | null | undefined): string {
+  const trimmed = scope?.trim()
+  return trimmed ? trimmed.toLowerCase() : 'default'
+}
+
+function fieldScope(category: ShareCategory, sourceKind: string, scope: string): string {
+  if (category === '고객정보' || category === '동물정보') return 'global'
+  if (sourceKind === 'extra' || sourceKind === 'synthetic-vaccine') return scope
+  return category === '절차정보' ? scope : 'global'
+}
+
+function makeShareFieldId(
+  scope: string,
+  category: ShareCategory,
+  key: string,
+  sourceKind: string,
+): string {
+  return `${fieldScope(category, sourceKind, scope)}:${sourceKind}:${key}`
+}
+
+function dSourceKindForStorage(storage: 'column' | 'data'): string {
+  return storage
 }
