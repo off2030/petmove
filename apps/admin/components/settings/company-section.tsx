@@ -564,14 +564,15 @@ export function CompanySection({
           </section>
         ))}
 
-        {/* 내 담당자 정보 — 로그인 사용자 본인 (한 조직에 멤버 여럿일 때 각자 본인 명의로
-            cert 발급되도록). org_type 에 따라 PDF 매핑이 hospital 의 vet:name_en /
-            transport 의 vet:transport_contact_en 로 overlay. */}
+        {/* 발급자 본인 정보 — 동물병원이면 "수의사", 운송회사면 "담당자" 그룹으로 노출.
+            로그인 사용자 본인 (profiles.contact_info) 만 보이고 편집됨. 한 조직에 멤버
+            여럿일 때 각자 본인 명의로 cert 발급되도록 — PDF 매핑(vet:name_en 등) 은
+            org_type 에 따라 hospital 측 vet 키 / transport 측 transport_contact 키로
+            overlay. 다른 멤버에게는 영향 없음. */}
         <section className="mb-xl">
-          <SectionLabel className="mb-2">내 담당자 정보</SectionLabel>
+          <SectionLabel className="mb-2">{isTransport ? '담당자' : '수의사'}</SectionLabel>
           <p className="mb-2 font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed max-w-md">
-            로그인 계정 본인만 보이고 편집됩니다. 같은 조직의 다른 멤버에게는 영향 없음.
-            cert 발급 시 본인의 이름/휴대폰/면허번호가 채워집니다.
+            로그인 본인 정보만 표시·편집. cert 발급 시 본인 이름/휴대폰{isTransport ? '' : '/면허번호'}이 채워집니다.
           </p>
           <div className="border-t border-border/80">
             {!myInfo ? (
@@ -649,11 +650,6 @@ export function CompanySection({
           </div>
         </section>
 
-        {isTransport && (
-          <p className="font-serif italic text-[12px] text-muted-foreground/70 -mt-md mb-xl leading-relaxed max-w-md">
-            운송회사는 회사 정보만 입력합니다. 병원 정보가 비어 있으면 PDF 의 병원·수의사 필드는 빈 값으로 출력됩니다.
-          </p>
-        )}
 
         {/* 사용자 정의 추가 필드 — 라벨/값 자유 입력 */}
         <section className="mb-xl">
