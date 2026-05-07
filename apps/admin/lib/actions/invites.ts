@@ -382,8 +382,18 @@ export async function sendInviteMagicLink(input: {
 
 /**
  * 초대 수락 — /invite/[token] 페이지에서 호출.
- * Service role 로 RLS 우회 (수락자는 아직 org 멤버가 아니므로 select 권한 없음).
- * 이메일 일치 검증 후 membership 생성.
+ *
+ * 보안 모델 (P1 #5 audit):
+ *   - organization_invites 테이블에 UPDATE RLS 정책이 없으므로 accepted_at 마킹은
+ *     service_role 우회 필수. SELECT/INSERT/DELETE 정책은 admin/super_admin 만 통과.
+ *   - 액션 진입 시 검증:
+ *     1) 사용자 인증 (auth.getUser)
+ *     2) 토큰으로 invite 존재 (Supabase parameterized query → SQL injection 안전)
+ *     3) 만료 시각 (expires_at < now)
+ *     4) 재사용 방지 (accepted_at IS NULL) — 아래 atomic claim 으로 enforce
+ *     5) 이메일 일치 (normalize 양쪽 비교) — 토큰 노출돼도 다른 사용자가 사용 불가
+ *   - Race condition: accepted_at 마킹을 atomic UPDATE … WHERE accepted_at IS NULL 로
+ *     수행하여 동시 accept 요청 중 정확히 한 건만 통과. 패배자는 명확한 오류 반환.
  */
 export async function acceptInvite(token: string): Promise<Result<{ orgId: string }>> {
   const supabase = await createClient()
@@ -410,17 +420,25 @@ export async function acceptInvite(token: string): Promise<Result<{ orgId: strin
   const orgId = invite.org_id as string
   const role = invite.role as InviteRole
 
-  // membership 추가 (이미 있으면 role upgrade)
+  // membership 추가 (이미 있으면 role upgrade) 먼저. 멱등하므로 retry-safe — accept 가
+  // 중간에 실패해 사용자가 재시도해도 membership 은 정확히 한 번 존재.
   const { error: memErr } = await admin
     .from('memberships')
     .upsert({ user_id: user.id, org_id: orgId, role }, { onConflict: 'user_id,org_id' })
   if (memErr) return { ok: false, error: memErr.message }
 
-  const { error: markErr } = await admin
+  // Atomic claim — accepted_at 가 여전히 NULL 일 때만 마킹 통과. 동시 accept 두 건이
+  // 들어와도 정확히 한 건만 RETURNING 결과를 받음. 패배자는 membership 이 이미 멱등하게
+  // 존재하므로 클라이언트에 "이미 수락된 초대" 응답해도 결과 무해.
+  const { data: claimed, error: markErr } = await admin
     .from('organization_invites')
     .update({ accepted_at: new Date().toISOString(), accepted_by: user.id })
     .eq('id', invite.id as string)
+    .is('accepted_at', null)
+    .select('id')
+    .maybeSingle()
   if (markErr) return { ok: false, error: markErr.message }
+  if (!claimed) return { ok: false, error: '이미 수락된 초대' }
 
   return { ok: true, value: { orgId } }
 }
