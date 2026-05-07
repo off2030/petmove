@@ -130,13 +130,28 @@ export async function loadVetInfo(): Promise<VetInfo> {
   return _cached
 }
 
-/** 설정 화면에서 호출 — 부분 업데이트 후 캐시 갱신. */
+/**
+ * 설정 화면에서 호출 — 부분 업데이트 후 캐시 갱신.
+ *
+ * 중요: merge base 는 module-level _cached 가 아니라 **DB 현재 값** 사용.
+ * _cached 는 서버 프로세스 재시작/HMR/콜드스타트 직후 비어 있을 수 있고, 그 상태에서
+ * patch 만 merge 하면 다른 모든 필드가 DEFAULT_VET_INFO(빈 문자열)로 덮여 DB row 가
+ * 통째로 wipe 되는 사고가 발생함. DB 의 현재 값을 base 로 잡으면 캐시 상태와 무관하게
+ * 안전하게 부분 갱신.
+ */
 export async function saveVetInfo(patch: Partial<VetInfo>): Promise<VetInfo> {
   const { createClient } = await import('@/lib/supabase/server')
   const { getActiveOrgId } = await import('@/lib/supabase/active-org')
   const supabase = await createClient()
   const orgId = await getActiveOrgId()
-  const merged: VetInfo = { ...getVetInfo(), ...patch }
+  const { data: existingRow } = await supabase
+    .from('organization_settings')
+    .select('value')
+    .eq('org_id', orgId)
+    .eq('key', 'company_info')
+    .maybeSingle()
+  const existing = (existingRow?.value as Partial<VetInfo> | null) ?? {}
+  const merged: VetInfo = { ...DEFAULT_VET_INFO, ...existing, ...patch }
   const { error } = await supabase
     .from('organization_settings')
     .upsert({ org_id: orgId, key: 'company_info', value: merged, updated_at: new Date().toISOString() })
@@ -144,6 +159,6 @@ export async function saveVetInfo(patch: Partial<VetInfo>): Promise<VetInfo> {
     console.error('[saveVetInfo] upsert error:', error)
     throw new Error(error.message)
   }
-  _cached = { ...DEFAULT_VET_INFO, ...merged }
-  return _cached
+  _cached = merged
+  return merged
 }
