@@ -11,7 +11,8 @@
     "import:dry": "node scripts/import-xlsx.mjs --dry-run --limit 5",
     "import:preview": "node scripts/import-xlsx.mjs --dry-run",
     "import:run": "node scripts/import-xlsx.mjs",
-    "gen:vapid": "node scripts/generate-vapid-keys.mjs"
+    "gen:vapid": "node scripts/generate-vapid-keys.mjs",
+    "verify:db": "supabase db query --linked < scripts/verify-db-invariants.sql"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.89.0",
