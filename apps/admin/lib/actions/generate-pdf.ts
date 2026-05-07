@@ -239,8 +239,11 @@ export async function generateInvoiceAndESD(opts: ShipmentOpts): Promise<Generat
   // 동적 렌더링하던 필드(특히 ESD 의 vet:name_en / vet:esd_license_block)는 병합 후
   // 재생성 불가능해 invisible 로 표시됨. 병합 직전 flatten 으로 페이지 content stream
   // 에 베이크. 단독 ESD/Invoice 발급 경로는 그대로 form field 유지(사용자 편집 가능).
-  invoicePdf.getForm().flatten()
-  esdPdf.getForm().flatten()
+  // updateFieldAppearances:false — 단독 PDF 가 이미 customFont(NanumGothic) 로 정확한
+  // AP 를 베이크해 둔 상태이므로 flatten 의 auto regeneration(default Helvetica) 으로
+  // 덮어써져 빈 <> Tj 가 되지 않도록 차단.
+  invoicePdf.getForm().flatten({ updateFieldAppearances: false })
+  esdPdf.getForm().flatten({ updateFieldAppearances: false })
 
   const mergedPdf = await PDFDocument.create()
   const invoicePages = await mergedPdf.copyPages(invoicePdf, invoicePdf.getPageIndices())
@@ -260,7 +263,9 @@ export async function generateInvoiceAndESD(opts: ShipmentOpts): Promise<Generat
     customsPages.forEach(page => mergedPdf.addPage(page))
   }
 
-  const pdfBytes = await mergedPdf.save()
+  // updateFieldAppearances:false — flatten 후 form 이 비어있고 페이지 content 에 텍스트가
+  // 이미 베이크돼 있으므로 auto regeneration 은 의미 없을 뿐 아니라 잠재적 사고 위험.
+  const pdfBytes = await mergedPdf.save({ updateFieldAppearances: false })
   const base64 = Buffer.from(pdfBytes).toString('base64')
 
   const suffix = opts.consignee_lab === 'ksvdl_r' ? '+Customs' : ''
@@ -289,10 +294,11 @@ export async function generateNzInfectionPack(caseId: string, opts?: GenerateOpt
   const merged = await PDFDocument.create()
   for (const r of [vbddl, apqaHq, apqaHqEn]) {
     const doc = await PDFDocument.load(Buffer.from(r.pdf, 'base64'))
+    // 단독 PDF 들은 모두 flatten=true 라 form 없음 — 안전하게 그대로 copyPages.
     const pages = await merged.copyPages(doc, doc.getPageIndices())
     pages.forEach(p => merged.addPage(p))
   }
-  const pdfBytes = await merged.save()
+  const pdfBytes = await merged.save({ updateFieldAppearances: false })
   return {
     ok: true,
     pdf: Buffer.from(pdfBytes).toString('base64'),

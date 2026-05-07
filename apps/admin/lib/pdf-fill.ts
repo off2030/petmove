@@ -2513,7 +2513,8 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
     pdfForm.flatten()
   }
 
-  const bytes = await pdf.save()
+  // updateFieldAppearances:false — solo 경로와 동일 이유. customFont 로 이미 베이크된 AP 보존.
+  const bytes = await pdf.save({ updateFieldAppearances: false })
   const base64 = Buffer.from(bytes).toString('base64')
   const petNames = doc.cases
     .map(c => (c.pet_name_en || c.pet_name || 'pet').replace(/[^\w가-힣]/g, '_'))
@@ -2961,7 +2962,11 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
     pdfForm.flatten()
   }
 
-  const bytes = await pdf.save()
+  // updateFieldAppearances:false — applyFontFixes 에서 이미 customFont 로 AP 를
+  // 정확히 생성했고, save 의 auto regeneration 은 폰트 인자 없이 default(Helvetica)
+  // 로 다시 그려 NanumGothic 인코딩을 빈 <> Tj 로 덮어쓰는 사고가 발생함.
+  // (특히 ESD vet:* 필드 — Invoice+ESD 병합 PDF 에서 invisible 로 출력되던 원인.)
+  const bytes = await pdf.save({ updateFieldAppearances: false })
   const base64 = Buffer.from(bytes).toString('base64')
   const petName = (caseRow.pet_name_en || caseRow.pet_name || 'pet').replace(/[^\w가-힣]/g, '_')
   const filename = form.filename.replace('{pet_name}', petName)
