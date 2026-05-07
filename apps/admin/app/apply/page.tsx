@@ -182,6 +182,8 @@ export default function ApplyPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [missing, setMissing] = useState<Set<string>>(() => new Set())
+  // honeypot — 사람 사용자에게는 invisible. 봇이 자동 채우면 서버 액션이 silent reject.
+  const [website, setWebsite] = useState('')
 
   // Form state
   const [destination, setDestination] = useState('')
@@ -445,6 +447,7 @@ export default function ApplyPage() {
         })(),
         microchip_implant_date: p.microchipDate || undefined,
         rabies_date: p.rabiesDate || undefined,
+        website,
       })
       if (!result.ok) { setError(result.error); allOk = false; break }
     }
@@ -497,6 +500,20 @@ export default function ApplyPage() {
           </h1>
         </header>
 
+        {/* honeypot — 시각적으로 숨기되 display:none 은 피함 (일부 봇이 skip). */}
+        <div aria-hidden="true" style={{ position: 'absolute', left: '-10000px', top: 'auto', width: '1px', height: '1px', overflow: 'hidden' }}>
+          <label>
+            웹사이트 (입력하지 마세요)
+            <input
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+            />
+          </label>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-md"
           onKeyDown={(e) => {
             if (e.key !== 'Enter') return

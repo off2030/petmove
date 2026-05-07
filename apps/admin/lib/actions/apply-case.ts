@@ -37,11 +37,19 @@ interface ApplyInput {
   microchip?: string
   microchip_implant_date?: string
   rabies_date?: string
+  // honeypot — 사람 사용자에게는 비공개. 봇이 채우면 silent success 로 차단.
+  website?: string
 }
 
 export async function applyCase(input: ApplyInput): Promise<
   { ok: true; caseId: string } | { ok: false; error: string }
 > {
+  // honeypot — 사람은 채울 수 없는 숨김 필드. 채워져 들어오면 봇으로 간주, DB 쓰기 없이
+  // 성공으로 위장 응답. (오류 반환 시 봇이 retry/적응할 여지 줘서 silent 가 더 효과적.)
+  if (input.website && input.website.trim().length > 0) {
+    return { ok: true, caseId: '00000000-0000-0000-0000-000000000000' }
+  }
+
   // 공개 신청폼 — anon key 로는 INSERT 후 SELECT (RETURNING) 단계가 cases_select RLS 에 막혀
   // "RLS 위반" 에러가 발생하므로, 신뢰된 서버 액션 안에서 service-role 로 우회한다.
   // org_id 는 코드에서 하드코딩 (사용자 입력 아님) 이므로 보안 영향 없음.
