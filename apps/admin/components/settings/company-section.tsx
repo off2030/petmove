@@ -57,7 +57,8 @@ const HOSPITAL_FIELDS: FieldDef[] = [
   { key: 'email', label: '이메일', group: 'Clinic' },
 
   { key: 'name_ko', label: '수의사', group: 'Veterinarian' },
-  { key: 'name_en', label: '영문명', group: 'Veterinarian' },
+  { key: 'name_first_en', label: '영문 이름 (First)', group: 'Veterinarian' },
+  { key: 'name_last_en', label: '영문 성 (Last)', group: 'Veterinarian' },
   { key: 'license_no', label: '면허번호', group: 'Veterinarian' },
   { key: 'mobile_phone', label: '휴대폰', group: 'Veterinarian' },
 ]
@@ -70,6 +71,33 @@ const TRANSPORT_FIELDS: FieldDef[] = [
   { key: 'transport_postal_code', label: '우편번호', group: 'Company' },
   { key: 'transport_mobile_phone', label: '휴대폰', group: 'Company' },
 ]
+
+/**
+ * 한국 전화번호 자동 포맷 — phone / mobile_phone / transport_mobile_phone 입력에 적용.
+ *  - 11 digits "01012345678" → "010-1234-5678"
+ *  - 10 digits "0212345678" (서울) → "02-1234-5678"
+ *  - 10 digits "0311234567" (지역) → "031-123-4567"
+ *  -  9 digits "028727588" (서울) → "02-872-7588"
+ *  - 매칭 실패 시 원본 그대로 (사용자 임의 형식 보존).
+ */
+function formatPhoneForSave(raw: string): string {
+  const trimmed = raw.trim()
+  if (!trimmed) return trimmed
+  const digits = trimmed.replace(/\D/g, '')
+  if (digits.startsWith('02')) {
+    if (digits.length === 10) return `02-${digits.slice(2, 6)}-${digits.slice(6)}`
+    if (digits.length === 9) return `02-${digits.slice(2, 5)}-${digits.slice(5)}`
+  }
+  if (digits.length === 11) return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`
+  if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`
+  return trimmed
+}
+
+const PHONE_KEYS: Set<VetInfoKey> = new Set([
+  'phone',
+  'mobile_phone',
+  'transport_mobile_phone',
+])
 
 function formatSavedAgo(date: Date | null): string {
   if (!date) return ''
@@ -147,15 +175,25 @@ export function CompanySection({
 
   function handleSave(key: VetInfoKey) {
     if (!info) return
-    const next = drafts[key]
-    if (next === undefined || next === info[key]) {
+    const draftVal = drafts[key]
+    if (draftVal === undefined || draftVal === info[key]) {
       setDrafts((d) => { const { [key]: _, ...rest } = d; return rest })
       return
+    }
+    // 전화번호 키는 자동 포맷 ("02-8727588" → "02-872-7588" 등). 매칭 실패 시 원본 보존.
+    const next = PHONE_KEYS.has(key) ? formatPhoneForSave(draftVal) : draftVal
+    // 영문명 split — first/last 중 하나가 변경되면 합성된 name_en 도 함께 저장.
+    // PDF 매핑(vet:name_en) 은 합성 결과를 읽으므로 sync 필수.
+    const patch: Partial<VetInfo> = { [key]: next }
+    if (key === 'name_first_en' || key === 'name_last_en') {
+      const first = (key === 'name_first_en' ? next : info.name_first_en ?? '').trim()
+      const last = (key === 'name_last_en' ? next : info.name_last_en ?? '').trim()
+      patch.name_en = [first, last].filter(Boolean).join(' ')
     }
     setSavingKey(key)
     setError(null)
     startTransition(async () => {
-      const r = await updateCompanyInfo({ [key]: next } as Partial<VetInfo>)
+      const r = await updateCompanyInfo(patch)
       setSavingKey(null)
       if (r.ok) {
         setInfo(r.info)

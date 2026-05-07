@@ -89,10 +89,10 @@ export function CompanyAddressSearch({
         width: '100%',
         height: '100%',
         oncomplete(data: DaumPostcodeResult) {
-          const krWithZip = data.zonecode ? `(${data.zonecode}) ${data.roadAddress}` : data.roadAddress
           setShowModal(false)
+          // 한국주소에는 (zonecode) prefix 안 붙임 — 우편번호는 별도 필드로 저장.
           onSelected({
-            address_ko: krWithZip,
+            address_ko: data.roadAddress,
             address_en: data.roadAddressEnglish ?? '',
             postal_code: data.zonecode ?? '',
           })

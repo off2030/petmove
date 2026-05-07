@@ -26,6 +26,11 @@ export interface VetInfo {
 
   // 영문
   name_en: string
+  /** 영문 이름 (First) — 케이스 상세의 customer_first_name_en 와 동일한 split 패턴.
+   *  설정 페이지에서 First/Last 분리 입력. 저장 시 name_en = "First Last" 로 자동 합성. */
+  name_first_en: string
+  /** 영문 성 (Last) */
+  name_last_en: string
   clinic_en: string
   address_en: string
   /** 주소 1줄 (street) / 2줄 (locality) 분리 */
@@ -68,6 +73,8 @@ export const DEFAULT_VET_INFO: VetInfo = {
   clinic_ko: '',
   address_ko: '',
   name_en: '',
+  name_first_en: '',
+  name_last_en: '',
   clinic_en: '',
   address_en: '',
   address_street_en: '',
