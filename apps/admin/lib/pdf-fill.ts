@@ -2612,7 +2612,7 @@ function flattenFreeTextAnnotations(
  * 다시 throw 하므로, 위젯 rect 크기의 빈 Form XObject 스트림을 등록해
  * AP/N 에 그 ref 를 박아넣는다. 시각적으로는 빈 칸이라 템플릿 인쇄 그대로.
  */
-function sanitizeMalformedWidgets(pdf: PDFDocument, pdfForm: import('pdf-lib').PDFForm): void {
+export function sanitizeMalformedWidgets(pdf: PDFDocument, pdfForm: import('pdf-lib').PDFForm): void {
   for (const field of pdfForm.getFields()) {
     for (const widget of field.acroField.getWidgets()) {
       const dict = widget.dict
@@ -2648,7 +2648,7 @@ function sanitizeMalformedWidgets(pdf: PDFDocument, pdfForm: import('pdf-lib').P
  *
  * Off state: 빈 외관 (템플릿의 인쇄 박스만 보이도록).
  */
-function forceRegenerateButtonAppearances(pdfForm: import('pdf-lib').PDFForm): void {
+export function forceRegenerateButtonAppearances(pdfForm: import('pdf-lib').PDFForm): void {
   const black = rgb(0, 0, 0)
   for (const field of pdfForm.getFields()) {
     if (!(field instanceof PDFCheckBox)) continue

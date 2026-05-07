@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
+import { fillPdf, fillPdfMulti, forceRegenerateButtonAppearances, sanitizeMalformedWidgets } from '@/lib/pdf-fill'
 import type { CaseRow } from '@/lib/supabase/types'
 import { getEffectiveVaccineList } from '@petmove/domain'
 import { loadVetInfo, runWithVetInfo } from '@/lib/vet-info'
@@ -239,11 +239,23 @@ export async function generateInvoiceAndESD(opts: ShipmentOpts): Promise<Generat
   // 동적 렌더링하던 필드(특히 ESD 의 vet:name_en / vet:esd_license_block)는 병합 후
   // 재생성 불가능해 invisible 로 표시됨. 병합 직전 flatten 으로 페이지 content stream
   // 에 베이크. 단독 ESD/Invoice 발급 경로는 그대로 form field 유지(사용자 편집 가능).
+  //
+  // flatten 직전에 fillPdfCore 와 동일한 prep 필수:
+  //   - forceRegenerateButtonAppearances: 체크박스 widget 의 Yes/Off ref 를 모두 채움
+  //     (Invoice 의 Check Box26 처럼 /Yes 만 있고 /Off 가 없는 incomplete AP dict
+  //      → flatten 의 findWidgetAppearanceRef 가 throw 하는 사고 차단)
+  //   - sanitizeMalformedWidgets: AP/N 이 stream 도 ref 도 dict 도 아닌 widget 에
+  //     빈 XObject ref 를 박아넣음
+  //
   // updateFieldAppearances:false — 단독 PDF 가 이미 customFont(NanumGothic) 로 정확한
   // AP 를 베이크해 둔 상태이므로 flatten 의 auto regeneration(default Helvetica) 으로
   // 덮어써져 빈 <> Tj 가 되지 않도록 차단.
-  invoicePdf.getForm().flatten({ updateFieldAppearances: false })
-  esdPdf.getForm().flatten({ updateFieldAppearances: false })
+  for (const p of [invoicePdf, esdPdf]) {
+    const f = p.getForm()
+    forceRegenerateButtonAppearances(f)
+    sanitizeMalformedWidgets(p, f)
+    f.flatten({ updateFieldAppearances: false })
+  }
 
   const mergedPdf = await PDFDocument.create()
   const invoicePages = await mergedPdf.copyPages(invoicePdf, invoicePdf.getPageIndices())
