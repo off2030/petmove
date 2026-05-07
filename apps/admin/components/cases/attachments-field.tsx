@@ -9,10 +9,14 @@ import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { createClient } from '@supabase/supabase-js'
 import { useSectionEditMode } from './section-edit-mode-context'
+import { signAttachmentUrls } from '@/lib/actions/attachment-urls'
 
 interface Attachment {
   name: string
-  url: string
+  /** Storage path (`{caseId}/{filename}`). 신규 업로드는 항상 path 사용. */
+  path?: string
+  /** Legacy public URL — 버킷 private 화 이전 데이터. path 추출용으로만 사용. */
+  url?: string
   size: number
   uploadedAt: string
 }
@@ -21,6 +25,13 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
 )
+
+function derivePath(item: { path?: string; url?: string }): string | null {
+  if (item.path) return item.path
+  if (!item.url) return null
+  const parts = item.url.split('/attachments/')
+  return parts.length > 1 ? parts[parts.length - 1] : null
+}
 
 export interface AttachmentsFieldHandle {
   triggerUpload: () => void
@@ -35,6 +46,7 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
 
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
   const fileRef = useRef<HTMLInputElement>(null)
 
   useImperativeHandle(ref, () => ({
@@ -43,6 +55,18 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
   }), [uploading])
 
   useEffect(() => { setError(null) }, [caseId])
+
+  // 첨부파일 path → signed URL 매핑 갱신. private 버킷이라 매번 발급 필요.
+  useEffect(() => {
+    const paths = attachments.map(derivePath).filter((p): p is string => !!p)
+    if (paths.length === 0) { setSignedUrls({}); return }
+    let cancelled = false
+    signAttachmentUrls(paths).then((map) => {
+      if (!cancelled) setSignedUrls(map)
+    }).catch(() => {})
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseId, attachments.length])
 
   async function uploadFiles(files: File[]) {
     if (files.length === 0) return
@@ -66,14 +90,9 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
         continue
       }
 
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('attachments')
-        .getPublicUrl(path)
-
       newAttachments.push({
         name: file.name,
-        url: urlData.publicUrl,
+        path,
         size: file.size,
         uploadedAt: new Date().toISOString(),
       })
@@ -101,9 +120,8 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
     // Optimistic — UI 즉시 반영. 스토리지 삭제는 백그라운드.
     updateLocalCaseField(caseId, 'data', 'attachments', nextVal)
     void (async () => {
-      const urlParts = att.url.split('/attachments/')
-      const path = urlParts[urlParts.length - 1]
-      void supabase.storage.from('attachments').remove([path])
+      const path = derivePath(att)
+      if (path) void supabase.storage.from('attachments').remove([path])
       const r = await updateCaseField(caseId, 'data', 'attachments', nextVal)
       if (!r.ok) updateLocalCaseField(caseId, 'data', 'attachments', prev)
     })()
@@ -137,9 +155,13 @@ export const AttachmentsField = forwardRef<AttachmentsFieldHandle, { caseId: str
               {attachments.map((att, i) => (
                 <li key={i} className="group/item flex items-center gap-sm text-sm">
                   <a
-                    href={att.url}
+                    href={(() => { const p = derivePath(att); return (p && signedUrls[p]) || '#' })()}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => {
+                      const p = derivePath(att)
+                      if (!p || !signedUrls[p]) e.preventDefault()
+                    }}
                     className="text-foreground hover:underline truncate"
                   >
                     {att.name}

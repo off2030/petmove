@@ -11,6 +11,7 @@ import type { CaseRow } from '@/lib/supabase/types'
 import { supabaseBrowser as supabase } from '@/lib/supabase/browser'
 import { useSectionEditMode } from './section-edit-mode-context'
 import { useConfirm } from '@/components/ui/confirm-dialog'
+import { signAttachmentUrls } from '@/lib/actions/attachment-urls'
 
 /* ── Types ── */
 
@@ -23,7 +24,10 @@ interface TextNote {
 interface FileNote {
   type: 'file'
   name: string
-  url: string
+  /** Storage path (`{caseId}/{filename}`). 신규 업로드는 항상 path 사용. */
+  path?: string
+  /** Legacy public URL — 버킷 private 화 이전 데이터. path 추출용으로만 사용. */
+  url?: string
   size: number
   createdAt: string
 }
@@ -36,6 +40,14 @@ interface LegacyAttachment {
   url: string
   size: number
   uploadedAt: string
+}
+
+/** path 또는 legacy url 에서 storage path 추출. */
+function derivePath(item: { path?: string; url?: string }): string | null {
+  if (item.path) return item.path
+  if (!item.url) return null
+  const parts = item.url.split('/attachments/')
+  return parts.length > 1 ? parts[parts.length - 1] : null
 }
 
 const DATA_KEY = 'notes'
@@ -54,6 +66,7 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
   const fileRef = useRef<HTMLInputElement>(null)
   const dropRef = useRef<HTMLDivElement>(null)
 
@@ -63,6 +76,27 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
     setError(null)
     setDragOver(false)
   }, [caseId])
+
+  // 첨부파일 path 들 모아서 signed URL 일괄 발급. 버킷 private 이라 매 렌더마다 갱신 필요.
+  // notes 의 file note 만 대상; text note 는 무관.
+  useEffect(() => {
+    const paths = notes
+      .filter((n): n is FileNote => n.type === 'file')
+      .map(derivePath)
+      .filter((p): p is string => !!p)
+    if (paths.length === 0) {
+      setSignedUrls({})
+      return
+    }
+    let cancelled = false
+    signAttachmentUrls(paths).then((map) => {
+      if (!cancelled) setSignedUrls(map)
+    }).catch(() => {})
+    return () => { cancelled = true }
+  // notes 길이·path 시그니처 기반 리렌더 — JSON.stringify 보다 가벼운 비교를 위해 caseId+개수 사용.
+  // path 변동(추가/삭제) 시는 saveNotes 흐름에서 caseRow 갱신으로 자연스럽게 트리거됨.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseId, notes.length])
 
   /* ── Persistence ── */
 
@@ -129,14 +163,10 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
         continue
       }
 
-      const { data: urlData } = supabase.storage
-        .from('attachments')
-        .getPublicUrl(path)
-
       newNotes.push({
         type: 'file',
         name: file.name,
-        url: urlData.publicUrl,
+        path,
         size: file.size,
         createdAt: new Date().toISOString(),
       })
@@ -223,9 +253,8 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
     // Optimistic — saveNotes 가 즉시 로컬 반영. 스토리지 삭제는 백그라운드.
     saveNotes(next).catch(() => {})
     if (note.type === 'file') {
-      const urlParts = note.url.split('/attachments/')
-      const path = urlParts[urlParts.length - 1]
-      void supabase.storage.from('attachments').remove([path])
+      const path = derivePath(note)
+      if (path) void supabase.storage.from('attachments').remove([path])
     }
   }
 
@@ -334,10 +363,14 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
               <div className="flex items-center gap-sm flex-1 min-w-0 py-1">
                 <span className="text-muted-foreground/60 text-xs shrink-0">📎</span>
                 <a
-                  href={note.url}
+                  href={(() => { const p = derivePath(note); return (p && signedUrls[p]) || '#' })()}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-foreground hover:underline truncate"
+                  onClick={(e) => {
+                    const p = derivePath(note)
+                    if (!p || !signedUrls[p]) e.preventDefault()
+                  }}
                 >
                   {note.name}
                 </a>

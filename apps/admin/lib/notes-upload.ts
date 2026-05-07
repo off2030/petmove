@@ -13,7 +13,8 @@ import type { CaseRow } from '@/lib/supabase/types'
 interface FileNote {
   type: 'file'
   name: string
-  url: string
+  path?: string
+  url?: string
   size: number
   createdAt: string
 }
@@ -51,7 +52,7 @@ function readNotes(data: Record<string, unknown>): NoteItem[] {
 
 /**
  * 파일을 Supabase에 업로드하고 notes에 첨부파일로 추가한다.
- * @returns 성공 시 업로드된 URL, 실패 시 null
+ * @returns 성공 시 storage path, 실패 시 null
  */
 export async function uploadFileToNotes(
   caseId: string,
@@ -68,14 +69,10 @@ export async function uploadFileToNotes(
 
   if (uploadErr) return null
 
-  const { data: urlData } = supabase.storage
-    .from('attachments')
-    .getPublicUrl(path)
-
   const newFile: FileNote = {
     type: 'file',
     name: file.name,
-    url: urlData.publicUrl,
+    path,
     size: file.size,
     createdAt: new Date().toISOString(),
   }
@@ -101,5 +98,5 @@ export async function uploadFileToNotes(
   const r = await updateCaseField(caseId, 'data', 'notes', nextNotes)
   if (r.ok) updateLocalCaseField(caseId, 'data', 'notes', nextNotes)
 
-  return urlData.publicUrl
+  return path
 }
