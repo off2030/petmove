@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
 import type { CaseRow } from '@/lib/supabase/types'
 import { getEffectiveVaccineList } from '@petmove/domain'
-import { loadVetInfo } from '@/lib/vet-info'
+import { loadVetInfo, runWithVetInfo } from '@/lib/vet-info'
 
 export type GeneratePdfResult =
   | { ok: true; pdf: string; filename: string }
@@ -47,32 +47,34 @@ async function generate(
   caseId: string,
   options?: { includeSignature?: boolean; destination?: string | null; extras?: Record<string, unknown>; rabiesIndices?: number[] },
 ): Promise<GeneratePdfResult> {
-  await loadVetInfo()
-  const supabase = await createClient()
-  const { data: row, error } = await supabase
-    .from('cases')
-    .select('*')
-    .eq('id', caseId)
-    .single()
-  if (error || !row) return { ok: false, error: error?.message ?? '케이스를 찾을 수 없습니다' }
-  let caseRow = row as CaseRow
-  const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const extraFields = (data.extra_visible_fields as string[]) ?? []
-  if (OTHER_HOSPITAL_EXCLUDED_FORMS.has(formKey)) {
-    caseRow = { ...caseRow, data: stripOtherHospitalRecords(data) }
-  }
-  // 다중 목적지 케이스에서 UI 활성 목적지를 받아 그 나라 규칙만 적용.
-  // 지정이 없으면 컬럼 전체 문자열을 사용(단일 목적지 케이스는 동작 동일).
-  // Form25/Form25AuNz 는 한국 수출검역증명서 — 목적지 필터 없이 모든 백신 포함.
-  const destForRules = options?.destination ?? caseRow.destination
-  const allowedVaccines = ALL_VACCINES_FORMS.has(formKey)
-    ? undefined
-    : getEffectiveVaccineList(destForRules, extraFields)
-  return fillPdf(formKey, caseRow, {
-    includeSignature: options?.includeSignature,
-    allowedVaccines,
-    extras: options?.extras,
-    rabiesIndices: options?.rabiesIndices,
+  const vetInfo = await loadVetInfo()
+  return runWithVetInfo(vetInfo, async () => {
+    const supabase = await createClient()
+    const { data: row, error } = await supabase
+      .from('cases')
+      .select('*')
+      .eq('id', caseId)
+      .single()
+    if (error || !row) return { ok: false, error: error?.message ?? '케이스를 찾을 수 없습니다' }
+    let caseRow = row as CaseRow
+    const data = (caseRow.data ?? {}) as Record<string, unknown>
+    const extraFields = (data.extra_visible_fields as string[]) ?? []
+    if (OTHER_HOSPITAL_EXCLUDED_FORMS.has(formKey)) {
+      caseRow = { ...caseRow, data: stripOtherHospitalRecords(data) }
+    }
+    // 다중 목적지 케이스에서 UI 활성 목적지를 받아 그 나라 규칙만 적용.
+    // 지정이 없으면 컬럼 전체 문자열을 사용(단일 목적지 케이스는 동작 동일).
+    // Form25/Form25AuNz 는 한국 수출검역증명서 — 목적지 필터 없이 모든 백신 포함.
+    const destForRules = options?.destination ?? caseRow.destination
+    const allowedVaccines = ALL_VACCINES_FORMS.has(formKey)
+      ? undefined
+      : getEffectiveVaccineList(destForRules, extraFields)
+    return fillPdf(formKey, caseRow, {
+      includeSignature: options?.includeSignature,
+      allowedVaccines,
+      extras: options?.extras,
+      rabiesIndices: options?.rabiesIndices,
+    })
   })
 }
 
@@ -85,18 +87,20 @@ async function generateStandalone(
   formKey: string,
   extras: Record<string, unknown>,
 ): Promise<GeneratePdfResult> {
-  await loadVetInfo()
-  const stub: CaseRow = {
-    id: 'standalone', org_id: '',
-    microchip: null, microchip_extra: [],
-    customer_name: '', customer_name_en: null,
-    pet_name: null, pet_name_en: null,
-    destination: null, departure_date: null,
-    assigned_to: null,
-    data: {},
-    created_at: '', updated_at: '',
-  }
-  return fillPdf(formKey, stub, { extras })
+  const vetInfo = await loadVetInfo()
+  return runWithVetInfo(vetInfo, async () => {
+    const stub: CaseRow = {
+      id: 'standalone', org_id: '',
+      microchip: null, microchip_extra: [],
+      customer_name: '', customer_name_en: null,
+      pet_name: null, pet_name_en: null,
+      destination: null, departure_date: null,
+      assigned_to: null,
+      data: {},
+      created_at: '', updated_at: '',
+    }
+    return fillPdf(formKey, stub, { extras })
+  })
 }
 
 /** 모든 generate* 진입점의 공통 옵션. UI 활성 목적지를 destination 으로 전달. */
@@ -436,22 +440,24 @@ async function generateMulti(
   caseIds: string[],
 ): Promise<GenerateMultiPdfResult> {
   if (caseIds.length === 0) return { ok: false, error: '대상 동물이 없습니다' }
-  await loadVetInfo()
-  const supabase = await createClient()
-  const { data: rows, error } = await supabase.from('cases').select('*').in('id', caseIds)
-  if (error) return { ok: false, error: error.message }
-  // Preserve the order of caseIds.
-  const byId = new Map((rows ?? []).map(r => [(r as CaseRow).id, r as CaseRow]))
-  const ordered = caseIds.map(id => byId.get(id)).filter((c): c is CaseRow => !!c)
-  if (ordered.length === 0) return { ok: false, error: '대상 동물을 찾을 수 없습니다' }
+  const vetInfo = await loadVetInfo()
+  return runWithVetInfo(vetInfo, async () => {
+    const supabase = await createClient()
+    const { data: rows, error } = await supabase.from('cases').select('*').in('id', caseIds)
+    if (error) return { ok: false, error: error.message }
+    // Preserve the order of caseIds.
+    const byId = new Map((rows ?? []).map(r => [(r as CaseRow).id, r as CaseRow]))
+    const ordered = caseIds.map(id => byId.get(id)).filter((c): c is CaseRow => !!c)
+    if (ordered.length === 0) return { ok: false, error: '대상 동물을 찾을 수 없습니다' }
 
-  const results = await fillPdfMulti(formKey, ordered)
-  const docs: Array<{ pdf: string; filename: string }> = []
-  for (const r of results) {
-    if (!r.ok) return { ok: false, error: r.error }
-    docs.push({ pdf: r.pdf, filename: r.filename })
-  }
-  return { ok: true, docs }
+    const results = await fillPdfMulti(formKey, ordered)
+    const docs: Array<{ pdf: string; filename: string }> = []
+    for (const r of results) {
+      if (!r.ok) return { ok: false, error: r.error }
+      docs.push({ pdf: r.pdf, filename: r.filename })
+    }
+    return { ok: true, docs }
+  })
 }
 
 export async function generateAnnexIIIMulti(caseIds: string[]) {
