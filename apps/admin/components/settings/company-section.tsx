@@ -23,6 +23,7 @@ import {
   SettingsField,
   SettingsSubsectionTitle as SectionLabel,
 } from './settings-layout'
+import { CompanyAddressSearch, type CompanyAddressResult } from './company-address-search'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
 
@@ -167,6 +168,35 @@ export function CompanySection({
   }
 
   /**
+   * Daum Postcode 검색 결과를 한국주소/영문주소/우편번호 한 번에 저장.
+   * org_type 별로 저장 키 다름 — hospital → address_ko/address_en/postal_code,
+   * transport → 추후 transport_address_* 필드 추가될 때 분기 (현재는 hospital 만).
+   */
+  function handleAddressSelected(result: CompanyAddressResult) {
+    if (!info) return
+    setError(null)
+    // draft 비우기 — 검색 결과로 즉시 덮어쓸 거라 사용자 편집 중인 draft 와 충돌 방지.
+    setDrafts((d) => {
+      const { address_ko: _a, address_en: _b, postal_code: _c, ...rest } = d
+      return rest
+    })
+    const patch: Partial<VetInfo> = {
+      address_ko: result.address_ko,
+      address_en: result.address_en,
+      postal_code: result.postal_code,
+    }
+    startTransition(async () => {
+      const r = await updateCompanyInfo(patch)
+      if (r.ok) {
+        setInfo(r.info)
+        setLastSaved(new Date())
+      } else {
+        setError(r.error)
+      }
+    })
+  }
+
+  /**
    * 추가 정보 키 — active org_type 별로 독립 저장.
    * hospital → custom_fields (legacy 호환)
    * transport → transport_custom_fields
@@ -299,48 +329,60 @@ export function CompanySection({
             <div className="border-t border-border/80">
               {fields.filter((f) => f.group === group).map((f) => {
                 const saving = savingKey === f.key
+                // address_ko 행에 한정해 우측에 "주소검색" 버튼 노출 — 검색 결과로
+                // address_ko/address_en/postal_code 한 번에 저장 (handleAddressSelected).
+                // 케이스 상세의 AddressField 와 동일한 Daum Postcode 흐름.
+                const showAddressSearch = isAdmin && f.key === 'address_ko'
                 return (
                   <SettingsField key={f.key} label={f.label}>
-                    {f.type === 'textarea' ? (
-                      <textarea
-                        value={valueOf(f.key)}
-                        onChange={(e) => handleChange(f.key, e.target.value)}
-                        onBlur={() => handleSave(f.key)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Escape') {
-                            setDrafts((d) => { const { [f.key]: _, ...rest } = d; return rest })
-                          }
-                        }}
-                        rows={1}
-                        placeholder={isAdmin ? '—' : ''}
-                        readOnly={!isAdmin}
-                        className={cn(
-                          'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground resize-y border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 transition-colors placeholder:text-muted-foreground/30',
-                          saving && 'opacity-60',
-                          !isAdmin && 'cursor-default',
-                        )}
-                      />
-                    ) : (
-                      <input
-                        type="text"
-                        value={valueOf(f.key)}
-                        onChange={(e) => handleChange(f.key, e.target.value)}
-                        onBlur={() => handleSave(f.key)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-                          if (e.key === 'Escape') {
-                            setDrafts((d) => { const { [f.key]: _, ...rest } = d; return rest })
-                          }
-                        }}
-                        placeholder={isAdmin ? '—' : ''}
-                        readOnly={!isAdmin}
-                        className={cn(
-                          'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 transition-colors placeholder:text-muted-foreground/30',
-                          saving && 'opacity-60',
-                          !isAdmin && 'cursor-default',
-                        )}
-                      />
-                    )}
+                    <div className="flex items-start gap-sm">
+                      {f.type === 'textarea' ? (
+                        <textarea
+                          value={valueOf(f.key)}
+                          onChange={(e) => handleChange(f.key, e.target.value)}
+                          onBlur={() => handleSave(f.key)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Escape') {
+                              setDrafts((d) => { const { [f.key]: _, ...rest } = d; return rest })
+                            }
+                          }}
+                          rows={1}
+                          placeholder={isAdmin ? '—' : ''}
+                          readOnly={!isAdmin}
+                          className={cn(
+                            'flex-1 min-w-0 bg-transparent font-serif text-[15px] leading-snug text-foreground resize-y border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 transition-colors placeholder:text-muted-foreground/30',
+                            saving && 'opacity-60',
+                            !isAdmin && 'cursor-default',
+                          )}
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={valueOf(f.key)}
+                          onChange={(e) => handleChange(f.key, e.target.value)}
+                          onBlur={() => handleSave(f.key)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+                            if (e.key === 'Escape') {
+                              setDrafts((d) => { const { [f.key]: _, ...rest } = d; return rest })
+                            }
+                          }}
+                          placeholder={isAdmin ? '—' : ''}
+                          readOnly={!isAdmin}
+                          className={cn(
+                            'flex-1 min-w-0 bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 transition-colors placeholder:text-muted-foreground/30',
+                            saving && 'opacity-60',
+                            !isAdmin && 'cursor-default',
+                          )}
+                        />
+                      )}
+                      {showAddressSearch && (
+                        <CompanyAddressSearch
+                          onSelected={handleAddressSelected}
+                          className="shrink-0 mt-0.5 inline-flex h-7 items-center rounded border px-2 font-serif text-[12px] border-border/80 text-muted-foreground hover:bg-accent/60 hover:text-foreground transition-colors disabled:opacity-50"
+                        />
+                      )}
+                    </div>
                   </SettingsField>
                 )
               })}
