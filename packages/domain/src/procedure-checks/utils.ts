@@ -221,3 +221,36 @@ export function daysBetween(aISO: string, bISO: string): number | null {
 
 /** 필수 입력이 누락된 경우 사용할 결과 — 통과로 간주해 어떤 표시도 안 함. */
 export const SKIP: CheckResult = { ok: true, message: '입력 대기 — 검증 대상 아님' }
+
+/**
+ * 광견병 1차 접종 가능 연령 — 보수적 안전 기준.
+ *
+ * 두 임계값 **모두 충족** 해야 통과:
+ *  - 일수 기준: 생후 91일 이상
+ *  - 캘린더 기준: 생년월일 + 3개월(`addMonths(birth, 3)`) 이후
+ *
+ * 출생일에 따라 어느 쪽이 더 엄격한지 달라지므로 AND 결합 시 어떤 케이스든
+ * 가장 늦은 시점이 임계값. 규정 명시 국가 (JP=91일·EU=12주·TH=12주·NZ=3개월·
+ * PH=12주) 외 모든 국가에 사용.
+ *
+ * @param birth 'YYYY-MM-DD' 생년월일
+ * @param vaccineDate 'YYYY-MM-DD' 광견병 1차 접종일
+ */
+export function evaluateRabiesAgeConservative(
+  birth: string,
+  vaccineDate: string,
+): { ok: boolean; ageInDays: number | null; calendar3mThreshold: string; failedRule?: '91days' | 'calendar3m' | 'both' } {
+  const ageInDays = daysBetween(birth, vaccineDate)
+  const calendar3m = addMonths(birth, 3)
+  if (ageInDays === null) {
+    return { ok: false, ageInDays: null, calendar3mThreshold: calendar3m }
+  }
+  const meets91 = ageInDays >= 91
+  const meets3m = !!calendar3m && vaccineDate >= calendar3m
+  if (meets91 && meets3m) {
+    return { ok: true, ageInDays, calendar3mThreshold: calendar3m }
+  }
+  const failedRule: '91days' | 'calendar3m' | 'both' =
+    !meets91 && !meets3m ? 'both' : !meets91 ? '91days' : 'calendar3m'
+  return { ok: false, ageInDays, calendar3mThreshold: calendar3m, failedRule }
+}

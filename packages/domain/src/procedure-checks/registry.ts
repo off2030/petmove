@@ -1,14 +1,26 @@
+import { AE_CHECKS } from './ae'
 import { AU_CHECKS } from './au'
+import { BR_CHECKS } from './br'
+import { CA_CHECKS } from './ca'
 import { CN_CHECKS } from './cn'
 import { EU_CHECKS } from './eu'
 import { GU_CHECKS } from './gu'
 import { HI_CHECKS } from './hi'
+import { HK_CHECKS } from './hk'
+import { ID_CHECKS } from './id'
+import { IL_CHECKS } from './il'
 import { JP_CHECKS } from './jp'
+import { MO_CHECKS } from './mo'
+import { MX_CHECKS } from './mx'
+import { MY_CHECKS } from './my'
 import { NZ_CHECKS } from './nz'
 import { PH_CHECKS } from './ph'
+import { RU_CHECKS } from './ru'
 import { SG_CHECKS } from './sg'
 import { TH_CHECKS } from './th'
+import { TR_CHECKS } from './tr'
 import { TW_CHECKS } from './tw'
+import { UA_CHECKS } from './ua'
 import type { CheckContext, CheckResult, CountryKey, ProcedureCheck } from './types'
 
 /**
@@ -30,6 +42,18 @@ export const ALL_PROCEDURE_CHECKS: ProcedureCheck[] = [
   ...PH_CHECKS,
   ...TW_CHECKS,
   ...GU_CHECKS,
+  ...RU_CHECKS,
+  ...MY_CHECKS,
+  ...MX_CHECKS,
+  ...MO_CHECKS,
+  ...BR_CHECKS,
+  ...AE_CHECKS,
+  ...HK_CHECKS,
+  ...TR_CHECKS,
+  ...UA_CHECKS,
+  ...IL_CHECKS,
+  ...ID_CHECKS,
+  ...CA_CHECKS,
 ]
 
 /** check 의 country 가 target 키에 매칭되는지. 'all' 또는 배열에 포함되면 true. */

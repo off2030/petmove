@@ -76,35 +76,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
   },
 
   // ── 광견병 ──
-  {
-    id: 'au.rabies-prime-after-91days-old',
-    country: COUNTRY,
-    category: '광견병',
-    title: '광견병 1차 접종 생후 91일령 이상',
-    description:
-      '광견병 1차 접종일은 생년월일 기준 91일 이후여야 함 (안전 기준 — DAFF 본문은 정량 미명시, JP/SGP 와 일관).',
-    severity: 'blocker',
-    addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
-      const rabies = readRabiesEntries(caseRow)
-      if (!birth || rabies.length === 0) return SKIP
-
-      const first = rabies[0]
-      const age = daysBetween(birth, first.date)
-      if (age === null) return SKIP
-      if (age < 91) {
-        return {
-          ok: false,
-          message: `1차 접종일(${first.date})이 생후 ${age}일령 — 최소 91일령 이상 필요.`,
-          fixHint: `${birth} 기준 91일 이후로 1차 접종일을 조정하세요.`,
-          offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
-        }
-      }
-      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${age}일령.` }
-    },
-  },
+  // (광견병 1차 접종 연령 룰은 호주 DAFF 미명시 — 의도적 제외)
   {
     id: 'au.rabies-valid-through-quarantine',
     country: COUNTRY,

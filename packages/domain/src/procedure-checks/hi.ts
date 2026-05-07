@@ -2,6 +2,7 @@ import type { ProcedureCheck } from './types'
 import {
   addMonths,
   daysBetween,
+  evaluateRabiesAgeConservative,
   readExternalParasiteEntries,
   readRabiesEntries,
   readTiterEntries,
@@ -63,14 +64,14 @@ export const HI_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── 광견병 (생후 12주 + 2회 평생 + 31일 간격 + 31일 이전 + 미만료) ──
+  // ── 광견병 (보수적 연령 + 2회 평생 + 31일 간격 + 31일 이전 + 미만료) ──
   {
     id: 'hi.rabies-prime-after-12weeks',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종 생후 12주(84일) 이상',
+    title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
-      '광견병 1차 접종은 생후 최소 12주(84일) 이후. (petmove 가이드 + EU 동일 기준 — HDOA 본문 미명시이나 안전 표준)',
+      'HDOA 본문 정량 미명시 — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요. (id 는 호환성을 위해 12weeks 유지)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -80,17 +81,23 @@ export const HI_CHECKS: ProcedureCheck[] = [
       if (!birth || rabies.length === 0) return SKIP
 
       const first = rabies[0]
-      const age = daysBetween(birth, first.date)
-      if (age === null) return SKIP
-      if (age < 84) {
+      const ev = evaluateRabiesAgeConservative(birth, first.date)
+      if (ev.ageInDays === null) return SKIP
+      if (!ev.ok) {
+        const reason =
+          ev.failedRule === '91days'
+            ? `생후 ${ev.ageInDays}일령 — 91일 미달`
+            : ev.failedRule === 'calendar3m'
+              ? `${first.date} < 캘린더 3개월(${ev.calendar3mThreshold})`
+              : `생후 ${ev.ageInDays}일령 + ${first.date} < 캘린더 3개월(${ev.calendar3mThreshold})`
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 생후 ${age}일령 — 최소 84일령(12주) 이상 필요.`,
-          fixHint: `${birth} 기준 84일 이후로 1차 접종일을 조정하세요.`,
+          message: `1차 접종일(${first.date}) 보수적 기준 미충족 — ${reason}.`,
+          fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월) 둘 다 충족 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${age}일령.` }
+      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${ev.ageInDays}일령 + 캘린더 3개월(${ev.calendar3mThreshold}) 충족.` }
     },
   },
   {
@@ -216,6 +223,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
   },
 
   // ── FAVN (OIE-FAVN) ──
+  // (≥0.5 IU/ml 결과치 룰은 의도적 제외 — 검사기관에서 이미 fail 결과 나옴, 시스템 검증 불필요)
   {
     id: 'hi.favn-sample-30days-to-36months-before-arrival',
     country: COUNTRY,

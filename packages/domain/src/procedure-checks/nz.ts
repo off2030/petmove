@@ -258,47 +258,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       }
     },
   },
-  {
-    id: 'nz.rnatt-result-min-0.5',
-    country: COUNTRY,
-    category: '광견병',
-    title: 'RNATT 결과 ≥0.5 IU/ml',
-    description:
-      'RNATT 측정값이 0.5 IU/ml 이상이어야 함. 미달 시 재접종 + 3-4주 후 재검사 필요. (MPI: "must be 0.5 IU/ml or more")',
-    severity: 'blocker',
-    addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
-      const titers = readTiterEntries(caseRow)
-      if (titers.length === 0) return SKIP
-
-      const offending: string[] = []
-      const problems: string[] = []
-      let anyValid = false
-      for (const t of titers) {
-        if (t.value === null || t.value === undefined || t.value === '') continue
-        const num = parseFloat(String(t.value).replace(/[^\d.]/g, ''))
-        if (isNaN(num)) continue
-        if (num >= 0.5) {
-          anyValid = true
-        } else {
-          offending.push(`rabies_titer_records[${t.originalIndex}].value`)
-          problems.push(`${t.date} 결과 ${num} IU/ml (<0.5)`)
-        }
-      }
-      if (anyValid) {
-        return { ok: true, message: '하나 이상의 RNATT 결과가 ≥0.5 IU/ml.' }
-      }
-      if (problems.length > 0) {
-        return {
-          ok: false,
-          message: problems.join(' / '),
-          fixHint: '재접종 후 3-4주 뒤 RNATT 재검사 필요.',
-          offendingPaths: offending,
-        }
-      }
-      return SKIP
-    },
-  },
+  // (≥0.5 IU/ml 결과치 룰은 의도적 제외 — 검사기관에서 이미 fail 결과 나옴, 시스템 검증 불필요)
 
   // ── 강아지 전용: 9개월 ──
   {

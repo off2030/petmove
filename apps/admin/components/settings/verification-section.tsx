@@ -31,6 +31,15 @@ const COUNTRY_LABELS: Record<string, string> = {
   china: '중국',
   taiwan: '대만',
   hongkong: '홍콩',
+  russia: '러시아',
+  malaysia: '말레이시아',
+  mexico: '멕시코',
+  morocco: '모로코',
+  brazil: '브라질',
+  uae: '아랍에미리트',
+  turkey: '튀르키예',
+  ukraine: '우크라이나',
+  israel: '이스라엘',
 }
 function countryLabel(k: string): string {
   return COUNTRY_LABELS[k] ?? k

@@ -2,6 +2,7 @@ import type { ProcedureCheck } from './types'
 import {
   addYears,
   daysBetween,
+  evaluateRabiesAgeConservative,
   readRabiesEntries,
   readTiterEntries,
   resolveValidUntil,
@@ -66,9 +67,9 @@ export const CN_CHECKS: ProcedureCheck[] = [
     id: 'cn.rabies-prime-after-91days-old',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종 생후 91일령 이상',
+    title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
-      '광견병 1차 접종은 생후 최소 91일 이후. (petmove 가이드 + JP/SG/AU/NZ 와 일관 기준)',
+      'petmove 가이드 + GACC 정량 미명시 — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요. 출생일에 따라 어느 쪽이 더 엄격한지 달라지므로 AND 결합.',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -78,17 +79,23 @@ export const CN_CHECKS: ProcedureCheck[] = [
       if (!birth || rabies.length === 0) return SKIP
 
       const first = rabies[0]
-      const age = daysBetween(birth, first.date)
-      if (age === null) return SKIP
-      if (age < 91) {
+      const ev = evaluateRabiesAgeConservative(birth, first.date)
+      if (ev.ageInDays === null) return SKIP
+      if (!ev.ok) {
+        const reason =
+          ev.failedRule === '91days'
+            ? `생후 ${ev.ageInDays}일령 — 91일 미달`
+            : ev.failedRule === 'calendar3m'
+              ? `${first.date} < 캘린더 3개월(${ev.calendar3mThreshold})`
+              : `생후 ${ev.ageInDays}일령 + ${first.date} < 캘린더 3개월(${ev.calendar3mThreshold})`
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 생후 ${age}일령 — 최소 91일령 이상 필요.`,
-          fixHint: `${birth} 기준 91일 이후로 1차 접종일을 조정하세요.`,
+          message: `1차 접종일(${first.date}) 보수적 기준 미충족 — ${reason}.`,
+          fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월) 둘 다 충족 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${age}일령.` }
+      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${ev.ageInDays}일령 + 캘린더 3개월(${ev.calendar3mThreshold}) 충족.` }
     },
   },
   {
@@ -264,47 +271,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: '모든 RNATT 채혈이 광견병 접종 이후.' }
     },
   },
-  {
-    id: 'cn.rnatt-result-min-0.5',
-    country: COUNTRY,
-    category: '광견병',
-    title: '항체검사 결과 ≥ 0.5 IU/ml',
-    description:
-      'RNATT 결과 ≥0.5 IU/ml. 미달 시 재접종 + 재검사 필요.',
-    severity: 'blocker',
-    addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
-      const titers = readTiterEntries(caseRow)
-      if (titers.length === 0) return SKIP
-
-      const offending: string[] = []
-      const problems: string[] = []
-      let anyValid = false
-      for (const t of titers) {
-        if (t.value === null || t.value === undefined || t.value === '') continue
-        const num = parseFloat(String(t.value).replace(/[^\d.]/g, ''))
-        if (isNaN(num)) continue
-        if (num >= 0.5) {
-          anyValid = true
-        } else {
-          offending.push(`rabies_titer_records[${t.originalIndex}].value`)
-          problems.push(`${t.date} 결과 ${num} IU/ml (<0.5)`)
-        }
-      }
-      if (anyValid) {
-        return { ok: true, message: '하나 이상의 RNATT 결과가 ≥0.5 IU/ml.' }
-      }
-      if (problems.length > 0) {
-        return {
-          ok: false,
-          message: problems.join(' / '),
-          fixHint: '재접종 후 RNATT 재검사 필요.',
-          offendingPaths: offending,
-        }
-      }
-      return SKIP
-    },
-  },
+  // (≥0.5 IU/ml 결과치 룰은 의도적 제외 — 검사기관에서 이미 fail 결과 나옴, 시스템 검증 불필요)
   {
     id: 'cn.rnatt-valid-1year-on-arrival',
     country: COUNTRY,

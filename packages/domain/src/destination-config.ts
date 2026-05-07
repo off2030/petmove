@@ -206,6 +206,50 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['대만', 'taiwan'],
     vaccines: ['rabies', 'rabies_titer'],
   },
+  malaysia: {
+    // DVS — 종합백신 필수, RNATT 면제(말레이시아 입국 한정 — 한국 귀국 시는 필요).
+    // 수입허가 + 계류장 14일 전 예약 + 도착 후 7일 격리.
+    keywords: ['말레이시아', 'malaysia'],
+    vaccines: ['rabies', 'rabies_titer', 'general'],
+  },
+  morocco: {
+    // ONSSA — 광견병 출국 30일 전, 도착 시 수의사 검역. RNATT 는 한국 귀국용.
+    keywords: ['모로코', 'morocco'],
+    vaccines: ['rabies', 'rabies_titer'],
+  },
+  // 사례기반 제3국 패밀리 — 공식 자료 부족, petmove "사례기반 최소 입국 룰"
+  mongolia: {
+    keywords: ['몽골', 'mongolia'],
+    vaccines: ['rabies', 'rabies_titer'],
+  },
+  vietnam: {
+    keywords: ['베트남', 'vietnam'],
+    vaccines: ['rabies', 'rabies_titer'],
+  },
+  argentina: {
+    // 광견병 출국 30일 전 추가 룰.
+    keywords: ['아르헨티나', 'argentina'],
+    vaccines: ['rabies', 'rabies_titer'],
+  },
+  uzbekistan: {
+    // 광견병 출국 30일 전 + 유효기간 1년.
+    keywords: ['우즈베키스탄', 'uzbekistan'],
+    vaccines: ['rabies', 'rabies_titer'],
+  },
+  cambodia: {
+    keywords: ['캄보디아', 'cambodia'],
+    vaccines: ['rabies', 'rabies_titer'],
+  },
+  ukraine: {
+    // 공식 자료 부재 — 사례 기반. 광견병 21일 + RNATT 3개월/1년 + 건강증명서 48시간.
+    keywords: ['우크라이나', 'ukraine'],
+    vaccines: ['rabies', 'rabies_titer'],
+  },
+  israel: {
+    // 광견병 후 30일 + RNATT 필수 + 도착 5일 이내 등록.
+    keywords: ['이스라엘', 'israel'],
+    vaccines: ['rabies', 'rabies_titer'],
+  },
 }
 
 // ── 헬퍼 함수 ──
