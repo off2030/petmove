@@ -1944,7 +1944,17 @@ function resolveField(
       return ''
     }
     const v = (VET_INFO as unknown as Record<string, unknown>)[key]
-    return v == null ? '' : String(v)
+    const str = v == null ? '' : String(v)
+    // phone_intl 가 비어있으면 phone 에서 자동 파생 — "02-872-7588" → "+82-2-872-7588".
+    // (settings 에서 phone_intl 직접 편집 UI 가 없는 환경 대비 fallback.)
+    if (key === 'phone_intl' && !str.trim()) {
+      const phone = String((VET_INFO as unknown as Record<string, unknown>).phone ?? '').trim()
+      if (!phone) return ''
+      if (/^\+/.test(phone)) return phone
+      const m = phone.match(/^0(\d{1,2})-(.+)$/)
+      return m ? `+82-${m[1]}-${m[2]}` : phone
+    }
+    return str
   }
 
   // Lab shipping address lookup (Invoice/ESD consignee).

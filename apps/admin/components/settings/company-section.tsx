@@ -102,6 +102,23 @@ function formatPhoneForSave(raw: string): string {
   return trimmed
 }
 
+/**
+ * 한국 전화번호 → 국제표기 자동 변환. 매칭 실패 시 원본 보존.
+ *   "02-872-7588"  → "+82-2-872-7588"
+ *   "010-1234-5678" → "+82-10-1234-5678"
+ *   "031-123-4567" → "+82-31-123-4567"
+ * 매칭 키: 첫 area code 가 0 으로 시작 → 0 제거 + "+82-" prefix.
+ */
+function derivePhoneIntl(raw: string): string {
+  const formatted = formatPhoneForSave(raw)
+  if (!formatted) return ''
+  // 이미 +82 / + 로 시작하면 그대로.
+  if (/^\+/.test(formatted)) return formatted
+  const m = formatted.match(/^0(\d{1,2})-(.+)$/)
+  if (!m) return formatted
+  return `+82-${m[1]}-${m[2]}`
+}
+
 const PHONE_KEYS: Set<VetInfoKey> = new Set([
   'phone',
   'mobile_phone',
@@ -223,6 +240,12 @@ export function CompanySection({
       const first = (key === split.first ? next : (info[split.first] as string) ?? '').trim()
       const last = (key === split.last ? next : (info[split.last] as string) ?? '').trim()
       patch[split.combined] = [first, last].filter(Boolean).join(' ')
+    }
+    // phone 저장 시 phone_intl 도 자동 파생 ("02-872-7588" → "+82-2-872-7588").
+    // 별지25 hospital_phone, OVD/AnnexIII clinic phone 등 PDF 매핑이 vet:phone_intl 를
+    // 직접 read 하므로 sync 필수.
+    if (key === 'phone') {
+      patch.phone_intl = derivePhoneIntl(next)
     }
     setSavingKey(key)
     setError(null)
