@@ -17,12 +17,6 @@ export type GenerateMultiPdfResult =
 
 /** 별지25와 별지25 EX는 타병원 접종 기록(other_hospital=true)을 제외해서 발급. */
 const OTHER_HOSPITAL_EXCLUDED_FORMS = new Set(['Form25', 'Form25AuNz'])
-/**
- * 별지25 / 별지25 EX는 한국 수출검역증명서로, 케이스에 입력된 모든 백신/구충 기록을
- * 목적지 필터 없이 무조건 포함시켜야 한다.
- * (다른 서류는 목적지별 vaccine 목록 + extra_visible_fields 토글에 따라 필터링.)
- */
-const ALL_VACCINES_FORMS = new Set(['Form25', 'Form25AuNz'])
 /** 타병원 접종 체크를 노출하는 백신 데이터 키. */
 const OTHER_HOSPITAL_VACCINE_KEYS = ['rabies_dates', 'general_vaccine_dates', 'civ_dates', 'kennel_cough_dates']
 
@@ -63,11 +57,11 @@ async function generate(
   }
   // 다중 목적지 케이스에서 UI 활성 목적지를 받아 그 나라 규칙만 적용.
   // 지정이 없으면 컬럼 전체 문자열을 사용(단일 목적지 케이스는 동작 동일).
-  // Form25/Form25AuNz 는 한국 수출검역증명서 — 목적지 필터 없이 모든 백신 포함.
+  // 모든 form 이 케이스 상세 노출 규칙(목적지별 vaccine list + extra_visible_fields
+  // 토글)과 동일한 필터 — 별지25/AuNz 도 예외 없이. 추가 백신 기록을 PDF 에 노출
+  // 하려면 케이스 상세 "절차정보 → 항목 추가" 로 해당 vaccine 토글 ON.
   const destForRules = options?.destination ?? caseRow.destination
-  const allowedVaccines = ALL_VACCINES_FORMS.has(formKey)
-    ? undefined
-    : getEffectiveVaccineList(destForRules, extraFields)
+  const allowedVaccines = getEffectiveVaccineList(destForRules, extraFields)
   return fillPdf(formKey, caseRow, {
     includeSignature: options?.includeSignature,
     allowedVaccines,
