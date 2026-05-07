@@ -122,9 +122,13 @@ export const VET_INFO = new Proxy({} as VetInfo, {
 })
 
 /**
- * Supabase 에서 override 를 읽어 캐시를 갱신.
- * 각 PDF 생성 server action 진입 시 await 한 번 호출.
- * 실패 시 기본값 유지.
+ * Supabase 에서 organization_settings.company_info override 를 읽어 캐시 갱신.
+ * 조직 공유 정보(회사명·주소·우편번호 등) 만 — 발급자 본인 정보(이름·휴대폰·면허) 는
+ * loadEffectiveVetInfo() 가 user-level overlay 로 덧씌움.
+ *
+ * 설정 페이지(병원/회사 정보 편집) 가 사용 — 해당 화면은 org-level 만 보고 편집.
+ *
+ * PDF 생성 경로는 loadEffectiveVetInfo() 사용해야 본인 정보가 cert 에 반영됨.
  */
 export async function loadVetInfo(): Promise<VetInfo> {
   try {
@@ -144,6 +148,63 @@ export async function loadVetInfo(): Promise<VetInfo> {
     _cached = DEFAULT_VET_INFO
   }
   return _cached
+}
+
+/**
+ * loadVetInfo() 결과(org-level)에 현재 로그인 사용자의 contact_info 를 overlay.
+ * 한 조직에 멤버가 여럿일 때 발급자 본인의 이름·휴대폰·면허번호가 cert 에 반영되도록.
+ *
+ * Overlay 매핑은 org_type 별로 다름:
+ *   hospital  → user.{name_ko/first_en/last_en/en/mobile_phone/license_no} 가
+ *               vet.{name_ko/name_first_en/name_last_en/name_en/mobile_phone/license_no} 덮음.
+ *   transport → user.{name_ko/first_en/last_en/en/mobile_phone} 가
+ *               vet.{transport_contact_ko/_first_en/_last_en/_en, transport_mobile_phone} 덮음.
+ *               (license_no 는 transport 에 의미 없음)
+ *
+ * 빈 user 값은 overlay 안 함 — 사용자가 본인 정보 미입력 상태면 org-level 기본값 그대로.
+ *
+ * PDF 생성 server action 진입 시 await 한 번 호출. _cached 도 effective 결과로 갱신
+ * → VET_INFO Proxy 가 fillPdf 안 vet:* transform 에서 read 시점에 effective 값 반환.
+ */
+export async function loadEffectiveVetInfo(): Promise<VetInfo> {
+  const org = await loadVetInfo()
+  let userInfo: Partial<{
+    name_ko: string; name_first_en: string; name_last_en: string; name_en: string;
+    mobile_phone: string; license_no: string;
+  }> = {}
+  let orgType: 'hospital' | 'transport' = 'hospital'
+  try {
+    const { loadUserContactInfo } = await import('@/lib/user-contact')
+    userInfo = await loadUserContactInfo()
+    const { createClient } = await import('@/lib/supabase/server')
+    const { getActiveOrgId } = await import('@/lib/supabase/active-org')
+    const supabase = await createClient()
+    const orgId = await getActiveOrgId()
+    const { data } = await supabase.from('organizations').select('org_type').eq('id', orgId).maybeSingle()
+    if ((data as { org_type?: string } | null)?.org_type === 'transport') orgType = 'transport'
+  } catch {
+    // user 정보 fail 시 org-level 만 그대로 — cached 도 그대로.
+    return org
+  }
+  const overlay: Partial<VetInfo> = {}
+  // overlay only when user value is non-empty (preserve org defaults otherwise)
+  if (orgType === 'hospital') {
+    if (userInfo.name_ko) overlay.name_ko = userInfo.name_ko
+    if (userInfo.name_first_en) overlay.name_first_en = userInfo.name_first_en
+    if (userInfo.name_last_en) overlay.name_last_en = userInfo.name_last_en
+    if (userInfo.name_en) overlay.name_en = userInfo.name_en
+    if (userInfo.mobile_phone) overlay.mobile_phone = userInfo.mobile_phone
+    if (userInfo.license_no) overlay.license_no = userInfo.license_no
+  } else {
+    if (userInfo.name_ko) overlay.transport_contact_ko = userInfo.name_ko
+    if (userInfo.name_first_en) overlay.transport_contact_first_en = userInfo.name_first_en
+    if (userInfo.name_last_en) overlay.transport_contact_last_en = userInfo.name_last_en
+    if (userInfo.name_en) overlay.transport_contact_en = userInfo.name_en
+    if (userInfo.mobile_phone) overlay.transport_mobile_phone = userInfo.mobile_phone
+  }
+  const effective: VetInfo = { ...org, ...overlay }
+  _cached = effective
+  return effective
 }
 
 /**

@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
 import type { CaseRow } from '@/lib/supabase/types'
 import { getEffectiveVaccineList } from '@petmove/domain'
-import { loadVetInfo } from '@/lib/vet-info'
+import { loadEffectiveVetInfo } from '@/lib/vet-info'
 
 export type GeneratePdfResult =
   | { ok: true; pdf: string; filename: string }
@@ -47,7 +47,7 @@ async function generate(
   caseId: string,
   options?: { includeSignature?: boolean; destination?: string | null; extras?: Record<string, unknown>; rabiesIndices?: number[] },
 ): Promise<GeneratePdfResult> {
-  await loadVetInfo()
+  await loadEffectiveVetInfo()
   const supabase = await createClient()
   const { data: row, error } = await supabase
     .from('cases')
@@ -85,7 +85,7 @@ async function generateStandalone(
   formKey: string,
   extras: Record<string, unknown>,
 ): Promise<GeneratePdfResult> {
-  await loadVetInfo()
+  await loadEffectiveVetInfo()
   const stub: CaseRow = {
     id: 'standalone', org_id: '',
     microchip: null, microchip_extra: [],
@@ -436,7 +436,7 @@ async function generateMulti(
   caseIds: string[],
 ): Promise<GenerateMultiPdfResult> {
   if (caseIds.length === 0) return { ok: false, error: '대상 동물이 없습니다' }
-  await loadVetInfo()
+  await loadEffectiveVetInfo()
   const supabase = await createClient()
   const { data: rows, error } = await supabase.from('cases').select('*').in('id', caseIds)
   if (error) return { ok: false, error: error.message }

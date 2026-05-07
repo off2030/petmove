@@ -12,10 +12,15 @@ import {
   type OrgType,
 } from '@/lib/actions/company-info'
 import {
+  getUserContactInfo,
+  updateUserContactInfo,
+} from '@/lib/actions/user-contact-info'
+import {
   getActiveOrgDmVisibility,
   updateActiveOrgDmVisibility,
 } from '@/lib/actions/chat'
 import type { CustomField, VetInfo, VetInfoKey } from '@/lib/vet-info'
+import type { UserContactInfo, UserContactKey } from '@/lib/user-contact'
 import {
   SettingsShell,
   SettingsSection,
@@ -47,6 +52,8 @@ const GROUP_LABELS: Record<string, string> = {
   Company: '회사',
 }
 
+// org-level (모든 멤버 공유) 필드만 — 개인 담당자 정보(이름·휴대폰·면허) 는 user-level
+// 로 분리되어 "내 담당자 정보" 섹션에서 별도 편집.
 const HOSPITAL_FIELDS: FieldDef[] = [
   { key: 'clinic_ko', label: '병원명', group: 'Clinic' },
   { key: 'clinic_en', label: '영문 병원명', group: 'Clinic' },
@@ -55,12 +62,6 @@ const HOSPITAL_FIELDS: FieldDef[] = [
   { key: 'postal_code', label: '우편번호', group: 'Clinic' },
   { key: 'phone', label: '전화', group: 'Clinic' },
   { key: 'email', label: '이메일', group: 'Clinic' },
-
-  { key: 'name_ko', label: '수의사', group: 'Veterinarian' },
-  { key: 'name_first_en', label: '영문 이름 (First)', group: 'Veterinarian' },
-  { key: 'name_last_en', label: '영문 성 (Last)', group: 'Veterinarian' },
-  { key: 'license_no', label: '면허번호', group: 'Veterinarian' },
-  { key: 'mobile_phone', label: '휴대폰', group: 'Veterinarian' },
 ]
 
 const TRANSPORT_FIELDS: FieldDef[] = [
@@ -69,10 +70,6 @@ const TRANSPORT_FIELDS: FieldDef[] = [
   { key: 'transport_address_ko', label: '주소', group: 'Company', type: 'textarea' },
   { key: 'transport_address_en', label: '영문 주소', group: 'Company', type: 'textarea' },
   { key: 'transport_postal_code', label: '우편번호', group: 'Company' },
-  { key: 'transport_contact_ko', label: '담당자', group: 'Company' },
-  { key: 'transport_contact_first_en', label: '영문 이름 (First)', group: 'Company' },
-  { key: 'transport_contact_last_en', label: '영문 성 (Last)', group: 'Company' },
-  { key: 'transport_mobile_phone', label: '휴대폰', group: 'Company' },
 ]
 
 /** First/Last 분리 영문명 키 → 합성된 단일 키 매핑. handleSave 가 같이 갱신. */
@@ -153,6 +150,10 @@ export function CompanySection({
   const [hasDefault, setHasDefault] = useState(false)
   const [, setTick] = useState(0)
   const [, startTransition] = useTransition()
+  // user-level (본인 담당자) 정보 — org_type 무관하게 로그인 사용자 자신의 이름·휴대폰·면허.
+  const [myInfo, setMyInfo] = useState<UserContactInfo | null>(null)
+  const [myDrafts, setMyDrafts] = useState<Partial<Record<UserContactKey, string>>>({})
+  const [savingMyKey, setSavingMyKey] = useState<UserContactKey | null>(null)
 
   useEffect(() => {
     if (initialInfo && !info) setInfo(initialInfo)
@@ -175,6 +176,13 @@ export function CompanySection({
   useEffect(() => {
     let alive = true
     hasCompanyInfoDefault().then((v) => { if (alive) setHasDefault(v) })
+    return () => { alive = false }
+  }, [])
+
+  // user-level 본인 담당자 정보 로드 — admin 여부와 무관하게 항상 본인 row 만 read/write 가능.
+  useEffect(() => {
+    let alive = true
+    getUserContactInfo().then((v) => { if (alive) setMyInfo(v) })
     return () => { alive = false }
   }, [])
 
@@ -229,6 +237,55 @@ export function CompanySection({
         setError(r.error)
       }
     })
+  }
+
+  // ────────────────────────────────────────────────────────────────────
+  // user-level 핸들러 — 본인 담당자 정보 (이름·휴대폰·면허)
+  // ────────────────────────────────────────────────────────────────────
+
+  function myValueOf(key: UserContactKey): string {
+    if (myDrafts[key] !== undefined) return myDrafts[key] ?? ''
+    const raw = myInfo?.[key] ?? ''
+    if (key === 'mobile_phone') return formatPhoneForSave(raw)
+    return raw
+  }
+
+  function handleMyChange(key: UserContactKey, v: string) {
+    setMyDrafts((d) => ({ ...d, [key]: v }))
+  }
+
+  function handleMySave(key: UserContactKey) {
+    if (!myInfo) return
+    const draftVal = myDrafts[key]
+    if (draftVal === undefined || draftVal === myInfo[key]) {
+      setMyDrafts((d) => { const { [key]: _, ...rest } = d; return rest })
+      return
+    }
+    const next = key === 'mobile_phone' ? formatPhoneForSave(draftVal) : draftVal
+    // 영문 First/Last split — 한쪽 변경 시 합성된 name_en 도 함께 저장.
+    const patch: Partial<UserContactInfo> = { [key]: next }
+    if (key === 'name_first_en' || key === 'name_last_en') {
+      const first = (key === 'name_first_en' ? next : myInfo.name_first_en ?? '').trim()
+      const last = (key === 'name_last_en' ? next : myInfo.name_last_en ?? '').trim()
+      patch.name_en = [first, last].filter(Boolean).join(' ')
+    }
+    setSavingMyKey(key)
+    setError(null)
+    startTransition(async () => {
+      const r = await updateUserContactInfo(patch)
+      setSavingMyKey(null)
+      if (r.ok) {
+        setMyInfo(r.info)
+        setMyDrafts((d) => { const { [key]: _, ...rest } = d; return rest })
+        setLastSaved(new Date())
+      } else {
+        setError(r.error)
+      }
+    })
+  }
+
+  function cancelMyDraft(key: UserContactKey) {
+    setMyDrafts((d) => { const { [key]: _, ...rest } = d; return rest })
   }
 
   /**
@@ -484,6 +541,91 @@ export function CompanySection({
           </section>
         ))}
 
+        {/* 내 담당자 정보 — 로그인 사용자 본인 (한 조직에 멤버 여럿일 때 각자 본인 명의로
+            cert 발급되도록). org_type 에 따라 PDF 매핑이 hospital 의 vet:name_en /
+            transport 의 vet:transport_contact_en 로 overlay. */}
+        <section className="mb-xl">
+          <SectionLabel className="mb-2">내 담당자 정보</SectionLabel>
+          <p className="mb-2 font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed max-w-md">
+            로그인 계정 본인만 보이고 편집됩니다. 같은 조직의 다른 멤버에게는 영향 없음.
+            cert 발급 시 본인의 이름/휴대폰/면허번호가 채워집니다.
+          </p>
+          <div className="border-t border-border/80">
+            {!myInfo ? (
+              <p className="py-3 font-serif italic text-[12px] text-muted-foreground/60">
+                불러오는 중...
+              </p>
+            ) : (
+              <>
+                <SettingsField label="한글 이름">
+                  <input
+                    type="text"
+                    value={myValueOf('name_ko')}
+                    onChange={(e) => handleMyChange('name_ko', e.target.value)}
+                    onBlur={() => handleMySave('name_ko')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+                      if (e.key === 'Escape') cancelMyDraft('name_ko')
+                    }}
+                    placeholder="—"
+                    className={cn(
+                      'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/30',
+                      savingMyKey === 'name_ko' && 'opacity-60',
+                    )}
+                  />
+                </SettingsField>
+                <EnglishNameSplitRow<UserContactKey>
+                  firstKey="name_first_en"
+                  lastKey="name_last_en"
+                  firstValue={myValueOf('name_first_en')}
+                  lastValue={myValueOf('name_last_en')}
+                  isAdmin={true}
+                  saving={savingMyKey === 'name_first_en' || savingMyKey === 'name_last_en'}
+                  onChange={handleMyChange}
+                  onCommit={handleMySave}
+                  onCancel={cancelMyDraft}
+                />
+                <SettingsField label="휴대폰">
+                  <input
+                    type="text"
+                    value={myValueOf('mobile_phone')}
+                    onChange={(e) => handleMyChange('mobile_phone', e.target.value)}
+                    onBlur={() => handleMySave('mobile_phone')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+                      if (e.key === 'Escape') cancelMyDraft('mobile_phone')
+                    }}
+                    placeholder="—"
+                    className={cn(
+                      'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/30',
+                      savingMyKey === 'mobile_phone' && 'opacity-60',
+                    )}
+                  />
+                </SettingsField>
+                {!isTransport && (
+                  <SettingsField label="면허번호">
+                    <input
+                      type="text"
+                      value={myValueOf('license_no')}
+                      onChange={(e) => handleMyChange('license_no', e.target.value)}
+                      onBlur={() => handleMySave('license_no')}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+                        if (e.key === 'Escape') cancelMyDraft('license_no')
+                      }}
+                      placeholder="—"
+                      className={cn(
+                        'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/30',
+                        savingMyKey === 'license_no' && 'opacity-60',
+                      )}
+                    />
+                  </SettingsField>
+                )}
+              </>
+            )}
+          </div>
+        </section>
+
         {isTransport && (
           <p className="font-serif italic text-[12px] text-muted-foreground/70 -mt-md mb-xl leading-relaxed max-w-md">
             운송회사는 회사 정보만 입력합니다. 병원 정보가 비어 있으면 PDF 의 병원·수의사 필드는 빈 값으로 출력됩니다.
@@ -566,7 +708,8 @@ export function CompanySection({
  * 영문명 First/Last 합성 행 — 케이스 상세의 customer-name-row 와 동일 패턴 (이름은 단일 행).
  * IME 입력 중에는 한글 자모 통과시키고 composition end 시점에 필터·대문자화 후 commit.
  */
-function EnglishNameSplitRow({
+function EnglishNameSplitRow<K extends string>({
+  label = '영문명',
   firstKey,
   lastKey,
   firstValue,
@@ -577,15 +720,16 @@ function EnglishNameSplitRow({
   onCommit,
   onCancel,
 }: {
-  firstKey: VetInfoKey
-  lastKey: VetInfoKey
+  label?: string
+  firstKey: K
+  lastKey: K
   firstValue: string
   lastValue: string
   isAdmin: boolean
   saving: boolean
-  onChange: (key: VetInfoKey, v: string) => void
-  onCommit: (key: VetInfoKey) => void
-  onCancel: (key: VetInfoKey) => void
+  onChange: (key: K, v: string) => void
+  onCommit: (key: K) => void
+  onCancel: (key: K) => void
 }) {
   const firstComposing = useRef(false)
   const lastComposing = useRef(false)
@@ -609,7 +753,7 @@ function EnglishNameSplitRow({
       onChange(key, capitalizeWords(filterKorean(raw)))
     }
   }
-  function makeKeyDown(key: VetInfoKey) {
+  function makeKeyDown(key: K) {
     return (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
       if (e.key === 'Escape') onCancel(key)
@@ -623,7 +767,7 @@ function EnglishNameSplitRow({
   )
 
   return (
-    <SettingsField label="영문명">
+    <SettingsField label={label}>
       <div className="flex items-baseline gap-md">
         <input
           type="text"
