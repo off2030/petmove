@@ -471,7 +471,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
                       'h-7 px-3 rounded-full border text-[13px] transition-colors',
                       hasChanges
                         ? 'border-pmw-accent bg-pmw-accent/15 text-pmw-accent-strong hover:bg-pmw-accent/25'
-                        : 'border-border/80 bg-card text-muted-foreground hover:text-foreground hover:border-foreground/40',
+                        : 'border-border/80 bg-card text-foreground hover:bg-accent/60',
                     )}
                   >
                     {hasChanges ? '저장' : '닫기'}

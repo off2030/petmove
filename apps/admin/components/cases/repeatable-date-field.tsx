@@ -190,8 +190,10 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     ? listParasiteFamilies(species, parasiteKind)
     : []
 
-  // Sort: newest first for expanded view
-  const sortedForExpand = [...records].sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+  // 인라인 chip: 최신순 (좌→우 = 최신→오래된) — 케이스 상세 개요용.
+  const sortedForInline = [...records].sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+  // 모달 카드: 오래된 순 (위→아래 = 오래된→최신) — 시간 흐름대로 검토.
+  const sortedForExpand = [...records].sort((a, b) => (a.date || '').localeCompare(b.date || ''))
 
   const [saving] = useTransition()
   const [editIdx, setEditIdx] = useState<number | null>(null)
@@ -501,6 +503,10 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     const rec = sortedForExpand[sortedIdx]
     return records.indexOf(rec)
   }
+  function origIdxFromInline(sortedIdx: number): number {
+    const rec = sortedForInline[sortedIdx]
+    return records.indexOf(rec)
+  }
 
   return (
     <div
@@ -527,11 +533,11 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
       {/* 인라인: 날짜 chips 만 (간결). 클릭하면 모달 열림.
           많아질 경우 줄 바꿈 대신 가로 스크롤. */}
       <div className="min-w-0 flex items-baseline gap-[10px] pt-1 overflow-x-auto whitespace-nowrap scrollbar-hide">
-        {sortedForExpand.length === 0 ? null : (
-          sortedForExpand.map((rec, si) => (
+        {sortedForInline.length === 0 ? null : (
+          sortedForInline.map((rec, si) => (
             <InlineDateChip
               key={si}
-              path={`${dataKey}[${origIdx(si)}].date`}
+              path={`${dataKey}[${origIdxFromInline(si)}].date`}
               date={rec.date}
               separator={si > 0}
               onClick={openEditModal}
@@ -556,43 +562,12 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
             )}
           >
             {/* Header */}
-            <div className="flex items-center justify-between gap-md px-md py-3 border-b border-border/80">
+            <div className="flex items-center gap-md px-md py-3 border-b border-border/80">
               <h2 className="font-serif text-[18px] text-foreground">{label}</h2>
-              <div className="flex items-center gap-1">
-                <AttachButton
-                  accept="image/*,.pdf"
-                  onFile={(f) => handleFile(f, null)}
-                  disabled={extracting}
-                  cropMode="fixed"
-                  className={roundIconBtn}
-                  title="이미지/PDF 로 새 기록 추출 (모바일 카메라 시 자동 크롭)"
-                >
-                  <Paperclip size={14} />
-                </AttachButton>
-                <button
-                  type="button"
-                  onClick={() => setAddingNew(true)}
-                  disabled={addingNew || saving}
-                  className={roundIconBtn}
-                  title="기록 추가"
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
             </div>
 
             {/* Body */}
             <div className="flex-1 overflow-auto px-md py-md space-y-2 scrollbar-minimal">
-              {addingNew && (
-                <div className="flex items-baseline gap-sm">
-                  <DateInput
-                    initial=""
-                    onSave={saveNewDate}
-                    onCancel={() => setAddingNew(false)}
-                  />
-                </div>
-              )}
-
               {extracting && (
                 <div className="text-xs text-muted-foreground">추출 중...</div>
               )}
@@ -606,7 +581,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
               )}
 
               {sortedForExpand.length === 0 && !addingNew && !extracting && (
-                <div className="text-[13px] italic text-muted-foreground/60">기록이 없습니다. 위의 "추가" 버튼으로 새 기록을 추가하세요.</div>
+                <div className="text-[13px] italic text-muted-foreground/60">기록이 없습니다. 아래의 "추가" 버튼으로 새 기록을 추가하세요.</div>
               )}
 
               {sortedForExpand.map((rec, si) => {
@@ -769,27 +744,64 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                   </div>
                 )
               })}
+
+              {addingNew && (
+                <div className="flex items-baseline gap-sm pl-2">
+                  <DateInput
+                    initial=""
+                    onSave={saveNewDate}
+                    onCancel={() => setAddingNew(false)}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Footer */}
             <div className="flex items-center gap-2 px-md py-2 border-t border-border/80 bg-background/95">
-              {(() => {
-                const hasChanges = JSON.stringify(records) !== initialRecordsRef.current
-                return (
-                  <button
-                    type="button"
-                    onClick={closeEditModal}
-                    className={cn(
-                      'h-7 px-3 rounded-full border text-[13px] transition-colors',
-                      hasChanges
-                        ? 'border-pmw-accent bg-pmw-accent/15 text-pmw-accent-strong hover:bg-pmw-accent/25'
-                        : 'border-border/80 bg-card text-muted-foreground hover:text-foreground hover:border-foreground/40',
-                    )}
-                  >
-                    {hasChanges ? '저장' : '닫기'}
-                  </button>
-                )
-              })()}
+              {/* 좌측: 추가 + 클립 */}
+              <button
+                type="button"
+                onClick={() => setAddingNew(true)}
+                disabled={addingNew || saving}
+                className={cn(
+                  'h-7 px-3 rounded-full border border-border/80 bg-card text-[13px] text-foreground transition-colors hover:bg-accent/60',
+                  (addingNew || saving) && 'opacity-50 cursor-not-allowed',
+                )}
+                title="기록 추가"
+              >
+                추가
+              </button>
+              <AttachButton
+                accept="image/*,.pdf"
+                onFile={(f) => handleFile(f, null)}
+                disabled={extracting}
+                cropMode="fixed"
+                className={roundIconBtn}
+                title="이미지/PDF 로 새 기록 추출 (모바일 카메라 시 자동 크롭)"
+              >
+                <Paperclip size={14} />
+              </AttachButton>
+
+              {/* 우측: 닫기/저장 — neutral 상태는 좌측 "추가" 와 동일 pill, 변경 시 accent 강조 */}
+              <div className="ml-auto">
+                {(() => {
+                  const hasChanges = JSON.stringify(records) !== initialRecordsRef.current
+                  return (
+                    <button
+                      type="button"
+                      onClick={closeEditModal}
+                      className={cn(
+                        'h-7 px-3 rounded-full border text-[13px] transition-colors',
+                        hasChanges
+                          ? 'border-pmw-accent bg-pmw-accent/15 text-pmw-accent-strong hover:bg-pmw-accent/25'
+                          : 'border-border/80 bg-card text-foreground hover:bg-accent/60',
+                      )}
+                    >
+                      {hasChanges ? '저장' : '닫기'}
+                    </button>
+                  )
+                })()}
+              </div>
             </div>
           </div>
         </div>,

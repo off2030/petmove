@@ -192,6 +192,17 @@ export function CasesProvider({
             })
           },
         )
+        // 공유 폼 제출·다른 세션 편집 등 외부 UPDATE 를 즉시 반영.
+        // 본인 inline edit 는 updateLocalCaseField 가 선반영 → 같은 데이터로 도착해도 무해.
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'cases', filter: `org_id=eq.${orgId}` },
+          (payload) => {
+            const row = payload.new as CaseRow
+            if (!row?.id) return
+            setCases((prev) => prev.map((c) => (c.id === row.id ? row : c)))
+          },
+        )
         .subscribe()
     }
 
