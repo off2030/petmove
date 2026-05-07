@@ -53,7 +53,12 @@ export interface VetInfo {
   transport_company_ko: string
   transport_company_en: string
   transport_contact_ko: string
+  /** 담당자 영문명 (합성). transport_contact_first_en + transport_contact_last_en 자동 결합. */
   transport_contact_en: string
+  transport_contact_first_en: string
+  transport_contact_last_en: string
+  transport_address_ko: string
+  transport_address_en: string
   transport_postal_code: string
   transport_mobile_phone: string
 
@@ -89,6 +94,10 @@ export const DEFAULT_VET_INFO: VetInfo = {
   transport_company_en: '',
   transport_contact_ko: '',
   transport_contact_en: '',
+  transport_contact_first_en: '',
+  transport_contact_last_en: '',
+  transport_address_ko: '',
+  transport_address_en: '',
   transport_postal_code: '',
   transport_mobile_phone: '',
   custom_fields: [],

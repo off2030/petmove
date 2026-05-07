@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { Plus, X } from 'lucide-react'
 import {
   getCompanyInfo,
@@ -66,11 +66,23 @@ const HOSPITAL_FIELDS: FieldDef[] = [
 const TRANSPORT_FIELDS: FieldDef[] = [
   { key: 'transport_company_ko', label: '회사명', group: 'Company' },
   { key: 'transport_company_en', label: '영문 회사명', group: 'Company' },
-  { key: 'transport_contact_ko', label: '담당자', group: 'Company' },
-  { key: 'transport_contact_en', label: '영문명', group: 'Company' },
+  { key: 'transport_address_ko', label: '주소', group: 'Company', type: 'textarea' },
+  { key: 'transport_address_en', label: '영문 주소', group: 'Company', type: 'textarea' },
   { key: 'transport_postal_code', label: '우편번호', group: 'Company' },
+  { key: 'transport_contact_ko', label: '담당자', group: 'Company' },
+  { key: 'transport_contact_first_en', label: '영문 이름 (First)', group: 'Company' },
+  { key: 'transport_contact_last_en', label: '영문 성 (Last)', group: 'Company' },
   { key: 'transport_mobile_phone', label: '휴대폰', group: 'Company' },
 ]
+
+/** First/Last 분리 영문명 키 → 합성된 단일 키 매핑. handleSave 가 같이 갱신. */
+const SPLIT_NAME_PARENT: Record<string, { first: VetInfoKey; last: VetInfoKey; combined: VetInfoKey }> = {
+  name_first_en:                { first: 'name_first_en',                last: 'name_last_en',                combined: 'name_en' },
+  name_last_en:                 { first: 'name_first_en',                last: 'name_last_en',                combined: 'name_en' },
+  transport_contact_first_en:   { first: 'transport_contact_first_en',   last: 'transport_contact_last_en',   combined: 'transport_contact_en' },
+  transport_contact_last_en:    { first: 'transport_contact_first_en',   last: 'transport_contact_last_en',   combined: 'transport_contact_en' },
+}
+
 
 /**
  * 한국 전화번호 자동 포맷 — phone / mobile_phone / transport_mobile_phone 입력에 적용.
@@ -98,6 +110,15 @@ const PHONE_KEYS: Set<VetInfoKey> = new Set([
   'mobile_phone',
   'transport_mobile_phone',
 ])
+
+/** 영문만 남기고 한글 자모/완성형 제거. 케이스 상세의 customer-name-row 와 동일. */
+function filterKorean(str: string): string {
+  return str.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
+}
+/** 단어 첫 글자 대문자화. "john doe" → "John Doe". */
+function capitalizeWords(str: string): string {
+  return str.replace(/\b[a-z]/g, (c) => c.toUpperCase())
+}
 
 function formatSavedAgo(date: Date | null): string {
   if (!date) return ''
@@ -186,13 +207,14 @@ export function CompanySection({
     }
     // 전화번호 키는 자동 포맷 ("02-8727588" → "02-872-7588" 등). 매칭 실패 시 원본 보존.
     const next = PHONE_KEYS.has(key) ? formatPhoneForSave(draftVal) : draftVal
-    // 영문명 split — first/last 중 하나가 변경되면 합성된 name_en 도 함께 저장.
-    // PDF 매핑(vet:name_en) 은 합성 결과를 읽으므로 sync 필수.
+    // 영문 First/Last split — 한쪽 변경 시 합성된 base 키도 함께 저장.
+    // (PDF 매핑이 합성 결과를 읽으므로 sync 필수.)
     const patch: Partial<VetInfo> = { [key]: next }
-    if (key === 'name_first_en' || key === 'name_last_en') {
-      const first = (key === 'name_first_en' ? next : info.name_first_en ?? '').trim()
-      const last = (key === 'name_last_en' ? next : info.name_last_en ?? '').trim()
-      patch.name_en = [first, last].filter(Boolean).join(' ')
+    const split = SPLIT_NAME_PARENT[key]
+    if (split) {
+      const first = (key === split.first ? next : (info[split.first] as string) ?? '').trim()
+      const last = (key === split.last ? next : (info[split.last] as string) ?? '').trim()
+      patch[split.combined] = [first, last].filter(Boolean).join(' ')
     }
     setSavingKey(key)
     setError(null)
@@ -211,21 +233,29 @@ export function CompanySection({
 
   /**
    * Daum Postcode 검색 결과를 한국주소/영문주소/우편번호 한 번에 저장.
-   * org_type 별로 저장 키 다름 — hospital → address_ko/address_en/postal_code,
-   * transport → 추후 transport_address_* 필드 추가될 때 분기 (현재는 hospital 만).
+   * org_type 별로 저장 키 다름:
+   *   hospital  → address_ko / address_en / postal_code
+   *   transport → transport_address_ko / transport_address_en / transport_postal_code
    */
   function handleAddressSelected(result: CompanyAddressResult) {
     if (!info) return
     setError(null)
+    const isTransport = orgType === 'transport'
+    const krKey: VetInfoKey = isTransport ? 'transport_address_ko' : 'address_ko'
+    const enKey: VetInfoKey = isTransport ? 'transport_address_en' : 'address_en'
+    const zipKey: VetInfoKey = isTransport ? 'transport_postal_code' : 'postal_code'
     // draft 비우기 — 검색 결과로 즉시 덮어쓸 거라 사용자 편집 중인 draft 와 충돌 방지.
     setDrafts((d) => {
-      const { address_ko: _a, address_en: _b, postal_code: _c, ...rest } = d
-      return rest
+      const next = { ...d }
+      delete next[krKey]
+      delete next[enKey]
+      delete next[zipKey]
+      return next
     })
     const patch: Partial<VetInfo> = {
-      address_ko: result.address_ko,
-      address_en: result.address_en,
-      postal_code: result.postal_code,
+      [krKey]: result.address_ko,
+      [enKey]: result.address_en,
+      [zipKey]: result.postal_code,
     }
     startTransition(async () => {
       const r = await updateCompanyInfo(patch)
@@ -371,10 +401,32 @@ export function CompanySection({
             <div className="border-t border-border/80">
               {fields.filter((f) => f.group === group).map((f) => {
                 const saving = savingKey === f.key
-                // address_ko 행에 한정해 우측에 "주소검색" 버튼 노출 — 검색 결과로
-                // address_ko/address_en/postal_code 한 번에 저장 (handleAddressSelected).
-                // 케이스 상세의 AddressField 와 동일한 Daum Postcode 흐름.
-                const showAddressSearch = isAdmin && f.key === 'address_ko'
+                // 한국주소 행에 한정해 우측에 "주소검색" 버튼 노출 — 검색 결과로
+                // 한국/영문/우편번호 세 필드를 한 번에 저장 (handleAddressSelected).
+                // hospital → address_ko, transport → transport_address_ko.
+                const showAddressSearch = isAdmin && (f.key === 'address_ko' || f.key === 'transport_address_ko')
+
+                // 영문 First/Last 한 줄 합성 행 — name_first_en / transport_contact_first_en
+                // 만났을 때 두 input 을 한 행에 같이 그리고, 짝(name_last_en/...) 은 skip.
+                const split = SPLIT_NAME_PARENT[f.key]
+                if (split && f.key === split.first) {
+                  return (
+                    <EnglishNameSplitRow
+                      key={f.key}
+                      firstKey={split.first}
+                      lastKey={split.last}
+                      firstValue={valueOf(split.first)}
+                      lastValue={valueOf(split.last)}
+                      isAdmin={isAdmin}
+                      saving={savingKey === split.first || savingKey === split.last}
+                      onChange={handleChange}
+                      onCommit={handleSave}
+                      onCancel={(k) => setDrafts((d) => { const { [k]: _, ...rest } = d; return rest })}
+                    />
+                  )
+                }
+                if (split && f.key === split.last) return null  // 짝꿍이 already rendered
+
                 return (
                   <SettingsField key={f.key} label={f.label}>
                     <div className="flex items-start gap-sm">
@@ -507,6 +559,99 @@ export function CompanySection({
         </span>
       </SettingsFooter>
     </SettingsShell>
+  )
+}
+
+/**
+ * 영문명 First/Last 합성 행 — 케이스 상세의 customer-name-row 와 동일 패턴 (이름은 단일 행).
+ * IME 입력 중에는 한글 자모 통과시키고 composition end 시점에 필터·대문자화 후 commit.
+ */
+function EnglishNameSplitRow({
+  firstKey,
+  lastKey,
+  firstValue,
+  lastValue,
+  isAdmin,
+  saving,
+  onChange,
+  onCommit,
+  onCancel,
+}: {
+  firstKey: VetInfoKey
+  lastKey: VetInfoKey
+  firstValue: string
+  lastValue: string
+  isAdmin: boolean
+  saving: boolean
+  onChange: (key: VetInfoKey, v: string) => void
+  onCommit: (key: VetInfoKey) => void
+  onCancel: (key: VetInfoKey) => void
+}) {
+  const firstComposing = useRef(false)
+  const lastComposing = useRef(false)
+
+  function makeChange(target: 'first' | 'last', composingRef: React.MutableRefObject<boolean>) {
+    return (e: React.ChangeEvent<HTMLInputElement>) => {
+      const key = target === 'first' ? firstKey : lastKey
+      // composition 중에는 IME 글자 통과 — 한글 입력 도중 자모 깨짐 방지.
+      if (composingRef.current) {
+        onChange(key, e.target.value)
+        return
+      }
+      onChange(key, capitalizeWords(filterKorean(e.target.value)))
+    }
+  }
+  function makeCompositionEnd(target: 'first' | 'last', composingRef: React.MutableRefObject<boolean>) {
+    return (e: React.CompositionEvent<HTMLInputElement>) => {
+      composingRef.current = false
+      const key = target === 'first' ? firstKey : lastKey
+      const raw = (e.target as HTMLInputElement).value
+      onChange(key, capitalizeWords(filterKorean(raw)))
+    }
+  }
+  function makeKeyDown(key: VetInfoKey) {
+    return (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+      if (e.key === 'Escape') onCancel(key)
+    }
+  }
+
+  const inputCls = cn(
+    'flex-1 min-w-0 bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/30',
+    saving && 'opacity-60',
+    !isAdmin && 'cursor-default',
+  )
+
+  return (
+    <SettingsField label="영문명">
+      <div className="flex items-baseline gap-md">
+        <input
+          type="text"
+          value={firstValue}
+          onChange={makeChange('first', firstComposing)}
+          onCompositionStart={() => { firstComposing.current = true }}
+          onCompositionEnd={makeCompositionEnd('first', firstComposing)}
+          onBlur={() => onCommit(firstKey)}
+          onKeyDown={makeKeyDown(firstKey)}
+          placeholder={isAdmin ? 'First (이름)' : ''}
+          readOnly={!isAdmin}
+          className={inputCls}
+        />
+        <span className="text-muted-foreground/30 select-none shrink-0">·</span>
+        <input
+          type="text"
+          value={lastValue}
+          onChange={makeChange('last', lastComposing)}
+          onCompositionStart={() => { lastComposing.current = true }}
+          onCompositionEnd={makeCompositionEnd('last', lastComposing)}
+          onBlur={() => onCommit(lastKey)}
+          onKeyDown={makeKeyDown(lastKey)}
+          placeholder={isAdmin ? 'Last (성)' : ''}
+          readOnly={!isAdmin}
+          className={inputCls}
+        />
+      </div>
+    </SettingsField>
   )
 }
 
