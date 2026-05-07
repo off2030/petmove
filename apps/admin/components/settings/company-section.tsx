@@ -166,7 +166,11 @@ export function CompanySection({
 
   function valueOf(key: VetInfoKey): string {
     if (drafts[key] !== undefined) return drafts[key] ?? ''
-    return info?.[key] ?? ''
+    const raw = info?.[key] ?? ''
+    // 전화 필드는 표시 시점에도 포맷 — DB 에 저장된 기존 값(예: "02-8727588")도
+    // 사용자가 화면에서는 항상 정규 형식("02-872-7588")으로 보이게.
+    if (PHONE_KEYS.has(key)) return formatPhoneForSave(raw)
+    return raw
   }
 
   function handleChange(key: VetInfoKey, v: string) {
