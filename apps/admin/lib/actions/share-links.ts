@@ -440,6 +440,10 @@ export async function submitShareLink(
           entries.push({ date: item.trim() })
         }
       }
+      // 빈 entries 로 기존 백신/구충 기록을 덮어쓰지 않기 — share 폼은 "입력"용 (삭제 의도 X).
+      // 수신자가 해당 그룹을 비워둔 채 제출해도 케이스의 기존 광견병/종합/CIV/구충 기록과
+      // legacy 단일 키(rabies_1/2/3 등) 가 그대로 보존되어 후속 증명서 PDF 가 데이터 손실 없이 생성된다.
+      if (entries.length === 0) continue
       if (group.storage_mode === 'array' && group.array_key) {
         // VacRecord 호환 객체 배열로 저장 — 외부 입력은 항상 타병원 접종 플래그
         dataUpdate[group.array_key] = entries.map((e) => {
@@ -454,7 +458,7 @@ export async function submitShareLink(
           if (e.expiry) rec.expiry = e.expiry
           return rec
         })
-        // legacy 단일 키 (rabies_1/2/3, civ, parasite_1/2 등) 정리
+        // legacy 단일 키 (rabies_1/2/3, civ, parasite_1/2 등) 정리 — 신규 array 가 들어왔을 때만.
         for (const k of group.source_keys) {
           if (k === group.array_key) continue
           dataUpdate[k] = null
