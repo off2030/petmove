@@ -7,34 +7,12 @@ import { listSharePresets, saveSharePresets } from '@/lib/actions/share-presets'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
 import { SettingsSubsectionTitle } from './settings-layout'
-import { EXTRA_FIELD_KEY_LABELS, ALL_EXTRA_FIELD_KEYS, EXTRA_FIELD_DEFS } from '@petmove/domain'
-import {
-  SHARE_VACCINE_GROUPS,
-  SHARE_HIDDEN_BY_VACCINE_GROUPS,
-  SHARE_RECIPIENT_LABEL_OVERRIDE,
-} from '@/lib/share-links-types'
-import { buildFieldSpecs } from '@/lib/fields'
+import { ALL_EXTRA_FIELD_KEYS } from '@petmove/domain'
+import { buildShareFieldLayout } from '@/lib/share-field-layout'
 import type { SharePreset } from '@/lib/share-presets-types'
 
-/** 카테고리 정렬 (직접 선택과 동일). */
-const CATEGORIES = ['고객정보', '동물정보', '절차정보', '추가정보'] as const
-
-/** spec.group → 카테고리 (기타정보 = 메모는 폼 별도 필드). */
-const SPEC_GROUP_TO_CATEGORY: Record<string, typeof CATEGORIES[number]> = {
-  '고객정보': '고객정보',
-  '동물정보': '동물정보',
-  '절차정보': '절차정보',
-}
-
-/** share-link-dialog 와 동일한 제외 목록 — 외부 수신자가 채울 일 없는 필드. */
-const SHARE_EXCLUDED_KEYS = new Set([
-  'age', 'rabies_3', 'destination', 'memo', 'notes',
-  'customer_first_name_en', 'customer_last_name_en',
-  'breed_en', 'color_en', 'sex_en',
-  'payment_amount', 'payment_method', 'payments',
-  'microchip_secondary', 'japan_extra',
-  'address_overseas',
-])
+/** 조직 단위 프리셋 — 모든 EXTRA 필드를 destination 무관하게 노출. species 필터도 미적용. */
+const ALL_EXTRA_ENTRIES = ALL_EXTRA_FIELD_KEYS.map((k) => ({ key: k }))
 
 function genId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -74,75 +52,15 @@ export function SharePresetsSection({
     [presets, savedPresets],
   )
 
-  /** 모든 가능 필드 — 카테고리 그룹별, 목적지 무관 (조직 단위 프리셋이라 전체 노출).
-   *  case-detail / share-link-dialog 와 동일한 좌표계(buildFieldSpecs)로 정렬. */
-  const groupedFields = useMemo(() => {
-    type Field = { key: string; label: string; order: number; groupOrder: number; subgroup?: string }
-    const buckets: Record<typeof CATEGORIES[number], Field[]> = {
-      '고객정보': [],
-      '동물정보': [],
-      '절차정보': [],
-      '추가정보': [],
-    }
-
-    // 1) 컬럼 + jsonb — case-detail 와 동일 정렬
-    const allSpecs = buildFieldSpecs(fieldDefs)
-    for (const spec of allSpecs) {
-      if (SHARE_EXCLUDED_KEYS.has(spec.key)) continue
-      if (SHARE_HIDDEN_BY_VACCINE_GROUPS.has(spec.key)) continue
-      const category = SPEC_GROUP_TO_CATEGORY[spec.group]
-      if (!category) continue
-      const label = SHARE_RECIPIENT_LABEL_OVERRIDE[spec.key] ?? spec.label
-      buckets[category].push({ key: spec.key, label, order: spec.order, groupOrder: spec.groupOrder })
-    }
-
-    // 2) 합성 백신 그룹 — 조직 단위라 모두 노출.
-    for (const g of SHARE_VACCINE_GROUPS) {
-      buckets['절차정보'].push({ key: g.key, label: g.label, order: g.display_order, groupOrder: 2 })
-    }
-
-    // 3) EXTRA 필드 — 같은 group 메타 2개 이상이면 subgroup 으로 묶어 표시 (case-detail / dialog 와 동일).
-    const groupCounts = new Map<string, number>()
-    for (const key of ALL_EXTRA_FIELD_KEYS) {
-      if (key === 'email') continue // 고객정보 전용
-      const g = EXTRA_FIELD_DEFS[key]?.group
-      if (g) groupCounts.set(g, (groupCounts.get(g) ?? 0) + 1)
-    }
-    let extraOrder = 0
-    for (const key of ALL_EXTRA_FIELD_KEYS) {
-      if (key === 'email') continue // 고객정보 전용 (field_definitions 기본정보)
-      const def = EXTRA_FIELD_DEFS[key]
-      const useGroup = !!def?.group && (groupCounts.get(def.group) ?? 0) >= 2
-      const label = useGroup && def?.shortLabel ? def.shortLabel : (EXTRA_FIELD_KEY_LABELS[key] ?? key)
-      buckets['추가정보'].push({
-        key,
-        label,
-        subgroup: useGroup ? def!.group : undefined,
-        order: extraOrder++,
-        groupOrder: 99,
-      })
-    }
-
-    for (const c of CATEGORIES) {
-      buckets[c].sort((a, b) => {
-        if (a.groupOrder !== b.groupOrder) return a.groupOrder - b.groupOrder
-        return a.order - b.order
-      })
-    }
-    return CATEGORIES.map((c) => {
-      // 같은 subgroup 끼리 블록으로 묶어 반환 (직접 선택의 그룹 표시와 일치).
-      const blocks: { subgroup?: string; fields: { key: string; label: string }[] }[] = []
-      for (const f of buckets[c]) {
-        const last = blocks[blocks.length - 1]
-        if (last && last.subgroup === f.subgroup) {
-          last.fields.push({ key: f.key, label: f.label })
-        } else {
-          blocks.push({ subgroup: f.subgroup, fields: [{ key: f.key, label: f.label }] })
-        }
-      }
-      return { category: c, blocks }
-    }).filter((g) => g.blocks.length > 0)
-  }, [fieldDefs])
+  /** 모든 가능 필드 — 다이얼로그/수신자 폼/case-detail 과 동일한 좌표계 (단일 진실 공급원). */
+  const groupedFields = useMemo(
+    () => buildShareFieldLayout({
+      fieldDefs,
+      extraFieldEntries: ALL_EXTRA_ENTRIES,
+      caseScoped: null, // 조직 단위 — 목적지/종 필터 미적용
+    }),
+    [fieldDefs],
+  )
 
   function addPreset() {
     const next: SharePreset = { id: genId(), name: '새 프리셋', field_keys: [] }
@@ -280,7 +198,7 @@ export function SharePresetsSection({
                   <div className="mt-3 space-y-lg pl-9">
                     {groupedFields.map((g) => (
                       <div key={g.category}>
-                        <h5 className="font-serif text-[14px] font-medium text-foreground mb-2">
+                        <h5 className="font-serif text-[15px] font-semibold text-foreground mb-3 pb-1 border-b border-dotted border-border/60">
                           {g.category}
                         </h5>
                         <div className="space-y-2 pl-2 border-l border-border/40">

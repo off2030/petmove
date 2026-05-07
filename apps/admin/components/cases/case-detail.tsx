@@ -8,7 +8,8 @@ import {
   HIDDEN_EN_KEYS,
   readCaseField,
 } from '@/lib/fields'
-import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, extraFieldMatchesSpecies, findCustomDestination, EXTRA_FIELD_DEFS, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, SWISS_ENTRY_AIRPORT_OPTIONS, THAILAND_ENTRY_AIRPORT_OPTIONS, type ExtraFieldDef } from '@petmove/domain'
+import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, SWISS_ENTRY_AIRPORT_OPTIONS, THAILAND_ENTRY_AIRPORT_OPTIONS, type ExtraFieldDef } from '@petmove/domain'
+import { buildShareFieldDescriptors } from '@/lib/share-field-layout'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Trash2, ChevronDown } from 'lucide-react'
@@ -332,24 +333,39 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
           </div>
           </SectionEditModeProvider>
         </section>
-        {/* ─── 추가정보 — 절차정보 바로 뒤. 모든 destination 이 일반 SimpleExtraSection 사용. ─── */}
+        {/* ─── 추가정보 — 절차정보 바로 뒤. 좌표는 buildShareFieldDescriptors 가 산출 (다이얼로그·프리셋·수신자 폼과 동일 권위). ─── */}
         {g.group === '절차정보' && (() => {
-          // extraFields entries — 커스텀 우선, 폴백 하드코딩. 종 필터 적용.
-          // email 은 고객정보(전화번호 옆) 에 표시되므로 추가정보에서 제외.
-          const extraEntries = getEffectiveExtraFieldEntries(viewDestination, destOverridesConfig)
-            .filter((e) => e.key !== 'email')
-            .filter((e) => extraFieldMatchesSpecies(e, speciesValue))
-          if (extraEntries.length === 0) return null
+          // 추가정보 카테고리만 추출 — 절차/고객/동물 카테고리는 case-detail 가 자체 렌더 (buildAllFieldSpecs + EditableField 라우팅).
+          // descriptor.subgroup 이 그대로 SimpleExtraSection 의 group/flat 분기 입력. species·email 필터는 빌더가 처리.
+          const extraDescriptors = buildShareFieldDescriptors({
+            fieldDefs,
+            extraFieldEntries: getEffectiveExtraFieldEntries(viewDestination, destOverridesConfig),
+            caseScoped: { allowedFields, vaccineApplies: () => false, speciesValue },
+          }).filter((d) => d.category === '추가정보')
+          if (extraDescriptors.length === 0) return null
           const sectionNumber = String(groups.length + 1).padStart(2, '0')
+          // descriptor.subgroup 으로 인접 그룹화 — 빌더가 이미 ≥2 일 때만 subgroup 을 박았으므로 1개짜리는 자동 평면.
+          const segments: ExtraSegment[] = []
+          for (const d of extraDescriptors) {
+            if (d.source.kind !== 'extra') continue
+            const def = applyDestinationFieldOverride(d.source.def, viewDestination)
+            if (d.subgroup) {
+              const last = segments[segments.length - 1]
+              if (last && last.type === 'group' && last.name === d.subgroup) {
+                last.items.push(def)
+              } else {
+                segments.push({ type: 'group', name: d.subgroup, items: [def] })
+              }
+            } else {
+              segments.push({ type: 'flat', entry: def })
+            }
+          }
           return (
             <SimpleExtraSection
               caseId={caseRow.id}
               caseRow={caseRow}
               sectionNumber={sectionNumber}
-              entries={extraEntries
-                .map((e) => EXTRA_FIELD_DEFS[e.key])
-                .filter((d): d is ExtraFieldDef => !!d)
-                .map((d) => applyDestinationFieldOverride(d, viewDestination))}
+              segments={segments}
               destination={viewDestination}
               isCollapsed={collapsed.has('추가정보')}
               onToggleCollapsed={() => toggleCollapsed('추가정보')}
@@ -371,36 +387,13 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
  * `address_overseas` 만 전용 OverseasAddressField, 나머지는 일반 EditableField 로 처리.
  */
 /**
- * 같은 group 메타데이터를 가진 항목들을 묶어 표시.
- * 그룹 순서는 array 안의 첫 등장 위치, 그룹 안 항목 순서는 array 순서.
+ * 추가정보 영역 segment — group 헤더 + sub-rows vs flat 단일 row.
+ * 좌표/그룹화 결정은 buildShareFieldDescriptors 가 책임 (subgroup 이 이미 ≥2 일 때만 박힘).
+ * case-detail 은 descriptor.subgroup 인접 묶음으로 ExtraSegment 를 구성한다.
  */
 type ExtraSegment =
   | { type: 'group'; name: string; items: ExtraFieldDef[] }
   | { type: 'flat'; entry: ExtraFieldDef }
-
-function groupExtraEntries(entries: ExtraFieldDef[]): ExtraSegment[] {
-  const result: ExtraSegment[] = []
-  const groupMap = new Map<string, { type: 'group'; name: string; items: ExtraFieldDef[] }>()
-  for (const e of entries) {
-    if (e.group) {
-      let g = groupMap.get(e.group)
-      if (!g) {
-        g = { type: 'group', name: e.group, items: [] }
-        result.push(g)
-        groupMap.set(e.group, g)
-      }
-      g.items.push(e)
-    } else {
-      result.push({ type: 'flat', entry: e })
-    }
-  }
-  // 그룹 안 항목이 1개뿐이면 그룹 헤더 없이 평면(전체 라벨)으로 표시.
-  return result.map((seg) => (
-    seg.type === 'group' && seg.items.length === 1
-      ? { type: 'flat' as const, entry: seg.items[0] }
-      : seg
-  ))
-}
 
 /** 목적지별 ExtraFieldDef 오버라이드 — 같은 키라도 국가별로 type/options 가 달라질 때 적용. */
 function applyDestinationFieldOverride(def: ExtraFieldDef, destination: string | null | undefined): ExtraFieldDef {
@@ -514,18 +507,17 @@ function mapExtractResultToUnified(country: Country, result: Record<string, unkn
   return out
 }
 
-function SimpleExtraSection({ caseId, caseRow, sectionNumber, entries, destination, isCollapsed, onToggleCollapsed }: {
+function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destination, isCollapsed, onToggleCollapsed }: {
   caseId: string
   caseRow: CaseRow
   sectionNumber: string
-  entries: ExtraFieldDef[]
+  segments: ExtraSegment[]
   destination: string | null | undefined
   isCollapsed: boolean
   onToggleCollapsed: () => void
 }) {
   const { updateLocalCaseField } = useCases()
   const confirm = useConfirm()
-  const segments = groupExtraEntries(entries)
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const [extracting, setExtracting] = useState(false)
   const [extractMsg, setExtractMsg] = useState<string | null>(null)
@@ -782,7 +774,10 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items }: {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors hover:bg-accent/60">
-      <SectionLabel className="pt-1">{groupName}</SectionLabel>
+      {/* 그룹명 — 우측 항목 라벨(mono muted)과 톤 차이 두기 위해 serif + semibold + foreground. */}
+      <span className="pt-1 font-serif text-[14px] font-semibold text-foreground">
+        {groupName}
+      </span>
       <div className="min-w-0">
         {items.map((def) => {
           const spec = buildSpecForExtra(def, true)

@@ -53,10 +53,10 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['일본', 'japan'],
     extraSection: 'japan',
     extraFields: [
-      // 입국 항공편 (한국 → 일본)
-      'entry_date', 'entry_departure_airport', 'entry_airport', 'entry_transport', 'entry_flight_number',
-      // 출국 항공편 (일본 → 한국)
-      'return_date', 'return_departure_airport', 'return_arrival_airport', 'return_transport', 'return_flight_number',
+      // 출국 항공편 (한국 → 일본) — 날짜 → 항공편명 → 출발/도착공항 → 운송방법
+      'entry_date', 'entry_flight_number', 'entry_departure_airport', 'entry_airport', 'entry_transport',
+      // 귀국 항공편 (일본 → 한국) — 동일 순서
+      'return_date', 'return_flight_number', 'return_departure_airport', 'return_arrival_airport', 'return_transport',
       // 평면 (그룹 없음)
       'email', 'address_overseas', 'certificate_no',
     ],
@@ -127,7 +127,12 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer', 'general'],
     extraSection: 'thailand',
     // 태국은 검역소·도착지 = 입국공항 (Bangkok=BKK, Phuket=HKT, Chiang Mai=CNX) 이라 entry_airport 로 통합.
-    extraFields: ['address_overseas', 'passport_number', 'passport_expiry_date', 'passport_issuer', 'entry_date', 'entry_time', 'entry_airport', 'entry_flight_number'],
+    // 표시 순서: 여권 정보 → 해외주소 → 항공편(날짜·시간·항공편명·도착공항).
+    extraFields: [
+      'passport_number', 'passport_expiry_date', 'passport_issuer',
+      'address_overseas',
+      'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
+    ],
   },
   philippines: {
     keywords: ['필리핀', 'philippines'],

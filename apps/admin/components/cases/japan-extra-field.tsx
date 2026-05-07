@@ -41,8 +41,8 @@ const TRANSPORT_OPTIONS = [
 
 const FLIGHT_FIELDS: { key: keyof FlightEntry; label: string; type: 'text' | 'date' | 'select'; placeholder?: string }[] = [
   { key: 'date', label: '날짜', type: 'date' },
-  { key: 'departure_airport', label: '출국공항', type: 'text', placeholder: 'ICN' },
-  { key: 'arrival_airport', label: '입국공항', type: 'text', placeholder: 'NRT' },
+  { key: 'departure_airport', label: '출발공항', type: 'text', placeholder: 'ICN' },
+  { key: 'arrival_airport', label: '도착공항', type: 'text', placeholder: 'NRT' },
   { key: 'transport', label: '운송방법', type: 'select' },
   { key: 'flight_number', label: '항공편명', type: 'text', placeholder: 'KE713' },
 ]
@@ -271,9 +271,9 @@ export function JapanExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
       handleDragLeave={handleDragLeave}
       handleDrop={handleDrop}
     >
-      {/* ── Inbound ── */}
+      {/* ── Inbound (출국: 한국 → 일본) ── */}
       <FlightBlock
-        label="입국 항공편"
+        label="출국 항공편"
         direction="inbound"
         flight={extra.inbound}
         editingField={editingField}
@@ -281,9 +281,9 @@ export function JapanExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
         onSave={(key, val) => saveFlightField('inbound', key, val)}
       />
 
-      {/* ── Outbound ── */}
+      {/* ── Outbound (귀국: 일본 → 한국) ── */}
       <FlightBlock
-        label="출국 항공편"
+        label="귀국 항공편"
         direction="outbound"
         flight={extra.outbound}
         editingField={editingField}

@@ -266,8 +266,8 @@ export function SwissExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
     >
       <div className="space-y-1">
       {renderSelect('entry_purpose', '입국목적', PURPOSE_OPTIONS)}
-      {renderDate('entry_date', '입국일')}
-      {renderSelect('entry_airport', '입국공항', AIRPORT_OPTIONS)}
+      {renderDate('entry_date', '도착일')}
+      {renderSelect('entry_airport', '도착공항', AIRPORT_OPTIONS)}
 
       {/* 해외주소 — 단일 문자열. "Rue du Lac 12, 1800 Vevey, Switzerland" 포맷.
           PDF 생성 시 자동 파싱해 Address/Postcode/City 로 분리 출력. */}

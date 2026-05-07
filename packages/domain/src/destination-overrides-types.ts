@@ -84,18 +84,18 @@ export const EXTRA_FIELD_DEFS: Record<string, ExtraFieldDef> = {
   passport_issuing_country: { key: 'passport_issuing_country', label: '발급국가', type: 'text', placeholder: 'Republic of Korea' },
   holder_birth_date: { key: 'holder_birth_date', label: '소지자 생년월일', type: 'date' },
   // ── 증명서 / 허가 ──
-  certificate_no: { key: 'certificate_no', label: '증명서 번호', type: 'text' },
+  certificate_no: { key: 'certificate_no', label: 'EQC No.', type: 'text' },
   permit_no: { key: 'permit_no', label: '수입허가번호', type: 'text' },
   id_date: { key: 'id_date', label: 'ID 날짜', type: 'date' },
   sample_received_date: { key: 'sample_received_date', label: '샘플수령일', type: 'date' },
-  // ── 입국 항공편 (그룹) ──
-  entry_date: { key: 'entry_date', label: '입국일', type: 'date', group: '입국 항공편', shortLabel: '날짜' },
-  entry_departure_airport: { key: 'entry_departure_airport', label: '출국공항', type: 'text', placeholder: 'ICN', group: '입국 항공편', shortLabel: '출국공항' },
-  entry_airport: { key: 'entry_airport', label: '입국공항', type: 'text', placeholder: 'NRT', group: '입국 항공편', shortLabel: '입국공항' },
-  entry_transport: { key: 'entry_transport', label: '운송방법', type: 'select', options: TRANSPORT_OPTIONS, group: '입국 항공편', shortLabel: '운송방법' },
-  entry_flight_number: { key: 'entry_flight_number', label: '입국 항공편', type: 'text', placeholder: 'KE659', group: '입국 항공편', shortLabel: '항공편명' },
-  // ── 입국 기타 (평면) ──
-  entry_time: { key: 'entry_time', label: '입국시간', type: 'time', placeholder: 'HH:mm', group: '입국 항공편', shortLabel: '시간' },
+  // ── 출국 항공편 (그룹) — 한국 출발 → 도착국 도착. 보호자 시점으로 라벨 통일.
+  //    표시 순서: 날짜 → 항공편명 → 출발/도착공항 → 운송방법 → 시간. ──
+  entry_date: { key: 'entry_date', label: '도착일', type: 'date', group: '출국 항공편', shortLabel: '날짜' },
+  entry_flight_number: { key: 'entry_flight_number', label: '항공편명', type: 'text', placeholder: 'KE659', group: '출국 항공편', shortLabel: '항공편명' },
+  entry_departure_airport: { key: 'entry_departure_airport', label: '출발공항', type: 'text', placeholder: 'ICN', group: '출국 항공편', shortLabel: '출발공항' },
+  entry_airport: { key: 'entry_airport', label: '도착공항', type: 'text', placeholder: 'NRT', group: '출국 항공편', shortLabel: '도착공항' },
+  entry_transport: { key: 'entry_transport', label: '운송방법', type: 'select', options: TRANSPORT_OPTIONS, group: '출국 항공편', shortLabel: '운송방법' },
+  entry_time: { key: 'entry_time', label: '도착시간', type: 'time', placeholder: 'HH:mm', group: '출국 항공편', shortLabel: '시간' },
   entry_purpose: {
     key: 'entry_purpose',
     label: '입국목적',
@@ -118,12 +118,13 @@ export const EXTRA_FIELD_DEFS: Record<string, ExtraFieldDef> = {
       { value: 'both', label: '둘 다' },
     ],
   },
-  // ── 출국 항공편 (그룹, 일본 reentry 등) ──
-  return_date: { key: 'return_date', label: '귀국일', type: 'date', group: '출국 항공편', shortLabel: '날짜' },
-  return_departure_airport: { key: 'return_departure_airport', label: '귀국 출발공항', type: 'text', placeholder: 'NRT', group: '출국 항공편', shortLabel: '출국공항' },
-  return_arrival_airport: { key: 'return_arrival_airport', label: '귀국 도착공항', type: 'text', placeholder: 'ICN', group: '출국 항공편', shortLabel: '입국공항' },
-  return_transport: { key: 'return_transport', label: '귀국 운송방법', type: 'select', options: TRANSPORT_OPTIONS, group: '출국 항공편', shortLabel: '운송방법' },
-  return_flight_number: { key: 'return_flight_number', label: '귀국 항공편', type: 'text', placeholder: 'KE713', group: '출국 항공편', shortLabel: '항공편명' },
+  // ── 귀국 항공편 (그룹, 일본 reentry 등) — 도착국 출발 → 한국 귀국.
+  //    표시 순서: 날짜 → 항공편명 → 출발/도착공항 → 운송방법. ──
+  return_date: { key: 'return_date', label: '귀국일', type: 'date', group: '귀국 항공편', shortLabel: '날짜' },
+  return_flight_number: { key: 'return_flight_number', label: '귀국 항공편', type: 'text', placeholder: 'KE713', group: '귀국 항공편', shortLabel: '항공편명' },
+  return_departure_airport: { key: 'return_departure_airport', label: '귀국 출발공항', type: 'text', placeholder: 'NRT', group: '귀국 항공편', shortLabel: '출발공항' },
+  return_arrival_airport: { key: 'return_arrival_airport', label: '귀국 도착공항', type: 'text', placeholder: 'ICN', group: '귀국 항공편', shortLabel: '도착공항' },
+  return_transport: { key: 'return_transport', label: '귀국 운송방법', type: 'select', options: TRANSPORT_OPTIONS, group: '귀국 항공편', shortLabel: '운송방법' },
 }
 
 export const ALL_EXTRA_FIELD_KEYS = Object.keys(EXTRA_FIELD_DEFS) as readonly string[]

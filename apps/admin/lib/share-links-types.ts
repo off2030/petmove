@@ -40,7 +40,7 @@ export interface ShareFieldSpec {
   hide_valid_until?: boolean
   /** 공유 폼 그룹핑 — '고객정보' | '동물정보' | '절차정보' | '추가정보'. 미지정 시 카테고리 헤더 없이 표시. */
   category?: string
-  /** 공유 폼 서브그룹 — '입국 항공편' | '출국 항공편' 등 (EXTRA_FIELD_DEFS.group). */
+  /** 공유 폼 서브그룹 — '출국 항공편' | '귀국 항공편' 등 (EXTRA_FIELD_DEFS.group). */
   subgroup?: string
 }
 
@@ -105,6 +105,14 @@ export const SHARE_VACCINE_GROUPS: ShareVaccineGroup[] = [
     source_keys: ['civ_dates', 'civ', 'civ_2'],
     storage_mode: 'array',
     array_key: 'civ_dates',
+  },
+  {
+    key: '__kennel_cough',
+    label: '켄넬코프',
+    display_order: 47,
+    source_keys: ['kennel_cough_dates'],
+    storage_mode: 'array',
+    array_key: 'kennel_cough_dates',
   },
   {
     key: '__external_parasite',
@@ -209,4 +217,31 @@ export const SHARE_RECIPIENT_LABEL_OVERRIDE: Record<string, string> = {
   pet_name:         '이름',
   pet_name_en:      '영문이름 (English)',
   weight:           '몸무게 (kg)',
+  // 추가정보 — admin 도메인 약어(EQC No.) 를 보호자 친화 풀 라벨로 풀어쓰기.
+  certificate_no:   '일본 수출동물검역증 번호',
 }
+
+/**
+ * 외부 수신자가 직접 입력하기 부적절한 필드 — share 다이얼로그·프리셋·수신자 폼에서 모두 제외.
+ * - age: 생년월일에서 자동 계산 (별도 입력 불필요)
+ * - rabies_3: 3차 접종 미사용 정책
+ * - destination: 발신 조직이 결정 (외부 수신자 입력 대상 아님)
+ * - memo / notes: 폼 하단의 별도 메모 필드로 분리
+ * - customer_first_name_en / customer_last_name_en: 컬럼 customer_name_en 으로 합쳐 노출
+ * - breed_en / color_en / sex_en: 한글 칩만 노출 (영문은 자동 보정/표시)
+ * - payment_*, payments: 외부 입력 대상 아님
+ * - microchip_secondary, japan_extra: 내부/legacy 컨테이너
+ * - address_overseas: 추가정보 전용 (4번 블록에서 처리)
+ * - vet_visit_date: 발신 조직 내부의 발급일 — 외부 수신자가 채울 항목 아님.
+ * - departure_date: 출국일은 발신 조직이 결정 — 외부 수신자가 채울 항목 아님.
+ */
+export const SHARE_EXCLUDED_KEYS = new Set([
+  'age', 'rabies_3', 'destination', 'memo', 'notes',
+  'customer_first_name_en', 'customer_last_name_en',
+  'breed_en', 'color_en', 'sex_en',
+  'payment_amount', 'payment_method', 'payments',
+  'microchip_secondary', 'japan_extra',
+  'address_overseas',
+  'vet_visit_date',
+  'departure_date',
+])

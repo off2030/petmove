@@ -15,13 +15,19 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { formatMicrochip } from '@/lib/fields'
-import { EXTRA_FIELD_DEFS } from '@petmove/domain'
+import {
+  getEffectiveExtraFieldEntries,
+  type DestinationExtraFieldEntry,
+} from '@petmove/domain'
+import { loadDestinationOverridesByOrg } from '@/lib/destination-overrides-config'
+import {
+  buildShareFieldDescriptors,
+  type ShareFieldDescriptor,
+} from '@/lib/share-field-layout'
 import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
 import {
-  SHARE_COLUMN_FIELDS as COLUMN_FIELDS,
-  SHARE_COLUMN_META as COLUMN_META,
-  SHARE_RECIPIENT_LABEL_OVERRIDE as RECIPIENT_LABEL_OVERRIDE,
   shareLinkStatus,
+  SHARE_COLUMN_FIELDS,
   SHARE_VACCINE_GROUPS,
   type ShareFieldSpec,
   type ShareLinkPublicView,
@@ -30,119 +36,108 @@ import {
   type ShareVaccineGroup,
 } from '@/lib/share-links-types'
 
-const VACCINE_GROUP_BY_KEY = new Map<string, ShareVaccineGroup>(
-  SHARE_VACCINE_GROUPS.map((g) => [g.key, g]),
-)
-
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 
-// ─────────────────────────────────────────────────
-// 헬퍼 — field_definitions 기반 spec 생성
-// ─────────────────────────────────────────────────
-
-/** column 키 → 카테고리 매핑 (share-link-dialog 와 동일한 좌표계). destination 은 외부 수신자 입력 대상 아님 → 매핑 없음. */
-const COLUMN_CATEGORY: Record<string, string> = {
-  customer_name:    '고객정보',
-  customer_name_en: '고객정보',
-  pet_name:         '동물정보',
-  pet_name_en:      '동물정보',
-  microchip:        '동물정보',
-  departure_date:   '절차정보',
-}
-/** field_definitions.group_name → 카테고리. */
-const FIELD_DEF_CATEGORY: Record<string, string> = {
-  '기본정보': '고객정보',
-  '동물정보': '동물정보',
-  '절차/식별': '절차정보',
-  '절차/예방접종': '절차정보',
-  '절차/검사': '절차정보',
-  '절차/구충': '절차정보',
-}
-
+/**
+ * fieldKeys → ShareFieldSpec[] 조립.
+ *
+ * 좌표(category·subgroup·정렬)는 buildShareFieldDescriptors 가 단독 책임 — 다이얼로그·프리셋·
+ * case-detail 추가정보 영역과 동일한 단일 권위. 이 함수는 그 위에서 fieldKeys 화이트리스트를 적용하고
+ * descriptor.source 메타로 storage·type·current_value 를 박을 뿐이다.
+ *
+ * caseScoped 는 null 로 — 발급 시점에 다이얼로그가 이미 species/destination 필터를 통과시킨 키만
+ * fieldKeys 에 들어 있으므로, 케이스 species 가 변경된 뒤에도 슬롯이 사라지지 않게.
+ */
 async function buildFieldSpecs(
   fieldKeys: string[],
   caseRow: CaseRow,
+  extraEntries: DestinationExtraFieldEntry[],
 ): Promise<ShareFieldSpec[]> {
-  // data jsonb 키만 골라서 field_definitions lookup (합성 키·컬럼 키 제외)
-  const dataKeys = fieldKeys.filter(
-    (k) => !COLUMN_FIELDS.has(k) && !VACCINE_GROUP_BY_KEY.has(k),
-  )
-  const admin = createAdminClient()
-  let defs: FieldDefinition[] = []
-  if (dataKeys.length > 0) {
-    const { data } = await admin
-      .from('field_definitions')
-      .select('*')
-      .is('org_id', null)
-      .in('key', dataKeys)
-    defs = (data ?? []) as FieldDefinition[]
-  }
-  const defByKey = new Map<string, FieldDefinition>()
-  for (const d of defs) defByKey.set(d.key, d)
+  // jsonb 키만 DB lookup — 컬럼·합성·EXTRA 는 descriptor.source 에서 직접 처리됨.
+  const allKeys = new Set(fieldKeys)
+  const fieldDefs = await fetchFieldDefinitionsForKeys(fieldKeys)
+
+  const descriptors = buildShareFieldDescriptors({
+    fieldDefs,
+    extraFieldEntries: extraEntries,
+    caseScoped: null,
+  })
 
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const out: ShareFieldSpec[] = []
-  for (const key of fieldKeys) {
-    // 1) 합성 백신·구충 그룹
-    const vax = VACCINE_GROUP_BY_KEY.get(key)
-    if (vax) {
-      out.push({
-        key: vax.key,
-        label: vax.label,
-        storage: 'synthetic',
-        type: 'date_array',
-        max_entries: vax.max_entries,
-        hide_valid_until: vax.hide_valid_until,
-        current_value: extractVaccineEntries(vax, data),
-        category: '절차정보',
-      })
-      continue
-    }
-    // 2) 정규 컬럼
-    if (COLUMN_FIELDS.has(key)) {
-      const meta = COLUMN_META[key]
-      if (!meta) continue
-      out.push({
-        key,
-        label: RECIPIENT_LABEL_OVERRIDE[key] ?? meta.label,
-        storage: 'column',
-        type: meta.type,
-        current_value: (caseRow as unknown as Record<string, unknown>)[key] ?? null,
-        category: COLUMN_CATEGORY[key],
-      })
-      continue
-    }
-    // 3) data jsonb 필드 (field_definitions)
-    const def = defByKey.get(key)
-    if (def) {
-      out.push({
-        key,
-        label: RECIPIENT_LABEL_OVERRIDE[key] ?? def.label,
-        storage: 'data',
-        type: def.type,
-        options: def.options ?? undefined,
-        current_value: data[key] ?? null,
-        category: FIELD_DEF_CATEGORY[def.group_name ?? ''],
-      })
-      continue
-    }
-    // 4) 목적지별 추가 필드 (EXTRA_FIELD_DEFS — 일본 입국일·항공편, 해외주소 등)
-    const extra = EXTRA_FIELD_DEFS[key]
-    if (extra) {
-      out.push({
-        key,
-        label: extra.label,
-        storage: 'data',
-        type: mapExtraType(extra.type),
-        options: extra.options?.map((o) => ({ value: o.value, label_ko: o.label })),
-        current_value: data[key] ?? null,
-        category: '추가정보',
-        subgroup: extra.group,
-      })
-      continue
-    }
+  for (const d of descriptors) {
+    if (!allKeys.has(d.key)) continue
+    out.push(toShareFieldSpec(d, caseRow, data))
   }
   return out
+}
+
+/** field_definitions DB lookup — null org_id (플랫폼 기본). fieldKeys 에 jsonb 후보가 없으면 query 스킵. */
+async function fetchFieldDefinitionsForKeys(fieldKeys: string[]): Promise<FieldDefinition[]> {
+  if (fieldKeys.length === 0) return []
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('field_definitions')
+    .select('*')
+    .is('org_id', null)
+    .in('key', fieldKeys)
+  return (data ?? []) as FieldDefinition[]
+}
+
+/** descriptor.source 한 곳에서 storage/type/options/current_value 결정 — server 전용 변환. */
+function toShareFieldSpec(
+  d: ShareFieldDescriptor,
+  caseRow: CaseRow,
+  data: Record<string, unknown>,
+): ShareFieldSpec {
+  const base = {
+    key: d.key,
+    label: d.label,
+    category: d.category,
+    subgroup: d.subgroup,
+  } as const
+  switch (d.source.kind) {
+    case 'column': {
+      const meta = d.source.meta
+      return {
+        ...base,
+        storage: 'column',
+        type: meta.type,
+        current_value: (caseRow as unknown as Record<string, unknown>)[d.key] ?? null,
+      }
+    }
+    case 'data': {
+      const def = d.source.def
+      return {
+        ...base,
+        storage: 'data',
+        type: def.type as ShareFieldSpec['type'],
+        options: def.options ?? undefined,
+        current_value: data[d.key] ?? null,
+      }
+    }
+    case 'synthetic-vaccine': {
+      const g = d.source.group
+      return {
+        ...base,
+        storage: 'synthetic',
+        type: 'date_array',
+        max_entries: g.max_entries,
+        hide_valid_until: g.hide_valid_until,
+        current_value: extractVaccineEntries(g, data),
+      }
+    }
+    case 'extra': {
+      const ed = d.source.def
+      return {
+        ...base,
+        storage: 'data',
+        type: mapExtraType(ed.type),
+        options: ed.options?.map((o) => ({ value: o.value, label_ko: o.label })),
+        current_value: data[d.key] ?? null,
+      }
+    }
+  }
 }
 
 /** ExtraFieldType → ShareFieldSpec.type — email/time 은 일반 text 로 폴백. */
@@ -155,6 +150,10 @@ function mapExtraType(t: string): ShareFieldSpec['type'] {
     default: return 'text'
   }
 }
+
+const VACCINE_GROUP_BY_KEY = new Map<string, ShareVaccineGroup>(
+  SHARE_VACCINE_GROUPS.map((g) => [g.key, g]),
+)
 
 /**
  * 백신·구충 그룹의 현재 값을 ShareVaccineEntry[] 로 추출 — UI 미리채우기용.
@@ -343,7 +342,14 @@ export async function getShareLinkByToken(
       .eq('id', row.org_id)
       .maybeSingle()
 
-    const fields = await buildFieldSpecs(row.field_keys, caseRow as CaseRow)
+    // 추가정보 표시 순서를 case-detail 과 일치시키려면 destination 별 extraFields entries 가
+    // 필요. 조직 custom override 까지 합쳐 effective entries 를 산출.
+    const destOverrides = await loadDestinationOverridesByOrg(admin, row.org_id)
+    const extraEntries = getEffectiveExtraFieldEntries(
+      (caseRow as CaseRow).destination,
+      destOverrides,
+    )
+    const fields = await buildFieldSpecs(row.field_keys, caseRow as CaseRow, extraEntries)
 
     return {
       ok: true,
@@ -447,7 +453,7 @@ export async function submitShareLink(
       if (VACCINE_GROUP_BY_KEY.has(key)) continue // 위에서 처리됨
       const value = normalizeValue(key, raw)
       if (value === undefined) continue
-      if (COLUMN_FIELDS.has(key)) {
+      if (SHARE_COLUMN_FIELDS.has(key)) {
         colUpdate[key] = value
       } else {
         dataUpdate[key] = value

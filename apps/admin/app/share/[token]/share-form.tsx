@@ -127,21 +127,23 @@ export function ShareForm({ initial }: Props) {
         </header>
 
         {/* 필드 입력 — 카테고리/서브그룹별로 묶어 표시. 카테고리·서브그룹 단일이면 헤더 생략. */}
-        <div className="space-y-md">
+        <div className="space-y-lg">
           {(() => {
             const grouped = groupFields(view.fields)
             const showCategoryHeaders = grouped.length >= 2
             return grouped.map((cat) => (
               <div key={cat.category ?? '__none'} className="space-y-md">
                 {showCategoryHeaders && cat.category && (
-                  <h2 className="font-mono text-[10.5px] uppercase tracking-[1.2px] text-foreground/80 pt-md">
+                  /* 카테고리 — share-link-dialog 와 동일 톤(serif semibold + 점선 밑줄). 항목 라벨(mono muted)과 톤 차이를 분명히. */
+                  <h2 className="font-serif text-[16px] font-semibold text-foreground pb-1.5 border-b border-dotted border-border/60">
                     {cat.category}
                   </h2>
                 )}
                 {cat.blocks.map((block, bi) => (
                   <div key={bi} className="space-y-md">
                     {cat.showSubgroupHeaders && block.subgroup && (
-                      <p className="font-mono text-[10px] uppercase tracking-[1.1px] text-muted-foreground/70 pt-1">
+                      /* 서브그룹 — 카테고리보다 한 단계 약하게(mono uppercase tracking, foreground/70). */
+                      <p className="font-mono text-[10.5px] uppercase tracking-[1.4px] text-foreground/70 pt-1 pl-2 border-l-2 border-border/60">
                         {block.subgroup}
                       </p>
                     )}
@@ -181,7 +183,7 @@ export function ShareForm({ initial }: Props) {
           disabled={pending}
           className="w-full py-2.5 rounded-md bg-foreground text-background font-serif text-[15px] hover:bg-foreground/90 disabled:opacity-40 transition-colors"
         >
-          {pending ? '제출 중…' : '제출하기'}
+          {pending ? '보내는 중…' : '보내기'}
         </button>
 
         <p className="font-serif italic text-[12px] text-muted-foreground/70 text-center" suppressHydrationWarning>

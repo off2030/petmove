@@ -97,6 +97,29 @@ function normalize(raw: unknown): DestinationOverridesConfig {
   return { custom }
 }
 
+/**
+ * 익명(토큰 기반) 흐름·서버 액션에서 admin(service-role) 클라이언트로 직접 조회.
+ * 기존 loadDestinationOverrides 는 active_org 의존이라 share/[token] 같은 anon 경로엔 부적합.
+ */
+export async function loadDestinationOverridesByOrg(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  admin: any,
+  orgId: string,
+): Promise<DestinationOverridesConfig> {
+  try {
+    const { data } = await admin
+      .from('organization_settings')
+      .select('value')
+      .eq('org_id', orgId)
+      .eq('key', APP_SETTINGS_KEY)
+      .maybeSingle()
+    if (data?.value) return normalize(data.value)
+    return EMPTY_DESTINATION_OVERRIDES
+  } catch {
+    return EMPTY_DESTINATION_OVERRIDES
+  }
+}
+
 export async function loadDestinationOverrides(): Promise<DestinationOverridesConfig> {
   try {
     const { createClient } = await import('@/lib/supabase/server')

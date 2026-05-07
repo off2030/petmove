@@ -13,10 +13,7 @@ import {
   getEffectiveVaccineEntries,
   getEffectiveExtraFieldEntries,
   vaccineMatchesSpecies,
-  extraFieldMatchesSpecies,
-  EXTRA_FIELD_DEFS,
 } from '@petmove/domain'
-import { buildFieldSpecs } from '@/lib/fields'
 import type { CaseRow } from '@/lib/supabase/types'
 import {
   createShareLink,
@@ -25,52 +22,11 @@ import {
 } from '@/lib/actions/share-links'
 import {
   shareLinkStatus,
-  SHARE_VACCINE_GROUPS,
-  SHARE_HIDDEN_BY_VACCINE_GROUPS,
-  SHARE_RECIPIENT_LABEL_OVERRIDE,
   type ShareLinkRow,
   type ShareLinkStatus,
 } from '@/lib/share-links-types'
+import { buildShareFieldLayout } from '@/lib/share-field-layout'
 import type { SharePreset } from '@/lib/share-presets-types'
-
-/**
- * 데이터 필드 키 → 백신/검사 그룹 키 매핑.
- * vaccineEntries 에 그룹이 있을 때만 해당 필드를 노출.
- * 매핑 없는 키(고객·동물 정보 등)는 백신 필터 적용 안함.
- */
-const FIELD_TO_VACCINE_KEY: Record<string, string> = {
-  // 광견병 — legacy 단일·번호 + 현재 array
-  rabies_1: 'rabies', rabies_2: 'rabies', rabies_3: 'rabies', rabies_dates: 'rabies',
-  // 광견병 항체검사 — legacy 단일 + 현재 키 (rabies_titer_test_date / rabies_titer)
-  rabies_titer_date: 'rabies_titer', rabies_titer_value: 'rabies_titer',
-  rabies_titer_test_date: 'rabies_titer', rabies_titer: 'rabies_titer',
-  // 종합백신 — legacy comprehensive 들 + 현재 general_vaccine
-  comprehensive: 'general', comprehensive_2: 'general',
-  general_vaccine: 'general', general_vaccine_dates: 'general',
-  // 독감(CIV)
-  civ: 'civ', civ_dates: 'civ', civ_2: 'civ',
-  // 켄넬코프
-  kennel_cough_dates: 'kennel',
-  // 검사 — legacy + 현재 (heartworm_test, infectious_disease_test)
-  heartworm: 'heartworm', heartworm_test: 'heartworm', heartworm_dates: 'heartworm',
-  infectious_disease: 'infectious_disease',
-  infectious_disease_test: 'infectious_disease',
-  // 구충
-  external_parasite_1: 'external_parasite',
-  external_parasite_2: 'external_parasite',
-  external_parasite_3: 'external_parasite',
-  internal_parasite_1: 'internal_parasite',
-  internal_parasite_2: 'internal_parasite',
-}
-
-/** 합성 백신·구충 그룹 → vaccine entry key. */
-const SYNTHETIC_VACCINE_KEY: Record<string, string> = {
-  __rabies: 'rabies',
-  __comprehensive: 'general',
-  __civ: 'civ',
-  __external_parasite: 'external_parasite',
-  __internal_parasite: 'internal_parasite',
-}
 
 interface Props {
   caseRow: CaseRow
@@ -78,47 +34,9 @@ interface Props {
   onClose: () => void
 }
 
-const CATEGORIES = ['고객정보', '동물정보', '절차정보', '추가정보'] as const
-
-/**
- * 외부 수신자가 직접 입력하기 부적절한 필드 — share 다이얼로그에서 제외.
- * - age: 생년월일에서 자동 계산 (별도 입력 불필요)
- * - rabies_3: 3차 접종 미사용 정책
- * - destination: 발신 조직이 결정 (외부 수신자 입력 대상 아님)
- * - memo / notes: 폼 하단의 별도 메모 필드로 분리
- * - customer_first_name_en / customer_last_name_en: 컬럼 customer_name_en 으로 합쳐 노출
- * - breed_en / color_en / sex_en: 한글 칩만 노출 (영문은 자동 보정/표시)
- * - payment_*, payments: 외부 입력 대상 아님
- * - microchip_secondary, japan_extra: 내부/legacy 컨테이너
- * - address_overseas: 추가정보 전용 (4번 블록에서 처리)
- */
-const SHARE_EXCLUDED_KEYS = new Set([
-  'age', 'rabies_3', 'destination', 'memo', 'notes',
-  'customer_first_name_en', 'customer_last_name_en',
-  'breed_en', 'color_en', 'sex_en',
-  'payment_amount', 'payment_method', 'payments',
-  'microchip_secondary', 'japan_extra',
-  'address_overseas',
-])
-
-// 다이얼로그 칩 라벨도 수신자에게 실제 보일 라벨(SHARE_RECIPIENT_LABEL_OVERRIDE)을 그대로 노출 —
-// 발신자가 "고객이 어떻게 볼지" 미리 확인할 수 있도록 단일 진실 공급원으로 통합.
-
-/** 카테고리 별로 allowedFields(=목적지 필터) 를 적용할지. 절차정보만 적용 — 고객·동물 정보는 모든 케이스 공통이라 필터 없이 전부 노출. */
-const CATEGORY_APPLIES_DESTINATION_FILTER: Record<string, boolean> = {
-  '고객정보': false,
-  '동물정보': false,
-  '절차정보': true,
-  '추가정보': false,
-}
-
-/** spec.group → 다이얼로그 카테고리 (case-detail 의 그룹명과 동일). */
-const SPEC_GROUP_TO_CATEGORY: Record<string, typeof CATEGORIES[number]> = {
-  '고객정보': '고객정보',
-  '동물정보': '동물정보',
-  '절차정보': '절차정보',
-  // '기타정보' (메모) 는 폼 하단 별도 메모 필드로 들어감 → 다이얼로그 칩 미노출
-}
+// 카테고리/그룹 매핑·합성 백신 매핑·라벨 override 등은 모두 share-field-layout.ts 와
+// share-links-types.ts 의 공통 정의를 사용 — 다이얼로그·프리셋·수신자 폼·case-detail
+// 네 곳이 단일 진실 공급원을 공유한다.
 
 const STATUS_LABEL: Record<ShareLinkStatus, string> = {
   active: '대기',
@@ -171,102 +89,16 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
     return !!entry && vaccineMatchesSpecies(entry, speciesValue)
   }
 
-  // 4개 카테고리로 정규화 — field_definitions.group_name 또는 컬럼 키 → 카테고리.
-  // 매칭 안되는 필드(메모 등)는 표시 자체에서 제외 (return null).
-  const groupedFields = useMemo(() => {
-    type Field = { key: string; label: string; order: number; groupOrder: number; subgroup?: string }
-    const buckets: Record<typeof CATEGORIES[number], Field[]> = {
-      '고객정보': [],
-      '동물정보': [],
-      '절차정보': [],
-      '추가정보': [],
-    }
-
-    // 1) 컬럼 + jsonb 필드를 case-detail 과 동일한 좌표계로 빌드 → 같은 정렬 결과 보장.
-    //    REGULAR_COLUMN_SPECS 의 groupOrder/order 와 field_definitions 의 display_order 가
-    //    혼합 정렬되므로 출국일(컬럼 order=9999) 이 마이크로칩 삽입일(jsonb display_order≈30) 뒤에 옴.
-    const allSpecs = buildFieldSpecs(fieldDefs)
-    for (const spec of allSpecs) {
-      if (SHARE_EXCLUDED_KEYS.has(spec.key)) continue
-      if (SHARE_HIDDEN_BY_VACCINE_GROUPS.has(spec.key)) continue
-      const category = SPEC_GROUP_TO_CATEGORY[spec.group]
-      if (!category) continue // 기타정보 등은 제외
-      // 절차정보는 목적지 토글 기준 필터, 고객·동물 정보는 전부 노출.
-      if (CATEGORY_APPLIES_DESTINATION_FILTER[category] && !allowedFields.has(spec.key)) continue
-      // 백신/검사/구충 매핑 키는 합성 그룹이 흡수하므로 vaccineApplies 로 제외 판정.
-      const vaccineKey = FIELD_TO_VACCINE_KEY[spec.key]
-      if (vaccineKey && !vaccineApplies(vaccineKey)) continue
-      const label = SHARE_RECIPIENT_LABEL_OVERRIDE[spec.key] ?? spec.label
-      buckets[category].push({
-        key: spec.key,
-        label,
-        order: spec.order,
-        groupOrder: spec.groupOrder,
-      })
-    }
-
-    // 2) 합성 백신 그룹 — 절차 카테고리에 case-detail 과 동일 좌표(groupOrder=2, order=display_order)로 삽입.
-    for (const g of SHARE_VACCINE_GROUPS) {
-      const vk = SYNTHETIC_VACCINE_KEY[g.key]
-      if (vk && !vaccineApplies(vk)) continue
-      buckets['절차정보'].push({
-        key: g.key,
-        label: g.label,
-        order: g.display_order,
-        groupOrder: 2,
-      })
-    }
-
-    // 3) 목적지별 추가 필드 (일본 입국일·항공편, EU 해외주소, 호주 입국공항 등)
-    //    같은 group 메타가 2개 이상일 때만 subgroup 으로 묶고 shortLabel 사용,
-    //    1개뿐이면 평면 표시 (예: 스위스/태국/USA 의 단일 entry_*).
-    const groupCounts = new Map<string, number>()
-    for (const entry of extraFieldEntries) {
-      if (!extraFieldMatchesSpecies(entry, speciesValue)) continue
-      const g = EXTRA_FIELD_DEFS[entry.key]?.group
-      if (g) groupCounts.set(g, (groupCounts.get(g) ?? 0) + 1)
-    }
-    // email 은 고객정보(field_definitions 기본정보) 전용 → 추가정보에서 제외.
-    const EXTRA_EXCLUDED_FROM_EXTRA = new Set(['email'])
-    let extraOrder = 0
-    for (const entry of extraFieldEntries) {
-      if (EXTRA_EXCLUDED_FROM_EXTRA.has(entry.key)) continue
-      if (!extraFieldMatchesSpecies(entry, speciesValue)) continue
-      const def = EXTRA_FIELD_DEFS[entry.key]
-      const useGroup = !!def?.group && (groupCounts.get(def.group) ?? 0) >= 2
-      const label = useGroup && def?.shortLabel ? def.shortLabel : (def?.label ?? entry.key)
-      buckets['추가정보'].push({
-        key: entry.key,
-        label,
-        subgroup: useGroup ? def!.group : undefined,
-        order: extraOrder++,
-        groupOrder: 99, // 추가정보 안에서 자체 정렬
-      })
-    }
-
-    // 카테고리 내 정렬 — case-detail 과 동일하게 (groupOrder, order) 사전식.
-    for (const c of CATEGORIES) {
-      buckets[c].sort((a, b) => {
-        if (a.groupOrder !== b.groupOrder) return a.groupOrder - b.groupOrder
-        return a.order - b.order
-      })
-    }
-
-    // 카테고리별로 연속된 같은 subgroup 끼리 블록으로 묶기 (subgroup 없는 항목은 단일 블록).
-    return CATEGORIES.map((c) => {
-      const blocks: { subgroup?: string; fields: { key: string; label: string }[] }[] = []
-      for (const f of buckets[c]) {
-        const last = blocks[blocks.length - 1]
-        if (last && last.subgroup === f.subgroup) {
-          last.fields.push({ key: f.key, label: f.label })
-        } else {
-          blocks.push({ subgroup: f.subgroup, fields: [{ key: f.key, label: f.label }] })
-        }
-      }
-      return { category: c, blocks }
-    }).filter((g) => g.blocks.length > 0)
+  // 4개 카테고리로 정규화 — buildShareFieldLayout 헬퍼가 case-detail/프리셋/수신자 폼과 동일 좌표계 보장.
+  const groupedFields = useMemo(
+    () => buildShareFieldLayout({
+      fieldDefs,
+      extraFieldEntries,
+      caseScoped: { allowedFields, vaccineApplies, speciesValue },
+    }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fieldDefs, allowedFields, vaccineEntries, extraFieldEntries, speciesValue])
+    [fieldDefs, allowedFields, vaccineEntries, extraFieldEntries, speciesValue],
+  )
 
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(() => new Set())
   const [title, setTitle] = useState('')
@@ -495,7 +327,7 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
             <div className="space-y-lg">
               {groupedFields.map((g) => (
                 <div key={g.category}>
-                  <h4 className="font-serif text-[14px] font-medium text-foreground mb-2">
+                  <h4 className="font-serif text-[15px] font-semibold text-foreground mb-3 pb-1 border-b border-dotted border-border/60">
                     {g.category}
                   </h4>
                   <div className="space-y-2 pl-2 border-l border-border/40">

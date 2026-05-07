@@ -158,6 +158,7 @@ export const HIDDEN_EN_KEYS = new Set<string>([
   'sex_en', // redundant with sex select's bilingual label
   'address_kr',  // shown via AddressField with search
   'address_en',  // shown via AddressField with search
+  'address_overseas', // 추가정보 영역 OverseasAddressField 에서만 표시 — 고객정보(기본정보) 그룹 중복 차단
   'notes',       // shown via NotesField (unified memo + attachments)
   'japan_extra', // shown via JapanExtraField
 ])
