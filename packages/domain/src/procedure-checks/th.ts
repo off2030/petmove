@@ -1,6 +1,8 @@
 import type { ProcedureCheck } from './types'
 import {
   daysBetween,
+  matchBannedBreed,
+  readBreed,
   readGeneralVaccineEntries,
   readRabiesEntries,
   resolveValidUntil,
@@ -260,5 +262,38 @@ export const TH_CHECKS: ProcedureCheck[] = [
       ok: true,
       message: 'R7 수입허가증 신청이 출발 7영업일 이전 완료되었는지 별도 확인 필요.',
     }),
+  },
+
+  // ── 수입 금지 견종 ──
+  {
+    id: 'th.banned-breeds',
+    country: COUNTRY,
+    category: '서류',
+    title: '수입 금지 견종 (Pit Bull 계열)',
+    description:
+      '태국은 American Pit Bull Terrier, American Staffordshire Terrier 등 핏불 계열 수입 금지. (DLD/태국 정부)',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const species = typeof data.species === 'string' ? data.species : ''
+      if (species && species !== 'dog') return SKIP
+      const breed = readBreed(caseRow)
+      if (!breed.ko && !breed.en) return SKIP
+      const match = matchBannedBreed(breed, [
+        'pit bull', 'pitbull', '핏불',
+        'american staffordshire terrier', '아메리칸 스태퍼드셔',
+        'staffordshire bull terrier', '스태퍼드셔 불 테리어',
+      ])
+      if (match) {
+        return {
+          ok: false,
+          message: `견종 "${breed.ko || breed.en}"은 태국 수입 금지 (매치: ${match}).`,
+          fixHint: '태국 내 사육은 합법이나 수입은 법으로 금지됨.',
+          offendingPaths: ['breed', 'breed_en'],
+        }
+      }
+      return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
+    },
   },
 ]

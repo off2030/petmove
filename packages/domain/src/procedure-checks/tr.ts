@@ -2,6 +2,8 @@ import type { ProcedureCheck } from './types'
 import {
   addYears,
   daysBetween,
+  matchBannedBreed,
+  readBreed,
   readExternalParasiteEntries,
   readInternalParasiteEntries,
   readRabiesEntries,
@@ -339,6 +341,42 @@ export const TR_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 수입 금지 견종 ──
+  {
+    id: 'tr.banned-breeds',
+    country: COUNTRY,
+    category: '서류',
+    title: '수입 금지 견종 (Pit Bull, Tosa, Dogo Argentino 등)',
+    description:
+      '튀르키예 농림부: Pit Bull Terrier, American Staffordshire Terrier, Japanese Tosa, Dogo Argentino, Fila Brasileiro 및 동종 수입 금지.',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const species = typeof data.species === 'string' ? data.species : ''
+      if (species && species !== 'dog') return SKIP
+      const breed = readBreed(caseRow)
+      if (!breed.ko && !breed.en) return SKIP
+      const match = matchBannedBreed(breed, [
+        'pit bull', 'pitbull', '핏불',
+        'american staffordshire terrier', '아메리칸 스태퍼드셔',
+        'staffordshire bull terrier', '스태퍼드셔 불 테리어',
+        'tosa', '도사',
+        'dogo argentino', '도고 아르헨티노',
+        'fila brasileiro', '필라 브라질레이로',
+      ])
+      if (match) {
+        return {
+          ok: false,
+          message: `견종 "${breed.ko || breed.en}"은 튀르키예 수입 금지 (매치: ${match}).`,
+          fixHint: 'Tarım ve Orman Bakanlığı 수입 금지 견종.',
+          offendingPaths: ['breed', 'breed_en'],
+        }
+      }
+      return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
     },
   },
 ]

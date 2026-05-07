@@ -217,6 +217,39 @@ export function daysBetween(aISO: string, bISO: string): number | null {
   return Math.round((b - a) / 86400000)
 }
 
+// ── 견종 (수입 금지·제한 검증) ──
+
+/** caseRow.data.breed (한글) + breed_en (영문) 읽기. */
+export function readBreed(caseRow: CaseRow): { ko: string; en: string } {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const ko = typeof data.breed === 'string' ? data.breed : ''
+  const en = typeof data.breed_en === 'string' ? data.breed_en : ''
+  return { ko, en }
+}
+
+/**
+ * 견종이 금지·제한 키워드 목록과 매치되는지 검사.
+ * - ko / en 양쪽에서 공백 제거·소문자 정규화 후 substring 매치.
+ * - 매치된 키워드 반환 (없으면 null).
+ *
+ * 키워드는 충분히 변별력 있는 표현 사용 권장:
+ *  ✅ 'pit bull', 'tosa', 'dogo argentino', 'fila brasileiro'
+ *  ⚠️ 'bull' 같은 짧은 단어는 오탐 위험 — 'bull mastiff', 'bull terrier' 등 전체 명 사용
+ */
+export function matchBannedBreed(
+  breed: { ko: string; en: string },
+  keywords: string[],
+): string | null {
+  const norm = (s: string) => s.toLowerCase().replace(/\s+/g, '')
+  const koLower = norm(breed.ko)
+  const enLower = norm(breed.en)
+  for (const kw of keywords) {
+    const kwLower = norm(kw)
+    if (kwLower && (koLower.includes(kwLower) || enLower.includes(kwLower))) return kw
+  }
+  return null
+}
+
 // ── 공통 결과 ──
 
 /** 필수 입력이 누락된 경우 사용할 결과 — 통과로 간주해 어떤 표시도 안 함. */

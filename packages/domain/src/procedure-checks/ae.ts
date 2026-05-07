@@ -2,6 +2,8 @@ import type { ProcedureCheck } from './types'
 import {
   daysBetween,
   evaluateRabiesAgeConservative,
+  matchBannedBreed,
+  readBreed,
   readExternalParasiteEntries,
   readGeneralVaccineEntries,
   readInternalParasiteEntries,
@@ -323,6 +325,45 @@ export const AE_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 수입 금지 견종 ──
+  {
+    id: 'ae.banned-breeds',
+    country: COUNTRY,
+    category: '서류',
+    title: '수입 금지 견종 (Pit Bull, Tosa, Doberman, Rottweiler 등)',
+    description:
+      'MOCCAE 수입 금지: Pitbull, Argentinian Mastiff (Dogo Argentino), Brazilian Mastiff (Fila Brasileiro), Tosa (Japanese Fighting Dog), American Staffordshire Terrier, Bull Mastiff, Doberman, Rottweiler 및 교잡.',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const species = typeof data.species === 'string' ? data.species : ''
+      if (species && species !== 'dog') return SKIP
+      const breed = readBreed(caseRow)
+      if (!breed.ko && !breed.en) return SKIP
+      const match = matchBannedBreed(breed, [
+        'pit bull', 'pitbull', '핏불',
+        'dogo argentino', '도고 아르헨티노',
+        'fila brasileiro', '필라 브라질레이로',
+        'tosa', '도사',
+        'american staffordshire terrier', '아메리칸 스태퍼드셔',
+        'staffordshire bull terrier', '스태퍼드셔 불 테리어',
+        'bull mastiff', '불 마스티프',
+        'doberman', '도베르만',
+        'rottweiler', '로트와일러',
+      ])
+      if (match) {
+        return {
+          ok: false,
+          message: `견종 "${breed.ko || breed.en}"은 UAE 수입 금지 (매치: ${match}).`,
+          fixHint: 'MOCCAE 수입 금지 견종 — 별도 가능 절차 없음.',
+          offendingPaths: ['breed', 'breed_en'],
+        }
+      }
+      return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
     },
   },
 ]

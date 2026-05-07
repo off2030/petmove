@@ -2,6 +2,8 @@ import type { ProcedureCheck } from './types'
 import {
   daysBetween,
   evaluateRabiesAgeConservative,
+  matchBannedBreed,
+  readBreed,
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
@@ -227,6 +229,39 @@ export const VN_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 수입 금지 견종 ──
+  {
+    id: 'vn.banned-breeds',
+    country: COUNTRY,
+    category: '서류',
+    title: '수입 금지 견종 (Pit Bull, Tosa, Dogo Argentino 등)',
+    description:
+      '베트남은 Pit Bull Terrier, Japanese Tosa, Dogo Argentino 등 견종 수입 제한. (Circular 25/2016 + USDA APHIS Vietnam)',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const species = typeof data.species === 'string' ? data.species : ''
+      if (species && species !== 'dog') return SKIP
+      const breed = readBreed(caseRow)
+      if (!breed.ko && !breed.en) return SKIP
+      const match = matchBannedBreed(breed, [
+        'pit bull', 'pitbull', '핏불',
+        'tosa', '도사',
+        'dogo argentino', '도고 아르헨티노',
+      ])
+      if (match) {
+        return {
+          ok: false,
+          message: `견종 "${breed.ko || breed.en}"은 베트남 수입 제한 (매치: ${match}).`,
+          fixHint: '베트남은 위 견종 수입 제한.',
+          offendingPaths: ['breed', 'breed_en'],
+        }
+      }
+      return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
     },
   },
 ]

@@ -2,6 +2,8 @@ import type { ProcedureCheck } from './types'
 import {
   daysBetween,
   evaluateRabiesAgeConservative,
+  matchBannedBreed,
+  readBreed,
   readGeneralVaccineEntries,
   readRabiesEntries,
   resolveValidUntil,
@@ -220,6 +222,83 @@ export const MY_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 수입 금지 견종 (DVS 7종) ──
+  {
+    id: 'my.banned-breeds',
+    country: COUNTRY,
+    category: '서류',
+    title: '수입 금지 견종 (Pit Bull 계열, Akita, Tosa 등 7종)',
+    description:
+      'DVS 수입 금지: Akita, American Bulldog, Dogo Argentino, Fila Brasileiro, Japanese Tosa, Neapolitan Mastiff, Pit Bull Terrier (American Pit Bull, American Staffordshire Terrier, Staffordshire Bull Terrier 포함). 교잡 포함.',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const species = typeof data.species === 'string' ? data.species : ''
+      if (species && species !== 'dog') return SKIP
+      const breed = readBreed(caseRow)
+      if (!breed.ko && !breed.en) return SKIP
+      const match = matchBannedBreed(breed, [
+        'akita', '아키타',
+        'american bulldog', '아메리칸 불독',
+        'dogo argentino', '도고 아르헨티노',
+        'fila brasileiro', '필라 브라질레이로',
+        'tosa', '도사',
+        'neapolitan mastiff', '네아폴리탄 마스티프',
+        'pit bull', 'pitbull', '핏불',
+        'american staffordshire terrier', '아메리칸 스태퍼드셔',
+        'staffordshire bull terrier', '스태퍼드셔 불 테리어',
+      ])
+      if (match) {
+        return {
+          ok: false,
+          message: `견종 "${breed.ko || breed.en}"은 말레이시아 수입 금지 (매치: ${match}).`,
+          fixHint: 'DVS 7종 수입 금지 견종 — 별도 가능 절차 없음.',
+          offendingPaths: ['breed', 'breed_en'],
+        }
+      }
+      return { ok: true, message: `견종 "${breed.ko || breed.en}" 금지 견종 아님.` }
+    },
+  },
+
+  // ── 제한 견종 (DVS — MAQIS 특별 승인 필요) ──
+  {
+    id: 'my.restricted-breeds',
+    country: COUNTRY,
+    category: '서류',
+    title: '제한 견종 (MAQIS 특별 승인 필요)',
+    description:
+      'DVS 제한 견종 (MAQIS 특별 승인 필요, 혈통서 필수, 상업 목적 금지): Bull Mastiff, Bull Terrier, Doberman, German Shepherd/Alsatian (Belgian, East European 포함), Perro de Presa Canario, Rottweiler.',
+    severity: 'warning',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const species = typeof data.species === 'string' ? data.species : ''
+      if (species && species !== 'dog') return SKIP
+      const breed = readBreed(caseRow)
+      if (!breed.ko && !breed.en) return SKIP
+      const match = matchBannedBreed(breed, [
+        'bull mastiff', '불 마스티프',
+        'bull terrier', '불 테리어',
+        'doberman', '도베르만',
+        'german shepherd', '저먼 셰퍼드', '독일 셰퍼드',
+        'alsatian', '알자스 셰퍼드',
+        'belgian shepherd', '벨지안 셰퍼드',
+        'perro de presa canario', '프레사 카나리오',
+        'rottweiler', '로트와일러',
+      ])
+      if (match) {
+        return {
+          ok: false,
+          message: `견종 "${breed.ko || breed.en}"은 말레이시아 제한 견종 (매치: ${match}) — MAQIS 특별 승인 필요.`,
+          fixHint: 'DVS 제한 견종은 MAQIS 사전 특별 승인 + 혈통서 필수. 상업 목적 수입 금지.',
+          offendingPaths: ['breed', 'breed_en'],
+        }
+      }
+      return { ok: true, message: `견종 "${breed.ko || breed.en}" 제한 견종 아님.` }
     },
   },
 ]

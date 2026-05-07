@@ -3,6 +3,8 @@ import {
   addYears,
   daysBetween,
   evaluateRabiesAgeConservative,
+  matchBannedBreed,
+  readBreed,
   readExternalParasiteEntries,
   readGeneralVaccineEntries,
   readInternalParasiteEntries,
@@ -365,6 +367,47 @@ export const SG_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내부구충(${latest.date}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 수입 금지 견종 ──
+  {
+    id: 'sg.banned-breeds',
+    country: 'singapore',
+    category: '서류',
+    title: '수입 금지 견종 (NParks First Schedule Part 1)',
+    description:
+      'NParks First Schedule Part 1 (수입·판매·방문·거주 전면 금지): Pit Bull 계열(American Pit Bull Terrier, American Staffordshire Terrier, Staffordshire Bull Terrier, American Bulldog), Neapolitan Mastiff, Tosa, Akita, Dogo Argentino, Boerboel, Fila Brasileiro, Perro de Presa Canario 및 교잡. (Animals and Birds (Licensing and Control of Cats and Dogs) Rules 2024)',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const species = typeof data.species === 'string' ? data.species : ''
+      if (species && species !== 'dog') return SKIP
+      const breed = readBreed(caseRow)
+      if (!breed.ko && !breed.en) return SKIP
+      const match = matchBannedBreed(breed, [
+        'pit bull', 'pitbull', '핏불',
+        'american staffordshire terrier', '아메리칸 스태퍼드셔',
+        'staffordshire bull terrier', '스태퍼드셔 불 테리어',
+        'american bulldog', '아메리칸 불독',
+        'neapolitan mastiff', '네아폴리탄 마스티프',
+        'tosa', '도사', '도사 이누',
+        'akita', '아키타',
+        'dogo argentino', '도고 아르헨티노',
+        'boerboel', '보어보엘',
+        'fila brasileiro', '필라 브라질레이로',
+        'perro de presa canario', '프레사 카나리오',
+      ])
+      if (match) {
+        return {
+          ok: false,
+          message: `견종 "${breed.ko || breed.en}"은 NParks 수입 금지 (매치: ${match}).`,
+          fixHint: 'NParks First Schedule Part 1 견종은 싱가포르 수입·거주 전면 금지. 별도 가능 절차 없음.',
+          offendingPaths: ['breed', 'breed_en'],
+        }
+      }
+      return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
     },
   },
 ]

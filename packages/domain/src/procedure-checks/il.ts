@@ -2,6 +2,8 @@ import type { ProcedureCheck } from './types'
 import {
   daysBetween,
   evaluateRabiesAgeConservative,
+  matchBannedBreed,
+  readBreed,
   readRabiesEntries,
   readTiterEntries,
   resolveValidUntil,
@@ -253,6 +255,44 @@ export const IL_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 수입 금지 견종 ──
+  {
+    id: 'il.banned-breeds',
+    country: COUNTRY,
+    category: '서류',
+    title: '수입 금지 견종 (Pitbull, Tosa, Rottweiler 등)',
+    description:
+      'gov.il 수입 금지: Pitbull, Argentine Dogo, Fila Brasileiro, Tosa, Staffordshire Bull Terrier, American Staffordshire Terrier, Bull Terrier, Rottweiler 및 교잡.',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const species = typeof data.species === 'string' ? data.species : ''
+      if (species && species !== 'dog') return SKIP
+      const breed = readBreed(caseRow)
+      if (!breed.ko && !breed.en) return SKIP
+      const match = matchBannedBreed(breed, [
+        'pit bull', 'pitbull', '핏불',
+        'dogo argentino', '도고 아르헨티노',
+        'fila brasileiro', '필라 브라질레이로',
+        'tosa', '도사',
+        'staffordshire bull terrier', '스태퍼드셔 불 테리어',
+        'american staffordshire terrier', '아메리칸 스태퍼드셔',
+        'bull terrier', '불 테리어',
+        'rottweiler', '로트와일러',
+      ])
+      if (match) {
+        return {
+          ok: false,
+          message: `견종 "${breed.ko || breed.en}"은 이스라엘 수입 금지 (매치: ${match}).`,
+          fixHint: 'gov.il 수의국 수입 금지 견종 — 별도 가능 절차 없음.',
+          offendingPaths: ['breed', 'breed_en'],
+        }
+      }
+      return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
     },
   },
 ]
