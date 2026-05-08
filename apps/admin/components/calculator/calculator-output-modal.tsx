@@ -364,7 +364,7 @@ export function CalculatorOutputModal({
 
           {/* 항목 표 */}
           <div className="rounded-md border border-border/80">
-            <div className="grid grid-cols-[28px_1fr_140px] items-center gap-2 px-3 py-2 border-b border-border/80 text-[11px] tracking-[1px] uppercase text-muted-foreground/70">
+            <div className="grid grid-cols-[24px_1fr_96px] md:grid-cols-[28px_1fr_140px] items-center gap-2 px-3 py-2 border-b border-border/80 text-[11px] tracking-[1px] uppercase text-muted-foreground/70">
               <span></span>
               <span>항목</span>
               <span className="text-right">금액</span>
@@ -374,7 +374,7 @@ export function CalculatorOutputModal({
               return (
                 <div
                   key={r.id}
-                  className="grid grid-cols-[28px_1fr_140px] items-center gap-2 px-3 py-1.5 border-b border-border/40 last:border-b-0"
+                  className="grid grid-cols-[24px_1fr_96px] md:grid-cols-[28px_1fr_140px] items-center gap-2 px-3 py-1.5 border-b border-border/40 last:border-b-0"
                 >
                   <Checkbox
                     checked={on}

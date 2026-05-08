@@ -97,8 +97,8 @@ function InputBlock({
   return (
     <div>
       <Label>{inputLabel}</Label>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div className="min-w-[14rem] flex-1">
+      <div className="flex flex-col md:flex-row md:flex-wrap md:items-center gap-x-4 gap-y-2">
+        <div className="md:min-w-[14rem] md:flex-1">
           <DateInput value={inputValue} onChange={onChange} />
         </div>
         {results.some((r) => r.date) && (

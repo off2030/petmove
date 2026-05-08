@@ -347,7 +347,8 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
                       {addMenuOpen && !freeMode && (
                         <div
                           className={cn(
-                            'absolute left-0 z-50 w-72 rounded-md border border-border/80 bg-background shadow-md',
+                            // 모바일에선 trigger 와 같은 줄 폭으로(stretch), 데스크톱에선 고정 288px.
+                            'absolute left-0 right-0 md:right-auto md:w-72 z-50 rounded-md border border-border/80 bg-background shadow-md',
                             addMenuPlacement === 'top'
                               ? 'bottom-[calc(100%+4px)]'
                               : 'top-[calc(100%+4px)]',
@@ -424,7 +425,7 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
                       {addMenuOpen && freeMode && (
                         <div
                           className={cn(
-                            'absolute left-0 z-50 w-72 rounded-md border border-border/80 bg-background shadow-md p-3',
+                            'absolute left-0 right-0 md:right-auto md:w-72 z-50 rounded-md border border-border/80 bg-background shadow-md p-3',
                             addMenuPlacement === 'top'
                               ? 'bottom-[calc(100%+4px)]'
                               : 'top-[calc(100%+4px)]',
