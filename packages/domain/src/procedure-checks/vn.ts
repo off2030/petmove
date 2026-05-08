@@ -2,6 +2,7 @@ import type { ProcedureCheck } from './types'
 import {
   daysBetween,
   evaluateRabiesAgeConservative,
+  findSameGuardianCases,
   matchBannedBreed,
   readBreed,
   readRabiesEntries,
@@ -262,6 +263,31 @@ export const VN_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
+    },
+  },
+
+  // ── 보호자 한도 (외국인 최대 2마리) ──
+  {
+    id: 'vn.max-2pets-per-guardian',
+    country: COUNTRY,
+    category: '서류',
+    title: '외국인 최대 2마리 한도 (Circular 25/2016 제10조)',
+    description:
+      'Circular 25/2016/TT-BNNPTNT 제10조: 외국인은 반려 목적으로 최대 2마리까지 동반 가능. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 베트남 목적 케이스 3건 이상 등록 시 경고.',
+    severity: 'warning',
+    addedAt: '2026-05-07',
+    run: ({ caseRow, relatedCases }) => {
+      if (relatedCases === undefined) return SKIP
+      const others = findSameGuardianCases(caseRow, relatedCases, { sameDestination: true })
+      if (others.length + 1 > 2) {
+        return {
+          ok: false,
+          message: `같은 보호자(${caseRow.customer_name})가 베트남 목적 케이스 ${others.length + 1}건 등록 — 2마리 한도 초과.`,
+          fixHint: 'Circular 25/2016 제10조: 1인 최대 2마리. 추가는 상업 수입 절차 필요.',
+          offendingPaths: ['customer_name'],
+        }
+      }
+      return { ok: true, message: '보호자 케이스 ≤ 2건.' }
     },
   },
 ]

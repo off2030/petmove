@@ -2,6 +2,7 @@ import type { ProcedureCheck } from './types'
 import {
   daysBetween,
   evaluateRabiesAgeConservative,
+  findSameGuardianCases,
   matchBannedBreed,
   readBreed,
   readRabiesEntries,
@@ -293,6 +294,31 @@ export const IL_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
+    },
+  },
+
+  // ── 보호자 한도 (3마리+ 시 Import License 필요) ──
+  {
+    id: 'il.import-license-3plus-pets',
+    country: COUNTRY,
+    category: '서류',
+    title: '3마리 이상 시 Import License 필수',
+    description:
+      'gov.il 수의국 / 1974 동물질병규칙: 동반 입국 3마리 미만은 License 면제. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 이스라엘 목적 케이스 3건 이상 등록 시 사전 Import License 필요.',
+    severity: 'warning',
+    addedAt: '2026-05-07',
+    run: ({ caseRow, relatedCases }) => {
+      if (relatedCases === undefined) return SKIP
+      const others = findSameGuardianCases(caseRow, relatedCases, { sameDestination: true })
+      if (others.length + 1 >= 3) {
+        return {
+          ok: false,
+          message: `같은 보호자(${caseRow.customer_name})가 이스라엘 목적 케이스 ${others.length + 1}건 등록 — Import License 필요.`,
+          fixHint: '3마리 이상 동반 시 이스라엘 수의국장 발급 사전 Import License 필수 (1974 동물질병규칙).',
+          offendingPaths: ['customer_name'],
+        }
+      }
+      return { ok: true, message: '보호자 케이스 < 3건 (License 면제).' }
     },
   },
 ]

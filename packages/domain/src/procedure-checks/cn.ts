@@ -3,6 +3,7 @@ import {
   addYears,
   daysBetween,
   evaluateRabiesAgeConservative,
+  findSameGuardianCases,
   readRabiesEntries,
   readTiterEntries,
   resolveValidUntil,
@@ -350,6 +351,31 @@ export const CN_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 보호자 1인 1마리 한도 (cross-case) ──
+  {
+    id: 'cn.one-pet-per-guardian',
+    country: COUNTRY,
+    category: '서류',
+    title: '1인당 1회 1마리 한도 (GACC)',
+    description:
+      'GACC 公告 2019 No.5 제1조: "携带或者托运入境的活动物仅限犬或者猫，每人每次限带1只" — 1인 1회 1마리 한정. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 중국 목적 케이스를 2건 이상 등록하면 경고.',
+    severity: 'warning',
+    addedAt: '2026-05-07',
+    run: ({ caseRow, relatedCases }) => {
+      if (relatedCases === undefined) return SKIP
+      const others = findSameGuardianCases(caseRow, relatedCases, { sameDestination: true })
+      if (others.length >= 1) {
+        return {
+          ok: false,
+          message: `같은 보호자(${caseRow.customer_name})가 중국 목적 케이스 ${others.length + 1}건 등록 — GACC 1인 1마리 한도 초과.`,
+          fixHint: 'GACC 규정상 1인 1회 1마리만 동반 가능. 별도 보호자(가족 등) 명의로 분리 등록 필요.',
+          offendingPaths: ['customer_name'],
+        }
+      }
+      return { ok: true, message: '동일 보호자 다중 등록 없음.' }
     },
   },
 ]

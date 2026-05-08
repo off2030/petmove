@@ -2,6 +2,7 @@ import type { ProcedureCheck } from './types'
 import {
   daysBetween,
   evaluateRabiesAgeConservative,
+  findSameGuardianCases,
   readGeneralVaccineEntries,
   readRabiesEntries,
   resolveValidUntil,
@@ -293,6 +294,31 @@ export const RU_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 보호자 한도 (개인용 2마리, 3마리+ 상업용) ──
+  {
+    id: 'ru.max-2pets-per-guardian',
+    country: COUNTRY,
+    category: '서류',
+    title: '개인용 1인 2마리 한도 (EAEU 결정 No.317)',
+    description:
+      'EAEU 결정 No.317 제15장: "ввоз собак и кошек, перевозимых для личного пользования, в количестве не более двух голов без разрешения Россельхознадзора" — 개인용 1인 최대 2마리 (3마리+ 상업용 절차).',
+    severity: 'warning',
+    addedAt: '2026-05-07',
+    run: ({ caseRow, relatedCases }) => {
+      if (relatedCases === undefined) return SKIP
+      const others = findSameGuardianCases(caseRow, relatedCases, { sameDestination: true })
+      if (others.length + 1 > 2) {
+        return {
+          ok: false,
+          message: `같은 보호자(${caseRow.customer_name})가 러시아 목적 케이스 ${others.length + 1}건 등록 — 개인용 2마리 한도 초과.`,
+          fixHint: 'EAEU 결정 No.317: 1인 최대 2마리. 3마리+ 시 Rosselkhoznadzor 사전허가 + 상업 수입 절차 필요.',
+          offendingPaths: ['customer_name'],
+        }
+      }
+      return { ok: true, message: '보호자 케이스 ≤ 2건.' }
     },
   },
 ]

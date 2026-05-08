@@ -2,6 +2,7 @@ import type { ProcedureCheck } from './types'
 import {
   daysBetween,
   evaluateRabiesAgeConservative,
+  findSameGuardianCases,
   matchBannedBreed,
   readBreed,
   readExternalParasiteEntries,
@@ -364,6 +365,31 @@ export const AE_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
+    },
+  },
+
+  // ── 보호자 한도 (개인당 연간 2마리) ──
+  {
+    id: 'ae.max-2pets-per-year',
+    country: COUNTRY,
+    category: '서류',
+    title: '개인당 연간 2마리 한도 (MOCCAE)',
+    description:
+      'MOCCAE: 개인당 연간 최대 2마리(개2 또는 고양이2 또는 개+고양이). 동일 보호자(이름·영문이름·전화·국내주소 일치)가 UAE 목적 케이스 3건 이상 등록 시 경고. (시간 윈도우는 시스템 미구현 — 보수적으로 전체 케이스 카운트)',
+    severity: 'warning',
+    addedAt: '2026-05-07',
+    run: ({ caseRow, relatedCases }) => {
+      if (relatedCases === undefined) return SKIP
+      const others = findSameGuardianCases(caseRow, relatedCases, { sameDestination: true })
+      if (others.length + 1 > 2) {
+        return {
+          ok: false,
+          message: `같은 보호자(${caseRow.customer_name})가 UAE 목적 케이스 ${others.length + 1}건 등록 — 개인당 연간 2마리 한도 초과.`,
+          fixHint: 'MOCCAE: 개인당 연간 2마리 한도. 보호자 분리 또는 출국 시점 분산 검토.',
+          offendingPaths: ['customer_name'],
+        }
+      }
+      return { ok: true, message: '보호자 케이스 ≤ 2건.' }
     },
   },
 ]

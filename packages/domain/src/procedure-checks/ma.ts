@@ -2,6 +2,7 @@ import type { ProcedureCheck } from './types'
 import {
   daysBetween,
   evaluateRabiesAgeConservative,
+  findSameGuardianCases,
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
@@ -191,6 +192,31 @@ export const MA_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 보호자 한도 (비상업 5두 이하) ──
+  {
+    id: 'ma.max-5pets-non-commercial',
+    country: COUNTRY,
+    category: '서류',
+    title: '비상업 1인 5마리 이하 (ONSSA)',
+    description:
+      'ONSSA: 비상업 목적 1인당 5두 이하 통상 인정. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 모로코 목적 케이스 6건 이상 등록 시 경고.',
+    severity: 'warning',
+    addedAt: '2026-05-07',
+    run: ({ caseRow, relatedCases }) => {
+      if (relatedCases === undefined) return SKIP
+      const others = findSameGuardianCases(caseRow, relatedCases, { sameDestination: true })
+      if (others.length + 1 > 5) {
+        return {
+          ok: false,
+          message: `같은 보호자(${caseRow.customer_name})가 모로코 목적 케이스 ${others.length + 1}건 등록 — 비상업 5두 한도 초과.`,
+          fixHint: 'ONSSA: 1인 비상업 5두 한도. 추가는 상업 수입 절차 필요.',
+          offendingPaths: ['customer_name'],
+        }
+      }
+      return { ok: true, message: '보호자 케이스 ≤ 5건.' }
     },
   },
 ]

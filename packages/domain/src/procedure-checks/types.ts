@@ -28,6 +28,11 @@ export interface ProcedureCheck {
 
 export interface CheckContext {
   caseRow: CaseRow
+  /**
+   * 같은 조직(테넌트)의 다른 케이스 목록. 동일 보호자 다중 등록 검증(예: CN 1인 1마리)에 사용.
+   * 호출자가 제공하지 않으면 cross-case 룰은 SKIP. 자기 자신(caseRow.id) 포함 가능.
+   */
+  relatedCases?: CaseRow[]
 }
 
 export interface CheckResult {
