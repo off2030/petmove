@@ -166,75 +166,91 @@ export async function searchMembersGlobal(
     const myOrgId = await getActiveOrgId()
 
     const admin = createAdminClient()
-    // 1) 이름/이메일 매칭 프로필
-    const { data: profs, error: pErr } = await admin
-      .from('profiles')
-      .select('id, name, email')
-      .or(`name.ilike.%${trimmed}%,email.ilike.%${trimmed}%`)
-      .neq('id', user.id)
-      .limit(30)
-    if (pErr) return { ok: false, error: pErr.message }
 
-    // 2) 이름 매칭 조직의 멤버도 포함 (사용자가 조직명으로 찾은 뒤 멤버 보고 싶을 때)
-    const { data: orgs, error: oErr } = await admin
-      .from('organizations')
-      .select('id, name')
-      .ilike('name', `%${trimmed}%`)
-      .neq('id', myOrgId)
-      .limit(10)
-    if (oErr) return { ok: false, error: oErr.message }
+    // P1 #11 — 6 직렬 RTT 를 4 wave 로 압축. 동일 데이터 셋은 1차 fetch 결과를
+    // 재사용해 redundant 쿼리도 제거.
+    //
+    // Wave 1 (병렬): profile 매칭 + organization 매칭. 서로 독립.
+    // Wave 2: 매칭된 organizations 의 멤버 user_id 목록 (orgs 가 비면 스킵).
+    // Wave 3 (병렬): allUserIds 의 memberships + (Wave 1 에 없는) profiles 보강.
+    // Wave 4: filteredMems 의 (Wave 1 에 없는) organizations 이름 보강.
+    const [profsResult, orgsResult] = await Promise.all([
+      admin
+        .from('profiles')
+        .select('id, name, email')
+        .or(`name.ilike.%${trimmed}%,email.ilike.%${trimmed}%`)
+        .neq('id', user.id)
+        .limit(30),
+      admin
+        .from('organizations')
+        .select('id, name')
+        .ilike('name', `%${trimmed}%`)
+        .neq('id', myOrgId)
+        .limit(10),
+    ])
+    if (profsResult.error) return { ok: false, error: profsResult.error.message }
+    if (orgsResult.error) return { ok: false, error: orgsResult.error.message }
+    const profs = (profsResult.data ?? []) as Array<{ id: string; name: string | null; email: string }>
+    const orgs = (orgsResult.data ?? []) as Array<{ id: string; name: string }>
 
     const orgUserSet = new Set<string>()
-    if ((orgs ?? []).length > 0) {
+    if (orgs.length > 0) {
       const { data: orgMems } = await admin
         .from('memberships')
         .select('user_id')
-        .in('org_id', (orgs ?? []).map((o) => (o as { id: string }).id))
+        .in('org_id', orgs.map((o) => o.id))
         .neq('user_id', user.id)
       for (const m of orgMems ?? []) {
         orgUserSet.add((m as { user_id: string }).user_id)
       }
     }
 
-    const allUserIds = Array.from(new Set([
-      ...(profs ?? []).map((p) => (p as { id: string }).id),
-      ...orgUserSet,
-    ]))
+    const profIdSet = new Set(profs.map((p) => p.id))
+    const allUserIds = Array.from(new Set([...profIdSet, ...orgUserSet]))
     if (allUserIds.length === 0) return { ok: true, value: [] }
 
-    // 멤버 → 조직 매핑 (본인 조직은 제외)
-    const { data: mems, error: mErr } = await admin
-      .from('memberships')
-      .select('user_id, org_id')
-      .in('user_id', allUserIds)
-    if (mErr) return { ok: false, error: mErr.message }
-    const filteredMems = (mems ?? []).filter(
+    // Wave 3: memberships + Wave 1 에 없는 profiles 만 보강.
+    const missingProfIds = allUserIds.filter((id) => !profIdSet.has(id))
+    const [memsResult, extraProfsResult] = await Promise.all([
+      admin
+        .from('memberships')
+        .select('user_id, org_id')
+        .in('user_id', allUserIds),
+      missingProfIds.length > 0
+        ? admin
+            .from('profiles')
+            .select('id, name, email')
+            .in('id', missingProfIds)
+        : Promise.resolve({
+            data: [] as Array<{ id: string; name: string | null; email: string }>,
+            error: null,
+          }),
+    ])
+    if (memsResult.error) return { ok: false, error: memsResult.error.message }
+    const filteredMems = (memsResult.data ?? []).filter(
       (m) => (m as { org_id: string }).org_id !== myOrgId,
     )
     if (filteredMems.length === 0) return { ok: true, value: [] }
 
-    // 조직명 lookup
-    const orgIds = Array.from(new Set(filteredMems.map((m) => (m as { org_id: string }).org_id)))
-    const { data: allOrgs } = await admin
-      .from('organizations')
-      .select('id, name')
-      .in('id', orgIds)
-    const orgNameMap = new Map<string, string>()
-    for (const o of allOrgs ?? []) {
-      orgNameMap.set((o as { id: string }).id, (o as { name: string }).name)
-    }
-
-    // 프로필 lookup (전체 검색 결과 + 조직 검색으로 추가된 멤버 모두)
-    const { data: allProfs } = await admin
-      .from('profiles')
-      .select('id, name, email')
-      .in('id', allUserIds)
+    // profMap = Wave 1 (이름/이메일 매칭) ∪ Wave 3 보강.
     const profMap = new Map<string, { name: string | null; email: string }>()
-    for (const p of allProfs ?? []) {
-      profMap.set((p as { id: string }).id, {
-        name: ((p as { name: string | null }).name) ?? null,
-        email: (p as { email: string }).email,
-      })
+    for (const p of profs) profMap.set(p.id, { name: p.name, email: p.email })
+    const extraProfs = (extraProfsResult.data ?? []) as Array<{ id: string; name: string | null; email: string }>
+    for (const p of extraProfs) profMap.set(p.id, { name: p.name, email: p.email })
+
+    // Wave 4: orgNameMap — Wave 1 (organizations 매칭) ∪ filteredMems 보강.
+    const orgNameMap = new Map<string, string>()
+    for (const o of orgs) orgNameMap.set(o.id, o.name)
+    const allOrgIds = Array.from(new Set(filteredMems.map((m) => (m as { org_id: string }).org_id)))
+    const missingOrgIds = allOrgIds.filter((id) => !orgNameMap.has(id))
+    if (missingOrgIds.length > 0) {
+      const { data: extraOrgs } = await admin
+        .from('organizations')
+        .select('id, name')
+        .in('id', missingOrgIds)
+      for (const o of extraOrgs ?? []) {
+        orgNameMap.set((o as { id: string }).id, (o as { name: string }).name)
+      }
     }
 
     // (user_id, org_id) 페어를 결과로 — 같은 사용자가 여러 조직 소속이면 여러 행
