@@ -14,6 +14,7 @@ import { MembersSection } from './members-section'
 import { ProfileSection } from './profile-section'
 import { DetailViewSection } from './detail-view-section'
 import { TransfersSection } from './transfers-section'
+import { SystemBotSection } from './system-bot-section'
 import { getSettingsBootstrap, type SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 
 /**
@@ -49,6 +50,7 @@ type TabDef = {
     | 'automation'
     | 'verification'
     | 'data'
+    | 'system_bot'
   label: string
   category: TabCategory
   visibility?: 'super_admin'
@@ -67,6 +69,7 @@ const TABS: readonly TabDef[] = [
   { id: 'import_report', label: '신고', category: 'work' },
   { id: 'export_doc', label: '서류', category: 'work' },
   { id: 'data', label: '데이터', category: 'data' },
+  { id: 'system_bot', label: '펫무브워크 봇', category: 'data', visibility: 'super_admin' },
 ] as const
 
 type TabId = TabDef['id']
@@ -252,10 +255,13 @@ export function SettingsApp({
           </div>
         </div>
 
-        {/* sub-tab row — active 카테고리의 탭들만 표시. */}
+        {/* sub-tab row — active 카테고리의 탭들만 표시. visibility='super_admin' 인 탭은 슈퍼 어드민에게만. */}
         <div className="shrink-0 px-md md:px-lg overflow-x-auto scrollbar-hide">
           <div className="flex gap-md flex-wrap">
-            {TABS.filter((t) => t.category === activeCategory).map((tab) => (
+            {TABS
+              .filter((t) => t.category === activeCategory)
+              .filter((t) => t.visibility !== 'super_admin' || (bootstrap?.myRole?.isSuperAdmin ?? false))
+              .map((tab) => (
               <button
                 key={tab.id}
                 type="button"
@@ -313,6 +319,9 @@ export function SettingsApp({
             <DetailViewSection initialSettings={bootstrap?.detailViewSettings} />
           )}
           {activeTab === 'data' && <DataSection isSuperAdmin={bootstrap?.myRole?.isSuperAdmin ?? false} />}
+          {activeTab === 'system_bot' && (bootstrap?.myRole?.isSuperAdmin ?? false) && (
+            <SystemBotSection />
+          )}
         </div>
       </div>
     </div>

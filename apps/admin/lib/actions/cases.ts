@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { applyAutoFillRules } from '@/lib/auto-fill-engine'
+import { evaluateAndNotify } from './system-notifications'
 
 const REGULAR_COLUMNS = new Set([
   'customer_name',
@@ -200,6 +201,11 @@ export async function updateCaseField(
       }
     } catch { /* best-effort */ }
   }
+
+  // 검증 실패가 새로 생기면 펫무브워크 시스템 메시지로 알림.
+  // 서버 액션 종료 전 완료되어야 메시지가 확실히 적재되므로 await.
+  // evaluateAndNotify 내부에서 모든 예외를 swallow 하므로 본 흐름엔 영향 없음.
+  await evaluateAndNotify(caseId)
 
   revalidatePath('/cases')
   return autoFilled ? { ok: true, autoFilled } : { ok: true }

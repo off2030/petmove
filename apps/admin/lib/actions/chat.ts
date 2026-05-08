@@ -27,7 +27,9 @@ export interface Participant {
 export interface ConversationListItem {
   id: string
   name: string | null
-  /** 본인 제외 참여자. 1:1 이면 length 1, 그룹이면 2+. */
+  /** 'normal' = 일반 1:1/그룹, 'system' = 펫무브워크 자동 알림. */
+  kind: 'normal' | 'system'
+  /** 본인 제외 참여자. 1:1 이면 length 1, 그룹이면 2+. system 은 비어 있음. */
   participants: Participant[]
   last_message:
     | {
@@ -199,7 +201,7 @@ export async function listMyConversations(): Promise<Result<ConversationListItem
   const [convsRes, allPartsRes, summariesRes] = await Promise.all([
     supabase
       .from('conversations')
-      .select('id, name, last_message_at, created_at, pinned_message_id')
+      .select('id, name, kind, last_message_at, created_at, pinned_message_id')
       .in('id', convIds)
       .order('last_message_at', { ascending: false, nullsFirst: false }),
     supabase
@@ -271,12 +273,15 @@ export async function listMyConversations(): Promise<Result<ConversationListItem
     return {
       id: cid,
       name: (c.name as string | null) ?? null,
+      kind: ((c.kind as string | null) ?? 'normal') as 'normal' | 'system',
       participants: partsByConv.get(cid) ?? [],
       last_message: last
         ? {
             content: last.content,
             has_file: !!last.file_url,
-            sender_name: last.sender_user_id ? senderNameMap.get(last.sender_user_id) ?? null : null,
+            sender_name: last.sender_user_id
+              ? senderNameMap.get(last.sender_user_id) ?? null
+              : null,
             created_at: last.created_at,
           }
         : null,
@@ -306,7 +311,7 @@ export async function listConversationMessages(input: {
   let q = supabase
     .from('messages')
     .select(
-      'id, conversation_id, sender_user_id, case_id, content, file_url, file_name, transfer_id, created_at, edited_at, deleted_at',
+      'id, conversation_id, sender_user_id, sender_name, case_id, content, file_url, file_name, transfer_id, created_at, edited_at, deleted_at',
     )
     .eq('conversation_id', input.convId)
     .order('created_at', { ascending: true })
@@ -445,7 +450,9 @@ export async function listConversationMessages(input: {
     id: r.id as string,
     conversation_id: r.conversation_id as string,
     sender_user_id: (r.sender_user_id as string | null) ?? null,
-    sender_name: r.sender_user_id ? nameMap.get(r.sender_user_id as string) ?? null : null,
+    sender_name: r.sender_user_id
+      ? nameMap.get(r.sender_user_id as string) ?? null
+      : ((r.sender_name as string | null) ?? null),
     case_id: (r.case_id as string | null) ?? null,
     case_label: r.case_id ? labelMap.get(r.case_id as string) ?? null : null,
     content: (r.content as string | null) ?? null,
@@ -702,7 +709,7 @@ export async function searchMessagesInConversation(input: {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('messages')
-    .select('id, conversation_id, sender_user_id, content, file_url, case_label, created_at')
+    .select('id, conversation_id, sender_user_id, sender_name, content, file_url, case_label, created_at')
     .eq('conversation_id', input.convId)
     .is('deleted_at', null)
     .ilike('content', `%${escaped}%`)
@@ -722,7 +729,9 @@ export async function searchMessagesInConversation(input: {
     id: r.id as string,
     conversation_id: r.conversation_id as string,
     sender_user_id: (r.sender_user_id as string | null) ?? null,
-    sender_name: r.sender_user_id ? nameMap.get(r.sender_user_id as string) ?? null : null,
+    sender_name: r.sender_user_id
+      ? nameMap.get(r.sender_user_id as string) ?? null
+      : ((r.sender_name as string | null) ?? null),
     case_label: (r.case_label as string | null) ?? null,
     content: (r.content as string | null) ?? null,
     has_file: !!(r.file_url as string | null),

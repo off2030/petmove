@@ -27,6 +27,8 @@ import { ShareLinkDialog } from './share-link-dialog'
 import { resolveCerts } from '@petmove/domain'
 import type { CaseRow } from '@/lib/supabase/types'
 import { useConfirm } from '@/components/ui/confirm-dialog'
+import { evaluateCase } from './verification-context'
+import { listOrgDisabledChecks } from '@/lib/actions/org-disabled-checks'
 
 function downloadBase64Pdf(base64: string, filename: string) {
   const link = document.createElement('a')
@@ -207,6 +209,32 @@ function Inner() {
   >(null)
   const [includeSignature, setIncludeSignature] = useState(false)
   const [addingFromFiles, setAddingFromFiles] = useState(false)
+  // org_disabled_checks 캐시 — 마운트 후 한 번 로드. PDF 발급 게이트가 사용.
+  const [disabledChecks, setDisabledChecks] = useState<Set<string>>(() => new Set())
+  useEffect(() => {
+    void (async () => {
+      const r = await listOrgDisabledChecks()
+      if (r.ok) setDisabledChecks(new Set(r.value))
+    })()
+  }, [])
+
+  const confirmIfFailing = useCallback(
+    async (caseRow: CaseRow, destination: string | null): Promise<boolean> => {
+      const results = evaluateCase(caseRow, destination, disabledChecks)
+      const failing = results.filter((r) => !r.result.ok && r.check.severity !== 'info')
+      if (failing.length === 0) return true
+      const lines = failing.slice(0, 8).map(({ result }) => `• ${result.message}`)
+      if (failing.length > 8) lines.push(`외 ${failing.length - 8}건…`)
+      return confirm({
+        message: `검증 실패 ${failing.length}건이 있습니다. 그래도 발급할까요?`,
+        description: lines.join('\n'),
+        okLabel: '발급',
+        cancelLabel: '취소',
+        variant: 'destructive',
+      })
+    },
+    [confirm, disabledChecks],
+  )
 
   // Reset detail scroll to top when selected case changes
   useEffect(() => {
@@ -330,6 +358,8 @@ function Inner() {
 
   const downloadCertPdf = useCallback(
     async (formKey: string, caseId: string, destination: string | null, rabiesIndices?: number[]) => {
+      const row = cases.find((c) => c.id === caseId)
+      if (row && !(await confirmIfFailing(row, destination))) return
       try {
         await downloadPdfRequest({
           kind: 'single',
@@ -359,7 +389,7 @@ function Inner() {
         alert(error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.')
       }
     },
-    [includeSignature],
+    [includeSignature, cases, confirmIfFailing],
   )
 
   const handleDuplicate = useCallback(async (id: string) => {
@@ -382,7 +412,9 @@ function Inner() {
   // Annex III / UK: if the case has siblings (same customer + destination +
   // departure date), show the multi-animal preview modal. Otherwise skip the
   // modal and generate a single-animal document directly.
-  const handleMultiForm = useCallback(async (caseId: string, formKey: 'AnnexIII' | 'UK') => {
+  const handleMultiForm = useCallback(async (caseId: string, formKey: 'AnnexIII' | 'UK', destination: string | null) => {
+    const row = cases.find((c) => c.id === caseId)
+    if (row && !(await confirmIfFailing(row, destination))) return
     const p = await previewSiblings(caseId, formKey)
     if (!p.ok) { alert(p.error); return }
     if (p.preview.cases.length <= 1) {
@@ -395,7 +427,7 @@ function Inner() {
       return
     }
     setMultiForm({ caseId, formKey })
-  }, [])
+  }, [cases, confirmIfFailing])
 
   const showDetail = selectedId !== null
 
@@ -605,7 +637,7 @@ function Inner() {
                             <button
                               key={btn.key}
                               type="button"
-                              onClick={() => handleMultiForm(selectedCase.id, (CERT_MULTI_KEYS[btn.key] ?? btn.key) as 'AnnexIII' | 'UK')}
+                              onClick={() => handleMultiForm(selectedCase.id, (CERT_MULTI_KEYS[btn.key] ?? btn.key) as 'AnnexIII' | 'UK', focusDest)}
                               className="shrink-0 whitespace-nowrap rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
                             >
                               {btn.label}

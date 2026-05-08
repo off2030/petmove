@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { HandoffCard } from './handoff-card'
+import { useCases } from '@/components/cases/cases-context'
 import {
   addParticipant,
   createConversation,
@@ -1560,6 +1561,7 @@ function ThreadPane({
                       currentUserId={currentUserId}
                       showSender={showSender}
                       isGroup={isGroup}
+                      isSystemConv={conv.kind === 'system'}
                       isReadByOther={isReadByOther}
                       readCount={readCount}
                       memberCount={memberCount}
@@ -1706,6 +1708,7 @@ const MessageItem = memo(function MessageItem({
   currentUserId,
   showSender,
   isGroup,
+  isSystemConv,
   isReadByOther,
   readCount,
   memberCount,
@@ -1719,6 +1722,8 @@ const MessageItem = memo(function MessageItem({
   currentUserId: string | null
   showSender: boolean
   isGroup: boolean
+  /** kind='system' 대화방 여부. case_id 가 있으면 버블 클릭 시 케이스 상세로 이동. */
+  isSystemConv: boolean
   isReadByOther: boolean
   readCount: number
   memberCount: number
@@ -1742,6 +1747,10 @@ const MessageItem = memo(function MessageItem({
     ((!isGroup && isReadByOther) ||
       (isGroup && memberCount > 0 && unreadByOthers === 0))
   const groupUnreadBadge = isOwn && isGroup && unreadByOthers > 0 ? unreadByOthers : null
+
+  // 시스템 메시지(펫무브워크) — kind='system' 대화방 + case_id 있으면 케이스 상세로 이동.
+  const { openCase } = useCases()
+  const systemCaseId = isSystemConv ? msg.case_id : null
   return (
     <li
       id={`msg-${msg.id}`}
@@ -1769,6 +1778,25 @@ const MessageItem = memo(function MessageItem({
             caseLabel={msg.case_label}
             preloaded={preloadedTransfer}
           />
+        ) : systemCaseId ? (
+          <button
+            type="button"
+            data-bubble="system"
+            onClick={() => openCase(systemCaseId)}
+            className="max-w-[70%] rounded-md px-3 py-1.5 text-left bg-muted text-foreground hover:bg-accent transition-colors cursor-pointer"
+            title="케이스 상세로 이동"
+          >
+            {msg.case_label && (
+              <span className="block text-[11px] uppercase tracking-[0.15em] text-muted-foreground mb-1">
+                {msg.case_label}
+              </span>
+            )}
+            {msg.content && (
+              <p className="whitespace-pre-wrap break-words text-[14px] leading-relaxed">
+                {msg.content}
+              </p>
+            )}
+          </button>
         ) : (
           <div
             data-bubble={isOwn ? 'own' : 'other'}

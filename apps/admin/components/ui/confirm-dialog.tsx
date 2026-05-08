@@ -85,7 +85,7 @@ function ConfirmDialog({ state, onClose }: { state: PendingState; onClose: (ok: 
       >
         <p className="font-serif text-[17px] leading-snug text-foreground">{state.message}</p>
         {state.description && (
-          <p className="mt-2 text-sm text-muted-foreground">{state.description}</p>
+          <p className="mt-2 text-sm text-muted-foreground whitespace-pre-line">{state.description}</p>
         )}
         <div className="mt-6 flex justify-end gap-sm">
           <button

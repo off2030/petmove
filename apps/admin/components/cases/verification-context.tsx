@@ -63,22 +63,10 @@ export function VerificationProvider({
   const { cases: relatedCases } = useCases()
 
   const value = useMemo<VerificationValue>(() => {
-    const country = detectCountryKey(destination ?? caseRow.destination)
-    const checks = country ? getChecksForCountry(country) : getChecksForCountry('all')
-
-    const results: CheckEntry[] = []
+    const results = evaluateCase(caseRow, destination, disabledIds, relatedCases)
     const pathMap = new Map<string, PathInfo>()
 
-    for (const check of checks) {
-      if (!check.run) continue
-      if (disabledIds.has(check.id)) continue
-      let result: CheckResult
-      try {
-        result = check.run({ caseRow, relatedCases })
-      } catch (e) {
-        result = { ok: false, message: `검증 실행 오류: ${e instanceof Error ? e.message : String(e)}` }
-      }
-      results.push({ check, result })
+    for (const { check, result } of results) {
       if (result.ok) continue
       const paths = result.offendingPaths ?? []
       for (const p of paths) {
@@ -112,6 +100,33 @@ export function useFieldVerification(path: string): PathInfo | null {
 export function useVerificationResults(): CheckEntry[] {
   const ctx = useContext(VerificationCtx)
   return ctx?.results ?? []
+}
+
+/**
+ * 케이스 + 목적지 + 비활성 규칙 셋을 받아 모든 체크를 실행한 결과 배열 반환.
+ * VerificationProvider 내부 계산과 PDF 발급 게이트가 공유한다.
+ */
+export function evaluateCase(
+  caseRow: CaseRow,
+  destination: string | null | undefined,
+  disabledIds: ReadonlySet<string>,
+  relatedCases?: CaseRow[],
+): CheckEntry[] {
+  const country = detectCountryKey(destination ?? caseRow.destination)
+  const checks = country ? getChecksForCountry(country) : getChecksForCountry('all')
+  const results: CheckEntry[] = []
+  for (const check of checks) {
+    if (!check.run) continue
+    if (disabledIds.has(check.id)) continue
+    let result: CheckResult
+    try {
+      result = check.run({ caseRow, relatedCases })
+    } catch (e) {
+      result = { ok: false, message: `검증 실행 오류: ${e instanceof Error ? e.message : String(e)}` }
+    }
+    results.push({ check, result })
+  }
+  return results
 }
 
 /** severity → 텍스트 색상 (밝기 대응). */

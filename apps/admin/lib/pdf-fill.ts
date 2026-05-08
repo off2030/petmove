@@ -1950,14 +1950,11 @@ function resolveField(
     }
     const v = (VET_INFO as unknown as Record<string, unknown>)[key]
     const str = v == null ? '' : String(v)
-    // phone_intl 가 비어있으면 phone 에서 자동 파생 — "02-872-7588" → "+82-2-872-7588".
-    // (settings 에서 phone_intl 직접 편집 UI 가 없는 환경 대비 fallback.)
+    // phone_intl 미설정 시 phone 값을 한국 국제표기(+82-…)로 변환해 폴백.
+    // 설정 UI 에는 phone 만 있고 phone_intl 은 노출되지 않아, seed 가 없는 org 는
+    // 항상 빈 값으로 출력되던 버그(SGP 등 vet:phone_intl 사용 폼) 회피.
     if (key === 'phone_intl' && !str.trim()) {
-      const phone = String((VET_INFO as unknown as Record<string, unknown>).phone ?? '').trim()
-      if (!phone) return ''
-      if (/^\+/.test(phone)) return phone
-      const m = phone.match(/^0(\d{1,2})-(.+)$/)
-      return m ? `+82-${m[1]}-${m[2]}` : phone
+      return fmtPhoneIntlKr(VET_INFO.phone)
     }
     return str
   }
