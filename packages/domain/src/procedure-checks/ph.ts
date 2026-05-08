@@ -2,7 +2,6 @@ import type { ProcedureCheck } from './types'
 import {
   daysBetween,
   findSameGuardianCases,
-  readExtraField,
   readGeneralVaccineEntries,
   readRabiesEntries,
   resolveValidUntil,
@@ -285,41 +284,6 @@ export const PH_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
-    },
-  },
-
-  // ── 서류 (SPSIC import clearance) ──
-  {
-    id: 'ph.spsic-validity-60days',
-    country: COUNTRY,
-    category: '서류',
-    title: 'SPSIC 발급 후 60일 이내 도착',
-    description:
-      'BAI SPSIC: "valid for two months from the date of approval" — 발급일로부터 60일 이내 도착. data.philippines_extra.spsic_issue_date 입력 시 검증.',
-    severity: 'blocker',
-    addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
-      const issueDate = readExtraField(caseRow, 'permit_issue_date')
-      if (!dep || !issueDate) return SKIP
-      const days = daysBetween(issueDate, dep)
-      if (days === null) return SKIP
-      if (days < 0) {
-        return {
-          ok: false,
-          message: `SPSIC 발급일(${issueDate})이 도착일(${dep})보다 늦음.`,
-          offendingPaths: ['permit_issue_date'],
-        }
-      }
-      if (days > 60) {
-        return {
-          ok: false,
-          message: `SPSIC 발급일(${issueDate}) → 도착일(${dep}): ${days}일 — 60일 이내 도착 필요.`,
-          fixHint: 'SPSIC 재신청 또는 도착일 조정.',
-          offendingPaths: ['permit_issue_date'],
-        }
-      }
-      return { ok: true, message: `SPSIC 발급일(${issueDate}) → 도착일(${dep}): ${days}일 (60일 이내).` }
     },
   },
 

@@ -6,7 +6,6 @@ import {
   matchBannedBreed,
   readBreed,
   readExternalParasiteEntries,
-  readExtraField,
   readGeneralVaccineEntries,
   readInternalParasiteEntries,
   readRabiesEntries,
@@ -366,41 +365,6 @@ export const AE_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
-    },
-  },
-
-  // ── 서류 (MOCCAE Import Permit) ──
-  {
-    id: 'ae.import-permit-validity-90days',
-    country: COUNTRY,
-    category: '서류',
-    title: 'MOCCAE Import Permit 발급 후 90일 이내 도착',
-    description:
-      'MOCCAE: "validity of permit is 90 days, and it is not allowed to import pets with an expired import permit" — 발급일로부터 90일 이내 도착. data.uae_extra.permit_issue_date 입력 시 검증.',
-    severity: 'blocker',
-    addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
-      const issueDate = readExtraField(caseRow, 'permit_issue_date')
-      if (!dep || !issueDate) return SKIP
-      const days = daysBetween(issueDate, dep)
-      if (days === null) return SKIP
-      if (days < 0) {
-        return {
-          ok: false,
-          message: `MOCCAE Permit 발급일(${issueDate})이 도착일(${dep})보다 늦음.`,
-          offendingPaths: ['permit_issue_date'],
-        }
-      }
-      if (days > 90) {
-        return {
-          ok: false,
-          message: `MOCCAE Permit 발급일(${issueDate}) → 도착일(${dep}): ${days}일 — 90일 이내 도착 필요.`,
-          fixHint: 'MOCCAE 재신청 또는 도착일 조정.',
-          offendingPaths: ['permit_issue_date'],
-        }
-      }
-      return { ok: true, message: `MOCCAE Permit(${issueDate}) → 도착일(${dep}): ${days}일 (90일 이내).` }
     },
   },
 

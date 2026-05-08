@@ -3,7 +3,6 @@ import {
   addOneYear,
   addYears,
   daysBetween,
-  readExtraField,
   readRabiesEntries,
   readTiterEntries,
   resolveValidUntil,
@@ -309,32 +308,6 @@ export const JP_CHECKS: ProcedureCheck[] = [
         fixHint: '재검사 또는 출국일을 검사일 + 2년 이내로 조정하세요.',
         offendingPaths: offending,
       }
-    },
-  },
-  {
-    id: 'jp.advance-notification-40days',
-    country: 'japan',
-    category: '서류',
-    title: '사전신고(届出)는 도착 40일 이상 전 제출',
-    description:
-      'AQS: "at least 40 days before arrival" — 도착 예정 공항 관할 동물검역소 또는 NACCS 시스템에 사전신고. data.japan_extra.advance_notification_date 입력 시 검증.',
-    severity: 'warning',
-    addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
-      const notifDate = readExtraField(caseRow, 'advance_notification_date')
-      if (!dep || !notifDate) return SKIP
-      const days = daysBetween(notifDate, dep)
-      if (days === null) return SKIP
-      if (days < 40) {
-        return {
-          ok: false,
-          message: `사전신고일(${notifDate}) → 도착일(${dep}): ${days}일 — 40일 이상 필요.`,
-          fixHint: `사전신고일을 ${dep} 기준 40일 이전으로 조정 (NACCS 또는 도착 AQS 사무소).`,
-          offendingPaths: ['advance_notification_date'],
-        }
-      }
-      return { ok: true, message: `사전신고일(${notifDate}) → 도착일(${dep}): ${days}일.` }
     },
   },
   {

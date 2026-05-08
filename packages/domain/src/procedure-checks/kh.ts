@@ -2,7 +2,6 @@ import type { ProcedureCheck } from './types'
 import {
   daysBetween,
   evaluateRabiesAgeConservative,
-  readExtraField,
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
@@ -228,35 +227,6 @@ export const KH_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
-    },
-  },
-
-  // ── 서류 (Import Permit, 화물 운송 시) ──
-  {
-    id: 'kh.import-permit-cargo',
-    country: COUNTRY,
-    category: '서류',
-    title: 'GDAHP Import Permit 신청은 출발 5영업일 이상 전 (화물 시)',
-    description:
-      'GDAHP: 동반 입국은 통상 면제, 무동반/화물 시 사전 Import Permit 필수. 출발 5-7영업일 이상 전 신청 권장. data.cambodia_extra.permit_application_date 입력 시 검증.',
-    severity: 'warning',
-    addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
-      const applyDate = readExtraField(caseRow, 'permit_application_date')
-      if (!dep || !applyDate) return SKIP
-      const days = daysBetween(applyDate, dep)
-      if (days === null) return SKIP
-      // 5영업일 = 약 7 캘린더일 보수
-      if (days < 7) {
-        return {
-          ok: false,
-          message: `Import Permit 신청일(${applyDate}) → 출발일(${dep}): ${days}일 — 5영업일(보수 7일) 이상 필요.`,
-          fixHint: 'GDAHP 신청을 출발 5영업일 이전으로 앞당기기.',
-          offendingPaths: ['permit_application_date'],
-        }
-      }
-      return { ok: true, message: `Import Permit 신청(${applyDate}) → 출발(${dep}): ${days}일 (5영업일+).` }
     },
   },
 ]

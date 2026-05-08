@@ -229,7 +229,7 @@ export function daysBetween(aISO: string, bISO: string): number | null {
 
 /**
  * 통합 키로 추가정보 필드를 읽음. top-level `data.{key}` 우선, 미발견 시 legacy
- * country-specific 경로(예: `data.thailand_extra.r7_issue_date`)로 fallback.
+ * country-specific 경로(예: `data.australia_extra.id_date`)로 fallback.
  * (destination-overrides-types LEGACY_EXTRA_PATHS 매핑 사용.)
  */
 export function readExtraField(caseRow: CaseRow, key: string): string | null {

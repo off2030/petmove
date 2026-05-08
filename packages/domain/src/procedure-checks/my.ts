@@ -4,7 +4,6 @@ import {
   evaluateRabiesAgeConservative,
   matchBannedBreed,
   readBreed,
-  readExtraField,
   readGeneralVaccineEntries,
   readRabiesEntries,
   resolveValidUntil,
@@ -255,41 +254,6 @@ export const MY_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
-    },
-  },
-
-  // ── 서류 (eP-Permit) ──
-  {
-    id: 'my.epermit-validity-30days',
-    country: COUNTRY,
-    category: '서류',
-    title: 'DVS eP-Permit 발급 후 30일 이내 도착',
-    description:
-      'DVS eP-Permit: "valid for 30 days from date of issuance" — 발급일로부터 30일 이내 도착. data.malaysia_extra.permit_issue_date 입력 시 검증.',
-    severity: 'blocker',
-    addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
-      const issueDate = readExtraField(caseRow, 'permit_issue_date')
-      if (!dep || !issueDate) return SKIP
-      const days = daysBetween(issueDate, dep)
-      if (days === null) return SKIP
-      if (days < 0) {
-        return {
-          ok: false,
-          message: `DVS eP-Permit 발급일(${issueDate})이 도착일(${dep})보다 늦음.`,
-          offendingPaths: ['permit_issue_date'],
-        }
-      }
-      if (days > 30) {
-        return {
-          ok: false,
-          message: `DVS eP-Permit 발급일(${issueDate}) → 도착일(${dep}): ${days}일 — 30일 이내 도착 필요.`,
-          fixHint: 'DVS 재발급 또는 도착일 조정.',
-          offendingPaths: ['permit_issue_date'],
-        }
-      }
-      return { ok: true, message: `eP-Permit(${issueDate}) → 도착일(${dep}): ${days}일 (30일 이내).` }
     },
   },
 

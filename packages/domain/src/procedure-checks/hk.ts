@@ -1,9 +1,7 @@
 import type { ProcedureCheck } from './types'
 import {
-  addMonths,
   daysBetween,
   evaluateRabiesAgeConservative,
-  readExtraField,
   readGeneralVaccineEntries,
   readRabiesEntries,
   resolveValidUntil,
@@ -279,42 +277,6 @@ export const HK_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
-    },
-  },
-
-  // ── 서류 (Special Permit AF240) ──
-  {
-    id: 'hk.special-permit-validity-6months',
-    country: COUNTRY,
-    category: '서류',
-    title: 'Special Permit (AF240) 발급 후 6개월 이내 도착',
-    description:
-      'AFCD Special Permit AF240: 발급일로부터 6개월 유효, 1회 선적 한정. data.hongkong_extra.permit_issue_date 입력 시 검증.',
-    severity: 'blocker',
-    addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
-      const issueDate = readExtraField(caseRow, 'permit_issue_date')
-      if (!dep || !issueDate) return SKIP
-      const days = daysBetween(issueDate, dep)
-      if (days === null) return SKIP
-      if (days < 0) {
-        return {
-          ok: false,
-          message: `Special Permit 발급일(${issueDate})이 도착일(${dep})보다 늦음.`,
-          offendingPaths: ['permit_issue_date'],
-        }
-      }
-      const expiry = addMonths(issueDate, 6)
-      if (dep > expiry) {
-        return {
-          ok: false,
-          message: `Special Permit 발급일(${issueDate}) + 6개월(${expiry}) < 도착일(${dep}) — 만료.`,
-          fixHint: 'AFCD에 30일 연장 신청 또는 재발급 필요.',
-          offendingPaths: ['permit_issue_date'],
-        }
-      }
-      return { ok: true, message: `Special Permit(${issueDate}) → 도착일(${dep}): ${days}일 (6개월 이내).` }
     },
   },
 ]

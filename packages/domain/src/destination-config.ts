@@ -59,8 +59,6 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       'return_date', 'return_flight_number', 'return_departure_airport', 'return_arrival_airport', 'return_transport',
       // 평면 (그룹 없음)
       'email', 'address_overseas', 'certificate_no',
-      // AQS 사전신고(届出) — 도착 40일 이상 전 의무.
-      'advance_notification_date',
     ],
   },
   // Tapeworm 6개국: 영국·아일랜드·몰타·북아일랜드·노르웨이·핀란드.
@@ -130,13 +128,11 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer', 'general'],
     extraSection: 'thailand',
     // 태국은 검역소·도착지 = 입국공항 (Bangkok=BKK, Phuket=HKT, Chiang Mai=CNX) 이라 entry_airport 로 통합.
-    // 표시 순서: 여권 정보 → 해외주소 → 항공편(날짜·시간·항공편명·도착공항) → R7 허가.
+    // 표시 순서: 여권 정보 → 해외주소 → 항공편(날짜·시간·항공편명·도착공항).
     extraFields: [
       'passport_number', 'passport_expiry_date', 'passport_issuer',
       'address_overseas',
       'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
-      // DLD R.7 import permit — 60일 유효 검증.
-      'permit_no', 'permit_issue_date',
     ],
   },
   philippines: {
@@ -146,16 +142,12 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     extraFields: [
       'address_overseas', 'postal_code', 'email',
       'passport_number', 'passport_expiry_date', 'entry_airport',
-      // BAI SPSIC — 60일 유효 검증.
-      'permit_no', 'permit_issue_date',
     ],
   },
   indonesia: {
     // 인도네시아는 별도 양식 없이 병원 발급 일반 영문 건강증명서(VHC) 제출.
     keywords: ['인도네시아', 'indonesia'],
     vaccines: ['rabies', 'rabies_titer'],
-    // Surat Persetujuan Pemasukan — 3개월 유효 검증.
-    extraFields: ['permit_no', 'permit_issue_date'],
   },
   india: {
     // 'india' / '인도' 는 'indonesia' / '인도네시아' 의 부분문자열이므로
@@ -183,8 +175,6 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   uae: {
     keywords: ['아랍에미레이트', '아랍에미리트', 'uae', 'united arab emirates'],
     vaccines: ['rabies', 'rabies_titer', 'general', 'external_parasite', 'internal_parasite'],
-    // MOCCAE Import Permit — 90일 유효 검증.
-    extraFields: ['permit_no', 'permit_issue_date'],
   },
   singapore: {
     keywords: ['싱가포르', 'singapore'],
@@ -193,8 +183,6 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   hongkong: {
     keywords: ['홍콩', 'hong kong', 'hongkong'],
     vaccines: ['rabies', 'rabies_titer', 'general'],
-    // AFCD Special Permit (Form AF240) — 6개월 유효 검증.
-    extraFields: ['permit_no', 'permit_issue_date'],
   },
   hawaii: {
     keywords: ['하와이', 'hawaii'],
@@ -221,16 +209,12 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // APHIA(2023 BAPHIQ에서 개칭) — 광견병 항체검사 필수, 채혈일 + 180일 후 도착, 7일 격리 (수입허가 20일 전 신청 시 면제).
     keywords: ['대만', 'taiwan'],
     vaccines: ['rabies', 'rabies_titer'],
-    // APHIA Import Permit — 신청은 선적 20일 이상 전 (격리 면제 핵심).
-    extraFields: ['permit_no', 'permit_application_date'],
   },
   malaysia: {
     // DVS — 종합백신 필수, RNATT 면제(말레이시아 입국 한정 — 한국 귀국 시는 필요).
     // 수입허가 + 계류장 14일 전 예약 + 도착 후 7일 격리.
     keywords: ['말레이시아', 'malaysia'],
     vaccines: ['rabies', 'rabies_titer', 'general'],
-    // DVS eP-Permit — 30일 유효 검증.
-    extraFields: ['permit_no', 'permit_issue_date'],
   },
   morocco: {
     // ONSSA — 광견병 출국 30일 전, 도착 시 수의사 검역. RNATT 는 한국 귀국용.
@@ -259,8 +243,6 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   cambodia: {
     keywords: ['캄보디아', 'cambodia'],
     vaccines: ['rabies', 'rabies_titer'],
-    // GDAHP Import Permit (화물 운송 시) — 출발 5영업일 이상 전 신청 권장.
-    extraFields: ['permit_no', 'permit_application_date'],
   },
   ukraine: {
     // 공식 자료 부재 — 사례 기반. 광견병 21일 + RNATT 3개월/1년 + 건강증명서 48시간.
