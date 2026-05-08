@@ -120,6 +120,7 @@ function CertMultiSelect({
             <li
               key={c.key}
               role="option"
+              aria-selected={false}
               onMouseDown={(e) => {
                 e.preventDefault()
                 onAdd(c.key)
