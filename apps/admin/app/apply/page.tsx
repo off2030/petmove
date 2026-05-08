@@ -732,7 +732,7 @@ export default function ApplyPage() {
         {/* Header — editorial magazine-style masthead */}
         <header className="relative mb-10 text-center pb-8 border-b border-border/80">
           {/* Language toggle */}
-          <div className="absolute top-0 right-0 flex items-baseline gap-2 font-mono text-[11px] uppercase tracking-[1.5px]">
+          <div className="mb-3 flex items-baseline justify-center gap-2 font-mono text-[11px] uppercase tracking-[1.5px] sm:absolute sm:top-0 sm:right-0 sm:mb-0">
             <button
               type="button"
               onClick={() => setLang('ko')}
