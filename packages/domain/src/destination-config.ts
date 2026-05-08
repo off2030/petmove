@@ -116,7 +116,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['호주', 'australia'],
     vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'infectious_disease', 'internal_parasite', 'external_parasite'],
     extraSection: 'australia',
-    extraFields: ['permit_no', 'id_date', 'sample_received_date'],
+    // sample_received_date 는 rabies_titer_records[].received_date 로 이동 (광견병 항체검사 편집화면에 표시).
+    extraFields: ['permit_no', 'id_date'],
   },
   new_zealand: {
     keywords: ['뉴질랜드', 'new zealand', 'nz'],

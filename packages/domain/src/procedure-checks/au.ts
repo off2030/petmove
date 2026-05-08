@@ -116,7 +116,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일은 RNATT 검체 lab 도착일 180일 이후',
     description:
-      'RNATT 검체가 DAFF 승인 lab 에 도착한 날부터 180일 의무 대기. 검체 도착일(`australia_extra.sample_received_date`) 우선, 없으면 채혈일 fallback.',
+      'RNATT 검체가 DAFF 승인 lab 에 도착한 날부터 180일 의무 대기. 우선순위: rabies_titer_records[].received_date → australia_extra.sample_received_date(legacy) → 채혈일(fallback).',
     severity: 'blocker',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
@@ -125,12 +125,17 @@ export const AU_CHECKS: ProcedureCheck[] = [
       const auExtra = readAustraliaExtra(caseRow)
       if (!dep) return SKIP
 
-      // 우선 sample_received_date, 없으면 채혈일 중 최선(가장 이른=가장 긴 대기) 사용
-      let basis: { kind: 'received' | 'sample'; date: string; titerIdx?: number } | null = null
-      if (auExtra.sample_received_date) {
-        basis = { kind: 'received', date: auExtra.sample_received_date }
+      // 우선순위:
+      //  (1) titer record 내 received_date — 가장 정확한 record-level 데이터
+      //  (2) australia_extra.sample_received_date — legacy 단일 필드
+      //  (3) 채혈일 fallback — 가장 이른 = 가장 긴 대기 = 가장 유리
+      let basis: { kind: 'received_record' | 'received_legacy' | 'sample'; date: string; titerIdx?: number } | null = null
+      const receivedRecord = titers.find((t) => t.received_date)
+      if (receivedRecord && receivedRecord.received_date) {
+        basis = { kind: 'received_record', date: receivedRecord.received_date, titerIdx: receivedRecord.originalIndex }
+      } else if (auExtra.sample_received_date) {
+        basis = { kind: 'received_legacy', date: auExtra.sample_received_date }
       } else if (titers.length > 0) {
-        // 가장 이른 채혈일이 가장 긴 대기 → 가장 유리
         const earliest = titers.reduce((a, b) => (a.date <= b.date ? a : b))
         basis = { kind: 'sample', date: earliest.date, titerIdx: earliest.originalIndex }
       } else {
@@ -141,9 +146,14 @@ export const AU_CHECKS: ProcedureCheck[] = [
       if (days === null) return SKIP
       if (days < 180) {
         const offendingPaths = ['departure_date']
-        if (basis.kind === 'received') offendingPaths.push('australia_extra.sample_received_date')
-        else offendingPaths.push(`rabies_titer_records[${basis.titerIdx}].date`)
-        const label = basis.kind === 'received' ? '검체 도착일' : '채혈일(검체일 미입력 fallback)'
+        if (basis.kind === 'received_record') {
+          offendingPaths.push(`rabies_titer_records[${basis.titerIdx}].received_date`)
+        } else if (basis.kind === 'received_legacy') {
+          offendingPaths.push('australia_extra.sample_received_date')
+        } else {
+          offendingPaths.push(`rabies_titer_records[${basis.titerIdx}].date`)
+        }
+        const label = basis.kind === 'sample' ? '채혈일(검체일 미입력 fallback)' : '검체 도착일'
         return {
           ok: false,
           message: `${label}(${basis.date}) → 출국일(${dep}): ${days}일 — 180일 이상 필요.`,
@@ -151,7 +161,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
           offendingPaths,
         }
       }
-      const label = basis.kind === 'received' ? '검체 도착일' : '채혈일'
+      const label = basis.kind === 'sample' ? '채혈일' : '검체 도착일'
       return { ok: true, message: `${label}(${basis.date}) → 출국일(${dep}): ${days}일.` }
     },
   },

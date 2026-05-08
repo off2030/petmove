@@ -247,9 +247,9 @@ export const GU_CHECKS: ProcedureCheck[] = [
     id: 'gu.rnatt-120days-before-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: 'RNATT 채혈일부터 120일 경과 후 도착',
+    title: 'RNATT 검체 lab 수령일부터 120일 경과 후 도착',
     description:
-      'RNATT 채혈일(lab 수령일 proxy)로부터 120일 경과 후에 괌 도착해야 함 (격리 면제 핵심 조건). (DOAG: "the day that the laboratory receives the OIE-FAVN sample counts as the first day for the 120-day countdown" — 채혈일 proxy는 lab 수령일보다 며칠 빨라 less strict, 보수 마진 검토 권고)',
+      'DOAG: "the day that the laboratory receives the OIE-FAVN sample counts as the first day for the 120-day countdown" — 검체 lab 수령일(`rabies_titer_records[].received_date`) 우선, 미입력 시 채혈일 fallback. 채혈일 proxy 는 lab 수령일보다 며칠 빨라 less strict.',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -257,22 +257,31 @@ export const GU_CHECKS: ProcedureCheck[] = [
       const titers = readTiterEntries(caseRow)
       if (!dep || titers.length === 0) return SKIP
 
+      // received_date 우선, 없으면 채혈일 fallback
       const valid = titers.find((t) => {
-        const days = daysBetween(t.date, dep)
+        const basis = t.received_date || t.date
+        const days = daysBetween(basis, dep)
         return days !== null && days >= 120
       })
       if (valid) {
-        const days = daysBetween(valid.date, dep)
-        return { ok: true, message: `RNATT(${valid.date}) → 출국(${dep}): ${days}일 (≥120).` }
+        const basis = valid.received_date || valid.date
+        const label = valid.received_date ? '검체 수령일' : 'RNATT 채혈일'
+        const days = daysBetween(basis, dep)
+        return { ok: true, message: `${label}(${basis}) → 출국(${dep}): ${days}일 (≥120).` }
       }
-      const earliest = [...titers].sort((a, b) => a.date.localeCompare(b.date))[0]
-      const days = daysBetween(earliest.date, dep)
+      const earliest = [...titers].sort((a, b) => (a.received_date || a.date).localeCompare(b.received_date || b.date))[0]
+      const earliestBasis = earliest.received_date || earliest.date
+      const days = daysBetween(earliestBasis, dep)
       const offending: string[] = ['departure_date']
-      for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
+      for (const t of titers) {
+        if (t.received_date) offending.push(`rabies_titer_records[${t.originalIndex}].received_date`)
+        else offending.push(`rabies_titer_records[${t.originalIndex}].date`)
+      }
+      const label = earliest.received_date ? '검체 수령일' : 'RNATT 채혈일'
       return {
         ok: false,
-        message: `RNATT(${earliest.date}) → 출국(${dep}): ${days ?? '?'}일 — 120일 이상 필요.`,
-        fixHint: `출국일을 ${earliest.date} 기준 120일 이후로 조정.`,
+        message: `${label}(${earliestBasis}) → 출국(${dep}): ${days ?? '?'}일 — 120일 이상 필요.`,
+        fixHint: `출국일을 ${earliestBasis} 기준 120일 이후로 조정.`,
         offendingPaths: offending,
       }
     },

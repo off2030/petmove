@@ -18,6 +18,8 @@ export interface RabiesEntry {
 export interface TiterEntry {
   date: string
   value?: string | null
+  /** 검사소가 검체를 수령한 날 (lab sample received). AU/HI/GU 의 N일 대기 카운트다운 기준. */
+  received_date?: string | null
   originalIndex: number
 }
 
@@ -55,8 +57,13 @@ export function readTiterEntries(caseRow: CaseRow): TiterEntry[] {
   if (!Array.isArray(raw)) return []
   return raw
     .map((r, originalIndex) => {
-      const rec = r as { date?: string | null; value?: string | null }
-      return { date: rec?.date ?? '', value: rec?.value ?? null, originalIndex }
+      const rec = r as { date?: string | null; value?: string | null; received_date?: string | null }
+      return {
+        date: rec?.date ?? '',
+        value: rec?.value ?? null,
+        received_date: rec?.received_date ?? null,
+        originalIndex,
+      }
     })
     .filter((r) => typeof r.date === 'string' && r.date.length >= 10)
 }

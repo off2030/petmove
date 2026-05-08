@@ -23,7 +23,7 @@ interface TiterRecord {
   date: string | null
   value: string | null
   lab: string | null
-  /** Legacy field — older rows may carry `received_date`. UI 에는 노출 안 함. */
+  /** 검사소 샘플 수령일 — AU/HI/GU 의 N일 대기 카운트다운 기준. 미입력 시 채혈일 fallback. */
   received_date?: string | null
 }
 
@@ -84,7 +84,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
 
   const [saving] = useTransition()
   const [editIdx, setEditIdx] = useState<number | null>(null)
-  const [editField, setEditField] = useState<'date' | 'value' | 'lab' | null>(null)
+  const [editField, setEditField] = useState<'date' | 'value' | 'lab' | 'received_date' | null>(null)
   const [addingNew, setAddingNew] = useState(false)
   const [extracting, setExtracting] = useState(false)
   const [extractMsg, setExtractMsg] = useState<string | null>(null)
@@ -119,11 +119,6 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
     setEditField(null)
   }
 
-  const isAU = !!destination && destination.split(',').some(d => {
-    const t = d.trim().toLowerCase()
-    return t === '호주' || t === 'australia'
-  })
-
   async function saveRecords(next: TiterRecord[]) {
     const val = next.length > 0 ? next : null
     const prevSnapshot = records
@@ -155,17 +150,25 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
         nextRecords = records.map((r, i) => i === targetIdx ? {
           ...r,
           value: r.value || xValue || null,
+          received_date: r.received_date || xReceived || null,
         } : r)
       } else if (xValue) {
-        // 새 record — 추출된 값을 가진 신규 row.
+        // 새 record — 추출된 값(+ 가능 시 수령일)을 가진 신규 row.
         const detectedLab = autoDetectLab(destination, inspectionConfig.titerRules, inspectionConfig.titerDefault)
-        nextRecords = [...records, { date: null, value: xValue, lab: detectedLab }]
+        nextRecords = [...records, { date: null, value: xValue, lab: detectedLab, received_date: xReceived || null }]
         createdAtIdx = records.length
         createdNewRecord = true
       }
 
       const applied = { value: false, received: false }
       if (xValue && nextRecords !== records) applied.value = true
+      if (xReceived && nextRecords !== records) {
+        // record-level 적용 여부 확인
+        const idx = targetIdx !== null ? targetIdx : createdAtIdx
+        if (idx !== null && nextRecords[idx]?.received_date === xReceived) {
+          applied.received = true
+        }
+      }
 
       if (nextRecords !== records) {
         await saveRecords(nextRecords)
@@ -174,18 +177,6 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
           const statusKey = `inspection_status_titer_${createdAtIdx}`
           updateLocalCaseField(caseId, 'data', statusKey, 'waiting')
           void updateCaseField(caseId, 'data', statusKey, 'waiting')
-        }
-      }
-
-      // 호주: sample_received_date 가 비어있으면 기록.
-      if (isAU && xReceived) {
-        const auPrev = (data.australia_extra as Record<string, unknown> | undefined) ?? {}
-        const auExistingReceived = typeof auPrev.sample_received_date === 'string' ? auPrev.sample_received_date : null
-        if (!auExistingReceived) {
-          const nextAu = { ...auPrev, sample_received_date: xReceived }
-          updateLocalCaseField(caseId, 'data', 'australia_extra', nextAu)
-          applied.received = true
-          void updateCaseField(caseId, 'data', 'australia_extra', nextAu)
         }
       }
 
@@ -519,8 +510,8 @@ function TiterRecordRow({
 }: {
   record: TiterRecord
   recordIdx: number
-  isEditing: 'date' | 'value' | 'lab' | null
-  onStartEdit: (f: 'date' | 'value' | 'lab') => void
+  isEditing: 'date' | 'value' | 'lab' | 'received_date' | null
+  onStartEdit: (f: 'date' | 'value' | 'lab' | 'received_date') => void
   onStopEdit: () => void
   onUpdateField: (f: keyof TiterRecord, v: unknown) => void
   onDelete: () => void
@@ -611,6 +602,26 @@ function TiterRecordRow({
         >
           <Trash2 size={13} />
         </button>
+      </div>
+
+      {/* 검사소 샘플 수령일 — AU/HI/GU 의 N일 대기 기준. */}
+      <div className="basis-full flex items-baseline gap-[10px] pt-1.5 border-t border-border/30 mt-1">
+        <span className="font-mono text-[11px] uppercase tracking-[1px] text-muted-foreground/70">검사소 샘플 수령일</span>
+        {isEditing === 'received_date' ? (
+          <DateInput
+            initial={record.received_date || ''}
+            onSave={(v) => { onUpdateField('received_date', v || null); onStopEdit() }}
+            onCancel={onStopEdit}
+          />
+        ) : (
+          <button type="button" onClick={() => onStartEdit('received_date')}
+            className={cn(
+              'text-left rounded-md px-2 py-0.5 -mx-2 font-mono text-[14px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
+              !record.received_date && 'font-sans text-[13px] italic font-normal tracking-normal text-muted-foreground/60',
+            )}>
+            {record.received_date || '— (미입력 시 채혈일 사용)'}
+          </button>
+        )}
       </div>
     </div>
   )
