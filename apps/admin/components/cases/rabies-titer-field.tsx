@@ -625,10 +625,10 @@ function TiterRecordRow({
             <button type="button" onClick={() => onStartEdit('received_date')} title={receivedTitle}
               className={cn(
                 'text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
-                !record.received_date && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60',
+                !record.received_date && 'text-muted-foreground/40',
                 receivedColorCls,
               )}>
-              {record.received_date || '—'}
+              {record.received_date || 'YYYY-MM-DD'}
             </button>
           )}
         </>
