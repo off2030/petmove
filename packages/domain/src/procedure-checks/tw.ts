@@ -1,5 +1,6 @@
 import type { ProcedureCheck } from './types'
 import {
+  addYears,
   daysBetween,
   readExtraField,
   readRabiesEntries,
@@ -157,12 +158,12 @@ export const TW_CHECKS: ProcedureCheck[] = [
     },
   },
   {
-    id: 'tw.rnatt-180days-before-arrival',
+    id: 'tw.rnatt-180days-to-1year-before-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: 'RNATT 채혈일부터 180일 경과 후 도착',
+    title: 'RNATT 채혈일부터 180일 ~ 1년 사이 도착',
     description:
-      'RNATT 채혈일로부터 180일 경과 후에 대만 도착해야 함 (격리 면제 핵심 조건). 미충족 시 추가 격리. (APHIA: "the blood sampling date should be no less than 180 days … prior to shipment")',
+      'RNATT 채혈일로부터 180일 경과 ~ 1년 이내에 대만 도착 (격리 면제 핵심 조건). 미충족 시 추가 격리 또는 재검사. (APHIA: "the blood sampling date should be no less than 180 days and no more than one year prior to shipment")',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -170,25 +171,36 @@ export const TW_CHECKS: ProcedureCheck[] = [
       const titers = readTiterEntries(caseRow)
       if (!dep || titers.length === 0) return SKIP
 
-      // 가장 이른 채혈 = 가장 긴 대기기간 (가장 유리). 180일 충족하는 것 하나라도 있으면 OK.
+      // 180일 ≤ 출국 ≤ 1년 (addYears: -1일 보정 = 364일째까지) 윈도우 안에 들어가는 채혈 1개 이상이면 OK.
       const valid = titers.find((t) => {
         const days = daysBetween(t.date, dep)
-        return days !== null && days >= 180
+        if (days === null) return false
+        const upper = addYears(t.date, 1)
+        return days >= 180 && upper >= dep
       })
       if (valid) {
         const days = daysBetween(valid.date, dep)
-        return { ok: true, message: `RNATT(${valid.date}) → 출국(${dep}): ${days}일 (≥180).` }
+        return { ok: true, message: `RNATT(${valid.date}) → 출국(${dep}): ${days}일 (180일 이상, 1년 이내).` }
       }
 
-      // 모두 실패 — 가장 이른 채혈일 기준 메시지 (가장 유리한 것이 부족)
-      const earliest = [...titers].sort((a, b) => a.date.localeCompare(b.date))[0]
-      const days = daysBetween(earliest.date, dep)
+      // 모두 실패 — 가장 최신 채혈일 기준 메시지
+      const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
+      const days = daysBetween(newest.date, dep)
+      const upper = addYears(newest.date, 1)
       const offending: string[] = ['departure_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
+      const reason =
+        days === null
+          ? '날짜 형식 오류'
+          : days < 0
+            ? `채혈일(${newest.date})이 출국일(${dep}) 이후`
+            : days < 180
+              ? `RNATT(${newest.date}) → 출국(${dep}): ${days}일 — 180일 미달`
+              : `RNATT(${newest.date}) + 1년(${upper}) < 출국일(${dep}) — 1년 초과 (재검사 필요)`
       return {
         ok: false,
-        message: `RNATT(${earliest.date}) → 출국(${dep}): ${days ?? '?'}일 — 180일 이상 필요.`,
-        fixHint: `출국일을 ${earliest.date} 기준 180일 이후로 조정.`,
+        message: reason,
+        fixHint: `출국일을 ${newest.date} 기준 180일 이후 ~ ${upper} 사이로 조정하거나 RNATT 재검사 필요.`,
         offendingPaths: offending,
       }
     },
