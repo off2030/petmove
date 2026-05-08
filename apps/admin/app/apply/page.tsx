@@ -25,7 +25,7 @@ type Lang = 'ko' | 'en'
 const messages = {
   ko: {
     eyebrow: 'PetMove · Registration',
-    title: '펫무브 등록 신청서',
+    title: 'PETMOVE',
     sec1: '어디로 가시나요?',
     destination: '목적지',
     required: '필수',
@@ -127,7 +127,7 @@ const messages = {
   },
   en: {
     eyebrow: 'PetMove · Registration',
-    title: 'PetMove Application',
+    title: 'PETMOVE',
     sec1: 'Where are you going?',
     destination: 'Destination',
     required: 'Required',
@@ -135,7 +135,7 @@ const messages = {
     destPlaceholder: 'e.g. Japan',
     noResults: 'No results',
     sec2: 'Owner Information',
-    name: 'Korean Name',
+    name: 'Name',
     namePlaceholder: 'e.g. 홍길동',
     nameEn: 'English Name',
     nameEnHint: 'as on passport',
