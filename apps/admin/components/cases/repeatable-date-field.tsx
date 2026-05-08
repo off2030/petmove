@@ -205,7 +205,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
   // 항목 클릭 시 열리는 편집 팝업.
   const [modalOpen, setModalOpen] = useState(false)
   // 모달 열릴 때 records 스냅샷 — 변경 감지용 (닫기 vs 저장 버튼 토글).
-  const initialRecordsRef = useRef<string>('[]')
+  const [initialRecordsSnapshot, setInitialRecordsSnapshot] = useState('[]')
 
   // Which detail field is being edited (in expanded view)
   const [detailEdit, setDetailEdit] = useState<{ idx: number; field: keyof VacRecord } | null>(null)
@@ -221,7 +221,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
 
   function openEditModal() {
     if (!editMode) return
-    initialRecordsRef.current = JSON.stringify(records)
+    setInitialRecordsSnapshot(JSON.stringify(records))
     setModalOpen(true)
     // 빈 상태에서 모달 열면 새 입력칸 자동 노출.
     if (records.length === 0) setAddingNew(true)
@@ -785,7 +785,7 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
               {/* 우측: 닫기/저장 — neutral 상태는 좌측 "추가" 와 동일 pill, 변경 시 accent 강조 */}
               <div className="ml-auto">
                 {(() => {
-                  const hasChanges = JSON.stringify(records) !== initialRecordsRef.current
+                  const hasChanges = JSON.stringify(records) !== initialRecordsSnapshot
                   return (
                     <button
                       type="button"

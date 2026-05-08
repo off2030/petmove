@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { ChevronDown, Menu, Plus, Printer, Search, Copy, Trash2 } from 'lucide-react'
 import { EditModeButton } from '@/components/ui/edit-mode-button'
 import { useCalculatorData } from '@/components/providers/calculator-data-provider'
@@ -163,14 +163,14 @@ export function CalculatorApp({
     })
   }
 
-  const countries = useMemo(() => {
+  const countries = (() => {
     const seen = new Map<string, number>()
     for (const it of items) {
       if (it.country.includes('(고양이)')) continue
       if (!seen.has(it.country)) seen.set(it.country, it.country_order)
     }
     return [...seen.entries()].sort((a, b) => a[1] - b[1]).map(([n]) => n)
-  }, [items])
+  })()
 
   const filteredCountries = countries.filter((c) => c.includes(search))
 

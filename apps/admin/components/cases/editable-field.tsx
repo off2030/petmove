@@ -318,6 +318,30 @@ export function EditableField({
     })()
   }
 
+  function handleFilteredInputChange(v: string, fromCompositionEnd?: boolean) {
+    if (composingRef.current && !fromCompositionEnd) { setValue(v); return }
+    const filtered = applyFilter(spec, v, effectiveLang)
+    setValue(filtered)
+    if (v !== filtered) {
+      const hasKorean = /[\u3131-\u318e\uac00-\ud7a3]/.test(v)
+      const hasNonDigit = /[^\d\s.]/.test(v)
+      const msg =
+        (DIGITS_ONLY_KEYS.has(spec.key) || DIGITS_SPACE_KEYS.has(spec.key)) && hasNonDigit
+          ? '숫자만 입력 가능합니다'
+        : (NUMERIC_KEYS.has(spec.key) || spec.type === 'number') && hasNonDigit
+          ? '숫자만 입력 가능합니다'
+        : EMAIL_KEYS.has(spec.key) && hasKorean
+          ? '영문만 입력 가능합니다'
+        : effectiveLang === 'en' && hasKorean
+          ? '영문만 입력 가능합니다'
+        : ''
+      if (msg) {
+        setError(msg)
+        setTimeout(() => setError(null), 2000)
+      }
+    }
+  }
+
   function handleSelectChange_custom(val: string | null) {
     const coerced = val ? coerceInputValue(spec, val) : null
     const prev = rawValue
@@ -417,29 +441,8 @@ export function EditableField({
       ) : editing ? (
         // 박스폼 — 모든 편집은 동일한 박스 + 저장 버튼 패턴으로 통일.
         <div className="flex items-start gap-sm">
-          {renderInput(spec, value, (v, fromCompositionEnd) => {
-            if (composingRef.current && !fromCompositionEnd) { setValue(v); return }
-            const filtered = applyFilter(spec, v, effectiveLang)
-            setValue(filtered)
-            if (v !== filtered) {
-              const hasKorean = /[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(v)
-              const hasNonDigit = /[^\d\s.]/.test(v)
-              const msg =
-                (DIGITS_ONLY_KEYS.has(spec.key) || DIGITS_SPACE_KEYS.has(spec.key)) && hasNonDigit
-                  ? '숫자만 입력 가능합니다'
-                : (NUMERIC_KEYS.has(spec.key) || spec.type === 'number') && hasNonDigit
-                  ? '숫자만 입력 가능합니다'
-                : EMAIL_KEYS.has(spec.key) && hasKorean
-                  ? '영문만 입력 가능합니다'
-                : effectiveLang === 'en' && hasKorean
-                  ? '영문만 입력 가능합니다'
-                : ''
-              if (msg) {
-                setError(msg)
-                setTimeout(() => setError(null), 2000)
-              }
-            }
-          }, inputRef, handleKeyDown, handleBlur, effectiveLang, autoSave, composingRef)}
+          {/* eslint-disable-next-line react-hooks/refs -- handler reads composition ref only during input events. */}
+          {renderInput(spec, value, handleFilteredInputChange, inputRef, handleKeyDown, handleBlur, effectiveLang, autoSave, composingRef)}
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}

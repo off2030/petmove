@@ -108,7 +108,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
   // 항목 클릭 시 열리는 편집 팝업.
   const [modalOpen, setModalOpen] = useState(false)
   // 모달 열릴 때 records 스냅샷 — 변경 감지용 (닫기 vs 저장 버튼 토글).
-  const initialRecordsRef = useRef<string>('[]')
+  const [initialRecordsSnapshot, setInitialRecordsSnapshot] = useState('[]')
   const rootRef = useRef<HTMLDivElement | null>(null)
   const modalRef = useRef<HTMLDivElement | null>(null)
 
@@ -123,7 +123,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
 
   function openEditModal() {
     if (!editMode) return
-    initialRecordsRef.current = JSON.stringify(records)
+    setInitialRecordsSnapshot(JSON.stringify(records))
     setModalOpen(true)
     if (records.length === 0) setAddingNew(true)
   }
@@ -474,7 +474,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
               {/* 우측: 닫기/저장 */}
               <div className="ml-auto">
                 {(() => {
-                  const hasChanges = JSON.stringify(records) !== initialRecordsRef.current
+                  const hasChanges = JSON.stringify(records) !== initialRecordsSnapshot
                   return (
                     <button
                       type="button"

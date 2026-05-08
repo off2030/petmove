@@ -753,24 +753,29 @@ function EnglishNameSplitRow<K extends string>({
   const firstComposing = useRef(false)
   const lastComposing = useRef(false)
 
-  function makeChange(target: 'first' | 'last', composingRef: React.MutableRefObject<boolean>) {
-    return (e: React.ChangeEvent<HTMLInputElement>) => {
-      const key = target === 'first' ? firstKey : lastKey
-      // composition 중에는 IME 글자 통과 — 한글 입력 도중 자모 깨짐 방지.
-      if (composingRef.current) {
-        onChange(key, e.target.value)
-        return
-      }
-      onChange(key, capitalizeWords(filterKorean(e.target.value)))
+  function handleFirstChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (firstComposing.current) {
+      onChange(firstKey, e.target.value)
+      return
     }
+    onChange(firstKey, capitalizeWords(filterKorean(e.target.value)))
   }
-  function makeCompositionEnd(target: 'first' | 'last', composingRef: React.MutableRefObject<boolean>) {
-    return (e: React.CompositionEvent<HTMLInputElement>) => {
-      composingRef.current = false
-      const key = target === 'first' ? firstKey : lastKey
-      const raw = (e.target as HTMLInputElement).value
-      onChange(key, capitalizeWords(filterKorean(raw)))
+  function handleLastChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (lastComposing.current) {
+      onChange(lastKey, e.target.value)
+      return
     }
+    onChange(lastKey, capitalizeWords(filterKorean(e.target.value)))
+  }
+  function handleFirstCompositionEnd(e: React.CompositionEvent<HTMLInputElement>) {
+    firstComposing.current = false
+    const raw = (e.target as HTMLInputElement).value
+    onChange(firstKey, capitalizeWords(filterKorean(raw)))
+  }
+  function handleLastCompositionEnd(e: React.CompositionEvent<HTMLInputElement>) {
+    lastComposing.current = false
+    const raw = (e.target as HTMLInputElement).value
+    onChange(lastKey, capitalizeWords(filterKorean(raw)))
   }
   function makeKeyDown(key: K) {
     return (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -791,9 +796,9 @@ function EnglishNameSplitRow<K extends string>({
         <input
           type="text"
           value={firstValue}
-          onChange={makeChange('first', firstComposing)}
+          onChange={handleFirstChange}
           onCompositionStart={() => { firstComposing.current = true }}
-          onCompositionEnd={makeCompositionEnd('first', firstComposing)}
+          onCompositionEnd={handleFirstCompositionEnd}
           onBlur={() => onCommit(firstKey)}
           onKeyDown={makeKeyDown(firstKey)}
           placeholder={isAdmin ? 'First (이름)' : ''}
@@ -804,9 +809,9 @@ function EnglishNameSplitRow<K extends string>({
         <input
           type="text"
           value={lastValue}
-          onChange={makeChange('last', lastComposing)}
+          onChange={handleLastChange}
           onCompositionStart={() => { lastComposing.current = true }}
-          onCompositionEnd={makeCompositionEnd('last', lastComposing)}
+          onCompositionEnd={handleLastCompositionEnd}
           onBlur={() => onCommit(lastKey)}
           onKeyDown={makeKeyDown(lastKey)}
           placeholder={isAdmin ? 'Last (성)' : ''}

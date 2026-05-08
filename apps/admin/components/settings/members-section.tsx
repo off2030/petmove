@@ -56,6 +56,7 @@ export function MembersSection({
   const [inviteNotice, setInviteNotice] = useState<string | null>(null)
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
   const [removeError, setRemoveError] = useState<string | null>(null)
+  const [now, setNow] = useState<number | null>(null)
   const [pending, startTransition] = useTransition()
 
   async function refresh() {
@@ -77,6 +78,10 @@ export function MembersSection({
   useEffect(() => {
     if (initialMembers !== null || initialInvites !== null) return
     refresh()
+  }, [])
+
+  useEffect(() => {
+    setNow(Date.now())
   }, [])
 
   const superAdminIds = new Set(superAdmins.map((s) => s.user_id))
@@ -287,7 +292,7 @@ export function MembersSection({
               <p className="font-serif italic text-[14px] text-muted-foreground py-4">대기 중인 초대가 없습니다.</p>
             ) : (
               invites.map((inv) => {
-                const expired = new Date(inv.expires_at).getTime() < Date.now()
+                const expired = now !== null && new Date(inv.expires_at).getTime() < now
                 return (
                   <div
                     key={inv.id}
@@ -444,4 +449,3 @@ function RoleSelect({
     </div>
   )
 }
-
