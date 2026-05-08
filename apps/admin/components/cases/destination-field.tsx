@@ -8,6 +8,7 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import destsData from '@/data/destinations.json'
 import { destCode } from '@/lib/country-code'
+import { resolveActiveDestination, getTripType } from '@petmove/domain'
 import { useSectionEditMode } from './section-edit-mode-context'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 
@@ -46,8 +47,8 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     ((currentCase?.data as Record<string, unknown> | undefined)?.trip_type as
       | Record<string, TripType>
       | undefined) ?? {}
-  const targetDest = (multi ? (activeDestination ?? selected[0]) : selected[0]) ?? null
-  const tripType: TripType = targetDest && tripTypeMap[targetDest] === 'one_way' ? 'one_way' : 'round'
+  const targetDest = resolveActiveDestination(destination, activeDestination)
+  const tripType: TripType = getTripType(currentCase?.data, targetDest)
 
   async function setTripType(value: TripType) {
     if (!targetDest) return

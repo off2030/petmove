@@ -8,7 +8,7 @@ import {
   HIDDEN_EN_KEYS,
   readCaseField,
 } from '@/lib/fields'
-import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, SWISS_ENTRY_AIRPORT_OPTIONS, THAILAND_ENTRY_AIRPORT_OPTIONS, type ExtraFieldDef } from '@petmove/domain'
+import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, SWISS_ENTRY_AIRPORT_OPTIONS, THAILAND_ENTRY_AIRPORT_OPTIONS, resolveActiveDestination, getTripType, isRabiesTiterHiddenForOneWay, type ExtraFieldDef } from '@petmove/domain'
 import { buildShareFieldDescriptors } from '@/lib/share-field-layout'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
@@ -92,6 +92,11 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
   // 적어도 첫 매칭 오버라이드라도 적용되게 한다.
   const viewDestination = activeDestination ?? caseRow.destination
 
+  // 활성 목적지 단일 토큰 — trip_type map 키 + 광견병항체 필터 게이트 기준.
+  const activeDestToken = resolveActiveDestination(caseRow.destination, activeDestination)
+  const tripType = getTripType(caseRow.data, activeDestToken)
+  const hideRabiesTiterOneWay = tripType === 'one_way' && isRabiesTiterHiddenForOneWay(activeDestToken)
+
   const allowedFields = getAllowedFields(viewDestination, extraFields)
   const vaccineEntries = getEffectiveVaccineEntries(viewDestination, extraFields, destOverridesConfig)
   // 커스텀 목적지가 매칭되면 baseVaccines = 커스텀의 entries — 토글 메뉴는 이미 들어간 키 제외하고 노출.
@@ -102,6 +107,8 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
 
   /** vaccineEntries 중 해당 키가 현재 케이스 종에 적용되는지. */
   function showVaccine(key: string): boolean {
+    // 편도 + 입국국이 RNATT 비요구이면 광견병항체검사 숨김 (한국 귀국 시는 필요하므로 왕복은 그대로).
+    if (key === 'rabies_titer' && hideRabiesTiterOneWay) return false
     const e = vaccineEntries.find(v => v.key === key)
     return !!e && vaccineMatchesSpecies(e, speciesValue)
   }
@@ -337,10 +344,15 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
         {g.group === '절차정보' && (() => {
           // 추가정보 카테고리만 추출 — 절차/고객/동물 카테고리는 case-detail 가 자체 렌더 (buildAllFieldSpecs + EditableField 라우팅).
           // descriptor.subgroup 이 그대로 SimpleExtraSection 의 group/flat 분기 입력. species·email 필터는 빌더가 처리.
+          // 편도 시 'return_*' 필드(귀국편 항공권 정보) 제외.
+          const rawExtraEntries = getEffectiveExtraFieldEntries(viewDestination, destOverridesConfig)
+          const extraEntriesFiltered = tripType === 'one_way'
+            ? rawExtraEntries.filter(e => !e.key.startsWith('return_'))
+            : rawExtraEntries
           const extraDescriptors = buildShareFieldDescriptors({
             fieldDefs,
             destinationScope: viewDestination,
-            extraFieldEntries: getEffectiveExtraFieldEntries(viewDestination, destOverridesConfig),
+            extraFieldEntries: extraEntriesFiltered,
             caseScoped: { allowedFields, vaccineApplies: () => false, speciesValue },
           }).filter((d) => d.category === '추가정보')
           if (extraDescriptors.length === 0) return null

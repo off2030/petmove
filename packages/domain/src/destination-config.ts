@@ -46,6 +46,11 @@ interface DestinationOverride {
    * extraSection 컴포넌트가 있어도 이 목록을 채우면 설정 UI 에 노출됨.
    */
   extraFields?: string[]
+  /**
+   * 편도(trip_type='one_way')일 때 광견병항체검사(rabies_titer)를 표시하지 않을지.
+   * 입국국 자체는 RNATT 비요구지만 한국 귀국용으로 디폴트 표시 중인 국가들에 사용.
+   */
+  rabiesTiterForReturnOnly?: boolean
 }
 
 export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
@@ -134,6 +139,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       'address_overseas',
       'entry_date', 'entry_time', 'entry_flight_number', 'entry_airport',
     ],
+    rabiesTiterForReturnOnly: true,
   },
   philippines: {
     keywords: ['필리핀', 'philippines'],
@@ -143,6 +149,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       'address_overseas', 'postal_code', 'email',
       'passport_number', 'passport_expiry_date', 'entry_airport',
     ],
+    rabiesTiterForReturnOnly: true,
   },
   indonesia: {
     // 인도네시아는 별도 양식 없이 병원 발급 일반 영문 건강증명서(VHC) 제출.
@@ -163,18 +170,22 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['미국', 'usa', 'united states', 'america'],
     extraSection: 'usa',
     extraFields: ['overseas_phone', 'passport_number', 'holder_birth_date', 'entry_date'],
+    rabiesTiterForReturnOnly: true,
   },
   mexico: {
     keywords: ['멕시코', 'mexico'],
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
+    rabiesTiterForReturnOnly: true,
   },
   russia: {
     keywords: ['러시아', 'russia'],
     vaccines: ['rabies', 'rabies_titer', 'general'],
+    rabiesTiterForReturnOnly: true,
   },
   uae: {
     keywords: ['아랍에미레이트', '아랍에미리트', 'uae', 'united arab emirates'],
     vaccines: ['rabies', 'rabies_titer', 'general', 'external_parasite', 'internal_parasite'],
+    rabiesTiterForReturnOnly: true,
   },
   singapore: {
     keywords: ['싱가포르', 'singapore'],
@@ -183,6 +194,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   hongkong: {
     keywords: ['홍콩', 'hong kong', 'hongkong'],
     vaccines: ['rabies', 'rabies_titer', 'general'],
+    rabiesTiterForReturnOnly: true,
   },
   hawaii: {
     keywords: ['하와이', 'hawaii'],
@@ -198,6 +210,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
   brazil: {
     keywords: ['브라질', 'brazil'],
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
+    rabiesTiterForReturnOnly: true,
   },
   china: {
     // 한국 = GACC 비지정 국가 → 광견병 항체검사 필수.
@@ -215,34 +228,46 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // 수입허가 + 계류장 14일 전 예약 + 도착 후 7일 격리.
     keywords: ['말레이시아', 'malaysia'],
     vaccines: ['rabies', 'rabies_titer', 'general'],
+    rabiesTiterForReturnOnly: true,
   },
   morocco: {
     // ONSSA — 광견병 출국 30일 전, 도착 시 수의사 검역. RNATT 는 한국 귀국용.
     keywords: ['모로코', 'morocco'],
     vaccines: ['rabies', 'rabies_titer'],
+    rabiesTiterForReturnOnly: true,
   },
   // 1차 정부 영문 자료 부분 공개 패밀리 — USDA APHIS / 한국 QIA 정부 2차 안내·운용 룰 의존
   mongolia: {
     keywords: ['몽골', 'mongolia'],
     vaccines: ['rabies', 'rabies_titer'],
+    rabiesTiterForReturnOnly: true,
   },
   vietnam: {
     keywords: ['베트남', 'vietnam'],
     vaccines: ['rabies', 'rabies_titer'],
+    rabiesTiterForReturnOnly: true,
   },
   argentina: {
     // 광견병 출국 30일 전 추가 룰.
     keywords: ['아르헨티나', 'argentina'],
     vaccines: ['rabies', 'rabies_titer'],
+    rabiesTiterForReturnOnly: true,
   },
   uzbekistan: {
     // 광견병 출국 30일 전 + 유효기간 1년.
     keywords: ['우즈베키스탄', 'uzbekistan'],
     vaccines: ['rabies', 'rabies_titer'],
+    rabiesTiterForReturnOnly: true,
   },
   cambodia: {
     keywords: ['캄보디아', 'cambodia'],
     vaccines: ['rabies', 'rabies_titer'],
+    rabiesTiterForReturnOnly: true,
+  },
+  canada: {
+    // USDA 호환 — 입국 시 광견병 백신만 요구. RNATT 는 한국 귀국용.
+    keywords: ['캐나다', 'canada'],
+    rabiesTiterForReturnOnly: true,
   },
   ukraine: {
     // 공식 자료 부재 — 사례 기반. 광견병 21일 + RNATT 3개월/1년 + 건강증명서 48시간.
@@ -265,6 +290,44 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
 export function parseDestinations(destination: string | null | undefined): string[] {
   if (!destination) return []
   return destination.split(',').map(s => s.trim()).filter(Boolean)
+}
+
+/**
+ * 다중 목적지에서 "현재 활성" 토큰을 결정.
+ * - activeDestination 이 있으면 그 값
+ * - 없으면 destination 의 첫 토큰
+ * - 모두 비어있으면 null
+ */
+export function resolveActiveDestination(
+  destination: string | null | undefined,
+  activeDestination: string | null | undefined,
+): string | null {
+  if (activeDestination) return activeDestination
+  return parseDestinations(destination)[0] ?? null
+}
+
+/**
+ * case.data.trip_type 에서 단일 목적지 토큰의 왕복/편도 값을 읽음.
+ * 미저장 또는 비매칭 시 디폴트 'round'.
+ */
+export function getTripType(
+  data: Record<string, unknown> | null | undefined,
+  destinationToken: string | null | undefined,
+): 'round' | 'one_way' {
+  if (!destinationToken) return 'round'
+  const map = (data?.['trip_type'] as Record<string, unknown> | undefined) ?? {}
+  return map[destinationToken] === 'one_way' ? 'one_way' : 'round'
+}
+
+/**
+ * 활성 목적지가 "편도일 때 광견병항체검사를 숨기는 국가" 인지 여부.
+ * destination-config 의 rabiesTiterForReturnOnly 플래그 기반.
+ */
+export function isRabiesTiterHiddenForOneWay(
+  destination: string | null | undefined,
+): boolean {
+  const override = getDestinationOverride(destination)
+  return !!override?.rabiesTiterForReturnOnly
 }
 
 /** 단일 목적지 토큰에 매칭되는 오버라이드 반환. 없으면 null. */
