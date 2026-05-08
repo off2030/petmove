@@ -2,6 +2,8 @@ import type { ProcedureCheck } from './types'
 import {
   daysBetween,
   evaluateRabiesAgeConservative,
+  readExternalParasiteEntries,
+  readInternalParasiteEntries,
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
@@ -187,6 +189,78 @@ export const AR_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 구충 (출국 포함 15일 이내 = 출국일 기준 14일 전 이후) ──
+  {
+    id: 'ar.external-parasite-within-15days',
+    country: COUNTRY,
+    category: '구충',
+    title: '외부구충은 출국 15일 이내 (보수: 14일 전부터)',
+    description:
+      '외부구충(벼룩·진드기) 처치는 출국 포함 15일 이내 = 출국일 기준 14일 전 이후. (SENASA + MERCOSUR GMC 17/2015: "Tratamiento contra parásitos externos dentro de los 15 (quince) días previos a la fecha de emisión del CVI")',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const dep = caseRow.departure_date
+      const entries = readExternalParasiteEntries(caseRow)
+      if (!dep || entries.length === 0) return SKIP
+
+      const latest = entries[entries.length - 1]
+      const days = daysBetween(latest.date, dep)
+      if (days === null) return SKIP
+      if (days < 0) {
+        return {
+          ok: false,
+          message: `외부구충(${latest.date})이 출국일(${dep})보다 늦음.`,
+          offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
+        }
+      }
+      if (days > 14) {
+        return {
+          ok: false,
+          message: `최근 외부구충(${latest.date}) → 출국(${dep}): ${days}일 — 출국 포함 15일 이내(≤14일 전) 필요.`,
+          fixHint: `처치일을 ${dep} 기준 14일 전 이후로 조정.`,
+          offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
+        }
+      }
+      return { ok: true, message: `최근 외부구충(${latest.date}) → 출국(${dep}): ${days}일.` }
+    },
+  },
+  {
+    id: 'ar.internal-parasite-within-15days',
+    country: COUNTRY,
+    category: '구충',
+    title: '내부구충은 출국 15일 이내 (보수: 14일 전부터)',
+    description:
+      '내부구충(선충·조충) 처치는 출국 포함 15일 이내 = 출국일 기준 14일 전 이후. (SENASA + MERCOSUR GMC 17/2015: "Tratamiento contra parásitos internos dentro de los 15 (quince) días previos a la fecha de emisión del CVI")',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const dep = caseRow.departure_date
+      const entries = readInternalParasiteEntries(caseRow)
+      if (!dep || entries.length === 0) return SKIP
+
+      const latest = entries[entries.length - 1]
+      const days = daysBetween(latest.date, dep)
+      if (days === null) return SKIP
+      if (days < 0) {
+        return {
+          ok: false,
+          message: `내부구충(${latest.date})이 출국일(${dep})보다 늦음.`,
+          offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
+        }
+      }
+      if (days > 14) {
+        return {
+          ok: false,
+          message: `최근 내부구충(${latest.date}) → 출국(${dep}): ${days}일 — 출국 포함 15일 이내(≤14일 전) 필요.`,
+          fixHint: `처치일을 ${dep} 기준 14일 전 이후로 조정.`,
+          offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
+        }
+      }
+      return { ok: true, message: `최근 내부구충(${latest.date}) → 출국(${dep}): ${days}일.` }
     },
   },
 ]
