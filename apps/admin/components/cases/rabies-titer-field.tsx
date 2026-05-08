@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
-import { Paperclip, Plus, Trash2 } from 'lucide-react'
+import { Paperclip, Trash2 } from 'lucide-react'
 import { AttachButton } from '@/components/ui/attach-button'
 import { DropdownSelect } from '@/components/ui/dropdown-select'
 import { cn, roundIconBtn } from '@/lib/utils'
@@ -372,28 +372,8 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
             )}
           >
             {/* Header */}
-            <div className="flex items-center justify-between gap-md px-md py-3 border-b border-border/80">
+            <div className="flex items-center gap-md px-md py-3 border-b border-border/80">
               <h2 className="font-serif text-[18px] text-foreground">광견병항체검사</h2>
-              <div className="flex items-center gap-1">
-                <AttachButton
-                  accept="image/*,.pdf"
-                  onFile={(f) => handleFile(f, null)}
-                  disabled={extracting}
-                  className={roundIconBtn}
-                  title="이미지/PDF 로 새 기록 추출"
-                >
-                  <Paperclip size={14} />
-                </AttachButton>
-                <button
-                  type="button"
-                  onClick={() => setAddingNew(true)}
-                  disabled={addingNew || saving}
-                  className={roundIconBtn}
-                  title="기록 추가"
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
             </div>
 
             {/* Body */}
@@ -468,23 +448,49 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
 
             {/* Footer */}
             <div className="flex items-center gap-2 px-md py-2 border-t border-border/80 bg-background/95">
-              {(() => {
-                const hasChanges = JSON.stringify(records) !== initialRecordsRef.current
-                return (
-                  <button
-                    type="button"
-                    onClick={closeEditModal}
-                    className={cn(
-                      'h-7 px-3 rounded-full border text-[13px] transition-colors',
-                      hasChanges
-                        ? 'border-pmw-accent bg-pmw-accent/15 text-pmw-accent-strong hover:bg-pmw-accent/25'
-                        : 'border-border/80 bg-card text-foreground hover:bg-accent/60',
-                    )}
-                  >
-                    {hasChanges ? '저장' : '닫기'}
-                  </button>
-                )
-              })()}
+              {/* 좌측: 추가 + 클립 */}
+              <button
+                type="button"
+                onClick={() => setAddingNew(true)}
+                disabled={addingNew || saving}
+                className={cn(
+                  'h-7 px-3 rounded-full border border-border/80 bg-card text-[13px] text-foreground transition-colors hover:bg-accent/60',
+                  (addingNew || saving) && 'opacity-50 cursor-not-allowed',
+                )}
+                title="기록 추가"
+              >
+                추가
+              </button>
+              <AttachButton
+                accept="image/*,.pdf"
+                onFile={(f) => handleFile(f, null)}
+                disabled={extracting}
+                className={roundIconBtn}
+                title="이미지/PDF 로 새 기록 추출"
+              >
+                <Paperclip size={14} />
+              </AttachButton>
+
+              {/* 우측: 닫기/저장 */}
+              <div className="ml-auto">
+                {(() => {
+                  const hasChanges = JSON.stringify(records) !== initialRecordsRef.current
+                  return (
+                    <button
+                      type="button"
+                      onClick={closeEditModal}
+                      className={cn(
+                        'h-7 px-3 rounded-full border text-[13px] transition-colors',
+                        hasChanges
+                          ? 'border-pmw-accent bg-pmw-accent/15 text-pmw-accent-strong hover:bg-pmw-accent/25'
+                          : 'border-border/80 bg-card text-foreground hover:bg-accent/60',
+                      )}
+                    >
+                      {hasChanges ? '저장' : '닫기'}
+                    </button>
+                  )
+                })()}
+              </div>
             </div>
           </div>
         </div>,
@@ -601,6 +607,29 @@ function TiterRecordRow({
         </button>
       )}
 
+      {/* 검사소 샘플 수령일 — AU/HI/GU 케이스에만 노출 (검증 룰이 사용하는 N일 대기 카운트다운 기준). */}
+      {showReceivedDate && (
+        <>
+          <span className="text-muted-foreground/30 select-none">|</span>
+          <span className="font-mono text-[11px] uppercase tracking-[1px] text-muted-foreground/70">검사소 샘플 수령일</span>
+          {isEditing === 'received_date' ? (
+            <DateInput
+              initial={record.received_date || ''}
+              onSave={(v) => { onUpdateField('received_date', v || null); onStopEdit() }}
+              onCancel={onStopEdit}
+            />
+          ) : (
+            <button type="button" onClick={() => onStartEdit('received_date')}
+              className={cn(
+                'text-left rounded-md px-2 py-0.5 -mx-2 font-mono text-[14px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
+                !record.received_date && 'font-sans text-[13px] italic font-normal tracking-normal text-muted-foreground/60',
+              )}>
+              {record.received_date || '—'}
+            </button>
+          )}
+        </>
+      )}
+
       <div className="flex items-center gap-1 ml-auto">
         <AttachButton
           accept="image/*,.pdf"
@@ -620,28 +649,6 @@ function TiterRecordRow({
           <Trash2 size={13} />
         </button>
       </div>
-
-      {/* 검사소 샘플 수령일 — AU/HI/GU 케이스에만 노출 (검증 룰이 사용하는 N일 대기 카운트다운 기준). */}
-      {showReceivedDate && (
-        <div className="basis-full flex items-baseline gap-[10px] pt-1.5 border-t border-border/30 mt-1">
-          <span className="font-mono text-[11px] uppercase tracking-[1px] text-muted-foreground/70">검사소 샘플 수령일</span>
-          {isEditing === 'received_date' ? (
-            <DateInput
-              initial={record.received_date || ''}
-              onSave={(v) => { onUpdateField('received_date', v || null); onStopEdit() }}
-              onCancel={onStopEdit}
-            />
-          ) : (
-            <button type="button" onClick={() => onStartEdit('received_date')}
-              className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 font-mono text-[14px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
-                !record.received_date && 'font-sans text-[13px] italic font-normal tracking-normal text-muted-foreground/60',
-              )}>
-              {record.received_date || '— (미입력 시 채혈일 사용)'}
-            </button>
-          )}
-        </div>
-      )}
     </div>
   )
 }
