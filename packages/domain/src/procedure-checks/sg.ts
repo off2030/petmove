@@ -284,7 +284,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
     category: '종합백신',
     title: '출국일 시점 종합백신 면역 유효',
     description:
-      '출국일에 가장 최근 종합백신의 면역 유효기간이 만료되지 않아야 함. (Schedule III IV(a)(iv)(v) "according to the vaccine manufacturer\'s recommendations")',
+      '출국일에 가장 최근 종합백신의 면역 유효기간이 만료되지 않아야 함. valid_until 미입력 시 디폴트 1년(addOneYear, +364일) 적용. (Schedule III IV(a)(iv)(v) "according to the vaccine manufacturer\'s recommendations")',
     severity: 'blocker',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
@@ -293,10 +293,8 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (!dep || entries.length === 0) return SKIP
 
       const latest = entries[entries.length - 1]
-      // 종합백신은 제품별 유효기간 편차가 커서 valid_until 명시된 경우에만 평가.
-      // (광견병과 달리 1년 디폴트 가정 안 함 — 예: 일부 제품은 3년)
-      if (!latest.valid_until) return SKIP
-      const validUntil = latest.valid_until
+      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      if (!validUntil) return SKIP
       if (validUntil < dep) {
         return {
           ok: false,
