@@ -1,5 +1,6 @@
 'use server'
 
+import { headers } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatMicrochip } from '@/lib/fields'
 
@@ -7,6 +8,8 @@ import { formatMicrochip } from '@/lib/fields'
 // Phase 5 RLS 활성화 시 이 엔드포인트만 service role 로 우회하거나 anon INSERT policy 추가 필요.
 // Phase 6+ 다중 테넌트 확장 시 /apply URL 이 org 선택을 받도록 수정.
 const ORG_ID = '00000000-0000-0000-0000-000000000001'
+
+const FAKE_OK_CASE_ID = '00000000-0000-0000-0000-000000000000'
 
 interface ApplyInput {
   // 1. 목적지
@@ -39,6 +42,42 @@ interface ApplyInput {
   rabies_date?: string
   // honeypot — 사람 사용자에게는 비공개. 봇이 채우면 silent success 로 차단.
   website?: string
+  // Cloudflare Turnstile token — 클라이언트 위젯이 발급. 서버에서 siteverify 통해 검증.
+  // TURNSTILE_SECRET_KEY 미설정 시(dev) 검증 스킵.
+  cf_turnstile_token?: string
+}
+
+/**
+ * Cloudflare Turnstile token 검증.
+ *   - secret 미설정: dev 환경 — true 반환 (검증 스킵).
+ *   - token 누락 또는 검증 실패: false (호출 측이 silent reject).
+ *   - 네트워크 에러는 fail-closed (보수적으로 false) — 봇 친화적 fail-open 회피.
+ */
+async function verifyTurnstile(
+  token: string | undefined,
+  remoteIp: string | null,
+): Promise<boolean> {
+  const secret = process.env.TURNSTILE_SECRET_KEY
+  if (!secret) return true
+  if (!token) return false
+  const formData = new URLSearchParams()
+  formData.append('secret', secret)
+  formData.append('response', token)
+  if (remoteIp) formData.append('remoteip', remoteIp)
+  try {
+    const res = await fetch(
+      'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+      {
+        method: 'POST',
+        body: formData,
+        signal: AbortSignal.timeout(5_000),
+      },
+    )
+    const data = (await res.json()) as { success?: boolean }
+    return data.success === true
+  } catch {
+    return false
+  }
 }
 
 export async function applyCase(input: ApplyInput): Promise<
@@ -47,7 +86,19 @@ export async function applyCase(input: ApplyInput): Promise<
   // honeypot — 사람은 채울 수 없는 숨김 필드. 채워져 들어오면 봇으로 간주, DB 쓰기 없이
   // 성공으로 위장 응답. (오류 반환 시 봇이 retry/적응할 여지 줘서 silent 가 더 효과적.)
   if (input.website && input.website.trim().length > 0) {
-    return { ok: true, caseId: '00000000-0000-0000-0000-000000000000' }
+    return { ok: true, caseId: FAKE_OK_CASE_ID }
+  }
+
+  // Cloudflare Turnstile 검증 — 봇·자동화 차단. 미설정(dev) 시 스킵.
+  // 검증 실패는 honeypot 과 동일하게 silent success 로 봇이 retry 못 하게 함.
+  const hdrs = await headers()
+  const remoteIp =
+    hdrs.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    hdrs.get('x-real-ip') ||
+    null
+  const turnstileOk = await verifyTurnstile(input.cf_turnstile_token, remoteIp)
+  if (!turnstileOk) {
+    return { ok: true, caseId: FAKE_OK_CASE_ID }
   }
 
   // 공개 신청폼 — anon key 로는 INSERT 후 SELECT (RETURNING) 단계가 cases_select RLS 에 막혀
