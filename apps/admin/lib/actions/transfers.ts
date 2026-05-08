@@ -524,23 +524,36 @@ export async function acceptTransfer(
       .select('id')
       .single()
     if (insErr) return { ok: false, error: insErr.message }
+    const newCaseId = newCase.id as string
 
-    // 전송 행을 accepted 로 마킹 + target_case_id 연결
-    const { error: updErr } = await supabase
+    // 전송 행을 accepted 로 마킹 + target_case_id 연결.
+    // Atomic claim: status='pending' AND target_case_id IS NULL 일 때만 성공.
+    // 두 사용자가 동시 accept 호출하면 한 명만 통과 (DB 트리거가 status 전이 검증).
+    // claim 실패 또는 update 에러 시 방금 만든 cases 행을 즉시 삭제 (보상) — 부분
+    // 실패로 receiving org 에 orphan 케이스가 남는 사고 방지.
+    const { data: claimed, error: updErr } = await supabase
       .from('case_transfers')
       .update({
         status: 'accepted',
-        target_case_id: newCase.id as string,
+        target_case_id: newCaseId,
         response_note: responseNote?.trim() || null,
       })
       .eq('id', id)
-    if (updErr) {
-      // 원자성 부족 — 로그만 남기고 케이스는 그대로 둠 (사용자가 재시도 가능)
-      return { ok: false, error: `케이스는 생성됐으나 전송 마킹 실패: ${updErr.message}` }
+      .eq('status', 'pending')
+      .is('target_case_id', null)
+      .select('id')
+      .maybeSingle()
+    if (updErr || !claimed) {
+      // 보상 — best-effort. 사용자 권한 RLS 로 본인 org 케이스만 삭제 가능.
+      await supabase.from('cases').delete().eq('id', newCaseId)
+      if (updErr) {
+        return { ok: false, error: `전송 마킹 실패: ${updErr.message}` }
+      }
+      return { ok: false, error: '이미 처리된 전송입니다 (다른 사용자가 먼저 수락)' }
     }
 
     revalidatePath('/cases')
-    return { ok: true, value: { caseId: newCase.id as string } }
+    return { ok: true, value: { caseId: newCaseId } }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }
