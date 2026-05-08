@@ -30,13 +30,31 @@ function joinDests(arr: string[]): string | null {
   return arr.length > 0 ? arr.join(', ') : null
 }
 
+type TripType = 'round' | 'one_way'
+
 export function DestinationField({ caseId, destination }: { caseId: string; destination: string | null }) {
-  const { updateLocalCaseField, activeDestination, setActiveDestination } = useCases()
+  const { cases, updateLocalCaseField, activeDestination, setActiveDestination } = useCases()
   const editMode = useSectionEditMode()
   const confirm = useConfirm()
 
   const selected = parseDests(destination)
   const multi = selected.length > 1
+
+  // 목적지별 왕복/편도 토글 — case.data.trip_type 객체에 저장. 디폴트 round.
+  const currentCase = cases.find(c => c.id === caseId)
+  const tripTypeMap =
+    ((currentCase?.data as Record<string, unknown> | undefined)?.trip_type as
+      | Record<string, TripType>
+      | undefined) ?? {}
+  const targetDest = (multi ? (activeDestination ?? selected[0]) : selected[0]) ?? null
+  const tripType: TripType = targetDest && tripTypeMap[targetDest] === 'one_way' ? 'one_way' : 'round'
+
+  async function setTripType(value: TripType) {
+    if (!targetDest) return
+    const next: Record<string, TripType> = { ...tripTypeMap, [targetDest]: value }
+    updateLocalCaseField(caseId, 'data', 'trip_type', next)
+    await updateCaseField(caseId, 'data', 'trip_type', next)
+  }
 
   // Display: show English names
   const display = selected.length > 0
@@ -270,6 +288,37 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
           </div>
         )}
         </div>
+        {selected.length > 0 && targetDest && (
+          <div
+            className="shrink-0 inline-flex items-center rounded-full border border-border/70 bg-background p-0.5 font-serif text-[12px] mt-0.5"
+            title={multi ? `${targetDest} 여행 유형` : '여행 유형'}
+          >
+            <button
+              type="button"
+              onClick={() => setTripType('round')}
+              className={cn(
+                'px-2 py-0.5 rounded-full transition-colors',
+                tripType === 'round'
+                  ? 'bg-foreground text-background'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              왕복
+            </button>
+            <button
+              type="button"
+              onClick={() => setTripType('one_way')}
+              className={cn(
+                'px-2 py-0.5 rounded-full transition-colors',
+                tripType === 'one_way'
+                  ? 'bg-foreground text-background'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              편도
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
