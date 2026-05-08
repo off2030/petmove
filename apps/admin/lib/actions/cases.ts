@@ -35,6 +35,14 @@ function deserializeFromHistory(storage: 'column' | 'data', raw: string | null):
 
 /**
  * Update a single field on a case. Records change in case_history for undo.
+ *
+ * P1 #7 — 단일 SELECT + 단일 UPDATE 로 통합. 이전엔 column 경로의 vet_available_date
+ * sync 와 status 리셋이 각자 별도 SELECT+UPDATE 했어서 최악 6 RTT. 이제 모든 in-row
+ * 부수효과(vet_available_date, status 리셋) 를 client 측에서 합산 후 1회 UPDATE.
+ *
+ * P1 #8 — autoFill 의 최종 update 와 본 update 를 하나로 합치는 작업은 autoFill
+ * 시그니처 변경이 필요해 추후 작업으로 분리. 현재는 autoFill 이 1회 더 update
+ * 하지만 이 자체가 race condition·데이터 corruption 은 아니므로 audit 결과 안정.
  */
 export async function updateCaseField(
   caseId: string,
@@ -43,98 +51,110 @@ export async function updateCaseField(
   value: unknown,
 ): Promise<UpdateResult> {
   if (!caseId || !key) return { ok: false, error: 'caseId and key are required' }
+  if (storage === 'column' && !REGULAR_COLUMNS.has(key)) {
+    return { ok: false, error: `column "${key}" is not updatable` }
+  }
 
   const supabase = await createClient()
 
-  // Get old value for history. Also capture org_id for case_history insert.
-  let oldValue: string | null = null
-  let orgId: string | null = null
+  // Single read — old value (column 또는 data 안), org_id, current data.
+  const { data: row, error: fetchErr } = await supabase
+    .from('cases')
+    .select('*')
+    .eq('id', caseId)
+    .single()
+  if (fetchErr) return { ok: false, error: fetchErr.message }
+  const orgId = (row as { org_id: string }).org_id
+  const currentData = ((row as { data: Record<string, unknown> | null }).data ?? {}) as Record<string, unknown>
 
+  let oldValue: string | null
   if (storage === 'column') {
-    if (!REGULAR_COLUMNS.has(key)) {
-      return { ok: false, error: `column "${key}" is not updatable` }
-    }
-    const { data: row } = await supabase
-      .from('cases')
-      .select('*')
-      .eq('id', caseId)
-      .single()
-    if (row) {
-      const v = (row as Record<string, unknown>)[key]
-      oldValue = serializeForHistory('column', v)
-      orgId = (row as { org_id: string }).org_id
-    }
-
-    const { error } = await supabase
-      .from('cases')
-      .update({ [key]: value })
-      .eq('id', caseId)
-    if (error) {
-      if (error.message.includes('cases_org_microchip_unique')) {
-        return { ok: false, error: '이미 등록된 번호입니다' }
-      }
-      return { ok: false, error: error.message }
-    }
-
-    // 출국일이 저장되면 내원가능일(vet_available_date)을 자동으로 -9일로 설정
-    if (key === 'departure_date' && value) {
-      try {
-        const departureDate = new Date(String(value))
-        if (!isNaN(departureDate.getTime())) {
-          const availableDate = new Date(departureDate)
-          availableDate.setDate(availableDate.getDate() - 9)
-          const availableDateStr = availableDate.toISOString().split('T')[0]
-
-          const { data: row, error: fetchErr } = await supabase
-            .from('cases')
-            .select('data')
-            .eq('id', caseId)
-            .single()
-          if (!fetchErr && row) {
-            const current: Record<string, unknown> =
-              (row.data as Record<string, unknown> | null) ?? {}
-            const next = { ...current, vet_available_date: availableDateStr }
-
-            await supabase
-              .from('cases')
-              .update({ data: next })
-              .eq('id', caseId)
-          }
-        }
-      } catch {
-        // 날짜 계산 실패는 무시
-      }
-    }
+    oldValue = serializeForHistory('column', (row as Record<string, unknown>)[key])
   } else {
-    const { data: row, error: fetchErr } = await supabase
-      .from('cases')
-      .select('org_id, data')
-      .eq('id', caseId)
-      .single()
-    if (fetchErr) return { ok: false, error: fetchErr.message }
-
-    const current: Record<string, unknown> =
-      (row?.data as Record<string, unknown> | null) ?? {}
-    oldValue = serializeForHistory('data', current[key])
-    orgId = (row as { org_id: string }).org_id
-
-    const next = { ...current }
-    if (value === null || value === undefined || value === '') {
-      delete next[key]
-    } else {
-      next[key] = value
-    }
-
-    const { error } = await supabase
-      .from('cases')
-      .update({ data: next })
-      .eq('id', caseId)
-    if (error) return { ok: false, error: error.message }
+    oldValue = serializeForHistory('data', currentData[key])
   }
 
-  // Record history (skip if value unchanged)
+  // 누적할 update 객체 + data 워킹카피.
+  const updateObj: Record<string, unknown> = {}
+  const nextData = { ...currentData }
+  let dataMutated = false
+
+  if (storage === 'column') {
+    updateObj[key] = value
+    // 출국일 저장 시 내원가능일(vet_available_date) = 출국일 - 9 자동 채움.
+    if (key === 'departure_date' && value) {
+      try {
+        const d = new Date(String(value))
+        if (!isNaN(d.getTime())) {
+          d.setDate(d.getDate() - 9)
+          nextData.vet_available_date = d.toISOString().split('T')[0]
+          dataMutated = true
+        }
+      } catch { /* 날짜 계산 실패 무시 */ }
+    }
+  } else {
+    if (value === null || value === undefined || value === '') {
+      delete nextData[key]
+    } else {
+      nextData[key] = value
+    }
+    dataMutated = true
+  }
+
+  // 서류/신고 탭 상태 자동 리셋 — 재출국 시 'done' 클리어.
+  //   서류(export_doc_status):
+  //     · 내원일(vet_visit_date) 변경 → 무조건 리셋
+  //     · 출국일(departure_date) 변경 + 내원일 비었거나 이미 지남 → 리셋
+  //   신고(import_import_status, import_export_status):
+  //     · 출국일 변경 + 이전 값이 과거(이미 다녀온 케이스) → 둘 다 + dismissed 플래그 클리어
   const newValue = serializeForHistory(storage, value)
-  if (oldValue !== newValue && orgId) {
+  const valueChanged = oldValue !== newValue
+  const isVetVisit = storage === 'data' && key === 'vet_visit_date'
+  const isDeparture = storage === 'column' && key === 'departure_date'
+  if ((isVetVisit || isDeparture) && valueChanged) {
+    const today = new Date().toISOString().slice(0, 10)
+    if (currentData.export_doc_status === 'done') {
+      let shouldReset = false
+      if (isVetVisit) {
+        shouldReset = true
+      } else {
+        const visit = typeof currentData.vet_visit_date === 'string' ? currentData.vet_visit_date : ''
+        if (!visit || visit < today) shouldReset = true
+      }
+      if (shouldReset) {
+        delete nextData.export_doc_status
+        dataMutated = true
+      }
+    }
+    if (isDeparture) {
+      const wasPast = !!oldValue && oldValue < today
+      const someDone =
+        currentData.import_import_status === 'done' || currentData.import_export_status === 'done'
+      if (wasPast && someDone) {
+        delete nextData.import_import_status
+        delete nextData.import_export_status
+        delete nextData.import_report_dismissed
+        dataMutated = true
+      }
+    }
+  }
+
+  if (dataMutated) updateObj.data = nextData
+
+  // Single UPDATE — column 변경 + data 부수효과 + status 리셋 모두 합산.
+  const { error: updErr } = await supabase
+    .from('cases')
+    .update(updateObj)
+    .eq('id', caseId)
+  if (updErr) {
+    if (updErr.message.includes('cases_org_microchip_unique')) {
+      return { ok: false, error: '이미 등록된 번호입니다' }
+    }
+    return { ok: false, error: updErr.message }
+  }
+
+  // History — 값이 실제로 바뀐 경우만.
+  if (valueChanged && orgId) {
     await supabase.from('case_history').insert({
       case_id: caseId,
       org_id: orgId,
@@ -143,67 +163,6 @@ export async function updateCaseField(
       old_value: oldValue,
       new_value: newValue,
     })
-  }
-
-  // 서류/신고 탭 상태 자동 리셋 — 재출국으로 간주되는 변경 시 'done' 상태를 클리어.
-  //
-  // 서류(export_doc_status='done'):
-  //  · 내원일(vet_visit_date) 변경 → 무조건 리셋
-  //  · 출국일(departure_date) 변경 + 내원일 비었거나 이미 지난 경우 → 리셋
-  //
-  // 신고(import_import_status='done' 또는 import_export_status='done'):
-  //  · 출국일(departure_date) 변경 + 이전 값이 과거(=이미 다녀온 케이스) → 둘 다 + dismissed 플래그까지 클리어
-  //  · 단순 오타 수정(둘 다 미래) 이나 첫 등록(이전 값 없음)은 리셋 안 함
-  const isVetVisit = storage === 'data' && key === 'vet_visit_date'
-  const isDeparture = storage === 'column' && key === 'departure_date'
-  if ((isVetVisit || isDeparture) && oldValue !== newValue) {
-    const { data: row } = await supabase
-      .from('cases')
-      .select('data')
-      .eq('id', caseId)
-      .single()
-    if (row) {
-      const current: Record<string, unknown> =
-        (row.data as Record<string, unknown> | null) ?? {}
-      const today = new Date().toISOString().slice(0, 10)
-      const next = { ...current }
-      let mutated = false
-
-      // 서류 리셋
-      if (current.export_doc_status === 'done') {
-        let shouldReset = false
-        if (isVetVisit) {
-          shouldReset = true
-        } else {
-          const visit = typeof current.vet_visit_date === 'string' ? current.vet_visit_date : ''
-          if (!visit || visit < today) shouldReset = true
-        }
-        if (shouldReset) {
-          delete next.export_doc_status
-          mutated = true
-        }
-      }
-
-      // 신고 리셋 (출국일 변경 시에만)
-      if (isDeparture) {
-        const wasPast = !!oldValue && oldValue < today
-        const someDone =
-          current.import_import_status === 'done' || current.import_export_status === 'done'
-        if (wasPast && someDone) {
-          delete next.import_import_status
-          delete next.import_export_status
-          delete next.import_report_dismissed
-          mutated = true
-        }
-      }
-
-      if (mutated) {
-        await supabase
-          .from('cases')
-          .update({ data: next })
-          .eq('id', caseId)
-      }
-    }
   }
 
   // 자동 채움 규칙 적용 — 날짜 관련 필드가 변경됐을 때만.
