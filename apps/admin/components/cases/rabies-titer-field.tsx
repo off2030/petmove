@@ -61,11 +61,26 @@ function autoDetectLab(
   return resolveTiterLab(dests[0], rules, defaultLab)
 }
 
+/**
+ * 검사소 샘플 수령일 입력 노출 — AU/HI/GU 에서만 검증에 사용되므로
+ * 그 외 목적지에선 UI 비표시. multi-destination 시 하나라도 포함되면 표시.
+ */
+function destinationNeedsReceivedDate(destination: string | null | undefined): boolean {
+  if (!destination) return false
+  const dests = destination.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+  return dests.some(d =>
+    d.includes('호주') || d.includes('australia') ||
+    d.includes('하와이') || d.includes('hawaii') ||
+    d.includes('괌') || d.includes('guam')
+  )
+}
+
 export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
   const { updateLocalCaseField, inspectionConfig } = useCases()
   const editMode = useSectionEditMode()
   const confirm = useConfirm()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const showReceivedDate = destinationNeedsReceivedDate(destination)
 
   function readRecords(): TiterRecord[] {
     if (Array.isArray(data[DATA_KEY])) return data[DATA_KEY] as TiterRecord[]
@@ -444,6 +459,7 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
                       onAttachFile={(f) => handleFile(f, oi)}
                       saving={saving}
                       extracting={extracting}
+                      showReceivedDate={showReceivedDate}
                     />
                   </div>
                 )
@@ -506,7 +522,7 @@ function InlineDateChip({ path, date, separator, onClick }: { path: string; date
 /* ── 모달 안의 단일 record row: date | lab | value | attach | delete ── */
 
 function TiterRecordRow({
-  record, recordIdx, isEditing, onStartEdit, onStopEdit, onUpdateField, onDelete, onAttachFile, saving, extracting,
+  record, recordIdx, isEditing, onStartEdit, onStopEdit, onUpdateField, onDelete, onAttachFile, saving, extracting, showReceivedDate,
 }: {
   record: TiterRecord
   recordIdx: number
@@ -518,6 +534,7 @@ function TiterRecordRow({
   onAttachFile: (file: File) => void
   saving: boolean
   extracting: boolean
+  showReceivedDate: boolean
 }) {
   const cleanValue = stripTiterUnit(record.value)
   const valueDisplay = cleanValue ? `${cleanValue} IU/ml` : 'IU/ml'
@@ -604,25 +621,27 @@ function TiterRecordRow({
         </button>
       </div>
 
-      {/* 검사소 샘플 수령일 — AU/HI/GU 의 N일 대기 기준. */}
-      <div className="basis-full flex items-baseline gap-[10px] pt-1.5 border-t border-border/30 mt-1">
-        <span className="font-mono text-[11px] uppercase tracking-[1px] text-muted-foreground/70">검사소 샘플 수령일</span>
-        {isEditing === 'received_date' ? (
-          <DateInput
-            initial={record.received_date || ''}
-            onSave={(v) => { onUpdateField('received_date', v || null); onStopEdit() }}
-            onCancel={onStopEdit}
-          />
-        ) : (
-          <button type="button" onClick={() => onStartEdit('received_date')}
-            className={cn(
-              'text-left rounded-md px-2 py-0.5 -mx-2 font-mono text-[14px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
-              !record.received_date && 'font-sans text-[13px] italic font-normal tracking-normal text-muted-foreground/60',
-            )}>
-            {record.received_date || '— (미입력 시 채혈일 사용)'}
-          </button>
-        )}
-      </div>
+      {/* 검사소 샘플 수령일 — AU/HI/GU 케이스에만 노출 (검증 룰이 사용하는 N일 대기 카운트다운 기준). */}
+      {showReceivedDate && (
+        <div className="basis-full flex items-baseline gap-[10px] pt-1.5 border-t border-border/30 mt-1">
+          <span className="font-mono text-[11px] uppercase tracking-[1px] text-muted-foreground/70">검사소 샘플 수령일</span>
+          {isEditing === 'received_date' ? (
+            <DateInput
+              initial={record.received_date || ''}
+              onSave={(v) => { onUpdateField('received_date', v || null); onStopEdit() }}
+              onCancel={onStopEdit}
+            />
+          ) : (
+            <button type="button" onClick={() => onStartEdit('received_date')}
+              className={cn(
+                'text-left rounded-md px-2 py-0.5 -mx-2 font-mono text-[14px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
+                !record.received_date && 'font-sans text-[13px] italic font-normal tracking-normal text-muted-foreground/60',
+              )}>
+              {record.received_date || '— (미입력 시 채혈일 사용)'}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
