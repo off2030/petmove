@@ -196,7 +196,7 @@ export async function listMyConversations(): Promise<Result<ConversationListItem
   const convIds = (myParts ?? []).map((r) => r.conversation_id as string)
   if (convIds.length === 0) return { ok: true, value: [] }
 
-  const [convsRes, allPartsRes, lastMsgRes, readsRes] = await Promise.all([
+  const [convsRes, allPartsRes, summariesRes] = await Promise.all([
     supabase
       .from('conversations')
       .select('id, name, last_message_at, created_at, pinned_message_id')
@@ -206,23 +206,16 @@ export async function listMyConversations(): Promise<Result<ConversationListItem
       .from('conversation_participants')
       .select('conversation_id, user_id')
       .in('conversation_id', convIds),
-    supabase
-      .from('messages')
-      .select('id, conversation_id, sender_user_id, content, file_url, created_at')
-      .in('conversation_id', convIds)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false }),
-    supabase
-      .from('message_reads')
-      .select('conversation_id, last_read_at')
-      .eq('user_id', auth.userId)
-      .in('conversation_id', convIds),
+    // P1 #9 — 이전엔 conv 의 모든 메시지를 가져와 client 가 last 한 건과 unread
+    // count 를 추림 → 누적 사용자에서 N×M 페이로드. RPC `conversation_summaries`
+    // 가 conv 별 (last message 1건 + 본인 기준 unread count) 를 한 row 로 반환.
+    // security invoker — 호출자 RLS 적용. message_reads 별도 쿼리 불필요해짐.
+    supabase.rpc('conversation_summaries', { p_conv_ids: convIds }),
   ])
 
   if (convsRes.error) return { ok: false, error: convsRes.error.message }
   if (allPartsRes.error) return { ok: false, error: allPartsRes.error.message }
-  if (lastMsgRes.error) return { ok: false, error: lastMsgRes.error.message }
-  if (readsRes.error) return { ok: false, error: readsRes.error.message }
+  if (summariesRes.error) return { ok: false, error: summariesRes.error.message }
 
   const allUserIds = Array.from(new Set((allPartsRes.data ?? []).map((p) => p.user_id as string)))
   const profMap = await loadParticipantInfo(allUserIds)
@@ -248,31 +241,27 @@ export async function listMyConversations(): Promise<Result<ConversationListItem
     string,
     { content: string | null; file_url: string | null; sender_user_id: string | null; created_at: string }
   >()
-  for (const m of lastMsgRes.data ?? []) {
-    const k = m.conversation_id as string
-    if (!lastByConv.has(k)) {
-      lastByConv.set(k, {
-        content: m.content as string | null,
-        file_url: m.file_url as string | null,
-        sender_user_id: m.sender_user_id as string | null,
-        created_at: m.created_at as string,
+  const unreadByConv = new Map<string, number>()
+  type SummaryRow = {
+    conversation_id: string
+    last_message_id: string | null
+    last_sender_user_id: string | null
+    last_content: string | null
+    last_file_url: string | null
+    last_created_at: string | null
+    unread_count: number
+  }
+  for (const s of (summariesRes.data ?? []) as SummaryRow[]) {
+    if (s.last_created_at) {
+      lastByConv.set(s.conversation_id, {
+        content: s.last_content,
+        file_url: s.last_file_url,
+        sender_user_id: s.last_sender_user_id,
+        created_at: s.last_created_at,
       })
     }
-  }
-
-  const readsByConv = new Map<string, string>()
-  for (const r of readsRes.data ?? []) readsByConv.set(r.conversation_id as string, r.last_read_at as string)
-
-  const unreadByConv = new Map<string, number>()
-  for (const m of lastMsgRes.data ?? []) {
-    const k = m.conversation_id as string
-    const lastRead = readsByConv.get(k)
-    const msgCreated = m.created_at as string
-    const sender = m.sender_user_id as string | null
-    const isFromOther = sender !== auth.userId
-    const isAfterRead = !lastRead || msgCreated > lastRead
-    if (isAfterRead && isFromOther) {
-      unreadByConv.set(k, (unreadByConv.get(k) ?? 0) + 1)
+    if (s.unread_count > 0) {
+      unreadByConv.set(s.conversation_id, s.unread_count)
     }
   }
 

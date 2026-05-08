@@ -137,17 +137,21 @@ export function MessagesApp({
     [refresh],
   )
 
-  // 대화목록이 채워지면 — 모든 conv 의 메시지를 백그라운드 prefetch.
-  // 사용자가 어떤 대화를 탭하든 in-memory cache hit → 즉시 표시.
-  // 동시 요청이 많으면 서버 부담 → 동시 3개로 제한 + 이미 캐시 있으면 skip.
-  // dashboard-shell 이 messages 탭을 항상 pre-mount 하므로 isActive 가
-  // false 여도(=다른 탭 보고 있어도) 워커가 돌아 첫 로그인 시점부터 캐시 적재.
+  // 대화목록이 채워지면 — 최근 N 개 conv 의 메시지를 백그라운드 prefetch.
+  // 사용자가 그 대화를 탭하면 in-memory cache hit → 즉시 표시.
+  //
+  // P1 #10: 이전엔 모든 conv 를 prefetch (예: 100 conv × 200 msg = 20k 행 + signed
+  // URL 호출 폭주). 최근 10개로 cap 하고 requestIdleCallback 으로 메인 스레드
+  // 양보 → 첫 페인트 영향 최소화. 나머지 conv 는 사용자가 직접 탭할 때 fetch.
   const prefetchedRef = useRef<Set<string>>(new Set())
   useEffect(() => {
     if (conversations.length === 0) return
     let canceled = false
-    const PARALLEL = 3
+    const PARALLEL = 2
+    const PREFETCH_CAP = 10 // 최근 10개만
+    // conversations 는 last_message_at desc 정렬돼있다고 가정 (chat.ts).
     const queue = conversations
+      .slice(0, PREFETCH_CAP)
       .map((c) => c.id)
       .filter((id) => !cacheRef.current.has(id) && !prefetchedRef.current.has(id))
     if (queue.length === 0) return
@@ -177,10 +181,29 @@ export function MessagesApp({
       }
     }
 
-    const workers = Array.from({ length: Math.min(PARALLEL, queue.length) }, () => worker())
-    void Promise.all(workers)
+    // requestIdleCallback 으로 메인 스레드가 한가할 때 시작. 없는 환경(Safari 일부)
+    // 은 setTimeout 폴백.
+    type IdleApi = (cb: () => void, opts?: { timeout?: number }) => number
+    const ric =
+      (typeof window !== 'undefined' &&
+        (window as Window & { requestIdleCallback?: IdleApi }).requestIdleCallback) ||
+      ((cb: () => void) => window.setTimeout(cb, 200))
+    const handle = ric(
+      () => {
+        if (canceled) return
+        const workers = Array.from({ length: Math.min(PARALLEL, queue.length) }, () => worker())
+        void Promise.all(workers)
+      },
+      { timeout: 2000 },
+    )
     return () => {
       canceled = true
+      type CancelIdleApi = (handle: number) => void
+      const cancelRic =
+        (typeof window !== 'undefined' &&
+          (window as Window & { cancelIdleCallback?: CancelIdleApi }).cancelIdleCallback) ||
+        ((h: number) => window.clearTimeout(h))
+      cancelRic(handle)
     }
   }, [conversations])
 
