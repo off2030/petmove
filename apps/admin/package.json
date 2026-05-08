@@ -11,11 +11,9 @@
     "import:dry": "node scripts/import-xlsx.mjs --dry-run --limit 5",
     "import:preview": "node scripts/import-xlsx.mjs --dry-run",
     "import:run": "node scripts/import-xlsx.mjs",
-    "gen:vapid": "node scripts/generate-vapid-keys.mjs",
     "verify:db": "supabase db query --linked < scripts/verify-db-invariants.sql"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.89.0",
     "@pdf-lib/fontkit": "^1.1.1",
     "@petmove/domain": "workspace:*",
     "@sentry/nextjs": "^10.50.0",
@@ -35,14 +33,12 @@
     "react-dom": "^19.2.5",
     "react-easy-crop": "^5.5.7",
     "react-image-crop": "^11.0.10",
-    "tailwind-merge": "^3.5.0",
-    "web-push": "^3.6.7"
+    "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@types/web-push": "^3.6.4",
     "autoprefixer": "^10.4.27",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.4",

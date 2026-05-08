@@ -5,6 +5,14 @@ import { useEffect, useState } from 'react'
 // Web Push 권한 토글 — 브라우저 권한 요청 + 구독 + 서버 등록.
 // 표시 조건: SW + PushManager 지원 + VAPID 공개키 env 설정.
 // VAPID 키는 NEXT_PUBLIC_VAPID_PUBLIC_KEY (publicly safe — 인증 우회 X).
+//
+// ⚠ 발송 인프라 미구축 (P2 #8 hygiene 이후 web-push 라이브러리 제거됨).
+// 사용자가 구독하면 push_subscriptions 에 저장되지만 서버에서 실제 알림을
+// 보내는 코드가 없어 알림은 전달되지 않는다. 발송 endpoint 도입 시 web-push
+// 또는 동등 라이브러리 재설치 + sendNotification 호출부 작성 필요.
+// 그 전까지 이 토글은 NEXT_PUBLIC_VAPID_PUBLIC_KEY 미설정으로 자동 숨겨지는
+// 환경에서만 표시되지 않는다 (env 가 설정돼있으면 UI 가 나타나 사용자에게
+// 오해 소지 — env 도 비활성화 권장).
 
 const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
 
