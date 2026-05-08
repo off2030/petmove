@@ -1,6 +1,9 @@
 import type { ProcedureCheck } from './types'
 import {
   daysBetween,
+  matchBannedBreed,
+  readBreed,
+  readExtraField,
   readGeneralVaccineEntries,
   readRabiesEntries,
   resolveValidUntil,
@@ -8,17 +11,21 @@ import {
 } from './utils'
 
 /**
- * 태국 (DLD — Department of Livestock Development) 절차 검증.
+ * 태국 (DLD — Department of Livestock Development, กรมปศุสัตว์) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/thai/) + 태국정부관광청.
+ * 출처:
+ *  - DLD AQS-Suvarnabhumi 공식 안내 — http://aqs-suvarn-dld.go.th/wp/en/import-en/importation-of-pet-dog-and-cat/
+ *  - 태국 외교부(MFA) 공식 PDF (Revised 30 Jan 2025) —
+ *    https://image.mfa.go.th/mfa/0/91fPdh6NtO/About-Thailand/Bringing_Pets_to_Thailand/All_Airports_-_Instructions_for_Bringing_Dog-Cat-Rabbit_into_Thailand_from_the_USA_(Revised_30Jan2025).pdf
+ *  - DLD AQI 영문 PDF — https://aqi.dld.go.th/webnew/images/stories/document/data-import-export/importation_eng.pdf
  *
  * ⚠️ 핵심:
- *  - **광견병 접종 출발 21일 전 완료** + 생후 91일 이상
- *  - 종합백신 (DHPPL/FVRCP) 출발 21일 전 완료
- *  - **광견병 항체검사 (RNATT)**: 태국 입국엔 비필수 → 검증 미적용 (한국 귀국용은 별도 흐름)
- *  - R7 import permit: 출발 7영업일 ~ 60일 전 신청 (별도 데이터 추적 미구현 → info)
- *  - 한국 APQA 검역: 출국일 10일 이내 (출발 7-9일 전 권장)
- *  - 강아지 렙토스피라: DHPPL 미포함 시 출발 30일 이내 음성 검사 (lepto 데이터 필드 부재 → 미적용)
+ *  - **광견병 접종 출발 21일 전 완료** (1차 또는 단절 시; 유효 부스터 면제) + 생후 12주(84일) 이상
+ *  - 종합백신 (개 DHPPL / 고양이 Panleukopenia 포함 FVRCP) 출발 21일 전 완료
+ *  - **광견병 항체검사 (RNATT)**: 태국 입국엔 비필수 (한국 귀국용은 별도 흐름)
+ *  - R7 import permit: 출발 7영업일 ~ 60일 전 신청, 60일 유효 (별도 데이터 추적 미구현 → info)
+ *  - 한국 APQA 검역: 출국 10일 이내 (보수 ≤9). DLD 자체 일자 명문 없음.
+ *  - 핏불 계열 수입 금지
  *
  * 컨벤션 (NZ/HI/CN 와 동일):
  *  - 필수 입력 누락 시 SKIP
@@ -94,7 +101,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종은 출국(=도착) 21일 이전 완료',
     description:
-      '가장 최근 광견병 접종이 도착일 기준 21일 이전 완료. (petmove 가이드: "태국 입국일 기준 최소 21일 전에 접종 완료")',
+      '가장 최근 광견병 접종이 도착일 기준 21일 이전 완료. (DLD: "primary or discontinuity vaccination must wait for 21 days before departure. Valid booster vaccination, waiting period not required" — 보수적으로 모든 경우 21일 적용)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -147,12 +154,33 @@ export const TH_CHECKS: ProcedureCheck[] = [
 
   // ── 종합백신 ──
   {
+    id: 'th.general-vaccine-required',
+    country: COUNTRY,
+    category: '종합백신',
+    title: '종합백신 접종 필수',
+    description:
+      'DLD: 강아지 DHPPL (Distemper/Hepatitis/Parvo/Lepto/Parainflu) / 고양이 FVRCP (Panleukopenia 포함) 의무. (DLD: "Animals must be vaccinated ... against Rabies, Distemper, Hepatitis, Parvo and Leptospirosis for dogs, and Rabies and Feline Panleukopenia for cats")',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const entries = readGeneralVaccineEntries(caseRow)
+      if (entries.length === 0) {
+        return {
+          ok: false,
+          message: '종합백신 기록 없음 — DLD 의무.',
+          fixHint: '강아지: DHPPL, 고양이: FVRCP(Panleukopenia 포함) 접종 후 등록.',
+        }
+      }
+      return { ok: true, message: `종합백신 ${entries.length}회 기록됨.` }
+    },
+  },
+  {
     id: 'th.general-vaccine-21days-before-arrival',
     country: COUNTRY,
     category: '종합백신',
     title: '종합백신 출국(=도착) 21일 이전 완료',
     description:
-      '종합백신(강아지 DHPPL / 고양이 FVRCP) 가장 최근 접종이 도착일 기준 21일 이전 완료. (petmove 가이드: "태국 입국일 기준 최소 21일 전")',
+      '종합백신(강아지 DHPPL / 고양이 Panleukopenia 포함 FVRCP) 가장 최근 접종이 도착일 기준 21일 이전 완료. (DLD: 광견병과 동일 21일 룰 적용 — 1차/단절 시. 유효 부스터 면제하나 보수적으로 모든 경우 적용)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -210,7 +238,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     category: '일정',
     title: '건강증명서(내원일)는 출국 10일 이내 (한국 APQA)',
     description:
-      '한국 APQA 검역 endorsement: 출국일 기준 10일 이내(`≤9`). 출발 7-9일 전 권장. (petmove 가이드 + 한국 검역본부 공통 룰)',
+      'DLD 자체 일자 명문 없음. 한국 APQA 검역 endorsement: 출국일 기준 10일 이내(`≤9`). 출발 7-9일 전 권장. (사용자 보수 N-1 적용)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -242,19 +270,71 @@ export const TH_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── 안내(경고) ──
+  // ── 서류 (R7 수입허가증) ──
   {
-    id: 'th.r7-import-permit-info',
+    id: 'th.r7-permit-validity-60days',
     country: COUNTRY,
     category: '서류',
-    title: 'R7 수입허가증 신청 (출발 7영업일 ~ 60일 전)',
+    title: 'R7 수입허가증 발급 후 60일 이내 도착',
     description:
-      'DLD R7 import permit 은 출발 최소 7영업일 ~ 최대 60일 전 신청. 발행 후 60일 유효, 처리 1-2주 소요. 시스템에 R7 신청 추적 데이터 없음 → 안내 경고.',
-    severity: 'warning',
-    addedAt: '2026-05-06',
-    run: () => ({
-      ok: true,
-      message: 'R7 수입허가증 신청이 출발 7영업일 이전 완료되었는지 별도 확인 필요.',
-    }),
+      'DLD R7 import permit 발급일로부터 60일 이내 도착해야 함. data.thailand_extra.r7_issue_date 입력 시 검증.',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const dep = caseRow.departure_date
+      const issueDate = readExtraField(caseRow, 'permit_issue_date')
+      if (!dep || !issueDate) return SKIP
+      const days = daysBetween(issueDate, dep)
+      if (days === null) return SKIP
+      if (days < 0) {
+        return {
+          ok: false,
+          message: `R7 발급일(${issueDate})이 도착일(${dep})보다 늦음.`,
+          offendingPaths: ['permit_issue_date'],
+        }
+      }
+      if (days > 60) {
+        return {
+          ok: false,
+          message: `R7 발급일(${issueDate}) → 도착일(${dep}): ${days}일 — 60일 이내 도착 필요.`,
+          fixHint: 'R7 재발급 또는 도착일 조정.',
+          offendingPaths: ['permit_issue_date'],
+        }
+      }
+      return { ok: true, message: `R7 발급일(${issueDate}) → 도착일(${dep}): ${days}일 (60일 이내).` }
+    },
+  },
+
+  // ── 수입 금지 견종 ──
+  {
+    id: 'th.banned-breeds',
+    country: COUNTRY,
+    category: '서류',
+    title: '수입 금지 견종 (Pit Bull 계열)',
+    description:
+      '태국은 American Pit Bull Terrier, American Staffordshire Terrier 등 핏불 계열 수입 금지. (DLD/태국 정부)',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const species = typeof data.species === 'string' ? data.species : ''
+      if (species && species !== 'dog') return SKIP
+      const breed = readBreed(caseRow)
+      if (!breed.ko && !breed.en) return SKIP
+      const match = matchBannedBreed(breed, [
+        'pit bull', 'pitbull', '핏불',
+        'american staffordshire terrier', '아메리칸 스태퍼드셔',
+        'staffordshire bull terrier', '스태퍼드셔 불 테리어',
+      ])
+      if (match) {
+        return {
+          ok: false,
+          message: `견종 "${breed.ko || breed.en}"은 태국 수입 금지 (매치: ${match}).`,
+          fixHint: '태국 내 사육은 합법이나 수입은 법으로 금지됨.',
+          offendingPaths: ['breed', 'breed_en'],
+        }
+      }
+      return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
+    },
   },
 ]

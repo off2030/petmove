@@ -10,22 +10,28 @@ import {
 } from './utils'
 
 /**
- * 브라질 (MAPA — Ministério da Agricultura, Pecuária e Abastecimento) 절차 검증.
+ * 브라질 (MAPA / VIGIAGRO — Ministério da Agricultura, Pecuária e Abastecimento) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/brazil-pet-travel-guide/)
+ * 출처:
+ *  - MAPA "Entrar no Brasil" — https://www.gov.br/agricultura/pt-br/assuntos/vigilancia-agropecuaria/animais-estimacao/entrar-no-brasil
+ *  - MAPA "Travelers and Pets" (영문) — https://www.gov.br/agricultura/pt-br/internacional/english/travelers-and-pets
+ *
+ * 한국 = 광견병 비청정국 분류 (WOAH 기준).
  *
  * 핵심 룰:
- *  - 마이크로칩: 브라질 입국 면제, 한국 수출검역에서 사실상 필수
- *  - 광견병: 1차 보수적(91일 AND 캘린더 3개월) + 출국 30일 전 + 면역 유효
- *  - 구충 (외부·내부): "도착전 15일 이내"
- *  - 건강증명서: 출국일(항공기 탑승) 10일 이내
+ *  - 마이크로칩: MAPA 명시 의무 부재. 식별 필수, 한국 수출검역에서 사실상 필수
+ *  - 광견병: 90일 이상 (보수 91일 AND 캘린더 3개월) + 1차 후 21일 대기 (보수 30일 적용) + 면역 유효
+ *  - 구충 (외부·내부): CVI 발급일 전 15일 이내 (MAPA "submitted within fifteen (15) days")
+ *  - 건강증명서: CVI 발급일 전 10일 이내 임상검사 (보수 ≤9). CVI 자체는 발급 후 60일 유효
+ *  - 한국 APQA 정부 수의관 인증 필수
  *
  * 별도 (시스템 검증 제외):
- *  - RNATT: 브라질 입국 면제 (한국 귀국용 — 별도 워크플로)
- *  - 종합백신: petmove 미명시
- *  - 도착 후 공항 동물검역소 심사: 사무 절차
+ *  - RNATT: MAPA 의무 아님 (권장만)
+ *  - 종합백신: MAPA 의무 아님 (광견병만 강제)
+ *  - 수입허가: 개·고양이 불요 (토끼·페럿 등은 MAPA Import Authorization 필요)
+ *  - 격리: 없음
  *
- * 컨벤션 (MX/MO/RU 와 동일):
+ * 컨벤션 (MX/MA/RU 와 동일):
  *  - 필수 입력 누락 시 SKIP
  *  - 유효기간 1년 = 접종일 + 364일까지 인정
  */
@@ -69,7 +75,7 @@ export const BR_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
-      'petmove 가이드 "생후 90일 이상" — MAPA 정량 미명시 → 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
+      'MAPA: "Animals 90 (ninety) days older must have a rabies vaccination" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -104,7 +110,7 @@ export const BR_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
-      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (petmove 가이드: "출국 30일 전 접종")',
+      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (MAPA: 1차 후 21일 대기 의무 — 보수적으로 30일 적용)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -132,7 +138,7 @@ export const BR_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일에 광견병 면역 유효',
     description:
-      '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함. (petmove 가이드: "면역 유효기간 이내에 브라질 입국")',
+      '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함. (MAPA: CVI 60일 유효 단 백신이 유효한 경우)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -162,7 +168,7 @@ export const BR_CHECKS: ProcedureCheck[] = [
     category: '구충',
     title: '외부구충은 출국 포함 15일 이내 (14일 전 이후)',
     description:
-      '외부구충(벼룩·진드기) 처치는 출국 포함 15일 이내 = 출국일 기준 14일 전 이후. (petmove 가이드: "도착전 15일 이내")',
+      '외부구충(벼룩·진드기) 처치는 출국 포함 15일 이내 = 출국일 기준 14일 전 이후. (MAPA: "submitted within fifteen (15) days prior to the issue date of the International Veterinary Certificate ... to a broad-spectrum treatment against internal and external parasites")',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -197,7 +203,7 @@ export const BR_CHECKS: ProcedureCheck[] = [
     category: '구충',
     title: '내부구충은 출국 포함 15일 이내 (14일 전 이후)',
     description:
-      '내부구충(선충·조충) 처치는 출국 포함 15일 이내 = 출국일 기준 14일 전 이후. (petmove 가이드: "도착전 15일 이내")',
+      '내부구충(선충·조충) 처치는 출국 포함 15일 이내 = 출국일 기준 14일 전 이후. (MAPA: "submitted within fifteen (15) days prior to the issue date of the International Veterinary Certificate")',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -232,9 +238,9 @@ export const BR_CHECKS: ProcedureCheck[] = [
     id: 'br.vet-visit-within-10days',
     country: COUNTRY,
     category: '일정',
-    title: '건강증명서(내원일)는 출국 10일 이내',
+    title: '건강증명서(내원일)는 출국 10일 이내 (보수: 9일 전부터)',
     description:
-      '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내. (petmove 가이드: "항공기 탑승 전 10일 이내")',
+      'MAPA: "examined within ten (10) days prior to the date of issue of the International Veterinary Certificate" — 사용자 보수 N-1 → ≤9 적용.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -254,11 +260,11 @@ export const BR_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['vet_visit_date'],
         }
       }
-      if (diff > 10) {
+      if (diff > 9) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 10일 이내 필요.`,
-          fixHint: `내원일을 ${dep} 기준 10일 전 이후로 조정.`,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 10일 이내(≤9일 전) 필요.`,
+          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정.`,
           offendingPaths: ['vet_visit_date'],
         }
       }

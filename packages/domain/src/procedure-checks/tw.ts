@@ -1,6 +1,8 @@
 import type { ProcedureCheck } from './types'
 import {
+  addYears,
   daysBetween,
+  readExtraField,
   readRabiesEntries,
   readTiterEntries,
   resolveValidUntil,
@@ -8,15 +10,19 @@ import {
 } from './utils'
 
 /**
- * 대만 (BAPHIQ — Bureau of Animal and Plant Health Inspection and Quarantine) 절차 검증.
+ * 대만 (APHIA — Animal and Plant Health Inspection Agency, 2023년 BAPHIQ에서 개칭) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/taiwan-pet-travel-guide/) + 주한국 대만대표부.
+ * 출처:
+ *  - APHIA "Quarantine for Dogs & Cats" — https://www.aphia.gov.tw/en/ws.php?id=14261
+ *  - APHIA "Procedure for Importation of Dogs/Cats" PDF —
+ *    https://pet-epermit.aphia.gov.tw/files/other/information_80asfiledownload1_4d09f517-bcfe-4c98-83d9-4e1cd9df61a1.pdf
+ *  - APHIA "Importation of Dogs or Cats FAQ" — https://www.aphia.gov.tw/office/khaphia/en/ws.php?id=738
  *
- * ⚠️ 핵심:
- *  - 마이크로칩 (ISO 11784/11785 또는 AVID-10/9/15자리) ≤ 광견병 1차
- *  - 광견병: 생후 91일령 이상, 출국 30일 ~ 1년 사이, 불활화 백신만 인정
- *  - **RNATT**: 채혈일부터 **180일 경과 후** 도착, ≥0.5 IU/ml
- *  - 한국 APQA 검역: 출국 10일 이내
+ * ⚠️ 핵심 (한국 = 광견병 발생국 분류):
+ *  - 마이크로칩: ISO 11784/11785 (15자리) ≤ 광견병 1차. AVID 등 비ISO 칩은 보조 ISO 칩 추가 식재 권고
+ *  - 광견병: 생후 90일령 이상, 불활화 백신만 인정, 1차는 선적 90일~1년 / 부스터는 30일~1년
+ *  - **RNATT**: 채혈일부터 **180일 경과 후** 도착, ≥0.5 IU/ml, APHIA 채신 명단 lab
+ *  - 한국 APQA 검역: 출국 10일 이내(보수 ≤9)
  *  - 격리 기본 7일 (수입허가증 20일 전 신청 + RNATT 180일 충족 시 면제 가능)
  *  - 개·고양이 동일 요건
  *
@@ -35,7 +41,7 @@ export const TW_CHECKS: ProcedureCheck[] = [
     category: '마이크로칩',
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
-      '마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. ISO 11784/11785 또는 AVID-10/9/15자리 허용. (대만 BAPHIQ)',
+      '마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. ISO 11784/11785 (15자리) 표준. AVID 등 비ISO 칩은 보조 ISO 칩 추가 식재 권고. (APHIA)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -123,7 +129,7 @@ export const TW_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '항체검사는 광견병 접종 이후',
     description:
-      'RNATT 채혈일은 직전 광견병 접종 이후여야 함. (petmove 가이드)',
+      'RNATT 채혈일은 직전 광견병 접종 이후여야 함. (APHIA Procedure)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -152,12 +158,12 @@ export const TW_CHECKS: ProcedureCheck[] = [
     },
   },
   {
-    id: 'tw.rnatt-180days-before-arrival',
+    id: 'tw.rnatt-180days-to-1year-before-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: 'RNATT 채혈일부터 180일 경과 후 도착',
+    title: 'RNATT 채혈일부터 180일 ~ 1년 사이 도착',
     description:
-      'RNATT 채혈일로부터 180일 경과 후에 대만 도착해야 함 (격리 면제 핵심 조건). 미충족 시 추가 격리. (petmove + 대만대표부: "채혈일로부터 180일이 경과한 후")',
+      'RNATT 채혈일로부터 180일 경과 ~ 1년 이내에 대만 도착 (격리 면제 핵심 조건). 미충족 시 추가 격리 또는 재검사. (APHIA: "the blood sampling date should be no less than 180 days and no more than one year prior to shipment")',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -165,25 +171,36 @@ export const TW_CHECKS: ProcedureCheck[] = [
       const titers = readTiterEntries(caseRow)
       if (!dep || titers.length === 0) return SKIP
 
-      // 가장 이른 채혈 = 가장 긴 대기기간 (가장 유리). 180일 충족하는 것 하나라도 있으면 OK.
+      // 180일 ≤ 출국 ≤ 1년 (addYears: -1일 보정 = 364일째까지) 윈도우 안에 들어가는 채혈 1개 이상이면 OK.
       const valid = titers.find((t) => {
         const days = daysBetween(t.date, dep)
-        return days !== null && days >= 180
+        if (days === null) return false
+        const upper = addYears(t.date, 1)
+        return days >= 180 && upper >= dep
       })
       if (valid) {
         const days = daysBetween(valid.date, dep)
-        return { ok: true, message: `RNATT(${valid.date}) → 출국(${dep}): ${days}일 (≥180).` }
+        return { ok: true, message: `RNATT(${valid.date}) → 출국(${dep}): ${days}일 (180일 이상, 1년 이내).` }
       }
 
-      // 모두 실패 — 가장 이른 채혈일 기준 메시지 (가장 유리한 것이 부족)
-      const earliest = [...titers].sort((a, b) => a.date.localeCompare(b.date))[0]
-      const days = daysBetween(earliest.date, dep)
+      // 모두 실패 — 가장 최신 채혈일 기준 메시지
+      const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
+      const days = daysBetween(newest.date, dep)
+      const upper = addYears(newest.date, 1)
       const offending: string[] = ['departure_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
+      const reason =
+        days === null
+          ? '날짜 형식 오류'
+          : days < 0
+            ? `채혈일(${newest.date})이 출국일(${dep}) 이후`
+            : days < 180
+              ? `RNATT(${newest.date}) → 출국(${dep}): ${days}일 — 180일 미달`
+              : `RNATT(${newest.date}) + 1년(${upper}) < 출국일(${dep}) — 1년 초과 (재검사 필요)`
       return {
         ok: false,
-        message: `RNATT(${earliest.date}) → 출국(${dep}): ${days ?? '?'}일 — 180일 이상 필요.`,
-        fixHint: `출국일을 ${earliest.date} 기준 180일 이후로 조정.`,
+        message: reason,
+        fixHint: `출국일을 ${newest.date} 기준 180일 이후 ~ ${upper} 사이로 조정하거나 RNATT 재검사 필요.`,
         offendingPaths: offending,
       }
     },
@@ -225,6 +242,34 @@ export const TW_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 서류 (수입허가 사전 신청) ──
+  {
+    id: 'tw.import-permit-20days-lead',
+    country: COUNTRY,
+    category: '서류',
+    title: '수입허가 신청은 선적 20일 이상 전 (격리 면제 핵심 조건)',
+    description:
+      'APHIA: 격리 면제 자격을 위해 수입허가 사전 신청은 출국 ≥20일 전. data.taiwan_extra.permit_application_date 입력 시 검증.',
+    severity: 'warning',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const dep = caseRow.departure_date
+      const applyDate = readExtraField(caseRow, 'permit_application_date')
+      if (!dep || !applyDate) return SKIP
+      const days = daysBetween(applyDate, dep)
+      if (days === null) return SKIP
+      if (days < 20) {
+        return {
+          ok: false,
+          message: `수입허가 신청일(${applyDate}) → 선적일(${dep}): ${days}일 — 20일 이상 필요 (격리 면제용).`,
+          fixHint: '수입허가 신청을 출국 20일 이전으로 앞당기거나 7일 격리 수용.',
+          offendingPaths: ['permit_application_date'],
+        }
+      }
+      return { ok: true, message: `수입허가 신청(${applyDate}) → 선적(${dep}): ${days}일 (≥20일).` }
     },
   },
 ]

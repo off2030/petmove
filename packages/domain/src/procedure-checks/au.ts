@@ -116,7 +116,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일은 RNATT 검체 lab 도착일 180일 이후',
     description:
-      'RNATT 검체가 DAFF 승인 lab 에 도착한 날부터 180일 의무 대기. 검체 도착일(`australia_extra.sample_received_date`) 우선, 없으면 채혈일 fallback.',
+      'RNATT 검체가 DAFF 승인 lab 에 도착한 날부터 180일 의무 대기. 우선순위: rabies_titer_records[].received_date → australia_extra.sample_received_date(legacy) → 채혈일(fallback).',
     severity: 'blocker',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
@@ -125,12 +125,17 @@ export const AU_CHECKS: ProcedureCheck[] = [
       const auExtra = readAustraliaExtra(caseRow)
       if (!dep) return SKIP
 
-      // 우선 sample_received_date, 없으면 채혈일 중 최선(가장 이른=가장 긴 대기) 사용
-      let basis: { kind: 'received' | 'sample'; date: string; titerIdx?: number } | null = null
-      if (auExtra.sample_received_date) {
-        basis = { kind: 'received', date: auExtra.sample_received_date }
+      // 우선순위:
+      //  (1) titer record 내 received_date — 가장 정확한 record-level 데이터
+      //  (2) australia_extra.sample_received_date — legacy 단일 필드
+      //  (3) 채혈일 fallback — 가장 이른 = 가장 긴 대기 = 가장 유리
+      let basis: { kind: 'received_record' | 'received_legacy' | 'sample'; date: string; titerIdx?: number } | null = null
+      const receivedRecord = titers.find((t) => t.received_date)
+      if (receivedRecord && receivedRecord.received_date) {
+        basis = { kind: 'received_record', date: receivedRecord.received_date, titerIdx: receivedRecord.originalIndex }
+      } else if (auExtra.sample_received_date) {
+        basis = { kind: 'received_legacy', date: auExtra.sample_received_date }
       } else if (titers.length > 0) {
-        // 가장 이른 채혈일이 가장 긴 대기 → 가장 유리
         const earliest = titers.reduce((a, b) => (a.date <= b.date ? a : b))
         basis = { kind: 'sample', date: earliest.date, titerIdx: earliest.originalIndex }
       } else {
@@ -139,19 +144,29 @@ export const AU_CHECKS: ProcedureCheck[] = [
 
       const days = daysBetween(basis.date, dep)
       if (days === null) return SKIP
-      if (days < 180) {
+      // 정확한 lab 수령일이 있으면 180일, 채혈일 fallback 시 lab 수령은 며칠 후이므로 +7일 마진 적용 → 187일.
+      const required = basis.kind === 'sample' ? 187 : 180
+      if (days < required) {
         const offendingPaths = ['departure_date']
-        if (basis.kind === 'received') offendingPaths.push('australia_extra.sample_received_date')
-        else offendingPaths.push(`rabies_titer_records[${basis.titerIdx}].date`)
-        const label = basis.kind === 'received' ? '검체 도착일' : '채혈일(검체일 미입력 fallback)'
+        if (basis.kind === 'received_record') {
+          offendingPaths.push(`rabies_titer_records[${basis.titerIdx}].received_date`)
+        } else if (basis.kind === 'received_legacy') {
+          offendingPaths.push('australia_extra.sample_received_date')
+        } else {
+          offendingPaths.push(`rabies_titer_records[${basis.titerIdx}].date`)
+        }
+        const label = basis.kind === 'sample' ? '채혈일(검체일 미입력 fallback)' : '검체 도착일'
+        const reqLabel = basis.kind === 'sample' ? '187일(180+7 보수)' : '180일'
         return {
           ok: false,
-          message: `${label}(${basis.date}) → 출국일(${dep}): ${days}일 — 180일 이상 필요.`,
-          fixHint: '출국일을 검체 도착일 + 180일 이후로 조정.',
+          message: `${label}(${basis.date}) → 출국일(${dep}): ${days}일 — ${reqLabel} 이상 필요.`,
+          fixHint: basis.kind === 'sample'
+            ? '검체 도착일 입력 시 180일 기준 검증 가능. 미입력 시 채혈일 +7일 보수 마진 (lab 수령일이 채혈일보다 며칠 늦으므로).'
+            : '출국일을 검체 도착일 + 180일 이후로 조정.',
           offendingPaths,
         }
       }
-      const label = basis.kind === 'received' ? '검체 도착일' : '채혈일'
+      const label = basis.kind === 'sample' ? '채혈일' : '검체 도착일'
       return { ok: true, message: `${label}(${basis.date}) → 출국일(${dep}): ${days}일.` }
     },
   },
@@ -224,9 +239,9 @@ export const AU_CHECKS: ProcedureCheck[] = [
     id: 'au.vet-visit-within-5days-of-departure',
     country: COUNTRY,
     category: '일정',
-    title: '내원일은 출국일 5일 이내',
+    title: '내원일은 출국일 5일 이내 (보수: 4일 전부터)',
     description:
-      '동물 건강증명서 endorsement 는 출국일 기준 5일 이내. (DAFF: "endorsed within 5 days before the dog\'s export date")',
+      '동물 건강증명서 endorsement 는 출국일 기준 5일 이내(`≤4`). (DAFF: "endorsed within 5 days before the dog\'s export date" — 사용자 보수 N-1 적용)',
     severity: 'blocker',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
@@ -246,11 +261,11 @@ export const AU_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['vet_visit_date'],
         }
       }
-      if (diff > 5) {
+      if (diff > 4) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 5일 이내 필요.`,
-          fixHint: `내원일을 ${dep} 기준 5일 전 이후로 조정.`,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 5일 이내(≤4일 전) 필요.`,
+          fixHint: `내원일을 ${dep} 기준 4일 전 이후로 조정.`,
           offendingPaths: ['vet_visit_date'],
         }
       }

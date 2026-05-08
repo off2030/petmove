@@ -2,28 +2,35 @@ import type { ProcedureCheck } from './types'
 import {
   daysBetween,
   evaluateRabiesAgeConservative,
+  findSameGuardianCases,
+  matchBannedBreed,
+  readBreed,
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
 } from './utils'
 
 /**
- * 베트남 절차 검증.
+ * 베트남 (DAH — Department of Animal Health, Cục Thú y) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/vietnam-pet-travel-guide/)
+ * 출처:
+ *  - Circular 25/2016/TT-BNNPTNT 제10조 (2016-06-30 시행, 2025-06-24 Circular 28/2025로 일부 개정)
+ *  - 미 대사관 베트남 안내 — https://vn.usembassy.gov/wp-content/uploads/sites/124/2024/08/Bring-Pets-to-or-from-Vietnam.pdf
+ *  - USDA APHIS Vietnam — https://www.aphis.usda.gov/pet-travel/us-to-another-country-export/pet-travel-us-vietnam
+ *  - MOIT 무역포털 — https://vntr.moit.gov.vn/procedures/detail/25
  *
  * 핵심 룰:
- *  - 마이크로칩 ≤ 광견병 1차 (베트남 입국 면제, 한국 수출검역에 사실상 필수)
- *  - 광견병 1차 ≥ 생후 91일령 (petmove "생후 3개월령 이후")
- *  - 광견병 출국 30일 이상 전 (사례기반 5국 통일 룰)
- *  - 1년 라이선스 광견병만 인정 (사례기반 5국 통일 룰)
- *  - 출국일 광견병 면역 유효
- *  - 건강증명서 ≤ 출국 10일 이내 (petmove 명시)
+ *  - 마이크로칩: ISO 11784/11785 15자리 (DAH/APHIS), 광견병 백신 이전 이식
+ *  - 광견병: 생후 90일 이상, 출국 30일 이상~12개월 이내 접종, 출국일 면역 유효
+ *  - **3년 라이선스 백신 불인정** (DAH 운용 + USDA APHIS + 미 대사관 일치 — Circular 25 본문 1차 명문 미확인)
+ *  - 건강증명서 ≤ 출국 10일 이내 (보수 ≤9). 한국 APQA 정부수의관 발급
+ *  - DAH Form 19 (Appendix V) Import Permit: 처리 5근무일, 출국 7-10일 전 신청
+ *  - 외국인 최대 2마리 (Circular 25 제10조)
+ *  - Pit Bull, Tosa, Dogo Argentino 등 견종 제한
  *
  * 별도 (시스템 검증 제외):
- *  - RNATT: 베트남 입국 면제 (한국 귀국 시는 필요 — 별도 워크플로)
- *  - 종합백신/구충: petmove 미명시
- *  - 도착 후 수입동물검역(지역에 따라 면제): 사무 절차
+ *  - RNATT: DAH 의무 아님 (APHIS 명기). 한국 귀국용은 별도 흐름
+ *  - 도착 후 14일 격리 (요건 미충족 시 또는 입국 거부)
  *
  * 컨벤션: 필수 입력 누락 시 SKIP. 유효기간 1년 = 접종일 + 364일까지.
  */
@@ -64,7 +71,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
-      'petmove 가이드 "생후 3개월령" — 보수적으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
+      'DAH/APHIS: "at least 3 months of age" — 보수적으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -99,7 +106,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
-      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (사례기반 5국 통일 룰)',
+      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (DAH/APHIS: "at least 30 days ... before the intended date of entry")',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -127,7 +134,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '1년 라이선스 광견병 백신만 인정 (3년 거부)',
     description:
-      '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 364일 초과면 거부. (사례기반 5국 통일 룰)',
+      '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 364일 초과면 거부. (DAH 운용 지침: "Vietnam does not recognize the 3-year rabies vaccine" — USDA APHIS, 미 대사관 일치. Circular 25/2016 본문 1차 명문 미확인)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -192,9 +199,9 @@ export const VN_CHECKS: ProcedureCheck[] = [
     id: 'vn.vet-visit-within-10days',
     country: COUNTRY,
     category: '일정',
-    title: '건강증명서(내원일)는 출국 10일 이내',
+    title: '건강증명서(내원일)는 출국 10일 이내 (보수: 9일 전부터)',
     description:
-      '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내. (petmove 가이드 명시)',
+      '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내(`≤9`). (미 대사관: "typically valid for seven to 10 days prior to departure" — 사용자 보수 N-1 적용)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -214,15 +221,73 @@ export const VN_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['vet_visit_date'],
         }
       }
-      if (diff > 10) {
+      if (diff > 9) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 10일 이내 필요.`,
-          fixHint: `내원일을 ${dep} 기준 10일 전 이후로 조정.`,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 10일 이내(≤9일 전) 필요.`,
+          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 수입 금지 견종 ──
+  {
+    id: 'vn.banned-breeds',
+    country: COUNTRY,
+    category: '서류',
+    title: '수입 금지 견종 (Pit Bull, Tosa, Dogo Argentino 등)',
+    description:
+      '베트남은 Pit Bull Terrier, Japanese Tosa, Dogo Argentino 등 견종 수입 제한. (Circular 25/2016 + USDA APHIS Vietnam)',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const species = typeof data.species === 'string' ? data.species : ''
+      if (species && species !== 'dog') return SKIP
+      const breed = readBreed(caseRow)
+      if (!breed.ko && !breed.en) return SKIP
+      const match = matchBannedBreed(breed, [
+        'pit bull', 'pitbull', '핏불',
+        'tosa', '도사',
+        'dogo argentino', '도고 아르헨티노',
+      ])
+      if (match) {
+        return {
+          ok: false,
+          message: `견종 "${breed.ko || breed.en}"은 베트남 수입 제한 (매치: ${match}).`,
+          fixHint: '베트남은 위 견종 수입 제한.',
+          offendingPaths: ['breed', 'breed_en'],
+        }
+      }
+      return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
+    },
+  },
+
+  // ── 보호자 한도 (외국인 최대 2마리) ──
+  {
+    id: 'vn.max-2pets-per-guardian',
+    country: COUNTRY,
+    category: '서류',
+    title: '외국인 최대 2마리 한도 (Circular 25/2016 제10조)',
+    description:
+      'Circular 25/2016/TT-BNNPTNT 제10조: 외국인은 반려 목적으로 최대 2마리까지 동반 가능. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 베트남 목적 케이스 3건 이상 등록 시 경고.',
+    severity: 'warning',
+    addedAt: '2026-05-07',
+    run: ({ caseRow, relatedCases }) => {
+      if (relatedCases === undefined) return SKIP
+      const others = findSameGuardianCases(caseRow, relatedCases, { sameDestination: true })
+      if (others.length + 1 > 2) {
+        return {
+          ok: false,
+          message: `같은 보호자(${caseRow.customer_name})가 베트남 목적 케이스 ${others.length + 1}건 등록 — 2마리 한도 초과.`,
+          fixHint: 'Circular 25/2016 제10조: 1인 최대 2마리. 추가는 상업 수입 절차 필요.',
+          offendingPaths: ['customer_name'],
+        }
+      }
+      return { ok: true, message: '보호자 케이스 ≤ 2건.' }
     },
   },
 ]

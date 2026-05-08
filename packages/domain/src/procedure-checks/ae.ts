@@ -2,7 +2,11 @@ import type { ProcedureCheck } from './types'
 import {
   daysBetween,
   evaluateRabiesAgeConservative,
+  findSameGuardianCases,
+  matchBannedBreed,
+  readBreed,
   readExternalParasiteEntries,
+  readExtraField,
   readGeneralVaccineEntries,
   readInternalParasiteEntries,
   readRabiesEntries,
@@ -13,21 +17,28 @@ import {
 /**
  * 아랍에미리트 (MOCCAE — Ministry of Climate Change & Environment) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/uae-pet-travel-guide/)
+ * 출처:
+ *  - MOCCAE Import Permit Pets — https://www.moccae.gov.ae/en/services/import-permit-pets
+ *  - MOCCAE Export-Import Services — https://www.moccae.gov.ae/en/services/export-import-services/import-permit-pets.aspx
+ *  - MOCCAE 입국 가이드 PDF — https://moccae.gov.ae/Handlers/DownloadPDF.ashx?id=67445
+ *
+ * 한국 = MOCCAE 저위험국(Low-risk country) 분류. RNATT 의무 아님.
  *
  * 핵심 룰:
- *  - 마이크로칩: ISO 표준 (UAE 자체 시점 미명시, 한국 수출검역에 사실상 필수)
- *  - 광견병: 1차 보수적(91일 AND 캘린더 3개월) + 출국일 면역 유효
- *  - 종합백신: **필수**, 강아지(DHPL), 고양이(FVRCP), 출국 **21일 전** 접종
- *  - 구충 (외부·내부): 출국 14일 이내
- *  - 건강증명서: 출국일 10일 이내
+ *  - 마이크로칩 (영구, ISO 11784/11785 운용)
+ *  - 광견병: 저위험국발 12주(보수 91일 AND 캘린더 3개월) + 1차/단절 시 21일 대기 + 출국일 면역 유효
+ *  - 종합백신: 백신 기록 (개 DHPP+L / 고양이 FVRCP), 출국 21일 전 접종 (운용 표준)
+ *  - 구충 (외부·내부): 출국 14일 이내 (MOCCAE: "preventive doses ... during the 14 days prior to shipment")
+ *  - 건강증명서: 출국일 10일 이내 (보수 ≤9)
+ *  - Import Permit (MOCCAE 사전 발급, 90일 유효)
+ *  - 개인당 연간 2마리 한도
+ *  - Pitbull, Tosa, Doberman, Rottweiler 등 견종 수입 금지
  *
  * 별도 (시스템 검증 제외):
- *  - RNATT: petmove 가이드 미명시 (UAE 입국 면제로 추정)
- *  - 광견병 1년 라이선스: petmove 미명시
- *  - 수입허가(30일 유효), 1인 2마리 제한: 사무 절차
+ *  - RNATT: 저위험국발은 의무 아님 (고위험국발만 필수)
+ *  - 광견병 1년 라이선스: MOCCAE 명문 부재 — 라벨 따름
  *
- * 컨벤션 (MX/MO/RU 와 동일):
+ * 컨벤션 (MX/MA/RU 와 동일):
  *  - 필수 입력 누락 시 SKIP
  *  - 유효기간 1년 = 접종일 + 364일까지 인정
  */
@@ -71,7 +82,7 @@ export const AE_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
-      'petmove 가이드 + MOCCAE 정량 미명시 — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
+      'MOCCAE 저위험국 출발: 생후 12주 이상 — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -164,7 +175,7 @@ export const AE_CHECKS: ProcedureCheck[] = [
     category: '종합백신',
     title: '종합백신 접종 필수',
     description:
-      '종합백신 접종 기록 필요. 강아지: DHPL(distemper/hepatitis/parvo/lepto) / 고양이: FVRCP(rhinotracheitis/calici/panleuk). (petmove 가이드 명시)',
+      '종합백신 접종 기록 필요. 강아지: DHPP+L(distemper/hepatitis/parvo/parainflu/lepto) / 고양이: FVRCP(rhinotracheitis/calici/panleuk). (MOCCAE 운용 표준 — 명시 의무 부재)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -185,7 +196,7 @@ export const AE_CHECKS: ProcedureCheck[] = [
     category: '종합백신',
     title: '종합백신은 출국일 21일 이상 전 접종',
     description:
-      '종합백신 접종일로부터 출국일까지 최소 21일 경과 필요. (petmove 가이드: "최소 21일 전에 접종")',
+      '종합백신 접종일로부터 출국일까지 최소 21일 경과 필요. (MOCCAE 운용 표준)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -215,7 +226,7 @@ export const AE_CHECKS: ProcedureCheck[] = [
     category: '구충',
     title: '외부구충은 출국 포함 14일 이내 (13일 전 이후)',
     description:
-      '외부구충(벼룩·진드기) 처치는 출국 포함 14일 이내 = 출국일 기준 13일 전 이후. (petmove 가이드: "출국일 기준 14일 이내")',
+      '외부구충(벼룩·진드기) 처치는 출국 포함 14일 이내 = 출국일 기준 13일 전 이후. (MOCCAE: "preventive doses for internal and external parasites during the 14 days prior to shipment")',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -250,7 +261,7 @@ export const AE_CHECKS: ProcedureCheck[] = [
     category: '구충',
     title: '내부구충은 출국 포함 14일 이내 (13일 전 이후)',
     description:
-      '내부구충(선충·조충) 처치는 출국 포함 14일 이내 = 출국일 기준 13일 전 이후. (petmove 가이드: "출국일 기준 14일 이내")',
+      '내부구충(선충·조충) 처치는 출국 포함 14일 이내 = 출국일 기준 13일 전 이후. (MOCCAE: "preventive doses for internal and external parasites during the 14 days prior to shipment")',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -285,9 +296,9 @@ export const AE_CHECKS: ProcedureCheck[] = [
     id: 'ae.vet-visit-within-10days',
     country: COUNTRY,
     category: '일정',
-    title: '건강증명서(내원일)는 출국 10일 이내',
+    title: '건강증명서(내원일)는 출국 10일 이내 (보수: 9일 전부터)',
     description:
-      '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내. (petmove 가이드: "탑승 전 10일 이내")',
+      'MOCCAE 자체 일자 명시 부재. 한국 APQA endorsement 10일 룰 + 사용자 보수 N-1 → ≤9 적용.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -307,15 +318,114 @@ export const AE_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['vet_visit_date'],
         }
       }
-      if (diff > 10) {
+      if (diff > 9) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 10일 이내 필요.`,
-          fixHint: `내원일을 ${dep} 기준 10일 전 이후로 조정.`,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 10일 이내(≤9일 전) 필요.`,
+          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 수입 금지 견종 ──
+  {
+    id: 'ae.banned-breeds',
+    country: COUNTRY,
+    category: '서류',
+    title: '수입 금지 견종 (Pit Bull, Tosa, Doberman, Rottweiler 등)',
+    description:
+      'MOCCAE 수입 금지: Pitbull, Argentinian Mastiff (Dogo Argentino), Brazilian Mastiff (Fila Brasileiro), Tosa (Japanese Fighting Dog), American Staffordshire Terrier, Bull Mastiff, Doberman, Rottweiler 및 교잡.',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const species = typeof data.species === 'string' ? data.species : ''
+      if (species && species !== 'dog') return SKIP
+      const breed = readBreed(caseRow)
+      if (!breed.ko && !breed.en) return SKIP
+      const match = matchBannedBreed(breed, [
+        'pit bull', 'pitbull', '핏불',
+        'dogo argentino', '도고 아르헨티노',
+        'fila brasileiro', '필라 브라질레이로',
+        'tosa', '도사',
+        'american staffordshire terrier', '아메리칸 스태퍼드셔',
+        'staffordshire bull terrier', '스태퍼드셔 불 테리어',
+        'bull mastiff', '불 마스티프',
+        'doberman', '도베르만',
+        'rottweiler', '로트와일러',
+      ])
+      if (match) {
+        return {
+          ok: false,
+          message: `견종 "${breed.ko || breed.en}"은 UAE 수입 금지 (매치: ${match}).`,
+          fixHint: 'MOCCAE 수입 금지 견종 — 별도 가능 절차 없음.',
+          offendingPaths: ['breed', 'breed_en'],
+        }
+      }
+      return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
+    },
+  },
+
+  // ── 서류 (MOCCAE Import Permit) ──
+  {
+    id: 'ae.import-permit-validity-90days',
+    country: COUNTRY,
+    category: '서류',
+    title: 'MOCCAE Import Permit 발급 후 90일 이내 도착',
+    description:
+      'MOCCAE: "validity of permit is 90 days, and it is not allowed to import pets with an expired import permit" — 발급일로부터 90일 이내 도착. data.uae_extra.permit_issue_date 입력 시 검증.',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const dep = caseRow.departure_date
+      const issueDate = readExtraField(caseRow, 'permit_issue_date')
+      if (!dep || !issueDate) return SKIP
+      const days = daysBetween(issueDate, dep)
+      if (days === null) return SKIP
+      if (days < 0) {
+        return {
+          ok: false,
+          message: `MOCCAE Permit 발급일(${issueDate})이 도착일(${dep})보다 늦음.`,
+          offendingPaths: ['permit_issue_date'],
+        }
+      }
+      if (days > 90) {
+        return {
+          ok: false,
+          message: `MOCCAE Permit 발급일(${issueDate}) → 도착일(${dep}): ${days}일 — 90일 이내 도착 필요.`,
+          fixHint: 'MOCCAE 재신청 또는 도착일 조정.',
+          offendingPaths: ['permit_issue_date'],
+        }
+      }
+      return { ok: true, message: `MOCCAE Permit(${issueDate}) → 도착일(${dep}): ${days}일 (90일 이내).` }
+    },
+  },
+
+  // ── 보호자 한도 (개인당 연간 2마리) ──
+  {
+    id: 'ae.max-2pets-per-year',
+    country: COUNTRY,
+    category: '서류',
+    title: '개인당 연간 2마리 한도 (MOCCAE)',
+    description:
+      'MOCCAE: 개인당 연간 최대 2마리(개2 또는 고양이2 또는 개+고양이). 동일 보호자(이름·영문이름·전화·국내주소 일치)가 UAE 목적 케이스 3건 이상 등록 시 경고. (시간 윈도우는 시스템 미구현 — 보수적으로 전체 케이스 카운트)',
+    severity: 'warning',
+    addedAt: '2026-05-07',
+    run: ({ caseRow, relatedCases }) => {
+      if (relatedCases === undefined) return SKIP
+      const others = findSameGuardianCases(caseRow, relatedCases, { sameDestination: true })
+      if (others.length + 1 > 2) {
+        return {
+          ok: false,
+          message: `같은 보호자(${caseRow.customer_name})가 UAE 목적 케이스 ${others.length + 1}건 등록 — 개인당 연간 2마리 한도 초과.`,
+          fixHint: 'MOCCAE: 개인당 연간 2마리 한도. 보호자 분리 또는 출국 시점 분산 검토.',
+          offendingPaths: ['customer_name'],
+        }
+      }
+      return { ok: true, message: '보호자 케이스 ≤ 2건.' }
     },
   },
 ]

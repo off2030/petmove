@@ -3,6 +3,8 @@ import {
   addYears,
   daysBetween,
   evaluateRabiesAgeConservative,
+  matchBannedBreed,
+  readBreed,
   readExternalParasiteEntries,
   readGeneralVaccineEntries,
   readInternalParasiteEntries,
@@ -31,9 +33,9 @@ export const SG_CHECKS: ProcedureCheck[] = [
     id: 'sg.vet-visit-within-7days-of-departure',
     country: 'singapore',
     category: '일정',
-    title: '내원일은 출국일 7일 이내',
+    title: '내원일은 출국일 7일 이내 (보수: 6일 전부터)',
     description:
-      '수의사 검진·증명서 발급은 출국일 기준 7일 이내여야 함. (Schedule III IV(a)(i)(ii))',
+      '수의사 검진·증명서 발급은 출국일 기준 7일 이내(`≤6`)여야 함. (NParks/AVS Schedule III IV(a)(i)(ii) "not more than seven (7) days prior to export" — 사용자 보수 N-1 적용)',
     severity: 'blocker',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
@@ -53,11 +55,11 @@ export const SG_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['vet_visit_date'],
         }
       }
-      if (diff > 7) {
+      if (diff > 6) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 7일 이내 필요.`,
-          fixHint: `내원일을 ${dep} 기준 7일 전 이후로 조정하세요.`,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 7일 이내(≤6일 전) 필요.`,
+          fixHint: `내원일을 ${dep} 기준 6일 전 이후로 조정하세요.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
@@ -282,7 +284,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
     category: '종합백신',
     title: '출국일 시점 종합백신 면역 유효',
     description:
-      '출국일에 가장 최근 종합백신의 면역 유효기간이 만료되지 않아야 함. (Schedule III IV(a)(iv)(v) "according to the vaccine manufacturer\'s recommendations")',
+      '출국일에 가장 최근 종합백신의 면역 유효기간이 만료되지 않아야 함. valid_until 미입력 시 디폴트 1년(addOneYear, +364일) 적용. (Schedule III IV(a)(iv)(v) "according to the vaccine manufacturer\'s recommendations")',
     severity: 'blocker',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
@@ -291,10 +293,8 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (!dep || entries.length === 0) return SKIP
 
       const latest = entries[entries.length - 1]
-      // 종합백신은 제품별 유효기간 편차가 커서 valid_until 명시된 경우에만 평가.
-      // (광견병과 달리 1년 디폴트 가정 안 함 — 예: 일부 제품은 3년)
-      if (!latest.valid_until) return SKIP
-      const validUntil = latest.valid_until
+      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      if (!validUntil) return SKIP
       if (validUntil < dep) {
         return {
           ok: false,
@@ -365,6 +365,47 @@ export const SG_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내부구충(${latest.date}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 수입 금지 견종 ──
+  {
+    id: 'sg.banned-breeds',
+    country: 'singapore',
+    category: '서류',
+    title: '수입 금지 견종 (NParks First Schedule Part 1)',
+    description:
+      'NParks First Schedule Part 1 (수입·판매·방문·거주 전면 금지): Pit Bull 계열(American Pit Bull Terrier, American Staffordshire Terrier, Staffordshire Bull Terrier, American Bulldog), Neapolitan Mastiff, Tosa, Akita, Dogo Argentino, Boerboel, Fila Brasileiro, Perro de Presa Canario 및 교잡. (Animals and Birds (Licensing and Control of Cats and Dogs) Rules 2024)',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const species = typeof data.species === 'string' ? data.species : ''
+      if (species && species !== 'dog') return SKIP
+      const breed = readBreed(caseRow)
+      if (!breed.ko && !breed.en) return SKIP
+      const match = matchBannedBreed(breed, [
+        'pit bull', 'pitbull', '핏불',
+        'american staffordshire terrier', '아메리칸 스태퍼드셔',
+        'staffordshire bull terrier', '스태퍼드셔 불 테리어',
+        'american bulldog', '아메리칸 불독',
+        'neapolitan mastiff', '네아폴리탄 마스티프',
+        'tosa', '도사', '도사 이누',
+        'akita', '아키타',
+        'dogo argentino', '도고 아르헨티노',
+        'boerboel', '보어보엘',
+        'fila brasileiro', '필라 브라질레이로',
+        'perro de presa canario', '프레사 카나리오',
+      ])
+      if (match) {
+        return {
+          ok: false,
+          message: `견종 "${breed.ko || breed.en}"은 NParks 수입 금지 (매치: ${match}).`,
+          fixHint: 'NParks First Schedule Part 1 견종은 싱가포르 수입·거주 전면 금지. 별도 가능 절차 없음.',
+          offendingPaths: ['breed', 'breed_en'],
+        }
+      }
+      return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
     },
   },
 ]

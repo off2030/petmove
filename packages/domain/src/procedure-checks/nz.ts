@@ -517,7 +517,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── 종합·독감·켄넬코프 (출국 14일~364일 전 = 1년 유효) ──
+  // ── 종합·켄넬코프 (출국 14일 이전 + 검역 10일 cushion) ──
   buildAnnualVaccineRule({
     id: 'nz.general-vaccine-14to364days',
     label: '종합백신',
@@ -526,19 +526,73 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     dogOnly: false,
   }),
   buildAnnualVaccineRule({
-    id: 'nz.civ-14to364days',
-    label: '독감(CIV)',
-    dataKey: 'civ_dates',
-    reader: readCivEntries,
-    dogOnly: true,
-  }),
-  buildAnnualVaccineRule({
     id: 'nz.kennel-cough-14to364days',
     label: '켄넬코프',
     dataKey: 'kennel_cough_dates',
     reader: readKennelCoughEntries,
     dogOnly: true,
   }),
+
+  // ── CIV (강아지 한정, 2회 접종 — 1차 ≥30일 / 2차 ≥21일 + 검역 cushion) ──
+  {
+    id: 'nz.civ-2doses-30and21days',
+    country: COUNTRY,
+    category: '종합백신',
+    title: 'CIV 2회 접종 + 1차 ≥30일 / 2차 ≥21일 + 검역 cushion (강아지)',
+    description:
+      '강아지 전용. MPI: CIV 2회 접종 의무. 1차는 출국 30일 이상 전, 2차(부스터)는 출국 21일 이상 전. 2차는 검역 10일 종료까지 유효해야 함 (cushion ≥10일).',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      if (species(caseRow) !== 'dog') return SKIP
+      const dep = caseRow.departure_date
+      const entries = readCivEntries(caseRow)
+      if (!dep) return SKIP
+      if (entries.length === 0) return SKIP
+      if (entries.length < 2) {
+        return {
+          ok: false,
+          message: `CIV 1회만 기록됨(${entries[0].date}) — 2회 접종 필요.`,
+          fixHint: '21일 이상 후 2차(부스터) 접종 추가.',
+          offendingPaths: [`civ_dates[${entries[0].originalIndex}].date`],
+        }
+      }
+
+      // 가장 최근 2개 도즈를 검증 대상으로 사용
+      const dose1 = entries[entries.length - 2]
+      const dose2 = entries[entries.length - 1]
+      const dose1ToDep = daysBetween(dose1.date, dep)
+      const dose2ToDep = daysBetween(dose2.date, dep)
+      const dose2ValidUntil = resolveValidUntil(dose2.date, dose2.valid_until)
+      const cushion = dose2ValidUntil ? daysBetween(dep, dose2ValidUntil) : null
+
+      const issues: string[] = []
+      const offending: string[] = []
+      if (dose1ToDep === null || dose1ToDep < 30) {
+        issues.push(`1차(${dose1.date})→출국 ${dose1ToDep ?? '?'}일 (≥30일 필요)`)
+        offending.push(`civ_dates[${dose1.originalIndex}].date`)
+      }
+      if (dose2ToDep === null || dose2ToDep < 21) {
+        issues.push(`2차(${dose2.date})→출국 ${dose2ToDep ?? '?'}일 (≥21일 필요)`)
+        offending.push(`civ_dates[${dose2.originalIndex}].date`)
+      }
+      if (cushion !== null && cushion < 10) {
+        issues.push(`2차 유효기간(${dose2ValidUntil}) - 출국 ${cushion}일 (검역 10일 cover 불가)`)
+        offending.push(`civ_dates[${dose2.originalIndex}].date`)
+      }
+      if (issues.length > 0) {
+        return {
+          ok: false,
+          message: issues.join(' / '),
+          offendingPaths: Array.from(new Set(offending)),
+        }
+      }
+      return {
+        ok: true,
+        message: `CIV 1차(${dose1.date})→출국 ${dose1ToDep}일, 2차(${dose2.date})→출국 ${dose2ToDep}일, 검역 cushion ${cushion}일.`,
+      }
+    },
+  },
 
   // ── 안내(경고) ──
   {
@@ -560,8 +614,10 @@ export const NZ_CHECKS: ProcedureCheck[] = [
 /**
  * 종합·독감·켄넬코프 공통 룰 빌더.
  * - 최근 접종 ≥ 출국 14일 전 (`dep - latest ≥ 14`)
- * - 출국일까지 면역 유효 (`valid_until ≥ dep`, 디폴트 1년 = `dep - latest ≤ 364`)
+ * - 검역 종료까지 면역 유효 (`valid_until ≥ dep + 10일` cushion, 디폴트 1년 = `dep - latest ≤ 354`)
  * - dogOnly = true 시 강아지에만 적용 (고양이는 SKIP)
+ *
+ * MPI: "검역기간 종료 시점까지 유효" — PEQ 10일 cushion 적용. 광견병 룰과 통일.
  */
 function buildAnnualVaccineRule(opts: {
   id: string
@@ -576,8 +632,8 @@ function buildAnnualVaccineRule(opts: {
     id: opts.id,
     country: COUNTRY,
     category: '종합백신',
-    title: `${opts.label} 출국 14일 ~ 364일 전 (1년 유효)${speciesNote}`,
-    description: `${speciesPrefix}최근 ${opts.label} 접종이 출국일 14일 이전 완료 + 1년 유효기간 안. valid_until 명시 시 override (\`dep - vacc ≤ 364\`).`,
+    title: `${opts.label} 출국 14일 이전 + 검역 10일 cover${speciesNote}`,
+    description: `${speciesPrefix}최근 ${opts.label} 접종이 출국일 14일 이전 + 검역(10일) 종료까지 면역 유효 (cushion ≥10일). 디폴트 1년 → \`dep - vacc ≤ 354\`. valid_until 명시 시 override.`,
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -599,20 +655,23 @@ function buildAnnualVaccineRule(opts: {
       } else if (toDep < 14) {
         issues.push(`최근 접종(${latest.date}) → 출국 ${toDep}일 (≥14일 필요)`)
       }
-      if (validUntil && validUntil < dep) {
-        issues.push(`유효기간(${validUntil}) < 출국일(${dep}) — 1년 만료`)
+      if (validUntil) {
+        const cushion = daysBetween(dep, validUntil)
+        if (cushion === null || cushion < 10) {
+          issues.push(`유효기간(${validUntil}) - 출국일(${dep}) = ${cushion ?? '?'}일 (검역 10일 cover 불가)`)
+        }
       }
       if (issues.length > 0) {
         return {
           ok: false,
           message: issues.join(' / '),
-          fixHint: '부스터 추가 또는 출국일 조정 — 출국 14~364일 전 범위.',
+          fixHint: '부스터 추가 또는 출국일 조정 — 출국 14일 전 + 검역 10일까지 유효.',
           offendingPaths: ['departure_date', `${opts.dataKey}[${latest.originalIndex}].date`],
         }
       }
       return {
         ok: true,
-        message: `최근 접종(${latest.date}) → 출국(${dep}): ${toDep}일, 유효기간 ${validUntil}.`,
+        message: `최근 접종(${latest.date}) → 출국(${dep}): ${toDep}일, 유효기간 ${validUntil} (검역 cushion OK).`,
       }
     },
   }

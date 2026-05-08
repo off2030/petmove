@@ -6,6 +6,7 @@ import { DESTINATION_OVERRIDES, matchesDestinationKey } from '@petmove/domain'
 import { getChecksForCountry } from '@petmove/domain'
 import type { CheckResult, CheckSeverity, ProcedureCheck } from '@petmove/domain'
 import { listOrgDisabledChecks } from '@/lib/actions/org-disabled-checks'
+import { useCases } from './cases-context'
 
 export interface CheckEntry {
   check: ProcedureCheck
@@ -58,6 +59,9 @@ export function VerificationProvider({
     })()
   }, [])
 
+  // cross-case 검증(예: CN 1인 1마리)에 사용. 동일 조직의 모든 케이스 (자기 자신 포함, 룰 내부에서 제외).
+  const { cases: relatedCases } = useCases()
+
   const value = useMemo<VerificationValue>(() => {
     const country = detectCountryKey(destination ?? caseRow.destination)
     const checks = country ? getChecksForCountry(country) : getChecksForCountry('all')
@@ -70,7 +74,7 @@ export function VerificationProvider({
       if (disabledIds.has(check.id)) continue
       let result: CheckResult
       try {
-        result = check.run({ caseRow })
+        result = check.run({ caseRow, relatedCases })
       } catch (e) {
         result = { ok: false, message: `검증 실행 오류: ${e instanceof Error ? e.message : String(e)}` }
       }
@@ -94,7 +98,7 @@ export function VerificationProvider({
       getForPath: (p) => pathMap.get(p) ?? null,
       results,
     }
-  }, [caseRow, destination, disabledIds])
+  }, [caseRow, destination, disabledIds, relatedCases])
 
   return <VerificationCtx.Provider value={value}>{children}</VerificationCtx.Provider>
 }

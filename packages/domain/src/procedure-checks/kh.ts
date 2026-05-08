@@ -2,29 +2,33 @@ import type { ProcedureCheck } from './types'
 import {
   daysBetween,
   evaluateRabiesAgeConservative,
+  readExtraField,
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
 } from './utils'
 
 /**
- * 캄보디아 절차 검증.
+ * 캄보디아 (GDAHP — General Directorate of Animal Health and Production, MAFF) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/cambodia-pet-travel-guide/)
- *  — "공식 자료 부재 — 언제든 변경 가능"
+ * 출처:
+ *  - Law on Animal Health and Production (NS/RKM/0116/003, 2016-01-28) — FAOLEX/Ecolex
+ *    https://www.ecolex.org/details/legislation/law-on-animal-health-and-production-no-nsrkm0116003-lex-faoc173984/
+ *  - WTO Import Licensing — Cambodia live animals — https://importlicensing.wto.org/content/live-animals-animal-products-meat-products
+ *  - WOAH Asia Rabies — Cambodia — https://rr-asia.woah.org/en/projects/rabies/
+ *
+ * ⚠️ 캄보디아는 영문 시행령·서식·수치를 별도 공개하지 않음 — 수치는 GDAHP가 사례별로 발급하는 Import Permit 조건과 한국 QIA 안내에 의존하는 운용 룰. 출국 5-7영업일 전 GDAHP 재확인 권장.
  *
  * 핵심 룰:
- *  - 마이크로칩 ≤ 광견병 1차 (캄보디아 입국 면제, 한국 수출검역 사실상 필수)
- *  - 광견병 1차 ≥ 생후 91일령 (petmove "생후 3개월령 이후")
- *  - 광견병 출국 30일 이상 전 (사례기반 5국 통일 룰)
- *  - 1년 라이선스 광견병만 인정 (사례기반 5국 통일 룰)
- *  - 출국일 광견병 면역 유효
- *  - 건강증명서 ≤ 출국 10일 이내 (petmove 명시)
+ *  - 마이크로칩 ≤ 광견병 1차 (GDAHP 운용 표준 — ISO 11784/11785 15자리)
+ *  - 광견병: 생후 90일 이상 + 출국 30일 이상~12개월 이내 (GDAHP 운용)
+ *  - 1년 라이선스 백신만 인정 (GDAHP 수입허가 발급 시 운용 조건 — 영문 법령 명문 부재)
+ *  - 건강증명서 ≤ 출국 10일 이내 (한국 QIA + 보수 ≤9)
  *
  * 별도 (시스템 검증 제외):
- *  - RNATT: 캄보디아 입국 면제 (한국 귀국 시는 필요 — 별도 워크플로)
- *  - 종합백신/구충: petmove 미명시
- *  - 도착 후 수입동물검역: 사무 절차
+ *  - RNATT: GDAHP 의무 아님 (한국 귀국용 별도)
+ *  - 화물 운송 시 GDAHP Import Permit 필수, 동반 입국은 통상 면제
+ *  - 종합백신/구충: 권장 (GDAHP 명문 의무 아님)
  *
  * 컨벤션: 필수 입력 누락 시 SKIP. 유효기간 1년 = 접종일 + 364일까지.
  */
@@ -65,7 +69,7 @@ export const KH_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
-      'petmove 가이드 "생후 3개월령" — 보수적으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
+      'GDAHP 운용: "3개월(90일) 이상 접종 의무" — 보수적으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -100,7 +104,7 @@ export const KH_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
-      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (사례기반 5국 통일 룰)',
+      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (GDAHP 수입허가 발급 시 운용 조건 — 영문 법령 명문 부재)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -128,7 +132,7 @@ export const KH_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '1년 라이선스 광견병 백신만 인정 (3년 거부)',
     description:
-      '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 364일 초과면 거부. (사례기반 5국 통일 룰)',
+      '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 364일 초과면 거부. (GDAHP 수입허가 발급 시 운용 조건 — 영문 법령 명문 부재, 보수 적용)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -193,9 +197,9 @@ export const KH_CHECKS: ProcedureCheck[] = [
     id: 'kh.vet-visit-within-10days',
     country: COUNTRY,
     category: '일정',
-    title: '건강증명서(내원일)는 출국 10일 이내',
+    title: '건강증명서(내원일)는 출국 10일 이내 (보수: 9일 전부터)',
     description:
-      '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내. (petmove 가이드 명시)',
+      '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내(`≤9`). 한국 QIA 발행 영문 검역증명서. (사용자 보수 N-1 적용)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -215,15 +219,44 @@ export const KH_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['vet_visit_date'],
         }
       }
-      if (diff > 10) {
+      if (diff > 9) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 10일 이내 필요.`,
-          fixHint: `내원일을 ${dep} 기준 10일 전 이후로 조정.`,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 10일 이내(≤9일 전) 필요.`,
+          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 서류 (Import Permit, 화물 운송 시) ──
+  {
+    id: 'kh.import-permit-cargo',
+    country: COUNTRY,
+    category: '서류',
+    title: 'GDAHP Import Permit 신청은 출발 5영업일 이상 전 (화물 시)',
+    description:
+      'GDAHP: 동반 입국은 통상 면제, 무동반/화물 시 사전 Import Permit 필수. 출발 5-7영업일 이상 전 신청 권장. data.cambodia_extra.permit_application_date 입력 시 검증.',
+    severity: 'warning',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const dep = caseRow.departure_date
+      const applyDate = readExtraField(caseRow, 'permit_application_date')
+      if (!dep || !applyDate) return SKIP
+      const days = daysBetween(applyDate, dep)
+      if (days === null) return SKIP
+      // 5영업일 = 약 7 캘린더일 보수
+      if (days < 7) {
+        return {
+          ok: false,
+          message: `Import Permit 신청일(${applyDate}) → 출발일(${dep}): ${days}일 — 5영업일(보수 7일) 이상 필요.`,
+          fixHint: 'GDAHP 신청을 출발 5영업일 이전으로 앞당기기.',
+          offendingPaths: ['permit_application_date'],
+        }
+      }
+      return { ok: true, message: `Import Permit 신청(${applyDate}) → 출발(${dep}): ${days}일 (5영업일+).` }
     },
   },
 ]

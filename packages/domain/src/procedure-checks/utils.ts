@@ -1,4 +1,5 @@
 import type { CaseRow } from '../types'
+import { readEffectiveExtraValue } from '../destination-overrides-types'
 import type { CheckResult } from './types'
 
 /**
@@ -17,6 +18,8 @@ export interface RabiesEntry {
 export interface TiterEntry {
   date: string
   value?: string | null
+  /** 검사소가 검체를 수령한 날 (lab sample received). AU/HI/GU 의 N일 대기 카운트다운 기준. */
+  received_date?: string | null
   originalIndex: number
 }
 
@@ -54,8 +57,13 @@ export function readTiterEntries(caseRow: CaseRow): TiterEntry[] {
   if (!Array.isArray(raw)) return []
   return raw
     .map((r, originalIndex) => {
-      const rec = r as { date?: string | null; value?: string | null }
-      return { date: rec?.date ?? '', value: rec?.value ?? null, originalIndex }
+      const rec = r as { date?: string | null; value?: string | null; received_date?: string | null }
+      return {
+        date: rec?.date ?? '',
+        value: rec?.value ?? null,
+        received_date: rec?.received_date ?? null,
+        originalIndex,
+      }
     })
     .filter((r) => typeof r.date === 'string' && r.date.length >= 10)
 }
@@ -215,6 +223,97 @@ export function daysBetween(aISO: string, bISO: string): number | null {
   const b = new Date(bISO).getTime()
   if (isNaN(a) || isNaN(b)) return null
   return Math.round((b - a) / 86400000)
+}
+
+// ── 통합 추가정보 필드 reader (top-level + legacy country_extra fallback) ──
+
+/**
+ * 통합 키로 추가정보 필드를 읽음. top-level `data.{key}` 우선, 미발견 시 legacy
+ * country-specific 경로(예: `data.thailand_extra.r7_issue_date`)로 fallback.
+ * (destination-overrides-types LEGACY_EXTRA_PATHS 매핑 사용.)
+ */
+export function readExtraField(caseRow: CaseRow, key: string): string | null {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const v = readEffectiveExtraValue(data, key)
+  return typeof v === 'string' && v.length > 0 ? v : null
+}
+
+// ── 보호자 (cross-case 매칭 — 동일 보호자 다중 등록 검증) ──
+
+/**
+ * 동일 보호자 매칭 키 정규화. customer_name + customer_name_en + data.phone + data.address_kr 4종을 합산.
+ * - 공백·하이픈 제거 후 소문자.
+ * - phone 은 숫자만 추출 (한국 010-1234-5678 ↔ 01012345678 호환).
+ */
+function guardianKey(caseRow: CaseRow): string | null {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const name = (caseRow.customer_name ?? '').trim().toLowerCase().replace(/\s+/g, '')
+  const nameEn = (caseRow.customer_name_en ?? '').trim().toLowerCase().replace(/\s+/g, '')
+  const phoneRaw = typeof data.phone === 'string' ? data.phone : ''
+  const phone = phoneRaw.replace(/\D/g, '')
+  const addressRaw = typeof data.address_kr === 'string' ? data.address_kr : ''
+  const address = addressRaw.trim().toLowerCase().replace(/\s+/g, '')
+  // 식별 가능한 최소 정보가 없으면 매칭 불가
+  if (!name || (!phone && !address && !nameEn)) return null
+  return `${name}|${nameEn}|${phone}|${address}`
+}
+
+/**
+ * 동일 보호자가 보유한 다른 케이스 검색.
+ * - customer_name + customer_name_en + data.phone + data.address_kr 4종 모두 일치해야 함.
+ * - 자기 자신(`caseRow.id` 동일)은 제외.
+ * - opts.sameDestination = true 시 caseRow.destination 동일 케이스만.
+ *
+ * 반환: 매칭된 케이스 배열 (자신 제외).
+ */
+export function findSameGuardianCases(
+  caseRow: CaseRow,
+  related: readonly CaseRow[] | undefined,
+  opts: { sameDestination?: boolean } = {},
+): CaseRow[] {
+  if (!related || related.length === 0) return []
+  const myKey = guardianKey(caseRow)
+  if (!myKey) return []
+  const myDest = (caseRow.destination ?? '').trim()
+  return related.filter((r) => {
+    if (r.id === caseRow.id) return false
+    if (guardianKey(r) !== myKey) return false
+    if (opts.sameDestination && (r.destination ?? '').trim() !== myDest) return false
+    return true
+  })
+}
+
+// ── 견종 (수입 금지·제한 검증) ──
+
+/** caseRow.data.breed (한글) + breed_en (영문) 읽기. */
+export function readBreed(caseRow: CaseRow): { ko: string; en: string } {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const ko = typeof data.breed === 'string' ? data.breed : ''
+  const en = typeof data.breed_en === 'string' ? data.breed_en : ''
+  return { ko, en }
+}
+
+/**
+ * 견종이 금지·제한 키워드 목록과 매치되는지 검사.
+ * - ko / en 양쪽에서 공백 제거·소문자 정규화 후 substring 매치.
+ * - 매치된 키워드 반환 (없으면 null).
+ *
+ * 키워드는 충분히 변별력 있는 표현 사용 권장:
+ *  ✅ 'pit bull', 'tosa', 'dogo argentino', 'fila brasileiro'
+ *  ⚠️ 'bull' 같은 짧은 단어는 오탐 위험 — 'bull mastiff', 'bull terrier' 등 전체 명 사용
+ */
+export function matchBannedBreed(
+  breed: { ko: string; en: string },
+  keywords: string[],
+): string | null {
+  const norm = (s: string) => s.toLowerCase().replace(/\s+/g, '')
+  const koLower = norm(breed.ko)
+  const enLower = norm(breed.en)
+  for (const kw of keywords) {
+    const kwLower = norm(kw)
+    if (kwLower && (koLower.includes(kwLower) || enLower.includes(kwLower))) return kw
+  }
+  return null
 }
 
 // ── 공통 결과 ──

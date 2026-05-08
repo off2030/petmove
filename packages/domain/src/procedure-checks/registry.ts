@@ -10,7 +10,7 @@ import { HK_CHECKS } from './hk'
 import { ID_CHECKS } from './id'
 import { IL_CHECKS } from './il'
 import { JP_CHECKS } from './jp'
-import { MO_CHECKS } from './mo'
+import { MA_CHECKS } from './ma'
 import { MX_CHECKS } from './mx'
 import { MY_CHECKS } from './my'
 import { NZ_CHECKS } from './nz'
@@ -45,7 +45,7 @@ export const ALL_PROCEDURE_CHECKS: ProcedureCheck[] = [
   ...RU_CHECKS,
   ...MY_CHECKS,
   ...MX_CHECKS,
-  ...MO_CHECKS,
+  ...MA_CHECKS,
   ...BR_CHECKS,
   ...AE_CHECKS,
   ...HK_CHECKS,

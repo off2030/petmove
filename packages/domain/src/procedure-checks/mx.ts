@@ -12,19 +12,23 @@ import {
 /**
  * 멕시코 (SENASICA — Servicio Nacional de Sanidad, Inocuidad y Calidad Agroalimentaria) 절차 검증.
  *
- * 출처: petmove 가이드 (https://www.petmove.co.kr/docs/mexico-pet-travel-guide/)
+ * 출처:
+ *  - SENASICA Pet Travel — https://www.gob.mx/senasica/documentos/requirements-and-procedures-for-traveling-to-mexico-with-your-pet
+ *  - SENASICA Travel with your pet PDF —
+ *    https://www.gob.mx/cms/uploads/attachment/file/938779/ENG.Viajas_con_tu_mascota_a_M_xico-Requisitos_y_procedimientos_para_viajar_a_M_xico_con_tu_mascota.pdf
  *
- * 핵심 룰:
- *  - 마이크로칩: 멕시코 자체는 면제, 한국 수출검역에서 사실상 필수
- *  - 광견병: 1차 ≥ 생후 91일령(안전기준) + **출국 ≥ 접종 + 30일** (petmove 명시) + 출국일 면역 유효(1년)
- *  - 구충 (외부·내부): "도착전 6개월 이내" 처치
- *  - 건강증명서: 출국일(항공기 탑승) 10일 이내 임상검사
+ * 핵심 룰 (SENASICA — 모든 출발국 단일 통합 요건):
+ *  - 마이크로칩: SENASICA 의무 아님 (식별·안전 권장). 한국 수출검역에서 사실상 필수
+ *  - 광견병: 3개월 이상 (보수 91일 AND 캘린더 3개월), 출국 ≥ 15일 (보수 30일 적용), 출국일 면역 유효
+ *  - 구충 (외부·내부): "발급일 전 6개월 이내" 처치 (SENASICA 명시)
+ *  - 건강증명서: 출국일(항공기 탑승) 15일 이내 (한국 APQA 10일 + 사용자 N-1 보수 ≤9 적용)
+ *  - SENASICA Zoosanitary Certificate, 양식 FF-SENASICA-003
  *
  * 별도 (시스템 검증 제외):
- *  - RNATT: 멕시코 입국 면제 (한국 귀국 시는 필요 — 별도 워크플로)
- *  - 종합백신: petmove 미명시
- *  - 광견병 1년 라이선스 룰: petmove 강조 안 함 → 룰 없음
- *  - 수입검역(공항 심사) / 1인 2마리 / 위임장: 사무 절차
+ *  - RNATT: SENASICA 의무 아님
+ *  - 종합백신: SENASICA 의무 아님 (광견병만 강제)
+ *  - 수입허가: 개·고양이 불요. 도착 시 OISA 검역
+ *  - 격리: 없음 (서류·임상검사 통과 시 즉시 통관)
  *
  * 컨벤션 (RU/MY 와 동일):
  *  - 필수 입력 누락 시 SKIP
@@ -70,7 +74,7 @@ export const MX_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
-      'petmove 가이드 + SENASICA 정량 미명시 — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
+      'SENASICA: "Pets under three months of age are exempt" → 3개월 이상 광견병 의무. 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -105,7 +109,7 @@ export const MX_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
-      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (petmove 가이드: "출국일 기준 최소 30일 전")',
+      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (SENASICA: 도착 전 ≥15일 명시 — 보수적으로 30일 적용)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -134,7 +138,7 @@ export const MX_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '출국일에 광견병 면역 유효',
     description:
-      '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함. (petmove 가이드: "유효기간 1년")',
+      '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함. (SENASICA: 유효기간 내 백신 라벨 기준)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -164,7 +168,7 @@ export const MX_CHECKS: ProcedureCheck[] = [
     category: '구충',
     title: '외부구충은 도착 6개월 이내',
     description:
-      '외부구충(벼룩·진드기) 처치는 멕시코 도착 6개월(180일) 이내 실시. (petmove 가이드: "도착전 6개월 이내")',
+      '외부구충(벼룩·진드기) 처치는 멕시코 도착 6개월(180일) 이내 실시. (SENASICA: "preventive treatment for internal and external parasites within the previous six months")',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -199,7 +203,7 @@ export const MX_CHECKS: ProcedureCheck[] = [
     category: '구충',
     title: '내부구충은 도착 6개월 이내',
     description:
-      '내부구충(선충·조충) 처치는 멕시코 도착 6개월(180일) 이내 실시. (petmove 가이드: "도착전 6개월 이내")',
+      '내부구충(선충·조충) 처치는 멕시코 도착 6개월(180일) 이내 실시. (SENASICA: "preventive treatment for internal and external parasites within the previous six months")',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -236,7 +240,7 @@ export const MX_CHECKS: ProcedureCheck[] = [
     category: '일정',
     title: '건강증명서(내원일)는 출국 10일 이내',
     description:
-      '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내. (petmove 가이드: "항공기 탑승 전 10일 이내")',
+      'SENASICA Zoosanitary Certificate: 출국 전 15일 이내 발급. 한국 APQA endorsement 10일 + 사용자 보수 N-1 → ≤9 적용.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -256,11 +260,11 @@ export const MX_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['vet_visit_date'],
         }
       }
-      if (diff > 10) {
+      if (diff > 9) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 10일 이내 필요.`,
-          fixHint: `내원일을 ${dep} 기준 10일 전 이후로 조정.`,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 10일 이내(≤9일 전) 필요.`,
+          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정.`,
           offendingPaths: ['vet_visit_date'],
         }
       }

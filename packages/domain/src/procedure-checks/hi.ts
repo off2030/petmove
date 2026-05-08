@@ -8,6 +8,7 @@ import {
   readTiterEntries,
   resolveValidUntil,
   SKIP,
+  type TiterEntry,
 } from './utils'
 
 /**
@@ -228,9 +229,9 @@ export const HI_CHECKS: ProcedureCheck[] = [
     id: 'hi.favn-sample-30days-to-36months-before-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: 'FAVN 채혈은 출국(=도착) 30일 ~ 36개월 전',
+    title: 'FAVN 검체 lab 수령일은 출국 30일 ~ 36개월 전',
     description:
-      'FAVN lab 수령일 기준 30일 ≤ 도착일 ≤ 36개월. 시스템에 수령일 필드 없어 채혈일(`rabies_titer_records[].date`) 을 보수 proxy 로 사용 (실제 수령일은 며칠 늦어 더 strict 함). (HDOA Step 4 + Step 5)',
+      'HDOA: lab 수령일 다음날부터 30일 이상, 36개월 이내. `rabies_titer_records[].received_date` 우선, 미입력 시 채혈일 fallback (실제 lab 수령일은 며칠 늦으므로 채혈일 proxy 는 less strict — 보수 마진 검토 권고).',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -238,36 +239,45 @@ export const HI_CHECKS: ProcedureCheck[] = [
       const titers = readTiterEntries(caseRow)
       if (!dep || titers.length === 0) return SKIP
 
-      // 가장 유리한 채혈 = 30일~36개월 범위 안에 들어가는 것. 하나라도 통과하면 OK.
+      // received_date 우선, 없으면 채혈일 fallback
+      const basisOf = (t: TiterEntry) => t.received_date || t.date
       const valid = titers.find((t) => {
-        const days = daysBetween(t.date, dep)
+        const basis = basisOf(t)
+        const days = daysBetween(basis, dep)
         if (days === null) return false
-        const upper = addMonths(t.date, 36)
+        const upper = addMonths(basis, 36)
         return days >= 30 && upper >= dep
       })
       if (valid) {
-        const days = daysBetween(valid.date, dep)
-        return { ok: true, message: `FAVN(${valid.date}) → 출국(${dep}): ${days}일 (30일 이상, 36개월 이내).` }
+        const basis = basisOf(valid)
+        const label = valid.received_date ? '검체 수령일' : 'FAVN 채혈일'
+        const days = daysBetween(basis, dep)
+        return { ok: true, message: `${label}(${basis}) → 출국(${dep}): ${days}일 (30일 이상, 36개월 이내).` }
       }
 
       // 모두 실패 — 가장 최신 기준 메시지
-      const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
-      const days = daysBetween(newest.date, dep)
-      const upper = addMonths(newest.date, 36)
+      const newest = [...titers].sort((a, b) => basisOf(b).localeCompare(basisOf(a)))[0]
+      const newestBasis = basisOf(newest)
+      const days = daysBetween(newestBasis, dep)
+      const upper = addMonths(newestBasis, 36)
       const offending: string[] = ['departure_date']
-      for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
+      for (const t of titers) {
+        if (t.received_date) offending.push(`rabies_titer_records[${t.originalIndex}].received_date`)
+        else offending.push(`rabies_titer_records[${t.originalIndex}].date`)
+      }
+      const label = newest.received_date ? '검체 수령일' : 'FAVN 채혈일'
       const reason =
         days === null
           ? '날짜 형식 오류'
           : days < 0
-            ? `채혈일(${newest.date})이 출국일(${dep}) 이후`
+            ? `${label}(${newestBasis})이 출국일(${dep}) 이후`
             : days < 30
-              ? `FAVN(${newest.date}) → 출국(${dep}): ${days}일 — 30일 미달 (대기 부족)`
-              : `FAVN(${newest.date}) + 36개월(${upper}) < 출국일(${dep}) — 36개월 초과 (재검사 필요)`
+              ? `${label}(${newestBasis}) → 출국(${dep}): ${days}일 — 30일 미달 (대기 부족)`
+              : `${label}(${newestBasis}) + 36개월(${upper}) < 출국일(${dep}) — 36개월 초과 (재검사 필요)`
       return {
         ok: false,
         message: reason,
-        fixHint: '출국일 조정 또는 FAVN 재검사. 실제 lab 수령일 기준이라 채혈일에서 며칠 더 여유 두는 것이 안전.',
+        fixHint: '출국일 조정 또는 FAVN 재검사. 실제 lab 수령일 미입력 시 채혈일에서 며칠 더 여유 두는 것이 안전.',
         offendingPaths: offending,
       }
     },
