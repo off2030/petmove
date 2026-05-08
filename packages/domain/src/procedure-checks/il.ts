@@ -1,5 +1,6 @@
 import type { ProcedureCheck } from './types'
 import {
+  addMonths,
   daysBetween,
   evaluateRabiesAgeConservative,
   findSameGuardianCases,
@@ -294,6 +295,38 @@ export const IL_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
+    },
+  },
+
+  // ── 입국 연령 ──
+  {
+    id: 'il.min-4months-on-departure',
+    country: COUNTRY,
+    category: '일정',
+    title: '출국일 시점 만 4개월령(약 17주) 이상',
+    description:
+      'gov.il 수의국: 이스라엘 입국 시 만 4개월(약 17주) 이상이어야 함. 출국일 기준 생후 ≥ 4개월(`addMonths(birth, 4) ≤ dep`).',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const dep = caseRow.departure_date
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
+      if (!dep || !birth) return SKIP
+
+      const earliestDep = addMonths(birth, 4)
+      if (!earliestDep) return SKIP
+      if (earliestDep <= dep) {
+        const ageDays = daysBetween(birth, dep)
+        return { ok: true, message: `생년월일(${birth}) + 4개월(${earliestDep}) ≤ 출국일(${dep}). 생후 ${ageDays}일.` }
+      }
+      const ageDays = daysBetween(birth, dep)
+      return {
+        ok: false,
+        message: `생년월일(${birth}) + 4개월(${earliestDep}) > 출국일(${dep}) — 4개월령 미달 (생후 ${ageDays ?? '?'}일).`,
+        fixHint: `출국일을 ${earliestDep} 이후로 조정.`,
+        offendingPaths: ['departure_date', 'birth_date'],
+      }
     },
   },
 
