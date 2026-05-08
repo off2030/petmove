@@ -530,28 +530,48 @@ export async function submitShareLink(
       updates.data = merged
     }
 
+    // Atomic claim — submitted_at 가 여전히 NULL 일 때만 마킹 통과. 두 동시 제출 중
+    // 한 건만 통과해 cases UPDATE 단계로 진입. 패배자는 cases 변경 없이 reject.
+    // claim 을 cases UPDATE 보다 먼저 수행해야 같은 link 의 vaccine entries 가
+    // 두 번 append 되는 사고를 막을 수 있다 (cases UPDATE 가 멱등하지 않음).
+    const submittedAt = new Date().toISOString()
+    const { data: claimed, error: markErr } = await admin
+      .from('case_share_links')
+      .update({
+        submitted_at: submittedAt,
+        submitter_name: input.submitterName?.trim() || null,
+        submitter_note: input.submitterNote?.trim() || null,
+      })
+      .eq('id', row.id)
+      .is('submitted_at', null)
+      .select('id')
+      .maybeSingle()
+    if (markErr) return { ok: false, error: markErr.message }
+    if (!claimed) return { ok: false, error: '이미 제출된 링크입니다' }
+
     if (Object.keys(updates).length > 0) {
       const { error: upErr } = await admin
         .from('cases')
         .update(updates)
         .eq('id', row.case_id)
       if (upErr) {
+        // cases 업데이트 실패 시 claim 을 되돌려 사용자가 재시도 가능하도록.
+        // best-effort — revert 도 실패해도 데이터 손상은 없음 (cases 는 미변경).
+        await admin
+          .from('case_share_links')
+          .update({
+            submitted_at: null,
+            submitter_name: null,
+            submitter_note: null,
+          })
+          .eq('id', row.id)
+          .eq('submitted_at', submittedAt) // 우리 claim 인지 확인
         if (upErr.message.includes('cases_org_microchip_unique')) {
           return { ok: false, error: '이미 등록된 마이크로칩 번호입니다' }
         }
         return { ok: false, error: upErr.message }
       }
     }
-
-    const { error: markErr } = await admin
-      .from('case_share_links')
-      .update({
-        submitted_at: new Date().toISOString(),
-        submitter_name: input.submitterName?.trim() || null,
-        submitter_note: input.submitterNote?.trim() || null,
-      })
-      .eq('id', row.id)
-    if (markErr) return { ok: false, error: markErr.message }
 
     // 발신자 측 케이스 상세에 즉시 반영되도록 캐시 무효화
     revalidatePath('/cases')
