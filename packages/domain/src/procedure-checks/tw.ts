@@ -1,6 +1,7 @@
 import type { ProcedureCheck } from './types'
 import {
   daysBetween,
+  readExtraField,
   readRabiesEntries,
   readTiterEntries,
   resolveValidUntil,
@@ -229,6 +230,34 @@ export const TW_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 서류 (수입허가 사전 신청) ──
+  {
+    id: 'tw.import-permit-20days-lead',
+    country: COUNTRY,
+    category: '서류',
+    title: '수입허가 신청은 선적 20일 이상 전 (격리 면제 핵심 조건)',
+    description:
+      'APHIA: 격리 면제 자격을 위해 수입허가 사전 신청은 출국 ≥20일 전. data.taiwan_extra.permit_application_date 입력 시 검증.',
+    severity: 'warning',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const dep = caseRow.departure_date
+      const applyDate = readExtraField(caseRow, 'permit_application_date')
+      if (!dep || !applyDate) return SKIP
+      const days = daysBetween(applyDate, dep)
+      if (days === null) return SKIP
+      if (days < 20) {
+        return {
+          ok: false,
+          message: `수입허가 신청일(${applyDate}) → 선적일(${dep}): ${days}일 — 20일 이상 필요 (격리 면제용).`,
+          fixHint: '수입허가 신청을 출국 20일 이전으로 앞당기거나 7일 격리 수용.',
+          offendingPaths: ['permit_application_date'],
+        }
+      }
+      return { ok: true, message: `수입허가 신청(${applyDate}) → 선적(${dep}): ${days}일 (≥20일).` }
     },
   },
 ]

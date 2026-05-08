@@ -10,6 +10,10 @@ interface PhilippinesExtra {
   passport_number: string | null
   passport_expiry_date: string | null
   arrival_airport: string | null
+  /** BAI SPSIC 번호. */
+  spsic_no: string | null
+  /** SPSIC 발급일 (60일 유효 검증). */
+  spsic_issue_date: string | null
 }
 
 const EMPTY: PhilippinesExtra = {
@@ -19,6 +23,8 @@ const EMPTY: PhilippinesExtra = {
   passport_number: null,
   passport_expiry_date: null,
   arrival_airport: null,
+  spsic_no: null,
+  spsic_issue_date: null,
 }
 
 const DATA_KEY = 'philippines_extra'
@@ -92,6 +98,23 @@ export function PhilippinesExtraField({ caseId, caseRow, sectionNumber }: { case
         onSave={(v) => saveField('arrival_airport', v)}
         onCancelEdit={() => setEditingField(null)}
         placeholder="MNL"
+      />
+      <FieldRow
+        label="SPSIC 번호"
+        value={extra.spsic_no}
+        isEditing={editingField === 'spsic_no'}
+        onStartEdit={() => setEditingField('spsic_no')}
+        onSave={(v) => saveField('spsic_no', v)}
+        onCancelEdit={() => setEditingField(null)}
+      />
+      <FieldRow
+        label="SPSIC 발급일"
+        value={extra.spsic_issue_date}
+        type="date"
+        isEditing={editingField === 'spsic_issue_date'}
+        onStartEdit={() => setEditingField('spsic_issue_date')}
+        onSave={(v) => saveField('spsic_issue_date', v)}
+        onCancelEdit={() => setEditingField(null)}
       />
     </ExtraFieldShell>
   )

@@ -3,6 +3,7 @@ import {
   daysBetween,
   matchBannedBreed,
   readBreed,
+  readExtraField,
   readGeneralVaccineEntries,
   readRabiesEntries,
   resolveValidUntil,
@@ -248,20 +249,39 @@ export const TH_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── 안내(경고) ──
+  // ── 서류 (R7 수입허가증) ──
   {
-    id: 'th.r7-import-permit-info',
+    id: 'th.r7-permit-validity-60days',
     country: COUNTRY,
     category: '서류',
-    title: 'R7 수입허가증 신청 (출발 7영업일 ~ 60일 전)',
+    title: 'R7 수입허가증 발급 후 60일 이내 도착',
     description:
-      'DLD R7 import permit 은 출발 최소 7영업일 ~ 최대 60일 전 신청. 발행 후 60일 유효, 처리 1-2주 소요. 시스템에 R7 신청 추적 데이터 없음 → 안내 경고.',
-    severity: 'warning',
-    addedAt: '2026-05-06',
-    run: () => ({
-      ok: true,
-      message: 'R7 수입허가증 신청이 출발 7영업일 이전 완료되었는지 별도 확인 필요.',
-    }),
+      'DLD R7 import permit 발급일로부터 60일 이내 도착해야 함. data.thailand_extra.r7_issue_date 입력 시 검증.',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const dep = caseRow.departure_date
+      const issueDate = readExtraField(caseRow, 'permit_issue_date')
+      if (!dep || !issueDate) return SKIP
+      const days = daysBetween(issueDate, dep)
+      if (days === null) return SKIP
+      if (days < 0) {
+        return {
+          ok: false,
+          message: `R7 발급일(${issueDate})이 도착일(${dep})보다 늦음.`,
+          offendingPaths: ['permit_issue_date'],
+        }
+      }
+      if (days > 60) {
+        return {
+          ok: false,
+          message: `R7 발급일(${issueDate}) → 도착일(${dep}): ${days}일 — 60일 이내 도착 필요.`,
+          fixHint: 'R7 재발급 또는 도착일 조정.',
+          offendingPaths: ['permit_issue_date'],
+        }
+      }
+      return { ok: true, message: `R7 발급일(${issueDate}) → 도착일(${dep}): ${days}일 (60일 이내).` }
+    },
   },
 
   // ── 수입 금지 견종 ──

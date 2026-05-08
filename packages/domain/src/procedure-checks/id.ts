@@ -1,7 +1,9 @@
 import type { ProcedureCheck } from './types'
 import {
+  addMonths,
   daysBetween,
   evaluateRabiesAgeConservative,
+  readExtraField,
   readRabiesEntries,
   readTiterEntries,
   resolveValidUntil,
@@ -209,6 +211,42 @@ export const ID_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 서류 (Surat Persetujuan Pemasukan / Import Permit) ──
+  {
+    id: 'id.import-permit-validity-3months',
+    country: COUNTRY,
+    category: '서류',
+    title: 'Surat Persetujuan 발급 후 3개월 이내 도착',
+    description:
+      'Direktorat Kesehatan Hewan: 수입허가(Surat Persetujuan Pemasukan) 발급일로부터 3개월 이내 도착. data.indonesia_extra.permit_issue_date 입력 시 검증.',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const dep = caseRow.departure_date
+      const issueDate = readExtraField(caseRow, 'permit_issue_date')
+      if (!dep || !issueDate) return SKIP
+      const days = daysBetween(issueDate, dep)
+      if (days === null) return SKIP
+      if (days < 0) {
+        return {
+          ok: false,
+          message: `수입허가 발급일(${issueDate})이 도착일(${dep})보다 늦음.`,
+          offendingPaths: ['permit_issue_date'],
+        }
+      }
+      const expiry = addMonths(issueDate, 3)
+      if (dep > expiry) {
+        return {
+          ok: false,
+          message: `수입허가 발급일(${issueDate}) + 3개월(${expiry}) < 도착일(${dep}) — 만료.`,
+          fixHint: '수입허가 재신청 또는 도착일 조정.',
+          offendingPaths: ['permit_issue_date'],
+        }
+      }
+      return { ok: true, message: `수입허가(${issueDate}) → 도착일(${dep}): ${days}일 (3개월 이내).` }
     },
   },
 ]

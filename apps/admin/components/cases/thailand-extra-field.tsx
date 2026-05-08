@@ -13,6 +13,10 @@ interface ThailandExtra {
   arrival_date: string | null
   arrival_time: string | null
   quarantine_location: string | null
+  /** DLD R.7 import permit 번호. */
+  r7_permit_no: string | null
+  /** R.7 발급일 (60일 유효 검증). */
+  r7_issue_date: string | null
 }
 
 const EMPTY: ThailandExtra = {
@@ -24,6 +28,8 @@ const EMPTY: ThailandExtra = {
   arrival_date: null,
   arrival_time: null,
   quarantine_location: null,
+  r7_permit_no: null,
+  r7_issue_date: null,
 }
 
 const QUARANTINE_OPTIONS = [
@@ -76,6 +82,8 @@ export function ThailandExtraField({ caseId, caseRow, sectionNumber }: { caseId:
       <FieldRow label="도착일" value={extra.arrival_date} type="date" {...rowProps('arrival_date')} />
       <FieldRow label="도착시간" value={extra.arrival_time} type="time" {...rowProps('arrival_time')} placeholder="HH:mm" />
       <FieldRow label="도착지" value={extra.quarantine_location} type="select" options={QUARANTINE_OPTIONS} {...rowProps('quarantine_location')} />
+      <FieldRow label="R.7 허가번호" value={extra.r7_permit_no} {...rowProps('r7_permit_no')} placeholder="" />
+      <FieldRow label="R.7 발급일" value={extra.r7_issue_date} type="date" {...rowProps('r7_issue_date')} />
     </ExtraFieldShell>
   )
 }

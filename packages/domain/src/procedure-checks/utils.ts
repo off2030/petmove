@@ -1,4 +1,5 @@
 import type { CaseRow } from '../types'
+import { readEffectiveExtraValue } from '../destination-overrides-types'
 import type { CheckResult } from './types'
 
 /**
@@ -215,6 +216,19 @@ export function daysBetween(aISO: string, bISO: string): number | null {
   const b = new Date(bISO).getTime()
   if (isNaN(a) || isNaN(b)) return null
   return Math.round((b - a) / 86400000)
+}
+
+// ── 통합 추가정보 필드 reader (top-level + legacy country_extra fallback) ──
+
+/**
+ * 통합 키로 추가정보 필드를 읽음. top-level `data.{key}` 우선, 미발견 시 legacy
+ * country-specific 경로(예: `data.thailand_extra.r7_issue_date`)로 fallback.
+ * (destination-overrides-types LEGACY_EXTRA_PATHS 매핑 사용.)
+ */
+export function readExtraField(caseRow: CaseRow, key: string): string | null {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const v = readEffectiveExtraValue(data, key)
+  return typeof v === 'string' && v.length > 0 ? v : null
 }
 
 // ── 보호자 (cross-case 매칭 — 동일 보호자 다중 등록 검증) ──

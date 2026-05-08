@@ -86,8 +86,11 @@ export const EXTRA_FIELD_DEFS: Record<string, ExtraFieldDef> = {
   // ── 증명서 / 허가 ──
   certificate_no: { key: 'certificate_no', label: 'EQC No.', type: 'text' },
   permit_no: { key: 'permit_no', label: '수입허가번호', type: 'text' },
+  permit_issue_date: { key: 'permit_issue_date', label: '수입허가 발급일', type: 'date' },
+  permit_application_date: { key: 'permit_application_date', label: '수입허가 신청일', type: 'date' },
+  advance_notification_date: { key: 'advance_notification_date', label: '사전신고일', type: 'date' },
   id_date: { key: 'id_date', label: 'ID 날짜', type: 'date' },
-  sample_received_date: { key: 'sample_received_date', label: '샘플수령일', type: 'date' },
+  sample_received_date: { key: 'sample_received_date', label: '검사소 샘플 수령일', type: 'date' },
   // ── 절차 ──
   // EU 촌충국가(영국·아일랜드·몰타·노르웨이·핀란드)의 praziquantel 투여 시각.
   // 구충일은 절차정보의 internal_parasite_dates 에 저장되고, 시각은 별도로 추가정보 영역에 표시.
@@ -216,6 +219,29 @@ const LEGACY_EXTRA_PATHS: Record<string, string[][]> = {
   permit_no: [
     ['australia_extra', 'permit_no'],
     ['new_zealand_extra', 'permit_no'],
+    ['thailand_extra', 'r7_permit_no'],
+    ['philippines_extra', 'spsic_no'],
+    ['uae_extra', 'permit_no'],
+    ['malaysia_extra', 'permit_no'],
+    ['indonesia_extra', 'permit_no'],
+    ['hongkong_extra', 'permit_no'],
+    ['taiwan_extra', 'permit_no'],
+    ['cambodia_extra', 'permit_no'],
+  ],
+  permit_issue_date: [
+    ['thailand_extra', 'r7_issue_date'],
+    ['philippines_extra', 'spsic_issue_date'],
+    ['uae_extra', 'permit_issue_date'],
+    ['malaysia_extra', 'permit_issue_date'],
+    ['indonesia_extra', 'permit_issue_date'],
+    ['hongkong_extra', 'permit_issue_date'],
+  ],
+  permit_application_date: [
+    ['taiwan_extra', 'permit_application_date'],
+    ['cambodia_extra', 'permit_application_date'],
+  ],
+  advance_notification_date: [
+    ['japan_extra', 'advance_notification_date'],
   ],
   id_date: [['australia_extra', 'id_date']],
   sample_received_date: [['australia_extra', 'sample_received_date']],

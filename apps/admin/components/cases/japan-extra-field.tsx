@@ -26,6 +26,8 @@ interface JapanExtra {
   email: string | null
   address_overseas: string | null
   certificate_no: string | null
+  /** AQS 사전신고(届出) 제출일 — 도착 40일 이상 전 의무. */
+  advance_notification_date: string | null
 }
 
 const EMPTY_FLIGHT: FlightEntry = {
@@ -55,7 +57,7 @@ export function JapanExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
   const { updateLocalCaseField } = useCases()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const extra: JapanExtra = (data[DATA_KEY] as JapanExtra) ?? {
-    inbound: { ...EMPTY_FLIGHT }, outbound: { ...EMPTY_FLIGHT }, email: null, address_overseas: null, certificate_no: null,
+    inbound: { ...EMPTY_FLIGHT }, outbound: { ...EMPTY_FLIGHT }, email: null, address_overseas: null, certificate_no: null, advance_notification_date: null,
   }
 
   const [editingField, setEditingField] = useState<string | null>(null)
@@ -96,7 +98,8 @@ export function JapanExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
       Object.values(next.outbound).some((v) => v !== null) ||
       next.email !== null ||
       next.address_overseas !== null ||
-      next.certificate_no !== null
+      next.certificate_no !== null ||
+      next.advance_notification_date !== null
     const val = hasAny ? next : null
     const r = await updateCaseField(caseId, 'data', DATA_KEY, val)
     if (r.ok) updateLocalCaseField(caseId, 'data', DATA_KEY, val)
@@ -137,6 +140,10 @@ export function JapanExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
 
   function saveCertificate(value: string | null) {
     saveExtra({ ...extra, certificate_no: value || null })
+  }
+
+  function saveAdvanceNotificationDate(value: string | null) {
+    saveExtra({ ...extra, advance_notification_date: value || null })
   }
 
   /* ── AI extraction ── */
@@ -323,13 +330,25 @@ export function JapanExtraField({ caseId, caseRow, sectionNumber }: { caseId: st
         onSave={(v) => saveCertificate(v)}
         onCancelEdit={() => setEditingField(null)}
       />
+
+      {/* ── 사전신고일 (40일 전) ── */}
+      <JapanTextRow
+        label="사전신고일"
+        value={extra.advance_notification_date}
+        placeholder="YYYY-MM-DD"
+        type="date"
+        editing={editingField === 'advance_notification_date'}
+        onStartEdit={() => setEditingField('advance_notification_date')}
+        onSave={(v) => saveAdvanceNotificationDate(v)}
+        onCancelEdit={() => setEditingField(null)}
+      />
     </ExtraSectionShell>
   )
 }
 
 /* ── Generic text row for Japan (email/address/certificate) ── */
 
-function JapanTextRow({ label, value, placeholder, editing, onStartEdit, onSave, onCancelEdit }: {
+function JapanTextRow({ label, value, placeholder, editing, onStartEdit, onSave, onCancelEdit, type = 'text' }: {
   label: string
   value: string | null
   placeholder: string
@@ -337,6 +356,7 @@ function JapanTextRow({ label, value, placeholder, editing, onStartEdit, onSave,
   onStartEdit: () => void
   onSave: (v: string | null) => void
   onCancelEdit: () => void
+  type?: 'text' | 'date'
 }) {
   const editMode = useSectionEditMode()
   const confirm = useConfirm()
@@ -357,7 +377,7 @@ function JapanTextRow({ label, value, placeholder, editing, onStartEdit, onSave,
       <SectionLabel className="pt-1">{label}</SectionLabel>
       {editMode && editing ? (
         <InlineInput
-          type="text"
+          type={type}
           initial={value ?? ''}
           placeholder={placeholder}
           onSave={onSave}
