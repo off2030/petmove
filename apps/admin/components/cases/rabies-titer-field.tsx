@@ -550,6 +550,9 @@ function TiterRecordRow({
   const dateInfo = useFieldVerification(`${DATA_KEY}[${recordIdx}].date`)
   const dateColorCls = dateInfo ? severityTextClass(dateInfo.severity) : ''
   const dateTitle = dateInfo ? tooltipText(dateInfo) : undefined
+  const receivedInfo = useFieldVerification(`${DATA_KEY}[${recordIdx}].received_date`)
+  const receivedColorCls = receivedInfo ? severityTextClass(receivedInfo.severity) : ''
+  const receivedTitle = receivedInfo ? tooltipText(receivedInfo) : undefined
 
   return (
     <div className="flex items-baseline gap-[10px] flex-wrap">
@@ -619,10 +622,11 @@ function TiterRecordRow({
               onCancel={onStopEdit}
             />
           ) : (
-            <button type="button" onClick={() => onStartEdit('received_date')}
+            <button type="button" onClick={() => onStartEdit('received_date')} title={receivedTitle}
               className={cn(
-                'text-left rounded-md px-2 py-0.5 -mx-2 font-mono text-[14px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
-                !record.received_date && 'font-sans text-[13px] italic font-normal tracking-normal text-muted-foreground/60',
+                'text-left rounded-md px-2 py-1 -mx-2 font-mono text-[15px] tracking-[0.3px] text-foreground transition-colors hover:bg-accent/60 cursor-pointer',
+                !record.received_date && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60',
+                receivedColorCls,
               )}>
               {record.received_date || '—'}
             </button>
