@@ -140,6 +140,34 @@ export const RU_CHECKS: ProcedureCheck[] = [
     },
   },
   {
+    id: 'ru.rabies-min-30days-before-departure',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 접종은 출국일 30일 이상 전',
+    description:
+      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (Rosselkhoznadzor: "не ранее, чем за 30 дней ... до даты выезда в РФ")',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const dep = caseRow.departure_date
+      const rabies = readRabiesEntries(caseRow)
+      if (!dep || rabies.length === 0) return SKIP
+
+      const earliest = rabies[0]
+      const days = daysBetween(earliest.date, dep)
+      if (days === null) return SKIP
+      if (days < 30) {
+        return {
+          ok: false,
+          message: `광견병 접종(${earliest.date}) → 출국일(${dep}): ${days}일 — 30일 이상 필요.`,
+          fixHint: `광견병 접종을 출국일 ${dep} 기준 30일 이전에 완료하세요. (부스터 chain 유효 시 면제 가능하나 보수 적용)`,
+          offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
+        }
+      }
+      return { ok: true, message: `광견병 접종(${earliest.date}) → 출국일(${dep}): ${days}일.` }
+    },
+  },
+  {
     id: 'ru.rabies-valid-on-departure',
     country: COUNTRY,
     category: '광견병',

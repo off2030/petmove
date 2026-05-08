@@ -239,4 +239,82 @@ export const UA_CHECKS: ProcedureCheck[] = [
     },
   },
 
+  // ── 항체가 결과치 ──
+  {
+    id: 'ua.titer-value-min-0.5iu',
+    country: COUNTRY,
+    category: '광견병',
+    title: 'RNATT 항체가 ≥ 0.5 IU/ml',
+    description:
+      'SSUFSCP: "перевірений титр антитіл дорівнює або більше ніж 0,5 МО/мл" — 모든 RNATT 결과치가 0.5 IU/ml 이상이어야 함. value 미입력 시 SKIP.',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const titers = readTiterEntries(caseRow)
+      if (titers.length === 0) return SKIP
+
+      const offending: string[] = []
+      const problems: string[] = []
+      for (const t of titers) {
+        if (!t.value) continue // 미입력은 SKIP
+        // 숫자 추출 (예: "0.5", "≥0.5", ">0.5", "0.7 IU/ml")
+        const match = t.value.match(/(\d+(?:\.\d+)?)/)
+        if (!match) continue
+        const num = parseFloat(match[1])
+        if (Number.isNaN(num)) continue
+        if (num < 0.5) {
+          offending.push(`rabies_titer_records[${t.originalIndex}].value`)
+          problems.push(`RNATT(${t.date}) 항체가 ${t.value} (<0.5 IU/ml)`)
+        }
+      }
+      if (offending.length > 0) {
+        return {
+          ok: false,
+          message: problems.join(' / '),
+          fixHint: '항체가 0.5 IU/ml 이상 — 미달 시 재접종 후 재검사 필요.',
+          offendingPaths: offending,
+        }
+      }
+      return { ok: true, message: '모든 RNATT 항체가 ≥ 0.5 IU/ml.' }
+    },
+  },
+
+  // ── 일정 ──
+  {
+    id: 'ua.vet-visit-within-10days',
+    country: COUNTRY,
+    category: '일정',
+    title: '건강증명서(내원일)는 출국 10일 이내 (보수: 9일 전부터)',
+    description:
+      'SSUFSCP: "Ветеринарний сертифікат… дійсний протягом 10 днів з дати видачі" — 사용자 보수 N-1 → ≤9 적용.',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const dep = caseRow.departure_date
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const visit = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      if (!dep || !visit) return SKIP
+
+      const diff = daysBetween(visit, dep)
+      if (diff === null) {
+        return { ok: false, message: '날짜 형식 오류.', offendingPaths: ['vet_visit_date'] }
+      }
+      if (diff < 0) {
+        return {
+          ok: false,
+          message: `내원일(${visit})이 출국일(${dep})보다 늦음.`,
+          offendingPaths: ['vet_visit_date'],
+        }
+      }
+      if (diff > 9) {
+        return {
+          ok: false,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 10일 이내(≤9일 전) 필요.`,
+          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정.`,
+          offendingPaths: ['vet_visit_date'],
+        }
+      }
+      return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
 ]

@@ -108,12 +108,40 @@ export const MY_CHECKS: ProcedureCheck[] = [
     },
   },
   {
+    id: 'my.rabies-min-30days-before-departure',
+    country: COUNTRY,
+    category: '광견병',
+    title: '광견병 접종은 출국일 30일 이상 전',
+    description:
+      '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (DVS Non-Scheduled: "vaccinated for rabies at least 30 days prior to entry into the country")',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const dep = caseRow.departure_date
+      const rabies = readRabiesEntries(caseRow)
+      if (!dep || rabies.length === 0) return SKIP
+
+      const earliest = rabies[0]
+      const days = daysBetween(earliest.date, dep)
+      if (days === null) return SKIP
+      if (days < 30) {
+        return {
+          ok: false,
+          message: `광견병 접종(${earliest.date}) → 출국일(${dep}): ${days}일 — 30일 이상 필요.`,
+          fixHint: `광견병 접종을 출국일 ${dep} 기준 30일 이전에 완료하세요.`,
+          offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
+        }
+      }
+      return { ok: true, message: `광견병 접종(${earliest.date}) → 출국일(${dep}): ${days}일.` }
+    },
+  },
+  {
     id: 'my.rabies-valid-on-departure',
     country: COUNTRY,
     category: '광견병',
-    title: '출국일에 광견병 면역 유효',
+    title: '출국일 + MAQIS 검역 7일까지 광견병 면역 유효',
     description:
-      '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함.',
+      'DVS Non-Scheduled: MAQIS 7일 의무 격리 — 격리 종료 시점까지 광견병 면역 유효 필요. cushion ≥7일.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -124,15 +152,17 @@ export const MY_CHECKS: ProcedureCheck[] = [
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return SKIP
-      if (validUntil < dep) {
+      const cushion = daysBetween(dep, validUntil)
+      if (cushion === null) return SKIP
+      if (cushion < 7) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date}) 유효기간(${validUntil}) < 출국일(${dep}) — 만료.`,
+          message: `최근 접종(${latest.date}) 유효기간(${validUntil}) - 출국일(${dep}) = ${cushion}일 (MAQIS 검역 7일 cover 불가).`,
           fixHint: '출국 전 부스터 접종 필요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 출국일(${dep}).` }
+      return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 출국 + 7일 (cushion ${cushion}일).` }
     },
   },
 
@@ -162,9 +192,9 @@ export const MY_CHECKS: ProcedureCheck[] = [
     id: 'my.general-vaccine-valid-on-departure',
     country: COUNTRY,
     category: '종합백신',
-    title: '출국일에 종합백신 면역 유효',
+    title: '출국일 + MAQIS 검역 7일까지 종합백신 면역 유효',
     description:
-      '최근 종합백신의 면역 유효기간이 출국일 이전에 만료되지 않아야 함.',
+      '최근 종합백신의 면역 유효기간이 MAQIS 검역(7일) 종료까지 유지되어야 함. cushion ≥7일.',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -175,15 +205,17 @@ export const MY_CHECKS: ProcedureCheck[] = [
       const latest = entries[entries.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return SKIP
-      if (validUntil < dep) {
+      const cushion = daysBetween(dep, validUntil)
+      if (cushion === null) return SKIP
+      if (cushion < 7) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date}) 유효기간(${validUntil}) < 출국일(${dep}) — 만료.`,
+          message: `최근 종합백신(${latest.date}) 유효기간(${validUntil}) - 출국일(${dep}) = ${cushion}일 (MAQIS 검역 7일 cover 불가).`,
           fixHint: '출국 전 추가 접종 필요.',
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `최근 종합백신(${latest.date}) 유효기간(${validUntil}) ≥ 출국일(${dep}).` }
+      return { ok: true, message: `최근 종합백신(${latest.date}) 유효기간(${validUntil}) ≥ 출국 + 7일 (cushion ${cushion}일).` }
     },
   },
 

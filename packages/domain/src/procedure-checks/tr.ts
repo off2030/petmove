@@ -1,5 +1,6 @@
 import type { ProcedureCheck } from './types'
 import {
+  addMonths,
   addYears,
   daysBetween,
   matchBannedBreed,
@@ -200,6 +201,51 @@ export const TR_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: '항체검사 시기 적합 (30일 경과).' }
+    },
+  },
+  {
+    id: 'tr.departure-min-3months-after-titer',
+    country: COUNTRY,
+    category: '광견병',
+    title: '출국일은 RNATT 채혈일 3개월(캘린더) 이후 (unlisted 제3국)',
+    description:
+      '한국 = unlisted third country → EU Reg 576/2013 차용으로 RNATT 채혈 후 최소 3개월 대기. 캘린더 기준 (`addMonths`). 부스터 chain 끊김 없이 유지 시 EU 패턴상 평생 유효이나, 보수적으로 매 RNATT 마다 3개월 적용.',
+    severity: 'blocker',
+    addedAt: '2026-05-07',
+    run: ({ caseRow }) => {
+      const dep = caseRow.departure_date
+      const titers = readTiterEntries(caseRow)
+      if (!dep || titers.length === 0) return SKIP
+
+      // 가장 오래된 titer 부터 검사 — 채혈+3개월 ≤ 출국 이면 통과
+      const sorted = [...titers].sort((a, b) => a.date.localeCompare(b.date))
+      const valid = sorted.find((t) => addMonths(t.date, 3) <= dep)
+      if (valid) {
+        const days = daysBetween(valid.date, dep)
+        const earliestDep = addMonths(valid.date, 3)
+        return {
+          ok: true,
+          message: `RNATT(${valid.date}) + 3개월(${earliestDep}) ≤ 출국일(${dep}). 차이 ${days}일.`,
+        }
+      }
+
+      const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
+      const days = daysBetween(newest.date, dep)
+      const earliestDep = addMonths(newest.date, 3)
+      const offending: string[] = ['departure_date']
+      for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
+      const message =
+        days === null
+          ? '항체검사일과 출국일을 확인할 수 없습니다.'
+          : days < 0
+            ? `항체검사일(${newest.date})이 출국일(${dep})보다 이후입니다.`
+            : `RNATT(${newest.date}) + 3개월 = ${earliestDep} > 출국일(${dep}) — 출국까지 ${days}일 (3개월 미달).`
+      return {
+        ok: false,
+        message,
+        fixHint: `출국일을 ${earliestDep} 이후로 조정하거나 더 이른 RNATT 필요.`,
+        offendingPaths: offending,
+      }
     },
   },
   {
