@@ -11,6 +11,11 @@ function sanitizeNext(raw: string | string[] | undefined): string {
   return v
 }
 
+function isReset(raw: string | string[] | undefined): boolean {
+  const v = Array.isArray(raw) ? raw[0] : raw
+  return v === '1' || v === 'true'
+}
+
 export default async function SetPasswordPage({
   searchParams,
 }: {
@@ -18,6 +23,9 @@ export default async function SetPasswordPage({
 }) {
   const params = await searchParams
   const next = sanitizeNext(params.next)
+  // ?reset=1 — /login 의 "비밀번호 재설정 메일" → callback 통과 후 도착하는 마커.
+  // 이미 password_set=true 인 사용자도 비번 변경 폼을 다시 띄우기 위해 password_set 체크 우회.
+  const reset = isReset(params.reset)
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -29,8 +37,14 @@ export default async function SetPasswordPage({
     .eq('id', user.id)
     .maybeSingle()
 
-  // 이미 비번 설정됨 → next 로 바로
-  if (profile?.password_set) redirect(next)
+  // reset 플로우가 아니면서 이미 비번 설정된 사용자 → next 로 바로 (기존 동작 보존).
+  if (!reset && profile?.password_set) redirect(next)
 
-  return <SetPasswordForm email={profile?.email ?? user.email ?? ''} next={next} />
+  return (
+    <SetPasswordForm
+      email={profile?.email ?? user.email ?? ''}
+      next={next}
+      mode={reset ? 'reset' : 'set'}
+    />
+  )
 }

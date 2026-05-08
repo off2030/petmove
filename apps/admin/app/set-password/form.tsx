@@ -4,7 +4,15 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { setMyPassword } from '@/lib/actions/profile'
 
-export function SetPasswordForm({ email, next }: { email: string; next: string }) {
+export function SetPasswordForm({
+  email,
+  next,
+  mode = 'set',
+}: {
+  email: string
+  next: string
+  mode?: 'set' | 'reset'
+}) {
   const router = useRouter()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -37,12 +45,16 @@ export function SetPasswordForm({ email, next }: { email: string; next: string }
     <div className="flex min-h-screen items-center justify-center p-md">
       <div className="w-full max-w-sm space-y-lg rounded-lg border bg-card p-lg shadow-sm">
         <div className="space-y-xs text-center">
-          <h1 className="text-xl font-semibold">비밀번호 설정</h1>
+          <h1 className="text-xl font-semibold">
+            {mode === 'reset' ? '비밀번호 재설정' : '비밀번호 설정'}
+          </h1>
           <p className="text-sm text-muted-foreground">
             {email}
           </p>
           <p className="text-xs text-muted-foreground italic">
-            다음 로그인부터 이메일 링크 없이 비밀번호로 빠르게 접속할 수 있어요.
+            {mode === 'reset'
+              ? '새 비밀번호를 입력해주세요. 저장 후 자동으로 로그인됩니다.'
+              : '다음 로그인부터 이메일 링크 없이 비밀번호로 빠르게 접속할 수 있어요.'}
           </p>
         </div>
 

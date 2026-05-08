@@ -86,7 +86,7 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
     router.refresh()
   }
 
-  // Magic link 발송 — 비번 잊었거나 신규 가입 fallback.
+  // Magic link 발송 — 비번 모름·신규 가입 fallback. 로그인 후 redirect 만, 비번 변경 X.
   // next 는 cookie 로 (Supabase OAuth/OTP 의 redirect_to allowlist 우회).
   async function sendMagicLink() {
     if (!email) {
@@ -108,6 +108,30 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
       return
     }
     setError(`${email} 로 로그인 링크를 발송했습니다. 메일을 확인하세요.`)
+  }
+
+  // 비밀번호 재설정 — 사용자가 비번을 잊고 새로 설정하고 싶을 때.
+  // recovery 메일 클릭 → /auth/callback → /set-password?reset=1 으로 이동해 새 비번 입력.
+  // Supabase resetPasswordForEmail 은 미가입 이메일에도 silent success 반환 → 계정 enumeration 차단.
+  async function sendResetLink() {
+    if (!email) {
+      setError('이메일을 먼저 입력하세요.')
+      return
+    }
+    setLoading('reset')
+    setError(null)
+    // Reset 후 set-password 로 보내기 위해 cookie 사용 (callback 의 pm_oauth_next 패턴).
+    // ?reset=1 쿼리는 페이지에서 password_set 체크를 우회하기 위한 마커.
+    document.cookie = `pm_oauth_next=${encodeURIComponent('/set-password?reset=1')}; path=/; max-age=600; samesite=lax`
+    const { error } = await supabaseBrowser.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    })
+    setLoading(null)
+    if (error) {
+      setError(error.message)
+      return
+    }
+    setError(`${email} 로 비밀번호 재설정 메일을 발송했습니다. 메일을 확인하세요.`)
   }
 
   return (
@@ -178,6 +202,14 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
             className="w-full text-xs text-muted-foreground hover:text-foreground italic disabled:opacity-40"
           >
             {loading === 'magic' ? '발송 중…' : '비밀번호 없이 이메일로 로그인 링크 받기'}
+          </button>
+          <button
+            type="button"
+            onClick={sendResetLink}
+            disabled={loading !== null || !email}
+            className="w-full text-xs text-muted-foreground hover:text-foreground italic disabled:opacity-40"
+          >
+            {loading === 'reset' ? '발송 중…' : '비밀번호를 잊으셨나요? 재설정 메일 받기'}
           </button>
         </form>
 
