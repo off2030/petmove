@@ -194,13 +194,23 @@ export function CasesProvider({
         )
         // 공유 폼 제출·다른 세션 편집 등 외부 UPDATE 를 즉시 반영.
         // 본인 inline edit 는 updateLocalCaseField 가 선반영 → 같은 데이터로 도착해도 무해.
+        //
+        // P1 #6 — updated_at 동일하면 phantom UPDATE (트리거·autoFill 의 no-op publish
+        // 등) 로 간주하고 prev 객체 유지. CaseRowItem memo 가 그 행 재렌더 안 하도록.
+        // updated_at 이 다르면 정상 변경 — payload.new 전체로 교체.
         .on(
           'postgres_changes',
           { event: 'UPDATE', schema: 'public', table: 'cases', filter: `org_id=eq.${orgId}` },
           (payload) => {
             const row = payload.new as CaseRow
             if (!row?.id) return
-            setCases((prev) => prev.map((c) => (c.id === row.id ? row : c)))
+            setCases((prev) =>
+              prev.map((c) => {
+                if (c.id !== row.id) return c
+                if (c.updated_at && c.updated_at === row.updated_at) return c
+                return row
+              }),
+            )
           },
         )
         .subscribe()

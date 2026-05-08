@@ -340,13 +340,16 @@ export async function fetchSiblings(caseId: string): Promise<
   if (pivotErr || !pivot) return { ok: false, error: pivotErr?.message ?? '케이스를 찾을 수 없습니다' }
   const p = pivot as CaseRow
 
-  // 1차 필터: customer_name + destination 일치 (server side)
+  // 1차 필터: customer_name + destination 일치 (server side).
+  // P1 #14: org_id 도 명시 (RLS 와 중복이지만 인덱스 활용 + 의도 명확) + cap 50.
+  // 같은 고객 이름 + 같은 목적지 케이스 50 건 초과는 매우 비정상이라 cap 안전.
   let q = supabase
     .from('cases')
     .select('*')
+    .eq('org_id', p.org_id)
     .eq('customer_name', p.customer_name)
   q = p.destination ? q.eq('destination', p.destination) : q.is('destination', null)
-  const { data: rows, error } = await q
+  const { data: rows, error } = await q.limit(50)
   if (error) return { ok: false, error: error.message }
 
   // 2차 필터: 출국일 OR 내원일 일치 (vet_visit_date 가 data jsonb 안이라 client side)
