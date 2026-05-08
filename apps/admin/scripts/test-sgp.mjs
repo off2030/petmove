@@ -186,7 +186,8 @@ const checks = [
   ['Rabies', 'text_19jz'], ['BloodSamp', 'text_20olqh'], ['Titer', 'text_21irsk'],
   ['ExtParDate', 'text_22mqjk'], ['ExtParName', 'text_23ltyb'], ['ExtParIngr', 'text_24egtj'],
   ['IntParDate', 'text_25pv'], ['IntParName', 'text_26zheb'], ['IntParIngr', 'text_27lonm'],
-  ['EndorseDate', 'text_28wkfi'], ['Practice', 'text_29ulae'], ['Address', 'text_30hspb'],
+  ['EndorseDate', 'text_28wkfi'], ['EndorseVet', 'text_32xsfq'],
+  ['Practice', 'text_29ulae'], ['Address', 'text_30hspb'],
   ['Phone', 'text_31tz'], ['Email', 'text_32fjpy'],
 ]
 for (const [label, k] of checks) {
