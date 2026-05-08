@@ -144,7 +144,9 @@ export const AU_CHECKS: ProcedureCheck[] = [
 
       const days = daysBetween(basis.date, dep)
       if (days === null) return SKIP
-      if (days < 180) {
+      // 정확한 lab 수령일이 있으면 180일, 채혈일 fallback 시 lab 수령은 며칠 후이므로 +7일 마진 적용 → 187일.
+      const required = basis.kind === 'sample' ? 187 : 180
+      if (days < required) {
         const offendingPaths = ['departure_date']
         if (basis.kind === 'received_record') {
           offendingPaths.push(`rabies_titer_records[${basis.titerIdx}].received_date`)
@@ -154,10 +156,13 @@ export const AU_CHECKS: ProcedureCheck[] = [
           offendingPaths.push(`rabies_titer_records[${basis.titerIdx}].date`)
         }
         const label = basis.kind === 'sample' ? '채혈일(검체일 미입력 fallback)' : '검체 도착일'
+        const reqLabel = basis.kind === 'sample' ? '187일(180+7 보수)' : '180일'
         return {
           ok: false,
-          message: `${label}(${basis.date}) → 출국일(${dep}): ${days}일 — 180일 이상 필요.`,
-          fixHint: '출국일을 검체 도착일 + 180일 이후로 조정.',
+          message: `${label}(${basis.date}) → 출국일(${dep}): ${days}일 — ${reqLabel} 이상 필요.`,
+          fixHint: basis.kind === 'sample'
+            ? '검체 도착일 입력 시 180일 기준 검증 가능. 미입력 시 채혈일 +7일 보수 마진 (lab 수령일이 채혈일보다 며칠 늦으므로).'
+            : '출국일을 검체 도착일 + 180일 이후로 조정.',
           offendingPaths,
         }
       }

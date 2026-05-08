@@ -265,12 +265,12 @@ export const EU_CHECKS: ProcedureCheck[] = [
 
   // ── 촌충 (UK·아일랜드·몰타·노르웨이·핀란드 한정) ──
   {
-    id: 'eu.tapeworm-1to4days-before-departure',
+    id: 'eu.tapeworm-1to3days-before-departure',
     country: TAPEWORM_DESTINATIONS,
     category: '구충',
-    title: '촌충구충은 출국일 1~4일 전 (보수: 24-120시간 범위)',
+    title: '촌충구충은 출국일 1~3일 전 (보수: 24-120시간 범위)',
     description:
-      'Praziquantel(촌충구충)은 입국 24시간 ~ 120시간(1~5일) 사이 투여 (EU Reg 2018/772 — 영국·아일랜드·몰타·노르웨이·핀란드). 사용자 보수 적용: 5일 경계는 시간 단위 정밀도 손실 위험으로 4일까지로 강화.',
+      'Praziquantel(촌충구충)은 입국 24시간 ~ 120시간(1~5일) 사이 투여 (EU Reg 2018/772 — 영국·아일랜드·몰타·노르웨이·핀란드). 사용자 보수 적용: 일 단위 검증 시 24h/120h 경계의 시간 정밀도 손실 위험으로 1~3일까지로 강화.',
     severity: 'blocker',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
@@ -281,11 +281,11 @@ export const EU_CHECKS: ProcedureCheck[] = [
       const latest = entries[entries.length - 1]
       const diff = daysBetween(latest.date, dep)
       if (diff === null) return SKIP
-      if (diff < 1 || diff > 4) {
+      if (diff < 1 || diff > 3) {
         return {
           ok: false,
-          message: `촌충구충(${latest.date}) → 출국일(${dep}): ${diff}일 — 1~4일 범위 필요 (24-120시간 보수 적용).`,
-          fixHint: `촌충구충일을 ${dep} 기준 1~4일 전 사이로 조정하세요.`,
+          message: `촌충구충(${latest.date}) → 출국일(${dep}): ${diff}일 — 1~3일 범위 필요 (24-120시간 보수 적용).`,
+          fixHint: `촌충구충일을 ${dep} 기준 1~3일 전 사이로 조정하세요.`,
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }
