@@ -191,15 +191,18 @@ export async function extractVaccineInfo(input: {
       return { ok: false, error: 'No input provided' }
     }
 
-    const response = await client.chat.completions.create({
-      model: VACCINE_EXTRACTION_MODEL,
-      max_tokens: 800,
-      temperature: 0,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: userContent },
-      ],
-    })
+    const response = await client.chat.completions.create(
+      {
+        model: VACCINE_EXTRACTION_MODEL,
+        max_tokens: 800,
+        temperature: 0,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userContent },
+        ],
+      },
+      { timeout: 30_000, maxRetries: 1 },
+    )
 
     const text = response.choices[0]?.message?.content ?? ''
     const jsonStr = text.replace(/```json?\s*/g, '').replace(/```\s*/g, '').trim()

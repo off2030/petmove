@@ -91,7 +91,11 @@ export async function migrateMyOAuthAvatar(): Promise<
     let buffer: ArrayBuffer
     let contentType = 'image/jpeg'
     try {
-      const r = await fetch(current, { redirect: 'follow' })
+      // 외부 avatar URL — 8s 캡 + redirect 따라감. 행거·redirect chain 방지.
+      const r = await fetch(current, {
+        redirect: 'follow',
+        signal: AbortSignal.timeout(8_000),
+      })
       if (!r.ok) {
         await supabase.from('profiles').update({ avatar_url: null }).eq('id', user.id)
         return { ok: true, avatar_url: null, migrated: false }

@@ -36,6 +36,8 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult 
       html: input.html,
       reply_to: input.replyTo,
     }),
+    // 외부 API 응답 행거 시 server action 동결 방지.
+    signal: AbortSignal.timeout(8_000),
   })
 
   if (!res.ok) {

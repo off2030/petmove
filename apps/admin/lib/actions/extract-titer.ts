@@ -73,15 +73,20 @@ export async function extractTiterInfo(input: {
       return { ok: false, error: 'No input provided' }
     }
 
-    const response = await client.chat.completions.create({
-      model: TITER_EXTRACTION_MODEL,
-      max_tokens: 400,
-      temperature: 0,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: userContent },
-      ],
-    })
+    const response = await client.chat.completions.create(
+      {
+        model: TITER_EXTRACTION_MODEL,
+        max_tokens: 400,
+        temperature: 0,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userContent },
+        ],
+      },
+      // 외부 OpenAI API 호출 — 30s 캡 + 1회 재시도. 미설정 시 SDK 기본값(10분, 2회)
+      // 으로 server action 이 무한 대기.
+      { timeout: 30_000, maxRetries: 1 },
+    )
 
     const text = response.choices[0]?.message?.content ?? ''
     const jsonStr = text.replace(/```json?\s*/g, '').replace(/```\s*/g, '').trim()

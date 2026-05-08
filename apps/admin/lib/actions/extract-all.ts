@@ -162,22 +162,25 @@ export async function extractAll(input: {
       text: 'Extract everything you can and merge into the JSON schema.',
     })
 
-    const response = await client.chat.completions.create({
-      model: DROP_CREATE_MODEL,
-      max_tokens: 1500,
-      response_format: {
-        type: 'json_schema',
-        json_schema: {
-          name: 'extract_all',
-          strict: true,
-          schema: SCHEMA as unknown as Record<string, unknown>,
+    const response = await client.chat.completions.create(
+      {
+        model: DROP_CREATE_MODEL,
+        max_tokens: 1500,
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'extract_all',
+            strict: true,
+            schema: SCHEMA as unknown as Record<string, unknown>,
+          },
         },
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userContent },
+        ],
       },
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: userContent },
-      ],
-    })
+      { timeout: 30_000, maxRetries: 1 },
+    )
 
     const text = response.choices[0]?.message?.content ?? ''
     const parsed = JSON.parse(text) as ExtractAllResult

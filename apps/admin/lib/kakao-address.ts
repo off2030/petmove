@@ -65,7 +65,11 @@ export async function lookupKoreanZipcode(
     try {
       const res = await fetch(
         `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(query)}&size=1`,
-        { headers: { Authorization: `KakaoAK ${key}` } },
+        {
+          headers: { Authorization: `KakaoAK ${key}` },
+          // 외부 API 응답이 행거 시 server action 동결 방지.
+          signal: AbortSignal.timeout(8_000),
+        },
       )
       if (!res.ok) {
         console.warn(`[kakao-address] HTTP ${res.status} for query="${query}"`)

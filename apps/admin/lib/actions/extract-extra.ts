@@ -361,22 +361,25 @@ export async function extractExtra<C extends Country>(input: ExtractInput<C>): P
     const today = new Date().toISOString().slice(0, 10)
     const systemContent = `Today is ${today} (UTC). When inferring missing year/date components, prefer the next upcoming date — never a past date.\n\n${PROMPTS[input.country]}`
 
-    const response = await client.chat.completions.create({
-      model: EXTRACTION_MODEL,
-      max_tokens: 800,
-      response_format: {
-        type: 'json_schema',
-        json_schema: {
-          name: `${input.country.replace('-', '_')}_extract`,
-          strict: true,
-          schema: SCHEMAS[input.country],
+    const response = await client.chat.completions.create(
+      {
+        model: EXTRACTION_MODEL,
+        max_tokens: 800,
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: `${input.country.replace('-', '_')}_extract`,
+            strict: true,
+            schema: SCHEMAS[input.country],
+          },
         },
+        messages: [
+          { role: 'system', content: systemContent },
+          { role: 'user', content: userContent },
+        ],
       },
-      messages: [
-        { role: 'system', content: systemContent },
-        { role: 'user', content: userContent },
-      ],
-    })
+      { timeout: 30_000, maxRetries: 1 },
+    )
 
     const text = response.choices[0]?.message?.content ?? ''
     const parsed = JSON.parse(text) as ResultMap[C]

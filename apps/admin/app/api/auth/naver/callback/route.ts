@@ -57,7 +57,11 @@ export async function GET(request: Request) {
 
   let accessToken: string
   try {
-    const tokenRes = await fetch(tokenUrl, { method: 'GET', cache: 'no-store' })
+    const tokenRes = await fetch(tokenUrl, {
+      method: 'GET',
+      cache: 'no-store',
+      signal: AbortSignal.timeout(8_000),
+    })
     const tokenJson = (await tokenRes.json()) as { access_token?: string; error?: string }
     if (!tokenJson.access_token) {
       return loginRedirect(url.origin, `naver_token: ${tokenJson.error ?? 'no token'}`)
@@ -74,6 +78,7 @@ export async function GET(request: Request) {
     const meRes = await fetch('https://openapi.naver.com/v1/nid/me', {
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: 'no-store',
+      signal: AbortSignal.timeout(8_000),
     })
     const meJson = (await meRes.json()) as {
       resultcode?: string
