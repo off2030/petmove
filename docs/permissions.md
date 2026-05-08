@@ -46,7 +46,7 @@
 
 | 테이블 | SELECT | INSERT | UPDATE | DELETE |
 |---|---|---|---|---|
-| `cases` | `M(org) ∨ SA` | `M(org) ∨ SA` (+ anon → 로잔만) | `M(org) ∨ SA` | `M(org) ∨ SA` |
+| `cases` | `M(org) ∨ SA` | `M(org) ∨ SA` | `M(org) ∨ SA` | `M(org) ∨ SA` |
 | `case_history` | `M(org) ∨ SA` | `M(org) ∨ SA` | `M(org) ∨ SA` | `M(org) ∨ SA` |
 | `field_definitions` | `org_id IS NULL ∨ M(org) ∨ SA` | `SA` | `SA` | `SA` |
 | `organizations` | `M(id) ∨ SA` | `SA` | `SA` | `SA` |
@@ -87,11 +87,28 @@ RLS 가 1차 방어선이지만, UX 사고 방지·정책으로 표현 어려운
 
 ## anon (비로그인) 접근
 
-공개 신청 폼만 허용:
+기본은 모든 테이블에 대해 anon SELECT/INSERT/UPDATE/DELETE **전면 차단**.
 
-- `cases.cases_anon_apply` — anon 으로 INSERT, `org_id = '00000000-0000-0000-0000-000000000001'` (로잔) 조건. 멀티 테넌트 전환 시 변경 필요.
+공개 신청 폼(`/apply`) 은 RLS 우회가 아닌 **service role 서버 액션** 으로 처리한다 — `lib/actions/apply-case.ts` 의 `applyCase` 가 `createAdminClient()` 사용. `org_id` 는 코드에서 하드코딩 (사용자 입력 아님) 이라 보안 영향 없음. 멀티 테넌트 전환 시 입력으로 받도록 수정.
 
-그 외 모든 테이블은 anon SELECT/INSERT/UPDATE/DELETE 차단.
+> **legacy**: 초기에는 `cases_anon_apply` RLS 정책으로 anon INSERT 를 허용했으나, publishable key 로 직접 cases.insert 호출 가능한 공격 표면이 되어 `20260507000005` 마이그에서 제거. 현재는 service role 우회 단일 경로.
+
+---
+
+## RLS 컨벤션·예외
+
+### Deny-by-default 원칙
+
+PostgreSQL RLS 는 정책 부재 시 자동 거부 — 명시적 deny 정책을 쓰지 않아도 안전. 본 프로젝트의 일부 테이블은 정책 매트릭스에서 DELETE 행이 비어있는데(예: `field_definitions` 의 일반 사용자 DELETE), RLS 가 기본 거부하므로 의도된 차단이다. 가독성·코드 검토 편의를 위해 향후 명시적 `for delete using (false)` 를 추가하는 것을 검토할 수 있다 (현재는 미적용).
+
+### 의도적 broad SELECT 정책
+
+일반 멤버십·org 단위가 아닌, "참여자 단위" 로 더 넓게 SELECT 를 여는 정책이 두 곳 있다 — 보안 약화가 아닌 의도된 동작:
+
+- **`message_reads.message_reads_select`** (DM) / **`group_message_reads_select`** (그룹) — 같은 conversation 또는 group 의 다른 참여자도 SELECT 가능. UI 의 "읽음" 표시(`messages-app.tsx` 의 `readsByUser`) 가 상대방의 `last_read_at` 을 읽어 메시지별 읽음 상태를 계산. INSERT/UPDATE/DELETE 는 본인(`user_id = auth.uid()`)만.
+- **`storage.objects` / `user-avatars` 버킷** — `select using (bucket_id = 'user-avatars')` 로 누구나 읽기 가능. 채팅·멤버 목록 등에서 다른 사용자의 프로필 이미지를 보여주기 위해 의도적으로 public. INSERT/UPDATE/DELETE 는 본인 폴더(`(storage.foldername(name))[1] = auth.uid()::text`)만. 5MB 제한.
+
+이 두 곳은 매트릭스에 단일 행으로 표현하기 부족해 별도 명시.
 
 ---
 
