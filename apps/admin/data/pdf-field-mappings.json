@@ -3836,6 +3836,7 @@
       "text_27lonm": { "source": "internal_parasite_dates", "transform": "parasite_info:internal:ingredient[0]", "note": "p2 Int parasite active ingredient" },
 
       "text_28wkfi": { "source": "vet_visit_date", "note": "p3 Endorsement signature date" },
+      "text_32xsfq": { "source": null, "transform": "vet:name_en",    "note": "p3 Endorsement — Name of government-approved veterinarian (Date 라벨 바로 아래 칸). 2026-05-08 템플릿 업데이트로 추가." },
       "text_29ulae": { "source": null, "transform": "vet:clinic_en",  "note": "p3 Practice name" },
       "text_30hspb": { "source": null, "transform": "vet:address_en", "note": "p3 Address" },
       "text_31tz":   { "source": null, "transform": "vet:phone_intl", "note": "p3 Phone" },
