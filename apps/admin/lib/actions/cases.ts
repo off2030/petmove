@@ -335,13 +335,11 @@ export async function restoreToHistoryPoint(
     }
   }
 
-  // 5. Apply column updates in a single UPDATE.
-  if (Object.keys(columnUpdates).length > 0) {
-    const { error } = await supabase.from('cases').update(columnUpdates).eq('id', caseId)
-    if (error) return { ok: false, error: error.message }
-  }
-
-  // 6. Apply data updates: read-merge-write.
+  // 5+6. Column + data 업데이트를 한 번의 UPDATE 로 합쳐서 부분 실패 윈도우 최소화.
+  //     P2 — 이전엔 column UPDATE → SELECT data → data UPDATE → history DELETE
+  //     순서로 3회 RTT, column 만 또는 data 만 적용된 inconsistent 상태 가능.
+  //     이제 column + data 를 단일 UPDATE 로 묶어 atomic.
+  const updateObj: Record<string, unknown> = { ...columnUpdates }
   if (dataKeyUpdates.size > 0) {
     const { data: row, error: dFetchErr } = await supabase
       .from('cases')
@@ -349,18 +347,21 @@ export async function restoreToHistoryPoint(
       .eq('id', caseId)
       .single()
     if (dFetchErr) return { ok: false, error: dFetchErr.message }
-
     const current: Record<string, unknown> = (row?.data as Record<string, unknown> | null) ?? {}
     const next = { ...current }
     for (const [k, v] of dataKeyUpdates) {
       if (v === null || v === undefined) delete next[k]
       else next[k] = v
     }
-    const { error } = await supabase.from('cases').update({ data: next }).eq('id', caseId)
+    updateObj.data = next
+  }
+  if (Object.keys(updateObj).length > 0) {
+    const { error } = await supabase.from('cases').update(updateObj).eq('id', caseId)
     if (error) return { ok: false, error: error.message }
   }
 
-  // 7. Delete consumed history entries.
+  // 7. Delete consumed history entries — UPDATE 성공 후에만. DELETE 실패해도 cases 는
+  //    정상 상태이고 다시 restore 호출해도 idempotent (같은 값으로 덮어쓰기).
   const ids = entries.map((e) => e.id)
   await supabase.from('case_history').delete().in('id', ids)
 
