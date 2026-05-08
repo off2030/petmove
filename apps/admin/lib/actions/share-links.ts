@@ -499,12 +499,17 @@ export async function submitShareLink(
       }
       // 백신 array_key 합치기 — 그룹별 분기:
       //   - has_other_hospital=true (광견병/종합백신/독감/켄넬코프): 본인 기록 보존,
-      //     타병원 부분만 수신자 제출로 교체. 빈 제출은 기존 타병원 기록 삭제 의미.
+      //     타병원 부분만 수신자 제출로 교체.
       //   - has_other_hospital=false (외부구충/내부구충): prefill 로 기존 기록을 그대로
-      //     수신자에게 보여줬으므로 제출값으로 전체 array 를 replace 한다. (append 하면
-      //     prefill 된 기록과 중복 발생.) 본인/타병원 구분이 없는 그룹이라 안전.
+      //     수신자에게 보여줬으므로 제출값으로 전체 array 를 replace 한다.
+      //
+      // 빈 entries 보호: 수신자가 그룹을 비워서 제출 = "입력 안 함" 의도일 가능성
+      // 높음. 의도하지 않은 light-delete (기존 기록 전체 또는 타병원 기록만 삭제)
+      // 방지를 위해 skip — 기존 기록 그대로 보존. 명시적 삭제 의도는 별도 플래그
+      // 필요 (현재 share 폼엔 없음).
       for (const { group, entries } of vaccineSubmissions) {
         if (!group.array_key) continue
+        if (entries.length === 0) continue
         const existing = Array.isArray(merged[group.array_key])
           ? (merged[group.array_key] as unknown[])
           : []

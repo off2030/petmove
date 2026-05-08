@@ -179,11 +179,15 @@ export function CaseList({
   const [dragOver, setDragOver] = useState(false)
   const dragDepth = useRef(0)
 
-  function handleFiles(list: FileList | File[] | null | undefined) {
-    if (!list || !onAddFromFiles) return
-    const files = Array.from(list).filter(isExtractableFile)
-    if (files.length > 0) onAddFromFiles(files)
-  }
+  // useCallback — onAddFromFiles 가 안정적 ref 라면 paste/drop 핸들러도 안정.
+  const handleFiles = useCallback(
+    (list: FileList | File[] | null | undefined) => {
+      if (!list || !onAddFromFiles) return
+      const files = Array.from(list).filter(isExtractableFile)
+      if (files.length > 0) onAddFromFiles(files)
+    },
+    [onAddFromFiles],
+  )
 
   useEffect(() => {
     if (!onAddFromFiles) return

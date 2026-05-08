@@ -43,16 +43,37 @@ export async function exportCasesXlsx(): Promise<
       return { ok: false, error: '데이터 내보내기는 슈퍼 관리자만 가능합니다.' }
     }
     const orgId = await getActiveOrgId()
-    const [casesRes, orgRes] = await Promise.all([
-      supabase
+    // P2 — 이전엔 limit 없이 select 한 번 → Supabase 기본 cap (1000) 으로 데이터
+    // 일부 누락 가능했음. fetchAllCases 와 동일한 batched pagination 으로 전체 행
+    // 안전 수집. 동시에 export 상한(50,000) 으로 메모리·timeout 보호.
+    const orgRes = await supabase
+      .from('organizations')
+      .select('name')
+      .eq('id', orgId)
+      .maybeSingle()
+    const rows: Array<Record<string, unknown>> = []
+    const batchSize = 1000
+    const HARD_CAP = 50_000
+    let from = 0
+    while (rows.length < HARD_CAP) {
+      const { data, error } = await supabase
         .from('cases')
         .select('*')
         .eq('org_id', orgId)
-        .order('created_at', { ascending: false }),
-      supabase.from('organizations').select('name').eq('id', orgId).maybeSingle(),
-    ])
-    if (casesRes.error) return { ok: false, error: casesRes.error.message }
-    const rows = casesRes.data ?? []
+        .order('created_at', { ascending: false })
+        .range(from, from + batchSize - 1)
+      if (error) return { ok: false, error: error.message }
+      if (!data || data.length === 0) break
+      rows.push(...(data as Array<Record<string, unknown>>))
+      if (data.length < batchSize) break
+      from += batchSize
+    }
+    if (rows.length >= HARD_CAP) {
+      return {
+        ok: false,
+        error: `데이터가 너무 많습니다 (${HARD_CAP.toLocaleString()}건 이상). 검색·필터로 범위를 좁힌 export 가 필요합니다.`,
+      }
+    }
     const orgName = (orgRes.data?.name as string | undefined)?.trim() || 'org'
 
     // data jsonb 의 모든 키 수집 (정렬해서 안정적인 컬럼 순서)
