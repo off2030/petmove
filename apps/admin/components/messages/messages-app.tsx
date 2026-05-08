@@ -1562,16 +1562,33 @@ function ThreadPane({
           />
         </div>
 
-        {/* 모바일 backdrop — 클릭 시 닫기. 데스크톱에선 인라인 패널이라 불필요. */}
-        {showMembers && (
-          <div
-            className="md:hidden fixed inset-0 z-30 bg-black/30"
-            onClick={() => setShowMembers(false)}
-            aria-hidden="true"
-          />
-        )}
-        {showMembers && (
-          <aside className="flex flex-col border-l border-border/80 bg-background min-h-0 md:w-[240px] md:shrink-0 max-md:fixed max-md:inset-y-0 max-md:right-0 max-md:w-[85%] max-md:max-w-[320px] max-md:z-40 max-md:shadow-xl">
+        {/* 모바일 backdrop — 클릭 시 닫기. 데스크톱에선 인라인 패널이라 불필요.
+            opacity 페이드 + drawer 와 동일 duration 으로 동기화. */}
+        <div
+          className={cn(
+            'md:hidden fixed inset-0 z-30 bg-black/30 transition-opacity duration-200',
+            showMembers ? 'opacity-100' : 'opacity-0 pointer-events-none',
+          )}
+          onClick={() => setShowMembers(false)}
+          aria-hidden={!showMembers}
+        />
+        {/* 멤버 패널 — 데스크톱은 컨디셔널 마운트 (인라인 컬럼), 모바일은 항상 마운트
+            + transform 으로 우측에서 슬라이드 인. 닫힘 시 pointer-events 차단. */}
+        <aside
+          aria-hidden={!showMembers}
+          className={cn(
+            'flex flex-col border-l border-border/80 bg-background min-h-0',
+            // 데스크톱: 닫힘 시 display:none → 폭을 차지 안 함
+            'md:shrink-0',
+            showMembers ? 'md:w-[240px]' : 'md:hidden',
+            // 모바일: 항상 fixed drawer, transform 으로 슬라이드
+            'max-md:fixed max-md:inset-y-0 max-md:right-0 max-md:w-[85%] max-md:max-w-[320px] max-md:z-40 max-md:shadow-xl',
+            'max-md:transition-transform max-md:duration-200 max-md:ease-out',
+            showMembers
+              ? 'max-md:translate-x-0'
+              : 'max-md:translate-x-full max-md:pointer-events-none',
+          )}
+        >
             <div className="shrink-0 flex items-center justify-between px-md py-sm border-b border-border/80">
               <span className="font-serif text-[14px]">멤버 ({totalCount})</span>
               <div className="flex items-center gap-1">
@@ -1641,7 +1658,6 @@ function ThreadPane({
               })}
             </ul>
           </aside>
-        )}
       </div>
 
       {showAddMember && (
