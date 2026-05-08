@@ -40,6 +40,8 @@ import {
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 /**
  * fieldKeys → ShareFieldSpec[] 조립.
  *
@@ -324,6 +326,7 @@ export async function getShareLinkByToken(
   token: string,
 ): Promise<Result<ShareLinkPublicView>> {
   try {
+    if (!UUID_RE.test(token)) return { ok: false, error: '유효하지 않은 링크입니다' }
     const admin = createAdminClient()
     const { data: link, error: lErr } = await admin
       .from('case_share_links')
@@ -392,6 +395,7 @@ export async function submitShareLink(
   input: SubmitShareLinkInput,
 ): Promise<Result<null>> {
   try {
+    if (!UUID_RE.test(input.token)) return { ok: false, error: '유효하지 않은 링크입니다' }
     const admin = createAdminClient()
     const { data: link, error: lErr } = await admin
       .from('case_share_links')

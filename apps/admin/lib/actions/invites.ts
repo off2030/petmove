@@ -12,6 +12,8 @@ const ROLE_LABEL: Record<'admin' | 'member', string> = {
   member: '멤버',
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export type InviteRole = 'admin' | 'member'
 
 export interface InviteRow {
@@ -313,6 +315,7 @@ export interface InviteSummary {
  */
 export async function getInviteSummary(token: string): Promise<Result<InviteSummary>> {
   try {
+    if (!UUID_RE.test(token)) return { ok: false, error: '유효하지 않은 초대 링크' }
     const admin = createAdminClient()
     const { data: invite, error } = await admin
       .from('organization_invites')
@@ -396,6 +399,7 @@ export async function sendInviteMagicLink(input: {
  *     수행하여 동시 accept 요청 중 정확히 한 건만 통과. 패배자는 명확한 오류 반환.
  */
 export async function acceptInvite(token: string): Promise<Result<{ orgId: string }>> {
+  if (!UUID_RE.test(token)) return { ok: false, error: '유효하지 않은 초대 링크' }
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false, error: '로그인이 필요합니다' }
