@@ -16,13 +16,10 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: 'ko',
     orientation: 'portrait',
     icons: [
-      // 일반 — 둥근 사각 PETMOVE / Work 워드마크 로고. SVG 가 우선, PNG 는 SVG 미지원 브라우저 대비.
-      {
-        src: '/icon.svg',
-        sizes: 'any',
-        type: 'image/svg+xml',
-        purpose: 'any',
-      },
+      // 일반 — 둥근 사각 PETMOVE / Work 워드마크. PNG 만 등록.
+      // SVG (icon.svg) 도 build artifact 로 존재하지만 Android Chrome 의 PWA 아이콘
+      // 변환기가 SVG 안의 inline @font-face 를 못 그려 글자 빠진 갈색 배경만 나오는
+      // 사례가 있어 manifest 에선 제외. SVG 는 브라우저 탭 favicon 등 다른 경로에서만 사용.
       {
         src: '/icon',
         sizes: '192x192',
@@ -30,11 +27,11 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'any',
       },
       // maskable — Android 적응형 아이콘 (둥근/사각/물방울 등 자유 crop).
-      // 안전영역(80%)에 PETMOVE/Work 배치 + full-bleed 배경.
+      // 안전영역(80%)에 PETMOVE/Work 배치 + full-bleed 배경. PNG (route handler) 로 제공.
       {
-        src: '/icon-maskable.svg',
-        sizes: 'any',
-        type: 'image/svg+xml',
+        src: '/icon-maskable',
+        sizes: '192x192',
+        type: 'image/png',
         purpose: 'maskable',
       },
     ],
