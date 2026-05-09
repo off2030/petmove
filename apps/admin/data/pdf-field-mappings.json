@@ -3994,9 +3994,8 @@
         "note": "p1 TELEPHONE section: Country of address"
       },
       "Print Name": {
-        "source": null,
-        "default": "JINWON LEE",
-        "note": "p3: Veterinarian/RVC print name"
+        "source": "customer_name_en",
+        "note": "p3: Primary owner print name (보호자 영문 이름)"
       },
       "Date": {
         "source": null,
