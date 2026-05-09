@@ -47,11 +47,16 @@ function evaluateFailures(
   return out
 }
 
-function caseLabelFor(c: CaseRow): string {
-  const name = c.pet_name || c.pet_name_en || ''
+/** 검증 실패 알림 본문 상단의 메타 라인 — "고객 · 김철수" 형식. 빈 값은 자동 생략. */
+function buildMetaLines(c: CaseRow): string[] {
+  const customer = c.customer_name || c.customer_name_en || ''
+  const pet = c.pet_name || c.pet_name_en || ''
   const dest = c.destination || ''
-  const chip = c.microchip ? `#${c.microchip.slice(-3)}` : ''
-  return [name, dest, chip].filter(Boolean).join(' · ') || '(이름 없음)'
+  const out: string[] = []
+  if (customer) out.push(`고객 · ${customer}`)
+  if (pet) out.push(`동물 · ${pet}`)
+  if (dest) out.push(`국가 · ${dest}`)
+  return out
 }
 
 /**
@@ -131,22 +136,28 @@ export async function evaluateAndNotify(caseId: string): Promise<void> {
         { onConflict: 'conversation_id,user_id', ignoreDuplicates: true },
       )
 
-    // 5) 메시지 본문.
-    const lines = newFailures.length === 1
-      ? [`검증 실패가 발생했습니다.`, '', `• ${newFailures[0].result.message}`]
-      : [`검증 실패 ${newFailures.length}건이 발생했습니다.`, '', ...newFailures.slice(0, 12).map((f) => `• ${f.result.message}`)]
+    // 5) 메시지 본문 — 제목 → 메타(고객/동물/국가) → 본문 3단 구조.
+    const titleLine = newFailures.length === 1
+      ? '검증 실패 알림'
+      : `검증 실패 알림 (${newFailures.length}건)`
+    const meta = buildMetaLines(caseRow)
+    const bullets = newFailures.slice(0, 12).map((f) => `• ${f.result.message}`)
+    const lines: string[] = [titleLine]
+    if (meta.length > 0) lines.push('', ...meta)
+    lines.push('', ...bullets)
     if (newFailures.length > 12) {
       lines.push(`외 ${newFailures.length - 12}건…`)
     }
 
     // 6) 메시지 적재 + dedup 셋 업데이트. sender 는 봇 사용자 — 다른 1:1 대화처럼
     //     profiles 룩업으로 이름·아바타가 자동으로 잡힌다.
+    //     case_label 은 본문에 메타 통합으로 중복 회피 — null.
     await admin.from('messages').insert({
       conversation_id: convId,
       sender_user_id: botUserId,
       sender_name: null,
       case_id: caseId,
-      case_label: caseLabelFor(caseRow),
+      case_label: null,
       content: lines.join('\n'),
     })
     await supabase.from('cases').update({ notified_check_ids: currentIds }).eq('id', caseId)

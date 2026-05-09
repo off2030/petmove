@@ -1791,11 +1791,22 @@ const MessageItem = memo(function MessageItem({
                 {msg.case_label}
               </span>
             )}
-            {msg.content && (
-              <p className="whitespace-pre-wrap break-words text-[14px] leading-relaxed">
-                {msg.content}
-              </p>
-            )}
+            {msg.content && (() => {
+              // 시스템 메시지 첫 줄을 제목 스타일로 강조 ("검증 실패 알림" 등).
+              const idx = msg.content.indexOf('\n')
+              const title = idx >= 0 ? msg.content.slice(0, idx) : msg.content
+              const body = idx >= 0 ? msg.content.slice(idx + 1).replace(/^\n+/, '') : ''
+              return (
+                <>
+                  <p className="font-medium text-[14px] leading-snug mb-1.5">{title}</p>
+                  {body && (
+                    <p className="whitespace-pre-wrap break-words text-[14px] leading-relaxed">
+                      {body}
+                    </p>
+                  )}
+                </>
+              )
+            })()}
           </button>
         ) : (
           <div
