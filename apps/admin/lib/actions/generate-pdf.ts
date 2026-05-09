@@ -303,7 +303,33 @@ export async function generateNZ(caseId: string, opts?: GenerateOpts) {
 }
 
 export async function generateAQS(caseId: string, opts?: GenerateOpts) {
-  return generate('AQS_279', caseId, opts)
+  // AQS-279 의 "TOTAL NUMBER of DOGS and CATS ARRIVING in HAWAII on that DATE"
+  // 는 같은 보호자 + 같은 목적지 + 같은 출국일 케이스 수로 자동 계산.
+  // hawaii_extra.total_pets_arriving 가 양의 정수로 입력돼 있으면 그 값을 우선.
+  const sib = await fetchSiblings(caseId)
+  let totalPets = 1
+  if (sib.ok) {
+    const pivot = sib.siblings[0]
+    const data = (pivot?.data ?? {}) as Record<string, unknown>
+    const hawaiiExtra = (data.hawaii_extra as Record<string, unknown> | undefined) ?? {}
+    const override = hawaiiExtra.total_pets_arriving
+    const overrideNum =
+      typeof override === 'number'
+        ? override
+        : typeof override === 'string' && override.trim() !== ''
+          ? Number(override)
+          : NaN
+    if (Number.isFinite(overrideNum) && overrideNum > 0) {
+      totalPets = Math.floor(overrideNum)
+    } else if (pivot?.departure_date) {
+      // fetchSiblings 는 (sameDeparture OR sameVet) 으로 매칭하므로
+      // AQS 도착일 카운트는 출국일 일치 건만 다시 좁혀서 카운트.
+      totalPets = sib.siblings.filter(c => c.departure_date === pivot.departure_date).length || 1
+    } else {
+      totalPets = sib.siblings.length
+    }
+  }
+  return generate('AQS_279', caseId, { ...opts, extras: { total_pets_arriving: String(totalPets) } })
 }
 
 export async function generateFormR11(caseId: string, opts?: GenerateOpts) {

@@ -22,6 +22,7 @@ interface HawaiiExtra {
   email_address: string | null
   address_overseas: string | null
   postal_code: string | null
+  total_pets_arriving: string | null
 }
 
 const EMPTY: HawaiiExtra = {
@@ -32,6 +33,7 @@ const EMPTY: HawaiiExtra = {
   email_address: null,
   address_overseas: null,
   postal_code: null,
+  total_pets_arriving: null,
 }
 
 const DATA_KEY = 'hawaii_extra'
@@ -199,6 +201,7 @@ export function HawaiiExtraField({ caseId, caseRow, sectionNumber }: { caseId: s
       {renderField('email_address', '이메일주소', 'email')}
       {renderField('address_overseas', '해외주소', 'text')}
       {renderField('postal_code', '우편번호', 'text')}
+      {renderField('total_pets_arriving', '동반 동물 수', 'text', '비워두면 자동 계산')}
     </ExtraSectionShell>
   )
 }

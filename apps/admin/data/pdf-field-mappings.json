@@ -3980,9 +3980,9 @@
         "note": "p1 Section 3: Hawaii email - 수동입력"
       },
       "TOTAL NUMBER of DOGS and CATS ARRIVING in HAWAII on that DATE": {
-        "source": null,
+        "source": "total_pets_arriving",
         "default": "1",
-        "note": "p1: Total animals arriving"
+        "note": "p1: Total animals arriving — generateAQS 가 같은 보호자+목적지+출국일 케이스 수를 세어 extras.total_pets_arriving 로 주입. hawaii_extra.total_pets_arriving 가 입력돼 있으면 그 값 우선."
       },
       "PRIMARY": {
         "source": "phone",
