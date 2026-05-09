@@ -78,7 +78,12 @@ export function InstallPrompt() {
       <div className="px-md py-sm flex items-start gap-sm">
         <div className="shrink-0 mt-0.5">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[#A56D54]">
-            <span className="font-serif text-[18px] font-medium text-[#F5F4ED]">P</span>
+            <span
+              className="font-bold text-[10px] tracking-[0.08em] leading-none text-[#F5F4ED]"
+              style={{ fontFamily: "'Alonzo', 'Bodoni Moda', 'Playfair Display', Georgia, serif" }}
+            >
+              PMW
+            </span>
           </span>
         </div>
 
