@@ -1793,12 +1793,13 @@ const MessageItem = memo(function MessageItem({
             )}
             {msg.content && (() => {
               // 시스템 메시지 첫 줄을 제목 스타일로 강조 ("검증 실패 알림" 등).
+              // 본문 시작의 빈 줄은 그대로 보존 — 작성자가 의도적으로 띄운 간격.
               const idx = msg.content.indexOf('\n')
               const title = idx >= 0 ? msg.content.slice(0, idx) : msg.content
-              const body = idx >= 0 ? msg.content.slice(idx + 1).replace(/^\n+/, '') : ''
+              const body = idx >= 0 ? msg.content.slice(idx + 1) : ''
               return (
                 <>
-                  <p className="font-medium text-[14px] leading-snug mb-1.5">{title}</p>
+                  <p className="font-medium text-[14px] leading-snug">{title}</p>
                   {body && (
                     <p className="whitespace-pre-wrap break-words text-[14px] leading-relaxed">
                       {body}
