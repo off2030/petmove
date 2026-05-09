@@ -497,8 +497,7 @@ export default function ApplyPage() {
         height: '100%',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         oncomplete(data: any) {
-          const kr = data.zonecode ? `(${data.zonecode}) ${data.roadAddress}` : data.roadAddress
-          setAddressKr(kr)
+          setAddressKr(data.roadAddress)
           setAddressDetail('')
           setAddressEn(data.roadAddressEnglish)
           setAddressZipcode(data.zonecode)

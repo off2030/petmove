@@ -816,13 +816,18 @@ function AddressKrInput({
         height: '100%',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         oncomplete(data: any) {
-          const kr = data.zonecode ? `(${data.zonecode}) ${data.roadAddress}` : data.roadAddress
+          const kr = data.roadAddress
           const en = data.roadAddressEnglish || ''
           setBase(kr)
           setDetail('')
           setAutoEn(en)
-          if (en && onMultiChange) {
-            onMultiChange({ [field.key]: kr, address_en: en })
+          if (onMultiChange) {
+            const patch: Record<string, unknown> = { [field.key]: kr }
+            if (en) patch.address_en = en
+            if (data.zonecode) patch.address_zipcode = data.zonecode
+            if (data.sido) patch.address_sido = data.sido
+            if (data.sigungu) patch.address_sigungu = data.sigungu
+            onMultiChange(patch)
           }
           setShowModal(false)
           setTimeout(() => detailRef.current?.focus(), 100)

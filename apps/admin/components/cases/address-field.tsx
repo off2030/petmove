@@ -124,7 +124,6 @@ export function AddressField({
         oncomplete(data: DaumPostcodeResult) {
           const kr = data.roadAddress
           const en = data.roadAddressEnglish
-          const krWithZip = data.zonecode ? `(${data.zonecode}) ${kr}` : kr
           setShowModal(false)
 
           // Parse English address into components for future document automation.
@@ -146,7 +145,7 @@ export function AddressField({
           const province = isProvince ? last : secondLast
 
           // Optimistic — UI 즉시 반영. 서버 저장은 백그라운드.
-          updateLocalCaseField(caseId, 'data', krSpec.key, krWithZip)
+          updateLocalCaseField(caseId, 'data', krSpec.key, kr)
           if (enSpec && en) updateLocalCaseField(caseId, 'data', enSpec.key, en)
           const components: Record<string, string> = {
             address_zipcode: data.zonecode,
@@ -160,7 +159,7 @@ export function AddressField({
             if (val) updateLocalCaseField(caseId, 'data', key, val)
           }
           void (async () => {
-            await updateCaseField(caseId, 'data', krSpec.key, krWithZip)
+            await updateCaseField(caseId, 'data', krSpec.key, kr)
             if (enSpec && en) await updateCaseField(caseId, 'data', enSpec.key, en)
             for (const [key, val] of Object.entries(components)) {
               if (val) await updateCaseField(caseId, 'data', key, val)
