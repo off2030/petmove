@@ -3948,8 +3948,14 @@
         "note": "p1 Section 3: Owner city (한국 시·구)"
       },
       "STATE": {
+        "source": "hawaii_extra",
+        "transform": "json:passport_issuing_country",
+        "default": "Republic of Korea",
+        "note": "p1 Section 3 ID row: Passport issuing country (PDF 필드명이 'STATE' 라 혼동 주의 — Daum 으로 채운 주소 state 가 아니라 여권 발행국)"
+      },
+      "STATE_2": {
         "source": "address_en_state",
-        "note": "p1 Section 3: Owner state (한국 도/광역시)"
+        "note": "p1 Section 3 Current Address: Owner state (한국 도/광역시)"
       },
       "ZIP": {
         "source": "address_zipcode",
