@@ -20,9 +20,16 @@ export default function manifest(): MetadataRoute.Manifest {
       // SVG (icon.svg) 도 build artifact 로 존재하지만 Android Chrome 의 PWA 아이콘
       // 변환기가 SVG 안의 inline @font-face 를 못 그려 글자 빠진 갈색 배경만 나오는
       // 사례가 있어 manifest 에선 제외. SVG 는 브라우저 탭 favicon 등 다른 경로에서만 사용.
+      // 192/512 두 사이즈 등록 → 작은 홈 아이콘과 큰 splash/app-drawer 모두 또렷.
       {
         src: '/icon',
         sizes: '192x192',
+        type: 'image/png',
+        purpose: 'any',
+      },
+      {
+        src: '/icon-512',
+        sizes: '512x512',
         type: 'image/png',
         purpose: 'any',
       },
@@ -31,6 +38,12 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         src: '/icon-maskable',
         sizes: '192x192',
+        type: 'image/png',
+        purpose: 'maskable',
+      },
+      {
+        src: '/icon-maskable-512',
+        sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',
       },
