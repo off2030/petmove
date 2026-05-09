@@ -754,11 +754,21 @@ function readSource(
   }
 
   // 한국 영문 주소를 4칸 분해 (street/state) — city/zip은 별도 source 활용
+  // Daum 표준 영문주소 포맷: "<번지>[,] <도로명>, <구/시>, <시도>" (번지/도로명 사이 콤마 유무 변동).
+  // 예) "152, Teheran-ro, Gangnam-gu, Seoul" 또는 "152 Teheran-ro, Gangnam-gu, Seoul"
   if (source === 'address_en_street') {
     const s = String(data.address_en ?? '').trim()
     if (!s) return ''
-    const parts = s.split(',').map(seg => seg.trim()).filter(Boolean)
-    return parts[0] ?? ''
+    let parts = s.split(',').map(seg => seg.trim()).filter(Boolean)
+    if (parts.length > 0 && /^republic of korea$/i.test(parts[parts.length - 1])) parts = parts.slice(0, -1)
+    // 마지막 2개 토큰(구/시 + 시도)은 CITY/STATE 필드 몫. 그 앞부분이 STREET.
+    // 4토큰: ["152","Teheran-ro","Gangnam-gu","Seoul"] → "152 Teheran-ro"
+    // 3토큰: ["152 Teheran-ro","Gangnam-gu","Seoul"] → "152 Teheran-ro"
+    // 2토큰: ["152 Teheran-ro","Seoul"] → "152 Teheran-ro"
+    // 1토큰: ["151"] → "151"
+    if (parts.length >= 3) parts = parts.slice(0, parts.length - 2)
+    else if (parts.length === 2) parts = parts.slice(0, 1)
+    return parts.join(' ')
   }
   if (source === 'address_en_state') {
     const s = String(data.address_en ?? '').trim()
