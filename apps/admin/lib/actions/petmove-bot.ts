@@ -5,10 +5,10 @@
 // 일반 1:1 대화의 다른 참가자처럼 자연스럽게 이름·아바타가 표시되도록 하기 위함.
 // 비밀번호로 로그인할 일은 없고, ensurePetmoveBot() 이 idempotent 하게 행을 보장한다.
 
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-
-const PETMOVE_BOT_EMAIL = 'bot@petmove.work'
+import { PETMOVE_BOT_EMAIL } from '@/lib/petmove-bot-constants'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 
@@ -132,6 +132,9 @@ export async function updatePetmoveBotProfile(input: {
     const admin = createAdminClient()
     const { error } = await admin.from('profiles').update(patch).eq('id', botId)
     if (error) return { ok: false, error: error.message }
+    // Dashboard layout 이 prefetch 한 conversations 의 봇 participant.name/avatar 를
+    // 다음 요청부터 갱신 — 메시지 모듈, 헤더 등 모든 곳에 반영.
+    revalidatePath('/', 'layout')
   }
 
   return getPetmoveBotProfile()
@@ -190,6 +193,7 @@ export async function uploadPetmoveBotAvatar(formData: FormData): Promise<Result
     if (oldPath) await admin.storage.from('user-avatars').remove([oldPath])
   }
 
+  revalidatePath('/', 'layout')
   return getPetmoveBotProfile()
 }
 
@@ -216,5 +220,6 @@ export async function removePetmoveBotAvatar(): Promise<Result<PetmoveBotProfile
     if (oldPath) await admin.storage.from('user-avatars').remove([oldPath])
   }
 
+  revalidatePath('/', 'layout')
   return getPetmoveBotProfile()
 }

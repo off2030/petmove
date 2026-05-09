@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { getMyProfile, updateMyProfile, type MyProfile } from '@/lib/actions/profile'
 import { updateMyDmVisibility } from '@/lib/actions/chat'
 import {
@@ -74,6 +75,7 @@ export function ProfileSection({
 }: {
   initialProfile?: MyProfile | null
 } = {}) {
+  const router = useRouter()
   const [profile, setProfile] = useState<MyProfile | null>(initialProfile)
   const [draft, setDraft] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -115,6 +117,8 @@ export function ProfileSection({
         setProfile(r.profile)
         setDraft(null)
         setLastSaved(new Date())
+        // dashboard layout 의 conversations / topbar avatar 갱신.
+        router.refresh()
       } else {
         setError(r.error)
       }

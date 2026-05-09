@@ -62,6 +62,7 @@ import {
 import type { TransferWithContext } from '@/lib/actions/transfers'
 import { PageShell } from '@/components/ui/page-shell'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
+import { isPetmoveBot } from '@/lib/petmove-bot-constants'
 import { getCachedConv, setCachedConv, deleteCachedConv } from '@/lib/messages/cache-idb'
 import { AttachButton } from '@/components/ui/attach-button'
 
@@ -256,56 +257,81 @@ export function MessagesApp({
 
     // 2) Realtime — 본인이 보낸 INSERT 는 이미 낙관적으로 추가했으므로 skip,
     //    그 외 모든 변경은 200ms debounce 로 묶어 1회 refetch.
-    const channel = supabaseBrowser
-      .channel(`conv:${convId}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${convId}` },
-        (payload) => {
-          const sender = (payload.new as { sender_user_id?: string } | null)?.sender_user_id
-          if (sender && sender === currentUserId) return
-          scheduleRefresh(convId)
-        },
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${convId}` },
-        () => scheduleRefresh(convId),
-      )
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${convId}` },
-        () => scheduleRefresh(convId),
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'message_reads',
-          filter: `conversation_id=eq.${convId}`,
-        },
-        (payload) => {
-          const userId =
-            (payload.new as { user_id?: string } | null)?.user_id ??
-            (payload.old as { user_id?: string } | null)?.user_id
-          if (userId && userId === currentUserId) return
-          scheduleRefresh(convId)
-        },
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'conversation_participants',
-          filter: `conversation_id=eq.${convId}`,
-        },
-        () => scheduleRefresh(convId),
-      )
-      .subscribe()
+    let alive = true
+    let channel: ReturnType<typeof supabaseBrowser.channel> | null = null
+
+    async function subscribe() {
+      // RLS 가 걸린 테이블 (profiles 등) 의 postgres_changes 가 도달하려면
+      // anon 이 아니라 user JWT 로 join 필요. setAuth() 누락 시 봇 이름 변경 같은
+      // profile UPDATE 이벤트가 안 들어와 chat header 가 stale 로 남는다.
+      const {
+        data: { session },
+      } = await supabaseBrowser.auth.getSession()
+      if (!alive || !session?.access_token) return
+      await supabaseBrowser.realtime.setAuth(session.access_token)
+      if (!alive) return
+
+      channel = supabaseBrowser
+        .channel(`conv:${convId}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${convId}` },
+          (payload) => {
+            const sender = (payload.new as { sender_user_id?: string } | null)?.sender_user_id
+            if (sender && sender === currentUserId) return
+            scheduleRefresh(convId)
+          },
+        )
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${convId}` },
+          () => scheduleRefresh(convId),
+        )
+        .on(
+          'postgres_changes',
+          { event: 'DELETE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${convId}` },
+          () => scheduleRefresh(convId),
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'message_reads',
+            filter: `conversation_id=eq.${convId}`,
+          },
+          (payload) => {
+            const userId =
+              (payload.new as { user_id?: string } | null)?.user_id ??
+              (payload.old as { user_id?: string } | null)?.user_id
+            if (userId && userId === currentUserId) return
+            scheduleRefresh(convId)
+          },
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'conversation_participants',
+            filter: `conversation_id=eq.${convId}`,
+          },
+          () => scheduleRefresh(convId),
+        )
+        // 참여자 (특히 봇) 의 name/avatar_url 변경도 chat header 에 반영. 비싼 처리는
+        // 아니라 currentConv 의 모든 row 단위로 listen — debounce 가 걸려 부하 미미.
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'profiles' },
+          () => scheduleRefresh(convId),
+        )
+        .subscribe()
+    }
+
+    void subscribe()
     return () => {
-      void supabaseBrowser.removeChannel(channel)
+      alive = false
+      if (channel) void supabaseBrowser.removeChannel(channel)
       if (refreshTimerRef.current) {
         clearTimeout(refreshTimerRef.current)
         refreshTimerRef.current = null
@@ -469,6 +495,12 @@ function EmptyState() {
 // ─────────────────────────────────────────────────
 
 function displayNameFor(c: ConversationListItem): string {
+  // 봇 대화 (system 자동 알림 또는 봇 1:1) 은 conv.name 이 과거 데이터로 박혀 있을 수 있어
+  // 봇 프로필명이 우선이어야 한다. 봇 이름 변경이 즉시 반영됨.
+  // 봇이 끼어있는 *그룹* 대화는 conv.name (그룹 제목) 우선 — 의도적으로 set 한 이름이라 가정.
+  const bot = c.participants.find((p) => isPetmoveBot(p.email))
+  const isBotConv = bot && (c.kind === 'system' || c.participants.length === 1)
+  if (isBotConv && bot?.name) return bot.name
   if (c.name) return c.name
   if (c.participants.length === 0) return '(빈 대화방)'
   return (
@@ -584,8 +616,14 @@ function ConversationRow({
 }) {
   const displayName = displayNameFor(conv)
   const isGroup = conv.participants.length >= 2
-  const orgLabel = isGroup ? `${conv.participants.length}명 그룹` : conv.participants[0]?.org_name ?? null
   const avatarLabel = avatarInitial(displayName || '?')
+  const isBot = conv.kind === 'system' || (!isGroup && isPetmoveBot(conv.participants[0]?.email))
+  // 봇은 일반 사용자처럼 소속 조직이 없음 → '펫무브' 로 자리 채워 다른 row 와 일관된 메타라인.
+  const orgLabel = isGroup
+    ? `${conv.participants.length}명 그룹`
+    : isBot
+      ? '펫무브'
+      : conv.participants[0]?.org_name ?? null
   const avatarImage = isGroup ? null : conv.participants[0]?.avatar_url ?? null
   const timeLabel = conv.last_message_at ? formatTime(conv.last_message_at) : null
   return (
@@ -600,7 +638,7 @@ function ConversationRow({
       )}
     >
       <span className="shrink-0">
-        <Avatar label={avatarLabel} imageUrl={avatarImage} tone="sage" />
+        <Avatar label={avatarLabel} imageUrl={avatarImage} tone="sage" bot={isBot} />
       </span>
       <span className="flex-1 min-w-0">
         <span className="block font-serif text-[15px] font-medium text-foreground truncate leading-tight">
@@ -1105,30 +1143,37 @@ function ThreadPane({
   }
 
   const headerTitle = useMemo(() => {
+    // 봇 대화 (system 또는 봇 1:1) 는 봇 프로필명 우선 — 박힌 conv.name 무시.
+    const bot = participants.find((p) => isPetmoveBot(p.email))
+    const isBotConv = bot && (conv.kind === 'system' || participants.length === 1)
+    if (isBotConv && bot?.name) return bot.name
     if (conv.name) return conv.name
     if (participants.length === 0) return '(빈 대화방)'
     return participants
       .map((p) => p.name ?? p.email ?? '?')
       .filter(Boolean)
       .join(', ') || '(이름 없음)'
-  }, [conv.name, participants])
+  }, [conv.kind, conv.name, participants])
 
   // 1:1 — 상대 프로필 (Settings/Members 스타일).
   const other = !isGroup ? participants[0] ?? null : null
   const otherHasRealName = !!(other?.name && other.name.trim() && other.name !== other.email)
   const otherDisplayName = otherHasRealName ? (other?.name ?? '') : (other?.email ?? '')
   const headerAvatarLabel = avatarInitial(isGroup ? headerTitle : otherDisplayName || '?')
+  const headerIsBot = conv.kind === 'system' || (!isGroup && isPetmoveBot(other?.email))
   const headerAvatarImage = isGroup ? null : other?.avatar_url ?? null
   const headerSubtitle = isGroup ? `${totalCount}명` : other?.org_name ?? null
   // 매거진 article header — "SINCE 2026-04-12" 캡스 메타라인.
+  // 봇 대화/시스템 알림은 날짜 대신 '펫무브' 로 고정 — 좌측 목록 row 의 orgLabel 과 일치.
   const sinceLabel = useMemo(() => {
+    if (headerIsBot) return '펫무브'
     if (!conv.created_at) return null
     const d = new Date(conv.created_at)
     const y = d.getFullYear()
     const m = String(d.getMonth() + 1).padStart(2, '0')
     const day = String(d.getDate()).padStart(2, '0')
     return `Since ${y}-${m}-${day}`
-  }, [conv.created_at])
+  }, [conv.created_at, headerIsBot])
 
   const readsByUser = useMemo(() => {
     const map = new Map<string, string>()
@@ -1275,7 +1320,7 @@ function ThreadPane({
           >
             <ArrowLeft size={20} />
           </button>
-          <Avatar label={headerAvatarLabel} imageUrl={headerAvatarImage} tone="sage" />
+          <Avatar label={headerAvatarLabel} imageUrl={headerAvatarImage} tone="sage" bot={headerIsBot} />
           {editingName ? (
             <input
               autoFocus
@@ -1651,7 +1696,7 @@ function ThreadPane({
                     key={p.user_id}
                     className="group/member px-md py-2 border-b border-border/30 flex items-center gap-sm last:border-b-0"
                   >
-                    <Avatar size="sm" label={avatarInitial(displayName)} imageUrl={p.avatar_url} tone="sage" />
+                    <Avatar size="sm" label={avatarInitial(displayName)} imageUrl={p.avatar_url} tone="sage" bot={isPetmoveBot(p.email)} />
                     <div className="min-w-0 flex-1">
                       <div className="text-[13px] font-serif text-foreground truncate leading-tight">
                         {displayName}

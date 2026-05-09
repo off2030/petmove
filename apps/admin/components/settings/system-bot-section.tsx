@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   ensurePetmoveBot,
   getPetmoveBotProfile,
@@ -19,7 +20,7 @@ import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 
 const AVATAR_MAX_BYTES = 20 * 1024 * 1024
-const AVATAR_ACCEPT = 'image/png,image/jpeg,image/webp,image/gif'
+const AVATAR_ACCEPT = 'image/png,image/jpeg,image/webp,image/gif,image/svg+xml'
 const AVATAR_TARGET_PX = 512
 const AVATAR_JPEG_QUALITY = 0.9
 
@@ -58,6 +59,7 @@ async function resizeAvatar(file: File): Promise<Blob> {
  * 내 프로필과 동일한 형태(아바타 업로드 + 이름 인라인 편집).
  */
 export function SystemBotSection() {
+  const router = useRouter()
   const [profile, setProfile] = useState<PetmoveBotProfile | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [draftName, setDraftName] = useState<string | null>(null)
@@ -106,6 +108,8 @@ export function SystemBotSection() {
       if (r.ok) {
         setProfile(r.value)
         setDraftName(null)
+        // dashboard layout 의 conversations prefetch 갱신 — 메시지 모듈 즉시 반영.
+        router.refresh()
       } else {
         setError(r.error)
       }
@@ -201,6 +205,7 @@ function BotAvatarRow({
   onChange: (p: PetmoveBotProfile) => void
   onError: (msg: string | null) => void
 }) {
+  const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [, startTransition] = useTransition()
@@ -234,6 +239,7 @@ function BotAvatarRow({
         return
       }
       onChange(r.value)
+      router.refresh()
     } finally {
       setBusy(false)
     }
@@ -251,6 +257,7 @@ function BotAvatarRow({
         return
       }
       onChange(r.value)
+      router.refresh()
     })
   }
 
@@ -258,7 +265,7 @@ function BotAvatarRow({
     <SettingsField label="프로필 이미지" align="center">
       <div className="flex items-center gap-md">
         <div className="relative">
-          <Avatar label={label} imageUrl={profile.avatar_url} size="md" />
+          <Avatar label={label} imageUrl={profile.avatar_url} size="md" bot />
         </div>
         <input
           ref={fileInputRef}
