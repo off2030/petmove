@@ -1786,11 +1786,7 @@ const MessageItem = memo(function MessageItem({
             className="max-w-[70%] rounded-md px-3 py-1.5 text-left bg-muted text-foreground hover:bg-accent transition-colors cursor-pointer"
             title="케이스 상세로 이동"
           >
-            {msg.case_label && (
-              <span className="block text-[11px] uppercase tracking-[0.15em] text-muted-foreground mb-1">
-                {msg.case_label}
-              </span>
-            )}
+            {/* case_label 은 본문 메타(고객·동물·국가)와 중복 — 시스템 메시지에선 표시 안 함. */}
             {msg.content && (() => {
               // 시스템 메시지 첫 줄을 제목 스타일로 강조 ("검증 실패 알림" 등).
               // 본문 시작의 빈 줄은 그대로 보존 — 작성자가 의도적으로 띄운 간격.
