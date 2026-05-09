@@ -9,12 +9,8 @@
       }
     ]]></style>
   </defs>
-  <!-- maskable purpose: full-bleed 배경 + 안전영역(중앙 80%)에 로고. Android 가 동그라미/사각형 등으로 자유롭게 crop. -->
-  <rect width="512" height="512" fill="#A56D54"/>
-  <text x="256" y="240" text-anchor="middle" dominant-baseline="central"
+  <rect width="512" height="512" rx="256" fill="#A56D54"/>
+  <text x="256" y="280" text-anchor="middle" dominant-baseline="central"
         font-family="'Alonzo', 'Bodoni Moda', 'Playfair Display', Georgia, serif"
-        font-weight="700" font-size="80" letter-spacing="5" fill="#F5F4ED">PETMOVE</text>
-  <text x="256" y="312" text-anchor="middle" dominant-baseline="central"
-        font-family="'Alonzo', 'Bodoni Moda', 'Playfair Display', Georgia, serif"
-        font-weight="700" font-size="42" letter-spacing="18" fill="#F5F4ED">Work</text>
+        font-weight="700" font-size="160" letter-spacing="4" fill="#F5F4ED">PMW</text>
 </svg>

@@ -17,6 +17,67 @@ export const NAV_ITEMS: Array<{ id: TabId; icon: typeof Folder; label: string }>
   { id: 'messages', icon: MessageSquare, label: '메시지' },
 ]
 
+// 좌측 상단 로고 시안 — 시안 비교용.
+//   text         : 기존 한글 워드마크 (펫무브워크)
+//   wordmark     : PETMOVE / WORK 영문 두 줄 (Bodoni)
+//   full         : 사람+강아지 일러스트 + PETMOVE / WORK (정사각형)
+//   alonzo       : PETMOVE 단일 워드 SVG (Alonzo Extralight, Bold weight)
+//   alonzo-text  : "PETMOVE Work" HTML 텍스트 (self-hosted Alonzo Cnd, bold)
+const LOGO_VARIANT: 'text' | 'wordmark' | 'full' | 'alonzo' | 'alonzo-text' = 'alonzo-text'
+
+function LogoMark() {
+  if (LOGO_VARIANT === 'text') {
+    return (
+      <span className="font-serif text-[18px] font-medium tracking-tight text-foreground whitespace-nowrap">
+        펫무브워크
+      </span>
+    )
+  }
+  if (LOGO_VARIANT === 'alonzo-text') {
+    // self-hosted Alonzo ExtraLight + faux bold (font-weight: 700) — 두 줄 워드마크.
+    return (
+      <span
+        style={{ fontFamily: "'Alonzo', 'Bodoni Moda', 'Playfair Display', serif" }}
+        className="inline-flex items-baseline gap-[6px] text-foreground leading-none whitespace-nowrap"
+      >
+        <span className="text-[19px] font-bold tracking-wide">PETMOVE</span>
+        <span className="text-[12px] font-bold tracking-[0.18em]">Work</span>
+      </span>
+    )
+  }
+  if (LOGO_VARIANT === 'wordmark') {
+    // 600x220 viewBox → h-10 (40px) 기준 가로 ~109px
+    return (
+      <img
+        src="/logo/petmove-wordmark.svg"
+        alt="펫무브워크"
+        className="h-10 w-auto select-none"
+        draggable={false}
+      />
+    )
+  }
+  if (LOGO_VARIANT === 'alonzo') {
+    // 600x140 viewBox → h-7 (28px) 기준 가로 ~120px
+    return (
+      <img
+        src="/logo/petmove-alonzo.svg"
+        alt="PETMOVE"
+        className="h-7 w-auto select-none"
+        draggable={false}
+      />
+    )
+  }
+  // full — 1083x865 → h-12 기준 가로 ~60px
+  return (
+    <img
+      src="/logo/petmove-full.svg"
+      alt="펫무브워크"
+      className="h-12 w-auto select-none"
+      draggable={false}
+    />
+  )
+}
+
 type TopBarProps = {
   /**
    * Currently active dashboard tab. `null`/undefined = no dashboard tab active
@@ -164,9 +225,7 @@ export function TopBar({
           >
             {/* Drawer 헤더 — 로고 + 닫기 */}
             <div className="shrink-0 flex items-center justify-between h-14 px-md border-b border-border/80">
-              <span className="font-serif text-[18px] font-medium tracking-tight text-foreground">
-                펫무브워크
-              </span>
+              <LogoMark />
               <button
                 type="button"
                 onClick={() => setMenuOpen(false)}
@@ -251,23 +310,25 @@ export function TopBar({
           </aside>
         </div>
 
-        {/* App name — serif wordmark. 항상 홈 목록 모드로 복귀 (검사/신고/서류 모드도 리셋). */}
+        {/* App name / logo — 시안은 LOGO_VARIANT 상수로 전환. 항상 홈 목록 모드로 복귀. */}
         {onTabChange ? (
           <button
             type="button"
             onClick={() => { onTabChange('cases'); dispatchHomeReset() }}
-            className="font-serif text-[18px] font-medium tracking-tight text-foreground whitespace-nowrap hover:opacity-70 transition-opacity"
+            aria-label="홈"
+            className="inline-flex items-center hover:opacity-70 transition-opacity"
           >
-            펫무브워크
+            <LogoMark />
           </button>
         ) : (
           <Link
             href="/cases"
             prefetch={false}
             onClick={dispatchHomeReset}
-            className="font-serif text-[18px] font-medium tracking-tight text-foreground whitespace-nowrap hover:opacity-70 transition-opacity"
+            aria-label="홈"
+            className="inline-flex items-center hover:opacity-70 transition-opacity"
           >
-            펫무브워크
+            <LogoMark />
           </Link>
         )}
 

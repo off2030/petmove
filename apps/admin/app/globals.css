@@ -12,6 +12,15 @@
   src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2-subset/PretendardVariable.woff2') format('woff2-variations');
 }
 
+/* Alonzo ExtraLight — 좌측 상단 로고 워드마크 전용. self-hosted .otf. */
+@font-face {
+  font-family: 'Alonzo';
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src: url('/fonts/Alonzo-ExtraLight.otf') format('opentype');
+}
+
 /* ─────────────────────────────────────────────────────────────
    PetMove — Editorial tone (펫무브워크 Design System)
    Parchment + Terracotta + Near-black. 모든 뉴트럴은 따뜻한 계열.

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 220" width="600" height="220">
+  <!-- PETMOVE -->
+  <text x="300" y="120"
+        fill="#9c5d3a"
+        font-family="'Bodoni Moda', 'Bodoni 72', 'Playfair Display', 'Times New Roman', serif"
+        font-size="92"
+        font-weight="400"
+        letter-spacing="6"
+        text-anchor="middle">PETMOVE</text>
+
+  <!-- WORK -->
+  <text x="300" y="190"
+        fill="#9c5d3a"
+        font-family="'Cormorant Garamond', 'Cormorant', 'Times New Roman', serif"
+        font-size="38"
+        font-weight="300"
+        letter-spacing="14"
+        text-anchor="middle">WORK</text>
+</svg>
