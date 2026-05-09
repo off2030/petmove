@@ -261,6 +261,12 @@ function requiresTapewormForCase(caseRow: CaseRow, data: Record<string, unknown>
   return species === 'dog'
 }
 
+/** Destination contains 중국 (transit 케이스 포함, 콤마 분리). */
+function destinationIsChina(dest: unknown): boolean {
+  if (typeof dest !== 'string' || !dest) return false
+  return dest.split(',').map(s => s.trim()).includes('중국')
+}
+
 /** YYYY-MM-DD → YYYY/MM/DD for Japan forms. */
 function fmtDate(s: unknown): string {
   if (typeof s !== 'string' || !s) return ''
@@ -1135,6 +1141,16 @@ function resolveField(
   // Australian date format: dd/mm/yyyy
   if (transform === 'date_dmy') {
     return fmtDateDMY(raw)
+  }
+
+  // Append "(Implant site: Neck)" to date when destination is 중국 (GACC requires
+  // implantation site alongside the date on Form25). Date stays at start so the
+  // form-level reformatDate can still convert YYYY-MM-DD → YYYY/MM/DD.
+  if (transform === 'with_implant_site_if_cn') {
+    const date = String(raw ?? '').trim()
+    if (!date) return ''
+    if (!destinationIsChina(caseRow.destination)) return date
+    return `${date} (Implant site: Neck)`
   }
 
   // Extract a string field from a JSON object source.
