@@ -21,10 +21,11 @@ interface SortedRabies {
   ascIndex: number
 }
 
-function normalize(rabiesDates: unknown, eligibleAfterDate?: string | null): SortedRabies[] {
+function normalize(rabiesDates: unknown, eligibleAfterDate?: string | null, includeOtherHospital?: boolean): SortedRabies[] {
   if (!Array.isArray(rabiesDates)) return []
-  // 별지 25호/EX/FormRE 는 타병원 접종을 자동 제외 → 모달도 동일하게 필터.
-  // 인덱스는 server 의 stripOtherHospitalRecords 후 sortedAsc 와 동일한 기준이어야 함.
+  // 별지 25호/EX 는 타병원 접종을 자동 제외 (서버도 동일하게 strip).
+  // FormRE 는 타병원도 후보에 포함 (서버 strip 안 함).
+  // ascIndex 는 서버의 sortedAsc(rabies_dates) 와 동일 공간이어야 인덱스가 맞음.
   const recs: { date: string; validUntil: string | null; otherHospital: boolean }[] = []
   for (const r of rabiesDates) {
     if (!r) continue
@@ -32,19 +33,17 @@ function normalize(rabiesDates: unknown, eligibleAfterDate?: string | null): Sor
       recs.push({ date: r, validUntil: null, otherHospital: false })
     } else if (typeof r === 'object') {
       const rec = r as RabiesRecord
-      if (rec.other_hospital) continue
+      if (rec.other_hospital && !includeOtherHospital) continue
       if (typeof rec.date === 'string' && rec.date) {
         recs.push({
           date: rec.date,
           validUntil: typeof rec.valid_until === 'string' ? rec.valid_until : null,
-          otherHospital: false,
+          otherHospital: !!rec.other_hospital,
         })
       }
     }
   }
   recs.sort((a, b) => a.date.localeCompare(b.date))
-  // ascIndex 는 전체 비-타병원 sortedAsc 기준 — 서버 rabiesIndices 와 동일 공간.
-  // eligibleAfterDate 가 주어지면 그 이후 접종만 표시 (FormRE 의 "1차 항체검사 후" 룰).
   const indexed = recs.map((r, i) => ({ ...r, ascIndex: i }))
   if (eligibleAfterDate) return indexed.filter((r) => r.date > eligibleAfterDate)
   return indexed
@@ -58,12 +57,17 @@ interface Props {
   rabiesDates: unknown
   /** 표시할 접종을 이 날짜 이후 (>) 로 제한. FormRE 는 1차 항체검사일 전달. */
   eligibleAfterDate?: string | null
+  /** 타병원 접종(`other_hospital: true`) 도 후보에 포함. FormRE 만 true. */
+  includeOtherHospital?: boolean
   /** 모달이 닫히면 호출 (cancel 또는 confirm). confirm 시 indices 비어있지 않음. */
   onClose: (indices: number[] | null) => void
 }
 
-export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, eligibleAfterDate, onClose }: Props) {
-  const sorted = useMemo(() => normalize(rabiesDates, eligibleAfterDate), [rabiesDates, eligibleAfterDate])
+export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, eligibleAfterDate, includeOtherHospital, onClose }: Props) {
+  const sorted = useMemo(
+    () => normalize(rabiesDates, eligibleAfterDate, includeOtherHospital),
+    [rabiesDates, eligibleAfterDate, includeOtherHospital],
+  )
   // 기본 — 가장 최신 N개. (Form25 의 경우 최근 부스터가 면역 증명에 가장 관련성 높음.)
   const defaultSelected = useMemo(() => {
     const n = sorted.length

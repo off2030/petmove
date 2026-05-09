@@ -214,7 +214,7 @@ function Inner() {
   const [shareOpen, setShareOpen] = useState<{ case: CaseRow; label: string } | null>(null)
   // 별지 25호/EX 의 광견병 슬롯이 부족할 때 띄우는 선택 모달.
   const [rabiesPick, setRabiesPick] = useState<
-    | { caseId: string; formKey: 'Form25' | 'Form25AuNz' | 'FormRE'; rabiesDates: unknown; destination: string | null; cap: number; eligibleAfterDate?: string | null }
+    | { caseId: string; formKey: 'Form25' | 'Form25AuNz' | 'FormRE'; rabiesDates: unknown; destination: string | null; cap: number; eligibleAfterDate?: string | null; includeOtherHospital?: boolean }
     | null
   >(null)
   const [includeSignature, setIncludeSignature] = useState(false)
@@ -493,6 +493,7 @@ function Inner() {
           slotCount={rabiesPick?.cap ?? 3}
           rabiesDates={rabiesPick?.rabiesDates}
           eligibleAfterDate={rabiesPick?.eligibleAfterDate}
+          includeOtherHospital={rabiesPick?.includeOtherHospital}
           onClose={(indices) => {
             const pick = rabiesPick
             setRabiesPick(null)
@@ -666,18 +667,11 @@ function Inner() {
                                 if (cap !== undefined) {
                                   const dataObj = (selectedCase.data ?? {}) as Record<string, unknown>
                                   const rabiesAll = Array.isArray(dataObj.rabies_dates) ? dataObj.rabies_dates : []
-                                  // 타병원 접종은 제외 (별지 25호/EX/FormRE 공통).
-                                  const rabies = rabiesAll.filter((r) => {
-                                    if (r && typeof r === 'object' && !Array.isArray(r)) {
-                                      return !(r as { other_hospital?: boolean }).other_hospital
-                                    }
-                                    return true
-                                  })
                                   if (formKey === 'FormRE') {
-                                    // FormRE: 1차 항체검사일 이후 접종이 2개 이상일 때 모달.
+                                    // FormRE: 타병원 포함 모든 접종 중 1차 항체검사 이후가 2개 이상이면 모달.
                                     const firstTiter = computeFirstTiterDate(dataObj.rabies_titer_records)
                                     if (firstTiter) {
-                                      const postTiterCount = rabies.filter((r) => {
+                                      const postTiterCount = rabiesAll.filter((r) => {
                                         const d = typeof r === 'string' ? r : (r && typeof r === 'object' ? (r as { date?: string }).date : null)
                                         return typeof d === 'string' && d > firstTiter
                                       }).length
@@ -689,19 +683,29 @@ function Inner() {
                                           eligibleAfterDate: firstTiter,
                                           destination: focusDest,
                                           cap,
+                                          includeOtherHospital: true,
                                         })
                                         return
                                       }
                                     }
-                                  } else if (rabies.length > cap) {
-                                    setRabiesPick({
-                                      caseId: selectedCase.id,
-                                      formKey: formKey as 'Form25' | 'Form25AuNz',
-                                      rabiesDates: dataObj.rabies_dates,
-                                      destination: focusDest,
-                                      cap,
+                                  } else {
+                                    // 별지 25호/EX: 타병원 접종 제외하고 카운트
+                                    const rabies = rabiesAll.filter((r) => {
+                                      if (r && typeof r === 'object' && !Array.isArray(r)) {
+                                        return !(r as { other_hospital?: boolean }).other_hospital
+                                      }
+                                      return true
                                     })
-                                    return
+                                    if (rabies.length > cap) {
+                                      setRabiesPick({
+                                        caseId: selectedCase.id,
+                                        formKey: formKey as 'Form25' | 'Form25AuNz',
+                                        rabiesDates: dataObj.rabies_dates,
+                                        destination: focusDest,
+                                        cap,
+                                      })
+                                      return
+                                    }
                                   }
                                 }
                                 void downloadCertPdf(formKey, selectedCase.id, focusDest)

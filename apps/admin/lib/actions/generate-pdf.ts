@@ -15,10 +15,9 @@ export type GenerateMultiPdfResult =
   | { ok: true; docs: Array<{ pdf: string; filename: string }> }
   | { ok: false; error: string }
 
-/** 별지25와 별지25 EX, FormRE 는 타병원 접종 기록(other_hospital=true)을 제외해서 발급.
- * FormRE 는 광견병 슬롯 선택 모달이 비-타병원 sortedAsc 인덱스를 보내므로 서버도
- * 같은 인덱스 공간으로 맞춰야 함. (after_titer 룰은 추가로 1차 항체검사 후만 노출.) */
-const OTHER_HOSPITAL_EXCLUDED_FORMS = new Set(['Form25', 'Form25AuNz', 'FormRE'])
+/** 별지25와 별지25 EX는 타병원 접종 기록(other_hospital=true)을 제외해서 발급.
+ * FormRE 는 타병원 접종도 그대로 노출 (1차 항체검사 후 룰만 적용). */
+const OTHER_HOSPITAL_EXCLUDED_FORMS = new Set(['Form25', 'Form25AuNz'])
 /** 타병원 접종 체크를 노출하는 백신 데이터 키. */
 const OTHER_HOSPITAL_VACCINE_KEYS = ['rabies_dates', 'general_vaccine_dates', 'civ_dates', 'kennel_cough_dates']
 
