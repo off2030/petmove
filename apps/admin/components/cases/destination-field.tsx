@@ -291,17 +291,17 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
         </div>
         {selected.length > 0 && targetDest && (
           <div
-            className="shrink-0 inline-flex items-center rounded-full border border-border/70 bg-background p-0.5 font-serif text-[12px] mt-0.5"
+            className="shrink-0 inline-flex items-center rounded-full bg-pmw-tag/30 p-0.5 font-serif text-[12px] mt-0.5"
             title={multi ? `${targetDest} 여행 유형` : '여행 유형'}
           >
             <button
               type="button"
               onClick={() => setTripType('round')}
               className={cn(
-                'px-2 py-0.5 rounded-full transition-colors',
+                'px-2.5 py-0.5 rounded-full transition-all',
                 tripType === 'round'
-                  ? 'bg-foreground text-background'
-                  : 'text-muted-foreground hover:text-foreground',
+                  ? 'bg-pmw-tag text-pmw-tag-foreground'
+                  : 'text-pmw-tag-foreground/55 hover:text-pmw-tag-foreground',
               )}
             >
               왕복
@@ -310,10 +310,10 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
               type="button"
               onClick={() => setTripType('one_way')}
               className={cn(
-                'px-2 py-0.5 rounded-full transition-colors',
+                'px-2.5 py-0.5 rounded-full transition-all',
                 tripType === 'one_way'
-                  ? 'bg-foreground text-background'
-                  : 'text-muted-foreground hover:text-foreground',
+                  ? 'bg-pmw-tag text-pmw-tag-foreground'
+                  : 'text-pmw-tag-foreground/55 hover:text-pmw-tag-foreground',
               )}
             >
               편도
