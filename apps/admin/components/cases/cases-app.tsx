@@ -87,6 +87,16 @@ const CERT_MULTI_KEYS: Record<string, string> = {
   uk: 'UK',
 }
 
+/** rabies_titer_records 의 1차 (가장 오래된) 검사 날짜. FormRE 의 "기재 대상" 판정용. */
+function computeFirstTiterDate(records: unknown): string | null {
+  if (!Array.isArray(records)) return null
+  const dates = records
+    .map((r) => (r && typeof r === 'object' ? (r as { date?: unknown }).date : null))
+    .filter((d): d is string => typeof d === 'string' && d.length > 0)
+    .sort()
+  return dates[0] ?? null
+}
+
 /**
  * 신고 탭 포함 토글. 두 종류의 국가 목록을 사용한다(설정 > 신고 에서 편집):
  *  - buttonCountries: 신고 버튼이 노출되는 국가
@@ -204,7 +214,7 @@ function Inner() {
   const [shareOpen, setShareOpen] = useState<{ case: CaseRow; label: string } | null>(null)
   // 별지 25호/EX 의 광견병 슬롯이 부족할 때 띄우는 선택 모달.
   const [rabiesPick, setRabiesPick] = useState<
-    | { caseId: string; formKey: 'Form25' | 'Form25AuNz'; rabiesDates: unknown; destination: string | null; cap: number }
+    | { caseId: string; formKey: 'Form25' | 'Form25AuNz' | 'FormRE'; rabiesDates: unknown; destination: string | null; cap: number; eligibleAfterDate?: string | null }
     | null
   >(null)
   const [includeSignature, setIncludeSignature] = useState(false)
@@ -476,10 +486,13 @@ function Inner() {
         <RabiesSelectDialog
           open={!!rabiesPick}
           formLabel={
-            rabiesPick?.formKey === 'Form25AuNz' ? '별지 25호 EX (호주/뉴질랜드)' : '별지 25호'
+            rabiesPick?.formKey === 'Form25AuNz' ? '별지 25호 EX (호주/뉴질랜드)' :
+            rabiesPick?.formKey === 'FormRE' ? '일본 재입국 (FormRE)' :
+            '별지 25호'
           }
           slotCount={rabiesPick?.cap ?? 3}
           rabiesDates={rabiesPick?.rabiesDates}
+          eligibleAfterDate={rabiesPick?.eligibleAfterDate}
           onClose={(indices) => {
             const pick = rabiesPick
             setRabiesPick(null)
@@ -653,14 +666,34 @@ function Inner() {
                                 if (cap !== undefined) {
                                   const dataObj = (selectedCase.data ?? {}) as Record<string, unknown>
                                   const rabiesAll = Array.isArray(dataObj.rabies_dates) ? dataObj.rabies_dates : []
-                                  // 별지 25호/EX 는 타병원 접종 제외하므로 그 수만 cap 비교.
+                                  // 타병원 접종은 제외 (별지 25호/EX/FormRE 공통).
                                   const rabies = rabiesAll.filter((r) => {
                                     if (r && typeof r === 'object' && !Array.isArray(r)) {
                                       return !(r as { other_hospital?: boolean }).other_hospital
                                     }
                                     return true
                                   })
-                                  if (rabies.length > cap) {
+                                  if (formKey === 'FormRE') {
+                                    // FormRE: 1차 항체검사일 이후 접종이 2개 이상일 때 모달.
+                                    const firstTiter = computeFirstTiterDate(dataObj.rabies_titer_records)
+                                    if (firstTiter) {
+                                      const postTiterCount = rabies.filter((r) => {
+                                        const d = typeof r === 'string' ? r : (r && typeof r === 'object' ? (r as { date?: string }).date : null)
+                                        return typeof d === 'string' && d > firstTiter
+                                      }).length
+                                      if (postTiterCount >= 2) {
+                                        setRabiesPick({
+                                          caseId: selectedCase.id,
+                                          formKey: 'FormRE',
+                                          rabiesDates: dataObj.rabies_dates,
+                                          eligibleAfterDate: firstTiter,
+                                          destination: focusDest,
+                                          cap,
+                                        })
+                                        return
+                                      }
+                                    }
+                                  } else if (rabies.length > cap) {
                                     setRabiesPick({
                                       caseId: selectedCase.id,
                                       formKey: formKey as 'Form25' | 'Form25AuNz',

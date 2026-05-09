@@ -21,9 +21,9 @@ interface SortedRabies {
   ascIndex: number
 }
 
-function normalize(rabiesDates: unknown): SortedRabies[] {
+function normalize(rabiesDates: unknown, eligibleAfterDate?: string | null): SortedRabies[] {
   if (!Array.isArray(rabiesDates)) return []
-  // 별지 25호/EX 는 타병원 접종을 자동 제외 → 모달도 동일하게 필터.
+  // 별지 25호/EX/FormRE 는 타병원 접종을 자동 제외 → 모달도 동일하게 필터.
   // 인덱스는 server 의 stripOtherHospitalRecords 후 sortedAsc 와 동일한 기준이어야 함.
   const recs: { date: string; validUntil: string | null; otherHospital: boolean }[] = []
   for (const r of rabiesDates) {
@@ -43,21 +43,27 @@ function normalize(rabiesDates: unknown): SortedRabies[] {
     }
   }
   recs.sort((a, b) => a.date.localeCompare(b.date))
-  return recs.map((r, i) => ({ ...r, ascIndex: i }))
+  // ascIndex 는 전체 비-타병원 sortedAsc 기준 — 서버 rabiesIndices 와 동일 공간.
+  // eligibleAfterDate 가 주어지면 그 이후 접종만 표시 (FormRE 의 "1차 항체검사 후" 룰).
+  const indexed = recs.map((r, i) => ({ ...r, ascIndex: i }))
+  if (eligibleAfterDate) return indexed.filter((r) => r.date > eligibleAfterDate)
+  return indexed
 }
 
 interface Props {
   open: boolean
   formLabel: string
-  /** dedicated 슬롯 수 — 별지 25호=3, 별지 25 EX=2. */
+  /** dedicated 슬롯 수 — 별지 25호=3, 별지 25 EX=2, FormRE=2. */
   slotCount: number
   rabiesDates: unknown
+  /** 표시할 접종을 이 날짜 이후 (>) 로 제한. FormRE 는 1차 항체검사일 전달. */
+  eligibleAfterDate?: string | null
   /** 모달이 닫히면 호출 (cancel 또는 confirm). confirm 시 indices 비어있지 않음. */
   onClose: (indices: number[] | null) => void
 }
 
-export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, onClose }: Props) {
-  const sorted = useMemo(() => normalize(rabiesDates), [rabiesDates])
+export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, eligibleAfterDate, onClose }: Props) {
+  const sorted = useMemo(() => normalize(rabiesDates, eligibleAfterDate), [rabiesDates, eligibleAfterDate])
   // 기본 — 가장 최신 N개. (Form25 의 경우 최근 부스터가 면역 증명에 가장 관련성 높음.)
   const defaultSelected = useMemo(() => {
     const n = sorted.length
@@ -172,4 +178,5 @@ export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, on
 export const RABIES_SLOT_CAP: Record<string, number> = {
   Form25: 3,
   Form25AuNz: 2,
+  FormRE: 2,
 }
