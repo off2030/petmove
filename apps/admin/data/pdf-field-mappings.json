@@ -3847,7 +3847,7 @@
     "template": "AQS_279.pdf",
     "description": "Hawaii 입주 신고서 (Animal Quarantine Station AQS-279 — Dog and Cat Entry Form for Hawaii). Page 1: 1) PLANNED DATE OF ARRIVAL, 2) PET INFORMATION, 3) PRIMARY OWNER INFORMATION. Page 3: Print Name & Date",
     "filename": "AQS_279_{pet_name}.pdf",
-    "dateFormat": "dmy",
+    "dateFormat": "mdy_slash",
     "flatten": true,
     "fields": {
       "1 PLANNED DATE OF ARRIVAL": {
