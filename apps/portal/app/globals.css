@@ -1,0 +1,2097 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Pretendard — 한글 글리프 전용. Google Fonts 미등록이라 jsdelivr CDN 경유.
+   latin 폰트(Inter Tight/Source Serif) 뒤 fallback 으로 스택. */
+@font-face {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 45 920;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2-subset/PretendardVariable.woff2') format('woff2-variations');
+}
+
+/* Alonzo ExtraLight — 좌측 상단 로고 워드마크 전용. self-hosted .otf. */
+@font-face {
+  font-family: 'Alonzo';
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src: url('/fonts/Alonzo-ExtraLight.otf') format('opentype');
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PetMove — Editorial tone (펫무브워크 Design System)
+   Parchment + Terracotta + Near-black. 모든 뉴트럴은 따뜻한 계열.
+   ───────────────────────────────────────────────────────────── */
+
+@layer base {
+  :root {
+    /* ── PMW tokens (editorial spec) ──────────────────────────── */
+    /* Fonts: next/font 가 --font-* 를 주입 → 이름 있는 alias 로 노출 */
+    --pmw-font-serif: var(--font-serif), var(--font-serif-kr), Georgia, 'Times New Roman', serif;
+    --pmw-font-sans: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    --pmw-font-mono: var(--font-mono), 'Pretendard', ui-monospace, 'SF Mono', Menlo, monospace;
+
+    /* === Warm Stationery raw PMW 토큰 — 채팅 패널 / 카드 surface 등 직접 참조용 === */
+
+    /* Neutral text */
+    --pmw-near-black: #28201A;       /* warm ink */
+    --pmw-olive-gray: #6B5F4F;       /* warm dark olive */
+    --pmw-stone-gray: #918975;       /* warm gray */
+
+    /* Accent — burgundy / clay */
+    --pmw-deep: #7A2E2E;             /* deep burgundy (primary 와 일치) */
+    --pmw-clay-soft: #E5D9C2;        /* warm cream tag */
+
+    /* Status (forest / olive / rust trio) */
+    --pmw-sage: #3F5F3F;             /* forest green (positive) */
+    --pmw-sage-soft: hsl(35 22% 86%); /* warm stone — 채팅 active row, page bg 와 같은 family */
+    --pmw-sage-paper: hsl(32 30% 92%); /* page bg(--background) 와 동일 — border만 경계 */
+    --pmw-amber: #8B7E4F;            /* olive (calendar today) */
+    --pmw-rust: #A04525;             /* rust red (destructive) */
+
+    /* Surface */
+    --pmw-border-warm: #D9CFB8;      /* warm hairline */
+    --pmw-parchment: #F4EDE0;        /* page bg */
+    --pmw-paper: #FBF7ED;            /* card bg */
+
+    /* Warm editorial palette — HSL pairs */
+
+    /* Page: Parchment #f5f4ed */
+    /* === Editorial fresh design: "Warm Stationery / Library" ===
+       매거진·편지지·도서관 톤. 따뜻한 종이 + 깊은 burgundy 액센트.
+       ============================================================ */
+
+    /* Page bg: 따뜻한 bone (#F4EDE0) — 종이 느낌 강함 */
+    --background: 32 30% 92%;
+    /* Primary text: 깊은 warm ink (#28201A) — 갈색 ondertone, 책 잉크 톤 */
+    --foreground: 29 19% 13%;
+
+    /* Card: 페이지보다 명확히 밝은 cream (#FBF7ED) — "raised paper" */
+    --card: 40 56% 96%;
+    --card-foreground: 29 19% 13%;
+
+    /* Popover: 가장 밝은 ivory — dropdown 떠 있음 */
+    --popover: 40 56% 96%;
+    --popover-foreground: 29 19% 13%;
+
+    /* Primary: 깊은 burgundy (#7A2E2E) — 매거진 시그니처 액센트 */
+    --primary: 0 46% 33%;
+    --primary-foreground: 32 30% 92%;
+
+    /* Secondary: warm sand (#E8DEC4) */
+    --secondary: 40 36% 84%;
+    --secondary-foreground: 29 19% 13%;
+
+    /* Muted: page bg 와 같은 family, 채도 ↓ — 상대 말풍선 */
+    --muted: 36 22% 86%;
+    /* Muted foreground: warm dark olive (#6B5F4F) */
+    --muted-foreground: 35 15% 36%;
+
+    /* Accent: warm sand */
+    --accent: 40 36% 84%;
+    --accent-foreground: 29 19% 13%;
+
+    /* Destructive: rust red (#A04525) */
+    --destructive: 16 64% 38%;
+    --destructive-foreground: 32 30% 92%;
+
+    /* Border: warm hairline (#D9CFB8) */
+    --border: 40 26% 79%;
+    --input: 40 26% 79%;
+    /* Ring (focus): 깊은 ink blue (#2F4459) — 매거진 cool 액센트 */
+    --ring: 215 32% 27%;
+
+    --radius: 0.5rem;
+
+    /* ── Semantic 색 토큰 (HSL 컴포넌트만 — Tailwind opacity modifier 'bg-pmw-accent/15' 호환).
+       하드코딩된 editorial brand 색을 의미 기반 토큰으로 추출 — 다른 스킨에서 다른 값 정의 가능.
+       각 스킨이 같은 의미 다른 색으로 매핑. */
+    /* PMW semantic — Warm Stationery 팔레트 */
+    --pmw-accent: 30 36% 65%;            /* #C9A580 muted clay — 편집 모드/surface */
+    --pmw-accent-fg: 32 30% 92%;         /* #F4EDE0 cream — solid accent 위 */
+    --pmw-accent-strong: 32 30% 43%;     /* #8C6F4E warm brown — tinted/hover */
+    --pmw-tag-bg: 40 36% 83%;            /* #E5D9C2 warm cream */
+    --pmw-tag-fg: 35 27% 30%;            /* #5E4D38 dark olive */
+    --pmw-cal-today: 49 30% 42%;         /* #8B7E4F olive */
+    --pmw-cal-sunday: 16 56% 40%;        /* #A04A2D rust orange */
+    --pmw-cal-saturday: 215 32% 27%;     /* #2F4459 ink blue */
+    --pmw-positive: 120 20% 31%;         /* #3F5F3F forest green */
+    --pmw-avatar-bg: 33 41% 78%;         /* #DEC8AE warm peach */
+    --pmw-avatar-fg: 24 53% 28%;         /* #6B4521 deep brown */
+    --pmw-code-label: 32 16% 49%;        /* #918068 warm gray */
+
+    /* 텍스트 색 4-tier — warm 잉크 */
+    --pmw-text-primary:    29 19% 13%;   /* #28201A deep ink */
+    --pmw-text-secondary:  35 15% 36%;   /* #6B5F4F warm dark olive */
+    --pmw-text-tertiary:   32 11% 58%;   /* #9F968A warm gray */
+    --pmw-text-disabled:   39 19% 73%;   /* #C9C0AE warm light */
+
+    /* Warning/overdue/info — semantic 보조 색 */
+    --pmw-warning: 36 67% 37%;           /* #A0741F warm honey amber — text */
+    --pmw-warning-bg: 39 70% 88%;        /* #F1E5C4 light cream — banner bg */
+    --pmw-warning-fg: 35 50% 22%;        /* #5A4520 dark amber — banner text */
+    --pmw-info: 215 32% 35%;             /* #3D5274 ink blue — links/info */
+
+    /* Chip 8-tone universal palette — 검사기관·목적지 chip 통합.
+       editorial: warm cream variants (Warm Stationery 톤 일관). */
+    --pmw-chip-red-bg:     348 24% 86%;  /* dusty rose (KSVDL-R) */
+    --pmw-chip-red-fg:     348 36% 34%;  /* dark rose */
+    --pmw-chip-amber-bg:   40 36% 83%;   /* warm cream (APQA Seoul) */
+    --pmw-chip-amber-fg:   35 27% 30%;   /* dark olive brown */
+    --pmw-chip-olive-bg:   212 12% 82%;  /* slate ink cream (KRSL) */
+    --pmw-chip-olive-fg:   218 22% 30%;  /* dark slate ink */
+    --pmw-chip-moss-bg:    90 16% 84%;   /* muted sage olive (APQA HQ) */
+    --pmw-chip-moss-fg:    95 22% 30%;   /* dark sage */
+    --pmw-chip-blue-bg:    216 25% 87%;  /* warm-leaning cream blue (APQA EU) */
+    --pmw-chip-blue-fg:    218 28% 31%;  /* dark navy */
+    --pmw-chip-plum-bg:    30 8% 84%;    /* warm stone grey (VBDDL) */
+    --pmw-chip-plum-fg:    32 14% 30%;   /* dark warm stone */
+    --pmw-chip-mauve-bg:   25 14% 80%;   /* warm walnut (KSVDL) */
+    --pmw-chip-mauve-fg:   25 26% 28%;   /* dark walnut */
+    --pmw-chip-neutral-bg: 36 14% 84%;   /* warm gray */
+    --pmw-chip-neutral-fg: 36 9% 28%;    /* dark warm gray */
+
+    /* Typography 스케일 — Editorial (서체가 주인공: serif 헤더 + sans 본문 + italic 시그니처) */
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.005em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.6;   --pmw-tracking-sm:   0.005em;
+    --pmw-text-base: 15px;   --pmw-leading-base: 1.6;   --pmw-tracking-base: 0;
+    --pmw-text-md:   16px;   --pmw-leading-md:   1.6;   --pmw-tracking-md:   0;
+    --pmw-text-lg:   22px;   --pmw-leading-lg:   1.3;   --pmw-tracking-lg:   -0.015em;
+    --pmw-text-xl:   28px;   --pmw-leading-xl:   1.2;   --pmw-tracking-xl:   -0.02em;
+    --pmw-text-2xl:  36px;   --pmw-leading-2xl:  1.15;  --pmw-tracking-2xl:  -0.02em;
+
+    /* ── Bot avatar (PMW 워드마크 아바타) — 에디토리얼 브랜드 브라운.
+       다른 스킨은 아래 [data-skin] 룰에서 --primary 로 자동 override. */
+    --pmw-bot-bg: #A56D54;
+    --pmw-bot-fg: #F5F4ED;
+
+    /* ── Mobile — safe-area-inset alias (iOS notch/home-indicator)
+       env() 를 직접 못 쓰는 utility-first Tailwind 환경에서 var() 로 우회.
+       Android/데스크톱은 0px 폴백. */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+  }
+
+  .dark {
+    /* === Warm Stationery raw PMW 토큰 dark === */
+    --pmw-near-black: #F4EDE0;       /* cream */
+    --pmw-olive-gray: #B8AC97;       /* warm light */
+    --pmw-stone-gray: #918975;       /* warm gray */
+    --pmw-deep: #B85555;             /* lighter burgundy */
+    --pmw-clay-soft: #3D3530;        /* dark warm */
+    --pmw-sage: #8FA888;             /* light forest */
+    --pmw-sage-soft: #2C2925;        /* dark warm soft */
+    --pmw-sage-paper: #1F1B17;       /* deep warm paper */
+    --pmw-amber: #C5B98A;            /* light olive */
+    --pmw-rust: #C46347;             /* light rust */
+    --pmw-border-warm: #3D3530;      /* dark warm hairline */
+    --pmw-parchment: #1A1612;        /* page bg dark */
+    --pmw-paper: #221F1B;            /* card bg dark */
+
+    color-scheme: dark;
+    /* Page bg: deep warm dark (#1A1612) — 책 잉크 종이의 reverse */
+    --background: 32 14% 9%;
+    /* Foreground: cream (#F4EDE0) */
+    --foreground: 32 30% 92%;
+
+    /* Card 살짝 밝은 dark warm (#211C18) — 페이지보다 위로 떠 있는 paper */
+    --card: 30 12% 12%;
+    --card-foreground: 32 30% 92%;
+
+    /* Popover: 가장 밝은 dark warm (#2C251F) */
+    --popover: 30 18% 15%;
+    --popover-foreground: 32 30% 92%;
+
+    /* Primary: lighter burgundy (#B85555) — dark 에선 lift */
+    --primary: 0 41% 53%;
+    --primary-foreground: 32 30% 92%;
+
+    /* Secondary/muted: deep warm gray (#3D3530) */
+    --secondary: 25 12% 21%;
+    --secondary-foreground: 32 30% 92%;
+
+    --muted: 25 12% 21%;
+    /* Muted foreground: warm light (#B8AC97) */
+    --muted-foreground: 36 18% 66%;
+
+    --accent: 25 12% 21%;
+    --accent-foreground: 32 30% 92%;
+
+    --destructive: 14 51% 53%;
+    --destructive-foreground: 32 30% 92%;
+
+    --border: 25 12% 21%;
+    --input: 25 12% 21%;
+    --ring: 213 24% 53%;
+
+    /* PMW semantic — Warm Stationery dark */
+    --pmw-accent: 30 38% 71%;            /* #D4B69A lighter clay */
+    --pmw-accent-fg: 32 14% 9%;          /* deep dark — solid accent 위 */
+    --pmw-accent-strong: 30 30% 58%;     /* #B89876 muted clay */
+    --pmw-tag-bg: 25 12% 21%;            /* dark warm */
+    --pmw-tag-fg: 40 36% 83%;            /* warm cream */
+    --pmw-cal-today: 47 30% 65%;         /* #C5B98A light olive */
+    --pmw-cal-sunday: 16 47% 58%;        /* #C77E5E light rust */
+    --pmw-cal-saturday: 213 17% 61%;     /* #8E9BAB light ink */
+    --pmw-positive: 113 17% 60%;         /* #8FA888 light forest */
+    --pmw-avatar-bg: 30 22% 28%;         /* dark warm peach */
+    --pmw-avatar-fg: 33 41% 78%;         /* light peach */
+    --pmw-code-label: 36 14% 60%;        /* warm gray */
+
+    /* 텍스트 색 4-tier (warm dark) */
+    --pmw-text-primary:    32 30% 92%;   /* cream */
+    --pmw-text-secondary:  36 18% 66%;   /* warm light */
+    --pmw-text-tertiary:   32 11% 50%;   /* warm med gray */
+    --pmw-text-disabled:   25 12% 30%;   /* dark warm gray */
+
+    /* Warning/info dark */
+    --pmw-warning: 36 60% 60%;           /* #C9A05E light honey */
+    --pmw-warning-bg: 35 25% 18%;        /* dark warm */
+    --pmw-warning-fg: 39 70% 80%;        /* light cream */
+    --pmw-info: 215 35% 60%;             /* light ink blue */
+
+    /* Chip 8-tone editorial dark */
+    --pmw-chip-red-bg:     348 20% 22%;  /* dusty rose (KSVDL-R) */
+    --pmw-chip-red-fg:     348 36% 80%;
+    --pmw-chip-amber-bg:   35 25% 22%;
+    --pmw-chip-amber-fg:   40 50% 78%;
+    --pmw-chip-olive-bg:   215 12% 22%;  /* slate ink (KRSL) */
+    --pmw-chip-olive-fg:   216 20% 80%;
+    --pmw-chip-moss-bg:    90 14% 22%;   /* muted sage olive (APQA HQ) */
+    --pmw-chip-moss-fg:    95 26% 78%;
+    --pmw-chip-blue-bg:    218 18% 22%;
+    --pmw-chip-blue-fg:    216 28% 80%;
+    --pmw-chip-plum-bg:    30 8% 22%;    /* warm stone grey (VBDDL) */
+    --pmw-chip-plum-fg:    32 16% 78%;
+    --pmw-chip-mauve-bg:   25 14% 22%;   /* warm walnut (KSVDL) */
+    --pmw-chip-mauve-fg:   25 30% 78%;
+    --pmw-chip-neutral-bg: 36 9% 22%;
+    --pmw-chip-neutral-fg: 36 14% 78%;
+
+    /* Bot avatar (editorial dark) — lifted clay 로 어두운 배경에서도 떠 보임. */
+    --pmw-bot-bg: #C58066;
+    --pmw-bot-fg: #F5F4ED;
+
+    /* Typography 스케일 (size/leading/tracking 은 light/dark 무관) */
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.005em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.6;   --pmw-tracking-sm:   0.005em;
+    --pmw-text-base: 15px;   --pmw-leading-base: 1.6;   --pmw-tracking-base: 0;
+    --pmw-text-md:   16px;   --pmw-leading-md:   1.6;   --pmw-tracking-md:   0;
+    --pmw-text-lg:   22px;   --pmw-leading-lg:   1.3;   --pmw-tracking-lg:   -0.015em;
+    --pmw-text-xl:   28px;   --pmw-leading-xl:   1.2;   --pmw-tracking-xl:   -0.02em;
+    --pmw-text-2xl:  36px;   --pmw-leading-2xl:  1.15;  --pmw-tracking-2xl:  -0.02em;
+  }
+
+  /* 다른 스킨은 자기 --primary 를 봇 아바타 색으로 — light/dark 자동 따라감.
+     editorial(:root, .dark) 은 위에서 브랜드 브라운으로 정의돼 이 룰에 안 걸림. */
+  [data-skin] {
+    --pmw-bot-bg: hsl(var(--primary));
+    --pmw-bot-fg: hsl(var(--primary-foreground));
+  }
+
+  /* ═════════════════════════════════════════════════════════════
+     스킨 추가 체크리스트 — 새 스킨 추가 시 빠뜨리면 안 되는 axis
+     ═════════════════════════════════════════════════════════════
+     [data-skin="X"] 와 [data-skin="X"].dark 두 블록 모두 정의:
+
+     1. shadcn 색 토큰 (HSL 컴포넌트만):
+        --background, --foreground, --card, --card-foreground,
+        --popover, --popover-foreground, --primary, --primary-foreground,
+        --secondary, --secondary-foreground, --muted, --muted-foreground,
+        --accent, --accent-foreground, --destructive, --destructive-foreground,
+        --border, --input, --ring
+
+     2. PMW semantic 토큰 (HSL 컴포넌트만 — opacity modifier 호환):
+        --pmw-accent, --pmw-accent-fg, --pmw-accent-strong,
+        --pmw-tag-bg, --pmw-tag-fg,
+        --pmw-cal-today, --pmw-cal-sunday, --pmw-cal-saturday,
+        --pmw-positive, --pmw-avatar-bg, --pmw-avatar-fg, --pmw-code-label
+
+     3. PMW raw 색 토큰 (직접 var() 참조용 — #hex):
+        --pmw-near-black, --pmw-olive-gray, --pmw-stone-gray,
+        --pmw-deep, --pmw-clay-soft, --pmw-sage, --pmw-sage-soft,
+        --pmw-sage-paper, --pmw-amber, --pmw-rust, --pmw-border-warm,
+        --pmw-parchment, --pmw-paper
+
+     4. 폰트 (Tailwind 가 실제로 쓰는 변수 — --pmw-font-* 가 아님):
+        --font-sans     (font-sans 클래스가 참조)
+        --font-serif    (font-serif 클래스가 참조)
+        --font-serif-kr (한글 serif fallback)
+        --font-mono     (font-mono 클래스가 참조)
+        — sans 폰트로 mono 평탄화 시 .font-mono { font-variant-numeric: tabular-nums }
+
+     5. radius:
+        --radius
+
+     6. Typography 스케일 (flat 이 reference 모델):
+        --pmw-text-{2xs,xs,sm,base,md,lg,xl,2xl}     8 tier 사이즈
+        --pmw-leading-{각각}                          tier 별 line-height
+        --pmw-tracking-{각각}                         tier 별 letter-spacing
+        — body 에 baseline 적용: [data-skin="X"] body { letter-spacing: var(...); line-height: var(...) }
+        — 각 컴포넌트는 className 에 size 명시 (text-base 또는 text-[Xpx])
+
+     7. 텍스트 색 4-tier (Linear 모델):
+        --pmw-text-primary    본문
+        --pmw-text-secondary  라벨, 부제
+        --pmw-text-tertiary   메타, 비활성 직전
+        --pmw-text-disabled   비활성
+        — Tailwind 클래스: text-pmw-text-primary 등
+        — 정의 안 하는 스킨은 자동으로 --foreground / --muted-foreground 로 fallback
+
+     8. (선택) italic / bold 전략:
+        — italic 안 쓰는 스킨: [data-skin="X"] .italic { font-style: normal }
+        — Manrope / Plus Jakarta 등 italic 없는 폰트 쓸 때 필수
+
+     9. (선택) 컴포넌트 그림자/테두리:
+        — 스킨 블록 뒤에 [data-skin="X"] .target { ... } 별도 규칙
+
+     ═════════════════════════════════════════════════════════════ */
+
+  /* ─────────────────────────────────────────────────────────────
+     Skin: flat — Linear / Notion / Stripe 류 미니멀.
+     순백 + zinc grays + 검정 solid primary. 단일 sans (Inter), 작은 radius.
+     채도 거의 0 — destructive 만 빨간색 유지. italic 미사용.
+     ───────────────────────────────────────────────────────────── */
+  [data-skin="flat"] {
+    /* Inter Tight → Inter (regular) — Linear/Notion 톤.
+       --font-sans/serif/serif-kr/mono 모두 sans 로 평탄화 — Linear/Notion 처럼 한 폰트로 통일.
+       Inter 의 tabular 숫자(OpenType tnum) 가 JetBrains Mono 정렬 대체. */
+    --font-sans: var(--font-sans-flat);
+    --font-serif: var(--font-sans-flat), Pretendard;
+    --font-serif-kr: var(--font-sans-kr);
+    --font-mono: var(--font-sans-flat);
+    --pmw-font-serif: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+
+    --pmw-near-black: #09090B;
+    --pmw-olive-gray: #71717A;
+    --pmw-stone-gray: #A1A1AA;
+    --pmw-deep: #18181B;
+    --pmw-clay-soft: #F4F4F5;       /* zinc-100 — surface tint */
+    --pmw-sage: #18181B;
+    --pmw-sage-soft: #E4E4E7;       /* zinc-200 — chat active row, paper 와 명확 구분 */
+    --pmw-sage-paper: #FAFAFA;       /* zinc-50 — chat panel bg */
+    --pmw-amber: #18181B;
+    --pmw-rust: #DC2626;
+    --pmw-border-warm: #E4E4E7;
+    --pmw-parchment: #FFFFFF;
+    --pmw-paper: #FFFFFF;
+
+    --background: 0 0% 100%;
+    --foreground: 240 10% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 4%;
+    --primary: 240 6% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 10% 4%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 240 5% 96%;
+    --accent-foreground: 240 10% 4%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 240 10% 4%;
+    --radius: 0.5rem;
+
+    /* Semantic 토큰 — flat (Linear/Notion 톤. 채도 0, 주말만 subtle 컬러) */
+    --pmw-accent: 240 6% 10%;
+    --pmw-accent-fg: 0 0% 98%;
+    --pmw-accent-strong: 240 5% 26%;
+    --pmw-tag-bg: 240 5% 96%;
+    --pmw-tag-fg: 240 6% 25%;
+    --pmw-cal-today: 240 6% 10%;
+    --pmw-cal-sunday: 0 65% 55%;
+    --pmw-cal-saturday: 220 50% 45%;
+    --pmw-positive: 142 60% 35%;
+    --pmw-avatar-bg: 240 5% 92%;
+    --pmw-avatar-fg: 240 6% 25%;
+    --pmw-code-label: 240 4% 46%;
+
+    /* Typography 스케일 — Linear/Notion 모델
+       (각 사이즈에 맞는 line-height + tracking + weight 조합) */
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.4;   --pmw-tracking-2xs:  0;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.5;   --pmw-tracking-xs:   -0.005em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.5;   --pmw-tracking-sm:   -0.011em;
+    --pmw-text-base: 14px;   --pmw-leading-base: 1.5;   --pmw-tracking-base: -0.011em;
+    --pmw-text-md:   15px;   --pmw-leading-md:   1.55;  --pmw-tracking-md:   -0.011em;
+    --pmw-text-lg:   18px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.015em;
+    --pmw-text-xl:   22px;   --pmw-leading-xl:   1.3;   --pmw-tracking-xl:   -0.02em;
+    --pmw-text-2xl:  28px;   --pmw-leading-2xl:  1.2;   --pmw-tracking-2xl:  -0.025em;
+
+    /* 텍스트 색 4-tier (Linear) */
+    --pmw-text-primary:    240 10% 4%;     /* zinc-950 — 본문 */
+    --pmw-text-secondary:  240 4% 46%;     /* zinc-500 — 라벨 */
+    --pmw-text-tertiary:   240 5% 65%;     /* zinc-400 — 메타 */
+    --pmw-text-disabled:   240 5% 84%;     /* zinc-300 — 비활성 */
+
+    /* Warning/info — Linear/Notion 톤 (vivid 보다 차분한 amber/blue) */
+    --pmw-warning: 32 70% 40%;             /* warm amber, vivid 보다 차분 */
+    --pmw-warning-bg: 38 60% 95%;          /* light amber tint */
+    --pmw-warning-fg: 28 70% 22%;          /* deep amber */
+    --pmw-info: 217 65% 45%;               /* muted blue (Linear 시그니처보다 차분) */
+
+    /* Chip 6-tone flat — zinc + 살짝 hue tint (Linear/Notion 톤) */
+    --pmw-chip-red-bg:     0 70% 95%;
+    --pmw-chip-red-fg:     0 60% 35%;
+    --pmw-chip-amber-bg:   38 70% 92%;
+    --pmw-chip-amber-fg:   28 65% 30%;
+    --pmw-chip-olive-bg:   90 30% 92%;
+    --pmw-chip-olive-fg:   90 35% 28%;
+    --pmw-chip-blue-bg:    215 60% 94%;
+    --pmw-chip-blue-fg:    218 55% 35%;
+    --pmw-chip-plum-bg:    280 35% 93%;
+    --pmw-chip-plum-fg:    280 35% 35%;
+    --pmw-chip-neutral-bg: 240 5% 94%;
+    --pmw-chip-neutral-fg: 240 6% 28%;
+  }
+
+  [data-skin="flat"].dark {
+    --pmw-near-black: #FAFAFA;
+    --pmw-olive-gray: #A1A1AA;
+    --pmw-stone-gray: #71717A;
+    --pmw-deep: #FAFAFA;
+    --pmw-clay-soft: #27272A;
+    --pmw-sage: #FAFAFA;
+    --pmw-sage-soft: #27272A;
+    --pmw-sage-paper: #18181B;
+    --pmw-amber: #FAFAFA;
+    --pmw-rust: #EF4444;
+    --pmw-border-warm: #27272A;
+    --pmw-parchment: #09090B;
+    --pmw-paper: #18181B;
+
+    color-scheme: dark;
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 4%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 4%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 6% 10%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 63% 41%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 240 5% 84%;
+
+    --pmw-accent: 0 0% 98%;
+    --pmw-accent-fg: 240 6% 10%;
+    --pmw-accent-strong: 240 5% 84%;
+    --pmw-tag-bg: 240 4% 16%;
+    --pmw-tag-fg: 240 5% 84%;
+    --pmw-cal-today: 0 0% 98%;
+    --pmw-cal-sunday: 0 65% 65%;
+    --pmw-cal-saturday: 220 50% 65%;
+    --pmw-positive: 142 50% 60%;
+    --pmw-avatar-bg: 240 4% 22%;
+    --pmw-avatar-fg: 240 5% 84%;
+    --pmw-code-label: 240 5% 65%;
+
+    /* Typography 스케일 + tracking — light 와 동일 (사이즈는 light/dark 무관) */
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.4;   --pmw-tracking-2xs:  0;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.5;   --pmw-tracking-xs:   -0.005em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.5;   --pmw-tracking-sm:   -0.011em;
+    --pmw-text-base: 14px;   --pmw-leading-base: 1.5;   --pmw-tracking-base: -0.011em;
+    --pmw-text-md:   15px;   --pmw-leading-md:   1.55;  --pmw-tracking-md:   -0.011em;
+    --pmw-text-lg:   18px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.015em;
+    --pmw-text-xl:   22px;   --pmw-leading-xl:   1.3;   --pmw-tracking-xl:   -0.02em;
+    --pmw-text-2xl:  28px;   --pmw-leading-2xl:  1.2;   --pmw-tracking-2xl:  -0.025em;
+
+    /* 텍스트 색 4-tier (dark 반전) */
+    --pmw-text-primary:    0 0% 98%;
+    --pmw-text-secondary:  240 5% 65%;
+    --pmw-text-tertiary:   240 5% 50%;
+    --pmw-text-disabled:   240 4% 35%;
+
+    --pmw-warning: 38 92% 60%;
+    --pmw-warning-bg: 32 65% 18%;
+    --pmw-warning-fg: 38 92% 80%;
+    --pmw-info: 217 91% 65%;
+
+    /* Chip 6-tone flat dark */
+    --pmw-chip-red-bg:     0 30% 18%;
+    --pmw-chip-red-fg:     0 70% 78%;
+    --pmw-chip-amber-bg:   28 25% 18%;
+    --pmw-chip-amber-fg:   38 70% 78%;
+    --pmw-chip-olive-bg:   90 18% 16%;
+    --pmw-chip-olive-fg:   90 35% 78%;
+    --pmw-chip-blue-bg:    218 20% 18%;
+    --pmw-chip-blue-fg:    215 55% 78%;
+    --pmw-chip-plum-bg:    280 18% 18%;
+    --pmw-chip-plum-fg:    280 40% 78%;
+    --pmw-chip-neutral-bg: 240 4% 18%;
+    --pmw-chip-neutral-fg: 240 5% 78%;
+  }
+
+
+  /* ─────────────────────────────────────────────────────────────
+     Skin: glassmorphism — iOS / macOS Big Sur 류 frosted glass.
+     반투명 + backdrop-blur 로 유리 질감. 배경은 보라/인디고 그라디언트.
+     카드/팝오버/인풋 surface 에 backdrop-filter blur + saturate 적용.
+     ───────────────────────────────────────────────────────────── */
+  [data-skin="glassmorphism"] {
+    /* 폰트는 editorial 과 동일 — Source Serif 4 + Inter Tight + JetBrains Mono.
+       --font-* / --pmw-font-* 는 :root 의 next/font 변수를 그대로 상속. */
+
+    --pmw-near-black: #1E1B4B;
+    --pmw-olive-gray: #4F46E5;
+    --pmw-stone-gray: #818CF8;
+    --pmw-deep: #4338CA;
+    --pmw-clay-soft: #EDE9FE;
+    --pmw-sage: #4F46E5;
+    --pmw-sage-soft: #E0E7FF;       /* chat active row */
+    --pmw-sage-paper: #F5F3FF;       /* chat panel bg — 살짝 violet tint */
+    --pmw-amber: #7C3AED;
+    --pmw-rust: #E11D48;
+    --pmw-border-warm: #DDD6FE;
+    --pmw-parchment: #EEF0FF;
+    --pmw-paper: #F5F3FF;
+
+    /* Glass surface 토큰 — bg-card/popover override 에서 사용 */
+    --glass-tint: rgba(255, 255, 255, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.65);
+    --glass-shadow: 0 8px 32px rgba(99, 102, 241, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    --glass-input-tint: rgba(255, 255, 255, 0.45);
+
+    /* Page bg: soft pastel violet — gradient 은 body 에 별도 rule */
+    --background: 240 100% 96%;
+    --foreground: 243 60% 21%;       /* #1E1B4B deep indigo */
+    --card: 0 0% 100%;
+    --card-foreground: 243 60% 21%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 243 60% 21%;
+    --primary: 239 84% 60%;          /* #4F46E5 indigo */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 244 100% 95%;       /* #EDE9FE — soft violet */
+    --secondary-foreground: 243 60% 21%;
+    --muted: 244 100% 95%;
+    --muted-foreground: 240 33% 45%; /* slate-violet */
+    --accent: 244 100% 95%;
+    --accent-foreground: 243 60% 21%;
+    --destructive: 350 89% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 60% 88%;
+    --input: 240 60% 88%;
+    --ring: 239 84% 60%;
+    --radius: 1rem;                  /* iOS 답게 큰 radius */
+
+    /* Semantic 토큰 — glassmorphism (violet/indigo 팔레트) */
+    --pmw-accent: 239 84% 60%;
+    --pmw-accent-fg: 0 0% 100%;
+    --pmw-accent-strong: 244 75% 50%;
+    --pmw-tag-bg: 244 100% 95%;
+    --pmw-tag-fg: 243 60% 30%;
+    --pmw-cal-today: 239 84% 60%;
+    --pmw-cal-sunday: 350 89% 60%;
+    --pmw-cal-saturday: 217 91% 60%;
+    --pmw-positive: 158 64% 40%;
+    --pmw-avatar-bg: 244 80% 90%;
+    --pmw-avatar-fg: 243 60% 30%;
+    --pmw-code-label: 240 33% 50%;
+
+    /* Typography 스케일 — flat 과 동일 (iOS/macOS 톤) */
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.4;   --pmw-tracking-2xs:  0;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.5;   --pmw-tracking-xs:   -0.005em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.5;   --pmw-tracking-sm:   -0.011em;
+    --pmw-text-base: 14px;   --pmw-leading-base: 1.5;   --pmw-tracking-base: -0.011em;
+    --pmw-text-md:   15px;   --pmw-leading-md:   1.55;  --pmw-tracking-md:   -0.011em;
+    --pmw-text-lg:   18px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.015em;
+    --pmw-text-xl:   22px;   --pmw-leading-xl:   1.3;   --pmw-tracking-xl:   -0.02em;
+    --pmw-text-2xl:  28px;   --pmw-leading-2xl:  1.2;   --pmw-tracking-2xl:  -0.025em;
+
+    /* 텍스트 색 4-tier (deep indigo 베이스) */
+    --pmw-text-primary:    243 60% 21%;
+    --pmw-text-secondary:  240 33% 45%;
+    --pmw-text-tertiary:   240 30% 60%;
+    --pmw-text-disabled:   240 30% 78%;
+
+    --pmw-warning: 32 95% 44%;
+    --pmw-warning-bg: 38 92% 92%;
+    --pmw-warning-fg: 28 70% 26%;
+    --pmw-info: 217 91% 50%;
+
+    /* Chip 6-tone glassmorphism — hue 350/30/140/210/270/240 분산, plum(violet) 가 시그니처라 채도 최고. */
+    --pmw-chip-red-bg:     350 36% 88%;  /* dusty rose */
+    --pmw-chip-red-fg:     350 48% 34%;
+    --pmw-chip-amber-bg:   30 36% 86%;   /* peach */
+    --pmw-chip-amber-fg:   28 48% 28%;
+    --pmw-chip-olive-bg:   140 22% 86%;  /* mint sage */
+    --pmw-chip-olive-fg:   140 32% 28%;
+    --pmw-chip-blue-bg:    210 32% 86%;  /* powder blue */
+    --pmw-chip-blue-fg:    210 42% 32%;
+    --pmw-chip-plum-bg:    270 38% 84%;  /* violet — glass signature */
+    --pmw-chip-plum-fg:    270 50% 32%;
+    --pmw-chip-neutral-bg: 240 14% 90%;  /* lavender gray */
+    --pmw-chip-neutral-fg: 240 18% 32%;
+  }
+
+  [data-skin="glassmorphism"].dark {
+    --pmw-near-black: #E0E7FF;
+    --pmw-olive-gray: #A5B4FC;
+    --pmw-stone-gray: #818CF8;
+    --pmw-deep: #C7D2FE;
+    --pmw-clay-soft: #312E81;
+    --pmw-sage: #A5B4FC;
+    --pmw-sage-soft: #312E81;
+    --pmw-sage-paper: #1E1B4B;
+    --pmw-amber: #C4B5FD;
+    --pmw-rust: #FB7185;
+    --pmw-border-warm: #312E81;
+    --pmw-parchment: #0F0B2D;
+    --pmw-paper: #1E1B4B;
+
+    --glass-tint: rgba(255, 255, 255, 0.08);
+    --glass-border: rgba(255, 255, 255, 0.14);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    --glass-input-tint: rgba(255, 255, 255, 0.06);
+
+    color-scheme: dark;
+    --background: 244 50% 11%;
+    --foreground: 226 100% 94%;      /* #E0E7FF */
+    --card: 244 40% 18%;
+    --card-foreground: 226 100% 94%;
+    --popover: 244 40% 18%;
+    --popover-foreground: 226 100% 94%;
+    --primary: 234 89% 74%;          /* #818CF8 lighter indigo */
+    --primary-foreground: 244 50% 11%;
+    --secondary: 244 40% 22%;
+    --secondary-foreground: 226 100% 94%;
+    --muted: 244 40% 22%;
+    --muted-foreground: 234 50% 75%;
+    --accent: 244 40% 22%;
+    --accent-foreground: 226 100% 94%;
+    --destructive: 350 89% 65%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 244 40% 28%;
+    --input: 244 40% 28%;
+    --ring: 234 89% 74%;
+
+    --pmw-accent: 234 89% 74%;
+    --pmw-accent-fg: 244 50% 11%;
+    --pmw-accent-strong: 226 100% 94%;
+    --pmw-tag-bg: 244 40% 22%;
+    --pmw-tag-fg: 226 80% 80%;
+    --pmw-cal-today: 234 89% 74%;
+    --pmw-cal-sunday: 350 89% 72%;
+    --pmw-cal-saturday: 217 91% 70%;
+    --pmw-positive: 158 50% 60%;
+    --pmw-avatar-bg: 244 40% 28%;
+    --pmw-avatar-fg: 226 80% 85%;
+    --pmw-code-label: 234 50% 70%;
+
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.4;   --pmw-tracking-2xs:  0;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.5;   --pmw-tracking-xs:   -0.005em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.5;   --pmw-tracking-sm:   -0.011em;
+    --pmw-text-base: 14px;   --pmw-leading-base: 1.5;   --pmw-tracking-base: -0.011em;
+    --pmw-text-md:   15px;   --pmw-leading-md:   1.55;  --pmw-tracking-md:   -0.011em;
+    --pmw-text-lg:   18px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.015em;
+    --pmw-text-xl:   22px;   --pmw-leading-xl:   1.3;   --pmw-tracking-xl:   -0.02em;
+    --pmw-text-2xl:  28px;   --pmw-leading-2xl:  1.2;   --pmw-tracking-2xl:  -0.025em;
+
+    --pmw-text-primary:    226 100% 94%;
+    --pmw-text-secondary:  234 50% 75%;
+    --pmw-text-tertiary:   234 35% 60%;
+    --pmw-text-disabled:   234 25% 40%;
+
+    --pmw-warning: 38 92% 72%;
+    --pmw-warning-bg: 32 50% 22%;
+    --pmw-warning-fg: 38 92% 85%;
+    --pmw-info: 217 91% 70%;
+
+    /* Chip 6-tone glassmorphism dark */
+    --pmw-chip-red-bg:     350 30% 24%;
+    --pmw-chip-red-fg:     350 80% 80%;
+    --pmw-chip-amber-bg:   28 30% 24%;
+    --pmw-chip-amber-fg:   38 80% 78%;
+    --pmw-chip-olive-bg:   158 25% 22%;
+    --pmw-chip-olive-fg:   158 50% 75%;
+    --pmw-chip-blue-bg:    217 35% 25%;
+    --pmw-chip-blue-fg:    217 80% 80%;
+    --pmw-chip-plum-bg:    270 30% 26%;
+    --pmw-chip-plum-fg:    270 70% 82%;
+    --pmw-chip-neutral-bg: 244 30% 25%;
+    --pmw-chip-neutral-fg: 234 40% 80%;
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     Skin: art-deco — 1920-30s Gatsby. 골드 + 네이비 + 크림 트라이톤.
+     기하학적 대칭, 자간 넓은 풀 캡스, 이중 골드 프레임.
+     LIGHT: cream paper + navy ink + gold accent (vintage print)
+     DARK : navy bg + cream/gold (jazz bar / Gatsby 사진 톤)
+     ───────────────────────────────────────────────────────────── */
+  [data-skin="art-deco"] {
+    /* Source Serif 4 일관. --font-serif 자체 redefine 금지. */
+    --font-sans: var(--font-serif);
+    --font-mono: var(--font-serif);
+    --pmw-font-serif: var(--font-serif), var(--font-serif-kr), Georgia, 'Times New Roman', serif;
+    --pmw-font-sans: var(--font-serif), var(--font-serif-kr), Georgia, 'Times New Roman', serif;
+    --pmw-font-mono: var(--font-serif), var(--font-serif-kr), Georgia, 'Times New Roman', serif;
+
+    --pmw-near-black: #0F1B30;       /* deep navy ink */
+    --pmw-olive-gray: #3D4D6B;
+    --pmw-stone-gray: #6B7991;
+    --pmw-deep: #0F1B30;
+    --pmw-clay-soft: #F5EBD3;
+    --pmw-sage: #0F1B30;
+    --pmw-sage-soft: #E5DAB8;
+    --pmw-sage-paper: #EDE3CD;       /* art deco cream */
+    --pmw-amber: #C9A961;             /* gold */
+    --pmw-rust: #8B3A2A;
+    --pmw-border-warm: #C9A961;      /* gold frame */
+    --pmw-parchment: #EDE3CD;
+    --pmw-paper: #F5EBD3;
+
+    --background: 42 47% 87%;        /* #EDE3CD cream */
+    --foreground: 215 50% 13%;       /* #0F1B30 deep navy */
+    --card: 42 56% 90%;              /* lighter cream */
+    --card-foreground: 215 50% 13%;
+    --popover: 42 60% 92%;
+    --popover-foreground: 215 50% 13%;
+    --primary: 215 50% 13%;          /* deep navy button */
+    --primary-foreground: 42 56% 90%;
+    --secondary: 42 35% 80%;
+    --secondary-foreground: 215 50% 13%;
+    --muted: 42 35% 80%;
+    --muted-foreground: 215 25% 35%;
+    --accent: 42 50% 70%;            /* gold tint accent */
+    --accent-foreground: 215 50% 13%;
+    --destructive: 14 60% 38%;
+    --destructive-foreground: 42 56% 90%;
+    --border: 38 50% 58%;            /* gold border */
+    --input: 38 50% 58%;
+    --ring: 38 60% 50%;              /* gold ring */
+    --radius: 0.125rem;              /* sharp 박스 */
+
+    /* Semantic 토큰 — art-deco (navy + gold + cream) */
+    --pmw-accent: 215 50% 13%;
+    --pmw-accent-fg: 42 56% 90%;
+    --pmw-accent-strong: 38 60% 45%; /* gold strong */
+    --pmw-tag-bg: 42 50% 80%;
+    --pmw-tag-fg: 215 50% 18%;
+    --pmw-cal-today: 38 60% 45%;     /* gold today */
+    --pmw-cal-sunday: 14 55% 38%;
+    --pmw-cal-saturday: 215 50% 22%;
+    --pmw-positive: 100 30% 28%;
+    --pmw-avatar-bg: 38 45% 65%;
+    --pmw-avatar-fg: 215 50% 18%;
+    --pmw-code-label: 215 25% 35%;
+
+    /* Typography 스케일 — Art Deco (display 큼, wide tracking) */
+    --pmw-text-2xs:  10px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.18em;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.55;  --pmw-tracking-xs:   0.08em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.55;  --pmw-tracking-sm:   0.04em;
+    --pmw-text-base: 14px;   --pmw-leading-base: 1.6;   --pmw-tracking-base: 0.01em;
+    --pmw-text-md:   16px;   --pmw-leading-md:   1.55;  --pmw-tracking-md:   0.02em;
+    --pmw-text-lg:   22px;   --pmw-leading-lg:   1.25;  --pmw-tracking-lg:   0.06em;
+    --pmw-text-xl:   30px;   --pmw-leading-xl:   1.15;  --pmw-tracking-xl:   0.10em;
+    --pmw-text-2xl:  42px;   --pmw-leading-2xl:  1.05;  --pmw-tracking-2xl:  0.14em;
+
+    /* 텍스트 색 4-tier (deep navy 베이스) */
+    --pmw-text-primary:    215 50% 13%;
+    --pmw-text-secondary:  215 25% 35%;
+    --pmw-text-tertiary:   215 18% 50%;
+    --pmw-text-disabled:   42 25% 70%;
+
+    --pmw-warning: 28 70% 32%;
+    --pmw-warning-bg: 38 50% 80%;
+    --pmw-warning-fg: 28 60% 18%;
+    --pmw-info: 215 50% 22%;
+
+    /* Chip 8-tone art-deco — 모두 cream/gold 톤 */
+    --pmw-chip-red-bg:     14 50% 80%;   /* terracotta cream (KSVDL-R) */
+    --pmw-chip-red-fg:     14 55% 28%;
+    --pmw-chip-amber-bg:   38 55% 78%;   /* gold (APQA Seoul) */
+    --pmw-chip-amber-fg:   28 55% 22%;
+    --pmw-chip-olive-bg:   75 30% 75%;   /* gold-olive (KRSL) */
+    --pmw-chip-olive-fg:   85 35% 22%;
+    --pmw-chip-moss-bg:    115 22% 74%;  /* sage on cream (APQA HQ) */
+    --pmw-chip-moss-fg:    120 35% 22%;
+    --pmw-chip-blue-bg:    215 30% 78%;  /* deco navy tint (APQA EU) */
+    --pmw-chip-blue-fg:    215 50% 18%;
+    --pmw-chip-plum-bg:    288 22% 78%;  /* dusty plum (VBDDL) */
+    --pmw-chip-plum-fg:    280 35% 25%;
+    --pmw-chip-mauve-bg:   25 32% 76%;   /* warm walnut on cream (KSVDL) */
+    --pmw-chip-mauve-fg:   22 45% 24%;
+    --pmw-chip-neutral-bg: 42 30% 75%;
+    --pmw-chip-neutral-fg: 215 30% 22%;
+  }
+
+  [data-skin="art-deco"].dark {
+    --pmw-near-black: #EDE3CD;
+    --pmw-olive-gray: #C9A961;       /* gold prominent */
+    --pmw-stone-gray: #8B7950;
+    --pmw-deep: #EDE3CD;
+    --pmw-clay-soft: #1A2840;
+    --pmw-sage: #C9A961;
+    --pmw-sage-soft: #1A2840;
+    --pmw-sage-paper: #0F1B30;
+    --pmw-amber: #D4B86A;             /* lighter gold */
+    --pmw-rust: #C46347;
+    --pmw-border-warm: #C9A961;
+    --pmw-parchment: #0F1B30;
+    --pmw-paper: #1A2840;
+
+    color-scheme: dark;
+    --background: 215 50% 12%;       /* #0F1B30 deep navy */
+    --foreground: 42 47% 87%;        /* cream */
+    --card: 215 42% 18%;             /* #1A2840 lighter navy */
+    --card-foreground: 42 47% 87%;
+    --popover: 215 42% 22%;
+    --popover-foreground: 42 47% 87%;
+    --primary: 38 60% 60%;           /* gold button bg */
+    --primary-foreground: 215 50% 12%;
+    --secondary: 215 35% 24%;
+    --secondary-foreground: 42 47% 87%;
+    --muted: 215 35% 24%;
+    --muted-foreground: 42 35% 70%;
+    --accent: 215 35% 28%;
+    --accent-foreground: 42 47% 87%;
+    --destructive: 14 55% 55%;
+    --destructive-foreground: 42 47% 87%;
+    --border: 38 50% 50%;            /* gold border */
+    --input: 38 50% 50%;
+    --ring: 38 60% 60%;
+
+    --pmw-accent: 38 60% 60%;        /* gold accent */
+    --pmw-accent-fg: 215 50% 12%;
+    --pmw-accent-strong: 38 70% 70%;
+    --pmw-tag-bg: 215 35% 24%;
+    --pmw-tag-fg: 38 60% 75%;
+    --pmw-cal-today: 38 60% 60%;
+    --pmw-cal-sunday: 14 55% 65%;
+    --pmw-cal-saturday: 215 35% 65%;
+    --pmw-positive: 100 25% 60%;
+    --pmw-avatar-bg: 215 35% 28%;
+    --pmw-avatar-fg: 38 60% 75%;
+    --pmw-code-label: 42 35% 70%;
+
+    --pmw-text-2xs:  10px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.18em;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.55;  --pmw-tracking-xs:   0.08em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.55;  --pmw-tracking-sm:   0.04em;
+    --pmw-text-base: 14px;   --pmw-leading-base: 1.6;   --pmw-tracking-base: 0.01em;
+    --pmw-text-md:   16px;   --pmw-leading-md:   1.55;  --pmw-tracking-md:   0.02em;
+    --pmw-text-lg:   22px;   --pmw-leading-lg:   1.25;  --pmw-tracking-lg:   0.06em;
+    --pmw-text-xl:   30px;   --pmw-leading-xl:   1.15;  --pmw-tracking-xl:   0.10em;
+    --pmw-text-2xl:  42px;   --pmw-leading-2xl:  1.05;  --pmw-tracking-2xl:  0.14em;
+
+    --pmw-text-primary:    42 47% 87%;
+    --pmw-text-secondary:  42 35% 70%;
+    --pmw-text-tertiary:   42 22% 55%;
+    --pmw-text-disabled:   215 25% 35%;
+
+    --pmw-warning: 38 60% 65%;
+    --pmw-warning-bg: 215 35% 22%;
+    --pmw-warning-fg: 38 70% 80%;
+    --pmw-info: 215 50% 65%;
+
+    /* Chip 8-tone art-deco dark — gold accent + dark navy 변형 */
+    --pmw-chip-red-bg:     14 25% 22%;
+    --pmw-chip-red-fg:     14 55% 78%;
+    --pmw-chip-amber-bg:   38 35% 25%;
+    --pmw-chip-amber-fg:   38 60% 75%;
+    --pmw-chip-olive-bg:   85 18% 22%;
+    --pmw-chip-olive-fg:   75 35% 78%;
+    --pmw-chip-moss-bg:    115 18% 22%;
+    --pmw-chip-moss-fg:    115 35% 78%;
+    --pmw-chip-blue-bg:    215 35% 28%;
+    --pmw-chip-blue-fg:    215 50% 78%;
+    --pmw-chip-plum-bg:    280 18% 25%;
+    --pmw-chip-plum-fg:    288 35% 80%;
+    --pmw-chip-mauve-bg:   22 22% 24%;
+    --pmw-chip-mauve-fg:   25 50% 78%;
+    --pmw-chip-neutral-bg: 215 25% 26%;
+    --pmw-chip-neutral-fg: 42 35% 78%;
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     Skin: hygge — 덴마크 휘게. 따뜻한 베이지·테라코타·우드톤.
+     부드러운 큰 모서리 + soft warm 색감. 카페·살림·라이프스타일 톤.
+     ───────────────────────────────────────────────────────────── */
+  [data-skin="hygge"] {
+    /* Manrope — soft geometric, hygge 부드러운 톤. */
+    --font-sans: var(--font-sans-neu);
+    --font-serif: var(--font-sans-neu), Pretendard;
+    --font-serif-kr: var(--font-sans-kr);
+    --font-mono: var(--font-sans-neu);
+    --pmw-font-serif: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+
+    --pmw-near-black: #3F3024;       /* warm dark brown */
+    --pmw-olive-gray: #6B5A48;
+    --pmw-stone-gray: #9C8A75;
+    --pmw-deep: #B89070;             /* terracotta-wood */
+    --pmw-clay-soft: #F2EAD9;
+    --pmw-sage: #B89070;
+    --pmw-sage-soft: #E8DCC4;
+    --pmw-sage-paper: #F7EFDE;       /* warm beige paper */
+    --pmw-amber: #C5985E;
+    --pmw-rust: #C46347;
+    --pmw-border-warm: #D8CAB0;
+    --pmw-parchment: #EFE6D6;
+    --pmw-paper: #F7EFDE;
+
+    --background: 36 38% 88%;        /* #EFE6D6 warm beige */
+    --foreground: 28 25% 20%;        /* #3F3024 warm dark brown */
+    --card: 38 50% 92%;              /* #F7EFDE lighter beige */
+    --card-foreground: 28 25% 20%;
+    --popover: 38 60% 95%;
+    --popover-foreground: 28 25% 20%;
+    --primary: 28 35% 58%;           /* #B89070 terracotta-wood */
+    --primary-foreground: 38 50% 95%;
+    --secondary: 36 38% 84%;
+    --secondary-foreground: 28 25% 20%;
+    --muted: 36 38% 84%;
+    --muted-foreground: 30 18% 38%;
+    --accent: 36 40% 80%;
+    --accent-foreground: 28 25% 20%;
+    --destructive: 14 55% 50%;
+    --destructive-foreground: 38 50% 95%;
+    --border: 36 30% 78%;
+    --input: 36 30% 78%;
+    --ring: 28 35% 58%;
+    --radius: 1.25rem;               /* 큰 부드러운 모서리 */
+
+    /* Semantic 토큰 — hygge (terracotta-wood + warm beige) */
+    --pmw-accent: 28 35% 58%;
+    --pmw-accent-fg: 38 50% 95%;
+    --pmw-accent-strong: 28 35% 42%;
+    --pmw-tag-bg: 36 40% 82%;
+    --pmw-tag-fg: 28 25% 25%;
+    --pmw-cal-today: 28 35% 58%;
+    --pmw-cal-sunday: 14 55% 50%;
+    --pmw-cal-saturday: 215 35% 45%;
+    --pmw-positive: 100 25% 38%;
+    --pmw-avatar-bg: 32 40% 80%;
+    --pmw-avatar-fg: 28 25% 25%;
+    --pmw-code-label: 30 18% 38%;
+
+    /* Typography 스케일 — hygge (편안한 base + soft tracking) */
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.01em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.6;   --pmw-tracking-sm:   0;
+    --pmw-text-base: 15px;   --pmw-leading-base: 1.65;  --pmw-tracking-base: 0;
+    --pmw-text-md:   16px;   --pmw-leading-md:   1.6;   --pmw-tracking-md:   0;
+    --pmw-text-lg:   20px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.01em;
+    --pmw-text-xl:   26px;   --pmw-leading-xl:   1.3;   --pmw-tracking-xl:   -0.015em;
+    --pmw-text-2xl:  34px;   --pmw-leading-2xl:  1.2;   --pmw-tracking-2xl:  -0.02em;
+
+    --pmw-text-primary:    28 25% 20%;
+    --pmw-text-secondary:  30 18% 38%;
+    --pmw-text-tertiary:   32 14% 55%;
+    --pmw-text-disabled:   36 22% 75%;
+
+    --pmw-warning: 32 65% 42%;
+    --pmw-warning-bg: 38 55% 88%;
+    --pmw-warning-fg: 28 60% 22%;
+    --pmw-info: 215 35% 38%;
+
+    /* Chip 6-tone hygge — warm pastel 톤 */
+    --pmw-chip-red-bg:     14 50% 85%;
+    --pmw-chip-red-fg:     14 55% 32%;
+    --pmw-chip-amber-bg:   38 55% 84%;
+    --pmw-chip-amber-fg:   28 55% 28%;
+    --pmw-chip-olive-bg:   75 30% 80%;
+    --pmw-chip-olive-fg:   85 35% 25%;
+    --pmw-chip-blue-bg:    216 30% 82%;
+    --pmw-chip-blue-fg:    218 35% 28%;
+    --pmw-chip-plum-bg:    288 22% 82%;
+    --pmw-chip-plum-fg:    280 30% 30%;
+    --pmw-chip-neutral-bg: 36 30% 80%;
+    --pmw-chip-neutral-fg: 30 22% 25%;
+  }
+
+  [data-skin="hygge"].dark {
+    --pmw-near-black: #F2EAD9;
+    --pmw-olive-gray: #B8A688;
+    --pmw-stone-gray: #8B7A60;
+    --pmw-deep: #C5985E;
+    --pmw-clay-soft: #2D2419;
+    --pmw-sage: #C5985E;
+    --pmw-sage-soft: #2D2419;
+    --pmw-sage-paper: #1F1812;
+    --pmw-amber: #D4AC72;
+    --pmw-rust: #C46347;
+    --pmw-border-warm: #4A3D2D;
+    --pmw-parchment: #14100B;
+    --pmw-paper: #251D14;
+
+    color-scheme: dark;
+    --background: 30 30% 8%;         /* deep cocoa */
+    --foreground: 36 38% 88%;
+    --card: 30 22% 13%;
+    --card-foreground: 36 38% 88%;
+    --popover: 30 22% 16%;
+    --popover-foreground: 36 38% 88%;
+    --primary: 28 45% 60%;           /* lighter terracotta */
+    --primary-foreground: 30 30% 8%;
+    --secondary: 30 18% 20%;
+    --secondary-foreground: 36 38% 88%;
+    --muted: 30 18% 20%;
+    --muted-foreground: 36 22% 65%;
+    --accent: 30 18% 24%;
+    --accent-foreground: 36 38% 88%;
+    --destructive: 14 55% 55%;
+    --destructive-foreground: 36 38% 88%;
+    --border: 30 22% 28%;
+    --input: 30 22% 28%;
+    --ring: 28 45% 60%;
+
+    --pmw-accent: 28 45% 60%;
+    --pmw-accent-fg: 30 30% 8%;
+    --pmw-accent-strong: 28 50% 75%;
+    --pmw-tag-bg: 30 18% 24%;
+    --pmw-tag-fg: 36 38% 80%;
+    --pmw-cal-today: 28 45% 60%;
+    --pmw-cal-sunday: 14 55% 65%;
+    --pmw-cal-saturday: 215 35% 65%;
+    --pmw-positive: 100 25% 60%;
+    --pmw-avatar-bg: 32 25% 28%;
+    --pmw-avatar-fg: 38 35% 78%;
+    --pmw-code-label: 36 22% 65%;
+
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.01em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.6;   --pmw-tracking-sm:   0;
+    --pmw-text-base: 15px;   --pmw-leading-base: 1.65;  --pmw-tracking-base: 0;
+    --pmw-text-md:   16px;   --pmw-leading-md:   1.6;   --pmw-tracking-md:   0;
+    --pmw-text-lg:   20px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.01em;
+    --pmw-text-xl:   26px;   --pmw-leading-xl:   1.3;   --pmw-tracking-xl:   -0.015em;
+    --pmw-text-2xl:  34px;   --pmw-leading-2xl:  1.2;   --pmw-tracking-2xl:  -0.02em;
+
+    --pmw-text-primary:    36 38% 88%;
+    --pmw-text-secondary:  36 22% 65%;
+    --pmw-text-tertiary:   34 18% 50%;
+    --pmw-text-disabled:   30 18% 28%;
+
+    --pmw-warning: 38 60% 65%;
+    --pmw-warning-bg: 30 25% 18%;
+    --pmw-warning-fg: 38 60% 80%;
+    --pmw-info: 215 35% 60%;
+
+    /* Chip 6-tone hygge dark */
+    --pmw-chip-red-bg:     14 25% 22%;
+    --pmw-chip-red-fg:     14 55% 78%;
+    --pmw-chip-amber-bg:   28 22% 22%;
+    --pmw-chip-amber-fg:   38 55% 78%;
+    --pmw-chip-olive-bg:   85 18% 22%;
+    --pmw-chip-olive-fg:   75 35% 78%;
+    --pmw-chip-blue-bg:    218 18% 22%;
+    --pmw-chip-blue-fg:    216 30% 80%;
+    --pmw-chip-plum-bg:    280 14% 22%;
+    --pmw-chip-plum-fg:    288 30% 80%;
+    --pmw-chip-neutral-bg: 32 14% 22%;
+    --pmw-chip-neutral-fg: 36 25% 78%;
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     Skin: scandi-minimal — Acne Studios / Kinfolk 톤.
+     warm off-white bg + 순백 카드 + light weight + outlined uppercase 버튼.
+     가장 정통 북유럽 — 가는 라인, 넉넉한 여백, 작은 디바이더.
+     ───────────────────────────────────────────────────────────── */
+  [data-skin="scandi-minimal"] {
+    /* Inter — light weight (300/400) 사용. */
+    --font-sans: var(--font-sans-flat);
+    --font-serif: var(--font-sans-flat), Pretendard;
+    --font-serif-kr: var(--font-sans-kr);
+    --font-mono: var(--font-sans-flat);
+    --pmw-font-serif: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+
+    --pmw-near-black: #1F1F1B;       /* warm near-black */
+    --pmw-olive-gray: #5C5C56;
+    --pmw-stone-gray: #8A8A82;
+    --pmw-deep: #1F1F1B;
+    --pmw-clay-soft: #EFEDE6;
+    --pmw-sage: #1F1F1B;
+    --pmw-sage-soft: #DEDBD1;
+    --pmw-sage-paper: #F2F0E8;
+    --pmw-amber: #5C5C56;
+    --pmw-rust: #8B3A2A;
+    --pmw-border-warm: #D6D2C8;      /* 가는 warm 헤어라인 */
+    --pmw-parchment: #E8E5DD;        /* warm off-white page */
+    --pmw-paper: #FFFFFF;            /* pure white card */
+
+    --background: 47 16% 89%;        /* #E8E5DD warm off-white */
+    --foreground: 60 6% 12%;         /* #1F1F1B near-black */
+    --card: 0 0% 100%;               /* pure white */
+    --card-foreground: 60 6% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 60 6% 12%;
+    --primary: 60 6% 12%;            /* near-black (outline 색) */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 47 14% 84%;
+    --secondary-foreground: 60 6% 12%;
+    --muted: 47 14% 84%;
+    --muted-foreground: 50 4% 38%;
+    --accent: 47 14% 84%;
+    --accent-foreground: 60 6% 12%;
+    --destructive: 14 60% 38%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 45 14% 75%;            /* 가는 warm 헤어라인 */
+    --input: 45 14% 75%;
+    --ring: 60 6% 12%;
+    --radius: 0.125rem;              /* sharp — Acne 톤 */
+
+    /* Semantic 토큰 — scandi-minimal (warm 모노크롬) */
+    --pmw-accent: 60 6% 12%;
+    --pmw-accent-fg: 0 0% 100%;
+    --pmw-accent-strong: 60 6% 6%;
+    --pmw-tag-bg: 47 14% 84%;
+    --pmw-tag-fg: 60 6% 18%;
+    --pmw-cal-today: 60 6% 12%;
+    --pmw-cal-sunday: 14 55% 38%;
+    --pmw-cal-saturday: 215 30% 28%;
+    --pmw-positive: 100 25% 28%;
+    --pmw-avatar-bg: 45 16% 78%;
+    --pmw-avatar-fg: 60 6% 18%;
+    --pmw-code-label: 50 4% 38%;
+
+    /* Typography 스케일 — scandi (큰 display + 넉넉한 leading + 자연 spacing) */
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.04em;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.02em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.6;   --pmw-tracking-sm:   0;
+    --pmw-text-base: 14px;   --pmw-leading-base: 1.7;   --pmw-tracking-base: 0;
+    --pmw-text-md:   15px;   --pmw-leading-md:   1.65;  --pmw-tracking-md:   0;
+    --pmw-text-lg:   22px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.01em;
+    --pmw-text-xl:   30px;   --pmw-leading-xl:   1.2;   --pmw-tracking-xl:   -0.02em;
+    --pmw-text-2xl:  44px;   --pmw-leading-2xl:  1.1;   --pmw-tracking-2xl:  -0.025em;
+
+    /* 텍스트 색 4-tier */
+    --pmw-text-primary:    60 6% 12%;
+    --pmw-text-secondary:  50 4% 38%;
+    --pmw-text-tertiary:   50 4% 55%;
+    --pmw-text-disabled:   45 14% 75%;
+
+    --pmw-warning: 28 70% 32%;
+    --pmw-warning-bg: 38 50% 86%;
+    --pmw-warning-fg: 28 60% 18%;
+    --pmw-info: 215 35% 30%;
+
+    /* Chip 6-tone scandi-minimal — warm 모노 톤 */
+    --pmw-chip-red-bg:     14 35% 86%;
+    --pmw-chip-red-fg:     14 50% 32%;
+    --pmw-chip-amber-bg:   38 30% 86%;
+    --pmw-chip-amber-fg:   28 50% 28%;
+    --pmw-chip-olive-bg:   75 22% 82%;
+    --pmw-chip-olive-fg:   85 30% 25%;
+    --pmw-chip-blue-bg:    216 22% 86%;
+    --pmw-chip-blue-fg:    218 30% 28%;
+    --pmw-chip-plum-bg:    288 18% 86%;
+    --pmw-chip-plum-fg:    280 28% 30%;
+    --pmw-chip-neutral-bg: 47 14% 86%;
+    --pmw-chip-neutral-fg: 60 6% 22%;
+  }
+
+  [data-skin="scandi-minimal"].dark {
+    --pmw-near-black: #F2F0E8;
+    --pmw-olive-gray: #8A8A82;
+    --pmw-stone-gray: #5C5C56;
+    --pmw-deep: #F2F0E8;
+    --pmw-clay-soft: #2A2A26;
+    --pmw-sage: #8A8A82;
+    --pmw-sage-soft: #2A2A26;
+    --pmw-sage-paper: #1A1A17;
+    --pmw-amber: #C7C7BC;
+    --pmw-rust: #C46347;
+    --pmw-border-warm: #3D3D38;
+    --pmw-parchment: #14140F;
+    --pmw-paper: #1F1F1B;
+
+    color-scheme: dark;
+    --background: 60 6% 8%;          /* warm near-black bg */
+    --foreground: 47 16% 89%;
+    --card: 60 6% 12%;               /* pure-ish black card */
+    --card-foreground: 47 16% 89%;
+    --popover: 60 6% 14%;
+    --popover-foreground: 47 16% 89%;
+    --primary: 47 16% 89%;           /* off-white "ink" 반전 */
+    --primary-foreground: 60 6% 8%;
+    --secondary: 60 4% 18%;
+    --secondary-foreground: 47 16% 89%;
+    --muted: 60 4% 18%;
+    --muted-foreground: 50 4% 65%;
+    --accent: 60 4% 22%;
+    --accent-foreground: 47 16% 89%;
+    --destructive: 14 55% 55%;
+    --destructive-foreground: 47 16% 89%;
+    --border: 50 4% 26%;
+    --input: 50 4% 26%;
+    --ring: 47 16% 89%;
+
+    --pmw-accent: 47 16% 89%;
+    --pmw-accent-fg: 60 6% 8%;
+    --pmw-accent-strong: 47 20% 95%;
+    --pmw-tag-bg: 60 4% 18%;
+    --pmw-tag-fg: 47 16% 80%;
+    --pmw-cal-today: 47 16% 89%;
+    --pmw-cal-sunday: 14 55% 65%;
+    --pmw-cal-saturday: 215 35% 65%;
+    --pmw-positive: 100 25% 60%;
+    --pmw-avatar-bg: 50 4% 26%;
+    --pmw-avatar-fg: 47 16% 80%;
+    --pmw-code-label: 50 4% 65%;
+
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.04em;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.02em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.6;   --pmw-tracking-sm:   0;
+    --pmw-text-base: 14px;   --pmw-leading-base: 1.7;   --pmw-tracking-base: 0;
+    --pmw-text-md:   15px;   --pmw-leading-md:   1.65;  --pmw-tracking-md:   0;
+    --pmw-text-lg:   22px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.01em;
+    --pmw-text-xl:   30px;   --pmw-leading-xl:   1.2;   --pmw-tracking-xl:   -0.02em;
+    --pmw-text-2xl:  44px;   --pmw-leading-2xl:  1.1;   --pmw-tracking-2xl:  -0.025em;
+
+    --pmw-text-primary:    47 16% 89%;
+    --pmw-text-secondary:  50 4% 65%;
+    --pmw-text-tertiary:   50 4% 50%;
+    --pmw-text-disabled:   50 4% 30%;
+
+    --pmw-warning: 38 60% 65%;
+    --pmw-warning-bg: 30 25% 18%;
+    --pmw-warning-fg: 38 60% 80%;
+    --pmw-info: 215 35% 60%;
+
+    /* Chip 6-tone scandi-minimal dark */
+    --pmw-chip-red-bg:     14 22% 22%;
+    --pmw-chip-red-fg:     14 50% 78%;
+    --pmw-chip-amber-bg:   28 22% 22%;
+    --pmw-chip-amber-fg:   38 50% 78%;
+    --pmw-chip-olive-bg:   85 18% 22%;
+    --pmw-chip-olive-fg:   75 30% 78%;
+    --pmw-chip-blue-bg:    218 18% 22%;
+    --pmw-chip-blue-fg:    216 30% 80%;
+    --pmw-chip-plum-bg:    280 14% 22%;
+    --pmw-chip-plum-fg:    288 28% 80%;
+    --pmw-chip-neutral-bg: 50 4% 22%;
+    --pmw-chip-neutral-fg: 47 16% 78%;
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     Skin: sakura — 일본 벚꽃 감성. 파스텔 핑크 그라디언트 + 한자/한글 혼용.
+     가는 산세리프, 정적/섬세. 스파·차·일본 화장품 톤.
+     ───────────────────────────────────────────────────────────── */
+  [data-skin="sakura"] {
+    /* Source Serif 4 — art-deco 와 동일. --font-serif 자체 redefine 금지. */
+    --font-sans: var(--font-serif);
+    --font-mono: var(--font-serif);
+    --pmw-font-serif: var(--font-serif), var(--font-serif-kr), Georgia, 'Times New Roman', serif;
+    --pmw-font-sans: var(--font-serif), var(--font-serif-kr), Georgia, 'Times New Roman', serif;
+    --pmw-font-mono: var(--font-serif), var(--font-serif-kr), Georgia, 'Times New Roman', serif;
+
+    --pmw-near-black: #5C2839;       /* deep sakura plum */
+    --pmw-olive-gray: #8B5A6A;
+    --pmw-stone-gray: #B68B96;
+    --pmw-deep: #A0364B;             /* deep sakura pink/burgundy */
+    --pmw-clay-soft: #FCE4EC;
+    --pmw-sage: #A0364B;
+    --pmw-sage-soft: #F5C0CB;
+    --pmw-sage-paper: #FBE0E5;       /* pale pink page bg */
+    --pmw-amber: #C5798A;
+    --pmw-rust: #DC2626;
+    --pmw-border-warm: #F0CCD3;
+    --pmw-parchment: #FCE4EC;
+    --pmw-paper: #FFFFFF;
+
+    /* Sakura 그라디언트 — body bg 에 별도 rule */
+    --sakura-grad: linear-gradient(180deg, #FCE4EC 0%, #F8D0DA 100%);
+    --sakura-btn-grad: linear-gradient(180deg, #F5C0CB 0%, #E8A0B0 100%);
+    --sakura-btn-grad-hover: linear-gradient(180deg, #EFA8B6 0%, #DC889B 100%);
+
+    --background: 343 80% 94%;       /* #FCE4EC 파스텔 핑크 fallback */
+    --foreground: 340 40% 25%;       /* #5C2839 deep plum */
+    --card: 0 0% 100%;               /* 순백 카드 */
+    --card-foreground: 340 40% 25%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 340 40% 25%;
+    --primary: 348 50% 42%;          /* #A0364B deep sakura pink */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 343 65% 92%;
+    --secondary-foreground: 340 40% 25%;
+    --muted: 343 60% 86%;            /* 채팅 상대 풍선 — background(94%) 대비 진하게 */
+    --muted-foreground: 340 25% 45%;
+    --accent: 348 65% 88%;
+    --accent-foreground: 348 50% 30%;
+    --destructive: 0 73% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 343 50% 85%;
+    --input: 343 50% 85%;
+    --ring: 348 50% 42%;
+    --radius: 1rem;                  /* 부드러운 모서리 */
+
+    /* Semantic 토큰 — sakura (monochromatic pink) */
+    --pmw-accent: 348 50% 42%;
+    --pmw-accent-fg: 0 0% 100%;
+    --pmw-accent-strong: 348 60% 32%;
+    --pmw-tag-bg: 348 65% 90%;
+    --pmw-tag-fg: 348 50% 30%;
+    --pmw-cal-today: 348 50% 42%;
+    --pmw-cal-sunday: 0 73% 55%;
+    --pmw-cal-saturday: 217 60% 50%;
+    --pmw-positive: 142 35% 38%;
+    --pmw-avatar-bg: 343 70% 90%;
+    --pmw-avatar-fg: 348 50% 30%;
+    --pmw-code-label: 340 25% 45%;
+
+    /* Typography 스케일 — sakura (light weight, 정돈된 spacing) */
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.04em;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.02em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.6;   --pmw-tracking-sm:   0;
+    --pmw-text-base: 14px;   --pmw-leading-base: 1.65;  --pmw-tracking-base: 0;
+    --pmw-text-md:   15px;   --pmw-leading-md:   1.6;   --pmw-tracking-md:   0;
+    --pmw-text-lg:   20px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.005em;
+    --pmw-text-xl:   28px;   --pmw-leading-xl:   1.25;  --pmw-tracking-xl:   -0.015em;
+    --pmw-text-2xl:  38px;   --pmw-leading-2xl:  1.15;  --pmw-tracking-2xl:  -0.02em;
+
+    --pmw-text-primary:    340 40% 25%;
+    --pmw-text-secondary:  340 25% 45%;
+    --pmw-text-tertiary:   340 22% 60%;
+    --pmw-text-disabled:   343 40% 80%;
+
+    --pmw-warning: 32 75% 45%;
+    --pmw-warning-bg: 38 70% 92%;
+    --pmw-warning-fg: 28 60% 25%;
+    --pmw-info: 217 60% 45%;
+
+    /* Chip 6-tone sakura — hue 를 0/30/90/210/285/340 으로 분산해 구분 명확.
+       채도는 무채(neutral 12%)~중채(38%) 로 차별, 형광 느낌은 유지 안 됨. */
+    --pmw-chip-red-bg:     350 38% 86%;  /* dusty rose */
+    --pmw-chip-red-fg:     350 48% 32%;
+    --pmw-chip-amber-bg:   30 35% 86%;   /* peach */
+    --pmw-chip-amber-fg:   28 48% 28%;
+    --pmw-chip-olive-bg:   90 22% 84%;   /* sage */
+    --pmw-chip-olive-fg:   90 32% 26%;
+    --pmw-chip-blue-bg:    210 32% 86%;  /* powder blue */
+    --pmw-chip-blue-fg:    210 42% 32%;
+    --pmw-chip-plum-bg:    285 28% 86%;  /* lavender */
+    --pmw-chip-plum-fg:    285 35% 34%;
+    --pmw-chip-neutral-bg: 340 12% 90%;  /* light pink-gray (sakura tint) */
+    --pmw-chip-neutral-fg: 340 22% 32%;
+  }
+
+  [data-skin="sakura"].dark {
+    --pmw-near-black: #FCE4EC;
+    --pmw-olive-gray: #E8B4C0;
+    --pmw-stone-gray: #B68B96;
+    --pmw-deep: #F8D0DA;
+    --pmw-clay-soft: #4C1729;
+    --pmw-sage: #F8D0DA;
+    --pmw-sage-soft: #4C1729;
+    --pmw-sage-paper: #2D0F1A;
+    --pmw-amber: #E8A0B0;
+    --pmw-rust: #FB7185;
+    --pmw-border-warm: #4C1729;
+    --pmw-parchment: #1F0913;
+    --pmw-paper: #2D0F1A;
+
+    /* dark 그라디언트 — 와인 채도 더 낮춰 무채에 가까운 plum */
+    --sakura-grad: linear-gradient(180deg, #1E181E 0%, #15131A 100%);
+    --sakura-btn-grad: linear-gradient(180deg, #C5798A 0%, #A0364B 100%);
+    --sakura-btn-grad-hover: linear-gradient(180deg, #DC889B 0%, #B5455B 100%);
+
+    color-scheme: dark;
+    --background: 340 12% 9%;
+    --foreground: 343 80% 94%;
+    --card: 340 10% 15%;
+    --card-foreground: 343 80% 94%;
+    --popover: 340 10% 18%;
+    --popover-foreground: 343 80% 94%;
+    --primary: 348 60% 65%;          /* lighter sakura */
+    --primary-foreground: 340 12% 9%;
+    --secondary: 340 8% 22%;
+    --secondary-foreground: 343 80% 94%;
+    --muted: 340 8% 22%;
+    --muted-foreground: 343 30% 70%;
+    --accent: 340 8% 26%;
+    --accent-foreground: 343 80% 94%;
+    --destructive: 0 73% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 340 8% 28%;
+    --input: 340 8% 28%;
+    --ring: 348 60% 65%;
+
+    --pmw-accent: 348 60% 65%;
+    --pmw-accent-fg: 340 12% 9%;
+    --pmw-accent-strong: 343 80% 90%;
+    --pmw-tag-bg: 340 8% 22%;
+    --pmw-tag-fg: 343 70% 80%;
+    --pmw-cal-today: 348 60% 65%;
+    --pmw-cal-sunday: 0 70% 65%;
+    --pmw-cal-saturday: 217 60% 65%;
+    --pmw-positive: 142 35% 60%;
+    --pmw-avatar-bg: 340 8% 28%;
+    --pmw-avatar-fg: 343 70% 85%;
+    --pmw-code-label: 343 30% 70%;
+
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.04em;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.02em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.6;   --pmw-tracking-sm:   0;
+    --pmw-text-base: 14px;   --pmw-leading-base: 1.65;  --pmw-tracking-base: 0;
+    --pmw-text-md:   15px;   --pmw-leading-md:   1.6;   --pmw-tracking-md:   0;
+    --pmw-text-lg:   20px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.005em;
+    --pmw-text-xl:   28px;   --pmw-leading-xl:   1.25;  --pmw-tracking-xl:   -0.015em;
+    --pmw-text-2xl:  38px;   --pmw-leading-2xl:  1.15;  --pmw-tracking-2xl:  -0.02em;
+
+    --pmw-text-primary:    343 80% 94%;
+    --pmw-text-secondary:  343 30% 70%;
+    --pmw-text-tertiary:   343 22% 55%;
+    --pmw-text-disabled:   340 8% 32%;
+
+    --pmw-warning: 38 65% 65%;
+    --pmw-warning-bg: 32 35% 22%;
+    --pmw-warning-fg: 38 70% 80%;
+    --pmw-info: 217 60% 65%;
+
+    /* Chip 6-tone sakura dark */
+    --pmw-chip-red-bg:     0 25% 22%;
+    --pmw-chip-red-fg:     0 60% 78%;
+    --pmw-chip-amber-bg:   28 25% 22%;
+    --pmw-chip-amber-fg:   38 65% 78%;
+    --pmw-chip-olive-bg:   100 18% 22%;
+    --pmw-chip-olive-fg:   100 35% 75%;
+    --pmw-chip-blue-bg:    217 25% 24%;
+    --pmw-chip-blue-fg:    217 60% 80%;
+    --pmw-chip-plum-bg:    310 25% 25%;
+    --pmw-chip-plum-fg:    310 50% 80%;
+    --pmw-chip-neutral-bg: 340 25% 25%;
+    --pmw-chip-neutral-fg: 343 35% 80%;
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     Pastel — Baby Blue 단일 (헬스케어/핀테크 톤).
+     ───────────────────────────────────────────────────────────── */
+
+  /* Baby Blue / Powder Blue — 헬스케어·핀테크(Toss)·교육·베이비. "안전한" 파스텔. PetMove 신뢰 도메인 최적. */
+  [data-skin="baby-blue"] {
+    --font-sans: var(--font-sans-flat);
+    --font-serif: var(--font-sans-flat), Pretendard;
+    --font-serif-kr: var(--font-sans-kr);
+    --font-mono: var(--font-sans-flat);
+    --pmw-font-serif: var(--font-sans), 'Pretendard', var(--font-sans-kr), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+
+    --pmw-near-black: #2C4A6F;       /* deep navy ink */
+    --pmw-olive-gray: #5A7AA0;
+    --pmw-stone-gray: #8BA8C7;
+    --pmw-deep: #4A7AB8;             /* mid blue (Toss tone) */
+    --pmw-clay-soft: #ECF2F9;
+    --pmw-sage: #4A7AB8;
+    --pmw-sage-soft: #C8DAEF;
+    --pmw-sage-paper: #DCE7F2;
+    --pmw-amber: #4A7AB8;
+    --pmw-rust: #DC2626;
+    --pmw-border-warm: #B8CDE5;
+    --pmw-parchment: #DCE7F2;
+    --pmw-paper: #FFFFFF;
+
+    --background: 215 50% 90%;       /* #DCE7F2 powder blue */
+    --foreground: 215 45% 30%;       /* #2C4A6F deep navy */
+    --card: 0 0% 100%;
+    --card-foreground: 215 45% 30%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 45% 30%;
+    --primary: 215 45% 50%;          /* #4A7AB8 Toss-like mid blue */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 215 50% 90%;
+    --secondary-foreground: 215 45% 30%;
+    --muted: 215 45% 84%;            /* 채팅 상대 풍선 — background(90%) 대비 진하게 */
+    --muted-foreground: 215 25% 42%;
+    --accent: 215 55% 88%;
+    --accent-foreground: 215 45% 30%;
+    --destructive: 0 73% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 40% 82%;
+    --input: 215 40% 82%;
+    --ring: 215 45% 50%;
+    --radius: 1rem;
+
+    --pmw-accent: 215 45% 50%;
+    --pmw-accent-fg: 0 0% 100%;
+    --pmw-accent-strong: 215 50% 35%;
+    --pmw-tag-bg: 215 55% 90%;
+    --pmw-tag-fg: 215 45% 32%;
+    --pmw-cal-today: 215 45% 50%;
+    --pmw-cal-sunday: 0 60% 50%;
+    --pmw-cal-saturday: 215 50% 38%;
+    --pmw-positive: 142 50% 38%;
+    --pmw-avatar-bg: 215 50% 88%;
+    --pmw-avatar-fg: 215 45% 32%;
+    --pmw-code-label: 215 25% 42%;
+
+    --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
+    --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.01em;
+    --pmw-text-sm:   13px;   --pmw-leading-sm:   1.6;   --pmw-tracking-sm:   0;
+    --pmw-text-base: 14px;   --pmw-leading-base: 1.65;  --pmw-tracking-base: 0;
+    --pmw-text-md:   15px;   --pmw-leading-md:   1.6;   --pmw-tracking-md:   0;
+    --pmw-text-lg:   20px;   --pmw-leading-lg:   1.4;   --pmw-tracking-lg:   -0.01em;
+    --pmw-text-xl:   28px;   --pmw-leading-xl:   1.25;  --pmw-tracking-xl:   -0.015em;
+    --pmw-text-2xl:  36px;   --pmw-leading-2xl:  1.15;  --pmw-tracking-2xl:  -0.02em;
+
+    --pmw-text-primary:    215 45% 30%;
+    --pmw-text-secondary:  215 25% 42%;
+    --pmw-text-tertiary:   215 18% 58%;
+    --pmw-text-disabled:   215 30% 80%;
+
+    --pmw-warning: 32 75% 42%;
+    --pmw-warning-bg: 38 70% 92%;
+    --pmw-warning-fg: 28 65% 25%;
+    --pmw-info: 215 60% 45%;
+
+    /* Chip 6-tone baby-blue — hue 0/30/100/215/270 + neutral 무채. blue 가 시그니처라 가장 진한 채도. */
+    --pmw-chip-red-bg: 0 32% 88%;        --pmw-chip-red-fg: 0 42% 36%;
+    --pmw-chip-amber-bg: 30 32% 86%;     --pmw-chip-amber-fg: 28 48% 28%;     /* warm peach */
+    --pmw-chip-olive-bg: 100 22% 84%;    --pmw-chip-olive-fg: 100 32% 26%;    /* sage */
+    --pmw-chip-blue-bg: 215 38% 84%;     --pmw-chip-blue-fg: 215 50% 30%;     /* signature baby-blue */
+    --pmw-chip-plum-bg: 270 26% 86%;     --pmw-chip-plum-fg: 270 32% 34%;     /* cool plum */
+    --pmw-chip-neutral-bg: 215 10% 90%;  --pmw-chip-neutral-fg: 215 14% 32%;  /* blue-tinted gray */
+  }
+
+  [data-skin="baby-blue"].dark {
+    --pmw-near-black: #ECF2F9; --pmw-olive-gray: #A8C4E0; --pmw-stone-gray: #7A9AC0;
+    --pmw-deep: #C8DAEF; --pmw-clay-soft: #1F2D40; --pmw-sage: #A8C4E0;
+    --pmw-sage-soft: #1F2D40; --pmw-sage-paper: #14202F; --pmw-amber: #BDD4EF;
+    --pmw-rust: #FB7185; --pmw-border-warm: #2D4060; --pmw-parchment: #0F1622; --pmw-paper: #1A2535;
+    color-scheme: dark;
+    --background: 215 35% 9%; --foreground: 215 50% 90%;
+    --card: 215 30% 14%; --card-foreground: 215 50% 90%;
+    --popover: 215 30% 17%; --popover-foreground: 215 50% 90%;
+    --primary: 215 60% 65%; --primary-foreground: 215 35% 9%;
+    --secondary: 215 25% 22%; --secondary-foreground: 215 50% 90%;
+    --muted: 215 25% 22%; --muted-foreground: 215 30% 70%;
+    --accent: 215 25% 26%; --accent-foreground: 215 50% 90%;
+    --destructive: 0 70% 60%; --destructive-foreground: 0 0% 100%;
+    --border: 215 25% 28%; --input: 215 25% 28%; --ring: 215 60% 65%;
+    --pmw-accent: 215 60% 65%; --pmw-accent-fg: 215 35% 9%; --pmw-accent-strong: 215 50% 90%;
+    --pmw-tag-bg: 215 25% 22%; --pmw-tag-fg: 215 50% 80%;
+    --pmw-cal-today: 215 60% 65%; --pmw-cal-sunday: 0 60% 65%; --pmw-cal-saturday: 215 50% 65%;
+    --pmw-positive: 142 35% 60%; --pmw-avatar-bg: 215 25% 25%; --pmw-avatar-fg: 215 50% 85%; --pmw-code-label: 215 30% 70%;
+    --pmw-text-2xs:11px; --pmw-leading-2xs:1.5; --pmw-tracking-2xs:0.02em;
+    --pmw-text-xs:12px; --pmw-leading-xs:1.6; --pmw-tracking-xs:0.01em;
+    --pmw-text-sm:13px; --pmw-leading-sm:1.6; --pmw-tracking-sm:0;
+    --pmw-text-base:14px; --pmw-leading-base:1.65; --pmw-tracking-base:0;
+    --pmw-text-md:15px; --pmw-leading-md:1.6; --pmw-tracking-md:0;
+    --pmw-text-lg:20px; --pmw-leading-lg:1.4; --pmw-tracking-lg:-0.01em;
+    --pmw-text-xl:28px; --pmw-leading-xl:1.25; --pmw-tracking-xl:-0.015em;
+    --pmw-text-2xl:36px; --pmw-leading-2xl:1.15; --pmw-tracking-2xl:-0.02em;
+    --pmw-text-primary:215 50% 90%; --pmw-text-secondary:215 30% 70%; --pmw-text-tertiary:215 22% 55%; --pmw-text-disabled:215 25% 32%;
+    --pmw-warning: 38 60% 65%; --pmw-warning-bg: 30 25% 18%; --pmw-warning-fg: 38 60% 80%; --pmw-info: 215 60% 65%;
+    --pmw-chip-red-bg: 0 22% 22%; --pmw-chip-red-fg: 0 60% 78%;
+    --pmw-chip-amber-bg: 28 22% 22%; --pmw-chip-amber-fg: 38 55% 78%;
+    --pmw-chip-olive-bg: 100 18% 22%; --pmw-chip-olive-fg: 100 30% 75%;
+    --pmw-chip-blue-bg: 215 25% 25%; --pmw-chip-blue-fg: 215 60% 80%;
+    --pmw-chip-plum-bg: 280 14% 22%; --pmw-chip-plum-fg: 280 35% 80%;
+    --pmw-chip-neutral-bg: 215 22% 22%; --pmw-chip-neutral-fg: 215 30% 78%;
+  }
+
+  /* font-mono 가 sans 폰트로 평탄화된 스킨 — glassmorphism 제외 (editorial 폰트 동일화). */
+  [data-skin="flat"] .font-mono,
+  [data-skin="art-deco"] .font-mono,
+  [data-skin="hygge"] .font-mono,
+  [data-skin="scandi-minimal"] .font-mono,
+  [data-skin="sakura"] .font-mono,
+  [data-skin="baby-blue"] .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* italic 미사용 스킨 — glassmorphism 제외 (editorial 폰트 동일화 → italic 사용 가능). */
+  [data-skin="flat"] .italic,
+  [data-skin="hygge"] .italic,
+  [data-skin="scandi-minimal"] .italic,
+  [data-skin="baby-blue"] .italic {
+    font-style: normal;
+  }
+
+  /* 모든 스킨 body baseline — letter-spacing + line-height 를 body 에 부여하면
+     모든 자식 텍스트가 inherit. 스킨별로 token 값이 다르므로 자동으로 분기.
+     - editorial: 자연 spacing + line-height 1.6 (매거진 톤)
+     - flat: -0.011em + 1.5 (Linear 타이트) */
+  body {
+    letter-spacing: var(--pmw-tracking-base, normal);
+    line-height: var(--pmw-leading-base, 1.5);
+  }
+
+  /* Editorial card "raised paper" — hairline border 는 base layer 에서 이미 적용됨 (* { border-border }).
+     여기서 미세 shadow 추가 — 1px y-offset, 거의 투명한 warm shadow (paper 위에 살짝 떠 있는 느낌).
+     editorial 만 — :not([data-skin]) 로 다른 스킨 영향 X. */
+  html:not([data-skin]) .bg-card,
+  html:not([data-skin]) .bg-popover {
+    box-shadow: 0 1px 3px rgba(60, 50, 35, 0.04), 0 1px 2px rgba(60, 50, 35, 0.03);
+  }
+
+  /* Editorial 채팅 버블 — own/other 모두 warm stone family 로 통일.
+     own: 약간 더 진한 stone (page bg 위 한 단계 lift). text 는 기본 foreground. */
+  html:not([data-skin]) [data-bubble="own"] {
+    background-color: hsl(28 20% 80%);
+    color: hsl(var(--foreground));
+  }
+  html:not([data-skin]).dark [data-bubble="own"] {
+    background-color: hsl(28 12% 30%);
+    color: hsl(var(--foreground));
+  }
+
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Glassmorphism — backdrop-filter 기반 frosted glass surface.
+   @layer base 밖에 둬야 Tailwind nesting/autoprefixer 가 backdrop-filter 를
+   유지함 (layer 안에서 원인 불명으로 stripped). body gradient + 카드·팝오버·
+   인풋·topbar surface 에 blur + saturate.
+   ───────────────────────────────────────────────────────────── */
+
+/* 페이지 배경 — html/body 양쪽에 그라디언트 (스크롤 시 끊김 없음).
+   background-attachment: fixed 는 backdrop-filter 와 함께 쓰면 매 composite 마다
+   gradient 재계산이라 느림 → html 에 깔고 body 는 transparent 로 단순화. */
+[data-skin="glassmorphism"] {
+  background-image: linear-gradient(135deg, #C7D2FE 0%, #DDD6FE 35%, #FBCFE8 70%, #FED7AA 100%);
+  background-color: transparent;
+  background-size: 100% 100%;
+  min-height: 100%;
+}
+[data-skin="glassmorphism"] body {
+  background-color: transparent;
+  background-image: none;
+}
+[data-skin="glassmorphism"].dark {
+  background-image: linear-gradient(135deg, #1E1B4B 0%, #312E81 40%, #4338CA 75%, #6D28D9 100%);
+}
+
+/* 카드/팝오버 — 반투명 흰색 + backdrop blur + saturate.
+   blur(12px) 로 완화 — blur(20px) + 다중 카드 동시 렌더는 모바일/저사양 GPU 부담. */
+[data-skin="glassmorphism"] .bg-card,
+[data-skin="glassmorphism"] .bg-popover {
+  background-color: var(--glass-tint);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+/* 인풋 — 더 옅은 tint (입력 가능한 영역임을 시각적으로 약하게 구분).
+   인풋은 작아서 backdrop-filter 비용 대비 시각 효과 미미 → blur 생략. */
+[data-skin="glassmorphism"] input:not([type='checkbox']):not([type='radio']),
+[data-skin="glassmorphism"] textarea,
+[data-skin="glassmorphism"] select {
+  background-color: var(--glass-input-tint);
+  border: 1px solid var(--glass-border);
+}
+
+/* topbar 도 글라스 — 페이지 그라디언트 위에 떠 있는 상단 바 */
+[data-skin="glassmorphism"] header.bg-background {
+  background-color: var(--glass-tint);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter: blur(12px) saturate(160%);
+  border-bottom-color: var(--glass-border);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Art Deco — Gatsby 톤 (cream/navy/gold).
+   카드 시그니처: 골드 이중 프레임 (외각 1px gold + 4px gap + 1px gold inner ring).
+   버튼: solid navy bg + gold text + UPPERCASE wide-tracking.
+   다크: navy bg + gold button (재즈바 톤).
+   ───────────────────────────────────────────────────────────── */
+
+[data-skin="art-deco"] {
+  background-color: #EDE3CD;
+  background-image: none;
+  min-height: 100%;
+}
+[data-skin="art-deco"].dark {
+  background-color: #0F1B30;
+}
+
+/* 한글 글리프도 serif (Noto Serif KR) */
+[data-skin="art-deco"] body {
+  font-family: var(--font-serif), var(--font-serif-kr), Georgia, 'Times New Roman', serif;
+}
+
+/* 카드/팝오버 — 골드 이중 프레임 (gold 시그니처) */
+[data-skin="art-deco"] .bg-card,
+[data-skin="art-deco"] .bg-popover {
+  border: 1px solid hsl(var(--border));
+  box-shadow:
+    inset 0 0 0 4px hsl(var(--card)),
+    inset 0 0 0 5px hsl(var(--border));
+}
+[data-skin="art-deco"].dark .bg-card,
+[data-skin="art-deco"].dark .bg-popover {
+  box-shadow:
+    inset 0 0 0 4px hsl(var(--card)),
+    inset 0 0 0 5px hsl(var(--border));
+}
+
+/* Primary — Gatsby 시그니처 버튼.
+   light: solid 네이비 + cream UPPERCASE wide-tracking
+   dark : solid 골드 + 네이비 UPPERCASE wide-tracking */
+[data-skin="art-deco"] .bg-primary {
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-weight: 500;
+  border-radius: 0.125rem;
+  box-shadow: none;
+}
+
+/* 채팅 own bubble — gold tint */
+[data-skin="art-deco"] [data-bubble="own"] {
+  background-color: hsl(var(--accent-foreground) / 0.10);
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border) / 0.5);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Hygge — 덴마크 휘게 톤. 따뜻한 베이지 bg + 우드/테라코타 액센트.
+   카드 둥근 + 따뜻한 그림자. 버튼 solid terracotta-wood (very rounded).
+   ───────────────────────────────────────────────────────────── */
+
+[data-skin="hygge"] {
+  background-color: #EFE6D6;
+  background-image: none;
+  min-height: 100%;
+}
+[data-skin="hygge"].dark {
+  background-color: #14100B;
+}
+
+/* 카드 — 따뜻한 부드러운 그림자 (램프 빛 받는 느낌) */
+[data-skin="hygge"] .bg-card,
+[data-skin="hygge"] .bg-popover {
+  border: 1px solid hsl(var(--border) / 0.5);
+  box-shadow: 0 4px 18px -4px rgba(80, 60, 40, 0.10),
+              0 2px 6px -2px rgba(80, 60, 40, 0.06);
+}
+[data-skin="hygge"].dark .bg-card,
+[data-skin="hygge"].dark .bg-popover {
+  box-shadow: 0 4px 18px -4px rgba(0, 0, 0, 0.35),
+              0 2px 6px -2px rgba(0, 0, 0, 0.20);
+}
+
+/* Primary — solid terracotta-wood, very rounded (pill) */
+[data-skin="hygge"] .bg-primary {
+  font-weight: 500;
+  letter-spacing: 0;
+  border-radius: 0.875rem;
+  box-shadow: 0 2px 6px -1px rgba(80, 60, 40, 0.14);
+}
+
+/* hygge own bubble — default 사용 (own = solid terracotta accent, other = bg-muted). */
+
+/* ─────────────────────────────────────────────────────────────
+   Scandi Minimal — Acne / Kinfolk 톤. warm off-white bg + 순백 카드.
+   카드 그림자 거의 X (가는 보더만). 버튼 outlined uppercase + light weight.
+   ───────────────────────────────────────────────────────────── */
+
+[data-skin="scandi-minimal"] {
+  background-color: #E8E5DD;
+  background-image: none;
+  min-height: 100%;
+}
+[data-skin="scandi-minimal"].dark {
+  background-color: #15140F;
+}
+
+/* 카드 — 가는 보더 + 거의 invisible shadow (clean Acne 톤) */
+[data-skin="scandi-minimal"] .bg-card,
+[data-skin="scandi-minimal"] .bg-popover {
+  border: 1px solid hsl(var(--border) / 0.5);
+  box-shadow: 0 1px 0 rgba(31, 31, 27, 0.02);
+}
+[data-skin="scandi-minimal"].dark .bg-card,
+[data-skin="scandi-minimal"].dark .bg-popover {
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Primary — Acne 시그니처 outlined uppercase. light weight + wide tracking. */
+[data-skin="scandi-minimal"] .bg-primary {
+  background-color: transparent;
+  background-image: none;
+  color: hsl(var(--primary));
+  border: 1px solid hsl(var(--primary));
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-weight: 400;
+  border-radius: 0.125rem;
+  box-shadow: none;
+}
+[data-skin="scandi-minimal"] .bg-primary:hover {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+/* scandi-minimal own bubble — default 사용 (own = solid mono accent, other = bg-muted). */
+
+/* ─────────────────────────────────────────────────────────────
+   Sakura — 파스텔 핑크 그라디언트 bg + 순백 카드 + 핑크 그라디언트 버튼.
+   monochromatic, refined, 정적/섬세. 일본 스파/차/화장품 톤.
+   ───────────────────────────────────────────────────────────── */
+
+[data-skin="sakura"] {
+  background-image: var(--sakura-grad);
+  background-color: #FBE0E5;
+  background-size: 100% 100%;
+  min-height: 100%;
+}
+[data-skin="sakura"] body {
+  background-color: transparent;
+  background-image: none;
+}
+[data-skin="sakura"].dark {
+  background-image: var(--sakura-grad);
+  background-color: #15131A;
+}
+
+/* 카드 — 순백 + soft pink 그림자 */
+[data-skin="sakura"] .bg-card,
+[data-skin="sakura"] .bg-popover {
+  border: 1px solid hsl(var(--border) / 0.4);
+  box-shadow: 0 4px 16px -4px rgba(160, 54, 75, 0.08),
+              0 2px 6px -2px rgba(160, 54, 75, 0.05);
+}
+[data-skin="sakura"].dark .bg-card,
+[data-skin="sakura"].dark .bg-popover {
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.4),
+              0 2px 6px -2px rgba(160, 54, 75, 0.18);
+}
+
+/* Primary — 핑크 그라디언트 버튼 (스크린샷 톤) */
+[data-skin="sakura"] .bg-primary {
+  background-image: var(--sakura-btn-grad);
+  background-color: transparent;
+  border: none;
+  border-radius: 9999px;          /* full pill */
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 6px -1px rgba(160, 54, 75, 0.18);
+}
+[data-skin="sakura"] .bg-primary:hover {
+  background-image: var(--sakura-btn-grad-hover);
+}
+
+/* sakura own bubble — solid 보다 약간 옅게 (사용자 피드백 — 너무 짙었음). */
+[data-skin="sakura"] [data-bubble="own"] {
+  background-color: hsl(var(--primary) / 0.75);
+  color: hsl(var(--primary-foreground));
+}
+
+/* flat own bubble — 약간 옅게 (사용자 피드백). */
+[data-skin="flat"] [data-bubble="own"] {
+  background-color: hsl(var(--primary) / 0.85);
+  color: hsl(var(--primary-foreground));
+}
+
+/* glassmorphism own bubble — 약간 옅게 (사용자 피드백). */
+[data-skin="glassmorphism"] [data-bubble="own"] {
+  background-color: hsl(var(--primary) / 0.75);
+  color: hsl(var(--primary-foreground));
+}
+
+/* scandi-minimal own bubble — 약간 옅게 (near-black 이라 0.7 정도면 진한 회색). */
+[data-skin="scandi-minimal"] [data-bubble="own"] {
+  background-color: hsl(var(--primary) / 0.75);
+  color: hsl(var(--primary-foreground));
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Pastel — Baby Blue 단일 (헬스케어/핀테크 톤).
+   ───────────────────────────────────────────────────────────── */
+
+/* Baby Blue */
+[data-skin="baby-blue"] { background-color: #DCE7F2; min-height: 100%; }
+[data-skin="baby-blue"].dark { background-color: #0F1622; }
+[data-skin="baby-blue"] .bg-card,
+[data-skin="baby-blue"] .bg-popover {
+  border: 1px solid hsl(var(--border) / 0.5);
+  box-shadow: 0 4px 16px -4px rgba(44, 74, 111, 0.10),
+              0 2px 6px -2px rgba(44, 74, 111, 0.06);
+}
+[data-skin="baby-blue"].dark .bg-card,
+[data-skin="baby-blue"].dark .bg-popover {
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.35),
+              0 2px 6px -2px rgba(0, 0, 0, 0.20);
+}
+[data-skin="baby-blue"] .bg-primary {
+  font-weight: 500;
+  letter-spacing: 0;
+  border-radius: 0.625rem;
+  box-shadow: 0 2px 6px -1px rgba(44, 74, 111, 0.16);
+}
+/* baby-blue own bubble — default 사용 (own = solid mid blue, other = bg-muted). */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+    /* 모바일 — 탭 하이라이트 회색 박스 제거 (포커스 링은 :focus-visible 로 별도) */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Editorial serif — use via .font-serif on headlines and pet names */
+  .font-serif {
+    font-family: "Source Serif 4", var(--font-serif-kr), Georgia, "Times New Roman", serif;
+    font-weight: 500;
+    letter-spacing: -0.1px;
+  }
+
+  .font-mono {
+    font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  /* input[type="search"] 의 브라우저 기본 X(clear) 버튼 제거 — 앱이 자체 X 버튼을 그리므로 중복 회피.
+     WebKit (Chrome/Safari/Edge) 와 Firefox 양쪽 처리. */
+  input[type="search"]::-webkit-search-cancel-button,
+  input[type="search"]::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input[type="search"]::-ms-clear {
+    display: none;
+  }
+}
+
+/* Chrome autofill 오버라이드 — 기본 yellow/blue 하이라이트가 에디토리얼 팔레트와 충돌.
+   배경을 페이지 bg 로 위조하고 텍스트 색은 foreground 유지. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: hsl(var(--foreground));
+  -webkit-box-shadow: 0 0 0 1000px hsl(var(--background)) inset;
+  caret-color: hsl(var(--foreground));
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PMW Editorial 타이포 스케일 (약품 관리 섹션 기준 — 다른 섹션에도 재사용)
+   ───────────────────────────────────────────────────────────── */
+@layer components {
+  .pmw-st__sec-title {
+    font-family: var(--pmw-font-serif);
+    font-size: 26px;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.3px;
+    color: var(--pmw-near-black);
+  }
+  .pmw-st__sec-lead {
+    font-family: var(--pmw-font-serif);
+    font-style: italic;
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--pmw-olive-gray);
+  }
+  .pmw-st__group-title {
+    font-family: var(--pmw-font-mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--pmw-olive-gray);
+  }
+  .pmw-st__field-label {
+    font-family: var(--pmw-font-serif);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--pmw-olive-gray);
+  }
+  .pmw-st__input {
+    font-family: var(--pmw-font-sans);
+    font-size: 14.5px;
+    color: var(--pmw-near-black);
+  }
+  .pmw-st__input-mono {
+    font-family: var(--pmw-font-mono);
+    font-size: 13.5px;
+    color: var(--pmw-near-black);
+  }
+  /* 모바일에서만 16px — iOS Safari 입력 포커스 시 자동 줌 방지(≥16px). */
+  @media (max-width: 767px) {
+    .pmw-st__input,
+    .pmw-st__input-mono {
+      font-size: 16px;
+    }
+  }
+  .pmw-st__btn {
+    font-family: var(--pmw-font-sans);
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--pmw-near-black);
+  }
+  .pmw-st__btn-ghost {
+    font-family: var(--pmw-font-serif);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--pmw-olive-gray);
+  }
+  .pmw-st__chip {
+    font-family: var(--pmw-font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--pmw-deep);
+    background-color: var(--pmw-clay-soft);
+  }
+  .pmw-st__tab-count {
+    font-family: var(--pmw-font-mono);
+    font-size: 10.5px;
+    color: var(--pmw-stone-gray);
+  }
+
+  /* Status text + dot helpers — sage/amber/rust trio */
+  .pmw-st__status--sage  { color: var(--pmw-sage); }
+  .pmw-st__status--amber { color: var(--pmw-amber); }
+  .pmw-st__status--rust  { color: var(--pmw-rust); }
+  .pmw-st__status--stone { color: var(--pmw-stone-gray); }
+  .pmw-st__dot--sage  { background-color: var(--pmw-sage); }
+  .pmw-st__dot--amber { background-color: var(--pmw-amber); }
+  .pmw-st__dot--rust  { background-color: var(--pmw-rust); }
+  .pmw-st__dot--stone { background-color: var(--pmw-stone-gray); }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+  .scrollbar-minimal {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .scrollbar-minimal::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-minimal::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-minimal::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 9999px;
+  }
+  .scrollbar-minimal:hover::-webkit-scrollbar-thumb,
+  .scrollbar-minimal::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.45);
+  }
+
+  .number-input-no-spinner {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  .number-input-no-spinner::-webkit-outer-spin-button,
+  .number-input-no-spinner::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
