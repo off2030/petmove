@@ -9,6 +9,12 @@ const nextConfig = {
       bodySizeLimit: '5mb',
     },
   },
+  // 정적 자산 (법무 마크다운 등) 을 Vercel serverless 함수 번들에 포함.
+  // monorepo 외부 경로(../../docs) 는 Next 의 기본 file tracer 가 못 잡아서 명시.
+  outputFileTracingIncludes: {
+    '/terms': ['../../docs/legal/terms.md'],
+    '/privacy': ['../../docs/legal/privacy.md'],
+  },
 }
 
 export default nextConfig
