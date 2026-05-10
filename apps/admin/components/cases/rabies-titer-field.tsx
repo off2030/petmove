@@ -15,9 +15,9 @@ import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { resolveTiterLab, type InspectionLabRule } from '@petmove/domain'
 import { severityTextClass, tooltipText, useFieldVerification } from './verification-context'
-import { DateTextField } from '@/components/ui/date-text-field'
+import { DateTextField } from '@petmove/ui'
 import { useSectionEditMode } from './section-edit-mode-context'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 
 interface TiterRecord {
   date: string | null

@@ -10,7 +10,7 @@ import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { supabaseBrowser as supabase } from '@/lib/supabase/browser'
 import { useSectionEditMode } from './section-edit-mode-context'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 import { signAttachmentUrls } from '@/lib/actions/attachment-urls'
 
 /* ── Types ── */

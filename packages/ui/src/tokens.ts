@@ -1,8 +1,7 @@
 /**
- * PetMove Design System — Editorial 톤
+ * 인라인 스타일 토큰 — 컴포넌트로 추출하지 않고 className 으로 직접 합성하는 패턴.
  *
- * 공용 패턴은 components/ui/* 컴포넌트(PillButton, ListRow, SectionLabel,
- * PageShell 등)로 이전됨. 여기는 컴포넌트화하지 않은 인라인 클래스 두 개만 남김.
+ * 컴포넌트는 `cn(iconButton, '...')` 형태로 부분 override.
  */
 
 // 카드 컨테이너 — 테두리/음영 없음, bg-card == bg-background

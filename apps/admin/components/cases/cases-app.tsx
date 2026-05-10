@@ -26,7 +26,7 @@ import { AssigneePicker } from './assignee-picker'
 import { ShareLinkDialog } from './share-link-dialog'
 import { resolveCerts } from '@petmove/domain'
 import type { CaseRow } from '@/lib/supabase/types'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 import { evaluateCase } from './verification-context'
 import { listOrgDisabledChecks } from '@/lib/actions/org-disabled-checks'
 

@@ -126,9 +126,18 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      lucide-react:
+        specifier: ^1.8.0
+        version: 1.8.0(react@19.2.5)
       react:
         specifier: ^19.0.0
         version: 19.2.5
+      react-day-picker:
+        specifier: ^9.14.0
+        version: 9.14.0(react@19.2.5)
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.5(react@19.2.5)
       tailwind-merge:
         specifier: ^3.5.0
         version: 3.5.0

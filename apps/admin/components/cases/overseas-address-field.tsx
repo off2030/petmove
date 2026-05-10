@@ -9,7 +9,7 @@ import type { CaseRow } from '@/lib/supabase/types'
 import { CopyButton } from './copy-button'
 import { SectionLabel } from '@/components/ui/section-label'
 import { useSectionEditMode } from './section-edit-mode-context'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 
 const DATA_KEY = 'address_overseas'
 

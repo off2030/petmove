@@ -29,7 +29,7 @@ import {
   SettingsSubsectionTitle as SectionLabel,
 } from './settings-layout'
 import { CompanyAddressSearch, type CompanyAddressResult } from './company-address-search'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 import { cn } from '@/lib/utils'
 
 interface FieldDef {

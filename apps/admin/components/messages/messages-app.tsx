@@ -32,7 +32,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { supabaseBrowser } from '@/lib/supabase/browser'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 import { HandoffCard } from './handoff-card'
 import { useCases } from '@/components/cases/cases-context'
 import {

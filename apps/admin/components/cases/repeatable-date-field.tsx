@@ -14,9 +14,9 @@ import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { severityTextClass, tooltipText, useFieldVerification } from './verification-context'
 import { AttachButton } from '@/components/ui/attach-button'
-import { DateTextField } from '@/components/ui/date-text-field'
+import { DateTextField } from '@petmove/ui'
 import { useSectionEditMode } from './section-edit-mode-context'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 import { Checkbox } from '@/components/ui/checkbox'
 
 interface VacRecord {

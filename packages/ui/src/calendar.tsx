@@ -3,7 +3,7 @@
 import { DayPicker } from 'react-day-picker'
 import { ko } from 'react-day-picker/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from './cn'
 
 /**
  * Editorial Calendar — react-day-picker v9 with PetMove editorial tone.

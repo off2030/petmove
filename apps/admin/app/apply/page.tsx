@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
-import { cardContainer } from '@/lib/design-system'
-import { DateTextField } from '@/components/ui/date-text-field'
+import { cardContainer } from '@petmove/ui'
+import { DateTextField } from '@petmove/ui'
 import { applyCase } from '@/lib/actions/apply-case'
 import destsData from '@/data/destinations.json'
 import breedsData from '@/data/breeds.json'

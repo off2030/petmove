@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { DateTextField } from '@/components/ui/date-text-field'
+import { DateTextField } from '@petmove/ui'
 
 export type ScheduleCountry = 'japan' | 'australia' | 'nz'
 

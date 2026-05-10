@@ -10,7 +10,7 @@ import destsData from '@/data/destinations.json'
 import { destCode } from '@/lib/country-code'
 import { resolveActiveDestination, getTripType } from '@petmove/domain'
 import { useSectionEditMode } from './section-edit-mode-context'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 
 interface Dest {
   ko: string

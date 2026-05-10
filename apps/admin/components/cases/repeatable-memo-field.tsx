@@ -7,7 +7,7 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { useSectionEditMode } from './section-edit-mode-context'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 
 const DATA_KEY = 'memos'
 

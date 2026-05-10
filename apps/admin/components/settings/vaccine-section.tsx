@@ -19,7 +19,7 @@ import {
 } from '@/lib/actions/org-vaccine-products'
 import { extractVaccineInfo } from '@/lib/actions/extract-vaccine'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import { SectionHeader } from '@petmove/ui'
 import {

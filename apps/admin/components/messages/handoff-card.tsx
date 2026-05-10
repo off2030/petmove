@@ -11,7 +11,7 @@ import {
   type TransferStatus,
   type TransferWithContext,
 } from '@/lib/actions/transfers'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 import { useCases } from '@/components/cases/cases-context'
 
 const STATUS_LABEL: Record<TransferStatus, string> = {

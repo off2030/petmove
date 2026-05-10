@@ -9,14 +9,14 @@ import type { CaseRow } from '@/lib/supabase/types'
 import { extractExtra } from '@/lib/actions/extract-extra'
 import type { FlightEntry } from '@/lib/actions/extract-extra'
 import { CopyButton } from './copy-button'
-import { DateTextField } from '@/components/ui/date-text-field'
+import { DateTextField } from '@petmove/ui'
 import { DropdownSelect } from '@petmove/ui'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { ExtraSectionShell } from './extra-field-shell'
 import { SectionLabel } from '@/components/ui/section-label'
 import { useSectionEditMode } from './section-edit-mode-context'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 
 /* ── Types ── */
 

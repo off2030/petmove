@@ -9,10 +9,10 @@ import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { labColor } from '@/lib/lab-color'
 import { resolveInspectionLabs } from '@petmove/domain'
-import { DateTextField } from '@/components/ui/date-text-field'
+import { DateTextField } from '@petmove/ui'
 import { DropdownSelect } from '@petmove/ui'
 import { useSectionEditMode } from './section-edit-mode-context'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 
 interface InfectiousRecord {
   date: string | null

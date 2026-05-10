@@ -10,10 +10,10 @@ import { CopyButton } from '@/components/cases/copy-button'
 import { useCases } from '@/components/cases/cases-context'
 import { useDetailViewSettings } from '@/components/providers/detail-view-settings-provider'
 import { severityTextClass, tooltipText, useFieldVerification } from '@/components/cases/verification-context'
-import { DateTextField } from '@/components/ui/date-text-field'
+import { DateTextField } from '@petmove/ui'
 import { SectionLabel } from '@/components/ui/section-label'
 import { useSectionEditMode } from '@/components/cases/section-edit-mode-context'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 
 /** Filter input by language */
 function filterByLang(str: string, lang?: 'ko' | 'en'): string {

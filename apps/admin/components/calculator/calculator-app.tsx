@@ -9,7 +9,7 @@ import {
   cloneCalculatorDestination,
   deleteCalculatorDestination,
 } from '@/lib/actions/calculator'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 import { Calculator } from './calculator'
 import { CalculatorOutputModal } from './calculator-output-modal'
 import { ScheduleCalculator, type ScheduleCountry } from './schedule-calculator'

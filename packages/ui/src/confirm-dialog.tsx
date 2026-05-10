@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { cn } from '@/lib/utils'
+import { cn } from './cn'
 
 type Variant = 'default' | 'destructive'
 

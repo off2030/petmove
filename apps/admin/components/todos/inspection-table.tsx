@@ -6,7 +6,7 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from '@/components/cases/cases-context'
 import { labColor } from '@/lib/lab-color'
 import { cn } from '@/lib/utils'
-import { DateTextField } from '@/components/ui/date-text-field'
+import { DateTextField } from '@petmove/ui'
 import { DropdownSelect } from '@petmove/ui'
 import { DestinationCell } from './destination-cell'
 

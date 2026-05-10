@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { Eye, Plus, RefreshCw, Trash2 } from 'lucide-react'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 import {
   createOrg,
   deleteOrg,

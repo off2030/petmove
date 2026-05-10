@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Inter_Tight, Manrope, Source_Serif_4, JetBrains_Mono, Noto_Sans_KR, Noto_Serif_KR } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
-import { ConfirmProvider } from '@/components/ui/confirm-dialog'
+import { ConfirmProvider } from '@petmove/ui'
 import { ServiceWorkerRegister } from '@/components/sw-register'
 
 // next/font — 동일 오리진에서 폰트 서빙, Turbopack/CSS @import 이슈 우회.

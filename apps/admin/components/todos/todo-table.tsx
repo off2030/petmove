@@ -5,7 +5,7 @@ import type { CaseRow } from '@/lib/supabase/types'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from '@/components/cases/cases-context'
 import { cn } from '@/lib/utils'
-import { DateTextField } from '@/components/ui/date-text-field'
+import { DateTextField } from '@petmove/ui'
 import { DropdownSelect } from '@petmove/ui'
 
 const INITIAL_VISIBLE = 100

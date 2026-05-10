@@ -18,7 +18,7 @@ import {
 } from '@/lib/actions/calculator'
 import { ListRow } from '@petmove/ui'
 import { Checkbox } from '@/components/ui/checkbox'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 import { cn } from '@/lib/utils'
 
 const CAT_VARIANTS: Record<string, string> = {

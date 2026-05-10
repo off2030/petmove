@@ -7,7 +7,7 @@ import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
-import { DateTextField } from '@/components/ui/date-text-field'
+import { DateTextField } from '@petmove/ui'
 import { DropdownSelect } from '@petmove/ui'
 import { useCalculatorData } from '@/components/providers/calculator-data-provider'
 import {
@@ -15,7 +15,7 @@ import {
   type EstimateSnapshot,
 } from '@/components/calculator/calculator-output-modal'
 import { useSectionEditMode } from './section-edit-mode-context'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 
 interface PaymentRecord {
   amount: number

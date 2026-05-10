@@ -11,10 +11,10 @@ import { CopyButton } from './copy-button'
 import { AttachButton } from '@/components/ui/attach-button'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
-import { DateTextField } from '@/components/ui/date-text-field'
+import { DateTextField } from '@petmove/ui'
 import { SectionLabel } from '@/components/ui/section-label'
 import { SectionEditModeProvider, useSectionEditMode } from './section-edit-mode-context'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 
 type ExtractOk<C extends Country> = { ok: true; data: ResultMap[C] }
 

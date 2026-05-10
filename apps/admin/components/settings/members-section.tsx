@@ -17,7 +17,7 @@ import {
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { PillButton } from '@petmove/ui'
 import { SettingsShell, SettingsSection, SettingsSubsectionTitle } from './settings-layout'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 import { cn } from '@/lib/utils'
 
 const ROLE_LABEL: Record<InviteRole, string> = {

@@ -12,7 +12,7 @@ import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { ExtraSectionShell, SelectInput } from './extra-field-shell'
 import { SectionLabel } from '@/components/ui/section-label'
 import { useSectionEditMode } from './section-edit-mode-context'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 
 interface SwissExtra {
   entry_purpose: 'temporary' | 'relocation' | 'reentry' | null

@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { History } from 'lucide-react'
 import { useCases } from './cases-context'
 import { restoreToHistoryPoint } from '@/lib/actions/cases'
-import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useConfirm } from '@petmove/ui'
 
 interface HistoryEntry {
   id: string
