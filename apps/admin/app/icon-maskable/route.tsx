@@ -32,9 +32,8 @@ export async function GET() {
           fontFamily: 'Alonzo',
         }}
       >
-        {/* 안전영역 안에 들어가도록 사이즈 한 단계 작게. */}
-        <div style={{ fontSize: 30, letterSpacing: 1, fontWeight: 700, lineHeight: 1 }}>PETMOVE</div>
-        <div style={{ fontSize: 15, letterSpacing: 4, fontWeight: 700, lineHeight: 1, marginTop: 4, paddingLeft: 4 }}>Work</div>
+        {/* 안전영역(중앙 80% ≈ 154px) 안에 들어가도록 폰트 크기 조정. */}
+        <div style={{ fontSize: 72, letterSpacing: 2, fontWeight: 700, lineHeight: 1 }}>PMW</div>
       </div>
     ),
     {

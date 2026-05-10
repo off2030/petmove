@@ -3,7 +3,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 // 일반 favicon / Android home screen 아이콘 (purpose: 'any').
-// 두 줄 워드마크 — PETMOVE / Work, Alonzo ExtraLight + faux bold.
+// 단일 모노그램 — PMW (작은 사이즈 가독성 우선). Alonzo ExtraLight + faux bold.
 // public/icon.svg 가 SVG 버전이지만, 일부 구형 Android Chrome 은 PNG 만 지원.
 // Next.js 가 빌드 타임에 PNG 로 생성하고 <link rel="icon"> 자동 주입.
 export const size = { width: 192, height: 192 }
@@ -29,8 +29,7 @@ export default async function Icon() {
           borderRadius: 36,
         }}
       >
-        <div style={{ fontSize: 34, letterSpacing: 1, fontWeight: 700, lineHeight: 1 }}>PETMOVE</div>
-        <div style={{ fontSize: 17, letterSpacing: 4, fontWeight: 700, lineHeight: 1, marginTop: 5, paddingLeft: 4 }}>Work</div>
+        <div style={{ fontSize: 92, letterSpacing: 2, fontWeight: 700, lineHeight: 1 }}>PMW</div>
       </div>
     ),
     {

@@ -4,7 +4,7 @@ import path from 'node:path'
 
 // iOS "홈 화면에 추가" 시 사용되는 apple-touch-icon.
 // 빌드 타임에 PNG 로 생성되어 <link rel="apple-touch-icon"> 자동 주입.
-// 두 줄 워드마크 — PETMOVE / Work, Alonzo ExtraLight + faux bold.
+// 단일 모노그램 — PMW (작은 사이즈 가독성 우선). Alonzo ExtraLight + faux bold.
 export const size = { width: 180, height: 180 }
 export const contentType = 'image/png'
 
@@ -27,8 +27,7 @@ export default async function AppleIcon() {
           fontFamily: 'Alonzo',
         }}
       >
-        <div style={{ fontSize: 32, letterSpacing: 1, fontWeight: 700, lineHeight: 1 }}>PETMOVE</div>
-        <div style={{ fontSize: 16, letterSpacing: 4, fontWeight: 700, lineHeight: 1, marginTop: 5, paddingLeft: 4 }}>Work</div>
+        <div style={{ fontSize: 86, letterSpacing: 2, fontWeight: 700, lineHeight: 1 }}>PMW</div>
       </div>
     ),
     {

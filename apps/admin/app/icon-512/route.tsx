@@ -27,8 +27,7 @@ export async function GET() {
           borderRadius: 96,
         }}
       >
-        <div style={{ fontSize: 116, letterSpacing: 4, fontWeight: 700, lineHeight: 1 }}>PETMOVE</div>
-        <div style={{ fontSize: 58, letterSpacing: 14, fontWeight: 700, lineHeight: 1, marginTop: 14, paddingLeft: 14 }}>Work</div>
+        <div style={{ fontSize: 248, letterSpacing: 6, fontWeight: 700, lineHeight: 1 }}>PMW</div>
       </div>
     ),
     {

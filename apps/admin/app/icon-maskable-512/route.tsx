@@ -26,8 +26,7 @@ export async function GET() {
         }}
       >
         {/* 안전영역(중앙 80% ≈ 410px) 안에 들어가도록 폰트 크기 조정. */}
-        <div style={{ fontSize: 80, letterSpacing: 3, fontWeight: 700, lineHeight: 1 }}>PETMOVE</div>
-        <div style={{ fontSize: 40, letterSpacing: 12, fontWeight: 700, lineHeight: 1, marginTop: 10, paddingLeft: 12 }}>Work</div>
+        <div style={{ fontSize: 192, letterSpacing: 4, fontWeight: 700, lineHeight: 1 }}>PMW</div>
       </div>
     ),
     {
