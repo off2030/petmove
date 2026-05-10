@@ -1,0 +1,87 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
+
+// Portal 의 인증 미들웨어. admin 의 invite-only 게이트와 다른 점:
+//   - 멤버십 체크 없음 — portal 은 보호자(고객) 모두 누구나 가입·로그인 가능
+//   - 토큰 기반 anon 진입 (/share/[token]) 은 추후 phase 에서 추가
+//
+// 현재는 최소한의 세션 refresh 만 수행하고, 보호 경로(/cases, /profile, /settings) 는
+// 미로그인 시 /login 으로 redirect.
+
+const PUBLIC_PREFIXES = [
+  '/login',
+  '/auth/callback',
+  '/terms',
+  '/privacy',
+  '/share',  // 토큰 진입 (Phase 11.0.5 구현 전 까지 page 자체는 없지만 미인증 통과 정의)
+  '/apply',  // 신청서 (Phase 11.0.6)
+  '/_next',
+  '/favicon',
+  '/manifest.webmanifest',
+  '/sw.js',
+  '/apple-icon',
+  '/icon',
+]
+
+function isPublic(pathname: string) {
+  return PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))
+}
+
+export async function proxy(request: NextRequest) {
+  let response = NextResponse.next({ request })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          )
+          response = NextResponse.next({ request })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options),
+          )
+        },
+      },
+    },
+  )
+
+  const { pathname } = request.nextUrl
+
+  // 루트 페이지는 placeholder 라 미로그인도 통과 (Phase 11.0.7 에서 케이스 목록 또는 marketing 으로 분기).
+  if (pathname === '/') return response
+
+  if (isPublic(pathname)) return response
+
+  // 보호 경로 — getUser() 로 세션 검증.
+  // stale refresh token 은 throw → signOut 후 /login 으로 redirect.
+  let user = null
+  try {
+    const result = await supabase.auth.getUser()
+    user = result.data.user
+  } catch {
+    try { await supabase.auth.signOut() } catch { /* ignore */ }
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('next', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  if (!user) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('next', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  return response
+}
+
+export const config = {
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+}
