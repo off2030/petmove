@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@petmove/auth'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { revalidatePath } from 'next/cache'
 

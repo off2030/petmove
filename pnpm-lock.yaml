@@ -20,6 +20,9 @@ importers:
       '@pdf-lib/fontkit':
         specifier: ^1.1.1
         version: 1.1.1
+      '@petmove/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@petmove/domain':
         specifier: workspace:*
         version: link:../../packages/domain
@@ -117,6 +120,9 @@ importers:
 
   apps/portal:
     dependencies:
+      '@petmove/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@petmove/domain':
         specifier: workspace:*
         version: link:../../packages/domain
@@ -185,7 +191,20 @@ importers:
         specifier: ^6.0.2
         version: 6.0.3
 
-  packages/auth: {}
+  packages/auth:
+    dependencies:
+      '@supabase/ssr':
+        specifier: ^0.10.2
+        version: 0.10.2(@supabase/supabase-js@2.104.0)
+      '@supabase/supabase-js':
+        specifier: ^2.103.0
+        version: 2.104.0
+      next:
+        specifier: '>=16.0.0'
+        version: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.5
 
   packages/db: {}
 

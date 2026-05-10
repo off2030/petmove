@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
-import { supabaseBrowser } from '@/lib/supabase/browser'
+import { supabaseBrowser } from '@petmove/auth'
 import { restoreCase, permanentDeleteCase } from '@/lib/actions/delete-case'
 import { useConfirm } from '@petmove/ui'
 

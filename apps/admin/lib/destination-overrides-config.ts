@@ -18,7 +18,7 @@ export { loadDestinationOverridesByOrg } from '@petmove/domain'
 
 export async function loadDestinationOverrides(): Promise<DestinationOverridesConfig> {
   try {
-    const { createClient } = await import('@/lib/supabase/server')
+    const { createClient } = await import('@petmove/auth')
     const { getActiveOrgId } = await import('@/lib/supabase/active-org')
     const supabase = await createClient()
     const orgId = await getActiveOrgId()
@@ -39,7 +39,7 @@ export async function saveDestinationOverrides(
   config: DestinationOverridesConfig,
 ): Promise<DestinationOverridesConfig> {
   const normalized = normalizeDestinationOverrides(config)
-  const { createClient } = await import('@/lib/supabase/server')
+  const { createClient } = await import('@petmove/auth')
   const { getActiveOrgId } = await import('@/lib/supabase/active-org')
   const supabase = await createClient()
   const orgId = await getActiveOrgId()

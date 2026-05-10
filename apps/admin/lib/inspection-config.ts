@@ -129,7 +129,7 @@ function normalize(raw: unknown): InspectionConfig {
 
 export async function loadInspectionConfig(): Promise<InspectionConfig> {
   try {
-    const { createClient } = await import('@/lib/supabase/server')
+    const { createClient } = await import('@petmove/auth')
     const { getActiveOrgId } = await import('@/lib/supabase/active-org')
     const supabase = await createClient()
     const orgId = await getActiveOrgId()
@@ -148,7 +148,7 @@ export async function loadInspectionConfig(): Promise<InspectionConfig> {
 
 export async function saveInspectionConfig(config: InspectionConfig): Promise<InspectionConfig> {
   const normalized = normalize(config)
-  const { createClient } = await import('@/lib/supabase/server')
+  const { createClient } = await import('@petmove/auth')
   const { getActiveOrgId } = await import('@/lib/supabase/active-org')
   const supabase = await createClient()
   const orgId = await getActiveOrgId()

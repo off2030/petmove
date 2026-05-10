@@ -1,8 +1,8 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@petmove/auth'
+import { createAdminClient } from '@petmove/auth'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { sendEmail, inviteFromAddress } from '@/lib/email/resend'
 import { inviteEmailHtml, inviteEmailSubject } from '@/lib/email/invite-template'

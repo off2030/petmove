@@ -17,7 +17,7 @@ const APP_SETTINGS_KEY = 'todo_columns_config'
 
 export async function loadTodoColumnsConfig(): Promise<TodoColumnsConfig> {
   try {
-    const { createClient } = await import('@/lib/supabase/server')
+    const { createClient } = await import('@petmove/auth')
     const { getActiveOrgId } = await import('@/lib/supabase/active-org')
     const supabase = await createClient()
     const orgId = await getActiveOrgId()
@@ -38,7 +38,7 @@ export async function saveTodoColumnsConfig(
   config: TodoColumnsConfig,
 ): Promise<TodoColumnsConfig> {
   const normalized = normalizeTodoColumnsConfig(config)
-  const { createClient } = await import('@/lib/supabase/server')
+  const { createClient } = await import('@petmove/auth')
   const { getActiveOrgId } = await import('@/lib/supabase/active-org')
   const supabase = await createClient()
   const orgId = await getActiveOrgId()

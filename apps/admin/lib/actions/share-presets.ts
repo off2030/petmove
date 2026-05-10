@@ -6,7 +6,7 @@
  */
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@petmove/auth'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import type { SharePreset } from '@/lib/share-presets-types'
 

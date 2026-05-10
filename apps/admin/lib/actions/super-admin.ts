@@ -2,8 +2,8 @@
 
 import { cookies, headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@petmove/auth'
+import { createAdminClient } from '@petmove/auth'
 import { sendEmail, inviteFromAddress } from '@/lib/email/resend'
 import { inviteEmailHtml, inviteEmailSubject } from '@/lib/email/invite-template'
 import { IMPERSONATION_COOKIE } from '@/lib/supabase/active-org'

@@ -7,7 +7,7 @@
  * 빈 값/null은 자동으로 drop되고, regular column / data jsonb로 적절히 분배된다.
  */
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@petmove/auth'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { formatMicrochip } from '@petmove/domain'
 import type { CaseRow } from '@/lib/supabase/types'

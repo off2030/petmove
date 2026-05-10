@@ -137,7 +137,7 @@ export const VET_INFO = new Proxy({} as VetInfo, {
  */
 export async function loadVetInfo(): Promise<VetInfo> {
   try {
-    const { createClient } = await import('@/lib/supabase/server')
+    const { createClient } = await import('@petmove/auth')
     const { getActiveOrgId } = await import('@/lib/supabase/active-org')
     const supabase = await createClient()
     const orgId = await getActiveOrgId()
@@ -181,7 +181,7 @@ export async function loadEffectiveVetInfo(): Promise<VetInfo> {
   try {
     const { loadUserContactInfo } = await import('@/lib/user-contact')
     userInfo = await loadUserContactInfo()
-    const { createClient } = await import('@/lib/supabase/server')
+    const { createClient } = await import('@petmove/auth')
     const { getActiveOrgId } = await import('@/lib/supabase/active-org')
     const supabase = await createClient()
     const orgId = await getActiveOrgId()
@@ -222,7 +222,7 @@ export async function loadEffectiveVetInfo(): Promise<VetInfo> {
  * 안전하게 부분 갱신.
  */
 export async function saveVetInfo(patch: Partial<VetInfo>): Promise<VetInfo> {
-  const { createClient } = await import('@/lib/supabase/server')
+  const { createClient } = await import('@petmove/auth')
   const { getActiveOrgId } = await import('@/lib/supabase/active-org')
   const supabase = await createClient()
   const orgId = await getActiveOrgId()

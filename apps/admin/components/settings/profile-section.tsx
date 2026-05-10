@@ -12,7 +12,7 @@ import {
   SettingsSubsectionTitle as SectionLabel,
 } from './settings-layout'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
-import { supabaseBrowser } from '@/lib/supabase/browser'
+import { supabaseBrowser } from '@petmove/auth'
 import { PushPermission } from '@/components/pwa/push-permission'
 import { cn } from '@/lib/utils'
 

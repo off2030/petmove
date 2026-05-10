@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@petmove/auth'
+import { createAdminClient } from '@petmove/auth'
 
 // Naver OAuth callback — code 교환 + user info → Supabase user 생성/조회 → 세션 cookie set.
 // Supabase 가 Naver 를 builtin 지원 안 해서 자체 처리. magic link 의 hashed_token 을

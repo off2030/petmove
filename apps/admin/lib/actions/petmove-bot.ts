@@ -6,8 +6,8 @@
 // 비밀번호로 로그인할 일은 없고, ensurePetmoveBot() 이 idempotent 하게 행을 보장한다.
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@petmove/auth'
+import { createAdminClient } from '@petmove/auth'
 import { PETMOVE_BOT_EMAIL } from '@/lib/petmove-bot-constants'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }

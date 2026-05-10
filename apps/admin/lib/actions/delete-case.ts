@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@petmove/auth'
 
 /** Soft-delete: set deleted_at timestamp */
 export async function deleteCase(

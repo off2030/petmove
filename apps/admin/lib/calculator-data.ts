@@ -6,7 +6,7 @@
  */
 import 'server-only'
 import { cache } from 'react'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@petmove/auth'
 import type { CalculatorItem } from '@/lib/supabase/types'
 
 export const getCalculatorItems = cache(async (): Promise<CalculatorItem[]> => {

@@ -13,7 +13,7 @@ import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
 import { parseDestinations } from '@petmove/domain'
 import type { InspectionConfig } from '@petmove/domain'
 import type { CertConfig } from '@petmove/domain'
-import { supabaseBrowser } from '@/lib/supabase/browser'
+import { supabaseBrowser } from '@petmove/auth'
 import type { SharePreset } from '@/lib/share-presets-types'
 import { DEFAULT_TODO_COLUMNS_CONFIG, type TodoColumnsConfig } from '@/lib/todo-columns-config-types'
 

@@ -1,7 +1,7 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@petmove/auth'
+import { createAdminClient } from '@petmove/auth'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { getTransfersByIds, type TransferWithContext } from './transfers'
 

@@ -1,7 +1,7 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createAdminClient } from '@petmove/auth'
 import { formatMicrochip } from '@petmove/domain'
 
 // apply 는 공개(비인증) 플로우 — getActiveOrgId() 사용 불가.

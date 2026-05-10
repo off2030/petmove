@@ -31,7 +31,7 @@ import {
   X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { supabaseBrowser } from '@/lib/supabase/browser'
+import { supabaseBrowser } from '@petmove/auth'
 import { useConfirm } from '@petmove/ui'
 import { HandoffCard } from './handoff-card'
 import { useCases } from '@/components/cases/cases-context'

@@ -11,8 +11,8 @@
  */
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@petmove/auth'
+import { createAdminClient } from '@petmove/auth'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { formatMicrochip } from '@petmove/domain'
 import breedsData from '@petmove/domain/data/breeds.json'

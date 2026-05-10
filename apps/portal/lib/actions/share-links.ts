@@ -13,7 +13,7 @@
  * 도메인 헬퍼는 @petmove/domain 에서 import — admin 과 단일 출처 공유.
  */
 
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createAdminClient } from '@petmove/auth'
 import {
   formatMicrochip,
   buildShareFieldDescriptors,

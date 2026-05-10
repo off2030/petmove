@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabaseBrowser } from '@/lib/supabase/browser'
+import { supabaseBrowser } from '@petmove/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 

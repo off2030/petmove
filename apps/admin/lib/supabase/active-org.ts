@@ -1,6 +1,6 @@
 import { cache } from 'react'
 import { cookies } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@petmove/auth'
 
 export const IMPERSONATION_COOKIE = 'pm_impersonated_org'
 

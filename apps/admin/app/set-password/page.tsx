@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@petmove/auth'
 import { SetPasswordForm } from './form'
 
 export const dynamic = 'force-dynamic'

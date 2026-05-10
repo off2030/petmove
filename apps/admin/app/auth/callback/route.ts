@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@petmove/auth'
 
 const OAUTH_NEXT_COOKIE = 'pm_oauth_next'
 

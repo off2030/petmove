@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@petmove/auth'
 
 const SIGN_TTL_SECONDS = 60 * 60
 

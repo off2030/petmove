@@ -6,7 +6,7 @@
  * 모두 영구 보관하기 위해 사용.
  */
 
-import { supabaseBrowser as supabase } from '@/lib/supabase/browser'
+import { supabaseBrowser as supabase } from '@petmove/auth'
 import { updateCaseField } from '@/lib/actions/cases'
 import type { CaseRow } from '@/lib/supabase/types'
 

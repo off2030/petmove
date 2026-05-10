@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@petmove/auth'
 import { applyAutoFillRules } from '@/lib/auto-fill-engine'
 import { evaluateAndNotify } from './system-notifications'
 
