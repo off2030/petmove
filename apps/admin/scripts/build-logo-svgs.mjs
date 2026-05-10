@@ -124,28 +124,24 @@ async function main() {
   const font = opentype.parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength))
   console.log(`Loaded font: ${font.names.fontFamily?.en} (${font.glyphs.length} glyphs)`)
 
-  // PWA 일반 — 둥근 사각 (rx=96 in 512). 좌우 padding 충분히 확보.
-  const iconSvg = buildTwoLineSvg(font, {
+  // PWA 일반 — 둥근 사각 (rx=96 in 512). PMW 한 줄, 작은 사이즈 가독성 우선.
+  // 봇 아바타(size=180) 폭 ≈ 437px 기준으로 size 200 ≈ viewBox 폭 484, 양쪽 14px padding.
+  const iconSvg = buildOneLineSvg(font, 'PMW', {
     viewBox: 512,
     rx: 96,
-    topSize: 88,
-    topLs: 0.06,
-    btmSize: 44,
-    btmLs: 0.32,
-    gap: 16,
+    size: 200,
+    ls: 0.05,
   })
   await fs.writeFile(path.join(OUT_DIR_PUBLIC, 'icon.svg'), iconSvg)
   console.log('✓ public/icon.svg')
 
-  // PWA maskable — full-bleed. 안전영역(중앙 80% ≈ 410px) 안에 충분히 들어가게 더 작게.
-  const maskableSvg = buildTwoLineSvg(font, {
+  // PWA maskable — full-bleed. 안전영역(중앙 80% ≈ 410px) 안에 들어가도록 작게.
+  // size 160 ≈ 폭 388, 안전영역 410 안에 padding 11px 각자.
+  const maskableSvg = buildOneLineSvg(font, 'PMW', {
     viewBox: 512,
     rx: 0,
-    topSize: 72,
-    topLs: 0.06,
-    btmSize: 36,
-    btmLs: 0.32,
-    gap: 14,
+    size: 160,
+    ls: 0.05,
   })
   await fs.writeFile(path.join(OUT_DIR_PUBLIC, 'icon-maskable.svg'), maskableSvg)
   console.log('✓ public/icon-maskable.svg')

@@ -10,7 +10,7 @@
  *   - 'notificationclick' event → 해당 URL 열기 (이미 열린 탭이면 focus)
  *   - 발송 인프라(VAPID, web-push, push_subscriptions 테이블)는 별도 작업.
  */
-const VERSION = 'v4'
+const VERSION = 'v5'
 const STATIC_CACHE = `static-${VERSION}`
 const PAGE_CACHE = `page-${VERSION}`
 const OFFLINE_URL = '/offline'

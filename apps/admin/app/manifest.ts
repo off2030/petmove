@@ -39,7 +39,7 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'any',
       },
       // maskable — Android 적응형 아이콘 (둥근/사각/물방울 등 자유 crop).
-      // 안전영역(80%)에 PETMOVE/Work 배치 + full-bleed 배경.
+      // 안전영역(80%)에 PMW 모노그램 배치 + full-bleed 배경.
       {
         src: '/icon-maskable.svg',
         sizes: 'any',
