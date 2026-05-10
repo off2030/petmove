@@ -3,21 +3,13 @@
 import { useEffect, useState } from 'react'
 import { Share, X } from 'lucide-react'
 
-// PWA "홈 화면에 추가" 안내 — 모바일 한정, 인앱 브라우저 제외, 1회 닫음 영속.
-// iOS Safari: beforeinstallprompt 미지원 → 수동 안내 텍스트.
-// Android Chrome: beforeinstallprompt 캐치 → 설치 버튼.
+// PWA "홈 화면에 추가" 안내 — iOS Safari 전용. 1회 닫음 영속.
+// Android Chrome 은 브라우저 native mini-infobar 가 알아서 띄우므로 별도 UI 안 만듦
+// (커스텀 안내와 native banner 가 동시에 떠서 중복 노출되는 문제 회피).
 const DISMISS_KEY = 'petmove:pwa:install-dismissed'
 
-interface BeforeInstallPromptEvent extends Event {
-  prompt(): Promise<void>
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
-}
-
-type Mode = 'ios' | 'android'
-
 export function InstallPrompt() {
-  const [mode, setMode] = useState<Mode | null>(null)
-  const [bipEvent, setBipEvent] = useState<BeforeInstallPromptEvent | null>(null)
+  const [show, setShow] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -32,46 +24,23 @@ export function InstallPrompt() {
     // 인앱 브라우저(카톡/Insta/Facebook/Naver) — PWA 설치 자체 불가
     if (/KAKAOTALK|Instagram|FBAN|FBAV|NAVER/i.test(ua)) return
 
+    // iOS Safari 만 표준 PWA. CriOS/FxiOS 도 WebKit 이지만 안내 UX 다름 → Safari 만.
     const isIOS = /iPad|iPhone|iPod/.test(ua)
-    const isAndroid = /Android/.test(ua)
+    if (!isIOS) return
+    const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS/.test(ua)
+    if (!isSafari) return
 
-    if (isIOS) {
-      // iOS Safari 만 표준 PWA. CriOS/FxiOS 도 WebKit 이지만 안내 UX 다름 → Safari 만.
-      const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS/.test(ua)
-      if (!isSafari) return
-      // 첫 진입 즉시 X — 페이지 익숙해진 뒤 (1.5s 후) 노출
-      const timer = setTimeout(() => setMode('ios'), 1500)
-      return () => clearTimeout(timer)
-    }
-
-    if (isAndroid) {
-      const handler = (e: Event) => {
-        e.preventDefault()
-        setBipEvent(e as BeforeInstallPromptEvent)
-        setMode('android')
-      }
-      window.addEventListener('beforeinstallprompt', handler)
-      return () => window.removeEventListener('beforeinstallprompt', handler)
-    }
+    // 첫 진입 즉시 X — 페이지 익숙해진 뒤 (1.5s 후) 노출
+    const timer = setTimeout(() => setShow(true), 1500)
+    return () => clearTimeout(timer)
   }, [])
 
   const dismiss = () => {
     localStorage.setItem(DISMISS_KEY, '1')
-    setMode(null)
+    setShow(false)
   }
 
-  const install = async () => {
-    if (!bipEvent) return
-    try {
-      await bipEvent.prompt()
-      await bipEvent.userChoice
-    } catch {
-      // 사용자 취소 또는 브라우저 거절 — 무시
-    }
-    dismiss()
-  }
-
-  if (!mode) return null
+  if (!show) return null
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 md:hidden border-t border-foreground/15 bg-background/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)]">
@@ -89,27 +58,12 @@ export function InstallPrompt() {
 
         <div className="flex-1 min-w-0 font-serif">
           <div className="text-[14px] text-foreground/90 font-medium">홈 화면에 추가</div>
-          {mode === 'ios' ? (
-            <div className="text-[12px] text-foreground/60 leading-snug">
-              하단 <Share size={11} className="inline -mt-0.5" /> 공유 → &lsquo;홈 화면에 추가&rsquo;
-            </div>
-          ) : (
-            <div className="text-[12px] text-foreground/60 leading-snug">
-              앱처럼 빠르게 진입할 수 있어요
-            </div>
-          )}
+          <div className="text-[12px] text-foreground/60 leading-snug">
+            하단 <Share size={11} className="inline -mt-0.5" /> 공유 → &lsquo;홈 화면에 추가&rsquo;
+          </div>
         </div>
 
         <div className="shrink-0 flex items-center gap-1">
-          {mode === 'android' && (
-            <button
-              type="button"
-              onClick={install}
-              className="rounded-full bg-foreground text-background font-serif text-[12px] h-7 px-3 hover:bg-foreground/90"
-            >
-              설치
-            </button>
-          )}
           <button
             type="button"
             onClick={dismiss}
