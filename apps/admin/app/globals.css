@@ -164,6 +164,11 @@
     --pmw-text-xl:   28px;   --pmw-leading-xl:   1.2;   --pmw-tracking-xl:   -0.02em;
     --pmw-text-2xl:  36px;   --pmw-leading-2xl:  1.15;  --pmw-tracking-2xl:  -0.02em;
 
+    /* ── Bot avatar (PMW 워드마크 아바타) — 에디토리얼 브랜드 브라운.
+       다른 스킨은 아래 [data-skin] 룰에서 --primary 로 자동 override. */
+    --pmw-bot-bg: #A56D54;
+    --pmw-bot-fg: #F5F4ED;
+
     /* ── Mobile — safe-area-inset alias (iOS notch/home-indicator)
        env() 를 직접 못 쓰는 utility-first Tailwind 환경에서 var() 로 우회.
        Android/데스크톱은 0px 폴백. */
@@ -269,6 +274,10 @@
     --pmw-chip-neutral-bg: 36 9% 22%;
     --pmw-chip-neutral-fg: 36 14% 78%;
 
+    /* Bot avatar (editorial dark) — lifted clay 로 어두운 배경에서도 떠 보임. */
+    --pmw-bot-bg: #C58066;
+    --pmw-bot-fg: #F5F4ED;
+
     /* Typography 스케일 (size/leading/tracking 은 light/dark 무관) */
     --pmw-text-2xs:  11px;   --pmw-leading-2xs:  1.5;   --pmw-tracking-2xs:  0.02em;
     --pmw-text-xs:   12px;   --pmw-leading-xs:   1.6;   --pmw-tracking-xs:   0.005em;
@@ -278,6 +287,13 @@
     --pmw-text-lg:   22px;   --pmw-leading-lg:   1.3;   --pmw-tracking-lg:   -0.015em;
     --pmw-text-xl:   28px;   --pmw-leading-xl:   1.2;   --pmw-tracking-xl:   -0.02em;
     --pmw-text-2xl:  36px;   --pmw-leading-2xl:  1.15;  --pmw-tracking-2xl:  -0.02em;
+  }
+
+  /* 다른 스킨은 자기 --primary 를 봇 아바타 색으로 — light/dark 자동 따라감.
+     editorial(:root, .dark) 은 위에서 브랜드 브라운으로 정의돼 이 룰에 안 걸림. */
+  [data-skin] {
+    --pmw-bot-bg: hsl(var(--primary));
+    --pmw-bot-fg: hsl(var(--primary-foreground));
   }
 
   /* ═════════════════════════════════════════════════════════════

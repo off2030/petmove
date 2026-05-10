@@ -40,17 +40,19 @@ export function Avatar({
     )
   }
   // 2) 봇이고 이미지 없음 → PMW 워드마크 (헤더와 같은 Alonzo bold + brand brown).
-  //    light=#A56D54, dark=#C58066 — dark 에서 lift 해 어두운 배경에서도 떠 보임.
+  //    --pmw-bot-bg/--pmw-bot-fg 토큰: editorial 은 브랜드 브라운, 다른 스킨은
+  //    자기 --primary 를 사용 (globals.css [data-skin] 룰).
   if (bot) {
     const botText = size === 'sm' ? 'text-[8px] tracking-[0.06em]' : 'text-[10px] tracking-[0.08em]'
     return (
       <div
         data-avatar
         className={cn(
-          'rounded-full flex items-center justify-center shrink-0 bg-[#A56D54] dark:bg-[#C58066] text-[#F5F4ED]',
+          'rounded-full flex items-center justify-center shrink-0',
           dim,
           className,
         )}
+        style={{ backgroundColor: 'var(--pmw-bot-bg)', color: 'var(--pmw-bot-fg)' }}
         title="펫무브워크"
       >
         <span
