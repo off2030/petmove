@@ -6,6 +6,7 @@ const config: Config = {
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
     './lib/**/*.{ts,tsx}',
+    '../../packages/ui/src/**/*.{ts,tsx}',
   ],
   // 스킨이 정의하는 색·typography tier 클래스 — 사용처 없어도 항상 생성.
   // 새 컴포넌트가 token 을 쓰려고 하는데 클래스 없는 상황 방지.

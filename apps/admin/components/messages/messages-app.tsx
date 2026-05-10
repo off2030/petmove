@@ -60,7 +60,7 @@ import {
   type Participant,
 } from '@/lib/actions/chat'
 import type { TransferWithContext } from '@/lib/actions/transfers'
-import { PageShell } from '@/components/ui/page-shell'
+import { PageShell } from '@petmove/ui'
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { isPetmoveBot } from '@/lib/petmove-bot-constants'
 import { getCachedConv, setCachedConv, deleteCachedConv } from '@/lib/messages/cache-idb'

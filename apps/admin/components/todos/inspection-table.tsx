@@ -7,7 +7,7 @@ import { useCases } from '@/components/cases/cases-context'
 import { labColor } from '@/lib/lab-color'
 import { cn } from '@/lib/utils'
 import { DateTextField } from '@/components/ui/date-text-field'
-import { DropdownSelect } from '@/components/ui/dropdown-select'
+import { DropdownSelect } from '@petmove/ui'
 import { DestinationCell } from './destination-cell'
 
 const INITIAL_VISIBLE = 100

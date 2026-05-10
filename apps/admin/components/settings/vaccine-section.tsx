@@ -21,7 +21,7 @@ import { extractVaccineInfo } from '@/lib/actions/extract-vaccine'
 import { filesToBase64, isExtractableFile } from '@/lib/file-to-base64'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { DialogFooter } from '@/components/ui/dialog-footer'
-import { SectionHeader } from '@/components/ui/section-header'
+import { SectionHeader } from '@petmove/ui'
 import {
   SETTINGS_ACTION_BUTTON_CLASS,
   SettingsActionButton,

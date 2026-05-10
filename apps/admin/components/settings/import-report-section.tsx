@@ -13,7 +13,7 @@ import {
   DEFAULT_IMPORT_REPORT_BUTTON_COUNTRIES,
 } from '@petmove/domain'
 import { DestinationPicker } from '@/components/ui/destination-picker'
-import { PillButton } from '@/components/ui/pill-button'
+import { PillButton } from '@petmove/ui'
 import { SettingsShell, SettingsSection, SettingsSubsectionTitle } from './settings-layout'
 
 export function ImportReportSection() {

@@ -23,7 +23,7 @@ import {
 } from '@/lib/actions/super-admin'
 import type { InviteRole } from '@/lib/actions/invites'
 import { TopBar } from '@/components/layout/topbar'
-import { PillButton } from '@/components/ui/pill-button'
+import { PillButton } from '@petmove/ui'
 import { cn } from '@/lib/utils'
 
 interface Props {

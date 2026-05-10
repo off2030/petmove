@@ -16,7 +16,7 @@ import {
   createCalculatorItem,
   deleteCalculatorItem,
 } from '@/lib/actions/calculator'
-import { ListRow } from '@/components/ui/list-row'
+import { ListRow } from '@petmove/ui'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'

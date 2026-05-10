@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'
+import { cn } from './cn'
 
 /**
  * Editorial 페이지 타이틀. 설정/상세/서브페이지 최상단 h2.

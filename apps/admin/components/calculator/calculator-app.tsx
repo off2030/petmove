@@ -18,7 +18,7 @@ import {
   type ExternalLinksHandle,
   type ExternalLinksMode,
 } from './external-links'
-import { PageShell, PageTabs } from '@/components/ui/page-shell'
+import { PageShell, PageTabs } from '@petmove/ui'
 import type { ExternalLinksConfig } from '@petmove/domain'
 
 type Mode = 'cost' | 'schedule' | 'links'

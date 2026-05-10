@@ -10,7 +10,7 @@ import type { CaseRow } from '@/lib/supabase/types'
 import { labColor } from '@/lib/lab-color'
 import { resolveInspectionLabs } from '@petmove/domain'
 import { DateTextField } from '@/components/ui/date-text-field'
-import { DropdownSelect } from '@/components/ui/dropdown-select'
+import { DropdownSelect } from '@petmove/ui'
 import { useSectionEditMode } from './section-edit-mode-context'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 

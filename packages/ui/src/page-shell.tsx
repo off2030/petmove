@@ -1,6 +1,6 @@
 'use client'
 
-import { cn } from '@/lib/utils'
+import { cn } from './cn'
 
 /**
  * 페이지 셸 — 홈/할일/도구 등 탑레벨 탭의 공통 레이아웃.

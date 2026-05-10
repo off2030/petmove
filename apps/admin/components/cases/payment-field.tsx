@@ -8,7 +8,7 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@/lib/supabase/types'
 import { DateTextField } from '@/components/ui/date-text-field'
-import { DropdownSelect } from '@/components/ui/dropdown-select'
+import { DropdownSelect } from '@petmove/ui'
 import { useCalculatorData } from '@/components/providers/calculator-data-provider'
 import {
   CalculatorOutputModal,

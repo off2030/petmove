@@ -14,7 +14,7 @@ import { InspectionTable, readInspectionStatus, type InspectionRow } from './ins
 import { DestinationCell } from './destination-cell'
 import { updateCaseField } from '@/lib/actions/cases'
 import { downloadPdfRequest, type PdfDownloadRequest } from '@/lib/pdf-download'
-import { PageShell, PageTabs } from '@/components/ui/page-shell'
+import { PageShell, PageTabs } from '@petmove/ui'
 
 
 /* DestinationCell 은 ./destination-cell 로 이동 — 검사·신고·서류·목록 공통 사용. */

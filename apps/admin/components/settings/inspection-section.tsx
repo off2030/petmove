@@ -7,7 +7,7 @@ import { useCases } from '@/components/cases/cases-context'
 import { TodoColumnsToggle } from './todo-columns-toggle'
 import { DestinationPicker } from '@/components/ui/destination-picker'
 import { LabPillSelect, LabPillMultiSelect } from '@/components/ui/lab-pill-select'
-import { PillButton } from '@/components/ui/pill-button'
+import { PillButton } from '@petmove/ui'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   SettingsShell,

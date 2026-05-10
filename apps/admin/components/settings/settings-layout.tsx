@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { SectionHeader } from '@/components/ui/section-header'
+import { SectionHeader } from '@petmove/ui'
 import { Check, Search, X } from 'lucide-react'
 
 /**

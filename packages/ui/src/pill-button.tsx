@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import { cn } from '@/lib/utils'
+import { cn } from './cn'
 
 /**
  * Editorial pill 버튼. 2가지 variant.

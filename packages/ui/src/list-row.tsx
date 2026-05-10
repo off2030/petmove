@@ -1,6 +1,6 @@
 'use client'
 
-import { cn } from '@/lib/utils'
+import { cn } from './cn'
 
 /**
  * 리스트 행 공통 클래스 — 도구/할일/홈 등 모든 리스트의 한 줄.

@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { ChevronDown, Plus, X } from 'lucide-react'
 import { useCases } from '@/components/cases/cases-context'
 import { DestinationPicker } from '@/components/ui/destination-picker'
-import { PillButton } from '@/components/ui/pill-button'
+import { PillButton } from '@petmove/ui'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   SettingsActionButton,
