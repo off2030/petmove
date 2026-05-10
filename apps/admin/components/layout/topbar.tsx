@@ -335,9 +335,10 @@ export function TopBar({
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* 모바일 전용 — topbar 우측 끝 다크모드 + 팔레트. gap-xs 로 묶어
+        {/* 모바일 전용 — topbar 우측 끝 팔레트 + 다크모드. gap-xs 로 묶어
             header gap-lg 영향 회피. 데스크톱은 아래 우측 아이콘 영역에 동일 기능. */}
         <div className="md:hidden flex items-center gap-xs">
+        <SkinPicker />
         {mounted && (
           <button
             type="button"
@@ -349,7 +350,6 @@ export function TopBar({
             {mode === 'system' ? <Monitor size={18} /> : mode === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
         )}
-        <SkinPicker />
         </div>
 
         {/* Nav tabs — right side, hidden on mobile (replaced by hamburger) */}
@@ -415,6 +415,7 @@ export function TopBar({
               </Link>
             )
           )}
+          <SkinPicker />
           {mounted && (
             <button
               type="button"
@@ -426,7 +427,6 @@ export function TopBar({
               {mode === 'system' ? <Monitor size={18} /> : mode === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
           )}
-          <SkinPicker />
           {onTabChange ? (
             <button
               type="button"
