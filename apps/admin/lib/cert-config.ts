@@ -53,7 +53,7 @@ function normalize(raw: unknown): CertConfig {
 
 export async function loadCertConfig(): Promise<CertConfig> {
   try {
-    const { createClient } = await import('@petmove/auth')
+    const { createClient } = await import('@petmove/auth/server')
     const { getActiveOrgId } = await import('@/lib/supabase/active-org')
     const supabase = await createClient()
     const orgId = await getActiveOrgId()
@@ -72,7 +72,7 @@ export async function loadCertConfig(): Promise<CertConfig> {
 
 export async function saveCertConfig(config: CertConfig): Promise<CertConfig> {
   const normalized = normalize(config)
-  const { createClient } = await import('@petmove/auth')
+  const { createClient } = await import('@petmove/auth/server')
   const { getActiveOrgId } = await import('@/lib/supabase/active-org')
   const supabase = await createClient()
   const orgId = await getActiveOrgId()

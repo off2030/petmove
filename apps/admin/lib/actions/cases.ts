@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 import { applyAutoFillRules } from '@/lib/auto-fill-engine'
 import { evaluateAndNotify } from './system-notifications'
 

@@ -1,7 +1,7 @@
 'use server'
 
 import ExcelJS from 'exceljs'
-import { createClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }

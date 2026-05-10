@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 import { acceptInvite, getInviteSummary } from '@/lib/actions/invites'
 import { InviteJoin } from './invite-join'
 

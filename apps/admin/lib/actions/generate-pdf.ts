@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
 import type { CaseRow } from '@/lib/supabase/types'
 import { getEffectiveVaccineList } from '@petmove/domain'

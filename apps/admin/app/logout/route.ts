@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 
 export async function POST(request: Request) {
   const supabase = await createClient()

@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 import { revalidatePath } from 'next/cache'
 
 import type { CalculatorItem } from '@/lib/supabase/types'

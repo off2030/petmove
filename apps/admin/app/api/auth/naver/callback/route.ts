@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { createClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 import { createAdminClient } from '@petmove/auth'
 
 // Naver OAuth callback — code 교환 + user info → Supabase user 생성/조회 → 세션 cookie set.

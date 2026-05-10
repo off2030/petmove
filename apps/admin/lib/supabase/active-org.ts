@@ -1,6 +1,6 @@
 import { cache } from 'react'
 import { cookies } from 'next/headers'
-import { createClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 
 export const IMPERSONATION_COOKIE = 'pm_impersonated_org'
 

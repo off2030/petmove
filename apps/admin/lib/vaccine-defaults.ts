@@ -41,7 +41,7 @@ function normalize(raw: unknown): VaccineDefaults {
 
 export async function loadVaccineDefaults(): Promise<VaccineDefaults> {
   try {
-    const { createClient } = await import('@petmove/auth')
+    const { createClient } = await import('@petmove/auth/server')
     const { getActiveOrgId } = await import('@/lib/supabase/active-org')
     const supabase = await createClient()
     const orgId = await getActiveOrgId()
@@ -58,7 +58,7 @@ export async function loadVaccineDefaults(): Promise<VaccineDefaults> {
 }
 
 export async function saveVaccineDefaults(patch: Partial<VaccineDefaults>): Promise<VaccineDefaults> {
-  const { createClient } = await import('@petmove/auth')
+  const { createClient } = await import('@petmove/auth/server')
   const { getActiveOrgId } = await import('@/lib/supabase/active-org')
   const supabase = await createClient()
   const orgId = await getActiveOrgId()

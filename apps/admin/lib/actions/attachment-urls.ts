@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 
 const SIGN_TTL_SECONDS = 60 * 60
 

@@ -1,7 +1,7 @@
 'use server'
 // 펫무브워크 자동 알림 — 케이스 데이터가 바뀌어 새 검증 실패가 생기면 시스템 메시지로 적재.
 
-import { createClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 import { createAdminClient } from '@petmove/auth'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { ensurePetmoveBot } from './petmove-bot'

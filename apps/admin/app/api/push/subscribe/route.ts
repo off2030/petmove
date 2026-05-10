@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 
 // PushSubscription.toJSON() 결과 + userAgent 받아 push_subscriptions 에 upsert.
 // endpoint 로 onConflict 해서 같은 디바이스 재구독 시 토큰 갱신.

@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import type { CaseRow } from '@/lib/supabase/types'
 

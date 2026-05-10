@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 
 // 디바이스의 endpoint 로 push_subscriptions 에서 행 제거.
 // RLS 가 user_id = auth.uid() 를 강제하므로 본인 행만 삭제 가능.

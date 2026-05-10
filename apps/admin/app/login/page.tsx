@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 import { LoginForm } from './login-form'
 
 export const dynamic = 'force-dynamic'

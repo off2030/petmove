@@ -12,7 +12,7 @@
  * 후 파생한 두 변형만 사용 — 둘 다 [0-9 ]+ 문자만 포함이라 안전.
  */
 
-import { createClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 import type { CaseRow } from '@/lib/supabase/types'
 
 export async function lookupCaseByMicrochip(

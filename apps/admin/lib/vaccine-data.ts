@@ -15,7 +15,7 @@ import {
   type VaccineProduct,
   type VaccineProductsData,
 } from '@petmove/domain'
-import { createClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { loadVaccineDefaults, type VaccineDefaults } from '@/lib/vaccine-defaults'
 

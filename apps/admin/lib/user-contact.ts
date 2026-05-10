@@ -51,7 +51,7 @@ let _cached: { userId: string; info: UserContactInfo } | null = null
  */
 export async function loadUserContactInfo(): Promise<UserContactInfo> {
   try {
-    const { createClient } = await import('@petmove/auth')
+    const { createClient } = await import('@petmove/auth/server')
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -78,7 +78,7 @@ export async function loadUserContactInfo(): Promise<UserContactInfo> {
  * 사고 방지).
  */
 export async function saveUserContactInfo(patch: Partial<UserContactInfo>): Promise<UserContactInfo> {
-  const { createClient } = await import('@petmove/auth')
+  const { createClient } = await import('@petmove/auth/server')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('not authenticated')

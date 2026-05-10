@@ -24,7 +24,7 @@ const BUTTON_KEY = 'import_report_button_countries'
 
 async function loadCountries(key: string, fallback: string[]): Promise<string[]> {
   try {
-    const { createClient } = await import('@petmove/auth')
+    const { createClient } = await import('@petmove/auth/server')
     const { getActiveOrgId } = await import('@/lib/supabase/active-org')
     const supabase = await createClient()
     const orgId = await getActiveOrgId()
@@ -46,7 +46,7 @@ async function loadCountries(key: string, fallback: string[]): Promise<string[]>
 
 async function saveCountries(key: string, list: string[]): Promise<string[]> {
   const normalized = Array.from(new Set(list.map((s) => s.trim()).filter(Boolean)))
-  const { createClient } = await import('@petmove/auth')
+  const { createClient } = await import('@petmove/auth/server')
   const { getActiveOrgId } = await import('@/lib/supabase/active-org')
   const supabase = await createClient()
   const orgId = await getActiveOrgId()

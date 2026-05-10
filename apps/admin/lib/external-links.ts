@@ -44,7 +44,7 @@ function normalize(raw: unknown): ExternalLinksConfig {
 
 export async function loadExternalLinks(): Promise<ExternalLinksConfig> {
   try {
-    const { createClient } = await import('@petmove/auth')
+    const { createClient } = await import('@petmove/auth/server')
     const { getActiveOrgId } = await import('@/lib/supabase/active-org')
     const supabase = await createClient()
     const orgId = await getActiveOrgId()
@@ -63,7 +63,7 @@ export async function loadExternalLinks(): Promise<ExternalLinksConfig> {
 
 export async function saveExternalLinks(config: ExternalLinksConfig): Promise<ExternalLinksConfig> {
   const normalized = normalize(config)
-  const { createClient } = await import('@petmove/auth')
+  const { createClient } = await import('@petmove/auth/server')
   const { getActiveOrgId } = await import('@/lib/supabase/active-org')
   const supabase = await createClient()
   const orgId = await getActiveOrgId()

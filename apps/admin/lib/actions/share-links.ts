@@ -14,7 +14,7 @@
  */
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import type { ShareLinkRow } from '@petmove/domain'
 
