@@ -24,8 +24,8 @@ import {
   shareLinkStatus,
   type ShareLinkRow,
   type ShareLinkStatus,
-} from '@/lib/share-links-types'
-import { buildShareFieldLayout } from '@/lib/share-field-layout'
+} from '@petmove/domain'
+import { buildShareFieldLayout } from '@petmove/domain'
 import type { SharePreset } from '@/lib/share-presets-types'
 
 interface Props {

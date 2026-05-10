@@ -8,7 +8,7 @@ import { useCases } from './cases-context'
 import { useDetailViewSettings } from '@/components/providers/detail-view-settings-provider'
 import type { CaseRow } from '@/lib/supabase/types'
 import { SectionLabel } from '@/components/ui/section-label'
-import colorsData from '@/data/colors.json'
+import colorsData from '@petmove/domain/data/colors.json'
 
 interface ColorOption {
   ko: string

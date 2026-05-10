@@ -19,12 +19,12 @@
  */
 import {
   EXTRA_FIELD_DEFS,
-  extraFieldMatchesSpecies,
   type DestinationExtraFieldEntry,
   type ExtraFieldDef,
-} from '@petmove/domain'
-import { buildFieldSpecs as buildAllFieldSpecs } from '@/lib/fields'
-import type { FieldDefinition } from '@/lib/supabase/types'
+} from './destination-overrides-types'
+import { extraFieldMatchesSpecies } from './destination-config'
+import { buildFieldSpecs as buildAllFieldSpecs } from './fields'
+import type { FieldDefinition } from './types'
 import {
   SHARE_COLUMN_META,
   SHARE_EXCLUDED_KEYS,
@@ -33,7 +33,7 @@ import {
   SHARE_VACCINE_GROUPS,
   type ShareColumnFieldMeta,
   type ShareVaccineGroup,
-} from '@/lib/share-links-types'
+} from './share-links-types'
 
 export const SHARE_CATEGORIES = ['고객정보', '동물정보', '절차정보', '추가정보'] as const
 export type ShareCategory = typeof SHARE_CATEGORIES[number]

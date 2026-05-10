@@ -9,7 +9,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
-import { formatMicrochip } from '@/lib/fields'
+import { formatMicrochip } from '@petmove/domain'
 import type { CaseRow } from '@/lib/supabase/types'
 import { revalidatePath } from 'next/cache'
 

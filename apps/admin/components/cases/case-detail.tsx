@@ -1,15 +1,15 @@
 'use client'
 
 import type { CaseRow } from '@/lib/supabase/types'
-import type { FieldSpec } from '@/lib/fields'
+import type { FieldSpec } from '@petmove/domain'
 import {
   buildFieldSpecs,
   groupFieldSpecs,
   HIDDEN_EN_KEYS,
   readCaseField,
-} from '@/lib/fields'
+} from '@petmove/domain'
 import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, SWISS_ENTRY_AIRPORT_OPTIONS, THAILAND_ENTRY_AIRPORT_OPTIONS, resolveActiveDestination, getTripType, isRabiesTiterHiddenForOneWay, type ExtraFieldDef } from '@petmove/domain'
-import { buildShareFieldDescriptors } from '@/lib/share-field-layout'
+import { buildShareFieldDescriptors } from '@petmove/domain'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Trash2, ChevronDown } from 'lucide-react'

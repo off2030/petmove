@@ -6,8 +6,8 @@ import { cardContainer } from '@petmove/ui'
 import { DateTextField } from '@petmove/ui'
 import { applyCase } from '@/lib/actions/apply-case'
 import destsData from '@/data/destinations.json'
-import breedsData from '@/data/breeds.json'
-import colorsData from '@/data/colors.json'
+import breedsData from '@petmove/domain/data/breeds.json'
+import colorsData from '@petmove/domain/data/colors.json'
 
 function capitalize(s: string) {
   return s.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')

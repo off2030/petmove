@@ -8,7 +8,7 @@ import { useConfirm } from '@petmove/ui'
 import { cn } from '@/lib/utils'
 import { SettingsSubsectionTitle } from './settings-layout'
 import { ALL_EXTRA_FIELD_KEYS } from '@petmove/domain'
-import { buildShareFieldLayout } from '@/lib/share-field-layout'
+import { buildShareFieldLayout } from '@petmove/domain'
 import type { SharePreset } from '@/lib/share-presets-types'
 
 /** 조직 단위 프리셋 — 모든 EXTRA 필드를 destination 무관하게 노출. species 필터도 미적용. */

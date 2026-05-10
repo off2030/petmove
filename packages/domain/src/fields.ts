@@ -1,4 +1,4 @@
-import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
+import type { CaseRow, FieldDefinition } from './types'
 
 /**
  * Normalize a microchip string to the canonical "NNN NNN NNN NNN NNN" form.

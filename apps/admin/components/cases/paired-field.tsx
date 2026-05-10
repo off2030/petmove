@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
-import type { FieldSpec } from '@/lib/fields'
-import { renderFieldValue } from '@/lib/fields'
+import type { FieldSpec } from '@petmove/domain'
+import { renderFieldValue } from '@petmove/domain'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import { CopyButton } from './copy-button'

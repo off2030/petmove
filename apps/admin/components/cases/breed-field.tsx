@@ -8,7 +8,7 @@ import { useCases } from './cases-context'
 import { useDetailViewSettings } from '@/components/providers/detail-view-settings-provider'
 import type { CaseRow } from '@/lib/supabase/types'
 import { SectionLabel } from '@/components/ui/section-label'
-import breedsData from '@/data/breeds.json'
+import breedsData from '@petmove/domain/data/breeds.json'
 
 interface Breed {
   ko: string

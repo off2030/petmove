@@ -14,9 +14,9 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
-import { formatMicrochip } from '@/lib/fields'
-import breedsData from '@/data/breeds.json'
-import colorsData from '@/data/colors.json'
+import { formatMicrochip } from '@petmove/domain'
+import breedsData from '@petmove/domain/data/breeds.json'
+import colorsData from '@petmove/domain/data/colors.json'
 import {
   getEffectiveExtraFieldEntries,
   type DestinationExtraFieldEntry,
@@ -25,7 +25,7 @@ import { loadDestinationOverridesByOrg } from '@/lib/destination-overrides-confi
 import {
   buildShareFieldDescriptors,
   type ShareFieldDescriptor,
-} from '@/lib/share-field-layout'
+} from '@petmove/domain'
 import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
 import {
   shareLinkStatus,
@@ -36,7 +36,7 @@ import {
   type ShareLinkRow,
   type ShareVaccineEntry,
   type ShareVaccineGroup,
-} from '@/lib/share-links-types'
+} from '@petmove/domain'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 

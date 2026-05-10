@@ -10,9 +10,9 @@ import type {
   ShareFieldSpec,
   ShareLinkPublicView,
   ShareVaccineEntry,
-} from '@/lib/share-links-types'
-import breedsData from '@/data/breeds.json'
-import colorsData from '@/data/colors.json'
+} from '@petmove/domain'
+import breedsData from '@petmove/domain/data/breeds.json'
+import colorsData from '@petmove/domain/data/colors.json'
 
 interface Breed { ko: string; en: string; type: string; alias?: string[] }
 const BREEDS = breedsData as Breed[]

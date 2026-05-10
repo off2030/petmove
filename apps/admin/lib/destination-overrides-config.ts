@@ -1,124 +1,20 @@
 /**
- * 조직별 커스텀 목적지 설정 server-only load/save.
- * organization_settings 테이블에 key='destination_overrides' 로 저장.
+ * 조직별 커스텀 목적지 설정 — admin (active_org) 컨텍스트 wrapper.
+ *
+ * 도메인 normalize / loadDestinationOverridesByOrg 는 packages/domain 으로 이전됨
+ * (anon 토큰 흐름 portal 도 동일 로직 사용). 이 파일은 admin-only 의 active_org 의존
+ * load/save 만 담당.
  */
 import {
   EMPTY_DESTINATION_OVERRIDES,
-  ALL_VACCINE_KEYS,
-  ALL_EXTRA_FIELD_KEYS,
-  type CustomDestination,
+  normalizeDestinationOverrides,
   type DestinationOverridesConfig,
-  type DestinationVaccineEntry,
-  type DestinationExtraFieldEntry,
-  type SpeciesFilter,
 } from '@petmove/domain'
 
 const APP_SETTINGS_KEY = 'destination_overrides'
 
-const VACCINE_KEY_SET = new Set<string>(ALL_VACCINE_KEYS)
-const EXTRA_FIELD_KEY_SET = new Set<string>(ALL_EXTRA_FIELD_KEYS)
-
-function normalizeVaccineEntry(o: unknown): DestinationVaccineEntry | null {
-  if (!o || typeof o !== 'object') return null
-  const r = o as Record<string, unknown>
-  const key = typeof r.key === 'string' ? r.key.trim() : ''
-  if (!key || !VACCINE_KEY_SET.has(key)) return null
-  const speciesRaw = typeof r.species === 'string' ? r.species : undefined
-  const species: SpeciesFilter | undefined =
-    speciesRaw === 'dog' || speciesRaw === 'cat' ? speciesRaw : undefined
-  return species ? { key, species } : { key }
-}
-
-function normalizeExtraFieldEntry(o: unknown): DestinationExtraFieldEntry | null {
-  if (!o || typeof o !== 'object') return null
-  const r = o as Record<string, unknown>
-  const key = typeof r.key === 'string' ? r.key.trim() : ''
-  if (!key || !EXTRA_FIELD_KEY_SET.has(key)) return null
-  const speciesRaw = typeof r.species === 'string' ? r.species : undefined
-  const species: SpeciesFilter | undefined =
-    speciesRaw === 'dog' || speciesRaw === 'cat' ? speciesRaw : undefined
-  return species ? { key, species } : { key }
-}
-
-function normalizeCustomDestination(o: unknown): CustomDestination | null {
-  if (!o || typeof o !== 'object') return null
-  const r = o as Record<string, unknown>
-  const id = typeof r.id === 'string' ? r.id.trim() : ''
-  const name = typeof r.name === 'string' ? r.name.trim() : ''
-  if (!id || !name) return null
-  const keywordsRaw = Array.isArray(r.keywords) ? r.keywords : []
-  const keywords = keywordsRaw
-    .filter((k): k is string => typeof k === 'string')
-    .map((k) => k.trim())
-    .filter(Boolean)
-  if (keywords.length === 0) return null
-  const vaccinesRaw = Array.isArray(r.vaccines) ? r.vaccines : []
-  const vaccines: DestinationVaccineEntry[] = []
-  const seenVacc = new Set<string>()
-  for (const v of vaccinesRaw) {
-    const entry = normalizeVaccineEntry(v)
-    if (entry && !seenVacc.has(entry.key)) {
-      seenVacc.add(entry.key)
-      vaccines.push(entry)
-    }
-  }
-  const extraFieldsRaw = Array.isArray(r.extraFields) ? r.extraFields : []
-  const extraFields: DestinationExtraFieldEntry[] = []
-  const seenExtra = new Set<string>()
-  for (const v of extraFieldsRaw) {
-    const entry = normalizeExtraFieldEntry(v)
-    if (entry && !seenExtra.has(entry.key)) {
-      seenExtra.add(entry.key)
-      extraFields.push(entry)
-    }
-  }
-  const extraSection = typeof r.extraSection === 'string' && r.extraSection.trim()
-    ? r.extraSection.trim()
-    : undefined
-  const out: CustomDestination = { id, name, keywords: Array.from(new Set(keywords)), vaccines }
-  if (extraFields.length > 0) out.extraFields = extraFields
-  if (extraSection) out.extraSection = extraSection
-  return out
-}
-
-function normalize(raw: unknown): DestinationOverridesConfig {
-  if (!raw || typeof raw !== 'object') return EMPTY_DESTINATION_OVERRIDES
-  const src = raw as Record<string, unknown>
-  const customRaw = Array.isArray(src.custom) ? src.custom : []
-  const seenIds = new Set<string>()
-  const custom: CustomDestination[] = []
-  for (const item of customRaw) {
-    const entry = normalizeCustomDestination(item)
-    if (entry && !seenIds.has(entry.id)) {
-      seenIds.add(entry.id)
-      custom.push(entry)
-    }
-  }
-  return { custom }
-}
-
-/**
- * 익명(토큰 기반) 흐름·서버 액션에서 admin(service-role) 클라이언트로 직접 조회.
- * 기존 loadDestinationOverrides 는 active_org 의존이라 share/[token] 같은 anon 경로엔 부적합.
- */
-export async function loadDestinationOverridesByOrg(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  admin: any,
-  orgId: string,
-): Promise<DestinationOverridesConfig> {
-  try {
-    const { data } = await admin
-      .from('organization_settings')
-      .select('value')
-      .eq('org_id', orgId)
-      .eq('key', APP_SETTINGS_KEY)
-      .maybeSingle()
-    if (data?.value) return normalize(data.value)
-    return EMPTY_DESTINATION_OVERRIDES
-  } catch {
-    return EMPTY_DESTINATION_OVERRIDES
-  }
-}
+// 도메인 모듈에서 재수출 — 기존 import 경로 (`@/lib/destination-overrides-config`) 호환.
+export { loadDestinationOverridesByOrg } from '@petmove/domain'
 
 export async function loadDestinationOverrides(): Promise<DestinationOverridesConfig> {
   try {
@@ -132,7 +28,7 @@ export async function loadDestinationOverrides(): Promise<DestinationOverridesCo
       .eq('org_id', orgId)
       .eq('key', APP_SETTINGS_KEY)
       .maybeSingle()
-    if (data?.value) return normalize(data.value)
+    if (data?.value) return normalizeDestinationOverrides(data.value)
     return EMPTY_DESTINATION_OVERRIDES
   } catch {
     return EMPTY_DESTINATION_OVERRIDES
@@ -142,7 +38,7 @@ export async function loadDestinationOverrides(): Promise<DestinationOverridesCo
 export async function saveDestinationOverrides(
   config: DestinationOverridesConfig,
 ): Promise<DestinationOverridesConfig> {
-  const normalized = normalize(config)
+  const normalized = normalizeDestinationOverrides(config)
   const { createClient } = await import('@/lib/supabase/server')
   const { getActiveOrgId } = await import('@/lib/supabase/active-org')
   const supabase = await createClient()
