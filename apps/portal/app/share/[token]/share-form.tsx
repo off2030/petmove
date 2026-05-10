@@ -5,7 +5,7 @@ import { CheckCircle2, Plus, X } from 'lucide-react'
 import { DateTextField } from '@petmove/ui'
 import { submitShareLink } from '@/lib/actions/share-links'
 import { cardContainer } from '@petmove/ui'
-import { cn } from '@/lib/utils'
+import { cn } from '@petmove/ui'
 import type {
   ShareFieldSpec,
   ShareLinkPublicView,
