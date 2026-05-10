@@ -509,7 +509,9 @@ export function EditableField({
       clearable && "group/row",
     )}>
       <SectionLabel className={compact ? undefined : "pt-1"} onClick={labelOnClick}>{spec.label}</SectionLabel>
-      <div className="min-w-0 flex items-baseline gap-sm">
+      {/* flex-wrap md:flex-nowrap — phone row 의 인라인 email chip 이 모바일에서 다음 줄로 떨어지게.
+          데스크톱은 한 줄 유지 (address-field 의 우편번호 chip 과 동일 패턴). */}
+      <div className="min-w-0 flex flex-wrap md:flex-nowrap items-baseline gap-sm">
         {(() => {
           // 절차정보 그룹은 CopyButton 표시 안 함 (사용자 요청).
           const noCopy = spec.type === 'longtext' || spec.key === 'select' || spec.group === '절차정보'
@@ -551,7 +553,8 @@ export function EditableField({
           return (
             <>
               <span className="text-muted-foreground/30 select-none mx-2 hidden md:inline">|</span>
-              <div className="group/email relative inline-flex items-baseline shrink-0 min-w-0">
+              {/* basis-full md:basis-auto — 모바일에선 다음 줄로 wrap, 데스크톱은 phone 옆에. */}
+              <div className="group/email relative inline-flex items-baseline shrink-0 min-w-0 basis-full md:basis-auto">
                 <span className="font-sans text-[10px] uppercase tracking-[1px] text-muted-foreground mr-1 shrink-0">이메일</span>
                 <span className="font-mono text-[12px] tracking-[0.5px] text-foreground truncate">{email}</span>
                 <CopyButton value={email} className="ml-1 opacity-0 group-hover/email:opacity-100 shrink-0" />
