@@ -546,24 +546,147 @@ export function EditableField({
             </>
           )
         })()}
-        {spec.key === 'phone' && !editing && (() => {
-          const row = cases.find((c) => c.id === caseId)
-          const email = (row?.data as Record<string, unknown> | undefined)?.email
-          if (typeof email !== 'string' || !email.trim()) return null
-          return (
-            <>
-              <span className="text-muted-foreground/30 select-none mx-2 hidden md:inline">|</span>
-              {/* basis-full md:basis-auto — 모바일에선 다음 줄로 wrap, 데스크톱은 phone 옆에. */}
-              <div className="group/email relative inline-flex items-baseline shrink-0 min-w-0 basis-full md:basis-auto">
-                <span className="font-sans text-[10px] uppercase tracking-[1px] text-muted-foreground mr-1 shrink-0">이메일</span>
-                <span className="font-mono text-[12px] tracking-[0.5px] text-foreground truncate">{email}</span>
-                <CopyButton value={email} className="ml-1 opacity-0 group-hover/email:opacity-100 shrink-0" />
-              </div>
-            </>
-          )
-        })()}
+        {spec.key === 'phone' && !editing && <EmailChip caseId={caseId} />}
       </div>
     </div>
+  )
+}
+
+/**
+ * Phone 행 우측의 인라인 이메일 chip — 클릭 시 인라인 편집.
+ * 값이 비어있고 editMode 이면 "+ 이메일 추가" 버튼 노출. 저장은 data.email 에.
+ */
+function EmailChip({ caseId }: { caseId: string }) {
+  const { cases, updateLocalCaseField } = useCases()
+  const editMode = useSectionEditMode()
+  const row = cases.find((c) => c.id === caseId)
+  const emailRaw = (row?.data as Record<string, unknown> | undefined)?.email
+  const emailStr = typeof emailRaw === 'string' ? emailRaw.trim() : ''
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState(emailStr)
+  const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!editing) setValue(emailStr)
+  }, [emailStr, editing])
+
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus()
+      inputRef.current.select()
+    }
+  }, [editing])
+
+  function handleChange(v: string) {
+    const filtered = v.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').toLowerCase()
+    setValue(filtered)
+    if (v !== filtered) {
+      setError('영문만 입력 가능합니다')
+      setTimeout(() => setError(null), 2000)
+    }
+  }
+
+  function save() {
+    const trimmed = value.trim()
+    const next = trimmed || null
+    const prev = emailStr ? emailStr : null
+    updateLocalCaseField(caseId, 'data', 'email', next)
+    setEditing(false)
+    setError(null)
+    void (async () => {
+      const result = await updateCaseField(caseId, 'data', 'email', next)
+      if (!result.ok) {
+        updateLocalCaseField(caseId, 'data', 'email', prev)
+        setError(result.error)
+      }
+    })()
+  }
+
+  function cancel() {
+    setEditing(false)
+    setValue(emailStr)
+    setError(null)
+  }
+
+  if (!editMode && !emailStr) return null
+
+  if (editing) {
+    return (
+      <>
+        <span className="text-muted-foreground/30 select-none mx-2 hidden md:inline">|</span>
+        <div className="inline-flex items-baseline gap-1 min-w-0 basis-full md:basis-auto">
+          <span className="font-sans text-[10px] uppercase tracking-[1px] text-muted-foreground mr-1 shrink-0">이메일</span>
+          <input
+            ref={inputRef}
+            type="email"
+            inputMode="email"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { e.preventDefault(); save() }
+              else if (e.key === 'Escape') { e.preventDefault(); cancel() }
+            }}
+            onBlur={() => { setTimeout(() => cancel(), 150) }}
+            placeholder="name@example.com"
+            className="flex-1 min-w-0 h-7 rounded-md border border-border/80 bg-background px-2 font-mono text-[12px] tracking-[0.5px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+          />
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={save}
+            className="shrink-0 whitespace-nowrap inline-flex h-6 items-center justify-center rounded border px-2 text-[11px] border-pmw-accent bg-pmw-accent/15 text-pmw-accent-strong hover:bg-pmw-accent/25 transition-colors"
+          >
+            저장
+          </button>
+        </div>
+        {error && <div className="basis-full mt-1 text-xs text-destructive">{error}</div>}
+      </>
+    )
+  }
+
+  if (!emailStr) {
+    return (
+      <>
+        <span className="text-muted-foreground/30 select-none mx-2 hidden md:inline">|</span>
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="inline-flex items-baseline shrink-0 basis-full md:basis-auto rounded-md px-1.5 py-0.5 -mx-1.5 text-muted-foreground/60 hover:text-foreground hover:bg-accent/60 transition-colors"
+        >
+          <span className="font-sans text-[10px] uppercase tracking-[1px] mr-1">이메일</span>
+          <span className="font-sans text-[12px]">+ 추가</span>
+        </button>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <span className="text-muted-foreground/30 select-none mx-2 hidden md:inline">|</span>
+      <div className="group/email relative inline-flex items-baseline shrink-0 min-w-0 basis-full md:basis-auto">
+        {editMode ? (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="inline-flex items-baseline min-w-0 rounded-md px-1 py-0.5 -mx-1 hover:bg-accent/60 transition-colors"
+            title="클릭하여 편집"
+          >
+            <span className="font-sans text-[10px] uppercase tracking-[1px] text-muted-foreground mr-1 shrink-0">이메일</span>
+            <span className="font-mono text-[12px] tracking-[0.5px] text-foreground truncate">{emailStr}</span>
+          </button>
+        ) : (
+          <>
+            <span className="font-sans text-[10px] uppercase tracking-[1px] text-muted-foreground mr-1 shrink-0">이메일</span>
+            <span className="font-mono text-[12px] tracking-[0.5px] text-foreground truncate">{emailStr}</span>
+          </>
+        )}
+        <CopyButton value={emailStr} className="ml-1 opacity-0 group-hover/email:opacity-100 shrink-0" />
+      </div>
+    </>
   )
 }
 
