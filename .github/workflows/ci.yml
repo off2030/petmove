@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  lint-and-typecheck:
+    name: Lint + Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # turbo lint (eslint) + scripts/lint-rls.mjs 둘 다 항상 실행, max exit code 반환.
+      # eslint 경고는 통과시키되 (warn level), error 면 fail.
+      - name: Lint (eslint + RLS)
+        run: pnpm lint
+
+      - name: Typecheck admin
+        run: pnpm --filter @petmove/admin exec tsc --noEmit
+
+      - name: Typecheck portal
+        run: pnpm --filter @petmove/portal exec tsc --noEmit
+
+      - name: Typecheck packages/auth
+        run: pnpm --filter @petmove/auth exec tsc --noEmit -p .
+
+      - name: Typecheck packages/domain
+        run: pnpm --filter @petmove/domain exec tsc --noEmit -p .
+
+      - name: Typecheck packages/ui
+        run: pnpm --filter @petmove/ui exec tsc --noEmit -p .
