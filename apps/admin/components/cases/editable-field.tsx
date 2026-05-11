@@ -655,10 +655,10 @@ function EmailChip({ caseId }: { caseId: string }) {
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="inline-flex items-baseline shrink-0 basis-full md:basis-auto rounded-md px-1.5 py-0.5 -mx-1.5 text-muted-foreground/60 hover:text-foreground hover:bg-accent/60 transition-colors"
+          className="inline-flex items-baseline shrink-0 rounded-md px-1.5 py-0.5 -mx-1.5 hover:bg-accent/60 transition-colors"
+          title="클릭하여 입력"
         >
-          <span className="font-sans text-[10px] uppercase tracking-[1px] mr-1">이메일</span>
-          <span className="font-sans text-[12px]">+ 추가</span>
+          <span className="font-sans text-[10px] uppercase tracking-[1px] text-muted-foreground/70">이메일</span>
         </button>
       </>
     )
