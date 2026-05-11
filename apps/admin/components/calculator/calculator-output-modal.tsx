@@ -6,14 +6,10 @@ import { ChevronDown, Plus, Search, X } from 'lucide-react'
 import type { CalculatorItem } from '@petmove/domain'
 import { cn } from '@/lib/utils'
 import { Checkbox } from '@/components/ui/checkbox'
+import { EU_ALIAS_NAMES, resolveCalculatorCountry } from '@/lib/calculator-aliases'
 
 const fmt = (n: number) => n.toLocaleString('ko-KR')
 const cashDiscount = (total: number) => Math.round((total * 0.95) / 10000) * 10000
-
-const CAT_VARIANTS: Record<string, string> = {
-  '호주': '호주(고양이)',
-  '뉴질랜드': '뉴질랜드(고양이)',
-}
 
 export type EstimateRow = {
   id: string
@@ -37,7 +33,7 @@ export type EstimateSnapshot = {
 }
 
 function targetCountry(c: string, s: 'dog' | 'cat') {
-  return s === 'cat' && CAT_VARIANTS[c] ? CAT_VARIANTS[c] : c
+  return resolveCalculatorCountry(c, s)
 }
 
 function rowsFromItems(items: CalculatorItem[]): EstimateRow[] {
@@ -110,7 +106,15 @@ export function CalculatorOutputModal({
       if (it.country.includes('(고양이)')) continue
       if (!seen.has(it.country)) seen.set(it.country, it.country_order)
     }
-    return [...seen.entries()].sort((a, b) => a[1] - b[1]).map(([n]) => n)
+    const baseList = [...seen.entries()].sort((a, b) => a[1] - b[1]).map(([n]) => n)
+    // 유럽 직후에 EU 회원국 alias 삽입 (가나다 정렬). 이미 별도 항목 있는 국가는 제외.
+    const europeIdx = baseList.indexOf('유럽')
+    if (europeIdx === -1) return baseList
+    const existing = new Set(baseList)
+    const aliases = EU_ALIAS_NAMES.filter((n) => !existing.has(n)).sort((a, b) =>
+      a.localeCompare(b, 'ko-KR'),
+    )
+    return [...baseList.slice(0, europeIdx + 1), ...aliases, ...baseList.slice(europeIdx + 1)]
   }, [allItems])
 
   useEffect(() => {

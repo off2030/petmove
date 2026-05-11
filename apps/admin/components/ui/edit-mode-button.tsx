@@ -11,18 +11,22 @@ export function EditModeButton({
   editMode,
   onToggle,
   saving = false,
+  disabled = false,
+  title,
   className,
 }: {
   editMode: boolean
   onToggle: () => void
   saving?: boolean
+  disabled?: boolean
+  title?: string
   className?: string
 }) {
   return (
     <button
       type="button"
       onClick={onToggle}
-      disabled={saving}
+      disabled={saving || disabled}
       className={cn(
         'inline-flex h-8 items-center gap-1.5 rounded-full border px-3.5 text-sm transition-colors disabled:opacity-50',
         editMode
@@ -30,7 +34,7 @@ export function EditModeButton({
           : 'border-border/80 bg-transparent text-muted-foreground hover:text-foreground',
         className,
       )}
-      title={editMode ? '저장' : '편집'}
+      title={title ?? (editMode ? '저장' : '편집')}
     >
       <Pencil size={13} />
       {editMode ? (saving ? '저장 중…' : '저장') : '편집'}

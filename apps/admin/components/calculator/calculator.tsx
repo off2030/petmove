@@ -20,11 +20,7 @@ import { ListRow } from '@petmove/ui'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useConfirm } from '@petmove/ui'
 import { cn } from '@/lib/utils'
-
-const CAT_VARIANTS: Record<string, string> = {
-  '호주': '호주(고양이)',
-  '뉴질랜드': '뉴질랜드(고양이)',
-}
+import { resolveCalculatorCountry } from '@/lib/calculator-aliases'
 
 const fmt = (n: number) => n.toLocaleString('ko-KR')
 const cashDiscount = (total: number) => Math.round((total * 0.95) / 10000) * 10000
@@ -42,7 +38,7 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
   // 첫 렌더부터 모든 항목 체크 ON 상태로 시작 — 마운트 직후 effect 가 실행되면서
   // 잠시 모두 unchecked(취소선)로 보였다가 채워지는 깜박임 방지.
   const [checked, setChecked] = useState<Record<number, boolean>>(() => {
-    const effCountry = species === 'cat' && CAT_VARIANTS[country] ? CAT_VARIANTS[country] : country
+    const effCountry = country ? resolveCalculatorCountry(country, species) : ''
     const next: Record<number, boolean> = {}
     items.filter((i) => i.country === effCountry).forEach((it) => { next[it.id] = true })
     return next
@@ -62,11 +58,10 @@ export function Calculator({ items, setItems, species, country, editMode }: Prop
   const freeInputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
 
-  const effectiveCountry = useMemo(() => {
-    if (!country) return ''
-    if (species === 'cat' && CAT_VARIANTS[country]) return CAT_VARIANTS[country]
-    return country
-  }, [country, species])
+  const effectiveCountry = useMemo(
+    () => (country ? resolveCalculatorCountry(country, species) : ''),
+    [country, species],
+  )
 
   const visibleItems = useMemo(
     () =>

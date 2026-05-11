@@ -20,6 +20,7 @@ import {
 } from './external-links'
 import { PageShell, PageTabs } from '@petmove/ui'
 import type { ExternalLinksConfig } from '@petmove/domain'
+import { EU_ALIAS_NAMES, isEuAliasCountry } from '@/lib/calculator-aliases'
 
 type Mode = 'cost' | 'schedule' | 'links'
 
@@ -169,8 +170,23 @@ export function CalculatorApp({
       if (it.country.includes('(고양이)')) continue
       if (!seen.has(it.country)) seen.set(it.country, it.country_order)
     }
-    return [...seen.entries()].sort((a, b) => a[1] - b[1]).map(([n]) => n)
+    const baseList = [...seen.entries()].sort((a, b) => a[1] - b[1]).map(([n]) => n)
+    // 유럽 직후에 EU 회원국 alias 삽입 (가나다). 별도 항목이 이미 있는 국가는 제외.
+    const europeIdx = baseList.indexOf('유럽')
+    if (europeIdx === -1) return baseList
+    const existing = new Set(baseList)
+    const aliases = EU_ALIAS_NAMES.filter((n) => !existing.has(n)).sort((a, b) =>
+      a.localeCompare(b, 'ko-KR'),
+    )
+    return [...baseList.slice(0, europeIdx + 1), ...aliases, ...baseList.slice(europeIdx + 1)]
   })()
+
+  // EU alias 목적지는 '유럽' 항목을 공유 — 편집/복제/삭제는 '유럽' 에서 직접 해야 함.
+  const isAlias = isEuAliasCountry(country)
+
+  useEffect(() => {
+    if (isAlias && editMode) setEditMode(false)
+  }, [isAlias, editMode])
 
   const filteredCountries = countries.filter((c) => c.includes(search))
 
@@ -283,7 +299,12 @@ export function CalculatorApp({
           )}
         </div>
 
-        <EditModeButton editMode={editMode} onToggle={() => setEditMode((v) => !v)} />
+        <EditModeButton
+          editMode={editMode}
+          onToggle={() => setEditMode((v) => !v)}
+          disabled={isAlias}
+          title={isAlias ? '유럽 회원국은 "유럽" 에서 편집해주세요' : undefined}
+        />
 
         {/* 목적지 메뉴 — 복제 / 추가 / 삭제 */}
         <div className="relative" ref={destMenuRef}>
@@ -303,7 +324,8 @@ export function CalculatorApp({
             <div className="absolute right-0 top-[calc(100%+4px)] z-50 w-44 overflow-hidden rounded-md border border-border bg-popover shadow-lg py-1">
               <button
                 type="button"
-                disabled={!country}
+                disabled={!country || isAlias}
+                title={isAlias ? '유럽 회원국 alias 는 복제할 수 없습니다' : undefined}
                 onClick={() => {
                   setDestAction('clone')
                   setDestMenuOpen(false)
@@ -330,7 +352,8 @@ export function CalculatorApp({
               </button>
               <button
                 type="button"
-                disabled={!country}
+                disabled={!country || isAlias}
+                title={isAlias ? '유럽 회원국 alias 는 삭제할 수 없습니다' : undefined}
                 onClick={() => {
                   void handleDeleteDestination()
                 }}
