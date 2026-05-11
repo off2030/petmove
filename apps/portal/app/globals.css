@@ -22,6 +22,32 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
+   Portal — Calm tone (Stone palette + Fraunces serif)
+   docs/portal-preview/tokens.css 의 portal-only 토큰. (authed) 셸 + 4탭 화면
+   에서 사용. admin Editorial(--pmw-*) 과 별개.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --pm-bg: #F2EDE6;
+  --pm-surface: #FBF7F1;
+  --pm-ink: #2A2620;
+  --pm-ink-2: #6B6457;
+  --pm-ink-3: #9A9286;
+  --pm-line: rgba(42, 38, 32, 0.10);
+  --pm-line-2: rgba(42, 38, 32, 0.14);
+  --pm-accent: #B89968;
+  --pm-accent-soft: #E8DCC4;
+  --pm-sage: #8FA68C;
+}
+
+@keyframes pm-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.pm-fade-up { animation: pm-fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.pm-noscroll::-webkit-scrollbar { display: none; }
+.pm-noscroll { scrollbar-width: none; }
+
+/* ─────────────────────────────────────────────────────────────
    PetMove — Editorial tone (펫무브워크 Design System)
    Parchment + Terracotta + Near-black. 모든 뉴트럴은 따뜻한 계열.
    ───────────────────────────────────────────────────────────── */

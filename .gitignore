@@ -16,6 +16,9 @@ out/
 dist/
 build/
 
+# Turbo build cache — per-package and root
+.turbo/
+
 # TypeScript incremental build cache — regenerated on every tsc run,
 # causes noisy diffs and push conflicts across machines.
 tsconfig.tsbuildinfo
