@@ -4,7 +4,23 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "NEXT_PUBLIC_PORTAL_BASE_URL",
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "SENTRY_DSN",
+        "SENTRY_AUTH_TOKEN",
+        "NAVER_CLIENT_ID",
+        "NAVER_CLIENT_SECRET",
+        "RESEND_API_KEY",
+        "KAKAO_REST_API_KEY",
+        "OPENAI_API_KEY",
+        "TURNSTILE_SECRET_KEY",
+        "NEXT_PUBLIC_TURNSTILE_SITE_KEY"
+      ]
     },
     "dev": {
       "cache": false,
