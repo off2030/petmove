@@ -2,6 +2,7 @@
 
 import { headers } from 'next/headers'
 import { createAdminClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 import { formatMicrochip } from '@petmove/domain'
 
 // apply 는 공개(비인증) 플로우 — getActiveOrgId() 사용 불가.
@@ -152,5 +153,24 @@ export async function applyCase(input: ApplyInput): Promise<
     .single()
 
   if (error) return { ok: false, error: error.message }
+
+  // 로그인된 보호자가 신청한 경우 — case_customer_links 즉시 INSERT.
+  // 비로그인 흐름은 autoLinkCasesByEmail 이 다음 로그인 시 이메일 매칭으로 link.
+  // service-role 우회 (case_customer_links 의 RLS insert 가 org_member 만 허용).
+  try {
+    const userClient = await createClient()
+    const { data: { user } } = await userClient.auth.getUser()
+    if (user) {
+      await supabase
+        .from('case_customer_links')
+        .upsert(
+          { case_id: row.id, user_id: user.id, linked_via: 'apply-authenticated' },
+          { onConflict: 'case_id,user_id', ignoreDuplicates: true },
+        )
+    }
+  } catch {
+    // case 자체는 생성 완료. link 실패는 silent — autoLinkCasesByEmail 가 다음 기회에 처리.
+  }
+
   return { ok: true, caseId: row.id }
 }
