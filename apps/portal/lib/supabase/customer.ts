@@ -36,3 +36,49 @@ export async function ensureCustomerProfile(
     // phone 은 사용자가 프로파일에서 직접 입력 (OAuth 가 보장 못 함)
   })
 }
+
+/**
+ * 가입 직후 (또는 customer_profile 생성 직후) 이메일 기준으로 기존 admin 케이스를
+ * 자동 링크. cases.data->>email 이 user.email (소문자) 와 일치하는 모든 케이스를
+ * case_customer_links 에 본인 user_id 로 INSERT.
+ *
+ * service role admin 클라이언트 사용 — case_customer_links 의 RLS insert 정책이
+ * "is org_member or super_admin" 이라 보호자 본인은 통과 안 됨 (의도된 설계: 보호자가
+ * 자기 마음대로 임의 케이스 링크하지 못하게). 자동 매칭은 신뢰된 자동화 경로라 우회.
+ *
+ * idempotent — 이미 링크된 (case_id, user_id) 는 PK 충돌 무시.
+ */
+export async function autoLinkCasesByEmail(
+  supabaseAdmin: SupabaseClient,
+  user: User,
+): Promise<{ linked: number }> {
+  const email = user.email?.toLowerCase()
+  if (!email) return { linked: 0 }
+
+  // cases.data.email 매칭 — apply-case.ts 가 data.email 로 저장.
+  const { data: cases } = await supabaseAdmin
+    .from('cases')
+    .select('id')
+    .filter('data->>email', 'eq', email)
+
+  if (!cases?.length) return { linked: 0 }
+
+  // upsert with onConflict — PK (case_id, user_id) 중복 무시
+  const rows = cases.map((c) => ({
+    case_id: (c as { id: string }).id,
+    user_id: user.id,
+    linked_via: 'email-match',
+  }))
+
+  const { error } = await supabaseAdmin
+    .from('case_customer_links')
+    .upsert(rows, { onConflict: 'case_id,user_id', ignoreDuplicates: true })
+
+  if (error) {
+    // 한 케이스 매칭 실패가 가입 자체를 망치면 안 됨. silent.
+    console.warn('[autoLinkCasesByEmail] insert failed:', error.message)
+    return { linked: 0 }
+  }
+
+  return { linked: rows.length }
+}

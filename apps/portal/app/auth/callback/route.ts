@@ -1,7 +1,8 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { createAdminClient } from '@petmove/auth'
 import { createClient } from '@petmove/auth/server'
-import { ensureCustomerProfile } from '@/lib/supabase/customer'
+import { autoLinkCasesByEmail, ensureCustomerProfile } from '@/lib/supabase/customer'
 
 const OAUTH_NEXT_COOKIE = 'pm_oauth_next'
 
@@ -47,6 +48,12 @@ export async function GET(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       try { await ensureCustomerProfile(supabase, user) } catch { /* best-effort */ }
+      // 자동 매칭 — 보호자 이메일과 일치하는 기존 admin 케이스를 case_customer_links 로 연결.
+      // service role 우회 (RLS insert 는 org_member 만 허용이라).
+      try {
+        const admin = createAdminClient()
+        await autoLinkCasesByEmail(admin, user)
+      } catch { /* best-effort */ }
     }
   }
 
