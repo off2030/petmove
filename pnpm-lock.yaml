@@ -132,6 +132,12 @@ importers:
       '@capacitor/ios':
         specifier: ^8.3.3
         version: 8.3.3(@capacitor/core@8.3.3)
+      '@capacitor/local-notifications':
+        specifier: ^8.1.0
+        version: 8.1.0(@capacitor/core@8.3.3)
+      '@capacitor/push-notifications':
+        specifier: ^8.0.4
+        version: 8.0.4(@capacitor/core@8.3.3)
       '@petmove/auth':
         specifier: workspace:*
         version: link:../../packages/auth
@@ -333,6 +339,16 @@ packages:
     resolution: {integrity: sha512-BHlTOxarrvkaqDdlTxKwip+dQmfQSnfctizpheR7SWp/VIlR0HcPpYzWMTiVbHQLq3nLRUdeZO1wSPVGvxzAPA==}
     peerDependencies:
       '@capacitor/core': ^8.3.0
+
+  '@capacitor/local-notifications@8.1.0':
+    resolution: {integrity: sha512-rc1vWw7G7LXLL9AOoi6DKA740UMDEVpBbRBFByI4KVPV4wJi30gtr5k2D3/WwiwwYvjm55eD1k03QhOrGYf9cA==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capacitor/push-notifications@8.0.4':
+    resolution: {integrity: sha512-14ZWKik9ExTu65AZ9+o7+k05uEOaTstuYv6lLq1Bobip+SC5AOwciSICYLALgTTKN2jEDTRoigFAEixmVEJp/w==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
 
   '@date-fns/tz@1.4.1':
     resolution: {integrity: sha512-P5LUNhtbj6YfI3iJjw5EL9eUAG6OitD0W3fWQcpQjDRc/QIsL0tRNuO1PcDvPccWL1fSTXXdE1ds+l95DV/OFA==}
@@ -3953,6 +3969,14 @@ snapshots:
       tslib: 2.8.1
 
   '@capacitor/ios@8.3.3(@capacitor/core@8.3.3)':
+    dependencies:
+      '@capacitor/core': 8.3.3
+
+  '@capacitor/local-notifications@8.1.0(@capacitor/core@8.3.3)':
+    dependencies:
+      '@capacitor/core': 8.3.3
+
+  '@capacitor/push-notifications@8.0.4(@capacitor/core@8.3.3)':
     dependencies:
       '@capacitor/core': 8.3.3
 

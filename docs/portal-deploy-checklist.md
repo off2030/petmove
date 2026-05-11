@@ -193,20 +193,53 @@ App Store Connect 최초 셋업:
 - 스크린샷 (iPhone 6.7" + 6.5" + iPad Pro 12.9") — Vercel preview 에서 캡처
 - $99/년 Apple Developer Program
 
-### 7.4 심사 통과 팁
+### 7.4 푸시 알림 (Native, 심사 통과 보강에 효과적)
+
+`@capacitor/push-notifications` + `@capacitor/local-notifications` 이미 설치됨.
+`apps/portal/lib/native/push-notifications.ts` 의 `registerPushNotifications()` 가
+token 받아오는 헬퍼. 사용자 액션:
+
+**iOS (APNs)**:
+1. Apple Developer Portal → Identifiers → `com.petmove.portal` → Capabilities → "Push Notifications" 체크
+2. Keys → "+" → "Apple Push Notifications service (APNs)" 키 생성 → `.p8` 파일 다운로드
+3. Supabase Dashboard 또는 자체 push 발송 서버에 .p8 + Key ID + Team ID 등록
+
+**Android (FCM)**:
+1. https://console.firebase.google.com → 프로젝트 생성
+2. Android 앱 추가 (Package name: `com.petmove.portal`)
+3. `google-services.json` 다운로드 → `apps/portal/android/app/` 에 배치
+4. `apps/portal/android/app/build.gradle` 상단에 `apply plugin: 'com.google.gms.google-services'` 추가
+5. `apps/portal/android/build.gradle` 의 dependencies 에 classpath `'com.google.gms:google-services:4.4.0'` 추가
+6. Firebase Console → Project settings → Cloud Messaging 의 Server key 를 Supabase 또는 발송 서버에 등록
+
+**Supabase DB** (push_subscriptions 테이블 — 미래 마이그):
+```sql
+create table public.push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  platform text not null check (platform in ('ios','android','web')),
+  token text not null,
+  created_at timestamptz not null default now(),
+  unique (user_id, token)
+);
+```
+
+**발송 시점**: 케이스 단계 변경, share-link 제출 완료, 검증 실패 등 admin 측
+event. Vercel Edge Function 또는 Supabase Edge Function 으로 구현 가능.
+
+### 7.5 심사 통과 팁
 
 Apple 의 4.2.7 ("browser wrapper" 거부 가능) 대비:
 - 앱이 단순 웹 래퍼가 아님을 증명 — 이미 갖춘 것:
   - PWA service worker (offline 폴백 페이지)
-  - Web Push 인프라 (VAPID 활성화 시 추가)
+  - Capacitor push-notifications + local-notifications plugins 활성화
   - 모바일 우선 디자인 (touch-friendly UI)
 - 추가로 강화하면 좋은 native 통합 (필요 시 Capacitor plugin 추가):
-  - `@capacitor/push-notifications` — APNs/FCM 토큰 등록
   - `@capacitor/camera` — 서류 사진 촬영
   - `@capacitor/biometric` — Face ID/Touch ID 자동 로그인
 - 처음 심사 거부되면: 거부 사유 받고 보강 → 재제출. 보통 첫 거부 후 1~2회 안에 통과.
 
-### 7.5 업데이트 흐름
+### 7.6 업데이트 흐름
 
 - **웹 콘텐츠** (UI/문구/페이지 추가): `git push` → Vercel 자동 재배포 → 모든
   사용자 앱 다음 열 때 즉시 반영. 앱스토어 재심사 없음.
