@@ -18,7 +18,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
  * remote URL 이 명확히 합리적.
  */
 const config: CapacitorConfig = {
-  appId: 'com.petmove.app',
+  appId: 'com.petmove.portal',
   appName: '펫무브',
   // webDir 는 static export 모드에서 사용. remote URL 모드에선 형식상만 필요 (빌드 산출물 폴더).
   webDir: 'out',
