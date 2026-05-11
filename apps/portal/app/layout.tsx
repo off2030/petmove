@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter_Tight, Source_Serif_4, JetBrains_Mono, Noto_Sans_KR, Noto_Serif_KR } from 'next/font/google'
+import { Inter_Tight, Source_Serif_4, JetBrains_Mono, Noto_Sans_KR, Noto_Serif_KR, Fraunces } from 'next/font/google'
 import './globals.css'
 import { ConfirmProvider } from '@petmove/ui'
 import { ServiceWorkerRegister } from '@/components/sw-register'
@@ -38,6 +38,15 @@ const notoSerifKr = Noto_Serif_KR({
   variable: '--font-serif-kr',
   display: 'swap',
 })
+// Calm 디자인 시스템 (portal-preview/timeline.jsx) 의 H1·숫자 serif.
+// 인라인 style 에서 'Fraunces' 패밀리명을 직접 참조 — variable 만 노출하면 됨.
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  style: ['normal', 'italic'],
+  variable: '--font-display',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: '펫무브',
@@ -69,7 +78,7 @@ export default function RootLayout({
     <html
       lang="ko"
       suppressHydrationWarning
-      className={`${interTight.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} ${notoSansKr.variable} ${notoSerifKr.variable}`}
+      className={`${interTight.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} ${notoSansKr.variable} ${notoSerifKr.variable} ${fraunces.variable}`}
     >
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
         <ServiceWorkerRegister />
