@@ -222,19 +222,28 @@ petmove/
 
 ## 9. 단계별 마일스톤
 
-### Phase 11.0 — Portal MVP (목표 ~2주)
-1. **스캐폴딩** (0.5일) — `apps/portal` 생성, package.json, tsconfig, tailwind, layout, globals.css 복사 후 정리
-2. **packages/ui 승격** (0.5일) — admin 의 `components/ui/*` 중 공용성 높은 것들 (PageShell, ListRow, SectionHeader, PillButton, DateTextField, DropdownSelect) 을 packages/ui 로 이동, admin import 경로 갱신
-3. **인증** (1일) — `customer_profiles` 마이그레이션, 가입/로그인/이메일 인증 페이지, customer-vs-staff 분기
-4. **케이스 매칭** (1일) — `case_customer_links` 마이그레이션 + 백필 (기존 cases 의 customer email/phone 으로 자동 매칭 dry-run → apply)
-5. **anon 토큰 뷰 이전** (1일) — `/share/[token]` 을 portal 로 옮김 + 진행상태 read-only 추가
-6. **신청서 이전** (1일) — `/apply` portal 로 옮김, admin 의 `/apply` 는 redirect
-7. **내 케이스 목록 + 상세** (3일) — list 페이지, 타임라인 상세 페이지
-8. **약관·개인정보처리방침** (0.5일) — 법무 텍스트 받아 정적 페이지
-9. **PWA + 모바일 폴리싱** (1일)
-10. **베타 배포** (0.5일) — Vercel 별도 프로젝트, 도메인 설정, 로잔 보호자만 매직링크 안내
+### Phase 11.0 — Portal MVP (진행 중)
+1. ✅ **스캐폴딩** — `apps/portal` Next.js 16 + 공유 패키지 wire (f5bba0f)
+2. ✅ **packages/ui 승격** — PageShell, ListRow, PillButton, DateTextField, Calendar, ConfirmProvider 등 (0bf559f, 77c2c39)
+3. ✅ **인증** — `customer_profiles` 마이그 + `@petmove/auth` 분리 + /login + /auth/callback + ensureCustomerProfile (562c3ba, 8bc35be, d66c111)
+4. ✅ **케이스 매칭** — `case_customer_links` + RLS (SECURITY DEFINER) + autoLinkCasesByEmail + autoLinkCasesByPhone + backfill 스크립트 (8d9018b, 98b222c, b856b3f, c790e31)
+5. ✅ **anon 토큰 뷰 이전** — `/share/[token]` portal + admin redirect (c8d5d4e, 1c71d22)
+6. ✅ **신청서 이전** — `/apply` portal + admin redirect (bc85993)
+7. ⏳ **내 케이스 목록 + 상세** — 데이터 레이어 완료 (listMyCases, getMyCase: accce10), UI 는 디자인 freeze 대기
+8. ✅ **약관·개인정보처리방침** — `/terms`, `/privacy` 마크다운 렌더 (4ed38c4) + 1차 초안 작성됨
+9. ✅ **PWA + 모바일 폴리싱** — manifest + sw.js + offline + Capacitor native shell (2c84904, 029d788)
+10. ⏳ **베타 배포** — `docs/portal-deploy-checklist.md` 완비. Vercel + KIPRIS + Apple Dev + Play 등록은 사용자 액션
+
+**추가 자율 작업 완료** (Phase 11.1 일부 + 인프라):
+- ✅ Capacitor App Store/Play 배포 베이스 — Bundle ID `com.petmove.portal`, Android scaffold (029d788, 2a07988)
+- ✅ Capacitor push notifications plugin + helper (95bec53)
+- ✅ profile server actions — getMyProfile/updateMyProfile (95bec53)
+- ✅ CI 자동화 — `.github/workflows/ci.yml` (lint + RLS + tsc) (5541526)
+- ✅ RLS recursion lint — `pnpm lint:rls` 사이클 검출 (7bc172e)
 
 **Cutover 기준**: 로잔 보호자 5명 + 본인 테스트로 신청-진행-완료 1사이클 확인.
+
+**남은 작업**: 11.0.7 UI (디자인 freeze 후) + 11.0.10 배포 (Apple Dev/Play 가입 후).
 
 ### Phase 11.1 — 알림 + 서류 다운로드 (1주)
 - 푸시 발송 트리거 (admin PWA 2단계와 합류)
