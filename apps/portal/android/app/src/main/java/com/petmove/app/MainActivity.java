@@ -1,4 +1,4 @@
-package kr.co.petmove.portal;
+package com.petmove.app;
 
 import com.getcapacitor.BridgeActivity;
 
