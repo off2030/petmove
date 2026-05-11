@@ -58,6 +58,7 @@ type SinglePdfBody = {
     | 'VBDDL'
   caseId: string
   includeSignature?: boolean
+  includeVet?: boolean
   destination?: string | null
   /** 별지 25호/EX 의 dedicated 광견병 슬롯 선택 (sortedAsc 기준 인덱스). */
   rabiesIndices?: number[]
@@ -68,6 +69,7 @@ type MultiPdfBody = {
   formKey: 'AnnexIII' | 'UK'
   caseIds: string[]
   part?: number
+  includeVet?: boolean
 }
 
 type ShipmentPdfBody = {
@@ -83,6 +85,7 @@ type BundlePdfBody = {
   variant: 'nz-infection-pack'
   caseId: string
   includeSignature?: boolean
+  includeVet?: boolean
   destination?: string | null
 }
 
@@ -147,6 +150,7 @@ export async function POST(req: NextRequest) {
       if (!generate) return jsonError(`지원하지 않는 양식입니다: ${body.formKey}`, 400)
       const result = await generate(body.caseId, {
         includeSignature: body.includeSignature,
+        includeVet: body.includeVet,
         destination: body.destination,
         rabiesIndices: body.rabiesIndices,
       })
@@ -173,6 +177,7 @@ export async function POST(req: NextRequest) {
     if (body.kind === 'bundle') {
       const result = await generateNzInfectionPack(body.caseId, {
         includeSignature: body.includeSignature,
+        includeVet: body.includeVet,
         destination: body.destination,
       })
       if (!result.ok) return jsonError(result.error, 500)
@@ -185,8 +190,8 @@ export async function POST(req: NextRequest) {
       }
       const result =
         body.formKey === 'AnnexIII'
-          ? await generateAnnexIIIMulti(body.caseIds)
-          : await generateUKMulti(body.caseIds)
+          ? await generateAnnexIIIMulti(body.caseIds, { includeVet: body.includeVet })
+          : await generateUKMulti(body.caseIds, { includeVet: body.includeVet })
       if (!result.ok) return jsonError(result.error, 500)
       if (result.docs.length === 0) return jsonError('생성된 문서가 없습니다.', 500)
 

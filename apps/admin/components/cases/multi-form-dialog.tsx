@@ -12,6 +12,8 @@ import { DialogFooter } from '@/components/ui/dialog-footer'
 interface Props {
   caseId: string
   formKey: 'AnnexIII' | 'UK'
+  /** 수의사/병원 정보·발급일 노출 여부. 부모 cases-app 의 토글 상태를 그대로 전달. */
+  includeVet?: boolean
   onClose: () => void
 }
 
@@ -46,7 +48,7 @@ function simulatePackCount(
   return docs
 }
 
-export function MultiFormDialog({ caseId, formKey, onClose }: Props) {
+export function MultiFormDialog({ caseId, formKey, includeVet, onClose }: Props) {
   const [preview, setPreview] = useState<SiblingPreview | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
@@ -79,7 +81,7 @@ export function MultiFormDialog({ caseId, formKey, onClose }: Props) {
     startGen(async () => {
       try {
         await downloadMultipartPdfRequest(
-          { kind: 'multi', formKey, caseIds: ids },
+          { kind: 'multi', formKey, caseIds: ids, includeVet },
           simulatePackCount(formKey, selectedCases),
         )
         onClose()

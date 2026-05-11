@@ -218,6 +218,9 @@ function Inner() {
     | null
   >(null)
   const [includeSignature, setIncludeSignature] = useState(false)
+  // 수의사/병원/발급일 노출 토글 — 기본 ON. 끄면 vet:*, vet_visit_date, today_* 계열 및
+  // vet_/hospital_/issue_date 필드를 공백으로 출력 (서명 토글과 독립).
+  const [includeVet, setIncludeVet] = useState(true)
   const [addingFromFiles, setAddingFromFiles] = useState(false)
   // org_disabled_checks 캐시 — 마운트 후 한 번 로드. PDF 발급 게이트가 사용.
   const [disabledChecks, setDisabledChecks] = useState<Set<string>>(() => new Set())
@@ -392,6 +395,7 @@ function Inner() {
             | 'VHC',
           caseId,
           includeSignature,
+          includeVet,
           destination,
           ...(rabiesIndices ? { rabiesIndices } : {}),
         })
@@ -399,7 +403,7 @@ function Inner() {
         alert(error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.')
       }
     },
-    [includeSignature, cases, confirmIfFailing],
+    [includeSignature, includeVet, cases, confirmIfFailing],
   )
 
   const handleDuplicate = useCallback(async (id: string) => {
@@ -430,14 +434,14 @@ function Inner() {
     if (p.preview.cases.length <= 1) {
       const ids = p.preview.cases.map(c => c.id)
       try {
-        await downloadMultipartPdfRequest({ kind: 'multi', formKey, caseIds: ids }, p.preview.docCount)
+        await downloadMultipartPdfRequest({ kind: 'multi', formKey, caseIds: ids, includeVet }, p.preview.docCount)
       } catch (error) {
         alert(error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.')
       }
       return
     }
     setMultiForm({ caseId, formKey })
-  }, [cases, confirmIfFailing])
+  }, [cases, confirmIfFailing, includeVet])
 
   const showDetail = selectedId !== null
 
@@ -463,6 +467,7 @@ function Inner() {
           <MultiFormDialog
             caseId={multiForm.caseId}
             formKey={multiForm.formKey}
+            includeVet={includeVet}
             onClose={() => setMultiForm(null)}
           />
         )}
@@ -643,6 +648,18 @@ function Inner() {
                           className="cursor-pointer"
                         />
                         서명
+                      </label>
+                      <label
+                        className="shrink-0 whitespace-nowrap flex items-center gap-xs select-none cursor-pointer rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
+                        title="해제 시 수의사·병원 정보 및 서류 발행일을 비웁니다"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={includeVet}
+                          onChange={(e) => setIncludeVet(e.target.checked)}
+                          className="cursor-pointer"
+                        />
+                        수의사
                       </label>
                       {(() => {
                         const focusDest = activeDestination ?? firstDestination(selectedCase)

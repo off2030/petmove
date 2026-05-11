@@ -40,7 +40,7 @@ function stripOtherHospitalRecords(data: Record<string, unknown>): Record<string
 async function generate(
   formKey: string,
   caseId: string,
-  options?: { includeSignature?: boolean; destination?: string | null; extras?: Record<string, unknown>; rabiesIndices?: number[] },
+  options?: { includeSignature?: boolean; includeVet?: boolean; destination?: string | null; extras?: Record<string, unknown>; rabiesIndices?: number[] },
 ): Promise<GeneratePdfResult> {
   await loadEffectiveVetInfo()
   const supabase = await createClient()
@@ -65,6 +65,7 @@ async function generate(
   const allowedVaccines = getEffectiveVaccineList(destForRules, extraFields)
   return fillPdf(formKey, caseRow, {
     includeSignature: options?.includeSignature,
+    includeVet: options?.includeVet,
     allowedVaccines,
     extras: options?.extras,
     rabiesIndices: options?.rabiesIndices,
@@ -97,6 +98,8 @@ async function generateStandalone(
 /** 모든 generate* 진입점의 공통 옵션. UI 활성 목적지를 destination 으로 전달. */
 export type GenerateOpts = {
   includeSignature?: boolean
+  /** 수의사/병원 정보·발급일 노출 여부. 기본 true. false 면 해당 필드 모두 공백. */
+  includeVet?: boolean
   destination?: string | null
   /** 별지 25호/EX 의 dedicated 광견병 슬롯에 들어갈 접종 선택. sortedAsc 기준 인덱스. */
   rabiesIndices?: number[]
@@ -458,6 +461,7 @@ function simulatePackCount(formKey: 'AnnexIII' | 'UK', summaries: SiblingSummary
 async function generateMulti(
   formKey: 'AnnexIII' | 'UK',
   caseIds: string[],
+  options?: { includeVet?: boolean },
 ): Promise<GenerateMultiPdfResult> {
   if (caseIds.length === 0) return { ok: false, error: '대상 동물이 없습니다' }
   await loadEffectiveVetInfo()
@@ -469,7 +473,7 @@ async function generateMulti(
   const ordered = caseIds.map(id => byId.get(id)).filter((c): c is CaseRow => !!c)
   if (ordered.length === 0) return { ok: false, error: '대상 동물을 찾을 수 없습니다' }
 
-  const results = await fillPdfMulti(formKey, ordered)
+  const results = await fillPdfMulti(formKey, ordered, options)
   const docs: Array<{ pdf: string; filename: string }> = []
   for (const r of results) {
     if (!r.ok) return { ok: false, error: r.error }
@@ -478,12 +482,12 @@ async function generateMulti(
   return { ok: true, docs }
 }
 
-export async function generateAnnexIIIMulti(caseIds: string[]) {
-  return generateMulti('AnnexIII', caseIds)
+export async function generateAnnexIIIMulti(caseIds: string[], opts?: { includeVet?: boolean }) {
+  return generateMulti('AnnexIII', caseIds, opts)
 }
 
-export async function generateUKMulti(caseIds: string[]) {
-  return generateMulti('UK', caseIds)
+export async function generateUKMulti(caseIds: string[], opts?: { includeVet?: boolean }) {
+  return generateMulti('UK', caseIds, opts)
 }
 
 // Legacy single-case entry points — kept for non-multi destinations that still use fillPdf.

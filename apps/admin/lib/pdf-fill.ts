@@ -2403,7 +2403,11 @@ function resolveFieldMulti(
   return resolveField(finalMapping, target, (target.data ?? {}) as Record<string, unknown>, allowedVaccines)
 }
 
-export async function fillPdfMulti(formKey: string, cases: CaseRow[]): Promise<FillResult[]> {
+export async function fillPdfMulti(
+  formKey: string,
+  cases: CaseRow[],
+  options?: { includeVet?: boolean },
+): Promise<FillResult[]> {
   if (cases.length === 0) return [{ ok: false, error: '대상 동물이 없습니다' }]
   const lookups = await getOrgVaccineLookups()
   return runWithOrgLookups(lookups, async () => {
@@ -2413,14 +2417,19 @@ export async function fillPdfMulti(formKey: string, cases: CaseRow[]): Promise<F
 
     const results: FillResult[] = []
     for (let i = 0; i < docs.length; i++) {
-      const r = await fillOnePackedDoc(formKey, docs[i], docs.length > 1 ? i + 1 : 0)
+      const r = await fillOnePackedDoc(formKey, docs[i], docs.length > 1 ? i + 1 : 0, options)
       results.push(r)
     }
     return results
   })
 }
 
-async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: number): Promise<FillResult> {
+async function fillOnePackedDoc(
+  formKey: string,
+  doc: PackedDoc,
+  partNumber: number,
+  options?: { includeVet?: boolean },
+): Promise<FillResult> {
   const form = MAPS[formKey]
   if (!form) return { ok: false, error: `Unknown form: ${formKey}` }
 
@@ -2458,8 +2467,10 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
     ? (s: unknown): unknown => (typeof s === 'string' ? eachPart(toDmmmY)(s) : s)
     : (s: unknown): unknown => s
 
+  const noVetMulti = options?.includeVet === false
   for (const [fieldName, mapping] of Object.entries(form.fields)) {
-    const value = reformatDate(resolveFieldMulti(fieldName, form.fields, doc))
+    const gated = noVetMulti && isVetGatedField(fieldName, mapping)
+    const value = gated ? '' : reformatDate(resolveFieldMulti(fieldName, form.fields, doc))
     let field
     try { field = pdfForm.getField(fieldName) } catch { continue }
     if (field instanceof PDFRadioGroup) {
@@ -2479,7 +2490,8 @@ async function fillOnePackedDoc(formKey: string, doc: PackedDoc, partNumber: num
       // This lets us set `"default": "N/A"` on row/slot fields that should
       // show "N/A" whenever the underlying data is missing (e.g. optional
       // test rows, skipped vaccine doses).
-      if (!text && mapping.default) text = mapping.default
+      // gated 필드는 default 폴백도 건너뜀.
+      if (!text && mapping.default && !gated) text = mapping.default
       text = sanitizeForFont(text)
       // Always setText (even to '') so any template default text is cleared.
       field.setText(text)
@@ -2703,6 +2715,13 @@ async function applyFontFixes(
 
 export type FillOptions = {
   includeSignature?: boolean
+  /**
+   * 수의사/병원 정보 및 발급일/작성일 노출 여부. 기본 true.
+   * false 면 vet:* transform, vet_visit_date source, today_ymd_slash 등
+   * 발급일 계열 필드 + 필드명이 `vet_` / `hospital_` 접두 / `issue_date` 인
+   * 필드를 모두 빈 값으로 출력 (mapping.default 도 무시).
+   */
+  includeVet?: boolean
   allowedVaccines?: string[]
   /** 추가 필드 (예: Invoice/ESD의 tube_count). caseRow.data 에 병합되어 source 로 읽힘. */
   extras?: Record<string, unknown>
@@ -2713,6 +2732,30 @@ export type FillOptions = {
    * 선택되지 않은 접종은 "기타 예방접종" 시퀀스 앞에 prepend 되어 표시.
    */
   rabiesIndices?: number[]
+}
+
+/**
+ * "수의사 체크 해제" 시 비우는 필드 판별. 다음 조건 중 하나라도 해당하면 true.
+ *  - 필드명 접두 `vet_` / `hospital_` (예: vet_name, vet_license_number, hospital_address1)
+ *  - 필드명 `issue_date`
+ *  - transform 이 `vet:*` (회사·병원·면허·연락처)
+ *  - source 가 `vet_visit_date` (모든 증명서의 발급일·서명일·내원일 — date_part/date_or_today 변형 포함)
+ *  - source=null + transform 이 today 계열 (`today_ymd_slash`/`today_day`/`today_month`/
+ *    `today_be_year`/`today_part:*`) — OVD/CH §6/VHC §IV 등 vet_visit_date 예외로 오늘날짜
+ *    를 쓰는 발급·서명일.
+ */
+function isVetGatedField(fieldName: string, mapping: FieldMapping): boolean {
+  if (fieldName.startsWith('vet_')) return true
+  if (fieldName.startsWith('hospital_')) return true
+  if (fieldName === 'issue_date') return true
+  const t = mapping.transform
+  if (typeof t === 'string' && t.startsWith('vet:')) return true
+  if (mapping.source === 'vet_visit_date') return true
+  if (mapping.source === null && typeof t === 'string') {
+    if (t === 'today_ymd_slash' || t === 'today_day' || t === 'today_month' || t === 'today_be_year') return true
+    if (t.startsWith('today_part:')) return true
+  }
+  return false
 }
 
 export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillOptions): Promise<FillResult> {
@@ -2799,8 +2842,12 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
   const empty: string[] = []
   const filled: Record<string, string | boolean> = {}
   const touchedFields = new Set<string>()
+  const noVet = options?.includeVet === false
   for (const [fieldName, mapping] of Object.entries(form.fields)) {
-    const value = reformatDate(resolveFieldMulti(fieldName, form.fields, soloDoc, options?.allowedVaccines))
+    const gated = noVet && isVetGatedField(fieldName, mapping)
+    const value = gated
+      ? ''
+      : reformatDate(resolveFieldMulti(fieldName, form.fields, soloDoc, options?.allowedVaccines))
     if (value === '' || value === false) empty.push(fieldName)
     else filled[fieldName] = typeof value === 'string' && value.length > 40 ? value.slice(0, 40) + '…' : value as string | boolean
     let field
@@ -2828,9 +2875,11 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
       let text = typeof value === 'string' ? value : ''
       // Fall back to mapping.default when a transform returned empty.
       // Used for N/A placeholders on row/slot fields that shouldn't be blank.
-      if (!text && mapping.default) text = mapping.default
-      // preserveTemplateText: 매핑돼있지만 값이 빈 필드는 템플릿 값 유지
-      if (form.preserveTemplateText && !text) continue
+      // gated 필드는 default 폴백도 건너뜀 (수의사 정보 미노출이 의도).
+      if (!text && mapping.default && !gated) text = mapping.default
+      // preserveTemplateText: 매핑돼있지만 값이 빈 필드는 템플릿 값 유지.
+      // gated 인 경우는 템플릿 텍스트도 지워야 하므로 예외적으로 빈 값을 setText.
+      if (form.preserveTemplateText && !text && !gated) continue
       text = sanitizeForFont(text)
       field.setText(text)
       touchedFields.add(fieldName)
