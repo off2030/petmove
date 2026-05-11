@@ -111,7 +111,8 @@ export async function applyCase(input: ApplyInput): Promise<
     customer_last_name_en: input.customer_last_name_en,
     customer_first_name_en: input.customer_first_name_en,
     phone: input.phone,
-    email: input.email,
+    // 이메일은 lowercase + trim 로 normalize — autoLinkCasesByEmail 매칭 키와 일치시키기 위함.
+    email: input.email.trim().toLowerCase(),
     address_kr: input.address_kr,
     address_en: input.address_en || null,
     address_zipcode: input.address_zipcode || null,
