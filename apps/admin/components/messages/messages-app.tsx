@@ -1777,6 +1777,10 @@ const MessageItem = memo(function MessageItem({
   onDelete?: (msgId: string) => void
   onPin?: (msgId: string, currentlyPinned: boolean) => void
 }) {
+  // 시스템 메시지(펫무브워크) — kind='system' 대화방 + case_id 있으면 케이스 상세로 이동.
+  // hook 호출은 early return 전에 — 삭제된 메시지 분기 들어가도 hook 순서 일관성 유지 (rules-of-hooks).
+  const { openCase } = useCases()
+
   if (msg.deleted_at) {
     return (
       <li id={`msg-${msg.id}`} className={cn('flex', isOwn ? 'justify-end' : 'justify-start')}>
@@ -1793,8 +1797,6 @@ const MessageItem = memo(function MessageItem({
       (isGroup && memberCount > 0 && unreadByOthers === 0))
   const groupUnreadBadge = isOwn && isGroup && unreadByOthers > 0 ? unreadByOthers : null
 
-  // 시스템 메시지(펫무브워크) — kind='system' 대화방 + case_id 있으면 케이스 상세로 이동.
-  const { openCase } = useCases()
   const systemCaseId = isSystemConv ? msg.case_id : null
   return (
     <li
