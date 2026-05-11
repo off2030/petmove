@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter_Tight, Source_Serif_4, JetBrains_Mono, Noto_Sans_KR, Noto_Serif_KR } from 'next/font/google'
 import './globals.css'
 import { ConfirmProvider } from '@petmove/ui'
+import { ServiceWorkerRegister } from '@/components/sw-register'
 
 // admin 과 동일한 폰트 스택. Editorial 디자인 시스템 동일 톤 유지.
 // 스킨/멀티 폰트(flat·hygge 변형) 는 portal MVP 에서 제외 — 단일 Editorial 톤.
@@ -71,6 +72,7 @@ export default function RootLayout({
       className={`${interTight.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} ${notoSansKr.variable} ${notoSerifKr.variable}`}
     >
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
+        <ServiceWorkerRegister />
         <ConfirmProvider>
           <div className="flex flex-col h-dvh">
             {children}
