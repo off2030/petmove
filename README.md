@@ -1,95 +1,137 @@
-# PetMove
+# PETMOVE
 
-반려동물 해외 이동 검역 관리 웹앱.
+반려동물 해외 이동 검역 관리 SaaS. 모노레포 — admin (B2B, 스태프용) + portal
+(B2C, 보호자 셀프서비스) + 공유 패키지들.
 
-## 현재 상태
-
-Phase 1 스키마 작성 완료. 아직 DB에 적용 안 됨.
+## 구조
 
 ```
-.
-├── supabase/
-│   ├── config.toml
-│   └── migrations/
-│       ├── 20260412000001_initial_schema.sql       # organizations, cases, field_definitions
-│       └── 20260412000002_field_definitions_seed.sql  # 현재 구글폼 34개 필드 정의
-├── .env.local           # gitignored, Supabase URL + publishable key
-├── .env.example
-└── package.json
+petmove/
+├── apps/
+│   ├── admin/                  Next.js 16 — B2B 스태프 콘솔 (현재 prod)
+│   └── portal/                 Next.js 16 + Capacitor — B2C 보호자 앱
+│                                · 웹: https://petmove.co.kr (예정)
+│                                · iOS/Android: 앱스토어 (com.petmove.portal)
+├── packages/
+│   ├── auth/                   @petmove/auth — Supabase browser/server/admin 클라이언트
+│   │                            · 서브패스: `.` (브라우저+admin), `./server` (next/headers 의존)
+│   ├── domain/                 @petmove/domain — 도메인 로직·타입·데이터
+│   │                            · procedure-checks, destination-config, fields, share-*
+│   │                            · /data/*.json (breeds, colors, destinations)
+│   └── ui/                     @petmove/ui — 공용 UI primitives
+│                                · PageShell, ListRow, PillButton, DateTextField, Calendar, ...
+├── supabase/migrations/        93개 SQL 마이그 — Seoul 프로젝트 (ugywxiyivfzflqkcnqvu)
+├── scripts/
+│   ├── lint-rls.mjs            RLS 무한 재귀 (42P17) 사전 검출
+│   ├── lint-all.mjs            turbo lint + lint-rls 통합
+│   └── backfill-case-customer-links.mjs   기존 케이스 ↔ 보호자 이메일 매칭 백필
+├── docs/
+│   ├── portal-plan.md          Phase 11.0 portal 개발 계획 단일 출처
+│   ├── portal-deploy-checklist.md   Vercel + Capacitor + App Store/Play 배포 매뉴얼
+│   ├── saas-migration.md       전체 SaaS 전환 로드맵
+│   ├── design-system.md        Editorial 디자인 토큰
+│   └── legal/{terms,privacy}.md   약관·개인정보처리방침 (1차 초안)
+└── .github/workflows/ci.yml    push/PR 마다 lint (eslint + RLS) + tsc 자동
 ```
 
-## 다음에 당신이 실행할 것 (순서대로)
+## 개발
 
-터미널에서 이 디렉토리로 이동 후:
-
+### 첫 셋업
 ```bash
-cd /c/dev/petmove     # git bash
-# 또는 cmd: cd C:\dev\petmove
+git clone https://github.com/off2030/petmove.git
+cd petmove
+pnpm install
+pnpm db:link    # Supabase Seoul 프로젝트 연결
 ```
 
-### 1. Supabase CLI 로그인
+`.env.local` 3개 필요 (gitignored):
+- `apps/admin/.env.local`
+- `apps/portal/.env.local`
+- (없으면 dev 서버 부팅 시 Supabase env 누락 에러)
 
+`apps/<app>/.env.example` 참고. Supabase 공개 키 + service role 필요.
+
+### dev 서버
 ```bash
-npx supabase login
+pnpm --filter @petmove/admin dev    # admin → localhost:3001
+pnpm --filter @petmove/portal dev   # portal → localhost:3002
 ```
 
-브라우저가 열리며 Supabase 계정으로 인증. 한 번만 하면 됩니다.
-
-### 2. 원격 프로젝트 연결
-
+### 빌드 / 린트 / 타입체크
 ```bash
-npm run db:link
+pnpm build            # turbo build (admin + portal)
+pnpm lint             # turbo lint (eslint) + lint:rls 둘 다 항상 실행
+pnpm lint:rls         # RLS 재귀 정적 분석 단독 실행
+pnpm exec tsc --noEmit -p apps/admin    # 패키지별 타입체크
 ```
 
-또는 직접:
+### DB
 ```bash
-npx supabase link --project-ref jxyalwbstsqpecavqfkb
+pnpm db:diff          # 로컬 ↔ 원격 스키마 차이 미리보기
+pnpm db:push          # 마이그 적용 (운영 DB)
+pnpm db:reset         # 로컬 supabase 만 — 원격 영향 X
 ```
 
-**DB 비밀번호 입력하라고 나옵니다.** 프로젝트 생성 때 설정한 비밀번호를 입력하세요. 모르면 Supabase 대시보드 → Project Settings → Database → Reset database password 에서 재설정.
-
-### 3. 마이그레이션 푸시 (스키마를 DB에 적용)
-
+### Capacitor (portal native)
 ```bash
-npm run db:push
+cd apps/portal
+pnpm cap:sync                  # 웹 → native 동기화
+pnpm cap:open:android          # Android Studio 열림
+pnpm cap:open:ios              # macOS 에서만 — Xcode 열림
 ```
 
-또는 직접:
+### 백필 (portal 출시 후)
 ```bash
-npx supabase db push
+pnpm backfill:case-links              # dry-run (변경 X)
+pnpm backfill:case-links:apply        # 실제 INSERT
 ```
 
-성공하면 원격 DB에 `organizations`, `cases`, `field_definitions` 세 테이블이 생기고 34개 필드 정의가 seed 됩니다.
+## 진행 상황
 
-### 4. 대시보드에서 확인
+### admin (B2B) — prod 운영 중
+- https://petmove.vercel.app (도메인 분리 후 app.petmove.co.kr)
+- 기능: 케이스 CRUD, 자동 검증·PDF 생성, 메시지, 검사·일정 관리, 결제, super-admin
+- 마이그 93건 적용
 
-https://supabase.com/dashboard/project/jxyalwbstsqpecavqfkb/editor 에서 테이블 탭을 열면:
-- `organizations` 에 "PetMove" 1건
-- `cases` 는 비어 있음 (아직 import 전)
-- `field_definitions` 에 34건
+### portal (B2C) — 베타 출시 직전
+- Phase 11.0 (portal-plan.md):
+  - 11.0.1 스캐폴딩 ✅
+  - 11.0.2 packages/ui 승격 ✅
+  - 11.0.3 인증 (customer_profiles) ✅
+  - 11.0.4 케이스 매핑 (case_customer_links + RLS) ✅
+  - 11.0.5 /share/[token] 이전 ✅
+  - 11.0.6 /apply 이전 ✅
+  - 11.0.7 내 케이스 목록·상세 ⏳ (디자인 freeze 대기, 데이터 레이어 준비됨)
+  - 11.0.8 약관·개인정보처리방침 ✅
+  - 11.0.9 PWA + 모바일 폴리싱 ✅
+  - 11.0.10 베타 배포 ⏳ (Vercel 도메인 + Apple Dev + Play Console)
 
-## 이후 계획
+### 네이티브 앱
+- Capacitor remote URL 모드 (Next.js 웹을 WebView 로 래핑, 콘텐츠 변경은 Vercel 재배포만으로 즉시 반영)
+- Bundle ID: `com.petmove.portal` (등록 전 임시. Apple Dev 가입 후 등록 시도)
+- Android 프로젝트 scaffold 됨 (apps/portal/android/)
+- iOS 는 macOS 작업기에서 `pnpm exec cap add ios` 한 번 실행 필요
 
-1. ~~스키마 작성~~ ✅
-2. Supabase에 스키마 적용 ← **지금 당신이 하는 단계**
-3. 기존 `Original form.xlsx` 의 구글폼 시트 5,950행을 `cases` 테이블로 import (1회성 스크립트)
-4. Next.js 스캐폴딩
-5. 목록/상세/편집 페이지 (shadcn/ui)
-6. 타임라인 뷰
-7. 인증 (운영자 → 에이전시 다중 → 고객 포털 순)
+## 두 가지 주의 (사고 사례)
 
-## 스키마 설계 요약
+### 1. `@petmove/auth` 서브패스 분리
+client component 가 `@petmove/auth` 만 import 해도 Next 가 server.ts (next/headers
+의존) 를 client bundle 에 끌고 가서 build 실패. exports 를 두 개로 분리:
+- `@petmove/auth` — browser + admin 클라이언트
+- `@petmove/auth/server` — createClient (서버 전용, next/headers)
 
-- **정규 컬럼**: `microchip`, `customer_name`, `customer_name_en`, `pet_name`, `pet_name_en`, `destination`, `status`, `org_id`, `created_at`, `updated_at`
-- **유연 필드**: 나머지는 전부 `cases.data` (jsonb) 안에 저장
-- **field_definitions** 가 각 필드의 라벨·타입·순서·그룹·is_step 을 정의하여 UI 를 드라이브
-- 필드 추가·이름변경·비활성화는 `field_definitions` 수정만으로 가능 (DB 스키마 변경 없음)
-- 멀티테넌트 대비: 모든 업무 테이블에 `org_id` 이미 박혀 있음
+자세히: `packages/auth/README.md`.
 
-## 문제 해결
+### 2. RLS 무한 재귀 (42P17)
+정책 본문에 inline `from public.<other_table>` subquery 가 있고 그 테이블 정책도
+원래 테이블을 같은 패턴으로 참조하면 Postgres 가 무한 평가 → SSR 500.
 
-**`supabase: command not found`** - `npx supabase ...` 를 대신 쓰거나 `C:\Program Files\nodejs` 가 PATH 에 있는지 확인.
+**해결**: 교차 테이블 체크를 `SECURITY DEFINER` 함수로 우회 (`is_org_member`,
+`is_case_customer` 등 패턴). 사례:
+`supabase/migrations/20260511000001_fix_cases_customer_rls_recursion.sql`.
 
-**마이그레이션 푸시 실패** - Supabase 대시보드 SQL Editor 에서 `supabase/migrations/*.sql` 내용을 직접 붙여넣어 실행해도 됩니다 (같은 효과).
+**예방**: `pnpm lint:rls` 가 양방향 사이클 자동 검출. CI 가 push 마다 실행.
 
-**DB 재시작하고 싶음** - `npm run db:reset` (원격에는 영향 없음, 로컬 전용). 원격 DB 를 날리려면 대시보드에서 테이블 삭제 후 다시 `db push`.
+## 라이센스
+
+비공개 / 상업용.
