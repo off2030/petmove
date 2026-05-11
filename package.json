@@ -10,7 +10,8 @@
     "db:push": "supabase db push",
     "db:reset": "supabase db reset",
     "db:diff": "supabase db diff",
-    "db:link": "supabase link --project-ref ugywxiyivfzflqkcnqvu"
+    "db:link": "supabase link --project-ref ugywxiyivfzflqkcnqvu",
+    "lint:rls": "node scripts/lint-rls.mjs"
   },
   "devDependencies": {
     "supabase": "^2.89.1",
