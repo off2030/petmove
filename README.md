@@ -1,7 +1,11 @@
-# PETMOVE
+# PETMOVE 모노레포
 
-반려동물 해외 이동 검역 관리 SaaS. 모노레포 — admin (B2B, 스태프용) + portal
-(B2C, 보호자 셀프서비스) + 공유 패키지들.
+반려동물 해외 이동 검역 사업의 **별도 두 앱**:
+
+- **펫무브워크** (`apps/admin`) — 동물병원·에이전시 스태프용 B2B SaaS **웹앱**. 현재 prod 운영 중.
+- **펫무브** / PETMOVE (`apps/portal`) — 보호자(고객)용 B2C **유료** **모바일 앱**. 웹(petmove.co.kr) + iOS/Android 네이티브(Capacitor remote URL). 베타 출시 직전.
+
+DB·인증·도메인 규칙만 공유. UI·server actions·도메인 모델은 분리. 한 앱의 코드를 다른 앱에서 직접 import 하지 않는다. 폴더별 작업 룰은 [apps/admin/CLAUDE.md](apps/admin/CLAUDE.md) / [apps/portal/CLAUDE.md](apps/portal/CLAUDE.md).
 
 ## 구조
 

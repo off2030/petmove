@@ -1,0 +1,89 @@
+/* PetMove design tokens */
+:root {
+  /* Brand gradient — lavender → peach (background only) */
+  --pm-bg-grad: linear-gradient(155deg, #DCD4F2 0%, #E8DCEB 35%, #F5DCD8 70%, #F8E1CE 100%);
+  --pm-bg-soft: linear-gradient(180deg, #F4EFEA 0%, #F8EDE6 100%);
+
+  /* Ink — warm off-black, calm */
+  --pm-ink: #1F1B2E;
+  --pm-ink-2: #4B4660;
+  --pm-ink-3: #837F94;
+  --pm-ink-4: #B6B2C2;
+
+  /* Surface */
+  --pm-surface: #FFFFFF;
+  --pm-surface-2: #FAF8F5;
+  --pm-surface-3: #F2EFE9;
+  --pm-line: rgba(31, 27, 46, 0.08);
+  --pm-line-2: rgba(31, 27, 46, 0.14);
+
+  /* Accent — oklch matched chroma */
+  --pm-accent: oklch(0.62 0.13 295);   /* lavender-violet primary */
+  --pm-accent-2: oklch(0.78 0.13 50);  /* warm peach for D-day */
+  --pm-accent-3: oklch(0.70 0.10 165); /* sage — done states */
+  --pm-warn: oklch(0.72 0.14 60);
+
+  /* Type */
+  --pm-font: 'Pretendard', 'Pretendard Variable', -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --pm-font-num: 'Inter', -apple-system, system-ui, sans-serif;
+  --pm-font-serif: 'GmarketSans', 'Pretendard', serif;
+
+  /* Radii & shadow */
+  --pm-r-sm: 10px;
+  --pm-r-md: 16px;
+  --pm-r-lg: 22px;
+  --pm-r-xl: 28px;
+  --pm-shadow-1: 0 1px 2px rgba(31,27,46,.04), 0 4px 16px rgba(31,27,46,.06);
+  --pm-shadow-2: 0 2px 6px rgba(31,27,46,.05), 0 12px 32px rgba(31,27,46,.10);
+  --pm-shadow-3: 0 4px 12px rgba(31,27,46,.08), 0 24px 56px rgba(31,27,46,.14);
+}
+
+* { box-sizing: border-box; }
+
+.pm-app {
+  font-family: var(--pm-font);
+  color: var(--pm-ink);
+  background: var(--pm-bg-grad);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'ss01', 'tnum';
+}
+
+.pm-num { font-family: var(--pm-font-num); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+/* Animations */
+@keyframes pm-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pm-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pm-pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+}
+@keyframes pm-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes pm-plane-fly {
+  0% { transform: translateX(-6px) translateY(2px) rotate(-8deg); }
+  50% { transform: translateX(0) translateY(-2px) rotate(-6deg); }
+  100% { transform: translateX(-6px) translateY(2px) rotate(-8deg); }
+}
+@keyframes pm-progress-fill {
+  from { stroke-dashoffset: var(--from-offset); }
+  to { stroke-dashoffset: var(--to-offset); }
+}
+
+.pm-fade-up { animation: pm-fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.pm-fade-in { animation: pm-fade-in 0.4s ease both; }
+
+/* Pressable card */
+.pm-pressable { transition: transform .15s ease, box-shadow .15s ease; cursor: pointer; }
+.pm-pressable:active { transform: scale(0.985); }
+
+/* Scrollbar — hidden inside phone */
+.pm-noscroll::-webkit-scrollbar { display: none; }
+.pm-noscroll { scrollbar-width: none; }
