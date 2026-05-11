@@ -10,7 +10,7 @@ import {
   type SetStateAction,
 } from 'react'
 import { Check, Plus, Trash2, X } from 'lucide-react'
-import type { CalculatorItem } from '@/lib/supabase/types'
+import type { CalculatorItem } from '@petmove/domain'
 import {
   updateCalculatorItem,
   createCalculatorItem,

@@ -3,7 +3,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Search, Plus, X, Paperclip, Loader2, History } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '@petmove/domain'
 import { Input } from '@/components/ui/input'
 import { useCases } from './cases-context'
 import { isExtractableFile } from '@/lib/file-to-base64'

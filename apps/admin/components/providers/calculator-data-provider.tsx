@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, type Dispatch, type SetStateAction } from 'react'
-import type { CalculatorItem } from '@/lib/supabase/types'
+import type { CalculatorItem } from '@petmove/domain'
 
 interface Ctx {
   items: CalculatorItem[]

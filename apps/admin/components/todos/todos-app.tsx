@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
 import { Menu, MoreHorizontal, Plus, Search } from 'lucide-react'
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '@petmove/domain'
 import { useCases } from '@/components/cases/cases-context'
 import { Input } from '@/components/ui/input'
 import { DialogFooter } from '@/components/ui/dialog-footer'

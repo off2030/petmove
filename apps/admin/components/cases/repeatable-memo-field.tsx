@@ -5,7 +5,7 @@ import { Trash2 } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '@petmove/domain'
 import { useSectionEditMode } from './section-edit-mode-context'
 import { useConfirm } from '@petmove/ui'
 

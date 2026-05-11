@@ -22,7 +22,7 @@ import {
 } from '@/lib/vaccine-lookups-scoped'
 import { getOrgVaccineLookups } from '@/lib/vaccine-data'
 import { VET_INFO } from '@/lib/vet-info'
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '@petmove/domain'
 
 /* ─── Performance feature flags ────────────────────────────────────────
  * Flip any to `false` to revert to the original slower-but-safe behavior.

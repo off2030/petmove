@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '@petmove/domain'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from '@/components/cases/cases-context'
 import { cn } from '@/lib/utils'

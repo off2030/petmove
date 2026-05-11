@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@petmove/auth/server'
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '@petmove/domain'
 
 /** 동물 개체 정보 키 (복제 시 제외) */
 const ANIMAL_DATA_KEYS = new Set([

@@ -13,7 +13,7 @@
  */
 
 import { createClient } from '@petmove/auth/server'
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '@petmove/domain'
 
 export async function lookupCaseByMicrochip(
   chip: string,

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, Plus, Search, X } from 'lucide-react'
-import type { CalculatorItem } from '@/lib/supabase/types'
+import type { CalculatorItem } from '@petmove/domain'
 import { cn } from '@/lib/utils'
 import { Checkbox } from '@/components/ui/checkbox'
 

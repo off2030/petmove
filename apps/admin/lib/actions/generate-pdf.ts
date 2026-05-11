@@ -2,7 +2,7 @@
 
 import { createClient } from '@petmove/auth/server'
 import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '@petmove/domain'
 import { getEffectiveVaccineList } from '@petmove/domain'
 import { loadEffectiveVetInfo } from '@/lib/vet-info'
 

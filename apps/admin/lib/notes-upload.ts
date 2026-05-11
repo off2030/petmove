@@ -8,7 +8,7 @@
 
 import { supabaseBrowser as supabase } from '@petmove/auth'
 import { updateCaseField } from '@/lib/actions/cases'
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '@petmove/domain'
 
 interface FileNote {
   type: 'file'

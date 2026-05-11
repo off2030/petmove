@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '@petmove/domain'
 import { DESTINATION_OVERRIDES, matchesDestinationKey } from '@petmove/domain'
 import { getChecksForCountry } from '@petmove/domain'
 import type { CheckResult, CheckSeverity, ProcedureCheck } from '@petmove/domain'

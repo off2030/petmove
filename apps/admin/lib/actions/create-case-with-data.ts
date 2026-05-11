@@ -10,7 +10,7 @@
 import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { formatMicrochip } from '@petmove/domain'
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '@petmove/domain'
 import { revalidatePath } from 'next/cache'
 
 /** regular column으로 저장되는 키 (cases 테이블의 실제 컬럼) */

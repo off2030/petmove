@@ -1,6 +1,6 @@
 'use client'
 
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '@petmove/domain'
 import type { FieldSpec } from '@petmove/domain'
 import {
   buildFieldSpecs,

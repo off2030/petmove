@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { destCode } from '@/lib/country-code'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '@petmove/domain'
 
 /**
  * 다중 목적지 케이스에서 한 줄에 "활성" 목적지 한 개만 보여주는 chip + dropdown.

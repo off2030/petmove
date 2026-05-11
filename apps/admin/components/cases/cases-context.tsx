@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
+import type { CaseRow, FieldDefinition } from '@petmove/domain'
 import { parseDestinations } from '@petmove/domain'
 import type { InspectionConfig } from '@petmove/domain'
 import type { CertConfig } from '@petmove/domain'

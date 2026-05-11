@@ -14,7 +14,7 @@ import {
   getEffectiveExtraFieldEntries,
   vaccineMatchesSpecies,
 } from '@petmove/domain'
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '@petmove/domain'
 import {
   createShareLink,
   listShareLinksForCase,

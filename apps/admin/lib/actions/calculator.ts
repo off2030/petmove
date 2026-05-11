@@ -3,7 +3,7 @@
 import { createClient } from '@petmove/auth/server'
 import { revalidatePath } from 'next/cache'
 
-import type { CalculatorItem } from '@/lib/supabase/types'
+import type { CalculatorItem } from '@petmove/domain'
 
 export type CalcResult<T = undefined> =
   | (T extends undefined ? { ok: true } : { ok: true; data: T })

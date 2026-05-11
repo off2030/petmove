@@ -6,7 +6,7 @@ import { createAdminClient } from '@petmove/auth'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { ensurePetmoveBot } from './petmove-bot'
 import { getChecksForCountry, DESTINATION_OVERRIDES, matchesDestinationKey } from '@petmove/domain'
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '@petmove/domain'
 import type { CheckResult, ProcedureCheck } from '@petmove/domain'
 
 function detectCountryKey(destination: string | null): string | null {

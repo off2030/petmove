@@ -1,6 +1,6 @@
 'use client'
 
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '@petmove/domain'
 import { ExtraFieldShell, FieldRow, useExtraFieldShell } from './extra-field-shell'
 
 interface NewZealandExtra {

@@ -1,5 +1,5 @@
 import { createClient } from '@petmove/auth/server'
-import type { CaseRow, FieldDefinition } from '@/lib/supabase/types'
+import type { CaseRow, FieldDefinition } from '@petmove/domain'
 import { CasesProvider } from '@/components/cases/cases-context'
 import { DashboardShell } from '@/components/layout/dashboard-shell'
 import { VaccineDataProvider } from '@/components/providers/vaccine-data-provider'

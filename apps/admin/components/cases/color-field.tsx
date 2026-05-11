@@ -6,7 +6,7 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { CopyButton } from './copy-button'
 import { useCases } from './cases-context'
 import { useDetailViewSettings } from '@/components/providers/detail-view-settings-provider'
-import type { CaseRow } from '@/lib/supabase/types'
+import type { CaseRow } from '@petmove/domain'
 import { SectionLabel } from '@/components/ui/section-label'
 import colorsData from '@petmove/domain/data/colors.json'
 
