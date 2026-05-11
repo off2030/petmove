@@ -11,7 +11,9 @@
     "db:reset": "supabase db reset",
     "db:diff": "supabase db diff",
     "db:link": "supabase link --project-ref ugywxiyivfzflqkcnqvu",
-    "lint:rls": "node scripts/lint-rls.mjs"
+    "lint:rls": "node scripts/lint-rls.mjs",
+    "backfill:case-links": "node scripts/backfill-case-customer-links.mjs",
+    "backfill:case-links:apply": "node scripts/backfill-case-customer-links.mjs --apply"
   },
   "devDependencies": {
     "supabase": "^2.89.1",
