@@ -56,10 +56,13 @@ export async function autoLinkCasesByEmail(
   if (!email) return { linked: 0 }
 
   // cases.data.email 매칭 — apply-case.ts 가 data.email 로 저장.
+  // ilike 로 case-insensitive — 보호자가 신청 폼에 대문자 섞어 입력해도 매칭.
+  // 이메일은 wildcard 문자(%, _)가 RFC 상 사용 가능하지만 실무상 보호자 입력에는 없음 —
+  // 만일 들어와도 supabase 가 escape 처리하므로 SQL injection 위험 없음.
   const { data: cases } = await supabaseAdmin
     .from('cases')
     .select('id')
-    .filter('data->>email', 'eq', email)
+    .ilike('data->>email', email)
 
   if (!cases?.length) return { linked: 0 }
 

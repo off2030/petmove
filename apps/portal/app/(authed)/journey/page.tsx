@@ -1,5 +1,8 @@
 import Link from 'next/link'
+import { createAdminClient } from '@petmove/auth'
+import { createClient } from '@petmove/auth/server'
 import { listMyCases } from '@/lib/actions/cases'
+import { autoLinkCasesByEmail } from '@/lib/supabase/customer'
 import { buildJourney } from '@/lib/journey/scenario'
 import { TimelineCalm } from '@/components/journey/timeline-calm'
 
@@ -12,8 +15,23 @@ export const dynamic = 'force-dynamic'
  *   - 보호자 본인에게 링크된 케이스 중 가장 최근(updated_at) 1건 표시.
  *   - 케이스 0건: 신청서 안내. case_customer_links 백필 직후라면 곧 매칭될 수 있다는 안내.
  *   - 다묘다견·동시 출국은 Phase 11.4 가족 계정 시점.
+ *
+ * 진입 시 한 번 autoLinkCasesByEmail 호출 — 사용자가 비로그인 상태로 신청 후 가입한
+ * 경우나, callback 시점 매칭이 실패했던 경우에 대비. idempotent (PK 충돌 무시) 라 비용
+ * 미미하지만 link 누락 보강.
  */
 export default async function JourneyPage() {
+  try {
+    const userClient = await createClient()
+    const { data: { user } } = await userClient.auth.getUser()
+    if (user) {
+      const admin = createAdminClient()
+      await autoLinkCasesByEmail(admin, user)
+    }
+  } catch {
+    // best-effort — 매칭 실패해도 listMyCases 는 그대로 진행.
+  }
+
   const result = await listMyCases()
 
   if (!result.ok) {
