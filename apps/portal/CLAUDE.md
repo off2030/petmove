@@ -21,8 +21,9 @@
 2. **공유 패키지** — `@petmove/db`, `@petmove/domain`, `@petmove/auth`, `@petmove/country-code` 가 정상 import 대상.
 3. **`@petmove/ui` 는 톤이 다름** — admin 의 Editorial(Parchment/Terracotta) 톤으로 만들어진 거라 펫무브의 Stone/Calm 톤과 안 맞음. 신규 컴포넌트는 portal 자체 [`components/`](components/) 에 만들고, packages/ui 는 톤이 충분히 맞는 것(ConfirmProvider 같은 기능성)만 선별 사용.
 4. **디자인 토큰 단일 출처** — `docs/portal-preview/tokens.css` + 화면별 인라인 Stone 팔레트. portal 의 `app/globals.css` 에 portal-only CSS 변수로 등록. admin 의 `--pmw-*` 와는 별개.
-5. **RLS 컨텍스트** — portal 의 server actions 는 `customer_profiles` + `case_customer_links` 기반 RLS 위에서 동작. admin 의 org/memberships server action 을 그대로 호출하지 않는다.
-6. **모바일 검증은 즉시 커밋·푸시** — 모바일 변경은 사용자가 실기기에서 검증. preview 우회 시도 X.
+5. **디자인 변경 순서** — 디자인을 다듬을 때는 `docs/portal-preview/` JSX 를 **먼저** 고치고, 그 다음 코드(`apps/portal/`)에 반영한다. 코드와 portal-preview 가 어긋나면 **portal-preview 가 truth**. 코드에서 즉흥적으로 톤·간격·색·타이포를 바꾸지 않는다. (디자인 freeze 단계 한정. 운영 단계 진입 시점에 코드가 truth 로 전환 — `docs/portal-plan.md` 에 시점 명시 예정.)
+6. **RLS 컨텍스트** — portal 의 server actions 는 `customer_profiles` + `case_customer_links` 기반 RLS 위에서 동작. admin 의 org/memberships server action 을 그대로 호출하지 않는다.
+7. **모바일 검증은 즉시 커밋·푸시** — 모바일 변경은 사용자가 실기기에서 검증. preview 우회 시도 X.
 
 ## 작업 시작 전 읽기
 
