@@ -1,0 +1,559 @@
+import type { AutoDocItem, ChecklistItem, DocsViewData, StoredDocItem } from '@/lib/docs/catalog'
+
+/**
+ * 케이스 서류함. Stone 팔레트 / Fraunces serif — TimelineCalm 과 동일 톤.
+ *
+ * 시각 소스: docs/portal-preview/docs.jsx — 그대로 옮김.
+ * Phase 1 read-only: 업로드 버튼은 placeholder, 다운로드 버튼은 표시만.
+ */
+export function DocsView({ data }: { data: DocsViewData }) {
+  const C = {
+    bg: '#F2EDE6',
+    surface: '#FBF7F1',
+    ink: '#2A2620',
+    ink2: '#6B6457',
+    ink3: '#9A9286',
+    line: 'rgba(42,38,32,.10)',
+    accent: '#B89968',
+    soft: '#E8DCC4',
+    sage: '#8FA68C',
+  } as const
+
+  const serif: React.CSSProperties = {
+    fontFamily: "'Fraunces', 'Pretendard Variable', serif",
+    fontWeight: 500,
+    letterSpacing: '-0.01em',
+  }
+  const num: React.CSSProperties = {
+    fontFamily: "'Fraunces', 'Inter', serif",
+    fontVariantNumeric: 'tabular-nums',
+    fontWeight: 400,
+  }
+  const monoCap: React.CSSProperties = {
+    fontSize: 10.5,
+    letterSpacing: '0.16em',
+    textTransform: 'uppercase',
+    color: C.ink3,
+    fontWeight: 500,
+  }
+
+  const { pet, trip, checklist, autoDocs, storedDocs } = data
+  const verifiedCount =
+    checklist.filter((d) => d.verified).length +
+    autoDocs.filter((d) => d.verified).length +
+    storedDocs.filter((d) => d.verified).length
+  const pendingCount =
+    checklist.filter((d) => !d.verified).length +
+    autoDocs.filter((d) => !d.verified).length +
+    storedDocs.filter((d) => !d.verified).length
+  const checklistDone = checklist.filter((d) => d.verified).length
+
+  return (
+    <div
+      className="pm-fade-up pm-noscroll"
+      style={{
+        background: C.bg,
+        color: C.ink,
+        minHeight: '100%',
+        paddingTop: 24,
+        paddingBottom: 24,
+        overflow: 'auto',
+      }}
+    >
+      <div style={{ padding: '0 24px' }}>
+        {/* Header */}
+        <div style={{ paddingTop: 8, display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+          <span style={{ alignSelf: 'center' }}>
+            <PetAvatar size={36} />
+          </span>
+          <h1 style={{ ...serif, fontSize: 30, lineHeight: 1.12, margin: 0, color: C.ink }}>{pet.name}</h1>
+          <div
+            style={{
+              fontSize: 12.5,
+              color: C.ink2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              transform: 'translateY(-2px)',
+            }}
+          >
+            <span>{trip.fromCity}</span>
+            <span style={{ color: C.ink3 }}>→</span>
+            <span>{trip.toCity}</span>
+          </div>
+        </div>
+
+        <div style={{ ...monoCap, marginTop: 10 }}>
+          <span style={num}>{verifiedCount}</span> 보관 · <span style={num}>{pendingCount}</span> 대기
+        </div>
+
+        {/* 1) Checklist */}
+        <SectionLabel right={`${checklistDone}/${checklist.length}`}>필수 서류 체크리스트</SectionLabel>
+        {checklist.length === 0 ? (
+          <EmptyHint>이 목적지에는 보호자가 따로 챙길 서류가 없습니다.</EmptyHint>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {checklist.map((d) => (
+              <ChecklistRow key={d.id} doc={d} C={C} monoCap={monoCap} />
+            ))}
+          </div>
+        )}
+
+        {/* 2) 증명서 자동 작성 */}
+        <SectionLabel right={`${autoDocs.length}건`}>증명서 자동 작성</SectionLabel>
+        {autoDocs.length === 0 ? (
+          <EmptyHint>이 목적지는 자동 작성 증명서가 없습니다.</EmptyHint>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {autoDocs.map((d) => (
+              <div
+                key={d.id}
+                style={{
+                  background: C.surface,
+                  border: `.5px solid ${C.line}`,
+                  borderRadius: 14,
+                  overflow: 'hidden',
+                }}
+              >
+                <DocRow doc={d} pending={!d.verified} C={C} num={num} monoCap={monoCap} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 3) 보관 중인 서류 */}
+        <SectionLabel right={`${storedDocs.length}건`}>보관 중인 서류</SectionLabel>
+        {storedDocs.length === 0 ? (
+          <EmptyHint>병원에서 발급한 사본이나 직접 올린 서류가 모이는 공간입니다.</EmptyHint>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {storedDocs.map((d) => (
+              <div
+                key={d.id}
+                style={{
+                  background: C.surface,
+                  border: `.5px solid ${C.line}`,
+                  borderRadius: 14,
+                  overflow: 'hidden',
+                }}
+              >
+                <DocRow doc={d} pending={!d.verified} C={C} num={num} monoCap={monoCap} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Upload placeholder */}
+        <div style={{ marginTop: 14 }}>
+          <UploadPlaceholder C={C} serif={serif} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── 하위 컴포넌트 ────────────────────────────────────────────────────────
+
+function SectionLabel({ children, right }: { children: React.ReactNode; right?: string }) {
+  const monoCap: React.CSSProperties = {
+    fontSize: 10.5,
+    letterSpacing: '0.16em',
+    textTransform: 'uppercase',
+    color: '#9A9286',
+    fontWeight: 500,
+  }
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'baseline',
+        marginTop: 22,
+        marginBottom: 10,
+        padding: '0 4px',
+      }}
+    >
+      <span style={monoCap}>{children}</span>
+      {right && <span style={{ ...monoCap, fontSize: 9.5 }}>{right}</span>}
+    </div>
+  )
+}
+
+function EmptyHint({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        background: '#FBF7F1',
+        border: '.5px dashed rgba(42,38,32,.10)',
+        borderRadius: 14,
+        padding: '14px 16px',
+        fontSize: 12.5,
+        color: '#9A9286',
+        lineHeight: 1.55,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+interface PaletteShape {
+  bg: string
+  surface: string
+  ink: string
+  ink2: string
+  ink3: string
+  line: string
+  accent: string
+  soft: string
+  sage: string
+}
+
+function ChecklistRow({
+  doc,
+  C,
+  monoCap,
+}: {
+  doc: ChecklistItem
+  C: PaletteShape
+  monoCap: React.CSSProperties
+}) {
+  const ok = doc.verified
+  return (
+    <div
+      style={{
+        background: C.surface,
+        border: `.5px solid ${C.line}`,
+        borderRadius: 14,
+        padding: '14px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+      }}
+    >
+      <div
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: '50%',
+          flexShrink: 0,
+          background: ok ? C.sage : 'transparent',
+          border: ok ? 'none' : `1px dashed ${C.ink3}`,
+          color: C.surface,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {ok && (
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        )}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: 13.5,
+            fontWeight: 500,
+            color: ok ? C.ink : C.ink2,
+          }}
+        >
+          {doc.name}
+        </div>
+        <div style={{ fontSize: 11.5, color: C.ink3, marginTop: 2 }}>{doc.source}</div>
+      </div>
+      <span
+        style={{
+          ...monoCap,
+          fontSize: 9,
+          color: ok ? C.sage : C.ink3,
+          fontWeight: 600,
+        }}
+      >
+        {ok ? '보유' : '대기'}
+      </span>
+    </div>
+  )
+}
+
+function DocRow({
+  doc,
+  pending,
+  C,
+  num,
+  monoCap,
+}: {
+  doc: AutoDocItem | StoredDocItem
+  pending: boolean
+  C: PaletteShape
+  num: React.CSSProperties
+  monoCap: React.CSSProperties
+}) {
+  const sized = 'size' in doc && doc.size ? doc.size : null
+  return (
+    <div
+      style={{
+        padding: '14px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 14,
+      }}
+    >
+      <DocIcon docType={doc.type} pending={pending} C={C} num={num} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span
+            style={{
+              fontSize: 13.5,
+              fontWeight: 500,
+              color: pending ? C.ink2 : C.ink,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {doc.name}
+          </span>
+          {doc.fresh && (
+            <span
+              style={{
+                ...monoCap,
+                fontSize: 8.5,
+                padding: '1px 6px',
+                background: C.soft,
+                color: C.accent,
+                borderRadius: 999,
+                fontWeight: 600,
+              }}
+            >
+              NEW
+            </span>
+          )}
+        </div>
+        <div style={{ ...num, fontSize: 11, color: C.ink3, marginTop: 3 }}>
+          {doc.date ? doc.date.replace(/-/g, '·') : '발급 대기'}
+          {sized && ` · ${sized}`} · {doc.source}
+        </div>
+      </div>
+      {pending ? (
+        <span
+          style={{
+            ...monoCap,
+            fontSize: 9,
+            padding: '4px 8px',
+            background: 'rgba(42,38,32,.04)',
+            borderRadius: 999,
+          }}
+        >
+          대기
+        </span>
+      ) : (
+        <button
+          type="button"
+          aria-label="다운로드"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            border: `.5px solid ${C.line}`,
+            background: 'transparent',
+            color: C.ink2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'not-allowed',
+          }}
+          disabled
+        >
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+          </svg>
+        </button>
+      )}
+    </div>
+  )
+}
+
+function DocIcon({
+  docType,
+  pending,
+  C,
+  num,
+}: {
+  docType: string
+  pending: boolean
+  C: PaletteShape
+  num: React.CSSProperties
+}) {
+  return (
+    <div
+      style={{
+        width: 36,
+        height: 44,
+        borderRadius: 4,
+        flexShrink: 0,
+        background: pending ? 'rgba(42,38,32,.04)' : C.soft,
+        border: pending ? `.5px dashed ${C.line}` : 'none',
+        position: 'relative',
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {pending ? (
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={C.ink3}
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M22 12h-6l-2 3h-4l-2-3H2" />
+          <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+        </svg>
+      ) : (
+        <span
+          style={{
+            ...num,
+            fontSize: 8.5,
+            fontWeight: 500,
+            color: C.accent,
+            letterSpacing: '0.08em',
+          }}
+        >
+          {docType.toUpperCase()}
+        </span>
+      )}
+      {!pending && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: 9,
+            height: 9,
+            background: 'rgba(255,255,255,.5)',
+            clipPath: 'polygon(0 0, 100% 0, 100% 100%)',
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+function UploadPlaceholder({ C, serif }: { C: PaletteShape; serif: React.CSSProperties }) {
+  return (
+    <div
+      style={{
+        borderRadius: 14,
+        padding: 14,
+        marginTop: 8,
+        background: 'transparent',
+        border: `1px dashed ${C.accent}80`,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        cursor: 'not-allowed',
+        opacity: 0.85,
+      }}
+    >
+      <div
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: '50%',
+          flexShrink: 0,
+          background: C.soft,
+          color: C.accent,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M12 3v14M5 10l7-7 7 7M3 21h18" />
+        </svg>
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ ...serif, fontSize: 13.5, color: C.ink }}>사본 추가 업로드</div>
+        <div style={{ fontSize: 11, color: C.ink3, marginTop: 2 }}>업로드 기능은 곧 추가됩니다</div>
+      </div>
+    </div>
+  )
+}
+
+function PetAvatar({ size = 44 }: { size?: number }) {
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        background: 'linear-gradient(135deg, #F2C9A4 0%, #E5A776 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        overflow: 'hidden',
+        boxShadow: 'inset 0 1px 2px rgba(255,255,255,.4), 0 1px 2px rgba(0,0,0,.06)',
+      }}
+    >
+      <svg width={size * 0.7} height={size * 0.7} viewBox="0 0 40 40">
+        <path
+          d="M20 8c-7 0-12 4.5-12 11 0 5 3 9 8 10.5 1.2.3 2.6.5 4 .5s2.8-.2 4-.5c5-1.5 8-5.5 8-10.5 0-6.5-5-11-12-11z"
+          fill="#FFF6EE"
+        />
+        <path d="M11 11l3.5 5.5L9 16l2-5z" fill="#C9824D" />
+        <path d="M29 11l-3.5 5.5L31 16l-2-5z" fill="#C9824D" />
+        <path d="M11.5 12l2.5 4L10.5 16l1-4z" fill="#FFD9B5" />
+        <path d="M28.5 12l-2.5 4L29.5 16l-1-4z" fill="#FFD9B5" />
+        <path
+          d="M14 18c-1 3-1 6 0 8 1 2 3.5 3 6 3s5-1 6-3c1-2 1-5 0-8-2-1-4-1.5-6-1.5s-4 .5-6 1.5z"
+          fill="#F5DCC1"
+        />
+        <circle cx="16" cy="20" r="1.2" fill="#1F1B2E" />
+        <circle cx="24" cy="20" r="1.2" fill="#1F1B2E" />
+        <ellipse cx="20" cy="24" rx="1.4" ry="1" fill="#1F1B2E" />
+        <path
+          d="M20 25v1.5M18 27c.5.5 1.2.7 2 .7s1.5-.2 2-.7"
+          stroke="#1F1B2E"
+          strokeWidth="0.8"
+          strokeLinecap="round"
+          fill="none"
+        />
+      </svg>
+    </div>
+  )
+}
