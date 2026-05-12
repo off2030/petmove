@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
 
@@ -10,7 +11,7 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
  * 라 인라인 style 로 유지. 디자인 freeze 단계에서 portal-preview JSX 가 truth, 이 코드는
  * 그것을 비교적 충실히 옮긴 것.
  */
-export function TimelineCalm({ data }: { data: JourneyData }) {
+export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: string }) {
   const { stages, trip, pet, nextStage } = data
   const total = stages.length
   const done = stages.filter((s) => s.state === 'done').length
@@ -210,14 +211,18 @@ export function TimelineCalm({ data }: { data: JourneyData }) {
             const isCurr = s.state === 'current'
             const last = i === stages.length - 1
             return (
-              <div
+              <Link
                 key={s.id}
+                href={`/cases/${caseId}/journey/${s.id}`}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 14,
                   padding: '13px 0',
                   borderBottom: last ? 'none' : `.5px solid ${C.line}`,
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  cursor: 'pointer',
                 }}
               >
                 <div
@@ -279,7 +284,7 @@ export function TimelineCalm({ data }: { data: JourneyData }) {
                 >
                   {isCurr ? (dDayLabel ?? '진행 중') : formatStageDate(s)}
                 </div>
-              </div>
+              </Link>
             )
           })}
         </div>

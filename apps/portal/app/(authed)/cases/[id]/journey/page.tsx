@@ -22,7 +22,7 @@ export default async function CaseJourneyPage({
   if (!result.value) return <EmptyState />
 
   const data = buildJourney(result.value)
-  return <TimelineCalm data={data} />
+  return <TimelineCalm data={data} caseId={id} />
 }
 
 function EmptyState() {
