@@ -167,7 +167,7 @@ export function ScheduleCalculator({ country }: Props) {
           results={[
             {
               label: '전염병검사일',
-              date: addDays(nzDepartureDate, -15),
+              date: addDays(nzDepartureDate, -16),
             },
           ]}
         />

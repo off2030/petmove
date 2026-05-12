@@ -27,10 +27,12 @@ import {
  *  → 면역 유효기간 룰은 출국 + 10일까지 cover 해야 함.
  *  → `vaccine + 364일 (1년 -1일) ≥ dep + 10` ⇒ `dep - vaccine ≤ 354` (AU 와 동일).
  *
- * 컨벤션 (AU/EU/SG 와 동일):
+ * 컨벤션 (NZ 전용 — MPI 텍스트 그대로):
  *  - 필수 입력 누락 시 SKIP
- *  - "X일 이내" = 출국일 포함 X distinct days → `dep - X ≤ N-1`
- *    (예: 30일 이내 → ≤29, 16일 이내 → ≤15, 4일 이내 → ≤3, 2일 이내 → ≤1)
+ *  - MPI 원문 "in the X days prior to shipment" = 출국 X일 전까지 cover → `dep - date ≤ X`
+ *    (예: 30일 → ≤30, 16일 → ≤16, 4일 → ≤4, 2일 → ≤2)
+ *    AU/EU/SG 의 N-1 strict 컨벤션과 다름 — MPI Cat3 Cert A 원문 §12·13·14·16·27 의
+ *    "in the X days prior" 표현이 경계일(30일 전, 4일 전 등)을 명시 허용하기 때문.
  *  - "이상" 경계는 inclusive (≥6개월 → `addMonths(date, 6) ≤ dep`)
  *  - 종 필터는 run() 안에서 caseRow.data.species 로 가드
  */
@@ -336,7 +338,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     category: '구충',
     title: '내부구충 2회 (1차 30일 이내, 2차 4일 이내, 14일+ 간격)',
     description:
-      '내부구충 2회: 1차 출국 30일 이내(`≤29`) + 2차 출국 4일 이내(`≤3`), 도즈 간격 ≥14일(2주). nematodes + cestodes 효과 제품. (MPI: 1st in 30 days prior, 2nd in 4 days prior, ≥2 weeks apart)',
+      '내부구충 2회: 1차 출국 30일 이내(`≤30`) + 2차 출국 4일 이내(`≤4`), 도즈 간격 ≥14일(2주). nematodes + cestodes 효과 제품. (MPI Cat3 Cert A §12: 1st "in the 30 days prior", 2nd "in the four days prior", "at least two weeks" apart)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -361,12 +363,12 @@ export const NZ_CHECKS: ProcedureCheck[] = [
 
       const issues: string[] = []
       const offending: string[] = []
-      if (dep1 === null || dep1 < 0 || dep1 > 29) {
-        issues.push(`1차(${dose1.date})→출국 ${dep1 ?? '?'}일 (출국 포함 30일 이내 = 0~29 범위 필요)`)
+      if (dep1 === null || dep1 < 0 || dep1 > 30) {
+        issues.push(`1차(${dose1.date})→출국 ${dep1 ?? '?'}일 (출국 30일 이내 = 0~30 범위 필요)`)
         offending.push(`internal_parasite_dates[${dose1.originalIndex}].date`)
       }
-      if (dep2 === null || dep2 < 0 || dep2 > 3) {
-        issues.push(`2차(${dose2.date})→출국 ${dep2 ?? '?'}일 (출국 포함 4일 이내 = 0~3 범위 필요)`)
+      if (dep2 === null || dep2 < 0 || dep2 > 4) {
+        issues.push(`2차(${dose2.date})→출국 ${dep2 ?? '?'}일 (출국 4일 이내 = 0~4 범위 필요)`)
         offending.push(`internal_parasite_dates[${dose2.originalIndex}].date`)
       }
       if (interval === null || interval < 14) {
@@ -391,7 +393,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     category: '구충',
     title: '외부구충 2회 (1차 30일 이내, 2차 2일 이내, 14일+ 간격)',
     description:
-      '외부구충 2회: 1차 출국 30일 이내(`≤29`) + 2차 출국 2일 이내(`≤1`), 도즈 간격 ≥14일(2주). fleas + ticks 효과 제품. (MPI: 1st in 30 days prior, 2nd in 2 days prior, ≥2 weeks apart)',
+      '외부구충 2회: 1차 출국 30일 이내(`≤30`) + 2차 출국 2일 이내(`≤2`), 도즈 간격 ≥14일(2주). ticks + fleas 효과 제품. (MPI Cat3 Cert A §13: 1st "in the 30 days prior", 2nd "in the two days prior", "at least two weeks" apart)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -416,12 +418,12 @@ export const NZ_CHECKS: ProcedureCheck[] = [
 
       const issues: string[] = []
       const offending: string[] = []
-      if (dep1 === null || dep1 < 0 || dep1 > 29) {
-        issues.push(`1차(${dose1.date})→출국 ${dep1 ?? '?'}일 (출국 포함 30일 이내 = 0~29 범위 필요)`)
+      if (dep1 === null || dep1 < 0 || dep1 > 30) {
+        issues.push(`1차(${dose1.date})→출국 ${dep1 ?? '?'}일 (출국 30일 이내 = 0~30 범위 필요)`)
         offending.push(`external_parasite_dates[${dose1.originalIndex}].date`)
       }
-      if (dep2 === null || dep2 < 0 || dep2 > 1) {
-        issues.push(`2차(${dose2.date})→출국 ${dep2 ?? '?'}일 (출국 포함 2일 이내 = 0~1 범위 필요)`)
+      if (dep2 === null || dep2 < 0 || dep2 > 2) {
+        issues.push(`2차(${dose2.date})→출국 ${dep2 ?? '?'}일 (출국 2일 이내 = 0~2 범위 필요)`)
         offending.push(`external_parasite_dates[${dose2.originalIndex}].date`)
       }
       if (interval === null || interval < 14) {
@@ -446,9 +448,9 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     id: 'nz.heartworm-treatment-within-4days',
     country: COUNTRY,
     category: '구충',
-    title: '심장사상충 예방 투약은 출국일 4일 이내 (강아지)',
+    title: '심장사상충 예방 투약은 출국 4일 이내 (강아지)',
     description:
-      '강아지 전용. 출국 4일 이내(`≤3`) 등록 예방약 투약 (또는 sustained-release injection). (MPI: "treated with a product registered for the prevention of heartworm four days prior to flying")',
+      '강아지 전용. 출국 4일 이내(`≤4`) 등록 예방약 투약 (또는 sustained-release injection). (MPI Cat3 Cert A §14(a): "in the four days prior to the date of shipment")',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -467,11 +469,11 @@ export const NZ_CHECKS: ProcedureCheck[] = [
           offendingPaths: [`heartworm_dates[${latest.originalIndex}].date`],
         }
       }
-      if (days > 3) {
+      if (days > 4) {
         return {
           ok: false,
-          message: `최근 심장사상충 투약(${latest.date}) → 출국일(${dep}): ${days}일 — 출국 포함 4일 이내(≤3일 전) 필요.`,
-          fixHint: `투약일을 ${dep} 기준 3일 전 이후로 조정하세요.`,
+          message: `최근 심장사상충 투약(${latest.date}) → 출국일(${dep}): ${days}일 — 출국 4일 이내(≤4일 전) 필요.`,
+          fixHint: `투약일을 ${dep} 기준 4일 전 이후로 조정하세요.`,
           offendingPaths: [`heartworm_dates[${latest.originalIndex}].date`],
         }
       }
@@ -484,9 +486,9 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     id: 'nz.infectious-disease-test-within-16days',
     country: COUNTRY,
     category: '검사',
-    title: '전염병검사는 출국일 16일 이내 (강아지)',
+    title: '전염병검사는 출국 16일 이내 (강아지)',
     description:
-      '강아지 전용. Babesia gibsoni (IFAT/ELISA) + Brucella canis (RSAT/TAT/CPAg-AGID) 검사가 출국 포함 16일 이내(`≤15`). (MPI: "negative result in the 16 days prior to flying" — 출국일 포함 16 distinct days = 0~15일 전; calculator 기본 dep-15 와 일관). 단일 검체일에 통합 처리됨.',
+      '강아지 전용. Babesia gibsoni (IFAT/ELISA) + Brucella canis (RSAT/TAT/CPAg-AGID) 검사가 출국 16일 이내(`≤16`). (MPI Cat3 Cert A §16~21: "negative result in the 16 days prior to the date of shipment"). 단일 검체일에 통합 처리됨.',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -505,11 +507,11 @@ export const NZ_CHECKS: ProcedureCheck[] = [
           offendingPaths: [`infectious_disease_records[${latest.originalIndex}].date`],
         }
       }
-      if (days > 15) {
+      if (days > 16) {
         return {
           ok: false,
-          message: `최근 전염병검사(${latest.date}) → 출국일(${dep}): ${days}일 — 출국 포함 16일 이내(≤15일 전) 필요.`,
-          fixHint: `검사일을 ${dep} 기준 15일 전 이후로 재실시.`,
+          message: `최근 전염병검사(${latest.date}) → 출국일(${dep}): ${days}일 — 출국 16일 이내(≤16일 전) 필요.`,
+          fixHint: `검사일을 ${dep} 기준 16일 전 이후로 재실시.`,
           offendingPaths: [`infectious_disease_records[${latest.originalIndex}].date`],
         }
       }
