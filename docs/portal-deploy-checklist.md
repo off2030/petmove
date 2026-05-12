@@ -50,7 +50,7 @@ admin 의 OpenAI/Resend/Naver 등은 portal 에 **불필요** — portal 은 Ope
 ### Authentication → URL Configuration
 
 **Site URL**: portal 의 production 도메인 (예: `https://petmove.co.kr` 또는 임시
-`https://petmove-portal.vercel.app`).
+`https://petmove.vercel.app`).
 
 **Redirect URLs** allowlist 에 추가 (모두):
 - `https://<portal-domain>/auth/callback`
@@ -81,7 +81,7 @@ URLs 은 list 형태라 둘 다 등록 가능. admin (`app.petmove.co.kr`) 과 p
 
 ## 4. 도메인
 
-베타 단계 — `petmove-portal.vercel.app` 임시 도메인으로 시작.
+베타 단계 — `petmove.vercel.app` 임시 도메인으로 시작 (Vercel 프로젝트 `petmove` = portal).
 
 정식 출시 시 (portal-plan.md 결정안: `petmove.co.kr` = portal):
 

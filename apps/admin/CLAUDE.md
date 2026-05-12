@@ -9,7 +9,7 @@
 |---|---|
 | 사용자 | 동물병원 수의사·매니저, 에이전시 직원, super_admin 운영자 |
 | 비즈 모델 | SaaS (org 기반 멤버십, invite-only) |
-| 배포 | 웹 only (현재 petmove.vercel.app → 추후 `app.petmove.co.kr`) |
+| 배포 | 웹 only (현재 petmovework.vercel.app → 추후 `app.petmove.co.kr`) |
 | 디자인 | Editorial 톤 (Parchment/Terracotta) — [docs/design-system.md](../../docs/design-system.md) 단일 출처 |
 | 토큰 | `--pmw-*` CSS 변수 + `.pmw-st__*` 타이포 유틸 |
 | 우선 | 데스크톱 우선. 모바일은 미디어 쿼리로만 |

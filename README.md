@@ -93,7 +93,7 @@ pnpm backfill:case-links:apply        # 실제 INSERT
 ## 진행 상황
 
 ### admin (B2B) — prod 운영 중
-- https://petmove.vercel.app (도메인 분리 후 app.petmove.co.kr)
+- https://petmovework.vercel.app (도메인 분리 후 app.petmove.co.kr)
 - 기능: 케이스 CRUD, 자동 검증·PDF 생성, 메시지, 검사·일정 관리, 결제, super-admin
 - 마이그 93건 적용
 

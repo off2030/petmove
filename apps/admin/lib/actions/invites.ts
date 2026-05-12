@@ -199,7 +199,7 @@ export async function createInvite(input: {
 
     // 초대 링크 — 요청 origin 기반. 로컬 dev / Vercel preview / prod 모두 자동 대응.
     const hdrs = await headers()
-    const host = hdrs.get('x-forwarded-host') || hdrs.get('host') || 'petmove.vercel.app'
+    const host = hdrs.get('x-forwarded-host') || hdrs.get('host') || 'petmovework.vercel.app'
     const proto = hdrs.get('x-forwarded-proto') || 'https'
     const inviteUrl = `${proto}://${host}/invite/${token}`
 
