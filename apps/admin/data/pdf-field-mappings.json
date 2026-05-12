@@ -3860,7 +3860,7 @@
       "text_7vwpg":  { "source": "address_overseas", "note": "p1 Importer/consignee — 대만 해외주소 (line 2)" },
       "text_8epkh":  { "source": "species",  "transform": "en",     "note": "p1 Species (Dog/Cat)" },
       "text_9klwh":  { "source": "breed_en",                         "note": "p1 Breed" },
-      "text_10exwj": { "source": "sex",      "transform": "en",     "note": "p1 Sex" },
+      "text_10exwj": { "source": "sex",      "transform": "sex_simple_en", "note": "p1 Sex — Male/Female/Neutered male/Spayed female" },
       "text_11pomw": { "source": "microchip",                        "note": "p1 Microchip number" },
       "text_12hann": { "source": "birth_date",                       "note": "p1 Age or date of birth (dd/mm/yyyy)" },
       "text_13pdds": { "source": "rabies_dates", "transform": "vaccine_combined:rabies:name", "note": "p1 Manufacturer and commercial name of vaccine — 광견병 vaccine name 자동 결합. 제조사가 명시 필요한 경우 사례마다 vaccine name 에 'Manufacturer / Product' 형식으로 입력 권장." },
