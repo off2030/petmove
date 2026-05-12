@@ -145,6 +145,10 @@ export async function generateSGP(caseId: string, opts?: GenerateOpts) {
   return generate('SGP', caseId, opts)
 }
 
+export async function generateTW(caseId: string, opts?: GenerateOpts) {
+  return generate('TW', caseId, opts)
+}
+
 export async function generateCH(caseId: string, opts?: GenerateOpts) {
   return generate('CH', caseId, opts)
 }

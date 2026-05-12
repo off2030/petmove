@@ -49,6 +49,7 @@ export const ALL_CERTS: CertDefinition[] = [
   { key: 'vhc', label: 'VHC', type: 'single' },
   { key: 'sgp', label: 'SGP', type: 'single' },
   { key: 'aqs', label: 'AQS-279', type: 'single' },
+  { key: 'tw', label: 'TW', type: 'single' },
 ]
 
 /** 기본 설정. 기존 하드코딩 규칙(destination-config.ts)에서 이관. */
@@ -66,6 +67,7 @@ export const DEFAULT_CERT_CONFIG: CertConfig = {
     { countries: ['터키'], certs: ['vhc'] },
     { countries: ['싱가포르'], certs: ['sgp'] },
     { countries: ['하와이'], certs: ['aqs'] },
+    { countries: ['대만'], certs: ['tw'] },
   ],
 }
 

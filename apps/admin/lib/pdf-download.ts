@@ -13,6 +13,7 @@ export type SinglePdfRequest = {
     | 'NZ'
     | 'OVD'
     | 'SGP'
+    | 'TW'
     | 'AQS_279'
     | 'CH'
     | 'Form_R11'
