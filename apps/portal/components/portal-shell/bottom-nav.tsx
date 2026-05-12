@@ -4,21 +4,33 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 /**
- * 보호자 앱 하단 4탭 — docs/portal-preview/app.jsx 의 BottomNav 포팅.
- * 여정/서류/정보/프로필 — Stone 톤. fixed bottom, safe-area 고려.
+ * 보호자 앱 하단 4탭 — case-aware.
+ *
+ * 현재 path 가 /cases/<id>/... 이면 그 id 를 보존하면서 다른 탭으로 전환.
+ * 아니면 (/cases 목록, /me 등) journey/docs/info 클릭 시 /cases 로 보냄
+ *   — /cases 가 1건이면 자동으로 그 케이스 /journey 로 진입.
+ * 프로필 탭은 항상 /me (case-외).
  */
 
-type Tab = { href: string; label: string; icon: 'route' | 'doc' | 'info' | 'user' }
+type Icon = 'route' | 'doc' | 'info' | 'user'
+type Tab = { key: 'journey' | 'docs' | 'info' | 'me'; label: string; icon: Icon }
 
 const TABS: Tab[] = [
-  { href: '/journey', label: '여정', icon: 'route' },
-  { href: '/docs', label: '서류', icon: 'doc' },
-  { href: '/info', label: '정보', icon: 'info' },
-  { href: '/profile', label: '프로필', icon: 'user' },
+  { key: 'journey', label: '여정', icon: 'route' },
+  { key: 'docs', label: '서류', icon: 'doc' },
+  { key: 'info', label: '정보', icon: 'info' },
+  { key: 'me', label: '프로필', icon: 'user' },
 ]
+
+function caseIdFromPath(pathname: string): string | null {
+  const m = pathname.match(/^\/cases\/([^/]+)(?:\/|$)/)
+  return m && m[1] !== 'page' ? m[1] : null
+}
 
 export function BottomNav() {
   const pathname = usePathname()
+  const caseId = caseIdFromPath(pathname)
+
   return (
     <nav
       style={{
@@ -39,11 +51,12 @@ export function BottomNav() {
       }}
     >
       {TABS.map((t) => {
-        const active = pathname === t.href || pathname.startsWith(t.href + '/')
+        const href = hrefFor(t.key, caseId)
+        const active = isActive(t.key, pathname)
         return (
           <Link
-            key={t.href}
-            href={t.href}
+            key={t.key}
+            href={href}
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -64,7 +77,18 @@ export function BottomNav() {
   )
 }
 
-function NavIcon({ name, stroke = 1.7 }: { name: Tab['icon']; stroke?: number }) {
+function hrefFor(key: Tab['key'], caseId: string | null): string {
+  if (key === 'me') return '/me'
+  if (!caseId) return '/cases'
+  return `/cases/${caseId}/${key}`
+}
+
+function isActive(key: Tab['key'], pathname: string): boolean {
+  if (key === 'me') return pathname === '/me' || pathname.startsWith('/me/')
+  return new RegExp(`^/cases/[^/]+/${key}(?:/|$)`).test(pathname)
+}
+
+function NavIcon({ name, stroke = 1.7 }: { name: Icon; stroke?: number }) {
   const p = {
     width: 20,
     height: 20,

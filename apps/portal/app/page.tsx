@@ -21,7 +21,7 @@ export default async function HomePage() {
   } catch {
     userId = null
   }
-  if (userId) redirect('/journey')
+  if (userId) redirect('/cases')
 
   return (
     <PageShell title="펫무브">

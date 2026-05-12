@@ -11,6 +11,7 @@
  * (terms_accepted_at, privacy_accepted_at) 는 가입 흐름에서만 설정.
  */
 
+import { redirect } from 'next/navigation'
 import { createClient } from '@petmove/auth/server'
 import { revalidatePath } from 'next/cache'
 
@@ -87,7 +88,7 @@ export async function updateMyProfile(
     if (error) return { ok: false, error: error.message }
     if (!data) return { ok: false, error: '프로파일을 찾을 수 없습니다' }
 
-    revalidatePath('/profile')
+    revalidatePath('/me')
     return { ok: true, value: data as CustomerProfileRow }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
@@ -102,6 +103,22 @@ export async function updateMyProfile(
  * service role 우회 — case_customer_links insert 가 org_member 만 허용이라 (보호자 본인은
  * 임의 케이스 링크 못 함). 자동 매칭은 신뢰된 자동화 경로.
  */
+/**
+ * 로그아웃 — 세션 종료 후 /login 으로 이동.
+ *
+ * server action 형태라 form action 으로 호출 가능 (`<form action={signOut}>`).
+ * supabase.auth.signOut() 가 cookie 를 비우면 다음 요청부터 proxy.ts 가 미인증으로 인식.
+ */
+export async function signOut(): Promise<void> {
+  const supabase = await createClient()
+  try {
+    await supabase.auth.signOut()
+  } catch {
+    /* 이미 만료된 토큰이어도 cookie 정리는 진행 */
+  }
+  redirect('/login')
+}
+
 export async function autoLinkCasesByPhone(): Promise<Result<{ linked: number }>> {
   try {
     const supabase = await createClient()

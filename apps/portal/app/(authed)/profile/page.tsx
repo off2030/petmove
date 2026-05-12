@@ -1,7 +1,8 @@
-import { ComingSoon } from '@/components/portal-shell/coming-soon'
+import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
-export default function ProfilePage() {
-  return <ComingSoon title="프로필" hint="계정·동물병원·에이전시·로그아웃. 디자인 freeze 후 곧 추가됩니다." />
+// Legacy: /profile → /me (case-외 페이지로 분리됨).
+export default function LegacyProfilePage() {
+  redirect('/me')
 }

@@ -5,7 +5,7 @@ import { createServerClient } from '@supabase/ssr'
 //   - 멤버십 체크 없음 — portal 은 보호자(고객) 모두 누구나 가입·로그인 가능
 //   - 토큰 기반 anon 진입 (/share/[token]) 은 추후 phase 에서 추가
 //
-// 현재는 최소한의 세션 refresh 만 수행하고, 보호 경로(/cases, /profile, /settings) 는
+// 현재는 최소한의 세션 refresh 만 수행하고, 보호 경로(/cases, /me, /settings) 는
 // 미로그인 시 /login 으로 redirect.
 
 const PUBLIC_PREFIXES = [
