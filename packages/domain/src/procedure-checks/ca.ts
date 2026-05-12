@@ -16,7 +16,7 @@ import {
  *  - CBSA Travelling with animals — https://www.cbsa-asfc.gc.ca/services/fpa-apa/animals-animaux-eng.html
  *
  * 핵심 룰:
- *  - 마이크로칩: CFIA 개인용 의무 아님, 한국 수출검역(APQA)에서 식별 필요
+ *  - 마이크로칩: CFIA 의무 아님 + 마이크로칩↔광견병 순서 규정 없음 → 시스템 검증 제외
  *  - 광견병: 3개월 미만 면제, 3개월 이상 의무 + 도착일 유효 (보수 91일 AND 캘린더 3개월)
  *  - 건강증명서: CFIA 별도 일자 의무 부재. 한국 APQA endorsement 10일 이내 적용 (보수 ≤9)
  *
@@ -33,35 +33,6 @@ import {
 const COUNTRY = 'canada'
 
 export const CA_CHECKS: ProcedureCheck[] = [
-  // ── 마이크로칩 ──
-  {
-    id: 'ca.microchip-before-rabies',
-    country: COUNTRY,
-    category: '마이크로칩',
-    title: '마이크로칩은 광견병 1차 접종 이전 시술',
-    description:
-      'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (캐나다 입국 면제, 한국 수출검역 사실상 필수)',
-    severity: 'blocker',
-    addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
-      const rabies = readRabiesEntries(caseRow)
-      if (!microchip || rabies.length === 0) return SKIP
-
-      const first = rabies[0]
-      if (microchip <= first.date) {
-        return { ok: true, message: `마이크로칩(${microchip}) ≤ 1차 접종(${first.date}).` }
-      }
-      return {
-        ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦음.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작 필요.',
-        offendingPaths: ['microchip_implant_date'],
-      }
-    },
-  },
-
   // ── 광견병 ──
   {
     id: 'ca.rabies-prime-after-91days-old',
