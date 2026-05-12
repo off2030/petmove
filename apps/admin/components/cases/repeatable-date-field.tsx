@@ -908,6 +908,8 @@ function ProductDropdown({ value, defaultName, options, onChange, saving }: {
       disabled={saving}
       className={cn(
         'text-xs rounded-md px-2 py-1 -mx-2 bg-transparent border-0 cursor-pointer transition-colors hover:bg-accent/60 focus:outline-none focus:ring-1 focus:ring-ring max-w-[180px]',
+        // 다크모드: 옵션 패널은 select 의 흐린 색을 상속하지 않도록 강제 — bg/text 명시.
+        '[&>option]:bg-background [&>option]:text-foreground [&>option]:not-italic',
         !selected && 'text-muted-foreground/60',
         !selected && !defaultName && 'italic text-muted-foreground/40',
       )}

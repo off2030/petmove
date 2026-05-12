@@ -581,6 +581,7 @@ function TiterRecordRow({
         value={record.lab ?? ''}
         options={[{ value: '', label: '—' }, ...LABS]}
         onChange={(v) => onUpdateField('lab', v || null)}
+        portal
         triggerClassName={cn(
           'text-left',
           labTone
