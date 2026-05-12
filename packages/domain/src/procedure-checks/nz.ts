@@ -295,9 +295,9 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     id: 'nz.vet-visit-within-2days-of-departure',
     country: COUNTRY,
     category: '일정',
-    title: '최종 임상검사(내원일)는 출국일 2일 이내',
+    title: '최종 임상검사(내원일)는 출국 2일 이내',
     description:
-      '최종 pre-export 임상검사는 출국일 기준 2일 이내(`0 ≤ dep - visit ≤ 1`). 외부기생충·전염병·CTVT(intact 강아지) 검사 + 2차 구충 동시 진행. (MPI: "in the 2 days prior to shipment")',
+      '최종 pre-export 임상검사는 출국 2일 이내(`0 ≤ dep - visit ≤ 2`). 외부기생충·전염병·CTVT(intact 강아지) 검사 + 2차 구충 동시 진행. (MPI Cat3 Cert A §27: "In the two days prior to shipment, I examined the animal(s)" — 2일 전 진찰을 명시 허용.)',
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
@@ -317,11 +317,11 @@ export const NZ_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['vet_visit_date'],
         }
       }
-      if (diff > 1) {
+      if (diff > 2) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 2일 이내(≤1일 전) 필요.`,
-          fixHint: `내원일을 ${dep} 기준 1일 전 이후로 조정하세요.`,
+          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국 2일 이내(≤2일 전) 필요.`,
+          fixHint: `내원일을 ${dep} 기준 2일 전 이후로 조정하세요.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
