@@ -224,7 +224,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     // (Certificate number 는 후처리 수기 입력 — EQC No. 라벨이 일본 전용이라 공유하지 않음.)
     keywords: ['대만', 'taiwan'],
     vaccines: ['rabies', 'rabies_titer'],
-    extraFields: ['permit_no'],
+    extraFields: ['address_overseas', 'permit_no'],
   },
   malaysia: {
     // DVS — 종합백신 필수, RNATT 면제(말레이시아 입국 한정 — 한국 귀국 시는 필요).
