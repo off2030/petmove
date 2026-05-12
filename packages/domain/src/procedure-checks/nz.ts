@@ -533,68 +533,18 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     dataKey: 'kennel_cough_dates',
     reader: readKennelCoughEntries,
     dogOnly: true,
+    sourceNote: '(MPI 의무 아님 — 계류장 입소 시 1회 접종 요구.)',
   }),
 
-  // ── CIV (강아지 한정, 2회 접종 — 1차 ≥30일 / 2차 ≥21일 + 검역 cushion) ──
-  {
-    id: 'nz.civ-2doses-30and21days',
-    country: COUNTRY,
-    category: '종합백신',
-    title: 'CIV 2회 접종 + 1차 ≥30일 / 2차 ≥21일 + 검역 cushion (강아지)',
-    description:
-      '강아지 전용. MPI: CIV 2회 접종 의무. 1차는 출국 30일 이상 전, 2차(부스터)는 출국 21일 이상 전. 2차는 검역 10일 종료까지 유효해야 함 (cushion ≥10일).',
-    severity: 'blocker',
-    addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      if (species(caseRow) !== 'dog') return SKIP
-      const dep = caseRow.departure_date
-      const entries = readCivEntries(caseRow)
-      if (!dep) return SKIP
-      if (entries.length === 0) return SKIP
-      if (entries.length < 2) {
-        return {
-          ok: false,
-          message: `CIV 1회만 기록됨(${entries[0].date}) — 2회 접종 필요.`,
-          fixHint: '21일 이상 후 2차(부스터) 접종 추가.',
-          offendingPaths: [`civ_dates[${entries[0].originalIndex}].date`],
-        }
-      }
-
-      // 가장 최근 2개 도즈를 검증 대상으로 사용
-      const dose1 = entries[entries.length - 2]
-      const dose2 = entries[entries.length - 1]
-      const dose1ToDep = daysBetween(dose1.date, dep)
-      const dose2ToDep = daysBetween(dose2.date, dep)
-      const dose2ValidUntil = resolveValidUntil(dose2.date, dose2.valid_until)
-      const cushion = dose2ValidUntil ? daysBetween(dep, dose2ValidUntil) : null
-
-      const issues: string[] = []
-      const offending: string[] = []
-      if (dose1ToDep === null || dose1ToDep < 30) {
-        issues.push(`1차(${dose1.date})→출국 ${dose1ToDep ?? '?'}일 (≥30일 필요)`)
-        offending.push(`civ_dates[${dose1.originalIndex}].date`)
-      }
-      if (dose2ToDep === null || dose2ToDep < 21) {
-        issues.push(`2차(${dose2.date})→출국 ${dose2ToDep ?? '?'}일 (≥21일 필요)`)
-        offending.push(`civ_dates[${dose2.originalIndex}].date`)
-      }
-      if (cushion !== null && cushion < 10) {
-        issues.push(`2차 유효기간(${dose2ValidUntil}) - 출국 ${cushion}일 (검역 10일 cover 불가)`)
-        offending.push(`civ_dates[${dose2.originalIndex}].date`)
-      }
-      if (issues.length > 0) {
-        return {
-          ok: false,
-          message: issues.join(' / '),
-          offendingPaths: Array.from(new Set(offending)),
-        }
-      }
-      return {
-        ok: true,
-        message: `CIV 1차(${dose1.date})→출국 ${dose1ToDep}일, 2차(${dose2.date})→출국 ${dose2ToDep}일, 검역 cushion ${cushion}일.`,
-      }
-    },
-  },
+  // ── CIV (강아지 한정, 1회 접종 — 계류장 요구사항) ──
+  buildAnnualVaccineRule({
+    id: 'nz.civ-1dose-14days',
+    label: 'CIV(개 독감)',
+    dataKey: 'civ_dates',
+    reader: readCivEntries,
+    dogOnly: true,
+    sourceNote: '(MPI Cert §26 은 백신 의무 X — 21일 격리/관찰만. 계류장 입소 시 1회 접종 요구.)',
+  }),
 
   // ── 안내(경고) ──
   {
@@ -618,6 +568,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
  * - 최근 접종 ≥ 출국 14일 전 (`dep - latest ≥ 14`)
  * - 검역 종료까지 면역 유효 (`valid_until ≥ dep + 10일` cushion, 디폴트 1년 = `dep - latest ≤ 354`)
  * - dogOnly = true 시 강아지에만 적용 (고양이는 SKIP)
+ * - 1회 접종으로 충분 (다회 접종 시 가장 최근 도즈 기준)
  *
  * MPI: "검역기간 종료 시점까지 유효" — PEQ 10일 cushion 적용. 광견병 룰과 통일.
  */
@@ -627,15 +578,17 @@ function buildAnnualVaccineRule(opts: {
   dataKey: 'general_vaccine_dates' | 'civ_dates' | 'kennel_cough_dates'
   reader: (cr: CaseRow) => VaccineEntry[]
   dogOnly: boolean
+  sourceNote?: string
 }): ProcedureCheck {
   const speciesNote = opts.dogOnly ? ' (강아지)' : ''
   const speciesPrefix = opts.dogOnly ? '강아지 전용. ' : ''
+  const sourceSuffix = opts.sourceNote ? ` ${opts.sourceNote}` : ''
   return {
     id: opts.id,
     country: COUNTRY,
     category: '종합백신',
     title: `${opts.label} 출국 14일 이전 + 검역 10일 cover${speciesNote}`,
-    description: `${speciesPrefix}최근 ${opts.label} 접종이 출국일 14일 이전 + 검역(10일) 종료까지 면역 유효 (cushion ≥10일). 디폴트 1년 → \`dep - vacc ≤ 354\`. valid_until 명시 시 override.`,
+    description: `${speciesPrefix}최근 ${opts.label} 접종이 출국일 14일 이전 + 검역(10일) 종료까지 면역 유효 (cushion ≥10일). 1회 접종으로 충분. 디폴트 1년 → \`dep - vacc ≤ 354\`. valid_until 명시 시 override.${sourceSuffix}`,
     severity: 'blocker',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
