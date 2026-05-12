@@ -61,7 +61,7 @@ export async function getMyCase(caseId: string): Promise<Result<CaseRow | null>>
     if (error) return { ok: false, error: error.message }
     if (!data) return { ok: true, value: null }
     const { case_customer_links: _l, ...rest } = data as Record<string, unknown>
-    return { ok: true, value: rest as CaseRow }
+    return { ok: true, value: rest as unknown as CaseRow }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }
