@@ -320,7 +320,7 @@ export function SettingsApp({
           )}
           {activeTab === 'data' && <DataSection isSuperAdmin={bootstrap?.myRole?.isSuperAdmin ?? false} />}
           {activeTab === 'system_bot' && (bootstrap?.myRole?.isSuperAdmin ?? false) && (
-            <SystemBotSection />
+            <SystemBotSection initialProfile={bootstrap?.botProfile ?? null} />
           )}
         </div>
       </div>

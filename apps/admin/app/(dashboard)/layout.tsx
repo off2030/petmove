@@ -15,7 +15,7 @@ import { getCalculatorItems } from '@/lib/calculator-data'
 import { getSettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 import { getActiveOrgId, getImpersonationInfo } from '@/lib/supabase/active-org'
 import { listAllOrgs, listSuperAdminsAll, type OrgSummary, type SuperAdminEntry } from '@/lib/actions/super-admin'
-import { listMyConversations, type ConversationListItem } from '@/lib/actions/chat'
+import { listMyConversations, listConversationMessages, type ConversationListItem, type ConversationMessagesResult } from '@/lib/actions/chat'
 import { InstallPrompt } from '@/components/pwa/install-prompt'
 
 export const dynamic = 'force-dynamic'
@@ -120,6 +120,22 @@ export default async function DashboardLayout({
   ])
   const initialConversations: ConversationListItem[] = convsR.ok ? convsR.value : []
 
+  // 최근 N 개 대화방 메시지를 서버에서 미리 가져와 클라이언트 캐시에 hydrate.
+  // 클라 진입 후 첫 클릭에서도 "불러오는 중…" 없이 즉시 표시. 이전엔 idle prefetch 였는데
+  // 사용자가 idle 전에 클릭하면 cache miss → loading 이 보였음.
+  const MESSAGES_PREFETCH_CAP = 5
+  const prefetchConvIds = initialConversations.slice(0, MESSAGES_PREFETCH_CAP).map((c) => c.id)
+  const prefetchResults = await Promise.all(
+    prefetchConvIds.map((id) =>
+      listConversationMessages({ convId: id }).catch(() => ({ ok: false as const, error: 'failed' })),
+    ),
+  )
+  const initialConvSnapshots: Record<string, ConversationMessagesResult> = {}
+  prefetchConvIds.forEach((id, i) => {
+    const r = prefetchResults[i]
+    if (r.ok) initialConvSnapshots[id] = r.value
+  })
+
   // Super admin 이면 org 목록 + 운영자 목록 prefetch — 탭 전환 시 즉시 표시 (불러오기 깜빡임 제거).
   let initialOrgs: OrgSummary[] = []
   let initialSuperAdmins: SuperAdminEntry[] = []
@@ -166,6 +182,7 @@ export default async function DashboardLayout({
               impersonation={impersonation}
               initialExternalLinks={externalLinks}
               initialConversations={initialConversations}
+              initialConvSnapshots={initialConvSnapshots}
             />
             <InstallPrompt />
           </CalculatorDataProvider>

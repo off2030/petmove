@@ -58,16 +58,23 @@ async function resizeAvatar(file: File): Promise<Blob> {
  * 펫무브워크 봇 프로필 — 슈퍼 어드민 전용. 시스템 메시지(검증 실패 알림 등)의 발신자.
  * 내 프로필과 동일한 형태(아바타 업로드 + 이름 인라인 편집).
  */
-export function SystemBotSection() {
+export function SystemBotSection({
+  initialProfile = null,
+}: {
+  initialProfile?: PetmoveBotProfile | null
+} = {}) {
   const router = useRouter()
-  const [profile, setProfile] = useState<PetmoveBotProfile | null>(null)
+  const [profile, setProfile] = useState<PetmoveBotProfile | null>(initialProfile)
   const [error, setError] = useState<string | null>(null)
   const [draftName, setDraftName] = useState<string | null>(null)
   const [savingName, setSavingName] = useState(false)
   const [creating, setCreating] = useState(false)
   const [, startTransition] = useTransition()
 
+  // initialProfile 이 있으면 서버 prefetch 결과를 그대로 사용 — 진입 시 "불러오는 중…" 없음.
+  // prop 이 없는 비정상 경로(예: 직접 임포트)에만 클라이언트에서 자체 fetch.
   useEffect(() => {
+    if (initialProfile) return
     let alive = true
     void getPetmoveBotProfile().then((r) => {
       if (!alive) return
@@ -75,7 +82,7 @@ export function SystemBotSection() {
       else setError(r.error)
     })
     return () => { alive = false }
-  }, [])
+  }, [initialProfile])
 
   function handleCreate() {
     setError(null)

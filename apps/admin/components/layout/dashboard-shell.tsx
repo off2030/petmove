@@ -16,7 +16,7 @@ import { listMyConversations } from '@/lib/actions/chat'
 import { supabaseBrowser } from '@petmove/auth'
 import type { SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 import type { OrgSummary, SuperAdminEntry } from '@/lib/actions/super-admin'
-import type { ConversationListItem } from '@/lib/actions/chat'
+import type { ConversationListItem, ConversationMessagesResult } from '@/lib/actions/chat'
 import type { ExternalLinksConfig } from '@petmove/domain'
 
 const MemoizedCases = memo(CasesApp)
@@ -45,6 +45,7 @@ export function DashboardShell({
   impersonation = null,
   initialExternalLinks,
   initialConversations = [],
+  initialConvSnapshots = {},
 }: {
   isSuperAdmin?: boolean
   userEmail?: string | null
@@ -57,6 +58,7 @@ export function DashboardShell({
   impersonation?: { orgId: string; orgName: string } | null
   initialExternalLinks: ExternalLinksConfig
   initialConversations?: ConversationListItem[]
+  initialConvSnapshots?: Record<string, ConversationMessagesResult>
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -248,6 +250,7 @@ export function DashboardShell({
               setConversations={setConversations}
               currentUserId={currentUserId}
               isActive={activeTab === 'messages'}
+              initialSnapshots={initialConvSnapshots}
             />
           </div>
         )}

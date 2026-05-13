@@ -58,6 +58,7 @@ import {
   type MessageSearchHit,
   type OrgPickerItem,
   type Participant,
+  type ConversationMessagesResult,
 } from '@/lib/actions/chat'
 import type { TransferWithContext } from '@/lib/actions/transfers'
 import { PageShell } from '@petmove/ui'
@@ -74,11 +75,14 @@ export function MessagesApp({
   setConversations,
   currentUserId,
   isActive,
+  initialSnapshots = {},
 }: {
   conversations: ConversationListItem[]
   setConversations: Dispatch<SetStateAction<ConversationListItem[]>>
   currentUserId: string | null
   isActive: boolean
+  /** 서버에서 미리 가져온 최근 대화방 스냅샷 — cacheRef 에 hydrate 해 첫 클릭에 cache hit. */
+  initialSnapshots?: Record<string, ConversationMessagesResult>
 }) {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [messages, setMessages] = useState<MessageRow[]>([])
@@ -98,7 +102,22 @@ export function MessagesApp({
     pinned_message: MessageRow | null
     transfers: Record<string, TransferWithContext>
   }
-  const cacheRef = useRef<Map<string, ConvSnapshot>>(new Map())
+  // 서버 prefetch 결과로 초기화 — 첫 클릭부터 cache hit. lazy init 으로 SSR 페이로드 1회만 변환.
+  const cacheRef = useRef<Map<string, ConvSnapshot>>(
+    (() => {
+      const m = new Map<string, ConvSnapshot>()
+      for (const [id, snap] of Object.entries(initialSnapshots)) {
+        m.set(id, {
+          messages: snap.messages,
+          participants: snap.participants,
+          reads: snap.reads,
+          pinned_message: snap.pinned_message,
+          transfers: snap.transfers,
+        })
+      }
+      return m
+    })(),
+  )
 
   const refresh = useCallback(
     async (convId: string, opts?: { silent?: boolean }) => {
@@ -142,10 +161,24 @@ export function MessagesApp({
   // 대화목록이 채워지면 — 최근 N 개 conv 의 메시지를 백그라운드 prefetch.
   // 사용자가 그 대화를 탭하면 in-memory cache hit → 즉시 표시.
   //
-  // P1 #10: 이전엔 모든 conv 를 prefetch (예: 100 conv × 200 msg = 20k 행 + signed
-  // URL 호출 폭주). 최근 10개로 cap 하고 requestIdleCallback 으로 메인 스레드
-  // 양보 → 첫 페인트 영향 최소화. 나머지 conv 는 사용자가 직접 탭할 때 fetch.
-  const prefetchedRef = useRef<Set<string>>(new Set())
+  // 서버에서 이미 가져온 N 개(initialSnapshots)는 cacheRef 에 hydrate 되어 skip.
+  // 그 이상은 idle prefetch 로 채움. requestIdleCallback 으로 메인 스레드 양보.
+  const prefetchedRef = useRef<Set<string>>(new Set(Object.keys(initialSnapshots)))
+
+  // 서버 prefetch 결과를 IDB 에도 즉시 persist — 새로고침 / 다음 세션에서도 즉시 표시.
+  // 의존성 비움: initialSnapshots 는 첫 마운트 시 한 번만 의미가 있음.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    for (const [id, snap] of Object.entries(initialSnapshots)) {
+      void setCachedConv(id, {
+        messages: snap.messages,
+        participants: snap.participants,
+        reads: snap.reads,
+        pinned_message: snap.pinned_message,
+        transfers: snap.transfers,
+      })
+    }
+  }, [])
   useEffect(() => {
     if (conversations.length === 0) return
     let canceled = false

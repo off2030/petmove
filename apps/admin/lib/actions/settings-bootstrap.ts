@@ -6,6 +6,7 @@ import { listOrgVaccineProducts, type OrgVaccineProduct } from './org-vaccine-pr
 import { listOrgAutoFillRules, type AutoFillRule } from './org-auto-fill-rules'
 import { getMyProfile, type MyProfile } from './profile'
 import { getMyOrgRole, type MyOrgRole } from './my-role'
+import { getPetmoveBotProfile, type PetmoveBotProfile } from './petmove-bot'
 import { getDetailViewSettings } from './detail-view-settings'
 import { getCaseAssigneeEnabled } from './transfer-settings'
 import { listSharePresets } from './share-presets'
@@ -31,6 +32,8 @@ export interface SettingsBootstrap {
   caseAssigneeEnabled: boolean
   sharePresets: SharePreset[]
   todoColumnsConfig: TodoColumnsConfig
+  /** 슈퍼 어드민 전용 — 봇 프로필. 비-슈퍼어드민 또는 조회 실패 시 null. */
+  botProfile: PetmoveBotProfile | null
   /** 부분 실패가 있으면 섹션별 에러 메시지 — 섹션이 자체 fetch 로 재시도 가능. */
   errors: Partial<Record<'members' | 'invites' | 'superAdmins' | 'vaccineProducts' | 'autoFillRules', string>>
 }
@@ -40,7 +43,7 @@ export interface SettingsBootstrap {
  * 각 호출이 같은 요청 scope 이므로 getActiveOrgId() 는 React cache() 에 의해 한 번만 실행.
  */
 export async function getSettingsBootstrap(): Promise<SettingsBootstrap> {
-  const [companyInfo, orgType, membersRes, invitesRes, superAdminsRes, vaccineRes, autoFillRes, myProfile, myRole, detailViewSettings, destinationOverrides, assigneeRes, presetsRes, todoColumnsConfig] = await Promise.all([
+  const [companyInfo, orgType, membersRes, invitesRes, superAdminsRes, vaccineRes, autoFillRes, myProfile, myRole, detailViewSettings, destinationOverrides, assigneeRes, presetsRes, todoColumnsConfig, botProfileRes] = await Promise.all([
     getCompanyInfo(),
     getOrgType(),
     listMembers(),
@@ -55,6 +58,8 @@ export async function getSettingsBootstrap(): Promise<SettingsBootstrap> {
     getCaseAssigneeEnabled(),
     listSharePresets(),
     loadTodoColumnsConfig(),
+    // 슈퍼 어드민이 아니면 권한 체크에서 실패해 null — 비-super 에선 이 데이터를 안 쓰므로 무해.
+    getPetmoveBotProfile().catch(() => ({ ok: false as const, error: 'failed' })),
   ])
 
   const errors: SettingsBootstrap['errors'] = {}
@@ -71,6 +76,7 @@ export async function getSettingsBootstrap(): Promise<SettingsBootstrap> {
 
   const caseAssigneeEnabled = assigneeRes.ok ? assigneeRes.value : false
   const sharePresets = presetsRes.ok ? presetsRes.value : []
+  const botProfile = botProfileRes.ok ? botProfileRes.value : null
 
-  return { companyInfo, orgType, members, invites, superAdmins, vaccineProducts, autoFillRules, myProfile, myRole, detailViewSettings, destinationOverrides, caseAssigneeEnabled, sharePresets, todoColumnsConfig, errors }
+  return { companyInfo, orgType, members, invites, superAdmins, vaccineProducts, autoFillRules, myProfile, myRole, detailViewSettings, destinationOverrides, caseAssigneeEnabled, sharePresets, todoColumnsConfig, botProfile, errors }
 }
