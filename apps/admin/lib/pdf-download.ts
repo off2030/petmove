@@ -33,7 +33,7 @@ export type SinglePdfRequest = {
 
 export type MultiPdfRequest = {
   kind: 'multi'
-  formKey: 'AnnexIII' | 'UK'
+  formKey: 'AnnexIII' | 'UK' | 'NZ'
   caseIds: string[]
   part?: number
   includeVet?: boolean

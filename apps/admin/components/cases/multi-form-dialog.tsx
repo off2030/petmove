@@ -11,17 +11,20 @@ import { DialogFooter } from '@/components/ui/dialog-footer'
 
 interface Props {
   caseId: string
-  formKey: 'AnnexIII' | 'UK'
+  formKey: 'AnnexIII' | 'UK' | 'NZ'
   /** 수의사/병원 정보·발급일 노출 여부. 부모 cases-app 의 토글 상태를 그대로 전달. */
   includeVet?: boolean
   onClose: () => void
 }
 
 function simulatePackCount(
-  formKey: 'AnnexIII' | 'UK',
+  formKey: 'AnnexIII' | 'UK' | 'NZ',
   cases: Array<{ rabiesDoseCount: number }>,
 ): number {
-  const cap = formKey === 'AnnexIII' ? { animals: 3, vaccRows: 5 } : { animals: 5, vaccRows: 5 }
+  const cap =
+    formKey === 'AnnexIII' ? { animals: 3, vaccRows: 5 } :
+    formKey === 'NZ' ? { animals: 5, vaccRows: 9999 } :
+    { animals: 5, vaccRows: 5 }
   let docs = 0
   let remaining = cases.slice()
 
@@ -91,7 +94,7 @@ export function MultiFormDialog({ caseId, formKey, includeVet, onClose }: Props)
     })
   }
 
-  const formLabel = formKey === 'AnnexIII' ? 'Annex III' : 'UK'
+  const formLabel = formKey === 'AnnexIII' ? 'Annex III' : formKey === 'NZ' ? 'NZ' : 'UK'
 
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])

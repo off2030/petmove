@@ -358,7 +358,7 @@ export interface SiblingPreview {
   /** Number of documents the pack will produce given current capacity rules. */
   docCount: number
   /** Form key the preview was computed for. */
-  formKey: 'AnnexIII' | 'UK'
+  formKey: 'AnnexIII' | 'UK' | 'NZ'
 }
 
 /** Find cases that share the same customer + destination + departure_date with the given case. */
@@ -415,7 +415,7 @@ function readVetVisitDate(c: CaseRow): string | null {
   return typeof v === 'string' && v ? v : null
 }
 
-export async function previewSiblings(caseId: string, formKey: 'AnnexIII' | 'UK'): Promise<
+export async function previewSiblings(caseId: string, formKey: 'AnnexIII' | 'UK' | 'NZ'): Promise<
   { ok: true; preview: SiblingPreview } | { ok: false; error: string }
 > {
   const r = await fetchSiblings(caseId)
@@ -441,8 +441,11 @@ function rabiesDoseCountOf(c: CaseRow): number {
     .length
 }
 
-function simulatePackCount(formKey: 'AnnexIII' | 'UK', summaries: SiblingSummary[]): number {
-  const cap = formKey === 'AnnexIII' ? { animals: 3, vaccRows: 5 } : { animals: 5, vaccRows: 5 }
+function simulatePackCount(formKey: 'AnnexIII' | 'UK' | 'NZ', summaries: SiblingSummary[]): number {
+  const cap =
+    formKey === 'AnnexIII' ? { animals: 3, vaccRows: 5 } :
+    formKey === 'NZ' ? { animals: 5, vaccRows: 9999 } :
+    { animals: 5, vaccRows: 5 }
   let docs = 0
   let remaining = summaries.slice()
   while (remaining.length > 0) {
@@ -463,7 +466,7 @@ function simulatePackCount(formKey: 'AnnexIII' | 'UK', summaries: SiblingSummary
 }
 
 async function generateMulti(
-  formKey: 'AnnexIII' | 'UK',
+  formKey: 'AnnexIII' | 'UK' | 'NZ' | 'NZ_2',
   caseIds: string[],
   options?: { includeVet?: boolean },
 ): Promise<GenerateMultiPdfResult> {
@@ -492,6 +495,26 @@ export async function generateAnnexIIIMulti(caseIds: string[], opts?: { includeV
 
 export async function generateUKMulti(caseIds: string[], opts?: { includeVet?: boolean }) {
   return generateMulti('UK', caseIds, opts)
+}
+
+/**
+ * NZ 다중 — primary(첫 케이스)의 광견병 접종 횟수로 NZ vs NZ_2 템플릿 선택.
+ * 한 인증서에는 동일한 (10a)/(10b) 룰이 적용되므로, 같이 묶인 케이스들의 광견병
+ * 이력은 primary 기준만 출력된다 (Cert A 의 다른 백신/검사 행도 모두 primary 기준).
+ * UI 가 같은 보호자·목적지·출국일 또는 내원일 케이스를 사전 필터하므로 보통은
+ * primary 이력으로 대표가 충분하다.
+ */
+export async function generateNZMulti(caseIds: string[], opts?: { includeVet?: boolean }): Promise<GenerateMultiPdfResult> {
+  if (caseIds.length === 0) return { ok: false, error: '대상 동물이 없습니다' }
+  const supabase = await createClient()
+  const { data: primary } = await supabase
+    .from('cases')
+    .select('data')
+    .eq('id', caseIds[0])
+    .single()
+  const dates = ((primary?.data as Record<string, unknown> | undefined)?.rabies_dates ?? []) as unknown[]
+  const formKey: 'NZ' | 'NZ_2' = Array.isArray(dates) && dates.length >= 2 ? 'NZ_2' : 'NZ'
+  return generateMulti(formKey, caseIds, opts)
 }
 
 // Legacy single-case entry points — kept for non-multi destinations that still use fillPdf.

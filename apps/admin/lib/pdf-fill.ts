@@ -2257,6 +2257,11 @@ interface FormCapacity { animals: number; vaccRows: number }
 const FORM_CAPACITY: Record<string, FormCapacity | undefined> = {
   AnnexIII: { animals: 3, vaccRows: 5 },
   UK:       { animals: 5, vaccRows: 5 },
+  // NZ 인증서는 (10)/(11)/(12)... 의 백신/검사 행이 동물별이 아니라 인증서당 1개씩만
+  // 있어서 packer 의 vaccRows 제약이 의미 없다. 큰 값으로 두면 동물 5마리까지 한
+  // 인증서에 채워진다 (Cert A p1 5-row table + Cert B (4) 의 multi-line microchip 목록).
+  NZ:       { animals: 5, vaccRows: 9999 },
+  NZ_2:     { animals: 5, vaccRows: 9999 },
 }
 
 function rabiesDoseCount(c: CaseRow): number {
@@ -2353,6 +2358,56 @@ function resolveMultiTransform(transform: string | undefined, doc: PackedDoc): s
     if (!c) return ''
     const mc = (c as unknown as Record<string, unknown>).microchip
     return typeof mc === 'string' ? mc : ''
+  }
+
+  // NZ Cert B (4) "The microchip number was confirmed as ..."
+  // - 1마리: 마이크로칩 번호만 (Top 정렬되므로 leading `\n` 으로 bottom 라인에 배치
+  //   = 인쇄된 "as ___" 베이스라인과 맞춤)
+  // - 2마리 이상: "A. <chip> (NAME)\nB. <chip> (NAME)\n..." 다중 라인.
+  //   필드 높이가 약 2줄(22pt)이라 3마리 이상은 시각적으로 잘릴 수 있음
+  //   (5마리까지 capacity 는 p1 동물 테이블 기준).
+  if (transform === 'multi:microchip_with_name_list') {
+    const letters = ['A', 'B', 'C', 'D', 'E']
+    if (doc.cases.length === 1) {
+      const mc = (doc.cases[0] as unknown as Record<string, unknown>).microchip
+      const s = typeof mc === 'string' ? mc : ''
+      return s ? `\n${s}` : ''
+    }
+    const lines: string[] = []
+    for (let i = 0; i < doc.cases.length; i++) {
+      const c = doc.cases[i]
+      const mc = (c as unknown as Record<string, unknown>).microchip
+      if (typeof mc !== 'string' || !mc) continue
+      const name = (c.pet_name_en || c.pet_name || '').trim()
+      const prefix = letters[i] ?? String(i + 1)
+      lines.push(`${prefix}. ${mc}${name ? ` (${name})` : ''}`)
+    }
+    return lines.join('\n')
+  }
+
+  // NZ p1 Animal table — Row 2~5 의 7개 셀(species/breed/microchip/name/sex/neutered/age)
+  // 을 doc.cases[idx] 로부터 채운다. Row 1 은 mapping 그대로(primary case) 사용.
+  // 형식: multi:animal[idx].slot
+  // slot ∈ { species, breed, microchip, name, age, sex_simple, sex_neutered_status }
+  const animalMatch = transform.match(/^multi:animal\[(\d+)\]\.(.+)$/)
+  if (animalMatch) {
+    const idx = Number(animalMatch[1])
+    const slot = animalMatch[2]
+    const c = doc.cases[idx]
+    if (!c) return ''
+    const slotMap: Record<string, FieldMapping> = {
+      species: { source: 'species', transform: 'en' },
+      breed: { source: 'breed_en' },
+      microchip: { source: 'microchip' },
+      name: { source: 'pet_name_en' },
+      age: { source: 'birth_date', transform: 'age_years' },
+      sex_simple: { source: 'sex', transform: 'sex_simple' },
+      sex_neutered_status: { source: 'sex', transform: 'sex_neutered_status' },
+    }
+    const slotMapping = slotMap[slot]
+    if (!slotMapping) return ''
+    const r = resolveField(slotMapping, c, (c.data ?? {}) as Record<string, unknown>)
+    return typeof r === 'string' ? r : ''
   }
 
   return null

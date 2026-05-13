@@ -3375,7 +3375,7 @@
   },
   "NZ": {
     "template": "NZ.pdf",
-    "description": "New Zealand 수출용 반려동물 건강증명서 (Model Veterinary Certificate A - Cats and Dogs). 개/고양이 공통 양식",
+    "description": "New Zealand 수출용 반려동물 건강증명서 (Model Veterinary Certificate A - Cats and Dogs). 개/고양이 공통 양식. 한 보호자가 최대 5마리까지 한 장에 기재 가능 (Cert A p1 동물 테이블 + Cert B (4) 마이크로칩 목록).",
     "filename": "NZ_{pet_name}.pdf",
     "dateFormat": "dmmmy",
     "flatten": true,
@@ -3383,7 +3383,7 @@
       "Text2": {
         "source": "new_zealand_extra",
         "transform": "json:permit_no",
-        "note": "p1 NZ Permit to Import number"
+        "note": "p1+p5 NZ Permit to Import number (필드가 두 페이지 공유)"
       },
       "Text5": {
         "source": "species",
@@ -3407,6 +3407,34 @@
         "transform": "age_years",
         "note": "p1 Row1 — Age (years)"
       },
+      "Text16": { "source": null, "transform": "multi:animal[1].species", "note": "p1 Row2 — Species" },
+      "Text17": { "source": null, "transform": "multi:animal[1].breed",   "note": "p1 Row2 — Breed" },
+      "Text18": { "source": null, "transform": "multi:animal[1].microchip","note": "p1 Row2 — Microchip" },
+      "Text19": { "source": null, "transform": "multi:animal[1].name",    "note": "p1 Row2 — Name" },
+      "Text22": { "source": null, "transform": "multi:animal[1].age",     "note": "p1 Row2 — Age" },
+      "Dropdown20": { "source": null, "transform": "multi:animal[1].sex_simple",          "note": "p1 Row2 — Sex" },
+      "Dropdown21": { "source": null, "transform": "multi:animal[1].sex_neutered_status", "note": "p1 Row2 — Neutered" },
+      "Text23": { "source": null, "transform": "multi:animal[2].species", "note": "p1 Row3 — Species" },
+      "Text24": { "source": null, "transform": "multi:animal[2].breed",   "note": "p1 Row3 — Breed" },
+      "Text25": { "source": null, "transform": "multi:animal[2].microchip","note": "p1 Row3 — Microchip" },
+      "Text26": { "source": null, "transform": "multi:animal[2].name",    "note": "p1 Row3 — Name" },
+      "Text30": { "source": null, "transform": "multi:animal[2].age",     "note": "p1 Row3 — Age" },
+      "Dropdown28": { "source": null, "transform": "multi:animal[2].sex_simple",          "note": "p1 Row3 — Sex" },
+      "Dropdown29": { "source": null, "transform": "multi:animal[2].sex_neutered_status", "note": "p1 Row3 — Neutered" },
+      "Text31": { "source": null, "transform": "multi:animal[3].species", "note": "p1 Row4 — Species" },
+      "Text32": { "source": null, "transform": "multi:animal[3].breed",   "note": "p1 Row4 — Breed" },
+      "Text33": { "source": null, "transform": "multi:animal[3].microchip","note": "p1 Row4 — Microchip" },
+      "Text34": { "source": null, "transform": "multi:animal[3].name",    "note": "p1 Row4 — Name" },
+      "Text38": { "source": null, "transform": "multi:animal[3].age",     "note": "p1 Row4 — Age" },
+      "Dropdown35": { "source": null, "transform": "multi:animal[3].sex_simple",          "note": "p1 Row4 — Sex" },
+      "Dropdown37": { "source": null, "transform": "multi:animal[3].sex_neutered_status", "note": "p1 Row4 — Neutered" },
+      "Text39": { "source": null, "transform": "multi:animal[4].species", "note": "p1 Row5 — Species" },
+      "Text40": { "source": null, "transform": "multi:animal[4].breed",   "note": "p1 Row5 — Breed" },
+      "Text42": { "source": null, "transform": "multi:animal[4].microchip","note": "p1 Row5 — Microchip" },
+      "Text43": { "source": null, "transform": "multi:animal[4].name",    "note": "p1 Row5 — Name" },
+      "Text46": { "source": null, "transform": "multi:animal[4].age",     "note": "p1 Row5 — Age" },
+      "Dropdown44": { "source": null, "transform": "multi:animal[4].sex_simple",          "note": "p1 Row5 — Sex" },
+      "Dropdown45": { "source": null, "transform": "multi:animal[4].sex_neutered_status", "note": "p1 Row5 — Neutered" },
       "Text48": {
         "source": "address_en",
         "note": "p1 (1) Name and address line 2 (owner address)"
@@ -3424,7 +3452,7 @@
       "Text1": {
         "source": null,
         "default": "Republic of Korea",
-        "note": "p1 (9c) country of export (6개월 거주)"
+        "note": "p1+p5 Country fields (5 widgets share name) — (9c) 거주국·Cert B (country) 등"
       },
       "Text55": {
         "source": "rabies_dates",
@@ -3531,24 +3559,9 @@
         "note": "p4 Vet Address line 2 (locality)",
         "transform": "vet:address_locality_en"
       },
-      "Text75": {
-        "source": "new_zealand_extra",
-        "transform": "json:permit_no",
-        "note": "p5 Certificate B — NZ Permit to Import number"
-      },
-      "text_15xevx": {
-        "source": null,
-        "default": "Republic of Korea",
-        "note": "p1 Country of export (6개월 거주 문구) — 새 템플릿 필드"
-      },
-      "text_14dawy": {
-        "source": null,
-        "default": "Republic of Korea",
-        "note": "p1 Government veterinary service — country or territory"
-      },
-      "text_78egqu": {
+      "Text82": {
         "source": "vet_visit_date",
-        "note": "p4 Date of certification (발급일)"
+        "note": "p4 Date of certification (발급일) — 새 템플릿에서 text_78egqu 대체"
       },
       "Dropdown13": {
         "source": "sex",
@@ -3573,20 +3586,16 @@
         "source": "customer_name_en",
         "note": "p1 (1) Name and address line 1 (owner name)"
       },
-      "text_80gijj": {
-        "source": null,
-        "note": "p4 Vet Email",
-        "transform": "vet:email"
-      },
       "Text76": {
-        "source": "microchip",
-        "note": "p5 (4) The microchip number was confirmed as ..."
+        "source": null,
+        "transform": "multi:microchip_with_name_list",
+        "note": "p5 (4) The microchip number was confirmed as ... — 다중일 때 A./B./... + 이름 줄바꿈"
       }
     }
   },
   "NZ_2": {
     "template": "NZ_2.pdf",
-    "description": "New Zealand 수출용 반려동물 건강증명서 — 광견병 2회 접종 버전",
+    "description": "New Zealand 수출용 반려동물 건강증명서 — 광견병 2회 접종 버전. 한 보호자가 최대 5마리까지 한 장에 기재 가능.",
     "filename": "NZ_{pet_name}.pdf",
     "dateFormat": "dmmmy",
     "flatten": true,
@@ -3618,6 +3627,34 @@
         "transform": "age_years",
         "note": "p1 Row1 — Age (years)"
       },
+      "Text16": { "source": null, "transform": "multi:animal[1].species", "note": "p1 Row2 — Species" },
+      "Text17": { "source": null, "transform": "multi:animal[1].breed",   "note": "p1 Row2 — Breed" },
+      "Text18": { "source": null, "transform": "multi:animal[1].microchip","note": "p1 Row2 — Microchip" },
+      "Text19": { "source": null, "transform": "multi:animal[1].name",    "note": "p1 Row2 — Name" },
+      "Text22": { "source": null, "transform": "multi:animal[1].age",     "note": "p1 Row2 — Age" },
+      "Dropdown20": { "source": null, "transform": "multi:animal[1].sex_simple",          "note": "p1 Row2 — Sex" },
+      "Dropdown21": { "source": null, "transform": "multi:animal[1].sex_neutered_status", "note": "p1 Row2 — Neutered" },
+      "Text23": { "source": null, "transform": "multi:animal[2].species", "note": "p1 Row3 — Species" },
+      "Text24": { "source": null, "transform": "multi:animal[2].breed",   "note": "p1 Row3 — Breed" },
+      "Text25": { "source": null, "transform": "multi:animal[2].microchip","note": "p1 Row3 — Microchip" },
+      "Text26": { "source": null, "transform": "multi:animal[2].name",    "note": "p1 Row3 — Name" },
+      "Text30": { "source": null, "transform": "multi:animal[2].age",     "note": "p1 Row3 — Age" },
+      "Dropdown28": { "source": null, "transform": "multi:animal[2].sex_simple",          "note": "p1 Row3 — Sex" },
+      "Dropdown29": { "source": null, "transform": "multi:animal[2].sex_neutered_status", "note": "p1 Row3 — Neutered" },
+      "Text31": { "source": null, "transform": "multi:animal[3].species", "note": "p1 Row4 — Species" },
+      "Text32": { "source": null, "transform": "multi:animal[3].breed",   "note": "p1 Row4 — Breed" },
+      "Text33": { "source": null, "transform": "multi:animal[3].microchip","note": "p1 Row4 — Microchip" },
+      "Text34": { "source": null, "transform": "multi:animal[3].name",    "note": "p1 Row4 — Name" },
+      "Text38": { "source": null, "transform": "multi:animal[3].age",     "note": "p1 Row4 — Age" },
+      "Dropdown35": { "source": null, "transform": "multi:animal[3].sex_simple",          "note": "p1 Row4 — Sex" },
+      "Dropdown37": { "source": null, "transform": "multi:animal[3].sex_neutered_status", "note": "p1 Row4 — Neutered" },
+      "Text39": { "source": null, "transform": "multi:animal[4].species", "note": "p1 Row5 — Species" },
+      "Text40": { "source": null, "transform": "multi:animal[4].breed",   "note": "p1 Row5 — Breed" },
+      "Text42": { "source": null, "transform": "multi:animal[4].microchip","note": "p1 Row5 — Microchip" },
+      "Text43": { "source": null, "transform": "multi:animal[4].name",    "note": "p1 Row5 — Name" },
+      "Text46": { "source": null, "transform": "multi:animal[4].age",     "note": "p1 Row5 — Age" },
+      "Dropdown44": { "source": null, "transform": "multi:animal[4].sex_simple",          "note": "p1 Row5 — Sex" },
+      "Dropdown45": { "source": null, "transform": "multi:animal[4].sex_neutered_status", "note": "p1 Row5 — Neutered" },
       "Text48": {
         "source": "address_en",
         "note": "p1 (1) Name and address line 2 (owner address)"
@@ -3790,8 +3827,9 @@
         "transform": "vet:email"
       },
       "Text76": {
-        "source": "microchip",
-        "note": "p5 (4) The microchip number was confirmed as ..."
+        "source": null,
+        "transform": "multi:microchip_with_name_list",
+        "note": "p5 (4) The microchip number was confirmed as ... — 다중일 때 A./B./... + 이름 (NZ_2 템플릿은 단일라인이라 2마리 이상 시 한 줄로 잘릴 수 있음 — 템플릿 업데이트 권장)"
       }
     }
   },

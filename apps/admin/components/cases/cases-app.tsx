@@ -87,6 +87,7 @@ const CERT_FORM_KEYS: Record<string, string> = {
 const CERT_MULTI_KEYS: Record<string, string> = {
   annexIII: 'AnnexIII',
   uk: 'UK',
+  nz: 'NZ',
 }
 
 /** rabies_titer_records 의 1차 (가장 오래된) 검사 날짜. FormRE 의 "기재 대상" 판정용. */
@@ -211,7 +212,7 @@ function Inner() {
     }
   }, [cases, selectedCase])
   const detailScrollRef = useRef<HTMLDivElement>(null)
-  const [multiForm, setMultiForm] = useState<{ caseId: string; formKey: 'AnnexIII' | 'UK' } | null>(null)
+  const [multiForm, setMultiForm] = useState<{ caseId: string; formKey: 'AnnexIII' | 'UK' | 'NZ' } | null>(null)
   const [transferOpen, setTransferOpen] = useState<{ caseId: string; label: string } | null>(null)
   const [shareOpen, setShareOpen] = useState<{ case: CaseRow; label: string } | null>(null)
   // 별지 25호/EX 의 광견병 슬롯이 부족할 때 띄우는 선택 모달.
@@ -429,7 +430,7 @@ function Inner() {
   // Annex III / UK: if the case has siblings (same customer + destination +
   // departure date), show the multi-animal preview modal. Otherwise skip the
   // modal and generate a single-animal document directly.
-  const handleMultiForm = useCallback(async (caseId: string, formKey: 'AnnexIII' | 'UK', destination: string | null) => {
+  const handleMultiForm = useCallback(async (caseId: string, formKey: 'AnnexIII' | 'UK' | 'NZ', destination: string | null) => {
     const row = cases.find((c) => c.id === caseId)
     if (row && !(await confirmIfFailing(row, destination))) return
     const p = await previewSiblings(caseId, formKey)
@@ -671,7 +672,7 @@ function Inner() {
                             <button
                               key={btn.key}
                               type="button"
-                              onClick={() => handleMultiForm(selectedCase.id, (CERT_MULTI_KEYS[btn.key] ?? btn.key) as 'AnnexIII' | 'UK', focusDest)}
+                              onClick={() => handleMultiForm(selectedCase.id, (CERT_MULTI_KEYS[btn.key] ?? btn.key) as 'AnnexIII' | 'UK' | 'NZ', focusDest)}
                               className="shrink-0 whitespace-nowrap rounded-md px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
                             >
                               {btn.label}
