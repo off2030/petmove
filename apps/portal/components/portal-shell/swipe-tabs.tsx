@@ -6,7 +6,13 @@ import { useEffect, useRef } from 'react'
 /**
  * 4탭(여정/서류/정보/프로필) 좌우 스와이프 내비.
  *
- * - 터치 한 손가락만, 수평 거리 ≥60px, |dy/dx| ≤0.7, 700ms 이내.
+ * 검출은 두 경로 OR:
+ *  1) 거리 기반 — 시작→끝 |dx| ≥60px AND |dy/dx| ≤1.0 (~45°), 1초 이내
+ *  2) 플릭 속도 — 마지막 120ms 윈도우에서 |vx| ≥0.5 px/ms AND |fdx| ≥40px AND |vy/vx| ≤0.7
+ *
+ * (2) 가 있어서 세로 스크롤하다가 끝에서 가로로 flick 해도 잡힘. (1) 단독이었던 v1 에선
+ * 누적 dy 때문에 ratio 실패하는 사례가 많았음.
+ *
  * - 화면 가장자리 28px 이내 시작은 무시 (iOS Safari 백/포워드 제스처 충돌 회피).
  * - 가로 스크롤러(`overflow-x:auto/scroll` + 실제 overflow) 또는 `data-no-swipe="true"` 자손에서 시작한 터치는 무시.
  * - /me 는 case-out 이라 caseId 가 없음 — sessionStorage 에 마지막 caseId 보관해 복귀 시 사용.
@@ -20,9 +26,14 @@ type Tab = (typeof TAB_ORDER)[number]
 const LAST_CASE_KEY = 'pm.last-case-id'
 
 const MIN_DISTANCE_PX = 60
-const MAX_OFF_AXIS_RATIO = 0.7
-const MAX_DURATION_MS = 700
+const DIST_OFF_AXIS_RATIO = 1.0 // 거리 기반: |dy/dx| 허용치 (~45°)
+const MAX_DURATION_MS = 1000
 const EDGE_GUARD_PX = 28
+
+const FLICK_WINDOW_MS = 120
+const FLICK_MIN_VX = 0.5 // px/ms (=500 px/s)
+const FLICK_MIN_DX = 40 // 플릭 윈도우 내 최소 가로 이동
+const FLICK_OFF_AXIS_RATIO = 0.7 // 플릭 기반: |vy/vx| 허용치
 
 function currentTab(pathname: string): Tab | null {
   if (pathname === '/me' || pathname.startsWith('/me/')) return 'me'
@@ -93,41 +104,99 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
   }, [tab, caseId, router])
 
   const startRef = useRef<{ x: number; y: number; t: number; skip: boolean } | null>(null)
+  const movesRef = useRef<{ x: number; y: number; t: number }[]>([])
 
   useEffect(() => {
     if (!tab) return
 
     const onStart = (e: TouchEvent) => {
+      movesRef.current = []
       if (e.touches.length !== 1) {
         startRef.current = null
         return
       }
       const t = e.touches[0]
+      const now = performance.now()
       const nearEdge =
         t.clientX < EDGE_GUARD_PX || t.clientX > window.innerWidth - EDGE_GUARD_PX
       startRef.current = {
         x: t.clientX,
         y: t.clientY,
-        t: performance.now(),
+        t: now,
         skip: nearEdge || startsOnNoSwipeZone(e.target),
       }
+      movesRef.current.push({ x: t.clientX, y: t.clientY, t: now })
+    }
+
+    const onMove = (e: TouchEvent) => {
+      const s = startRef.current
+      if (!s || s.skip) return
+      if (e.touches.length !== 1) return
+      const t = e.touches[0]
+      const now = performance.now()
+      movesRef.current.push({ x: t.clientX, y: t.clientY, t: now })
+      // 200ms 이상 오래된 샘플은 제거 (메모리 + 플릭 윈도우 충분히 커버)
+      const cutoff = now - 200
+      while (movesRef.current.length > 1 && movesRef.current[0].t < cutoff) {
+        movesRef.current.shift()
+      }
+    }
+
+    const detectDirection = (s: NonNullable<typeof startRef.current>, endX: number, endY: number): number => {
+      const dx = endX - s.x
+      const dy = endY - s.y
+
+      // (1) 거리 기반
+      if (Math.abs(dx) >= MIN_DISTANCE_PX && Math.abs(dy) <= Math.abs(dx) * DIST_OFF_AXIS_RATIO) {
+        return dx < 0 ? 1 : -1
+      }
+
+      // (2) 플릭 속도 — 마지막 FLICK_WINDOW_MS 윈도우
+      const moves = movesRef.current
+      if (moves.length < 2) return 0
+      const last = moves[moves.length - 1]
+      const cutoff = last.t - FLICK_WINDOW_MS
+      let first = moves[0]
+      for (let i = moves.length - 1; i >= 0; i--) {
+        if (moves[i].t <= cutoff) {
+          first = moves[i]
+          break
+        }
+        first = moves[i]
+      }
+      const dt = last.t - first.t
+      if (dt < 20) return 0
+      const fdx = last.x - first.x
+      const fdy = last.y - first.y
+      const vx = fdx / dt
+      const vy = fdy / dt
+      if (
+        Math.abs(vx) >= FLICK_MIN_VX &&
+        Math.abs(fdx) >= FLICK_MIN_DX &&
+        Math.abs(vy) <= Math.abs(vx) * FLICK_OFF_AXIS_RATIO
+      ) {
+        return vx < 0 ? 1 : -1
+      }
+      return 0
     }
 
     const onEnd = (e: TouchEvent) => {
       const s = startRef.current
       startRef.current = null
+      const moves = movesRef.current
+      movesRef.current = []
       if (!s || s.skip) return
       if (performance.now() - s.t > MAX_DURATION_MS) return
 
       const t = e.changedTouches[0]
       if (!t) return
-      const dx = t.clientX - s.x
-      const dy = t.clientY - s.y
 
-      if (Math.abs(dx) < MIN_DISTANCE_PX) return
-      if (Math.abs(dy) > Math.abs(dx) * MAX_OFF_AXIS_RATIO) return
+      // detectDirection 이 moves 를 참조 — 비우기 전에 복구
+      movesRef.current = moves
+      const dir = detectDirection(s, t.clientX, t.clientY)
+      movesRef.current = []
+      if (dir === 0) return
 
-      const dir = dx < 0 ? 1 : -1
       const idx = TAB_ORDER.indexOf(tab)
       const next = idx + dir
       if (next < 0 || next >= TAB_ORDER.length) return
@@ -137,13 +206,16 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
 
     const onCancel = () => {
       startRef.current = null
+      movesRef.current = []
     }
 
     window.addEventListener('touchstart', onStart, { passive: true })
+    window.addEventListener('touchmove', onMove, { passive: true })
     window.addEventListener('touchend', onEnd, { passive: true })
     window.addEventListener('touchcancel', onCancel, { passive: true })
     return () => {
       window.removeEventListener('touchstart', onStart)
+      window.removeEventListener('touchmove', onMove)
       window.removeEventListener('touchend', onEnd)
       window.removeEventListener('touchcancel', onCancel)
     }
