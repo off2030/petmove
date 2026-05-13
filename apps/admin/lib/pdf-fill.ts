@@ -1839,6 +1839,14 @@ function resolveField(
     if (s === 'spayed_female') return 'Spayed female'
     return ''
   }
+  // 중성화 여부를 빼고 Male/Female 만. NZ 동물 테이블의 Sex 칸은 옆에 별도의
+  // Neutered/Entire 드롭다운이 있어 중성화 정보가 중복으로 들어가면 안 됨.
+  if (transform === 'sex_mf_only') {
+    const s = String(raw ?? '').toLowerCase()
+    if (s === 'male' || s === 'neutered_male') return 'Male'
+    if (s === 'female' || s === 'spayed_female') return 'Female'
+    return ''
+  }
   // "Neutered" / "Entire" — used by NZ certificate dropdowns.
   if (transform === 'sex_neutered_status') {
     const s = String(raw ?? '').toLowerCase()
@@ -2402,6 +2410,7 @@ function resolveMultiTransform(transform: string | undefined, doc: PackedDoc): s
       name: { source: 'pet_name_en' },
       age: { source: 'birth_date', transform: 'age_years' },
       sex_simple: { source: 'sex', transform: 'sex_simple' },
+      sex_mf_only: { source: 'sex', transform: 'sex_mf_only' },
       sex_neutered_status: { source: 'sex', transform: 'sex_neutered_status' },
     }
     const slotMapping = slotMap[slot]
