@@ -1937,6 +1937,24 @@ function resolveField(
 
       return lines.join('\n')
     }
+    // 한 multiline 필드에 도로명 + 도시·국가를 두 줄로 출력 (예: NZ Cert A p4 Text80).
+    // street + "\n" + locality 형식.
+    if (key === 'address_full_en') {
+      const street = (VET_INFO.address_street_en?.trim()) || ''
+      const locality = (VET_INFO.address_locality_en?.trim()) || ''
+      if (street || locality) {
+        return [street, locality].filter(Boolean).join('\n')
+      }
+      const full = String(VET_INFO.address_en ?? '').trim()
+      if (!full) return ''
+      const segs = full.split(',').map(s => s.trim()).filter(Boolean)
+      if (segs.length <= 1) return full
+      const streetCount = Math.max(1, segs.length - 3)
+      return [
+        segs.slice(0, streetCount).join(', '),
+        segs.slice(streetCount).join(', '),
+      ].filter(Boolean).join('\n')
+    }
     // address_street_en / address_locality_en 가 빈 값이면 address_en 을 콤마로
     // 분리해 반환 (address_part:street/locality 와 동일 규칙).
     if (key === 'address_street_en' || key === 'address_locality_en') {

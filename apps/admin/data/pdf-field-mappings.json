@@ -3551,13 +3551,13 @@
       },
       "Text80": {
         "source": null,
-        "note": "p4 Vet Address line 1 (street)",
-        "transform": "vet:address_street_en"
+        "note": "p4 Vet Address (street + locality, multiline)",
+        "transform": "vet:address_full_en"
       },
       "Text81": {
         "source": null,
-        "note": "p4 Vet Address line 2 (locality)",
-        "transform": "vet:address_locality_en"
+        "note": "p4 Vet Email",
+        "transform": "vet:email"
       },
       "Text82": {
         "source": "vet_visit_date",
