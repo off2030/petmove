@@ -2565,6 +2565,16 @@ async function fillOnePackedDoc(
     } else if (field instanceof PDFDropdown) {
       if (typeof value === 'string' && value) {
         try { field.select(value) } catch { /* option not found */ }
+      } else {
+        // 빈 값으로 두면 flatten 시 dropdown ▼ 아이콘이 셀에 그대로 박힌다 (예: NZ
+        // Row 2~5 의 Sex/Neutered 컬럼). 옵션 중 whitespace placeholder 가 있으면 그걸
+        // 선택해 visually 빈 셀로 만든다. 없으면 빈 문자열 select 시도.
+        try {
+          const opts = field.getOptions()
+          const placeholder = opts.find(o => !o.trim())
+          if (placeholder != null) field.select(placeholder)
+          else field.select('')
+        } catch { /* ignore */ }
       }
     } else if (field instanceof PDFTextField) {
       let text = typeof value === 'string' ? value : ''
