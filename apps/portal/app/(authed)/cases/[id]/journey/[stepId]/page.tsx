@@ -1,4 +1,7 @@
+'use client'
+
 import { notFound } from 'next/navigation'
+import { use } from 'react'
 import {
   JOURNEY_STEP_CATALOG,
   buildCaseJourneyContext,
@@ -11,31 +14,27 @@ import {
   type ProcedureCheck,
   type StepDefinition,
 } from '@petmove/domain'
-import { getMyCase } from '@/lib/actions/cases'
 import { StepDetailView } from '@/components/journey/step-detail-view'
-
-export const dynamic = 'force-dynamic'
+import { useCase } from '@/components/portal-shell/case-data-provider'
 
 /**
- * 케이스의 한 step 상세. `/cases/<id>/journey/<stepId>`.
+ * 케이스의 한 step 상세. `/cases/<id>/journey/<stepId>`. Client 컴포넌트.
  *
- * 흐름:
- *  1) layout 이 케이스 본인 매핑 보장 → getMyCase 단건 재조회 (React cache dedupe)
- *  2) JOURNEY_STEP_CATALOG 에서 stepId 매칭 + 케이스 applicability 검증 → 미적용 404
- *  3) 매핑된 procedure-check 결과만 추려서 StepDetailView 로 전달
+ * 1) Context 에서 케이스 조회 (네트워크 없음)
+ * 2) JOURNEY_STEP_CATALOG 에서 stepId 매칭 + applicability 검증 → 미적용 notFound
+ * 3) 매핑된 procedure-check 결과만 추려서 StepDetailView 로 전달
  *
- * MVP 에서는 read-only. 입력 폼 / 첨부 업로드 / 완료 토글은 후속 PR.
+ * 도메인 함수(buildCaseJourneyContext / runChecksForCase) 는 순수 — client 실행 OK.
  */
-export default async function CaseJourneyStepPage({
+export default function CaseJourneyStepPage({
   params,
 }: {
   params: Promise<{ id: string; stepId: string }>
 }) {
-  const { id, stepId } = await params
-  const result = await getMyCase(id)
-  if (!result.ok || !result.value) notFound()
+  const { id, stepId } = use(params)
+  const caseRow = useCase(id)
+  if (!caseRow) notFound()
 
-  const caseRow = result.value
   const step = JOURNEY_STEP_CATALOG.find((s) => s.id === stepId)
   if (!step) notFound()
 

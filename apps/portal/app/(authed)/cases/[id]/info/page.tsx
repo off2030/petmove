@@ -1,25 +1,23 @@
+'use client'
+
 import { notFound } from 'next/navigation'
-import { getMyCase } from '@/lib/actions/cases'
+import { use } from 'react'
 import { buildInfoView } from '@/lib/info/catalog'
 import { InfoView } from '@/components/cases/info-view'
-
-export const dynamic = 'force-dynamic'
+import { useCase } from '@/components/portal-shell/case-data-provider'
 
 /**
- * 케이스별 정보 — /cases/<id>/info.
- *
- * layout 이 케이스 본인 매핑 보장. 여기서는 단건 재조회 (React cache dedupe).
- * 데이터 모델: lib/info/catalog.ts → InfoView (Stone 톤, app.jsx 의 Info 시안).
+ * 케이스별 정보 — /cases/<id>/info. Client 컴포넌트 — CaseDataProvider 에서 데이터 읽음.
  */
-export default async function CaseInfoPage({
+export default function CaseInfoPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
-  const { id } = await params
-  const result = await getMyCase(id)
-  if (!result.ok || !result.value) notFound()
+  const { id } = use(params)
+  const caseRow = useCase(id)
+  if (!caseRow) notFound()
 
-  const data = buildInfoView(result.value)
+  const data = buildInfoView(caseRow)
   return <InfoView data={data} />
 }
