@@ -39,7 +39,7 @@ export default async function AuthedLayout({ children }: { children: React.React
   return (
     <div
       style={{
-        background: '#F2EDE6',
+        background: '#F5EFE8',
         color: '#2A2620',
         minHeight: '100dvh',
         display: 'flex',

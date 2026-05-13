@@ -13,8 +13,11 @@ function TimelineCalm({ scenario, onNav, ringShape = 'B' }) {
 
   // Stone palette tokens — scoped to this view only
   const C = {
-    bg: '#F2EDE6', surface: '#FBF7F1', ink: '#2A2620', ink2: '#6B6457', ink3: '#9A9286',
-    line: 'rgba(42,38,32,.10)', accent: '#B89968', soft: '#E8DCC4', bar: '#D4C7AC', sage: '#8FA68C'
+    bg: '#F5EFE8', surface: '#FBF7F1', ink: '#2A2620', ink2: '#6B6457', ink3: '#9A9286',
+    line: 'rgba(42,38,32,.07)', accent: '#8A7355', soft: '#EDE4D7', bar: '#D4C7AC', sage: '#8FA68C',
+    cardSoft: 'linear-gradient(160deg, #F0E8DB 0%, #EDE4D7 50%, #E6DDCD 100%)',
+    cardList: 'linear-gradient(160deg, #F5EDE0 0%, #F2E9DC 50%, #ECE3D3 100%)',
+    cardHero: 'radial-gradient(140% 100% at 80% 18%, #E8DECC 0%, #DCD2BD 45%, #CBC1AB 100%)',
   };
 
   const serif = { fontFamily: "'Fraunces', 'Pretendard Variable', serif", fontWeight: 500, letterSpacing: '-0.01em' };
@@ -69,47 +72,50 @@ function TimelineCalm({ scenario, onNav, ringShape = 'B' }) {
           </div>
         </div>
 
-        {/* 다음 할 일 — italic Fraunces quote */}
+        {/* 다음 할 일 — soft taupe gradient card */}
         <div style={{
-          marginTop: 22, padding: 18, borderRadius: 18,
-          background: 'rgba(251,247,241,.55)', border: `.5px solid ${C.line}`
+          marginTop: 22, padding: 22, borderRadius: 22,
+          background: C.cardSoft,
+          boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <div style={monoCap}>다음 할 일</div>
-            <span style={{ ...monoCap, fontSize: 9.5, color: C.accent, fontWeight: 600 }}>D-7</span>
+            <div style={{ ...monoCap, color: 'rgba(45,38,28,.55)' }}>다음 할 일</div>
+            <span style={{ ...monoCap, fontSize: 9.5, color: 'rgba(45,38,28,.75)', fontWeight: 600 }}>D-7</span>
           </div>
           <h3 style={{
-            ...serif, margin: '10px 0 0',
-            fontSize: 22, lineHeight: 1.2, color: C.ink, fontWeight: 500,
+            ...serif, margin: '12px 0 0',
+            fontSize: 26, lineHeight: 1.18, color: '#2A2620', fontWeight: 500,
             textWrap: 'balance',
           }}>
             광견병 항체가 검사
           </h3>
           <p style={{
-            margin: '6px 0 0',
-            fontSize: 13, lineHeight: 1.55, color: C.ink2,
+            margin: '8px 0 0',
+            fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)',
           }}>
             5월 10일부터 검사 가능 · 채혈 → 일본 지정 검사기관 송부
           </p>
           <button
             onClick={() => onNav && onNav('timeline')}
             style={{
-              marginTop: 14, padding: '9px 14px', borderRadius: 999,
-              border: `.5px solid ${C.line}`, background: C.surface,
-              color: C.ink, fontSize: 12, fontWeight: 500, cursor: 'pointer',
+              marginTop: 16, padding: '9px 14px', borderRadius: 999,
+              border: '.5px solid rgba(45,38,28,.18)', background: 'rgba(255,253,247,.55)',
+              color: '#2A2620', fontSize: 12, fontWeight: 500, cursor: 'pointer',
               fontFamily: 'inherit', letterSpacing: '-0.005em',
               display: 'inline-flex', alignItems: 'center', gap: 6,
+              backdropFilter: 'blur(4px)',
             }}
           >
             자세히 보기
-            <span style={{ color: C.ink3 }}>→</span>
+            <span style={{ color: 'rgba(45,38,28,.5)' }}>→</span>
           </button>
         </div>
 
         {/* Now-Step hero — big circular progress (Now Playing pattern) */}
         <div style={{
           marginTop: 22, padding: '28px 18px 22px', borderRadius: 22,
-          background: C.surface, border: `.5px solid ${C.line}`,
+          background: C.cardHero,
+          boxShadow: '0 1px 0 rgba(255,255,255,.35) inset',
           display: 'flex', flexDirection: 'column', alignItems: 'center'
         }}>
           <div style={{ position: 'relative', width: 220, height: 220 }}>
@@ -154,7 +160,8 @@ function TimelineCalm({ scenario, onNav, ringShape = 'B' }) {
         {/* Stage list — quiet, mono-cap dates */}
         <h3 style={{ ...serif, margin: '24px 0 12px', fontSize: 16 }}>전체 여정</h3>
         <div style={{
-          background: C.surface, border: `.5px solid ${C.line}`, borderRadius: 18,
+          background: C.cardList, borderRadius: 20,
+          boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
           padding: '4px 14px'
         }}>
           {stages.map((s, i) => {

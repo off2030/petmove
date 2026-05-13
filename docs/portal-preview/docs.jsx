@@ -1,7 +1,7 @@
 // docs.jsx — 서류함 (Calm 디자인 시스템: Stone palette + Fraunces serif)
 
 const DOCS_C = {
-  bg: '#F2EDE6', surface: '#FBF7F1', ink: '#2A2620', ink2: '#6B6457', ink3: '#9A9286',
+  bg: '#F5EFE8', surface: '#FBF7F1', ink: '#2A2620', ink2: '#6B6457', ink3: '#9A9286',
   line: 'rgba(42,38,32,.10)', accent: '#B89968', soft: '#E8DCC4', sage: '#8FA68C',
 };
 const docsSerif = { fontFamily: "'Fraunces', 'Pretendard Variable', serif", fontWeight: 500, letterSpacing: '-0.01em' };

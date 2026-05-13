@@ -19,14 +19,17 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
 
   // Stone palette — scoped to this view (globals.css 의 --pm-* 와 같은 값, 인라인 fidelity).
   const C = {
-    bg: '#F2EDE6',
+    bg: '#F5EFE8',
     surface: '#FBF7F1',
     ink: '#2A2620',
     ink2: '#6B6457',
     ink3: '#9A9286',
-    line: 'rgba(42,38,32,.10)',
-    accent: '#B89968',
+    line: 'rgba(42,38,32,.07)',
+    accent: '#8A7355',
     sage: '#8FA68C',
+    cardSoft: 'linear-gradient(160deg, #F0E8DB 0%, #EDE4D7 50%, #E6DDCD 100%)',
+    cardList: 'linear-gradient(160deg, #F5EDE0 0%, #F2E9DC 50%, #ECE3D3 100%)',
+    cardHero: 'radial-gradient(140% 100% at 80% 18%, #E8DECC 0%, #DCD2BD 45%, #CBC1AB 100%)',
   } as const
 
   const serif: React.CSSProperties = {
@@ -109,30 +112,30 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
           </div>
         </div>
 
-        {/* 다음 할 일 카드 */}
+        {/* 다음 할 일 카드 — soft taupe gradient */}
         {nextStage && (
           <div
             style={{
               marginTop: 22,
-              padding: 18,
-              borderRadius: 18,
-              background: 'rgba(251,247,241,.55)',
-              border: `.5px solid ${C.line}`,
+              padding: 22,
+              borderRadius: 22,
+              background: C.cardSoft,
+              boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <div style={monoCap}>다음 할 일</div>
+              <div style={{ ...monoCap, color: 'rgba(45,38,28,.55)' }}>다음 할 일</div>
               {dDayLabel && (
-                <span style={{ ...monoCap, fontSize: 9.5, color: C.accent, fontWeight: 600 }}>{dDayLabel}</span>
+                <span style={{ ...monoCap, fontSize: 9.5, color: 'rgba(45,38,28,.75)', fontWeight: 600 }}>{dDayLabel}</span>
               )}
             </div>
             <h3
               style={{
                 ...serif,
-                margin: '10px 0 0',
-                fontSize: 22,
-                lineHeight: 1.2,
-                color: C.ink,
+                margin: '12px 0 0',
+                fontSize: 26,
+                lineHeight: 1.18,
+                color: '#2A2620',
                 fontWeight: 500,
                 textWrap: 'balance' as React.CSSProperties['textWrap'],
               }}
@@ -140,19 +143,19 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               {nextStage.label}
             </h3>
             {nextStage.desc && (
-              <p style={{ margin: '6px 0 0', fontSize: 13, lineHeight: 1.55, color: C.ink2 }}>{nextStage.desc}</p>
+              <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>{nextStage.desc}</p>
             )}
           </div>
         )}
 
-        {/* 진행률 링 */}
+        {/* 진행률 링 — taupe radial gradient hero */}
         <div
           style={{
             marginTop: 22,
             padding: '28px 18px 22px',
             borderRadius: 22,
-            background: C.surface,
-            border: `.5px solid ${C.line}`,
+            background: C.cardHero,
+            boxShadow: '0 1px 0 rgba(255,255,255,.35) inset',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -196,13 +199,13 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
           </div>
         </div>
 
-        {/* 단계 리스트 */}
+        {/* 단계 리스트 — light cream gradient */}
         <h3 style={{ ...serif, margin: '24px 0 12px', fontSize: 16 }}>전체 여정</h3>
         <div
           style={{
-            background: C.surface,
-            border: `.5px solid ${C.line}`,
-            borderRadius: 18,
+            background: C.cardList,
+            borderRadius: 20,
+            boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
             padding: '4px 14px',
           }}
         >

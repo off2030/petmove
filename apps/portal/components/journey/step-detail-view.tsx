@@ -31,7 +31,7 @@ export function StepDetailView({
   petName: string
 }) {
   const C = {
-    bg: '#F2EDE6',
+    bg: '#F5EFE8',
     surface: '#FBF7F1',
     ink: '#2A2620',
     ink2: '#6B6457',
