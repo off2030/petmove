@@ -53,6 +53,7 @@ export function CaseSwitcher({ caseId, cases, current }: Props) {
 
   return (
     <div
+      data-no-swipe="true"
       style={{
         padding: '14px 12px 6px',
         display: 'flex',

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createAdminClient } from '@petmove/auth'
 import { createClient } from '@petmove/auth/server'
 import { BottomNav } from '@/components/portal-shell/bottom-nav'
+import { SwipeTabs } from '@/components/portal-shell/swipe-tabs'
 import { TopBar } from '@/components/portal-shell/top-bar'
 import { autoLinkCasesByEmail } from '@/lib/supabase/customer'
 
@@ -54,7 +55,7 @@ export default async function AuthedLayout({ children }: { children: React.React
           paddingBottom: 88,
         }}
       >
-        {children}
+        <SwipeTabs>{children}</SwipeTabs>
       </main>
       <BottomNav />
     </div>
