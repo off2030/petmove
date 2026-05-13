@@ -83,7 +83,12 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
       const ni = idx + offset
       if (ni < 0 || ni >= TAB_ORDER.length) continue
       try {
-        router.prefetch(hrefFor(TAB_ORDER[ni], caseId))
+        // kind: 'full' — dynamic 페이지의 RSC payload 까지 통째 prefetch.
+        // 기본 'auto' 는 force-dynamic 에선 사실상 효과 없음.
+        // PrefetchKind enum 은 public export 가 아니라 ts-expect-error 로 회피
+        // (런타임 string 'full' 이 enum 값과 일치).
+        // @ts-expect-error PrefetchKind enum not publicly exported
+        router.prefetch(hrefFor(TAB_ORDER[ni], caseId), { kind: 'full' })
       } catch {
         /* prefetch 는 best-effort */
       }

@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getMyCase, listMyCases } from '@/lib/actions/cases'
+import { CasePrefetcher } from '@/components/portal-shell/case-prefetcher'
 import { CaseSwitcher } from '@/components/portal-shell/case-switcher'
 
 export const dynamic = 'force-dynamic'
@@ -28,6 +29,7 @@ export default async function CaseLayout({
   return (
     <>
       <CaseSwitcher caseId={id} cases={cases} current={current} />
+      <CasePrefetcher caseIds={cases.map((c) => c.id)} currentCaseId={id} />
       {children}
     </>
   )
