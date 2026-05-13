@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
+import { readLastCaseId, writeLastCaseId } from './last-case'
 
 /**
  * 4탭(여정/서류/정보/프로필) 좌우 스와이프 내비.
@@ -22,8 +23,6 @@ import { useEffect, useRef } from 'react'
 
 const TAB_ORDER = ['journey', 'docs', 'info', 'me'] as const
 type Tab = (typeof TAB_ORDER)[number]
-
-const LAST_CASE_KEY = 'pm.last-case-id'
 
 const MIN_DISTANCE_PX = 60
 const DIST_OFF_AXIS_RATIO = 1.0 // 거리 기반: |dy/dx| 허용치 (~45°)
@@ -59,14 +58,6 @@ function startsOnNoSwipeZone(target: EventTarget | null): boolean {
   return false
 }
 
-function readLastCaseId(): string | null {
-  try {
-    return window.sessionStorage.getItem(LAST_CASE_KEY)
-  } catch {
-    return null
-  }
-}
-
 function hrefFor(tab: Tab, caseId: string | null): string {
   if (tab === 'me') return '/me'
   const id = caseId ?? readLastCaseId()
@@ -82,11 +73,7 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!caseId) return
-    try {
-      window.sessionStorage.setItem(LAST_CASE_KEY, caseId)
-    } catch {
-      /* ignore */
-    }
+    writeLastCaseId(caseId)
   }, [caseId])
 
   useEffect(() => {

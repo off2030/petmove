@@ -2,13 +2,17 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { readLastCaseId, writeLastCaseId } from './last-case'
 
 /**
  * 보호자 앱 하단 4탭 — case-aware.
  *
  * 현재 path 가 /cases/<id>/... 이면 그 id 를 보존하면서 다른 탭으로 전환.
- * 아니면 (/cases 목록, /me 등) journey/docs/info 클릭 시 /cases 로 보냄
- *   — /cases 가 1건이면 자동으로 그 케이스 /journey 로 진입.
+ * /me (case-외) 같은 화면에선 sessionStorage 의 마지막 caseId 로 복귀
+ *   — swipe-tabs 와 동일한 키 공유. 이게 없으면 프로필에서 여정/서류/정보 탭을
+ *   누를 때마다 /cases (다중 케이스 선택 화면) 로 튕겨나가는 버그가 됨.
+ * sessionStorage 도 비어 있으면 /cases 로 보냄 (1건이면 자동 redirect).
  * 프로필 탭은 항상 /me (case-외).
  */
 
@@ -29,7 +33,19 @@ function caseIdFromPath(pathname: string): string | null {
 
 export function BottomNav() {
   const pathname = usePathname()
-  const caseId = caseIdFromPath(pathname)
+  const caseIdInPath = caseIdFromPath(pathname)
+  const [lastCaseId, setLastCaseId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (caseIdInPath) {
+      writeLastCaseId(caseIdInPath)
+      setLastCaseId(caseIdInPath)
+    } else {
+      setLastCaseId(readLastCaseId())
+    }
+  }, [caseIdInPath])
+
+  const caseId = caseIdInPath ?? lastCaseId
 
   return (
     <nav
