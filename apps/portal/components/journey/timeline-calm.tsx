@@ -312,8 +312,14 @@ function formatDDay(daysLeft: number | null): string | null {
 
 function formatStageDate(stage: JourneyStage): string {
   if (!stage.date) return '—'
-  // 'YYYY-MM-DD' → 'MM·DD'
-  return stage.date.slice(5).replace('-', '·')
+  // 'YYYY-MM-DD' → 올해면 'MM·DD', 다른 해면 'YY·MM·DD'.
+  // 공간 빠듯해서 4자리 연도는 가운데 label 폭을 너무 잡아먹음 (iPhone SE 에서 wrap 위험).
+  const parts = stage.date.split('-')
+  if (parts.length !== 3) return '—'
+  const [yyyy, mm, dd] = parts
+  const thisYear = new Date().getFullYear().toString()
+  if (yyyy === thisYear) return `${mm}·${dd}`
+  return `${yyyy.slice(2)}·${mm}·${dd}`
 }
 
 function PetAvatar({ size = 44 }: { size?: number }) {
