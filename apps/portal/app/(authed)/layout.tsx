@@ -30,32 +30,32 @@ export default async function AuthedLayout({ children }: { children: React.React
   const profile = profileResult.ok ? profileResult.value : null
 
   return (
-    <div
-      style={{
-        background: '#F5EFE8',
-        color: '#2A2620',
-        minHeight: '100dvh',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
+    <CaseDataProvider
+      initialCases={cases}
+      initialProfile={profile}
+      userEmail={user.email ?? null}
     >
-      <TopBar />
-      <main
+      <div
         style={{
-          flex: 1,
-          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 44px)',
-          paddingBottom: 88,
+          background: '#F5EFE8',
+          color: '#2A2620',
+          minHeight: '100dvh',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
-        <CaseDataProvider
-          initialCases={cases}
-          initialProfile={profile}
-          userEmail={user.email ?? null}
+        <TopBar />
+        <main
+          style={{
+            flex: 1,
+            paddingTop: 'calc(env(safe-area-inset-top, 0px) + 48px)',
+            paddingBottom: 88,
+          }}
         >
           <SwipeTabs>{children}</SwipeTabs>
-        </CaseDataProvider>
-      </main>
-      <BottomNav />
-    </div>
+        </main>
+        <BottomNav />
+      </div>
+    </CaseDataProvider>
   )
 }
