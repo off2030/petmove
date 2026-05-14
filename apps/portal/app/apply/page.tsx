@@ -882,20 +882,18 @@ export default function ApplyPage() {
                 </div>
               )}
             </FieldRow>
-            {destination && (
-              <FieldRow m={m} label={m.tripType} required>
-                <div className="flex gap-sm">
-                  <button type="button" onClick={() => setTripType('round')}
-                    className={`h-9 px-5 rounded-full border text-[13px] font-medium transition-colors ${tripType === 'round' ? chipButtonActive : chipButtonInactive}`}>
-                    {m.tripRound}
-                  </button>
-                  <button type="button" onClick={() => setTripType('one_way')}
-                    className={`h-9 px-5 rounded-full border text-[13px] font-medium transition-colors ${tripType === 'one_way' ? chipButtonActive : chipButtonInactive}`}>
-                    {m.tripOneWay}
-                  </button>
-                </div>
-              </FieldRow>
-            )}
+            <FieldRow m={m} label={m.tripType} required>
+              <div className="flex gap-sm">
+                <button type="button" onClick={() => setTripType('round')}
+                  className={`h-9 px-5 rounded-full border text-[13px] font-medium transition-colors ${tripType === 'round' ? chipButtonActive : chipButtonInactive}`}>
+                  {m.tripRound}
+                </button>
+                <button type="button" onClick={() => setTripType('one_way')}
+                  className={`h-9 px-5 rounded-full border text-[13px] font-medium transition-colors ${tripType === 'one_way' ? chipButtonActive : chipButtonInactive}`}>
+                  {m.tripOneWay}
+                </button>
+              </div>
+            </FieldRow>
           </section>
 
           {/* 2. 소유주 */}
