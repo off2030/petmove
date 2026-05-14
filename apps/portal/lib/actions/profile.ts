@@ -12,7 +12,7 @@
  */
 
 import { redirect } from 'next/navigation'
-import { createClient } from '@petmove/auth/server'
+import { createClient, getCurrentUser } from '@petmove/auth/server'
 import { revalidatePath } from 'next/cache'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
@@ -32,11 +32,9 @@ export interface CustomerProfileRow {
 
 export async function getMyProfile(): Promise<Result<CustomerProfileRow | null>> {
   try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getCurrentUser()
     if (!user) return { ok: false, error: '인증 필요' }
+    const supabase = await createClient()
 
     const { data, error } = await supabase
       .from('customer_profiles')
@@ -62,11 +60,9 @@ export async function updateMyProfile(
   input: UpdateProfileInput,
 ): Promise<Result<CustomerProfileRow>> {
   try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getCurrentUser()
     if (!user) return { ok: false, error: '인증 필요' }
+    const supabase = await createClient()
 
     // 빈 객체 호출은 no-op
     const patch: Record<string, unknown> = {}
@@ -121,11 +117,9 @@ export async function signOut(): Promise<void> {
 
 export async function autoLinkCasesByPhone(): Promise<Result<{ linked: number }>> {
   try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getCurrentUser()
     if (!user) return { ok: false, error: '인증 필요' }
+    const supabase = await createClient()
 
     const { data: profile } = await supabase
       .from('customer_profiles')

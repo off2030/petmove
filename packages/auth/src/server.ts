@@ -34,3 +34,20 @@ export const createClient = cache(async () => {
     },
   )
 })
+
+/**
+ * Request-scoped 캐시된 getUser() 호출. supabase.auth.getUser() 는 매 호출마다
+ * Supabase auth 서버로 네트워크 요청을 보내 JWT 검증 — layout + 다수의 server action 이
+ * 모두 호출하면 3-4 번 중복돼 latency 가 누적된다 (각 50-200ms).
+ *
+ * 이 헬퍼를 사용하면 같은 요청 안에서 단 한 번만 호출. 두 번째 호출부터는 Promise 캐시 결과 반환.
+ */
+export const getCurrentUser = cache(async () => {
+  const supabase = await createClient()
+  try {
+    const { data } = await supabase.auth.getUser()
+    return data.user
+  } catch {
+    return null
+  }
+})

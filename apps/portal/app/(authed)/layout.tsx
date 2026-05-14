@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@petmove/auth/server'
+import { getCurrentUser } from '@petmove/auth/server'
 import { BottomNav } from '@/components/portal-shell/bottom-nav'
 import { CaseDataProvider } from '@/components/portal-shell/case-data-provider'
 import { SwipeTabs } from '@/components/portal-shell/swipe-tabs'
@@ -22,14 +22,7 @@ export const dynamic = 'force-dynamic'
  * 구독도 한 번만.
  */
 export default async function AuthedLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  let user = null
-  try {
-    const result = await supabase.auth.getUser()
-    user = result.data.user
-  } catch {
-    user = null
-  }
+  const user = await getCurrentUser()
   if (!user) redirect('/login?next=/cases')
 
   const [casesResult, profileResult] = await Promise.all([listMyCases(), getMyProfile()])

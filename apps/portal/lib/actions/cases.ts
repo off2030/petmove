@@ -11,7 +11,7 @@
  * 그대로 import 해서 wiring.
  */
 
-import { createClient } from '@petmove/auth/server'
+import { createClient, getCurrentUser } from '@petmove/auth/server'
 import type { CaseRow } from '@petmove/domain'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
@@ -22,11 +22,9 @@ type Result<T> = { ok: true; value: T } | { ok: false; error: string }
  */
 export async function listMyCases(): Promise<Result<CaseRow[]>> {
   try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getCurrentUser()
     if (!user) return { ok: false, error: '인증 필요' }
+    const supabase = await createClient()
 
     const { data, error } = await supabase
       .from('cases')
@@ -46,11 +44,9 @@ export async function listMyCases(): Promise<Result<CaseRow[]>> {
  */
 export async function getMyCase(caseId: string): Promise<Result<CaseRow | null>> {
   try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getCurrentUser()
     if (!user) return { ok: false, error: '인증 필요' }
+    const supabase = await createClient()
 
     const { data, error } = await supabase
       .from('cases')
