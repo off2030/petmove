@@ -2,7 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { avatarGlyph, avatarGradient, avatarIsEmoji } from '@/lib/avatar'
+import { readLastCaseId } from './last-case'
 import { useCases } from './case-data-provider'
 
 /**
@@ -35,6 +37,15 @@ export function TopBar() {
   const { cases } = useCases()
   const activeCaseId = caseIdFromPath(pathname)
   const tab = currentTab(pathname)
+
+  // PETMOVE 워드마크는 "현재 여정"으로 — bottom-nav 와 동일한 case 결정 패턴.
+  // path 에 caseId 가 있으면 그걸, 아니면 sessionStorage 의 마지막 case, 둘 다 없으면 /cases.
+  const [lastCaseId, setLastCaseId] = useState<string | null>(null)
+  useEffect(() => {
+    if (!activeCaseId) setLastCaseId(readLastCaseId())
+  }, [activeCaseId])
+  const homeCaseId = activeCaseId ?? lastCaseId
+  const homeHref = homeCaseId ? `/cases/${homeCaseId}/journey` : '/cases'
 
   const btn: React.CSSProperties = {
     width: 32,
@@ -75,9 +86,9 @@ export function TopBar() {
       }}
     >
       <Link
-        href="/cases"
+        href={homeHref}
         prefetch
-        aria-label="첫 화면"
+        aria-label="여정"
         style={{
           fontFamily: 'var(--pm-font-display)',
           fontWeight: 500,
