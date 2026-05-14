@@ -1,5 +1,10 @@
+'use client'
+
 import Link from 'next/link'
+import { useEffect, useState, useTransition } from 'react'
 import type { CheckResult, ProcedureCheck, StepDefinition } from '@petmove/domain'
+import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
+import { updateMicrochipFields } from '@/lib/actions/cases'
 import { MicrochipInputs } from './microchip-inputs'
 
 interface CollectedCheck {
@@ -11,10 +16,14 @@ interface CollectedCheck {
  * 케이스 step 상세 화면. Stone 팔레트 / Fraunces serif — TimelineCalm 과 동일 톤.
  *
  * 4 영역:
- *  1) 헤더 — pet → 목적지, 뒤로가기
+ *  1) 헤더 — back link + 우측 저장 버튼(microchip 한정) / 동그라미+title / 펫·여행
  *  2) 설명 — step.description (마크다운은 단순 줄바꿈만)
- *  3) ⚠ 경고 — 매핑된 procedure-checks 중 ok=false. ok=true 룰은 접힌 카운터로
- *  4) 입력 필드 미리보기 — MVP 에서는 스키마만 표시. 실제 폼은 후속 PR
+ *  3) ⚠ 경고 — 매핑된 procedure-checks 중 ok=false
+ *  4) 입력 필드 — microchip step 만 인터랙티브, 그 외는 read-only 스키마
+ *
+ * microchip step 의 폼 state(chip / date / dirty / save)는 이 컴포넌트에서 관리.
+ * iOS Contacts 편집 패턴 — 우상단 '저장' 버튼이 화면 전체 폼 변경을 한 번에 commit.
+ * MicrochipInputs 는 controlled (chip/date/setChip/setDate props) 로 입력만 담당.
  */
 export function StepDetailView({
   caseId,
@@ -36,6 +45,53 @@ export function StepDetailView({
   petName: string
   tripType: 'round' | 'one_way'
 }) {
+  const isMicrochip = step.id === 'microchip'
+  const caseRow = useCase(caseId)
+  const { updateCase } = useCases()
+
+  // microchip 폼 state — 다른 step 에서는 아무 효과 없음(렌더 안 함). hooks 는 매번 호출.
+  const savedChip = caseRow?.microchip ?? ''
+  const savedDate = readImplantDate(caseRow?.data)
+  const [chip, setChip] = useState(savedChip)
+  const [date, setDate] = useState(savedDate)
+  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [error, setError] = useState<string | null>(null)
+  const [, startTransition] = useTransition()
+
+  const dirty = isMicrochip && (chip !== savedChip || date !== savedDate)
+
+  // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
+  useEffect(() => {
+    if (!dirty) setChip(caseRow?.microchip ?? '')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.microchip])
+  useEffect(() => {
+    if (!dirty) setDate(readImplantDate(caseRow?.data))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data])
+
+  function handleSave() {
+    if (!isMicrochip || !dirty) return
+    if (chip !== '' && chip.length !== 15) {
+      setStatus('error')
+      setError('마이크로칩 번호는 15자리여야 합니다.')
+      return
+    }
+    setStatus('saving')
+    setError(null)
+    startTransition(async () => {
+      const res = await updateMicrochipFields(caseId, chip || null, date || null)
+      if (res.ok) {
+        updateCase(res.value)
+        setStatus('saved')
+        window.setTimeout(() => setStatus('idle'), 1500)
+      } else {
+        setStatus('error')
+        setError(res.error)
+      }
+    })
+  }
+
   const C = {
     bg: '#F5EFE8',
     surface: '#FBF7F1',
@@ -82,21 +138,67 @@ export function StepDetailView({
       }}
     >
       <div style={{ padding: '0 20px' }}>
-        {/* Back link */}
-        <Link
-          href={`/cases/${caseId}/journey`}
+        {/* In-page navigation row — 좌측 back, 우측 저장(microchip 한정).
+            iOS Contacts 편집 패턴. dirty 일 때만 저장 활성. */}
+        <div
           style={{
-            display: 'inline-flex',
+            display: 'flex',
             alignItems: 'center',
-            gap: 4,
-            fontSize: 13,
-            color: C.ink2,
-            textDecoration: 'none',
-            padding: '6px 0',
+            justifyContent: 'space-between',
+            gap: 12,
+            minHeight: 32,
           }}
         >
-          ← 일정으로
-        </Link>
+          <Link
+            href={`/cases/${caseId}/journey`}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              fontSize: 13,
+              color: C.ink2,
+              textDecoration: 'none',
+              padding: '6px 0',
+            }}
+          >
+            ← 일정으로
+          </Link>
+          {isMicrochip && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span
+                aria-live="polite"
+                style={{
+                  fontSize: 12,
+                  color: status === 'error' ? C.warn : status === 'saved' ? C.sage : C.ink3,
+                }}
+              >
+                {status === 'saving' && '저장 중…'}
+                {status === 'saved' && '✓ 저장됨'}
+                {status === 'error' && (error ?? '저장 실패')}
+              </span>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={!dirty || status === 'saving'}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 999,
+                  border: 0,
+                  background: dirty && status !== 'saving' ? C.accent : 'transparent',
+                  color: dirty && status !== 'saving' ? '#fff' : C.ink3,
+                  fontFamily: 'inherit',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  letterSpacing: '-0.005em',
+                  cursor: dirty && status !== 'saving' ? 'pointer' : 'not-allowed',
+                  transition: 'background .15s, color .15s',
+                }}
+              >
+                저장
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Header — 일정 row 와 동일한 동그라미(완료 ✓ 또는 번호) + 항목명. */}
         <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -214,7 +316,7 @@ export function StepDetailView({
         )}
 
         {/* Inputs — 마이크로칩 step 은 인터랙티브, 그 외는 read-only 스키마 미리보기. */}
-        {step.id === 'microchip' && (
+        {isMicrochip && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력 정보</h3>
             <div
@@ -225,7 +327,7 @@ export function StepDetailView({
                 padding: '16px 16px',
               }}
             >
-              <MicrochipInputs caseId={caseId} />
+              <MicrochipInputs chip={chip} date={date} onChipChange={setChip} onDateChange={setDate} />
             </div>
           </section>
         )}
@@ -310,4 +412,10 @@ function fieldTypeLabel(t: string): string {
     default:
       return t
   }
+}
+
+function readImplantDate(data: Record<string, unknown> | null | undefined): string {
+  if (!data) return ''
+  const v = data['microchip_implant_date']
+  return typeof v === 'string' ? v : ''
 }
