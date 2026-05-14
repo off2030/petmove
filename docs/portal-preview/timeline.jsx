@@ -1,11 +1,11 @@
 // timeline.jsx — Calm 디자인 시스템 (Stone palette + Fraunces serif)
 // 최종 디자인은 Calm 변형만 사용 (chat2: "타임라인 뷰 링뷰 제거" 이후)
 
-function Timeline({ scenario, onNav, ringShape = 'B' }) {
+function Timeline({ scenario, onNav, ringShape = 'H' }) {
   return <TimelineCalm scenario={scenario} onNav={onNav} ringShape={ringShape} />;
 }
 
-function TimelineCalm({ scenario, onNav, ringShape = 'B' }) {
+function TimelineCalm({ scenario, onNav, ringShape = 'H' }) {
   const { stages, trip, pet } = scenario;
   const total = stages.length;
   const done = stages.filter((s) => s.state === 'done').length;
