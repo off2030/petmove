@@ -76,6 +76,7 @@ export function CaseSwitcher() {
           <Link
             key={c.id}
             href={`/cases/${c.id}/${tab}`}
+            prefetch
             style={{
               flexShrink: 0,
               padding: '8px 14px',

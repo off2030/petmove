@@ -2,6 +2,7 @@
 
 import { supabaseBrowser } from '@petmove/auth'
 import type { CaseRow } from '@petmove/domain'
+import { useRouter } from 'next/navigation'
 import {
   createContext,
   useCallback,
@@ -48,8 +49,35 @@ export function CaseDataProvider({
   userEmail: string | null
   children: React.ReactNode
 }) {
+  const router = useRouter()
   const [cases, setCases] = useState<CaseRow[]>(initialCases)
   const [profile, setProfile] = useState<CustomerProfileRow | null>(initialProfile)
+
+  // 모든 케이스 × 탭 URL 을 백그라운드 prefetch — 케이스 전환 시 RSC 캐시 적중.
+  // setTimeout 으로 첫 paint 뒤 시작해 초기 렌더에 영향 없음.
+  useEffect(() => {
+    if (cases.length === 0) return
+    const timer = setTimeout(() => {
+      const tabs = ['journey', 'docs', 'info'] as const
+      for (const c of cases) {
+        for (const t of tabs) {
+          try {
+            // @ts-expect-error PrefetchKind enum not publicly exported; runtime 'full' matches.
+            router.prefetch(`/cases/${c.id}/${t}`, { kind: 'full' })
+          } catch {
+            /* best-effort */
+          }
+        }
+      }
+      try {
+        // @ts-expect-error PrefetchKind enum not publicly exported
+        router.prefetch('/me', { kind: 'full' })
+      } catch {
+        /* best-effort */
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [cases, router])
 
   const refreshCases = useCallback(async () => {
     const result = await listMyCases()
