@@ -5,12 +5,15 @@ import { ConfirmProvider } from '@petmove/ui'
 import { ServiceWorkerRegister } from '@/components/sw-register'
 
 // Portal MVP 폰트 스택 — Inter_Tight (body sans, next/font self-host) + Fraunces
-// (display serif, globals.css 의 @import 로 Google Fonts CDN 로드).
-// Fraunces 를 next/font 가 아닌 CSS @import 로 가져오는 이유: portal-preview JSX
+// (display serif, <head> 의 <link> 로 Google Fonts CDN 로드).
+// Fraunces 를 next/font 가 아닌 <link> 로 가져오는 이유: portal-preview JSX
 // 와 동일한 inline fontFamily ("'Fraunces', 'Pretendard Variable', serif") 를 그대로
 // 매칭시키려면 family 이름이 해시되지 않은 리터럴 'Fraunces' 여야 한다. next/font
 // 는 family 명을 __Fraunces_xxxx 식으로 해시하므로 리터럴 미스매치 → 시스템 serif
 // 폴백 문제가 있었음.
+// globals.css 의 @import 로 시도했으나 Next 16 Turbopack 이 @tailwind expand 후
+// @import 를 뒤로 밀어내 "@import rules must precede all rules" 빌드 에러가 남.
+// portal-preview/index.html 과 동일하게 <link> 태그로 옮김.
 const interTight = Inter_Tight({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
@@ -51,6 +54,14 @@ export default function RootLayout({
       suppressHydrationWarning
       className={interTight.variable}
     >
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap"
+        />
+      </head>
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
         <ServiceWorkerRegister />
         <ConfirmProvider>
