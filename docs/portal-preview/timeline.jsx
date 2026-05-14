@@ -72,12 +72,19 @@ function TimelineCalm({ scenario, onNav, ringShape = 'B' }) {
           </div>
         </div>
 
-        {/* 다음 할 일 — soft taupe gradient card */}
-        <div style={{
-          marginTop: 22, padding: 22, borderRadius: 22,
-          background: C.cardSoft,
-          boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
-        }}>
+        {/* 다음 할 일 — soft taupe gradient card. 카드 전체가 클릭 가능 (해당 단계 상세로 이동). */}
+        <button
+          type="button"
+          onClick={() => onNav && onNav('timeline')}
+          className="pm-pressable"
+          style={{
+            display: 'block', width: '100%', textAlign: 'left',
+            marginTop: 22, padding: 22, borderRadius: 22,
+            background: C.cardSoft, border: 0,
+            boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
+            color: 'inherit', fontFamily: 'inherit', cursor: 'pointer',
+          }}
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <div style={{ ...monoCap, color: 'rgba(45,38,28,.55)' }}>다음 할 일</div>
             <span style={{ ...monoCap, fontSize: 9.5, color: 'rgba(45,38,28,.75)', fontWeight: 600 }}>D-7</span>
@@ -95,21 +102,7 @@ function TimelineCalm({ scenario, onNav, ringShape = 'B' }) {
           }}>
             5월 10일부터 검사 가능 · 채혈 → 일본 지정 검사기관 송부
           </p>
-          <button
-            onClick={() => onNav && onNav('timeline')}
-            style={{
-              marginTop: 16, padding: '9px 14px', borderRadius: 999,
-              border: '.5px solid rgba(45,38,28,.18)', background: 'rgba(255,253,247,.55)',
-              color: '#2A2620', fontSize: 12, fontWeight: 500, cursor: 'pointer',
-              fontFamily: 'inherit', letterSpacing: '-0.005em',
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              backdropFilter: 'blur(4px)',
-            }}
-          >
-            자세히 보기
-            <span style={{ color: 'rgba(45,38,28,.5)' }}>→</span>
-          </button>
-        </div>
+        </button>
 
         {/* Now-Step hero — big circular progress (Now Playing pattern) */}
         <div style={{

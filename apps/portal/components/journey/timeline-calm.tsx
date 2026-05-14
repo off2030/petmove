@@ -112,15 +112,21 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
           </div>
         </div>
 
-        {/* 다음 할 일 카드 — soft taupe gradient */}
+        {/* 다음 할 일 카드 — soft taupe gradient. 클릭 시 해당 단계 상세로 이동. */}
         {nextStage && (
-          <div
+          <Link
+            href={`/cases/${caseId}/journey/${nextStage.id}`}
+            className="pm-pressable"
             style={{
+              display: 'block',
               marginTop: 22,
               padding: 22,
               borderRadius: 22,
               background: C.cardSoft,
               boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
+              textDecoration: 'none',
+              color: 'inherit',
+              cursor: 'pointer',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -145,7 +151,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
             {nextStage.desc && (
               <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>{nextStage.desc}</p>
             )}
-          </div>
+          </Link>
         )}
 
         {/* 진행률 링 — taupe radial gradient hero */}
