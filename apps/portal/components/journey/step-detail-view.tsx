@@ -124,9 +124,9 @@ export function StepDetailView({
             color: C.ink2,
           }}
         >
-          {step.description.split('\n').map((line, i) => (
-            <p key={i} style={{ margin: i === 0 ? 0 : '8px 0 0' }}>
-              {line}
+          {step.description.split(/\n\n+/).map((para, i) => (
+            <p key={i} style={{ margin: i === 0 ? 0 : '14px 0 0' }}>
+              {para}
             </p>
           ))}
           {step.id === 'intake' && (
