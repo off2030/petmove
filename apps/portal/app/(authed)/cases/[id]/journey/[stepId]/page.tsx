@@ -39,7 +39,8 @@ export default function CaseJourneyStepPage({
   if (!step) notFound()
 
   const applicable = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
-  if (!applicable.some((s) => s.id === step.id)) notFound()
+  const stepIndex = applicable.findIndex((s) => s.id === step.id)
+  if (stepIndex === -1) notFound()
 
   const ctx = buildCaseJourneyContext(caseRow)
   const done = resolveDone(step.done, caseRow)
@@ -50,6 +51,7 @@ export default function CaseJourneyStepPage({
       caseId={id}
       step={step}
       done={done}
+      stepNumber={stepIndex + 1}
       checkResults={checkResults}
       destinationLabel={ctx.destinationToken ?? caseRow.destination ?? '—'}
       petName={caseRow.pet_name ?? '반려동물'}

@@ -20,6 +20,7 @@ export function StepDetailView({
   caseId,
   step,
   done,
+  stepNumber,
   checkResults,
   destinationLabel,
   petName,
@@ -28,6 +29,8 @@ export function StepDetailView({
   caseId: string
   step: StepDefinition
   done: boolean
+  /** applicable step 들 안에서 1-based 순번. 일정 row 의 좌측 번호와 동일. */
+  stepNumber: number
   checkResults: CollectedCheck[]
   destinationLabel: string
   petName: string
@@ -50,6 +53,11 @@ export function StepDetailView({
     fontFamily: 'var(--pm-font-display)',
     fontWeight: 500,
     letterSpacing: '-0.01em',
+  }
+  const num: React.CSSProperties = {
+    fontFamily: 'var(--pm-font-display)',
+    fontVariantNumeric: 'tabular-nums',
+    fontWeight: 400,
   }
   const monoCap: React.CSSProperties = {
     fontSize: 11,
@@ -90,25 +98,47 @@ export function StepDetailView({
           ← 일정으로
         </Link>
 
-        {/* Header */}
-        <div style={{ marginTop: 10, display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-          <div style={monoCap}>{categoryLabel(step.category)}</div>
-          {done && (
-            <span
-              style={{
-                ...monoCap,
-                color: C.sage,
-                fontWeight: 700,
-              }}
-            >
-              완료
-            </span>
-          )}
+        {/* Header — 일정 row 와 동일한 동그라미(완료 ✓ 또는 번호) + 항목명. */}
+        <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: '50%',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: done ? C.sage : 'transparent',
+              border: done ? 'none' : `1px solid ${C.line}`,
+              color: done ? C.surface : C.ink3,
+              ...num,
+              fontSize: 13,
+            }}
+            aria-hidden
+          >
+            {done ? (
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            ) : (
+              stepNumber
+            )}
+          </div>
+          <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.15, margin: 0, color: C.ink, minWidth: 0 }}>
+            {step.title}
+          </h1>
         </div>
-        <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.15, margin: '6px 0 4px', color: C.ink }}>
-          {step.title}
-        </h1>
-        <div style={{ fontSize: 12, color: C.ink2 }}>
+        <div style={{ fontSize: 12, color: C.ink2, marginTop: 4 }}>
           {petName} · 한국 {tripType === 'round' ? '⇄' : '→'} {destinationLabel}
         </div>
 
@@ -261,25 +291,6 @@ export function StepDetailView({
       </div>
     </div>
   )
-}
-
-function categoryLabel(c: StepDefinition['category']): string {
-  switch (c) {
-    case 'preparation':
-      return '준비'
-    case 'vaccination':
-      return '접종'
-    case 'lab':
-      return '검사'
-    case 'permit':
-      return '허가'
-    case 'document':
-      return '서류'
-    case 'logistics':
-      return '항공'
-    case 'travel':
-      return '이동'
-  }
 }
 
 function fieldTypeLabel(t: string): string {
