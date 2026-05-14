@@ -26,7 +26,7 @@ function PhoneShell({ screen, onNav, scenario, ringShape }) {
     <div style={{ position: 'relative' }}>
       <IOSDevice width={390} height={844} dark={false}>
         <PMScreenContent screen={screen} scenario={scenario} onNav={onNav} ringShape={ringShape}/>
-        <ThemeControls/>
+        <ThemeControls onNav={onNav}/>
         <BottomNav screen={screen} onNav={onNav} />
       </IOSDevice>
     </div>
@@ -48,8 +48,8 @@ function PMScreenContent({ screen, scenario, onNav, ringShape }) {
   );
 }
 
-// 다이내믹 아일랜드 우측: PETMOVE 워드마크 (좌) + 팔레트·다크모드 (우)
-function ThemeControls() {
+// 다이내믹 아일랜드 우측: PETMOVE 워드마크 (좌, 클릭 시 첫 화면=timeline) + 팔레트·다크모드 (우)
+function ThemeControls({ onNav }) {
   const btn = {
     width: 26, height: 26, borderRadius: '50%', border: 0,
     background: 'transparent',
@@ -65,12 +65,18 @@ function ThemeControls() {
       padding: '0 22px',
       pointerEvents: 'none',
     }}>
-      <div style={{
-        fontFamily: "'Fraunces', 'Pretendard Variable', serif",
-        fontWeight: 500, fontSize: 11, letterSpacing: '0.22em',
-        color: 'var(--pm-ink-3)', textTransform: 'uppercase',
-        pointerEvents: 'auto',
-      }}>PETMOVE</div>
+      <button
+        type="button"
+        aria-label="첫 화면"
+        onClick={() => onNav && onNav('timeline')}
+        style={{
+          fontFamily: "'Fraunces', 'Pretendard Variable', serif",
+          fontWeight: 500, fontSize: 11, letterSpacing: '0.22em',
+          color: 'var(--pm-ink-3)', textTransform: 'uppercase',
+          pointerEvents: 'auto',
+          background: 'transparent', border: 0, padding: 0, cursor: 'pointer',
+        }}
+      >PETMOVE</button>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, pointerEvents: 'auto' }}>
         <button aria-label="팔레트" title="테마" style={btn}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">

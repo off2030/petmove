@@ -74,7 +74,10 @@ export function TopBar() {
         WebkitBackdropFilter: 'blur(20px)',
       }}
     >
-      <div
+      <Link
+        href="/cases"
+        prefetch
+        aria-label="첫 화면"
         style={{
           fontFamily: 'var(--pm-font-display)',
           fontWeight: 500,
@@ -84,10 +87,11 @@ export function TopBar() {
           textTransform: 'uppercase',
           pointerEvents: 'auto',
           flexShrink: 0,
+          textDecoration: 'none',
         }}
       >
         PETMOVE
-      </div>
+      </Link>
       <div
         style={{
           display: 'flex',
