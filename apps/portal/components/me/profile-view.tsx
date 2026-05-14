@@ -1,3 +1,5 @@
+import type { CaseRow } from '@petmove/domain'
+import { PetAvatarPicker } from '@/components/me/pet-avatar-picker'
 import { signOut } from '@/lib/actions/profile'
 import type { GuardianBlock, PartnerBlock, PetBlock, ProfileViewData } from '@/lib/profile/catalog'
 
@@ -12,7 +14,13 @@ import type { GuardianBlock, PartnerBlock, PetBlock, ProfileViewData } from '@/l
  *
  * partner 정보는 admin organization 영역이라 Phase 1 에서 null → dashed placeholder card.
  */
-export function ProfileView({ data }: { data: ProfileViewData }) {
+export function ProfileView({
+  data,
+  primaryCase,
+}: {
+  data: ProfileViewData
+  primaryCase: CaseRow | null
+}) {
   const C = {
     bg: '#F5EFE8',
     surface: '#FBF7F1',
@@ -58,7 +66,14 @@ export function ProfileView({ data }: { data: ProfileViewData }) {
       <div style={{ padding: '0 24px' }}>
         <h1 style={{ ...serif, fontSize: 30, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>프로필</h1>
 
-        <HeroCard guardian={data.guardian} pet={data.pet} C={C} serif={serif} num={num} />
+        <HeroCard
+          guardian={data.guardian}
+          pet={data.pet}
+          primaryCase={primaryCase}
+          C={C}
+          serif={serif}
+          num={num}
+        />
 
         <PartnerCard
           cap="동물병원"
@@ -113,12 +128,14 @@ interface Palette {
 function HeroCard({
   guardian,
   pet,
+  primaryCase,
   C,
   serif,
   num,
 }: {
   guardian: GuardianBlock
   pet: PetBlock | null
+  primaryCase: CaseRow | null
   C: Palette
   serif: React.CSSProperties
   num: React.CSSProperties
@@ -168,25 +185,10 @@ function HeroCard({
         </div>
       </div>
 
-      {pet && (
+      {pet && primaryCase && (
         <>
           <div style={{ height: 0.5, background: C.line }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <PetAvatar size={52} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ ...serif, fontSize: 18, color: C.ink }}>{pet.name ?? '이름 미정'}</span>
-                {pet.nameEn && (
-                  <span style={{ ...serif, fontStyle: 'italic', fontSize: 13, color: C.ink3, fontWeight: 400 }}>
-                    {pet.nameEn}
-                  </span>
-                )}
-              </div>
-              <div style={{ fontSize: 12, color: C.ink3, marginTop: 4 }}>
-                {[pet.breed, pet.ageLabel, pet.weight].filter(Boolean).join(' · ') || '추가 정보 미입력'}
-              </div>
-            </div>
-          </div>
+          <PetAvatarPicker case_={primaryCase} pet={pet} />
         </>
       )}
     </div>
@@ -366,46 +368,3 @@ function AccountSection({
   )
 }
 
-function PetAvatar({ size = 52 }: { size?: number }) {
-  return (
-    <div
-      style={{
-        width: size,
-        height: size,
-        borderRadius: '50%',
-        background: 'linear-gradient(135deg, #F2C9A4 0%, #E5A776 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-        overflow: 'hidden',
-        boxShadow: 'inset 0 1px 2px rgba(255,255,255,.4), 0 1px 2px rgba(0,0,0,.06)',
-      }}
-    >
-      <svg width={size * 0.7} height={size * 0.7} viewBox="0 0 40 40">
-        <path
-          d="M20 8c-7 0-12 4.5-12 11 0 5 3 9 8 10.5 1.2.3 2.6.5 4 .5s2.8-.2 4-.5c5-1.5 8-5.5 8-10.5 0-6.5-5-11-12-11z"
-          fill="#FFF6EE"
-        />
-        <path d="M11 11l3.5 5.5L9 16l2-5z" fill="#C9824D" />
-        <path d="M29 11l-3.5 5.5L31 16l-2-5z" fill="#C9824D" />
-        <path d="M11.5 12l2.5 4L10.5 16l1-4z" fill="#FFD9B5" />
-        <path d="M28.5 12l-2.5 4L29.5 16l-1-4z" fill="#FFD9B5" />
-        <path
-          d="M14 18c-1 3-1 6 0 8 1 2 3.5 3 6 3s5-1 6-3c1-2 1-5 0-8-2-1-4-1.5-6-1.5s-4 .5-6 1.5z"
-          fill="#F5DCC1"
-        />
-        <circle cx="16" cy="20" r="1.2" fill="#1F1B2E" />
-        <circle cx="24" cy="20" r="1.2" fill="#1F1B2E" />
-        <ellipse cx="20" cy="24" rx="1.4" ry="1" fill="#1F1B2E" />
-        <path
-          d="M20 25v1.5M18 27c.5.5 1.2.7 2 .7s1.5-.2 2-.7"
-          stroke="#1F1B2E"
-          strokeWidth="0.8"
-          strokeLinecap="round"
-          fill="none"
-        />
-      </svg>
-    </div>
-  )
-}

@@ -19,5 +19,5 @@ export default function MePage() {
     primaryCase,
   })
 
-  return <ProfileView data={data} />
+  return <ProfileView data={data} primaryCase={primaryCase} />
 }

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import type { CaseRow } from '@petmove/domain'
+import { avatarGlyph, avatarGradient, avatarIsEmoji } from '@/lib/avatar'
 import { useCases } from './case-data-provider'
 
 /**
@@ -10,19 +10,14 @@ import { useCases } from './case-data-provider'
  *
  * 좌측: PETMOVE 워드마크 (Fraunces serif, letterSpacing 0.22em — 브랜드 시그니처)
  * 우측: 팔레트 / 다크모드 토글 → 구분선 → 펫 아바타 스위처(케이스 ≥1건일 때).
- *   - 아바타 색은 case.id 해시로 3색 팔레트 cycle (같은 케이스는 항상 같은 색)
+ *   - 아바타 (이모지/색) 는 보호자가 /me 에서 설정. 미설정 시 pet_name 첫 글자 +
+ *     case.id 해시 색으로 fallback. 헬퍼는 @/lib/avatar.
  *   - 활성 상태: 외곽 brown ring + scale 1, 비활성: opacity .42 + scale .9
  *   - 클릭 시 현재 탭(journey/docs/info) 유지하며 caseId 만 교체
  *
  * position: fixed top. safe-area-inset-top 보정 (iOS PWA 다이내믹 아일랜드).
  * height(=safe-area + 48) 만큼 본문 paddingTop 필요. (authed) layout 에서 처리.
  */
-
-const PET_GRADIENTS = [
-  'linear-gradient(135deg, #E5A776 0%, #C9824D 100%)', // 오렌지
-  'linear-gradient(135deg, #4A4458 0%, #28252E 100%)', // 다크 퍼플
-  'linear-gradient(135deg, #C9DBCB 0%, #97B69A 100%)', // 세이지
-] as const
 
 function caseIdFromPath(pathname: string): string | null {
   const m = pathname.match(/^\/cases\/([^/]+)(?:\/|$)/)
@@ -33,17 +28,6 @@ function currentTab(pathname: string): 'journey' | 'docs' | 'info' {
   if (pathname.includes('/docs')) return 'docs'
   if (pathname.includes('/info')) return 'info'
   return 'journey'
-}
-
-function petInitial(c: CaseRow): string {
-  const name = c.pet_name ?? ''
-  return name.slice(0, 1) || '·'
-}
-
-function gradientFor(id: string): string {
-  let h = 0
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0
-  return PET_GRADIENTS[h % PET_GRADIENTS.length]
 }
 
 export function TopBar() {
@@ -147,6 +131,7 @@ export function TopBar() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               {cases.map((c) => {
                 const isActive = c.id === activeCaseId
+                const isEmoji = avatarIsEmoji(c)
                 return (
                   <Link
                     key={c.id}
@@ -160,15 +145,18 @@ export function TopBar() {
                       height: 30,
                       borderRadius: '50%',
                       padding: 0,
-                      background: gradientFor(c.id),
+                      background: avatarGradient(c),
                       border: 'none',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: '#fff',
-                      fontFamily: "'Fraunces', 'Pretendard Variable', serif",
+                      fontFamily: isEmoji
+                        ? "-apple-system, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
+                        : "'Fraunces', 'Pretendard Variable', serif",
                       fontWeight: 600,
-                      fontSize: 11,
+                      fontSize: isEmoji ? 15 : 11,
+                      lineHeight: 1,
                       textDecoration: 'none',
                       opacity: isActive ? 1 : 0.42,
                       boxShadow: isActive
@@ -178,7 +166,7 @@ export function TopBar() {
                       transition: 'opacity .2s, transform .2s, box-shadow .2s',
                     }}
                   >
-                    {petInitial(c)}
+                    {avatarGlyph(c)}
                   </Link>
                 )
               })}

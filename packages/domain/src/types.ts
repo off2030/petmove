@@ -12,6 +12,8 @@ export interface CaseRow {
   destination: string | null
   departure_date: string | null
   assigned_to: string | null
+  avatar_emoji: string | null
+  avatar_color: string | null
   data: Record<string, unknown>
   created_at: string
   updated_at: string
