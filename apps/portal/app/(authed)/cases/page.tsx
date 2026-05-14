@@ -25,7 +25,7 @@ export default async function CasesPage() {
       <h1
         style={{
           fontFamily: 'var(--pm-font-display)',
-          fontSize: 24,
+          fontSize: 28,
           fontWeight: 500,
           letterSpacing: '-0.01em',
           margin: '12px 0 16px',
@@ -51,7 +51,7 @@ export default async function CasesPage() {
               border: '1px solid rgba(0,0,0,0.04)',
             }}
           >
-            <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>{petName}</div>
+            <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em' }}>{petName}</div>
             {dest && (
               <div style={{ fontSize: 13, color: '#6B6457', marginTop: 4 }}>
                 한국 {tripType === 'round' ? '⇄' : '→'} {dest}
@@ -88,7 +88,7 @@ function EmptyState() {
       >
         아직 진행 중인 일정이 없습니다
       </h1>
-      <p style={{ fontSize: 14, lineHeight: 1.6, color: '#6B6457', maxWidth: 320 }}>
+      <p style={{ fontSize: 15, lineHeight: 1.6, color: '#6B6457', maxWidth: 320 }}>
         반려동물 출국을 준비 중이신가요? 신청서를 작성하시면 담당 수의사가 검토 후 일정을
         준비해 드립니다. 이미 펫무브워크에서 진행 중이라면 같은 이메일로 가입 시 자동
         연결됩니다.
@@ -101,7 +101,7 @@ function EmptyState() {
           borderRadius: 999,
           background: '#B89968',
           color: '#FBF7F1',
-          fontSize: 13.5,
+          fontSize: 13,
           fontWeight: 600,
           letterSpacing: '-0.005em',
           textDecoration: 'none',
@@ -116,7 +116,7 @@ function EmptyState() {
 function ErrorState({ message }: { message: string }) {
   return (
     <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-      <p style={{ fontSize: 14, color: '#A04525' }}>케이스를 불러오지 못했습니다.</p>
+      <p style={{ fontSize: 15, color: '#A04525' }}>케이스를 불러오지 못했습니다.</p>
       <p style={{ fontSize: 12, color: '#9A9286', marginTop: 8 }}>{message}</p>
     </div>
   )

@@ -30,7 +30,7 @@ export function DocsView({ data }: { data: DocsViewData }) {
     fontWeight: 400,
   }
   const monoCap: React.CSSProperties = {
-    fontSize: 10.5,
+    fontSize: 11,
     letterSpacing: '0.16em',
     textTransform: 'uppercase',
     color: C.ink3,
@@ -66,10 +66,10 @@ export function DocsView({ data }: { data: DocsViewData }) {
           <span style={{ alignSelf: 'center' }}>
             <PetAvatar size={36} />
           </span>
-          <h1 style={{ ...serif, fontSize: 30, lineHeight: 1.12, margin: 0, color: C.ink }}>{pet.name}</h1>
+          <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: 0, color: C.ink }}>{pet.name}</h1>
           <div
             style={{
-              fontSize: 12.5,
+              fontSize: 12,
               color: C.ink2,
               display: 'flex',
               alignItems: 'center',
@@ -156,7 +156,7 @@ export function DocsView({ data }: { data: DocsViewData }) {
 
 function SectionLabel({ children, right }: { children: React.ReactNode; right?: string }) {
   const monoCap: React.CSSProperties = {
-    fontSize: 10.5,
+    fontSize: 11,
     letterSpacing: '0.16em',
     textTransform: 'uppercase',
     color: '#9A9286',
@@ -174,7 +174,7 @@ function SectionLabel({ children, right }: { children: React.ReactNode; right?: 
       }}
     >
       <span style={monoCap}>{children}</span>
-      {right && <span style={{ ...monoCap, fontSize: 9.5 }}>{right}</span>}
+      {right && <span style={monoCap}>{right}</span>}
     </div>
   )
 }
@@ -187,7 +187,7 @@ function EmptyHint({ children }: { children: React.ReactNode }) {
         border: '.5px dashed rgba(42,38,32,.10)',
         borderRadius: 14,
         padding: '14px 16px',
-        fontSize: 12.5,
+        fontSize: 13,
         color: '#9A9286',
         lineHeight: 1.55,
       }}
@@ -263,19 +263,18 @@ function ChecklistRow({
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontSize: 13.5,
+            fontSize: 17,
             fontWeight: 500,
             color: ok ? C.ink : C.ink2,
           }}
         >
           {doc.name}
         </div>
-        <div style={{ fontSize: 11.5, color: C.ink3, marginTop: 2 }}>{doc.source}</div>
+        <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>{doc.source}</div>
       </div>
       <span
         style={{
           ...monoCap,
-          fontSize: 9,
           color: ok ? C.sage : C.ink3,
           fontWeight: 600,
         }}
@@ -314,7 +313,7 @@ function DocRow({
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span
             style={{
-              fontSize: 13.5,
+              fontSize: 17,
               fontWeight: 500,
               color: pending ? C.ink2 : C.ink,
               overflow: 'hidden',
@@ -328,7 +327,6 @@ function DocRow({
             <span
               style={{
                 ...monoCap,
-                fontSize: 8.5,
                 padding: '1px 6px',
                 background: C.soft,
                 color: C.accent,
@@ -340,7 +338,7 @@ function DocRow({
             </span>
           )}
         </div>
-        <div style={{ ...num, fontSize: 11, color: C.ink3, marginTop: 3 }}>
+        <div style={{ ...num, fontSize: 12, color: C.ink3, marginTop: 3 }}>
           {doc.date ? doc.date.replace(/-/g, '·') : '발급 대기'}
           {sized && ` · ${sized}`} · {doc.source}
         </div>
@@ -349,7 +347,6 @@ function DocRow({
         <span
           style={{
             ...monoCap,
-            fontSize: 9,
             padding: '4px 8px',
             background: 'rgba(42,38,32,.04)',
             borderRadius: 999,
@@ -438,7 +435,7 @@ function DocIcon({
         <span
           style={{
             ...num,
-            fontSize: 8.5,
+            fontSize: 10,
             fontWeight: 500,
             color: C.accent,
             letterSpacing: '0.08em',
@@ -507,8 +504,8 @@ function UploadPlaceholder({ C, serif }: { C: PaletteShape; serif: React.CSSProp
         </svg>
       </div>
       <div style={{ flex: 1 }}>
-        <div style={{ ...serif, fontSize: 13.5, color: C.ink }}>사본 추가 업로드</div>
-        <div style={{ fontSize: 11, color: C.ink3, marginTop: 2 }}>업로드 기능은 곧 추가됩니다</div>
+        <div style={{ ...serif, fontSize: 17, color: C.ink }}>사본 추가 업로드</div>
+        <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>업로드 기능은 곧 추가됩니다</div>
       </div>
     </div>
   )

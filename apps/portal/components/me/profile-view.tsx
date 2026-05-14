@@ -44,7 +44,7 @@ export function ProfileView({
     fontWeight: 400,
   }
   const monoCap: React.CSSProperties = {
-    fontSize: 10.5,
+    fontSize: 11,
     letterSpacing: '0.16em',
     textTransform: 'uppercase',
     color: C.ink3,
@@ -64,7 +64,7 @@ export function ProfileView({
       }}
     >
       <div style={{ padding: '0 24px' }}>
-        <h1 style={{ ...serif, fontSize: 30, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>프로필</h1>
+        <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>프로필</h1>
 
         <HeroCard
           guardian={data.guardian}
@@ -166,7 +166,7 @@ function HeroCard({
             alignItems: 'center',
             justifyContent: 'center',
             ...num,
-            fontSize: 18,
+            fontSize: 20,
             fontWeight: 500,
           }}
         >
@@ -174,7 +174,7 @@ function HeroCard({
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ ...serif, fontSize: 18, color: C.ink }}>{guardian.name ?? '이름 미설정'}</span>
+            <span style={{ ...serif, fontSize: 20, color: C.ink }}>{guardian.name ?? '이름 미설정'}</span>
             {guardian.nameEn && (
               <span style={{ ...serif, fontStyle: 'italic', fontSize: 13, color: C.ink3, fontWeight: 400 }}>
                 {guardian.nameEn}
@@ -227,8 +227,8 @@ function PartnerCard({
           border: `.5px dashed ${C.line}`,
         }}
       >
-        <div style={{ ...monoCap, fontSize: 9.5 }}>{cap}</div>
-        <div style={{ marginTop: 10, fontSize: 12.5, color: C.ink3, lineHeight: 1.55 }}>{placeholder}</div>
+        <div style={monoCap}>{cap}</div>
+        <div style={{ marginTop: 10, fontSize: 13, color: C.ink3, lineHeight: 1.55 }}>{placeholder}</div>
       </div>
     )
   }
@@ -243,7 +243,7 @@ function PartnerCard({
         border: `.5px solid ${C.line}`,
       }}
     >
-      <div style={{ ...monoCap, fontSize: 9.5 }}>{cap}</div>
+      <div style={monoCap}>{cap}</div>
       <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 14 }}>
         <div
           style={{
@@ -261,7 +261,7 @@ function PartnerCard({
           {icon}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ ...serif, fontSize: 16, color: C.ink, lineHeight: 1.2 }}>{partner.name}</div>
+          <div style={{ ...serif, fontSize: 17, color: C.ink, lineHeight: 1.2 }}>{partner.name}</div>
           <div style={{ fontSize: 12, color: C.ink3, marginTop: 3 }}>
             {[partner.role, partner.subtitle].filter(Boolean).join(' · ')}
           </div>
@@ -277,7 +277,7 @@ function PartnerCard({
           alignItems: 'center',
         }}
       >
-        <span style={{ ...monoCap, fontSize: 9 }}>연락처</span>
+        <span style={monoCap}>연락처</span>
         <span style={{ ...num, fontSize: 13, color: C.ink }}>{partner.phone ?? '—'}</span>
       </div>
     </div>
@@ -316,10 +316,10 @@ function AccountSection({
             gap: 12,
           }}
         >
-          <span style={{ fontSize: 12.5, color: C.ink2 }}>이메일</span>
+          <span style={{ fontSize: 13, color: C.ink2 }}>이메일</span>
           <span
             style={{
-              fontSize: 13.5,
+              fontSize: 15,
               color: C.ink,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -339,8 +339,8 @@ function AccountSection({
             borderBottom: `.5px solid ${C.line}`,
           }}
         >
-          <span style={{ fontSize: 12.5, color: C.ink2 }}>알림</span>
-          <span style={{ fontSize: 13.5, color: C.ink3 }}>{account.notificationLabel}</span>
+          <span style={{ fontSize: 13, color: C.ink2 }}>알림</span>
+          <span style={{ fontSize: 15, color: C.ink3 }}>{account.notificationLabel}</span>
         </div>
         <form action={signOut}>
           <button
@@ -359,8 +359,8 @@ function AccountSection({
               fontFamily: 'inherit',
             }}
           >
-            <span style={{ fontSize: 12.5, color: C.ink2 }}>로그아웃</span>
-            <span style={{ fontSize: 13.5, color: C.ink3 }}>›</span>
+            <span style={{ fontSize: 13, color: C.ink2 }}>로그아웃</span>
+            <span style={{ fontSize: 15, color: C.ink3 }}>›</span>
           </button>
         </form>
       </div>

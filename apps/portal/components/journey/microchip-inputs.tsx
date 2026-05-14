@@ -82,7 +82,7 @@ export function MicrochipInputs({ caseId }: { caseId: string }) {
     fontWeight: 500,
   }
   const helpStyle: React.CSSProperties = {
-    fontSize: 11.5,
+    fontSize: 12,
     color: C.ink3,
     marginTop: 2,
   }
@@ -94,7 +94,7 @@ export function MicrochipInputs({ caseId }: { caseId: string }) {
     borderRadius: 10,
     background: '#fff',
     fontFamily: 'inherit',
-    fontSize: 14,
+    fontSize: 15,
     color: C.ink,
     outline: 'none',
     boxSizing: 'border-box',
@@ -140,7 +140,7 @@ export function MicrochipInputs({ caseId }: { caseId: string }) {
       <div
         aria-live="polite"
         style={{
-          fontSize: 11.5,
+          fontSize: 12,
           color: status === 'error' ? C.warn : status === 'saved' ? C.sage : C.ink3,
           minHeight: 16,
         }}

@@ -52,7 +52,7 @@ export function StepDetailView({
     letterSpacing: '-0.01em',
   }
   const monoCap: React.CSSProperties = {
-    fontSize: 10.5,
+    fontSize: 11,
     letterSpacing: '0.16em',
     textTransform: 'uppercase',
     color: C.ink3,
@@ -81,7 +81,7 @@ export function StepDetailView({
             display: 'inline-flex',
             alignItems: 'center',
             gap: 4,
-            fontSize: 12.5,
+            fontSize: 13,
             color: C.ink2,
             textDecoration: 'none',
             padding: '6px 0',
@@ -92,12 +92,11 @@ export function StepDetailView({
 
         {/* Header */}
         <div style={{ marginTop: 10, display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-          <div style={{ ...monoCap, fontSize: 9.5 }}>{categoryLabel(step.category)}</div>
+          <div style={monoCap}>{categoryLabel(step.category)}</div>
           {done && (
             <span
               style={{
                 ...monoCap,
-                fontSize: 9.5,
                 color: C.sage,
                 fontWeight: 700,
               }}
@@ -109,7 +108,7 @@ export function StepDetailView({
         <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.15, margin: '6px 0 4px', color: C.ink }}>
           {step.title}
         </h1>
-        <div style={{ fontSize: 12.5, color: C.ink2 }}>
+        <div style={{ fontSize: 12, color: C.ink2 }}>
           {petName} · 한국 {tripType === 'round' ? '⇄' : '→'} {destinationLabel}
         </div>
 
@@ -121,7 +120,7 @@ export function StepDetailView({
             borderRadius: 18,
             background: C.surface,
             border: `.5px solid ${C.line}`,
-            fontSize: 14,
+            fontSize: 15,
             lineHeight: 1.65,
             color: C.ink2,
           }}
@@ -141,7 +140,7 @@ export function StepDetailView({
                 border: `.5px solid ${C.line}`,
                 background: 'rgba(255,253,247,.55)',
                 color: C.ink,
-                fontSize: 12.5,
+                fontSize: 13,
                 fontWeight: 500,
                 letterSpacing: '-0.005em',
                 display: 'inline-flex',
@@ -167,16 +166,16 @@ export function StepDetailView({
               border: `.5px solid ${C.warn}33`,
             }}
           >
-            <div style={{ ...monoCap, fontSize: 9.5, color: C.warn, fontWeight: 700, marginBottom: 8 }}>
+            <div style={{ ...monoCap, color: C.warn, fontWeight: 700, marginBottom: 8 }}>
               점검 필요 {failed.length}건
             </div>
             <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {failed.map(({ check, result }) => (
                 <li key={check.id}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, marginBottom: 2 }}>{check.title}</div>
-                  <div style={{ fontSize: 12.5, color: C.ink2, lineHeight: 1.5 }}>{result.message}</div>
+                  <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>{result.message}</div>
                   {result.fixHint && (
-                    <div style={{ fontSize: 11.5, color: C.ink3, marginTop: 4 }}>↳ {result.fixHint}</div>
+                    <div style={{ fontSize: 12, color: C.ink3, marginTop: 4 }}>↳ {result.fixHint}</div>
                   )}
                 </li>
               ))}
@@ -187,7 +186,7 @@ export function StepDetailView({
         {/* Inputs — 마이크로칩 step 은 인터랙티브, 그 외는 read-only 스키마 미리보기. */}
         {step.id === 'microchip' && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 16, margin: '0 0 10px' }}>입력 정보</h3>
+            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력 정보</h3>
             <div
               style={{
                 background: C.surface,
@@ -202,7 +201,7 @@ export function StepDetailView({
         )}
         {step.id !== 'microchip' && step.inputs && step.inputs.length > 0 && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 16, margin: '0 0 10px' }}>입력 정보</h3>
+            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력 정보</h3>
             <div
               style={{
                 background: C.surface,
@@ -225,7 +224,7 @@ export function StepDetailView({
                       {field.label}
                       {field.required && <span style={{ color: C.warn, marginLeft: 4 }}>*</span>}
                     </div>
-                    <div style={{ fontSize: 11.5, color: C.ink3, marginTop: 2 }}>
+                    <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
                       {fieldTypeLabel(field.type)}
                       {field.helpText && ` · ${field.helpText}`}
                     </div>
@@ -233,7 +232,7 @@ export function StepDetailView({
                 )
               })}
             </div>
-            <p style={{ marginTop: 10, fontSize: 11.5, color: C.ink3, lineHeight: 1.5 }}>
+            <p style={{ marginTop: 10, fontSize: 12, color: C.ink3, lineHeight: 1.5 }}>
               입력 기능은 곧 추가됩니다. 현재는 펫무브워크에서 담당 수의사가 입력합니다.
             </p>
           </section>
@@ -242,14 +241,14 @@ export function StepDetailView({
         {/* Attachments placeholder */}
         {step.allowAttachments && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 16, margin: '0 0 10px' }}>첨부</h3>
+            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>첨부</h3>
             <div
               style={{
                 padding: '18px 16px',
                 borderRadius: 16,
                 background: C.surface,
                 border: `.5px dashed ${C.line}`,
-                fontSize: 12.5,
+                fontSize: 13,
                 color: C.ink3,
                 lineHeight: 1.55,
               }}

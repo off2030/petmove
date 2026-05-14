@@ -30,7 +30,7 @@ export function InfoView({ data }: { data: CaseInfoData }) {
     fontWeight: 400,
   }
   const monoCap: React.CSSProperties = {
-    fontSize: 10.5,
+    fontSize: 11,
     letterSpacing: '0.16em',
     textTransform: 'uppercase',
     color: C.ink3,
@@ -50,7 +50,7 @@ export function InfoView({ data }: { data: CaseInfoData }) {
       }}
     >
       <div style={{ padding: '0 24px' }}>
-        <h1 style={{ ...serif, fontSize: 30, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>정보</h1>
+        <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>정보</h1>
 
         <GuardianSection guardian={data.guardian} C={C} serif={serif} num={num} monoCap={monoCap} />
         <PetSection pet={data.pet} C={C} serif={serif} num={num} monoCap={monoCap} />
@@ -129,11 +129,11 @@ function Row({
         gap: 12,
       }}
     >
-      <span style={{ fontSize: 12.5, color: C.ink2, flexShrink: 0, paddingTop: wrap ? 2 : 0 }}>{label}</span>
+      <span style={{ fontSize: 13, color: C.ink2, flexShrink: 0, paddingTop: wrap ? 2 : 0 }}>{label}</span>
       <div style={{ textAlign: 'right', minWidth: 0, flex: 1 }}>
         <div
           style={{
-            fontSize: 13.5,
+            fontSize: 17,
             color: C.ink,
             fontWeight: 500,
             overflow: wrap ? 'visible' : 'hidden',
@@ -146,7 +146,7 @@ function Row({
           {value}
         </div>
         {value2 != null && (
-          <div style={{ fontSize: 11, color: C.ink3, marginTop: 2 }}>{value2}</div>
+          <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>{value2}</div>
         )}
       </div>
     </div>
@@ -312,7 +312,6 @@ function TripSection({
           <span
             style={{
               ...monoCap,
-              fontSize: 9,
               padding: '3px 8px',
               borderRadius: 999,
               background: isRound ? C.soft : 'rgba(42,38,32,.04)',
@@ -375,7 +374,7 @@ function FlightsSection({
             border: `.5px dashed ${C.line}`,
             borderRadius: 18,
             padding: '14px 16px',
-            fontSize: 12.5,
+            fontSize: 13,
             color: C.ink3,
             lineHeight: 1.55,
           }}
@@ -406,7 +405,7 @@ function FlightsSection({
                 gap: 12,
               }}
             >
-              <span style={{ ...monoCap, fontSize: 9.5 }}>{f.label}</span>
+              <span style={monoCap}>{f.label}</span>
               {f.date && (
                 <span style={{ ...num, fontSize: 12, color: C.ink2 }}>
                   {f.date.replace(/-/g, '·')}
@@ -474,7 +473,7 @@ function FlightsSection({
                   <span />
                 )}
                 {f.transport && (
-                  <span style={{ color: C.ink3, fontSize: 11 }}>{f.transport}</span>
+                  <span style={{ color: C.ink3, fontSize: 12 }}>{f.transport}</span>
                 )}
               </div>
             )}
