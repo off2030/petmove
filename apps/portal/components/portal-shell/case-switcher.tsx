@@ -3,21 +3,22 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { CaseRow } from '@petmove/domain'
+import { useCases } from './case-data-provider'
 
 /**
- * 케이스 스위처 — case layout 상단 고정.
+ * 케이스 스위처 — 케이스 페이지 상단 고정.
  *
- * - 케이스 1건: 현재 펫 이름만 표시 (스위처 노출 안 함, 단순 헤더).
+ * - 케이스 1건: 현재 펫 이름만 표시 (스위처 미노출, 단순 헤더).
  * - 케이스 2건+: 가로 스크롤 칩. 현재 선택 케이스는 어둡게, 나머지는 옅게.
- *   클릭 시 같은 탭(journey/docs/info) 유지하면서 caseId 만 교체.
+ *   클릭 시 같은 탭(journey/docs/info) 유지하며 caseId 만 교체.
  *
- * 디자인은 미니멀 임시본 — portal-preview 시안 확정 후 톤·간격·타이포 정식화.
+ * 데이터·현재 caseId 는 props 가 아닌 Context + pathname 에서 — 케이스 전환 시 layout RSC 가
+ * 비어 있어도 client 가 즉시 처리.
  */
 
-type Props = {
-  caseId: string
-  cases: CaseRow[]
-  current: CaseRow
+function caseIdFromPath(pathname: string): string | null {
+  const m = pathname.match(/^\/cases\/([^/]+)(?:\/|$)/)
+  return m && m[1] !== 'page' ? m[1] : null
 }
 
 function currentTab(pathname: string): 'journey' | 'docs' | 'info' {
@@ -30,9 +31,15 @@ function petName(c: CaseRow): string {
   return c.pet_name ?? '이름 미정'
 }
 
-export function CaseSwitcher({ caseId, cases, current }: Props) {
+export function CaseSwitcher() {
   const pathname = usePathname()
+  const { cases } = useCases()
+  const caseId = caseIdFromPath(pathname)
   const tab = currentTab(pathname)
+  const current = caseId ? cases.find((c) => c.id === caseId) : null
+
+  // /cases/[id] 라우트가 아니면 스위처 숨김 (방어적; layout 안에서 호출되므로 정상 시엔 doesn't happen)
+  if (!current) return null
 
   if (cases.length <= 1) {
     return (

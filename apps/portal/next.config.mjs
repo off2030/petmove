@@ -14,13 +14,12 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '5mb',
     },
-    // 클라이언트 라우터 캐시 TTL. 4탭 스와이프 전환을 즉시화.
-    // dynamic 페이지는 기본 0초 (매 진입마다 서버 왕복) — 30초로 늘리면 prefetch 된
-    // 인접 탭이 캐시에 머물러 스와이프가 즉시 전환.
-    // mutation 은 server action 의 revalidatePath 가 캐시 무효화 → stale 없음.
-    // admin 측 변경은 최대 30초 stale 가능 (앱 재진입·새로고침·router.refresh 면 즉시).
+    // 클라이언트 라우터 캐시 TTL. 4탭 스와이프 + 케이스 전환을 즉시화.
+    // dynamic 페이지는 기본 0초 (매 진입마다 서버 왕복) — Context 가 데이터 source 역할을
+    // 하므로 stale 진입 시에도 UI 는 즉시 (cases 데이터는 Provider 메모리). admin 변경은
+    // Supabase Realtime 으로 push, focus/visibility 로 안전망 → stale 위험 없음.
     staleTimes: {
-      dynamic: 30,
+      dynamic: 120,
       static: 300,
     },
   },
