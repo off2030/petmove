@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Trash2 } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
 import { cn } from '@/lib/utils'
@@ -71,6 +72,11 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
+  const popupRef = useRef<HTMLDivElement>(null)
+  type PopupPos =
+    | { left: number; top: number; maxHeight: number }
+    | { left: number; bottom: number; maxHeight: number }
+  const [popupPos, setPopupPos] = useState<PopupPos | null>(null)
 
   const filtered = ALL_DESTS.filter((d) => {
     if (!query.trim()) return true
@@ -80,15 +86,43 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
 
   useEffect(() => { setOpen(false); setQuery('') }, [caseId])
   useEffect(() => { if (open && inputRef.current) inputRef.current.focus() }, [open])
+  // Close on click outside — trigger(containerRef) 또는 portal 팝업(popupRef) 안쪽이면 유지.
   useEffect(() => {
     if (!open) return
     function onClick(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+      const t = e.target as Node
+      if (containerRef.current?.contains(t)) return
+      if (popupRef.current?.contains(t)) return
+      setOpen(false)
     }
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
+  }, [open])
+
+  // 팝업 위치 측정 — fixed 로 띄워 부모 overflow:auto 클리핑 우회.
+  // containerRef(목적지 값 영역) 바로 아래 — 칩이 없으면 그 자리에, 칩이 있으면 칩 아래.
+  useEffect(() => {
+    if (!open) return
+    function measure() {
+      const rect = containerRef.current?.getBoundingClientRect()
+      if (!rect) return
+      const left = Math.max(8, Math.min(rect.left, window.innerWidth - 256 - 8))
+      const gap = 4
+      const above = rect.top - 8 - gap
+      const below = window.innerHeight - rect.bottom - 8 - gap
+      if (below >= above) {
+        setPopupPos({ left, top: rect.bottom + gap, maxHeight: Math.max(220, below) })
+      } else {
+        setPopupPos({ left, bottom: window.innerHeight - rect.top + gap, maxHeight: Math.max(220, above) })
+      }
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    window.addEventListener('scroll', measure, true)
+    return () => {
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('scroll', measure, true)
+    }
   }, [open])
 
   async function toggleDest(dest: Dest) {
@@ -221,9 +255,20 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
           </div>
         ) : null}
 
-        {open && (
-          <div className="absolute left-0 top-full mt-1 z-20 w-64 rounded-md border border-border/80 bg-background shadow-md">
-            <div className="p-2 border-b border-border/30">
+        {open && popupPos && typeof document !== 'undefined' && createPortal(
+          <div
+            ref={popupRef}
+            style={{
+              position: 'fixed',
+              left: popupPos.left,
+              top: 'top' in popupPos ? popupPos.top : undefined,
+              bottom: 'bottom' in popupPos ? popupPos.bottom : undefined,
+              width: 256,
+              maxHeight: popupPos.maxHeight,
+            }}
+            className="z-50 flex flex-col rounded-md border border-border/80 bg-background shadow-md overflow-hidden"
+          >
+            <div className="shrink-0 p-2 border-b border-border/30">
               <input
                 ref={inputRef}
                 type="text"
@@ -251,7 +296,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                 className="w-full h-8 rounded border border-border/80 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
               />
             </div>
-            <ul ref={listRef} className="max-h-60 overflow-y-auto scrollbar-minimal py-1">
+            <ul ref={listRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-minimal py-1">
               {filtered.length === 0 ? (
                 <li className="px-sm py-2 text-sm text-muted-foreground">검색 결과 없음</li>
               ) : (
@@ -277,7 +322,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                 })
               )}
             </ul>
-            <div className="border-t border-border/30 py-1 flex justify-end">
+            <div className="shrink-0 border-t border-border/30 py-1 flex justify-end">
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -286,7 +331,8 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                 닫기
               </button>
             </div>
-          </div>
+          </div>,
+          document.body,
         )}
         </div>
         {selected.length > 0 && targetDest && (

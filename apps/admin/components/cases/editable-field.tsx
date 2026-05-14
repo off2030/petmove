@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useTransition } from 'react'
+import { createPortal } from 'react-dom'
 import { Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { FieldSpec } from '@petmove/domain'
@@ -114,6 +115,11 @@ export function EditableField({
     HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
   >(null)
   const selectWrapRef = useRef<HTMLDivElement>(null)
+  const selectPopupRef = useRef<HTMLUListElement>(null)
+  type SelectPopupPos =
+    | { left: number; top: number; minWidth: number; maxHeight: number }
+    | { left: number; bottom: number; minWidth: number; maxHeight: number }
+  const [selectPopupPos, setSelectPopupPos] = useState<SelectPopupPos | null>(null)
 
   // Reset editing when case changes (caseId changes)
   useEffect(() => {
@@ -122,15 +128,44 @@ export function EditableField({
   }, [caseId])
 
   // Select 드롭다운: 외부 클릭으로 닫기.
+  // 팝업은 portal 로 띄우므로 selectWrapRef(트리거) 또는 selectPopupRef 안쪽 클릭이면 닫지 않는다.
   useEffect(() => {
     if (!editing || spec.type !== 'select') return
     function onClick(e: MouseEvent) {
-      if (selectWrapRef.current && !selectWrapRef.current.contains(e.target as Node)) {
-        setEditing(false)
-      }
+      const t = e.target as Node
+      if (selectWrapRef.current?.contains(t)) return
+      if (selectPopupRef.current?.contains(t)) return
+      setEditing(false)
     }
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
+  }, [editing, spec.type])
+
+  // Select 드롭다운 위치 측정 — fixed 로 띄워 부모 overflow:auto 클리핑 우회.
+  // 아래 공간이 위보다 넓으면 아래로 (디폴트), 아니면 위로 펼침.
+  useEffect(() => {
+    if (!editing || spec.type !== 'select') return
+    function measure() {
+      const trigger = selectWrapRef.current?.querySelector('button')
+      const rect = trigger?.getBoundingClientRect()
+      if (!rect) return
+      const left = Math.max(8, rect.left)
+      const gap = 4
+      const above = rect.top - 8 - gap
+      const below = window.innerHeight - rect.bottom - 8 - gap
+      if (below >= above) {
+        setSelectPopupPos({ left, top: rect.bottom + gap, minWidth: rect.width, maxHeight: Math.max(120, below) })
+      } else {
+        setSelectPopupPos({ left, bottom: window.innerHeight - rect.top + gap, minWidth: rect.width, maxHeight: Math.max(120, above) })
+      }
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    window.addEventListener('scroll', measure, true)
+    return () => {
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('scroll', measure, true)
+    }
   }, [editing, spec.type])
 
   useEffect(() => {
@@ -386,8 +421,19 @@ export function EditableField({
               </span>
             )}
           </div>
-          {editMode && editing && (
-            <ul className="absolute left-0 top-full mt-1 z-20 w-max max-w-[400px] rounded-md border border-border/80 bg-background py-1 shadow-md">
+          {editMode && editing && selectPopupPos && typeof document !== 'undefined' && createPortal(
+            <ul
+              ref={selectPopupRef}
+              style={{
+                position: 'fixed',
+                left: selectPopupPos.left,
+                top: 'top' in selectPopupPos ? selectPopupPos.top : undefined,
+                bottom: 'bottom' in selectPopupPos ? selectPopupPos.bottom : undefined,
+                minWidth: selectPopupPos.minWidth,
+                maxHeight: selectPopupPos.maxHeight,
+              }}
+              className="z-50 w-max max-w-[400px] overflow-y-auto rounded-md border border-border/80 bg-background py-1 shadow-md scrollbar-minimal"
+            >
               {spec.options!.map((opt) => (
                 <li key={opt.value}>
                   <button
@@ -402,7 +448,8 @@ export function EditableField({
                   </button>
                 </li>
               ))}
-            </ul>
+            </ul>,
+            document.body,
           )}
         </div>
       ) : isDate && editing ? (

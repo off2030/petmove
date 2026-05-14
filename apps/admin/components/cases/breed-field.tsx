@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { CopyButton } from './copy-button'
@@ -55,6 +56,11 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
+  const popupRef = useRef<HTMLDivElement>(null)
+  type PopupPos =
+    | { left: number; top: number; width: number; maxHeight: number }
+    | { left: number; bottom: number; width: number; maxHeight: number }
+  const [popupPos, setPopupPos] = useState<PopupPos | null>(null)
 
   // Filter breeds by species and query
   const filtered = ALL_BREEDS.filter((b) => {
@@ -75,16 +81,43 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
     if (open && inputRef.current) inputRef.current.focus()
   }, [open])
 
-  // Close on click outside
+  // Close on click outside — trigger(containerRef) 또는 portal 팝업(popupRef) 안쪽이면 유지.
   useEffect(() => {
     if (!open) return
     function onClick(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+      const t = e.target as Node
+      if (containerRef.current?.contains(t)) return
+      if (popupRef.current?.contains(t)) return
+      setOpen(false)
     }
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
+  }, [open])
+
+  // 팝업 위치 측정 — fixed 로 띄워 부모 overflow:auto 클리핑 우회.
+  useEffect(() => {
+    if (!open) return
+    function measure() {
+      const trigger = containerRef.current?.querySelector('button')
+      const rect = trigger?.getBoundingClientRect()
+      if (!rect) return
+      const left = Math.max(8, Math.min(rect.left, window.innerWidth - 288 - 8))
+      const gap = 4
+      const above = rect.top - 8 - gap
+      const below = window.innerHeight - rect.bottom - 8 - gap
+      if (below >= above) {
+        setPopupPos({ left, top: rect.bottom + gap, width: 288, maxHeight: Math.max(180, below) })
+      } else {
+        setPopupPos({ left, bottom: window.innerHeight - rect.top + gap, width: 288, maxHeight: Math.max(180, above) })
+      }
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    window.addEventListener('scroll', measure, true)
+    return () => {
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('scroll', measure, true)
+    }
   }, [open])
 
   function selectBreed(breed: Breed) {
@@ -127,11 +160,22 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
           />
         </div>
 
-        {/* Dropdown */}
-        {open && (
-          <div className="absolute left-0 top-full mt-1 z-20 w-72 rounded-md border border-border/80 bg-background shadow-md">
+        {/* Dropdown — portal 로 띄워 overflow:auto 클리핑 우회 */}
+        {open && popupPos && typeof document !== 'undefined' && createPortal(
+          <div
+            ref={popupRef}
+            style={{
+              position: 'fixed',
+              left: popupPos.left,
+              top: 'top' in popupPos ? popupPos.top : undefined,
+              bottom: 'bottom' in popupPos ? popupPos.bottom : undefined,
+              width: popupPos.width,
+              maxHeight: popupPos.maxHeight,
+            }}
+            className="z-50 flex flex-col rounded-md border border-border/80 bg-background shadow-md overflow-hidden"
+          >
             {/* Search input */}
-            <div className="p-2 border-b border-border/30">
+            <div className="shrink-0 p-2 border-b border-border/30">
               <input
                 ref={inputRef}
                 type="text"
@@ -162,7 +206,7 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
               />
             </div>
             {/* Options list */}
-            <ul ref={listRef} className="max-h-60 overflow-y-auto scrollbar-minimal py-1">
+            <ul ref={listRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-minimal py-1">
               {filtered.length === 0 ? (
                 <li className="px-sm py-2 text-sm text-muted-foreground">검색 결과 없음</li>
               ) : (
@@ -183,7 +227,8 @@ export function BreedField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                 ))
               )}
             </ul>
-          </div>
+          </div>,
+          document.body,
         )}
       </div>
     </div>

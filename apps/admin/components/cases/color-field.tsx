@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { CopyButton } from './copy-button'
@@ -49,6 +50,11 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
   const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const containerRef = useRef<HTMLDivElement>(null)
+  const popupRef = useRef<HTMLDivElement>(null)
+  type PopupPos =
+    | { left: number; top: number; maxHeight: number }
+    | { left: number; bottom: number; maxHeight: number }
+  const [popupPos, setPopupPos] = useState<PopupPos | null>(null)
 
   // Parse current value into selected set on open
   useEffect(() => {
@@ -74,16 +80,43 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
     setOpen(false)
   }, [caseId])
 
-  // Close on click outside
+  // Close on click outside — trigger(containerRef) 또는 portal 팝업(popupRef) 안쪽이면 유지.
   useEffect(() => {
     if (!open) return
     function onClick(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+      const t = e.target as Node
+      if (containerRef.current?.contains(t)) return
+      if (popupRef.current?.contains(t)) return
+      setOpen(false)
     }
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
+  }, [open])
+
+  // 팝업 위치 측정 — fixed 로 띄워 부모 overflow:auto 클리핑 우회.
+  useEffect(() => {
+    if (!open) return
+    function measure() {
+      const trigger = containerRef.current?.querySelector('button')
+      const rect = trigger?.getBoundingClientRect()
+      if (!rect) return
+      const left = Math.max(8, Math.min(rect.left, window.innerWidth - 300 - 8))
+      const gap = 4
+      const above = rect.top - 8 - gap
+      const below = window.innerHeight - rect.bottom - 8 - gap
+      if (below >= above) {
+        setPopupPos({ left, top: rect.bottom + gap, maxHeight: Math.max(220, below) })
+      } else {
+        setPopupPos({ left, bottom: window.innerHeight - rect.top + gap, maxHeight: Math.max(220, above) })
+      }
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    window.addEventListener('scroll', measure, true)
+    return () => {
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('scroll', measure, true)
+    }
   }, [open])
 
   function toggle(en: string) {
@@ -141,9 +174,20 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
           />
         </div>
 
-        {open && (
-          <div className="absolute left-0 top-full mt-1 z-20 rounded-md border border-border/80 bg-background shadow-md p-3">
-            <div className="flex flex-wrap gap-sm mb-3">
+        {open && popupPos && typeof document !== 'undefined' && createPortal(
+          <div
+            ref={popupRef}
+            style={{
+              position: 'fixed',
+              left: popupPos.left,
+              top: 'top' in popupPos ? popupPos.top : undefined,
+              bottom: 'bottom' in popupPos ? popupPos.bottom : undefined,
+              maxHeight: popupPos.maxHeight,
+              width: 300,
+            }}
+            className="z-50 flex flex-col rounded-md border border-border/80 bg-background shadow-md p-3 overflow-hidden"
+          >
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-minimal flex flex-wrap gap-sm mb-3">
               {COLORS.map((c) => {
                 const isSelected = selected.has(c.en)
                 return (
@@ -152,7 +196,7 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                     type="button"
                     onClick={() => toggle(c.en)}
                     className={cn(
-                      'px-sm py-1.5 rounded-md text-sm transition-colors border',
+                      'h-fit px-sm py-1.5 rounded-md text-sm transition-colors border',
                       isSelected
                         ? 'bg-foreground text-background border-foreground'
                         : 'bg-background text-foreground border-border/80 hover:bg-accent/60',
@@ -163,7 +207,7 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                 )
               })}
             </div>
-            <div className="flex items-center justify-between">
+            <div className="shrink-0 flex items-center justify-between">
               <span className="text-xs text-muted-foreground">
                 {selected.size > 0
                   ? COLORS.filter(c => selected.has(c.en)).map(c => c.ko).join(', ')
@@ -177,7 +221,8 @@ export function ColorField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
                 저장
               </button>
             </div>
-          </div>
+          </div>,
+          document.body,
         )}
       </div>
     </div>
