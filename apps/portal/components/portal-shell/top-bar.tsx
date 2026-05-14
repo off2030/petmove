@@ -152,6 +152,9 @@ export function TopBar() {
                 overflowX: 'auto',
                 paddingInline: 4,
                 marginInline: -4,
+                // overflow-x: auto 는 사양상 overflow-y 도 같이 auto 가 돼 ring 이 잘림.
+                // block padding 으로 컨테이너 자체를 ring(±4.5px) 이 들어갈 만큼 키워줌.
+                paddingBlock: 6,
               }}
             >
               {cases.map((c) => {
