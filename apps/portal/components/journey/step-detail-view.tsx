@@ -59,7 +59,6 @@ export function StepDetailView({
   }
 
   const failed = checkResults.filter((c) => !c.result.ok)
-  const passed = checkResults.filter((c) => c.result.ok)
 
   return (
     <div
@@ -182,12 +181,6 @@ export function StepDetailView({
               ))}
             </ul>
           </section>
-        )}
-
-        {passed.length > 0 && (
-          <div style={{ marginTop: 12, fontSize: 11.5, color: C.ink3 }}>
-            ✓ 통과 {passed.length}건
-          </div>
         )}
 
         {/* Inputs preview (MVP — read-only schema) */}
