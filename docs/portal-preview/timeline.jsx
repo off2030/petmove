@@ -163,7 +163,7 @@ function TimelineCalm({ scenario, onNav, ringShape = 'H' }) {
             const last = i === stages.length - 1;
             return (
               <div key={s.id} style={{
-                display: 'flex', alignItems: 'center', gap: 14, padding: '13px 0',
+                display: 'flex', alignItems: 'flex-start', gap: 14, padding: '13px 0',
                 borderBottom: last ? 'none' : `.5px solid ${C.line}`
               }}>
                 <div style={{
@@ -182,23 +182,28 @@ function TimelineCalm({ scenario, onNav, ringShape = 'H' }) {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
-                    fontSize: 17,
-                    color: isCurr ? C.ink : isDone ? C.ink2 : C.ink3,
-                    fontWeight: isCurr ? 600 : 500
-                  }}>{s.label}</div>
+                    display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10
+                  }}>
+                    <div style={{
+                      fontSize: 17,
+                      color: isCurr ? C.ink : isDone ? C.ink2 : C.ink3,
+                      fontWeight: isCurr ? 600 : 500,
+                      minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                    }}>{s.label}</div>
+                    <div style={{
+                      ...monoCap,
+                      color: isCurr ? C.accent : C.ink3,
+                      fontWeight: isCurr ? 700 : 500,
+                      textAlign: 'right', flexShrink: 0
+                    }}>
+                      {isCurr ? 'D-7' : s.date ? `${s.date.slice(2, 4)}·${s.date.slice(5, 7)}·${s.date.slice(8, 10)}` : '—'}
+                    </div>
+                  </div>
                   {s.desc &&
-                  <div style={{ fontSize: 11.5, color: C.ink3, marginTop: 2, lineHeight: 1.4 }}>
+                  <div style={{ fontSize: 12, color: C.ink3, marginTop: 2, lineHeight: 1.4 }}>
                       {s.desc}
                     </div>
                   }
-                </div>
-                <div style={{
-                  ...monoCap, fontSize: 9.5,
-                  color: isCurr ? C.accent : C.ink3,
-                  fontWeight: isCurr ? 700 : 500,
-                  textAlign: 'right', flexShrink: 0
-                }}>
-                  {isCurr ? 'D-7' : s.date ? s.date.slice(5).replace('-', '·') : '—'}
                 </div>
               </div>
             );

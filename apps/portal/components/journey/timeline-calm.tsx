@@ -226,7 +226,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                 href={`/cases/${caseId}/journey/${s.id}`}
                 style={{
                   display: 'flex',
-                  alignItems: 'center',
+                  alignItems: 'flex-start',
                   gap: 14,
                   padding: '13px 0',
                   borderBottom: last ? 'none' : `.5px solid ${C.line}`,
@@ -271,27 +271,40 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
-                      fontSize: 17,
-                      color: isCurr ? C.ink : isDone ? C.ink2 : C.ink3,
-                      fontWeight: isCurr ? 600 : 500,
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      justifyContent: 'space-between',
+                      gap: 10,
                     }}
                   >
-                    {s.label}
+                    <div
+                      style={{
+                        fontSize: 17,
+                        color: isCurr ? C.ink : isDone ? C.ink2 : C.ink3,
+                        fontWeight: isCurr ? 600 : 500,
+                        minWidth: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {s.label}
+                    </div>
+                    <div
+                      style={{
+                        ...monoCap,
+                        color: isCurr ? C.accent : C.ink3,
+                        fontWeight: isCurr ? 700 : 500,
+                        textAlign: 'right',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {isCurr ? (dDayLabel ?? '예정') : formatStageDate(s)}
+                    </div>
                   </div>
                   {s.desc && (
                     <div style={{ fontSize: 12, color: C.ink3, marginTop: 2, lineHeight: 1.4 }}>{s.desc}</div>
                   )}
-                </div>
-                <div
-                  style={{
-                    ...monoCap,
-                    color: isCurr ? C.accent : C.ink3,
-                    fontWeight: isCurr ? 700 : 500,
-                    textAlign: 'right',
-                    flexShrink: 0,
-                  }}
-                >
-                  {isCurr ? (dDayLabel ?? '예정') : formatStageDate(s)}
                 </div>
               </Link>
             )
@@ -311,13 +324,10 @@ function formatDDay(daysLeft: number | null): string | null {
 
 function formatStageDate(stage: JourneyStage): string {
   if (!stage.date) return '—'
-  // 'YYYY-MM-DD' → 올해면 'MM·DD', 다른 해면 'YY·MM·DD'.
-  // 공간 빠듯해서 4자리 연도는 가운데 label 폭을 너무 잡아먹음 (iPhone SE 에서 wrap 위험).
+  // 'YYYY-MM-DD' → 항상 'YY·MM·DD'. 연도가 같든 다르든 일관 표기.
   const parts = stage.date.split('-')
   if (parts.length !== 3) return '—'
   const [yyyy, mm, dd] = parts
-  const thisYear = new Date().getFullYear().toString()
-  if (yyyy === thisYear) return `${mm}·${dd}`
   return `${yyyy.slice(2)}·${mm}·${dd}`
 }
 
