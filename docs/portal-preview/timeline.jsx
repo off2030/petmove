@@ -182,10 +182,11 @@ function TimelineCalm({ scenario, onNav, ringShape = 'H' }) {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
-                    display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                    minHeight: 22
                   }}>
                     <div style={{
-                      fontSize: 17,
+                      fontSize: 17, lineHeight: '22px',
                       color: isCurr ? C.ink : isDone ? C.ink2 : C.ink3,
                       fontWeight: isCurr ? 600 : 500,
                       minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'

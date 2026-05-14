@@ -271,15 +271,19 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
+                      // 동그라미(22px)와 같은 높이로 baseline center 정렬 — label 의 line-height
+                      // 를 22 로 맞춰 row 자체가 22 가 되도록.
                       display: 'flex',
-                      alignItems: 'baseline',
+                      alignItems: 'center',
                       justifyContent: 'space-between',
                       gap: 10,
+                      minHeight: 22,
                     }}
                   >
                     <div
                       style={{
                         fontSize: 17,
+                        lineHeight: '22px',
                         color: isCurr ? C.ink : isDone ? C.ink2 : C.ink3,
                         fontWeight: isCurr ? 600 : 500,
                         minWidth: 0,
