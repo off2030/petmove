@@ -14,6 +14,9 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '5mb',
     },
+    // workspace 패키지를 deep tree-shake — vaccine-lookup, 15개 procedure-checks 등
+    // 포털에서 안 쓰는 모듈이 번들에 포함되지 않도록.
+    optimizePackageImports: ['@petmove/domain'],
     // 클라이언트 라우터 캐시 TTL. 4탭 스와이프 + 케이스 전환을 즉시화.
     // dynamic 페이지는 기본 0초 (매 진입마다 서버 왕복) — Context 가 데이터 source 역할을
     // 하므로 stale 진입 시에도 UI 는 즉시 (cases 데이터는 Provider 메모리). admin 변경은

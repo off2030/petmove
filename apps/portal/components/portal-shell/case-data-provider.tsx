@@ -9,6 +9,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { listMyCases } from '@/lib/actions/cases'
@@ -54,30 +55,54 @@ export function CaseDataProvider({
   const [profile, setProfile] = useState<CustomerProfileRow | null>(initialProfile)
 
   // 모든 케이스 × 탭 URL 을 백그라운드 prefetch — 케이스 전환 시 RSC 캐시 적중.
-  // setTimeout 으로 첫 paint 뒤 시작해 초기 렌더에 영향 없음.
+  //
+  // dep 을 cases 가 아니라 caseIdsKey (정렬된 ID 문자열) 로 — focus refresh / Realtime
+  // UPDATE 가 새 array reference 를 만들어도 ID 집합이 같으면 useEffect 재실행 X.
+  // (이전 [cases, router] dep 은 매 cases 갱신마다 모든 URL prefetch 가 재발사돼
+  // 네트워크 큐를 압박, 진짜 click 한 URL 의 RSC 가 그 뒤에 줄 서서 case 전환 lag 유발했음.)
+  //
+  // prefetchedRef 로 이미 prefetch 한 URL 추적 — 케이스가 추가되어도 새 URL 만 보충.
+  const prefetchedRef = useRef<Set<string>>(new Set())
+  const caseIdsKey = useMemo(
+    () => cases.map((c) => c.id).sort().join(','),
+    [cases],
+  )
+
   useEffect(() => {
-    if (cases.length === 0) return
-    const timer = setTimeout(() => {
-      const tabs = ['journey', 'docs', 'info'] as const
-      for (const c of cases) {
-        for (const t of tabs) {
-          try {
-            // @ts-expect-error PrefetchKind enum not publicly exported; runtime 'full' matches.
-            router.prefetch(`/cases/${c.id}/${t}`, { kind: 'full' })
-          } catch {
-            /* best-effort */
-          }
+    if (!caseIdsKey) return
+    const ids = caseIdsKey.split(',')
+    const urls: string[] = []
+    const tabs = ['journey', 'docs', 'info'] as const
+    for (const id of ids) {
+      for (const t of tabs) {
+        const url = `/cases/${id}/${t}`
+        if (!prefetchedRef.current.has(url)) urls.push(url)
+      }
+    }
+    if (!prefetchedRef.current.has('/me')) urls.push('/me')
+    if (urls.length === 0) return
+
+    // requestIdleCallback 가능하면 idle 시점, 아니면 setTimeout fallback.
+    const idleCb =
+      (window as { requestIdleCallback?: (cb: () => void) => number })
+        .requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 500))
+    const cancelCb =
+      (window as { cancelIdleCallback?: (id: number) => void })
+        .cancelIdleCallback ?? window.clearTimeout
+
+    const handle = idleCb(() => {
+      for (const url of urls) {
+        try {
+          // @ts-expect-error PrefetchKind enum not publicly exported; runtime 'full' matches.
+          router.prefetch(url, { kind: 'full' })
+          prefetchedRef.current.add(url)
+        } catch {
+          /* best-effort */
         }
       }
-      try {
-        // @ts-expect-error PrefetchKind enum not publicly exported
-        router.prefetch('/me', { kind: 'full' })
-      } catch {
-        /* best-effort */
-      }
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [cases, router])
+    })
+    return () => cancelCb(handle as number)
+  }, [caseIdsKey, router])
 
   const refreshCases = useCallback(async () => {
     const result = await listMyCases()
@@ -97,12 +122,7 @@ export function CaseDataProvider({
     setProfile(next)
   }, [])
 
-  // 케이스 id 집합이 바뀌면 Realtime 재구독.
-  const caseIdsKey = useMemo(
-    () => cases.map((c) => c.id).sort().join(','),
-    [cases],
-  )
-
+  // Realtime — 같은 caseIdsKey (위에서 정의) 를 deps 로 공유, 케이스 id 집합 변동 시만 재구독.
   useEffect(() => {
     if (!caseIdsKey) return
     const ids = caseIdsKey.split(',')
