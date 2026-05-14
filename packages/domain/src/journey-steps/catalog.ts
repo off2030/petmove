@@ -34,16 +34,25 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '마이크로칩 삽입',
     shortLabel: '칩',
     description:
-      '국제 규격(15자리)의 마이크로칩을 동물의 피부 아래에 삽입합니다.\n\n광견병 백신 1차 접종 이전에 시술되어 있어야 일본·EU 등 대부분 국가에서 인정되며, 이 칩 번호가 출국 서류 전체에서 동물 신원 확인에 사용됩니다.',
+      '국제 표준 규격(15자리 번호)의 내장형 마이크로칩을 삽입합니다.\n\n강아지는 동물등록도 필수입니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 20,
     done: 'microchip-set',
     inputs: [
-      { key: 'microchip', label: '칩 번호 (15자리)', type: 'text', required: true },
-      { key: 'microchip_implant_date', label: '시술일', type: 'date' },
+      {
+        key: 'microchip',
+        label: '마이크로칩 번호',
+        type: 'text',
+        required: true,
+        helpText: '000 000 000 000 000 형식 (3자리씩 공백 구분)',
+      },
+      {
+        key: 'microchip_implant_date',
+        label: '시술일',
+        type: 'date',
+        helpText: '펫무브 등록 신청서의 달력과 동일 컴포넌트',
+      },
     ],
-    allowAttachments: true,
-    attachmentHint: '시술 인증서 또는 등록증을 사진으로 올려주세요.',
     validationIds: ['jp.microchip-rabies-sequence'],
   },
 
