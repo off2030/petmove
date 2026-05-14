@@ -133,72 +133,27 @@ export function StepDetailView({
         color: C.ink,
         minHeight: '100%',
         paddingTop: 16,
-        paddingBottom: 32,
+        // microchip 일 때 하단 sticky 저장 바 + bottom-nav 공간을 더 확보.
+        paddingBottom: isMicrochip ? 132 : 32,
         overflow: 'auto',
       }}
     >
       <div style={{ padding: '0 20px' }}>
-        {/* In-page navigation row — 좌측 back, 우측 저장(microchip 한정).
-            iOS Contacts 편집 패턴. dirty 일 때만 저장 활성. */}
-        <div
+        {/* Back link */}
+        <Link
+          href={`/cases/${caseId}/journey`}
           style={{
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-            minHeight: 32,
+            gap: 4,
+            fontSize: 13,
+            color: C.ink2,
+            textDecoration: 'none',
+            padding: '6px 0',
           }}
         >
-          <Link
-            href={`/cases/${caseId}/journey`}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              fontSize: 13,
-              color: C.ink2,
-              textDecoration: 'none',
-              padding: '6px 0',
-            }}
-          >
-            ← 일정으로
-          </Link>
-          {isMicrochip && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span
-                aria-live="polite"
-                style={{
-                  fontSize: 12,
-                  color: status === 'error' ? C.warn : status === 'saved' ? C.sage : C.ink3,
-                }}
-              >
-                {status === 'saving' && '저장 중…'}
-                {status === 'saved' && '✓ 저장됨'}
-                {status === 'error' && (error ?? '저장 실패')}
-              </span>
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={!dirty || status === 'saving'}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: 999,
-                  border: 0,
-                  background: dirty && status !== 'saving' ? C.accent : 'transparent',
-                  color: dirty && status !== 'saving' ? '#fff' : C.ink3,
-                  fontFamily: 'inherit',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  letterSpacing: '-0.005em',
-                  cursor: dirty && status !== 'saving' ? 'pointer' : 'not-allowed',
-                  transition: 'background .15s, color .15s',
-                }}
-              >
-                저장
-              </button>
-            </div>
-          )}
-        </div>
+          ← 일정으로
+        </Link>
 
         {/* Header — 일정 row 와 동일한 동그라미(완료 ✓ 또는 번호) + 항목명. */}
         <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -391,6 +346,69 @@ export function StepDetailView({
           </section>
         )}
       </div>
+
+      {/* 하단 sticky 저장 바 — microchip 한정. 한국 모바일 앱 패턴 (토스/카카오/당근).
+          dirty 일 때 accent 활성, 아니면 muted disabled. BottomNav(z40) 아래 layer
+          이지만 컨텐츠는 BottomNav 위쪽에만 배치돼 시각 겹침 없음. */}
+      {isMicrochip && (
+        <div
+          style={{
+            position: 'fixed',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            paddingTop: 12,
+            paddingLeft: 20,
+            paddingRight: 20,
+            // bottom-nav 영역(content 41px + max(safe-area, 12px)) 만큼 비워둠 + 12px gap
+            paddingBottom: 'calc(max(env(safe-area-inset-bottom, 0px), 12px) + 53px)',
+            background:
+              'linear-gradient(180deg, rgba(245,239,232,0) 0%, rgba(245,239,232,.92) 30%, rgba(245,239,232,.92) 100%)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            zIndex: 39,
+            pointerEvents: 'none',
+          }}
+        >
+          {status !== 'idle' && (
+            <div
+              aria-live="polite"
+              style={{
+                textAlign: 'center',
+                fontSize: 12,
+                color: status === 'error' ? C.warn : status === 'saved' ? C.sage : C.ink3,
+                marginBottom: 8,
+              }}
+            >
+              {status === 'saving' && '저장 중…'}
+              {status === 'saved' && '✓ 저장됨'}
+              {status === 'error' && (error ?? '저장 실패')}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!dirty || status === 'saving'}
+            style={{
+              pointerEvents: 'auto',
+              width: '100%',
+              padding: '14px 0',
+              borderRadius: 14,
+              border: 0,
+              background: dirty && status !== 'saving' ? C.accent : 'rgba(42,38,32,.10)',
+              color: dirty && status !== 'saving' ? '#fff' : C.ink3,
+              fontFamily: 'inherit',
+              fontSize: 15,
+              fontWeight: 600,
+              letterSpacing: '-0.005em',
+              cursor: dirty && status !== 'saving' ? 'pointer' : 'not-allowed',
+              transition: 'background .15s, color .15s',
+            }}
+          >
+            저장
+          </button>
+        </div>
+      )}
     </div>
   )
 }
