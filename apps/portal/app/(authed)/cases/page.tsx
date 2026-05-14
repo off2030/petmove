@@ -52,7 +52,7 @@ export default async function CasesPage() {
             <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>{petName}</div>
             {dest && (
               <div style={{ fontSize: 13, color: '#6B6457', marginTop: 4 }}>
-                서울 → {dest}
+                한국 → {dest}
               </div>
             )}
           </Link>

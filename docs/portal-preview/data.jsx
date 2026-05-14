@@ -24,7 +24,7 @@ const SCENARIO = {
     postalCode: '17500',
   },
   trip: {
-    fromCity: '서울',
+    fromCity: '한국',
     fromCountry: '한국',
     toCity: '도쿄',
     toCountry: '일본',

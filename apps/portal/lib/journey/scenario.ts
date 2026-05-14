@@ -102,7 +102,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
   return {
     pet: { name: caseRow.pet_name ?? '반려동물' },
     trip: {
-      fromCity: '서울',
+      fromCity: '한국',
       toCity: ctx.destinationToken ?? caseRow.destination ?? '—',
       departureDate: dep,
       daysLeft,

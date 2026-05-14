@@ -97,7 +97,7 @@ export function buildDocsView(caseRow: CaseRow): DocsViewData {
   return {
     pet: { name: caseRow.pet_name ?? '반려동물' },
     trip: {
-      fromCity: '서울',
+      fromCity: '한국',
       toCity: ctx.destinationToken ?? caseRow.destination ?? '—',
     },
     checklist,

@@ -108,7 +108,7 @@ export function StepDetailView({
           {step.title}
         </h1>
         <div style={{ fontSize: 12.5, color: C.ink2 }}>
-          {petName} · 서울 → {destinationLabel}
+          {petName} · 한국 → {destinationLabel}
         </div>
 
         {/* Description */}
