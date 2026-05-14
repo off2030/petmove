@@ -31,10 +31,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'microchip',
     category: 'preparation',
-    title: '마이크로칩 확인',
+    title: '마이크로칩 삽입',
     shortLabel: '칩',
     description:
-      'ISO 11784/11785 규격의 15자리 마이크로칩이 시술되어 있어야 합니다. 시술일이 광견병 백신 1차 접종 이전이어야 일본·EU 등 대부분 국가에서 인정됩니다.',
+      '국제 규격(15자리)의 마이크로칩을 동물의 피부 아래에 삽입합니다.\n\n광견병 백신 1차 접종 이전에 시술되어 있어야 일본·EU 등 대부분 국가에서 인정되며, 이 칩 번호가 출국 서류 전체에서 동물 신원 확인에 사용됩니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 20,
     done: 'microchip-set',
