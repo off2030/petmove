@@ -1,35 +1,21 @@
-import { createClient } from '@petmove/auth/server'
-import { getMyProfile } from '@/lib/actions/profile'
-import { listMyCases } from '@/lib/actions/cases'
+'use client'
+
 import { buildProfileView } from '@/lib/profile/catalog'
 import { ProfileView } from '@/components/me/profile-view'
-
-export const dynamic = 'force-dynamic'
+import { useCases } from '@/components/portal-shell/case-data-provider'
 
 /**
- * 내 계정 (/me) — bottom-nav 의 프로필 탭. case-외.
+ * 내 계정 (/me) — bottom-nav 의 프로필 탭. Client 컴포넌트.
  *
- * 시각: docs/portal-preview/app.jsx 의 `Profile`. Stone 톤.
- * 데이터:
- *   - auth.user → 이메일
- *   - customer_profiles → display_name / phone / preferred_language / marketing_opt_in
- *   - listMyCases() 첫 행 → hero pet 줄 + (Phase 11.1 이후) partner 정보
+ * 데이터는 모두 CaseDataProvider 의 Context 에서 — 추가 fetch 없음. 진입 즉시 렌더.
  */
-export default async function MePage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  const [profileResult, casesResult] = await Promise.all([getMyProfile(), listMyCases()])
-
-  const customerProfile = profileResult.ok ? profileResult.value : null
-  const cases = casesResult.ok ? casesResult.value : []
+export default function MePage() {
+  const { cases, profile, userEmail } = useCases()
   const primaryCase = cases[0] ?? null
 
   const data = buildProfileView({
-    userEmail: user?.email ?? null,
-    customerProfile,
+    userEmail,
+    customerProfile: profile,
     primaryCase,
   })
 

@@ -11,44 +11,62 @@ import {
   useState,
 } from 'react'
 import { listMyCases } from '@/lib/actions/cases'
+import { getMyProfile, type CustomerProfileRow } from '@/lib/actions/profile'
 
 /**
- * 보호자의 모든 케이스 데이터를 한 번 fetch 해 Context 로 공유.
+ * 보호자의 모든 데이터(케이스 + 프로파일)를 한 번 fetch 해 Context 로 공유.
  *
- * 동기화 메커니즘:
- *  1) Realtime (`postgres_changes` on `cases` filter `id=in.(...)`) — admin 측 변경 push 받아 즉시 반영
- *  2) focus / visibilitychange — 백그라운드 복귀 시 안전망 refresh (Realtime 끊겼거나 휴면 중 변경 커버)
- *  3) refresh() / updateCase() — 보호자 mutation 후 즉시 갱신
+ * 동기화:
+ *  1) Realtime — `postgres_changes` on `cases` filter `id=in.(...)`. admin 변경 push 받아 즉시 반영.
+ *     (customer_profiles 는 publication 미포함 — focus refetch 로 커버)
+ *  2) focus / visibilitychange — 백그라운드 복귀 시 안전망 refresh
+ *  3) refresh* / updateCase — 보호자 mutation 후 즉시 갱신
  *
- * 탭/케이스 전환에서 추가 네트워크 0 — 모든 탭 페이지가 client 로 이 Context 만 읽음.
- *
- * SSR: CaseLayout 이 server 측 listMyCases 결과를 initialCases 로 주입 → 첫 paint 부터 데이터 있음.
+ * 탭/케이스/프로필 전환에서 추가 네트워크 0 — 모든 페이지가 client 로 이 Context 만 읽음.
  */
 
 type CaseDataContextValue = {
   cases: CaseRow[]
-  refresh: () => Promise<void>
+  profile: CustomerProfileRow | null
+  userEmail: string | null
+  refreshCases: () => Promise<void>
+  refreshProfile: () => Promise<void>
   updateCase: (next: CaseRow) => void
+  updateProfile: (next: CustomerProfileRow) => void
 }
 
 const CaseDataContext = createContext<CaseDataContextValue | null>(null)
 
 export function CaseDataProvider({
   initialCases,
+  initialProfile,
+  userEmail,
   children,
 }: {
   initialCases: CaseRow[]
+  initialProfile: CustomerProfileRow | null
+  userEmail: string | null
   children: React.ReactNode
 }) {
   const [cases, setCases] = useState<CaseRow[]>(initialCases)
+  const [profile, setProfile] = useState<CustomerProfileRow | null>(initialProfile)
 
-  const refresh = useCallback(async () => {
+  const refreshCases = useCallback(async () => {
     const result = await listMyCases()
     if (result.ok) setCases(result.value)
   }, [])
 
+  const refreshProfile = useCallback(async () => {
+    const result = await getMyProfile()
+    if (result.ok) setProfile(result.value)
+  }, [])
+
   const updateCase = useCallback((next: CaseRow) => {
     setCases((prev) => prev.map((c) => (c.id === next.id ? next : c)))
+  }, [])
+
+  const updateProfile = useCallback((next: CustomerProfileRow) => {
+    setProfile(next)
   }, [])
 
   // 케이스 id 집합이 바뀌면 Realtime 재구독.
@@ -80,7 +98,7 @@ export function CaseDataProvider({
             )
           } else {
             // INSERT/DELETE: 케이스 목록 자체 변동 — case_customer_links 까지 확인하려면 listMyCases.
-            void refresh()
+            void refreshCases()
           }
         },
       )
@@ -89,27 +107,36 @@ export function CaseDataProvider({
     return () => {
       void supabaseBrowser.removeChannel(channel)
     }
-  }, [caseIdsKey, refresh])
+  }, [caseIdsKey, refreshCases])
 
-  // 앱 포커스 복귀 시 refresh — Realtime 끊겼거나 휴면 동안 변경 커버.
+  // 앱 포커스 복귀 시 cases + profile 갱신.
   useEffect(() => {
-    const onFocus = () => {
-      void refresh()
+    const onRefresh = () => {
+      void refreshCases()
+      void refreshProfile()
     }
     const onVisibility = () => {
-      if (!document.hidden) void refresh()
+      if (!document.hidden) onRefresh()
     }
-    window.addEventListener('focus', onFocus)
+    window.addEventListener('focus', onRefresh)
     document.addEventListener('visibilitychange', onVisibility)
     return () => {
-      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('focus', onRefresh)
       document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [refresh])
+  }, [refreshCases, refreshProfile])
 
   const value = useMemo(
-    () => ({ cases, refresh, updateCase }),
-    [cases, refresh, updateCase],
+    () => ({
+      cases,
+      profile,
+      userEmail,
+      refreshCases,
+      refreshProfile,
+      updateCase,
+      updateProfile,
+    }),
+    [cases, profile, userEmail, refreshCases, refreshProfile, updateCase, updateProfile],
   )
 
   return <CaseDataContext.Provider value={value}>{children}</CaseDataContext.Provider>
@@ -124,4 +151,12 @@ export function useCases(): CaseDataContextValue {
 export function useCase(caseId: string): CaseRow | null {
   const { cases } = useCases()
   return cases.find((c) => c.id === caseId) ?? null
+}
+
+export function useProfile(): {
+  profile: CustomerProfileRow | null
+  userEmail: string | null
+} {
+  const { profile, userEmail } = useCases()
+  return { profile, userEmail }
 }
