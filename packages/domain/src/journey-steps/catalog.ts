@@ -56,26 +56,46 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['jp.microchip-rabies-sequence'],
   },
 
-  // ── 3. 광견병 백신 ─────────────────────────────────────────────────────
+  // ── 3. 광견병 백신 1차 ─────────────────────────────────────────────────
   {
-    id: 'rabies-vaccine',
+    id: 'rabies-vaccine-1',
     category: 'vaccination',
-    title: '광견병 백신 접종',
-    shortLabel: '백신',
+    title: '광견병 백신(1차)',
+    shortLabel: '백신1',
     description:
-      '생후 91일 이후 1차 접종, 30일 이상 간격으로 2차 접종. 두 접종 모두 마이크로칩 시술 이후여야 일본·EU 기준을 충족합니다.',
+      '생후 91일 이후 1차 접종. 마이크로칩 시술 이후여야 일본·EU 등 대부분 국가에서 인정됩니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 30,
-    done: 'has-rabies-booster',
+    done: 'has-rabies-entry',
     inputs: [
-      { key: 'rabies_dates', label: '접종일', type: 'date_array', hasValidUntil: true, required: true },
+      { key: 'rabies_dates', label: '1차 접종일', type: 'date_array', hasValidUntil: true, required: true },
     ],
     allowAttachments: true,
-    attachmentHint: '접종 증명서를 사진으로 올려주세요 (lot no. 가 보이게).',
+    attachmentHint: '1차 접종 증명서를 사진으로 올려주세요 (lot no. 가 보이게).',
     validationIds: [
       'jp.rabies-prime-after-91days-old',
-      'jp.rabies-prime-booster-interval',
       'jp.microchip-rabies-sequence',
+    ],
+  },
+
+  // ── 4. 광견병 백신 2차 ─────────────────────────────────────────────────
+  {
+    id: 'rabies-vaccine-2',
+    category: 'vaccination',
+    title: '광견병 백신(2차)',
+    shortLabel: '백신2',
+    description:
+      '1차 접종 후 30일 이상 간격으로 2차 접종. 출국 시점에 유효기간이 남아있어야 일본·EU 등 대부분 국가에서 인정됩니다.',
+    applicability: { destinations: 'all', species: 'all', tripType: 'all' },
+    order: 35,
+    done: 'has-rabies-booster',
+    inputs: [
+      { key: 'rabies_dates', label: '2차 접종일', type: 'date_array', hasValidUntil: true, required: true },
+    ],
+    allowAttachments: true,
+    attachmentHint: '2차 접종 증명서를 사진으로 올려주세요 (lot no. 가 보이게).',
+    validationIds: [
+      'jp.rabies-prime-booster-interval',
       'jp.rabies-valid-until-on-departure',
     ],
   },
