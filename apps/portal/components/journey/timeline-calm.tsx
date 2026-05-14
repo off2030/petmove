@@ -107,7 +107,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
             }}
           >
             <span>{trip.fromCity}</span>
-            <span style={{ color: C.ink3 }}>→</span>
+            <span style={{ color: C.ink3 }}>{trip.tripType === 'round' ? '⇄' : '→'}</span>
             <span>{trip.toCity}</span>
           </div>
         </div>
