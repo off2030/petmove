@@ -291,7 +291,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                     flexShrink: 0,
                   }}
                 >
-                  {isCurr ? (dDayLabel ?? '진행 중') : formatStageDate(s)}
+                  {isCurr ? (dDayLabel ?? '예정') : formatStageDate(s)}
                 </div>
               </Link>
             )
