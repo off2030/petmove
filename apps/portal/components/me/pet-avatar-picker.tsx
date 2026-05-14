@@ -34,7 +34,7 @@ export function PetAvatarPicker({ case_, pet }: { case_: CaseRow; pet: PetBlock 
     soft: '#F0E8DB',
   } as const
   const serif: React.CSSProperties = {
-    fontFamily: "'Fraunces', 'Pretendard Variable', serif",
+    fontFamily: 'var(--pm-font-display)',
     fontWeight: 500,
     letterSpacing: '-0.01em',
   }
@@ -262,7 +262,7 @@ function avatarGlyphSpanStyle(c: CaseRow, size: number): React.CSSProperties {
     color: '#fff',
     fontFamily: isEmoji
       ? "-apple-system, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
-      : "'Fraunces', 'Pretendard Variable', serif",
+      : 'var(--pm-font-display)',
     fontWeight: 600,
     fontSize: isEmoji ? Math.round(size * 0.5) : Math.round(size * 0.36),
     lineHeight: 1,

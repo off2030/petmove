@@ -3,18 +3,9 @@
 @tailwind utilities;
 
 /* Pretendard — 한글 글리프 전용. Google Fonts 미등록이라 jsdelivr CDN 경유.
-   latin 폰트(Inter Tight/Source Serif) 뒤 fallback 으로 스택. */
+   semantic 토큰 (--pm-font-*) 의 한글 fallback 으로 스택. */
 @font-face {
   font-family: 'Pretendard';
-  font-style: normal;
-  font-weight: 45 920;
-  font-display: swap;
-  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2-subset/PretendardVariable.woff2') format('woff2-variations');
-}
-/* 'Pretendard Variable' alias — portal-preview JSX 의 inline fontFamily 가 이 이름을
-   참조함. 같은 woff2 라 브라우저가 캐시 dedup. */
-@font-face {
-  font-family: 'Pretendard Variable';
   font-style: normal;
   font-weight: 45 920;
   font-display: swap;
@@ -46,6 +37,12 @@
   --pm-accent: #B89968;
   --pm-accent-soft: #E8DCC4;
   --pm-sage: #8FA68C;
+
+  /* Semantic font tokens — UI 코드는 이것만 참조.
+     --font-fraunces / --font-sans 는 next/font 가 layout.tsx 에서 주입. */
+  --pm-font-display: var(--font-fraunces), 'Pretendard', Georgia, 'Times New Roman', serif;
+  --pm-font-body:    var(--font-sans), 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', sans-serif;
+  --pm-font-mark:    'Alonzo', var(--pm-font-display);
 }
 
 @keyframes pm-fade-up {

@@ -53,6 +53,9 @@ const config: Config = {
         sans: ['var(--font-sans)', 'Pretendard', 'var(--font-sans-kr)', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Arial', 'sans-serif'],
         serif: ['var(--font-serif)', 'var(--font-serif-kr)', 'Georgia', '"Times New Roman"', 'serif'],
         mono: ['var(--font-mono)', 'Pretendard', 'ui-monospace', '"SF Mono"', 'Menlo', 'monospace'],
+        // Portal Calm 톤 — globals.css 의 --pm-font-* semantic 토큰 노출.
+        display: ['var(--pm-font-display)'],
+        mark: ['var(--pm-font-mark)'],
       },
       spacing: {
         xs: '0.25rem',

@@ -76,7 +76,7 @@ export function TopBar() {
     >
       <div
         style={{
-          fontFamily: "'Fraunces', 'Pretendard Variable', serif",
+          fontFamily: 'var(--pm-font-display)',
           fontWeight: 500,
           fontSize: 15,
           letterSpacing: '0.22em',
@@ -181,7 +181,7 @@ export function TopBar() {
                       color: '#fff',
                       fontFamily: isEmoji
                         ? "-apple-system, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
-                        : "'Fraunces', 'Pretendard Variable', serif",
+                        : 'var(--pm-font-display)',
                       fontWeight: 600,
                       fontSize: isEmoji ? 13 : 10,
                       lineHeight: 1,

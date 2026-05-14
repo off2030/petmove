@@ -29,7 +29,7 @@ export function ComingSoon({ title, hint }: { title: string; hint?: string }) {
       </span>
       <h1
         style={{
-          fontFamily: "'Fraunces', 'Pretendard Variable', serif",
+          fontFamily: 'var(--pm-font-display)',
           fontSize: 28,
           fontWeight: 500,
           letterSpacing: '-0.01em',

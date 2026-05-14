@@ -44,7 +44,7 @@ export function StepDetailView({
   } as const
 
   const serif: React.CSSProperties = {
-    fontFamily: "'Fraunces', 'Pretendard Variable', serif",
+    fontFamily: 'var(--pm-font-display)',
     fontWeight: 500,
     letterSpacing: '-0.01em',
   }

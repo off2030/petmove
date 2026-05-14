@@ -23,7 +23,7 @@ export default async function CasesPage() {
     <div style={{ padding: '32px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
       <h1
         style={{
-          fontFamily: "'Fraunces', 'Pretendard Variable', serif",
+          fontFamily: 'var(--pm-font-display)',
           fontSize: 24,
           fontWeight: 500,
           letterSpacing: '-0.01em',
@@ -77,7 +77,7 @@ function EmptyState() {
     >
       <h1
         style={{
-          fontFamily: "'Fraunces', 'Pretendard Variable', serif",
+          fontFamily: 'var(--pm-font-display)',
           fontSize: 28,
           fontWeight: 500,
           letterSpacing: '-0.01em',

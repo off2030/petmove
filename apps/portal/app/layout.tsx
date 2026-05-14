@@ -1,24 +1,26 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter_Tight } from 'next/font/google'
+import { Fraunces, Inter_Tight } from 'next/font/google'
 import './globals.css'
 import { ConfirmProvider } from '@petmove/ui'
 import { ServiceWorkerRegister } from '@/components/sw-register'
 
-// Portal MVP 폰트 스택 — Inter_Tight (body sans, next/font self-host) + Fraunces
-// (display serif, <head> 의 <link> 로 Google Fonts CDN 로드).
-// Fraunces 를 next/font 가 아닌 <link> 로 가져오는 이유: portal-preview JSX
-// 와 동일한 inline fontFamily ("'Fraunces', 'Pretendard Variable', serif") 를 그대로
-// 매칭시키려면 family 이름이 해시되지 않은 리터럴 'Fraunces' 여야 한다. next/font
-// 는 family 명을 __Fraunces_xxxx 식으로 해시하므로 리터럴 미스매치 → 시스템 serif
-// 폴백 문제가 있었음.
-// globals.css 의 @import 로 시도했으나 Next 16 Turbopack 이 @tailwind expand 후
-// @import 를 뒤로 밀어내 "@import rules must precede all rules" 빌드 에러가 남.
-// portal-preview/index.html 과 동일하게 <link> 태그로 옮김.
+// Portal 폰트 스택 — next/font self-host 두 family + globals.css @font-face 의 Pretendard/Alonzo.
+// CSS 변수 --font-sans / --font-fraunces 로 노출하고, globals.css 가 semantic 토큰
+// (--pm-font-display, --pm-font-body, --pm-font-mark) 으로 한 번 더 추상화. UI 코드는
+// semantic 토큰만 참조 → 폰트 출처를 바꿔도 컴포넌트 손 안 댐.
 const interTight = Inter_Tight({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   style: ['normal', 'italic'],
   variable: '--font-sans',
+  display: 'swap',
+})
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  style: ['normal', 'italic'],
+  axes: ['opsz'],
+  variable: '--font-fraunces',
   display: 'swap',
 })
 
@@ -52,16 +54,8 @@ export default function RootLayout({
     <html
       lang="ko"
       suppressHydrationWarning
-      className={interTight.variable}
+      className={`${interTight.variable} ${fraunces.variable}`}
     >
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap"
-        />
-      </head>
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
         <ServiceWorkerRegister />
         <ConfirmProvider>

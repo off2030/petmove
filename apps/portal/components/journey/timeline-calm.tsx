@@ -33,12 +33,12 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
   } as const
 
   const serif: React.CSSProperties = {
-    fontFamily: "'Fraunces', 'Pretendard Variable', serif",
+    fontFamily: 'var(--pm-font-display)',
     fontWeight: 500,
     letterSpacing: '-0.01em',
   }
   const num: React.CSSProperties = {
-    fontFamily: "'Fraunces', 'Inter', serif",
+    fontFamily: 'var(--pm-font-display)',
     fontVariantNumeric: 'tabular-nums',
     fontWeight: 400,
   }
