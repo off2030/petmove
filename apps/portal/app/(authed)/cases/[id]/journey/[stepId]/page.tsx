@@ -8,6 +8,7 @@ import {
   getChecksForStep,
   getStepsForCase,
   resolveDone,
+  resolveStepForDestination,
   runChecksForCase,
   type CaseRow,
   type CheckResult,
@@ -35,14 +36,16 @@ export default function CaseJourneyStepPage({
   const caseRow = useCase(id)
   if (!caseRow) notFound()
 
-  const step = JOURNEY_STEP_CATALOG.find((s) => s.id === stepId)
-  if (!step) notFound()
+  const baseStep = JOURNEY_STEP_CATALOG.find((s) => s.id === stepId)
+  if (!baseStep) notFound()
 
   const applicable = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
-  const stepIndex = applicable.findIndex((s) => s.id === step.id)
+  const stepIndex = applicable.findIndex((s) => s.id === baseStep.id)
   if (stepIndex === -1) notFound()
 
   const ctx = buildCaseJourneyContext(caseRow)
+  // 목적지별 description/title override 적용. validation 은 base.done/validationIds 그대로.
+  const step = resolveStepForDestination(baseStep, ctx.destinationKey)
   const done = resolveDone(step.done, caseRow)
   const checkResults = collectStepChecks(step, caseRow, ctx.destinationKey)
 

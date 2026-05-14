@@ -1,5 +1,6 @@
 export * from './types'
 export * from './applicability'
 export * from './done-resolver'
+export * from './destination-overrides'
 export * from './check-mapping'
 export { JOURNEY_STEP_CATALOG } from './catalog'

@@ -5,6 +5,7 @@ import {
   getStepsForCase,
   resolveCompletedDate,
   resolveDone,
+  resolveStepForDestination,
   type StepDefinition,
 } from '@petmove/domain'
 
@@ -88,7 +89,10 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
 
   const applicableSteps = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
 
-  const stages: JourneyStage[] = applicableSteps.map((step) => {
+  const stages: JourneyStage[] = applicableSteps.map((rawStep) => {
+    // 목적지별 override(주로 description/title) 적용 — base catalog 는 그대로,
+    // ctx.destinationKey 가 STEP_DESTINATION_OVERRIDES 에 매칭되면 머지.
+    const step = resolveStepForDestination(rawStep, ctx.destinationKey)
     const done = resolveDone(step.done, caseRow)
     // departure step 은 출국일 자체. 그 외에는:
     //  - done → resolveCompletedDate (없으면 dash 로 fallback)
