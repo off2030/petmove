@@ -68,6 +68,25 @@ export async function getMyCase(caseId: string): Promise<Result<CaseRow | null>>
 }
 
 /**
+ * 본인 ↔ 케이스 link 확인. updateCaseAvatar / updateMicrochipFields 등에서 공통.
+ * 권한 없으면 ok=false. 통과 시 admin 클라이언트 호출자가 직접 update.
+ */
+async function assertCaseAccess(caseId: string): Promise<Result<true>> {
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: '인증 필요' }
+  const supabase = await createClient()
+  const { data: link, error: linkErr } = await supabase
+    .from('case_customer_links')
+    .select('case_id')
+    .eq('case_id', caseId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+  if (linkErr) return { ok: false, error: linkErr.message }
+  if (!link) return { ok: false, error: '이 케이스에 접근 권한이 없습니다.' }
+  return { ok: true, value: true }
+}
+
+/**
  * 보호자가 자기 케이스의 아바타(이모지·색)를 갱신.
  *
  * cases_update RLS 는 org_member 만 허용 → service role 로 우회. 그 대신
@@ -83,9 +102,6 @@ export async function updateCaseAvatar(
   color: AvatarColorId | null,
 ): Promise<Result<CaseRow>> {
   try {
-    const user = await getCurrentUser()
-    if (!user) return { ok: false, error: '인증 필요' }
-
     if (emoji !== null && !AVATAR_EMOJIS.includes(emoji)) {
       return { ok: false, error: '허용되지 않은 이모지' }
     }
@@ -93,15 +109,8 @@ export async function updateCaseAvatar(
       return { ok: false, error: '허용되지 않은 색상' }
     }
 
-    const supabase = await createClient()
-    const { data: link, error: linkErr } = await supabase
-      .from('case_customer_links')
-      .select('case_id')
-      .eq('case_id', caseId)
-      .eq('user_id', user.id)
-      .maybeSingle()
-    if (linkErr) return { ok: false, error: linkErr.message }
-    if (!link) return { ok: false, error: '이 케이스에 접근 권한이 없습니다.' }
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
 
     const admin = createAdminClient()
     const { data, error } = await admin
@@ -112,6 +121,67 @@ export async function updateCaseAvatar(
       .single()
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: data as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * 마이크로칩 step 의 두 필드를 patch.
+ *  - microchip: cases.microchip 컬럼 (15자리 raw digits only) — 빈문자열/null 이면 해제
+ *  - microchip_implant_date: cases.data.microchip_implant_date (YYYY-MM-DD) — 빈/null 이면 키 제거
+ *
+ * data 의 다른 키는 fetch-merge 로 보존. 두 필드 화이트리스트 외에는 손대지 않음.
+ */
+export async function updateMicrochipFields(
+  caseId: string,
+  microchip: string | null,
+  microchipImplantDate: string | null,
+): Promise<Result<CaseRow>> {
+  try {
+    // microchip 정규화: 숫자만, 15자리 필수 (빈/null 은 해제).
+    let chip: string | null = null
+    if (microchip != null && microchip !== '') {
+      const digits = microchip.replace(/\D/g, '')
+      if (digits.length !== 15) {
+        return { ok: false, error: '마이크로칩 번호는 15자리여야 합니다.' }
+      }
+      chip = digits
+    }
+
+    // implant_date 정규화: YYYY-MM-DD 만 허용 (빈/null 은 해제).
+    let dt: string | null = null
+    if (microchipImplantDate != null && microchipImplantDate !== '') {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(microchipImplantDate)) {
+        return { ok: false, error: '시술일 형식은 YYYY-MM-DD 여야 합니다.' }
+      }
+      dt = microchipImplantDate
+    }
+
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    // data 의 다른 키 보존을 위해 fetch → merge → update.
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const nextData = { ...prev }
+    if (dt === null) delete nextData.microchip_implant_date
+    else nextData.microchip_implant_date = dt
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ microchip: chip, data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }

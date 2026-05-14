@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { CheckResult, ProcedureCheck, StepDefinition } from '@petmove/domain'
+import { MicrochipInputs } from './microchip-inputs'
 
 interface CollectedCheck {
   check: ProcedureCheck
@@ -183,8 +184,23 @@ export function StepDetailView({
           </section>
         )}
 
-        {/* Inputs preview (MVP — read-only schema) */}
-        {step.inputs && step.inputs.length > 0 && (
+        {/* Inputs — 마이크로칩 step 은 인터랙티브, 그 외는 read-only 스키마 미리보기. */}
+        {step.id === 'microchip' && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...serif, fontSize: 16, margin: '0 0 10px' }}>입력 정보</h3>
+            <div
+              style={{
+                background: C.surface,
+                border: `.5px solid ${C.line}`,
+                borderRadius: 16,
+                padding: '16px 16px',
+              }}
+            >
+              <MicrochipInputs caseId={caseId} />
+            </div>
+          </section>
+        )}
+        {step.id !== 'microchip' && step.inputs && step.inputs.length > 0 && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...serif, fontSize: 16, margin: '0 0 10px' }}>입력 정보</h3>
             <div
