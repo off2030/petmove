@@ -8,43 +8,45 @@ import { updateMicrochipFields } from '@/lib/actions/cases'
 /**
  * 마이크로칩 step 인터랙티브 폼.
  *
- * - 칩 번호: store 는 raw 15-digit, display 는 3자리 공백 구분. apply/page.tsx 의 mask 와 동일.
- *   onBlur 시점에 server action 호출(자동 저장) — 보호자가 명시 저장 버튼 없이 입력하다 화면을 떠도 보존.
- * - 시술일: @petmove/ui 의 DateTextField (apply 와 동일 컴포넌트). onChange 가 commit 한 값을 즉시 저장.
- *
- * 저장 결과 CaseRow 는 case-data Context 로 push — TopBar / 일정 화면이 같은 컨텍스트를 본다.
- * 검증 실패(15자리 아님)는 인라인 메시지로 표시, 서버 호출 안 함.
+ * - 칩 번호: store 는 raw 15-digit, display 는 3자리 공백 구분 (apply/page.tsx 와 동일 mask).
+ * - 시술일: @petmove/ui 의 DateTextField (apply 와 동일 컴포넌트).
+ * - 저장: 명시 '저장' 버튼 — dirty 여부에 따라 활성/비활성. 펫무브워크 admin 의
+ *   상세 페이지 패턴과 동일. (이전엔 onBlur 자동 저장이었으나 사용자가 의도치 않은
+ *   저장을 막기 위해 명시 저장으로 변경.)
+ * - 저장 응답 CaseRow 는 case-data Context 로 push → TopBar / 일정 화면 즉시 갱신.
  */
 export function MicrochipInputs({ caseId }: { caseId: string }) {
   const caseRow = useCase(caseId)
   const { updateCase } = useCases()
 
-  const initialChip = caseRow?.microchip ?? ''
-  const initialDate = readImplantDate(caseRow?.data)
+  const savedChip = caseRow?.microchip ?? ''
+  const savedDate = readImplantDate(caseRow?.data)
 
-  const [chip, setChip] = useState(initialChip)
-  const [date, setDate] = useState(initialDate)
+  const [chip, setChip] = useState(savedChip)
+  const [date, setDate] = useState(savedDate)
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
-  // 외부에서(예: admin push, Realtime) case 가 갱신되면 입력값도 따라가도록 sync.
-  // 단, 사용자가 입력 중인 동안(focus) sync 하면 글자 사라짐 — onBlur 후에만 동기화.
+  const dirty = chip !== savedChip || date !== savedDate
+
+  // 외부에서(admin push / Realtime) caseRow 의 저장된 값이 갱신되면 입력값도 따라가도록 sync.
+  // 단, 사용자가 변경 중(dirty) 이면 외부 변경 무시 — 사용자가 입력하던 값 보존.
   useEffect(() => {
-    setChip(caseRow?.microchip ?? '')
+    if (!dirty) setChip(caseRow?.microchip ?? '')
+    // dirty 일 때 sync 안 함. 사용자가 저장하거나 폐기할 때까지 사용자 입력 유지.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.microchip])
   useEffect(() => {
-    setDate(readImplantDate(caseRow?.data))
+    if (!dirty) setDate(readImplantDate(caseRow?.data))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
 
-  function commit(nextChip: string, nextDate: string) {
-    // 변경 없으면 no-op
-    const prevChip = caseRow?.microchip ?? ''
-    const prevDate = readImplantDate(caseRow?.data)
-    if (nextChip === prevChip && nextDate === prevDate) return
+  function handleSave() {
+    if (!dirty) return
 
     // 칩 번호는 비우거나(해제) 15자리만 허용 — 그 외는 클라 검증 실패로 저장 안 함.
-    if (nextChip !== '' && nextChip.length !== 15) {
+    if (chip !== '' && chip.length !== 15) {
       setStatus('error')
       setError('마이크로칩 번호는 15자리여야 합니다.')
       return
@@ -53,7 +55,7 @@ export function MicrochipInputs({ caseId }: { caseId: string }) {
     setStatus('saving')
     setError(null)
     startTransition(async () => {
-      const res = await updateMicrochipFields(caseId, nextChip || null, nextDate || null)
+      const res = await updateMicrochipFields(caseId, chip || null, date || null)
       if (res.ok) {
         updateCase(res.value)
         setStatus('saved')
@@ -72,6 +74,7 @@ export function MicrochipInputs({ caseId }: { caseId: string }) {
     ink: '#2A2620',
     ink2: '#6B6457',
     ink3: '#9A9286',
+    accent: '#8A7355',
     sage: '#8FA68C',
     warn: '#C26A4A',
   } as const
@@ -100,13 +103,25 @@ export function MicrochipInputs({ caseId }: { caseId: string }) {
     boxSizing: 'border-box',
     letterSpacing: '0.04em',
   }
+  const saveBtnEnabled = dirty && status !== 'saving'
+  const saveBtnStyle: React.CSSProperties = {
+    padding: '10px 18px',
+    borderRadius: 999,
+    border: 0,
+    background: saveBtnEnabled ? C.accent : 'rgba(42,38,32,.10)',
+    color: saveBtnEnabled ? '#fff' : C.ink3,
+    fontFamily: 'inherit',
+    fontSize: 13,
+    fontWeight: 600,
+    letterSpacing: '-0.005em',
+    cursor: saveBtnEnabled ? 'pointer' : 'not-allowed',
+    transition: 'background .15s, color .15s',
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
-        <div style={labelStyle}>
-          마이크로칩 번호 <span style={{ color: C.warn }}>*</span>
-        </div>
+        <div style={labelStyle}>마이크로칩 번호</div>
         <div style={helpStyle}>000 000 000 000 000 형식 (3자리씩 공백 구분)</div>
         <input
           type="text"
@@ -116,7 +131,6 @@ export function MicrochipInputs({ caseId }: { caseId: string }) {
             const digits = e.target.value.replace(/\D/g, '').slice(0, 15)
             setChip(digits)
           }}
-          onBlur={() => commit(chip, date)}
           placeholder="000 000 000 000 000"
           maxLength={19}
           style={inputStyle}
@@ -128,26 +142,41 @@ export function MicrochipInputs({ caseId }: { caseId: string }) {
         <div style={{ marginTop: 8 }}>
           <DateTextField
             value={date}
-            onChange={(v) => {
-              setDate(v)
-              // DateTextField 는 commit 된 값을 onChange 로 전달 — 즉시 저장.
-              commit(chip, v)
-            }}
+            onChange={(v) => setDate(v)}
             placeholder="YYYY-MM-DD"
           />
         </div>
       </div>
       <div
-        aria-live="polite"
         style={{
-          fontSize: 12,
-          color: status === 'error' ? C.warn : status === 'saved' ? C.sage : C.ink3,
-          minHeight: 16,
+          marginTop: 4,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
         }}
       >
-        {status === 'saving' && '저장 중…'}
-        {status === 'saved' && '✓ 저장됨'}
-        {status === 'error' && (error ?? '저장 실패')}
+        <div
+          aria-live="polite"
+          style={{
+            fontSize: 12,
+            color: status === 'error' ? C.warn : status === 'saved' ? C.sage : C.ink3,
+            minWidth: 0,
+          }}
+        >
+          {status === 'saving' && '저장 중…'}
+          {status === 'saved' && '✓ 저장됨'}
+          {status === 'error' && (error ?? '저장 실패')}
+          {status === 'idle' && dirty && '변경 사항 있음'}
+        </div>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!saveBtnEnabled}
+          style={saveBtnStyle}
+        >
+          저장
+        </button>
       </div>
     </div>
   )

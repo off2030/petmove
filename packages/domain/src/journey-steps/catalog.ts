@@ -34,7 +34,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '마이크로칩 삽입',
     shortLabel: '칩',
     description:
-      '국제 표준 규격(15자리 번호)의 내장형 마이크로칩을 삽입합니다.\n\n강아지는 동물등록도 필수입니다.',
+      '국제 표준 규격(15자리 번호)의 내장형 마이크로칩을 삽입합니다. 강아지는 동물등록도 필수입니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 20,
     done: 'microchip-set',
