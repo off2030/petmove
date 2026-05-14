@@ -43,7 +43,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
     fontWeight: 400,
   }
   const monoCap: React.CSSProperties = {
-    fontSize: 10.5,
+    fontSize: 11,
     letterSpacing: '0.16em',
     textTransform: 'uppercase',
     color: C.ink3,
@@ -95,10 +95,10 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
           <span style={{ alignSelf: 'center' }}>
             <PetAvatar size={36} />
           </span>
-          <h1 style={{ ...serif, fontSize: 30, lineHeight: 1.12, margin: 0, color: C.ink }}>{pet.name}</h1>
+          <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: 0, color: C.ink }}>{pet.name}</h1>
           <div
             style={{
-              fontSize: 12.5,
+              fontSize: 12,
               color: C.ink2,
               display: 'flex',
               alignItems: 'center',
@@ -132,14 +132,14 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <div style={{ ...monoCap, color: 'rgba(45,38,28,.55)' }}>다음 할 일</div>
               {dDayLabel && (
-                <span style={{ ...monoCap, fontSize: 9.5, color: 'rgba(45,38,28,.75)', fontWeight: 600 }}>{dDayLabel}</span>
+                <span style={{ ...monoCap, color: 'rgba(45,38,28,.75)', fontWeight: 600 }}>{dDayLabel}</span>
               )}
             </div>
             <h3
               style={{
                 ...serif,
                 margin: '12px 0 0',
-                fontSize: 26,
+                fontSize: 22,
                 lineHeight: 1.18,
                 color: '#2A2620',
                 fontWeight: 500,
@@ -198,7 +198,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                 {animNum}
                 <span style={{ fontSize: 22, color: C.ink3, marginLeft: 2 }}>%</span>
               </div>
-              <div style={{ marginTop: 8, fontSize: 11.5, color: C.ink3 }}>
+              <div style={{ marginTop: 8, fontSize: 12, color: C.ink3 }}>
                 <span style={num}>{done}</span>
                 <span> / {total} 단계{dDayLabel ? ` · ${dDayLabel}` : ''}</span>
               </div>
@@ -279,13 +279,12 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                     {s.label}
                   </div>
                   {s.desc && (
-                    <div style={{ fontSize: 11.5, color: C.ink3, marginTop: 2, lineHeight: 1.4 }}>{s.desc}</div>
+                    <div style={{ fontSize: 12, color: C.ink3, marginTop: 2, lineHeight: 1.4 }}>{s.desc}</div>
                   )}
                 </div>
                 <div
                   style={{
                     ...monoCap,
-                    fontSize: 9.5,
                     color: isCurr ? C.accent : C.ink3,
                     fontWeight: isCurr ? 700 : 500,
                     textAlign: 'right',
