@@ -92,10 +92,9 @@ export function TopBar() {
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 10,
+          gap: 8,
           pointerEvents: 'auto',
           minWidth: 0,
-          marginLeft: 16,
         }}
       >
         <button aria-label="테마" title="테마" style={btn} type="button">
