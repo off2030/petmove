@@ -2,14 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Pretendard — 한글 글리프 전용. Google Fonts 미등록이라 jsdelivr CDN 경유.
-   semantic 토큰 (--pm-font-*) 의 한글 fallback 으로 스택. */
+/* Pretendard — 자체 호스팅 (/public/fonts/PretendardVariable.woff2).
+   jsdelivr CDN 의 woff2 fetch 가 모바일에서 실패해 시스템 한글로 폴백되던 문제 해소.
+   'Pretendard Variable' 이름도 같이 등록 — portal-preview JSX 와 동일 literal 매칭. */
 @font-face {
   font-family: 'Pretendard';
   font-style: normal;
   font-weight: 45 920;
   font-display: swap;
-  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2-subset/PretendardVariable.woff2') format('woff2-variations');
+  src: url('/fonts/PretendardVariable.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard Variable';
+  font-style: normal;
+  font-weight: 45 920;
+  font-display: swap;
+  src: url('/fonts/PretendardVariable.woff2') format('woff2');
 }
 
 /* Alonzo ExtraLight — 좌측 상단 로고 워드마크 전용. self-hosted .otf. */
@@ -39,9 +47,10 @@
   --pm-sage: #8FA68C;
 
   /* Semantic font tokens — UI 코드는 이것만 참조.
-     --font-fraunces / --font-sans 는 next/font 가 layout.tsx 에서 주입. */
-  --pm-font-display: var(--font-fraunces), 'Pretendard', Georgia, 'Times New Roman', serif;
-  --pm-font-body:    var(--font-sans), 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', sans-serif;
+     --font-fraunces / --font-sans 는 next/font 가 layout.tsx 에서 주입.
+     'Pretendard Variable' 와 'Pretendard' 는 self-hosted (/fonts/PretendardVariable.woff2). */
+  --pm-font-display: var(--font-fraunces), 'Pretendard Variable', 'Pretendard', Georgia, 'Times New Roman', serif;
+  --pm-font-body:    var(--font-sans), 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', sans-serif;
   --pm-font-mark:    'Alonzo', var(--pm-font-display);
 }
 
