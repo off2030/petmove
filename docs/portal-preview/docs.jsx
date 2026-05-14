@@ -37,7 +37,7 @@ function Documents({ scenario }) {
           </h1>
           <div style={{ fontSize: 12.5, color: DOCS_C.ink2, display: 'flex', alignItems: 'center', gap: 6, transform: 'translateY(-2px)' }}>
             <span>{trip.fromCity}</span>
-            <span style={{ color: DOCS_C.ink3 }}>→</span>
+            <span style={{ color: DOCS_C.ink3 }}>{trip.tripType === 'roundtrip' ? '⇄' : '→'}</span>
             <span>{trip.toCity}</span>
           </div>
         </div>

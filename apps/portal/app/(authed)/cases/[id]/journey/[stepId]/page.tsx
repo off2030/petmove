@@ -53,6 +53,7 @@ export default function CaseJourneyStepPage({
       checkResults={checkResults}
       destinationLabel={ctx.destinationToken ?? caseRow.destination ?? '—'}
       petName={caseRow.pet_name ?? '반려동물'}
+      tripType={ctx.tripType}
     />
   )
 }

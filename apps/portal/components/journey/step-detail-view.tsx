@@ -22,6 +22,7 @@ export function StepDetailView({
   checkResults,
   destinationLabel,
   petName,
+  tripType,
 }: {
   caseId: string
   step: StepDefinition
@@ -29,6 +30,7 @@ export function StepDetailView({
   checkResults: CollectedCheck[]
   destinationLabel: string
   petName: string
+  tripType: 'round' | 'one_way'
 }) {
   const C = {
     bg: '#F5EFE8',
@@ -108,7 +110,7 @@ export function StepDetailView({
           {step.title}
         </h1>
         <div style={{ fontSize: 12.5, color: C.ink2 }}>
-          {petName} · 한국 → {destinationLabel}
+          {petName} · 한국 {tripType === 'round' ? '⇄' : '→'} {destinationLabel}
         </div>
 
         {/* Description */}

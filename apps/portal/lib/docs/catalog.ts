@@ -23,7 +23,7 @@ import {
 
 export interface DocsViewData {
   pet: { name: string }
-  trip: { fromCity: string; toCity: string }
+  trip: { fromCity: string; toCity: string; tripType: 'round' | 'one_way' }
   checklist: ChecklistItem[]
   autoDocs: AutoDocItem[]
   storedDocs: StoredDocItem[]
@@ -99,6 +99,7 @@ export function buildDocsView(caseRow: CaseRow): DocsViewData {
     trip: {
       fromCity: '한국',
       toCity: ctx.destinationToken ?? caseRow.destination ?? '—',
+      tripType: ctx.tripType,
     },
     checklist,
     autoDocs,

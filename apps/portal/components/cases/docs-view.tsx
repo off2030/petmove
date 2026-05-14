@@ -78,7 +78,7 @@ export function DocsView({ data }: { data: DocsViewData }) {
             }}
           >
             <span>{trip.fromCity}</span>
-            <span style={{ color: C.ink3 }}>→</span>
+            <span style={{ color: C.ink3 }}>{trip.tripType === 'round' ? '⇄' : '→'}</span>
             <span>{trip.toCity}</span>
           </div>
         </div>

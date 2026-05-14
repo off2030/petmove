@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { buildCaseJourneyContext } from '@petmove/domain'
 import { listMyCases } from '@/lib/actions/cases'
 
 export const dynamic = 'force-dynamic'
@@ -35,6 +36,7 @@ export default async function CasesPage() {
       {cases.map((c) => {
         const petName = c.pet_name ?? '이름 미정'
         const dest = c.destination ?? ''
+        const tripType = buildCaseJourneyContext(c).tripType
         return (
           <Link
             key={c.id}
@@ -52,7 +54,7 @@ export default async function CasesPage() {
             <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>{petName}</div>
             {dest && (
               <div style={{ fontSize: 13, color: '#6B6457', marginTop: 4 }}>
-                한국 → {dest}
+                한국 {tripType === 'round' ? '⇄' : '→'} {dest}
               </div>
             )}
           </Link>
