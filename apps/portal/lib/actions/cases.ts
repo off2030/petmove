@@ -32,6 +32,7 @@ export async function listMyCases(): Promise<Result<CaseRow[]>> {
       .from('cases')
       .select('*, case_customer_links!inner(user_id)')
       .eq('case_customer_links.user_id', user.id)
+      .is('deleted_at', null)
       .order('updated_at', { ascending: false })
     if (error) return { ok: false, error: error.message }
     const rows = (data ?? []).map(({ case_customer_links: _l, ...rest }) => rest) as CaseRow[]
@@ -55,6 +56,7 @@ export async function getMyCase(caseId: string): Promise<Result<CaseRow | null>>
       .select('*, case_customer_links!inner(user_id)')
       .eq('id', caseId)
       .eq('case_customer_links.user_id', user.id)
+      .is('deleted_at', null)
       .maybeSingle()
     if (error) return { ok: false, error: error.message }
     if (!data) return { ok: true, value: null }
