@@ -100,7 +100,7 @@ function ThemeControls({ onNav }) {
 
 function BottomNav({ screen, onNav }) {
   const items = [
-    { id: 'timeline', label: '여정', icon: 'route' },
+    { id: 'timeline', label: '일정', icon: 'route' },
     { id: 'docs', label: '서류', icon: 'doc' },
     { id: 'info', label: '정보', icon: 'info' },
     { id: 'profile', label: '프로필', icon: 'user' },

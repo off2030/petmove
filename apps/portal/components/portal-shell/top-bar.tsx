@@ -38,7 +38,7 @@ export function TopBar() {
   const activeCaseId = caseIdFromPath(pathname)
   const tab = currentTab(pathname)
 
-  // PETMOVE 워드마크는 "현재 여정"으로 — bottom-nav 와 동일한 case 결정 패턴.
+  // PETMOVE 워드마크는 "현재 일정"으로 — bottom-nav 와 동일한 case 결정 패턴.
   // path 에 caseId 가 있으면 그걸, 아니면 sessionStorage 의 마지막 case, 둘 다 없으면 /cases.
   const [lastCaseId, setLastCaseId] = useState<string | null>(null)
   useEffect(() => {
@@ -88,7 +88,7 @@ export function TopBar() {
       <Link
         href={homeHref}
         prefetch
-        aria-label="여정"
+        aria-label="일정"
         style={{
           // 펫무브워크 상단 "PETMOVE Work" 와 동일한 워드마크 스타일.
           // Alonzo ExtraLight + faux bold(700) + tight tracking. globals.css 의 --pm-font-mark 토큰.

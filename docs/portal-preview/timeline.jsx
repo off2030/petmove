@@ -151,7 +151,7 @@ function TimelineCalm({ scenario, onNav, ringShape = 'B' }) {
         </div>
 
         {/* Stage list — quiet, mono-cap dates */}
-        <h3 style={{ ...serif, margin: '24px 0 12px', fontSize: 16 }}>전체 여정</h3>
+        <h3 style={{ ...serif, margin: '24px 0 12px', fontSize: 16 }}>전체 일정</h3>
         <div style={{
           background: C.cardList, borderRadius: 20,
           boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',

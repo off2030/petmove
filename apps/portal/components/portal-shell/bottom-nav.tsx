@@ -10,7 +10,7 @@ import { readLastCaseId, writeLastCaseId } from './last-case'
  *
  * 현재 path 가 /cases/<id>/... 이면 그 id 를 보존하면서 다른 탭으로 전환.
  * /me (case-외) 같은 화면에선 sessionStorage 의 마지막 caseId 로 복귀
- *   — swipe-tabs 와 동일한 키 공유. 이게 없으면 프로필에서 여정/서류/정보 탭을
+ *   — swipe-tabs 와 동일한 키 공유. 이게 없으면 프로필에서 일정/서류/정보 탭을
  *   누를 때마다 /cases (다중 케이스 선택 화면) 로 튕겨나가는 버그가 됨.
  * sessionStorage 도 비어 있으면 /cases 로 보냄 (1건이면 자동 redirect).
  * 프로필 탭은 항상 /me (case-외).
@@ -20,7 +20,7 @@ type Icon = 'route' | 'doc' | 'info' | 'user'
 type Tab = { key: 'journey' | 'docs' | 'info' | 'me'; label: string; icon: Icon }
 
 const TABS: Tab[] = [
-  { key: 'journey', label: '여정', icon: 'route' },
+  { key: 'journey', label: '일정', icon: 'route' },
   { key: 'docs', label: '서류', icon: 'doc' },
   { key: 'info', label: '정보', icon: 'info' },
   { key: 'me', label: '프로필', icon: 'user' },

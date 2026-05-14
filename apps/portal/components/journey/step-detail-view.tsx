@@ -85,7 +85,7 @@ export function StepDetailView({
             padding: '6px 0',
           }}
         >
-          ← 여정으로
+          ← 일정으로
         </Link>
 
         {/* Header */}

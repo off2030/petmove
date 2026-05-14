@@ -10,7 +10,7 @@ import { getMyProfile } from '@/lib/actions/profile'
 export const dynamic = 'force-dynamic'
 
 /**
- * 인증된 보호자 셸. 4탭 (여정/서류/정보/프로필) 공통 레이아웃.
+ * 인증된 보호자 셸. 4탭 (일정/서류/정보/프로필) 공통 레이아웃.
  *
  * 서버 fetch 는 최소 — getUser + listMyCases + getMyProfile (모두 RLS 위 단일 쿼리).
  * autoLinkCasesByEmail 은 auth callback 에서만 (가입 직후) — 매 레이아웃 렌더링마다 100-300ms

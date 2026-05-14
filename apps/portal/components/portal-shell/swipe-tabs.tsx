@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react'
 import { readLastCaseId, writeLastCaseId } from './last-case'
 
 /**
- * 4탭(여정/서류/정보/프로필) 좌우 스와이프 내비.
+ * 4탭(일정/서류/정보/프로필) 좌우 스와이프 내비.
  *
  * 검출은 두 경로 OR:
  *  1) 거리 기반 — 시작→끝 |dx| ≥60px AND |dy/dx| ≤1.0 (~45°), 1초 이내
