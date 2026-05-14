@@ -37,8 +37,8 @@ export function TopBar() {
   const tab = currentTab(pathname)
 
   const btn: React.CSSProperties = {
-    width: 28,
-    height: 28,
+    width: 32,
+    height: 32,
     borderRadius: '50%',
     border: 0,
     background: 'transparent',
@@ -73,7 +73,7 @@ export function TopBar() {
         style={{
           fontFamily: "'Fraunces', 'Pretendard Variable', serif",
           fontWeight: 500,
-          fontSize: 12,
+          fontSize: 14,
           letterSpacing: '0.22em',
           color: '#9A9286',
           textTransform: 'uppercase',
@@ -87,8 +87,8 @@ export function TopBar() {
       >
         <button aria-label="테마" title="테마" style={btn} type="button">
           <svg
-            width="15"
-            height="15"
+            width="18"
+            height="18"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -105,8 +105,8 @@ export function TopBar() {
         </button>
         <button aria-label="다크모드" title="다크모드" style={btn} type="button">
           <svg
-            width="14"
-            height="14"
+            width="17"
+            height="17"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -123,7 +123,7 @@ export function TopBar() {
               aria-hidden
               style={{
                 width: 1,
-                height: 16,
+                height: 18,
                 background: 'rgba(42,38,32,.10)',
                 display: 'inline-block',
               }}
