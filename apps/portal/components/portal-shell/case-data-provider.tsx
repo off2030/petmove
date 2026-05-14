@@ -82,26 +82,46 @@ export function CaseDataProvider({
     if (!prefetchedRef.current.has('/me')) urls.push('/me')
     if (urls.length === 0) return
 
-    // requestIdleCallback 가능하면 idle 시점, 아니면 setTimeout fallback.
-    const idleCb =
-      (window as { requestIdleCallback?: (cb: () => void) => number })
-        .requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 500))
-    const cancelCb =
-      (window as { cancelIdleCallback?: (id: number) => void })
-        .cancelIdleCallback ?? window.clearTimeout
+    // 첫 paint 와 경쟁하지 않도록 — window 'load' 이벤트 (모든 리소스 완료) + 1500ms 뒤 실행.
+    // 또는 사용자의 첫 입력 (touch/scroll) — 어느 쪽이든 먼저 발생한 것을 트리거로.
+    // (이전 requestIdleCallback 은 idle 이 너무 빨리 와서 첫 paint 직후 경쟁 발생했음.)
+    let cancelled = false
+    let timer: number | undefined
 
-    const handle = idleCb(() => {
-      for (const url of urls) {
-        try {
-          // @ts-expect-error PrefetchKind enum not publicly exported; runtime 'full' matches.
-          router.prefetch(url, { kind: 'full' })
-          prefetchedRef.current.add(url)
-        } catch {
-          /* best-effort */
+    const start = () => {
+      if (cancelled) return
+      cancelled = true
+      timer = window.setTimeout(() => {
+        for (const url of urls) {
+          try {
+            // @ts-expect-error PrefetchKind enum not publicly exported; runtime 'full' matches.
+            router.prefetch(url, { kind: 'full' })
+            prefetchedRef.current.add(url)
+          } catch {
+            /* best-effort */
+          }
         }
-      }
-    })
-    return () => cancelCb(handle as number)
+      }, 1500)
+    }
+
+    const onInteract = () => start()
+
+    if (document.readyState === 'complete') {
+      // 이미 load 끝났으면 1500ms 만 추가 대기
+      start()
+    } else {
+      window.addEventListener('load', start, { once: true })
+    }
+    window.addEventListener('touchstart', onInteract, { once: true, passive: true })
+    window.addEventListener('scroll', onInteract, { once: true, passive: true })
+
+    return () => {
+      cancelled = true
+      if (timer !== undefined) clearTimeout(timer)
+      window.removeEventListener('load', start)
+      window.removeEventListener('touchstart', onInteract)
+      window.removeEventListener('scroll', onInteract)
+    }
   }, [caseIdsKey, router])
 
   const refreshCases = useCallback(async () => {
@@ -122,38 +142,67 @@ export function CaseDataProvider({
     setProfile(next)
   }, [])
 
-  // Realtime — 같은 caseIdsKey (위에서 정의) 를 deps 로 공유, 케이스 id 집합 변동 시만 재구독.
+  // Realtime — 첫 paint 안정 후로 지연. WebSocket 핸드셰이크 + supabase realtime 모듈 파싱이
+  // 초기 진입 마지막 구간 lag 의 한 축. caseIdsKey 가 변하면 (= 케이스 추가/삭제) 재구독.
   useEffect(() => {
     if (!caseIdsKey) return
     const ids = caseIdsKey.split(',')
+    let channel: ReturnType<typeof supabaseBrowser.channel> | null = null
+    let cancelled = false
 
-    const channel = supabaseBrowser
-      .channel(`portal-cases-${ids[0]?.slice(0, 8) ?? 'empty'}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'cases',
-          filter: `id=in.(${ids.join(',')})`,
-        },
-        (payload) => {
-          if (payload.eventType === 'UPDATE') {
-            setCases((prev) =>
-              prev.map((c) =>
-                c.id === (payload.new as CaseRow).id ? (payload.new as CaseRow) : c,
-              ),
-            )
-          } else {
-            // INSERT/DELETE: 케이스 목록 자체 변동 — case_customer_links 까지 확인하려면 listMyCases.
-            void refreshCases()
-          }
-        },
-      )
-      .subscribe()
+    const subscribe = () => {
+      if (cancelled) return
+      channel = supabaseBrowser
+        .channel(`portal-cases-${ids[0]?.slice(0, 8) ?? 'empty'}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'cases',
+            filter: `id=in.(${ids.join(',')})`,
+          },
+          (payload) => {
+            if (payload.eventType === 'UPDATE') {
+              setCases((prev) =>
+                prev.map((c) =>
+                  c.id === (payload.new as CaseRow).id ? (payload.new as CaseRow) : c,
+                ),
+              )
+            } else {
+              // INSERT/DELETE: case_customer_links 까지 확인하려면 listMyCases 재조회.
+              void refreshCases()
+            }
+          },
+        )
+        .subscribe()
+    }
+
+    // load 이벤트 + 2초 지연 — 초기 진입 안정화 우선. 사용자 입력이 먼저 와도 트리거.
+    let timer: number | undefined
+    const start = () => {
+      if (cancelled || channel) return
+      timer = window.setTimeout(subscribe, 2000)
+    }
+    const onInteract = () => {
+      if (cancelled || channel) return
+      if (timer !== undefined) clearTimeout(timer)
+      subscribe()
+    }
+
+    if (document.readyState === 'complete') {
+      start()
+    } else {
+      window.addEventListener('load', start, { once: true })
+    }
+    window.addEventListener('touchstart', onInteract, { once: true, passive: true })
 
     return () => {
-      void supabaseBrowser.removeChannel(channel)
+      cancelled = true
+      if (timer !== undefined) clearTimeout(timer)
+      window.removeEventListener('load', start)
+      window.removeEventListener('touchstart', onInteract)
+      if (channel) void supabaseBrowser.removeChannel(channel)
     }
   }, [caseIdsKey, refreshCases])
 

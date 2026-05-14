@@ -76,24 +76,8 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
     writeLastCaseId(caseId)
   }, [caseId])
 
-  useEffect(() => {
-    if (!tab) return
-    const idx = TAB_ORDER.indexOf(tab)
-    for (const offset of [-1, 1]) {
-      const ni = idx + offset
-      if (ni < 0 || ni >= TAB_ORDER.length) continue
-      try {
-        // kind: 'full' — dynamic 페이지의 RSC payload 까지 통째 prefetch.
-        // 기본 'auto' 는 force-dynamic 에선 사실상 효과 없음.
-        // PrefetchKind enum 은 public export 가 아니라 ts-expect-error 로 회피
-        // (런타임 string 'full' 이 enum 값과 일치).
-        // @ts-expect-error PrefetchKind enum not publicly exported
-        router.prefetch(hrefFor(TAB_ORDER[ni], caseId), { kind: 'full' })
-      } catch {
-        /* prefetch 는 best-effort */
-      }
-    }
-  }, [tab, caseId, router])
+  // 인접 탭 prefetch 는 CaseDataProvider 가 모든 케이스 × 탭을 일괄 처리하므로 제거.
+  // (이전엔 두 컴포넌트가 같은 URL prefetch 를 중복 요청, 초기 진입 직후 네트워크 큐를 압박했음.)
 
   const startRef = useRef<{ x: number; y: number; t: number; skip: boolean } | null>(null)
   const movesRef = useRef<{ x: number; y: number; t: number }[]>([])
