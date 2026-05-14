@@ -48,6 +48,16 @@ function todayKst(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
+/**
+ * description 의 첫 문장만 추출 — 일정 row 의 sub-line 용.
+ * 마침표/물음표/느낌표 의 첫 등장까지 (그 부호 포함) 반환. 없으면 원문 그대로.
+ */
+function firstSentence(text: string): string {
+  const idx = text.search(/[.!?]/)
+  if (idx === -1) return text.trim()
+  return text.slice(0, idx + 1).trim()
+}
+
 function daysBetween(fromIso: string, toIso: string): number {
   const ms = new Date(toIso + 'T00:00:00Z').getTime() - new Date(fromIso + 'T00:00:00Z').getTime()
   return Math.round(ms / 86_400_000)
@@ -95,7 +105,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       short: step.shortLabel,
       date,
       state: done ? 'done' : 'upcoming',
-      desc: step.description.split('\n')[0],
+      desc: firstSentence(step.description),
     }
   })
 
