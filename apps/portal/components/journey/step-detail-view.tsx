@@ -129,6 +129,29 @@ export function StepDetailView({
               {line}
             </p>
           ))}
+          {step.id === 'intake' && (
+            <Link
+              href={`/cases/${caseId}/info`}
+              style={{
+                marginTop: 14,
+                padding: '9px 14px',
+                borderRadius: 999,
+                border: `.5px solid ${C.line}`,
+                background: 'rgba(255,253,247,.55)',
+                color: C.ink,
+                fontSize: 12.5,
+                fontWeight: 500,
+                letterSpacing: '-0.005em',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                textDecoration: 'none',
+              }}
+            >
+              검토하러 가기
+              <span style={{ color: C.ink3 }}>→</span>
+            </Link>
+          )}
         </section>
 
         {/* Warnings */}

@@ -14,14 +14,14 @@ import type { StepDefinition } from './types'
  * 컴포넌트에서 type 별로 분기.
  */
 export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
-  // ── 1. 의뢰 접수 ────────────────────────────────────────────────────────
+  // ── 1. 펫무브 등록 ──────────────────────────────────────────────────────
   {
     id: 'intake',
     category: 'preparation',
-    title: '의뢰 접수',
-    shortLabel: '접수',
+    title: '펫무브 등록',
+    shortLabel: '등록',
     description:
-      '담당 수의사에게 출국 신청이 접수되었습니다. 다음 단계부터는 보호자 입력과 검역 절차가 순차적으로 진행됩니다.',
+      '보호자와 동물 정보가 등록되었습니다. 이 정보는 증명서 발행, 수입허가증 신청 등 주요 절차에 사용됩니다. 혹시 잘못 입력된 정보가 없는지 한번 더 검토해주세요.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 10,
     done: 'always-done',

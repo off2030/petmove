@@ -74,7 +74,7 @@ const SCENARIO = {
   },
   // Timeline — 8 stages, current step is 4 (항체가 검사)
   stages: [
-    { id: 's1', label: '의뢰 접수',       short: '접수',     date: '2026-04-18', state: 'done',     desc: '상담 완료, 견적 확정' },
+    { id: 's1', label: '펫무브 등록',     short: '등록',     date: '2026-04-18', state: 'done',     desc: '보호자/동물 정보 등록 완료' },
     { id: 's2', label: '마이크로칩 확인',  short: '칩 확인',   date: '2026-04-22', state: 'done',     desc: 'ISO 11784 규격 확인' },
     { id: 's3', label: '광견병 백신 접종', short: '백신',     date: '2026-04-29', state: 'done',     desc: '3차 접종 / 항체 형성 대기' },
     { id: 's4', label: '광견병항체가 검사',       short: '항체 검사', date: '2026-05-12', state: 'current', desc: '채혈 → 일본 지정 검사기관 송부', sub: 'D-7 · 다음 단계' },
