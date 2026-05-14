@@ -48,8 +48,9 @@ export function TopBar() {
   const homeHref = homeCaseId ? `/cases/${homeCaseId}/journey` : '/cases'
 
   const btn: React.CSSProperties = {
-    width: 32,
-    height: 32,
+    // iOS HIG minimum tap target 44pt 근접 — 시각 균형 위해 40 으로.
+    width: 40,
+    height: 40,
     borderRadius: '50%',
     border: 0,
     background: 'transparent',
@@ -94,7 +95,7 @@ export function TopBar() {
           // Alonzo ExtraLight + faux bold(700) + tight tracking. globals.css 의 --pm-font-mark 토큰.
           fontFamily: 'var(--pm-font-mark)',
           fontWeight: 700,
-          fontSize: 19,
+          fontSize: 17,
           letterSpacing: '0.025em',
           color: '#9A9286',
           pointerEvents: 'auto',
@@ -116,8 +117,8 @@ export function TopBar() {
       >
         <button aria-label="테마" title="테마" style={btn} type="button">
           <svg
-            width="20"
-            height="20"
+            width="22"
+            height="22"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -134,8 +135,8 @@ export function TopBar() {
         </button>
         <button aria-label="다크모드" title="다크모드" style={btn} type="button">
           <svg
-            width="19"
-            height="19"
+            width="22"
+            height="22"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -185,8 +186,8 @@ export function TopBar() {
                     title={c.pet_name ?? '케이스'}
                     className="pm-pressable"
                     style={{
-                      width: 26,
-                      height: 26,
+                      width: 28,
+                      height: 28,
                       borderRadius: '50%',
                       padding: 0,
                       background: avatarGradient(c, i),
@@ -200,7 +201,7 @@ export function TopBar() {
                         ? "-apple-system, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
                         : 'var(--pm-font-display)',
                       fontWeight: 600,
-                      fontSize: isEmoji ? 13 : 10,
+                      fontSize: isEmoji ? 14 : 11,
                       lineHeight: 1,
                       textDecoration: 'none',
                       opacity: isActive ? 1 : 0.42,

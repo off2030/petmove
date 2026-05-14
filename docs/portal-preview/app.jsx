@@ -51,7 +51,7 @@ function PMScreenContent({ screen, scenario, onNav, ringShape }) {
 // 다이내믹 아일랜드 우측: PETMOVE 워드마크 (좌, 클릭 시 첫 화면=timeline) + 팔레트·다크모드 (우)
 function ThemeControls({ onNav }) {
   const btn = {
-    width: 26, height: 26, borderRadius: '50%', border: 0,
+    width: 40, height: 40, borderRadius: '50%', border: 0,
     background: 'transparent',
     cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
     color: 'var(--pm-ink-2)',
@@ -72,7 +72,7 @@ function ThemeControls({ onNav }) {
         style={{
           // 펫무브워크 PETMOVE 워드마크와 동일 — Alonzo ExtraLight + faux bold.
           fontFamily: "'Alonzo', 'Bodoni Moda', 'Playfair Display', serif",
-          fontWeight: 700, fontSize: 14, letterSpacing: '0.025em',
+          fontWeight: 700, fontSize: 17, letterSpacing: '0.025em',
           color: 'var(--pm-ink-3)',
           pointerEvents: 'auto', lineHeight: 1,
           background: 'transparent', border: 0, padding: 0, cursor: 'pointer',
@@ -80,7 +80,7 @@ function ThemeControls({ onNav }) {
       >PETMOVE</button>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, pointerEvents: 'auto' }}>
         <button aria-label="팔레트" title="테마" style={btn}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 22a10 10 0 1 1 10-10c0 2.5-2 4-4 4h-2a2 2 0 0 0-2 2v.5a2.5 2.5 0 0 1-2 2.5z"/>
             <circle cx="7.5" cy="11" r="1.1" fill="currentColor" stroke="none"/>
             <circle cx="10.5" cy="7" r="1.1" fill="currentColor" stroke="none"/>
@@ -89,7 +89,7 @@ function ThemeControls({ onNav }) {
           </svg>
         </button>
         <button aria-label="다크모드" title="다크모드" style={btn}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
           </svg>
         </button>
