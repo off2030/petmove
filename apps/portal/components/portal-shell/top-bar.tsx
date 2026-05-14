@@ -48,6 +48,7 @@ export function TopBar() {
     justifyContent: 'center',
     color: '#6B6457',
     padding: 0,
+    flexShrink: 0,
   }
 
   return (
@@ -82,12 +83,20 @@ export function TopBar() {
           color: '#9A9286',
           textTransform: 'uppercase',
           pointerEvents: 'auto',
+          flexShrink: 0,
         }}
       >
         PETMOVE
       </div>
       <div
-        style={{ display: 'flex', alignItems: 'center', gap: 10, pointerEvents: 'auto' }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          pointerEvents: 'auto',
+          minWidth: 0,
+          marginLeft: 16,
+        }}
       >
         <button aria-label="테마" title="테마" style={btn} type="button">
           <svg
@@ -130,9 +139,21 @@ export function TopBar() {
                 height: 18,
                 background: 'rgba(42,38,32,.10)',
                 display: 'inline-block',
+                flexShrink: 0,
               }}
             />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div
+              className="pm-noscroll"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                minWidth: 0,
+                overflowX: 'auto',
+                paddingInline: 4,
+                marginInline: -4,
+              }}
+            >
               {cases.map((c) => {
                 const isActive = c.id === activeCaseId
                 const isEmoji = avatarIsEmoji(c)
@@ -154,6 +175,7 @@ export function TopBar() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      flexShrink: 0,
                       color: '#fff',
                       fontFamily: isEmoji
                         ? "-apple-system, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
