@@ -121,7 +121,7 @@ export function TopBar() {
             <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
           </svg>
         </button>
-        {cases.length > 0 && (
+        {cases.length > 1 && (
           <>
             <span
               aria-hidden
