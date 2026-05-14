@@ -14,6 +14,7 @@ const FAKE_OK_CASE_ID = '00000000-0000-0000-0000-000000000000'
 interface ApplyInput {
   // 1. 목적지
   destination: string
+  trip_type?: 'round' | 'one_way'
   // 2. 고객정보
   customer_name: string
   customer_last_name_en: string
@@ -125,6 +126,11 @@ export async function applyCase(input: ApplyInput): Promise<
     color_en: input.color_en,
     sex: input.sex,
     weight: input.weight ? Number(input.weight) : null,
+  }
+
+  // 왕복/편도 — admin 의 case.data.trip_type 컨벤션과 동일. 목적지 키로 매핑.
+  if (input.trip_type) {
+    data.trip_type = { [input.destination]: input.trip_type }
   }
 
   // 선택 항목

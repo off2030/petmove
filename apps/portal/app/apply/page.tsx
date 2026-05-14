@@ -32,6 +32,9 @@ const messages = {
     searchHint: '검색 입력',
     destPlaceholder: '예: 일본 · Japan',
     noResults: '검색 결과 없음',
+    tripType: '여행 유형',
+    tripRound: '왕복',
+    tripOneWay: '편도',
     sec2: '소유주 정보',
     name: '성함',
     namePlaceholder: '예: 홍길동',
@@ -134,6 +137,9 @@ const messages = {
     searchHint: 'Search',
     destPlaceholder: 'e.g. Japan',
     noResults: 'No results',
+    tripType: 'Trip type',
+    tripRound: 'Round-trip',
+    tripOneWay: 'One-way',
     sec2: 'Owner Information',
     name: 'Name',
     namePlaceholder: 'e.g. 홍길동',
@@ -410,6 +416,7 @@ export default function ApplyPage() {
   // Form state
   const [destination, setDestination] = useState('')
   const [destQuery, setDestQuery] = useState('')
+  const [tripType, setTripType] = useState<'round' | 'one_way'>('round')
   const [customerName, setCustomerName] = useState('')
   const [customerLastNameEn, setCustomerLastNameEn] = useState('')
   const [customerFirstNameEn, setCustomerFirstNameEn] = useState('')
@@ -656,6 +663,7 @@ export default function ApplyPage() {
     for (const p of pets) {
       const result = await applyCase({
         destination,
+        trip_type: tripType,
         customer_name: customerName.trim(),
         customer_last_name_en: capitalize(customerLastNameEn.trim()),
         customer_first_name_en: capitalize(customerFirstNameEn.trim()),
@@ -712,7 +720,7 @@ export default function ApplyPage() {
             type="button"
             onClick={() => {
               setStep(0)
-              setDestination(''); setDestQuery('')
+              setDestination(''); setDestQuery(''); setTripType('round')
               setCustomerName(''); setCustomerLastNameEn(''); setCustomerFirstNameEn(''); setPhone(''); setAddressKr(''); setAddressDetail(''); setAddressEn(''); setEmail('')
               setPetCount(1); setPets([emptyPet()])
             }}
@@ -874,6 +882,20 @@ export default function ApplyPage() {
                 </div>
               )}
             </FieldRow>
+            {destination && (
+              <FieldRow m={m} label={m.tripType} required>
+                <div className="flex gap-sm">
+                  <button type="button" onClick={() => setTripType('round')}
+                    className={`h-9 px-5 rounded-full border text-[13px] font-medium transition-colors ${tripType === 'round' ? chipButtonActive : chipButtonInactive}`}>
+                    {m.tripRound}
+                  </button>
+                  <button type="button" onClick={() => setTripType('one_way')}
+                    className={`h-9 px-5 rounded-full border text-[13px] font-medium transition-colors ${tripType === 'one_way' ? chipButtonActive : chipButtonInactive}`}>
+                    {m.tripOneWay}
+                  </button>
+                </div>
+              </FieldRow>
+            )}
           </section>
 
           {/* 2. 소유주 */}
