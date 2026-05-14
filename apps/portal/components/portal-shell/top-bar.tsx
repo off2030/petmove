@@ -67,6 +67,10 @@ export function TopBar() {
         paddingBlock: 0,
         boxSizing: 'border-box',
         pointerEvents: 'none',
+        background:
+          'linear-gradient(180deg, rgba(245,239,232,.95) 0%, rgba(245,239,232,.92) 60%, rgba(245,239,232,0) 100%)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
       }}
     >
       <div
