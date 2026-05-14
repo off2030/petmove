@@ -182,7 +182,7 @@ function TimelineCalm({ scenario, onNav, ringShape = 'B' }) {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
-                    fontSize: 15,
+                    fontSize: 17,
                     color: isCurr ? C.ink : isDone ? C.ink2 : C.ink3,
                     fontWeight: isCurr ? 600 : 500
                   }}>{s.label}</div>
