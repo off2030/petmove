@@ -141,8 +141,8 @@ export function TopBar() {
                     title={c.pet_name ?? '케이스'}
                     className="pm-pressable"
                     style={{
-                      width: 30,
-                      height: 30,
+                      width: 26,
+                      height: 26,
                       borderRadius: '50%',
                       padding: 0,
                       background: avatarGradient(c),
@@ -155,7 +155,7 @@ export function TopBar() {
                         ? "-apple-system, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
                         : "'Fraunces', 'Pretendard Variable', serif",
                       fontWeight: 600,
-                      fontSize: isEmoji ? 15 : 11,
+                      fontSize: isEmoji ? 13 : 10,
                       lineHeight: 1,
                       textDecoration: 'none',
                       opacity: isActive ? 1 : 0.42,
