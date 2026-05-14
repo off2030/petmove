@@ -70,10 +70,11 @@ function ThemeControls({ onNav }) {
         aria-label="첫 화면"
         onClick={() => onNav && onNav('timeline')}
         style={{
-          fontFamily: "'Fraunces', 'Pretendard Variable', serif",
-          fontWeight: 500, fontSize: 11, letterSpacing: '0.22em',
-          color: 'var(--pm-ink-3)', textTransform: 'uppercase',
-          pointerEvents: 'auto',
+          // 펫무브워크 PETMOVE 워드마크와 동일 — Alonzo ExtraLight + faux bold.
+          fontFamily: "'Alonzo', 'Bodoni Moda', 'Playfair Display', serif",
+          fontWeight: 700, fontSize: 14, letterSpacing: '0.025em',
+          color: 'var(--pm-ink-3)',
+          pointerEvents: 'auto', lineHeight: 1,
           background: 'transparent', border: 0, padding: 0, cursor: 'pointer',
         }}
       >PETMOVE</button>

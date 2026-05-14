@@ -90,15 +90,17 @@ export function TopBar() {
         prefetch
         aria-label="여정"
         style={{
-          fontFamily: 'var(--pm-font-display)',
-          fontWeight: 500,
-          fontSize: 15,
-          letterSpacing: '0.22em',
+          // 펫무브워크 상단 "PETMOVE Work" 와 동일한 워드마크 스타일.
+          // Alonzo ExtraLight + faux bold(700) + tight tracking. globals.css 의 --pm-font-mark 토큰.
+          fontFamily: 'var(--pm-font-mark)',
+          fontWeight: 700,
+          fontSize: 19,
+          letterSpacing: '0.025em',
           color: '#9A9286',
-          textTransform: 'uppercase',
           pointerEvents: 'auto',
           flexShrink: 0,
           textDecoration: 'none',
+          lineHeight: 1,
         }}
       >
         PETMOVE

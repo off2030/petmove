@@ -1,3 +1,12 @@
+/* Alonzo ExtraLight — 좌측 상단 PETMOVE 워드마크 전용 (펫무브워크와 공유). */
+@font-face {
+  font-family: 'Alonzo';
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src: url('fonts/Alonzo-ExtraLight.otf') format('opentype');
+}
+
 /* PetMove design tokens */
 :root {
   /* Brand gradient — lavender → peach (background only) */
