@@ -156,7 +156,7 @@ export function TopBar() {
                 paddingBlock: 6,
               }}
             >
-              {cases.map((c) => {
+              {cases.map((c, i) => {
                 const isActive = c.id === activeCaseId
                 const isEmoji = avatarIsEmoji(c)
                 return (
@@ -172,7 +172,7 @@ export function TopBar() {
                       height: 26,
                       borderRadius: '50%',
                       padding: 0,
-                      background: avatarGradient(c),
+                      background: avatarGradient(c, i),
                       border: 'none',
                       display: 'flex',
                       alignItems: 'center',

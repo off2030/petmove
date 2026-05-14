@@ -20,15 +20,17 @@ export type AvatarColorId =
   | 'slate'
   | 'terracotta'
 
+// 순서가 곧 "n번째 케이스에 어떤 색을 줄지" — 화사한 5색을 먼저, 어두운 2색(slate/purple)을 뒤로.
+// picker grid 표시 순서도 이 배열을 그대로 따라가므로 사용자가 보기에도 화사한 색이 먼저 보임.
 export const AVATAR_COLOR_IDS: readonly AvatarColorId[] = [
-  'orange',
-  'purple',
   'sage',
   'rose',
   'ocean',
   'sand',
-  'slate',
   'terracotta',
+  'orange',
+  'slate',
+  'purple',
 ] as const
 
 export const AVATAR_GRADIENTS: Record<AvatarColorId, string> = {
@@ -42,7 +44,10 @@ export const AVATAR_GRADIENTS: Record<AvatarColorId, string> = {
   terracotta: 'linear-gradient(135deg, #D69570 0%, #B47453 100%)',
 }
 
-/** Hash fallback 시 사용되는 자동 색상 cycle — 8색 전체 순환. */
+/**
+ * Index 정보 없는 호출자(단일 케이스 페이지 등)를 위한 hash fallback.
+ * 보호자 케이스 목록(TopBar / Picker)에선 index 를 넘겨 충돌 없는 순환 사용.
+ */
 const HASH_CYCLE: readonly AvatarColorId[] = AVATAR_COLOR_IDS
 
 export const AVATAR_EMOJIS: readonly string[] = [
@@ -66,9 +71,21 @@ function hashColorFor(id: string): AvatarColorId {
   return HASH_CYCLE[h % HASH_CYCLE.length]
 }
 
-export function avatarGradient(c: Pick<CaseRow, 'id' | 'avatar_color'>): string {
-  const id = isAvatarColorId(c.avatar_color) ? c.avatar_color : hashColorFor(c.id)
-  return AVATAR_GRADIENTS[id]
+/**
+ * 케이스의 그라데이션. 우선순위:
+ *   1. avatar_color 명시 설정 → 그 색
+ *   2. index 인자 전달됨 → AVATAR_COLOR_IDS[index % 8] (충돌 없음, 보호자 8케이스까지)
+ *   3. fallback → case.id 해시 (호출자가 리스트 컨텍스트 없을 때만)
+ */
+export function avatarGradient(
+  c: Pick<CaseRow, 'id' | 'avatar_color'>,
+  index?: number,
+): string {
+  if (isAvatarColorId(c.avatar_color)) return AVATAR_GRADIENTS[c.avatar_color]
+  if (typeof index === 'number' && index >= 0) {
+    return AVATAR_GRADIENTS[AVATAR_COLOR_IDS[index % AVATAR_COLOR_IDS.length]]
+  }
+  return AVATAR_GRADIENTS[hashColorFor(c.id)]
 }
 
 export function avatarGlyph(c: Pick<CaseRow, 'pet_name' | 'avatar_emoji'>): string {

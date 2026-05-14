@@ -25,6 +25,10 @@ import type { PetBlock } from '@/lib/profile/catalog'
  */
 export function PetAvatarPicker({ case_, pet }: { case_: CaseRow; pet: PetBlock }) {
   const [open, setOpen] = useState(false)
+  // 보호자 케이스 목록 내 index — avatarGradient 의 cyclic fallback 에 사용.
+  // 음수(=목록에 없음)는 -1 그대로 넘기면 avatarGradient 내부에서 hash fallback.
+  const { cases } = useCases()
+  const idx = cases.findIndex((c) => c.id === case_.id)
 
   const C = {
     ink: '#2A2620',
@@ -49,7 +53,7 @@ export function PetAvatarPicker({ case_, pet }: { case_: CaseRow; pet: PetBlock 
           aria-expanded={open}
           className="pm-pressable"
           style={{
-            ...avatarCircleStyle(case_, 52),
+            ...avatarCircleStyle(case_, 52, idx),
             border: 'none',
             padding: 0,
             cursor: 'pointer',
@@ -242,12 +246,12 @@ function PickerGrid({
 
 // ── Avatar circle 스타일 ─────────────────────────────────────────────────
 
-function avatarCircleStyle(c: CaseRow, size: number): React.CSSProperties {
+function avatarCircleStyle(c: CaseRow, size: number, index?: number): React.CSSProperties {
   return {
     width: size,
     height: size,
     borderRadius: '50%',
-    background: avatarGradient(c),
+    background: avatarGradient(c, index),
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
