@@ -77,7 +77,7 @@ export function TopBar() {
         style={{
           fontFamily: "'Fraunces', 'Pretendard Variable', serif",
           fontWeight: 500,
-          fontSize: 14,
+          fontSize: 15,
           letterSpacing: '0.22em',
           color: '#9A9286',
           textTransform: 'uppercase',
@@ -91,8 +91,8 @@ export function TopBar() {
       >
         <button aria-label="테마" title="테마" style={btn} type="button">
           <svg
-            width="18"
-            height="18"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -109,8 +109,8 @@ export function TopBar() {
         </button>
         <button aria-label="다크모드" title="다크모드" style={btn} type="button">
           <svg
-            width="17"
-            height="17"
+            width="19"
+            height="19"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
