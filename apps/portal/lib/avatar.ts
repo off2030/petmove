@@ -42,8 +42,8 @@ export const AVATAR_GRADIENTS: Record<AvatarColorId, string> = {
   terracotta: 'linear-gradient(135deg, #D69570 0%, #B47453 100%)',
 }
 
-/** Hash fallback 시 사용되는 자동 색상 cycle 순서. */
-const HASH_CYCLE: readonly AvatarColorId[] = ['orange', 'purple', 'sage'] as const
+/** Hash fallback 시 사용되는 자동 색상 cycle — 8색 전체 순환. */
+const HASH_CYCLE: readonly AvatarColorId[] = AVATAR_COLOR_IDS
 
 export const AVATAR_EMOJIS: readonly string[] = [
   '🐶',
