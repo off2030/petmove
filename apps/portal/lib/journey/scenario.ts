@@ -3,6 +3,7 @@ import {
   JOURNEY_STEP_CATALOG,
   buildCaseJourneyContext,
   getStepsForCase,
+  resolveCompletedDate,
   resolveDone,
   type StepDefinition,
 } from '@petmove/domain'
@@ -79,9 +80,15 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
 
   const stages: JourneyStage[] = applicableSteps.map((step) => {
     const done = resolveDone(step.done, caseRow)
-    // departure step 은 출국일 자체를 date 로 표시 — 다른 step 은 deadline 권장일
+    // departure step 은 출국일 자체. 그 외에는:
+    //  - done → resolveCompletedDate (없으면 dash 로 fallback)
+    //  - upcoming → deadline 권장일
     const isDeparture = step.id === 'departure'
-    const date = isDeparture ? dep : done ? null : deadlineDate(step, caseRow)
+    const date = isDeparture
+      ? dep
+      : done
+        ? resolveCompletedDate(step.done, caseRow)
+        : deadlineDate(step, caseRow)
     return {
       id: step.id,
       label: step.title,

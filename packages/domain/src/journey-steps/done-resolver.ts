@@ -68,3 +68,61 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10)
 }
+
+/**
+ * done 시그널 → "완료된 시점" 의 ISO date('YYYY-MM-DD'). resolveDone 이 true 일 때만 의미.
+ *
+ * 데이터에 시점이 명시되어 있지 않은 시그널(manual-flag:*)은 null. UI 는 null 일 때
+ * 표시를 비우거나 fallback 을 쓰면 됨.
+ */
+export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): string | null {
+  // manual-flag 토글 시점은 별도 저장되지 않음 — 표시할 날짜 없음.
+  if (typeof signal === 'string' && signal.startsWith('manual-flag:')) return null
+
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+
+  switch (signal) {
+    case 'always-done':
+      // intake — 케이스 생성일. 가입/등록 시점이라 가장 직관적.
+      return caseRow.created_at ? caseRow.created_at.slice(0, 10) : null
+    case 'microchip-set': {
+      const dt = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : null
+      if (dt && dt.length >= 10) return dt.slice(0, 10)
+      // 시술일 미입력 시 — 칩 번호 등록 시점이 명확치 않아 케이스 생성일로 fallback.
+      return caseRow.created_at ? caseRow.created_at.slice(0, 10) : null
+    }
+    case 'has-rabies-entry':
+    case 'has-rabies-booster':
+      return lastEntryDate(readRabiesEntries(caseRow).map((e) => e.date))
+    case 'has-titer-entry':
+      return lastEntryDate(readTiterEntries(caseRow).map((e) => e.date))
+    case 'has-general-vaccine':
+      return lastEntryDate(readGeneralVaccineEntries(caseRow).map((e) => e.date))
+    case 'has-civ-vaccine':
+      return lastEntryDate(readCivEntries(caseRow).map((e) => e.date))
+    case 'has-infectious-disease-test':
+      return lastEntryDate(readInfectiousDiseaseEntries(caseRow).map((e) => e.date))
+    case 'has-internal-parasite':
+      return lastEntryDate(readInternalParasiteEntries(caseRow).map((e) => e.date))
+    case 'has-external-parasite':
+      return lastEntryDate(readExternalParasiteEntries(caseRow).map((e) => e.date))
+    case 'has-deworming-time': {
+      const dt = typeof data.deworming_time === 'string' ? data.deworming_time : null
+      return dt && dt.length >= 10 ? dt.slice(0, 10) : null
+    }
+    case 'has-vet-visit': {
+      const dt = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : null
+      return dt && dt.length >= 10 ? dt.slice(0, 10) : null
+    }
+    case 'departure-past':
+      return caseRow.departure_date ?? null
+    default:
+      return null
+  }
+}
+
+function lastEntryDate(dates: string[]): string | null {
+  if (dates.length === 0) return null
+  // reader 별 sort 정책이 일관되지 않아 여기서 max 를 직접 뽑음.
+  return dates.slice().sort().slice(-1)[0]
+}
