@@ -139,7 +139,7 @@
    - [ ] Kakao Developers Redirect URI 에서 Mumbai `.../jxya.../auth/v1/callback` 제거
 
 5. **다음 구현 대상 후보** (우선순위 본인 판단):
-   - Phase 11 `apps/portal` B2C 스캐폴딩 (큰 스코프 — admin 과 분리된 고객용 Next.js 앱)
+   - Phase 11 `apps/portal` B2C 스캐폴딩 (상세 계획: [`docs/portal-plan.md`](portal-plan.md))
    - 결제/요금제 기반 설계 (Stripe vs 토스)
    - 이용약관·개인정보처리방침 페이지 (런칭 전제)
    - 토스트 알림 시스템 (인라인 에러 → 글로벌)
@@ -773,7 +773,7 @@ petmove/                      ← 모노레포 (pnpm workspaces + Turborepo)
 - [ ] 초대 링크 → 소셜 로그인 → membership 자동 추가
 
 ### Phase 11+ — 확장 (우선순위 따라)
-- **B2C 포털 스캐폴딩**: `apps/portal` 생성, 고객용 읽기 전용 뷰
+- **B2C 포털 스캐폴딩**: `apps/portal` 생성 — 상세 계획·마일스톤·결정 필요 항목은 [`docs/portal-plan.md`](portal-plan.md) 단일 출처
 - **결제**: Stripe 연동, `organizations.billing_status`
 - **SOP 커스텀 체크**: `organization_custom_checks` + 설정 UI
 - **일정 템플릿**: `organization_schedule_templates` + 출국일 입력 시 제안 다이얼로그
