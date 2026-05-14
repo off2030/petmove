@@ -207,7 +207,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
         </div>
 
         {/* 단계 리스트 — light cream gradient */}
-        <h3 style={{ ...serif, margin: '24px 0 12px', fontSize: 16 }}>전체 일정</h3>
+        <h3 style={{ ...serif, margin: '24px 0 12px', fontSize: 20 }}>전체 일정</h3>
         <div
           style={{
             background: C.cardList,
