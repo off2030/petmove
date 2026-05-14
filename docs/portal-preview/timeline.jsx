@@ -118,8 +118,8 @@ function TimelineCalm({ scenario, onNav, ringShape = 'B' }) {
                 <circle cx="110" cy="110" r={R} fill="none" stroke={C.accent} strokeWidth="1.5" strokeLinecap="round" strokeDasharray={CIRC} strokeDashoffset={animOffset} transform="rotate(-90 110 110)" />
               </>}
               {ringShape === 'B' && <>
-                <circle cx="110" cy="110" r={R} fill="none" stroke="rgba(42,38,32,.08)" strokeWidth="10" />
-                <circle cx="110" cy="110" r={R} fill="none" stroke={C.accent} strokeWidth="10" strokeLinecap="round" strokeDasharray={CIRC} strokeDashoffset={animOffset} transform="rotate(-90 110 110)" />
+                <circle cx="110" cy="110" r={R} fill="none" stroke="rgba(60,48,28,.13)" strokeWidth="10" />
+                <circle cx="110" cy="110" r={R} fill="none" stroke="#735B3D" strokeWidth="10" strokeLinecap="round" strokeDasharray={CIRC} strokeDashoffset={animOffset} transform="rotate(-90 110 110)" />
               </>}
               {ringShape === 'F' && <>
                 <circle cx="110" cy="110" r={R} fill="none" stroke="rgba(42,38,32,.08)" strokeWidth="4" />

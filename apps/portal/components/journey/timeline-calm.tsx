@@ -169,13 +169,13 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
         >
           <div style={{ position: 'relative', width: 220, height: 220 }}>
             <svg width="220" height="220" viewBox="0 0 220 220">
-              <circle cx="110" cy="110" r={R} fill="none" stroke="rgba(42,38,32,.08)" strokeWidth="10" />
+              <circle cx="110" cy="110" r={R} fill="none" stroke="rgba(60,48,28,.13)" strokeWidth="10" />
               <circle
                 cx="110"
                 cy="110"
                 r={R}
                 fill="none"
-                stroke={C.accent}
+                stroke="#735B3D"
                 strokeWidth="10"
                 strokeLinecap="round"
                 strokeDasharray={CIRC}
