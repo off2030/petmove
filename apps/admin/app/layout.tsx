@@ -83,6 +83,21 @@ export const viewport: Viewport = {
   themeColor: '#F5F4ED',
 }
 
+// hydration 전에 동기 실행 — localStorage 읽어 data-skin/.dark 미리 박아 FOUC 방지.
+// ThemeProvider 의 useEffect 가 같은 값을 다시 쓰지만 깜빡임 없음. VALID_SKINS 와
+// FORCE_DEFAULT_PATHS 는 theme-provider.tsx 와 동기화 유지.
+const SKIN_BOOT_SCRIPT = `(function(){try{
+var p=location.pathname;
+var force=p.indexOf('/apply')===0||p.indexOf('/share')===0;
+var h=document.documentElement;
+var m=localStorage.getItem('theme');
+var dark=!force&&(m==='dark'||((!m||m==='system')&&matchMedia('(prefers-color-scheme: dark)').matches));
+if(dark)h.classList.add('dark');
+var s=force?null:localStorage.getItem('skin');
+var V=['glassmorphism','sakura','baby-blue','scandi-minimal','art-deco','flat','hygge'];
+if(s&&V.indexOf(s)>=0)h.setAttribute('data-skin',s);
+}catch(e){}})()`
+
 export default function RootLayout({
   children,
 }: {
@@ -90,6 +105,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko" suppressHydrationWarning className={`${interTight.variable} ${inter.variable} ${manrope.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} ${notoSansKr.variable} ${notoSerifKr.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SKIN_BOOT_SCRIPT }} />
+      </head>
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
         <ThemeProvider />
         <ServiceWorkerRegister />
