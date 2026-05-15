@@ -270,21 +270,12 @@ export function StepDetailView({
           </section>
         )}
 
-        {/* Inputs — 마이크로칩 step 은 인터랙티브, 그 외는 read-only 스키마 미리보기. */}
+        {/* Inputs — 마이크로칩 step 은 인터랙티브, 그 외는 read-only 스키마 미리보기.
+            마이크로칩은 카드 wrapper / 제목 없이 input 별 카드 두 개 그대로 나열. */}
         {isMicrochip && (
-          <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력 정보</h3>
-            <div
-              style={{
-                background: C.surface,
-                border: `.5px solid ${C.line}`,
-                borderRadius: 16,
-                padding: '16px 16px',
-              }}
-            >
-              <MicrochipInputs chip={chip} date={date} onChipChange={setChip} onDateChange={setDate} />
-            </div>
-          </section>
+          <div style={{ marginTop: 22 }}>
+            <MicrochipInputs chip={chip} date={date} onChipChange={setChip} onDateChange={setDate} />
+          </div>
         )}
         {step.id !== 'microchip' && step.inputs && step.inputs.length > 0 && (
           <section style={{ marginTop: 22 }}>

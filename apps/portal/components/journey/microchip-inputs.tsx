@@ -21,11 +21,18 @@ export function MicrochipInputs({
   onDateChange: (next: string) => void
 }) {
   const C = {
+    surface: '#FBF7F1',
     line: 'rgba(42,38,32,.10)',
     ink: '#2A2620',
     ink3: '#9A9286',
   } as const
 
+  const cardStyle: React.CSSProperties = {
+    background: C.surface,
+    border: `.5px solid ${C.line}`,
+    borderRadius: 16,
+    padding: '16px 16px',
+  }
   const labelStyle: React.CSSProperties = {
     fontSize: 13,
     color: C.ink,
@@ -54,8 +61,8 @@ export function MicrochipInputs({
   const chipDisplay = chip.replace(/(\d{3})(?=\d)/g, '$1 ')
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={cardStyle}>
         <div style={labelStyle}>마이크로칩 번호</div>
         <div style={helpStyle}>000 000 000 000 000 형식 (3자리씩 공백 구분)</div>
         <input
@@ -71,7 +78,7 @@ export function MicrochipInputs({
           style={inputStyle}
         />
       </div>
-      <div>
+      <div style={cardStyle}>
         <div style={labelStyle}>시술일</div>
         <div style={helpStyle}>달력에서 선택하거나 YYYY-MM-DD 로 입력하세요.</div>
         <div style={{ marginTop: 8 }}>
