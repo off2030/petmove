@@ -1,15 +1,19 @@
 'use client'
 
+import { TITER_LABS } from '@petmove/domain'
 import { DateTextField } from '@petmove/ui'
 
 /**
- * 광견병 항체가 검사 step 입력 필드 — 채혈일 + 검사결과. controlled — 부모
+ * 광견병 항체가 검사 step 입력 필드 — 채혈일 + 검사기관 + 검사결과. controlled — 부모
  * (step-detail-view)가 state·save 를 보유. 저장 형식은 case.data.rabies_titer_records[0]
- * 의 date / value (펫무브워크 RabiesTiterField 와 동일 키, 값엔 IU/mL 단위 미포함).
+ * 의 date / lab / value (펫무브워크 RabiesTiterField 와 동일 키).
+ *  - lab 은 TITER_LABS 코드, 미해당 시 '기타'.
+ *  - value 는 IU/mL 단위 없이 수치만 (저장 시 server action 이 단위 제거).
  */
 
 export interface TiterForm {
   date: string
+  lab: string
   value: string
 }
 
@@ -25,6 +29,7 @@ export function TiterInputs({
     line: 'rgba(42,38,32,.10)',
     ink: '#2A2620',
     ink2: '#6B6457',
+    ink3: '#9A9286',
   } as const
 
   const labelStyle: React.CSSProperties = {
@@ -32,9 +37,7 @@ export function TiterInputs({
     color: C.ink,
     fontWeight: 500,
   }
-  const inputStyle: React.CSSProperties = {
-    flex: 1,
-    minWidth: 0,
+  const fieldBox: React.CSSProperties = {
     padding: '10px 12px',
     border: `1px solid ${C.line}`,
     borderRadius: 10,
@@ -65,6 +68,29 @@ export function TiterInputs({
           />
         </div>
       </div>
+
+      <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
+        <div style={labelStyle}>검사기관</div>
+        <select
+          value={form.lab}
+          onChange={(e) => onChange('lab', e.target.value)}
+          style={{
+            ...fieldBox,
+            marginTop: 8,
+            width: '100%',
+            color: form.lab ? C.ink : C.ink3,
+          }}
+        >
+          <option value="">선택하세요</option>
+          {TITER_LABS.map((l) => (
+            <option key={l.value} value={l.value}>
+              {l.label}
+            </option>
+          ))}
+          <option value="기타">기타</option>
+        </select>
+      </div>
+
       <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
         <div style={labelStyle}>검사결과</div>
         <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -74,7 +100,7 @@ export function TiterInputs({
             value={form.value}
             onChange={(e) => onChange('value', e.target.value)}
             placeholder="예: 0.5"
-            style={inputStyle}
+            style={{ ...fieldBox, flex: 1, minWidth: 0 }}
           />
           <span style={{ fontSize: 14, color: C.ink2, flexShrink: 0 }}>IU/mL</span>
         </div>

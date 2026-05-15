@@ -263,16 +263,16 @@ function isEmptyObject(v: unknown): boolean {
 
 /**
  * 광견병 항체가 검사 step 의 입력 필드를 patch — case.data.rabies_titer_records[0] 의
- * date / value(검사 수치)를 갱신.
+ * date / lab(검사기관) / value(검사 수치)를 갱신.
  *
- * 0번 항목이 없으면 생성, 있으면 lab·received_date 등 다른 키는 보존.
+ * 0번 항목이 없으면 생성, 있으면 received_date 등 다른 키는 보존.
  * 빈 값은 키 제거 (남는 키 없으면 rabies_titer_records 자체 제거).
  * value 는 IU/mL 단위 표기를 제거해 저장 (펫무브워크 RabiesTiterField 와 동일).
  * data 의 다른 키는 fetch-merge 로 보존.
  */
 export async function updateTiterFields(
   caseId: string,
-  fields: { date: string | null; value: string | null },
+  fields: { date: string | null; lab: string | null; value: string | null },
 ): Promise<Result<CaseRow>> {
   try {
     if (fields.date != null && fields.date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(fields.date)) {
@@ -301,6 +301,10 @@ export async function updateTiterFields(
     const d = typeof fields.date === 'string' ? fields.date.trim() : fields.date
     if (d) entry.date = d
     else delete entry.date
+
+    const labVal = typeof fields.lab === 'string' ? fields.lab.trim() : ''
+    if (labVal) entry.lab = labVal
+    else delete entry.lab
 
     const v = typeof fields.value === 'string' ? stripTiterUnit(fields.value) : ''
     if (v) entry.value = v

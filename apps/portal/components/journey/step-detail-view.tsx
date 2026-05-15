@@ -80,7 +80,9 @@ export function StepDetailView({
   const rabiesDirty = isRabies && !rabiesFormEqual(rabies, savedRabies)
   const titerDirty =
     isTiter &&
-    (titerForm.date !== savedTiterForm.date || titerForm.value !== savedTiterForm.value)
+    (titerForm.date !== savedTiterForm.date ||
+      titerForm.lab !== savedTiterForm.lab ||
+      titerForm.value !== savedTiterForm.value)
   const dirty = microchipDirty || rabiesDirty || titerDirty
 
   // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
@@ -151,6 +153,7 @@ export function StepDetailView({
       startTransition(async () => {
         const res = await updateTiterFields(caseId, {
           date: titerForm.date || null,
+          lab: titerForm.lab || null,
           value: titerForm.value || null,
         })
         if (res.ok) {
@@ -651,9 +654,9 @@ function rabiesFormEqual(a: RabiesEntryForm, b: RabiesEntryForm): boolean {
   )
 }
 
-/** 채혈일·검사결과 — caseRow.data.rabies_titer_records[0] 의 date / value. 없으면 빈 문자열. */
+/** 채혈일·검사기관·검사결과 — caseRow.data.rabies_titer_records[0] 의 date / lab / value. */
 function readTiterForm(data: Record<string, unknown> | null | undefined): TiterForm {
-  const empty: TiterForm = { date: '', value: '' }
+  const empty: TiterForm = { date: '', lab: '', value: '' }
   if (!data) return empty
   const arr = data['rabies_titer_records']
   if (!Array.isArray(arr) || arr.length === 0) return empty
@@ -661,5 +664,5 @@ function readTiterForm(data: Record<string, unknown> | null | undefined): TiterF
   if (!entry || typeof entry !== 'object') return empty
   const r = entry as Record<string, unknown>
   const str = (v: unknown) => (typeof v === 'string' ? v : '')
-  return { date: str(r.date), value: str(r.value) }
+  return { date: str(r.date), lab: str(r.lab), value: str(r.value) }
 }

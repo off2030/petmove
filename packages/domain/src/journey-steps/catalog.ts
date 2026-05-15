@@ -147,6 +147,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     done: 'has-titer-entry',
     inputs: [
       { key: 'rabies_titer_date', label: '채혈일', type: 'date' },
+      { key: 'rabies_titer_lab', label: '검사기관', type: 'select' },
       { key: 'rabies_titer_value', label: '검사결과', type: 'text' },
     ],
     allowAttachments: true,
