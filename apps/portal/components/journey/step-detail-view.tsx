@@ -212,11 +212,40 @@ export function StepDetailView({
             color: C.ink2,
           }}
         >
-          {step.description.split(/\n\n+/).map((para, i) => (
-            <p key={i} style={{ margin: i === 0 ? 0 : '14px 0 0' }}>
-              {para}
-            </p>
-          ))}
+          {/* description 의 모든 비어있지 않은 줄을 bullet 항목으로 표시.
+              \n\n 으로 구분된 단락의 경계는 marginTop 으로 단락 간 간격을 살짝 줌. */}
+          {(() => {
+            const lines = step.description.split('\n')
+            let paraBreakBefore = false
+            return (
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                {lines.flatMap((line, i) => {
+                  if (line.trim() === '') {
+                    paraBreakBefore = true
+                    return []
+                  }
+                  const item = (
+                    <li
+                      key={i}
+                      style={{
+                        display: 'flex',
+                        gap: 8,
+                        alignItems: 'flex-start',
+                        marginTop: i === 0 ? 0 : paraBreakBefore ? 14 : 8,
+                      }}
+                    >
+                      <span style={{ flexShrink: 0, color: C.ink3 }} aria-hidden>
+                        •
+                      </span>
+                      <span>{line}</span>
+                    </li>
+                  )
+                  paraBreakBefore = false
+                  return [item]
+                })}
+              </ul>
+            )
+          })()}
           {step.id === 'intake' && (
             <Link
               href={`/cases/${caseId}/info`}
