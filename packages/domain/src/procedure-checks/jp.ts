@@ -45,10 +45,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
         const eligibleFrom = addDays(birth, 91)
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 생후 ${age}일령 — 최소 91일령 이상 필요.`,
-          fixHint: eligibleFrom
-            ? `${eligibleFrom} 이후로 1차 접종일을 조정하세요.`
-            : `생년월일 기준 91일 이후로 1차 접종일을 조정하세요.`,
+          message: eligibleFrom
+            ? `${eligibleFrom} 이후에 1차 접종이 가능합니다. 현재 1차 접종일(${first.date})은 생후 ${age}일령으로 91일령 미만.`
+            : `1차 접종일(${first.date})이 생후 ${age}일령 — 최소 91일령 이상 필요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
