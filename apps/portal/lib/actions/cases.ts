@@ -197,7 +197,8 @@ export async function updateMicrochipFields(
  *  - rabies_dates 배열·0번 항목이 없으면 생성. 있으면 other_hospital 등 관리 외
  *    키는 보존.
  *  - 빈 값은 키 제거 — admin 의 날짜 기반 약품 자동 추론(hint) 폴백을 살린다.
- *  - 날짜 3종은 YYYY-MM-DD 형식 검증. data 의 다른 키는 fetch-merge 로 보존.
+ *  - 접종일·제품 유효기간은 YYYY-MM-DD 검증 (면역 유효기간은 "N년" 문자열).
+ *    data 의 다른 키는 fetch-merge 로 보존.
  */
 export async function updateRabiesVaccine1Fields(
   caseId: string,
@@ -211,8 +212,8 @@ export async function updateRabiesVaccine1Fields(
   },
 ): Promise<Result<CaseRow>> {
   try {
-    // 날짜 키 검증 — YYYY-MM-DD 또는 빈 값.
-    for (const key of ['date', 'valid_until', 'expiry'] as const) {
+    // 날짜 키 검증 — YYYY-MM-DD 또는 빈 값. (valid_until 은 "N년" 문자열이라 제외.)
+    for (const key of ['date', 'expiry'] as const) {
       const v = fields[key]
       if (v != null && v !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
         return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
