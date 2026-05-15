@@ -25,12 +25,13 @@ const FIELDS: ReadonlyArray<{
   label: string
   kind: 'date' | 'text' | 'years'
   required?: boolean
+  placeholder?: string
 }> = [
   { key: 'date', label: '접종일', kind: 'date', required: true },
   { key: 'valid_until', label: '면역 유효기간', kind: 'years' },
-  { key: 'product', label: '약품명', kind: 'text' },
-  { key: 'manufacturer', label: '제조사', kind: 'text' },
-  { key: 'lot', label: '제조번호', kind: 'text' },
+  { key: 'product', label: '약품명', kind: 'text', placeholder: '예: Rabisin' },
+  { key: 'manufacturer', label: '제조사', kind: 'text', placeholder: '예: Boehringer Ingelheim' },
+  { key: 'lot', label: '제조번호', kind: 'text', placeholder: '예: G98321' },
   { key: 'expiry', label: '제품 유효기간', kind: 'date' },
 ]
 
@@ -140,6 +141,7 @@ export function RabiesVaccine1Inputs({
               type="text"
               value={value[field.key]}
               onChange={(e) => onChange(field.key, e.target.value)}
+              placeholder={field.placeholder}
               style={inputStyle}
             />
           )}
