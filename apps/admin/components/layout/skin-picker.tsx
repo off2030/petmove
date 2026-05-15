@@ -19,7 +19,7 @@ const SKIN_PREVIEW: Record<Skin, { bg: string; accent: string }> = {
 }
 
 export function SkinPicker() {
-  const { skin, mounted } = useSkin()
+  const { skin } = useSkin()
   const [open, setOpen] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [pos, setPos] = useState<{ top: number; right: number } | null>(null)
@@ -52,14 +52,13 @@ export function SkinPicker() {
     return () => document.removeEventListener('keydown', onEsc)
   }, [open])
 
-  if (!mounted) return null
-
   return (
     <>
       <button
         ref={triggerRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
+        suppressHydrationWarning
         title={`스킨: ${SKIN_LABELS[skin]}`}
         aria-label="스킨 선택"
         aria-expanded={open}
