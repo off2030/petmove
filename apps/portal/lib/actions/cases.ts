@@ -186,3 +186,85 @@ export async function updateMicrochipFields(
     return { ok: false, error: (e as Error).message }
   }
 }
+
+/**
+ * 광견병 백신 1차 step 의 입력 필드를 patch — case.data.rabies_dates[0] 의 6개 키
+ * (date / valid_until / product / manufacturer / lot / expiry) 를 갱신.
+ *
+ * 키 이름은 펫무브워크 RepeatableDateField 의 VacRecord 와 동일 — portal 입력이
+ * admin 케이스 상세에 그대로 보이고, 양쪽 편집이 서로의 데이터를 보존한다.
+ *
+ *  - rabies_dates 배열·0번 항목이 없으면 생성. 있으면 other_hospital 등 관리 외
+ *    키는 보존.
+ *  - 빈 값은 키 제거 — admin 의 날짜 기반 약품 자동 추론(hint) 폴백을 살린다.
+ *  - 날짜 3종은 YYYY-MM-DD 형식 검증. data 의 다른 키는 fetch-merge 로 보존.
+ */
+export async function updateRabiesVaccine1Fields(
+  caseId: string,
+  fields: {
+    date: string | null
+    valid_until: string | null
+    product: string | null
+    manufacturer: string | null
+    lot: string | null
+    expiry: string | null
+  },
+): Promise<Result<CaseRow>> {
+  try {
+    // 날짜 키 검증 — YYYY-MM-DD 또는 빈 값.
+    for (const key of ['date', 'valid_until', 'expiry'] as const) {
+      const v = fields[key]
+      if (v != null && v !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+        return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+      }
+    }
+
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const rabiesArr = Array.isArray(prev.rabies_dates)
+      ? [...(prev.rabies_dates as unknown[])]
+      : []
+    const prevEntry =
+      rabiesArr[0] && typeof rabiesArr[0] === 'object'
+        ? { ...(rabiesArr[0] as Record<string, unknown>) }
+        : {}
+
+    // 6개 관리 키 머지 — 값이 있으면 set, 비면 delete.
+    const entry: Record<string, unknown> = { ...prevEntry }
+    for (const [key, raw] of Object.entries(fields)) {
+      const v = typeof raw === 'string' ? raw.trim() : raw
+      if (v == null || v === '') delete entry[key]
+      else entry[key] = v
+    }
+
+    const nextData: Record<string, unknown> = { ...prev }
+    if (Object.keys(entry).length === 0 && rabiesArr.length <= 1) {
+      // 전부 비움 + 다른 항목 없음 — rabies_dates 자체 제거.
+      delete nextData.rabies_dates
+    } else {
+      rabiesArr[0] = entry
+      nextData.rabies_dates = rabiesArr
+    }
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}

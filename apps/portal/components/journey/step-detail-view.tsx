@@ -4,8 +4,9 @@ import Link from 'next/link'
 import { useEffect, useState, useTransition } from 'react'
 import type { CheckResult, ProcedureCheck, StepDefinition } from '@petmove/domain'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
-import { updateMicrochipFields } from '@/lib/actions/cases'
+import { updateMicrochipFields, updateRabiesVaccine1Fields } from '@/lib/actions/cases'
 import { MicrochipInputs } from './microchip-inputs'
+import { RabiesVaccine1Inputs, type RabiesVaccine1Form } from './rabies-vaccine-1-inputs'
 
 interface CollectedCheck {
   check: ProcedureCheck
@@ -16,14 +17,14 @@ interface CollectedCheck {
  * 케이스 step 상세 화면. Stone 팔레트 / Fraunces serif — TimelineCalm 과 동일 톤.
  *
  * 4 영역:
- *  1) 헤더 — back link + 우측 저장 버튼(microchip 한정) / 동그라미+title / 펫·여행
+ *  1) 헤더 — back link / 동그라미+title / 펫·여행
  *  2) 설명 — step.description (마크다운은 단순 줄바꿈만)
  *  3) ⚠ 경고 — 매핑된 procedure-checks 중 ok=false
- *  4) 입력 필드 — microchip step 만 인터랙티브, 그 외는 read-only 스키마
+ *  4) 입력 필드 — microchip·광견병1차 step 은 인터랙티브, 그 외는 read-only 스키마
  *
- * microchip step 의 폼 state(chip / date / dirty / save)는 이 컴포넌트에서 관리.
- * iOS Contacts 편집 패턴 — 우상단 '저장' 버튼이 화면 전체 폼 변경을 한 번에 commit.
- * MicrochipInputs 는 controlled (chip/date/setChip/setDate props) 로 입력만 담당.
+ * 인터랙티브 step 의 폼 state·dirty·save 는 이 컴포넌트에서 관리. 하단 sticky
+ * '저장' 바가 화면 전체 폼 변경을 한 번에 commit. 입력 컴포넌트
+ * (MicrochipInputs / RabiesVaccine1Inputs) 는 controlled — 입력만 담당.
  */
 export function StepDetailView({
   caseId,
@@ -46,50 +47,87 @@ export function StepDetailView({
   tripType: 'round' | 'one_way'
 }) {
   const isMicrochip = step.id === 'microchip'
+  const isRabies1 = step.id === 'rabies-vaccine-1'
+  const isInteractive = isMicrochip || isRabies1
   const caseRow = useCase(caseId)
   const { updateCase } = useCases()
 
-  // microchip 폼 state — 다른 step 에서는 아무 효과 없음(렌더 안 함). hooks 는 매번 호출.
+  // 인터랙티브 step 폼 state — 다른 step 에서는 렌더 안 함. hooks 는 매번 호출.
   const savedChip = caseRow?.microchip ?? ''
   const savedDate = readImplantDate(caseRow?.data)
   const [chip, setChip] = useState(savedChip)
   const [date, setDate] = useState(savedDate)
+
+  const savedRabies1 = readRabies1Form(caseRow?.data)
+  const [rabies1, setRabies1] = useState<RabiesVaccine1Form>(savedRabies1)
+
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
-  const dirty = isMicrochip && (chip !== savedChip || date !== savedDate)
+  const microchipDirty = isMicrochip && (chip !== savedChip || date !== savedDate)
+  const rabies1Dirty = isRabies1 && !rabies1FormEqual(rabies1, savedRabies1)
+  const dirty = microchipDirty || rabies1Dirty
 
   // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
   useEffect(() => {
-    if (!dirty) setChip(caseRow?.microchip ?? '')
+    if (!microchipDirty) setChip(caseRow?.microchip ?? '')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.microchip])
   useEffect(() => {
-    if (!dirty) setDate(readImplantDate(caseRow?.data))
+    if (!microchipDirty) setDate(readImplantDate(caseRow?.data))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data])
+  useEffect(() => {
+    if (!rabies1Dirty) setRabies1(readRabies1Form(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
 
   function handleSave() {
-    if (!isMicrochip || !dirty) return
-    if (chip !== '' && chip.length !== 15) {
-      setStatus('error')
-      setError('마이크로칩 번호는 15자리여야 합니다.')
-      return
-    }
-    setStatus('saving')
-    setError(null)
-    startTransition(async () => {
-      const res = await updateMicrochipFields(caseId, chip || null, date || null)
-      if (res.ok) {
-        updateCase(res.value)
-        setStatus('saved')
-        window.setTimeout(() => setStatus('idle'), 1500)
-      } else {
+    if (!dirty) return
+    if (isMicrochip) {
+      if (chip !== '' && chip.length !== 15) {
         setStatus('error')
-        setError(res.error)
+        setError('마이크로칩 번호는 15자리여야 합니다.')
+        return
       }
-    })
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        const res = await updateMicrochipFields(caseId, chip || null, date || null)
+        if (res.ok) {
+          updateCase(res.value)
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    } else if (isRabies1) {
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        const res = await updateRabiesVaccine1Fields(caseId, {
+          date: rabies1.date || null,
+          valid_until: rabies1.valid_until || null,
+          product: rabies1.product || null,
+          manufacturer: rabies1.manufacturer || null,
+          lot: rabies1.lot || null,
+          expiry: rabies1.expiry || null,
+        })
+        if (res.ok) {
+          updateCase(res.value)
+          // 서버가 trim·정규화한 값으로 폼을 맞춰 dirty 해제.
+          setRabies1(readRabies1Form(res.value.data))
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    }
   }
 
   const C = {
@@ -134,8 +172,8 @@ export function StepDetailView({
         color: C.ink,
         minHeight: '100%',
         paddingTop: 16,
-        // microchip 일 때 하단 sticky 저장 바 + bottom-nav 공간을 더 확보.
-        paddingBottom: isMicrochip ? 132 : 32,
+        // 인터랙티브 step 일 때 하단 sticky 저장 바 + bottom-nav 공간을 더 확보.
+        paddingBottom: isInteractive ? 132 : 32,
         overflow: 'auto',
       }}
     >
@@ -302,15 +340,23 @@ export function StepDetailView({
           </section>
         )}
 
-        {/* Inputs — 마이크로칩 step 은 인터랙티브, 그 외는 read-only 스키마 미리보기.
-            마이크로칩은 카드 wrapper / 제목 없이 input 별 카드 두 개 그대로 나열. */}
+        {/* Inputs — 마이크로칩·광견병1차 step 은 인터랙티브, 그 외는 read-only 스키마 미리보기. */}
         {isMicrochip && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
             <MicrochipInputs chip={chip} date={date} onChipChange={setChip} onDateChange={setDate} />
           </section>
         )}
-        {step.id !== 'microchip' && step.inputs && step.inputs.length > 0 && (
+        {isRabies1 && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <RabiesVaccine1Inputs
+              value={rabies1}
+              onChange={(key, next) => setRabies1((prev) => ({ ...prev, [key]: next }))}
+            />
+          </section>
+        )}
+        {!isInteractive && step.inputs && step.inputs.length > 0 && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력 정보</h3>
             <div
@@ -376,10 +422,10 @@ export function StepDetailView({
         )}
       </div>
 
-      {/* 하단 sticky 저장 바 — microchip 한정. 한국 모바일 앱 패턴 (토스/카카오/당근).
+      {/* 하단 sticky 저장 바 — 인터랙티브 step 한정. 한국 모바일 앱 패턴 (토스/카카오/당근).
           dirty 일 때 accent 활성, 아니면 muted disabled. BottomNav(z40) 아래 layer
           이지만 컨텐츠는 BottomNav 위쪽에만 배치돼 시각 겹침 없음. */}
-      {isMicrochip && (
+      {isInteractive && (
         <div
           style={{
             position: 'fixed',
@@ -526,4 +572,42 @@ function readImplantDate(data: Record<string, unknown> | null | undefined): stri
   if (!data) return ''
   const v = data['microchip_implant_date']
   return typeof v === 'string' ? v : ''
+}
+
+/**
+ * 광견병 1차 폼 값을 caseRow.data.rabies_dates[0] 에서 읽어온다.
+ * 항목·키가 없으면 빈 문자열 — 입력 컴포넌트는 controlled 라 빈 값이 필요.
+ */
+function readRabies1Form(
+  data: Record<string, unknown> | null | undefined,
+): RabiesVaccine1Form {
+  const empty: RabiesVaccine1Form = {
+    date: '', valid_until: '', product: '', manufacturer: '', lot: '', expiry: '',
+  }
+  if (!data) return empty
+  const arr = data['rabies_dates']
+  if (!Array.isArray(arr) || arr.length === 0) return empty
+  const entry = arr[0]
+  if (!entry || typeof entry !== 'object') return empty
+  const r = entry as Record<string, unknown>
+  const str = (v: unknown) => (typeof v === 'string' ? v : '')
+  return {
+    date: str(r.date),
+    valid_until: str(r.valid_until),
+    product: str(r.product),
+    manufacturer: str(r.manufacturer),
+    lot: str(r.lot),
+    expiry: str(r.expiry),
+  }
+}
+
+function rabies1FormEqual(a: RabiesVaccine1Form, b: RabiesVaccine1Form): boolean {
+  return (
+    a.date === b.date &&
+    a.valid_until === b.valid_until &&
+    a.product === b.product &&
+    a.manufacturer === b.manufacturer &&
+    a.lot === b.lot &&
+    a.expiry === b.expiry
+  )
 }
