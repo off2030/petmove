@@ -117,7 +117,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '광견병 항체가 검사',
     shortLabel: '항체',
     description:
-      '인증된 FAVN/RFFIT 검사기관에서 0.5 IU/mL 이상 결과가 필요합니다. 일본·EU·호주는 채혈일로부터 출국까지 대기기간(JP 180일, EU 90일, AU 180일)이 별도 적용됩니다.',
+      '일본 지정 검사기관에서 광견병 항체가 검사를 받습니다.\n\n동물병원을 통해 의뢰할 수 있습니다.\n0.5 IU/mL 이상이면 합격입니다.',
     applicability: {
       destinations: [
         'japan',
@@ -146,7 +146,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     order: 40,
     done: 'has-titer-entry',
     inputs: [
-      { key: 'rabies_titer_records', label: '채혈일', type: 'date_array', required: true },
+      { key: 'rabies_titer_date', label: '채혈일', type: 'date' },
     ],
     allowAttachments: true,
     attachmentHint: '검사기관 결과지를 사진/PDF 로 올려주세요.',

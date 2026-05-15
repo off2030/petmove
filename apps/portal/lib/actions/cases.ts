@@ -260,3 +260,63 @@ export async function updateRabiesEntryFields(
 function isEmptyObject(v: unknown): boolean {
   return !!v && typeof v === 'object' && Object.keys(v as object).length === 0
 }
+
+/**
+ * 광견병 항체가 검사 step 의 채혈일을 patch — case.data.rabies_titer_records[0].date.
+ *
+ * 0번 항목이 없으면 생성, 있으면 value·received_date 등 다른 키는 보존.
+ * 빈 값은 date 키 제거 (다른 키도 없으면 rabies_titer_records 자체 제거).
+ * data 의 다른 키는 fetch-merge 로 보존.
+ */
+export async function updateTiterDate(
+  caseId: string,
+  date: string | null,
+): Promise<Result<CaseRow>> {
+  try {
+    if (date != null && date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+    }
+
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const arr = Array.isArray(prev.rabies_titer_records)
+      ? [...(prev.rabies_titer_records as unknown[])]
+      : []
+    const slot = arr[0]
+    const entry: Record<string, unknown> =
+      slot && typeof slot === 'object' ? { ...(slot as Record<string, unknown>) } : {}
+
+    const d = typeof date === 'string' ? date.trim() : date
+    if (d) entry.date = d
+    else delete entry.date
+
+    const nextData: Record<string, unknown> = { ...prev }
+    if (isEmptyObject(entry) && arr.length <= 1) {
+      delete nextData.rabies_titer_records
+    } else {
+      arr[0] = entry
+      nextData.rabies_titer_records = arr
+    }
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}

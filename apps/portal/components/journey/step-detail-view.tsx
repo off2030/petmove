@@ -4,11 +4,12 @@ import Link from 'next/link'
 import { useEffect, useState, useTransition } from 'react'
 import type { CheckResult, ProcedureCheck, StepDefinition } from '@petmove/domain'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
-import { updateMicrochipFields, updateRabiesEntryFields } from '@/lib/actions/cases'
+import { updateMicrochipFields, updateRabiesEntryFields, updateTiterDate } from '@/lib/actions/cases'
 import { readCaseDocuments } from '@/lib/documents'
 import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm } from './rabies-entry-inputs'
 import { StepAttachments } from './step-attachments'
+import { TiterInputs } from './titer-inputs'
 
 interface CollectedCheck {
   check: ProcedureCheck
@@ -22,11 +23,11 @@ interface CollectedCheck {
  *  1) 헤더 — back link / 동그라미+title / 펫·여행
  *  2) 설명 — step.description (마크다운은 단순 줄바꿈만)
  *  3) ⚠ 경고 — 매핑된 procedure-checks 중 ok=false
- *  4) 입력 필드 — microchip·광견병1·2차 step 은 인터랙티브, 그 외는 read-only 스키마
+ *  4) 입력 필드 — microchip·광견병1·2차·항체검사 step 은 인터랙티브, 그 외는 read-only 스키마
  *
  * 인터랙티브 step 의 폼 state·dirty·save 는 이 컴포넌트에서 관리. 하단 sticky
  * '저장' 바가 화면 전체 폼 변경을 한 번에 commit. 입력 컴포넌트
- * (MicrochipInputs / RabiesEntryInputs) 는 controlled — 입력만 담당.
+ * (MicrochipInputs / RabiesEntryInputs / TiterInputs) 는 controlled — 입력만 담당.
  */
 export function StepDetailView({
   caseId,
@@ -54,7 +55,8 @@ export function StepDetailView({
   const isRabies = isRabies1 || isRabies2
   // rabies_dates 배열 내 위치 — 1차=0, 2차=1.
   const rabiesIndex = isRabies2 ? 1 : 0
-  const isInteractive = isMicrochip || isRabies
+  const isTiter = step.id === 'rabies-titer'
+  const isInteractive = isMicrochip || isRabies || isTiter
   const caseRow = useCase(caseId)
   const { updateCase } = useCases()
 
@@ -67,13 +69,17 @@ export function StepDetailView({
   const savedRabies = readRabiesEntryForm(caseRow?.data, rabiesIndex)
   const [rabies, setRabies] = useState<RabiesEntryForm>(savedRabies)
 
+  const savedTiterDate = readTiterDate(caseRow?.data)
+  const [titerDate, setTiterDate] = useState(savedTiterDate)
+
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
   const microchipDirty = isMicrochip && (chip !== savedChip || date !== savedDate)
   const rabiesDirty = isRabies && !rabiesFormEqual(rabies, savedRabies)
-  const dirty = microchipDirty || rabiesDirty
+  const titerDirty = isTiter && titerDate !== savedTiterDate
+  const dirty = microchipDirty || rabiesDirty || titerDirty
 
   // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
   useEffect(() => {
@@ -86,6 +92,10 @@ export function StepDetailView({
   }, [caseRow?.data])
   useEffect(() => {
     if (!rabiesDirty) setRabies(readRabiesEntryForm(caseRow?.data, rabiesIndex))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data])
+  useEffect(() => {
+    if (!titerDirty) setTiterDate(readTiterDate(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
 
@@ -126,6 +136,21 @@ export function StepDetailView({
           updateCase(res.value)
           // 서버가 trim·정규화한 값으로 폼을 맞춰 dirty 해제.
           setRabies(readRabiesEntryForm(res.value.data, rabiesIndex))
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    } else if (isTiter) {
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        const res = await updateTiterDate(caseId, titerDate || null)
+        if (res.ok) {
+          updateCase(res.value)
+          setTiterDate(readTiterDate(res.value.data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -361,6 +386,12 @@ export function StepDetailView({
               value={rabies}
               onChange={(key, next) => setRabies((prev) => ({ ...prev, [key]: next }))}
             />
+          </section>
+        )}
+        {isTiter && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <TiterInputs value={titerDate} onChange={setTiterDate} />
           </section>
         )}
         {!isInteractive && step.inputs && step.inputs.length > 0 && (
@@ -610,4 +641,15 @@ function rabiesFormEqual(a: RabiesEntryForm, b: RabiesEntryForm): boolean {
     a.lot === b.lot &&
     a.expiry === b.expiry
   )
+}
+
+/** 채혈일 — caseRow.data.rabies_titer_records[0].date. 없으면 빈 문자열. */
+function readTiterDate(data: Record<string, unknown> | null | undefined): string {
+  if (!data) return ''
+  const arr = data['rabies_titer_records']
+  if (!Array.isArray(arr) || arr.length === 0) return ''
+  const entry = arr[0]
+  if (!entry || typeof entry !== 'object') return ''
+  const v = (entry as Record<string, unknown>).date
+  return typeof v === 'string' ? v : ''
 }
