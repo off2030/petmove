@@ -321,6 +321,7 @@ export function StepDetailView({
             >
               {step.inputs.map((field, i) => {
                 const last = i === (step.inputs?.length ?? 0) - 1
+                const value = caseRow ? resolveInputValue(field.key, caseRow) : null
                 return (
                   <div
                     key={field.key}
@@ -333,10 +334,14 @@ export function StepDetailView({
                       {field.label}
                       {field.required && <span style={{ color: C.warn, marginLeft: 4 }}>*</span>}
                     </div>
-                    <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
-                      {fieldTypeLabel(field.type)}
-                      {field.helpText && ` · ${field.helpText}`}
-                    </div>
+                    {value ? (
+                      <div style={{ fontSize: 14, color: C.ink, marginTop: 2 }}>{value}</div>
+                    ) : (
+                      <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
+                        {fieldTypeLabel(field.type)}
+                        {field.helpText && ` · ${field.helpText}`}
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -452,6 +457,67 @@ function fieldTypeLabel(t: string): string {
     default:
       return t
   }
+}
+
+/**
+ * step input 의 현재 저장된 값을 caseRow 에서 끌어와 화면에 표시할 문자열로 반환.
+ *
+ * catalog 의 input.key 는 portal 의 미래 입력 폼 스키마라 storage 키와 직접 매칭되지
+ * 않는 경우가 있음 (예: rabies_1_date → data.rabies_dates[0].date). 여기서 brigde.
+ * 매칭이 없거나 값이 비어있으면 null — 호출부가 placeholder 표시.
+ */
+function resolveInputValue(
+  fieldKey: string,
+  caseRow: { microchip: string | null; data?: Record<string, unknown> | null },
+): string | null {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+
+  // 마이크로칩 — top-level 컬럼 + data
+  if (fieldKey === 'microchip') return caseRow.microchip || null
+  if (fieldKey === 'microchip_implant_date') {
+    const v = data['microchip_implant_date']
+    return typeof v === 'string' && v ? v : null
+  }
+
+  // rabies_1_*, rabies_2_* → data.rabies_dates[0|1].(date|valid_until)
+  const rabiesMatch = fieldKey.match(/^rabies_(\d+)_(date|valid_until)$/)
+  if (rabiesMatch) {
+    const idx = Number(rabiesMatch[1]) - 1
+    const sub = rabiesMatch[2] as 'date' | 'valid_until'
+    const arr = data['rabies_dates']
+    if (!Array.isArray(arr)) return null
+    const entry = arr[idx]
+    if (!entry || typeof entry !== 'object') return null
+    const v = (entry as Record<string, unknown>)[sub]
+    return typeof v === 'string' && v ? v : null
+  }
+
+  // 날짜 배열류 (rabies_titer_records, general_vaccine_dates, civ_dates,
+  // infectious_disease_records, external_parasite_dates, ...) — 첫 항목 date 만.
+  if (
+    fieldKey === 'rabies_titer_records' ||
+    fieldKey === 'general_vaccine_dates' ||
+    fieldKey === 'civ_dates' ||
+    fieldKey === 'infectious_disease_records' ||
+    fieldKey === 'external_parasite_dates' ||
+    fieldKey === 'internal_parasite_dates'
+  ) {
+    const arr = data[fieldKey]
+    if (!Array.isArray(arr) || arr.length === 0) return null
+    // 배열 길이 표시 — n건 형태가 type 'date_array' 와 어울림.
+    const dates = arr
+      .map((e) => (typeof e === 'string' ? e : (e as { date?: string } | null)?.date))
+      .filter((d): d is string => typeof d === 'string' && d.length >= 10)
+    if (dates.length === 0) return null
+    if (dates.length === 1) return dates[0]
+    return `${dates[0]} 외 ${dates.length - 1}건`
+  }
+
+  // 그 외 — caseRow.data[fieldKey] 단순 조회
+  const v = data[fieldKey]
+  if (typeof v === 'string' && v) return v
+  if (typeof v === 'number') return String(v)
+  return null
 }
 
 function readImplantDate(data: Record<string, unknown> | null | undefined): string {
