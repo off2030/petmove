@@ -63,15 +63,20 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '광견병 백신(1차)',
     shortLabel: '백신1',
     description:
-      '생후 91일 이후 1차 접종. 마이크로칩 시술 이후여야 일본·EU 등 대부분 국가에서 인정됩니다.',
+      '1차 광견병 백신을 접종합니다.\n\n생후 91일령 이후 접종해야 합니다.\n마이크로칩 삽입일에 함께 할 수 있습니다.\n불활화(사독) 또는 재조합(변형) 백신을 사용합니다. (국내 유통되는 거의 모든 백신 허용)',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 30,
     done: 'has-rabies-entry',
     inputs: [
-      { key: 'rabies_dates', label: '1차 접종일', type: 'date_array', hasValidUntil: true, required: true },
+      { key: 'rabies_1_date', label: '접종일', type: 'date', required: true },
+      { key: 'rabies_1_valid_until', label: '면역 유효기간', type: 'date' },
+      { key: 'rabies_1_product', label: '약품명', type: 'text' },
+      { key: 'rabies_1_manufacturer', label: '제조사', type: 'text' },
+      { key: 'rabies_1_lot', label: '제조번호', type: 'text' },
+      { key: 'rabies_1_product_expiry', label: '제품 유효기간', type: 'date' },
     ],
     allowAttachments: true,
-    attachmentHint: '1차 접종 증명서를 사진으로 올려주세요 (lot no. 가 보이게).',
+    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진/PDF 로 올려주세요.',
     validationIds: [
       'jp.rabies-prime-after-91days-old',
       'jp.microchip-rabies-sequence',
