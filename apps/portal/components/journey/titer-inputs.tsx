@@ -2,6 +2,7 @@
 
 import { TITER_LABS } from '@petmove/domain'
 import { DateTextField } from '@petmove/ui'
+import { SelectField, type SelectOption } from './select-field'
 
 /**
  * 광견병 항체가 검사 step 입력 필드 — 채혈일 + 검사기관 + 검사결과. controlled — 부모
@@ -17,10 +18,11 @@ export interface TiterForm {
   value: string
 }
 
-/** 검사기관 드롭다운 옵션 — APQA Seoul·KSVDL-R 만 노출. 그 외 기관은 '기타'. */
-const TITER_LAB_OPTIONS = TITER_LABS.filter(
-  (l) => l.value === 'apqa_seoul' || l.value === 'ksvdl_r',
-)
+/** 검사기관 드롭다운 옵션 — APQA Seoul·KSVDL-R + 기타. */
+const LAB_OPTIONS: SelectOption[] = [
+  ...TITER_LABS.filter((l) => l.value === 'apqa_seoul' || l.value === 'ksvdl_r'),
+  { value: '기타', label: '기타' },
+]
 
 export function TiterInputs({
   form,
@@ -34,7 +36,6 @@ export function TiterInputs({
     line: 'rgba(42,38,32,.10)',
     ink: '#2A2620',
     ink2: '#6B6457',
-    ink3: '#9A9286',
   } as const
 
   const labelStyle: React.CSSProperties = {
@@ -76,24 +77,13 @@ export function TiterInputs({
 
       <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
         <div style={labelStyle}>검사기관</div>
-        <select
-          value={form.lab}
-          onChange={(e) => onChange('lab', e.target.value)}
-          style={{
-            ...fieldBox,
-            marginTop: 8,
-            width: '100%',
-            color: form.lab ? C.ink : C.ink3,
-          }}
-        >
-          <option value="">선택하세요</option>
-          {TITER_LAB_OPTIONS.map((l) => (
-            <option key={l.value} value={l.value}>
-              {l.label}
-            </option>
-          ))}
-          <option value="기타">기타</option>
-        </select>
+        <div style={{ marginTop: 8 }}>
+          <SelectField
+            value={form.lab}
+            options={LAB_OPTIONS}
+            onChange={(v) => onChange('lab', v)}
+          />
+        </div>
       </div>
 
       <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
