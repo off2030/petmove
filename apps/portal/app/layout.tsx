@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from 'next'
-import { Fraunces, Inter_Tight } from 'next/font/google'
+import { Inter_Tight } from 'next/font/google'
 import './globals.css'
 import { ConfirmProvider } from '@petmove/ui'
 import { ServiceWorkerRegister } from '@/components/sw-register'
 
-// Portal 폰트 스택 — next/font self-host 두 family + globals.css @font-face 의 Pretendard/Alonzo.
-// CSS 변수 --font-sans / --font-fraunces 로 노출하고, globals.css 가 semantic 토큰
+// Portal 폰트 스택 — next/font self-host Inter Tight + globals.css @font-face 의 Pretendard/Alonzo.
+// CSS 변수 --font-sans 로 노출하고, globals.css 가 semantic 토큰
 // (--pm-font-display, --pm-font-body, --pm-font-mark) 으로 한 번 더 추상화. UI 코드는
 // semantic 토큰만 참조 → 폰트 출처를 바꿔도 컴포넌트 손 안 댐.
 const interTight = Inter_Tight({
@@ -13,13 +13,6 @@ const interTight = Inter_Tight({
   weight: ['400', '500', '600', '700'],
   style: ['normal', 'italic'],
   variable: '--font-sans',
-  display: 'swap',
-})
-const fraunces = Fraunces({
-  subsets: ['latin'],
-  style: ['normal', 'italic'],
-  axes: ['opsz'],
-  variable: '--font-fraunces',
   display: 'swap',
 })
 
@@ -53,7 +46,7 @@ export default function RootLayout({
     <html
       lang="ko"
       suppressHydrationWarning
-      className={`${interTight.variable} ${fraunces.variable}`}
+      className={interTight.variable}
     >
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
         <ServiceWorkerRegister />
