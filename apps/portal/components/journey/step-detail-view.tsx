@@ -289,9 +289,11 @@ export function StepDetailView({
               {failed.map(({ check, result }) => (
                 <li key={check.id}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, marginBottom: 2 }}>{check.title}</div>
-                  <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>{result.message}</div>
+                  {result.message && (
+                    <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>{result.message}</div>
+                  )}
                   {result.fixHint && (
-                    <div style={{ fontSize: 12, color: C.ink3, marginTop: 4 }}>↳ {result.fixHint}</div>
+                    <div style={{ fontSize: 13, color: C.ink3, marginTop: result.message ? 4 : 2, lineHeight: 1.5 }}>↳ {result.fixHint}</div>
                   )}
                 </li>
               ))}
