@@ -5,8 +5,10 @@ import { useEffect, useState, useTransition } from 'react'
 import type { CheckResult, ProcedureCheck, StepDefinition } from '@petmove/domain'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
 import { updateMicrochipFields, updateRabiesVaccine1Fields } from '@/lib/actions/cases'
+import { readCaseDocuments } from '@/lib/documents'
 import { MicrochipInputs } from './microchip-inputs'
 import { RabiesVaccine1Inputs, type RabiesVaccine1Form } from './rabies-vaccine-1-inputs'
+import { StepAttachments } from './step-attachments'
 
 interface CollectedCheck {
   check: ProcedureCheck
@@ -163,6 +165,7 @@ export function StepDetailView({
   }
 
   const failed = checkResults.filter((c) => !c.result.ok)
+  const stepDocuments = readCaseDocuments(caseRow?.data).filter((d) => d.stepId === step.id)
 
   return (
     <div
@@ -400,24 +403,16 @@ export function StepDetailView({
           </section>
         )}
 
-        {/* Attachments placeholder */}
+        {/* Attachments */}
         {step.allowAttachments && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>첨부</h3>
-            <div
-              style={{
-                padding: '18px 16px',
-                borderRadius: 16,
-                background: C.surface,
-                border: `.5px dashed ${C.line}`,
-                fontSize: 13,
-                color: C.ink3,
-                lineHeight: 1.55,
-              }}
-            >
-              {step.attachmentHint ?? '관련 서류 사진/PDF 를 올릴 수 있습니다.'}
-              <div style={{ marginTop: 6, fontSize: 11, color: C.ink3 }}>업로드는 곧 추가됩니다.</div>
-            </div>
+            <StepAttachments
+              caseId={caseId}
+              stepId={step.id}
+              documents={stepDocuments}
+              hint={step.attachmentHint}
+            />
           </section>
         )}
       </div>

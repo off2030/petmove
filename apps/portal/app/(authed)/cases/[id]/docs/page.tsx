@@ -19,5 +19,5 @@ export default function CaseDocsPage({
   if (!caseRow) notFound()
 
   const data = buildDocsView(caseRow)
-  return <DocsView data={data} />
+  return <DocsView data={data} caseId={id} />
 }

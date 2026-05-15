@@ -15,8 +15,7 @@ import { createAdminClient } from '@petmove/auth'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
 import type { CaseRow } from '@petmove/domain'
 import { AVATAR_COLOR_IDS, AVATAR_EMOJIS, type AvatarColorId } from '@/lib/avatar'
-
-type Result<T> = { ok: true; value: T } | { ok: false; error: string }
+import { assertCaseAccess, type Result } from './_shared'
 
 /**
  * 현재 사용자에게 case_customer_links 로 매핑된 모든 케이스.
@@ -65,25 +64,6 @@ export async function getMyCase(caseId: string): Promise<Result<CaseRow | null>>
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }
-}
-
-/**
- * 본인 ↔ 케이스 link 확인. updateCaseAvatar / updateMicrochipFields 등에서 공통.
- * 권한 없으면 ok=false. 통과 시 admin 클라이언트 호출자가 직접 update.
- */
-async function assertCaseAccess(caseId: string): Promise<Result<true>> {
-  const user = await getCurrentUser()
-  if (!user) return { ok: false, error: '인증 필요' }
-  const supabase = await createClient()
-  const { data: link, error: linkErr } = await supabase
-    .from('case_customer_links')
-    .select('case_id')
-    .eq('case_id', caseId)
-    .eq('user_id', user.id)
-    .maybeSingle()
-  if (linkErr) return { ok: false, error: linkErr.message }
-  if (!link) return { ok: false, error: '이 케이스에 접근 권한이 없습니다.' }
-  return { ok: true, value: true }
 }
 
 /**

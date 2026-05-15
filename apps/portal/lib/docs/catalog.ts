@@ -8,6 +8,7 @@ import {
   resolveDone,
   type CertDefinition,
 } from '@petmove/domain'
+import { formatFileSize, readCaseDocuments } from '@/lib/documents'
 
 /**
  * Portal 서류함(/cases/<id>/docs) 데이터 모델.
@@ -16,9 +17,9 @@ import {
  * 3 섹션:
  *   1) 필수 서류 체크리스트 — 카탈로그 step 중 allowAttachments=true 인 항목
  *   2) 증명서 자동 작성 — destination + species 로 resolveCerts (admin 이 PDF 생성)
- *   3) 보관 중인 서류 — 보호자/병원이 올린 사본 (Phase 1 = []  — 첨부 인프라 미도입)
+ *   3) 보관 중인 서류 — 보호자가 journey step 에서 올린 파일 (case.data.documents)
  *
- * 빌더는 read-only. 업로드/다운로드 액션은 후속 PR.
+ * 빌더는 read-only — 업로드/삭제/열람은 lib/actions/documents.ts.
  */
 
 export interface DocsViewData {
@@ -91,8 +92,20 @@ export function buildDocsView(caseRow: CaseRow): DocsViewData {
     fresh: false,
   }))
 
-  // 3) 보관 중인 서류 — Phase 1 빈 영역
-  const storedDocs: StoredDocItem[] = []
+  // 3) 보관 중인 서류 — 보호자가 step 에서 올린 파일. 최신 업로드가 위로.
+  const storedDocs: StoredDocItem[] = readCaseDocuments(caseRow.data)
+    .slice()
+    .sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt))
+    .map((d) => ({
+      id: d.id,
+      name: d.name,
+      type: d.mime === 'application/pdf' ? 'PDF' : 'IMG',
+      date: d.uploadedAt.slice(0, 10),
+      size: formatFileSize(d.size),
+      source: '고객 업로드',
+      verified: true,
+      fresh: false,
+    }))
 
   return {
     pet: { name: caseRow.pet_name ?? '반려동물' },

@@ -1,3 +1,6 @@
+'use client'
+
+import { getStepDocumentUrl } from '@/lib/actions/documents'
 import type { AutoDocItem, ChecklistItem, DocsViewData, StoredDocItem } from '@/lib/docs/catalog'
 
 /**
@@ -6,7 +9,7 @@ import type { AutoDocItem, ChecklistItem, DocsViewData, StoredDocItem } from '@/
  * 시각 소스: docs/portal-preview/docs.jsx — 그대로 옮김.
  * Phase 1 read-only: 업로드 버튼은 placeholder, 다운로드 버튼은 표시만.
  */
-export function DocsView({ data }: { data: DocsViewData }) {
+export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string }) {
   const C = {
     bg: '#F5EFE8',
     surface: '#FBF7F1',
@@ -48,6 +51,12 @@ export function DocsView({ data }: { data: DocsViewData }) {
     autoDocs.filter((d) => !d.verified).length +
     storedDocs.filter((d) => !d.verified).length
   const checklistDone = checklist.filter((d) => d.verified).length
+
+  function handleOpenDoc(docId: string) {
+    getStepDocumentUrl(caseId, docId).then((res) => {
+      if (res.ok) window.open(res.value, '_blank')
+    })
+  }
 
   return (
     <div
@@ -138,7 +147,14 @@ export function DocsView({ data }: { data: DocsViewData }) {
                   overflow: 'hidden',
                 }}
               >
-                <DocRow doc={d} pending={!d.verified} C={C} num={num} monoCap={monoCap} />
+                <DocRow
+                  doc={d}
+                  pending={!d.verified}
+                  C={C}
+                  num={num}
+                  monoCap={monoCap}
+                  onDownload={() => handleOpenDoc(d.id)}
+                />
               </div>
             ))}
           </div>
@@ -292,12 +308,15 @@ function DocRow({
   C,
   num,
   monoCap,
+  onDownload,
 }: {
   doc: AutoDocItem | StoredDocItem
   pending: boolean
   C: PaletteShape
   num: React.CSSProperties
   monoCap: React.CSSProperties
+  /** 있으면 다운로드 버튼이 활성화돼 클릭 시 호출 (보관 중인 서류 한정). */
+  onDownload?: () => void
 }) {
   const sized = 'size' in doc && doc.size ? doc.size : null
   return (
@@ -358,7 +377,8 @@ function DocRow({
       ) : (
         <button
           type="button"
-          aria-label="다운로드"
+          aria-label="열기"
+          onClick={onDownload}
           style={{
             width: 32,
             height: 32,
@@ -369,9 +389,9 @@ function DocRow({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            cursor: 'not-allowed',
+            cursor: onDownload ? 'pointer' : 'not-allowed',
           }}
-          disabled
+          disabled={!onDownload}
         >
           <svg
             width="13"

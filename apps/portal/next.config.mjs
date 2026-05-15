@@ -12,7 +12,8 @@ const nextConfig = {
   transpilePackages: ['@petmove/auth', '@petmove/domain', '@petmove/ui'],
   experimental: {
     serverActions: {
-      bodySizeLimit: '5mb',
+      // 케이스 첨부 서류(사진·PDF) 업로드 — FormData 가 server action 본문으로 전달됨.
+      bodySizeLimit: '15mb',
     },
     // workspace 패키지를 deep tree-shake — vaccine-lookup, 15개 procedure-checks 등
     // 포털에서 안 쓰는 모듈이 번들에 포함되지 않도록.
