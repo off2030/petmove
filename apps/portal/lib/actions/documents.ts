@@ -14,11 +14,10 @@
 import { randomUUID } from 'node:crypto'
 import { createAdminClient } from '@petmove/auth'
 import type { CaseRow } from '@petmove/domain'
-import { type CaseDocument, readCaseDocuments } from '@/lib/documents'
+import { type CaseDocument, MAX_DOCUMENT_BYTES, readCaseDocuments } from '@/lib/documents'
 import { assertCaseAccess, type Result } from './_shared'
 
 const BUCKET = 'attachments'
-const MAX_BYTES = 12 * 1024 * 1024
 
 function isAllowedMime(mime: string): boolean {
   return mime.startsWith('image/') || mime === 'application/pdf'
@@ -42,7 +41,7 @@ export async function uploadStepDocument(formData: FormData): Promise<Result<Cas
     if (!isAllowedMime(file.type)) {
       return { ok: false, error: '이미지 또는 PDF 파일만 올릴 수 있습니다.' }
     }
-    if (file.size > MAX_BYTES) {
+    if (file.size > MAX_DOCUMENT_BYTES) {
       return { ok: false, error: '파일 크기는 12MB 이하여야 합니다.' }
     }
 

@@ -7,7 +7,7 @@ import {
   getStepDocumentUrl,
   uploadStepDocument,
 } from '@/lib/actions/documents'
-import { type CaseDocument, formatFileSize } from '@/lib/documents'
+import { type CaseDocument, formatFileSize, MAX_DOCUMENT_BYTES } from '@/lib/documents'
 
 /**
  * journey step '첨부' 영역 — 파일(사진·PDF) 업로드·열람·삭제.
@@ -48,6 +48,10 @@ export function StepAttachments({
     e.target.value = '' // 같은 파일 재선택 허용
     if (!file) return
     setError(null)
+    if (file.size > MAX_DOCUMENT_BYTES) {
+      setError('파일 크기는 12MB 이하여야 합니다.')
+      return
+    }
     const fd = new FormData()
     fd.set('caseId', caseId)
     fd.set('stepId', stepId)

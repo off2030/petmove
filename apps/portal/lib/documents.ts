@@ -6,6 +6,9 @@
  * admin 의 case.data.notes 와는 분리 — portal 전용 기록.
  */
 
+/** 첨부 파일 1건 최대 크기 (12MB). 클라이언트 검증과 server action 이 공유. */
+export const MAX_DOCUMENT_BYTES = 12 * 1024 * 1024
+
 export interface CaseDocument {
   id: string
   name: string
