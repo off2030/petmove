@@ -3,15 +3,15 @@
 import { DateTextField } from '@petmove/ui'
 
 /**
- * 광견병 백신 1차 step 입력 필드. controlled — 부모(step-detail-view)가 state·save 보유.
+ * 광견병 백신 step(1·2차) 입력 필드. controlled — 부모(step-detail-view)가 state·save 보유.
  *
  * 접종일·제품 유효기간은 @petmove/ui 의 DateTextField (apply 신청폼·마이크로칩 step 과
  * 동일 컴포넌트). 면역 유효기간은 1/2/3년 선택 — 펫무브워크 ValidUntilSelector 와 동일
  * (저장값 "1년"/"2년"/"3년"). 약품명·제조사·제조번호는 텍스트 입력.
- * 저장 형식은 case.data.rabies_dates[0] — 키는 펫무브워크 RepeatableDateField 와 동일.
+ * 저장 형식은 case.data.rabies_dates[index] — 키는 펫무브워크 RepeatableDateField 와 동일.
  */
 
-export interface RabiesVaccine1Form {
+export interface RabiesEntryForm {
   date: string
   valid_until: string
   product: string
@@ -21,7 +21,7 @@ export interface RabiesVaccine1Form {
 }
 
 const FIELDS: ReadonlyArray<{
-  key: keyof RabiesVaccine1Form
+  key: keyof RabiesEntryForm
   label: string
   kind: 'date' | 'text' | 'years'
   required?: boolean
@@ -46,12 +46,12 @@ function selectedYear(value: string): string | null {
   return null
 }
 
-export function RabiesVaccine1Inputs({
+export function RabiesEntryInputs({
   value,
   onChange,
 }: {
-  value: RabiesVaccine1Form
-  onChange: (key: keyof RabiesVaccine1Form, next: string) => void
+  value: RabiesEntryForm
+  onChange: (key: keyof RabiesEntryForm, next: string) => void
 }) {
   const C = {
     surface: '#FBF7F1',

@@ -168,20 +168,22 @@ export async function updateMicrochipFields(
 }
 
 /**
- * 광견병 백신 1차 step 의 입력 필드를 patch — case.data.rabies_dates[0] 의 6개 키
- * (date / valid_until / product / manufacturer / lot / expiry) 를 갱신.
+ * 광견병 백신 step(1·2차)의 입력 필드를 patch — case.data.rabies_dates[index] 의 6개
+ * 키(date / valid_until / product / manufacturer / lot / expiry)를 갱신.
+ * index 0 = 1차, 1 = 2차.
  *
  * 키 이름은 펫무브워크 RepeatableDateField 의 VacRecord 와 동일 — portal 입력이
  * admin 케이스 상세에 그대로 보이고, 양쪽 편집이 서로의 데이터를 보존한다.
  *
- *  - rabies_dates 배열·0번 항목이 없으면 생성. 있으면 other_hospital 등 관리 외
- *    키는 보존.
+ *  - 해당 index 항목이 없으면 생성 (앞 index 는 빈 객체로 패딩). 있으면
+ *    other_hospital 등 관리 외 키는 보존. 끝의 빈 항목은 정리.
  *  - 빈 값은 키 제거 — admin 의 날짜 기반 약품 자동 추론(hint) 폴백을 살린다.
  *  - 접종일·제품 유효기간은 YYYY-MM-DD 검증 (면역 유효기간은 "N년" 문자열).
  *    data 의 다른 키는 fetch-merge 로 보존.
  */
-export async function updateRabiesVaccine1Fields(
+export async function updateRabiesEntryFields(
   caseId: string,
+  index: number,
   fields: {
     date: string | null
     valid_until: string | null
@@ -192,6 +194,9 @@ export async function updateRabiesVaccine1Fields(
   },
 ): Promise<Result<CaseRow>> {
   try {
+    if (index !== 0 && index !== 1) {
+      return { ok: false, error: '잘못된 요청입니다.' }
+    }
     // 날짜 키 검증 — YYYY-MM-DD 또는 빈 값. (valid_until 은 "N년" 문자열이라 제외.)
     for (const key of ['date', 'expiry'] as const) {
       const v = fields[key]
@@ -215,10 +220,9 @@ export async function updateRabiesVaccine1Fields(
     const rabiesArr = Array.isArray(prev.rabies_dates)
       ? [...(prev.rabies_dates as unknown[])]
       : []
+    const slot = rabiesArr[index]
     const prevEntry =
-      rabiesArr[0] && typeof rabiesArr[0] === 'object'
-        ? { ...(rabiesArr[0] as Record<string, unknown>) }
-        : {}
+      slot && typeof slot === 'object' ? { ...(slot as Record<string, unknown>) } : {}
 
     // 6개 관리 키 머지 — 값이 있으면 set, 비면 delete.
     const entry: Record<string, unknown> = { ...prevEntry }
@@ -228,14 +232,17 @@ export async function updateRabiesVaccine1Fields(
       else entry[key] = v
     }
 
-    const nextData: Record<string, unknown> = { ...prev }
-    if (Object.keys(entry).length === 0 && rabiesArr.length <= 1) {
-      // 전부 비움 + 다른 항목 없음 — rabies_dates 자체 제거.
-      delete nextData.rabies_dates
-    } else {
-      rabiesArr[0] = entry
-      nextData.rabies_dates = rabiesArr
+    // 앞 index 를 빈 객체로 패딩 (sparse 배열 방지) 후 해당 index 설정.
+    while (rabiesArr.length < index) rabiesArr.push({})
+    rabiesArr[index] = entry
+    // 끝의 완전히 빈 항목 제거.
+    while (rabiesArr.length > 0 && isEmptyObject(rabiesArr[rabiesArr.length - 1])) {
+      rabiesArr.pop()
     }
+
+    const nextData: Record<string, unknown> = { ...prev }
+    if (rabiesArr.length === 0) delete nextData.rabies_dates
+    else nextData.rabies_dates = rabiesArr
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -248,4 +255,8 @@ export async function updateRabiesVaccine1Fields(
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }
+}
+
+function isEmptyObject(v: unknown): boolean {
+  return !!v && typeof v === 'object' && Object.keys(v as object).length === 0
 }
