@@ -41,6 +41,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
     fontFamily: 'var(--pm-font-display)',
     fontWeight: 500,
     letterSpacing: '-0.01em',
+    fontVariantNumeric: 'tabular-nums',
   }
   const num: React.CSSProperties = {
     fontFamily: 'var(--pm-font-display)',

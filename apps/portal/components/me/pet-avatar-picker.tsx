@@ -41,6 +41,7 @@ export function PetAvatarPicker({ case_, pet }: { case_: CaseRow; pet: PetBlock 
     fontFamily: 'var(--pm-font-display)',
     fontWeight: 500,
     letterSpacing: '-0.01em',
+    fontVariantNumeric: 'tabular-nums',
   }
 
   return (
