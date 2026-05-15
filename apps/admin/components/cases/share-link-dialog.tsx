@@ -527,6 +527,11 @@ export function ShareLinkDialog({ caseRow, caseLabel, onClose }: Props) {
 }
 
 function shareUrl(token: string): string {
+  // 보호자 진입은 portal 도메인 — admin /share/[token] 은 redirect stub (Phase 11.0.5).
+  // window.location.origin 을 쓰면 deployment-specific 호스트(petmovework-<hash>-petmove.vercel.app)가
+  // 박혀 배포 교체 시 DEPLOYMENT_NOT_FOUND 가 난다. NEXT_PUBLIC_PORTAL_BASE_URL 을 우선.
+  const portalBase = process.env.NEXT_PUBLIC_PORTAL_BASE_URL?.replace(/\/$/, '')
+  if (portalBase) return `${portalBase}/share/${token}`
   if (typeof window === 'undefined') return ''
   return `${window.location.origin}/share/${token}`
 }
