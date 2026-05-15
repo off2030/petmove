@@ -21,7 +21,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '펫무브 등록',
     shortLabel: '등록',
     description:
-      '보호자와 동물 정보가 등록되었습니다. 이 정보는 검사, 신고, 서류 준비 등 여러 절차에 사용됩니다.  정보 페이지에서 검토, 수정이 가능합니다.',
+      '보호자와 동물 정보가 등록되었습니다.\n이 정보는 검사, 신고, 서류 준비 등 여러 절차에 사용됩니다.\n정보 페이지에서 검토, 수정이 가능합니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 10,
     done: 'always-done',
@@ -34,7 +34,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '마이크로칩 삽입',
     shortLabel: '칩',
     description:
-      '국제 표준 규격(15자리 번호)의 내장형 마이크로칩을 삽입합니다. 강아지는 동물등록도 필수입니다.',
+      '국제 표준 규격(15자리 번호)의 내장형 마이크로칩을 삽입합니다.\n강아지는 동물등록도 필수입니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 20,
     done: 'microchip-set',
