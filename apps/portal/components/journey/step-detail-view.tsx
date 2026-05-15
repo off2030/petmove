@@ -283,7 +283,7 @@ export function StepDetailView({
             }}
           >
             <div style={{ ...monoCap, color: C.warn, fontWeight: 700, marginBottom: 8 }}>
-              점검 필요 {failed.length}건
+              주의 {failed.length}건
             </div>
             <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {failed.map(({ check, result }) => (
