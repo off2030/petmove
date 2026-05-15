@@ -91,6 +91,8 @@ var p=location.pathname;
 var force=p.indexOf('/apply')===0||p.indexOf('/share')===0;
 var h=document.documentElement;
 var m=localStorage.getItem('theme');
+var theme=force?'system':(m==='dark'||m==='light'?m:'system');
+h.setAttribute('data-theme',theme);
 var dark=!force&&(m==='dark'||((!m||m==='system')&&matchMedia('(prefers-color-scheme: dark)').matches));
 if(dark)h.classList.add('dark');
 var s=force?null:localStorage.getItem('skin');

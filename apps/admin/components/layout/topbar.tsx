@@ -112,7 +112,7 @@ export function TopBar({
 }: TopBarProps) {
   const vaccineLookups = useVaccineLookups()
   const expiringCount = useMemo(() => vaccineLookups.countExpiringProducts(), [vaccineLookups])
-  const { mode, mounted, cycle } = useDarkMode()
+  const { mode, cycle } = useDarkMode()
   const [menuOpen, setMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
@@ -347,7 +347,11 @@ export function TopBar({
           aria-label="테마 전환"
           className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
         >
-          {!mounted ? <Monitor size={18} /> : mode === 'system' ? <Monitor size={18} /> : mode === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
+          {/* 3개 아이콘 모두 렌더하고 CSS 가 [html data-theme] 따라 하나만 표시 —
+              인라인 부트 스크립트가 hydration 전에 data-theme 박아 swap 깜빡임 제거. */}
+          <Monitor size={18} className="theme-icon-system" />
+          <Sun size={18} className="theme-icon-light" />
+          <Moon size={18} className="theme-icon-dark" />
         </button>
         </div>
 
@@ -415,17 +419,18 @@ export function TopBar({
             )
           )}
           <SkinPicker />
-          {mounted && (
-            <button
-              type="button"
-              onClick={cycle}
-              title={`테마: ${mode === 'system' ? '시스템' : mode === 'light' ? '라이트' : '다크'} (클릭하여 전환)`}
-              aria-label="테마 전환"
-              className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-            >
-              {mode === 'system' ? <Monitor size={18} /> : mode === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={cycle}
+            suppressHydrationWarning
+            title={`테마: ${mode === 'system' ? '시스템' : mode === 'light' ? '라이트' : '다크'} (클릭하여 전환)`}
+            aria-label="테마 전환"
+            className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          >
+            <Monitor size={18} className="theme-icon-system" />
+            <Sun size={18} className="theme-icon-light" />
+            <Moon size={18} className="theme-icon-dark" />
+          </button>
           {onTabChange ? (
             <button
               type="button"

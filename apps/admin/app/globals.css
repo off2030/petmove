@@ -21,6 +21,17 @@
   src: url('/fonts/Alonzo-ExtraLight.otf') format('opentype');
 }
 
+/* 테마 아이콘 — 3개 다 렌더하고 [data-theme] 따라 하나만 표시.
+   인라인 부트 스크립트가 hydration 전 data-theme 박아서 swap 깜빡임 없음.
+   기본값(미설정) = system 으로 폴백. */
+.theme-icon-light, .theme-icon-dark { display: none; }
+:root[data-theme="light"] .theme-icon-system,
+:root[data-theme="light"] .theme-icon-dark { display: none; }
+:root[data-theme="light"] .theme-icon-light { display: inline-block; }
+:root[data-theme="dark"] .theme-icon-system,
+:root[data-theme="dark"] .theme-icon-light { display: none; }
+:root[data-theme="dark"] .theme-icon-dark { display: inline-block; }
+
 /* ─────────────────────────────────────────────────────────────
    PetMove — Editorial tone (펫무브워크 Design System)
    Parchment + Terracotta + Near-black. 모든 뉴트럴은 따뜻한 계열.
