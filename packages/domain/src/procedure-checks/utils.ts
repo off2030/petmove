@@ -186,6 +186,18 @@ export function addOneYear(dateStr: string): string {
 }
 
 /**
+ * 'YYYY-MM-DD' + N일 후의 날짜 반환. 경계 보정 없음 — 단순 +N일.
+ * 예: 2026-05-04 + 91일 → 2026-08-03.
+ */
+export function addDays(dateStr: string, n: number): string {
+  if (dateStr.length < 10) return ''
+  const d = new Date(`${dateStr.slice(0, 10)}T00:00:00Z`)
+  if (isNaN(d.getTime())) return ''
+  d.setUTCDate(d.getUTCDate() + n)
+  return d.toISOString().slice(0, 10)
+}
+
+/**
  * 'YYYY-MM-DD' + N개월 후의 동일 일자 반환 (달 끝 보정).
  * EU "three months" 같은 캘린더 기반 비교에 사용.
  *

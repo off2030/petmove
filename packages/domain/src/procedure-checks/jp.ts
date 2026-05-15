@@ -1,5 +1,6 @@
 import type { ProcedureCheck } from './types'
 import {
+  addDays,
   addOneYear,
   addYears,
   daysBetween,
@@ -41,10 +42,13 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const age = daysBetween(birth, first.date)
       if (age === null) return SKIP
       if (age < 91) {
+        const eligibleFrom = addDays(birth, 91)
         return {
           ok: false,
           message: `1차 접종일(${first.date})이 생후 ${age}일령 — 최소 91일령 이상 필요.`,
-          fixHint: `${birth} 기준 91일 이후로 1차 접종일을 조정하세요.`,
+          fixHint: eligibleFrom
+            ? `${eligibleFrom} 이후로 1차 접종일을 조정하세요.`
+            : `생년월일 기준 91일 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
