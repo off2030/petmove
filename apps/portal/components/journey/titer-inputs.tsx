@@ -7,7 +7,7 @@ import { DateTextField } from '@petmove/ui'
  * 광견병 항체가 검사 step 입력 필드 — 채혈일 + 검사기관 + 검사결과. controlled — 부모
  * (step-detail-view)가 state·save 를 보유. 저장 형식은 case.data.rabies_titer_records[0]
  * 의 date / lab / value (펫무브워크 RabiesTiterField 와 동일 키).
- *  - lab 은 TITER_LABS 코드, 미해당 시 '기타'.
+ *  - lab 은 검사기관 코드(apqa_seoul / ksvdl_r), 미해당 시 '기타'.
  *  - value 는 IU/mL 단위 없이 수치만 (저장 시 server action 이 단위 제거).
  */
 
@@ -16,6 +16,11 @@ export interface TiterForm {
   lab: string
   value: string
 }
+
+/** 검사기관 드롭다운 옵션 — APQA Seoul·KSVDL-R 만 노출. 그 외 기관은 '기타'. */
+const TITER_LAB_OPTIONS = TITER_LABS.filter(
+  (l) => l.value === 'apqa_seoul' || l.value === 'ksvdl_r',
+)
 
 export function TiterInputs({
   form,
@@ -82,7 +87,7 @@ export function TiterInputs({
           }}
         >
           <option value="">선택하세요</option>
-          {TITER_LABS.map((l) => (
+          {TITER_LAB_OPTIONS.map((l) => (
             <option key={l.value} value={l.value}>
               {l.label}
             </option>
