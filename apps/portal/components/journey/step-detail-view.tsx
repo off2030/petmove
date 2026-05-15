@@ -4,12 +4,12 @@ import Link from 'next/link'
 import { useEffect, useState, useTransition } from 'react'
 import type { CheckResult, ProcedureCheck, StepDefinition } from '@petmove/domain'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
-import { updateMicrochipFields, updateRabiesEntryFields, updateTiterDate } from '@/lib/actions/cases'
+import { updateMicrochipFields, updateRabiesEntryFields, updateTiterFields } from '@/lib/actions/cases'
 import { readCaseDocuments } from '@/lib/documents'
 import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm } from './rabies-entry-inputs'
 import { StepAttachments } from './step-attachments'
-import { TiterInputs } from './titer-inputs'
+import { TiterInputs, type TiterForm } from './titer-inputs'
 
 interface CollectedCheck {
   check: ProcedureCheck
@@ -69,8 +69,8 @@ export function StepDetailView({
   const savedRabies = readRabiesEntryForm(caseRow?.data, rabiesIndex)
   const [rabies, setRabies] = useState<RabiesEntryForm>(savedRabies)
 
-  const savedTiterDate = readTiterDate(caseRow?.data)
-  const [titerDate, setTiterDate] = useState(savedTiterDate)
+  const savedTiterForm = readTiterForm(caseRow?.data)
+  const [titerForm, setTiterForm] = useState<TiterForm>(savedTiterForm)
 
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -78,7 +78,9 @@ export function StepDetailView({
 
   const microchipDirty = isMicrochip && (chip !== savedChip || date !== savedDate)
   const rabiesDirty = isRabies && !rabiesFormEqual(rabies, savedRabies)
-  const titerDirty = isTiter && titerDate !== savedTiterDate
+  const titerDirty =
+    isTiter &&
+    (titerForm.date !== savedTiterForm.date || titerForm.value !== savedTiterForm.value)
   const dirty = microchipDirty || rabiesDirty || titerDirty
 
   // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
@@ -95,7 +97,7 @@ export function StepDetailView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
-    if (!titerDirty) setTiterDate(readTiterDate(caseRow?.data))
+    if (!titerDirty) setTiterForm(readTiterForm(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
 
@@ -147,10 +149,13 @@ export function StepDetailView({
       setStatus('saving')
       setError(null)
       startTransition(async () => {
-        const res = await updateTiterDate(caseId, titerDate || null)
+        const res = await updateTiterFields(caseId, {
+          date: titerForm.date || null,
+          value: titerForm.value || null,
+        })
         if (res.ok) {
           updateCase(res.value)
-          setTiterDate(readTiterDate(res.value.data))
+          setTiterForm(readTiterForm(res.value.data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -391,7 +396,10 @@ export function StepDetailView({
         {isTiter && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
-            <TiterInputs value={titerDate} onChange={setTiterDate} />
+            <TiterInputs
+              form={titerForm}
+              onChange={(key, next) => setTiterForm((prev) => ({ ...prev, [key]: next }))}
+            />
           </section>
         )}
         {!isInteractive && step.inputs && step.inputs.length > 0 && (
@@ -643,13 +651,15 @@ function rabiesFormEqual(a: RabiesEntryForm, b: RabiesEntryForm): boolean {
   )
 }
 
-/** 채혈일 — caseRow.data.rabies_titer_records[0].date. 없으면 빈 문자열. */
-function readTiterDate(data: Record<string, unknown> | null | undefined): string {
-  if (!data) return ''
+/** 채혈일·검사결과 — caseRow.data.rabies_titer_records[0] 의 date / value. 없으면 빈 문자열. */
+function readTiterForm(data: Record<string, unknown> | null | undefined): TiterForm {
+  const empty: TiterForm = { date: '', value: '' }
+  if (!data) return empty
   const arr = data['rabies_titer_records']
-  if (!Array.isArray(arr) || arr.length === 0) return ''
+  if (!Array.isArray(arr) || arr.length === 0) return empty
   const entry = arr[0]
-  if (!entry || typeof entry !== 'object') return ''
-  const v = (entry as Record<string, unknown>).date
-  return typeof v === 'string' ? v : ''
+  if (!entry || typeof entry !== 'object') return empty
+  const r = entry as Record<string, unknown>
+  const str = (v: unknown) => (typeof v === 'string' ? v : '')
+  return { date: str(r.date), value: str(r.value) }
 }

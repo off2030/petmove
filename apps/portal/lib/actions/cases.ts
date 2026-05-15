@@ -262,18 +262,20 @@ function isEmptyObject(v: unknown): boolean {
 }
 
 /**
- * 광견병 항체가 검사 step 의 채혈일을 patch — case.data.rabies_titer_records[0].date.
+ * 광견병 항체가 검사 step 의 입력 필드를 patch — case.data.rabies_titer_records[0] 의
+ * date / value(검사 수치)를 갱신.
  *
- * 0번 항목이 없으면 생성, 있으면 value·received_date 등 다른 키는 보존.
- * 빈 값은 date 키 제거 (다른 키도 없으면 rabies_titer_records 자체 제거).
+ * 0번 항목이 없으면 생성, 있으면 lab·received_date 등 다른 키는 보존.
+ * 빈 값은 키 제거 (남는 키 없으면 rabies_titer_records 자체 제거).
+ * value 는 IU/mL 단위 표기를 제거해 저장 (펫무브워크 RabiesTiterField 와 동일).
  * data 의 다른 키는 fetch-merge 로 보존.
  */
-export async function updateTiterDate(
+export async function updateTiterFields(
   caseId: string,
-  date: string | null,
+  fields: { date: string | null; value: string | null },
 ): Promise<Result<CaseRow>> {
   try {
-    if (date != null && date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    if (fields.date != null && fields.date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(fields.date)) {
       return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
     }
 
@@ -296,9 +298,13 @@ export async function updateTiterDate(
     const entry: Record<string, unknown> =
       slot && typeof slot === 'object' ? { ...(slot as Record<string, unknown>) } : {}
 
-    const d = typeof date === 'string' ? date.trim() : date
+    const d = typeof fields.date === 'string' ? fields.date.trim() : fields.date
     if (d) entry.date = d
     else delete entry.date
+
+    const v = typeof fields.value === 'string' ? stripTiterUnit(fields.value) : ''
+    if (v) entry.value = v
+    else delete entry.value
 
     const nextData: Record<string, unknown> = { ...prev }
     if (isEmptyObject(entry) && arr.length <= 1) {
@@ -319,4 +325,9 @@ export async function updateTiterDate(
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }
+}
+
+/** 검사 수치에서 IU/mL 단위 표기 제거 — 저장 값엔 단위를 남기지 않는다 (펫무브워크와 동일). */
+function stripTiterUnit(value: string): string {
+  return value.replace(/\s*IU\s*\/\s*m[lL]\s*/gi, '').trim()
 }
