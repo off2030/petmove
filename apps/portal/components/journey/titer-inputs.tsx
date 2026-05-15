@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { TITER_LABS } from '@petmove/domain'
 import { DateTextField } from '@petmove/ui'
 import { SelectField, type SelectOption } from './select-field'
@@ -8,7 +9,7 @@ import { SelectField, type SelectOption } from './select-field'
  * 광견병 항체가 검사 step 입력 필드 — 채혈일 + 검사기관 + 검사결과. controlled — 부모
  * (step-detail-view)가 state·save 를 보유. 저장 형식은 case.data.rabies_titer_records[0]
  * 의 date / lab / value (펫무브워크 RabiesTiterField 와 동일 키).
- *  - lab 은 검사기관 코드(apqa_seoul / ksvdl_r), 미해당 시 '기타'.
+ *  - lab 은 검사기관 코드(apqa_seoul / ksvdl_r), 목록에 없으면 직접 입력한 기관명.
  *  - value 는 IU/mL 단위 없이 수치만 (저장 시 server action 이 단위 제거).
  */
 
@@ -18,10 +19,15 @@ export interface TiterForm {
   value: string
 }
 
-/** 검사기관 드롭다운 옵션 — APQA Seoul·KSVDL-R + 기타. */
+/** 드롭다운에 노출하는 검사기관 코드. */
+const KNOWN_LAB_CODES = ['apqa_seoul', 'ksvdl_r']
+/** '직접 입력' 옵션 sentinel — form.lab 에 저장되지 않고 드롭다운 표시용으로만 쓰임. */
+const CUSTOM_LAB = '__custom__'
+
+/** 검사기관 드롭다운 옵션 — APQA Seoul·KSVDL-R + 직접 입력. */
 const LAB_OPTIONS: SelectOption[] = [
-  ...TITER_LABS.filter((l) => l.value === 'apqa_seoul' || l.value === 'ksvdl_r'),
-  { value: '기타', label: '기타' },
+  ...TITER_LABS.filter((l) => KNOWN_LAB_CODES.includes(l.value)),
+  { value: CUSTOM_LAB, label: '직접 입력' },
 ]
 
 export function TiterInputs({
@@ -37,6 +43,23 @@ export function TiterInputs({
     ink: '#2A2620',
     ink2: '#6B6457',
   } as const
+
+  // 검사기관 — lab 이 드롭다운 코드가 아니면 직접 입력 모드. lab 이 비었지만 사용자가
+  // 방금 '직접 입력' 을 고른 경우(아직 미입력)도 직접 입력 모드로 본다.
+  const [pickedCustom, setPickedCustom] = useState(false)
+  const isCustomStored = form.lab !== '' && !KNOWN_LAB_CODES.includes(form.lab)
+  const customMode = isCustomStored || (pickedCustom && form.lab === '')
+
+  function handleLabSelect(next: string) {
+    if (next === CUSTOM_LAB) {
+      setPickedCustom(true)
+      // 코드 → 직접 입력 전환 시 코드가 기관명으로 남지 않도록 비움.
+      if (KNOWN_LAB_CODES.includes(form.lab)) onChange('lab', '')
+    } else {
+      setPickedCustom(false)
+      onChange('lab', next)
+    }
+  }
 
   const labelStyle: React.CSSProperties = {
     fontSize: 13,
@@ -79,11 +102,20 @@ export function TiterInputs({
         <div style={labelStyle}>검사기관</div>
         <div style={{ marginTop: 8 }}>
           <SelectField
-            value={form.lab}
+            value={customMode ? CUSTOM_LAB : form.lab}
             options={LAB_OPTIONS}
-            onChange={(v) => onChange('lab', v)}
+            onChange={handleLabSelect}
           />
         </div>
+        {customMode && (
+          <input
+            type="text"
+            value={form.lab}
+            onChange={(e) => onChange('lab', e.target.value)}
+            placeholder="검사기관명을 입력하세요"
+            style={{ ...fieldBox, marginTop: 8, width: '100%' }}
+          />
+        )}
       </div>
 
       <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
