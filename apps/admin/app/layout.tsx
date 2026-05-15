@@ -106,6 +106,23 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning className={`${interTight.variable} ${inter.variable} ${manrope.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} ${notoSansKr.variable} ${notoSerifKr.variable}`}>
       <head>
+        {/* 웹폰트 preload — Alonzo(좌측 워드마크), Pretendard(한글 글리프).
+            font-display: swap 라 로딩 늦으면 fallback → 실폰트 스왑 시 폭 변경 →
+            상단바 레이아웃 튐. preload 로 HTML 파싱과 동시에 fetch 시작. */}
+        <link
+          rel="preload"
+          href="/fonts/Alonzo-ExtraLight.otf"
+          as="font"
+          type="font/otf"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2-subset/PretendardVariable.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
         <script dangerouslySetInnerHTML={{ __html: SKIN_BOOT_SCRIPT }} />
       </head>
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">

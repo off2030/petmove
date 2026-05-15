@@ -133,6 +133,6 @@ export const config = {
     // _next 빌드 산출물·favicon·정적 이미지만 제외. /api/* 는 의도적으로 포함 —
     // /api/auth/* (OAuth 시작/callback) 가 PUBLIC_PREFIXES 통과해야 미로그인
     // 사용자도 도달 가능하기 때문. 그 외 보호된 API 도 동일 게이트로 처리.
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|otf|woff|woff2|ttf)$).*)',
   ],
 }
