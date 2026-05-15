@@ -2,10 +2,12 @@ import type { CaseRow } from '@petmove/domain'
 import {
   JOURNEY_STEP_CATALOG,
   buildCaseJourneyContext,
+  findStepForCheck,
   getStepsForCase,
   resolveCompletedDate,
   resolveDone,
   resolveStepForDestination,
+  runChecksForCase,
   type StepDefinition,
 } from '@petmove/domain'
 
@@ -29,6 +31,8 @@ export interface JourneyStage {
   date: string | null
   state: StageState
   desc?: string
+  /** 이 step 에 매핑된 procedure-check 중 ok=false 개수. 0 또는 미정의면 정상. */
+  failedChecks?: number
 }
 
 export interface JourneyData {
@@ -43,6 +47,8 @@ export interface JourneyData {
   stages: JourneyStage[]
   /** state==='current' 인 첫 스테이지. 없으면 null (= 전체 완료). */
   nextStage: JourneyStage | null
+  /** 전체 stage 의 failedChecks 합 — 상단 한 줄 알림 배지에 사용. */
+  totalFailedChecks: number
 }
 
 function todayKst(): string {
@@ -52,11 +58,12 @@ function todayKst(): string {
 /**
  * description 의 첫 문장만 추출 — 일정 row 의 sub-line 용.
  * 마침표/물음표/느낌표 의 첫 등장까지 (그 부호 포함) 반환. 없으면 원문 그대로.
+ * 마침표는 뒤에 숫자가 오는 경우(소수점 — "0.5 IU/mL") 는 문장 종결로 보지 않음.
  */
 function firstSentence(text: string): string {
-  const idx = text.search(/[.!?]/)
-  if (idx === -1) return text.trim()
-  return text.slice(0, idx + 1).trim()
+  const m = text.match(/[!?]|\.(?!\d)/)
+  if (!m || m.index == null) return text.trim()
+  return text.slice(0, m.index + 1).trim()
 }
 
 function daysBetween(fromIso: string, toIso: string): number {
@@ -89,6 +96,18 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
 
   const applicableSteps = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
 
+  // procedure-check 결과를 step 단위로 집계. destinationKey 없으면 빈 맵.
+  const failedByStep = new Map<string, number>()
+  if (ctx.destinationKey) {
+    const all = runChecksForCase(ctx.destinationKey, { caseRow })
+    for (const { check, result } of all) {
+      if (result.ok) continue
+      const stepId = findStepForCheck(check.id)
+      if (!stepId) continue
+      failedByStep.set(stepId, (failedByStep.get(stepId) ?? 0) + 1)
+    }
+  }
+
   const stages: JourneyStage[] = applicableSteps.map((rawStep) => {
     // 목적지별 override(주로 description/title) 적용 — base catalog 는 그대로,
     // ctx.destinationKey 가 STEP_DESTINATION_OVERRIDES 에 매칭되면 머지.
@@ -103,6 +122,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       : done
         ? resolveCompletedDate(step.done, caseRow)
         : deadlineDate(step, caseRow)
+    const failedChecks = failedByStep.get(step.id) ?? 0
     return {
       id: step.id,
       label: step.title,
@@ -110,6 +130,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       date,
       state: done ? 'done' : 'upcoming',
       desc: firstSentence(step.description),
+      failedChecks: failedChecks > 0 ? failedChecks : undefined,
     }
   })
 
@@ -119,6 +140,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     stages[firstUpcomingIdx].state = 'current'
   }
   const nextStage = stages.find((s) => s.state === 'current') ?? null
+  const totalFailedChecks = stages.reduce((sum, s) => sum + (s.failedChecks ?? 0), 0)
 
   return {
     pet: { name: caseRow.pet_name ?? '반려동물' },
@@ -131,5 +153,6 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     },
     stages,
     nextStage,
+    totalFailedChecks,
   }
 }

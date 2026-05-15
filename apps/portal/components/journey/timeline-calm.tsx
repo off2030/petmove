@@ -12,7 +12,7 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
  * 그것을 비교적 충실히 옮긴 것.
  */
 export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: string }) {
-  const { stages, trip, pet, nextStage } = data
+  const { stages, trip, pet, nextStage, totalFailedChecks } = data
   const total = stages.length
   const done = stages.filter((s) => s.state === 'done').length
   const pct = done / total
@@ -27,10 +27,15 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
     line: 'rgba(42,38,32,.07)',
     accent: '#8A7355',
     sage: '#8FA68C',
+    warn: '#C26A4A',
+    warnBg: 'rgba(194,106,74,0.08)',
     cardSoft: 'linear-gradient(160deg, #F0E8DB 0%, #EDE4D7 50%, #E6DDCD 100%)',
     cardList: 'linear-gradient(160deg, #F5EDE0 0%, #F2E9DC 50%, #ECE3D3 100%)',
     cardHero: 'radial-gradient(140% 100% at 80% 18%, #E8DECC 0%, #DCD2BD 45%, #CBC1AB 100%)',
   } as const
+
+  // 주의가 발생한 첫 stage — 한 줄 알림 배너의 링크 타겟.
+  const firstWarnedStage = stages.find((s) => (s.failedChecks ?? 0) > 0) ?? null
 
   const serif: React.CSSProperties = {
     fontFamily: 'var(--pm-font-display)',
@@ -111,6 +116,35 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
             <span>{trip.toCity}</span>
           </div>
         </div>
+
+        {/* 주의 알림 — 한 줄 배너. 첫 주의 stage 로 이동. */}
+        {totalFailedChecks > 0 && firstWarnedStage && (
+          <Link
+            href={`/cases/${caseId}/journey/${firstWarnedStage.id}`}
+            className="pm-pressable"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginTop: 18,
+              padding: '10px 14px',
+              borderRadius: 12,
+              background: C.warnBg,
+              border: `.5px solid ${C.warn}33`,
+              color: C.warn,
+              fontSize: 13,
+              textDecoration: 'none',
+              fontWeight: 500,
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span>주의 {totalFailedChecks}건 — {firstWarnedStage.label}</span>
+          </Link>
+        )}
 
         {/* 다음 할 일 카드 — soft taupe gradient. 클릭 시 해당 단계 상세로 이동. */}
         {nextStage && (
@@ -219,6 +253,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
           {stages.map((s, i) => {
             const isDone = s.state === 'done'
             const isCurr = s.state === 'current'
+            const hasWarn = (s.failedChecks ?? 0) > 0
             const last = i === stages.length - 1
             return (
               <Link
@@ -244,14 +279,31 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: isDone ? C.sage : isCurr ? C.accent : 'transparent',
-                    border: !isDone && !isCurr ? `1px solid ${C.line}` : 'none',
-                    color: isDone || isCurr ? C.surface : C.ink3,
+                    // 주의가 있으면 sage/accent 대신 warn 색으로 — 체크/번호 자리에 ⚠.
+                    background: hasWarn ? C.warn : isDone ? C.sage : isCurr ? C.accent : 'transparent',
+                    border: !hasWarn && !isDone && !isCurr ? `1px solid ${C.line}` : 'none',
+                    color: hasWarn || isDone || isCurr ? C.surface : C.ink3,
                     ...num,
                     fontSize: 11,
                   }}
                 >
-                  {isDone ? (
+                  {hasWarn ? (
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-label="주의"
+                    >
+                      <line x1="12" y1="9" x2="12" y2="13" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    </svg>
+                  ) : isDone ? (
                     <svg
                       width="11"
                       height="11"
@@ -284,8 +336,8 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                       style={{
                         fontSize: 17,
                         lineHeight: '22px',
-                        color: isCurr ? C.ink : isDone ? C.ink2 : C.ink3,
-                        fontWeight: isCurr ? 600 : 500,
+                        color: hasWarn ? C.warn : isCurr ? C.ink : isDone ? C.ink2 : C.ink3,
+                        fontWeight: isCurr || hasWarn ? 600 : 500,
                         minWidth: 0,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -297,13 +349,13 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                     <div
                       style={{
                         ...monoCap,
-                        color: isCurr ? C.accent : C.ink3,
-                        fontWeight: isCurr ? 700 : 500,
+                        color: hasWarn ? C.warn : isCurr ? C.accent : C.ink3,
+                        fontWeight: isCurr || hasWarn ? 700 : 500,
                         textAlign: 'right',
                         flexShrink: 0,
                       }}
                     >
-                      {isCurr ? (dDayLabel ?? '예정') : formatStageDate(s)}
+                      {hasWarn ? `주의 ${s.failedChecks}` : isCurr ? (dDayLabel ?? '예정') : formatStageDate(s)}
                     </div>
                   </div>
                   {s.desc && (
