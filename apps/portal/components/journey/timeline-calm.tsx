@@ -34,8 +34,9 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
     cardHero: 'radial-gradient(140% 100% at 80% 18%, #E8DECC 0%, #DCD2BD 45%, #CBC1AB 100%)',
   } as const
 
-  // 주의가 발생한 첫 stage — 한 줄 알림 배너의 링크 타겟.
-  const firstWarnedStage = stages.find((s) => (s.failedChecks ?? 0) > 0) ?? null
+  // 주의가 발생한 stage 들 — 배너에 항목명을 모두 나열하고, 링크는 첫 항목으로.
+  const warnedStages = stages.filter((s) => (s.failedChecks ?? 0) > 0)
+  const firstWarnedStage = warnedStages[0] ?? null
 
   const serif: React.CSSProperties = {
     fontFamily: 'var(--pm-font-display)',
@@ -143,7 +144,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               <line x1="12" y1="9" x2="12" y2="13" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
-            <span>주의 {totalFailedChecks}건 — {firstWarnedStage.label}</span>
+            <span>주의 {totalFailedChecks}건 — {warnedStages.map((s) => s.label).join(', ')}</span>
           </Link>
         )}
 
