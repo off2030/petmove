@@ -30,7 +30,10 @@ export interface JourneyStage {
   short: string
   date: string | null
   state: StageState
+  /** 전체 일정 리스트 보조 줄. done→완료 문구, 그 외→행동 문구. */
   desc?: string
+  /** 다음 할 일 카드 본문 — 날짜 구문 + 행동 문구. 미완료 step 에만 채워짐. */
+  cardDesc?: string
   /** 이 step 에 매핑된 procedure-check 중 ok=false 개수. 0 또는 미정의면 정상. */
   failedChecks?: number
 }
@@ -71,6 +74,20 @@ function daysBetween(fromIso: string, toIso: string): number {
   return Math.round(ms / 86_400_000)
 }
 
+function addDays(iso: string, days: number): string {
+  const d = new Date(iso + 'T00:00:00Z')
+  d.setUTCDate(d.getUTCDate() + days)
+  return d.toISOString().slice(0, 10)
+}
+
+/** 'YYYY-MM-DD' → 'YYYY년 M월 D일'. 형식이 아니면 원문 반환. */
+function formatKoreanDate(iso: string): string {
+  const parts = iso.split('-')
+  if (parts.length !== 3) return iso
+  const [y, m, d] = parts
+  return `${y}년 ${Number(m)}월 ${Number(d)}일`
+}
+
 /** step 의 deadline 으로부터 표시용 date 문자열 계산 (없으면 null). */
 function deadlineDate(step: StepDefinition, caseRow: CaseRow): string | null {
   if (!step.deadline) return null
@@ -84,6 +101,30 @@ function deadlineDate(step: StepDefinition, caseRow: CaseRow): string | null {
     const d = new Date(caseRow.created_at)
     d.setUTCDate(d.getUTCDate() - step.deadline.daysBefore)
     return d.toISOString().slice(0, 10)
+  }
+  return null
+}
+
+/**
+ * step 의 earliest 앵커로 '가능 시작일' 계산.
+ * - anchor 'birth': case.data.birth_date + daysAfter.
+ * - anchor 'step:<id>': 선행 step 의 완료일 + daysAfter. 선행 step 미완료면 null.
+ */
+function earliestDate(step: StepDefinition, caseRow: CaseRow): string | null {
+  const e = step.earliest
+  if (!e) return null
+  if (e.anchor === 'birth') {
+    const data = (caseRow.data ?? {}) as Record<string, unknown>
+    const birth = typeof data.birth_date === 'string' ? data.birth_date : null
+    if (!birth || birth.length < 10) return null
+    return addDays(birth.slice(0, 10), e.daysAfter)
+  }
+  if (e.anchor.startsWith('step:')) {
+    const refId = e.anchor.slice('step:'.length)
+    const refStep = JOURNEY_STEP_CATALOG.find((s) => s.id === refId)
+    if (!refStep || !resolveDone(refStep.done, caseRow)) return null
+    const base = resolveCompletedDate(refStep.done, caseRow)
+    return base ? addDays(base, e.daysAfter) : null
   }
   return null
 }
@@ -115,13 +156,33 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     const done = resolveDone(step.done, caseRow)
     // departure step 은 출국일 자체. 그 외에는:
     //  - done → resolveCompletedDate (없으면 dash 로 fallback)
-    //  - upcoming → deadline 권장일
+    //  - upcoming → deadline 권장일, 없으면 earliest 가능일
     const isDeparture = step.id === 'departure'
+    const deadline = deadlineDate(step, caseRow)
+    const earliest = earliestDate(step, caseRow)
     const date = isDeparture
       ? dep
       : done
         ? resolveCompletedDate(step.done, caseRow)
-        : deadlineDate(step, caseRow)
+        : (deadline ?? earliest)
+    // 상태별 보조 문구.
+    //  - done   → doneSummary (완료 문구)
+    //  - 그 외  → actionLine (행동 문구)
+    // 둘 다 catalog 미정의면 description 첫 문장으로 폴백.
+    const action = step.actionLine ?? firstSentence(step.description)
+    const desc = done
+      ? (step.doneSummary ?? firstSentence(step.description))
+      : action
+    // 다음 할 일 카드 본문 — 날짜 구문 + actionLine.
+    // earliest("이후")가 deadline("까지")보다 우선: 보호자가 먼저 알아야 할 제약.
+    // 선행 step 미완료 등으로 날짜 계산이 안 되면 actionLine 만.
+    const cardDesc = done
+      ? undefined
+      : earliest
+        ? `${formatKoreanDate(earliest)} 이후 ${action}`
+        : deadline
+          ? `${formatKoreanDate(deadline)}까지 ${action}`
+          : action
     const failedChecks = failedByStep.get(step.id) ?? 0
     return {
       id: step.id,
@@ -129,7 +190,8 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       short: step.shortLabel,
       date,
       state: done ? 'done' : 'upcoming',
-      desc: firstSentence(step.description),
+      desc,
+      cardDesc,
       failedChecks: failedChecks > 0 ? failedChecks : undefined,
     }
   })

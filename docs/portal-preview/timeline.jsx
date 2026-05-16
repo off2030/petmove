@@ -100,7 +100,7 @@ function TimelineCalm({ scenario, onNav, ringShape = 'H' }) {
             margin: '8px 0 0',
             fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)',
           }}>
-            5월 10일부터 검사 가능 · 채혈 → 일본 지정 검사기관 송부
+            2026년 5월 10일 이후 광견병 항체가 검사를 위해 채혈합니다.
           </p>
         </button>
 

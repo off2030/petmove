@@ -94,6 +94,17 @@ export interface StepDeadline {
   daysBefore: number
 }
 
+/**
+ * 가능 시작일 — "이 날짜 이후에 할 수 있다". deadline 과 반대 방향.
+ * - anchor 'birth': 동물 생년월일(case.data.birth_date) 기준.
+ * - anchor 'step:<id>': 해당 step 의 완료일 기준. 그 step 이 미완료면 계산 불가(null).
+ */
+export interface StepEarliest {
+  anchor: 'birth' | `step:${string}`
+  /** anchor 기준 며칠 이후. */
+  daysAfter: number
+}
+
 export interface StepDefinition {
   /** 전역 유일 식별자. kebab-case. 예: 'rabies-titer'. */
   id: string
@@ -102,13 +113,25 @@ export interface StepDefinition {
   title: string
   /** 더 짧은 1~3자. 예: '항체'. */
   shortLabel: string
-  /** 상세 페이지 본문 — 마크다운 가능. */
+  /** 상세 페이지 본문 — 마크다운 가능. 절차 규칙을 안내. */
   description: string
+  /**
+   * 전체 일정 리스트·다음 할 일 카드의 행동 문구 — 미완료 step 에 표시.
+   * 예: '2차 광견병 백신을 접종합니다.' 생략 시 description 첫 문장으로 폴백.
+   */
+  actionLine?: string
+  /**
+   * 전체 일정 리스트의 완료 문구 — 완료된 step 에 표시.
+   * 예: '마이크로칩 삽입이 완료되었습니다.' 생략 시 description 첫 문장으로 폴백.
+   */
+  doneSummary?: string
   applicability: StepApplicability
   /** 정렬용. 작을수록 일찍 등장. 같은 값은 카탈로그 등록 순. */
   order: number
   /** 권장 시점. UI 의 deadline 배지. 생략 시 표시 안 함. */
   deadline?: StepDeadline
+  /** 가능 시작일. 다음 할 일 카드에서 "{날짜} 이후 …" 문구로 노출. */
+  earliest?: StepEarliest
   /** 완료 시그널. */
   done: StepDoneSignal
   /** 입력 폼. 없으면 안내+첨부+완료 토글만 표시. */

@@ -184,8 +184,10 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
             >
               {nextStage.label}
             </h3>
-            {nextStage.desc && (
-              <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>{nextStage.desc}</p>
+            {(nextStage.cardDesc ?? nextStage.desc) && (
+              <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>
+                {nextStage.cardDesc ?? nextStage.desc}
+              </p>
             )}
           </Link>
         )}
