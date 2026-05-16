@@ -106,7 +106,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'rabies_2_product_expiry', label: '제품 유효기간', type: 'date' },
     ],
     allowAttachments: true,
-    attachmentHint: '2차 접종 증명서를 사진으로 올려주세요 (lot no. 가 보이게).',
+    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진/PDF 로 올려주세요.',
     validationIds: [
       'jp.rabies-prime-booster-interval',
       'jp.rabies-booster-within-prime-validity',
@@ -158,7 +158,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'rabies_titer_value', label: '검사결과', type: 'text' },
     ],
     allowAttachments: true,
-    attachmentHint: '검사기관 결과지를 사진/PDF 로 올려주세요.',
+    attachmentHint: '검사결과지 사본을 사진/PDF 로 보관하세요.',
     validationIds: [
       'jp.rabies-titer-vs-booster',
       'jp.departure-180days-after-titer',
