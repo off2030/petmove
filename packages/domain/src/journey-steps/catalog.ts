@@ -80,7 +80,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'rabies_1_product_expiry', label: '제품 유효기간', type: 'date' },
     ],
     allowAttachments: true,
-    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진/PDF 로 올려주세요.',
+    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 저장하세요.',
     validationIds: ['jp.rabies-prime-after-91days-old'],
   },
 
@@ -106,7 +106,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'rabies_2_product_expiry', label: '제품 유효기간', type: 'date' },
     ],
     allowAttachments: true,
-    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진/PDF 로 올려주세요.',
+    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 저장하세요.',
     validationIds: [
       'jp.rabies-prime-booster-interval',
       'jp.rabies-booster-within-prime-validity',
@@ -177,6 +177,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       '광견병 항체가 검사 채혈일로부터 180일이 지나야 일본에 입국할 수 있습니다.\n채혈일로부터 2년 이내에 입국해야 합니다.\n\n입국 가능 시기에 맞춰 항공권을 구매하세요.\n예약 전 반려동물 동반 가능 여부와 켄넬 규정을 항공사에 확인하세요.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
     order: 45,
+    earliest: { anchor: 'step:rabies-titer', daysAfter: 180 },
     done: 'manual-flag:flight-purchased',
     allowAttachments: true,
     attachmentHint: '구매한 항공권(e-티켓)을 사진/PDF 로 올려주세요.',
