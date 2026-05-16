@@ -81,10 +81,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진/PDF 로 올려주세요.',
-    validationIds: [
-      'jp.rabies-prime-after-91days-old',
-      'jp.microchip-rabies-sequence',
-    ],
+    validationIds: ['jp.rabies-prime-after-91days-old'],
   },
 
   // ── 4. 광견병 백신 2차 ─────────────────────────────────────────────────

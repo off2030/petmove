@@ -195,7 +195,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `1차 접종일(${first.date})이 마이크로칩 시술일(${microchip})보다 앞섭니다.`,
-        fixHint: '2차 광견병 백신은 광견병 항체가 검사와 같은 날 해야 합니다.',
+        fixHint: '2차 광견병 백신과 광견병 항체가 검사를 같은 날 해야 합니다.',
         offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
       }
     },
