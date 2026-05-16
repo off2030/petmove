@@ -80,7 +80,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'rabies_1_product_expiry', label: '제품 유효기간', type: 'date' },
     ],
     allowAttachments: true,
-    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 저장하세요.',
+    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 보관하세요.',
     validationIds: ['jp.rabies-prime-after-91days-old'],
   },
 
@@ -106,7 +106,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'rabies_2_product_expiry', label: '제품 유효기간', type: 'date' },
     ],
     allowAttachments: true,
-    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 저장하세요.',
+    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 보관하세요.',
     validationIds: [
       'jp.rabies-prime-booster-interval',
       'jp.rabies-booster-within-prime-validity',
@@ -158,7 +158,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'rabies_titer_value', label: '검사결과', type: 'text' },
     ],
     allowAttachments: true,
-    attachmentHint: '검사결과지 사본을 사진/PDF 로 보관하세요.',
+    attachmentHint: '검사결과지 사본을 사진, PDF로 보관하세요.',
     validationIds: [
       'jp.rabies-titer-vs-booster',
       'jp.departure-180days-after-titer',
@@ -180,7 +180,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     earliest: { anchor: 'step:rabies-titer', daysAfter: 180 },
     done: 'manual-flag:flight-purchased',
     allowAttachments: true,
-    attachmentHint: '구매한 항공권(e-티켓)을 사진/PDF 로 올려주세요.',
+    attachmentHint: '구매한 항공권(e-티켓)을 사진, PDF로 보관하세요.',
   },
 
   // ── 5. 종합백신 (DHPP·FVRCP) ────────────────────────────────────────────
@@ -354,7 +354,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'permit_no', label: '허가 번호', type: 'text' },
     ],
     allowAttachments: true,
-    attachmentHint: '허가서 PDF 를 올려주세요.',
+    attachmentHint: '허가서를 사진, PDF로 보관하세요.',
   },
 
   // ── 11. 내원 — 수의사 검진 ──────────────────────────────────────────────
