@@ -159,6 +159,21 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
   },
 
+  // ── 항공권 구매 (일본 전용) ──────────────────────────────────────────────
+  {
+    id: 'flight-purchase',
+    category: 'logistics',
+    title: '항공권 구매',
+    shortLabel: '항공권',
+    description:
+      '광견병 항체가 검사 채혈일로부터 180일이 지나야 일본에 입국할 수 있습니다.\n채혈일로부터 2년 이내에 입국해야 합니다.\n\n입국 가능 시기에 맞춰 항공권을 구매하세요.\n예약 전 반려동물 동반 가능 여부와 켄넬 규정을 항공사에 확인하세요.',
+    applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
+    order: 45,
+    done: 'manual-flag:flight-purchased',
+    allowAttachments: true,
+    attachmentHint: '구매한 항공권(e-티켓)을 사진/PDF 로 올려주세요.',
+  },
+
   // ── 5. 종합백신 (DHPP·FVRCP) ────────────────────────────────────────────
   {
     id: 'general-vaccine',

@@ -83,6 +83,7 @@ packages/domain/src/journey-steps/
 | `microchip` | preparation | all | ISO 11784/11785 |
 | `rabies-vaccine` | vaccination | all | 1·2차 |
 | `rabies-titer` | lab | EU/UK/AU/NZ/JP/MY/CN/TW/CH + round-trip 일부 | 가장 복잡한 단계 |
+| `flight-purchase` | logistics | JP | 항체검사 후 — 입국 가능 시기 확정 시 항공권 구매 (manual flag) |
 | `tapeworm-deworm` | preparation | UK·IE·MT·NO·FI (EU Reg 2018/772) | 출국 24-120h |
 | `general-vaccine` | vaccination | AU/NZ/TH/MY/SG/RU/IN/UAE/HK/GU/PH/RU | DHPP/FVRCP |
 | `civ-vaccine` | vaccination | AU/NZ/IN | 강아지만 (dog) |
