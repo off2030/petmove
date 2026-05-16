@@ -67,8 +67,8 @@ export const EU_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦음.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작 필요.',
+        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦습니다.`,
+        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 합니다.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -96,7 +96,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
       if (age < 84) {
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 생후 ${age}일령 — 최소 84일령(12주) 이상 필요.`,
+          message: `1차 접종일(${first.date})이 생후 ${age}일령입니다. 최소 84일령(12주) 이상이어야 합니다.`,
           fixHint: `${birth} 기준 84일 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
@@ -124,14 +124,14 @@ export const EU_CHECKS: ProcedureCheck[] = [
         const priorDoses = rabies.filter((r) => r.date <= t.date)
         if (priorDoses.length === 0) {
           offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date}) 이전 광견병 접종 기록 없음`)
+          problems.push(`채혈일(${t.date}) 이전의 광견병 접종 기록이 없습니다.`)
           continue
         }
         const latest = priorDoses[priorDoses.length - 1]
         const gap = daysBetween(latest.date, t.date)
         if (gap === null || gap < 30) {
           offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈(${t.date}) - 직전접종(${latest.date}) = ${gap ?? '?'}일 (<30일)`)
+          problems.push(`채혈일(${t.date})과 직전 접종일(${latest.date})의 간격이 ${gap ?? '?'}일로 30일 미만입니다.`)
         }
       }
       if (offendingPaths.length > 0) {
@@ -182,7 +182,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
           ? '항체검사일과 출국일을 확인할 수 없습니다.'
           : days < 0
             ? `항체검사일(${newest.date})이 출국일(${dep})보다 이후입니다. 채혈은 출국 전에 완료되어야 합니다.`
-            : `항체검사(${newest.date}) + 3개월 = ${earliestDep} > 출국일(${dep}) — 출국까지 ${days}일 (3개월 미달).`
+            : `항체검사(${newest.date}) + 3개월(${earliestDep})이 출국일(${dep})보다 늦습니다. 출국까지 ${days}일로 3개월에 미달합니다.`
       return {
         ok: false,
         message,
@@ -212,8 +212,8 @@ export const EU_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 이전에 만료.`,
-          fixHint: '출국 전 추가 접종이 필요합니다. 부스터 chain 끊기면 RNATT 재검사 필요.',
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 이전에 만료됩니다.`,
+          fixHint: '출국 전 추가 접종이 필요합니다. 부스터 chain이 끊기면 RNATT 재검사가 필요합니다.',
           offendingPaths: [
             'departure_date',
             `rabies_dates[${latest.originalIndex}].date`,
@@ -242,19 +242,19 @@ export const EU_CHECKS: ProcedureCheck[] = [
 
       const diff = daysBetween(visit, dep)
       if (diff === null) {
-        return { ok: false, message: '날짜 형식 오류.', offendingPaths: ['vet_visit_date'] }
+        return { ok: false, message: '날짜 형식이 올바르지 않습니다.', offendingPaths: ['vet_visit_date'] }
       }
       if (diff < 0) {
         return {
           ok: false,
-          message: `내원일(${visit})이 출국일(${dep})보다 늦음.`,
+          message: `내원일(${visit})이 출국일(${dep})보다 늦습니다.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
       if (diff > 9) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 10일 이내(≤9일 전) 필요.`,
+          message: `내원일(${visit})부터 출국일(${dep})까지 ${diff}일입니다. 출국일 포함 10일 이내(9일 전 이후)여야 합니다.`,
           fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정하세요.`,
           offendingPaths: ['vet_visit_date'],
         }
@@ -284,7 +284,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
       if (diff < 1 || diff > 3) {
         return {
           ok: false,
-          message: `촌충구충(${latest.date}) → 출국일(${dep}): ${diff}일 — 1~3일 범위 필요 (24-120시간 보수 적용).`,
+          message: `촌충구충(${latest.date})부터 출국일(${dep})까지 ${diff}일입니다. 1~3일 범위여야 합니다 (24-120시간 보수 적용).`,
           fixHint: `촌충구충일을 ${dep} 기준 1~3일 전 사이로 조정하세요.`,
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }

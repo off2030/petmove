@@ -57,8 +57,8 @@ export const RU_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦음.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작 필요.',
+        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦습니다.`,
+        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 합니다.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -86,13 +86,13 @@ export const RU_CHECKS: ProcedureCheck[] = [
       if (!ev.ok) {
         const reason =
           ev.failedRule === '91days'
-            ? `생후 ${ev.ageInDays}일령 — 91일 미달`
+            ? `생후 ${ev.ageInDays}일령으로 91일에 미달합니다`
             : ev.failedRule === 'calendar3m'
-              ? `${first.date} < 캘린더 3개월(${ev.calendar3mThreshold})`
-              : `생후 ${ev.ageInDays}일령 + ${first.date} < 캘린더 3개월(${ev.calendar3mThreshold})`
+              ? `1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빠릅니다`
+              : `생후 ${ev.ageInDays}일령이며 1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빠릅니다`
         return {
           ok: false,
-          message: `1차 접종일(${first.date}) 보수적 기준 미충족 — ${reason}.`,
+          message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못합니다. ${reason}.`,
           fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월) 둘 다 충족 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
@@ -127,12 +127,12 @@ export const RU_CHECKS: ProcedureCheck[] = [
         const msgs: string[] = []
         for (const v of violations) {
           offending.push(`rabies_dates[${v.entry.originalIndex}].valid_until`)
-          msgs.push(`${v.entry.date} 백신 유효기간 ${v.days}일 (>364 = 1년 초과 — 3년 백신 거부)`)
+          msgs.push(`${v.entry.date} 백신의 유효기간이 ${v.days}일로 364일(1년)을 초과합니다. 3년 백신은 인정되지 않습니다.`)
         }
         return {
           ok: false,
           message: msgs.join(' / '),
-          fixHint: '1년 라이선스 백신으로 재접종.',
+          fixHint: '1년 라이선스 백신으로 재접종해야 합니다.',
           offendingPaths: offending,
         }
       }
@@ -159,7 +159,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
       if (days < 30) {
         return {
           ok: false,
-          message: `광견병 접종(${earliest.date}) → 출국일(${dep}): ${days}일 — 30일 이상 필요.`,
+          message: `광견병 접종(${earliest.date})부터 출국일(${dep})까지 ${days}일입니다. 30일 이상이어야 합니다.`,
           fixHint: `광견병 접종을 출국일 ${dep} 기준 30일 이전에 완료하세요. (부스터 chain 유효 시 면제 가능하나 보수 적용)`,
           offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
         }
@@ -187,8 +187,8 @@ export const RU_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date}) 유효기간(${validUntil}) < 출국일(${dep}) — 만료.`,
-          fixHint: '출국 전 부스터 접종 필요.',
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료됩니다.`,
+          fixHint: '출국 전 부스터 접종이 필요합니다.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -211,8 +211,8 @@ export const RU_CHECKS: ProcedureCheck[] = [
       if (entries.length === 0) {
         return {
           ok: false,
-          message: '종합백신 기록 없음.',
-          fixHint: '강아지: DHPPL/파라인플루엔자, 고양이: FVRCP 접종 후 등록.',
+          message: '종합백신 기록이 없습니다.',
+          fixHint: '강아지는 DHPPL/파라인플루엔자, 고양이는 FVRCP 접종 후 등록하세요.',
         }
       }
       return { ok: true, message: `종합백신 ${entries.length}회 기록됨.` }
@@ -245,12 +245,12 @@ export const RU_CHECKS: ProcedureCheck[] = [
         const msgs: string[] = []
         for (const v of violations) {
           offending.push(`general_vaccine_dates[${v.entry.originalIndex}].valid_until`)
-          msgs.push(`${v.entry.date} 백신 유효기간 ${v.days}일 (>364 = 1년 초과 — 3년 백신 거부)`)
+          msgs.push(`${v.entry.date} 백신의 유효기간이 ${v.days}일로 364일(1년)을 초과합니다. 3년 백신은 인정되지 않습니다.`)
         }
         return {
           ok: false,
           message: msgs.join(' / '),
-          fixHint: '1년 라이선스 백신으로 재접종.',
+          fixHint: '1년 라이선스 백신으로 재접종해야 합니다.',
           offendingPaths: offending,
         }
       }
@@ -277,8 +277,8 @@ export const RU_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date}) 유효기간(${validUntil}) < 출국일(${dep}) — 만료.`,
-          fixHint: '출국 전 추가 접종 필요.',
+          message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료됩니다.`,
+          fixHint: '출국 전 추가 접종이 필요합니다.',
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
@@ -304,20 +304,20 @@ export const RU_CHECKS: ProcedureCheck[] = [
 
       const diff = daysBetween(visit, dep)
       if (diff === null) {
-        return { ok: false, message: '날짜 형식 오류.', offendingPaths: ['vet_visit_date'] }
+        return { ok: false, message: '날짜 형식이 올바르지 않습니다.', offendingPaths: ['vet_visit_date'] }
       }
       if (diff < 0) {
         return {
           ok: false,
-          message: `내원일(${visit})이 출국일(${dep})보다 늦음.`,
+          message: `내원일(${visit})이 출국일(${dep})보다 늦습니다.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
       if (diff > 4) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 5일 이내(≤4일 전) 필요 (EAEU).`,
-          fixHint: `내원일을 ${dep} 기준 4일 전 이후로 조정. **러시아는 EAEU 5일 룰 적용 — 타국 10일과 다름**.`,
+          message: `내원일(${visit})부터 출국일(${dep})까지 ${diff}일입니다. 출국일 포함 5일 이내(4일 전부터)여야 합니다 (EAEU).`,
+          fixHint: `내원일을 ${dep} 기준 4일 전 이후로 조정하세요. **러시아는 EAEU 5일 룰을 적용하므로 타국 10일과 다릅니다**.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
@@ -341,8 +341,8 @@ export const RU_CHECKS: ProcedureCheck[] = [
       if (others.length + 1 > 2) {
         return {
           ok: false,
-          message: `같은 보호자(${caseRow.customer_name})가 러시아 목적 케이스 ${others.length + 1}건 등록 — 개인용 2마리 한도 초과.`,
-          fixHint: 'EAEU 결정 No.317: 1인 최대 2마리. 3마리+ 시 Rosselkhoznadzor 사전허가 + 상업 수입 절차 필요.',
+          message: `같은 보호자(${caseRow.customer_name})가 러시아 목적 케이스를 ${others.length + 1}건 등록하여 개인용 2마리 한도를 초과했습니다.`,
+          fixHint: 'EAEU 결정 No.317에 따라 1인 최대 2마리까지 가능합니다. 3마리 이상이면 Rosselkhoznadzor 사전허가와 상업 수입 절차가 필요합니다.',
           offendingPaths: ['customer_name'],
         }
       }

@@ -66,8 +66,8 @@ export const CN_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦음.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작 필요.',
+        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦습니다.`,
+        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 합니다.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -95,13 +95,13 @@ export const CN_CHECKS: ProcedureCheck[] = [
       if (!ev.ok) {
         const reason =
           ev.failedRule === '91days'
-            ? `생후 ${ev.ageInDays}일령 — 91일 미달`
+            ? `생후 ${ev.ageInDays}일령으로 91일에 미달합니다`
             : ev.failedRule === 'calendar3m'
-              ? `${first.date} < 캘린더 3개월(${ev.calendar3mThreshold})`
-              : `생후 ${ev.ageInDays}일령 + ${first.date} < 캘린더 3개월(${ev.calendar3mThreshold})`
+              ? `1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빠릅니다`
+              : `생후 ${ev.ageInDays}일령이며 1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빠릅니다`
         return {
           ok: false,
-          message: `1차 접종일(${first.date}) 보수적 기준 미충족 — ${reason}.`,
+          message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못합니다. ${reason}.`,
           fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월) 둘 다 충족 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
@@ -124,8 +124,8 @@ export const CN_CHECKS: ProcedureCheck[] = [
       if (rabies.length < 2) {
         return {
           ok: false,
-          message: `광견병 1회만 기록됨(${rabies[0].date}) — 2회 필요.`,
-          fixHint: '30일 후 2차(부스터) 접종.',
+          message: `광견병 접종이 1회(${rabies[0].date})만 기록되어 있습니다. 2회가 필요합니다.`,
+          fixHint: '30일 후 2차(부스터)를 접종하세요.',
           offendingPaths: [`rabies_dates[${rabies[0].originalIndex}].date`],
         }
       }
@@ -154,14 +154,14 @@ export const CN_CHECKS: ProcedureCheck[] = [
         const prevValidUntil = resolveValidUntil(prev.date, prev.valid_until)
         if (gap === null) continue
         if (gap < 30) {
-          issues.push(`${prev.date} → ${curr.date}: ${gap}일 (≥30일 필요)`)
+          issues.push(`${prev.date}부터 ${curr.date}까지 ${gap}일입니다. 30일 이상이어야 합니다.`)
           offending.push(
             `rabies_dates[${prev.originalIndex}].date`,
             `rabies_dates[${curr.originalIndex}].date`,
           )
         }
         if (curr.date > prevValidUntil) {
-          issues.push(`${curr.date} 가 직전(${prev.date}) 유효기간(${prevValidUntil}) 만료 후 — 부스터 chain 끊김`)
+          issues.push(`${curr.date} 접종이 직전 접종(${prev.date})의 유효기간(${prevValidUntil}) 만료 후라서 부스터 chain이 끊깁니다.`)
           offending.push(
             `rabies_dates[${prev.originalIndex}].date`,
             `rabies_dates[${curr.originalIndex}].date`,
@@ -172,7 +172,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: issues.join(' / '),
-          fixHint: '도즈 간격은 30일 이상 ~ 직전 접종 유효기간 이내.',
+          fixHint: '도즈 간격은 30일 이상이면서 직전 접종 유효기간 이내여야 합니다.',
           offendingPaths: Array.from(new Set(offending)),
         }
       }
@@ -206,12 +206,12 @@ export const CN_CHECKS: ProcedureCheck[] = [
         const msgs: string[] = []
         for (const v of violations) {
           offending.push(`rabies_dates[${v.entry.originalIndex}].valid_until`)
-          msgs.push(`${v.entry.date} 백신 유효기간 ${v.days}일 (>364 = 1년 초과 — 2/3년 백신 거부)`)
+          msgs.push(`${v.entry.date} 백신의 유효기간이 ${v.days}일로 364일(1년)을 초과합니다. 2년·3년 백신은 인정되지 않습니다.`)
         }
         return {
           ok: false,
           message: msgs.join(' / '),
-          fixHint: '1년 라이선스 백신으로 재접종.',
+          fixHint: '1년 라이선스 백신으로 재접종해야 합니다.',
           offendingPaths: offending,
         }
       }
@@ -238,8 +238,8 @@ export const CN_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date}) 유효기간(${validUntil}) < 출국일(${dep}) — 만료.`,
-          fixHint: '출국 전 부스터 접종 필요. 만료 후 접종은 1차로 간주.',
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료됩니다.`,
+          fixHint: '출국 전 부스터 접종이 필요합니다. 만료 후 접종은 1차로 간주됩니다.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -268,7 +268,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
         const priorDoses = rabies.filter((r) => r.date <= t.date)
         if (priorDoses.length === 0) {
           offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date}) 이전 광견병 접종 기록 없음`)
+          problems.push(`채혈일(${t.date}) 이전의 광견병 접종 기록이 없습니다.`)
         }
       }
       if (problems.length > 0) {
@@ -308,8 +308,8 @@ export const CN_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: `최신 RNATT(${newest.date}) 유효기간(${expiry}) < 출국일(${dep}) — 1년 초과.`,
-        fixHint: '재검사 또는 출국일을 채혈일 + 1년 이내로 조정.',
+        message: `최신 RNATT(${newest.date})의 유효기간(${expiry})이 출국일(${dep})보다 빨라 1년을 초과했습니다.`,
+        fixHint: '재검사를 하거나 출국일을 채혈일 + 1년 이내로 조정하세요.',
         offendingPaths: offending,
       }
     },
@@ -333,20 +333,20 @@ export const CN_CHECKS: ProcedureCheck[] = [
 
       const diff = daysBetween(visit, dep)
       if (diff === null) {
-        return { ok: false, message: '날짜 형식 오류.', offendingPaths: ['vet_visit_date'] }
+        return { ok: false, message: '날짜 형식이 올바르지 않습니다.', offendingPaths: ['vet_visit_date'] }
       }
       if (diff < 0) {
         return {
           ok: false,
-          message: `내원일(${visit})이 출국일(${dep})보다 늦음.`,
+          message: `내원일(${visit})이 출국일(${dep})보다 늦습니다.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
       if (diff > 9) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 10일 이내(≤9일 전) 필요 (한국 APQA).`,
-          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정 (출발 7-9일 전 권장).`,
+          message: `내원일(${visit})부터 출국일(${dep})까지 ${diff}일입니다. 10일 이내(9일 전부터)여야 합니다 (한국 APQA).`,
+          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정하세요 (출발 7-9일 전 권장).`,
           offendingPaths: ['vet_visit_date'],
         }
       }
@@ -370,8 +370,8 @@ export const CN_CHECKS: ProcedureCheck[] = [
       if (others.length >= 1) {
         return {
           ok: false,
-          message: `같은 보호자(${caseRow.customer_name})가 중국 목적 케이스 ${others.length + 1}건 등록 — GACC 1인 1마리 한도 초과.`,
-          fixHint: 'GACC 규정상 1인 1회 1마리만 동반 가능. 별도 보호자(가족 등) 명의로 분리 등록 필요.',
+          message: `같은 보호자(${caseRow.customer_name})가 중국 목적 케이스를 ${others.length + 1}건 등록하여 GACC 1인 1마리 한도를 초과했습니다.`,
+          fixHint: 'GACC 규정상 1인 1회 1마리만 동반할 수 있습니다. 별도 보호자(가족 등) 명의로 분리 등록해야 합니다.',
           offendingPaths: ['customer_name'],
         }
       }

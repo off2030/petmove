@@ -67,8 +67,8 @@ export const TR_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦음.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작 필요.',
+        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦습니다.`,
+        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 합니다.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -96,7 +96,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
       if (age < 84) {
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 생후 ${age}일령 — 최소 84일령(12주) 이상 필요.`,
+          message: `1차 접종일(${first.date})이 생후 ${age}일령입니다. 최소 84일령(12주) 이상이어야 합니다.`,
           fixHint: `${birth} 기준 84일 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
@@ -124,7 +124,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
       if (days < 30) {
         return {
           ok: false,
-          message: `광견병 접종(${earliest.date}) → 출국일(${dep}): ${days}일 — 30일 이상 필요.`,
+          message: `광견병 접종(${earliest.date})부터 출국일(${dep})까지 ${days}일입니다. 30일 이상이어야 합니다.`,
           fixHint: `광견병 접종을 출국일 ${dep} 기준 30일 이전에 완료하세요.`,
           offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
         }
@@ -152,8 +152,8 @@ export const TR_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date}) 유효기간(${validUntil}) < 출국일(${dep}) — 만료.`,
-          fixHint: '출국 전 부스터 접종 필요.',
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료됩니다.`,
+          fixHint: '출국 전 부스터 접종이 필요합니다.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -182,14 +182,14 @@ export const TR_CHECKS: ProcedureCheck[] = [
         const priorDoses = rabies.filter((r) => r.date <= t.date)
         if (priorDoses.length === 0) {
           offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date}) 이전 광견병 접종 기록 없음`)
+          problems.push(`채혈일(${t.date}) 이전의 광견병 접종 기록이 없습니다.`)
           continue
         }
         const latest = priorDoses[priorDoses.length - 1]
         const gap = daysBetween(latest.date, t.date)
         if (gap === null || gap < 30) {
           offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈(${t.date}) - 직전접종(${latest.date}) = ${gap ?? '?'}일 (<30일)`)
+          problems.push(`채혈일(${t.date})과 직전 접종일(${latest.date})의 간격이 ${gap ?? '?'}일로 30일 미만입니다.`)
         }
       }
       if (offending.length > 0) {
@@ -239,11 +239,11 @@ export const TR_CHECKS: ProcedureCheck[] = [
           ? '항체검사일과 출국일을 확인할 수 없습니다.'
           : days < 0
             ? `항체검사일(${newest.date})이 출국일(${dep})보다 이후입니다.`
-            : `RNATT(${newest.date}) + 3개월 = ${earliestDep} > 출국일(${dep}) — 출국까지 ${days}일 (3개월 미달).`
+            : `RNATT(${newest.date})에 3개월을 더한 ${earliestDep}이 출국일(${dep})보다 늦습니다. 출국까지 ${days}일로 3개월에 미달합니다.`
       return {
         ok: false,
         message,
-        fixHint: `출국일을 ${earliestDep} 이후로 조정하거나 더 이른 RNATT 필요.`,
+        fixHint: `출국일을 ${earliestDep} 이후로 조정하거나 더 이른 RNATT가 필요합니다.`,
         offendingPaths: offending,
       }
     },
@@ -272,8 +272,8 @@ export const TR_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: `최신 항체검사(${newest.date}) 유효기간(${expiry}) < 출국일(${dep}) — 1년 초과.`,
-        fixHint: '재검사 또는 출국일을 채혈일 + 1년 이내로 조정.',
+        message: `최신 항체검사(${newest.date})의 유효기간(${expiry})이 출국일(${dep})보다 빠릅니다. 1년을 초과했습니다.`,
+        fixHint: '재검사를 받거나 출국일을 채혈일 + 1년 이내로 조정하세요.',
         offendingPaths: offending,
       }
     },
@@ -300,15 +300,15 @@ export const TR_CHECKS: ProcedureCheck[] = [
       if (diff < 0) {
         return {
           ok: false,
-          message: `외부구충(${latest.date})이 출국일(${dep})보다 늦음.`,
+          message: `외부구충(${latest.date})이 출국일(${dep})보다 늦습니다.`,
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
       if (diff > 29) {
         return {
           ok: false,
-          message: `외부구충(${latest.date}) → 출국일(${dep}): ${diff}일 — 출국 포함 30일 이내(≤29일 전) 필요.`,
-          fixHint: `외부구충일을 ${dep} 기준 29일 전 이후로 조정 (진드기 효과 제품).`,
+          message: `외부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일입니다. 출국 포함 30일 이내(29일 전 이후)여야 합니다.`,
+          fixHint: `외부구충일을 ${dep} 기준 29일 전 이후로 조정하세요 (진드기 효과 제품).`,
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
@@ -335,15 +335,15 @@ export const TR_CHECKS: ProcedureCheck[] = [
       if (diff < 0) {
         return {
           ok: false,
-          message: `내부구충(${latest.date})이 출국일(${dep})보다 늦음.`,
+          message: `내부구충(${latest.date})이 출국일(${dep})보다 늦습니다.`,
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }
       if (diff > 29) {
         return {
           ok: false,
-          message: `내부구충(${latest.date}) → 출국일(${dep}): ${diff}일 — 출국 포함 30일 이내(≤29일 전) 필요.`,
-          fixHint: `내부구충일을 ${dep} 기준 29일 전 이후로 조정 (촌충 효과 제품).`,
+          message: `내부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일입니다. 출국 포함 30일 이내(29일 전 이후)여야 합니다.`,
+          fixHint: `내부구충일을 ${dep} 기준 29일 전 이후로 조정하세요 (촌충 효과 제품).`,
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
       }
@@ -369,20 +369,20 @@ export const TR_CHECKS: ProcedureCheck[] = [
 
       const diff = daysBetween(visit, dep)
       if (diff === null) {
-        return { ok: false, message: '날짜 형식 오류.', offendingPaths: ['vet_visit_date'] }
+        return { ok: false, message: '날짜 형식이 올바르지 않습니다.', offendingPaths: ['vet_visit_date'] }
       }
       if (diff < 0) {
         return {
           ok: false,
-          message: `내원일(${visit})이 출국일(${dep})보다 늦음.`,
+          message: `내원일(${visit})이 출국일(${dep})보다 늦습니다.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
       if (diff > 2) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 48시간(2일) 이내 필요.`,
-          fixHint: `내원일을 ${dep} 기준 2일 전 이후로 조정.`,
+          message: `내원일(${visit})부터 출국일(${dep})까지 ${diff}일입니다. 48시간(2일) 이내여야 합니다.`,
+          fixHint: `내원일을 ${dep} 기준 2일 전 이후로 조정하세요.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
@@ -417,8 +417,8 @@ export const TR_CHECKS: ProcedureCheck[] = [
       if (match) {
         return {
           ok: false,
-          message: `견종 "${breed.ko || breed.en}"은 튀르키예 수입 금지 (매치: ${match}).`,
-          fixHint: 'Tarım ve Orman Bakanlığı 수입 금지 견종.',
+          message: `견종 "${breed.ko || breed.en}"은 튀르키예 수입 금지 견종입니다 (매치: ${match}).`,
+          fixHint: 'Tarım ve Orman Bakanlığı 수입 금지 견종입니다.',
           offendingPaths: ['breed', 'breed_en'],
         }
       }

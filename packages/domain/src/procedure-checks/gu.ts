@@ -69,8 +69,8 @@ export const GU_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦음.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작 필요.',
+        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦습니다.`,
+        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 합니다.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -99,7 +99,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
       if (first.date < earliestValid) {
         return {
           ok: false,
-          message: `1차 접종일(${first.date}) — 3개월령(${earliestValid}) 이전. 생후 ${age ?? '?'}일.`,
+          message: `1차 접종일(${first.date})이 3개월령(${earliestValid}) 이전입니다. 생후 ${age ?? '?'}일입니다.`,
           fixHint: `${birth} 기준 3개월(${earliestValid}) 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
@@ -122,8 +122,8 @@ export const GU_CHECKS: ProcedureCheck[] = [
       if (rabies.length < 2) {
         return {
           ok: false,
-          message: `광견병 1회만 기록됨(${rabies[0].date}) — 2회 필요.`,
-          fixHint: '30일 후 2차 접종 추가.',
+          message: `광견병 접종이 1회(${rabies[0].date})만 기록되어 있습니다. 2회 이상 접종해야 합니다.`,
+          fixHint: '30일 후 2차 접종을 추가하세요.',
           offendingPaths: [`rabies_dates[${rabies[0].originalIndex}].date`],
         }
       }
@@ -160,12 +160,12 @@ export const GU_CHECKS: ProcedureCheck[] = [
             `rabies_dates[${v.prev.originalIndex}].date`,
             `rabies_dates[${v.curr.originalIndex}].date`,
           )
-          msgs.push(`${v.prev.date} → ${v.curr.date}: ${v.gap}일 (≥30일 필요)`)
+          msgs.push(`${v.prev.date}부터 ${v.curr.date}까지 ${v.gap}일입니다. 30일 이상이어야 합니다.`)
         }
         return {
           ok: false,
           message: msgs.join(' / '),
-          fixHint: '도즈 간 최소 30일(1개월) 간격 확보.',
+          fixHint: '도즈 간 최소 30일(1개월) 간격을 확보하세요.',
           offendingPaths: Array.from(new Set(offending)),
         }
       }
@@ -192,8 +192,8 @@ export const GU_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date}) 유효기간(${validUntil}) < 출국일(${dep}) — 만료.`,
-          fixHint: '출국 전 부스터 접종 필요.',
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료됩니다.`,
+          fixHint: '출국 전 부스터 접종이 필요합니다.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -222,14 +222,14 @@ export const GU_CHECKS: ProcedureCheck[] = [
         const priorDoses = rabies.filter((r) => r.date <= t.date)
         if (priorDoses.length === 0) {
           offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date}) 이전 광견병 접종 기록 없음`)
+          problems.push(`채혈일(${t.date}) 이전에 광견병 접종 기록이 없습니다.`)
           continue
         }
         const latest = priorDoses[priorDoses.length - 1]
         const gap = daysBetween(latest.date, t.date)
         if (gap === null || gap < 10) {
           offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈(${t.date}) - 직전접종(${latest.date}) = ${gap ?? '?'}일 (<10일)`)
+          problems.push(`채혈일(${t.date})과 직전 접종일(${latest.date}) 간격이 ${gap ?? '?'}일입니다. 10일 이상이어야 합니다.`)
         }
       }
       if (offending.length > 0) {
@@ -280,8 +280,8 @@ export const GU_CHECKS: ProcedureCheck[] = [
       const label = earliest.received_date ? '검체 수령일' : 'RNATT 채혈일'
       return {
         ok: false,
-        message: `${label}(${earliestBasis}) → 출국(${dep}): ${days ?? '?'}일 — 120일 이상 필요.`,
-        fixHint: `출국일을 ${earliestBasis} 기준 120일 이후로 조정.`,
+        message: `${label}(${earliestBasis})부터 출국일(${dep})까지 ${days ?? '?'}일입니다. 120일 이상이어야 합니다.`,
+        fixHint: `출국일을 ${earliestBasis} 기준 120일 이후로 조정하세요.`,
         offendingPaths: offending,
       }
     },
@@ -341,20 +341,20 @@ export const GU_CHECKS: ProcedureCheck[] = [
 
       const diff = daysBetween(visit, dep)
       if (diff === null) {
-        return { ok: false, message: '날짜 형식 오류.', offendingPaths: ['vet_visit_date'] }
+        return { ok: false, message: '날짜 형식이 올바르지 않습니다.', offendingPaths: ['vet_visit_date'] }
       }
       if (diff < 0) {
         return {
           ok: false,
-          message: `내원일(${visit})이 출국일(${dep})보다 늦음.`,
+          message: `내원일(${visit})이 출국일(${dep})보다 늦습니다.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
       if (diff > 9) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 10일 이내(≤9일 전) 필요 (한국 APQA).`,
-          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정 (출발 7-9일 전 권장).`,
+          message: `내원일(${visit})부터 출국일(${dep})까지 ${diff}일입니다. 출국일 포함 10일 이내(9일 전부터)여야 합니다 (한국 APQA).`,
+          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정하세요 (출발 7-9일 전 권장).`,
           offendingPaths: ['vet_visit_date'],
         }
       }
@@ -395,21 +395,21 @@ function buildAnnualVaccineRule(opts: {
 
       const issues: string[] = []
       if (toDep === null) {
-        return { ok: false, message: '날짜 형식 오류.', offendingPaths: [`${opts.dataKey}[${latest.originalIndex}].date`] }
+        return { ok: false, message: '날짜 형식이 올바르지 않습니다.', offendingPaths: [`${opts.dataKey}[${latest.originalIndex}].date`] }
       }
       if (toDep < 0) {
-        issues.push(`최근 접종(${latest.date})이 출국일(${dep})보다 늦음`)
+        issues.push(`최근 접종일(${latest.date})이 출국일(${dep})보다 늦습니다.`)
       } else if (toDep < 10) {
-        issues.push(`최근 접종(${latest.date}) → 출국 ${toDep}일 (≥10일 필요)`)
+        issues.push(`최근 접종일(${latest.date})부터 출국일까지 ${toDep}일입니다. 10일 이상이어야 합니다.`)
       }
       if (validUntil && validUntil < dep) {
-        issues.push(`유효기간(${validUntil}) < 출국일(${dep}) — 1년 만료`)
+        issues.push(`유효기간(${validUntil})이 출국일(${dep}) 전에 만료됩니다.`)
       }
       if (issues.length > 0) {
         return {
           ok: false,
           message: issues.join(' / '),
-          fixHint: '부스터 추가 또는 출국일 조정 — 출국 10일 이전 ~ 1년 이내.',
+          fixHint: '부스터를 추가하거나 출국일을 조정하여 출국 10일 이전 ~ 1년 이내가 되도록 하세요.',
           offendingPaths: ['departure_date', `${opts.dataKey}[${latest.originalIndex}].date`],
         }
       }
@@ -449,15 +449,15 @@ function buildWithin14DaysRule(opts: {
       if (days < 0) {
         return {
           ok: false,
-          message: `${opts.label}(${latest.date})이 출국일(${dep})보다 늦음.`,
+          message: `${opts.label}(${latest.date})이 출국일(${dep})보다 늦습니다.`,
           offendingPaths: [`${opts.dataKey}[${latest.originalIndex}].date`],
         }
       }
       if (days > 13) {
         return {
           ok: false,
-          message: `최근 ${opts.label}(${latest.date}) → 출국(${dep}): ${days}일 — 출국 포함 14일 이내(≤13일 전) 필요.`,
-          fixHint: `처치일을 ${dep} 기준 13일 전 이후로 조정.`,
+          message: `최근 ${opts.label}(${latest.date})부터 출국일(${dep})까지 ${days}일입니다. 출국일 포함 14일 이내(13일 전부터)여야 합니다.`,
+          fixHint: `처치일을 ${dep} 기준 13일 전 이후로 조정하세요.`,
           offendingPaths: [`${opts.dataKey}[${latest.originalIndex}].date`],
         }
       }

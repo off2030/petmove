@@ -56,8 +56,8 @@ export const MA_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦음.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작 필요.',
+        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦습니다.`,
+        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 합니다.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -85,13 +85,13 @@ export const MA_CHECKS: ProcedureCheck[] = [
       if (!ev.ok) {
         const reason =
           ev.failedRule === '91days'
-            ? `생후 ${ev.ageInDays}일령 — 91일 미달`
+            ? `생후 ${ev.ageInDays}일령으로 91일에 미달합니다`
             : ev.failedRule === 'calendar3m'
-              ? `${first.date} < 캘린더 3개월(${ev.calendar3mThreshold})`
-              : `생후 ${ev.ageInDays}일령 + ${first.date} < 캘린더 3개월(${ev.calendar3mThreshold})`
+              ? `1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빠릅니다`
+              : `생후 ${ev.ageInDays}일령이며 1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빠릅니다`
         return {
           ok: false,
-          message: `1차 접종일(${first.date}) 보수적 기준 미충족 — ${reason}.`,
+          message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못합니다. ${reason}.`,
           fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월) 둘 다 충족 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
@@ -119,7 +119,7 @@ export const MA_CHECKS: ProcedureCheck[] = [
       if (days < 30) {
         return {
           ok: false,
-          message: `광견병 접종(${earliest.date}) → 출국일(${dep}): ${days}일 — 30일 이상 필요.`,
+          message: `광견병 접종일(${earliest.date})부터 출국일(${dep})까지 ${days}일입니다. 30일 이상이어야 합니다.`,
           fixHint: `광견병 접종을 출국일 ${dep} 기준 30일 이전에 완료하세요.`,
           offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
         }
@@ -147,8 +147,8 @@ export const MA_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date}) 유효기간(${validUntil}) < 출국일(${dep}) — 만료.`,
-          fixHint: '출국 전 부스터 접종 필요.',
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료됩니다.`,
+          fixHint: '출국 전 부스터 접종이 필요합니다.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -174,20 +174,20 @@ export const MA_CHECKS: ProcedureCheck[] = [
 
       const diff = daysBetween(visit, dep)
       if (diff === null) {
-        return { ok: false, message: '날짜 형식 오류.', offendingPaths: ['vet_visit_date'] }
+        return { ok: false, message: '날짜 형식이 올바르지 않습니다.', offendingPaths: ['vet_visit_date'] }
       }
       if (diff < 0) {
         return {
           ok: false,
-          message: `내원일(${visit})이 출국일(${dep})보다 늦음.`,
+          message: `내원일(${visit})이 출국일(${dep})보다 늦습니다.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
       if (diff > 9) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 10일 이내(≤9일 전) 필요.`,
-          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정.`,
+          message: `내원일(${visit})부터 출국일(${dep})까지 ${diff}일입니다. 출국일 포함 10일 이내(9일 전부터)여야 합니다.`,
+          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정하세요.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
@@ -211,8 +211,8 @@ export const MA_CHECKS: ProcedureCheck[] = [
       if (others.length + 1 > 5) {
         return {
           ok: false,
-          message: `같은 보호자(${caseRow.customer_name})가 모로코 목적 케이스 ${others.length + 1}건 등록 — 비상업 5두 한도 초과.`,
-          fixHint: 'ONSSA: 1인 비상업 5두 한도. 추가는 상업 수입 절차 필요.',
+          message: `같은 보호자(${caseRow.customer_name})가 모로코 목적 케이스를 ${others.length + 1}건 등록하여 비상업 5두 한도를 초과했습니다.`,
+          fixHint: 'ONSSA 기준 1인 비상업 한도는 5두이며, 추가 반려동물은 상업 수입 절차가 필요합니다.',
           offendingPaths: ['customer_name'],
         }
       }

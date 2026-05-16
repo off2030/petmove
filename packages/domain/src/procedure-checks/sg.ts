@@ -46,19 +46,19 @@ export const SG_CHECKS: ProcedureCheck[] = [
 
       const diff = daysBetween(visit, dep)
       if (diff === null) {
-        return { ok: false, message: '날짜 형식 오류.', offendingPaths: ['vet_visit_date'] }
+        return { ok: false, message: '날짜 형식이 올바르지 않습니다.', offendingPaths: ['vet_visit_date'] }
       }
       if (diff < 0) {
         return {
           ok: false,
-          message: `내원일(${visit})이 출국일(${dep})보다 늦음.`,
+          message: `내원일(${visit})이 출국일(${dep})보다 늦습니다.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
       if (diff > 6) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 7일 이내(≤6일 전) 필요.`,
+          message: `내원일(${visit})부터 출국일(${dep})까지 ${diff}일입니다. 출국일 포함 7일 이내(6일 전 이후)여야 합니다.`,
           fixHint: `내원일을 ${dep} 기준 6일 전 이후로 조정하세요.`,
           offendingPaths: ['vet_visit_date'],
         }
@@ -89,14 +89,14 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (!ev.ok) {
         const reason =
           ev.failedRule === '91days'
-            ? `생후 ${ev.ageInDays}일령 — 91일 미달`
+            ? `생후 ${ev.ageInDays}일령으로 91일에 미달합니다`
             : ev.failedRule === 'calendar3m'
-              ? `${first.date} < 캘린더 3개월(${ev.calendar3mThreshold})`
-              : `생후 ${ev.ageInDays}일령 + ${first.date} < 캘린더 3개월(${ev.calendar3mThreshold})`
+              ? `접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빠릅니다`
+              : `생후 ${ev.ageInDays}일령이며 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빠릅니다`
         return {
           ok: false,
-          message: `1차 접종일(${first.date}) 보수적 기준 미충족 — ${reason}.`,
-          fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월) 둘 다 충족 이후로 1차 접종일을 조정하세요.`,
+          message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못합니다. ${reason}.`,
+          fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월)을 둘 다 충족하는 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -124,14 +124,14 @@ export const SG_CHECKS: ProcedureCheck[] = [
         const priorDoses = rabies.filter((r) => r.date <= t.date)
         if (priorDoses.length === 0) {
           offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date}) 이전 광견병 접종 기록 없음`)
+          problems.push(`채혈일(${t.date}) 이전의 광견병 접종 기록이 없습니다.`)
           continue
         }
         const latest = priorDoses[priorDoses.length - 1]
         const gap = daysBetween(latest.date, t.date)
         if (gap === null || gap < 28) {
           offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈(${t.date}) - 직전접종(${latest.date}) = ${gap ?? '?'}일 (<28일)`)
+          problems.push(`채혈일(${t.date})과 직전 접종일(${latest.date})의 간격이 ${gap ?? '?'}일로 28일 미만입니다.`)
         }
       }
       if (offendingPaths.length > 0) {
@@ -174,7 +174,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
         ? '항체검사일과 출국일을 확인할 수 없습니다.'
         : best.days < 0
           ? `항체검사일(${best.entry.date})이 출국일(${dep})보다 이후입니다. 채혈은 출국 전에 완료되어야 합니다.`
-          : `항체검사일로부터 출국일까지 ${best.days}일 — 90일 이상 필요합니다.`
+          : `항체검사일로부터 출국일까지 ${best.days}일입니다. 90일 이상이어야 합니다.`
       return {
         ok: false,
         message,
@@ -210,8 +210,8 @@ export const SG_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: `최신 항체검사(${newest.date}) 유효기간(${newestValidUntil}) < 출국일(${dep}).`,
-        fixHint: '재검사 또는 출국일을 검사일 + 12개월 이내로 조정하세요.',
+        message: `최신 항체검사(${newest.date})의 유효기간(${newestValidUntil})이 출국일(${dep})보다 빠릅니다.`,
+        fixHint: '재검사를 하거나 출국일을 검사일 + 12개월 이내로 조정하세요.',
         offendingPaths: offending,
       }
     },
@@ -237,7 +237,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 이전에 만료.`,
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 이전에 만료됩니다.`,
           fixHint: '출국 전 추가 접종이 필요합니다.',
           offendingPaths: [
             'departure_date',
@@ -270,7 +270,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (diff < 14) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date}) → 출국일(${dep}): ${diff}일 — 14일 이상 필요.`,
+          message: `최근 종합백신(${latest.date})부터 출국일(${dep})까지 ${diff}일입니다. 14일 이상이어야 합니다.`,
           fixHint: `종합백신을 출국일 ${dep} 기준 14일 전 이전에 접종하세요.`,
           offendingPaths: [`general_vaccine_dates[${latest.originalIndex}].date`],
         }
@@ -298,7 +298,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 이전에 만료.`,
+          message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 이전에 만료됩니다.`,
           fixHint: '출국 전 추가 접종이 필요합니다.',
           offendingPaths: [
             'departure_date',
@@ -331,7 +331,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (diff < 2 || diff > 7) {
         return {
           ok: false,
-          message: `외부구충(${latest.date}) → 출국일(${dep}): ${diff}일 — 2~7일 범위 필요.`,
+          message: `외부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일입니다. 2~7일 범위여야 합니다.`,
           fixHint: `외부구충일을 ${dep} 기준 2~7일 전 사이로 조정하세요.`,
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
@@ -359,7 +359,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (diff < 2 || diff > 7) {
         return {
           ok: false,
-          message: `내부구충(${latest.date}) → 출국일(${dep}): ${diff}일 — 2~7일 범위 필요.`,
+          message: `내부구충(${latest.date})부터 출국일(${dep})까지 ${diff}일입니다. 2~7일 범위여야 합니다.`,
           fixHint: `내부구충일을 ${dep} 기준 2~7일 전 사이로 조정하세요.`,
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
@@ -400,8 +400,8 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (match) {
         return {
           ok: false,
-          message: `견종 "${breed.ko || breed.en}"은 NParks 수입 금지 (매치: ${match}).`,
-          fixHint: 'NParks First Schedule Part 1 견종은 싱가포르 수입·거주 전면 금지. 별도 가능 절차 없음.',
+          message: `견종 "${breed.ko || breed.en}"은 NParks 수입 금지 대상입니다 (매치: ${match}).`,
+          fixHint: 'NParks First Schedule Part 1 견종은 싱가포르 수입·거주가 전면 금지되며, 별도로 가능한 절차가 없습니다.',
           offendingPaths: ['breed', 'breed_en'],
         }
       }

@@ -76,8 +76,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (gap < 30) {
         return {
           ok: false,
-          message: `1·2차 접종 간격 ${gap}일 — 최소 30일 이상 필요.`,
-          fixHint: '2차 접종일을 1차 접종일 + 30일 이후로 조정.',
+          message: `1·2차 접종 간격이 ${gap}일입니다. 최소 30일 이상이어야 합니다.`,
+          fixHint: '2차 접종일을 1차 접종일 + 30일 이후로 조정하세요.',
           offendingPaths: [secondPath],
         }
       }
@@ -104,7 +104,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (!withinValidity) {
         return {
           ok: false,
-          message: `2차 접종일(${second.date})이 1차 유효기간(${validUntil || '미상'}) 초과 — 기초접종으로 재시작 필요.`,
+          message: `2차 접종일(${second.date})이 1차 유효기간(${validUntil || '미상'})을 초과했습니다. 기초접종부터 다시 시작해야 합니다.`,
           fixHint: '1차 유효기간이 지난 뒤의 접종은 추가접종이 아닌 새로운 기초접종으로 간주됩니다.',
           offendingPaths: [`rabies_dates[${second.originalIndex}].date`],
         }
@@ -155,7 +155,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
         for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
         return {
           ok: false,
-          message: `1차 접종(${first.date})이 마이크로칩보다 이전이라면 2차 접종일(${second.date})과 항체검사일이 같아야 함.`,
+          message: `1차 접종(${first.date})이 마이크로칩보다 이전이라면 2차 접종일(${second.date})과 항체검사일이 같아야 합니다.`,
           fixHint: '시술 후 재접종을 2차로 잡고 같은 날 항체검사를 실시하세요.',
           offendingPaths: offending,
         }
@@ -164,7 +164,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       // 마이크로칩이 2차보다도 늦음 → 두 조건 모두 불충족
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 2차 접종일(${second.date})보다 늦음.`,
+        message: `마이크로칩(${microchip})이 2차 접종일(${second.date})보다 늦습니다.`,
         fixHint: '시술 후 광견병 2회 접종이 다시 필요합니다.',
         offendingPaths: ['microchip_implant_date'],
       }
@@ -174,7 +174,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.rabies-prime-before-microchip',
     country: 'japan',
     category: '마이크로칩',
-    title: '마이크로칩보다 앞선 1차 접종 — 2차 접종일 안내',
+    title: '마이크로칩 이전 1차 접종 시 2차 접종 시기',
     description:
       '1차 광견병 접종이 마이크로칩 시술보다 앞선 경우 2차 접종을 광견병 항체가 검사와 같은 날 받아야 함. 2차 입력 전 미리 안내.',
     severity: 'info',
@@ -234,10 +234,10 @@ export const JP_CHECKS: ProcedureCheck[] = [
         const path = `rabies_titer_records[${t.originalIndex}].date`
         if (t.date < second.date) {
           offendingPaths.push(path)
-          problems.push(`채혈일(${t.date}) < 2차 접종일(${second.date})`)
+          problems.push(`채혈일(${t.date})이 2차 접종일(${second.date})보다 빠릅니다.`)
         } else if (chainEnd && t.date > chainEnd) {
           offendingPaths.push(path)
-          problems.push(`채혈일(${t.date}) > 부스터 chain 면역기간(${chainEnd})`)
+          problems.push(`채혈일(${t.date})이 부스터 면역기간(${chainEnd})을 벗어났습니다.`)
         }
       }
       if (offendingPaths.length > 0) {
@@ -275,7 +275,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
         ? '항체검사일과 출국일을 확인할 수 없습니다.'
         : best.days < 0
           ? `항체검사일(${best.entry.date})이 출국일(${dep})보다 이후입니다. 채혈은 출국 전에 완료되어야 합니다.`
-          : `항체검사일로부터 출국일까지 ${best.days}일 — 180일 이상 필요합니다.`
+          : `항체검사일로부터 출국일까지 ${best.days}일입니다. 180일 이상이어야 합니다.`
       return {
         ok: false,
         message,
@@ -300,19 +300,19 @@ export const JP_CHECKS: ProcedureCheck[] = [
 
       const diff = daysBetween(visit, dep)
       if (diff === null) {
-        return { ok: false, message: '날짜 형식 오류.', offendingPaths: ['vet_visit_date'] }
+        return { ok: false, message: '날짜 형식이 올바르지 않습니다.', offendingPaths: ['vet_visit_date'] }
       }
       if (diff < 0) {
         return {
           ok: false,
-          message: `내원일(${visit})이 출국일(${dep})보다 늦음.`,
+          message: `내원일(${visit})이 출국일(${dep})보다 늦습니다.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
       if (diff > 9) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국일 포함 10일 이내 필요.`,
+          message: `내원일(${visit})부터 출국일(${dep})까지 ${diff}일입니다. 출국일 포함 10일 이내여야 합니다.`,
           fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정하세요.`,
           offendingPaths: ['vet_visit_date'],
         }
@@ -346,7 +346,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: `최신 항체검사(${newest.date}) 유효기간(${newestValidUntil}) < 출국일(${dep}).`,
+        message: `최신 항체검사(${newest.date})의 유효기간(${newestValidUntil})이 출국일(${dep})보다 빠릅니다.`,
         fixHint: '재검사 또는 출국일을 검사일 + 2년 이내로 조정하세요.',
         offendingPaths: offending,
       }
@@ -373,7 +373,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 이전에 만료.`,
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료됩니다.`,
           fixHint: '출국 전 추가 접종이 필요합니다.',
           offendingPaths: [
             'departure_date',

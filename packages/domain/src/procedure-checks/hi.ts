@@ -58,8 +58,8 @@ export const HI_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦음.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작 필요.',
+        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦습니다.`,
+        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 합니다.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -87,13 +87,13 @@ export const HI_CHECKS: ProcedureCheck[] = [
       if (!ev.ok) {
         const reason =
           ev.failedRule === '91days'
-            ? `생후 ${ev.ageInDays}일령 — 91일 미달`
+            ? `생후 ${ev.ageInDays}일령으로 91일에 미달합니다`
             : ev.failedRule === 'calendar3m'
-              ? `${first.date} < 캘린더 3개월(${ev.calendar3mThreshold})`
-              : `생후 ${ev.ageInDays}일령 + ${first.date} < 캘린더 3개월(${ev.calendar3mThreshold})`
+              ? `1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빠릅니다`
+              : `생후 ${ev.ageInDays}일령이며 1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빠릅니다`
         return {
           ok: false,
-          message: `1차 접종일(${first.date}) 보수적 기준 미충족 — ${reason}.`,
+          message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못합니다. ${reason}.`,
           fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월) 둘 다 충족 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
@@ -116,8 +116,8 @@ export const HI_CHECKS: ProcedureCheck[] = [
       if (rabies.length < 2) {
         return {
           ok: false,
-          message: `광견병 1회만 기록됨(${rabies[0].date}) — 2회 필요.`,
-          fixHint: '31일 후 부스터 추가.',
+          message: `광견병 접종이 1회(${rabies[0].date})만 기록되어 있습니다. 2회가 필요합니다.`,
+          fixHint: '31일 후 부스터를 추가하세요.',
           offendingPaths: [`rabies_dates[${rabies[0].originalIndex}].date`],
         }
       }
@@ -154,12 +154,12 @@ export const HI_CHECKS: ProcedureCheck[] = [
             `rabies_dates[${v.prev.originalIndex}].date`,
             `rabies_dates[${v.curr.originalIndex}].date`,
           )
-          msgs.push(`${v.prev.date} → ${v.curr.date}: ${v.gap}일 (≥31일 필요)`)
+          msgs.push(`${v.prev.date}부터 ${v.curr.date}까지 ${v.gap}일입니다. 31일 이상이어야 합니다.`)
         }
         return {
           ok: false,
           message: msgs.join(' / '),
-          fixHint: '도즈 간 최소 31일(more than 30 days) 간격 확보.',
+          fixHint: '도즈 간 최소 31일(more than 30 days) 간격을 확보하세요.',
           offendingPaths: Array.from(new Set(offending)),
         }
       }
@@ -186,8 +186,8 @@ export const HI_CHECKS: ProcedureCheck[] = [
       if (days < 31) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date}) → 출국(${dep}): ${days}일 (≥31일 필요).`,
-          fixHint: `출국일을 ${latest.date} 기준 31일 이후로 조정하거나 추가 부스터를 더 일찍 접종.`,
+          message: `최근 접종(${latest.date})부터 출국(${dep})까지 ${days}일입니다. 31일 이상이어야 합니다.`,
+          fixHint: `출국일을 ${latest.date} 기준 31일 이후로 조정하거나 추가 부스터를 더 일찍 접종하세요.`,
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -214,8 +214,8 @@ export const HI_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date}) 유효기간(${validUntil}) < 출국일(${dep}) — 만료.`,
-          fixHint: '출국 전 부스터 접종 (3년 라이선스 백신 사용 시 valid_until 직접 입력).',
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료됩니다.`,
+          fixHint: '출국 전 부스터를 접종하세요. 3년 라이선스 백신을 사용한 경우 valid_until을 직접 입력하세요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -268,16 +268,16 @@ export const HI_CHECKS: ProcedureCheck[] = [
       const label = newest.received_date ? '검체 수령일' : 'FAVN 채혈일'
       const reason =
         days === null
-          ? '날짜 형식 오류'
+          ? '날짜 형식이 올바르지 않습니다.'
           : days < 0
-            ? `${label}(${newestBasis})이 출국일(${dep}) 이후`
+            ? `${label}(${newestBasis})이 출국일(${dep})보다 이후입니다.`
             : days < 30
-              ? `${label}(${newestBasis}) → 출국(${dep}): ${days}일 — 30일 미달 (대기 부족)`
-              : `${label}(${newestBasis}) + 36개월(${upper}) < 출국일(${dep}) — 36개월 초과 (재검사 필요)`
+              ? `${label}(${newestBasis})부터 출국(${dep})까지 ${days}일로 30일에 미달하여 대기 기간이 부족합니다.`
+              : `${label}(${newestBasis})에 36개월을 더한 날(${upper})이 출국일(${dep})보다 빨라 36개월을 초과하므로 재검사가 필요합니다.`
       return {
         ok: false,
         message: reason,
-        fixHint: '출국일 조정 또는 FAVN 재검사. 실제 lab 수령일 미입력 시 채혈일에서 며칠 더 여유 두는 것이 안전.',
+        fixHint: '출국일을 조정하거나 FAVN 재검사를 하세요. 실제 lab 수령일을 입력하지 않은 경우 채혈일에서 며칠 더 여유를 두는 것이 안전합니다.',
         offendingPaths: offending,
       }
     },
@@ -301,19 +301,19 @@ export const HI_CHECKS: ProcedureCheck[] = [
 
       const diff = daysBetween(visit, dep)
       if (diff === null) {
-        return { ok: false, message: '날짜 형식 오류.', offendingPaths: ['vet_visit_date'] }
+        return { ok: false, message: '날짜 형식이 올바르지 않습니다.', offendingPaths: ['vet_visit_date'] }
       }
       if (diff < 0) {
         return {
           ok: false,
-          message: `내원일(${visit})이 출국일(${dep})보다 늦음.`,
+          message: `내원일(${visit})이 출국일(${dep})보다 늦습니다.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
       if (diff > 9) {
         return {
           ok: false,
-          message: `내원일(${visit}) → 출국일(${dep}): ${diff}일 — 출국 포함 10일 이내(≤9일 전) 필요 (한국 APQA 규정).`,
+          message: `내원일(${visit})부터 출국일(${dep})까지 ${diff}일입니다. 출국일 포함 10일 이내(9일 전부터)여야 합니다 (한국 APQA 규정).`,
           fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정하세요.`,
           offendingPaths: ['vet_visit_date'],
         }
@@ -343,15 +343,15 @@ export const HI_CHECKS: ProcedureCheck[] = [
       if (days < 0) {
         return {
           ok: false,
-          message: `진드기 처치일(${latest.date})이 출국일(${dep})보다 늦음.`,
+          message: `진드기 처치일(${latest.date})이 출국일(${dep})보다 늦습니다.`,
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
       if (days > 13) {
         return {
           ok: false,
-          message: `최근 진드기 처치(${latest.date}) → 출국(${dep}): ${days}일 — 출국 포함 14일 이내(≤13일 전) 필요.`,
-          fixHint: `처치일을 ${dep} 기준 13일 전 이후로 조정. Long-acting tick 제품 (Revolution 불가).`,
+          message: `최근 진드기 처치(${latest.date})부터 출국(${dep})까지 ${days}일입니다. 출국일 포함 14일 이내(13일 전부터)여야 합니다.`,
+          fixHint: `처치일을 ${dep} 기준 13일 전 이후로 조정하세요. Long-acting tick 제품을 사용해야 합니다 (Revolution 불가).`,
           offendingPaths: [`external_parasite_dates[${latest.originalIndex}].date`],
         }
       }
