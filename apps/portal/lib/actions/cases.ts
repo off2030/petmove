@@ -336,6 +336,62 @@ function stripTiterUnit(value: string): string {
   return value.replace(/\s*IU\s*\/\s*m[lL]\s*/gi, '').trim()
 }
 
+/** 항공권 구매 step 이 다루는 case.data 평탄 키 — 출국 4 + 귀국 4. */
+const FLIGHT_DATA_KEYS = [
+  'entry_departure_airport',
+  'entry_airport',
+  'entry_flight_number',
+  'entry_transport',
+  'return_departure_airport',
+  'return_arrival_airport',
+  'return_flight_number',
+  'return_transport',
+] as const
+
+/**
+ * 항공권 구매 step 의 입력 필드를 patch — case.data 의 entry_* / return_* 평탄 키
+ * (정보 탭 항공권 섹션·펫무브워크 추가정보와 동일 키)를 갱신.
+ *
+ * 빈 값은 키 제거. data 의 다른 키는 fetch-merge 로 보존.
+ * 편도 케이스도 귀국 키를 그대로 보내며(미편집이라 값 불변), 빈 값이면 제거된다.
+ */
+export async function updateFlightFields(
+  caseId: string,
+  fields: Record<(typeof FLIGHT_DATA_KEYS)[number], string | null>,
+): Promise<Result<CaseRow>> {
+  try {
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const nextData: Record<string, unknown> = { ...prev }
+    for (const key of FLIGHT_DATA_KEYS) {
+      const v = typeof fields[key] === 'string' ? (fields[key] as string).trim() : ''
+      if (v) nextData[key] = v
+      else delete nextData[key]
+    }
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 /**
  * 정보 탭(보호자·동물·여행·항공권)의 편집 가능한 모든 필드를 한 번에 patch.
  *

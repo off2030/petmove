@@ -180,6 +180,17 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     order: 45,
     earliest: { anchor: 'step:rabies-titer', daysAfter: 180 },
     done: 'manual-flag:flight-purchased',
+    // 출국 4 + 귀국 4. 귀국은 왕복 케이스에서만 노출 — 분기는 컴포넌트(FlightInputs)에서.
+    inputs: [
+      { key: 'entry_departure_airport', label: '출발 공항', type: 'text' },
+      { key: 'entry_airport', label: '도착 공항', type: 'text' },
+      { key: 'entry_flight_number', label: '편명', type: 'text' },
+      { key: 'entry_transport', label: '운송 방법', type: 'text' },
+      { key: 'return_departure_airport', label: '출발 공항', type: 'text' },
+      { key: 'return_arrival_airport', label: '도착 공항', type: 'text' },
+      { key: 'return_flight_number', label: '편명', type: 'text' },
+      { key: 'return_transport', label: '운송 방법', type: 'text' },
+    ],
     allowAttachments: true,
     attachmentHint: '구매한 항공권(e-티켓)을 사진, PDF로 보관하세요.',
   },

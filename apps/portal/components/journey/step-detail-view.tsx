@@ -4,8 +4,14 @@ import Link from 'next/link'
 import { useEffect, useState, useTransition } from 'react'
 import type { CheckResult, ProcedureCheck, StepDefinition } from '@petmove/domain'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
-import { updateMicrochipFields, updateRabiesEntryFields, updateTiterFields } from '@/lib/actions/cases'
+import {
+  updateFlightFields,
+  updateMicrochipFields,
+  updateRabiesEntryFields,
+  updateTiterFields,
+} from '@/lib/actions/cases'
 import { readCaseDocuments } from '@/lib/documents'
+import { FlightInputs, type FlightForm } from './flight-inputs'
 import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm } from './rabies-entry-inputs'
 import { StepAttachments } from './step-attachments'
@@ -56,7 +62,8 @@ export function StepDetailView({
   // rabies_dates 배열 내 위치 — 1차=0, 2차=1.
   const rabiesIndex = isRabies2 ? 1 : 0
   const isTiter = step.id === 'rabies-titer'
-  const isInteractive = isMicrochip || isRabies || isTiter
+  const isFlight = step.id === 'flight-purchase'
+  const isInteractive = isMicrochip || isRabies || isTiter || isFlight
   const caseRow = useCase(caseId)
   const { updateCase } = useCases()
 
@@ -72,6 +79,9 @@ export function StepDetailView({
   const savedTiterForm = readTiterForm(caseRow?.data)
   const [titerForm, setTiterForm] = useState<TiterForm>(savedTiterForm)
 
+  const savedFlightForm = readFlightForm(caseRow?.data)
+  const [flightForm, setFlightForm] = useState<FlightForm>(savedFlightForm)
+
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
@@ -83,7 +93,8 @@ export function StepDetailView({
     (titerForm.date !== savedTiterForm.date ||
       titerForm.lab !== savedTiterForm.lab ||
       titerForm.value !== savedTiterForm.value)
-  const dirty = microchipDirty || rabiesDirty || titerDirty
+  const flightDirty = isFlight && !flightFormEqual(flightForm, savedFlightForm)
+  const dirty = microchipDirty || rabiesDirty || titerDirty || flightDirty
   // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
   const justSaved = status === 'saved' && !dirty
 
@@ -102,6 +113,10 @@ export function StepDetailView({
   }, [caseRow?.data])
   useEffect(() => {
     if (!titerDirty) setTiterForm(readTiterForm(caseRow?.data))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data])
+  useEffect(() => {
+    if (!flightDirty) setFlightForm(readFlightForm(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
 
@@ -161,6 +176,30 @@ export function StepDetailView({
         if (res.ok) {
           updateCase(res.value)
           setTiterForm(readTiterForm(res.value.data))
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    } else if (isFlight) {
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        const res = await updateFlightFields(caseId, {
+          entry_departure_airport: flightForm.entry_departure_airport || null,
+          entry_airport: flightForm.entry_airport || null,
+          entry_flight_number: flightForm.entry_flight_number || null,
+          entry_transport: flightForm.entry_transport || null,
+          return_departure_airport: flightForm.return_departure_airport || null,
+          return_arrival_airport: flightForm.return_arrival_airport || null,
+          return_flight_number: flightForm.return_flight_number || null,
+          return_transport: flightForm.return_transport || null,
+        })
+        if (res.ok) {
+          updateCase(res.value)
+          setFlightForm(readFlightForm(res.value.data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -441,6 +480,16 @@ export function StepDetailView({
             />
           </section>
         )}
+        {isFlight && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <FlightInputs
+              value={flightForm}
+              onChange={(key, next) => setFlightForm((prev) => ({ ...prev, [key]: next }))}
+              showReturn={tripType === 'round'}
+            />
+          </section>
+        )}
         {!isInteractive && step.inputs && step.inputs.length > 0 && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력 정보</h3>
@@ -711,4 +760,35 @@ function readTiterForm(data: Record<string, unknown> | null | undefined): TiterF
   const r = entry as Record<string, unknown>
   const str = (v: unknown) => (typeof v === 'string' ? v : '')
   return { date: str(r.date), lab: str(r.lab), value: str(r.value) }
+}
+
+/** 항공권 폼 값을 caseRow.data 의 entry_* / return_* 평탄 키에서 읽어온다 (정보 탭과 동일 키). */
+function readFlightForm(data: Record<string, unknown> | null | undefined): FlightForm {
+  const str = (key: string) => {
+    const v = data?.[key]
+    return typeof v === 'string' ? v : ''
+  }
+  return {
+    entry_departure_airport: str('entry_departure_airport'),
+    entry_airport: str('entry_airport'),
+    entry_flight_number: str('entry_flight_number'),
+    entry_transport: str('entry_transport'),
+    return_departure_airport: str('return_departure_airport'),
+    return_arrival_airport: str('return_arrival_airport'),
+    return_flight_number: str('return_flight_number'),
+    return_transport: str('return_transport'),
+  }
+}
+
+function flightFormEqual(a: FlightForm, b: FlightForm): boolean {
+  return (
+    a.entry_departure_airport === b.entry_departure_airport &&
+    a.entry_airport === b.entry_airport &&
+    a.entry_flight_number === b.entry_flight_number &&
+    a.entry_transport === b.entry_transport &&
+    a.return_departure_airport === b.return_departure_airport &&
+    a.return_arrival_airport === b.return_arrival_airport &&
+    a.return_flight_number === b.return_flight_number &&
+    a.return_transport === b.return_transport
+  )
 }
