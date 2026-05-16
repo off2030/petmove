@@ -84,6 +84,8 @@ export function StepDetailView({
       titerForm.lab !== savedTiterForm.lab ||
       titerForm.value !== savedTiterForm.value)
   const dirty = microchipDirty || rabiesDirty || titerDirty
+  // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
+  const justSaved = status === 'saved' && !dirty
 
   // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
   useEffect(() => {
@@ -486,33 +488,43 @@ export function StepDetailView({
             pointerEvents: 'none',
           }}
         >
-          {status !== 'idle' && (
+          {status === 'error' && (
             <div
-              aria-live="polite"
+              role="alert"
               style={{
-                textAlign: 'center',
-                fontSize: 12,
-                color: status === 'error' ? C.warn : status === 'saved' ? C.sage : C.ink3,
+                pointerEvents: 'auto',
                 marginBottom: 8,
+                padding: '9px 12px',
+                borderRadius: 10,
+                // 불투명 배경 — 뒤 콘텐츠(첨부 영역)가 비쳐 겹쳐 보이지 않도록.
+                background: C.surface,
+                border: `.5px solid ${C.warn}55`,
+                color: C.warn,
+                fontSize: 12,
+                textAlign: 'center',
               }}
             >
-              {status === 'saving' && '저장 중…'}
-              {status === 'saved' && '✓ 저장됨'}
-              {status === 'error' && (error ?? '저장 실패')}
+              {error ?? '저장 실패'}
             </div>
           )}
+          {/* 저장 중·저장됨은 별도 줄 대신 버튼 라벨로 — 첨부 영역과 겹치지 않음. */}
           <button
             type="button"
             onClick={handleSave}
             disabled={!dirty || status === 'saving'}
+            aria-live="polite"
             style={{
               pointerEvents: 'auto',
               width: '100%',
               padding: '14px 0',
               borderRadius: 14,
               border: 0,
-              background: dirty && status !== 'saving' ? C.accent : 'rgba(42,38,32,.10)',
-              color: dirty && status !== 'saving' ? '#fff' : C.ink3,
+              background: justSaved
+                ? C.sage
+                : dirty && status !== 'saving'
+                  ? C.accent
+                  : 'rgba(42,38,32,.10)',
+              color: justSaved || (dirty && status !== 'saving') ? '#fff' : C.ink3,
               fontFamily: 'inherit',
               fontSize: 15,
               fontWeight: 600,
@@ -521,7 +533,7 @@ export function StepDetailView({
               transition: 'background .15s, color .15s',
             }}
           >
-            저장
+            {status === 'saving' ? '저장 중…' : justSaved ? '✓ 저장됨' : '저장'}
           </button>
         </div>
       )}
