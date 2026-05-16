@@ -165,14 +165,14 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       : done
         ? resolveCompletedDate(step.done, caseRow)
         : (deadline ?? earliest)
-    // 상태별 보조 문구.
-    //  - done   → doneSummary (완료 문구)
-    //  - 그 외  → actionLine (행동 문구)
-    // 둘 다 catalog 미정의면 description 첫 문장으로 폴백.
-    const action = step.actionLine ?? firstSentence(step.description)
+    // 전체 일정 리스트 보조 문구.
+    //  - done  → doneSummary (완료 문구. 미정의면 description 첫 문장)
+    //  - 그 외 → description 첫 문장 (절차 설명)
     const desc = done
       ? (step.doneSummary ?? firstSentence(step.description))
-      : action
+      : firstSentence(step.description)
+    // 다음 할 일 카드 본문은 actionLine(행동 문구)을 쓴다 — 리스트와 톤이 다름.
+    const action = step.actionLine ?? firstSentence(step.description)
     // 다음 할 일 카드 본문 — 날짜 구문 + actionLine.
     // earliest("이후")가 deadline("까지")보다 우선: 보호자가 먼저 알아야 할 제약.
     // 선행 step 미완료 등으로 날짜 계산이 안 되면 actionLine 만.
