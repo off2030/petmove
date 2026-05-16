@@ -55,7 +55,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         helpText: '펫무브 등록 신청서의 달력과 동일 컴포넌트',
       },
     ],
-    validationIds: ['common.microchip-after-birth', 'jp.microchip-rabies-sequence'],
+    validationIds: ['common.microchip-after-birth'],
   },
 
   // ── 3. 광견병 백신 1차 ─────────────────────────────────────────────────
@@ -115,6 +115,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       'jp.rabies-booster-within-prime-validity',
       'jp.rabies-valid-until-on-departure',
       'jp.rabies-prime-before-microchip',
+      'jp.microchip-rabies-sequence',
     ],
   },
 
@@ -165,6 +166,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       'jp.rabies-titer-vs-booster',
       'jp.departure-180days-after-titer',
       'jp.departure-within-2years-of-titer',
+      'jp.microchip-rabies-sequence',
     ],
   },
 
