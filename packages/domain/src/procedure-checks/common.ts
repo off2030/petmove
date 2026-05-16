@@ -12,7 +12,7 @@ export const COMMON_CHECKS: ProcedureCheck[] = [
     id: 'common.microchip-after-birth',
     country: 'all',
     category: '마이크로칩',
-    title: '마이크로칩 시술일이 생년월일 이후',
+    title: '마이크로칩 시술일은 생년월일 이후',
     description: '마이크로칩 시술일은 동물의 생년월일과 같거나 그 이후여야 함.',
     severity: 'blocker',
     addedAt: '2026-05-16',
