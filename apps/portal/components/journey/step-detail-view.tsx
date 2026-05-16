@@ -182,6 +182,8 @@ export function StepDetailView({
     sage: '#8FA68C',
     warn: '#C26A4A',
     warnBg: 'rgba(194,106,74,0.08)',
+    info: '#6B6457',
+    infoBg: 'rgba(42,38,32,0.05)',
   } as const
 
   const serif: React.CSSProperties = {
@@ -203,7 +205,9 @@ export function StepDetailView({
     fontWeight: 500,
   }
 
-  const failed = checkResults.filter((c) => !c.result.ok)
+  // ok=false 체크를 톤별로 분리 — '주의'(blocker/warning) vs '안내'(info).
+  const failed = checkResults.filter((c) => !c.result.ok && c.check.severity !== 'info')
+  const notices = checkResults.filter((c) => !c.result.ok && c.check.severity === 'info')
   const stepDocuments = readCaseDocuments(caseRow?.data).filter((d) => d.stepId === step.id)
 
   return (
@@ -368,6 +372,36 @@ export function StepDetailView({
             </div>
             <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {failed.map(({ check, result }) => (
+                <li key={check.id}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, marginBottom: 2 }}>{check.title}</div>
+                  {result.message && (
+                    <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>{result.message}</div>
+                  )}
+                  {result.fixHint && (
+                    <div style={{ fontSize: 13, color: C.ink3, marginTop: result.message ? 4 : 2, lineHeight: 1.5 }}>↳ {result.fixHint}</div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {/* 안내 — 오류는 아니지만 미리 알려둘 사항. 주의보다 차분한 중립 톤. */}
+        {notices.length > 0 && (
+          <section
+            style={{
+              marginTop: 16,
+              padding: '14px 16px',
+              borderRadius: 16,
+              background: C.infoBg,
+              border: `.5px solid ${C.info}26`,
+            }}
+          >
+            <div style={{ ...monoCap, color: C.info, fontWeight: 700, marginBottom: 8 }}>
+              안내 {notices.length}건
+            </div>
+            <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {notices.map(({ check, result }) => (
                 <li key={check.id}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, marginBottom: 2 }}>{check.title}</div>
                   {result.message && (

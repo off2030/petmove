@@ -34,8 +34,10 @@ export interface JourneyStage {
   desc?: string
   /** 다음 할 일 카드 본문 — 날짜 구문 + 행동 문구. 미완료 step 에만 채워짐. */
   cardDesc?: string
-  /** 이 step 에 매핑된 procedure-check 중 ok=false 개수. 0 또는 미정의면 정상. */
+  /** 이 step 의 ok=false 체크 중 '주의'(severity 'info' 제외) 개수. */
   failedChecks?: number
+  /** 이 step 의 ok=false 체크 중 '안내'(severity 'info') 개수. */
+  infoChecks?: number
 }
 
 export interface JourneyData {
@@ -50,8 +52,10 @@ export interface JourneyData {
   stages: JourneyStage[]
   /** state==='current' 인 첫 스테이지. 없으면 null (= 전체 완료). */
   nextStage: JourneyStage | null
-  /** 전체 stage 의 failedChecks 합 — 상단 한 줄 알림 배지에 사용. */
+  /** 전체 stage 의 failedChecks 합 — 상단 '주의' 배너에 사용. */
   totalFailedChecks: number
+  /** 전체 stage 의 infoChecks 합 — 상단 '안내' 배너에 사용. */
+  totalInfoChecks: number
 }
 
 function todayKst(): string {
@@ -137,15 +141,18 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
 
   const applicableSteps = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
 
-  // procedure-check 결과를 step 단위로 집계. destinationKey 없으면 빈 맵.
+  // procedure-check 결과를 step 단위로 집계. severity 'info' 는 차분한 '안내'
+  // 톤으로 분리, 그 외(blocker/warning)는 '주의'. destinationKey 없으면 빈 맵.
   const failedByStep = new Map<string, number>()
+  const infoByStep = new Map<string, number>()
   if (ctx.destinationKey) {
     const all = runChecksForCase(ctx.destinationKey, { caseRow })
     for (const { check, result } of all) {
       if (result.ok) continue
       const stepId = findStepForCheck(check.id)
       if (!stepId) continue
-      failedByStep.set(stepId, (failedByStep.get(stepId) ?? 0) + 1)
+      const bucket = check.severity === 'info' ? infoByStep : failedByStep
+      bucket.set(stepId, (bucket.get(stepId) ?? 0) + 1)
     }
   }
 
@@ -180,6 +187,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
           ? `${formatKoreanDate(deadline)}까지 ${summary}`
           : summary
     const failedChecks = failedByStep.get(step.id) ?? 0
+    const infoChecks = infoByStep.get(step.id) ?? 0
     return {
       id: step.id,
       label: step.title,
@@ -189,6 +197,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       desc,
       cardDesc,
       failedChecks: failedChecks > 0 ? failedChecks : undefined,
+      infoChecks: infoChecks > 0 ? infoChecks : undefined,
     }
   })
 
@@ -199,6 +208,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
   }
   const nextStage = stages.find((s) => s.state === 'current') ?? null
   const totalFailedChecks = stages.reduce((sum, s) => sum + (s.failedChecks ?? 0), 0)
+  const totalInfoChecks = stages.reduce((sum, s) => sum + (s.infoChecks ?? 0), 0)
 
   return {
     pet: { name: caseRow.pet_name ?? '반려동물' },
@@ -212,5 +222,6 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     stages,
     nextStage,
     totalFailedChecks,
+    totalInfoChecks,
   }
 }

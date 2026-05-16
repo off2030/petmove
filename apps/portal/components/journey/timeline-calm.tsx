@@ -12,7 +12,7 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
  * 그것을 비교적 충실히 옮긴 것.
  */
 export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: string }) {
-  const { stages, trip, pet, nextStage, totalFailedChecks } = data
+  const { stages, trip, pet, nextStage, totalFailedChecks, totalInfoChecks } = data
   const total = stages.length
   const done = stages.filter((s) => s.state === 'done').length
   const pct = done / total
@@ -29,6 +29,8 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
     sage: '#8FA68C',
     warn: '#C26A4A',
     warnBg: 'rgba(194,106,74,0.08)',
+    info: '#6B6457',
+    infoBg: 'rgba(42,38,32,0.05)',
     cardSoft: 'linear-gradient(160deg, #F0E8DB 0%, #EDE4D7 50%, #E6DDCD 100%)',
     cardList: 'linear-gradient(160deg, #F5EDE0 0%, #F2E9DC 50%, #ECE3D3 100%)',
     cardHero: 'radial-gradient(140% 100% at 80% 18%, #E8DECC 0%, #DCD2BD 45%, #CBC1AB 100%)',
@@ -37,6 +39,9 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
   // 주의가 발생한 stage 들 — 배너에 항목명을 모두 나열하고, 링크는 첫 항목으로.
   const warnedStages = stages.filter((s) => (s.failedChecks ?? 0) > 0)
   const firstWarnedStage = warnedStages[0] ?? null
+  // '안내'(severity 'info') 가 있는 stage 들 — 주의와 별개의 차분한 배너.
+  const infoStages = stages.filter((s) => (s.infoChecks ?? 0) > 0)
+  const firstInfoStage = infoStages[0] ?? null
 
   const serif: React.CSSProperties = {
     fontFamily: 'var(--pm-font-display)',
@@ -145,6 +150,35 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
             <span>주의 {totalFailedChecks}건 — {warnedStages.map((s) => s.label).join(', ')}</span>
+          </Link>
+        )}
+
+        {/* 안내 — 오류는 아니지만 미리 알려둘 사항. 주의보다 차분한 중립 톤. */}
+        {totalInfoChecks > 0 && firstInfoStage && (
+          <Link
+            href={`/cases/${caseId}/journey/${firstInfoStage.id}`}
+            className="pm-pressable"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginTop: totalFailedChecks > 0 ? 8 : 18,
+              padding: '10px 14px',
+              borderRadius: 12,
+              background: C.infoBg,
+              border: `.5px solid ${C.info}26`,
+              color: C.info,
+              fontSize: 13,
+              textDecoration: 'none',
+              fontWeight: 500,
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            <span>안내 {totalInfoChecks}건 — {infoStages.map((s) => s.label).join(', ')}</span>
           </Link>
         )}
 
@@ -258,6 +292,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
             const isDone = s.state === 'done'
             const isCurr = s.state === 'current'
             const hasWarn = (s.failedChecks ?? 0) > 0
+            const hasInfo = (s.infoChecks ?? 0) > 0
             const last = i === stages.length - 1
             return (
               <Link
@@ -283,10 +318,10 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    // 주의가 있으면 sage/accent 대신 warn 색으로 — 체크/번호 자리에 ⚠.
-                    background: hasWarn ? C.warn : isDone ? C.sage : isCurr ? C.accent : 'transparent',
-                    border: !hasWarn && !isDone && !isCurr ? `1px solid ${C.line}` : 'none',
-                    color: hasWarn || isDone || isCurr ? C.surface : C.ink3,
+                    // 주의/안내가 있으면 sage/accent 대신 그 톤으로 — 번호 자리에 ⚠ 또는 ⓘ.
+                    background: hasWarn ? C.warn : hasInfo ? C.info : isDone ? C.sage : isCurr ? C.accent : 'transparent',
+                    border: !hasWarn && !hasInfo && !isDone && !isCurr ? `1px solid ${C.line}` : 'none',
+                    color: hasWarn || hasInfo || isDone || isCurr ? C.surface : C.ink3,
                     ...num,
                     fontSize: 11,
                   }}
@@ -306,6 +341,21 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                       <line x1="12" y1="9" x2="12" y2="13" />
                       <line x1="12" y1="17" x2="12.01" y2="17" />
                       <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    </svg>
+                  ) : hasInfo ? (
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-label="안내"
+                    >
+                      <line x1="12" y1="11" x2="12" y2="17" />
+                      <line x1="12" y1="7" x2="12.01" y2="7" />
                     </svg>
                   ) : isDone ? (
                     <svg
@@ -353,13 +403,13 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                     <div
                       style={{
                         ...monoCap,
-                        color: hasWarn ? C.warn : isCurr ? C.accent : C.ink3,
-                        fontWeight: isCurr || hasWarn ? 700 : 500,
+                        color: hasWarn ? C.warn : hasInfo ? C.info : isCurr ? C.accent : C.ink3,
+                        fontWeight: hasWarn ? 700 : hasInfo ? 600 : isCurr ? 700 : 500,
                         textAlign: 'right',
                         flexShrink: 0,
                       }}
                     >
-                      {hasWarn ? '주의' : isCurr ? (dDayLabel ?? '예정') : formatStageDate(s)}
+                      {hasWarn ? '주의' : hasInfo ? '안내' : isCurr ? (dDayLabel ?? '예정') : formatStageDate(s)}
                     </div>
                   </div>
                   {s.desc && (
