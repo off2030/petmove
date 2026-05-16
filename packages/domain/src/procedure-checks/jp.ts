@@ -171,6 +171,36 @@ export const JP_CHECKS: ProcedureCheck[] = [
     },
   },
   {
+    id: 'jp.rabies-prime-before-microchip',
+    country: 'japan',
+    category: '마이크로칩',
+    title: '마이크로칩보다 앞선 1차 접종 — 2차 접종일 주의',
+    description:
+      '1차 광견병 접종이 마이크로칩 시술보다 앞선 경우, 마이크로칩 이후의 접종만 유효함. 2차 접종을 광견병 항체가 검사와 같은 날 받도록 2차 입력 전 미리 안내.',
+    severity: 'blocker',
+    addedAt: '2026-05-16',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
+      const rabies = readRabiesEntries(caseRow)
+      // 필수: 마이크로칩 시술일 + 1차 접종 기록
+      if (!microchip || rabies.length === 0) return SKIP
+      // 2차 입력 후에는 jp.microchip-rabies-sequence 가 본 검증 — 사전 안내 종료
+      if (rabies.length >= 2) return SKIP
+
+      const first = rabies[0]
+      if (first.date >= microchip) {
+        return { ok: true, message: `1차 접종(${first.date}) ≥ 마이크로칩(${microchip}).` }
+      }
+      return {
+        ok: false,
+        message: `1차 접종일(${first.date})이 마이크로칩 시술일(${microchip})보다 앞섭니다 — 마이크로칩 이전 접종은 유효하지 않습니다.`,
+        fixHint: '2차 광견병 백신은 광견병 항체가 검사와 같은 날 접종해야 합니다.',
+        offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
+      }
+    },
+  },
+  {
     id: 'jp.rabies-titer-vs-booster',
     country: 'japan',
     category: '광견병',
