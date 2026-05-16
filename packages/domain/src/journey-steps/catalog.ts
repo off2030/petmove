@@ -91,7 +91,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '광견병 백신(2차)',
     shortLabel: '백신2',
     description:
-      '2차 광견병 백신을 접종합니다.\n\n1차 접종 후 30일 이상 지나서 접종합니다.\n1차 접종 면역 유효기간 내에 접종합니다.\n일본 입국 때 면역 유효기간이 남아있어야 합니다.',
+      '2차 광견병 백신을 접종합니다.\n\n1차 접종 후 30일 이상 지나서 접종합니다.\n1차 접종 면역 유효기간 이내에 접종합니다.\n일본 입국 때 면역 유효기간이 남아있어야 합니다.',
     doneSummary: '2차 광견병 백신 접종이 완료되었습니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 35,
