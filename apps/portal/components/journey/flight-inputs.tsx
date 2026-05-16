@@ -23,20 +23,19 @@ const C = {
   surface: '#FBF7F1',
   line: 'rgba(42,38,32,.10)',
   ink: '#2A2620',
+  ink2: '#6B6457',
   ink3: '#9A9286',
-  accent: '#B89968',
-  accentSoft: 'rgba(184,153,104,.14)',
 } as const
 
 /**
- * 운송 방법 선택지 — value 는 펫무브워크 추가정보(EXTRA_FIELD_DEFS)의 TRANSPORT_OPTIONS
- * 와 동일 코드. label 만 보호자용 한글이라 수출서류 생성과 저장값이 round-trip.
+ * 운송 방법 선택지 — 보호자 친근 라벨 chip. share 폼(share-form.tsx)의 고객용 3지와 동일.
+ * value 는 펫무브워크 추가정보 TRANSPORT_OPTIONS 와 같은 영문 코드라 수출서류 생성과
+ * round-trip. Cargo(Sea) 는 고객에게 받지 않음 — 케이스 상세에서 발신자가 직접 조정.
  */
 const TRANSPORT_OPTIONS: readonly { value: string; label: string }[] = [
-  { value: 'Checked-baggage', label: '위탁 수하물' },
-  { value: 'Carry-on', label: '기내 동반' },
-  { value: 'Cargo', label: '화물' },
-  { value: 'Cargo(Sea)', label: '화물 (해상)' },
+  { value: 'Carry-on', label: '기내탑승' },
+  { value: 'Checked-baggage', label: '위탁수하물' },
+  { value: 'Cargo', label: '화물운송' },
 ]
 
 interface FlightField {
@@ -152,10 +151,10 @@ function FlightGroup({
   )
 }
 
-/** 운송 방법 — 4지 선택(2×2). 선택된 항목을 다시 누르면 해제. */
+/** 운송 방법 — 고객용 3지 chip 선택. 선택된 항목을 다시 누르면 해제. */
 function TransportSelect({ value, onChange }: { value: string; onChange: (next: string) => void }) {
   return (
-    <div style={{ marginTop: 8, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+    <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
       {TRANSPORT_OPTIONS.map((o) => {
         const selected = value === o.value
         return (
@@ -165,39 +164,19 @@ function TransportSelect({ value, onChange }: { value: string; onChange: (next: 
             onClick={() => onChange(selected ? '' : o.value)}
             aria-pressed={selected}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 6,
-              padding: '11px 12px',
-              border: `1px solid ${selected ? C.accent : C.line}`,
-              borderRadius: 10,
-              background: selected ? C.accentSoft : '#fff',
+              padding: '8px 16px',
+              borderRadius: 999,
+              border: `1px solid ${selected ? C.ink : C.line}`,
+              background: selected ? C.ink : '#fff',
+              color: selected ? C.surface : C.ink2,
               fontFamily: 'inherit',
               fontSize: 14,
-              color: C.ink,
+              fontWeight: 500,
               cursor: 'pointer',
-              textAlign: 'left',
-              transition: 'border-color .12s, background .12s',
+              transition: 'background .12s, color .12s, border-color .12s',
             }}
           >
-            <span>{o.label}</span>
-            {selected && (
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke={C.accent}
-                strokeWidth="2.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ flexShrink: 0 }}
-                aria-hidden
-              >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            )}
+            {o.label}
           </button>
         )
       })}
