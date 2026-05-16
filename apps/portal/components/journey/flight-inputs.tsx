@@ -70,7 +70,13 @@ export function FlightInputs({
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-      <FlightGroup label="출국 항공권" fields={ENTRY_FIELDS} value={value} onChange={onChange} />
+      {/* 편도면 그룹이 하나뿐 — '출국 항공권' 라벨 생략(상위 '입력' 헤딩으로 충분). */}
+      <FlightGroup
+        label={showReturn ? '출국 항공권' : undefined}
+        fields={ENTRY_FIELDS}
+        value={value}
+        onChange={onChange}
+      />
       {showReturn && (
         <FlightGroup label="귀국 항공권" fields={RETURN_FIELDS} value={value} onChange={onChange} />
       )}
@@ -84,26 +90,28 @@ function FlightGroup({
   value,
   onChange,
 }: {
-  label: string
+  label?: string
   fields: readonly FlightField[]
   value: FlightForm
   onChange: (key: keyof FlightForm, next: string) => void
 }) {
   return (
     <div>
-      <div
-        style={{
-          fontSize: 11,
-          letterSpacing: '0.16em',
-          textTransform: 'uppercase',
-          color: C.ink3,
-          fontWeight: 500,
-          marginBottom: 8,
-          padding: '0 4px',
-        }}
-      >
-        {label}
-      </div>
+      {label && (
+        <div
+          style={{
+            fontSize: 11,
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: C.ink3,
+            fontWeight: 500,
+            marginBottom: 8,
+            padding: '0 4px',
+          }}
+        >
+          {label}
+        </div>
+      )}
       <div
         style={{
           background: C.surface,
