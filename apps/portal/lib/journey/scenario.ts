@@ -176,15 +176,15 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     const summary = firstSentence(step.description)
     // 전체 일정 리스트 보조 문구. done → doneSummary(완료 문구), 그 외 → 절차 설명.
     const desc = done ? (step.doneSummary ?? summary) : summary
-    // 다음 할 일 카드 본문 — 기본은 절차 설명, 날짜가 필요하면 앞에 날짜 구문을 붙인다.
+    // 다음 할 일 카드 본문 — 날짜(earliest/deadline)가 있으면 step.cardLine
+    // (미지정 시 설명 첫 문장)에 날짜 구문을 붙이고, 날짜가 없으면 설명 첫 문장만.
     // earliest("이후")가 deadline("까지")보다 우선: 보호자가 먼저 알아야 할 제약.
-    // 선행 step 미완료 등으로 날짜 계산이 안 되면 절차 설명만.
     const cardDesc = done
       ? undefined
       : earliest
-        ? `${formatKoreanDate(earliest)} 이후 ${summary}`
+        ? `${formatKoreanDate(earliest)} 이후 ${step.cardLine ?? summary}`
         : deadline
-          ? `${formatKoreanDate(deadline)}까지 ${summary}`
+          ? `${formatKoreanDate(deadline)}까지 ${step.cardLine ?? summary}`
           : summary
     const failedChecks = failedByStep.get(step.id) ?? 0
     const infoChecks = infoByStep.get(step.id) ?? 0

@@ -174,7 +174,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '항공권 구매',
     shortLabel: '항공권',
     description:
-      '일본에 입국할 수 있습니다.\n광견병 항체가 검사 채혈일로부터 180일이 지나야 합니다.\n채혈일로부터 2년 이내에 입국해야 합니다.\n\n입국 가능 시기에 맞춰 항공권을 구매하세요.\n예약 전 반려동물 동반 가능 여부와 켄넬 규정을 항공사에 확인하세요.',
+      '입국 가능 시기에 맞춰 항공권을 구매하세요.\n\n채혈일로부터 180일 후 ~ 2년 사이에 입국할 수 있습니다.\n일본 입국 때 광견병 예방접종 면역 유효기간이 남아있어야 합니다.\n항공사에 반려동물 동반 가능 여부를 확인하세요.',
+    cardLine: '일본에 입국할 수 있습니다.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
     order: 45,
     earliest: { anchor: 'step:rabies-titer', daysAfter: 180 },

@@ -120,6 +120,11 @@ export interface StepDefinition {
    * 예: '마이크로칩 삽입이 완료되었습니다.' 생략 시 description 첫 문장으로 폴백.
    */
   doneSummary?: string
+  /**
+   * 다음 할 일 카드 본문 — 날짜(earliest/deadline)가 있을 때 "{날짜} 이후/까지 …"
+   * 의 … 자리에 쓰임. 생략 시 description 첫 문장으로 폴백.
+   */
+  cardLine?: string
   applicability: StepApplicability
   /** 정렬용. 작을수록 일찍 등장. 같은 값은 카탈로그 등록 순. */
   order: number
