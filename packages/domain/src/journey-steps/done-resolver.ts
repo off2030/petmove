@@ -91,9 +91,16 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
       // 시술일 미입력 시 — 칩 번호 등록 시점이 명확치 않아 케이스 생성일로 fallback.
       return caseRow.created_at ? caseRow.created_at.slice(0, 10) : null
     }
-    case 'has-rabies-entry':
-    case 'has-rabies-booster':
-      return lastEntryDate(readRabiesEntries(caseRow).map((e) => e.date))
+    case 'has-rabies-entry': {
+      // 1차 = 가장 이른 광견병 접종일 (readRabiesEntries 는 날짜 오름차순 정렬)
+      const r = readRabiesEntries(caseRow)
+      return r.length > 0 ? r[0].date : null
+    }
+    case 'has-rabies-booster': {
+      // 2차 = 두 번째 광견병 접종일
+      const r = readRabiesEntries(caseRow)
+      return r.length >= 2 ? r[1].date : null
+    }
     case 'has-titer-entry':
       return lastEntryDate(readTiterEntries(caseRow).map((e) => e.date))
     case 'has-general-vaccine':
