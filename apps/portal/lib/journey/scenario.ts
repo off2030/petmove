@@ -174,8 +174,8 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
         : (deadline ?? earliest)
     // 보조 문구의 기본값은 description 첫 문장(절차 설명).
     const summary = firstSentence(step.description)
-    // 전체 일정 리스트 보조 문구. done → doneSummary(완료 문구), 그 외 → 절차 설명.
-    const desc = done ? (step.doneSummary ?? summary) : summary
+    // 전체 일정 리스트 보조 문구 — 미완료 step 만. 완료 step 은 체크 표시로 충분.
+    const desc = done ? undefined : summary
     // 다음 할 일 카드 본문 — 날짜(earliest/deadline)가 있으면 step.cardLine
     // (미지정 시 설명 첫 문장)에 날짜 구문을 붙이고, 날짜가 없으면 설명 첫 문장만.
     // earliest("이후")가 deadline("까지")보다 우선: 보호자가 먼저 알아야 할 제약.

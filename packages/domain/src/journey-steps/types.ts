@@ -116,11 +116,6 @@ export interface StepDefinition {
   /** 상세 페이지 본문 — 마크다운 가능. 절차 규칙을 안내. */
   description: string
   /**
-   * 전체 일정 리스트의 완료 문구 — 완료된 step 에 표시.
-   * 예: '마이크로칩 삽입이 완료되었습니다.' 생략 시 description 첫 문장으로 폴백.
-   */
-  doneSummary?: string
-  /**
    * 다음 할 일 카드 본문 — 날짜(earliest/deadline)가 있을 때 "{날짜} 이후/까지 …"
    * 의 … 자리에 쓰임. 생략 시 description 첫 문장으로 폴백.
    */
