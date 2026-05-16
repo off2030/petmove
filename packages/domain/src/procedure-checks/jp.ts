@@ -59,9 +59,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.rabies-prime-booster-interval',
     country: 'japan',
     category: '광견병',
-    title: '광견병 1·2차 접종 간격 및 유효기간',
-    description:
-      '1차·2차 접종일 간격이 30일 이상이어야 하며, 2차 접종은 1차 접종의 면역 유효기간 이내여야 함.',
+    title: '광견병 1·2차 접종 간격 30일 이상',
+    description: '1차·2차 광견병 접종일 간격이 30일 이상이어야 함.',
     severity: 'blocker',
     addedAt: '2026-04-21',
     run: ({ caseRow }) => {
@@ -71,39 +70,48 @@ export const JP_CHECKS: ProcedureCheck[] = [
 
       const [first, second] = entries
       const gap = daysBetween(first.date, second.date)
-      const validUntil = first.valid_until || addOneYear(first.date)
-      const withinValidity = !!validUntil && validUntil >= second.date
-      const gapOk = gap !== null && gap >= 30
+      if (gap === null) return SKIP
 
       const secondPath = `rabies_dates[${second.originalIndex}].date`
-
-      if (!gapOk && !withinValidity) {
+      if (gap < 30) {
         return {
           ok: false,
-          message: `1·2차 간격 ${gap ?? '?'}일 (<30일) 그리고 2차 접종일(${second.date})이 1차 유효기간(${validUntil || '미상'}) 초과.`,
-          fixHint: '두 조건 모두 불충족 — 재접종 일정 재검토 필요.',
-          offendingPaths: [secondPath],
-        }
-      }
-      if (!gapOk) {
-        return {
-          ok: false,
-          message: `1·2차 접종 간격 ${gap ?? '?'}일 — 최소 30일 이상 필요.`,
+          message: `1·2차 접종 간격 ${gap}일 — 최소 30일 이상 필요.`,
           fixHint: '2차 접종일을 1차 접종일 + 30일 이후로 조정.',
           offendingPaths: [secondPath],
         }
       }
+      return { ok: true, message: `1·2차 접종 간격 ${gap}일.` }
+    },
+  },
+  {
+    id: 'jp.rabies-booster-within-prime-validity',
+    country: 'japan',
+    category: '광견병',
+    title: '광견병 2차 접종 1차 유효기간 이내',
+    description:
+      '2차 광견병 접종은 1차 접종의 면역 유효기간 이내여야 함. 유효기간 경과 후 접종은 추가접종이 아닌 새 기초접종으로 간주됨.',
+    severity: 'blocker',
+    addedAt: '2026-05-16',
+    run: ({ caseRow }) => {
+      const entries = readRabiesEntries(caseRow)
+      // 1·2차 둘 다 필요 — 하나라도 없으면 skip
+      if (entries.length < 2) return SKIP
+
+      const [first, second] = entries
+      const validUntil = first.valid_until || addOneYear(first.date)
+      const withinValidity = !!validUntil && validUntil >= second.date
       if (!withinValidity) {
         return {
           ok: false,
           message: `2차 접종일(${second.date})이 1차 유효기간(${validUntil || '미상'}) 초과 — 기초접종으로 재시작 필요.`,
           fixHint: '1차 유효기간이 지난 뒤의 접종은 추가접종이 아닌 새로운 기초접종으로 간주됩니다.',
-          offendingPaths: [secondPath],
+          offendingPaths: [`rabies_dates[${second.originalIndex}].date`],
         }
       }
       return {
         ok: true,
-        message: `1·2차 간격 ${gap}일, 2차 접종(${second.date})이 1차 유효기간(${validUntil}) 이내.`,
+        message: `2차 접종(${second.date})이 1차 유효기간(${validUntil}) 이내.`,
       }
     },
   },

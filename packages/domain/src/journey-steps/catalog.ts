@@ -106,6 +106,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '2차 접종 증명서를 사진으로 올려주세요 (lot no. 가 보이게).',
     validationIds: [
       'jp.rabies-prime-booster-interval',
+      'jp.rabies-booster-within-prime-validity',
       'jp.rabies-valid-until-on-departure',
     ],
   },
