@@ -64,6 +64,10 @@
 .pm-noscroll::-webkit-scrollbar { display: none; }
 .pm-noscroll { scrollbar-width: none; }
 
+/* 정보 탭 편집 필드 — placeholder 톤 통일 (인라인 스타일로는 ::placeholder 불가). */
+.pm-field-input::placeholder { color: var(--pm-ink-3); opacity: 1; }
+.pm-field-input { caret-color: var(--pm-accent); }
+
 /* ─────────────────────────────────────────────────────────────
    PetMove — Editorial tone (펫무브워크 Design System)
    Parchment + Terracotta + Near-black. 모든 뉴트럴은 따뜻한 계열.

@@ -335,3 +335,155 @@ export async function updateTiterFields(
 function stripTiterUnit(value: string): string {
   return value.replace(/\s*IU\s*\/\s*m[lL]\s*/gi, '').trim()
 }
+
+/**
+ * 정보 탭(보호자·동물·여행·항공권)의 편집 가능한 모든 필드를 한 번에 patch.
+ *
+ * InfoView 는 편집 필드 전체의 desired-state 를 보내고, 이 액션이 화이트리스트된
+ * 컬럼·data 키만 갱신한다. 빈 문자열은 data 키 제거 / nullable 컬럼 null.
+ *
+ * 저장 포맷은 펫무브워크(admin)와 동일 — 양쪽 편집이 round-trip:
+ *  - species/sex: 코드 (dog/cat/other, male/female/...) — 단 legacy/커스텀 값도 그대로 보존
+ *  - phone: 숫자만, microchip: 15자리 숫자, weight: number
+ *  - trip_type: data.trip_type[목적지토큰] = 'round' | 'one_way' (기존 토큰 보존 머지)
+ * data 의 화이트리스트 외 키는 fetch-merge 로 보존.
+ */
+export interface CaseInfoInput {
+  customer_name: string
+  customer_name_en: string
+  pet_name: string
+  pet_name_en: string
+  microchip: string
+  destination: string
+  departure_date: string
+  phone: string
+  email: string
+  address_kr: string
+  address_zipcode: string
+  address_en: string
+  birth_date: string
+  species: string
+  breed: string
+  color: string
+  sex: string
+  weight: string
+  trip_type: 'round' | 'one_way'
+  return_date: string
+  entry_departure_airport: string
+  entry_airport: string
+  entry_flight_number: string
+  entry_transport: string
+  return_departure_airport: string
+  return_arrival_airport: string
+  return_flight_number: string
+  return_transport: string
+}
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+
+/** 빈 문자열이면 키 제거, 아니면 trim 해서 set. */
+const INFO_DATA_KEYS = [
+  'phone',
+  'email',
+  'address_kr',
+  'address_zipcode',
+  'address_en',
+  'birth_date',
+  'species',
+  'breed',
+  'color',
+  'sex',
+  'return_date',
+  'entry_departure_airport',
+  'entry_airport',
+  'entry_flight_number',
+  'entry_transport',
+  'return_departure_airport',
+  'return_arrival_airport',
+  'return_flight_number',
+  'return_transport',
+] as const
+
+export async function updateCaseInfoFields(
+  caseId: string,
+  input: CaseInfoInput,
+): Promise<Result<CaseRow>> {
+  try {
+    // ── 검증 ──
+    for (const v of [input.departure_date, input.birth_date, input.return_date]) {
+      if (v && !ISO_DATE_RE.test(v)) {
+        return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+      }
+    }
+    let chip: string | null = null
+    if (input.microchip) {
+      const digits = input.microchip.replace(/\D/g, '')
+      if (digits.length !== 15) {
+        return { ok: false, error: '마이크로칩 번호는 15자리여야 합니다.' }
+      }
+      chip = digits
+    }
+    let weightNum: number | null = null
+    if (input.weight.trim()) {
+      const n = Number(input.weight)
+      if (!Number.isFinite(n) || n < 0) {
+        return { ok: false, error: '몸무게 형식이 올바르지 않습니다.' }
+      }
+      weightNum = n
+    }
+
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const nextData: Record<string, unknown> = { ...prev }
+
+    for (const key of INFO_DATA_KEYS) {
+      const v = (input[key] ?? '').trim()
+      if (v) nextData[key] = v
+      else delete nextData[key]
+    }
+
+    if (weightNum === null) delete nextData.weight
+    else nextData.weight = weightNum
+
+    // trip_type — 활성 목적지 토큰 키로 머지 (다른 토큰의 기존 값 보존).
+    const destToken = input.destination.split(',')[0]?.trim() ?? ''
+    if (destToken) {
+      const prevTrip =
+        prev.trip_type && typeof prev.trip_type === 'object'
+          ? { ...(prev.trip_type as Record<string, unknown>) }
+          : {}
+      prevTrip[destToken] = input.trip_type
+      nextData.trip_type = prevTrip
+    }
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({
+        customer_name: input.customer_name.trim(),
+        customer_name_en: input.customer_name_en.trim() || null,
+        pet_name: input.pet_name.trim() || null,
+        pet_name_en: input.pet_name_en.trim() || null,
+        microchip: chip,
+        destination: input.destination.trim() || null,
+        departure_date: input.departure_date || null,
+        data: nextData,
+      })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}

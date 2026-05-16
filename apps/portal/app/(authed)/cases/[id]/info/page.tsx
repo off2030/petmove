@@ -2,7 +2,6 @@
 
 import { notFound } from 'next/navigation'
 import { use } from 'react'
-import { buildInfoView } from '@/lib/info/catalog'
 import { InfoView } from '@/components/cases/info-view'
 import { useCase } from '@/components/portal-shell/case-data-provider'
 
@@ -18,6 +17,5 @@ export default function CaseInfoPage({
   const caseRow = useCase(id)
   if (!caseRow) notFound()
 
-  const data = buildInfoView(caseRow)
-  return <InfoView data={data} />
+  return <InfoView caseRow={caseRow} caseId={id} />
 }

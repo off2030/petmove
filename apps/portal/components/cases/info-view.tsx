@@ -1,41 +1,237 @@
-import type { CaseInfoData, FlightInfo, GuardianInfo, PetInfo, TripInfo } from '@/lib/info/catalog'
+'use client'
+
+import { useEffect, useMemo, useState, useTransition } from 'react'
+import type { CaseRow } from '@petmove/domain'
+import { buildCaseJourneyContext } from '@petmove/domain'
+import { useCases } from '@/components/portal-shell/case-data-provider'
+import { updateCaseInfoFields, type CaseInfoInput } from '@/lib/actions/cases'
+import {
+  DateField,
+  DestinationField,
+  OptionField,
+  SegmentField,
+  TextField,
+  type FieldOption,
+} from '@/components/fields/info-fields'
 
 /**
- * 케이스 정보 탭. Stone 팔레트 / Fraunces serif — TimelineCalm·DocsView 와 동일 톤.
+ * 케이스 정보 탭 — 보호자/동물/여행/항공권. 모든 행이 편집 가능한 필드.
  *
- * 시각 소스: docs/portal-preview/app.jsx 의 `Info` — 4 섹션(보호자/동물/여행/항공권).
- * 데이터가 비면 행을 '—' 로 표시. 항공권은 entry_* 또는 return_* 필드 중 하나라도 있을 때만 표시.
+ * 시각 소스: docs/portal-preview/app.jsx 의 `Info`. Stone 팔레트 — TimelineCalm·DocsView 동일 톤.
+ *
+ * 편집 모델: 전체 폼 state(=desired-state) + dirty 추적 + 하단 sticky 저장 바.
+ * StepDetailView 의 인터랙티브 step 패턴과 동일. 저장은 updateCaseInfoFields 한 번에 commit.
+ * dirty 동안 외부 변경(Realtime/admin push)은 무시 — base 만 갱신해 저장 후 정합 유지.
  */
-export function InfoView({ data }: { data: CaseInfoData }) {
-  const C = {
-    bg: '#F5EFE8',
-    surface: '#FBF7F1',
-    ink: '#2A2620',
-    ink2: '#6B6457',
-    ink3: '#9A9286',
-    line: 'rgba(42,38,32,.10)',
-    accent: '#B89968',
-    soft: '#E8DCC4',
-    sage: '#8FA68C',
-  } as const
 
+const C = {
+  bg: '#F5EFE8',
+  surface: '#FBF7F1',
+  ink: '#2A2620',
+  ink2: '#6B6457',
+  ink3: '#9A9286',
+  line: 'rgba(42,38,32,.10)',
+  accent: '#B89968',
+  sage: '#8FA68C',
+  warn: '#C26A4A',
+} as const
+
+const SPECIES_OPTIONS: readonly FieldOption[] = [
+  { value: 'dog', label: '강아지' },
+  { value: 'cat', label: '고양이' },
+  { value: 'other', label: '기타' },
+]
+const SEX_OPTIONS: readonly FieldOption[] = [
+  { value: 'male', label: '수컷' },
+  { value: 'female', label: '암컷' },
+  { value: 'neutered_male', label: '중성화 수컷' },
+  { value: 'spayed_female', label: '중성화 암컷' },
+]
+const TRIP_OPTIONS: readonly FieldOption[] = [
+  { value: 'round', label: '왕복' },
+  { value: 'one_way', label: '편도' },
+]
+
+// ── 데이터 ↔ 폼 ──────────────────────────────────────────────────────────
+
+/** caseRow → 편집 폼 state. data jsonb·컬럼을 모두 문자열 필드로 평탄화. */
+function readForm(caseRow: CaseRow): CaseInfoInput {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const s = (key: string): string => {
+    const v = data[key]
+    if (typeof v === 'string') return v
+    if (typeof v === 'number') return String(v)
+    return ''
+  }
+  const sFallback = (...keys: string[]): string => {
+    for (const k of keys) {
+      const v = s(k)
+      if (v) return v
+    }
+    return ''
+  }
+  return {
+    customer_name: caseRow.customer_name ?? '',
+    customer_name_en: caseRow.customer_name_en ?? '',
+    pet_name: caseRow.pet_name ?? '',
+    pet_name_en: caseRow.pet_name_en ?? '',
+    microchip: (caseRow.microchip ?? '').replace(/\D/g, ''),
+    destination: caseRow.destination ?? '',
+    departure_date: caseRow.departure_date ?? '',
+    phone: s('phone').replace(/\D/g, ''),
+    email: s('email'),
+    address_kr: sFallback('address_kr', 'address_ko'),
+    address_zipcode: sFallback('address_zipcode', 'postal_code', 'zipcode'),
+    address_en: sFallback('address_en', 'address_overseas'),
+    birth_date: s('birth_date'),
+    species: s('species'),
+    breed: s('breed'),
+    color: s('color'),
+    sex: s('sex'),
+    weight: s('weight'),
+    trip_type: buildCaseJourneyContext(caseRow).tripType,
+    return_date: s('return_date'),
+    entry_departure_airport: s('entry_departure_airport'),
+    entry_airport: s('entry_airport'),
+    entry_flight_number: s('entry_flight_number'),
+    entry_transport: s('entry_transport'),
+    return_departure_airport: s('return_departure_airport'),
+    return_arrival_airport: s('return_arrival_airport'),
+    return_flight_number: s('return_flight_number'),
+    return_transport: s('return_transport'),
+  }
+}
+
+function eqForm(a: CaseInfoInput, b: CaseInfoInput): boolean {
+  return JSON.stringify(a) === JSON.stringify(b)
+}
+
+// ── 표시용 파생값 ────────────────────────────────────────────────────────
+
+function todayIso(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** 출국일 → D-7 / D-DAY / D+3. */
+function dDayLabel(departureIso: string): string | undefined {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(departureIso)) return undefined
+  const today = new Date(todayIso() + 'T00:00:00')
+  const dep = new Date(departureIso + 'T00:00:00')
+  const diff = Math.round((dep.getTime() - today.getTime()) / 86_400_000)
+  if (diff > 0) return `D-${diff}`
+  if (diff === 0) return 'D-DAY'
+  return `D+${-diff}`
+}
+
+/** 생년월일 → '연령 3세 2개월'. */
+function ageLabel(birthIso: string): string | undefined {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthIso)) return undefined
+  const b = new Date(birthIso + 'T00:00:00')
+  const t = new Date(todayIso() + 'T00:00:00')
+  if (isNaN(b.getTime())) return undefined
+  let years = t.getFullYear() - b.getFullYear()
+  let months = t.getMonth() - b.getMonth()
+  if (t.getDate() < b.getDate()) months--
+  if (months < 0) {
+    years--
+    months += 12
+  }
+  if (years <= 0 && months <= 0) return undefined
+  if (years <= 0) return `연령 ${months}개월`
+  return `연령 ${years}세 ${months}개월`
+}
+
+// ── Section ──────────────────────────────────────────────────────────────
+
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <>
+      <div
+        style={{
+          fontSize: 11,
+          letterSpacing: '0.16em',
+          textTransform: 'uppercase',
+          color: C.ink3,
+          fontWeight: 500,
+          marginTop: 24,
+          marginBottom: 10,
+          padding: '0 4px',
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          background: C.surface,
+          border: `.5px solid ${C.line}`,
+          borderRadius: 18,
+          padding: '2px 16px',
+        }}
+      >
+        {children}
+      </div>
+    </>
+  )
+}
+
+// ── InfoView ─────────────────────────────────────────────────────────────
+
+export function InfoView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string }) {
+  const { updateCase } = useCases()
+
+  const [form, setForm] = useState<CaseInfoInput>(() => readForm(caseRow))
+  const [base, setBase] = useState<CaseInfoInput>(() => readForm(caseRow))
+  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [error, setError] = useState<string | null>(null)
+  const [, startTransition] = useTransition()
+
+  // 외부(Realtime/admin) 변경 동기화 — 사용자 미편집(form==base) 시에만 새 값 채택.
+  useEffect(() => {
+    const next = readForm(caseRow)
+    setForm((prev) => (eqForm(prev, base) ? next : prev))
+    setBase(next)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow])
+
+  const dirty = useMemo(() => !eqForm(form, base), [form, base])
+  const justSaved = status === 'saved' && !dirty
+
+  function set<K extends keyof CaseInfoInput>(key: K, value: CaseInfoInput[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }))
+    if (status === 'error') setStatus('idle')
+  }
+
+  function handleSave() {
+    if (!dirty || status === 'saving') return
+    if (form.microchip && form.microchip.length !== 15) {
+      setStatus('error')
+      setError('마이크로칩 번호는 15자리여야 합니다.')
+      return
+    }
+    setStatus('saving')
+    setError(null)
+    startTransition(async () => {
+      const res = await updateCaseInfoFields(caseId, form)
+      if (res.ok) {
+        const fresh = readForm(res.value)
+        setForm(fresh)
+        setBase(fresh)
+        updateCase(res.value)
+        setStatus('saved')
+        window.setTimeout(() => setStatus('idle'), 1500)
+      } else {
+        setStatus('error')
+        setError(res.error)
+      }
+    })
+  }
+
+  const isRound = form.trip_type === 'round'
   const serif: React.CSSProperties = {
     fontFamily: 'var(--pm-font-display)',
     fontWeight: 500,
     letterSpacing: '-0.01em',
-    fontVariantNumeric: 'tabular-nums',
-  }
-  const num: React.CSSProperties = {
-    fontFamily: 'var(--pm-font-display)',
-    fontVariantNumeric: 'tabular-nums',
-    fontWeight: 400,
-  }
-  const monoCap: React.CSSProperties = {
-    fontSize: 11,
-    letterSpacing: '0.16em',
-    textTransform: 'uppercase',
-    color: C.ink3,
-    fontWeight: 500,
   }
 
   return (
@@ -46,441 +242,145 @@ export function InfoView({ data }: { data: CaseInfoData }) {
         color: C.ink,
         minHeight: '100%',
         paddingTop: 24,
-        paddingBottom: 24,
+        paddingBottom: 132,
         overflow: 'auto',
       }}
     >
       <div style={{ padding: '0 24px' }}>
         <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>정보</h1>
+        <p style={{ fontSize: 12.5, color: C.ink3, margin: '6px 0 0', lineHeight: 1.5 }}>
+          각 항목을 눌러 수정할 수 있어요.
+        </p>
 
-        <GuardianSection guardian={data.guardian} C={C} serif={serif} num={num} monoCap={monoCap} />
-        <PetSection pet={data.pet} C={C} serif={serif} num={num} monoCap={monoCap} />
-        <TripSection trip={data.trip} C={C} num={num} monoCap={monoCap} />
-        <FlightsSection flights={data.flights} C={C} serif={serif} num={num} monoCap={monoCap} />
-      </div>
-    </div>
-  )
-}
+        {/* 보호자 정보 */}
+        <Section label="보호자 정보">
+          <TextField label="성함" value={form.customer_name} onChange={(v) => set('customer_name', v)} placeholder="예: 홍길동" />
+          <TextField label="영문 성함" value={form.customer_name_en} onChange={(v) => set('customer_name_en', v)} placeholder="예: Gildong Hong" />
+          <TextField label="전화번호" value={form.phone} onChange={(v) => set('phone', v)} mask="phone" inputMode="tel" placeholder="010-0000-0000" />
+          <TextField label="이메일" value={form.email} onChange={(v) => set('email', v)} inputMode="email" placeholder="example@email.com" />
+          <TextField label="한국주소" value={form.address_kr} onChange={(v) => set('address_kr', v)} placeholder="도로명 주소" stacked />
+          <TextField label="우편번호" value={form.address_zipcode} onChange={(v) => set('address_zipcode', v)} inputMode="numeric" placeholder="00000" />
+          <TextField label="영문주소" value={form.address_en} onChange={(v) => set('address_en', v)} placeholder="English address" stacked last />
+        </Section>
 
-// ── Section helpers ─────────────────────────────────────────────────────
+        {/* 동물 정보 */}
+        <Section label="동물 정보">
+          <TextField label="이름" value={form.pet_name} onChange={(v) => set('pet_name', v)} placeholder="예: 마루" />
+          <TextField label="영문 이름" value={form.pet_name_en} onChange={(v) => set('pet_name_en', v)} placeholder="예: Maru" />
+          <TextField label="마이크로칩번호" value={form.microchip} onChange={(v) => set('microchip', v)} mask="microchip" inputMode="numeric" placeholder="15자리" />
+          <DateField label="생년월일" value={form.birth_date} onChange={(v) => set('birth_date', v)} sub={ageLabel(form.birth_date)} />
+          <OptionField label="종" value={form.species} onChange={(v) => set('species', v)} options={SPECIES_OPTIONS} />
+          <TextField label="품종" value={form.breed} onChange={(v) => set('breed', v)} placeholder="예: 말티즈" />
+          <TextField label="모색" value={form.color} onChange={(v) => set('color', v)} placeholder="예: 흰색" />
+          <OptionField label="성별" value={form.sex} onChange={(v) => set('sex', v)} options={SEX_OPTIONS} />
+          <TextField label="몸무게" value={form.weight} onChange={(v) => set('weight', v)} mask="weight" inputMode="decimal" placeholder="예: 5.2" suffix="kg" last />
+        </Section>
 
-interface Palette {
-  bg: string
-  surface: string
-  ink: string
-  ink2: string
-  ink3: string
-  line: string
-  accent: string
-  soft: string
-  sage: string
-}
+        {/* 여행 정보 */}
+        <Section label="여행 정보">
+          <DestinationField label="여행지" value={form.destination} onChange={(v) => set('destination', v)} />
+          <SegmentField
+            label="유형"
+            value={form.trip_type}
+            onChange={(v) => set('trip_type', v === 'one_way' ? 'one_way' : 'round')}
+            options={TRIP_OPTIONS}
+          />
+          <DateField
+            label="출국일"
+            value={form.departure_date}
+            onChange={(v) => set('departure_date', v)}
+            sub={dDayLabel(form.departure_date)}
+            last={!isRound}
+          />
+          {isRound && (
+            <DateField label="귀국일" value={form.return_date} onChange={(v) => set('return_date', v)} last />
+          )}
+        </Section>
 
-function Section({
-  label,
-  C,
-  monoCap,
-  children,
-}: {
-  label: string
-  C: Palette
-  monoCap: React.CSSProperties
-  children: React.ReactNode
-}) {
-  return (
-    <>
-      <div style={{ ...monoCap, marginTop: 24, marginBottom: 10, padding: '0 4px' }}>{label}</div>
-      <div
-        style={{
-          background: C.surface,
-          border: `.5px solid ${C.line}`,
-          borderRadius: 18,
-          padding: '4px 16px',
-        }}
-      >
-        {children}
-      </div>
-    </>
-  )
-}
+        {/* 항공권 — 출국 */}
+        <Section label="출국 항공권">
+          <TextField label="출발 공항" value={form.entry_departure_airport} onChange={(v) => set('entry_departure_airport', v)} placeholder="예: 인천 ICN" />
+          <TextField label="도착 공항" value={form.entry_airport} onChange={(v) => set('entry_airport', v)} placeholder="예: 나리타 NRT" />
+          <TextField label="편명" value={form.entry_flight_number} onChange={(v) => set('entry_flight_number', v)} placeholder="예: KE703" />
+          <TextField label="운송 방법" value={form.entry_transport} onChange={(v) => set('entry_transport', v)} placeholder="예: 수하물 / 화물" last />
+        </Section>
 
-function Row({
-  label,
-  value,
-  value2,
-  last,
-  wrap,
-  C,
-}: {
-  label: string
-  value: React.ReactNode
-  value2?: React.ReactNode
-  last?: boolean
-  wrap?: boolean
-  C: Palette
-}) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: wrap ? 'flex-start' : 'center',
-        padding: '13px 0',
-        borderBottom: last ? 'none' : `.5px solid ${C.line}`,
-        gap: 12,
-      }}
-    >
-      <span style={{ fontSize: 13, color: C.ink2, flexShrink: 0, paddingTop: wrap ? 2 : 0 }}>{label}</span>
-      <div style={{ textAlign: 'right', minWidth: 0, flex: 1 }}>
-        <div
-          style={{
-            fontSize: 17,
-            color: C.ink,
-            fontWeight: 500,
-            overflow: wrap ? 'visible' : 'hidden',
-            textOverflow: wrap ? 'clip' : 'ellipsis',
-            whiteSpace: wrap ? 'normal' : 'nowrap',
-            lineHeight: wrap ? 1.5 : 1.3,
-            textWrap: 'pretty' as React.CSSProperties['textWrap'],
-          }}
-        >
-          {value}
-        </div>
-        {value2 != null && (
-          <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>{value2}</div>
+        {/* 항공권 — 귀국 (왕복만) */}
+        {isRound && (
+          <Section label="귀국 항공권">
+            <TextField label="출발 공항" value={form.return_departure_airport} onChange={(v) => set('return_departure_airport', v)} placeholder="예: 나리타 NRT" />
+            <TextField label="도착 공항" value={form.return_arrival_airport} onChange={(v) => set('return_arrival_airport', v)} placeholder="예: 인천 ICN" />
+            <TextField label="편명" value={form.return_flight_number} onChange={(v) => set('return_flight_number', v)} placeholder="예: KE704" />
+            <TextField label="운송 방법" value={form.return_transport} onChange={(v) => set('return_transport', v)} placeholder="예: 수하물 / 화물" last />
+          </Section>
         )}
       </div>
-    </div>
-  )
-}
 
-function Dash({ C }: { C: Palette }) {
-  return <span style={{ color: C.ink3 }}>—</span>
-}
-
-function BilingualName({
-  ko,
-  en,
-  C,
-  serif,
-}: {
-  ko: string | null
-  en: string | null
-  C: Palette
-  serif: React.CSSProperties
-}) {
-  if (!ko && !en) return <Dash C={C} />
-  if (!en) return <span>{ko}</span>
-  if (!ko)
-    return <span style={{ ...serif, fontStyle: 'italic', fontWeight: 400 }}>{en}</span>
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8 }}>
-      <span>{ko}</span>
-      <span
+      {/* 하단 sticky 저장 바 — StepDetailView 인터랙티브 step 과 동일 패턴. */}
+      <div
         style={{
-          width: 1,
-          height: 11,
-          background: C.line,
-          display: 'inline-block',
-          alignSelf: 'center',
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          paddingTop: 12,
+          paddingLeft: 20,
+          paddingRight: 20,
+          paddingBottom: 'calc(max(env(safe-area-inset-bottom, 0px), 12px) + 53px)',
+          background:
+            'linear-gradient(180deg, rgba(245,239,232,0) 0%, rgba(245,239,232,.92) 30%, rgba(245,239,232,.92) 100%)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          zIndex: 39,
+          pointerEvents: 'none',
         }}
-      />
-      <span style={{ ...serif, fontStyle: 'italic', fontWeight: 400, color: C.ink2 }}>{en}</span>
-    </span>
-  )
-}
-
-// ── Guardian ───────────────────────────────────────────────────────────
-
-function GuardianSection({
-  guardian,
-  C,
-  serif,
-  num,
-  monoCap,
-}: {
-  guardian: GuardianInfo
-  C: Palette
-  serif: React.CSSProperties
-  num: React.CSSProperties
-  monoCap: React.CSSProperties
-}) {
-  const addressKo = guardian.postalCode && guardian.addressKo
-    ? `(${guardian.postalCode}) ${guardian.addressKo}`
-    : guardian.addressKo
-  return (
-    <Section label="보호자 정보" C={C} monoCap={monoCap}>
-      <Row
-        label="성함"
-        value={<BilingualName ko={guardian.name} en={guardian.nameEn} C={C} serif={serif} />}
-        C={C}
-      />
-      <Row
-        label="전화번호"
-        value={guardian.phone ? <span style={num}>{guardian.phone}</span> : <Dash C={C} />}
-        C={C}
-      />
-      <Row label="이메일" value={guardian.email ?? <Dash C={C} />} C={C} />
-      <Row label="한국주소" value={addressKo ?? <Dash C={C} />} wrap C={C} />
-      <Row label="영문주소" value={guardian.addressEn ?? <Dash C={C} />} wrap last C={C} />
-    </Section>
-  )
-}
-
-// ── Pet ────────────────────────────────────────────────────────────────
-
-function PetSection({
-  pet,
-  C,
-  serif,
-  num,
-  monoCap,
-}: {
-  pet: PetInfo
-  C: Palette
-  serif: React.CSSProperties
-  num: React.CSSProperties
-  monoCap: React.CSSProperties
-}) {
-  return (
-    <Section label="동물 정보" C={C} monoCap={monoCap}>
-      <Row
-        label="이름"
-        value={<BilingualName ko={pet.name} en={pet.nameEn} C={C} serif={serif} />}
-        C={C}
-      />
-      <Row
-        label="마이크로칩번호"
-        value={
-          pet.microchip ? (
-            <span style={{ ...num, letterSpacing: '0.06em' }}>{pet.microchip}</span>
-          ) : (
-            <Dash C={C} />
-          )
-        }
-        C={C}
-      />
-      <Row
-        label="생년월일"
-        value={pet.birthDate ? <span style={num}>{pet.birthDate}</span> : <Dash C={C} />}
-        value2={pet.ageLabel ? `연령 ${pet.ageLabel}` : undefined}
-        C={C}
-      />
-      <Row label="종" value={pet.species ?? <Dash C={C} />} C={C} />
-      <Row label="품종" value={pet.breed ?? <Dash C={C} />} C={C} />
-      <Row label="모색" value={pet.color ?? <Dash C={C} />} C={C} />
-      <Row label="성별" value={pet.sex ?? <Dash C={C} />} C={C} />
-      <Row
-        label="몸무게"
-        value={pet.weight ? <span style={num}>{pet.weight}</span> : <Dash C={C} />}
-        last
-        C={C}
-      />
-    </Section>
-  )
-}
-
-// ── Trip ───────────────────────────────────────────────────────────────
-
-function TripSection({
-  trip,
-  C,
-  num,
-  monoCap,
-}: {
-  trip: TripInfo
-  C: Palette
-  num: React.CSSProperties
-  monoCap: React.CSSProperties
-}) {
-  const isRound = trip.tripType === 'round'
-  const showReturnRow = isRound && trip.returnDate
-  const dDayLabel =
-    trip.daysLeft == null
-      ? null
-      : trip.daysLeft > 0
-        ? `D-${trip.daysLeft}`
-        : trip.daysLeft === 0
-          ? 'D-DAY'
-          : `D+${-trip.daysLeft}`
-
-  return (
-    <Section label="여행 정보" C={C} monoCap={monoCap}>
-      <Row label="여행지" value={trip.toCountry ?? <Dash C={C} />} C={C} />
-      <Row
-        label="유형"
-        value={
-          <span
+      >
+        {status === 'error' && (
+          <div
+            role="alert"
             style={{
-              ...monoCap,
-              padding: '3px 8px',
-              borderRadius: 999,
-              background: isRound ? C.soft : 'rgba(42,38,32,.04)',
-              color: isRound ? C.accent : C.ink2,
-              fontWeight: 600,
+              pointerEvents: 'auto',
+              marginBottom: 8,
+              padding: '9px 12px',
+              borderRadius: 10,
+              background: C.surface,
+              border: `.5px solid ${C.warn}55`,
+              color: C.warn,
+              fontSize: 12,
+              textAlign: 'center',
             }}
           >
-            {isRound ? '왕복' : '편도'}
-          </span>
-        }
-        C={C}
-      />
-      <Row
-        label="출국일"
-        value={
-          trip.departureDate ? (
-            <span style={num}>{trip.departureDate.replace(/-/g, '·')}</span>
-          ) : (
-            <Dash C={C} />
-          )
-        }
-        value2={dDayLabel ?? undefined}
-        last={!showReturnRow}
-        C={C}
-      />
-      {showReturnRow && (
-        <Row
-          label="귀국일"
-          value={<span style={num}>{trip.returnDate!.replace(/-/g, '·')}</span>}
-          last
-          C={C}
-        />
-      )}
-    </Section>
-  )
-}
-
-// ── Flights ────────────────────────────────────────────────────────────
-
-function FlightsSection({
-  flights,
-  C,
-  serif,
-  num,
-  monoCap,
-}: {
-  flights: FlightInfo[]
-  C: Palette
-  serif: React.CSSProperties
-  num: React.CSSProperties
-  monoCap: React.CSSProperties
-}) {
-  if (flights.length === 0) {
-    return (
-      <>
-        <div style={{ ...monoCap, marginTop: 24, marginBottom: 10, padding: '0 4px' }}>항공권 정보</div>
-        <div
+            {error ?? '저장 실패'}
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!dirty || status === 'saving'}
+          aria-live="polite"
           style={{
-            background: C.surface,
-            border: `.5px dashed ${C.line}`,
-            borderRadius: 18,
-            padding: '14px 16px',
-            fontSize: 13,
-            color: C.ink3,
-            lineHeight: 1.55,
+            pointerEvents: 'auto',
+            width: '100%',
+            padding: '14px 0',
+            borderRadius: 14,
+            border: 0,
+            background: justSaved
+              ? C.sage
+              : dirty && status !== 'saving'
+                ? C.accent
+                : 'rgba(42,38,32,.10)',
+            color: justSaved || (dirty && status !== 'saving') ? '#fff' : C.ink3,
+            fontFamily: 'inherit',
+            fontSize: 15,
+            fontWeight: 600,
+            letterSpacing: '-0.005em',
+            cursor: dirty && status !== 'saving' ? 'pointer' : 'not-allowed',
+            transition: 'background .15s, color .15s',
           }}
         >
-          항공권 정보가 등록되면 출국·귀국 편이 여기에 표시됩니다.
-        </div>
-      </>
-    )
-  }
-
-  return (
-    <Section label="항공권 정보" C={C} monoCap={monoCap}>
-      {flights.map((f, i) => {
-        const last = i === flights.length - 1
-        return (
-          <div
-            key={f.direction}
-            style={{
-              padding: '14px 0',
-              borderBottom: last ? 'none' : `.5px solid ${C.line}`,
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                justifyContent: 'space-between',
-                gap: 12,
-              }}
-            >
-              <span style={monoCap}>{f.label}</span>
-              {f.date && (
-                <span style={{ ...num, fontSize: 12, color: C.ink2 }}>
-                  {f.date.replace(/-/g, '·')}
-                </span>
-              )}
-            </div>
-            <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ textAlign: 'left', flexShrink: 0 }}>
-                <div style={{ ...serif, fontSize: 20, color: C.ink, lineHeight: 1 }}>
-                  {f.fromAirport ?? '—'}
-                </div>
-              </div>
-              <div style={{ flex: 1, position: 'relative', height: 12 }}>
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: 6,
-                    right: 6,
-                    height: 1,
-                    background: C.line,
-                  }}
-                />
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke={C.accent}
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%,-50%)',
-                    background: C.surface,
-                    padding: 1,
-                  }}
-                >
-                  <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
-                </svg>
-              </div>
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ ...serif, fontSize: 20, color: C.ink, lineHeight: 1 }}>
-                  {f.toAirport ?? '—'}
-                </div>
-              </div>
-            </div>
-            {(f.flightNumber || f.transport) && (
-              <div
-                style={{
-                  marginTop: 10,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'baseline',
-                  gap: 8,
-                  fontSize: 12,
-                }}
-              >
-                {f.flightNumber ? (
-                  <span style={{ ...num, color: C.ink, fontWeight: 500 }}>{f.flightNumber}</span>
-                ) : (
-                  <span />
-                )}
-                {f.transport && (
-                  <span style={{ color: C.ink3, fontSize: 12 }}>{f.transport}</span>
-                )}
-              </div>
-            )}
-          </div>
-        )
-      })}
-    </Section>
+          {status === 'saving' ? '저장 중…' : justSaved ? '✓ 저장됨' : '저장'}
+        </button>
+      </div>
+    </div>
   )
 }
