@@ -156,7 +156,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `마이크로칩이 1차(${first.date}) 이후라면 2차 접종일(${second.date})과 항체검사일이 같아야 함.`,
-          fixHint: '시술 후 재접종을 2차로 잡고 같은 날 항체검사를 실시하거나, 마이크로칩을 1차 전에 시술하세요.',
+          fixHint: '시술 후 재접종을 2차로 잡고 같은 날 항체검사를 실시하세요.',
           offendingPaths: offending,
         }
       }
