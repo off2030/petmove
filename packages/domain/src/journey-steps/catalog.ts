@@ -111,7 +111,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       'jp.rabies-prime-booster-interval',
       'jp.rabies-booster-within-prime-validity',
       'jp.rabies-valid-until-on-departure',
-      'jp.rabies-prime-before-microchip',
       'jp.microchip-rabies-sequence',
     ],
   },
