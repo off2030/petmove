@@ -22,7 +22,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '등록',
     description:
       '보호자와 동물 정보가 등록되었습니다. 이 정보는 검사, 신고, 서류 준비 등 여러 절차에 사용됩니다.\n정보 페이지에서 검토, 수정이 가능합니다.',
-    actionLine: '보호자와 동물 정보를 등록합니다.',
     doneSummary: '보호자와 동물 정보가 등록되었습니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 10,
@@ -37,7 +36,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '칩',
     description:
       '국제 표준 규격(15자리 번호)의 내장형 마이크로칩을 삽입합니다.\n강아지는 동물등록도 필수입니다.',
-    actionLine: '마이크로칩을 삽입합니다.',
     doneSummary: '마이크로칩 삽입이 완료되었습니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 20,
@@ -68,7 +66,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '백신1',
     description:
       '1차 광견병 백신을 접종합니다.\n\n생후 91일령 이후 접종해야 합니다.\n마이크로칩 삽입일에 함께 할 수 있습니다.\n불활화(사독) 또는 재조합(변형) 백신을 사용합니다. (국내 유통되는 거의 모든 백신 허용)',
-    actionLine: '1차 광견병 백신을 접종합니다.',
     doneSummary: '1차 광견병 백신 접종이 완료되었습니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 30,
@@ -98,7 +95,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '백신2',
     description:
       '2차 광견병 백신을 접종합니다.\n\n1차 접종 후 30일 이상 지나서 접종합니다.\n일본 입국 때 면역 유효기간이 남아있어야 합니다.',
-    actionLine: '2차 광견병 백신을 접종합니다.',
     doneSummary: '2차 광견병 백신 접종이 완료되었습니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 35,
@@ -129,7 +125,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '항체',
     description:
       '일본 지정 검사기관에서 광견병 항체가 검사를 받습니다.\n\n동물병원을 통해 의뢰할 수 있습니다.\n0.5 IU/mL 이상이면 합격입니다.',
-    actionLine: '광견병 항체가 검사를 위해 채혈합니다.',
     doneSummary: '광견병 항체가 검사가 완료되었습니다.',
     applicability: {
       destinations: [
@@ -195,7 +190,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '종합',
     description:
       '강아지는 DHPP(C), 고양이는 FVRCP. 출국 시점에 유효기간이 남아있어야 합니다.',
-    actionLine: '종합백신을 접종합니다.',
     doneSummary: '종합백신 접종이 완료되었습니다.',
     applicability: {
       destinations: [
@@ -231,7 +225,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '독감(CIV) 접종',
     shortLabel: '독감',
     description: '호주·뉴질랜드·인도 등 일부 국가는 강아지 인플루엔자 백신을 요구합니다.',
-    actionLine: '독감(CIV) 백신을 접종합니다.',
     doneSummary: '독감(CIV) 백신 접종이 완료되었습니다.',
     applicability: {
       destinations: ['australia', 'new_zealand', 'india'],
@@ -254,7 +247,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '전염병',
     description:
       '호주(Brucella/Leptospira/Leishmania 등), 뉴질랜드 — 인증 실험실에서 음성 확인이 필요합니다.',
-    actionLine: '전염병 검사를 받습니다.',
     doneSummary: '전염병 검사가 완료되었습니다.',
     applicability: {
       destinations: ['australia', 'new_zealand'],
@@ -277,7 +269,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '외부',
     description:
       'EU 6국·호주·뉴질랜드 등에서 출국 직전 진드기/벼룩 처치가 요구됩니다.',
-    actionLine: '외부 기생충 구충 처치를 합니다.',
     doneSummary: '외부구충 처치가 완료되었습니다.',
     applicability: {
       destinations: [
@@ -315,7 +306,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '내부',
     description:
       'EU 6국(영국·아일랜드·몰타·노르웨이·핀란드 + 북아일랜드)은 출국 24~120시간 전 praziquantel 류 촌충약이 필수입니다. 시간(분 단위)까지 기록됩니다.',
-    actionLine: '내부 기생충 구충약을 투여합니다.',
     doneSummary: '내부구충 투약이 완료되었습니다.',
     applicability: {
       destinations: [
@@ -350,7 +340,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '허가',
     description:
       '호주(DAFF), 뉴질랜드(MPI), 대만(APHIA), 말레이시아(DVS) 등은 도착 전 수입허가가 필요합니다. 허가번호가 검역증에 명시되어야 합니다.',
-    actionLine: '수입 허가를 신청합니다.',
     doneSummary: '수입 허가 신청이 완료되었습니다.',
     applicability: {
       destinations: ['australia', 'new_zealand', 'taiwan', 'malaysia'],
@@ -375,7 +364,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '내원',
     description:
       '대부분 국가는 출국 10일 이내(일본·EU 등) 또는 14일 이내 검진 기록을 요구합니다. 이 검진을 바탕으로 다음 단계의 검역증명서가 발급됩니다.',
-    actionLine: '수의사에게 임상검진을 받습니다.',
     doneSummary: '임상검진이 완료되었습니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 110,
@@ -395,7 +383,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '증명서',
     description:
       '농림축산검역본부 발급. 일본 EQC, EU AnnexIII, 호주 RNATT 등 목적지별 양식이 달라 펫무브워크에서 자동 생성됩니다.',
-    actionLine: '검역증명서를 발급받습니다.',
     doneSummary: '검역증명서 발급이 완료되었습니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 120,
@@ -413,7 +400,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '항공',
     description:
       '항공권 · 켄넬 · 위탁/기내 동반 여부를 확정합니다. 일본·태국 등은 항공편명까지 검역증명서에 기재되어야 합니다.',
-    actionLine: '항공편을 예약하고 확정합니다.',
     doneSummary: '항공 예약이 확정되었습니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 130,
@@ -433,7 +419,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '출국',
     description:
       '공항 검역대 → 항공 탑승 → 도착지 검역소 입국 심사. 도착 후 일부 국가는 7~10일 자가 격리 또는 검역소 격리가 적용됩니다.',
-    actionLine: '출국하여 도착지에 입국합니다.',
     doneSummary: '출국이 완료되었습니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 140,

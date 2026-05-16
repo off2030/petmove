@@ -116,11 +116,6 @@ export interface StepDefinition {
   /** 상세 페이지 본문 — 마크다운 가능. 절차 규칙을 안내. */
   description: string
   /**
-   * 전체 일정 리스트·다음 할 일 카드의 행동 문구 — 미완료 step 에 표시.
-   * 예: '2차 광견병 백신을 접종합니다.' 생략 시 description 첫 문장으로 폴백.
-   */
-  actionLine?: string
-  /**
    * 전체 일정 리스트의 완료 문구 — 완료된 step 에 표시.
    * 예: '마이크로칩 삽입이 완료되었습니다.' 생략 시 description 첫 문장으로 폴백.
    */

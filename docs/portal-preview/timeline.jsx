@@ -100,7 +100,7 @@ function TimelineCalm({ scenario, onNav, ringShape = 'H' }) {
             margin: '8px 0 0',
             fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)',
           }}>
-            2026년 5월 10일 이후 광견병 항체가 검사를 위해 채혈합니다.
+            2026년 5월 10일 이후 일본 지정 검사기관에서 광견병 항체가 검사를 받습니다.
           </p>
         </button>
 

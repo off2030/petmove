@@ -74,12 +74,12 @@ const SCENARIO = {
   },
   // Timeline — 8 stages, current step is 4 (항체가 검사)
   // desc: done → 완료 문구 / 그 외 → 절차 설명 첫 문장
-  // cardDesc: 미완료 step 의 '다음 할 일' 카드 본문 = 날짜 구문 + 행동 문구
+  // cardDesc: 미완료 step 의 '다음 할 일' 카드 본문 = (날짜 필요 시) 날짜 구문 + 절차 설명 첫 문장
   stages: [
     { id: 's1', label: '펫무브 등록',     short: '등록',     date: '2026-04-18', state: 'done',     desc: '보호자와 동물 정보가 등록되었습니다.' },
     { id: 's2', label: '마이크로칩 삽입',  short: '칩',       date: '2026-04-22', state: 'done',     desc: '마이크로칩 삽입이 완료되었습니다.' },
     { id: 's3', label: '광견병 백신 접종', short: '백신',     date: '2026-04-29', state: 'done',     desc: '광견병 백신 접종이 완료되었습니다.' },
-    { id: 's4', label: '광견병항체가 검사',       short: '항체 검사', date: '2026-05-12', state: 'current', desc: '일본 지정 검사기관에서 광견병 항체가 검사를 받습니다.', cardDesc: '2026년 5월 10일 이후 광견병 항체가 검사를 위해 채혈합니다.' },
+    { id: 's4', label: '광견병항체가 검사',       short: '항체 검사', date: '2026-05-12', state: 'current', desc: '일본 지정 검사기관에서 광견병 항체가 검사를 받습니다.', cardDesc: '2026년 5월 10일 이후 일본 지정 검사기관에서 광견병 항체가 검사를 받습니다.' },
     { id: 's5', label: '검역 신청',        short: '신청',     date: '2026-05-19', state: 'upcoming', desc: '농림축산검역본부에 출국 전 검역을 사전 신고합니다.' },
     { id: 's6', label: '검역증 발급',      short: '증명서',    date: '2026-05-23', state: 'upcoming', desc: '농림축산검역본부에서 동물검역증명서를 발급받습니다.' },
     { id: 's7', label: '항공 예약 확정',   short: '항공',     date: '2026-05-25', state: 'upcoming', desc: '항공권과 켄넬, 위탁 동반 여부를 확정합니다.' },
