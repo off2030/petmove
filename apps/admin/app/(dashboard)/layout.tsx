@@ -1,5 +1,5 @@
 import { createClient } from '@petmove/auth/server'
-import type { CaseRow, FieldDefinition } from '@petmove/domain'
+import type { FieldDefinition } from '@petmove/domain'
 import { CasesProvider } from '@/components/cases/cases-context'
 import { DashboardShell } from '@/components/layout/dashboard-shell'
 import { VaccineDataProvider } from '@/components/providers/vaccine-data-provider'
@@ -13,44 +13,13 @@ import { loadExternalLinks } from '@/lib/external-links'
 import { getOrgVaccineData, getOrgVaccineDefaults } from '@/lib/vaccine-data'
 import { getCalculatorItems } from '@/lib/calculator-data'
 import { getSettingsBootstrap } from '@/lib/actions/settings-bootstrap'
+import { listActiveOrgCases } from '@/lib/actions/list-cases'
 import { getActiveOrgId, getImpersonationInfo } from '@/lib/supabase/active-org'
 import { listAllOrgs, listSuperAdminsAll, type OrgSummary, type SuperAdminEntry } from '@/lib/actions/super-admin'
 import { listMyConversations, listConversationMessages, type ConversationListItem, type ConversationMessagesResult } from '@/lib/actions/chat'
 import { InstallPrompt } from '@/components/pwa/install-prompt'
 
 export const dynamic = 'force-dynamic'
-
-async function fetchAllCases(): Promise<CaseRow[]> {
-  const supabase = await createClient()
-  // active org 필터 — super_admin 도 impersonation 컨텍스트의 org 만 보도록.
-  // getActiveOrgId 는 cache() 라 같은 요청 안에서 중복 호출 안 됨.
-  let orgId: string | null = null
-  try {
-    orgId = await getActiveOrgId()
-  } catch {
-    return []
-  }
-  const all: CaseRow[] = []
-  const batchSize = 1000
-  let from = 0
-  while (true) {
-    const { data, error } = await supabase
-      .from('cases')
-      .select(
-        'id, org_id, microchip, microchip_extra, customer_name, customer_name_en, pet_name, pet_name_en, destination, departure_date, assigned_to, avatar_emoji, avatar_color, data, created_at, updated_at, deleted_at',
-      )
-      .eq('org_id', orgId)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false })
-      .range(from, from + batchSize - 1)
-    if (error) throw new Error(error.message)
-    if (!data || data.length === 0) break
-    all.push(...(data as CaseRow[]))
-    if (data.length < batchSize) break
-    from += batchSize
-  }
-  return all
-}
 
 async function fetchFieldDefs(): Promise<FieldDefinition[]> {
   const supabase = await createClient()
@@ -102,7 +71,7 @@ export default async function DashboardLayout({
   children: React.ReactNode
 }) {
   const [initialCases, fieldDefs, importReportCountries, importReportButtonCountries, inspectionConfig, certConfig, userCtx, vaccineData, vaccineDefaults, calculatorItems, settingsBootstrap, orgId, impersonation, externalLinks, convsR] = await Promise.all([
-    fetchAllCases(),
+    listActiveOrgCases(),
     fetchFieldDefs(),
     loadImportReportCountries(),
     loadImportReportButtonCountries(),

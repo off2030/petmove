@@ -32,6 +32,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { supabaseBrowser } from '@petmove/auth'
+import { subscribeRealtime } from '@/lib/realtime/resilient-channel'
 import { useConfirm } from '@petmove/ui'
 import { HandoffCard } from './handoff-card'
 import { useCases } from '@/components/cases/cases-context'
@@ -290,81 +291,76 @@ export function MessagesApp({
 
     // 2) Realtime — 본인이 보낸 INSERT 는 이미 낙관적으로 추가했으므로 skip,
     //    그 외 모든 변경은 200ms debounce 로 묶어 1회 refetch.
-    let alive = true
-    let channel: ReturnType<typeof supabaseBrowser.channel> | null = null
-
-    async function subscribe() {
-      // RLS 가 걸린 테이블 (profiles 등) 의 postgres_changes 가 도달하려면
-      // anon 이 아니라 user JWT 로 join 필요. setAuth() 누락 시 봇 이름 변경 같은
-      // profile UPDATE 이벤트가 안 들어와 chat header 가 stale 로 남는다.
-      const {
-        data: { session },
-      } = await supabaseBrowser.auth.getSession()
-      if (!alive || !session?.access_token) return
-      await supabaseBrowser.realtime.setAuth(session.access_token)
-      if (!alive) return
-
-      channel = supabaseBrowser
-        .channel(`conv:${convId}`)
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${convId}` },
-          (payload) => {
-            const sender = (payload.new as { sender_user_id?: string } | null)?.sender_user_id
-            if (sender && sender === currentUserId) return
-            scheduleRefresh(convId)
-          },
-        )
-        .on(
-          'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${convId}` },
-          () => scheduleRefresh(convId),
-        )
-        .on(
-          'postgres_changes',
-          { event: 'DELETE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${convId}` },
-          () => scheduleRefresh(convId),
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'message_reads',
-            filter: `conversation_id=eq.${convId}`,
-          },
-          (payload) => {
-            const userId =
-              (payload.new as { user_id?: string } | null)?.user_id ??
-              (payload.old as { user_id?: string } | null)?.user_id
-            if (userId && userId === currentUserId) return
-            scheduleRefresh(convId)
-          },
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'conversation_participants',
-            filter: `conversation_id=eq.${convId}`,
-          },
-          () => scheduleRefresh(convId),
-        )
-        // 참여자 (특히 봇) 의 name/avatar_url 변경도 chat header 에 반영. 비싼 처리는
-        // 아니라 currentConv 의 모든 row 단위로 listen — debounce 가 걸려 부하 미미.
-        .on(
-          'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'profiles' },
-          () => scheduleRefresh(convId),
-        )
-        .subscribe()
-    }
-
-    void subscribe()
+    //    subscribeRealtime 이 setAuth·재연결·토큰갱신을 자체 관리한다. 재연결 시
+    //    onSubscribed 가 한 번 refresh — 끊긴 동안 놓친 메시지·읽음 상태 보충.
+    let isFirstSubscribe = true
+    const unsubscribe = subscribeRealtime(
+      `conv:${convId}`,
+      (channel) =>
+        channel
+          .on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${convId}` },
+            (payload) => {
+              const sender = (payload.new as { sender_user_id?: string } | null)?.sender_user_id
+              if (sender && sender === currentUserId) return
+              scheduleRefresh(convId)
+            },
+          )
+          .on(
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${convId}` },
+            () => scheduleRefresh(convId),
+          )
+          .on(
+            'postgres_changes',
+            { event: 'DELETE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${convId}` },
+            () => scheduleRefresh(convId),
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'message_reads',
+              filter: `conversation_id=eq.${convId}`,
+            },
+            (payload) => {
+              const userId =
+                (payload.new as { user_id?: string } | null)?.user_id ??
+                (payload.old as { user_id?: string } | null)?.user_id
+              if (userId && userId === currentUserId) return
+              scheduleRefresh(convId)
+            },
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'conversation_participants',
+              filter: `conversation_id=eq.${convId}`,
+            },
+            () => scheduleRefresh(convId),
+          )
+          // 참여자 (특히 봇) 의 name/avatar_url 변경도 chat header 에 반영. 비싼 처리는
+          // 아니라 currentConv 의 모든 row 단위로 listen — debounce 가 걸려 부하 미미.
+          .on(
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'profiles' },
+            () => scheduleRefresh(convId),
+          ),
+      () => {
+        // 최초 구독은 위 refresh(convId) 가 이미 처리. 재연결 시에만 보충.
+        if (isFirstSubscribe) {
+          isFirstSubscribe = false
+          return
+        }
+        scheduleRefresh(convId)
+      },
+    )
     return () => {
-      alive = false
-      if (channel) void supabaseBrowser.removeChannel(channel)
+      unsubscribe()
       if (refreshTimerRef.current) {
         clearTimeout(refreshTimerRef.current)
         refreshTimerRef.current = null

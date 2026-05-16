@@ -13,7 +13,8 @@ import type { CaseRow, FieldDefinition } from '@petmove/domain'
 import { parseDestinations } from '@petmove/domain'
 import type { InspectionConfig } from '@petmove/domain'
 import type { CertConfig } from '@petmove/domain'
-import { supabaseBrowser } from '@petmove/auth'
+import { subscribeRealtime } from '@/lib/realtime/resilient-channel'
+import { listActiveOrgCases } from '@/lib/actions/list-cases'
 import type { SharePreset } from '@/lib/share-presets-types'
 import { DEFAULT_TODO_COLUMNS_CONFIG, type TodoColumnsConfig } from '@/lib/todo-columns-config-types'
 
@@ -135,6 +136,9 @@ export function CasesProvider({
   // 본인이 직접 추가한(addLocalCase 또는 useEffect 내 직접 setCases) 케이스 id.
   // Realtime INSERT 가 같은 행을 다시 가져왔을 때 중복 처리 + "신규" 표식을 막는다.
   const selfAddedRef = useRef<Set<string>>(new Set())
+  // Realtime 재연결 시 onSubscribed 콜백이 stale closure 없이 현재 목록을 읽도록.
+  const casesRef = useRef(cases)
+  casesRef.current = cases
 
   const selectCase = useCallback((id: string | null) => {
     setSelectedId(id)
@@ -151,76 +155,89 @@ export function CasesProvider({
   // ───── Realtime: 신청폼 신규 INSERT 구독 ─────
   // 같은 org 의 새 케이스가 들어오면 cases 배열에 즉시 추가 + 신규 표식.
   // 사용자가 행을 선택하면 표식 제거 (selectCase 안에서).
+  //
+  // subscribeRealtime 이 setAuth·재연결·토큰갱신을 자체 관리한다. 재연결 시
+  // onSubscribed 가 전체 목록을 다시 받아 끊긴 동안 놓친 INSERT 를 보충한다 —
+  // postgres_changes 는 downtime 이벤트를 replay 하지 않으므로 필수.
   useEffect(() => {
     if (!orgId) return
-    let closed = false
-    let channel: ReturnType<typeof supabaseBrowser.channel> | null = null
+    let isFirstSubscribe = true
 
-    async function subscribeCases() {
-      const {
-        data: { session },
-      } = await supabaseBrowser.auth.getSession()
-
-      if (closed || !session?.access_token) return
-
-      // Ensure the postgres_changes join carries the authenticated JWT.
-      // Without this, the first join can race as anon and RLS hides inserts.
-      await supabaseBrowser.realtime.setAuth(session.access_token)
-      if (closed) return
-
-      channel = supabaseBrowser
-        .channel(`cases-realtime-${orgId}`)
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'cases', filter: `org_id=eq.${orgId}` },
-          (payload) => {
-            const row = payload.new as CaseRow
-            if (!row?.id) return
-          // 본인이 추가한 케이스면 Realtime 콜백 무시 — 이미 addLocalCase 로 반영됨.
-            if (selfAddedRef.current.has(row.id)) {
-              selfAddedRef.current.delete(row.id)
-              return
-            }
-            setCases((prev) => {
-              if (prev.some((c) => c.id === row.id)) return prev
-              return [row, ...prev]
-            })
+    return subscribeRealtime(
+      `cases-realtime-${orgId}`,
+      (channel) =>
+        channel
+          .on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'cases', filter: `org_id=eq.${orgId}` },
+            (payload) => {
+              const row = payload.new as CaseRow
+              if (!row?.id) return
+              // 본인이 추가한 케이스면 무시 — 이미 addLocalCase 로 반영됨.
+              if (selfAddedRef.current.has(row.id)) {
+                selfAddedRef.current.delete(row.id)
+                return
+              }
+              setCases((prev) => {
+                if (prev.some((c) => c.id === row.id)) return prev
+                return [row, ...prev]
+              })
+              setNewCaseIds((prev) => {
+                const next = new Set(prev)
+                next.add(row.id)
+                return next
+              })
+            },
+          )
+          // 공유 폼 제출·다른 세션 편집 등 외부 UPDATE 를 즉시 반영.
+          // 본인 inline edit 는 updateLocalCaseField 가 선반영 → 같은 데이터로 도착해도 무해.
+          //
+          // P1 #6 — updated_at 동일하면 phantom UPDATE (트리거·autoFill 의 no-op publish
+          // 등) 로 간주하고 prev 객체 유지. CaseRowItem memo 가 그 행 재렌더 안 하도록.
+          // updated_at 이 다르면 정상 변경 — payload.new 전체로 교체.
+          .on(
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'cases', filter: `org_id=eq.${orgId}` },
+            (payload) => {
+              const row = payload.new as CaseRow
+              if (!row?.id) return
+              setCases((prev) =>
+                prev.map((c) => {
+                  if (c.id !== row.id) return c
+                  if (c.updated_at && c.updated_at === row.updated_at) return c
+                  return row
+                }),
+              )
+            },
+          ),
+      () => {
+        // 최초 구독은 initialCases 가 이미 최신이라 스킵. 재연결 시에만 보충.
+        if (isFirstSubscribe) {
+          isFirstSubscribe = false
+          return
+        }
+        void (async () => {
+          let fresh: CaseRow[]
+          try {
+            fresh = await listActiveOrgCases()
+          } catch {
+            return
+          }
+          const prevIds = new Set(casesRef.current.map((c) => c.id))
+          const arrivedIds = fresh
+            .filter((c) => !prevIds.has(c.id) && !selfAddedRef.current.has(c.id))
+            .map((c) => c.id)
+          setCases(fresh)
+          if (arrivedIds.length > 0) {
             setNewCaseIds((prev) => {
               const next = new Set(prev)
-              next.add(row.id)
+              for (const id of arrivedIds) next.add(id)
               return next
             })
-          },
-        )
-        // 공유 폼 제출·다른 세션 편집 등 외부 UPDATE 를 즉시 반영.
-        // 본인 inline edit 는 updateLocalCaseField 가 선반영 → 같은 데이터로 도착해도 무해.
-        //
-        // P1 #6 — updated_at 동일하면 phantom UPDATE (트리거·autoFill 의 no-op publish
-        // 등) 로 간주하고 prev 객체 유지. CaseRowItem memo 가 그 행 재렌더 안 하도록.
-        // updated_at 이 다르면 정상 변경 — payload.new 전체로 교체.
-        .on(
-          'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'cases', filter: `org_id=eq.${orgId}` },
-          (payload) => {
-            const row = payload.new as CaseRow
-            if (!row?.id) return
-            setCases((prev) =>
-              prev.map((c) => {
-                if (c.id !== row.id) return c
-                if (c.updated_at && c.updated_at === row.updated_at) return c
-                return row
-              }),
-            )
-          },
-        )
-        .subscribe()
-    }
-
-    void subscribeCases()
-    return () => {
-      closed = true
-      if (channel) void supabaseBrowser.removeChannel(channel)
-    }
+          }
+        })()
+      },
+    )
   }, [orgId])
 
   // 검사/신고/서류 탭에서 행 클릭 시 호출. selectCase로 케이스 선택 후

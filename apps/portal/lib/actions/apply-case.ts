@@ -146,6 +146,8 @@ export async function applyCase(input: ApplyInput): Promise<
     .from('cases')
     .insert({
       org_id: ORG_ID,
+      // 공개 신청폼 출처 표시 — DB 트리거가 이 값으로 운영자 봇 알림을 발송한다.
+      source: 'apply_form',
       customer_name: input.customer_name,
       customer_name_en: `${input.customer_first_name_en} ${input.customer_last_name_en}`,
       pet_name: input.pet_name,

@@ -13,7 +13,7 @@ import { SuperAdminApp } from '@/components/super-admin/super-admin-app'
 import { clearImpersonation } from '@/lib/actions/super-admin'
 import { migrateMyOAuthAvatar } from '@/lib/actions/profile'
 import { listMyConversations } from '@/lib/actions/chat'
-import { supabaseBrowser } from '@petmove/auth'
+import { subscribeRealtime } from '@/lib/realtime/resilient-channel'
 import type { SettingsBootstrap } from '@/lib/actions/settings-bootstrap'
 import type { OrgSummary, SuperAdminEntry } from '@/lib/actions/super-admin'
 import type { ConversationListItem, ConversationMessagesResult } from '@/lib/actions/chat'
@@ -95,49 +95,40 @@ export function DashboardShell({
   // RLS 가 postgres_changes 에 적용되므로 본인 참여 대화방 이벤트만 도달.
   useEffect(() => {
     let alive = true
-    let channel: ReturnType<typeof supabaseBrowser.channel> | null = null
     const refetch = async () => {
       const r = await listMyConversations()
       if (!alive || !r.ok) return
       setConversations(r.value)
     }
 
-    async function subscribe() {
-      // Realtime postgres_changes 가 RLS 를 통과하려면 anon 이 아니라 user JWT 로
-      // join 해야 함. setAuth() 누락 시 profiles 처럼 RLS 걸린 테이블 이벤트가
-      // 안 들어와 봇 이름 변경이 stale 로 남는다 (cases-context 와 동일 패턴).
-      const {
-        data: { session },
-      } = await supabaseBrowser.auth.getSession()
-      if (!alive || !session?.access_token) return
-      await supabaseBrowser.realtime.setAuth(session.access_token)
-      if (!alive) return
-
-      channel = supabaseBrowser
-        .channel('topbar-inbox')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, refetch)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, refetch)
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'conversation_participants' },
-          refetch,
-        )
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'message_reads' },
-          refetch,
-        )
-        // 봇 (또는 다른 사용자) 의 name/avatar_url 이 바뀌면 conversations 의 participant
-        // 정보도 stale → 같이 refetch. profiles 변경은 빈번하지 않아 부하 미미.
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, refetch)
-        .subscribe()
-    }
-
-    refetch()
-    void subscribe()
+    // subscribeRealtime 이 setAuth·재연결·토큰갱신을 자체 관리한다.
+    // onSubscribed 가 (재)구독 때마다 refetch — 끊긴 동안 놓친 메시지·읽음 상태 보충.
+    const unsubscribe = subscribeRealtime(
+      'topbar-inbox',
+      (channel) =>
+        channel
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, refetch)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, refetch)
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'conversation_participants' },
+            refetch,
+          )
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'message_reads' },
+            refetch,
+          )
+          // 봇 (또는 다른 사용자) 의 name/avatar_url 이 바뀌면 conversations 의 participant
+          // 정보도 stale → 같이 refetch. profiles 변경은 빈번하지 않아 부하 미미.
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, refetch),
+      () => {
+        void refetch()
+      },
+    )
     return () => {
       alive = false
-      if (channel) void supabaseBrowser.removeChannel(channel)
+      unsubscribe()
     }
   }, [])
 
