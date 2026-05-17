@@ -344,10 +344,10 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
         {g.group === '절차정보' && (() => {
           // 추가정보 카테고리만 추출 — 절차/고객/동물 카테고리는 case-detail 가 자체 렌더 (buildAllFieldSpecs + EditableField 라우팅).
           // descriptor.subgroup 이 그대로 SimpleExtraSection 의 group/flat 분기 입력. species·email 필터는 빌더가 처리.
-          // 편도 시 'return_*' 필드(귀국편 항공권 정보) 제외.
+          // 편도 시 'return_*'(귀국편 항공권)·'jp_export_quarantine_*'(수출검역 예약) 제외 — 왕복 전용.
           const rawExtraEntries = getEffectiveExtraFieldEntries(viewDestination, destOverridesConfig)
           const extraEntriesFiltered = tripType === 'one_way'
-            ? rawExtraEntries.filter(e => !e.key.startsWith('return_'))
+            ? rawExtraEntries.filter(e => !e.key.startsWith('return_') && !e.key.startsWith('jp_export_quarantine_'))
             : rawExtraEntries
           const extraDescriptors = buildShareFieldDescriptors({
             fieldDefs,
