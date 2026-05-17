@@ -233,6 +233,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
 
       const offendingPaths: string[] = []
       const problems: string[] = []
+      let tooLate = false
       for (const t of titers) {
         const path = `rabies_titer_records[${t.originalIndex}].date`
         if (t.date < second.date) {
@@ -241,10 +242,15 @@ export const JP_CHECKS: ProcedureCheck[] = [
         } else if (chainEnd && t.date > chainEnd) {
           offendingPaths.push(path)
           problems.push(`채혈일(${t.date})이 부스터 면역기간(${chainEnd})을 벗어났습니다.`)
+          tooLate = true
         }
       }
       if (offendingPaths.length > 0) {
-        return { ok: false, message: problems.join(' / '), offendingPaths }
+        // 채혈은 2차 접종일 이후 ~ 부스터 면역 유효기간 이내여야 함.
+        const fixHint = tooLate
+          ? '추가 접종 후 면역 유효기간 이내에 항체검사를 다시 받으세요.'
+          : '2차 접종 이후 항체검사를 다시 받으세요.'
+        return { ok: false, message: problems.join(' / '), fixHint, offendingPaths }
       }
       return { ok: true, message: '항체검사 시기 적합.' }
     },
