@@ -101,6 +101,16 @@ function deadlineDate(step: StepDefinition, caseRow: CaseRow): string | null {
     d.setUTCDate(d.getUTCDate() - step.deadline.daysBefore)
     return d.toISOString().slice(0, 10)
   }
+  if (step.deadline.anchor === 'entry') {
+    // 일본 입국일 = 항공편 entry_date. 출국일과 별개 — '입국 N일 전' 마감 계산에 사용.
+    const data = (caseRow.data ?? {}) as Record<string, unknown>
+    const entry = typeof data.entry_date === 'string' ? data.entry_date : null
+    if (entry && entry.length >= 10) {
+      const d = new Date(entry.slice(0, 10) + 'T00:00:00Z')
+      d.setUTCDate(d.getUTCDate() - step.deadline.daysBefore)
+      return d.toISOString().slice(0, 10)
+    }
+  }
   if (step.deadline.anchor === 'created') {
     const d = new Date(caseRow.created_at)
     d.setUTCDate(d.getUTCDate() - step.deadline.daysBefore)

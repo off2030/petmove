@@ -204,7 +204,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '일본 검역소에 사전 신고를 하세요.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
     order: 47,
-    deadline: { anchor: 'departure', daysBefore: 40 },
+    deadline: { anchor: 'entry', daysBefore: 40 },
     done: 'manual-flag:advance-notification-submitted',
     allowAttachments: true,
     attachmentHint: '수입허가증을 사진, PDF로 보관하세요.',
