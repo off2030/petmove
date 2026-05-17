@@ -182,53 +182,60 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
           </Link>
         )}
 
-        {/* 다음 할 일 카드 — soft taupe gradient. 클릭 시 해당 단계 상세로 이동.
-            non-blocking step 뒤엔 current 가 여럿이라 카드도 여럿. 라벨·D-day 는 첫 카드만. */}
-        {nextStages.map((stage, i) => (
-          <Link
-            key={stage.id}
-            href={`/cases/${caseId}/journey/${stage.id}`}
-            className="pm-pressable"
+        {/* 다음 할 일 카드 — soft taupe. 헤더 1회 + 할 일 항목들(각 행이 링크, 구분선).
+            non-blocking step 뒤엔 항목이 여럿 — 한 카드에 묶어 표시. */}
+        {nextStages.length > 0 && (
+          <div
             style={{
-              display: 'block',
-              marginTop: i === 0 ? 22 : 12,
+              marginTop: 22,
               padding: 22,
               borderRadius: 22,
               background: C.cardSoft,
               boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
-              textDecoration: 'none',
-              color: 'inherit',
-              cursor: 'pointer',
             }}
           >
-            {i === 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <div style={{ ...monoCap, color: 'rgba(45,38,28,.55)' }}>다음 할 일</div>
-                {dDayLabel && (
-                  <span style={{ ...monoCap, color: 'rgba(45,38,28,.75)', fontWeight: 600 }}>{dDayLabel}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <div style={{ ...monoCap, color: 'rgba(45,38,28,.55)' }}>다음 할 일</div>
+              {dDayLabel && (
+                <span style={{ ...monoCap, color: 'rgba(45,38,28,.75)', fontWeight: 600 }}>{dDayLabel}</span>
+              )}
+            </div>
+            {nextStages.map((stage, i) => (
+              <Link
+                key={stage.id}
+                href={`/cases/${caseId}/journey/${stage.id}`}
+                className="pm-pressable"
+                style={{
+                  display: 'block',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  marginTop: i === 0 ? 12 : 14,
+                  paddingTop: i === 0 ? 0 : 14,
+                  borderTop: i === 0 ? 0 : '1px solid rgba(45,38,28,.12)',
+                }}
+              >
+                <h3
+                  style={{
+                    ...serif,
+                    margin: 0,
+                    fontSize: 22,
+                    lineHeight: 1.18,
+                    color: '#2A2620',
+                    fontWeight: 500,
+                    textWrap: 'balance' as React.CSSProperties['textWrap'],
+                  }}
+                >
+                  {stage.label}
+                </h3>
+                {(stage.cardDesc ?? stage.desc) && (
+                  <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>
+                    {stage.cardDesc ?? stage.desc}
+                  </p>
                 )}
-              </div>
-            )}
-            <h3
-              style={{
-                ...serif,
-                margin: i === 0 ? '12px 0 0' : 0,
-                fontSize: 22,
-                lineHeight: 1.18,
-                color: '#2A2620',
-                fontWeight: 500,
-                textWrap: 'balance' as React.CSSProperties['textWrap'],
-              }}
-            >
-              {stage.label}
-            </h3>
-            {(stage.cardDesc ?? stage.desc) && (
-              <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>
-                {stage.cardDesc ?? stage.desc}
-              </p>
-            )}
-          </Link>
-        ))}
+              </Link>
+            ))}
+          </div>
+        )}
 
         {/* 진행률 링 — taupe radial gradient hero */}
         <div

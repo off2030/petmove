@@ -72,37 +72,53 @@ function TimelineCalm({ scenario, onNav, ringShape = 'H' }) {
           </div>
         </div>
 
-        {/* 다음 할 일 — soft taupe gradient card. 카드 전체가 클릭 가능 (해당 단계 상세로 이동). */}
-        <button
-          type="button"
-          onClick={() => onNav && onNav('timeline')}
-          className="pm-pressable"
+        {/* 다음 할 일 — soft taupe gradient card. 헤더 1회 + 할 일 항목들(각 행 클릭 가능, 구분선).
+            non-blocking step 뒤엔 할 일이 여럿 — 한 카드에 묶어 표시. */}
+        <div
           style={{
-            display: 'block', width: '100%', textAlign: 'left',
             marginTop: 22, padding: 22, borderRadius: 22,
-            background: C.cardSoft, border: 0,
+            background: C.cardSoft,
             boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
-            color: 'inherit', fontFamily: 'inherit', cursor: 'pointer',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <div style={{ ...monoCap, color: 'rgba(45,38,28,.55)' }}>다음 할 일</div>
             <span style={{ ...monoCap, fontSize: 9.5, color: 'rgba(45,38,28,.75)', fontWeight: 600 }}>D-7</span>
           </div>
-          <h3 style={{
-            ...serif, margin: '12px 0 0',
-            fontSize: 26, lineHeight: 1.18, color: '#2A2620', fontWeight: 500,
-            textWrap: 'balance',
-          }}>
-            광견병 항체가 검사
-          </h3>
-          <p style={{
-            margin: '8px 0 0',
-            fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)',
-          }}>
-            2026년 5월 10일 이후 일본 지정 검사기관에서 광견병 항체가 검사를 받습니다.
-          </p>
-        </button>
+          {[
+            { label: '광견병 항체가 검사', desc: '2026년 5월 10일 이후 일본 지정 검사기관에서 광견병 항체가 검사를 받습니다.' },
+            { label: '검역 신청', desc: '농림축산검역본부에 출국 전 검역을 사전 신고합니다.' },
+          ].map((task, i) => (
+            <button
+              key={task.label}
+              type="button"
+              onClick={() => onNav && onNav('timeline')}
+              className="pm-pressable"
+              style={{
+                display: 'block', width: '100%', textAlign: 'left',
+                background: 'transparent', border: 0, padding: 0,
+                color: 'inherit', fontFamily: 'inherit', cursor: 'pointer',
+                marginTop: i === 0 ? 12 : 14,
+                paddingTop: i === 0 ? 0 : 14,
+                borderTop: i === 0 ? 0 : '1px solid rgba(45,38,28,.12)',
+              }}
+            >
+              <h3 style={{
+                ...serif, margin: 0,
+                fontSize: 26, lineHeight: 1.18, color: '#2A2620', fontWeight: 500,
+                textWrap: 'balance',
+              }}>
+                {task.label}
+              </h3>
+              <p style={{
+                margin: '8px 0 0',
+                fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)',
+              }}>
+                {task.desc}
+              </p>
+            </button>
+          ))}
+        </div>
 
         {/* Now-Step hero — big circular progress (Now Playing pattern) */}
         <div style={{
