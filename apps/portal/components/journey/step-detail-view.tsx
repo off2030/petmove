@@ -188,10 +188,12 @@ export function StepDetailView({
       setError(null)
       startTransition(async () => {
         const res = await updateFlightFields(caseId, {
+          entry_date: flightForm.entry_date || null,
           entry_departure_airport: flightForm.entry_departure_airport || null,
           entry_airport: flightForm.entry_airport || null,
           entry_flight_number: flightForm.entry_flight_number || null,
           entry_transport: flightForm.entry_transport || null,
+          return_date: flightForm.return_date || null,
           return_departure_airport: flightForm.return_departure_airport || null,
           return_arrival_airport: flightForm.return_arrival_airport || null,
           return_flight_number: flightForm.return_flight_number || null,
@@ -769,10 +771,12 @@ function readFlightForm(data: Record<string, unknown> | null | undefined): Fligh
     return typeof v === 'string' ? v : ''
   }
   return {
+    entry_date: str('entry_date'),
     entry_departure_airport: str('entry_departure_airport'),
     entry_airport: str('entry_airport'),
     entry_flight_number: str('entry_flight_number'),
     entry_transport: str('entry_transport'),
+    return_date: str('return_date'),
     return_departure_airport: str('return_departure_airport'),
     return_arrival_airport: str('return_arrival_airport'),
     return_flight_number: str('return_flight_number'),
@@ -782,10 +786,12 @@ function readFlightForm(data: Record<string, unknown> | null | undefined): Fligh
 
 function flightFormEqual(a: FlightForm, b: FlightForm): boolean {
   return (
+    a.entry_date === b.entry_date &&
     a.entry_departure_airport === b.entry_departure_airport &&
     a.entry_airport === b.entry_airport &&
     a.entry_flight_number === b.entry_flight_number &&
     a.entry_transport === b.entry_transport &&
+    a.return_date === b.return_date &&
     a.return_departure_airport === b.return_departure_airport &&
     a.return_arrival_airport === b.return_arrival_airport &&
     a.return_flight_number === b.return_flight_number &&

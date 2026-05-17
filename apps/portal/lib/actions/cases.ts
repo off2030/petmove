@@ -338,10 +338,12 @@ function stripTiterUnit(value: string): string {
 
 /** 항공권 구매 step 이 다루는 case.data 평탄 키 — 출국 4 + 귀국 4. */
 const FLIGHT_DATA_KEYS = [
+  'entry_date',
   'entry_departure_airport',
   'entry_airport',
   'entry_flight_number',
   'entry_transport',
+  'return_date',
   'return_departure_airport',
   'return_arrival_airport',
   'return_flight_number',
@@ -360,6 +362,13 @@ export async function updateFlightFields(
   fields: Record<(typeof FLIGHT_DATA_KEYS)[number], string | null>,
 ): Promise<Result<CaseRow>> {
   try {
+    for (const key of ['entry_date', 'return_date'] as const) {
+      const v = fields[key]
+      if (v != null && v !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+        return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+      }
+    }
+
     const access = await assertCaseAccess(caseId)
     if (!access.ok) return access
 

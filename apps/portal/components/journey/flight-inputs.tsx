@@ -1,5 +1,7 @@
 'use client'
 
+import { DateTextField } from '@petmove/ui'
+
 /**
  * 항공권 구매 step 입력 필드 — 출국·귀국 항공권. controlled — 부모(step-detail-view)가
  * state·save 를 보유. 저장 형식은 case.data 의 entry_* / return_* 평탄 키
@@ -9,10 +11,12 @@
  */
 
 export interface FlightForm {
+  entry_date: string
   entry_departure_airport: string
   entry_airport: string
   entry_flight_number: string
   entry_transport: string
+  return_date: string
   return_departure_airport: string
   return_arrival_airport: string
   return_flight_number: string
@@ -41,11 +45,12 @@ const TRANSPORT_OPTIONS: readonly { value: string; label: string }[] = [
 interface FlightField {
   key: keyof FlightForm
   label: string
-  kind: 'text' | 'transport'
+  kind: 'text' | 'date' | 'transport'
   placeholder?: string
 }
 
 const ENTRY_FIELDS: readonly FlightField[] = [
+  { key: 'entry_date', label: '도착일', kind: 'date' },
   { key: 'entry_departure_airport', label: '출발 공항', kind: 'text', placeholder: '예: 인천 ICN' },
   { key: 'entry_airport', label: '도착 공항', kind: 'text', placeholder: '예: 나리타 NRT' },
   { key: 'entry_flight_number', label: '편명', kind: 'text', placeholder: '예: KE703' },
@@ -53,6 +58,7 @@ const ENTRY_FIELDS: readonly FlightField[] = [
 ]
 
 const RETURN_FIELDS: readonly FlightField[] = [
+  { key: 'return_date', label: '귀국일', kind: 'date' },
   { key: 'return_departure_airport', label: '출발 공항', kind: 'text', placeholder: '예: 나리타 NRT' },
   { key: 'return_arrival_airport', label: '도착 공항', kind: 'text', placeholder: '예: 인천 ICN' },
   { key: 'return_flight_number', label: '편명', kind: 'text', placeholder: '예: KE704' },
@@ -131,6 +137,14 @@ function FlightGroup({
                 value={value[field.key]}
                 onChange={(next) => onChange(field.key, next)}
               />
+            ) : field.kind === 'date' ? (
+              <div style={{ marginTop: 8 }}>
+                <DateTextField
+                  value={value[field.key]}
+                  onChange={(next) => onChange(field.key, next)}
+                  placeholder="YYYY-MM-DD"
+                />
+              </div>
             ) : (
               <input
                 type="text"
