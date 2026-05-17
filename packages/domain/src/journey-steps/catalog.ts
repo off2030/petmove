@@ -388,11 +388,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'vet-visit',
     category: 'document',
-    title: '출국 전 임상 검사와 서류 준비',
+    title: '출국 전 임상검사',
     shortLabel: '내원',
     description:
-      '출국일 기준 10일 이내에 임상 수의사의 검진을 받고 검역소에 제출할 서류를 준비합니다.',
-    cardLine: '임상 수의사의 검진을 받고 검역소 서류를 준비하세요.',
+      '출국일 기준 10일 이내에 임상 수의사의 검진을 받으세요.\n검역소에 제출할 서류를 준비하세요.',
+    cardLine: '임상 수의사의 검진을 받고 검역소에 제출할 서류를 준비하세요.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 110,
     deadline: { anchor: 'departure', daysBefore: 9, window: true },
