@@ -95,17 +95,19 @@ function formatKoreanDate(iso: string): string {
 /** step 의 deadline 으로부터 표시용 date 문자열 계산 (없으면 null). */
 function deadlineDate(step: StepDefinition, caseRow: CaseRow): string | null {
   if (!step.deadline) return null
-  const dep = caseRow.departure_date
-  if (step.deadline.anchor === 'departure' && dep) {
-    const d = new Date(dep + 'T00:00:00Z')
-    d.setUTCDate(d.getUTCDate() - step.deadline.daysBefore)
-    return d.toISOString().slice(0, 10)
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
+  if (step.deadline.anchor === 'departure') {
+    // 출국일 미입력 시 항공편 입국일(entry_date)로 폴백 — 한일 노선은 출국=입국 당일.
+    const dep = caseRow.departure_date || entry
+    if (dep && dep.length >= 10) {
+      const d = new Date(dep.slice(0, 10) + 'T00:00:00Z')
+      d.setUTCDate(d.getUTCDate() - step.deadline.daysBefore)
+      return d.toISOString().slice(0, 10)
+    }
   }
   if (step.deadline.anchor === 'entry') {
-    // 일본 입국일 = 항공편 entry_date. 출국일과 별개 — '입국 N일 전' 마감 계산에 사용.
-    const data = (caseRow.data ?? {}) as Record<string, unknown>
-    const entry = typeof data.entry_date === 'string' ? data.entry_date : null
-    if (entry && entry.length >= 10) {
+    if (entry.length >= 10) {
       const d = new Date(entry.slice(0, 10) + 'T00:00:00Z')
       d.setUTCDate(d.getUTCDate() - step.deadline.daysBefore)
       return d.toISOString().slice(0, 10)
