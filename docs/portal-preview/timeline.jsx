@@ -213,7 +213,7 @@ function TimelineCalm({ scenario, onNav, ringShape = 'H' }) {
                       fontWeight: isCurr ? 700 : 500,
                       textAlign: 'right', flexShrink: 0
                     }}>
-                      {isCurr ? 'D-7' : s.date ? `${s.date.slice(2, 4)}·${s.date.slice(5, 7)}·${s.date.slice(8, 10)}` : '—'}
+                      {isCurr ? '예정' : s.date ? `${s.date.slice(2, 4)}·${s.date.slice(5, 7)}·${s.date.slice(8, 10)}` : '—'}
                     </div>
                   </div>
                   {s.desc &&

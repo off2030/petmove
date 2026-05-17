@@ -420,7 +420,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                         flexShrink: 0,
                       }}
                     >
-                      {hasWarn ? '주의' : hasInfo ? '안내' : isCurr ? (dDayLabel ?? '예정') : formatStageDate(s)}
+                      {hasWarn ? '주의' : hasInfo ? '안내' : isCurr ? '예정' : formatStageDate(s)}
                     </div>
                   </div>
                   {s.desc && (
