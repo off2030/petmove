@@ -21,6 +21,7 @@
 3. **invite-only 가드** — proxy.ts 의 memberships 0 차단은 admin 에서만. portal 에는 적용되지 않음 (도메인 분리됨).
 4. **본체에서 master 직접 작업** — worktree 사용 X. /c/dev/petmove 에서 master 직접 편집·커밋·푸시.
 5. **Supabase 는 Seoul 프로젝트만** — Mumbai 사용 금지 (곧 삭제 예정). `pnpm db:link` 확인 필수.
+6. **인증 게이트 = RLS + 핸들러 자체 검증** — 미들웨어(`proxy.ts`)는 문서 내비게이션만 `/login` 으로 보낸다. 서버액션·비공개 API 라우트는 미들웨어를 통과하므로 반드시 자체 `getUser()` 체크 또는 RLS 에 의존할 것. 특히 `createAdminClient()`(service-role, RLS 우회) 호출 전 인증 가드 필수.
 
 ## 작업 시작 전 읽기
 

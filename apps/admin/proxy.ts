@@ -35,6 +35,25 @@ function bypassMembershipGate(pathname: string) {
   return NO_MEMBERSHIP_OK_PREFIXES.some((p) => pathname.startsWith(p))
 }
 
+/**
+ * 최상위 문서 내비게이션(주소창 입력·새로고침·링크 클릭 → 전체 페이지 로드)인지 판별.
+ *
+ * 인증 실패 시 redirect 를 *문서 내비게이션에만* 내보내기 위한 게이트.
+ * 서버액션 POST 의 redirect 는 Next 라우터가 내비게이션으로 따라가, SPA 가
+ * /login 으로 갔다 되돌아오며 (dashboard) 레이아웃이 리마운트 → 화면 상태가
+ * 통째로 소실된다(상세페이지가 메모리 상태라 목록으로 튕김). RSC·prefetch·fetch 도 동일.
+ *
+ * Sec-Fetch-Mode 는 브라우저가 강제 부착하는 헤더(JS 위조 불가). 구형 브라우저로
+ * 헤더가 없으면 RSC/서버액션을 명시 제외 후 Accept 로 폴백.
+ */
+function isDocumentNavigation(request: NextRequest): boolean {
+  const mode = request.headers.get('sec-fetch-mode')
+  if (mode) return mode === 'navigate'
+  if (request.headers.get('rsc') === '1') return false
+  if (request.headers.has('next-action')) return false
+  return request.headers.get('accept')?.includes('text/html') ?? false
+}
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request })
 
@@ -59,30 +78,34 @@ export async function proxy(request: NextRequest) {
     },
   )
 
-  // getUser() 는 내부적으로 refresh 를 시도한다. 구 환경(Mumbai 등)의 stale
-  // refresh token 이 쿠키에 남아있으면 "Invalid Refresh Token" 으로 throw 하고
-  // Next.js 에러 오버레이가 뜬다. 공개 경로는 auth 체크 자체를 건너뛰고,
-  // 보호 경로에서 실패하면 쿠키를 정리하며 /login 으로 보낸다.
   const { pathname } = request.nextUrl
   if (isPublic(pathname)) return response
 
+  // getUser() 는 내부적으로 refresh 를 시도하며, stale/경쟁 refresh token 으로
+  // throw 할 수 있다 — 이는 "미인증"이 아니라 일시적 실패일 수 있다. 따라서 throw 시
+  // signOut() 으로 세션을 파괴하지 않는다(네트워크 블립에 멀쩡한 세션이 날아가는 것
+  // 방지). throw 든 user=null 이든 아래 단일 분기에서 처리한다.
   let user = null
   try {
-    const result = await supabase.auth.getUser()
-    user = result.data.user
+    user = (await supabase.auth.getUser()).data.user
   } catch {
-    // stale / invalid refresh token — signOut 으로 쿠키 제거 후 /login
-    try { await supabase.auth.signOut() } catch { /* ignore */ }
+    /* 일시적 실패 가능 — user=null 로 두고 아래 공통 처리 */
+  }
+
+  // 인증 실패 처리. redirect 는 *문서 내비게이션에만* — 일시적 실패였다면 /login 이
+  // 재검증 후 next 로 되돌려보낸다(전체 로드라 잃을 SPA 상태가 없다). 서버액션·RSC 등
+  // 백그라운드 요청은 redirect 없이 통과 — 라우터가 redirect 를 내비게이션으로 따라가며
+  // 생기는 "상세페이지 → 홈 튕김"을 차단한다. 데이터 노출 없음: 실제 경계는 RLS.
+  if (!user) {
+    if (!isDocumentNavigation(request)) return response
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  if (!user) {
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('next', pathname)
-    return NextResponse.redirect(loginUrl)
-  }
+  // 멤버십·비번 게이트도 redirect 를 내보내므로 동일 원칙 — 문서 내비게이션이 아니면
+  // 게이트 자체를 건너뛴다(불필요한 DB 조회 2건도 절약). user 는 위에서 확정됨.
+  if (!isDocumentNavigation(request)) return response
 
   // Invite-only 게이트: 멤버십 0 + super_admin 아님 → 차단.
   // 외부인이 OAuth 로 들어와도 빈 화면 대신 /login?error=invite_required 로 보냄.
