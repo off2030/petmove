@@ -504,7 +504,7 @@ export function StepDetailView({
               <span style={{ color: C.ink3 }}>→</span>
             </Link>
           )}
-          {step.id === 'vet-visit' && (
+          {(step.id === 'vet-visit' || step.id === 'certificate-issue') && (
             <Link
               href={`/cases/${caseId}/docs`}
               style={{

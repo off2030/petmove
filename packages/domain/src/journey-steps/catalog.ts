@@ -431,7 +431,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     category: 'document',
     title: '한국 동물검역소 방문',
     shortLabel: '검역소',
-    description: '출국일 기준 10일 이내에 동물검역소를 방문해 검역을 받습니다.',
+    description:
+      '출국일 기준 10일 이내에 동물검역소를 방문해 검역을 받습니다.\n반드시 동물을 데리고 가셔야 합니다.\n필요한 서류를 확인하세요.',
     cardLine: '동물검역소를 방문해 검역을 받으세요.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 120,
@@ -439,7 +440,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     deadline: { anchor: 'departure', daysBefore: 9, window: true },
     done: 'manual-flag:certificate-issued',
     allowAttachments: true,
-    attachmentHint: '발급된 검역증명서 PDF 가 자동 첨부됩니다.',
+    attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
     links: [
       { url: 'https://www.petmove.co.kr/docs/pet-quarantine-station/', label: '동물검역소 위치' },
       { url: 'https://eminwon.qia.go.kr/eminwon/reservation/login/login.do?ref=petmove.co.kr', label: '검역 예약' },
