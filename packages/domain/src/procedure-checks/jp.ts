@@ -399,7 +399,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message,
-        fixHint: `입국일을 ${earliestKr} 이후로 조정하세요.`,
+        fixHint: `입국일을 ${earliestKr} 이후로 변경하세요.`,
         offendingPaths: offending,
       }
     },
@@ -432,7 +432,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `항체검사 유효기간이 ${validUntilKr}까지입니다. 입력하신 입국일(${formatKoreanDate(entryDate)})은 그 이후입니다.`,
-        fixHint: `재검사하거나 입국일을 ${validUntilKr} 이내로 조정하세요.`,
+        fixHint: `재검사하거나 입국일을 ${validUntilKr} 이내로 변경하세요.`,
         offendingPaths: offending,
       }
     },
