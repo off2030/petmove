@@ -57,6 +57,11 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return typeof data.vet_visit_date === 'string' && (data.vet_visit_date as string).length >= 10
     case 'has-flight-date':
       return typeof data.entry_date === 'string' && (data.entry_date as string).length >= 10
+    case 'has-advance-notification':
+      return (
+        typeof data.advance_notification_date === 'string' &&
+        (data.advance_notification_date as string).length >= 10
+      )
     case 'departure-past': {
       const dep = caseRow.departure_date
       if (!dep) return false
@@ -125,6 +130,11 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
     }
     case 'has-flight-date': {
       const dt = typeof data.entry_date === 'string' ? data.entry_date : null
+      return dt && dt.length >= 10 ? dt.slice(0, 10) : null
+    }
+    case 'has-advance-notification': {
+      const dt =
+        typeof data.advance_notification_date === 'string' ? data.advance_notification_date : null
       return dt && dt.length >= 10 ? dt.slice(0, 10) : null
     }
     case 'departure-past':

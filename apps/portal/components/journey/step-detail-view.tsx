@@ -5,12 +5,14 @@ import { useEffect, useState, useTransition } from 'react'
 import type { CheckResult, ProcedureCheck, StepDefinition } from '@petmove/domain'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
 import {
+  updateAdvanceNotificationDate,
   updateFlightFields,
   updateMicrochipFields,
   updateRabiesEntryFields,
   updateTiterFields,
 } from '@/lib/actions/cases'
 import { readCaseDocuments } from '@/lib/documents'
+import { AdvanceNotificationInputs } from './advance-notification-inputs'
 import { FlightInputs, type FlightForm } from './flight-inputs'
 import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm } from './rabies-entry-inputs'
@@ -63,7 +65,8 @@ export function StepDetailView({
   const rabiesIndex = isRabies2 ? 1 : 0
   const isTiter = step.id === 'rabies-titer'
   const isFlight = step.id === 'flight-purchase'
-  const isInteractive = isMicrochip || isRabies || isTiter || isFlight
+  const isAdvanceNotification = step.id === 'advance-notification'
+  const isInteractive = isMicrochip || isRabies || isTiter || isFlight || isAdvanceNotification
   const caseRow = useCase(caseId)
   const { updateCase } = useCases()
 
@@ -82,6 +85,9 @@ export function StepDetailView({
   const savedFlightForm = readFlightForm(caseRow?.data)
   const [flightForm, setFlightForm] = useState<FlightForm>(savedFlightForm)
 
+  const savedAdvanceDate = readAdvanceDate(caseRow?.data)
+  const [advanceDate, setAdvanceDate] = useState(savedAdvanceDate)
+
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
@@ -94,7 +100,8 @@ export function StepDetailView({
       titerForm.lab !== savedTiterForm.lab ||
       titerForm.value !== savedTiterForm.value)
   const flightDirty = isFlight && !flightFormEqual(flightForm, savedFlightForm)
-  const dirty = microchipDirty || rabiesDirty || titerDirty || flightDirty
+  const advanceDirty = isAdvanceNotification && advanceDate !== savedAdvanceDate
+  const dirty = microchipDirty || rabiesDirty || titerDirty || flightDirty || advanceDirty
   // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
   const justSaved = status === 'saved' && !dirty
 
@@ -117,6 +124,10 @@ export function StepDetailView({
   }, [caseRow?.data])
   useEffect(() => {
     if (!flightDirty) setFlightForm(readFlightForm(caseRow?.data))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data])
+  useEffect(() => {
+    if (!advanceDirty) setAdvanceDate(readAdvanceDate(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
 
@@ -202,6 +213,21 @@ export function StepDetailView({
         if (res.ok) {
           updateCase(res.value)
           setFlightForm(readFlightForm(res.value.data))
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    } else if (isAdvanceNotification) {
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        const res = await updateAdvanceNotificationDate(caseId, advanceDate || null)
+        if (res.ok) {
+          updateCase(res.value)
+          setAdvanceDate(readAdvanceDate(res.value.data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -517,6 +543,12 @@ export function StepDetailView({
             />
           </section>
         )}
+        {isAdvanceNotification && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <AdvanceNotificationInputs date={advanceDate} onChange={setAdvanceDate} />
+          </section>
+        )}
         {!isInteractive && step.inputs && step.inputs.length > 0 && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력 정보</h3>
@@ -822,4 +854,11 @@ function flightFormEqual(a: FlightForm, b: FlightForm): boolean {
     a.return_flight_number === b.return_flight_number &&
     a.return_transport === b.return_transport
   )
+}
+
+/** 사전 신고 신청일 — caseRow.data.advance_notification_date. */
+function readAdvanceDate(data: Record<string, unknown> | null | undefined): string {
+  if (!data) return ''
+  const v = data['advance_notification_date']
+  return typeof v === 'string' ? v : ''
 }

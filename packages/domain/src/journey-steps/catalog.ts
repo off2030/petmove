@@ -205,7 +205,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
     order: 47,
     deadline: { anchor: 'entry', daysBefore: 40 },
-    done: 'manual-flag:advance-notification-submitted',
+    done: 'has-advance-notification',
+    inputs: [{ key: 'advance_notification_date', label: '신청일', type: 'date' }],
     allowAttachments: true,
     attachmentHint: '수입허가증을 사진, PDF로 보관하세요.',
     link: {

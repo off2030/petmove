@@ -73,6 +73,7 @@ export type StepDoneSignal =
   | 'has-deworming-time'           // EU 6국 촌충약 (출국 24-120h 전)
   | 'has-vet-visit'
   | 'has-flight-date'              // 항공권 구매 — entry_date(항공편 날짜) 입력 시 완료
+  | 'has-advance-notification'     // 사전 신고 — advance_notification_date 입력 시 완료
   | 'departure-past'
   | `manual-flag:${string}`
 
