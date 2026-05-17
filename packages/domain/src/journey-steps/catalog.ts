@@ -213,6 +213,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O',
       label: 'NACCS 신청 페이지',
     },
+    validationIds: ['jp.advance-notification-40days-before-entry'],
   },
 
   // ── 5. 종합백신 (DHPP·FVRCP) ────────────────────────────────────────────

@@ -439,6 +439,35 @@ export const JP_CHECKS: ProcedureCheck[] = [
     },
   },
   {
+    id: 'jp.advance-notification-40days-before-entry',
+    country: 'japan',
+    category: '일정',
+    title: '사전 신고는 입국 40일 전까지',
+    description: '일본 동물검역소 사전 신고(NACCS)는 입국일로부터 40일 이전에 접수되어야 함.',
+    severity: 'blocker',
+    addedAt: '2026-05-17',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const notif =
+        typeof data.advance_notification_date === 'string' ? data.advance_notification_date : ''
+      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
+      // 필수: 사전 신고 신청일 + 항공편 입국일
+      if (!notif || !entry) return SKIP
+
+      const deadline = addDays(entry, -40)
+      if (!deadline) return SKIP
+      if (notif <= deadline) {
+        return { ok: true, message: `신청일(${notif}) ≤ 마감(${deadline}).` }
+      }
+      return {
+        ok: false,
+        message: `신청일(${formatKoreanDate(notif)})이 입국 40일 전 마감일(${formatKoreanDate(deadline)})보다 늦습니다.`,
+        fixHint: `입국일을 ${formatKoreanDate(addDays(notif, 40))} 이후로 변경하세요.`,
+        offendingPaths: ['advance_notification_date', 'entry_date'],
+      }
+    },
+  },
+  {
     id: 'jp.rabies-valid-until-on-departure',
     country: 'japan',
     category: '광견병',
