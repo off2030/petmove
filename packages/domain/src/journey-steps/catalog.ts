@@ -226,8 +226,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '일본 동물검역소에 수출 동물검역을 신청·예약하세요.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
     order: 48,
-    // 사전 신고와 동시 진행 — 사전 신고와 동일 마감(입국 40일 전)으로 카드에 날짜 노출.
-    deadline: { anchor: 'entry', daysBefore: 40 },
+    // 귀국 항공편 기준 — 귀국일 10일 전까지 예약 (data.return_date 앵커).
+    deadline: { anchor: 'return', daysBefore: 10 },
     // 귀국편 절차라 후속(출국 전 임상검사 등)을 막지 않는다 — 동시에 '다음 할 일' 노출.
     nonBlocking: true,
     done: 'has-jp-export-quarantine',

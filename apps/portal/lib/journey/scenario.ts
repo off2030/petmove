@@ -105,9 +105,11 @@ function deadlineAnchorDate(step: StepDefinition, caseRow: CaseRow): string | nu
   if (!dl) return null
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
+  const ret = typeof data.return_date === 'string' ? data.return_date : ''
   let base = ''
   if (dl.anchor === 'departure') base = caseRow.departure_date || entry
   else if (dl.anchor === 'entry') base = entry
+  else if (dl.anchor === 'return') base = ret
   else if (dl.anchor === 'created') base = caseRow.created_at ?? ''
   return base.length >= 10 ? base.slice(0, 10) : null
 }
