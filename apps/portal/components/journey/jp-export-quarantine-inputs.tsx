@@ -7,6 +7,14 @@ export interface JpExportForm {
   time: string
 }
 
+/** 예약시간 입력 마스킹 — 숫자만 추려 H:mm / HH:mm 으로 (예: '1200'→'12:00', '930'→'9:30'). */
+function normalizeTime(raw: string): string {
+  const d = raw.replace(/\D/g, '').slice(0, 4)
+  // 시 앞자리가 3~9 면 한 자리 시('9:30'), 그 외엔 두 자리('12:00').
+  const hourLen = d[0] >= '3' && d[0] <= '9' ? 1 : 2
+  return d.length <= hourLen ? d : `${d.slice(0, hourLen)}:${d.slice(hourLen)}`
+}
+
 /**
  * 일본 수출검역 step 입력 필드 — 예약일·예약시간. controlled — 부모(step-detail-view)가
  * state·save 를 보유. 저장 형식은 case.data.jp_export_quarantine_date (YYYY-MM-DD) /
@@ -57,8 +65,9 @@ export function JpExportQuarantineInputs({
           <input
             type="text"
             inputMode="numeric"
+            maxLength={5}
             value={form.time}
-            onChange={(e) => onChange('time', e.target.value)}
+            onChange={(e) => onChange('time', normalizeTime(e.target.value))}
             placeholder="14:30"
             style={{
               width: '100%',

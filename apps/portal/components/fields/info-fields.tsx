@@ -49,6 +49,14 @@ function formatChip(digits: string): string {
   return digits.replace(/\D/g, '').slice(0, 15).replace(/(\d{3})(?=\d)/g, '$1 ')
 }
 
+/** 시간 입력 마스킹 — 숫자만 추려 H:mm / HH:mm 으로 (예: '1200'→'12:00', '930'→'9:30'). */
+function normalizeTime(raw: string): string {
+  const d = raw.replace(/\D/g, '').slice(0, 4)
+  // 시 앞자리가 3~9 면 한 자리 시, 그 외엔 두 자리.
+  const hourLen = d[0] >= '3' && d[0] <= '9' ? 1 : 2
+  return d.length <= hourLen ? d : `${d.slice(0, hourLen)}:${d.slice(hourLen)}`
+}
+
 /** 'YYYY-MM-DD' → 'YYYY·MM·DD'. 빈 값은 빈 문자열. */
 function dotDate(iso: string): string {
   return iso ? iso.replace(/-/g, '·') : ''
@@ -195,7 +203,7 @@ export function TextField({
   onChange: (next: string) => void
   placeholder?: string
   last?: boolean
-  mask?: 'phone' | 'microchip' | 'weight'
+  mask?: 'phone' | 'microchip' | 'weight' | 'time'
   inputMode?: 'text' | 'numeric' | 'decimal' | 'tel' | 'email'
   /** true 면 라벨 위 + 입력 아래 (긴 텍스트: 주소). */
   stacked?: boolean
@@ -213,7 +221,8 @@ export function TextField({
       const cleaned = raw.replace(/[^\d.]/g, '')
       const parts = cleaned.split('.')
       onChange(parts.length > 2 ? `${parts[0]}.${parts.slice(1).join('')}` : cleaned)
-    } else onChange(raw)
+    } else if (mask === 'time') onChange(normalizeTime(raw))
+    else onChange(raw)
   }
 
   if (stacked) {

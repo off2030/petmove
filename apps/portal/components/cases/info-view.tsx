@@ -333,6 +333,7 @@ export function InfoView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string
               onChange={(v) => set('jp_export_quarantine_time', v)}
               placeholder="예: 14:30"
               inputMode="numeric"
+              mask="time"
               last
             />
           </Section>
