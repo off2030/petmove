@@ -395,7 +395,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '임상 수의사의 검진을 받고 검역소 서류를 준비하세요.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 110,
-    deadline: { anchor: 'departure', daysBefore: 10 },
+    deadline: { anchor: 'departure', daysBefore: 9, window: true },
     done: 'has-vet-visit',
     inputs: [
       { key: 'vet_visit_date', label: '검진일', type: 'date' },

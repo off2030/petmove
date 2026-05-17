@@ -92,33 +92,37 @@ function formatKoreanDate(iso: string): string {
   return `${y}년 ${Number(m)}월 ${Number(d)}일`
 }
 
-/** step 의 deadline 으로부터 표시용 date 문자열 계산 (없으면 null). */
-function deadlineDate(step: StepDefinition, caseRow: CaseRow): string | null {
-  if (!step.deadline) return null
+/**
+ * deadline anchor 의 기준일 (YYYY-MM-DD, 없으면 null).
+ * 'departure' 는 출국일 — 미입력 시 항공편 입국일(entry_date)로 폴백 (한일 노선은 출국=입국 당일).
+ */
+function deadlineAnchorDate(step: StepDefinition, caseRow: CaseRow): string | null {
+  const dl = step.deadline
+  if (!dl) return null
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
-  if (step.deadline.anchor === 'departure') {
-    // 출국일 미입력 시 항공편 입국일(entry_date)로 폴백 — 한일 노선은 출국=입국 당일.
-    const dep = caseRow.departure_date || entry
-    if (dep && dep.length >= 10) {
-      const d = new Date(dep.slice(0, 10) + 'T00:00:00Z')
-      d.setUTCDate(d.getUTCDate() - step.deadline.daysBefore)
-      return d.toISOString().slice(0, 10)
-    }
-  }
-  if (step.deadline.anchor === 'entry') {
-    if (entry.length >= 10) {
-      const d = new Date(entry.slice(0, 10) + 'T00:00:00Z')
-      d.setUTCDate(d.getUTCDate() - step.deadline.daysBefore)
-      return d.toISOString().slice(0, 10)
-    }
-  }
-  if (step.deadline.anchor === 'created') {
-    const d = new Date(caseRow.created_at)
-    d.setUTCDate(d.getUTCDate() - step.deadline.daysBefore)
-    return d.toISOString().slice(0, 10)
-  }
-  return null
+  let base = ''
+  if (dl.anchor === 'departure') base = caseRow.departure_date || entry
+  else if (dl.anchor === 'entry') base = entry
+  else if (dl.anchor === 'created') base = caseRow.created_at ?? ''
+  return base.length >= 10 ? base.slice(0, 10) : null
+}
+
+/** step 의 deadline 표시일 — 기준일에서 daysBefore 만큼 당김. window 면 구간 시작일. */
+function deadlineDate(step: StepDefinition, caseRow: CaseRow): string | null {
+  if (!step.deadline) return null
+  const base = deadlineAnchorDate(step, caseRow)
+  if (!base) return null
+  const d = new Date(base + 'T00:00:00Z')
+  if (isNaN(d.getTime())) return null
+  d.setUTCDate(d.getUTCDate() - step.deadline.daysBefore)
+  return d.toISOString().slice(0, 10)
+}
+
+/** 날짜 구간의 끝 날짜 표시 — 시작과 같은 해면 'YYYY년' 생략. */
+function formatRangeEnd(start: string, end: string): string {
+  const full = formatKoreanDate(end)
+  return start.slice(0, 4) === end.slice(0, 4) ? full.replace(/^\d+년\s*/, '') : full
 }
 
 /**
@@ -179,6 +183,8 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     const isDeparture = step.id === 'departure'
     const deadline = deadlineDate(step, caseRow)
     const earliest = earliestDate(step, caseRow)
+    // window 마감이면 구간 끝(기준일) — 카드에 'A ~ B' 구간으로 표시.
+    const deadlineEnd = step.deadline?.window ? deadlineAnchorDate(step, caseRow) : null
     const date = isDeparture
       ? dep
       : done
@@ -190,14 +196,17 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     const desc = done ? undefined : summary
     // 다음 할 일 카드 본문 — 날짜(earliest/deadline)가 있으면 step.cardLine
     // (미지정 시 설명 첫 문장)에 날짜 구문을 붙이고, 날짜가 없으면 설명 첫 문장만.
-    // earliest("이후")가 deadline("까지")보다 우선: 보호자가 먼저 알아야 할 제약.
+    // earliest("이후")가 deadline("까지"/window 구간)보다 우선: 보호자가 먼저 알아야 할 제약.
+    const cardLine = step.cardLine ?? summary
     const cardDesc = done
       ? undefined
       : earliest
-        ? `${formatKoreanDate(earliest)} 이후 ${step.cardLine ?? summary}`
-        : deadline
-          ? `${formatKoreanDate(deadline)}까지 ${step.cardLine ?? summary}`
-          : summary
+        ? `${formatKoreanDate(earliest)} 이후 ${cardLine}`
+        : deadline && deadlineEnd
+          ? `${formatKoreanDate(deadline)} ~ ${formatRangeEnd(deadline, deadlineEnd)}에 ${cardLine}`
+          : deadline
+            ? `${formatKoreanDate(deadline)}까지 ${cardLine}`
+            : summary
     const failedChecks = failedByStep.get(step.id) ?? 0
     const infoChecks = infoByStep.get(step.id) ?? 0
     return {
