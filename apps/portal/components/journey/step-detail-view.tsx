@@ -10,6 +10,7 @@ import {
   updateMicrochipFields,
   updateRabiesEntryFields,
   updateTiterFields,
+  updateVetVisitDate,
 } from '@/lib/actions/cases'
 import { readCaseDocuments } from '@/lib/documents'
 import { AdvanceNotificationInputs } from './advance-notification-inputs'
@@ -18,6 +19,7 @@ import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm } from './rabies-entry-inputs'
 import { StepAttachments } from './step-attachments'
 import { TiterInputs, type TiterForm } from './titer-inputs'
+import { VetVisitInputs } from './vet-visit-inputs'
 
 interface CollectedCheck {
   check: ProcedureCheck
@@ -66,7 +68,9 @@ export function StepDetailView({
   const isTiter = step.id === 'rabies-titer'
   const isFlight = step.id === 'flight-purchase'
   const isAdvanceNotification = step.id === 'advance-notification'
-  const isInteractive = isMicrochip || isRabies || isTiter || isFlight || isAdvanceNotification
+  const isVetVisit = step.id === 'vet-visit'
+  const isInteractive =
+    isMicrochip || isRabies || isTiter || isFlight || isAdvanceNotification || isVetVisit
   const caseRow = useCase(caseId)
   const { updateCase } = useCases()
 
@@ -88,6 +92,9 @@ export function StepDetailView({
   const savedAdvanceDate = readAdvanceDate(caseRow?.data)
   const [advanceDate, setAdvanceDate] = useState(savedAdvanceDate)
 
+  const savedVetVisitDate = readVetVisitDate(caseRow?.data)
+  const [vetVisitDate, setVetVisitDate] = useState(savedVetVisitDate)
+
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
@@ -101,7 +108,9 @@ export function StepDetailView({
       titerForm.value !== savedTiterForm.value)
   const flightDirty = isFlight && !flightFormEqual(flightForm, savedFlightForm)
   const advanceDirty = isAdvanceNotification && advanceDate !== savedAdvanceDate
-  const dirty = microchipDirty || rabiesDirty || titerDirty || flightDirty || advanceDirty
+  const vetVisitDirty = isVetVisit && vetVisitDate !== savedVetVisitDate
+  const dirty =
+    microchipDirty || rabiesDirty || titerDirty || flightDirty || advanceDirty || vetVisitDirty
   // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
   const justSaved = status === 'saved' && !dirty
 
@@ -128,6 +137,10 @@ export function StepDetailView({
   }, [caseRow?.data])
   useEffect(() => {
     if (!advanceDirty) setAdvanceDate(readAdvanceDate(caseRow?.data))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data])
+  useEffect(() => {
+    if (!vetVisitDirty) setVetVisitDate(readVetVisitDate(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
 
@@ -228,6 +241,21 @@ export function StepDetailView({
         if (res.ok) {
           updateCase(res.value)
           setAdvanceDate(readAdvanceDate(res.value.data))
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    } else if (isVetVisit) {
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        const res = await updateVetVisitDate(caseId, vetVisitDate || null)
+        if (res.ok) {
+          updateCase(res.value)
+          setVetVisitDate(readVetVisitDate(res.value.data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -421,6 +449,29 @@ export function StepDetailView({
               <span style={{ color: C.ink3 }}>→</span>
             </Link>
           )}
+          {step.id === 'vet-visit' && (
+            <Link
+              href={`/cases/${caseId}/docs`}
+              style={{
+                marginTop: 14,
+                padding: '9px 14px',
+                borderRadius: 999,
+                border: `.5px solid ${C.line}`,
+                background: 'rgba(255,253,247,.55)',
+                color: C.ink,
+                fontSize: 13,
+                fontWeight: 500,
+                letterSpacing: '-0.005em',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                textDecoration: 'none',
+              }}
+            >
+              서류 체크리스트
+              <span style={{ color: C.ink3 }}>→</span>
+            </Link>
+          )}
           {step.link && (
             <a
               href={step.link.url}
@@ -547,6 +598,12 @@ export function StepDetailView({
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
             <AdvanceNotificationInputs date={advanceDate} onChange={setAdvanceDate} />
+          </section>
+        )}
+        {isVetVisit && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <VetVisitInputs date={vetVisitDate} onChange={setVetVisitDate} />
           </section>
         )}
         {!isInteractive && step.inputs && step.inputs.length > 0 && (
@@ -860,5 +917,12 @@ function flightFormEqual(a: FlightForm, b: FlightForm): boolean {
 function readAdvanceDate(data: Record<string, unknown> | null | undefined): string {
   if (!data) return ''
   const v = data['advance_notification_date']
+  return typeof v === 'string' ? v : ''
+}
+
+/** 내원·임상검진 검진일 — caseRow.data.vet_visit_date. */
+function readVetVisitDate(data: Record<string, unknown> | null | undefined): string {
+  if (!data) return ''
+  const v = data['vet_visit_date']
   return typeof v === 'string' ? v : ''
 }
