@@ -55,6 +55,8 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return typeof data.deworming_time === 'string' && (data.deworming_time as string).length > 0
     case 'has-vet-visit':
       return typeof data.vet_visit_date === 'string' && (data.vet_visit_date as string).length >= 10
+    case 'has-flight-date':
+      return typeof data.entry_date === 'string' && (data.entry_date as string).length >= 10
     case 'departure-past': {
       const dep = caseRow.departure_date
       if (!dep) return false
@@ -119,6 +121,10 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
     }
     case 'has-vet-visit': {
       const dt = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : null
+      return dt && dt.length >= 10 ? dt.slice(0, 10) : null
+    }
+    case 'has-flight-date': {
+      const dt = typeof data.entry_date === 'string' ? data.entry_date : null
       return dt && dt.length >= 10 ? dt.slice(0, 10) : null
     }
     case 'departure-past':

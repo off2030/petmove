@@ -174,7 +174,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
     order: 45,
     earliest: { anchor: 'step:rabies-titer', daysAfter: 180 },
-    done: 'manual-flag:flight-purchased',
+    done: 'has-flight-date',
     // 출국 5 + 귀국 5. 귀국은 왕복 케이스에서만 노출 — 분기는 컴포넌트(FlightInputs)에서.
     inputs: [
       { key: 'entry_date', label: '날짜', type: 'date' },
