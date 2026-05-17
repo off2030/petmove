@@ -158,8 +158,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
         for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
         return {
           ok: false,
-          message: `1차 접종(${first.date})을 마이크로칩보다 먼저 한 경우, 2차 접종일(${second.date})과 항체검사일이 같아야 합니다.`,
-          fixHint: '시술 후 재접종을 2차로 잡고 같은 날 항체검사를 실시하세요.',
+          message: `1차 접종(${first.date})이 마이크로칩 시술보다 빠릅니다. 이때는 2차 접종과 항체검사를 같은 날 받아야 합니다.`,
+          fixHint: '2차 접종과 항체검사를 같은 날 다시 하세요.',
           offendingPaths: offending,
         }
       }
