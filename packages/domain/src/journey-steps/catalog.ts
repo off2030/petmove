@@ -190,6 +190,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '구매한 항공권(e-티켓)을 사진, PDF로 보관하세요.',
+    validationIds: ['jp.entry-180days-after-titer', 'jp.entry-within-2years-of-titer'],
   },
 
   // ── 수입 사전신고 (일본 전용) ───────────────────────────────────────────
