@@ -288,7 +288,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message,
-        fixHint: '출국일을 채혈일 + 180일 이후로 조정하거나 더 이른 항체검사가 필요합니다.',
+        fixHint: '출국일을 채혈일 + 180일 이후로 변경하거나 더 이른 항체검사가 필요합니다.',
         offendingPaths: offending,
       }
     },
@@ -322,7 +322,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `내원일(${visit})부터 출국일(${dep})까지 ${diff}일입니다. 출국일 포함 10일 이내여야 합니다.`,
-          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정하세요.`,
+          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 변경하세요.`,
           offendingPaths: ['vet_visit_date'],
         }
       }
@@ -356,7 +356,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `최신 항체검사(${newest.date})의 유효기간(${newestValidUntil})이 출국일(${dep})보다 빠릅니다.`,
-        fixHint: '재검사 또는 출국일을 검사일 + 2년 이내로 조정하세요.',
+        fixHint: '재검사 또는 출국일을 검사일 + 2년 이내로 변경하세요.',
         offendingPaths: offending,
       }
     },
