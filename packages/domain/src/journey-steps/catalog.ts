@@ -216,19 +216,23 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['jp.advance-notification-40days-before-entry'],
   },
 
-  // ── 사전 신고 다음 — 일본 수출검역 (왕복 케이스 한정) ───────────────────
+  // ── 사전 신고 다음 — 일본 수출 동물검역 (왕복 케이스 한정) ──────────────
   {
     id: 'jp-export-quarantine',
     category: 'permit',
-    title: '일본 수출동물검역 신청/예약',
+    title: '일본 수출 동물검역 신청',
     shortLabel: '수출',
     description:
-      '왕복 일정은 일본에서 다시 출국할 때 수출검역이 필요합니다.\n\n일본 입국 후, 출국 공항을 관할하는 일본 동물검역소에 수출검역을 신청하고 일정을 예약하세요.',
+      '일본 동물검역소에 수출 동물검역 신청과 예약을 합니다.\n\nNACCS를 통해 최소 10일 전까지 예약을 해야 합니다.\n사전 신고와 동시에 진행을 하는 것이 편리합니다.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
     order: 48,
     done: 'manual-flag:jp-export-quarantine',
     allowAttachments: true,
-    attachmentHint: '수출검역 신청·예약 확인서를 사진, PDF로 보관하세요.',
+    attachmentHint: '수출 동물검역 신청·예약 확인서를 사진, PDF로 보관하세요.',
+    link: {
+      url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O',
+      label: 'NACCS 신청 페이지',
+    },
   },
 
   // ── 5. 종합백신 (DHPP·FVRCP) ────────────────────────────────────────────
