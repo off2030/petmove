@@ -200,8 +200,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '사전 신고',
     shortLabel: '신고',
     description:
-      '일본 입국 40일 전까지 신고해야 합니다.\n\nNACCS로 신청하며, 일본 검역소 이메일 지시에 적절한 답변 및 대응을 합니다.\n수 주 후 허가증(Approval)을 받을 수 있습니다.',
-    cardLine: '일본 검역소에 사전 신고를 하세요.',
+      '일본 입국 40일 전까지 신고해야 합니다.\n\nNACCS로 신청한 후 일본 동물검역소 이메일 지시에 적절한 답변 및 대응을 합니다.\n수 주 후 허가증(Approval)을 받을 수 있습니다.',
+    cardLine: '일본 동물검역소에 사전 신고를 하세요.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
     order: 47,
     deadline: { anchor: 'entry', daysBefore: 40 },
