@@ -237,6 +237,14 @@ export function daysBetween(aISO: string, bISO: string): number | null {
   return Math.round((b - a) / 86400000)
 }
 
+/** 'YYYY-MM-DD' → 'YYYY년 M월 D일'. 형식이 아니면 원문 반환. 검증 메시지 표시용. */
+export function formatKoreanDate(iso: string): string {
+  const parts = iso.split('-')
+  if (parts.length !== 3) return iso
+  const [y, m, d] = parts
+  return `${y}년 ${Number(m)}월 ${Number(d)}일`
+}
+
 // ── 통합 추가정보 필드 reader (top-level + legacy country_extra fallback) ──
 
 /**

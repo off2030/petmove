@@ -4,6 +4,7 @@ import {
   addOneYear,
   addYears,
   daysBetween,
+  formatKoreanDate,
   readRabiesEntries,
   readTiterEntries,
   resolveValidUntil,
@@ -378,15 +379,19 @@ export const JP_CHECKS: ProcedureCheck[] = [
       }
       const offending: string[] = ['entry_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-      const message = !best
-        ? '항체검사일과 입국일을 확인할 수 없습니다.'
-        : best.days < 0
-          ? `항체검사일(${best.titer.date})이 입국일(${entryDate})보다 이후입니다. 채혈은 입국 전에 완료되어야 합니다.`
-          : `항체검사일로부터 입국일까지 ${best.days}일입니다. 180일 이상이어야 합니다.`
+      if (!best) {
+        return { ok: false, message: '항체검사일과 입국일을 확인할 수 없습니다.', offendingPaths: offending }
+      }
+      // 입국 가능일 = 채혈일 + 180일.
+      const earliestKr = formatKoreanDate(addDays(best.titer.date, 180))
+      const message =
+        best.days < 0
+          ? `입국일(${formatKoreanDate(entryDate)})이 항체검사일(${formatKoreanDate(best.titer.date)})보다 빠릅니다. 채혈은 입국 전에 완료되어야 합니다.`
+          : `채혈일로부터 180일이 지나야 일본에 입국할 수 있습니다. 입국 가능일은 ${earliestKr}입니다.`
       return {
         ok: false,
         message,
-        fixHint: '입국일을 채혈일 + 180일 이후로 조정하세요.',
+        fixHint: `입국일을 ${earliestKr} 이후로 조정하세요.`,
         offendingPaths: offending,
       }
     },
@@ -396,8 +401,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     country: 'japan',
     category: '광견병',
     title: '입국일은 항체검사일 2년 이내',
-    description:
-      '광견병 항체검사 유효기간은 채혈일 포함 2년 — 항공편 입국일이 채혈일 + 2년을 넘지 않아야 함.',
+    description: '항공편 입국일은 광견병 항체검사 채혈일 포함 2년 이내여야 함 (항체검사 유효기간).',
     severity: 'blocker',
     addedAt: '2026-05-17',
     run: ({ caseRow }) => {
@@ -414,13 +418,13 @@ export const JP_CHECKS: ProcedureCheck[] = [
         }
       }
       const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
-      const newestValidUntil = addYears(newest.date, 2)
+      const validUntilKr = formatKoreanDate(addYears(newest.date, 2))
       const offending: string[] = ['entry_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: `최신 항체검사(${newest.date})의 유효기간(${newestValidUntil})이 입국일(${entryDate})보다 빠릅니다.`,
-        fixHint: '재검사하거나 입국일을 채혈일 + 2년 이내로 조정하세요.',
+        message: `항체검사 유효기간이 ${validUntilKr}까지입니다. 입력하신 입국일(${formatKoreanDate(entryDate)})은 그 이후입니다.`,
+        fixHint: `재검사하거나 입국일을 ${validUntilKr} 이내로 조정하세요.`,
         offendingPaths: offending,
       }
     },
