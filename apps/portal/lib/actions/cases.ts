@@ -388,9 +388,16 @@ export async function updateFlightFields(
       else delete nextData[key]
     }
 
+    // 항공편 입국일(entry_date) = 출국일 — 펫무브워크와 동일하게 departure_date 컬럼도 동기화.
+    const entryDate = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
+    const updatePayload: { data: Record<string, unknown>; departure_date?: string } = {
+      data: nextData,
+    }
+    if (entryDate) updatePayload.departure_date = entryDate
+
     const { data: updated, error } = await admin
       .from('cases')
-      .update({ data: nextData })
+      .update(updatePayload)
       .eq('id', caseId)
       .select('*')
       .single()
