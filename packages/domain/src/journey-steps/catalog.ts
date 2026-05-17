@@ -227,8 +227,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
     order: 48,
     done: 'manual-flag:jp-export-quarantine',
-    allowAttachments: true,
-    attachmentHint: '수출 동물검역 신청·예약 확인서를 사진, PDF로 보관하세요.',
+    inputs: [
+      { key: 'jp_export_quarantine_date', label: '예약일', type: 'date' },
+      { key: 'jp_export_quarantine_time', label: '예약시간', type: 'text', helpText: 'HH:mm 형식 (예: 14:30)' },
+    ],
     link: {
       url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O',
       label: 'NACCS 신청 페이지',
