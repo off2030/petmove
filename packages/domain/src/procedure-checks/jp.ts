@@ -43,13 +43,14 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const age = daysBetween(birth, first.date)
       if (age === null) return SKIP
       if (age < 91) {
-        const eligibleFrom = addDays(birth, 91)
+        const eligible = addDays(birth, 91)
+        const eligibleKr = eligible ? formatKoreanDate(eligible) : ''
         return {
           ok: false,
-          message: '',
-          fixHint: eligibleFrom
-            ? `${eligibleFrom} 이후로 1차 접종일을 조정하세요.`
-            : `생년월일 기준 91일 이후로 1차 접종일을 조정하세요.`,
+          message: eligibleKr
+            ? `1차 접종 시 생후 ${age}일령으로 91일령 미만입니다. 유효한 1차 접종은 ${eligibleKr}부터 가능합니다.`
+            : `1차 접종 시 생후 ${age}일령으로 91일령 미만입니다.`,
+          fixHint: eligibleKr ? `${eligibleKr} 이후 재접종하세요.` : '생후 91일령 이후 재접종하세요.',
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
