@@ -193,20 +193,21 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['jp.entry-180days-after-titer', 'jp.entry-within-2years-of-titer'],
   },
 
-  // ── 수입 사전신고 (일본 전용) ───────────────────────────────────────────
+  // ── 사전 신고 (일본 전용) ───────────────────────────────────────────
   {
     id: 'advance-notification',
     category: 'permit',
-    title: '수입 사전신고',
+    title: '사전 신고',
     shortLabel: '신고',
     description:
-      '일본 동물검역소(AQS)에 수입 사전신고를 합니다.\n\n도착 예정일 40일 전까지 신고해야 합니다.\nNACCS(일본 검역 전산시스템)로 제출하며, 검사 신청도 함께 처리됩니다.\n신고 후 받는 접수번호를 보관하세요.',
+      '일본 입국 40일 전까지 신고해야 합니다.\n\nNACCS로 신청하며, 일본 검역소 이메일 지시에 적절한 답변 및 대응을 합니다.\n수 주 후 허가증(Approval)을 받을 수 있습니다.',
+    cardLine: '일본 검역소에 사전 신고를 하세요.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
     order: 47,
     deadline: { anchor: 'departure', daysBefore: 40 },
     done: 'manual-flag:advance-notification-submitted',
     allowAttachments: true,
-    attachmentHint: '신고 접수번호·확인서를 사진, PDF로 보관하세요.',
+    attachmentHint: '발급받은 허가증(Approval)을 사진, PDF로 보관하세요.',
   },
 
   // ── 5. 종합백신 (DHPP·FVRCP) ────────────────────────────────────────────
