@@ -207,7 +207,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     deadline: { anchor: 'departure', daysBefore: 40 },
     done: 'manual-flag:advance-notification-submitted',
     allowAttachments: true,
-    attachmentHint: '발급받은 허가증(Approval)을 사진, PDF로 보관하세요.',
+    attachmentHint: '수입허가증을 사진, PDF로 보관하세요.',
+    link: {
+      url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O',
+      label: 'NACCS 신청 페이지',
+    },
   },
 
   // ── 5. 종합백신 (DHPP·FVRCP) ────────────────────────────────────────────
