@@ -223,8 +223,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '수출',
     description:
       '일본 동물검역소에 수출 동물검역 신청과 예약을 합니다.\n\nNACCS를 통해 방문일 최소 10일 전까지 예약을 해야 합니다.\n사전 신고와 동시에 진행을 하는 것이 편리합니다.',
+    cardLine: '일본 동물검역소에 수출 동물검역을 신청·예약하세요.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
     order: 48,
+    // 사전 신고와 동시 진행 — 사전 신고와 동일 마감(입국 40일 전)으로 카드에 날짜 노출.
+    deadline: { anchor: 'entry', daysBefore: 40 },
     // 귀국편 절차라 후속(출국 전 임상검사 등)을 막지 않는다 — 동시에 '다음 할 일' 노출.
     nonBlocking: true,
     done: 'has-jp-export-quarantine',
@@ -445,25 +448,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
   },
 
-  // ── 13. 항공 예약 ──────────────────────────────────────────────────────
-  {
-    id: 'flight-booking',
-    category: 'logistics',
-    title: '항공 예약 확정',
-    shortLabel: '항공',
-    description:
-      '항공권 · 켄넬 · 위탁/기내 동반 여부를 확정합니다. 일본·태국 등은 항공편명까지 검역증명서에 기재되어야 합니다.',
-    applicability: { destinations: 'all', species: 'all', tripType: 'all' },
-    order: 130,
-    done: 'manual-flag:flight-booked',
-    inputs: [
-      { key: 'entry_date', label: '도착일', type: 'date' },
-      { key: 'entry_flight_number', label: '항공편명', type: 'text' },
-      { key: 'entry_airport', label: '도착공항 (IATA)', type: 'text' },
-    ],
-  },
-
-  // ── 14. 출국·도착 ──────────────────────────────────────────────────────
+  // ── 13. 출국·도착 ──────────────────────────────────────────────────────
   {
     id: 'departure',
     category: 'travel',
