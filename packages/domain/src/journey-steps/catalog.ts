@@ -432,7 +432,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '한국 동물검역소 방문',
     shortLabel: '검역소',
     description:
-      '출국일 기준 10일 이내에 동물검역소를 방문해 검역을 받습니다.\n반드시 동물을 데리고 가셔야 합니다.\n필요한 서류를 확인하세요.',
+      '출국일 기준 10일 이내에 동물검역소를 방문해 검역을 받습니다.\n반드시 동물을 데리고 가야 합니다.\n필요한 서류를 확인하세요.',
     cardLine: '동물검역소를 방문해 검역을 받으세요.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 120,
