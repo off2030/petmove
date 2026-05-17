@@ -537,6 +537,7 @@ export function StepDetailView({
               rel="noopener noreferrer"
               style={{
                 marginTop: 14,
+                marginRight: 8,
                 padding: '9px 14px',
                 borderRadius: 999,
                 border: `.5px solid ${C.line}`,
@@ -545,8 +546,7 @@ export function StepDetailView({
                 fontSize: 13,
                 fontWeight: 500,
                 letterSpacing: '-0.005em',
-                display: 'flex',
-                width: 'fit-content',
+                display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
                 textDecoration: 'none',
