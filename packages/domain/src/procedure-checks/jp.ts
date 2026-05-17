@@ -75,12 +75,12 @@ export const JP_CHECKS: ProcedureCheck[] = [
 
       const secondPath = `rabies_dates[${second.originalIndex}].date`
       if (gap < 30) {
-        // 2차 접종 가능 시점 = 1차 접종일 + 30일.
+        // 유효한 2차 접종 가능 시점 = 1차 접종일 + 30일.
         const earliestKr = formatKoreanDate(addDays(first.date, 30))
         return {
           ok: false,
-          message: `1·2차 접종 간격이 ${gap}일입니다. 2차 접종일은 ${earliestKr} 이후여야 합니다.`,
-          fixHint: `2차 접종일을 ${earliestKr} 이후로 조정하세요.`,
+          message: `1·2차 접종 간격이 ${gap}일입니다. 유효한 2차 접종은 ${earliestKr}부터 가능합니다.`,
+          fixHint: `${earliestKr} 이후 재접종하세요.`,
           offendingPaths: [secondPath],
         }
       }
