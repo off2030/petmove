@@ -216,6 +216,21 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['jp.advance-notification-40days-before-entry'],
   },
 
+  // ── 사전 신고 다음 — 일본 수출검역 (왕복 케이스 한정) ───────────────────
+  {
+    id: 'jp-export-quarantine',
+    category: 'permit',
+    title: '일본 수출동물검역 신청/예약',
+    shortLabel: '수출',
+    description:
+      '왕복 일정은 일본에서 다시 출국할 때 수출검역이 필요합니다.\n\n일본 입국 후, 출국 공항을 관할하는 일본 동물검역소에 수출검역을 신청하고 일정을 예약하세요.',
+    applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
+    order: 48,
+    done: 'manual-flag:jp-export-quarantine',
+    allowAttachments: true,
+    attachmentHint: '수출검역 신청·예약 확인서를 사진, PDF로 보관하세요.',
+  },
+
   // ── 5. 종합백신 (DHPP·FVRCP) ────────────────────────────────────────────
   {
     id: 'general-vaccine',
