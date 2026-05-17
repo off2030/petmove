@@ -1,0 +1,80 @@
+'use client'
+
+import { DateTextField } from '@petmove/ui'
+
+export interface JpExportForm {
+  date: string
+  time: string
+}
+
+/**
+ * 일본 수출검역 step 입력 필드 — 예약일·예약시간. controlled — 부모(step-detail-view)가
+ * state·save 를 보유. 저장 형식은 case.data.jp_export_quarantine_date (YYYY-MM-DD) /
+ * jp_export_quarantine_time (HH:mm).
+ */
+export function JpExportQuarantineInputs({
+  form,
+  onChange,
+}: {
+  form: JpExportForm
+  onChange: (key: keyof JpExportForm, next: string) => void
+}) {
+  const C = {
+    surface: '#FBF7F1',
+    line: 'rgba(42,38,32,.10)',
+    ink: '#2A2620',
+    ink3: '#9A9286',
+  } as const
+
+  return (
+    <div
+      style={{
+        background: C.surface,
+        border: `.5px solid ${C.line}`,
+        borderRadius: 16,
+        padding: '4px 16px',
+      }}
+    >
+      <div style={{ padding: '14px 0', borderBottom: `.5px solid ${C.line}` }}>
+        <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>예약일</div>
+        <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
+          일본 동물검역소 방문 예약 날짜
+        </div>
+        <div style={{ marginTop: 8 }}>
+          <DateTextField
+            value={form.date}
+            onChange={(v) => onChange('date', v)}
+            placeholder="YYYY-MM-DD"
+          />
+        </div>
+      </div>
+      <div style={{ padding: '14px 0' }}>
+        <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>예약시간</div>
+        <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
+          24시간 형식 (예: 14:30)
+        </div>
+        <div style={{ marginTop: 8 }}>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={form.time}
+            onChange={(e) => onChange('time', e.target.value)}
+            placeholder="14:30"
+            style={{
+              width: '100%',
+              boxSizing: 'border-box',
+              background: '#fff',
+              border: `1px solid ${C.line}`,
+              borderRadius: 8,
+              padding: '8px 10px',
+              fontFamily: 'inherit',
+              fontSize: 15,
+              color: C.ink,
+              outline: 'none',
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}

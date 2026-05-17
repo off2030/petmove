@@ -495,6 +495,60 @@ export async function updateVetVisitDate(
 }
 
 /**
+ * 일본 수출검역 step 의 예약일·예약시간을 patch — case.data.jp_export_quarantine_date
+ * (YYYY-MM-DD) / jp_export_quarantine_time (HH:mm). 빈/null 이면 키 제거.
+ * data 의 다른 키는 fetch-merge 로 보존.
+ */
+export async function updateJpExportQuarantineFields(
+  caseId: string,
+  fields: { date: string | null; time: string | null },
+): Promise<Result<CaseRow>> {
+  try {
+    if (fields.date != null && fields.date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(fields.date)) {
+      return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+    }
+    let time: string | null = null
+    if (fields.time != null && fields.time.trim() !== '') {
+      const m = fields.time.trim().match(/^(\d{1,2}):(\d{2})$/)
+      if (!m || Number(m[1]) > 23 || Number(m[2]) > 59) {
+        return { ok: false, error: '예약시간 형식은 HH:mm (예: 14:30) 여야 합니다.' }
+      }
+      time = `${m[1].padStart(2, '0')}:${m[2]}`
+    }
+
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const nextData: Record<string, unknown> = { ...prev }
+    const d = typeof fields.date === 'string' ? fields.date.trim() : ''
+    if (d) nextData.jp_export_quarantine_date = d
+    else delete nextData.jp_export_quarantine_date
+    if (time) nextData.jp_export_quarantine_time = time
+    else delete nextData.jp_export_quarantine_time
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
  * 정보 탭(보호자·동물·여행·항공권)의 편집 가능한 모든 필드를 한 번에 patch.
  *
  * InfoView 는 편집 필드 전체의 desired-state 를 보내고, 이 액션이 화이트리스트된
@@ -535,6 +589,8 @@ export interface CaseInfoInput {
   return_arrival_airport: string
   return_flight_number: string
   return_transport: string
+  jp_export_quarantine_date: string
+  jp_export_quarantine_time: string
 }
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -560,6 +616,8 @@ const INFO_DATA_KEYS = [
   'return_arrival_airport',
   'return_flight_number',
   'return_transport',
+  'jp_export_quarantine_date',
+  'jp_export_quarantine_time',
 ] as const
 
 export async function updateCaseInfoFields(
@@ -568,7 +626,12 @@ export async function updateCaseInfoFields(
 ): Promise<Result<CaseRow>> {
   try {
     // ── 검증 ──
-    for (const v of [input.departure_date, input.birth_date, input.return_date]) {
+    for (const v of [
+      input.departure_date,
+      input.birth_date,
+      input.return_date,
+      input.jp_export_quarantine_date,
+    ]) {
       if (v && !ISO_DATE_RE.test(v)) {
         return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
       }

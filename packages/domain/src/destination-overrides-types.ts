@@ -129,6 +129,9 @@ export const EXTRA_FIELD_DEFS: Record<string, ExtraFieldDef> = {
   return_departure_airport: { key: 'return_departure_airport', label: '귀국 출발공항', type: 'text', placeholder: 'NRT', group: '귀국 항공편', shortLabel: '출발공항' },
   return_arrival_airport: { key: 'return_arrival_airport', label: '귀국 도착공항', type: 'text', placeholder: 'ICN', group: '귀국 항공편', shortLabel: '도착공항' },
   return_transport: { key: 'return_transport', label: '귀국 운송방법', type: 'select', options: TRANSPORT_OPTIONS, group: '귀국 항공편', shortLabel: '운송방법' },
+  // ── 일본 수출검역 예약 (그룹) — 왕복 시 일본 출국검역 신청·예약. ──
+  jp_export_quarantine_date: { key: 'jp_export_quarantine_date', label: '수출검역 예약일', type: 'date', group: '수출검역 예약', shortLabel: '날짜' },
+  jp_export_quarantine_time: { key: 'jp_export_quarantine_time', label: '수출검역 예약시간', type: 'time', placeholder: 'HH:mm', group: '수출검역 예약', shortLabel: '시간' },
 }
 
 export const ALL_EXTRA_FIELD_KEYS = Object.keys(EXTRA_FIELD_DEFS) as readonly string[]

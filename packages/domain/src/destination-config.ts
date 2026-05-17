@@ -62,6 +62,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
       'entry_date', 'entry_flight_number', 'entry_departure_airport', 'entry_airport', 'entry_transport',
       // 귀국 항공편 (일본 → 한국) — 동일 순서
       'return_date', 'return_flight_number', 'return_departure_airport', 'return_arrival_airport', 'return_transport',
+      // 수출검역 예약 (왕복 시 일본 출국검역)
+      'jp_export_quarantine_date', 'jp_export_quarantine_time',
       // 평면 (그룹 없음)
       'email', 'address_overseas', 'certificate_no',
     ],

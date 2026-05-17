@@ -99,6 +99,8 @@ function readForm(caseRow: CaseRow): CaseInfoInput {
     return_arrival_airport: s('return_arrival_airport'),
     return_flight_number: s('return_flight_number'),
     return_transport: s('return_transport'),
+    jp_export_quarantine_date: s('jp_export_quarantine_date'),
+    jp_export_quarantine_time: s('jp_export_quarantine_time'),
   }
 }
 
@@ -228,6 +230,8 @@ export function InfoView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string
   }
 
   const isRound = form.trip_type === 'round'
+  const isJapan =
+    buildCaseJourneyContext({ ...caseRow, destination: form.destination }).destinationKey === 'japan'
   const serif: React.CSSProperties = {
     fontFamily: 'var(--pm-font-display)',
     fontWeight: 500,
@@ -312,6 +316,25 @@ export function InfoView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string
             <TextField label="도착 공항" value={form.return_arrival_airport} onChange={(v) => set('return_arrival_airport', v)} placeholder="예: 인천 ICN" />
             <TextField label="편명" value={form.return_flight_number} onChange={(v) => set('return_flight_number', v)} placeholder="예: KE704" />
             <TextField label="운송 방법" value={form.return_transport} onChange={(v) => set('return_transport', v)} placeholder="예: 수하물 / 화물" last />
+          </Section>
+        )}
+
+        {/* 일본 수출검역 — 왕복·일본만 */}
+        {isRound && isJapan && (
+          <Section label="일본 수출검역">
+            <DateField
+              label="예약일"
+              value={form.jp_export_quarantine_date}
+              onChange={(v) => set('jp_export_quarantine_date', v)}
+            />
+            <TextField
+              label="예약시간"
+              value={form.jp_export_quarantine_time}
+              onChange={(v) => set('jp_export_quarantine_time', v)}
+              placeholder="예: 14:30"
+              inputMode="numeric"
+              last
+            />
           </Section>
         )}
       </div>

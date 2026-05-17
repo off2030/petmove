@@ -7,6 +7,7 @@ import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
 import {
   updateAdvanceNotificationDate,
   updateFlightFields,
+  updateJpExportQuarantineFields,
   updateMicrochipFields,
   updateRabiesEntryFields,
   updateTiterFields,
@@ -15,6 +16,7 @@ import {
 import { readCaseDocuments } from '@/lib/documents'
 import { AdvanceNotificationInputs } from './advance-notification-inputs'
 import { FlightInputs, type FlightForm } from './flight-inputs'
+import { JpExportQuarantineInputs, type JpExportForm } from './jp-export-quarantine-inputs'
 import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm } from './rabies-entry-inputs'
 import { StepAttachments } from './step-attachments'
@@ -69,8 +71,15 @@ export function StepDetailView({
   const isFlight = step.id === 'flight-purchase'
   const isAdvanceNotification = step.id === 'advance-notification'
   const isVetVisit = step.id === 'vet-visit'
+  const isJpExportQuarantine = step.id === 'jp-export-quarantine'
   const isInteractive =
-    isMicrochip || isRabies || isTiter || isFlight || isAdvanceNotification || isVetVisit
+    isMicrochip ||
+    isRabies ||
+    isTiter ||
+    isFlight ||
+    isAdvanceNotification ||
+    isVetVisit ||
+    isJpExportQuarantine
   const caseRow = useCase(caseId)
   const { updateCase } = useCases()
 
@@ -95,6 +104,9 @@ export function StepDetailView({
   const savedVetVisitDate = readVetVisitDate(caseRow?.data)
   const [vetVisitDate, setVetVisitDate] = useState(savedVetVisitDate)
 
+  const savedJpExport = readJpExportForm(caseRow?.data)
+  const [jpExport, setJpExport] = useState<JpExportForm>(savedJpExport)
+
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
@@ -109,8 +121,15 @@ export function StepDetailView({
   const flightDirty = isFlight && !flightFormEqual(flightForm, savedFlightForm)
   const advanceDirty = isAdvanceNotification && advanceDate !== savedAdvanceDate
   const vetVisitDirty = isVetVisit && vetVisitDate !== savedVetVisitDate
+  const jpExportDirty = isJpExportQuarantine && !jpExportFormEqual(jpExport, savedJpExport)
   const dirty =
-    microchipDirty || rabiesDirty || titerDirty || flightDirty || advanceDirty || vetVisitDirty
+    microchipDirty ||
+    rabiesDirty ||
+    titerDirty ||
+    flightDirty ||
+    advanceDirty ||
+    vetVisitDirty ||
+    jpExportDirty
   // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
   const justSaved = status === 'saved' && !dirty
 
@@ -141,6 +160,10 @@ export function StepDetailView({
   }, [caseRow?.data])
   useEffect(() => {
     if (!vetVisitDirty) setVetVisitDate(readVetVisitDate(caseRow?.data))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data])
+  useEffect(() => {
+    if (!jpExportDirty) setJpExport(readJpExportForm(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
 
@@ -256,6 +279,24 @@ export function StepDetailView({
         if (res.ok) {
           updateCase(res.value)
           setVetVisitDate(readVetVisitDate(res.value.data))
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    } else if (isJpExportQuarantine) {
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        const res = await updateJpExportQuarantineFields(caseId, {
+          date: jpExport.date || null,
+          time: jpExport.time || null,
+        })
+        if (res.ok) {
+          updateCase(res.value)
+          setJpExport(readJpExportForm(res.value.data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -606,6 +647,15 @@ export function StepDetailView({
             <VetVisitInputs date={vetVisitDate} onChange={setVetVisitDate} />
           </section>
         )}
+        {isJpExportQuarantine && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <JpExportQuarantineInputs
+              form={jpExport}
+              onChange={(key, next) => setJpExport((prev) => ({ ...prev, [key]: next }))}
+            />
+          </section>
+        )}
         {!isInteractive && step.inputs && step.inputs.length > 0 && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력 정보</h3>
@@ -925,4 +975,17 @@ function readVetVisitDate(data: Record<string, unknown> | null | undefined): str
   if (!data) return ''
   const v = data['vet_visit_date']
   return typeof v === 'string' ? v : ''
+}
+
+/** 일본 수출검역 예약 — caseRow.data.jp_export_quarantine_date / _time. */
+function readJpExportForm(data: Record<string, unknown> | null | undefined): JpExportForm {
+  const str = (key: string) => {
+    const v = data?.[key]
+    return typeof v === 'string' ? v : ''
+  }
+  return { date: str('jp_export_quarantine_date'), time: str('jp_export_quarantine_time') }
+}
+
+function jpExportFormEqual(a: JpExportForm, b: JpExportForm): boolean {
+  return a.date === b.date && a.time === b.time
 }
