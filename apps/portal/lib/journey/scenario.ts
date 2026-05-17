@@ -50,8 +50,12 @@ export interface JourneyData {
     tripType: 'round' | 'one_way'
   }
   stages: JourneyStage[]
-  /** state==='current' 인 첫 스테이지. 없으면 null (= 전체 완료). */
-  nextStage: JourneyStage | null
+  /**
+   * state==='current' 인 스테이지들 — '다음 할 일' 카드로 노출.
+   * 보통 1개지만, non-blocking step(예: 수출검역) 뒤엔 후속 step 도 동시에 current 가 되어 2개 이상.
+   * 빈 배열이면 전체 완료.
+   */
+  nextStages: JourneyStage[]
   /** 전체 stage 의 failedChecks 합 — 상단 '주의' 배너에 사용. */
   totalFailedChecks: number
   /** 전체 stage 의 infoChecks 합 — 상단 '안내' 배너에 사용. */
@@ -222,12 +226,16 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     }
   })
 
-  // 첫 upcoming → current 로 승격
-  const firstUpcomingIdx = stages.findIndex((s) => s.state === 'upcoming')
-  if (firstUpcomingIdx >= 0) {
-    stages[firstUpcomingIdx].state = 'current'
+  // 첫 upcoming 부터 'current' 로 승격. non-blocking step(귀국편 등 후속을 막지 않는
+  // 단계)은 바로 다음 step 도 함께 'current' 로 올린다 — '다음 할 일' 카드가 여럿이 될 수 있다.
+  const nonBlockingIds = new Set(applicableSteps.filter((s) => s.nonBlocking).map((s) => s.id))
+  for (let i = 0; i < stages.length; i++) {
+    if (stages[i].state !== 'upcoming') continue
+    stages[i].state = 'current'
+    // blocking step 에서 멈춤. non-blocking 이면 계속 스캔해 다음 step 도 승격.
+    if (!nonBlockingIds.has(stages[i].id)) break
   }
-  const nextStage = stages.find((s) => s.state === 'current') ?? null
+  const nextStages = stages.filter((s) => s.state === 'current')
   const totalFailedChecks = stages.reduce((sum, s) => sum + (s.failedChecks ?? 0), 0)
   const totalInfoChecks = stages.reduce((sum, s) => sum + (s.infoChecks ?? 0), 0)
 
@@ -241,7 +249,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       tripType: ctx.tripType,
     },
     stages,
-    nextStage,
+    nextStages,
     totalFailedChecks,
     totalInfoChecks,
   }

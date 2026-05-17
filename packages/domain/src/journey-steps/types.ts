@@ -145,6 +145,11 @@ export interface StepDefinition {
   validationIds?: string[]
   /** 표시 전용. 카탈로그 카드의 부가 톤. */
   severityHint?: CheckSeverity
+  /**
+   * true 면 이 step 이 후속 step 을 막지 않는다 — journey 타임라인에서 이 step 이
+   * 'current' 가 되면 바로 다음 step 도 함께 'current' 로 노출된다 (병렬 진행 가능 단계).
+   */
+  nonBlocking?: boolean
 }
 
 // ── 런타임 컨텍스트 ──────────────────────────────────────────────────────

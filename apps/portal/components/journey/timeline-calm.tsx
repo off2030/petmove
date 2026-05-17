@@ -12,7 +12,7 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
  * 그것을 비교적 충실히 옮긴 것.
  */
 export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: string }) {
-  const { stages, trip, pet, nextStage, totalFailedChecks, totalInfoChecks } = data
+  const { stages, trip, pet, nextStages, totalFailedChecks, totalInfoChecks } = data
   const total = stages.length
   const done = stages.filter((s) => s.state === 'done').length
   const pct = done / total
@@ -182,14 +182,16 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
           </Link>
         )}
 
-        {/* 다음 할 일 카드 — soft taupe gradient. 클릭 시 해당 단계 상세로 이동. */}
-        {nextStage && (
+        {/* 다음 할 일 카드 — soft taupe gradient. 클릭 시 해당 단계 상세로 이동.
+            non-blocking step 뒤엔 current 가 여럿이라 카드도 여럿. 라벨·D-day 는 첫 카드만. */}
+        {nextStages.map((stage, i) => (
           <Link
-            href={`/cases/${caseId}/journey/${nextStage.id}`}
+            key={stage.id}
+            href={`/cases/${caseId}/journey/${stage.id}`}
             className="pm-pressable"
             style={{
               display: 'block',
-              marginTop: 22,
+              marginTop: i === 0 ? 22 : 12,
               padding: 22,
               borderRadius: 22,
               background: C.cardSoft,
@@ -199,16 +201,18 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               cursor: 'pointer',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <div style={{ ...monoCap, color: 'rgba(45,38,28,.55)' }}>다음 할 일</div>
-              {dDayLabel && (
-                <span style={{ ...monoCap, color: 'rgba(45,38,28,.75)', fontWeight: 600 }}>{dDayLabel}</span>
-              )}
-            </div>
+            {i === 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <div style={{ ...monoCap, color: 'rgba(45,38,28,.55)' }}>다음 할 일</div>
+                {dDayLabel && (
+                  <span style={{ ...monoCap, color: 'rgba(45,38,28,.75)', fontWeight: 600 }}>{dDayLabel}</span>
+                )}
+              </div>
+            )}
             <h3
               style={{
                 ...serif,
-                margin: '12px 0 0',
+                margin: i === 0 ? '12px 0 0' : 0,
                 fontSize: 22,
                 lineHeight: 1.18,
                 color: '#2A2620',
@@ -216,15 +220,15 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                 textWrap: 'balance' as React.CSSProperties['textWrap'],
               }}
             >
-              {nextStage.label}
+              {stage.label}
             </h3>
-            {(nextStage.cardDesc ?? nextStage.desc) && (
+            {(stage.cardDesc ?? stage.desc) && (
               <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>
-                {nextStage.cardDesc ?? nextStage.desc}
+                {stage.cardDesc ?? stage.desc}
               </p>
             )}
           </Link>
-        )}
+        ))}
 
         {/* 진행률 링 — taupe radial gradient hero */}
         <div
