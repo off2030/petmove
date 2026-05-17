@@ -223,11 +223,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '수출',
     description:
       '일본 동물검역소에 수출 동물검역 신청과 예약을 합니다.\n\nNACCS를 통해 방문일 최소 10일 전까지 예약을 해야 합니다.\n사전 신고와 동시에 진행을 하는 것이 편리합니다.',
-    cardLine: '일본 동물검역소에 수출 동물검역을 신청·예약하세요.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
     order: 48,
-    // 귀국 항공편 기준 — 귀국일 10일 전까지 예약 (data.return_date 앵커).
-    deadline: { anchor: 'return', daysBefore: 10 },
+    // 마감 없음 — 예약 기준일이 검역소 방문일(= 예약일, 사용자 입력)이라 고정 앵커가 없다.
     // 귀국편 절차라 후속(출국 전 임상검사 등)을 막지 않는다 — 동시에 '다음 할 일' 노출.
     nonBlocking: true,
     done: 'has-jp-export-quarantine',

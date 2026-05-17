@@ -91,8 +91,8 @@ export type StepCategory =
   | 'travel'
 
 export interface StepDeadline {
-  /** D-day 계산 기준점. 'departure' = 출국일, 'entry' = 일본 입국일(data.entry_date), 'return' = 귀국일(data.return_date), 'created' = 케이스 생성일. */
-  anchor: 'departure' | 'entry' | 'return' | 'created'
+  /** D-day 계산 기준점. 'departure' = 출국일, 'entry' = 일본 입국일(data.entry_date), 'created' = 케이스 생성일. */
+  anchor: 'departure' | 'entry' | 'created'
   /** anchor 기준 며칠 전. 양수 = anchor 보다 N일 일찍, 음수 = 이후. */
   daysBefore: number
   /** true 면 마감이 [anchor−daysBefore, anchor] 구간 — 카드에 'A ~ B' 로 표시. 기본은 '~까지' 단일 마감. */
