@@ -177,12 +177,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     done: 'manual-flag:flight-purchased',
     // 출국 5 + 귀국 5. 귀국은 왕복 케이스에서만 노출 — 분기는 컴포넌트(FlightInputs)에서.
     inputs: [
-      { key: 'entry_date', label: '도착일', type: 'date' },
+      { key: 'entry_date', label: '날짜', type: 'date' },
       { key: 'entry_departure_airport', label: '출발 공항', type: 'text' },
       { key: 'entry_airport', label: '도착 공항', type: 'text' },
       { key: 'entry_flight_number', label: '편명', type: 'text' },
       { key: 'entry_transport', label: '운송 방법', type: 'select' },
-      { key: 'return_date', label: '귀국일', type: 'date' },
+      { key: 'return_date', label: '날짜', type: 'date' },
       { key: 'return_departure_airport', label: '출발 공항', type: 'text' },
       { key: 'return_arrival_airport', label: '도착 공항', type: 'text' },
       { key: 'return_flight_number', label: '편명', type: 'text' },

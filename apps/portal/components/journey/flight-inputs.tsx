@@ -50,7 +50,7 @@ interface FlightField {
 }
 
 const ENTRY_FIELDS: readonly FlightField[] = [
-  { key: 'entry_date', label: '도착일', kind: 'date' },
+  { key: 'entry_date', label: '날짜', kind: 'date' },
   { key: 'entry_departure_airport', label: '출발 공항', kind: 'text', placeholder: '예: 인천 ICN' },
   { key: 'entry_airport', label: '도착 공항', kind: 'text', placeholder: '예: 나리타 NRT' },
   { key: 'entry_flight_number', label: '편명', kind: 'text', placeholder: '예: KE703' },
@@ -58,7 +58,7 @@ const ENTRY_FIELDS: readonly FlightField[] = [
 ]
 
 const RETURN_FIELDS: readonly FlightField[] = [
-  { key: 'return_date', label: '귀국일', kind: 'date' },
+  { key: 'return_date', label: '날짜', kind: 'date' },
   { key: 'return_departure_airport', label: '출발 공항', kind: 'text', placeholder: '예: 나리타 NRT' },
   { key: 'return_arrival_airport', label: '도착 공항', kind: 'text', placeholder: '예: 인천 ICN' },
   { key: 'return_flight_number', label: '편명', kind: 'text', placeholder: '예: KE704' },
