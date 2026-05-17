@@ -209,10 +209,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     inputs: [{ key: 'advance_notification_date', label: '신청일', type: 'date' }],
     allowAttachments: true,
     attachmentHint: '수입허가증을 사진, PDF로 보관하세요.',
-    link: {
-      url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O',
-      label: 'NACCS 신청 페이지',
-    },
+    links: [
+      { url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O', label: 'NACCS 신청 페이지' },
+    ],
     validationIds: ['jp.advance-notification-40days-before-entry'],
   },
 
@@ -233,10 +232,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'jp_export_quarantine_date', label: '예약일', type: 'date' },
       { key: 'jp_export_quarantine_time', label: '예약시간', type: 'text', helpText: 'HH:mm 형식 (예: 14:30)' },
     ],
-    link: {
-      url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O',
-      label: 'NACCS 신청 페이지',
-    },
+    links: [
+      { url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O', label: 'NACCS 신청 페이지' },
+    ],
   },
 
   // ── 5. 종합백신 (DHPP·FVRCP) ────────────────────────────────────────────
@@ -426,20 +424,25 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: ['jp.vet-visit-within-10days-of-departure'],
   },
 
-  // ── 12. 검역증명서 발급 ────────────────────────────────────────────────
+  // ── 12. 한국 동물검역소 방문 ────────────────────────────────────────────
   {
     id: 'certificate-issue',
     category: 'document',
-    title: '검역증명서 발급',
-    shortLabel: '증명서',
-    description:
-      '농림축산검역본부 발급. 일본 EQC, EU AnnexIII, 호주 RNATT 등 목적지별 양식이 달라 펫무브워크에서 자동 생성됩니다.',
+    title: '한국 동물검역소 방문',
+    shortLabel: '검역소',
+    description: '출국일 기준 10일 이내에 동물검역소를 방문해 검역을 받습니다.',
+    cardLine: '동물검역소를 방문해 검역을 받으세요.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 120,
-    deadline: { anchor: 'departure', daysBefore: 7 },
+    // 출국 전 검역소 방문 가능 구간 — 임상검사(vet-visit)와 동일한 '출국 10일 이내' 윈도우.
+    deadline: { anchor: 'departure', daysBefore: 9, window: true },
     done: 'manual-flag:certificate-issued',
     allowAttachments: true,
     attachmentHint: '발급된 검역증명서 PDF 가 자동 첨부됩니다.',
+    links: [
+      { url: 'https://www.petmove.co.kr/docs/pet-quarantine-station/', label: '동물검역소 위치' },
+      { url: 'https://eminwon.qia.go.kr/eminwon/reservation/login/login.do?ref=petmove.co.kr', label: '검역 예약' },
+    ],
   },
 
   // ── 13. 항공 예약 ──────────────────────────────────────────────────────

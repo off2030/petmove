@@ -139,8 +139,8 @@ export interface StepDefinition {
   /** Phase 2 — 첨부 허용 여부. MVP 에서는 false 기본. */
   allowAttachments?: boolean
   attachmentHint?: string
-  /** 상세 페이지 설명 아래 표시할 외부 링크 (예: 신청 사이트). */
-  link?: { url: string; label: string }
+  /** 상세 페이지 설명 아래 표시할 외부 링크 목록 (예: 신청·예약 사이트). */
+  links?: Array<{ url: string; label: string }>
   /** 이 step 에 매핑되는 procedure-checks 의 id 목록. check-mapping.ts 의 데이터 1차 출처. */
   validationIds?: string[]
   /** 표시 전용. 카탈로그 카드의 부가 톤. */

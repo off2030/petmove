@@ -513,13 +513,15 @@ export function StepDetailView({
               <span style={{ color: C.ink3 }}>→</span>
             </Link>
           )}
-          {step.link && (
+          {step.links?.map((l) => (
             <a
-              href={step.link.url}
+              key={l.url}
+              href={l.url}
               target="_blank"
               rel="noopener noreferrer"
               style={{
                 marginTop: 14,
+                marginRight: 8,
                 padding: '9px 14px',
                 borderRadius: 999,
                 border: `.5px solid ${C.line}`,
@@ -534,10 +536,10 @@ export function StepDetailView({
                 textDecoration: 'none',
               }}
             >
-              {step.link.label}
+              {l.label}
               <span style={{ color: C.ink3 }}>↗</span>
             </a>
-          )}
+          ))}
         </section>
 
         {/* Warnings */}
