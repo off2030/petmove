@@ -544,7 +544,7 @@ function Inner() {
                 </>
               )}
               <div className="h-full flex flex-col gap-4">
-              {/* Top menu bar: 목록 / 변경이력 · 복제 · 삭제 — Editorial 서브 메뉴 */}
+              {/* Top menu bar: 돌아가기 / 변경이력 · 복제 · 삭제 — Editorial 서브 메뉴 */}
               <div className="h-9 shrink-0 flex items-center justify-between">
                 <button
                   type="button"
@@ -558,9 +558,10 @@ function Inner() {
                       selectCase(null)
                     }
                   }}
-                  className="px-2 py-1 font-mono text-[12px] uppercase tracking-[1.5px] text-muted-foreground hover:text-foreground transition-colors"
+                  className="inline-flex items-center gap-1 px-2 py-1 font-mono text-[12px] uppercase tracking-[1.5px] text-foreground/70 hover:text-foreground transition-colors"
                 >
-                  목록
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                  돌아가기
                 </button>
                 {selectedCase && (
                   <div className="flex items-center gap-1">
