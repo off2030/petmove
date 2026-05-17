@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import type { CheckResult, ProcedureCheck, StepDefinition } from '@petmove/domain'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
 import {
@@ -110,6 +110,19 @@ export function StepDetailView({
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
+
+  // 하단 sticky 저장 바가 마지막 입력 필드를 가리지 않도록 — 바 높이를 재서 컨텐츠
+  // paddingBottom 을 맞춘다. 저장 에러 시 바가 커지므로 그 시점에 맨 아래로 스크롤한다.
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const barRef = useRef<HTMLDivElement>(null)
+  const [barHeight, setBarHeight] = useState(132)
+  useEffect(() => {
+    if (barRef.current) setBarHeight(barRef.current.offsetHeight)
+    if (status === 'error' && scrollRef.current) {
+      const el = scrollRef.current
+      requestAnimationFrame(() => el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' }))
+    }
+  }, [isInteractive, status, error])
 
   const microchipDirty = isMicrochip && (chip !== savedChip || date !== savedDate)
   const rabiesDirty = isRabies && !rabiesFormEqual(rabies, savedRabies)
@@ -348,14 +361,15 @@ export function StepDetailView({
 
   return (
     <div
+      ref={scrollRef}
       className="pm-fade-up"
       style={{
         background: C.bg,
         color: C.ink,
         minHeight: '100%',
         paddingTop: 16,
-        // 인터랙티브 step 일 때 하단 sticky 저장 바 + bottom-nav 공간을 더 확보.
-        paddingBottom: isInteractive ? 132 : 32,
+        // 측정한 sticky 저장 바 높이 + 여백 — 마지막 입력 필드가 바에 가리지 않게.
+        paddingBottom: isInteractive ? barHeight + 24 : 32,
         overflow: 'auto',
       }}
     >
@@ -721,6 +735,7 @@ export function StepDetailView({
           이지만 컨텐츠는 BottomNav 위쪽에만 배치돼 시각 겹침 없음. */}
       {isInteractive && (
         <div
+          ref={barRef}
           style={{
             position: 'fixed',
             left: 0,
