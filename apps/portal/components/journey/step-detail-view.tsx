@@ -8,6 +8,7 @@ import {
   updateAdvanceNotificationDate,
   updateFlightFields,
   updateJpExportQuarantineFields,
+  updateKrExportQuarantineDate,
   updateMicrochipFields,
   updateRabiesEntryFields,
   updateTiterFields,
@@ -17,6 +18,7 @@ import { readCaseDocuments } from '@/lib/documents'
 import { AdvanceNotificationInputs } from './advance-notification-inputs'
 import { FlightInputs, type FlightForm } from './flight-inputs'
 import { JpExportQuarantineInputs, type JpExportForm } from './jp-export-quarantine-inputs'
+import { KrExportQuarantineInputs } from './kr-export-quarantine-inputs'
 import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm } from './rabies-entry-inputs'
 import { StepAttachments } from './step-attachments'
@@ -72,6 +74,7 @@ export function StepDetailView({
   const isAdvanceNotification = step.id === 'advance-notification'
   const isVetVisit = step.id === 'vet-visit'
   const isJpExportQuarantine = step.id === 'jp-export-quarantine'
+  const isCertificateIssue = step.id === 'certificate-issue'
   const isInteractive =
     isMicrochip ||
     isRabies ||
@@ -79,7 +82,8 @@ export function StepDetailView({
     isFlight ||
     isAdvanceNotification ||
     isVetVisit ||
-    isJpExportQuarantine
+    isJpExportQuarantine ||
+    isCertificateIssue
   const caseRow = useCase(caseId)
   const { updateCase } = useCases()
 
@@ -106,6 +110,9 @@ export function StepDetailView({
 
   const savedJpExport = readJpExportForm(caseRow?.data)
   const [jpExport, setJpExport] = useState<JpExportForm>(savedJpExport)
+
+  const savedKrExportQuarantineDate = readKrExportQuarantineDate(caseRow?.data)
+  const [krExportQuarantineDate, setKrExportQuarantineDate] = useState(savedKrExportQuarantineDate)
 
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -135,6 +142,8 @@ export function StepDetailView({
   const advanceDirty = isAdvanceNotification && advanceDate !== savedAdvanceDate
   const vetVisitDirty = isVetVisit && vetVisitDate !== savedVetVisitDate
   const jpExportDirty = isJpExportQuarantine && !jpExportFormEqual(jpExport, savedJpExport)
+  const krExportQuarantineDirty =
+    isCertificateIssue && krExportQuarantineDate !== savedKrExportQuarantineDate
   const dirty =
     microchipDirty ||
     rabiesDirty ||
@@ -142,7 +151,8 @@ export function StepDetailView({
     flightDirty ||
     advanceDirty ||
     vetVisitDirty ||
-    jpExportDirty
+    jpExportDirty ||
+    krExportQuarantineDirty
   // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
   const justSaved = status === 'saved' && !dirty
 
@@ -177,6 +187,10 @@ export function StepDetailView({
   }, [caseRow?.data])
   useEffect(() => {
     if (!jpExportDirty) setJpExport(readJpExportForm(caseRow?.data))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data])
+  useEffect(() => {
+    if (!krExportQuarantineDirty) setKrExportQuarantineDate(readKrExportQuarantineDate(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
 
@@ -310,6 +324,21 @@ export function StepDetailView({
         if (res.ok) {
           updateCase(res.value)
           setJpExport(readJpExportForm(res.value.data))
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    } else if (isCertificateIssue) {
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        const res = await updateKrExportQuarantineDate(caseId, krExportQuarantineDate || null)
+        if (res.ok) {
+          updateCase(res.value)
+          setKrExportQuarantineDate(readKrExportQuarantineDate(res.value.data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -680,6 +709,15 @@ export function StepDetailView({
             />
           </section>
         )}
+        {isCertificateIssue && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <KrExportQuarantineInputs
+              date={krExportQuarantineDate}
+              onChange={setKrExportQuarantineDate}
+            />
+          </section>
+        )}
         {!isInteractive && step.inputs && step.inputs.length > 0 && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력 정보</h3>
@@ -999,6 +1037,13 @@ function readAdvanceDate(data: Record<string, unknown> | null | undefined): stri
 function readVetVisitDate(data: Record<string, unknown> | null | undefined): string {
   if (!data) return ''
   const v = data['vet_visit_date']
+  return typeof v === 'string' ? v : ''
+}
+
+/** 한국 수출 동물검역 검역일 — caseRow.data.kr_export_quarantine_date. */
+function readKrExportQuarantineDate(data: Record<string, unknown> | null | undefined): string {
+  if (!data) return ''
+  const v = data['kr_export_quarantine_date']
   return typeof v === 'string' ? v : ''
 }
 

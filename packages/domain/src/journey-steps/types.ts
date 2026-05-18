@@ -75,6 +75,7 @@ export type StepDoneSignal =
   | 'has-flight-date'              // 항공권 구매 — entry_date(항공편 날짜) 입력 시 완료
   | 'has-advance-notification'     // 사전 신고 — advance_notification_date 입력 시 완료
   | 'has-jp-export-quarantine'     // 일본 수출검역 — jp_export_quarantine_date 입력 시 완료
+  | 'has-kr-export-quarantine'     // 한국 수출검역 — kr_export_quarantine_date 입력 시 완료
   | 'departure-past'
   | `manual-flag:${string}`
 

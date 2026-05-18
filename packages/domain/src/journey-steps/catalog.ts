@@ -438,7 +438,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     order: 120,
     // 출국 전 검역소 방문 가능 구간 — 임상검사(vet-visit)와 동일한 '출국 10일 이내' 윈도우.
     deadline: { anchor: 'departure', daysBefore: 9, window: true },
-    done: 'manual-flag:certificate-issued',
+    done: 'has-kr-export-quarantine',
+    inputs: [
+      { key: 'kr_export_quarantine_date', label: '검역일', type: 'date' },
+    ],
     allowAttachments: true,
     attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
     links: [
