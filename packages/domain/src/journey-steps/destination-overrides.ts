@@ -23,7 +23,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     departure: {
       title: '일본 수입 동물검역',
       shortLabel: '수입',
-      description: '일본 도착 후 공항 동물검역소에서 검역을 받습니다.',
+      description:
+        '일본 도착 후 공항 동물검역소에서 검역을 받습니다.\n동물검역소는 입국 심사대를 지나 수화물 찾는 곳 주변에 있는 경우가 많습니다. 세관 심사대를 지나기 전에 있으므로 참고하세요.',
+      links: [
+        { url: 'https://www.petmove.co.kr/blog/japan-pet-import-inspection/', label: '일본 주요 공항 동물검역소 위치' },
+      ],
     },
   },
 }
