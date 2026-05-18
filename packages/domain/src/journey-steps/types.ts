@@ -78,6 +78,8 @@ export type StepDoneSignal =
   | 'has-kr-export-quarantine'     // 한국 수출검역 — kr_export_quarantine_date 입력 시 완료
   | 'has-jp-import-quarantine'     // 일본 수입검역 — jp_import_quarantine_date 입력 시 완료
   | 'has-jp-export-quarantine-visit' // 일본 수출검역(검역소 방문) — jp_export_quarantine_visit_date 입력 시 완료
+  | 'has-kr-import-quarantine'     // 한국 수입검역 — kr_import_quarantine_date 입력 시 완료
+  | 'has-arrived'                  // 도착 완료 마일스톤 — 마지막 검역(편도=일본 수입 / 왕복=한국 수입) 완료 시
   | 'departure-past'
   | `manual-flag:${string}`
 

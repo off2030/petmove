@@ -11,6 +11,7 @@ import {
   updateJpExportQuarantineVisitDate,
   updateJpImportQuarantineDate,
   updateKrExportQuarantineDate,
+  updateKrImportQuarantineDate,
   updateMicrochipFields,
   updateRabiesEntryFields,
   updateTiterFields,
@@ -23,6 +24,7 @@ import { JpExportQuarantineInputs, type JpExportForm } from './jp-export-quarant
 import { JpExportQuarantineVisitInputs } from './jp-export-quarantine-visit-inputs'
 import { JpImportQuarantineInputs } from './jp-import-quarantine-inputs'
 import { KrExportQuarantineInputs } from './kr-export-quarantine-inputs'
+import { KrImportQuarantineInputs } from './kr-import-quarantine-inputs'
 import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm } from './rabies-entry-inputs'
 import { StepAttachments } from './step-attachments'
@@ -84,6 +86,7 @@ export function StepDetailView({
     step.id === 'departure' &&
     (step.inputs ?? []).some((i) => i.key === 'jp_import_quarantine_date')
   const isJpExportQuarantineVisit = step.id === 'jp-export-quarantine-visit'
+  const isKrImportQuarantine = step.id === 'kr-import-quarantine'
   const isInteractive =
     isMicrochip ||
     isRabies ||
@@ -94,7 +97,8 @@ export function StepDetailView({
     isJpExportQuarantine ||
     isCertificateIssue ||
     isJpImportQuarantine ||
-    isJpExportQuarantineVisit
+    isJpExportQuarantineVisit ||
+    isKrImportQuarantine
   const caseRow = useCase(caseId)
   const { updateCase } = useCases()
 
@@ -133,6 +137,9 @@ export function StepDetailView({
     savedJpExportQuarantineVisitDate,
   )
 
+  const savedKrImportQuarantineDate = readKrImportQuarantineDate(caseRow?.data)
+  const [krImportQuarantineDate, setKrImportQuarantineDate] = useState(savedKrImportQuarantineDate)
+
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
@@ -167,6 +174,8 @@ export function StepDetailView({
     isJpImportQuarantine && jpImportQuarantineDate !== savedJpImportQuarantineDate
   const jpExportQuarantineVisitDirty =
     isJpExportQuarantineVisit && jpExportQuarantineVisitDate !== savedJpExportQuarantineVisitDate
+  const krImportQuarantineDirty =
+    isKrImportQuarantine && krImportQuarantineDate !== savedKrImportQuarantineDate
   const dirty =
     microchipDirty ||
     rabiesDirty ||
@@ -177,7 +186,8 @@ export function StepDetailView({
     jpExportDirty ||
     krExportQuarantineDirty ||
     jpImportQuarantineDirty ||
-    jpExportQuarantineVisitDirty
+    jpExportQuarantineVisitDirty ||
+    krImportQuarantineDirty
   // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
   const justSaved = status === 'saved' && !dirty
 
@@ -225,6 +235,10 @@ export function StepDetailView({
   useEffect(() => {
     if (!jpExportQuarantineVisitDirty)
       setJpExportQuarantineVisitDate(readJpExportQuarantineVisitDate(caseRow?.data))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data])
+  useEffect(() => {
+    if (!krImportQuarantineDirty) setKrImportQuarantineDate(readKrImportQuarantineDate(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
 
@@ -406,6 +420,21 @@ export function StepDetailView({
         if (res.ok) {
           updateCase(res.value)
           setJpExportQuarantineVisitDate(readJpExportQuarantineVisitDate(res.value.data))
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    } else if (isKrImportQuarantine) {
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        const res = await updateKrImportQuarantineDate(caseId, krImportQuarantineDate || null)
+        if (res.ok) {
+          updateCase(res.value)
+          setKrImportQuarantineDate(readKrImportQuarantineDate(res.value.data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -803,6 +832,15 @@ export function StepDetailView({
             />
           </section>
         )}
+        {isKrImportQuarantine && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <KrImportQuarantineInputs
+              date={krImportQuarantineDate}
+              onChange={setKrImportQuarantineDate}
+            />
+          </section>
+        )}
         {!isInteractive && step.inputs && step.inputs.length > 0 && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력 정보</h3>
@@ -1145,6 +1183,13 @@ function readJpExportQuarantineVisitDate(
 ): string {
   if (!data) return ''
   const v = data['jp_export_quarantine_visit_date']
+  return typeof v === 'string' ? v : ''
+}
+
+/** 한국 수입 동물검역 검역일 — caseRow.data.kr_import_quarantine_date. */
+function readKrImportQuarantineDate(data: Record<string, unknown> | null | undefined): string {
+  if (!data) return ''
+  const v = data['kr_import_quarantine_date']
   return typeof v === 'string' ? v : ''
 }
 

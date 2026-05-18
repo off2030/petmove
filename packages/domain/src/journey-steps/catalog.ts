@@ -482,4 +482,39 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
   },
+
+  // ── 15. 한국 수입 동물검역 (왕복 케이스 한정 — 귀국 후) ─────────────────
+  {
+    id: 'kr-import-quarantine',
+    category: 'document',
+    title: '한국 수입 동물검역',
+    shortLabel: '수입',
+    description:
+      '한국 도착 후 공항 동물검역소에서 수입 동물검역을 받습니다.\n반려동물을 데리고 검역소를 방문하세요.',
+    cardLine: '한국 공항 동물검역소에서 수입 검역을 받으세요.',
+    applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
+    order: 160,
+    done: 'has-kr-import-quarantine',
+    inputs: [
+      { key: 'kr_import_quarantine_date', label: '검역일', type: 'date' },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
+  },
+
+  // ── 16. 도착 완료 — 여정 마무리 마일스톤 ───────────────────────────────
+  // 입력 없는 마커 step. 마지막 검역(편도=일본 수입 / 왕복=한국 수입)이
+  // 완료되면 자동 완료 — done-resolver 의 'has-arrived' 가 trip-type 으로 분기.
+  {
+    id: 'journey-complete',
+    category: 'travel',
+    title: '도착 완료',
+    shortLabel: '도착',
+    description:
+      '모든 검역 절차를 마치고 반려동물이 무사히 도착했습니다.\n긴 여정을 함께 완주하셨어요.',
+    cardLine: '반려동물과 무사히 도착했어요.',
+    applicability: { destinations: 'all', species: 'all', tripType: 'all' },
+    order: 200,
+    done: 'has-arrived',
+  },
 ]
