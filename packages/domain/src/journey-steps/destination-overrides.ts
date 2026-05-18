@@ -31,6 +31,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       inputs: [
         { key: 'jp_import_quarantine_date', label: '검역일', type: 'date' },
       ],
+      allowAttachments: true,
+      attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
       links: [
         { url: '/guide/japan-airport-quarantine', label: '일본 주요 공항 동물검역소 위치' },
       ],
