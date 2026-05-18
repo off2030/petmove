@@ -26,7 +26,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       description:
         '일본 도착 후 공항 동물검역소에서 검역을 받습니다.\n동물검역소는 공항마다 위치가 다르지만 일반적으로 입국 심사대를 지난 뒤 수화물 찾는 곳 근처에 있습니다. 검역을 받기 전에 세관 심사대를 통과하지 않도록 주의하세요.',
       links: [
-        { url: 'https://www.petmove.co.kr/blog/japan-pet-import-inspection/', label: '일본 주요 공항 동물검역소 위치' },
+        { url: '/guide/japan-airport-quarantine', label: '일본 주요 공항 동물검역소 위치' },
       ],
     },
   },
