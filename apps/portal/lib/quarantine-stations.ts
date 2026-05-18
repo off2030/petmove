@@ -10,8 +10,8 @@ export interface QuarantineStation {
   /** 전화번호 (표시용 원문 — '~'·',' 로 여러 번호 포함 가능). */
   phone: string
   address: string
-  /** true 면 페이지 상단 '주요 동물검역소' 섹션에도 노출. */
-  featured?: boolean
+  /** 값이 있으면 '주요 동물검역소' 섹션에 노출 — 숫자는 그 섹션 안의 표시 순서(오름차순). */
+  featured?: number
 }
 
 export interface QuarantineRegion {
@@ -33,13 +33,13 @@ export const QUARANTINE_REGIONS: QuarantineRegion[] = [
         office: '인천공항 제1여객터미널',
         phone: '032-740-2660~2',
         address: '인천 중구 공항로 272 인천국제공항 제1여객터미널 3037호',
-        featured: true,
+        featured: 3,
       },
       {
         office: '인천공항 제2여객터미널',
         phone: '032-740-2028',
         address: '인천 중구 제2여객터미널대로 446 인천국제공항 제2여객터미널 2F-0750호',
-        featured: true,
+        featured: 4,
       },
     ],
   },
@@ -110,13 +110,13 @@ export const QUARANTINE_REGIONS: QuarantineRegion[] = [
         office: '축산물 위생검역과',
         phone: '02-2650-0617',
         address: '서울 강서구 등촌로 39가길 46',
-        featured: true,
+        featured: 1,
       },
       {
         office: '김포공항사무소',
         phone: '02-2664-2601',
         address: '서울 강서구 하늘길 38 김포공항 국제선청사 171 (1층 우리은행 옆 통로)',
-        featured: true,
+        featured: 2,
       },
       {
         office: '용인사무소',

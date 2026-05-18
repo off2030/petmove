@@ -42,8 +42,8 @@ const boxStyle: React.CSSProperties = {
 export default function QuarantineStationsPage() {
   const router = useRouter()
   const featured = QUARANTINE_REGIONS.flatMap((r) =>
-    r.stations.filter((s) => s.featured).map((s) => ({ station: s, hq: r.hq })),
-  )
+    r.stations.filter((s) => s.featured != null).map((s) => ({ station: s, hq: r.hq })),
+  ).sort((a, b) => (a.station.featured ?? 0) - (b.station.featured ?? 0))
 
   return (
     <div
