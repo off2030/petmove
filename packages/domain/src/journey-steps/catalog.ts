@@ -442,7 +442,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
     links: [
-      { url: 'https://www.petmove.co.kr/docs/pet-quarantine-station/', label: '동물검역소 위치' },
+      { url: '/guide/quarantine-stations', label: '동물검역소 위치' },
       { url: 'https://eminwon.qia.go.kr/eminwon/reservation/login/login.do?ref=petmove.co.kr', label: '동물검역 예약' },
     ],
   },
