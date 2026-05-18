@@ -281,19 +281,31 @@ function fmtDateDMY(s: unknown): string {
   return `${m[3]}/${m[2]}/${m[1]}`
 }
 
-/** Compute full years + remaining months between birth and today. */
-function ageParts(birth: unknown): { years: number; months: number } | null {
+/** Compute full years + remaining months between birth and a reference date. */
+function ageParts(birth: unknown, asOf: Date): { years: number; months: number } | null {
   if (typeof birth !== 'string') return null
   const m = birth.match(/^(\d{4})-(\d{2})-(\d{2})$/)
   if (!m) return null
   const by = Number(m[1]); const bm = Number(m[2]) - 1; const bd = Number(m[3])
-  const now = new Date()
-  let years = now.getFullYear() - by
-  let months = now.getMonth() - bm
-  if (now.getDate() < bd) months -= 1
+  let years = asOf.getFullYear() - by
+  let months = asOf.getMonth() - bm
+  if (asOf.getDate() < bd) months -= 1
   if (months < 0) { years -= 1; months += 12 }
   if (years < 0) return null
   return { years, months }
+}
+
+/**
+ * 나이 계산 기준일 — 증명서 발행일(= 내원일 vet_visit_date). 없으면 오늘.
+ * 발행일 칸이 쓰는 date_or_today 와 같은 기준이라 나이와 발행일이 일치한다.
+ */
+function issueDateOf(data: Record<string, unknown>): Date {
+  const v = data.vet_visit_date
+  if (typeof v === 'string') {
+    const m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+    if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+  }
+  return new Date()
 }
 
 /** Format raw digit string into 010-XXXX-XXXX (10–11 digit Korean mobile). */
@@ -1297,14 +1309,20 @@ function resolveField(
     return jsonInMatch[2].split('|').includes(String(v ?? ''))
   }
 
-  // Age in full years computed from birth date.
+  // Age from birth date, as of the certificate issue date (vet_visit_date, else
+  // today) — keeps the age consistent with the 발급일 printed on the form.
   if (transform === 'age_years') {
-    const a = ageParts(raw)
+    const a = ageParts(raw, issueDateOf(data))
     return a ? String(a.years) : ''
   }
   if (transform === 'age_months') {
-    const a = ageParts(raw)
+    const a = ageParts(raw, issueDateOf(data))
     return a ? String(a.months) : ''
+  }
+  // Age in full years as of today — forms whose 발급일 is today (AQS-279).
+  if (transform === 'age_years_today') {
+    const a = ageParts(raw, new Date())
+    return a ? String(a.years) : ''
   }
 
   // Numeric comparison for weight range checkboxes etc.
@@ -1864,8 +1882,9 @@ function resolveField(
   }
 
   // Korean age label — birth_date 기준 "N살" (만 나이). 검역본부 서식의 '연령' 칸용.
+  // 발행일(vet_visit_date, 없으면 오늘) 기준.
   if (transform === 'age_ko') {
-    const a = ageParts(raw)
+    const a = ageParts(raw, issueDateOf(data))
     if (!a) return ''
     return a.years === 0 ? `${a.months}개월` : `${a.years}살`
   }

@@ -3969,8 +3969,8 @@
       },
       "AGERow1": {
         "source": "birth_date",
-        "transform": "age_years",
-        "note": "p1 Section 2: Age in years"
+        "transform": "age_years_today",
+        "note": "p1 Section 2: Age in years — AQS-279 발급일은 today 라 today 기준"
       },
       "MICROCHIP NUMBERRow1": {
         "source": "microchip",
