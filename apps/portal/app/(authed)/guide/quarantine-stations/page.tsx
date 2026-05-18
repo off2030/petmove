@@ -81,7 +81,7 @@ export default function QuarantineStationsPage() {
           동물검역소 위치
         </h1>
         <p style={{ fontSize: 12.5, color: C.ink3, margin: '6px 0 0', lineHeight: 1.5 }}>
-          전국 동물검역소 위치와 연락처를 알려드립니다. 방문 전 전화로 검역 가능 여부, 시간 등을 확인하세요.
+          전국 동물검역소 위치와 연락처입니다. 방문 전 전화로 검역 가능 여부, 시간 등을 확인하세요.
         </p>
 
         <div style={{ ...monoCap, marginTop: 24, marginBottom: 10, padding: '0 4px' }}>주요 동물검역소</div>
