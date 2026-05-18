@@ -67,8 +67,7 @@ export default function JapanAirportQuarantinePage() {
           일본 공항 동물검역소 위치
         </h1>
         <p style={{ fontSize: 12.5, color: C.ink3, margin: '8px 0 0', lineHeight: 1.6 }}>
-          일본 도착 후 동물검역은 공항 검역 카운터에서 받습니다. 검역소는 보통 입국 심사대를 지나
-          수하물 찾는 곳 근처에 있으며, 세관 심사 전에 들러야 합니다. 안내도를 탭하면 크게 볼 수 있습니다.
+          안내도를 탭하면 크게 볼 수 있습니다.
         </p>
 
         {JAPAN_AIRPORTS.map((ap) => (
