@@ -486,6 +486,7 @@ export function StepDetailView({
               href={`/cases/${caseId}/info`}
               style={{
                 marginTop: 14,
+                marginRight: 8,
                 padding: '9px 14px',
                 borderRadius: 999,
                 border: `.5px solid ${C.line}`,
@@ -494,8 +495,7 @@ export function StepDetailView({
                 fontSize: 13,
                 fontWeight: 500,
                 letterSpacing: '-0.005em',
-                display: 'flex',
-                width: 'fit-content',
+                display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
                 textDecoration: 'none',
@@ -510,6 +510,7 @@ export function StepDetailView({
               href={`/cases/${caseId}/docs`}
               style={{
                 marginTop: 14,
+                marginRight: 8,
                 padding: '9px 14px',
                 borderRadius: 999,
                 border: `.5px solid ${C.line}`,
@@ -518,8 +519,7 @@ export function StepDetailView({
                 fontSize: 13,
                 fontWeight: 500,
                 letterSpacing: '-0.005em',
-                display: 'flex',
-                width: 'fit-content',
+                display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
                 textDecoration: 'none',
@@ -532,9 +532,10 @@ export function StepDetailView({
           {step.links?.map((l) => {
             // 상대 경로(/…) = 앱 내부 페이지 → Next Link + '→', http = 외부 → 새 탭 + '↗'.
             const internal = l.url.startsWith('/')
+            // 내부 링크는 inline-flex 로 한 줄에 나란히, 외부 링크는 block 으로 자기 줄.
             const pillStyle: React.CSSProperties = {
               marginTop: 14,
-              marginRight: 8,
+              marginRight: internal ? 8 : 0,
               padding: '9px 14px',
               borderRadius: 999,
               border: `.5px solid ${C.line}`,
@@ -543,7 +544,8 @@ export function StepDetailView({
               fontSize: 13,
               fontWeight: 500,
               letterSpacing: '-0.005em',
-              display: 'inline-flex',
+              display: internal ? 'inline-flex' : 'flex',
+              width: internal ? undefined : 'fit-content',
               alignItems: 'center',
               gap: 6,
               textDecoration: 'none',
