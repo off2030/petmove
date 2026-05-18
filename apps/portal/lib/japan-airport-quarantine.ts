@@ -71,7 +71,6 @@ export const JAPAN_AIRPORTS: JapanAirport[] = [
   {
     name: '간사이 국제공항',
     nameSub: 'Kansai International Airport · KIX',
-    phone: '+81-72-455-1956',
     maps: [
       {
         label: '제1터미널 (Terminal 1)',
@@ -84,12 +83,6 @@ export const JAPAN_AIRPORTS: JapanAirport[] = [
         src: `${DIR}/kansai-t2.png`,
         width: 2496,
         height: 1404,
-      },
-      {
-        label: '동물검역소 사무소 — 공항역에서 가는 길',
-        src: `${DIR}/kansai-office-access.png`,
-        width: 1548,
-        height: 2189,
       },
     ],
   },
