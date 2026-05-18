@@ -827,6 +827,10 @@
         "transform": "age_months",
         "note": "Age months (구 age_months)"
       },
+      "birth_date": {
+        "source": "birth_date",
+        "note": "Date of birth — 별지25 EX 템플릿에 신규 추가한 필드 (add-form25aunz-birthdate.mjs)"
+      },
       "text_94psqd": {
         "source": "color_en",
         "note": "Color/marks (구 color_marks)"
@@ -867,6 +871,10 @@
         "source": "microchip_combined",
         "align": "left",
         "note": "Microchip number — 3자리 단위 스페이스 그룹핑, 보조칩 있으면 '<primary> / <secondary>'. 새 템플릿에서 폭 93→162 확장, 좌측 정렬 (구 microchip_number)"
+      },
+      "text_89fbkl": {
+        "source": "microchip_implant_date",
+        "note": "Microchip implant date — 별지25 의 text_79snvi 대응 (이식일 칸)"
       },
       "rabies1_product": {
         "source": "rabies_dates",

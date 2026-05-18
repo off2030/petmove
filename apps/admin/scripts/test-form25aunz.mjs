@@ -204,7 +204,7 @@ const caseRow = {
     address_en: '3, Gwanak-ro 29-gil, Gwanak-gu, Seoul, Republic of Korea',
     species: 'dog', breed_en: 'Maltese', color_en: 'White',
     sex: 'neutered_male', weight: '5',
-    birth_date: '2020-03-15', vet_visit_date: '2026-06-20',
+    birth_date: '2020-03-15', microchip_implant_date: '2021-04-10', vet_visit_date: '2026-06-20',
     rabies_dates: ['2024-05-01', '2023-05-01'],
     general_vaccine_dates: ['2024-06-01', '2025-06-10', '2026-06-15'],
     civ_dates: ['2025-07-01', '2026-07-05'],
