@@ -3001,7 +3001,12 @@
       "text_18rloc": {
         "source": "rabies_dates",
         "transform": "vaccine:rabies:date[0]",
-        "note": "p2 Rabies Row 1 date — oldest dose (1회 접종이면 여기만)"
+        "note": "p2 Rabies Row 1 date — 1회차 접종일 (oldest)"
+      },
+      "rabies_date_2": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[1]",
+        "note": "p2 Rabies Row 2 date — 2회차 접종일. 1회 접종이면 공란 (add-aucat-rabies-row2.mjs 로 추가한 필드)"
       },
       "text_19bpxy": {
         "source": "rabies_dates",
@@ -3234,7 +3239,12 @@
       "text_18rloc": {
         "source": "rabies_dates",
         "transform": "vaccine:rabies:date[0]",
-        "note": "p2 Rabies Row 1 date — oldest dose (1회 접종이면 여기만)"
+        "note": "p2 Rabies Row 1 date — 1회차 접종일 (oldest)"
+      },
+      "rabies_date_2": {
+        "source": "rabies_dates",
+        "transform": "vaccine:rabies:date[1]",
+        "note": "p2 Rabies Row 2 date — 2회차 접종일. 1회 접종이면 공란 (add-aucat-rabies-row2.mjs 로 추가한 필드)"
       },
       "text_19bpxy": {
         "source": "rabies_dates",
