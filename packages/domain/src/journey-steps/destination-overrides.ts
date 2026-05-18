@@ -17,12 +17,15 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   string,
   Partial<Record<string, Partial<StepDefinition>>>
 > = {
-  // 예시 — 실제 텍스트는 사용자가 알려주는 대로 채움.
-  // japan: {
-  //   microchip: {
-  //     description: '국제 표준 규격(ISO 11784/11785)…',
-  //   },
-  // },
+  japan: {
+    // 'departure'(출국·도착)은 전 목적지 공용 — 일본은 도착 후 공항 검역이 핵심이라
+    // 일본 케이스에서만 '일본 수입 동물검역'으로 표시. 다른 목적지는 base 그대로.
+    departure: {
+      title: '일본 수입 동물검역',
+      shortLabel: '수입',
+      description: '일본 도착 후 공항 동물검역소에서 검역을 받습니다.',
+    },
+  },
 }
 
 /**
