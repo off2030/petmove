@@ -43,6 +43,14 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
   const infoStages = stages.filter((s) => (s.infoChecks ?? 0) > 0)
   const firstInfoStage = infoStages[0] ?? null
 
+  // 왕복 케이스의 출국편/귀국편 구분 — '출국·도착'(departure) step 다음에 실질 절차
+  // step 이 있을 때만 캡션을 단다. '도착 완료' 마일스톤만 남는 케이스는 구분 불필요.
+  const departureIdx = stages.findIndex((s) => s.id === 'departure')
+  const hasReturnLeg =
+    trip.tripType === 'round' &&
+    departureIdx >= 0 &&
+    stages.some((s, i) => i > departureIdx && s.id !== 'journey-complete')
+
   const serif: React.CSSProperties = {
     fontFamily: 'var(--pm-font-display)',
     fontWeight: 500,
@@ -299,13 +307,21 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
             padding: '4px 14px',
           }}
         >
-          {stages.map((s, i) => {
+          {stages.flatMap((s, i) => {
             const isDone = s.state === 'done'
             const isCurr = s.state === 'current'
             const hasWarn = (s.failedChecks ?? 0) > 0
             const hasInfo = (s.infoChecks ?? 0) > 0
             const last = i === stages.length - 1
-            return (
+            // 출국편/귀국편 경계 캡션 — 일정 항목이 아니라 구간 구분용.
+            const legCaption = !hasReturnLeg
+              ? null
+              : i === 0
+                ? `${withRo(trip.toCity)} 떠나요`
+                : i === departureIdx + 1
+                  ? `${withRo(trip.fromCity)} 돌아와요`
+                  : null
+            const row = (
               <Link
                 key={s.id}
                 href={`/cases/${caseId}/journey/${s.id}`}
@@ -429,6 +445,16 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                 </div>
               </Link>
             )
+            if (!legCaption) return [row]
+            return [
+              <div
+                key={`${s.id}-leg`}
+                style={{ ...monoCap, padding: i === 0 ? '10px 0 4px' : '20px 0 6px' }}
+              >
+                {legCaption}
+              </div>,
+              row,
+            ]
           })}
         </div>
       </div>
@@ -450,6 +476,14 @@ function formatStageDate(stage: JourneyStage): string {
   if (parts.length !== 3) return '—'
   const [yyyy, mm, dd] = parts
   return `${yyyy.slice(2)}·${mm}·${dd}`
+}
+
+/** 한글 단어에 '으로/로' 조사를 붙인다 — 받침 없음·ㄹ받침은 '로', 그 외는 '으로'. */
+function withRo(word: string): string {
+  const last = word.charCodeAt(word.length - 1)
+  if (Number.isNaN(last) || last < 0xac00 || last > 0xd7a3) return `${word}로`
+  const jong = (last - 0xac00) % 28
+  return jong === 0 || jong === 8 ? `${word}로` : `${word}으로`
 }
 
 function PetAvatar({ size = 44 }: { size?: number }) {
