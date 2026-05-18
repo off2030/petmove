@@ -2926,14 +2926,18 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
   const MONTHS_SHORT_1 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const toDmmmY_1 = (s: string): string =>
     s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/, (_, y, m, d) => `${String(d).padStart(2, '0')}/${MONTHS_SHORT_1[Number(m) - 1] ?? m}/${y}`)
+  // vaccine_combined 은 여러 날짜를 " / " 로 join 한다. 각 조각에 형식 변환을
+  // 적용해야 결합 유효기간 필드도 양식 날짜 스타일로 렌더된다 (fillOnePackedDoc 와 동일).
+  const eachPart = (fn: (s: string) => string) => (s: string) =>
+    s.includes(' / ') ? s.split(' / ').map(fn).join(' / ') : fn(s)
   const reformatDate = form.dateFormat === 'dmy'
-    ? (s: unknown): unknown => (typeof s === 'string' ? toDmy(s) : s)
+    ? (s: unknown): unknown => (typeof s === 'string' ? eachPart(toDmy)(s) : s)
     : form.dateFormat === 'mdy_slash'
-    ? (s: unknown): unknown => (typeof s === 'string' ? toMdy_1(s) : s)
+    ? (s: unknown): unknown => (typeof s === 'string' ? eachPart(toMdy_1)(s) : s)
     : form.dateFormat === 'ymd_slash'
-    ? (s: unknown): unknown => (typeof s === 'string' ? toSlashYmd(s) : s)
+    ? (s: unknown): unknown => (typeof s === 'string' ? eachPart(toSlashYmd)(s) : s)
     : form.dateFormat === 'dmmmy'
-    ? (s: unknown): unknown => (typeof s === 'string' ? toDmmmY_1(s) : s)
+    ? (s: unknown): unknown => (typeof s === 'string' ? eachPart(toDmmmY_1)(s) : s)
     : (s: unknown): unknown => s
 
   // Route single-case fills through the same multi-case resolver so
