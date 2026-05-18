@@ -185,11 +185,15 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     //  - done → resolveCompletedDate (없으면 dash 로 fallback)
     //  - upcoming → deadline 권장일, 없으면 earliest 가능일
     const isDeparture = step.id === 'departure'
+    // 일본 수입검역(= departure 의 일본 override)은 검역일로 완료·날짜를 잡으므로
+    // departure 의 '출국일' shortcut 에서 제외 — 일반 경로(done→완료일)를 탄다.
+    const isJpImportQuarantine =
+      isDeparture && (step.inputs ?? []).some((i) => i.key === 'jp_import_quarantine_date')
     const deadline = deadlineDate(step, caseRow)
     const earliest = earliestDate(step, caseRow)
     // window 마감이면 구간 끝(기준일) — 카드에 'A ~ B' 구간으로 표시.
     const deadlineEnd = step.deadline?.window ? deadlineAnchorDate(step, caseRow) : null
-    const date = isDeparture
+    const date = isDeparture && !isJpImportQuarantine
       ? dep
       : done
         ? resolveCompletedDate(step.done, caseRow)

@@ -8,6 +8,7 @@ import {
   updateAdvanceNotificationDate,
   updateFlightFields,
   updateJpExportQuarantineFields,
+  updateJpImportQuarantineDate,
   updateKrExportQuarantineDate,
   updateMicrochipFields,
   updateRabiesEntryFields,
@@ -18,6 +19,7 @@ import { readCaseDocuments } from '@/lib/documents'
 import { AdvanceNotificationInputs } from './advance-notification-inputs'
 import { FlightInputs, type FlightForm } from './flight-inputs'
 import { JpExportQuarantineInputs, type JpExportForm } from './jp-export-quarantine-inputs'
+import { JpImportQuarantineInputs } from './jp-import-quarantine-inputs'
 import { KrExportQuarantineInputs } from './kr-export-quarantine-inputs'
 import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm } from './rabies-entry-inputs'
@@ -75,6 +77,10 @@ export function StepDetailView({
   const isVetVisit = step.id === 'vet-visit'
   const isJpExportQuarantine = step.id === 'jp-export-quarantine'
   const isCertificateIssue = step.id === 'certificate-issue'
+  // 일본 수입 동물검역 = 'departure' step 의 일본 override (override 가 검역일 input 을 실음).
+  const isJpImportQuarantine =
+    step.id === 'departure' &&
+    (step.inputs ?? []).some((i) => i.key === 'jp_import_quarantine_date')
   const isInteractive =
     isMicrochip ||
     isRabies ||
@@ -83,7 +89,8 @@ export function StepDetailView({
     isAdvanceNotification ||
     isVetVisit ||
     isJpExportQuarantine ||
-    isCertificateIssue
+    isCertificateIssue ||
+    isJpImportQuarantine
   const caseRow = useCase(caseId)
   const { updateCase } = useCases()
 
@@ -113,6 +120,9 @@ export function StepDetailView({
 
   const savedKrExportQuarantineDate = readKrExportQuarantineDate(caseRow?.data)
   const [krExportQuarantineDate, setKrExportQuarantineDate] = useState(savedKrExportQuarantineDate)
+
+  const savedJpImportQuarantineDate = readJpImportQuarantineDate(caseRow?.data)
+  const [jpImportQuarantineDate, setJpImportQuarantineDate] = useState(savedJpImportQuarantineDate)
 
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -144,6 +154,8 @@ export function StepDetailView({
   const jpExportDirty = isJpExportQuarantine && !jpExportFormEqual(jpExport, savedJpExport)
   const krExportQuarantineDirty =
     isCertificateIssue && krExportQuarantineDate !== savedKrExportQuarantineDate
+  const jpImportQuarantineDirty =
+    isJpImportQuarantine && jpImportQuarantineDate !== savedJpImportQuarantineDate
   const dirty =
     microchipDirty ||
     rabiesDirty ||
@@ -152,7 +164,8 @@ export function StepDetailView({
     advanceDirty ||
     vetVisitDirty ||
     jpExportDirty ||
-    krExportQuarantineDirty
+    krExportQuarantineDirty ||
+    jpImportQuarantineDirty
   // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
   const justSaved = status === 'saved' && !dirty
 
@@ -191,6 +204,10 @@ export function StepDetailView({
   }, [caseRow?.data])
   useEffect(() => {
     if (!krExportQuarantineDirty) setKrExportQuarantineDate(readKrExportQuarantineDate(caseRow?.data))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data])
+  useEffect(() => {
+    if (!jpImportQuarantineDirty) setJpImportQuarantineDate(readJpImportQuarantineDate(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
 
@@ -339,6 +356,21 @@ export function StepDetailView({
         if (res.ok) {
           updateCase(res.value)
           setKrExportQuarantineDate(readKrExportQuarantineDate(res.value.data))
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    } else if (isJpImportQuarantine) {
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        const res = await updateJpImportQuarantineDate(caseId, jpImportQuarantineDate || null)
+        if (res.ok) {
+          updateCase(res.value)
+          setJpImportQuarantineDate(readJpImportQuarantineDate(res.value.data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -718,6 +750,15 @@ export function StepDetailView({
             />
           </section>
         )}
+        {isJpImportQuarantine && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <JpImportQuarantineInputs
+              date={jpImportQuarantineDate}
+              onChange={setJpImportQuarantineDate}
+            />
+          </section>
+        )}
         {!isInteractive && step.inputs && step.inputs.length > 0 && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력 정보</h3>
@@ -1044,6 +1085,13 @@ function readVetVisitDate(data: Record<string, unknown> | null | undefined): str
 function readKrExportQuarantineDate(data: Record<string, unknown> | null | undefined): string {
   if (!data) return ''
   const v = data['kr_export_quarantine_date']
+  return typeof v === 'string' ? v : ''
+}
+
+/** 일본 수입 동물검역 검역일 — caseRow.data.jp_import_quarantine_date. */
+function readJpImportQuarantineDate(data: Record<string, unknown> | null | undefined): string {
+  if (!data) return ''
+  const v = data['jp_import_quarantine_date']
   return typeof v === 'string' ? v : ''
 }
 
