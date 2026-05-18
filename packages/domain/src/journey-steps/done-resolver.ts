@@ -77,6 +77,11 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
         typeof data.jp_import_quarantine_date === 'string' &&
         (data.jp_import_quarantine_date as string).length >= 10
       )
+    case 'has-jp-export-quarantine-visit':
+      return (
+        typeof data.jp_export_quarantine_visit_date === 'string' &&
+        (data.jp_export_quarantine_visit_date as string).length >= 10
+      )
     case 'departure-past': {
       const dep = caseRow.departure_date
       if (!dep) return false
@@ -165,6 +170,13 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
     case 'has-jp-import-quarantine': {
       const dt =
         typeof data.jp_import_quarantine_date === 'string' ? data.jp_import_quarantine_date : null
+      return dt && dt.length >= 10 ? dt.slice(0, 10) : null
+    }
+    case 'has-jp-export-quarantine-visit': {
+      const dt =
+        typeof data.jp_export_quarantine_visit_date === 'string'
+          ? data.jp_export_quarantine_visit_date
+          : null
       return dt && dt.length >= 10 ? dt.slice(0, 10) : null
     }
     case 'departure-past':

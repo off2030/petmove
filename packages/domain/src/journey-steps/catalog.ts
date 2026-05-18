@@ -463,4 +463,23 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     deadline: { anchor: 'departure', daysBefore: 0 },
     done: 'departure-past',
   },
+
+  // ── 14. 일본 수출 동물검역 (왕복 케이스 한정 — 귀국편) ──────────────────
+  {
+    id: 'jp-export-quarantine-visit',
+    category: 'document',
+    title: '일본 수출 동물검역',
+    shortLabel: '검역',
+    description:
+      '일본 출국 전 일본 동물검역소를 방문해 수출 동물검역을 받습니다.\n반려동물을 데리고 예약한 일정에 방문하세요.',
+    cardLine: '일본 동물검역소를 방문해 수출 검역을 받으세요.',
+    applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
+    order: 150,
+    done: 'has-jp-export-quarantine-visit',
+    inputs: [
+      { key: 'jp_export_quarantine_visit_date', label: '검역일', type: 'date' },
+    ],
+    allowAttachments: true,
+    attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
+  },
 ]
