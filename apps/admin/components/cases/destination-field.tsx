@@ -61,6 +61,23 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
   // 동시 진행 — 같은 보호자의 다른 동물 케이스에 절차·추가 정보를 함께 반영. 디폴트 on.
   const coProgress =
     ((currentCase?.data as Record<string, unknown> | undefined)?.co_progress) !== false
+  // 토글은 같은 보호자가 동물 ≥2 마리를 준비할 때만 노출 — 형제가 없으면 동기화할
+  // 대상이 없어 무의미하다. 형제 판정 기준은 DB 트리거 cases_sync_co_progress 와 동일:
+  // 이름(customer_name)·전화(data.phone 숫자) 가 둘 다 있고 정확히 일치.
+  const currentName = (currentCase?.customer_name ?? '').trim()
+  const currentPhone = String(
+    (currentCase?.data as Record<string, unknown> | undefined)?.phone ?? '',
+  ).replace(/\D/g, '')
+  const hasSibling =
+    currentName !== '' &&
+    currentPhone !== '' &&
+    cases.some(
+      (c) =>
+        c.id !== caseId &&
+        (c.customer_name ?? '').trim() === currentName &&
+        String((c.data as Record<string, unknown> | undefined)?.phone ?? '').replace(/\D/g, '') ===
+          currentPhone,
+    )
   async function setCoProgress(value: boolean) {
     updateLocalCaseField(caseId, 'data', 'co_progress', value)
     await updateCaseField(caseId, 'data', 'co_progress', value)
@@ -374,7 +391,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
             </button>
           </div>
         )}
-        {selected.length > 0 && (
+        {selected.length > 0 && hasSibling && (
           <button
             type="button"
             onClick={() => setCoProgress(!coProgress)}

@@ -186,7 +186,25 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 // ── InfoView ─────────────────────────────────────────────────────────────
 
 export function InfoView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string }) {
-  const { updateCase } = useCases()
+  const { updateCase, cases } = useCases()
+
+  // 동시 진행 토글은 같은 보호자가 동물 ≥2 마리를 준비할 때만 노출 — 형제가 없으면
+  // 동기화 대상이 없어 무의미하다. 형제 판정 기준은 DB 트리거 cases_sync_co_progress
+  // 와 동일: 이름(customer_name)·전화(data.phone 숫자) 가 둘 다 있고 정확히 일치.
+  const coProgressName = (caseRow.customer_name ?? '').trim()
+  const coProgressPhone = String(
+    ((caseRow.data ?? {}) as Record<string, unknown>).phone ?? '',
+  ).replace(/\D/g, '')
+  const hasSibling =
+    coProgressName !== '' &&
+    coProgressPhone !== '' &&
+    cases.some(
+      (c) =>
+        c.id !== caseId &&
+        (c.customer_name ?? '').trim() === coProgressName &&
+        String(((c.data ?? {}) as Record<string, unknown>).phone ?? '').replace(/\D/g, '') ===
+          coProgressPhone,
+    )
 
   const [form, setForm] = useState<CaseInfoInput>(() => readForm(caseRow))
   const [base, setBase] = useState<CaseInfoInput>(() => readForm(caseRow))
@@ -295,12 +313,14 @@ export function InfoView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string
             onChange={(v) => set('trip_type', v === 'one_way' ? 'one_way' : 'round')}
             options={TRIP_OPTIONS}
           />
-          <SegmentField
-            label="동시 진행"
-            value={form.co_progress ? 'on' : 'off'}
-            onChange={(v) => set('co_progress', v === 'on')}
-            options={CO_PROGRESS_OPTIONS}
-          />
+          {hasSibling && (
+            <SegmentField
+              label="동시 진행"
+              value={form.co_progress ? 'on' : 'off'}
+              onChange={(v) => set('co_progress', v === 'on')}
+              options={CO_PROGRESS_OPTIONS}
+            />
+          )}
           <DateField
             label="출국일"
             value={form.departure_date}
