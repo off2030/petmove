@@ -351,12 +351,8 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <div style={{ ...monoCap, color: 'rgba(45,38,28,.55)' }}>다음 할 일</div>
-              {dDayLabel && (
-                <span style={{ ...monoCap, color: 'rgba(45,38,28,.75)', fontWeight: 600 }}>{dDayLabel}</span>
-              )}
-            </div>
+            {/* D-day 는 진행률 링 카드에만 — 중복 방지로 헤더는 라벨만. */}
+            <div style={{ ...monoCap, color: 'rgba(45,38,28,.55)' }}>다음 할 일</div>
             {nextStages.map((stage, i) => (
               <Link
                 key={stage.id}

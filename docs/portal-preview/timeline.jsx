@@ -81,10 +81,8 @@ function TimelineCalm({ scenario, onNav, ringShape = 'H' }) {
             boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <div style={{ ...monoCap, color: 'rgba(45,38,28,.55)' }}>다음 할 일</div>
-            <span style={{ ...monoCap, fontSize: 9.5, color: 'rgba(45,38,28,.75)', fontWeight: 600 }}>D-7</span>
-          </div>
+          {/* D-day 는 진행률 링 카드에만 — 중복 방지로 헤더는 라벨만. */}
+          <div style={{ ...monoCap, color: 'rgba(45,38,28,.55)' }}>다음 할 일</div>
           {[
             { label: '광견병 항체가 검사', desc: '2026년 5월 10일 이후 일본 지정 검사기관에서 광견병 항체가 검사를 받습니다.' },
             { label: '검역 신청', desc: '농림축산검역본부에 출국 전 검역을 사전 신고합니다.' },
