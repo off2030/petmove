@@ -97,6 +97,28 @@ interface CasesContextValue {
 
 const CasesContext = createContext<CasesContextValue | null>(null)
 
+// ───── 선택된 케이스 id 의 URL 영속화 ─────
+// selectedId 는 클라이언트 메모리 상태라, 필드 저장 후 revalidatePath('/cases')
+// 리프레시 + 배포 버전 스큐 등으로 (dashboard) 레이아웃이 리마운트/리로드되면
+// 상세 화면이 목록으로 "튕긴다". /cases?case=<id> 로 URL 에 적어두면 어떤
+// 리마운트가 일어나도 마운트 시 URL 에서 복원된다.
+//
+// 라우팅은 탭 전환과 동일하게 raw History API 로만 — Next 라우터를 거치지 않아
+// 추가 RSC refetch 가 없다. 목록에서의 선택은 history 항목을 만들지 않던 기존
+// 동작을 유지하기 위해 replaceState 사용.
+function readCaseIdFromUrl(): string | null {
+  if (typeof window === 'undefined') return null
+  return new URLSearchParams(window.location.search).get('case')
+}
+
+function syncCaseIdToUrl(id: string | null) {
+  if (typeof window === 'undefined') return
+  const url = new URL(window.location.href)
+  if (id) url.searchParams.set('case', id)
+  else url.searchParams.delete('case')
+  window.history.replaceState(window.history.state, '', url)
+}
+
 export function CasesProvider({
   initialCases,
   fieldDefs,
@@ -125,7 +147,11 @@ export function CasesProvider({
   children: React.ReactNode
 }) {
   const [cases, setCases] = useState<CaseRow[]>(initialCases)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  // 마운트 시 URL 에서 복원. URL 의 id 가 현재 목록에 없으면(삭제·타조직) 무시.
+  const [selectedId, setSelectedId] = useState<string | null>(() => {
+    const fromUrl = readCaseIdFromUrl()
+    return fromUrl && initialCases.some((c) => c.id === fromUrl) ? fromUrl : null
+  })
   const [activeDestination, setActiveDestination] = useState<string | null>(null)
   const [importReportCountries, setImportReportCountries] = useState<string[]>(initialImportReportCountries)
   const [importReportButtonCountries, setImportReportButtonCountries] = useState<string[]>(initialImportReportButtonCountries)
@@ -140,8 +166,16 @@ export function CasesProvider({
   const casesRef = useRef(cases)
   casesRef.current = cases
 
+  // 마운트 시 URL 의 case 파라미터가 stale(목록에 없음) 이면 정리.
+  useEffect(() => {
+    if (!readCaseIdFromUrl()) return
+    if (selectedId === null) syncCaseIdToUrl(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const selectCase = useCallback((id: string | null) => {
     setSelectedId(id)
+    syncCaseIdToUrl(id)
     if (id) {
       setNewCaseIds((prev) => {
         if (!prev.has(id)) return prev
@@ -248,8 +282,10 @@ export function CasesProvider({
     if (typeof window === 'undefined') return
     if (window.location.pathname !== '/cases') {
       const origin = window.location.pathname
-      window.history.pushState({ caseDetailOrigin: origin }, '', '/cases')
+      window.history.pushState({ caseDetailOrigin: origin }, '', `/cases?case=${id}`)
       window.dispatchEvent(new PopStateEvent('popstate'))
+    } else {
+      syncCaseIdToUrl(id)
     }
   }, [])
 
@@ -269,13 +305,16 @@ export function CasesProvider({
     selfAddedRef.current.add(newCase.id)
     setCases((prev) => [newCase, ...prev])
     setSelectedId(newCase.id)
+    syncCaseIdToUrl(newCase.id)
   }, [])
 
   const removeLocalCase = useCallback((id: string) => {
     setCases((prev) => {
       const next = prev.filter((c) => c.id !== id)
       // Auto-select the first (latest) case after deletion
-      setSelectedId(next.length > 0 ? next[0].id : null)
+      const nextId = next.length > 0 ? next[0].id : null
+      setSelectedId(nextId)
+      syncCaseIdToUrl(nextId)
       return next
     })
   }, [])
