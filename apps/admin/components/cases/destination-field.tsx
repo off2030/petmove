@@ -201,7 +201,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
           목적지
         </SectionLabel>
       </div>
-      <div ref={containerRef} className="relative min-w-0 flex items-start gap-md">
+      <div ref={containerRef} className="relative min-w-0 flex flex-col md:flex-row items-start gap-md">
         <div className="flex-1 min-w-0">
         {selected.length > 0 ? (
           <div className="group/val inline-flex items-center gap-md flex-wrap">
