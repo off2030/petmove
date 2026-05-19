@@ -2161,22 +2161,6 @@ function resolveField(
     return date && lookupRabies(date) ? '1' : ''
   }
 
-  // Titer fields rendered only when a 2nd titer exists (FormRE)
-  const ifMultiMatch = transform?.match(/^if_multi\[(\d+)\]\.(\w+)$/)
-  if (ifMultiMatch && source === 'rabies_titer_records') {
-    const idx = Number(ifMultiMatch[1])
-    const prop = ifMultiMatch[2]
-    const recs = sortedTiters(raw)
-    if (recs.length < 2) return ''
-    const rec = recs[idx]
-    if (!rec) return ''
-    if (prop === 'date') return fmtDate(rec.date)
-    if (prop === 'value') return rec.value ?? ''
-    if (prop === 'lab') return rec.lab ? (LAB_INFO[rec.lab]?.name ?? rec.lab) : ''
-    if (prop === 'lab_country') return rec.lab ? (LAB_INFO[rec.lab]?.country ?? '') : ''
-    return ''
-  }
-
   const productMatch = transform?.match(/^product\[(\d+)\]$/)
   if (productMatch && source === 'rabies_dates') {
     const idx = Number(productMatch[1])

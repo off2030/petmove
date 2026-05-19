@@ -261,20 +261,20 @@
       },
       "titer_date_1": {
         "source": "rabies_titer_records",
-        "transform": "if_multi[0].date",
-        "note": "2차 항체검사(최신)가 있을 때만 출력"
+        "transform": "array[0].date",
+        "note": "최신 항체검사. 기록이 1건만 있어도 출력"
       },
       "titer_value_1": {
         "source": "rabies_titer_records",
-        "transform": "if_multi[0].value"
+        "transform": "array[0].value"
       },
       "titer_lab_name_1": {
         "source": "rabies_titer_records",
-        "transform": "if_multi[0].lab"
+        "transform": "array[0].lab"
       },
       "titer_lab_country_1": {
         "source": "rabies_titer_records",
-        "transform": "if_multi[0].lab_country"
+        "transform": "array[0].lab_country"
       },
       "vet_name": {
         "source": null,
