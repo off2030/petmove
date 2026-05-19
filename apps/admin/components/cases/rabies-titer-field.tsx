@@ -692,9 +692,17 @@ function ValueInput({ initial, onSave, onCancel, saving }: {
     onSave(v)
   }
 
+  // 숫자·소수점만 허용 — 숫자가 아닌 문자는 입력 시점에 제거, 소수점은 1개로 제한.
+  function sanitize(raw: string): string {
+    let s = raw.replace(/[^0-9.]/g, '')
+    const first = s.indexOf('.')
+    if (first !== -1) s = s.slice(0, first + 1) + s.slice(first + 1).replace(/\./g, '')
+    return s
+  }
+
   return (
-    <input ref={ref} type="text" value={val}
-      onChange={(e) => setVal(e.target.value)}
+    <input ref={ref} type="text" inputMode="decimal" value={val}
+      onChange={(e) => setVal(sanitize(e.target.value))}
       onKeyDown={(e) => { if (e.key === 'Enter') submit(val.trim()); if (e.key === 'Escape') onCancel() }}
       onBlur={() => setTimeout(() => { if (!saving) submit(val.trim()) }, 150)}
       placeholder="수치"
