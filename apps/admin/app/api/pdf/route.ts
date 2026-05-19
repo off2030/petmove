@@ -24,6 +24,7 @@ import {
   generateNZMulti,
   generateNzInfectionPack,
   generateOVD,
+  generateVBC,
   generateSGP,
   generateTW,
   generateUKMulti,
@@ -48,6 +49,7 @@ type SinglePdfBody = {
     | 'AU_Cat_2'
     | 'NZ'
     | 'OVD'
+    | 'VBC'
     | 'SGP'
     | 'TW'
     | 'AQS_279'
@@ -106,6 +108,7 @@ const SINGLE_GENERATORS = {
   AU_Cat_2: generateAUCat2,
   NZ: generateNZ,
   OVD: generateOVD,
+  VBC: generateVBC,
   SGP: generateSGP,
   TW: generateTW,
   AQS_279: generateAQS,
