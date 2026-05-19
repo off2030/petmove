@@ -386,6 +386,8 @@ interface ParasiteRecord {
   expiry?: string | null
   /** Immunity validity end — displayed as-is. Free text, e.g. '2029-04-20' or '3년'. */
   valid_until?: string | null
+  /** 타병원 접종 — true 면 지정 약품(카탈로그) 폴백을 끄고 입력값만 사용. */
+  other_hospital?: boolean
 }
 /** Sort parasite records (objects with date + optional product_id) by date desc. */
 function sortedDescRecords(arr: unknown): ParasiteRecord[] {
@@ -438,15 +440,19 @@ function parseValidYears(rec: ParasiteRecord | null | undefined): number {
 /**
  * Merge per-record user overrides (product/manufacturer/lot/expiry from the detail
  * page) on top of catalog lookup values. User input wins when non-empty.
+ * 타병원 접종(other_hospital) record 는 카탈로그 폴백을 끄고 입력값만 사용한다 —
+ * 빈 값이면 그대로 공백.
  */
 function applyRecOverrides(
-  rec: Pick<ParasiteRecord, 'product' | 'manufacturer' | 'lot' | 'expiry'> | null | undefined,
+  rec: Pick<ParasiteRecord, 'product' | 'manufacturer' | 'lot' | 'expiry' | 'other_hospital'> | null | undefined,
   p: { vaccine?: string; product?: string; manufacturer?: string; batch?: string | null; expiry?: string | null } | null,
 ): { name: string; manufacturer: string; serial: string; expiry: string } {
-  const name = rec?.product?.trim() || p?.vaccine || p?.product || ''
-  const manufacturer = rec?.manufacturer?.trim() || p?.manufacturer || ''
-  const serial = rec?.lot?.trim() || p?.batch || ''
-  const expiryRaw = rec?.expiry?.trim() || p?.expiry || ''
+  // 타병원 접종은 지정 약품(카탈로그)을 쓰지 않는다.
+  const cat = rec?.other_hospital ? null : p
+  const name = rec?.product?.trim() || cat?.vaccine || cat?.product || ''
+  const manufacturer = rec?.manufacturer?.trim() || cat?.manufacturer || ''
+  const serial = rec?.lot?.trim() || cat?.batch || ''
+  const expiryRaw = rec?.expiry?.trim() || cat?.expiry || ''
   return { name, manufacturer, serial, expiry: fmtDate(expiryRaw) }
 }
 
@@ -1543,10 +1549,13 @@ function resolveField(
       const merged = applyRecOverrides(rec, p)
       return merged.serial ?? ''
     }
-    // date_(day|month|year) → 접종일, expiry_(day|month|year) → 카탈로그 lookup 의 expiry
+    // date_(day|month|year) → 접종일, expiry_(day|month|year) → 제품 유효기간.
+    // 타병원 접종은 카탈로그 폴백 없이 입력값(rec.expiry)만 — 없으면 공백.
     const target = attr.startsWith('date_')
       ? rec.date
-      : (lookupRabies(rec.date)?.expiry ?? '')
+      : rec.other_hospital
+        ? (rec.expiry ?? '')
+        : (lookupRabies(rec.date)?.expiry ?? '')
     const dm = target.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/)
     if (!dm) return ''
     const part = attr.split('_')[1]

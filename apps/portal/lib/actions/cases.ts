@@ -13,7 +13,7 @@
 
 import { createAdminClient } from '@petmove/auth'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
-import type { CaseRow } from '@petmove/domain'
+import { emptyVaccineProductsData, type CaseRow, type VaccineProductsData } from '@petmove/domain'
 import { AVATAR_COLOR_IDS, AVATAR_EMOJIS, type AvatarColorId } from '@/lib/avatar'
 import { assertCaseAccess, type Result } from './_shared'
 
@@ -881,6 +881,66 @@ export async function updateCaseInfoFields(
       .single()
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/** org_vaccine_products 의 rabies 행 — getCaseVaccineData 에서만 사용. */
+interface RabiesProductRow {
+  vaccine: string | null
+  product: string | null
+  manufacturer: string
+  batch: string | null
+  expiry: string | null
+  year: number | null
+}
+
+/**
+ * 케이스 org 의 광견병 백신 카탈로그를 VaccineProductsData(rabies 만 채움) 로 반환.
+ *
+ * 광견병 step 의 "지정 약품" 힌트 계산용 — 펫무브워크 케이스 상세가 보여주는
+ * 자동 추론 약품과 동일한 카탈로그. createVaccineLookups(value).lookupRabies(date)
+ * 로 클라이언트에서 접종일별 힌트를 뽑는다.
+ *
+ * org_vaccine_products 는 org 멤버 전용 RLS 라 service role 로 우회 — case 접근
+ * (case_customer_links) 확인 후이므로 보호자는 자기 케이스 org 의 카탈로그만 본다.
+ * 포털 여정엔 광견병 step 만 있어 rabies 카테고리만 로드.
+ */
+export async function getCaseVaccineData(caseId: string): Promise<Result<VaccineProductsData>> {
+  try {
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: caseRow, error: caseErr } = await admin
+      .from('cases')
+      .select('org_id')
+      .eq('id', caseId)
+      .single()
+    if (caseErr || !caseRow) {
+      return { ok: false, error: caseErr?.message ?? '케이스를 찾을 수 없습니다.' }
+    }
+
+    const { data: rows, error } = await admin
+      .from('org_vaccine_products')
+      .select('vaccine, product, manufacturer, batch, expiry, year')
+      .eq('org_id', (caseRow as { org_id: string }).org_id)
+      .eq('category', 'rabies')
+    if (error) return { ok: false, error: error.message }
+
+    const value = emptyVaccineProductsData()
+    for (const row of (rows ?? []) as RabiesProductRow[]) {
+      value.rabies.push({
+        vaccine: row.vaccine ?? undefined,
+        product: row.product ?? undefined,
+        manufacturer: row.manufacturer,
+        batch: row.batch,
+        expiry: row.expiry,
+        year: row.year ?? undefined,
+      })
+    }
+    return { ok: true, value }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }

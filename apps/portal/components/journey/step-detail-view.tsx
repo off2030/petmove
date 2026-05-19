@@ -1,10 +1,17 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useRef, useState, useTransition } from 'react'
-import type { CheckResult, ProcedureCheck, StepDefinition } from '@petmove/domain'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import {
+  createVaccineLookups,
+  type CheckResult,
+  type ProcedureCheck,
+  type StepDefinition,
+  type VaccineProductsData,
+} from '@petmove/domain'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
 import {
+  getCaseVaccineData,
   updateAdvanceNotificationDate,
   updateFlightFields,
   updateJpExportQuarantineFields,
@@ -26,7 +33,7 @@ import { JpImportQuarantineInputs } from './jp-import-quarantine-inputs'
 import { KrExportQuarantineInputs } from './kr-export-quarantine-inputs'
 import { KrImportQuarantineInputs } from './kr-import-quarantine-inputs'
 import { MicrochipInputs } from './microchip-inputs'
-import { RabiesEntryInputs, type RabiesEntryForm } from './rabies-entry-inputs'
+import { RabiesEntryInputs, type RabiesEntryForm, type RabiesProductHints } from './rabies-entry-inputs'
 import { StepAttachments } from './step-attachments'
 import { TiterInputs, type TiterForm } from './titer-inputs'
 import { VetVisitInputs } from './vet-visit-inputs'
@@ -110,6 +117,8 @@ export function StepDetailView({
 
   const savedRabies = readRabiesEntryForm(caseRow?.data, rabiesIndex)
   const [rabies, setRabies] = useState<RabiesEntryForm>(savedRabies)
+  // 광견병 step 한정 — org 백신 카탈로그 ("지정 약품" 힌트 계산용).
+  const [vaccineData, setVaccineData] = useState<VaccineProductsData | null>(null)
 
   const savedTiterForm = readTiterForm(caseRow?.data)
   const [titerForm, setTiterForm] = useState<TiterForm>(savedTiterForm)
@@ -204,6 +213,17 @@ export function StepDetailView({
     if (!rabiesDirty) setRabies(readRabiesEntryForm(caseRow?.data, rabiesIndex))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
+  // 광견병 step 진입 시 org 백신 카탈로그를 1회 로드.
+  useEffect(() => {
+    if (!isRabies) return
+    let cancelled = false
+    void getCaseVaccineData(caseId).then((r) => {
+      if (!cancelled && r.ok) setVaccineData(r.value)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [caseId, isRabies])
   useEffect(() => {
     if (!titerDirty) setTiterForm(readTiterForm(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -241,6 +261,28 @@ export function StepDetailView({
     if (!krImportQuarantineDirty) setKrImportQuarantineDate(readKrImportQuarantineDate(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
+
+  // 광견병 "지정 약품" 힌트 — 카탈로그 + 현재 접종일 기준. 타병원 접종이면
+  // RabiesEntryInputs 가 otherHospital 로 표시를 억제.
+  const rabiesLookups = useMemo(
+    () => (vaccineData ? createVaccineLookups(vaccineData) : null),
+    [vaccineData],
+  )
+  const rabiesProductHints = useMemo<RabiesProductHints | null>(() => {
+    if (!rabiesLookups || !rabies.date) return null
+    const r = rabiesLookups.lookupRabies(rabies.date)
+    if (!r) return null
+    return {
+      product: r.vaccine || r.product || undefined,
+      manufacturer: r.manufacturer || undefined,
+      lot: r.batch || undefined,
+      expiry: r.expiry || undefined,
+    }
+  }, [rabiesLookups, rabies.date])
+  const rabiesOtherHospital = useMemo(
+    () => readRabiesOtherHospital(caseRow?.data, rabiesIndex),
+    [caseRow?.data, rabiesIndex],
+  )
 
   function handleSave() {
     if (!dirty) return
@@ -762,6 +804,8 @@ export function StepDetailView({
             <RabiesEntryInputs
               value={rabies}
               onChange={(key, next) => setRabies((prev) => ({ ...prev, [key]: next }))}
+              productHints={rabiesProductHints}
+              otherHospital={rabiesOtherHospital}
             />
           </section>
         )}
@@ -1088,6 +1132,22 @@ function readRabiesEntryForm(
     lot: str(r.lot),
     expiry: str(r.expiry),
   }
+}
+
+/**
+ * rabies_dates[index].other_hospital — 타병원 접종 여부.
+ * 체크는 펫무브워크에서만 토글 — 포털은 읽기만 하고 "지정 약품" 힌트 억제에 쓴다.
+ */
+function readRabiesOtherHospital(
+  data: Record<string, unknown> | null | undefined,
+  index: number,
+): boolean {
+  if (!data) return false
+  const arr = data['rabies_dates']
+  if (!Array.isArray(arr) || index >= arr.length) return false
+  const entry = arr[index]
+  if (!entry || typeof entry !== 'object') return false
+  return (entry as Record<string, unknown>).other_hospital === true
 }
 
 function rabiesFormEqual(a: RabiesEntryForm, b: RabiesEntryForm): boolean {

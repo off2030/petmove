@@ -20,6 +20,17 @@ export interface RabiesEntryForm {
   expiry: string
 }
 
+/**
+ * 약품 정보 필드(제품명·제조사·제조번호·제품 유효기간)의 "지정 약품" 힌트.
+ * 펫무브워크 케이스 상세가 보여주는 자동 추론 약품과 동일 — 빈 필드에 옅게 표시.
+ */
+export interface RabiesProductHints {
+  product?: string
+  manufacturer?: string
+  lot?: string
+  expiry?: string
+}
+
 const FIELDS: ReadonlyArray<{
   key: keyof RabiesEntryForm
   label: string
@@ -46,12 +57,33 @@ function selectedYear(value: string): string | null {
   return null
 }
 
+/**
+ * 약품 정보 필드(product/manufacturer/lot/expiry)의 지정 약품 힌트를 반환.
+ * date/valid_until 은 힌트 대상이 아니고, hints 가 없으면(타병원 접종 등) undefined.
+ */
+function hintForKey(
+  key: keyof RabiesEntryForm,
+  hints: RabiesProductHints | null | undefined,
+): string | undefined {
+  if (!hints) return undefined
+  if (key === 'product' || key === 'manufacturer' || key === 'lot' || key === 'expiry') {
+    return hints[key]
+  }
+  return undefined
+}
+
 export function RabiesEntryInputs({
   value,
   onChange,
+  productHints,
+  otherHospital,
 }: {
   value: RabiesEntryForm
   onChange: (key: keyof RabiesEntryForm, next: string) => void
+  /** 약품 정보 4필드의 지정 약품 힌트 — 빈 필드에 placeholder 로 옅게 표시. */
+  productHints?: RabiesProductHints | null
+  /** 타병원 접종이면 지정 약품 힌트를 표시하지 않는다 (입력값만, 빈칸은 빈칸). */
+  otherHospital?: boolean
 }) {
   const C = {
     surface: '#FBF7F1',
@@ -133,7 +165,7 @@ export function RabiesEntryInputs({
               <DateTextField
                 value={value[field.key]}
                 onChange={(v) => onChange(field.key, v)}
-                placeholder="YYYY-MM-DD"
+                placeholder={hintForKey(field.key, otherHospital ? null : productHints) || 'YYYY-MM-DD'}
               />
             </div>
           ) : (
@@ -141,7 +173,7 @@ export function RabiesEntryInputs({
               type="text"
               value={value[field.key]}
               onChange={(e) => onChange(field.key, e.target.value)}
-              placeholder={field.placeholder}
+              placeholder={hintForKey(field.key, otherHospital ? null : productHints) || field.placeholder}
               style={inputStyle}
             />
           )}
