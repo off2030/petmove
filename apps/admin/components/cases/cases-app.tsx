@@ -16,7 +16,7 @@ import { extractResultToSeed } from '@/lib/extract-to-seed'
 import { filesToBase64, filesToPdfText } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { lookupCaseByMicrochip } from '@/lib/actions/lookup-case-by-chip'
-import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateOVD, generateSGP, generateTW, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti } from '@/lib/actions/generate-pdf'
+import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateOVD, generateVBC, generateSGP, generateTW, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti } from '@/lib/actions/generate-pdf'
 import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-download'
 import { MultiFormDialog } from './multi-form-dialog'
 import { RabiesSelectDialog, RABIES_SLOT_CAP } from './rabies-select-dialog'
@@ -55,6 +55,7 @@ const CERT_ACTIONS: Record<string, CertAction> = {
   auCat2: generateAUCat2,
   nz: generateNZ,
   ovd: generateOVD,
+  vbc: generateVBC,
   sgp: generateSGP,
   tw: generateTW,
   aqs: generateAQS,
@@ -75,6 +76,7 @@ const CERT_FORM_KEYS: Record<string, string> = {
   auCat2: 'AU_Cat_2',
   nz: 'NZ',
   ovd: 'OVD',
+  vbc: 'VBC',
   sgp: 'SGP',
   tw: 'TW',
   aqs: 'AQS_279',

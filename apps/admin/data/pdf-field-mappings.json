@@ -4568,6 +4568,24 @@
       "text_25douc": { "source": null, "default": "", "note": "Owner Phone (유선) — 좌표상 좌측 (x=335) Phone 칸. 별도 유선 데이터 없어 빈 값" }
     }
   },
+  "VBC": {
+    "template": "VBC.pdf",
+    "description": "New Zealand Registered Veterinary Breed Declaration — 수출견이 금지 견종(American Pit Bull Terrier 등)이 아님을 수의사가 선언. NZ 보조서류, 개 전용. 템플릿에 form field 없어 9개 텍스트 필드 신규 추가. 서명란은 수기 서명용으로 비워둠.",
+    "filename": "VBC_{pet_name}.pdf",
+    "dateFormat": "dmmmy",
+    "flatten": true,
+    "fields": {
+      "vbc_client": { "source": "customer_name_en", "note": "Client/s — 보호자 영문 이름" },
+      "vbc_pet_name": { "source": "pet_name_en", "note": "Pet/s Name/s — 동물 영문 이름" },
+      "vbc_breed": { "source": "breed_en", "note": "Breed/s — 영문 품종" },
+      "vbc_vet_name": { "source": null, "transform": "vet:name_en", "note": "'I, ___ being a registered Veterinarian' — 수의사 영문 이름" },
+      "vbc_printed_name": { "source": null, "transform": "vet:name_en", "note": "Printed Name — 수의사 영문 이름" },
+      "vbc_hospital": { "source": null, "transform": "vet:clinic_en", "note": "Hospital/Clinic Name — 영문 병원명" },
+      "vbc_address": { "source": null, "transform": "vet:address_en_no_country", "note": "Address — 병원 영문 주소 (국가명 제외, Country 필드와 중복 방지)" },
+      "vbc_country": { "source": null, "default": "REPUBLIC OF KOREA", "note": "Country — 병원 소재 국가" },
+      "vbc_telephone": { "source": null, "transform": "vet:phone_intl", "note": "Telephone — 병원 국제전화 번호" }
+    }
+  },
   "VBDDL": {
     "template": "VBDDL.pdf",
     "description": "Vector Borne Disease Diagnostic Lab (NC State) — Submission Form. 레이슈마니아 등 매개체 매개 질병 검사용. 2026-04 템플릿 업데이트로 CLINIC INFORMATION + PATIENT INFORMATION 섹션이 모두 form field 화 (23개 텍스트 필드). PATIENT ID·LAB REF NUMBER 는 수동 입력, SAMPLE TYPE 은 'Serum' 기본값, SPECIES 자동 채움.",

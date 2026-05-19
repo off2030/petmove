@@ -2006,6 +2006,15 @@ function resolveField(
         .replace(/^\s*(?:대한민국|한국|Republic of Korea|South Korea|Korea)[,，\s]+/i, '')
         .trim()
     }
+    // vet:address_en_no_country — 영문주소에서 trailing 국가명("Republic of Korea"
+    // /"South Korea"/"Korea") 제거. Address·Country 가 분리된 서식(VBC 등)에서
+    // 국가명이 두 칸에 중복 출력되는 것을 방지.
+    if (key === 'address_en_no_country') {
+      const addr = String(VET_INFO.address_en ?? '').trim()
+      return addr
+        .replace(/[,，\s]*(?:Republic of Korea|South Korea|Korea)\s*$/i, '')
+        .trim()
+    }
     // vet:custom:<label> — custom_fields 에서 라벨로 값 조회 (대소문자/공백 무시).
     // 여러 라벨을 `|` 로 구분해 fallback 지정 가능 (예: "KSVDL Account No.|Account No.").
     // 첫 매칭 라벨의 값을 반환. 사용자가 라벨을 다르게 적었거나 오타 보정용.

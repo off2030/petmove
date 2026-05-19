@@ -296,6 +296,10 @@ export async function generateOVD(caseId: string, opts?: GenerateOpts) {
   return generate('OVD', caseId, opts)
 }
 
+export async function generateVBC(caseId: string, opts?: GenerateOpts) {
+  return generate('VBC', caseId, opts)
+}
+
 export async function generateNZ(caseId: string, opts?: GenerateOpts) {
   // 광견병 접종 횟수로 템플릿 선택: 1회면 NZ(primary), 2회 이상이면 NZ_2(booster).
   // 템플릿마다 (10a)/(10b) 구간에 미리 그어진 취소선이 달라서 결과 PDF의 해당 구간이
