@@ -11,7 +11,9 @@
  * manual auth(case_customer_links 체크) 후 화이트리스트된 컬럼만 update.
  */
 
+import { cookies } from 'next/headers'
 import { createAdminClient } from '@petmove/auth'
+import { verifyPreviewToken } from '@petmove/auth/preview-token'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
 import { emptyVaccineProductsData, type CaseRow, type VaccineProductsData } from '@petmove/domain'
 import { AVATAR_COLOR_IDS, AVATAR_EMOJIS, type AvatarColorId } from '@/lib/avatar'
@@ -907,10 +909,29 @@ interface RabiesProductRow {
  * (case_customer_links) 확인 후이므로 보호자는 자기 케이스 org 의 카탈로그만 본다.
  * 포털 여정엔 광견병 step 만 있어 rabies 카테고리만 로드.
  */
+/**
+ * 펫무브워크 "고객앱 미리보기" 인증 — pm_preview 쿠키가 이 caseId 로 유효한지.
+ * 미리보기는 보호자 세션이 없어 case_customer_links 검증을 통과 못 하므로,
+ * (authed) layout 과 동일한 서명 토큰 검증으로 별도 통과시킨다.
+ */
+async function isPreviewAuthorized(caseId: string): Promise<boolean> {
+  try {
+    const token = (await cookies()).get('pm_preview')?.value
+    if (!token) return false
+    const payload = verifyPreviewToken(token)
+    return !!payload && payload.caseId === caseId
+  } catch {
+    return false
+  }
+}
+
 export async function getCaseVaccineData(caseId: string): Promise<Result<VaccineProductsData>> {
   try {
-    const access = await assertCaseAccess(caseId)
-    if (!access.ok) return access
+    // 보호자 본인 또는 펫무브워크 미리보기 — 둘 중 하나면 통과.
+    if (!(await isPreviewAuthorized(caseId))) {
+      const access = await assertCaseAccess(caseId)
+      if (!access.ok) return access
+    }
 
     const admin = createAdminClient()
     const { data: caseRow, error: caseErr } = await admin
