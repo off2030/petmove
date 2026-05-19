@@ -363,7 +363,7 @@ export interface SiblingPreview {
   /** Number of documents the pack will produce given current capacity rules. */
   docCount: number
   /** Form key the preview was computed for. */
-  formKey: 'AnnexIII' | 'UK' | 'NZ'
+  formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC'
 }
 
 /** Find cases that share the same customer + destination + departure_date with the given case. */
@@ -420,7 +420,7 @@ function readVetVisitDate(c: CaseRow): string | null {
   return typeof v === 'string' && v ? v : null
 }
 
-export async function previewSiblings(caseId: string, formKey: 'AnnexIII' | 'UK' | 'NZ'): Promise<
+export async function previewSiblings(caseId: string, formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC'): Promise<
   { ok: true; preview: SiblingPreview } | { ok: false; error: string }
 > {
   const r = await fetchSiblings(caseId)
@@ -446,7 +446,9 @@ function rabiesDoseCountOf(c: CaseRow): number {
     .length
 }
 
-function simulatePackCount(formKey: 'AnnexIII' | 'UK' | 'NZ', summaries: SiblingSummary[]): number {
+function simulatePackCount(formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC', summaries: SiblingSummary[]): number {
+  // VBC 는 동물 테이블이 없어 페이지 용량 제한이 없다 — 항상 1장에 모두 들어간다.
+  if (formKey === 'VBC') return summaries.length > 0 ? 1 : 0
   const cap =
     formKey === 'AnnexIII' ? { animals: 3, vaccRows: 5 } :
     formKey === 'NZ' ? { animals: 5, vaccRows: 9999 } :
@@ -471,7 +473,7 @@ function simulatePackCount(formKey: 'AnnexIII' | 'UK' | 'NZ', summaries: Sibling
 }
 
 async function generateMulti(
-  formKey: 'AnnexIII' | 'UK' | 'NZ' | 'NZ_2',
+  formKey: 'AnnexIII' | 'UK' | 'NZ' | 'NZ_2' | 'VBC',
   caseIds: string[],
   options?: { includeVet?: boolean },
 ): Promise<GenerateMultiPdfResult> {
@@ -500,6 +502,11 @@ export async function generateAnnexIIIMulti(caseIds: string[], opts?: { includeV
 
 export async function generateUKMulti(caseIds: string[], opts?: { includeVet?: boolean }) {
   return generateMulti('UK', caseIds, opts)
+}
+
+/** VBC 다중 — 같은 보호자의 여러 마리를 한 선언서에. 이름·품종을 ', ' 로 join. */
+export async function generateVBCMulti(caseIds: string[], opts?: { includeVet?: boolean }) {
+  return generateMulti('VBC', caseIds, opts)
 }
 
 /**

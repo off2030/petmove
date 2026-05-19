@@ -4572,14 +4572,14 @@
   },
   "VBC": {
     "template": "VBC.pdf",
-    "description": "New Zealand Registered Veterinary Breed Declaration — 수출견이 금지 견종(American Pit Bull Terrier 등)이 아님을 수의사가 선언. NZ 보조서류, 개 전용. 2026-05 템플릿 업데이트로 9개 텍스트 필드(text_*) 화. 서명란은 수기 서명용으로 비워둠(text_5 없음).",
+    "description": "New Zealand Registered Veterinary Breed Declaration — 수출견이 금지 견종(American Pit Bull Terrier 등)이 아님을 수의사가 선언. NZ 보조서류, 개 전용. 2026-05 템플릿 업데이트로 9개 텍스트 필드(text_*) 화. 서명란은 수기 서명용으로 비워둠(text_5 없음). 멀티 케이스 지원 — 같은 보호자의 여러 마리를 한 장에 발급, Pet/s Name/s·Breed/s 를 ', ' 로 join.",
     "filename": "VBC_{pet_name}.pdf",
     "dateFormat": "dmmmy",
     "flatten": true,
     "fields": {
       "text_1smmj":  { "source": "customer_name_en", "note": "Client/s — 보호자 영문 이름" },
-      "text_2ttsq":  { "source": "pet_name_en", "note": "Pet/s Name/s — 동물 영문 이름" },
-      "text_3cjtb":  { "source": "breed_en", "note": "Breed/s — 영문 품종" },
+      "text_2ttsq":  { "source": "pet_name_en", "transform": "multi:join.pet_name", "note": "Pet/s Name/s — 멀티 시 여러 마리 이름을 ', ' 로 join" },
+      "text_3cjtb":  { "source": "breed_en", "transform": "multi:join.breed", "note": "Breed/s — 멀티 시 여러 마리 품종을 ', ' 로 join (이름과 같은 순서)" },
       "text_4awrr":  { "source": null, "transform": "vet:name_en", "note": "'I, ___ being a registered Veterinarian' — 수의사 영문 이름" },
       "text_6kydk":  { "source": null, "transform": "vet:name_en", "note": "Printed Name — 수의사 영문 이름" },
       "text_7vyie":  { "source": null, "transform": "vet:clinic_en", "note": "Hospital/Clinic Name — 영문 병원명" },

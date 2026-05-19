@@ -2439,6 +2439,22 @@ function resolveMultiTransform(transform: string | undefined, doc: PackedDoc): s
     return lines.join('\n')
   }
 
+  // VBC — 한 선언서에 여러 마리. Pet/s Name/s · Breed/s 를 ", " 로 join.
+  // 같은 인덱스 순서로 출력되므로 이름·품종이 짝을 이룬다.
+  const joinMatch = transform.match(/^multi:join\.(pet_name|breed)$/)
+  if (joinMatch) {
+    const m: FieldMapping = joinMatch[1] === 'breed'
+      ? { source: 'breed_en' }
+      : { source: 'pet_name_en' }
+    const parts: string[] = []
+    for (const c of doc.cases) {
+      const r = resolveField(m, c, (c.data ?? {}) as Record<string, unknown>)
+      const s = typeof r === 'string' ? r.trim() : ''
+      if (s) parts.push(s)
+    }
+    return parts.join(', ')
+  }
+
   // NZ p1 Animal table — Row 2~5 의 7개 셀(species/breed/microchip/name/sex/neutered/age)
   // 을 doc.cases[idx] 로부터 채운다. Row 1 은 mapping 그대로(primary case) 사용.
   // 형식: multi:animal[idx].slot

@@ -45,7 +45,7 @@ export const ALL_CERTS: CertDefinition[] = [
   { key: 'auCat2', label: 'AU C 2', type: 'single', species: 'cat' },
   { key: 'nz', label: 'NZ', type: 'multi' },
   { key: 'ovd', label: 'OVD', type: 'single' },
-  { key: 'vbc', label: 'VBC', type: 'single', species: 'dog' },
+  { key: 'vbc', label: 'VBC', type: 'multi', species: 'dog' },
   { key: 'formR11', label: 'R.11', type: 'single' },
   { key: 'vhc', label: 'VHC', type: 'single' },
   { key: 'sgp', label: 'SGP', type: 'single' },

@@ -22,6 +22,7 @@ import {
   generateKsvdl,
   generateNZ,
   generateNZMulti,
+  generateVBCMulti,
   generateNzInfectionPack,
   generateOVD,
   generateVBC,
@@ -71,7 +72,7 @@ type SinglePdfBody = {
 
 type MultiPdfBody = {
   kind: 'multi'
-  formKey: 'AnnexIII' | 'UK' | 'NZ'
+  formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC'
   caseIds: string[]
   part?: number
   includeVet?: boolean
@@ -200,6 +201,8 @@ export async function POST(req: NextRequest) {
           ? await generateAnnexIIIMulti(body.caseIds, { includeVet: body.includeVet })
           : body.formKey === 'NZ'
           ? await generateNZMulti(body.caseIds, { includeVet: body.includeVet })
+          : body.formKey === 'VBC'
+          ? await generateVBCMulti(body.caseIds, { includeVet: body.includeVet })
           : await generateUKMulti(body.caseIds, { includeVet: body.includeVet })
       if (!result.ok) return jsonError(result.error, 500)
       if (result.docs.length === 0) return jsonError('생성된 문서가 없습니다.', 500)
