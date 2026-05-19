@@ -752,6 +752,8 @@ export interface CaseInfoInput {
   sex: string
   weight: string
   trip_type: 'round' | 'one_way'
+  /** 동시 진행 — 같은 보호자의 다른 동물에 절차·추가 정보를 함께 반영. 디폴트 on. */
+  co_progress: boolean
   return_date: string
   entry_departure_airport: string
   entry_airport: string
@@ -847,6 +849,9 @@ export async function updateCaseInfoFields(
 
     if (weightNum === null) delete nextData.weight
     else nextData.weight = weightNum
+
+    // 동시 진행 플래그 — 명시적 boolean 으로 저장 (디폴트 on = 키 없음 또는 false 아님).
+    nextData.co_progress = input.co_progress
 
     // trip_type — 활성 목적지 토큰 키로 머지 (다른 토큰의 기존 값 보존).
     const destToken = input.destination.split(',')[0]?.trim() ?? ''

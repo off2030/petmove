@@ -58,6 +58,14 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     await updateCaseField(caseId, 'data', 'trip_type', next)
   }
 
+  // 동시 진행 — 같은 보호자의 다른 동물 케이스에 절차·추가 정보를 함께 반영. 디폴트 on.
+  const coProgress =
+    ((currentCase?.data as Record<string, unknown> | undefined)?.co_progress) !== false
+  async function setCoProgress(value: boolean) {
+    updateLocalCaseField(caseId, 'data', 'co_progress', value)
+    await updateCaseField(caseId, 'data', 'co_progress', value)
+  }
+
   // Display: show English names
   const display = selected.length > 0
     ? selected.map(ko => {
@@ -365,6 +373,33 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
               편도
             </button>
           </div>
+        )}
+        {selected.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setCoProgress(!coProgress)}
+            aria-pressed={coProgress}
+            title={
+              coProgress
+                ? '동시 진행 켜짐 — 같은 보호자의 다른 동물에도 절차·추가 정보가 함께 입력됩니다'
+                : '동시 진행 꺼짐 — 이 동물만 따로 입력됩니다'
+            }
+            className={cn(
+              'shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-serif text-[12px] mt-0.5 transition-all',
+              coProgress
+                ? 'border-transparent bg-pmw-tag text-pmw-tag-foreground'
+                : 'border-pmw-tag/45 text-pmw-tag-foreground/55 hover:border-pmw-tag/70 hover:text-pmw-tag-foreground',
+            )}
+          >
+            <span
+              aria-hidden
+              className={cn(
+                'inline-block h-1.5 w-1.5 rounded-full transition-colors',
+                coProgress ? 'bg-pmw-tag-foreground' : 'bg-pmw-tag-foreground/30',
+              )}
+            />
+            동시 진행
+          </button>
         )}
       </div>
     </div>

@@ -51,6 +51,11 @@ const TRIP_OPTIONS: readonly FieldOption[] = [
   { value: 'round', label: '왕복' },
   { value: 'one_way', label: '편도' },
 ]
+// 동시 진행 — 같은 보호자의 다른 동물과 절차·추가 정보를 함께 진행할지.
+const CO_PROGRESS_OPTIONS: readonly FieldOption[] = [
+  { value: 'on', label: '함께' },
+  { value: 'off', label: '개별' },
+]
 
 // ── 데이터 ↔ 폼 ──────────────────────────────────────────────────────────
 
@@ -90,6 +95,7 @@ function readForm(caseRow: CaseRow): CaseInfoInput {
     sex: s('sex'),
     weight: s('weight'),
     trip_type: buildCaseJourneyContext(caseRow).tripType,
+    co_progress: data.co_progress !== false,
     return_date: s('return_date'),
     entry_departure_airport: s('entry_departure_airport'),
     entry_airport: s('entry_airport'),
@@ -288,6 +294,12 @@ export function InfoView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string
             value={form.trip_type}
             onChange={(v) => set('trip_type', v === 'one_way' ? 'one_way' : 'round')}
             options={TRIP_OPTIONS}
+          />
+          <SegmentField
+            label="동시 진행"
+            value={form.co_progress ? 'on' : 'off'}
+            onChange={(v) => set('co_progress', v === 'on')}
+            options={CO_PROGRESS_OPTIONS}
           />
           <DateField
             label="출국일"
