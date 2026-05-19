@@ -456,6 +456,39 @@ function applyRecOverrides(
   return { name, manufacturer, serial, expiry: fmtDate(expiryRaw) }
 }
 
+/** 타병원 접종 체크가 있는 4종 백신 — 본병원/타병원 약품 표시 규칙 대상. */
+const DESIGNATED_RULE_VACCINE_KEYS = [
+  'rabies_dates', 'general_vaccine_dates', 'civ_dates', 'kennel_cough_dates',
+]
+
+/**
+ * 본병원(타병원 미체크) 백신 record 의 입력 약품 정보(product/manufacturer/lot/
+ * expiry)를 제거 — applyRecOverrides 가 지정 약품(카탈로그)으로 채우게 한다.
+ * 타병원 record 는 입력값을 그대로 두고, applyRecOverrides 의 게이트가 카탈로그
+ * 폴백을 막는다. 구충제 등 타병원 체크가 없는 항목은 손대지 않는다.
+ * 입력값은 DB 에 보존되며, 여기서는 PDF 채움용 사본만 가공한다.
+ */
+function applyDesignatedProductRule(rawData: unknown): Record<string, unknown> {
+  const data = (rawData ?? {}) as Record<string, unknown>
+  const next: Record<string, unknown> = { ...data }
+  for (const key of DESIGNATED_RULE_VACCINE_KEYS) {
+    const arr = next[key]
+    if (!Array.isArray(arr)) continue
+    next[key] = arr.map((rec) => {
+      if (!rec || typeof rec !== 'object' || Array.isArray(rec)) return rec
+      const r = rec as Record<string, unknown>
+      if (r.other_hospital === true) return rec
+      const cleaned = { ...r }
+      delete cleaned.product
+      delete cleaned.manufacturer
+      delete cleaned.lot
+      delete cleaned.expiry
+      return cleaned
+    })
+  }
+  return next
+}
+
 /**
  * "기타 예방접종 및 기생충 처치내역" 슬롯 채우기용 시퀀스.
  * 우선순위: 종합백신 → 외부구충 → 내부구충 → (추후) 내외부 합제.
@@ -2545,9 +2578,14 @@ export async function fillPdfMulti(
 ): Promise<FillResult[]> {
   if (cases.length === 0) return [{ ok: false, error: '대상 동물이 없습니다' }]
   const lookups = await getOrgVaccineLookups()
+  // 본병원/타병원 약품 표시 규칙 — 본병원 record 는 지정 약품(카탈로그)으로.
+  const effectiveCases = cases.map((c) => ({
+    ...c,
+    data: applyDesignatedProductRule(c.data) as CaseRow['data'],
+  }))
   return runWithOrgLookups(lookups, async () => {
     let docs: PackedDoc[]
-    try { docs = packCases(formKey, cases) }
+    try { docs = packCases(formKey, effectiveCases) }
     catch (e) { return [{ ok: false, error: (e as Error).message }] }
 
     const results: FillResult[] = []
@@ -2905,7 +2943,12 @@ function isVetGatedField(fieldName: string, mapping: FieldMapping): boolean {
 
 export async function fillPdf(formKey: string, caseRow: CaseRow, options?: FillOptions): Promise<FillResult> {
   const lookups = await getOrgVaccineLookups()
-  return runWithOrgLookups(lookups, () => fillPdfCore(formKey, caseRow, options))
+  // 본병원/타병원 약품 표시 규칙 — 본병원 record 는 지정 약품(카탈로그)으로.
+  const effectiveCase: CaseRow = {
+    ...caseRow,
+    data: applyDesignatedProductRule(caseRow.data) as CaseRow['data'],
+  }
+  return runWithOrgLookups(lookups, () => fillPdfCore(formKey, effectiveCase, options))
 }
 
 async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOptions): Promise<FillResult> {

@@ -80,9 +80,9 @@ export function RabiesEntryInputs({
 }: {
   value: RabiesEntryForm
   onChange: (key: keyof RabiesEntryForm, next: string) => void
-  /** 약품 정보 4필드의 지정 약품 힌트 — 빈 필드에 placeholder 로 옅게 표시. */
+  /** 약품 정보 4필드의 지정 약품(카탈로그 자동 추론). 본병원일 때 읽기 전용으로 표시. */
   productHints?: RabiesProductHints | null
-  /** 타병원 접종이면 지정 약품 힌트를 표시하지 않는다 (입력값만, 빈칸은 빈칸). */
+  /** 타병원 접종 여부. 본병원이면 약품칸은 지정 약품 읽기 전용, 타병원이면 직접 입력. */
   otherHospital?: boolean
 }) {
   const C = {
@@ -90,6 +90,7 @@ export function RabiesEntryInputs({
     line: 'rgba(42,38,32,.10)',
     ink: '#2A2620',
     ink2: '#6B6457',
+    ink3: '#9A9286',
     warn: '#C26A4A',
   } as const
 
@@ -117,68 +118,100 @@ export function RabiesEntryInputs({
     outline: 'none',
     boxSizing: 'border-box',
   }
+  // 본병원 — 약품 정보는 병원 지정 약품을 읽기 전용으로 표시.
+  const designatedStyle: React.CSSProperties = {
+    width: '100%',
+    marginTop: 8,
+    padding: '10px 12px',
+    border: `1px solid ${C.line}`,
+    borderRadius: 10,
+    background: 'rgba(42,38,32,0.035)',
+    fontFamily: 'inherit',
+    fontSize: 15,
+    color: C.ink2,
+    boxSizing: 'border-box',
+  }
 
   return (
     <div style={cardStyle}>
-      {FIELDS.map((field, i) => (
-        <div
-          key={field.key}
-          style={{
-            padding: '14px 0',
-            borderTop: i === 0 ? undefined : `.5px solid ${C.line}`,
-          }}
-        >
-          <div style={labelStyle}>
-            {field.label}
-            {field.required && <span style={{ color: C.warn, marginLeft: 4 }}>*</span>}
-          </div>
-          {field.kind === 'years' ? (
-            <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-              {(['1', '2', '3'] as const).map((n) => {
-                const selected = selectedYear(value[field.key]) === n
-                return (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => onChange(field.key, `${n}년`)}
-                    style={{
-                      flex: 1,
-                      padding: '9px 0',
-                      borderRadius: 10,
-                      border: `1px solid ${selected ? C.ink : C.line}`,
-                      background: selected ? C.ink : '#fff',
-                      color: selected ? C.surface : C.ink2,
-                      fontFamily: 'inherit',
-                      fontSize: 14,
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      transition: 'background .12s, color .12s, border-color .12s',
-                    }}
-                  >
-                    {n}년
-                  </button>
-                )
-              })}
+      {FIELDS.map((field, i) => {
+        const isProduct =
+          field.key === 'product' ||
+          field.key === 'manufacturer' ||
+          field.key === 'lot' ||
+          field.key === 'expiry'
+        // 본병원(타병원 미체크) — 약품칸은 지정 약품을 읽기 전용으로 표시.
+        const designated = isProduct && !otherHospital
+        const hint = designated ? hintForKey(field.key, productHints) : undefined
+        return (
+          <div
+            key={field.key}
+            style={{
+              padding: '14px 0',
+              borderTop: i === 0 ? undefined : `.5px solid ${C.line}`,
+            }}
+          >
+            <div style={labelStyle}>
+              {field.label}
+              {field.required && <span style={{ color: C.warn, marginLeft: 4 }}>*</span>}
+              {designated && (
+                <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 400, color: C.ink3 }}>
+                  병원 지정
+                </span>
+              )}
             </div>
-          ) : field.kind === 'date' ? (
-            <div style={{ marginTop: 8 }}>
-              <DateTextField
+            {field.kind === 'years' ? (
+              <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                {(['1', '2', '3'] as const).map((n) => {
+                  const selected = selectedYear(value[field.key]) === n
+                  return (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => onChange(field.key, `${n}년`)}
+                      style={{
+                        flex: 1,
+                        padding: '9px 0',
+                        borderRadius: 10,
+                        border: `1px solid ${selected ? C.ink : C.line}`,
+                        background: selected ? C.ink : '#fff',
+                        color: selected ? C.surface : C.ink2,
+                        fontFamily: 'inherit',
+                        fontSize: 14,
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        transition: 'background .12s, color .12s, border-color .12s',
+                      }}
+                    >
+                      {n}년
+                    </button>
+                  )
+                })}
+              </div>
+            ) : designated ? (
+              <div style={designatedStyle}>
+                {hint || <span style={{ color: C.ink3 }}>—</span>}
+              </div>
+            ) : field.kind === 'date' ? (
+              <div style={{ marginTop: 8 }}>
+                <DateTextField
+                  value={value[field.key]}
+                  onChange={(v) => onChange(field.key, v)}
+                  placeholder="YYYY-MM-DD"
+                />
+              </div>
+            ) : (
+              <input
+                type="text"
                 value={value[field.key]}
-                onChange={(v) => onChange(field.key, v)}
-                placeholder={hintForKey(field.key, otherHospital ? null : productHints) || 'YYYY-MM-DD'}
+                onChange={(e) => onChange(field.key, e.target.value)}
+                placeholder={field.placeholder}
+                style={inputStyle}
               />
-            </div>
-          ) : (
-            <input
-              type="text"
-              value={value[field.key]}
-              onChange={(e) => onChange(field.key, e.target.value)}
-              placeholder={hintForKey(field.key, otherHospital ? null : productHints) || field.placeholder}
-              style={inputStyle}
-            />
-          )}
-        </div>
-      ))}
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
