@@ -60,6 +60,11 @@ export async function proxy(request: NextRequest) {
 
   if (isPublic(pathname)) return response
 
+  // 펫무브워크 "고객앱 미리보기" — pm_preview 쿠키가 있으면 통과시킨다. 토큰 자체의
+  // 검증은 (authed) layout 이 수행한다 (미들웨어는 Edge 런타임이라 node:crypto 불가).
+  // 위조 쿠키는 layout 의 verify 가 실패 → getCurrentUser → /login 으로 떨어지므로 안전.
+  if (request.cookies.get('pm_preview')?.value) return response
+
   // 보호 경로 — getUser() 로 세션 검증.
   // stale refresh token 은 throw → signOut 후 /login 으로 redirect.
   let user = null

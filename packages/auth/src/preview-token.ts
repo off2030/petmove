@@ -15,7 +15,8 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
  */
 
 const PURPOSE = 'petmove-portal-preview-token:v1'
-const DEFAULT_TTL_MS = 15 * 60 * 1000
+// 미리보기 세션 수명 — admin 이 모달을 열어 둔 채 4탭을 둘러보기 충분한 시간.
+const DEFAULT_TTL_MS = 30 * 60 * 1000
 
 function previewKey(): Buffer {
   const secret = process.env.SUPABASE_SERVICE_ROLE_KEY

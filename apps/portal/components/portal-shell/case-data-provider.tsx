@@ -43,11 +43,14 @@ export function CaseDataProvider({
   initialCases,
   initialProfile,
   userEmail,
+  previewMode = false,
   children,
 }: {
   initialCases: CaseRow[]
   initialProfile: CustomerProfileRow | null
   userEmail: string | null
+  /** 펫무브워크 고객앱 미리보기 — 보호자 세션이 없어 Realtime·refetch 를 끈다. */
+  previewMode?: boolean
   children: React.ReactNode
 }) {
   const router = useRouter()
@@ -145,6 +148,8 @@ export function CaseDataProvider({
   // Realtime — 첫 paint 안정 후로 지연. WebSocket 핸드셰이크 + supabase realtime 모듈 파싱이
   // 초기 진입 마지막 구간 lag 의 한 축. caseIdsKey 가 변하면 (= 케이스 추가/삭제) 재구독.
   useEffect(() => {
+    // 미리보기: 보호자 세션이 없어 Realtime 구독이 무의미 — 생략.
+    if (previewMode) return
     if (!caseIdsKey) return
     const ids = caseIdsKey.split(',')
     let channel: ReturnType<typeof supabaseBrowser.channel> | null = null
@@ -204,10 +209,12 @@ export function CaseDataProvider({
       window.removeEventListener('touchstart', onInteract)
       if (channel) void supabaseBrowser.removeChannel(channel)
     }
-  }, [caseIdsKey, refreshCases])
+  }, [caseIdsKey, refreshCases, previewMode])
 
   // 앱 포커스 복귀 시 cases + profile 갱신.
   useEffect(() => {
+    // 미리보기: 세션이 없어 refetch 가 무의미 — 생략.
+    if (previewMode) return
     const onRefresh = () => {
       void refreshCases()
       void refreshProfile()

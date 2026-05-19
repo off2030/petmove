@@ -5,52 +5,13 @@ import { useEffect, useRef, useState } from 'react'
 import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
 
 /**
- * preview 모드(펫무브워크 고객앱 미리보기)에선 step 상세가 보호자 인증 라우트라 진입이
- * 불가 — 링크를 정적 div 로 렌더해 깨진 네비게이션을 막는다.
- */
-function StepLink({
-  href,
-  preview,
-  className,
-  style,
-  children,
-}: {
-  href: string
-  preview: boolean
-  className?: string
-  style?: React.CSSProperties
-  children: React.ReactNode
-}) {
-  if (preview) {
-    return (
-      <div className={className} style={style}>
-        {children}
-      </div>
-    )
-  }
-  return (
-    <Link href={href} className={className} style={style}>
-      {children}
-    </Link>
-  )
-}
-
-/**
  * Calm 디자인 시스템의 여정 화면.
  *
  * 시각 소스: docs/portal-preview/timeline.jsx (TimelineCalm) — Stone 팔레트는 portal-only
  * 라 인라인 style 로 유지. 디자인 freeze 단계에서 portal-preview JSX 가 truth, 이 코드는
  * 그것을 비교적 충실히 옮긴 것.
  */
-export function TimelineCalm({
-  data,
-  caseId,
-  preview = false,
-}: {
-  data: JourneyData
-  caseId: string
-  preview?: boolean
-}) {
+export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: string }) {
   const { stages, trip, pet, nextStages, totalFailedChecks, totalInfoChecks } = data
   const total = stages.length
   const done = stages.filter((s) => s.state === 'done').length
@@ -160,10 +121,9 @@ export function TimelineCalm({
     const hasWarn = (s.failedChecks ?? 0) > 0
     const hasInfo = (s.infoChecks ?? 0) > 0
     return (
-      <StepLink
+      <Link
         key={s.id}
         href={`/cases/${caseId}/journey/${s.id}`}
-        preview={preview}
         style={{
           display: 'flex',
           alignItems: 'flex-start',
@@ -282,7 +242,7 @@ export function TimelineCalm({
             <div style={{ fontSize: 12, color: C.ink3, marginTop: 2, lineHeight: 1.4 }}>{s.desc}</div>
           )}
         </div>
-      </StepLink>
+      </Link>
     )
   }
 
@@ -323,9 +283,8 @@ export function TimelineCalm({
 
         {/* 주의 알림 — 한 줄 배너. 첫 주의 stage 로 이동. */}
         {totalFailedChecks > 0 && firstWarnedStage && (
-          <StepLink
+          <Link
             href={`/cases/${caseId}/journey/${firstWarnedStage.id}`}
-            preview={preview}
             className="pm-pressable"
             style={{
               display: 'flex',
@@ -348,14 +307,13 @@ export function TimelineCalm({
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
             <span>주의 {totalFailedChecks}건 — {warnedStages.map((s) => s.label).join(', ')}</span>
-          </StepLink>
+          </Link>
         )}
 
         {/* 안내 — 오류는 아니지만 미리 알려둘 사항. 주의보다 차분한 중립 톤. */}
         {totalInfoChecks > 0 && firstInfoStage && (
-          <StepLink
+          <Link
             href={`/cases/${caseId}/journey/${firstInfoStage.id}`}
-            preview={preview}
             className="pm-pressable"
             style={{
               display: 'flex',
@@ -378,7 +336,7 @@ export function TimelineCalm({
               <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
             <span>안내 {totalInfoChecks}건 — {infoStages.map((s) => s.label).join(', ')}</span>
-          </StepLink>
+          </Link>
         )}
 
         {/* 다음 할 일 카드 — soft taupe. 헤더 1회 + 할 일 항목들(각 행이 링크, 구분선).
@@ -400,10 +358,9 @@ export function TimelineCalm({
               )}
             </div>
             {nextStages.map((stage, i) => (
-              <StepLink
+              <Link
                 key={stage.id}
                 href={`/cases/${caseId}/journey/${stage.id}`}
-                preview={preview}
                 className="pm-pressable"
                 style={{
                   display: 'block',
@@ -432,7 +389,7 @@ export function TimelineCalm({
                     {stage.cardDesc ?? stage.desc}
                   </p>
                 )}
-              </StepLink>
+              </Link>
             ))}
           </div>
         )}
