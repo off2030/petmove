@@ -204,7 +204,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
       <div ref={containerRef} className="relative min-w-0 flex flex-col md:flex-row items-start gap-md">
         <div className="flex-1 min-w-0">
         {selected.length > 0 ? (
-          <div className="group/val inline-flex items-center gap-md flex-wrap">
+          <div className="group/val flex items-center gap-md flex-nowrap overflow-x-auto scrollbar-minimal md:flex-wrap md:overflow-x-visible">
             {selected.map((ko, idx) => {
               const code = destCode(ko)
               const isActive = multi && (activeDestination ?? selected[0]) === ko
@@ -236,7 +236,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                   }}
                   onDragEnd={() => { setDragIdx(null); setOverIdx(null) }}
                   className={cn(
-                    'group/chip inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 transition-all',
+                    'group/chip shrink-0 inline-flex items-baseline gap-1.5 rounded-full px-2.5 py-0.5 transition-all',
                     'bg-pmw-tag text-pmw-tag-foreground',
                     multi && isActive && 'ring-1 ring-pmw-accent/45',
                     multi && editMode && 'cursor-grab active:cursor-grabbing',
@@ -360,7 +360,9 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
           document.body,
         )}
         </div>
-        {selected.length > 0 && targetDest && (
+        {selected.length > 0 && (targetDest || hasSibling) && (
+          <div className="flex items-start gap-md">
+        {targetDest && (
           <div
             className="shrink-0 inline-flex items-center rounded-full bg-pmw-tag/30 p-0.5 font-serif text-[12px] mt-0.5"
             title={multi ? `${targetDest} 여행 유형` : '여행 유형'}
@@ -391,7 +393,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
             </button>
           </div>
         )}
-        {selected.length > 0 && hasSibling && (
+        {hasSibling && (
           <button
             type="button"
             onClick={() => setCoProgress(!coProgress)}
@@ -417,6 +419,8 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
             />
             동시 진행
           </button>
+        )}
+          </div>
         )}
       </div>
     </div>
