@@ -15,6 +15,7 @@ const PUBLIC_PREFIXES = [
   '/privacy',
   '/share',  // 토큰 진입 (Phase 11.0.5 구현 전 까지 page 자체는 없지만 미인증 통과 정의)
   '/apply',  // 신청서 (Phase 11.0.6)
+  '/preview', // 펫무브워크 "고객앱 미리보기" — admin 서명 토큰으로 진입 (보호자 세션 아님)
   '/offline', // SW 가 install 시 prefetch 해서 오프라인 폴백으로 사용 — 미인증 통과 필수
   '/_next',
   '/favicon',

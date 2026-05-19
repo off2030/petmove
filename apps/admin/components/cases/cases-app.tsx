@@ -20,10 +20,11 @@ import { generateFormRE, generateFormAC, generateIdentificationDeclaration, gene
 import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-download'
 import { MultiFormDialog } from './multi-form-dialog'
 import { RabiesSelectDialog, RABIES_SLOT_CAP } from './rabies-select-dialog'
-import { ChevronLeft, ChevronRight, Copy, Link2, Send, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Copy, Link2, Send, Smartphone, Trash2 } from 'lucide-react'
 import { TransferDialog } from './transfer-dialog'
 import { AssigneePicker } from './assignee-picker'
 import { ShareLinkDialog } from './share-link-dialog'
+import { PortalPreviewDialog } from './portal-preview-dialog'
 import { resolveCerts } from '@petmove/domain'
 import type { CaseRow } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
@@ -218,6 +219,7 @@ function Inner() {
   const [multiForm, setMultiForm] = useState<{ caseId: string; formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC' } | null>(null)
   const [transferOpen, setTransferOpen] = useState<{ caseId: string; label: string } | null>(null)
   const [shareOpen, setShareOpen] = useState<{ case: CaseRow; label: string } | null>(null)
+  const [previewOpen, setPreviewOpen] = useState<{ caseId: string; label: string } | null>(null)
   // 별지 25호/EX 의 광견병 슬롯이 부족할 때 띄우는 선택 모달.
   const [rabiesPick, setRabiesPick] = useState<
     | { caseId: string; formKey: 'Form25' | 'Form25AuNz' | 'FormRE'; rabiesDates: unknown; destination: string | null; cap: number; eligibleAfterDate?: string | null; includeOtherHospital?: boolean }
@@ -495,6 +497,14 @@ function Inner() {
           />
         )}
 
+        {previewOpen && (
+          <PortalPreviewDialog
+            caseId={previewOpen.caseId}
+            caseLabel={previewOpen.label}
+            onClose={() => setPreviewOpen(null)}
+          />
+        )}
+
         <RabiesSelectDialog
           open={!!rabiesPick}
           formLabel={
@@ -579,6 +589,18 @@ function Inner() {
                       />
                     )}
                     <CaseHistory caseId={selectedCase.id} />
+                    <button
+                      type="button"
+                      onClick={() => setPreviewOpen({
+                        caseId: selectedCase.id,
+                        label: `${selectedCase.customer_name || '(이름 없음)'}${selectedCase.pet_name ? ` / ${selectedCase.pet_name}` : ''}`,
+                      })}
+                      title="고객앱 미리보기"
+                      aria-label="고객앱 미리보기"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    >
+                      <Smartphone className="h-3.5 w-3.5" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => setShareOpen({
