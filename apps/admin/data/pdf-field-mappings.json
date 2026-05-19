@@ -227,8 +227,8 @@
         "source": "microchip_implant_date"
       },
       "rabies_cert_number": {
-        "source": null,
-        "note": "일본 AQS 수출검역증명서 번호 — 케이스 데이터 없음"
+        "source": "certificate_no",
+        "note": "EQC No. — Export quarantine certificate 번호 (extra.certificate_no 수동 입력). 비어있으면 공란."
       },
       "rabies_date_1": {
         "source": "rabies_dates",
@@ -256,8 +256,8 @@
         "transform": "after_titer_product[1]"
       },
       "titer_cert_number": {
-        "source": null,
-        "note": "일본 AQS 항체가검사 증명서 번호"
+        "source": "certificate_no",
+        "note": "EQC No. — Export quarantine certificate 번호 (extra.certificate_no 수동 입력). 비어있으면 공란."
       },
       "titer_date_1": {
         "source": "rabies_titer_records",
