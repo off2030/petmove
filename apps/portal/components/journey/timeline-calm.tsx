@@ -43,13 +43,29 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
   const infoStages = stages.filter((s) => (s.infoChecks ?? 0) > 0)
   const firstInfoStage = infoStages[0] ?? null
 
-  // 왕복 케이스의 출국편/귀국편 구분 — '출국·도착'(departure) step 다음에 실질 절차
-  // step 이 있을 때만 캡션을 단다. '도착 완료' 마일스톤만 남는 케이스는 구분 불필요.
-  const departureIdx = stages.findIndex((s) => s.id === 'departure')
-  const hasReturnLeg =
-    trip.tripType === 'round' &&
-    departureIdx >= 0 &&
-    stages.some((s, i) => i > departureIdx && s.id !== 'journey-complete')
+  // 전체 일정을 물리적 위치 기준 구간으로 나눈다 — 한국(출국 준비)·일본·한국(귀국).
+  // 'departure'(출국·도착) 앞에서 일본 구간이, 'kr-import-quarantine' 앞에서 한국 귀국
+  // 구간이 시작된다. 해당 step 이 없으면 그 구간은 생기지 않는다(편도·단순 케이스).
+  const stageZones = (() => {
+    const departureIdx = stages.findIndex((s) => s.id === 'departure')
+    const krReturnIdx = stages.findIndex((s) => s.id === 'kr-import-quarantine')
+    const cuts: { index: number; caption: string | null }[] = [{ index: 0, caption: null }]
+    if (departureIdx > 0) {
+      cuts.push({ index: departureIdx, caption: `${withRo(trip.toCity)} 떠나요` })
+      if (krReturnIdx > departureIdx) {
+        cuts.push({ index: krReturnIdx, caption: `${withRo(trip.fromCity)} 돌아와요` })
+      }
+    }
+    return cuts.map((cut, ci) => {
+      const next = cuts[ci + 1]
+      return {
+        caption: cut.caption,
+        rows: stages
+          .slice(cut.index, next ? next.index : stages.length)
+          .map((stage, k) => ({ stage, index: cut.index + k })),
+      }
+    })
+  })()
 
   const serif: React.CSSProperties = {
     fontFamily: 'var(--pm-font-display)',
@@ -96,6 +112,139 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
   const animOffset = CIRC * (1 - animPct)
 
   const dDayLabel = formatDDay(trip.daysLeft)
+
+  // 일정 카드 한 행 — 동그라미(번호·상태) + 항목명 + 날짜. index 는 전체 일정 기준
+  // 0-based, isLast 는 소속 카드 내 마지막 행 여부(구분선 생략).
+  const renderStageRow = (s: JourneyStage, index: number, isLast: boolean) => {
+    const isDone = s.state === 'done'
+    const isCurr = s.state === 'current'
+    const hasWarn = (s.failedChecks ?? 0) > 0
+    const hasInfo = (s.infoChecks ?? 0) > 0
+    return (
+      <Link
+        key={s.id}
+        href={`/cases/${caseId}/journey/${s.id}`}
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 14,
+          padding: '13px 0',
+          borderBottom: isLast ? 'none' : `.5px solid ${C.line}`,
+          textDecoration: 'none',
+          color: 'inherit',
+          cursor: 'pointer',
+        }}
+      >
+        <div
+          style={{
+            width: 22,
+            height: 22,
+            borderRadius: '50%',
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            // 주의/안내가 있으면 sage/accent 대신 그 톤으로 — 번호 자리에 ⚠ 또는 ⓘ.
+            background: hasWarn ? C.warn : hasInfo ? C.info : isDone ? C.sage : isCurr ? C.accent : 'transparent',
+            border: !hasWarn && !hasInfo && !isDone && !isCurr ? `1px solid ${C.line}` : 'none',
+            color: hasWarn || hasInfo || isDone || isCurr ? C.surface : C.ink3,
+            ...num,
+            fontSize: 11,
+          }}
+        >
+          {hasWarn ? (
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-label="주의"
+            >
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            </svg>
+          ) : hasInfo ? (
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-label="안내"
+            >
+              <line x1="12" y1="11" x2="12" y2="17" />
+              <line x1="12" y1="7" x2="12.01" y2="7" />
+            </svg>
+          ) : isDone ? (
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          ) : (
+            index + 1
+          )}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              // 동그라미(22px)와 같은 높이로 baseline center 정렬 — label 의 line-height
+              // 를 22 로 맞춰 row 자체가 22 가 되도록.
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 10,
+              minHeight: 22,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 17,
+                lineHeight: '22px',
+                color: hasWarn ? C.warn : isCurr ? C.ink : isDone ? C.ink2 : C.ink3,
+                fontWeight: isCurr || hasWarn ? 600 : 500,
+                minWidth: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {s.label}
+            </div>
+            <div
+              style={{
+                ...monoCap,
+                color: hasWarn ? C.warn : hasInfo ? C.info : isCurr ? C.accent : C.ink3,
+                fontWeight: hasWarn ? 700 : hasInfo ? 600 : isCurr ? 700 : 500,
+                textAlign: 'right',
+                flexShrink: 0,
+              }}
+            >
+              {hasWarn ? '주의' : hasInfo ? '안내' : isCurr ? '예정' : formatStageDate(s)}
+            </div>
+          </div>
+          {s.desc && (
+            <div style={{ fontSize: 12, color: C.ink3, marginTop: 2, lineHeight: 1.4 }}>{s.desc}</div>
+          )}
+        </div>
+      </Link>
+    )
+  }
 
   return (
     <div
@@ -297,166 +446,33 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
           </div>
         </div>
 
-        {/* 단계 리스트 — light cream gradient */}
+        {/* 단계 리스트 — 한국(출국 준비)·일본·한국(귀국) 구간별 카드. */}
         <h3 style={{ ...serif, margin: '24px 0 12px', fontSize: 20 }}>전체 일정</h3>
-        <div
-          style={{
-            background: C.cardList,
-            borderRadius: 20,
-            boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
-            padding: '4px 14px',
-          }}
-        >
-          {stages.flatMap((s, i) => {
-            const isDone = s.state === 'done'
-            const isCurr = s.state === 'current'
-            const hasWarn = (s.failedChecks ?? 0) > 0
-            const hasInfo = (s.infoChecks ?? 0) > 0
-            const last = i === stages.length - 1
-            // 출국편/귀국편 경계 캡션 — 일정 항목이 아니라 구간 구분용.
-            const legCaption = !hasReturnLeg
-              ? null
-              : i === 0
-                ? `${withRo(trip.toCity)} 떠나요`
-                : i === departureIdx + 1
-                  ? `${withRo(trip.fromCity)} 돌아와요`
-                  : null
-            const row = (
-              <Link
-                key={s.id}
-                href={`/cases/${caseId}/journey/${s.id}`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: 14,
-                  padding: '13px 0',
-                  borderBottom: last ? 'none' : `.5px solid ${C.line}`,
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  cursor: 'pointer',
-                }}
-              >
-                <div
-                  style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: '50%',
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    // 주의/안내가 있으면 sage/accent 대신 그 톤으로 — 번호 자리에 ⚠ 또는 ⓘ.
-                    background: hasWarn ? C.warn : hasInfo ? C.info : isDone ? C.sage : isCurr ? C.accent : 'transparent',
-                    border: !hasWarn && !hasInfo && !isDone && !isCurr ? `1px solid ${C.line}` : 'none',
-                    color: hasWarn || hasInfo || isDone || isCurr ? C.surface : C.ink3,
-                    ...num,
-                    fontSize: 11,
-                  }}
-                >
-                  {hasWarn ? (
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-label="주의"
-                    >
-                      <line x1="12" y1="9" x2="12" y2="13" />
-                      <line x1="12" y1="17" x2="12.01" y2="17" />
-                      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                    </svg>
-                  ) : hasInfo ? (
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-label="안내"
-                    >
-                      <line x1="12" y1="11" x2="12" y2="17" />
-                      <line x1="12" y1="7" x2="12.01" y2="7" />
-                    </svg>
-                  ) : isDone ? (
-                    <svg
-                      width="11"
-                      height="11"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  ) : (
-                    i + 1
-                  )}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      // 동그라미(22px)와 같은 높이로 baseline center 정렬 — label 의 line-height
-                      // 를 22 로 맞춰 row 자체가 22 가 되도록.
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 10,
-                      minHeight: 22,
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 17,
-                        lineHeight: '22px',
-                        color: hasWarn ? C.warn : isCurr ? C.ink : isDone ? C.ink2 : C.ink3,
-                        fontWeight: isCurr || hasWarn ? 600 : 500,
-                        minWidth: 0,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {s.label}
-                    </div>
-                    <div
-                      style={{
-                        ...monoCap,
-                        color: hasWarn ? C.warn : hasInfo ? C.info : isCurr ? C.accent : C.ink3,
-                        fontWeight: hasWarn ? 700 : hasInfo ? 600 : isCurr ? 700 : 500,
-                        textAlign: 'right',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {hasWarn ? '주의' : hasInfo ? '안내' : isCurr ? '예정' : formatStageDate(s)}
-                    </div>
-                  </div>
-                  {s.desc && (
-                    <div style={{ fontSize: 12, color: C.ink3, marginTop: 2, lineHeight: 1.4 }}>{s.desc}</div>
-                  )}
-                </div>
-              </Link>
-            )
-            if (!legCaption) return [row]
-            return [
-              <div
-                key={`${s.id}-leg`}
-                style={{ ...monoCap, padding: i === 0 ? '10px 0 4px' : '20px 0 6px' }}
-              >
-                {legCaption}
-              </div>,
-              row,
-            ]
-          })}
-        </div>
+        {stageZones.flatMap((zone, zi) => {
+          const card = (
+            <div
+              key={`zone-${zi}`}
+              style={{
+                background: C.cardList,
+                borderRadius: 20,
+                boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
+                padding: '4px 14px',
+              }}
+            >
+              {zone.rows.map(({ stage, index }, k) =>
+                renderStageRow(stage, index, k === zone.rows.length - 1),
+              )}
+            </div>
+          )
+          // caption 이 있는 구간(일본·귀국)은 카드 위에 구분 캡션을 얹는다.
+          if (!zone.caption) return [card]
+          return [
+            <div key={`zone-${zi}-cap`} style={{ ...monoCap, margin: '22px 0 10px' }}>
+              {zone.caption}
+            </div>,
+            card,
+          ]
+        })}
       </div>
     </div>
   )
