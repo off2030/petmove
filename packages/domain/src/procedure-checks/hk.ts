@@ -45,9 +45,9 @@ export const HK_CHECKS: ProcedureCheck[] = [
     id: 'hk.microchip-before-rabies',
     country: COUNTRY,
     category: '마이크로칩',
-    title: '마이크로칩은 광견병 1차 접종 이전 시술',
+    title: '마이크로칩은 광견병 접종 이전 시술',
     description:
-      'ISO 11784/11785 또는 AVID 호환 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (AFCD DC-02v05: "implanted with a microchip ... compliant with ISO or AVID standards")',
+      'ISO 11784/11785 또는 AVID 호환 마이크로칩이 광견병 접종일과 같거나 이전이어야 함. 칩 이전 접종은 추적 불가로 무효 — 칩 이후 접종이 1건이라도 있으면 그 접종부터 유효 기록으로 인정. (AFCD DC-02v05: "implanted with a microchip ... compliant with ISO or AVID standards")',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
@@ -56,14 +56,16 @@ export const HK_CHECKS: ProcedureCheck[] = [
       const rabies = readRabiesEntries(caseRow)
       if (!microchip || rabies.length === 0) return SKIP
 
-      const first = rabies[0]
-      if (microchip <= first.date) {
-        return { ok: true, message: `마이크로칩(${microchip}) ≤ 1차 접종(${first.date}).` }
+      // 칩 이후(같은 날 포함) 접종이 1건이라도 있으면 충족 — 그 접종부터 유효 면역 기록.
+      const valid = rabies.find((r) => microchip <= r.date)
+      if (valid) {
+        return { ok: true, message: `마이크로칩(${microchip}) ≤ 광견병 접종(${valid.date}).` }
       }
+      const last = rabies[rabies.length - 1]
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦습니다.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 합니다.',
+        message: `마이크로칩(${microchip})이 모든 광견병 접종(최근 ${last.date})보다 늦습니다.`,
+        fixHint: '시술 후 광견병 접종이 다시 필요합니다.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
