@@ -138,6 +138,13 @@ export interface StepDefinition {
   /** 상세 페이지 본문 — 마크다운 가능. 절차 규칙을 안내. */
   description: string
   /**
+   * 전체 일정 리스트에서 step 이 완료됐을 때 제목 아래 보조 줄로 노출되는 문구.
+   * 과거형 narration ('1차 광견병 백신을 접종했습니다.') 권장.
+   * 생략 시 description 첫 문장을 폴백 — 첫 문장이 현재형 안내문이면 어색할 수 있으니
+   * 가능하면 step 별로 명시.
+   */
+  doneSummary?: string
+  /**
    * 다음 할 일 카드 본문 — 날짜(earliest/deadline)가 있을 때 "{날짜} 이후/까지 …"
    * 의 … 자리에 쓰임. 생략 시 description 첫 문장으로 폴백.
    */

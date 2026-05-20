@@ -25,6 +25,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       shortLabel: '수입',
       description:
         '일본 도착 후 공항 동물검역소에서 검역을 받습니다.\n동물검역소는 공항마다 위치가 다르지만 일반적으로 입국 심사대를 지난 뒤 수화물 찾는 곳 근처에 있습니다. 검역을 받기 전에 세관 심사대를 통과하지 않도록 주의하세요.',
+      doneSummary: '일본 수입 동물검역을 받았습니다.',
       // 일본 수입검역은 도착 후 공항 검역소 방문이 핵심 — 출국일 경과(base 의
       // departure-past)가 아니라 검역일 입력 시 완료 처리. 검역일 필드도 노출.
       done: 'has-jp-import-quarantine',
