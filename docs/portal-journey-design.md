@@ -51,7 +51,7 @@ Step
 
 도메인 로직을 step 정의 안에 인라인하지 않고 **시그널 이름**으로만 표시:
 
-- `'microchip-set'` — `caseRow.microchip` 비어있지 않음
+- `'microchip-set'` — `caseRow.microchip` + `data.microchip_implant_date` 둘 다 채워짐
 - `'has-rabies-entry'` — `data.rabies_dates` 에 1건 이상
 - `'has-titer-entry'` — `data.rabies_titer_records` 에 1건 이상
 - `'has-vet-visit'` — `data.vet_visit_date` 채워짐

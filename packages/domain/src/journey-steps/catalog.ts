@@ -50,6 +50,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         key: 'microchip_implant_date',
         label: '시술일',
         type: 'date',
+        required: true,
         helpText: '펫무브 등록 신청서의 달력과 동일 컴포넌트',
       },
     ],

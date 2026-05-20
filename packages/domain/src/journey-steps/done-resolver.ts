@@ -34,8 +34,13 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
   switch (signal) {
     case 'always-done':
       return true
-    case 'microchip-set':
-      return !!caseRow.microchip && caseRow.microchip.length > 0
+    case 'microchip-set': {
+      // 칩 번호 + 시술일 모두 입력되어야 완료. 시술일은 광견병 1차 백신 'after-microchip'
+      // 체크의 기준일이라 없으면 후속 단계 검증이 무력화됨.
+      if (!caseRow.microchip || caseRow.microchip.length === 0) return false
+      const implant = data.microchip_implant_date
+      return typeof implant === 'string' && implant.length >= 10
+    }
     case 'has-rabies-entry':
       return readRabiesEntries(caseRow).length > 0
     case 'has-rabies-booster':
