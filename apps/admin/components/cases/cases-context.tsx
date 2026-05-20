@@ -93,6 +93,9 @@ interface CasesContextValue {
    */
   todoColumnsConfig: TodoColumnsConfig
   setTodoColumnsConfig: (config: TodoColumnsConfig) => void
+  /** 케이스 목록 검색어. 좌측 목록 + 케이스 상세 좌우 네비게이션이 같은 검색 결과를 공유. */
+  searchQuery: string
+  setSearchQuery: (q: string) => void
 }
 
 const CasesContext = createContext<CasesContextValue | null>(null)
@@ -159,6 +162,7 @@ export function CasesProvider({
   const [certConfig, setCertConfig] = useState<CertConfig>(initialCertConfig)
   const [todoColumnsConfig, setTodoColumnsConfig] = useState<TodoColumnsConfig>(initialTodoColumnsConfig)
   const [newCaseIds, setNewCaseIds] = useState<Set<string>>(() => new Set())
+  const [searchQuery, setSearchQuery] = useState('')
   // 본인이 직접 추가한(addLocalCase 또는 useEffect 내 직접 setCases) 케이스 id.
   // Realtime INSERT 가 같은 행을 다시 가져왔을 때 중복 처리 + "신규" 표식을 막는다.
   const selfAddedRef = useRef<Set<string>>(new Set())
@@ -384,8 +388,10 @@ export function CasesProvider({
       sharePresets,
       todoColumnsConfig,
       setTodoColumnsConfig,
+      searchQuery,
+      setSearchQuery,
     }),
-    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, replaceLocalCaseData, activeDestination, importReportCountries, importReportButtonCountries, inspectionConfig, certConfig, newCaseIds, caseAssigneeEnabled, orgMembers, sharePresets, todoColumnsConfig],
+    [cases, fieldDefs, selectedId, selectCase, openCase, addLocalCase, removeLocalCase, updateLocalCaseField, replaceLocalCaseData, activeDestination, importReportCountries, importReportButtonCountries, inspectionConfig, certConfig, newCaseIds, caseAssigneeEnabled, orgMembers, sharePresets, todoColumnsConfig, searchQuery],
   )
 
   return <CasesContext.Provider value={value}>{children}</CasesContext.Provider>

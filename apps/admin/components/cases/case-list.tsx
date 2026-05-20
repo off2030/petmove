@@ -127,9 +127,8 @@ export function CaseList({
   onAddFromFiles?: (files: File[]) => void
   busy?: boolean
 }) {
-  const { cases, selectedId, selectCase, newCaseIds } = useCases()
+  const { cases, selectedId, selectCase, newCaseIds, searchQuery: query, setSearchQuery: setQuery } = useCases()
 
-  const [query, setQuery] = useState('')
   const [visible, setVisible] = useState(INITIAL_VISIBLE)
   const [highlight, setHighlight] = useState(-1)
   const [showTrash, setShowTrash] = useState(false)
@@ -154,23 +153,7 @@ export function CaseList({
     setHighlight(-1)
   }, [query])
 
-  const filtered = useMemo(() => {
-    const raw = query.trim().toLowerCase()
-    if (!raw) return cases
-
-    if (raw.includes(' ')) {
-      const phraseMatch = cases.filter((c) =>
-        buildSearchString(c).toLowerCase().includes(raw),
-      )
-      if (phraseMatch.length > 0) return phraseMatch
-    }
-
-    const terms = raw.split(/\s+/).filter(Boolean)
-    return cases.filter((c) => {
-      const hay = buildSearchString(c).toLowerCase()
-      return terms.every((t) => hay.includes(t))
-    })
-  }, [cases, query])
+  const filtered = useMemo(() => filterCases(cases, query), [cases, query])
 
   const visibleCases = filtered.slice(0, visible)
 
@@ -505,6 +488,30 @@ export function CaseList({
  * 것을 일회성으로 줄임.
  */
 const searchStringCache = new WeakMap<CaseRow, string>()
+
+/**
+ * 검색어로 케이스 목록을 필터링. 케이스 상세 좌우 네비게이션도 같은 결과를 공유하도록 export.
+ *  - 공백 포함 → phrase 우선, 0건이면 단어 AND 폴백
+ *  - 단어들 → AND 매칭
+ *  - 빈 검색어 → 원본 cases 반환 (reference 동일)
+ */
+export function filterCases(cases: CaseRow[], query: string): CaseRow[] {
+  const raw = query.trim().toLowerCase()
+  if (!raw) return cases
+
+  if (raw.includes(' ')) {
+    const phraseMatch = cases.filter((c) =>
+      buildSearchString(c).toLowerCase().includes(raw),
+    )
+    if (phraseMatch.length > 0) return phraseMatch
+  }
+
+  const terms = raw.split(/\s+/).filter(Boolean)
+  return cases.filter((c) => {
+    const hay = buildSearchString(c).toLowerCase()
+    return terms.every((t) => hay.includes(t))
+  })
+}
 
 function buildSearchString(c: CaseRow): string {
   const cached = searchStringCache.get(c)
