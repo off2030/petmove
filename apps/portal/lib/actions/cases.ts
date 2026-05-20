@@ -225,6 +225,9 @@ export async function updateRabiesEntryFields(
     const slot = rabiesArr[index]
     const prevEntry =
       slot && typeof slot === 'object' ? { ...(slot as Record<string, unknown>) } : {}
+    // 포털에서 처음 생성되는 entry 인지 — 기존 항목 편집이면 admin 이 정한 상태(특히
+    // other_hospital) 를 보존해야 한다.
+    const isFreshEntry = Object.keys(prevEntry).length === 0
 
     // 6개 관리 키 머지 — 값이 있으면 set, 비면 delete.
     const entry: Record<string, unknown> = { ...prevEntry }
@@ -232,6 +235,15 @@ export async function updateRabiesEntryFields(
       const v = typeof raw === 'string' ? raw.trim() : raw
       if (v == null || v === '') delete entry[key]
       else entry[key] = v
+    }
+
+    // 포털에서 새로 만들어진 항목은 '타병원 접종' 기본 — 보호자는 어느 병원 약품인지
+    // 모르는 상태고, admin 이 본병원이면 펫무브워크에서 명시적으로 체크 해제하는 흐름.
+    // (apps/portal/lib/actions/apply-case.ts:142 의 신청폼 경로와 동일 정책.) 이 flag 가
+    // 없으면 portal/admin 의 약품 4필드가 '병원 지정' 카탈로그 hint 로 표시돼서, 보호자
+    // 본인은 본 적 없는 약품명·제조사가 본인이 입력한 양 보이는 사고가 난다.
+    if (isFreshEntry && Object.keys(entry).length > 0) {
+      entry.other_hospital = true
     }
 
     // 앞 index 를 빈 객체로 패딩 (sparse 배열 방지) 후 해당 index 설정.
