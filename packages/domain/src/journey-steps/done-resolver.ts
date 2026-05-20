@@ -165,8 +165,15 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
       const r = readRabiesEntries(caseRow)
       return r.length >= 3 ? r[r.length - 1].date : null
     }
-    case 'has-titer-entry':
-      return lastEntryDate(readTiterEntries(caseRow).map((e) => e.date))
+    case 'has-titer-entry': {
+      // 1회차 = 가장 이른 항체검사일 (180일 대기·2년 입국 기한의 기준일).
+      // 광견병 백신(has-rabies-entry)이 r[0]=1차 인 것과 동일 컨벤션.
+      const dates = readTiterEntries(caseRow)
+        .map((e) => e.date)
+        .filter((d): d is string => typeof d === 'string' && d.length >= 10)
+      if (dates.length === 0) return null
+      return dates.slice().sort()[0]
+    }
     case 'has-extra-titer': {
       // 추가 항체검사(2회+) = 가장 최근 검사일.
       const dates = readTiterEntries(caseRow)
