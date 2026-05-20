@@ -288,6 +288,14 @@ export function CasesProvider({
           } catch {
             return
           }
+          // 재연결 직후 token refresh/visibilitychange 등의 race 로 getActiveOrgId()
+          // 가 일시적으로 throw → listActiveOrgCases() 가 조용히 [] 를 반환할 수 있다.
+          // 이 결과로 setCases([]) 를 그대로 적용하면 사용자의 상세 화면이 빈 패널로
+          // 변하거나(혹은 restoration 이 case:null 응답을 받으면) 선택이 풀려서 목록
+          // 으로 튕긴다. 이전에 케이스가 있었던 상태에서 빈 결과가 오면 보존한다 —
+          // 진짜 0건은 다음 정상 reconnect 또는 Realtime DELETE 가 반영한다.
+          if (fresh.length === 0 && casesRef.current.length > 0) return
+
           const prevIds = new Set(casesRef.current.map((c) => c.id))
           const arrivedIds = fresh
             .filter((c) => !prevIds.has(c.id) && !selfAddedRef.current.has(c.id))
