@@ -14,7 +14,7 @@ import { parseDestinations } from '@petmove/domain'
 import type { InspectionConfig } from '@petmove/domain'
 import type { CertConfig } from '@petmove/domain'
 import { subscribeRealtime } from '@/lib/realtime/resilient-channel'
-import { listActiveOrgCases } from '@/lib/actions/list-cases'
+import { getActiveOrgCaseById, listActiveOrgCases } from '@/lib/actions/list-cases'
 import type { SharePreset } from '@/lib/share-presets-types'
 import { DEFAULT_TODO_COLUMNS_CONFIG, type TodoColumnsConfig } from '@/lib/todo-columns-config-types'
 
@@ -150,10 +150,10 @@ export function CasesProvider({
   children: React.ReactNode
 }) {
   const [cases, setCases] = useState<CaseRow[]>(initialCases)
-  // 마운트 시 URL 에서 복원. URL 의 id 가 현재 목록에 없으면(삭제·타조직) 무시.
+  // 마운트 시 URL 에서 복원. 목록 조회가 일시적으로 비어도 case id 는 보존한 뒤
+  // 아래 effect 에서 단일 조회로 확인한다.
   const [selectedId, setSelectedId] = useState<string | null>(() => {
-    const fromUrl = readCaseIdFromUrl()
-    return fromUrl && initialCases.some((c) => c.id === fromUrl) ? fromUrl : null
+    return readCaseIdFromUrl()
   })
   const [activeDestination, setActiveDestination] = useState<string | null>(null)
   const [importReportCountries, setImportReportCountries] = useState<string[]>(initialImportReportCountries)
@@ -170,12 +170,39 @@ export function CasesProvider({
   const casesRef = useRef(cases)
   casesRef.current = cases
 
-  // 마운트 시 URL 의 case 파라미터가 stale(목록에 없음) 이면 정리.
+  // URL 의 case 파라미터가 현재 목록에 없으면 단일 조회로 복원한다.
+  // 조회 자체가 실패하면 인증 refresh/RLS/네트워크 타이밍일 수 있으므로 URL 을 지우지 않는다.
+  // "정상 조회 결과 없음" 이 확인될 때만 stale id 로 보고 정리한다.
   useEffect(() => {
-    if (!readCaseIdFromUrl()) return
-    if (selectedId === null) syncCaseIdToUrl(null)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    if (!selectedId) return
+    if (cases.some((c) => c.id === selectedId)) return
+
+    let alive = true
+    void (async () => {
+      const result = await getActiveOrgCaseById(selectedId)
+      if (!alive) return
+
+      if (!result.ok) return
+      const restoredCase = result.case
+      if (restoredCase) {
+        setCases((prev) => {
+          if (prev.some((c) => c.id === restoredCase.id)) return prev
+          return [restoredCase, ...prev]
+        })
+        return
+      }
+
+      setSelectedId((current) => {
+        if (current !== selectedId) return current
+        syncCaseIdToUrl(null)
+        return null
+      })
+    })()
+
+    return () => {
+      alive = false
+    }
+  }, [cases, selectedId])
 
   const selectCase = useCallback((id: string | null) => {
     setSelectedId(id)

@@ -40,3 +40,37 @@ export async function listActiveOrgCases(): Promise<CaseRow[]> {
   }
   return all
 }
+
+/**
+ * URL 에 남아 있는 상세 case id 를 복원하기 위한 단일 조회.
+ *
+ * listActiveOrgCases() 가 인증 refresh/RLS/org lookup 타이밍 문제로 일시적으로
+ * 빈 목록을 반환하더라도, URL 의 case id 를 곧장 버리지 않고 한 번 더 확인한다.
+ */
+export async function getActiveOrgCaseById(
+  caseId: string,
+): Promise<{ ok: true; case: CaseRow | null } | { ok: false; error: string }> {
+  if (!caseId) return { ok: false, error: 'caseId is required' }
+
+  const supabase = await createClient()
+  let orgId: string
+  try {
+    orgId = await getActiveOrgId()
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : 'active org lookup failed',
+    }
+  }
+
+  const { data, error } = await supabase
+    .from('cases')
+    .select(CASE_COLUMNS)
+    .eq('id', caseId)
+    .eq('org_id', orgId)
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  if (error) return { ok: false, error: error.message }
+  return { ok: true, case: (data as CaseRow | null) ?? null }
+}
