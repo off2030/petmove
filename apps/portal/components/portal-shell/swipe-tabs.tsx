@@ -35,8 +35,14 @@ const FLICK_MIN_DX = 40 // 플릭 윈도우 내 최소 가로 이동
 const FLICK_OFF_AXIS_RATIO = 0.7 // 플릭 기반: |vy/vx| 허용치
 
 function currentTab(pathname: string): Tab | null {
-  if (pathname === '/me' || pathname.startsWith('/me/')) return 'me'
-  const m = pathname.match(/^\/cases\/[^/]+\/(journey|docs|info)(?:\/|$)/)
+  // /me 는 leaf — 그 자체가 탭 루트.
+  if (pathname === '/me') return 'me'
+  // 케이스 탭은 *루트만* 매칭 — /cases/<id>/(journey|docs|info) 정확히. 서브 페이지
+  // (예: /cases/<id>/journey/<stepId>) 에서는 tab=null 로 두어 탭 스와이프 핸들러가
+  // 마운트되지 않게 한다. 그래야 보호자가 상세 페이지에서 버튼·입력 인터랙션을 할 때
+  // 손가락이 살짝 가로로 미끄러져도 (텍스트 선택 드래그·iOS 키보드 jitter 등)
+  // 옆 탭으로 router.push 되어 첫화면(목록) 으로 튀어나가는 사고가 안 난다.
+  const m = pathname.match(/^\/cases\/[^/]+\/(journey|docs|info)\/?$/)
   return m ? (m[1] as Tab) : null
 }
 
@@ -45,10 +51,25 @@ function caseIdFromPath(pathname: string): string | null {
   return m && m[1] !== 'page' ? m[1] : null
 }
 
+/** 폼 컨트롤·인터랙티브 엘리먼트 위에서 시작한 터치는 무시. iOS 텍스트 선택 드래그·
+ * 키보드 jitter·달력 셀 드래그 등에서 가로 60px+ 가 발생해 옆 탭으로 튀는 사고 방지. */
+function isInteractiveElement(el: HTMLElement): boolean {
+  const tag = el.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON' || tag === 'LABEL') {
+    return true
+  }
+  // contentEditable 영역도 폼 컨트롤로 취급.
+  if (el.isContentEditable) return true
+  // role="button" 등 ARIA 인터랙티브 — 광범위하게 잡지 말고 button 만.
+  if (el.getAttribute('role') === 'button') return true
+  return false
+}
+
 function startsOnNoSwipeZone(target: EventTarget | null): boolean {
   let el = target as HTMLElement | null
   while (el && el !== document.body) {
     if (el.dataset && el.dataset.noSwipe === 'true') return true
+    if (isInteractiveElement(el)) return true
     if (el.scrollWidth > el.clientWidth + 1) {
       const cs = window.getComputedStyle(el)
       if (cs.overflowX === 'auto' || cs.overflowX === 'scroll') return true
