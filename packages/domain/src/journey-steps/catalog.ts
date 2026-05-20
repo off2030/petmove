@@ -56,7 +56,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         helpText: '펫무브 등록 신청서의 달력과 동일 컴포넌트',
       },
     ],
-    validationIds: ['common.microchip-after-birth'],
+    validationIds: ['common.microchip-after-birth', 'common.microchip-partial-input'],
   },
 
   // ── 3. 광견병 백신 1차 ─────────────────────────────────────────────────
