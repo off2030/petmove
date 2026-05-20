@@ -200,23 +200,29 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
         : (deadline ?? earliest)
     // 보조 문구의 기본값은 description 첫 문장(절차 설명).
     const summary = firstSentence(step.description)
+    // 상황별 override — 데이터 상태로 desc/cardDesc 를 갈아끼울 수 있는 훅.
+    // (예: 마이크로칩 한 필드만 채워진 상태 → 빠진 쪽 입력 요청.)
+    const sit = step.situational?.(caseRow)
     // 전체 일정 리스트 보조 문구.
+    //  - situational.desc 가 있으면 우선.
     //  - 미완료: description 첫 문장(현재형 안내문).
     //  - 완료: step.doneSummary(과거형 narration). 미정의면 summary 로 폴백.
-    const desc = done ? (step.doneSummary ?? summary) : summary
+    const desc = sit?.desc ?? (done ? (step.doneSummary ?? summary) : summary)
     // 다음 할 일 카드 본문 — 날짜(earliest/deadline)가 있으면 step.cardLine
     // (미지정 시 설명 첫 문장)에 날짜 구문을 붙이고, 날짜가 없으면 설명 첫 문장만.
     // earliest("이후")가 deadline("까지"/window 구간)보다 우선: 보호자가 먼저 알아야 할 제약.
+    // situational.cardDesc 가 있으면 모든 날짜 로직을 덮어쓴다.
     const cardLine = step.cardLine ?? summary
     const cardDesc = done
       ? undefined
-      : earliest
-        ? `${formatKoreanDate(earliest)} 이후 ${cardLine}`
-        : deadline && deadlineEnd
-          ? `${formatKoreanDate(deadline)} ~ ${formatRangeEnd(deadline, deadlineEnd)}에 ${cardLine}`
-          : deadline
-            ? `${formatKoreanDate(deadline)}까지 ${cardLine}`
-            : summary
+      : (sit?.cardDesc
+          ?? (earliest
+            ? `${formatKoreanDate(earliest)} 이후 ${cardLine}`
+            : deadline && deadlineEnd
+              ? `${formatKoreanDate(deadline)} ~ ${formatRangeEnd(deadline, deadlineEnd)}에 ${cardLine}`
+              : deadline
+                ? `${formatKoreanDate(deadline)}까지 ${cardLine}`
+                : summary))
     const failedChecks = failedByStep.get(step.id) ?? 0
     const infoChecks = infoByStep.get(step.id) ?? 0
     return {

@@ -37,6 +37,18 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '국제 표준 규격(15자리 번호)의 내장형 마이크로칩을 삽입합니다.\n강아지는 동물등록도 필수입니다.',
     doneSummary: '마이크로칩을 삽입했습니다.',
+    // 마이크로칩 번호와 시술일은 한 쌍 — 한쪽만 채워졌으면 빠진 쪽을 desc/카드에서 직접 요청.
+    situational: (caseRow) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const implant =
+        typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
+      const number = (caseRow.microchip ?? '').trim()
+      const hasNumber = number.length > 0
+      const hasImplant = implant.length >= 10
+      if (hasNumber === hasImplant) return undefined
+      const msg = hasNumber ? '마이크로칩 삽입 날짜를 입력해주세요.' : '마이크로칩 번호를 입력해주세요.'
+      return { desc: msg, cardDesc: msg }
+    },
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 20,
     done: 'microchip-set',
@@ -56,7 +68,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         helpText: '펫무브 등록 신청서의 달력과 동일 컴포넌트',
       },
     ],
-    validationIds: ['common.microchip-after-birth', 'common.microchip-partial-input'],
+    validationIds: ['common.microchip-after-birth'],
   },
 
   // ── 3. 광견병 백신 1차 ─────────────────────────────────────────────────

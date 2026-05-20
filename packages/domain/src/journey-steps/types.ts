@@ -7,6 +7,7 @@
  * 적용 조건(목적지·종·왕복/편도) + 입력 스키마 + 완료 시그널 + 검증 룰 ID 를 묶는다.
  */
 
+import type { CaseRow } from '../types'
 import type { CheckSeverity } from '../procedure-checks/types'
 
 // ── 적용 조건 ────────────────────────────────────────────────────────────
@@ -144,6 +145,15 @@ export interface StepDefinition {
    * 가능하면 step 별로 명시.
    */
   doneSummary?: string
+  /**
+   * 데이터 상태에 따라 desc(전체 일정 row 보조줄) / cardDesc(다음 할 일 카드 본문) 를
+   * 동적으로 갈아끼우는 훅. 예: 마이크로칩 번호만 입력되고 시술일이 비면
+   * '마이크로칩 삽입 날짜를 입력해주세요.' 로 안내.
+   *
+   * 우선순위: situational 반환값 > doneSummary(완료 시) > description 첫 문장.
+   * 두 필드 모두 선택 — undefined 면 해당 자리만 기본 로직으로 폴백.
+   */
+  situational?: (caseRow: CaseRow) => { desc?: string; cardDesc?: string } | undefined
   /**
    * 다음 할 일 카드 본문 — 날짜(earliest/deadline)가 있을 때 "{날짜} 이후/까지 …"
    * 의 … 자리에 쓰임. 생략 시 description 첫 문장으로 폴백.
