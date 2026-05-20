@@ -34,6 +34,7 @@ import { KrExportQuarantineInputs } from './kr-export-quarantine-inputs'
 import { KrImportQuarantineInputs } from './kr-import-quarantine-inputs'
 import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm, type RabiesProductHints } from './rabies-entry-inputs'
+import { RabiesExtraList, type RabiesExtraRecord } from './rabies-extra-list'
 import { StepAttachments } from './step-attachments'
 import { TiterInputs, type TiterForm } from './titer-inputs'
 import { VetVisitInputs } from './vet-visit-inputs'
@@ -80,6 +81,7 @@ export function StepDetailView({
   const isRabies1 = step.id === 'rabies-vaccine-1'
   const isRabies2 = step.id === 'rabies-vaccine-2'
   const isRabies = isRabies1 || isRabies2
+  const isRabiesExtra = step.id === 'rabies-vaccine-extra'
   // rabies_dates 배열 내 위치 — 1차=0, 2차=1.
   const rabiesIndex = isRabies2 ? 1 : 0
   const isTiter = step.id === 'rabies-titer'
@@ -213,9 +215,9 @@ export function StepDetailView({
     if (!rabiesDirty) setRabies(readRabiesEntryForm(caseRow?.data, rabiesIndex))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
-  // 광견병 step 진입 시 org 백신 카탈로그를 1회 로드.
+  // 광견병 step 진입 시 org 백신 카탈로그를 1회 로드 (1·2차 입력 + 추가 접종 표시 공용).
   useEffect(() => {
-    if (!isRabies) return
+    if (!isRabies && !isRabiesExtra) return
     let cancelled = false
     void getCaseVaccineData(caseId).then((r) => {
       if (!cancelled && r.ok) setVaccineData(r.value)
@@ -223,7 +225,7 @@ export function StepDetailView({
     return () => {
       cancelled = true
     }
-  }, [caseId, isRabies])
+  }, [caseId, isRabies, isRabiesExtra])
   useEffect(() => {
     if (!titerDirty) setTiterForm(readTiterForm(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -283,6 +285,22 @@ export function StepDetailView({
     () => readRabiesOtherHospital(caseRow?.data, rabiesIndex),
     [caseRow?.data, rabiesIndex],
   )
+  // 추가 접종(3차 이후) 표시용 — rabies_dates 의 index 2 이상.
+  const extraRabiesRecords = useMemo<RabiesExtraRecord[]>(() => {
+    if (!isRabiesExtra) return []
+    const arr = (caseRow?.data as Record<string, unknown> | null | undefined)?.rabies_dates
+    if (!Array.isArray(arr)) return []
+    const out: RabiesExtraRecord[] = []
+    for (let i = 2; i < arr.length; i++) {
+      const rec = arr[i]
+      if (typeof rec === 'string') {
+        out.push({ date: rec })
+      } else if (rec && typeof rec === 'object') {
+        out.push(rec as RabiesExtraRecord)
+      }
+    }
+    return out
+  }, [isRabiesExtra, caseRow?.data])
 
   function handleSave() {
     if (!dirty) return
@@ -807,6 +825,12 @@ export function StepDetailView({
               productHints={rabiesProductHints}
               otherHospital={rabiesOtherHospital}
             />
+          </section>
+        )}
+        {isRabiesExtra && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>접종 기록</h3>
+            <RabiesExtraList records={extraRabiesRecords} vaccineLookups={rabiesLookups} />
           </section>
         )}
         {isTiter && (

@@ -6,7 +6,7 @@ import {
   resolveActiveDestination,
   DESTINATION_OVERRIDES,
 } from '../destination-config'
-import type { CaseJourneyContext, StepApplicability, StepDefinition } from './types'
+import type { CaseJourneyContext, StepApplicability, StepAppliesWhenSignal, StepDefinition } from './types'
 
 /**
  * 케이스에서 step 적용 조건 필터에 필요한 컨텍스트(목적지·종·trip)를 뽑아낸다.
@@ -66,6 +66,33 @@ export function isStepApplicable(applicability: StepApplicability, ctx: CaseJour
   return true
 }
 
+/**
+ * 데이터 조건부 노출 — step 의 appliesWhen 시그널이 케이스 데이터와 맞는지.
+ * 정의 안 된 시그널은 항상 통과 (보수적). done-resolver 와 별도로 정의해 모듈 간
+ * 순환 의존을 피한다. 새 시그널 추가 시 types.ts 의 union 도 함께 확장.
+ */
+function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: CaseRow): boolean {
+  if (!signal) return true
+  switch (signal) {
+    case 'has-extra-rabies': {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const arr = data.rabies_dates
+      if (!Array.isArray(arr)) return false
+      let count = 0
+      for (const rec of arr) {
+        const date =
+          typeof rec === 'string'
+            ? rec
+            : rec && typeof rec === 'object'
+              ? (rec as { date?: unknown }).date
+              : null
+        if (typeof date === 'string' && date.length >= 10) count++
+      }
+      return count >= 3
+    }
+  }
+}
+
 /** 케이스에 적용되는 step 들을 order 순으로 반환. */
 export function getStepsForCase(
   catalog: readonly StepDefinition[],
@@ -74,5 +101,6 @@ export function getStepsForCase(
   const ctx = buildCaseJourneyContext(caseRow)
   return catalog
     .filter((s) => isStepApplicable(s.applicability, ctx))
+    .filter((s) => appliesWhenMatches(s.appliesWhen, caseRow))
     .sort((a, b) => a.order - b.order)
 }

@@ -40,6 +40,8 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return readRabiesEntries(caseRow).length > 0
     case 'has-rabies-booster':
       return readRabiesEntries(caseRow).length >= 2
+    case 'has-extra-rabies':
+      return readRabiesEntries(caseRow).length >= 3
     case 'has-titer-entry':
       return readTiterEntries(caseRow).length > 0
     case 'has-general-vaccine':
@@ -150,6 +152,11 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
       // 2차 = 두 번째 광견병 접종일
       const r = readRabiesEntries(caseRow)
       return r.length >= 2 ? r[1].date : null
+    }
+    case 'has-extra-rabies': {
+      // 추가 접종(3차+) = 가장 최근 접종일 (readRabiesEntries 는 오름차순 정렬)
+      const r = readRabiesEntries(caseRow)
+      return r.length >= 3 ? r[r.length - 1].date : null
     }
     case 'has-titer-entry':
       return lastEntryDate(readTiterEntries(caseRow).map((e) => e.date))

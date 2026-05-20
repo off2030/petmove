@@ -64,6 +64,7 @@ export type StepDoneSignal =
   | 'microchip-set'
   | 'has-rabies-entry'
   | 'has-rabies-booster'           // 2차 이상
+  | 'has-extra-rabies'             // 3차 이상 (추가 접종)
   | 'has-titer-entry'
   | 'has-general-vaccine'
   | 'has-civ-vaccine'
@@ -82,6 +83,15 @@ export type StepDoneSignal =
   | 'has-arrived'                  // 도착 완료 마일스톤 — 마지막 검역(편도=일본 수입 / 왕복=한국 수입) 완료 시
   | 'departure-past'
   | `manual-flag:${string}`
+
+/**
+ * 데이터 조건부 노출 시그널. 정의되면 그 조건이 true 일 때만 step 이 카탈로그에서
+ * 떠오른다(applicability + appliesWhen 둘 다 통과해야 적용).
+ *
+ * 새 시그널 추가 시: 이 union + applicability.ts 의 appliesWhenMatches 양쪽에 추가.
+ */
+export type StepAppliesWhenSignal =
+  | 'has-extra-rabies'             // 광견병 3차 이상 있을 때만
 
 // ── 메인 타입 ────────────────────────────────────────────────────────────
 
@@ -139,6 +149,11 @@ export interface StepDefinition {
   earliest?: StepEarliest
   /** 완료 시그널. */
   done: StepDoneSignal
+  /**
+   * 데이터 조건부 노출. 정의되면 applicability + 이 조건이 둘 다 참일 때만 카탈로그에서
+   * 떠오른다. 빈 값이면 항상 적용.
+   */
+  appliesWhen?: StepAppliesWhenSignal
   /** 입력 폼. 없으면 안내+첨부+완료 토글만 표시. */
   inputs?: StepInputField[]
   /** Phase 2 — 첨부 허용 여부. MVP 에서는 false 기본. */
