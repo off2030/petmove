@@ -252,11 +252,13 @@ function PaymentRow({
 
       <span className="text-muted-foreground/30 select-none">|</span>
 
-      {/* Method — DropdownSelect 통일 */}
+      {/* Method — DropdownSelect 통일. portal: 상세 패널 마지막 행에서 overflow:hidden 으로
+          메뉴가 잘리지 않도록 body 로 portal + auto flip-up. */}
       <DropdownSelect
         value={record.method ?? ''}
         options={[{ value: '', label: '—' }, ...METHODS]}
         onChange={(v) => onUpdateField('method', v || null)}
+        portal
         triggerClassName={cn(
           'text-left rounded-md px-2 py-1 -mx-2 font-serif text-[17px] font-medium tracking-[-0.1px] text-foreground hover:bg-accent/60',
           methodDisplay === '—' && 'font-sans text-base font-normal tracking-normal text-muted-foreground/60',
