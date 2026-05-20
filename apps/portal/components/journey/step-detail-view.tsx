@@ -1184,16 +1184,22 @@ function readRabiesEntryForm(
 /**
  * rabies_dates[index].other_hospital — 타병원 접종 여부.
  * 체크는 펫무브워크에서만 토글 — 포털은 읽기만 하고 "지정 약품" 힌트 억제에 쓴다.
+ *
+ * entry 가 아직 존재하지 않는 경우 (보호자가 처음 입력 중) 는 타병원(true) 기본 —
+ * 펫무브 보호자는 어느 병원 약품인지 모르는 상태고, 카탈로그 hint(Rabisin 등)가
+ * 자기가 입력한 양 노출되는 사고를 막는다. admin 이 본병원이면 펫무브워크에서
+ * 명시적으로 체크 해제하는 흐름. 저장 시점에 updateRabiesEntryFields 가
+ * other_hospital=true 를 명시 저장한다.
  */
 function readRabiesOtherHospital(
   data: Record<string, unknown> | null | undefined,
   index: number,
 ): boolean {
-  if (!data) return false
+  if (!data) return true
   const arr = data['rabies_dates']
-  if (!Array.isArray(arr) || index >= arr.length) return false
+  if (!Array.isArray(arr) || index >= arr.length) return true
   const entry = arr[index]
-  if (!entry || typeof entry !== 'object') return false
+  if (!entry || typeof entry !== 'object') return true
   return (entry as Record<string, unknown>).other_hospital === true
 }
 
