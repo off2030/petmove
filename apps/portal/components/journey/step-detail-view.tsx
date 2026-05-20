@@ -36,6 +36,7 @@ import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm, type RabiesProductHints } from './rabies-entry-inputs'
 import { RabiesExtraList, type RabiesExtraRecord } from './rabies-extra-list'
 import { StepAttachments } from './step-attachments'
+import { TiterExtraList, type TiterExtraRecord } from './titer-extra-list'
 import { TiterInputs, type TiterForm } from './titer-inputs'
 import { VetVisitInputs } from './vet-visit-inputs'
 
@@ -85,6 +86,7 @@ export function StepDetailView({
   // rabies_dates 배열 내 위치 — 1차=0, 2차=1.
   const rabiesIndex = isRabies2 ? 1 : 0
   const isTiter = step.id === 'rabies-titer'
+  const isTiterExtra = step.id === 'rabies-titer-extra'
   const isFlight = step.id === 'flight-purchase'
   const isAdvanceNotification = step.id === 'advance-notification'
   const isVetVisit = step.id === 'vet-visit'
@@ -301,6 +303,21 @@ export function StepDetailView({
     }
     return out
   }, [isRabiesExtra, caseRow?.data])
+
+  // 추가 항체검사(2회 이후) 표시용 — rabies_titer_records 의 index 1 이상.
+  const extraTiterRecords = useMemo<TiterExtraRecord[]>(() => {
+    if (!isTiterExtra) return []
+    const arr = (caseRow?.data as Record<string, unknown> | null | undefined)?.rabies_titer_records
+    if (!Array.isArray(arr)) return []
+    const out: TiterExtraRecord[] = []
+    for (let i = 1; i < arr.length; i++) {
+      const rec = arr[i]
+      if (rec && typeof rec === 'object') {
+        out.push(rec as TiterExtraRecord)
+      }
+    }
+    return out
+  }, [isTiterExtra, caseRow?.data])
 
   function handleSave() {
     if (!dirty) return
@@ -831,6 +848,12 @@ export function StepDetailView({
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>접종 기록</h3>
             <RabiesExtraList records={extraRabiesRecords} vaccineLookups={rabiesLookups} />
+          </section>
+        )}
+        {isTiterExtra && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>검사 기록</h3>
+            <TiterExtraList records={extraTiterRecords} />
           </section>
         )}
         {isTiter && (

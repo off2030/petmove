@@ -49,6 +49,8 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return readRabiesEntries(caseRow).length >= 3
     case 'has-titer-entry':
       return readTiterEntries(caseRow).length > 0
+    case 'has-extra-titer':
+      return readTiterEntries(caseRow).length >= 2
     case 'has-general-vaccine':
       return readGeneralVaccineEntries(caseRow).length > 0
     case 'has-civ-vaccine':
@@ -165,6 +167,14 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
     }
     case 'has-titer-entry':
       return lastEntryDate(readTiterEntries(caseRow).map((e) => e.date))
+    case 'has-extra-titer': {
+      // 추가 항체검사(2회+) = 가장 최근 검사일.
+      const dates = readTiterEntries(caseRow)
+        .map((e) => e.date)
+        .filter((d) => typeof d === 'string' && d.length >= 10)
+      if (dates.length < 2) return null
+      return dates.slice().sort().slice(-1)[0]
+    }
     case 'has-general-vaccine':
       return lastEntryDate(readGeneralVaccineEntries(caseRow).map((e) => e.date))
     case 'has-civ-vaccine':

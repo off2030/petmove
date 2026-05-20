@@ -66,6 +66,7 @@ export type StepDoneSignal =
   | 'has-rabies-booster'           // 2차 이상
   | 'has-extra-rabies'             // 3차 이상 (추가 접종)
   | 'has-titer-entry'
+  | 'has-extra-titer'              // 2회 이상 (항체검사 추가)
   | 'has-general-vaccine'
   | 'has-civ-vaccine'
   | 'has-infectious-disease-test'
@@ -92,6 +93,7 @@ export type StepDoneSignal =
  */
 export type StepAppliesWhenSignal =
   | 'has-extra-rabies'             // 광견병 3차 이상 있을 때만
+  | 'has-extra-titer'              // 항체검사 2회 이상 있을 때만
 
 // ── 메인 타입 ────────────────────────────────────────────────────────────
 

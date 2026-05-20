@@ -113,11 +113,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
   },
 
-  // ── 3-1. 광견병 백신(추가 접종) — 일본 한정, 3차 이상 있을 때만 노출 ──────
+  // ── 3-1. 광견병 백신(추가) — 일본 한정, 3차 이상 있을 때만 노출 ──────
   {
     id: 'rabies-vaccine-extra',
     category: 'vaccination',
-    title: '광견병 백신(추가 접종)',
+    title: '광견병 백신(추가)',
     shortLabel: '백신+',
     description:
       '3차 이후의 광견병 추가 접종 기록입니다.\n\n펫무브워크에서 입력된 모든 추가 접종을 차수별로 표시합니다.\n약품 정보는 본병원 접종이면 병원 지정 약품, 타병원 접종이면 입력된 정보가 그대로 보입니다.',
@@ -177,6 +177,22 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       'jp.departure-within-2years-of-titer',
       'jp.microchip-rabies-sequence',
     ],
+  },
+
+  // ── 4-1. 광견병 항체가 검사(추가) — 일본 한정, 2회 이상 있을 때만 노출 ─────
+  {
+    id: 'rabies-titer-extra',
+    category: 'lab',
+    title: '광견병 항체가 검사(추가)',
+    shortLabel: '항체+',
+    description:
+      '2회차 이후의 광견병 항체가 검사 기록입니다.\n\n펫무브워크에서 입력된 추가 항체가 검사를 회차별로 표시합니다.\n검사기관·검사결과는 입력된 정보가 그대로 보입니다.',
+    applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
+    appliesWhen: 'has-extra-titer',
+    order: 41,
+    done: 'has-extra-titer',
+    allowAttachments: false,
+    validationIds: [],
   },
 
   // ── 항공권 구매 (일본 전용) ──────────────────────────────────────────────

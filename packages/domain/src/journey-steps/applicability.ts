@@ -90,6 +90,20 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
       }
       return count >= 3
     }
+    case 'has-extra-titer': {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const arr = data.rabies_titer_records
+      if (!Array.isArray(arr)) return false
+      let count = 0
+      for (const rec of arr) {
+        const date =
+          rec && typeof rec === 'object'
+            ? (rec as { date?: unknown }).date
+            : null
+        if (typeof date === 'string' && date.length >= 10) count++
+      }
+      return count >= 2
+    }
   }
 }
 
