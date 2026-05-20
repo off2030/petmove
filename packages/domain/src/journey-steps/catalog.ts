@@ -193,6 +193,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '항체+',
     description:
       '2회차 이후의 광견병 항체가 검사 기록입니다.\n\n펫무브워크에서 입력된 추가 항체가 검사를 회차별로 표시합니다.\n검사기관·검사결과는 입력된 정보가 그대로 보입니다.',
+    doneSummary: '광견병 항체가 검사를 추가로 받았습니다.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
     appliesWhen: 'has-extra-titer',
     order: 41,
