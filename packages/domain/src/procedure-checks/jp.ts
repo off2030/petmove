@@ -335,7 +335,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.entry-within-2years-of-titer',
     country: 'japan',
     category: '광견병',
-    title: '입국일은 항체검사일 2년 이내',
+    title: '광견병 항체가 검사 유효기간 만료',
     description: '항공편 입국일은 광견병 항체검사 채혈일 포함 2년 이내여야 함 (항체검사 유효기간).',
     severity: 'blocker',
     addedAt: '2026-05-17',
@@ -358,8 +358,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: `항체검사 유효기간이 ${validUntilKr}까지입니다. 입력하신 입국일(${formatKoreanDate(entryDate)})은 그 이후입니다.`,
-        fixHint: `재검사하거나 입국일을 ${validUntilKr} 이내로 변경하세요.`,
+        message: `광견병 항체검사 유효기간이 ${validUntilKr}에 만료됩니다. 일본 입국 전 재검사가 필요합니다.`,
         offendingPaths: offending,
       }
     },
@@ -417,7 +416,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: '광견병 백신 유효기간이 일본 입국일 전에 만료됩니다. 만료 전 재접종이 필요합니다.',
+          message: `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 일본 입국 전 재접종이 필요합니다.`,
           offendingPaths: [
             entry ? 'entry_date' : 'departure_date',
             `rabies_dates[${latest.originalIndex}].date`,
