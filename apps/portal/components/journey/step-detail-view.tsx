@@ -21,6 +21,7 @@ import {
   updateKrImportQuarantineDate,
   updateMicrochipFields,
   updateRabiesEntryFields,
+  updateRabiesExtraEntries,
   updateTiterFields,
   updateVetVisitDate,
 } from '@/lib/actions/cases'
@@ -34,7 +35,7 @@ import { KrExportQuarantineInputs } from './kr-export-quarantine-inputs'
 import { KrImportQuarantineInputs } from './kr-import-quarantine-inputs'
 import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm, type RabiesProductHints } from './rabies-entry-inputs'
-import { RabiesExtraList, type RabiesExtraRecord } from './rabies-extra-list'
+import { RabiesExtraInputs, type RabiesExtraEntry } from './rabies-extra-inputs'
 import { StepAttachments } from './step-attachments'
 import { TiterExtraList, type TiterExtraRecord } from './titer-extra-list'
 import { TiterInputs, type TiterForm } from './titer-inputs'
@@ -101,6 +102,7 @@ export function StepDetailView({
   const isInteractive =
     isMicrochip ||
     isRabies ||
+    isRabiesExtra ||
     isTiter ||
     isFlight ||
     isAdvanceNotification ||
@@ -123,6 +125,12 @@ export function StepDetailView({
   const [rabies, setRabies] = useState<RabiesEntryForm>(savedRabies)
   // 광견병 step 한정 — org 백신 카탈로그 ("지정 약품" 힌트 계산용).
   const [vaccineData, setVaccineData] = useState<VaccineProductsData | null>(null)
+
+  // 광견병 추가 백신(3차+) — 빈 상태에서도 입력칸 한 장이 보이도록 최소 1장 유지.
+  const savedRabiesExtra = readRabiesExtraEntries(caseRow?.data)
+  const [rabiesExtra, setRabiesExtra] = useState<RabiesExtraEntry[]>(
+    savedRabiesExtra.length === 0 ? [makeEmptyExtra()] : savedRabiesExtra,
+  )
 
   const savedTiterForm = readTiterForm(caseRow?.data)
   const [titerForm, setTiterForm] = useState<TiterForm>(savedTiterForm)
@@ -172,6 +180,7 @@ export function StepDetailView({
 
   const microchipDirty = isMicrochip && (chip !== savedChip || date !== savedDate)
   const rabiesDirty = isRabies && !rabiesFormEqual(rabies, savedRabies)
+  const rabiesExtraDirty = isRabiesExtra && !rabiesExtraEqual(rabiesExtra, savedRabiesExtra)
   const titerDirty =
     isTiter &&
     (titerForm.date !== savedTiterForm.date ||
@@ -192,6 +201,7 @@ export function StepDetailView({
   const dirty =
     microchipDirty ||
     rabiesDirty ||
+    rabiesExtraDirty ||
     titerDirty ||
     flightDirty ||
     advanceDirty ||
@@ -215,6 +225,13 @@ export function StepDetailView({
   }, [caseRow?.data])
   useEffect(() => {
     if (!rabiesDirty) setRabies(readRabiesEntryForm(caseRow?.data, rabiesIndex))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data])
+  useEffect(() => {
+    if (!rabiesExtraDirty) {
+      const next = readRabiesExtraEntries(caseRow?.data)
+      setRabiesExtra(next.length === 0 ? [makeEmptyExtra()] : next)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   // 광견병 step 진입 시 org 백신 카탈로그를 1회 로드 (1·2차 입력 + 추가 접종 표시 공용).
@@ -287,22 +304,22 @@ export function StepDetailView({
     () => readRabiesOtherHospital(caseRow?.data, rabiesIndex),
     [caseRow?.data, rabiesIndex],
   )
-  // 추가 접종(3차 이후) 표시용 — rabies_dates 의 index 2 이상.
-  const extraRabiesRecords = useMemo<RabiesExtraRecord[]>(() => {
-    if (!isRabiesExtra) return []
-    const arr = (caseRow?.data as Record<string, unknown> | null | undefined)?.rabies_dates
-    if (!Array.isArray(arr)) return []
-    const out: RabiesExtraRecord[] = []
-    for (let i = 2; i < arr.length; i++) {
-      const rec = arr[i]
-      if (typeof rec === 'string') {
-        out.push({ date: rec })
-      } else if (rec && typeof rec === 'object') {
-        out.push(rec as RabiesExtraRecord)
-      }
-    }
-    return out
-  }, [isRabiesExtra, caseRow?.data])
+  // 추가 접종(3차+) 각 entry 의 접종일 기준 카탈로그 hint — 본병원일 때만 약품 4필드에 표시.
+  const rabiesExtraProductHints = useMemo(
+    () =>
+      rabiesExtra.map((e): RabiesProductHints | null => {
+        if (!rabiesLookups || !e.date) return null
+        const r = rabiesLookups.lookupRabies(e.date)
+        if (!r) return null
+        return {
+          product: r.vaccine || r.product || undefined,
+          manufacturer: r.manufacturer || undefined,
+          lot: r.batch || undefined,
+          expiry: r.expiry || undefined,
+        }
+      }),
+    [rabiesExtra, rabiesLookups],
+  )
 
   // 추가 항체검사(2회 이후) 표시용 — rabies_titer_records 의 index 1 이상.
   const extraTiterRecords = useMemo<TiterExtraRecord[]>(() => {
@@ -356,6 +373,32 @@ export function StepDetailView({
           updateCase(res.value)
           // 서버가 trim·정규화한 값으로 폼을 맞춰 dirty 해제.
           setRabies(readRabiesEntryForm(res.value.data, rabiesIndex))
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    } else if (isRabiesExtra) {
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        const res = await updateRabiesExtraEntries(
+          caseId,
+          rabiesExtra.map((e) => ({
+            date: e.date || null,
+            valid_until: e.valid_until || null,
+            product: e.product || null,
+            manufacturer: e.manufacturer || null,
+            lot: e.lot || null,
+            expiry: e.expiry || null,
+          })),
+        )
+        if (res.ok) {
+          updateCase(res.value)
+          const next = readRabiesExtraEntries(res.value.data)
+          setRabiesExtra(next.length === 0 ? [makeEmptyExtra()] : next)
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -847,7 +890,23 @@ export function StepDetailView({
         {isRabiesExtra && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>접종 기록</h3>
-            <RabiesExtraList records={extraRabiesRecords} vaccineLookups={rabiesLookups} />
+            <RabiesExtraInputs
+              entries={rabiesExtra}
+              onChange={(idx, key, next) =>
+                setRabiesExtra((prev) =>
+                  prev.map((e, i) => (i === idx ? { ...e, [key]: next } : e)),
+                )
+              }
+              onRemove={(idx) =>
+                setRabiesExtra((prev) => {
+                  const next = prev.filter((_, i) => i !== idx)
+                  // 한 장도 없으면 빈 카드를 다시 띄움 — 사용자가 곧 입력할 자리.
+                  return next.length === 0 ? [makeEmptyExtra()] : next
+                })
+              }
+              onAdd={() => setRabiesExtra((prev) => [...prev, makeEmptyExtra()])}
+              productHintsFor={(idx) => rabiesExtraProductHints[idx] ?? null}
+            />
           </section>
         )}
         {isTiterExtra && (
@@ -1212,6 +1271,88 @@ function rabiesFormEqual(a: RabiesEntryForm, b: RabiesEntryForm): boolean {
     a.lot === b.lot &&
     a.expiry === b.expiry
   )
+}
+
+/**
+ * 추가 백신 카드 한 장의 빈 폼. 빈 상태에서도 사용자가 바로 입력 가능하게
+ * 기본 1장이 떠야 하므로 초기/삭제 후 폴백에서 사용.
+ */
+function makeEmptyExtra(): RabiesExtraEntry {
+  return {
+    date: '',
+    valid_until: '',
+    product: '',
+    manufacturer: '',
+    lot: '',
+    expiry: '',
+    other_hospital: true,
+  }
+}
+
+/**
+ * case.data.rabies_dates 의 index 2 이상(3차+)을 RabiesExtraEntry[] 로 읽는다.
+ * other_hospital 미정의는 portal 정책상 true 로 본다 (1·2차 readRabiesOtherHospital 와 동일).
+ */
+function readRabiesExtraEntries(
+  data: Record<string, unknown> | null | undefined,
+): RabiesExtraEntry[] {
+  if (!data) return []
+  const arr = data['rabies_dates']
+  if (!Array.isArray(arr)) return []
+  const str = (v: unknown) => (typeof v === 'string' ? v : '')
+  const out: RabiesExtraEntry[] = []
+  for (let i = 2; i < arr.length; i++) {
+    const rec = arr[i]
+    if (typeof rec === 'string') {
+      out.push({
+        date: rec,
+        valid_until: '',
+        product: '',
+        manufacturer: '',
+        lot: '',
+        expiry: '',
+        other_hospital: true,
+      })
+    } else if (rec && typeof rec === 'object') {
+      const r = rec as Record<string, unknown>
+      out.push({
+        date: str(r.date),
+        valid_until: str(r.valid_until),
+        product: str(r.product),
+        manufacturer: str(r.manufacturer),
+        lot: str(r.lot),
+        expiry: str(r.expiry),
+        other_hospital: r.other_hospital !== false,
+      })
+    }
+  }
+  return out
+}
+
+function rabiesExtraEqual(a: RabiesExtraEntry[], b: RabiesExtraEntry[]): boolean {
+  // 길이 비교 — 사용자가 빈 카드를 추가했더라도 "내용 동등성" 으로 판정해야 dirty 가 새지 않음.
+  // 빈 카드(6키 모두 ''')는 저장 시 서버가 제외하므로, 비교 시에도 비-빈 항목만 본다.
+  const nonEmpty = (e: RabiesExtraEntry) =>
+    !!(e.date || e.valid_until || e.product || e.manufacturer || e.lot || e.expiry)
+  const aF = a.filter(nonEmpty)
+  const bF = b.filter(nonEmpty)
+  if (aF.length !== bF.length) return false
+  for (let i = 0; i < aF.length; i++) {
+    const x = aF[i]
+    const y = bF[i]
+    if (
+      x.date !== y.date ||
+      x.valid_until !== y.valid_until ||
+      x.product !== y.product ||
+      x.manufacturer !== y.manufacturer ||
+      x.lot !== y.lot ||
+      x.expiry !== y.expiry ||
+      x.other_hospital !== y.other_hospital
+    ) {
+      return false
+    }
+  }
+  return true
 }
 
 /** 채혈일·검사기관·검사결과 — caseRow.data.rabies_titer_records[0] 의 date / lab / value. */

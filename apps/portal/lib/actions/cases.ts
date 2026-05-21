@@ -276,6 +276,104 @@ function isEmptyObject(v: unknown): boolean {
 }
 
 /**
+ * 광견병 추가 백신(3차 이상)의 입력 기록을 한 번에 patch — case.data.rabies_dates 의
+ * index 2 이상을 전체 교체. 1차(0) / 2차(1) 는 updateRabiesEntryFields 가 관리하므로
+ * 여기서는 건드리지 않는다.
+ *
+ * entries 는 사용자가 화면에서 본 순서대로 들어오고, 각 entry 의 같은 인덱스 위치에
+ * 기존 record 가 있으면 그 record 의 other_hospital · 그 외 비관리 키를 보존한다.
+ * 새로 생성된 entry (해당 인덱스에 기존 record 없음) 는 portal 정책상 other_hospital=true
+ * 로 강제 — 보호자는 어느 병원 약품인지 모르는 상태고, admin 이 본병원이면 펫무브워크에서
+ * 명시적으로 체크 해제하는 흐름. (updateRabiesEntryFields 와 동일.)
+ *
+ * 빈 entry(6개 관리 키 모두 비어있고 + 기존 비관리 키도 없음) 는 제외 — 사용자가 카드만
+ * 추가하고 입력 안 한 경우 자동 정리. 끝의 빈 항목도 추가로 trim.
+ */
+export async function updateRabiesExtraEntries(
+  caseId: string,
+  entries: Array<{
+    date: string | null
+    valid_until: string | null
+    product: string | null
+    manufacturer: string | null
+    lot: string | null
+    expiry: string | null
+  }>,
+): Promise<Result<CaseRow>> {
+  try {
+    for (const e of entries) {
+      for (const key of ['date', 'expiry'] as const) {
+        const v = e[key]
+        if (v != null && v !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+          return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+        }
+      }
+    }
+
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const rabiesArr = Array.isArray(prev.rabies_dates)
+      ? [...(prev.rabies_dates as unknown[])]
+      : []
+    const preserved = rabiesArr.slice(0, 2)
+    const prevExtras = rabiesArr.slice(2)
+
+    const newExtras: Record<string, unknown>[] = []
+    for (let i = 0; i < entries.length; i++) {
+      const fields = entries[i]
+      const prevSlot = prevExtras[i]
+      const prevEntry =
+        prevSlot && typeof prevSlot === 'object'
+          ? { ...(prevSlot as Record<string, unknown>) }
+          : {}
+      const isFreshEntry = Object.keys(prevEntry).length === 0
+
+      const entry: Record<string, unknown> = { ...prevEntry }
+      for (const [key, raw] of Object.entries(fields)) {
+        const v = typeof raw === 'string' ? raw.trim() : raw
+        if (v == null || v === '') delete entry[key]
+        else entry[key] = v
+      }
+      if (isFreshEntry && Object.keys(entry).length > 0) {
+        entry.other_hospital = true
+      }
+      if (Object.keys(entry).length === 0) continue
+      newExtras.push(entry)
+    }
+
+    const rabiesNext: unknown[] = [...preserved, ...newExtras]
+    while (rabiesNext.length > 0 && isEmptyObject(rabiesNext[rabiesNext.length - 1])) {
+      rabiesNext.pop()
+    }
+
+    const nextData: Record<string, unknown> = { ...prev }
+    if (rabiesNext.length === 0) delete nextData.rabies_dates
+    else nextData.rabies_dates = rabiesNext
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
  * 광견병 항체가 검사 step 의 입력 필드를 patch — case.data.rabies_titer_records[0] 의
  * date / lab(검사기관) / value(검사 수치)를 갱신.
  *

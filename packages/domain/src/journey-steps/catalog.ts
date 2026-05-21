@@ -137,7 +137,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '추가 백신',
     shortLabel: '백신+',
     description:
-      '3차 이후의 광견병 추가 접종 기록입니다.\n\n펫무브워크에서 입력된 모든 추가 접종을 차수별로 표시합니다.\n약품 정보는 본병원 접종이면 병원 지정 약품, 타병원 접종이면 입력된 정보가 그대로 보입니다.',
+      '직전 광견병 백신의 면역 유효기간이 끝나기 전에 재접종합니다.\n\n유효기간이 끝나기 전에 재접종하지 않으면, 일본 입국을 위해 1·2차 접종과 항체검사를 다시 받고 180일을 기다려야 합니다.',
     doneSummary: '광견병 백신을 추가 접종했습니다.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
     // 3차+ 입력됐거나 최근 접종 유효기간이 입국일+30일 전 만료(추가 접종 필요) 일 때 노출.
