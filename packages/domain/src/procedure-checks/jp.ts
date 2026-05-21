@@ -90,7 +90,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.rabies-booster-within-prime-validity',
     country: 'japan',
     category: '광견병',
-    title: '광견병 2차 접종 1차 유효기간 이내',
+    title: '백신 유효기간 만료',
     description:
       '2차 광견병 접종은 1차 접종의 면역 유효기간 이내여야 함. 유효기간 경과 후 접종은 추가접종이 아닌 새 기초접종으로 간주됨.',
     severity: 'blocker',
@@ -106,8 +106,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (!withinValidity) {
         return {
           ok: false,
-          message: `2차 접종일(${second.date})이 1차 유효기간(${validUntil || '미상'})을 초과했습니다. 기초접종부터 다시 시작해야 합니다.`,
-          fixHint: '1차 유효기간이 지난 뒤의 접종은 추가접종이 아닌 새로운 기초접종으로 간주됩니다.',
+          message:
+            '1차 광견병 백신 유효기간이 만료되었습니다. 2차 광견병 백신은 1차 광견병 백신 유효기간 이내에 해야 합니다. 재접종이 필요합니다.',
           offendingPaths: [`rabies_dates[${second.originalIndex}].date`],
         }
       }
