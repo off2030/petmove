@@ -416,7 +416,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 일본 입국 전 재접종이 필요합니다.`,
+          message: `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전 재접종이 필요합니다.`,
           offendingPaths: [
             entry ? 'entry_date' : 'departure_date',
             `rabies_dates[${latest.originalIndex}].date`,
