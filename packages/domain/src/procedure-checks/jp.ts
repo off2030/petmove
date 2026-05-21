@@ -60,7 +60,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.rabies-prime-booster-interval',
     country: 'japan',
     category: '광견병',
-    title: '광견병 1·2차 접종 간격 30일 이상',
+    title: '광견병 백신 타이밍',
     description: '1차·2차 광견병 접종일 간격이 30일 이상이어야 함.',
     severity: 'blocker',
     addedAt: '2026-04-21',
@@ -79,8 +79,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
         const earliestKr = formatKoreanDate(addDays(first.date, 30))
         return {
           ok: false,
-          message: `1·2차 접종 간격이 ${gap}일입니다. 유효한 2차 접종은 ${earliestKr}부터 가능합니다.`,
-          fixHint: `${earliestKr} 이후 재접종하세요.`,
+          message: `1, 2차 백신 간격은 30일 이상이어야 합니다. 현재 간격이 ${gap}일입니다. ${earliestKr} 이후 재접종하세요.`,
           offendingPaths: [secondPath],
         }
       }
@@ -122,7 +121,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.microchip-rabies-sequence',
     country: 'japan',
     category: '마이크로칩',
-    title: '마이크로칩·광견병 접종·항체검사 순서',
+    title: '마이크로칩, 접종, 검사 타이밍',
     description:
       '① 마이크로칩 ≤ 1차 < 2차 ≤ 항체검사, 또는 ② 1차 < 마이크로칩 ≤ 2차이면서 2차 접종일 = 항체검사일. 둘 중 하나 충족 필요.',
     severity: 'blocker',
@@ -158,8 +157,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
         for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
         return {
           ok: false,
-          message: `1차 접종(${first.date})이 마이크로칩 시술보다 빠릅니다. 이때는 2차 접종과 항체검사를 같은 날 받아야 합니다.`,
-          fixHint: '2차 접종과 항체검사를 같은 날 다시 하세요.',
+          message:
+            '마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 반드시 2차 광견병 백신과 광견병 항체가 검사를 같은 날 해야 합니다.',
           offendingPaths: offending,
         }
       }
@@ -167,8 +166,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       // 마이크로칩이 2차보다도 늦음 → 두 조건 모두 불충족
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 2차 접종일(${second.date})보다 늦습니다.`,
-        fixHint: '시술 후 광견병 2회 접종이 다시 필요합니다.',
+        message: '마이크로칩이 2차 광견병 백신보다 늦습니다. 재접종이 필요합니다.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
