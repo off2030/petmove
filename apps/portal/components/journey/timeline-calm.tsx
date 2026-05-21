@@ -12,7 +12,7 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
  * 그것을 비교적 충실히 옮긴 것.
  */
 export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: string }) {
-  const { stages, trip, pet, nextStages, totalFailedChecks, totalInfoChecks } = data
+  const { stages, trip, pet, nextStages, totalInfoChecks } = data
   const total = stages.length
   const done = stages.filter((s) => s.state === 'done').length
   const pct = done / total
@@ -37,7 +37,11 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
   } as const
 
   // 주의가 발생한 stage 들 — 배너에 항목명을 모두 나열하고, 링크는 첫 항목으로.
-  const warnedStages = stages.filter((s) => (s.failedChecks ?? 0) > 0)
+  // advisory(추가 백신·추가 검사)도 미완료면 동일하게 주의 톤으로 묶는다 — 일정 row
+  // 시각(hasWarn)과 일치시킨다.
+  const warnedStages = stages.filter(
+    (s) => (s.failedChecks ?? 0) > 0 || (!!s.advisory && s.state !== 'done'),
+  )
   const firstWarnedStage = warnedStages[0] ?? null
   // '안내'(severity 'info') 가 있는 stage 들 — 주의와 별개의 차분한 배너.
   const infoStages = stages.filter((s) => (s.infoChecks ?? 0) > 0)
@@ -118,7 +122,9 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
   const renderStageRow = (s: JourneyStage, index: number, isLast: boolean) => {
     const isDone = s.state === 'done'
     const isCurr = s.state === 'current'
-    const hasWarn = (s.failedChecks ?? 0) > 0
+    // advisory(추가 백신·추가 검사) 가 미완료면 본 흐름의 다음 단계는 못 가리지만 미래
+    // 만료 대비용 의무이므로 시각적으로는 주의 톤으로 표시 — 보호자가 행동 인지.
+    const hasWarn = (s.failedChecks ?? 0) > 0 || (!!s.advisory && !isDone)
     const hasInfo = (s.infoChecks ?? 0) > 0
     return (
       <Link
@@ -282,7 +288,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
         </div>
 
         {/* 주의 알림 — 한 줄 배너. 첫 주의 stage 로 이동. */}
-        {totalFailedChecks > 0 && firstWarnedStage && (
+        {warnedStages.length > 0 && firstWarnedStage && (
           <Link
             href={`/cases/${caseId}/journey/${firstWarnedStage.id}`}
             className="pm-pressable"
@@ -306,7 +312,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               <line x1="12" y1="9" x2="12" y2="13" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
-            <span>주의 {totalFailedChecks}건 — {warnedStages.map((s) => s.label).join(', ')}</span>
+            <span>주의 {warnedStages.length}건 — {warnedStages.map((s) => s.label).join(', ')}</span>
           </Link>
         )}
 
@@ -319,7 +325,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              marginTop: totalFailedChecks > 0 ? 8 : 18,
+              marginTop: warnedStages.length > 0 ? 8 : 18,
               padding: '10px 14px',
               borderRadius: 12,
               background: C.infoBg,

@@ -38,6 +38,12 @@ export interface JourneyStage {
   failedChecks?: number
   /** 이 step 의 ok=false 체크 중 '안내'(severity 'info') 개수. */
   infoChecks?: number
+  /**
+   * advisoryOnly step (추가 백신·추가 검사 등 미래 만료 대비 reminder) 여부.
+   * 미완료(upcoming) 상태일 때 본 흐름의 다음 단계는 못 가리되, 일정 row 에서는
+   * '주의' 톤으로 표시해 보호자가 인지하도록 한다. (시각만 주의, 의미는 deferrable.)
+   */
+  advisory?: boolean
 }
 
 export interface JourneyData {
@@ -235,6 +241,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       cardDesc,
       failedChecks: failedChecks > 0 ? failedChecks : undefined,
       infoChecks: infoChecks > 0 ? infoChecks : undefined,
+      advisory: step.advisoryOnly === true ? true : undefined,
     }
   })
 
