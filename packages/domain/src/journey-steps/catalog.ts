@@ -194,6 +194,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       'jp.departure-180days-after-titer',
       'jp.departure-within-2years-of-titer',
       'jp.microchip-rabies-sequence',
+      // 마이크로칩 < 1차 사전 안내 — 2차 step 과 동시에 항체검사 step 에도 노출하여
+      // '2차와 항체검사를 같은 날' 룰을 두 입력 시점 모두에서 보호자에게 상기.
+      'jp.rabies-prime-before-microchip',
     ],
   },
 
