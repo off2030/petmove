@@ -296,7 +296,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.entry-180days-after-titer',
     country: 'japan',
     category: '광견병',
-    title: '입국일은 항체검사일 180일 이후',
+    title: '일본 입국 타이밍',
     description: '항공편 입국일은 광견병 항체검사 채혈일로부터 180일이 지난 시점이어야 함.',
     severity: 'blocker',
     addedAt: '2026-05-17',
@@ -325,14 +325,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const earliestKr = formatKoreanDate(addDays(best.titer.date, 180))
       const message =
         best.days < 0
-          ? `입국일(${formatKoreanDate(entryDate)})이 항체검사일(${formatKoreanDate(best.titer.date)})보다 빠릅니다. 채혈은 입국 전에 완료되어야 합니다.`
-          : `채혈일로부터 180일이 지나야 일본에 입국할 수 있습니다. 입국 가능일은 ${earliestKr}입니다.`
-      return {
-        ok: false,
-        message,
-        fixHint: `입국일을 ${earliestKr} 이후로 변경하세요.`,
-        offendingPaths: offending,
-      }
+          ? '입국일이 항체검사일보다 빠릅니다. 채혈은 입국 전에 완료되어야 합니다.'
+          : `검사일로부터 180일 후에 일본에 입국할 수 있습니다. ${earliestKr} 이후 일본에 입국할 수 있습니다.`
+      return { ok: false, message, offendingPaths: offending }
     },
   },
   {
