@@ -29,7 +29,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.rabies-prime-after-91days-old',
     country: 'japan',
     category: '광견병',
-    title: '광견병 1차 접종 생후 91일령 이상',
+    title: '광견병 백신 타이밍',
     description: '광견병 1차 접종일은 생년월일 기준 91일 이후여야 함.',
     severity: 'blocker',
     addedAt: '2026-04-21',
@@ -48,9 +48,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: eligibleKr
-            ? `1차 접종 시 생후 ${age}일령으로 91일령 미만입니다. 유효한 1차 접종은 ${eligibleKr}부터 가능합니다.`
-            : `1차 접종 시 생후 ${age}일령으로 91일령 미만입니다.`,
-          fixHint: eligibleKr ? `${eligibleKr} 이후 재접종하세요.` : '생후 91일령 이후 재접종하세요.',
+            ? `광견병 백신은 생후 91일이 지난 후 접종해야 합니다. ${eligibleKr} 이후 재접종하세요.`
+            : '광견병 백신은 생후 91일이 지난 후 접종해야 합니다.',
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
