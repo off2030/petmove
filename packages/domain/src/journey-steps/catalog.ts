@@ -78,7 +78,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '광견병 백신(1차)',
     shortLabel: '백신1',
     description:
-      '1차 광견병 백신을 접종합니다.\n\n생후 91일령 이후 접종해야 합니다.\n불활화(사독) 또는 재조합(변형) 백신을 사용합니다. (국내 유통되는 거의 모든 백신 허용)',
+      '1차 광견병 백신을 접종합니다.\n\n생후 91일이 지난 후 접종해야 합니다.\n불활화(사독) 또는 재조합(변형) 백신을 사용합니다. (국내 유통되는 거의 모든 백신 허용)',
     doneSummary: '1차 광견병 백신을 접종했습니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 30,
