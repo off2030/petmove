@@ -334,6 +334,14 @@ export async function submitShareLink(
       }
     }
 
+    // 출국 항공편 날짜(data.entry_date) → 출국일(departure_date 컬럼) 동기화 —
+    // updateFlightFields(journey step 경로) 와 동일. 보호자가 매직링크로 항공권만 채워도
+    // 케이스 출국일이 함께 갱신된다. 양쪽이 같이 들어와도 entry_date 가 권위 (journey
+    // step 과 admin 의 entry_date→departure_date auto-fill rule 모두 동일 방향).
+    if (typeof dataUpdate.entry_date === 'string' && dataUpdate.entry_date.trim()) {
+      colUpdate.departure_date = dataUpdate.entry_date.trim()
+    }
+
     // breed/color 한글 → 영문 자동 보정
     if (typeof dataUpdate.breed === 'string' && dataUpdate.breed.trim()) {
       const ko = dataUpdate.breed.trim()
