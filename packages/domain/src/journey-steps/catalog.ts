@@ -140,12 +140,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       '3차 이후의 광견병 추가 접종 기록입니다.\n\n펫무브워크에서 입력된 모든 추가 접종을 차수별로 표시합니다.\n약품 정보는 본병원 접종이면 병원 지정 약품, 타병원 접종이면 입력된 정보가 그대로 보입니다.',
     doneSummary: '광견병 백신을 추가 접종했습니다.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
-    // 3차+ 입력됐거나 최근 접종 유효기간이 입국일 전 만료(추가 접종 필요) 일 때 노출.
+    // 3차+ 입력됐거나 최근 접종 유효기간이 입국일+30일 전 만료(추가 접종 필요) 일 때 노출.
     appliesWhen: 'rabies-extra-applicable',
     order: 37,
     done: 'has-extra-rabies',
     allowAttachments: false,
-    validationIds: [],
+    validationIds: ['jp.rabies-validity-expires-soon'],
   },
 
   // ── 4. 광견병 항체검사 ──────────────────────────────────────────────────
@@ -212,12 +212,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       '2회차 이후의 광견병 항체가 검사 기록입니다.\n\n펫무브워크에서 입력된 추가 항체가 검사를 회차별로 표시합니다.\n검사기관·검사결과는 입력된 정보가 그대로 보입니다.',
     doneSummary: '광견병 항체가 검사를 추가로 받았습니다.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
-    // 2회+ 입력됐거나 최근 항체검사가 입국일 기준 2년 만료(재검사 필요) 일 때 노출.
+    // 2회+ 입력됐거나 입국일+30일 안에 항체검사 2년 만료(재검사 필요) 일 때 노출.
     appliesWhen: 'titer-extra-applicable',
     order: 41,
     done: 'has-extra-titer',
     allowAttachments: false,
-    validationIds: [],
+    validationIds: ['jp.titer-validity-expires-soon'],
   },
 
   // ── 항공권 구매 (일본 전용) ──────────────────────────────────────────────

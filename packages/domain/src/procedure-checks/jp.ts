@@ -426,4 +426,73 @@ export const JP_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 입국일(${dep}).` }
     },
   },
+  {
+    id: 'jp.rabies-validity-expires-soon',
+    country: 'japan',
+    category: '광견병',
+    title: '광견병 백신 유효기간 만료 임박',
+    description: '입국일까지 광견병 백신 면역 유효기간이 30일 이내로 남았을 때 사전 안내.',
+    severity: 'info',
+    addedAt: '2026-05-21',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
+      const dep = entry || caseRow.departure_date || ''
+      const rabies = readRabiesEntries(caseRow)
+      if (!dep || rabies.length === 0) return SKIP
+
+      const latest = rabies[rabies.length - 1]
+      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      if (!validUntil) return SKIP
+      // 이미 만료된 케이스는 blocker(jp.rabies-valid-until-on-departure)가 잡음 — info 는 SKIP.
+      if (validUntil < dep) return SKIP
+
+      const threshold = addDays(dep, 30)
+      if (!threshold || validUntil >= threshold) {
+        return { ok: true, message: `만료(${validUntil}) ≥ 입국일+30일.` }
+      }
+      return {
+        ok: false,
+        message: `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 일본 입국 전 추가 접종을 준비하세요.`,
+        offendingPaths: [
+          entry ? 'entry_date' : 'departure_date',
+          `rabies_dates[${latest.originalIndex}].date`,
+        ],
+      }
+    },
+  },
+  {
+    id: 'jp.titer-validity-expires-soon',
+    country: 'japan',
+    category: '광견병',
+    title: '광견병 항체가 검사 유효기간 만료 임박',
+    description: '입국일까지 광견병 항체검사 유효기간(2년)이 30일 이내로 남았을 때 사전 안내.',
+    severity: 'info',
+    addedAt: '2026-05-21',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
+      const dep = entry || caseRow.departure_date || ''
+      const titers = readTiterEntries(caseRow)
+      if (!dep || titers.length === 0) return SKIP
+
+      const latest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
+      const validUntil = addYears(latest.date, 2)
+      if (!validUntil) return SKIP
+      // 이미 만료된 케이스는 blocker(jp.entry-within-2years-of-titer)가 잡음 — info 는 SKIP.
+      if (validUntil < dep) return SKIP
+
+      const threshold = addDays(dep, 30)
+      if (!threshold || validUntil >= threshold) {
+        return { ok: true, message: `만료(${validUntil}) ≥ 입국일+30일.` }
+      }
+      const offending: string[] = [entry ? 'entry_date' : 'departure_date']
+      for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
+      return {
+        ok: false,
+        message: `광견병 항체검사 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 일본 입국 전 추가 검사를 준비하세요.`,
+        offendingPaths: offending,
+      }
+    },
+  },
 ]

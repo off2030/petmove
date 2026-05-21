@@ -6,7 +6,7 @@ import {
   resolveActiveDestination,
   DESTINATION_OVERRIDES,
 } from '../destination-config'
-import { addYears, readRabiesEntries, readTiterEntries, resolveValidUntil } from '../procedure-checks/utils'
+import { addDays, addYears, readRabiesEntries, readTiterEntries, resolveValidUntil } from '../procedure-checks/utils'
 import type { CaseJourneyContext, StepApplicability, StepAppliesWhenSignal, StepDefinition } from './types'
 
 /**
@@ -108,8 +108,10 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
     case 'rabies-extra-applicable': {
       // (1) 이미 3차+ 입력 — 기존 has-extra-rabies 와 동일 의미. 입력된 기록을 계속
       //     표시할 수 있어야 하므로 OR 의 한 쪽.
-      // (2) 추가 접종이 필요한 상황 — 최근 광견병 접종의 면역 유효기간이 입국일 전
-      //     만료. 한일 노선은 entry_date===departure_date 라 entry 우선 + dep 폴백.
+      // (2) 추가 접종이 곧 필요한 상황 — 최근 광견병 접종의 면역 유효기간이
+      //     입국일 + 30일 이전. 즉 만료된 케이스 + 입국일 30일 안에 만료되는
+      //     케이스 모두 포함 (사전 준비 카드 노출). 한일 노선은
+      //     entry_date===departure_date 라 entry 우선 + dep 폴백.
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length >= 3) return true
       if (rabies.length === 0) return false
@@ -122,12 +124,13 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return false
-      return validUntil < dep
+      const threshold = addDays(dep, 30)
+      return !!threshold && validUntil < threshold
     }
     case 'titer-extra-applicable': {
       // 동일 패턴 (rabies-extra-applicable):
       // (1) 이미 2회+ 항체검사 입력됨
-      // (2) 1회 검사 후 입국일이 검사일 + 2년 초과 — 재검사 필요
+      // (2) 1회 검사 후 입국일 + 30일 안에 검사일 + 2년이 만료 — 재검사 필요
       const titers = readTiterEntries(caseRow)
       if (titers.length >= 2) return true
       if (titers.length === 0) return false
@@ -140,7 +143,8 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
       // 가장 최근(=date 기준 최신) 항체검사의 유효기간(채혈일 + 2년) 만료 여부.
       const latest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
       const validUntil = addYears(latest.date, 2)
-      return validUntil < dep
+      const threshold = addDays(dep, 30)
+      return !!threshold && validUntil < threshold
     }
   }
 }
