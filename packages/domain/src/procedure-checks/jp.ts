@@ -207,7 +207,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.rabies-titer-vs-booster',
     country: 'japan',
     category: '광견병',
-    title: '광견병 항체검사 시기',
+    title: '광견병 항체가 검사 타이밍',
     description:
       '채혈일은 2차 접종일 이후이며, 2차부터 끊김 없이 이어진 부스터 chain 의 면역 유효기간 이내여야 함.',
     severity: 'blocker',
@@ -231,26 +231,24 @@ export const JP_CHECKS: ProcedureCheck[] = [
         }
       }
 
+      // 채혈은 2차 접종일 이후 ~ 부스터 면역 유효기간 이내여야 함.
+      // 둘 다 위반 가능한 record 가 섞이면 만료(tooLate) 가 더 무거운 신호라 우선.
       const offendingPaths: string[] = []
-      const problems: string[] = []
       let tooLate = false
       for (const t of titers) {
         const path = `rabies_titer_records[${t.originalIndex}].date`
         if (t.date < second.date) {
           offendingPaths.push(path)
-          problems.push(`채혈일(${t.date})이 2차 접종일(${second.date})보다 빠릅니다.`)
         } else if (chainEnd && t.date > chainEnd) {
           offendingPaths.push(path)
-          problems.push(`채혈일(${t.date})이 부스터 면역기간(${chainEnd})을 벗어났습니다.`)
           tooLate = true
         }
       }
       if (offendingPaths.length > 0) {
-        // 채혈은 2차 접종일 이후 ~ 부스터 면역 유효기간 이내여야 함.
-        const fixHint = tooLate
-          ? '추가 접종 후 면역 유효기간 이내에 항체검사를 다시 받으세요.'
-          : '2차 접종 이후 항체검사를 다시 받으세요.'
-        return { ok: false, message: problems.join(' / '), fixHint, offendingPaths }
+        const message = tooLate
+          ? '2차 광견병 백신 유효기간이 만료되었습니다. 2회 재접종 후 면역 유효기간 이내에 다시 검사를 받으세요.'
+          : '채혈일이 2차 광견병 백신 접종일보다 빠릅니다. 2차 접종 이후 다시 검사를 받으세요.'
+        return { ok: false, message, offendingPaths }
       }
       return { ok: true, message: '항체검사 시기 적합.' }
     },
