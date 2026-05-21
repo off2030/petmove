@@ -148,6 +148,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '직전 광견병 백신의 면역 유효기간이 끝나기 전에 재접종합니다.\n\n유효기간이 끝나기 전에 재접종하지 않으면, 일본 입국을 위해 1·2차 접종과 항체검사를 다시 받고 180일을 기다려야 합니다.',
     doneSummary: '광견병 백신을 추가 접종했습니다.',
+    // 미래 만료 대비 reminder — 본 흐름의 다음 단계(사전 신고 등)를 다음 할 일에서 가리지 않는다.
+    advisoryOnly: true,
     // 직전 광견병 접종의 면역 유효기간(=재접종 마감일)을 카드 본문에 정확한 날짜로 노출.
     // 추측 ("곧 만료") 대신 명시적 일자. valid_until 미입력이면 date + 1년으로 폴백.
     situational: (caseRow) => {
@@ -231,6 +233,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '일본 입국 전 재검사가 필요합니다.\n\n검사 결과가 나올 때까지 수 주가 걸릴 수 있으므로 미리 검사를 받아두길 권장합니다.',
     doneSummary: '광견병 항체가 검사를 추가로 받았습니다.',
+    // 미래 만료 대비 reminder — 본 흐름의 다음 단계를 다음 할 일에서 가리지 않는다.
+    advisoryOnly: true,
     // 직전 항체검사의 유효기간(채혈일 + 2년) = 재검사 마감일을 카드/일정 row 에 정확한
     // 날짜로 노출. 광견병 백신 추가 step 의 situational 과 같은 패턴.
     situational: (caseRow) => {

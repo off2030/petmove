@@ -240,12 +240,25 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
 
   // 첫 upcoming 부터 'current' 로 승격. non-blocking step(귀국편 등 후속을 막지 않는
   // 단계)은 바로 다음 step 도 함께 'current' 로 올린다 — '다음 할 일' 카드가 여럿이 될 수 있다.
+  // advisoryOnly step (추가 백신·추가 검사 등 미래 만료 대비 reminder) 은 본 흐름의
+  // 다음 단계를 가리지 않도록 승격에서 건너뛴다.
   const nonBlockingIds = new Set(applicableSteps.filter((s) => s.nonBlocking).map((s) => s.id))
+  const advisoryOnlyIds = new Set(applicableSteps.filter((s) => s.advisoryOnly).map((s) => s.id))
   for (let i = 0; i < stages.length; i++) {
     if (stages[i].state !== 'upcoming') continue
+    if (advisoryOnlyIds.has(stages[i].id)) continue
     stages[i].state = 'current'
     // blocking step 에서 멈춤. non-blocking 이면 계속 스캔해 다음 step 도 승격.
     if (!nonBlockingIds.has(stages[i].id)) break
+  }
+  // 폴백 — 본 흐름의 모든 step 이 done 이고 advisory 만 남았다면 (예: 항체검사도 끝났는데
+  // 추가 백신만 만료 임박) 가장 앞의 advisory 를 다음 할 일로 노출. 보호자가 행동할 게
+  // 그것뿐일 때까지 가려두면 화면이 공백처럼 보인다.
+  if (stages.every((s) => s.state !== 'current')) {
+    const firstAdvisory = stages.findIndex(
+      (s) => s.state === 'upcoming' && advisoryOnlyIds.has(s.id),
+    )
+    if (firstAdvisory >= 0) stages[firstAdvisory].state = 'current'
   }
   const nextStages = stages.filter((s) => s.state === 'current')
   const totalFailedChecks = stages.reduce((sum, s) => sum + (s.failedChecks ?? 0), 0)

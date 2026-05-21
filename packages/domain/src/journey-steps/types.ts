@@ -191,6 +191,17 @@ export interface StepDefinition {
    * 'current' 가 되면 바로 다음 step 도 함께 'current' 로 노출된다 (병렬 진행 가능 단계).
    */
   nonBlocking?: boolean
+  /**
+   * true 면 이 step 은 '다음 할 일' 자리를 차지하지 않는다 — 추가 백신·추가 검사 처럼
+   * 미래 유효기간 만료 대비용 조건부 reminder 가 본 흐름의 다음 단계(예: 사전 신고)를
+   * 가려버리는 사고를 막는다.
+   *
+   * 효과: 'current' 승격 루프가 이 step 을 건너뛰고 다음 candidate 를 찾는다. 다만
+   * 다른 미완료 step 이 하나도 없으면 폴백으로 advisoryOnly step 도 승격된다 — 보호자
+   * 가 행동할 게 정말 그것뿐일 때까지 가려두지는 않는다. 일정 row 에는 정상적으로
+   * 'upcoming' 으로 표시.
+   */
+  advisoryOnly?: boolean
 }
 
 // ── 런타임 컨텍스트 ──────────────────────────────────────────────────────
