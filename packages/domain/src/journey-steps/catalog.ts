@@ -191,8 +191,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '검사결과지 사본을 사진, PDF로 보관하세요.',
     validationIds: [
       'jp.rabies-titer-vs-booster',
-      'jp.departure-180days-after-titer',
-      'jp.departure-within-2years-of-titer',
+      // 출국일 ± 180일/2년 룰은 항체검사 step 에서 보호자가 조치 불가 — 항공권
+      // 구매 step (flight-purchase) 에 jp.entry-* 로 매핑되어 거기서만 안내.
       'jp.microchip-rabies-sequence',
       // 마이크로칩 < 1차 사전 안내 — 2차 step 과 동시에 항체검사 step 에도 노출하여
       // '2차와 항체검사를 같은 날' 룰을 두 입력 시점 모두에서 보호자에게 상기.
