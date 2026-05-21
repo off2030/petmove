@@ -109,9 +109,20 @@ const CasesContext = createContext<CasesContextValue | null>(null)
 // 라우팅은 탭 전환과 동일하게 raw History API 로만 — Next 라우터를 거치지 않아
 // 추가 RSC refetch 가 없다. 목록에서의 선택은 history 항목을 만들지 않던 기존
 // 동작을 유지하기 위해 replaceState 사용.
+const SELECTED_CASE_STORAGE_KEY = 'petmove:cases:selected-id'
+
 function readCaseIdFromUrl(): string | null {
   if (typeof window === 'undefined') return null
   return new URLSearchParams(window.location.search).get('case')
+}
+
+function readStoredCaseId(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    return window.sessionStorage.getItem(SELECTED_CASE_STORAGE_KEY)
+  } catch {
+    return null
+  }
 }
 
 function syncCaseIdToUrl(id: string | null) {
@@ -120,6 +131,10 @@ function syncCaseIdToUrl(id: string | null) {
   if (id) url.searchParams.set('case', id)
   else url.searchParams.delete('case')
   window.history.replaceState(window.history.state, '', url)
+  try {
+    if (id) window.sessionStorage.setItem(SELECTED_CASE_STORAGE_KEY, id)
+    else window.sessionStorage.removeItem(SELECTED_CASE_STORAGE_KEY)
+  } catch {}
 }
 
 export function CasesProvider({
@@ -153,7 +168,7 @@ export function CasesProvider({
   // 마운트 시 URL 에서 복원. 목록 조회가 일시적으로 비어도 case id 는 보존한 뒤
   // 아래 effect 에서 단일 조회로 확인한다.
   const [selectedId, setSelectedId] = useState<string | null>(() => {
-    return readCaseIdFromUrl()
+    return readCaseIdFromUrl() ?? readStoredCaseId()
   })
   const [activeDestination, setActiveDestination] = useState<string | null>(null)
   const [importReportCountries, setImportReportCountries] = useState<string[]>(initialImportReportCountries)
@@ -168,7 +183,9 @@ export function CasesProvider({
   const selfAddedRef = useRef<Set<string>>(new Set())
   // Realtime 재연결 시 onSubscribed 콜백이 stale closure 없이 현재 목록을 읽도록.
   const casesRef = useRef(cases)
-  casesRef.current = cases
+  useEffect(() => {
+    casesRef.current = cases
+  }, [cases])
 
   // URL 의 case 파라미터가 현재 목록에 없으면 단일 조회로 복원한다.
   // 조회 자체가 실패하면 인증 refresh/RLS/네트워크 타이밍일 수 있으므로 URL 을 지우지 않는다.
@@ -189,14 +206,7 @@ export function CasesProvider({
           if (prev.some((c) => c.id === restoredCase.id)) return prev
           return [restoredCase, ...prev]
         })
-        return
       }
-
-      setSelectedId((current) => {
-        if (current !== selectedId) return current
-        syncCaseIdToUrl(null)
-        return null
-      })
     })()
 
     return () => {
