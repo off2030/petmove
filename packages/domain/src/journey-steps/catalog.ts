@@ -166,7 +166,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     appliesWhen: 'rabies-extra-applicable',
     order: 37,
     done: 'has-extra-rabies',
-    allowAttachments: false,
+    allowAttachments: true,
+    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 보관하세요.',
     validationIds: ['jp.rabies-validity-expires-soon'],
   },
 
@@ -252,7 +253,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     appliesWhen: 'titer-extra-applicable',
     order: 41,
     done: 'has-extra-titer',
-    allowAttachments: false,
+    allowAttachments: true,
+    attachmentHint: '검사결과지 사본을 사진, PDF로 보관하세요.',
     validationIds: ['jp.titer-validity-expires-soon'],
   },
 

@@ -7,7 +7,7 @@ import type { RabiesEntryForm, RabiesProductHints } from './rabies-entry-inputs'
  * 광견병 추가 백신(3차 이상) step 입력 — 가변 길이 배열 + 추가/삭제.
  *
  * 1·2차 (RabiesEntryInputs) 와 필드 구성은 동일하지만, 추가 접종은 차수가 정해져 있지
- * 않아 사용자가 카드를 추가/삭제할 수 있다. 각 카드 헤더에 "광견병 N차" + 삭제 아이콘,
+ * 않아 사용자가 카드를 추가/삭제할 수 있다. 각 카드 헤더에 "광견병 백신(N차)" + 삭제 아이콘,
  * 마지막에 + 버튼.
  *
  * 본병원/타병원 약품칸 규칙은 1·2차와 같음 — 본병원이면 '병원 지정' 카탈로그 hint 를
@@ -170,7 +170,9 @@ function ExtraCard({
           justifyContent: 'space-between',
         }}
       >
-        <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>광견병 {doseNumber}차</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>
+          광견병 백신({doseNumber}차)
+        </div>
         <button
           type="button"
           onClick={onRemove}

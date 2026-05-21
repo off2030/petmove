@@ -914,7 +914,7 @@ export function StepDetailView({
         )}
         {isRabiesExtra && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>접종 기록</h3>
+            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
             <RabiesExtraInputs
               entries={rabiesExtra}
               onChange={(idx, key, next) =>
@@ -936,7 +936,7 @@ export function StepDetailView({
         )}
         {isTiterExtra && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>검사 기록</h3>
+            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
             <TiterExtraInputs
               entries={titerExtra}
               onChange={(idx, key, next) =>
