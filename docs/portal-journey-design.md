@@ -148,8 +148,6 @@ export const STEP_CHECK_MAP: Record<string, string[]> = {
   ],
   'rabies-titer': [
     'jp.rabies-titer-vs-booster',
-    'jp.departure-180days-after-titer',
-    'jp.departure-within-2years-of-titer',
     'au.titer-...',
   ],
   // ...

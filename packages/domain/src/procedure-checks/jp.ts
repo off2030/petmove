@@ -254,44 +254,6 @@ export const JP_CHECKS: ProcedureCheck[] = [
     },
   },
   {
-    id: 'jp.departure-180days-after-titer',
-    country: 'japan',
-    category: '광견병',
-    title: '출국일은 항체검사일 180일 이후',
-    description: '출국일은 광견병 항체검사 채혈일로부터 180일이 지난 시점이어야 함.',
-    severity: 'blocker',
-    addedAt: '2026-04-21',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
-      const titers = readTiterEntries(caseRow)
-      // 필수: 출국일 + 1개 이상의 항체검사
-      if (!dep || titers.length === 0) return SKIP
-
-      let best: { entry: (typeof titers)[number]; days: number } | null = null
-      for (const t of titers) {
-        const days = daysBetween(t.date, dep)
-        if (days === null) continue
-        if (!best || days > best.days) best = { entry: t, days }
-      }
-      if (best && best.days >= 180) {
-        return { ok: true, message: `항체검사(${best.entry.date}) → 출국일(${dep}): ${best.days}일` }
-      }
-      const offending: string[] = ['departure_date']
-      for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-      const message = !best
-        ? '항체검사일과 출국일을 확인할 수 없습니다.'
-        : best.days < 0
-          ? `항체검사일(${best.entry.date})이 출국일(${dep})보다 이후입니다. 채혈은 출국 전에 완료되어야 합니다.`
-          : `항체검사일로부터 출국일까지 ${best.days}일입니다. 180일 이상이어야 합니다.`
-      return {
-        ok: false,
-        message,
-        fixHint: '출국일을 채혈일 + 180일 이후로 변경하거나 더 이른 항체검사가 필요합니다.',
-        offendingPaths: offending,
-      }
-    },
-  },
-  {
     id: 'jp.vet-visit-within-10days-of-departure',
     country: 'japan',
     category: '일정',
@@ -327,38 +289,6 @@ export const JP_CHECKS: ProcedureCheck[] = [
           ? `검진일을 ${formatKoreanDate(earliest)} ~ ${formatKoreanDate(dep)} 사이로 변경하세요.`
           : '검진일을 출국일 9일 전 이후로 변경하세요.',
         offendingPaths: ['vet_visit_date'],
-      }
-    },
-  },
-  {
-    id: 'jp.departure-within-2years-of-titer',
-    country: 'japan',
-    category: '광견병',
-    title: '출국일은 항체검사일 2년 이내',
-    description: '광견병 항체검사 유효기간은 2년 — 출국일이 검사일 + 2년을 넘지 않아야 함.',
-    severity: 'blocker',
-    addedAt: '2026-04-21',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
-      const titers = readTiterEntries(caseRow)
-      if (!dep || titers.length === 0) return SKIP
-
-      const valid = titers.find((t) => addYears(t.date, 2) >= dep)
-      if (valid) {
-        return {
-          ok: true,
-          message: `항체검사(${valid.date}) 유효(${addYears(valid.date, 2)}) ≥ 출국일(${dep}).`,
-        }
-      }
-      const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
-      const newestValidUntil = addYears(newest.date, 2)
-      const offending: string[] = ['departure_date']
-      for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-      return {
-        ok: false,
-        message: `최신 항체검사(${newest.date})의 유효기간(${newestValidUntil})이 출국일(${dep})보다 빠릅니다.`,
-        fixHint: '재검사 또는 출국일을 검사일 + 2년 이내로 변경하세요.',
-        offendingPaths: offending,
       }
     },
   },
