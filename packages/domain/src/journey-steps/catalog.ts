@@ -1,4 +1,4 @@
-import { readRabiesEntries, resolveValidUntil } from '../procedure-checks/utils'
+import { addYears, readRabiesEntries, readTiterEntries, resolveValidUntil } from '../procedure-checks/utils'
 import type { StepDefinition } from './types'
 
 /** 'YYYY-MM-DD' → 'YYYY년 M월 D일'. 형식이 아니면 원문 반환. */
@@ -229,8 +229,20 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '추가 검사',
     shortLabel: '항체+',
     description:
-      '2회차 이후의 광견병 항체가 검사 기록입니다.\n\n펫무브워크에서 입력된 추가 항체가 검사를 회차별로 표시합니다.\n검사기관·검사결과는 입력된 정보가 그대로 보입니다.',
+      '직전 광견병 항체검사의 유효기간이 끝나기 전에 재검사받습니다.\n\n유효기간이 끝난 뒤 재검사를 받으면, 일본 입국까지 채혈일로부터 다시 180일을 기다려야 합니다.',
     doneSummary: '광견병 항체가 검사를 추가로 받았습니다.',
+    // 직전 항체검사의 유효기간(채혈일 + 2년) = 재검사 마감일을 카드/일정 row 에 정확한
+    // 날짜로 노출. 광견병 백신 추가 step 의 situational 과 같은 패턴.
+    situational: (caseRow) => {
+      const titers = readTiterEntries(caseRow)
+      if (titers.length === 0) return undefined
+      // 가장 최근(=date 기준 최신) 검사 — readTiterEntries 는 ascending 정렬이라 마지막.
+      const latest = [...titers].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
+      const validUntil = addYears(latest.date, 2)
+      if (!validUntil) return undefined
+      const msg = `${formatKoreanDate(validUntil)}까지 재검사받습니다.`
+      return { desc: msg, cardDesc: msg }
+    },
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
     // 2회+ 입력됐거나 입국일+30일 안에 항체검사 2년 만료(재검사 필요) 일 때 노출.
     appliesWhen: 'titer-extra-applicable',

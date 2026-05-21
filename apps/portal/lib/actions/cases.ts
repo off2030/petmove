@@ -448,6 +448,94 @@ function stripTiterUnit(value: string): string {
   return value.replace(/\s*IU\s*\/\s*m[lL]\s*/gi, '').trim()
 }
 
+/**
+ * 광견병 항체가 검사(2회차+)의 입력 기록을 한 번에 patch — case.data.rabies_titer_records
+ * 의 index 1 이상을 전체 교체. 1회차(0) 는 updateTiterFields 가 관리하므로 보존.
+ *
+ * entries 는 사용자가 화면에서 본 순서대로 들어오고, 같은 인덱스 위치에 기존 record 가
+ * 있으면 그 record 의 received_date 등 비관리 키를 보존한다 (updateRabiesExtraEntries
+ * 와 동일 패턴). 빈 entry 는 자동 제외 + 끝의 빈 항목 trim.
+ *
+ * value 는 IU/mL 단위 표기 제거해 저장.
+ */
+export async function updateTiterExtraEntries(
+  caseId: string,
+  entries: Array<{ date: string | null; lab: string | null; value: string | null }>,
+): Promise<Result<CaseRow>> {
+  try {
+    for (const e of entries) {
+      if (e.date != null && e.date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(e.date)) {
+        return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+      }
+    }
+
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const arr = Array.isArray(prev.rabies_titer_records)
+      ? [...(prev.rabies_titer_records as unknown[])]
+      : []
+    const preserved = arr.slice(0, 1)
+    const prevExtras = arr.slice(1)
+
+    const newExtras: Record<string, unknown>[] = []
+    for (let i = 0; i < entries.length; i++) {
+      const fields = entries[i]
+      const prevSlot = prevExtras[i]
+      const prevEntry =
+        prevSlot && typeof prevSlot === 'object'
+          ? { ...(prevSlot as Record<string, unknown>) }
+          : {}
+
+      const entry: Record<string, unknown> = { ...prevEntry }
+
+      const d = typeof fields.date === 'string' ? fields.date.trim() : ''
+      if (d) entry.date = d
+      else delete entry.date
+
+      const labVal = typeof fields.lab === 'string' ? fields.lab.trim() : ''
+      if (labVal) entry.lab = labVal
+      else delete entry.lab
+
+      const v = typeof fields.value === 'string' ? stripTiterUnit(fields.value) : ''
+      if (v) entry.value = v
+      else delete entry.value
+
+      if (Object.keys(entry).length === 0) continue
+      newExtras.push(entry)
+    }
+
+    const titerNext: unknown[] = [...preserved, ...newExtras]
+    while (titerNext.length > 0 && isEmptyObject(titerNext[titerNext.length - 1])) {
+      titerNext.pop()
+    }
+
+    const nextData: Record<string, unknown> = { ...prev }
+    if (titerNext.length === 0) delete nextData.rabies_titer_records
+    else nextData.rabies_titer_records = titerNext
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 /** 항공권 구매 step 이 다루는 case.data 평탄 키 — 출국 4 + 귀국 4. */
 const FLIGHT_DATA_KEYS = [
   'entry_date',

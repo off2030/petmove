@@ -22,6 +22,7 @@ import {
   updateMicrochipFields,
   updateRabiesEntryFields,
   updateRabiesExtraEntries,
+  updateTiterExtraEntries,
   updateTiterFields,
   updateVetVisitDate,
 } from '@/lib/actions/cases'
@@ -37,7 +38,7 @@ import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm, type RabiesProductHints } from './rabies-entry-inputs'
 import { RabiesExtraInputs, type RabiesExtraEntry } from './rabies-extra-inputs'
 import { StepAttachments } from './step-attachments'
-import { TiterExtraList, type TiterExtraRecord } from './titer-extra-list'
+import { TiterExtraInputs, type TiterExtraEntry } from './titer-extra-inputs'
 import { TiterInputs, type TiterForm } from './titer-inputs'
 import { VetVisitInputs } from './vet-visit-inputs'
 
@@ -104,6 +105,7 @@ export function StepDetailView({
     isRabies ||
     isRabiesExtra ||
     isTiter ||
+    isTiterExtra ||
     isFlight ||
     isAdvanceNotification ||
     isVetVisit ||
@@ -134,6 +136,12 @@ export function StepDetailView({
 
   const savedTiterForm = readTiterForm(caseRow?.data)
   const [titerForm, setTiterForm] = useState<TiterForm>(savedTiterForm)
+
+  // 광견병 추가 항체검사(2회차+) — 빈 상태에서도 카드 1장이 보이도록 최소 1장 유지.
+  const savedTiterExtra = readTiterExtraEntries(caseRow?.data)
+  const [titerExtra, setTiterExtra] = useState<TiterExtraEntry[]>(
+    savedTiterExtra.length === 0 ? [makeEmptyTiterExtra()] : savedTiterExtra,
+  )
 
   const savedFlightForm = readFlightForm(caseRow?.data)
   const [flightForm, setFlightForm] = useState<FlightForm>(savedFlightForm)
@@ -186,6 +194,7 @@ export function StepDetailView({
     (titerForm.date !== savedTiterForm.date ||
       titerForm.lab !== savedTiterForm.lab ||
       titerForm.value !== savedTiterForm.value)
+  const titerExtraDirty = isTiterExtra && !titerExtraEqual(titerExtra, savedTiterExtra)
   const flightDirty = isFlight && !flightFormEqual(flightForm, savedFlightForm)
   const advanceDirty = isAdvanceNotification && advanceDate !== savedAdvanceDate
   const vetVisitDirty = isVetVisit && vetVisitDate !== savedVetVisitDate
@@ -203,6 +212,7 @@ export function StepDetailView({
     rabiesDirty ||
     rabiesExtraDirty ||
     titerDirty ||
+    titerExtraDirty ||
     flightDirty ||
     advanceDirty ||
     vetVisitDirty ||
@@ -247,6 +257,13 @@ export function StepDetailView({
   }, [caseId, isRabies, isRabiesExtra])
   useEffect(() => {
     if (!titerDirty) setTiterForm(readTiterForm(caseRow?.data))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data])
+  useEffect(() => {
+    if (!titerExtraDirty) {
+      const next = readTiterExtraEntries(caseRow?.data)
+      setTiterExtra(next.length === 0 ? [makeEmptyTiterExtra()] : next)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
@@ -320,21 +337,6 @@ export function StepDetailView({
       }),
     [rabiesExtra, rabiesLookups],
   )
-
-  // 추가 항체검사(2회 이후) 표시용 — rabies_titer_records 의 index 1 이상.
-  const extraTiterRecords = useMemo<TiterExtraRecord[]>(() => {
-    if (!isTiterExtra) return []
-    const arr = (caseRow?.data as Record<string, unknown> | null | undefined)?.rabies_titer_records
-    if (!Array.isArray(arr)) return []
-    const out: TiterExtraRecord[] = []
-    for (let i = 1; i < arr.length; i++) {
-      const rec = arr[i]
-      if (rec && typeof rec === 'object') {
-        out.push(rec as TiterExtraRecord)
-      }
-    }
-    return out
-  }, [isTiterExtra, caseRow?.data])
 
   function handleSave() {
     if (!dirty) return
@@ -418,6 +420,29 @@ export function StepDetailView({
         if (res.ok) {
           updateCase(res.value)
           setTiterForm(readTiterForm(res.value.data))
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    } else if (isTiterExtra) {
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        const res = await updateTiterExtraEntries(
+          caseId,
+          titerExtra.map((e) => ({
+            date: e.date || null,
+            lab: e.lab || null,
+            value: e.value || null,
+          })),
+        )
+        if (res.ok) {
+          updateCase(res.value)
+          const next = readTiterExtraEntries(res.value.data)
+          setTiterExtra(next.length === 0 ? [makeEmptyTiterExtra()] : next)
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -912,7 +937,21 @@ export function StepDetailView({
         {isTiterExtra && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>검사 기록</h3>
-            <TiterExtraList records={extraTiterRecords} />
+            <TiterExtraInputs
+              entries={titerExtra}
+              onChange={(idx, key, next) =>
+                setTiterExtra((prev) =>
+                  prev.map((e, i) => (i === idx ? { ...e, [key]: next } : e)),
+                )
+              }
+              onRemove={(idx) =>
+                setTiterExtra((prev) => {
+                  const next = prev.filter((_, i) => i !== idx)
+                  return next.length === 0 ? [makeEmptyTiterExtra()] : next
+                })
+              }
+              onAdd={() => setTiterExtra((prev) => [...prev, makeEmptyTiterExtra()])}
+            />
           </section>
         )}
         {isTiter && (
@@ -1347,6 +1386,54 @@ function rabiesExtraEqual(a: RabiesExtraEntry[], b: RabiesExtraEntry[]): boolean
       x.lot !== y.lot ||
       x.expiry !== y.expiry ||
       x.other_hospital !== y.other_hospital
+    ) {
+      return false
+    }
+  }
+  return true
+}
+
+/**
+ * 추가 항체검사 카드 한 장의 빈 폼. 빈 상태에서도 사용자가 바로 입력 가능하게
+ * 기본 1장이 떠야 하므로 초기/삭제 후 폴백에서 사용.
+ */
+function makeEmptyTiterExtra(): TiterExtraEntry {
+  return { date: '', lab: '', value: '' }
+}
+
+/**
+ * case.data.rabies_titer_records 의 index 1 이상(2회차+)을 TiterExtraEntry[] 로 읽는다.
+ * 비관리 키(received_date 등) 는 무시 — 서버 액션이 머지로 보존.
+ */
+function readTiterExtraEntries(
+  data: Record<string, unknown> | null | undefined,
+): TiterExtraEntry[] {
+  if (!data) return []
+  const arr = data['rabies_titer_records']
+  if (!Array.isArray(arr)) return []
+  const str = (v: unknown) => (typeof v === 'string' ? v : '')
+  const out: TiterExtraEntry[] = []
+  for (let i = 1; i < arr.length; i++) {
+    const rec = arr[i]
+    if (rec && typeof rec === 'object') {
+      const r = rec as Record<string, unknown>
+      out.push({ date: str(r.date), lab: str(r.lab), value: str(r.value) })
+    }
+  }
+  return out
+}
+
+function titerExtraEqual(a: TiterExtraEntry[], b: TiterExtraEntry[]): boolean {
+  // 빈 카드(3키 모두 '')는 저장 시 제외되므로 비교에서도 제외.
+  const nonEmpty = (e: TiterExtraEntry) => !!(e.date || e.lab || e.value)
+  const aF = a.filter(nonEmpty)
+  const bF = b.filter(nonEmpty)
+  if (aF.length !== bF.length) return false
+  for (let i = 0; i < aF.length; i++) {
+    if (
+      aF[i].date !== bF[i].date ||
+      aF[i].lab !== bF[i].lab ||
+      aF[i].value !== bF[i].value
     ) {
       return false
     }
