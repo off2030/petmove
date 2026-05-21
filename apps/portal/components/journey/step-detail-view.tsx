@@ -1015,7 +1015,6 @@ export function StepDetailView({
                   >
                     <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>
                       {field.label}
-                      {field.required && <span style={{ color: C.warn, marginLeft: 4 }}>*</span>}
                     </div>
                     {value ? (
                       <div style={{ fontSize: 14, color: C.ink, marginTop: 2 }}>{value}</div>

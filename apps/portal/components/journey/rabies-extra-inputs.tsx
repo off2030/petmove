@@ -26,17 +26,15 @@ const C = {
   ink: '#2A2620',
   ink2: '#6B6457',
   ink3: '#9A9286',
-  warn: '#C26A4A',
 } as const
 
 const FIELDS: ReadonlyArray<{
   key: keyof RabiesEntryForm
   label: string
   kind: 'date' | 'text' | 'years'
-  required?: boolean
   placeholder?: string
 }> = [
-  { key: 'date', label: '접종일', kind: 'date', required: true },
+  { key: 'date', label: '접종일', kind: 'date' },
   { key: 'valid_until', label: '면역 유효기간', kind: 'years' },
   { key: 'product', label: '약품명', kind: 'text', placeholder: '예: Rabisin' },
   { key: 'manufacturer', label: '제조사', kind: 'text', placeholder: '예: Boehringer Ingelheim' },
@@ -221,7 +219,6 @@ function ExtraCard({
           >
             <div style={labelStyle}>
               {field.label}
-              {field.required && <span style={{ color: C.warn, marginLeft: 4 }}>*</span>}
               {designated && (
                 <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 400, color: C.ink3 }}>
                   병원 지정
