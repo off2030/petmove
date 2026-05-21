@@ -123,7 +123,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     validationIds: [
       'jp.rabies-prime-booster-interval',
       'jp.rabies-booster-within-prime-validity',
-      'jp.rabies-valid-until-on-departure',
+      // jp.rabies-valid-until-on-departure 는 입국일(entry_date) 기준이라 항공권
+      // 구매 step 에서 안내 — 백신 입력 시점엔 보호자가 조치 못 함.
       'jp.microchip-rabies-sequence',
       'jp.rabies-prime-before-microchip',
     ],
@@ -246,7 +247,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '구매한 항공권(e-티켓)을 사진, PDF로 보관하세요.',
-    validationIds: ['jp.entry-180days-after-titer', 'jp.entry-within-2years-of-titer'],
+    validationIds: [
+      'jp.entry-180days-after-titer',
+      'jp.entry-within-2years-of-titer',
+      'jp.rabies-valid-until-on-departure',
+    ],
   },
 
   // ── 사전 신고 (일본 전용) ───────────────────────────────────────────

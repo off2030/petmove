@@ -397,14 +397,17 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.rabies-valid-until-on-departure',
     country: 'japan',
     category: '광견병',
-    title: '출국일 시점 광견병 면역 유효',
-    description: '출국일에 가장 최근 광견병 접종의 면역 유효기간이 만료되지 않아야 함.',
+    title: '광견병 백신 유효기간 만료',
+    description: '입국일에 가장 최근 광견병 접종의 면역 유효기간이 만료되지 않아야 함.',
     severity: 'blocker',
     addedAt: '2026-04-21',
     run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+      // 항공권 step 에서 보호자가 직접 입력하는 키는 entry_date — 그쪽 우선,
+      // 미입력 시 departure_date 컬럼 폴백 (한일 노선은 둘이 동일).
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
+      const dep = entry || caseRow.departure_date || ''
       const rabies = readRabiesEntries(caseRow)
-      // 필수: 출국일 + 1개 이상의 접종 기록
       if (!dep || rabies.length === 0) return SKIP
 
       const latest = rabies[rabies.length - 1]
@@ -414,15 +417,14 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료됩니다.`,
-          fixHint: '출국 전 추가 접종이 필요합니다.',
+          message: '광견병 백신 유효기간이 일본 입국일 전에 만료됩니다. 만료 전 재접종이 필요합니다.',
           offendingPaths: [
-            'departure_date',
+            entry ? 'entry_date' : 'departure_date',
             `rabies_dates[${latest.originalIndex}].date`,
           ],
         }
       }
-      return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 출국일(${dep}).` }
+      return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 입국일(${dep}).` }
     },
   },
 ]
