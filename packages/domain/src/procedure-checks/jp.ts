@@ -177,7 +177,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '마이크로칩',
     title: '마이크로칩, 접종, 검사 타이밍',
     description:
-      '1차 광견병 접종이 마이크로칩 시술보다 앞선 경우 2차 접종을 광견병 항체가 검사와 같은 날 받아야 함. 2차 입력 전 미리 안내.',
+      '1차 광견병 접종이 마이크로칩 시술보다 앞선 경우 2차 접종을 광견병 항체가 검사와 같은 날 받아야 함. 항체검사 입력 전까지 안내 지속.',
     severity: 'info',
     addedAt: '2026-05-16',
     run: ({ caseRow }) => {
@@ -186,8 +186,10 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const rabies = readRabiesEntries(caseRow)
       // 필수: 마이크로칩 시술일 + 1차 접종 기록
       if (!microchip || rabies.length === 0) return SKIP
-      // 2차 입력 후에는 jp.microchip-rabies-sequence 가 본 검증 — 사전 안내 종료
-      if (rabies.length >= 2) return SKIP
+      // 항체검사 입력 후에는 jp.microchip-rabies-sequence 가 본 검증 — 사전 안내 종료.
+      // (2차 입력만으로는 사라지지 않음 — 보호자가 "2차와 항체검사를 같은 날" 룰을
+      // 잊지 않도록 항체검사 입력까지 안내 유지.)
+      if (readTiterEntries(caseRow).length > 0) return SKIP
 
       const first = rabies[0]
       if (first.date >= microchip) {
