@@ -178,7 +178,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.rabies-prime-before-microchip',
     country: 'japan',
     category: '마이크로칩',
-    title: '마이크로칩 이전 1차 접종 시 2차 접종 시기',
+    title: '마이크로칩, 접종, 검사 타이밍',
     description:
       '1차 광견병 접종이 마이크로칩 시술보다 앞선 경우 2차 접종을 광견병 항체가 검사와 같은 날 받아야 함. 2차 입력 전 미리 안내.',
     severity: 'info',
@@ -198,8 +198,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `1차 접종일(${first.date})이 마이크로칩 시술일(${microchip})보다 앞섭니다.`,
-        fixHint: '2차 광견병 백신과 광견병 항체가 검사를 같은 날 해야 합니다.',
+        message:
+          '마이크로칩 삽입보다 1차 광견병 백신 접종을 먼저 한 경우, 반드시 2차 광견병 백신과 광견병 항체가 검사를 같은 날 해야 합니다.',
         offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
       }
     },
