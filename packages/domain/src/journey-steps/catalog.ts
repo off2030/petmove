@@ -134,7 +134,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'rabies-vaccine-extra',
     category: 'vaccination',
-    title: '광견병 백신(추가)',
+    title: '추가 백신',
     shortLabel: '백신+',
     description:
       '3차 이후의 광견병 추가 접종 기록입니다.\n\n펫무브워크에서 입력된 모든 추가 접종을 차수별로 표시합니다.\n약품 정보는 본병원 접종이면 병원 지정 약품, 타병원 접종이면 입력된 정보가 그대로 보입니다.',
@@ -206,7 +206,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'rabies-titer-extra',
     category: 'lab',
-    title: '광견병 항체가 검사(추가)',
+    title: '추가 검사',
     shortLabel: '항체+',
     description:
       '2회차 이후의 광견병 항체가 검사 기록입니다.\n\n펫무브워크에서 입력된 추가 항체가 검사를 회차별로 표시합니다.\n검사기관·검사결과는 입력된 정보가 그대로 보입니다.',
