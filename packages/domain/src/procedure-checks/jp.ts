@@ -321,13 +321,14 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (!best) {
         return { ok: false, message: '항체검사일과 입국일을 확인할 수 없습니다.', offendingPaths: offending }
       }
-      // 입국 가능일 = 채혈일 + 180일.
+      // 입국 가능일 = 채혈일 + 180일. 입국일 < 항체검사일(시간 역순) 케이스도 같은
+      // 메시지로 커버 — earliestKr 가 항체검사일 + 180일이라 항상 정확.
       const earliestKr = formatKoreanDate(addDays(best.titer.date, 180))
-      const message =
-        best.days < 0
-          ? '입국일이 항체검사일보다 빠릅니다. 채혈은 입국 전에 완료되어야 합니다.'
-          : `검사일로부터 180일 후에 일본에 입국할 수 있습니다. ${earliestKr} 이후 일본에 입국할 수 있습니다.`
-      return { ok: false, message, offendingPaths: offending }
+      return {
+        ok: false,
+        message: `검사일로부터 180일 후에 일본에 입국할 수 있습니다. ${earliestKr} 이후 일본에 입국할 수 있습니다.`,
+        offendingPaths: offending,
+      }
     },
   },
   {
