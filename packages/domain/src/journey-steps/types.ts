@@ -95,6 +95,7 @@ export type StepDoneSignal =
 export type StepAppliesWhenSignal =
   | 'has-extra-rabies'             // 광견병 3차 이상 있을 때만
   | 'has-extra-titer'              // 항체검사 2회 이상 있을 때만
+  | 'rabies-extra-applicable'      // 3차+ 입력됨 OR 최근 접종 유효기간이 입국일 전 만료 (= 추가 접종 필요)
 
 // ── 메인 타입 ────────────────────────────────────────────────────────────
 

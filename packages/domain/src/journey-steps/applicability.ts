@@ -6,6 +6,7 @@ import {
   resolveActiveDestination,
   DESTINATION_OVERRIDES,
 } from '../destination-config'
+import { readRabiesEntries, resolveValidUntil } from '../procedure-checks/utils'
 import type { CaseJourneyContext, StepApplicability, StepAppliesWhenSignal, StepDefinition } from './types'
 
 /**
@@ -103,6 +104,25 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
         if (typeof date === 'string' && date.length >= 10) count++
       }
       return count >= 2
+    }
+    case 'rabies-extra-applicable': {
+      // (1) 이미 3차+ 입력 — 기존 has-extra-rabies 와 동일 의미. 입력된 기록을 계속
+      //     표시할 수 있어야 하므로 OR 의 한 쪽.
+      // (2) 추가 접종이 필요한 상황 — 최근 광견병 접종의 면역 유효기간이 입국일 전
+      //     만료. 한일 노선은 entry_date===departure_date 라 entry 우선 + dep 폴백.
+      const rabies = readRabiesEntries(caseRow)
+      if (rabies.length >= 3) return true
+      if (rabies.length === 0) return false
+
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
+      const dep = entry || caseRow.departure_date || ''
+      if (!dep) return false
+
+      const latest = rabies[rabies.length - 1]
+      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      if (!validUntil) return false
+      return validUntil < dep
     }
   }
 }
