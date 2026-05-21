@@ -1,4 +1,13 @@
+import { readRabiesEntries, resolveValidUntil } from '../procedure-checks/utils'
 import type { StepDefinition } from './types'
+
+/** 'YYYY-MM-DD' → 'YYYY년 M월 D일'. 형식이 아니면 원문 반환. */
+function formatKoreanDate(iso: string): string {
+  const parts = iso.split('-')
+  if (parts.length !== 3) return iso
+  const [y, m, d] = parts
+  return `${y}년 ${Number(m)}월 ${Number(d)}일`
+}
 
 /**
  * 펫무브 portal 여정 step 카탈로그.
@@ -139,6 +148,17 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '직전 광견병 백신의 면역 유효기간이 끝나기 전에 재접종합니다.\n\n유효기간이 끝나기 전에 재접종하지 않으면, 일본 입국을 위해 1·2차 접종과 항체검사를 다시 받고 180일을 기다려야 합니다.',
     doneSummary: '광견병 백신을 추가 접종했습니다.',
+    // 직전 광견병 접종의 면역 유효기간(=재접종 마감일)을 카드 본문에 정확한 날짜로 노출.
+    // 추측 ("곧 만료") 대신 명시적 일자. valid_until 미입력이면 date + 1년으로 폴백.
+    situational: (caseRow) => {
+      const rabies = readRabiesEntries(caseRow)
+      if (rabies.length === 0) return undefined
+      const latest = rabies[rabies.length - 1]
+      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      if (!validUntil) return undefined
+      const msg = `${formatKoreanDate(validUntil)}까지 재접종합니다.`
+      return { desc: msg, cardDesc: msg }
+    },
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
     // 3차+ 입력됐거나 최근 접종 유효기간이 입국일+30일 전 만료(추가 접종 필요) 일 때 노출.
     appliesWhen: 'rabies-extra-applicable',
