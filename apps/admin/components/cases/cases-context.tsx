@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import * as Sentry from '@sentry/nextjs'
 import type { CaseRow, FieldDefinition } from '@petmove/domain'
 import { parseDestinations } from '@petmove/domain'
 import type { InspectionConfig } from '@petmove/domain'
@@ -109,6 +110,9 @@ const CasesContext = createContext<CasesContextValue | null>(null)
 // 라우팅은 탭 전환과 동일하게 raw History API 로만 — Next 라우터를 거치지 않아
 // 추가 RSC refetch 가 없다. 목록에서의 선택은 history 항목을 만들지 않던 기존
 // 동작을 유지하기 위해 replaceState 사용.
+// URL 이 어떤 코드 경로에서 ?case= 를 잃거나(예: 미래의 tab 전환·라우터 변경이 query
+// 를 함께 지우는 회귀) Next 라우터가 query 누락 상태로 history 를 갱신할 가능성에 대비
+// 한 두 번째 layer. URL 을 우선 읽고, 없으면 sessionStorage 에서 복원. 41c2953 참고.
 const SELECTED_CASE_STORAGE_KEY = 'petmove:cases:selected-id'
 
 function readCaseIdFromUrl(): string | null {
@@ -187,6 +191,44 @@ export function CasesProvider({
     casesRef.current = cases
   }, [cases])
 
+  // ── 임시 진단(DIAG-REMOUNT) ─────────────────────────────────────────────
+  // "상세→목록 튕김" 의 가설: (dashboard) 레이아웃이 어떤 트리거로 리마운트
+  // → CasesProvider 도 새 인스턴스 → URL/sessionStorage 가 깨져 있으면 첫화면 노출.
+  //
+  // 이 effect 는 CasesProvider 가 짧은 간격(5초 이내) 으로 재마운트되는 경우만
+  // Sentry + console.warn 으로 보고. 정상 사용엔 영향 없음. 재발이 안정적으로
+  // 진단되면 통째로 제거(grep "DIAG-REMOUNT").
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const LAST_MOUNT_KEY = 'petmove:diag:cases-provider-last-mount'
+    const THRESHOLD_MS = 5_000
+    const now = Date.now()
+    let prev: number | null = null
+    try {
+      const raw = window.sessionStorage.getItem(LAST_MOUNT_KEY)
+      if (raw) prev = parseInt(raw, 10)
+    } catch {}
+    try {
+      window.sessionStorage.setItem(LAST_MOUNT_KEY, String(now))
+    } catch {}
+    if (prev && now - prev < THRESHOLD_MS) {
+      const ctx = {
+        gap_ms: now - prev,
+        url: window.location.href,
+        url_case: readCaseIdFromUrl(),
+        storage_case: readStoredCaseId(),
+        initial_cases_count: cases.length,
+      }
+      console.warn('[DIAG-REMOUNT] CasesProvider quick remount', ctx)
+      Sentry.captureMessage('CasesProvider quick remount', {
+        level: 'warning',
+        extra: ctx,
+      })
+    }
+    // mount-only — cases.length 는 진단 컨텍스트 용도라 deps 에 의도적으로 제외
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // URL 의 case 파라미터가 현재 목록에 없으면 단일 조회로 복원한다.
   // 조회 자체가 실패하면 인증 refresh/RLS/네트워크 타이밍일 수 있으므로 URL 을 지우지 않는다.
   // "정상 조회 결과 없음" 이 확인될 때만 stale id 로 보고 정리한다.
@@ -225,6 +267,14 @@ export function CasesProvider({
         return next
       })
     }
+  }, [])
+
+  useEffect(() => {
+    function onPopState() {
+      setSelectedId(readCaseIdFromUrl())
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
   // ───── Realtime: 신청폼 신규 INSERT 구독 ─────

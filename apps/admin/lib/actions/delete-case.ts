@@ -1,7 +1,11 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import { createClient } from '@petmove/auth/server'
+
+// revalidatePath 의도적으로 호출하지 않음 — deleteCase 는 client 가 removeLocalCase 로
+// 반영. restoreCase·permanentDeleteCase 는 trash modal 이 onRestore 에서 window.location
+// .reload() 로 전체 새로고침을 강제하므로 어차피 fresh fetch. RSC refetch 트리거를 피해
+// (dashboard) 레이아웃 리마운트로 인한 상세→목록 튕김 위험을 차단한다.
 
 /** Soft-delete: set deleted_at timestamp */
 export async function deleteCase(
@@ -16,7 +20,6 @@ export async function deleteCase(
     .eq('id', caseId)
 
   if (error) return { ok: false, error: error.message }
-  revalidatePath('/cases')
   return { ok: true }
 }
 
@@ -33,7 +36,6 @@ export async function restoreCase(
     .eq('id', caseId)
 
   if (error) return { ok: false, error: error.message }
-  revalidatePath('/cases')
   return { ok: true }
 }
 
@@ -70,6 +72,5 @@ export async function permanentDeleteCase(
   // 2) cases 행 영구 삭제 — case_history 등은 FK cascade 로 자동 정리.
   const { error } = await supabase.from('cases').delete().eq('id', caseId)
   if (error) return { ok: false, error: error.message }
-  revalidatePath('/cases')
   return { ok: true }
 }

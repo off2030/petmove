@@ -11,7 +11,6 @@ import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { formatMicrochip } from '@petmove/domain'
 import type { CaseRow } from '@petmove/domain'
-import { revalidatePath } from 'next/cache'
 
 /** regular column으로 저장되는 키 (cases 테이블의 실제 컬럼) */
 const REGULAR_COLUMNS = new Set([
@@ -74,6 +73,7 @@ export async function createCaseWithData(
     return { ok: false, error: error.message }
   }
 
-  revalidatePath('/cases')
+  // revalidatePath 미사용 — 클라이언트는 addLocalCase 로 즉시 반영, 타 클라이언트는
+  // Realtime INSERT 채널로 수신. RSC refetch 트리거를 피해 리마운트 위험 차단.
   return { ok: true, case: data as CaseRow }
 }

@@ -1,6 +1,5 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import { createClient } from '@petmove/auth/server'
 import { applyAutoFillRules } from '@/lib/auto-fill-engine'
 import { evaluateAndNotify } from './system-notifications'
@@ -207,7 +206,10 @@ export async function updateCaseField(
   // evaluateAndNotify 내부에서 모든 예외를 swallow 하므로 본 흐름엔 영향 없음.
   await evaluateAndNotify(caseId)
 
-  revalidatePath('/cases')
+  // revalidatePath('/cases') 의도적으로 호출하지 않음 — 클라이언트는 updateLocalCaseField
+  // 로 optimistic update, 타 클라이언트는 Realtime UPDATE 로 동기화. revalidate 는 RSC
+  // refetch 를 트리거해 (dashboard) 레이아웃 재실행 → 그 안의 Promise.all 이 transient
+  // throw 하면 global-error 거쳐 리마운트, 결국 상세→목록 튕김으로 이어지던 원인.
   return autoFilled ? { ok: true, autoFilled } : { ok: true }
 }
 
@@ -271,7 +273,8 @@ export async function undoLastChange(
   // Delete this history entry (consumed)
   await supabase.from('case_history').delete().eq('id', entry.id)
 
-  revalidatePath('/cases')
+  // revalidatePath 미사용 — updateCaseField 와 동일한 사유 (클라이언트가 반환값으로
+  // updateLocalCaseField 호출).
   return { ok: true, key: field_key, storage: field_storage as 'column' | 'data', restoredValue }
 }
 
@@ -371,7 +374,8 @@ export async function restoreToHistoryPoint(
   const ids = entries.map((e) => e.id)
   await supabase.from('case_history').delete().in('id', ids)
 
-  revalidatePath('/cases')
+  // revalidatePath 미사용 — 반환된 restored 배열을 클라이언트가 updateLocalCaseField
+  // 로 일괄 반영.
 
   return {
     ok: true,

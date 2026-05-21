@@ -17,6 +17,35 @@ type ListMode = 'cases' | TodosTabId
 
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
+const LIST_MODE_STORAGE_KEY = 'petmove:cases:list-mode'
+const LIST_MODE_PARAM = 'view'
+
+function isListMode(value: string | null): value is ListMode {
+  return value === 'cases' || TODOS_TABS.some((tab) => tab.id === value)
+}
+
+function readStoredListMode(): ListMode {
+  if (typeof window === 'undefined') return 'cases'
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get(LIST_MODE_PARAM)
+    if (isListMode(fromUrl)) return fromUrl
+    const value = window.sessionStorage.getItem(LIST_MODE_STORAGE_KEY)
+    return isListMode(value) ? value : 'cases'
+  } catch {
+    return 'cases'
+  }
+}
+
+function storeListMode(mode: ListMode) {
+  if (typeof window === 'undefined') return
+  try {
+    window.sessionStorage.setItem(LIST_MODE_STORAGE_KEY, mode)
+  } catch {}
+  const url = new URL(window.location.href)
+  if (mode === 'cases') url.searchParams.delete(LIST_MODE_PARAM)
+  else url.searchParams.set(LIST_MODE_PARAM, mode)
+  window.history.replaceState(window.history.state, '', url)
+}
 
 interface CaseRowItemProps {
   caseRow: CaseRow
@@ -132,14 +161,26 @@ export function CaseList({
   const [visible, setVisible] = useState(INITIAL_VISIBLE)
   const [highlight, setHighlight] = useState(-1)
   const [showTrash, setShowTrash] = useState(false)
-  const [mode, setMode] = useState<ListMode>('cases')
+  const [mode, setModeState] = useState<ListMode>(() => readStoredListMode())
   const isTodosMode = mode !== 'cases'
+  const setMode = useCallback((next: ListMode) => {
+    setModeState(next)
+    storeListMode(next)
+  }, [])
 
   // 펫무브워크 wordmark 클릭 시 항상 목록 모드로 복귀.
   useEffect(() => {
     function onReset() { setMode('cases') }
     window.addEventListener('home-list-reset', onReset)
     return () => window.removeEventListener('home-list-reset', onReset)
+  }, [setMode])
+
+  useEffect(() => {
+    function onPopState() {
+      setModeState(readStoredListMode())
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
   // 안정적인 callback 으로 만들어 CaseRowItem 의 React.memo 가 정상 동작하도록 함.

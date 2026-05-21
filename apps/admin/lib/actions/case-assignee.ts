@@ -6,7 +6,6 @@
  * DB 컬럼은 항상 존재하고 누구나 본인 조직 케이스의 담당자를 변경할 수 있음.
  */
 
-import { revalidatePath } from 'next/cache'
 import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 
@@ -37,7 +36,8 @@ export async function setCaseAssignee(
       .eq('org_id', orgId)
     if (error) return { ok: false, error: error.message }
 
-    revalidatePath('/cases')
+    // revalidatePath 미사용 — 클라이언트가 AssigneePicker onChanged 로 updateLocalCaseField
+    // 즉시 반영, 타 클라이언트는 Realtime UPDATE 채널로 동기화.
     return { ok: true, value: null }
   } catch (e) {
     return { ok: false, error: (e as Error).message }

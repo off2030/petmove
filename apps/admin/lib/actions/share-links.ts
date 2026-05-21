@@ -13,7 +13,6 @@
  * 호스팅. portal 이 service role 로 case·share-link 직접 조회/수정.
  */
 
-import { revalidatePath } from 'next/cache'
 import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import type { ShareLinkRow } from '@petmove/domain'
@@ -74,7 +73,8 @@ export async function createShareLink(
       .single()
     if (error) return { ok: false, error: error.message }
 
-    revalidatePath('/cases')
+    // revalidatePath 미사용 — share-link 목록은 ShareLinkDialog 가 listShareLinksForCase
+    // 로 매번 직접 조회. layout 의 initialCases 와 무관해 RSC refetch 가 필요 없다.
     return {
       ok: true,
       value: {
@@ -114,7 +114,8 @@ export async function revokeShareLink(id: string): Promise<Result<null>> {
       .eq('id', id)
       .is('revoked_at', null)
     if (error) return { ok: false, error: error.message }
-    revalidatePath('/cases')
+    // revalidatePath 미사용 — ShareLinkDialog 가 dialog open 마다 listShareLinksForCase
+    // 로 fresh 조회.
     return { ok: true, value: null }
   } catch (e) {
     return { ok: false, error: (e as Error).message }

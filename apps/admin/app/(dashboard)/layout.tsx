@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import { createClient } from '@petmove/auth/server'
 import type { FieldDefinition } from '@petmove/domain'
 import { CasesProvider } from '@/components/cases/cases-context'
@@ -65,26 +66,41 @@ async function fetchUserContext(): Promise<{
   }
 }
 
+// 임시 진단(DIAG-REMOUNT) — 어느 fetch 가 throw 했는지 라벨로 Sentry 에 남김.
+// "상세→목록 튕김" 추적: Promise.all 안의 한 promise 만 reject 해도 레이아웃이 throw →
+// global-error → 리마운트. stack 만으론 라벨이 모호해 명시 tag 부착.
+// 재발이 안정적으로 진단되면 wrapper 제거하고 원래 호출로 복원.
+async function traceLayoutFetch<T>(label: string, p: Promise<T>): Promise<T> {
+  try {
+    return await p
+  } catch (err) {
+    Sentry.captureException(err, {
+      tags: { layout_fetch: label, diag: 'remount' },
+    })
+    throw err
+  }
+}
+
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   const [initialCases, fieldDefs, importReportCountries, importReportButtonCountries, inspectionConfig, certConfig, userCtx, vaccineData, vaccineDefaults, calculatorItems, settingsBootstrap, orgId, impersonation, externalLinks, convsR] = await Promise.all([
-    listActiveOrgCases(),
-    fetchFieldDefs(),
-    loadImportReportCountries(),
-    loadImportReportButtonCountries(),
-    loadInspectionConfig(),
-    loadCertConfig(),
-    fetchUserContext(),
-    getOrgVaccineData(),
-    getOrgVaccineDefaults(),
-    getCalculatorItems(),
+    traceLayoutFetch('listActiveOrgCases', listActiveOrgCases()),
+    traceLayoutFetch('fetchFieldDefs', fetchFieldDefs()),
+    traceLayoutFetch('loadImportReportCountries', loadImportReportCountries()),
+    traceLayoutFetch('loadImportReportButtonCountries', loadImportReportButtonCountries()),
+    traceLayoutFetch('loadInspectionConfig', loadInspectionConfig()),
+    traceLayoutFetch('loadCertConfig', loadCertConfig()),
+    traceLayoutFetch('fetchUserContext', fetchUserContext()),
+    traceLayoutFetch('getOrgVaccineData', getOrgVaccineData()),
+    traceLayoutFetch('getOrgVaccineDefaults', getOrgVaccineDefaults()),
+    traceLayoutFetch('getCalculatorItems', getCalculatorItems()),
     getSettingsBootstrap().catch(() => null),
     getActiveOrgId().catch(() => null),
     getImpersonationInfo().catch(() => null),
-    loadExternalLinks(),
+    traceLayoutFetch('loadExternalLinks', loadExternalLinks()),
     listMyConversations().catch(() => ({ ok: false as const, error: 'failed' })),
   ])
   const initialConversations: ConversationListItem[] = convsR.ok ? convsR.value : []
