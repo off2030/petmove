@@ -33,9 +33,11 @@ const INSPECTION_STATUS_OPTIONS = [
   { value: 'done', label: '완료' },
 ]
 
+// 서류 탭 준비상태 — 대기/완료 2지. (export_doc_status 전용. 기존 'in_progress' 값은
+// 운영 DB 에 0건이라 옵션 제거. 다른 column 은 INSPECTION_STATUS_OPTIONS /
+// STATUS_WITH_NA 를 별도로 씀.)
 const STATUS_OPTIONS = [
-  { value: 'not_started', label: '시작 전' },
-  { value: 'in_progress', label: '진행 중' },
+  { value: 'not_started', label: '대기' },
   { value: 'done', label: '완료' },
 ]
 
