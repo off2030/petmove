@@ -150,16 +150,25 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     doneSummary: '광견병 백신을 추가 접종했습니다.',
     // 미래 만료 대비 reminder — 본 흐름의 다음 단계(사전 신고 등)를 다음 할 일에서 가리지 않는다.
     advisoryOnly: true,
-    // 직전 광견병 접종의 면역 유효기간(=재접종 마감일)을 카드 본문에 노출.
-    // 만료 임박을 알리되, 추측에 그치지 않게 명시적 일자로 마감일을 못 박는다.
-    // valid_until 미입력이면 date + 1년으로 폴백.
+    // 이 step 의 트리거는 '오늘 기준 임박'이 아니라 면역 유효기간이 입국 일정 대비
+    // 끝나는 것 (applicability: validUntil < 입국일 + 30일). 그래서 문구도 입국일
+    // 기준으로 분기한다 — 입국일 전 만료(체인 끊김) / 입국 직후 만료(여유 부족).
+    // valid_until 미입력 시 date + 1년 폴백. dep 미입력은 3차+ done 케이스뿐 → undefined.
     situational: (caseRow) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return undefined
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return undefined
-      const msg = `광견병 백신 유효기간이 곧 만료됩니다. ${formatKoreanDate(validUntil)} 전에 재접종하세요.`
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
+      const dep = entry || caseRow.departure_date || ''
+      if (!dep) return undefined
+      const deadline = `${formatKoreanDate(validUntil)} 전에 재접종하세요.`
+      const msg =
+        validUntil < dep
+          ? `광견병 백신 유효기간이 일본 입국일 전에 만료됩니다. ${deadline}`
+          : `광견병 백신 유효기간이 일본 입국 직후 만료됩니다. ${deadline}`
       return { desc: msg, cardDesc: msg }
     },
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
