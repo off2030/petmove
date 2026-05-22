@@ -150,12 +150,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     doneSummary: '광견병 백신을 추가 접종했습니다.',
     // 미래 만료 대비 reminder — 본 흐름의 다음 단계(사전 신고 등)를 다음 할 일에서 가리지 않는다.
     advisoryOnly: true,
-    // 트리거는 '오늘 기준 임박'이 아니라 면역 유효기간이 입국 일정 대비 끝나는 것.
-    // 조건 1(입국 후 한 달 이내 만료) / 조건 2(입국일 전 만료) 판정은 입국일을 알아야
-    // 가능하므로, 문구는 보호자가 직접 입력한 entry_date 기준으로만 분기한다.
-    // departure_date 폴백 안 씀 — 보호자가 안 넣은 admin/동기화 값으로 '입국일 전/후'를
-    // 단정하면 오해 소지. entry_date 미입력이면 조건 없이 만료일만 알린다.
-    // valid_until 미입력 시 date + 1년 폴백.
+    // 상황별 문구는 entry_date 기준 2갈래:
+    //  - 입국일 미입력 → 만료일 + '만료 전 재접종' (만료 임박 체크와 동일 문구).
+    //  - 입국일 입력 & 유효기간이 입국일 전 만료 → '입국일 전 만료' 경고.
+    // 그 외(입국일 후 만료)는 상황별 문구 없음 — 고정 description 이 노출된다.
+    // departure_date 폴백 안 씀(보호자 미입력 잔여값으로 단정 X). valid_until 미입력 시 date + 1년 폴백.
     situational: (caseRow) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return undefined
@@ -165,16 +164,17 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
       if (!entry) {
-        // 입국일 미입력 — 조건 1/2 판정 불가. 만료 사실만 알리고 항공권 step 으로 유도.
-        const msg = `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 입국 일정을 입력하면 재접종 시기를 안내합니다.`
+        // 입국일 미입력 — 만료일 + 재접종 안내.
+        const msg = `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전 재접종을 하세요.`
         return { desc: msg, cardDesc: msg }
       }
-      const deadline = `${formatKoreanDate(validUntil)} 전에 재접종하세요.`
-      const msg =
-        validUntil < entry
-          ? `광견병 백신 유효기간이 일본 입국일 전에 만료됩니다. ${deadline}`
-          : `광견병 백신 유효기간이 일본 입국 후 한 달 이내에 만료됩니다. ${deadline}`
-      return { desc: msg, cardDesc: msg }
+      // 입국일 전 만료 — 입국 전 재접종 필수.
+      if (validUntil < entry) {
+        const msg = `광견병 백신 유효기간이 일본 입국일 전에 만료됩니다. ${formatKoreanDate(validUntil)} 전에 재접종하세요.`
+        return { desc: msg, cardDesc: msg }
+      }
+      // 입국일 후 만료 — 상황별 문구 없음 (고정 description 노출).
+      return undefined
     },
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
     // 3차+ 입력됐거나 최근 접종 유효기간이 입국일+30일 전 만료(추가 접종 필요) 일 때 노출.
