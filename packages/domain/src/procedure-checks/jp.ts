@@ -407,7 +407,10 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
       const dep = entry || caseRow.departure_date || ''
       const rabies = readRabiesEntries(caseRow)
-      if (!dep || rabies.length === 0) return SKIP
+      // 항체검사 입력 전에는 입국 시기가 확정되지 않아 평가 불가 — 같은 step(항공권 구매)의
+      // jp.entry-* 체크와 동일하게 titer 입력 후에만 평가한다. 그 전의 백신 만료는 항공권
+      // 구매 step 이 아니라 '추가 백신' advisory step 이 재접종으로 안내한다.
+      if (!dep || rabies.length === 0 || readTiterEntries(caseRow).length === 0) return SKIP
 
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)

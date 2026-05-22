@@ -210,10 +210,12 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     // (예: 마이크로칩 한 필드만 채워진 상태 → 빠진 쪽 입력 요청.)
     const sit = step.situational?.(caseRow)
     // 전체 일정 리스트 보조 문구.
-    //  - situational.desc 가 있으면 우선.
-    //  - 미완료: description 첫 문장(현재형 안내문).
-    //  - 완료: step.doneSummary(과거형 narration). 미정의면 summary 로 폴백.
-    const desc = sit?.desc ?? (done ? (step.doneSummary ?? summary) : summary)
+    //  - 완료: step.doneSummary(과거형 narration)가 최우선 — situational 의 미래형
+    //    리마인더(예: '…까지 재접종합니다')가 완료 표시와 모순되지 않도록.
+    //  - 미완료: situational.desc 가 있으면 우선, 없으면 description 첫 문장(현재형 안내문).
+    const desc = done
+      ? (step.doneSummary ?? sit?.desc ?? summary)
+      : (sit?.desc ?? summary)
     // 다음 할 일 카드 본문 — 날짜(earliest/deadline)가 있으면 step.cardLine
     // (미지정 시 설명 첫 문장)에 날짜 구문을 붙이고, 날짜가 없으면 설명 첫 문장만.
     // earliest("이후")가 deadline("까지"/window 구간)보다 우선: 보호자가 먼저 알아야 할 제약.

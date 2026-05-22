@@ -152,7 +152,9 @@ export interface StepDefinition {
    * 동적으로 갈아끼우는 훅. 예: 마이크로칩 번호만 입력되고 시술일이 비면
    * '마이크로칩 삽입 날짜를 입력해주세요.' 로 안내.
    *
-   * 우선순위: situational 반환값 > doneSummary(완료 시) > description 첫 문장.
+   * desc 우선순위: 완료 시 doneSummary > situational.desc > description 첫 문장,
+   * 미완료 시 situational.desc > description 첫 문장. (완료된 step 은 과거형 narration
+   * 이 미래형 situational 리마인더보다 우선 — 완료 표시와 모순 방지.)
    * 두 필드 모두 선택 — undefined 면 해당 자리만 기본 로직으로 폴백.
    */
   situational?: (caseRow: CaseRow) => { desc?: string; cardDesc?: string } | undefined
