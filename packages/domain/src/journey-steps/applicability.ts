@@ -116,7 +116,10 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
       //     남아 있어도 그걸로 step 을 띄우지 않는다. entry_date 미입력이면 (2) 만 적용.
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length >= 3) return true
-      if (rabies.length === 0) return false
+      // (2)(3) 은 1·2차 프라임 시리즈가 끝난 뒤에만 의미 — 1차만 입력된 상태면
+      // 다음 단계는 2차 백신이지 추가 백신이 아니다 (1차 유효기간 만료/임박
+      // 안내는 2차 백신 step 담당). rabies 2개 미만이면 미노출.
+      if (rabies.length < 2) return false
 
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
