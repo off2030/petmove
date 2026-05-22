@@ -12,7 +12,7 @@ export const COMMON_CHECKS: ProcedureCheck[] = [
     id: 'common.microchip-after-birth',
     country: 'all',
     category: '마이크로칩',
-    title: '마이크로칩 시술일은 생년월일 이후',
+    title: '마이크로칩 시술 타이밍',
     description: '마이크로칩 시술일은 동물의 생년월일과 같거나 그 이후여야 함.',
     severity: 'blocker',
     addedAt: '2026-05-16',
@@ -26,8 +26,7 @@ export const COMMON_CHECKS: ProcedureCheck[] = [
       if (implant < birth) {
         return {
           ok: false,
-          message: `마이크로칩 시술일(${implant})이 생년월일(${birth})보다 빠릅니다.`,
-          fixHint: '마이크로칩은 출생 이후에만 삽입할 수 있습니다. 시술일 또는 생년월일을 확인하세요.',
+          message: `마이크로칩 시술일(${implant})이 생년월일(${birth})보다 빠릅니다. 시술일 혹은 생년월일을 확인하세요.`,
           offendingPaths: ['microchip_implant_date', 'birth_date'],
         }
       }
