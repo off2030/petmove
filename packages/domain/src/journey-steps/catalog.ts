@@ -152,7 +152,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     advisoryOnly: true,
     // 이 step 의 트리거는 '오늘 기준 임박'이 아니라 면역 유효기간이 입국 일정 대비
     // 끝나는 것 (applicability: validUntil < 입국일 + 30일). 그래서 문구도 입국일
-    // 기준으로 분기한다 — 입국일 전 만료(체인 끊김) / 입국 직후 만료(여유 부족).
+    // 기준으로 분기한다 — 입국일 전 만료(체인 끊김) / 입국 후 한 달 이내 만료(여유 부족).
     // valid_until 미입력 시 date + 1년 폴백. dep 미입력은 3차+ done 케이스뿐 → undefined.
     situational: (caseRow) => {
       const rabies = readRabiesEntries(caseRow)
@@ -168,7 +168,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const msg =
         validUntil < dep
           ? `광견병 백신 유효기간이 일본 입국일 전에 만료됩니다. ${deadline}`
-          : `광견병 백신 유효기간이 일본 입국 직후 만료됩니다. ${deadline}`
+          : `광견병 백신 유효기간이 일본 입국 후 한 달 이내에 만료됩니다. ${deadline}`
       return { desc: msg, cardDesc: msg }
     },
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
