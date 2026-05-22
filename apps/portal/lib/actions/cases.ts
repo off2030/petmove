@@ -15,7 +15,12 @@ import { cookies } from 'next/headers'
 import { createAdminClient } from '@petmove/auth'
 import { verifyPreviewToken } from '@petmove/auth/preview-token'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
-import { emptyVaccineProductsData, type CaseRow, type VaccineProductsData } from '@petmove/domain'
+import {
+  emptyVaccineProductsData,
+  matchesDestinationKey,
+  type CaseRow,
+  type VaccineProductsData,
+} from '@petmove/domain'
 import { AVATAR_COLOR_IDS, AVATAR_EMOJIS, type AvatarColorId } from '@/lib/avatar'
 import { assertCaseAccess, type Result } from './_shared'
 
@@ -1047,6 +1052,14 @@ export async function updateCaseInfoFields(
       const v = (input[key] ?? '').trim()
       if (v) nextData[key] = v
       else delete nextData[key]
+    }
+
+    // 일본: data.entry_date(입국일) = departure_date(출국일). 항공권 step·매직링크의
+    // 정방향(entry_date→departure_date) 동기화와 대칭 — departure_date 가 이 경로로
+    // 들어오면 entry_date 도 맞춘다. 안 그러면 둘이 어긋나 추가 백신/검사 step 의
+    // 입국일 판정이 깨진다. 비일본은 입국일≠출국일이라 동기화하지 않는다.
+    if (matchesDestinationKey(input.destination, 'japan') && input.departure_date) {
+      nextData.entry_date = input.departure_date
     }
 
     if (weightNum === null) delete nextData.weight
