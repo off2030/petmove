@@ -41,7 +41,8 @@ export interface JourneyStage {
   /**
    * advisoryOnly step (추가 백신·추가 검사 등 미래 만료 대비 reminder) 여부.
    * 미완료(upcoming) 상태일 때 본 흐름의 다음 단계는 못 가리되, 일정 row 에서는
-   * '주의' 톤으로 표시해 보호자가 인지하도록 한다. (시각만 주의, 의미는 deferrable.)
+   * '안내' 톤으로 표시해 보호자가 인지하도록 한다. (deferrable 한 미래 대비라
+   * '주의'(실제 문제)가 아닌 차분한 안내 톤.)
    */
   advisory?: boolean
 }

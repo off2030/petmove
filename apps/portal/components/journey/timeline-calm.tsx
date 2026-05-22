@@ -36,21 +36,19 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
     cardHero: 'radial-gradient(140% 100% at 80% 18%, #E8DECC 0%, #DCD2BD 45%, #CBC1AB 100%)',
   } as const
 
-  // 주의가 발생한 stage 들 — 배너에 항목명을 모두 나열하고, 링크는 첫 항목으로.
-  // advisory(추가 백신·추가 검사)도 미완료면 동일하게 주의 톤으로 묶는다 — 일정 row
-  // 시각(hasWarn)과 일치시킨다.
-  const warnedStages = stages.filter(
-    (s) => (s.failedChecks ?? 0) > 0 || (!!s.advisory && s.state !== 'done'),
-  )
+  // 주의가 발생한 stage 들 — 실패한 비-info 체크(실제 문제)가 있는 경우만.
+  const warnedStages = stages.filter((s) => (s.failedChecks ?? 0) > 0)
   const firstWarnedStage = warnedStages[0] ?? null
-  // '안내'(severity 'info') 가 있는 stage 들 — 단, 이미 '주의'로 묶인 stage 는 제외해
-  // 한 stage 가 주의·안내 배너에 중복으로 뜨지 않게 한다 (일정 row 의 hasWarn 우선 규칙과 일치).
+  // 안내 stage 들 — info 체크가 있거나, advisory step(추가 백신·추가 검사)이 미완료인 경우.
+  // advisory 는 면역이 아직 유효한 '미래 만료 대비' reminder — 문제(주의)가 아니라
+  // 차분한 안내 톤으로 묶는다. 이미 주의로 잡힌 stage 는 제외(한 stage = 한 배너).
   const warnedIds = new Set(warnedStages.map((s) => s.id))
   const infoStages = stages.filter(
-    (s) => (s.infoChecks ?? 0) > 0 && !warnedIds.has(s.id),
+    (s) =>
+      !warnedIds.has(s.id) &&
+      ((s.infoChecks ?? 0) > 0 || (!!s.advisory && s.state !== 'done')),
   )
   const firstInfoStage = infoStages[0] ?? null
-  const infoCount = infoStages.reduce((n, s) => n + (s.infoChecks ?? 0), 0)
 
   // 전체 일정을 물리적 위치 기준 구간으로 나눈다 — 한국(출국 준비)·일본·한국(귀국).
   // 'departure'(출국·도착) 앞에서 일본 구간이, 'kr-import-quarantine' 앞에서 한국 귀국
@@ -128,9 +126,9 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
     const isDone = s.state === 'done'
     const isCurr = s.state === 'current'
     // advisory(추가 백신·추가 검사) 가 미완료면 본 흐름의 다음 단계는 못 가리지만 미래
-    // 만료 대비용 의무이므로 시각적으로는 주의 톤으로 표시 — 보호자가 행동 인지.
-    const hasWarn = (s.failedChecks ?? 0) > 0 || (!!s.advisory && !isDone)
-    const hasInfo = (s.infoChecks ?? 0) > 0
+    // 만료 대비 reminder 이므로 안내 톤으로 표시 — 보호자가 인지하되 '문제'는 아니다.
+    const hasWarn = (s.failedChecks ?? 0) > 0
+    const hasInfo = (s.infoChecks ?? 0) > 0 || (!!s.advisory && !isDone)
     return (
       <Link
         key={s.id}
@@ -322,7 +320,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
         )}
 
         {/* 안내 — 오류는 아니지만 미리 알려둘 사항. 주의보다 차분한 중립 톤. */}
-        {infoCount > 0 && firstInfoStage && (
+        {infoStages.length > 0 && firstInfoStage && (
           <Link
             href={`/cases/${caseId}/journey/${firstInfoStage.id}`}
             className="pm-pressable"
@@ -346,7 +344,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               <line x1="12" y1="16" x2="12" y2="12" />
               <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
-            <span>안내 {infoCount}건 — {infoStages.map((s) => s.label).join(', ')}</span>
+            <span>안내 {infoStages.length}건 — {infoStages.map((s) => s.label).join(', ')}</span>
           </Link>
         )}
 
