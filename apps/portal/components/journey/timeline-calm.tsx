@@ -12,7 +12,7 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
  * 그것을 비교적 충실히 옮긴 것.
  */
 export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: string }) {
-  const { stages, trip, pet, nextStages, totalInfoChecks } = data
+  const { stages, trip, pet, nextStages } = data
   const total = stages.length
   const done = stages.filter((s) => s.state === 'done').length
   const pct = done / total
@@ -43,9 +43,14 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
     (s) => (s.failedChecks ?? 0) > 0 || (!!s.advisory && s.state !== 'done'),
   )
   const firstWarnedStage = warnedStages[0] ?? null
-  // '안내'(severity 'info') 가 있는 stage 들 — 주의와 별개의 차분한 배너.
-  const infoStages = stages.filter((s) => (s.infoChecks ?? 0) > 0)
+  // '안내'(severity 'info') 가 있는 stage 들 — 단, 이미 '주의'로 묶인 stage 는 제외해
+  // 한 stage 가 주의·안내 배너에 중복으로 뜨지 않게 한다 (일정 row 의 hasWarn 우선 규칙과 일치).
+  const warnedIds = new Set(warnedStages.map((s) => s.id))
+  const infoStages = stages.filter(
+    (s) => (s.infoChecks ?? 0) > 0 && !warnedIds.has(s.id),
+  )
   const firstInfoStage = infoStages[0] ?? null
+  const infoCount = infoStages.reduce((n, s) => n + (s.infoChecks ?? 0), 0)
 
   // 전체 일정을 물리적 위치 기준 구간으로 나눈다 — 한국(출국 준비)·일본·한국(귀국).
   // 'departure'(출국·도착) 앞에서 일본 구간이, 'kr-import-quarantine' 앞에서 한국 귀국
@@ -317,7 +322,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
         )}
 
         {/* 안내 — 오류는 아니지만 미리 알려둘 사항. 주의보다 차분한 중립 톤. */}
-        {totalInfoChecks > 0 && firstInfoStage && (
+        {infoCount > 0 && firstInfoStage && (
           <Link
             href={`/cases/${caseId}/journey/${firstInfoStage.id}`}
             className="pm-pressable"
@@ -341,7 +346,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               <line x1="12" y1="16" x2="12" y2="12" />
               <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
-            <span>안내 {totalInfoChecks}건 — {infoStages.map((s) => s.label).join(', ')}</span>
+            <span>안내 {infoCount}건 — {infoStages.map((s) => s.label).join(', ')}</span>
           </Link>
         )}
 
