@@ -156,7 +156,7 @@ export function CaseList({
   onAddFromFiles?: (files: File[]) => void
   busy?: boolean
 }) {
-  const { cases, selectedId, selectCase, newCaseIds, searchQuery: query, setSearchQuery: setQuery } = useCases()
+  const { cases, selectedId, selectCase, newCaseIds, searchQuery: query, setSearchQuery: setQuery, setNavCaseIds } = useCases()
 
   const [visible, setVisible] = useState(INITIAL_VISIBLE)
   const [highlight, setHighlight] = useState(-1)
@@ -197,6 +197,13 @@ export function CaseList({
   const filtered = useMemo(() => filterCases(cases, query), [cases, query])
 
   const visibleCases = filtered.slice(0, visible)
+
+  // 고객 목록 모드일 때 상세 좌우 네비게이션 순서를 이 목록으로 publish.
+  // 검사/신고/서류 모드에서는 embedded TodosApp 이 자신의 순서를 publish 한다.
+  useEffect(() => {
+    if (mode !== 'cases') return
+    setNavCaseIds(filtered.map((c) => c.id))
+  }, [mode, filtered, setNavCaseIds])
 
   // ── File drop / paste / attach ─────────────────────────────────
   const rootRef = useRef<HTMLDivElement>(null)

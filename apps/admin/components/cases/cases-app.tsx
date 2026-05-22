@@ -201,25 +201,27 @@ function ImportReportToggle({
 }
 
 function Inner() {
-  const { cases, selectedId, selectCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination, certConfig, caseAssigneeEnabled, orgMembers, searchQuery } = useCases()
+  const { cases, selectedId, selectCase, addLocalCase, removeLocalCase, updateLocalCaseField, activeDestination, certConfig, caseAssigneeEnabled, orgMembers, searchQuery, navCaseIds } = useCases()
   const confirm = useConfirm()
   const selectedCase = useMemo(
     () => cases.find((c) => c.id === selectedId) ?? null,
     [cases, selectedId],
   )
-  // 좌우 화살표는 현재 검색 결과 안에서만 순회 — 검색어가 비면 전체 목록과 동일.
-  const filteredCases = useMemo(
-    () => filterCases(cases, searchQuery),
-    [cases, searchQuery],
-  )
+  // 좌우 화살표는 현재 보고 있는 목록 안에서만 순회 — 고객 목록이면 검색 결과,
+  // 검사/신고/서류 탭이면 그 탭의 정렬·필터 결과(navCaseIds 로 context 공유).
+  // navCaseIds 가 아직 비어 있으면 검색 결과로 폴백.
   const { prevCase, nextCase } = useMemo(() => {
     if (!selectedCase) return { prevCase: null as CaseRow | null, nextCase: null as CaseRow | null }
-    const idx = filteredCases.findIndex((c) => c.id === selectedCase.id)
+    const order = navCaseIds.length > 0 ? navCaseIds : filterCases(cases, searchQuery).map((c) => c.id)
+    const idx = order.indexOf(selectedCase.id)
+    if (idx < 0) return { prevCase: null as CaseRow | null, nextCase: null as CaseRow | null }
+    const prevId = idx > 0 ? order[idx - 1] : null
+    const nextId = idx < order.length - 1 ? order[idx + 1] : null
     return {
-      prevCase: idx > 0 ? filteredCases[idx - 1] : null,
-      nextCase: idx >= 0 && idx < filteredCases.length - 1 ? filteredCases[idx + 1] : null,
+      prevCase: prevId ? cases.find((c) => c.id === prevId) ?? null : null,
+      nextCase: nextId ? cases.find((c) => c.id === nextId) ?? null : null,
     }
-  }, [filteredCases, selectedCase])
+  }, [navCaseIds, cases, searchQuery, selectedCase])
   const detailScrollRef = useRef<HTMLDivElement>(null)
   const [multiForm, setMultiForm] = useState<{ caseId: string; formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC' } | null>(null)
   const [transferOpen, setTransferOpen] = useState<{ caseId: string; label: string } | null>(null)

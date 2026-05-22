@@ -579,7 +579,7 @@ export function TodosApp({
   tab?: TabId
   query?: string
 } = {}) {
-  const { cases, updateLocalCaseField, importReportCountries, inspectionConfig, todoColumnsConfig } = useCases()
+  const { cases, updateLocalCaseField, importReportCountries, inspectionConfig, todoColumnsConfig, setNavCaseIds } = useCases()
   const [internalTab, setInternalTab] = useState<TabId>('inspection')
   const [internalQuery, setInternalQuery] = useState('')
   const activeTab = forcedTab ?? internalTab
@@ -682,6 +682,27 @@ export function TodosApp({
       }),
     [cases, q, inspectionConfig],
   )
+
+  // 상세 좌우 화살표가 순회할 순서를 현재 탭의 정렬·필터 결과로 publish.
+  // 검사 탭은 한 케이스가 항체 record 수만큼 여러 행이 될 수 있어 id 중복 제거.
+  const navCaseIds = useMemo(() => {
+    if (activeTab === 'inspection') {
+      const seen = new Set<string>()
+      const out: string[] = []
+      for (const r of inspectionRows) {
+        if (seen.has(r.caseRow.id)) continue
+        seen.add(r.caseRow.id)
+        out.push(r.caseRow.id)
+      }
+      return out
+    }
+    return filteredCases.map((c) => c.id)
+  }, [activeTab, inspectionRows, filteredCases])
+
+  useEffect(() => {
+    if (!embedded) return
+    setNavCaseIds(navCaseIds)
+  }, [embedded, navCaseIds, setNavCaseIds])
 
   const right = (
     <>
