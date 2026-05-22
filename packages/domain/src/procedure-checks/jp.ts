@@ -458,7 +458,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 일본 입국 전 추가 접종을 준비하세요.`,
+        message: `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전 재접종을 하세요.`,
         offendingPaths: [`rabies_dates[${latest.originalIndex}].date`],
       }
     },
@@ -493,7 +493,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: `광견병 항체검사 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 일본 입국 전 추가 검사를 준비하세요.`,
+        message: `광견병 항체검사 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전 재검사를 하세요.`,
         offendingPaths: offending,
       }
     },
