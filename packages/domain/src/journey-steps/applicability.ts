@@ -111,7 +111,9 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
       // (2) 직전 광견병 접종의 면역 유효기간 만료 30일 전 — 오늘 기준 사전 안내.
       //     일본 입국일과 무관하게 '곧 만료되니 재접종 준비' 를 알린다.
       // (3) 면역 유효기간이 일본 입국일 전에 만료 — 입국 전 재접종 필수.
-      //     한일 노선은 entry_date===departure_date 라 entry 우선 + dep 폴백.
+      //     입국일은 보호자가 입력한 entry_date 만 본다 — departure_date 폴백 안 씀.
+      //     항공권 step 미완료 등으로 보호자가 입력하지 않은 departure_date 잔여값이
+      //     남아 있어도 그걸로 step 을 띄우지 않는다. entry_date 미입력이면 (2) 만 적용.
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length >= 3) return true
       if (rabies.length === 0) return false
@@ -126,14 +128,14 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
       // (3) 입국일 전 만료.
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
-      const dep = entry || caseRow.departure_date || ''
-      return !!dep && validUntil < dep
+      return !!entry && validUntil < entry
     }
     case 'titer-extra-applicable': {
       // 동일 패턴 (rabies-extra-applicable):
       // (1) 이미 2회+ 항체검사 입력됨
       // (2) 항체검사 유효기간(채혈일 + 2년) 만료 30일 전 — 오늘 기준 사전 안내.
       // (3) 항체검사 유효기간이 일본 입국일 전에 만료 — 재검사 필요.
+      //     입국일은 entry_date 만 본다 (departure_date 폴백 안 씀) — rabies 와 동일.
       const titers = readTiterEntries(caseRow)
       if (titers.length >= 2) return true
       if (titers.length === 0) return false
@@ -149,8 +151,7 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
       // (3) 입국일 전 만료.
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
-      const dep = entry || caseRow.departure_date || ''
-      return !!dep && validUntil < dep
+      return !!entry && validUntil < entry
     }
   }
 }

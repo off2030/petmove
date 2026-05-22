@@ -9,7 +9,7 @@
 
 import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
-import { formatMicrochip, matchesDestinationKey } from '@petmove/domain'
+import { formatMicrochip } from '@petmove/domain'
 import type { CaseRow } from '@petmove/domain'
 
 /** regular column으로 저장되는 키 (cases 테이블의 실제 컬럼) */
@@ -51,20 +51,6 @@ export async function createCaseWithData(
   for (const [k, v] of Object.entries(seed.data ?? {})) {
     if (v === null || v === undefined || v === '') continue
     cleanData[k] = v
-  }
-
-  // 일본: data.entry_date(입국일) = departure_date(출국일). 포털 동기화 경로와 대칭 —
-  // departure_date 가 시드에 들어오면 entry_date 도 맞춰 desync 를 막는다.
-  // 비일본은 입국일≠출국일이라 동기화하지 않는다.
-  if (
-    typeof cleanColumn.departure_date === 'string' &&
-    !cleanData.entry_date &&
-    matchesDestinationKey(
-      typeof cleanColumn.destination === 'string' ? cleanColumn.destination : '',
-      'japan',
-    )
-  ) {
-    cleanData.entry_date = cleanColumn.departure_date
   }
 
   const insertRow = {
