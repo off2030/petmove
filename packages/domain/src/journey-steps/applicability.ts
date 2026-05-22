@@ -6,7 +6,7 @@ import {
   resolveActiveDestination,
   DESTINATION_OVERRIDES,
 } from '../destination-config'
-import { addDays, addYears, readRabiesEntries, readTiterEntries, resolveValidUntil } from '../procedure-checks/utils'
+import { addDays, addYears, readRabiesEntries, readTiterEntries, resolveValidUntil, todayUtc } from '../procedure-checks/utils'
 import type { CaseJourneyContext, StepApplicability, StepAppliesWhenSignal, StepDefinition } from './types'
 
 /**
@@ -108,43 +108,49 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
     case 'rabies-extra-applicable': {
       // (1) 이미 3차+ 입력 — 기존 has-extra-rabies 와 동일 의미. 입력된 기록을 계속
       //     표시할 수 있어야 하므로 OR 의 한 쪽.
-      // (2) 추가 접종이 곧 필요한 상황 — 최근 광견병 접종의 면역 유효기간이
-      //     입국일 + 30일 이전. 즉 만료된 케이스 + 입국일 30일 안에 만료되는
-      //     케이스 모두 포함 (사전 준비 카드 노출). 한일 노선은
-      //     entry_date===departure_date 라 entry 우선 + dep 폴백.
+      // (2) 직전 광견병 접종의 면역 유효기간 만료 30일 전 — 오늘 기준 사전 안내.
+      //     일본 입국일과 무관하게 '곧 만료되니 재접종 준비' 를 알린다.
+      // (3) 면역 유효기간이 일본 입국일 전에 만료 — 입국 전 재접종 필수.
+      //     한일 노선은 entry_date===departure_date 라 entry 우선 + dep 폴백.
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length >= 3) return true
       if (rabies.length === 0) return false
 
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
-      const dep = entry || caseRow.departure_date || ''
-      if (!dep) return false
-
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return false
-      const threshold = addDays(dep, 30)
-      return !!threshold && validUntil < threshold
+
+      // (2) 만료 30일 전 (오늘 기준).
+      if (validUntil < addDays(todayUtc(), 30)) return true
+
+      // (3) 입국일 전 만료.
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
+      const dep = entry || caseRow.departure_date || ''
+      return !!dep && validUntil < dep
     }
     case 'titer-extra-applicable': {
       // 동일 패턴 (rabies-extra-applicable):
       // (1) 이미 2회+ 항체검사 입력됨
-      // (2) 1회 검사 후 입국일 + 30일 안에 검사일 + 2년이 만료 — 재검사 필요
+      // (2) 항체검사 유효기간(채혈일 + 2년) 만료 30일 전 — 오늘 기준 사전 안내.
+      // (3) 항체검사 유효기간이 일본 입국일 전에 만료 — 재검사 필요.
       const titers = readTiterEntries(caseRow)
       if (titers.length >= 2) return true
       if (titers.length === 0) return false
 
+      // 가장 최근(=date 기준 최신) 항체검사의 유효기간(채혈일 + 2년).
+      const latest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
+      const validUntil = addYears(latest.date, 2)
+      if (!validUntil) return false
+
+      // (2) 만료 30일 전 (오늘 기준).
+      if (validUntil < addDays(todayUtc(), 30)) return true
+
+      // (3) 입국일 전 만료.
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
       const dep = entry || caseRow.departure_date || ''
-      if (!dep) return false
-
-      // 가장 최근(=date 기준 최신) 항체검사의 유효기간(채혈일 + 2년) 만료 여부.
-      const latest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
-      const validUntil = addYears(latest.date, 2)
-      const threshold = addDays(dep, 30)
-      return !!threshold && validUntil < threshold
+      return !!dep && validUntil < dep
     }
   }
 }

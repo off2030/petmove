@@ -589,11 +589,13 @@ export async function updateFlightFields(
     }
 
     // 항공편 입국일(entry_date) = 출국일 — 펫무브워크와 동일하게 departure_date 컬럼도 동기화.
+    // 입국일을 지우면 departure_date 도 null 로 비운다 — 안 비우면 옛 출국일이 컬럼에
+    // 남아 journey 체크의 entry_date||departure_date 폴백이 유령 출국일을 잡는다.
     const entryDate = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
-    const updatePayload: { data: Record<string, unknown>; departure_date?: string } = {
+    const updatePayload: { data: Record<string, unknown>; departure_date: string | null } = {
       data: nextData,
+      departure_date: entryDate || null,
     }
-    if (entryDate) updatePayload.departure_date = entryDate
 
     const { data: updated, error } = await admin
       .from('cases')

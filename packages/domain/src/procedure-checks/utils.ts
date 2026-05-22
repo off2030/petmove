@@ -230,6 +230,11 @@ export function addMonths(dateStr: string, n: number): string {
   return `${yyyy}-${mm}-${dd}`
 }
 
+/** 오늘 날짜 'YYYY-MM-DD' (UTC). 만료 임박 등 '오늘 기준' 검증에 사용. */
+export function todayUtc(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
 export function daysBetween(aISO: string, bISO: string): number | null {
   const a = new Date(aISO).getTime()
   const b = new Date(bISO).getTime()
