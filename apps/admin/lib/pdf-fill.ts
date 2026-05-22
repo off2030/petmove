@@ -3,9 +3,10 @@
  * Reads case row, resolves each field value via the mapping's transform,
  * and fills the PDF form.
  */
-import { PDFDocument, PDFName, PDFString, PDFDict, PDFRef, PDFRawStream, PDFBool, TextAlignment, PDFCheckBox, PDFDropdown, PDFTextField, PDFRadioGroup, drawCheckMark, rgb, pushGraphicsState, popGraphicsState } from 'pdf-lib'
+import { PDFDocument, PDFName, PDFString, PDFDict, PDFArray, PDFRef, PDFRawStream, PDFBool, PDFNumber, TextAlignment, PDFCheckBox, PDFDropdown, PDFTextField, PDFRadioGroup, drawCheckMark, rgb, pushGraphicsState, popGraphicsState } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 import { readFile } from 'node:fs/promises'
+import zlib from 'node:zlib'
 import path from 'node:path'
 import mappings from '@/data/pdf-field-mappings.json'
 import { getParasiteFamily, PARASITE_FAMILIES } from '@petmove/domain'
@@ -2705,9 +2706,10 @@ async function fillOnePackedDoc(
     forceRegenerateButtonAppearances(pdfForm)
     sanitizeMalformedWidgets(pdf, pdfForm)
     pdfForm.flatten()
+    removeDanglingAnnots(pdf)
   }
 
-  const bytes = await pdf.save()
+  const bytes = await fixupSubsetFontSfnt(await pdf.save())
   const base64 = Buffer.from(bytes).toString('base64')
   const petNames = doc.cases
     .map(c => (c.pet_name_en || c.pet_name || 'pet').replace(/[^\w가-힣]/g, '_'))
@@ -2752,6 +2754,67 @@ function sanitizeMalformedWidgets(pdf: PDFDocument, pdfForm: import('pdf-lib').P
       AP.set(PDFName.of('N'), pdf.context.register(stream))
     }
   }
+}
+
+/**
+ * Flatten 직후 호출 — pdfForm.flatten() 은 위젯 외관은 페이지에 구워넣지만
+ * 페이지 /Annots 배열에는 삭제된 위젯 객체를 가리키는 죽은 참조를 남긴다.
+ *
+ * Why: Chrome PDFium 은 죽은 참조를 무시하지만 Adobe Acrobat 의 인쇄 경로는
+ * /Annots 를 순회하다 해소 불가 참조에서 실패 → "문서를 인쇄할 수 없습니다".
+ * 화면 표시는 양쪽 다 정상이라 인쇄에서만 터진다.
+ */
+function removeDanglingAnnots(pdf: PDFDocument): void {
+  for (const page of pdf.getPages()) {
+    const annots = page.node.lookup(PDFName.of('Annots'))
+    if (!(annots instanceof PDFArray)) continue
+    const kept = PDFArray.withContext(pdf.context)
+    for (let i = 0; i < annots.size(); i++) {
+      const ref = annots.get(i)
+      const resolved = ref instanceof PDFRef ? pdf.context.lookup(ref) : ref
+      if (resolved instanceof PDFDict) kept.push(ref)
+    }
+    if (kept.size() === annots.size()) continue
+    if (kept.size() === 0) page.node.delete(PDFName.of('Annots'))
+    else page.node.set(PDFName.of('Annots'), kept)
+  }
+}
+
+/**
+ * 발급 직후 호출 — pdf-lib/fontkit 서브셋이 임베드한 폰트의 sfnt 버전 태그를
+ * 표준 0x00010000 으로 교정하고 누락된 /Length1 을 보강한다.
+ *
+ * Why: @pdf-lib/fontkit 서브셋 결과는 원본이 0x00010000 이어도 Apple/Mac 방식
+ * 'true'(0x74727565) 태그로 출력되고 FontFile2 스트림에 규격 필수 항목
+ * /Length1 도 누락한다. Chrome PDFium 은 너그럽게 받아 화면·인쇄 모두
+ * 정상이지만 Adobe Acrobat 의 Windows 인쇄 경로는 0x00010000 만 인정 →
+ * "문서를 인쇄할 수 없습니다" 로 발급 PDF 가 인쇄 불가가 된다.
+ * 'true' 와 0x00010000 은 동일 TrueType 포맷, 4바이트 매직만 다르므로
+ * 교체는 무손실이다. 'true' 시그니처가 없으면(서브셋 미사용 등) 원본 그대로 반환.
+ */
+async function fixupSubsetFontSfnt(bytes: Uint8Array): Promise<Uint8Array> {
+  const pdf = await PDFDocument.load(bytes)
+  let patched = 0
+  for (const [, obj] of pdf.context.enumerateIndirectObjects()) {
+    if (!(obj instanceof PDFDict)) continue
+    if (obj.get(PDFName.of('Type'))?.toString() !== '/FontDescriptor') continue
+    const ffRef = obj.get(PDFName.of('FontFile2'))
+    if (!ffRef) continue
+    const stream = pdf.context.lookup(ffRef)
+    if (!(stream instanceof PDFRawStream)) continue
+    let raw: Buffer
+    try { raw = zlib.inflateSync(Buffer.from(stream.contents)) }
+    catch { continue }
+    if (raw.length < 4 || raw.readUInt32BE(0) !== 0x74727565) continue
+    raw.writeUInt32BE(0x00010000, 0)
+    const recompressed = zlib.deflateSync(raw)
+    ;(stream as { contents: Uint8Array }).contents = new Uint8Array(recompressed)
+    stream.dict.set(PDFName.of('Length'), PDFNumber.of(recompressed.length))
+    stream.dict.set(PDFName.of('Length1'), PDFNumber.of(raw.length))
+    patched++
+  }
+  if (!patched) return bytes
+  return pdf.save()
 }
 
 /**
@@ -3126,9 +3189,10 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
     forceRegenerateButtonAppearances(pdfForm)
     sanitizeMalformedWidgets(pdf, pdfForm)
     pdfForm.flatten()
+    removeDanglingAnnots(pdf)
   }
 
-  const bytes = await pdf.save()
+  const bytes = await fixupSubsetFontSfnt(await pdf.save())
   const base64 = Buffer.from(bytes).toString('base64')
   const petName = (caseRow.pet_name_en || caseRow.pet_name || 'pet').replace(/[^\w가-힣]/g, '_')
   const filename = form.filename.replace('{pet_name}', petName)
