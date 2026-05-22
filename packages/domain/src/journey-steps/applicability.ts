@@ -125,7 +125,11 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return false
 
-      // (2) 만료 30일 전 (오늘 기준).
+      // 이미 만료된 면역은 '추가 백신(부스터)' 대상이 아니다 — 유효기간 경과 후
+      // 접종은 부스터가 아닌 새 기초접종이라, 1·2차부터 다시 하는 재시작 상황이다.
+      if (validUntil < todayUtc()) return false
+
+      // (2) 아직 유효하지만 만료 30일 전 (오늘 기준).
       if (validUntil < addDays(todayUtc(), 30)) return true
 
       // (3) 입국일 전 만료.
