@@ -672,8 +672,8 @@ export function StepDetailView({
     sage: '#8FA68C',
     warn: '#C26A4A',
     warnBg: 'rgba(194,106,74,0.08)',
-    info: '#6B7C8F',
-    infoBg: 'rgba(107,124,143,0.08)',
+    info: '#C9A663',
+    infoBg: 'rgba(201,166,99,0.08)',
   } as const
 
   const serif: React.CSSProperties = {
