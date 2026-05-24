@@ -364,7 +364,7 @@ export function StepDetailView({
       // 의미가 없고 chain 도 끊김 → 차단하고 새 접종을 유도.
       if (isRabies1 && isRabiesEntryExpired(rabies)) {
         setStatus('error')
-        setError('면역 유효기간이 만료되었습니다. 새로운 접종 정보를 입력해주세요.')
+        setError('입력하신 접종은 면역 유효기간이 만료되었습니다.')
         return
       }
       setStatus('saving')
