@@ -32,6 +32,8 @@ export interface JourneyStage {
   state: StageState
   /** 전체 일정 리스트 보조 줄. done→완료 문구, 그 외→행동 문구. */
   desc?: string
+  /** 우측 날짜 앞 prefix. 예: '출국일' (항공권 구매 step). 미설정 시 prefix 없음. */
+  dateLabel?: string
   /** 다음 할 일 카드 본문 — 날짜 구문 + 행동 문구. 미완료 step 에만 채워짐. */
   cardDesc?: string
   /** 이 step 의 ok=false 체크 중 '주의'(severity 'info' 제외) 개수. */
@@ -239,6 +241,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       label: step.title,
       short: step.shortLabel,
       date,
+      dateLabel: step.dateLabel,
       state: done ? 'done' : 'upcoming',
       desc,
       cardDesc,

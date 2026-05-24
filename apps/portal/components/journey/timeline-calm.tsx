@@ -496,7 +496,9 @@ function formatStageDate(stage: JourneyStage): string {
   const parts = stage.date.split('-')
   if (parts.length !== 3) return '—'
   const [yyyy, mm, dd] = parts
-  return `${yyyy.slice(2)}·${mm}·${dd}`
+  const formatted = `${yyyy.slice(2)}·${mm}·${dd}`
+  // dateLabel(예: '출국일') 이 있으면 prefix — step title 과 date 의미가 어긋날 때 명시.
+  return stage.dateLabel ? `${stage.dateLabel} ${formatted}` : formatted
 }
 
 /** 한글 단어에 '으로/로' 조사를 붙인다 — 받침 없음·ㄹ받침은 '로', 그 외는 '으로'. */
