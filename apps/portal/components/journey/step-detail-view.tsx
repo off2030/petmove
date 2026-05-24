@@ -1551,12 +1551,14 @@ function titerExtraEqual(a: TiterExtraEntry[], b: TiterExtraEntry[]): boolean {
 
 /**
  * 항공편 입국일 cross-entry 검증. 통과면 null, 실패면 에러 메시지.
- * - rule 1: 입국일 ≥ 채혈일 + 180일 (어떤 titer 라도 만족하면 통과)
- * - rule 2: 입국일 < 채혈일 + 2년 (어떤 titer 라도 유효기간 안이면 통과)
- * - rule 3: 입국일 < 광견병 부스터 chain 최종 만료일
+ * - rule 1 (차단): 입국일 ≥ 채혈일 + 180일 (어떤 titer 라도 만족하면 통과). 너무
+ *   이른 입국은 추가 단계로 해결 안 됨 — 실제 날짜 조정 필요.
  *
- * titer 미입력 시 전체 skip — 기존 procedure-check (jp.entry-*) 와 동일하게 항체검사
- * 입력 후에야 입국 시기가 확정되므로.
+ * 백신·검사 유효기간 만료 (입국일 > titer +2년, 입국일 > rabies chain) 는 차단 X —
+ * 추가 접종·추가 검사로 해결 가능한 계획 사항이라 procedure-check 의 '주의' 로 노출
+ * (jp.entry-within-2years-of-titer / jp.rabies-valid-until-on-departure 가 안내).
+ *
+ * titer 미입력 시 전체 skip — 입국 시기가 항체검사 후에 확정되므로.
  */
 function validateFlightEntryDate(
   data: Record<string, unknown> | null | undefined,
@@ -1567,13 +1569,6 @@ function validateFlightEntryDate(
   if (titerDates.length === 0) return null
   if (!titerDates.some((t) => daysBetween(t, entryDate) >= 180)) {
     return '입국일은 광견병 항체검사일로부터 180일 후여야 합니다.'
-  }
-  if (!titerDates.some((t) => addYears(t, 2) > entryDate)) {
-    return '입국일이 광견병 항체검사 유효기간을 벗어났습니다.'
-  }
-  const chainEnd = computeRabiesChainEnd(data)
-  if (chainEnd && entryDate >= chainEnd) {
-    return '입국일이 광견병 백신 면역 유효기간을 벗어났습니다.'
   }
   return null
 }
