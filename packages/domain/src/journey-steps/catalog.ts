@@ -321,8 +321,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '구매한 항공권(e-티켓)을 사진, PDF로 보관하세요.',
     validationIds: [
       'jp.entry-180days-after-titer',
-      'jp.entry-within-2years-of-titer',
-      'jp.rabies-valid-until-on-departure',
+      // jp.entry-within-2years-of-titer / jp.rabies-valid-until-on-departure 는 항공권 자체가
+      // 잘못된 게 아니라 추가 접종·검사가 필요한 신호 — 추가 백신·추가 검사 step 의 situational
+      // 안내가 더 정확한 맥락에서 전달. 항공권 step 에서는 중복 노출 안 함.
     ],
   },
 
