@@ -698,6 +698,9 @@ export function StepDetailView({
   // ok=false 체크를 톤별로 분리 — '주의'(blocker/warning) vs '안내'(info).
   const failed = checkResults.filter((c) => !c.result.ok && c.check.severity !== 'info')
   const notices = checkResults.filter((c) => !c.result.ok && c.check.severity === 'info')
+  // step config 의 situational 메시지 — timeline desc 와 동일 내용을 detail 에도 노출.
+  const situationalDesc =
+    caseRow && step.situational ? step.situational(caseRow)?.desc : undefined
   const stepDocuments = readCaseDocuments(caseRow?.data).filter((d) => d.stepId === step.id)
 
   return (
@@ -904,6 +907,25 @@ export function StepDetailView({
             )
           })}
         </section>
+
+        {/* Situational 안내 — step config 가 caseRow 상태에 따라 동적으로 만든 메시지.
+            timeline 의 desc 와 동일 내용이라 detail 페이지에서도 같은 정보 전달. */}
+        {situationalDesc && (
+          <section
+            style={{
+              marginTop: 16,
+              padding: '14px 16px',
+              borderRadius: 16,
+              background: C.infoBg,
+              border: `.5px solid ${C.info}59`,
+            }}
+          >
+            <div style={{ ...monoCap, color: C.info, fontWeight: 700, marginBottom: 8 }}>
+              안내
+            </div>
+            <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>{situationalDesc}</div>
+          </section>
+        )}
 
         {/* Warnings */}
         {failed.length > 0 && (
