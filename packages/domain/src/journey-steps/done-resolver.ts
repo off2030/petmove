@@ -7,6 +7,7 @@ import {
   readInternalParasiteEntries,
   readRabiesEntries,
   readTiterEntries,
+  resolveValidUntil,
 } from '../procedure-checks/utils'
 import type { StepDoneSignal } from './types'
 import { buildCaseJourneyContext } from './applicability'
@@ -45,8 +46,17 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return readRabiesEntries(caseRow).length > 0
     case 'has-rabies-booster':
       return readRabiesEntries(caseRow).length >= 2
-    case 'has-extra-rabies':
-      return readRabiesEntries(caseRow).length >= 3
+    case 'has-extra-rabies': {
+      // 추가 접종(3차+) 은 직전 백신의 면역 유효기간 이내에 받아야 부스터로 인정.
+      // 만료 후 접종은 새 기초접종이라 chain 이 깨진 것 — 추가 백신 step 미완료 처리.
+      // (동일 룰의 blocker: jp.rabies-extra-within-previous-validity)
+      const r = readRabiesEntries(caseRow)
+      if (r.length < 3) return false
+      const latest = r[r.length - 1]
+      const previous = r[r.length - 2]
+      const previousValidUntil = resolveValidUntil(previous.date, previous.valid_until)
+      return !!previousValidUntil && latest.date <= previousValidUntil
+    }
     case 'has-titer-entry':
       return readTiterEntries(caseRow).length > 0
     case 'has-extra-titer':

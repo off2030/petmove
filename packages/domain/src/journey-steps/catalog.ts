@@ -150,15 +150,28 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     doneSummary: '광견병 백신을 추가 접종했습니다.',
     // 미래 만료 대비 reminder — 본 흐름의 다음 단계(사전 신고 등)를 다음 할 일에서 가리지 않는다.
     advisoryOnly: true,
-    // 상황별 문구는 entry_date 기준 2갈래:
+    // 상황별 문구 분기:
+    //  - 3차+ 입력됐는데 직전 백신 유효기간 만료 후 접종 → chain 깨짐. 1차부터 재시작.
     //  - 입국일 미입력 → 만료일 + '만료 전 재접종' (만료 임박 체크와 동일 문구).
     //  - 입국일 입력 & 유효기간이 입국일 전 만료 → '입국일 전 만료' 경고.
-    // 그 외(입국일 후 만료)는 상황별 문구 없음 — 고정 description 이 노출된다.
+    //  - 그 외(입국일 후 만료)는 상황별 문구 없음 — 고정 description 이 노출된다.
     // departure_date 폴백 안 씀(보호자 미입력 잔여값으로 단정 X). valid_until 미입력 시 date + 1년 폴백.
     situational: (caseRow) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return undefined
       const latest = rabies[rabies.length - 1]
+
+      // chain-broken: 추가 도즈가 직전 유효기간 이후라 부스터 미인정 — 1차부터 재시작.
+      // (동일 룰: jp.rabies-extra-within-previous-validity blocker)
+      if (rabies.length >= 3) {
+        const previous = rabies[rabies.length - 2]
+        const previousValidUntil = resolveValidUntil(previous.date, previous.valid_until)
+        if (previousValidUntil && latest.date > previousValidUntil) {
+          const msg = `직전 광견병 백신 유효기간(${formatKoreanDate(previousValidUntil)}) 만료 후 접종이라 추가 백신으로 인정되지 않습니다. 1차 광견병 백신부터 다시 접종해야 합니다.`
+          return { desc: msg, cardDesc: msg }
+        }
+      }
+
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return undefined
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -183,7 +196,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     done: 'has-extra-rabies',
     allowAttachments: true,
     attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 보관하세요.',
-    validationIds: ['jp.rabies-validity-expires-soon'],
+    validationIds: [
+      'jp.rabies-validity-expires-soon',
+      'jp.rabies-extra-within-previous-validity',
+    ],
   },
 
   // ── 4. 광견병 항체검사 ──────────────────────────────────────────────────

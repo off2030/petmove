@@ -119,6 +119,38 @@ export const JP_CHECKS: ProcedureCheck[] = [
     },
   },
   {
+    id: 'jp.rabies-extra-within-previous-validity',
+    country: 'japan',
+    category: '광견병',
+    title: '백신 유효기간 만료',
+    description:
+      '추가(3차+) 광견병 접종은 직전 광견병 백신의 면역 유효기간 이내여야 함. 유효기간 경과 후 접종은 부스터가 아닌 새 기초접종으로 간주됨.',
+    severity: 'blocker',
+    addedAt: '2026-05-24',
+    run: ({ caseRow }) => {
+      const entries = readRabiesEntries(caseRow)
+      // 3차+ 가 있어야 검사 대상.
+      if (entries.length < 3) return SKIP
+
+      const previous = entries[entries.length - 2]
+      const latest = entries[entries.length - 1]
+      const previousValidUntil = resolveValidUntil(previous.date, previous.valid_until)
+      const withinValidity = !!previousValidUntil && previousValidUntil >= latest.date
+      if (!withinValidity) {
+        return {
+          ok: false,
+          message:
+            '직전 광견병 백신 유효기간 만료 후 접종이라 추가 백신으로 인정되지 않습니다. 1차 광견병 백신부터 다시 접종해야 합니다.',
+          offendingPaths: [`rabies_dates[${latest.originalIndex}].date`],
+        }
+      }
+      return {
+        ok: true,
+        message: `추가 접종(${latest.date})이 직전 유효기간(${previousValidUntil}) 이내.`,
+      }
+    },
+  },
+  {
     id: 'jp.microchip-rabies-sequence',
     country: 'japan',
     category: '마이크로칩',
