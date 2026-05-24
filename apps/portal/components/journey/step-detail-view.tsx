@@ -1309,13 +1309,14 @@ function readRabiesOtherHospital(
 
 /**
  * 광견병 폼의 "오늘 기준 면역 만료" 판정.
- * date·valid_until 둘 다 채워졌고 valid_until 이 'N년' 패턴일 때만 판정 — 미입력은
- * 미만료(false)로 통과(부분 저장 허용). 접종일 + N년 이 오늘 이전·당일이면 만료
- * (1주년 -1일 까지 인정 = addYears(date, N) > today).
+ * date 만 있어도 판정 — valid_until 빈 값은 UI에서 "1년" 디폴트로 시각 선택돼 있으므로
+ * 검증도 1년으로 가정 (UI 디폴트와 검증 기준 일치). 접종일 + N년 이 오늘 이전·당일이면
+ * 만료 (1주년 -1일 까지 인정 = addYears(date, N) > today).
  */
 function isRabiesEntryExpired(form: RabiesEntryForm): boolean {
-  if (!form.date || !form.valid_until) return false
-  const m = form.valid_until.match(/^(\d+)\s*년$/)
+  if (!form.date) return false
+  const raw = form.valid_until.trim() || '1년'
+  const m = raw.match(/^(\d+)\s*년$/)
   if (!m) return false
   const years = Number(m[1])
   return todayIso() >= addYears(form.date, years)
