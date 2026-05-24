@@ -672,8 +672,8 @@ export function StepDetailView({
     sage: '#8FA68C',
     warn: '#C26A4A',
     warnBg: 'rgba(194,106,74,0.08)',
-    info: '#6B6457',
-    infoBg: 'rgba(42,38,32,0.05)',
+    info: '#6B7C8F',
+    infoBg: 'rgba(107,124,143,0.08)',
   } as const
 
   const serif: React.CSSProperties = {
@@ -943,7 +943,7 @@ export function StepDetailView({
               padding: '14px 16px',
               borderRadius: 16,
               background: C.infoBg,
-              border: `.5px solid ${C.info}26`,
+              border: `.5px solid ${C.info}59`,
             }}
           >
             <div style={{ ...monoCap, color: C.info, fontWeight: 700, marginBottom: 8 }}>
