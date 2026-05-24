@@ -161,13 +161,14 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       if (rabies.length === 0) return undefined
       const latest = rabies[rabies.length - 1]
 
-      // chain-broken: 추가 도즈가 직전 유효기간 이후라 부스터 미인정 — 1차부터 재시작.
+      // chain-broken: 추가 도즈가 직전 유효기간 이후라 부스터 미인정 — 1·2차+검사+180일 재시작.
       // (동일 룰: jp.rabies-extra-within-previous-validity blocker)
       if (rabies.length >= 3) {
         const previous = rabies[rabies.length - 2]
         const previousValidUntil = resolveValidUntil(previous.date, previous.valid_until)
         if (previousValidUntil && latest.date > previousValidUntil) {
-          const msg = `직전 광견병 백신 유효기간(${formatKoreanDate(previousValidUntil)}) 만료 후 접종이라 추가 백신으로 인정되지 않습니다. 1차 광견병 백신부터 다시 접종해야 합니다.`
+          const msg =
+            '직전 광견병 백신 유효기간 만료 전 재접종을 하지 못했습니다. 1, 2차 접종과 검사 후 다시 180일을 기다려야 합니다.'
           return { desc: msg, cardDesc: msg }
         }
       }

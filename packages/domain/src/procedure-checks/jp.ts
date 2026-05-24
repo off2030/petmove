@@ -140,7 +140,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message:
-            '직전 광견병 백신 유효기간 만료 후 접종이라 추가 백신으로 인정되지 않습니다. 1차 광견병 백신부터 다시 접종해야 합니다.',
+            '직전 광견병 백신 유효기간 만료 전 재접종을 하지 못했습니다. 1, 2차 접종과 검사 후 다시 180일을 기다려야 합니다.',
           offendingPaths: [`rabies_dates[${latest.originalIndex}].date`],
         }
       }
