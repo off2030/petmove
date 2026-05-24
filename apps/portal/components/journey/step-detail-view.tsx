@@ -515,6 +515,13 @@ export function StepDetailView({
         }
       })
     } else if (isFlight) {
+      // 입국일 cross-entry — 광견병 항체검사 + 부스터 chain 기반 (titer 미입력 시 skip).
+      const flightError = validateFlightEntryDate(caseRow?.data, flightForm.entry_date)
+      if (flightError) {
+        setStatus('error')
+        setError(flightError)
+        return
+      }
       setStatus('saving')
       setError(null)
       startTransition(async () => {
@@ -1540,6 +1547,41 @@ function titerExtraEqual(a: TiterExtraEntry[], b: TiterExtraEntry[]): boolean {
     }
   }
   return true
+}
+
+/**
+ * 항공편 입국일 cross-entry 검증. 통과면 null, 실패면 에러 메시지.
+ * - rule 1: 입국일 ≥ 채혈일 + 180일 (어떤 titer 라도 만족하면 통과)
+ * - rule 2: 입국일 < 채혈일 + 2년 (어떤 titer 라도 유효기간 안이면 통과)
+ * - rule 3: 입국일 < 광견병 부스터 chain 최종 만료일
+ *
+ * titer 미입력 시 전체 skip — 기존 procedure-check (jp.entry-*) 와 동일하게 항체검사
+ * 입력 후에야 입국 시기가 확정되므로.
+ */
+function validateFlightEntryDate(
+  data: Record<string, unknown> | null | undefined,
+  entryDate: string,
+): string | null {
+  if (!entryDate) return null
+  const titerDates = readAllTiterDates(data)
+  if (titerDates.length === 0) return null
+  if (!titerDates.some((t) => daysBetween(t, entryDate) >= 180)) {
+    return '입국일은 광견병 항체검사일로부터 180일 후여야 합니다.'
+  }
+  if (!titerDates.some((t) => addYears(t, 2) > entryDate)) {
+    return '입국일이 광견병 항체검사 유효기간을 벗어났습니다.'
+  }
+  const chainEnd = computeRabiesChainEnd(data)
+  if (chainEnd && entryDate >= chainEnd) {
+    return '입국일이 광견병 백신 면역 유효기간을 벗어났습니다.'
+  }
+  return null
+}
+
+/** 두 YYYY-MM-DD 날짜 사이의 일수 차이 (to - from). 형식이 깨지면 NaN. */
+function daysBetween(fromIso: string, toIso: string): number {
+  const ms = new Date(toIso + 'T00:00:00Z').getTime() - new Date(fromIso + 'T00:00:00Z').getTime()
+  return Math.round(ms / 86_400_000)
 }
 
 /**
