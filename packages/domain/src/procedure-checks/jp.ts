@@ -57,37 +57,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `1차 접종일(${first.date}) 생후 ${age}일령.` }
     },
   },
-  {
-    id: 'jp.rabies-prime-booster-interval',
-    country: 'japan',
-    category: '광견병',
-    title: '광견병 백신 타이밍',
-    description: '1차·2차 광견병 접종일 간격이 30일 이상이어야 함.',
-    severity: 'blocker',
-    addedAt: '2026-04-21',
-    run: ({ caseRow }) => {
-      const entries = readRabiesEntries(caseRow)
-      // 1·2차 둘 다 필요 — 하나라도 없으면 skip
-      if (entries.length < 2) return SKIP
-
-      const [first, second] = entries
-      const gap = daysBetween(first.date, second.date)
-      if (gap === null) return SKIP
-
-      const secondPath = `rabies_dates[${second.originalIndex}].date`
-      if (gap < 30) {
-        // 유효한 2차 접종 가능 시점 = 1차 접종일 + 30일.
-        const earliestKr = formatKoreanDate(addDays(first.date, 30))
-        return {
-          ok: false,
-          message: `1, 2차 백신 간격은 30일 이상이어야 합니다. 현재 간격이 ${gap}일입니다. ${earliestKr} 이후 재접종하세요.`,
-          offendingPaths: [secondPath],
-        }
-      }
-      return { ok: true, message: `1·2차 접종 간격 ${gap}일.` }
-    },
-  },
-  {
+{
     id: 'jp.rabies-booster-within-prime-validity',
     country: 'japan',
     category: '광견병',

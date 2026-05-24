@@ -370,9 +370,9 @@ export function StepDetailView({
       if (isRabies2) {
         const r1 = readRabiesEntryForm(caseRow?.data, 0)
         if (r1.date && rabies.date) {
-          if (rabies.date <= r1.date) {
+          if (daysBetween(r1.date, rabies.date) < 30) {
             setStatus('error')
-            setError('2차 접종일은 1차 접종일 이후여야 합니다.')
+            setError('1·2차 접종 간격은 30일 이상이어야 합니다.')
             return
           }
           const r1Years = parseValidUntilYears(r1.valid_until)
