@@ -184,7 +184,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       }
       // 입국일 전 만료 — 입국 전 재접종 필수.
       if (validUntil < entry) {
-        const msg = `광견병 백신 유효기간이 일본 입국일 전에 만료됩니다. ${formatKoreanDate(validUntil)} 전에 재접종하세요.`
+        const msg = `광견병 백신 유효기간이 일본 입국일 전에 만료됩니다. ${formatKoreanDate(validUntil)} 전에 재접종 하세요.`
         return { desc: msg, cardDesc: msg }
       }
       // 입국일 후 만료 — 상황별 문구 없음 (고정 description 노출).
@@ -277,7 +277,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const latest = [...titers].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
       const validUntil = addYears(latest.date, 2)
       if (!validUntil) return undefined
-      const msg = `${formatKoreanDate(validUntil)}까지 재검사받습니다.`
+      const msg = `직전 검사의 유효기간이 일본 입국일 전에 만료됩니다. ${formatKoreanDate(validUntil)}까지 재검사 하세요.`
       return { desc: msg, cardDesc: msg }
     },
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
