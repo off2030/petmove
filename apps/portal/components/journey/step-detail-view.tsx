@@ -1566,14 +1566,14 @@ function validateFlightEntryDate(
   const titerDates = readAllTiterDates(data)
   if (titerDates.length === 0) return null
   if (!titerDates.some((t) => daysBetween(t, entryDate) >= 180)) {
-    return '입국일은 광견병 항체검사일로부터 180일 후여야 합니다.'
+    return '출국 항공권 날짜는 광견병 항체검사일로부터 180일 후여야 합니다.'
   }
   if (!titerDates.some((t) => addYears(t, 2) > entryDate)) {
-    return '입국일이 광견병 항체검사 유효기간을 벗어났습니다.'
+    return '출국 항공권 날짜가 광견병 항체검사 유효기간을 벗어났습니다.'
   }
   const chainEnd = computeRabiesChainEnd(data)
   if (chainEnd && entryDate >= chainEnd) {
-    return '입국일이 광견병 백신 면역 유효기간을 벗어났습니다.'
+    return '출국 항공권 날짜가 광견병 백신 면역 유효기간을 벗어났습니다.'
   }
   return null
 }
