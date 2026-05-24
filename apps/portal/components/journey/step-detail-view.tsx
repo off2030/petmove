@@ -360,12 +360,28 @@ export function StepDetailView({
         }
       })
     } else if (isRabies) {
-      // 광견병 1차 — 입력 시점에 면역이 유효해야 함. 만료된 기록을 새로 등록하는 건
-      // 의미가 없고 chain 도 끊김 → 차단하고 새 접종을 유도.
-      if (isRabies1 && isRabiesEntryExpired(rabies)) {
+      // 1·2차 공통: 입력 시점에 면역 유효 아님 → 차단 (만료된 기록은 chain 끊김).
+      if (isRabiesEntryExpired(rabies)) {
         setStatus('error')
         setError('입력하신 접종은 면역 유효기간이 만료되었습니다.')
         return
+      }
+      // 2차 한정 cross-entry: 1차 접종 이후 + 1차 면역 유효기간 이내.
+      if (isRabies2) {
+        const r1 = readRabiesEntryForm(caseRow?.data, 0)
+        if (r1.date && rabies.date) {
+          if (rabies.date <= r1.date) {
+            setStatus('error')
+            setError('2차 접종일은 1차 접종일 이후여야 합니다.')
+            return
+          }
+          const r1Years = parseValidUntilYears(r1.valid_until)
+          if (r1Years !== null && rabies.date >= addYears(r1.date, r1Years)) {
+            setStatus('error')
+            setError('2차 접종일이 1차 접종의 면역 유효기간을 벗어났습니다.')
+            return
+          }
+        }
       }
       setStatus('saving')
       setError(null)
@@ -1308,17 +1324,25 @@ function readRabiesOtherHospital(
 }
 
 /**
+ * "N년" 문자열에서 연수 추출. 빈 값은 UI에서 "1년" 디폴트로 시각 선택돼 있으므로 1로 가정.
+ * 파싱 실패 시 null.
+ */
+function parseValidUntilYears(value: string): number | null {
+  const raw = value.trim() || '1년'
+  const m = raw.match(/^(\d+)\s*년$/)
+  if (!m) return null
+  return Number(m[1])
+}
+
+/**
  * 광견병 폼의 "오늘 기준 면역 만료" 판정.
- * date 만 있어도 판정 — valid_until 빈 값은 UI에서 "1년" 디폴트로 시각 선택돼 있으므로
- * 검증도 1년으로 가정 (UI 디폴트와 검증 기준 일치). 접종일 + N년 이 오늘 이전·당일이면
- * 만료 (1주년 -1일 까지 인정 = addYears(date, N) > today).
+ * date 만 있어도 판정 — valid_until 빈 값은 UI 디폴트 1년으로 간주. 접종일 + N년 이
+ * 오늘 이전·당일이면 만료 (1주년 -1일 까지 인정 = addYears(date, N) > today).
  */
 function isRabiesEntryExpired(form: RabiesEntryForm): boolean {
   if (!form.date) return false
-  const raw = form.valid_until.trim() || '1년'
-  const m = raw.match(/^(\d+)\s*년$/)
-  if (!m) return false
-  const years = Number(m[1])
+  const years = parseValidUntilYears(form.valid_until)
+  if (years === null) return false
   return todayIso() >= addYears(form.date, years)
 }
 
