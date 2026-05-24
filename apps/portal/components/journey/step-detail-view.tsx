@@ -445,6 +445,18 @@ export function StepDetailView({
         }
       })
     } else if (isTiter) {
+      // 첫 항체검사 — 만료 + 채혈 cross-entry (1차<마이크로칩 시 = 2차 룰 포함).
+      if (isTiterEntryExpired(titerForm)) {
+        setStatus('error')
+        setError('입력하신 항체검사는 유효기간이 만료되었습니다.')
+        return
+      }
+      const titerError = validateTiterDate(caseRow?.data, titerForm.date, true)
+      if (titerError) {
+        setStatus('error')
+        setError(titerError)
+        return
+      }
       setStatus('saving')
       setError(null)
       startTransition(async () => {
@@ -464,6 +476,22 @@ export function StepDetailView({
         }
       })
     } else if (isTiterExtra) {
+      // 추가 항체검사 — 만료 + 채혈 cross-entry. rule 3 (=2차) 는 set-level 룰이라
+      // 추가 검사 개별 입력엔 적용 X (procedure-check 가 set 평가).
+      for (const entry of titerExtra) {
+        if (!entry.date) continue
+        if (isTiterEntryExpired(entry)) {
+          setStatus('error')
+          setError(`채혈일 ${entry.date}: 입력하신 항체검사는 유효기간이 만료되었습니다.`)
+          return
+        }
+        const err = validateTiterDate(caseRow?.data, entry.date, false)
+        if (err) {
+          setStatus('error')
+          setError(`채혈일 ${entry.date}: ${err}`)
+          return
+        }
+      }
       setStatus('saving')
       setError(null)
       startTransition(async () => {
@@ -1512,6 +1540,81 @@ function titerExtraEqual(a: TiterExtraEntry[], b: TiterExtraEntry[]): boolean {
     }
   }
   return true
+}
+
+/**
+ * 항체검사 "오늘 기준 유효기간 만료" 판정. 항체검사 유효기간은 채혈 + 2년
+ * (마지막 유효일 = addYears(date,2) -1일). today >= addYears(date,2) 이면 만료.
+ */
+function isTiterEntryExpired(form: { date: string }): boolean {
+  if (!form.date) return false
+  return todayIso() >= addYears(form.date, 2)
+}
+
+/**
+ * 항체검사 채혈일 cross-entry 검증. 통과면 null, 실패면 에러 메시지.
+ * - rule 1: 채혈일 ≥ 2차 접종일
+ * - rule 2: 채혈일 < 광견병 부스터 chain 최종 만료일 (2차부터 끊김 없이 이어진 부스터)
+ * - rule 3: isFirstTiter && 1차 < 마이크로칩 → 채혈일 = 2차 접종일
+ *
+ * 2차 접종 미입력 시 모든 룰 skip (전제 조건 부족).
+ */
+function validateTiterDate(
+  data: Record<string, unknown> | null | undefined,
+  date: string,
+  isFirstTiter: boolean,
+): string | null {
+  if (!date) return null
+  const r2 = readRabiesEntryForm(data, 1)
+  if (!r2.date) return null
+  if (date < r2.date) {
+    return '채혈일은 2차 광견병 접종일 이후여야 합니다.'
+  }
+  const chainEnd = computeRabiesChainEnd(data)
+  if (chainEnd && date >= chainEnd) {
+    return '채혈일이 광견병 백신 면역 유효기간을 벗어났습니다.'
+  }
+  if (isFirstTiter) {
+    const r1 = readRabiesEntryForm(data, 0)
+    const microchip = readImplantDate(data)
+    if (r1.date && microchip && r1.date < microchip && date !== r2.date) {
+      return '마이크로칩보다 1차를 먼저 접종한 경우, 채혈일은 2차 광견병 접종일과 같아야 합니다.'
+    }
+  }
+  return null
+}
+
+/**
+ * 광견병 부스터 chain 의 최종 만료일(anniversary, 마지막 유효일+1) 계산.
+ * 2차부터 시작, 매 부스터(3차+)가 직전 chain 만료일 이전이면 chain 연장. 끊기면 멈춤.
+ * 2차가 없거나 valid_until 파싱 실패 시 null — 룰 2 skip.
+ */
+function computeRabiesChainEnd(data: Record<string, unknown> | null | undefined): string | null {
+  if (!data) return null
+  const arr = data['rabies_dates']
+  if (!Array.isArray(arr)) return null
+  const entries: Array<{ date: string; years: number }> = []
+  for (let i = 1; i < arr.length; i++) {
+    const rec = arr[i]
+    if (!rec || typeof rec !== 'object') continue
+    const r = rec as Record<string, unknown>
+    const date = typeof r.date === 'string' ? r.date : ''
+    if (!date) continue
+    const years = parseValidUntilYears(typeof r.valid_until === 'string' ? r.valid_until : '')
+    if (years === null) continue
+    entries.push({ date, years })
+  }
+  if (entries.length === 0) return null
+  entries.sort((a, b) => a.date.localeCompare(b.date))
+  let chainEnd = addYears(entries[0].date, entries[0].years)
+  for (let i = 1; i < entries.length; i++) {
+    if (entries[i].date < chainEnd) {
+      chainEnd = addYears(entries[i].date, entries[i].years)
+    } else {
+      break
+    }
+  }
+  return chainEnd
 }
 
 /**
