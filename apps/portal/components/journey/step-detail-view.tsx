@@ -360,6 +360,13 @@ export function StepDetailView({
         }
       })
     } else if (isRabies) {
+      // 광견병 1차 — 입력 시점에 면역이 유효해야 함. 만료된 기록을 새로 등록하는 건
+      // 의미가 없고 chain 도 끊김 → 차단하고 새 접종을 유도.
+      if (isRabies1 && isRabiesEntryExpired(rabies)) {
+        setStatus('error')
+        setError('면역 유효기간이 만료되었습니다. 새로운 접종 정보를 입력해주세요.')
+        return
+      }
       setStatus('saving')
       setError(null)
       startTransition(async () => {
@@ -1298,6 +1305,34 @@ function readRabiesOtherHospital(
   const entry = arr[index]
   if (!entry || typeof entry !== 'object') return true
   return (entry as Record<string, unknown>).other_hospital === true
+}
+
+/**
+ * 광견병 폼의 "오늘 기준 면역 만료" 판정.
+ * date·valid_until 둘 다 채워졌고 valid_until 이 'N년' 패턴일 때만 판정 — 미입력은
+ * 미만료(false)로 통과(부분 저장 허용). 접종일 + N년 이 오늘 이전·당일이면 만료
+ * (1주년 -1일 까지 인정 = addYears(date, N) > today).
+ */
+function isRabiesEntryExpired(form: RabiesEntryForm): boolean {
+  if (!form.date || !form.valid_until) return false
+  const m = form.valid_until.match(/^(\d+)\s*년$/)
+  if (!m) return false
+  const years = Number(m[1])
+  return todayIso() >= addYears(form.date, years)
+}
+
+function addYears(iso: string, years: number): string {
+  const d = new Date(iso + 'T00:00:00Z')
+  d.setUTCFullYear(d.getUTCFullYear() + years)
+  return d.toISOString().slice(0, 10)
+}
+
+function todayIso(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 function rabiesFormEqual(a: RabiesEntryForm, b: RabiesEntryForm): boolean {
