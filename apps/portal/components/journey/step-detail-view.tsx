@@ -1568,7 +1568,7 @@ function validateTiterDate(
   const r2 = readRabiesEntryForm(data, 1)
   if (!r2.date) return null
   if (date < r2.date) {
-    return '채혈일은 2차 광견병 접종일 이후여야 합니다.'
+    return '채혈일은 2차 접종일 이후여야 합니다.'
   }
   const chainEnd = computeRabiesChainEnd(data)
   if (chainEnd && date >= chainEnd) {
@@ -1578,7 +1578,7 @@ function validateTiterDate(
     const r1 = readRabiesEntryForm(data, 0)
     const microchip = readImplantDate(data)
     if (r1.date && microchip && r1.date < microchip && date !== r2.date) {
-      return '마이크로칩보다 1차 접종을 먼저 한 경우, 채혈일은 2차 광견병 접종일과 같아야 합니다.'
+      return '마이크로칩보다 1차 접종을 먼저 한 경우, 채혈일은 2차 접종일과 같아야 합니다.'
     }
   }
   return null
