@@ -366,7 +366,7 @@ export function StepDetailView({
         setError('입력하신 접종은 면역 유효기간이 만료되었습니다.')
         return
       }
-      // 2차 한정 cross-entry: 1차 접종 이후 + 1차 면역 유효기간 이내.
+      // 2차 한정 cross-entry: 1차 접종 이후 + 1차 면역 유효기간 이내 + (1차<마이크로칩이면 2차=항체검사일).
       if (isRabies2) {
         const r1 = readRabiesEntryForm(caseRow?.data, 0)
         if (r1.date && rabies.date) {
@@ -380,6 +380,19 @@ export function StepDetailView({
             setStatus('error')
             setError('2차 접종일이 1차 접종의 면역 유효기간을 벗어났습니다.')
             return
+          }
+          // 1차가 마이크로칩보다 빠른 경우: 2차 = 항체검사일. 항체검사 미입력 시 검증 불가 →
+          // 통과 (이후 항체검사 입력 시 procedure-check 가 잡음).
+          const microchip = readImplantDate(caseRow?.data)
+          if (microchip && r1.date < microchip) {
+            const titerDates = readAllTiterDates(caseRow?.data)
+            if (titerDates.length > 0 && !titerDates.includes(rabies.date)) {
+              setStatus('error')
+              setError(
+                '마이크로칩보다 1차를 먼저 접종한 경우, 2차 접종일은 광견병 항체검사일과 같아야 합니다.',
+              )
+              return
+            }
           }
         }
       }
@@ -1499,6 +1512,19 @@ function titerExtraEqual(a: TiterExtraEntry[], b: TiterExtraEntry[]): boolean {
     }
   }
   return true
+}
+
+/**
+ * 모든 항체검사 record 의 date 만 모아 반환 (index 0 + extras). 광견병 2차 cross-entry
+ * 검증("2차 = 항체검사일")에서 사용 — 어느 한 검사 date 와 일치하면 통과.
+ */
+function readAllTiterDates(data: Record<string, unknown> | null | undefined): string[] {
+  if (!data) return []
+  const arr = data['rabies_titer_records']
+  if (!Array.isArray(arr)) return []
+  return arr
+    .map((r) => (r && typeof r === 'object' ? (r as { date?: string }).date : undefined))
+    .filter((d): d is string => typeof d === 'string' && d.length >= 10)
 }
 
 /** 채혈일·검사기관·검사결과 — caseRow.data.rabies_titer_records[0] 의 date / lab / value. */
