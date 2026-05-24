@@ -138,13 +138,6 @@ export interface StepDefinition {
   title: string
   /** 더 짧은 1~3자. 예: '항체'. */
   shortLabel: string
-  /**
-   * 전체 일정 row 우측 날짜 앞에 붙는 prefix. 예: '항공권 구매' step 의 date 는
-   * 출국일이라 'dateLabel: "출국일"' 로 설정해 "출국일 28·01·03" 으로 표시.
-   * 미설정 시 prefix 없음 — title 자체가 action 이고 date 가 그 action 의 일자라
-   * 자명한 step (백신, 검사 등) 은 생략.
-   */
-  dateLabel?: string
   /** 상세 페이지 본문 — 마크다운 가능. 절차 규칙을 안내. */
   description: string
   /**
