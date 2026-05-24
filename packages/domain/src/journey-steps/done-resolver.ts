@@ -1,5 +1,6 @@
 import type { CaseRow } from '../types'
 import {
+  addYears,
   readGeneralVaccineEntries,
   readCivEntries,
   readExternalParasiteEntries,
@@ -47,20 +48,39 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
     case 'has-rabies-booster':
       return readRabiesEntries(caseRow).length >= 2
     case 'has-extra-rabies': {
-      // 추가 접종(3차+) 은 직전 백신의 면역 유효기간 이내에 받아야 부스터로 인정.
-      // 만료 후 접종은 새 기초접종이라 chain 이 깨진 것 — 추가 백신 step 미완료 처리.
-      // (동일 룰의 blocker: jp.rabies-extra-within-previous-validity)
+      // 추가 접종(3차+) 은 (a) 직전 백신의 면역 유효기간 이내에 받아 chain 유지하고,
+      // (b) 입국일이 입력된 경우 최신 booster 유효기간이 입국일을 커버해야 완료.
+      // 둘 중 하나라도 못 만족하면 추가 접종이 더 필요한 상태 → 미완료.
       const r = readRabiesEntries(caseRow)
       if (r.length < 3) return false
       const latest = r[r.length - 1]
       const previous = r[r.length - 2]
       const previousValidUntil = resolveValidUntil(previous.date, previous.valid_until)
-      return !!previousValidUntil && latest.date <= previousValidUntil
+      if (!previousValidUntil || latest.date > previousValidUntil) return false
+      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
+      if (entry) {
+        const latestValidUntil = resolveValidUntil(latest.date, latest.valid_until)
+        if (!latestValidUntil || latestValidUntil < entry) return false
+      }
+      return true
     }
     case 'has-titer-entry':
       return readTiterEntries(caseRow).length > 0
-    case 'has-extra-titer':
-      return readTiterEntries(caseRow).length >= 2
+    case 'has-extra-titer': {
+      // 추가 항체검사(2회+) 는 (a) 2개 이상 입력되고, (b) 입국일이 입력된 경우 어떤 titer
+      // 의 2년 유효기간이 입국일을 커버해야 완료. 못 커버하면 추가 검사가 더 필요한 상태.
+      const t = readTiterEntries(caseRow)
+      if (t.length < 2) return false
+      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
+      if (entry) {
+        const hasValid = t.some((titer) => {
+          const v = addYears(titer.date, 2)
+          return !!v && v >= entry
+        })
+        if (!hasValid) return false
+      }
+      return true
+    }
     case 'has-general-vaccine':
       return readGeneralVaccineEntries(caseRow).length > 0
     case 'has-civ-vaccine':
