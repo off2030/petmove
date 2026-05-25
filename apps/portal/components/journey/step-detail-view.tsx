@@ -1623,7 +1623,7 @@ function validateAdvanceNotificationDate(
   const entry = typeof data?.entry_date === 'string' ? data.entry_date : ''
   if (!entry) return null
   if (daysBetween(notifDate, entry) < 40) {
-    return '사전 신고는 입국일 40일 전까지 접수되어야 합니다.'
+    return '일본 입국 40일 전까지 신고를 해야 합니다. 신고가 늦은 경우 입국일을 변경해야 합니다.'
   }
   return null
 }
