@@ -302,10 +302,20 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     (s) => s.state === 'upcoming' && !nonBlockingIds.has(s.id) && !advisoryOnlyIds.has(s.id),
   )
   if (mainIdx >= 0) stages[mainIdx].state = 'current'
+  // return lane step 의 prereq main step — done 이어야 return lane 노출.
+  // (수출검역 신청은 항공권 구매 이후부터 신청 가능 — 사전 신고와 평행 진행이라
+  //  사전 신고 자체는 prereq 가 아니지만, 항공권 미입력 시점엔 같이 가려둔다.)
+  const RETURN_LANE_PREREQ: Record<string, string> = {
+    'jp-export-quarantine': 'flight-purchase',
+  }
   const returnIdx = stages.findIndex(
     (s) => s.state === 'upcoming' && nonBlockingIds.has(s.id),
   )
-  if (returnIdx >= 0) stages[returnIdx].state = 'current'
+  if (returnIdx >= 0) {
+    const prereqId = RETURN_LANE_PREREQ[stages[returnIdx].id]
+    const prereqDone = !prereqId || stages.some((s) => s.id === prereqId && s.state === 'done')
+    if (prereqDone) stages[returnIdx].state = 'current'
+  }
   // 폴백 — 두 lane 모두 비어 있고 advisory 만 남았다면 (예: 항체검사도 끝났는데
   // 추가 백신만 만료 임박) 가장 앞의 advisory 를 다음 할 일로 노출. 보호자가 행동할 게
   // 그것뿐일 때까지 가려두면 화면이 공백처럼 보인다.
