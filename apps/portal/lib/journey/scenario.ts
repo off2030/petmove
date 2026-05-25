@@ -217,11 +217,13 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       typeof caseData.return_date === 'string' && caseData.return_date.length >= 10
         ? caseData.return_date.slice(0, 10)
         : null
-    // window 마감(출국 10일 이내 등) 은 타임라인 표시일에서 제외 — 구간 시작일을
-    // '예정'으로 박으면 그날 해야 할 것처럼 읽힘. 다음 할 일 카드의 구간 표기는 유지.
-    const fallbackDate = step.deadline?.window
-      ? (earliest ?? null)
-      : (deadline ?? earliest)
+    // 미완 step 의 타임라인 표시일 — step 의 직접 입력 필드(advance_notification_date 등)는
+    // 비어있는데 earliest(다른 step 완료일 기준 계산값)만으로 '예정 [날짜]' 칩을 띄우면
+    // 일정이 정해진 것처럼 오해됨. 따라서:
+    //  - window 마감(출국 10일 이내 등): 구간 시작일을 박으면 그날 해야 할 것처럼 읽혀서 제외.
+    //  - earliest 단독: '예정' 의미상 어긋나 제외 — '다음 할 일' 카드 본문(cardDesc)에서만 안내.
+    // deadline 이 있고 window 가 아니면 그게 마감일 — '마감' 칩으로 표시.
+    const fallbackDate = step.deadline && !step.deadline.window ? deadline : null
     const date = isDeparture && !isJpImportQuarantine
       ? dep
       : isJpImportQuarantine
