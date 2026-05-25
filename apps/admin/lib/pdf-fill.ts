@@ -23,6 +23,7 @@ import {
 } from '@/lib/vaccine-lookups-scoped'
 import { getOrgVaccineLookups } from '@/lib/vaccine-data'
 import { VET_INFO } from '@/lib/vet-info'
+import { RABIES_SLOT_CAP } from '@/lib/rabies-slot-cap'
 import type { CaseRow } from '@petmove/domain'
 
 /* ─── Performance feature flags ────────────────────────────────────────
@@ -539,9 +540,10 @@ function buildVaccineSequenceUnified(
     return sorted.slice().reverse()
   }
 
-  // 0. 광견병 overflow — Form25 dedicated 슬롯에 안 들어간 추가 광견병 접종.
-  // 사용자 선택 결과 (FillOptions.rabiesIndices) 에 따라 fillPdfCore 가 미리
-  // 채워두는 키. 카테고리 cap 적용 안 함 — 모두 chronological asc 순으로 prepend.
+  // 0. 광견병 overflow — dedicated 슬롯 수보다 많이 선택된 광견병 접종 중
+  // 슬롯에 못 들어간 더 오래된 것. fillPdfCore 가 사용자 선택(rabiesIndices)에서
+  // 최근 N개를 dedicated 로 보낸 뒤 나머지를 desc(최근 → 오래된) 순으로 여기에 둠.
+  // 카테고리 cap 적용 안 함 — 받은 순서 그대로 "기타 예방접종" 칸 앞쪽에 prepend.
   const rabiesOverflow = data.rabies_overflow
   if (Array.isArray(rabiesOverflow) && rabiesOverflow.length > 0) {
     for (const rec of rabiesOverflow as ParasiteRecord[]) {
@@ -2972,10 +2974,14 @@ export type FillOptions = {
   /** 추가 필드 (예: Invoice/ESD의 tube_count). caseRow.data 에 병합되어 source 로 읽힘. */
   extras?: Record<string, unknown>
   /**
-   * Form25 (3슬롯) / Form25AuNz (2슬롯) 의 dedicated 광견병 슬롯에 들어갈
-   * 접종을 선택. 인덱스는 rabies_dates 를 날짜 오름차순 정렬한 후의 위치.
-   * 미지정 시 처음부터 슬롯 수 만큼 채움 (기존 동작).
-   * 선택되지 않은 접종은 "기타 예방접종" 시퀀스 앞에 prepend 되어 표시.
+   * 증명서에 기재할 광견병 접종 인덱스 (rabies_dates sortedAsc 기준).
+   * 미지정 시 모든 광견병 접종이 기존 로직대로 처리됨 (별지25호/EX 외 form 포함).
+   * 지정 시:
+   *  - 선택분 중 최근 N개(N = RABIES_SLOT_CAP[formKey])는 dedicated 광견병
+   *    슬롯에 빠른 순(오래된 → 최근)으로 채움.
+   *  - 선택분 중 더 오래된 나머지는 "기타 예방접종" 칸 앞쪽에 최근 순(desc)으로 prepend.
+   *  - 미선택분은 증명서에 기재되지 않음.
+   *  - 빈 배열을 넘기면 광견병 칸 전부 공란.
    */
   rabiesIndices?: number[]
 }
@@ -3033,20 +3039,23 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
   const pdfForm = pdf.getForm()
   const data = { ...(caseRow.data ?? {}), ...(options?.extras ?? {}) } as Record<string, unknown>
 
-  // 광견병 dedicated 슬롯 선택 처리 — rabiesIndices 가 주어지면 sortedAsc 기준
-  // 그 인덱스에 해당하는 records 만 rabies_dates 에 남기고, 나머지는
-  // rabies_overflow 키로 옮겨 buildVaccineSequenceUnified 가 prepend 하도록.
+  // 광견병 선택 처리 — rabiesIndices 가 주어지면 sortedAsc 기준 그 인덱스에
+  // 해당하는 접종만 증명서에 기재 (미선택분은 드롭).
+  //   - 선택분 중 최근 N개 (N = RABIES_SLOT_CAP[formKey]) → rabies_dates
+  //     (asc 유지 = 빠른 순으로 dedicated rabies1/2/3 슬롯에 채움)
+  //   - 선택분 중 그 이전 (더 오래된) → rabies_overflow, desc(최근 순)로
+  //     buildVaccineSequenceUnified 가 "기타 예방접종" 칸에 prepend
+  //   - 미선택분 → 증명서에 나오지 않음
   if (options?.rabiesIndices) {
     const allAsc = sortedAscRecords(data.rabies_dates)
     const idxSet = new Set(options.rabiesIndices)
-    const selected: ParasiteRecord[] = []
-    const overflow: ParasiteRecord[] = []
-    allAsc.forEach((rec, i) => {
-      if (idxSet.has(i)) selected.push(rec)
-      else overflow.push(rec)
-    })
-    data.rabies_dates = selected
-    data.rabies_overflow = overflow
+    const selectedAsc = allAsc.filter((_, i) => idxSet.has(i))
+    const cap = RABIES_SLOT_CAP[formKey] ?? selectedAsc.length
+    const cutoff = Math.max(0, selectedAsc.length - cap)
+    const dedicatedAsc = selectedAsc.slice(cutoff)
+    const olderAsc = selectedAsc.slice(0, cutoff)
+    data.rabies_dates = dedicatedAsc
+    data.rabies_overflow = olderAsc.slice().reverse()
   }
 
   // extras(예: tube_count, consignee_lab)는 resolveField가 `caseRow.data` 를

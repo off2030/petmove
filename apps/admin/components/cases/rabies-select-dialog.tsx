@@ -6,6 +6,8 @@ import { X } from 'lucide-react'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import { cn } from '@/lib/utils'
 
+export { RABIES_SLOT_CAP } from '@/lib/rabies-slot-cap'
+
 interface RabiesRecord {
   date?: string | null
   valid_until?: string | null
@@ -59,7 +61,7 @@ interface Props {
   eligibleAfterDate?: string | null
   /** 타병원 접종(`other_hospital: true`) 도 후보에 포함. FormRE 만 true. */
   includeOtherHospital?: boolean
-  /** 모달이 닫히면 호출 (cancel 또는 confirm). confirm 시 indices 비어있지 않음. */
+  /** 모달이 닫히면 호출. cancel 은 null, confirm 은 number[] (0건 선택도 허용 — 빈 배열). */
   onClose: (indices: number[] | null) => void
 }
 
@@ -69,6 +71,7 @@ export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, el
     [rabiesDates, eligibleAfterDate, includeOtherHospital],
   )
   // 기본 — 가장 최신 N개. (Form25 의 경우 최근 부스터가 면역 증명에 가장 관련성 높음.)
+  // 사용자가 더 추가하거나 제거할 수 있음 (cap 없음, 0 건도 허용).
   const defaultSelected = useMemo(() => {
     const n = sorted.length
     const start = Math.max(0, n - slotCount)
@@ -96,19 +99,15 @@ export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, el
   useEffect(() => { setMounted(true) }, [])
   if (!open || !mounted) return null
 
-  const overflowCount = sorted.length - selected.size
-  const canConfirm = selected.size > 0 && selected.size <= slotCount
-  const atCap = selected.size >= slotCount
+  // 선택한 접종 중 최근 N개는 dedicated 슬롯, 나머지는 "기타" 슬롯으로.
+  const dedicatedCount = Math.min(selected.size, slotCount)
+  const otherCount = Math.max(0, selected.size - slotCount)
 
   function toggle(idx: number) {
     setSelected((s) => {
       const next = new Set(s)
-      if (next.has(idx)) {
-        next.delete(idx)
-      } else {
-        if (next.size >= slotCount) return s
-        next.add(idx)
-      }
+      if (next.has(idx)) next.delete(idx)
+      else next.add(idx)
       return next
     })
   }
@@ -125,26 +124,24 @@ export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, el
 
         <div className="px-lg py-md space-y-2">
           <p className="font-serif text-[13px] text-muted-foreground">
-            서식의 광견병 슬롯이 {slotCount}개 입니다. 인쇄할 접종 {slotCount}건을 골라주세요.
-            나머지는 "기타 예방접종" 칸에 이어서 기재됩니다.
+            증명서에 기재할 광견병 접종을 선택하세요. 선택한 접종 중 최근 {slotCount}개는
+            광견병 슬롯에, 그 이전은 "기타 예방접종" 칸에 기재됩니다. 선택하지 않은 접종은
+            증명서에 나오지 않습니다.
           </p>
           <ul className="mt-2 divide-y divide-border/60 border border-border/80 rounded-md">
             {sorted.map((r) => {
               const checked = selected.has(r.ascIndex)
-              const disabled = !checked && atCap
               return (
                 <li key={r.ascIndex}>
                   <label className={cn(
-                    'flex items-center gap-3 px-3 py-2 transition-colors',
-                    disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer',
-                    checked ? 'bg-accent/40' : !disabled && 'hover:bg-accent/20',
+                    'flex items-center gap-3 px-3 py-2 transition-colors cursor-pointer',
+                    checked ? 'bg-accent/40' : 'hover:bg-accent/20',
                   )}>
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggle(r.ascIndex)}
-                      disabled={disabled}
-                      className="cursor-pointer disabled:cursor-not-allowed"
+                      className="cursor-pointer"
                     />
                     <span className="font-mono text-[14px] tabular-nums">{r.date}</span>
                     {r.validUntil && (
@@ -161,7 +158,7 @@ export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, el
             })}
           </ul>
           <p className="font-serif text-[12px] text-muted-foreground italic">
-            선택 {selected.size}/{slotCount} · 기타 슬롯으로 이동 {overflowCount}건
+            선택 {selected.size}건 · 광견병 슬롯 {dedicatedCount}건 · 기타 슬롯 {otherCount}건
           </p>
         </div>
 
@@ -170,7 +167,6 @@ export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, el
           onCancel={() => onClose(null)}
           onPrimary={() => onClose(Array.from(selected).sort((a, b) => a - b))}
           primaryLabel="이대로 발급"
-          primaryDisabled={!canConfirm}
         />
       </div>
     </div>,
@@ -178,9 +174,3 @@ export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, el
   )
 }
 
-/** Form key → dedicated 광견병 슬롯 수. 다른 form 은 unsupported (선택 불필요). */
-export const RABIES_SLOT_CAP: Record<string, number> = {
-  Form25: 3,
-  Form25AuNz: 2,
-  FormRE: 2,
-}
