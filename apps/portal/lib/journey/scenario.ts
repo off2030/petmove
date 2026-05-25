@@ -217,6 +217,11 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       typeof caseData.return_date === 'string' && caseData.return_date.length >= 10
         ? caseData.return_date.slice(0, 10)
         : null
+    // window 마감(출국 10일 이내 등) 은 타임라인 표시일에서 제외 — 구간 시작일을
+    // '예정'으로 박으면 그날 해야 할 것처럼 읽힘. 다음 할 일 카드의 구간 표기는 유지.
+    const fallbackDate = step.deadline?.window
+      ? (earliest ?? null)
+      : (deadline ?? earliest)
     const date = isDeparture && !isJpImportQuarantine
       ? dep
       : isJpImportQuarantine
@@ -225,7 +230,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
           ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? flightReturnDate
           : done
             ? resolveCompletedDate(step.done, caseRow)
-            : (deadline ?? earliest)
+            : fallbackDate
     // 칩 라벨 분기 — '마감 26·11·21' (단일 non-window 마감일이 표시 날짜인 경우) vs
     // '예정 …' (그 외 일정·이벤트·window 시작·기간 시작 등). 사전 신고처럼 deadline 자체가
     // 보호자의 행동 마감일일 때만 '마감'. window 마감(출국 10일 이내 검진 등)은 구간 시작이라 '예정' 유지.
