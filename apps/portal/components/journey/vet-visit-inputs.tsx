@@ -35,7 +35,7 @@ export function VetVisitInputs({
           임상 수의사의 검진을 받은 날짜
         </div>
         <div style={{ marginTop: 8 }}>
-          <DateTextField value={date} onChange={onChange} placeholder="YYYY-MM-DD" />
+          <DateTextField value={date} onChange={onChange} placeholder="YYYY-MM-DD" block />
         </div>
       </div>
     </div>

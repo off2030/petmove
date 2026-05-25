@@ -53,6 +53,7 @@ export function JpExportQuarantineInputs({
             value={form.date}
             onChange={(v) => onChange('date', v)}
             placeholder="YYYY-MM-DD"
+            block
           />
         </div>
       </div>

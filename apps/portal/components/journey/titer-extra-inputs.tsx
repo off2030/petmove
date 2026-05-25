@@ -189,6 +189,7 @@ function ExtraCard({
             value={entry.date}
             onChange={(v) => onChange('date', v)}
             placeholder="YYYY-MM-DD"
+            block
           />
         </div>
       </div>

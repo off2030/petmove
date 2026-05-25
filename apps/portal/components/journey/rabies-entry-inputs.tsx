@@ -195,6 +195,7 @@ export function RabiesEntryInputs({
                   value={value[field.key]}
                   onChange={(v) => onChange(field.key, v)}
                   placeholder="YYYY-MM-DD"
+                  block
                 />
               </div>
             ) : (

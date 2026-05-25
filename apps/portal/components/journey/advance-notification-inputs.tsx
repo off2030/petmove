@@ -35,7 +35,7 @@ export function AdvanceNotificationInputs({
           NACCS로 사전 신고를 제출한 날짜
         </div>
         <div style={{ marginTop: 8 }}>
-          <DateTextField value={date} onChange={onChange} placeholder="YYYY-MM-DD" />
+          <DateTextField value={date} onChange={onChange} placeholder="YYYY-MM-DD" block />
         </div>
       </div>
     </div>

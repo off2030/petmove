@@ -89,6 +89,7 @@ export function MicrochipInputs({
             value={date}
             onChange={(v) => onDateChange(v)}
             placeholder="YYYY-MM-DD"
+            block
           />
         </div>
       </div>
