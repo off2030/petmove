@@ -130,6 +130,21 @@ function deadlineDate(step: StepDefinition, caseRow: CaseRow): string | null {
   return d.toISOString().slice(0, 10)
 }
 
+/** step 의 recommended 표시일 — deadline 과 같은 anchor 룰, daysBefore 만 다를 수 있다. */
+function recommendedDate(step: StepDefinition, caseRow: CaseRow): string | null {
+  const rec = step.recommended
+  if (!rec) return null
+  // recommended 는 deadline 과 동일한 anchor 의미를 사용. deadlineAnchorDate 룩업을
+  // 재활용하기 위해 일시적으로 deadline 처럼 다룬다.
+  const tmpStep: StepDefinition = { ...step, deadline: rec }
+  const base = deadlineAnchorDate(tmpStep, caseRow)
+  if (!base) return null
+  const d = new Date(base + 'T00:00:00Z')
+  if (isNaN(d.getTime())) return null
+  d.setUTCDate(d.getUTCDate() - rec.daysBefore)
+  return d.toISOString().slice(0, 10)
+}
+
 /** 날짜 구간의 끝 날짜 표시 — 시작과 같은 해면 'YYYY년' 생략. */
 function formatRangeEnd(start: string, end: string): string {
   const full = formatKoreanDate(end)
@@ -197,6 +212,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     const isJpImportQuarantine =
       isDeparture && (step.inputs ?? []).some((i) => i.key === 'jp_import_quarantine_date')
     const deadline = deadlineDate(step, caseRow)
+    const recommended = recommendedDate(step, caseRow)
     const earliest = earliestDate(step, caseRow)
     // window 마감이면 구간 끝(기준일) — 카드에 'A ~ B' 구간으로 표시.
     const deadlineEnd = step.deadline?.window ? deadlineAnchorDate(step, caseRow) : null
@@ -220,7 +236,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
           ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? flightReturnDate
           : done
             ? resolveCompletedDate(step.done, caseRow)
-            : (deadline ?? earliest)
+            : (recommended ?? deadline ?? earliest)
     // 보조 문구의 기본값은 description 첫 문장(절차 설명).
     const summary = firstSentence(step.description)
     // 상황별 override — 데이터 상태로 desc/cardDesc 를 갈아끼울 수 있는 훅.
@@ -233,9 +249,11 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     const desc = done
       ? (step.doneSummary ?? sit?.desc ?? summary)
       : (sit?.desc ?? summary)
-    // 다음 할 일 카드 본문 — 날짜(earliest/deadline)가 있으면 step.cardLine
+    // 다음 할 일 카드 본문 — 날짜(earliest/recommended/deadline)가 있으면 step.cardLine
     // (미지정 시 설명 첫 문장)에 날짜 구문을 붙이고, 날짜가 없으면 설명 첫 문장만.
     // earliest("이후")가 deadline("까지"/window 구간)보다 우선: 보호자가 먼저 알아야 할 제약.
+    // recommended 가 deadline 과 함께면 "{recommended} ~ {deadline} 사이에" 구간으로 노출
+    // (사전 신고처럼 응답 대기 수 주가 필요한 절차에서 마감만 보여주면 늦게 시작할 위험).
     // situational.cardDesc 가 있으면 모든 날짜 로직을 덮어쓴다.
     const cardLine = step.cardLine ?? summary
     const cardDesc = done
@@ -243,11 +261,13 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       : (sit?.cardDesc
           ?? (earliest
             ? `${formatKoreanDate(earliest)} 이후 ${cardLine}`
-            : deadline && deadlineEnd
-              ? `${formatKoreanDate(deadline)} ~ ${formatRangeEnd(deadline, deadlineEnd)}에 ${cardLine}`
-              : deadline
-                ? `${formatKoreanDate(deadline)}까지 ${cardLine}`
-                : summary))
+            : recommended && deadline
+              ? `${formatKoreanDate(recommended)} ~ ${formatRangeEnd(recommended, deadline)}에 ${cardLine}`
+              : deadline && deadlineEnd
+                ? `${formatKoreanDate(deadline)} ~ ${formatRangeEnd(deadline, deadlineEnd)}에 ${cardLine}`
+                : deadline
+                  ? `${formatKoreanDate(deadline)}까지 ${cardLine}`
+                  : summary))
     const failedChecks = failedByStep.get(step.id) ?? 0
     const infoChecks = infoByStep.get(step.id) ?? 0
     return {

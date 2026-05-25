@@ -340,6 +340,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
     order: 47,
     deadline: { anchor: 'entry', daysBefore: 40 },
+    // 응답 대기 수 주(허가증 발급)에 보호자 대응 시간까지 고려해 입국 70일 전 시작 권장.
+    // = 마감(40일 전) + 30일 버퍼. 일정 row 표시일·next-up 카드 구간의 시작점이 된다.
+    recommended: { anchor: 'entry', daysBefore: 70 },
     done: 'has-advance-notification',
     inputs: [{ key: 'advance_notification_date', label: '신청일', type: 'date' }],
     allowAttachments: true,

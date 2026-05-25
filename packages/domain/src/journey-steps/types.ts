@@ -168,6 +168,13 @@ export interface StepDefinition {
   order: number
   /** 권장 시점. UI 의 deadline 배지. 생략 시 표시 안 함. */
   deadline?: StepDeadline
+  /**
+   * 권장 시작일 — deadline 보다 일찍, 보호자가 여유 있게 시작해야 하는 시점.
+   * 신청 후 응답에 수 주가 걸리는 step(사전 신고·수입 허가 등)에서 마감만 표시하면
+   * "그날 하면 됨" 처럼 읽히는 걸 방지. deadline 과 함께 설정되면 일정 표시일은
+   * recommended, 다음 할 일 카드는 "recommended ~ deadline 사이에" 구간으로.
+   */
+  recommended?: StepDeadline
   /** 가능 시작일. 다음 할 일 카드에서 "{날짜} 이후 …" 문구로 노출. */
   earliest?: StepEarliest
   /** 완료 시그널. */
