@@ -699,8 +699,15 @@ export function StepDetailView({
   const failed = checkResults.filter((c) => !c.result.ok && c.check.severity !== 'info')
   const notices = checkResults.filter((c) => !c.result.ok && c.check.severity === 'info')
   // step config 의 situational 메시지 — timeline desc 와 동일 내용을 detail 에도 노출.
-  const situationalDesc =
+  // 같은 룰을 mirror 한 procedure-check 가 동일 메시지로 이미 떴으면(예: 추가 백신
+  // chain-break: catalog situational ↔ jp.rabies-extra-within-previous-validity)
+  // 안내·주의 두 배너에 같은 문장이 나가니 dedup 한다.
+  const rawSituationalDesc =
     caseRow && step.situational ? step.situational(caseRow)?.desc : undefined
+  const situationalDup =
+    !!rawSituationalDesc &&
+    [...failed, ...notices].some(({ result }) => result.message === rawSituationalDesc)
+  const situationalDesc = situationalDup ? undefined : rawSituationalDesc
   const stepDocuments = readCaseDocuments(caseRow?.data).filter((d) => d.stepId === step.id)
 
   return (
