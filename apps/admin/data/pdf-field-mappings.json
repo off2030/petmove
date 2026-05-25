@@ -4200,12 +4200,12 @@
         "transform": "json:arrival_flight_number",
         "note": "By Flight — 입국 항공편명"
       },
-      "text_25hlqx": {
+      "text_34phci": {
         "source": "thailand_extra",
         "transform": "json:arrival_date",
         "note": "Date — 입국 도착일"
       },
-      "text_26frqr": {
+      "text_35gcir": {
         "source": "thailand_extra",
         "transform": "json:arrival_time",
         "note": "Time — 입국 도착시간"
