@@ -548,6 +548,13 @@ export function StepDetailView({
         }
       })
     } else if (isAdvanceNotification) {
+      // 입국 40일 전까지 접수돼야 함 — 룰 위반 시 차단 (procedure-check '주의' 로 빠지는 것 방지).
+      const advanceError = validateAdvanceNotificationDate(caseRow?.data, advanceDate)
+      if (advanceError) {
+        setStatus('error')
+        setError(advanceError)
+        return
+      }
       setStatus('saving')
       setError(null)
       startTransition(async () => {
@@ -1598,6 +1605,25 @@ function validateFlightEntryDate(
   if (titerDates.length === 0) return null
   if (!titerDates.some((t) => daysBetween(t, entryDate) >= 180)) {
     return '입국일은 광견병 항체검사일로부터 180일 후여야 합니다.'
+  }
+  return null
+}
+
+/**
+ * 사전 신고(NACCS) 신청일 cross-entry 검증. 통과면 null, 실패면 에러 메시지.
+ * - 룰: 신청일 ≤ 입국일 − 40일 (procedure-check jp.advance-notification-40days-before-entry 와 동일).
+ *
+ * 입국일(entry_date) 미입력 시 skip — 항공편 결정 후 평가되도록 둠.
+ */
+function validateAdvanceNotificationDate(
+  data: Record<string, unknown> | null | undefined,
+  notifDate: string,
+): string | null {
+  if (!notifDate) return null
+  const entry = typeof data?.entry_date === 'string' ? data.entry_date : ''
+  if (!entry) return null
+  if (daysBetween(notifDate, entry) < 40) {
+    return '사전 신고는 입국일 40일 전까지 접수되어야 합니다.'
   }
   return null
 }
