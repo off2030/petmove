@@ -295,12 +295,27 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
   // 다음 단계를 가리지 않도록 승격에서 건너뛴다.
   const nonBlockingIds = new Set(applicableSteps.filter((s) => s.nonBlocking).map((s) => s.id))
   const advisoryOnlyIds = new Set(applicableSteps.filter((s) => s.advisoryOnly).map((s) => s.id))
+  // 사전 신고 ↔ 일본 수출 동물검역 신청은 모두 일본 측 사전 절차라 카탈로그상으로도
+  // "사전 신고와 동시에 진행을 하는 것이 편리합니다" 라고 안내됨. 왕복 + 항공권 출국·귀국이
+  // 모두 입력된 시점부터 advance-notification 도 effectively non-blocking 으로 다뤄
+  // jp-export-quarantine 까지 함께 '다음 할 일' 에 노출. (one-way 는 jp-export-quarantine
+  // 자체가 applicable 하지 않으므로 영향 없음.)
+  const caseData = (caseRow.data ?? {}) as Record<string, unknown>
+  const hasFlightEntry =
+    typeof caseData.entry_date === 'string' && caseData.entry_date.length >= 10
+  const hasFlightReturn =
+    typeof caseData.return_date === 'string' && caseData.return_date.length >= 10
+  const advanceNotificationParallelsExport =
+    ctx.tripType === 'round' && hasFlightEntry && hasFlightReturn
+  const isNonBlocking = (stepId: string): boolean =>
+    nonBlockingIds.has(stepId) ||
+    (stepId === 'advance-notification' && advanceNotificationParallelsExport)
   for (let i = 0; i < stages.length; i++) {
     if (stages[i].state !== 'upcoming') continue
     if (advisoryOnlyIds.has(stages[i].id)) continue
     stages[i].state = 'current'
     // blocking step 에서 멈춤. non-blocking 이면 계속 스캔해 다음 step 도 승격.
-    if (!nonBlockingIds.has(stages[i].id)) break
+    if (!isNonBlocking(stages[i].id)) break
   }
   // 폴백 — 본 흐름의 모든 step 이 done 이고 advisory 만 남았다면 (예: 항체검사도 끝났는데
   // 추가 백신만 만료 임박) 가장 앞의 advisory 를 다음 할 일로 노출. 보호자가 행동할 게
