@@ -156,10 +156,12 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            // 주의/안내가 있으면 sage/accent 대신 그 톤으로 — 번호 자리에 ⚠ 또는 ⓘ.
-            background: hasWarn ? C.warn : hasInfo ? C.info : isDone ? C.sage : isCurr ? C.accent : 'transparent',
-            border: !hasWarn && !hasInfo && !isDone && !isCurr ? `1px solid ${C.line}` : 'none',
-            color: hasWarn || hasInfo || isDone || isCurr ? C.surface : C.ink3,
+            // 우선순위: 주의(실제 문제) > done(완료 체크) > current(다음 할 일 톤) > 안내 > upcoming.
+            // current 와 안내가 동시이면 current 톤 유지 — 보호자의 다음 액션이 시각의 무게중심.
+            // 안내는 우측 칩 + 별도 카드로 보조 노출.
+            background: hasWarn ? C.warn : isDone ? C.sage : isCurr ? C.accent : hasInfo ? C.info : 'transparent',
+            border: !hasWarn && !isDone && !isCurr && !hasInfo ? `1px solid ${C.line}` : 'none',
+            color: hasWarn || isDone || isCurr || hasInfo ? C.surface : C.ink3,
             ...num,
             fontSize: 11,
           }}
@@ -180,6 +182,21 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               <line x1="12" y1="17" x2="12.01" y2="17" />
               <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
             </svg>
+          ) : isDone ? (
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          ) : isCurr ? (
+            index + 1
           ) : hasInfo ? (
             <svg
               width="12"
@@ -194,19 +211,6 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
             >
               <line x1="12" y1="11" x2="12" y2="17" />
               <line x1="12" y1="7" x2="12.01" y2="7" />
-            </svg>
-          ) : isDone ? (
-            <svg
-              width="11"
-              height="11"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12" />
             </svg>
           ) : (
             index + 1
@@ -344,35 +348,6 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
           </Link>
         )}
 
-        {/* 안내 — 오류는 아니지만 미리 알려둘 사항. 주의보다 차분한 중립 톤. */}
-        {infoStages.length > 0 && firstInfoStage && (
-          <Link
-            href={`/cases/${caseId}/journey/${firstInfoStage.id}`}
-            className="pm-pressable"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              marginTop: warnedStages.length > 0 ? 8 : 18,
-              padding: '10px 14px',
-              borderRadius: 12,
-              background: C.infoBg,
-              border: `.5px solid ${C.info}59`,
-              color: C.info,
-              fontSize: 13,
-              textDecoration: 'none',
-              fontWeight: 500,
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="16" x2="12" y2="12" />
-              <line x1="12" y1="8" x2="12.01" y2="8" />
-            </svg>
-            <span>안내 {infoStages.length}건 — {infoStages.map((s) => s.label).join(', ')}</span>
-          </Link>
-        )}
-
         {/* 다음 할 일 카드 — soft taupe. 헤더 1회 + 할 일 항목들(각 행이 링크, 구분선).
             non-blocking step 뒤엔 항목이 여럿 — 한 카드에 묶어 표시. */}
         {nextStages.length > 0 && (
@@ -417,6 +392,56 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                 {(stage.cardDesc ?? stage.desc) && (
                   <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>
                     {stage.cardDesc ?? stage.desc}
+                  </p>
+                )}
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* 안내 카드 — 다음 할 일 카드와 같은 톤·구조. 단 헤더 라벨은 info 색으로 구분.
+            안내별 카드 1장씩 (다건이면 N장) — step 이름 + 안내문 첫 줄 + 해당 step 링크. */}
+        {infoStages.length > 0 && (
+          <div
+            style={{
+              marginTop: nextStages.length > 0 ? 14 : 22,
+              padding: 22,
+              borderRadius: 22,
+              background: C.cardSoft,
+              boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
+            }}
+          >
+            <div style={{ ...monoCap, color: C.info }}>안내</div>
+            {infoStages.map((stage, i) => (
+              <Link
+                key={stage.id}
+                href={`/cases/${caseId}/journey/${stage.id}`}
+                className="pm-pressable"
+                style={{
+                  display: 'block',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  marginTop: i === 0 ? 12 : 14,
+                  paddingTop: i === 0 ? 0 : 14,
+                  borderTop: i === 0 ? 0 : '1px solid rgba(45,38,28,.12)',
+                }}
+              >
+                <h3
+                  style={{
+                    ...serif,
+                    margin: 0,
+                    fontSize: 22,
+                    lineHeight: 1.18,
+                    color: '#2A2620',
+                    fontWeight: 500,
+                    textWrap: 'balance' as React.CSSProperties['textWrap'],
+                  }}
+                >
+                  {stage.label}
+                </h3>
+                {stage.infoMessage && (
+                  <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>
+                    {stage.infoMessage}
                   </p>
                 )}
               </Link>

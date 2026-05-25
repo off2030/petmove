@@ -44,6 +44,11 @@ export interface JourneyStage {
   /** 이 step 의 ok=false 체크 중 '안내'(severity 'info') 개수. */
   infoChecks?: number
   /**
+   * 안내 카드 본문 — info check 의 description 또는 advisory step 의 동적 안내문.
+   * '안내' 톤 stage(infoChecks > 0 또는 advisory) 일 때만 채워진다. 다건이면 첫 메시지만.
+   */
+  infoMessage?: string
+  /**
    * advisoryOnly step (추가 백신·추가 검사 등 미래 만료 대비 reminder) 여부.
    * 미완료(upcoming) 상태일 때 본 흐름의 다음 단계는 못 가리되, 일정 row 에서는
    * '안내' 톤으로 표시해 보호자가 인지하도록 한다. (deferrable 한 미래 대비라
@@ -177,6 +182,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
   // 톤으로 분리, 그 외(blocker/warning)는 '주의'. destinationKey 없으면 빈 맵.
   const failedByStep = new Map<string, number>()
   const infoByStep = new Map<string, number>()
+  const infoMessageByStep = new Map<string, string>()
   if (ctx.destinationKey) {
     const all = runChecksForCase(ctx.destinationKey, { caseRow })
     for (const { check, result } of all) {
@@ -192,6 +198,10 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       }
       const bucket = check.severity === 'info' ? infoByStep : failedByStep
       bucket.set(stepId, (bucket.get(stepId) ?? 0) + 1)
+      // 안내 카드 본문 — 같은 step 에 여러 안내가 묶이면 첫 메시지만 보존.
+      if (check.severity === 'info' && !infoMessageByStep.has(stepId)) {
+        infoMessageByStep.set(stepId, result.message ?? check.description)
+      }
     }
   }
 
@@ -283,6 +293,10 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
                 : summary))
     const failedChecks = failedByStep.get(step.id) ?? 0
     const infoChecks = infoByStep.get(step.id) ?? 0
+    const isAdvisory = step.advisoryOnly === true
+    // 안내 카드 본문 — info check 메시지가 있으면 그걸, 없으면 advisory step 의 desc(상황별).
+    const infoMessage =
+      infoMessageByStep.get(step.id) ?? (isAdvisory && !done ? desc : undefined)
     return {
       id: step.id,
       label: step.title,
@@ -294,7 +308,8 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       cardDesc,
       failedChecks: failedChecks > 0 ? failedChecks : undefined,
       infoChecks: infoChecks > 0 ? infoChecks : undefined,
-      advisory: step.advisoryOnly === true ? true : undefined,
+      advisory: isAdvisory ? true : undefined,
+      infoMessage,
     }
   })
 
