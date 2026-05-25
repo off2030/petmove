@@ -29,6 +29,11 @@ export interface JourneyStage {
   label: string
   short: string
   date: string | null
+  /**
+   * 미래 날짜 칩의 prefix 단어. 단일 non-window 마감일이 표시 날짜인 step(사전 신고 등)은
+   * '마감', 그 외(이벤트·window 시작·earliest·flight)는 '예정'. 과거 날짜·칩 없는 경우는 무시됨.
+   */
+  dateLabel?: '예정' | '마감'
   state: StageState
   /** 전체 일정 리스트 보조 줄. done→완료 문구, 그 외→행동 문구. */
   desc?: string
@@ -130,21 +135,6 @@ function deadlineDate(step: StepDefinition, caseRow: CaseRow): string | null {
   return d.toISOString().slice(0, 10)
 }
 
-/** step 의 recommended 표시일 — deadline 과 같은 anchor 룰, daysBefore 만 다를 수 있다. */
-function recommendedDate(step: StepDefinition, caseRow: CaseRow): string | null {
-  const rec = step.recommended
-  if (!rec) return null
-  // recommended 는 deadline 과 동일한 anchor 의미를 사용. deadlineAnchorDate 룩업을
-  // 재활용하기 위해 일시적으로 deadline 처럼 다룬다.
-  const tmpStep: StepDefinition = { ...step, deadline: rec }
-  const base = deadlineAnchorDate(tmpStep, caseRow)
-  if (!base) return null
-  const d = new Date(base + 'T00:00:00Z')
-  if (isNaN(d.getTime())) return null
-  d.setUTCDate(d.getUTCDate() - rec.daysBefore)
-  return d.toISOString().slice(0, 10)
-}
-
 /** 날짜 구간의 끝 날짜 표시 — 시작과 같은 해면 'YYYY년' 생략. */
 function formatRangeEnd(start: string, end: string): string {
   const full = formatKoreanDate(end)
@@ -212,7 +202,6 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     const isJpImportQuarantine =
       isDeparture && (step.inputs ?? []).some((i) => i.key === 'jp_import_quarantine_date')
     const deadline = deadlineDate(step, caseRow)
-    const recommended = recommendedDate(step, caseRow)
     const earliest = earliestDate(step, caseRow)
     // window 마감이면 구간 끝(기준일) — 카드에 'A ~ B' 구간으로 표시.
     const deadlineEnd = step.deadline?.window ? deadlineAnchorDate(step, caseRow) : null
@@ -236,7 +225,20 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
           ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? flightReturnDate
           : done
             ? resolveCompletedDate(step.done, caseRow)
-            : (recommended ?? deadline ?? earliest)
+            : (deadline ?? earliest)
+    // 칩 라벨 분기 — '마감 26·11·21' (단일 non-window 마감일이 표시 날짜인 경우) vs
+    // '예정 …' (그 외 일정·이벤트·window 시작·기간 시작 등). 사전 신고처럼 deadline 자체가
+    // 보호자의 행동 마감일일 때만 '마감'. window 마감(출국 10일 이내 검진 등)은 구간 시작이라 '예정' 유지.
+    const dateLabel: '예정' | '마감' =
+      !done &&
+      !isDeparture &&
+      !isJpImportQuarantine &&
+      step.id !== 'kr-import-quarantine' &&
+      step.deadline &&
+      !step.deadline.window &&
+      date === deadline
+        ? '마감'
+        : '예정'
     // 보조 문구의 기본값은 description 첫 문장(절차 설명).
     const summary = firstSentence(step.description)
     // 상황별 override — 데이터 상태로 desc/cardDesc 를 갈아끼울 수 있는 훅.
@@ -272,6 +274,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       label: step.title,
       short: step.shortLabel,
       date,
+      dateLabel,
       state: done ? 'done' : 'upcoming',
       desc,
       cardDesc,

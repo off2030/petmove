@@ -263,7 +263,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                     fontWeight: 700,
                   }}
                 >
-                  예정 {formatStageDate(s)}
+                  {s.dateLabel ?? '예정'} {formatStageDate(s)}
                 </span>
               ) : isCurr ? (
                 '예정'
