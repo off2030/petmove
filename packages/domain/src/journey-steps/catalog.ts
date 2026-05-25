@@ -251,9 +251,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 출국일 ± 180일/2년 룰은 항체검사 step 에서 보호자가 조치 불가 — 항공권
       // 구매 step (flight-purchase) 에 jp.entry-* 로 매핑되어 거기서만 안내.
       'jp.microchip-rabies-sequence',
-      // 마이크로칩 < 1차 사전 안내 — 2차 step 과 동시에 항체검사 step 에도 노출하여
-      // '2차와 항체검사를 같은 날' 룰을 두 입력 시점 모두에서 보호자에게 상기.
-      'jp.rabies-prime-before-microchip',
+      // 마이크로칩 < 1차 사전 안내는 base 매핑이 rabies-vaccine-2 (다음 액션 step).
+      // 2차 done 시점에는 scenario.ts 가 동적으로 이 step(rabies-titer)으로 옮긴다.
     ],
   },
 

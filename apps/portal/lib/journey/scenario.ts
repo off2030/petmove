@@ -181,8 +181,15 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     const all = runChecksForCase(ctx.destinationKey, { caseRow })
     for (const { check, result } of all) {
       if (result.ok) continue
-      const stepId = findStepForCheck(check.id)
+      let stepId = findStepForCheck(check.id)
       if (!stepId) continue
+      // 1차 < 마이크로칩 사전 안내는 보호자가 다음 액션할 step 으로 옮긴다.
+      // 2차 백신 미완 → catalog 매핑(rabies-vaccine-2) 그대로, 2차 done → rabies-titer.
+      // (같은 날 룰을 두 입력 시점 모두에서 환기.)
+      if (check.id === 'jp.rabies-prime-before-microchip') {
+        const r2 = applicableSteps.find((s) => s.id === 'rabies-vaccine-2')
+        if (r2 && resolveDone(r2.done, caseRow)) stepId = 'rabies-titer'
+      }
       const bucket = check.severity === 'info' ? infoByStep : failedByStep
       bucket.set(stepId, (bucket.get(stepId) ?? 0) + 1)
     }
