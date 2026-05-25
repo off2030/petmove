@@ -249,8 +249,9 @@ export async function updateRabiesEntryFields(
     // 앞 index 를 빈 객체로 패딩 (sparse 배열 방지) 후 해당 index 설정.
     while (rabiesArr.length < index) rabiesArr.push({})
     rabiesArr[index] = entry
-    // 끝의 완전히 빈 항목 제거.
-    while (rabiesArr.length > 0 && isEmptyObject(rabiesArr[rabiesArr.length - 1])) {
+    // 끝의 phantom (date 없는 entry — 빈 객체 또는 {other_hospital: true} 만 남은
+    // 잔여물) 제거. hasValidDate 기반이라 기존 phantom 도 함께 정리됨.
+    while (rabiesArr.length > 0 && !hasValidDate(rabiesArr[rabiesArr.length - 1])) {
       rabiesArr.pop()
     }
 
@@ -273,6 +274,24 @@ export async function updateRabiesEntryFields(
 
 function isEmptyObject(v: unknown): boolean {
   return !!v && typeof v === 'object' && Object.keys(v as object).length === 0
+}
+
+/**
+ * 광견병/항체검사 entry 가 "phantom" 인지 — date 가 없으면 의미 없는 잔여물로 간주.
+ *
+ * 배경: 새 카드 생성 시 `other_hospital: true` 가 자동 부여되거나(rabies), 사용자가
+ * 기존 entry 의 date 만 비워 저장한 경우 `{other_hospital: true}` / `{lab: ...}` 처럼
+ * date 없는 객체가 남는다. `isEmptyObject`(키 0개) 검사는 이를 못 잡아 array 에
+ * 영원히 phantom 으로 박힌다. readRabiesEntries 의 date.length>=10 필터는 이걸
+ * 제거하지만, length 계산이 어긋나 chain 체크가 잘못 fire 한다(예: 1·2·phantom·4차
+ * → 필터 후 3개로 인식, 2차→4차 chain 검증).
+ *
+ * 정책: date 없는 entry 는 의미 없음 → save 시 drop.
+ */
+function hasValidDate(v: unknown): boolean {
+  if (!v || typeof v !== 'object') return false
+  const date = (v as { date?: unknown }).date
+  return typeof date === 'string' && date.length >= 10
 }
 
 /**
@@ -347,12 +366,14 @@ export async function updateRabiesExtraEntries(
       if (isFreshEntry && Object.keys(entry).length > 0) {
         entry.other_hospital = true
       }
-      if (Object.keys(entry).length === 0) continue
+      // date 가 없으면 의미 없는 잔여물 — drop (other_hospital 만 남는 phantom 방지).
+      // 기존 DB phantom 도 prevSlot 으로 들어왔다가 여기서 자동 정리됨.
+      if (!hasValidDate(entry)) continue
       newExtras.push(entry)
     }
 
     const rabiesNext: unknown[] = [...preserved, ...newExtras]
-    while (rabiesNext.length > 0 && isEmptyObject(rabiesNext[rabiesNext.length - 1])) {
+    while (rabiesNext.length > 0 && !hasValidDate(rabiesNext[rabiesNext.length - 1])) {
       rabiesNext.pop()
     }
 
@@ -423,7 +444,7 @@ export async function updateTiterFields(
     else delete entry.value
 
     const nextData: Record<string, unknown> = { ...prev }
-    if (isEmptyObject(entry) && arr.length <= 1) {
+    if (!hasValidDate(entry) && arr.length <= 1) {
       delete nextData.rabies_titer_records
     } else {
       arr[0] = entry
@@ -510,12 +531,13 @@ export async function updateTiterExtraEntries(
       if (v) entry.value = v
       else delete entry.value
 
-      if (Object.keys(entry).length === 0) continue
+      // date 없는 entry 는 의미 없는 잔여물 — drop (lab/value 만 남는 phantom 방지).
+      if (!hasValidDate(entry)) continue
       newExtras.push(entry)
     }
 
     const titerNext: unknown[] = [...preserved, ...newExtras]
-    while (titerNext.length > 0 && isEmptyObject(titerNext[titerNext.length - 1])) {
+    while (titerNext.length > 0 && !hasValidDate(titerNext[titerNext.length - 1])) {
       titerNext.pop()
     }
 
