@@ -249,25 +249,22 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     const desc = done
       ? (step.doneSummary ?? sit?.desc ?? summary)
       : (sit?.desc ?? summary)
-    // 다음 할 일 카드 본문 — 날짜(earliest/recommended/deadline)가 있으면 step.cardLine
+    // 다음 할 일 카드 본문 — 날짜(earliest/deadline)가 있으면 step.cardLine
     // (미지정 시 설명 첫 문장)에 날짜 구문을 붙이고, 날짜가 없으면 설명 첫 문장만.
     // earliest("이후")가 deadline("까지"/window 구간)보다 우선: 보호자가 먼저 알아야 할 제약.
-    // recommended 가 deadline 과 함께면 "{recommended} ~ {deadline} 사이에" 구간으로 노출
-    // (사전 신고처럼 응답 대기 수 주가 필요한 절차에서 마감만 보여주면 늦게 시작할 위험).
     // situational.cardDesc 가 있으면 모든 날짜 로직을 덮어쓴다.
+    // (참고: recommended 는 일정 row 표시일만 영향 — 카드 본문은 마감 기준 유지.)
     const cardLine = step.cardLine ?? summary
     const cardDesc = done
       ? undefined
       : (sit?.cardDesc
           ?? (earliest
             ? `${formatKoreanDate(earliest)} 이후 ${cardLine}`
-            : recommended && deadline
-              ? `${formatKoreanDate(recommended)} ~ ${formatRangeEnd(recommended, deadline)}에 ${cardLine}`
-              : deadline && deadlineEnd
-                ? `${formatKoreanDate(deadline)} ~ ${formatRangeEnd(deadline, deadlineEnd)}에 ${cardLine}`
-                : deadline
-                  ? `${formatKoreanDate(deadline)}까지 ${cardLine}`
-                  : summary))
+            : deadline && deadlineEnd
+              ? `${formatKoreanDate(deadline)} ~ ${formatRangeEnd(deadline, deadlineEnd)}에 ${cardLine}`
+              : deadline
+                ? `${formatKoreanDate(deadline)}까지 ${cardLine}`
+                : summary))
     const failedChecks = failedByStep.get(step.id) ?? 0
     const infoChecks = infoByStep.get(step.id) ?? 0
     return {
