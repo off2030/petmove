@@ -70,13 +70,13 @@ export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, el
     () => normalize(rabiesDates, eligibleAfterDate, includeOtherHospital),
     [rabiesDates, eligibleAfterDate, includeOtherHospital],
   )
-  // 기본 — 가장 최신 N개. (Form25 의 경우 최근 부스터가 면역 증명에 가장 관련성 높음.)
-  // 사용자가 더 추가하거나 제거할 수 있음 (cap 없음, 0 건도 허용).
-  const defaultSelected = useMemo(() => {
-    const n = sorted.length
-    const start = Math.max(0, n - slotCount)
-    return new Set(sorted.slice(start).map((r) => r.ascIndex))
-  }, [sorted, slotCount])
+  // 기본 — 모두 체크. 선택분 중 최근 slotCount 개는 dedicated 슬롯,
+  // 그 이전은 "기타 예방접종" 칸으로 자동 분배. 사용자는 증명서에서
+  // 제외할 항목만 해제하면 됨 (0 건도 허용).
+  const defaultSelected = useMemo(
+    () => new Set(sorted.map((r) => r.ascIndex)),
+    [sorted],
+  )
 
   const [selected, setSelected] = useState<Set<number>>(defaultSelected)
 
