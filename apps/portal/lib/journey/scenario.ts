@@ -269,10 +269,13 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     // (예: 마이크로칩 한 필드만 채워진 상태 → 빠진 쪽 입력 요청.)
     const sit = step.situational?.(caseRow)
     // 전체 일정 리스트 보조 문구.
-    //  - 완료: step.doneSummary(과거형 narration)가 최우선 — situational 의 미래형
-    //    리마인더(예: '…까지 재접종합니다')가 완료 표시와 모순되지 않도록.
+    //  - 완료(과거·오늘): step.doneSummary(과거형 narration)가 최우선 — situational 의
+    //    미래형 리마인더가 완료 표시와 모순되지 않도록.
+    //  - 완료(미래 — 예약 입력 상태): "받았습니다" 같은 과거형은 맞지 않으므로 미완료와
+    //    동일한 안내 톤(situational/현재형) 사용.
     //  - 미완료: situational.desc 가 있으면 우선, 없으면 description 첫 문장(현재형 안내문).
-    const desc = done
+    const isFutureDate = date != null && date > today
+    const desc = done && !isFutureDate
       ? (step.doneSummary ?? sit?.desc ?? summary)
       : (sit?.desc ?? summary)
     // 다음 할 일 카드 본문 — 날짜(earliest/deadline)가 있으면 step.cardLine
