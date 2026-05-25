@@ -1,7 +1,7 @@
 'use client'
 
-import { notFound, redirect } from 'next/navigation'
-import { use } from 'react'
+import { notFound, useRouter } from 'next/navigation'
+import { use, useEffect } from 'react'
 import {
   JOURNEY_STEP_CATALOG,
   buildCaseJourneyContext,
@@ -33,6 +33,7 @@ export default function CaseJourneyStepPage({
   params: Promise<{ id: string; stepId: string }>
 }) {
   const { id, stepId } = use(params)
+  const router = useRouter()
   const caseRow = useCase(id)
   if (!caseRow) notFound()
 
@@ -43,7 +44,13 @@ export default function CaseJourneyStepPage({
   const stepIndex = applicable.findIndex((s) => s.id === baseStep.id)
   // 케이스 데이터 변경(예: 추가 검사 항목 삭제)으로 step 이 더 이상 적용 안 되면
   // 일정 목록으로 — 자기 자신을 보고 있던 사용자에게 404 대신 정상 화면을 보여준다.
-  if (stepIndex === -1) redirect(`/cases/${id}/journey`)
+  // redirect() 는 server context 전용이라 client component render 에서 호출하면
+  // prod 빌드에서 "couldn't load" 에러가 난다 (dev 에선 우회됨). router.replace 를
+  // effect 에서 호출하는 게 client 안전 패턴.
+  useEffect(() => {
+    if (stepIndex === -1) router.replace(`/cases/${id}/journey`)
+  }, [stepIndex, id, router])
+  if (stepIndex === -1) return null
 
   const ctx = buildCaseJourneyContext(caseRow)
   // 목적지별 description/title override 적용. validation 은 base.done/validationIds 그대로.
