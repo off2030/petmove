@@ -231,6 +231,15 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
       return dt && dt.length >= 10 ? dt.slice(0, 10) : null
     }
     case 'has-flight-date': {
+      // 항공권 구매 step 의 '완료 시점' = 정보 입력 날짜(flight_info_recorded_at).
+      // 항공편 자체 날짜(entry_date)는 일본 수입검역 step 의 표시일로 분리됐다.
+      // legacy(기록 timestamp 없음): updated_at → entry_date 순으로 폴백.
+      const rec =
+        typeof data.flight_info_recorded_at === 'string' ? data.flight_info_recorded_at : null
+      if (rec && rec.length >= 10) return rec.slice(0, 10)
+      if (caseRow.updated_at && caseRow.updated_at.length >= 10) {
+        return caseRow.updated_at.slice(0, 10)
+      }
       const dt = typeof data.entry_date === 'string' ? data.entry_date : null
       return dt && dt.length >= 10 ? dt.slice(0, 10) : null
     }

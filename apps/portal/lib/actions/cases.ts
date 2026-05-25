@@ -610,6 +610,19 @@ export async function updateFlightFields(
       else delete nextData[key]
     }
 
+    // 항공권 구매 step 의 '표시 날짜' = 정보 입력 날짜(flight_info_recorded_at).
+    // 항공권 자체 날짜(entry_date/return_date)는 검역 step 들로 분산. 최초 한 번만 캡처,
+    // 항공권 정보가 모두 지워지면 함께 정리.
+    const hasAnyFlightInfo = FLIGHT_DATA_KEYS.some((key) => {
+      const v = nextData[key]
+      return typeof v === 'string' && v.length > 0
+    })
+    if (hasAnyFlightInfo && typeof nextData.flight_info_recorded_at !== 'string') {
+      nextData.flight_info_recorded_at = new Date().toISOString().slice(0, 10)
+    } else if (!hasAnyFlightInfo) {
+      delete nextData.flight_info_recorded_at
+    }
+
     // 항공편 입국일(entry_date) = 출국일 — 펫무브워크와 동일하게 departure_date 컬럼도 동기화.
     // 입국일을 지우면 departure_date 도 null 로 비운다 — 안 비우면 옛 출국일이 컬럼에
     // 남아 journey 체크의 entry_date||departure_date 폴백이 유령 출국일을 잡는다.

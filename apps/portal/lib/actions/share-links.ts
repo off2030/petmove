@@ -342,6 +342,25 @@ export async function submitShareLink(
       colUpdate.departure_date = dataUpdate.entry_date.trim()
     }
 
+    // 항공권 구매 step 표시 날짜 = 정보 입력 날짜(flight_info_recorded_at). 매직링크로 항공권
+    // 필드가 처음 입력되는 시점에 캡처 (실제 머지는 needsDataRead 블록 안에서 기존 값 유무 확인 후 세팅).
+    const flightShareKeys = [
+      'entry_date',
+      'entry_departure_airport',
+      'entry_airport',
+      'entry_flight_number',
+      'entry_transport',
+      'return_date',
+      'return_departure_airport',
+      'return_arrival_airport',
+      'return_flight_number',
+      'return_transport',
+    ] as const
+    const recordingFlightInfo = flightShareKeys.some((k) => {
+      const v = dataUpdate[k]
+      return typeof v === 'string' && v.trim().length > 0
+    })
+
     // breed/color 한글 → 영문 자동 보정
     if (typeof dataUpdate.breed === 'string' && dataUpdate.breed.trim()) {
       const ko = dataUpdate.breed.trim()
@@ -369,6 +388,10 @@ export async function submitShareLink(
       for (const [k, v] of Object.entries(dataUpdate)) {
         if (v === null || v === undefined) delete merged[k]
         else merged[k] = v
+      }
+      // 항공권 정보 최초 입력 시점에만 캡처 — 기존 값이 있으면 덮어쓰지 않음 (updateFlightFields 와 동일).
+      if (recordingFlightInfo && typeof merged.flight_info_recorded_at !== 'string') {
+        merged.flight_info_recorded_at = new Date().toISOString().slice(0, 10)
       }
       for (const { group, entries } of vaccineSubmissions) {
         if (!group.array_key) continue

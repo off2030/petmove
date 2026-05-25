@@ -200,11 +200,29 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     const earliest = earliestDate(step, caseRow)
     // window 마감이면 구간 끝(기준일) — 카드에 'A ~ B' 구간으로 표시.
     const deadlineEnd = step.deadline?.window ? deadlineAnchorDate(step, caseRow) : null
+    // 항공권 dates → 검역 step 표시일. 한일 노선은 도착·검역이 같은 날이라
+    // entry_date(출국 항공편) = 일본 수입검역, return_date(귀국 항공편) = 일본 수출검역·
+    // 한국 수입검역. 사용자가 항공권만 입력해도 일정 row 에 미래 날짜가 채워진다.
+    const caseData = (caseRow.data ?? {}) as Record<string, unknown>
+    const flightEntryDate =
+      typeof caseData.entry_date === 'string' && caseData.entry_date.length >= 10
+        ? caseData.entry_date.slice(0, 10)
+        : null
+    const flightReturnDate =
+      typeof caseData.return_date === 'string' && caseData.return_date.length >= 10
+        ? caseData.return_date.slice(0, 10)
+        : null
     const date = isDeparture && !isJpImportQuarantine
       ? dep
-      : done
-        ? resolveCompletedDate(step.done, caseRow)
-        : (deadline ?? earliest)
+      : isJpImportQuarantine
+        ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? flightEntryDate
+        : step.id === 'jp-export-quarantine-visit'
+          ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? flightReturnDate
+          : step.id === 'kr-import-quarantine'
+            ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? flightReturnDate
+            : done
+              ? resolveCompletedDate(step.done, caseRow)
+              : (deadline ?? earliest)
     // 보조 문구의 기본값은 description 첫 문장(절차 설명).
     const summary = firstSentence(step.description)
     // 상황별 override — 데이터 상태로 desc/cardDesc 를 갈아끼울 수 있는 훅.

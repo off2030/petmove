@@ -294,7 +294,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'flight-purchase',
     category: 'logistics',
-    title: '항공권',
+    title: '항공권 구매',
     shortLabel: '항공권',
     description:
       '입국 가능 시기에 맞춰 항공권을 구매하세요.\n\n채혈일로부터 180일 후 ~ 2년 사이에 입국할 수 있습니다.\n일본 입국 때 광견병 예방접종 면역 유효기간이 남아있어야 합니다.\n항공사에 반려동물 동반 가능 여부를 확인하세요.',
