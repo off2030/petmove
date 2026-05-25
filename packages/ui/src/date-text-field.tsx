@@ -59,6 +59,11 @@ interface Props {
    * 부모(record 컬렉션 등)가 자체적으로 삭제 confirm 을 처리하는 경우 true.
    */
   skipClearConfirm?: boolean
+  /**
+   * 부모 너비를 가득 채워야 하는 컨텍스트(모바일 폼·카드 등) 에서 true.
+   * 기본은 inline-block(컨텐츠 너비) — admin 의 인라인 편집 컬럼이 깨지지 않도록 유지.
+   */
+  block?: boolean
 }
 
 export function DateTextField({
@@ -71,6 +76,7 @@ export function DateTextField({
   onKeyDown,
   size = 'default',
   skipClearConfirm = false,
+  block = false,
 }: Props) {
   const [draft, setDraft] = useState(value)
   const [open, setOpen] = useState(false)
@@ -167,7 +173,7 @@ export function DateTextField({
   }
 
   return (
-    <div className="relative inline-block w-fit" ref={wrapRef}>
+    <div className={cn('relative', block ? 'block w-full' : 'inline-block w-fit')} ref={wrapRef}>
       <input
         ref={inputRef}
         type="text"
@@ -176,7 +182,7 @@ export function DateTextField({
         value={draft}
         maxLength={10}
         placeholder={placeholder}
-        className={cn(className, size === 'sm' ? 'pr-8' : 'pr-12')}
+        className={cn(block && 'w-full', size === 'sm' ? 'pr-8' : 'pr-12', className)}
         onChange={(e) => {
           const next = normalizeDateInput(e.target.value)
           setDraft(next)

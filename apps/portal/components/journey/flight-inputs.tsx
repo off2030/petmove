@@ -143,6 +143,7 @@ function FlightGroup({
                   value={value[field.key]}
                   onChange={(next) => onChange(field.key, next)}
                   placeholder="YYYY-MM-DD"
+                  block
                 />
               </div>
             ) : (

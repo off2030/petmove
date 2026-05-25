@@ -35,7 +35,7 @@ export function KrExportQuarantineInputs({
           동물검역소에서 수출 검역을 받은 날짜
         </div>
         <div style={{ marginTop: 8 }}>
-          <DateTextField value={date} onChange={onChange} placeholder="YYYY-MM-DD" />
+          <DateTextField value={date} onChange={onChange} placeholder="YYYY-MM-DD" block />
         </div>
       </div>
     </div>
