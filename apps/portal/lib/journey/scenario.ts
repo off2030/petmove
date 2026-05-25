@@ -304,19 +304,22 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     (s) => s.state === 'upcoming' && !nonBlockingIds.has(s.id) && !advisoryOnlyIds.has(s.id),
   )
   if (mainIdx >= 0) stages[mainIdx].state = 'current'
-  // return lane step 의 prereq main step — done 이어야 return lane 노출.
-  // (수출검역 신청은 항공권 구매 이후부터 신청 가능 — 사전 신고와 평행 진행이라
-  //  사전 신고 자체는 prereq 가 아니지만, 항공권 미입력 시점엔 같이 가려둔다.)
-  const RETURN_LANE_PREREQ: Record<string, string> = {
-    'jp-export-quarantine': 'flight-purchase',
+  // return lane step 별 노출 조건 — 충족돼야 다음 할 일에 올림.
+  // 수출검역 신청은 귀국 항공편이 정해진 뒤에야 예약 가능 — return_date 입력 시점부터 노출.
+  // (entry_date 만 입력된 출국편 단독 상태에선 step 자체는 applicable 하지만 다음 할 일은 X.)
+  const RETURN_LANE_READY: Record<string, (c: typeof caseRow) => boolean> = {
+    'jp-export-quarantine': (c) => {
+      const data = (c.data ?? {}) as Record<string, unknown>
+      return typeof data.return_date === 'string' && (data.return_date as string).length >= 10
+    },
   }
   const returnIdx = stages.findIndex(
     (s) => s.state === 'upcoming' && nonBlockingIds.has(s.id),
   )
   if (returnIdx >= 0) {
-    const prereqId = RETURN_LANE_PREREQ[stages[returnIdx].id]
-    const prereqDone = !prereqId || stages.some((s) => s.id === prereqId && s.state === 'done')
-    if (prereqDone) stages[returnIdx].state = 'current'
+    const check = RETURN_LANE_READY[stages[returnIdx].id]
+    const ready = !check || check(caseRow)
+    if (ready) stages[returnIdx].state = 'current'
   }
   // 폴백 — 두 lane 모두 비어 있고 advisory 만 남았다면 (예: 항체검사도 끝났는데
   // 추가 백신만 만료 임박) 가장 앞의 advisory 를 다음 할 일로 노출. 보호자가 행동할 게
