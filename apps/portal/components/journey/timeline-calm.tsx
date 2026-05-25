@@ -240,21 +240,35 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
             <div
               style={{
                 ...monoCap,
-                color: hasWarn ? C.warn : hasInfo ? C.info : isCurr || isFutureDone ? C.accent : C.ink3,
-                fontWeight: hasWarn ? 700 : hasInfo ? 600 : isCurr || isFutureDone ? 700 : 500,
+                color: hasWarn ? C.warn : hasInfo ? C.info : isCurr ? C.accent : C.ink3,
+                fontWeight: hasWarn ? 700 : hasInfo ? 600 : isCurr ? 700 : 500,
                 textAlign: 'right',
                 flexShrink: 0,
               }}
             >
-              {hasWarn
-                ? '주의'
-                : hasInfo
-                  ? '안내'
-                  : isCurr
-                    ? '예정'
-                    : isFutureDone
-                      ? `예정 ${formatStageDate(s)}`
-                      : formatStageDate(s)}
+              {hasWarn ? (
+                '주의'
+              ) : hasInfo ? (
+                '안내'
+              ) : isCurr ? (
+                '예정'
+              ) : isFutureDone ? (
+                <span
+                  style={{
+                    display: 'inline-block',
+                    padding: '2px 8px',
+                    borderRadius: 6,
+                    background: 'rgba(184,153,104,0.18)',
+                    border: '.5px solid #B89968',
+                    color: C.accent,
+                    fontWeight: 700,
+                  }}
+                >
+                  예정 {formatStageDate(s)}
+                </span>
+              ) : (
+                formatStageDate(s)
+              )}
             </div>
           </div>
           {s.desc && (
