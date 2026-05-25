@@ -129,8 +129,9 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
     // 만료 대비 reminder 이므로 안내 톤으로 표시 — 보호자가 인지하되 '문제'는 아니다.
     const hasWarn = (s.failedChecks ?? 0) > 0
     const hasInfo = (s.infoChecks ?? 0) > 0 || (!!s.advisory && !isDone)
-    // 입력은 됐지만(=done) 날짜가 내일 이후 — '예정 28·01·03' 으로 미래 일정임을 명시.
-    const isFutureDone = isDone && isFuture(s.date)
+    // 날짜가 내일 이후 — 상태(done/current/upcoming) 무관하게 '예정 28·01·03' 칩으로
+    // 미래 일정임을 명시. (current 라도 의미 있는 날짜가 있으면 같이 보여준다.)
+    const hasFutureDate = isFuture(s.date)
     return (
       <Link
         key={s.id}
@@ -250,9 +251,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                 '주의'
               ) : hasInfo ? (
                 '안내'
-              ) : isCurr ? (
-                '예정'
-              ) : isFutureDone ? (
+              ) : hasFutureDate ? (
                 <span
                   style={{
                     display: 'inline-block',
@@ -266,6 +265,8 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                 >
                   예정 {formatStageDate(s)}
                 </span>
+              ) : isCurr ? (
+                '예정'
               ) : (
                 formatStageDate(s)
               )}
