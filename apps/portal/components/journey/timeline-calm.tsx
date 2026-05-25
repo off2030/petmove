@@ -129,6 +129,8 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
     // 만료 대비 reminder 이므로 안내 톤으로 표시 — 보호자가 인지하되 '문제'는 아니다.
     const hasWarn = (s.failedChecks ?? 0) > 0
     const hasInfo = (s.infoChecks ?? 0) > 0 || (!!s.advisory && !isDone)
+    // 입력은 됐지만(=done) 날짜가 내일 이후 — '예정 28·01·03' 으로 미래 일정임을 명시.
+    const isFutureDone = isDone && isFuture(s.date)
     return (
       <Link
         key={s.id}
@@ -238,13 +240,21 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
             <div
               style={{
                 ...monoCap,
-                color: hasWarn ? C.warn : hasInfo ? C.info : isCurr ? C.accent : C.ink3,
-                fontWeight: hasWarn ? 700 : hasInfo ? 600 : isCurr ? 700 : 500,
+                color: hasWarn ? C.warn : hasInfo ? C.info : isCurr || isFutureDone ? C.accent : C.ink3,
+                fontWeight: hasWarn ? 700 : hasInfo ? 600 : isCurr || isFutureDone ? 700 : 500,
                 textAlign: 'right',
                 flexShrink: 0,
               }}
             >
-              {hasWarn ? '주의' : hasInfo ? '안내' : isCurr ? '예정' : formatStageDate(s)}
+              {hasWarn
+                ? '주의'
+                : hasInfo
+                  ? '안내'
+                  : isCurr
+                    ? '예정'
+                    : isFutureDone
+                      ? `예정 ${formatStageDate(s)}`
+                      : formatStageDate(s)}
             </div>
           </div>
           {s.desc && (
@@ -497,6 +507,14 @@ function formatStageDate(stage: JourneyStage): string {
   if (parts.length !== 3) return '—'
   const [yyyy, mm, dd] = parts
   return `${yyyy.slice(2)}·${mm}·${dd}`
+}
+
+/** 주어진 YYYY-MM-DD 가 오늘 이후(내일~)인지. 디바이스 로컬 기준. */
+function isFuture(iso: string | null): boolean {
+  if (!iso) return false
+  const d = new Date()
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  return iso > today
 }
 
 /** 한글 단어에 '으로/로' 조사를 붙인다 — 받침 없음·ㄹ받침은 '로', 그 외는 '으로'. */
