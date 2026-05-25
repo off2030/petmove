@@ -1,6 +1,6 @@
 'use client'
 
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { use } from 'react'
 import {
   JOURNEY_STEP_CATALOG,
@@ -41,7 +41,9 @@ export default function CaseJourneyStepPage({
 
   const applicable = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
   const stepIndex = applicable.findIndex((s) => s.id === baseStep.id)
-  if (stepIndex === -1) notFound()
+  // 케이스 데이터 변경(예: 추가 검사 항목 삭제)으로 step 이 더 이상 적용 안 되면
+  // 일정 목록으로 — 자기 자신을 보고 있던 사용자에게 404 대신 정상 화면을 보여준다.
+  if (stepIndex === -1) redirect(`/cases/${id}/journey`)
 
   const ctx = buildCaseJourneyContext(caseRow)
   // 목적지별 description/title override 적용. validation 은 base.done/validationIds 그대로.
