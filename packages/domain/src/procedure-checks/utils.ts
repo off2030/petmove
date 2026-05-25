@@ -159,9 +159,20 @@ function readSimpleDatedArray(caseRow: CaseRow, key: string): ParasiteEntry[] {
 
 // ── 날짜 산수 ──
 
-/** 면역 유효기간 끝. valid_until 있으면 그대로, 없으면 date + 1년 (마지막 유효일). */
+/**
+ * 면역 유효기간 끝. 입력 valid_until 우선:
+ *  - "N년" (한글 ValidUntilSelector 저장값) → date + N년 마지막 유효일로 변환
+ *  - ISO 'YYYY-MM-DD' → 그대로
+ *  - 빈 값 → date + 1년 (디폴트)
+ *
+ * "N년" 을 ISO 로 변환하지 않으면 후속 `validUntil < dep` / `validUntil >= other.date`
+ * 비교가 문자열 사전순으로 끊겨 ("1년" < "2026-..." 처럼) 만료 판정이 전부 깨진다.
+ */
 export function resolveValidUntil(date: string, validUntil?: string | null): string {
-  return validUntil || addOneYear(date)
+  if (!validUntil) return addOneYear(date)
+  const m = validUntil.match(/^(\d+)\s*년$/)
+  if (m) return addYears(date, parseInt(m[1], 10))
+  return validUntil
 }
 
 /**
