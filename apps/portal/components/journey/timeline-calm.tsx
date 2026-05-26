@@ -42,10 +42,14 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
   // 안내 stage 들 — info 체크가 있거나, advisory step(추가 백신·추가 검사)이 미완료인 경우.
   // advisory 는 면역이 아직 유효한 '미래 만료 대비' reminder — 문제(주의)가 아니라
   // 차분한 안내 톤으로 묶는다. 이미 주의로 잡힌 stage 는 제외(한 stage = 한 배너).
+  // 또한 '다음 할 일' 카드에 같은 stage 가 노출되면 거기에 안내가 인라인으로 붙으므로
+  // 별도 '안내' 카드로 중복 노출하지 않는다.
   const warnedIds = new Set(warnedStages.map((s) => s.id))
+  const nextStageIds = new Set(nextStages.map((s) => s.id))
   const infoStages = stages.filter(
     (s) =>
       !warnedIds.has(s.id) &&
+      !nextStageIds.has(s.id) &&
       ((s.infoChecks ?? 0) > 0 || (!!s.advisory && s.state !== 'done')),
   )
   const firstInfoStage = infoStages[0] ?? null
@@ -447,6 +451,33 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                   <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>
                     {stage.cardDesc ?? stage.desc}
                   </p>
+                )}
+                {/* 안내 메시지 — info 체크나 advisory step 의 안내문이 있으면 cardDesc 아래에
+                    인라인으로 노출. 별도 '안내' 카드 중복 방지 + 같은 단계의 행동 안내와 묶어 표시. */}
+                {stage.infoMessage && ((stage.infoChecks ?? 0) > 0 || stage.advisory) && (
+                  <div style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <span
+                      style={{
+                        ...monoCap,
+                        color: C.info,
+                        fontSize: 10,
+                        flexShrink: 0,
+                        marginTop: 3,
+                      }}
+                    >
+                      안내
+                    </span>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: 13,
+                        lineHeight: 1.55,
+                        color: 'rgba(45,38,28,.65)',
+                      }}
+                    >
+                      {stage.infoMessage}
+                    </p>
+                  </div>
                 )}
               </Link>
             ))}
