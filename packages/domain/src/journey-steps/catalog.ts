@@ -384,6 +384,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '수입허가증을 사진, PDF로 보관하세요.',
     links: [
       { url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O', label: 'NACCS 신청 페이지' },
+      { url: '/guide/jp-quarantine-contacts', label: '일본 동물검역소 연락처' },
     ],
     validationIds: ['jp.advance-notification-40days-before-entry'],
   },
@@ -428,6 +429,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     links: [
       { url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O', label: 'NACCS 신청 페이지' },
+      { url: '/guide/jp-quarantine-contacts', label: '일본 동물검역소 연락처' },
     ],
   },
 
