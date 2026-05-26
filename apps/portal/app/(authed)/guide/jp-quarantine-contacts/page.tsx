@@ -78,10 +78,6 @@ export default function JpQuarantineContactsPage() {
         <h1 style={{ ...serif, fontSize: 26, lineHeight: 1.15, margin: '8px 0 0', color: C.ink }}>
           일본 동물검역소 연락처
         </h1>
-        <p style={{ fontSize: 12.5, color: C.ink3, margin: '6px 0 0', lineHeight: 1.55 }}>
-          나리타·하네다·간사이 공항 외 전국 지부. 절차 단계별로 담당 부서가 다르니
-          섹션을 확인하고 연락하세요.
-        </p>
 
         {JP_QUARANTINE_CONTACTS.map((section, si) => (
           <Section key={section.title} section={section} first={si === 0} />
