@@ -67,6 +67,7 @@ export function StepDetailView({
   stepNumber,
   checkResults,
   destinationLabel,
+  destinationKey,
   petName,
   tripType,
 }: {
@@ -77,6 +78,8 @@ export function StepDetailView({
   stepNumber: number
   checkResults: CollectedCheck[]
   destinationLabel: string
+  /** 정규화된 목적지 키 ('japan' 등) — 입력 cross-validation 분기에 사용. */
+  destinationKey: string | null
   petName: string
   tripType: 'round' | 'one_way'
 }) {
@@ -567,8 +570,8 @@ export function StepDetailView({
         }
       })
     } else if (isFlight) {
-      // 입국일 cross-entry — 광견병 항체검사 + 부스터 chain 기반 (titer 미입력 시 skip).
-      const flightError = validateFlightEntryDate(caseRow?.data, flightForm.entry_date)
+      // 입국일 cross-entry — 광견병 항체검사 + 부스터 chain + 사전 신고 40일 마감(일본 한정).
+      const flightError = validateFlightEntryDate(caseRow?.data, flightForm.entry_date, destinationKey)
       if (flightError) {
         setStatus('error')
         setError(flightError)
@@ -1653,18 +1656,29 @@ function titerExtraEqual(a: TiterExtraEntry[], b: TiterExtraEntry[]): boolean {
  * 항공편 입국일 cross-entry 검증. 통과면 null, 실패면 에러 메시지.
  * - rule 1 (차단): 입국일 ≥ 채혈일 + 180일 (어떤 titer 라도 만족하면 통과). 너무
  *   이른 입국은 추가 단계로 해결 안 됨 — 실제 날짜 조정 필요.
+ * - rule 2 (차단, 일본 한정): 입국일 ≥ 오늘 + 40일. 사전 신고 마감이 입국 40일 전인데
+ *   더 가까운 입국일을 박으면 마감이 이미 지나 신청 자체가 불가능 — 입국일 조정 필요.
  *
  * 백신·검사 유효기간 만료 (입국일 > titer +2년, 입국일 > rabies chain) 는 차단 X —
  * 추가 접종·추가 검사로 해결 가능한 계획 사항이라 procedure-check 의 '주의' 로 노출
  * (jp.entry-within-2years-of-titer / jp.rabies-valid-until-on-departure 가 안내).
  *
- * titer 미입력 시 전체 skip — 입국 시기가 항체검사 후에 확정되므로.
+ * titer 미입력 시 rule 1 만 skip — rule 2 는 destination 만으로 평가 가능.
  */
 function validateFlightEntryDate(
   data: Record<string, unknown> | null | undefined,
   entryDate: string,
+  destinationKey: string | null,
 ): string | null {
   if (!entryDate) return null
+  // rule 2 — 일본 사전 신고 40일 마감.
+  if (destinationKey === 'japan') {
+    const today = todayIso()
+    if (daysBetween(today, entryDate) < 40) {
+      return '일본 입국일은 오늘로부터 최소 40일 후여야 합니다. 사전 신고 마감(입국 40일 전)이 이미 지나 신청이 불가능합니다.'
+    }
+  }
+  // rule 1 — titer 후 180일.
   const titerDates = readAllTiterDates(data)
   if (titerDates.length === 0) return null
   if (!titerDates.some((t) => daysBetween(t, entryDate) >= 180)) {

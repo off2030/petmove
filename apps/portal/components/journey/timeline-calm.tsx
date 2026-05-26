@@ -136,6 +136,11 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
     // 날짜가 내일 이후 — 상태(done/current/upcoming) 무관하게 '예정 28·01·03' 칩으로
     // 미래 일정임을 명시. (current 라도 의미 있는 날짜가 있으면 같이 보여준다.)
     const hasFutureDate = isFuture(s.date)
+    // 마감 라벨 + 날짜가 있는 미완 step (사전 신고 등). 과거/미래 무관하게 항상 표시 —
+    // 마감일은 단순 '예정 일자'가 아니라 보호자가 인지해야 할 시점이고, 지난 경우엔
+    // warn 색으로 'overdue' 신호를 줘야 한다.
+    const showDeadlinePill = s.dateLabel === '마감' && !!s.date && !isDone
+    const isOverdueDeadline = showDeadlinePill && !hasFutureDate
     return (
       <Link
         key={s.id}
@@ -259,6 +264,20 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                 '주의'
               ) : hasInfo ? (
                 '안내'
+              ) : showDeadlinePill ? (
+                <span
+                  style={{
+                    display: 'inline-block',
+                    padding: '2px 8px',
+                    borderRadius: 6,
+                    background: isOverdueDeadline ? C.warnBg : 'rgba(184,153,104,0.18)',
+                    border: `.5px solid ${isOverdueDeadline ? `${C.warn}55` : '#B89968'}`,
+                    color: isOverdueDeadline ? C.warn : C.accent,
+                    fontWeight: 700,
+                  }}
+                >
+                  마감 {formatStageDate(s)}
+                </span>
               ) : hasFutureDate ? (
                 <span
                   style={{
