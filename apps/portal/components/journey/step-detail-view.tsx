@@ -1675,7 +1675,7 @@ function validateFlightEntryDate(
   if (destinationKey === 'japan') {
     const today = todayIso()
     if (daysBetween(today, entryDate) < 40) {
-      return '일본 입국일은 오늘로부터 최소 40일 후여야 합니다. 사전 신고 마감(입국 40일 전)이 이미 지나 신청이 불가능합니다.'
+      return '사전 신고 마감일(입국 40일 전)이 지났습니다. 오늘부터 최소 40일 후로 변경해주세요.'
     }
   }
   // rule 1 — titer 후 180일.
