@@ -10,6 +10,7 @@ import {
   type StepDefinition,
   type VaccineProductsData,
 } from '@petmove/domain'
+import { useConfirm } from '@petmove/ui'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
 import {
   getCaseVaccineData,
@@ -784,9 +785,15 @@ export function StepDetailView({
   })()
   const [convertingTrip, setConvertingTrip] = useState(false)
   const router = useRouter()
-  const handleConvertToOneWay = () => {
+  const confirm = useConfirm()
+  const handleConvertToOneWay = async () => {
     if (convertingTrip) return
-    if (!window.confirm('편도 일정으로 전환하시겠어요? 일본 수출 동물검역·한국 수입검역 등 귀국편 단계가 일정에서 빠집니다.')) return
+    const ok = await confirm({
+      message: '편도 일정으로 전환하시겠어요?',
+      description: '일본 수출 동물검역·한국 수입검역 등 귀국편 단계가 일정에서 빠집니다.',
+      okLabel: '편도로 전환',
+    })
+    if (!ok) return
     setConvertingTrip(true)
     startTransition(async () => {
       const res = await updateCaseTripType(caseId, 'one_way')
