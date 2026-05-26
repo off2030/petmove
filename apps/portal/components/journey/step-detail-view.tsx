@@ -188,6 +188,31 @@ export function StepDetailView({
 
   const microchipDirty = isMicrochip && (chip !== savedChip || date !== savedDate)
   const rabiesDirty = isRabies && !rabiesFormEqual(rabies, savedRabies)
+  // 저장 검증 실패 후 사용자가 form 을 만지면 error 자동 해제 — 시각 신호로 "다시 시도
+  // 가능". dirty 자체는 form vs saved 비교라 사용자 변경이 같은 값으로 돌아가면 dirty=false
+  // 가 되어 button disabled, 새 값이면 활성화. error 자동 해제는 step 무관 공통 처리.
+  useEffect(() => {
+    if (status === 'error') {
+      setStatus('idle')
+      setError(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    chip,
+    date,
+    rabies,
+    rabiesExtra,
+    titerForm,
+    titerExtra,
+    flightForm,
+    advanceDate,
+    vetVisitDate,
+    jpExport,
+    krExportQuarantineDate,
+    jpImportQuarantineDate,
+    jpExportQuarantineVisitDate,
+    krImportQuarantineDate,
+  ])
   const rabiesExtraDirty = isRabiesExtra && !rabiesExtraEqual(rabiesExtra, savedRabiesExtra)
   const titerDirty =
     isTiter &&
