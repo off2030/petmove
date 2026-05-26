@@ -395,7 +395,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '일본 수출 동물검역 신청',
     shortLabel: '수출',
     description:
-      '일본 동물검역소에 수출 동물검역 신청과 예약을 합니다.\n\nNACCS를 통해 방문일 최소 10일 전까지 예약을 해야 합니다.\n사전 신고와 동시에 진행을 하는 것이 편리합니다.',
+      '일본 동물검역소에 수출 동물검역 신청과 예약을 합니다.\n\n수출 동물검역은 일본에서 한국으로 돌아오기 위한 필수 절차입니다.\n수출 동물검역 신청은 NACCS를 통해서 할 수 있습니다.\n수출 동물검역 예약은 이메일로 합니다.',
     doneSummary: '일본 수출 동물검역 예약을 확정했습니다.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
     order: 48,
