@@ -1031,39 +1031,32 @@ export function StepDetailView({
             <div style={{ ...monoCap, color: C.info, fontWeight: 700, marginBottom: 8 }}>
               안내
             </div>
-            <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>{situationalDesc}</div>
+            <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
+              {situationalDesc}
+              {isFlightRoundEntryOnly && ' 귀국 일정이 미정인 경우는 편도 일정으로 전환할 수 있습니다.'}
+            </div>
             {isFlightRoundEntryOnly && (
-              <div
+              <button
+                type="button"
+                onClick={handleConvertToOneWay}
+                disabled={convertingTrip}
+                className="pm-pressable"
                 style={{
                   marginTop: 24,
-                  fontSize: 13,
-                  color: C.ink2,
-                  lineHeight: 1.5,
+                  padding: '5px 12px',
+                  borderRadius: 999,
+                  border: `.5px solid ${C.info}77`,
+                  background: '#FBF7F1',
+                  color: C.info,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: '0.01em',
+                  cursor: convertingTrip ? 'progress' : 'pointer',
+                  opacity: convertingTrip ? 0.6 : 1,
                 }}
               >
-                <div>귀국 일정이 미정인 경우 편도 일정으로 전환할 수 있습니다.</div>
-                <button
-                  type="button"
-                  onClick={handleConvertToOneWay}
-                  disabled={convertingTrip}
-                  className="pm-pressable"
-                  style={{
-                    marginTop: 10,
-                    padding: '5px 12px',
-                    borderRadius: 999,
-                    border: `.5px solid ${C.info}77`,
-                    background: '#FBF7F1',
-                    color: C.info,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    letterSpacing: '0.01em',
-                    cursor: convertingTrip ? 'progress' : 'pointer',
-                    opacity: convertingTrip ? 0.6 : 1,
-                  }}
-                >
-                  {convertingTrip ? '전환 중…' : '편도 일정으로 전환'}
-                </button>
-              </div>
+                {convertingTrip ? '전환 중…' : '편도 일정으로 전환'}
+              </button>
             )}
           </section>
         )}
