@@ -32,7 +32,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 백신 타이밍',
     description: '광견병 1차 접종일은 생년월일 기준 91일 이후여야 함.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-04-21',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -64,7 +64,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     title: '백신 유효기간 만료',
     description:
       '2차 광견병 접종은 1차 접종의 면역 유효기간 이내여야 함. 유효기간 경과 후 접종은 추가접종이 아닌 새 기초접종으로 간주됨.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-16',
     run: ({ caseRow }) => {
       const entries = readRabiesEntries(caseRow)
@@ -95,7 +95,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     title: '백신 유효기간 만료',
     description:
       '추가(3차+) 광견병 접종은 직전 광견병 백신의 면역 유효기간 이내여야 함. 유효기간 경과 후 접종은 부스터가 아닌 새 기초접종으로 간주됨.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-24',
     run: ({ caseRow }) => {
       const entries = readRabiesEntries(caseRow)
@@ -127,7 +127,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩, 접종, 검사 타이밍',
     description:
       '① 마이크로칩 ≤ 1차 < 2차 ≤ 항체검사, 또는 ② 1차 < 마이크로칩 ≤ 2차이면서 2차 접종일 = 항체검사일. 둘 중 하나 충족 필요.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-04-21',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -213,7 +213,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     title: '광견병 항체가 검사 타이밍',
     description:
       '채혈일은 2차 접종일 이후이며, 2차부터 끊김 없이 이어진 부스터 chain 의 면역 유효기간 이내여야 함.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-04-21',
     run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -262,7 +262,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '일정',
     title: '검진일은 출국일 10일 이내',
     description: '검진일은 출국일 포함 10일 이내여야 함 (출국일 9일 전 ~ 출국일).',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-04-21',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -301,7 +301,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '일본 입국 타이밍',
     description: '항공편 입국일은 광견병 항체검사 채혈일로부터 180일이 지난 시점이어야 함.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-17',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -340,7 +340,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 항체가 검사 유효기간 만료',
     description: '항공편 입국일은 광견병 항체검사 채혈일 포함 2년 이내여야 함 (항체검사 유효기간).',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-17',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -372,7 +372,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '일정',
     title: '사전 신고는 입국 40일 전까지',
     description: '일본 동물검역소 사전 신고(NACCS)는 입국일로부터 40일 이전에 접수되어야 함.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-17',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -401,7 +401,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 백신 유효기간 만료',
     description: '입국일에 가장 최근 광견병 접종의 면역 유효기간이 만료되지 않아야 함.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-04-21',
     run: ({ caseRow }) => {
       // 항공권 step 에서 보호자가 직접 입력하는 키는 entry_date — 그쪽 우선,

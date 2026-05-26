@@ -41,7 +41,7 @@ export const CA_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
       'CFIA: 3개월 이상 강아지·고양이는 광견병 백신 의무 (3개월 미만 면제). 보수적으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요. (CFIA Import Reference Document)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -76,7 +76,7 @@ export const CA_CHECKS: ProcedureCheck[] = [
     title: '출국일에 광견병 면역 유효',
     description:
       '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -106,7 +106,7 @@ export const CA_CHECKS: ProcedureCheck[] = [
     title: '건강증명서(내원일)는 출국 10일 이내 (보수: 9일 전부터)',
     description:
       '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내(`≤9`). CFIA는 별도 일자 의무 명문 없음 — 한국 APQA endorsement 10일 룰 + 사용자 보수 N-1 적용.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date

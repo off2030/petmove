@@ -52,7 +52,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       '마이크로칩(ISO 11784/11785, 15자리)이 광견병 1차 접종일과 같거나 이전이어야 함. 칩 미이식 또는 규격 미충족 시 30일 격리. (강아지는 한국 동물등록 별도 필수)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -81,7 +81,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
       'GACC 2019 No.5 본문 정량 미명시 (OIE 표준 차용) — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요. 출생일에 따라 어느 쪽이 더 엄격한지 달라지므로 AND 결합.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -116,7 +116,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
     title: '광견병 2회 접종 (1차 + 부스터)',
     description:
       '광견병 백신은 최소 2회 (1차 + 부스터). 2차는 1차 30일 후 ~ 1년 이내. (GACC 2019 No.5 본문은 횟수 미명시 — RNATT ≥0.5 IU/ml 충족 위해 OIE 표준상 사실상 필요)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -139,7 +139,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
     title: '광견병 도즈 간격 30일 이상 ~ 1년 이내',
     description:
       '연속된 광견병 접종 간 간격: 직전 접종 30일 이후 + 직전 접종 유효기간(1년) 이내. 1년 초과 시 부스터 chain 끊김 (1차로 간주).',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -225,7 +225,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
     title: '도착일에 광견병 면역 유효',
     description:
       '최근 광견병 접종의 면역 유효기간이 도착일 이전 만료되지 않아야 함. 만료 시 추가 부스터 필요. (GACC: "유효한 광견병 백신 접종 증명서" 입경일 기준 유효)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -255,7 +255,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
     title: '항체검사는 광견병 접종 이후',
     description:
       'RNATT 채혈일은 직전 광견병 접종 이후여야 함 (2차 접종 후 시행 권장). (GACC 채신 lab 보고서 표준)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -290,7 +290,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
     title: '항체검사 유효기간 1년 — 도착일까지 유효',
     description:
       'RNATT 결과는 채혈일 기준 1년간 유효 (실무 기준). 도착일이 채혈일 + 1년 이내여야 함. (GACC 본문 미명시 — 실무 운용상 1년 한도 보수 적용)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -323,7 +323,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
     title: '건강증명서(내원일)는 출국 10일 이내 (한국 APQA)',
     description:
       'GACC: 입경 14일 이내 임상검사. 한국 APQA endorsement는 10일 이내가 더 strict — 보수 ≤9일 적용 (출발 7-9일 전 권장).',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date

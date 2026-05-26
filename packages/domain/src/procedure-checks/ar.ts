@@ -43,7 +43,7 @@ export const AR_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (아르헨티나 입국 면제, 한국 수출검역 사실상 필수)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -70,7 +70,7 @@ export const AR_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
       'SENASA: "La edad mínima para la vacunación antirrábica en Argentina es de tres (3) meses" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -105,7 +105,7 @@ export const AR_CHECKS: ProcedureCheck[] = [
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
       '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (SENASA: "inmunidad vigente" — 1차 후 21일 권장, 보수적으로 30일 적용)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -133,7 +133,7 @@ export const AR_CHECKS: ProcedureCheck[] = [
     title: '출국일에 광견병 면역 유효',
     description:
       '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -161,7 +161,7 @@ export const AR_CHECKS: ProcedureCheck[] = [
     title: '건강증명서(내원일)는 출국 10일 이내 (보수: 9일 전부터)',
     description:
       'SENASA: "Certificado de Salud ... emitido dentro de los 10 (diez) días previos a la fecha de emisión del CVI" — 사용자 보수 N-1 → ≤9 적용.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -200,7 +200,7 @@ export const AR_CHECKS: ProcedureCheck[] = [
     title: '외부구충은 출국 15일 이내 (보수: 14일 전부터)',
     description:
       '외부구충(벼룩·진드기) 처치는 출국 포함 15일 이내 = 출국일 기준 14일 전 이후. (SENASA + MERCOSUR GMC 17/2015: "Tratamiento contra parásitos externos dentro de los 15 (quince) días previos a la fecha de emisión del CVI")',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -235,7 +235,7 @@ export const AR_CHECKS: ProcedureCheck[] = [
     title: '내부구충은 출국 15일 이내 (보수: 14일 전부터)',
     description:
       '내부구충(선충·조충) 처치는 출국 포함 15일 이내 = 출국일 기준 14일 전 이후. (SENASA + MERCOSUR GMC 17/2015: "Tratamiento contra parásitos internos dentro de los 15 (quince) días previos a la fecha de emisión del CVI")',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date

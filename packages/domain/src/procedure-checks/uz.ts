@@ -40,7 +40,7 @@ export const UZ_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (우즈베키스탄 입국 권장, 한국 수출검역 사실상 필수)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -67,7 +67,7 @@ export const UZ_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
       'USDA APHIS 우즈베키스탄: "over 3 months of age" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -102,7 +102,7 @@ export const UZ_CHECKS: ProcedureCheck[] = [
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
       '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (USDA APHIS: "between 30 days and 12 months prior to entering Uzbekistan")',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -169,7 +169,7 @@ export const UZ_CHECKS: ProcedureCheck[] = [
     title: '출국일에 광견병 면역 유효',
     description:
       '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -197,7 +197,7 @@ export const UZ_CHECKS: ProcedureCheck[] = [
     title: '건강증명서(내원일)는 출국 10일 이내 (보수: 9일 전부터)',
     description:
       'USDA APHIS Uzbekistan: "within 10 days of entry". 한국 APQA endorsement + 사용자 보수 N-1 → ≤9 적용.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date

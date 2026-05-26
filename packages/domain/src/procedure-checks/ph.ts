@@ -44,7 +44,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       '마이크로칩(ISO 11784/11785, 15자리)이 광견병 1차 접종일과 같거나 이전이어야 함. 매 준비 단계마다 칩 스캔 확인 필수. (BAI SPSIC)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -73,7 +73,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 생후 12주(84일) 이상',
     description:
       '광견병 1차 접종은 생후 최소 12주(84일) 이후. (BAI MC 49 — EU Reg 576/2013 동일 기준)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -102,7 +102,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종은 출국 21일 이전 완료 (부스터 면제)',
     description:
       'BAI 공식: "initial rabies vaccination should not be less than 14 days prior to application of the SPSIC". SPSIC 신청 ≈ 출국 7-14일 전 → 합산 21일 (dep proxy). **annual booster (2차+) 는 즉시 출국 가능 — BAI 면제** ("animals may be shipped immediately upon vaccination").',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -135,7 +135,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     title: '도착일에 광견병 면역 유효 (접종일 포함 1년 = 364일까지)',
     description:
       '최근 광견병 접종 면역 유효기간이 도착일 이전 만료되지 않아야 함. **접종일 포함 1년 = +364일**까지 허용. valid_until 명시 시 그 값 사용, 미명시 시 디폴트 1년 (`addOneYear` = +364).',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -165,7 +165,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     title: '종합백신 1차 접종은 출국 21일 이전 완료 (부스터 면제)',
     description:
       '종합백신(강아지 DHLPPi / 고양이 FVRCP) 1차 접종이 출국일 기준 21일 이전 완료. **부스터(2차+) 는 즉시 출국 가능 — BAI 면제** (광견병 부스터 면제 정책 동일 적용).',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -198,7 +198,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     title: '도착일에 종합백신 면역 유효 (접종일 포함 1년 = 364일까지)',
     description:
       '최근 종합백신 면역 유효기간이 도착일 이전 만료되지 않아야 함. **접종일 포함 1년 = +364일**까지 허용. valid_until 명시 시 그 값, 미명시 시 디폴트 1년 (`addOneYear` = +364).',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -228,7 +228,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     title: '출국일 시점 만 120일(약 4개월) 이상',
     description:
       '필리핀 SPSIC 신청 자격: 생후 120일(약 4개월) 이상. (BAI MC 49: "Only dogs and cats that are 120 days and above at the time of SPSIC application")',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -256,7 +256,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     title: '건강증명서(내원일)는 출국 10일 이내 (한국 APQA)',
     description:
       '한국 APQA 검역 endorsement: 출국일 기준 10일 이내(`≤9`). 출발 7-9일 전 권장. (사용자 보수 N-1 적용)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date

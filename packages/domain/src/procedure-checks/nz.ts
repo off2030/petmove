@@ -53,7 +53,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       '마이크로칩(ISO 11784/11785)이 광견병 1차 접종일 이전이어야 함. 모든 검사·접종·시술 전 칩 verify 필수. (MPI Category 3 OVD)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -82,7 +82,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 생후 3개월령(캘린더) 이상',
     description:
       '광견병 1차 접종은 생년월일 기준 캘린더 3개월(`addMonths(birth, 3)`) 이후. (MPI: "at least three months old" — 월 단위 명시이므로 일수 근사 대신 정확한 캘린더 월 계산.)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -112,7 +112,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     title: '출국일 + 검역 10일까지 광견병 면역 유효',
     description:
       '입국 후 10일 검역(최소) 종료까지 광견병 면역이 유지되어야 함. `valid_until ≥ dep + 10일`. 디폴트 1년 (`addYears -1일`) → `dep - rabies ≤ 354일`. valid_until 명시 시 override. (MPI: "no more than 12 months prior to travel" + 10-day quarantine)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -142,7 +142,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     title: '1차 접종(primary)은 출국일 6개월 이전',
     description:
       '1차 접종(primary)인 경우 출국일 6개월 이전이어야 함. 부스터(booster, 직전 접종 만료 전 추가 접종)에는 미적용. (MPI: primary "no less than 6 months ... prior to travel"). 단일 접종 = 1차로 간주.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -176,7 +176,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     title: '부스터 chain 끊김 없음 (직전 접종 만료 전 부스터)',
     description:
       '각 부스터 접종은 직전 접종의 유효기간 만료 전이어야 함. 만료 후 접종은 1차로 간주(primary 6-12개월 룰 적용). (MPI: "must be administered before the previous rabies vaccination has expired")',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -219,7 +219,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     title: 'RNATT 채혈은 출국일 3~24개월 전',
     description:
       'RNATT 채혈일이 출국일로부터 최소 3개월, 최대 24개월 이내여야 함. (MPI: "not less than 3 months and not more than 24 months prior to departing")',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -270,7 +270,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     title: '출국일 시점 강아지 9개월 이상',
     description:
       '강아지 전용. 출국일 기준 만 9개월 이상이어야 함. (MPI: "be 9 months of age or older on the date of travel")',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       if (species(caseRow) !== 'dog') return SKIP
@@ -300,7 +300,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     title: '최종 임상검사(내원일)는 출국 2일 이내',
     description:
       '최종 pre-export 임상검사는 출국 2일 이내(`0 ≤ dep - visit ≤ 2`). 외부기생충·전염병·CTVT(intact 강아지) 검사 + 2차 구충 동시 진행. (MPI Cat3 Cert A §27: "In the two days prior to shipment, I examined the animal(s)" — 2일 전 진찰을 명시 허용.)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -339,7 +339,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     title: '내부구충 2회 (1차 30일 이내, 2차 4일 이내, 14일+ 간격)',
     description:
       '내부구충 2회: 1차 출국 30일 이내(`≤30`) + 2차 출국 4일 이내(`≤4`), 도즈 간격 ≥14일(2주). nematodes + cestodes 효과 제품. (MPI Cat3 Cert A §12: 1st "in the 30 days prior", 2nd "in the four days prior", "at least two weeks" apart)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -394,7 +394,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     title: '외부구충 2회 (1차 30일 이내, 2차 2일 이내, 14일+ 간격)',
     description:
       '외부구충 2회: 1차 출국 30일 이내(`≤30`) + 2차 출국 2일 이내(`≤2`), 도즈 간격 ≥14일(2주). ticks + fleas 효과 제품. (MPI Cat3 Cert A §13: 1st "in the 30 days prior", 2nd "in the two days prior", "at least two weeks" apart)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -451,7 +451,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     title: '심장사상충 예방 투약은 출국 4일 이내 (강아지)',
     description:
       '강아지 전용. 출국 4일 이내(`≤4`) 등록 예방약 투약 (또는 sustained-release injection). (MPI Cat3 Cert A §14(a): "in the four days prior to the date of shipment")',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       if (species(caseRow) !== 'dog') return SKIP
@@ -489,7 +489,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
     title: '전염병검사는 출국 16일 이내 (강아지)',
     description:
       '강아지 전용. Babesia gibsoni (IFAT/ELISA) + Brucella canis (RSAT/TAT/CPAg-AGID) 검사가 출국 16일 이내(`≤16`). (MPI Cat3 Cert A §16~21: "negative result in the 16 days prior to the date of shipment"). 단일 검체일에 통합 처리됨.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       if (species(caseRow) !== 'dog') return SKIP
@@ -589,7 +589,7 @@ function buildAnnualVaccineRule(opts: {
     category: '종합백신',
     title: `${opts.label} 출국 14일 이전 + 검역 10일 cover${speciesNote}`,
     description: `${speciesPrefix}최근 ${opts.label} 접종이 출국일 14일 이전 + 검역(10일) 종료까지 면역 유효 (cushion ≥10일). 1회 접종으로 충분. 디폴트 1년 → \`dep - vacc ≤ 354\`. valid_until 명시 시 override.${sourceSuffix}`,
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       if (opts.dogOnly && species(caseRow) !== 'dog') return SKIP

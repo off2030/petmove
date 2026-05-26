@@ -49,7 +49,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       'ISO 11784/11785 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (DVS Non-Scheduled: "identified using an ISO (Std 11784 & 11785) compliant microchip")',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -78,7 +78,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
       'DVS Non-Scheduled: "shall not be less than 3 months of age at the time of import" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -113,7 +113,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
       '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (DVS Non-Scheduled: "vaccinated for rabies at least 30 days prior to entry into the country")',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -141,7 +141,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
     title: '출국일 + MAQIS 검역 7일까지 광견병 면역 유효',
     description:
       'DVS Non-Scheduled: MAQIS 7일 의무 격리 — 격리 종료 시점까지 광견병 면역 유효 필요. cushion ≥7일.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -173,7 +173,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
     title: '종합백신 접종 필수',
     description:
       '종합백신 접종 기록 필요. 강아지: DHPPL+파라인플루엔자 / 고양이: 범백혈구감소증 (FVRCP). (DVS 운용 표준 — Non-Scheduled 규정 PDF 1차 명문 미확인)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const entries = readGeneralVaccineEntries(caseRow)
@@ -194,7 +194,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
     title: '출국일 + MAQIS 검역 7일까지 종합백신 면역 유효',
     description:
       '최근 종합백신의 면역 유효기간이 MAQIS 검역(7일) 종료까지 유지되어야 함. cushion ≥7일.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -226,7 +226,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
     title: '건강증명서(내원일)는 출국 7일 이내 (보수: 6일 전부터)',
     description:
       'DVS Non-Scheduled: "examined and found to be healthy ... within seven (7) days immediately prior to export" — 출국 7일 이내(`≤6`). 사용자 보수 N-1 적용.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date

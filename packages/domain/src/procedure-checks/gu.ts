@@ -55,7 +55,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       '마이크로칩(ISO 11784/11785) 이 광견병 1차 접종일과 같거나 이전이어야 함.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -84,7 +84,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 생후 3개월령(캘린더) 이상',
     description:
       '광견병 1차 접종은 생년월일 기준 캘린더 3개월(`addMonths(birth, 3)`) 이후. (DOAG: "shall not be given less than 3 months of age") 91일 근사 대신 정확한 월 계산.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -114,7 +114,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     title: '광견병 평생 2회 이상 접종',
     description:
       '광견병 백신은 평생 최소 2회. 1차 + 2차 모두 필수.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -137,7 +137,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     title: '광견병 도즈 간 30일 이상 간격 (최소 1개월)',
     description:
       '연속된 광견병 접종 간 간격 ≥30일 (1개월). (DOAG Brochure 2024-08-09 운용. 참고: HI는 strict ">30 days = ≥31일"이며 GU 동일 강화 검토 권고)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -179,7 +179,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     title: '도착일에 광견병 면역 유효 (접종일 포함 1년 = 364일까지)',
     description:
       '최근 광견병 접종 면역 유효기간이 도착일 이전 만료되지 않아야 함. **접종일 포함 1년 = +364일**까지 허용. valid_until 명시 시 그 값, 미명시 시 디폴트 1년 (`addOneYear`).',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -209,7 +209,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     title: '항체검사는 직전 광견병 접종 후 10일 이상 경과',
     description:
       'RNATT 채혈일은 직전 광견병 접종 후 10일 이상 경과해야 함. (DOAG: 항체 형성 시간 운용 권장)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -250,7 +250,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     title: 'RNATT 검체 lab 수령일부터 120일 경과 후 도착',
     description:
       'DOAG: "the day that the laboratory receives the OIE-FAVN sample counts as the first day for the 120-day countdown" — 검체 lab 수령일(`rabies_titer_records[].received_date`) 우선, 미입력 시 채혈일 fallback. 채혈일 proxy 는 lab 수령일보다 며칠 빨라 less strict.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -331,7 +331,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     title: '건강증명서(내원일)는 출국 10일 이내 (한국 APQA)',
     description:
       '한국 APQA 검역 endorsement: 출국일 기준 10일 이내(`≤9`). 출발 7-9일 전 권장.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -381,7 +381,7 @@ function buildAnnualVaccineRule(opts: {
     category: '종합백신',
     title: `${opts.label} 출국 10일 이전 + 1년 유효${speciesNote}`,
     description: `${speciesPrefix}최근 ${opts.label} 접종이 출국일 10일 이전 완료 + **접종일 포함 1년 = +364일** 유효기간 안. valid_until 명시 시 override.`,
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       if (opts.dogOnly && species(caseRow) !== 'dog') return SKIP
@@ -436,7 +436,7 @@ function buildWithin14DaysRule(opts: {
     category: '구충',
     title: `${opts.label}은 출국 14일 이내(${'`≤13`'})`,
     description: `${opts.label} 가장 최근 처치가 출국일 14일 이내(\`≤13\`). (DOAG: "treated ... within 14 days of arrival on Guam")`,
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date

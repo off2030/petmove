@@ -49,7 +49,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       'ISO 11784 및 11785 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (SSUFSCP: "Тварини повинні бути ідентифіковані за допомогою мікрочіпа ... ISO 11784 та 11785")',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -78,7 +78,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
       'SSUFSCP: "Вакцинація проти сказу здійснюється починаючи з 12-тижневого віку" (12주부터). 보수 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -113,7 +113,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
     title: '출국일에 광견병 면역 유효',
     description:
       '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함. (SSUFSCP: 1차 접종은 출국 30일~12개월 이내)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -143,7 +143,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
     title: '항체검사는 광견병 접종 30일 이후',
     description:
       'RNATT 채혈일은 직전 광견병 접종으로부터 30일 이후. (공식 가이드: "blood sample should be taken at least 30 days after the rabies vaccine" — EU 동일 패턴)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -184,7 +184,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
     title: '출국일은 항체검사 3개월 이후',
     description:
       'RNATT 채혈일로부터 출국일까지 최소 3개월 경과 필요. (SSUFSCP: "принаймні за три місяці до дати видачі сертифіката") — 캘린더 기준(`addMonths`).',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -215,7 +215,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
     title: '출국일은 항체검사 12개월 이내',
     description:
       'RNATT 유효기간 1년 — 출국일이 채혈일 + 1년(364일) 초과 시 재검사 필요. (SSUFSCP 실무 운용 — 부스터 chain 끊김 없을 시 EU 패턴상 평생 유효 가능, 보수적으로 1년 적용)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -247,7 +247,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
     title: 'RNATT 항체가 ≥ 0.5 IU/ml',
     description:
       'SSUFSCP: "перевірений титр антитіл дорівнює або більше ніж 0,5 МО/мл" — 모든 RNATT 결과치가 0.5 IU/ml 이상이어야 함. value 미입력 시 SKIP.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const titers = readTiterEntries(caseRow)
@@ -287,7 +287,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
     title: '건강증명서(내원일)는 출국 10일 이내 (보수: 9일 전부터)',
     description:
       'SSUFSCP: "Ветеринарний сертифікат… дійсний протягом 10 днів з дати видачі" — 사용자 보수 N-1 → ≤9 적용.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date

@@ -44,7 +44,7 @@ export const ID_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (BARANTIN 운용 표준 — 광견병 백신·항체검사 식별 연계 필요)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -73,7 +73,7 @@ export const ID_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
       'BARANTIN: "at least 90 days old at the time of export/shipment" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -108,7 +108,7 @@ export const ID_CHECKS: ProcedureCheck[] = [
     title: '출국일에 광견병 면역 유효',
     description:
       '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함. (BARANTIN: "vaccination performed at least 30 days and not more than 1 year prior to export/shipment")',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -138,7 +138,7 @@ export const ID_CHECKS: ProcedureCheck[] = [
     title: '항체검사는 광견병 접종 30일 이후',
     description:
       'RNATT 채혈일은 직전 광견병 접종으로부터 30일 이후. (BARANTIN 본문 명시 부재 — EU/TR/IL/UA OIE 표준 차용 보수적 기준)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -181,7 +181,7 @@ export const ID_CHECKS: ProcedureCheck[] = [
     title: '건강증명서(내원일)는 출국 10일 이내 (보수: 9일 전부터)',
     description:
       'BARANTIN 자체 일자 명시 모호. 한국 APQA endorsement 10일 룰 + 사용자 보수 N-1 → ≤9 적용.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date

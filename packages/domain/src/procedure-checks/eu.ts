@@ -53,7 +53,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       '마이크로칩이 광견병 1차 접종일보다 먼저 시술되어 있어야 함. 칩 시술 후의 접종만 인정. (EU Reg 576/2013)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -82,7 +82,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 생후 12주(84일) 이상',
     description:
       '광견병 1차 접종일은 생년월일 기준 12주(84일) 이후여야 함. (EU Reg 576/2013 Annex III)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -111,7 +111,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
     title: '항체검사는 광견병 접종 30일 후',
     description:
       'RNATT 채혈일은 직전 광견병 접종(1차 또는 부스터)으로부터 30일 이후여야 함. (EU Reg 576/2013 Annex IV)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -152,7 +152,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
     title: '출국일은 항체검사일 3개월(캘린더) 이후',
     description:
       'RNATT 채혈일로부터 출국일까지 최소 3개월 경과 필요. 캘린더 기준 — 달에 따라 89~92일이 될 수 있음. (EU Reg 576/2013 Article 12 — "at least three months before")',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -198,7 +198,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
     title: '출국일 시점 광견병 면역 유효',
     description:
       '출국일에 가장 최근 광견병 접종의 면역 유효기간이 만료되지 않아야 함. EU 는 부스터 chain 유지 시 RNATT 결과는 무기한 유효 (재검사 불필요), chain 끊기면 1차부터 재시작.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -232,7 +232,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
     title: '내원일은 출국일 10일 이내',
     description:
       '동물 건강증명서 발급 검진은 EU 입국 10일 이내 시점이어야 함. (EU Reg 577/2013 Annex IV)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -271,7 +271,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
     title: '촌충구충은 출국일 1~3일 전 (보수: 24-120시간 범위)',
     description:
       'Praziquantel(촌충구충)은 입국 24시간 ~ 120시간(1~5일) 사이 투여 (EU Reg 2018/772 — 영국·아일랜드·몰타·노르웨이·핀란드). 사용자 보수 적용: 일 단위 검증 시 24h/120h 경계의 시간 정밀도 손실 위험으로 1~3일까지로 강화.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date

@@ -43,7 +43,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       '마이크로칩(ISO 11784/11785)이 광견병 1차 접종일과 같거나 이전이어야 함. 입국 시 칩 번호와 서류 일치 검증. (DLD 표준)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -72,7 +72,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 생후 12주(84일) 이상',
     description:
       '광견병 1차 접종은 생후 최소 12주(84일) 이후. 불활화(사독) 또는 재조합 백신만 인정. (DLD 공식: "at least 3 months old or 12 weeks or 84 days at time of administered")',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -101,7 +101,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     title: '광견병 접종은 출국(=도착) 21일 이전 완료',
     description:
       '가장 최근 광견병 접종이 도착일 기준 21일 이전 완료. (DLD: "primary or discontinuity vaccination must wait for 21 days before departure. Valid booster vaccination, waiting period not required" — 보수적으로 모든 경우 21일 적용)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -129,7 +129,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     title: '도착일에 광견병 면역 유효',
     description:
       '최근 광견병 접종의 면역 유효기간이 도착일 이전 만료되지 않아야 함. valid_until 명시 시 그 값 사용, 미명시 시 디폴트 1년 (`addOneYear`).',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -159,7 +159,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     title: '종합백신 접종 필수',
     description:
       'DLD: 강아지 DHPPL (Distemper/Hepatitis/Parvo/Lepto/Parainflu) / 고양이 FVRCP (Panleukopenia 포함) 의무. (DLD: "Animals must be vaccinated ... against Rabies, Distemper, Hepatitis, Parvo and Leptospirosis for dogs, and Rabies and Feline Panleukopenia for cats")',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const entries = readGeneralVaccineEntries(caseRow)
@@ -180,7 +180,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     title: '종합백신 출국(=도착) 21일 이전 완료',
     description:
       '종합백신(강아지 DHPPL / 고양이 Panleukopenia 포함 FVRCP) 가장 최근 접종이 도착일 기준 21일 이전 완료. (DLD: 광견병과 동일 21일 룰 적용 — 1차/단절 시. 유효 부스터 면제하나 보수적으로 모든 경우 적용)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -208,7 +208,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     title: '도착일에 종합백신 면역 유효',
     description:
       '최근 종합백신 면역 유효기간이 도착일 이전 만료되지 않아야 함. valid_until 명시 시 그 값 사용, 미명시 시 디폴트 1년.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -238,7 +238,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     title: '건강증명서(내원일)는 출국 10일 이내 (한국 APQA)',
     description:
       'DLD 자체 일자 명문 없음. 한국 APQA 검역 endorsement: 출국일 기준 10일 이내(`≤9`). 출발 7-9일 전 권장. (사용자 보수 N-1 적용)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-06',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date

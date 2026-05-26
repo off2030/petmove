@@ -54,7 +54,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       '마이크로칩(ISO 호환)이 광견병 1차 접종일 이전이어야 함. 시술 후 접종만 인정.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -84,7 +84,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     title: '출국일 + 검역 10일까지 광견병 면역 유효',
     description:
       '입국 후 10일 검역(최소) 종료까지 광견병 면역이 유지되어야 함. `valid_until ≥ dep + 10일`. 디폴트 1년 (`addYears -1일`) → `dep - rabies ≤ 354일`. valid_until 명시 시 override.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -117,7 +117,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     title: '출국일은 RNATT 검체 lab 도착일 180일 이후',
     description:
       'RNATT 검체가 DAFF 승인 lab 에 도착한 날부터 180일 의무 대기. 우선순위: rabies_titer_records[].received_date → australia_extra.sample_received_date(legacy) → 채혈일(fallback).',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -177,7 +177,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     title: '출국일은 RNATT 검사일 12개월 이내',
     description:
       'RNATT 결과 유효기간 12개월 — 출국까지 유효해야 함. 1주년 당일은 만료라 364일까지만 인정 (`addYears(titer, 1)` 사용).',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -210,7 +210,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     title: 'ID 확인은 RNATT 채혈 이전 별도 visit',
     description:
       'DAFF: "Identity verification must occur **prior to** RNATT blood sampling. Cannot be at the same vet visit as the RNATT." 같은 날 시술도 RNATT 무효화. → `id_date < titer_date` 엄격.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
       const titers = readTiterEntries(caseRow)
@@ -242,7 +242,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     title: '내원일은 출국일 5일 이내 (보수: 4일 전부터)',
     description:
       '동물 건강증명서 endorsement 는 출국일 기준 5일 이내(`≤4`). (DAFF: "endorsed within 5 days before the dog\'s export date" — 사용자 보수 N-1 적용)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -281,7 +281,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     title: '출국 + 검역 10일까지 종합백신(DHPP+L) 면역 유효',
     description:
       '강아지 전용. DHPP+L (Lepto 포함) 가 검역 종료까지 유효해야 함. `valid_until ≥ dep + 10일`. 디폴트 1년 → `dep - vacc ≤ 354일`. valid_until 명시 시 override.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
       if (species(caseRow) !== 'dog') return SKIP
@@ -315,7 +315,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     title: '전염병검사는 출국일 45일 이내 (강아지)',
     description:
       '강아지 전용. Brucella canis(intact 한정) + Leishmania infantum + Lepto MAT(종합백신 미완 시) 통합 검사일. 출국일 포함 45일 이내, 45일 전 제외 (`0 ≤ dep - test ≤ 44`).',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
       if (species(caseRow) !== 'dog') return SKIP
@@ -352,7 +352,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     title: 'CIV(독감) 2회 정확히 14일 간격 + 2차 14~354일 전',
     description:
       '강아지 전용. CIV 2회 접종, **정확히 14일 간격** (`dose2 - dose1 == 14`). 2차 완료 ≤ 출국 14일 전 (`dep - dose2 ≥ 14`), 검역 종료까지 유효 (`dep - dose2 ≤ 354`).',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
       if (species(caseRow) !== 'dog') return SKIP
@@ -417,7 +417,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
     title: '내부구충 2회 (45일 이내, 14일+ 간격, 2차 5일 이내)',
     description:
       '내부구충 2회 모두 출국 45일 이내 (≤44), 도즈 간격 ≥14일, 2차는 출국 5일 이내 (≤4).',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -503,7 +503,7 @@ function buildExternalParasiteRule(
         speciesKey === 'cat'
           ? 'DAFF: 출국 21일 전 시작, 출국일까지 지속. 각 consecutive 도즈 간격 21일 이하 + 마지막 도즈→출국 21일 이하 (continuous protection).'
           : 'DAFF: 출국 30일 전 시작, 출국일까지 지속. 각 consecutive 도즈 간격 30일 이하 + 마지막 도즈→출국 30일 이하.',
-      severity: 'blocker',
+      severity: 'info',
       addedAt: '2026-05-05',
       run: ({ caseRow }) => {
         if (species(caseRow) !== speciesKey) return SKIP

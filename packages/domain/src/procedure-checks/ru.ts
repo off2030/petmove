@@ -43,7 +43,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. 한국 수출검역(특히 강아지)에서 사실상 필수.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -72,7 +72,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 보수적 기준 (생후 91일 AND 캘린더 3개월)',
     description:
       'Rosselkhoznadzor: "вакцинация против бешенства осуществляется начиная с 12-недельного возраста" (12주 이상). 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -146,7 +146,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
     title: '광견병 접종은 출국일 30일 이상 전',
     description:
       '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (Rosselkhoznadzor: "не ранее, чем за 30 дней ... до даты выезда в РФ")',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -174,7 +174,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
     title: '출국일에 광견병 면역 유효',
     description:
       '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함. 만료 시 부스터 chain 끊김.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -204,7 +204,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
     title: '종합백신 접종 필수',
     description:
       '종합백신 접종 기록 필요. 강아지: DHPPL+파라인플루엔자 / 고양이: FVRCP. (EAEU 결정 No.317 명시 의무 부재 — 운용 보수)',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const entries = readGeneralVaccineEntries(caseRow)
@@ -264,7 +264,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
     title: '출국일에 종합백신 면역 유효',
     description:
       '최근 종합백신의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date
@@ -294,7 +294,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
     title: '임상검진은 출국 5일 이내 (보수: 4일 전부터)',
     description:
       'EAEU 결정 No.317 제15장: "клинического осмотра в течение 5 дней перед отправкой" (선적 5일 이내 임상검진). 사용자 보수 N-1 → ≤4 적용. **타국 10일 룰과 다름 — 러시아 특별 규정**.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow }) => {
       const dep = caseRow.departure_date

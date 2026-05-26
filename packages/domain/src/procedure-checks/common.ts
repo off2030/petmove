@@ -14,7 +14,7 @@ export const COMMON_CHECKS: ProcedureCheck[] = [
     category: '마이크로칩',
     title: '마이크로칩 시술 타이밍',
     description: '마이크로칩 시술일은 동물의 생년월일과 같거나 그 이후여야 함.',
-    severity: 'blocker',
+    severity: 'info',
     addedAt: '2026-05-16',
     run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
