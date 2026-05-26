@@ -1035,23 +1035,20 @@ export function StepDetailView({
             {isFlightRoundEntryOnly && (
               <div
                 style={{
-                  marginTop: 12,
-                  display: 'flex',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: 8,
+                  marginTop: 24,
                   fontSize: 13,
                   color: C.ink2,
                   lineHeight: 1.5,
                 }}
               >
-                <span>귀국 일정이 미정인 경우 편도 일정으로 전환할 수 있습니다.</span>
+                <div>귀국 일정이 미정인 경우 편도 일정으로 전환할 수 있습니다.</div>
                 <button
                   type="button"
                   onClick={handleConvertToOneWay}
                   disabled={convertingTrip}
                   className="pm-pressable"
                   style={{
+                    marginTop: 10,
                     padding: '5px 12px',
                     borderRadius: 999,
                     border: `.5px solid ${C.info}77`,
