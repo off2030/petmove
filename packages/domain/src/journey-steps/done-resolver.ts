@@ -107,11 +107,23 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       }
       return true
     }
-    case 'has-advance-notification':
-      return (
+    case 'has-advance-notification': {
+      // 신청일 입력은 신고 접수 시그널일 뿐 — NACCS 허가증(Approval) 첨부까지 받아야
+      // 완전 완료. 보호자가 첨부 없이 진행하려는 경우엔
+      // case.data.advance_notification_approval_skipped 플래그로 명시적 skip.
+      const hasDate =
         typeof data.advance_notification_date === 'string' &&
         (data.advance_notification_date as string).length >= 10
+      if (!hasDate) return false
+      if (data.advance_notification_approval_skipped === true) return true
+      const docs = Array.isArray(data.documents) ? data.documents : []
+      return docs.some(
+        (d) =>
+          !!d &&
+          typeof d === 'object' &&
+          (d as Record<string, unknown>).stepId === 'advance-notification',
       )
+    }
     case 'has-jp-export-quarantine':
       return (
         typeof data.jp_export_quarantine_date === 'string' &&

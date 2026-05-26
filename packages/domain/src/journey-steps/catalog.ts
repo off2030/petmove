@@ -351,13 +351,15 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     cardLine: '일본 동물검역소에 사전 신고를 하세요.',
     // 신청일은 입력됐는데 허가증 파일이 아직 안 올라온 상태 — 보호자가 NACCS 응답을
     // 기다리는 동안 일정 카드·detail 헤더에 '신청 완료, 허가증 대기' 안내로 노출.
-    // 첨부가 올라오면 doneSummary 로 자연스럽게 전환.
+    // 첨부가 올라오거나 보호자가 명시적으로 skip(`advance_notification_approval_skipped`)
+    // 하면 done-resolver 에서 완료로 잡혀 doneSummary 로 자연스럽게 전환.
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const hasDate =
         typeof data.advance_notification_date === 'string' &&
         data.advance_notification_date.length >= 10
       if (!hasDate) return undefined
+      if (data.advance_notification_approval_skipped === true) return undefined
       const docs = Array.isArray(data.documents) ? data.documents : []
       const hasAttachment = docs.some(
         (d) =>

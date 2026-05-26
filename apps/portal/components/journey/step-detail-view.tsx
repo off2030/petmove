@@ -14,6 +14,7 @@ import { useConfirm } from '@petmove/ui'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
 import {
   getCaseVaccineData,
+  markAdvanceNotificationApprovalSkipped,
   updateAdvanceNotificationDate,
   updateCaseTripType,
   updateFlightFields,
@@ -783,10 +784,32 @@ export function StepDetailView({
     const hasReturn = typeof data.return_date === 'string' && data.return_date.length >= 10
     return hasEntry && !hasReturn
   })()
-  // 사전 신고 step + 신청일 입력됐는데 허가증 첨부 아직 — 첨부 권장 + '다음' 으로 보류 패스.
+  // 사전 신고 step + 신청일 입력됐는데 허가증 첨부·skip 둘 다 아직 — 첨부 권장 + '다음' 으로 명시적 skip.
   // stepDocuments 는 이미 step.id === advance-notification 기준 필터링됨.
+  const advanceApprovalSkipped =
+    (caseRow?.data as Record<string, unknown> | undefined)?.advance_notification_approval_skipped ===
+    true
   const isAdvanceAwaitingApproval =
-    isAdvanceNotification && !!savedAdvanceDate && stepDocuments.length === 0
+    isAdvanceNotification &&
+    !!savedAdvanceDate &&
+    stepDocuments.length === 0 &&
+    !advanceApprovalSkipped
+  const [skippingApproval, setSkippingApproval] = useState(false)
+  const handleSkipAdvanceApproval = () => {
+    if (skippingApproval) return
+    setSkippingApproval(true)
+    startTransition(async () => {
+      const res = await markAdvanceNotificationApprovalSkipped(caseId)
+      setSkippingApproval(false)
+      if (res.ok) {
+        updateCase(res.value)
+        router.replace(`/cases/${caseId}/journey`)
+      } else {
+        setStatus('error')
+        setError(res.error)
+      }
+    })
+  }
   const [convertingTrip, setConvertingTrip] = useState(false)
   const router = useRouter()
   const confirm = useConfirm()
@@ -1337,7 +1360,8 @@ export function StepDetailView({
                 </div>
                 <button
                   type="button"
-                  onClick={() => router.replace(`/cases/${caseId}/journey`)}
+                  onClick={handleSkipAdvanceApproval}
+                  disabled={skippingApproval}
                   className="pm-pressable"
                   style={{
                     marginTop: 14,
@@ -1349,10 +1373,11 @@ export function StepDetailView({
                     fontSize: 12,
                     fontWeight: 700,
                     letterSpacing: '0.01em',
-                    cursor: 'pointer',
+                    cursor: skippingApproval ? 'progress' : 'pointer',
+                    opacity: skippingApproval ? 0.6 : 1,
                   }}
                 >
-                  다음
+                  {skippingApproval ? '처리 중…' : '다음'}
                 </button>
               </div>
             )}

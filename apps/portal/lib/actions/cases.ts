@@ -694,6 +694,55 @@ export async function updateCaseTripType(
 }
 
 /**
+ * 사전 신고 step 의 '허가증 첨부 없이 완료' 플래그를 set — 보호자가 detail 안내의
+ * '다음' 버튼으로 명시적 skip. done-resolver 가 이 플래그를 보고 완료 판정.
+ *
+ * 토글 X — set 만. 첨부를 나중에 올리면 자연스럽게 정식 완료로 흡수돼 플래그는
+ * 의미만 잃을 뿐 굳이 unset 할 필요 없음.
+ */
+export async function markAdvanceNotificationApprovalSkipped(
+  caseId: string,
+): Promise<Result<CaseRow>> {
+  try {
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    // 신청일이 있어야 skip 이 의미가 있음 — 미입력 상태에서 호출되면 노옵.
+    if (
+      typeof prev.advance_notification_date !== 'string' ||
+      (prev.advance_notification_date as string).length < 10
+    ) {
+      return { ok: false, error: '신청일이 입력되어 있지 않습니다.' }
+    }
+
+    const nextData: Record<string, unknown> = {
+      ...prev,
+      advance_notification_approval_skipped: true,
+    }
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
  * 사전 신고 step 의 신청일을 patch — case.data.advance_notification_date (YYYY-MM-DD).
  * 빈/null 이면 키 제거. data 의 다른 키는 fetch-merge 로 보존.
  */
