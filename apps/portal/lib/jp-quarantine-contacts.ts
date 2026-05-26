@@ -3,10 +3,10 @@
  * 내부 leaf 페이지 데이터. 펫무브는 개·고양이만 다루므로 그 외 동물 안내는 제외.
  *
  * 출처: 일본 농림수산성 동물검역소(MAFF Animal Quarantine Service) 공식 안내.
- * 절차 단계별로 연락처가 다름:
- *  - 신청·여행 문의: 도쿄 본부의 공항 담당 부서 (단일 전화·팩스, 터미널별 이메일).
- *  - 사전 신고 승인 후·예약: 각 공항 지부 (지부별 직통).
- *  - 그 외 지역(항구·기타 공항): 지역 지부.
+ * 구조: 본 흐름(나리타·하네다·간사이) vs 그 외 지역. 본 흐름은 절차 단계별로
+ * 담당 부서가 다르기 때문에 subsection 두 개 — 신청·여행 문의(도쿄 본부 공항 담당)
+ * 와 사전 신고 승인 후·예약 문의(각 공항 지부 직통). 그 외 지역은 항구·지방 공항으로
+ * subsection 없음.
  */
 
 export interface ContactEmail {
@@ -28,92 +28,106 @@ export interface ContactRow {
   emails: ContactEmail[]
 }
 
-export interface ContactSection {
-  /** 섹션 제목 — 어떤 절차 단계에 쓰는 연락처인지. */
+export interface ContactSubsection {
+  /** 문의 종류 라벨 (예: '사전 신고·수출검역 신청·여행 관련 문의'). */
   title: string
-  /** 대상·범위 부연. */
-  subtitle?: string
   rows: ContactRow[]
+}
+
+export interface ContactSection {
+  /** 상위 그룹 제목 (예: '나리타·하네다·간사이 공항'). */
+  title: string
+  /** 그룹 부연 설명. */
+  subtitle?: string
+  /** 문의 종류별 분기. 없으면 rows 사용. */
+  subsections?: ContactSubsection[]
+  /** subsection 없는 단일 흐름. */
+  rows?: ContactRow[]
 }
 
 export const JP_QUARANTINE_CONTACTS: ContactSection[] = [
   {
-    title: '사전 신고·수출검역 신청·여행 관련 문의',
-    rows: [
+    title: '나리타·하네다·간사이 공항',
+    subsections: [
       {
-        name: '나리타 국제공항',
-        phones: ['+81-3-5708-7261'],
-        faxes: ['+81-3-6428-9953'],
-        emails: [
-          { label: '제1터미널', address: 'aqs.nrt1@maff.go.jp' },
-          { label: '제2터미널', address: 'aqs.nrt2@maff.go.jp' },
-          { label: '화물', address: 'aqs.nrtcargo@maff.go.jp' },
+        title: '사전 신고·수출검역 신청·여행 관련 문의',
+        rows: [
+          {
+            name: '나리타 국제공항',
+            phones: ['+81-3-5708-7261'],
+            faxes: ['+81-3-6428-9953'],
+            emails: [
+              { label: '제1터미널', address: 'aqs.nrt1@maff.go.jp' },
+              { label: '제2터미널', address: 'aqs.nrt2@maff.go.jp' },
+              { label: '화물', address: 'aqs.nrtcargo@maff.go.jp' },
+            ],
+          },
+          {
+            name: '도쿄 국제공항 (하네다 공항)',
+            phones: ['+81-3-5757-9752'],
+            faxes: ['+81-3-5757-9759'],
+            emails: [{ address: 'aqs.hnd@maff.go.jp' }],
+          },
+          {
+            name: '간사이 국제공항',
+            phones: ['+81-72-455-1956'],
+            faxes: ['+81-72-455-1957'],
+            emails: [{ address: 'aqs.kix1@maff.go.jp' }],
+          },
         ],
       },
       {
-        name: '도쿄 국제공항 (하네다 공항)',
-        phones: ['+81-3-5757-9752'],
-        faxes: ['+81-3-5757-9759'],
-        emails: [{ address: 'aqs.hnd@maff.go.jp' }],
-      },
-      {
-        name: '간사이 국제공항',
-        phones: ['+81-72-455-1956'],
-        faxes: ['+81-72-455-1957'],
-        emails: [{ address: 'aqs.kix1@maff.go.jp' }],
-      },
-    ],
-  },
-  {
-    title: '사전 신고 승인 후·수출검역 예약 문의',
-    rows: [
-      {
-        name: '나리타 지부, 제1터미널',
-        location: '나리타 국제공항',
-        phones: ['+81-476-32-6510'],
-        faxes: ['+81-476-30-3011'],
-        emails: [{ address: 'aqs.nrt1@maff.go.jp' }],
-      },
-      {
-        name: '나리타 지부, 제2터미널',
-        location: '나리타 국제공항',
-        phones: ['+81-476-34-2342'],
-        faxes: ['+81-476-34-2338'],
-        emails: [{ address: 'aqs.nrt2@maff.go.jp' }],
-      },
-      {
-        name: '나리타 지부 (화물)',
-        location: '나리타 국제공항',
-        phones: ['+81-476-32-6655'],
-        faxes: ['+81-476-30-3012'],
-        emails: [{ address: 'aqs.nrtcargo@maff.go.jp' }],
-      },
-      {
-        name: '하네다 공항 지부',
-        location: '도쿄 국제공항',
-        phones: ['+81-3-5757-9752'],
-        faxes: ['+81-3-5757-9759'],
-        emails: [{ address: 'aqs.hnd@maff.go.jp' }],
-      },
-      {
-        name: '간사이 공항 지부',
-        location: '간사이 국제공항',
-        phones: ['+81-72-455-1956'],
-        faxes: ['+81-72-455-1955'],
-        emails: [{ address: 'aqs.kix1@maff.go.jp' }],
-      },
-      {
-        name: '간사이 공항 지부 (화물)',
-        location: '간사이 국제공항',
-        phones: ['+81-72-455-1958'],
-        faxes: ['+81-72-455-1959'],
-        emails: [{ address: 'aqs.kixcargo@maff.go.jp' }],
+        title: '사전 신고 승인 후·수출검역 예약 문의',
+        rows: [
+          {
+            name: '나리타 지부, 제1터미널',
+            location: '나리타 국제공항',
+            phones: ['+81-476-32-6510'],
+            faxes: ['+81-476-30-3011'],
+            emails: [{ address: 'aqs.nrt1@maff.go.jp' }],
+          },
+          {
+            name: '나리타 지부, 제2터미널',
+            location: '나리타 국제공항',
+            phones: ['+81-476-34-2342'],
+            faxes: ['+81-476-34-2338'],
+            emails: [{ address: 'aqs.nrt2@maff.go.jp' }],
+          },
+          {
+            name: '나리타 지부 (화물)',
+            location: '나리타 국제공항',
+            phones: ['+81-476-32-6655'],
+            faxes: ['+81-476-30-3012'],
+            emails: [{ address: 'aqs.nrtcargo@maff.go.jp' }],
+          },
+          {
+            name: '하네다 공항 지부',
+            location: '도쿄 국제공항',
+            phones: ['+81-3-5757-9752'],
+            faxes: ['+81-3-5757-9759'],
+            emails: [{ address: 'aqs.hnd@maff.go.jp' }],
+          },
+          {
+            name: '간사이 공항 지부',
+            location: '간사이 국제공항',
+            phones: ['+81-72-455-1956'],
+            faxes: ['+81-72-455-1955'],
+            emails: [{ address: 'aqs.kix1@maff.go.jp' }],
+          },
+          {
+            name: '간사이 공항 지부 (화물)',
+            location: '간사이 국제공항',
+            phones: ['+81-72-455-1958'],
+            faxes: ['+81-72-455-1959'],
+            emails: [{ address: 'aqs.kixcargo@maff.go.jp' }],
+          },
+        ],
       },
     ],
   },
   {
     title: '그 외 지역',
-    subtitle: '항구·지역 공항 — 본 흐름(나리타·하네다·간사이) 외 지점',
+    subtitle: '항구·지방 공항',
     rows: [
       {
         name: '홋카이도와 도호쿠 지부',

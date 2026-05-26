@@ -5,16 +5,16 @@ import {
   JP_QUARANTINE_CONTACTS,
   type ContactRow,
   type ContactSection,
+  type ContactSubsection,
 } from '@/lib/jp-quarantine-contacts'
 
 /**
  * 일본 동물검역소 연락처 — '사전 신고' / '일본 수출검역 신청' step 에서 진입하는
  * 내부 leaf 페이지. 4탭에 추가하지 않고 step 링크로만 진입. Stone/Calm 톤.
  *
- * 절차 단계별로 연락처가 달라 섹션 3개로 분리:
- *  1) 신청·여행 문의 — 도쿄 본부 공항 담당.
- *  2) 사전 신고 승인 후·예약 — 각 공항 지부 직통.
- *  3) 그 외 지역 — 본 흐름 외 항구·지방 공항.
+ * 본 흐름(나리타·하네다·간사이) vs 그 외 지역 두 섹션. 본 흐름은 절차 단계별로
+ * 담당 부서가 다르기 때문에 subsection 둘로 분기 — 신청·여행 문의(도쿄 본부) vs
+ * 사전 신고 승인 후·예약(각 공항 지부).
  */
 
 const C = {
@@ -93,20 +93,47 @@ export default function JpQuarantineContactsPage() {
 
 function Section({ section, first }: { section: ContactSection; first: boolean }) {
   return (
-    <div style={{ marginTop: first ? 26 : 28 }}>
-      <div style={{ ...monoCap, marginBottom: 6, padding: '0 4px' }}>{section.title}</div>
+    <div style={{ marginTop: first ? 26 : 32 }}>
+      <h2 style={{ ...serif, fontSize: 19, margin: 0, color: C.ink, lineHeight: 1.3 }}>
+        {section.title}
+      </h2>
       {section.subtitle && (
-        <div
-          style={{
-            fontSize: 12, color: C.ink3, padding: '0 4px', marginBottom: 10, lineHeight: 1.5,
-          }}
-        >
+        <div style={{ fontSize: 12, color: C.ink3, marginTop: 4, lineHeight: 1.5 }}>
           {section.subtitle}
         </div>
       )}
+      {section.subsections ? (
+        section.subsections.map((sub, i) => (
+          <Subsection key={sub.title} sub={sub} sectionTitle={section.title} first={i === 0} />
+        ))
+      ) : section.rows ? (
+        <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {section.rows.map((row) => (
+            <ContactCard key={`${section.title}-${row.name}`} row={row} />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function Subsection({
+  sub,
+  sectionTitle,
+  first,
+}: {
+  sub: ContactSubsection
+  sectionTitle: string
+  first: boolean
+}) {
+  return (
+    <div style={{ marginTop: first ? 18 : 22 }}>
+      <div style={{ ...monoCap, color: C.ink2, marginBottom: 10, padding: '0 4px' }}>
+        {sub.title}
+      </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {section.rows.map((row) => (
-          <ContactCard key={`${section.title}-${row.name}`} row={row} />
+        {sub.rows.map((row) => (
+          <ContactCard key={`${sectionTitle}-${sub.title}-${row.name}`} row={row} />
         ))}
       </div>
     </div>
