@@ -239,6 +239,26 @@ export const SHARE_RECIPIENT_LABEL_OVERRIDE: Record<string, string> = {
 }
 
 /**
+ * 외부 수신자 폼에서 서브그룹 헤더에 노출할 라벨·설명 override.
+ * EXTRA_FIELD_DEFS.group 값을 그대로 키로 쓴다 (내부 그룹명 → 보호자 친화 라벨).
+ * - label: 헤더 텍스트 (미지정 시 원본 group 값 사용)
+ * - description: 헤더 아래 1~2줄 설명 (왜 묻는지·어떤 정보인지)
+ * admin 의 추가정보 그룹 헤더에는 영향 없음 — share form 전용.
+ */
+export interface ShareRecipientSubgroupMeta {
+  label?: string
+  description?: string
+}
+export const SHARE_RECIPIENT_SUBGROUP_META: Record<string, ShareRecipientSubgroupMeta> = {
+  // 보호자 다수가 '수출검역 예약' 만 보면 뭘 묻는지 모름 → 풀라벨 + 한 줄 설명.
+  '수출검역 예약': {
+    label: '일본 수출동물검역 예약 날짜/시간',
+    description:
+      '일본에서 한국으로 귀국하실 때 일본 동물검역소에서 수출동물검역을 받아야 합니다. 이 검역을 받으실 날짜와 시간을 기재해주세요.',
+  },
+}
+
+/**
  * 외부 수신자가 직접 입력하기 부적절한 필드 — share 다이얼로그·프리셋·수신자 폼에서 모두 제외.
  * - age: 생년월일에서 자동 계산 (별도 입력 불필요)
  * - rabies_3: 3차 접종 미사용 정책

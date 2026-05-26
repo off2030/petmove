@@ -11,6 +11,7 @@ import type {
   ShareLinkPublicView,
   ShareVaccineEntry,
 } from '@petmove/domain'
+import { SHARE_RECIPIENT_SUBGROUP_META } from '@petmove/domain'
 import breedsData from '@petmove/domain/data/breeds.json'
 import colorsData from '@petmove/domain/data/colors.json'
 
@@ -228,7 +229,13 @@ export function ShareForm({ initial }: Props) {
                 </div>
               )}
 
-              {category.blocks.map((block, blockIndex) => (
+              {category.blocks.map((block, blockIndex) => {
+                const subgroupMeta = block.subgroup
+                  ? SHARE_RECIPIENT_SUBGROUP_META[block.subgroup]
+                  : undefined
+                const subgroupLabel = subgroupMeta?.label ?? block.subgroup
+                const subgroupDescription = subgroupMeta?.description
+                return (
                 <Fragment key={`${block.subgroup ?? 'default'}-${blockIndex}`}>
                   {block.subgroup && (
                     <div
@@ -240,9 +247,14 @@ export function ShareForm({ initial }: Props) {
                       <div className="flex items-center gap-2">
                         <span className="h-px w-6 bg-border/80" aria-hidden />
                         <p className="font-serif text-[14px] font-medium text-muted-foreground">
-                          {block.subgroup}
+                          {subgroupLabel}
                         </p>
                       </div>
+                      {subgroupDescription && (
+                        <p className="mt-2 pl-8 font-serif text-[13px] leading-relaxed text-muted-foreground/85">
+                          {subgroupDescription}
+                        </p>
+                      )}
                     </div>
                   )}
                   {block.fields.map((field) => (
@@ -256,7 +268,8 @@ export function ShareForm({ initial }: Props) {
                     />
                   ))}
                 </Fragment>
-              ))}
+                )
+              })}
             </section>
           ))}
 
