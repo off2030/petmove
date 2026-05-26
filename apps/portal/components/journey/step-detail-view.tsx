@@ -367,8 +367,10 @@ export function StepDetailView({
         }
       })
     } else if (isRabies) {
-      // 1·2차 공통: 입력 시점에 면역 유효 아님 → 차단 (만료된 기록은 chain 끊김).
-      if (isRabiesEntryExpired(rabies)) {
+      // 2차 한정: 입력 시점에 면역 유효 아님 → 차단 (출국 시점에 유효해야 검역 인정).
+      // 1차는 면제 — 이미 추가 접종을 마친 보호자가 옛 1차 기록을 그대로 등록하는
+      // 케이스에서 만료가 정상이고, 후속 검증(2차 1차유효기간 내·항체검사 chain)에서 잡힌다.
+      if (isRabies2 && isRabiesEntryExpired(rabies)) {
         setStatus('error')
         setError('입력하신 접종은 면역 유효기간이 만료되었습니다.')
         return
