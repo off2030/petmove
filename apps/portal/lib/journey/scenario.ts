@@ -326,11 +326,18 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
                 ? `${formatKoreanDate(deadline)}까지 ${cardLine}`
                 : summary))
     const failedChecks = failedByStep.get(step.id) ?? 0
-    const infoChecks = infoByStep.get(step.id) ?? 0
+    // 사전 신고 — 신청일 입력 후 허가증 첨부·skip 대기 상태(situational 활성)이면
+    // 우측 칩이 '마감' 대신 '안내' 톤으로 바뀌도록 infoChecks 1 추가.
+    // (신청 시점에 사용자는 이미 마감 액션을 마친 셈이라 '마감 …' 표기는 어색.)
+    const isAdvanceAwaiting = step.id === 'advance-notification' && !done && !!sit
+    const infoChecks = (infoByStep.get(step.id) ?? 0) + (isAdvanceAwaiting ? 1 : 0)
     const isAdvisory = step.advisoryOnly === true
-    // 안내 카드 본문 — info check 메시지가 있으면 그걸, 없으면 advisory step 의 desc(상황별).
+    // 안내 카드 본문 — info check 메시지가 있으면 그걸, 없으면 advisory step 의 desc(상황별),
+    // advance-notification awaiting 은 situational desc 자체가 안내문.
     const infoMessage =
-      infoMessageByStep.get(step.id) ?? (isAdvisory && !done ? desc : undefined)
+      infoMessageByStep.get(step.id) ??
+      (isAdvisory && !done ? desc : undefined) ??
+      (isAdvanceAwaiting ? sit?.desc : undefined)
     return {
       id: step.id,
       label: step.title,
