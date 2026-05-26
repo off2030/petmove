@@ -1044,7 +1044,9 @@ export function StepDetailView({
 
         {/* Situational 안내 — step config 가 caseRow 상태에 따라 동적으로 만든 메시지.
             timeline 의 desc 와 동일 내용이라 detail 페이지에서도 같은 정보 전달.
-            항공권 step + 왕복 + 출국만 입력 상태에선 '편도 일정으로 전환' 토글을 같이 노출. */}
+            항공권 step + 왕복 + 출국만 입력 상태에선 '편도 일정으로 전환' 토글을,
+            사전 신고 step + 신청일 입력됐는데 허가증 첨부·skip 둘 다 아직 상태에선
+            '다음' 으로 첨부 없이 완료 처리하는 토글을 같이 노출. */}
         {situationalDesc && (
           <section
             style={{
@@ -1061,6 +1063,7 @@ export function StepDetailView({
             <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
               {situationalDesc}
               {isFlightRoundEntryOnly && ' 귀국 일정이 미정인 경우는 편도 일정으로 전환할 수 있습니다.'}
+              {isAdvanceAwaitingApproval && ' 첨부 없이 완료 처리하시려면 다음 버튼을 클릭해주세요.'}
             </div>
             {isFlightRoundEntryOnly && (
               <button
@@ -1083,6 +1086,29 @@ export function StepDetailView({
                 }}
               >
                 {convertingTrip ? '전환 중…' : '편도 일정으로 전환'}
+              </button>
+            )}
+            {isAdvanceAwaitingApproval && (
+              <button
+                type="button"
+                onClick={handleSkipAdvanceApproval}
+                disabled={skippingApproval}
+                className="pm-pressable"
+                style={{
+                  marginTop: 24,
+                  padding: '5px 14px',
+                  borderRadius: 999,
+                  border: `.5px solid ${C.info}77`,
+                  background: '#FBF7F1',
+                  color: C.info,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: '0.01em',
+                  cursor: skippingApproval ? 'progress' : 'pointer',
+                  opacity: skippingApproval ? 0.6 : 1,
+                }}
+              >
+                {skippingApproval ? '처리 중…' : '다음'}
               </button>
             )}
           </section>
@@ -1337,50 +1363,6 @@ export function StepDetailView({
               documents={stepDocuments}
               hint={step.attachmentHint}
             />
-            {/* 사전 신고 + 신청일 입력됐는데 허가증 첨부 아직 — 첨부 권장 안내 + '다음' 으로 일정으로 패스. */}
-            {isAdvanceAwaitingApproval && (
-              <div
-                style={{
-                  marginTop: 16,
-                  padding: '14px 16px',
-                  borderRadius: 16,
-                  background: C.infoBg,
-                  border: `.5px solid ${C.info}59`,
-                  fontSize: 13,
-                  color: C.ink2,
-                  lineHeight: 1.5,
-                }}
-              >
-                <div style={{ ...monoCap, color: C.info, fontWeight: 700, marginBottom: 8 }}>
-                  안내
-                </div>
-                <div>
-                  허가증이 나오면 파일을 첨부해주세요. 첨부 없이 완료 처리하시려면 다음 버튼을
-                  클릭해주세요.
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSkipAdvanceApproval}
-                  disabled={skippingApproval}
-                  className="pm-pressable"
-                  style={{
-                    marginTop: 14,
-                    padding: '5px 14px',
-                    borderRadius: 999,
-                    border: `.5px solid ${C.info}77`,
-                    background: '#FBF7F1',
-                    color: C.info,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    letterSpacing: '0.01em',
-                    cursor: skippingApproval ? 'progress' : 'pointer',
-                    opacity: skippingApproval ? 0.6 : 1,
-                  }}
-                >
-                  {skippingApproval ? '처리 중…' : '다음'}
-                </button>
-              </div>
-            )}
           </section>
         )}
       </div>
