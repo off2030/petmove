@@ -646,6 +646,54 @@ export async function updateFlightFields(
 }
 
 /**
+ * 케이스의 trip_type 만 토글 — data.trip_type[destinationToken] 갱신. 다른 토큰의
+ * 기존 값은 보존. 항공권 step 의 '편도 일정으로 전환' 버튼이 호출.
+ *
+ * 편도 전환 시 귀국 항공편/검역 데이터는 유지(되돌릴 때 복원되게) — applicability 만
+ * 바뀌어 일본 수출 검역·한국 수입검역 step 이 자동으로 빠진다.
+ */
+export async function updateCaseTripType(
+  caseId: string,
+  tripType: 'round' | 'one_way',
+): Promise<Result<CaseRow>> {
+  try {
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data, destination')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const destToken = (existing?.destination ?? '').split(',')[0]?.trim() ?? ''
+    if (!destToken) return { ok: false, error: '목적지가 설정되지 않은 케이스입니다.' }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const nextData: Record<string, unknown> = { ...prev }
+    const prevTrip =
+      prev.trip_type && typeof prev.trip_type === 'object'
+        ? { ...(prev.trip_type as Record<string, unknown>) }
+        : {}
+    prevTrip[destToken] = tripType
+    nextData.trip_type = prevTrip
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
  * 사전 신고 step 의 신청일을 patch — case.data.advance_notification_date (YYYY-MM-DD).
  * 빈/null 이면 키 제거. data 의 다른 키는 fetch-merge 로 보존.
  */

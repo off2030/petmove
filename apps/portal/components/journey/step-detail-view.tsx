@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import {
   createVaccineLookups,
@@ -13,6 +14,7 @@ import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
 import {
   getCaseVaccineData,
   updateAdvanceNotificationDate,
+  updateCaseTripType,
   updateFlightFields,
   updateJpExportQuarantineFields,
   updateJpExportQuarantineVisitDate,
@@ -772,6 +774,34 @@ export function StepDetailView({
   const situationalDesc = situationalDup ? undefined : rawSituationalDesc
   const stepDocuments = readCaseDocuments(caseRow?.data).filter((d) => d.stepId === step.id)
 
+  // 항공권 step + 왕복 + 출국만 입력된 상태 — 편도 전환 affordance 노출.
+  const isFlightRoundEntryOnly = (() => {
+    if (!isFlight || tripType !== 'round') return false
+    const data = (caseRow?.data ?? {}) as Record<string, unknown>
+    const hasEntry = typeof data.entry_date === 'string' && data.entry_date.length >= 10
+    const hasReturn = typeof data.return_date === 'string' && data.return_date.length >= 10
+    return hasEntry && !hasReturn
+  })()
+  const [convertingTrip, setConvertingTrip] = useState(false)
+  const router = useRouter()
+  const handleConvertToOneWay = () => {
+    if (convertingTrip) return
+    if (!window.confirm('편도 일정으로 전환하시겠어요? 일본 수출 동물검역·한국 수입검역 등 귀국편 단계가 일정에서 빠집니다.')) return
+    setConvertingTrip(true)
+    startTransition(async () => {
+      const res = await updateCaseTripType(caseId, 'one_way')
+      setConvertingTrip(false)
+      if (res.ok) {
+        updateCase(res.value)
+        // 전환 후 일정으로 — 사전 신고가 다음 할 일로 자동 승격된 상태를 보여준다.
+        router.replace(`/cases/${caseId}/journey`)
+      } else {
+        setStatus('error')
+        setError(res.error)
+      }
+    })
+  }
+
   return (
     <div
       ref={scrollRef}
@@ -978,7 +1008,8 @@ export function StepDetailView({
         </section>
 
         {/* Situational 안내 — step config 가 caseRow 상태에 따라 동적으로 만든 메시지.
-            timeline 의 desc 와 동일 내용이라 detail 페이지에서도 같은 정보 전달. */}
+            timeline 의 desc 와 동일 내용이라 detail 페이지에서도 같은 정보 전달.
+            항공권 step + 왕복 + 출국만 입력 상태에선 '편도 일정으로 전환' 토글을 같이 노출. */}
         {situationalDesc && (
           <section
             style={{
@@ -993,6 +1024,42 @@ export function StepDetailView({
               안내
             </div>
             <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>{situationalDesc}</div>
+            {isFlightRoundEntryOnly && (
+              <div
+                style={{
+                  marginTop: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 8,
+                  fontSize: 13,
+                  color: C.ink2,
+                  lineHeight: 1.5,
+                }}
+              >
+                <span>귀국 일정이 미정인 경우,</span>
+                <button
+                  type="button"
+                  onClick={handleConvertToOneWay}
+                  disabled={convertingTrip}
+                  className="pm-pressable"
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: 999,
+                    border: `.5px solid ${C.info}77`,
+                    background: '#FBF7F1',
+                    color: C.info,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    letterSpacing: '0.01em',
+                    cursor: convertingTrip ? 'progress' : 'pointer',
+                    opacity: convertingTrip ? 0.6 : 1,
+                  }}
+                >
+                  {convertingTrip ? '전환 중…' : '편도 일정으로 전환'}
+                </button>
+              </div>
+            )}
           </section>
         )}
 
