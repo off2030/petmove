@@ -1675,7 +1675,7 @@ function validateFlightEntryDate(
   if (destinationKey === 'japan') {
     const today = todayIso()
     if (daysBetween(today, entryDate) < 40) {
-      return '사전 신고 마감일(입국 40일 전)이 지났습니다. 오늘부터 최소 40일 후로 변경해주세요.'
+      return '사전 신고를 위해 일본 입국 때까지 최소 40일 여유 기간이 필요합니다.'
     }
   }
   // rule 1 — titer 후 180일.
