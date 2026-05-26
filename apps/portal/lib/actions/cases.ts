@@ -694,12 +694,43 @@ export async function updateCaseTripType(
 }
 
 /**
- * 사전 신고 step 의 '허가증 첨부 없이 완료' 플래그를 set — 보호자가 detail 안내의
- * '다음' 버튼으로 명시적 skip. done-resolver 가 이 플래그를 보고 완료 판정.
- *
- * 토글 X — set 만. 첨부를 나중에 올리면 자연스럽게 정식 완료로 흡수돼 플래그는
- * 의미만 잃을 뿐 굳이 unset 할 필요 없음.
+ * 사전 신고 step 의 '허가증 첨부 없이 완료' 플래그를 set/unset — set 은 보호자가
+ * detail 안내의 '다음' 버튼으로 명시적 skip, unset 은 같은 화면의 '되돌리기' 버튼.
+ * done-resolver 가 이 플래그를 보고 완료 판정. 첨부가 올라오면 플래그는 의미만
+ * 잃을 뿐 굳이 unset 할 필요 없음 (둘 다 완료 시그널).
  */
+export async function unmarkAdvanceNotificationApprovalSkipped(
+  caseId: string,
+): Promise<Result<CaseRow>> {
+  try {
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const nextData: Record<string, unknown> = { ...prev }
+    delete nextData.advance_notification_approval_skipped
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 export async function markAdvanceNotificationApprovalSkipped(
   caseId: string,
 ): Promise<Result<CaseRow>> {

@@ -15,6 +15,7 @@ import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
 import {
   getCaseVaccineData,
   markAdvanceNotificationApprovalSkipped,
+  unmarkAdvanceNotificationApprovalSkipped,
   updateAdvanceNotificationDate,
   updateCaseTripType,
   updateFlightFields,
@@ -784,16 +785,17 @@ export function StepDetailView({
     const hasReturn = typeof data.return_date === 'string' && data.return_date.length >= 10
     return hasEntry && !hasReturn
   })()
-  // 사전 신고 step + 신청일 입력됐는데 허가증 첨부·skip 둘 다 아직 — 첨부 권장 + '다음' 으로 명시적 skip.
+  // 사전 신고 step + 신청일 입력됐는데 허가증 첨부 아직 — 두 분기:
+  //  - skip X: 첨부 권장 + '다음' 으로 명시적 skip.
+  //  - skip O: '첨부 없이 완료 처리됨' 안내 + '되돌리기' 로 awaiting 으로 복귀.
   // stepDocuments 는 이미 step.id === advance-notification 기준 필터링됨.
   const advanceApprovalSkipped =
     (caseRow?.data as Record<string, unknown> | undefined)?.advance_notification_approval_skipped ===
     true
-  const isAdvanceAwaitingApproval =
-    isAdvanceNotification &&
-    !!savedAdvanceDate &&
-    stepDocuments.length === 0 &&
-    !advanceApprovalSkipped
+  const isAdvanceDateEntered =
+    isAdvanceNotification && !!savedAdvanceDate && stepDocuments.length === 0
+  const isAdvanceAwaitingApproval = isAdvanceDateEntered && !advanceApprovalSkipped
+  const isAdvanceApprovalSkipped = isAdvanceDateEntered && advanceApprovalSkipped
   const [skippingApproval, setSkippingApproval] = useState(false)
   const handleSkipAdvanceApproval = () => {
     if (skippingApproval) return
@@ -804,6 +806,21 @@ export function StepDetailView({
       if (res.ok) {
         updateCase(res.value)
         router.replace(`/cases/${caseId}/journey`)
+      } else {
+        setStatus('error')
+        setError(res.error)
+      }
+    })
+  }
+  const [unskippingApproval, setUnskippingApproval] = useState(false)
+  const handleUnskipAdvanceApproval = () => {
+    if (unskippingApproval) return
+    setUnskippingApproval(true)
+    startTransition(async () => {
+      const res = await unmarkAdvanceNotificationApprovalSkipped(caseId)
+      setUnskippingApproval(false)
+      if (res.ok) {
+        updateCase(res.value)
       } else {
         setStatus('error')
         setError(res.error)
@@ -1069,6 +1086,11 @@ export function StepDetailView({
                 첨부 없이 완료 처리하시려면 다음 버튼을 클릭해주세요.
               </div>
             )}
+            {isAdvanceApprovalSkipped && (
+              <div style={{ marginTop: 16, fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
+                허가증 첨부 대기 상태로 되돌리시려면 되돌리기 버튼을 클릭해주세요.
+              </div>
+            )}
             {isFlightRoundEntryOnly && (
               <button
                 type="button"
@@ -1113,6 +1135,29 @@ export function StepDetailView({
                 }}
               >
                 {skippingApproval ? '처리 중…' : '다음'}
+              </button>
+            )}
+            {isAdvanceApprovalSkipped && (
+              <button
+                type="button"
+                onClick={handleUnskipAdvanceApproval}
+                disabled={unskippingApproval}
+                className="pm-pressable"
+                style={{
+                  marginTop: 24,
+                  padding: '5px 14px',
+                  borderRadius: 999,
+                  border: `.5px solid ${C.info}77`,
+                  background: '#FBF7F1',
+                  color: C.info,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: '0.01em',
+                  cursor: unskippingApproval ? 'progress' : 'pointer',
+                  opacity: unskippingApproval ? 0.6 : 1,
+                }}
+              >
+                {unskippingApproval ? '처리 중…' : '되돌리기'}
               </button>
             )}
           </section>

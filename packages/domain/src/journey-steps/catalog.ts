@@ -349,17 +349,17 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       '일본 입국 40일 전까지 신고해야 합니다.\n\nNACCS로 신청한 후 일본 동물검역소 이메일 지시에 적절한 답변 및 대응을 합니다.\n수 주 후 허가증(Approval)을 받을 수 있습니다.\n왕복 일정인 경우 일본 수출 동물검역 신청도 함께 하는 것이 좋습니다.',
     doneSummary: '일본 동물검역소에 사전 신고를 했습니다.',
     cardLine: '일본 동물검역소에 사전 신고를 하세요.',
-    // 신청일은 입력됐는데 허가증 파일이 아직 안 올라온 상태 — 보호자가 NACCS 응답을
-    // 기다리는 동안 일정 카드·detail 헤더에 '신청 완료, 허가증 대기' 안내로 노출.
-    // 첨부가 올라오거나 보호자가 명시적으로 skip(`advance_notification_approval_skipped`)
-    // 하면 done-resolver 에서 완료로 잡혀 doneSummary 로 자연스럽게 전환.
+    // 신청일은 입력됐는데 허가증 파일이 아직 안 올라온 상태 — 두 분기:
+    //  - skip X (대기 중): '신청 완료, 허가증 대기' — done 아니라 timeline·detail 동시 노출.
+    //  - skip O (명시적 첨부 없이 완료 처리): '첨부 없이 완료 처리됨' — done 이라 timeline 은
+    //    doneSummary 로 가리고 detail 헤더에서만 보임. 보호자가 되돌릴 수 있도록 안내.
+    // 첨부가 올라오면 두 경우 모두 doneSummary 로 자연스럽게 전환.
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const hasDate =
         typeof data.advance_notification_date === 'string' &&
         data.advance_notification_date.length >= 10
       if (!hasDate) return undefined
-      if (data.advance_notification_approval_skipped === true) return undefined
       const docs = Array.isArray(data.documents) ? data.documents : []
       const hasAttachment = docs.some(
         (d) =>
@@ -368,6 +368,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
           (d as Record<string, unknown>).stepId === 'advance-notification',
       )
       if (hasAttachment) return undefined
+      if (data.advance_notification_approval_skipped === true) {
+        const msg = '첨부 없이 완료 처리됐어요. 허가증(Approval)을 받으시면 파일을 첨부할 수 있습니다.'
+        return { desc: msg, cardDesc: msg }
+      }
       const msg = '신청이 완료되었습니다. 허가증(Approval)이 나오면 파일을 첨부해주세요.'
       return { desc: msg, cardDesc: msg }
     },
