@@ -124,11 +124,16 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
           (d as Record<string, unknown>).stepId === 'advance-notification',
       )
     }
-    case 'has-jp-export-quarantine':
-      return (
+    case 'has-jp-export-quarantine': {
+      // 신청일은 NACCS 접수 시그널 — 완료엔 예약 날짜·시간이 둘 다 확정돼야 한다
+      // (검역소 회신을 받아야만 예약이 잡힘).
+      const hasDate =
         typeof data.jp_export_quarantine_date === 'string' &&
         (data.jp_export_quarantine_date as string).length >= 10
-      )
+      if (!hasDate) return false
+      const time = typeof data.jp_export_quarantine_time === 'string' ? data.jp_export_quarantine_time : ''
+      return /^\d{1,2}:\d{2}$/.test(time)
+    }
     case 'has-kr-export-quarantine':
       return (
         typeof data.kr_export_quarantine_date === 'string' &&

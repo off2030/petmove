@@ -1032,17 +1032,27 @@ export async function updateKrImportQuarantineDate(
 }
 
 /**
- * 일본 수출검역 step 의 예약일·예약시간을 patch — case.data.jp_export_quarantine_date
+ * 일본 수출검역 step 의 신청일·예약일·예약시간을 patch —
+ * case.data.jp_export_quarantine_application_date / jp_export_quarantine_date
  * (YYYY-MM-DD) / jp_export_quarantine_time (HH:mm). 빈/null 이면 키 제거.
  * data 의 다른 키는 fetch-merge 로 보존.
+ *
+ * 신청일은 NACCS 접수 시그널, 예약 날짜·시간 둘 다 입력돼야 done-resolver 가 완료로 잡음.
  */
 export async function updateJpExportQuarantineFields(
   caseId: string,
-  fields: { date: string | null; time: string | null },
+  fields: { applicationDate: string | null; date: string | null; time: string | null },
 ): Promise<Result<CaseRow>> {
   try {
+    if (
+      fields.applicationDate != null &&
+      fields.applicationDate !== '' &&
+      !/^\d{4}-\d{2}-\d{2}$/.test(fields.applicationDate)
+    ) {
+      return { ok: false, error: '신청일 형식은 YYYY-MM-DD 여야 합니다.' }
+    }
     if (fields.date != null && fields.date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(fields.date)) {
-      return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+      return { ok: false, error: '예약일 형식은 YYYY-MM-DD 여야 합니다.' }
     }
     let time: string | null = null
     if (fields.time != null && fields.time.trim() !== '') {
@@ -1066,6 +1076,9 @@ export async function updateJpExportQuarantineFields(
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }
+    const a = typeof fields.applicationDate === 'string' ? fields.applicationDate.trim() : ''
+    if (a) nextData.jp_export_quarantine_application_date = a
+    else delete nextData.jp_export_quarantine_application_date
     const d = typeof fields.date === 'string' ? fields.date.trim() : ''
     if (d) nextData.jp_export_quarantine_date = d
     else delete nextData.jp_export_quarantine_date

@@ -649,6 +649,7 @@ export function StepDetailView({
       setError(null)
       startTransition(async () => {
         const res = await updateJpExportQuarantineFields(caseId, {
+          applicationDate: jpExport.applicationDate || null,
           date: jpExport.date || null,
           time: jpExport.time || null,
         })
@@ -2059,15 +2060,22 @@ function readKrImportQuarantineDate(data: Record<string, unknown> | null | undef
   return typeof v === 'string' ? v : ''
 }
 
-/** 일본 수출검역 예약 — caseRow.data.jp_export_quarantine_date / _time. */
+/**
+ * 일본 수출검역 예약 — caseRow.data.jp_export_quarantine_application_date(신청일) /
+ * jp_export_quarantine_date(예약일) / jp_export_quarantine_time(예약시간).
+ */
 function readJpExportForm(data: Record<string, unknown> | null | undefined): JpExportForm {
   const str = (key: string) => {
     const v = data?.[key]
     return typeof v === 'string' ? v : ''
   }
-  return { date: str('jp_export_quarantine_date'), time: str('jp_export_quarantine_time') }
+  return {
+    applicationDate: str('jp_export_quarantine_application_date'),
+    date: str('jp_export_quarantine_date'),
+    time: str('jp_export_quarantine_time'),
+  }
 }
 
 function jpExportFormEqual(a: JpExportForm, b: JpExportForm): boolean {
-  return a.date === b.date && a.time === b.time
+  return a.applicationDate === b.applicationDate && a.date === b.date && a.time === b.time
 }

@@ -3,6 +3,7 @@
 import { DateTextField } from '@petmove/ui'
 
 export interface JpExportForm {
+  applicationDate: string
   date: string
   time: string
 }
@@ -44,9 +45,23 @@ export function JpExportQuarantineInputs({
       }}
     >
       <div style={{ padding: '14px 0', borderBottom: `.5px solid ${C.line}` }}>
+        <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>신청일</div>
+        <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
+          NACCS로 수출 동물검역을 신청한 날짜
+        </div>
+        <div style={{ marginTop: 8 }}>
+          <DateTextField
+            value={form.applicationDate}
+            onChange={(v) => onChange('applicationDate', v)}
+            placeholder="YYYY-MM-DD"
+            block
+          />
+        </div>
+      </div>
+      <div style={{ padding: '14px 0', borderBottom: `.5px solid ${C.line}` }}>
         <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>예약일</div>
         <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
-          일본 동물검역소 방문 예약 날짜
+          일본 동물검역소 방문 예약 날짜 (검역소 회신으로 확정)
         </div>
         <div style={{ marginTop: 8 }}>
           <DateTextField

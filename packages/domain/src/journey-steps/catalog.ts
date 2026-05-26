@@ -396,14 +396,33 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '수출',
     description:
       '일본 동물검역소에 수출 동물검역 신청과 예약을 합니다.\n\nNACCS를 통해 방문일 최소 10일 전까지 예약을 해야 합니다.\n사전 신고와 동시에 진행을 하는 것이 편리합니다.',
-    doneSummary: '일본 수출 동물검역을 신청했습니다.',
+    doneSummary: '일본 수출 동물검역 예약을 확정했습니다.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
     order: 48,
     // 마감 없음 — 예약 기준일이 검역소 방문일(= 예약일, 사용자 입력)이라 고정 앵커가 없다.
     // 귀국편 절차라 후속(출국 전 임상검사 등)을 막지 않는다 — 동시에 '다음 할 일' 노출.
     nonBlocking: true,
     done: 'has-jp-export-quarantine',
+    // 신청일 입력은 NACCS 접수 시그널일 뿐 — 검역소 응답으로 예약 날짜·시간이 확정돼야 완료.
+    // 사전 신고와 같은 두 단계 패턴이지만 skip 은 없음 — 예약은 검역소 회신이 있어야만 가능.
+    situational: (caseRow) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const hasApplied =
+        typeof data.jp_export_quarantine_application_date === 'string' &&
+        data.jp_export_quarantine_application_date.length >= 10
+      if (!hasApplied) return undefined
+      const hasReservationDate =
+        typeof data.jp_export_quarantine_date === 'string' &&
+        data.jp_export_quarantine_date.length >= 10
+      const hasReservationTime =
+        typeof data.jp_export_quarantine_time === 'string' &&
+        /^\d{1,2}:\d{2}$/.test(data.jp_export_quarantine_time)
+      if (hasReservationDate && hasReservationTime) return undefined
+      const msg = '신청이 완료되었습니다. 예약 날짜와 시간이 확정되면 입력해주세요.'
+      return { desc: msg, cardDesc: msg }
+    },
     inputs: [
+      { key: 'jp_export_quarantine_application_date', label: '신청일', type: 'date' },
       { key: 'jp_export_quarantine_date', label: '예약일', type: 'date' },
       { key: 'jp_export_quarantine_time', label: '예약시간', type: 'text', helpText: 'HH:mm 형식 (예: 14:30)' },
     ],
