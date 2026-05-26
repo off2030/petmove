@@ -790,7 +790,8 @@ export function StepDetailView({
     if (convertingTrip) return
     const ok = await confirm({
       message: '편도 일정으로 전환하시겠어요?',
-      description: '일본 수출 동물검역·한국 수입검역 등 귀국편 단계가 일정에서 빠집니다.',
+      description:
+        '일본 수출 동물검역·한국 수입검역 등 귀국편 단계가 일정에서 빠집니다.\n정보탭 → 여행 정보 → 유형 메뉴에서 왕복으로 다시 전환할 수 있습니다.',
       okLabel: '편도로 전환',
     })
     if (!ok) return
