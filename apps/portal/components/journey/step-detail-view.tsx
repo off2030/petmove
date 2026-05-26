@@ -1044,7 +1044,7 @@ export function StepDetailView({
                   lineHeight: 1.5,
                 }}
               >
-                <span>귀국 일정이 미정인 경우,</span>
+                <span>귀국 일정이 미정인 경우 편도 일정으로 전환할 수 있습니다.</span>
                 <button
                   type="button"
                   onClick={handleConvertToOneWay}
