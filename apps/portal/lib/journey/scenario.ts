@@ -57,6 +57,18 @@ export interface JourneyStage {
   advisory?: boolean
 }
 
+/**
+ * 케이스 차원 '주의' — 특정 step 에 묶이지 않는 자격·외부 행정 결격.
+ * (예: 수입 금지 견종, 마릿수 한도, 거주 요건, 1년 라이선스 백신 거부)
+ * step 안의 procedure-check 배지가 아니라 journey 페이지 상단의 별도 카드로 노출된다.
+ */
+export interface CaseAlert {
+  id: string
+  title: string
+  message: string
+  severity: 'blocker' | 'warning'
+}
+
 export interface JourneyData {
   pet: { name: string }
   trip: {
@@ -77,6 +89,11 @@ export interface JourneyData {
   totalFailedChecks: number
   /** 전체 stage 의 infoChecks 합 — 상단 '안내' 배너에 사용. */
   totalInfoChecks: number
+  /**
+   * 케이스 차원 '주의' 목록 — step 매핑이 없는 procedure-check 의 non-info 결과.
+   * 견종·마릿수·거주·1년 라이선스 같은 자격 결격이 여기로 들어온다. 빈 배열이면 표시 안 함.
+   */
+  caseAlerts: CaseAlert[]
 }
 
 function todayKst(): string {
@@ -183,12 +200,26 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
   const failedByStep = new Map<string, number>()
   const infoByStep = new Map<string, number>()
   const infoMessageByStep = new Map<string, string>()
+  // step 매핑이 없는 non-info 결과 — 견종·마릿수·거주·1년 라이선스 같은 case-level 결격.
+  // journey 페이지 상단의 별도 '주의' 카드로 노출된다.
+  const caseAlerts: CaseAlert[] = []
   if (ctx.destinationKey) {
     const all = runChecksForCase(ctx.destinationKey, { caseRow })
     for (const { check, result } of all) {
       if (result.ok) continue
       let stepId = findStepForCheck(check.id)
-      if (!stepId) continue
+      if (!stepId) {
+        // step 에 매핑되지 않은 non-info = case-level 결격. 별도 영역에 모은다.
+        if (check.severity !== 'info') {
+          caseAlerts.push({
+            id: check.id,
+            title: check.title,
+            message: result.message ?? check.description,
+            severity: check.severity,
+          })
+        }
+        continue
+      }
       // 1차 < 마이크로칩 사전 안내는 보호자가 다음 액션할 step 으로 옮긴다.
       // 2차 백신 미완 → catalog 매핑(rabies-vaccine-2) 그대로, 2차 done → rabies-titer.
       // (같은 날 룰을 두 입력 시점 모두에서 환기.)
@@ -372,5 +403,6 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     nextStages,
     totalFailedChecks,
     totalInfoChecks,
+    caseAlerts,
   }
 }

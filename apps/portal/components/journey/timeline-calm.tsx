@@ -12,7 +12,7 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
  * 그것을 비교적 충실히 옮긴 것.
  */
 export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: string }) {
-  const { stages, trip, pet, nextStages } = data
+  const { stages, trip, pet, nextStages, caseAlerts } = data
   const total = stages.length
   const done = stages.filter((s) => s.state === 'done').length
   const pct = done / total
@@ -319,7 +319,61 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
           </div>
         </div>
 
-        {/* 주의 알림 — 한 줄 배너. 첫 주의 stage 로 이동. */}
+        {/* 주의 카드 — 케이스 차원 결격 (견종·마릿수·거주·1년 라이선스 등).
+            step 안에 묶이지 않고 보호자가 케이스 자체를 재검토해야 하는 신호라 별도 카드로.
+            각 항목: title(serif) + message(설명). 링크 X — 가야 할 특정 step 이 없음. */}
+        {caseAlerts.length > 0 && (
+          <div
+            style={{
+              marginTop: 18,
+              padding: 22,
+              borderRadius: 22,
+              background: C.warnBg,
+              border: `.5px solid ${C.warn}33`,
+              boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
+            }}
+          >
+            <div style={{ ...monoCap, color: C.warn, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <span>주의</span>
+            </div>
+            {caseAlerts.map((alert, i) => (
+              <div
+                key={alert.id}
+                style={{
+                  marginTop: i === 0 ? 12 : 14,
+                  paddingTop: i === 0 ? 0 : 14,
+                  borderTop: i === 0 ? 0 : `1px solid ${C.warn}22`,
+                }}
+              >
+                <h3
+                  style={{
+                    ...serif,
+                    margin: 0,
+                    fontSize: 20,
+                    lineHeight: 1.2,
+                    color: C.ink,
+                    fontWeight: 500,
+                    textWrap: 'balance' as React.CSSProperties['textWrap'],
+                  }}
+                >
+                  {alert.title}
+                </h3>
+                <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: C.ink2 }}>
+                  {alert.message}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* (구) 주의 알림 — stage 차원 procedure-check 가 트리거되면 표시되던 한 줄 배너.
+            severity 재분류 이후 stage-level 주의는 더 이상 발생하지 않지만, 향후
+            입력 차단 외 stage-level 룰이 추가될 가능성을 위해 로직은 유지. */}
         {warnedStages.length > 0 && firstWarnedStage && (
           <Link
             href={`/cases/${caseId}/journey/${firstWarnedStage.id}`}
