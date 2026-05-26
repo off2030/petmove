@@ -783,6 +783,10 @@ export function StepDetailView({
     const hasReturn = typeof data.return_date === 'string' && data.return_date.length >= 10
     return hasEntry && !hasReturn
   })()
+  // 사전 신고 step + 신청일 입력됐는데 허가증 첨부 아직 — 첨부 권장 + '다음' 으로 보류 패스.
+  // stepDocuments 는 이미 step.id === advance-notification 기준 필터링됨.
+  const isAdvanceAwaitingApproval =
+    isAdvanceNotification && !!savedAdvanceDate && stepDocuments.length === 0
   const [convertingTrip, setConvertingTrip] = useState(false)
   const router = useRouter()
   const confirm = useConfirm()
@@ -1310,6 +1314,48 @@ export function StepDetailView({
               documents={stepDocuments}
               hint={step.attachmentHint}
             />
+            {/* 사전 신고 + 신청일 입력됐는데 허가증 첨부 아직 — 첨부 권장 안내 + '다음' 으로 일정으로 패스. */}
+            {isAdvanceAwaitingApproval && (
+              <div
+                style={{
+                  marginTop: 16,
+                  padding: '14px 16px',
+                  borderRadius: 16,
+                  background: C.infoBg,
+                  border: `.5px solid ${C.info}59`,
+                  fontSize: 13,
+                  color: C.ink2,
+                  lineHeight: 1.5,
+                }}
+              >
+                <div style={{ ...monoCap, color: C.info, fontWeight: 700, marginBottom: 8 }}>
+                  안내
+                </div>
+                <div>
+                  허가증이 나오면 파일을 첨부해주세요. 첨부 없이 완료 처리하시려면 다음 버튼을
+                  클릭해주세요.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => router.replace(`/cases/${caseId}/journey`)}
+                  className="pm-pressable"
+                  style={{
+                    marginTop: 14,
+                    padding: '5px 14px',
+                    borderRadius: 999,
+                    border: `.5px solid ${C.info}77`,
+                    background: '#FBF7F1',
+                    color: C.info,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    letterSpacing: '0.01em',
+                    cursor: 'pointer',
+                  }}
+                >
+                  다음
+                </button>
+              </div>
+            )}
           </section>
         )}
       </div>
