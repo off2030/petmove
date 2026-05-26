@@ -77,7 +77,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         helpText: '펫무브 등록 신청서의 달력과 동일 컴포넌트',
       },
     ],
-    validationIds: ['common.microchip-after-birth'],
+    // common.microchip-after-birth (시술일 ≥ 출생일) 은 portal 입력 차단으로 이관 — timeline '주의' 노출 X.
   },
 
   // ── 3. 광견병 백신 1차 ─────────────────────────────────────────────────
@@ -103,7 +103,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 보관하세요.',
-    validationIds: ['jp.rabies-prime-after-91days-old'],
+    // jp.rabies-prime-after-91days-old (생후 91일 이후 1차) 은 portal 입력 차단으로 이관.
   },
 
   // ── 4. 광견병 백신 2차 ─────────────────────────────────────────────────
@@ -130,11 +130,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 보관하세요.',
     validationIds: [
-      // jp.rabies-prime-booster-interval (30일 간격) 은 portal 입력 차단으로 이관 — 제거.
-      'jp.rabies-booster-within-prime-validity',
+      // jp.rabies-prime-booster-interval (30일 간격), jp.rabies-booster-within-prime-validity
+      // (2차가 1차 유효기간 내), jp.microchip-rabies-sequence (마이크로칩 ≤ 2차) 는
+      // portal 입력 차단으로 이관 — 제거.
       // jp.rabies-valid-until-on-departure 는 입국일(entry_date) 기준이라 항공권
       // 구매 step 에서 안내 — 백신 입력 시점엔 보호자가 조치 못 함.
-      'jp.microchip-rabies-sequence',
       'jp.rabies-prime-before-microchip',
     ],
   },

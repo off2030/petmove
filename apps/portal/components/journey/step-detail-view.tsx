@@ -346,6 +346,13 @@ export function StepDetailView({
         setError('마이크로칩 번호는 15자리여야 합니다.')
         return
       }
+      // 시술일 ≥ 출생일 (common.microchip-after-birth — 입력 차단으로 이관).
+      const birth = readBirthDate(caseRow?.data)
+      if (date && birth && date < birth) {
+        setStatus('error')
+        setError('시술일이 출생일보다 빠릅니다. 시술일 또는 출생일을 확인하세요.')
+        return
+      }
       setStatus('saving')
       setError(null)
       startTransition(async () => {
@@ -366,7 +373,18 @@ export function StepDetailView({
         setError('입력하신 접종은 면역 유효기간이 만료되었습니다.')
         return
       }
-      // 2차 한정 cross-entry: 1차 접종 이후 + 1차 면역 유효기간 이내 + (1차<마이크로칩이면 2차=항체검사일).
+      // 1차: 생후 91일 이후만 가능 (jp.rabies-prime-after-91days-old — 입력 차단으로 이관).
+      if (isRabies1 && rabies.date) {
+        const birth = readBirthDate(caseRow?.data)
+        if (birth && daysBetween(birth, rabies.date) < 91) {
+          const eligible = addDays(birth, 91)
+          setStatus('error')
+          setError(`1차 광견병 접종은 생후 91일 이후(${eligible} 이후) 가능합니다.`)
+          return
+        }
+      }
+      // 2차 한정 cross-entry: 1차 접종 이후 + 1차 면역 유효기간 이내 + (1차<마이크로칩이면 2차=항체검사일)
+      // + 마이크로칩 ≤ 2차 (jp.microchip-rabies-sequence 2차 시점 검증 — 입력 차단으로 이관).
       if (isRabies2) {
         const r1 = readRabiesEntryForm(caseRow?.data, 0)
         if (r1.date && rabies.date) {
@@ -381,9 +399,16 @@ export function StepDetailView({
             setError('2차 접종일이 1차 접종의 면역 유효기간을 벗어났습니다.')
             return
           }
+          // 마이크로칩 ≤ 2차 (jp.microchip-rabies-sequence): 마이크로칩이 2차보다 늦으면
+          // ①·② 두 조건 모두 위반이라 차단.
+          const microchip = readImplantDate(caseRow?.data)
+          if (microchip && microchip > rabies.date) {
+            setStatus('error')
+            setError('마이크로칩 시술일 이후에 광견병 백신을 접종해야 합니다.')
+            return
+          }
           // 1차가 마이크로칩보다 빠른 경우: 2차 = 항체검사일. 항체검사 미입력 시 검증 불가 →
           // 통과 (이후 항체검사 입력 시 procedure-check 가 잡음).
-          const microchip = readImplantDate(caseRow?.data)
           if (microchip && r1.date < microchip) {
             const titerDates = readAllTiterDates(caseRow?.data)
             if (titerDates.length > 0 && !titerDates.includes(rabies.date)) {
@@ -1355,6 +1380,18 @@ function readImplantDate(data: Record<string, unknown> | null | undefined): stri
   if (!data) return ''
   const v = data['microchip_implant_date']
   return typeof v === 'string' ? v : ''
+}
+
+function readBirthDate(data: Record<string, unknown> | null | undefined): string {
+  if (!data) return ''
+  const v = data['birth_date']
+  return typeof v === 'string' ? v : ''
+}
+
+function addDays(iso: string, days: number): string {
+  const d = new Date(iso + 'T00:00:00Z')
+  d.setUTCDate(d.getUTCDate() + days)
+  return d.toISOString().slice(0, 10)
 }
 
 /**
