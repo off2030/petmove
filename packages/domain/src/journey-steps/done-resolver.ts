@@ -95,8 +95,18 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return typeof data.deworming_time === 'string' && (data.deworming_time as string).length > 0
     case 'has-vet-visit':
       return typeof data.vet_visit_date === 'string' && (data.vet_visit_date as string).length >= 10
-    case 'has-flight-date':
-      return typeof data.entry_date === 'string' && (data.entry_date as string).length >= 10
+    case 'has-flight-date': {
+      const hasEntry = typeof data.entry_date === 'string' && (data.entry_date as string).length >= 10
+      if (!hasEntry) return false
+      // 왕복 케이스는 귀국 항공편까지 입력되어야 항공권 구매 완료. 출국만 입력된 상태로
+      // 다음 step(사전 신고)으로 흘려보내면 보호자가 귀국편을 잊을 위험 — situational
+      // 안내문이 카드에 노출되며 다음 할 일에 머무름.
+      const ctx = buildCaseJourneyContext(caseRow)
+      if (ctx.tripType === 'round') {
+        return typeof data.return_date === 'string' && (data.return_date as string).length >= 10
+      }
+      return true
+    }
     case 'has-advance-notification':
       return (
         typeof data.advance_notification_date === 'string' &&
