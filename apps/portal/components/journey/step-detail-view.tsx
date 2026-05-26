@@ -1063,8 +1063,12 @@ export function StepDetailView({
             <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
               {situationalDesc}
               {isFlightRoundEntryOnly && ' 귀국 일정이 미정인 경우는 편도 일정으로 전환할 수 있습니다.'}
-              {isAdvanceAwaitingApproval && ' 첨부 없이 완료 처리하시려면 다음 버튼을 클릭해주세요.'}
             </div>
+            {isAdvanceAwaitingApproval && (
+              <div style={{ marginTop: 16, fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
+                첨부 없이 완료 처리하시려면 다음 버튼을 클릭해주세요.
+              </div>
+            )}
             {isFlightRoundEntryOnly && (
               <button
                 type="button"
