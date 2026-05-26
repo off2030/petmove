@@ -1,11 +1,11 @@
 /**
  * 일본 동물검역소 연락처 — '사전 신고' / '일본 수출검역 신청' step 에서 진입하는
- * 내부 leaf 페이지 데이터.
+ * 내부 leaf 페이지 데이터. 펫무브는 개·고양이만 다루므로 그 외 동물 안내는 제외.
  *
  * 출처: 일본 농림수산성 동물검역소(MAFF Animal Quarantine Service) 공식 안내.
  * 절차 단계별로 연락처가 다름:
  *  - 신청·여행 문의: 도쿄 본부의 공항 담당 부서 (단일 전화·팩스, 터미널별 이메일).
- *  - 사전 신고 승인 후·예약·기타 반려동물: 각 공항 지부 (지부별 직통).
+ *  - 사전 신고 승인 후·예약: 각 공항 지부 (지부별 직통).
  *  - 그 외 지역(항구·기타 공항): 지역 지부.
  */
 
@@ -39,7 +39,6 @@ export interface ContactSection {
 export const JP_QUARANTINE_CONTACTS: ContactSection[] = [
   {
     title: '사전 신고·수출검역 신청·여행 관련 문의',
-    subtitle: '개와 고양이 대상',
     rows: [
       {
         name: '나리타 국제공항',
@@ -66,8 +65,7 @@ export const JP_QUARANTINE_CONTACTS: ContactSection[] = [
     ],
   },
   {
-    title: '사전 신고 승인 후·수출검역 예약·기타 반려동물 문의',
-    subtitle: '개·고양이 외의 반려동물은 모든 단계에서 이 연락처 사용',
+    title: '사전 신고 승인 후·수출검역 예약 문의',
     rows: [
       {
         name: '나리타 지부, 제1터미널',
@@ -188,11 +186,18 @@ export const JP_QUARANTINE_CONTACTS: ContactSection[] = [
         emails: [{ address: 'aqs.kop@maff.go.jp' }],
       },
       {
-        name: '오키나와 지부',
-        location: '나하 항구, 나하 공항',
-        phones: ['+81-98-861-4370', '+81-98-857-4468'],
-        faxes: ['+81-98-862-0093', '+81-98-859-1646'],
-        emails: [{ address: 'aqs.nah@maff.go.jp' }, { address: 'aqs.nap@maff.go.jp' }],
+        name: '오키나와 지부 (나하 항구)',
+        location: '나하 항구',
+        phones: ['+81-98-861-4370'],
+        faxes: ['+81-98-862-0093'],
+        emails: [{ address: 'aqs.nah@maff.go.jp' }],
+      },
+      {
+        name: '오키나와 지부 (나하 공항)',
+        location: '나하 공항',
+        phones: ['+81-98-857-4468'],
+        faxes: ['+81-98-859-1646'],
+        emails: [{ address: 'aqs.nap@maff.go.jp' }],
       },
     ],
   },
