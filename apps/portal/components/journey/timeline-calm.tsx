@@ -473,22 +473,26 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                 )}
                 {/* 안내 — info 체크나 advisory step 의 안내문이 있으면 cardDesc 아래에 한 칸 띄고
                     별도 섹션으로 노출. '다음 할 일' 헤더와 동일한 monoCap 크기로, 같은 단계의
-                    행동 안내와 묶어 표시. 별도 '안내' 카드 중복은 nextStageIds 필터로 방지. */}
-                {stage.infoMessage && ((stage.infoChecks ?? 0) > 0 || stage.advisory) && (
-                  <div style={{ marginTop: 18 }}>
-                    <div style={{ ...monoCap, color: C.info }}>안내</div>
-                    <p
-                      style={{
-                        margin: '8px 0 0',
-                        fontSize: 13,
-                        lineHeight: 1.55,
-                        color: 'rgba(45,38,28,.65)',
-                      }}
-                    >
-                      {stage.infoMessage}
-                    </p>
-                  </div>
-                )}
+                    행동 안내와 묶어 표시. 별도 '안내' 카드 중복은 nextStageIds 필터로 방지.
+                    카드 본문(desc/cardDesc)이 이미 안내문과 동일한 경우(예: 사전 신고 awaiting
+                    — situational 이 cardDesc·infoMessage 동시에 채움)에는 한 번만 노출. */}
+                {stage.infoMessage &&
+                  ((stage.infoChecks ?? 0) > 0 || stage.advisory) &&
+                  stage.infoMessage !== (stage.cardDesc ?? stage.desc) && (
+                    <div style={{ marginTop: 18 }}>
+                      <div style={{ ...monoCap, color: C.info }}>안내</div>
+                      <p
+                        style={{
+                          margin: '8px 0 0',
+                          fontSize: 13,
+                          lineHeight: 1.55,
+                          color: 'rgba(45,38,28,.65)',
+                        }}
+                      >
+                        {stage.infoMessage}
+                      </p>
+                    </div>
+                  )}
               </Link>
             ))}
           </div>
