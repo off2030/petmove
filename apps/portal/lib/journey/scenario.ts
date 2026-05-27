@@ -331,7 +331,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
           ?? (earliest
             ? `${formatKoreanDate(earliest)} 이후 ${cardLine}`
             : deadline && deadlineEnd
-              ? `${formatKoreanDate(deadline)} ~ ${formatRangeEnd(deadline, deadlineEnd)}에 ${cardLine}`
+              ? `${formatKoreanDate(deadline)} ~ ${formatRangeEnd(deadline, deadlineEnd)} 사이에 ${cardLine}`
               : deadline
                 ? `${formatKoreanDate(deadline)}까지 ${cardLine}`
                 : summary))
