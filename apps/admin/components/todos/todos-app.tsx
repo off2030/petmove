@@ -407,12 +407,40 @@ function isJapan(row: CaseRow): boolean {
 }
 
 /**
- * 신고 탭 상태 디폴트 — 저장된 값이 있으면 그대로, 없으면:
- *   - 수입: 항상 'not_started' (대기중) — 출국일 미정이어도 활성으로 표시
- *   - 수출(일본만): 귀국일 있으면 'not_started', 없으면 'na'
+ * 신고 탭 상태 — 일본 케이스는 portal data(사전신고·수출검역 step) 에서 derive,
+ * 그 외(다른 신고국)는 기존대로 admin 저장값(`import_import_status` 등) 사용.
+ *
+ * 일본 derive 규칙:
+ *   - admin_demoted_at 이 set 이면 → 'in_progress' (admin 이 명시적으로 demote)
+ *   - 완료 시그널(첨부·skipped·confirmed) 이 있으면 → 'done'
+ *   - 신청일이 있으면 → 'in_progress'
+ *   - 그 외 → 'not_started'
+ * 수출은 추가로 귀국일 없으면 'na' (수출 절차 자체가 없음).
+ *
+ * 양방향 sync: portal 액션이 위 시그널을 set/unset → admin 자동 반영.
+ *   admin dropdown 변경도 같은 시그널을 patch (todo-table 의 select handler 가
+ *   wiring) → portal 자동 반영.
  */
 function effectiveImportStatus(row: CaseRow): string {
   const data = (row.data ?? {}) as Record<string, unknown>
+  if (isJapan(row)) {
+    // demote 가 최우선 — 데이터상 완료 시그널이 있어도 admin 의도가 '진행중'.
+    if (typeof data.advance_notification_admin_demoted_at === 'string') return 'in_progress'
+    const docs = Array.isArray(data.documents) ? data.documents : []
+    const hasAttachment = docs.some(
+      (d) =>
+        !!d &&
+        typeof d === 'object' &&
+        (d as Record<string, unknown>).stepId === 'advance-notification',
+    )
+    if (hasAttachment) return 'done'
+    if (data.advance_notification_approval_skipped === true) return 'done'
+    const hasDate =
+      typeof data.advance_notification_date === 'string' &&
+      (data.advance_notification_date as string).length >= 10
+    if (hasDate) return 'in_progress'
+    return 'not_started'
+  }
   const stored = data.import_import_status
   if (stored != null && String(stored) !== '') return String(stored)
   return 'not_started'
@@ -420,8 +448,23 @@ function effectiveImportStatus(row: CaseRow): string {
 
 function effectiveExportStatus(row: CaseRow): string {
   const data = (row.data ?? {}) as Record<string, unknown>
-  // 귀국일이 없으면 저장값 무관하게 N/A. (귀국일이 없는데 수출 절차가 있을 수 없음)
   if (!data.return_date) return 'na'
+  if (isJapan(row)) {
+    if (typeof data.jp_export_quarantine_admin_demoted_at === 'string') return 'in_progress'
+    if (data.jp_export_quarantine_reservation_skipped === true) return 'done'
+    if (data.jp_export_quarantine_confirmed === true) {
+      const hasDate =
+        typeof data.jp_export_quarantine_date === 'string' &&
+        (data.jp_export_quarantine_date as string).length >= 10
+      const t = typeof data.jp_export_quarantine_time === 'string' ? data.jp_export_quarantine_time : ''
+      if (hasDate && /^\d{1,2}:\d{2}$/.test(t)) return 'done'
+    }
+    const hasApplied =
+      typeof data.jp_export_quarantine_application_date === 'string' &&
+      (data.jp_export_quarantine_application_date as string).length >= 10
+    if (hasApplied) return 'in_progress'
+    return 'not_started'
+  }
   const stored = data.import_export_status
   if (stored != null && String(stored) !== '') return String(stored)
   return 'not_started'
