@@ -1210,7 +1210,7 @@ export async function updateJpExportQuarantineFields(
     if (trimmedReserved && returnDate && returnDate.length >= 10 && trimmedReserved > returnDate.slice(0, 10)) {
       return {
         ok: false,
-        error: `예약일은 귀국 항공편(${formatKr(returnDate)})보다 늦을 수 없습니다.`,
+        error: '예약일은 귀국일보다 늦을 수 없습니다.',
       }
     }
     if (trimmedReserved && entryDate && entryDate.length >= 10 && trimmedReserved < entryDate.slice(0, 10)) {
