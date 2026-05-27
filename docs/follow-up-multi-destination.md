@@ -42,38 +42,25 @@ pnpm db:push
 - ~~**출발시간 입력 UI**~~ — `JapanExtraField` 는 dead code 였고 (case-detail 에서 안 부름), 실제 렌더는 `SimpleExtraSection` 이 `EXTRA_FIELD_DEFS` + destination-config 의 `extraFields` 자동 노출로 처리. `departure_flight_time` 은 이미 `'출국 항공편'` group 에 등록돼 있어 자동 표시됨.
 - LEGACY_EXTRA_PATHS: `entry_date` 에서 `japan_extra.inbound.date` 제거, `departure_flight_date/time` fallback 으로 옮김 (옛 케이스도 새 키로 읽힘).
 
-### 우선순위 2 — 다른 destination 정리
+### ~~우선순위 2 — 다른 destination 정리~~ (완료)
 
-- **시차 큰 노선의 `entry_date → departure_date` legacy sync** ([apps/portal/lib/actions/share-links.ts](../apps/portal/lib/actions/share-links.ts) 350-360 부근)
-  - 현재 portal `submitShareLink` 에 hardcode: `if (dataUpdate.entry_date) colUpdate.departure_date = ...`
-  - 스위스·태국·미국·하와이는 시차로 출국일과 도착일이 다른 날일 수 있음
-  - 잘못된 sync 위험 — 각 destination 별로 출국·도착 같은 날 가정 안전한지 검토 + 다른 날인 destination 은 sync 분기 제거
-  - 또는 destination 별 사용자 룰 등록 + share-link 도 룰 trigger (아래 항목과 연계)
+- ~~**시차 큰 노선의 `entry_date → departure_date` legacy sync**~~ — [4672ac9]. portal `submitShareLink` 의 hardcode `entry_date → departure_date` 단방향 sync 제거. 시차 큰 destination 의 잘못된 sync 위험 차단. 일본의 `departure_flight_date ↔ departure_date` 양방향 sync 는 유지 (auto-fill rule + hardcode 부족분).
+- ~~**portal share-link 의 auto-fill 룰 통합**~~ — [1b49f99]. `applyAutoFillRules` 를 `apps/admin/lib/auto-fill-engine.ts` → `packages/domain/src/auto-fill-engine.ts` 로 이전. portal `submitShareLink` 가 case update 직후 룰 trigger. admin/portal 단일 룰 시스템.
 
-- **portal share-link 의 auto-fill 룰 통합** ([apps/portal/lib/actions/share-links.ts](../apps/portal/lib/actions/share-links.ts))
-  - 현재 portal 은 admin 의 `applyAutoFillRules` 직접 호출 못 함 (`apps/admin/lib/...` import 금지)
-  - 옵션 A: `applyAutoFillRules` 를 `packages/auto-fill/` 또는 `packages/domain/` 공유 패키지로 이전
-  - 옵션 B: portal 자체 구현 (코드 중복)
-  - A 권장 — 양쪽 흐름이 같은 룰 시스템 거치게
+### ~~우선순위 3 — 다중 목적지 후속~~ (부분 완료)
 
-### 우선순위 3 — 다중 목적지 후속
+- ~~**fetchSiblings (Annex/UK/NZ/VBC pack PDF)**~~ — [407ac06]. `fetchSiblings(caseId, activeDestination?)` 시그니처 확장. `getDepartureDate`/`getVetVisitDate` 헬퍼로 활성 목적지의 by_dest 우선 비교. `previewSiblings`·`generateAQS`·`multi-form-dialog`·`cases-app` 모두 destination 전달.
 
-- **top-level scoped 값 정리 마이그레이션**
+- **top-level scoped 값 정리 마이그레이션** (검증 후 진행)
   - 현재 by_dest 가 채워졌어도 top-level 데이터는 보존 (fallback). 시간 지나면 stale.
-  - by_dest 가 모든 destination 에 채워진 케이스의 top-level 값 삭제 안전성 검증 후 마이그
-  - 검증·PDF·auto-fill·share-link 모두 by_dest 우선 + null sentinel 인식 확인 필수
+  - 안전성 조건: by_dest 가 모든 destination 에 채워진 케이스만 대상 + destination 미지정 read 경로 audit 필요 (`readEffectiveExtraValue(data, key)` 같은 호출자가 multi-dest 케이스를 어떻게 다루는지).
+  - 검증·PDF·auto-fill·share-link 모두 by_dest 우선 + null sentinel 인식 확인 필수.
 
-- **fetchSiblings (Annex/UK/NZ/VBC pack PDF)**
-  - 현재 `cases.departure_date` 컬럼 비교로 sibling 매칭
-  - 다중 목적지 케이스 + by_dest 의 출국일 분리 시 sibling 누락 가능
-  - 활성 목적지 인지하도록 보강
+### ~~우선순위 4 — destination 별 entry_date 의미 검토~~ (완료)
 
-### 우선순위 4 — destination 별 entry_date 의미 검토
-
-- **다른 destination 에서 entry_date 의 의미 명확화**
-  - 스위스·태국·미국·하와이: 도착일. 시차 있으면 출국일과 다른 날
-  - 라벨이 "도착일" 인데 매직링크에서 "출국일" 입력하라는 폼인지 확인 필요
-  - case-detail 그룹 라벨 vs share-link 수신자 폼 톤 일관성 점검
+- **portal `updateFlightFields` 도 auto-fill 룰 trigger** — [54b2125]. 일본 케이스에서 보호자가 journey 항공권 step 에 입력한 날짜가 `entry_date` + `departure_date` 컬럼에만 들어가고 `departure_flight_date` 는 빈 상태로 남던 문제 수정. update 후 `applyAutoFillRules(supabase, caseId, 'departure_date')` 호출 → 일본 sync 룰 fire.
+- **라벨 일관성 결론**: portal `flight-inputs.tsx` 가 "출국 항공권 → 날짜" 라벨로 보호자에게 노출. 코드는 entry_date 키에 저장하지만 동시에 `departure_date` 컬럼에 sync 되므로 procedure-checks 가 `readDepartureDate` 로 정확히 읽음. 라벨 자체는 보호자 시점에 직관적이라(보호자는 "내가 출국하는 날") 변경하지 않고 sync 보강만 진행.
+- 시차 큰 destination (스위스·태국·미국·하와이) 의 entry_date 의미 불일치는 향후 destination 별 다른 입력 UX 가 필요할 때 다시 검토 (현재는 `entry_date == 한국 출발일` 로 일관 사용).
 
 ## 메모리·문서 동기화
 
@@ -105,3 +92,8 @@ pnpm db:push
 [3185985]: https://github.com/off2030/petmove/commit/3185985
 [d73c2a8]: https://github.com/off2030/petmove/commit/d73c2a8
 [e554a88]: https://github.com/off2030/petmove/commit/e554a88
+[6a00722]: https://github.com/off2030/petmove/commit/6a00722
+[4672ac9]: https://github.com/off2030/petmove/commit/4672ac9
+[1b49f99]: https://github.com/off2030/petmove/commit/1b49f99
+[407ac06]: https://github.com/off2030/petmove/commit/407ac06
+[54b2125]: https://github.com/off2030/petmove/commit/54b2125
