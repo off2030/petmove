@@ -84,6 +84,18 @@ export async function evaluateAndNotify(caseId: string): Promise<void> {
       ((disabledRes.data ?? []) as { check_id: string }[]).map((r) => r.check_id),
     )
 
+    // 1.5) 발동 게이트 — 출국일 또는 내원일 중 하나라도 입력되기 전엔 알림을 띄우지 않는다.
+    //      WHY: 신청 직후 빈 케이스에서도 일부 검증(예: "종합백신 기록 없음")은
+    //      의존 입력 없이 즉시 fail 로 잡혀, 운영자가 트리아지 시작하기 전부터
+    //      노이즈 알림이 발생한다. 시기·관계 검증(SKIP 컨벤션)은 dep/visit 가
+    //      채워져야 의미가 생기므로, 이 둘 중 하나라도 들어온 시점을
+    //      "검증 알림 시작 신호" 로 본다.
+    //      notified_check_ids 도 건드리지 않아, 이후 첫 실제 평가 때 누적된
+    //      fail 이 일괄 알림으로 발송된다.
+    const dataObj = (caseRow.data ?? {}) as Record<string, unknown>
+    const visitDate = typeof dataObj.vet_visit_date === 'string' ? dataObj.vet_visit_date : ''
+    if (!caseRow.departure_date && !visitDate) return
+
     // 2) 평가.
     const failures = evaluateFailures(caseRow, caseRow.destination ?? null, disabledIds)
     const currentIds = failures.map((f) => f.check.id).sort()
