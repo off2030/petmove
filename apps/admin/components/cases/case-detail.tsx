@@ -899,11 +899,8 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow }: { caseId: string
   // 추가정보 내 다른 row 와 동일한 grid 레이아웃 — 좌측 라벨(180px) + 우측 컨텐츠.
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors hover:bg-accent/60">
-      <SectionLabel className="pt-1">사전신고 허가증</SectionLabel>
+      <SectionLabel className="pt-1">허가증</SectionLabel>
       <div className="min-w-0 space-y-2">
-        {stepDocs.length === 0 && (
-          <div className="text-sm text-muted-foreground italic">아직 첨부된 허가증이 없습니다.</div>
-        )}
         {stepDocs.map((d) => {
           const id = String(d.id ?? '')
           const name = String(d.name ?? '파일')
@@ -950,7 +947,7 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow }: { caseId: string
               uploading && 'opacity-60 cursor-progress',
             )}
           >
-            {uploading ? '업로드 중…' : '+ 허가증 첨부'}
+            {uploading ? '업로드 중…' : '+ 첨부'}
           </button>
           {error && <span className="ml-3 text-xs text-destructive">{error}</span>}
         </div>
