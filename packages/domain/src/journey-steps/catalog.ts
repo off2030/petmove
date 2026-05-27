@@ -439,11 +439,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O', label: 'NACCS 신청 페이지' },
       { url: '/guide/jp-quarantine-contacts', label: '일본 동물검역소 연락처' },
     ],
-    validationIds: [
-      'jp.export-quarantine-application-10days-before-return',
-      'jp.export-quarantine-date-not-after-return',
-      'jp.export-quarantine-date-not-before-entry',
-    ],
+    // 입력 조건(신청일·예약일 vs 항공편)은 server action(updateJpExportQuarantineFields)이
+    // 거부 — 절차 검증 배지가 아니라 저장 자체를 차단.
   },
 
   // ── 5. 종합백신 (DHPP·FVRCP) ────────────────────────────────────────────

@@ -276,6 +276,14 @@ function isEmptyObject(v: unknown): boolean {
   return !!v && typeof v === 'object' && Object.keys(v as object).length === 0
 }
 
+/** 'YYYY-MM-DD' → 'YYYY년 M월 D일'. 형식 어긋나면 원문. 액션 에러 메시지 표시용. */
+function formatKr(iso: string): string {
+  const parts = iso.slice(0, 10).split('-')
+  if (parts.length !== 3) return iso
+  const [y, m, d] = parts
+  return `${y}년 ${Number(m)}월 ${Number(d)}일`
+}
+
 /**
  * 광견병/항체검사 entry 가 "phantom" 인지 — date 가 없으면 의미 없는 잔여물로 간주.
  *
@@ -1169,6 +1177,36 @@ export async function updateJpExportQuarantineFields(
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
+    // 항공편 일정 기준 입력 조건 — 항공편 미입력 시 비교 불가라 SKIP. 입력된 경우에만 차단.
+    const entryDate = typeof prev.entry_date === 'string' ? prev.entry_date : ''
+    const returnDate = typeof prev.return_date === 'string' ? prev.return_date : ''
+    const trimmedApp = typeof fields.applicationDate === 'string' ? fields.applicationDate.trim() : ''
+    const trimmedReserved = typeof fields.date === 'string' ? fields.date.trim() : ''
+    if (trimmedApp && returnDate && returnDate.length >= 10) {
+      // 신청일 ≤ 귀국 - 10일 (간단 비교: ISO date 는 사전식 정렬 = 시간순)
+      const ret = new Date(returnDate.slice(0, 10) + 'T00:00:00Z')
+      ret.setUTCDate(ret.getUTCDate() - 10)
+      const deadline = ret.toISOString().slice(0, 10)
+      if (trimmedApp > deadline) {
+        return {
+          ok: false,
+          error: `신청일은 귀국 항공편(${formatKr(returnDate)}) 10일 전(${formatKr(deadline)})까지여야 합니다.`,
+        }
+      }
+    }
+    if (trimmedReserved && returnDate && returnDate.length >= 10 && trimmedReserved > returnDate.slice(0, 10)) {
+      return {
+        ok: false,
+        error: `예약일은 귀국 항공편(${formatKr(returnDate)})보다 늦을 수 없습니다.`,
+      }
+    }
+    if (trimmedReserved && entryDate && entryDate.length >= 10 && trimmedReserved < entryDate.slice(0, 10)) {
+      return {
+        ok: false,
+        error: `예약일은 일본 입국일(${formatKr(entryDate)})보다 빠를 수 없습니다.`,
+      }
+    }
+
     const nextData: Record<string, unknown> = { ...prev }
     const a = typeof fields.applicationDate === 'string' ? fields.applicationDate.trim() : ''
     if (a) nextData.jp_export_quarantine_application_date = a
