@@ -364,7 +364,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
           <div className="flex items-start gap-md">
         {targetDest && (
           <div
-            className="shrink-0 inline-flex items-center rounded-full bg-pmw-tag/30 p-0.5 font-serif text-[12px] mt-0.5"
+            className="shrink-0 inline-flex items-center rounded-full bg-pmw-tag/30 p-0.5 font-serif text-[12px] leading-none mt-0.5"
             title={multi ? `${targetDest} 여행 유형` : '여행 유형'}
           >
             <button
