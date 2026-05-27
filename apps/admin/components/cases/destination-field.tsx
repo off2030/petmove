@@ -402,7 +402,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                 : '동시 진행 꺼짐 — 이 동물만 따로 입력됩니다'
             }
           >
-            <span className="text-pmw-tag-foreground/70">동시 진행</span>
+            <span className="text-muted-foreground">동시 진행</span>
             <button
               type="button"
               onClick={() => setCoProgress(!coProgress)}
