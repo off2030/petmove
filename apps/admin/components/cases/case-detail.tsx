@@ -8,7 +8,7 @@ import {
   HIDDEN_EN_KEYS,
   readCaseField,
 } from '@petmove/domain'
-import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, SWISS_ENTRY_AIRPORT_OPTIONS, THAILAND_ENTRY_AIRPORT_OPTIONS, resolveActiveDestination, getTripType, isRabiesTiterHiddenForOneWay, type ExtraFieldDef } from '@petmove/domain'
+import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, matchesDestinationKey, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, SWISS_ENTRY_AIRPORT_OPTIONS, THAILAND_ENTRY_AIRPORT_OPTIONS, resolveActiveDestination, getTripType, isRabiesTiterHiddenForOneWay, type ExtraFieldDef } from '@petmove/domain'
 import { buildShareFieldDescriptors } from '@petmove/domain'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
@@ -17,6 +17,11 @@ import { useConfirm } from '@petmove/ui'
 import { AttachButton } from '@/components/ui/attach-button'
 import { cn } from '@/lib/utils'
 import { setJpExportQuarantineConfirmed, updateCaseField } from '@/lib/actions/cases'
+import {
+  deleteStepDocumentAdmin,
+  getStepDocumentUrlAdmin,
+  uploadStepDocumentAdmin,
+} from '@/lib/actions/step-documents'
 import { CopyButton } from './copy-button'
 import { DateTextField } from '@petmove/ui'
 import { SectionLabel } from '@/components/ui/section-label'
@@ -388,6 +393,12 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
             />
           )
         })()}
+        {/* 사전신고 허가증 첨부 — 일본 케이스 한정. portal 보호자·admin 운영자 모두 업로드 가능,
+            case.data.documents 배열 공유 (stepId='advance-notification'). 첨부 = 완료 시그널이라
+            업로드 시점에 admin_demoted_at 자동 해제됨 (step-documents 액션 내부). */}
+        {g.group === '절차정보' && matchesDestinationKey(caseRow.destination, 'japan') && (
+          <AdvanceNotificationAttachmentsSection caseId={caseRow.id} caseRow={caseRow} />
+        )}
         </React.Fragment>
         )
       })}
@@ -821,6 +832,132 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel }: {
         )}
       </div>
     </div>
+  )
+}
+
+/**
+ * 사전신고 허가증 첨부 섹션 — 일본 케이스 한정.
+ * case.data.documents 배열에서 stepId='advance-notification' 만 필터해 표시.
+ * portal 보호자가 올린 파일도 같은 자리에 보이고, 운영자가 추가 업로드 가능.
+ */
+function AdvanceNotificationAttachmentsSection({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
+  const { replaceLocalCaseData } = useCases()
+  const confirm = useConfirm()
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const docs = Array.isArray(data.documents) ? (data.documents as Array<Record<string, unknown>>) : []
+  const stepDocs = docs.filter((d) => d && d.stepId === 'advance-notification')
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  async function handleFile(file: File) {
+    setError(null)
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.set('caseId', caseId)
+      fd.set('stepId', 'advance-notification')
+      fd.set('file', file)
+      const res = await uploadStepDocumentAdmin(fd)
+      if (res.ok) {
+        replaceLocalCaseData(caseId, (res.value.data ?? {}) as Record<string, unknown>)
+      } else {
+        setError(res.error)
+      }
+    } finally {
+      setUploading(false)
+      if (inputRef.current) inputRef.current.value = ''
+    }
+  }
+
+  async function handleView(docId: string) {
+    const r = await getStepDocumentUrlAdmin(caseId, docId)
+    if (r.ok) {
+      window.open(r.url, '_blank', 'noopener,noreferrer')
+    } else {
+      setError(r.error)
+    }
+  }
+
+  async function handleDelete(docId: string, name: string) {
+    const ok = await confirm({
+      message: `${name} 파일을 삭제할까요?`,
+      okLabel: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
+    const res = await deleteStepDocumentAdmin(caseId, docId)
+    if (res.ok) {
+      replaceLocalCaseData(caseId, (res.value.data ?? {}) as Record<string, unknown>)
+    } else {
+      setError(res.error)
+    }
+  }
+
+  return (
+    <section className="mb-10 pt-10 border-t border-border/60 rounded-md">
+      <div className="mb-4 flex items-baseline gap-3">
+        <span className="font-serif text-[20px] text-foreground">사전신고 허가증</span>
+        <span className="font-mono text-[11px] tracking-[1.2px] text-muted-foreground/60">
+          NACCS APPROVAL
+        </span>
+      </div>
+      <div className="space-y-2">
+        {stepDocs.length === 0 && (
+          <div className="text-sm text-muted-foreground italic">아직 첨부된 허가증이 없습니다.</div>
+        )}
+        {stepDocs.map((d) => {
+          const id = String(d.id ?? '')
+          const name = String(d.name ?? '파일')
+          const size = typeof d.size === 'number' ? d.size : 0
+          const sizeKb = size > 0 ? `${Math.round(size / 1024)} KB` : ''
+          return (
+            <div key={id} className="flex items-center gap-3 rounded-md border border-border/60 px-3 py-2 hover:bg-accent/40">
+              <button
+                type="button"
+                onClick={() => handleView(id)}
+                className="flex-1 min-w-0 text-left text-sm text-foreground underline-offset-2 hover:underline truncate"
+              >
+                {name}
+              </button>
+              <span className="text-xs text-muted-foreground">{sizeKb}</span>
+              <button
+                type="button"
+                onClick={() => handleDelete(id, name)}
+                className="text-xs text-muted-foreground/60 hover:text-destructive"
+                title="삭제"
+              >
+                ✕
+              </button>
+            </div>
+          )
+        })}
+        <div className="pt-2">
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*,.pdf"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) handleFile(f)
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            className={cn(
+              'text-sm px-3 py-1.5 rounded-md border border-border/60 hover:bg-accent/60',
+              uploading && 'opacity-60 cursor-progress',
+            )}
+          >
+            {uploading ? '업로드 중…' : '+ 허가증 첨부'}
+          </button>
+          {error && <span className="ml-3 text-xs text-destructive">{error}</span>}
+        </div>
+      </div>
+    </section>
   )
 }
 
