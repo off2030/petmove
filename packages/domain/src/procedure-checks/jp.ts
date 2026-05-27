@@ -12,7 +12,6 @@ import {
   todayUtc,
   readDepartureDate,
   readVetVisitDate,
-  readExtraField,
 } from './utils'
 
 /**
@@ -268,10 +267,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
     severity: 'info',
     addedAt: '2026-04-21',
     run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      // 출국일 미입력 시 항공편 입국일(entry_date)로 폴백 — 한일 노선은 출국=입국 당일.
-      const dep =
-        readDepartureDate(caseRow, destination) || (readExtraField(caseRow, 'entry_date', destination) ?? '')
+      // 한일 노선은 출국일=일본 입국일 같은 날 — departure_date 단일 권위 사용.
+      const dep = readDepartureDate(caseRow, destination) ?? ''
       const visit = readVetVisitDate(caseRow, destination) ?? ''
       if (!dep || !visit) return SKIP
 
@@ -307,10 +304,10 @@ export const JP_CHECKS: ProcedureCheck[] = [
     severity: 'info',
     addedAt: '2026-05-17',
     run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const entryDate = readExtraField(caseRow, 'entry_date', destination) ?? ''
+      // 한일 노선 = 출국일이 일본 입국일 — departure_date 사용.
+      const entryDate = readDepartureDate(caseRow, destination) ?? ''
       const titers = readTiterEntries(caseRow)
-      // 필수: 항공편 입국일 + 1개 이상의 항체검사
+      // 필수: 출국일(=입국일) + 1개 이상의 항체검사
       if (!entryDate || titers.length === 0) return SKIP
 
       let best: { titer: (typeof titers)[number]; days: number } | null = null
@@ -322,7 +319,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (best && best.days >= 180) {
         return { ok: true, message: `항체검사(${best.titer.date}) → 입국일(${entryDate}): ${best.days}일` }
       }
-      const offending: string[] = ['entry_date']
+      const offending: string[] = ['departure_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       if (!best) {
         return { ok: false, message: '항체검사일과 입국일을 확인할 수 없습니다.', offendingPaths: offending }
@@ -346,8 +343,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
     severity: 'info',
     addedAt: '2026-05-17',
     run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const entryDate = readExtraField(caseRow, 'entry_date', destination) ?? ''
+      // 한일 노선 = 출국일이 일본 입국일 — departure_date 사용.
+      const entryDate = readDepartureDate(caseRow, destination) ?? ''
       const titers = readTiterEntries(caseRow)
       if (!entryDate || titers.length === 0) return SKIP
 
@@ -360,7 +357,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       }
       const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
       const validUntilKr = formatKoreanDate(addYears(newest.date, 2))
-      const offending: string[] = ['entry_date']
+      const offending: string[] = ['departure_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
@@ -381,8 +378,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const notif =
         typeof data.advance_notification_date === 'string' ? data.advance_notification_date : ''
-      const entry = readExtraField(caseRow, 'entry_date', destination) ?? ''
-      // 필수: 사전 신고 신청일 + 항공편 입국일
+      // 한일 노선 = 출국일이 일본 입국일.
+      const entry = readDepartureDate(caseRow, destination) ?? ''
+      // 필수: 사전 신고 신청일 + 출국일(=입국일)
       if (!notif || !entry) return SKIP
 
       const deadline = addDays(entry, -40)
@@ -394,7 +392,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
         ok: false,
         message: `신청일(${formatKoreanDate(notif)})이 입국 40일 전 마감일(${formatKoreanDate(deadline)})보다 늦습니다.`,
         fixHint: `입국일을 ${formatKoreanDate(addDays(notif, 40))} 이후로 변경하세요.`,
-        offendingPaths: ['advance_notification_date', 'entry_date'],
+        offendingPaths: ['advance_notification_date', 'departure_date'],
       }
     },
   },
@@ -407,11 +405,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
     severity: 'info',
     addedAt: '2026-04-21',
     run: ({ caseRow, destination }) => {
-      // 항공권 step 에서 보호자가 직접 입력하는 키는 entry_date — 그쪽 우선,
-      // 미입력 시 departure_date 컬럼 폴백 (한일 노선은 둘이 동일).
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const entry = readExtraField(caseRow, 'entry_date', destination) ?? ''
-      const dep = entry || readDepartureDate(caseRow, destination) || ''
+      // 한일 노선 = 출국일이 일본 입국일 — departure_date 단일 권위.
+      const dep = readDepartureDate(caseRow, destination) ?? ''
       const rabies = readRabiesEntries(caseRow)
       // 항체검사 입력 전에는 입국 시기가 확정되지 않아 평가 불가 — 같은 step(항공권 구매)의
       // jp.entry-* 체크와 동일하게 titer 입력 후에만 평가한다. 그 전의 백신 만료는 항공권
@@ -426,10 +421,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전 재접종이 필요합니다.`,
-          offendingPaths: [
-            entry ? 'entry_date' : 'departure_date',
-            `rabies_dates[${latest.originalIndex}].date`,
-          ],
+          offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
       return { ok: true, message: `최근 접종(${latest.date}) 유효기간(${validUntil}) ≥ 입국일(${dep}).` }
@@ -444,9 +436,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     severity: 'info',
     addedAt: '2026-05-21',
     run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const entry = readExtraField(caseRow, 'entry_date', destination) ?? ''
-      const dep = entry || readDepartureDate(caseRow, destination) || ''
+      const dep = readDepartureDate(caseRow, destination) ?? ''
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return SKIP
 
@@ -477,9 +467,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     severity: 'info',
     addedAt: '2026-05-21',
     run: ({ caseRow, destination }) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const entry = readExtraField(caseRow, 'entry_date', destination) ?? ''
-      const dep = entry || readDepartureDate(caseRow, destination) || ''
+      const dep = readDepartureDate(caseRow, destination) ?? ''
       const titers = readTiterEntries(caseRow)
       if (titers.length === 0) return SKIP
 
