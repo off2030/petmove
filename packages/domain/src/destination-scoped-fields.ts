@@ -129,3 +129,43 @@ export function getVetVisitDate(
   const top = data?.['vet_visit_date']
   return typeof top === 'string' && top ? top : null
 }
+
+/**
+ * 활성 목적지 기준으로 케이스를 "평탄화" — `data.by_dest[destination]` 의 destination-scoped
+ * 값을 top-level 로 덮어쓴 새 CaseRow 반환 (immutable). PDF·자동채움 등 단일값을 가정하는
+ * legacy 경로가 다중 목적지 케이스에서도 활성 목적지 기준으로 동작하도록 입력 전처리에 사용.
+ *
+ * - departure_date 컬럼: by_dest[dest].departure_date 가 있으면 그 값으로 교체 (null sentinel
+ *   이면 컬럼도 null).
+ * - data 의 각 scoped key: by_dest[dest][key] 가 있으면 (null 포함) 그 값으로 교체.
+ * - by_dest 키 자체는 결과 data 에서 제거 (legacy 경로는 모르기 때문).
+ * - destination 미지정 또는 by_dest 없음: caseRow 그대로 반환.
+ */
+export function flattenCaseForDestination<T extends CaseRow>(
+  caseRow: T,
+  destination: string | null | undefined,
+): T {
+  if (!destination) return caseRow
+  const data = (caseRow.data as Record<string, unknown> | null) ?? {}
+  const byDest = data['by_dest'] as Record<string, Record<string, unknown>> | undefined
+  const destObj = byDest?.[destination]
+  if (!destObj) return caseRow
+  const nextData: Record<string, unknown> = { ...data }
+  delete nextData['by_dest']
+  let nextDeparture = caseRow.departure_date
+  for (const k of Object.keys(destObj)) {
+    if (!DESTINATION_SCOPED_FIELD_KEYS.has(k)) continue
+    const v = destObj[k]
+    // null sentinel → 명시적 비움 (legacy 경로는 빈값으로 인식).
+    if (k === 'departure_date') {
+      nextDeparture = (typeof v === 'string' && v) ? v : null
+    } else {
+      if (v === null || v === undefined) {
+        delete nextData[k]
+      } else {
+        nextData[k] = v
+      }
+    }
+  }
+  return { ...caseRow, departure_date: nextDeparture, data: nextData }
+}

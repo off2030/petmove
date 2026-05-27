@@ -6,6 +6,8 @@ import {
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
+  readDepartureDate,
+  readVetVisitDate,
 } from './utils'
 
 /**
@@ -44,7 +46,7 @@ export const MA_CHECKS: ProcedureCheck[] = [
       'ISO 11784/11785 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (ONSSA: 2011-07-03 이전 판독 가능 문신만 예외)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -73,7 +75,7 @@ export const MA_CHECKS: ProcedureCheck[] = [
       'ONSSA: "12주(3개월) 이상 접종" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -108,8 +110,8 @@ export const MA_CHECKS: ProcedureCheck[] = [
       '광견병 접종일로부터 출국일까지 최소 30일(한 달) 경과 필요. (ONSSA EU 양식 운용 표준 — 1차는 21일+, 일반은 30일)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -136,8 +138,8 @@ export const MA_CHECKS: ProcedureCheck[] = [
       '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함. (ONSSA: 제조사 라벨 유효기간 내)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -166,10 +168,10 @@ export const MA_CHECKS: ProcedureCheck[] = [
       'ONSSA EU 양식은 24시간 이내 — 일반 운용 10일. 한국 APQA 정부 수의관 발급. 사용자 보수 N-1 → ≤9 적용.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      const visit = readVetVisitDate(caseRow, destination) ?? ''
       if (!dep || !visit) return SKIP
 
       const diff = daysBetween(visit, dep)
@@ -205,7 +207,7 @@ export const MA_CHECKS: ProcedureCheck[] = [
       'ONSSA: 비상업 목적 1인당 5두 이하 통상 인정. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 모로코 목적 케이스 6건 이상 등록 시 경고.',
     severity: 'warning',
     addedAt: '2026-05-07',
-    run: ({ caseRow, relatedCases }) => {
+    run: ({ caseRow, relatedCases, destination }) => {
       if (relatedCases === undefined) return SKIP
       const others = findSameGuardianCases(caseRow, relatedCases, { sameDestination: true })
       if (others.length + 1 > 5) {

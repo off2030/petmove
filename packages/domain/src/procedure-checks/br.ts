@@ -7,6 +7,8 @@ import {
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
+  readDepartureDate,
+  readVetVisitDate,
 } from './utils'
 
 /**
@@ -49,7 +51,7 @@ export const BR_CHECKS: ProcedureCheck[] = [
       'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (브라질 입국 면제, 한국 수출검역 사실상 필수)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -78,7 +80,7 @@ export const BR_CHECKS: ProcedureCheck[] = [
       'MAPA: "Animals 90 (ninety) days older must have a rabies vaccination" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -113,8 +115,8 @@ export const BR_CHECKS: ProcedureCheck[] = [
       '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (MAPA: 1차 후 21일 대기 의무 — 보수적으로 30일 적용)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -141,8 +143,8 @@ export const BR_CHECKS: ProcedureCheck[] = [
       '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함. (MAPA: CVI 60일 유효 단 백신이 유효한 경우)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -171,8 +173,8 @@ export const BR_CHECKS: ProcedureCheck[] = [
       '외부구충(벼룩·진드기) 처치는 출국 포함 15일 이내 = 출국일 기준 14일 전 이후. (MAPA: "submitted within fifteen (15) days prior to the issue date of the International Veterinary Certificate ... to a broad-spectrum treatment against internal and external parasites")',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readExternalParasiteEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
@@ -206,8 +208,8 @@ export const BR_CHECKS: ProcedureCheck[] = [
       '내부구충(선충·조충) 처치는 출국 포함 15일 이내 = 출국일 기준 14일 전 이후. (MAPA: "submitted within fifteen (15) days prior to the issue date of the International Veterinary Certificate")',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readInternalParasiteEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
@@ -243,10 +245,10 @@ export const BR_CHECKS: ProcedureCheck[] = [
       'MAPA: "examined within ten (10) days prior to the date of issue of the International Veterinary Certificate" — 사용자 보수 N-1 → ≤9 적용.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      const visit = readVetVisitDate(caseRow, destination) ?? ''
       if (!dep || !visit) return SKIP
 
       const diff = daysBetween(visit, dep)

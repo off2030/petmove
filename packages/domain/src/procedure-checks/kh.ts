@@ -5,6 +5,8 @@ import {
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
+  readDepartureDate,
+  readVetVisitDate,
 } from './utils'
 
 /**
@@ -44,7 +46,7 @@ export const KH_CHECKS: ProcedureCheck[] = [
       'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (캄보디아 입국 면제, 한국 수출검역 사실상 필수)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -71,7 +73,7 @@ export const KH_CHECKS: ProcedureCheck[] = [
       'GDAHP 운용: "3개월(90일) 이상 접종 의무" — 보수적으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -106,8 +108,8 @@ export const KH_CHECKS: ProcedureCheck[] = [
       '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (GDAHP 수입허가 발급 시 운용 조건 — 영문 법령 명문 부재)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -134,7 +136,7 @@ export const KH_CHECKS: ProcedureCheck[] = [
       '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 364일 초과면 거부. (GDAHP 수입허가 발급 시 운용 조건 — 영문 법령 명문 부재, 보수 적용)',
     severity: 'blocker',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return SKIP
 
@@ -173,8 +175,8 @@ export const KH_CHECKS: ProcedureCheck[] = [
       '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -201,10 +203,10 @@ export const KH_CHECKS: ProcedureCheck[] = [
       '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내(`≤9`). 한국 QIA 발행 영문 검역증명서. (사용자 보수 N-1 적용)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      const visit = readVetVisitDate(caseRow, destination) ?? ''
       if (!dep || !visit) return SKIP
 
       const diff = daysBetween(visit, dep)

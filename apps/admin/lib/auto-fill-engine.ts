@@ -2,7 +2,11 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   DESTINATION_OVERRIDES,
   matchesDestinationKey,
+  parseDestinations,
   resolveInspectionLabs,
+  isDestinationScopedKey,
+  readByDestValue,
+  writeByDestValue,
   type InspectionLabRule,
 } from '@petmove/domain'
 
@@ -90,7 +94,14 @@ function writeNested(data: Record<string, unknown>, path: string[], value: unkno
   return { ...data, [head]: writeNested(child, rest, value) }
 }
 
-function readScalarDate(c: CaseSnapshot, key: string): string | null {
+function readScalarDate(c: CaseSnapshot, key: string, activeDest?: string | null): string | null {
+  // 다중 목적지 + scoped 키 + 활성 목적지 컨텍스트 시 by_dest 우선.
+  if (activeDest && isDestinationScopedKey(key)) {
+    const v = readByDestValue(c.data, activeDest, key)
+    if (typeof v === 'string' && v) return v
+    // by_dest 에 명시적 null sentinel 이면 fallback 안 함 (값 없음).
+    if (v === null) return null
+  }
   if (key === 'departure_date') {
     // departure_date 는 column. 호출부에서 data 에 섞어 전달할 수도 있으므로 검사.
     const v = c.data['departure_date'] ?? (c as unknown as Record<string, unknown>)['departure_date']
@@ -112,10 +123,10 @@ function readArrayEntryDate(c: CaseSnapshot, arrayName: string, index: number): 
   return entry?.date ?? null
 }
 
-function readTriggerDate(c: CaseSnapshot, triggerField: string): string | null {
+function readTriggerDate(c: CaseSnapshot, triggerField: string, activeDest?: string | null): string | null {
   const { arrayName, index } = parsePath(triggerField)
   if (arrayName && index !== null) return readArrayEntryDate(c, arrayName, index)
-  return readScalarDate(c, triggerField)
+  return readScalarDate(c, triggerField, activeDest)
 }
 
 function addDays(dateStr: string, offsetDays: number): string {
@@ -156,6 +167,7 @@ function applyRuleToData(
   writtenTargets: Set<string>,
   destination: string | null,
   infectiousRules: InspectionLabRule[],
+  activeDest?: string | null,
 ): Record<string, unknown> {
   const { arrayName, index, nestedPath } = parsePath(rule.target_field)
   const offsets = rule.offsets_days
@@ -222,6 +234,16 @@ function applyRuleToData(
     return writeNested(data, nestedPath, newDate)
   }
 
+  // 다중 목적지 + 활성 목적지 + scoped 키 → by_dest 경로로 라우팅.
+  // departure_date 컬럼 동기화는 by_dest 경로에선 스킵 (활성 목적지에 한정된 값).
+  if (activeDest && isDestinationScopedKey(rule.target_field)) {
+    const cur = readByDestValue(data, activeDest, rule.target_field)
+    if (cur && !rule.overwrite_existing) return data
+    if (cur === newDate) return data
+    writtenTargets.add(rule.target_field)
+    return writeByDestValue(data, activeDest, rule.target_field, newDate)
+  }
+
   // 스칼라 - departure_date 컬럼
   if (rule.target_field === 'departure_date') {
     const cur = data['departure_date'] // snapshot 에 주입돼있음
@@ -250,6 +272,12 @@ export async function applyAutoFillRules(
   supabase: SupabaseClient,
   caseId: string,
   userEditedKey?: string,
+  /**
+   * 활성 목적지 토큰 — 다중 목적지 케이스에서 by_dest scoped 키 자동채움 라우팅용.
+   * 지정 시: scoped 키 read/write 가 `data.by_dest[activeDest][key]` 경로로.
+   * 단일 목적지 또는 미지정: 기존 top-level/column 경로.
+   */
+  activeDest?: string | null,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
     const { data: row, error: fetchErr } = await supabase
@@ -317,14 +345,16 @@ export async function applyAutoFillRules(
     const processedTriggers = new Set<string>()
     const writtenTargetsAll = new Set<string>()
 
+    // 다중 목적지가 아니면 activeDest 무시 (단일이면 by_dest 미사용).
+    const effectiveActiveDest = parseDestinations(destination).length > 1 ? (activeDest ?? null) : null
     for (let iter = 0; iter < MAX_ITER; iter++) {
       const written = new Set<string>()
       for (const rule of matchedRules) {
         const triggerKey = rule.trigger_field
         if (processedTriggers.has(triggerKey)) continue
-        const triggerDate = readTriggerDate({ destination, data: dataMut }, triggerKey)
+        const triggerDate = readTriggerDate({ destination, data: dataMut }, triggerKey, effectiveActiveDest)
         if (!triggerDate) continue
-        dataMut = applyRuleToData(dataMut, columnUpdates, rule, triggerDate, written, destination, infectiousRules)
+        dataMut = applyRuleToData(dataMut, columnUpdates, rule, triggerDate, written, destination, infectiousRules, effectiveActiveDest)
       }
       if (written.size === 0) break
       for (const t of written) {

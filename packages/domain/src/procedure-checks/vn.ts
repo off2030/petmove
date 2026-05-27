@@ -8,6 +8,8 @@ import {
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
+  readDepartureDate,
+  readVetVisitDate,
 } from './utils'
 
 /**
@@ -47,7 +49,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
       'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (베트남 입국 면제, 한국 수출검역 사실상 필수)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -74,7 +76,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
       'DAH/APHIS: "at least 3 months of age" — 보수적으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -109,8 +111,8 @@ export const VN_CHECKS: ProcedureCheck[] = [
       '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (DAH/APHIS: "at least 30 days ... before the intended date of entry")',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -137,7 +139,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
       '광견병 백신 면역 유효기간 1년만 인정. valid_until 이 접종일 + 364일 초과면 거부. (DAH 운용 지침: "Vietnam does not recognize the 3-year rabies vaccine" — USDA APHIS, 미 대사관 일치. Circular 25/2016 본문 1차 명문 미확인)',
     severity: 'blocker',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return SKIP
 
@@ -176,8 +178,8 @@ export const VN_CHECKS: ProcedureCheck[] = [
       '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -204,10 +206,10 @@ export const VN_CHECKS: ProcedureCheck[] = [
       '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내(`≤9`). (미 대사관: "typically valid for seven to 10 days prior to departure" — 사용자 보수 N-1 적용)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      const visit = readVetVisitDate(caseRow, destination) ?? ''
       if (!dep || !visit) return SKIP
 
       const diff = daysBetween(visit, dep)
@@ -243,7 +245,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
       '베트남은 Pit Bull Terrier, Japanese Tosa, Dogo Argentino 등 견종 수입 제한. (Circular 25/2016 + USDA APHIS Vietnam)',
     severity: 'blocker',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const species = typeof data.species === 'string' ? data.species : ''
       if (species && species !== 'dog') return SKIP
@@ -276,7 +278,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
       'Circular 25/2016/TT-BNNPTNT 제10조: 외국인은 반려 목적으로 최대 2마리까지 동반 가능. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 베트남 목적 케이스 3건 이상 등록 시 경고.',
     severity: 'warning',
     addedAt: '2026-05-07',
-    run: ({ caseRow, relatedCases }) => {
+    run: ({ caseRow, relatedCases, destination }) => {
       if (relatedCases === undefined) return SKIP
       const others = findSameGuardianCases(caseRow, relatedCases, { sameDestination: true })
       if (others.length + 1 > 2) {

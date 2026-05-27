@@ -8,6 +8,8 @@ import {
   readTiterEntries,
   resolveValidUntil,
   SKIP,
+  readDepartureDate,
+  readVetVisitDate,
 } from './utils'
 
 /**
@@ -54,7 +56,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
       '마이크로칩(ISO 11784/11785, 15자리)이 광견병 1차 접종일과 같거나 이전이어야 함. 칩 미이식 또는 규격 미충족 시 30일 격리. (강아지는 한국 동물등록 별도 필수)',
     severity: 'info',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -83,7 +85,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
       'GACC 2019 No.5 본문 정량 미명시 (OIE 표준 차용) — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요. 출생일에 따라 어느 쪽이 더 엄격한지 달라지므로 AND 결합.',
     severity: 'info',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -118,7 +120,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
       '광견병 백신은 최소 2회 (1차 + 부스터). 2차는 1차 30일 후 ~ 1년 이내. (GACC 2019 No.5 본문은 횟수 미명시 — RNATT ≥0.5 IU/ml 충족 위해 OIE 표준상 사실상 필요)',
     severity: 'info',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return SKIP
       if (rabies.length < 2) {
@@ -141,7 +143,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
       '연속된 광견병 접종 간 간격: 직전 접종 30일 이후 + 직전 접종 유효기간(1년) 이내. 1년 초과 시 부스터 chain 끊김 (1차로 간주).',
     severity: 'info',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length < 2) return SKIP
 
@@ -188,7 +190,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
       '실무상 면역 유효기간 2년·3년짜리 광견병 백신을 인정하지 않음. valid_until 이 접종일 + 364일(접종일 포함 1년) 초과면 거부. (GACC 본문은 "유효기간 내"만 명시 — 일부 입국항 운용 거부 사례 존재, 보수 적용)',
     severity: 'blocker',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return SKIP
 
@@ -227,8 +229,8 @@ export const CN_CHECKS: ProcedureCheck[] = [
       '최근 광견병 접종의 면역 유효기간이 도착일 이전 만료되지 않아야 함. 만료 시 추가 부스터 필요. (GACC: "유효한 광견병 백신 접종 증명서" 입경일 기준 유효)',
     severity: 'info',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -257,7 +259,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
       'RNATT 채혈일은 직전 광견병 접종 이후여야 함 (2차 접종 후 시행 권장). (GACC 채신 lab 보고서 표준)',
     severity: 'info',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       const titers = readTiterEntries(caseRow)
       if (rabies.length === 0 || titers.length === 0) return SKIP
@@ -292,8 +294,8 @@ export const CN_CHECKS: ProcedureCheck[] = [
       'RNATT 결과는 채혈일 기준 1년간 유효 (실무 기준). 도착일이 채혈일 + 1년 이내여야 함. (GACC 본문 미명시 — 실무 운용상 1년 한도 보수 적용)',
     severity: 'info',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const titers = readTiterEntries(caseRow)
       if (!dep || titers.length === 0) return SKIP
 
@@ -325,10 +327,10 @@ export const CN_CHECKS: ProcedureCheck[] = [
       'GACC: 입경 14일 이내 임상검사. 한국 APQA endorsement는 10일 이내가 더 strict — 보수 ≤9일 적용 (출발 7-9일 전 권장).',
     severity: 'info',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      const visit = readVetVisitDate(caseRow, destination) ?? ''
       if (!dep || !visit) return SKIP
 
       const diff = daysBetween(visit, dep)
@@ -364,7 +366,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
       'GACC 公告 2019 No.5 제1조: "携带或者托运入境的活动物仅限犬或者猫，每人每次限带1只" — 1인 1회 1마리 한정. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 중국 목적 케이스를 2건 이상 등록하면 경고.',
     severity: 'warning',
     addedAt: '2026-05-07',
-    run: ({ caseRow, relatedCases }) => {
+    run: ({ caseRow, relatedCases, destination }) => {
       if (relatedCases === undefined) return SKIP
       const others = findSameGuardianCases(caseRow, relatedCases, { sameDestination: true })
       if (others.length >= 1) {

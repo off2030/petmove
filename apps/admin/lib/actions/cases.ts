@@ -113,8 +113,31 @@ export async function updateCaseField(
         new_value: newValueByDest,
       })
     }
+    // 자동 채움 — 활성 목적지 기준 trigger 가 by_dest 안의 다른 키를 채움.
+    // departure_date / vet_visit_date / entry_date 등 날짜 트리거에 한해 가동.
+    let autoFilled: { data: Record<string, unknown>; columns?: Record<string, unknown> } | undefined
+    const BY_DEST_TRIGGER_KEYS = new Set([
+      'departure_date', 'vet_visit_date', 'entry_date',
+    ])
+    if (BY_DEST_TRIGGER_KEYS.has(key)) {
+      try {
+        await applyAutoFillRules(supabase, caseId, key, destination)
+        const { data: refreshed } = await supabase
+          .from('cases')
+          .select('data, departure_date')
+          .eq('id', caseId)
+          .single()
+        if (refreshed) {
+          const r = refreshed as { data: Record<string, unknown> | null; departure_date: string | null }
+          autoFilled = {
+            data: r.data ?? {},
+            columns: { departure_date: r.departure_date ?? null },
+          }
+        }
+      } catch { /* best-effort */ }
+    }
     await evaluateAndNotify(caseId)
-    return { ok: true }
+    return autoFilled ? { ok: true, autoFilled } : { ok: true }
   }
 
   let oldValue: string | null

@@ -7,6 +7,8 @@ import {
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
+  readDepartureDate,
+  readVetVisitDate,
 } from './utils'
 
 /**
@@ -45,7 +47,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
       'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. 한국 수출검역(특히 강아지)에서 사실상 필수.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -74,7 +76,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
       'Rosselkhoznadzor: "вакцинация против бешенства осуществляется начиная с 12-недельного возраста" (12주 이상). 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -109,7 +111,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
       'Rosselkhoznadzor: "재접종 주기 12개월 초과 백신은 최종 접종일로부터 12개월 이내일 때만 인정". 사실상 1년 룰. valid_until 이 접종일 + 364일(1년) 초과면 거부. (일부 지역지부는 항체검사 첨부 시 3년 인정 사례 — 보수 적용)',
     severity: 'blocker',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return SKIP
 
@@ -148,8 +150,8 @@ export const RU_CHECKS: ProcedureCheck[] = [
       '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (Rosselkhoznadzor: "не ранее, чем за 30 дней ... до даты выезда в РФ")',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -176,8 +178,8 @@ export const RU_CHECKS: ProcedureCheck[] = [
       '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함. 만료 시 부스터 chain 끊김.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -206,7 +208,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
       '종합백신 접종 기록 필요. 강아지: DHPPL+파라인플루엔자 / 고양이: FVRCP. (EAEU 결정 No.317 명시 의무 부재 — 운용 보수)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const entries = readGeneralVaccineEntries(caseRow)
       if (entries.length === 0) {
         return {
@@ -227,7 +229,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
       '종합백신 면역 유효기간 1년만 인정 (광견병과 동일 조건). valid_until 이 접종일 + 364일 초과면 거부.',
     severity: 'blocker',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const entries = readGeneralVaccineEntries(caseRow)
       if (entries.length === 0) return SKIP
 
@@ -266,8 +268,8 @@ export const RU_CHECKS: ProcedureCheck[] = [
       '최근 종합백신의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readGeneralVaccineEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
@@ -296,10 +298,10 @@ export const RU_CHECKS: ProcedureCheck[] = [
       'EAEU 결정 No.317 제15장: "клинического осмотра в течение 5 дней перед отправкой" (선적 5일 이내 임상검진). 사용자 보수 N-1 → ≤4 적용. **타국 10일 룰과 다름 — 러시아 특별 규정**.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      const visit = readVetVisitDate(caseRow, destination) ?? ''
       if (!dep || !visit) return SKIP
 
       const diff = daysBetween(visit, dep)
@@ -335,7 +337,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
       'EAEU 결정 No.317 제15장: "ввоз собак и кошек, перевозимых для личного пользования, в количестве не более двух голов без разрешения Россельхознадзора" — 개인용 1인 최대 2마리 (3마리+ 상업용 절차).',
     severity: 'warning',
     addedAt: '2026-05-07',
-    run: ({ caseRow, relatedCases }) => {
+    run: ({ caseRow, relatedCases, destination }) => {
       if (relatedCases === undefined) return SKIP
       const others = findSameGuardianCases(caseRow, relatedCases, { sameDestination: true })
       if (others.length + 1 > 2) {

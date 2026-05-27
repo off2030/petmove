@@ -33,6 +33,12 @@ export interface CheckContext {
    * 호출자가 제공하지 않으면 cross-case 룰은 SKIP. 자기 자신(caseRow.id) 포함 가능.
    */
   relatedCases?: CaseRow[]
+  /**
+   * 활성 목적지 토큰 (사용자 입력 그대로의 한글/영문). 다중 목적지 케이스에서
+   * `data.by_dest[destination]` 의 출국일·내원일·entry_* 등 destination-scoped 값을
+   * 읽기 위함. 미지정(단일 목적지 컨텍스트) 시 헬퍼는 column/top-level fallback.
+   */
+  destination?: string | null
 }
 
 export interface CheckResult {

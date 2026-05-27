@@ -12,6 +12,8 @@ import {
   readTiterEntries,
   resolveValidUntil,
   SKIP,
+  readDepartureDate,
+  readVetVisitDate,
 } from './utils'
 
 /**
@@ -38,10 +40,10 @@ export const SG_CHECKS: ProcedureCheck[] = [
       '수의사 검진·증명서 발급은 출국일 기준 7일 이내(`≤6`)여야 함. (NParks/AVS Schedule III IV(a)(i)(ii) "not more than seven (7) days prior to export" — 사용자 보수 N-1 적용)',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      const visit = readVetVisitDate(caseRow, destination) ?? ''
       if (!dep || !visit) return SKIP
 
       const diff = daysBetween(visit, dep)
@@ -77,7 +79,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
       'NParks/AVS 는 "제조사 권장"으로만 표기되어 정량 기준 미명시 — 안전 기준으로 생후 91일 AND 캘린더 3개월(`addMonths(birth, 3)`) 둘 다 충족 필요. 출생일에 따라 어느 쪽이 더 엄격한지 달라지므로 AND 결합.',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -112,7 +114,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
       'RNATT 채혈일은 직전 광견병 접종(1차 또는 부스터)으로부터 28일 이후여야 함. (Schedule III IV(a)(iii) "At least 28 days after the primary rabies vaccination or rabies booster")',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       const titers = readTiterEntries(caseRow)
       if (rabies.length === 0 || titers.length === 0) return SKIP
@@ -154,8 +156,8 @@ export const SG_CHECKS: ProcedureCheck[] = [
       'RNATT 채혈일로부터 출국일까지 최소 90일 경과 필요. (Schedule III IV(a)(iii) "not less than 90 days ... prior to export")',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const titers = readTiterEntries(caseRow)
       if (!dep || titers.length === 0) return SKIP
 
@@ -192,8 +194,8 @@ export const SG_CHECKS: ProcedureCheck[] = [
       'RNATT 유효기간 12개월 — 출국일이 채혈일 + 1년을 넘으면 재검사 필요. 1주년 당일은 만료일이라 364일째까지만 인정. (Schedule III IV(a)(iii) "not more than 12 months prior to export")',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const titers = readTiterEntries(caseRow)
       if (!dep || titers.length === 0) return SKIP
 
@@ -225,8 +227,8 @@ export const SG_CHECKS: ProcedureCheck[] = [
       '출국일에 가장 최근 광견병 접종의 면역 유효기간이 만료되지 않아야 함. (Schedule III IV(a)(iii) "valid ... in accordance with the recommendations of the vaccine manufacturer")',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -259,8 +261,8 @@ export const SG_CHECKS: ProcedureCheck[] = [
       '종합백신(개: distemper/adeno1/parvo2, 고양이: calici/herpes-1/panleuk)은 출국 최소 14일 전 접종 필요. (Schedule III IV(a)(iv)(v) "not less than two (2) weeks prior to export")',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readGeneralVaccineEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
@@ -287,8 +289,8 @@ export const SG_CHECKS: ProcedureCheck[] = [
       '출국일에 가장 최근 종합백신의 면역 유효기간이 만료되지 않아야 함. valid_until 미입력 시 디폴트 1년(addOneYear, +364일) 적용. (Schedule III IV(a)(iv)(v) "according to the vaccine manufacturer\'s recommendations")',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readGeneralVaccineEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
@@ -320,8 +322,8 @@ export const SG_CHECKS: ProcedureCheck[] = [
       '외부구충(벼룩·진드기) 처치는 출국일 기준 2~7일 사이에 실시. (Schedule III IV(a)(vi) "between 2 and 7 days of export")',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readExternalParasiteEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
@@ -348,8 +350,8 @@ export const SG_CHECKS: ProcedureCheck[] = [
       '내부구충(선충·조충) 처치는 출국일 기준 2~7일 사이에 실시. (Schedule III IV(a)(vi) "between 2 and 7 days of export")',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readInternalParasiteEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
@@ -378,7 +380,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
       'NParks First Schedule Part 1 (수입·판매·방문·거주 전면 금지): Pit Bull 계열(American Pit Bull Terrier, American Staffordshire Terrier, Staffordshire Bull Terrier, American Bulldog), Neapolitan Mastiff, Tosa, Akita, Dogo Argentino, Boerboel, Fila Brasileiro, Perro de Presa Canario 및 교잡. (Animals and Birds (Licensing and Control of Cats and Dogs) Rules 2024)',
     severity: 'blocker',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const species = typeof data.species === 'string' ? data.species : ''
       if (species && species !== 'dog') return SKIP

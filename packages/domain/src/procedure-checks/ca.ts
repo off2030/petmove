@@ -5,6 +5,8 @@ import {
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
+  readDepartureDate,
+  readVetVisitDate,
 } from './utils'
 
 /**
@@ -43,7 +45,7 @@ export const CA_CHECKS: ProcedureCheck[] = [
       'CFIA: 3개월 이상 강아지·고양이는 광견병 백신 의무 (3개월 미만 면제). 보수적으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요. (CFIA Import Reference Document)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -78,8 +80,8 @@ export const CA_CHECKS: ProcedureCheck[] = [
       '최근 광견병 접종의 면역 유효기간이 출국일 이전에 만료되지 않아야 함.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -108,10 +110,10 @@ export const CA_CHECKS: ProcedureCheck[] = [
       '수의사 임상검사·증명서 발급은 출국일(항공기 탑승) 기준 10일 이내(`≤9`). CFIA는 별도 일자 의무 명문 없음 — 한국 APQA endorsement 10일 룰 + 사용자 보수 N-1 적용.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      const visit = readVetVisitDate(caseRow, destination) ?? ''
       if (!dep || !visit) return SKIP
 
       const diff = daysBetween(visit, dep)

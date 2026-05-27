@@ -86,7 +86,9 @@ function collectStepChecks(
   if (!destinationKey) return []
   const targetIds = new Set(getChecksForStep(step.id))
   if (targetIds.size === 0) return []
-  const all = runChecksForCase(destinationKey, { caseRow })
+  // 다중 목적지 케이스에서 by_dest 가 destinationKey 토큰으로 조회되도록 전달.
+  // 단일 목적지면 caseRow.destination 그대로, 다중이면 첫 토큰(검증 대상 destination).
+  const all = runChecksForCase(destinationKey, { caseRow, destination: caseRow.destination })
   return all
     .filter(({ check }) => targetIds.has(check.id))
     .sort((a, b) => Number(a.result.ok) - Number(b.result.ok))

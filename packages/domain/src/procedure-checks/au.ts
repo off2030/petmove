@@ -13,6 +13,8 @@ import {
   readTiterEntries,
   resolveValidUntil,
   SKIP,
+  readDepartureDate,
+  readVetVisitDate,
 } from './utils'
 
 /**
@@ -56,7 +58,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
       '마이크로칩(ISO 호환)이 광견병 1차 접종일 이전이어야 함. 시술 후 접종만 인정.',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -86,8 +88,8 @@ export const AU_CHECKS: ProcedureCheck[] = [
       '입국 후 10일 검역(최소) 종료까지 광견병 면역이 유지되어야 함. `valid_until ≥ dep + 10일`. 디폴트 1년 (`addYears -1일`) → `dep - rabies ≤ 354일`. valid_until 명시 시 override.',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -119,8 +121,8 @@ export const AU_CHECKS: ProcedureCheck[] = [
       'RNATT 검체가 DAFF 승인 lab 에 도착한 날부터 180일 의무 대기. 우선순위: rabies_titer_records[].received_date → australia_extra.sample_received_date(legacy) → 채혈일(fallback).',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const titers = readTiterEntries(caseRow)
       const auExtra = readAustraliaExtra(caseRow)
       if (!dep) return SKIP
@@ -179,8 +181,8 @@ export const AU_CHECKS: ProcedureCheck[] = [
       'RNATT 결과 유효기간 12개월 — 출국까지 유효해야 함. 1주년 당일은 만료라 364일까지만 인정 (`addYears(titer, 1)` 사용).',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const titers = readTiterEntries(caseRow)
       if (!dep || titers.length === 0) return SKIP
 
@@ -212,7 +214,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
       'DAFF: "Identity verification must occur **prior to** RNATT blood sampling. Cannot be at the same vet visit as the RNATT." 같은 날 시술도 RNATT 무효화. → `id_date < titer_date` 엄격.',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const titers = readTiterEntries(caseRow)
       const auExtra = readAustraliaExtra(caseRow)
       if (!auExtra.id_date || titers.length === 0) return SKIP
@@ -244,10 +246,10 @@ export const AU_CHECKS: ProcedureCheck[] = [
       '동물 건강증명서 endorsement 는 출국일 기준 5일 이내(`≤4`). (DAFF: "endorsed within 5 days before the dog\'s export date" — 사용자 보수 N-1 적용)',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      const visit = readVetVisitDate(caseRow, destination) ?? ''
       if (!dep || !visit) return SKIP
 
       const diff = daysBetween(visit, dep)
@@ -283,9 +285,9 @@ export const AU_CHECKS: ProcedureCheck[] = [
       '강아지 전용. DHPP+L (Lepto 포함) 가 검역 종료까지 유효해야 함. `valid_until ≥ dep + 10일`. 디폴트 1년 → `dep - vacc ≤ 354일`. valid_until 명시 시 override.',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       if (species(caseRow) !== 'dog') return SKIP
-      const dep = caseRow.departure_date
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readGeneralVaccineEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
@@ -317,9 +319,9 @@ export const AU_CHECKS: ProcedureCheck[] = [
       '강아지 전용. Brucella canis(intact 한정) + Leishmania infantum + Lepto MAT(종합백신 미완 시) 통합 검사일. 출국일 포함 45일 이내, 45일 전 제외 (`0 ≤ dep - test ≤ 44`).',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       if (species(caseRow) !== 'dog') return SKIP
-      const dep = caseRow.departure_date
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readInfectiousDiseaseEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
@@ -354,9 +356,9 @@ export const AU_CHECKS: ProcedureCheck[] = [
       '강아지 전용. CIV 2회 접종, **정확히 14일 간격** (`dose2 - dose1 == 14`). 2차 완료 ≤ 출국 14일 전 (`dep - dose2 ≥ 14`), 검역 종료까지 유효 (`dep - dose2 ≤ 354`).',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       if (species(caseRow) !== 'dog') return SKIP
-      const dep = caseRow.departure_date
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readCivEntries(caseRow)
       if (!dep) return SKIP
       if (entries.length === 0) return SKIP
@@ -419,8 +421,8 @@ export const AU_CHECKS: ProcedureCheck[] = [
       '내부구충 2회 모두 출국 45일 이내 (≤44), 도즈 간격 ≥14일, 2차는 출국 5일 이내 (≤4).',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readInternalParasiteEntries(caseRow)
       if (!dep) return SKIP
       if (entries.length === 0) return SKIP
@@ -505,9 +507,9 @@ function buildExternalParasiteRule(
           : 'DAFF: 출국 30일 전 시작, 출국일까지 지속. 각 consecutive 도즈 간격 30일 이하 + 마지막 도즈→출국 30일 이하.',
       severity: 'info',
       addedAt: '2026-05-05',
-      run: ({ caseRow }) => {
+      run: ({ caseRow, destination }) => {
         if (species(caseRow) !== speciesKey) return SKIP
-        const dep = caseRow.departure_date
+        const dep = readDepartureDate(caseRow, destination)
         const entries = readExternalParasiteEntries(caseRow)
         if (!dep || entries.length === 0) return SKIP
 

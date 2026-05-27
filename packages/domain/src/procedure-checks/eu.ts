@@ -7,6 +7,8 @@ import {
   readTiterEntries,
   resolveValidUntil,
   SKIP,
+  readDepartureDate,
+  readVetVisitDate,
 } from './utils'
 
 /**
@@ -55,7 +57,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
       '마이크로칩이 광견병 1차 접종일보다 먼저 시술되어 있어야 함. 칩 시술 후의 접종만 인정. (EU Reg 576/2013)',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -84,7 +86,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
       '광견병 1차 접종일은 생년월일 기준 12주(84일) 이후여야 함. (EU Reg 576/2013 Annex III)',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -113,7 +115,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
       'RNATT 채혈일은 직전 광견병 접종(1차 또는 부스터)으로부터 30일 이후여야 함. (EU Reg 576/2013 Annex IV)',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       const titers = readTiterEntries(caseRow)
       if (rabies.length === 0 || titers.length === 0) return SKIP
@@ -154,8 +156,8 @@ export const EU_CHECKS: ProcedureCheck[] = [
       'RNATT 채혈일로부터 출국일까지 최소 3개월 경과 필요. 캘린더 기준 — 달에 따라 89~92일이 될 수 있음. (EU Reg 576/2013 Article 12 — "at least three months before")',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const titers = readTiterEntries(caseRow)
       if (!dep || titers.length === 0) return SKIP
 
@@ -200,8 +202,8 @@ export const EU_CHECKS: ProcedureCheck[] = [
       '출국일에 가장 최근 광견병 접종의 면역 유효기간이 만료되지 않아야 함. EU 는 부스터 chain 유지 시 RNATT 결과는 무기한 유효 (재검사 불필요), chain 끊기면 1차부터 재시작.',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -234,10 +236,10 @@ export const EU_CHECKS: ProcedureCheck[] = [
       '동물 건강증명서 발급 검진은 EU 입국 10일 이내 시점이어야 함. (EU Reg 577/2013 Annex IV)',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      const visit = readVetVisitDate(caseRow, destination) ?? ''
       if (!dep || !visit) return SKIP
 
       const diff = daysBetween(visit, dep)
@@ -273,8 +275,8 @@ export const EU_CHECKS: ProcedureCheck[] = [
       'Praziquantel(촌충구충)은 입국 24시간 ~ 120시간(1~5일) 사이 투여 (EU Reg 2018/772 — 영국·아일랜드·몰타·노르웨이·핀란드). 사용자 보수 적용: 일 단위 검증 시 24h/120h 경계의 시간 정밀도 손실 위험으로 1~3일까지로 강화.',
     severity: 'info',
     addedAt: '2026-05-05',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readInternalParasiteEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 

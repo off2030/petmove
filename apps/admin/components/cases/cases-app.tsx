@@ -223,7 +223,7 @@ function Inner() {
     }
   }, [navCaseIds, cases, searchQuery, selectedCase])
   const detailScrollRef = useRef<HTMLDivElement>(null)
-  const [multiForm, setMultiForm] = useState<{ caseId: string; formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC' } | null>(null)
+  const [multiForm, setMultiForm] = useState<{ caseId: string; formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC'; destination: string | null } | null>(null)
   const [transferOpen, setTransferOpen] = useState<{ caseId: string; label: string } | null>(null)
   const [shareOpen, setShareOpen] = useState<{ case: CaseRow; label: string } | null>(null)
   const [previewOpen, setPreviewOpen] = useState<{ caseId: string; label: string } | null>(null)
@@ -450,13 +450,13 @@ function Inner() {
     if (p.preview.cases.length <= 1) {
       const ids = p.preview.cases.map(c => c.id)
       try {
-        await downloadMultipartPdfRequest({ kind: 'multi', formKey, caseIds: ids, includeVet }, p.preview.docCount)
+        await downloadMultipartPdfRequest({ kind: 'multi', formKey, caseIds: ids, includeVet, destination }, p.preview.docCount)
       } catch (error) {
         alert(error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.')
       }
       return
     }
-    setMultiForm({ caseId, formKey })
+    setMultiForm({ caseId, formKey, destination })
   }, [cases, confirmIfFailing, includeVet])
 
   const showDetail = selectedId !== null
@@ -484,6 +484,7 @@ function Inner() {
             caseId={multiForm.caseId}
             formKey={multiForm.formKey}
             includeVet={includeVet}
+            destination={multiForm.destination}
             onClose={() => setMultiForm(null)}
           />
         )}

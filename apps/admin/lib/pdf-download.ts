@@ -37,6 +37,8 @@ export type MultiPdfRequest = {
   caseIds: string[]
   part?: number
   includeVet?: boolean
+  /** 다중 목적지 케이스에서 활성 목적지 토큰 — by_dest 평탄화에 사용. */
+  destination?: string | null
 }
 
 export type ShipmentPdfRequest = {

@@ -1,6 +1,23 @@
 import type { CaseRow } from '../types'
 import { readEffectiveExtraValue } from '../destination-overrides-types'
+import { getDepartureDate, getVetVisitDate } from '../destination-scoped-fields'
 import type { CheckResult } from './types'
+
+/**
+ * 활성 목적지 기준 출국일 — `data.by_dest[destination].departure_date` 우선,
+ * 없으면 `cases.departure_date` 컬럼 fallback. destination 미지정 시 컬럼만.
+ */
+export function readDepartureDate(caseRow: CaseRow, destination?: string | null): string | null {
+  return getDepartureDate(caseRow, destination ?? null)
+}
+
+/**
+ * 활성 목적지 기준 내원일 (= 증명서 발급일).
+ * `data.by_dest[destination].vet_visit_date` 우선, 없으면 `data.vet_visit_date`.
+ */
+export function readVetVisitDate(caseRow: CaseRow, destination?: string | null): string | null {
+  return getVetVisitDate(caseRow, destination ?? null)
+}
 
 /**
  * 절차 검증에서 공통으로 쓰는 유틸 (날짜 산수 + caseRow.data 리더).
@@ -264,13 +281,15 @@ export function formatKoreanDate(iso: string): string {
 // ── 통합 추가정보 필드 reader (top-level + legacy country_extra fallback) ──
 
 /**
- * 통합 키로 추가정보 필드를 읽음. top-level `data.{key}` 우선, 미발견 시 legacy
- * country-specific 경로(예: `data.australia_extra.id_date`)로 fallback.
- * (destination-overrides-types LEGACY_EXTRA_PATHS 매핑 사용.)
+ * 통합 키로 추가정보 필드를 읽음.
+ *
+ * destination 인자가 주어지고 destination-scoped 키이면 `data.by_dest[destination][key]`
+ * 우선 (명시적 null sentinel 인식), 없으면 top-level `data.{key}` → legacy
+ * country-specific 경로(예: `data.australia_extra.id_date`) fallback.
  */
-export function readExtraField(caseRow: CaseRow, key: string): string | null {
+export function readExtraField(caseRow: CaseRow, key: string, destination?: string | null): string | null {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const v = readEffectiveExtraValue(data, key)
+  const v = readEffectiveExtraValue(data, key, destination ?? null)
   return typeof v === 'string' && v.length > 0 ? v : null
 }
 

@@ -3,7 +3,7 @@
 import { createClient } from '@petmove/auth/server'
 import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
 import type { CaseRow } from '@petmove/domain'
-import { getEffectiveVaccineList } from '@petmove/domain'
+import { getEffectiveVaccineList, flattenCaseForDestination } from '@petmove/domain'
 import { loadEffectiveVetInfo } from '@/lib/vet-info'
 
 export type GeneratePdfResult =
@@ -63,6 +63,9 @@ async function generate(
   // 하려면 케이스 상세 "절차정보 → 항목 추가" 로 해당 vaccine 토글 ON.
   const destForRules = options?.destination ?? caseRow.destination
   const allowedVaccines = getEffectiveVaccineList(destForRules, extraFields)
+  // 다중 목적지 케이스: 활성 목적지의 by_dest 값을 top-level 로 평탄화한 caseRow 로 채움.
+  // 단일 목적지 또는 by_dest 미사용 케이스는 그대로.
+  caseRow = flattenCaseForDestination(caseRow, options?.destination ?? null)
   return fillPdf(formKey, caseRow, {
     includeSignature: options?.includeSignature,
     includeVet: options?.includeVet,
@@ -475,16 +478,19 @@ function simulatePackCount(formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC', summaries:
 async function generateMulti(
   formKey: 'AnnexIII' | 'UK' | 'NZ' | 'NZ_2' | 'VBC',
   caseIds: string[],
-  options?: { includeVet?: boolean },
+  options?: { includeVet?: boolean; destination?: string | null },
 ): Promise<GenerateMultiPdfResult> {
   if (caseIds.length === 0) return { ok: false, error: '대상 동물이 없습니다' }
   await loadEffectiveVetInfo()
   const supabase = await createClient()
   const { data: rows, error } = await supabase.from('cases').select('*').in('id', caseIds)
   if (error) return { ok: false, error: error.message }
-  // Preserve the order of caseIds.
+  // Preserve the order of caseIds + 활성 목적지 기준 평탄화.
   const byId = new Map((rows ?? []).map(r => [(r as CaseRow).id, r as CaseRow]))
-  const ordered = caseIds.map(id => byId.get(id)).filter((c): c is CaseRow => !!c)
+  const ordered = caseIds
+    .map(id => byId.get(id))
+    .filter((c): c is CaseRow => !!c)
+    .map(c => flattenCaseForDestination(c, options?.destination ?? null))
   if (ordered.length === 0) return { ok: false, error: '대상 동물을 찾을 수 없습니다' }
 
   const results = await fillPdfMulti(formKey, ordered, options)
@@ -496,16 +502,16 @@ async function generateMulti(
   return { ok: true, docs }
 }
 
-export async function generateAnnexIIIMulti(caseIds: string[], opts?: { includeVet?: boolean }) {
+export async function generateAnnexIIIMulti(caseIds: string[], opts?: { includeVet?: boolean; destination?: string | null }) {
   return generateMulti('AnnexIII', caseIds, opts)
 }
 
-export async function generateUKMulti(caseIds: string[], opts?: { includeVet?: boolean }) {
+export async function generateUKMulti(caseIds: string[], opts?: { includeVet?: boolean; destination?: string | null }) {
   return generateMulti('UK', caseIds, opts)
 }
 
 /** VBC 다중 — 같은 보호자의 여러 마리를 한 선언서에. 이름·품종을 ', ' 로 join. */
-export async function generateVBCMulti(caseIds: string[], opts?: { includeVet?: boolean }) {
+export async function generateVBCMulti(caseIds: string[], opts?: { includeVet?: boolean; destination?: string | null }) {
   return generateMulti('VBC', caseIds, opts)
 }
 
@@ -516,7 +522,7 @@ export async function generateVBCMulti(caseIds: string[], opts?: { includeVet?: 
  * UI 가 같은 보호자·목적지·출국일 또는 내원일 케이스를 사전 필터하므로 보통은
  * primary 이력으로 대표가 충분하다.
  */
-export async function generateNZMulti(caseIds: string[], opts?: { includeVet?: boolean }): Promise<GenerateMultiPdfResult> {
+export async function generateNZMulti(caseIds: string[], opts?: { includeVet?: boolean; destination?: string | null }): Promise<GenerateMultiPdfResult> {
   if (caseIds.length === 0) return { ok: false, error: '대상 동물이 없습니다' }
   const supabase = await createClient()
   const { data: primary } = await supabase

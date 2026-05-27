@@ -23,6 +23,10 @@ import {
   SHARE_VACCINE_GROUPS,
   loadDestinationOverridesByOrg,
   getEffectiveExtraFieldEntries,
+  isDestinationScopedKey,
+  parseDestinations,
+  readByDestValue,
+  writeByDestValue,
   type CaseRow,
   type FieldDefinition,
   type DestinationExtraFieldEntry,
@@ -66,7 +70,7 @@ async function buildFieldSpecs(
   const idFilter = hasResolvedIds ? new Set(fieldIds) : null
   for (const d of descriptors) {
     if (idFilter ? !idFilter.has(d.id) : !allKeys.has(d.key)) continue
-    out.push(toShareFieldSpec(d, caseRow, data))
+    out.push(toShareFieldSpec(d, caseRow, data, destinationScope))
   }
   return out
 }
@@ -86,6 +90,7 @@ function toShareFieldSpec(
   d: ShareFieldDescriptor,
   caseRow: CaseRow,
   data: Record<string, unknown>,
+  destinationScope: string | null | undefined,
 ): ShareFieldSpec {
   const base = {
     id: d.id,
@@ -94,6 +99,10 @@ function toShareFieldSpec(
     category: d.category,
     subgroup: d.subgroup,
   } as const
+  // 다중 목적지 + scope 지정 + scoped 키: by_dest 우선 (null sentinel 도 인식).
+  const isMulti = parseDestinations(caseRow.destination).length > 1
+  const useByDest = isMulti && !!destinationScope && isDestinationScopedKey(d.key)
+  const byDestVal = useByDest ? readByDestValue(data, destinationScope ?? null, d.key) : undefined
   switch (d.source.kind) {
     case 'column': {
       const meta = d.source.meta
@@ -101,7 +110,9 @@ function toShareFieldSpec(
         ...base,
         storage: 'column',
         type: meta.type,
-        current_value: (caseRow as unknown as Record<string, unknown>)[d.key] ?? null,
+        current_value: useByDest
+          ? (byDestVal === undefined ? ((caseRow as unknown as Record<string, unknown>)[d.key] ?? null) : byDestVal)
+          : ((caseRow as unknown as Record<string, unknown>)[d.key] ?? null),
       }
     }
     case 'data': {
@@ -111,7 +122,9 @@ function toShareFieldSpec(
         storage: 'data',
         type: def.type as ShareFieldSpec['type'],
         options: def.options ?? undefined,
-        current_value: data[d.key] ?? null,
+        current_value: useByDest
+          ? (byDestVal === undefined ? (data[d.key] ?? null) : byDestVal)
+          : (data[d.key] ?? null),
       }
     }
     case 'synthetic-vaccine': {
@@ -132,7 +145,9 @@ function toShareFieldSpec(
         storage: 'data',
         type: mapExtraType(ed.type),
         options: ed.options?.map((o) => ({ value: o.value, label_ko: o.label })),
-        current_value: data[d.key] ?? null,
+        current_value: useByDest
+          ? (byDestVal === undefined ? (data[d.key] ?? null) : byDestVal)
+          : (data[d.key] ?? null),
       }
     }
   }
@@ -374,18 +389,40 @@ export async function submitShareLink(
       dataUpdate.color_en = ens.join(', ')
     }
 
-    // 현재 case data 와 머지 — null 은 키 삭제로 취급
-    const updates: Record<string, unknown> = { ...colUpdate }
-    const needsDataRead = Object.keys(dataUpdate).length > 0 || vaccineSubmissions.length > 0
+    // 현재 case data + destination 컨텍스트 머지.
+    // 다중 목적지 케이스 + share-link 가 destination_scope 지정 시: scoped 키는 by_dest 경로로.
+    const updates: Record<string, unknown> = {}
+    const { data: caseInfo } = await admin
+      .from('cases')
+      .select('data, destination')
+      .eq('id', row.case_id)
+      .maybeSingle()
+    const current = ((caseInfo?.data as Record<string, unknown> | null) ?? {})
+    const caseDestination = (caseInfo as { destination?: string | null } | null)?.destination ?? null
+    const isMultiDest = parseDestinations(caseDestination).length > 1
+    const scope = row.destination_scope ?? null
+    const useByDest = isMultiDest && !!scope
+
+    // colUpdate 처리 — by_dest 모드면 departure_date 같은 scoped 컬럼은 by_dest 로.
+    const colNonScoped: Record<string, unknown> = {}
+    let merged: Record<string, unknown> = { ...current }
+    for (const [k, v] of Object.entries(colUpdate)) {
+      if (useByDest && isDestinationScopedKey(k)) {
+        merged = writeByDestValue(merged, scope!, k, v)
+      } else {
+        colNonScoped[k] = v
+      }
+    }
+    Object.assign(updates, colNonScoped)
+
+    const needsDataRead = Object.keys(dataUpdate).length > 0 || vaccineSubmissions.length > 0 || useByDest
     if (needsDataRead) {
-      const { data: caseRow } = await admin
-        .from('cases')
-        .select('data')
-        .eq('id', row.case_id)
-        .maybeSingle()
-      const current = (caseRow?.data as Record<string, unknown> | null) ?? {}
-      const merged: Record<string, unknown> = { ...current }
       for (const [k, v] of Object.entries(dataUpdate)) {
+        if (useByDest && isDestinationScopedKey(k)) {
+          // scoped 키 → by_dest 경로. null/empty 는 명시 sentinel 로 저장됨.
+          merged = writeByDestValue(merged, scope!, k, v)
+          continue
+        }
         if (v === null || v === undefined) delete merged[k]
         else merged[k] = v
       }

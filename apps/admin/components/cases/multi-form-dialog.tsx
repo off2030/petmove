@@ -14,6 +14,8 @@ interface Props {
   formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC'
   /** 수의사/병원 정보·발급일 노출 여부. 부모 cases-app 의 토글 상태를 그대로 전달. */
   includeVet?: boolean
+  /** 다중 목적지 케이스의 활성 목적지 — PDF 생성 시 by_dest 평탄화에 사용. */
+  destination?: string | null
   onClose: () => void
 }
 
@@ -53,7 +55,7 @@ function simulatePackCount(
   return docs
 }
 
-export function MultiFormDialog({ caseId, formKey, includeVet, onClose }: Props) {
+export function MultiFormDialog({ caseId, formKey, includeVet, destination, onClose }: Props) {
   const [preview, setPreview] = useState<SiblingPreview | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
@@ -86,7 +88,7 @@ export function MultiFormDialog({ caseId, formKey, includeVet, onClose }: Props)
     startGen(async () => {
       try {
         await downloadMultipartPdfRequest(
-          { kind: 'multi', formKey, caseIds: ids, includeVet },
+          { kind: 'multi', formKey, caseIds: ids, includeVet, destination },
           simulatePackCount(formKey, selectedCases),
         )
         onClose()

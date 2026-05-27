@@ -10,6 +10,8 @@ import {
   readTiterEntries,
   resolveValidUntil,
   SKIP,
+  readDepartureDate,
+  readVetVisitDate,
 } from './utils'
 
 /**
@@ -56,7 +58,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
       'ISO 11784/11785 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (gov.il 수의국 — 비ISO 칩 시 자체 리더기 동반)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -85,7 +87,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
       'gov.il 수의국: "12주 이상 접종" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -120,8 +122,8 @@ export const IL_CHECKS: ProcedureCheck[] = [
       '최근 광견병 접종 후 출국까지 대기 — chain 유효한 부스터 = 15일, 1차 또는 chain 끊김 후 재접종 = 30일. (gov.il: 1차 후 30일, 연속 부스터 14일 단축 가능). chain 유효성 = 직전 접종 valid_until 이내 후속 접종.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -158,8 +160,8 @@ export const IL_CHECKS: ProcedureCheck[] = [
       '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함. (gov.il 수의국: 백신 in-force 상태 필수)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -188,7 +190,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
       'RNATT 채혈일은 직전 광견병 접종으로부터 30일 이후. (gov.il: "rabies neutralizing antibody titer ... taken at least 30 days after vaccination")',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       const titers = readTiterEntries(caseRow)
       if (rabies.length === 0 || titers.length === 0) return SKIP
@@ -231,10 +233,10 @@ export const IL_CHECKS: ProcedureCheck[] = [
       'gov.il: "health check and Israeli specific health certificate signed by a private vet and endorsed by a government vet within ten days prior to arrival" — 사용자 보수 N-1 → ≤9 적용.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      const visit = readVetVisitDate(caseRow, destination) ?? ''
       if (!dep || !visit) return SKIP
 
       const diff = daysBetween(visit, dep)
@@ -270,7 +272,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
       'gov.il 수입 금지: Pitbull, Argentine Dogo, Fila Brasileiro, Tosa, Staffordshire Bull Terrier, American Staffordshire Terrier, Bull Terrier, Rottweiler 및 교잡.',
     severity: 'blocker',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const species = typeof data.species === 'string' ? data.species : ''
       if (species && species !== 'dog') return SKIP
@@ -308,8 +310,8 @@ export const IL_CHECKS: ProcedureCheck[] = [
       'gov.il 수의국: 이스라엘 입국 시 만 4개월(약 17주) 이상이어야 함. 출국일 기준 생후 ≥ 4개월(`addMonths(birth, 4) ≤ dep`).',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       if (!dep || !birth) return SKIP
@@ -340,7 +342,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
       'gov.il 수의국 / 1974 동물질병규칙: 동반 입국 3마리 미만은 License 면제. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 이스라엘 목적 케이스 3건 이상 등록 시 사전 Import License 필요.',
     severity: 'warning',
     addedAt: '2026-05-07',
-    run: ({ caseRow, relatedCases }) => {
+    run: ({ caseRow, relatedCases, destination }) => {
       if (relatedCases === undefined) return SKIP
       const others = findSameGuardianCases(caseRow, relatedCases, { sameDestination: true })
       if (others.length + 1 >= 3) {

@@ -76,6 +76,8 @@ type MultiPdfBody = {
   caseIds: string[]
   part?: number
   includeVet?: boolean
+  /** 다중 목적지 케이스 평탄화 — 활성 목적지 토큰 */
+  destination?: string | null
 }
 
 type ShipmentPdfBody = {
@@ -196,14 +198,15 @@ export async function POST(req: NextRequest) {
       if (!Array.isArray(body.caseIds) || body.caseIds.length === 0) {
         return jsonError('선택된 케이스가 없습니다.', 400)
       }
+      const multiOpts = { includeVet: body.includeVet, destination: body.destination }
       const result =
         body.formKey === 'AnnexIII'
-          ? await generateAnnexIIIMulti(body.caseIds, { includeVet: body.includeVet })
+          ? await generateAnnexIIIMulti(body.caseIds, multiOpts)
           : body.formKey === 'NZ'
-          ? await generateNZMulti(body.caseIds, { includeVet: body.includeVet })
+          ? await generateNZMulti(body.caseIds, multiOpts)
           : body.formKey === 'VBC'
-          ? await generateVBCMulti(body.caseIds, { includeVet: body.includeVet })
-          : await generateUKMulti(body.caseIds, { includeVet: body.includeVet })
+          ? await generateVBCMulti(body.caseIds, multiOpts)
+          : await generateUKMulti(body.caseIds, multiOpts)
       if (!result.ok) return jsonError(result.error, 500)
       if (result.docs.length === 0) return jsonError('생성된 문서가 없습니다.', 500)
 

@@ -11,6 +11,8 @@ import {
   readTiterEntries,
   resolveValidUntil,
   SKIP,
+  readDepartureDate,
+  readVetVisitDate,
 } from './utils'
 
 /**
@@ -55,7 +57,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
       'ISO 11784/11785 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (Tarım ve Orman Bakanlığı / EU Reg 576/2013 차용)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -84,7 +86,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
       '광견병 1차 접종은 생후 최소 12주(84일) 이후. (Tarım ve Orman Bakanlığı / EU Reg 576/2013 동일 기준 — "at least 12 weeks old")',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -113,8 +115,8 @@ export const TR_CHECKS: ProcedureCheck[] = [
       '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (Tarım ve Orman Bakanlığı: "vaccination certificate must be issued not later than thirty (30) days prior to the entry")',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -141,8 +143,8 @@ export const TR_CHECKS: ProcedureCheck[] = [
       '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함. (Tarım Bakanlığı / EU 표준 — 제조사 라벨 또는 1년)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -171,7 +173,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
       'RNATT 채혈일은 직전 광견병 접종으로부터 30일 이후. (EU Reg 576/2013 Annex IV "at least 30 days after vaccination" 차용)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       const titers = readTiterEntries(caseRow)
       if (rabies.length === 0 || titers.length === 0) return SKIP
@@ -212,8 +214,8 @@ export const TR_CHECKS: ProcedureCheck[] = [
       '한국 = unlisted third country → EU Reg 576/2013 차용으로 RNATT 채혈 후 최소 3개월 대기. 캘린더 기준 (`addMonths`). 부스터 chain 끊김 없이 유지 시 EU 패턴상 평생 유효이나, 보수적으로 매 RNATT 마다 3개월 적용.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const titers = readTiterEntries(caseRow)
       if (!dep || titers.length === 0) return SKIP
 
@@ -257,8 +259,8 @@ export const TR_CHECKS: ProcedureCheck[] = [
       'RNATT 유효기간 1년 — 출국일이 채혈일 + 1년(364일) 초과 시 재검사 필요. (Tarım Bakanlığı 운용)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const titers = readTiterEntries(caseRow)
       if (!dep || titers.length === 0) return SKIP
 
@@ -289,8 +291,8 @@ export const TR_CHECKS: ProcedureCheck[] = [
       '진드기에 효과적인 외부 기생충 치료제 처치는 출국 포함 30일 이내 = 출국일 기준 29일 전 이후. (Tarım Bakanlığı / EU 표준)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readExternalParasiteEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
@@ -324,8 +326,8 @@ export const TR_CHECKS: ProcedureCheck[] = [
       '촌충에 효과적인 내부 구충제 처치는 출국 포함 30일 이내 = 출국일 기준 29일 전 이후. (Tarım Bakanlığı / EU 표준)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readInternalParasiteEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
@@ -361,10 +363,10 @@ export const TR_CHECKS: ProcedureCheck[] = [
       '공식 수의사 배서 발급은 출국일(항공기 탑승) 기준 48시간(2일) 이내. (Tarım Bakanlığı / 외교부 공관: "issued and filled out by the competent official veterinary authority within 2 days before your departure") — 다른 국가(10일)보다 매우 strict. 임상검사 자체는 96시간 이내(별도).',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      const visit = readVetVisitDate(caseRow, destination) ?? ''
       if (!dep || !visit) return SKIP
 
       const diff = daysBetween(visit, dep)
@@ -400,7 +402,7 @@ export const TR_CHECKS: ProcedureCheck[] = [
       '튀르키예 농림부: Pit Bull Terrier, American Staffordshire Terrier, Japanese Tosa, Dogo Argentino, Fila Brasileiro 및 동종 수입 금지.',
     severity: 'blocker',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const species = typeof data.species === 'string' ? data.species : ''
       if (species && species !== 'dog') return SKIP

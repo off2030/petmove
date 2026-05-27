@@ -6,6 +6,8 @@ import {
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
+  readDepartureDate,
+  readVetVisitDate,
 } from './utils'
 
 /**
@@ -50,7 +52,7 @@ export const HK_CHECKS: ProcedureCheck[] = [
       'ISO 11784/11785 또는 AVID 호환 마이크로칩이 광견병 접종일과 같거나 이전이어야 함. 칩 이전 접종은 추적 불가로 무효 — 칩 이후 접종이 1건이라도 있으면 그 접종부터 유효 기록으로 인정. (AFCD DC-02v05: "implanted with a microchip ... compliant with ISO or AVID standards")',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -81,7 +83,7 @@ export const HK_CHECKS: ProcedureCheck[] = [
       'AFCD DC-02v05: "the animal was at least 90 days old when it was vaccinated" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -116,8 +118,8 @@ export const HK_CHECKS: ProcedureCheck[] = [
       '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (AFCD DC-02v05: "vaccinated against rabies not less than 30 days ... prior to export")',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -144,8 +146,8 @@ export const HK_CHECKS: ProcedureCheck[] = [
       '최근 광견병 접종의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -174,7 +176,7 @@ export const HK_CHECKS: ProcedureCheck[] = [
       '종합백신 접종 기록 필요. 강아지: DHP (Distemper, Infectious Canine Hepatitis, Parvovirus), 고양이: Feline Panleukopenia + Feline Respiratory Disease (FVRCP). (AFCD DC-02v05 / VC-DC2 명시)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const entries = readGeneralVaccineEntries(caseRow)
       if (entries.length === 0) {
         return {
@@ -195,8 +197,8 @@ export const HK_CHECKS: ProcedureCheck[] = [
       '종합백신 접종일로부터 출국일까지 최소 14일 경과 필요. (AFCD: "vaccinated ... not less than 14 days and not more than 1 year before importation")',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readGeneralVaccineEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
@@ -223,8 +225,8 @@ export const HK_CHECKS: ProcedureCheck[] = [
       '최근 종합백신의 면역 유효기간(1년)이 출국일 이전에 만료되지 않아야 함.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readGeneralVaccineEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
@@ -253,10 +255,10 @@ export const HK_CHECKS: ProcedureCheck[] = [
       'AFCD VC-DC2: "not more than 14 days before export". 한국 APQA endorsement 10일 룰 + 사용자 보수 N-1 → ≤9 적용.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      const visit = readVetVisitDate(caseRow, destination) ?? ''
       if (!dep || !visit) return SKIP
 
       const diff = daysBetween(visit, dep)

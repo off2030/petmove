@@ -9,6 +9,8 @@ import {
   resolveValidUntil,
   SKIP,
   type TiterEntry,
+  readDepartureDate,
+  readVetVisitDate,
 } from './utils'
 
 /**
@@ -46,7 +48,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
       '마이크로칩(ISO 11784/11785)이 광견병 1차 접종일과 같거나 이전이어야 함. 칩 없거나 스캔 불가 시 120일 검역 강제. (HDOA Step 2 + JP/SG/AU/EU/NZ 와 일관)',
     severity: 'info',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -75,7 +77,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
       'HDOA 본문 정량 미명시 — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요. (id 는 호환성을 위해 12weeks 유지)',
     severity: 'info',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -110,7 +112,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
       '광견병 백신은 평생 최소 2회. 1차 + 부스터 모두 필수. (HDOA: "vaccinated at least twice for rabies in its lifetime")',
     severity: 'info',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return SKIP
       if (rabies.length < 2) {
@@ -133,7 +135,7 @@ export const HI_CHECKS: ProcedureCheck[] = [
       '연속된 광견병 접종 간 간격 ≥31일. (HDOA: "must have been administered more than 30 days apart" → strict >30 = ≥31)',
     severity: 'info',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length < 2) return SKIP
 
@@ -175,8 +177,8 @@ export const HI_CHECKS: ProcedureCheck[] = [
       '가장 최근 광견병 접종일이 도착일 기준 31일 이전(more than 30 days). 31일 미만 시 도착 후 추가 검역 강제. (HDOA Step 3)',
     severity: 'info',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -203,8 +205,8 @@ export const HI_CHECKS: ProcedureCheck[] = [
       '최근 광견병 접종의 라이선스 booster interval 이 도착일 이전 만료되지 않아야 함. **접종일 포함**: 1년 라이선스 → +364일, 3년 라이선스 → +1094일 (3년-1일). valid_until 명시 시 그 값 사용 — 3년 백신은 valid_until 직접 입력 필수. 미명시 시 디폴트 1년 (`addOneYear`). (HDOA: "must not be expired when your pet arrives")',
     severity: 'info',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -234,8 +236,8 @@ export const HI_CHECKS: ProcedureCheck[] = [
       'HDOA: lab 수령일 다음날부터 30일 이상, 36개월 이내. `rabies_titer_records[].received_date` 우선, 미입력 시 채혈일 fallback (실제 lab 수령일은 며칠 늦으므로 채혈일 proxy 는 less strict — 보수 마진 검토 권고).',
     severity: 'info',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const titers = readTiterEntries(caseRow)
       if (!dep || titers.length === 0) return SKIP
 
@@ -293,10 +295,10 @@ export const HI_CHECKS: ProcedureCheck[] = [
       '건강증명서(영문 원본) 검진은 출국일 기준 10일 이내(`≤9`). HDOA 자체는 14일 허용이나 한국 APQA 검역 endorsement 룰이 더 strict (10일) — 한국 출국 케이스에는 더 엄격한 룰 적용. 도착 시 원본 미지참 시 release 거부.',
     severity: 'info',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      const visit = readVetVisitDate(caseRow, destination) ?? ''
       if (!dep || !visit) return SKIP
 
       const diff = daysBetween(visit, dep)
@@ -332,8 +334,8 @@ export const HI_CHECKS: ProcedureCheck[] = [
       '도착일 기준 14일 이내(`≤13`) 장시간 작용 진드기 구제 (Revolution 불가, Frontline/Bravecto 등 tick label 제품). 제품명·날짜는 건강증명서에 기재. (HDOA Step 6: "within 14 days of arrival")',
     severity: 'info',
     addedAt: '2026-05-06',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readExternalParasiteEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 

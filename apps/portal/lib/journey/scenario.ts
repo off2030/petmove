@@ -204,7 +204,9 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
   // journey 페이지 상단의 별도 '주의' 카드로 노출된다.
   const caseAlerts: CaseAlert[] = []
   if (ctx.destinationKey) {
-    const all = runChecksForCase(ctx.destinationKey, { caseRow })
+    // 다중 목적지 케이스에서 by_dest 조회를 위해 destination 토큰 전달 (caseRow.destination
+    // 그대로 — 단일 목적지면 그 값, 다중이면 read 시 헬퍼가 토큰을 파싱).
+    const all = runChecksForCase(ctx.destinationKey, { caseRow, destination: caseRow.destination })
     for (const { check, result } of all) {
       if (result.ok) continue
       let stepId = findStepForCheck(check.id)

@@ -10,6 +10,9 @@ import {
   resolveValidUntil,
   SKIP,
   todayUtc,
+  readDepartureDate,
+  readVetVisitDate,
+  readExtraField,
 } from './utils'
 
 /**
@@ -34,7 +37,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     description: '광견병 1차 접종일은 생년월일 기준 91일 이후여야 함.',
     severity: 'info',
     addedAt: '2026-04-21',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -66,7 +69,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       '2차 광견병 접종은 1차 접종의 면역 유효기간 이내여야 함. 유효기간 경과 후 접종은 추가접종이 아닌 새 기초접종으로 간주됨.',
     severity: 'info',
     addedAt: '2026-05-16',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const entries = readRabiesEntries(caseRow)
       // 1·2차 둘 다 필요 — 하나라도 없으면 skip
       if (entries.length < 2) return SKIP
@@ -97,7 +100,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       '추가(3차+) 광견병 접종은 직전 광견병 백신의 면역 유효기간 이내여야 함. 유효기간 경과 후 접종은 부스터가 아닌 새 기초접종으로 간주됨.',
     severity: 'info',
     addedAt: '2026-05-24',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const entries = readRabiesEntries(caseRow)
       // 3차+ 가 있어야 검사 대상.
       if (entries.length < 3) return SKIP
@@ -129,7 +132,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       '① 마이크로칩 ≤ 1차 < 2차 ≤ 항체검사, 또는 ② 1차 < 마이크로칩 ≤ 2차이면서 2차 접종일 = 항체검사일. 둘 중 하나 충족 필요.',
     severity: 'info',
     addedAt: '2026-04-21',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -183,7 +186,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       '1차 광견병 접종이 마이크로칩 시술보다 앞선 경우 2차 접종을 광견병 항체가 검사와 같은 날 받아야 함. 항체검사 입력 전까지 안내 지속.',
     severity: 'info',
     addedAt: '2026-05-16',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -215,7 +218,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       '채혈일은 2차 접종일 이후이며, 2차부터 끊김 없이 이어진 부스터 chain 의 면역 유효기간 이내여야 함.',
     severity: 'info',
     addedAt: '2026-04-21',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       const titers = readTiterEntries(caseRow)
       // 필수: 2차 접종 기록 + 1개 이상의 항체검사
@@ -264,12 +267,12 @@ export const JP_CHECKS: ProcedureCheck[] = [
     description: '검진일은 출국일 포함 10일 이내여야 함 (출국일 9일 전 ~ 출국일).',
     severity: 'info',
     addedAt: '2026-04-21',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       // 출국일 미입력 시 항공편 입국일(entry_date)로 폴백 — 한일 노선은 출국=입국 당일.
       const dep =
-        caseRow.departure_date || (typeof data.entry_date === 'string' ? data.entry_date : '')
-      const visit = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+        readDepartureDate(caseRow, destination) || (readExtraField(caseRow, 'entry_date', destination) ?? '')
+      const visit = readVetVisitDate(caseRow, destination) ?? ''
       if (!dep || !visit) return SKIP
 
       const diff = daysBetween(visit, dep)
@@ -303,9 +306,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
     description: '항공편 입국일은 광견병 항체검사 채혈일로부터 180일이 지난 시점이어야 함.',
     severity: 'info',
     addedAt: '2026-05-17',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const entryDate = typeof data.entry_date === 'string' ? data.entry_date : ''
+      const entryDate = readExtraField(caseRow, 'entry_date', destination) ?? ''
       const titers = readTiterEntries(caseRow)
       // 필수: 항공편 입국일 + 1개 이상의 항체검사
       if (!entryDate || titers.length === 0) return SKIP
@@ -342,9 +345,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
     description: '항공편 입국일은 광견병 항체검사 채혈일 포함 2년 이내여야 함 (항체검사 유효기간).',
     severity: 'info',
     addedAt: '2026-05-17',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const entryDate = typeof data.entry_date === 'string' ? data.entry_date : ''
+      const entryDate = readExtraField(caseRow, 'entry_date', destination) ?? ''
       const titers = readTiterEntries(caseRow)
       if (!entryDate || titers.length === 0) return SKIP
 
@@ -374,11 +377,11 @@ export const JP_CHECKS: ProcedureCheck[] = [
     description: '일본 동물검역소 사전 신고(NACCS)는 입국일로부터 40일 이전에 접수되어야 함.',
     severity: 'info',
     addedAt: '2026-05-17',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const notif =
         typeof data.advance_notification_date === 'string' ? data.advance_notification_date : ''
-      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
+      const entry = readExtraField(caseRow, 'entry_date', destination) ?? ''
       // 필수: 사전 신고 신청일 + 항공편 입국일
       if (!notif || !entry) return SKIP
 
@@ -403,12 +406,12 @@ export const JP_CHECKS: ProcedureCheck[] = [
     description: '입국일에 가장 최근 광견병 접종의 면역 유효기간이 만료되지 않아야 함.',
     severity: 'info',
     addedAt: '2026-04-21',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       // 항공권 step 에서 보호자가 직접 입력하는 키는 entry_date — 그쪽 우선,
       // 미입력 시 departure_date 컬럼 폴백 (한일 노선은 둘이 동일).
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
-      const dep = entry || caseRow.departure_date || ''
+      const entry = readExtraField(caseRow, 'entry_date', destination) ?? ''
+      const dep = entry || readDepartureDate(caseRow, destination) || ''
       const rabies = readRabiesEntries(caseRow)
       // 항체검사 입력 전에는 입국 시기가 확정되지 않아 평가 불가 — 같은 step(항공권 구매)의
       // jp.entry-* 체크와 동일하게 titer 입력 후에만 평가한다. 그 전의 백신 만료는 항공권
@@ -440,10 +443,10 @@ export const JP_CHECKS: ProcedureCheck[] = [
     description: '광견병 백신 면역 유효기간이 오늘로부터 30일 이내로 남았을 때 사전 안내.',
     severity: 'info',
     addedAt: '2026-05-21',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
-      const dep = entry || caseRow.departure_date || ''
+      const entry = readExtraField(caseRow, 'entry_date', destination) ?? ''
+      const dep = entry || readDepartureDate(caseRow, destination) || ''
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return SKIP
 
@@ -473,10 +476,10 @@ export const JP_CHECKS: ProcedureCheck[] = [
     description: '광견병 항체검사 유효기간(2년)이 오늘로부터 30일 이내로 남았을 때 사전 안내.',
     severity: 'info',
     addedAt: '2026-05-21',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
-      const dep = entry || caseRow.departure_date || ''
+      const entry = readExtraField(caseRow, 'entry_date', destination) ?? ''
+      const dep = entry || readDepartureDate(caseRow, destination) || ''
       const titers = readTiterEntries(caseRow)
       if (titers.length === 0) return SKIP
 

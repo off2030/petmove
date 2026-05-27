@@ -8,6 +8,8 @@ import {
   readRabiesEntries,
   resolveValidUntil,
   SKIP,
+  readDepartureDate,
+  readVetVisitDate,
 } from './utils'
 
 /**
@@ -51,7 +53,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
       'ISO 11784/11785 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (DVS Non-Scheduled: "identified using an ISO (Std 11784 & 11785) compliant microchip")',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -80,7 +82,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
       'DVS Non-Scheduled: "shall not be less than 3 months of age at the time of import" — 안전 기준으로 생후 91일 AND 캘린더 3개월 둘 다 충족 필요.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
@@ -115,8 +117,8 @@ export const MY_CHECKS: ProcedureCheck[] = [
       '광견병 접종일로부터 출국일까지 최소 30일 경과 필요. (DVS Non-Scheduled: "vaccinated for rabies at least 30 days prior to entry into the country")',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -143,8 +145,8 @@ export const MY_CHECKS: ProcedureCheck[] = [
       'DVS Non-Scheduled: MAQIS 7일 의무 격리 — 격리 종료 시점까지 광견병 면역 유효 필요. cushion ≥7일.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
@@ -175,7 +177,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
       '종합백신 접종 기록 필요. 강아지: DHPPL+파라인플루엔자 / 고양이: 범백혈구감소증 (FVRCP). (DVS 운용 표준 — Non-Scheduled 규정 PDF 1차 명문 미확인)',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const entries = readGeneralVaccineEntries(caseRow)
       if (entries.length === 0) {
         return {
@@ -196,8 +198,8 @@ export const MY_CHECKS: ProcedureCheck[] = [
       '최근 종합백신의 면역 유효기간이 MAQIS 검역(7일) 종료까지 유지되어야 함. cushion ≥7일.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const entries = readGeneralVaccineEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
@@ -228,10 +230,10 @@ export const MY_CHECKS: ProcedureCheck[] = [
       'DVS Non-Scheduled: "examined and found to be healthy ... within seven (7) days immediately prior to export" — 출국 7일 이내(`≤6`). 사용자 보수 N-1 적용.',
     severity: 'info',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
-      const dep = caseRow.departure_date
+    run: ({ caseRow, destination }) => {
+      const dep = readDepartureDate(caseRow, destination)
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      const visit = readVetVisitDate(caseRow, destination) ?? ''
       if (!dep || !visit) return SKIP
 
       const diff = daysBetween(visit, dep)
@@ -267,7 +269,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
       'DVS 수입 금지: Akita, American Bulldog, Dogo Argentino, Fila Brasileiro, Japanese Tosa, Neapolitan Mastiff, Pit Bull Terrier (American Pit Bull, American Staffordshire Terrier, Staffordshire Bull Terrier 포함). 교잡 포함.',
     severity: 'blocker',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const species = typeof data.species === 'string' ? data.species : ''
       if (species && species !== 'dog') return SKIP
@@ -306,7 +308,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
       'DVS 제한 견종 (MAQIS 특별 승인 필요, 혈통서 필수, 상업 목적 금지): Bull Mastiff, Bull Terrier, Doberman, German Shepherd/Alsatian (Belgian, East European 포함), Perro de Presa Canario, Rottweiler.',
     severity: 'warning',
     addedAt: '2026-05-07',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const species = typeof data.species === 'string' ? data.species : ''
       if (species && species !== 'dog') return SKIP

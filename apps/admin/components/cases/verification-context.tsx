@@ -114,13 +114,16 @@ export function evaluateCase(
 ): CheckEntry[] {
   const country = detectCountryKey(destination ?? caseRow.destination)
   const checks = country ? getChecksForCountry(country) : getChecksForCountry('all')
+  // destination 인자(활성 목적지 토큰) 를 ctx 로 전달 — 다중 목적지 케이스에서
+  // procedure-check 가 by_dest 의 destination-scoped 값을 정확히 읽도록.
+  const ctxDestination = destination ?? null
   const results: CheckEntry[] = []
   for (const check of checks) {
     if (!check.run) continue
     if (disabledIds.has(check.id)) continue
     let result: CheckResult
     try {
-      result = check.run({ caseRow, relatedCases })
+      result = check.run({ caseRow, relatedCases, destination: ctxDestination })
     } catch (e) {
       result = { ok: false, message: `검증 실행 오류: ${e instanceof Error ? e.message : String(e)}` }
     }
