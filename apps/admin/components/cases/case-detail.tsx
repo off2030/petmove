@@ -16,7 +16,7 @@ import { Trash2, ChevronDown } from 'lucide-react'
 import { useConfirm } from '@petmove/ui'
 import { AttachButton } from '@/components/ui/attach-button'
 import { cn } from '@/lib/utils'
-import { updateCaseField } from '@/lib/actions/cases'
+import { setJpExportQuarantineConfirmed, updateCaseField } from '@/lib/actions/cases'
 import { CopyButton } from './copy-button'
 import { DateTextField } from '@petmove/ui'
 import { SectionLabel } from '@/components/ui/section-label'
@@ -791,6 +791,10 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel }: {
   useShortLabel: boolean
 }) {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
+  // 수출검역 예약 그룹은 date·time 입력 아래에 '확정' 토글을 노출.
+  // 토글 ON = case.data.jp_export_quarantine_confirmed = true → 신고탭 수출 '완료',
+  // portal 사전신고와 마찬가지로 step 완료로 derive. OFF 면 date/time 은 '고객 희망' 의미.
+  const isJpExportReservation = groupName === '수출검역 예약'
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors hover:bg-accent/60">
       {/* 그룹명 — 우측 항목 라벨(mono muted)과 톤 차이 두기 위해 serif + semibold + foreground. */}
@@ -812,7 +816,60 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel }: {
             />
           )
         })}
+        {isJpExportReservation && (
+          <JpExportConfirmedToggle caseId={caseId} caseRow={caseRow} />
+        )}
       </div>
+    </div>
+  )
+}
+
+/**
+ * 수출검역 예약 확정 토글 — 신고탭 '완료' 와 동일 결과 (양방향 sync).
+ * ON → jp_export_quarantine_confirmed=true. OFF → false (skipped/demoted 등은 안 건드림).
+ */
+function JpExportConfirmedToggle({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
+  const { replaceLocalCaseData } = useCases()
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const confirmed = data.jp_export_quarantine_confirmed === true
+  const [busy, setBusy] = useState(false)
+  async function onClick() {
+    if (busy) return
+    setBusy(true)
+    try {
+      const next = !confirmed
+      const res = await setJpExportQuarantineConfirmed(caseId, next)
+      if (res.ok && res.autoFilled?.data) {
+        replaceLocalCaseData(caseId, res.autoFilled.data)
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <div className="mt-1 flex items-center gap-2 text-[13px]">
+      <span className="text-muted-foreground">확정</span>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={busy}
+        aria-pressed={confirmed}
+        className={cn(
+          'inline-flex h-5 w-9 items-center rounded-full transition-colors',
+          confirmed ? 'bg-pmw-positive' : 'bg-muted-foreground/30',
+          busy && 'opacity-60 cursor-progress',
+        )}
+      >
+        <span
+          className={cn(
+            'inline-block h-4 w-4 transform rounded-full bg-background shadow-sm transition-transform',
+            confirmed ? 'translate-x-4' : 'translate-x-0.5',
+          )}
+        />
+      </button>
+      {confirmed && (
+        <span className="font-serif italic text-pmw-positive">예약 확정됨</span>
+      )}
     </div>
   )
 }
