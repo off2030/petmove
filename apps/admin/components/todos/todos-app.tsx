@@ -407,24 +407,24 @@ function isJapan(row: CaseRow): boolean {
 }
 
 /**
- * 신고 탭 상태 — 일본 케이스는 portal data(사전신고·수출검역 step) 에서 derive,
- * 그 외(다른 신고국)는 기존대로 admin 저장값(`import_import_status` 등) 사용.
+ * 신고 탭 상태 — 저장된 값(`import_import_status`)이 있으면 우선 사용.
+ *   - 기존 운영자가 수동으로 박은 'done'/'in_progress' 등 그대로 보존.
+ *   - 양방향 sync 가 필요한 새 액션(setAdvanceNotificationReportStatus 등) 은
+ *     서버액션 단에서 stored 를 명시 클리어해 derive 로 전환시킨다.
  *
- * 일본 derive 규칙:
- *   - admin_demoted_at 이 set 이면 → 'in_progress' (admin 이 명시적으로 demote)
- *   - 완료 시그널(첨부·skipped·confirmed) 이 있으면 → 'done'
- *   - 신청일이 있으면 → 'in_progress'
+ * 저장값 없는 일본 케이스만 portal data(사전신고 step) 에서 derive:
+ *   - admin_demoted_at 이 set → 'in_progress'
+ *   - 첨부·skipped → 'done'
+ *   - 신청일 → 'in_progress'
  *   - 그 외 → 'not_started'
- * 수출은 추가로 귀국일 없으면 'na' (수출 절차 자체가 없음).
- *
- * 양방향 sync: portal 액션이 위 시그널을 set/unset → admin 자동 반영.
- *   admin dropdown 변경도 같은 시그널을 patch (todo-table 의 select handler 가
- *   wiring) → portal 자동 반영.
+ * 수출은 추가로 귀국일 없으면 'na'.
  */
 function effectiveImportStatus(row: CaseRow): string {
   const data = (row.data ?? {}) as Record<string, unknown>
+  // stored 우선 — legacy 운영자 수동값 보존.
+  const stored = data.import_import_status
+  if (stored != null && String(stored) !== '') return String(stored)
   if (isJapan(row)) {
-    // demote 가 최우선 — 데이터상 완료 시그널이 있어도 admin 의도가 '진행중'.
     if (typeof data.advance_notification_admin_demoted_at === 'string') return 'in_progress'
     const docs = Array.isArray(data.documents) ? data.documents : []
     const hasAttachment = docs.some(
@@ -439,16 +439,15 @@ function effectiveImportStatus(row: CaseRow): string {
       typeof data.advance_notification_date === 'string' &&
       (data.advance_notification_date as string).length >= 10
     if (hasDate) return 'in_progress'
-    return 'not_started'
   }
-  const stored = data.import_import_status
-  if (stored != null && String(stored) !== '') return String(stored)
   return 'not_started'
 }
 
 function effectiveExportStatus(row: CaseRow): string {
   const data = (row.data ?? {}) as Record<string, unknown>
   if (!data.return_date) return 'na'
+  const stored = data.import_export_status
+  if (stored != null && String(stored) !== '') return String(stored)
   if (isJapan(row)) {
     if (typeof data.jp_export_quarantine_admin_demoted_at === 'string') return 'in_progress'
     if (data.jp_export_quarantine_reservation_skipped === true) return 'done'
@@ -463,10 +462,7 @@ function effectiveExportStatus(row: CaseRow): string {
       typeof data.jp_export_quarantine_application_date === 'string' &&
       (data.jp_export_quarantine_application_date as string).length >= 10
     if (hasApplied) return 'in_progress'
-    return 'not_started'
   }
-  const stored = data.import_export_status
-  if (stored != null && String(stored) !== '') return String(stored)
   return 'not_started'
 }
 
