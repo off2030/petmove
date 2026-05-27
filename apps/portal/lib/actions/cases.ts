@@ -15,7 +15,7 @@ import { cookies } from 'next/headers'
 import { createAdminClient } from '@petmove/auth'
 import { verifyPreviewToken } from '@petmove/auth/preview-token'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
-import { emptyVaccineProductsData, type CaseRow, type VaccineProductsData } from '@petmove/domain'
+import { emptyVaccineProductsData, applyAutoFillRules, type CaseRow, type VaccineProductsData } from '@petmove/domain'
 import { AVATAR_COLOR_IDS, AVATAR_EMOJIS, type AvatarColorId } from '@/lib/avatar'
 import { assertCaseAccess, type Result } from './_shared'
 
@@ -640,13 +640,26 @@ export async function updateFlightFields(
       departure_date: entryDate || null,
     }
 
-    const { data: updated, error } = await admin
+    const { error } = await admin
       .from('cases')
       .update(updatePayload)
       .eq('id', caseId)
-      .select('*')
-      .single()
     if (error) return { ok: false, error: error.message }
+
+    // departure_date 가 갱신되면 org_auto_fill_rules 트리거 — 일본의 경우
+    // departure_date → departure_flight_date 양방향 sync 룰이 fire 해 출국 항공편 그룹의
+    // 출발일이 자동 채워짐. admin 의 updateCaseField 와 동일.
+    try {
+      await applyAutoFillRules(admin, caseId, 'departure_date')
+    } catch { /* best-effort */ }
+
+    // auto-fill 룰 적용 결과를 포함한 최신 case row 를 다시 fetch.
+    const { data: updated, error: refetchErr } = await admin
+      .from('cases')
+      .select('*')
+      .eq('id', caseId)
+      .single()
+    if (refetchErr) return { ok: false, error: refetchErr.message }
     return { ok: true, value: updated as CaseRow }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
