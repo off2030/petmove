@@ -125,8 +125,13 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       )
     }
     case 'has-jp-export-quarantine': {
-      // 신청일은 NACCS 접수 시그널 — 완료엔 예약 날짜·시간이 둘 다 확정돼야 한다
-      // (검역소 회신을 받아야만 예약이 잡힘).
+      // 신청일은 NACCS/이메일 접수 시그널 — 완료엔 예약 날짜·시간이 둘 다 확정돼야 한다
+      // (검역소 회신을 받아야만 예약이 잡힘). 보호자가 예약 확정 입력 없이 진행하려는 경우엔
+      // case.data.jp_export_quarantine_reservation_skipped 플래그로 명시적 skip — 신청일만으로 완료.
+      const hasApplied =
+        typeof data.jp_export_quarantine_application_date === 'string' &&
+        (data.jp_export_quarantine_application_date as string).length >= 10
+      if (data.jp_export_quarantine_reservation_skipped === true && hasApplied) return true
       const hasDate =
         typeof data.jp_export_quarantine_date === 'string' &&
         (data.jp_export_quarantine_date as string).length >= 10
@@ -276,9 +281,15 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
       return dt && dt.length >= 10 ? dt.slice(0, 10) : null
     }
     case 'has-jp-export-quarantine': {
-      const dt =
+      // 예약일 우선 — skip 케이스는 예약일이 없으므로 신청일로 폴백.
+      const reserved =
         typeof data.jp_export_quarantine_date === 'string' ? data.jp_export_quarantine_date : null
-      return dt && dt.length >= 10 ? dt.slice(0, 10) : null
+      if (reserved && reserved.length >= 10) return reserved.slice(0, 10)
+      const applied =
+        typeof data.jp_export_quarantine_application_date === 'string'
+          ? data.jp_export_quarantine_application_date
+          : null
+      return applied && applied.length >= 10 ? applied.slice(0, 10) : null
     }
     case 'has-kr-export-quarantine': {
       const dt =

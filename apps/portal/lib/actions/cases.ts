@@ -774,6 +774,85 @@ export async function markAdvanceNotificationApprovalSkipped(
 }
 
 /**
+ * 일본 수출 동물검역 신청 step 의 '예약 입력 없이 완료' 플래그 set/unset — 사전 신고
+ * 패턴과 동일. set 은 detail 안내의 '다음' 버튼, unset 은 '되돌리기' 버튼.
+ * done-resolver 가 이 플래그를 보고 신청일만으로 완료 판정. 예약 날짜·시간이 둘 다
+ * 입력되면 플래그는 의미만 잃을 뿐 굳이 unset 할 필요 없음.
+ */
+export async function unmarkJpExportQuarantineReservationSkipped(
+  caseId: string,
+): Promise<Result<CaseRow>> {
+  try {
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const nextData: Record<string, unknown> = { ...prev }
+    delete nextData.jp_export_quarantine_reservation_skipped
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+export async function markJpExportQuarantineReservationSkipped(
+  caseId: string,
+): Promise<Result<CaseRow>> {
+  try {
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    if (
+      typeof prev.jp_export_quarantine_application_date !== 'string' ||
+      (prev.jp_export_quarantine_application_date as string).length < 10
+    ) {
+      return { ok: false, error: '신청일이 입력되어 있지 않습니다.' }
+    }
+
+    const nextData: Record<string, unknown> = {
+      ...prev,
+      jp_export_quarantine_reservation_skipped: true,
+    }
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
  * 사전 신고 step 의 신청일을 patch — case.data.advance_notification_date (YYYY-MM-DD).
  * 빈/null 이면 키 제거. data 의 다른 키는 fetch-merge 로 보존.
  */

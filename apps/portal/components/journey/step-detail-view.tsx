@@ -15,7 +15,9 @@ import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
 import {
   getCaseVaccineData,
   markAdvanceNotificationApprovalSkipped,
+  markJpExportQuarantineReservationSkipped,
   unmarkAdvanceNotificationApprovalSkipped,
+  unmarkJpExportQuarantineReservationSkipped,
   updateAdvanceNotificationDate,
   updateCaseTripType,
   updateFlightFields,
@@ -828,6 +830,50 @@ export function StepDetailView({
       }
     })
   }
+  // 일본 수출검역 신청 — 사전 신고와 동일 패턴. 신청일 입력됐는데 예약 날짜·시간 둘 다
+  // 미입력 상태에서 두 분기:
+  //  - skip X: 예약 확정 대기. '다음' 으로 명시적 skip.
+  //  - skip O: '입력 없이 완료 처리됨'. '되돌리기' 로 awaiting 으로 복귀.
+  const jpExportReservationSkipped =
+    (caseRow?.data as Record<string, unknown> | undefined)?.jp_export_quarantine_reservation_skipped ===
+    true
+  const isJpExportApplied =
+    isJpExportQuarantine && !!savedJpExport.applicationDate && savedJpExport.applicationDate.length >= 10
+  const isJpExportReservationPending =
+    isJpExportApplied && !(savedJpExport.date.length >= 10 && /^\d{1,2}:\d{2}$/.test(savedJpExport.time))
+  const isJpExportAwaitingReservation = isJpExportReservationPending && !jpExportReservationSkipped
+  const isJpExportReservationSkipped = isJpExportReservationPending && jpExportReservationSkipped
+  const [skippingJpExport, setSkippingJpExport] = useState(false)
+  const handleSkipJpExportReservation = () => {
+    if (skippingJpExport) return
+    setSkippingJpExport(true)
+    startTransition(async () => {
+      const res = await markJpExportQuarantineReservationSkipped(caseId)
+      setSkippingJpExport(false)
+      if (res.ok) {
+        updateCase(res.value)
+        router.replace(`/cases/${caseId}/journey`)
+      } else {
+        setStatus('error')
+        setError(res.error)
+      }
+    })
+  }
+  const [unskippingJpExport, setUnskippingJpExport] = useState(false)
+  const handleUnskipJpExportReservation = () => {
+    if (unskippingJpExport) return
+    setUnskippingJpExport(true)
+    startTransition(async () => {
+      const res = await unmarkJpExportQuarantineReservationSkipped(caseId)
+      setUnskippingJpExport(false)
+      if (res.ok) {
+        updateCase(res.value)
+      } else {
+        setStatus('error')
+        setError(res.error)
+      }
+    })
+  }
   const [convertingTrip, setConvertingTrip] = useState(false)
   const router = useRouter()
   const confirm = useConfirm()
@@ -1092,6 +1138,16 @@ export function StepDetailView({
                 허가증 첨부 대기 상태로 되돌리시려면 되돌리기 버튼을 클릭해주세요.
               </div>
             )}
+            {isJpExportAwaitingReservation && (
+              <div style={{ marginTop: 16, fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
+                입력 없이 완료 처리하시려면 다음 버튼을 클릭해주세요.
+              </div>
+            )}
+            {isJpExportReservationSkipped && (
+              <div style={{ marginTop: 16, fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
+                예약 확정 대기 상태로 되돌리시려면 되돌리기 버튼을 클릭해주세요.
+              </div>
+            )}
             {isFlightRoundEntryOnly && (
               <button
                 type="button"
@@ -1159,6 +1215,52 @@ export function StepDetailView({
                 }}
               >
                 {unskippingApproval ? '처리 중…' : '되돌리기'}
+              </button>
+            )}
+            {isJpExportAwaitingReservation && (
+              <button
+                type="button"
+                onClick={handleSkipJpExportReservation}
+                disabled={skippingJpExport}
+                className="pm-pressable"
+                style={{
+                  marginTop: 24,
+                  padding: '5px 14px',
+                  borderRadius: 999,
+                  border: `.5px solid ${C.info}77`,
+                  background: '#FBF7F1',
+                  color: C.info,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: '0.01em',
+                  cursor: skippingJpExport ? 'progress' : 'pointer',
+                  opacity: skippingJpExport ? 0.6 : 1,
+                }}
+              >
+                {skippingJpExport ? '처리 중…' : '다음'}
+              </button>
+            )}
+            {isJpExportReservationSkipped && (
+              <button
+                type="button"
+                onClick={handleUnskipJpExportReservation}
+                disabled={unskippingJpExport}
+                className="pm-pressable"
+                style={{
+                  marginTop: 24,
+                  padding: '5px 14px',
+                  borderRadius: 999,
+                  border: `.5px solid ${C.info}77`,
+                  background: '#FBF7F1',
+                  color: C.info,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: '0.01em',
+                  cursor: unskippingJpExport ? 'progress' : 'pointer',
+                  opacity: unskippingJpExport ? 0.6 : 1,
+                }}
+              >
+                {unskippingJpExport ? '처리 중…' : '되돌리기'}
               </button>
             )}
           </section>

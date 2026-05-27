@@ -404,8 +404,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 귀국편 절차라 후속(출국 전 임상검사 등)을 막지 않는다 — 동시에 '다음 할 일' 노출.
     nonBlocking: true,
     done: 'has-jp-export-quarantine',
-    // 신청일 입력은 NACCS 접수 시그널일 뿐 — 검역소 응답으로 예약 날짜·시간이 확정돼야 완료.
-    // 사전 신고와 같은 두 단계 패턴이지만 skip 은 없음 — 예약은 검역소 회신이 있어야만 가능.
+    // 신청일 입력은 NACCS/이메일 접수 시그널일 뿐 — 검역소 응답으로 예약 날짜·시간이 확정돼야 완료.
+    // 사전 신고와 동일한 두 분기:
+    //  - skip X (대기 중): '신청 완료, 예약 확정 시 입력 요청' — done 아니라 timeline·detail 동시 노출.
+    //  - skip O (예약 입력 없이 완료 처리): '입력 없이 완료 처리됨' — done 이라 timeline 은
+    //    doneSummary 로 가리고 detail 헤더에서만 보임. 보호자가 되돌릴 수 있도록 안내.
+    // 예약 날짜·시간이 둘 다 입력되면 두 경우 모두 doneSummary 로 자연스럽게 전환.
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const hasApplied =
@@ -419,7 +423,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         typeof data.jp_export_quarantine_time === 'string' &&
         /^\d{1,2}:\d{2}$/.test(data.jp_export_quarantine_time)
       if (hasReservationDate && hasReservationTime) return undefined
-      const msg = '신청이 완료되었습니다. 예약 날짜와 시간이 확정되면 입력해주세요.'
+      if (data.jp_export_quarantine_reservation_skipped === true) {
+        const msg = '입력 없이 완료 처리됐어요. 예약이 확정되면 날짜와 시간을 입력할 수 있습니다.'
+        return { desc: msg, cardDesc: msg }
+      }
+      const msg = '신청이 완료되었습니다. 예약이 확정되면 예약날짜와 시간을 입력해주세요.'
       return { desc: msg, cardDesc: msg }
     },
     inputs: [
