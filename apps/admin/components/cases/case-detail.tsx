@@ -381,6 +381,12 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
               segments.push({ type: 'flat', entry: def })
             }
           }
+          // 사전신고 허가증 첨부 — 활성 목적지가 일본일 때만 추가정보 마지막 row 로 표시.
+          // 케이스가 다중 목적지(예: '일본, 필리핀')이고 활성이 일본 외이면 안 노출.
+          // portal 보호자·admin 운영자 모두 업로드 가능, case.data.documents 배열 공유
+          // (stepId='advance-notification'). 첨부 = 완료 시그널이라 업로드 시점에
+          // admin_demoted_at 자동 해제됨 (step-documents 액션 내부).
+          const showNaccsRow = matchesDestinationKey(viewDestination, 'japan')
           return (
             <SimpleExtraSection
               caseId={caseRow.id}
@@ -390,15 +396,12 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
               destination={viewDestination}
               isCollapsed={collapsed.has('추가정보')}
               onToggleCollapsed={() => toggleCollapsed('추가정보')}
+              trailing={showNaccsRow ? (
+                <AdvanceNotificationAttachmentsRow caseId={caseRow.id} caseRow={caseRow} />
+              ) : null}
             />
           )
         })()}
-        {/* 사전신고 허가증 첨부 — 일본 케이스 한정. portal 보호자·admin 운영자 모두 업로드 가능,
-            case.data.documents 배열 공유 (stepId='advance-notification'). 첨부 = 완료 시그널이라
-            업로드 시점에 admin_demoted_at 자동 해제됨 (step-documents 액션 내부). */}
-        {g.group === '절차정보' && matchesDestinationKey(caseRow.destination, 'japan') && (
-          <AdvanceNotificationAttachmentsSection caseId={caseRow.id} caseRow={caseRow} />
-        )}
         </React.Fragment>
         )
       })}
@@ -521,7 +524,7 @@ function mapExtractResultToUnified(country: Country, result: Record<string, unkn
   return out
 }
 
-function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destination, isCollapsed, onToggleCollapsed }: {
+function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destination, isCollapsed, onToggleCollapsed, trailing }: {
   caseId: string
   caseRow: CaseRow
   sectionNumber: string
@@ -529,6 +532,8 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
   destination: string | null | undefined
   isCollapsed: boolean
   onToggleCollapsed: () => void
+  /** 추가정보 마지막에 끼워 넣을 임의 노드 (예: 일본 사전신고 허가증 첨부 행). 별도 섹션 X. */
+  trailing?: React.ReactNode
 }) {
   const { updateLocalCaseField, activeDestination } = useCases()
   const confirm = useConfirm()
@@ -779,6 +784,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
               />
             )
           })}
+          {trailing}
         </div>
       </SectionEditModeProvider>
     </section>
@@ -831,11 +837,12 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel, activ
 }
 
 /**
- * 사전신고 허가증 첨부 섹션 — 일본 케이스 한정.
+ * 사전신고 허가증 첨부 row — 일본 목적지 한정.
+ * 추가정보 섹션 마지막 행으로 통합 (별도 카테고리 X). 좌측 라벨 + 우측 파일 리스트·첨부 버튼.
  * case.data.documents 배열에서 stepId='advance-notification' 만 필터해 표시.
  * portal 보호자가 올린 파일도 같은 자리에 보이고, 운영자가 추가 업로드 가능.
  */
-function AdvanceNotificationAttachmentsSection({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
+function AdvanceNotificationAttachmentsRow({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
   const { replaceLocalCaseData } = useCases()
   const confirm = useConfirm()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -889,15 +896,11 @@ function AdvanceNotificationAttachmentsSection({ caseId, caseRow }: { caseId: st
     }
   }
 
+  // 추가정보 내 다른 row 와 동일한 grid 레이아웃 — 좌측 라벨(180px) + 우측 컨텐츠.
   return (
-    <section className="mb-10 pt-10 border-t border-border/60 rounded-md">
-      <div className="mb-4 flex items-baseline gap-3">
-        <span className="font-serif text-[20px] text-foreground">사전신고 허가증</span>
-        <span className="font-mono text-[11px] tracking-[1.2px] text-muted-foreground/60">
-          NACCS APPROVAL
-        </span>
-      </div>
-      <div className="space-y-2">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors hover:bg-accent/60">
+      <SectionLabel className="pt-1">사전신고 허가증</SectionLabel>
+      <div className="min-w-0 space-y-2">
         {stepDocs.length === 0 && (
           <div className="text-sm text-muted-foreground italic">아직 첨부된 허가증이 없습니다.</div>
         )}
@@ -927,7 +930,7 @@ function AdvanceNotificationAttachmentsSection({ caseId, caseRow }: { caseId: st
             </div>
           )
         })}
-        <div className="pt-2">
+        <div className="pt-1">
           <input
             ref={inputRef}
             type="file"
@@ -952,7 +955,7 @@ function AdvanceNotificationAttachmentsSection({ caseId, caseRow }: { caseId: st
           {error && <span className="ml-3 text-xs text-destructive">{error}</span>}
         </div>
       </div>
-    </section>
+    </div>
   )
 }
 
