@@ -1063,7 +1063,7 @@ function JpExportConfirmedToggle({ caseId, caseRow }: { caseId: string; caseRow:
     }
   }
   return (
-    <div className="mt-1 flex items-center gap-2 text-[13px]">
+    <div className="mt-1 flex items-center gap-1.5 font-serif text-[12px]">
       <span className="text-muted-foreground">확정</span>
       <button
         type="button"
@@ -1084,7 +1084,7 @@ function JpExportConfirmedToggle({ caseId, caseRow }: { caseId: string; caseRow:
         />
       </button>
       {confirmed && (
-        <span className="font-serif italic text-pmw-positive">예약 확정됨</span>
+        <span className="italic text-pmw-positive">예약 확정됨</span>
       )}
     </div>
   )

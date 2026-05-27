@@ -394,31 +394,33 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
           </div>
         )}
         {hasSibling && (
-          <button
-            type="button"
-            onClick={() => setCoProgress(!coProgress)}
-            aria-pressed={coProgress}
+          <div
+            className="shrink-0 inline-flex items-center gap-1.5 font-serif text-[12px] mt-0.5"
             title={
               coProgress
                 ? '동시 진행 켜짐 — 같은 보호자의 다른 동물에도 절차·추가 정보가 함께 입력됩니다'
                 : '동시 진행 꺼짐 — 이 동물만 따로 입력됩니다'
             }
-            className={cn(
-              'shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-serif text-[12px] mt-0.5 transition-all',
-              coProgress
-                ? 'border-transparent bg-pmw-tag text-pmw-tag-foreground'
-                : 'border-pmw-tag/45 text-pmw-tag-foreground/55 hover:border-pmw-tag/70 hover:text-pmw-tag-foreground',
-            )}
           >
-            <span
-              aria-hidden
+            <span className="text-pmw-tag-foreground/70">동시 진행</span>
+            <button
+              type="button"
+              onClick={() => setCoProgress(!coProgress)}
+              aria-pressed={coProgress}
               className={cn(
-                'inline-block h-1.5 w-1.5 rounded-full transition-colors',
-                coProgress ? 'bg-pmw-tag-foreground' : 'bg-pmw-tag-foreground/30',
+                'inline-flex h-5 w-9 items-center rounded-full transition-colors',
+                coProgress ? 'bg-pmw-tag' : 'bg-muted-foreground/30',
               )}
-            />
-            동시 진행
-          </button>
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  'inline-block h-4 w-4 transform rounded-full bg-background shadow-sm transition-transform',
+                  coProgress ? 'translate-x-4' : 'translate-x-0.5',
+                )}
+              />
+            </button>
+          </div>
         )}
           </div>
         )}
