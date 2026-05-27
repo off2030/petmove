@@ -1097,9 +1097,6 @@ function JpExportConfirmedToggle({ caseId, caseRow }: { caseId: string; caseRow:
           )}
         />
       </button>
-      {confirmed && (
-        <span className="italic text-pmw-accent">예약 확정됨</span>
-      )}
     </div>
   )
 }
