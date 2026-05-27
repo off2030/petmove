@@ -897,25 +897,27 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow }: { caseId: string
   }
 
   // 추가정보 내 다른 row 와 동일한 grid 레이아웃 — 좌측 라벨(180px) + 우측 컨텐츠.
+  // 빈 상태(파일 없음): inline 첨부 버튼만으로 다른 EditableField row 와 동일한 높이.
+  // 첨부 파일 있을 때: 파일 chip 들이 wrap 되어 자연 높이 증가.
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors hover:bg-accent/60">
-      <SectionLabel className="pt-1">허가증</SectionLabel>
-      <div className="min-w-0 space-y-2">
+    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-center gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors hover:bg-accent/60">
+      <SectionLabel>허가증</SectionLabel>
+      <div className="min-w-0 flex items-center flex-wrap gap-2">
         {stepDocs.map((d) => {
           const id = String(d.id ?? '')
           const name = String(d.name ?? '파일')
           const size = typeof d.size === 'number' ? d.size : 0
           const sizeKb = size > 0 ? `${Math.round(size / 1024)} KB` : ''
           return (
-            <div key={id} className="flex items-center gap-3 rounded-md border border-border/60 px-3 py-2 hover:bg-accent/40">
+            <div key={id} className="inline-flex items-center gap-2 rounded-md border border-border/60 px-2 py-0.5 hover:bg-accent/40">
               <button
                 type="button"
                 onClick={() => handleView(id)}
-                className="flex-1 min-w-0 text-left text-sm text-foreground underline-offset-2 hover:underline truncate"
+                className="min-w-0 text-left text-sm text-foreground underline-offset-2 hover:underline truncate max-w-[200px]"
               >
                 {name}
               </button>
-              <span className="text-xs text-muted-foreground">{sizeKb}</span>
+              {sizeKb && <span className="text-xs text-muted-foreground">{sizeKb}</span>}
               <button
                 type="button"
                 onClick={() => handleDelete(id, name)}
@@ -927,30 +929,28 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow }: { caseId: string
             </div>
           )
         })}
-        <div className="pt-1">
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*,.pdf"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) handleFile(f)
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            disabled={uploading}
-            className={cn(
-              'text-sm px-3 py-1.5 rounded-md border border-border/60 hover:bg-accent/60',
-              uploading && 'opacity-60 cursor-progress',
-            )}
-          >
-            {uploading ? '업로드 중…' : '+ 첨부'}
-          </button>
-          {error && <span className="ml-3 text-xs text-destructive">{error}</span>}
-        </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*,.pdf"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0]
+            if (f) handleFile(f)
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          className={cn(
+            'text-xs px-2 py-0.5 rounded-md border border-border/60 hover:bg-accent/60',
+            uploading && 'opacity-60 cursor-progress',
+          )}
+        >
+          {uploading ? '업로드 중…' : '+ 첨부'}
+        </button>
+        {error && <span className="text-xs text-destructive">{error}</span>}
       </div>
     </div>
   )
