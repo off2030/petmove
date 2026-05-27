@@ -125,13 +125,16 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       )
     }
     case 'has-jp-export-quarantine': {
-      // 신청일은 NACCS/이메일 접수 시그널 — 완료엔 예약 날짜·시간이 둘 다 확정돼야 한다
-      // (검역소 회신을 받아야만 예약이 잡힘). 보호자가 예약 확정 입력 없이 진행하려는 경우엔
-      // case.data.jp_export_quarantine_reservation_skipped 플래그로 명시적 skip — 신청일만으로 완료.
+      // 두 가지 완료 경로:
+      //  - skipped=true (신청일 있으면) — 보호자가 예약 정보 없이 진행 처리 (portal '다음')
+      //  - confirmed=true AND date AND time — 예약 확정. confirmed 플래그는 portal 보호자가
+      //    date+time 입력 시 자동 set (admin 운영자가 case-detail에서 토글로도 set).
+      // admin 추가정보의 date/time 단독 입력은 '고객 희망' 의미라 confirmed 안 켜짐.
       const hasApplied =
         typeof data.jp_export_quarantine_application_date === 'string' &&
         (data.jp_export_quarantine_application_date as string).length >= 10
       if (data.jp_export_quarantine_reservation_skipped === true && hasApplied) return true
+      if (data.jp_export_quarantine_confirmed !== true) return false
       const hasDate =
         typeof data.jp_export_quarantine_date === 'string' &&
         (data.jp_export_quarantine_date as string).length >= 10

@@ -759,6 +759,8 @@ export async function markAdvanceNotificationApprovalSkipped(
       ...prev,
       advance_notification_approval_skipped: true,
     }
+    // 완료 시그널 — admin demote 상태를 자동 해제.
+    delete nextData.advance_notification_admin_demoted_at
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -838,6 +840,8 @@ export async function markJpExportQuarantineReservationSkipped(
       ...prev,
       jp_export_quarantine_reservation_skipped: true,
     }
+    // 완료 시그널 — admin demote 상태를 자동 해제.
+    delete nextData.jp_export_quarantine_admin_demoted_at
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1163,6 +1167,15 @@ export async function updateJpExportQuarantineFields(
     else delete nextData.jp_export_quarantine_date
     if (time) nextData.jp_export_quarantine_time = time
     else delete nextData.jp_export_quarantine_time
+    // portal 보호자 입력 = 확정 의미 (admin 추가정보의 '고객 희망'과 다름).
+    // date+time 둘 다 있으면 confirmed=true, 하나라도 비면 false. admin 토글로도 동일.
+    if (d && time) {
+      nextData.jp_export_quarantine_confirmed = true
+      // 완료 시그널 — admin demote 상태를 자동 해제.
+      delete nextData.jp_export_quarantine_admin_demoted_at
+    } else {
+      delete nextData.jp_export_quarantine_confirmed
+    }
 
     const { data: updated, error } = await admin
       .from('cases')
