@@ -382,3 +382,154 @@ export async function restoreToHistoryPoint(
     restored: Array.from(finalByKey.values()),
   }
 }
+
+// ───── 신고 탭 상태 변경 (일본 케이스 양방향 sync) ─────
+//
+// admin 신고탭 dropdown 변경 시 portal data 필드를 atomic 하게 patch.
+// portal 의 사전신고·수출검역 step 시그널과 같은 키를 공유 — 어느 쪽 변경이든 즉시 반영.
+//
+// 매핑:
+//   - not_started: 진행 시그널 제거 (date·skipped·confirmed·demoted_at). 첨부는 portal
+//     관할이라 손대지 않음 — 첨부가 남아 있으면 derive 가 'done' 으로 잡으므로 admin 의
+//     '대기' 의도가 표면에 안 보일 수 있음. UI 에서 confirm 시 안내.
+//   - in_progress: 현재 done 시그널이 있으면 demote (admin_demoted_at = now).
+//     date 가 비어 있으면 today 로 set (derive 가 'in_progress' 로 잡히도록).
+//   - done: skipped (사전신고) / confirmed (수출검역, date+time 있는 경우만; 없으면 skipped)
+//     set + demoted_at 클리어.
+
+type ReportTarget = 'not_started' | 'in_progress' | 'done'
+
+async function patchCaseData(
+  caseId: string,
+  mutate: (data: Record<string, unknown>) => void,
+): Promise<UpdateResult> {
+  const supabase = await createClient()
+  const { data: row, error: fetchErr } = await supabase
+    .from('cases')
+    .select('data')
+    .eq('id', caseId)
+    .single()
+  if (fetchErr) return { ok: false, error: fetchErr.message }
+  const current = ((row?.data as Record<string, unknown> | null) ?? {}) as Record<string, unknown>
+  const next = { ...current }
+  mutate(next)
+  const { error } = await supabase.from('cases').update({ data: next }).eq('id', caseId)
+  if (error) return { ok: false, error: error.message }
+  // autoFilled.data 채널로 patched data 를 클라이언트에 반환 — 호출자가 replaceLocalCaseData
+  // 로 반영. (UpdateResult 형 호환 유지하면서 다중 키 업데이트 결과를 전달.)
+  return { ok: true, autoFilled: { data: next } }
+}
+
+function hasAdvanceAttachment(data: Record<string, unknown>): boolean {
+  const docs = Array.isArray(data.documents) ? data.documents : []
+  return docs.some(
+    (d) =>
+      !!d &&
+      typeof d === 'object' &&
+      (d as Record<string, unknown>).stepId === 'advance-notification',
+  )
+}
+
+export async function setAdvanceNotificationReportStatus(
+  caseId: string,
+  target: ReportTarget,
+): Promise<UpdateResult> {
+  return patchCaseData(caseId, (d) => {
+    if (target === 'not_started') {
+      delete d.advance_notification_date
+      delete d.advance_notification_approval_skipped
+      delete d.advance_notification_admin_demoted_at
+      return
+    }
+    if (target === 'in_progress') {
+      const wasDone =
+        hasAdvanceAttachment(d) || d.advance_notification_approval_skipped === true
+      if (wasDone) {
+        d.advance_notification_admin_demoted_at = new Date().toISOString()
+        delete d.advance_notification_approval_skipped
+      } else {
+        // 대기 → 진행중: 신청일이 없으면 오늘로 — derive 가 'in_progress' 로 잡힘.
+        if (typeof d.advance_notification_date !== 'string' || (d.advance_notification_date as string).length < 10) {
+          d.advance_notification_date = new Date().toISOString().slice(0, 10)
+        }
+      }
+      return
+    }
+    // target === 'done'
+    d.advance_notification_approval_skipped = true
+    delete d.advance_notification_admin_demoted_at
+    // 신청일이 비어 있으면 오늘로 (skipped + date 가 정합).
+    if (typeof d.advance_notification_date !== 'string' || (d.advance_notification_date as string).length < 10) {
+      d.advance_notification_date = new Date().toISOString().slice(0, 10)
+    }
+  })
+}
+
+export async function setJpExportQuarantineReportStatus(
+  caseId: string,
+  target: ReportTarget,
+): Promise<UpdateResult> {
+  return patchCaseData(caseId, (d) => {
+    if (target === 'not_started') {
+      delete d.jp_export_quarantine_application_date
+      delete d.jp_export_quarantine_reservation_skipped
+      delete d.jp_export_quarantine_confirmed
+      delete d.jp_export_quarantine_admin_demoted_at
+      return
+    }
+    if (target === 'in_progress') {
+      const wasDone =
+        d.jp_export_quarantine_reservation_skipped === true ||
+        d.jp_export_quarantine_confirmed === true
+      if (wasDone) {
+        d.jp_export_quarantine_admin_demoted_at = new Date().toISOString()
+        delete d.jp_export_quarantine_reservation_skipped
+        delete d.jp_export_quarantine_confirmed
+      } else {
+        if (
+          typeof d.jp_export_quarantine_application_date !== 'string' ||
+          (d.jp_export_quarantine_application_date as string).length < 10
+        ) {
+          d.jp_export_quarantine_application_date = new Date().toISOString().slice(0, 10)
+        }
+      }
+      return
+    }
+    // target === 'done' — date+time 둘 다 있으면 confirmed, 없으면 skipped.
+    delete d.jp_export_quarantine_admin_demoted_at
+    const hasDate =
+      typeof d.jp_export_quarantine_date === 'string' &&
+      (d.jp_export_quarantine_date as string).length >= 10
+    const t = typeof d.jp_export_quarantine_time === 'string' ? d.jp_export_quarantine_time : ''
+    const hasTime = /^\d{1,2}:\d{2}$/.test(t)
+    if (hasDate && hasTime) {
+      d.jp_export_quarantine_confirmed = true
+      delete d.jp_export_quarantine_reservation_skipped
+    } else {
+      d.jp_export_quarantine_reservation_skipped = true
+      delete d.jp_export_quarantine_confirmed
+    }
+    if (
+      typeof d.jp_export_quarantine_application_date !== 'string' ||
+      (d.jp_export_quarantine_application_date as string).length < 10
+    ) {
+      d.jp_export_quarantine_application_date = new Date().toISOString().slice(0, 10)
+    }
+  })
+}
+
+/** admin 상세 확정 토글 — case.data.jp_export_quarantine_confirmed 직접 조작. */
+export async function setJpExportQuarantineConfirmed(
+  caseId: string,
+  value: boolean,
+): Promise<UpdateResult> {
+  return patchCaseData(caseId, (d) => {
+    if (value) {
+      d.jp_export_quarantine_confirmed = true
+      delete d.jp_export_quarantine_admin_demoted_at
+      delete d.jp_export_quarantine_reservation_skipped
+    } else {
+      delete d.jp_export_quarantine_confirmed
+    }
+  })
+}

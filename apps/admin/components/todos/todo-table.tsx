@@ -2,10 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CaseRow } from '@petmove/domain'
-import { updateCaseField } from '@/lib/actions/cases'
+import { matchesDestinationKey } from '@petmove/domain'
+import {
+  setAdvanceNotificationReportStatus,
+  setJpExportQuarantineReportStatus,
+  updateCaseField,
+} from '@/lib/actions/cases'
 import { useCases } from '@/components/cases/cases-context'
 import { cn } from '@/lib/utils'
-import { DateTextField } from '@petmove/ui'
+import { DateTextField, useConfirm } from '@petmove/ui'
 import { DropdownSelect } from '@petmove/ui'
 
 const INITIAL_VISIBLE = 100
@@ -222,8 +227,37 @@ function SelectCell({
   onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
 }) {
   const value = getCellValue(row, col)
+  const { replaceLocalCaseData } = useCases()
+  const confirm = useConfirm()
+  // 일본 케이스 + 신고탭 status 컬럼은 portal data 필드를 직접 patch (양방향 sync).
+  // 다른 컬럼·다른 국가는 기존 단일키 path 그대로.
+  const isJapanReport =
+    matchesDestinationKey(row.destination, 'japan') &&
+    (col.key === 'import_import_status' || col.key === 'import_export_status')
   async function pick(v: string) {
     if (v === value) return
+    if (isJapanReport && (v === 'not_started' || v === 'in_progress' || v === 'done')) {
+      if (v === 'not_started') {
+        const ok = await confirm({
+          message: '대기중으로 되돌리시겠어요?',
+          description:
+            col.key === 'import_import_status'
+              ? '사전 신고 진행 정보(신청일·완료 표시)가 지워집니다. 보호자가 첨부한 허가증은 그대로 유지됩니다.'
+              : '수출검역 진행 정보(신청일·확정·완료 표시)가 지워집니다.',
+          okLabel: '대기로 되돌리기',
+        })
+        if (!ok) return
+      }
+      const action =
+        col.key === 'import_import_status'
+          ? setAdvanceNotificationReportStatus
+          : setJpExportQuarantineReportStatus
+      const res = await action(row.id, v as 'not_started' | 'in_progress' | 'done')
+      if (res.ok && res.autoFilled?.data) {
+        replaceLocalCaseData(row.id, res.autoFilled.data)
+      }
+      return
+    }
     onUpdate(row.id, col.storage, col.key, v || null)
     await updateCaseField(row.id, col.storage, col.key, v || null)
   }
