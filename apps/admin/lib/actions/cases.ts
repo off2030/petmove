@@ -598,20 +598,3 @@ export async function setJpExportQuarantineReportStatus(
   })
 }
 
-/** admin 상세 확정 토글 — case.data.jp_export_quarantine_confirmed 직접 조작. */
-export async function setJpExportQuarantineConfirmed(
-  caseId: string,
-  value: boolean,
-): Promise<UpdateResult> {
-  return patchCaseData(caseId, (d) => {
-    // 토글 = 명시적 transition. stored 클리어해 derive 모드.
-    delete d.import_export_status
-    if (value) {
-      d.jp_export_quarantine_confirmed = true
-      delete d.jp_export_quarantine_admin_demoted_at
-      delete d.jp_export_quarantine_reservation_skipped
-    } else {
-      delete d.jp_export_quarantine_confirmed
-    }
-  })
-}

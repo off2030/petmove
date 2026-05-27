@@ -140,9 +140,9 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
     case 'has-jp-export-quarantine': {
       // 두 가지 완료 경로:
       //  - skipped=true (신청일 있으면) — 보호자가 예약 정보 없이 진행 처리 (portal '다음')
-      //  - confirmed=true AND date AND time — 예약 확정. confirmed 플래그는 portal '예약 확정'
-      //    토글 또는 admin case-detail 토글로 명시 set (양쪽 동일 의미).
-      // date/time 단독 입력은 '희망' 의미라 confirmed 토글이 OFF 면 step 완료 아님.
+      //  - confirmed=true AND date AND time — 예약 확정. confirmed 플래그는 portal 보호자가
+      //    date+time 입력 시 자동 set. admin 추가정보의 date/time 단독 입력은 '고객 희망'
+      //    의미라 confirmed 안 켜짐 — admin 은 별도 UI 없음.
       const hasApplied =
         typeof data.jp_export_quarantine_application_date === 'string' &&
         (data.jp_export_quarantine_application_date as string).length >= 10
