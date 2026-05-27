@@ -632,6 +632,8 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
     if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false)
   }
   function handleDrop(e: React.DragEvent) {
+    // 자식 row(예: 허가증) 가 자체 onDrop 으로 stopPropagation 하면 여기 안 옴.
+    // 도달했다면 row 외 추가정보 영역에 드롭된 거 → AI 추출 흐름 진행.
     e.preventDefault()
     setDragOver(false)
     const files = Array.from(e.dataTransfer.files).filter(isExtractableFile)
@@ -641,6 +643,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
   // Ctrl+V 붙여넣기.
   // - 이미지: 섹션 hover 중일 때만 (다른 섹션과 충돌 방지)
   // - 텍스트: 케이스 페이지 어디서든 fallback (input/textarea 포커스 아닐 때)
+  // - 자식 row(허가증 등) hover 시 양보 — 그쪽이 자체 paste 핸들러로 처리.
   useEffect(() => {
     function onPaste(e: ClipboardEvent) {
       if (!sectionRef.current) return
@@ -648,6 +651,10 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
       if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return
       const items = e.clipboardData?.items
       if (!items) return
+      // 허가증 row hover 시 양보 — defaultPrevented 검사로는 핸들러 등록 순서에
+      // 의존하게 되므로 hover 위치를 직접 확인하는 게 안전.
+      const naccsHovered = sectionRef.current.querySelector('[data-naccs-row]:hover')
+      if (naccsHovered) return
       const isHovered = sectionRef.current.matches(':hover')
       const imageFiles: File[] = []
       for (const item of Array.from(items)) {
@@ -850,7 +857,9 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow }: { caseId: string
   const stepDocs = docs.filter((d) => d && d.stepId === 'advance-notification')
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [dragOver, setDragOver] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const rowRef = useRef<HTMLDivElement>(null)
 
   async function handleFile(file: File) {
     setError(null)
@@ -870,6 +879,55 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow }: { caseId: string
       setUploading(false)
       if (inputRef.current) inputRef.current.value = ''
     }
+  }
+
+  // Ctrl+V 붙여넣기 — 허가증 row hover 중일 때만 처리. SimpleExtraSection 의
+  // AI 추출 paste 핸들러는 data-naccs-row hover 를 감지하면 양보 (아래 부모 핸들러
+  // 의 querySelector 분기 참조). 이미지/PDF 파일만 받음, 텍스트·다른 종류 무시.
+  useEffect(() => {
+    function onPaste(e: ClipboardEvent) {
+      if (!rowRef.current) return
+      if (!rowRef.current.matches(':hover')) return
+      const active = document.activeElement
+      if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return
+      const items = e.clipboardData?.items
+      if (!items) return
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/') || item.type === 'application/pdf') {
+          const file = item.getAsFile()
+          if (file) {
+            e.preventDefault()
+            void handleFile(file)
+            return
+          }
+        }
+      }
+    }
+    document.addEventListener('paste', onPaste)
+    return () => document.removeEventListener('paste', onPaste)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseId])
+
+  // 드래그앤드롭 — row 영역에 떨어진 파일만 받음. e.stopPropagation 으로 부모
+  // SimpleExtraSection 의 AI 추출 drop 핸들러로 전파 차단.
+  function handleDragOver(e: React.DragEvent) {
+    if (!Array.from(e.dataTransfer.types).includes('Files')) return
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(true)
+  }
+  function handleDragLeave(e: React.DragEvent) {
+    e.stopPropagation()
+    if (rowRef.current && !rowRef.current.contains(e.relatedTarget as Node)) setDragOver(false)
+  }
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(false)
+    const file = Array.from(e.dataTransfer.files).find((f) =>
+      f.type.startsWith('image/') || f.type === 'application/pdf',
+    )
+    if (file) void handleFile(file)
   }
 
   async function handleView(docId: string) {
@@ -899,8 +957,19 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow }: { caseId: string
   // 추가정보 내 다른 row 와 동일한 grid 레이아웃 — 좌측 라벨(180px) + 우측 컨텐츠.
   // 빈 상태(파일 없음): inline 첨부 버튼만으로 다른 EditableField row 와 동일한 높이.
   // 첨부 파일 있을 때: 파일 chip 들이 wrap 되어 자연 높이 증가.
+  // data-naccs-row: 부모 SimpleExtraSection 의 AI 추출 paste 핸들러가 양보하는 마커.
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-center gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors hover:bg-accent/60">
+    <div
+      ref={rowRef}
+      data-naccs-row
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={cn(
+        'grid grid-cols-1 md:grid-cols-[180px_1fr] items-center gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors hover:bg-accent/60',
+        dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
+      )}
+    >
       <SectionLabel>허가증</SectionLabel>
       <div className="min-w-0 flex items-center flex-wrap gap-2">
         {stepDocs.map((d) => {
