@@ -3,6 +3,7 @@
 import { createClient } from '@petmove/auth/server'
 import { applyAutoFillRules } from '@/lib/auto-fill-engine'
 import { evaluateAndNotify } from './system-notifications'
+import { isDestinationScopedKey, parseDestinations } from '@petmove/domain'
 
 const REGULAR_COLUMNS = new Set([
   'customer_name',
@@ -49,6 +50,13 @@ export async function updateCaseField(
   storage: 'column' | 'data',
   key: string,
   value: unknown,
+  /**
+   * 다중 목적지 케이스에서 destination-scoped 키 입력 시 활성 목적지 토큰.
+   * - 미지정: 기존 경로 (column 또는 data top-level).
+   * - 지정 + isDestinationScopedKey(key) + 다중 목적지 케이스 → `data.by_dest[destination][key]` 에 저장.
+   * - 부수효과(vet_available_date 동기화·status 리셋·auto-fill)는 by_dest 경로에선 우선 스킵.
+   */
+  destination?: string | null,
 ): Promise<UpdateResult> {
   if (!caseId || !key) return { ok: false, error: 'caseId and key are required' }
   if (storage === 'column' && !REGULAR_COLUMNS.has(key)) {
@@ -66,6 +74,48 @@ export async function updateCaseField(
   if (fetchErr) return { ok: false, error: fetchErr.message }
   const orgId = (row as { org_id: string }).org_id
   const currentData = ((row as { data: Record<string, unknown> | null }).data ?? {}) as Record<string, unknown>
+  const destinationRaw = (row as { destination: string | null }).destination
+  const isMultiDest = parseDestinations(destinationRaw).length > 1
+  // by_dest 경로 적용 조건: 활성 목적지 + scoped 키 + 다중 목적지.
+  const useByDest = !!destination && isDestinationScopedKey(key) && isMultiDest
+
+  // by_dest 경로 — 별도 분기로 처리하고 기존 부수효과는 우회.
+  if (useByDest) {
+    const byDestPrev = (currentData['by_dest'] as Record<string, Record<string, unknown>> | undefined) ?? {}
+    const destObjPrev = byDestPrev[destination!] ?? {}
+    const oldValueByDest = serializeForHistory('data', destObjPrev[key])
+    const nextByDest: Record<string, Record<string, unknown>> = { ...byDestPrev }
+    const nextDestObj = { ...destObjPrev }
+    if (value === null || value === undefined || value === '') {
+      delete nextDestObj[key]
+    } else {
+      nextDestObj[key] = value
+    }
+    if (Object.keys(nextDestObj).length === 0) delete nextByDest[destination!]
+    else nextByDest[destination!] = nextDestObj
+    const nextData = { ...currentData }
+    if (Object.keys(nextByDest).length === 0) delete nextData['by_dest']
+    else nextData['by_dest'] = nextByDest
+    const { error: updErr } = await supabase
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+    if (updErr) return { ok: false, error: updErr.message }
+    const newValueByDest = serializeForHistory('data', value)
+    if (oldValueByDest !== newValueByDest && orgId) {
+      // History: key 에 by_dest 경로 인코딩 (undo 시 파싱) — 형식 'by_dest:{destination}:{key}'.
+      await supabase.from('case_history').insert({
+        case_id: caseId,
+        org_id: orgId,
+        field_key: `by_dest:${destination}:${key}`,
+        field_storage: 'data',
+        old_value: oldValueByDest,
+        new_value: newValueByDest,
+      })
+    }
+    await evaluateAndNotify(caseId)
+    return { ok: true }
+  }
 
   let oldValue: string | null
   if (storage === 'column') {

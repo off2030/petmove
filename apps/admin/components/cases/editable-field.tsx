@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { FieldSpec } from '@petmove/domain'
-import { calculateAge, coerceInputValue, renderFieldValue } from '@petmove/domain'
+import { calculateAge, coerceInputValue, renderFieldValue, isDestinationScopedKey, parseDestinations } from '@petmove/domain'
 import { updateCaseField } from '@/lib/actions/cases'
 import { CopyButton } from '@/components/cases/copy-button'
 import { useCases } from '@/components/cases/cases-context'
@@ -102,6 +102,12 @@ export function EditableField({
   compact?: boolean
 }) {
   const { cases, updateLocalCaseField, replaceLocalCaseData, activeDestination } = useCases()
+  // 다중 목적지 + activeDestination + scoped 키 → data.by_dest[destination][key] 경로.
+  // destArg 가 set 이면 server action·local mutator 둘 다 5번째 인자로 전달.
+  const currentCase = cases.find((c) => c.id === caseId)
+  const isMultiDest = parseDestinations(currentCase?.destination).length > 1
+  const useByDest = isMultiDest && !!activeDestination && isDestinationScopedKey(spec.key)
+  const destArg: string | null | undefined = useByDest ? activeDestination : undefined
   const { settings: detailViewSettings } = useDetailViewSettings()
   const confirm = useConfirm()
   const editMode = useSectionEditMode()
@@ -222,13 +228,13 @@ export function EditableField({
     if (!ok) return
     // Optimistic — UI 즉시 반영. 실패 시 rollback.
     const prevValue = rawValue
-    updateLocalCaseField(caseId, spec.storage, spec.key, null)
+    updateLocalCaseField(caseId, spec.storage, spec.key, null, destArg)
     setError(null)
     setEditing(false)
     void (async () => {
-      const result = await updateCaseField(caseId, spec.storage, spec.key, null)
+      const result = await updateCaseField(caseId, spec.storage, spec.key, null, destArg)
       if (!result.ok) {
-        updateLocalCaseField(caseId, spec.storage, spec.key, prevValue)
+        updateLocalCaseField(caseId, spec.storage, spec.key, prevValue, destArg)
         setError(result.error)
       }
     })()
@@ -261,15 +267,15 @@ export function EditableField({
     const coerced = coerceInputValue(spec, value)
     const prev = rawValue
     // Optimistic — UI 즉시 반영. 실패 시 rollback.
-    updateLocalCaseField(caseId, spec.storage, spec.key, coerced)
+    updateLocalCaseField(caseId, spec.storage, spec.key, coerced, destArg)
     setError(null)
     setEditing(false)
     setSavedFlash(true)
     setTimeout(() => setSavedFlash(false), 1500)
     void (async () => {
-      const result = await updateCaseField(caseId, spec.storage, spec.key, coerced)
+      const result = await updateCaseField(caseId, spec.storage, spec.key, coerced, destArg)
       if (!result.ok) {
-        updateLocalCaseField(caseId, spec.storage, spec.key, prev)
+        updateLocalCaseField(caseId, spec.storage, spec.key, prev, destArg)
         setError(result.error)
       }
     })()
@@ -288,12 +294,12 @@ export function EditableField({
   /** Save without closing edit mode (used by date inputs that auto-save on change) */
   function autoSave(coerced: unknown) {
     const prev = rawValue
-    updateLocalCaseField(caseId, spec.storage, spec.key, coerced)
+    updateLocalCaseField(caseId, spec.storage, spec.key, coerced, destArg)
     setError(null)
     void (async () => {
-      const result = await updateCaseField(caseId, spec.storage, spec.key, coerced)
+      const result = await updateCaseField(caseId, spec.storage, spec.key, coerced, destArg)
       if (!result.ok) {
-        updateLocalCaseField(caseId, spec.storage, spec.key, prev)
+        updateLocalCaseField(caseId, spec.storage, spec.key, prev, destArg)
         setError(result.error)
       }
     })()
@@ -317,17 +323,18 @@ export function EditableField({
   function saveDateValue(v: string) {
     const value = v.trim() || null
     const prev = rawValue
-    updateLocalCaseField(caseId, spec.storage, spec.key, value)
+    updateLocalCaseField(caseId, spec.storage, spec.key, value, destArg)
     setError(null)
     setEditing(false)
     void (async () => {
-      const result = await updateCaseField(caseId, spec.storage, spec.key, value)
+      const result = await updateCaseField(caseId, spec.storage, spec.key, value, destArg)
       if (!result.ok) {
-        updateLocalCaseField(caseId, spec.storage, spec.key, prev)
+        updateLocalCaseField(caseId, spec.storage, spec.key, prev, destArg)
         setError(result.error)
         return
       }
       // 자동 채움 결과 반영 — 엔진이 다른 필드들을 채웠으면 data 통째 교체 + 컬럼도 갱신.
+      // (by_dest 경로에선 server action 이 auto-fill skip — autoFilled 없음.)
       if (result.autoFilled) {
         replaceLocalCaseData(caseId, result.autoFilled.data)
         for (const [k, v] of Object.entries(result.autoFilled.columns ?? {})) {
@@ -380,12 +387,12 @@ export function EditableField({
   function handleSelectChange_custom(val: string | null) {
     const coerced = val ? coerceInputValue(spec, val) : null
     const prev = rawValue
-    updateLocalCaseField(caseId, spec.storage, spec.key, coerced)
+    updateLocalCaseField(caseId, spec.storage, spec.key, coerced, destArg)
     setError(null)
     void (async () => {
-      const result = await updateCaseField(caseId, spec.storage, spec.key, coerced)
+      const result = await updateCaseField(caseId, spec.storage, spec.key, coerced, destArg)
       if (!result.ok) {
-        updateLocalCaseField(caseId, spec.storage, spec.key, prev)
+        updateLocalCaseField(caseId, spec.storage, spec.key, prev, destArg)
         setError(result.error)
       }
     })()

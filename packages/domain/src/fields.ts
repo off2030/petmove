@@ -1,4 +1,5 @@
 import type { CaseRow, FieldDefinition } from './types'
+import { isDestinationScopedKey, readByDestValue } from './destination-scoped-fields'
 
 /**
  * Normalize a microchip string to the canonical "NNN NNN NNN NNN NNN" form.
@@ -264,13 +265,20 @@ export function groupFieldSpecs(specs: FieldSpec[]): Array<{ group: string; item
 /**
  * Read a value out of a case row given its spec.
  * Special case: 'age' is auto-calculated from 'birth_date'.
+ *
+ * destination 인자가 주어지고 spec.key 가 destination-scoped 면
+ * `data.by_dest[destination][key]` 를 우선 조회 (없으면 column/data fallback).
  */
-export function readCaseField(row: CaseRow, spec: FieldSpec): unknown {
+export function readCaseField(row: CaseRow, spec: FieldSpec, destination?: string | null): unknown {
   if (spec.key === 'age') {
     const data = (row.data ?? {}) as Record<string, unknown>
     const birthStr = data.birth_date as string | undefined
     if (birthStr) return calculateAge(birthStr)
     return null
+  }
+  if (destination && isDestinationScopedKey(spec.key)) {
+    const v = readByDestValue((row.data as Record<string, unknown>) ?? null, destination, spec.key)
+    if (v !== undefined) return v
   }
   if (spec.storage === 'column') {
     return (row as unknown as Record<string, unknown>)[spec.key] ?? null

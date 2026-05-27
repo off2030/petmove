@@ -8,7 +8,7 @@ import {
   HIDDEN_EN_KEYS,
   readCaseField,
 } from '@petmove/domain'
-import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, matchesDestinationKey, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, SWISS_ENTRY_AIRPORT_OPTIONS, THAILAND_ENTRY_AIRPORT_OPTIONS, resolveActiveDestination, getTripType, isRabiesTiterHiddenForOneWay, type ExtraFieldDef } from '@petmove/domain'
+import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, matchesDestinationKey, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, SWISS_ENTRY_AIRPORT_OPTIONS, THAILAND_ENTRY_AIRPORT_OPTIONS, resolveActiveDestination, getTripType, isRabiesTiterHiddenForOneWay, isDestinationScopedKey, parseDestinations, type ExtraFieldDef } from '@petmove/domain'
 import { buildShareFieldDescriptors } from '@petmove/domain'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
@@ -211,15 +211,15 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
                     <EditableField
                       caseId={caseRow.id}
                       spec={spec}
-                      rawValue={readCaseField(caseRow, spec)}
+                      rawValue={readCaseField(caseRow, spec, activeDestToken)}
                     />
                     {addrKrSpec && (
                       <AddressField
                         caseId={caseRow.id}
                         krSpec={addrKrSpec}
                         enSpec={addrEnSpec}
-                        krRaw={readCaseField(caseRow, addrKrSpec)}
-                        enRaw={addrEnSpec ? readCaseField(caseRow, addrEnSpec) : null}
+                        krRaw={readCaseField(caseRow, addrKrSpec, activeDestToken)}
+                        enRaw={addrEnSpec ? readCaseField(caseRow, addrEnSpec, activeDestToken) : null}
                         zipcode={(data.address_zipcode as string | null) ?? null}
                       />
                     )}
@@ -293,7 +293,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
                     <EditableField
                       caseId={caseRow.id}
                       spec={spec}
-                      rawValue={readCaseField(caseRow, spec)}
+                      rawValue={readCaseField(caseRow, spec, activeDestToken)}
                     />
                     <BreedField caseId={caseRow.id} caseRow={caseRow} />
                     <ColorField caseId={caseRow.id} caseRow={caseRow} />
@@ -320,9 +320,9 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
                     caseId={caseRow.id}
                     koSpec={spec}
                     enSpec={enSpec}
-                    koRaw={readCaseField(caseRow, spec)}
+                    koRaw={readCaseField(caseRow, spec, activeDestToken)}
                     enRaw={
-                      enSpec ? readCaseField(caseRow, enSpec) : null
+                      enSpec ? readCaseField(caseRow, enSpec, activeDestToken) : null
                     }
                   />
                 )
@@ -333,7 +333,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
                   key={`${spec.storage}:${spec.key}`}
                   caseId={caseRow.id}
                   spec={spec}
-                  rawValue={readCaseField(caseRow, spec)}
+                  rawValue={readCaseField(caseRow, spec, activeDestToken)}
                   clearable={isClearable}
                 />
               )
@@ -543,9 +543,14 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
   isCollapsed: boolean
   onToggleCollapsed: () => void
 }) {
-  const { updateLocalCaseField } = useCases()
+  const { updateLocalCaseField, activeDestination } = useCases()
   const confirm = useConfirm()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
+  // 다중 목적지 + 활성 목적지 일 때 destination-scoped 키 입력은 by_dest 경로로 라우팅.
+  const activeDest = resolveActiveDestination(caseRow.destination, activeDestination)
+  const isMultiDest = parseDestinations(caseRow.destination).length > 1
+  const destArgFor = (key: string): string | null | undefined =>
+    isMultiDest && activeDest && isDestinationScopedKey(key) ? activeDest : undefined
   const [extracting, setExtracting] = useState(false)
   const [extractMsg, setExtractMsg] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -578,10 +583,10 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
       variant: 'destructive',
     })) return
     for (const k of allKeys) {
-      updateLocalCaseField(caseId, 'data', k, null)
+      updateLocalCaseField(caseId, 'data', k, null, destArgFor(k))
     }
     void (async () => {
-      for (const k of allKeys) await updateCaseField(caseId, 'data', k, null)
+      for (const k of allKeys) await updateCaseField(caseId, 'data', k, null, destArgFor(k))
     })()
   }
 
@@ -596,14 +601,14 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
       const keys = Object.keys(unified)
       if (keys.length === 0) { setExtractMsg('관련 정보를 찾지 못했습니다'); return }
       // Optimistic — 모든 키 일괄 로컬 반영 후 백그라운드 저장.
-      for (const k of keys) updateLocalCaseField(caseId, 'data', k, unified[k])
+      for (const k of keys) updateLocalCaseField(caseId, 'data', k, unified[k], destArgFor(k))
       // entry_date 가 추출되면 케이스의 출국일(departure_date) 컬럼도 동기화.
       if (unified.entry_date) {
-        updateLocalCaseField(caseId, 'column', 'departure_date', unified.entry_date)
-        void updateCaseField(caseId, 'column', 'departure_date', unified.entry_date)
+        updateLocalCaseField(caseId, 'column', 'departure_date', unified.entry_date, destArgFor('departure_date'))
+        void updateCaseField(caseId, 'column', 'departure_date', unified.entry_date, destArgFor('departure_date'))
       }
       void (async () => {
-        for (const k of keys) await updateCaseField(caseId, 'data', k, unified[k])
+        for (const k of keys) await updateCaseField(caseId, 'data', k, unified[k], destArgFor(k))
       })()
       const labels = keys.map(k => EXTRA_FIELD_KEY_LABELS[k] ?? k)
       const shown = labels.slice(0, 4).join(', ')
@@ -767,6 +772,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
                   groupName={seg.name}
                   items={seg.items}
                   useShortLabel={seg.useShortLabel}
+                  activeDest={activeDest}
                 />
               )
             }
@@ -775,7 +781,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
               return <OverseasAddressField key={def.key} caseId={caseId} caseRow={caseRow} />
             }
             const spec = buildSpecForExtra(def, false)
-            const rawValue = readEffectiveExtraValue(data, def.key)
+            const rawValue = readEffectiveExtraValue(data, def.key, activeDest)
             return (
               <EditableField
                 key={def.key}
@@ -793,13 +799,15 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
 }
 
 /** group 메타데이터로 묶인 추가정보 항목들 — 좌측 그룹명 + 우측 sub-row 스택. */
-function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel }: {
+function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel, activeDest }: {
   caseId: string
   caseRow: CaseRow
   groupName: string
   items: ExtraFieldDef[]
   /** 빌더가 destination 별로 결정한 라벨 모드 — 일본만 true(날짜/시간), 그 외 false(도착일/도착시간). */
   useShortLabel: boolean
+  /** 활성 목적지 토큰 — by_dest 경로 읽기용. 다중 목적지 케이스에서만 의미 있음. */
+  activeDest: string | null
 }) {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   // 수출검역 예약 그룹은 date·time 입력 아래에 '확정' 토글을 노출.
@@ -815,7 +823,7 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel }: {
       <div className="min-w-0">
         {items.map((def) => {
           const spec = buildSpecForExtra(def, useShortLabel)
-          const rawValue = readEffectiveExtraValue(data, def.key)
+          const rawValue = readEffectiveExtraValue(data, def.key, activeDest)
           return (
             <EditableField
               key={def.key}

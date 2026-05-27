@@ -225,9 +225,23 @@ const LEGACY_EXTRA_PATHS: Record<string, string[][]> = {
   certificate_no: [['japan_extra', 'certificate_no']],
 }
 
-/** 통합 키의 효과적 값 — top-level 우선, legacy country_extra 경로로 fallback. */
-export function readEffectiveExtraValue(data: Record<string, unknown> | null | undefined, key: string): unknown {
+/**
+ * 통합 키의 효과적 값 — destination 인자가 주어지고 해당 키가 destination-scoped 이면
+ * `data.by_dest[destination][key]` 우선 조회. 없으면 top-level → legacy country_extra 순.
+ *
+ * destination 미지정(단일 목적지 컨텍스트) 시 기존 동작 그대로.
+ */
+export function readEffectiveExtraValue(
+  data: Record<string, unknown> | null | undefined,
+  key: string,
+  destination?: string | null,
+): unknown {
   if (!data) return null
+  if (destination) {
+    const byDest = data['by_dest'] as Record<string, Record<string, unknown>> | undefined
+    const v = byDest?.[destination]?.[key]
+    if (v != null) return v
+  }
   if (data[key] != null) return data[key]
   const paths = LEGACY_EXTRA_PATHS[key]
   if (!paths) return null

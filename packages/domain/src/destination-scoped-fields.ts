@@ -1,0 +1,131 @@
+/**
+ * 다중 목적지 케이스에서 destination별로 분리 저장되는 필드 정책.
+ *
+ * 저장 구조: `cases.data.by_dest[destination][key] = value`
+ *   destination 토큰은 `resolveActiveDestination` 결과(사용자 입력 그대로의 한글/영문 토큰)와 동일.
+ *   `trip_type` Map 컨벤션과 일치.
+ *
+ * Fallback 순서 (read):
+ *   1. data.by_dest[destination][key]
+ *   2. top-level data[key]  (또는 column for departure_date)
+ *   3. legacy country_extra 경로 (readEffectiveExtraValue 내부)
+ *
+ * 단일 목적지 케이스: by_dest 미사용, 기존 경로 그대로.
+ */
+
+import type { CaseRow } from './types'
+
+/**
+ * 분리 대상 키. 이 키들에 대한 입력은 다중 목적지 시 by_dest 에 저장돼야 함.
+ *
+ * 🟢 케이스 공통 유지 (포함 X): email, address_overseas, postal_code, overseas_phone,
+ *   passport_*, holder_birth_date — 보호자·동물 신원은 destination 무관.
+ */
+export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
+  // 일정
+  'departure_date',
+  'vet_visit_date',
+  // 입국 항공편 (한국 → 도착국)
+  'entry_date',
+  'entry_airport',
+  'entry_flight_number',
+  'entry_departure_airport',
+  'entry_time',
+  'entry_transport',
+  'entry_purpose',
+  // 귀국 항공편 (도착국 → 한국)
+  'return_date',
+  'return_flight_number',
+  'return_departure_airport',
+  'return_arrival_airport',
+  'return_transport',
+  // 증명서·허가 (국가별)
+  'permit_no',
+  'certificate_no',
+  'id_date',
+  // 절차 시간 (EU 촌충국가별 praziquantel 투여시각)
+  'deworming_time',
+])
+
+export function isDestinationScopedKey(key: string): boolean {
+  return DESTINATION_SCOPED_FIELD_KEYS.has(key)
+}
+
+/**
+ * `data.by_dest[destination][key]` 직접 읽기. 없으면 undefined.
+ * fallback 처리는 호출자(또는 readEffectiveExtraValue) 책임.
+ */
+export function readByDestValue(
+  data: Record<string, unknown> | null | undefined,
+  destination: string | null | undefined,
+  key: string,
+): unknown {
+  if (!data || !destination) return undefined
+  const byDest = data['by_dest'] as Record<string, Record<string, unknown>> | undefined
+  const destObj = byDest?.[destination]
+  if (!destObj) return undefined
+  const v = destObj[key]
+  return v == null ? undefined : v
+}
+
+/**
+ * `data.by_dest[destination][key] = value` 를 갱신한 새 data 객체 반환 (immutable).
+ * value 가 null/undefined/빈문자열 이면 키 삭제.
+ * 빈 destination 객체·빈 by_dest 는 자동 정리.
+ */
+export function writeByDestValue(
+  data: Record<string, unknown> | null | undefined,
+  destination: string,
+  key: string,
+  value: unknown,
+): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...(data ?? {}) }
+  const byDest: Record<string, Record<string, unknown>> = {
+    ...((next['by_dest'] as Record<string, Record<string, unknown>> | undefined) ?? {}),
+  }
+  const destObj: Record<string, unknown> = { ...(byDest[destination] ?? {}) }
+  if (value == null || value === '') {
+    delete destObj[key]
+  } else {
+    destObj[key] = value
+  }
+  if (Object.keys(destObj).length === 0) {
+    delete byDest[destination]
+  } else {
+    byDest[destination] = destObj
+  }
+  if (Object.keys(byDest).length === 0) {
+    delete next['by_dest']
+  } else {
+    next['by_dest'] = byDest
+  }
+  return next
+}
+
+/**
+ * 활성 목적지 기준 출국일.
+ * by_dest 우선, 없으면 `cases.departure_date` 컬럼 fallback.
+ */
+export function getDepartureDate(
+  caseRow: Pick<CaseRow, 'data' | 'departure_date'>,
+  destination: string | null | undefined,
+): string | null {
+  const v = readByDestValue(caseRow.data as Record<string, unknown> | null, destination, 'departure_date')
+  if (typeof v === 'string' && v) return v
+  return caseRow.departure_date ?? null
+}
+
+/**
+ * 활성 목적지 기준 내원일 (= 증명서 발급일).
+ * by_dest 우선, 없으면 `data.vet_visit_date` fallback.
+ */
+export function getVetVisitDate(
+  caseRow: Pick<CaseRow, 'data'>,
+  destination: string | null | undefined,
+): string | null {
+  const data = (caseRow.data as Record<string, unknown> | null) ?? null
+  const v = readByDestValue(data, destination, 'vet_visit_date')
+  if (typeof v === 'string' && v) return v
+  const top = data?.['vet_visit_date']
+  return typeof top === 'string' && top ? top : null
+}

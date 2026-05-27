@@ -11,7 +11,7 @@ import {
 } from 'react'
 import * as Sentry from '@sentry/nextjs'
 import type { CaseRow, FieldDefinition } from '@petmove/domain'
-import { parseDestinations } from '@petmove/domain'
+import { parseDestinations, isDestinationScopedKey, writeByDestValue } from '@petmove/domain'
 import type { InspectionConfig } from '@petmove/domain'
 import type { CertConfig } from '@petmove/domain'
 import { subscribeRealtime } from '@/lib/realtime/resilient-channel'
@@ -42,6 +42,11 @@ interface CasesContextValue {
     storage: 'column' | 'data',
     key: string,
     value: unknown,
+    /**
+     * 다중 목적지 케이스에서 destination-scoped 키 입력 시 활성 목적지 토큰.
+     * 지정 시 `data.by_dest[destination][key]` 로 로컬 상태 반영.
+     */
+    destination?: string | null,
   ) => void
   /** auto-fill 엔진 등 여러 필드가 한 번에 바뀔 때 data 객체 전체를 교체. */
   replaceLocalCaseData: (caseId: string, data: Record<string, unknown>) => void
@@ -441,11 +446,23 @@ export function CasesProvider({
       storage: 'column' | 'data',
       key: string,
       value: unknown,
+      destination?: string | null,
     ) => {
       setCases((prev) =>
         prev.map((c) => {
           if (c.id !== caseId) return c
           const now = new Date().toISOString()
+          // by_dest 경로 — 다중 목적지 + destination 지정 + scoped 키일 때만.
+          const isMultiDest = parseDestinations(c.destination).length > 1
+          if (destination && isDestinationScopedKey(key) && isMultiDest) {
+            const nextData = writeByDestValue(
+              (c.data as Record<string, unknown>) ?? null,
+              destination,
+              key,
+              value,
+            )
+            return { ...c, data: nextData, updated_at: now } as CaseRow
+          }
           if (storage === 'column') {
             return { ...c, [key]: value, updated_at: now } as CaseRow
           }
