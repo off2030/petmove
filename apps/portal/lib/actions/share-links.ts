@@ -351,9 +351,12 @@ export async function submitShareLink(
 
     // 출국 항공편 날짜 → 케이스 departure_date(출국일) 컬럼 동기화.
     // 일본: departure_flight_date 가 출발일 = 출국일. 양방향 sync — 한쪽만 입력돼도 다른 쪽 채움.
-    // 그 외 destination(스위스·태국·미국·하와이): entry_date 가 도착일이지만 시차 없이 같은 날
-    //   가정한 legacy 단방향 sync 유지 (entry_date → departure_date). 시차 큰 노선에서 잘못된
-    //   sync 가 일어날 수 있어 추후 정리 대상.
+    //
+    // 일본 외 destination 의 entry_date(도착일) → departure_date 단방향 sync 는 제거됨.
+    //   기존 legacy 동작은 같은 날 가정으로 적용됐지만, 스위스·태국·미국·하와이 등 시차 큰
+    //   노선에선 entry_date(도착일) 와 departure_date(출국일) 가 다른 날일 수 있어 잘못된 값을
+    //   덮어쓸 위험이 있음. 이제 admin 이 share-link field_keys 에 departure_date 를 명시적으로
+    //   포함하거나, 차후 org_auto_fill_rules 의 destination 별 룰로 처리.
     if (typeof dataUpdate.departure_flight_date === 'string' && dataUpdate.departure_flight_date.trim()) {
       colUpdate.departure_date = dataUpdate.departure_flight_date.trim()
     } else if (typeof colUpdate.departure_date === 'string' && colUpdate.departure_date.trim()) {
@@ -362,9 +365,6 @@ export async function submitShareLink(
       if (!dataUpdate.departure_flight_date) {
         dataUpdate.departure_flight_date = colUpdate.departure_date.trim()
       }
-    }
-    if (typeof dataUpdate.entry_date === 'string' && dataUpdate.entry_date.trim()) {
-      if (!colUpdate.departure_date) colUpdate.departure_date = dataUpdate.entry_date.trim()
     }
 
     // 항공권 구매 step 표시 날짜 = 정보 입력 날짜(flight_info_recorded_at). 매직링크로 항공권
