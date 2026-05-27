@@ -9,5 +9,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./data/*.json": "./src/data/*.json"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.103.0"
   }
 }

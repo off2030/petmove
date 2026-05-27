@@ -27,6 +27,7 @@ import {
   parseDestinations,
   readByDestValue,
   writeByDestValue,
+  applyAutoFillRules,
   type CaseRow,
   type FieldDefinition,
   type DestinationExtraFieldEntry,
@@ -506,6 +507,16 @@ export async function submitShareLink(
         }
         return { ok: false, error: upErr.message }
       }
+
+      // 매직링크 입력 후 org_auto_fill_rules 트리거 — 예: 일본 departure_flight_date ↔
+      // departure_date 양방향 sync, departure_date 변경 시 백신 일정 자동 계산 등이
+      // admin 의 updateCaseField 와 동일하게 portal 입력에서도 적용되도록.
+      //  - useByDest 면 활성 목적지 scope 를 넘겨 by_dest 경로로 라우팅.
+      //  - userEditedKey 는 명시 안 함 — 본 share-link 는 다중 키 입력이므로 전부 유효.
+      //    각 룰의 overwrite_existing 플래그로 사용자가 방금 입력한 값 보호 (기본 false).
+      try {
+        await applyAutoFillRules(admin, row.case_id, undefined, useByDest ? scope : null)
+      } catch { /* best-effort — 실패해도 share-link 제출 자체는 성공 */ }
     }
 
     // portal 은 아직 /cases 라우트가 없어 revalidatePath 생략. admin 측은 자체 캐시

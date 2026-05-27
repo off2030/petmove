@@ -1,14 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { DESTINATION_OVERRIDES, matchesDestinationKey, parseDestinations } from './destination-config'
+import { resolveInspectionLabs, type InspectionLabRule } from './inspection-config-defaults'
 import {
-  DESTINATION_OVERRIDES,
-  matchesDestinationKey,
-  parseDestinations,
-  resolveInspectionLabs,
   isDestinationScopedKey,
   readByDestValue,
   writeByDestValue,
-  type InspectionLabRule,
-} from '@petmove/domain'
+} from './destination-scoped-fields'
 
 /**
  * 자동 채움 엔진.

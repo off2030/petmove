@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@petmove/auth/server'
-import { applyAutoFillRules } from '@/lib/auto-fill-engine'
+import { applyAutoFillRules } from '@petmove/domain'
 import { evaluateAndNotify } from './system-notifications'
 import { isDestinationScopedKey, parseDestinations } from '@petmove/domain'
 

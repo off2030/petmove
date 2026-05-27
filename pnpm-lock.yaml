@@ -104,7 +104,7 @@ importers:
         version: 9.39.4(jiti@1.21.7)
       eslint-config-next:
         specifier: ^16.2.4
-        version: 16.2.4(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3)
+        version: 16.2.4(@typescript-eslint/parser@8.59.1(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3))(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3)
       opentype.js:
         specifier: ^2.0.0
         version: 2.0.0
@@ -198,7 +198,7 @@ importers:
         version: 9.39.4(jiti@1.21.7)
       eslint-config-next:
         specifier: ^16.2.4
-        version: 16.2.4(@typescript-eslint/parser@8.59.1(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3))(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3)
+        version: 16.2.4(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3)
       postcss:
         specifier: ^8.5.9
         version: 8.5.10
@@ -226,7 +226,11 @@ importers:
 
   packages/db: {}
 
-  packages/domain: {}
+  packages/domain:
+    devDependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.103.0
+        version: 2.104.0
 
   packages/ui:
     dependencies:
