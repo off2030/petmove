@@ -58,10 +58,12 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['일본', 'japan'],
     extraSection: 'japan',
     extraFields: [
-      // 출국 항공편 (한국 → 일본) — 항공편명 → 출발/도착공항 → 운송방법.
-      // 날짜는 별도 entry_date 안 둠 — 한일 노선 같은 날 도착이라 케이스의 departure_date(출국일)
-      // 가 그대로 출국 항공편 날짜. procedure-check·PDF·매직링크 모두 departure_date 단일 권위.
-      'entry_flight_number', 'entry_departure_airport', 'entry_airport', 'entry_transport',
+      // 출국 항공편 (한국 → 일본) — 항공권 정보. 날짜·시간은 한국 출발 기준.
+      // departure_flight_date 는 케이스의 departure_date(출국일) 컬럼과 양방향 sync
+      // (updateCaseField / share-link hardcode — 한일 노선 같은 날 출발=도착).
+      // entry_date(도착일) 는 의미상 일본 도착일이지만 한일 같은 날이라 미사용.
+      'departure_flight_date', 'entry_flight_number', 'entry_departure_airport',
+      'entry_airport', 'entry_transport', 'departure_flight_time',
       // 귀국 항공편 (일본 → 한국) — 동일 순서
       'return_date', 'return_flight_number', 'return_departure_airport', 'return_arrival_airport', 'return_transport',
       // 수출검역 예약 (왕복 시 일본 출국검역)
