@@ -18,8 +18,8 @@ import type { CaseRow } from './types'
 /**
  * 분리 대상 키. 이 키들에 대한 입력은 다중 목적지 시 by_dest 에 저장돼야 함.
  *
- * 🟢 케이스 공통 유지 (포함 X): email, address_overseas, postal_code, overseas_phone,
- *   passport_*, holder_birth_date — 보호자·동물 신원은 destination 무관.
+ * 🟢 케이스 공통 유지 (포함 X): email, postal_code, overseas_phone, passport_*,
+ *   holder_birth_date — 보호자·동물 신원은 destination 무관.
  */
 export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 일정
@@ -45,6 +45,8 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'id_date',
   // 절차 시간 (EU 촌충국가별 praziquantel 투여시각)
   'deworming_time',
+  // 도착국 거주지 주소 — destination 별로 다른 주소
+  'address_overseas',
 ])
 
 export function isDestinationScopedKey(key: string): boolean {

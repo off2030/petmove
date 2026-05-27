@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@petmove/domain'
+import { isDestinationScopedKey, parseDestinations, readEffectiveExtraValue, resolveActiveDestination } from '@petmove/domain'
 import { CopyButton } from './copy-button'
 import { SectionLabel } from '@/components/ui/section-label'
 import { useSectionEditMode } from './section-edit-mode-context'
@@ -14,7 +15,7 @@ import { useConfirm } from '@petmove/ui'
 const DATA_KEY = 'address_overseas'
 
 export function OverseasAddressField({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
-  const { updateLocalCaseField } = useCases()
+  const { updateLocalCaseField, activeDestination } = useCases()
   const editMode = useSectionEditMode()
   const confirm = useConfirm()
   async function handleDelete() {
@@ -25,8 +26,14 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
     })
     if (ok) save(null)
   }
+  // 다중 목적지 + 활성 목적지 + scoped 키 → by_dest 경로 read/write.
+  const activeDest = resolveActiveDestination(caseRow.destination, activeDestination)
+  const isMultiDest = parseDestinations(caseRow.destination).length > 1
+  const destArg: string | null | undefined =
+    isMultiDest && activeDest && isDestinationScopedKey(DATA_KEY) ? activeDest : undefined
   const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const value = (data[DATA_KEY] as string | null) ?? null
+  const raw = readEffectiveExtraValue(data, DATA_KEY, activeDest)
+  const value: string | null = typeof raw === 'string' ? raw : null
 
   const [editing, setEditing] = useState(false)
 
@@ -36,11 +43,11 @@ export function OverseasAddressField({ caseId, caseRow }: { caseId: string; case
     const val = v?.trim() || null
     const prev = value
     // Optimistic
-    updateLocalCaseField(caseId, 'data', DATA_KEY, val)
+    updateLocalCaseField(caseId, 'data', DATA_KEY, val, destArg)
     setEditing(false)
     void (async () => {
-      const r = await updateCaseField(caseId, 'data', DATA_KEY, val)
-      if (!r.ok) updateLocalCaseField(caseId, 'data', DATA_KEY, prev)
+      const r = await updateCaseField(caseId, 'data', DATA_KEY, val, destArg)
+      if (!r.ok) updateLocalCaseField(caseId, 'data', DATA_KEY, prev, destArg)
     })()
   }
 
