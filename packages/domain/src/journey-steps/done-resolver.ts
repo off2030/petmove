@@ -57,7 +57,12 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       const previous = r[r.length - 2]
       const previousValidUntil = resolveValidUntil(previous.date, previous.valid_until)
       if (!previousValidUntil || latest.date > previousValidUntil) return false
-      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
+      // 입국일 = data.entry_date 우선, 없으면 케이스의 출국일(departure_date) 폴백.
+      // 일본 등 entry_date 미사용 destination 에서도 검증 동작.
+      const entry =
+        (typeof data.entry_date === 'string' && data.entry_date) ||
+        (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
+        ''
       if (entry) {
         const latestValidUntil = resolveValidUntil(latest.date, latest.valid_until)
         if (!latestValidUntil || latestValidUntil < entry) return false
@@ -71,7 +76,11 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       // 의 2년 유효기간이 입국일을 커버해야 완료. 못 커버하면 추가 검사가 더 필요한 상태.
       const t = readTiterEntries(caseRow)
       if (t.length < 2) return false
-      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
+      // 입국일 = entry_date 우선, 없으면 출국일 폴백 (일본 등).
+      const entry =
+        (typeof data.entry_date === 'string' && data.entry_date) ||
+        (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
+        ''
       if (entry) {
         const hasValid = t.some((titer) => {
           const v = addYears(titer.date, 2)
@@ -96,7 +105,11 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
     case 'has-vet-visit':
       return typeof data.vet_visit_date === 'string' && (data.vet_visit_date as string).length >= 10
     case 'has-flight-date': {
-      const hasEntry = typeof data.entry_date === 'string' && (data.entry_date as string).length >= 10
+      // entry_date(도착일) 또는 케이스의 departure_date(출국일) 둘 중 하나라도 입력되면 완료.
+      // 일본은 entry_date 미사용 → departure_date(= 항공권 출발일과 sync) 로 판정.
+      const entryRaw = typeof data.entry_date === 'string' ? data.entry_date : ''
+      const depRaw = typeof caseRow.departure_date === 'string' ? caseRow.departure_date : ''
+      const hasEntry = entryRaw.length >= 10 || depRaw.length >= 10
       if (!hasEntry) return false
       // 왕복 케이스는 귀국 항공편까지 입력되어야 항공권 구매 완료. 출국만 입력된 상태로
       // 다음 step(사전 신고)으로 흘려보내면 보호자가 귀국편을 잊을 위험 — situational

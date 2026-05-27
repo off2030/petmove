@@ -3,7 +3,7 @@
 import { createClient } from '@petmove/auth/server'
 import { applyAutoFillRules } from '@/lib/auto-fill-engine'
 import { evaluateAndNotify } from './system-notifications'
-import { isDestinationScopedKey, matchesDestinationKey, parseDestinations } from '@petmove/domain'
+import { isDestinationScopedKey, parseDestinations } from '@petmove/domain'
 
 const REGULAR_COLUMNS = new Set([
   'customer_name',
@@ -93,19 +93,6 @@ export async function updateCaseField(
     } else {
       nextDestObj[key] = value
     }
-    // 일본 한정: departure_flight_date ↔ departure_date 양방향 sync (한일 같은 날 출발=도착).
-    // by_dest 안에서만 sync — 다른 destination 의 by_dest 또는 top-level 컬럼은 안 건드림.
-    if (matchesDestinationKey(destination, 'japan')) {
-      if (key === 'departure_flight_date') {
-        if (nextDestObj['departure_date'] !== (value ?? null)) {
-          nextDestObj['departure_date'] = value === null || value === undefined || value === '' ? null : value
-        }
-      } else if (key === 'departure_date') {
-        if (nextDestObj['departure_flight_date'] !== (value ?? null)) {
-          nextDestObj['departure_flight_date'] = value === null || value === undefined || value === '' ? null : value
-        }
-      }
-    }
     nextByDest[destination!] = nextDestObj
     const nextData = { ...currentData }
     nextData['by_dest'] = nextByDest
@@ -178,15 +165,6 @@ export async function updateCaseField(
         }
       } catch { /* 날짜 계산 실패 무시 */ }
     }
-    // 일본 한정: departure_date → departure_flight_date sync (한일 같은 날 출발=도착).
-    if (
-      key === 'departure_date'
-      && matchesDestinationKey(destinationRaw, 'japan')
-      && nextData['departure_flight_date'] !== (value ?? null)
-    ) {
-      nextData['departure_flight_date'] = value === null || value === undefined || value === '' ? null : value
-      dataMutated = true
-    }
   } else {
     if (value === null || value === undefined || value === '') {
       delete nextData[key]
@@ -194,27 +172,9 @@ export async function updateCaseField(
       nextData[key] = value
     }
     dataMutated = true
-    // 일본 한정: departure_flight_date → departure_date 컬럼 sync.
-    if (
-      key === 'departure_flight_date'
-      && matchesDestinationKey(destinationRaw, 'japan')
-    ) {
-      const newDep = value === null || value === undefined || value === '' ? null : value
-      if ((row as { departure_date: string | null }).departure_date !== newDep) {
-        updateObj['departure_date'] = newDep
-        // vet_available_date 도 같이 동기화 (= departure_date - 9).
-        if (typeof newDep === 'string' && newDep) {
-          try {
-            const d = new Date(newDep)
-            if (!isNaN(d.getTime())) {
-              d.setDate(d.getDate() - 9)
-              nextData.vet_available_date = d.toISOString().split('T')[0]
-            }
-          } catch { /* 무시 */ }
-        }
-      }
-    }
   }
+  // 일본 등 destination 별 sync (예: departure_flight_date ↔ departure_date) 는
+  // hardcode 가 아닌 org_auto_fill_rules 로 처리 — applyAutoFillRules 가 트리거.
 
   // 서류/신고 탭 상태 자동 리셋 — 재출국 시 'done' 클리어.
   //   서류(export_doc_status):
