@@ -335,9 +335,11 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
             </div>
           ))}
 
-          {/* ── Text input (new) — 입력칸 우측 중앙에 클립 아이콘으로 파일 첨부 ── */}
+          {/* ── Text input (new) — 입력칸 우측에 [저장][클립] 한 줄 배치, 같은 높이.
+                저장은 NoteTextInput 내부, 클립은 외부 — 부모 flex 가 items-start 로 textarea
+                상단에 두 버튼 모두 정렬해 textarea 가 multi-line 으로 늘어나도 어긋나지 않음. ── */}
           {addingText && (
-            <div className="flex items-center gap-sm">
+            <div className="flex items-start gap-sm">
               <div className="flex-1 min-w-0">
                 <NoteTextInput
                   initial=""
@@ -349,7 +351,7 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
               <AttachButton
                 multiple
                 onFile={(file) => uploadFiles([file])}
-                className={roundIconBtn}
+                className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full border border-border/80 bg-popover text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
                 title="파일 첨부 (모바일 카메라 시 자동 크롭)"
               >
                 <Paperclip size={14} />
