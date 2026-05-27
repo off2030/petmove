@@ -1072,7 +1072,7 @@ function JpExportConfirmedToggle({ caseId, caseRow }: { caseId: string; caseRow:
         aria-pressed={confirmed}
         className={cn(
           'inline-flex h-5 w-9 items-center rounded-full transition-colors',
-          confirmed ? 'bg-pmw-tag' : 'bg-muted-foreground/30',
+          confirmed ? 'bg-pmw-accent' : 'bg-muted-foreground/30',
           busy && 'opacity-60 cursor-progress',
         )}
       >

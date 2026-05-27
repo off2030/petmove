@@ -409,7 +409,7 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
               aria-pressed={coProgress}
               className={cn(
                 'inline-flex h-5 w-9 items-center rounded-full transition-colors',
-                coProgress ? 'bg-pmw-tag' : 'bg-muted-foreground/30',
+                coProgress ? 'bg-pmw-accent' : 'bg-muted-foreground/30',
               )}
             >
               <span
