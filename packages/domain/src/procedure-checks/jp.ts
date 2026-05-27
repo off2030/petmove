@@ -396,6 +396,87 @@ export const JP_CHECKS: ProcedureCheck[] = [
     },
   },
   {
+    id: 'jp.export-quarantine-application-10days-before-return',
+    country: 'japan',
+    category: '일정',
+    title: '수출 동물검역 신청은 귀국 10일 전까지',
+    description: '일본 수출 동물검역 신청은 귀국 항공편 출발일로부터 10일 이전에 접수되어야 함.',
+    severity: 'info',
+    addedAt: '2026-05-27',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const applied =
+        typeof data.jp_export_quarantine_application_date === 'string'
+          ? data.jp_export_quarantine_application_date
+          : ''
+      const ret = typeof data.return_date === 'string' ? data.return_date : ''
+      // 필수: 신청일 + 귀국 항공편 날짜
+      if (!applied || !ret) return SKIP
+
+      const deadline = addDays(ret, -10)
+      if (!deadline) return SKIP
+      if (applied <= deadline) {
+        return { ok: true, message: `신청일(${applied}) ≤ 마감(${deadline}).` }
+      }
+      return {
+        ok: false,
+        message: `신청일(${formatKoreanDate(applied)})이 귀국 10일 전 마감일(${formatKoreanDate(deadline)})보다 늦습니다.`,
+        fixHint: `귀국 항공편을 ${formatKoreanDate(addDays(applied, 10))} 이후로 변경하세요.`,
+        offendingPaths: ['jp_export_quarantine_application_date', 'return_date'],
+      }
+    },
+  },
+  {
+    id: 'jp.export-quarantine-date-not-after-return',
+    country: 'japan',
+    category: '일정',
+    title: '수출 동물검역 예약은 귀국 항공편 이전',
+    description: '수출 동물검역 예약일은 귀국 항공편 출발일보다 늦을 수 없음.',
+    severity: 'warning',
+    addedAt: '2026-05-27',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const reserved =
+        typeof data.jp_export_quarantine_date === 'string' ? data.jp_export_quarantine_date : ''
+      const ret = typeof data.return_date === 'string' ? data.return_date : ''
+      // 필수: 예약일 + 귀국 항공편 날짜
+      if (!reserved || !ret) return SKIP
+      if (reserved <= ret) {
+        return { ok: true, message: `예약(${reserved}) ≤ 귀국(${ret}).` }
+      }
+      return {
+        ok: false,
+        message: `예약일(${formatKoreanDate(reserved)})이 귀국 항공편(${formatKoreanDate(ret)})보다 늦습니다.`,
+        offendingPaths: ['jp_export_quarantine_date', 'return_date'],
+      }
+    },
+  },
+  {
+    id: 'jp.export-quarantine-date-not-before-entry',
+    country: 'japan',
+    category: '일정',
+    title: '수출 동물검역 예약은 일본 입국 이후',
+    description: '수출 동물검역 예약일은 일본 입국 항공편보다 빠를 수 없음.',
+    severity: 'warning',
+    addedAt: '2026-05-27',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const reserved =
+        typeof data.jp_export_quarantine_date === 'string' ? data.jp_export_quarantine_date : ''
+      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
+      // 필수: 예약일 + 출국(일본 입국) 항공편 날짜
+      if (!reserved || !entry) return SKIP
+      if (reserved >= entry) {
+        return { ok: true, message: `예약(${reserved}) ≥ 입국(${entry}).` }
+      }
+      return {
+        ok: false,
+        message: `예약일(${formatKoreanDate(reserved)})이 일본 입국일(${formatKoreanDate(entry)})보다 빠릅니다.`,
+        offendingPaths: ['jp_export_quarantine_date', 'entry_date'],
+      }
+    },
+  },
+  {
     id: 'jp.rabies-valid-until-on-departure',
     country: 'japan',
     category: '광견병',
