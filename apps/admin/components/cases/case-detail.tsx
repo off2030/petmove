@@ -8,7 +8,7 @@ import {
   HIDDEN_EN_KEYS,
   readCaseField,
 } from '@petmove/domain'
-import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, matchesDestinationKey, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, SWISS_ENTRY_AIRPORT_OPTIONS, THAILAND_ENTRY_AIRPORT_OPTIONS, resolveActiveDestination, getTripType, isRabiesTiterHiddenForOneWay, isDestinationScopedKey, parseDestinations, type ExtraFieldDef } from '@petmove/domain'
+import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, matchesDestinationKey, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, resolveActiveDestination, getTripType, isRabiesTiterHiddenForOneWay, isDestinationScopedKey, parseDestinations, applyDestinationFieldOverride, type ExtraFieldDef } from '@petmove/domain'
 import { buildShareFieldDescriptors } from '@petmove/domain'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
@@ -366,7 +366,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
           const segments: ExtraSegment[] = []
           for (const d of extraDescriptors) {
             if (d.source.kind !== 'extra') continue
-            const def = applyDestinationFieldOverride(d.source.def, viewDestination)
+            const def = applyDestinationFieldOverride(d.source.def, viewDestination, getDestinationOverride)
             // useShortLabel 은 빌더가 destination 별로 결정한 값을 그대로 신뢰
             // (일본만 'shortLabel' — 날짜/시간/항공편명, 그 외는 풀라벨 — 도착일/도착시간).
             const groupUseShortLabel = d.source.useShortLabel
@@ -421,19 +421,6 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
 type ExtraSegment =
   | { type: 'group'; name: string; items: ExtraFieldDef[]; useShortLabel: boolean }
   | { type: 'flat'; entry: ExtraFieldDef }
-
-/** 목적지별 ExtraFieldDef 오버라이드 — 같은 키라도 국가별로 type/options 가 달라질 때 적용. */
-function applyDestinationFieldOverride(def: ExtraFieldDef, destination: string | null | undefined): ExtraFieldDef {
-  if (!destination) return def
-  const override = getDestinationOverride(destination)
-  if (override?.extraSection === 'switzerland' && def.key === 'entry_airport') {
-    return { ...def, type: 'select', options: SWISS_ENTRY_AIRPORT_OPTIONS, placeholder: undefined }
-  }
-  if (override?.extraSection === 'thailand' && def.key === 'entry_airport') {
-    return { ...def, type: 'select', options: THAILAND_ENTRY_AIRPORT_OPTIONS, placeholder: undefined }
-  }
-  return def
-}
 
 function buildSpecForExtra(def: ExtraFieldDef, useShortLabel: boolean): FieldSpec {
   const isSelect = def.type === 'select' && def.options

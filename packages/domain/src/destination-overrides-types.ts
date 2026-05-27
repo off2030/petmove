@@ -295,6 +295,34 @@ export const HARDCODED_VACCINE_SPECIES_DEFAULTS: Record<string, SpeciesFilter | 
   infectious_disease: 'dog',
 }
 
+/**
+ * 목적지별 ExtraFieldDef 오버라이드 — 같은 key 라도 destination 에 따라 type/options/label
+ * 이 달라지는 경우를 일원화. case-detail 상세 + share-link(매직링크) 양쪽이 같은 정의를 본다.
+ *
+ * - switzerland.entry_airport: 공항 select (Zürich/Geneva/Basel)
+ * - thailand.entry_airport: 공항 select (Bangkok/Phuket/Chiang Mai)
+ * - philippines.entry_airport: label "도착공항 / 목적지" — 보호자가 도시·지역으로
+ *   해석하기 쉽도록 (보홀·세부 등 공항이자 목적지인 케이스가 많음).
+ */
+export function applyDestinationFieldOverride<T extends ExtraFieldDef>(
+  def: T,
+  destination: string | null | undefined,
+  getOverride: (d: string | null | undefined) => { extraSection?: string } | null,
+): T {
+  if (!destination) return def
+  const override = getOverride(destination)
+  if (override?.extraSection === 'switzerland' && def.key === 'entry_airport') {
+    return { ...def, type: 'select', options: SWISS_ENTRY_AIRPORT_OPTIONS, placeholder: undefined }
+  }
+  if (override?.extraSection === 'thailand' && def.key === 'entry_airport') {
+    return { ...def, type: 'select', options: THAILAND_ENTRY_AIRPORT_OPTIONS, placeholder: undefined }
+  }
+  if (override?.extraSection === 'philippines' && def.key === 'entry_airport') {
+    return { ...def, label: '도착공항 / 목적지' }
+  }
+  return def
+}
+
 /** 슬러그 검증 — 영소문자/숫자/언더스코어, 1자 이상. */
 export function isValidDestinationId(id: string): boolean {
   return /^[a-z0-9_]+$/.test(id) && id.length > 0

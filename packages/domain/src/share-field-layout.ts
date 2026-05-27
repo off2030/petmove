@@ -19,10 +19,11 @@
  */
 import {
   EXTRA_FIELD_DEFS,
+  applyDestinationFieldOverride,
   type DestinationExtraFieldEntry,
   type ExtraFieldDef,
 } from './destination-overrides-types'
-import { extraFieldMatchesSpecies } from './destination-config'
+import { extraFieldMatchesSpecies, getDestinationOverride } from './destination-config'
 import { buildFieldSpecs as buildAllFieldSpecs } from './fields'
 import type { FieldDefinition } from './types'
 import {
@@ -222,8 +223,11 @@ export function buildShareFieldDescriptors(
   for (const entry of extraFieldEntries) {
     if (EXTRA_EXCLUDED_FROM_EXTRA.has(entry.key)) continue
     if (caseScoped && !extraFieldMatchesSpecies(entry, speciesValue)) continue
-    const def = EXTRA_FIELD_DEFS[entry.key]
-    if (!def) continue
+    const rawDef = EXTRA_FIELD_DEFS[entry.key]
+    if (!rawDef) continue
+    // 목적지별 ExtraFieldDef 오버라이드 — type/options/label 이 destination 에 따라 다른 경우.
+    // 예: philippines.entry_airport 의 label='도착공항 / 목적지' (보호자가 도시·지역으로 해석).
+    const def = applyDestinationFieldOverride(rawDef, destinationScope, getDestinationOverride)
     const useGroup = !!def.group && (groupCounts.get(def.group) ?? 0) >= 2
     // 일본은 항공편 필드가 많아 shortLabel(날짜/시간/항공편명)이 더 가독성 좋음.
     // 태국/미국 등은 같은 그룹이어도 풀라벨(도착일/도착시간)을 그대로 노출.
