@@ -21,6 +21,7 @@
 | [3185985] | 일본 entry_date 제거 — 일본 procedure-check 의 entry_date 참조 readDepartureDate 로 |
 | [d73c2a8] | 일본 `departure_flight_date` / `departure_flight_time` 신설 |
 | [e554a88] | 일본 출발일↔출국일 sync hardcode → org_auto_fill_rules 시드. done-resolver 보강 |
+| [6a00722] | 일본 항공권 OCR 에 출발시간 추출 + 매핑 수정 (`inbound.{date,time}` → `departure_flight_{date,time}`) |
 
 ## 적용 필요 마이그레이션 (다른 컴퓨터에서 prod 반영 시)
 
@@ -35,18 +36,11 @@ pnpm db:push
 
 ## 후속 작업 (TODO)
 
-### 우선순위 1 — 일본 항공권 흐름 완결
+### ~~우선순위 1 — 일본 항공권 흐름 완결~~ (완료 — 6a00722)
 
-- **AI 추출 확장** ([apps/admin/lib/actions/extract-extra.ts](../apps/admin/lib/actions/extract-extra.ts))
-  - 현재 `JapanResult.inbound.date` (= entry_date) 추출 중
-  - 일본 미사용 키라 일본 항공권 OCR 결과가 손실됨
-  - schema 에 `departure_flight_date` / `departure_flight_time` 추출 추가, 일본 매핑 변경
-  - 보호자가 매직링크로 항공권 사진 올리면 두 키에 자동 채움
-
-- **출발시간 입력 UI** ([apps/admin/components/cases/japan-extra-field.tsx](../apps/admin/components/cases/japan-extra-field.tsx))
-  - 현재 `FLIGHT_FIELDS` 가 [date·항공편명·출발공항·도착공항·운송방법] 5개
-  - `departure_flight_time` 추가 시 FLIGHT_FIELDS 확장 + FlightEntry 타입에 time 필드 추가
-  - 또는 EXTRA_FIELD_DEFS 자동 노출 메커니즘으로 처리 가능한지 확인 (이미 group 안에 있으니 동작할 수도)
+- ~~**AI 추출 확장**~~ — `FlightEntry` 에 `time` 추가, Japan prompt 가 inbound flight 의 24h 출발시간 추출. `mapExtractResultToUnified` 가 `inbound.{date,time}` → `departure_flight_{date,time}` 로 매핑 (entry_date 제거).
+- ~~**출발시간 입력 UI**~~ — `JapanExtraField` 는 dead code 였고 (case-detail 에서 안 부름), 실제 렌더는 `SimpleExtraSection` 이 `EXTRA_FIELD_DEFS` + destination-config 의 `extraFields` 자동 노출로 처리. `departure_flight_time` 은 이미 `'출국 항공편'` group 에 등록돼 있어 자동 표시됨.
+- LEGACY_EXTRA_PATHS: `entry_date` 에서 `japan_extra.inbound.date` 제거, `departure_flight_date/time` fallback 으로 옮김 (옛 케이스도 새 키로 읽힘).
 
 ### 우선순위 2 — 다른 destination 정리
 
