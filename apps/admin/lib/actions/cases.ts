@@ -435,6 +435,8 @@ export async function setAdvanceNotificationReportStatus(
   target: ReportTarget,
 ): Promise<UpdateResult> {
   return patchCaseData(caseId, (d) => {
+    // 새 액션이 호출되는 시점 = derive 모드로 전환. legacy stored 는 클리어.
+    delete d.import_import_status
     if (target === 'not_started') {
       delete d.advance_notification_date
       delete d.advance_notification_approval_skipped
@@ -470,6 +472,8 @@ export async function setJpExportQuarantineReportStatus(
   target: ReportTarget,
 ): Promise<UpdateResult> {
   return patchCaseData(caseId, (d) => {
+    // 새 액션이 호출되는 시점 = derive 모드로 전환. legacy stored 는 클리어.
+    delete d.import_export_status
     if (target === 'not_started') {
       delete d.jp_export_quarantine_application_date
       delete d.jp_export_quarantine_reservation_skipped
@@ -524,6 +528,8 @@ export async function setJpExportQuarantineConfirmed(
   value: boolean,
 ): Promise<UpdateResult> {
   return patchCaseData(caseId, (d) => {
+    // 토글 = 명시적 transition. stored 클리어해 derive 모드.
+    delete d.import_export_status
     if (value) {
       d.jp_export_quarantine_confirmed = true
       delete d.jp_export_quarantine_admin_demoted_at

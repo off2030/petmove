@@ -94,9 +94,10 @@ export async function uploadStepDocumentAdmin(formData: FormData): Promise<StepD
       uploadedAt: new Date().toISOString(),
     }
     const nextData: Record<string, unknown> = { ...prev, documents: [...readDocs(prev), doc] }
-    // 사전신고 첨부 = 완료 시그널. demote 자동 해제.
+    // 사전신고 첨부 = 완료 시그널. demote 자동 해제 + stored 클리어 (derive 전환).
     if (stepId === 'advance-notification') {
       delete nextData.advance_notification_admin_demoted_at
+      delete nextData.import_import_status
     }
 
     const { data: updated, error } = await supabase
@@ -133,7 +134,11 @@ export async function deleteStepDocumentAdmin(
     const target = docs.find((d) => d.id === docId)
     if (!target) return { ok: false, error: '파일을 찾을 수 없습니다.' }
 
-    const nextData = { ...prev, documents: docs.filter((d) => d.id !== docId) }
+    const nextData: Record<string, unknown> = { ...prev, documents: docs.filter((d) => d.id !== docId) }
+    // 사전신고 첨부 삭제 = 운영자의 명시적 transition — stored 클리어해 derive 전환.
+    if (target.stepId === 'advance-notification') {
+      delete nextData.import_import_status
+    }
     const { data: updated, error } = await supabase
       .from('cases')
       .update({ data: nextData })
