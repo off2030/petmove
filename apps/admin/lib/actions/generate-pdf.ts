@@ -3,7 +3,7 @@
 import { createClient } from '@petmove/auth/server'
 import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
 import type { CaseRow } from '@petmove/domain'
-import { getEffectiveVaccineList, flattenCaseForDestination } from '@petmove/domain'
+import { getEffectiveVaccineList, flattenCaseForDestination, getDepartureDate, getVetVisitDate } from '@petmove/domain'
 import { loadEffectiveVetInfo } from '@/lib/vet-info'
 
 export type GeneratePdfResult =
@@ -322,7 +322,9 @@ export async function generateAQS(caseId: string, opts?: GenerateOpts) {
   // AQS-279 의 "TOTAL NUMBER of DOGS and CATS ARRIVING in HAWAII on that DATE"
   // 는 같은 보호자 + 같은 목적지 + 같은 출국일 케이스 수로 자동 계산.
   // hawaii_extra.total_pets_arriving 가 양의 정수로 입력돼 있으면 그 값을 우선.
-  const sib = await fetchSiblings(caseId)
+  // 다중 목적지: opts.destination 으로 활성 목적지를 받아 sibling 매칭에 by_dest 출국일 사용.
+  const activeDest = opts?.destination ?? null
+  const sib = await fetchSiblings(caseId, activeDest)
   let totalPets = 1
   if (sib.ok) {
     const pivot = sib.siblings[0]
@@ -337,12 +339,15 @@ export async function generateAQS(caseId: string, opts?: GenerateOpts) {
           : NaN
     if (Number.isFinite(overrideNum) && overrideNum > 0) {
       totalPets = Math.floor(overrideNum)
-    } else if (pivot?.departure_date) {
-      // fetchSiblings 는 (sameDeparture OR sameVet) 으로 매칭하므로
-      // AQS 도착일 카운트는 출국일 일치 건만 다시 좁혀서 카운트.
-      totalPets = sib.siblings.filter(c => c.departure_date === pivot.departure_date).length || 1
     } else {
-      totalPets = sib.siblings.length
+      const pivotDeparture = getDepartureDate(pivot, activeDest)
+      if (pivotDeparture) {
+        // fetchSiblings 는 (sameDeparture OR sameVet) 으로 매칭하므로
+        // AQS 도착일 카운트는 출국일 일치 건만 다시 좁혀서 카운트.
+        totalPets = sib.siblings.filter(c => getDepartureDate(c, activeDest) === pivotDeparture).length || 1
+      } else {
+        totalPets = sib.siblings.length
+      }
     }
   }
   return generate('AQS_279', caseId, { ...opts, extras: { total_pets_arriving: String(totalPets) } })
@@ -369,8 +374,15 @@ export interface SiblingPreview {
   formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC'
 }
 
-/** Find cases that share the same customer + destination + departure_date with the given case. */
-export async function fetchSiblings(caseId: string): Promise<
+/**
+ * Find cases that share the same customer + destination + departure_date with the given case.
+ *
+ * 다중 목적지 케이스 + activeDestination 인자가 주어진 경우: 출국일·내원일 비교를
+ * `by_dest[activeDestination][departure_date|vet_visit_date]` 기준으로 수행 (top-level
+ * column/data fallback). pivot 과 candidate 모두 같은 활성 목적지 컨텍스트로 읽혀야
+ * destination 별 분리된 출국일이 다른 경우에도 정확한 sibling 묶음이 잡힌다.
+ */
+export async function fetchSiblings(caseId: string, activeDestination?: string | null): Promise<
   { ok: true; siblings: CaseRow[] } | { ok: false; error: string }
 > {
   const supabase = await createClient()
@@ -394,13 +406,16 @@ export async function fetchSiblings(caseId: string): Promise<
   const { data: rows, error } = await q.limit(50)
   if (error) return { ok: false, error: error.message }
 
-  // 2차 필터: 출국일 OR 내원일 일치 (vet_visit_date 가 data jsonb 안이라 client side)
-  const pivotVet = readVetVisitDate(p)
+  // 2차 필터: 활성 목적지 기준 출국일 OR 내원일 일치.
+  // by_dest 우선, 없으면 column/data fallback — destination-scoped-fields 헬퍼가 처리.
+  const pivotDeparture = getDepartureDate(p, activeDestination)
+  const pivotVet = getVetVisitDate(p, activeDestination)
   const matchesPivot = (c: CaseRow): boolean => {
-    const cVet = readVetVisitDate(c)
-    const sameDeparture = p.departure_date
-      ? c.departure_date === p.departure_date
-      : !c.departure_date
+    const cDeparture = getDepartureDate(c, activeDestination)
+    const cVet = getVetVisitDate(c, activeDestination)
+    const sameDeparture = pivotDeparture
+      ? cDeparture === pivotDeparture
+      : !cDeparture
     const sameVet = pivotVet ? cVet === pivotVet : !cVet
     return sameDeparture || sameVet
   }
@@ -417,16 +432,15 @@ export async function fetchSiblings(caseId: string): Promise<
   return { ok: true, siblings: sorted }
 }
 
-function readVetVisitDate(c: CaseRow): string | null {
-  const data = (c.data ?? {}) as Record<string, unknown>
-  const v = data.vet_visit_date
-  return typeof v === 'string' && v ? v : null
-}
-
-export async function previewSiblings(caseId: string, formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC'): Promise<
+export async function previewSiblings(
+  caseId: string,
+  formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC',
+  /** 다중 목적지 케이스 — 활성 목적지의 출국일·내원일 기준으로 sibling 매칭. */
+  activeDestination?: string | null,
+): Promise<
   { ok: true; preview: SiblingPreview } | { ok: false; error: string }
 > {
-  const r = await fetchSiblings(caseId)
+  const r = await fetchSiblings(caseId, activeDestination ?? null)
   if (!r.ok) return r
   const summaries: SiblingSummary[] = r.siblings.map(c => ({
     id: c.id,

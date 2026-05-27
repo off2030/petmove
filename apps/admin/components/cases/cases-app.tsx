@@ -445,7 +445,7 @@ function Inner() {
   const handleMultiForm = useCallback(async (caseId: string, formKey: 'AnnexIII' | 'UK' | 'NZ' | 'VBC', destination: string | null) => {
     const row = cases.find((c) => c.id === caseId)
     if (row && !(await confirmIfFailing(row, destination))) return
-    const p = await previewSiblings(caseId, formKey)
+    const p = await previewSiblings(caseId, formKey, destination)
     if (!p.ok) { alert(p.error); return }
     if (p.preview.cases.length <= 1) {
       const ids = p.preview.cases.map(c => c.id)

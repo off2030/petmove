@@ -64,7 +64,7 @@ export function MultiFormDialog({ caseId, formKey, includeVet, destination, onCl
 
   useEffect(() => {
     startLoad(async () => {
-      const r = await previewSiblings(caseId, formKey)
+      const r = await previewSiblings(caseId, formKey, destination)
       if (r.ok) {
         setPreview(r.preview)
         setSelected(new Set(r.preview.cases.map(c => c.id)))
