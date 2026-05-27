@@ -11,6 +11,7 @@ export type Country =
 
 export interface FlightEntry {
   date: string | null
+  time: string | null
   departure_airport: string | null
   arrival_airport: string | null
   transport: 'Checked-baggage' | 'Carry-on' | 'Cargo' | 'Cargo(Sea)' | null
@@ -112,9 +113,10 @@ type ExtractResult<C extends Country> =
 const FLIGHT_ENTRY_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['date', 'departure_airport', 'arrival_airport', 'transport', 'flight_number'],
+  required: ['date', 'time', 'departure_airport', 'arrival_airport', 'transport', 'flight_number'],
   properties: {
     date: { type: ['string', 'null'] },
+    time: { type: ['string', 'null'] },
     departure_airport: { type: ['string', 'null'] },
     arrival_airport: { type: ['string', 'null'] },
     transport: {
@@ -296,7 +298,8 @@ The customer transports a pet between Korea and Japan — typically TWO flights:
 1. "inbound" = Korea → Japan (departing Korean airport ICN/GMP/PUS/CJU; arriving Japanese airport NRT/HND/KIX/CTS/FUK/OKA).
 2. "outbound" = Japan → Korea (reverse).
 Determine direction BY AIRPORTS, not by date order.${COMMON_RULES}
-- For each flight: date (YYYY-MM-DD), departure_airport (IATA), arrival_airport (IATA), transport, flight_number.
+- For each flight: date (YYYY-MM-DD), time (24h "HH:mm"), departure_airport (IATA), arrival_airport (IATA), transport, flight_number.
+- time: scheduled DEPARTURE time of that flight in 24h "HH:mm". Convert AM/PM if needed (e.g. "9:30 AM" → "09:30", "5:45 PM" → "17:45"). If only an arrival time is shown, return null.
 - transport: exactly one of "Checked-baggage" | "Carry-on" | "Cargo" | "Cargo(Sea)". NEVER null — default "Carry-on" when unclear.
   Korean mappings: 기내탑승/기내동반/cabin → "Carry-on"; 수하물/수화물/화물칸/baggage/checked → "Checked-baggage"; 화물/cargo → "Cargo"; 선박/sea → "Cargo(Sea)".
   In Q&A format, ONLY use the ANSWER (after colon), not the question choices.

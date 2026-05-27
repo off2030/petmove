@@ -29,7 +29,7 @@ interface JapanExtra {
 }
 
 const EMPTY_FLIGHT: FlightEntry = {
-  date: null, departure_airport: null, arrival_airport: null, transport: null, flight_number: null,
+  date: null, time: null, departure_airport: null, arrival_airport: null, transport: null, flight_number: null,
 }
 
 const TRANSPORT_OPTIONS = [

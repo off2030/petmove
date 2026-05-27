@@ -200,9 +200,13 @@ const LEGACY_EXTRA_PATHS: Record<string, string[][]> = {
     ['thailand_extra', 'arrival_date'],
     ['usa_extra', 'arrival_date'],
     ['switzerland_extra', 'entry_date'],
-    ['japan_extra', 'inbound', 'date'],
+    // 일본은 entry_date 미사용 (한일 같은 날 → departure_flight_date 로 통일).
+    // legacy 케이스의 japan_extra.inbound.date 는 departure_flight_date fallback 으로 옮김.
   ],
   entry_time: [['thailand_extra', 'arrival_time']],
+  // 일본: 한국 출발일·출발시간. legacy 시절에는 japan_extra.inbound.{date,time} 에 저장됐다.
+  departure_flight_date: [['japan_extra', 'inbound', 'date']],
+  departure_flight_time: [['japan_extra', 'inbound', 'time']],
   entry_departure_airport: [['japan_extra', 'inbound', 'departure_airport']],
   entry_airport: [
     ['philippines_extra', 'arrival_airport'],
