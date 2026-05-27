@@ -1156,7 +1156,12 @@ export async function updateKrImportQuarantineDate(
  */
 export async function updateJpExportQuarantineFields(
   caseId: string,
-  fields: { applicationDate: string | null; date: string | null; time: string | null },
+  fields: {
+    applicationDate: string | null
+    date: string | null
+    time: string | null
+    confirmed: boolean
+  },
 ): Promise<Result<CaseRow>> {
   try {
     if (
@@ -1229,12 +1234,12 @@ export async function updateJpExportQuarantineFields(
     else delete nextData.jp_export_quarantine_date
     if (time) nextData.jp_export_quarantine_time = time
     else delete nextData.jp_export_quarantine_time
-    // portal 보호자 입력 = 확정 의미 (admin 추가정보의 '고객 희망'과 다름).
-    // date+time 둘 다 있으면 confirmed=true, 하나라도 비면 false. admin 토글로도 동일.
-    if (d && time) {
+    // 보호자가 폼의 '예약 확정' 토글로 명시 — date+time 단독 입력은 '희망' 의미.
+    // 확정 ON → 완료 시그널 (admin demote/skipped 자동 해제). OFF → confirmed 키 제거.
+    if (fields.confirmed === true) {
       nextData.jp_export_quarantine_confirmed = true
-      // 완료 시그널 — admin demote 상태를 자동 해제.
       delete nextData.jp_export_quarantine_admin_demoted_at
+      delete nextData.jp_export_quarantine_reservation_skipped
     } else {
       delete nextData.jp_export_quarantine_confirmed
     }

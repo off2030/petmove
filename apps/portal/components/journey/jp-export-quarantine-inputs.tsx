@@ -6,6 +6,7 @@ export interface JpExportForm {
   applicationDate: string
   date: string
   time: string
+  confirmed: boolean
 }
 
 /** 예약시간 입력 마스킹 — 숫자만 추려 H:mm / HH:mm 으로 (예: '1200'→'12:00', '930'→'9:30'). */
@@ -26,7 +27,7 @@ export function JpExportQuarantineInputs({
   onChange,
 }: {
   form: JpExportForm
-  onChange: (key: keyof JpExportForm, next: string) => void
+  onChange: <K extends keyof JpExportForm>(key: K, next: JpExportForm[K]) => void
 }) {
   const C = {
     surface: '#FBF7F1',
@@ -56,6 +57,51 @@ export function JpExportQuarantineInputs({
             placeholder="YYYY-MM-DD"
             block
           />
+        </div>
+      </div>
+      <div style={{ padding: '14px 0', borderBottom: `.5px solid ${C.line}` }}>
+        <div
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}
+        >
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>예약 확정</div>
+            <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
+              검역소 이메일로 예약이 확정됐을 때 켜주세요
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onChange('confirmed', !form.confirmed)}
+            aria-pressed={form.confirmed}
+            style={{
+              flexShrink: 0,
+              position: 'relative',
+              width: 36,
+              height: 20,
+              borderRadius: 9999,
+              background: form.confirmed ? '#7D5938' : 'rgba(42,38,32,.20)',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'background 0.2s',
+              padding: 0,
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                display: 'block',
+                width: 16,
+                height: 16,
+                borderRadius: 9999,
+                background: '#fff',
+                boxShadow: '0 1px 2px rgba(0,0,0,.15)',
+                position: 'absolute',
+                top: 2,
+                left: form.confirmed ? 18 : 2,
+                transition: 'left 0.2s',
+              }}
+            />
+          </button>
         </div>
       </div>
       <div style={{ padding: '14px 0', borderBottom: `.5px solid ${C.line}` }}>

@@ -654,6 +654,7 @@ export function StepDetailView({
           applicationDate: jpExport.applicationDate || null,
           date: jpExport.date || null,
           time: jpExport.time || null,
+          confirmed: jpExport.confirmed,
         })
         if (res.ok) {
           updateCase(res.value)
@@ -2175,9 +2176,15 @@ function readJpExportForm(data: Record<string, unknown> | null | undefined): JpE
     applicationDate: str('jp_export_quarantine_application_date'),
     date: str('jp_export_quarantine_date'),
     time: str('jp_export_quarantine_time'),
+    confirmed: data?.jp_export_quarantine_confirmed === true,
   }
 }
 
 function jpExportFormEqual(a: JpExportForm, b: JpExportForm): boolean {
-  return a.applicationDate === b.applicationDate && a.date === b.date && a.time === b.time
+  return (
+    a.applicationDate === b.applicationDate &&
+    a.date === b.date &&
+    a.time === b.time &&
+    a.confirmed === b.confirmed
+  )
 }
