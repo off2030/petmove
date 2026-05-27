@@ -15,14 +15,14 @@ import { cookies } from 'next/headers'
 import { createAdminClient } from '@petmove/auth'
 import { verifyPreviewToken } from '@petmove/auth/preview-token'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
-import { emptyVaccineProductsData, applyAutoFillRules, getVetVisitMaxDaysBeforeDep, type CaseRow, type VaccineProductsData } from '@petmove/domain'
+import { emptyVaccineProductsData, applyAutoFillRules, getVetVisitWindowDays, type CaseRow, type VaccineProductsData } from '@petmove/domain'
 import { AVATAR_COLOR_IDS, AVATAR_EMOJIS, type AvatarColorId } from '@/lib/avatar'
 import { assertCaseAccess, type Result } from './_shared'
 
 /**
- * 내원·임상검진일은 출국일 포함 (max+1)일 이내여야 함 — 목적지별 윈도우(@petmove/domain
- * getVetVisitMaxDaysBeforeDep). 한국 APQA 디폴트 10일(max=9), 호주·러시아 5일(max=4),
- * 말레이·싱가포르 7일(max=6), 뉴질랜드·터키 2일(max=2). 다중 목적지 시 가장 엄격한 윈도우.
+ * 내원·임상검진일은 출국일 포함 N일 이내여야 함 — 목적지별 윈도우(@petmove/domain
+ * getVetVisitWindowDays). 한국 APQA 디폴트 10일, 말레이·싱가포르 7일,
+ * 호주·러시아 5일, 뉴질랜드·터키 3일. 다중 목적지 시 가장 엄격한 윈도우.
  */
 function validateVetVisitVsDeparture(
   visit: string | null | undefined,
@@ -38,11 +38,11 @@ function validateVetVisitVsDeparture(
   const da = new Date(d + 'T00:00:00Z').getTime()
   if (isNaN(va) || isNaN(da)) return { ok: true }
   const days = Math.round((da - va) / 86_400_000)
-  const maxDays = getVetVisitMaxDaysBeforeDep(destination)
-  if (days > maxDays) {
+  const windowDays = getVetVisitWindowDays(destination)
+  if (days >= windowDays) {
     return {
       ok: false,
-      error: `출국 전 임상검사는 출국일 기준 ${maxDays + 1}일 이내에 받아야 합니다.`,
+      error: `출국 전 임상검사는 출국일 기준 ${windowDays}일 이내에 받아야 합니다.`,
     }
   }
   return { ok: true }

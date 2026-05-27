@@ -368,39 +368,41 @@ export function matchesDestinationKey(
 }
 
 /**
- * 내원·임상검진일은 출국일 포함 X일 이내(= 출국일 기준 max 일 전 이후) 룰의
- * 목적지별 max days. 한국 APQA 디폴트는 10일(max 9). 비표준만 명시.
+ * 내원·임상검진일은 출국일 포함 N일 이내여야 함 — 목적지별 윈도우 N.
+ * 한국 APQA 디폴트 10일. 비표준만 명시; 값은 규정 문구의 "N일 이내" N 그대로.
  * 다중 목적지 시 가장 엄격한 윈도우(최소값) 적용.
  *
  * Source of truth — 각 목적지의 규정 (출처 packages/domain/src/procedure-checks/*.ts).
+ *
+ * 비교 규칙: `days >= window` 면 거부. 예) window=10 → days 0~9 OK, 10+ 거부.
+ *
+ * NOTE: 뉴질랜드/터키는 규정상 "2일 이내(48시간/MPI 2일)" 이지만 max-2-days-before
+ * 해석으로 window=3 적용 중. 규정 문구와 표시 disconnect — 별도 정리 대상.
  */
 const VET_VISIT_WINDOW_OVERRIDES: Array<{
   key: keyof typeof DESTINATION_OVERRIDES
-  max: number
+  window: number
 }> = [
-  // 7일 이내 (max 6일 전)
-  { key: 'malaysia', max: 6 },
-  { key: 'singapore', max: 6 },
-  // 5일 이내 (max 4일 전)
-  { key: 'australia', max: 4 },
-  { key: 'russia', max: 4 },
-  // 2일 이내 (max 2일 전 — '48시간' / MPI 2일)
-  { key: 'new_zealand', max: 2 },
-  { key: 'turkey', max: 2 },
+  { key: 'malaysia', window: 7 },
+  { key: 'singapore', window: 7 },
+  { key: 'australia', window: 5 },
+  { key: 'russia', window: 5 },
+  { key: 'new_zealand', window: 3 },
+  { key: 'turkey', window: 3 },
 ]
 
-const VET_VISIT_DEFAULT_MAX_DAYS = 9
+const VET_VISIT_DEFAULT_WINDOW_DAYS = 10
 
 /**
- * 입력된 목적지(콤마 구분 가능)에 대한 내원일↔출국일 max 일수.
- * 다중 목적지 시 가장 엄격한 윈도우 반환.
+ * 입력된 목적지(콤마 구분 가능)에 대한 내원일↔출국일 윈도우 일수.
+ * 반환값은 규정의 "N일 이내" N. 다중 목적지 시 가장 엄격한 윈도우(최소값) 반환.
  */
-export function getVetVisitMaxDaysBeforeDep(destination: string | null | undefined): number {
-  if (!destination) return VET_VISIT_DEFAULT_MAX_DAYS
-  let min = VET_VISIT_DEFAULT_MAX_DAYS
+export function getVetVisitWindowDays(destination: string | null | undefined): number {
+  if (!destination) return VET_VISIT_DEFAULT_WINDOW_DAYS
+  let min = VET_VISIT_DEFAULT_WINDOW_DAYS
   for (const ov of VET_VISIT_WINDOW_OVERRIDES) {
-    if (matchesDestinationKey(destination, ov.key) && ov.max < min) {
-      min = ov.max
+    if (matchesDestinationKey(destination, ov.key) && ov.window < min) {
+      min = ov.window
     }
   }
   return min
