@@ -827,9 +827,26 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel, activ
         {groupName}
       </span>
       <div className="min-w-0">
-        {items.map((def) => {
+        {items.map((def, idx) => {
           const spec = buildSpecForExtra(def, useShortLabel)
           const rawValue = readEffectiveExtraValue(data, def.key, activeDest)
+          // 수출검역 예약: 첫 행(날짜) 우측에 '확정' 토글을 인라인 배치.
+          if (isJpExportReservation && idx === 0) {
+            return (
+              <div key={def.key} className="flex items-center gap-md">
+                <div className="flex-1 min-w-0">
+                  <EditableField
+                    caseId={caseId}
+                    spec={spec}
+                    rawValue={rawValue}
+                    compact
+                    clearable
+                  />
+                </div>
+                <JpExportConfirmedToggle caseId={caseId} caseRow={caseRow} />
+              </div>
+            )
+          }
           return (
             <EditableField
               key={def.key}
@@ -841,9 +858,6 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel, activ
             />
           )
         })}
-        {isJpExportReservation && (
-          <JpExportConfirmedToggle caseId={caseId} caseRow={caseRow} />
-        )}
       </div>
     </div>
   )
@@ -1063,7 +1077,7 @@ function JpExportConfirmedToggle({ caseId, caseRow }: { caseId: string; caseRow:
     }
   }
   return (
-    <div className="mt-1 flex items-center gap-1.5 font-serif text-[12px]">
+    <div className="flex items-center gap-1.5 font-serif text-[12px]">
       <span className="text-muted-foreground">확정</span>
       <button
         type="button"
