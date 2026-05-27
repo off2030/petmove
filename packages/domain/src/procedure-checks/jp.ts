@@ -259,43 +259,6 @@ export const JP_CHECKS: ProcedureCheck[] = [
     },
   },
   {
-    id: 'jp.vet-visit-within-10days-of-departure',
-    country: 'japan',
-    category: '일정',
-    title: '검진일은 출국일 10일 이내',
-    description: '검진일은 출국일 포함 10일 이내여야 함 (출국일 9일 전 ~ 출국일).',
-    severity: 'info',
-    addedAt: '2026-04-21',
-    run: ({ caseRow, destination }) => {
-      // 한일 노선은 출국일=일본 입국일 같은 날 — departure_date 단일 권위 사용.
-      const dep = readDepartureDate(caseRow, destination) ?? ''
-      const visit = readVetVisitDate(caseRow, destination) ?? ''
-      if (!dep || !visit) return SKIP
-
-      const diff = daysBetween(visit, dep)
-      if (diff === null) {
-        return { ok: false, message: '날짜 형식이 올바르지 않습니다.', offendingPaths: ['vet_visit_date'] }
-      }
-      if (diff >= 0 && diff <= 9) {
-        return { ok: true, message: `검진일(${visit}) → 출국일(${dep}): ${diff}일.` }
-      }
-      // 검진 유효 구간 = 출국일 9일 전 ~ 출국일.
-      const earliest = addDays(dep, -9)
-      const message =
-        diff < 0
-          ? `검진일(${formatKoreanDate(visit)})이 출국일(${formatKoreanDate(dep)})보다 늦습니다.`
-          : `검진일(${formatKoreanDate(visit)})부터 출국일(${formatKoreanDate(dep)})까지 ${diff}일입니다. 출국일 포함 10일 이내여야 합니다.`
-      return {
-        ok: false,
-        message,
-        fixHint: earliest
-          ? `검진일을 ${formatKoreanDate(earliest)} ~ ${formatKoreanDate(dep)} 사이로 변경하세요.`
-          : '검진일을 출국일 9일 전 이후로 변경하세요.',
-        offendingPaths: ['vet_visit_date'],
-      }
-    },
-  },
-  {
     id: 'jp.entry-180days-after-titer',
     country: 'japan',
     category: '광견병',

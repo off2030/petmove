@@ -288,45 +288,6 @@ export const RU_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── 일정 ──
-  {
-    id: 'ru.vet-visit-within-10days',
-    country: COUNTRY,
-    category: '일정',
-    title: '임상검진은 출국 5일 이내 (보수: 4일 전부터)',
-    description:
-      'EAEU 결정 No.317 제15장: "клинического осмотра в течение 5 дней перед отправкой" (선적 5일 이내 임상검진). 사용자 보수 N-1 → ≤4 적용. **타국 10일 룰과 다름 — 러시아 특별 규정**.',
-    severity: 'info',
-    addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
-      const dep = readDepartureDate(caseRow, destination)
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = readVetVisitDate(caseRow, destination) ?? ''
-      if (!dep || !visit) return SKIP
-
-      const diff = daysBetween(visit, dep)
-      if (diff === null) {
-        return { ok: false, message: '날짜 형식이 올바르지 않습니다.', offendingPaths: ['vet_visit_date'] }
-      }
-      if (diff < 0) {
-        return {
-          ok: false,
-          message: `내원일(${visit})이 출국일(${dep})보다 늦습니다.`,
-          offendingPaths: ['vet_visit_date'],
-        }
-      }
-      if (diff > 4) {
-        return {
-          ok: false,
-          message: `내원일(${visit})부터 출국일(${dep})까지 ${diff}일입니다. 출국일 포함 5일 이내(4일 전부터)여야 합니다 (EAEU).`,
-          fixHint: `내원일을 ${dep} 기준 4일 전 이후로 조정하세요. **러시아는 EAEU 5일 룰을 적용하므로 타국 10일과 다릅니다**.`,
-          offendingPaths: ['vet_visit_date'],
-        }
-      }
-      return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
-    },
-  },
-
   // ── 보호자 한도 (개인용 2마리, 3마리+ 상업용) ──
   {
     id: 'ru.max-2pets-per-guardian',

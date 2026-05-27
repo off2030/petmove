@@ -367,6 +367,45 @@ export function matchesDestinationKey(
   return tokens.some(t => keywords.includes(t))
 }
 
+/**
+ * 내원·임상검진일은 출국일 포함 X일 이내(= 출국일 기준 max 일 전 이후) 룰의
+ * 목적지별 max days. 한국 APQA 디폴트는 10일(max 9). 비표준만 명시.
+ * 다중 목적지 시 가장 엄격한 윈도우(최소값) 적용.
+ *
+ * Source of truth — 각 목적지의 규정 (출처 packages/domain/src/procedure-checks/*.ts).
+ */
+const VET_VISIT_WINDOW_OVERRIDES: Array<{
+  key: keyof typeof DESTINATION_OVERRIDES
+  max: number
+}> = [
+  // 7일 이내 (max 6일 전)
+  { key: 'malaysia', max: 6 },
+  { key: 'singapore', max: 6 },
+  // 5일 이내 (max 4일 전)
+  { key: 'australia', max: 4 },
+  { key: 'russia', max: 4 },
+  // 2일 이내 (max 2일 전 — '48시간' / MPI 2일)
+  { key: 'new_zealand', max: 2 },
+  { key: 'turkey', max: 2 },
+]
+
+const VET_VISIT_DEFAULT_MAX_DAYS = 9
+
+/**
+ * 입력된 목적지(콤마 구분 가능)에 대한 내원일↔출국일 max 일수.
+ * 다중 목적지 시 가장 엄격한 윈도우 반환.
+ */
+export function getVetVisitMaxDaysBeforeDep(destination: string | null | undefined): number {
+  if (!destination) return VET_VISIT_DEFAULT_MAX_DAYS
+  let min = VET_VISIT_DEFAULT_MAX_DAYS
+  for (const ov of VET_VISIT_WINDOW_OVERRIDES) {
+    if (matchesDestinationKey(destination, ov.key) && ov.max < min) {
+      min = ov.max
+    }
+  }
+  return min
+}
+
 /** 목적지별 허용 필드 키 Set. extraFields는 케이스별 토글된 추가 필드. */
 export function getAllowedFields(destination: string | null | undefined, extraFields?: string[]): Set<string> {
   const fields = new Set<string>([

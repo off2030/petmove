@@ -285,45 +285,6 @@ export const HI_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── 일정 ──
-  {
-    id: 'hi.health-cert-within-10days',
-    country: COUNTRY,
-    category: '일정',
-    title: '건강증명서(내원일)는 출국 10일 이내 (한국 APQA 규정)',
-    description:
-      '건강증명서(영문 원본) 검진은 출국일 기준 10일 이내(`≤9`). HDOA 자체는 14일 허용이나 한국 APQA 검역 endorsement 룰이 더 strict (10일) — 한국 출국 케이스에는 더 엄격한 룰 적용. 도착 시 원본 미지참 시 release 거부.',
-    severity: 'info',
-    addedAt: '2026-05-06',
-    run: ({ caseRow, destination }) => {
-      const dep = readDepartureDate(caseRow, destination)
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = readVetVisitDate(caseRow, destination) ?? ''
-      if (!dep || !visit) return SKIP
-
-      const diff = daysBetween(visit, dep)
-      if (diff === null) {
-        return { ok: false, message: '날짜 형식이 올바르지 않습니다.', offendingPaths: ['vet_visit_date'] }
-      }
-      if (diff < 0) {
-        return {
-          ok: false,
-          message: `내원일(${visit})이 출국일(${dep})보다 늦습니다.`,
-          offendingPaths: ['vet_visit_date'],
-        }
-      }
-      if (diff > 9) {
-        return {
-          ok: false,
-          message: `내원일(${visit})부터 출국일(${dep})까지 ${diff}일입니다. 출국일 포함 10일 이내(9일 전부터)여야 합니다 (한국 APQA 규정).`,
-          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정하세요.`,
-          offendingPaths: ['vet_visit_date'],
-        }
-      }
-      return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
-    },
-  },
-
   // ── 진드기 ──
   {
     id: 'hi.tick-treatment-within-14days',

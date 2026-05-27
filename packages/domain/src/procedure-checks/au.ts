@@ -236,45 +236,6 @@ export const AU_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── 일정 ──
-  {
-    id: 'au.vet-visit-within-5days-of-departure',
-    country: COUNTRY,
-    category: '일정',
-    title: '내원일은 출국일 5일 이내 (보수: 4일 전부터)',
-    description:
-      '동물 건강증명서 endorsement 는 출국일 기준 5일 이내(`≤4`). (DAFF: "endorsed within 5 days before the dog\'s export date" — 사용자 보수 N-1 적용)',
-    severity: 'info',
-    addedAt: '2026-05-05',
-    run: ({ caseRow, destination }) => {
-      const dep = readDepartureDate(caseRow, destination)
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = readVetVisitDate(caseRow, destination) ?? ''
-      if (!dep || !visit) return SKIP
-
-      const diff = daysBetween(visit, dep)
-      if (diff === null) {
-        return { ok: false, message: '날짜 형식이 올바르지 않습니다.', offendingPaths: ['vet_visit_date'] }
-      }
-      if (diff < 0) {
-        return {
-          ok: false,
-          message: `내원일(${visit})이 출국일(${dep})보다 늦습니다.`,
-          offendingPaths: ['vet_visit_date'],
-        }
-      }
-      if (diff > 4) {
-        return {
-          ok: false,
-          message: `내원일(${visit})부터 출국일(${dep})까지 ${diff}일입니다. 출국일 포함 5일 이내(4일 전 이후)여야 합니다.`,
-          fixHint: `내원일을 ${dep} 기준 4일 전 이후로 조정하세요.`,
-          offendingPaths: ['vet_visit_date'],
-        }
-      }
-      return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
-    },
-  },
-
   // ── 강아지 전용 ──
   {
     id: 'au.comprehensive-vaccine-valid-through-quarantine',

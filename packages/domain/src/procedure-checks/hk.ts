@@ -244,43 +244,4 @@ export const HK_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `최근 종합백신(${latest.date}) 유효기간(${validUntil}) ≥ 출국일(${dep}).` }
     },
   },
-
-  // ── 일정 ──
-  {
-    id: 'hk.vet-visit-within-10days',
-    country: COUNTRY,
-    category: '일정',
-    title: '건강증명서(내원일)는 출국 10일 이내 (보수: 9일 전부터)',
-    description:
-      'AFCD VC-DC2: "not more than 14 days before export". 한국 APQA endorsement 10일 룰 + 사용자 보수 N-1 → ≤9 적용.',
-    severity: 'info',
-    addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
-      const dep = readDepartureDate(caseRow, destination)
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const visit = readVetVisitDate(caseRow, destination) ?? ''
-      if (!dep || !visit) return SKIP
-
-      const diff = daysBetween(visit, dep)
-      if (diff === null) {
-        return { ok: false, message: '날짜 형식이 올바르지 않습니다.', offendingPaths: ['vet_visit_date'] }
-      }
-      if (diff < 0) {
-        return {
-          ok: false,
-          message: `내원일(${visit})이 출국일(${dep})보다 늦습니다.`,
-          offendingPaths: ['vet_visit_date'],
-        }
-      }
-      if (diff > 9) {
-        return {
-          ok: false,
-          message: `내원일(${visit})부터 출국일(${dep})까지 ${diff}일입니다. 출국일 포함 10일 이내(9일 전 이후)여야 합니다.`,
-          fixHint: `내원일을 ${dep} 기준 9일 전 이후로 조정하세요.`,
-          offendingPaths: ['vet_visit_date'],
-        }
-      }
-      return { ok: true, message: `내원일(${visit}) → 출국일(${dep}): ${diff}일.` }
-    },
-  },
 ]

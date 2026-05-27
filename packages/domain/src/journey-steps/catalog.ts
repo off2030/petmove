@@ -634,7 +634,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     inputs: [
       { key: 'vet_visit_date', label: '검진일', type: 'date' },
     ],
-    validationIds: ['jp.vet-visit-within-10days-of-departure'],
   },
 
   // ── 12. 한국 수출 동물검역 ────────────────────────────────────────────
