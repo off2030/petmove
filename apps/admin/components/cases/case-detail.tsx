@@ -396,9 +396,9 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
               destination={viewDestination}
               isCollapsed={collapsed.has('추가정보')}
               onToggleCollapsed={() => toggleCollapsed('추가정보')}
-              trailing={showNaccsRow ? (
-                <AdvanceNotificationAttachmentsRow caseId={caseRow.id} caseRow={caseRow} />
-              ) : null}
+              trailing={showNaccsRow ? (({ onTakeoverDrag }) => (
+                <AdvanceNotificationAttachmentsRow caseId={caseRow.id} caseRow={caseRow} onTakeoverDrag={onTakeoverDrag} />
+              )) : undefined}
             />
           )
         })()}
@@ -532,8 +532,11 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
   destination: string | null | undefined
   isCollapsed: boolean
   onToggleCollapsed: () => void
-  /** 추가정보 마지막에 끼워 넣을 임의 노드 (예: 일본 사전신고 허가증 첨부 행). 별도 섹션 X. */
-  trailing?: React.ReactNode
+  /**
+   * 추가정보 마지막에 끼워 넣을 임의 노드 (예: 일본 사전신고 허가증 첨부 행). 별도 섹션 X.
+   * 함수 형태: 자식이 자체 drag/drop 을 가로챘을 때 부모 ring 을 끄도록 onTakeoverDrag 콜백 전달.
+   */
+  trailing?: (helpers: { onTakeoverDrag: () => void }) => React.ReactNode
 }) {
   const { updateLocalCaseField, activeDestination } = useCases()
   const confirm = useConfirm()
@@ -791,7 +794,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
               />
             )
           })}
-          {trailing}
+          {trailing?.({ onTakeoverDrag: () => setDragOver(false) })}
         </div>
       </SectionEditModeProvider>
     </section>
@@ -849,7 +852,13 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel, activ
  * case.data.documents 배열에서 stepId='advance-notification' 만 필터해 표시.
  * portal 보호자가 올린 파일도 같은 자리에 보이고, 운영자가 추가 업로드 가능.
  */
-function AdvanceNotificationAttachmentsRow({ caseId, caseRow }: { caseId: string; caseRow: CaseRow }) {
+function AdvanceNotificationAttachmentsRow({ caseId, caseRow, onTakeoverDrag }: {
+  caseId: string
+  caseRow: CaseRow
+  /** row 가 drag/drop 을 가로챘음을 부모(SimpleExtraSection) 에 알려 자기 ring 끄게 함.
+   *  row 가 stopPropagation 하므로 부모 dragLeave/drop 이 안 와서 state 가 stuck 되는 걸 방지. */
+  onTakeoverDrag?: () => void
+}) {
   const { replaceLocalCaseData } = useCases()
   const confirm = useConfirm()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -909,12 +918,14 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow }: { caseId: string
   }, [caseId])
 
   // 드래그앤드롭 — row 영역에 떨어진 파일만 받음. e.stopPropagation 으로 부모
-  // SimpleExtraSection 의 AI 추출 drop 핸들러로 전파 차단.
+  // SimpleExtraSection 의 AI 추출 drop 핸들러로 전파 차단. 동시에 onTakeoverDrag
+  // 콜백으로 부모 dragOver state 도 reset (부모는 자식 dragleave 못 받아 stuck).
   function handleDragOver(e: React.DragEvent) {
     if (!Array.from(e.dataTransfer.types).includes('Files')) return
     e.preventDefault()
     e.stopPropagation()
     setDragOver(true)
+    onTakeoverDrag?.()
   }
   function handleDragLeave(e: React.DragEvent) {
     e.stopPropagation()
@@ -924,6 +935,7 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow }: { caseId: string
     e.preventDefault()
     e.stopPropagation()
     setDragOver(false)
+    onTakeoverDrag?.()
     const file = Array.from(e.dataTransfer.files).find((f) =>
       f.type.startsWith('image/') || f.type === 'application/pdf',
     )
