@@ -252,7 +252,7 @@ export interface ShareRecipientSubgroupMeta {
 export const SHARE_RECIPIENT_SUBGROUP_META: Record<string, ShareRecipientSubgroupMeta> = {
   // 보호자 다수가 '수출검역 예약' 만 보면 뭘 묻는지 모름 → 풀라벨 + 한 줄 설명.
   '수출검역 예약': {
-    label: '일본 수출동물검역 예약 날짜/시간',
+    label: '일본 수출동물검역 예약',
     description:
       '한국으로 귀국하기 전, 일본 동물검역소에서 수출동물검역을 받아야 합니다. 희망 날짜와 시간을 알려주시면 일본 동물검역소에 문의해드립니다. 동물검역소 상황에 따라 예약이 거절될 수 있습니다.',
   },
