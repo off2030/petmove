@@ -239,8 +239,9 @@ export function readEffectiveExtraValue(
   if (!data) return null
   if (destination) {
     const byDest = data['by_dest'] as Record<string, Record<string, unknown>> | undefined
-    const v = byDest?.[destination]?.[key]
-    if (v != null) return v
+    const destObj = byDest?.[destination]
+    // 키가 명시적으로 존재하면 (null sentinel 포함) 그 값 그대로 반환 — top-level fallback 차단.
+    if (destObj && key in destObj) return destObj[key] ?? null
   }
   if (data[key] != null) return data[key]
   const paths = LEGACY_EXTRA_PATHS[key]

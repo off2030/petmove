@@ -86,16 +86,16 @@ export async function updateCaseField(
     const oldValueByDest = serializeForHistory('data', destObjPrev[key])
     const nextByDest: Record<string, Record<string, unknown>> = { ...byDestPrev }
     const nextDestObj = { ...destObjPrev }
+    // 비움(null/empty) 시에도 키 삭제 X — 명시적 null sentinel 저장.
+    // 그래야 read 시 top-level 잔여 데이터가 fallback 으로 부활하지 않음.
     if (value === null || value === undefined || value === '') {
-      delete nextDestObj[key]
+      nextDestObj[key] = null
     } else {
       nextDestObj[key] = value
     }
-    if (Object.keys(nextDestObj).length === 0) delete nextByDest[destination!]
-    else nextByDest[destination!] = nextDestObj
+    nextByDest[destination!] = nextDestObj
     const nextData = { ...currentData }
-    if (Object.keys(nextByDest).length === 0) delete nextData['by_dest']
-    else nextData['by_dest'] = nextByDest
+    nextData['by_dest'] = nextByDest
     const { error: updErr } = await supabase
       .from('cases')
       .update({ data: nextData })

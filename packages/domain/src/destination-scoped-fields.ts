@@ -52,8 +52,14 @@ export function isDestinationScopedKey(key: string): boolean {
 }
 
 /**
- * `data.by_dest[destination][key]` 직접 읽기. 없으면 undefined.
- * fallback 처리는 호출자(또는 readEffectiveExtraValue) 책임.
+ * `data.by_dest[destination][key]` 읽기.
+ *
+ * - 키 미존재: `undefined` (caller 는 top-level/column fallback 으로 진행)
+ * - 키 존재 + null: `null` (명시적 "비움" sentinel — caller 는 fallback 하지 말고 null 반환)
+ * - 키 존재 + 값: 그 값
+ *
+ * 다중 목적지 케이스에서 한 destination 의 값을 비웠을 때 top-level 잔여 데이터가
+ * fallback 으로 부활하는 걸 막기 위해 null sentinel 을 명시적으로 보존한다.
  */
 export function readByDestValue(
   data: Record<string, unknown> | null | undefined,
@@ -63,15 +69,17 @@ export function readByDestValue(
   if (!data || !destination) return undefined
   const byDest = data['by_dest'] as Record<string, Record<string, unknown>> | undefined
   const destObj = byDest?.[destination]
-  if (!destObj) return undefined
+  if (!destObj || !(key in destObj)) return undefined
   const v = destObj[key]
-  return v == null ? undefined : v
+  return v === undefined ? null : v
 }
 
 /**
  * `data.by_dest[destination][key] = value` 를 갱신한 새 data 객체 반환 (immutable).
- * value 가 null/undefined/빈문자열 이면 키 삭제.
- * 빈 destination 객체·빈 by_dest 는 자동 정리.
+ *
+ * value 가 null/undefined/빈문자열 이면 **명시적 null sentinel** 로 저장 (delete X).
+ * 다중 목적지에서 한 destination 에서 비우기 액션을 하면 top-level fallback 으로
+ * 부활하는 걸 막기 위함. by_dest 객체에 항목이 쌓이지만 의미상 "명시적 비움".
  */
 export function writeByDestValue(
   data: Record<string, unknown> | null | undefined,
@@ -84,21 +92,13 @@ export function writeByDestValue(
     ...((next['by_dest'] as Record<string, Record<string, unknown>> | undefined) ?? {}),
   }
   const destObj: Record<string, unknown> = { ...(byDest[destination] ?? {}) }
-  if (value == null || value === '') {
-    delete destObj[key]
+  if (value === null || value === undefined || value === '') {
+    destObj[key] = null // 명시적 비움 sentinel
   } else {
     destObj[key] = value
   }
-  if (Object.keys(destObj).length === 0) {
-    delete byDest[destination]
-  } else {
-    byDest[destination] = destObj
-  }
-  if (Object.keys(byDest).length === 0) {
-    delete next['by_dest']
-  } else {
-    next['by_dest'] = byDest
-  }
+  byDest[destination] = destObj
+  next['by_dest'] = byDest
   return next
 }
 
