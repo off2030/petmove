@@ -284,15 +284,17 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
       return dt && dt.length >= 10 ? dt.slice(0, 10) : null
     }
     case 'has-jp-export-quarantine': {
-      // 예약일 우선 — skip 케이스는 예약일이 없으므로 신청일로 폴백.
-      const reserved =
-        typeof data.jp_export_quarantine_date === 'string' ? data.jp_export_quarantine_date : null
-      if (reserved && reserved.length >= 10) return reserved.slice(0, 10)
+      // '신청' step 의 완료일 = 신청·예약 확정 행위 시점(= 신청일). 예약일(jp_export_quarantine_date)은
+      // 미래 방문일이라 visit step(jp-export-quarantine-visit)의 표시일로 분리. 신청일 없는
+      // 비정상 케이스만 예약일 폴백.
       const applied =
         typeof data.jp_export_quarantine_application_date === 'string'
           ? data.jp_export_quarantine_application_date
           : null
-      return applied && applied.length >= 10 ? applied.slice(0, 10) : null
+      if (applied && applied.length >= 10) return applied.slice(0, 10)
+      const reserved =
+        typeof data.jp_export_quarantine_date === 'string' ? data.jp_export_quarantine_date : null
+      return reserved && reserved.length >= 10 ? reserved.slice(0, 10) : null
     }
     case 'has-kr-export-quarantine': {
       const dt =

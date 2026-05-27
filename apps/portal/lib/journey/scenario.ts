@@ -255,7 +255,8 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     const deadlineEnd = step.deadline?.window ? deadlineAnchorDate(step, caseRow) : null
     // 항공권 dates → 검역 step 표시일. 한일 노선은 도착·검역이 같은 날이라
     // entry_date(출국 항공편) = 일본 수입검역, return_date(귀국 항공편) = 한국 수입검역.
-    // (일본 수출 동물검역은 예약일이 따로 잡혀 항공편 날짜와 분리 — 반영 제외.)
+    // 일본 수출 동물검역(visit) 은 신청 step 에서 입력한 예약일(jp_export_quarantine_date)이
+    // 곧 방문일 — visit step 의 미완료 표시일로 사용.
     const caseData = (caseRow.data ?? {}) as Record<string, unknown>
     const flightEntryDate =
       typeof caseData.entry_date === 'string' && caseData.entry_date.length >= 10
@@ -264,6 +265,11 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     const flightReturnDate =
       typeof caseData.return_date === 'string' && caseData.return_date.length >= 10
         ? caseData.return_date.slice(0, 10)
+        : null
+    const jpExportReservationDate =
+      typeof caseData.jp_export_quarantine_date === 'string' &&
+      caseData.jp_export_quarantine_date.length >= 10
+        ? caseData.jp_export_quarantine_date.slice(0, 10)
         : null
     // 미완 step 의 타임라인 표시일 — step 의 직접 입력 필드(advance_notification_date 등)는
     // 비어있는데 earliest(다른 step 완료일 기준 계산값)만으로 '예정 [날짜]' 칩을 띄우면
@@ -278,9 +284,11 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
         ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? flightEntryDate
         : step.id === 'kr-import-quarantine'
           ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? flightReturnDate
-          : done
-            ? resolveCompletedDate(step.done, caseRow)
-            : fallbackDate
+          : step.id === 'jp-export-quarantine-visit'
+            ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? jpExportReservationDate
+            : done
+              ? resolveCompletedDate(step.done, caseRow)
+              : fallbackDate
     // 칩 라벨 분기 — '마감 26·11·21' (단일 non-window 마감일이 표시 날짜인 경우) vs
     // '예정 …' (그 외 일정·이벤트·window 시작·기간 시작 등). 사전 신고처럼 deadline 자체가
     // 보호자의 행동 마감일일 때만 '마감'. window 마감(출국 10일 이내 검진 등)은 구간 시작이라 '예정' 유지.
