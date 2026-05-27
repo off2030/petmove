@@ -717,6 +717,8 @@ export async function unmarkAdvanceNotificationApprovalSkipped(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }
     delete nextData.advance_notification_approval_skipped
+    // stored 클리어해 derive 모드 전환.
+    delete nextData.import_import_status
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -761,6 +763,8 @@ export async function markAdvanceNotificationApprovalSkipped(
     }
     // 완료 시그널 — admin demote 상태를 자동 해제.
     delete nextData.advance_notification_admin_demoted_at
+    // stored 클리어해 derive 모드 전환.
+    delete nextData.import_import_status
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -799,6 +803,8 @@ export async function unmarkJpExportQuarantineReservationSkipped(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }
     delete nextData.jp_export_quarantine_reservation_skipped
+    // stored 클리어해 derive 모드 전환.
+    delete nextData.import_export_status
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -842,6 +848,8 @@ export async function markJpExportQuarantineReservationSkipped(
     }
     // 완료 시그널 — admin demote 상태를 자동 해제.
     delete nextData.jp_export_quarantine_admin_demoted_at
+    // stored 클리어해 derive 모드 전환.
+    delete nextData.import_export_status
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -885,6 +893,9 @@ export async function updateAdvanceNotificationDate(
     const v = typeof date === 'string' ? date.trim() : ''
     if (v) nextData.advance_notification_date = v
     else delete nextData.advance_notification_date
+    // 신고탭 stored 값을 클리어해 derive 모드로 전환 — portal 보호자의 적극적 입력이
+    // 운영자의 기존 수동 상태보다 우선시되도록. 액션이 일어난 케이스만 영향.
+    delete nextData.import_import_status
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1176,6 +1187,9 @@ export async function updateJpExportQuarantineFields(
     } else {
       delete nextData.jp_export_quarantine_confirmed
     }
+    // 신청일·예약·확정 어떤 시점이든 보호자가 portal 에서 적극적 입력을 했다는 뜻 —
+    // stored 클리어해 derive 모드로 전환 (운영자 수동값이 있었다면 그 시점부터만 무력화).
+    delete nextData.import_export_status
 
     const { data: updated, error } = await admin
       .from('cases')

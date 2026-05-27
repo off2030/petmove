@@ -84,6 +84,8 @@ export async function uploadStepDocument(formData: FormData): Promise<Result<Cas
     // 보호자가 새 허가증을 첨부하면 자동 해제 — 다시 완료로 derive.
     if (stepId === 'advance-notification') {
       delete nextData.advance_notification_admin_demoted_at
+      // stored 클리어해 derive 모드 전환.
+      delete nextData.import_import_status
     }
 
     const { data: updated, error } = await admin
@@ -126,7 +128,11 @@ export async function deleteStepDocument(
     const target = docs.find((d) => d.id === docId)
     if (!target) return { ok: false, error: '파일을 찾을 수 없습니다.' }
 
-    const nextData = { ...prev, documents: docs.filter((d) => d.id !== docId) }
+    const nextData: Record<string, unknown> = { ...prev, documents: docs.filter((d) => d.id !== docId) }
+    // 사전신고 첨부 삭제 = portal 보호자의 명시적 액션 — stored 클리어해 derive 전환.
+    if (target.stepId === 'advance-notification') {
+      delete nextData.import_import_status
+    }
     const { data: updated, error } = await admin
       .from('cases')
       .update({ data: nextData })
