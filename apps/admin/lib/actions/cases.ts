@@ -35,6 +35,27 @@ function deserializeFromHistory(storage: 'column' | 'data', raw: string | null):
 }
 
 /**
+ * 내원·임상검진일은 출국일 포함 10일 이내(9일 전 이후)여야 함 — 한국 APQA 수출검역 요건,
+ * 목적지 무관 공통. 양쪽 모두 set 일 때만 검증; 한쪽이라도 비면 통과.
+ */
+function validateVetVisitVsDeparture(
+  visit: string | null | undefined,
+  dep: string | null | undefined,
+): { ok: true } | { ok: false; error: string } {
+  if (!visit || !dep) return { ok: true }
+  const v = String(visit).slice(0, 10)
+  const d = String(dep).slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v) || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return { ok: true }
+  if (v > d) return { ok: false, error: `내원일(${v})은 출국일(${d})보다 늦을 수 없습니다.` }
+  const va = new Date(v + 'T00:00:00Z').getTime()
+  const da = new Date(d + 'T00:00:00Z').getTime()
+  if (isNaN(va) || isNaN(da)) return { ok: true }
+  const days = Math.round((da - va) / 86_400_000)
+  if (days > 9) return { ok: false, error: `내원일은 출국일(${d}) 기준 10일 이내(9일 전 이후)여야 합니다.` }
+  return { ok: true }
+}
+
+/**
  * Update a single field on a case. Records change in case_history for undo.
  *
  * P1 #7 — 단일 SELECT + 단일 UPDATE 로 통합. 이전엔 column 경로의 vet_available_date
@@ -78,6 +99,21 @@ export async function updateCaseField(
   const isMultiDest = parseDestinations(destinationRaw).length > 1
   // by_dest 경로 적용 조건: 활성 목적지 + scoped 키 + 다중 목적지.
   const useByDest = !!destination && isDestinationScopedKey(key) && isMultiDest
+
+  // 내원일 ↔ 출국일 10일 이내 룰 — 한국 APQA 공통, 모든 목적지에 적용.
+  // 입력 시점에 거부 (procedure-check 안내 배지 아님).
+  if (storage === 'data' && key === 'vet_visit_date' && value) {
+    const currentDep = (row as { departure_date: string | null }).departure_date
+    const check = validateVetVisitVsDeparture(value as string, currentDep)
+    if (!check.ok) return { ok: false, error: check.error }
+  }
+  if (storage === 'column' && key === 'departure_date' && value) {
+    const currentVisit = typeof currentData.vet_visit_date === 'string'
+      ? (currentData.vet_visit_date as string)
+      : null
+    const check = validateVetVisitVsDeparture(currentVisit, value as string)
+    if (!check.ok) return { ok: false, error: check.error }
+  }
 
   // by_dest 경로 — 별도 분기로 처리하고 기존 부수효과는 우회.
   if (useByDest) {
