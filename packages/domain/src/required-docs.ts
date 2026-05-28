@@ -58,7 +58,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'step',
       stepRef: 'advance-notification',
       description:
-        '일본 동물검역소에 사전 신고를 마치면 발급되는 허가증(Approval)입니다.\n수출 검역 단계에서 제출하고, 입국 시 일본 동물검역소에 함께 제시합니다.\n신청 후 발급까지 통상 1~2주가 소요됩니다.',
+        '사전 신고 후 일본 동물검역소에서 발급 받을 수 있습니다.\n\n발급까지 수 주 이상 걸릴 수 있으며, 1회만 사용이 가능합니다.\n\n동물검역을 받을 때 반드시 소지해야 합니다.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용하실 수 있습니다.',
       previewStepId: 'advance-notification',
     },
     {
