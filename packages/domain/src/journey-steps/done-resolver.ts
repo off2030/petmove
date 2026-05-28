@@ -104,9 +104,10 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return typeof data.deworming_time === 'string' && (data.deworming_time as string).length > 0
     case 'has-vet-visit': {
       // 검진일이 입력되어도 미래 날짜면 미완료 — '예정' 상태로 노출되어야 함.
+      // 오늘 검진은 완료로 인정 (당일 입력 시 보호자는 이미 다녀온 상태).
       const dt = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
       if (dt.length < 10) return false
-      return dt < todayIso()
+      return dt <= todayIso()
     }
     case 'has-flight-date': {
       // entry_date(도착일) 또는 케이스의 departure_date(출국일) 둘 중 하나라도 입력되면 완료.
