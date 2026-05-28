@@ -109,7 +109,7 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
         {useCurated ? (
           /* 큐레이션 모드: 국가별 '필수 서류' 한 섹션 (예: 일본 5건) */
           <>
-            <SectionLabel right={`${requiredDone}/${requiredDocs!.length}`}>필수 서류</SectionLabel>
+            <SectionLabel right={`${requiredDone}/${requiredDocs!.length}`}>서류 체크리스트</SectionLabel>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {requiredDocs!.map((d) => (
                 <ChecklistRow
@@ -161,8 +161,8 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
           </>
         )}
 
-        {/* 3) 보관 중인 서류 */}
-        <SectionLabel right={`${storedDocs.length}건`}>보관 중인 서류</SectionLabel>
+        {/* 3) 보관함 */}
+        <SectionLabel right={`${storedDocs.length}건`}>보관함</SectionLabel>
         {storedDocs.length === 0 ? (
           <EmptyHint>병원에서 발급한 사본이나 직접 올린 서류가 모이는 공간입니다.</EmptyHint>
         ) : (
