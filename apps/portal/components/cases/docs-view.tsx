@@ -62,16 +62,6 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
   // requiredDocs spec 이 있는 목적지(예: 일본)는 큐레이션된 5건만 보고,
   // 기존 자동 체크리스트·자동 작성 섹션은 가린다.
   const useCurated = requiredDocs !== null
-  const verifiedCount = useCurated
-    ? requiredDocs!.filter((d) => d.verified).length + storedDocs.filter((d) => d.verified).length
-    : checklist.filter((d) => d.verified).length +
-      autoDocs.filter((d) => d.verified).length +
-      storedDocs.filter((d) => d.verified).length
-  const pendingCount = useCurated
-    ? requiredDocs!.filter((d) => !d.verified).length + storedDocs.filter((d) => !d.verified).length
-    : checklist.filter((d) => !d.verified).length +
-      autoDocs.filter((d) => !d.verified).length +
-      storedDocs.filter((d) => !d.verified).length
   const checklistDone = checklist.filter((d) => d.verified).length
   const requiredDone = requiredDocs?.filter((d) => d.verified).length ?? 0
 
@@ -114,10 +104,6 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
             <span style={{ color: C.ink3 }}>{trip.tripType === 'round' ? '⇄' : '→'}</span>
             <span>{trip.toCity}</span>
           </div>
-        </div>
-
-        <div style={{ ...monoCap, marginTop: 10 }}>
-          <span style={num}>{verifiedCount}</span> 보관 · <span style={num}>{pendingCount}</span> 대기
         </div>
 
         {useCurated ? (
