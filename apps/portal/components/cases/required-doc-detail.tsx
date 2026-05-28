@@ -89,6 +89,9 @@ export function RequiredDocDetail({
     })
   }
 
+  // 첨부가 곧 발급 증빙 — 완료를 자동으로 잠근다(일정 step 의 '저장' 비활성과 동일).
+  const hasAttachment = previewDocs.length > 0
+
   const btnBase: React.CSSProperties = {
     width: '100%',
     padding: '14px 16px',
@@ -113,6 +116,14 @@ export function RequiredDocDetail({
     border: `1px solid ${C.line}`,
     background: 'transparent',
     color: C.ink2,
+  }
+  // 일정 step 의 비활성 '저장' 바와 동일 톤 — 회색 면 채움 + not-allowed.
+  const disabledBtn: React.CSSProperties = {
+    ...btnBase,
+    border: 0,
+    background: 'rgba(42,38,32,.10)',
+    color: C.ink3,
+    cursor: 'not-allowed',
   }
 
   return (
@@ -259,14 +270,19 @@ export function RequiredDocDetail({
           hideList
         />
 
-        {/* 상태 토글 — 수기 서류이고 첨부가 없을 때(첨부가 있으면 그 자체가 발급 증빙).
-            설명 → 첨부 → 버튼 순. naAllowed 서류는 '완료' 와 '해당없음' 둘 다 노출.
-            해당없음 상태면 첨부 유무와 무관하게 되돌리기 버튼을 보장. */}
-        {doc.manual && (previewDocs.length === 0 || doc.na) && (
+        {/* 상태 토글 — 수기 서류. 일정 step 의 '저장' 바와 동일하게: 첨부가 있으면
+            버튼이 사라지지 않고 비활성(회색)으로 남는다 — 첨부 자체가 발급 증빙이라
+            완료를 잠그고, 되돌리려면 위 첨부 카드의 ×로 삭제. 설명 → 첨부 → 버튼 순.
+            naAllowed 서류는 미완료 시 '해당없음' 도 노출. */}
+        {doc.manual && (
           <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {doc.na ? (
               <button type="button" onClick={handleToggleNa} disabled={busy} style={outlineBtn}>
                 {busy ? '처리 중…' : '해당없음 취소'}
+              </button>
+            ) : hasAttachment ? (
+              <button type="button" disabled style={disabledBtn}>
+                완료
               </button>
             ) : (
               <>
