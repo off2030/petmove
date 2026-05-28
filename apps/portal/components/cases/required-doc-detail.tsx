@@ -6,6 +6,7 @@ import type { RequiredDocItem } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
 import { setRequiredDocComplete } from '@/lib/actions/required-docs'
+import { StepAttachments } from '@/components/journey/step-attachments'
 import { type CaseDocument } from '@/lib/documents'
 
 /**
@@ -186,41 +187,29 @@ export function RequiredDocDetail({
           <p style={{ marginTop: 8, fontSize: 12, color: C.warn, lineHeight: 1.5 }}>{error}</p>
         )}
 
+        {/* 첨부 — 일정 step 과 동일한 업로드 메뉴. previewStepId 가 있는 서류만 (그 step
+            으로 업로드). 올린 파일은 아래 미리보기에도 함께 표시. */}
+        {doc.previewStepId && (
+          <>
+            <SectionLabel>첨부</SectionLabel>
+            <StepAttachments
+              caseId={caseId}
+              stepId={doc.previewStepId}
+              documents={previewDocs}
+            />
+          </>
+        )}
+
         {/* Preview */}
-        <SectionLabel right={previewDocs.length > 0 ? `${previewDocs.length}건` : undefined}>
-          디지털 원본·사본
-        </SectionLabel>
-        {previewDocs.length === 0 ? (
-          <div
-            style={{
-              background: C.surface,
-              border: `.5px dashed ${C.line}`,
-              borderRadius: 14,
-              padding: '20px 16px',
-              fontSize: 13,
-              color: C.ink3,
-              lineHeight: 1.6,
-              textAlign: 'center',
-            }}
-          >
-            아직 올린 원본이나 사본이 없습니다.
-            {doc.previewStepId && (
-              <div style={{ marginTop: 6 }}>
-                <Link
-                  href={`/cases/${caseId}/journey/${doc.previewStepId}`}
-                  style={{ color: C.accent, textDecoration: 'underline' }}
-                >
-                  관련 단계에서 파일을 올릴 수 있습니다
-                </Link>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {previewDocs.map((d) => (
-              <PreviewCard key={d.id} caseId={caseId} doc={d} C={C} monoCap={monoCap} />
-            ))}
-          </div>
+        {previewDocs.length > 0 && (
+          <>
+            <SectionLabel right={`${previewDocs.length}건`}>디지털 원본·사본</SectionLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {previewDocs.map((d) => (
+                <PreviewCard key={d.id} caseId={caseId} doc={d} C={C} monoCap={monoCap} />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
