@@ -88,7 +88,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       source: '일본 동물검역소',
       kind: 'manual',
       description:
-        '일본에서 한국으로 돌아오기 위한 수출 동물검역증입니다.\n일본 동물검역소를 방문해 검역을 받으면 발급됩니다.\n원본을 보관 후 완료 표시해주세요.',
+        '일본에서 한국으로 올 때 수출 동물검역을 마치면 발급됩니다.\n\n일본 재입국 때 필요할 수 있습니다.\n\n일본에 처음 입국하는 경우는 필요하지 않습니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
       previewStepId: 'jp-export-quarantine-visit',
     },
   ],
