@@ -104,6 +104,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 보관하세요.',
+    attachmentLabel: '광견병백신',
     // jp.rabies-prime-after-91days-old (생후 91일 이후 1차) 은 portal 입력 차단으로 이관.
   },
 
@@ -130,6 +131,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 보관하세요.',
+    attachmentLabel: '광견병백신',
     validationIds: [
       // jp.rabies-prime-booster-interval (30일 간격), jp.rabies-booster-within-prime-validity
       // (2차가 1차 유효기간 내), jp.microchip-rabies-sequence (마이크로칩 ≤ 2차) 는
@@ -332,6 +334,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '구매한 항공권(e-티켓)을 사진, PDF로 보관하세요.',
+    attachmentLabel: '항공권',
     validationIds: [
       'jp.entry-180days-after-titer',
       // jp.entry-within-2years-of-titer / jp.rabies-valid-until-on-departure 는 항공권 자체가
@@ -658,6 +661,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
+    attachmentLabel: '동물검역증',
     links: [
       { url: '/guide/quarantine-stations', label: '동물검역소 위치' },
       { url: 'https://eminwon.qia.go.kr/eminwon/reservation/login/login.do?ref=petmove.co.kr', label: '동물검역 예약' },
@@ -677,6 +681,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     order: 140,
     deadline: { anchor: 'departure', daysBefore: 0 },
     done: 'departure-past',
+    // base departure 는 첨부 불가 — 일본 override(일본 수입 동물검역)만 allowAttachments.
+    // 첨부 명명은 base catalog 의 attachmentLabel 을 읽으므로 여기 둔다 (일본에서만 효과).
+    attachmentLabel: 'Import Quarantine Certificate',
   },
 
   // ── 14. 일본 수출 동물검역 (왕복 케이스 한정 — 귀국편) ──────────────────
@@ -697,7 +704,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
-    attachmentLabel: '일본 수출 동물검역증',
+    attachmentLabel: 'Export Quarantine Certificate',
   },
 
   // ── 15. 한국 수입 동물검역 (왕복 케이스 한정 — 귀국 후) ─────────────────

@@ -64,8 +64,11 @@ export function resolveAttachmentName(
 }
 
 /**
- * 카탈로그를 참조하는 편의 함수. stepId 로 attachmentLabel 조회 + 동일 stepId 의
- * 기존 documents 이름만 추려 resolveAttachmentName 위임.
+ * 카탈로그를 참조하는 편의 함수. stepId 로 attachmentLabel 조회 후 resolveAttachmentName 위임.
+ *
+ * 중복(_2) 판정은 stepId 가 아니라 **라벨 기준 전체 documents** 로 — 광견병백신 1차/2차
+ * 처럼 서로 다른 step 이 같은 라벨('광견병백신')을 쓰면 보관함에서 이름이 충돌하므로,
+ * 같은 라벨이 이미 있으면(어느 step 이든) 다음 번호를 붙인다.
  */
 export function resolveStepAttachmentName(
   stepId: string,
@@ -75,8 +78,8 @@ export function resolveStepAttachmentName(
   const step = JOURNEY_STEP_CATALOG.find((s) => s.id === stepId)
   const label = step?.attachmentLabel
   if (!label) return originalFileName
-  const sameStepNames = existingDocs
-    .filter((d) => d.stepId === stepId && typeof d.name === 'string')
+  const existingNames = existingDocs
+    .filter((d) => typeof d.name === 'string')
     .map((d) => d.name as string)
-  return resolveAttachmentName(label, originalFileName, sameStepNames)
+  return resolveAttachmentName(label, originalFileName, existingNames)
 }
