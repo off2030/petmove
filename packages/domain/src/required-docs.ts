@@ -80,7 +80,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       source: '동물병원',
       kind: 'manual',
       description:
-        '일본 입국 시 제출하는 영문 증명서입니다 — Form AC (광견병 항체검사 정보) 또는 Form RE (광견병 면역 이력).\nPetMove 가 자동 작성하며, 출력해 임상 수의사의 서명·날인을 받아 완료 표시해주세요.',
+        '일본 지정 양식의 접종, 검사 및 건강증명서입니다.\n\n출국일 기준 10일 이내에 임상 수의사의 서명을 받아야 합니다.\n\n한국 수출 동물검역 때 보증서명을 받습니다.',
     },
     {
       id: 'jp-export-quarantine-cert',
