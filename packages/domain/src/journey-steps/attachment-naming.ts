@@ -11,6 +11,14 @@
 
 import { JOURNEY_STEP_CATALOG } from './catalog'
 
+/**
+ * journey step 이 아닌 필수 서류(required-docs)의 첨부 stepId(= doc.id) → 파일 라벨.
+ * 별지25·FormAC/RE 처럼 PetMove 발급 서류는 catalog step 이 없어 여기서 라벨 부여.
+ */
+const REQUIRED_DOC_ATTACH_LABELS: Record<string, string> = {
+  form25: '별지 제 25호 서식',
+}
+
 /** 'foo.bar.jpg' → '.jpg'. 확장자 없으면 ''. */
 function extractExtension(name: string): string {
   const i = name.lastIndexOf('.')
@@ -76,7 +84,8 @@ export function resolveStepAttachmentName(
   existingDocs: Array<{ stepId?: string; name?: string }>,
 ): string {
   const step = JOURNEY_STEP_CATALOG.find((s) => s.id === stepId)
-  const label = step?.attachmentLabel
+  // journey step 라벨 우선, 없으면 필수 서류 첨부 라벨(별지25 등).
+  const label = step?.attachmentLabel ?? REQUIRED_DOC_ATTACH_LABELS[stepId]
   if (!label) return originalFileName
   const existingNames = existingDocs
     .filter((d) => typeof d.name === 'string')
