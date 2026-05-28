@@ -912,20 +912,22 @@ export function StepDetailView({
       }}
     >
       <div style={{ padding: '0 20px' }}>
-        {/* Back link */}
+        {/* Back link — 서류 상세와 동일한 chevron + 작은 라벨 스타일. */}
         <Link
           href={`/cases/${caseId}/journey`}
           style={{
+            ...monoCap,
             display: 'inline-flex',
             alignItems: 'center',
             gap: 4,
-            fontSize: 13,
             color: C.ink2,
             textDecoration: 'none',
-            padding: '6px 0',
           }}
         >
-          ← 일정으로
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          일정
         </Link>
 
         {/* Header — 일정 row 와 동일한 동그라미(완료 ✓ 또는 번호) + 항목명. */}
@@ -1322,13 +1324,13 @@ export function StepDetailView({
         {/* Inputs — 마이크로칩·광견병1·2차 step 은 인터랙티브, 그 외는 read-only 스키마 미리보기. */}
         {isMicrochip && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <MicrochipInputs chip={chip} date={date} onChipChange={setChip} onDateChange={setDate} />
           </section>
         )}
         {isRabies && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <RabiesEntryInputs
               value={rabies}
               onChange={(key, next) => setRabies((prev) => ({ ...prev, [key]: next }))}
@@ -1339,7 +1341,7 @@ export function StepDetailView({
         )}
         {isRabiesExtra && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <RabiesExtraInputs
               entries={rabiesExtra}
               onChange={(idx, key, next) =>
@@ -1361,7 +1363,7 @@ export function StepDetailView({
         )}
         {isTiterExtra && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <TiterExtraInputs
               entries={titerExtra}
               onChange={(idx, key, next) =>
@@ -1381,7 +1383,7 @@ export function StepDetailView({
         )}
         {isTiter && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <TiterInputs
               form={titerForm}
               onChange={(key, next) => setTiterForm((prev) => ({ ...prev, [key]: next }))}
@@ -1390,7 +1392,7 @@ export function StepDetailView({
         )}
         {isFlight && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <FlightInputs
               value={flightForm}
               onChange={(key, next) => setFlightForm((prev) => ({ ...prev, [key]: next }))}
@@ -1400,19 +1402,19 @@ export function StepDetailView({
         )}
         {isAdvanceNotification && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <AdvanceNotificationInputs date={advanceDate} onChange={setAdvanceDate} />
           </section>
         )}
         {isVetVisit && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <VetVisitInputs date={vetVisitDate} onChange={setVetVisitDate} />
           </section>
         )}
         {isJpExportQuarantine && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <JpExportQuarantineInputs
               form={jpExport}
               onChange={(key, next) => setJpExport((prev) => ({ ...prev, [key]: next }))}
@@ -1421,7 +1423,7 @@ export function StepDetailView({
         )}
         {isCertificateIssue && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <KrExportQuarantineInputs
               date={krExportQuarantineDate}
               onChange={setKrExportQuarantineDate}
@@ -1430,7 +1432,7 @@ export function StepDetailView({
         )}
         {isJpImportQuarantine && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <JpImportQuarantineInputs
               date={jpImportQuarantineDate}
               onChange={setJpImportQuarantineDate}
@@ -1439,7 +1441,7 @@ export function StepDetailView({
         )}
         {isJpExportQuarantineVisit && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <JpExportQuarantineVisitInputs
               date={jpExportQuarantineVisitDate}
               onChange={setJpExportQuarantineVisitDate}
@@ -1448,7 +1450,7 @@ export function StepDetailView({
         )}
         {isKrImportQuarantine && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력</h3>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <KrImportQuarantineInputs
               date={krImportQuarantineDate}
               onChange={setKrImportQuarantineDate}
@@ -1457,7 +1459,7 @@ export function StepDetailView({
         )}
         {!isInteractive && step.inputs && step.inputs.length > 0 && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>입력 정보</h3>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력 정보</h3>
             <div
               style={{
                 background: C.surface,
@@ -1501,7 +1503,7 @@ export function StepDetailView({
         {/* Attachments */}
         {step.allowAttachments && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...serif, fontSize: 20, margin: '0 0 10px' }}>첨부</h3>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>첨부</h3>
             <StepAttachments
               caseId={caseId}
               stepId={step.id}

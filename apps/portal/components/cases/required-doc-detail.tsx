@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState, useTransition } from 'react'
 import type { RequiredDocItem } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
-import { getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
+import { deleteStepDocument, getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
 import { setRequiredDocComplete } from '@/lib/actions/required-docs'
 import { StepAttachments } from '@/components/journey/step-attachments'
 import { type CaseDocument } from '@/lib/documents'
@@ -108,7 +108,7 @@ export function RequiredDocDetail({
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
-          서류함
+          서류
         </Link>
 
         {/* Title row — 일정 step 헤더와 동일하게 동그라미·항목명 수직 중앙 정렬. */}
@@ -218,28 +218,38 @@ export function RequiredDocDetail({
           <p style={{ marginTop: 8, fontSize: 12, color: C.warn, lineHeight: 1.5 }}>{error}</p>
         )}
 
-        {/* 첨부 — 일정 step 과 동일한 업로드 메뉴. previewStepId 가 있는 서류만 (그 step
-            으로 업로드). 올린 파일은 아래 미리보기에도 함께 표시. */}
+        {/* 첨부 — ① 미리보기(이미지/PDF, 삭제 ×) → ② 파일 추가 버튼, 이 둘만.
+            previewStepId 가 있는 서류만 그 step 으로 업로드·삭제. */}
         {doc.previewStepId && (
           <>
-            <SectionLabel>첨부</SectionLabel>
+            <SectionLabel right={previewDocs.length > 0 ? `${previewDocs.length}건` : undefined}>
+              첨부
+            </SectionLabel>
+            {previewDocs.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 10 }}>
+                {previewDocs.map((d) => (
+                  <PreviewCard
+                    key={d.id}
+                    caseId={caseId}
+                    doc={d}
+                    C={C}
+                    monoCap={monoCap}
+                    onDelete={() => {
+                      deleteStepDocument(caseId, d.id).then((res) => {
+                        if (res.ok) updateCase(res.value)
+                      })
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+            {/* 파일명 리스트 없이 업로드 버튼만 (미리보기를 위에서 따로 그림). */}
             <StepAttachments
               caseId={caseId}
               stepId={doc.previewStepId}
               documents={previewDocs}
+              hideList
             />
-          </>
-        )}
-
-        {/* Preview */}
-        {previewDocs.length > 0 && (
-          <>
-            <SectionLabel right={`${previewDocs.length}건`}>디지털 원본·사본</SectionLabel>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {previewDocs.map((d) => (
-                <PreviewCard key={d.id} caseId={caseId} doc={d} C={C} monoCap={monoCap} />
-              ))}
-            </div>
           </>
         )}
       </div>
@@ -290,11 +300,14 @@ function PreviewCard({
   doc,
   C,
   monoCap,
+  onDelete,
 }: {
   caseId: string
   doc: CaseDocument
   C: PaletteShape
   monoCap: React.CSSProperties
+  /** 있으면 카드 헤더에 삭제(×) 노출. */
+  onDelete?: () => void
 }) {
   const [url, setUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -349,6 +362,30 @@ function PreviewCard({
             {doc.uploadedAt.slice(0, 10).replace(/-/g, '·')}
           </div>
         </div>
+        {onDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            aria-label="삭제"
+            style={{
+              width: 28,
+              height: 28,
+              flexShrink: 0,
+              borderRadius: '50%',
+              border: `.5px solid ${C.line}`,
+              background: 'transparent',
+              color: C.ink3,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
       <div style={{ borderTop: `.5px solid ${C.line}`, background: '#fff' }}>
         {error ? (

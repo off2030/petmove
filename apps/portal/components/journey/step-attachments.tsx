@@ -31,11 +31,14 @@ export function StepAttachments({
   stepId,
   documents,
   hint,
+  hideList = false,
 }: {
   caseId: string
   stepId: string
   documents: CaseDocument[]
   hint?: string
+  /** true 면 파일명 리스트를 숨기고 업로드 버튼만 — 미리보기를 따로 그리는 화면용. */
+  hideList?: boolean
 }) {
   const { updateCase } = useCases()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -87,7 +90,7 @@ export function StepAttachments({
 
   return (
     <div>
-      {documents.length > 0 && (
+      {!hideList && documents.length > 0 && (
         <div
           style={{
             background: C.surface,
