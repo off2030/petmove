@@ -293,7 +293,8 @@ function ChecklistRow({
           borderRadius: '50%',
           flexShrink: 0,
           background: ok ? C.sage : 'transparent',
-          border: ok ? 'none' : `1px dashed ${C.ink3}`,
+          // 일정 타임라인 미완료 원과 동일하게 — 점선 ink3 → 실선 line.
+          border: ok ? 'none' : `1px solid ${C.line}`,
           color: C.surface,
           display: 'flex',
           alignItems: 'center',

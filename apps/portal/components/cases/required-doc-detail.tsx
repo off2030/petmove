@@ -113,14 +113,15 @@ export function RequiredDocDetail({
 
         {/* Title row — 일정 step 헤더와 동일하게 동그라미·항목명 수직 중앙 정렬. */}
         <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* 일정 step 상세 헤더 원과 동일 — 26px, 미완료는 실선 line, 체크 13px. */}
           <div
             style={{
-              width: 28,
-              height: 28,
+              width: 26,
+              height: 26,
               flexShrink: 0,
               borderRadius: '50%',
               background: doc.verified ? C.sage : 'transparent',
-              border: doc.verified ? 'none' : `1px dashed ${C.ink3}`,
+              border: doc.verified ? 'none' : `1px solid ${C.line}`,
               color: C.surface,
               display: 'flex',
               alignItems: 'center',
@@ -128,7 +129,7 @@ export function RequiredDocDetail({
             }}
           >
             {doc.verified && (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             )}
