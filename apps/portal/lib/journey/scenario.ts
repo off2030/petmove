@@ -273,6 +273,12 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       caseData.jp_export_quarantine_date.length >= 10
         ? caseData.jp_export_quarantine_date.slice(0, 10)
         : null
+    // 임상검사 검진일이 미래로 입력된 경우 — done 시그널은 '오늘 이전'만 인정하므로
+    // 미완료 상태가 되지만, 보호자가 일정을 잡아둔 셈이라 '예정 [날짜]' 칩으로 노출.
+    const vetVisitDate =
+      typeof caseData.vet_visit_date === 'string' && caseData.vet_visit_date.length >= 10
+        ? caseData.vet_visit_date.slice(0, 10)
+        : null
     // 미완 step 의 타임라인 표시일 — step 의 직접 입력 필드(advance_notification_date 등)는
     // 비어있는데 earliest(다른 step 완료일 기준 계산값)만으로 '예정 [날짜]' 칩을 띄우면
     // 일정이 정해진 것처럼 오해됨. 따라서:
@@ -288,9 +294,11 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
           ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? flightReturnDate
           : step.id === 'jp-export-quarantine-visit'
             ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? jpExportReservationDate
-            : done
-              ? resolveCompletedDate(step.done, caseRow)
-              : fallbackDate
+            : step.id === 'vet-visit'
+              ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? vetVisitDate
+              : done
+                ? resolveCompletedDate(step.done, caseRow)
+                : fallbackDate
     // 칩 라벨 분기 — '마감 26·11·21' (단일 non-window 마감일이 표시 날짜인 경우) vs
     // '예정 …' (그 외 일정·이벤트·window 시작·기간 시작 등). 사전 신고처럼 deadline 자체가
     // 보호자의 행동 마감일일 때만 '마감'. window 마감(출국 10일 이내 검진 등)은 구간 시작이라 '예정' 유지.
