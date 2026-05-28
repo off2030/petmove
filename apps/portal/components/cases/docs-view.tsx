@@ -5,6 +5,7 @@ import { useEffect } from 'react'
 import { getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { PetAvatar } from '@/components/cases/pet-avatar'
+import { StepAttachments } from '@/components/journey/step-attachments'
 import type { AutoDocItem, DocsViewData, StoredDocItem } from '@/lib/docs/catalog'
 
 /**
@@ -190,9 +191,17 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
           </div>
         )}
 
-        {/* Upload placeholder */}
+        {/* 사본 추가 업로드 — 다른 파일 추가 필드와 동일한 StepAttachments. 보관함은
+            전체 documents 를 보여주므로 stepId='misc' 로 태깅(서류명은 원본 파일명).
+            올린 파일은 위 보관함 리스트에 합류. 모바일은 탭 시 카메라/사진/파일 선택. */}
         <div style={{ marginTop: 14 }}>
-          <UploadPlaceholder C={C} serif={serif} />
+          <StepAttachments
+            caseId={caseId}
+            stepId="misc"
+            documents={[]}
+            hideList
+            hint="발급받은 서류 사본을 사진/PDF로 올릴 수 있습니다."
+          />
         </div>
       </div>
     </div>
@@ -524,56 +533,6 @@ function DocIcon({
           }}
         />
       )}
-    </div>
-  )
-}
-
-function UploadPlaceholder({ C, serif }: { C: PaletteShape; serif: React.CSSProperties }) {
-  return (
-    <div
-      style={{
-        borderRadius: 14,
-        padding: 14,
-        marginTop: 8,
-        background: 'transparent',
-        border: `1px dashed ${C.accent}80`,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        cursor: 'not-allowed',
-        opacity: 0.85,
-      }}
-    >
-      <div
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: '50%',
-          flexShrink: 0,
-          background: C.soft,
-          color: C.accent,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 3v14M5 10l7-7 7 7M3 21h18" />
-        </svg>
-      </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ ...serif, fontSize: 17, color: C.ink }}>사본 추가 업로드</div>
-        <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>업로드 기능은 곧 추가됩니다</div>
-      </div>
     </div>
   )
 }
