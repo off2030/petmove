@@ -160,39 +160,38 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       const time = typeof data.jp_export_quarantine_time === 'string' ? data.jp_export_quarantine_time : ''
       return /^\d{1,2}:\d{2}$/.test(time)
     }
-    case 'has-kr-export-quarantine':
-      return (
-        typeof data.kr_export_quarantine_date === 'string' &&
-        (data.kr_export_quarantine_date as string).length >= 10
-      )
-    case 'has-jp-import-quarantine':
-      return (
-        typeof data.jp_import_quarantine_date === 'string' &&
-        (data.jp_import_quarantine_date as string).length >= 10
-      )
-    case 'has-jp-export-quarantine-visit':
-      return (
-        typeof data.jp_export_quarantine_visit_date === 'string' &&
-        (data.jp_export_quarantine_visit_date as string).length >= 10
-      )
-    case 'has-kr-import-quarantine':
-      return (
-        typeof data.kr_import_quarantine_date === 'string' &&
-        (data.kr_import_quarantine_date as string).length >= 10
-      )
+    case 'has-kr-export-quarantine': {
+      // 검역일이 입력돼도 미래 날짜면 아직 검역 전 — '예정' 으로 노출돼야 함.
+      // 검역소 방문해 '받은 날짜' 라서 has-vet-visit 와 동일 규칙(과거·오늘만 완료).
+      const dt = typeof data.kr_export_quarantine_date === 'string' ? data.kr_export_quarantine_date : ''
+      if (dt.length < 10) return false
+      return dt <= todayIso()
+    }
+    case 'has-jp-import-quarantine': {
+      const dt = typeof data.jp_import_quarantine_date === 'string' ? data.jp_import_quarantine_date : ''
+      if (dt.length < 10) return false
+      return dt <= todayIso()
+    }
+    case 'has-jp-export-quarantine-visit': {
+      const dt = typeof data.jp_export_quarantine_visit_date === 'string' ? data.jp_export_quarantine_visit_date : ''
+      if (dt.length < 10) return false
+      return dt <= todayIso()
+    }
+    case 'has-kr-import-quarantine': {
+      const dt = typeof data.kr_import_quarantine_date === 'string' ? data.kr_import_quarantine_date : ''
+      if (dt.length < 10) return false
+      return dt <= todayIso()
+    }
     case 'has-arrived': {
       // 도착 완료 — 왕복은 한국 수입검역, 편도는 일본 수입검역(있으면) / 출국일 경과.
+      // 검역일이 미래면 아직 미도착 — 다른 검역 step 과 동일하게 과거·오늘만 인정.
       const { tripType } = buildCaseJourneyContext(caseRow)
       if (tripType === 'round') {
-        return (
-          typeof data.kr_import_quarantine_date === 'string' &&
-          (data.kr_import_quarantine_date as string).length >= 10
-        )
+        const dt = typeof data.kr_import_quarantine_date === 'string' ? data.kr_import_quarantine_date : ''
+        return dt.length >= 10 && dt <= todayIso()
       }
-      if (
-        typeof data.jp_import_quarantine_date === 'string' &&
-        (data.jp_import_quarantine_date as string).length >= 10
-      ) {
+      const jp = typeof data.jp_import_quarantine_date === 'string' ? data.jp_import_quarantine_date : ''
+      if (jp.length >= 10 && jp <= todayIso()) {
         return true
       }
       return !!caseRow.departure_date && caseRow.departure_date < todayIso()
