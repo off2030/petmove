@@ -187,39 +187,6 @@ export function RequiredDocDetail({
           })()}
         </section>
 
-        {/* 발급완료 — 수기 서류이고 첨부가 없을 때만. 첨부가 있으면 그 자체가 발급
-            증빙이라 자동으로 '보유'(버튼 숨김). 발급완료 누르면 플래그로 '보유' 처리. */}
-        {doc.manual && previewDocs.length === 0 && (
-          <button
-            type="button"
-            onClick={handleToggle}
-            disabled={busy}
-            style={{
-              marginTop: 14,
-              width: '100%',
-              padding: '14px 16px',
-              borderRadius: 14,
-              border: `1px solid ${doc.verified ? C.line : C.accent}`,
-              background: doc.verified ? 'transparent' : C.accent,
-              color: doc.verified ? C.ink2 : C.surface,
-              fontSize: 15,
-              fontWeight: 600,
-              fontFamily: 'inherit',
-              cursor: busy ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-            }}
-          >
-            {busy ? '처리 중…' : doc.verified ? '발급완료 취소' : '발급완료'}
-          </button>
-        )}
-
-        {error && (
-          <p style={{ marginTop: 8, fontSize: 12, color: C.warn, lineHeight: 1.5 }}>{error}</p>
-        )}
-
         {/* 첨부 — 모든 필수 서류. ① 미리보기(이미지/PDF, 삭제 ×) → ② 파일 추가 버튼.
             attachStepId 태그로 업로드·삭제 (별지25 등은 doc.id, step 연동은 공유 step).
             수기 서류는 사본을 첨부하면 그 자체가 발급 증빙이라 '보유' 처리된다. */}
@@ -251,6 +218,44 @@ export function RequiredDocDetail({
           documents={previewDocs}
           hideList
         />
+
+        {/* 보유 — 수기 서류이고 첨부가 없을 때만(첨부가 있으면 그 자체가 발급 증빙).
+            설명 → 첨부 → 버튼 순. 안내문은 아직 미완료일 때만. */}
+        {doc.manual && previewDocs.length === 0 && (
+          <div style={{ marginTop: 18 }}>
+            {!doc.verified && (
+              <p style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5, margin: '0 0 10px', padding: '0 2px' }}>
+                이 서류를 발급받으셨다면 보유 버튼을 눌러주세요.
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={handleToggle}
+              disabled={busy}
+              style={{
+                width: '100%',
+                padding: '14px 16px',
+                borderRadius: 14,
+                border: `1px solid ${doc.verified ? C.line : C.accent}`,
+                background: doc.verified ? 'transparent' : C.accent,
+                color: doc.verified ? C.ink2 : C.surface,
+                fontSize: 15,
+                fontWeight: 600,
+                fontFamily: 'inherit',
+                cursor: busy ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+            >
+              {busy ? '처리 중…' : doc.verified ? '보유 취소' : '보유'}
+            </button>
+            {error && (
+              <p style={{ marginTop: 8, fontSize: 12, color: C.warn, lineHeight: 1.5 }}>{error}</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
