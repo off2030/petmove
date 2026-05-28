@@ -80,7 +80,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       source: '동물병원',
       kind: 'manual',
       description:
-        '일본 지정 양식의 접종, 검사 및 건강증명서입니다.\n\n출국일 기준 10일 이내에 임상 수의사의 서명을 받아야 합니다.\n\n한국 수출 동물검역 때 보증서명을 받습니다.',
+        '일본 지정 양식의 접종, 검사 및 건강증명서입니다.\n\n출국일 기준 10일 이내에 임상 수의사의 서명을 받아야 합니다.\n\n한국 수출 동물검역 때 검역관 확인·서명을 받습니다.',
     },
     {
       id: 'jp-export-quarantine-cert',
