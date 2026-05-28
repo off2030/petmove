@@ -138,22 +138,53 @@ export function RequiredDocDetail({
           </div>
         </div>
 
-        {/* Description */}
-        <div
+        {/* Description — 일정 step 과 동일한 불릿 형식. 비어있지 않은 줄마다 bullet,
+            \n\n 단락 경계는 marginTop 으로 간격. */}
+        <section
           style={{
             marginTop: 20,
+            padding: '18px 18px',
+            borderRadius: 18,
             background: C.surface,
             border: `.5px solid ${C.line}`,
-            borderRadius: 14,
-            padding: '16px 18px',
-            fontSize: 14,
-            lineHeight: 1.7,
+            fontSize: 15,
+            lineHeight: 1.65,
             color: C.ink2,
-            whiteSpace: 'pre-line',
           }}
         >
-          {doc.description}
-        </div>
+          {(() => {
+            const lines = doc.description.split('\n')
+            let paraBreakBefore = false
+            return (
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                {lines.flatMap((line, i) => {
+                  if (line.trim() === '') {
+                    paraBreakBefore = true
+                    return []
+                  }
+                  const item = (
+                    <li
+                      key={i}
+                      style={{
+                        display: 'flex',
+                        gap: 8,
+                        alignItems: 'flex-start',
+                        marginTop: i === 0 ? 0 : paraBreakBefore ? 14 : 8,
+                      }}
+                    >
+                      <span style={{ flexShrink: 0, color: C.ink3 }} aria-hidden>
+                        •
+                      </span>
+                      <span>{line}</span>
+                    </li>
+                  )
+                  paraBreakBefore = false
+                  return [item]
+                })}
+              </ul>
+            )
+          })()}
+        </section>
 
         {/* Manual toggle */}
         {doc.manual && (
