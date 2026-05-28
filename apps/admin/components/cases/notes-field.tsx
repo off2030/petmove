@@ -254,7 +254,22 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
     saveNotes(next).catch(() => {})
     if (note.type === 'file') {
       const path = derivePath(note)
-      if (path) void supabase.storage.from('attachments').remove([path])
+      if (path) {
+        // portal 의 step 첨부·필수 서류 미리보기와 동기화 — 같은 path 를
+        // 참조하는 data.documents 항목도 함께 제거. notes 만 지우면 portal 에
+        // 끊긴 링크가 남는다 (admin 이 광견병 항체검사 같은 stepId 가 붙은
+        // 업로드를 notes+documents 양쪽에 기록하기 때문).
+        const docs = Array.isArray(data.documents)
+          ? (data.documents as Array<Record<string, unknown>>)
+          : []
+        const nextDocs = docs.filter((d) => d?.path !== path)
+        if (nextDocs.length !== docs.length) {
+          const val = nextDocs.length > 0 ? nextDocs : null
+          updateLocalCaseField(caseId, 'data', 'documents', val)
+          void updateCaseField(caseId, 'data', 'documents', val)
+        }
+        void supabase.storage.from('attachments').remove([path])
+      }
     }
   }
 
