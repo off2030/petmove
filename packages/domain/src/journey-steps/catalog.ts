@@ -383,7 +383,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     inputs: [{ key: 'advance_notification_date', label: '신청일', type: 'date' }],
     allowAttachments: true,
     attachmentHint: '수입허가증을 사진, PDF로 보관하세요.',
-    attachmentLabel: '사전신고 허가증',
+    attachmentLabel: '허가증(Approval)',
     links: [
       { url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O', label: 'NACCS 신청 페이지' },
       { url: '/guide/jp-quarantine-contacts', label: '일본 동물검역소 연락처' },
