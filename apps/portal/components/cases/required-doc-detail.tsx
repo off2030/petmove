@@ -110,15 +110,14 @@ export function RequiredDocDetail({
           서류함
         </Link>
 
-        {/* Title row */}
-        <div style={{ marginTop: 14, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        {/* Title row — 일정 step 헤더와 동일하게 동그라미·항목명 수직 중앙 정렬. */}
+        <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
           <div
             style={{
               width: 28,
               height: 28,
               flexShrink: 0,
               borderRadius: '50%',
-              marginTop: 6,
               background: doc.verified ? C.sage : 'transparent',
               border: doc.verified ? 'none' : `1px dashed ${C.ink3}`,
               color: C.surface,
