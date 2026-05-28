@@ -110,7 +110,7 @@ export async function uploadFileToNotes(
   let displayName: string
   if (labelOverride) {
     const existingNames = existingNotesAll
-      .filter((n): n is { type: 'file'; name: string } => n.type === 'file' && typeof n.name === 'string')
+      .filter((n): n is FileNote => n.type === 'file')
       .map((n) => n.name)
     displayName = resolveAttachmentName(labelOverride, file.name, existingNames)
   } else if (stepId) {
