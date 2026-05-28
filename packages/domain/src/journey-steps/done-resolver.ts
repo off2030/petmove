@@ -102,8 +102,12 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return readExternalParasiteEntries(caseRow).length > 0
     case 'has-deworming-time':
       return typeof data.deworming_time === 'string' && (data.deworming_time as string).length > 0
-    case 'has-vet-visit':
-      return typeof data.vet_visit_date === 'string' && (data.vet_visit_date as string).length >= 10
+    case 'has-vet-visit': {
+      // 검진일이 입력되어도 미래 날짜면 미완료 — '예정' 상태로 노출되어야 함.
+      const dt = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      if (dt.length < 10) return false
+      return dt < todayIso()
+    }
     case 'has-flight-date': {
       // entry_date(도착일) 또는 케이스의 departure_date(출국일) 둘 중 하나라도 입력되면 완료.
       // 일본은 entry_date 미사용 → departure_date(= 항공권 출발일과 sync) 로 판정.
