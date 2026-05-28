@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from 'react'
 import type { CaseRow } from '@petmove/domain'
 import { buildCaseJourneyContext } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
+import { PetAvatar } from '@/components/cases/pet-avatar'
 import { updateCaseInfoFields, type CaseInfoInput } from '@/lib/actions/cases'
 import {
   DateField,
@@ -256,6 +257,9 @@ export function InfoView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string
   const isRound = form.trip_type === 'round'
   const isJapan =
     buildCaseJourneyContext({ ...caseRow, destination: form.destination }).destinationKey === 'japan'
+  // 헤더 여행지 — 일정·서류와 동일하게 buildCaseJourneyContext 의 토큰 사용 (없으면 원문).
+  const toCity =
+    buildCaseJourneyContext(caseRow).destinationToken ?? caseRow.destination ?? '—'
   const serif: React.CSSProperties = {
     fontFamily: 'var(--pm-font-display)',
     fontWeight: 500,
@@ -275,8 +279,30 @@ export function InfoView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string
       }}
     >
       <div style={{ padding: '0 24px' }}>
-        <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>정보</h1>
-        <p style={{ fontSize: 12.5, color: C.ink3, margin: '6px 0 0', lineHeight: 1.5 }}>
+        {/* 헤더 — 일정·서류 탭과 동일한 아바타 + 이름 + 여행 경로. */}
+        <div style={{ paddingTop: 8, display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+          <span style={{ alignSelf: 'center' }}>
+            <PetAvatar size={36} />
+          </span>
+          <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: 0, color: C.ink }}>
+            {form.pet_name || '반려동물'}
+          </h1>
+          <div
+            style={{
+              fontSize: 12,
+              color: C.ink2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              transform: 'translateY(-2px)',
+            }}
+          >
+            <span>한국</span>
+            <span style={{ color: C.ink3 }}>{isRound ? '⇄' : '→'}</span>
+            <span>{toCity}</span>
+          </div>
+        </div>
+        <p style={{ fontSize: 12.5, color: C.ink3, margin: '10px 0 0', lineHeight: 1.5 }}>
           각 항목을 눌러 수정할 수 있어요.
         </p>
 
