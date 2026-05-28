@@ -54,7 +54,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     {
       id: 'advance-notification-approval',
       name: '허가증(Approval)',
-      source: '검역본부 발급',
+      source: '일본 동물검역소',
       kind: 'step',
       stepRef: 'advance-notification',
       description:
@@ -64,7 +64,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     {
       id: 'form25',
       name: '접종 및 건강증명서(별지 제 25호 서식)',
-      source: 'PetMove 발급',
+      source: '동물병원',
       kind: 'manual',
       description:
         '한국 수출 동물검역 신청 시 제출하는 접종 및 건강증명서입니다.\nPetMove 가 케이스 입력 정보를 바탕으로 자동 작성합니다.\n발급된 PDF 를 출력해 임상 수의사의 서명·날인을 받아 완료 표시해주세요.',
@@ -72,7 +72,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     {
       id: 'form-ac-or-re',
       name: 'FormAC 또는 FormRE',
-      source: 'PetMove 발급',
+      source: '동물병원',
       kind: 'manual',
       description:
         '일본 입국 시 제출하는 영문 증명서입니다 — Form AC (광견병 항체검사 정보) 또는 Form RE (광견병 면역 이력).\nPetMove 가 자동 작성하며, 출력해 임상 수의사의 서명·날인을 받아 완료 표시해주세요.',
@@ -80,7 +80,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     {
       id: 'jp-export-quarantine-cert',
       name: '일본 수출 동물검역증(Export Quarantine Certificate)',
-      source: '검역본부 발급',
+      source: '일본 동물검역소',
       kind: 'manual',
       description:
         '일본에서 한국으로 돌아오기 위한 수출 동물검역증입니다.\n일본 동물검역소를 방문해 검역을 받으면 발급됩니다.\n원본을 보관 후 완료 표시해주세요.',
