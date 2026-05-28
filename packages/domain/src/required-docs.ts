@@ -48,7 +48,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'step',
       stepRef: 'rabies-titer',
       description:
-        '검사를 의뢰한 동물병원에서 발급받습니다.\n\n동물검역을 받을 때 반드시 원본이 필요합니다.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인해야 할 때 편리합니다.\n\n광견병 백신 유효기간 유지 시 최대 2년까지 사용할 수 있습니다.',
+        '검사를 의뢰한 동물병원에서 발급받습니다.\n\n동물검역을 받을 때 반드시 원본이 필요합니다.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리합니다.\n\n광견병 백신 유효기간 유지 시 최대 2년까지 사용할 수 있습니다.',
       previewStepId: 'rabies-titer',
     },
     {
