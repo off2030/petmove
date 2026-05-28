@@ -368,8 +368,11 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
             onDragLeave={handleDragLeave}
             onDrop={handleDropNew}
             className={cn(
+              // dragOver 에 bg-accent/40 를 주면 모달이 투명해져 뒤의 detail 페이지
+              // (인라인 칩·헤더 배지)가 비쳐 보임. 배경은 bg-background 로 유지하고
+              // ring 으로만 드롭 가능 영역 신호.
               'relative w-full max-w-3xl max-h-[90vh] flex flex-col rounded-lg border border-border/80 bg-background shadow-xl transition-colors',
-              dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
+              dragOver && 'ring-2 ring-ring/30 ring-dashed',
             )}
           >
             {/* Header */}
