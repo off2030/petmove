@@ -1125,7 +1125,7 @@ export function StepDetailView({
             </div>
             {isAdvanceAwaitingApproval && (
               <div style={{ marginTop: 16, fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
-                첨부 없이 완료 처리하시려면 다음 버튼을 클릭해주세요.
+                허가증 저장 없이 완료 처리 하시려면 다음 버튼을 클릭해주세요.
               </div>
             )}
             {isAdvanceApprovalSkipped && (

@@ -373,7 +373,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         const msg = '첨부 없이 완료 처리됐어요. 허가증(Approval)을 받으시면 파일을 첨부할 수 있습니다.'
         return { desc: msg, cardDesc: msg }
       }
-      const msg = '신청이 완료되었습니다. 허가증(Approval)이 나오면 파일을 첨부해주세요.'
+      const msg = '신청이 완료되었습니다. 허가증이 나온 후 파일을 저장하시면 완료 처리됩니다.'
       return { desc: msg, cardDesc: msg }
     },
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
