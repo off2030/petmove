@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { getStepDocumentUrl } from '@/lib/actions/documents'
 import type { AutoDocItem, DocsViewData, StoredDocItem } from '@/lib/docs/catalog'
 
@@ -109,7 +110,14 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
             <SectionLabel right={`${requiredDone}/${requiredDocs!.length}`}>필수 서류</SectionLabel>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {requiredDocs!.map((d) => (
-                <ChecklistRow key={d.id} doc={d} C={C} monoCap={monoCap} pendingLabel="준비중" />
+                <ChecklistRow
+                  key={d.id}
+                  doc={d}
+                  C={C}
+                  monoCap={monoCap}
+                  pendingLabel="준비중"
+                  href={`/cases/${caseId}/docs/${d.id}`}
+                />
               ))}
             </div>
           </>
@@ -251,26 +259,31 @@ function ChecklistRow({
   C,
   monoCap,
   pendingLabel = '대기',
+  href,
 }: {
   doc: { id: string; name: string; source: string; verified: boolean }
   C: PaletteShape
   monoCap: React.CSSProperties
   /** 미준비 상태의 우측 라벨. 기본 '대기'. 큐레이션 섹션은 '준비중'. */
   pendingLabel?: string
+  /** 있으면 카드 전체가 Link 가 되어 상세 페이지로 이동. */
+  href?: string
 }) {
   const ok = doc.verified
-  return (
-    <div
-      style={{
-        background: C.surface,
-        border: `.5px solid ${C.line}`,
-        borderRadius: 14,
-        padding: '14px 16px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-      }}
-    >
+  const cardStyle: React.CSSProperties = {
+    background: C.surface,
+    border: `.5px solid ${C.line}`,
+    borderRadius: 14,
+    padding: '14px 16px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    textDecoration: 'none',
+    color: 'inherit',
+    cursor: href ? 'pointer' : 'default',
+  }
+  const inner = (
+    <>
       <div
         style={{
           width: 22,
@@ -321,7 +334,14 @@ function ChecklistRow({
       >
         {ok ? '보유' : pendingLabel}
       </span>
-    </div>
+    </>
+  )
+  return href ? (
+    <Link href={href} style={cardStyle}>
+      {inner}
+    </Link>
+  ) : (
+    <div style={cardStyle}>{inner}</div>
   )
 }
 
