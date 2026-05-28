@@ -135,7 +135,7 @@ export function RequiredDocDetail({
             )}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h1 style={{ ...serif, fontSize: 22, lineHeight: 1.25, margin: 0, color: C.ink }}>{doc.name}</h1>
+            <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.15, margin: 0, color: C.ink }}>{doc.name}</h1>
           </div>
         </div>
 
