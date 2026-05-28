@@ -4,6 +4,9 @@
  *
  * AI 추출용 이미지(일본/태국 추가정보, 백신 증명서 등)를
  * 모두 영구 보관하기 위해 사용.
+ *
+ * stepId 가 주어지면 동일 파일을 case.data.documents 에도 등록 — portal 의
+ * journey step 첨부·필수 서류 미리보기와 자동 연동된다.
  */
 
 import { supabaseBrowser as supabase } from '@petmove/auth'
@@ -34,6 +37,17 @@ interface LegacyAttachment {
   uploadedAt: string
 }
 
+/** portal 의 CaseDocument 와 동일 shape — packages 의존성 피해 인라인 정의. */
+interface CaseDocumentRecord {
+  id: string
+  name: string
+  path: string
+  size: number
+  mime: string
+  stepId: string
+  uploadedAt: string
+}
+
 function readNotes(data: Record<string, unknown>): NoteItem[] {
   if (Array.isArray(data.notes)) return data.notes as NoteItem[]
   const items: NoteItem[] = []
@@ -50,8 +64,18 @@ function readNotes(data: Record<string, unknown>): NoteItem[] {
   return items
 }
 
+function readDocuments(data: Record<string, unknown>): CaseDocumentRecord[] {
+  const raw = data['documents']
+  if (!Array.isArray(raw)) return []
+  return raw.filter(
+    (d): d is CaseDocumentRecord =>
+      !!d && typeof d === 'object' && typeof (d as CaseDocumentRecord).path === 'string',
+  )
+}
+
 /**
  * 파일을 Supabase에 업로드하고 notes에 첨부파일로 추가한다.
+ * stepId 주어지면 case.data.documents 에도 등록 — portal 연동.
  * @returns 성공 시 storage path, 실패 시 null
  */
 export async function uploadFileToNotes(
@@ -59,6 +83,7 @@ export async function uploadFileToNotes(
   caseRow: CaseRow,
   file: File,
   updateLocalCaseField: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void,
+  stepId?: string,
 ): Promise<string | null> {
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
   const path = `${caseId}/${Date.now()}_${safeName}`
@@ -69,12 +94,13 @@ export async function uploadFileToNotes(
 
   if (uploadErr) return null
 
+  const createdAt = new Date().toISOString()
   const newFile: FileNote = {
     type: 'file',
     name: file.name,
     path,
     size: file.size,
-    createdAt: new Date().toISOString(),
+    createdAt,
   }
 
   const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -97,6 +123,25 @@ export async function uploadFileToNotes(
 
   const r = await updateCaseField(caseId, 'data', 'notes', nextNotes)
   if (r.ok) updateLocalCaseField(caseId, 'data', 'notes', nextNotes)
+
+  // portal 의 step 첨부·필수 서류 미리보기 연동 — 동일 파일을 documents 에도 등록.
+  if (stepId) {
+    const existingDocs = readDocuments(data)
+    const newDoc: CaseDocumentRecord = {
+      id: typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      name: file.name,
+      path,
+      size: file.size,
+      mime: file.type || 'application/octet-stream',
+      stepId,
+      uploadedAt: createdAt,
+    }
+    const nextDocs = [...existingDocs, newDoc]
+    const dr = await updateCaseField(caseId, 'data', 'documents', nextDocs)
+    if (dr.ok) updateLocalCaseField(caseId, 'data', 'documents', nextDocs)
+  }
 
   return path
 }

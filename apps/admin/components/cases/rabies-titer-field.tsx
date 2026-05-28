@@ -213,7 +213,8 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
       setTimeout(() => setExtractMsg(null), 4000)
       return
     }
-    uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField).catch(() => {})
+    // stepId='rabies-titer' — portal 의 필수 서류(광견병 항체가 검사 결과지) 미리보기 연동.
+    uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField, 'rabies-titer').catch(() => {})
     setExtracting(true)
     setExtractMsg(null)
     let images: { base64: string; mediaType: string }[]
