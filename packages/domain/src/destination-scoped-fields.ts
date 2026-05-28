@@ -14,6 +14,7 @@
  */
 
 import type { CaseRow } from './types'
+import { parseDestinations } from './destination-config'
 
 /**
  * 분리 대상 키. 이 키들에 대한 입력은 다중 목적지 시 by_dest 에 저장돼야 함.
@@ -104,6 +105,30 @@ export function writeByDestValue(
   byDest[destination] = destObj
   next['by_dest'] = byDest
   return next
+}
+
+/**
+ * 탭(신고·서류·검사)에서 케이스 한 줄이 대표할 "활성 목적지" 해석.
+ *
+ * 우선순위:
+ *   1. data[overrideKey] (사용자가 칩으로 고른 값) — 유효한 목적지일 때만.
+ *   2. 출국일(by_dest 우선)이 입력된 첫 목적지 — 다중 목적지에서 자연스러운 기본.
+ *   3. 첫 목적지.
+ *
+ * DestinationCell(칩 표시)과 todos 탭의 날짜 읽기(flatten)가 동일 목적지를 쓰도록
+ * 공용 — 칩과 표시 데이터가 어긋나지 않게 한다. 단일 목적지면 그 목적지.
+ */
+export function resolveTabActiveDest(
+  caseRow: Pick<CaseRow, 'destination' | 'data' | 'departure_date'>,
+  overrideKey: string,
+): string | null {
+  const dests = parseDestinations(caseRow.destination)
+  if (dests.length === 0) return null
+  const data = (caseRow.data as Record<string, unknown> | null) ?? {}
+  const override = data[overrideKey]
+  if (typeof override === 'string' && dests.includes(override)) return override
+  const withDeparture = dests.find((d) => !!getDepartureDate(caseRow, d))
+  return withDeparture ?? dests[0]
 }
 
 /**

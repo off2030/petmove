@@ -25,7 +25,7 @@ import { TransferDialog } from './transfer-dialog'
 import { AssigneePicker } from './assignee-picker'
 import { ShareLinkDialog } from './share-link-dialog'
 import { PortalPreviewDialog } from './portal-preview-dialog'
-import { resolveCerts } from '@petmove/domain'
+import { getDepartureDate, resolveCerts } from '@petmove/domain'
 import type { CaseRow } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
 import { evaluateCase } from './verification-context'
@@ -136,8 +136,9 @@ function ImportReportToggle({
 
   const manual = data.import_report_manual === true
   const dismissed = data.import_report_dismissed === true
-  // 자동 포함 = 출국일 있음 + 활성 목적지가 신고 대상국 (= isAutoImportReport와 동일 의도)
-  const auto = !!caseRow.departure_date && importReportCountries.includes(focusDest)
+  // 자동 포함 = 활성 목적지가 신고 대상국 + 그 목적지 출국일 있음(by_dest 우선).
+  // (isAutoImportReport 와 동일 의도 — 다중 목적지에서 목적지별 출국일 인지.)
+  const auto = importReportCountries.includes(focusDest) && !!getDepartureDate(caseRow, focusDest)
   const included = auto || manual
 
   // "신고 내리기" 로 비활성화된 상태 — 회색 라벨 + 리셋 버튼.

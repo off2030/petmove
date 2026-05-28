@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { destCode } from '@/lib/country-code'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
-import type { CaseRow } from '@petmove/domain'
+import { resolveTabActiveDest, type CaseRow } from '@petmove/domain'
 
 /**
  * 다중 목적지 케이스에서 한 줄에 "활성" 목적지 한 개만 보여주는 chip + dropdown.
@@ -31,10 +31,9 @@ export function DestinationCell({
   dismissAction?: { label: string; dismissKey: string }
 }) {
   const dests = (row.destination ?? '').split(',').map(s => s.trim()).filter(Boolean)
-  const data = (row.data ?? {}) as Record<string, unknown>
-  const overrideRaw = data[overrideKey]
-  const override = typeof overrideRaw === 'string' ? overrideRaw : null
-  const active = override && dests.includes(override) ? override : dests[0] ?? null
+  // 활성 목적지: override ?? 출국일 있는 목적지 ?? 첫 목적지. todos 탭의 날짜 flatten 과
+  // 동일 기준(resolveTabActiveDest)이라 칩과 표시 데이터가 일치.
+  const active = resolveTabActiveDest(row, overrideKey)
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -71,10 +70,10 @@ export function DestinationCell({
 
   async function pick(d: string) {
     setOpen(false)
-    // 첫 번째 목적지 선택 시에는 override를 비워 default 동작으로 되돌린다.
-    const val = d === dests[0] ? null : d
-    onUpdate(row.id, 'data', overrideKey, val)
-    await updateCaseField(row.id, 'data', overrideKey, val)
+    // 명시적으로 고른 목적지는 항상 override 로 저장. (기본 활성이 '출국일 있는 목적지'라
+    // 첫 목적지 선택 시 override 를 비우면 다시 default 로 튕겨 선택이 안 남는다.)
+    onUpdate(row.id, 'data', overrideKey, d)
+    await updateCaseField(row.id, 'data', overrideKey, d)
   }
 
   async function dismiss() {

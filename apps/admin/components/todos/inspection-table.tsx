@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { CaseRow } from '@petmove/domain'
+import { getDepartureDate, resolveTabActiveDest, type CaseRow } from '@petmove/domain'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from '@/components/cases/cases-context'
 import { labColor } from '@/lib/lab-color'
@@ -543,7 +543,13 @@ export function InspectionTable({
   rows: InspectionRow[]
   labOptions: LabOption[]
   statusOptions: StatusOption[]
-  onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
+  onUpdate: (
+    caseId: string,
+    storage: 'column' | 'data',
+    key: string,
+    value: unknown,
+    destination?: string | null,
+  ) => void
   /** 설정 → 검사 에서 숨김 처리된 컬럼 key. */
   hiddenColumns?: string[]
 }) {
@@ -649,15 +655,22 @@ export function InspectionTable({
             )}
             {!hidden.has('departure_date') && (
               <td className="px-2 py-4" style={{ width: BASE_W, minWidth: BASE_W }} onClick={(e) => e.stopPropagation()}>
-                <DateCell
-                  value={row.caseRow.departure_date ?? ''}
-                  editable
-                  onSave={async (v) => {
-                    const next = v || null
-                    onUpdate(row.caseRow.id, 'column', 'departure_date', next)
-                    await updateCaseField(row.caseRow.id, 'column', 'departure_date', next)
-                  }}
-                />
+                {(() => {
+                  // 활성 목적지(inspection_active_dest) 출국일 — 다중 목적지면 by_dest,
+                  // 단일이면 컬럼. 편집도 같은 목적지로 라우팅.
+                  const activeDest = resolveTabActiveDest(row.caseRow, 'inspection_active_dest')
+                  return (
+                    <DateCell
+                      value={getDepartureDate(row.caseRow, activeDest) ?? ''}
+                      editable
+                      onSave={async (v) => {
+                        const next = v || null
+                        onUpdate(row.caseRow.id, 'column', 'departure_date', next, activeDest)
+                        await updateCaseField(row.caseRow.id, 'column', 'departure_date', next, activeDest)
+                      }}
+                    />
+                  )
+                })()}
               </td>
             )}
             {!hidden.has('memo') && (

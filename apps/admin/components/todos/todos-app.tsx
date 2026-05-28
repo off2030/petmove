@@ -7,7 +7,14 @@ import type { CaseRow } from '@petmove/domain'
 import { useCases } from '@/components/cases/cases-context'
 import { Input } from '@/components/ui/input'
 import { DialogFooter } from '@/components/ui/dialog-footer'
-import { matchesDestinationKey } from '@petmove/domain'
+import {
+  getDepartureDate,
+  getVetVisitDate,
+  matchesDestinationKey,
+  parseDestinations,
+  readByDestValue,
+  resolveTabActiveDest,
+} from '@petmove/domain'
 import { cn } from '@/lib/utils'
 import { TodoTable, type TodoColumn } from './todo-table'
 import { InspectionTable, readInspectionStatus, type InspectionRow } from './inspection-table'
@@ -153,6 +160,67 @@ function addDays(dateStr: string, days: number): string {
   return `${y}-${m}-${day}`
 }
 
+// ── 다중 목적지 by_dest 인지 헬퍼 ──────────────────────────────────────────
+// 출국일·내원일은 목적지별(data.by_dest[목적지])로 저장될 수 있다. 탭은 활성
+// 목적지(override ?? 출국일 있는 목적지 ?? 첫 목적지) 기준으로 읽고, 포함 판정은
+// 모든 목적지를 스캔한다. 단일 목적지면 컬럼/top-level 폴백이라 기존 동작 유지.
+const IMPORT_REPORT_DEST_KEY = 'import_report_active_dest'
+const EXPORT_DOC_DEST_KEY = 'export_doc_active_dest'
+
+/** 서류 탭 활성 목적지 출국일. */
+function exportDocDeparture(row: CaseRow): string {
+  return getDepartureDate(row, resolveTabActiveDest(row, EXPORT_DOC_DEST_KEY)) ?? ''
+}
+/** 서류 탭 활성 목적지 내원일. */
+function exportDocVetVisit(row: CaseRow): string {
+  return getVetVisitDate(row, resolveTabActiveDest(row, EXPORT_DOC_DEST_KEY)) ?? ''
+}
+/** 신고 탭 활성 목적지 출국일. */
+function importReportDeparture(row: CaseRow): string {
+  return getDepartureDate(row, resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)) ?? ''
+}
+/** 신고 탭 활성 목적지 귀국일 (by_dest 우선) — 수출 검역 상태 판정용. */
+function importReportReturnDate(row: CaseRow): string {
+  const activeDest = resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)
+  const data = (row.data as Record<string, unknown> | null) ?? null
+  const v = readByDestValue(data, activeDest, 'return_date')
+  if (typeof v === 'string' && v) return v
+  const top = data?.return_date
+  return typeof top === 'string' && top ? top : ''
+}
+/** 케이스의 어떤 목적지든 출국일이 있는지 (by_dest 우선 + 컬럼 폴백). */
+function anyDestHasDeparture(row: CaseRow): boolean {
+  const dests = parseDestinations(row.destination)
+  if (dests.length === 0) return !!row.departure_date
+  return dests.some((d) => !!getDepartureDate(row, d))
+}
+/** 특정 검사국(예: 'australia')에 해당하는 목적지의 출국일 (by_dest 우선). */
+function destDeparture(row: CaseRow, destKey: string): string {
+  const dests = parseDestinations(row.destination)
+  const match = dests.find((d) => matchesDestinationKey(d, destKey))
+  if (!match) return ''
+  return getDepartureDate(row, match) ?? ''
+}
+/** 케이스의 어떤 목적지든 내원일이 있는지. */
+function anyDestHasVetVisit(row: CaseRow): boolean {
+  const dests = parseDestinations(row.destination)
+  if (dests.length === 0) {
+    const v = (row.data as Record<string, unknown> | null)?.vet_visit_date
+    return typeof v === 'string' && !!v
+  }
+  return dests.some((d) => !!getVetVisitDate(row, d))
+}
+/**
+ * 신고 마감일 자동 계산 — 활성 목적지가 일본이고 그 목적지 출국일이 있으면 -40일.
+ * 그 외 국가는 마감 규칙 미정 → 빈값(운영자 수기). 향후 국가별 규칙 추가 지점.
+ */
+function autoImportDeadline(row: CaseRow): string {
+  const activeDest = resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY)
+  const dep = getDepartureDate(row, activeDest)
+  if (matchesDestinationKey(activeDest, 'japan') && dep) return computeJapanImportDeadline(dep)
+  return ''
+}
+
 /**
  * 설정의 infectiousRules에서 특정 국가(예: '뉴질랜드') 규칙의 labs 배열을 찾는다.
  * 표시 순서는 사용자가 설정 → 전염병 규칙에서 멀티 선택한 순서를 그대로 따른다.
@@ -202,11 +270,11 @@ function buildInspectionRows(
     const isAU = matchesDestinationKey(c.destination, 'australia')
     const isNZ = matchesDestinationKey(c.destination, 'new_zealand')
     if (isAU) {
-      // 호주: 검사일(infectious ksvdl.date) 또는 출국일 중 하나라도 있으면 탭에 올림.
-      // 날짜 컬럼은 검사일 있으면 그것, 없으면 빈 값(사용자가 탭에서 직접 입력).
+      // 호주: 검사일(infectious ksvdl.date) 또는 호주 출국일(by_dest 우선) 중 하나라도
+      // 있으면 탭에 올림. 날짜 컬럼은 검사일 있으면 그것, 없으면 빈 값(직접 입력).
       const recs = readInfectiousRecords(c)
       const existing = recs.find(r => r.lab === 'ksvdl')
-      const referenceDate = existing?.date || c.departure_date
+      const referenceDate = existing?.date || destDeparture(c, 'australia')
       if (referenceDate) {
         rows.push({
           id: `${c.id}:inf:ksvdl`,
@@ -219,13 +287,14 @@ function buildInspectionRows(
         })
       }
     }
-    if (isNZ && c.departure_date) {
+    const nzDeparture = destDeparture(c, 'new_zealand')
+    if (isNZ && nzDeparture) {
       // 뉴질랜드: 설정 labs 순서대로 묶음 한 행으로 표시.
       // 검사일 수정 시 묶음 내 모든 record에 동시 저장.
-      // 표시 날짜는 저장값 우선(설정 순서대로 첫 hit), 없으면 출국일 - 15일 자동.
+      // 표시 날짜는 저장값 우선(설정 순서대로 첫 hit), 없으면 뉴질랜드 출국일 - 15일 자동.
       const recs = readInfectiousRecords(c)
       const existing = nzLabs.map(lab => recs.find(r => r.lab === lab)).find(Boolean)
-      const autoDate = computeNZInspectionDate(c.departure_date)
+      const autoDate = computeNZInspectionDate(nzDeparture)
       const date = existing?.date || autoDate
       rows.push({
         id: `${c.id}:inf:nz`,
@@ -288,37 +357,47 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
     storage: 'data',
     type: 'date',
     width: EXPORT_DOC_COL_W,
+    // 활성 목적지 내원일 (by_dest 우선) 표시. 편집은 TodoTable 이 active dest 로 라우팅.
+    resolveValue: (row) => exportDocVetVisit(row),
     // 내원일이 7일 이내(포함 경과분)이고 준비상태 ≠ done 이면 주황.
     cellClass: (row) => {
-      const data = (row.data ?? {}) as Record<string, unknown>
-      const visit = data.vet_visit_date
-      if (visit == null || String(visit) === '') return ''
-      const d = new Date(String(visit))
+      const visit = exportDocVetVisit(row)
+      if (!visit) return ''
+      const d = new Date(visit)
       if (isNaN(d.getTime())) return ''
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       d.setHours(0, 0, 0, 0)
       const diffDays = Math.floor((d.getTime() - today.getTime()) / 86400000)
       if (diffDays > 7) return ''
+      const data = (row.data ?? {}) as Record<string, unknown>
       const status = typeof data.export_doc_status === 'string' ? data.export_doc_status : 'not_started'
       if (status === 'done') return ''
       return 'text-pmw-warning'
     },
   },
-  { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: EXPORT_DOC_COL_W },
+  {
+    key: 'departure_date',
+    label: '출국일',
+    storage: 'column',
+    type: 'date',
+    width: EXPORT_DOC_COL_W,
+    // 활성 목적지 출국일 (by_dest 우선) 표시.
+    resolveValue: (row) => exportDocDeparture(row),
+  },
   {
     key: 'vet_available_date',
     label: '내원가능일',
     storage: 'data',
     type: 'date',
     width: EXPORT_DOC_COL_W,
-    // 저장된 값이 없으면 출국일 - 9일로 자동 계산하여 표시.
+    // 저장된 값이 없으면 활성 목적지 출국일 - 9일로 자동 계산하여 표시.
     resolveValue: (row) => {
       const data = (row.data ?? {}) as Record<string, unknown>
       const stored = data.vet_available_date
       if (stored != null && String(stored) !== '') return String(stored)
-      const departure = row.departure_date
-      if (typeof departure === 'string' && departure) return addDays(departure, -9)
+      const departure = exportDocDeparture(row)
+      if (departure) return addDays(departure, -9)
       return ''
     },
   },
@@ -339,32 +418,22 @@ const EXPORT_DOC_COLUMNS: TodoColumn[] = [
   { key: 'export_doc_memo', label: '메모', storage: 'data', type: 'text', width: EXPORT_DOC_COL_W },
 ]
 
-/**
- * 신고 탭 자동 포함 규칙:
- *   - 목적지가 대상국(설정 > 신고) 중 하나여야 하고,
- *   - 출국일(departure_date) 이 기재되어 있어야 함.
- * 그 외 국가는 상세페이지에서 "신고 추가" 토글(`import_report_manual`)로 수동 포함.
- */
-function isImportReportCountry(row: CaseRow, countries: string[]): boolean {
-  if (!row.destination) return false
-  const set = new Set(countries)
-  const dests = row.destination.split(',').map(s => s.trim()).filter(Boolean)
-  return dests.some(d => set.has(d))
-}
 
 /**
- * 자동 포함 판정 — 활성 목적지(import_report_active_dest)가 영속 저장돼 있으면
- * 그 국가 기준으로만 판정. 비-신고국으로 명시 저장된 경우 자동 포함 안 됨.
- * 저장값 없으면(레거시) 기존대로 ANY-매칭으로 폴백.
+ * 자동 포함 판정 — 신고국이면서 출국일(by_dest 우선)이 있는 목적지가 있어야 함.
+ *
+ * 활성 목적지(import_report_active_dest)가 명시 저장돼 있으면 그 목적지 기준으로만
+ * 판정 (비-신고국으로 옮겨 두면 자동 포함 안 됨). 저장값 없으면 케이스의 모든
+ * 목적지를 스캔 — 다중 목적지에서 한 목적지에만 출국일이 있어도 포함된다.
  */
 function isAutoImportReport(row: CaseRow, countries: string[]): boolean {
-  if (!row.departure_date) return false
   const data = (row.data ?? {}) as Record<string, unknown>
   const active = data.import_report_active_dest
   if (typeof active === 'string' && active) {
-    return countries.includes(active)
+    return countries.includes(active) && !!getDepartureDate(row, active)
   }
-  return isImportReportCountry(row, countries)
+  const dests = parseDestinations(row.destination)
+  return dests.some((d) => countries.includes(d) && !!getDepartureDate(row, d))
 }
 
 function isManualImportReport(row: CaseRow): boolean {
@@ -445,7 +514,7 @@ function effectiveImportStatus(row: CaseRow): string {
 
 function effectiveExportStatus(row: CaseRow): string {
   const data = (row.data ?? {}) as Record<string, unknown>
-  if (!data.return_date) return 'na'
+  if (!importReportReturnDate(row)) return 'na'
   const stored = data.import_export_status
   if (stored != null && String(stored) !== '') return String(stored)
   if (isJapan(row)) {
@@ -472,23 +541,23 @@ function isImportReportComplete(row: CaseRow): boolean {
   return done(effectiveImportStatus(row)) && done(effectiveExportStatus(row))
 }
 
-/** 출국일이 오늘보다 전 = 이미 출국한 케이스. */
+/** 활성 목적지 출국일이 오늘보다 전 = 이미 출국한 케이스. */
 function isPastDeparture(row: CaseRow): boolean {
-  const dep = row.departure_date
+  const dep = exportDocDeparture(row)
   if (!dep) return false
   return dep < new Date().toISOString().slice(0, 10)
 }
 
 /**
  * 출국일 미정 + 준비상태 완료 + 내원일 경과 = 사실상 마무리된 케이스.
- * 서류 탭에서 dim 처리하고 정렬상 하단으로 보낸다.
+ * 서류 탭에서 dim 처리하고 정렬상 하단으로 보낸다. (활성 목적지 기준)
  */
 function isExportDocFinishedNoDeparture(row: CaseRow): boolean {
-  if (row.departure_date) return false
+  if (exportDocDeparture(row)) return false
   const data = (row.data ?? {}) as Record<string, unknown>
   if (data.export_doc_status !== 'done') return false
-  const v = data.vet_visit_date
-  if (typeof v !== 'string' || !v) return false
+  const v = exportDocVetVisit(row)
+  if (!v) return false
   return v < new Date().toISOString().slice(0, 10)
 }
 
@@ -518,13 +587,12 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
     storage: 'data',
     type: 'date',
     width: BASE_COL_W,
-    // 일본: 저장된 값이 없으면 출국일 - 40일로 자동 계산하여 표시.
+    // 일본: 저장된 값이 없으면 활성 목적지 출국일 - 40일로 자동 계산하여 표시.
     resolveValue: (row) => {
       const data = (row.data ?? {}) as Record<string, unknown>
       const stored = data.import_deadline
       if (stored != null && String(stored) !== '') return String(stored)
-      if (isJapan(row) && row.departure_date) return computeJapanImportDeadline(row.departure_date)
-      return ''
+      return autoImportDeadline(row)
     },
     // 기한이 7일 이내(포함 경과분)이고 수입·수출 상태가 모두 '진행중/완료'가 아닐 때 주황.
     cellClass: (row) => {
@@ -532,7 +600,7 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
       const stored = data.import_deadline
       const deadline = stored != null && String(stored) !== ''
         ? String(stored)
-        : (isJapan(row) && row.departure_date ? computeJapanImportDeadline(row.departure_date) : '')
+        : autoImportDeadline(row)
       if (!deadline) return ''
       const d = new Date(deadline)
       if (isNaN(d.getTime())) return ''
@@ -546,8 +614,8 @@ const IMPORT_REPORT_COLUMNS: TodoColumn[] = [
       return 'text-pmw-warning'
     },
   },
-  { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: BASE_COL_W },
-  { key: 'return_date', label: '귀국일', storage: 'data', type: 'date', width: BASE_COL_W },
+  { key: 'departure_date', label: '출국일', storage: 'column', type: 'date', width: BASE_COL_W, resolveValue: (row) => importReportDeparture(row) },
+  { key: 'return_date', label: '귀국일', storage: 'data', type: 'date', width: BASE_COL_W, resolveValue: (row) => importReportReturnDate(row) },
   {
     key: 'import_import_status',
     label: '수입',
@@ -638,9 +706,9 @@ export function TodosApp({
           const ca = isImportReportComplete(a) ? 1 : 0
           const cb = isImportReportComplete(b) ? 1 : 0
           if (ca !== cb) return ca - cb
-          // 2차: 같은 그룹 내에서는 출국일 빠른 순(asc).
-          const da = a.departure_date ?? ''
-          const db = b.departure_date ?? ''
+          // 2차: 같은 그룹 내에서는 활성 목적지 출국일 빠른 순(asc).
+          const da = importReportDeparture(a)
+          const db = importReportDeparture(b)
           if (da !== db) {
             if (!da) return 1
             if (!db) return -1
@@ -652,15 +720,12 @@ export function TodosApp({
     }
     if (activeTab === 'export_doc') {
       const todayStr = new Date().toISOString().slice(0, 10)
-      const visitDate = (c: CaseRow) => {
-        const d = (c.data ?? {}) as Record<string, unknown>
-        const v = d.vet_visit_date
-        return typeof v === 'string' && v ? v : ''
-      }
+      // 활성 목적지 기준 내원일·출국일 (by_dest 우선).
+      const visitDate = (c: CaseRow) => exportDocVetVisit(c)
       // 0=내원일 미래, 1=내원일 미정, 2=내원일 경과(출국일 미경과), 3=하단(출국일 지남
       //   또는 출국일 미정 + 준비상태 완료 + 내원일 경과 — 후자도 마무리된 케이스로 간주).
       const groupOf = (c: CaseRow): 0 | 1 | 2 | 3 => {
-        const dep = c.departure_date ?? ''
+        const dep = exportDocDeparture(c)
         if (dep && dep < todayStr) return 3
         if (isExportDocFinishedNoDeparture(c)) return 3
         const v = visitDate(c)
@@ -669,14 +734,15 @@ export function TodosApp({
         return 0
       }
       return cases
-        .filter((c) => !!c.departure_date || !!visitDate(c))
+        // 포함: 어떤 목적지든 출국일 또는 내원일이 있으면 (by_dest 스캔).
+        .filter((c) => anyDestHasDeparture(c) || anyDestHasVetVisit(c))
         .filter(c => matchesQuery(c, q))
         .sort((a, b) => {
           const ga = groupOf(a)
           const gb = groupOf(b)
           if (ga !== gb) return ga - gb
-          const da = a.departure_date ?? ''
-          const db = b.departure_date ?? ''
+          const da = exportDocDeparture(a)
+          const db = exportDocDeparture(b)
           if (ga === 0) {
             // 상단: 내원일 asc, 동일하면 출국일 asc.
             const cmp = visitDate(a).localeCompare(visitDate(b))
@@ -688,6 +754,20 @@ export function TodosApp({
     }
     return cases
   }, [cases, activeTab, q])
+
+  // 탭별 활성 목적지 맵 — TodoTable 의 scoped key 편집을 by_dest 로 라우팅하는 데 사용.
+  const activeDestById = useMemo(() => {
+    const key =
+      activeTab === 'import_report'
+        ? IMPORT_REPORT_DEST_KEY
+        : activeTab === 'export_doc'
+        ? EXPORT_DOC_DEST_KEY
+        : null
+    if (!key) return undefined
+    const m = new Map<string, string | null>()
+    for (const c of filteredCases) m.set(c.id, resolveTabActiveDest(c, key))
+    return m
+  }, [filteredCases, activeTab])
 
   const inspectionRows = useMemo(
     () => buildInspectionRows(cases, inspectionConfig.titerRules, inspectionConfig.titerDefault, inspectionConfig.infectiousRules)
@@ -713,8 +793,8 @@ export function TodosApp({
           if (!db) return -1
           return da.localeCompare(db)
         }
-        const ea = a.caseRow.departure_date ?? ''
-        const eb = b.caseRow.departure_date ?? ''
+        const ea = getDepartureDate(a.caseRow, resolveTabActiveDest(a.caseRow, 'inspection_active_dest')) ?? ''
+        const eb = getDepartureDate(b.caseRow, resolveTabActiveDest(b.caseRow, 'inspection_active_dest')) ?? ''
         if (!ea) return 1
         if (!eb) return -1
         return ea.localeCompare(eb)
@@ -840,6 +920,7 @@ export function TodosApp({
             (col) => !todoColumnsConfig.hiddenColumns[activeTab].includes(col.key),
           )}
           onUpdate={updateLocalCaseField}
+          activeDestById={activeDestById}
           rowClass={
             activeTab === 'import_report'
               ? (row) => (isImportReportComplete(row) ? 'opacity-50 hover:opacity-100' : '')

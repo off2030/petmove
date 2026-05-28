@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CaseRow } from '@petmove/domain'
-import { matchesDestinationKey } from '@petmove/domain'
+import { isDestinationScopedKey, matchesDestinationKey } from '@petmove/domain'
 import {
   setAdvanceNotificationReportStatus,
   setJpExportQuarantineReportStatus,
@@ -15,6 +15,18 @@ import { DropdownSelect } from '@petmove/ui'
 
 const INITIAL_VISIBLE = 100
 const LOAD_MORE_STEP = 100
+
+/**
+ * 로컬 상태 반영 콜백. 5번째 destination 은 다중 목적지 케이스에서 scoped key 를
+ * by_dest 로 라우팅할 때 전달 (updateLocalCaseField 와 동일 시그니처).
+ */
+type OnUpdate = (
+  caseId: string,
+  storage: 'column' | 'data',
+  key: string,
+  value: unknown,
+  destination?: string | null,
+) => void
 
 function formatDateDotted(v: string): string {
   if (!v || v.length < 10) return v
@@ -42,7 +54,7 @@ export interface TodoColumn {
    * Custom cell renderer for `type: 'custom'`. Receives the row and an
    * `onUpdate` helper for persisting changes via the shared local+DB path.
    */
-  render?: (row: CaseRow, onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void) => React.ReactNode
+  render?: (row: CaseRow, onUpdate: OnUpdate) => React.ReactNode
   /**
    * 읽기 전용으로 표시하고 셀 클릭 시 행 네비게이션(상세페이지 이동)을 허용.
    * 식별 컬럼(동물명·고객명 등)에 사용.
@@ -94,10 +106,13 @@ function EditableCell({
   row,
   col,
   onUpdate,
+  activeDest,
 }: {
   row: CaseRow
   col: TodoColumn
-  onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
+  onUpdate: OnUpdate
+  /** 다중 목적지 케이스의 활성 목적지 — scoped key 저장을 by_dest 로 라우팅. */
+  activeDest?: string | null
 }) {
   const { replaceLocalCaseData, updateLocalCaseField } = useCases()
   const value = getCellValue(row, col)
@@ -114,9 +129,11 @@ function EditableCell({
         return
       }
       const saveVal = trimmed === '' ? null : trimmed
-      onUpdate(row.id, col.storage, col.key, saveVal)
+      // scoped key(출국일·내원일 등)는 활성 목적지로 by_dest 라우팅. 그 외는 기존 경로.
+      const dest = isDestinationScopedKey(col.key) ? (activeDest ?? undefined) : undefined
+      onUpdate(row.id, col.storage, col.key, saveVal, dest)
       setEditing(false)
-      const result = await updateCaseField(row.id, col.storage, col.key, saveVal)
+      const result = await updateCaseField(row.id, col.storage, col.key, saveVal, dest)
       // 자동 채움/리셋 결과 반영 — 서버에서 다른 필드(예: export_doc_status)가 바뀌었을 수 있음.
       if (result.ok && result.autoFilled) {
         replaceLocalCaseData(row.id, result.autoFilled.data)
@@ -125,7 +142,7 @@ function EditableCell({
         }
       }
     },
-    [row.id, col.storage, col.key, value, onUpdate, replaceLocalCaseData, updateLocalCaseField],
+    [row.id, col.storage, col.key, value, onUpdate, replaceLocalCaseData, updateLocalCaseField, activeDest],
   )
 
   useEffect(() => {
@@ -224,7 +241,7 @@ function SelectCell({
 }: {
   row: CaseRow
   col: TodoColumn
-  onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
+  onUpdate: OnUpdate
 }) {
   const value = getCellValue(row, col)
   const { replaceLocalCaseData } = useCases()
@@ -299,11 +316,14 @@ export function TodoTable({
   columns,
   onUpdate,
   rowClass,
+  activeDestById,
 }: {
   cases: CaseRow[]
   columns: TodoColumn[]
-  onUpdate: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void
+  onUpdate: OnUpdate
   rowClass?: (row: CaseRow) => string
+  /** caseId → 활성 목적지. scoped key 편집을 by_dest 로 라우팅하는 데 사용. */
+  activeDestById?: Map<string, string | null>
 }) {
   const [visible, setVisible] = useState(INITIAL_VISIBLE)
   const sentinelRef = useRef<HTMLTableRowElement>(null)
@@ -378,7 +398,7 @@ export function TodoTable({
                   ) : col.type === 'select' && col.options ? (
                     <SelectCell row={row} col={col} onUpdate={onUpdate} />
                   ) : (
-                    <EditableCell row={row} col={col} onUpdate={onUpdate} />
+                    <EditableCell row={row} col={col} onUpdate={onUpdate} activeDest={activeDestById?.get(row.id) ?? null} />
                   )}
                 </td>
               )
