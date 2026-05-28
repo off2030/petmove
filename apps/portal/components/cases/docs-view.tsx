@@ -126,7 +126,7 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
         ) : (
           <>
             {/* 1) Checklist */}
-            <SectionLabel right={`${checklistDone}/${checklist.length}`}>필수 서류 체크리스트</SectionLabel>
+            <SectionLabel right={`${checklistDone}/${checklist.length}`}>서류 체크리스트</SectionLabel>
             {checklist.length === 0 ? (
               <EmptyHint>이 목적지에는 보호자가 따로 챙길 서류가 없습니다.</EmptyHint>
             ) : (
