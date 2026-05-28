@@ -17,11 +17,7 @@ import { useConfirm } from '@petmove/ui'
 import { AttachButton } from '@/components/ui/attach-button'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
-import {
-  deleteStepDocumentAdmin,
-  getStepDocumentUrlAdmin,
-  uploadStepDocumentAdmin,
-} from '@/lib/actions/step-documents'
+import { uploadStepDocumentAdmin } from '@/lib/actions/step-documents'
 import { CopyButton } from './copy-button'
 import { DateTextField } from '@petmove/ui'
 import { SectionLabel } from '@/components/ui/section-label'
@@ -859,10 +855,6 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow, onTakeoverDrag }: 
   onTakeoverDrag?: () => void
 }) {
   const { replaceLocalCaseData } = useCases()
-  const confirm = useConfirm()
-  const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const docs = Array.isArray(data.documents) ? (data.documents as Array<Record<string, unknown>>) : []
-  const stepDocs = docs.filter((d) => d && d.stepId === 'advance-notification')
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -941,30 +933,6 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow, onTakeoverDrag }: 
     if (file) void handleFile(file)
   }
 
-  async function handleView(docId: string) {
-    const r = await getStepDocumentUrlAdmin(caseId, docId)
-    if (r.ok) {
-      window.open(r.url, '_blank', 'noopener,noreferrer')
-    } else {
-      setError(r.error)
-    }
-  }
-
-  async function handleDelete(docId: string, name: string) {
-    const ok = await confirm({
-      message: `${name} 파일을 삭제할까요?`,
-      okLabel: '삭제',
-      variant: 'destructive',
-    })
-    if (!ok) return
-    const res = await deleteStepDocumentAdmin(caseId, docId)
-    if (res.ok) {
-      replaceLocalCaseData(caseId, (res.value.data ?? {}) as Record<string, unknown>)
-    } else {
-      setError(res.error)
-    }
-  }
-
   // 추가정보 내 다른 row 와 동일한 grid 레이아웃 — 좌측 라벨(180px) + 우측 컨텐츠.
   // 빈 상태(파일 없음): inline 첨부 버튼만으로 다른 EditableField row 와 동일한 높이.
   // 첨부 파일 있을 때: 파일 chip 들이 wrap 되어 자연 높이 증가.
@@ -982,33 +950,9 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow, onTakeoverDrag }: 
       )}
     >
       <SectionLabel>허가증</SectionLabel>
+      {/* 다른 추가정보 행처럼 첨부 버튼만. 올린 파일은 메모(notes)에 모여 표시되며
+          (업로드 시 documents+notes 동시 기록) 인라인 리스트는 두지 않는다. */}
       <div className="min-w-0 flex items-center flex-wrap gap-2">
-        {stepDocs.map((d) => {
-          const id = String(d.id ?? '')
-          const name = String(d.name ?? '파일')
-          const size = typeof d.size === 'number' ? d.size : 0
-          const sizeKb = size > 0 ? `${Math.round(size / 1024)} KB` : ''
-          return (
-            <div key={id} className="inline-flex items-center gap-2 rounded-md border border-border/60 px-2 py-0.5 hover:bg-accent/40">
-              <button
-                type="button"
-                onClick={() => handleView(id)}
-                className="min-w-0 text-left text-sm text-foreground underline-offset-2 hover:underline truncate max-w-[200px]"
-              >
-                {name}
-              </button>
-              {sizeKb && <span className="text-xs text-muted-foreground">{sizeKb}</span>}
-              <button
-                type="button"
-                onClick={() => handleDelete(id, name)}
-                className="text-xs text-muted-foreground/60 hover:text-destructive"
-                title="삭제"
-              >
-                ✕
-              </button>
-            </div>
-          )
-        })}
         <input
           ref={inputRef}
           type="file"
