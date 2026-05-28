@@ -13,7 +13,7 @@
 
 import { randomUUID } from 'node:crypto'
 import { createClient } from '@petmove/auth/server'
-import type { CaseRow } from '@petmove/domain'
+import { resolveStepAttachmentName, type CaseRow } from '@petmove/domain'
 
 const BUCKET = 'attachments'
 const MAX_BYTES = 12 * 1024 * 1024
@@ -64,7 +64,19 @@ export async function uploadStepDocumentAdmin(formData: FormData): Promise<StepD
     }
 
     const supabase = await createClient()
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+
+    // 이름 결정에 기존 documents 가 필요하므로 storage 업로드 전에 먼저 조회.
+    const { data: existing, error: fetchErr } = await supabase
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const existingDocs = readDocs(prev)
+    const displayName = resolveStepAttachmentName(stepId, file.name, existingDocs)
+    const safeName = displayName.replace(/[^a-zA-Z0-9._-]/g, '_')
     const path = `${caseId}/${Date.now()}_${safeName}`
     const buffer = Buffer.from(await file.arrayBuffer())
 
@@ -73,27 +85,30 @@ export async function uploadStepDocumentAdmin(formData: FormData): Promise<StepD
       .upload(path, buffer, { contentType: file.type, upsert: false })
     if (uploadErr) return { ok: false, error: uploadErr.message }
 
-    const { data: existing, error: fetchErr } = await supabase
-      .from('cases')
-      .select('data')
-      .eq('id', caseId)
-      .single()
-    if (fetchErr) {
-      await supabase.storage.from(BUCKET).remove([path])
-      return { ok: false, error: fetchErr.message }
-    }
-
-    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const uploadedAt = new Date().toISOString()
     const doc: CaseDocument = {
       id: randomUUID(),
-      name: file.name,
+      name: displayName,
       path,
       size: file.size,
       mime: file.type,
       stepId,
-      uploadedAt: new Date().toISOString(),
+      uploadedAt,
     }
-    const nextData: Record<string, unknown> = { ...prev, documents: [...readDocs(prev), doc] }
+    // 메모(notes) 섹션 동기화 — admin·portal 양쪽에서 한눈에 보이도록.
+    const existingNotes = Array.isArray(prev.notes) ? (prev.notes as unknown[]) : []
+    const noteEntry = {
+      type: 'file' as const,
+      name: displayName,
+      path,
+      size: file.size,
+      createdAt: uploadedAt,
+    }
+    const nextData: Record<string, unknown> = {
+      ...prev,
+      documents: [...existingDocs, doc],
+      notes: [...existingNotes, noteEntry],
+    }
     // 사전신고 첨부 = 완료 시그널. demote 자동 해제 + stored 클리어 (derive 전환).
     if (stepId === 'advance-notification') {
       delete nextData.advance_notification_admin_demoted_at
@@ -134,7 +149,15 @@ export async function deleteStepDocumentAdmin(
     const target = docs.find((d) => d.id === docId)
     if (!target) return { ok: false, error: '파일을 찾을 수 없습니다.' }
 
-    const nextData: Record<string, unknown> = { ...prev, documents: docs.filter((d) => d.id !== docId) }
+    const nextDocs = docs.filter((d) => d.id !== docId)
+    // 동일 path 의 notes 항목도 함께 제거 (orphan 방지) — admin 메모 섹션과 동기.
+    const prevNotes = Array.isArray(prev.notes) ? (prev.notes as Array<Record<string, unknown>>) : []
+    const nextNotes = prevNotes.filter((n) => n?.path !== target.path)
+    const nextData: Record<string, unknown> = {
+      ...prev,
+      documents: nextDocs,
+      notes: nextNotes.length > 0 ? nextNotes : null,
+    }
     // 사전신고 첨부 삭제 = 운영자의 명시적 transition — stored 클리어해 derive 전환.
     if (target.stepId === 'advance-notification') {
       delete nextData.import_import_status

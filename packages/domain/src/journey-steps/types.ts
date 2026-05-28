@@ -182,6 +182,12 @@ export interface StepDefinition {
   /** Phase 2 — 첨부 허용 여부. MVP 에서는 false 기본. */
   allowAttachments?: boolean
   attachmentHint?: string
+  /**
+   * 업로드된 파일의 표시 이름 라벨. 주어지면 원본 파일명을 무시하고 이 이름으로 저장
+   * (예: '광견병 항체가 검사 결과지'). 같은 step 에 여러 개면 '_2', '_3' 접미사.
+   * 미설정이면 원본 파일명 그대로.
+   */
+  attachmentLabel?: string
   /** 상세 페이지 설명 아래 표시할 외부 링크 목록 (예: 신청·예약 사이트). */
   links?: Array<{ url: string; label: string }>
   /** 이 step 에 매핑되는 procedure-checks 의 id 목록. check-mapping.ts 의 데이터 1차 출처. */

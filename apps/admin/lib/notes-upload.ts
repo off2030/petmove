@@ -11,7 +11,7 @@
 
 import { supabaseBrowser as supabase } from '@petmove/auth'
 import { updateCaseField } from '@/lib/actions/cases'
-import type { CaseRow } from '@petmove/domain'
+import { resolveStepAttachmentName, type CaseRow } from '@petmove/domain'
 
 interface FileNote {
   type: 'file'
@@ -85,7 +85,14 @@ export async function uploadFileToNotes(
   updateLocalCaseField: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void,
   stepId?: string,
 ): Promise<string | null> {
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const existingDocs = readDocuments(data)
+  // step 컨텍스트가 있으면 (광견병 항체검사 등) 라벨 기반 이름으로 통일
+  // — 같은 step 의 기존 업로드 개수에 따라 '_2', '_3' 접미사 (gap-fill).
+  const displayName = stepId
+    ? resolveStepAttachmentName(stepId, file.name, existingDocs)
+    : file.name
+  const safeName = displayName.replace(/[^a-zA-Z0-9._-]/g, '_')
   const path = `${caseId}/${Date.now()}_${safeName}`
 
   const { error: uploadErr } = await supabase.storage
@@ -97,13 +104,12 @@ export async function uploadFileToNotes(
   const createdAt = new Date().toISOString()
   const newFile: FileNote = {
     type: 'file',
-    name: file.name,
+    name: displayName,
     path,
     size: file.size,
     createdAt,
   }
 
-  const data = (caseRow.data ?? {}) as Record<string, unknown>
   const existingNotes = readNotes(data)
   const nextNotes = [...existingNotes, newFile]
 
@@ -126,12 +132,11 @@ export async function uploadFileToNotes(
 
   // portal 의 step 첨부·필수 서류 미리보기 연동 — 동일 파일을 documents 에도 등록.
   if (stepId) {
-    const existingDocs = readDocuments(data)
     const newDoc: CaseDocumentRecord = {
       id: typeof crypto !== 'undefined' && 'randomUUID' in crypto
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      name: file.name,
+      name: displayName,
       path,
       size: file.size,
       mime: file.type || 'application/octet-stream',

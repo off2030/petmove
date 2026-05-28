@@ -247,6 +247,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '검사결과지 사본을 사진, PDF로 보관하세요.',
+    attachmentLabel: '광견병 항체가 검사 결과지',
     validationIds: [
       'jp.rabies-titer-vs-booster',
       // 출국일 ± 180일/2년 룰은 항체검사 step 에서 보호자가 조치 불가 — 항공권
@@ -382,6 +383,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     inputs: [{ key: 'advance_notification_date', label: '신청일', type: 'date' }],
     allowAttachments: true,
     attachmentHint: '수입허가증을 사진, PDF로 보관하세요.',
+    attachmentLabel: '사전신고 허가증',
     links: [
       { url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O', label: 'NACCS 신청 페이지' },
       { url: '/guide/jp-quarantine-contacts', label: '일본 동물검역소 연락처' },
@@ -695,6 +697,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
+    attachmentLabel: '일본 수출 동물검역증',
   },
 
   // ── 15. 한국 수입 동물검역 (왕복 케이스 한정 — 귀국 후) ─────────────────

@@ -13,7 +13,7 @@
 
 import { randomUUID } from 'node:crypto'
 import { createAdminClient } from '@petmove/auth'
-import type { CaseRow } from '@petmove/domain'
+import { resolveStepAttachmentName, type CaseRow } from '@petmove/domain'
 import { type CaseDocument, MAX_DOCUMENT_BYTES, readCaseDocuments } from '@/lib/documents'
 import { assertCaseAccess, type Result } from './_shared'
 
@@ -49,7 +49,22 @@ export async function uploadStepDocument(formData: FormData): Promise<Result<Cas
     if (!access.ok) return access
 
     const admin = createAdminClient()
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+
+    // data 의 다른 키 보존을 위해 fetch → merge → update.
+    // (이름 결정에 기존 documents 가 필요하므로 storage 업로드 전에 먼저 조회.)
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    // step 라벨 기반 이름 통일 (광견병 항체검사 → '광견병 항체가 검사 결과지').
+    // 같은 step 의 기존 업로드 개수에 따라 '_2', '_3' (gap-fill).
+    const existingDocs = readCaseDocuments(prev)
+    const displayName = resolveStepAttachmentName(stepId, file.name, existingDocs)
+    const safeName = displayName.replace(/[^a-zA-Z0-9._-]/g, '_')
     const path = `${caseId}/${Date.now()}_${safeName}`
     const buffer = Buffer.from(await file.arrayBuffer())
 
@@ -58,28 +73,31 @@ export async function uploadStepDocument(formData: FormData): Promise<Result<Cas
       .upload(path, buffer, { contentType: file.type, upsert: false })
     if (uploadErr) return { ok: false, error: uploadErr.message }
 
-    // data 의 다른 키 보존을 위해 fetch → merge → update.
-    const { data: existing, error: fetchErr } = await admin
-      .from('cases')
-      .select('data')
-      .eq('id', caseId)
-      .single()
-    if (fetchErr) {
-      await admin.storage.from(BUCKET).remove([path])
-      return { ok: false, error: fetchErr.message }
-    }
-
-    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const uploadedAt = new Date().toISOString()
     const doc: CaseDocument = {
       id: randomUUID(),
-      name: file.name,
+      name: displayName,
       path,
       size: file.size,
       mime: file.type,
       stepId,
-      uploadedAt: new Date().toISOString(),
+      uploadedAt,
     }
-    const nextData: Record<string, unknown> = { ...prev, documents: [...readCaseDocuments(prev), doc] }
+    // admin 의 메모(notes) 섹션에서도 보이도록 동시 기록. admin 의 notes-upload.ts 와
+    // 동일 shape (type='file').
+    const existingNotes = Array.isArray(prev.notes) ? (prev.notes as unknown[]) : []
+    const noteEntry = {
+      type: 'file' as const,
+      name: displayName,
+      path,
+      size: file.size,
+      createdAt: uploadedAt,
+    }
+    const nextData: Record<string, unknown> = {
+      ...prev,
+      documents: [...existingDocs, doc],
+      notes: [...existingNotes, noteEntry],
+    }
     // 사전신고 첨부 = 완료 시그널. admin 이 진행중으로 demote 한 상태였더라도
     // 보호자가 새 허가증을 첨부하면 자동 해제 — 다시 완료로 derive.
     if (stepId === 'advance-notification') {
@@ -128,7 +146,15 @@ export async function deleteStepDocument(
     const target = docs.find((d) => d.id === docId)
     if (!target) return { ok: false, error: '파일을 찾을 수 없습니다.' }
 
-    const nextData: Record<string, unknown> = { ...prev, documents: docs.filter((d) => d.id !== docId) }
+    const nextDocs = docs.filter((d) => d.id !== docId)
+    // 동일 path 의 notes 항목도 함께 제거 — admin 메모 섹션과 동기 (orphan 방지).
+    const prevNotes = Array.isArray(prev.notes) ? (prev.notes as Array<Record<string, unknown>>) : []
+    const nextNotes = prevNotes.filter((n) => n?.path !== target.path)
+    const nextData: Record<string, unknown> = {
+      ...prev,
+      documents: nextDocs,
+      notes: nextNotes.length > 0 ? nextNotes : null,
+    }
     // 사전신고 첨부 삭제 = portal 보호자의 명시적 액션 — stored 클리어해 derive 전환.
     if (target.stepId === 'advance-notification') {
       delete nextData.import_import_status
