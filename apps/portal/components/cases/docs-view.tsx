@@ -1,7 +1,7 @@
 'use client'
 
 import { getStepDocumentUrl } from '@/lib/actions/documents'
-import type { AutoDocItem, ChecklistItem, DocsViewData, StoredDocItem } from '@/lib/docs/catalog'
+import type { AutoDocItem, DocsViewData, StoredDocItem } from '@/lib/docs/catalog'
 
 /**
  * 케이스 서류함. Stone 팔레트 / Fraunces serif — TimelineCalm 과 동일 톤.
@@ -41,16 +41,22 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
     fontWeight: 500,
   }
 
-  const { pet, trip, checklist, autoDocs, storedDocs } = data
-  const verifiedCount =
-    checklist.filter((d) => d.verified).length +
-    autoDocs.filter((d) => d.verified).length +
-    storedDocs.filter((d) => d.verified).length
-  const pendingCount =
-    checklist.filter((d) => !d.verified).length +
-    autoDocs.filter((d) => !d.verified).length +
-    storedDocs.filter((d) => !d.verified).length
+  const { pet, trip, requiredDocs, checklist, autoDocs, storedDocs } = data
+  // requiredDocs spec 이 있는 목적지(예: 일본)는 큐레이션된 5건만 보고,
+  // 기존 자동 체크리스트·자동 작성 섹션은 가린다.
+  const useCurated = requiredDocs !== null
+  const verifiedCount = useCurated
+    ? requiredDocs!.filter((d) => d.verified).length + storedDocs.filter((d) => d.verified).length
+    : checklist.filter((d) => d.verified).length +
+      autoDocs.filter((d) => d.verified).length +
+      storedDocs.filter((d) => d.verified).length
+  const pendingCount = useCurated
+    ? requiredDocs!.filter((d) => !d.verified).length + storedDocs.filter((d) => !d.verified).length
+    : checklist.filter((d) => !d.verified).length +
+      autoDocs.filter((d) => !d.verified).length +
+      storedDocs.filter((d) => !d.verified).length
   const checklistDone = checklist.filter((d) => d.verified).length
+  const requiredDone = requiredDocs?.filter((d) => d.verified).length ?? 0
 
   function handleOpenDoc(docId: string) {
     getStepDocumentUrl(caseId, docId).then((res) => {
@@ -97,38 +103,52 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
           <span style={num}>{verifiedCount}</span> 보관 · <span style={num}>{pendingCount}</span> 대기
         </div>
 
-        {/* 1) Checklist */}
-        <SectionLabel right={`${checklistDone}/${checklist.length}`}>필수 서류 체크리스트</SectionLabel>
-        {checklist.length === 0 ? (
-          <EmptyHint>이 목적지에는 보호자가 따로 챙길 서류가 없습니다.</EmptyHint>
+        {useCurated ? (
+          /* 큐레이션 모드: 국가별 '필수 서류' 한 섹션 (예: 일본 5건) */
+          <>
+            <SectionLabel right={`${requiredDone}/${requiredDocs!.length}`}>필수 서류</SectionLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {requiredDocs!.map((d) => (
+                <ChecklistRow key={d.id} doc={d} C={C} monoCap={monoCap} pendingLabel="준비중" />
+              ))}
+            </div>
+          </>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {checklist.map((d) => (
-              <ChecklistRow key={d.id} doc={d} C={C} monoCap={monoCap} />
-            ))}
-          </div>
-        )}
-
-        {/* 2) 증명서 자동 작성 */}
-        <SectionLabel right={`${autoDocs.length}건`}>증명서 자동 작성</SectionLabel>
-        {autoDocs.length === 0 ? (
-          <EmptyHint>이 목적지는 자동 작성 증명서가 없습니다.</EmptyHint>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {autoDocs.map((d) => (
-              <div
-                key={d.id}
-                style={{
-                  background: C.surface,
-                  border: `.5px solid ${C.line}`,
-                  borderRadius: 14,
-                  overflow: 'hidden',
-                }}
-              >
-                <DocRow doc={d} pending={!d.verified} C={C} num={num} monoCap={monoCap} />
+          <>
+            {/* 1) Checklist */}
+            <SectionLabel right={`${checklistDone}/${checklist.length}`}>필수 서류 체크리스트</SectionLabel>
+            {checklist.length === 0 ? (
+              <EmptyHint>이 목적지에는 보호자가 따로 챙길 서류가 없습니다.</EmptyHint>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {checklist.map((d) => (
+                  <ChecklistRow key={d.id} doc={d} C={C} monoCap={monoCap} />
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+
+            {/* 2) 증명서 자동 작성 */}
+            <SectionLabel right={`${autoDocs.length}건`}>증명서 자동 작성</SectionLabel>
+            {autoDocs.length === 0 ? (
+              <EmptyHint>이 목적지는 자동 작성 증명서가 없습니다.</EmptyHint>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {autoDocs.map((d) => (
+                  <div
+                    key={d.id}
+                    style={{
+                      background: C.surface,
+                      border: `.5px solid ${C.line}`,
+                      borderRadius: 14,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <DocRow doc={d} pending={!d.verified} C={C} num={num} monoCap={monoCap} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
 
         {/* 3) 보관 중인 서류 */}
@@ -230,10 +250,13 @@ function ChecklistRow({
   doc,
   C,
   monoCap,
+  pendingLabel = '대기',
 }: {
-  doc: ChecklistItem
+  doc: { id: string; name: string; source: string; verified: boolean }
   C: PaletteShape
   monoCap: React.CSSProperties
+  /** 미준비 상태의 우측 라벨. 기본 '대기'. 큐레이션 섹션은 '준비중'. */
+  pendingLabel?: string
 }) {
   const ok = doc.verified
   return (
@@ -296,7 +319,7 @@ function ChecklistRow({
           fontWeight: 600,
         }}
       >
-        {ok ? '보유' : '대기'}
+        {ok ? '보유' : pendingLabel}
       </span>
     </div>
   )

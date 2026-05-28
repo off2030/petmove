@@ -6,7 +6,9 @@ import {
   getStepsForCase,
   resolveCerts,
   resolveDone,
+  resolveRequiredDocs,
   type CertDefinition,
+  type RequiredDocItem,
 } from '@petmove/domain'
 import { formatFileSize, readCaseDocuments } from '@/lib/documents'
 
@@ -25,6 +27,11 @@ import { formatFileSize, readCaseDocuments } from '@/lib/documents'
 export interface DocsViewData {
   pet: { name: string }
   trip: { fromCity: string; toCity: string; tripType: 'round' | 'one_way' }
+  /**
+   * 국가별 큐레이션된 '필수 서류' (예: 일본 5개). spec 이 있는 목적지면 portal 은
+   * 이 한 섹션만 노출하고 checklist/autoDocs 는 가린다. spec 없으면 null.
+   */
+  requiredDocs: RequiredDocItem[] | null
   checklist: ChecklistItem[]
   autoDocs: AutoDocItem[]
   storedDocs: StoredDocItem[]
@@ -65,6 +72,7 @@ export interface StoredDocItem {
 export function buildDocsView(caseRow: CaseRow): DocsViewData {
   const ctx = buildCaseJourneyContext(caseRow)
   const applicableSteps = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
+  const requiredDocs = resolveRequiredDocs(caseRow.destination, caseRow)
 
   // 1) 체크리스트 — 첨부가 필요한 step
   const checklist: ChecklistItem[] = applicableSteps
@@ -114,6 +122,7 @@ export function buildDocsView(caseRow: CaseRow): DocsViewData {
       toCity: ctx.destinationToken ?? caseRow.destination ?? '—',
       tripType: ctx.tripType,
     },
+    requiredDocs,
     checklist,
     autoDocs,
     storedDocs,
