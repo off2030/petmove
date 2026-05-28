@@ -25,8 +25,6 @@ export interface RequiredDocItem {
   naAllowed: boolean
   /** 보호자가 '해당없음' 으로 표시함 (case.data.required_doc_na[id]). 체크리스트 카운트에서 제외. */
   na: boolean
-  /** 대부분 케이스엔 불필요한 조건부 서류 — 메인 체크리스트가 아닌 '해당 시 필요' 섹션, X/Y 카운트 제외. */
-  conditional: boolean
   /** 상세 페이지 본문. 서류 설명·받는 방법. */
   description: string
   /** preview 소스 step.id — 해당 step 에 업로드된 파일이 '디지털원본/사본' 으로 노출. */
@@ -47,8 +45,6 @@ interface RequiredDocSpec {
   stepRef?: string
   /** 케이스에 따라 불필요할 수 있는 서류 — 상세에서 '해당없음' 토글 노출(예: 첫 입국 시 수출 검역증). */
   naAllowed?: boolean
-  /** 대부분 케이스엔 불필요 — '필수' 대신 '해당 시 필요' 섹션으로 분리(예: 재입국 시만 필요한 수출 검역증). */
-  conditional?: boolean
   description: string
   /** preview 영역에 노출할 step 의 업로드. 없으면 preview 영역 placeholder. */
   previewStepId?: string
@@ -98,7 +94,6 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       source: '일본 동물검역소',
       kind: 'manual',
       naAllowed: true,
-      conditional: true,
       description:
         '일본에서 한국으로 올 때 수출 동물검역을 마치면 발급됩니다.\n\n일본 재입국 때 필요할 수 있습니다.\n\n일본에 처음 입국하는 경우는 필요하지 않습니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
       previewStepId: 'jp-export-quarantine-visit',
@@ -136,7 +131,6 @@ export function resolveRequiredDocs(
       manual: spec.kind === 'manual',
       naAllowed,
       na,
-      conditional: spec.conditional === true,
       description: spec.description,
       previewStepId: spec.previewStepId,
       attachStepId,

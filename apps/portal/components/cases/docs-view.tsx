@@ -64,12 +64,9 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
   // 기존 자동 체크리스트·자동 작성 섹션은 가린다.
   const useCurated = requiredDocs !== null
   const checklistDone = checklist.filter((d) => d.verified).length
-  // 조건부('해당 시 필요') 서류는 메인 체크리스트·카운트에서 분리 — 대부분 무관해 미완료처럼 안 보이게.
-  const mainDocs = requiredDocs?.filter((d) => !d.conditional) ?? []
-  const conditionalDocs = requiredDocs?.filter((d) => d.conditional) ?? []
-  const requiredDone = mainDocs.filter((d) => d.verified).length
+  const requiredDone = requiredDocs?.filter((d) => d.verified).length ?? 0
   // '해당없음' 으로 표시한 서류는 분모에서 제외 — 보유/해당없음을 다 정리하면 X/X.
-  const requiredTotal = mainDocs.filter((d) => !d.na).length
+  const requiredTotal = requiredDocs?.filter((d) => !d.na).length ?? 0
 
   function handleOpenDoc(docId: string) {
     getStepDocumentUrl(caseId, docId).then((res) => {
@@ -113,11 +110,11 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
         </div>
 
         {useCurated ? (
-          /* 큐레이션 모드: 국가별 '필수 서류' (예: 일본). 조건부 서류는 아래 별도 섹션. */
+          /* 큐레이션 모드: 국가별 '필수 서류' 한 섹션 (예: 일본 5건) */
           <>
             <SectionLabel right={`${requiredDone}/${requiredTotal}`}>서류 체크리스트</SectionLabel>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {mainDocs.map((d) => (
+              {requiredDocs!.map((d) => (
                 <ChecklistRow
                   key={d.id}
                   doc={d}
@@ -128,26 +125,6 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
                 />
               ))}
             </div>
-
-            {/* 해당 시 필요 — 대부분 무관한 조건부 서류(예: 재입국 시만 필요한 수출 검역증).
-                카운트에 안 들어가고, 미완료('해당 시')로만 표시해 나그하지 않음. */}
-            {conditionalDocs.length > 0 && (
-              <>
-                <SectionLabel>해당 시 필요한 서류</SectionLabel>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {conditionalDocs.map((d) => (
-                    <ChecklistRow
-                      key={d.id}
-                      doc={d}
-                      C={C}
-                      monoCap={monoCap}
-                      pendingLabel="해당 시"
-                      href={`/cases/${caseId}/docs/${d.id}`}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
           </>
         ) : (
           <>
