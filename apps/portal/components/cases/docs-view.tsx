@@ -65,6 +65,8 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
   const useCurated = requiredDocs !== null
   const checklistDone = checklist.filter((d) => d.verified).length
   const requiredDone = requiredDocs?.filter((d) => d.verified).length ?? 0
+  // '해당없음' 으로 표시한 서류는 분모에서 제외 — 보유/해당없음을 다 정리하면 X/X.
+  const requiredTotal = requiredDocs?.filter((d) => !d.na).length ?? 0
 
   function handleOpenDoc(docId: string) {
     getStepDocumentUrl(caseId, docId).then((res) => {
@@ -110,7 +112,7 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
         {useCurated ? (
           /* 큐레이션 모드: 국가별 '필수 서류' 한 섹션 (예: 일본 5건) */
           <>
-            <SectionLabel right={`${requiredDone}/${requiredDocs!.length}`}>서류 체크리스트</SectionLabel>
+            <SectionLabel right={`${requiredDone}/${requiredTotal}`}>서류 체크리스트</SectionLabel>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {requiredDocs!.map((d) => (
                 <ChecklistRow
@@ -272,7 +274,7 @@ function ChecklistRow({
   pendingLabel = '대기',
   href,
 }: {
-  doc: { id: string; name: string; source: string; verified: boolean }
+  doc: { id: string; name: string; source: string; verified: boolean; na?: boolean }
   C: PaletteShape
   monoCap: React.CSSProperties
   /** 미준비 상태의 우측 라벨. 기본 '대기'. 큐레이션 섹션은 '준비중'. */
@@ -281,6 +283,8 @@ function ChecklistRow({
   href?: string
 }) {
   const ok = doc.verified
+  // 해당없음 — 보유도 미준비도 아닌 회색 톤 상태. 카운트 분모에서 제외됨.
+  const na = doc.na === true
   const cardStyle: React.CSSProperties = {
     background: C.surface,
     border: `.5px solid ${C.line}`,
@@ -304,13 +308,13 @@ function ChecklistRow({
           background: ok ? C.sage : 'transparent',
           // 일정 타임라인 미완료 원과 동일하게 — 점선 ink3 → 실선 line.
           border: ok ? 'none' : `1px solid ${C.line}`,
-          color: C.surface,
+          color: ok ? C.surface : C.ink3,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        {ok && (
+        {ok ? (
           <svg
             width="12"
             height="12"
@@ -323,14 +327,18 @@ function ChecklistRow({
           >
             <polyline points="20 6 9 17 4 12" />
           </svg>
-        )}
+        ) : na ? (
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        ) : null}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
             fontSize: 17,
             fontWeight: 500,
-            color: ok ? C.ink : C.ink2,
+            color: ok ? C.ink : na ? C.ink3 : C.ink2,
           }}
         >
           {doc.name}
@@ -344,7 +352,7 @@ function ChecklistRow({
           fontWeight: 600,
         }}
       >
-        {ok ? '보유' : pendingLabel}
+        {ok ? '보유' : na ? '해당없음' : pendingLabel}
       </span>
     </>
   )

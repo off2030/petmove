@@ -21,6 +21,10 @@ export interface RequiredDocItem {
   verified: boolean
   /** 수기 완료 토글이 필요한 항목 (kind='manual'). 상세 페이지에서 발급완료 버튼 노출. */
   manual: boolean
+  /** '해당없음' 토글을 허용하는 서류 (예: 일본 첫 입국 시 수출 검역증). */
+  naAllowed: boolean
+  /** 보호자가 '해당없음' 으로 표시함 (case.data.required_doc_na[id]). 체크리스트 카운트에서 제외. */
+  na: boolean
   /** 상세 페이지 본문. 서류 설명·받는 방법. */
   description: string
   /** preview 소스 step.id — 해당 step 에 업로드된 파일이 '디지털원본/사본' 으로 노출. */
@@ -39,6 +43,8 @@ interface RequiredDocSpec {
   kind: 'step' | 'manual'
   /** kind='step' 시 verified 판정에 쓸 step.id. manual 은 무시. */
   stepRef?: string
+  /** 케이스에 따라 불필요할 수 있는 서류 — 상세에서 '해당없음' 토글 노출(예: 첫 입국 시 수출 검역증). */
+  naAllowed?: boolean
   description: string
   /** preview 영역에 노출할 step 의 업로드. 없으면 preview 영역 placeholder. */
   previewStepId?: string
@@ -87,6 +93,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       name: '일본 수출 동물검역증(Export Quarantine Certificate)',
       source: '일본 동물검역소',
       kind: 'manual',
+      naAllowed: true,
       description:
         '일본에서 한국으로 올 때 수출 동물검역을 마치면 발급됩니다.\n\n일본 재입국 때 필요할 수 있습니다.\n\n일본에 처음 입국하는 경우는 필요하지 않습니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
       previewStepId: 'jp-export-quarantine-visit',
@@ -101,25 +108,33 @@ export function resolveRequiredDocs(
   if (!destination) return null
   const specs = SPECS[destination]
   if (!specs) return null
-  const flags = readManualFlags(caseRow)
+  const flags = readBoolFlags(caseRow, 'required_doc_flags')
+  const naFlags = readBoolFlags(caseRow, 'required_doc_na')
   return specs.map((spec) => {
     // 첨부 대상 stepId — step 연동 서류는 공유 step, 그 외는 doc.id 자체.
     const attachStepId = spec.previewStepId ?? spec.id
+    const naAllowed = spec.naAllowed === true
+    // '해당없음' 으로 표시한 서류는 보유 판정 자체를 끈다(첨부가 있어도 카운트 제외).
+    const na = naAllowed && naFlags[spec.id] === true
+    const verified =
+      !na &&
+      (spec.kind === 'manual'
+        ? // 수기 발급완료 플래그 OR 사본 첨부가 있으면 '보유'.
+          flags[spec.id] === true || hasAttachmentForStep(caseRow, attachStepId)
+        : spec.stepRef
+          ? resolveStepDone(spec.stepRef, caseRow)
+          : false)
     return {
       id: spec.id,
       name: spec.name,
       source: spec.source,
       manual: spec.kind === 'manual',
+      naAllowed,
+      na,
       description: spec.description,
       previewStepId: spec.previewStepId,
       attachStepId,
-      verified:
-        spec.kind === 'manual'
-          ? // 수기 발급완료 플래그 OR 사본 첨부가 있으면 '보유'.
-            flags[spec.id] === true || hasAttachmentForStep(caseRow, attachStepId)
-          : spec.stepRef
-            ? resolveStepDone(spec.stepRef, caseRow)
-            : false,
+      verified,
     }
   })
 }
@@ -148,9 +163,10 @@ function resolveStepDone(stepId: string, caseRow: CaseRow): boolean {
   return resolveDone(step.done, caseRow)
 }
 
-function readManualFlags(caseRow: CaseRow): Record<string, boolean> {
+/** case.data 의 boolean 플래그 맵(required_doc_flags / required_doc_na) 읽기. true 만 남긴다. */
+function readBoolFlags(caseRow: CaseRow, key: string): Record<string, boolean> {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const raw = data.required_doc_flags
+  const raw = data[key]
   if (!raw || typeof raw !== 'object') return {}
   const out: Record<string, boolean> = {}
   for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {

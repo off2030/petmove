@@ -5,7 +5,7 @@ import { useEffect, useState, useTransition } from 'react'
 import type { RequiredDocItem } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { deleteStepDocument, getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
-import { setRequiredDocComplete } from '@/lib/actions/required-docs'
+import { setRequiredDocComplete, setRequiredDocNa } from '@/lib/actions/required-docs'
 import { StepAttachments } from '@/components/journey/step-attachments'
 import { type CaseDocument } from '@/lib/documents'
 
@@ -80,6 +80,41 @@ export function RequiredDocDetail({
     })
   }
 
+  function handleToggleNa() {
+    setError(null)
+    startTransition(async () => {
+      const res = await setRequiredDocNa(caseId, doc.id, !doc.na)
+      if (res.ok) updateCase(res.value)
+      else setError(res.error)
+    })
+  }
+
+  const btnBase: React.CSSProperties = {
+    width: '100%',
+    padding: '14px 16px',
+    borderRadius: 14,
+    fontSize: 15,
+    fontWeight: 600,
+    fontFamily: 'inherit',
+    cursor: busy ? 'not-allowed' : 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  }
+  const primaryBtn: React.CSSProperties = {
+    ...btnBase,
+    border: `1px solid ${C.accent}`,
+    background: C.accent,
+    color: C.surface,
+  }
+  const outlineBtn: React.CSSProperties = {
+    ...btnBase,
+    border: `1px solid ${C.line}`,
+    background: 'transparent',
+    color: C.ink2,
+  }
+
   return (
     <div
       className="pm-fade-up pm-noscroll"
@@ -113,7 +148,8 @@ export function RequiredDocDetail({
 
         {/* Title row — 일정 step 헤더와 동일하게 동그라미·항목명 수직 중앙 정렬. */}
         <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* 일정 step 상세 헤더 원과 동일 — 26px, 미완료는 실선 line, 체크 13px. */}
+          {/* 일정 step 상세 헤더 원과 동일 — 26px, 미완료는 실선 line, 체크 13px.
+              해당없음은 회색 톤 dash(—). */}
           <div
             style={{
               width: 26,
@@ -122,17 +158,21 @@ export function RequiredDocDetail({
               borderRadius: '50%',
               background: doc.verified ? C.sage : 'transparent',
               border: doc.verified ? 'none' : `1px solid ${C.line}`,
-              color: C.surface,
+              color: doc.verified ? C.surface : C.ink3,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            {doc.verified && (
+            {doc.verified ? (
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-            )}
+            ) : doc.na ? (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            ) : null}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <h1 style={{ ...serif, fontSize: 24, lineHeight: 1.2, margin: 0, color: C.ink }}>{doc.name}</h1>
@@ -219,33 +259,37 @@ export function RequiredDocDetail({
           hideList
         />
 
-        {/* 보유 — 수기 서류이고 첨부가 없을 때만(첨부가 있으면 그 자체가 발급 증빙).
-            설명 → 첨부 → 버튼 순. 안내문은 아직 미완료일 때만. */}
-        {doc.manual && previewDocs.length === 0 && (
-          <div style={{ marginTop: 18 }}>
-            <button
-              type="button"
-              onClick={handleToggle}
-              disabled={busy}
-              style={{
-                width: '100%',
-                padding: '14px 16px',
-                borderRadius: 14,
-                border: `1px solid ${doc.verified ? C.line : C.accent}`,
-                background: doc.verified ? 'transparent' : C.accent,
-                color: doc.verified ? C.ink2 : C.surface,
-                fontSize: 15,
-                fontWeight: 600,
-                fontFamily: 'inherit',
-                cursor: busy ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-              }}
-            >
-              {busy ? '처리 중…' : doc.verified ? '완료 취소' : '완료'}
-            </button>
+        {/* 상태 토글 — 수기 서류이고 첨부가 없을 때(첨부가 있으면 그 자체가 발급 증빙).
+            설명 → 첨부 → 버튼 순. naAllowed 서류는 '완료' 와 '해당없음' 둘 다 노출.
+            해당없음 상태면 첨부 유무와 무관하게 되돌리기 버튼을 보장. */}
+        {doc.manual && (previewDocs.length === 0 || doc.na) && (
+          <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {doc.na ? (
+              <button type="button" onClick={handleToggleNa} disabled={busy} style={outlineBtn}>
+                {busy ? '처리 중…' : '해당없음 취소'}
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={handleToggle}
+                  disabled={busy}
+                  style={doc.verified ? outlineBtn : primaryBtn}
+                >
+                  {busy ? '처리 중…' : doc.verified ? '완료 취소' : '완료'}
+                </button>
+                {doc.naAllowed && !doc.verified && (
+                  <button
+                    type="button"
+                    onClick={handleToggleNa}
+                    disabled={busy}
+                    style={outlineBtn}
+                  >
+                    해당없음
+                  </button>
+                )}
+              </>
+            )}
             {error && (
               <p style={{ marginTop: 8, fontSize: 12, color: C.warn, lineHeight: 1.5 }}>{error}</p>
             )}
