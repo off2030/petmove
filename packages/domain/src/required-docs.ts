@@ -19,12 +19,17 @@ export interface RequiredDocItem {
   name: string
   source: string
   verified: boolean
-  /** 수기 완료 토글이 필요한 항목 (kind='manual'). 상세 페이지에서 토글 버튼 노출. */
+  /** 수기 완료 토글이 필요한 항목 (kind='manual'). 상세 페이지에서 발급완료 버튼 노출. */
   manual: boolean
   /** 상세 페이지 본문. 서류 설명·받는 방법. */
   description: string
   /** preview 소스 step.id — 해당 step 에 업로드된 파일이 '디지털원본/사본' 으로 노출. */
   previewStepId?: string
+  /**
+   * 첨부 업로드·미리보기 대상 stepId. step 연동 서류는 previewStepId(공유 step),
+   * 그 외(별지25 등)는 doc.id 자체. 이 키로 case.data.documents 를 태깅·필터.
+   */
+  attachStepId: string
 }
 
 interface RequiredDocSpec {
@@ -97,20 +102,33 @@ export function resolveRequiredDocs(
   const specs = SPECS[destination]
   if (!specs) return null
   const flags = readManualFlags(caseRow)
-  return specs.map((spec) => ({
-    id: spec.id,
-    name: spec.name,
-    source: spec.source,
-    manual: spec.kind === 'manual',
-    description: spec.description,
-    previewStepId: spec.previewStepId,
-    verified:
-      spec.kind === 'manual'
-        ? flags[spec.id] === true
-        : spec.stepRef
-          ? resolveStepDone(spec.stepRef, caseRow)
-          : false,
-  }))
+  return specs.map((spec) => {
+    // 첨부 대상 stepId — step 연동 서류는 공유 step, 그 외는 doc.id 자체.
+    const attachStepId = spec.previewStepId ?? spec.id
+    return {
+      id: spec.id,
+      name: spec.name,
+      source: spec.source,
+      manual: spec.kind === 'manual',
+      description: spec.description,
+      previewStepId: spec.previewStepId,
+      attachStepId,
+      verified:
+        spec.kind === 'manual'
+          ? // 수기 발급완료 플래그 OR 사본 첨부가 있으면 '보유'.
+            flags[spec.id] === true || hasAttachmentForStep(caseRow, attachStepId)
+          : spec.stepRef
+            ? resolveStepDone(spec.stepRef, caseRow)
+            : false,
+    }
+  })
+}
+
+/** case.data.documents 에 해당 stepId 태그의 파일이 하나라도 있으면 true. */
+function hasAttachmentForStep(caseRow: CaseRow, stepId: string): boolean {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const docs = Array.isArray(data.documents) ? (data.documents as Array<Record<string, unknown>>) : []
+  return docs.some((d) => !!d && typeof d === 'object' && d.stepId === stepId)
 }
 
 /** 단일 docId 의 spec 을 찾는다 — 상세 페이지에서 사용. */

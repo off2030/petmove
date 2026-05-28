@@ -26,9 +26,11 @@ export default function RequiredDocDetailPage({
   const doc = findRequiredDoc(caseRow.destination, docId, caseRow)
   if (!doc) notFound()
 
-  const previewDocs = doc.previewStepId
-    ? readCaseDocuments(caseRow.data).filter((d) => d.stepId === doc.previewStepId)
-    : []
+  // 첨부·미리보기 대상 — attachStepId 태그 파일 (step 연동 서류는 공유 step,
+  // 그 외 별지25 등은 doc.id). 모든 필수 서류가 첨부 가능.
+  const previewDocs = readCaseDocuments(caseRow.data).filter(
+    (d) => d.stepId === doc.attachStepId,
+  )
 
   return (
     <RequiredDocDetail

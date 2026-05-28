@@ -187,8 +187,9 @@ export function RequiredDocDetail({
           })()}
         </section>
 
-        {/* Manual toggle */}
-        {doc.manual && (
+        {/* 발급완료 — 수기 서류이고 첨부가 없을 때만. 첨부가 있으면 그 자체가 발급
+            증빙이라 자동으로 '보유'(버튼 숨김). 발급완료 누르면 플래그로 '보유' 처리. */}
+        {doc.manual && previewDocs.length === 0 && (
           <button
             type="button"
             onClick={handleToggle}
@@ -211,7 +212,7 @@ export function RequiredDocDetail({
               gap: 8,
             }}
           >
-            {busy ? '처리 중…' : doc.verified ? '보유 표시 해제' : '보유로 표시'}
+            {busy ? '처리 중…' : doc.verified ? '발급완료 취소' : '발급완료'}
           </button>
         )}
 
@@ -219,40 +220,37 @@ export function RequiredDocDetail({
           <p style={{ marginTop: 8, fontSize: 12, color: C.warn, lineHeight: 1.5 }}>{error}</p>
         )}
 
-        {/* 첨부 — ① 미리보기(이미지/PDF, 삭제 ×) → ② 파일 추가 버튼, 이 둘만.
-            previewStepId 가 있는 서류만 그 step 으로 업로드·삭제. */}
-        {doc.previewStepId && (
-          <>
-            <SectionLabel right={previewDocs.length > 0 ? `${previewDocs.length}건` : undefined}>
-              첨부
-            </SectionLabel>
-            {previewDocs.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 10 }}>
-                {previewDocs.map((d) => (
-                  <PreviewCard
-                    key={d.id}
-                    caseId={caseId}
-                    doc={d}
-                    C={C}
-                    monoCap={monoCap}
-                    onDelete={() => {
-                      deleteStepDocument(caseId, d.id).then((res) => {
-                        if (res.ok) updateCase(res.value)
-                      })
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-            {/* 파일명 리스트 없이 업로드 버튼만 (미리보기를 위에서 따로 그림). */}
-            <StepAttachments
-              caseId={caseId}
-              stepId={doc.previewStepId}
-              documents={previewDocs}
-              hideList
-            />
-          </>
+        {/* 첨부 — 모든 필수 서류. ① 미리보기(이미지/PDF, 삭제 ×) → ② 파일 추가 버튼.
+            attachStepId 태그로 업로드·삭제 (별지25 등은 doc.id, step 연동은 공유 step).
+            수기 서류는 사본을 첨부하면 그 자체가 발급 증빙이라 '보유' 처리된다. */}
+        <SectionLabel right={previewDocs.length > 0 ? `${previewDocs.length}건` : undefined}>
+          첨부
+        </SectionLabel>
+        {previewDocs.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 10 }}>
+            {previewDocs.map((d) => (
+              <PreviewCard
+                key={d.id}
+                caseId={caseId}
+                doc={d}
+                C={C}
+                monoCap={monoCap}
+                onDelete={() => {
+                  deleteStepDocument(caseId, d.id).then((res) => {
+                    if (res.ok) updateCase(res.value)
+                  })
+                }}
+              />
+            ))}
+          </div>
         )}
+        {/* 파일명 리스트 없이 업로드 버튼만 (미리보기를 위에서 따로 그림). */}
+        <StepAttachments
+          caseId={caseId}
+          stepId={doc.attachStepId}
+          documents={previewDocs}
+          hideList
+        />
       </div>
     </div>
   )
