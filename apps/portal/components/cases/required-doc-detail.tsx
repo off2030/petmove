@@ -125,6 +125,13 @@ export function RequiredDocDetail({
     color: C.ink3,
     cursor: 'not-allowed',
   }
+  // '해당없음' — 대부분 케이스에서 누르는 버튼이라 흐린 outline 대신 채움으로 또렷하게.
+  const naBtn: React.CSSProperties = {
+    ...btnBase,
+    border: `1px solid ${C.soft}`,
+    background: C.soft,
+    color: C.ink,
+  }
 
   return (
     <div
@@ -299,7 +306,7 @@ export function RequiredDocDetail({
                     type="button"
                     onClick={handleToggleNa}
                     disabled={busy}
-                    style={outlineBtn}
+                    style={naBtn}
                   >
                     해당없음
                   </button>
