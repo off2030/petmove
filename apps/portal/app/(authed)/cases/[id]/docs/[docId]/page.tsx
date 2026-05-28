@@ -35,7 +35,6 @@ export default function RequiredDocDetailPage({
       caseId={id}
       doc={doc}
       previewDocs={previewDocs}
-      petName={caseRow.pet_name ?? '반려동물'}
     />
   )
 }

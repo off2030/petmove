@@ -65,9 +65,7 @@ export default function CaseJourneyStepPage({
       done={done}
       stepNumber={stepIndex + 1}
       checkResults={checkResults}
-      destinationLabel={ctx.destinationToken ?? caseRow.destination ?? '—'}
       destinationKey={ctx.destinationKey}
-      petName={caseRow.pet_name ?? '반려동물'}
       tripType={ctx.tripType}
     />
   )

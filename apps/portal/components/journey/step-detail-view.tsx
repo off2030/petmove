@@ -73,9 +73,7 @@ export function StepDetailView({
   done,
   stepNumber,
   checkResults,
-  destinationLabel,
   destinationKey,
-  petName,
   tripType,
 }: {
   caseId: string
@@ -84,10 +82,8 @@ export function StepDetailView({
   /** applicable step 들 안에서 1-based 순번. 일정 row 의 좌측 번호와 동일. */
   stepNumber: number
   checkResults: CollectedCheck[]
-  destinationLabel: string
   /** 정규화된 목적지 키 ('japan' 등) — 입력 cross-validation 분기에 사용. */
   destinationKey: string | null
-  petName: string
   tripType: 'round' | 'one_way'
 }) {
   const isMicrochip = step.id === 'microchip'
@@ -971,9 +967,6 @@ export function StepDetailView({
           <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.15, margin: 0, color: C.ink, minWidth: 0 }}>
             {step.title}
           </h1>
-        </div>
-        <div style={{ fontSize: 12, color: C.ink2, marginTop: 4 }}>
-          {petName} · 한국 {tripType === 'round' ? '⇄' : '→'} {destinationLabel}
         </div>
 
         {/* Description */}

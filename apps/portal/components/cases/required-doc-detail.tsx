@@ -22,12 +22,10 @@ export function RequiredDocDetail({
   caseId,
   doc,
   previewDocs,
-  petName,
 }: {
   caseId: string
   doc: RequiredDocItem
   previewDocs: CaseDocument[]
-  petName: string
 }) {
   const C = {
     bg: '#F5EFE8',
@@ -137,9 +135,6 @@ export function RequiredDocDetail({
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <h1 style={{ ...serif, fontSize: 22, lineHeight: 1.25, margin: 0, color: C.ink }}>{doc.name}</h1>
-            <div style={{ ...monoCap, marginTop: 6 }}>
-              {petName} · {doc.source} · {doc.verified ? '보유' : '준비중'}
-            </div>
           </div>
         </div>
 
