@@ -225,7 +225,7 @@ export function RequiredDocDetail({
           <div style={{ marginTop: 18 }}>
             {!doc.verified && (
               <p style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5, margin: '0 0 10px', padding: '0 2px' }}>
-                이 서류를 발급받으셨다면 보유 버튼을 눌러주세요.
+                첨부 없이 완료로 전환하시려면 다음 버튼을 클릭해주세요.
               </p>
             )}
             <button
@@ -249,7 +249,7 @@ export function RequiredDocDetail({
                 gap: 8,
               }}
             >
-              {busy ? '처리 중…' : doc.verified ? '보유 취소' : '보유'}
+              {busy ? '처리 중…' : doc.verified ? '준비 완료 취소' : '준비 완료'}
             </button>
             {error && (
               <p style={{ marginTop: 8, fontSize: 12, color: C.warn, lineHeight: 1.5 }}>{error}</p>
