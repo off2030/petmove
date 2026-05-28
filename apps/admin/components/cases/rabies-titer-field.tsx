@@ -380,8 +380,8 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
               <h2 className="font-serif text-[18px] text-foreground">광견병항체검사</h2>
             </div>
 
-            {/* Body */}
-            <div className="flex-1 overflow-auto px-md py-md space-y-2 scrollbar-minimal">
+            {/* Body — 명시적 bg 로 detail 페이지 bleed-through 차단 */}
+            <div className="flex-1 overflow-auto px-md py-md space-y-2 scrollbar-minimal bg-background">
               {addingNew && (
                 <div className="flex items-baseline gap-sm">
                   <DateInput
@@ -428,8 +428,10 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
                       if (file) handleFile(file, oi)
                     }}
                     className={cn(
-                      'group/item rounded-md p-2 border border-border/40 transition-colors',
-                      dragOverIdx === oi && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
+                      // bg-accent/40 는 반투명 — record 자체엔 영향 없지만
+                      // 안전상 ring 만 사용해 일관 동작.
+                      'group/item rounded-md p-2 border border-border/40 bg-background transition-colors',
+                      dragOverIdx === oi && 'ring-2 ring-ring/30 ring-dashed',
                     )}
                   >
                     <TiterRecordRow
