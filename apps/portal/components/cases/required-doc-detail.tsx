@@ -397,11 +397,33 @@ function PreviewCard({
             불러오는 중…
           </div>
         ) : isPdf ? (
-          <iframe
-            src={url}
-            title={doc.name}
-            style={{ width: '100%', height: 480, border: 0, display: 'block' }}
-          />
+          // 모바일 WebView 는 iframe 내 PDF 인라인 렌더를 지원하지 않아 빈 화면이 됨.
+          // 인라인 대신 기기 기본 뷰어로 여는 버튼.
+          <button
+            type="button"
+            onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
+            style={{
+              width: '100%',
+              padding: '20px 16px',
+              border: 0,
+              background: 'transparent',
+              color: C.accent,
+              fontFamily: 'inherit',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <path d="M15 3h6v6M10 14 21 3" />
+            </svg>
+            PDF 열기
+          </button>
         ) : (
           <img
             src={url}
