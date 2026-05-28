@@ -10,7 +10,7 @@ import {
   readTiterEntries,
   resolveValidUntil,
 } from '../procedure-checks/utils'
-import type { StepDoneSignal } from './types'
+import type { StepDoneSignal, StepDefinition } from './types'
 import { buildCaseJourneyContext } from './applicability'
 
 /**
@@ -204,6 +204,23 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
     default:
       return false
   }
+}
+
+/** case.data.step_done_flags[stepId] === true — 보호자가 상세에서 수기 '완료' 표시. */
+export function readStepDoneFlag(caseRow: CaseRow, stepId: string): boolean {
+  const raw = (caseRow.data as Record<string, unknown> | null)?.step_done_flags
+  if (!raw || typeof raw !== 'object') return false
+  return (raw as Record<string, unknown>)[stepId] === true
+}
+
+/**
+ * step 완료 판정 — 보호자 수기 완료 플래그(step_done_flags) OR done 시그널.
+ * 임상검사·검역처럼 상세의 '완료' 버튼으로 날짜 없이도 완료 처리하는 step 을 위해
+ * 수기 플래그를 done 시그널과 OR 한다. 타임라인·상세 공용 판정.
+ */
+export function isStepDone(step: StepDefinition, caseRow: CaseRow): boolean {
+  if (readStepDoneFlag(caseRow, step.id)) return true
+  return resolveDone(step.done, caseRow)
 }
 
 function todayIso(): string {

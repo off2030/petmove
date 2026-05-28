@@ -32,6 +32,7 @@ import {
   updateTiterExtraEntries,
   updateTiterFields,
   updateVetVisitDate,
+  setStepDone,
 } from '@/lib/actions/cases'
 import { readCaseDocuments } from '@/lib/documents'
 import { AdvanceNotificationInputs } from './advance-notification-inputs'
@@ -71,6 +72,8 @@ export function StepDetailView({
   caseId,
   step,
   done,
+  doneByDate,
+  manuallyDone,
   stepNumber,
   checkResults,
   destinationKey,
@@ -79,6 +82,10 @@ export function StepDetailView({
   caseId: string
   step: StepDefinition
   done: boolean
+  /** 날짜 시그널 기반 완료 — true 면 이미 완료라 '완료' 버튼을 숨긴다. */
+  doneByDate: boolean
+  /** 보호자 수기 완료 플래그(step_done_flags) — '완료'/'완료 취소' 토글 상태. */
+  manuallyDone: boolean
   /** applicable step 들 안에서 1-based 순번. 일정 row 의 좌측 번호와 동일. */
   stepNumber: number
   checkResults: CollectedCheck[]
@@ -120,6 +127,9 @@ export function StepDetailView({
     isJpImportQuarantine ||
     isJpExportQuarantineVisit ||
     isKrImportQuarantine
+  // 보호자가 상세에서 직접 '완료' 토글할 수 있는 step — 날짜 없이 수기 완료(step_done_flags).
+  const isCompletableStep =
+    isVetVisit || isCertificateIssue || isJpImportQuarantine || isJpExportQuarantineVisit
   const caseRow = useCase(caseId)
   const { updateCase } = useCases()
 
@@ -169,7 +179,8 @@ export function StepDetailView({
 
   const savedJpExportQuarantineVisitDate = readJpExportQuarantineVisitDate(caseRow?.data)
   const [jpExportQuarantineVisitDate, setJpExportQuarantineVisitDate] = useState(
-    savedJpExportQuarantineVisitDate,
+    // 신청 예약일·시간과 연동 — 검역일이 비어있으면 신청 예약일을 기본값으로 채운다.
+    savedJpExportQuarantineVisitDate || (isJpExportQuarantineVisit ? savedJpExport.date : ''),
   )
 
   const savedKrImportQuarantineDate = readKrImportQuarantineDate(caseRow?.data)
@@ -177,6 +188,7 @@ export function StepDetailView({
 
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
+  const [completing, setCompleting] = useState(false)
   const [, startTransition] = useTransition()
 
   // 하단 sticky 저장 바가 마지막 입력 필드를 가리지 않도록 — 바 높이를 재서 컨텐츠
@@ -725,6 +737,22 @@ export function StepDetailView({
         }
       })
     }
+  }
+
+  // 수기 완료 토글 — 날짜는 건드리지 않고 step_done_flags 만 on/off.
+  const handleToggleStepDone = () => {
+    if (completing) return
+    setCompleting(true)
+    startTransition(async () => {
+      const res = await setStepDone(caseId, step.id, !manuallyDone)
+      setCompleting(false)
+      if (res.ok) {
+        updateCase(res.value)
+      } else {
+        setStatus('error')
+        setError(res.error)
+      }
+    })
   }
 
   const C = {
@@ -1445,6 +1473,11 @@ export function StepDetailView({
             <JpExportQuarantineVisitInputs
               date={jpExportQuarantineVisitDate}
               onChange={setJpExportQuarantineVisitDate}
+              reservationHint={
+                savedJpExport.date
+                  ? `신청 예약: ${savedJpExport.date}${savedJpExport.time ? ` ${savedJpExport.time}` : ''}`
+                  : undefined
+              }
             />
           </section>
         )}
@@ -1510,6 +1543,33 @@ export function StepDetailView({
               documents={stepDocuments}
               hint={step.attachmentHint}
             />
+          </section>
+        )}
+
+        {/* 보호자 수기 완료 토글 — 날짜 입력 없이 '완료' 처리. 날짜로 이미 완료된 경우엔 숨김. */}
+        {isCompletableStep && !doneByDate && (
+          <section style={{ marginTop: 18 }}>
+            <button
+              type="button"
+              onClick={handleToggleStepDone}
+              disabled={completing}
+              className="pm-pressable"
+              style={{
+                width: '100%',
+                padding: '14px 16px',
+                borderRadius: 14,
+                border: manuallyDone ? `1px solid ${C.line}` : `1px solid ${C.accent}`,
+                background: manuallyDone ? 'transparent' : C.accent,
+                color: manuallyDone ? C.ink2 : '#fff',
+                fontFamily: 'inherit',
+                fontSize: 15,
+                fontWeight: 600,
+                letterSpacing: '-0.005em',
+                cursor: completing ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {completing ? '처리 중…' : manuallyDone ? '완료 취소' : '완료'}
+            </button>
           </section>
         )}
       </div>

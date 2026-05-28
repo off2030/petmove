@@ -1148,6 +1148,56 @@ export async function updateJpExportQuarantineVisitDate(
 }
 
 /**
+ * step 의 수기 '완료' 토글 — case.data.step_done_flags[stepId] = true|삭제.
+ * 보호자가 상세에서 직접 완료 처리(임상검사·검역 등). 날짜는 건드리지 않는다 —
+ * done 판정은 isStepDone 에서 이 플래그 OR done 시그널로 합쳐진다.
+ */
+export async function setStepDone(
+  caseId: string,
+  stepId: string,
+  done: boolean,
+): Promise<Result<CaseRow>> {
+  try {
+    if (!caseId || !stepId) return { ok: false, error: '잘못된 요청입니다.' }
+
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const flagsRaw = prev.step_done_flags
+    const flags: Record<string, boolean> =
+      flagsRaw && typeof flagsRaw === 'object'
+        ? (Object.fromEntries(
+            Object.entries(flagsRaw as Record<string, unknown>).filter(([, v]) => v === true),
+          ) as Record<string, boolean>)
+        : {}
+    if (done) flags[stepId] = true
+    else delete flags[stepId]
+
+    const nextData: Record<string, unknown> = { ...prev, step_done_flags: flags }
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
  * 한국 수입 동물검역 step 의 검역일을 patch — case.data.kr_import_quarantine_date
  * (YYYY-MM-DD). 빈/null 이면 키 제거. data 의 다른 키는 fetch-merge 로 보존.
  */
