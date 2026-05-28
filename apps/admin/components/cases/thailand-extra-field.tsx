@@ -36,7 +36,7 @@ const DATA_KEY = 'thailand_extra'
 
 export function ThailandExtraField({ caseId, caseRow, sectionNumber }: { caseId: string; caseRow: CaseRow; sectionNumber: string }) {
   const shell = useExtraFieldShell<ThailandExtra, 'thailand'>({
-    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY, country: 'thailand',
+    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY, country: 'thailand', sectionLabel: '태국 추가정보',
     onExtract: (result, current, helpers) => {
       const merged = { ...current }
       if (result.data.address_overseas) merged.address_overseas = result.data.address_overseas

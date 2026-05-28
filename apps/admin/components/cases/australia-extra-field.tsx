@@ -19,7 +19,7 @@ const DATA_KEY = 'australia_extra'
 
 export function AustraliaExtraField({ caseId, caseRow, sectionNumber }: { caseId: string; caseRow: CaseRow; sectionNumber: string }) {
   const shell = useExtraFieldShell<AustraliaExtra, 'australia'>({
-    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY, country: 'australia',
+    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY, country: 'australia', sectionLabel: '호주 추가정보',
     onExtract: (result, current) => {
       const merged = { ...current }
       if (result.data.permit_no) merged.permit_no = result.data.permit_no

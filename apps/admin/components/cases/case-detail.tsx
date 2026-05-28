@@ -622,8 +622,11 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
   async function handleFiles(files: File[]) {
     const extractable = files.filter(isExtractableFile)
     if (extractable.length === 0) return
+    // SimpleExtraSection 은 dedicated 컴포넌트 없는 목적지의 폴백 — country 가 결정되면
+    // '${country} 추가정보' 라벨, 아니면 generic '추가정보' 로 명명.
+    const label = country ? `${country} 추가정보` : '추가정보'
     for (const file of extractable) {
-      uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField).catch(() => {})
+      uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField, { label }).catch(() => {})
     }
     const images = await filesToBase64(extractable)
     if (images.length > 0) tryExtract({ images })

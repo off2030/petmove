@@ -15,7 +15,7 @@ const DATA_KEY = 'new_zealand_extra'
 
 export function NewZealandExtraField({ caseId, caseRow, sectionNumber }: { caseId: string; caseRow: CaseRow; sectionNumber: string }) {
   const shell = useExtraFieldShell<NewZealandExtra, 'new-zealand'>({
-    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY, country: 'new-zealand',
+    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY, country: 'new-zealand', sectionLabel: '뉴질랜드 추가정보',
     onExtract: (result, current) => {
       const merged = { ...current }
       if (result.data.permit_no) merged.permit_no = result.data.permit_no

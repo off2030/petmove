@@ -417,7 +417,8 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
       setTimeout(() => setExtractMsg(null), 4000)
       return
     }
-    uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField).catch(() => {})
+    // section 의 label prop (예: '광견병', '구충') 으로 파일 이름 통일.
+    uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField, { label }).catch(() => {})
     setExtracting(true)
     setExtractMsg(null)
     let images: { base64: string; mediaType: string }[]

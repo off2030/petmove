@@ -21,7 +21,7 @@ const DATA_KEY = 'usa_extra'
 
 export function UsaExtraField({ caseId, caseRow, sectionNumber }: { caseId: string; caseRow: CaseRow; sectionNumber: string }) {
   const shell = useExtraFieldShell<UsaExtra, 'usa'>({
-    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY, country: 'usa',
+    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY, country: 'usa', sectionLabel: '미국 추가정보',
     onExtract: (result, current, helpers) => {
       const merged = { ...current }
       if (result.data.passport_number) merged.passport_number = result.data.passport_number

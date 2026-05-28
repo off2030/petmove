@@ -25,7 +25,7 @@ const DATA_KEY = 'philippines_extra'
 
 export function PhilippinesExtraField({ caseId, caseRow, sectionNumber }: { caseId: string; caseRow: CaseRow; sectionNumber: string }) {
   const shell = useExtraFieldShell<PhilippinesExtra, 'philippines'>({
-    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY, country: 'philippines',
+    caseId, caseRow, dataKey: DATA_KEY, empty: EMPTY, country: 'philippines', sectionLabel: '필리핀 추가정보',
     onExtract: (result, current) => {
       const merged = { ...current }
       if (result.data.email) merged.email = result.data.email

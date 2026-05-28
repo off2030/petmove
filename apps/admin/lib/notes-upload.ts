@@ -11,7 +11,7 @@
 
 import { supabaseBrowser as supabase } from '@petmove/auth'
 import { updateCaseField } from '@/lib/actions/cases'
-import { resolveStepAttachmentName, type CaseRow } from '@petmove/domain'
+import { resolveAttachmentName, resolveStepAttachmentName, type CaseRow } from '@petmove/domain'
 
 interface FileNote {
   type: 'file'
@@ -73,9 +73,22 @@ function readDocuments(data: Record<string, unknown>): CaseDocumentRecord[] {
   )
 }
 
+export interface UploadFileOptions {
+  /** portal 연동용 step.id. case.data.documents 의 stepId 필드. */
+  stepId?: string
+  /**
+   * 파일 표시 이름 라벨 (예: '일본 추가정보', '광견병'). 미설정 시 stepId 의
+   * attachmentLabel 사용, 그것도 없으면 원본 파일명. label 이 직접 주어지면
+   * stepId 의 catalog 라벨보다 우선.
+   */
+  label?: string
+}
+
 /**
  * 파일을 Supabase에 업로드하고 notes에 첨부파일로 추가한다.
  * stepId 주어지면 case.data.documents 에도 등록 — portal 연동.
+ * label 또는 stepId 의 attachmentLabel 이 있으면 파일 이름을 그 라벨로 통일
+ * (같은 라벨이 이미 있으면 '_2', '_3' 자동 접미사).
  * @returns 성공 시 storage path, 실패 시 null
  */
 export async function uploadFileToNotes(
@@ -83,15 +96,28 @@ export async function uploadFileToNotes(
   caseRow: CaseRow,
   file: File,
   updateLocalCaseField: (caseId: string, storage: 'column' | 'data', key: string, value: unknown) => void,
-  stepId?: string,
+  options?: UploadFileOptions,
 ): Promise<string | null> {
+  const stepId = options?.stepId
+  const labelOverride = options?.label
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const existingDocs = readDocuments(data)
-  // step 컨텍스트가 있으면 (광견병 항체검사 등) 라벨 기반 이름으로 통일
-  // — 같은 step 의 기존 업로드 개수에 따라 '_2', '_3' 접미사 (gap-fill).
-  const displayName = stepId
-    ? resolveStepAttachmentName(stepId, file.name, existingDocs)
-    : file.name
+  const existingNotesAll = readNotes(data)
+  // 표시 이름 결정 우선순위:
+  //   1) label 직접 주어진 경우 → 그대로 사용, notes 의 같은 라벨 패턴 중 다음 번호로.
+  //   2) stepId 만 주어진 경우 → catalog 의 attachmentLabel, documents 의 같은 stepId 중 다음 번호로.
+  //   3) 둘 다 없으면 원본 파일명 유지 (메모 섹션 직접 업로드).
+  let displayName: string
+  if (labelOverride) {
+    const existingNames = existingNotesAll
+      .filter((n): n is { type: 'file'; name: string } => n.type === 'file' && typeof n.name === 'string')
+      .map((n) => n.name)
+    displayName = resolveAttachmentName(labelOverride, file.name, existingNames)
+  } else if (stepId) {
+    displayName = resolveStepAttachmentName(stepId, file.name, existingDocs)
+  } else {
+    displayName = file.name
+  }
   const safeName = displayName.replace(/[^a-zA-Z0-9._-]/g, '_')
   const path = `${caseId}/${Date.now()}_${safeName}`
 
@@ -110,8 +136,7 @@ export async function uploadFileToNotes(
     createdAt,
   }
 
-  const existingNotes = readNotes(data)
-  const nextNotes = [...existingNotes, newFile]
+  const nextNotes = [...existingNotesAll, newFile]
 
   // Legacy keys 정리 + notes 저장
   if (data.memo) {

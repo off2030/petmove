@@ -95,7 +95,7 @@ export function HawaiiExtraField({ caseId, caseRow, sectionNumber }: { caseId: s
     const extractable = files.filter(isExtractableFile)
     if (extractable.length === 0) return
     for (const file of extractable) {
-      uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField).catch(() => {})
+      uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField, { label: '하와이 추가정보' }).catch(() => {})
     }
     const images = await filesToBase64(extractable)
     if (images.length > 0) await tryExtract({ images })

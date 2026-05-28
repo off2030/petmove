@@ -51,8 +51,10 @@ export function useExtraFieldShell<T extends object, C extends Country>(params: 
   empty: T
   country: C
   onExtract: ExtractHandler<T, C>
+  /** 업로드된 파일 표시 이름 라벨 (예: '호주 추가정보'). 미설정 시 원본 파일명. */
+  sectionLabel?: string
 }) {
-  const { caseId, caseRow, dataKey, empty, country, onExtract } = params
+  const { caseId, caseRow, dataKey, empty, country, onExtract, sectionLabel } = params
   const { updateLocalCaseField } = useCases()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const extra: T = (data[dataKey] as T) ?? empty
@@ -127,7 +129,7 @@ export function useExtraFieldShell<T extends object, C extends Country>(params: 
     const extractable = files.filter(isExtractableFile)
     if (extractable.length === 0) return
     for (const file of extractable) {
-      uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField).catch(() => {})
+      uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField, { label: sectionLabel }).catch(() => {})
     }
     const images = await filesToBase64(extractable)
     if (images.length > 0) tryExtract({ images })

@@ -214,7 +214,8 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
       return
     }
     // stepId='rabies-titer' — portal 의 필수 서류(광견병 항체가 검사 결과지) 미리보기 연동.
-    uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField, 'rabies-titer').catch(() => {})
+    // catalog 의 attachmentLabel ('광견병 항체가 검사 결과지') 로 자동 명명.
+    uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField, { stepId: 'rabies-titer' }).catch(() => {})
     setExtracting(true)
     setExtractMsg(null)
     let images: { base64: string; mediaType: string }[]

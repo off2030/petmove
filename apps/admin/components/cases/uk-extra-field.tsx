@@ -65,7 +65,7 @@ export function UKExtraField({ caseId, caseRow, sectionNumber }: { caseId: strin
     const extractable = files.filter(isExtractableFile)
     if (extractable.length === 0) return
     for (const file of extractable) {
-      uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField).catch(() => {})
+      uploadFileToNotes(caseId, caseRow, file, updateLocalCaseField, { label: '영국 추가정보' }).catch(() => {})
     }
     const images = await filesToBase64(extractable)
     if (images.length > 0) await tryExtract({ images })
