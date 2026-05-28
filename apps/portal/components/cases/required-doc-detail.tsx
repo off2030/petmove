@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState, useTransition } from 'react'
 import type { RequiredDocItem } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
-import { getStepDocumentUrl } from '@/lib/actions/documents'
+import { getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
 import { setRequiredDocComplete } from '@/lib/actions/required-docs'
 import { type CaseDocument } from '@/lib/documents'
 
@@ -59,6 +59,18 @@ export function RequiredDocDetail({
   const { updateCase } = useCases()
   const [busy, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+
+  // 진입 시 orphan(삭제됐는데 기록만 남아 'Object not found' 로 뜨는) 문서 정리.
+  // 변경 있을 때만 케이스 갱신 → previewDocs 가 다시 계산되어 깨진 항목이 사라짐.
+  useEffect(() => {
+    let cancelled = false
+    pruneMissingStepDocuments(caseId).then((res) => {
+      if (!cancelled && res.ok) updateCase(res.value)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [caseId, updateCase])
 
   function handleToggle() {
     setError(null)

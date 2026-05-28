@@ -211,3 +211,63 @@ export async function getStepDocumentUrl(
     return { ok: false, error: (e as Error).message }
   }
 }
+
+/**
+ * orphan 정리 — storage 객체가 없는 documents 기록(과 동일 path 의 notes 기록)을 제거.
+ *
+ * 삭제 동기화 이전에 메모에서 지운 파일 등은 documents 에 기록만 남아 portal 미리보기에
+ * "Object not found" 로 표시된다. caseId 폴더의 실제 객체 목록과 대조해 없는 것만 정리.
+ * 변경이 없으면 DB 쓰기 없이 현재 케이스를 그대로 반환.
+ */
+export async function pruneMissingStepDocuments(caseId: string): Promise<Result<CaseRow>> {
+  try {
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('*')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const docs = readCaseDocuments(prev)
+    if (docs.length === 0) return { ok: true, value: existing as CaseRow }
+
+    // caseId 폴더의 실제 객체 이름 → 전체 path 집합.
+    const { data: objects, error: listErr } = await admin.storage
+      .from(BUCKET)
+      .list(caseId, { limit: 1000 })
+    if (listErr) return { ok: false, error: listErr.message }
+    const existingPaths = new Set((objects ?? []).map((o) => `${caseId}/${o.name}`))
+
+    const orphanPaths = new Set(
+      docs.filter((d) => !existingPaths.has(d.path)).map((d) => d.path),
+    )
+    if (orphanPaths.size === 0) return { ok: true, value: existing as CaseRow }
+
+    const nextDocs = docs.filter((d) => !orphanPaths.has(d.path))
+    const prevNotes = Array.isArray(prev.notes) ? (prev.notes as Array<Record<string, unknown>>) : []
+    const nextNotes = prevNotes.filter(
+      (n) => !(n && typeof n.path === 'string' && orphanPaths.has(n.path as string)),
+    )
+
+    const nextData: Record<string, unknown> = {
+      ...prev,
+      documents: nextDocs,
+      notes: nextNotes.length > 0 ? nextNotes : null,
+    }
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}

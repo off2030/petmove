@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { getStepDocumentUrl } from '@/lib/actions/documents'
+import { useEffect } from 'react'
+import { getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
+import { useCases } from '@/components/portal-shell/case-data-provider'
 import type { AutoDocItem, DocsViewData, StoredDocItem } from '@/lib/docs/catalog'
 
 /**
@@ -41,6 +43,19 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
     color: C.ink3,
     fontWeight: 500,
   }
+
+  const { updateCase } = useCases()
+  // 진입 시 orphan(삭제됐는데 기록만 남은) 문서 정리 — storedDocs·미리보기의
+  // 'Object not found' 항목 제거. 변경 있을 때만 케이스 갱신.
+  useEffect(() => {
+    let cancelled = false
+    pruneMissingStepDocuments(caseId).then((res) => {
+      if (!cancelled && res.ok) updateCase(res.value)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [caseId, updateCase])
 
   const { pet, trip, requiredDocs, checklist, autoDocs, storedDocs } = data
   // requiredDocs spec 이 있는 목적지(예: 일본)는 큐레이션된 5건만 보고,
