@@ -89,6 +89,16 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
         '일본 지정 양식의 접종, 검사 및 건강증명서입니다.\n\n일본 첫 입국 시 FormAC를 준비합니다. 재입국일 경우는 FormRE를 준비합니다.\n\n출국일 기준 10일 이내에 임상 수의사의 서명을 받습니다.\n\n한국 수출 동물검역 때 검역관 확인·서명을 받습니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
     },
     {
+      id: 'kr-export-quarantine-cert',
+      name: '한국 수출 동물검역증(Export Quarantine Certificate)',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'certificate-issue',
+      description:
+        '한국에서 출국할 때 받는 수출 동물검역증입니다.\n\n출국일 기준 10일 이내에 동물검역소를 방문해 수출 검역을 받으면 발급됩니다.\n\n동물검역을 받을 때 제출할 필수 서류를 빠짐없이 구비해야 합니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+      previewStepId: 'certificate-issue',
+    },
+    {
       id: 'jp-export-quarantine-cert',
       name: '일본 수출 동물검역증(Export Quarantine Certificate)',
       source: '일본 동물검역소',
