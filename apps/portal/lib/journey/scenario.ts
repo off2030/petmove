@@ -280,6 +280,13 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       caseData.jp_export_quarantine_date.length >= 10
         ? caseData.jp_export_quarantine_date.slice(0, 10)
         : null
+    // 일본 수출검역 신청은 마감(deadline)이 없어 미완료 시 표시일이 없다 — 신청일을 입력했으면
+    // '예정 [신청일]'로 노출. (사전 신고는 마감일이 있어 기존대로 '마감 [날짜]' 유지.)
+    const jpExportApplicationDate =
+      typeof caseData.jp_export_quarantine_application_date === 'string' &&
+      caseData.jp_export_quarantine_application_date.length >= 10
+        ? caseData.jp_export_quarantine_application_date.slice(0, 10)
+        : null
     // 임상검사 검진일이 미래로 입력된 경우 — done 시그널은 '오늘 이전'만 인정하므로
     // 미완료 상태가 되지만, 보호자가 일정을 잡아둔 셈이라 '예정 [날짜]' 칩으로 노출.
     const vetVisitDate =
@@ -343,9 +350,11 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
               ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? vetVisitDate
               : step.id === 'certificate-issue'
                 ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? krExportQuarantineDate
-                : done
-                  ? resolveCompletedDate(step.done, caseRow)
-                  : fallbackDate
+                : step.id === 'jp-export-quarantine'
+                  ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? jpExportApplicationDate
+                  : done
+                    ? resolveCompletedDate(step.done, caseRow)
+                    : fallbackDate
     // 칩 라벨 분기 — '마감 26·11·21' (단일 non-window 마감일이 표시 날짜인 경우) vs
     // '예정 …' (그 외 일정·이벤트·window 시작·기간 시작 등). 사전 신고처럼 deadline 자체가
     // 보호자의 행동 마감일일 때만 '마감'. window 마감(출국 10일 이내 검진 등)은 구간 시작이라 '예정' 유지.
