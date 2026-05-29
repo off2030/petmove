@@ -702,7 +702,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '일본 수출 동물검역',
     shortLabel: '검역',
     description:
-      '일본 출국 전 일본 동물검역소를 방문해 수출 동물검역을 받습니다.\n반려동물을 데리고 예약한 일정에 방문하세요.',
+      '일본 출국 전 일본 동물검역소를 방문해 수출 동물검역을 받습니다.\n반려동물을 데리고 예약한 일정에 방문하세요.\n일본 수출 동물검역증(Export Quarantine Certificate)은 향후 일본에 재입국을 하게 되면 필요할 수 있습니다. 잘 보관해두세요.',
     doneSummary: '일본 수출 동물검역을 받았습니다.',
     cardLine: '일본 동물검역소를 방문해 수출 검역을 받으세요.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
