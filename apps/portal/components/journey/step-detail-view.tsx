@@ -165,7 +165,10 @@ export function StepDetailView({
   const [krExportQuarantineDate, setKrExportQuarantineDate] = useState(savedKrExportQuarantineDate)
 
   const savedJpImportQuarantineDate = readJpImportQuarantineDate(caseRow?.data)
-  const [jpImportQuarantineDate, setJpImportQuarantineDate] = useState(savedJpImportQuarantineDate)
+  const [jpImportQuarantineDate, setJpImportQuarantineDate] = useState(
+    // 검역일이 비어있으면 일본 도착 항공편 날짜(입국일)를 예정일 기본값으로 채운다.
+    savedJpImportQuarantineDate || (isJpImportQuarantine ? savedFlightForm.entry_date.slice(0, 10) : ''),
+  )
 
   const savedJpExportQuarantineVisitDate = readJpExportQuarantineVisitDate(caseRow?.data)
   const [jpExportQuarantineVisitDate, setJpExportQuarantineVisitDate] = useState(
@@ -174,7 +177,10 @@ export function StepDetailView({
   )
 
   const savedKrImportQuarantineDate = readKrImportQuarantineDate(caseRow?.data)
-  const [krImportQuarantineDate, setKrImportQuarantineDate] = useState(savedKrImportQuarantineDate)
+  const [krImportQuarantineDate, setKrImportQuarantineDate] = useState(
+    // 검역일이 비어있으면 귀국 항공편 날짜를 예정일 기본값으로 채운다.
+    savedKrImportQuarantineDate || (isKrImportQuarantine ? savedFlightForm.return_date.slice(0, 10) : ''),
+  )
 
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
