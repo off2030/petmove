@@ -742,7 +742,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'journey-complete',
     category: 'travel',
-    title: '도착 완료',
+    title: '여정 완료',
     shortLabel: '도착',
     description:
       '모든 검역 절차를 마치고 반려동물이 무사히 도착했습니다.\n긴 여정을 함께 완주하셨어요.',
