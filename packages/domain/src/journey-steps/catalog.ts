@@ -745,8 +745,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '여정 완료',
     shortLabel: '도착',
     description:
-      '모든 검역 절차를 마치고 반려동물이 무사히 도착했습니다.\n긴 여정을 함께 완주하셨어요.',
-    doneSummary: '반려동물과 무사히 도착했습니다.',
+      '여정이 완료되었습니다.\n\n펫무브와 함께 즐거운 여행 되셨나요?',
+    doneSummary: '여정이 완료되었습니다!',
     cardLine: '반려동물과 무사히 도착했어요.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 200,
