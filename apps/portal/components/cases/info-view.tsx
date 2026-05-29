@@ -302,9 +302,6 @@ export function InfoView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string
             <span>{toCity}</span>
           </div>
         </div>
-        <p style={{ fontSize: 12.5, color: C.ink3, margin: '10px 0 0', lineHeight: 1.5 }}>
-          각 항목을 눌러 수정할 수 있어요.
-        </p>
 
         {/* 보호자 정보 */}
         <Section label="보호자 정보">

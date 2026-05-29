@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import destsData from '@petmove/domain/data/destinations.json'
 import { BottomSheet } from './bottom-sheet'
 import { PortalCalendar, ymdLocal } from './portal-calendar'
@@ -74,24 +74,27 @@ function InlineRow({
   label,
   last,
   children,
+  alignTop,
 }: {
   label: string
   last?: boolean
   children: React.ReactNode
+  /** 값이 여러 줄로 늘어날 수 있을 때(주소 등) 라벨을 위로 정렬. */
+  alignTop?: boolean
 }) {
   return (
     <div
       style={{
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: alignTop ? 'flex-start' : 'center',
         padding: '11px 0',
         borderBottom: last ? 'none' : `.5px solid ${C.line}`,
         gap: 12,
         minHeight: 46,
       }}
     >
-      <span style={labelStyle}>{label}</span>
+      <span style={{ ...labelStyle, ...(alignTop ? { paddingTop: 2 } : null) }}>{label}</span>
       <div style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'flex-end' }}>
         {children}
       </div>
@@ -99,25 +102,49 @@ function InlineRow({
   )
 }
 
-function StackRow({
-  label,
-  last,
-  children,
+/** 인라인 행 안에서 다른 값들과 같은 글꼴·우측정렬을 유지하되 길면 줄바꿈되는 입력(주소). */
+function AutoGrowTextarea({
+  value,
+  onChange,
+  placeholder,
 }: {
-  label: string
-  last?: boolean
-  children: React.ReactNode
+  value: string
+  onChange: (next: string) => void
+  placeholder?: string
 }) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [value])
   return (
-    <div
+    <textarea
+      ref={ref}
+      className="pm-field-input"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      rows={1}
       style={{
-        padding: '12px 0',
-        borderBottom: last ? 'none' : `.5px solid ${C.line}`,
+        flex: 1,
+        minWidth: 0,
+        textAlign: 'right',
+        background: 'transparent',
+        border: 0,
+        outline: 'none',
+        padding: 0,
+        margin: 0,
+        resize: 'none',
+        overflow: 'hidden',
+        fontFamily: 'var(--pm-font-display)',
+        fontSize: 17,
+        fontWeight: 500,
+        lineHeight: 1.4,
+        color: C.ink,
       }}
-    >
-      <div style={{ ...labelStyle, marginBottom: 7 }}>{label}</div>
-      {children}
-    </div>
+    />
   )
 }
 
@@ -227,29 +254,9 @@ export function TextField({
 
   if (stacked) {
     return (
-      <StackRow label={label} last={last}>
-        <textarea
-          className="pm-field-input"
-          value={value}
-          onChange={(e) => handle(e.target.value)}
-          placeholder={placeholder}
-          rows={2}
-          style={{
-            width: '100%',
-            background: '#fff',
-            border: `1px solid ${C.line}`,
-            borderRadius: 10,
-            padding: '10px 12px',
-            fontFamily: 'inherit',
-            fontSize: 15,
-            lineHeight: 1.5,
-            color: C.ink,
-            outline: 'none',
-            resize: 'none',
-            boxSizing: 'border-box',
-          }}
-        />
-      </StackRow>
+      <InlineRow label={label} last={last} alignTop>
+        <AutoGrowTextarea value={value} onChange={handle} placeholder={placeholder} />
+      </InlineRow>
     )
   }
 
