@@ -269,6 +269,22 @@ export function StepDetailView({
       (isKrImportQuarantine && up(savedKrImportQuarantineDate))
     )
   })()
+  // 저장 안내 문구('예정일로 저장합니다')는 날짜를 입력해 저장한 경우에만 — 날짜를
+  // 비우고(삭제) 저장하면 노출하지 않는다. 저장 직후라 form 값 = 방금 저장된 값.
+  const savedHasDate =
+    (isMicrochip && date.length >= 10) ||
+    (isRabies && rabies.date.length >= 10) ||
+    (isRabiesExtra && rabiesExtra.some((e) => e.date.length >= 10)) ||
+    (isTiter && titerForm.date.length >= 10) ||
+    (isTiterExtra && titerExtra.some((e) => e.date.length >= 10)) ||
+    (isFlight && (flightForm.entry_date.length >= 10 || flightForm.return_date.length >= 10)) ||
+    (isAdvanceNotification && advanceDate.length >= 10) ||
+    (isVetVisit && vetVisitDate.length >= 10) ||
+    (isJpExportQuarantine && jpExport.date.length >= 10) ||
+    (isCertificateIssue && krExportQuarantineDate.length >= 10) ||
+    (isJpImportQuarantine && jpImportQuarantineDate.length >= 10) ||
+    (isJpExportQuarantineVisit && jpExportQuarantineVisitDate.length >= 10) ||
+    (isKrImportQuarantine && krImportQuarantineDate.length >= 10)
 
   // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
   useEffect(() => {
@@ -1580,7 +1596,7 @@ export function StepDetailView({
           )}
           {/* 저장 직후 — 선택한 날짜가 '예정일'로 저장됨을 안내. 오늘보다 늦은 날짜는
               일정에서 자동으로 '예정' 으로 표시된다. justSaved 와 함께 1.5s 노출. */}
-          {justSaved && (
+          {justSaved && savedHasDate && (
             <div
               role="status"
               style={{
