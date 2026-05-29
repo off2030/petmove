@@ -255,6 +255,20 @@ export function StepDetailView({
     krImportQuarantineDirty
   // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
   const justSaved = status === 'saved' && !dirty
+  // 예정(미래) 날짜로 저장된 검역·검사 step — 검진일이 오늘보다 늦으면 아직 '예정' 상태.
+  // 이때 저장 버튼을 계속 활성화해, 보호자가 예정일이 지난 뒤 다시 들어와 (필요 시 실제
+  // 방문일로 고쳐) 저장·완료할 수 있게 한다. 날짜가 오늘 이하가 되면 done → 자동 '완료'.
+  const savedUpcomingDate = (() => {
+    const t = todayIso()
+    const up = (d: string) => d.length >= 10 && d > t
+    return (
+      (isVetVisit && up(savedVetVisitDate)) ||
+      (isCertificateIssue && up(savedKrExportQuarantineDate)) ||
+      (isJpImportQuarantine && up(savedJpImportQuarantineDate)) ||
+      (isJpExportQuarantineVisit && up(savedJpExportQuarantineVisitDate)) ||
+      (isKrImportQuarantine && up(savedKrImportQuarantineDate))
+    )
+  })()
 
   // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
   useEffect(() => {
@@ -371,7 +385,7 @@ export function StepDetailView({
   )
 
   function handleSave() {
-    if (!dirty) return
+    if (!dirty && !savedUpcomingDate) return
     if (isMicrochip) {
       if (chip !== '' && chip.length !== 15) {
         setStatus('error')
@@ -1588,7 +1602,7 @@ export function StepDetailView({
           <button
             type="button"
             onClick={handleSave}
-            disabled={!dirty || status === 'saving'}
+            disabled={(!dirty && !savedUpcomingDate) || status === 'saving'}
             aria-live="polite"
             style={{
               pointerEvents: 'auto',
@@ -1598,15 +1612,15 @@ export function StepDetailView({
               border: 0,
               background: justSaved
                 ? C.sage
-                : dirty && status !== 'saving'
+                : (dirty || savedUpcomingDate) && status !== 'saving'
                   ? C.accent
                   : 'rgba(42,38,32,.10)',
-              color: justSaved || (dirty && status !== 'saving') ? '#fff' : C.ink3,
+              color: justSaved || ((dirty || savedUpcomingDate) && status !== 'saving') ? '#fff' : C.ink3,
               fontFamily: 'inherit',
               fontSize: 15,
               fontWeight: 600,
               letterSpacing: '-0.005em',
-              cursor: dirty && status !== 'saving' ? 'pointer' : 'not-allowed',
+              cursor: (dirty || savedUpcomingDate) && status !== 'saving' ? 'pointer' : 'not-allowed',
               transition: 'background .15s, color .15s',
             }}
           >
