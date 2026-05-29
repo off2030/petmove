@@ -360,9 +360,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 첨부가 올라오면 두 경우 모두 doneSummary 로 자연스럽게 전환.
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const hasDate =
-        typeof data.advance_notification_date === 'string' &&
-        data.advance_notification_date.length >= 10
+      const filed =
+        typeof data.advance_notification_date === 'string' ? data.advance_notification_date : ''
+      const hasDate = filed.length >= 10 && filed <= new Date().toISOString().slice(0, 10)
       if (!hasDate) return undefined
       const docs = Array.isArray(data.documents) ? data.documents : []
       const hasAttachment = docs.some(
@@ -417,9 +417,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 예약 날짜·시간이 둘 다 입력되면 두 경우 모두 doneSummary 로 자연스럽게 전환.
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const hasApplied =
-        typeof data.jp_export_quarantine_application_date === 'string' &&
-        data.jp_export_quarantine_application_date.length >= 10
+      const applied =
+        typeof data.jp_export_quarantine_application_date === 'string'
+          ? data.jp_export_quarantine_application_date
+          : ''
+      const hasApplied = applied.length >= 10 && applied <= new Date().toISOString().slice(0, 10)
       if (!hasApplied) return undefined
       const hasReservationDate =
         typeof data.jp_export_quarantine_date === 'string' &&

@@ -122,13 +122,11 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return true
     }
     case 'has-advance-notification': {
-      // 신청일 입력은 신고 접수 시그널일 뿐 — NACCS 허가증(Approval) 첨부까지 받아야
-      // 완전 완료. 보호자가 첨부 없이 진행하려는 경우엔
-      // case.data.advance_notification_approval_skipped 플래그로 명시적 skip.
-      const hasDate =
-        typeof data.advance_notification_date === 'string' &&
-        (data.advance_notification_date as string).length >= 10
-      if (!hasDate) return false
+      // 신고일이 미입력이거나 미래면 아직 신고 전 — '예정'. 신고 완료(신고일 ≤ 오늘) 후
+      // NACCS 허가증(Approval) 첨부 OR 첨부 없이 완료 처리(skip) 해야 완전 완료.
+      const filed =
+        typeof data.advance_notification_date === 'string' ? data.advance_notification_date : ''
+      if (filed.length < 10 || filed > todayIso()) return false
       if (data.advance_notification_approval_skipped === true) return true
       const docs = Array.isArray(data.documents) ? data.documents : []
       return docs.some(
@@ -139,15 +137,15 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       )
     }
     case 'has-jp-export-quarantine': {
-      // 두 가지 완료 경로:
-      //  - skipped=true (신청일 있으면) — 보호자가 예약 정보 없이 진행 처리 (portal '다음')
-      //  - confirmed=true AND date AND time — 예약 확정. confirmed 플래그는 portal 보호자가
-      //    date+time 입력 시 자동 set. admin 추가정보의 date/time 단독 입력은 '고객 희망'
-      //    의미라 confirmed 안 켜짐 — admin 은 별도 UI 없음.
-      const hasApplied =
-        typeof data.jp_export_quarantine_application_date === 'string' &&
-        (data.jp_export_quarantine_application_date as string).length >= 10
-      if (data.jp_export_quarantine_reservation_skipped === true && hasApplied) return true
+      // 신청일이 미입력이거나 미래면 아직 신청 전 — '예정'(NACCS 신청은 오늘 이전 행위).
+      // 신청 완료(신청일 ≤ 오늘) 후: skipped=true(예약 정보 없이 진행) 또는 confirmed=true +
+      // 예약 날짜·시간. confirmed 는 portal 보호자가 date+time 입력 시 자동 set.
+      const applied =
+        typeof data.jp_export_quarantine_application_date === 'string'
+          ? data.jp_export_quarantine_application_date
+          : ''
+      if (applied.length < 10 || applied > todayIso()) return false
+      if (data.jp_export_quarantine_reservation_skipped === true) return true
       if (data.jp_export_quarantine_confirmed !== true) return false
       const hasDate =
         typeof data.jp_export_quarantine_date === 'string' &&

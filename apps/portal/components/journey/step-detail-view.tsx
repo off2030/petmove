@@ -300,6 +300,11 @@ export function StepDetailView({
     isConfirmStep && confirmSavedDate.length >= 10 && confirmSavedDate <= todayStr && !done
   // 저장 버튼 활성: 변경됨(dirty) OR 검진일 도래했는데 아직 확인 전(저장 클릭으로 완료).
   const canSave = dirty || (formArrived && !done)
+  // 신청·신고 step(검역 5단계 외) — 신청일/신고일이 미래면 버튼 라벨을 '예정일로 저장'으로.
+  // 완료 판정은 신청일이 오늘 이하로 도래한 뒤(+ 예약/허가증/skip). canSave 는 dirty 그대로.
+  const jpExportApplicationUpcoming =
+    isJpExportQuarantine && jpExport.applicationDate.length >= 10 && jpExport.applicationDate > todayStr
+  const advanceUpcoming = isAdvanceNotification && advanceDate.length >= 10 && advanceDate > todayStr
 
   // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
   useEffect(() => {
@@ -839,7 +844,10 @@ export function StepDetailView({
     (caseRow?.data as Record<string, unknown> | undefined)?.advance_notification_approval_skipped ===
     true
   const isAdvanceDateEntered =
-    isAdvanceNotification && !!savedAdvanceDate && stepDocuments.length === 0
+    isAdvanceNotification &&
+    savedAdvanceDate.length >= 10 &&
+    savedAdvanceDate <= todayStr &&
+    stepDocuments.length === 0
   const isAdvanceAwaitingApproval = isAdvanceDateEntered && !advanceApprovalSkipped
   const isAdvanceApprovalSkipped = isAdvanceDateEntered && advanceApprovalSkipped
   const [skippingApproval, setSkippingApproval] = useState(false)
@@ -881,7 +889,9 @@ export function StepDetailView({
     (caseRow?.data as Record<string, unknown> | undefined)?.jp_export_quarantine_reservation_skipped ===
     true
   const isJpExportApplied =
-    isJpExportQuarantine && !!savedJpExport.applicationDate && savedJpExport.applicationDate.length >= 10
+    isJpExportQuarantine &&
+    savedJpExport.applicationDate.length >= 10 &&
+    savedJpExport.applicationDate <= todayStr
   const isJpExportReservationPending =
     isJpExportApplied && !(savedJpExport.date.length >= 10 && /^\d{1,2}:\d{2}$/.test(savedJpExport.time))
   const isJpExportAwaitingReservation = isJpExportReservationPending && !jpExportReservationSkipped
@@ -1658,7 +1668,7 @@ export function StepDetailView({
               ? '저장 중…'
               : justSaved
                 ? '✓ 저장됨'
-                : formUpcoming
+                : formUpcoming || jpExportApplicationUpcoming || advanceUpcoming
                   ? '예정일로 저장'
                   : '저장'}
           </button>
