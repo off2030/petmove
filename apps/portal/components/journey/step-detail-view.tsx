@@ -32,7 +32,6 @@ import {
   updateTiterExtraEntries,
   updateTiterFields,
   updateVetVisitDate,
-  setStepDone,
 } from '@/lib/actions/cases'
 import { readCaseDocuments } from '@/lib/documents'
 import { AdvanceNotificationInputs } from './advance-notification-inputs'
@@ -72,8 +71,6 @@ export function StepDetailView({
   caseId,
   step,
   done,
-  doneByDate,
-  manuallyDone,
   stepNumber,
   checkResults,
   destinationKey,
@@ -82,10 +79,6 @@ export function StepDetailView({
   caseId: string
   step: StepDefinition
   done: boolean
-  /** 날짜 시그널 기반 완료 — true 면 이미 완료라 '완료' 버튼을 숨긴다. */
-  doneByDate: boolean
-  /** 보호자 수기 완료 플래그(step_done_flags) — '완료'/'완료 취소' 토글 상태. */
-  manuallyDone: boolean
   /** applicable step 들 안에서 1-based 순번. 일정 row 의 좌측 번호와 동일. */
   stepNumber: number
   checkResults: CollectedCheck[]
@@ -127,9 +120,6 @@ export function StepDetailView({
     isJpImportQuarantine ||
     isJpExportQuarantineVisit ||
     isKrImportQuarantine
-  // 보호자가 상세에서 직접 '완료' 토글할 수 있는 step — 날짜 없이 수기 완료(step_done_flags).
-  const isCompletableStep =
-    isVetVisit || isCertificateIssue || isJpImportQuarantine || isJpExportQuarantineVisit
   const caseRow = useCase(caseId)
   const { updateCase } = useCases()
 
@@ -188,7 +178,6 @@ export function StepDetailView({
 
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
-  const [completing, setCompleting] = useState(false)
   const [, startTransition] = useTransition()
 
   // 하단 sticky 저장 바가 마지막 입력 필드를 가리지 않도록 — 바 높이를 재서 컨텐츠
@@ -737,22 +726,6 @@ export function StepDetailView({
         }
       })
     }
-  }
-
-  // 수기 완료 토글 — 날짜는 건드리지 않고 step_done_flags 만 on/off.
-  const handleToggleStepDone = () => {
-    if (completing) return
-    setCompleting(true)
-    startTransition(async () => {
-      const res = await setStepDone(caseId, step.id, !manuallyDone)
-      setCompleting(false)
-      if (res.ok) {
-        updateCase(res.value)
-      } else {
-        setStatus('error')
-        setError(res.error)
-      }
-    })
   }
 
   const C = {
@@ -1546,32 +1519,6 @@ export function StepDetailView({
           </section>
         )}
 
-        {/* 보호자 수기 완료 토글 — 날짜 입력 없이 '완료' 처리. 날짜로 이미 완료된 경우엔 숨김. */}
-        {isCompletableStep && !doneByDate && (
-          <section style={{ marginTop: 18 }}>
-            <button
-              type="button"
-              onClick={handleToggleStepDone}
-              disabled={completing}
-              className="pm-pressable"
-              style={{
-                width: '100%',
-                padding: '14px 16px',
-                borderRadius: 14,
-                border: manuallyDone ? `1px solid ${C.line}` : `1px solid ${C.accent}`,
-                background: manuallyDone ? 'transparent' : C.accent,
-                color: manuallyDone ? C.ink2 : '#fff',
-                fontFamily: 'inherit',
-                fontSize: 15,
-                fontWeight: 600,
-                letterSpacing: '-0.005em',
-                cursor: completing ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {completing ? '처리 중…' : manuallyDone ? '완료 취소' : '완료'}
-            </button>
-          </section>
-        )}
       </div>
 
       {/* 하단 sticky 저장 바 — 인터랙티브 step 한정. 한국 모바일 앱 패턴 (토스/카카오/당근).
@@ -1615,6 +1562,26 @@ export function StepDetailView({
               }}
             >
               {error ?? '저장 실패'}
+            </div>
+          )}
+          {/* 저장 직후 — 선택한 날짜가 '예정일'로 저장됨을 안내. 오늘보다 늦은 날짜는
+              일정에서 자동으로 '예정' 으로 표시된다. justSaved 와 함께 1.5s 노출. */}
+          {justSaved && (
+            <div
+              role="status"
+              style={{
+                pointerEvents: 'auto',
+                marginBottom: 8,
+                padding: '9px 12px',
+                borderRadius: 10,
+                background: C.surface,
+                border: `.5px solid ${C.sage}55`,
+                color: C.ink2,
+                fontSize: 12,
+                textAlign: 'center',
+              }}
+            >
+              선택하신 날짜를 예정일로 저장합니다.
             </div>
           )}
           {/* 저장 중·저장됨은 별도 줄 대신 버튼 라벨로 — 첨부 영역과 겹치지 않음. */}

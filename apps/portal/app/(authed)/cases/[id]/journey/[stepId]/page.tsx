@@ -7,7 +7,6 @@ import {
   buildCaseJourneyContext,
   getChecksForStep,
   getStepsForCase,
-  readStepDoneFlag,
   resolveDone,
   resolveStepForDestination,
   runChecksForCase,
@@ -56,11 +55,7 @@ export default function CaseJourneyStepPage({
   const ctx = buildCaseJourneyContext(caseRow)
   // 목적지별 description/title override 적용. validation 은 base.done/validationIds 그대로.
   const step = resolveStepForDestination(baseStep, ctx.destinationKey)
-  // done = 날짜 시그널(doneByDate) OR 보호자 수기 완료 플래그(manuallyDone).
-  // 상세의 '완료' 버튼은 doneByDate 가 아닐 때만 노출(이미 날짜로 완료면 토글 불필요).
-  const doneByDate = resolveDone(step.done, caseRow)
-  const manuallyDone = readStepDoneFlag(caseRow, step.id)
-  const done = doneByDate || manuallyDone
+  const done = resolveDone(step.done, caseRow)
   const checkResults = collectStepChecks(step, caseRow, ctx.destinationKey)
 
   return (
@@ -68,8 +63,6 @@ export default function CaseJourneyStepPage({
       caseId={id}
       step={step}
       done={done}
-      doneByDate={doneByDate}
-      manuallyDone={manuallyDone}
       stepNumber={stepIndex + 1}
       checkResults={checkResults}
       destinationKey={ctx.destinationKey}

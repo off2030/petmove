@@ -4,7 +4,6 @@ import {
   buildCaseJourneyContext,
   findStepForCheck,
   getStepsForCase,
-  isStepDone,
   resolveCompletedDate,
   resolveDone,
   resolveStepForDestination,
@@ -243,8 +242,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     // 목적지별 override(주로 description/title) 적용 — base catalog 는 그대로,
     // ctx.destinationKey 가 STEP_DESTINATION_OVERRIDES 에 매칭되면 머지.
     const step = resolveStepForDestination(rawStep, ctx.destinationKey)
-    // 수기 '완료' 플래그(step_done_flags) OR done 시그널 — 보호자가 상세에서 직접 완료한 step 반영.
-    const done = isStepDone(step, caseRow)
+    const done = resolveDone(step.done, caseRow)
     // departure step 은 출국일 자체. 그 외에는:
     //  - done → resolveCompletedDate (없으면 dash 로 fallback)
     //  - upcoming → deadline 권장일, 없으면 earliest 가능일
