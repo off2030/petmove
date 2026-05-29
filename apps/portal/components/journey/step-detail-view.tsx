@@ -255,36 +255,21 @@ export function StepDetailView({
     krImportQuarantineDirty
   // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
   const justSaved = status === 'saved' && !dirty
-  // 예정(미래) 날짜로 저장된 검역·검사 step — 검진일이 오늘보다 늦으면 아직 '예정' 상태.
-  // 이때 저장 버튼을 계속 활성화해, 보호자가 예정일이 지난 뒤 다시 들어와 (필요 시 실제
-  // 방문일로 고쳐) 저장·완료할 수 있게 한다. 날짜가 오늘 이하가 되면 done → 자동 '완료'.
-  const savedUpcomingDate = (() => {
+  // 입력한(또는 이미 저장된) 검진일이 오늘보다 늦으면 '예정' 상태 — (1) 저장 버튼을 계속
+  // 활성화해 보호자가 예정일이 지난 뒤 다시 저장·완료할 수 있게 하고, (2) 버튼 문구를
+  // '예정일로 저장'으로 바꿔 의도를 분명히 한다. form 값 기준이라(편집 중엔 입력값, 아니면
+  // 저장값과 동일) 미래 날짜 입력 즉시 반영된다. 날짜가 오늘 이하면 done → 자동 '완료'.
+  const formUpcomingDate = (() => {
     const t = todayIso()
     const up = (d: string) => d.length >= 10 && d > t
     return (
-      (isVetVisit && up(savedVetVisitDate)) ||
-      (isCertificateIssue && up(savedKrExportQuarantineDate)) ||
-      (isJpImportQuarantine && up(savedJpImportQuarantineDate)) ||
-      (isJpExportQuarantineVisit && up(savedJpExportQuarantineVisitDate)) ||
-      (isKrImportQuarantine && up(savedKrImportQuarantineDate))
+      (isVetVisit && up(vetVisitDate)) ||
+      (isCertificateIssue && up(krExportQuarantineDate)) ||
+      (isJpImportQuarantine && up(jpImportQuarantineDate)) ||
+      (isJpExportQuarantineVisit && up(jpExportQuarantineVisitDate)) ||
+      (isKrImportQuarantine && up(krImportQuarantineDate))
     )
   })()
-  // 저장 안내 문구('예정일로 저장합니다')는 날짜를 입력해 저장한 경우에만 — 날짜를
-  // 비우고(삭제) 저장하면 노출하지 않는다. 저장 직후라 form 값 = 방금 저장된 값.
-  const savedHasDate =
-    (isMicrochip && date.length >= 10) ||
-    (isRabies && rabies.date.length >= 10) ||
-    (isRabiesExtra && rabiesExtra.some((e) => e.date.length >= 10)) ||
-    (isTiter && titerForm.date.length >= 10) ||
-    (isTiterExtra && titerExtra.some((e) => e.date.length >= 10)) ||
-    (isFlight && (flightForm.entry_date.length >= 10 || flightForm.return_date.length >= 10)) ||
-    (isAdvanceNotification && advanceDate.length >= 10) ||
-    (isVetVisit && vetVisitDate.length >= 10) ||
-    (isJpExportQuarantine && jpExport.date.length >= 10) ||
-    (isCertificateIssue && krExportQuarantineDate.length >= 10) ||
-    (isJpImportQuarantine && jpImportQuarantineDate.length >= 10) ||
-    (isJpExportQuarantineVisit && jpExportQuarantineVisitDate.length >= 10) ||
-    (isKrImportQuarantine && krImportQuarantineDate.length >= 10)
 
   // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
   useEffect(() => {
@@ -401,7 +386,7 @@ export function StepDetailView({
   )
 
   function handleSave() {
-    if (!dirty && !savedUpcomingDate) return
+    if (!dirty && !formUpcomingDate) return
     if (isMicrochip) {
       if (chip !== '' && chip.length !== 15) {
         setStatus('error')
@@ -1594,31 +1579,12 @@ export function StepDetailView({
               {error ?? '저장 실패'}
             </div>
           )}
-          {/* 저장 직후 — 선택한 날짜가 '예정일'로 저장됨을 안내. 오늘보다 늦은 날짜는
-              일정에서 자동으로 '예정' 으로 표시된다. justSaved 와 함께 1.5s 노출. */}
-          {justSaved && savedHasDate && (
-            <div
-              role="status"
-              style={{
-                pointerEvents: 'auto',
-                marginBottom: 8,
-                padding: '9px 12px',
-                borderRadius: 10,
-                background: C.surface,
-                border: `.5px solid ${C.sage}55`,
-                color: C.ink2,
-                fontSize: 12,
-                textAlign: 'center',
-              }}
-            >
-              선택하신 날짜를 예정일로 저장합니다.
-            </div>
-          )}
-          {/* 저장 중·저장됨은 별도 줄 대신 버튼 라벨로 — 첨부 영역과 겹치지 않음. */}
+          {/* 저장 중·저장됨은 별도 줄 대신 버튼 라벨로 — 첨부 영역과 겹치지 않음.
+              미래 날짜(예정)면 라벨을 '예정일로 저장'으로 바꿔 누르기 전에 의도를 알린다. */}
           <button
             type="button"
             onClick={handleSave}
-            disabled={(!dirty && !savedUpcomingDate) || status === 'saving'}
+            disabled={(!dirty && !formUpcomingDate) || status === 'saving'}
             aria-live="polite"
             style={{
               pointerEvents: 'auto',
@@ -1628,19 +1594,25 @@ export function StepDetailView({
               border: 0,
               background: justSaved
                 ? C.sage
-                : (dirty || savedUpcomingDate) && status !== 'saving'
+                : (dirty || formUpcomingDate) && status !== 'saving'
                   ? C.accent
                   : 'rgba(42,38,32,.10)',
-              color: justSaved || ((dirty || savedUpcomingDate) && status !== 'saving') ? '#fff' : C.ink3,
+              color: justSaved || ((dirty || formUpcomingDate) && status !== 'saving') ? '#fff' : C.ink3,
               fontFamily: 'inherit',
               fontSize: 15,
               fontWeight: 600,
               letterSpacing: '-0.005em',
-              cursor: (dirty || savedUpcomingDate) && status !== 'saving' ? 'pointer' : 'not-allowed',
+              cursor: (dirty || formUpcomingDate) && status !== 'saving' ? 'pointer' : 'not-allowed',
               transition: 'background .15s, color .15s',
             }}
           >
-            {status === 'saving' ? '저장 중…' : justSaved ? '✓ 저장됨' : '저장'}
+            {status === 'saving'
+              ? '저장 중…'
+              : justSaved
+                ? '✓ 저장됨'
+                : formUpcomingDate
+                  ? '예정일로 저장'
+                  : '저장'}
           </button>
         </div>
       )}
