@@ -17,6 +17,7 @@ import { JOURNEY_STEP_CATALOG } from './catalog'
  */
 const REQUIRED_DOC_ATTACH_LABELS: Record<string, string> = {
   form25: '별지 제 25호 서식',
+  'form-ac-or-re': 'FormAC/RE',
 }
 
 /** 'foo.bar.jpg' → '.jpg'. 확장자 없으면 ''. */

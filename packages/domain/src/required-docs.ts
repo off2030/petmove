@@ -90,12 +90,12 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     },
     {
       id: 'kr-export-quarantine-cert',
-      name: '한국 수출 동물검역증(Export Quarantine Certificate)',
+      name: '한국 수출 동물검역',
       source: '농림축산검역본부',
       kind: 'step',
       stepRef: 'certificate-issue',
       description:
-        '한국에서 출국할 때 받는 수출 동물검역증입니다.\n\n출국일 기준 10일 이내에 동물검역소를 방문해 수출 검역을 받으면 발급됩니다.\n\n동물검역을 받을 때 제출할 필수 서류를 빠짐없이 구비해야 합니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+        '한국 수출 동물검역 후 발급받습니다.\n\n일본 수입 동물검역 때 원본을 제시해야 합니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
       previewStepId: 'certificate-issue',
     },
     {
