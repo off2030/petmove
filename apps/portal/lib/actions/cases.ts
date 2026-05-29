@@ -1320,6 +1320,53 @@ export async function updateJpExportQuarantineFields(
 }
 
 /**
+ * 여정 완료 후 보호자가 남기는 의견 — case.data.feedback 에 저장.
+ * rating(만족도 1~5, 없으면 null) + text(자유 의견). 둘 다 비면 feedback 키 제거.
+ * data 의 다른 키는 fetch-merge 로 보존. 케이스별로 저장돼 운영자(펫무브워크)가 확인.
+ */
+export async function saveCaseFeedback(
+  caseId: string,
+  rating: number | null,
+  text: string | null,
+): Promise<Result<CaseRow>> {
+  try {
+    if (!caseId) return { ok: false, error: '잘못된 요청입니다.' }
+
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const r = typeof rating === 'number' && rating >= 1 && rating <= 5 ? Math.round(rating) : null
+    const t = typeof text === 'string' ? text.trim() : ''
+    const nextData: Record<string, unknown> = { ...prev }
+    if (r === null && !t) {
+      delete nextData.feedback
+    } else {
+      nextData.feedback = { rating: r, text: t, submittedAt: new Date().toISOString() }
+    }
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
  * 정보 탭(보호자·동물·여행·항공권)의 편집 가능한 모든 필드를 한 번에 patch.
  *
  * InfoView 는 편집 필드 전체의 desired-state 를 보내고, 이 액션이 화이트리스트된
