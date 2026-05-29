@@ -1,7 +1,9 @@
+import { Fragment } from 'react'
 import type { CaseRow } from '@petmove/domain'
 import { PetAvatarPicker } from '@/components/me/pet-avatar-picker'
 import { signOut } from '@/lib/actions/profile'
-import type { GuardianBlock, PartnerBlock, PetBlock, ProfileViewData } from '@/lib/profile/catalog'
+import { buildPetBlock } from '@/lib/profile/catalog'
+import type { GuardianBlock, PartnerBlock, ProfileViewData } from '@/lib/profile/catalog'
 
 /**
  * 보호자 프로필 화면 (/me). Stone 팔레트 / Fraunces serif — TimelineCalm 과 동일 톤.
@@ -16,10 +18,10 @@ import type { GuardianBlock, PartnerBlock, PetBlock, ProfileViewData } from '@/l
  */
 export function ProfileView({
   data,
-  primaryCase,
+  cases,
 }: {
   data: ProfileViewData
-  primaryCase: CaseRow | null
+  cases: CaseRow[]
 }) {
   const C = {
     bg: '#F5EFE8',
@@ -69,8 +71,7 @@ export function ProfileView({
 
         <HeroCard
           guardian={data.guardian}
-          pet={data.pet}
-          primaryCase={primaryCase}
+          cases={cases}
           C={C}
           serif={serif}
           num={num}
@@ -128,15 +129,13 @@ interface Palette {
 
 function HeroCard({
   guardian,
-  pet,
-  primaryCase,
+  cases,
   C,
   serif,
   num,
 }: {
   guardian: GuardianBlock
-  pet: PetBlock | null
-  primaryCase: CaseRow | null
+  cases: CaseRow[]
   C: Palette
   serif: React.CSSProperties
   num: React.CSSProperties
@@ -186,12 +185,12 @@ function HeroCard({
         </div>
       </div>
 
-      {pet && primaryCase && (
-        <>
+      {cases.map((case_) => (
+        <Fragment key={case_.id}>
           <div style={{ height: 0.5, background: C.line }} />
-          <PetAvatarPicker case_={primaryCase} pet={pet} />
-        </>
-      )}
+          <PetAvatarPicker case_={case_} pet={buildPetBlock(case_)} />
+        </Fragment>
+      ))}
     </div>
   )
 }

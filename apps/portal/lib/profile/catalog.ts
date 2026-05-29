@@ -15,7 +15,6 @@ import type { CustomerProfileRow } from '@/lib/actions/profile'
 
 export interface ProfileViewData {
   guardian: GuardianBlock
-  pet: PetBlock | null
   clinic: PartnerBlock | null
   transport: PartnerBlock | null
   account: AccountBlock
@@ -78,16 +77,6 @@ export function buildProfileView({
     initials: deriveInitials(customerNameKo, customerNameEn, userEmail),
   }
 
-  const pet: PetBlock | null = primaryCase
-    ? {
-        name: primaryCase.pet_name,
-        nameEn: primaryCase.pet_name_en,
-        breed: pickString(data, 'breed'),
-        ageLabel: ageLabel(pickString(data, 'birth_date')),
-        weight: pickString(data, 'weight'),
-      }
-    : null
-
   // 동물병원·에이전시 정보는 admin 의 organization 영역. portal RLS 통과 X — Phase 11.1 후속.
   // 시안의 카드 모양을 유지하면서 데이터는 null → 컴포넌트에서 placeholder 렌더.
   const clinic: PartnerBlock | null = null
@@ -100,7 +89,19 @@ export function buildProfileView({
     notificationLabel: '준비 중',
   }
 
-  return { guardian, pet, clinic, transport, account }
+  return { guardian, clinic, transport, account }
+}
+
+/** 케이스 1건 → 동물 카드 블록. (케이스 = 동물 1마리) */
+export function buildPetBlock(case_: CaseRow): PetBlock {
+  const data = (case_.data ?? {}) as Record<string, unknown>
+  return {
+    name: case_.pet_name,
+    nameEn: case_.pet_name_en,
+    breed: pickString(data, 'breed'),
+    ageLabel: ageLabel(pickString(data, 'birth_date')),
+    weight: pickString(data, 'weight'),
+  }
 }
 
 // ── 헬퍼 ─────────────────────────────────────────────────────────────────
