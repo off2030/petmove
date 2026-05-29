@@ -1166,7 +1166,7 @@ export function StepDetailView({
             </div>
             {isAdvanceAwaitingApproval && (
               <div style={{ marginTop: 16, fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
-                허가증 첨부 없이 완료 처리 하시려면 다음 버튼을 클릭해주세요.
+                허가증 첨부 없이 완료 처리 하시려면 아래 버튼을 클릭해주세요.
               </div>
             )}
             {isAdvanceApprovalSkipped && (
@@ -1176,7 +1176,7 @@ export function StepDetailView({
             )}
             {isJpExportAwaitingReservation && (
               <div style={{ marginTop: 16, fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
-                입력 없이 완료 처리하시려면 다음 버튼을 클릭해주세요.
+                입력 없이 완료 처리하시려면 아래 버튼을 클릭해주세요.
               </div>
             )}
             {isJpExportReservationSkipped && (
@@ -1227,7 +1227,7 @@ export function StepDetailView({
                   opacity: skippingApproval ? 0.6 : 1,
                 }}
               >
-                {skippingApproval ? '처리 중…' : '다음'}
+                {skippingApproval ? '처리 중…' : '완료 처리'}
               </button>
             )}
             {isAdvanceApprovalSkipped && (
@@ -1273,7 +1273,7 @@ export function StepDetailView({
                   opacity: skippingJpExport ? 0.6 : 1,
                 }}
               >
-                {skippingJpExport ? '처리 중…' : '다음'}
+                {skippingJpExport ? '처리 중…' : '완료 처리'}
               </button>
             )}
             {isJpExportReservationSkipped && (
