@@ -187,6 +187,13 @@ function earliestDate(step: StepDefinition, caseRow: CaseRow): string | null {
   return null
 }
 
+/**
+ * 검역·검사 5단계에서 예정일이 지났는데 보호자가 아직 '저장'으로 확인(완료)하지 않은 상태 안내.
+ * 자동 완료가 아니라 직접 확인 방식이라, 지난 일정을 어떻게 처리할지 알려준다.
+ */
+const PASSED_UNCONFIRMED_MSG =
+  '예정일이 지났습니다. 저장 버튼을 눌러서 완료로 전환하시거나, 새로운 예정일을 등록하실 수 있습니다.'
+
 export function buildJourney(caseRow: CaseRow): JourneyData {
   const ctx = buildCaseJourneyContext(caseRow)
   const today = todayKst()
@@ -285,6 +292,36 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       caseData.kr_export_quarantine_date.length >= 10
         ? caseData.kr_export_quarantine_date.slice(0, 10)
         : null
+    // 검역·검사 5단계는 '저장' 확인으로 완료(날짜 ≤ 오늘 자동완료 아님). 각 step 의 '자기 검진일'.
+    const jpImportOwnDate =
+      typeof caseData.jp_import_quarantine_date === 'string' &&
+      caseData.jp_import_quarantine_date.length >= 10
+        ? caseData.jp_import_quarantine_date.slice(0, 10)
+        : null
+    const jpExportVisitOwnDate =
+      typeof caseData.jp_export_quarantine_visit_date === 'string' &&
+      caseData.jp_export_quarantine_visit_date.length >= 10
+        ? caseData.jp_export_quarantine_visit_date.slice(0, 10)
+        : null
+    const krImportOwnDate =
+      typeof caseData.kr_import_quarantine_date === 'string' &&
+      caseData.kr_import_quarantine_date.length >= 10
+        ? caseData.kr_import_quarantine_date.slice(0, 10)
+        : null
+    const ownConfirmDate =
+      step.id === 'vet-visit'
+        ? vetVisitDate
+        : step.id === 'certificate-issue'
+          ? krExportQuarantineDate
+          : isJpImportQuarantine
+            ? jpImportOwnDate
+            : step.id === 'jp-export-quarantine-visit'
+              ? jpExportVisitOwnDate
+              : step.id === 'kr-import-quarantine'
+                ? krImportOwnDate
+                : null
+    // 예정일이 지났는데 아직 확인(done) 전 — '예정 [지난 날짜]' 대신 안내 문구로 표시.
+    const passedUnconfirmed = !done && !!ownConfirmDate && ownConfirmDate <= today
     // 미완 step 의 타임라인 표시일 — step 의 직접 입력 필드(advance_notification_date 등)는
     // 비어있는데 earliest(다른 step 완료일 기준 계산값)만으로 '예정 [날짜]' 칩을 띄우면
     // 일정이 정해진 것처럼 오해됨. 따라서:
@@ -292,7 +329,9 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     //  - earliest 단독: '예정' 의미상 어긋나 제외 — '다음 할 일' 카드 본문(cardDesc)에서만 안내.
     // deadline 이 있고 window 가 아니면 그게 마감일 — '마감' 칩으로 표시.
     const fallbackDate = step.deadline && !step.deadline.window ? deadline : null
-    const date = isDeparture && !isJpImportQuarantine
+    const date = passedUnconfirmed
+      ? null
+      : isDeparture && !isJpImportQuarantine
       ? dep
       : isJpImportQuarantine
         ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? flightEntryDate
@@ -332,16 +371,20 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     //    동일한 안내 톤(situational/현재형) 사용.
     //  - 미완료: situational.desc 가 있으면 우선, 없으면 description 첫 문장(현재형 안내문).
     const isFutureDate = date != null && date > today
-    const desc = done && !isFutureDate
-      ? (step.doneSummary ?? sit?.desc ?? summary)
-      : (sit?.desc ?? summary)
+    const desc = passedUnconfirmed
+      ? PASSED_UNCONFIRMED_MSG
+      : done && !isFutureDate
+        ? (step.doneSummary ?? sit?.desc ?? summary)
+        : (sit?.desc ?? summary)
     // 다음 할 일 카드 본문 — 날짜(earliest/deadline)가 있으면 step.cardLine
     // (미지정 시 설명 첫 문장)에 날짜 구문을 붙이고, 날짜가 없으면 설명 첫 문장만.
     // earliest("이후")가 deadline("까지"/window 구간)보다 우선: 보호자가 먼저 알아야 할 제약.
     // situational.cardDesc 가 있으면 모든 날짜 로직을 덮어쓴다.
     // (참고: recommended 는 일정 row 표시일만 영향 — 카드 본문은 마감 기준 유지.)
     const cardLine = step.cardLine ?? summary
-    const cardDesc = done
+    const cardDesc = passedUnconfirmed
+      ? PASSED_UNCONFIRMED_MSG
+      : done
       ? undefined
       : (sit?.cardDesc
           ?? (earliest

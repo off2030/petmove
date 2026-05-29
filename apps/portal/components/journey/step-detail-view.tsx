@@ -255,21 +255,45 @@ export function StepDetailView({
     krImportQuarantineDirty
   // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
   const justSaved = status === 'saved' && !dirty
-  // 입력한(또는 이미 저장된) 검진일이 오늘보다 늦으면 '예정' 상태 — (1) 저장 버튼을 계속
-  // 활성화해 보호자가 예정일이 지난 뒤 다시 저장·완료할 수 있게 하고, (2) 버튼 문구를
-  // '예정일로 저장'으로 바꿔 의도를 분명히 한다. form 값 기준이라(편집 중엔 입력값, 아니면
-  // 저장값과 동일) 미래 날짜 입력 즉시 반영된다. 날짜가 오늘 이하면 done → 자동 '완료'.
-  const formUpcomingDate = (() => {
-    const t = todayIso()
-    const up = (d: string) => d.length >= 10 && d > t
-    return (
-      (isVetVisit && up(vetVisitDate)) ||
-      (isCertificateIssue && up(krExportQuarantineDate)) ||
-      (isJpImportQuarantine && up(jpImportQuarantineDate)) ||
-      (isJpExportQuarantineVisit && up(jpExportQuarantineVisitDate)) ||
-      (isKrImportQuarantine && up(krImportQuarantineDate))
-    )
-  })()
+  // 검역·검사 5단계 — '저장' 클릭(확인)으로 완료하는 step. 미래 날짜=예정(저장만 됨),
+  // 오늘 이하 날짜를 저장하면 완료. done(prop)=resolveDone=저장된 확인 플래그.
+  const isConfirmStep =
+    isVetVisit ||
+    isCertificateIssue ||
+    isJpImportQuarantine ||
+    isJpExportQuarantineVisit ||
+    isKrImportQuarantine
+  const confirmFormDate = isVetVisit
+    ? vetVisitDate
+    : isCertificateIssue
+      ? krExportQuarantineDate
+      : isJpImportQuarantine
+        ? jpImportQuarantineDate
+        : isJpExportQuarantineVisit
+          ? jpExportQuarantineVisitDate
+          : isKrImportQuarantine
+            ? krImportQuarantineDate
+            : ''
+  const confirmSavedDate = isVetVisit
+    ? savedVetVisitDate
+    : isCertificateIssue
+      ? savedKrExportQuarantineDate
+      : isJpImportQuarantine
+        ? savedJpImportQuarantineDate
+        : isJpExportQuarantineVisit
+          ? savedJpExportQuarantineVisitDate
+          : isKrImportQuarantine
+            ? savedKrImportQuarantineDate
+            : ''
+  const todayStr = todayIso()
+  // 버튼 문구·저장 확인 여부는 form(입력 중) 날짜 기준. 미래면 '예정일로 저장', 오늘 이하면 '저장'.
+  const formUpcoming = isConfirmStep && confirmFormDate.length >= 10 && confirmFormDate > todayStr
+  const formArrived = isConfirmStep && confirmFormDate.length >= 10 && confirmFormDate <= todayStr
+  // 저장된 검진일이 오늘 이하인데 아직 확인(done) 전 — '예정일 지남, 저장 필요' 안내 노출.
+  const savedArrivedUnconfirmed =
+    isConfirmStep && confirmSavedDate.length >= 10 && confirmSavedDate <= todayStr && !done
+  // 저장 버튼 활성: 변경됨(dirty) OR 검진일 도래했는데 아직 확인 전(저장 클릭으로 완료).
+  const canSave = dirty || (formArrived && !done)
 
   // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
   useEffect(() => {
@@ -386,7 +410,7 @@ export function StepDetailView({
   )
 
   function handleSave() {
-    if (!dirty && !formUpcomingDate) return
+    if (!canSave) return
     if (isMicrochip) {
       if (chip !== '' && chip.length !== 15) {
         setStatus('error')
@@ -647,7 +671,7 @@ export function StepDetailView({
       setStatus('saving')
       setError(null)
       startTransition(async () => {
-        const res = await updateVetVisitDate(caseId, vetVisitDate || null)
+        const res = await updateVetVisitDate(caseId, vetVisitDate || null, formArrived)
         if (res.ok) {
           updateCase(res.value)
           setVetVisitDate(readVetVisitDate(res.value.data))
@@ -681,7 +705,7 @@ export function StepDetailView({
       setStatus('saving')
       setError(null)
       startTransition(async () => {
-        const res = await updateKrExportQuarantineDate(caseId, krExportQuarantineDate || null)
+        const res = await updateKrExportQuarantineDate(caseId, krExportQuarantineDate || null, formArrived)
         if (res.ok) {
           updateCase(res.value)
           setKrExportQuarantineDate(readKrExportQuarantineDate(res.value.data))
@@ -696,7 +720,7 @@ export function StepDetailView({
       setStatus('saving')
       setError(null)
       startTransition(async () => {
-        const res = await updateJpImportQuarantineDate(caseId, jpImportQuarantineDate || null)
+        const res = await updateJpImportQuarantineDate(caseId, jpImportQuarantineDate || null, formArrived)
         if (res.ok) {
           updateCase(res.value)
           setJpImportQuarantineDate(readJpImportQuarantineDate(res.value.data))
@@ -714,6 +738,7 @@ export function StepDetailView({
         const res = await updateJpExportQuarantineVisitDate(
           caseId,
           jpExportQuarantineVisitDate || null,
+          formArrived,
         )
         if (res.ok) {
           updateCase(res.value)
@@ -729,7 +754,7 @@ export function StepDetailView({
       setStatus('saving')
       setError(null)
       startTransition(async () => {
-        const res = await updateKrImportQuarantineDate(caseId, krImportQuarantineDate || null)
+        const res = await updateKrImportQuarantineDate(caseId, krImportQuarantineDate || null, formArrived)
         if (res.ok) {
           updateCase(res.value)
           setKrImportQuarantineDate(readKrImportQuarantineDate(res.value.data))
@@ -1534,6 +1559,23 @@ export function StepDetailView({
           </section>
         )}
 
+        {/* 예정일이 지났는데 아직 '저장'으로 확인 안 한 상태 — 저장하면 완료, 또는 날짜 재등록 안내. */}
+        {savedArrivedUnconfirmed && (
+          <section
+            style={{
+              marginTop: 18,
+              padding: '14px 16px',
+              borderRadius: 16,
+              background: C.infoBg,
+              border: `.5px solid ${C.info}59`,
+            }}
+          >
+            <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
+              예정일이 지났습니다. 저장 버튼을 눌러서 완료로 전환하시거나, 새로운 예정일을 등록하실 수 있습니다.
+            </div>
+          </section>
+        )}
+
       </div>
 
       {/* 하단 sticky 저장 바 — 인터랙티브 step 한정. 한국 모바일 앱 패턴 (토스/카카오/당근).
@@ -1584,7 +1626,7 @@ export function StepDetailView({
           <button
             type="button"
             onClick={handleSave}
-            disabled={(!dirty && !formUpcomingDate) || status === 'saving'}
+            disabled={!canSave || status === 'saving'}
             aria-live="polite"
             style={{
               pointerEvents: 'auto',
@@ -1594,15 +1636,15 @@ export function StepDetailView({
               border: 0,
               background: justSaved
                 ? C.sage
-                : (dirty || formUpcomingDate) && status !== 'saving'
+                : canSave && status !== 'saving'
                   ? C.accent
                   : 'rgba(42,38,32,.10)',
-              color: justSaved || ((dirty || formUpcomingDate) && status !== 'saving') ? '#fff' : C.ink3,
+              color: justSaved || (canSave && status !== 'saving') ? '#fff' : C.ink3,
               fontFamily: 'inherit',
               fontSize: 15,
               fontWeight: 600,
               letterSpacing: '-0.005em',
-              cursor: (dirty || formUpcomingDate) && status !== 'saving' ? 'pointer' : 'not-allowed',
+              cursor: canSave && status !== 'saving' ? 'pointer' : 'not-allowed',
               transition: 'background .15s, color .15s',
             }}
           >
@@ -1610,7 +1652,7 @@ export function StepDetailView({
               ? '저장 중…'
               : justSaved
                 ? '✓ 저장됨'
-                : formUpcomingDate
+                : formUpcoming
                   ? '예정일로 저장'
                   : '저장'}
           </button>

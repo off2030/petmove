@@ -102,13 +102,9 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return readExternalParasiteEntries(caseRow).length > 0
     case 'has-deworming-time':
       return typeof data.deworming_time === 'string' && (data.deworming_time as string).length > 0
-    case 'has-vet-visit': {
-      // 검진일이 입력되어도 미래 날짜면 미완료 — '예정' 상태로 노출되어야 함.
-      // 오늘 검진은 완료로 인정 (당일 입력 시 보호자는 이미 다녀온 상태).
-      const dt = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
-      if (dt.length < 10) return false
-      return dt <= todayIso()
-    }
+    case 'has-vet-visit':
+      // 검진일 입력 + 보호자 '저장' 확인(완료 클릭)해야 완료. 날짜만으론 자동 완료 X.
+      return isQuarantineConfirmed(data, 'vet_visit_date', 'vet_visit_confirmed')
     case 'has-flight-date': {
       // entry_date(도착일) 또는 케이스의 departure_date(출국일) 둘 중 하나라도 입력되면 완료.
       // 일본은 entry_date 미사용 → departure_date(= 항공권 출발일과 sync) 로 판정.
@@ -160,38 +156,23 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       const time = typeof data.jp_export_quarantine_time === 'string' ? data.jp_export_quarantine_time : ''
       return /^\d{1,2}:\d{2}$/.test(time)
     }
-    case 'has-kr-export-quarantine': {
-      // 검역일이 입력돼도 미래 날짜면 아직 검역 전 — '예정' 으로 노출돼야 함.
-      // 검역소 방문해 '받은 날짜' 라서 has-vet-visit 와 동일 규칙(과거·오늘만 완료).
-      const dt = typeof data.kr_export_quarantine_date === 'string' ? data.kr_export_quarantine_date : ''
-      if (dt.length < 10) return false
-      return dt <= todayIso()
-    }
-    case 'has-jp-import-quarantine': {
-      const dt = typeof data.jp_import_quarantine_date === 'string' ? data.jp_import_quarantine_date : ''
-      if (dt.length < 10) return false
-      return dt <= todayIso()
-    }
-    case 'has-jp-export-quarantine-visit': {
-      const dt = typeof data.jp_export_quarantine_visit_date === 'string' ? data.jp_export_quarantine_visit_date : ''
-      if (dt.length < 10) return false
-      return dt <= todayIso()
-    }
-    case 'has-kr-import-quarantine': {
-      const dt = typeof data.kr_import_quarantine_date === 'string' ? data.kr_import_quarantine_date : ''
-      if (dt.length < 10) return false
-      return dt <= todayIso()
-    }
+    case 'has-kr-export-quarantine':
+      // 검역소 방문해 '받은 날짜' — has-vet-visit 와 동일하게 검역일 + 보호자 확인으로 완료.
+      return isQuarantineConfirmed(data, 'kr_export_quarantine_date', 'kr_export_quarantine_confirmed')
+    case 'has-jp-import-quarantine':
+      return isQuarantineConfirmed(data, 'jp_import_quarantine_date', 'jp_import_quarantine_confirmed')
+    case 'has-jp-export-quarantine-visit':
+      return isQuarantineConfirmed(data, 'jp_export_quarantine_visit_date', 'jp_export_quarantine_visit_confirmed')
+    case 'has-kr-import-quarantine':
+      return isQuarantineConfirmed(data, 'kr_import_quarantine_date', 'kr_import_quarantine_confirmed')
     case 'has-arrived': {
-      // 도착 완료 — 왕복은 한국 수입검역, 편도는 일본 수입검역(있으면) / 출국일 경과.
-      // 검역일이 미래면 아직 미도착 — 다른 검역 step 과 동일하게 과거·오늘만 인정.
+      // 도착 완료 — 왕복은 한국 수입검역, 편도는 일본 수입검역(있으면) 확인 / 출국일 경과.
+      // 검역 step 과 동일하게 보호자 '저장' 확인 플래그로 완료. 비-일본 편도는 출국일 경과로 자동.
       const { tripType } = buildCaseJourneyContext(caseRow)
       if (tripType === 'round') {
-        const dt = typeof data.kr_import_quarantine_date === 'string' ? data.kr_import_quarantine_date : ''
-        return dt.length >= 10 && dt <= todayIso()
+        return isQuarantineConfirmed(data, 'kr_import_quarantine_date', 'kr_import_quarantine_confirmed')
       }
-      const jp = typeof data.jp_import_quarantine_date === 'string' ? data.jp_import_quarantine_date : ''
-      if (jp.length >= 10 && jp <= todayIso()) {
+      if (isQuarantineConfirmed(data, 'jp_import_quarantine_date', 'jp_import_quarantine_confirmed')) {
         return true
       }
       return !!caseRow.departure_date && caseRow.departure_date < todayIso()
@@ -204,6 +185,22 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
     default:
       return false
   }
+}
+
+/**
+ * 검역·검사 step 완료 판정 — 검진일(dateKey)이 입력돼 있고 + 보호자가 '저장'으로
+ * 확인(confirmKey === true)했을 때만 완료. 날짜만으론 자동 완료하지 않는다 — 예정일이
+ * 지나도 보호자 확인 전까진 미완료('확인 대기'). 확인 플래그는 portal 저장 시 검진일이
+ * 오늘 이하일 때 set, 미래·빈값이면 clear 된다.
+ */
+function isQuarantineConfirmed(
+  data: Record<string, unknown>,
+  dateKey: string,
+  confirmKey: string,
+): boolean {
+  const dt = data[dateKey]
+  if (typeof dt !== 'string' || dt.length < 10) return false
+  return data[confirmKey] === true
 }
 
 function todayIso(): string {

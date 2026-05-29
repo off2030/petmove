@@ -976,6 +976,7 @@ export async function updateAdvanceNotificationDate(
 export async function updateVetVisitDate(
   caseId: string,
   date: string | null,
+  confirmed: boolean,
 ): Promise<Result<CaseRow>> {
   try {
     if (date != null && date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -1004,6 +1005,9 @@ export async function updateVetVisitDate(
     const nextData: Record<string, unknown> = { ...prev }
     if (v) nextData.vet_visit_date = v
     else delete nextData.vet_visit_date
+    // 보호자 '저장' 확인 플래그 — 검진일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
+    if (v && confirmed) nextData.vet_visit_confirmed = true
+    else delete nextData.vet_visit_confirmed
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1025,6 +1029,7 @@ export async function updateVetVisitDate(
 export async function updateKrExportQuarantineDate(
   caseId: string,
   date: string | null,
+  confirmed: boolean,
 ): Promise<Result<CaseRow>> {
   try {
     if (date != null && date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -1047,6 +1052,9 @@ export async function updateKrExportQuarantineDate(
     const v = typeof date === 'string' ? date.trim() : ''
     if (v) nextData.kr_export_quarantine_date = v
     else delete nextData.kr_export_quarantine_date
+    // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
+    if (v && confirmed) nextData.kr_export_quarantine_confirmed = true
+    else delete nextData.kr_export_quarantine_confirmed
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1068,6 +1076,7 @@ export async function updateKrExportQuarantineDate(
 export async function updateJpImportQuarantineDate(
   caseId: string,
   date: string | null,
+  confirmed: boolean,
 ): Promise<Result<CaseRow>> {
   try {
     if (date != null && date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -1090,6 +1099,9 @@ export async function updateJpImportQuarantineDate(
     const v = typeof date === 'string' ? date.trim() : ''
     if (v) nextData.jp_import_quarantine_date = v
     else delete nextData.jp_import_quarantine_date
+    // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
+    if (v && confirmed) nextData.jp_import_quarantine_confirmed = true
+    else delete nextData.jp_import_quarantine_confirmed
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1111,6 +1123,7 @@ export async function updateJpImportQuarantineDate(
 export async function updateJpExportQuarantineVisitDate(
   caseId: string,
   date: string | null,
+  confirmed: boolean,
 ): Promise<Result<CaseRow>> {
   try {
     if (date != null && date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -1133,6 +1146,9 @@ export async function updateJpExportQuarantineVisitDate(
     const v = typeof date === 'string' ? date.trim() : ''
     if (v) nextData.jp_export_quarantine_visit_date = v
     else delete nextData.jp_export_quarantine_visit_date
+    // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
+    if (v && confirmed) nextData.jp_export_quarantine_visit_confirmed = true
+    else delete nextData.jp_export_quarantine_visit_confirmed
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1154,6 +1170,7 @@ export async function updateJpExportQuarantineVisitDate(
 export async function updateKrImportQuarantineDate(
   caseId: string,
   date: string | null,
+  confirmed: boolean,
 ): Promise<Result<CaseRow>> {
   try {
     if (date != null && date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -1176,6 +1193,9 @@ export async function updateKrImportQuarantineDate(
     const v = typeof date === 'string' ? date.trim() : ''
     if (v) nextData.kr_import_quarantine_date = v
     else delete nextData.kr_import_quarantine_date
+    // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
+    if (v && confirmed) nextData.kr_import_quarantine_confirmed = true
+    else delete nextData.kr_import_quarantine_confirmed
 
     const { data: updated, error } = await admin
       .from('cases')
