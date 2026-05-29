@@ -165,22 +165,24 @@ export function StepDetailView({
   const [krExportQuarantineDate, setKrExportQuarantineDate] = useState(savedKrExportQuarantineDate)
 
   const savedJpImportQuarantineDate = readJpImportQuarantineDate(caseRow?.data)
-  const [jpImportQuarantineDate, setJpImportQuarantineDate] = useState(
-    // 검역일이 비어있으면 일본 도착 항공편 날짜(입국일)를 예정일 기본값으로 채운다.
-    savedJpImportQuarantineDate || (isJpImportQuarantine ? savedFlightForm.entry_date.slice(0, 10) : ''),
-  )
+  // 검역일이 비어있으면 일본 도착 항공편 날짜(입국일)를 예정일 기본값으로 — 자동 채움값(baseline)과
+  // 같으면 dirty 아님(버튼 비활성). 보호자가 직접 바꿔야 dirty(활성).
+  const jpImportQuarantineBaseline =
+    savedJpImportQuarantineDate || (isJpImportQuarantine ? savedFlightForm.entry_date.slice(0, 10) : '')
+  const [jpImportQuarantineDate, setJpImportQuarantineDate] = useState(jpImportQuarantineBaseline)
 
   const savedJpExportQuarantineVisitDate = readJpExportQuarantineVisitDate(caseRow?.data)
-  const [jpExportQuarantineVisitDate, setJpExportQuarantineVisitDate] = useState(
-    // 신청 예약일·시간과 연동 — 검역일이 비어있으면 신청 예약일을 기본값으로 채운다.
-    savedJpExportQuarantineVisitDate || (isJpExportQuarantineVisit ? savedJpExport.date : ''),
-  )
+  // 검역일이 비어있으면 신청 예약일을 예정일 기본값으로 — baseline 과 같으면 dirty 아님(버튼 비활성).
+  const jpExportQuarantineVisitBaseline =
+    savedJpExportQuarantineVisitDate || (isJpExportQuarantineVisit ? savedJpExport.date : '')
+  const [jpExportQuarantineVisitDate, setJpExportQuarantineVisitDate] =
+    useState(jpExportQuarantineVisitBaseline)
 
   const savedKrImportQuarantineDate = readKrImportQuarantineDate(caseRow?.data)
-  const [krImportQuarantineDate, setKrImportQuarantineDate] = useState(
-    // 검역일이 비어있으면 귀국 항공편 날짜를 예정일 기본값으로 채운다.
-    savedKrImportQuarantineDate || (isKrImportQuarantine ? savedFlightForm.return_date.slice(0, 10) : ''),
-  )
+  // 검역일이 비어있으면 귀국 항공편 날짜를 예정일 기본값으로 — baseline 과 같으면 dirty 아님(버튼 비활성).
+  const krImportQuarantineBaseline =
+    savedKrImportQuarantineDate || (isKrImportQuarantine ? savedFlightForm.return_date.slice(0, 10) : '')
+  const [krImportQuarantineDate, setKrImportQuarantineDate] = useState(krImportQuarantineBaseline)
 
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -240,11 +242,11 @@ export function StepDetailView({
   const krExportQuarantineDirty =
     isCertificateIssue && krExportQuarantineDate !== savedKrExportQuarantineDate
   const jpImportQuarantineDirty =
-    isJpImportQuarantine && jpImportQuarantineDate !== savedJpImportQuarantineDate
+    isJpImportQuarantine && jpImportQuarantineDate !== jpImportQuarantineBaseline
   const jpExportQuarantineVisitDirty =
-    isJpExportQuarantineVisit && jpExportQuarantineVisitDate !== savedJpExportQuarantineVisitDate
+    isJpExportQuarantineVisit && jpExportQuarantineVisitDate !== jpExportQuarantineVisitBaseline
   const krImportQuarantineDirty =
-    isKrImportQuarantine && krImportQuarantineDate !== savedKrImportQuarantineDate
+    isKrImportQuarantine && krImportQuarantineDate !== krImportQuarantineBaseline
   const dirty =
     microchipDirty ||
     rabiesDirty ||
@@ -369,16 +371,15 @@ export function StepDetailView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
-    if (!jpImportQuarantineDirty) setJpImportQuarantineDate(readJpImportQuarantineDate(caseRow?.data))
+    if (!jpImportQuarantineDirty) setJpImportQuarantineDate(jpImportQuarantineBaseline)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
-    if (!jpExportQuarantineVisitDirty)
-      setJpExportQuarantineVisitDate(readJpExportQuarantineVisitDate(caseRow?.data))
+    if (!jpExportQuarantineVisitDirty) setJpExportQuarantineVisitDate(jpExportQuarantineVisitBaseline)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
-    if (!krImportQuarantineDirty) setKrImportQuarantineDate(readKrImportQuarantineDate(caseRow?.data))
+    if (!krImportQuarantineDirty) setKrImportQuarantineDate(krImportQuarantineBaseline)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
 
