@@ -402,8 +402,49 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
         )
       })}
 
+      <FeedbackSection caseRow={caseRow} />
     </div>
     </VerificationProvider>
+  )
+}
+
+/**
+ * 고객 의견 — 펫무브(고객 앱) 여정 완료 후 보호자가 남긴 만족도·자유 의견(case.data.feedback)을
+ * 읽기 전용으로 표시. 의견이 없으면 렌더하지 않는다.
+ */
+function FeedbackSection({ caseRow }: { caseRow: CaseRow }) {
+  const fb = ((caseRow.data ?? {}) as Record<string, unknown>).feedback
+  if (!fb || typeof fb !== 'object') return null
+  const rec = fb as Record<string, unknown>
+  const rating = typeof rec.rating === 'number' ? rec.rating : null
+  const text = typeof rec.text === 'string' ? rec.text : ''
+  const submittedAt = typeof rec.submittedAt === 'string' ? rec.submittedAt : ''
+  if (rating === null && !text) return null
+  const RATING_LABELS = ['', '많이 아쉬워요', '아쉬워요', '보통이에요', '좋았어요', '아주 좋아요']
+  const ratingLabel = rating !== null ? `${RATING_LABELS[rating] ?? ''} (${rating}/5)` : null
+  return (
+    <section className="mb-10 pt-10 border-t border-border/60">
+      <div className="mb-4 flex items-baseline gap-3">
+        <h3 className="font-serif text-[20px] font-medium tracking-tight text-foreground">고객 의견</h3>
+        {submittedAt && (
+          <span className="font-mono text-[12px] tracking-[0.5px] text-muted-foreground/70">
+            {submittedAt.slice(0, 10)}
+          </span>
+        )}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5">
+        <SectionLabel>만족도</SectionLabel>
+        <div className="text-[15px] text-foreground">
+          {ratingLabel ?? <span className="text-muted-foreground/60">—</span>}
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-t border-border/40">
+        <SectionLabel>의견</SectionLabel>
+        <div className="text-[15px] text-foreground whitespace-pre-wrap leading-relaxed">
+          {text || <span className="text-muted-foreground/60">—</span>}
+        </div>
+      </div>
+    </section>
   )
 }
 
