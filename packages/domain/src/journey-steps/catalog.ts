@@ -429,9 +429,16 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const hasReservationTime =
         typeof data.jp_export_quarantine_time === 'string' &&
         /^\d{1,2}:\d{2}$/.test(data.jp_export_quarantine_time)
-      if (hasReservationDate && hasReservationTime) return undefined
+      // 예약 날짜·시간이 보호자 직접 입력으로 '확정(confirmed)'된 경우만 done — 안내 불필요.
+      const confirmed = data.jp_export_quarantine_confirmed === true
+      if (hasReservationDate && hasReservationTime && confirmed) return undefined
       if (data.jp_export_quarantine_reservation_skipped === true) {
         const msg = '입력 없이 완료 처리됐어요. 예약이 확정되면 날짜와 시간을 입력할 수 있습니다.'
+        return { desc: msg, cardDesc: msg }
+      }
+      // 예약 날짜·시간은 있는데 미확정 = 운영자(대행)가 입력한 '고객 희망' → 예약 확정 대기.
+      if (hasReservationDate && hasReservationTime) {
+        const msg = '신청이 완료되었습니다. 예약 대기중입니다.'
         return { desc: msg, cardDesc: msg }
       }
       const msg = '신청이 완료되었습니다. 예약이 확정되면 예약날짜와 시간을 입력해주세요.'
