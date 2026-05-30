@@ -1,23 +1,12 @@
 'use client'
 
-import { buildProfileView } from '@/lib/profile/catalog'
-import { ProfileView } from '@/components/me/profile-view'
-import { useCases } from '@/components/portal-shell/case-data-provider'
+import { SettingsHubView } from '@/components/me/settings-hub-view'
 
 /**
- * 내 계정 (/me) — bottom-nav 의 프로필 탭. Client 컴포넌트.
- *
- * 데이터는 모두 CaseDataProvider 의 Context 에서 — 추가 fetch 없음. 진입 즉시 렌더.
+ * 설정 탭 (/me) — bottom-nav 의 '설정' 탭이 여기로 도착.
+ * 6 메뉴 리스트 → /me/{guardian,animal,travel,vet,agency,account}.
+ * (이전엔 ProfileView 가 마운트됐으나 정보 페이지와 통합되면서 hub 로 전환.)
  */
 export default function MePage() {
-  const { cases, profile, userEmail } = useCases()
-  const primaryCase = cases[0] ?? null
-
-  const data = buildProfileView({
-    userEmail,
-    customerProfile: profile,
-    primaryCase,
-  })
-
-  return <ProfileView data={data} cases={cases} />
+  return <SettingsHubView />
 }

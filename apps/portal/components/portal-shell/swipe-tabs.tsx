@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react'
 import { readLastCaseId, writeLastCaseId } from './last-case'
 
 /**
- * 4탭(일정/서류/정보/프로필) 좌우 스와이프 내비.
+ * 3탭(일정/서류/설정) 좌우 스와이프 내비.
  *
  * 검출은 두 경로 OR:
  *  1) 거리 기반 — 시작→끝 |dx| ≥60px AND |dy/dx| ≤1.0 (~45°), 1초 이내
@@ -21,7 +21,7 @@ import { readLastCaseId, writeLastCaseId } from './last-case'
  * - 인접 탭은 router.prefetch 해 전환을 즉시화. BottomNav 의 `<Link>` 자동 prefetch 와 동일한 효과.
  */
 
-const TAB_ORDER = ['journey', 'docs', 'info', 'me'] as const
+const TAB_ORDER = ['journey', 'docs', 'me'] as const
 type Tab = (typeof TAB_ORDER)[number]
 
 const MIN_DISTANCE_PX = 60
@@ -37,12 +37,12 @@ const FLICK_OFF_AXIS_RATIO = 0.7 // 플릭 기반: |vy/vx| 허용치
 function currentTab(pathname: string): Tab | null {
   // /me 는 leaf — 그 자체가 탭 루트.
   if (pathname === '/me') return 'me'
-  // 케이스 탭은 *루트만* 매칭 — /cases/<id>/(journey|docs|info) 정확히. 서브 페이지
+  // 케이스 탭은 *루트만* 매칭 — /cases/<id>/(journey|docs) 정확히. 서브 페이지
   // (예: /cases/<id>/journey/<stepId>) 에서는 tab=null 로 두어 탭 스와이프 핸들러가
   // 마운트되지 않게 한다. 그래야 보호자가 상세 페이지에서 버튼·입력 인터랙션을 할 때
   // 손가락이 살짝 가로로 미끄러져도 (텍스트 선택 드래그·iOS 키보드 jitter 등)
   // 옆 탭으로 router.push 되어 첫화면(목록) 으로 튀어나가는 사고가 안 난다.
-  const m = pathname.match(/^\/cases\/[^/]+\/(journey|docs|info)\/?$/)
+  const m = pathname.match(/^\/cases\/[^/]+\/(journey|docs)\/?$/)
   return m ? (m[1] as Tab) : null
 }
 

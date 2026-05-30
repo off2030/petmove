@@ -1,21 +1,8 @@
-'use client'
+import { redirect } from 'next/navigation'
 
-import { notFound } from 'next/navigation'
-import { use } from 'react'
-import { InfoView } from '@/components/cases/info-view'
-import { useCase } from '@/components/portal-shell/case-data-provider'
+export const dynamic = 'force-dynamic'
 
-/**
- * 케이스별 정보 — /cases/<id>/info. Client 컴포넌트 — CaseDataProvider 에서 데이터 읽음.
- */
-export default function CaseInfoPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
-  const { id } = use(params)
-  const caseRow = useCase(id)
-  if (!caseRow) notFound()
-
-  return <InfoView caseRow={caseRow} caseId={id} />
+// 정보 페이지는 설정 hub 로 통합됨 (2026-05-29). 옛 링크/북마크 보호를 위해 /me 로 보냄.
+export default function LegacyCaseInfoPage() {
+  redirect('/me')
 }

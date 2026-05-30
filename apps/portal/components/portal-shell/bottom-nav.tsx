@@ -6,24 +6,23 @@ import { useEffect, useState } from 'react'
 import { readLastCaseId, writeLastCaseId } from './last-case'
 
 /**
- * 보호자 앱 하단 4탭 — case-aware.
+ * 보호자 앱 하단 3탭 — case-aware.
  *
  * 현재 path 가 /cases/<id>/... 이면 그 id 를 보존하면서 다른 탭으로 전환.
- * /me (case-외) 같은 화면에선 sessionStorage 의 마지막 caseId 로 복귀
- *   — swipe-tabs 와 동일한 키 공유. 이게 없으면 프로필에서 일정/서류/정보 탭을
+ * /me/... (case-외) 같은 화면에선 sessionStorage 의 마지막 caseId 로 복귀
+ *   — swipe-tabs 와 동일한 키 공유. 이게 없으면 설정에서 일정/서류 탭을
  *   누를 때마다 /cases (다중 케이스 선택 화면) 로 튕겨나가는 버그가 됨.
  * sessionStorage 도 비어 있으면 /cases 로 보냄 (1건이면 자동 redirect).
- * 프로필 탭은 항상 /me (case-외).
+ * 설정 탭은 항상 /me (case-외 hub).
  */
 
-type Icon = 'route' | 'doc' | 'info' | 'user'
-type Tab = { key: 'journey' | 'docs' | 'info' | 'me'; label: string; icon: Icon }
+type Icon = 'route' | 'doc' | 'cog'
+type Tab = { key: 'journey' | 'docs' | 'me'; label: string; icon: Icon }
 
 const TABS: Tab[] = [
   { key: 'journey', label: '일정', icon: 'route' },
   { key: 'docs', label: '서류', icon: 'doc' },
-  { key: 'info', label: '정보', icon: 'info' },
-  { key: 'me', label: '프로필', icon: 'user' },
+  { key: 'me', label: '설정', icon: 'cog' },
 ]
 
 function caseIdFromPath(pathname: string): string | null {
@@ -130,18 +129,11 @@ function NavIcon({ name, stroke = 1.7 }: { name: Icon; stroke?: number }) {
           <path d="M14 2v6h6M9 13h6M9 17h6" />
         </svg>
       )
-    case 'info':
+    case 'cog':
       return (
         <svg {...p}>
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 8h.01M11 12h1v5h1" />
-        </svg>
-      )
-    case 'user':
-      return (
-        <svg {...p}>
-          <circle cx="12" cy="8" r="4" />
-          <path d="M4 21a8 8 0 0 1 16 0" />
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
         </svg>
       )
   }
