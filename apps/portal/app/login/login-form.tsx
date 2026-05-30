@@ -80,7 +80,14 @@ export function LoginForm({
       <div className="w-full max-w-sm space-y-lg">
         <div className="space-y-xs text-center">
           <h1 className="font-serif text-[28px] leading-tight text-foreground">펫무브</h1>
-          <p className="text-sm text-muted-foreground">반려동물 해외 출국 보호자 셀프서비스</p>
+          <p className="text-sm text-muted-foreground leading-snug">
+            반려동물과 함께하는 해외 여행, 이민, 유학
+            <br />
+            펫무브앱으로 준비하세요!
+          </p>
+          <p className="pt-xs text-xs text-muted-foreground/80">
+            처음이신가요? 같은 버튼으로 가입까지 한 번에 진행됩니다.
+          </p>
         </div>
 
         <PillButton
