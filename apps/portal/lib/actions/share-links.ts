@@ -372,7 +372,6 @@ export async function submitShareLink(
     // 필드가 처음 입력되는 시점에 캡처 (실제 머지는 needsDataRead 블록 안에서 기존 값 유무 확인 후 세팅).
     const flightShareKeys = [
       'departure_flight_date',
-      'departure_flight_time',
       'entry_date',
       'entry_departure_airport',
       'entry_airport',

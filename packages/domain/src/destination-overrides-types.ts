@@ -95,13 +95,13 @@ export const EXTRA_FIELD_DEFS: Record<string, ExtraFieldDef> = {
   // ── 출국 항공편 (그룹) — 한국 출발 → 도착국 도착. 보호자 시점으로 라벨 통일.
   //    표시 순서: 날짜 → 항공편명 → 출발/도착공항 → 운송방법 → 시간. ──
   //
-  // departure_flight_date / departure_flight_time: 항공권에 적힌 한국 **출발일·출발시간**.
+  // departure_flight_date: 항공권에 적힌 한국 **출발일**.
   //    일본 등 한국 → 도착국 같은 날 도착 노선에서 사용. 케이스의 departure_date 컬럼과
   //    양방향 sync (updateCaseField hardcode + share-link 동일 처리).
+  //    (출발시간은 한일 같은 날 노선엔 불필요해 미사용.)
   // entry_date / entry_time: 도착국 **도착일·도착시간**. 시차 큰 destination(스위스·태국·미국·하와이)
   //    에서 출국일과 다른 날일 수 있는 경우에 사용. 일본은 사용하지 않음.
   departure_flight_date: { key: 'departure_flight_date', label: '출발일', type: 'date', group: '출국 항공편', shortLabel: '날짜' },
-  departure_flight_time: { key: 'departure_flight_time', label: '출발시간', type: 'time', placeholder: 'HH:mm', group: '출국 항공편', shortLabel: '시간' },
   entry_date: { key: 'entry_date', label: '도착일', type: 'date', group: '출국 항공편', shortLabel: '날짜' },
   entry_flight_number: { key: 'entry_flight_number', label: '항공편명', type: 'text', placeholder: 'KE659', group: '출국 항공편', shortLabel: '항공편명' },
   entry_departure_airport: { key: 'entry_departure_airport', label: '출발공항', type: 'text', placeholder: 'ICN', group: '출국 항공편', shortLabel: '출발공항' },
@@ -204,9 +204,8 @@ const LEGACY_EXTRA_PATHS: Record<string, string[][]> = {
     // legacy 케이스의 japan_extra.inbound.date 는 departure_flight_date fallback 으로 옮김.
   ],
   entry_time: [['thailand_extra', 'arrival_time']],
-  // 일본: 한국 출발일·출발시간. legacy 시절에는 japan_extra.inbound.{date,time} 에 저장됐다.
+  // 일본: 한국 출발일. legacy 시절에는 japan_extra.inbound.date 에 저장됐다.
   departure_flight_date: [['japan_extra', 'inbound', 'date']],
-  departure_flight_time: [['japan_extra', 'inbound', 'time']],
   entry_departure_airport: [['japan_extra', 'inbound', 'departure_airport']],
   entry_airport: [
     ['philippines_extra', 'arrival_airport'],

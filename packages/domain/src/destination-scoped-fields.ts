@@ -28,7 +28,6 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'vet_visit_date',
   // 출국 항공편 — 한국 출발 (departure_*) + 도착국 도착 (entry_*)
   'departure_flight_date',
-  'departure_flight_time',
   'entry_date',
   'entry_airport',
   'entry_flight_number',
