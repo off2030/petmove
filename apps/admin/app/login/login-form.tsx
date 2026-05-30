@@ -1,12 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { supabaseBrowser } from '@petmove/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-type Provider = 'google' | 'kakao' | 'naver'
+type Provider = 'google' | 'naver'
 
 const ERROR_MESSAGES: Record<string, string> = {
   invite_required: '이 서비스는 초대받은 사용자만 사용할 수 있습니다. 관리자에게 초대를 요청하세요.',
@@ -18,11 +17,9 @@ function resolveError(raw: string | null): string | null {
 }
 
 export function LoginForm({ next, initialError = null }: { next: string; initialError?: string | null }) {
-  const router = useRouter()
-
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState<string | null>(null)
+  const [info, setInfo] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(resolveError(initialError))
 
   // 차단 결과로 표시된 에러 파라미터는 한 번만 보여주고 URL 에서 제거.
@@ -39,6 +36,7 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
   async function oauth(provider: Provider) {
     setLoading(provider)
     setError(null)
+    setInfo(null)
 
     // 네이버는 Supabase builtin 이 아니라 자체 라우트 사용.
     if (provider === 'naver') {
@@ -47,20 +45,16 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
     }
 
     // redirectTo 에 query 를 포함하면 Supabase 가 Redirect URLs allowlist 와 정확히
-    // 매칭 못 해서 Site URL 로 fallback (ex: localhost 시도가 vercel 로 redirect).
-    // 따라서 callback URL 은 query 없이 base 만 사용하고, next 는 cookie 로 전달.
+    // 매칭 못 해서 Site URL 로 fallback. 따라서 callback URL 은 query 없이 base 만 사용하고,
+    // next 는 cookie 로 전달.
     const redirectTo = `${window.location.origin}/auth/callback`
     if (next && next !== '/cases') {
-      // 600초 안에 callback 이 소비. SameSite=Lax 로 OAuth redirect 통과 보장.
       document.cookie = `pm_oauth_next=${encodeURIComponent(next)}; path=/; max-age=600; samesite=lax`
     }
 
-    const scopes =
-      provider === 'kakao' ? 'profile_nickname profile_image' : undefined
-
     const { error } = await supabaseBrowser.auth.signInWithOAuth({
       provider,
-      options: { redirectTo, scopes },
+      options: { redirectTo },
     })
 
     if (error) {
@@ -69,32 +63,16 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
     }
   }
 
-  async function emailLogin(e: React.FormEvent) {
+  // 매직링크 발송 — 이메일 로그인의 유일한 방식. 비번 운영 X.
+  async function sendMagicLink(e: React.FormEvent) {
     e.preventDefault()
-    setLoading('email')
-    setError(null)
-    const { error } = await supabaseBrowser.auth.signInWithPassword({
-      email,
-      password,
-    })
-    if (error) {
-      setError(error.message)
-      setLoading(null)
-      return
-    }
-    router.replace(next)
-    router.refresh()
-  }
-
-  // Magic link 발송 — 비번 모름·신규 가입 fallback. 로그인 후 redirect 만, 비번 변경 X.
-  // next 는 cookie 로 (Supabase OAuth/OTP 의 redirect_to allowlist 우회).
-  async function sendMagicLink() {
     if (!email) {
       setError('이메일을 먼저 입력하세요.')
       return
     }
     setLoading('magic')
     setError(null)
+    setInfo(null)
     if (next && next !== '/cases') {
       document.cookie = `pm_oauth_next=${encodeURIComponent(next)}; path=/; max-age=600; samesite=lax`
     }
@@ -107,31 +85,7 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
       setError(error.message)
       return
     }
-    setError(`${email} 로 로그인 링크를 발송했습니다. 메일을 확인하세요.`)
-  }
-
-  // 비밀번호 재설정 — 사용자가 비번을 잊고 새로 설정하고 싶을 때.
-  // recovery 메일 클릭 → /auth/callback → /set-password?reset=1 으로 이동해 새 비번 입력.
-  // Supabase resetPasswordForEmail 은 미가입 이메일에도 silent success 반환 → 계정 enumeration 차단.
-  async function sendResetLink() {
-    if (!email) {
-      setError('이메일을 먼저 입력하세요.')
-      return
-    }
-    setLoading('reset')
-    setError(null)
-    // Reset 후 set-password 로 보내기 위해 cookie 사용 (callback 의 pm_oauth_next 패턴).
-    // ?reset=1 쿼리는 페이지에서 password_set 체크를 우회하기 위한 마커.
-    document.cookie = `pm_oauth_next=${encodeURIComponent('/set-password?reset=1')}; path=/; max-age=600; samesite=lax`
-    const { error } = await supabaseBrowser.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback`,
-    })
-    setLoading(null)
-    if (error) {
-      setError(error.message)
-      return
-    }
-    setError(`${email} 로 비밀번호 재설정 메일을 발송했습니다. 메일을 확인하세요.`)
+    setInfo(`${email} 로 로그인 링크를 발송했습니다. 메일을 확인하세요.`)
   }
 
   return (
@@ -140,7 +94,7 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
         <div className="space-y-xs text-center">
           <h1 className="text-xl font-semibold">펫무브워크 로그인</h1>
           <p className="text-sm text-muted-foreground">
-            소셜 계정으로 로그인하세요.
+            소셜 계정 또는 이메일 링크로 로그인하세요.
           </p>
         </div>
 
@@ -171,7 +125,7 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
           <div className="h-px flex-1 bg-border" />
         </div>
 
-        <form onSubmit={emailLogin} className="space-y-sm">
+        <form onSubmit={sendMagicLink} className="space-y-sm">
           <Input
             type="email"
             placeholder="email@example.com"
@@ -180,39 +134,23 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
             required
             autoComplete="email"
           />
-          <Input
-            type="password"
-            placeholder="비밀번호"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
           <Button
             type="submit"
             className="w-full"
-            disabled={loading !== null || !email || !password}
+            disabled={loading !== null || !email}
           >
-            {loading === 'email' ? '로그인 중…' : '이메일로 로그인'}
+            {loading === 'magic' ? '발송 중…' : '이메일로 로그인 링크 받기'}
           </Button>
-          <button
-            type="button"
-            onClick={sendMagicLink}
-            disabled={loading !== null || !email}
-            className="w-full text-xs text-muted-foreground hover:text-foreground italic disabled:opacity-40"
-          >
-            {loading === 'magic' ? '발송 중…' : '비밀번호 없이 이메일로 로그인 링크 받기'}
-          </button>
-          <button
-            type="button"
-            onClick={sendResetLink}
-            disabled={loading !== null || !email}
-            className="w-full text-xs text-muted-foreground hover:text-foreground italic disabled:opacity-40"
-          >
-            {loading === 'reset' ? '발송 중…' : '비밀번호를 잊으셨나요? 재설정 메일 받기'}
-          </button>
+          <p className="text-center text-xs text-muted-foreground/80">
+            처음이신가요? 초대받은 이메일로 링크를 받아 입장하세요.
+          </p>
         </form>
 
+        {info && (
+          <p className="rounded border border-pmw-positive/40 bg-pmw-positive/10 p-sm text-xs text-pmw-positive">
+            {info}
+          </p>
+        )}
         {error && (
           <p className="rounded border border-destructive/40 bg-destructive/10 p-sm text-xs text-destructive">
             {error}

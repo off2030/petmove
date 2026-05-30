@@ -33,7 +33,6 @@ export default async function InviteAcceptPage({ params }: Props) {
   // 로그인 됨 — 자동 수락 시도
   const result = await acceptInvite(token)
   if (result.ok) {
-    // 비번 미설정 + email 가입자면 set-password 강제 (proxy 가드가 잡지만 명시적으로)
     redirect('/cases')
   }
 

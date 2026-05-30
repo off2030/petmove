@@ -24,7 +24,7 @@ const PUBLIC_PREFIXES = [
 
 // 인증은 필요하지만 멤버십 0 인 신규 사용자도 진입 가능한 경로.
 // 초대 수락 페이지가 대표적 — 멤버십을 *얻기 위한* 페이지라 게이트로 막으면 데드락.
-// /set-password 도 우회 — magic link 가입 직후 멤버십 받기 전 거칠 수 있음.
+// /set-password 도 우회 — 사용자가 자율적으로 비번을 설정하러 들어가는 경우 통과.
 const NO_MEMBERSHIP_OK_PREFIXES = ['/invite', '/set-password']
 
 function isPublic(pathname: string) {
@@ -112,23 +112,11 @@ export async function proxy(request: NextRequest) {
   // 초대 수락 진행 중인 /invite/* 는 우회.
   if (!bypassMembershipGate(pathname)) {
     const [profRes, memRes] = await Promise.all([
-      supabase.from('profiles').select('is_super_admin, password_set').eq('id', user.id).maybeSingle(),
+      supabase.from('profiles').select('is_super_admin').eq('id', user.id).maybeSingle(),
       supabase.from('memberships').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
     ])
     const isSuperAdmin = !!profRes.data?.is_super_admin
     const memberCount = memRes.count ?? 0
-
-    // 비밀번호 강제 가드 — magic link 만 가입한 사용자는 비번 설정 후 진행.
-    // OAuth provider (google/naver/kakao) 도 가지고 있으면 우회 — 그쪽으로 매번 로그인 가능.
-    // /set-password 자체는 NO_MEMBERSHIP_OK_PREFIXES 로 위에서 우회됨.
-    const providers: string[] = (user.app_metadata?.providers as string[] | undefined) ?? []
-    const hasOnlyEmailProvider = providers.length > 0 && providers.every((p) => p === 'email')
-    const passwordSet = (profRes.data as { password_set?: boolean } | null)?.password_set ?? false
-    if (hasOnlyEmailProvider && !passwordSet && pathname !== '/set-password') {
-      const url = new URL('/set-password', request.url)
-      url.searchParams.set('next', pathname)
-      return NextResponse.redirect(url)
-    }
 
     if (!isSuperAdmin && memberCount === 0) {
       try { await supabase.auth.signOut() } catch { /* ignore */ }

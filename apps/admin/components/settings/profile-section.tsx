@@ -235,7 +235,7 @@ export function ProfileSection({
 
 function providerLabel(provider: string): string {
   switch (provider) {
-    case 'email': return '이메일 · 비밀번호'
+    case 'email': return '이메일 (로그인 링크)'
     case 'google': return 'Google'
     case 'kakao': return 'Kakao'
     case 'naver': return 'Naver'
