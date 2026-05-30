@@ -15,86 +15,25 @@ import { C, serif, monoCap } from './settings-shared'
 
 /**
  * 설정 탭 허브 (/me) — 카드 리스트.
- * 각 카드 = 아바타/아이콘 + 이름/요약 + 우측 chevron. 탭 → 상세 sub-page.
- * 시각 패턴: 옛 ProfileView 의 HeroCard / PartnerCard 그대로, 카드 자체를 Link 로 감싸 클릭 가능.
+ * 시각 톤: 옛 ProfileView 의 HeroCard / PartnerCard / AccountSection 그대로.
+ *   - 보호자·동물 → Hero (padding 18, 아바타 52, 이름 20 serif + 영문 italic)
+ *   - 여행·병원·에이전시 → Partner (mono-cap 헤더 + 본문 row, 아바타 44)
+ *   - 계정 → 외부 mono-cap 라벨 + 카드 내 행(이메일)
+ * 카드 자체가 Link → 탭하면 sub-page. 옛 톤에 chevron 은 없으므로 제거.
  */
 
-// ── 공통 스타일 ─────────────────────────────────────────────────────────────
-
+const CARD_RADIUS = 18
 const CARD_PADDING = 18
-const CIRCLE_SIZE = 52
-const PARTNER_ICON_SIZE = 44
+const HERO_AVATAR = 52
+const PARTNER_AVATAR = 44
 
-function cardLinkStyle(dashed = false): CSSProperties {
-  return {
-    display: 'block',
-    padding: CARD_PADDING,
-    borderRadius: 18,
-    background: C.surface,
-    border: dashed ? `.5px dashed ${C.line}` : `.5px solid ${C.line}`,
-    textDecoration: 'none',
-    color: 'inherit',
-  }
-}
-function cardRowStyle(): CSSProperties {
-  return { display: 'flex', alignItems: 'center', gap: 14 }
-}
-function infoColStyle(): CSSProperties {
-  return { flex: 1, minWidth: 0 }
-}
-function nameRowStyle(): CSSProperties {
-  return { display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }
-}
-function initialsCircleStyle(size: number): CSSProperties {
-  return {
-    width: size,
-    height: size,
-    borderRadius: '50%',
-    flexShrink: 0,
-    background: C.soft,
-    color: C.accent,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontFamily: 'var(--pm-font-display)',
-    fontVariantNumeric: 'tabular-nums',
-    fontSize: 20,
-    fontWeight: 500,
-  }
-}
-function iconCircleStyle(size = PARTNER_ICON_SIZE): CSSProperties {
-  return {
-    width: size,
-    height: size,
-    borderRadius: '50%',
-    flexShrink: 0,
-    background: C.soft,
-    color: C.accent,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  }
+const num: CSSProperties = {
+  fontFamily: 'var(--pm-font-display)',
+  fontVariantNumeric: 'tabular-nums',
+  fontWeight: 400,
 }
 
-function Chevron() {
-  return (
-    <svg
-      width={16}
-      height={16}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={C.ink3}
-      strokeWidth={1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <polyline points="9 6 15 12 9 18" />
-    </svg>
-  )
-}
-
-// ── 아이콘 (partner / account) ─────────────────────────────────────────────
+// ── 아이콘 ────────────────────────────────────────────────────────────────
 
 function MedicalIcon() {
   return (
@@ -112,25 +51,17 @@ function PlaneIcon() {
 }
 function RouteIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <circle cx="6" cy="19" r="2.2" />
       <circle cx="18" cy="5" r="2.2" />
       <path d="M8 19h6a4 4 0 0 0 0-8h-4a4 4 0 0 1 0-8h6" />
     </svg>
   )
 }
-function UserIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21a8 8 0 0 1 16 0" />
-    </svg>
-  )
-}
 
-// ── 카드들 ─────────────────────────────────────────────────────────────────
+// ── Hero 톤 (보호자·동물) ─────────────────────────────────────────────────
 
-function PrimaryNameCard({
+function HeroLinkCard({
   href,
   avatar,
   nameKo,
@@ -146,24 +77,28 @@ function PrimaryNameCard({
   subtitleMuted?: boolean
 }) {
   return (
-    <Link href={href} style={cardLinkStyle()} className="pm-pressable">
-      <div style={cardRowStyle()}>
+    <Link
+      href={href}
+      className="pm-pressable"
+      style={{
+        display: 'block',
+        padding: CARD_PADDING,
+        borderRadius: CARD_RADIUS,
+        background: C.surface,
+        border: `.5px solid ${C.line}`,
+        textDecoration: 'none',
+        color: 'inherit',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         {avatar}
-        <div style={infoColStyle()}>
-          <div style={nameRowStyle()}>
-            <span style={{ ...serif, fontSize: 18, color: C.ink, lineHeight: 1.2 }}>
-              {nameKo ?? '—'}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ ...serif, fontSize: 20, color: C.ink, fontVariantNumeric: 'tabular-nums' }}>
+              {nameKo ?? '이름 미설정'}
             </span>
             {nameEn && (
-              <span
-                style={{
-                  ...serif,
-                  fontStyle: 'italic',
-                  fontSize: 13,
-                  color: C.ink3,
-                  fontWeight: 400,
-                }}
-              >
+              <span style={{ ...serif, fontStyle: 'italic', fontSize: 13, color: C.ink3, fontWeight: 400 }}>
                 {nameEn}
               </span>
             )}
@@ -181,17 +116,36 @@ function PrimaryNameCard({
             {subtitle}
           </div>
         </div>
-        <Chevron />
       </div>
     </Link>
   )
 }
 
 function GuardianCard({ data, href }: { data: GuardianBlock; href: string }) {
+  const avatar = (
+    <div
+      style={{
+        width: HERO_AVATAR,
+        height: HERO_AVATAR,
+        borderRadius: '50%',
+        flexShrink: 0,
+        background: C.soft,
+        color: C.accent,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...num,
+        fontSize: 20,
+        fontWeight: 500,
+      }}
+    >
+      {data.initials}
+    </div>
+  )
   return (
-    <PrimaryNameCard
+    <HeroLinkCard
       href={href}
-      avatar={<div style={initialsCircleStyle(CIRCLE_SIZE)}>{data.initials}</div>}
+      avatar={avatar}
       nameKo={data.name}
       nameEn={data.nameEn}
       subtitle={data.relation}
@@ -200,13 +154,13 @@ function GuardianCard({ data, href }: { data: GuardianBlock; href: string }) {
   )
 }
 
-function PetCard({ case_, index, href }: { case_: CaseRow; index?: number; href: string }) {
+function PetCard({ case_, index, href }: { case_: CaseRow; index: number; href: string }) {
   const pet = buildPetBlock(case_)
   const meta = [pet.breed, pet.ageLabel, pet.weight].filter(Boolean).join(' · ')
   return (
-    <PrimaryNameCard
+    <HeroLinkCard
       href={href}
-      avatar={<PetAvatarDisplay case_={case_} index={index} size={CIRCLE_SIZE} />}
+      avatar={<PetAvatarDisplay case_={case_} index={index} size={HERO_AVATAR} />}
       nameKo={pet.name}
       nameEn={pet.nameEn}
       subtitle={meta || '아바타를 눌러 정보를 등록해보세요'}
@@ -214,6 +168,8 @@ function PetCard({ case_, index, href }: { case_: CaseRow; index?: number; href:
     />
   )
 }
+
+// ── Partner 톤 (여행) ─────────────────────────────────────────────────────
 
 const TRIP_LABEL: Record<string, string> = { round: '왕복', one_way: '편도' }
 
@@ -223,106 +179,158 @@ function TravelCard({ case_, href }: { case_: CaseRow; href: string }) {
   const dest = case_.destination?.trim() || null
   const departure = case_.departure_date?.trim() || null
 
-  const routeBit = dest
-    ? `한국 ${tripType === 'round' ? '⇄' : '→'} ${dest}`
-    : null
-  const subtitleParts = [
-    routeBit,
+  const route = dest ? `한국 ${tripType === 'round' ? '⇄' : '→'} ${dest}` : null
+  const subParts = [
     tripType ? TRIP_LABEL[tripType] : null,
     departure ? dDayLabel(departure) : null,
   ].filter(Boolean)
-  const subtitle = subtitleParts.join(' · ') || '여행지 정보가 등록되면 표시됩니다.'
+  const sub = subParts.join(' · ')
 
   return (
-    <Link href={href} style={cardLinkStyle()} className="pm-pressable">
-      <div style={cardRowStyle()}>
-        <div style={iconCircleStyle()}>
+    <Link
+      href={href}
+      className="pm-pressable"
+      style={{
+        display: 'block',
+        padding: CARD_PADDING,
+        borderRadius: CARD_RADIUS,
+        background: C.surface,
+        border: `.5px solid ${C.line}`,
+        textDecoration: 'none',
+        color: 'inherit',
+      }}
+    >
+      <div style={monoCap}>여행정보</div>
+      <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div
+          style={{
+            width: PARTNER_AVATAR,
+            height: PARTNER_AVATAR,
+            borderRadius: '50%',
+            flexShrink: 0,
+            background: C.soft,
+            color: C.accent,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <RouteIcon />
         </div>
-        <div style={infoColStyle()}>
-          <span style={{ ...serif, fontSize: 18, color: C.ink, lineHeight: 1.2 }}>
-            여행정보
-          </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              fontSize: 12,
-              color: subtitleParts.length ? C.ink2 : C.ink3,
-              marginTop: 4,
+              ...serif,
+              fontSize: 17,
+              color: route ? C.ink : C.ink3,
+              lineHeight: 1.2,
+              fontVariantNumeric: 'tabular-nums',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
             }}
           >
-            {subtitle}
+            {route ?? '여행지 미설정'}
           </div>
+          {sub && (
+            <div
+              style={{
+                fontSize: 12,
+                color: C.ink3,
+                marginTop: 3,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {sub}
+            </div>
+          )}
         </div>
-        <Chevron />
       </div>
     </Link>
   )
 }
+
+// ── Partner stub (병원·에이전시) ─────────────────────────────────────────
 
 function PartnerStubCard({
   cap,
   placeholder,
   href,
-  icon,
 }: {
   cap: string
   placeholder: string
   href: string
-  icon: ReactNode
 }) {
   return (
-    <Link href={href} style={cardLinkStyle(true)} className="pm-pressable">
-      <div style={cardRowStyle()}>
-        <div style={iconCircleStyle()}>{icon}</div>
-        <div style={infoColStyle()}>
-          <div style={monoCap}>{cap}</div>
-          <div
-            style={{
-              fontSize: 13,
-              color: C.ink3,
-              marginTop: 8,
-              lineHeight: 1.5,
-            }}
-          >
-            {placeholder}
-          </div>
-        </div>
-        <Chevron />
+    <Link
+      href={href}
+      className="pm-pressable"
+      style={{
+        display: 'block',
+        padding: CARD_PADDING,
+        borderRadius: CARD_RADIUS,
+        background: C.surface,
+        border: `.5px dashed ${C.line}`,
+        textDecoration: 'none',
+        color: 'inherit',
+      }}
+    >
+      <div style={monoCap}>{cap}</div>
+      <div style={{ marginTop: 10, fontSize: 13, color: C.ink3, lineHeight: 1.55 }}>
+        {placeholder}
       </div>
     </Link>
   )
 }
 
-function AccountCard({ email, href }: { email: string | null; href: string }) {
+// ── 계정 (외부 mono-cap + 카드 내 행 리스트) ─────────────────────────────
+
+function AccountSection({ email, href }: { email: string | null; href: string }) {
   return (
-    <Link href={href} style={cardLinkStyle()} className="pm-pressable">
-      <div style={cardRowStyle()}>
-        <div style={iconCircleStyle()}>
-          <UserIcon />
-        </div>
-        <div style={infoColStyle()}>
-          <span style={{ ...serif, fontSize: 18, color: C.ink, lineHeight: 1.2 }}>
-            계정
-          </span>
-          <div
+    <>
+      <div style={{ ...monoCap, marginTop: 24, marginBottom: 10, padding: '0 4px' }}>
+        계정
+      </div>
+      <Link
+        href={href}
+        className="pm-pressable"
+        style={{
+          display: 'block',
+          background: C.surface,
+          border: `.5px solid ${C.line}`,
+          borderRadius: CARD_RADIUS,
+          padding: '4px 16px',
+          textDecoration: 'none',
+          color: 'inherit',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '13px 0',
+            gap: 12,
+          }}
+        >
+          <span style={{ fontSize: 13, color: C.ink2 }}>이메일</span>
+          <span
             style={{
-              fontSize: 12,
-              color: email ? C.ink2 : C.ink3,
-              marginTop: 4,
+              fontSize: 15,
+              color: email ? C.ink : C.ink3,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
+              minWidth: 0,
             }}
           >
             {email ?? '—'}
-          </div>
+          </span>
         </div>
-        <Chevron />
-      </div>
-    </Link>
+      </Link>
+    </>
   )
 }
 
@@ -367,16 +375,15 @@ export function SettingsHubView() {
             cap="동물병원"
             placeholder="담당 동물병원 정보가 등록되면 표시됩니다."
             href="/me/vet"
-            icon={<MedicalIcon />}
           />
           <PartnerStubCard
             cap="에이전시"
             placeholder="출국 운송을 맡은 에이전시 정보가 등록되면 표시됩니다."
             href="/me/agency"
-            icon={<PlaneIcon />}
           />
-          <AccountCard email={view.account.email} href="/me/account" />
         </div>
+
+        <AccountSection email={view.account.email} href="/me/account" />
       </div>
     </div>
   )
