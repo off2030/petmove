@@ -48,6 +48,14 @@ export function LoginForm({
     }
   }
 
+  function naverOAuth() {
+    // 네이버는 Supabase builtin 이 아니라 자체 라우트 사용 (apps/portal/app/api/auth/naver).
+    setLoading('naver')
+    setError(null)
+    setInfo(null)
+    window.location.href = `/api/auth/naver?next=${encodeURIComponent(next)}`
+  }
+
   async function sendMagicLink(e: React.FormEvent) {
     e.preventDefault()
     if (!email) {
@@ -90,14 +98,24 @@ export function LoginForm({
           </p>
         </div>
 
-        <PillButton
-          variant="solid"
-          className="w-full justify-center h-10 px-md text-[14px]"
-          disabled={loading !== null}
-          onClick={googleOAuth}
-        >
-          {loading === 'google' ? '이동 중…' : 'Google 계정으로 계속'}
-        </PillButton>
+        <div className="space-y-sm">
+          <PillButton
+            variant="solid"
+            className="w-full justify-center h-10 px-md text-[14px]"
+            disabled={loading !== null}
+            onClick={googleOAuth}
+          >
+            {loading === 'google' ? '이동 중…' : 'Google 계정으로 계속'}
+          </PillButton>
+          <PillButton
+            variant="solid"
+            className="w-full justify-center h-10 px-md text-[14px]"
+            disabled={loading !== null}
+            onClick={naverOAuth}
+          >
+            {loading === 'naver' ? '이동 중…' : '네이버 계정으로 계속'}
+          </PillButton>
+        </div>
 
         <div className="flex items-center gap-sm text-xs text-muted-foreground">
           <div className="h-px flex-1 bg-border" />

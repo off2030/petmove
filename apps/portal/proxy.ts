@@ -11,6 +11,7 @@ import { createServerClient } from '@supabase/ssr'
 const PUBLIC_PREFIXES = [
   '/login',
   '/auth/callback',
+  '/api/auth',  // Naver OAuth 등 자체 라우트 — 미로그인 통과 필요
   '/terms',
   '/privacy',
   '/share',  // 토큰 진입 (Phase 11.0.5 구현 전 까지 page 자체는 없지만 미인증 통과 정의)
