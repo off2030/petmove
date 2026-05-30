@@ -359,7 +359,9 @@ export function SettingsHubView() {
           }}
         >
           <GuardianCard data={view.guardian} href="/me/guardian" />
-          {primary && <PetCard case_={primary} href="/me/animal" />}
+          {cases.map((c) => (
+            <PetCard key={c.id} case_={c} href={`/me/animal/${c.id}`} />
+          ))}
           {primary && <TravelCard case_={primary} href="/me/travel" />}
           <PartnerStubCard
             cap="동물병원"

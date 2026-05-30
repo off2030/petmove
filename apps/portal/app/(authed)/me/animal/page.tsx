@@ -1,14 +1,8 @@
-'use client'
+import { redirect } from 'next/navigation'
 
-import { useCases } from '@/components/portal-shell/case-data-provider'
-import { AnimalEditView } from '@/components/me/animal-edit-view'
-import { ComingSoonView } from '@/components/me/coming-soon-view'
+export const dynamic = 'force-dynamic'
 
-export default function MeAnimalPage() {
-  const { cases } = useCases()
-  const primary = cases[0]
-  if (!primary) {
-    return <ComingSoonView title="동물" message="먼저 케이스를 등록해주세요." />
-  }
-  return <AnimalEditView caseRow={primary} caseId={primary.id} />
+// caseId 없이 진입하면 설정 hub 로. 카드에서 진입할 땐 /me/animal/[caseId] 로 옴.
+export default function MeAnimalIndexPage() {
+  redirect('/me')
 }
