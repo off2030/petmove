@@ -200,13 +200,13 @@ function GuardianCard({ data, href }: { data: GuardianBlock; href: string }) {
   )
 }
 
-function PetCard({ case_, href }: { case_: CaseRow; href: string }) {
+function PetCard({ case_, index, href }: { case_: CaseRow; index?: number; href: string }) {
   const pet = buildPetBlock(case_)
   const meta = [pet.breed, pet.ageLabel, pet.weight].filter(Boolean).join(' · ')
   return (
     <PrimaryNameCard
       href={href}
-      avatar={<PetAvatarDisplay case_={case_} size={CIRCLE_SIZE} />}
+      avatar={<PetAvatarDisplay case_={case_} index={index} size={CIRCLE_SIZE} />}
       nameKo={pet.name}
       nameEn={pet.nameEn}
       subtitle={meta || '아바타를 눌러 정보를 등록해보세요'}
@@ -359,8 +359,8 @@ export function SettingsHubView() {
           }}
         >
           <GuardianCard data={view.guardian} href="/me/guardian" />
-          {cases.map((c) => (
-            <PetCard key={c.id} case_={c} href={`/me/animal/${c.id}`} />
+          {cases.map((c, i) => (
+            <PetCard key={c.id} case_={c} index={i} href={`/me/animal/${c.id}`} />
           ))}
           {primary && <TravelCard case_={primary} href="/me/travel" />}
           <PartnerStubCard
