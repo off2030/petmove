@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { cn } from '@petmove/ui'
 import { DateTextField } from '@petmove/ui'
 import { applyCase } from '@/lib/actions/apply-case'
+import { BottomSheet } from '@/components/fields/bottom-sheet'
 import destsData from '@petmove/domain/data/destinations.json'
 import breedsData from '@petmove/domain/data/breeds.json'
 import colorsData from '@petmove/domain/data/colors.json'
@@ -29,7 +30,6 @@ const messages = {
     sec1: '어디로 가시나요?',
     destination: '목적지',
     required: '필수',
-    searchHint: '검색 입력',
     destPlaceholder: '예: 일본 · Japan',
     noResults: '검색 결과 없음',
     tripType: '여행 유형',
@@ -131,7 +131,6 @@ const messages = {
     sec1: 'Where are you going?',
     destination: 'Destination',
     required: 'Required',
-    searchHint: 'Search',
     destPlaceholder: 'e.g. Japan',
     noResults: 'No results',
     tripType: 'Trip type',
@@ -305,11 +304,6 @@ const chipButtonActive =
   'border-[#2A2620] bg-[#2A2620] text-[#FBF7F1]'
 const chipButtonInactive =
   'border-[rgba(42,38,32,0.14)] bg-[#FBF7F1] text-[#2A2620] hover:bg-[#F0E8DC]'
-const dropdownClass =
-  'mt-1 rounded-md border border-[rgba(42,38,32,0.12)] bg-[#FBF7F1] shadow-sm'
-const dropdownRowClass =
-  'w-full text-left px-md py-2.5 text-[15px] transition-colors hover:bg-[#F0E8DC]'
-const dropdownRowActiveClass = 'bg-[#F0E8DC]'
 const destructiveBoxClass =
   'rounded-md border border-[#C26A4A]/30 bg-[#C26A4A]/10 px-md py-2.5 text-sm text-[#C26A4A]'
 const primaryButtonClass = cn(
@@ -373,6 +367,101 @@ function FieldRow({
   )
 }
 
+/* ── Search-sheet select (목적지·품종) — 탭하면 하단 시트: 검색창 상단 고정 + 목록 스크롤.
+   모바일에서 키보드가 목록을 가리지 않음. 정보 탭 DestinationField 와 동일 패턴. ── */
+function SearchSheetField({
+  title, selected, items, query, onQuery, onPick, open, onOpen, onClose,
+  placeholder, searchPlaceholder, noResults, disabled = false, disabledPlaceholder, lang,
+}: {
+  title: string
+  selected: { ko: string; en: string } | null
+  items: { ko: string; en: string }[]
+  query: string
+  onQuery: (v: string) => void
+  onPick: (item: { ko: string; en: string }) => void
+  open: boolean
+  onOpen: () => void
+  onClose: () => void
+  placeholder: string
+  searchPlaceholder: string
+  noResults: string
+  disabled?: boolean
+  disabledPlaceholder?: string
+  lang: Lang
+}) {
+  const triggerPrimary = selected ? (lang === 'en' ? (selected.en || selected.ko) : selected.ko) : ''
+  const triggerSecondary = selected ? (lang === 'en' ? selected.ko : selected.en) : ''
+  return (
+    <>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onOpen}
+        className={cn(
+          'w-full h-10 flex items-center justify-between gap-2 text-left transition-opacity',
+          disabled ? 'opacity-50' : 'hover:opacity-70',
+        )}
+      >
+        {selected ? (
+          <span className="min-w-0 flex items-baseline gap-2">
+            <span className="font-display font-semibold text-[17px] leading-tight text-[#2A2620] truncate">{triggerPrimary}</span>
+            {triggerSecondary && <span className="font-display text-[15px] text-[#9A9286] truncate">{triggerSecondary}</span>}
+          </span>
+        ) : (
+          <span className="font-display text-[17px] text-[#9A9286]/70 truncate">
+            {disabled ? (disabledPlaceholder ?? placeholder) : placeholder}
+          </span>
+        )}
+        <svg aria-hidden viewBox="0 0 24 24" fill="none" className="h-[18px] w-[18px] shrink-0 text-[#9A9286]">
+          <path d="M8 10l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      <BottomSheet open={open} onClose={onClose} title={title}>
+        <input
+          autoFocus
+          type="text"
+          value={query}
+          onChange={(e) => onQuery(e.target.value)}
+          placeholder={searchPlaceholder}
+          className="mb-2.5 w-full rounded-lg border border-[rgba(42,38,32,0.16)] bg-white px-3 py-2.5 text-[15px] text-[#2A2620] placeholder:text-[#9A9286]/70 focus:outline-none focus:ring-1 focus:ring-[#B89968]/40"
+        />
+        <div className="pm-noscroll flex flex-col gap-1 overflow-y-auto" style={{ maxHeight: '52vh' }}>
+          {items.length === 0 ? (
+            <p className="px-1 py-3 text-[13px] text-[#9A9286]">{noResults}</p>
+          ) : (
+            items.map((it) => {
+              const primary = lang === 'en' ? (it.en || it.ko) : it.ko
+              const secondary = lang === 'en' ? it.ko : it.en
+              const isSel = selected?.ko === it.ko
+              return (
+                <button
+                  key={`${it.ko}|${it.en}`}
+                  type="button"
+                  onClick={() => onPick(it)}
+                  className={cn(
+                    'flex w-full items-baseline justify-between gap-2 rounded-md px-3 py-3 text-left transition-colors',
+                    isSel ? 'bg-[#F0E8DC]' : 'hover:bg-[#F0E8DC]',
+                  )}
+                >
+                  <span className="min-w-0 flex items-baseline gap-2">
+                    <span className="text-[16px] text-[#2A2620] truncate">{primary}</span>
+                    {secondary && <span className="text-[13px] text-[#9A9286] truncate">{secondary}</span>}
+                  </span>
+                  {isSel && (
+                    <svg aria-hidden viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 text-[#B89968]">
+                      <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </button>
+              )
+            })
+          )}
+        </div>
+      </BottomSheet>
+    </>
+  )
+}
+
 /* ── Color swatch (for 모색 chips) ── */
 function ColorSwatch({ hex, selected }: { hex: string; selected?: boolean }) {
   return (
@@ -421,6 +510,7 @@ export default function ApplyPage() {
   // Form state
   const [destination, setDestination] = useState('')
   const [destQuery, setDestQuery] = useState('')
+  const [destSheetOpen, setDestSheetOpen] = useState(false)
   const [tripType, setTripType] = useState<'round' | 'one_way'>('round')
   const [customerName, setCustomerName] = useState('')
   const [customerLastNameEn, setCustomerLastNameEn] = useState('')
@@ -528,9 +618,6 @@ export default function ApplyPage() {
     setter(filtered)
     if (hasKorean) showEnWarning(field, m.enOnlyWarning)
   }
-  const [destHighlight, setDestHighlight] = useState(-1)
-  const [breedHighlights, setBreedHighlights] = useState<Record<number, number>>({})
-
   function getFilteredBreeds(pet: PetForm) {
     return BREEDS.filter(b => {
       if (pet.species && b.type !== pet.species) return false
@@ -780,62 +867,22 @@ export default function ApplyPage() {
             <div className="flex items-baseline gap-[10px] pb-3 border-b border-[rgba(42,38,32,0.12)] mb-1">
               <h2 className={sectionTitleClass}>{m.sec1}</h2>
             </div>
-            <FieldRow m={m} label={m.destination} required hint={m.searchHint} fieldKey="destination" missing={missing.has('destination')}>
-              {destination ? (
-                (() => {
-                  const d = DESTS.find(x => x.ko === destination)
-                  const primary = lang === 'en' ? (d?.en ?? destination) : (d?.ko ?? destination)
-                  const secondary = lang === 'en' ? (d?.ko ?? '') : (d?.en ?? '')
-                  return (
-                    <button type="button" onClick={() => { setDestination(''); setDestQuery('') }}
-                      className="w-full flex items-baseline justify-between text-left h-10 text-[#2A2620] hover:opacity-70 transition-opacity">
-                      <span className="font-display font-semibold text-[17px] leading-tight">{primary}</span>
-                      <span className="ml-2 font-display text-[15px] text-[#9A9286]">{secondary}</span>
-                    </button>
-                  )
-                })()
-              ) : (
-                <div className="relative">
-                  <input
-                    type="text"
-                    data-search-field="dest"
-                    value={destQuery}
-                    onChange={(e) => { setDestQuery(e.target.value); setDestHighlight(-1) }}
-                    onKeyDown={(e) => {
-                      const items = filteredDests.slice(0, 10)
-                      if (e.key === 'ArrowDown') { e.preventDefault(); setDestHighlight(h => Math.min(h + 1, items.length - 1)) }
-                      if (e.key === 'ArrowUp') { e.preventDefault(); setDestHighlight(h => Math.max(h - 1, 0)) }
-                      if (e.key === 'Enter') {
-                        const pick = destHighlight >= 0 ? items[destHighlight] : items.length === 1 ? items[0] : null
-                        if (pick) { e.preventDefault(); setDestination(pick.ko); setDestQuery(''); setDestHighlight(-1) }
-                      }
-                    }}
-                    onBlur={() => setTimeout(() => { if (!destination) setDestQuery('') }, 300)}
-                    placeholder={m.destPlaceholder}
-                    className={inputClass}
-                  />
-                  {destQuery && (
-                    <ul className={cn(dropdownClass, 'absolute left-0 right-0 top-full z-20 max-h-48 overflow-y-auto')}>
-                      {filteredDests.length === 0 ? (
-                        <li className="px-md py-3 text-sm text-[#9A9286]">{m.noResults}</li>
-                      ) : (
-                        filteredDests.slice(0, 10).map((d, i) => {
-                          const primary = lang === 'en' ? d.en : d.ko
-                          const secondary = lang === 'en' ? d.ko : d.en
-                          return (
-                            <li key={d.ko}>
-                              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setDestination(d.ko); setDestQuery(''); setDestHighlight(-1) }}
-                                className={cn(dropdownRowClass, i === destHighlight && dropdownRowActiveClass)}>
-                                {primary} <span className="font-display text-[#9A9286] ml-1">{secondary}</span>
-                              </button>
-                            </li>
-                          )
-                        })
-                      )}
-                    </ul>
-                  )}
-                </div>
-              )}
+            <FieldRow m={m} label={m.destination} required fieldKey="destination" missing={missing.has('destination')}>
+              <SearchSheetField
+                title={m.destination}
+                selected={destination ? (DESTS.find(x => x.ko === destination) ?? { ko: destination, en: '' }) : null}
+                items={filteredDests}
+                query={destQuery}
+                onQuery={setDestQuery}
+                onPick={(it) => { setDestination(it.ko); setDestQuery(''); setDestSheetOpen(false) }}
+                open={destSheetOpen}
+                onOpen={() => { setDestQuery(''); setDestSheetOpen(true) }}
+                onClose={() => { setDestSheetOpen(false); setDestQuery('') }}
+                placeholder={m.destPlaceholder}
+                searchPlaceholder={m.destPlaceholder}
+                noResults={m.noResults}
+                lang={lang}
+              />
             </FieldRow>
             <FieldRow m={m} label={m.tripType} required>
               <div className="flex gap-sm">
@@ -884,7 +931,7 @@ export default function ApplyPage() {
                 onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, '').slice(0, 11))}
                 placeholder={m.phonePlaceholder} className={numericInputClass} />
             </FieldRow>
-            <FieldRow m={m} label={m.addressKr} required hint={m.searchHint} fieldKey="addressKr" missing={missing.has('addressKr')}>
+            <FieldRow m={m} label={m.addressKr} required fieldKey="addressKr" missing={missing.has('addressKr')}>
               <div className="flex gap-sm items-center">
                 <input type="text" autoComplete="off" value={addressKr} onChange={(e) => setAddressKr(e.target.value)}
                   placeholder={m.addressClickToSearch} className={inputClass + ' flex-1 cursor-pointer'} readOnly
@@ -947,8 +994,6 @@ export default function ApplyPage() {
               composingRef={composingRef}
               handleEnInput={handleEnInput}
               handleEnCompositionEnd={handleEnCompositionEnd}
-              breedHighlight={breedHighlights[pi] ?? -1}
-              setBreedHighlight={(h: number) => setBreedHighlights(prev => ({ ...prev, [pi]: h }))}
               getFilteredBreeds={getFilteredBreeds}
               missing={missing}
               m={m}
@@ -980,8 +1025,6 @@ export default function ApplyPage() {
               composingRef={composingRef}
               handleEnInput={handleEnInput}
               handleEnCompositionEnd={handleEnCompositionEnd}
-              breedHighlight={breedHighlights[pi] ?? -1}
-              setBreedHighlight={(h: number) => setBreedHighlights(prev => ({ ...prev, [pi]: h }))}
               getFilteredBreeds={getFilteredBreeds}
               missing={missing}
               m={m}
@@ -1043,7 +1086,7 @@ export default function ApplyPage() {
 
 /* ── Pet Form Section (동물정보 + 선택항목) ── */
 
-function PetFormSection({ part, pet, index, updatePet, enWarnings, composingRef, handleEnInput, handleEnCompositionEnd, breedHighlight, setBreedHighlight, getFilteredBreeds, missing, m, lang }: {
+function PetFormSection({ part, pet, index, updatePet, enWarnings, composingRef, handleEnInput, handleEnCompositionEnd, getFilteredBreeds, missing, m, lang }: {
   part: 'required' | 'optional'
   pet: PetForm
   index: number
@@ -1052,14 +1095,13 @@ function PetFormSection({ part, pet, index, updatePet, enWarnings, composingRef,
   composingRef: React.RefObject<boolean>
   handleEnInput: (e: React.ChangeEvent<HTMLInputElement>, setter: (v: string) => void, field: string) => void
   handleEnCompositionEnd: (e: React.CompositionEvent<HTMLInputElement>, setter: (v: string) => void, field: string) => void
-  breedHighlight: number
-  setBreedHighlight: (h: number) => void
   getFilteredBreeds: (pet: PetForm) => Breed[]
   missing: Set<string>
   m: Messages
   lang: Lang
 }) {
   const filteredBreeds = getFilteredBreeds(pet)
+  const [breedSheetOpen, setBreedSheetOpen] = useState(false)
   const warnKey = (f: string) => `pet${index}_${f}`
   const mk = (f: string) => `pet${index}.${f}`
   const isMissing = (f: string) => missing.has(mk(f))
@@ -1110,56 +1152,24 @@ function PetFormSection({ part, pet, index, updatePet, enWarnings, composingRef,
       </FieldRow>
 
       {/* 품종 */}
-      <FieldRow m={m} label={m.breed} required hint={m.searchHint} fieldKey={mk('breed')} missing={isMissing('breed')}>
-        {pet.breed ? (
-          (() => {
-            const primary = lang === 'en' ? pet.breedEn : pet.breed
-            const secondary = lang === 'en' ? pet.breed : pet.breedEn
-            return (
-              <button type="button" onClick={() => { updatePet(index, 'breed', ''); updatePet(index, 'breedEn', ''); updatePet(index, 'breedQuery', '') }}
-                className="w-full flex items-baseline justify-between text-left h-10 text-[#2A2620] hover:opacity-70 transition-opacity">
-                <span className="font-display font-semibold text-[17px] leading-tight">{primary}</span>
-                <span className="ml-2 font-display text-[15px] text-[#9A9286]">{secondary}</span>
-              </button>
-            )
-          })()
-        ) : (
-          <div className="relative">
-            <input type="text" data-search-field="breed" value={pet.breedQuery}
-              onChange={(e) => { updatePet(index, 'breedQuery', e.target.value); setBreedHighlight(-1) }}
-              onKeyDown={(e) => {
-                const items = filteredBreeds.slice(0, 10)
-                if (e.key === 'ArrowDown') { e.preventDefault(); setBreedHighlight(Math.min(breedHighlight + 1, items.length - 1)) }
-                if (e.key === 'ArrowUp') { e.preventDefault(); setBreedHighlight(Math.max(breedHighlight - 1, 0)) }
-                if (e.key === 'Enter') {
-                  const pick = breedHighlight >= 0 ? items[breedHighlight] : items.length === 1 ? items[0] : null
-                  if (pick) { e.preventDefault(); updatePet(index, 'breed', pick.ko); updatePet(index, 'breedEn', pick.en); updatePet(index, 'breedQuery', ''); setBreedHighlight(-1) }
-                }
-              }}
-              onBlur={() => setTimeout(() => { if (!pet.breed) updatePet(index, 'breedQuery', '') }, 300)}
-              placeholder={pet.species ? m.breedPlaceholder : m.breedSelectSpeciesFirst}
-              disabled={!pet.species} className={cn(inputClass, !pet.species && 'opacity-50')} />
-            {pet.breedQuery && filteredBreeds.length > 0 && (
-              <ul className={cn(dropdownClass, 'absolute left-0 right-0 top-full z-20 max-h-48 overflow-y-auto')}>
-                {filteredBreeds.slice(0, 10).map((b, i) => {
-                  const primary = lang === 'en' ? b.en : b.ko
-                  const secondary = lang === 'en' ? b.ko : b.en
-                  return (
-                    <li key={`${b.type}:${b.en}`}>
-                      <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { updatePet(index, 'breed', b.ko); updatePet(index, 'breedEn', b.en); updatePet(index, 'breedQuery', ''); setBreedHighlight(-1) }}
-                        className={cn(dropdownRowClass, i === breedHighlight && dropdownRowActiveClass)}>
-                        {primary} <span className="font-display text-[#9A9286] ml-1">{secondary}</span>
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-            {pet.breedQuery && filteredBreeds.length === 0 && (
-              <p className="mt-1 font-display text-[12px] text-[#9A9286]">{m.noResults}</p>
-            )}
-          </div>
-        )}
+      <FieldRow m={m} label={m.breed} required fieldKey={mk('breed')} missing={isMissing('breed')}>
+        <SearchSheetField
+          title={m.breed}
+          selected={pet.breed ? { ko: pet.breed, en: pet.breedEn } : null}
+          items={filteredBreeds}
+          query={pet.breedQuery}
+          onQuery={(v) => updatePet(index, 'breedQuery', v)}
+          onPick={(it) => { updatePet(index, 'breed', it.ko); updatePet(index, 'breedEn', it.en); updatePet(index, 'breedQuery', ''); setBreedSheetOpen(false) }}
+          open={breedSheetOpen}
+          onOpen={() => { updatePet(index, 'breedQuery', ''); setBreedSheetOpen(true) }}
+          onClose={() => { setBreedSheetOpen(false); updatePet(index, 'breedQuery', '') }}
+          placeholder={m.breedPlaceholder}
+          searchPlaceholder={m.breedPlaceholder}
+          noResults={m.noResults}
+          disabled={!pet.species}
+          disabledPlaceholder={m.breedSelectSpeciesFirst}
+          lang={lang}
+        />
       </FieldRow>
 
       {/* 모색 */}
