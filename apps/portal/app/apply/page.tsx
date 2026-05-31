@@ -88,6 +88,9 @@ const messages = {
     submitting: '제출 중…',
     submit: '정보 등록',
     submitFooter: '등록하신 정보는 서류 발급에 사용됩니다',
+    next: '다음',
+    back: '이전',
+    optionalStepTitle: '추가 정보 (선택)',
     addressModalTitle: '주소 검색',
     fillRequest: '작성 요청',
     phoneFormatError: '전화번호는 010-1234-5678 형식으로 입력해주세요.',
@@ -187,6 +190,9 @@ const messages = {
     submitting: 'Submitting…',
     submit: 'Submit',
     submitFooter: 'Your information will be used to prepare documents',
+    next: 'Next',
+    back: 'Back',
+    optionalStepTitle: 'Additional (optional)',
     addressModalTitle: 'Address search',
     fillRequest: 'Required',
     phoneFormatError: 'Phone must be in 010-1234-5678 format.',
@@ -274,8 +280,6 @@ const pageShellClass =
 const pageInnerClass =
   'mx-auto w-full max-w-[680px] px-6 py-12 sm:px-8 lg:px-10'
 const sectionCardClass = cn(cardContainer, 'p-lg')
-const eyebrowNumClass =
-  'font-mono text-[12px] tracking-[1.3px] text-muted-foreground'
 const sectionTitleClass =
   'font-serif text-[15px] font-medium uppercase tracking-[0.4px] text-foreground'
 // Field row: vertical container with top divider between rows (first row has no top border)
@@ -324,6 +328,15 @@ const primaryButtonClass = cn(
   'w-full h-12 text-base tracking-[0.1px]',
   'bg-primary text-primary-foreground hover:bg-primary/90',
 )
+const secondaryButtonClass = cn(
+  'inline-flex items-center justify-center rounded-md font-medium transition-colors',
+  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+  'disabled:pointer-events-none disabled:opacity-50 select-none',
+  'h-12 px-6 text-base tracking-[0.1px]',
+  'border border-border bg-card text-foreground hover:bg-accent',
+)
+
+const TOTAL_STEPS = 4
 
 /* ── Field Row helper — label(left) + REQ/hint(right) + input(below) ── */
 function FieldRow({
@@ -385,6 +398,28 @@ function ColorSwatch({ hex, selected }: { hex: string; selected?: boolean }) {
   )
 }
 
+/* ── Step progress — thin segmented bar + "n / total" ── */
+function StepProgress({ step, total }: { step: number; total: number }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex flex-1 gap-1.5">
+        {Array.from({ length: total }).map((_, i) => (
+          <span
+            key={i}
+            className={cn(
+              'h-1 flex-1 rounded-full transition-colors',
+              i < step ? 'bg-primary' : 'bg-border',
+            )}
+          />
+        ))}
+      </div>
+      <span className="shrink-0 font-mono text-[11px] tracking-[1.3px] tabular-nums text-muted-foreground">
+        {step} / {total}
+      </span>
+    </div>
+  )
+}
+
 export default function ApplyPage() {
   const router = useRouter()
   const [lang, setLang] = useState<Lang>('ko')
@@ -392,6 +427,7 @@ export default function ApplyPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [missing, setMissing] = useState<Set<string>>(() => new Set())
+  const [step, setStep] = useState(1)
 
   // Form state
   const [destination, setDestination] = useState('')
@@ -521,35 +557,35 @@ export default function ApplyPage() {
     return d.ko.includes(q) || d.en.toLowerCase().includes(q)
   })
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-
-    // Validation — 모든 누락 항목을 한 번에 수집해서 표시.
+  // 단계별 누락 수집 — step 에 해당하는 필드만 검사.
+  function collectMissing(s: number): { miss: Set<string>; formatError: string | null } {
     const miss = new Set<string>()
-    if (!destination) miss.add('destination')
-    if (!customerName.trim()) miss.add('customerName')
-    if (!customerLastNameEn.trim() || !customerFirstNameEn.trim()) miss.add('customerNameEn')
-    if (!phone.trim()) miss.add('phone')
-    if (!addressKr.trim()) miss.add('addressKr')
-    if (!email.trim()) miss.add('email')
-    for (let i = 0; i < pets.length; i++) {
-      const p = pets[i]
-      if (!p.petName.trim()) miss.add(`pet${i}.petName`)
-      if (!p.petNameEn.trim()) miss.add(`pet${i}.petNameEn`)
-      if (!p.birthDate) miss.add(`pet${i}.birthDate`)
-      if (!p.species) miss.add(`pet${i}.species`)
-      if (!p.breed.trim()) miss.add(`pet${i}.breed`)
-      if (p.selectedColors.length === 0) miss.add(`pet${i}.colors`)
-      if (!p.sex) miss.add(`pet${i}.sex`)
-      if (!p.weight.trim()) miss.add(`pet${i}.weight`)
-    }
-
-    // 형식 오류 (누락 아님) — 별도 메시지로 처리.
     let formatError: string | null = null
-    if (!miss.has('phone') && !/^010\d{8}$/.test(phone)) {
-      formatError = m.phoneFormatError
-      miss.add('phone') // 시각적 강조도 같이
-    } else {
+    if (s === 1) {
+      if (!destination) miss.add('destination')
+    } else if (s === 2) {
+      if (!customerName.trim()) miss.add('customerName')
+      if (!customerLastNameEn.trim() || !customerFirstNameEn.trim()) miss.add('customerNameEn')
+      if (!phone.trim()) miss.add('phone')
+      if (!addressKr.trim()) miss.add('addressKr')
+      if (!email.trim()) miss.add('email')
+      if (!miss.has('phone') && !/^010\d{8}$/.test(phone)) {
+        formatError = m.phoneFormatError
+        miss.add('phone')
+      }
+    } else if (s === 3) {
+      for (let i = 0; i < pets.length; i++) {
+        const p = pets[i]
+        if (!p.petName.trim()) miss.add(`pet${i}.petName`)
+        if (!p.petNameEn.trim()) miss.add(`pet${i}.petNameEn`)
+        if (!p.birthDate) miss.add(`pet${i}.birthDate`)
+        if (!p.species) miss.add(`pet${i}.species`)
+        if (!p.breed.trim()) miss.add(`pet${i}.breed`)
+        if (p.selectedColors.length === 0) miss.add(`pet${i}.colors`)
+        if (!p.sex) miss.add(`pet${i}.sex`)
+        if (!p.weight.trim()) miss.add(`pet${i}.weight`)
+      }
+    } else if (s === 4) {
       for (let i = 0; i < pets.length; i++) {
         const p = pets[i]
         if (p.microchip && p.microchip.length !== 15) {
@@ -559,41 +595,80 @@ export default function ApplyPage() {
         }
       }
     }
+    return { miss, formatError }
+  }
 
+  function buildErrorMessage(miss: Set<string>, formatError: string | null): string {
+    const topMissing: string[] = []
+    const petMissing = new Map<number, string[]>()
+    for (const k of miss) {
+      const mm = k.match(/^pet(\d+)\.(.+)$/)
+      if (mm) {
+        const idx = Number(mm[1])
+        const label = m.petLabels[mm[2]] ?? mm[2]
+        if (!petMissing.has(idx)) petMissing.set(idx, [])
+        petMissing.get(idx)!.push(label)
+      } else if (m.topLabels[k]) {
+        topMissing.push(m.topLabels[k])
+      }
+    }
+    const parts: string[] = []
+    if (topMissing.length > 0) parts.push(topMissing.join(', '))
+    const petIdxs = Array.from(petMissing.keys()).sort((a, b) => a - b)
+    for (const i of petIdxs) {
+      const labels = petMissing.get(i)!
+      const prefix = pets.length > 1 ? m.petPrefixN(i + 1) : m.petPrefixSingle
+      parts.push(`${prefix}${labels.join(', ')}`)
+    }
+    const summary = m.summarize(parts)
+    return formatError ? `${summary} ${formatError}`.trim() : summary
+  }
+
+  function scrollToFirstMissing(miss: Set<string>) {
+    if (miss.size === 0) return
+    setTimeout(() => {
+      const first = Array.from(miss)[0]
+      const el = document.querySelector(`[data-field-key="${first}"]`) as HTMLElement | null
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 50)
+  }
+
+  function goNext() {
+    const { miss, formatError } = collectMissing(step)
     if (miss.size > 0 || formatError) {
       setMissing(miss)
-      const topMissing: string[] = []
-      const petMissing = new Map<number, string[]>()
-      for (const k of miss) {
-        const mm = k.match(/^pet(\d+)\.(.+)$/)
-        if (mm) {
-          const idx = Number(mm[1])
-          const label = m.petLabels[mm[2]] ?? mm[2]
-          if (!petMissing.has(idx)) petMissing.set(idx, [])
-          petMissing.get(idx)!.push(label)
-        } else if (m.topLabels[k]) {
-          topMissing.push(m.topLabels[k])
-        }
-      }
-      const parts: string[] = []
-      if (topMissing.length > 0) parts.push(topMissing.join(', '))
-      const petIdxs = Array.from(petMissing.keys()).sort((a, b) => a - b)
-      for (const i of petIdxs) {
-        const labels = petMissing.get(i)!
-        const prefix = pets.length > 1 ? m.petPrefixN(i + 1) : m.petPrefixSingle
-        parts.push(`${prefix}${labels.join(', ')}`)
-      }
-      const summary = m.summarize(parts)
-      setError(formatError ? `${summary} ${formatError}`.trim() : summary)
-      // 첫 누락 항목으로 스크롤
-      if (miss.size > 0) {
-        setTimeout(() => {
-          const first = Array.from(miss)[0]
-          const el = document.querySelector(`[data-field-key="${first}"]`) as HTMLElement | null
-          el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        }, 50)
-      }
+      setError(buildErrorMessage(miss, formatError))
+      scrollToFirstMissing(miss)
       return
+    }
+    setMissing(new Set())
+    setError(null)
+    setStep((s) => Math.min(s + 1, TOTAL_STEPS))
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function goBack() {
+    setMissing(new Set())
+    setError(null)
+    setStep((s) => Math.max(s - 1, 1))
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    // 마지막 단계가 아니면 Enter/submit 은 다음 단계로.
+    if (step < TOTAL_STEPS) { goNext(); return }
+
+    // 최종 제출 — 전 단계 재검증, 이상 있으면 해당 단계로 이동.
+    for (let s = 1; s <= TOTAL_STEPS; s++) {
+      const { miss, formatError } = collectMissing(s)
+      if (miss.size > 0 || formatError) {
+        setStep(s)
+        setMissing(miss)
+        setError(buildErrorMessage(miss, formatError))
+        scrollToFirstMissing(miss)
+        return
+      }
     }
 
     setMissing(new Set())
@@ -647,10 +722,9 @@ export default function ApplyPage() {
   return (
     <div className={pageShellClass}>
       <div className={pageInnerClass}>
-        {/* Header — editorial magazine-style masthead */}
-        <header className="relative mb-10 text-center pb-8 border-b border-border/80">
-          {/* Language toggle */}
-          <div className="mb-3 flex items-baseline justify-center gap-2 font-mono text-[11px] uppercase tracking-[1.5px] sm:absolute sm:top-0 sm:right-0 sm:mb-0">
+        {/* Header — lang toggle + step progress */}
+        <header className="mb-8">
+          <div className="mb-5 flex items-baseline justify-end gap-2 font-mono text-[11px] uppercase tracking-[1.5px]">
             <button
               type="button"
               onClick={() => setLang('ko')}
@@ -675,12 +749,7 @@ export default function ApplyPage() {
               English
             </button>
           </div>
-          <p className="font-mono text-[11px] uppercase tracking-[2.5px] text-muted-foreground mb-4">
-            {m.eyebrow}
-          </p>
-          <h1 className="font-serif text-3xl font-medium tracking-tight text-foreground">
-            {m.title}
-          </h1>
+          <StepProgress step={step} total={TOTAL_STEPS} />
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-md"
@@ -716,10 +785,10 @@ export default function ApplyPage() {
               }
             }
           }}>
-          {/* 1. 목적지 */}
+          {/* Step 1 · 목적지 */}
+          {step === 1 && (
           <section className={sectionCardClass}>
             <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/80 mb-1">
-              <span className={eyebrowNumClass}>01</span>
               <h2 className={sectionTitleClass}>{m.sec1}</h2>
             </div>
             <FieldRow m={m} label={m.destination} required hint={m.searchHint} fieldKey="destination" missing={missing.has('destination')}>
@@ -792,11 +861,12 @@ export default function ApplyPage() {
               </div>
             </FieldRow>
           </section>
+          )}
 
-          {/* 2. 소유주 */}
+          {/* Step 2 · 소유주 */}
+          {step === 2 && (
           <section className={sectionCardClass}>
             <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/80 mb-1">
-              <span className={eyebrowNumClass}>02</span>
               <h2 className={sectionTitleClass}>{m.sec2}</h2>
             </div>
             <FieldRow m={m} label={m.name} required fieldKey="customerName" missing={missing.has('customerName')}>
@@ -851,11 +921,12 @@ export default function ApplyPage() {
                 placeholder={m.emailPlaceholder} className={inputEnClass} />
             </FieldRow>
           </section>
+          )}
 
-          {/* 마리 수 선택 */}
+          {/* Step 3 · 마리수 + 반려동물 (필수) */}
+          {step === 3 && (<>
           <section className={sectionCardClass}>
             <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/80 mb-1">
-              <span className={eyebrowNumClass}>03</span>
               <h2 className={sectionTitleClass}>{m.sec3}</h2>
             </div>
             <FieldRow m={m} label={m.petCount} required>
@@ -870,16 +941,16 @@ export default function ApplyPage() {
             </FieldRow>
           </section>
 
-          {/* 3. 반려동물 (반복) */}
+          {/* 반려동물 · 필수 정보 */}
           {pets.map((pet, pi) => (
           <section key={pi} className={sectionCardClass}>
             <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/80 mb-1">
-              <span className={eyebrowNumClass}>{String(4 + pi).padStart(2, '0')}</span>
               <h2 className={sectionTitleClass}>
                 {pets.length > 1 ? m.petInfoN(pi + 1) : m.petInfo}
               </h2>
             </div>
             <PetFormSection
+              part="required"
               pet={pet}
               index={pi}
               updatePet={updatePet}
@@ -896,6 +967,40 @@ export default function ApplyPage() {
             />
           </section>
           ))}
+          </>)}
+
+          {/* Step 4 · 추가 정보 (선택) */}
+          {step === 4 && (<>
+          <div className="px-1 pb-1">
+            <p className="font-serif text-[15px] text-foreground">{m.optionalStepTitle}</p>
+            <p className="mt-1 font-serif italic text-[13px] text-muted-foreground/80">{m.optionalHint}</p>
+          </div>
+          {pets.map((pet, pi) => (
+          <section key={pi} className={sectionCardClass}>
+            {pets.length > 1 && (
+              <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/80 mb-1">
+                <h2 className={sectionTitleClass}>{m.petInfoN(pi + 1)}</h2>
+              </div>
+            )}
+            <PetFormSection
+              part="optional"
+              pet={pet}
+              index={pi}
+              updatePet={updatePet}
+              enWarnings={enWarnings}
+              composingRef={composingRef}
+              handleEnInput={handleEnInput}
+              handleEnCompositionEnd={handleEnCompositionEnd}
+              breedHighlight={breedHighlights[pi] ?? -1}
+              setBreedHighlight={(h: number) => setBreedHighlights(prev => ({ ...prev, [pi]: h }))}
+              getFilteredBreeds={getFilteredBreeds}
+              missing={missing}
+              m={m}
+              lang={lang}
+            />
+          </section>
+          ))}
+          </>)}
 
           {/* Error */}
           {error && (
@@ -904,20 +1009,29 @@ export default function ApplyPage() {
             </div>
           )}
 
-          {/* Submit */}
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={submitting}
-              className={primaryButtonClass}
-            >
-              {submitting ? m.submitting : m.submit}
-            </button>
+          {/* Navigation — 이전 / 다음 · 마지막 단계는 제출 */}
+          <div className="flex gap-sm pt-2">
+            {step > 1 && (
+              <button type="button" onClick={goBack} className={secondaryButtonClass}>
+                {m.back}
+              </button>
+            )}
+            {step < TOTAL_STEPS ? (
+              <button type="button" onClick={goNext} className={cn(primaryButtonClass, 'flex-1')}>
+                {m.next}
+              </button>
+            ) : (
+              <button type="submit" disabled={submitting} className={cn(primaryButtonClass, 'flex-1')}>
+                {submitting ? m.submitting : m.submit}
+              </button>
+            )}
           </div>
 
-          <p className="text-center font-mono text-[11px] uppercase tracking-[1.5px] text-muted-foreground pb-10">
-            {m.submitFooter}
-          </p>
+          {step === TOTAL_STEPS && (
+            <p className="text-center font-mono text-[11px] uppercase tracking-[1.5px] text-muted-foreground pb-10">
+              {m.submitFooter}
+            </p>
+          )}
         </form>
       </div>
 
@@ -940,7 +1054,8 @@ export default function ApplyPage() {
 
 /* ── Pet Form Section (동물정보 + 선택항목) ── */
 
-function PetFormSection({ pet, index, updatePet, enWarnings, composingRef, handleEnInput, handleEnCompositionEnd, breedHighlight, setBreedHighlight, getFilteredBreeds, missing, m, lang }: {
+function PetFormSection({ part, pet, index, updatePet, enWarnings, composingRef, handleEnInput, handleEnCompositionEnd, breedHighlight, setBreedHighlight, getFilteredBreeds, missing, m, lang }: {
+  part: 'required' | 'optional'
   pet: PetForm
   index: number
   updatePet: (idx: number, field: keyof PetForm, value: PetForm[keyof PetForm]) => void
@@ -964,6 +1079,8 @@ function PetFormSection({ pet, index, updatePet, enWarnings, composingRef, handl
 
   return (
     <>
+      {part === 'required' && (
+      <>
       {/* 이름 */}
       <FieldRow m={m} label={m.petName} required fieldKey={mk('petName')} missing={isMissing('petName')}>
         <input type="text" value={pet.petName} onChange={(e) => updatePet(index, 'petName', e.target.value.replace(/\b[a-z]/g, c => c.toUpperCase()))}
@@ -1101,15 +1218,11 @@ function PetFormSection({ pet, index, updatePet, enWarnings, composingRef, handl
           onChange={(e) => updatePet(index, 'weight', e.target.value.replace(/[^\d.]/g, ''))}
           placeholder={m.weightPlaceholder} className={numericInputClass} />
       </FieldRow>
+      </>
+      )}
 
-      {/* 선택 항목 섹션 헤더 */}
-      <div className="pt-6 mt-4 border-t border-border/80">
-        <div className="flex items-baseline justify-between mb-1">
-          <span className="font-mono text-[11px] uppercase tracking-[1.6px] text-muted-foreground">{m.optional}</span>
-          <span className="font-serif italic text-[12px] text-muted-foreground/80">{m.optionalHint}</span>
-        </div>
-      </div>
-
+      {part === 'optional' && (
+      <>
       {/* 마이크로칩 번호 */}
       <FieldRow m={m} label={m.microchip} hint={m.microchipHint}>
         <input type="text" inputMode="numeric"
@@ -1137,6 +1250,8 @@ function PetFormSection({ pet, index, updatePet, enWarnings, composingRef, handl
           className={numericInputClass}
         />
       </FieldRow>
+      </>
+      )}
     </>
   )
 }
