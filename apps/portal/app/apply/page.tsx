@@ -289,9 +289,6 @@ const labelClass =
   'font-display text-[15px] text-[#2A2620]'
 // Right meta (REQ + hint) — stacked horizontally, right-aligned
 const fieldMetaClass = 'flex items-baseline gap-2 shrink-0'
-// 필수 표시 — 작은 badge, Stone gold
-const reqIndicatorClass =
-  'font-display text-[12px] text-[#B89968]'
 // Optional hint text on the right of header
 const hintRightClass =
   'font-display text-[12px] text-[#9A9286]'
@@ -335,7 +332,6 @@ const TOTAL_STEPS = 4
 /* ── Field Row helper — label(left) + REQ/hint(right) + input(below) ── */
 function FieldRow({
   label,
-  required,
   hint,
   children,
   className,
@@ -344,6 +340,7 @@ function FieldRow({
   m,
 }: {
   label: React.ReactNode
+  /** 필수 항목 여부. 현재 신청 플로우에선 배지 미표시(검증은 missing 으로). */
   required?: boolean
   hint?: string
   children: React.ReactNode
@@ -366,10 +363,8 @@ function FieldRow({
         <span className={labelClass}>{label}</span>
         <span className={fieldMetaClass}>
           {hint && !missing && <span className={hintRightClass}>{hint}</span>}
-          {missing ? (
+          {missing && (
             <span className="font-display text-[12px] text-[#B89968]">{m.fillRequest}</span>
-          ) : (
-            required && <span className={reqIndicatorClass}>{m.required}</span>
           )}
         </span>
       </div>
