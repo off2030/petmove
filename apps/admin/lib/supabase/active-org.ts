@@ -40,17 +40,19 @@ export const getActiveOrgId = cache(async (): Promise<string> => {
     }
   }
 
-  // 2) 본인의 첫 membership
+  // 2) 본인의 home membership — 가장 오래된(원래 소속) org.
+  //    super_admin 은 직영(펫무브) 등 여러 org 의 멤버일 수 있다. 그 경우 home 은 가장 오래된
+  //    소속(예: 로잔)으로 고정하고, 다른 org 는 위 1)의 impersonation 쿠키로 전환해 본다.
+  //    (정식 org 스위처 UI 는 Phase 6.) — 예전엔 멤버십 2개 이상이면 throw 했는데,
+  //    직영 멤버십이 생기면서 super_admin 의 모든 화면을 깨뜨렸다.
   const { data: rows, error } = await supabase
     .from('memberships')
-    .select('org_id')
+    .select('org_id, created_at')
     .eq('user_id', user.id)
+    .order('created_at', { ascending: true })
 
   if (error) throw new Error(`memberships lookup failed: ${error.message}`)
   if (!rows || rows.length === 0) throw new Error('no org membership')
-  if (rows.length > 1) {
-    throw new Error('multiple org memberships — Phase 6 org switcher 필요')
-  }
   return rows[0].org_id as string
 })
 
@@ -79,6 +81,7 @@ export async function getImpersonationInfo(): Promise<{ orgId: string; orgName: 
     .from('memberships')
     .select('org_id')
     .eq('user_id', user.id)
+    .order('created_at', { ascending: true })
     .limit(1)
     .maybeSingle()
   if (mem?.org_id === impOrgId) return null
