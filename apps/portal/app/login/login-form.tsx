@@ -86,7 +86,7 @@ export function LoginForm({
   return (
     <div className="flex min-h-dvh items-center justify-center px-md py-xl">
       <div className="w-full max-w-sm space-y-lg">
-        <div className="space-y-xs text-center">
+        <div className="space-y-md text-center">
           <h1 className="font-serif text-[28px] leading-tight text-foreground">펫무브</h1>
           <p className="text-sm text-muted-foreground leading-snug">
             반려동물과 함께하는 해외 여행, 이민, 유학
