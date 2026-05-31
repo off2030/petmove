@@ -425,7 +425,7 @@ function SearchSheetField({
           placeholder={searchPlaceholder}
           className="mb-2.5 w-full rounded-lg border border-[rgba(42,38,32,0.16)] bg-white px-3 py-2.5 text-[15px] text-[#2A2620] placeholder:text-[#9A9286]/70 focus:outline-none focus:ring-1 focus:ring-[#B89968]/40"
         />
-        <div className="pm-noscroll flex flex-col gap-1 overflow-y-auto" style={{ maxHeight: '52vh' }}>
+        <div className="pm-noscroll flex flex-col gap-1 overflow-y-auto" style={{ height: '52vh' }}>
           {items.length === 0 ? (
             <p className="px-1 py-3 text-[13px] text-[#9A9286]">{noResults}</p>
           ) : (
