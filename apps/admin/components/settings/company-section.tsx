@@ -441,6 +441,15 @@ export function CompanySection({
   const issuerKeys = isTransport
     ? { ko: 'transport_name_ko', first: 'transport_name_first_en', last: 'transport_name_last_en', mobile: 'transport_mobile_phone' } as const
     : { ko: 'name_ko', first: 'name_first_en', last: 'name_last_en', mobile: 'mobile_phone' } as const
+  // 조직 공용 기본값(org-level) 키 — 본인 정보를 비웠을 때 placeholder 로 보여줄 값.
+  // (cert 발급도 동일: 본인 값 비면 이 org 기본값으로 채워짐 — loadEffectiveVetInfo)
+  const issuerDefaultKeys = isTransport
+    ? { ko: 'transport_contact_ko', first: 'transport_contact_first_en', last: 'transport_contact_last_en', mobile: 'transport_mobile_phone' } as const
+    : { ko: 'name_ko', first: 'name_first_en', last: 'name_last_en', mobile: 'mobile_phone' } as const
+  const orgDefaultOf = (k: keyof VetInfo): string => {
+    const v = info?.[k]
+    return typeof v === 'string' ? v : ''
+  }
   const groups: readonly string[] = isTransport ? TRANSPORT_GROUPS : HOSPITAL_GROUPS
   const fields: FieldDef[] = isTransport ? TRANSPORT_FIELDS : HOSPITAL_FIELDS
 
@@ -581,7 +590,7 @@ export function CompanySection({
         <section className="mb-xl">
           <SectionLabel className="mb-2">{isTransport ? '담당자' : '수의사'}</SectionLabel>
           <p className="mb-2 font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed max-w-md">
-            로그인 본인 정보만 표시·편집. cert 발급 시 본인 이름/휴대폰{isTransport ? '' : '/면허번호'}이 채워집니다.
+            본인 정보를 넣으면 그 이름·휴대폰{isTransport ? '' : '·면허'}로 발급되고, 비워두면 회색 글씨의 조직 기본값으로 발급됩니다.
           </p>
           <div className="border-t border-border/80">
             {!myInfo ? (
@@ -600,7 +609,7 @@ export function CompanySection({
                       if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
                       if (e.key === 'Escape') cancelMyDraft(issuerKeys.ko)
                     }}
-                    placeholder="—"
+                    placeholder={orgDefaultOf(issuerDefaultKeys.ko) || '—'}
                     className={cn(
                       'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/30',
                       savingMyKey === issuerKeys.ko && 'opacity-60',
@@ -617,6 +626,8 @@ export function CompanySection({
                   onChange={handleMyChange}
                   onCommit={handleMySave}
                   onCancel={cancelMyDraft}
+                  firstPlaceholder={orgDefaultOf(issuerDefaultKeys.first)}
+                  lastPlaceholder={orgDefaultOf(issuerDefaultKeys.last)}
                 />
                 <SettingsField label="휴대폰">
                   <input
@@ -628,7 +639,7 @@ export function CompanySection({
                       if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
                       if (e.key === 'Escape') cancelMyDraft(issuerKeys.mobile)
                     }}
-                    placeholder="—"
+                    placeholder={orgDefaultOf(issuerDefaultKeys.mobile) || '—'}
                     className={cn(
                       'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/30',
                       savingMyKey === issuerKeys.mobile && 'opacity-60',
@@ -646,7 +657,7 @@ export function CompanySection({
                         if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
                         if (e.key === 'Escape') cancelMyDraft('license_no')
                       }}
-                      placeholder="—"
+                      placeholder={orgDefaultOf('license_no') || '—'}
                       className={cn(
                         'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/30',
                         savingMyKey === 'license_no' && 'opacity-60',
@@ -747,6 +758,8 @@ function EnglishNameSplitRow<K extends string>({
   onChange,
   onCommit,
   onCancel,
+  firstPlaceholder,
+  lastPlaceholder,
 }: {
   label?: string
   firstKey: K
@@ -758,6 +771,8 @@ function EnglishNameSplitRow<K extends string>({
   onChange: (key: K, v: string) => void
   onCommit: (key: K) => void
   onCancel: (key: K) => void
+  firstPlaceholder?: string
+  lastPlaceholder?: string
 }) {
   const firstComposing = useRef(false)
   const lastComposing = useRef(false)
@@ -810,7 +825,7 @@ function EnglishNameSplitRow<K extends string>({
           onCompositionEnd={handleFirstCompositionEnd}
           onBlur={() => onCommit(firstKey)}
           onKeyDown={makeKeyDown(firstKey)}
-          placeholder={isAdmin ? 'First (이름)' : ''}
+          placeholder={isAdmin ? (firstPlaceholder || 'First (이름)') : ''}
           readOnly={!isAdmin}
           className={inputCls}
         />
@@ -823,7 +838,7 @@ function EnglishNameSplitRow<K extends string>({
           onCompositionEnd={handleLastCompositionEnd}
           onBlur={() => onCommit(lastKey)}
           onKeyDown={makeKeyDown(lastKey)}
-          placeholder={isAdmin ? 'Last (성)' : ''}
+          placeholder={isAdmin ? (lastPlaceholder || 'Last (성)') : ''}
           readOnly={!isAdmin}
           className={inputCls}
         />
