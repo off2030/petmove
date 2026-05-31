@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { supabaseBrowser } from '@petmove/auth'
-import { PillButton } from '@petmove/ui'
+
+const buttonBaseClass =
+  'inline-flex w-full items-center justify-center rounded-md h-10 px-md text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#B89968]/40 disabled:pointer-events-none disabled:opacity-50 select-none'
+const socialButtonClass = `${buttonBaseClass} border border-[rgba(42,38,32,0.16)] bg-[#FBF7F1] text-[#2A2620] hover:bg-[#F0E8DC]`
+const primaryButtonClass = `${buttonBaseClass} bg-[#B89968] text-[#FBF7F1] hover:bg-[#A98B5E]`
 
 export function LoginForm({
   next,
@@ -84,11 +88,11 @@ export function LoginForm({
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-md py-xl">
+    <div className="flex min-h-dvh items-center justify-center bg-[#F5EFE8] px-md py-xl">
       <div className="w-full max-w-sm space-y-lg">
         <div className="space-y-md text-center">
-          <h1 className="font-serif text-[28px] leading-tight text-foreground">펫무브</h1>
-          <p className="text-sm text-muted-foreground leading-snug">
+          <h1 className="font-display text-[28px] leading-tight text-[#2A2620]">펫무브</h1>
+          <p className="text-sm leading-snug text-[#9A9286]">
             반려동물과 함께하는 해외여행
             <br />
             펫무브 앱으로 준비하세요!
@@ -96,28 +100,28 @@ export function LoginForm({
         </div>
 
         <div className="space-y-sm">
-          <PillButton
-            variant="solid"
-            className="w-full justify-center h-10 px-md text-[14px]"
+          <button
+            type="button"
+            className={socialButtonClass}
             disabled={loading !== null}
             onClick={googleOAuth}
           >
             {loading === 'google' ? '이동 중…' : 'Google 계정으로 계속'}
-          </PillButton>
-          <PillButton
-            variant="solid"
-            className="w-full justify-center h-10 px-md text-[14px]"
+          </button>
+          <button
+            type="button"
+            className={socialButtonClass}
             disabled={loading !== null}
             onClick={naverOAuth}
           >
             {loading === 'naver' ? '이동 중…' : '네이버 계정으로 계속'}
-          </PillButton>
+          </button>
         </div>
 
-        <div className="flex items-center gap-sm text-xs text-muted-foreground">
-          <div className="h-px flex-1 bg-border" />
+        <div className="flex items-center gap-sm text-xs text-[#9A9286]">
+          <div className="h-px flex-1 bg-[rgba(42,38,32,0.12)]" />
           <span>또는 이메일</span>
-          <div className="h-px flex-1 bg-border" />
+          <div className="h-px flex-1 bg-[rgba(42,38,32,0.12)]" />
         </div>
 
         <form onSubmit={sendMagicLink} className="space-y-sm">
@@ -128,25 +132,20 @@ export function LoginForm({
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
-            className="w-full rounded-md border border-border bg-background px-sm py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
+            className="w-full rounded-md border border-[rgba(42,38,32,0.16)] bg-[#FBF7F1] px-sm py-2 text-sm text-[#2A2620] placeholder:text-[#9A9286]/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#B89968]/40"
           />
-          <PillButton
-            variant="solid"
-            type="submit"
-            className="w-full justify-center h-10 px-md text-[14px]"
-            disabled={loading !== null || !email}
-          >
+          <button type="submit" className={primaryButtonClass} disabled={loading !== null || !email}>
             {loading === 'magic' ? '발송 중…' : '이메일로 로그인 링크 받기'}
-          </PillButton>
+          </button>
         </form>
 
         {info && (
-          <p className="rounded border border-pmw-positive/40 bg-pmw-positive/10 p-sm text-xs text-pmw-positive">
+          <p className="rounded-md border border-[#B89968]/30 bg-[#B89968]/10 p-sm text-xs text-[#6B6457]">
             {info}
           </p>
         )}
         {error && (
-          <p className="rounded border border-destructive/40 bg-destructive/10 p-sm text-xs text-destructive">
+          <p className="rounded-md border border-[#C26A4A]/30 bg-[#C26A4A]/10 p-sm text-xs text-[#C26A4A]">
             {error}
           </p>
         )}
