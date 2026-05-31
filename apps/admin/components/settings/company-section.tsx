@@ -80,6 +80,14 @@ const SPLIT_NAME_PARENT: Record<string, { first: VetInfoKey; last: VetInfoKey; c
   transport_contact_last_en:    { first: 'transport_contact_first_en',   last: 'transport_contact_last_en',   combined: 'transport_contact_en' },
 }
 
+/** user-contact 발급자 영문명 split → 합성 키. 수의사/담당자 독립 저장. */
+const USER_SPLIT_NAME: Partial<Record<UserContactKey, { first: UserContactKey; last: UserContactKey; combined: UserContactKey }>> = {
+  name_first_en:           { first: 'name_first_en',           last: 'name_last_en',           combined: 'name_en' },
+  name_last_en:            { first: 'name_first_en',           last: 'name_last_en',           combined: 'name_en' },
+  transport_name_first_en: { first: 'transport_name_first_en', last: 'transport_name_last_en', combined: 'transport_name_en' },
+  transport_name_last_en:  { first: 'transport_name_first_en', last: 'transport_name_last_en', combined: 'transport_name_en' },
+}
+
 
 /**
  * 한국 전화번호 자동 포맷 — phone / mobile_phone / transport_mobile_phone 입력에 적용.
@@ -269,7 +277,7 @@ export function CompanySection({
   function myValueOf(key: UserContactKey): string {
     if (myDrafts[key] !== undefined) return myDrafts[key] ?? ''
     const raw = myInfo?.[key] ?? ''
-    if (key === 'mobile_phone') return formatPhoneForSave(raw)
+    if (key === 'mobile_phone' || key === 'transport_mobile_phone') return formatPhoneForSave(raw)
     return raw
   }
 
@@ -284,13 +292,14 @@ export function CompanySection({
       setMyDrafts((d) => { const { [key]: _, ...rest } = d; return rest })
       return
     }
-    const next = key === 'mobile_phone' ? formatPhoneForSave(draftVal) : draftVal
-    // 영문 First/Last split — 한쪽 변경 시 합성된 name_en 도 함께 저장.
+    const next = (key === 'mobile_phone' || key === 'transport_mobile_phone') ? formatPhoneForSave(draftVal) : draftVal
+    // 영문 First/Last split — 한쪽 변경 시 합성된 (name_en | transport_name_en) 도 함께 저장.
     const patch: Partial<UserContactInfo> = { [key]: next }
-    if (key === 'name_first_en' || key === 'name_last_en') {
-      const first = (key === 'name_first_en' ? next : myInfo.name_first_en ?? '').trim()
-      const last = (key === 'name_last_en' ? next : myInfo.name_last_en ?? '').trim()
-      patch.name_en = [first, last].filter(Boolean).join(' ')
+    const split = USER_SPLIT_NAME[key]
+    if (split) {
+      const first = (key === split.first ? next : myInfo[split.first] ?? '').trim()
+      const last = (key === split.last ? next : myInfo[split.last] ?? '').trim()
+      patch[split.combined] = [first, last].filter(Boolean).join(' ')
     }
     setSavingMyKey(key)
     setError(null)
@@ -440,6 +449,10 @@ export function CompanySection({
 
   const isTransport = orgType === 'transport'
   const isBoth = orgType === 'both'
+  // 발급자(본인) 키 — 수의사(hospital)와 담당자(transport)는 독립 필드(연동 X).
+  const issuerKeys = isTransport
+    ? { ko: 'transport_name_ko', first: 'transport_name_first_en', last: 'transport_name_last_en', mobile: 'transport_mobile_phone' } as const
+    : { ko: 'name_ko', first: 'name_first_en', last: 'name_last_en', mobile: 'mobile_phone' } as const
   // 'both' = 동물병원 + 운송회사 → 양쪽 정보 섹션을 모두 노출. (발급자는 자기 수의사 — hospital 동작)
   const groups: readonly string[] = isBoth
     ? [...HOSPITAL_GROUPS, ...TRANSPORT_GROUPS]
@@ -601,27 +614,27 @@ export function CompanySection({
                 <SettingsField label="한글 이름">
                   <input
                     type="text"
-                    value={myValueOf('name_ko')}
-                    onChange={(e) => handleMyChange('name_ko', e.target.value)}
-                    onBlur={() => handleMySave('name_ko')}
+                    value={myValueOf(issuerKeys.ko)}
+                    onChange={(e) => handleMyChange(issuerKeys.ko, e.target.value)}
+                    onBlur={() => handleMySave(issuerKeys.ko)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-                      if (e.key === 'Escape') cancelMyDraft('name_ko')
+                      if (e.key === 'Escape') cancelMyDraft(issuerKeys.ko)
                     }}
                     placeholder="—"
                     className={cn(
                       'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/30',
-                      savingMyKey === 'name_ko' && 'opacity-60',
+                      savingMyKey === issuerKeys.ko && 'opacity-60',
                     )}
                   />
                 </SettingsField>
                 <EnglishNameSplitRow<UserContactKey>
-                  firstKey="name_first_en"
-                  lastKey="name_last_en"
-                  firstValue={myValueOf('name_first_en')}
-                  lastValue={myValueOf('name_last_en')}
+                  firstKey={issuerKeys.first}
+                  lastKey={issuerKeys.last}
+                  firstValue={myValueOf(issuerKeys.first)}
+                  lastValue={myValueOf(issuerKeys.last)}
                   isAdmin={true}
-                  saving={savingMyKey === 'name_first_en' || savingMyKey === 'name_last_en'}
+                  saving={savingMyKey === issuerKeys.first || savingMyKey === issuerKeys.last}
                   onChange={handleMyChange}
                   onCommit={handleMySave}
                   onCancel={cancelMyDraft}
@@ -629,17 +642,17 @@ export function CompanySection({
                 <SettingsField label="휴대폰">
                   <input
                     type="text"
-                    value={myValueOf('mobile_phone')}
-                    onChange={(e) => handleMyChange('mobile_phone', e.target.value)}
-                    onBlur={() => handleMySave('mobile_phone')}
+                    value={myValueOf(issuerKeys.mobile)}
+                    onChange={(e) => handleMyChange(issuerKeys.mobile, e.target.value)}
+                    onBlur={() => handleMySave(issuerKeys.mobile)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-                      if (e.key === 'Escape') cancelMyDraft('mobile_phone')
+                      if (e.key === 'Escape') cancelMyDraft(issuerKeys.mobile)
                     }}
                     placeholder="—"
                     className={cn(
                       'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/30',
-                      savingMyKey === 'mobile_phone' && 'opacity-60',
+                      savingMyKey === issuerKeys.mobile && 'opacity-60',
                     )}
                   />
                 </SettingsField>

@@ -14,7 +14,8 @@
 import 'server-only'
 
 export interface UserContactInfo {
-  /** 한글 이름 — hospital: 수의사, transport: 담당자 */
+  // ── 동물병원(수의사) 발급자 ──
+  /** 한글 이름 — 수의사 */
   name_ko: string
   /** 영문 이름 (First) */
   name_first_en: string
@@ -24,8 +25,20 @@ export interface UserContactInfo {
   name_en: string
   /** 휴대폰 (한국 형식, 자동 정규화는 settings 페이지에서) */
   mobile_phone: string
-  /** 수의사 면허번호 — hospital org 에서만 의미. transport 는 빈 값 */
+  /** 수의사 면허번호 — hospital org 에서만 의미 */
   license_no: string
+
+  // ── 운송회사(담당자) 발급자 — 수의사와 완전 독립(따로 입력·삭제) ──
+  /** 한글 이름 — 운송 담당자 */
+  transport_name_ko: string
+  /** 담당자 영문 이름 (First) */
+  transport_name_first_en: string
+  /** 담당자 영문 성 (Last) */
+  transport_name_last_en: string
+  /** 합성 영문명 — transport_name_first_en + transport_name_last_en */
+  transport_name_en: string
+  /** 담당자 휴대폰 */
+  transport_mobile_phone: string
 }
 
 export const DEFAULT_USER_CONTACT_INFO: UserContactInfo = {
@@ -35,6 +48,11 @@ export const DEFAULT_USER_CONTACT_INFO: UserContactInfo = {
   name_en: '',
   mobile_phone: '',
   license_no: '',
+  transport_name_ko: '',
+  transport_name_first_en: '',
+  transport_name_last_en: '',
+  transport_name_en: '',
+  transport_mobile_phone: '',
 }
 
 /** 단순 string 키 — settings 페이지 input 매핑용. */

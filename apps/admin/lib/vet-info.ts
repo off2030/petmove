@@ -162,9 +162,9 @@ export async function loadVetInfo(): Promise<VetInfo> {
  * Overlay 매핑은 org_type 별로 다름:
  *   hospital  → user.{name_ko/first_en/last_en/en/mobile_phone/license_no} 가
  *               vet.{name_ko/name_first_en/name_last_en/name_en/mobile_phone/license_no} 덮음.
- *   transport → user.{name_ko/first_en/last_en/en/mobile_phone} 가
+ *   transport → user.{transport_name_ko/_first_en/_last_en/_en, transport_mobile_phone} 가
  *               vet.{transport_contact_ko/_first_en/_last_en/_en, transport_mobile_phone} 덮음.
- *               (license_no 는 transport 에 의미 없음)
+ *               (담당자는 수의사(name_*)와 독립 필드. license_no 는 transport 에 의미 없음)
  *
  * 빈 user 값은 overlay 안 함 — 사용자가 본인 정보 미입력 상태면 org-level 기본값 그대로.
  *
@@ -176,6 +176,8 @@ export async function loadEffectiveVetInfo(): Promise<VetInfo> {
   let userInfo: Partial<{
     name_ko: string; name_first_en: string; name_last_en: string; name_en: string;
     mobile_phone: string; license_no: string;
+    transport_name_ko: string; transport_name_first_en: string; transport_name_last_en: string;
+    transport_name_en: string; transport_mobile_phone: string;
   }> = {}
   let orgType: 'hospital' | 'transport' = 'hospital'
   try {
@@ -201,11 +203,12 @@ export async function loadEffectiveVetInfo(): Promise<VetInfo> {
     if (userInfo.mobile_phone) overlay.mobile_phone = userInfo.mobile_phone
     if (userInfo.license_no) overlay.license_no = userInfo.license_no
   } else {
-    if (userInfo.name_ko) overlay.transport_contact_ko = userInfo.name_ko
-    if (userInfo.name_first_en) overlay.transport_contact_first_en = userInfo.name_first_en
-    if (userInfo.name_last_en) overlay.transport_contact_last_en = userInfo.name_last_en
-    if (userInfo.name_en) overlay.transport_contact_en = userInfo.name_en
-    if (userInfo.mobile_phone) overlay.transport_mobile_phone = userInfo.mobile_phone
+    // 담당자(transport_name_*) — 수의사(name_*)와 독립. 운송 발급자 본인 정보로 overlay.
+    if (userInfo.transport_name_ko) overlay.transport_contact_ko = userInfo.transport_name_ko
+    if (userInfo.transport_name_first_en) overlay.transport_contact_first_en = userInfo.transport_name_first_en
+    if (userInfo.transport_name_last_en) overlay.transport_contact_last_en = userInfo.transport_name_last_en
+    if (userInfo.transport_name_en) overlay.transport_contact_en = userInfo.transport_name_en
+    if (userInfo.transport_mobile_phone) overlay.transport_mobile_phone = userInfo.transport_mobile_phone
   }
   const effective: VetInfo = { ...org, ...overlay }
   _cached = effective
