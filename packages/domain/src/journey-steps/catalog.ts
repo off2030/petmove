@@ -1,5 +1,9 @@
 import { addYears, readRabiesEntries, readTiterEntries, resolveValidUntil } from '../procedure-checks/utils'
 import { buildCaseJourneyContext } from './applicability'
+import {
+  deriveAdvanceNotificationStatus,
+  deriveJpExportQuarantineStatus,
+} from './report-status'
 import type { StepDefinition } from './types'
 
 /** 'YYYY-MM-DD' → 'YYYY년 M월 D일'. 형식이 아니면 원문 반환. */
@@ -353,29 +357,29 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       '일본 입국 40일 전까지 신고해야 합니다.\n\nNACCS로 신청한 후 일본 동물검역소 이메일 지시에 적절한 답변 및 대응을 합니다.\n수 주 후 허가증(Approval)을 받을 수 있습니다.\n왕복 일정인 경우 일본 수출 동물검역 신청도 함께 하는 것이 좋습니다.',
     doneSummary: '일본 동물검역소에 사전 신고를 했습니다.',
     cardLine: '일본 동물검역소에 사전 신고를 하세요.',
-    // 신청일은 입력됐는데 허가증 파일이 아직 안 올라온 상태 — 두 분기:
-    //  - skip X (대기 중): '신청 완료, 허가증 대기' — done 아니라 timeline·detail 동시 노출.
+    // 진행 상태는 [[deriveAdvanceNotificationStatus]] 가 단일 출처 — admin 신고탭과 동일.
+    // 두 분기:
     //  - skip O (명시적 첨부 없이 완료 처리): '첨부 없이 완료 처리됨' — done 이라 timeline 은
     //    doneSummary 로 가리고 detail 헤더에서만 보임. 보호자가 되돌릴 수 있도록 안내.
+    //  - status 'in_progress' (신청일 입력 OR admin demote OR legacy stored 'in_progress'):
+    //    '신청 완료, 허가증 대기' — done 아니라 timeline·detail 동시 노출.
     // 첨부가 올라오면 두 경우 모두 doneSummary 로 자연스럽게 전환.
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const filed =
-        typeof data.advance_notification_date === 'string' ? data.advance_notification_date : ''
-      const hasDate = filed.length >= 10 && filed <= new Date().toISOString().slice(0, 10)
-      if (!hasDate) return undefined
-      const docs = Array.isArray(data.documents) ? data.documents : []
-      const hasAttachment = docs.some(
-        (d) =>
-          !!d &&
-          typeof d === 'object' &&
-          (d as Record<string, unknown>).stepId === 'advance-notification',
-      )
-      if (hasAttachment) return undefined
       if (data.advance_notification_approval_skipped === true) {
-        const msg = '첨부 없이 완료 처리됐어요. 허가증(Approval)을 받으시면 파일을 첨부할 수 있습니다.'
-        return { desc: msg, cardDesc: msg }
+        const docs = Array.isArray(data.documents) ? data.documents : []
+        const hasAttachment = docs.some(
+          (d) =>
+            !!d &&
+            typeof d === 'object' &&
+            (d as Record<string, unknown>).stepId === 'advance-notification',
+        )
+        if (!hasAttachment) {
+          const msg = '첨부 없이 완료 처리됐어요. 허가증(Approval)을 받으시면 파일을 첨부할 수 있습니다.'
+          return { desc: msg, cardDesc: msg }
+        }
       }
+      if (deriveAdvanceNotificationStatus(caseRow) !== 'in_progress') return undefined
       const msg = '신청이 완료되었습니다. 허가증이 나온 후 파일을 첨부하시면 완료 처리됩니다.'
       return { desc: msg, cardDesc: msg }
     },
@@ -409,33 +413,25 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 귀국편 절차라 후속(출국 전 임상검사 등)을 막지 않는다 — 동시에 '다음 할 일' 노출.
     nonBlocking: true,
     done: 'has-jp-export-quarantine',
-    // 신청일 입력은 NACCS/이메일 접수 시그널일 뿐 — 검역소 응답으로 예약 날짜·시간이 확정돼야 완료.
-    // 사전 신고와 동일한 두 분기:
-    //  - skip X (대기 중): '신청 완료, 예약 확정 시 입력 요청' — done 아니라 timeline·detail 동시 노출.
+    // 진행 상태는 [[deriveJpExportQuarantineStatus]] 가 단일 출처 — admin 신고탭과 동일.
+    // 두 분기:
     //  - skip O (예약 입력 없이 완료 처리): '입력 없이 완료 처리됨' — done 이라 timeline 은
     //    doneSummary 로 가리고 detail 헤더에서만 보임. 보호자가 되돌릴 수 있도록 안내.
-    // 예약 날짜·시간이 둘 다 입력되면 두 경우 모두 doneSummary 로 자연스럽게 전환.
+    //  - status 'in_progress' (신청일 입력 OR admin demote OR legacy stored 'in_progress'):
+    //    '신청 완료, 예약 확정 대기' — done 아니라 timeline·detail 동시 노출.
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const applied =
-        typeof data.jp_export_quarantine_application_date === 'string'
-          ? data.jp_export_quarantine_application_date
-          : ''
-      const hasApplied = applied.length >= 10 && applied <= new Date().toISOString().slice(0, 10)
-      if (!hasApplied) return undefined
+      if (data.jp_export_quarantine_reservation_skipped === true) {
+        const msg = '입력 없이 완료 처리됐어요. 예약이 확정되면 날짜와 시간을 입력할 수 있습니다.'
+        return { desc: msg, cardDesc: msg }
+      }
+      if (deriveJpExportQuarantineStatus(caseRow) !== 'in_progress') return undefined
       const hasReservationDate =
         typeof data.jp_export_quarantine_date === 'string' &&
         data.jp_export_quarantine_date.length >= 10
       const hasReservationTime =
         typeof data.jp_export_quarantine_time === 'string' &&
         /^\d{1,2}:\d{2}$/.test(data.jp_export_quarantine_time)
-      // 예약 날짜·시간이 보호자 직접 입력으로 '확정(confirmed)'된 경우만 done — 안내 불필요.
-      const confirmed = data.jp_export_quarantine_confirmed === true
-      if (hasReservationDate && hasReservationTime && confirmed) return undefined
-      if (data.jp_export_quarantine_reservation_skipped === true) {
-        const msg = '입력 없이 완료 처리됐어요. 예약이 확정되면 날짜와 시간을 입력할 수 있습니다.'
-        return { desc: msg, cardDesc: msg }
-      }
       // 예약 날짜·시간은 있는데 미확정 = 운영자(대행)가 입력한 '고객 희망' → 예약 진행 중.
       if (hasReservationDate && hasReservationTime) {
         const msg = '신청이 완료되었습니다. 예약 진행중입니다.'

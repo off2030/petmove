@@ -12,6 +12,10 @@ import {
 } from '../procedure-checks/utils'
 import type { StepDoneSignal } from './types'
 import { buildCaseJourneyContext } from './applicability'
+import {
+  deriveAdvanceNotificationStatus,
+  deriveJpExportQuarantineStatus,
+} from './report-status'
 
 /**
  * doneSignal → boolean. 단일 dispatcher.
@@ -121,39 +125,14 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       }
       return true
     }
-    case 'has-advance-notification': {
-      // 신고일이 미입력이거나 미래면 아직 신고 전 — '예정'. 신고 완료(신고일 ≤ 오늘) 후
-      // NACCS 허가증(Approval) 첨부 OR 첨부 없이 완료 처리(skip) 해야 완전 완료.
-      const filed =
-        typeof data.advance_notification_date === 'string' ? data.advance_notification_date : ''
-      if (filed.length < 10 || filed > todayIso()) return false
-      if (data.advance_notification_approval_skipped === true) return true
-      const docs = Array.isArray(data.documents) ? data.documents : []
-      return docs.some(
-        (d) =>
-          !!d &&
-          typeof d === 'object' &&
-          (d as Record<string, unknown>).stepId === 'advance-notification',
-      )
-    }
-    case 'has-jp-export-quarantine': {
-      // 신청일이 미입력이거나 미래면 아직 신청 전 — '예정'(NACCS 신청은 오늘 이전 행위).
-      // 신청 완료(신청일 ≤ 오늘) 후: skipped=true(예약 정보 없이 진행) 또는 confirmed=true +
-      // 예약 날짜·시간. confirmed 는 portal 보호자가 date+time 입력 시 자동 set.
-      const applied =
-        typeof data.jp_export_quarantine_application_date === 'string'
-          ? data.jp_export_quarantine_application_date
-          : ''
-      if (applied.length < 10 || applied > todayIso()) return false
-      if (data.jp_export_quarantine_reservation_skipped === true) return true
-      if (data.jp_export_quarantine_confirmed !== true) return false
-      const hasDate =
-        typeof data.jp_export_quarantine_date === 'string' &&
-        (data.jp_export_quarantine_date as string).length >= 10
-      if (!hasDate) return false
-      const time = typeof data.jp_export_quarantine_time === 'string' ? data.jp_export_quarantine_time : ''
-      return /^\d{1,2}:\d{2}$/.test(time)
-    }
+    case 'has-advance-notification':
+      // 신고 진행 상태는 [[deriveAdvanceNotificationStatus]] 가 단일 출처 — admin 신고 탭과
+      // portal 사전 신고 step 이 같이 사용. 'done' = 첨부·skipped·legacy stored 'done'.
+      return deriveAdvanceNotificationStatus(caseRow) === 'done'
+    case 'has-jp-export-quarantine':
+      // 일본 수출검역 신청도 동일 — [[deriveJpExportQuarantineStatus]] 가 단일 출처.
+      // 'done' = skipped·confirmed+예약확정·legacy stored 'done'.
+      return deriveJpExportQuarantineStatus(caseRow) === 'done'
     case 'has-kr-export-quarantine':
       // 검역소 방문해 '받은 날짜' — has-vet-visit 와 동일하게 검역일 + 보호자 확인으로 완료.
       return isQuarantineConfirmed(data, 'kr_export_quarantine_date', 'kr_export_quarantine_confirmed')

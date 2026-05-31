@@ -8,6 +8,8 @@ import { useCases } from '@/components/cases/cases-context'
 import { Input } from '@/components/ui/input'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
+  deriveAdvanceNotificationStatus,
+  deriveJpExportQuarantineStatus,
   getDepartureDate,
   getVetVisitDate,
   matchesDestinationKey,
@@ -476,62 +478,26 @@ function isJapan(row: CaseRow): boolean {
 }
 
 /**
- * 신고 탭 상태 — 저장된 값(`import_import_status`)이 있으면 우선 사용.
- *   - 기존 운영자가 수동으로 박은 'done'/'in_progress' 등 그대로 보존.
- *   - 양방향 sync 가 필요한 새 액션(setAdvanceNotificationReportStatus 등) 은
- *     서버액션 단에서 stored 를 명시 클리어해 derive 로 전환시킨다.
+ * 신고 탭 상태 — 일본 케이스는 공용 derive 헬퍼([[deriveAdvanceNotificationStatus]])로,
+ * 그 외 destination 은 stored 값만 본다. derive 헬퍼는 portal 의 사전 신고 step 도 같이
+ * 사용 — 한곳에 모아 양쪽이 비대칭으로 보이지 않게 한다.
  *
- * 저장값 없는 일본 케이스만 portal data(사전신고 step) 에서 derive:
- *   - admin_demoted_at 이 set → 'in_progress'
- *   - 첨부·skipped → 'done'
- *   - 신청일 → 'in_progress'
- *   - 그 외 → 'not_started'
- * 수출은 추가로 귀국일 없으면 'na'.
+ * 수출은 추가로 귀국일 없으면 'na' (admin 만의 표기).
  */
 function effectiveImportStatus(row: CaseRow): string {
+  if (isJapan(row)) return deriveAdvanceNotificationStatus(row)
   const data = (row.data ?? {}) as Record<string, unknown>
-  // stored 우선 — legacy 운영자 수동값 보존.
   const stored = data.import_import_status
   if (stored != null && String(stored) !== '') return String(stored)
-  if (isJapan(row)) {
-    if (typeof data.advance_notification_admin_demoted_at === 'string') return 'in_progress'
-    const docs = Array.isArray(data.documents) ? data.documents : []
-    const hasAttachment = docs.some(
-      (d) =>
-        !!d &&
-        typeof d === 'object' &&
-        (d as Record<string, unknown>).stepId === 'advance-notification',
-    )
-    if (hasAttachment) return 'done'
-    if (data.advance_notification_approval_skipped === true) return 'done'
-    const hasDate =
-      typeof data.advance_notification_date === 'string' &&
-      (data.advance_notification_date as string).length >= 10
-    if (hasDate) return 'in_progress'
-  }
   return 'not_started'
 }
 
 function effectiveExportStatus(row: CaseRow): string {
-  const data = (row.data ?? {}) as Record<string, unknown>
   if (!importReportReturnDate(row)) return 'na'
+  if (isJapan(row)) return deriveJpExportQuarantineStatus(row)
+  const data = (row.data ?? {}) as Record<string, unknown>
   const stored = data.import_export_status
   if (stored != null && String(stored) !== '') return String(stored)
-  if (isJapan(row)) {
-    if (typeof data.jp_export_quarantine_admin_demoted_at === 'string') return 'in_progress'
-    if (data.jp_export_quarantine_reservation_skipped === true) return 'done'
-    if (data.jp_export_quarantine_confirmed === true) {
-      const hasDate =
-        typeof data.jp_export_quarantine_date === 'string' &&
-        (data.jp_export_quarantine_date as string).length >= 10
-      const t = typeof data.jp_export_quarantine_time === 'string' ? data.jp_export_quarantine_time : ''
-      if (hasDate && /^\d{1,2}:\d{2}$/.test(t)) return 'done'
-    }
-    const hasApplied =
-      typeof data.jp_export_quarantine_application_date === 'string' &&
-      (data.jp_export_quarantine_application_date as string).length >= 10
-    if (hasApplied) return 'in_progress'
-  }
   return 'not_started'
 }
 
