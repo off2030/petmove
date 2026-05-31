@@ -234,7 +234,6 @@ function speciesOptions(m: Messages) {
   return [
     { value: 'dog', label: m.speciesDog },
     { value: 'cat', label: m.speciesCat },
-    { value: 'other', label: m.speciesOther },
   ]
 }
 
