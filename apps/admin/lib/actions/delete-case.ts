@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@petmove/auth/server'
+import { createAdminClient } from '@petmove/auth'
 
 // revalidatePath 의도적으로 호출하지 않음 — deleteCase 는 client 가 removeLocalCase 로
 // 반영. restoreCase·permanentDeleteCase 는 trash modal 이 onRestore 에서 window.location
@@ -53,24 +54,45 @@ export async function permanentDeleteCase(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!caseId) return { ok: false, error: 'caseId is required' }
 
+  // 인증 — 로그인 사용자.
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: '로그인이 필요합니다.' }
 
-  // 1) Storage 첨부파일 cleanup — best-effort. 권한 없거나 파일 없으면 빈 결과 반환.
-  //    cases.delete 가 먼저 일어나면 RLS 가 더 이상 매칭 안 돼 storage 행을 못 지움.
+  // 권한 검증 + 실제 삭제는 service-role 로. (이전엔 RLS 컨텍스트로 cases.delete 만 호출 →
+  // 세션/RLS 경계에서 0행 삭제가 조용히 일어나 "삭제가 안 되는" 버그. 다른 관리자 쓰기
+  // 액션과 동일하게 명시적 권한 검증 후 service-role 로 전환.)
+  const admin = createAdminClient()
+
+  const { data: caseRow, error: caseErr } = await admin
+    .from('cases')
+    .select('org_id')
+    .eq('id', caseId)
+    .maybeSingle()
+  if (caseErr) return { ok: false, error: caseErr.message }
+  if (!caseRow) return { ok: false, error: '케이스를 찾을 수 없습니다.' }
+
+  // 권한: 해당 조직 멤버 또는 super_admin 만 영구삭제 가능.
+  const [{ data: profile }, { data: membership }] = await Promise.all([
+    admin.from('profiles').select('is_super_admin').eq('id', user.id).maybeSingle(),
+    admin.from('memberships').select('user_id').eq('user_id', user.id).eq('org_id', caseRow.org_id).maybeSingle(),
+  ])
+  if (!profile?.is_super_admin && !membership) {
+    return { ok: false, error: '이 케이스를 영구삭제할 권한이 없습니다.' }
+  }
+
+  // 1) Storage 첨부파일 cleanup — best-effort. cases.delete 전에 정리.
   try {
-    const { data: files } = await supabase.storage
-      .from('attachments')
-      .list(caseId, { limit: 1000 })
+    const { data: files } = await admin.storage.from('attachments').list(caseId, { limit: 1000 })
     if (files && files.length > 0) {
-      const paths = files.map((f) => `${caseId}/${f.name}`)
-      await supabase.storage.from('attachments').remove(paths)
+      await admin.storage.from('attachments').remove(files.map((f) => `${caseId}/${f.name}`))
     }
   } catch {
-    // 파일 cleanup 실패는 cases 삭제를 막지 않음 — orphan 파일은 향후 cron 으로 청소 가능.
+    // 파일 cleanup 실패는 cases 삭제를 막지 않음.
   }
 
   // 2) cases 행 영구 삭제 — case_history 등은 FK cascade 로 자동 정리.
-  const { error } = await supabase.from('cases').delete().eq('id', caseId)
+  const { error } = await admin.from('cases').delete().eq('id', caseId)
   if (error) return { ok: false, error: error.message }
   return { ok: true }
 }

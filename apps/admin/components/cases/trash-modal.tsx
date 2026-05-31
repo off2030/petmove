@@ -20,6 +20,7 @@ export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRest
   const [acting, startAction] = useTransition()
   const [query, setQuery] = useState('')
   const [mounted, setMounted] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -44,11 +45,14 @@ export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRest
   }, [onClose])
 
   function handleRestore(id: string) {
+    setErrorMsg(null)
     startAction(async () => {
       const r = await restoreCase(id)
       if (r.ok) {
         setItems(prev => prev.filter(i => i.id !== id))
         onRestore()
+      } else {
+        setErrorMsg(r.error)
       }
     })
   }
@@ -61,10 +65,13 @@ export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRest
       variant: 'destructive',
     })
     if (!ok) return
+    setErrorMsg(null)
     startAction(async () => {
       const r = await permanentDeleteCase(id)
       if (r.ok) {
         setItems(prev => prev.filter(i => i.id !== id))
+      } else {
+        setErrorMsg(r.error)
       }
     })
   }
@@ -84,6 +91,12 @@ export function TrashModal({ onClose, onRestore }: { onClose: () => void; onRest
           <button type="button" onClick={onClose}
             className="text-muted-foreground hover:text-foreground text-lg">&times;</button>
         </div>
+
+        {errorMsg && (
+          <div className="px-5 py-2 border-b border-border/30 bg-destructive/10 text-destructive text-xs">
+            {errorMsg}
+          </div>
+        )}
 
         {/* 검색 — 홈/할일 동일 스타일 */}
         {items.length > 0 && (
