@@ -1582,7 +1582,7 @@ export function StepDetailView({
               })}
             </div>
             <p style={{ marginTop: 10, fontSize: 12, color: C.ink3, lineHeight: 1.5 }}>
-              입력 기능은 곧 추가됩니다. 현재는 펫무브워크에서 담당 수의사가 입력합니다.
+              입력 기능을 준비 중이에요. 지금은 읽기 전용입니다.
             </p>
           </section>
         )}
