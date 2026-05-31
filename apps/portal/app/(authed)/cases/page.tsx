@@ -105,7 +105,7 @@ function EmptyState() {
           textDecoration: 'none',
         }}
       >
-        펫무브 등록
+        등록하기
       </Link>
     </div>
   )
