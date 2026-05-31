@@ -1,5 +1,6 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@petmove/auth'
 import { getCurrentUser } from '@petmove/auth/server'
 import { formatMicrochip } from '@petmove/domain'
@@ -137,6 +138,11 @@ export async function applyCase(input: ApplyInput): Promise<
       console.warn('[applyCase] case_customer_links insert failed:', linkError.message)
     }
   }
+
+  // 제출 직후 /cases 로 이동했을 때 새 케이스가 바로 보이도록 라우터 캐시 무효화.
+  // (안 하면 0건일 때 캐시된 '환영(EmptyState)' 화면이 그대로 떠서 새 케이스가 안 보임.)
+  revalidatePath('/cases')
+  revalidatePath('/', 'layout')
 
   return { ok: true, caseId: row.id }
 }
