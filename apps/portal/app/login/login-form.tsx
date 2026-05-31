@@ -93,9 +93,6 @@ export function LoginForm({
             <br />
             펫무브앱으로 준비하세요!
           </p>
-          <p className="pt-xs text-xs text-muted-foreground/80">
-            처음이신가요? 같은 버튼으로 가입까지 한 번에 진행됩니다.
-          </p>
         </div>
 
         <div className="space-y-sm">
