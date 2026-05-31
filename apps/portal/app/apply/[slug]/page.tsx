@@ -24,5 +24,6 @@ export default async function OrgApplyPage({
     .eq('slug', slug.toLowerCase())
     .maybeSingle()
   if (!org) redirect('/apply')
-  return <ApplyForm orgId={org.id as string} orgName={(org.name as string) ?? '펫무브'} />
+  // 조직별 공개 신청 — 병원 손님이 로그인 없이 작성(이메일 직접 입력·익명 제출).
+  return <ApplyForm orgId={org.id as string} orgName={(org.name as string) ?? '펫무브'} isPublic />
 }

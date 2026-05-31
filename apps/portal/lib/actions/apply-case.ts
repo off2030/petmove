@@ -4,7 +4,10 @@ import { createAdminClient } from '@petmove/auth'
 import { getCurrentUser } from '@petmove/auth/server'
 import { formatMicrochip } from '@petmove/domain'
 
-// 신청서는 인증 사용자 전용 — 미로그인 진입은 proxy.ts 가 /login 으로 redirect.
+// 신청서 2종:
+//   - 직영 /apply (로그인) → 계정 이메일 사용, 작성 본인(user_id)에 즉시 링크
+//   - 조직별 /apply/<slug> (공개·미로그인) → 입력 이메일 사용, 익명 생성(링크 없음).
+//     나중에 같은 이메일로 펫무브 가입 시 case_customer_links 트리거가 'email-match' 로 연결.
 // 케이스 INSERT 와 case_customer_links INSERT 모두 admin client 로 수행:
 //   - cases INSERT 는 org 멤버 RLS 만 허용
 //   - case_customer_links INSERT 도 org 멤버 RLS 만 허용 (보호자 본인이 임의 케이스에
@@ -23,6 +26,7 @@ interface ApplyInput {
   customer_last_name_en: string
   customer_first_name_en: string
   phone: string
+  email?: string  // 공개(조직별) 폼 — 계정이 없으니 직접 입력. 직영은 계정 이메일 사용.
   address_kr: string
   address_en?: string
   address_zipcode?: string
@@ -48,8 +52,8 @@ interface ApplyInput {
 export async function applyCase(input: ApplyInput): Promise<
   { ok: true; caseId: string } | { ok: false; error: string }
 > {
+  // 직영(로그인) 이면 user, 조직별 공개폼이면 null — 둘 다 허용.
   const user = await getCurrentUser()
-  if (!user) return { ok: false, error: '로그인이 필요합니다.' }
 
   const supabase = createAdminClient()
 
@@ -68,7 +72,7 @@ export async function applyCase(input: ApplyInput): Promise<
     customer_last_name_en: input.customer_last_name_en,
     customer_first_name_en: input.customer_first_name_en,
     phone: input.phone,
-    email: user.email ?? null,
+    email: user?.email ?? input.email?.trim() ?? null,
     address_kr: input.address_kr,
     address_en: input.address_en || null,
     address_zipcode: input.address_zipcode || null,
@@ -118,20 +122,20 @@ export async function applyCase(input: ApplyInput): Promise<
 
   if (error) return { ok: false, error: error.message }
 
-  // 케이스 ↔ 보호자 링크 — 작성한 본인 user_id 에 즉시 묶는다. 같은 이메일로 admin 이
-  // 만든 케이스가 있어도 case_customer_links 트리거가 별도로 'email-match' 로 묶음.
-  const { error: linkError } = await supabase
-    .from('case_customer_links')
-    .insert({
-      case_id: row.id,
-      user_id: user.id,
-      linked_via: 'self-apply',
-    })
-
-  if (linkError) {
-    // 링크 실패해도 case 자체는 생성되어 있으므로 사용자한테 성공 응답.
-    // 운영자가 후속으로 수동 링크 가능. 콘솔에만 남김.
-    console.warn('[applyCase] case_customer_links insert failed:', linkError.message)
+  // 케이스 ↔ 보호자 링크 — 로그인(직영) 이면 작성 본인 user_id 에 즉시 묶는다.
+  // 공개(조직별) 폼은 익명이라 링크 생략 — 나중에 같은 이메일로 가입 시 트리거가 'email-match' 로 연결.
+  if (user) {
+    const { error: linkError } = await supabase
+      .from('case_customer_links')
+      .insert({
+        case_id: row.id,
+        user_id: user.id,
+        linked_via: 'self-apply',
+      })
+    if (linkError) {
+      // 링크 실패해도 case 자체는 생성되어 있으므로 성공 응답. 운영자가 후속 수동 링크 가능.
+      console.warn('[applyCase] case_customer_links insert failed:', linkError.message)
+    }
   }
 
   return { ok: true, caseId: row.id }

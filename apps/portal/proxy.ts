@@ -14,6 +14,8 @@ const PUBLIC_PREFIXES = [
   '/api/auth',  // Naver OAuth 등 자체 라우트 — 미로그인 통과 필요
   '/terms',
   '/privacy',
+  '/apply/',  // 조직별 공개 신청폼 (/apply/<slug>) — 병원 손님이 로그인 없이 작성.
+              // 슬래시 포함이라 직영 '/apply'(정확히) 는 매칭 안 됨 → 직영은 로그인 유지.
   '/share',  // 토큰 진입 (Phase 11.0.5 구현 전 까지 page 자체는 없지만 미인증 통과 정의)
   '/preview', // 펫무브워크 "고객앱 미리보기" — admin 서명 토큰으로 진입 (보호자 세션 아님)
   '/offline', // SW 가 install 시 prefetch 해서 오프라인 폴백으로 사용 — 미인증 통과 필수

@@ -502,7 +502,7 @@ function StepProgress({ step, total }: { step: number; total: number }) {
   )
 }
 
-export function ApplyForm({ orgId, orgName }: { orgId: string; orgName: string }) {
+export function ApplyForm({ orgId, orgName, isPublic }: { orgId: string; orgName: string; isPublic: boolean }) {
   const router = useRouter()
   const [lang, setLang] = useState<Lang>('ko')
   const m = messages[lang]
@@ -510,6 +510,7 @@ export function ApplyForm({ orgId, orgName }: { orgId: string; orgName: string }
   const [error, setError] = useState<string | null>(null)
   const [missing, setMissing] = useState<Set<string>>(() => new Set())
   const [step, setStep] = useState(1)
+  const [submitted, setSubmitted] = useState(false)  // 공개(조직별) 폼 제출 후 '접수 완료' 화면
 
   // Form state
   const [destination, setDestination] = useState('')
@@ -520,6 +521,7 @@ export function ApplyForm({ orgId, orgName }: { orgId: string; orgName: string }
   const [customerLastNameEn, setCustomerLastNameEn] = useState('')
   const [customerFirstNameEn, setCustomerFirstNameEn] = useState('')
   const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')  // 공개(조직별) 폼만 — 직영은 계정 이메일 사용
   const [addressKr, setAddressKr] = useState('')  // 검색된 기본주소
   const [addressDetail, setAddressDetail] = useState('')  // 상세주소
   const [addressEn, setAddressEn] = useState('')
@@ -761,6 +763,7 @@ export function ApplyForm({ orgId, orgName }: { orgId: string; orgName: string }
         customer_last_name_en: capitalize(customerLastNameEn.trim()),
         customer_first_name_en: capitalize(customerFirstNameEn.trim()),
         phone: phone.trim(),
+        email: isPublic ? email.trim() : undefined,
         address_kr: addressDetail.trim() ? `${addressKr.trim()} ${addressDetail.trim()}` : addressKr.trim(),
         address_en: addressEn.trim(),
         address_zipcode: addressZipcode,
@@ -789,11 +792,33 @@ export function ApplyForm({ orgId, orgName }: { orgId: string; orgName: string }
     }
 
     if (allOk) {
-      // 신청 직후 본인 케이스 화면으로. /cases 가 1건이면 그 케이스 /journey 로 자동 redirect.
-      router.push('/cases')
+      // 직영(로그인): 본인 케이스 화면으로. /cases 가 1건이면 그 케이스 /journey 로 자동 redirect.
+      // 조직별 공개폼(미로그인): /cases 는 로그인 필요 → '접수 완료' 화면을 보여준다.
+      if (isPublic) {
+        setSubmitted(true)
+        setSubmitting(false)
+      } else {
+        router.push('/cases')
+      }
     } else {
       setSubmitting(false)
     }
+  }
+
+  // 공개(조직별) 폼 제출 완료 — 로그인이 없어 케이스 화면으로 못 보내므로 접수 안내.
+  if (submitted) {
+    return (
+      <div className={pageShellClass}>
+        <div className={pageInnerClass}>
+          <div className="min-h-[70vh] flex flex-col items-center justify-center text-center gap-3">
+            <p className="font-display text-[20px] font-semibold text-[#2A2620]">신청이 접수되었습니다</p>
+            <p className="font-display text-[14px] text-[#9A9286] leading-relaxed">
+              {orgName}에서 확인 후 연락드릴게요.<br />감사합니다.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -956,6 +981,13 @@ export function ApplyForm({ orgId, orgName }: { orgId: string; orgName: string }
                 <p className="mt-1 font-display text-[15px] text-[#2A2620]">{addressEn}</p>
               )}
             </FieldRow>
+            {isPublic && (
+              <FieldRow m={m} label={m.email}>
+                <input type="email" inputMode="email" autoComplete="email" value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={m.emailPlaceholder} className={inputClass} />
+              </FieldRow>
+            )}
           </section>
           )}
 
