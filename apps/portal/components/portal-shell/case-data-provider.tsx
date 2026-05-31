@@ -169,11 +169,14 @@ export function CaseDataProvider({
           },
           (payload) => {
             if (payload.eventType === 'UPDATE') {
-              setCases((prev) =>
-                prev.map((c) =>
-                  c.id === (payload.new as CaseRow).id ? (payload.new as CaseRow) : c,
-                ),
-              )
+              const next = payload.new as CaseRow & { deleted_at?: string | null }
+              if (next.deleted_at) {
+                // 소프트삭제 — 운영자가 펫무브워크에서 삭제(deleted_at 설정)하면 UPDATE 로
+                // 들어온다. 목록에서 즉시 제거 (안 그러면 deleted 케이스가 앱에 계속 보임).
+                setCases((prev) => prev.filter((c) => c.id !== next.id))
+              } else {
+                setCases((prev) => prev.map((c) => (c.id === next.id ? (next as CaseRow) : c)))
+              }
             } else {
               // INSERT/DELETE: case_customer_links 까지 확인하려면 listMyCases 재조회.
               void refreshCases()

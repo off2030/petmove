@@ -1,7 +1,7 @@
 'use client'
 
-import { notFound } from 'next/navigation'
-import { use } from 'react'
+import { useRouter } from 'next/navigation'
+import { use, useEffect } from 'react'
 import { buildJourney } from '@/lib/journey/scenario'
 import { TimelineCalm } from '@/components/journey/timeline-calm'
 import { useCase } from '@/components/portal-shell/case-data-provider'
@@ -19,7 +19,12 @@ export default function CaseJourneyPage({
 }) {
   const { id } = use(params)
   const caseRow = useCase(id)
-  if (!caseRow) notFound()
+  const router = useRouter()
+  // 케이스가 없으면(예: 운영자가 펫무브워크에서 삭제) 404 대신 내 케이스 목록으로 — 부드럽게.
+  useEffect(() => {
+    if (!caseRow) router.replace('/cases')
+  }, [caseRow, router])
+  if (!caseRow) return null
 
   const data = buildJourney(caseRow)
   return <TimelineCalm data={data} caseId={id} />
