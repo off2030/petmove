@@ -86,11 +86,10 @@ function EmptyState() {
           margin: '32px 0 0',
         }}
       >
-        아직 진행 중인 일정이 없습니다
+        펫무브에 오신 것을 환영합니다!
       </h1>
       <p style={{ fontSize: 15, lineHeight: 1.6, color: '#6B6457', maxWidth: 320 }}>
-        출국 일정이 아직 없어요. 신청서를 작성하시면 일정이 만들어집니다. 펫무브워크에서
-        이미 진행 중인 케이스가 있다면, 가입하신 이메일로 자동 연결됩니다.
+        준비를 시작하시려면 펫무브 등록을 진행해주세요. 등록을 완료하면 일정이 만들어집니다.
       </p>
       <Link
         href="/apply"
@@ -106,7 +105,7 @@ function EmptyState() {
           textDecoration: 'none',
         }}
       >
-        신청서 작성
+        펫무브 등록
       </Link>
     </div>
   )
