@@ -9,10 +9,12 @@ import { formatMicrochip } from '@petmove/domain'
 //   - cases INSERT 는 org 멤버 RLS 만 허용
 //   - case_customer_links INSERT 도 org 멤버 RLS 만 허용 (보호자 본인이 임의 케이스에
 //     셀프 링크 못 하게 막는 의도된 설계). 신뢰된 server action 이라 우회 안전.
-// Phase 6+ 다중 테넌트 확장 시 org 선택 로직 추가.
-const ORG_ID = '00000000-0000-0000-0000-000000000001'
+// 신청 대상 org: 조직별 링크(/apply/<slug>)면 그 org, 표시 없으면 직영(펫무브).
+const DIRECT_ORG_ID = '00000000-0000-0000-0000-000000000002' // 펫무브 직영(platform)
 
 interface ApplyInput {
+  // 신청 대상 조직 id (조직별 링크면 그 org, 없으면 직영). 서버에서 존재 검증 후 사용.
+  org_id?: string
   // 1. 목적지
   destination: string
   trip_type?: 'round' | 'one_way'
@@ -50,6 +52,17 @@ export async function applyCase(input: ApplyInput): Promise<
   if (!user) return { ok: false, error: '로그인이 필요합니다.' }
 
   const supabase = createAdminClient()
+
+  // 신청 대상 org 결정 — 유효한 조직 id 가 오면 그 org, 아니면 직영(펫무브).
+  let orgId = DIRECT_ORG_ID
+  if (input.org_id) {
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('id')
+      .eq('id', input.org_id)
+      .maybeSingle()
+    if (org) orgId = org.id as string
+  }
 
   const data: Record<string, unknown> = {
     customer_last_name_en: input.customer_last_name_en,
@@ -89,7 +102,7 @@ export async function applyCase(input: ApplyInput): Promise<
   const { data: row, error } = await supabase
     .from('cases')
     .insert({
-      org_id: ORG_ID,
+      org_id: orgId,
       // 공개 신청폼 출처 표시 — DB 트리거가 이 값으로 운영자 봇 알림을 발송한다.
       source: 'apply_form',
       customer_name: input.customer_name,

@@ -9,8 +9,9 @@ export const dynamic = 'force-dynamic'
  * NEXT_PUBLIC_PORTAL_BASE_URL 가 미설정이면 same-origin path redirect.
  */
 export default async function ApplyRedirect() {
+  // 펫무브워크의 레거시 신청 링크는 로잔(lvmc) 귀속 — 포털의 조직별 신청 경로로 보낸다.
   const base = process.env.NEXT_PUBLIC_PORTAL_BASE_URL?.replace(/\/$/, '') ?? ''
-  const target = base ? `${base}/apply` : '/apply'
+  const target = base ? `${base}/apply/lvmc` : '/apply/lvmc'
   if (base) permanentRedirect(target)
   redirect(target)
 }
