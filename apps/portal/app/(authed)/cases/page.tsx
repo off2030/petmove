@@ -89,7 +89,7 @@ function EmptyState() {
         펫무브에 오신 것을 환영합니다!
       </h1>
       <p style={{ fontSize: 15, lineHeight: 1.6, color: '#6B6457', maxWidth: 320 }}>
-        준비를 시작하시려면 펫무브 등록을 진행해주세요. 등록을 완료하면 일정이 만들어집니다.
+        첫 출국 준비를 시작해볼까요? 반려동물 정보를 등록하면 맞춤 일정이 만들어집니다.
       </p>
       <Link
         href="/apply"
@@ -105,7 +105,7 @@ function EmptyState() {
           textDecoration: 'none',
         }}
       >
-        등록하기
+        시작하기
       </Link>
     </div>
   )
