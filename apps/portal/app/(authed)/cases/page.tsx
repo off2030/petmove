@@ -80,17 +80,16 @@ function EmptyState() {
       <h1
         style={{
           fontFamily: 'var(--pm-font-display)',
-          fontSize: 28,
+          fontSize: 21,
           fontWeight: 500,
           letterSpacing: '-0.01em',
-          margin: '32px 0 0',
+          lineHeight: 1.4,
+          margin: '40px 0 0',
+          color: '#2A2620',
         }}
       >
-        펫무브에 오신 것을 환영합니다!
+        펫무브에 오신 것을 환영합니다
       </h1>
-      <p style={{ fontSize: 15, lineHeight: 1.6, color: '#6B6457', maxWidth: 320 }}>
-        첫 출국 준비를 시작해볼까요? 반려동물 정보를 등록하면 맞춤 일정이 만들어집니다.
-      </p>
       <Link
         href="/apply"
         style={{
