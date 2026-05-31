@@ -486,11 +486,16 @@ export function CompanySection({
         )}
 
         {/* Field groups */}
-        {groups.map((group) => (
+        {groups.map((group) => {
+          const groupFields = fields.filter((f) => f.group === group)
+          // org-level 필드가 없는 그룹(예: 수의사 — 본인 정보는 아래 발급자 섹션) 은 빈 헤더만
+          // 뜨므로 건너뛴다. (동물병원에 '수의사'가 두 번 보이던 문제.)
+          if (groupFields.length === 0) return null
+          return (
           <section key={group} className="mb-xl">
             <SectionLabel className="mb-2">{GROUP_LABELS[group] ?? group}</SectionLabel>
             <div className="border-t border-border/80">
-              {fields.filter((f) => f.group === group).map((f) => {
+              {groupFields.map((f) => {
                 const saving = savingKey === f.key
                 // 한국주소 행에 한정해 우측에 "주소검색" 버튼 노출 — 검색 결과로
                 // 한국/영문/우편번호 세 필드를 한 번에 저장 (handleAddressSelected).
@@ -573,7 +578,8 @@ export function CompanySection({
               })}
             </div>
           </section>
-        ))}
+          )
+        })}
 
         {/* 발급자 본인 정보 — 동물병원이면 "수의사", 운송회사면 "담당자" 그룹으로 노출.
             로그인 사용자 본인 (profiles.contact_info) 만 보이고 편집됨. 한 조직에 멤버
