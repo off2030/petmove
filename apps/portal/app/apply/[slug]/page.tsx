@@ -20,9 +20,9 @@ export default async function OrgApplyPage({
   const admin = createAdminClient()
   const { data: org } = await admin
     .from('organizations')
-    .select('id')
+    .select('id, name')
     .eq('slug', slug.toLowerCase())
     .maybeSingle()
   if (!org) redirect('/apply')
-  return <ApplyForm orgId={org.id as string} />
+  return <ApplyForm orgId={org.id as string} orgName={(org.name as string) ?? '펫무브'} />
 }

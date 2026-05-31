@@ -502,7 +502,7 @@ function StepProgress({ step, total }: { step: number; total: number }) {
   )
 }
 
-export function ApplyForm({ orgId }: { orgId: string }) {
+export function ApplyForm({ orgId, orgName }: { orgId: string; orgName: string }) {
   const router = useRouter()
   const [lang, setLang] = useState<Lang>('ko')
   const m = messages[lang]
@@ -801,30 +801,35 @@ export function ApplyForm({ orgId }: { orgId: string }) {
       <div className={pageInnerClass}>
         {/* Header — lang toggle + step progress */}
         <header className="mb-8">
-          <div className="mb-5 flex items-baseline justify-end gap-2 font-display text-[11px] uppercase tracking-[1.5px]">
-            <button
-              type="button"
-              onClick={() => setLang('ko')}
-              className={cn(
-                'transition-colors',
-                lang === 'ko' ? 'text-[#2A2620]' : 'text-[#9A9286] hover:text-[#2A2620]',
-              )}
-              aria-pressed={lang === 'ko'}
-            >
-              한국어
-            </button>
-            <span className="text-[#9A9286]/60">·</span>
-            <button
-              type="button"
-              onClick={() => setLang('en')}
-              className={cn(
-                'transition-colors',
-                lang === 'en' ? 'text-[#2A2620]' : 'text-[#9A9286] hover:text-[#2A2620]',
-              )}
-              aria-pressed={lang === 'en'}
-            >
-              English
-            </button>
+          <div className="mb-5 flex items-baseline justify-between gap-3">
+            <p className="font-display text-[14px] font-semibold tracking-[0.2px] text-[#2A2620] truncate">
+              {orgName}
+            </p>
+            <div className="shrink-0 flex items-baseline gap-2 font-display text-[11px] uppercase tracking-[1.5px]">
+              <button
+                type="button"
+                onClick={() => setLang('ko')}
+                className={cn(
+                  'transition-colors',
+                  lang === 'ko' ? 'text-[#2A2620]' : 'text-[#9A9286] hover:text-[#2A2620]',
+                )}
+                aria-pressed={lang === 'ko'}
+              >
+                한국어
+              </button>
+              <span className="text-[#9A9286]/60">·</span>
+              <button
+                type="button"
+                onClick={() => setLang('en')}
+                className={cn(
+                  'transition-colors',
+                  lang === 'en' ? 'text-[#2A2620]' : 'text-[#9A9286] hover:text-[#2A2620]',
+                )}
+                aria-pressed={lang === 'en'}
+              >
+                English
+              </button>
+            </div>
           </div>
           <StepProgress step={step} total={TOTAL_STEPS} />
         </header>

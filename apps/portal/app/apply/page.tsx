@@ -5,5 +5,6 @@ import { ApplyForm } from './apply-form'
 const DIRECT_ORG_ID = '00000000-0000-0000-0000-000000000002'
 
 export default function ApplyPage() {
-  return <ApplyForm orgId={DIRECT_ORG_ID} />
+  // 직영(펫무브 플랫폼) 자체 신청 — 헤더에 "펫무브" 표기.
+  return <ApplyForm orgId={DIRECT_ORG_ID} orgName="펫무브" />
 }
