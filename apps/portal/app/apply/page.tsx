@@ -55,6 +55,8 @@ const messages = {
     petCount: '마리수',
     petInfo: '반려동물 정보',
     petInfoN: (n: number) => `반려동물 · ${n}`,
+    petAdd: '반려동물 추가',
+    petRemove: '삭제',
     petName: '이름',
     petNamePlaceholder: '예: 마루',
     petNameEn: '영문이름',
@@ -156,6 +158,8 @@ const messages = {
     petCount: 'Pets',
     petInfo: 'Pet Information',
     petInfoN: (n: number) => `Pet · ${n}`,
+    petAdd: 'Add a pet',
+    petRemove: 'Remove',
     petName: 'Name',
     petNamePlaceholder: 'e.g. 마루',
     petNameEn: 'English Name',
@@ -570,19 +574,18 @@ export default function ApplyPage() {
       }).embed(addrModalRef.current)
     }, 100)
   }
-  const [petCount, setPetCount] = useState(1)
   const [pets, setPets] = useState<PetForm[]>([emptyPet()])
+  const MAX_PETS = 5
 
   function updatePet(idx: number, field: keyof PetForm, value: PetForm[keyof PetForm]) {
     setPets(prev => prev.map((p, i) => i === idx ? { ...p, [field]: value } : p))
   }
 
-  function handlePetCountChange(count: number) {
-    setPetCount(count)
-    setPets(prev => {
-      if (count > prev.length) return [...prev, ...Array(count - prev.length).fill(null).map(() => emptyPet())]
-      return prev.slice(0, count)
-    })
+  function addPet() {
+    setPets(prev => (prev.length >= MAX_PETS ? prev : [...prev, emptyPet()]))
+  }
+  function removePet(idx: number) {
+    setPets(prev => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== idx)))
   }
   const [enWarnings, setEnWarnings] = useState<Record<string, string | null>>({})
   const composingRef = useRef(false)
@@ -950,31 +953,20 @@ export default function ApplyPage() {
           </section>
           )}
 
-          {/* Step 3 · 마리수 + 반려동물 (필수) */}
+          {/* Step 3 · 반려동물 (필수) — 한 마리부터, 필요하면 '추가' 버튼으로 더. */}
           {step === 3 && (<>
-          <section className={sectionCardClass}>
-            <div className="flex items-baseline gap-[10px] pb-3 border-b border-[rgba(42,38,32,0.12)] mb-1">
-              <h2 className={sectionTitleClass}>{m.sec3}</h2>
-            </div>
-            <FieldRow m={m} label={m.petCount} required>
-              <div className="flex gap-sm">
-                {[1, 2, 3, 4, 5].map(n => (
-                  <button key={n} type="button" onClick={() => handlePetCountChange(n)}
-                    className={`h-10 w-10 rounded-full border font-display text-sm tabular-nums transition-colors ${petCount === n ? chipButtonActive : chipButtonInactive}`}>
-                    {n}
-                  </button>
-                ))}
-              </div>
-            </FieldRow>
-          </section>
-
-          {/* 반려동물 · 필수 정보 */}
           {pets.map((pet, pi) => (
           <section key={pi} className={sectionCardClass}>
-            <div className="flex items-baseline gap-[10px] pb-3 border-b border-[rgba(42,38,32,0.12)] mb-1">
+            <div className="flex items-baseline justify-between gap-[10px] pb-3 border-b border-[rgba(42,38,32,0.12)] mb-1">
               <h2 className={sectionTitleClass}>
                 {pets.length > 1 ? m.petInfoN(pi + 1) : m.petInfo}
               </h2>
+              {pi > 0 && (
+                <button type="button" onClick={() => removePet(pi)}
+                  className="shrink-0 text-[12px] text-[#9A9286] transition-colors hover:text-[#C26A4A]">
+                  {m.petRemove}
+                </button>
+              )}
             </div>
             <PetFormSection
               part="required"
@@ -992,6 +984,12 @@ export default function ApplyPage() {
             />
           </section>
           ))}
+          {pets.length < MAX_PETS && (
+            <button type="button" onClick={addPet}
+              className="w-full rounded-xl border border-dashed border-[rgba(42,38,32,0.25)] bg-transparent py-3.5 text-center text-[14px] font-medium text-[#6B6457] transition-colors hover:bg-[#FBF7F1] hover:text-[#2A2620]">
+              + {m.petAdd}
+            </button>
+          )}
           </>)}
 
           {/* Step 4 · 추가 정보 (선택) */}
