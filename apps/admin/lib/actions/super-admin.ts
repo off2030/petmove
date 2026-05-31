@@ -376,6 +376,15 @@ export async function deleteOrg(input: {
       }
     }
 
+    // case_transfers (from/to_org_id 가 on delete RESTRICT) 정리 — 안 지우면 조직 DELETE 가
+    // FK 로 막혀 조용히 실패한다. 조직이 사라지면 그 조직과의 핸드오프 기록도 함께 제거
+    // (반대편 조직의 케이스 자체는 건드리지 않음 — transfer 행만 삭제).
+    const { error: trErr } = await admin
+      .from('case_transfers')
+      .delete()
+      .or(`from_org_id.eq.${input.orgId},to_org_id.eq.${input.orgId}`)
+    if (trErr) return { ok: false, error: trErr.message }
+
     const { error: delErr } = await admin
       .from('organizations')
       .delete()
