@@ -280,35 +280,30 @@ const pageInnerClass =
   'mx-auto w-full max-w-[680px] px-6 py-12 sm:px-8 lg:px-10'
 const sectionCardClass = 'rounded-xl bg-[#FBF7F1] p-lg'
 const sectionTitleClass =
-  'font-serif text-[15px] font-medium uppercase tracking-[0.4px] text-[#2A2620]'
+  'font-display text-[15px] font-medium uppercase tracking-[0.4px] text-[#2A2620]'
 // Field row: vertical container with top divider between rows (first row has no top border)
 const fieldRowClass = 'py-4 border-t border-[rgba(42,38,32,0.1)] first:border-t-0 first:pt-1'
 // Header row: label left, REQ badge + hint on right
 const fieldHeaderClass = 'flex items-baseline justify-between gap-3 mb-2'
-// Label: serif (Calm 톤)
 const labelClass =
-  'font-serif text-[15px] text-[#2A2620]'
+  'font-display text-[15px] text-[#2A2620]'
 // Right meta (REQ + hint) — stacked horizontally, right-aligned
 const fieldMetaClass = 'flex items-baseline gap-2 shrink-0'
 // 필수 표시 — 작은 badge, Stone gold
 const reqIndicatorClass =
-  'font-serif italic text-[12px] text-[#B89968]'
+  'font-display text-[12px] text-[#B89968]'
 // Optional hint text on the right of header
 const hintRightClass =
-  'font-serif italic text-[12px] text-[#9A9286]'
+  'font-display text-[12px] text-[#9A9286]'
 // Borderless input — no box, relies on row divider
-// 공통 placeholder: serif italic, smaller, muted
 const placeholderClass =
-  'placeholder:font-serif placeholder:italic placeholder:font-normal placeholder:text-[14px] placeholder:text-[#9A9286]/70'
-// 한국어 입력 — 홈화면 동물이름 서체
+  'placeholder:font-normal placeholder:text-[14px] placeholder:text-[#9A9286]/70'
 const inputClass =
-  `w-full h-10 bg-transparent px-0 font-serif font-semibold text-[17px] leading-tight text-[#2A2620] ${placeholderClass} focus:outline-none transition-colors`
-// 영어 입력 — 상세페이지 품종 영어 italic 서체
+  `w-full h-10 bg-transparent px-0 font-display font-semibold text-[17px] leading-tight text-[#2A2620] ${placeholderClass} focus:outline-none transition-colors`
 const inputEnClass =
-  `w-full h-10 bg-transparent px-0 font-serif italic text-[17px] text-[#2A2620] ${placeholderClass} focus:outline-none transition-colors`
-// 숫자/날짜 입력 — 상세페이지 mono 서체
+  `w-full h-10 bg-transparent px-0 font-display text-[17px] text-[#2A2620] ${placeholderClass} focus:outline-none transition-colors`
 const numericInputClass =
-  `w-full h-10 bg-transparent px-0 font-mono text-[15px] tracking-[0.3px] tabular-nums text-[#2A2620] ${placeholderClass} focus:outline-none transition-colors`
+  `w-full h-10 bg-transparent px-0 font-display text-[15px] tracking-[0.3px] tabular-nums text-[#2A2620] ${placeholderClass} focus:outline-none transition-colors`
 const chipButtonActive =
   'border-[#2A2620] bg-[#2A2620] text-[#FBF7F1]'
 const chipButtonInactive =
@@ -372,7 +367,7 @@ function FieldRow({
         <span className={fieldMetaClass}>
           {hint && !missing && <span className={hintRightClass}>{hint}</span>}
           {missing ? (
-            <span className="font-serif italic text-[12px] text-[#B89968]">{m.fillRequest}</span>
+            <span className="font-display text-[12px] text-[#B89968]">{m.fillRequest}</span>
           ) : (
             required && <span className={reqIndicatorClass}>{m.required}</span>
           )}
@@ -412,7 +407,7 @@ function StepProgress({ step, total }: { step: number; total: number }) {
           />
         ))}
       </div>
-      <span className="shrink-0 font-mono text-[11px] tracking-[1.3px] tabular-nums text-[#9A9286]">
+      <span className="shrink-0 font-display text-[11px] tracking-[1.3px] tabular-nums text-[#9A9286]">
         {step} / {total}
       </span>
     </div>
@@ -723,7 +718,7 @@ export default function ApplyPage() {
       <div className={pageInnerClass}>
         {/* Header — lang toggle + step progress */}
         <header className="mb-8">
-          <div className="mb-5 flex items-baseline justify-end gap-2 font-mono text-[11px] uppercase tracking-[1.5px]">
+          <div className="mb-5 flex items-baseline justify-end gap-2 font-display text-[11px] uppercase tracking-[1.5px]">
             <button
               type="button"
               onClick={() => setLang('ko')}
@@ -799,8 +794,8 @@ export default function ApplyPage() {
                   return (
                     <button type="button" onClick={() => { setDestination(''); setDestQuery('') }}
                       className="w-full flex items-baseline justify-between text-left h-10 text-[#2A2620] hover:opacity-70 transition-opacity">
-                      <span className="font-serif font-semibold text-[17px] leading-tight">{primary}</span>
-                      <span className="ml-2 font-serif italic text-[15px] text-[#9A9286]">{secondary}</span>
+                      <span className="font-display font-semibold text-[17px] leading-tight">{primary}</span>
+                      <span className="ml-2 font-display text-[15px] text-[#9A9286]">{secondary}</span>
                     </button>
                   )
                 })()
@@ -836,7 +831,7 @@ export default function ApplyPage() {
                             <li key={d.ko}>
                               <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setDestination(d.ko); setDestQuery(''); setDestHighlight(-1) }}
                                 className={cn(dropdownRowClass, i === destHighlight && dropdownRowActiveClass)}>
-                                {primary} <span className="font-serif italic text-[#9A9286] ml-1">{secondary}</span>
+                                {primary} <span className="font-display text-[#9A9286] ml-1">{secondary}</span>
                               </button>
                             </li>
                           )
@@ -900,7 +895,7 @@ export default function ApplyPage() {
                   placeholder={m.addressClickToSearch} className={inputClass + ' flex-1 cursor-pointer'} readOnly
                   onFocus={() => { if (!addressKr) handleAddrSearch() }} />
                 <button type="button" onClick={handleAddrSearch}
-                  className="shrink-0 h-8 rounded-full border border-[rgba(42,38,32,0.12)] bg-transparent px-3 font-serif italic text-[12px] text-[#2A2620] transition-colors hover:bg-[#F0E8DC]">
+                  className="shrink-0 h-8 rounded-full border border-[rgba(42,38,32,0.12)] bg-transparent px-3 font-display text-[12px] text-[#2A2620] transition-colors hover:bg-[#F0E8DC]">
                   {m.addressSearch}
                 </button>
               </div>
@@ -910,7 +905,7 @@ export default function ApplyPage() {
                   className={inputClass + ' mt-1'} />
               )}
               {addressEn && (
-                <p className="mt-1 font-serif italic text-[15px] text-[#2A2620]">{addressEn}</p>
+                <p className="mt-1 font-display text-[15px] text-[#2A2620]">{addressEn}</p>
               )}
             </FieldRow>
             <FieldRow m={m} label={m.email} required fieldKey="email" missing={missing.has('email')}>
@@ -932,7 +927,7 @@ export default function ApplyPage() {
               <div className="flex gap-sm">
                 {[1, 2, 3, 4, 5].map(n => (
                   <button key={n} type="button" onClick={() => handlePetCountChange(n)}
-                    className={`h-10 w-10 rounded-full border font-mono text-sm tabular-nums transition-colors ${petCount === n ? chipButtonActive : chipButtonInactive}`}>
+                    className={`h-10 w-10 rounded-full border font-display text-sm tabular-nums transition-colors ${petCount === n ? chipButtonActive : chipButtonInactive}`}>
                     {n}
                   </button>
                 ))}
@@ -971,8 +966,8 @@ export default function ApplyPage() {
           {/* Step 4 · 추가 정보 (선택) */}
           {step === 4 && (<>
           <div className="px-1 pb-1">
-            <p className="font-serif text-[15px] text-[#2A2620]">{m.optionalStepTitle}</p>
-            <p className="mt-1 font-serif italic text-[13px] text-[#9A9286]/80">{m.optionalHint}</p>
+            <p className="font-display text-[15px] text-[#2A2620]">{m.optionalStepTitle}</p>
+            <p className="mt-1 font-display text-[13px] text-[#9A9286]/80">{m.optionalHint}</p>
           </div>
           {pets.map((pet, pi) => (
           <section key={pi} className={sectionCardClass}>
@@ -1027,7 +1022,7 @@ export default function ApplyPage() {
           </div>
 
           {step === TOTAL_STEPS && (
-            <p className="text-center font-mono text-[11px] uppercase tracking-[1.5px] text-[#9A9286] pb-10">
+            <p className="text-center font-display text-[11px] uppercase tracking-[1.5px] text-[#9A9286] pb-10">
               {m.submitFooter}
             </p>
           )}
@@ -1039,7 +1034,7 @@ export default function ApplyPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2A2620]/40 backdrop-blur-[2px]" onClick={() => setShowAddrModal(false)}>
           <div className="relative mx-4 w-full max-w-lg overflow-hidden rounded-xl border border-[rgba(42,38,32,0.12)] bg-[#FBF7F1] shadow-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-md py-3 border-b border-[rgba(42,38,32,0.12)]">
-              <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-[#9A9286]">{m.addressModalTitle}</span>
+              <span className="font-display text-[12px] uppercase tracking-[1.3px] text-[#9A9286]">{m.addressModalTitle}</span>
               <button type="button" onClick={() => setShowAddrModal(false)}
                 className="text-[#9A9286] hover:text-[#2A2620] text-lg leading-none">&times;</button>
             </div>
@@ -1128,8 +1123,8 @@ function PetFormSection({ part, pet, index, updatePet, enWarnings, composingRef,
             return (
               <button type="button" onClick={() => { updatePet(index, 'breed', ''); updatePet(index, 'breedEn', ''); updatePet(index, 'breedQuery', '') }}
                 className="w-full flex items-baseline justify-between text-left h-10 text-[#2A2620] hover:opacity-70 transition-opacity">
-                <span className="font-serif font-semibold text-[17px] leading-tight">{primary}</span>
-                <span className="ml-2 font-serif italic text-[15px] text-[#9A9286]">{secondary}</span>
+                <span className="font-display font-semibold text-[17px] leading-tight">{primary}</span>
+                <span className="ml-2 font-display text-[15px] text-[#9A9286]">{secondary}</span>
               </button>
             )
           })()
@@ -1158,7 +1153,7 @@ function PetFormSection({ part, pet, index, updatePet, enWarnings, composingRef,
                     <li key={`${b.type}:${b.en}`}>
                       <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { updatePet(index, 'breed', b.ko); updatePet(index, 'breedEn', b.en); updatePet(index, 'breedQuery', ''); setBreedHighlight(-1) }}
                         className={cn(dropdownRowClass, i === breedHighlight && dropdownRowActiveClass)}>
-                        {primary} <span className="font-serif italic text-[#9A9286] ml-1">{secondary}</span>
+                        {primary} <span className="font-display text-[#9A9286] ml-1">{secondary}</span>
                       </button>
                     </li>
                   )
@@ -1166,7 +1161,7 @@ function PetFormSection({ part, pet, index, updatePet, enWarnings, composingRef,
               </ul>
             )}
             {pet.breedQuery && filteredBreeds.length === 0 && (
-              <p className="mt-1 font-serif italic text-[12px] text-[#9A9286]">{m.noResults}</p>
+              <p className="mt-1 font-display text-[12px] text-[#9A9286]">{m.noResults}</p>
             )}
           </div>
         )}
