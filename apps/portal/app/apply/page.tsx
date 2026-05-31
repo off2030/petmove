@@ -1069,7 +1069,7 @@ export default function ApplyPage() {
 
       {/* Daum Postcode Modal */}
       {showAddrModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2A2620]/40 backdrop-blur-[2px]" onClick={() => setShowAddrModal(false)}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-[6vh] bg-[#2A2620]/40 backdrop-blur-[2px] sm:items-center sm:py-0 sm:overflow-y-visible" onClick={() => setShowAddrModal(false)}>
           <div className="relative mx-4 w-full max-w-lg overflow-hidden rounded-xl border border-[rgba(42,38,32,0.12)] bg-[#FBF7F1] shadow-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-md py-3 border-b border-[rgba(42,38,32,0.12)]">
               <span className="font-display text-[12px] uppercase tracking-[1.3px] text-[#9A9286]">{m.addressModalTitle}</span>
