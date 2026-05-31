@@ -69,12 +69,15 @@ function EmptyState() {
     <div
       className="pm-fade-up"
       style={{
-        padding: '48px 24px',
+        // main 본문 영역(100dvh − 상단 safe+48 − 하단 88)을 채워 세로 중앙 정렬.
+        minHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - 48px - 88px)',
+        padding: '24px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
+        justifyContent: 'center',
         textAlign: 'center',
-        gap: 14,
+        gap: 18,
       }}
     >
       <h1
@@ -84,7 +87,7 @@ function EmptyState() {
           fontWeight: 500,
           letterSpacing: '-0.01em',
           lineHeight: 1.4,
-          margin: '40px 0 0',
+          margin: 0,
           color: '#2A2620',
         }}
       >
@@ -93,7 +96,6 @@ function EmptyState() {
       <Link
         href="/apply"
         style={{
-          marginTop: 12,
           padding: '11px 22px',
           borderRadius: 999,
           background: '#B89968',
