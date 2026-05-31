@@ -7,7 +7,6 @@ import {
   updateCompanyInfo,
   resetCompanyInfo,
   getOrgType,
-  updateOrgType,
   hasCompanyInfoDefault,
   type OrgType,
 } from '@/lib/actions/company-info'
@@ -167,9 +166,13 @@ export function CompanySection({
   const confirm = useConfirm()
   const [info, setInfo] = useState<VetInfo | null>(initialInfo)
   const [orgType, setOrgType] = useState<OrgType | null>(initialOrgType)
+  // 동물병원/운송회사 탭 — 유형 '선택'이 아니라 보기·입력 전환(둘 다 입력 가능).
+  // org_type 은 저장 시 채운 정보로 자동 판정(서버). 여긴 어느 쪽 필드를 보여줄지만 결정.
+  const [viewTab, setViewTab] = useState<'hospital' | 'transport'>(
+    initialOrgType === 'transport' ? 'transport' : 'hospital',
+  )
   const [drafts, setDrafts] = useState<Partial<Record<VetInfoKey, string>>>({})
   const [savingKey, setSavingKey] = useState<VetInfoKey | null>(null)
-  const [savingOrgType, setSavingOrgType] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [hasDefault, setHasDefault] = useState(false)
@@ -368,7 +371,7 @@ export function CompanySection({
    * transport → transport_custom_fields
    */
   const customFieldsKey: 'custom_fields' | 'transport_custom_fields' =
-    orgType === 'transport' ? 'transport_custom_fields' : 'custom_fields'
+    viewTab === 'transport' ? 'transport_custom_fields' : 'custom_fields'
 
   function getCustomFields(source: VetInfo | null): CustomField[] {
     if (!source) return []
@@ -412,20 +415,6 @@ export function CompanySection({
     saveCustomFields(next)
   }
 
-  async function handleOrgTypeChange(next: OrgType) {
-    if (next === orgType) return
-    setSavingOrgType(true)
-    setError(null)
-    const r = await updateOrgType(next)
-    setSavingOrgType(false)
-    if (r.ok) {
-      setOrgType(r.org_type)
-      setLastSaved(new Date())
-    } else {
-      setError(r.error)
-    }
-  }
-
   async function handleReset() {
     if (!await confirm({ message: '회사 정보를 기본값으로 되돌릴까요?', okLabel: '되돌리기' })) return
     setError(null)
@@ -447,50 +436,40 @@ export function CompanySection({
     )
   }
 
-  const isTransport = orgType === 'transport'
-  const isBoth = orgType === 'both'
+  const isTransport = viewTab === 'transport'
   // 발급자(본인) 키 — 수의사(hospital)와 담당자(transport)는 독립 필드(연동 X).
   const issuerKeys = isTransport
     ? { ko: 'transport_name_ko', first: 'transport_name_first_en', last: 'transport_name_last_en', mobile: 'transport_mobile_phone' } as const
     : { ko: 'name_ko', first: 'name_first_en', last: 'name_last_en', mobile: 'mobile_phone' } as const
-  // 'both' = 동물병원 + 운송회사 → 양쪽 정보 섹션을 모두 노출. (발급자는 자기 수의사 — hospital 동작)
-  const groups: readonly string[] = isBoth
-    ? [...HOSPITAL_GROUPS, ...TRANSPORT_GROUPS]
-    : isTransport ? TRANSPORT_GROUPS : HOSPITAL_GROUPS
-  const fields: FieldDef[] = isBoth
-    ? [...HOSPITAL_FIELDS, ...TRANSPORT_FIELDS]
-    : isTransport ? TRANSPORT_FIELDS : HOSPITAL_FIELDS
+  const groups: readonly string[] = isTransport ? TRANSPORT_GROUPS : HOSPITAL_GROUPS
+  const fields: FieldDef[] = isTransport ? TRANSPORT_FIELDS : HOSPITAL_FIELDS
 
-  const title = isBoth ? '병원 + 운송 정보' : isTransport ? '운송회사 정보' : '병원 정보'
+  const title = '조직정보'
 
   return (
     <SettingsShell>
       <SettingsSection title={title}>
-        {/* Org type — subtle segmented control (admin only) */}
-        {isAdmin && (
-          <section className="mb-xl">
-            <SectionLabel className="mb-2">조직</SectionLabel>
-            <div className="border-t border-border/80 pt-md flex items-center gap-xs">
-              {(['hospital', 'transport', 'both'] as const).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => handleOrgTypeChange(t)}
-                  disabled={savingOrgType}
-                  className={cn(
-                    'h-8 px-md font-serif text-[14px] rounded-full border transition-colors',
-                    orgType === t
-                      ? 'border-primary/50 bg-primary/10 text-primary'
-                      : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
-                    savingOrgType && 'opacity-60',
-                  )}
-                >
-                  {t === 'hospital' ? '동물병원' : t === 'transport' ? '운송회사' : '동물병원 + 운송회사'}
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
+        {/* 동물병원/운송회사 — 보기·입력 전환 탭. 유형 '선택' 아님(유형은 저장 시 자동 판정).
+            해당하는 쪽만 채우거나 둘 다 채우면 됨. */}
+        <section className="mb-lg">
+          <div className="flex items-center gap-xs">
+            {(['hospital', 'transport'] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setViewTab(t)}
+                className={cn(
+                  'h-9 px-lg font-serif text-[14px] rounded-full border transition-colors',
+                  viewTab === t
+                    ? 'border-primary/50 bg-primary/10 text-primary'
+                    : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+                )}
+              >
+                {t === 'hospital' ? '동물병원' : '운송회사'}
+              </button>
+            ))}
+          </div>
+        </section>
 
         {!isAdmin && (
           <p className="mb-xl font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
