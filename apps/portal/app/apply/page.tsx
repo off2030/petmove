@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { cn } from '@petmove/ui'
 import { cardContainer } from '@petmove/ui'
 import { DateTextField } from '@petmove/ui'
@@ -88,11 +89,6 @@ const messages = {
     submit: '정보 등록',
     submitFooter: '등록하신 정보는 서류 발급에 사용됩니다',
     addressModalTitle: '주소 검색',
-    completed: 'Completed',
-    doneTitle: '신청이 접수되었습니다',
-    doneBody1: '이제 일정 화면에서 진행 상황을 확인하실 수 있어요.',
-    doneBody2: '감사합니다.',
-    newApply: '새 신청 작성',
     fillRequest: '작성 요청',
     phoneFormatError: '전화번호는 010-1234-5678 형식으로 입력해주세요.',
     microchipFormatErrorPrefixSingle: '',
@@ -192,11 +188,6 @@ const messages = {
     submit: 'Submit',
     submitFooter: 'Your information will be used to prepare documents',
     addressModalTitle: 'Address search',
-    completed: 'Completed',
-    doneTitle: 'Application received',
-    doneBody1: 'You can now track your progress on the journey screen.',
-    doneBody2: 'Thank you.',
-    newApply: 'New application',
     fillRequest: 'Required',
     phoneFormatError: 'Phone must be in 010-1234-5678 format.',
     microchipFormatErrorPrefixSingle: '',
@@ -395,9 +386,9 @@ function ColorSwatch({ hex, selected }: { hex: string; selected?: boolean }) {
 }
 
 export default function ApplyPage() {
+  const router = useRouter()
   const [lang, setLang] = useState<Lang>('ko')
   const m = messages[lang]
-  const [step, setStep] = useState(0) // 0=form, 1=done
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [missing, setMissing] = useState<Set<string>>(() => new Set())
@@ -644,40 +635,13 @@ export default function ApplyPage() {
       })
       if (!result.ok) { setError(result.error); allOk = false; break }
     }
-    setSubmitting(false)
 
     if (allOk) {
-      setStep(1)
+      // 신청 직후 본인 케이스 화면으로. /cases 가 1건이면 그 케이스 /journey 로 자동 redirect.
+      router.push('/cases')
+    } else {
+      setSubmitting(false)
     }
-  }
-
-  if (step === 1) {
-    return (
-      <div className={cn(pageShellClass, 'flex items-center justify-center px-4')}>
-        <div className="mx-auto w-full max-w-md text-center py-20">
-          <p className="font-mono text-[11px] uppercase tracking-[2px] text-muted-foreground mb-4">{m.completed}</p>
-          <h1 className="font-serif text-2xl font-medium tracking-tight text-foreground mb-3">
-            {m.doneTitle}
-          </h1>
-          <p className="text-[15px] leading-relaxed text-muted-foreground mb-10">
-            {m.doneBody1}<br />
-            {m.doneBody2}
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setStep(0)
-              setDestination(''); setDestQuery(''); setTripType('round')
-              setCustomerName(''); setCustomerLastNameEn(''); setCustomerFirstNameEn(''); setPhone(''); setAddressKr(''); setAddressDetail(''); setAddressEn(''); setEmail('')
-              setPetCount(1); setPets([emptyPet()])
-            }}
-            className="font-mono text-[12px] uppercase tracking-[1.5px] text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {m.newApply}
-          </button>
-        </div>
-      </div>
-    )
   }
 
   return (
