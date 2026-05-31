@@ -522,7 +522,6 @@ export default function ApplyPage() {
   const [addressZipcode, setAddressZipcode] = useState('')
   const [addressSido, setAddressSido] = useState('')
   const [addressSigungu, setAddressSigungu] = useState('')
-  const [email, setEmail] = useState('')
 
   // Daum Postcode
   const [scriptLoaded, setScriptLoaded] = useState(false)
@@ -644,7 +643,6 @@ export default function ApplyPage() {
       if (!customerLastNameEn.trim() || !customerFirstNameEn.trim()) miss.add('customerNameEn')
       if (!phone.trim()) miss.add('phone')
       if (!addressKr.trim()) miss.add('addressKr')
-      if (!email.trim()) miss.add('email')
       if (!miss.has('phone') && !/^010\d{8}$/.test(phone)) {
         formatError = m.phoneFormatError
         miss.add('phone')
@@ -764,7 +762,6 @@ export default function ApplyPage() {
         address_zipcode: addressZipcode,
         address_sido: addressSido,
         address_sigungu: addressSigungu,
-        email: email.trim(),
         pet_name: p.petName.trim(),
         pet_name_en: capitalize(p.petNameEn.trim()),
         birth_date: p.birthDate,
@@ -949,12 +946,6 @@ export default function ApplyPage() {
               {addressEn && (
                 <p className="mt-1 font-display text-[15px] text-[#2A2620]">{addressEn}</p>
               )}
-            </FieldRow>
-            <FieldRow m={m} label={m.email} required fieldKey="email" missing={missing.has('email')}>
-              <input type="email" inputMode="email" autoComplete="email" value={email}
-                onChange={(e) => setEmail(e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣A-Z]/g, (c) => c >= 'A' && c <= 'Z' ? c.toLowerCase() : ''))}
-                onCompositionEnd={(e) => setEmail((e.target as HTMLInputElement).value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '').toLowerCase())}
-                placeholder={m.emailPlaceholder} className={inputEnClass} />
             </FieldRow>
           </section>
           )}

@@ -26,7 +26,6 @@ interface ApplyInput {
   address_zipcode?: string
   address_sido?: string
   address_sigungu?: string
-  email: string
   // 3. 동물정보
   pet_name: string
   pet_name_en: string
@@ -56,7 +55,7 @@ export async function applyCase(input: ApplyInput): Promise<
     customer_last_name_en: input.customer_last_name_en,
     customer_first_name_en: input.customer_first_name_en,
     phone: input.phone,
-    email: input.email,
+    email: user.email ?? null,
     address_kr: input.address_kr,
     address_en: input.address_en || null,
     address_zipcode: input.address_zipcode || null,
