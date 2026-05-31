@@ -511,6 +511,8 @@ export function ApplyForm({ orgId, orgName, isPublic }: { orgId: string; orgName
   const [missing, setMissing] = useState<Set<string>>(() => new Set())
   const [step, setStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)  // 공개(조직별) 폼 제출 후 '접수 완료' 화면
+  // 마지막 단계 도착 시각 — 단계 전환 직후의 모바일 ghost click/더블탭으로 인한 자동 제출 방지.
+  const lastAdvanceRef = useRef(0)
 
   // Form state
   const [destination, setDestination] = useState('')
@@ -723,6 +725,7 @@ export function ApplyForm({ orgId, orgName, isPublic }: { orgId: string; orgName
     setMissing(new Set())
     setError(null)
     setStep((s) => Math.min(s + 1, TOTAL_STEPS))
+    lastAdvanceRef.current = Date.now()  // 방금 단계 전환 — 직후 자동 제출(ghost click) 차단용
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -737,6 +740,9 @@ export function ApplyForm({ orgId, orgName, isPublic }: { orgId: string; orgName
     e.preventDefault()
     // 마지막 단계가 아니면 Enter/submit 은 다음 단계로.
     if (step < TOTAL_STEPS) { goNext(); return }
+    // 막 마지막 단계로 전환된 직후(모바일 ghost click/더블탭)의 자동 제출 차단.
+    // 사용자가 '제출'을 의도적으로 누르려면 단계 전환 후 잠깐(>0.6s) 뒤여야 함.
+    if (Date.now() - lastAdvanceRef.current < 600) return
 
     // 최종 제출 — 전 단계 재검증, 이상 있으면 해당 단계로 이동.
     for (let s = 1; s <= TOTAL_STEPS; s++) {
