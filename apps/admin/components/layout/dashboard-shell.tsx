@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useCallback, useEffect, useMemo, useState, useTransition } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { MessageSquare } from 'lucide-react'
 import { TopBar, type TabId } from './topbar'
 import { useCases } from '@/components/cases/cases-context'
@@ -60,7 +60,6 @@ export function DashboardShell({
   initialConversations?: ConversationListItem[]
   initialConvSnapshots?: Record<string, ConversationMessagesResult>
 }) {
-  const router = useRouter()
   const pathname = usePathname()
   const [activeTab, setActiveTab] = useState<TabId>(() => pathToTab(pathname))
   // 'messages' 는 항상 프리마운트 — 첫 로그인 시점부터 백그라운드 prefetch 워커가
@@ -151,9 +150,12 @@ export function DashboardShell({
   const onEndImpersonation = useCallback(() => {
     startEndImpersonation(async () => {
       await clearImpersonation()
-      router.refresh()
+      // hard reload — 들어갈 때(onImpersonate)와 동일. DashboardShell 의 SPA 탭·케이스 목록
+      // 상태는 router.refresh() 로는 안 바뀌어 직영 목록이 그대로 남는다. 쿠키 해제 후
+      // 케이스 페이지를 SSR 로 재호출해 home org(로잔)으로 확실히 복귀.
+      window.location.href = '/cases'
     })
-  }, [router])
+  }, [])
 
   const { selectCase } = useCases()
 
