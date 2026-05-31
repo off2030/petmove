@@ -98,7 +98,6 @@ const messages = {
     microchipFormatErrorPrefixSingle: '',
     microchipFormatErrorPrefixN: (n: number) => `반려동물 ${n}: `,
     microchipFormatError: '마이크로칩 번호는 15자리 숫자여야 합니다.',
-    honeypotLabel: '웹사이트 (입력하지 마세요)',
     topLabels: {
       destination: '목적지',
       customerName: '성함',
@@ -203,7 +202,6 @@ const messages = {
     microchipFormatErrorPrefixSingle: '',
     microchipFormatErrorPrefixN: (n: number) => `Pet ${n}: `,
     microchipFormatError: 'Microchip number must be 15 digits.',
-    honeypotLabel: 'Website (do not fill)',
     topLabels: {
       destination: 'Destination',
       customerName: 'Korean Name',
@@ -396,10 +394,6 @@ function ColorSwatch({ hex, selected }: { hex: string; selected?: boolean }) {
   )
 }
 
-// Cloudflare Turnstile site key (publicly safe — secret 은 서버에만).
-// 미설정 시 위젯 미표시 + 서버측 검증도 skip.
-const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
-
 export default function ApplyPage() {
   const [lang, setLang] = useState<Lang>('ko')
   const m = messages[lang]
@@ -407,11 +401,6 @@ export default function ApplyPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [missing, setMissing] = useState<Set<string>>(() => new Set())
-  // honeypot — 사람 사용자에게는 invisible. 봇이 자동 채우면 서버 액션이 silent reject.
-  const [website, setWebsite] = useState('')
-  // Cloudflare Turnstile token (위젯 콜백에서 갱신).
-  const [turnstileToken, setTurnstileToken] = useState('')
-  const turnstileRef = useRef<HTMLDivElement>(null)
 
   // Form state
   const [destination, setDestination] = useState('')
@@ -453,46 +442,6 @@ export default function ApplyPage() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [showAddrModal])
-
-  // Cloudflare Turnstile 위젯 로드·렌더 — site key 설정 시에만.
-  // 스크립트가 이미 있으면 재사용 (다른 페이지에서 로드된 경우 등).
-  useEffect(() => {
-    if (!TURNSTILE_SITE_KEY || !turnstileRef.current) return
-    interface TurnstileGlobal {
-      render(el: HTMLElement, opts: {
-        sitekey: string
-        callback?: (token: string) => void
-        'expired-callback'?: () => void
-        'error-callback'?: () => void
-      }): string | undefined
-    }
-    type WindowWithTurnstile = Window & { turnstile?: TurnstileGlobal }
-    function tryRender() {
-      const w = window as WindowWithTurnstile
-      if (!w.turnstile || !turnstileRef.current) return false
-      w.turnstile.render(turnstileRef.current, {
-        sitekey: TURNSTILE_SITE_KEY!,
-        callback: (token) => setTurnstileToken(token),
-        'expired-callback': () => setTurnstileToken(''),
-        'error-callback': () => setTurnstileToken(''),
-      })
-      return true
-    }
-    if (tryRender()) return
-    const existing = document.querySelector<HTMLScriptElement>(
-      'script[src^="https://challenges.cloudflare.com/turnstile"]',
-    )
-    if (existing) {
-      existing.addEventListener('load', tryRender, { once: true })
-      return
-    }
-    const script = document.createElement('script')
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js'
-    script.async = true
-    script.defer = true
-    script.onload = tryRender
-    document.head.appendChild(script)
-  }, [])
 
   function handleAddrSearch() {
     if (!scriptLoaded || !window.daum?.Postcode) return
@@ -692,8 +641,6 @@ export default function ApplyPage() {
         })(),
         microchip_implant_date: p.microchipDate || undefined,
         rabies_date: p.rabiesDate || undefined,
-        website,
-        cf_turnstile_token: turnstileToken || undefined,
       })
       if (!result.ok) { setError(result.error); allOk = false; break }
     }
@@ -772,20 +719,6 @@ export default function ApplyPage() {
           </h1>
         </header>
 
-        {/* honeypot — 시각적으로 숨기되 display:none 은 피함 (일부 봇이 skip). */}
-        <div aria-hidden="true" style={{ position: 'absolute', left: '-10000px', top: 'auto', width: '1px', height: '1px', overflow: 'hidden' }}>
-          <label>
-            {m.honeypotLabel}
-            <input
-              type="text"
-              name="website"
-              tabIndex={-1}
-              autoComplete="off"
-              value={website}
-              onChange={(e) => setWebsite(e.target.value)}
-            />
-          </label>
-        </div>
         <form onSubmit={handleSubmit} className="space-y-md"
           onKeyDown={(e) => {
             if (e.key !== 'Enter') return
@@ -1004,14 +937,6 @@ export default function ApplyPage() {
           {error && (
             <div className={destructiveBoxClass}>
               {error}
-            </div>
-          )}
-
-          {/* Cloudflare Turnstile — 봇 차단. site key 미설정 시 div 자체는 남지만 빈 채로
-              표시되지 않고, 서버측 검증도 skip 된다 (dev 환경 호환). */}
-          {TURNSTILE_SITE_KEY && (
-            <div className="pt-2 flex justify-center">
-              <div ref={turnstileRef} />
             </div>
           )}
 
