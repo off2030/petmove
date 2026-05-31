@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@petmove/ui'
-import { cardContainer } from '@petmove/ui'
 import { DateTextField } from '@petmove/ui'
 import { applyCase } from '@/lib/actions/apply-case'
 import destsData from '@petmove/domain/data/destinations.json'
@@ -276,64 +275,64 @@ function emptyPet(): PetForm {
 }
 
 const pageShellClass =
-  'min-h-screen bg-background text-foreground'
+  'min-h-screen bg-[#F5EFE8] text-[#2A2620]'
 const pageInnerClass =
   'mx-auto w-full max-w-[680px] px-6 py-12 sm:px-8 lg:px-10'
-const sectionCardClass = cn(cardContainer, 'p-lg')
+const sectionCardClass = 'rounded-xl bg-[#FBF7F1] p-lg'
 const sectionTitleClass =
-  'font-serif text-[15px] font-medium uppercase tracking-[0.4px] text-foreground'
+  'font-serif text-[15px] font-medium uppercase tracking-[0.4px] text-[#2A2620]'
 // Field row: vertical container with top divider between rows (first row has no top border)
-const fieldRowClass = 'py-4 border-t border-border/80 first:border-t-0 first:pt-1'
+const fieldRowClass = 'py-4 border-t border-[rgba(42,38,32,0.1)] first:border-t-0 first:pt-1'
 // Header row: label left, REQ badge + hint on right
 const fieldHeaderClass = 'flex items-baseline justify-between gap-3 mb-2'
-// Label: serif (editorial tone)
+// Label: serif (Calm 톤)
 const labelClass =
-  'font-serif text-[15px] text-foreground'
+  'font-serif text-[15px] text-[#2A2620]'
 // Right meta (REQ + hint) — stacked horizontally, right-aligned
 const fieldMetaClass = 'flex items-baseline gap-2 shrink-0'
-// 필수 표시 — 작은 badge, terracotta
+// 필수 표시 — 작은 badge, Stone gold
 const reqIndicatorClass =
-  'font-serif italic text-[12px] text-primary'
+  'font-serif italic text-[12px] text-[#B89968]'
 // Optional hint text on the right of header
 const hintRightClass =
-  'font-serif italic text-[12px] text-muted-foreground/80'
+  'font-serif italic text-[12px] text-[#9A9286]'
 // Borderless input — no box, relies on row divider
 // 공통 placeholder: serif italic, smaller, muted
 const placeholderClass =
-  'placeholder:font-serif placeholder:italic placeholder:font-normal placeholder:text-[14px] placeholder:text-muted-foreground/50'
+  'placeholder:font-serif placeholder:italic placeholder:font-normal placeholder:text-[14px] placeholder:text-[#9A9286]/70'
 // 한국어 입력 — 홈화면 동물이름 서체
 const inputClass =
-  `w-full h-10 bg-transparent px-0 font-serif font-semibold text-[17px] leading-tight text-foreground ${placeholderClass} focus:outline-none transition-colors`
+  `w-full h-10 bg-transparent px-0 font-serif font-semibold text-[17px] leading-tight text-[#2A2620] ${placeholderClass} focus:outline-none transition-colors`
 // 영어 입력 — 상세페이지 품종 영어 italic 서체
 const inputEnClass =
-  `w-full h-10 bg-transparent px-0 font-serif italic text-[17px] text-foreground ${placeholderClass} focus:outline-none transition-colors`
+  `w-full h-10 bg-transparent px-0 font-serif italic text-[17px] text-[#2A2620] ${placeholderClass} focus:outline-none transition-colors`
 // 숫자/날짜 입력 — 상세페이지 mono 서체
 const numericInputClass =
-  `w-full h-10 bg-transparent px-0 font-mono text-[15px] tracking-[0.3px] tabular-nums text-foreground ${placeholderClass} focus:outline-none transition-colors`
+  `w-full h-10 bg-transparent px-0 font-mono text-[15px] tracking-[0.3px] tabular-nums text-[#2A2620] ${placeholderClass} focus:outline-none transition-colors`
 const chipButtonActive =
-  'border-foreground bg-foreground text-background'
+  'border-[#2A2620] bg-[#2A2620] text-[#FBF7F1]'
 const chipButtonInactive =
-  'border-border bg-card text-foreground hover:bg-accent'
+  'border-[rgba(42,38,32,0.14)] bg-[#FBF7F1] text-[#2A2620] hover:bg-[#F0E8DC]'
 const dropdownClass =
-  'mt-1 rounded-md border border-border/80 bg-popover shadow-sm'
+  'mt-1 rounded-md border border-[rgba(42,38,32,0.12)] bg-[#FBF7F1] shadow-sm'
 const dropdownRowClass =
-  'w-full text-left px-md py-2.5 text-[15px] transition-colors hover:bg-accent'
-const dropdownRowActiveClass = 'bg-accent'
+  'w-full text-left px-md py-2.5 text-[15px] transition-colors hover:bg-[#F0E8DC]'
+const dropdownRowActiveClass = 'bg-[#F0E8DC]'
 const destructiveBoxClass =
-  'rounded-md border border-destructive/20 bg-destructive/10 px-md py-2.5 text-sm text-destructive'
+  'rounded-md border border-[#C26A4A]/30 bg-[#C26A4A]/10 px-md py-2.5 text-sm text-[#C26A4A]'
 const primaryButtonClass = cn(
   'inline-flex items-center justify-center rounded-md font-medium transition-colors',
-  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#B89968]/40',
   'disabled:pointer-events-none disabled:opacity-50 select-none',
   'w-full h-12 text-base tracking-[0.1px]',
-  'bg-primary text-primary-foreground hover:bg-primary/90',
+  'bg-[#B89968] text-[#FBF7F1] hover:bg-[#A98B5E]',
 )
 const secondaryButtonClass = cn(
   'inline-flex items-center justify-center rounded-md font-medium transition-colors',
-  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#B89968]/40',
   'disabled:pointer-events-none disabled:opacity-50 select-none',
   'h-12 px-6 text-base tracking-[0.1px]',
-  'border border-border bg-card text-foreground hover:bg-accent',
+  'border border-[rgba(42,38,32,0.16)] bg-[#FBF7F1] text-[#2A2620] hover:bg-[#F0E8DC]',
 )
 
 const TOTAL_STEPS = 4
@@ -362,18 +361,18 @@ function FieldRow({
 }) {
   return (
     <div
-      className={cn(fieldRowClass, className, missing && 'relative pl-3 -ml-3 bg-primary/5 rounded-sm')}
+      className={cn(fieldRowClass, className, missing && 'relative pl-3 -ml-3 bg-[#B89968]/10 rounded-sm')}
       data-field-key={fieldKey}
     >
       {missing && (
-        <span aria-hidden className="absolute left-0 top-2 bottom-2 w-[3px] bg-primary rounded" />
+        <span aria-hidden className="absolute left-0 top-2 bottom-2 w-[3px] bg-[#B89968] rounded" />
       )}
       <div className={fieldHeaderClass}>
         <span className={labelClass}>{label}</span>
         <span className={fieldMetaClass}>
           {hint && !missing && <span className={hintRightClass}>{hint}</span>}
           {missing ? (
-            <span className="font-serif italic text-[12px] text-primary">{m.fillRequest}</span>
+            <span className="font-serif italic text-[12px] text-[#B89968]">{m.fillRequest}</span>
           ) : (
             required && <span className={reqIndicatorClass}>{m.required}</span>
           )}
@@ -408,12 +407,12 @@ function StepProgress({ step, total }: { step: number; total: number }) {
             key={i}
             className={cn(
               'h-1 flex-1 rounded-full transition-colors',
-              i < step ? 'bg-primary' : 'bg-border',
+              i < step ? 'bg-[#B89968]' : 'bg-[rgba(42,38,32,0.14)]',
             )}
           />
         ))}
       </div>
-      <span className="shrink-0 font-mono text-[11px] tracking-[1.3px] tabular-nums text-muted-foreground">
+      <span className="shrink-0 font-mono text-[11px] tracking-[1.3px] tabular-nums text-[#9A9286]">
         {step} / {total}
       </span>
     </div>
@@ -730,19 +729,19 @@ export default function ApplyPage() {
               onClick={() => setLang('ko')}
               className={cn(
                 'transition-colors',
-                lang === 'ko' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                lang === 'ko' ? 'text-[#2A2620]' : 'text-[#9A9286] hover:text-[#2A2620]',
               )}
               aria-pressed={lang === 'ko'}
             >
               한국어
             </button>
-            <span className="text-muted-foreground/60">·</span>
+            <span className="text-[#9A9286]/60">·</span>
             <button
               type="button"
               onClick={() => setLang('en')}
               className={cn(
                 'transition-colors',
-                lang === 'en' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                lang === 'en' ? 'text-[#2A2620]' : 'text-[#9A9286] hover:text-[#2A2620]',
               )}
               aria-pressed={lang === 'en'}
             >
@@ -788,7 +787,7 @@ export default function ApplyPage() {
           {/* Step 1 · 목적지 */}
           {step === 1 && (
           <section className={sectionCardClass}>
-            <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/80 mb-1">
+            <div className="flex items-baseline gap-[10px] pb-3 border-b border-[rgba(42,38,32,0.12)] mb-1">
               <h2 className={sectionTitleClass}>{m.sec1}</h2>
             </div>
             <FieldRow m={m} label={m.destination} required hint={m.searchHint} fieldKey="destination" missing={missing.has('destination')}>
@@ -799,9 +798,9 @@ export default function ApplyPage() {
                   const secondary = lang === 'en' ? (d?.ko ?? '') : (d?.en ?? '')
                   return (
                     <button type="button" onClick={() => { setDestination(''); setDestQuery('') }}
-                      className="w-full flex items-baseline justify-between text-left h-10 text-foreground hover:opacity-70 transition-opacity">
+                      className="w-full flex items-baseline justify-between text-left h-10 text-[#2A2620] hover:opacity-70 transition-opacity">
                       <span className="font-serif font-semibold text-[17px] leading-tight">{primary}</span>
-                      <span className="ml-2 font-serif italic text-[15px] text-muted-foreground">{secondary}</span>
+                      <span className="ml-2 font-serif italic text-[15px] text-[#9A9286]">{secondary}</span>
                     </button>
                   )
                 })()
@@ -828,7 +827,7 @@ export default function ApplyPage() {
                   {destQuery && (
                     <ul className={cn(dropdownClass, 'absolute left-0 right-0 top-full z-20 max-h-48 overflow-y-auto')}>
                       {filteredDests.length === 0 ? (
-                        <li className="px-md py-3 text-sm text-muted-foreground">{m.noResults}</li>
+                        <li className="px-md py-3 text-sm text-[#9A9286]">{m.noResults}</li>
                       ) : (
                         filteredDests.slice(0, 10).map((d, i) => {
                           const primary = lang === 'en' ? d.en : d.ko
@@ -837,7 +836,7 @@ export default function ApplyPage() {
                             <li key={d.ko}>
                               <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setDestination(d.ko); setDestQuery(''); setDestHighlight(-1) }}
                                 className={cn(dropdownRowClass, i === destHighlight && dropdownRowActiveClass)}>
-                                {primary} <span className="font-serif italic text-muted-foreground ml-1">{secondary}</span>
+                                {primary} <span className="font-serif italic text-[#9A9286] ml-1">{secondary}</span>
                               </button>
                             </li>
                           )
@@ -866,7 +865,7 @@ export default function ApplyPage() {
           {/* Step 2 · 소유주 */}
           {step === 2 && (
           <section className={sectionCardClass}>
-            <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/80 mb-1">
+            <div className="flex items-baseline gap-[10px] pb-3 border-b border-[rgba(42,38,32,0.12)] mb-1">
               <h2 className={sectionTitleClass}>{m.sec2}</h2>
             </div>
             <FieldRow m={m} label={m.name} required fieldKey="customerName" missing={missing.has('customerName')}>
@@ -886,7 +885,7 @@ export default function ApplyPage() {
                   onCompositionEnd={(e) => handleEnCompositionEnd(e, setCustomerFirstNameEn, 'firstNameEn')}
                   placeholder={m.firstNameEnPlaceholder} className={inputEnClass + ' flex-1'} />
               </div>
-              {(enWarnings.lastNameEn || enWarnings.firstNameEn) && <p className="mt-1.5 text-xs text-destructive">{enWarnings.lastNameEn || enWarnings.firstNameEn}</p>}
+              {(enWarnings.lastNameEn || enWarnings.firstNameEn) && <p className="mt-1.5 text-xs text-[#C26A4A]">{enWarnings.lastNameEn || enWarnings.firstNameEn}</p>}
             </FieldRow>
             <FieldRow m={m} label={m.phone} required fieldKey="phone" missing={missing.has('phone')}>
               <input type="tel" inputMode="numeric" autoComplete="tel"
@@ -901,7 +900,7 @@ export default function ApplyPage() {
                   placeholder={m.addressClickToSearch} className={inputClass + ' flex-1 cursor-pointer'} readOnly
                   onFocus={() => { if (!addressKr) handleAddrSearch() }} />
                 <button type="button" onClick={handleAddrSearch}
-                  className="shrink-0 h-8 rounded-full border border-border/80 bg-transparent px-3 font-serif italic text-[12px] text-foreground transition-colors hover:bg-accent">
+                  className="shrink-0 h-8 rounded-full border border-[rgba(42,38,32,0.12)] bg-transparent px-3 font-serif italic text-[12px] text-[#2A2620] transition-colors hover:bg-[#F0E8DC]">
                   {m.addressSearch}
                 </button>
               </div>
@@ -911,7 +910,7 @@ export default function ApplyPage() {
                   className={inputClass + ' mt-1'} />
               )}
               {addressEn && (
-                <p className="mt-1 font-serif italic text-[15px] text-foreground">{addressEn}</p>
+                <p className="mt-1 font-serif italic text-[15px] text-[#2A2620]">{addressEn}</p>
               )}
             </FieldRow>
             <FieldRow m={m} label={m.email} required fieldKey="email" missing={missing.has('email')}>
@@ -926,7 +925,7 @@ export default function ApplyPage() {
           {/* Step 3 · 마리수 + 반려동물 (필수) */}
           {step === 3 && (<>
           <section className={sectionCardClass}>
-            <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/80 mb-1">
+            <div className="flex items-baseline gap-[10px] pb-3 border-b border-[rgba(42,38,32,0.12)] mb-1">
               <h2 className={sectionTitleClass}>{m.sec3}</h2>
             </div>
             <FieldRow m={m} label={m.petCount} required>
@@ -944,7 +943,7 @@ export default function ApplyPage() {
           {/* 반려동물 · 필수 정보 */}
           {pets.map((pet, pi) => (
           <section key={pi} className={sectionCardClass}>
-            <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/80 mb-1">
+            <div className="flex items-baseline gap-[10px] pb-3 border-b border-[rgba(42,38,32,0.12)] mb-1">
               <h2 className={sectionTitleClass}>
                 {pets.length > 1 ? m.petInfoN(pi + 1) : m.petInfo}
               </h2>
@@ -972,13 +971,13 @@ export default function ApplyPage() {
           {/* Step 4 · 추가 정보 (선택) */}
           {step === 4 && (<>
           <div className="px-1 pb-1">
-            <p className="font-serif text-[15px] text-foreground">{m.optionalStepTitle}</p>
-            <p className="mt-1 font-serif italic text-[13px] text-muted-foreground/80">{m.optionalHint}</p>
+            <p className="font-serif text-[15px] text-[#2A2620]">{m.optionalStepTitle}</p>
+            <p className="mt-1 font-serif italic text-[13px] text-[#9A9286]/80">{m.optionalHint}</p>
           </div>
           {pets.map((pet, pi) => (
           <section key={pi} className={sectionCardClass}>
             {pets.length > 1 && (
-              <div className="flex items-baseline gap-[10px] pb-3 border-b border-border/80 mb-1">
+              <div className="flex items-baseline gap-[10px] pb-3 border-b border-[rgba(42,38,32,0.12)] mb-1">
                 <h2 className={sectionTitleClass}>{m.petInfoN(pi + 1)}</h2>
               </div>
             )}
@@ -1028,7 +1027,7 @@ export default function ApplyPage() {
           </div>
 
           {step === TOTAL_STEPS && (
-            <p className="text-center font-mono text-[11px] uppercase tracking-[1.5px] text-muted-foreground pb-10">
+            <p className="text-center font-mono text-[11px] uppercase tracking-[1.5px] text-[#9A9286] pb-10">
               {m.submitFooter}
             </p>
           )}
@@ -1037,12 +1036,12 @@ export default function ApplyPage() {
 
       {/* Daum Postcode Modal */}
       {showAddrModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-[2px]" onClick={() => setShowAddrModal(false)}>
-          <div className="relative mx-4 w-full max-w-lg overflow-hidden rounded-xl border border-border/80 bg-popover shadow-md" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-md py-3 border-b border-border/80">
-              <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-muted-foreground">{m.addressModalTitle}</span>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2A2620]/40 backdrop-blur-[2px]" onClick={() => setShowAddrModal(false)}>
+          <div className="relative mx-4 w-full max-w-lg overflow-hidden rounded-xl border border-[rgba(42,38,32,0.12)] bg-[#FBF7F1] shadow-md" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-md py-3 border-b border-[rgba(42,38,32,0.12)]">
+              <span className="font-mono text-[12px] uppercase tracking-[1.3px] text-[#9A9286]">{m.addressModalTitle}</span>
               <button type="button" onClick={() => setShowAddrModal(false)}
-                className="text-muted-foreground hover:text-foreground text-lg leading-none">&times;</button>
+                className="text-[#9A9286] hover:text-[#2A2620] text-lg leading-none">&times;</button>
             </div>
             <div ref={addrModalRef} className="h-[450px]" />
           </div>
@@ -1094,7 +1093,7 @@ function PetFormSection({ part, pet, index, updatePet, enWarnings, composingRef,
           onChange={(e) => handleEnInput(e, (v) => updatePet(index, 'petNameEn', v), warnKey('en'))}
           onCompositionEnd={(e) => handleEnCompositionEnd(e, (v) => updatePet(index, 'petNameEn', v), warnKey('en'))}
           placeholder={m.petNameEnPlaceholder} className={inputEnClass} />
-        {enWarnings[warnKey('en')] && <p className="mt-1.5 text-xs text-destructive">{enWarnings[warnKey('en')]}</p>}
+        {enWarnings[warnKey('en')] && <p className="mt-1.5 text-xs text-[#C26A4A]">{enWarnings[warnKey('en')]}</p>}
       </FieldRow>
 
       {/* 생년월일 */}
@@ -1128,9 +1127,9 @@ function PetFormSection({ part, pet, index, updatePet, enWarnings, composingRef,
             const secondary = lang === 'en' ? pet.breed : pet.breedEn
             return (
               <button type="button" onClick={() => { updatePet(index, 'breed', ''); updatePet(index, 'breedEn', ''); updatePet(index, 'breedQuery', '') }}
-                className="w-full flex items-baseline justify-between text-left h-10 text-foreground hover:opacity-70 transition-opacity">
+                className="w-full flex items-baseline justify-between text-left h-10 text-[#2A2620] hover:opacity-70 transition-opacity">
                 <span className="font-serif font-semibold text-[17px] leading-tight">{primary}</span>
-                <span className="ml-2 font-serif italic text-[15px] text-muted-foreground">{secondary}</span>
+                <span className="ml-2 font-serif italic text-[15px] text-[#9A9286]">{secondary}</span>
               </button>
             )
           })()
@@ -1159,7 +1158,7 @@ function PetFormSection({ part, pet, index, updatePet, enWarnings, composingRef,
                     <li key={`${b.type}:${b.en}`}>
                       <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { updatePet(index, 'breed', b.ko); updatePet(index, 'breedEn', b.en); updatePet(index, 'breedQuery', ''); setBreedHighlight(-1) }}
                         className={cn(dropdownRowClass, i === breedHighlight && dropdownRowActiveClass)}>
-                        {primary} <span className="font-serif italic text-muted-foreground ml-1">{secondary}</span>
+                        {primary} <span className="font-serif italic text-[#9A9286] ml-1">{secondary}</span>
                       </button>
                     </li>
                   )
@@ -1167,7 +1166,7 @@ function PetFormSection({ part, pet, index, updatePet, enWarnings, composingRef,
               </ul>
             )}
             {pet.breedQuery && filteredBreeds.length === 0 && (
-              <p className="mt-1 font-serif italic text-[12px] text-muted-foreground">{m.noResults}</p>
+              <p className="mt-1 font-serif italic text-[12px] text-[#9A9286]">{m.noResults}</p>
             )}
           </div>
         )}
