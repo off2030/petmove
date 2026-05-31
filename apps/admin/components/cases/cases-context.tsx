@@ -386,6 +386,14 @@ export function CasesProvider({
     )
   }, [orgId])
 
+  // 조직 전환(슈퍼어드민 임퍼소네이션 set/clear) 시 '신규' 표식 초기화.
+  // org_id 가 바뀌는 전환 도중, 직전 org 의 구독(onSubscribed)이 재연결되며 listActiveOrgCases()
+  // 가 이미 바뀐 새 org 의 전체 목록을 받아 와, 옛 org 기준으로 diff → 전부 '신규'로 잡히던 문제.
+  // 데이터는 멀쩡하고 화면의 신규 표식만 잘못 붙으므로, org 가 바뀌면 표식을 비운다.
+  useEffect(() => {
+    setNewCaseIds(new Set<string>())
+  }, [orgId])
+
   // 검사/신고/서류 탭에서 행 클릭 시 호출. selectCase로 케이스 선택 후
   // /cases로 URL을 밀고 popstate를 발사해 DashboardShell이 탭 전환하도록 함.
   // origin 정보를 state에 남겨 "목록" 버튼에서 이전 탭으로 복귀 가능하게 함.
