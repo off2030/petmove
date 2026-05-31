@@ -5,7 +5,7 @@ import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 import { DEFAULT_VET_INFO, loadVetInfo, saveVetInfo, type VetInfo } from '@/lib/vet-info'
 
-export type OrgType = 'hospital' | 'transport'
+export type OrgType = 'hospital' | 'transport' | 'both'
 
 export async function getCompanyInfo(): Promise<VetInfo> {
   return await loadVetInfo()
@@ -71,7 +71,7 @@ export async function getOrgType(): Promise<OrgType> {
       .eq('id', orgId)
       .maybeSingle()
     const t = data?.org_type
-    return t === 'transport' ? 'transport' : 'hospital'
+    return t === 'transport' ? 'transport' : t === 'both' ? 'both' : 'hospital'
   } catch {
     return 'hospital'
   }

@@ -317,10 +317,15 @@ export function CompanySection({
    *   hospital  → address_ko / address_en / postal_code
    *   transport → transport_address_ko / transport_address_en / transport_postal_code
    */
-  function handleAddressSelected(result: CompanyAddressResult) {
+  function handleAddressSelected(
+    result: CompanyAddressResult,
+    addressKey: 'address_ko' | 'transport_address_ko' = 'address_ko',
+  ) {
     if (!info) return
     setError(null)
-    const isTransport = orgType === 'transport'
+    // 'both' 는 병원·운송 주소가 둘 다 있으므로, 전역 org_type 이 아니라 검색을 띄운
+    // 주소 필드(addressKey)로 어느 쪽 키에 저장할지 결정.
+    const isTransport = addressKey === 'transport_address_ko'
     const krKey: VetInfoKey = isTransport ? 'transport_address_ko' : 'address_ko'
     const enKey: VetInfoKey = isTransport ? 'transport_address_en' : 'address_en'
     const zipKey: VetInfoKey = isTransport ? 'transport_postal_code' : 'postal_code'
@@ -434,10 +439,16 @@ export function CompanySection({
   }
 
   const isTransport = orgType === 'transport'
-  const groups = isTransport ? TRANSPORT_GROUPS : HOSPITAL_GROUPS
-  const fields = isTransport ? TRANSPORT_FIELDS : HOSPITAL_FIELDS
+  const isBoth = orgType === 'both'
+  // 'both' = 동물병원 + 운송회사 → 양쪽 정보 섹션을 모두 노출. (발급자는 자기 수의사 — hospital 동작)
+  const groups: readonly string[] = isBoth
+    ? [...HOSPITAL_GROUPS, ...TRANSPORT_GROUPS]
+    : isTransport ? TRANSPORT_GROUPS : HOSPITAL_GROUPS
+  const fields: FieldDef[] = isBoth
+    ? [...HOSPITAL_FIELDS, ...TRANSPORT_FIELDS]
+    : isTransport ? TRANSPORT_FIELDS : HOSPITAL_FIELDS
 
-  const title = isTransport ? '운송회사 정보' : '병원 정보'
+  const title = isBoth ? '병원 + 운송 정보' : isTransport ? '운송회사 정보' : '병원 정보'
 
   return (
     <SettingsShell>
@@ -447,7 +458,7 @@ export function CompanySection({
           <section className="mb-xl">
             <SectionLabel className="mb-2">조직</SectionLabel>
             <div className="border-t border-border/80 pt-md flex items-center gap-xs">
-              {(['hospital', 'transport'] as const).map((t) => (
+              {(['hospital', 'transport', 'both'] as const).map((t) => (
                 <button
                   key={t}
                   type="button"
@@ -461,7 +472,7 @@ export function CompanySection({
                     savingOrgType && 'opacity-60',
                   )}
                 >
-                  {t === 'hospital' ? '동물병원' : '운송회사'}
+                  {t === 'hospital' ? '동물병원' : t === 'transport' ? '운송회사' : '동물병원 + 운송회사'}
                 </button>
               ))}
             </div>
@@ -552,7 +563,7 @@ export function CompanySection({
                       )}
                       {showAddressSearch && (
                         <CompanyAddressSearch
-                          onSelected={handleAddressSelected}
+                          onSelected={(result) => handleAddressSelected(result, f.key as 'address_ko' | 'transport_address_ko')}
                           className="shrink-0 mt-0.5 inline-flex h-7 items-center rounded border px-2 font-serif text-[12px] border-border/80 text-muted-foreground hover:bg-accent/60 hover:text-foreground transition-colors disabled:opacity-50"
                         />
                       )}
