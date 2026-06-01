@@ -72,7 +72,7 @@ export function BackLink({ href, label }: { href: string; label: string }) {
  */
 export function EditPageShell({
   backHref = '/me',
-  backLabel = '설정',
+  backLabel = '내 정보',
   title,
   children,
   bottomBar,

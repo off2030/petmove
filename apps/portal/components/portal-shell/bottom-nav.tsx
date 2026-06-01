@@ -10,19 +10,19 @@ import { readLastCaseId, writeLastCaseId } from './last-case'
  *
  * 현재 path 가 /cases/<id>/... 이면 그 id 를 보존하면서 다른 탭으로 전환.
  * /me/... (case-외) 같은 화면에선 sessionStorage 의 마지막 caseId 로 복귀
- *   — swipe-tabs 와 동일한 키 공유. 이게 없으면 설정에서 일정/서류 탭을
+ *   — swipe-tabs 와 동일한 키 공유. 이게 없으면 내 정보 탭에서 일정/서류 탭을
  *   누를 때마다 /cases (다중 케이스 선택 화면) 로 튕겨나가는 버그가 됨.
  * sessionStorage 도 비어 있으면 /cases 로 보냄 (1건이면 자동 redirect).
- * 설정 탭은 항상 /me (case-외 hub).
+ * 내 정보 탭은 항상 /me (case-외 hub). 앱 설정(계정·테마·약관 등)은 상단바 ⚙ → /settings.
  */
 
-type Icon = 'route' | 'doc' | 'cog'
+type Icon = 'route' | 'doc' | 'user'
 type Tab = { key: 'journey' | 'docs' | 'me'; label: string; icon: Icon }
 
 const TABS: Tab[] = [
   { key: 'journey', label: '일정', icon: 'route' },
   { key: 'docs', label: '서류', icon: 'doc' },
-  { key: 'me', label: '설정', icon: 'cog' },
+  { key: 'me', label: '내 정보', icon: 'user' },
 ]
 
 function caseIdFromPath(pathname: string): string | null {
@@ -129,11 +129,11 @@ function NavIcon({ name, stroke = 1.7 }: { name: Icon; stroke?: number }) {
           <path d="M14 2v6h6M9 13h6M9 17h6" />
         </svg>
       )
-    case 'cog':
+    case 'user':
       return (
         <svg {...p}>
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
         </svg>
       )
   }

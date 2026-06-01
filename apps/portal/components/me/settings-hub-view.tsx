@@ -14,7 +14,7 @@ import { PetAvatarDisplay } from './pet-avatar-display'
 import { C, serif, monoCap } from './settings-shared'
 
 /**
- * 설정 탭 허브 (/me) — 카드 리스트.
+ * 내 정보 탭 허브 (/me) — 카드 리스트. (앱 설정은 상단바 ⚙ → /settings)
  * 시각 톤: 옛 ProfileView 의 HeroCard / PartnerCard / AccountSection 그대로.
  *   - 보호자·동물 → Hero (padding 18, 아바타 52, 이름 20 serif + 영문 italic)
  *   - 여행·병원·에이전시 → Partner (mono-cap 헤더 + 본문 row, 아바타 44)
@@ -355,7 +355,7 @@ export function SettingsHubView() {
     >
       <div style={{ padding: '0 24px' }}>
         <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>
-          설정
+          내 정보
         </h1>
 
         <div

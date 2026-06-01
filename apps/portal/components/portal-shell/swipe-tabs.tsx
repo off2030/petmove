@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react'
 import { readLastCaseId, writeLastCaseId } from './last-case'
 
 /**
- * 3탭(일정/서류/설정) 좌우 스와이프 내비.
+ * 3탭(일정/서류/내 정보) 좌우 스와이프 내비. (앱 설정 /settings 은 ⚙ 진입 — 스와이프 대상 아님)
  *
  * 검출은 두 경로 OR:
  *  1) 거리 기반 — 시작→끝 |dx| ≥60px AND |dy/dx| ≤1.0 (~45°), 1초 이내

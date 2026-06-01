@@ -79,18 +79,11 @@ function ThemeControls({ onNav }) {
         }}
       >PETMOVE</button>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, pointerEvents: 'auto' }}>
-        <button aria-label="팔레트" title="테마" style={btn}>
+        {/* 설정 진입 — 테마·다크는 빈 토글이 아니라 설정(/settings) 안으로 이동. */}
+        <button aria-label="설정" title="설정" style={btn} onClick={() => onNav && onNav('settings')}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 22a10 10 0 1 1 10-10c0 2.5-2 4-4 4h-2a2 2 0 0 0-2 2v.5a2.5 2.5 0 0 1-2 2.5z"/>
-            <circle cx="7.5" cy="11" r="1.1" fill="currentColor" stroke="none"/>
-            <circle cx="10.5" cy="7" r="1.1" fill="currentColor" stroke="none"/>
-            <circle cx="15.5" cy="7" r="1.1" fill="currentColor" stroke="none"/>
-            <circle cx="18" cy="11" r="1.1" fill="currentColor" stroke="none"/>
-          </svg>
-        </button>
-        <button aria-label="다크모드" title="다크모드" style={btn}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </svg>
         </button>
       </div>

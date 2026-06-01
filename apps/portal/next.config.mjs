@@ -1,11 +1,18 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { createRequire } from 'node:module'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+// package.json 의 version 을 클라이언트에 노출 — 설정 > 앱 정보 행에서 표시.
+const require = createRequire(import.meta.url)
+const pkgVersion = require('./package.json').version
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  env: {
+    NEXT_PUBLIC_APP_VERSION: pkgVersion,
+  },
   // Monorepo root — Vercel 의 serverless 함수가 packages/* 를 번들에 포함하도록.
   outputFileTracingRoot: path.join(__dirname, '../../'),
   // workspace 패키지(.ts 직접 export)를 Next 가 트랜스파일·watch 하도록 명시.
