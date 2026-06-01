@@ -1305,15 +1305,13 @@ export async function updateJpExportQuarantineFields(
     }
     // 신청일 마감 — 예약일이 입력돼 있으면 예약일 −10일, 아니면 귀국 항공편 −10일을 마지노선으로.
     // (예약일이 추후 확정될 때 다시 검증되므로, 입력 시점엔 귀국일이 최소 보장 기준.)
+    // 위반 메시지는 anchor 와 무관하게 단일 — 보호자가 외울 룰은 결국 '10일 전' 하나.
     if (trimmedApp) {
       let anchor = ''
-      let anchorLabel = ''
       if (trimmedReserved) {
         anchor = trimmedReserved
-        anchorLabel = '예약일'
       } else if (returnDate && returnDate.length >= 10) {
         anchor = returnDate.slice(0, 10)
-        anchorLabel = '귀국 항공편'
       }
       if (anchor) {
         const a = new Date(anchor + 'T00:00:00Z')
@@ -1322,7 +1320,7 @@ export async function updateJpExportQuarantineFields(
         if (trimmedApp > deadline) {
           return {
             ok: false,
-            error: `신청일은 ${anchorLabel}(${formatKr(anchor)}) 10일 전(${formatKr(deadline)})까지여야 합니다.`,
+            error: '일본 수출 동물검역은 최소 10일 전에 신청, 예약해야 합니다.',
           }
         }
       }
