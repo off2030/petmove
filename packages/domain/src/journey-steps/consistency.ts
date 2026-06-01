@@ -101,7 +101,7 @@ export function evaluateChainConsistency(
       issues.push({
         stepId,
         kind: 'order',
-        message: `${step.title} 날짜(${formatKoreanDate(stepDate!)})가 ${worst.prereq.title} 날짜(${formatKoreanDate(worst.prereqDate)})보다 앞섭니다. 날짜를 확인해 주세요.`,
+        message: `${step.title} 날짜(${formatKoreanDate(stepDate!)})가 ${worst.prereq.title} 날짜(${formatKoreanDate(worst.prereqDate)})보다 빠릅니다. 날짜를 확인해 주세요.`,
       })
       continue
     }
