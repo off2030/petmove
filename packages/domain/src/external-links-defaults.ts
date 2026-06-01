@@ -88,7 +88,7 @@ export const DEFAULT_EXTERNAL_LINKS: ExternalLinksConfig = {
           id: 'us-ksvdl',
           name: 'KSVDL (Kansas State University)',
           url: 'http://www.ksvdl.org/',
-          description: '미국 전염병검사 (광견병 항체가 등)',
+          description: '미국 전염병검사 (광견병 항체 검사 등)',
           flag: '🇺🇸',
         },
       ],

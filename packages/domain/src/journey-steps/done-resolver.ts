@@ -76,7 +76,7 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
     case 'has-titer-entry':
       return readTiterEntries(caseRow).length > 0
     case 'has-extra-titer': {
-      // 추가 항체검사(2회+) 는 (a) 2개 이상 입력되고, (b) 입국일이 입력된 경우 어떤 titer
+      // 추가 항체 검사(2회+) 는 (a) 2개 이상 입력되고, (b) 입국일이 입력된 경우 어떤 titer
       // 의 2년 유효기간이 입국일을 커버해야 완료. 못 커버하면 추가 검사가 더 필요한 상태.
       const t = readTiterEntries(caseRow)
       if (t.length < 2) return false
@@ -222,7 +222,7 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
       return r.length >= 3 ? r[r.length - 1].date : null
     }
     case 'has-titer-entry': {
-      // 1회차 = 가장 이른 항체검사일 (180일 대기·2년 입국 기한의 기준일).
+      // 1회차 = 가장 이른 항체 검사일 (180일 대기·2년 입국 기한의 기준일).
       // 광견병 백신(has-rabies-entry)이 r[0]=1차 인 것과 동일 컨벤션.
       const dates = readTiterEntries(caseRow)
         .map((e) => e.date)
@@ -231,7 +231,7 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
       return dates.slice().sort()[0]
     }
     case 'has-extra-titer': {
-      // 추가 항체검사(2회+) = 가장 최근 검사일.
+      // 추가 항체 검사(2회+) = 가장 최근 검사일.
       const dates = readTiterEntries(caseRow)
         .map((e) => e.date)
         .filter((d) => typeof d === 'string' && d.length >= 10)

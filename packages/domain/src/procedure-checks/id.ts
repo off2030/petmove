@@ -45,7 +45,7 @@ export const ID_CHECKS: ProcedureCheck[] = [
     category: '마이크로칩',
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
-      'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (BARANTIN 운용 표준 — 광견병 백신·항체검사 식별 연계 필요)',
+      'ISO 표준 마이크로칩이 광견병 1차 접종일과 같거나 이전이어야 함. (BARANTIN 운용 표준 — 광견병 백신·항체 검사 식별 연계 필요)',
     severity: 'info',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {
@@ -137,7 +137,7 @@ export const ID_CHECKS: ProcedureCheck[] = [
     id: 'id.rnatt-min-30days-after-vaccine',
     country: COUNTRY,
     category: '광견병',
-    title: '항체검사는 광견병 접종 30일 이후',
+    title: '항체 검사는 광견병 접종 30일 이후',
     description:
       'RNATT 채혈일은 직전 광견병 접종으로부터 30일 이후. (BARANTIN 본문 명시 부재 — EU/TR/IL/UA OIE 표준 차용 보수적 기준)',
     severity: 'info',
@@ -171,7 +171,7 @@ export const ID_CHECKS: ProcedureCheck[] = [
           offendingPaths: offending,
         }
       }
-      return { ok: true, message: '항체검사 시기 적합 (30일 경과).' }
+      return { ok: true, message: '항체 검사 시기 적합 (30일 경과).' }
     },
   },
 ]

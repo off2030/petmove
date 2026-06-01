@@ -128,7 +128,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '마이크로칩',
     title: '마이크로칩, 접종, 검사 타이밍',
     description:
-      '① 마이크로칩 ≤ 1차 < 2차 ≤ 항체검사, 또는 ② 1차 < 마이크로칩 ≤ 2차이면서 2차 접종일 = 항체검사일. 둘 중 하나 충족 필요.',
+      '① 마이크로칩 ≤ 1차 < 2차 ≤ 항체 검사, 또는 ② 1차 < 마이크로칩 ≤ 2차이면서 2차 접종일 = 항체 검사일. 둘 중 하나 충족 필요.',
     severity: 'info',
     addedAt: '2026-04-21',
     run: ({ caseRow, destination }) => {
@@ -147,15 +147,15 @@ export const JP_CHECKS: ProcedureCheck[] = [
         return { ok: true, message: `마이크로칩(${microchip}) ≤ 1차 접종(${first.date}).` }
       }
 
-      // 조건 2: 1차 < 마이크로칩 ≤ 2차 AND 2차 == 항체검사일
+      // 조건 2: 1차 < 마이크로칩 ≤ 2차 AND 2차 == 항체 검사일
       if (microchip <= second.date) {
-        // 항체검사 미입력 → 아직 판정 불가, skip
+        // 항체 검사 미입력 → 아직 판정 불가, skip
         if (titers.length === 0) return SKIP
         const matching = titers.find((t) => t.date === second.date)
         if (matching) {
           return {
             ok: true,
-            message: `마이크로칩이 1·2차 사이, 2차 접종일과 항체검사일 동일(${second.date}).`,
+            message: `마이크로칩이 1·2차 사이, 2차 접종일과 항체 검사일 동일(${second.date}).`,
           }
         }
         const offending = ['microchip_implant_date']
@@ -163,7 +163,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message:
-            '마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 반드시 2차 광견병 백신과 광견병 항체가 검사를 같은 날 해야 합니다.',
+            '마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 반드시 2차 광견병 백신과 광견병 항체 검사를 같은 날 해야 합니다.',
           offendingPaths: offending,
         }
       }
@@ -182,7 +182,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '마이크로칩',
     title: '마이크로칩, 접종, 검사 타이밍',
     description:
-      '1차 광견병 접종이 마이크로칩 시술보다 앞선 경우 2차 접종을 광견병 항체가 검사와 같은 날 받아야 함. 항체검사 입력 전까지 안내 지속.',
+      '1차 광견병 접종이 마이크로칩 시술보다 앞선 경우 2차 접종을 광견병 항체 검사와 같은 날 받아야 함. 항체 검사 입력 전까지 안내 지속.',
     severity: 'info',
     addedAt: '2026-05-16',
     run: ({ caseRow, destination }) => {
@@ -191,9 +191,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const rabies = readRabiesEntries(caseRow)
       // 필수: 마이크로칩 시술일 + 1차 접종 기록
       if (!microchip || rabies.length === 0) return SKIP
-      // 항체검사 입력 후에는 jp.microchip-rabies-sequence 가 본 검증 — 사전 안내 종료.
-      // (2차 입력만으로는 사라지지 않음 — 보호자가 "2차와 항체검사를 같은 날" 룰을
-      // 잊지 않도록 항체검사 입력까지 안내 유지.)
+      // 항체 검사 입력 후에는 jp.microchip-rabies-sequence 가 본 검증 — 사전 안내 종료.
+      // (2차 입력만으로는 사라지지 않음 — 보호자가 "2차와 항체 검사를 같은 날" 룰을
+      // 잊지 않도록 항체 검사 입력까지 안내 유지.)
       if (readTiterEntries(caseRow).length > 0) return SKIP
 
       const first = rabies[0]
@@ -203,7 +203,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message:
-          '마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 반드시 2차 광견병 백신과 광견병 항체가 검사를 같은 날 해야 합니다.',
+          '마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 반드시 2차 광견병 백신과 광견병 항체 검사를 같은 날 해야 합니다.',
         offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
       }
     },
@@ -212,7 +212,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.rabies-titer-vs-booster',
     country: 'japan',
     category: '광견병',
-    title: '광견병 항체가 검사 타이밍',
+    title: '광견병 항체 검사 타이밍',
     description:
       '채혈일은 2차 접종일 이후이며, 2차부터 끊김 없이 이어진 부스터 chain 의 면역 유효기간 이내여야 함.',
     severity: 'info',
@@ -220,7 +220,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
       const titers = readTiterEntries(caseRow)
-      // 필수: 2차 접종 기록 + 1개 이상의 항체검사
+      // 필수: 2차 접종 기록 + 1개 이상의 항체 검사
       if (rabies.length < 2 || titers.length === 0) return SKIP
 
       const second = rabies[1]
@@ -255,7 +255,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
           : '채혈일이 2차 광견병 백신 접종일보다 빠릅니다. 2차 접종 이후 다시 검사를 받으세요.'
         return { ok: false, message, offendingPaths }
       }
-      return { ok: true, message: '항체검사 시기 적합.' }
+      return { ok: true, message: '항체 검사 시기 적합.' }
     },
   },
   {
@@ -263,14 +263,14 @@ export const JP_CHECKS: ProcedureCheck[] = [
     country: 'japan',
     category: '광견병',
     title: '일본 입국 타이밍',
-    description: '항공편 입국일은 광견병 항체검사 채혈일로부터 180일이 지난 시점이어야 함.',
+    description: '항공편 입국일은 광견병 항체 검사 채혈일로부터 180일이 지난 시점이어야 함.',
     severity: 'info',
     addedAt: '2026-05-17',
     run: ({ caseRow, destination }) => {
       // 한일 노선 = 출국일이 일본 입국일 — departure_date 사용.
       const entryDate = readDepartureDate(caseRow, destination) ?? ''
       const titers = readTiterEntries(caseRow)
-      // 필수: 출국일(=입국일) + 1개 이상의 항체검사
+      // 필수: 출국일(=입국일) + 1개 이상의 항체 검사
       if (!entryDate || titers.length === 0) return SKIP
 
       let best: { titer: (typeof titers)[number]; days: number } | null = null
@@ -280,15 +280,15 @@ export const JP_CHECKS: ProcedureCheck[] = [
         if (!best || days > best.days) best = { titer: t, days }
       }
       if (best && best.days >= 180) {
-        return { ok: true, message: `항체검사(${best.titer.date}) → 입국일(${entryDate}): ${best.days}일` }
+        return { ok: true, message: `항체 검사(${best.titer.date}) → 입국일(${entryDate}): ${best.days}일` }
       }
       const offending: string[] = ['departure_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       if (!best) {
-        return { ok: false, message: '항체검사일과 입국일을 확인할 수 없습니다.', offendingPaths: offending }
+        return { ok: false, message: '항체 검사일과 입국일을 확인할 수 없습니다.', offendingPaths: offending }
       }
-      // 입국 가능일 = 채혈일 + 180일. 입국일 < 항체검사일(시간 역순) 케이스도 같은
-      // 메시지로 커버 — earliestKr 가 항체검사일 + 180일이라 항상 정확.
+      // 입국 가능일 = 채혈일 + 180일. 입국일 < 항체 검사일(시간 역순) 케이스도 같은
+      // 메시지로 커버 — earliestKr 가 항체 검사일 + 180일이라 항상 정확.
       const earliestKr = formatKoreanDate(addDays(best.titer.date, 180))
       return {
         ok: false,
@@ -301,8 +301,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.entry-within-2years-of-titer',
     country: 'japan',
     category: '광견병',
-    title: '광견병 항체가 검사 유효기간 만료',
-    description: '항공편 입국일은 광견병 항체검사 채혈일 포함 2년 이내여야 함 (항체검사 유효기간).',
+    title: '광견병 항체 검사 유효기간 만료',
+    description: '항공편 입국일은 광견병 항체 검사 채혈일 포함 2년 이내여야 함 (항체 검사 유효기간).',
     severity: 'info',
     addedAt: '2026-05-17',
     run: ({ caseRow, destination }) => {
@@ -315,7 +315,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (valid) {
         return {
           ok: true,
-          message: `항체검사(${valid.date}) 유효(${addYears(valid.date, 2)}) ≥ 입국일(${entryDate}).`,
+          message: `항체 검사(${valid.date}) 유효(${addYears(valid.date, 2)}) ≥ 입국일(${entryDate}).`,
         }
       }
       const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
@@ -324,7 +324,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: `광견병 항체검사 유효기간이 ${validUntilKr}에 만료됩니다. 일본 입국 전 재검사가 필요합니다.`,
+        message: `광견병 항체 검사 유효기간이 ${validUntilKr}에 만료됩니다. 일본 입국 전 재검사가 필요합니다.`,
         offendingPaths: offending,
       }
     },
@@ -371,7 +371,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       // 한일 노선 = 출국일이 일본 입국일 — departure_date 단일 권위.
       const dep = readDepartureDate(caseRow, destination) ?? ''
       const rabies = readRabiesEntries(caseRow)
-      // 항체검사 입력 전에는 입국 시기가 확정되지 않아 평가 불가 — 같은 step(항공권 구매)의
+      // 항체 검사 입력 전에는 입국 시기가 확정되지 않아 평가 불가 — 같은 step(항공권 구매)의
       // jp.entry-* 체크와 동일하게 titer 입력 후에만 평가한다. 그 전의 백신 만료는 항공권
       // 구매 step 이 아니라 '추가 백신' advisory step 이 재접종으로 안내한다.
       if (!dep || rabies.length === 0 || readTiterEntries(caseRow).length === 0) return SKIP
@@ -425,8 +425,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.titer-validity-expires-soon',
     country: 'japan',
     category: '광견병',
-    title: '광견병 항체가 검사 유효기간 만료 임박',
-    description: '광견병 항체검사 유효기간(2년)이 오늘로부터 30일 이내로 남았을 때 사전 안내.',
+    title: '광견병 항체 검사 유효기간 만료 임박',
+    description: '광견병 항체 검사 유효기간(2년)이 오늘로부터 30일 이내로 남았을 때 사전 안내.',
     severity: 'info',
     addedAt: '2026-05-21',
     run: ({ caseRow, destination }) => {
@@ -449,7 +449,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: `광견병 항체검사 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전 재검사를 하세요.`,
+        message: `광견병 항체 검사 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전 재검사를 하세요.`,
         offendingPaths: offending,
       }
     },

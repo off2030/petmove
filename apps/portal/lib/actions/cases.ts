@@ -314,7 +314,7 @@ function formatKr(iso: string): string {
 }
 
 /**
- * 광견병/항체검사 entry 가 "phantom" 인지 — date 가 없으면 의미 없는 잔여물로 간주.
+ * 광견병/항체 검사 entry 가 "phantom" 인지 — date 가 없으면 의미 없는 잔여물로 간주.
  *
  * 배경: 새 카드 생성 시 `other_hospital: true` 가 자동 부여되거나(rabies), 사용자가
  * 기존 entry 의 date 만 비워 저장한 경우 `{other_hospital: true}` / `{lab: ...}` 처럼
@@ -432,7 +432,7 @@ export async function updateRabiesExtraEntries(
 }
 
 /**
- * 광견병 항체가 검사 step 의 입력 필드를 patch — case.data.rabies_titer_records[0] 의
+ * 광견병 항체 검사 step 의 입력 필드를 patch — case.data.rabies_titer_records[0] 의
  * date / lab(검사기관) / value(검사 수치)를 갱신.
  *
  * 0번 항목이 없으면 생성, 있으면 received_date 등 다른 키는 보존.
@@ -507,7 +507,7 @@ function stripTiterUnit(value: string): string {
 }
 
 /**
- * 광견병 항체가 검사(2회차+)의 입력 기록을 한 번에 patch — case.data.rabies_titer_records
+ * 광견병 항체 검사(2회차+)의 입력 기록을 한 번에 patch — case.data.rabies_titer_records
  * 의 index 1 이상을 전체 교체. 1회차(0) 는 updateTiterFields 가 관리하므로 보존.
  *
  * entries 는 사용자가 화면에서 본 순서대로 들어오고, 같은 인덱스 위치에 기존 record 가

@@ -108,7 +108,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '1년 라이선스 광견병 백신만 인정 (3년 거부)',
     description:
-      'Rosselkhoznadzor: "재접종 주기 12개월 초과 백신은 최종 접종일로부터 12개월 이내일 때만 인정". 사실상 1년 룰. valid_until 이 접종일 + 364일(1년) 초과면 거부. (일부 지역지부는 항체검사 첨부 시 3년 인정 사례 — 보수 적용)',
+      'Rosselkhoznadzor: "재접종 주기 12개월 초과 백신은 최종 접종일로부터 12개월 이내일 때만 인정". 사실상 1년 룰. valid_until 이 접종일 + 364일(1년) 초과면 거부. (일부 지역지부는 항체 검사 첨부 시 3년 인정 사례 — 보수 적용)',
     severity: 'blocker',
     addedAt: '2026-05-07',
     run: ({ caseRow, destination }) => {

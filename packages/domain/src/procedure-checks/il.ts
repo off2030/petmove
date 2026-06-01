@@ -185,7 +185,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
     id: 'il.rnatt-min-30days-after-vaccine',
     country: COUNTRY,
     category: '광견병',
-    title: '항체검사는 광견병 접종 30일 이후',
+    title: '항체 검사는 광견병 접종 30일 이후',
     description:
       'RNATT 채혈일은 직전 광견병 접종으로부터 30일 이후. (gov.il: "rabies neutralizing antibody titer ... taken at least 30 days after vaccination")',
     severity: 'info',
@@ -219,7 +219,7 @@ export const IL_CHECKS: ProcedureCheck[] = [
           offendingPaths: offending,
         }
       }
-      return { ok: true, message: '항체검사 시기 적합 (30일 경과).' }
+      return { ok: true, message: '항체 검사 시기 적합 (30일 경과).' }
     },
   },
 

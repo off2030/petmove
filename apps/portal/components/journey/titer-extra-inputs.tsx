@@ -4,10 +4,10 @@ import { useState } from 'react'
 import { DateTextField } from '@petmove/ui'
 
 /**
- * 광견병 항체가 검사(2회차+) step 입력 — 가변 길이 배열 + 추가/삭제.
+ * 광견병 항체 검사(2회차+) step 입력 — 가변 길이 배열 + 추가/삭제.
  *
  * 1회차 (TiterInputs) 와 필드 구성은 동일하지만, 추가 검사는 회차가 정해져 있지 않아
- * 사용자가 카드를 추가/삭제할 수 있다. 각 카드 헤더에 "광견병 항체가 검사(N차)" + 삭제 아이콘,
+ * 사용자가 카드를 추가/삭제할 수 있다. 각 카드 헤더에 "광견병 항체 검사(N차)" + 삭제 아이콘,
  * 마지막에 + 버튼.
  *
  * 저장 형식은 case.data.rabies_titer_records[index] (index >= 1) — 펫무브워크
@@ -146,7 +146,7 @@ function ExtraCard({
         }}
       >
         <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>
-          광견병 항체가 검사({roundNumber}차)
+          광견병 항체 검사({roundNumber}차)
         </div>
         <button
           type="button"

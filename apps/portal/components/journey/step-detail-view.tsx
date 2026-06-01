@@ -61,7 +61,7 @@ interface CollectedCheck {
  *  1) 헤더 — back link / 동그라미+title / 펫·여행
  *  2) 설명 — step.description (마크다운은 단순 줄바꿈만)
  *  3) ⚠ 경고 — 매핑된 procedure-checks 중 ok=false
- *  4) 입력 필드 — microchip·광견병1·2차·항체검사 step 은 인터랙티브, 그 외는 read-only 스키마
+ *  4) 입력 필드 — microchip·광견병1·2차·항체 검사 step 은 인터랙티브, 그 외는 read-only 스키마
  *
  * 인터랙티브 step 의 폼 state·dirty·save 는 이 컴포넌트에서 관리. 하단 sticky
  * '저장' 바가 화면 전체 폼 변경을 한 번에 commit. 입력 컴포넌트
@@ -143,7 +143,7 @@ export function StepDetailView({
   const savedTiterForm = readTiterForm(caseRow?.data)
   const [titerForm, setTiterForm] = useState<TiterForm>(savedTiterForm)
 
-  // 광견병 추가 항체검사(2회차+) — 빈 상태에서도 카드 1장이 보이도록 최소 1장 유지.
+  // 광견병 추가 항체 검사(2회차+) — 빈 상태에서도 카드 1장이 보이도록 최소 1장 유지.
   const savedTiterExtra = readTiterExtraEntries(caseRow?.data)
   const [titerExtra, setTiterExtra] = useState<TiterExtraEntry[]>(
     savedTiterExtra.length === 0 ? [makeEmptyTiterExtra()] : savedTiterExtra,
@@ -452,7 +452,7 @@ export function StepDetailView({
     } else if (isRabies) {
       // 2차 한정: 입력 시점에 면역 유효 아님 → 차단 (출국 시점에 유효해야 검역 인정).
       // 1차는 면제 — 이미 추가 접종을 마친 보호자가 옛 1차 기록을 그대로 등록하는
-      // 케이스에서 만료가 정상이고, 후속 검증(2차 1차유효기간 내·항체검사 chain)에서 잡힌다.
+      // 케이스에서 만료가 정상이고, 후속 검증(2차 1차유효기간 내·항체 검사 chain)에서 잡힌다.
       if (isRabies2 && isRabiesEntryExpired(rabies)) {
         setStatus('error')
         setError('입력하신 접종은 면역 유효기간이 만료되었습니다.')
@@ -468,7 +468,7 @@ export function StepDetailView({
           return
         }
       }
-      // 2차 한정 cross-entry: 1차 접종 이후 + 1차 면역 유효기간 이내 + (1차<마이크로칩이면 2차=항체검사일)
+      // 2차 한정 cross-entry: 1차 접종 이후 + 1차 면역 유효기간 이내 + (1차<마이크로칩이면 2차=항체 검사일)
       // + 마이크로칩 ≤ 2차 (jp.microchip-rabies-sequence 2차 시점 검증 — 입력 차단으로 이관).
       if (isRabies2) {
         const r1 = readRabiesEntryForm(caseRow?.data, 0)
@@ -492,14 +492,14 @@ export function StepDetailView({
             setError('마이크로칩 시술일 이후에 광견병 백신을 접종해야 합니다.')
             return
           }
-          // 1차가 마이크로칩보다 빠른 경우: 2차 = 항체검사일. 항체검사 미입력 시 검증 불가 →
-          // 통과 (이후 항체검사 입력 시 procedure-check 가 잡음).
+          // 1차가 마이크로칩보다 빠른 경우: 2차 = 항체 검사일. 항체 검사 미입력 시 검증 불가 →
+          // 통과 (이후 항체 검사 입력 시 procedure-check 가 잡음).
           if (microchip && r1.date < microchip) {
             const titerDates = readAllTiterDates(caseRow?.data)
             if (titerDates.length > 0 && !titerDates.includes(rabies.date)) {
               setStatus('error')
               setError(
-                '마이크로칩보다 1차 접종을 먼저 한 경우, 2차 접종일은 광견병 항체검사일과 같아야 합니다.',
+                '마이크로칩보다 1차 접종을 먼저 한 경우, 2차 접종일은 광견병 항체 검사일과 같아야 합니다.',
               )
               return
             }
@@ -555,10 +555,10 @@ export function StepDetailView({
         }
       })
     } else if (isTiter) {
-      // 첫 항체검사 — 만료 + 채혈 cross-entry (1차<마이크로칩 시 = 2차 룰 포함).
+      // 첫 항체 검사 — 만료 + 채혈 cross-entry (1차<마이크로칩 시 = 2차 룰 포함).
       if (isTiterEntryExpired(titerForm)) {
         setStatus('error')
-        setError('입력하신 항체검사는 유효기간이 만료되었습니다.')
+        setError('입력하신 항체 검사는 유효기간이 만료되었습니다.')
         return
       }
       const titerError = validateTiterDate(caseRow?.data, titerForm.date, true)
@@ -586,13 +586,13 @@ export function StepDetailView({
         }
       })
     } else if (isTiterExtra) {
-      // 추가 항체검사 — 만료 + 채혈 cross-entry. rule 3 (=2차) 는 set-level 룰이라
+      // 추가 항체 검사 — 만료 + 채혈 cross-entry. rule 3 (=2차) 는 set-level 룰이라
       // 추가 검사 개별 입력엔 적용 X (procedure-check 가 set 평가).
       for (const entry of titerExtra) {
         if (!entry.date) continue
         if (isTiterEntryExpired(entry)) {
           setStatus('error')
-          setError(`채혈일 ${entry.date}: 입력하신 항체검사는 유효기간이 만료되었습니다.`)
+          setError(`채혈일 ${entry.date}: 입력하신 항체 검사는 유효기간이 만료되었습니다.`)
           return
         }
         const err = validateTiterDate(caseRow?.data, entry.date, false)
@@ -625,7 +625,7 @@ export function StepDetailView({
         }
       })
     } else if (isFlight) {
-      // 입국일 cross-entry — 광견병 항체검사 + 부스터 chain + 사전 신고 40일 마감(일본 한정).
+      // 입국일 cross-entry — 광견병 항체 검사 + 부스터 chain + 사전 신고 40일 마감(일본 한정).
       const flightError = validateFlightEntryDate(caseRow?.data, flightForm.entry_date, destinationKey)
       if (flightError) {
         setStatus('error')
@@ -1982,7 +1982,7 @@ function rabiesExtraEqual(a: RabiesExtraEntry[], b: RabiesExtraEntry[]): boolean
 }
 
 /**
- * 추가 항체검사 카드 한 장의 빈 폼. 빈 상태에서도 사용자가 바로 입력 가능하게
+ * 추가 항체 검사 카드 한 장의 빈 폼. 빈 상태에서도 사용자가 바로 입력 가능하게
  * 기본 1장이 떠야 하므로 초기/삭제 후 폴백에서 사용.
  */
 function makeEmptyTiterExtra(): TiterExtraEntry {
@@ -2059,7 +2059,7 @@ function validateFlightEntryDate(
   const titerDates = readAllTiterDates(data)
   if (titerDates.length === 0) return null
   if (!titerDates.some((t) => daysBetween(t, entryDate) >= 180)) {
-    return '입국일은 광견병 항체검사일로부터 180일 후여야 합니다.'
+    return '입국일은 광견병 항체 검사일로부터 180일 후여야 합니다.'
   }
   return null
 }
@@ -2090,7 +2090,7 @@ function daysBetween(fromIso: string, toIso: string): number {
 }
 
 /**
- * 항체검사 "오늘 기준 유효기간 만료" 판정. 항체검사 유효기간은 채혈 + 2년
+ * 항체 검사 "오늘 기준 유효기간 만료" 판정. 항체 검사 유효기간은 채혈 + 2년
  * (마지막 유효일 = addYears(date,2) -1일). today >= addYears(date,2) 이면 만료.
  */
 function isTiterEntryExpired(form: { date: string }): boolean {
@@ -2099,7 +2099,7 @@ function isTiterEntryExpired(form: { date: string }): boolean {
 }
 
 /**
- * 항체검사 채혈일 cross-entry 검증. 통과면 null, 실패면 에러 메시지.
+ * 항체 검사 채혈일 cross-entry 검증. 통과면 null, 실패면 에러 메시지.
  * - rule 1: 채혈일 ≥ 2차 접종일
  * - rule 2: 채혈일 < 광견병 부스터 chain 최종 만료일 (2차부터 끊김 없이 이어진 부스터)
  * - rule 3: isFirstTiter && 1차 < 마이크로칩 → 채혈일 = 2차 접종일
@@ -2165,8 +2165,8 @@ function computeRabiesChainEnd(data: Record<string, unknown> | null | undefined)
 }
 
 /**
- * 모든 항체검사 record 의 date 만 모아 반환 (index 0 + extras). 광견병 2차 cross-entry
- * 검증("2차 = 항체검사일")에서 사용 — 어느 한 검사 date 와 일치하면 통과.
+ * 모든 항체 검사 record 의 date 만 모아 반환 (index 0 + extras). 광견병 2차 cross-entry
+ * 검증("2차 = 항체 검사일")에서 사용 — 어느 한 검사 date 와 일치하면 통과.
  */
 function readAllTiterDates(data: Record<string, unknown> | null | undefined): string[] {
   if (!data) return []

@@ -210,15 +210,15 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
   },
 
-  // ── 4. 광견병 항체검사 ──────────────────────────────────────────────────
+  // ── 4. 광견병 항체 검사 ──────────────────────────────────────────────────
   {
     id: 'rabies-titer',
     category: 'lab',
-    title: '광견병 항체가 검사',
+    title: '광견병 항체 검사',
     shortLabel: '항체',
     description:
-      '일본 지정 검사기관에서 광견병 항체가 검사를 받습니다.\n\n동물병원을 통해 의뢰할 수 있습니다.\n0.5 IU/mL 이상이면 합격입니다.\n2차 접종 면역 유효기간 이내에 검사합니다.',
-    doneSummary: '광견병 항체가 검사를 받았습니다.',
+      '일본 지정 검사기관에서 광견병 항체 검사를 받습니다.\n\n동물병원을 통해 의뢰할 수 있습니다.\n0.5 IU/mL 이상이면 합격입니다.\n2차 접종 면역 유효기간 이내에 검사합니다.',
+    doneSummary: '광견병 항체 검사를 받았습니다.',
     applicability: {
       destinations: [
         'japan',
@@ -253,10 +253,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '검사결과지 사본을 사진, PDF로 보관하세요.',
-    attachmentLabel: '광견병 항체가 검사 결과지',
+    attachmentLabel: '광견병 항체 검사 결과지',
     validationIds: [
       'jp.rabies-titer-vs-booster',
-      // 출국일 ± 180일/2년 룰은 항체검사 step 에서 보호자가 조치 불가 — 항공권
+      // 출국일 ± 180일/2년 룰은 항체 검사 step 에서 보호자가 조치 불가 — 항공권
       // 구매 step (flight-purchase) 에 jp.entry-* 로 매핑되어 거기서만 안내.
       'jp.microchip-rabies-sequence',
       // 마이크로칩 < 1차 사전 안내는 base 매핑이 rabies-vaccine-2 (다음 액션 step).
@@ -264,7 +264,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
   },
 
-  // ── 4-1. 광견병 항체가 검사(추가) — 일본 한정, 2회 이상 있을 때만 노출 ─────
+  // ── 4-1. 광견병 항체 검사(추가) — 일본 한정, 2회 이상 있을 때만 노출 ─────
   {
     id: 'rabies-titer-extra',
     category: 'lab',
@@ -272,10 +272,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     shortLabel: '항체+',
     description:
       '일본 입국 전 재검사가 필요합니다.\n\n검사 결과가 나올 때까지 수 주가 걸릴 수 있으므로 미리 검사를 받아두길 권장합니다.',
-    doneSummary: '광견병 항체가 검사를 추가로 받았습니다.',
+    doneSummary: '광견병 항체 검사를 추가로 받았습니다.',
     // 미래 만료 대비 reminder — 본 흐름의 다음 단계를 다음 할 일에서 가리지 않는다.
     advisoryOnly: true,
-    // 직전 항체검사의 유효기간(채혈일 + 2년) = 재검사 마감일을 카드/일정 row 에 정확한
+    // 직전 항체 검사의 유효기간(채혈일 + 2년) = 재검사 마감일을 카드/일정 row 에 정확한
     // 날짜로 노출. 광견병 백신 추가 step 의 situational 과 같은 패턴.
     situational: (caseRow) => {
       const titers = readTiterEntries(caseRow)
@@ -288,7 +288,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       return { desc: msg, cardDesc: msg }
     },
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
-    // 2회+ 입력됐거나 입국일+30일 안에 항체검사 2년 만료(재검사 필요) 일 때 노출.
+    // 2회+ 입력됐거나 입국일+30일 안에 항체 검사 2년 만료(재검사 필요) 일 때 노출.
     appliesWhen: 'titer-extra-applicable',
     order: 41,
     done: 'has-extra-titer',

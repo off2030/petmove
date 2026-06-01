@@ -15,7 +15,7 @@ import {
 /**
  * 중국 (GACC — General Administration of Customs of China, 海关总署) 절차 검증.
  *
- * 한국 = **비지정국** → 광견병 항체검사(RNATT) 필수.
+ * 한국 = **비지정국** → 광견병 항체 검사(RNATT) 필수.
  *  - 지정 19개국 (호주·NZ·미국·일본·홍콩·싱가포르 등) 은 RNATT 면제 + 격리 면제
  *  - 비지정국에서 입국 시: 마이크로칩 + RNATT ≥0.5 IU/ml + 현장검역 합격 → 격리 면제,
  *    미충족 시 GACC 지정 격리시설에서 30일
@@ -249,12 +249,12 @@ export const CN_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── RNATT (광견병 항체검사) ──
+  // ── RNATT (광견병 항체 검사) ──
   {
     id: 'cn.rnatt-after-rabies-vaccine',
     country: COUNTRY,
     category: '광견병',
-    title: '항체검사는 광견병 접종 이후',
+    title: '항체 검사는 광견병 접종 이후',
     description:
       'RNATT 채혈일은 직전 광견병 접종 이후여야 함 (2차 접종 후 시행 권장). (GACC 채신 lab 보고서 표준)',
     severity: 'info',
@@ -289,7 +289,7 @@ export const CN_CHECKS: ProcedureCheck[] = [
     id: 'cn.rnatt-valid-1year-on-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: '항체검사 유효기간 1년 — 도착일까지 유효',
+    title: '항체 검사 유효기간 1년 — 도착일까지 유효',
     description:
       'RNATT 결과는 채혈일 기준 1년간 유효 (실무 기준). 도착일이 채혈일 + 1년 이내여야 함. (GACC 본문 미명시 — 실무 운용상 1년 한도 보수 적용)',
     severity: 'info',

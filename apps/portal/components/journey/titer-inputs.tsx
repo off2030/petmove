@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { DateTextField } from '@petmove/ui'
 
 /**
- * 광견병 항체가 검사 step 입력 필드 — 채혈일 + 검사기관 + 검사결과. controlled — 부모
+ * 광견병 항체 검사 step 입력 필드 — 채혈일 + 검사기관 + 검사결과. controlled — 부모
  * (step-detail-view)가 state·save 를 보유. 저장 형식은 case.data.rabies_titer_records[0]
  * 의 date / lab / value (펫무브워크 RabiesTiterField 와 동일 키).
  *  - lab 은 검사기관 코드(apqa_seoul / ksvdl_r), 목록에 없으면 직접 입력한 기관명.

@@ -70,7 +70,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
     id: 'sg.titer-min-28days-after-vaccine',
     country: 'singapore',
     category: '광견병',
-    title: '항체검사는 광견병 접종 28일 후',
+    title: '항체 검사는 광견병 접종 28일 후',
     description:
       'RNATT 채혈일은 직전 광견병 접종(1차 또는 부스터)으로부터 28일 이후여야 함. (Schedule III IV(a)(iii) "At least 28 days after the primary rabies vaccination or rabies booster")',
     severity: 'info',
@@ -105,14 +105,14 @@ export const SG_CHECKS: ProcedureCheck[] = [
           offendingPaths,
         }
       }
-      return { ok: true, message: '항체검사 시기 적합 (28일 경과).' }
+      return { ok: true, message: '항체 검사 시기 적합 (28일 경과).' }
     },
   },
   {
     id: 'sg.departure-min-90days-after-titer',
     country: 'singapore',
     category: '광견병',
-    title: '출국일은 항체검사일 90일 이후',
+    title: '출국일은 항체 검사일 90일 이후',
     description:
       'RNATT 채혈일로부터 출국일까지 최소 90일 경과 필요. (Schedule III IV(a)(iii) "not less than 90 days ... prior to export")',
     severity: 'info',
@@ -129,19 +129,19 @@ export const SG_CHECKS: ProcedureCheck[] = [
         if (!best || days > best.days) best = { entry: t, days }
       }
       if (best && best.days >= 90) {
-        return { ok: true, message: `항체검사(${best.entry.date}) → 출국일(${dep}): ${best.days}일.` }
+        return { ok: true, message: `항체 검사(${best.entry.date}) → 출국일(${dep}): ${best.days}일.` }
       }
       const offending: string[] = ['departure_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       const message = !best
-        ? '항체검사일과 출국일을 확인할 수 없습니다.'
+        ? '항체 검사일과 출국일을 확인할 수 없습니다.'
         : best.days < 0
-          ? `항체검사일(${best.entry.date})이 출국일(${dep})보다 이후입니다. 채혈은 출국 전에 완료되어야 합니다.`
-          : `항체검사일로부터 출국일까지 ${best.days}일입니다. 90일 이상이어야 합니다.`
+          ? `항체 검사일(${best.entry.date})이 출국일(${dep})보다 이후입니다. 채혈은 출국 전에 완료되어야 합니다.`
+          : `항체 검사일로부터 출국일까지 ${best.days}일입니다. 90일 이상이어야 합니다.`
       return {
         ok: false,
         message,
-        fixHint: '출국일을 채혈일 + 90일 이후로 조정하거나 더 이른 항체검사가 필요합니다.',
+        fixHint: '출국일을 채혈일 + 90일 이후로 조정하거나 더 이른 항체 검사가 필요합니다.',
         offendingPaths: offending,
       }
     },
@@ -150,7 +150,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
     id: 'sg.departure-within-12months-of-titer',
     country: 'singapore',
     category: '광견병',
-    title: '출국일은 항체검사일 12개월 이내',
+    title: '출국일은 항체 검사일 12개월 이내',
     description:
       'RNATT 유효기간 12개월 — 출국일이 채혈일 + 1년을 넘으면 재검사 필요. 1주년 당일은 만료일이라 364일째까지만 인정. (Schedule III IV(a)(iii) "not more than 12 months prior to export")',
     severity: 'info',
@@ -164,7 +164,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
       if (valid) {
         return {
           ok: true,
-          message: `항체검사(${valid.date}) 유효(${addYears(valid.date, 1)}) ≥ 출국일(${dep}).`,
+          message: `항체 검사(${valid.date}) 유효(${addYears(valid.date, 1)}) ≥ 출국일(${dep}).`,
         }
       }
       const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
@@ -173,7 +173,7 @@ export const SG_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: `최신 항체검사(${newest.date})의 유효기간(${newestValidUntil})이 출국일(${dep})보다 빠릅니다.`,
+        message: `최신 항체 검사(${newest.date})의 유효기간(${newestValidUntil})이 출국일(${dep})보다 빠릅니다.`,
         fixHint: '재검사를 하거나 출국일을 검사일 + 12개월 이내로 조정하세요.',
         offendingPaths: offending,
       }

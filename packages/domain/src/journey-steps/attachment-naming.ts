@@ -29,9 +29,9 @@ function extractExtension(name: string): string {
 
 /**
  * 기존 이름이 label 패턴(label 또는 label_N) 과 매칭되면 N 반환, 아니면 null.
- * label = '광견병 항체가 검사 결과지'
- *   '광견병 항체가 검사 결과지.jpg' → 1
- *   '광견병 항체가 검사 결과지_3.pdf' → 3
+ * label = '광견병 항체 검사 결과지'
+ *   '광견병 항체 검사 결과지.jpg' → 1
+ *   '광견병 항체 검사 결과지_3.pdf' → 3
  *   'IMG_001.jpg' → null
  */
 function parseLabelNumber(name: string, label: string): number | null {

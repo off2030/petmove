@@ -54,7 +54,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
   '일본': [
     {
       id: 'rabies-titer-result',
-      name: '광견병 항체가 검사 결과지',
+      name: '광견병 항체 검사 결과지',
       source: '동물병원',
       kind: 'step',
       stepRef: 'rabies-titer',

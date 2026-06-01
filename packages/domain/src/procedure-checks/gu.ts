@@ -208,7 +208,7 @@ export const GU_CHECKS: ProcedureCheck[] = [
     id: 'gu.rnatt-after-rabies-10days',
     country: COUNTRY,
     category: '광견병',
-    title: '항체검사는 직전 광견병 접종 후 10일 이상 경과',
+    title: '항체 검사는 직전 광견병 접종 후 10일 이상 경과',
     description:
       'RNATT 채혈일은 직전 광견병 접종 후 10일 이상 경과해야 함. (DOAG: 항체 형성 시간 운용 권장)',
     severity: 'info',

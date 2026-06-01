@@ -123,12 +123,12 @@ export const TW_CHECKS: ProcedureCheck[] = [
     },
   },
 
-  // ── RNATT (광견병 항체검사) ──
+  // ── RNATT (광견병 항체 검사) ──
   {
     id: 'tw.rnatt-after-rabies-vaccine',
     country: COUNTRY,
     category: '광견병',
-    title: '항체검사는 광견병 접종 이후',
+    title: '항체 검사는 광견병 접종 이후',
     description:
       'RNATT 채혈일은 직전 광견병 접종 이후여야 함. (APHIA Procedure)',
     severity: 'info',

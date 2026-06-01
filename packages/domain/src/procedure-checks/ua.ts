@@ -142,7 +142,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
     id: 'ua.rnatt-min-30days-after-vaccine',
     country: COUNTRY,
     category: '광견병',
-    title: '항체검사는 광견병 접종 30일 이후',
+    title: '항체 검사는 광견병 접종 30일 이후',
     description:
       'RNATT 채혈일은 직전 광견병 접종으로부터 30일 이후. (공식 가이드: "blood sample should be taken at least 30 days after the rabies vaccine" — EU 동일 패턴)',
     severity: 'info',
@@ -176,14 +176,14 @@ export const UA_CHECKS: ProcedureCheck[] = [
           offendingPaths: offending,
         }
       }
-      return { ok: true, message: '항체검사 시기 적합 (30일 경과).' }
+      return { ok: true, message: '항체 검사 시기 적합 (30일 경과).' }
     },
   },
   {
     id: 'ua.departure-min-3months-after-titer',
     country: COUNTRY,
     category: '광견병',
-    title: '출국일은 항체검사 3개월 이후',
+    title: '출국일은 항체 검사 3개월 이후',
     description:
       'RNATT 채혈일로부터 출국일까지 최소 3개월 경과 필요. (SSUFSCP: "принаймні за три місяці до дати видачі сертифіката") — 캘린더 기준(`addMonths`).',
     severity: 'info',
@@ -196,7 +196,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
       const valid = titers.find((t) => addMonths(t.date, 3) <= dep)
       if (valid) {
         const days = daysBetween(valid.date, dep)
-        return { ok: true, message: `항체검사(${valid.date}) → 출국일(${dep}): ${days}일 (≥3개월).` }
+        return { ok: true, message: `항체 검사(${valid.date}) → 출국일(${dep}): ${days}일 (≥3개월).` }
       }
       const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
       const requiredDate = addMonths(newest.date, 3)
@@ -204,8 +204,8 @@ export const UA_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: `최신 항체검사(${newest.date}) 기준 출국 가능일(${requiredDate})이 출국일(${dep})보다 늦습니다.`,
-        fixHint: '출국일을 채혈일 + 3개월 이후로 조정하거나 더 이른 항체검사가 필요합니다.',
+        message: `최신 항체 검사(${newest.date}) 기준 출국 가능일(${requiredDate})이 출국일(${dep})보다 늦습니다.`,
+        fixHint: '출국일을 채혈일 + 3개월 이후로 조정하거나 더 이른 항체 검사가 필요합니다.',
         offendingPaths: offending,
       }
     },
@@ -214,7 +214,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
     id: 'ua.departure-within-12months-of-titer',
     country: COUNTRY,
     category: '광견병',
-    title: '출국일은 항체검사 12개월 이내',
+    title: '출국일은 항체 검사 12개월 이내',
     description:
       'RNATT 유효기간 1년 — 출국일이 채혈일 + 1년(364일) 초과 시 재검사 필요. (SSUFSCP 실무 운용 — 부스터 chain 끊김 없을 시 EU 패턴상 평생 유효 가능, 보수적으로 1년 적용)',
     severity: 'info',
@@ -226,7 +226,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
 
       const valid = titers.find((t) => addYears(t.date, 1) >= dep)
       if (valid) {
-        return { ok: true, message: `항체검사(${valid.date}) 유효(${addYears(valid.date, 1)}) ≥ 출국일(${dep}).` }
+        return { ok: true, message: `항체 검사(${valid.date}) 유효(${addYears(valid.date, 1)}) ≥ 출국일(${dep}).` }
       }
       const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
       const expiry = addYears(newest.date, 1)
@@ -234,7 +234,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: `최신 항체검사(${newest.date})의 유효기간(${expiry})이 출국일(${dep})보다 빠릅니다. 1년을 초과했습니다.`,
+        message: `최신 항체 검사(${newest.date})의 유효기간(${expiry})이 출국일(${dep})보다 빠릅니다. 1년을 초과했습니다.`,
         fixHint: '재검사를 받거나 출국일을 채혈일 + 1년 이내로 조정하세요.',
         offendingPaths: offending,
       }

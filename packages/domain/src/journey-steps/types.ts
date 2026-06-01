@@ -67,7 +67,7 @@ export type StepDoneSignal =
   | 'has-rabies-booster'           // 2차 이상
   | 'has-extra-rabies'             // 3차 이상 (추가 접종)
   | 'has-titer-entry'
-  | 'has-extra-titer'              // 2회 이상 (항체검사 추가)
+  | 'has-extra-titer'              // 2회 이상 (항체 검사 추가)
   | 'has-general-vaccine'
   | 'has-civ-vaccine'
   | 'has-infectious-disease-test'
@@ -94,9 +94,9 @@ export type StepDoneSignal =
  */
 export type StepAppliesWhenSignal =
   | 'has-extra-rabies'             // 광견병 3차 이상 있을 때만
-  | 'has-extra-titer'              // 항체검사 2회 이상 있을 때만
+  | 'has-extra-titer'              // 항체 검사 2회 이상 있을 때만
   | 'rabies-extra-applicable'      // 3차+ 입력됨 OR 최근 접종 유효기간이 입국일 전 만료 (= 추가 접종 필요)
-  | 'titer-extra-applicable'       // 2회+ 입력됨 OR 최근 항체검사가 입국일 기준 2년 만료 (= 추가 검사 필요)
+  | 'titer-extra-applicable'       // 2회+ 입력됨 OR 최근 항체 검사가 입국일 기준 2년 만료 (= 추가 검사 필요)
 
 // ── 메인 타입 ────────────────────────────────────────────────────────────
 
@@ -134,7 +134,7 @@ export interface StepDefinition {
   /** 전역 유일 식별자. kebab-case. 예: 'rabies-titer'. */
   id: string
   category: StepCategory
-  /** 짧은 카드 라벨. 예: '광견병 항체검사'. */
+  /** 짧은 카드 라벨. 예: '광견병 항체 검사'. */
   title: string
   /** 더 짧은 1~3자. 예: '항체'. */
   shortLabel: string
@@ -184,7 +184,7 @@ export interface StepDefinition {
   attachmentHint?: string
   /**
    * 업로드된 파일의 표시 이름 라벨. 주어지면 원본 파일명을 무시하고 이 이름으로 저장
-   * (예: '광견병 항체가 검사 결과지'). 같은 step 에 여러 개면 '_2', '_3' 접미사.
+   * (예: '광견병 항체 검사 결과지'). 같은 step 에 여러 개면 '_2', '_3' 접미사.
    * 미설정이면 원본 파일명 그대로.
    */
   attachmentLabel?: string

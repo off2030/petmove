@@ -47,7 +47,7 @@ interface DestinationOverride {
    */
   extraFields?: string[]
   /**
-   * 편도(trip_type='one_way')일 때 광견병항체검사(rabies_titer)를 표시하지 않을지.
+   * 편도(trip_type='one_way')일 때 광견병 항체 검사(rabies_titer)를 표시하지 않을지.
    * 입국국 자체는 RNATT 비요구지만 한국 귀국용으로 디폴트 표시 중인 국가들에 사용.
    */
   rabiesTiterForReturnOnly?: boolean
@@ -126,7 +126,7 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     keywords: ['호주', 'australia'],
     vaccines: ['rabies', 'rabies_titer', 'general', 'civ', 'infectious_disease', 'internal_parasite', 'external_parasite'],
     extraSection: 'australia',
-    // sample_received_date 는 rabies_titer_records[].received_date 로 이동 (광견병 항체검사 편집화면에 표시).
+    // sample_received_date 는 rabies_titer_records[].received_date 로 이동 (광견병 항체 검사 편집화면에 표시).
     extraFields: ['permit_no', 'id_date'],
   },
   new_zealand: {
@@ -220,13 +220,13 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     rabiesTiterForReturnOnly: true,
   },
   china: {
-    // 한국 = GACC 비지정 국가 → 광견병 항체검사 필수.
+    // 한국 = GACC 비지정 국가 → 광견병 항체 검사 필수.
     // 중국은 1년 라이선스 백신만 인정 (2년/3년 거부).
     keywords: ['중국', 'china'],
     vaccines: ['rabies', 'rabies_titer'],
   },
   taiwan: {
-    // APHIA(2023 BAPHIQ에서 개칭) — 광견병 항체검사 필수, 채혈일 + 180일 후 도착, 7일 격리 (수입허가 20일 전 신청 시 면제).
+    // APHIA(2023 BAPHIQ에서 개칭) — 광견병 항체 검사 필수, 채혈일 + 180일 후 도착, 7일 격리 (수입허가 20일 전 신청 시 면제).
     // BAPHIQ Form 002 Import permit number 입력용으로 permit_no 추가정보 노출.
     // (Certificate number 는 후처리 수기 입력 — EQC No. 라벨이 일본 전용이라 공유하지 않음.)
     keywords: ['대만', 'taiwan'],
@@ -330,7 +330,7 @@ export function getTripType(
 }
 
 /**
- * 활성 목적지가 "편도일 때 광견병항체검사를 숨기는 국가" 인지 여부.
+ * 활성 목적지가 "편도일 때 광견병 항체 검사를 숨기는 국가" 인지 여부.
  * destination-config 의 rabiesTiterForReturnOnly 플래그 기반.
  */
 export function isRabiesTiterHiddenForOneWay(
@@ -547,7 +547,7 @@ export const ALL_VACCINE_KEYS = [
 /** UI 표시용 라벨. */
 export const VACCINE_KEY_LABELS: Record<string, string> = {
   rabies: '광견병',
-  rabies_titer: '광견병항체검사',
+  rabies_titer: '광견병 항체 검사',
   general: '종합백신',
   civ: '독감',
   kennel: '켄넬코프',
@@ -558,7 +558,7 @@ export const VACCINE_KEY_LABELS: Record<string, string> = {
   heartworm: '심장사상충',
 }
 
-/** 모든 케이스에 기본 적용되는 백신/검사 (광견병 + 항체검사). */
+/** 모든 케이스에 기본 적용되는 백신/검사 (광견병 + 항체 검사). */
 export const DEFAULT_VACCINE_KEYS: string[] = ['rabies', 'rabies_titer']
 
 /**

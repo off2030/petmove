@@ -213,7 +213,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: '모든 부스터가 직전 접종 만료 전 시점.' }
     },
   },
-  // ── RNATT (광견병 항체검사) ──
+  // ── RNATT (광견병 항체 검사) ──
   {
     id: 'nz.rnatt-3to24months-before-departure',
     country: COUNTRY,

@@ -60,7 +60,7 @@ export async function uploadStepDocument(formData: FormData): Promise<Result<Cas
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    // step 라벨 기반 이름 통일 (광견병 항체검사 → '광견병 항체가 검사 결과지').
+    // step 라벨 기반 이름 통일 (광견병 항체 검사 → '광견병 항체 검사 결과지').
     // 같은 step 의 기존 업로드 개수에 따라 '_2', '_3' (gap-fill).
     const existingDocs = readCaseDocuments(prev)
     const displayName = resolveStepAttachmentName(stepId, file.name, existingDocs)

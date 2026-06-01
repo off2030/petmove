@@ -23,8 +23,8 @@ import {
  * 한국 (Annex II Part 2 — listed third country) → EU/UK/CH 입국 공통 요건:
  *  ① 마이크로칩 ≤ 광견병 1차 접종
  *  ② 1차 접종 ≥ 생후 12주 (84일)
- *  ③ 항체검사 ≥ 직전 접종 + 30일
- *  ④ 출국 ≥ 항체검사 + 3개월 (캘린더 기준, 90일 아님)
+ *  ③ 항체 검사 ≥ 직전 접종 + 30일
+ *  ④ 출국 ≥ 항체 검사 + 3개월 (캘린더 기준, 90일 아님)
  *  ⑤ 출국 시 광견병 면역 유효
  *  ⑥ 내원·증명서 ≤ 출국 10일 이내
  *  ⑦ (촌충국가 한정) 촌충구충 24-120시간 (1-5일) 전
@@ -110,7 +110,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
     id: 'eu.titer-min-30days-after-vaccine',
     country: EU_REGIME,
     category: '광견병',
-    title: '항체검사는 광견병 접종 30일 후',
+    title: '항체 검사는 광견병 접종 30일 후',
     description:
       'RNATT 채혈일은 직전 광견병 접종(1차 또는 부스터)으로부터 30일 이후여야 함. (EU Reg 576/2013 Annex IV)',
     severity: 'info',
@@ -144,14 +144,14 @@ export const EU_CHECKS: ProcedureCheck[] = [
           offendingPaths,
         }
       }
-      return { ok: true, message: '항체검사 시기 적합 (30일 경과).' }
+      return { ok: true, message: '항체 검사 시기 적합 (30일 경과).' }
     },
   },
   {
     id: 'eu.departure-min-3months-after-titer',
     country: EU_REGIME,
     category: '광견병',
-    title: '출국일은 항체검사일 3개월(캘린더) 이후',
+    title: '출국일은 항체 검사일 3개월(캘린더) 이후',
     description:
       'RNATT 채혈일로부터 출국일까지 최소 3개월 경과 필요. 캘린더 기준 — 달에 따라 89~92일이 될 수 있음. (EU Reg 576/2013 Article 12 — "at least three months before")',
     severity: 'info',
@@ -169,7 +169,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
         const earliestDep = addMonths(valid.date, 3)
         return {
           ok: true,
-          message: `항체검사(${valid.date}) + 3개월(${earliestDep}) ≤ 출국일(${dep}). 차이 ${days}일.`,
+          message: `항체 검사(${valid.date}) + 3개월(${earliestDep}) ≤ 출국일(${dep}). 차이 ${days}일.`,
         }
       }
 
@@ -181,14 +181,14 @@ export const EU_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       const message =
         days === null
-          ? '항체검사일과 출국일을 확인할 수 없습니다.'
+          ? '항체 검사일과 출국일을 확인할 수 없습니다.'
           : days < 0
-            ? `항체검사일(${newest.date})이 출국일(${dep})보다 이후입니다. 채혈은 출국 전에 완료되어야 합니다.`
-            : `항체검사(${newest.date}) + 3개월(${earliestDep})이 출국일(${dep})보다 늦습니다. 출국까지 ${days}일로 3개월에 미달합니다.`
+            ? `항체 검사일(${newest.date})이 출국일(${dep})보다 이후입니다. 채혈은 출국 전에 완료되어야 합니다.`
+            : `항체 검사(${newest.date}) + 3개월(${earliestDep})이 출국일(${dep})보다 늦습니다. 출국까지 ${days}일로 3개월에 미달합니다.`
       return {
         ok: false,
         message,
-        fixHint: `출국일을 ${earliestDep} 이후로 조정하거나 더 이른 항체검사가 필요합니다.`,
+        fixHint: `출국일을 ${earliestDep} 이후로 조정하거나 더 이른 항체 검사가 필요합니다.`,
         offendingPaths: offending,
       }
     },

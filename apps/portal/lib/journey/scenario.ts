@@ -463,7 +463,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     const ready = !check || check(caseRow)
     if (ready) stages[returnIdx].state = 'current'
   }
-  // 폴백 — 두 lane 모두 비어 있고 advisory 만 남았다면 (예: 항체검사도 끝났는데
+  // 폴백 — 두 lane 모두 비어 있고 advisory 만 남았다면 (예: 항체 검사도 끝났는데
   // 추가 백신만 만료 임박) 가장 앞의 advisory 를 다음 할 일로 노출. 보호자가 행동할 게
   // 그것뿐일 때까지 가려두면 화면이 공백처럼 보인다.
   if (stages.every((s) => s.state !== 'current')) {

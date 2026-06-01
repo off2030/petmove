@@ -139,15 +139,15 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
     }
     case 'titer-extra-applicable': {
       // 동일 패턴 (rabies-extra-applicable):
-      // (1) 이미 2회+ 항체검사 입력됨
-      // (2) 항체검사 유효기간(채혈일 + 2년) 만료 30일 전 — 오늘 기준 사전 안내.
-      // (3) 항체검사 유효기간이 일본 입국일 전에 만료 — 재검사 필요.
+      // (1) 이미 2회+ 항체 검사 입력됨
+      // (2) 항체 검사 유효기간(채혈일 + 2년) 만료 30일 전 — 오늘 기준 사전 안내.
+      // (3) 항체 검사 유효기간이 일본 입국일 전에 만료 — 재검사 필요.
       //     입국일은 entry_date 만 본다 (departure_date 폴백 안 씀) — rabies 와 동일.
       const titers = readTiterEntries(caseRow)
       if (titers.length >= 2) return true
       if (titers.length === 0) return false
 
-      // 가장 최근(=date 기준 최신) 항체검사의 유효기간(채혈일 + 2년).
+      // 가장 최근(=date 기준 최신) 항체 검사의 유효기간(채혈일 + 2년).
       const latest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
       const validUntil = addYears(latest.date, 2)
       if (!validUntil) return false
