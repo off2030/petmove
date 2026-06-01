@@ -371,7 +371,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const filed =
         typeof data.advance_notification_date === 'string' ? data.advance_notification_date : ''
       if (filed.length >= 10 && filed > new Date().toISOString().slice(0, 10)) return undefined
-      if (data.advance_notification_approval_skipped === true) {
+      // 신청일을 지우면 skip 플래그가 남아 있어도 완료 처리 안내를 띄우지 않는다.
+      if (filed.length >= 10 && data.advance_notification_approval_skipped === true) {
         const docs = Array.isArray(data.documents) ? data.documents : []
         const hasAttachment = docs.some(
           (d) =>
@@ -432,7 +433,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
           ? data.jp_export_quarantine_application_date
           : ''
       if (applied.length >= 10 && applied > new Date().toISOString().slice(0, 10)) return undefined
-      if (data.jp_export_quarantine_reservation_skipped === true) {
+      // 신청일을 지우면 skip 플래그가 남아 있어도 완료 처리 안내를 띄우지 않는다.
+      if (applied.length >= 10 && data.jp_export_quarantine_reservation_skipped === true) {
         const msg = '입력 없이 완료 처리됐어요. 예약이 확정되면 날짜와 시간을 입력할 수 있습니다.'
         return { desc: msg, cardDesc: msg }
       }

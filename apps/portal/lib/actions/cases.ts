@@ -976,7 +976,12 @@ export async function updateAdvanceNotificationDate(
     const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
     if (v) nextData.advance_notification_date = v
-    else delete nextData.advance_notification_date
+    else {
+      delete nextData.advance_notification_date
+      // 신청일을 지우면 '완료 처리(skip)'도 함께 해제 — 신청일 없는 skip 플래그는 무의미하고,
+      // UI '되돌리기' 버튼도 신청일이 있어야 떠서 그대로 두면 해제 불가 상태가 된다.
+      delete nextData.advance_notification_approval_skipped
+    }
     // 신고탭 stored 값을 클리어해 derive 모드로 전환 — portal 보호자의 적극적 입력이
     // 운영자의 기존 수동 상태보다 우선시되도록. 액션이 일어난 케이스만 영향.
     delete nextData.import_import_status
@@ -1312,7 +1317,11 @@ export async function updateJpExportQuarantineFields(
     const nextData: Record<string, unknown> = { ...prev }
     const a = typeof fields.applicationDate === 'string' ? fields.applicationDate.trim() : ''
     if (a) nextData.jp_export_quarantine_application_date = a
-    else delete nextData.jp_export_quarantine_application_date
+    else {
+      delete nextData.jp_export_quarantine_application_date
+      // 신청일을 지우면 '완료 처리(skip)'도 함께 해제 — 사전 신고와 동일 사유.
+      delete nextData.jp_export_quarantine_reservation_skipped
+    }
     const d = typeof fields.date === 'string' ? fields.date.trim() : ''
     if (d) nextData.jp_export_quarantine_date = d
     else delete nextData.jp_export_quarantine_date
