@@ -2,6 +2,7 @@ import type { CaseRow } from '@petmove/domain'
 import {
   JOURNEY_STEP_CATALOG,
   buildCaseJourneyContext,
+  evaluateChainConsistency,
   findStepForCheck,
   getStepsForCase,
   resolveCompletedDate,
@@ -201,6 +202,12 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
   const daysLeft = dep ? daysBetween(today, dep) : null
 
   const applicableSteps = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
+
+  // 정합성 패스 — 선행/순서 불변식 위반을 해당(후행) step 에 '주의'로 표면화.
+  // done(데이터 유무)·procedure-check 와 무관한 참조 무결성 레이어. 위반 없으면 빈 맵.
+  const consistencyByStep = new Map(
+    evaluateChainConsistency(applicableSteps, caseRow).map((i) => [i.stepId, i.message]),
+  )
 
   // procedure-check 결과를 step 단위로 집계. severity 'info' 는 차분한 '안내'
   // 톤으로 분리, 그 외(blocker/warning)는 '주의'. destinationKey 없으면 빈 맵.
@@ -417,6 +424,10 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       infoMessageByStep.get(step.id) ??
       (isAdvisory && !done ? desc : undefined) ??
       (isAwaitingStep ? sit?.desc : undefined)
+    // 정합성 위반이 있으면 그 메시지를 보조줄로 노출하고 '주의'로 카운트 — done 이어도
+    // ⚠ 로 바뀐다(timeline 우선순위 주의 > done). 데이터·완료 상태 자체는 보존.
+    const consistencyMsg = consistencyByStep.get(step.id)
+    const effectiveFailed = failedChecks + (consistencyMsg ? 1 : 0)
     return {
       id: step.id,
       label: step.title,
@@ -424,9 +435,9 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       date,
       dateLabel,
       state: done ? 'done' : 'upcoming',
-      desc,
+      desc: consistencyMsg ?? desc,
       cardDesc,
-      failedChecks: failedChecks > 0 ? failedChecks : undefined,
+      failedChecks: effectiveFailed > 0 ? effectiveFailed : undefined,
       infoChecks: infoChecks > 0 ? infoChecks : undefined,
       advisory: isAdvisory ? true : undefined,
       infoMessage,
