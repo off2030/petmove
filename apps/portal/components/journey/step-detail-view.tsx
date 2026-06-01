@@ -1244,7 +1244,7 @@ export function StepDetailView({
             )}
             {isAdvanceApprovalSkipped && (
               <div style={{ marginTop: 16, fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
-                허가증 첨부 대기 상태로 되돌리시려면 되돌리기 버튼을 클릭해주세요.
+                완료 전 상태로 되돌리시려면 되돌리기 버튼을 클릭해주세요.
               </div>
             )}
             {isJpExportAwaitingReservation && (
