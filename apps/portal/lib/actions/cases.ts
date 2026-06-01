@@ -1290,18 +1290,7 @@ export async function updateJpExportQuarantineFields(
     const returnDate = typeof prev.return_date === 'string' ? prev.return_date : ''
     const trimmedApp = typeof fields.applicationDate === 'string' ? fields.applicationDate.trim() : ''
     const trimmedReserved = typeof fields.date === 'string' ? fields.date.trim() : ''
-    if (trimmedApp && returnDate && returnDate.length >= 10) {
-      // 신청일 ≤ 귀국 - 10일 (간단 비교: ISO date 는 사전식 정렬 = 시간순)
-      const ret = new Date(returnDate.slice(0, 10) + 'T00:00:00Z')
-      ret.setUTCDate(ret.getUTCDate() - 10)
-      const deadline = ret.toISOString().slice(0, 10)
-      if (trimmedApp > deadline) {
-        return {
-          ok: false,
-          error: `신청일은 귀국 항공편(${formatKr(returnDate)}) 10일 전(${formatKr(deadline)})까지여야 합니다.`,
-        }
-      }
-    }
+    // 예약일 range 먼저 검증 — 신청일 마감의 anchor 로 쓰기 전에 신뢰성 확보.
     if (trimmedReserved && returnDate && returnDate.length >= 10 && trimmedReserved > returnDate.slice(0, 10)) {
       return {
         ok: false,
@@ -1312,6 +1301,30 @@ export async function updateJpExportQuarantineFields(
       return {
         ok: false,
         error: `예약일은 일본 입국일(${formatKr(entryDate)})보다 빠를 수 없습니다.`,
+      }
+    }
+    // 신청일 마감 — 예약일이 입력돼 있으면 예약일 −10일, 아니면 귀국 항공편 −10일을 마지노선으로.
+    // (예약일이 추후 확정될 때 다시 검증되므로, 입력 시점엔 귀국일이 최소 보장 기준.)
+    if (trimmedApp) {
+      let anchor = ''
+      let anchorLabel = ''
+      if (trimmedReserved) {
+        anchor = trimmedReserved
+        anchorLabel = '예약일'
+      } else if (returnDate && returnDate.length >= 10) {
+        anchor = returnDate.slice(0, 10)
+        anchorLabel = '귀국 항공편'
+      }
+      if (anchor) {
+        const a = new Date(anchor + 'T00:00:00Z')
+        a.setUTCDate(a.getUTCDate() - 10)
+        const deadline = a.toISOString().slice(0, 10)
+        if (trimmedApp > deadline) {
+          return {
+            ok: false,
+            error: `신청일은 ${anchorLabel}(${formatKr(anchor)}) 10일 전(${formatKr(deadline)})까지여야 합니다.`,
+          }
+        }
       }
     }
 
