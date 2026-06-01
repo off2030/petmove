@@ -366,6 +366,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 첨부가 올라오면 두 경우 모두 doneSummary 로 자연스럽게 전환.
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
+      // 신청일이 미래(=예정)이면 안내 노출 안 함 — derive 가 'in_progress' 로 보더라도
+      // 보호자에겐 '신청 완료' 톤이 부적절. stored/admin_demoted_at 별도 시그널은 별개.
+      const filed =
+        typeof data.advance_notification_date === 'string' ? data.advance_notification_date : ''
+      if (filed.length >= 10 && filed > new Date().toISOString().slice(0, 10)) return undefined
       if (data.advance_notification_approval_skipped === true) {
         const docs = Array.isArray(data.documents) ? data.documents : []
         const hasAttachment = docs.some(
@@ -421,6 +426,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //    '신청 완료, 예약 확정 대기' — done 아니라 timeline·detail 동시 노출.
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
+      // 신청일이 미래(=예정)이면 안내 노출 안 함 — 사전 신고와 동일 패턴.
+      const applied =
+        typeof data.jp_export_quarantine_application_date === 'string'
+          ? data.jp_export_quarantine_application_date
+          : ''
+      if (applied.length >= 10 && applied > new Date().toISOString().slice(0, 10)) return undefined
       if (data.jp_export_quarantine_reservation_skipped === true) {
         const msg = '입력 없이 완료 처리됐어요. 예약이 확정되면 날짜와 시간을 입력할 수 있습니다.'
         return { desc: msg, cardDesc: msg }
