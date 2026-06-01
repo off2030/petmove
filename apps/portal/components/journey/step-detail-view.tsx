@@ -1078,7 +1078,7 @@ export function StepDetailView({
           })()}
           {step.id === 'intake' && (
             <Link
-              href={`/cases/${caseId}/info`}
+              href="/me"
               style={{
                 marginTop: 14,
                 marginRight: 8,

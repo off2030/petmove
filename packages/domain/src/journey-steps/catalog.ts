@@ -35,7 +35,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '펫무브 등록',
     shortLabel: '등록',
     description:
-      '보호자와 반려동물 정보가 등록되었습니다. 이 정보는 검사, 신고, 서류 준비 등 여러 절차에 사용됩니다.\n정보 페이지에서 검토, 수정이 가능합니다.',
+      '보호자와 반려동물 정보가 등록되었습니다.\n\n이 정보는 준비의 모든 단계에 필요합니다. 진행 중 정보가 바뀌면 검역 때 문제가 될 수 있습니다. 변경이 필요한 경우 검토가 필요합니다.\n\n등록하신 정보는 설정 페이지에서 검토, 수정하실 수 있습니다.',
     doneSummary: '보호자와 반려동물 정보가 등록되었습니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 10,
