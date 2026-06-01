@@ -602,13 +602,13 @@ export async function setJpExportQuarantineReportStatus(
       return
     }
     if (target === 'in_progress') {
-      const wasDone =
-        d.jp_export_quarantine_reservation_skipped === true ||
-        d.jp_export_quarantine_confirmed === true
+      // 완료 단일 경로(skip 플래그) 기준. legacy confirmed=true 가 남아 있을 수 있으니
+      // 같이 정리한다(이제 derive 에서 무시되지만 데이터 위생 차원).
+      const wasDone = d.jp_export_quarantine_reservation_skipped === true
+      delete d.jp_export_quarantine_confirmed
       if (wasDone) {
         d.jp_export_quarantine_admin_demoted_at = new Date().toISOString()
         delete d.jp_export_quarantine_reservation_skipped
-        delete d.jp_export_quarantine_confirmed
       } else {
         if (
           typeof d.jp_export_quarantine_application_date !== 'string' ||
@@ -619,20 +619,12 @@ export async function setJpExportQuarantineReportStatus(
       }
       return
     }
-    // target === 'done' — date+time 둘 다 있으면 confirmed, 없으면 skipped.
+    // target === 'done' — 완료는 단일 경로(reservation_skipped 플래그)로 일원화.
+    // 예약일·시간은 '희망' 데이터로만 취급되고 완료 판정에 영향 없음. legacy confirmed
+    // 플래그가 남아 있다면 정리한다(이제 derive 에서 무시되지만 데이터 위생 차원).
     delete d.jp_export_quarantine_admin_demoted_at
-    const hasDate =
-      typeof d.jp_export_quarantine_date === 'string' &&
-      (d.jp_export_quarantine_date as string).length >= 10
-    const t = typeof d.jp_export_quarantine_time === 'string' ? d.jp_export_quarantine_time : ''
-    const hasTime = /^\d{1,2}:\d{2}$/.test(t)
-    if (hasDate && hasTime) {
-      d.jp_export_quarantine_confirmed = true
-      delete d.jp_export_quarantine_reservation_skipped
-    } else {
-      d.jp_export_quarantine_reservation_skipped = true
-      delete d.jp_export_quarantine_confirmed
-    }
+    d.jp_export_quarantine_reservation_skipped = true
+    delete d.jp_export_quarantine_confirmed
     if (
       typeof d.jp_export_quarantine_application_date !== 'string' ||
       (d.jp_export_quarantine_application_date as string).length < 10

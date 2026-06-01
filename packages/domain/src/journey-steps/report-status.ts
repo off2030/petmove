@@ -54,12 +54,14 @@ export function deriveAdvanceNotificationStatus(caseRow: CaseRow): JpReportStatu
  *
  *  - stored `import_export_status`: legacy 수동값. 처리 동일.
  *  - 신청일 입력 + `jp_export_quarantine_reservation_skipped` = 'done'
- *    (신청일 없으면 skip 무효. portal '완료' 버튼이 이 플래그를 set — 메인 done 경로)
- *  - `jp_export_quarantine_confirmed` + 예약일·시간 모두 입력 = 'done'
- *    (legacy/admin 경로 — portal 입력은 더 이상 confirmed 를 자동 set 하지 않음.
- *    예약일·시간은 보호자 '희망' 데이터로만 취급됨)
+ *    (신청일 없으면 skip 무효. portal·admin 의 '완료' 액션이 이 플래그를 set — 단일 done 경로)
  *  - `jp_export_quarantine_admin_demoted_at` OR 신청일(application_date) 입력 = 'in_progress'
  *  - 그 외 = 'not_started'
+ *
+ * `jp_export_quarantine_confirmed` 플래그는 옛 모델(예약일·시간 입력 시 자동 done)의 잔재.
+ * 새 모델에선 완료는 명시적 '완료' 액션 단일 경로만 인정한다 — confirmed 는 derive 에
+ * 영향 X(존재해도 단순 데이터). 옛 케이스가 confirmed=true 만 있다면 이제 'in_progress'
+ * 로 보이며, 보호자가 '완료' 버튼을 한 번 더 누르면 done 으로 정리된다.
  */
 export function deriveJpExportQuarantineStatus(caseRow: CaseRow): JpReportStatus {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -73,16 +75,8 @@ export function deriveJpExportQuarantineStatus(caseRow: CaseRow): JpReportStatus
     typeof data.jp_export_quarantine_application_date === 'string'
       ? data.jp_export_quarantine_application_date
       : ''
-  // skip(입력 없이 완료 처리)은 신청일이 있을 때만 유효 — 신청일을 지우면 완료 처리도 해제된다.
+  // 완료(skip)는 신청일이 있을 때만 유효 — 신청일을 지우면 완료도 해제된다.
   if (data.jp_export_quarantine_reservation_skipped === true && applied.length >= 10) return 'done'
-  if (data.jp_export_quarantine_confirmed === true) {
-    const hasDate =
-      typeof data.jp_export_quarantine_date === 'string' &&
-      (data.jp_export_quarantine_date as string).length >= 10
-    const t =
-      typeof data.jp_export_quarantine_time === 'string' ? data.jp_export_quarantine_time : ''
-    if (hasDate && /^\d{1,2}:\d{2}$/.test(t)) return 'done'
-  }
   if (typeof data.jp_export_quarantine_admin_demoted_at === 'string') return 'in_progress'
   if (applied.length >= 10) return 'in_progress'
   return 'not_started'
