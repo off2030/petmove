@@ -918,10 +918,11 @@ export function StepDetailView({
       }
     })
   }
-  // 일본 수출검역 신청 — 사전 신고와 동일 패턴. 신청일 입력됐는데 예약 날짜·시간 둘 다
-  // 미입력 상태에서 두 분기:
-  //  - skip X: 예약 확정 대기. '다음' 으로 명시적 skip.
-  //  - skip O: '입력 없이 완료 처리됨'. '되돌리기' 로 awaiting 으로 복귀.
+  // 일본 수출검역 신청 — 사전 신고와 동일 패턴.
+  //  - 예약일·시간은 '희망' 데이터로 완료 판정에 영향 X. step 완료는 보호자가 '완료' 버튼을
+  //    명시적으로 눌러야 됨 (= reservation_skipped 플래그 set).
+  //  - skip X & !done: '신청 진행 중' 안내 + 하단 저장 버튼이 jpExportSkipMode 로 '완료' 전환.
+  //  - skip O: '완료 처리됨' 안내 + 되돌리기 버튼.
   const jpExportReservationSkipped =
     (caseRow?.data as Record<string, unknown> | undefined)?.jp_export_quarantine_reservation_skipped ===
     true
@@ -929,10 +930,11 @@ export function StepDetailView({
     isJpExportQuarantine &&
     savedJpExport.applicationDate.length >= 10 &&
     savedJpExport.applicationDate <= todayStr
-  const isJpExportReservationPending =
-    isJpExportApplied && !(savedJpExport.date.length >= 10 && /^\d{1,2}:\d{2}$/.test(savedJpExport.time))
-  const isJpExportAwaitingReservation = isJpExportReservationPending && !jpExportReservationSkipped
-  const isJpExportReservationSkipped = isJpExportReservationPending && jpExportReservationSkipped
+  // 'awaiting' = 신청 도래 + 아직 완료 처리 안 함. done(legacy confirmed/admin) 이면 제외.
+  const isJpExportAwaitingReservation = isJpExportApplied && !jpExportReservationSkipped && !done
+  const isJpExportReservationSkipped = isJpExportApplied && jpExportReservationSkipped
+  // 하단 '저장' 버튼이 '완료' 로 전환되는 모드 — 변경 없을 때만(저장과 충돌 방지).
+  const jpExportSkipMode = isJpExportAwaitingReservation && !dirty
   const [skippingJpExport, setSkippingJpExport] = useState(false)
   const handleSkipJpExportReservation = () => {
     if (skippingJpExport) return
@@ -1222,8 +1224,9 @@ export function StepDetailView({
         {/* Situational 안내 — step config 가 caseRow 상태에 따라 동적으로 만든 메시지.
             timeline 의 desc 와 동일 내용이라 detail 페이지에서도 같은 정보 전달.
             항공권 step + 왕복 + 출국만 입력 상태에선 '편도 일정으로 전환' 토글을 노출.
-            사전 신고 허가증 대기 상태의 '완료' 액션은 하단 sticky 저장 버튼이 전환되어
-            맡는다(advanceSkipMode) — 안내 박스엔 별도 버튼 X. */}
+            사전 신고 허가증 대기(advanceSkipMode) / 일본 수출검역 신청 진행(jpExportSkipMode)
+            상태의 '완료' 액션은 하단 sticky 저장 버튼이 라벨 전환으로 맡는다 — 안내 박스엔
+            별도 액션 버튼 X(되돌리기만 남음). */}
         {situationalDesc && (
           <section
             style={{
@@ -1244,11 +1247,6 @@ export function StepDetailView({
             {isAdvanceApprovalSkipped && (
               <div style={{ marginTop: 16, fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
                 완료 전 상태로 되돌리시려면 되돌리기 버튼을 클릭해주세요.
-              </div>
-            )}
-            {isJpExportAwaitingReservation && (
-              <div style={{ marginTop: 16, fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
-                입력 없이 완료 처리하시려면 아래 버튼을 클릭해주세요.
               </div>
             )}
             {isJpExportReservationSkipped && (
@@ -1300,29 +1298,6 @@ export function StepDetailView({
                 }}
               >
                 {unskippingApproval ? '처리 중…' : '되돌리기'}
-              </button>
-            )}
-            {isJpExportAwaitingReservation && (
-              <button
-                type="button"
-                onClick={handleSkipJpExportReservation}
-                disabled={skippingJpExport}
-                className="pm-pressable"
-                style={{
-                  marginTop: 24,
-                  padding: '5px 14px',
-                  borderRadius: 999,
-                  border: `.5px solid color-mix(in srgb, ${C.info} 47%, transparent)`,
-                  background: 'var(--pm-surface)',
-                  color: C.info,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  letterSpacing: '0.01em',
-                  cursor: skippingJpExport ? 'progress' : 'pointer',
-                  opacity: skippingJpExport ? 0.6 : 1,
-                }}
-              >
-                {skippingJpExport ? '처리 중…' : '완료 처리'}
               </button>
             )}
             {isJpExportReservationSkipped && (
@@ -1672,13 +1647,23 @@ export function StepDetailView({
           )}
           {/* 저장 중·저장됨은 별도 줄 대신 버튼 라벨로 — 첨부 영역과 겹치지 않음.
               미래 날짜(예정)면 라벨을 '예정일로 저장'으로 바꿔 누르기 전에 의도를 알린다.
-              사전 신고 허가증 대기(advanceSkipMode)면 같은 버튼이 '완료'로 전환 —
-              저장할 변경이 없는 상태에서 skip-approval 액션을 직접 노출. */}
+              사전 신고 허가증 대기(advanceSkipMode) / 일본 수출검역 신청 진행
+              (jpExportSkipMode)이면 같은 버튼이 '완료'로 전환 — 저장할 변경이 없는 상태에서
+              명시적 완료 액션(skip 플래그 set)을 직접 노출. */}
           <button
             type="button"
-            onClick={advanceSkipMode ? handleSkipAdvanceApproval : handleSave}
+            onClick={
+              advanceSkipMode
+                ? handleSkipAdvanceApproval
+                : jpExportSkipMode
+                  ? handleSkipJpExportReservation
+                  : handleSave
+            }
             disabled={
-              (!canSave && !advanceSkipMode) || status === 'saving' || skippingApproval
+              (!canSave && !advanceSkipMode && !jpExportSkipMode) ||
+              status === 'saving' ||
+              skippingApproval ||
+              skippingJpExport
             }
             aria-live="polite"
             style={{
@@ -1689,12 +1674,18 @@ export function StepDetailView({
               border: 0,
               background: justSaved
                 ? C.sage
-                : (canSave || advanceSkipMode) && status !== 'saving' && !skippingApproval
+                : (canSave || advanceSkipMode || jpExportSkipMode) &&
+                    status !== 'saving' &&
+                    !skippingApproval &&
+                    !skippingJpExport
                   ? C.accent
                   : 'var(--pm-line)',
               color:
                 justSaved ||
-                ((canSave || advanceSkipMode) && status !== 'saving' && !skippingApproval)
+                ((canSave || advanceSkipMode || jpExportSkipMode) &&
+                  status !== 'saving' &&
+                  !skippingApproval &&
+                  !skippingJpExport)
                   ? '#fff'
                   : C.ink3,
               fontFamily: 'inherit',
@@ -1702,7 +1693,10 @@ export function StepDetailView({
               fontWeight: 600,
               letterSpacing: '-0.005em',
               cursor:
-                (canSave || advanceSkipMode) && status !== 'saving' && !skippingApproval
+                (canSave || advanceSkipMode || jpExportSkipMode) &&
+                status !== 'saving' &&
+                !skippingApproval &&
+                !skippingJpExport
                   ? 'pointer'
                   : 'not-allowed',
               transition: 'background .15s, color .15s',
@@ -1710,11 +1704,11 @@ export function StepDetailView({
           >
             {status === 'saving'
               ? '저장 중…'
-              : skippingApproval
+              : skippingApproval || skippingJpExport
                 ? '처리 중…'
                 : justSaved
                   ? '✓ 저장됨'
-                  : advanceSkipMode
+                  : advanceSkipMode || jpExportSkipMode
                     ? '완료'
                     : formUpcoming ||
                         jpExportApplicationUpcoming ||

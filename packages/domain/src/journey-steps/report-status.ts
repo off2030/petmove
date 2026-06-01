@@ -53,8 +53,11 @@ export function deriveAdvanceNotificationStatus(caseRow: CaseRow): JpReportStatu
  * 일본 수출 동물검역 진행 상태. 일본 + 왕복 케이스에서만 의미.
  *
  *  - stored `import_export_status`: legacy 수동값. 처리 동일.
- *  - 신청일 입력 + `jp_export_quarantine_reservation_skipped` = 'done' (신청일 없으면 skip 무효)
+ *  - 신청일 입력 + `jp_export_quarantine_reservation_skipped` = 'done'
+ *    (신청일 없으면 skip 무효. portal '완료' 버튼이 이 플래그를 set — 메인 done 경로)
  *  - `jp_export_quarantine_confirmed` + 예약일·시간 모두 입력 = 'done'
+ *    (legacy/admin 경로 — portal 입력은 더 이상 confirmed 를 자동 set 하지 않음.
+ *    예약일·시간은 보호자 '희망' 데이터로만 취급됨)
  *  - `jp_export_quarantine_admin_demoted_at` OR 신청일(application_date) 입력 = 'in_progress'
  *  - 그 외 = 'not_started'
  */

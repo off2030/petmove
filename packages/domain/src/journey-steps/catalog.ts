@@ -435,22 +435,13 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       if (applied.length >= 10 && applied > new Date().toISOString().slice(0, 10)) return undefined
       // 신청일을 지우면 skip 플래그가 남아 있어도 완료 처리 안내를 띄우지 않는다.
       if (applied.length >= 10 && data.jp_export_quarantine_reservation_skipped === true) {
-        const msg = '입력 없이 완료 처리됐어요. 예약이 확정되면 날짜와 시간을 입력할 수 있습니다.'
+        const msg = '완료 처리됐어요. 예약이 확정되면 날짜와 시간을 입력할 수 있습니다.'
         return { desc: msg, cardDesc: msg }
       }
       if (deriveJpExportQuarantineStatus(caseRow) !== 'in_progress') return undefined
-      const hasReservationDate =
-        typeof data.jp_export_quarantine_date === 'string' &&
-        data.jp_export_quarantine_date.length >= 10
-      const hasReservationTime =
-        typeof data.jp_export_quarantine_time === 'string' &&
-        /^\d{1,2}:\d{2}$/.test(data.jp_export_quarantine_time)
-      // 예약 날짜·시간은 있는데 미확정 = 운영자(대행)가 입력한 '고객 희망' → 예약 진행 중.
-      if (hasReservationDate && hasReservationTime) {
-        const msg = '신청이 완료되었습니다. 예약 진행중입니다.'
-        return { desc: msg, cardDesc: msg }
-      }
-      const msg = '신청이 완료되었습니다. 예약이 확정되면 예약날짜와 시간을 입력해주세요.'
+      // 예약일·시간은 '희망' 데이터일 뿐 완료 판정에 영향 없음 — 보호자가 '완료' 버튼을 직접
+      // 눌러야 step 이 done. 사전 신고와 동일 모델.
+      const msg = '일본 수출 동물검역 신청을 진행 중입니다. 예약이 확정되면 날짜와 시간을 입력하시거나 완료 버튼을 눌러주세요.'
       return { desc: msg, cardDesc: msg }
     },
     inputs: [

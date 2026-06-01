@@ -1330,15 +1330,10 @@ export async function updateJpExportQuarantineFields(
     else delete nextData.jp_export_quarantine_date
     if (time) nextData.jp_export_quarantine_time = time
     else delete nextData.jp_export_quarantine_time
-    // portal 보호자 입력 = 확정 의미 (admin 추가정보의 '고객 희망'과 다름).
-    // date+time 둘 다 있으면 confirmed=true, 하나라도 비면 false. admin 토글로도 동일.
-    if (d && time) {
-      nextData.jp_export_quarantine_confirmed = true
-      // 완료 시그널 — admin demote 상태를 자동 해제.
-      delete nextData.jp_export_quarantine_admin_demoted_at
-    } else {
-      delete nextData.jp_export_quarantine_confirmed
-    }
+    // 예약일·시간은 '희망/예정' 데이터일 뿐, 완료 판정에 영향 없음 — 보호자가 하단 '완료'
+    // 버튼(reservation_skipped 플래그)을 명시적으로 눌러야 step 이 done. 사전 신고와 동일 모델.
+    // 기존에 admin 토글로 confirmed=true 가 세팅된 케이스가 있다면 그 값은 그대로 둔다
+    // (admin 의 명시적 액션이라 portal 입력 변화로 자동 무력화하지 않음).
     // 신청일·예약·확정 어떤 시점이든 보호자가 portal 에서 적극적 입력을 했다는 뜻 —
     // stored 클리어해 derive 모드로 전환 (운영자 수동값이 있었다면 그 시점부터만 무력화).
     delete nextData.import_export_status
