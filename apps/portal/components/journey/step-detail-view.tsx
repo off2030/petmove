@@ -2068,8 +2068,9 @@ function titerExtraEqual(a: TiterExtraEntry[], b: TiterExtraEntry[]): boolean {
  * 항공편 입국일 cross-entry 검증. 통과면 null, 실패면 에러 메시지.
  * - rule 1 (차단): 입국일 ≥ 채혈일 + 180일 (어떤 titer 라도 만족하면 통과). 너무
  *   이른 입국은 추가 단계로 해결 안 됨 — 실제 날짜 조정 필요.
- * - rule 2 (차단, 일본 한정): 입국일 ≥ 오늘 + 40일. 사전 신고 마감이 입국 40일 전인데
- *   더 가까운 입국일을 박으면 마감이 이미 지나 신청 자체가 불가능 — 입국일 조정 필요.
+ * - rule 2 (차단, 일본 한정): 입국일 ≥ (사전 신고 신청일 OR 오늘) + 40일. 아직 신고 전이면
+ *   '오늘+40' 안에는 마감이 지나 신청 자체가 불가능하므로 차단. 이미 신고해뒀으면 '신청일+40'
+ *   기준이라, 일찍 신고한 경우 오늘 기준 40일 안 남은 입국일도 허용.
  *
  * 백신·검사 유효기간 만료 (입국일 > titer +2년, 입국일 > rabies chain) 는 차단 X —
  * 추가 접종·추가 검사로 해결 가능한 계획 사항이라 procedure-check 의 '주의' 로 노출
@@ -2083,11 +2084,19 @@ function validateFlightEntryDate(
   destinationKey: string | null,
 ): string | null {
   if (!entryDate) return null
-  // rule 2 — 일본 사전 신고 40일 마감.
+  // rule 2 — 일본 사전 신고 40일 마감. 기준 날짜를 '신고했으면 신청일, 아니면 오늘'로 잡는다.
+  // 40일 규칙의 본질은 '신고일 ≤ 입국일−40'(= 신고할 시간 확보)이라, 이미 미리 신고해뒀다면
+  // 입국이 오늘 기준 40일 미만이어도 신고가 충분히 일찍 됐으면 통과시킨다. 신고 후 입국일을
+  // 신청일+40 이전으로 당기면 여전히 차단 — procedure-check jp.advance-notification-40days-before-entry 와 동일 의미.
   if (destinationKey === 'japan') {
-    const today = todayIso()
-    if (daysBetween(today, entryDate) < 40) {
-      return '사전 신고를 위해 일본 입국 때까지 최소 40일 여유 기간이 필요합니다.'
+    const notif =
+      typeof data?.advance_notification_date === 'string' ? data.advance_notification_date : ''
+    const filed = notif.length >= 10
+    const anchor = filed ? notif : todayIso()
+    if (daysBetween(anchor, entryDate) < 40) {
+      return filed
+        ? '사전 신고일 기준 입국까지 최소 40일이 필요합니다. 입국일을 늦추거나 신고일을 확인하세요.'
+        : '사전 신고를 위해 일본 입국 때까지 최소 40일 여유 기간이 필요합니다.'
     }
   }
   // rule 1 — titer 후 180일.
