@@ -2096,7 +2096,7 @@ function validateFlightEntryDate(
     if (daysBetween(anchor, entryDate) < 40) {
       return filed
         ? '사전 신고일 기준 입국까지 최소 40일이 필요합니다. 입국일을 늦추거나 신고일을 확인하세요.'
-        : '사전 신고를 위해 일본 입국 때까지 최소 40일 여유 기간이 필요합니다.'
+        : '사전 신고를 위해 일본 입국 때까지 최소 40일 여유 기간이 필요합니다. 사전 신고를 먼저 하신 경우 사전 신고 날짜를 입력해주세요.'
     }
   }
   // rule 1 — titer 후 180일.
