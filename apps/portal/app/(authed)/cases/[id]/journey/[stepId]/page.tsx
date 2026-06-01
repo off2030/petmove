@@ -83,6 +83,18 @@ function collectStepChecks(
 ): CollectedCheck[] {
   if (!destinationKey) return []
   const targetIds = new Set(getChecksForStep(step.id))
+
+  // 동적 매핑 — scenario.ts 와 일관: 1차 < 마이크로칩 사전 안내(jp.rabies-prime-before-microchip)는
+  // 2차 백신 미완 → catalog 매핑(rabies-vaccine-2), 2차 done → rabies-titer 로 옮긴다.
+  // (다음 액션 step 에 안내 — '같은 날' 룰을 두 입력 시점 모두에서 환기.)
+  const r2 = JOURNEY_STEP_CATALOG.find((s) => s.id === 'rabies-vaccine-2')
+  const r2Done = r2 ? resolveDone(r2.done, caseRow) : false
+  if (step.id === 'rabies-titer' && r2Done) {
+    targetIds.add('jp.rabies-prime-before-microchip')
+  } else if (step.id === 'rabies-vaccine-2' && r2Done) {
+    targetIds.delete('jp.rabies-prime-before-microchip')
+  }
+
   if (targetIds.size === 0) return []
   // 다중 목적지 케이스에서 by_dest 가 destinationKey 토큰으로 조회되도록 전달.
   // 단일 목적지면 caseRow.destination 그대로, 다중이면 첫 토큰(검증 대상 destination).
