@@ -308,6 +308,11 @@ export function StepDetailView({
   const jpExportApplicationUpcoming =
     isJpExportQuarantine && jpExport.applicationDate.length >= 10 && jpExport.applicationDate > todayStr
   const advanceUpcoming = isAdvanceNotification && advanceDate.length >= 10 && advanceDate > todayStr
+  // 추가 백신(3차+) — 입력 entry 중 하나라도 미래면 '예정일로 저장'. 도래한 entry 만으로
+  // step 완료 — has-extra-rabies done 룰이 latest.date ≤ 오늘 게이트로 동일 판정.
+  const rabiesExtraUpcoming =
+    isRabiesExtra &&
+    rabiesExtra.some((e) => typeof e.date === 'string' && e.date.length >= 10 && e.date > todayStr)
 
   // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
   useEffect(() => {
@@ -1720,7 +1725,10 @@ export function StepDetailView({
               ? '저장 중…'
               : justSaved
                 ? '✓ 저장됨'
-                : formUpcoming || jpExportApplicationUpcoming || advanceUpcoming
+                : formUpcoming ||
+                    jpExportApplicationUpcoming ||
+                    advanceUpcoming ||
+                    rabiesExtraUpcoming
                   ? '예정일로 저장'
                   : '저장'}
           </button>

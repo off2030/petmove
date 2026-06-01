@@ -58,6 +58,8 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       const r = readRabiesEntries(caseRow)
       if (r.length < 3) return false
       const latest = r[r.length - 1]
+      // 미래 접종일은 '예정' — 도래해야 완료로 잡힘.
+      if (latest.date > todayIso()) return false
       const previous = r[r.length - 2]
       const previousValidUntil = resolveValidUntil(previous.date, previous.valid_until)
       if (!previousValidUntil || latest.date > previousValidUntil) return false
