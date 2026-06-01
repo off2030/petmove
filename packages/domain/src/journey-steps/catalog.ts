@@ -441,7 +441,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       if (deriveJpExportQuarantineStatus(caseRow) !== 'in_progress') return undefined
       // 예약일·시간은 '희망' 데이터일 뿐 완료 판정에 영향 없음 — 보호자가 '완료' 버튼을 직접
       // 눌러야 step 이 done. 사전 신고와 동일 모델.
-      const msg = '일본 수출 동물검역 신청을 진행 중입니다. 예약이 확정되면 날짜와 시간을 입력하시거나 완료 버튼을 눌러주세요.'
+      const msg = '예약이 확정되면 완료 버튼을 눌러주세요.'
       return { desc: msg, cardDesc: msg }
     },
     inputs: [
