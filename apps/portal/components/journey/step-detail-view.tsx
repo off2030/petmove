@@ -883,6 +883,10 @@ export function StepDetailView({
     stepDocuments.length === 0
   const isAdvanceAwaitingApproval = isAdvanceDateEntered && !advanceApprovalSkipped
   const isAdvanceApprovalSkipped = isAdvanceDateEntered && advanceApprovalSkipped
+  // 사전 신고 허가증 대기 상태에서 입력 변경이 없으면 하단 '저장' 버튼이 '완료' 로 전환되어
+  // skip-approval 액션을 실행. 보호자에겐 화면에 액션 버튼이 둘(저장+완료)이 아니라 하나만
+  // 보이도록 — 안내 박스 내 별도 '완료' 버튼은 제거됐다.
+  const advanceSkipMode = isAdvanceAwaitingApproval && !dirty
   const [skippingApproval, setSkippingApproval] = useState(false)
   const handleSkipAdvanceApproval = () => {
     if (skippingApproval) return
@@ -1217,9 +1221,9 @@ export function StepDetailView({
 
         {/* Situational 안내 — step config 가 caseRow 상태에 따라 동적으로 만든 메시지.
             timeline 의 desc 와 동일 내용이라 detail 페이지에서도 같은 정보 전달.
-            항공권 step + 왕복 + 출국만 입력 상태에선 '편도 일정으로 전환' 토글을,
-            사전 신고 step + 신청일 입력됐는데 허가증 첨부·skip 둘 다 아직 상태에선
-            '다음' 으로 첨부 없이 완료 처리하는 토글을 같이 노출. */}
+            항공권 step + 왕복 + 출국만 입력 상태에선 '편도 일정으로 전환' 토글을 노출.
+            사전 신고 허가증 대기 상태의 '완료' 액션은 하단 sticky 저장 버튼이 전환되어
+            맡는다(advanceSkipMode) — 안내 박스엔 별도 버튼 X. */}
         {situationalDesc && (
           <section
             style={{
@@ -1273,29 +1277,6 @@ export function StepDetailView({
                 }}
               >
                 {convertingTrip ? '전환 중…' : '편도 일정으로 전환'}
-              </button>
-            )}
-            {isAdvanceAwaitingApproval && (
-              <button
-                type="button"
-                onClick={handleSkipAdvanceApproval}
-                disabled={skippingApproval}
-                className="pm-pressable"
-                style={{
-                  marginTop: 24,
-                  padding: '5px 14px',
-                  borderRadius: 999,
-                  border: `.5px solid color-mix(in srgb, ${C.info} 47%, transparent)`,
-                  background: 'var(--pm-surface)',
-                  color: C.info,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  letterSpacing: '0.01em',
-                  cursor: skippingApproval ? 'progress' : 'pointer',
-                  opacity: skippingApproval ? 0.6 : 1,
-                }}
-              >
-                {skippingApproval ? '처리 중…' : '완료'}
               </button>
             )}
             {isAdvanceApprovalSkipped && (
@@ -1690,11 +1671,15 @@ export function StepDetailView({
             </div>
           )}
           {/* 저장 중·저장됨은 별도 줄 대신 버튼 라벨로 — 첨부 영역과 겹치지 않음.
-              미래 날짜(예정)면 라벨을 '예정일로 저장'으로 바꿔 누르기 전에 의도를 알린다. */}
+              미래 날짜(예정)면 라벨을 '예정일로 저장'으로 바꿔 누르기 전에 의도를 알린다.
+              사전 신고 허가증 대기(advanceSkipMode)면 같은 버튼이 '완료'로 전환 —
+              저장할 변경이 없는 상태에서 skip-approval 액션을 직접 노출. */}
           <button
             type="button"
-            onClick={handleSave}
-            disabled={!canSave || status === 'saving'}
+            onClick={advanceSkipMode ? handleSkipAdvanceApproval : handleSave}
+            disabled={
+              (!canSave && !advanceSkipMode) || status === 'saving' || skippingApproval
+            }
             aria-live="polite"
             style={{
               pointerEvents: 'auto',
@@ -1704,28 +1689,39 @@ export function StepDetailView({
               border: 0,
               background: justSaved
                 ? C.sage
-                : canSave && status !== 'saving'
+                : (canSave || advanceSkipMode) && status !== 'saving' && !skippingApproval
                   ? C.accent
                   : 'var(--pm-line)',
-              color: justSaved || (canSave && status !== 'saving') ? '#fff' : C.ink3,
+              color:
+                justSaved ||
+                ((canSave || advanceSkipMode) && status !== 'saving' && !skippingApproval)
+                  ? '#fff'
+                  : C.ink3,
               fontFamily: 'inherit',
               fontSize: 15,
               fontWeight: 600,
               letterSpacing: '-0.005em',
-              cursor: canSave && status !== 'saving' ? 'pointer' : 'not-allowed',
+              cursor:
+                (canSave || advanceSkipMode) && status !== 'saving' && !skippingApproval
+                  ? 'pointer'
+                  : 'not-allowed',
               transition: 'background .15s, color .15s',
             }}
           >
             {status === 'saving'
               ? '저장 중…'
-              : justSaved
-                ? '✓ 저장됨'
-                : formUpcoming ||
-                    jpExportApplicationUpcoming ||
-                    advanceUpcoming ||
-                    rabiesExtraUpcoming
-                  ? '예정일로 저장'
-                  : '저장'}
+              : skippingApproval
+                ? '처리 중…'
+                : justSaved
+                  ? '✓ 저장됨'
+                  : advanceSkipMode
+                    ? '완료'
+                    : formUpcoming ||
+                        jpExportApplicationUpcoming ||
+                        advanceUpcoming ||
+                        rabiesExtraUpcoming
+                      ? '예정일로 저장'
+                      : '저장'}
           </button>
         </div>
       )}
