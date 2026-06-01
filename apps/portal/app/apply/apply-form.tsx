@@ -35,7 +35,7 @@ const messages = {
     tripType: '왕복 · 편도',
     tripRound: '왕복',
     tripOneWay: '편도',
-    sec2: '소유주 정보',
+    sec2: '보호자 정보',
     name: '성함',
     namePlaceholder: '예: 홍길동',
     nameEn: '영문성함',
