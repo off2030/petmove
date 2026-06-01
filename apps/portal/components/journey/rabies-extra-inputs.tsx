@@ -21,11 +21,11 @@ export interface RabiesExtraEntry extends RabiesEntryForm {
 }
 
 const C = {
-  surface: '#FBF7F1',
-  line: 'rgba(42,38,32,.10)',
-  ink: '#2A2620',
-  ink2: '#6B6457',
-  ink3: '#9A9286',
+  surface: 'var(--pm-surface)',
+  line: 'var(--pm-line)',
+  ink: 'var(--pm-ink)',
+  ink2: 'var(--pm-ink-2)',
+  ink3: 'var(--pm-ink-3)',
 } as const
 
 const FIELDS: ReadonlyArray<{
@@ -153,7 +153,7 @@ function ExtraCard({
     padding: '10px 12px',
     border: `1px solid ${C.line}`,
     borderRadius: 10,
-    background: 'rgba(42,38,32,0.035)',
+    background: 'rgb(var(--pm-ink-rgb) / .035)',
     fontFamily: 'inherit',
     fontSize: 15,
     color: C.ink2,

@@ -781,18 +781,18 @@ export function StepDetailView({
   }
 
   const C = {
-    bg: '#F5EFE8',
-    surface: '#FBF7F1',
-    ink: '#2A2620',
-    ink2: '#6B6457',
-    ink3: '#9A9286',
-    line: 'rgba(42,38,32,.10)',
-    accent: '#B89968',
-    sage: '#8FA68C',
-    warn: '#C26A4A',
-    warnBg: 'rgba(194,106,74,0.08)',
-    info: '#C9A663',
-    infoBg: 'rgba(201,166,99,0.08)',
+    bg: 'var(--pm-bg)',
+    surface: 'var(--pm-surface)',
+    ink: 'var(--pm-ink)',
+    ink2: 'var(--pm-ink-2)',
+    ink3: 'var(--pm-ink-3)',
+    line: 'var(--pm-line)',
+    accent: 'var(--pm-accent)',
+    sage: 'var(--pm-sage)',
+    warn: 'var(--pm-warn)',
+    warnBg: 'color-mix(in srgb, var(--pm-warn) 8%, transparent)',
+    info: 'var(--pm-info)',
+    infoBg: 'color-mix(in srgb, var(--pm-info) 8%, transparent)',
   } as const
 
   const serif: React.CSSProperties = {
@@ -1195,7 +1195,7 @@ export function StepDetailView({
               padding: '14px 16px',
               borderRadius: 16,
               background: C.infoBg,
-              border: `.5px solid ${C.info}59`,
+              border: `.5px solid color-mix(in srgb, ${C.info} 35%, transparent)`,
             }}
           >
             <div style={{ ...monoCap, color: C.info, fontWeight: 700, marginBottom: 8 }}>
@@ -1235,8 +1235,8 @@ export function StepDetailView({
                   marginTop: 24,
                   padding: '5px 12px',
                   borderRadius: 999,
-                  border: `.5px solid ${C.info}77`,
-                  background: '#FBF7F1',
+                  border: `.5px solid color-mix(in srgb, ${C.info} 47%, transparent)`,
+                  background: 'var(--pm-surface)',
                   color: C.info,
                   fontSize: 12,
                   fontWeight: 700,
@@ -1258,8 +1258,8 @@ export function StepDetailView({
                   marginTop: 24,
                   padding: '5px 14px',
                   borderRadius: 999,
-                  border: `.5px solid ${C.info}77`,
-                  background: '#FBF7F1',
+                  border: `.5px solid color-mix(in srgb, ${C.info} 47%, transparent)`,
+                  background: 'var(--pm-surface)',
                   color: C.info,
                   fontSize: 12,
                   fontWeight: 700,
@@ -1281,8 +1281,8 @@ export function StepDetailView({
                   marginTop: 24,
                   padding: '5px 14px',
                   borderRadius: 999,
-                  border: `.5px solid ${C.info}77`,
-                  background: '#FBF7F1',
+                  border: `.5px solid color-mix(in srgb, ${C.info} 47%, transparent)`,
+                  background: 'var(--pm-surface)',
                   color: C.info,
                   fontSize: 12,
                   fontWeight: 700,
@@ -1304,8 +1304,8 @@ export function StepDetailView({
                   marginTop: 24,
                   padding: '5px 14px',
                   borderRadius: 999,
-                  border: `.5px solid ${C.info}77`,
-                  background: '#FBF7F1',
+                  border: `.5px solid color-mix(in srgb, ${C.info} 47%, transparent)`,
+                  background: 'var(--pm-surface)',
                   color: C.info,
                   fontSize: 12,
                   fontWeight: 700,
@@ -1327,8 +1327,8 @@ export function StepDetailView({
                   marginTop: 24,
                   padding: '5px 14px',
                   borderRadius: 999,
-                  border: `.5px solid ${C.info}77`,
-                  background: '#FBF7F1',
+                  border: `.5px solid color-mix(in srgb, ${C.info} 47%, transparent)`,
+                  background: 'var(--pm-surface)',
                   color: C.info,
                   fontSize: 12,
                   fontWeight: 700,
@@ -1351,7 +1351,7 @@ export function StepDetailView({
               padding: '14px 16px',
               borderRadius: 16,
               background: C.warnBg,
-              border: `.5px solid ${C.warn}33`,
+              border: `.5px solid color-mix(in srgb, ${C.warn} 20%, transparent)`,
             }}
           >
             <div style={{ ...monoCap, color: C.warn, fontWeight: 700, marginBottom: 8 }}>
@@ -1381,7 +1381,7 @@ export function StepDetailView({
               padding: '14px 16px',
               borderRadius: 16,
               background: C.infoBg,
-              border: `.5px solid ${C.info}59`,
+              border: `.5px solid color-mix(in srgb, ${C.info} 35%, transparent)`,
             }}
           >
             <div style={{ ...monoCap, color: C.info, fontWeight: 700, marginBottom: 8 }}>
@@ -1608,7 +1608,7 @@ export function StepDetailView({
               padding: '14px 16px',
               borderRadius: 16,
               background: C.infoBg,
-              border: `.5px solid ${C.info}59`,
+              border: `.5px solid color-mix(in srgb, ${C.info} 35%, transparent)`,
             }}
           >
             <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
@@ -1653,7 +1653,7 @@ export function StepDetailView({
                 borderRadius: 10,
                 // 불투명 배경 — 뒤 콘텐츠(첨부 영역)가 비쳐 겹쳐 보이지 않도록.
                 background: C.surface,
-                border: `.5px solid ${C.warn}55`,
+                border: `.5px solid color-mix(in srgb, ${C.warn} 33%, transparent)`,
                 color: C.warn,
                 fontSize: 12,
                 textAlign: 'center',
@@ -1679,7 +1679,7 @@ export function StepDetailView({
                 ? C.sage
                 : canSave && status !== 'saving'
                   ? C.accent
-                  : 'rgba(42,38,32,.10)',
+                  : 'var(--pm-line)',
               color: justSaved || (canSave && status !== 'saving') ? '#fff' : C.ink3,
               fontFamily: 'inherit',
               fontSize: 15,

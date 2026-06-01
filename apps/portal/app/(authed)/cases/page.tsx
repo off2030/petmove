@@ -45,15 +45,15 @@ export default async function CasesPage() {
               display: 'block',
               padding: '18px 18px',
               borderRadius: 14,
-              background: '#FBF7F1',
+              background: 'var(--pm-surface)',
               textDecoration: 'none',
-              color: '#2A2620',
+              color: 'var(--pm-ink)',
               border: '1px solid rgba(0,0,0,0.04)',
             }}
           >
             <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em' }}>{petName}</div>
             {dest && (
-              <div style={{ fontSize: 13, color: '#6B6457', marginTop: 4 }}>
+              <div style={{ fontSize: 13, color: 'var(--pm-ink-2)', marginTop: 4 }}>
                 한국 {tripType === 'round' ? '⇄' : '→'} {dest}
               </div>
             )}
@@ -88,7 +88,7 @@ function EmptyState() {
           letterSpacing: '-0.01em',
           lineHeight: 1.4,
           margin: 0,
-          color: '#2A2620',
+          color: 'var(--pm-ink)',
         }}
       >
         펫무브에 오신 것을 환영합니다
@@ -98,8 +98,8 @@ function EmptyState() {
         style={{
           padding: '11px 22px',
           borderRadius: 999,
-          background: '#B89968',
-          color: '#FBF7F1',
+          background: 'var(--pm-accent)',
+          color: 'var(--pm-surface)',
           fontSize: 13,
           fontWeight: 600,
           letterSpacing: '-0.005em',
@@ -116,7 +116,7 @@ function ErrorState({ message }: { message: string }) {
   return (
     <div style={{ padding: '48px 24px', textAlign: 'center' }}>
       <p style={{ fontSize: 15, color: '#A04525' }}>케이스를 불러오지 못했습니다.</p>
-      <p style={{ fontSize: 12, color: '#9A9286', marginTop: 8 }}>{message}</p>
+      <p style={{ fontSize: 12, color: 'var(--pm-ink-3)', marginTop: 8 }}>{message}</p>
     </div>
   )
 }

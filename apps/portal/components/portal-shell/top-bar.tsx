@@ -58,7 +58,7 @@ export function TopBar() {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#6B6457',
+    color: 'var(--pm-ink-2)',
     padding: 0,
     flexShrink: 0,
   }
@@ -81,7 +81,7 @@ export function TopBar() {
         boxSizing: 'border-box',
         pointerEvents: 'none',
         background:
-          'linear-gradient(180deg, rgba(245,239,232,.95) 0%, rgba(245,239,232,.92) 60%, rgba(245,239,232,0) 100%)',
+          'linear-gradient(180deg, rgb(var(--pm-bg-rgb) / .95) 0%, rgb(var(--pm-bg-rgb) / .92) 60%, rgb(var(--pm-bg-rgb) / 0) 100%)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
       }}
@@ -97,7 +97,7 @@ export function TopBar() {
           fontWeight: 700,
           fontSize: 17,
           letterSpacing: '0.025em',
-          color: '#9A9286',
+          color: 'var(--pm-ink-3)',
           pointerEvents: 'auto',
           flexShrink: 0,
           textDecoration: 'none',
@@ -138,7 +138,7 @@ export function TopBar() {
               style={{
                 width: 1,
                 height: 18,
-                background: 'rgba(42,38,32,.10)',
+                background: 'var(--pm-line)',
                 display: 'inline-block',
                 flexShrink: 0,
               }}
@@ -190,7 +190,7 @@ export function TopBar() {
                       textDecoration: 'none',
                       opacity: isActive ? 1 : 0.42,
                       boxShadow: isActive
-                        ? '0 0 0 1.5px #F5EFE8, 0 0 0 3px #735B3D, 0 1px 2px rgba(42,38,32,.10)'
+                        ? '0 0 0 1.5px var(--pm-ring-bg), 0 0 0 3px var(--pm-ring-accent), 0 1px 2px rgb(var(--pm-ink-rgb) / .10)'
                         : 'inset 0 1px 1px rgba(255,255,255,.25)',
                       transform: isActive ? 'scale(1)' : 'scale(0.9)',
                       transition: 'opacity .2s, transform .2s, box-shadow .2s',

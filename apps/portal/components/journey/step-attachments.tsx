@@ -17,13 +17,13 @@ import { type CaseDocument, formatFileSize, MAX_DOCUMENT_BYTES } from '@/lib/doc
  */
 
 const C = {
-  surface: '#FBF7F1',
-  line: 'rgba(42,38,32,.10)',
-  ink: '#2A2620',
-  ink3: '#9A9286',
-  accent: '#B89968',
-  soft: '#E8DCC4',
-  warn: '#C26A4A',
+  surface: 'var(--pm-surface)',
+  line: 'var(--pm-line)',
+  ink: 'var(--pm-ink)',
+  ink3: 'var(--pm-ink-3)',
+  accent: 'var(--pm-accent)',
+  soft: 'var(--pm-accent-soft)',
+  warn: 'var(--pm-warn)',
 } as const
 
 export function StepAttachments({
@@ -186,7 +186,7 @@ export function StepAttachments({
           borderRadius: 14,
           padding: 14,
           background: 'transparent',
-          border: `1px dashed ${C.accent}80`,
+          border: `1px dashed color-mix(in srgb, ${C.accent} 50%, transparent)`,
           display: 'flex',
           alignItems: 'center',
           gap: 12,

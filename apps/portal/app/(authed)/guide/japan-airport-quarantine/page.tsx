@@ -12,13 +12,13 @@ import { JAPAN_AIRPORTS, type AirportMap } from '@/lib/japan-airport-quarantine'
  */
 
 const C = {
-  bg: '#F5EFE8',
-  surface: '#FBF7F1',
-  ink: '#2A2620',
-  ink2: '#6B6457',
-  ink3: '#9A9286',
-  line: 'rgba(42,38,32,.10)',
-  accent: '#B89968',
+  bg: 'var(--pm-bg)',
+  surface: 'var(--pm-surface)',
+  ink: 'var(--pm-ink)',
+  ink2: 'var(--pm-ink-2)',
+  ink3: 'var(--pm-ink-3)',
+  line: 'var(--pm-line)',
+  accent: 'var(--pm-accent)',
 } as const
 
 const serif: React.CSSProperties = {

@@ -16,15 +16,15 @@ import type { AutoDocItem, DocsViewData, StoredDocItem } from '@/lib/docs/catalo
  */
 export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string }) {
   const C = {
-    bg: '#F5EFE8',
-    surface: '#FBF7F1',
-    ink: '#2A2620',
-    ink2: '#6B6457',
-    ink3: '#9A9286',
-    line: 'rgba(42,38,32,.10)',
-    accent: '#B89968',
-    soft: '#E8DCC4',
-    sage: '#8FA68C',
+    bg: 'var(--pm-bg)',
+    surface: 'var(--pm-surface)',
+    ink: 'var(--pm-ink)',
+    ink2: 'var(--pm-ink-2)',
+    ink3: 'var(--pm-ink-3)',
+    line: 'var(--pm-line)',
+    accent: 'var(--pm-accent)',
+    soft: 'var(--pm-accent-soft)',
+    sage: 'var(--pm-sage)',
   } as const
 
   const serif: React.CSSProperties = {
@@ -217,7 +217,7 @@ function SectionLabel({ children, right }: { children: React.ReactNode; right?: 
     fontSize: 11,
     letterSpacing: '0.16em',
     textTransform: 'uppercase',
-    color: '#9A9286',
+    color: 'var(--pm-ink-3)',
     fontWeight: 500,
   }
   return (
@@ -241,12 +241,12 @@ function EmptyHint({ children }: { children: React.ReactNode }) {
   return (
     <div
       style={{
-        background: '#FBF7F1',
-        border: '.5px dashed rgba(42,38,32,.10)',
+        background: 'var(--pm-surface)',
+        border: '.5px dashed var(--pm-line)',
         borderRadius: 14,
         padding: '14px 16px',
         fontSize: 13,
-        color: '#9A9286',
+        color: 'var(--pm-ink-3)',
         lineHeight: 1.55,
       }}
     >
@@ -431,7 +431,7 @@ function DocRow({
           style={{
             ...monoCap,
             padding: '4px 8px',
-            background: 'rgba(42,38,32,.04)',
+            background: 'rgb(var(--pm-ink-rgb) / .04)',
             borderRadius: 999,
           }}
         >
@@ -492,7 +492,7 @@ function DocIcon({
         height: 44,
         borderRadius: 4,
         flexShrink: 0,
-        background: pending ? 'rgba(42,38,32,.04)' : C.soft,
+        background: pending ? 'rgb(var(--pm-ink-rgb) / .04)' : C.soft,
         border: pending ? `.5px dashed ${C.line}` : 'none',
         position: 'relative',
         overflow: 'hidden',

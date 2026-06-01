@@ -14,10 +14,10 @@ export function JpImportQuarantineInputs({
   onChange: (next: string) => void
 }) {
   const C = {
-    surface: '#FBF7F1',
-    line: 'rgba(42,38,32,.10)',
-    ink: '#2A2620',
-    ink3: '#9A9286',
+    surface: 'var(--pm-surface)',
+    line: 'var(--pm-line)',
+    ink: 'var(--pm-ink)',
+    ink3: 'var(--pm-ink-3)',
   } as const
 
   return (

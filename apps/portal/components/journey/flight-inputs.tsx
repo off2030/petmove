@@ -24,11 +24,11 @@ export interface FlightForm {
 }
 
 const C = {
-  surface: '#FBF7F1',
-  line: 'rgba(42,38,32,.10)',
-  ink: '#2A2620',
-  ink2: '#6B6457',
-  ink3: '#9A9286',
+  surface: 'var(--pm-surface)',
+  line: 'var(--pm-line)',
+  ink: 'var(--pm-ink)',
+  ink2: 'var(--pm-ink-2)',
+  ink3: 'var(--pm-ink-3)',
 } as const
 
 /**

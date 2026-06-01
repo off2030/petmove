@@ -11,14 +11,14 @@ import { useState } from 'react'
  */
 
 const C = {
-  surface: '#FBF7F1',
-  ink: '#2A2620',
-  ink2: '#6B6457',
-  ink3: '#9A9286',
-  line: 'rgba(42,38,32,.10)',
-  accent: '#B89968',
-  soft: '#E8DCC4',
-  sun: '#C26A4A',
+  surface: 'var(--pm-surface)',
+  ink: 'var(--pm-ink)',
+  ink2: 'var(--pm-ink-2)',
+  ink3: 'var(--pm-ink-3)',
+  line: 'var(--pm-line)',
+  accent: 'var(--pm-accent)',
+  soft: 'var(--pm-accent-soft)',
+  sun: 'var(--pm-warn)',
 } as const
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']

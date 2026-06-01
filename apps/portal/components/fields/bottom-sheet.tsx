@@ -11,9 +11,9 @@ import { createPortal } from 'react-dom'
  */
 
 const C = {
-  surface: '#FBF7F1',
-  ink: '#2A2620',
-  line: 'rgba(42,38,32,.10)',
+  surface: 'var(--pm-surface)',
+  ink: 'var(--pm-ink)',
+  line: 'var(--pm-line)',
 } as const
 
 export function BottomSheet({

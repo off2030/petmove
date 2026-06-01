@@ -60,7 +60,7 @@ export function BottomNav() {
         paddingBottom: 'max(env(safe-area-inset-bottom), 12px)',
         display: 'flex',
         justifyContent: 'space-around',
-        background: 'linear-gradient(180deg, rgba(242,237,230,0) 0%, rgba(242,237,230,.95) 60%)',
+        background: 'linear-gradient(180deg, rgb(var(--pm-bg-rgb) / 0) 0%, rgb(var(--pm-bg-rgb) / .95) 60%)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
       }}
@@ -80,7 +80,7 @@ export function BottomNav() {
               padding: '6px 12px',
               flex: 1,
               textDecoration: 'none',
-              color: active ? '#2A2620' : '#9A9286',
+              color: active ? 'var(--pm-ink)' : 'var(--pm-ink-3)',
             }}
           >
             <NavIcon name={t.icon} stroke={active ? 2 : 1.7} />

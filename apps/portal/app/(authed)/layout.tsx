@@ -82,8 +82,8 @@ function Shell({
   return (
     <div
       style={{
-        background: '#F5EFE8',
-        color: '#2A2620',
+        background: 'var(--pm-bg)',
+        color: 'var(--pm-ink)',
         minHeight: '100dvh',
         display: 'flex',
         flexDirection: 'column',

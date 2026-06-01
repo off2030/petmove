@@ -12,15 +12,15 @@ import { saveCaseFeedback } from '@/lib/actions/cases'
  */
 
 const C = {
-  bg: '#F5EFE8',
-  surface: '#FBF7F1',
-  ink: '#2A2620',
-  ink2: '#6B6457',
-  ink3: '#9A9286',
-  line: 'rgba(42,38,32,.10)',
-  accent: '#B89968',
-  sage: '#8FA68C',
-  warn: '#C26A4A',
+  bg: 'var(--pm-bg)',
+  surface: 'var(--pm-surface)',
+  ink: 'var(--pm-ink)',
+  ink2: 'var(--pm-ink-2)',
+  ink3: 'var(--pm-ink-3)',
+  line: 'var(--pm-line)',
+  accent: 'var(--pm-accent)',
+  sage: 'var(--pm-sage)',
+  warn: 'var(--pm-warn)',
 } as const
 
 const FACES: { level: number; label: string }[] = [
@@ -254,7 +254,7 @@ export function FeedbackView({ caseId }: { caseId: string }) {
               padding: '12px 14px',
               borderRadius: 12,
               background: 'rgba(143,166,140,.10)',
-              border: `.5px solid ${C.sage}55`,
+              border: `.5px solid color-mix(in srgb, ${C.sage} 33%, transparent)`,
               color: C.ink2,
               fontSize: 13,
               lineHeight: 1.5,
@@ -271,7 +271,7 @@ export function FeedbackView({ caseId }: { caseId: string }) {
               padding: '10px 12px',
               borderRadius: 10,
               background: C.surface,
-              border: `.5px solid ${C.warn}55`,
+              border: `.5px solid color-mix(in srgb, ${C.warn} 33%, transparent)`,
               color: C.warn,
               fontSize: 12,
               textAlign: 'center',
@@ -293,7 +293,7 @@ export function FeedbackView({ caseId }: { caseId: string }) {
             padding: '14px 0',
             borderRadius: 14,
             border: 0,
-            background: justSaved ? C.sage : canSend ? C.accent : 'rgba(42,38,32,.10)',
+            background: justSaved ? C.sage : canSend ? C.accent : 'var(--pm-line)',
             color: justSaved || canSend ? '#fff' : C.ink3,
             fontFamily: 'inherit',
             fontSize: 15,

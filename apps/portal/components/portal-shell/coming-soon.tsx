@@ -21,7 +21,7 @@ export function ComingSoon({ title, hint }: { title: string; hint?: string }) {
           fontSize: 10.5,
           letterSpacing: '0.16em',
           textTransform: 'uppercase',
-          color: '#9A9286',
+          color: 'var(--pm-ink-3)',
           fontWeight: 500,
         }}
       >
@@ -38,7 +38,7 @@ export function ComingSoon({ title, hint }: { title: string; hint?: string }) {
       >
         {title}
       </h1>
-      {hint && <p style={{ fontSize: 13, lineHeight: 1.55, color: '#6B6457', maxWidth: 300 }}>{hint}</p>}
+      {hint && <p style={{ fontSize: 13, lineHeight: 1.55, color: 'var(--pm-ink-2)', maxWidth: 300 }}>{hint}</p>}
     </div>
   )
 }

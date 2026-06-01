@@ -8,17 +8,19 @@ import type { CSSProperties, ReactNode } from 'react'
  * 원본 톤: components/cases/info-view.tsx 및 me/profile-view.tsx (Stone 팔레트).
  */
 
+// 색은 globals.css 의 --pm-* 토큰을 참조 — light/dark 를 컴포넌트 수정 없이 따라감.
+// (알파 합성이 필요한 곳은 color-mix(in srgb, var(--pm-x) N%, transparent) 로, var()+hex 금지)
 export const C = {
-  bg: '#F5EFE8',
-  surface: '#FBF7F1',
-  ink: '#2A2620',
-  ink2: '#6B6457',
-  ink3: '#9A9286',
-  line: 'rgba(42,38,32,.10)',
-  accent: '#B89968',
-  soft: '#E8DCC4',
-  sage: '#8FA68C',
-  warn: '#C26A4A',
+  bg: 'var(--pm-bg)',
+  surface: 'var(--pm-surface)',
+  ink: 'var(--pm-ink)',
+  ink2: 'var(--pm-ink-2)',
+  ink3: 'var(--pm-ink-3)',
+  line: 'var(--pm-line)',
+  accent: 'var(--pm-accent)',
+  soft: 'var(--pm-accent-soft)',
+  sage: 'var(--pm-sage)',
+  warn: 'var(--pm-warn)',
 } as const
 
 export const serif: CSSProperties = {
@@ -185,7 +187,7 @@ export function StickySaveBar({
         paddingRight: 20,
         paddingBottom: 'calc(max(env(safe-area-inset-bottom, 0px), 12px) + 53px)',
         background:
-          'linear-gradient(180deg, rgba(245,239,232,0) 0%, rgba(245,239,232,.92) 30%, rgba(245,239,232,.92) 100%)',
+          'linear-gradient(180deg, rgb(var(--pm-bg-rgb) / 0) 0%, rgb(var(--pm-bg-rgb) / .92) 30%, rgb(var(--pm-bg-rgb) / .92) 100%)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         zIndex: 39,
@@ -201,7 +203,7 @@ export function StickySaveBar({
             padding: '9px 12px',
             borderRadius: 10,
             background: C.surface,
-            border: `.5px solid ${C.warn}55`,
+            border: `.5px solid color-mix(in srgb, ${C.warn} 33%, transparent)`,
             color: C.warn,
             fontSize: 12,
             textAlign: 'center',
@@ -221,7 +223,7 @@ export function StickySaveBar({
           padding: '14px 0',
           borderRadius: 14,
           border: 0,
-          background: justSaved ? C.sage : canSave ? C.accent : 'rgba(42,38,32,.10)',
+          background: justSaved ? C.sage : canSave ? C.accent : C.line,
           color: justSaved || canSave ? '#fff' : C.ink3,
           fontFamily: 'inherit',
           fontSize: 15,

@@ -45,6 +45,19 @@
   --pm-accent: #B89968;
   --pm-accent-soft: #E8DCC4;
   --pm-sage: #8FA68C;
+  --pm-warn: #C26A4A;
+  --pm-info: #C9A663;
+
+  /* bg/surface 의 rgb 트리플 — 인라인 그라디언트/반투명 오버레이(상단바·하단바·저장바)가
+     rgb(var(--pm-bg-rgb) / α) 로 테마를 따라가도록. (다크에서 dark 블록이 트리플을 교체) */
+  --pm-bg-rgb: 245 239 232;
+  --pm-surface-rgb: 251 247 241;
+  /* ink 의 rgb 트리플 — 하드코딩 hairline/틴트(rgba(42,38,32,.NN))가
+     rgb(var(--pm-ink-rgb) / .NN) 로 다크에서 반전되도록. (스크림·그림자는 제외, literal 유지) */
+  --pm-ink-rgb: 42 38 32;
+  /* 상단바 펫 아바타 active ring — 배경색 ring + 브라운 ring. 다크에서 교체. */
+  --pm-ring-bg: #F5EFE8;
+  --pm-ring-accent: #735B3D;
 
   /* Semantic font tokens — UI 코드는 이것만 참조.
      --font-sans 는 next/font 가 layout.tsx 에서 주입.

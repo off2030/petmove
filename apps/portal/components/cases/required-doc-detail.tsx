@@ -29,16 +29,16 @@ export function RequiredDocDetail({
   previewDocs: CaseDocument[]
 }) {
   const C = {
-    bg: '#F5EFE8',
-    surface: '#FBF7F1',
-    ink: '#2A2620',
-    ink2: '#6B6457',
-    ink3: '#9A9286',
-    line: 'rgba(42,38,32,.10)',
-    accent: '#B89968',
-    soft: '#E8DCC4',
-    sage: '#8FA68C',
-    warn: '#C26A4A',
+    bg: 'var(--pm-bg)',
+    surface: 'var(--pm-surface)',
+    ink: 'var(--pm-ink)',
+    ink2: 'var(--pm-ink-2)',
+    ink3: 'var(--pm-ink-3)',
+    line: 'var(--pm-line)',
+    accent: 'var(--pm-accent)',
+    soft: 'var(--pm-accent-soft)',
+    sage: 'var(--pm-sage)',
+    warn: 'var(--pm-warn)',
   } as const
 
   const serif: React.CSSProperties = {
@@ -121,7 +121,7 @@ export function RequiredDocDetail({
   const disabledBtn: React.CSSProperties = {
     ...btnBase,
     border: 0,
-    background: 'rgba(42,38,32,.10)',
+    background: 'var(--pm-line)',
     color: C.ink3,
     cursor: 'not-allowed',
   }
@@ -328,7 +328,7 @@ function SectionLabel({ children, right }: { children: React.ReactNode; right?: 
     fontSize: 11,
     letterSpacing: '0.16em',
     textTransform: 'uppercase',
-    color: '#9A9286',
+    color: 'var(--pm-ink-3)',
     fontWeight: 500,
   }
   return (

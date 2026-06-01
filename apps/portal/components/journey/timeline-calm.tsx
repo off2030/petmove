@@ -20,17 +20,17 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
 
   // Stone palette — scoped to this view (globals.css 의 --pm-* 와 같은 값, 인라인 fidelity).
   const C = {
-    bg: '#F5EFE8',
-    surface: '#FBF7F1',
-    ink: '#2A2620',
-    ink2: '#6B6457',
-    ink3: '#9A9286',
-    line: 'rgba(42,38,32,.07)',
+    bg: 'var(--pm-bg)',
+    surface: 'var(--pm-surface)',
+    ink: 'var(--pm-ink)',
+    ink2: 'var(--pm-ink-2)',
+    ink3: 'var(--pm-ink-3)',
+    line: 'rgb(var(--pm-ink-rgb) / .07)',
     accent: '#8A7355',
-    sage: '#8FA68C',
-    warn: '#C26A4A',
+    sage: 'var(--pm-sage)',
+    warn: 'var(--pm-warn)',
     warnBg: 'rgba(194,106,74,0.08)',
-    info: '#C9A663',
+    info: 'var(--pm-info)',
     infoBg: 'rgba(201,166,99,0.08)',
     cardSoft: 'linear-gradient(160deg, #F0E8DB 0%, #EDE4D7 50%, #E6DDCD 100%)',
     cardList: 'linear-gradient(160deg, #F5EDE0 0%, #F2E9DC 50%, #ECE3D3 100%)',
@@ -272,7 +272,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                     padding: '2px 8px',
                     borderRadius: 6,
                     background: isOverdueDeadline ? C.warnBg : 'rgba(184,153,104,0.18)',
-                    border: `.5px solid ${isOverdueDeadline ? `${C.warn}55` : '#B89968'}`,
+                    border: `.5px solid ${isOverdueDeadline ? `color-mix(in srgb, ${C.warn} 33%, transparent)` : 'var(--pm-accent)'}`,
                     color: isOverdueDeadline ? C.warn : C.accent,
                     fontWeight: 700,
                   }}
@@ -286,7 +286,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                     padding: '2px 8px',
                     borderRadius: 6,
                     background: 'rgba(184,153,104,0.18)',
-                    border: '.5px solid #B89968',
+                    border: '.5px solid var(--pm-accent)',
                     color: C.accent,
                     fontWeight: 700,
                   }}
@@ -353,7 +353,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               padding: 22,
               borderRadius: 22,
               background: C.warnBg,
-              border: `.5px solid ${C.warn}33`,
+              border: `.5px solid color-mix(in srgb, ${C.warn} 20%, transparent)`,
               boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
             }}
           >
@@ -371,7 +371,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                 style={{
                   marginTop: i === 0 ? 12 : 14,
                   paddingTop: i === 0 ? 0 : 14,
-                  borderTop: i === 0 ? 0 : `1px solid ${C.warn}22`,
+                  borderTop: i === 0 ? 0 : `1px solid color-mix(in srgb, ${C.warn} 13%, transparent)`,
                 }}
               >
                 <h3
@@ -410,7 +410,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               padding: '10px 14px',
               borderRadius: 12,
               background: C.warnBg,
-              border: `.5px solid ${C.warn}33`,
+              border: `.5px solid color-mix(in srgb, ${C.warn} 20%, transparent)`,
               color: C.warn,
               fontSize: 13,
               textDecoration: 'none',
@@ -460,7 +460,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                     margin: 0,
                     fontSize: 22,
                     lineHeight: 1.18,
-                    color: '#2A2620',
+                    color: 'var(--pm-ink)',
                     fontWeight: 500,
                     textWrap: 'balance' as React.CSSProperties['textWrap'],
                   }}
@@ -532,7 +532,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                     margin: 0,
                     fontSize: 22,
                     lineHeight: 1.18,
-                    color: '#2A2620',
+                    color: 'var(--pm-ink)',
                     fontWeight: 500,
                     textWrap: 'balance' as React.CSSProperties['textWrap'],
                   }}

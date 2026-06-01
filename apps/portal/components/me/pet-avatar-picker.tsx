@@ -31,10 +31,10 @@ export function PetAvatarPicker({ case_, pet }: { case_: CaseRow; pet: PetBlock 
   const idx = cases.findIndex((c) => c.id === case_.id)
 
   const C = {
-    ink: '#2A2620',
-    ink2: '#6B6457',
-    ink3: '#9A9286',
-    line: 'rgba(42,38,32,.10)',
+    ink: 'var(--pm-ink)',
+    ink2: 'var(--pm-ink-2)',
+    ink3: 'var(--pm-ink-3)',
+    line: 'var(--pm-line)',
     soft: '#F0E8DB',
   } as const
   const serif: React.CSSProperties = {
@@ -162,11 +162,11 @@ function PickerGrid({
               aria-pressed={selected}
               style={{
                 ...slotBase,
-                background: '#FBF7F1',
+                background: 'var(--pm-surface)',
                 fontSize: 18,
                 lineHeight: 1,
                 boxShadow: selected
-                  ? '0 0 0 1.5px #FBF7F1, 0 0 0 3px #735B3D'
+                  ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px #735B3D'
                   : `inset 0 0 0 .5px ${C.line}`,
               }}
             >
@@ -211,7 +211,7 @@ function PickerGrid({
                 ...slotBase,
                 background: AVATAR_GRADIENTS[id],
                 boxShadow: selected
-                  ? '0 0 0 1.5px #FBF7F1, 0 0 0 3px #735B3D'
+                  ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px #735B3D'
                   : 'inset 0 1px 1px rgba(255,255,255,.25)',
               }}
             />
