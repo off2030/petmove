@@ -26,7 +26,8 @@ function hasAdvanceAttachment(data: Record<string, unknown>): boolean {
  *
  *  - stored `import_import_status`: legacy 수동값. 'in_progress'/'done'/'not_started' 그대로.
  *    'na' 같은 admin-only 값은 portal 입장에선 미진행으로 묶는다.
- *  - 첨부 OR `advance_notification_approval_skipped` = 'done'
+ *  - 첨부 = 'done'
+ *  - 신청일 입력 + `advance_notification_approval_skipped` = 'done' (신청일 없으면 skip 무효)
  *  - `advance_notification_admin_demoted_at` OR `advance_notification_date` 입력 = 'in_progress'
  *  - 그 외 = 'not_started'
  */
@@ -39,10 +40,11 @@ export function deriveAdvanceNotificationStatus(caseRow: CaseRow): JpReportStatu
     return 'not_started'
   }
   if (hasAdvanceAttachment(data)) return 'done'
-  if (data.advance_notification_approval_skipped === true) return 'done'
-  if (typeof data.advance_notification_admin_demoted_at === 'string') return 'in_progress'
   const dt =
     typeof data.advance_notification_date === 'string' ? data.advance_notification_date : ''
+  // skip(첨부 없이 완료 처리)은 신청일이 있을 때만 유효 — 신청일을 지우면 완료 처리도 해제된다.
+  if (data.advance_notification_approval_skipped === true && dt.length >= 10) return 'done'
+  if (typeof data.advance_notification_admin_demoted_at === 'string') return 'in_progress'
   if (dt.length >= 10) return 'in_progress'
   return 'not_started'
 }
@@ -51,7 +53,7 @@ export function deriveAdvanceNotificationStatus(caseRow: CaseRow): JpReportStatu
  * 일본 수출 동물검역 진행 상태. 일본 + 왕복 케이스에서만 의미.
  *
  *  - stored `import_export_status`: legacy 수동값. 처리 동일.
- *  - `jp_export_quarantine_reservation_skipped` = 'done'
+ *  - 신청일 입력 + `jp_export_quarantine_reservation_skipped` = 'done' (신청일 없으면 skip 무효)
  *  - `jp_export_quarantine_confirmed` + 예약일·시간 모두 입력 = 'done'
  *  - `jp_export_quarantine_admin_demoted_at` OR 신청일(application_date) 입력 = 'in_progress'
  *  - 그 외 = 'not_started'
@@ -64,7 +66,12 @@ export function deriveJpExportQuarantineStatus(caseRow: CaseRow): JpReportStatus
     if (v === 'in_progress' || v === 'done' || v === 'not_started') return v
     return 'not_started'
   }
-  if (data.jp_export_quarantine_reservation_skipped === true) return 'done'
+  const applied =
+    typeof data.jp_export_quarantine_application_date === 'string'
+      ? data.jp_export_quarantine_application_date
+      : ''
+  // skip(입력 없이 완료 처리)은 신청일이 있을 때만 유효 — 신청일을 지우면 완료 처리도 해제된다.
+  if (data.jp_export_quarantine_reservation_skipped === true && applied.length >= 10) return 'done'
   if (data.jp_export_quarantine_confirmed === true) {
     const hasDate =
       typeof data.jp_export_quarantine_date === 'string' &&
@@ -74,10 +81,6 @@ export function deriveJpExportQuarantineStatus(caseRow: CaseRow): JpReportStatus
     if (hasDate && /^\d{1,2}:\d{2}$/.test(t)) return 'done'
   }
   if (typeof data.jp_export_quarantine_admin_demoted_at === 'string') return 'in_progress'
-  const applied =
-    typeof data.jp_export_quarantine_application_date === 'string'
-      ? data.jp_export_quarantine_application_date
-      : ''
   if (applied.length >= 10) return 'in_progress'
   return 'not_started'
 }
