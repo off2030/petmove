@@ -1096,7 +1096,7 @@ export function StepDetailView({
                 textDecoration: 'none',
               }}
             >
-              검토하러 가기
+              내 정보 보기
               <span style={{ color: C.ink3 }}>→</span>
             </Link>
           )}
