@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { C, EditPageShell, SectionCard } from '@/components/me/settings-shared'
+import { ThemeSwitcher } from './theme-switcher'
 
 /**
  * 앱 설정 허브 (/settings) — 상단바 ⚙ 진입.
@@ -83,7 +84,9 @@ export function SettingsView() {
   return (
     <EditPageShell title="설정" backHref="/me" backLabel="내 정보">
       <SectionCard label="화면" marginTop={8}>
-        <ValueRow label="테마" value="준비 중" last />
+        <div style={{ padding: '14px 0' }}>
+          <ThemeSwitcher />
+        </div>
       </SectionCard>
 
       <SectionCard label="계정">

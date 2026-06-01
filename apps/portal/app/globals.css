@@ -69,6 +69,32 @@
   --pm-font-mark:    'Alonzo', var(--pm-font-display);
 }
 
+/* ─────────────────────────────────────────────────────────────
+   Portal 다크 테마 — warm Stone (순흑 아님). 로그인 후 앱 내부에만 적용.
+   <html data-theme="dark"> 일 때만. 비로그인(login/apply)은 하드코딩 색 유지로 라이트 고정.
+   admin 의 .dark(--pmw-*) 와 충돌 없도록 .dark 가 아닌 data-theme 사용.
+   ───────────────────────────────────────────────────────────── */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --pm-bg: #1C1916;
+  --pm-surface: #262220;
+  --pm-ink: #ECE4D8;
+  --pm-ink-2: #B3A993;
+  --pm-ink-3: #847C6E;
+  --pm-line: rgba(236, 228, 216, 0.12);
+  --pm-line-2: rgba(236, 228, 216, 0.16);
+  --pm-accent: #C9AC7C;
+  --pm-accent-soft: #3A3328;
+  --pm-sage: #9DB89A;
+  --pm-warn: #D67E5C;
+  --pm-info: #D6B775;
+  --pm-bg-rgb: 28 25 22;
+  --pm-surface-rgb: 38 34 32;
+  --pm-ink-rgb: 236 228 216;
+  --pm-ring-bg: #1C1916;
+  --pm-ring-accent: #C9AC7C;
+}
+
 @keyframes pm-fade-up {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
