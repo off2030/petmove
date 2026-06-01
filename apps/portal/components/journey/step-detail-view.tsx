@@ -632,6 +632,16 @@ export function StepDetailView({
         setError(flightError)
         return
       }
+      // 출국 ≤ 귀국 — 둘 다 입력된 경우만 차단. 논리적 불가능 조건.
+      if (
+        flightForm.entry_date &&
+        flightForm.return_date &&
+        flightForm.return_date < flightForm.entry_date
+      ) {
+        setStatus('error')
+        setError('귀국 항공편 날짜는 출국 항공편 날짜 이후여야 합니다.')
+        return
+      }
       setStatus('saving')
       setError(null)
       startTransition(async () => {

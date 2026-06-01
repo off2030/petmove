@@ -44,27 +44,6 @@ const DEPENDENCY_EDGES: DependencyEdge[] = [
   { prereq: 'rabies-vaccine-2', step: 'rabies-titer' },
 ]
 
-/**
- * 한 step 안의 두 날짜 필드 순서 규칙 (earlier ≤ later). 의존 엣지가 step 간 완료일
- * 비교라면, 이건 같은 step 에 입력된 두 날짜의 선후 비교. (예: 출국 항공편 ≤ 귀국 항공편)
- */
-interface FieldOrderRule {
-  stepId: string
-  earlierKey: string
-  earlierLabel: string
-  laterKey: string
-  laterLabel: string
-}
-const FIELD_ORDER_RULES: FieldOrderRule[] = [
-  {
-    stepId: 'flight-purchase',
-    earlierKey: 'entry_date',
-    earlierLabel: '출국 항공편',
-    laterKey: 'return_date',
-    laterLabel: '귀국 항공편',
-  },
-]
-
 /** 'YYYY-MM-DD' → 'YYYY년 M월 D일'. 형식이 아니면 원문. */
 function formatKoreanDate(iso: string): string {
   const parts = iso.split('-')
@@ -82,23 +61,6 @@ export function evaluateChainConsistency(
   caseRow: CaseRow,
 ): ConsistencyIssue[] {
   const byId = new Map(steps.map((s) => [s.id, s]))
-  const data = (caseRow.data ?? {}) as Record<string, unknown>
-  const issues: ConsistencyIssue[] = []
-
-  // ── 같은 step 내 두 날짜 필드 순서 (출국 항공편 ≤ 귀국 항공편 등) ──
-  for (const rule of FIELD_ORDER_RULES) {
-    if (!byId.has(rule.stepId)) continue
-    const earlier = typeof data[rule.earlierKey] === 'string' ? (data[rule.earlierKey] as string) : ''
-    const later = typeof data[rule.laterKey] === 'string' ? (data[rule.laterKey] as string) : ''
-    if (earlier.length < 10 || later.length < 10) continue
-    if (later < earlier) {
-      issues.push({
-        stepId: rule.stepId,
-        kind: 'order',
-        message: `${rule.laterLabel} 날짜(${formatKoreanDate(later)})가 ${rule.earlierLabel} 날짜(${formatKoreanDate(earlier)})보다 빠릅니다. 날짜를 확인해 주세요.`,
-      })
-    }
-  }
 
   // 후행 step 별로 엣지를 모아 한 번에 판정.
   const edgesByStep = new Map<string, DependencyEdge[]>()
@@ -110,6 +72,7 @@ export function evaluateChainConsistency(
     edgesByStep.set(edge.step, list)
   }
 
+  const issues: ConsistencyIssue[] = []
   for (const [stepId, edges] of edgesByStep) {
     const step = byId.get(stepId)!
     // 후행이 완료(데이터 있음)가 아니면 모순 자체가 성립 안 함.

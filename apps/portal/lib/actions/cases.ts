@@ -627,6 +627,14 @@ export async function updateFlightFields(
         return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
       }
     }
+    // 출국 ≤ 귀국 — 둘 다 입력된 경우만 검사. 논리적 불가능 조건이므로 저장 거부.
+    {
+      const entry = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
+      const ret = typeof fields.return_date === 'string' ? fields.return_date.trim() : ''
+      if (entry && ret && ret < entry) {
+        return { ok: false, error: '귀국 항공편 날짜는 출국 항공편 날짜 이후여야 합니다.' }
+      }
+    }
 
     const access = await assertCaseAccess(caseId)
     if (!access.ok) return access
@@ -1455,6 +1463,15 @@ export async function updateCaseInfoFields(
       if (v && !ISO_DATE_RE.test(v)) {
         return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
       }
+    }
+    // 출국일 ≤ 귀국일 — 둘 다 입력된 왕복 케이스에서만 검사. 논리적 불가능 조건이므로 저장 거부.
+    if (
+      input.trip_type === 'round' &&
+      input.departure_date &&
+      input.return_date &&
+      input.return_date < input.departure_date
+    ) {
+      return { ok: false, error: '귀국일은 출국일 이후여야 합니다.' }
     }
     let chip: string | null = null
     if (input.microchip) {
