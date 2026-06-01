@@ -111,7 +111,7 @@ export function evaluateChainConsistency(
       issues.push({
         stepId,
         kind: 'missing-prerequisite',
-        message: `${closest.title} 정보가 없는데 ${step.title}가 입력되어 있습니다. ${closest.title} 정보를 입력해 주세요.`,
+        message: `${closest.title} 정보가 없습니다. 입력해 주세요.`,
       })
     }
   }
