@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import {
   createVaccineLookups,
+  findRabiesChainBreak,
   type CheckResult,
   type ProcedureCheck,
   type StepDefinition,
@@ -529,6 +530,22 @@ export function StepDetailView({
         }
       })
     } else if (isRabiesExtra) {
+      // chain 검증 — 각 접종은 직전 접종 면역 유효기간 이내여야 함. 만료 후 접종은
+      // 새 기초접종이 되어 1·2차+검사+180일 다시 — 입력 단계에서 거부.
+      const r1Saved = readRabiesEntryForm(caseRow?.data, 0)
+      const r2Saved = readRabiesEntryForm(caseRow?.data, 1)
+      const chainBreak = findRabiesChainBreak([
+        { date: r1Saved.date, valid_until: r1Saved.valid_until || null },
+        { date: r2Saved.date, valid_until: r2Saved.valid_until || null },
+        ...rabiesExtra.map((e) => ({ date: e.date, valid_until: e.valid_until || null })),
+      ])
+      if (chainBreak) {
+        setStatus('error')
+        setError(
+          `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 합니다.`,
+        )
+        return
+      }
       setStatus('saving')
       setError(null)
       startTransition(async () => {

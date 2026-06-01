@@ -15,7 +15,7 @@ import { cookies } from 'next/headers'
 import { createAdminClient } from '@petmove/auth'
 import { verifyPreviewToken } from '@petmove/auth/preview-token'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
-import { emptyVaccineProductsData, applyAutoFillRules, getVetVisitWindowDays, type CaseRow, type VaccineProductsData } from '@petmove/domain'
+import { emptyVaccineProductsData, applyAutoFillRules, findRabiesChainBreak, getVetVisitWindowDays, type CaseRow, type VaccineProductsData } from '@petmove/domain'
 import { AVATAR_COLOR_IDS, AVATAR_EMOJIS, type AvatarColorId } from '@/lib/avatar'
 import { assertCaseAccess, type Result } from './_shared'
 
@@ -412,6 +412,23 @@ export async function updateRabiesExtraEntries(
     const rabiesNext: unknown[] = [...preserved, ...newExtras]
     while (rabiesNext.length > 0 && !hasValidDate(rabiesNext[rabiesNext.length - 1])) {
       rabiesNext.pop()
+    }
+
+    // chain 검증 — 각 접종은 직전 접종의 면역 유효기간 이내여야 함. 만료 후 접종은
+    // 새 기초접종이 되어 1·2차+검사+180일 다시 — 입력 단계에서 거부.
+    const chainSeq = rabiesNext.map((r) => {
+      const rec = r && typeof r === 'object' ? (r as Record<string, unknown>) : {}
+      return {
+        date: typeof rec.date === 'string' ? rec.date : '',
+        valid_until: typeof rec.valid_until === 'string' ? rec.valid_until : null,
+      }
+    })
+    const chainBreak = findRabiesChainBreak(chainSeq)
+    if (chainBreak) {
+      return {
+        ok: false,
+        error: `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 합니다.`,
+      }
     }
 
     const nextData: Record<string, unknown> = { ...prev }
