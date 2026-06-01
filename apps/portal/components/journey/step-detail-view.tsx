@@ -1237,11 +1237,6 @@ export function StepDetailView({
               {situationalDesc}
               {isFlightRoundEntryOnly && ' 귀국 일정이 미정인 경우는 편도 일정으로 전환할 수 있습니다.'}
             </div>
-            {isAdvanceAwaitingApproval && (
-              <div style={{ marginTop: 16, fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
-                허가증 첨부 없이 완료 처리 하시려면 아래 버튼을 클릭해주세요.
-              </div>
-            )}
             {isAdvanceApprovalSkipped && (
               <div style={{ marginTop: 16, fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
                 완료 전 상태로 되돌리시려면 되돌리기 버튼을 클릭해주세요.
@@ -1300,7 +1295,7 @@ export function StepDetailView({
                   opacity: skippingApproval ? 0.6 : 1,
                 }}
               >
-                {skippingApproval ? '처리 중…' : '완료 처리'}
+                {skippingApproval ? '처리 중…' : '완료'}
               </button>
             )}
             {isAdvanceApprovalSkipped && (

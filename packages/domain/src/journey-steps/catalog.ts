@@ -386,7 +386,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         }
       }
       if (deriveAdvanceNotificationStatus(caseRow) !== 'in_progress') return undefined
-      const msg = '신청이 완료되었습니다. 허가증이 나온 후 파일을 첨부하시면 완료 처리됩니다.'
+      const msg = '사전 신고를 진행 중입니다. 허가증이 나오면 파일을 첨부하시거나 완료 버튼을 눌러주세요.'
       return { desc: msg, cardDesc: msg }
     },
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
