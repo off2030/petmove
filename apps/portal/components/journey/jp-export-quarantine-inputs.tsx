@@ -61,7 +61,7 @@ export function JpExportQuarantineInputs({
       <div style={{ padding: '14px 0', borderBottom: `.5px solid ${C.line}` }}>
         <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>예약일</div>
         <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
-          일본 동물검역소 예약 날짜 (이메일 확정)
+          일본 동물검역소 예약 날짜
         </div>
         <div style={{ marginTop: 8 }}>
           <DateTextField
@@ -73,9 +73,9 @@ export function JpExportQuarantineInputs({
         </div>
       </div>
       <div style={{ padding: '14px 0' }}>
-        <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>예약시간</div>
+        <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>예약 시간</div>
         <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
-          24시간 형식 (예: 14:30)
+          일본 동물검역소 예약 시간
         </div>
         <div style={{ marginTop: 8 }}>
           <input
