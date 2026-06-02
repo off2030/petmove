@@ -1,7 +1,6 @@
 import type { CaseRow } from './types'
 import { JOURNEY_STEP_CATALOG } from './journey-steps/catalog'
-import { resolveDone } from './journey-steps/done-resolver'
-import { getStepsForCase } from './journey-steps/applicability'
+import { resolveCompletedDate, resolveDone } from './journey-steps/done-resolver'
 
 /**
  * 국가별 '필수 서류' 큐레이션. 서류함의 자동 체크리스트(step.allowAttachments 전부)
@@ -128,11 +127,6 @@ export function resolveRequiredDocs(
   if (!specs) return null
   const flags = readBoolFlags(caseRow, 'required_doc_flags')
   const naFlags = readBoolFlags(caseRow, 'required_doc_na')
-  // 케이스 main lane — 발급 예정(awaiting) 판정에서 nonBlocking/advisoryOnly 제외한 본 흐름 step 들.
-  // 발급 step 보다 앞에 미완료가 있으면 보호자가 능동 준비할 수 없는 단계라 dim 처리.
-  const mainLane = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow).filter(
-    (s) => !s.nonBlocking && !s.advisoryOnly,
-  )
   return specs.map((spec) => {
     // 첨부 대상 stepId — step 연동 서류는 공유 step, 그 외는 doc.id 자체.
     const attachStepId = spec.previewStepId ?? spec.id
@@ -149,7 +143,7 @@ export function resolveRequiredDocs(
           : false)
     // 발급 step — 명시(issuanceStepId) 우선, kind='step' 이면 stepRef 폴백.
     const issuanceStepId = spec.issuanceStepId ?? (spec.kind === 'step' ? spec.stepRef : undefined)
-    const awaiting = !verified && !na && isIssuanceFuture(issuanceStepId, mainLane, caseRow)
+    const awaiting = !verified && !na && isIssuanceNotStarted(issuanceStepId, caseRow)
     return {
       id: spec.id,
       name: spec.name,
@@ -167,19 +161,21 @@ export function resolveRequiredDocs(
 }
 
 /**
- * 발급 step 이 보호자의 '현재 진행' 보다 미래인지 — main lane 에서 발급 step 보다 앞 순서의
- * step 중 미완료가 하나라도 있으면 true. 발급 step 자체가 active 또는 그 이후면 false.
+ * 발급 step 이 아직 '시작 전'인지 — 그 step 의 1차 입력(채혈일·신청일·검진일·검역일 등)이
+ * 없으면 true(=발급 예정, dim). 시작됐으면(in_progress) false(=활성, '준비중'), 완료면
+ * verified 가 true 라 awaiting 자체가 false.
+ *
+ * 'started' 판별: resolveCompletedDate 가 그 step 의 1차 날짜를 done 여부와 무관하게
+ * 반환한다(없으면 null) — 채혈일만 입력된 진행 중 검사도 시작됨으로 잡힌다. 그래서:
+ *   - 광견병 항체 검사 진행 중(채혈일 있음) → 결과지 '준비중'(활성)
+ *   - 사전 신고 진행 중(신청일 있음) → 허가증 '준비중', 그 뒤(검진·검역) 발급 서류는 발급 예정
  * issuance step 미지정·카탈로그 누락이면 false (보수적: dim 처리 안 함).
  */
-function isIssuanceFuture(
-  issuanceStepId: string | undefined,
-  mainLane: ReturnType<typeof getStepsForCase>,
-  caseRow: CaseRow,
-): boolean {
+function isIssuanceNotStarted(issuanceStepId: string | undefined, caseRow: CaseRow): boolean {
   if (!issuanceStepId) return false
-  const issuance = mainLane.find((s) => s.id === issuanceStepId)
-  if (!issuance) return false
-  return mainLane.some((s) => s.order < issuance.order && !resolveDone(s.done, caseRow))
+  const step = JOURNEY_STEP_CATALOG.find((s) => s.id === issuanceStepId)
+  if (!step) return false
+  return resolveCompletedDate(step.done, caseRow) === null
 }
 
 /** case.data.documents 에 해당 stepId 태그의 파일이 하나라도 있으면 true. */
