@@ -134,7 +134,8 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       const dt = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
       if (dt.length < 10 || dt > todayIso()) return false
       if (data.vet_visit_confirmed === true) return true
-      if (areAllRequiredDocsVerified(caseRow)) return true
+      // 출국 전 임상검사 시점까지 발급되는 서류만 게이트 — 한국 수출 동물검역증(이후 발급)은 제외.
+      if (areAllRequiredDocsVerified(caseRow, 'vet-visit')) return true
       return resolveRequiredDocs(caseRow.destination, caseRow) === null
     }
     case 'has-flight-date': {

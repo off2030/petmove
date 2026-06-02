@@ -187,13 +187,33 @@ function hasAttachmentForStep(caseRow: CaseRow, stepId: string): boolean {
 
 /**
  * 큐레이션된 필수 서류가 모두 ✓ 인지(verified 또는 해당없음). spec 이 없는 목적지는 false —
- * 자동 완료 시그널 자체가 없는 것으로 본다(보호자가 수동 '완료' 버튼으로만 마감).
- * vet-visit done-resolver 가 호출 — 모든 서류 갖춰지면 자동 완료로 인정.
+ * 자동 완료 시그널 자체가 없는 것으로 본다.
+ *
+ * `uptoStepId` 가 주어지면 그 step 까지 발급되는 서류만 게이트에 넣는다 — 그 step 보다
+ * 뒤에 발급되는 서류(예: vet-visit 기준 한국 수출 동물검역증은 certificate-issue 발급물)는
+ * 아직 발급 전이라 제외. StepDocChecklist 카드가 previewStepId 로 미래 서류를 가리는 것과
+ * 동일 규칙이라, 카드에 보이는 서류가 다 ✓ 면 곧 완료가 되도록 맞춘다.
+ *
+ * vet-visit done-resolver 가 'vet-visit' 로 호출 — 출국 전 임상검사 시점까지의 서류(항체검사
+ * 결과지·허가증·별지25·FormAC/RE)가 다 갖춰지면 자동 완료.
  */
-export function areAllRequiredDocsVerified(caseRow: CaseRow): boolean {
+export function areAllRequiredDocsVerified(caseRow: CaseRow, uptoStepId?: string): boolean {
   const items = resolveRequiredDocs(caseRow.destination, caseRow)
   if (!items || items.length === 0) return false
-  return items.every((d) => d.verified || d.na)
+  let scoped = items
+  if (uptoStepId) {
+    const cutoff = JOURNEY_STEP_CATALOG.find((s) => s.id === uptoStepId)?.order
+    if (cutoff != null) {
+      scoped = items.filter((d) => {
+        // previewStepId 미지정(별지25·FormAC 등) = 현재 step 발급물 → 포함.
+        if (!d.previewStepId) return true
+        const ref = JOURNEY_STEP_CATALOG.find((s) => s.id === d.previewStepId)
+        return ref ? ref.order <= cutoff : true
+      })
+    }
+  }
+  if (scoped.length === 0) return false
+  return scoped.every((d) => d.verified || d.na)
 }
 
 /** 단일 docId 의 spec 을 찾는다 — 상세 페이지에서 사용. */

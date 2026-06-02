@@ -652,7 +652,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       if (dt.length < 10 || dt > new Date().toISOString().slice(0, 10)) return undefined
       if (data.vet_visit_confirmed === true) return undefined
       if (resolveRequiredDocs(caseRow.destination, caseRow) === null) return undefined
-      if (areAllRequiredDocsVerified(caseRow)) return undefined
+      // done-resolver(has-vet-visit)와 동일 범위 — vet-visit 시점까지의 서류만 본다.
+      if (areAllRequiredDocsVerified(caseRow, 'vet-visit')) return undefined
       const msg = '출국 전 임상검사를 받았습니다. 서류 체크리스트를 확인하세요.'
       return { desc: msg, cardDesc: msg }
     },
