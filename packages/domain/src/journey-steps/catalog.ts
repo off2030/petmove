@@ -371,20 +371,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const filed =
         typeof data.advance_notification_date === 'string' ? data.advance_notification_date : ''
       if (filed.length >= 10 && filed > new Date().toISOString().slice(0, 10)) return undefined
-      // 신청일을 지우면 skip 플래그가 남아 있어도 완료 처리 안내를 띄우지 않는다.
-      if (filed.length >= 10 && data.advance_notification_approval_skipped === true) {
-        const docs = Array.isArray(data.documents) ? data.documents : []
-        const hasAttachment = docs.some(
-          (d) =>
-            !!d &&
-            typeof d === 'object' &&
-            (d as Record<string, unknown>).stepId === 'advance-notification',
-        )
-        if (!hasAttachment) {
-          const msg = '첨부 없이 완료 처리됐어요. 허가증(Approval)을 받으시면 파일을 첨부할 수 있습니다.'
-          return { desc: msg, cardDesc: msg }
-        }
-      }
+      // 완료(skip) 상태에선 안내 노출 안 함 — '완료' 자체가 명시적 보호자 액션이라 추가 설명 불필요.
+      // 첨부는 언제든 documents 탭에서 올릴 수 있음.
       if (deriveAdvanceNotificationStatus(caseRow) !== 'in_progress') return undefined
       const msg = '사전 신고를 진행 중입니다. 허가증이 나오면 파일을 첨부하시거나 완료 버튼을 눌러주세요.'
       return { desc: msg, cardDesc: msg }
@@ -433,11 +421,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
           ? data.jp_export_quarantine_application_date
           : ''
       if (applied.length >= 10 && applied > new Date().toISOString().slice(0, 10)) return undefined
-      // 신청일을 지우면 skip 플래그가 남아 있어도 완료 처리 안내를 띄우지 않는다.
-      if (applied.length >= 10 && data.jp_export_quarantine_reservation_skipped === true) {
-        const msg = '완료 처리됐어요. 예약이 확정되면 날짜와 시간을 입력할 수 있습니다.'
-        return { desc: msg, cardDesc: msg }
-      }
+      // 완료(skip) 상태에선 안내 노출 안 함 — '완료' 자체가 명시적 보호자 액션이라 추가 설명 불필요.
+      // 예약일·시간은 언제든 input 으로 수정 가능.
       if (deriveJpExportQuarantineStatus(caseRow) !== 'in_progress') return undefined
       // 예약일·시간은 '희망' 데이터일 뿐 완료 판정에 영향 없음 — 보호자가 '완료' 버튼을 직접
       // 눌러야 step 이 done. 사전 신고와 동일 모델.

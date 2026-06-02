@@ -17,8 +17,6 @@ import {
   getCaseVaccineData,
   markAdvanceNotificationApprovalSkipped,
   markJpExportQuarantineReservationSkipped,
-  unmarkAdvanceNotificationApprovalSkipped,
-  unmarkJpExportQuarantineReservationSkipped,
   updateAdvanceNotificationDate,
   updateCaseTripType,
   updateFlightFields,
@@ -882,7 +880,6 @@ export function StepDetailView({
     savedAdvanceDate <= todayStr &&
     stepDocuments.length === 0
   const isAdvanceAwaitingApproval = isAdvanceDateEntered && !advanceApprovalSkipped
-  const isAdvanceApprovalSkipped = isAdvanceDateEntered && advanceApprovalSkipped
   // 사전 신고 허가증 대기 상태에서 입력 변경이 없으면 하단 '저장' 버튼이 '완료' 로 전환되어
   // skip-approval 액션을 실행. 보호자에겐 화면에 액션 버튼이 둘(저장+완료)이 아니라 하나만
   // 보이도록 — 안내 박스 내 별도 '완료' 버튼은 제거됐다.
@@ -903,26 +900,10 @@ export function StepDetailView({
       }
     })
   }
-  const [unskippingApproval, setUnskippingApproval] = useState(false)
-  const handleUnskipAdvanceApproval = () => {
-    if (unskippingApproval) return
-    setUnskippingApproval(true)
-    startTransition(async () => {
-      const res = await unmarkAdvanceNotificationApprovalSkipped(caseId)
-      setUnskippingApproval(false)
-      if (res.ok) {
-        updateCase(res.value)
-      } else {
-        setStatus('error')
-        setError(res.error)
-      }
-    })
-  }
   // 일본 수출검역 신청 — 사전 신고와 동일 패턴.
   //  - 예약일·시간은 '희망' 데이터로 완료 판정에 영향 X. step 완료는 보호자가 '완료' 버튼을
   //    명시적으로 눌러야 됨 (= reservation_skipped 플래그 set).
   //  - skip X & !done: '신청 진행 중' 안내 + 하단 저장 버튼이 jpExportSkipMode 로 '완료' 전환.
-  //  - skip O: '완료 처리됨' 안내 + 되돌리기 버튼.
   const jpExportReservationSkipped =
     (caseRow?.data as Record<string, unknown> | undefined)?.jp_export_quarantine_reservation_skipped ===
     true
@@ -932,7 +913,6 @@ export function StepDetailView({
     savedJpExport.applicationDate <= todayStr
   // 'awaiting' = 신청 도래 + 아직 완료 처리 안 함. done(legacy confirmed/admin) 이면 제외.
   const isJpExportAwaitingReservation = isJpExportApplied && !jpExportReservationSkipped && !done
-  const isJpExportReservationSkipped = isJpExportApplied && jpExportReservationSkipped
   // 하단 '저장' 버튼이 '완료' 로 전환되는 모드 — 변경 없을 때만(저장과 충돌 방지).
   const jpExportSkipMode = isJpExportAwaitingReservation && !dirty
   const [skippingJpExport, setSkippingJpExport] = useState(false)
@@ -945,21 +925,6 @@ export function StepDetailView({
       if (res.ok) {
         updateCase(res.value)
         router.replace(`/cases/${caseId}/journey`)
-      } else {
-        setStatus('error')
-        setError(res.error)
-      }
-    })
-  }
-  const [unskippingJpExport, setUnskippingJpExport] = useState(false)
-  const handleUnskipJpExportReservation = () => {
-    if (unskippingJpExport) return
-    setUnskippingJpExport(true)
-    startTransition(async () => {
-      const res = await unmarkJpExportQuarantineReservationSkipped(caseId)
-      setUnskippingJpExport(false)
-      if (res.ok) {
-        updateCase(res.value)
       } else {
         setStatus('error')
         setError(res.error)
@@ -1226,7 +1191,8 @@ export function StepDetailView({
             항공권 step + 왕복 + 출국만 입력 상태에선 '편도 일정으로 전환' 토글을 노출.
             사전 신고 허가증 대기(advanceSkipMode) / 일본 수출검역 신청 진행(jpExportSkipMode)
             상태의 '완료' 액션은 하단 sticky 저장 버튼이 라벨 전환으로 맡는다 — 안내 박스엔
-            별도 액션 버튼 X(되돌리기만 남음). */}
+            별도 액션 버튼 X. 완료(skip) 상태에선 situational 자체가 undefined 라 안내 박스
+            미노출. */}
         {situationalDesc && (
           <section
             style={{
@@ -1244,16 +1210,6 @@ export function StepDetailView({
               {situationalDesc}
               {isFlightRoundEntryOnly && ' 귀국 일정이 미정인 경우는 편도 일정으로 전환할 수 있습니다.'}
             </div>
-            {isAdvanceApprovalSkipped && (
-              <div style={{ marginTop: 16, fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
-                완료 전 상태로 되돌리시려면 되돌리기 버튼을 클릭해주세요.
-              </div>
-            )}
-            {isJpExportReservationSkipped && (
-              <div style={{ marginTop: 16, fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
-                예약 확정 대기 상태로 되돌리시려면 되돌리기 버튼을 클릭해주세요.
-              </div>
-            )}
             {isFlightRoundEntryOnly && (
               <button
                 type="button"
@@ -1275,52 +1231,6 @@ export function StepDetailView({
                 }}
               >
                 {convertingTrip ? '전환 중…' : '편도 일정으로 전환'}
-              </button>
-            )}
-            {isAdvanceApprovalSkipped && (
-              <button
-                type="button"
-                onClick={handleUnskipAdvanceApproval}
-                disabled={unskippingApproval}
-                className="pm-pressable"
-                style={{
-                  marginTop: 24,
-                  padding: '5px 14px',
-                  borderRadius: 999,
-                  border: `.5px solid color-mix(in srgb, ${C.info} 47%, transparent)`,
-                  background: 'var(--pm-surface)',
-                  color: C.info,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  letterSpacing: '0.01em',
-                  cursor: unskippingApproval ? 'progress' : 'pointer',
-                  opacity: unskippingApproval ? 0.6 : 1,
-                }}
-              >
-                {unskippingApproval ? '처리 중…' : '되돌리기'}
-              </button>
-            )}
-            {isJpExportReservationSkipped && (
-              <button
-                type="button"
-                onClick={handleUnskipJpExportReservation}
-                disabled={unskippingJpExport}
-                className="pm-pressable"
-                style={{
-                  marginTop: 24,
-                  padding: '5px 14px',
-                  borderRadius: 999,
-                  border: `.5px solid color-mix(in srgb, ${C.info} 47%, transparent)`,
-                  background: 'var(--pm-surface)',
-                  color: C.info,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  letterSpacing: '0.01em',
-                  cursor: unskippingJpExport ? 'progress' : 'pointer',
-                  opacity: unskippingJpExport ? 0.6 : 1,
-                }}
-              >
-                {unskippingJpExport ? '처리 중…' : '되돌리기'}
               </button>
             )}
           </section>
