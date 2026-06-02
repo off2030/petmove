@@ -1151,16 +1151,25 @@ export async function updateJpImportQuarantineDate(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
-    // 일본 수입 동물검역은 일본에 도착한 뒤에 받는 절차 — 검역일이 일본 입국일(출국 항공편
-    // 도착일)보다 빠를 수 없다. 논리적 불가능 조건이라 저장 자체를 거부. 항공편 미입력 시 SKIP.
+    // 일본 수입 동물검역은 일본 도착 당일 공항 검역소에서 받는 절차 — 검역일은 일본 입국일
+    // (출국 항공편 도착일) 당일 또는 (도착이 늦은 경우) 다음 날만 가능. 그 외는 저장 거부.
+    // 항공편 미입력 시 SKIP.
     const jpEntry =
       typeof prev.entry_date === 'string' && prev.entry_date.length >= 10
         ? prev.entry_date.slice(0, 10)
         : typeof prev.departure_flight_date === 'string' && prev.departure_flight_date.length >= 10
           ? prev.departure_flight_date.slice(0, 10)
           : ''
-    if (v && jpEntry && v < jpEntry) {
-      return { ok: false, error: `검역일은 일본 입국일(${formatKr(jpEntry)})보다 빠를 수 없습니다.` }
+    if (v && jpEntry) {
+      const next = new Date(jpEntry + 'T00:00:00Z')
+      next.setUTCDate(next.getUTCDate() + 1)
+      const jpEntryPlus1 = next.toISOString().slice(0, 10)
+      if (v !== jpEntry && v !== jpEntryPlus1) {
+        return {
+          ok: false,
+          error: `검역일은 일본 입국일(${formatKr(jpEntry)}) 당일 또는 다음 날만 가능합니다.`,
+        }
+      }
     }
     if (v) nextData.jp_import_quarantine_date = v
     else delete nextData.jp_import_quarantine_date
