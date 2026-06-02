@@ -554,7 +554,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
             </div>
 
             <p style={{ margin: '12px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>
-              펫무브와 함께한 여행 어떠셨나요?
+              펫무브와 함께한 여정 어떠셨나요?
             </p>
             <Link
               href={`/cases/${caseId}/feedback`}
