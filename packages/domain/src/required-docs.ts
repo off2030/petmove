@@ -146,6 +146,17 @@ function hasAttachmentForStep(caseRow: CaseRow, stepId: string): boolean {
   return docs.some((d) => !!d && typeof d === 'object' && d.stepId === stepId)
 }
 
+/**
+ * 큐레이션된 필수 서류가 모두 ✓ 인지(verified 또는 해당없음). spec 이 없는 목적지는 false —
+ * 자동 완료 시그널 자체가 없는 것으로 본다(보호자가 수동 '완료' 버튼으로만 마감).
+ * vet-visit done-resolver 가 호출 — 모든 서류 갖춰지면 자동 완료로 인정.
+ */
+export function areAllRequiredDocsVerified(caseRow: CaseRow): boolean {
+  const items = resolveRequiredDocs(caseRow.destination, caseRow)
+  if (!items || items.length === 0) return false
+  return items.every((d) => d.verified || d.na)
+}
+
 /** 단일 docId 의 spec 을 찾는다 — 상세 페이지에서 사용. */
 export function findRequiredDoc(
   destination: string | null | undefined,

@@ -17,6 +17,7 @@ import {
   getCaseVaccineData,
   markAdvanceNotificationApprovalSkipped,
   markJpExportQuarantineReservationSkipped,
+  markVetVisitCompleted,
   updateAdvanceNotificationDate,
   updateCaseTripType,
   updateFlightFields,
@@ -263,36 +264,32 @@ export function StepDetailView({
     krImportQuarantineDirty
   // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
   const justSaved = status === 'saved' && !dirty
-  // 검역·검사 5단계 — '저장' 클릭(확인)으로 완료하는 step. 미래 날짜=예정(저장만 됨),
+  // 검역·검사 4단계 — '저장' 클릭(확인)으로 완료하는 step. 미래 날짜=예정(저장만 됨),
   // 오늘 이하 날짜를 저장하면 완료. done(prop)=resolveDone=저장된 확인 플래그.
+  // vet-visit 은 별도 모델(완료 = '완료' 버튼 또는 모든 필수 서류 ✓) 이라 이 패턴에서 제외.
   const isConfirmStep =
-    isVetVisit ||
     isCertificateIssue ||
     isJpImportQuarantine ||
     isJpExportQuarantineVisit ||
     isKrImportQuarantine
-  const confirmFormDate = isVetVisit
-    ? vetVisitDate
-    : isCertificateIssue
-      ? krExportQuarantineDate
-      : isJpImportQuarantine
-        ? jpImportQuarantineDate
-        : isJpExportQuarantineVisit
-          ? jpExportQuarantineVisitDate
-          : isKrImportQuarantine
-            ? krImportQuarantineDate
-            : ''
-  const confirmSavedDate = isVetVisit
-    ? savedVetVisitDate
-    : isCertificateIssue
-      ? savedKrExportQuarantineDate
-      : isJpImportQuarantine
-        ? savedJpImportQuarantineDate
-        : isJpExportQuarantineVisit
-          ? savedJpExportQuarantineVisitDate
-          : isKrImportQuarantine
-            ? savedKrImportQuarantineDate
-            : ''
+  const confirmFormDate = isCertificateIssue
+    ? krExportQuarantineDate
+    : isJpImportQuarantine
+      ? jpImportQuarantineDate
+      : isJpExportQuarantineVisit
+        ? jpExportQuarantineVisitDate
+        : isKrImportQuarantine
+          ? krImportQuarantineDate
+          : ''
+  const confirmSavedDate = isCertificateIssue
+    ? savedKrExportQuarantineDate
+    : isJpImportQuarantine
+      ? savedJpImportQuarantineDate
+      : isJpExportQuarantineVisit
+        ? savedJpExportQuarantineVisitDate
+        : isKrImportQuarantine
+          ? savedKrImportQuarantineDate
+          : ''
   const todayStr = todayIso()
   // 버튼 문구·저장 확인 여부는 form(입력 중) 날짜 기준. 미래면 '예정일로 저장', 오늘 이하면 '저장'.
   const formUpcoming = isConfirmStep && confirmFormDate.length >= 10 && confirmFormDate > todayStr
@@ -714,7 +711,8 @@ export function StepDetailView({
       setStatus('saving')
       setError(null)
       startTransition(async () => {
-        const res = await updateVetVisitDate(caseId, vetVisitDate || null, formArrived)
+        // 새 모델 — 저장은 데이터 저장만 (완료 처리 X). 완료는 '완료' 버튼/서류 자동.
+        const res = await updateVetVisitDate(caseId, vetVisitDate || null, false)
         if (res.ok) {
           updateCase(res.value)
           setVetVisitDate(readVetVisitDate(res.value.data))
@@ -923,6 +921,26 @@ export function StepDetailView({
     startTransition(async () => {
       const res = await markJpExportQuarantineReservationSkipped(caseId)
       setSkippingJpExport(false)
+      if (res.ok) {
+        updateCase(res.value)
+        router.replace(`/cases/${caseId}/journey`)
+      } else {
+        setStatus('error')
+        setError(res.error)
+      }
+    })
+  }
+  // 출국 전 임상검사 — 사전 신고/일본 수출검역과 동일 패턴(검진일 ≤ 오늘 + !done + !dirty → '완료' mode).
+  // 완료 경로 두 가지: 보호자 '완료' 클릭 OR 큐레이션된 필수 서류가 모두 ✓ (자동, done-resolver).
+  const vetVisitInProgress = isVetVisit && savedVetVisitDate.length >= 10 && savedVetVisitDate <= todayStr && !done
+  const vetVisitCompleteMode = vetVisitInProgress && !dirty
+  const [completingVetVisit, setCompletingVetVisit] = useState(false)
+  const handleCompleteVetVisit = () => {
+    if (completingVetVisit) return
+    setCompletingVetVisit(true)
+    startTransition(async () => {
+      const res = await markVetVisitCompleted(caseId)
+      setCompletingVetVisit(false)
       if (res.ok) {
         updateCase(res.value)
         router.replace(`/cases/${caseId}/journey`)
@@ -1542,8 +1560,8 @@ export function StepDetailView({
           {/* 저장 중·저장됨은 별도 줄 대신 버튼 라벨로 — 첨부 영역과 겹치지 않음.
               미래 날짜(예정)면 라벨을 '예정일로 저장'으로 바꿔 누르기 전에 의도를 알린다.
               사전 신고 허가증 대기(advanceSkipMode) / 일본 수출검역 신청 진행
-              (jpExportSkipMode)이면 같은 버튼이 '완료'로 전환 — 저장할 변경이 없는 상태에서
-              명시적 완료 액션(skip 플래그 set)을 직접 노출. */}
+              (jpExportSkipMode) / 출국 전 임상검사 진행(vetVisitCompleteMode) 이면 같은
+              버튼이 '완료'로 전환 — 저장할 변경이 없는 상태에서 명시적 완료 액션을 직접 노출. */}
           <button
             type="button"
             onClick={
@@ -1551,13 +1569,16 @@ export function StepDetailView({
                 ? handleSkipAdvanceApproval
                 : jpExportSkipMode
                   ? handleSkipJpExportReservation
-                  : handleSave
+                  : vetVisitCompleteMode
+                    ? handleCompleteVetVisit
+                    : handleSave
             }
             disabled={
-              (!canSave && !advanceSkipMode && !jpExportSkipMode) ||
+              (!canSave && !advanceSkipMode && !jpExportSkipMode && !vetVisitCompleteMode) ||
               status === 'saving' ||
               skippingApproval ||
-              skippingJpExport
+              skippingJpExport ||
+              completingVetVisit
             }
             aria-live="polite"
             style={{
@@ -1568,18 +1589,20 @@ export function StepDetailView({
               border: 0,
               background: justSaved
                 ? C.sage
-                : (canSave || advanceSkipMode || jpExportSkipMode) &&
+                : (canSave || advanceSkipMode || jpExportSkipMode || vetVisitCompleteMode) &&
                     status !== 'saving' &&
                     !skippingApproval &&
-                    !skippingJpExport
+                    !skippingJpExport &&
+                    !completingVetVisit
                   ? C.accent
                   : 'var(--pm-line)',
               color:
                 justSaved ||
-                ((canSave || advanceSkipMode || jpExportSkipMode) &&
+                ((canSave || advanceSkipMode || jpExportSkipMode || vetVisitCompleteMode) &&
                   status !== 'saving' &&
                   !skippingApproval &&
-                  !skippingJpExport)
+                  !skippingJpExport &&
+                  !completingVetVisit)
                   ? '#fff'
                   : C.ink3,
               fontFamily: 'inherit',
@@ -1587,10 +1610,11 @@ export function StepDetailView({
               fontWeight: 600,
               letterSpacing: '-0.005em',
               cursor:
-                (canSave || advanceSkipMode || jpExportSkipMode) &&
+                (canSave || advanceSkipMode || jpExportSkipMode || vetVisitCompleteMode) &&
                 status !== 'saving' &&
                 !skippingApproval &&
-                !skippingJpExport
+                !skippingJpExport &&
+                !completingVetVisit
                   ? 'pointer'
                   : 'not-allowed',
               transition: 'background .15s, color .15s',
@@ -1598,11 +1622,11 @@ export function StepDetailView({
           >
             {status === 'saving'
               ? '저장 중…'
-              : skippingApproval || skippingJpExport
+              : skippingApproval || skippingJpExport || completingVetVisit
                 ? '처리 중…'
                 : justSaved
                   ? '✓ 저장됨'
-                  : advanceSkipMode || jpExportSkipMode
+                  : advanceSkipMode || jpExportSkipMode || vetVisitCompleteMode
                     ? '완료'
                     : formUpcoming ||
                         jpExportApplicationUpcoming ||

@@ -1,4 +1,5 @@
 import { addYears, readRabiesEntries, readTiterEntries, resolveValidUntil } from '../procedure-checks/utils'
+import { areAllRequiredDocsVerified } from '../required-docs'
 import { buildCaseJourneyContext } from './applicability'
 import {
   deriveAdvanceNotificationStatus,
@@ -626,6 +627,19 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받고 검역소에 제출할 서류를 준비하세요.',
     doneSummary: '출국 전 임상검사를 받았습니다.',
     cardLine: '임상 수의사의 검진을 받고 검역소에 제출할 서류를 준비하세요.',
+    // 검진일 ≤ 오늘 + 아직 완료(=서류 모두 ✓ 또는 보호자 '완료' 클릭)가 아니면 안내 노출.
+    // 두 완료 경로:
+    //  - 서류 자동: 큐레이션된 필수 서류가 모두 ✓ → done-resolver 가 자동 done 판정.
+    //  - 명시: 하단 '완료' 버튼이 vet_visit_confirmed 플래그를 set.
+    situational: (caseRow) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const dt = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      if (dt.length < 10 || dt > new Date().toISOString().slice(0, 10)) return undefined
+      if (data.vet_visit_confirmed === true) return undefined
+      if (areAllRequiredDocsVerified(caseRow)) return undefined
+      const msg = '출국 전 임상검사를 받았습니다. 서류 체크리스트를 확인하세요.'
+      return { desc: msg, cardDesc: msg }
+    },
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 110,
     deadline: { anchor: 'departure', daysBefore: 9, window: true },

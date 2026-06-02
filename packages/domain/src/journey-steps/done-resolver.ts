@@ -16,6 +16,7 @@ import {
   deriveAdvanceNotificationStatus,
   deriveJpExportQuarantineStatus,
 } from './report-status'
+import { areAllRequiredDocsVerified } from '../required-docs'
 
 /**
  * doneSignal → boolean. 단일 dispatcher.
@@ -108,9 +109,15 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return readExternalParasiteEntries(caseRow).length > 0
     case 'has-deworming-time':
       return typeof data.deworming_time === 'string' && (data.deworming_time as string).length > 0
-    case 'has-vet-visit':
-      // 검진일 입력 + 보호자 '저장' 확인(완료 클릭)해야 완료. 날짜만으론 자동 완료 X.
-      return isQuarantineConfirmed(data, 'vet_visit_date', 'vet_visit_confirmed')
+    case 'has-vet-visit': {
+      // 검진일 ≤ 오늘 AND (모든 필수 서류 ✓ OR 보호자가 '완료' 버튼 클릭).
+      // 옛 모델은 '저장 = 완료'였으나 새 모델은 두 경로 분리 — 명시적 완료 플래그
+      // 또는 서류 자동 충족.
+      const dt = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
+      if (dt.length < 10 || dt > todayIso()) return false
+      if (data.vet_visit_confirmed === true) return true
+      return areAllRequiredDocsVerified(caseRow)
+    }
     case 'has-flight-date': {
       // entry_date(도착일) 또는 케이스의 departure_date(출국일) 둘 중 하나라도 입력되면 완료.
       // 일본은 entry_date 미사용 → departure_date(= 항공권 출발일과 sync) 로 판정.
