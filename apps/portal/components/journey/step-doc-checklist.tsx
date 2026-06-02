@@ -22,30 +22,42 @@ interface ChecklistRow {
  * Step detail 페이지의 '서류 체크리스트' 카드. 서류 탭(buildDocsView)과 동일 로직 —
  * spec 이 있는 목적지(예: 일본 5건)는 큐레이션, 그 외는 step.allowAttachments 기반 폴백.
  * verified 시그널·해당없음 토글이 서류 탭과 같은 소스를 보므로 자동 동기.
+ *
+ * 단, 현재 step 보다 뒤에 발급되는 서류(stepRef.order > currentStep.order)는 제외 —
+ * 예: 출국 전 임상검사(vet-visit, order 110)엔 한국 수출 동물검역증(stepRef
+ * certificate-issue, order 120)이 미래 단계 서류라 보이지 않는다.
  */
-export function StepDocChecklist({ caseId }: { caseId: string }) {
+export function StepDocChecklist({ caseId, currentStepId }: { caseId: string; currentStepId: string }) {
   const caseRow = useCase(caseId)
   const rows = useMemo<ChecklistRow[]>(() => {
     if (!caseRow) return []
+    const currentOrder = JOURNEY_STEP_CATALOG.find((s) => s.id === currentStepId)?.order ?? Infinity
+    const isFuture = (stepRef: string | undefined) => {
+      if (!stepRef) return false
+      const ref = JOURNEY_STEP_CATALOG.find((s) => s.id === stepRef)
+      return ref ? ref.order > currentOrder : false
+    }
     const required = resolveRequiredDocs(caseRow.destination, caseRow)
     if (required) {
-      return required.map((d) => ({
-        id: d.id,
-        name: d.name,
-        verified: d.verified,
-        na: d.na,
-      }))
+      return required
+        .filter((d) => !isFuture(d.previewStepId))
+        .map((d) => ({
+          id: d.id,
+          name: d.name,
+          verified: d.verified,
+          na: d.na,
+        }))
     }
     const steps = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
     return steps
-      .filter((s) => s.allowAttachments)
+      .filter((s) => s.allowAttachments && s.order <= currentOrder)
       .map((s) => ({
         id: s.id,
         name: s.title,
         verified: resolveDone(s.done, caseRow),
         na: false,
       }))
-  }, [caseRow])
+  }, [caseRow, currentStepId])
 
   if (rows.length === 0) return null
 

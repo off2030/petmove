@@ -1167,7 +1167,7 @@ export function StepDetailView({
             서류 탭(buildDocsView)과 같은 시그널을 사용해 자동 동기 — 서류 탭에서
             완료 표시한 항목이 여기에도 ✓ 로 보인다. */}
         {(step.id === 'vet-visit' || step.id === 'certificate-issue') && (
-          <StepDocChecklist caseId={caseId} />
+          <StepDocChecklist caseId={caseId} currentStepId={step.id} />
         )}
 
         {/* Situational 안내 — step config 가 caseRow 상태에 따라 동적으로 만든 메시지.
