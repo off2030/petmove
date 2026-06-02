@@ -73,6 +73,8 @@ export function StepDocChecklist({ caseId, currentStepId }: { caseId: string; cu
   // '해당없음' 은 분모에서 빠지고 분자에 1로 친다(서류 탭 카운팅과 같은 규칙).
   const totalDenom = rows.filter((r) => !r.na).length
   const doneNum = rows.filter((r) => r.verified || r.na).length
+  // 진행 바 채움 비율 — 분모 0(전부 해당없음)이면 채울 게 없으니 100%로.
+  const pct = totalDenom === 0 ? 100 : Math.min(100, Math.round((doneNum / totalDenom) * 100))
 
   // 제목은 외부 h3('서류 체크리스트')가 담당 — 이 카드 내부엔 카운트만 우측에 노출.
   return (
@@ -85,11 +87,34 @@ export function StepDocChecklist({ caseId, currentStepId }: { caseId: string; cu
       }}
     >
       <div
-        style={{ fontSize: 12, color: C.ink3, fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}
+        style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}
       >
-        완료 {doneNum}/{totalDenom}
+        <span style={{ fontSize: 12, color: C.ink3, letterSpacing: '0.02em' }}>서류 준비</span>
+        <span style={{ fontSize: 12, color: C.ink3, fontVariantNumeric: 'tabular-nums' }}>
+          {doneNum}/{totalDenom}
+        </span>
       </div>
-      <ul style={{ margin: '8px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div
+        aria-hidden
+        style={{
+          marginTop: 8,
+          height: 5,
+          borderRadius: 999,
+          background: C.line,
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            height: '100%',
+            width: `${pct}%`,
+            background: C.sage,
+            borderRadius: 999,
+            transition: 'width .3s ease',
+          }}
+        />
+      </div>
+      <ul style={{ margin: '14px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
         {rows.map((row) => {
           const checked = row.verified || row.na
           return (
