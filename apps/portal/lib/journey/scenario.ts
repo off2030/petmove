@@ -86,6 +86,12 @@ export interface JourneyData {
    * 빈 배열이면 전체 완료.
    */
   nextStages: JourneyStage[]
+  /**
+   * 여정 완료 — 마지막 절차(편도=일본 수입 / 왕복=한국 수입)가 끝남(has-arrived).
+   * true 면 '다음 할 일' 자리에 완료 배너(의견 보내기)를 띄운다. 옛 journey-complete
+   * 마커 step 을 대체.
+   */
+  journeyComplete: boolean
   /** 전체 stage 의 failedChecks 합 — 상단 '주의' 배너에 사용. */
   totalFailedChecks: number
   /** 전체 stage 의 infoChecks 합 — 상단 '안내' 배너에 사용. */
@@ -497,6 +503,10 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     )
     if (firstAdvisory >= 0) stages[firstAdvisory].state = 'current'
   }
+  // 여정 완료 — 마지막 절차가 끝났는지(has-arrived: 왕복=한국 수입검역 / 편도=일본 수입검역·도착).
+  // 옛 journey-complete 마커 step 의 done 시그널을 그대로 재사용. 완료면 timeline-calm 이
+  // '다음 할 일' 자리에 완료 배너를 띄우고 그 외 카드는 가린다.
+  const journeyComplete = resolveDone('has-arrived', caseRow)
   const nextStages = stages.filter((s) => s.state === 'current')
   const totalFailedChecks = stages.reduce((sum, s) => sum + (s.failedChecks ?? 0), 0)
   const totalInfoChecks = stages.reduce((sum, s) => sum + (s.infoChecks ?? 0), 0)
@@ -512,6 +522,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     },
     stages,
     nextStages,
+    journeyComplete,
     totalFailedChecks,
     totalInfoChecks,
     caseAlerts,

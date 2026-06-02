@@ -1131,30 +1131,6 @@ export function StepDetailView({
               <span style={{ color: C.ink3 }}>→</span>
             </Link>
           )}
-          {step.id === 'journey-complete' && (
-            <Link
-              href={`/cases/${caseId}/feedback`}
-              style={{
-                marginTop: 14,
-                marginRight: 8,
-                padding: '9px 14px',
-                borderRadius: 999,
-                border: `.5px solid ${C.line}`,
-                background: 'rgba(255,253,247,.55)',
-                color: C.ink,
-                fontSize: 13,
-                fontWeight: 500,
-                letterSpacing: '-0.005em',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                textDecoration: 'none',
-              }}
-            >
-              의견 보내기
-              <span style={{ color: C.ink3 }}>→</span>
-            </Link>
-          )}
           {step.links?.map((l) => {
             // 상대 경로(/…) = 앱 내부 페이지 → Next Link + '→', http = 외부 → 새 탭 + '↗'.
             const internal = l.url.startsWith('/')

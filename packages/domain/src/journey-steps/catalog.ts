@@ -770,19 +770,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   },
 
   // ── 16. 도착 완료 — 여정 마무리 마일스톤 ───────────────────────────────
-  // 입력 없는 마커 step. 마지막 검역(편도=일본 수입 / 왕복=한국 수입)이
-  // 완료되면 자동 완료 — done-resolver 의 'has-arrived' 가 trip-type 으로 분기.
-  {
-    id: 'journey-complete',
-    category: 'travel',
-    title: '여정 완료',
-    shortLabel: '도착',
-    description:
-      '여정이 완료되었습니다.\n\n펫무브와 함께 즐거운 여행 되셨나요?',
-    doneSummary: '여정이 완료되었습니다!',
-    cardLine: '반려동물과 무사히 도착했어요.',
-    applicability: { destinations: 'all', species: 'all', tripType: 'all' },
-    order: 200,
-    done: 'has-arrived',
-  },
+  // 옛 'journey-complete' 마커 step 은 제거됨 — 여정 완료는 타임라인의 별도 행이 아니라
+  // 마지막 절차(편도=일본 수입 / 왕복=한국 수입)가 끝나면 일정 화면 '다음 할 일' 위치에
+  // 완료 배너로 노출한다 (scenario.ts journeyComplete + timeline-calm). 완료 시그널은
+  // done-resolver 의 'has-arrived' (trip-type 으로 분기) 를 그대로 사용.
 ]

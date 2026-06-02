@@ -5,6 +5,16 @@ import { useEffect, useRef, useState } from 'react'
 import { PetAvatar } from '@/components/cases/pet-avatar'
 import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
 
+/** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
+function withWaGwa(name: string): string {
+  if (!name) return name
+  const last = name.charCodeAt(name.length - 1)
+  if (last >= 0xac00 && last <= 0xd7a3) {
+    return (last - 0xac00) % 28 !== 0 ? `${name}과` : `${name}와`
+  }
+  return `${name}와`
+}
+
 /**
  * Calm 디자인 시스템의 여정 화면.
  *
@@ -13,7 +23,7 @@ import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
  * 그것을 비교적 충실히 옮긴 것.
  */
 export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: string }) {
-  const { stages, trip, pet, nextStages, caseAlerts } = data
+  const { stages, trip, pet, nextStages, caseAlerts, journeyComplete } = data
   const total = stages.length
   const done = stages.filter((s) => s.state === 'done').length
   const pct = done / total
@@ -426,9 +436,63 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
           </Link>
         )}
 
+        {/* 여정 완료 배너 — 마지막 절차가 끝나면 '다음 할 일' 자리에 노출. 옛 journey-complete
+            마커 step 을 대체. 완료의 긍정 톤(sage)으로 다음 할 일·안내 카드와 구분. */}
+        {journeyComplete && (
+          <div
+            style={{
+              marginTop: 22,
+              padding: 22,
+              borderRadius: 22,
+              background: 'color-mix(in srgb, var(--pm-sage) 12%, #F0E8DB)',
+              boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
+            }}
+          >
+            <div style={{ ...monoCap, color: C.sage }}>여정 완료</div>
+            <h3
+              style={{
+                ...serif,
+                margin: '12px 0 0',
+                fontSize: 22,
+                lineHeight: 1.2,
+                color: 'var(--pm-ink)',
+                fontWeight: 500,
+                textWrap: 'balance' as React.CSSProperties['textWrap'],
+              }}
+            >
+              {withWaGwa(pet.name)} 무사히 도착했어요 🎉
+            </h3>
+            <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>
+              펫무브와 함께 한 여정은 어떠셨나요? 소중한 의견을 들려주세요.
+            </p>
+            <Link
+              href={`/cases/${caseId}/feedback`}
+              className="pm-pressable"
+              style={{
+                marginTop: 18,
+                padding: '10px 16px',
+                borderRadius: 999,
+                border: `.5px solid color-mix(in srgb, var(--pm-sage) 45%, transparent)`,
+                background: 'var(--pm-surface)',
+                color: 'var(--pm-ink)',
+                fontSize: 13,
+                fontWeight: 600,
+                letterSpacing: '-0.005em',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                textDecoration: 'none',
+              }}
+            >
+              의견 보내기
+              <span style={{ color: C.sage }}>→</span>
+            </Link>
+          </div>
+        )}
+
         {/* 다음 할 일 카드 — soft taupe. 헤더 1회 + 할 일 항목들(각 행이 링크, 구분선).
-            non-blocking step 뒤엔 항목이 여럿 — 한 카드에 묶어 표시. */}
-        {nextStages.length > 0 && (
+            non-blocking step 뒤엔 항목이 여럿 — 한 카드에 묶어 표시. 여정 완료 후엔 가린다. */}
+        {!journeyComplete && nextStages.length > 0 && (
           <div
             style={{
               marginTop: 22,
@@ -500,8 +564,9 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
         )}
 
         {/* 안내 카드 — 다음 할 일 카드와 같은 톤·구조. 단 헤더 라벨은 info 색으로 구분.
-            안내별 카드 1장씩 (다건이면 N장) — step 이름 + 안내문 첫 줄 + 해당 step 링크. */}
-        {infoStages.length > 0 && (
+            안내별 카드 1장씩 (다건이면 N장) — step 이름 + 안내문 첫 줄 + 해당 step 링크.
+            여정 완료 후엔 완료 배너에 집중하도록 가린다. */}
+        {!journeyComplete && infoStages.length > 0 && (
           <div
             style={{
               marginTop: nextStages.length > 0 ? 14 : 22,
