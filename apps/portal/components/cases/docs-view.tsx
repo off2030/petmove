@@ -274,10 +274,10 @@ function ChecklistRow({
   pendingLabel = '대기',
   href,
 }: {
-  doc: { id: string; name: string; source: string; verified: boolean; na?: boolean }
+  doc: { id: string; name: string; source: string; verified: boolean; na?: boolean; awaiting?: boolean }
   C: PaletteShape
   monoCap: React.CSSProperties
-  /** 미준비 상태의 우측 라벨. 기본 '대기'. 큐레이션 섹션은 '준비중'. */
+  /** 미준비 상태의 우측 라벨. 기본 '대기'. 큐레이션 섹션은 '준비중'. awaiting 일 땐 무시. */
   pendingLabel?: string
   /** 있으면 카드 전체가 Link 가 되어 상세 페이지로 이동. */
   href?: string
@@ -285,6 +285,9 @@ function ChecklistRow({
   const ok = doc.verified
   // 해당없음 — 보유도 미준비도 아닌 회색 톤 상태. 카운트 분모에서 제외됨.
   const na = doc.na === true
+  // 발급 예정 — 다른 step 완료 후 자동 발급되는 서류 (한국 수출 동물검역증 등).
+  // 보호자 능동 '준비중' 과 구분되는 수동 '대기' 상태 — opacity·라벨로 시각 분리.
+  const awaiting = doc.awaiting === true && !ok && !na
   const cardStyle: React.CSSProperties = {
     background: C.surface,
     border: `.5px solid ${C.line}`,
@@ -296,6 +299,7 @@ function ChecklistRow({
     textDecoration: 'none',
     color: 'inherit',
     cursor: href ? 'pointer' : 'default',
+    opacity: awaiting ? 0.6 : 1,
   }
   const inner = (
     <>
@@ -352,7 +356,7 @@ function ChecklistRow({
           fontWeight: 600,
         }}
       >
-        {ok ? '보유' : na ? '해당없음' : pendingLabel}
+        {ok ? '보유' : na ? '해당없음' : awaiting ? '발급 예정' : pendingLabel}
       </span>
     </>
   )

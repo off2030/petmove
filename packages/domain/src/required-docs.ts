@@ -25,6 +25,12 @@ export interface RequiredDocItem {
   naAllowed: boolean
   /** 보호자가 '해당없음' 으로 표시함 (case.data.required_doc_na[id]). 체크리스트 카운트에서 제외. */
   na: boolean
+  /**
+   * 발급 step 이 아직 완료되지 않아 보호자가 직접 준비/조치할 수 없는 상태 — 보호자 능동
+   * '준비중' 과 구분되는 수동 '대기' 상태. 예: 한국 수출 동물검역증은 검역 후에 자동 발급.
+   * spec 의 awaitingIssuance=true 이면서 verified=false 일 때만 true.
+   */
+  awaiting: boolean
   /** 상세 페이지 본문. 서류 설명·받는 방법. */
   description: string
   /** preview 소스 step.id — 해당 step 에 업로드된 파일이 '디지털원본/사본' 으로 노출. */
@@ -45,6 +51,12 @@ interface RequiredDocSpec {
   stepRef?: string
   /** 케이스에 따라 불필요할 수 있는 서류 — 상세에서 '해당없음' 토글 노출(예: 첫 입국 시 수출 검역증). */
   naAllowed?: boolean
+  /**
+   * 보호자가 직접 준비/조치 X — 다른 step 완료 후 외부 기관이 자동/필연적으로 발급하는 서류
+   * (예: 한국 수출 동물검역증은 검역 후 농림축산검역본부가 발급). UI 에서 '준비중' 이 아니라
+   * '발급 예정' 톤으로 dim 처리해 능동 작업과 시각적으로 구분.
+   */
+  awaitingIssuance?: boolean
   description: string
   /** preview 영역에 노출할 step 의 업로드. 없으면 preview 영역 placeholder. */
   previewStepId?: string
@@ -94,6 +106,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       source: '농림축산검역본부',
       kind: 'step',
       stepRef: 'certificate-issue',
+      awaitingIssuance: true,
       description:
         '한국 수출 동물검역 후 발급받습니다.\n\n일본 수입 동물검역 때 원본을 제시해야 합니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
       previewStepId: 'certificate-issue',
@@ -124,6 +137,7 @@ export function resolveRequiredDocs(
         : spec.stepRef
           ? resolveStepDone(spec.stepRef, caseRow)
           : false)
+    const awaiting = spec.awaitingIssuance === true && !verified && !na
     return {
       id: spec.id,
       name: spec.name,
@@ -131,6 +145,7 @@ export function resolveRequiredDocs(
       manual: spec.kind === 'manual',
       naAllowed,
       na,
+      awaiting,
       description: spec.description,
       previewStepId: spec.previewStepId,
       attachStepId,
