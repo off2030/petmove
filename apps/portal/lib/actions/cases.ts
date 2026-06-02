@@ -1218,6 +1218,24 @@ export async function updateJpExportQuarantineVisitDate(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
+    // 일본 수출 동물검역은 일본 도착 후 ~ 귀국 전 사이에 받는 절차 —
+    //  - 일본 입국일(entry_date)보다 빠를 수 없음 (일본 도착 후에 받음).
+    //  - 귀국일(return_date)보다 늦을 수 없음 (귀국 전에 받아야 함).
+    // 논리적 불가능 조건이라 저장 거부. 각 anchor 미입력 시 해당 검증만 SKIP.
+    const jpEntry =
+      typeof prev.entry_date === 'string' && prev.entry_date.length >= 10
+        ? prev.entry_date.slice(0, 10)
+        : ''
+    if (v && jpEntry && v < jpEntry) {
+      return { ok: false, error: `검역일은 일본 입국일(${formatKr(jpEntry)})보다 빠를 수 없습니다.` }
+    }
+    const jpReturn =
+      typeof prev.return_date === 'string' && prev.return_date.length >= 10
+        ? prev.return_date.slice(0, 10)
+        : ''
+    if (v && jpReturn && v > jpReturn) {
+      return { ok: false, error: `검역일은 귀국일(${formatKr(jpReturn)})보다 늦을 수 없습니다.` }
+    }
     if (v) nextData.jp_export_quarantine_visit_date = v
     else delete nextData.jp_export_quarantine_visit_date
     // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
