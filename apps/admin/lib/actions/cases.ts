@@ -437,20 +437,30 @@ export async function restoreToHistoryPoint(
   if (!entries || entries.length === 0) return { ok: false, error: '되돌릴 이력이 없습니다' }
 
   // 3. Reduce to per-field final state.
-  //    entries are DESC (newest → oldest). Iterating in this order with .set() means
-  //    the OLDEST entry for each key wins — which is exactly what we want: the value
-  //    before any change in the selected range.
+  //    entries are DESC (newest → oldest). 두 가지 값을 동시에 추적:
+  //     - restoredValue: 가장 OLD entry 의 old_value (= 범위 시작 전 값, 복원 대상)
+  //     - currentValue: 가장 NEW entry 의 new_value (= 현재 DB 값, 새 history old_value 로 사용)
   const finalByKey = new Map<
     string,
-    { storage: 'column' | 'data'; key: string; value: unknown }
+    { storage: 'column' | 'data'; key: string; restoredValue: unknown; currentValue: unknown }
   >()
   for (const e of entries) {
     const storage = e.field_storage as 'column' | 'data'
-    finalByKey.set(`${storage}:${e.field_key}`, {
-      storage,
-      key: e.field_key,
-      value: deserializeFromHistory(storage, e.old_value),
-    })
+    const k = `${storage}:${e.field_key}`
+    const restored = deserializeFromHistory(storage, e.old_value)
+    const existing = finalByKey.get(k)
+    if (existing) {
+      // 같은 키의 더 OLD entry — restoredValue 갱신 (그게 진짜 복원 대상).
+      existing.restoredValue = restored
+    } else {
+      // 첫(=NEWEST) entry — currentValue 캡처. restoredValue 는 일단 채워두고 더 OLD 가 있으면 덮어씀.
+      finalByKey.set(k, {
+        storage,
+        key: e.field_key,
+        restoredValue: restored,
+        currentValue: deserializeFromHistory(storage, e.new_value),
+      })
+    }
   }
 
   // 4. Separate column and data updates.
@@ -458,16 +468,13 @@ export async function restoreToHistoryPoint(
   const dataKeyUpdates = new Map<string, unknown>()
   for (const f of finalByKey.values()) {
     if (f.storage === 'column') {
-      if (REGULAR_COLUMNS.has(f.key)) columnUpdates[f.key] = f.value
+      if (REGULAR_COLUMNS.has(f.key)) columnUpdates[f.key] = f.restoredValue
     } else {
-      dataKeyUpdates.set(f.key, f.value)
+      dataKeyUpdates.set(f.key, f.restoredValue)
     }
   }
 
   // 5+6. Column + data 업데이트를 한 번의 UPDATE 로 합쳐서 부분 실패 윈도우 최소화.
-  //     P2 — 이전엔 column UPDATE → SELECT data → data UPDATE → history DELETE
-  //     순서로 3회 RTT, column 만 또는 data 만 적용된 inconsistent 상태 가능.
-  //     이제 column + data 를 단일 UPDATE 로 묶어 atomic.
   const updateObj: Record<string, unknown> = { ...columnUpdates }
   if (dataKeyUpdates.size > 0) {
     const { data: row, error: dFetchErr } = await supabase
@@ -489,17 +496,51 @@ export async function restoreToHistoryPoint(
     if (error) return { ok: false, error: error.message }
   }
 
-  // 7. Delete consumed history entries — UPDATE 성공 후에만. DELETE 실패해도 cases 는
-  //    정상 상태이고 다시 restore 호출해도 idempotent (같은 값으로 덮어쓰기).
-  const ids = entries.map((e) => e.id)
-  await supabase.from('case_history').delete().in('id', ids)
+  // 7. 새 history entries 기록 — 복원 행위 자체를 정상 변경 이벤트로 남긴다.
+  //    옛 동작은 consumed entries 를 DELETE 했지만 audit trail 이 사라져 (1) 무엇이 복원됐는지
+  //    추적 불가, (2) Ctrl+Z(undoLastChange) 로 복원 자체를 되돌리는 경로가 끊김.
+  //    각 필드의 currentValue(복원 직전) → restoredValue(복원 후) 를 새 entry 로 insert.
+  //    실제로 값이 바뀐 필드만 (currentValue !== restoredValue) 기록.
+  const orgId = (await supabase
+    .from('cases')
+    .select('org_id')
+    .eq('id', caseId)
+    .single()).data?.org_id as string | undefined
+  if (orgId) {
+    const historyRows: Array<{
+      case_id: string
+      org_id: string
+      field_key: string
+      field_storage: 'column' | 'data'
+      old_value: string | null
+      new_value: string | null
+    }> = []
+    for (const f of finalByKey.values()) {
+      const oldSer = serializeForHistory(f.storage, f.currentValue)
+      const newSer = serializeForHistory(f.storage, f.restoredValue)
+      if (oldSer === newSer) continue
+      historyRows.push({
+        case_id: caseId,
+        org_id: orgId,
+        field_key: f.key,
+        field_storage: f.storage,
+        old_value: oldSer,
+        new_value: newSer,
+      })
+    }
+    if (historyRows.length > 0) {
+      await supabase.from('case_history').insert(historyRows)
+    }
+  }
 
-  // revalidatePath 미사용 — 반환된 restored 배열을 클라이언트가 updateLocalCaseField
-  // 로 일괄 반영.
-
+  // revalidatePath 미사용 — 반환된 restored 배열을 클라이언트가 updateLocalCaseField 로 일괄 반영.
   return {
     ok: true,
-    restored: Array.from(finalByKey.values()),
+    restored: Array.from(finalByKey.values()).map((f) => ({
+      storage: f.storage,
+      key: f.key,
+      value: f.restoredValue,
+    })),
   }
 }
 
