@@ -1051,7 +1051,7 @@ export async function updateKrExportQuarantineDate(
     const admin = createAdminClient()
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
-      .select('data')
+      .select('data, destination')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
@@ -1059,6 +1059,39 @@ export async function updateKrExportQuarantineDate(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
+    // 한국 수출 동물검역은 출국 전 임상검사 후 ~ 출국 항공편 전 사이에 받는 절차.
+    //  - 임상검사일보다 빠를 수 없음 (검역 때 임상검사 서류를 제출하므로).
+    //  - 출국일(출국 항공편 날짜)보다 늦을 수 없음 (출국 전에 받는 검역).
+    //  - 출국일 기준 N일(목적지별 윈도우, 한국·일본 10일=출국 9일 전) 이내여야 함.
+    // 논리적 불가능 조건이라 저장 거부. 각 anchor 미입력 시 해당 검증만 SKIP.
+    const vetVisit =
+      typeof prev.vet_visit_date === 'string' && prev.vet_visit_date.length >= 10
+        ? prev.vet_visit_date.slice(0, 10)
+        : ''
+    if (v && vetVisit && v < vetVisit) {
+      return { ok: false, error: `검역일은 출국 전 임상검사일(${formatKr(vetVisit)})보다 빠를 수 없습니다.` }
+    }
+    const depart =
+      typeof prev.entry_date === 'string' && prev.entry_date.length >= 10
+        ? prev.entry_date.slice(0, 10)
+        : typeof prev.departure_flight_date === 'string' && prev.departure_flight_date.length >= 10
+          ? prev.departure_flight_date.slice(0, 10)
+          : ''
+    if (v && depart) {
+      if (v > depart) {
+        return { ok: false, error: `검역일은 출국일(${formatKr(depart)})보다 늦을 수 없습니다.` }
+      }
+      const days = Math.round(
+        (new Date(depart + 'T00:00:00Z').getTime() - new Date(v + 'T00:00:00Z').getTime()) /
+          86_400_000,
+      )
+      const windowDays = getVetVisitWindowDays(
+        (existing as { destination: string | null }).destination,
+      )
+      if (days >= windowDays) {
+        return { ok: false, error: `검역일은 출국일 기준 ${windowDays}일 이내여야 합니다.` }
+      }
+    }
     if (v) nextData.kr_export_quarantine_date = v
     else delete nextData.kr_export_quarantine_date
     // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
