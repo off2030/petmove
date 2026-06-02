@@ -1,6 +1,7 @@
 import type { CaseRow } from './types'
 import { JOURNEY_STEP_CATALOG } from './journey-steps/catalog'
 import { resolveDone } from './journey-steps/done-resolver'
+import { getStepsForCase } from './journey-steps/applicability'
 
 /**
  * 국가별 '필수 서류' 큐레이션. 서류함의 자동 체크리스트(step.allowAttachments 전부)
@@ -26,9 +27,11 @@ export interface RequiredDocItem {
   /** 보호자가 '해당없음' 으로 표시함 (case.data.required_doc_na[id]). 체크리스트 카운트에서 제외. */
   na: boolean
   /**
-   * 발급 step 이 아직 완료되지 않아 보호자가 직접 준비/조치할 수 없는 상태 — 보호자 능동
-   * '준비중' 과 구분되는 수동 '대기' 상태. 예: 한국 수출 동물검역증은 검역 후에 자동 발급.
-   * spec 의 awaitingIssuance=true 이면서 verified=false 일 때만 true.
+   * 발급 step 이 보호자의 현재 진행 step 보다 뒤에 있어 아직 능동 준비가 불가능한 상태 —
+   * 보호자 능동 '준비중' 과 구분되는 수동 '대기' 톤. 예: 사전 신고 진행 중일 때 vet-visit 에서
+   * 발급될 별지25/FormAC/RE 는 발급 예정. UI 에서 opacity·라벨로 시각 분리.
+   * spec 의 issuanceStepId(없으면 kind='step' 의 stepRef 폴백) 보다 앞에 있는 main lane
+   * (nonBlocking·advisoryOnly 제외) step 중 미완료가 하나라도 있고 verified=false, na=false 일 때 true.
    */
   awaiting: boolean
   /** 상세 페이지 본문. 서류 설명·받는 방법. */
@@ -52,11 +55,12 @@ interface RequiredDocSpec {
   /** 케이스에 따라 불필요할 수 있는 서류 — 상세에서 '해당없음' 토글 노출(예: 첫 입국 시 수출 검역증). */
   naAllowed?: boolean
   /**
-   * 보호자가 직접 준비/조치 X — 다른 step 완료 후 외부 기관이 자동/필연적으로 발급하는 서류
-   * (예: 한국 수출 동물검역증은 검역 후 농림축산검역본부가 발급). UI 에서 '준비중' 이 아니라
-   * '발급 예정' 톤으로 dim 처리해 능동 작업과 시각적으로 구분.
+   * 이 서류가 실제로 발급되는 step. kind='step' 이면 stepRef 와 같은 게 보통이라 생략 가능
+   * (자동 폴백). kind='manual' 인데 특정 step 의 결과로 발급되는 서류(예: 별지25·FormAC/RE 는
+   * vet-visit 검진 결과)는 여기에 명시. resolveRequiredDocs 가 발급 step 보다 앞 main lane
+   * 미완료가 있을 때 awaiting=true 로 dim 처리한다.
    */
-  awaitingIssuance?: boolean
+  issuanceStepId?: string
   description: string
   /** preview 영역에 노출할 step 의 업로드. 없으면 preview 영역 placeholder. */
   previewStepId?: string
@@ -89,6 +93,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       name: '접종 및 건강증명서(별지 제 25호 서식)',
       source: '동물병원',
       kind: 'manual',
+      issuanceStepId: 'vet-visit',
       description:
         '농림축산검역본부 지정 양식의 접종 및 건강증명서입니다.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급합니다.\n\n원본 2부를 준비해서, 동물검역 때 1부를 제출합니다.\n\n접종과 출국 전 임상검사를 한 동물병원이 다른 경우, 각각의 동물병원에서 별개의 증명서를 받아야 하는 점에 주의하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
     },
@@ -97,6 +102,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       name: 'FormAC/RE',
       source: '동물병원',
       kind: 'manual',
+      issuanceStepId: 'vet-visit',
       description:
         '일본 지정 양식의 접종, 검사 및 건강증명서입니다.\n\n일본 첫 입국 시 FormAC를 준비합니다. 재입국일 경우는 FormRE를 준비합니다.\n\n출국일 기준 10일 이내에 임상 수의사의 서명을 받습니다.\n\n한국 수출 동물검역 때 검역관 확인·서명을 받습니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
     },
@@ -106,7 +112,6 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       source: '농림축산검역본부',
       kind: 'step',
       stepRef: 'certificate-issue',
-      awaitingIssuance: true,
       description:
         '한국 수출 동물검역 후 발급받습니다.\n\n일본 수입 동물검역 때 원본을 제시해야 합니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
       previewStepId: 'certificate-issue',
@@ -123,6 +128,11 @@ export function resolveRequiredDocs(
   if (!specs) return null
   const flags = readBoolFlags(caseRow, 'required_doc_flags')
   const naFlags = readBoolFlags(caseRow, 'required_doc_na')
+  // 케이스 main lane — 발급 예정(awaiting) 판정에서 nonBlocking/advisoryOnly 제외한 본 흐름 step 들.
+  // 발급 step 보다 앞에 미완료가 있으면 보호자가 능동 준비할 수 없는 단계라 dim 처리.
+  const mainLane = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow).filter(
+    (s) => !s.nonBlocking && !s.advisoryOnly,
+  )
   return specs.map((spec) => {
     // 첨부 대상 stepId — step 연동 서류는 공유 step, 그 외는 doc.id 자체.
     const attachStepId = spec.previewStepId ?? spec.id
@@ -137,7 +147,9 @@ export function resolveRequiredDocs(
         : spec.stepRef
           ? resolveStepDone(spec.stepRef, caseRow)
           : false)
-    const awaiting = spec.awaitingIssuance === true && !verified && !na
+    // 발급 step — 명시(issuanceStepId) 우선, kind='step' 이면 stepRef 폴백.
+    const issuanceStepId = spec.issuanceStepId ?? (spec.kind === 'step' ? spec.stepRef : undefined)
+    const awaiting = !verified && !na && isIssuanceFuture(issuanceStepId, mainLane, caseRow)
     return {
       id: spec.id,
       name: spec.name,
@@ -152,6 +164,22 @@ export function resolveRequiredDocs(
       verified,
     }
   })
+}
+
+/**
+ * 발급 step 이 보호자의 '현재 진행' 보다 미래인지 — main lane 에서 발급 step 보다 앞 순서의
+ * step 중 미완료가 하나라도 있으면 true. 발급 step 자체가 active 또는 그 이후면 false.
+ * issuance step 미지정·카탈로그 누락이면 false (보수적: dim 처리 안 함).
+ */
+function isIssuanceFuture(
+  issuanceStepId: string | undefined,
+  mainLane: ReturnType<typeof getStepsForCase>,
+  caseRow: CaseRow,
+): boolean {
+  if (!issuanceStepId) return false
+  const issuance = mainLane.find((s) => s.id === issuanceStepId)
+  if (!issuance) return false
+  return mainLane.some((s) => s.order < issuance.order && !resolveDone(s.done, caseRow))
 }
 
 /** case.data.documents 에 해당 stepId 태그의 파일이 하나라도 있으면 true. */
