@@ -339,6 +339,33 @@ export function CasesProvider({
             (payload) => {
               const row = payload.new as CaseRow
               if (!row?.id) return
+              // Realtime 은 행이 max_record_bytes(기본 1MB) 를 넘으면 payload 를 잘라
+              // 보낸다 — 작은 컬럼(customer_name·microchip 등)은 남고 큰 data(jsonb)
+              // 컬럼이 비거나 누락된다. 이 잘린 payload 로 캐시를 덮으면 화면에서
+              // 고객·동물 정보가 통째로 사라진다(DB 는 멀쩡, 새로고침하면 복구).
+              // 잘린 신호가 보이면 payload 를 신뢰하지 말고 권위 행을 재fetch 한다.
+              const cached = casesRef.current.find((c) => c.id === row.id)
+              if (cached?.updated_at && cached.updated_at === row.updated_at) return
+              const errs = (payload as { errors?: unknown[] }).errors
+              const hasErrors = Array.isArray(errs) && errs.length > 0
+              const incomingEmpty =
+                row.data == null ||
+                (typeof row.data === 'object' && Object.keys(row.data as object).length === 0)
+              const cachedHasData =
+                !!cached?.data &&
+                typeof cached.data === 'object' &&
+                Object.keys(cached.data as object).length > 0
+              if (hasErrors || (incomingEmpty && cachedHasData)) {
+                // 잘린 payload — 덮어쓰지 않고 권위 행을 다시 읽어 정확한 data 회복.
+                // 그 사이 기존 캐시는 그대로 유지(화면 보존).
+                void getActiveOrgCaseById(row.id).then((res) => {
+                  if (res.ok && res.case) {
+                    const full = res.case
+                    setCases((prev) => prev.map((c) => (c.id === full.id ? full : c)))
+                  }
+                })
+                return
+              }
               setCases((prev) =>
                 prev.map((c) => {
                   if (c.id !== row.id) return c

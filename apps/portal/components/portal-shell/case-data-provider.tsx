@@ -175,7 +175,21 @@ export function CaseDataProvider({
                 // 들어온다. 목록에서 즉시 제거 (안 그러면 deleted 케이스가 앱에 계속 보임).
                 setCases((prev) => prev.filter((c) => c.id !== next.id))
               } else {
-                setCases((prev) => prev.map((c) => (c.id === next.id ? (next as CaseRow) : c)))
+                // Realtime 은 행이 max_record_bytes(기본 1MB) 를 넘으면 payload 를 잘라
+                // 보낸다 — 작은 컬럼은 남고 큰 data(jsonb) 가 비거나 누락된다. 이 잘린
+                // payload 로 캐시를 덮으면 보호자 화면에서 내 정보가 통째로 사라진다
+                // (DB 는 멀쩡). 고객 케이스는 항상 data 가 있으므로, errors 가 있거나
+                // data 가 비어 들어오면 잘린 것으로 보고 권위 데이터를 재fetch 한다.
+                const errs = (payload as { errors?: unknown[] }).errors
+                const truncated =
+                  (Array.isArray(errs) && errs.length > 0) ||
+                  next.data == null ||
+                  (typeof next.data === 'object' && Object.keys(next.data as object).length === 0)
+                if (truncated) {
+                  void refreshCases()
+                } else {
+                  setCases((prev) => prev.map((c) => (c.id === next.id ? (next as CaseRow) : c)))
+                }
               }
             } else {
               // INSERT/DELETE: case_customer_links 까지 확인하려면 listMyCases 재조회.
