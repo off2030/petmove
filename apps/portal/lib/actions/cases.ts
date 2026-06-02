@@ -1265,6 +1265,24 @@ export async function updateKrImportQuarantineDate(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
+    // 한국 수입 동물검역은 귀국 항공편으로 한국 도착 후 공항 검역소에서 받는 절차 —
+    // 검역일은 귀국일(return_date) 당일 또는 (도착이 늦은 경우) 다음 날만 가능. 그 외는 거부.
+    // 귀국 항공편 미입력 시 SKIP. (일본 수입검역과 동일 모델.)
+    const krReturn =
+      typeof prev.return_date === 'string' && prev.return_date.length >= 10
+        ? prev.return_date.slice(0, 10)
+        : ''
+    if (v && krReturn) {
+      const next = new Date(krReturn + 'T00:00:00Z')
+      next.setUTCDate(next.getUTCDate() + 1)
+      const krReturnPlus1 = next.toISOString().slice(0, 10)
+      if (v !== krReturn && v !== krReturnPlus1) {
+        return {
+          ok: false,
+          error: `검역일은 귀국일(${formatKr(krReturn)}) 당일 또는 다음 날만 가능합니다.`,
+        }
+      }
+    }
     if (v) nextData.kr_import_quarantine_date = v
     else delete nextData.kr_import_quarantine_date
     // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
