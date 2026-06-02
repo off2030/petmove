@@ -87,7 +87,7 @@ export function StepDocChecklist({ caseId, currentStepId }: { caseId: string; cu
       <div
         style={{ fontSize: 12, color: C.ink3, fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}
       >
-        {doneNum}/{totalDenom}
+        완료 {doneNum}/{totalDenom}
       </div>
       <ul style={{ margin: '8px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
         {rows.map((row) => {

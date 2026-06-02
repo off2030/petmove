@@ -624,9 +624,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '출국 전 임상검사',
     shortLabel: '내원',
     description:
-      '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받고 검역소에 제출할 서류를 준비하세요.',
+      '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받고 검역에 필요한 서류를 준비하세요.',
     doneSummary: '출국 전 임상검사를 받았습니다.',
-    cardLine: '임상 수의사의 검진을 받고 검역소에 제출할 서류를 준비하세요.',
+    cardLine: '임상 수의사의 검진을 받고 검역에 필요한 서류를 준비하세요.',
     // 검진일 ≤ 오늘 + 미완료 상태에서 안내. 완료는 큐레이션된 필수 서류가 모두 ✓ 일 때
     // done-resolver 가 자동 판정. 옛 데이터 호환을 위해 vet_visit_confirmed 플래그도 done.
     // spec 없는 destination 은 검진일 입력만으로 완료라 안내 자체가 등장하지 않음.
