@@ -155,7 +155,7 @@ export function StepDocChecklist({ caseId, currentStepId }: { caseId: string; cu
           textDecoration: 'none',
         }}
       >
-        서류 탭으로 바로가기
+        전체 서류 보기
         <span style={{ color: C.ink3 }}>→</span>
       </Link>
     </section>
