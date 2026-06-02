@@ -1279,7 +1279,7 @@ export async function updateKrImportQuarantineDate(
       if (v !== krReturn && v !== krReturnPlus1) {
         return {
           ok: false,
-          error: `검역일은 귀국일(${formatKr(krReturn)}) 당일 또는 다음 날만 가능합니다.`,
+          error: '검역은 귀국 당일에 받습니다. 검역일 혹은 귀국 항공편 날짜를 수정하세요.',
         }
       }
     }
