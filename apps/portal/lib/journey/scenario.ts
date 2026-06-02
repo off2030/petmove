@@ -418,11 +418,17 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
                 ? `${formatKoreanDate(deadline)}까지 ${cardLine}`
                 : summary))
     const failedChecks = failedByStep.get(step.id) ?? 0
-    // 신청-완료 두 단계 step (사전 신고·일본 수출검역 신청) — 신청은 됐지만 완료는 아직
-    // (situational 활성, !done) 상태에선 우측 칩이 '안내' 톤으로 바뀌도록 infoChecks 1 추가.
-    // 신청 시점에 사용자는 이미 액션 한 번을 마친 셈이라 '마감 …' / '예정' 만 보이면 어색.
+    // 액션-완료 두 단계 step (사전 신고·일본 수출검역 신청·출국 전 임상검사) — 신청/검진은
+    // 됐지만 완료는 아직(situational 활성, !done) 상태에선 우측 칩이 '안내' 톤으로 바뀌도록
+    // infoChecks 1 추가. 이미 액션 한 번을 마친 셈이라 '마감 …' / '예정' 만 보이면 어색.
+    // vet-visit: 검진일 도래 + 서류 미완(= situational '받았습니다. 서류 확인') 상태에만 해당 —
+    // 미래 검진일이면 situational 이 undefined 라 그대로 '예정 [날짜]' 칩 유지.
     const isAwaitingStep =
-      (step.id === 'advance-notification' || step.id === 'jp-export-quarantine') && !done && !!sit
+      (step.id === 'advance-notification' ||
+        step.id === 'jp-export-quarantine' ||
+        step.id === 'vet-visit') &&
+      !done &&
+      !!sit
     const infoChecks = (infoByStep.get(step.id) ?? 0) + (isAwaitingStep ? 1 : 0)
     const isAdvisory = step.advisoryOnly === true
     // 안내 카드 본문 — info check 메시지가 있으면 그걸, 없으면 advisory step 의 desc(상황별),
