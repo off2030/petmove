@@ -44,6 +44,7 @@ import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm, type RabiesProductHints } from './rabies-entry-inputs'
 import { RabiesExtraInputs, type RabiesExtraEntry } from './rabies-extra-inputs'
 import { StepAttachments } from './step-attachments'
+import { StepDocChecklist } from './step-doc-checklist'
 import { TiterExtraInputs, type TiterExtraEntry } from './titer-extra-inputs'
 import { TiterInputs, type TiterForm } from './titer-inputs'
 import { VetVisitInputs } from './vet-visit-inputs'
@@ -1103,30 +1104,6 @@ export function StepDetailView({
               <span style={{ color: C.ink3 }}>→</span>
             </Link>
           )}
-          {(step.id === 'vet-visit' || step.id === 'certificate-issue') && (
-            <Link
-              href={`/cases/${caseId}/docs`}
-              style={{
-                marginTop: 14,
-                marginRight: 8,
-                padding: '9px 14px',
-                borderRadius: 999,
-                border: `.5px solid ${C.line}`,
-                background: 'rgba(255,253,247,.55)',
-                color: C.ink,
-                fontSize: 13,
-                fontWeight: 500,
-                letterSpacing: '-0.005em',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                textDecoration: 'none',
-              }}
-            >
-              서류 체크리스트
-              <span style={{ color: C.ink3 }}>→</span>
-            </Link>
-          )}
           {step.id === 'journey-complete' && (
             <Link
               href={`/cases/${caseId}/feedback`}
@@ -1185,6 +1162,13 @@ export function StepDetailView({
             )
           })}
         </section>
+
+        {/* 서류 체크리스트 카드 — 출국 전 임상검사·검역증명서 발급 step 에서 노출.
+            서류 탭(buildDocsView)과 같은 시그널을 사용해 자동 동기 — 서류 탭에서
+            완료 표시한 항목이 여기에도 ✓ 로 보인다. */}
+        {(step.id === 'vet-visit' || step.id === 'certificate-issue') && (
+          <StepDocChecklist caseId={caseId} />
+        )}
 
         {/* Situational 안내 — step config 가 caseRow 상태에 따라 동적으로 만든 메시지.
             timeline 의 desc 와 동일 내용이라 detail 페이지에서도 같은 정보 전달.
