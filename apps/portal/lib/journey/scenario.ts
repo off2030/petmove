@@ -88,7 +88,7 @@ export interface JourneyData {
   nextStages: JourneyStage[]
   /**
    * 여정 완료 — 마지막 절차(편도=일본 수입 / 왕복=한국 수입)가 끝남(has-arrived).
-   * true 면 '다음 할 일' 자리에 완료 배너(의견 보내기)를 띄운다. 옛 journey-complete
+   * true 면 '다음 할 일' 자리에 완료 배너(소감 남기기)를 띄운다. 옛 journey-complete
    * 마커 step 을 대체.
    */
   journeyComplete: boolean

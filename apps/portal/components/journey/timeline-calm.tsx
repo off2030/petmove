@@ -575,7 +575,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                 textDecoration: 'none',
               }}
             >
-              의견 보내기
+              소감 남기기
               <span style={{ color: C.sage }}>→</span>
             </Link>
           </div>
