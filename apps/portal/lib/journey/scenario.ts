@@ -92,6 +92,8 @@ export interface JourneyData {
    * 마커 step 을 대체.
    */
   journeyComplete: boolean
+  /** 여정 완료일(YYYY-MM-DD) — 마지막 검역일. 완료 배너의 '도착 도장'에 표시. 미완료면 null. */
+  journeyCompleteDate: string | null
   /** 전체 stage 의 failedChecks 합 — 상단 '주의' 배너에 사용. */
   totalFailedChecks: number
   /** 전체 stage 의 infoChecks 합 — 상단 '안내' 배너에 사용. */
@@ -507,6 +509,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
   // 옛 journey-complete 마커 step 의 done 시그널을 그대로 재사용. 완료면 timeline-calm 이
   // '다음 할 일' 자리에 완료 배너를 띄우고 그 외 카드는 가린다.
   const journeyComplete = resolveDone('has-arrived', caseRow)
+  const journeyCompleteDate = journeyComplete ? resolveCompletedDate('has-arrived', caseRow) : null
   const nextStages = stages.filter((s) => s.state === 'current')
   const totalFailedChecks = stages.reduce((sum, s) => sum + (s.failedChecks ?? 0), 0)
   const totalInfoChecks = stages.reduce((sum, s) => sum + (s.infoChecks ?? 0), 0)
@@ -523,6 +526,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     stages,
     nextStages,
     journeyComplete,
+    journeyCompleteDate,
     totalFailedChecks,
     totalInfoChecks,
     caseAlerts,

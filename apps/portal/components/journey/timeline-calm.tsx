@@ -15,6 +15,14 @@ function withWaGwa(name: string): string {
   return `${name}와`
 }
 
+/** 'YYYY-MM-DD' → 'YYYY년 M월 D일'. 형식이 아니면 원문. 완료 배너 도착일 표기용. */
+function formatKoreanDate(iso: string): string {
+  const parts = iso.split('-')
+  if (parts.length !== 3) return iso
+  const [y, m, d] = parts
+  return `${y}년 ${Number(m)}월 ${Number(d)}일`
+}
+
 /**
  * Calm 디자인 시스템의 여정 화면.
  *
@@ -23,7 +31,7 @@ function withWaGwa(name: string): string {
  * 그것을 비교적 충실히 옮긴 것.
  */
 export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: string }) {
-  const { stages, trip, pet, nextStages, caseAlerts, journeyComplete } = data
+  const { stages, trip, pet, nextStages, caseAlerts, journeyComplete, journeyCompleteDate } = data
   const total = stages.length
   const done = stages.filter((s) => s.state === 'done').length
   const pct = done / total
@@ -441,29 +449,101 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
         {journeyComplete && (
           <div
             style={{
+              position: 'relative',
               marginTop: 22,
               padding: 22,
               borderRadius: 22,
-              background: 'color-mix(in srgb, var(--pm-sage) 12%, #F0E8DB)',
+              overflow: 'hidden',
+              background: 'color-mix(in srgb, var(--pm-sage) 11%, #F1E9DC)',
               boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
             }}
           >
-            <div style={{ ...monoCap, color: C.sage }}>여정 완료</div>
-            <h3
+            {/* 도착 도장 — 여권 스탬프 톤. 살짝 기울인 이중 링 + 텍스트, 반투명 sage. */}
+            <div
+              aria-hidden
               style={{
-                ...serif,
-                margin: '12px 0 0',
-                fontSize: 22,
-                lineHeight: 1.2,
-                color: 'var(--pm-ink)',
-                fontWeight: 500,
-                textWrap: 'balance' as React.CSSProperties['textWrap'],
+                position: 'absolute',
+                top: 14,
+                right: 12,
+                width: 76,
+                height: 76,
+                borderRadius: '50%',
+                border: `2px solid color-mix(in srgb, var(--pm-sage) 60%, transparent)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transform: 'rotate(-11deg)',
+                color: 'color-mix(in srgb, var(--pm-sage) 78%, var(--pm-ink))',
+                opacity: 0.7,
               }}
             >
-              {withWaGwa(pet.name)} 무사히 도착했어요 🎉
-            </h3>
-            <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>
-              펫무브와 함께 한 여정은 어떠셨나요? 소중한 의견을 들려주세요.
+              <div
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: '50%',
+                  border: `1px solid color-mix(in srgb, var(--pm-sage) 50%, transparent)`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1,
+                  textAlign: 'center',
+                }}
+              >
+                <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.04em' }}>도착</span>
+                <span style={{ fontSize: 9, letterSpacing: '0.22em', fontWeight: 600 }}>ARRIVED</span>
+              </div>
+            </div>
+
+            <div style={{ ...monoCap, color: C.sage }}>여정 완료</div>
+
+            {/* 펫 아바타 + 헤드라인 */}
+            <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ flexShrink: 0 }}>
+                <PetAvatar size={40} />
+              </span>
+              <h3
+                style={{
+                  ...serif,
+                  margin: 0,
+                  fontSize: 21,
+                  lineHeight: 1.18,
+                  color: 'var(--pm-ink)',
+                  fontWeight: 500,
+                  textWrap: 'balance' as React.CSSProperties['textWrap'],
+                }}
+              >
+                {withWaGwa(pet.name)} 무사히 도착했어요
+              </h3>
+            </div>
+
+            {/* 경로 + 완료일 */}
+            <div
+              style={{
+                marginTop: 12,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 12,
+                letterSpacing: '0.01em',
+                color: 'rgba(45,38,28,.6)',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              <span>{trip.fromCity}</span>
+              <span style={{ color: C.sage }}>{trip.tripType === 'round' ? '⇄' : '→'}</span>
+              <span>{trip.toCity}</span>
+              {journeyCompleteDate && (
+                <>
+                  <span style={{ color: 'rgba(45,38,28,.3)' }}>·</span>
+                  <span>{formatKoreanDate(journeyCompleteDate)}</span>
+                </>
+              )}
+            </div>
+
+            <p style={{ margin: '12px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>
+              긴 여정을 잘 마쳤어요. 함께한 펫무브 이야기를 들려주세요.
             </p>
             <Link
               href={`/cases/${caseId}/feedback`}
