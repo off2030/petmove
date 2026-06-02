@@ -513,10 +513,25 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
 
             <div style={{ ...monoCap, color: C.sage }}>여정 완료</div>
 
+            {/* 헤드라인 — 아바타는 상단 헤더와 중복이라 제외. */}
+            <h3
+              style={{
+                ...serif,
+                margin: '14px 0 0',
+                fontSize: 21,
+                lineHeight: 1.18,
+                color: 'var(--pm-ink)',
+                fontWeight: 500,
+                textWrap: 'balance' as React.CSSProperties['textWrap'],
+              }}
+            >
+              {withWaGwa(pet.name)} 무사히 도착했어요
+            </h3>
+
             {/* 경로 + 날짜 — 경로 '한국 - 일본', 날짜는 왕복=출발~도착 / 편도=도착일만. */}
             <div
               style={{
-                marginTop: 14,
+                marginTop: 12,
                 fontSize: 12,
                 letterSpacing: '0.01em',
                 color: 'rgba(45,38,28,.6)',
@@ -533,21 +548,6 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                 </>
               )}
             </div>
-
-            {/* 헤드라인 — 경로·날짜 아래. 아바타는 상단 헤더와 중복이라 제외. */}
-            <h3
-              style={{
-                ...serif,
-                margin: '8px 0 0',
-                fontSize: 21,
-                lineHeight: 1.18,
-                color: 'var(--pm-ink)',
-                fontWeight: 500,
-                textWrap: 'balance' as React.CSSProperties['textWrap'],
-              }}
-            >
-              {withWaGwa(pet.name)} 무사히 도착했어요
-            </h3>
 
             <p style={{ margin: '12px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>
               펫무브와 함께한 여행 어떠셨나요?
