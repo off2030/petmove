@@ -1402,7 +1402,7 @@ export function StepDetailView({
               onChange={setJpExportQuarantineVisitDate}
               reservationHint={
                 savedJpExport.date
-                  ? `신청 예약: ${savedJpExport.date}${savedJpExport.time ? ` ${savedJpExport.time}` : ''}`
+                  ? `예약 날짜 · 시간: ${savedJpExport.date}${savedJpExport.time ? ` ${savedJpExport.time}` : ''}`
                   : undefined
               }
             />

@@ -14,7 +14,7 @@ export function JpExportQuarantineVisitInputs({
 }: {
   date: string
   onChange: (next: string) => void
-  /** 신청 step 의 예약일·시간 안내 — '신청 예약: 2026-06-10 14:30'. */
+  /** 신청 step 의 예약일·시간 안내 — '예약 날짜 · 시간: 2026-06-10 14:30'. */
   reservationHint?: string
 }) {
   const C = {
