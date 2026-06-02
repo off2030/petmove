@@ -167,9 +167,9 @@ export function FeedbackView({ caseId }: { caseId: string }) {
           의견 보내기
         </h1>
         <p style={{ marginTop: 8, fontSize: 15, lineHeight: 1.6, color: C.ink2 }}>
-          펫무브와 함께 한 여정은 어떠셨나요?
+          펫무브와 함께한 여정 어떠셨나요?
           <br />
-          소중한 의견은 더 나은 펫무브를 만드는 데 큰 힘이 됩니다.
+          소중한 의견 부탁드립니다.
         </p>
 
         {/* 만족도 — 얼굴 5단계 (모노톤) */}
