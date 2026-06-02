@@ -308,6 +308,10 @@ export function StepDetailView({
   const rabiesExtraUpcoming =
     isRabiesExtra &&
     rabiesExtra.some((e) => typeof e.date === 'string' && e.date.length >= 10 && e.date > todayStr)
+  // 출국 전 임상검사 — 검진일이 미래면 버튼 라벨만 '예정일로 저장'으로. 완료 판정은 별도 모델
+  // (필수 서류 ✓ = has-vet-visit)이라 그대로 유지, canSave 도 dirty 그대로.
+  const vetVisitUpcoming =
+    isVetVisit && vetVisitDate.length >= 10 && vetVisitDate > todayStr
 
   // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
   useEffect(() => {
@@ -1607,7 +1611,8 @@ export function StepDetailView({
                     : formUpcoming ||
                         jpExportApplicationUpcoming ||
                         advanceUpcoming ||
-                        rabiesExtraUpcoming
+                        rabiesExtraUpcoming ||
+                        vetVisitUpcoming
                       ? '예정일로 저장'
                       : '저장'}
           </button>
