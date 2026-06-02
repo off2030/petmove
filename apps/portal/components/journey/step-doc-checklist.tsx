@@ -114,7 +114,9 @@ export function StepDocChecklist({ caseId, currentStepId }: { caseId: string; cu
           }}
         />
       </div>
-      <ul style={{ margin: '18px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* 헤더(진행 바)와 본문(리스트) 사이 구분 — 시각적 호흡 + 얇은 hairline. */}
+      <div aria-hidden style={{ marginTop: 18, borderTop: `.5px solid ${C.line}` }} />
+      <ul style={{ margin: '18px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 14 }}>
         {rows.map((row) => {
           const checked = row.verified || row.na
           return (
@@ -157,7 +159,7 @@ export function StepDocChecklist({ caseId, currentStepId }: { caseId: string; cu
       <Link
         href={`/cases/${caseId}/docs`}
         style={{
-          marginTop: 22,
+          marginTop: 32,
           padding: '9px 14px',
           borderRadius: 999,
           border: `.5px solid ${C.line}`,
