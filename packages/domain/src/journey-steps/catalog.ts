@@ -756,7 +756,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '한국 수입 동물검역',
     shortLabel: '수입',
     description:
-      '한국 도착 후 공항 동물검역소에서 수입 동물검역을 받습니다.\n반려동물을 데리고 검역소를 방문하세요.',
+      '한국 도착 후 공항 동물검역소에서 수입 동물검역을 받습니다.',
     doneSummary: '한국 수입 동물검역을 받았습니다.',
     cardLine: '한국 공항 동물검역소에서 수입 검역을 받으세요.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
