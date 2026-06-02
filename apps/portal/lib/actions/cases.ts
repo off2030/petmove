@@ -1007,6 +1007,18 @@ export async function updateVetVisitDate(
       const check = validateVetVisitVsDeparture(v, row.departure_date, row.destination)
       if (!check.ok) return { ok: false, error: check.error }
     }
+    // 출국 전 임상검사는 한국 수출 동물검역보다 늦을 수 없음 (검역 때 임상검사 서류 제출) —
+    // 수출 검역일이 이미 입력돼 있으면 그보다 늦은 임상검사일은 저장 거부 (역방향 cross-check).
+    const krExport =
+      typeof prev.kr_export_quarantine_date === 'string' && prev.kr_export_quarantine_date.length >= 10
+        ? prev.kr_export_quarantine_date.slice(0, 10)
+        : ''
+    if (v && krExport && v > krExport) {
+      return {
+        ok: false,
+        error: `출국 전 임상검사일은 한국 수출 동물검역일(${formatKr(krExport)})보다 늦을 수 없습니다.`,
+      }
+    }
     const nextData: Record<string, unknown> = { ...prev }
     const prevDate = typeof prev.vet_visit_date === 'string' ? prev.vet_visit_date : ''
     if (v) nextData.vet_visit_date = v
