@@ -322,18 +322,19 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       caseData.kr_import_quarantine_date.length >= 10
         ? caseData.kr_import_quarantine_date.slice(0, 10)
         : null
+    // vet-visit 는 새 모델(완료 = 서류 모두 ✓ 또는 '완료' 버튼) — '저장 = 완료' 가정의
+    // PASSED_UNCONFIRMED_MSG 가 부적절해서 ownConfirmDate 에서 제외. 대신 situational 이
+    // '받았습니다. 서류 체크리스트를 확인하세요' 로 안내.
     const ownConfirmDate =
-      step.id === 'vet-visit'
-        ? vetVisitDate
-        : step.id === 'certificate-issue'
-          ? krExportQuarantineDate
-          : isJpImportQuarantine
-            ? jpImportOwnDate
-            : step.id === 'jp-export-quarantine-visit'
-              ? jpExportVisitOwnDate
-              : step.id === 'kr-import-quarantine'
-                ? krImportOwnDate
-                : null
+      step.id === 'certificate-issue'
+        ? krExportQuarantineDate
+        : isJpImportQuarantine
+          ? jpImportOwnDate
+          : step.id === 'jp-export-quarantine-visit'
+            ? jpExportVisitOwnDate
+            : step.id === 'kr-import-quarantine'
+              ? krImportOwnDate
+              : null
     // 예정일이 지났는데 아직 확인(done) 전 — '예정 [지난 날짜]' 대신 안내 문구로 표시.
     const passedUnconfirmed = !done && !!ownConfirmDate && ownConfirmDate <= today
     // 미완 step 의 타임라인 표시일 — step 의 직접 입력 필드(advance_notification_date 등)는
@@ -354,7 +355,13 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
           : step.id === 'jp-export-quarantine-visit'
             ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? jpExportReservationDate
             : step.id === 'vet-visit'
-              ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? vetVisitDate
+              ? done
+                ? resolveCompletedDate(step.done, caseRow)
+                // 검진일 도래 + 미완료 = '받았습니다, 서류 확인' 안내 상태 → 칩 숨김(date=null),
+                // situational desc 로 표현. 미래 검진일이면 그대로 '예정 [날짜]'.
+                : vetVisitDate && vetVisitDate <= today
+                  ? null
+                  : vetVisitDate
               : step.id === 'certificate-issue'
                 ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? krExportQuarantineDate
                 : step.id === 'jp-export-quarantine'
