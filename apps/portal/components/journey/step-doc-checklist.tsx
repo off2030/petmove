@@ -172,7 +172,7 @@ export function StepDocChecklist({ caseId, currentStepId }: { caseId: string; cu
           textDecoration: 'none',
         }}
       >
-        전체 서류 보기
+        서류 자세히 보기
         <span style={{ color: C.ink3 }}>→</span>
       </Link>
     </div>
