@@ -525,7 +525,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                 textWrap: 'balance' as React.CSSProperties['textWrap'],
               }}
             >
-              {withWaGwa(pet.name)} 무사히 도착했어요
+              {withWaGwa(pet.name)} 잘 도착했어요
             </h3>
 
             {/* 경로 + 날짜 — 경로 '한국 - 일본', 날짜는 왕복=출발~도착 / 편도=도착일만. */}
