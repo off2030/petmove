@@ -333,15 +333,18 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     // vet-visit 는 새 모델(완료 = 서류 모두 ✓ 또는 '완료' 버튼) — '저장 = 완료' 가정의
     // PASSED_UNCONFIRMED_MSG 가 부적절해서 ownConfirmDate 에서 제외. 대신 situational 이
     // '받았습니다. 서류 체크리스트를 확인하세요' 로 안내.
+    // 자기 검진일이 비어 있으면 항공편 기준 예정일(일본 도착=입국, 귀국=return, 수출검역
+    // 예약일)을 fallback 으로. 그래야 검역일을 아직 저장 안 했어도 그 예정일이 지나면
+    // '예정 [지난 날짜]' 가 아니라 '지났어요, 저장하세요' 안내로 전환된다.
     const ownConfirmDate =
       step.id === 'certificate-issue'
         ? krExportQuarantineDate
         : isJpImportQuarantine
-          ? jpImportOwnDate
+          ? (jpImportOwnDate ?? flightEntryDate)
           : step.id === 'jp-export-quarantine-visit'
-            ? jpExportVisitOwnDate
+            ? (jpExportVisitOwnDate ?? jpExportReservationDate)
             : step.id === 'kr-import-quarantine'
-              ? krImportOwnDate
+              ? (krImportOwnDate ?? flightReturnDate)
               : null
     // 예정일이 지났는데 아직 확인(done) 전 — '예정 [지난 날짜]' 대신 안내 문구로 표시.
     const passedUnconfirmed = !done && !!ownConfirmDate && ownConfirmDate <= today
