@@ -1402,7 +1402,7 @@ export function StepDetailView({
               onChange={setJpExportQuarantineVisitDate}
               reservationHint={
                 savedJpExport.date
-                  ? `예약 날짜 · 시간: ${savedJpExport.date}${savedJpExport.time ? ` ${savedJpExport.time}` : ''}`
+                  ? `예약 날짜 · 시간: ${formatKoreanDate(savedJpExport.date)}${savedJpExport.time ? ` ${savedJpExport.time}` : ''}`
                   : undefined
               }
             />
@@ -1705,6 +1705,14 @@ function addDays(iso: string, days: number): string {
   const d = new Date(iso + 'T00:00:00Z')
   d.setUTCDate(d.getUTCDate() + days)
   return d.toISOString().slice(0, 10)
+}
+
+/** 'YYYY-MM-DD' → 'YYYY년 M월 D일'. 형식이 아니면 원문. 안내·힌트 날짜 표기용(앱 공통). */
+function formatKoreanDate(iso: string): string {
+  const parts = iso.slice(0, 10).split('-')
+  if (parts.length !== 3) return iso
+  const [y, m, d] = parts
+  return `${y}년 ${Number(m)}월 ${Number(d)}일`
 }
 
 /**
