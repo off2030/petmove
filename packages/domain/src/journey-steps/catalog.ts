@@ -15,6 +15,17 @@ function formatKoreanDate(iso: string): string {
   return `${y}년 ${Number(m)}월 ${Number(d)}일`
 }
 
+/** 'HH:mm'(24시간) → '오후 2시 30분'(한국식 12시간). 분이 0이면 '오후 2시'. 형식 외엔 원문. */
+function formatKoreanTime(hhmm: string): string {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm)
+  if (!m) return hhmm
+  const h = Number(m[1])
+  const min = Number(m[2])
+  const period = h < 12 ? '오전' : '오후'
+  const h12 = h % 12 === 0 ? 12 : h % 12
+  return min === 0 ? `${period} ${h12}시` : `${period} ${h12}시 ${min}분`
+}
+
 /**
  * 펫무브 portal 여정 step 카탈로그.
  *
@@ -744,7 +755,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 신청 step([[jp-export-quarantine]])에서 입력한 예약 날짜·시간을 방문 step 의 '안내'로
     // 노출한다 — step 상세 화면의 안내 박스(situational.desc) + '다음 할 일' 카드 인라인 안내
     // (scenario 가 방문이 current 일 때만 infoMessage 로 승격). 예약일이 비어 있으면 기본 설명.
-    // 시간은 HH:mm 형식일 때만 덧붙이고, 없으면 '날짜는' 으로 표현한다.
+    // '예약 날짜'·'예약 시간' 라벨 줄로 분리(줄바꿈은 렌더 측 white-space:pre-line 으로 표시).
+    // 시간은 한국식 12시간제(오전/오후)로 표기하고, 비어 있으면 날짜 줄만 노출한다.
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const resDate =
@@ -758,9 +770,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         /^\d{1,2}:\d{2}$/.test(data.jp_export_quarantine_time)
           ? data.jp_export_quarantine_time
           : ''
-      const when = formatKoreanDate(resDate) + (resTime ? ` ${resTime}` : '')
-      const label = resTime ? '예약 날짜와 시간은' : '예약 날짜는'
-      return { desc: `수출동물검역 ${label} ${when} 입니다` }
+      const lines = [`예약 날짜: ${formatKoreanDate(resDate)}`]
+      if (resTime) lines.push(`예약 시간: ${formatKoreanTime(resTime)}`)
+      return { desc: lines.join('\n') }
     },
     inputs: [
       { key: 'jp_export_quarantine_visit_date', label: '검역일', type: 'date' },

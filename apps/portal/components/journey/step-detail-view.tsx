@@ -1186,7 +1186,7 @@ export function StepDetailView({
             <div style={{ ...monoCap, color: C.info, fontWeight: 700, marginBottom: 8 }}>
               안내
             </div>
-            <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5, whiteSpace: 'pre-line' }}>
               {situationalDesc}
               {isFlightRoundEntryOnly && ' 귀국 일정이 미정인 경우는 편도 일정으로 전환할 수 있습니다.'}
             </div>

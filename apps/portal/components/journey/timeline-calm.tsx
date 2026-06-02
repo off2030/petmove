@@ -643,6 +643,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
                           fontSize: 13,
                           lineHeight: 1.55,
                           color: 'rgba(45,38,28,.65)',
+                          whiteSpace: 'pre-line',
                         }}
                       >
                         {stage.infoMessage}
