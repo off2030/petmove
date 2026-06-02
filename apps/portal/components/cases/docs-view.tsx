@@ -168,8 +168,7 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
         <SectionLabel right={`${storedDocs.length}건`}>보관함</SectionLabel>
         {storedDocs.length === 0 ? (
           <EmptyHint>
-            일정에서 첨부한 사진, PDF를 한 눈에 볼 수 있습니다. 추가로 첨부할 자료가 있는
-            경우 파일 추가를 눌러주세요.
+            일정에서 첨부한 사진, PDF를 한눈에 보고 파일 추가를 할 수 있습니다.
           </EmptyHint>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
