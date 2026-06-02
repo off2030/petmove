@@ -114,7 +114,7 @@ export function StepDocChecklist({ caseId, currentStepId }: { caseId: string; cu
           }}
         />
       </div>
-      <ul style={{ margin: '14px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <ul style={{ margin: '18px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
         {rows.map((row) => {
           const checked = row.verified || row.na
           return (
@@ -157,7 +157,7 @@ export function StepDocChecklist({ caseId, currentStepId }: { caseId: string; cu
       <Link
         href={`/cases/${caseId}/docs`}
         style={{
-          marginTop: 16,
+          marginTop: 22,
           padding: '9px 14px',
           borderRadius: 999,
           border: `.5px solid ${C.line}`,
