@@ -10,12 +10,9 @@ import { DateTextField } from '@petmove/ui'
 export function JpExportQuarantineVisitInputs({
   date,
   onChange,
-  reservationHint,
 }: {
   date: string
   onChange: (next: string) => void
-  /** 신청 step 의 예약일·시간 안내 — '예약 날짜 · 시간: 2026-06-10 14:30'. */
-  reservationHint?: string
 }) {
   const C = {
     surface: 'var(--pm-surface)',
@@ -38,9 +35,6 @@ export function JpExportQuarantineVisitInputs({
         <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
           일본 동물검역소에서 수출 검역을 받은 날짜
         </div>
-        {reservationHint && (
-          <div style={{ fontSize: 12, color: C.ink3, marginTop: 4 }}>{reservationHint}</div>
-        )}
         <div style={{ marginTop: 8 }}>
           <DateTextField value={date} onChange={onChange} placeholder="YYYY-MM-DD" block />
         </div>

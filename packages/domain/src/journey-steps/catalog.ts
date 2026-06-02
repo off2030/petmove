@@ -741,11 +741,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
     order: 150,
     done: 'has-jp-export-quarantine-visit',
-    // 신청 step([[jp-export-quarantine]])에서 입력한 예약 날짜·시간을 방문 step 의 다음 할 일
-    // 카드에 보여준다 — 보호자가 방문일을 잊지 않도록. 예약일이 비어 있으면 기본 설명 유지.
-    // cardDesc 만 덮고 desc(전체 일정 리스트 보조줄)는 기본 설명 유지 — 신청·검역 두 줄이
-    // 예약을 중복 표기하지 않도록. done·지난 예약 미확인은 scenario 가 cardDesc 를 가린다.
-    // 시간은 HH:mm 형식일 때만 덧붙인다.
+    // 신청 step([[jp-export-quarantine]])에서 입력한 예약 날짜·시간을 방문 step 의 '안내'로
+    // 노출한다 — step 상세 화면의 안내 박스(situational.desc) + '다음 할 일' 카드 인라인 안내
+    // (scenario 가 방문이 current 일 때만 infoMessage 로 승격). 예약일이 비어 있으면 기본 설명.
+    // 시간은 HH:mm 형식일 때만 덧붙이고, 없으면 '날짜는' 으로 표현한다.
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const resDate =
@@ -760,7 +759,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
           ? data.jp_export_quarantine_time
           : ''
       const when = formatKoreanDate(resDate) + (resTime ? ` ${resTime}` : '')
-      return { cardDesc: `일본 수출 동물검역 예약: ${when}. 예약한 일정에 동물검역소를 방문하세요.` }
+      const label = resTime ? '예약 날짜와 시간은' : '예약 날짜는'
+      return { desc: `수출동물검역 ${label} ${when} 입니다` }
     },
     inputs: [
       { key: 'jp_export_quarantine_visit_date', label: '검역일', type: 'date' },

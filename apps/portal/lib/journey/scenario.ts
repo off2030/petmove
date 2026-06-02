@@ -514,6 +514,22 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
   const journeyComplete = resolveDone('has-arrived', caseRow)
   const journeyCompleteDate = journeyComplete ? resolveCompletedDate('has-arrived', caseRow) : null
   const nextStages = stages.filter((s) => s.state === 'current')
+  // 일본 수출검역 방문 step 이 '다음 할 일'이 됐을 때만, 신청 step 에서 입력한 예약 날짜·시간
+  // 안내(situational.desc)를 카드 인라인 '안내'로 승격한다(infoMessage/infoChecks 보강).
+  // 방문이 아직 멀면(current 아님) 별도 '안내' 카드로 조기 노출되지 않도록 current 에서만 처리.
+  // step 상세 화면의 '안내' 박스는 situational.desc 로 이미 별도 노출된다.
+  const jpExportVisitStage = nextStages.find((s) => s.id === 'jp-export-quarantine-visit')
+  // desc 가 예약 안내(situational)일 때만 승격 — 예약일이 지나 미확인(passedUnconfirmed)이면
+  // desc 가 '지났어요, 저장' 안내로 바뀌므로 그땐 승격하지 않는다(지난 예약을 안내로 띄우지 않음).
+  if (jpExportVisitStage?.desc && jpExportVisitStage.desc !== PASSED_UNCONFIRMED_MSG) {
+    const d = (caseRow.data ?? {}) as Record<string, unknown>
+    const hasReservation =
+      typeof d.jp_export_quarantine_date === 'string' && d.jp_export_quarantine_date.length >= 10
+    if (hasReservation) {
+      jpExportVisitStage.infoMessage = jpExportVisitStage.desc
+      jpExportVisitStage.infoChecks = (jpExportVisitStage.infoChecks ?? 0) + 1
+    }
+  }
   const totalFailedChecks = stages.reduce((sum, s) => sum + (s.failedChecks ?? 0), 0)
   const totalInfoChecks = stages.reduce((sum, s) => sum + (s.infoChecks ?? 0), 0)
 
