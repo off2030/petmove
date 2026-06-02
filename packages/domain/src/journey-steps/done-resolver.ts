@@ -16,7 +16,7 @@ import {
   deriveAdvanceNotificationStatus,
   deriveJpExportQuarantineStatus,
 } from './report-status'
-import { areAllRequiredDocsVerified } from '../required-docs'
+import { areAllRequiredDocsVerified, resolveRequiredDocs } from '../required-docs'
 
 /**
  * doneSignal → boolean. 단일 dispatcher.
@@ -110,13 +110,17 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
     case 'has-deworming-time':
       return typeof data.deworming_time === 'string' && (data.deworming_time as string).length > 0
     case 'has-vet-visit': {
-      // 검진일 ≤ 오늘 AND (모든 필수 서류 ✓ OR 보호자가 '완료' 버튼 클릭).
-      // 옛 모델은 '저장 = 완료'였으나 새 모델은 두 경로 분리 — 명시적 완료 플래그
-      // 또는 서류 자동 충족.
+      // 검진일 ≤ 오늘 AND 다음 중 하나:
+      //  - legacy `vet_visit_confirmed=true` (옛 '저장=완료' 모델 또는 admin 토글)
+      //  - 큐레이션된 필수 서류가 모두 ✓ (Japan 등 spec 있는 destination — 보호자가
+      //    서류 탭에서 체크리스트를 채우면 자동 완료)
+      //  - 큐레이션 spec 자체가 없는 destination — 자동 검증 신호가 없으므로 검진일 입력
+      //    만으로 완료 처리 (옛 모델과 동일)
       const dt = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
       if (dt.length < 10 || dt > todayIso()) return false
       if (data.vet_visit_confirmed === true) return true
-      return areAllRequiredDocsVerified(caseRow)
+      if (areAllRequiredDocsVerified(caseRow)) return true
+      return resolveRequiredDocs(caseRow.destination, caseRow) === null
     }
     case 'has-flight-date': {
       // entry_date(도착일) 또는 케이스의 departure_date(출국일) 둘 중 하나라도 입력되면 완료.

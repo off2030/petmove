@@ -957,55 +957,12 @@ export async function updateVetVisitDate(
     const prevDate = typeof prev.vet_visit_date === 'string' ? prev.vet_visit_date : ''
     if (v) nextData.vet_visit_date = v
     else delete nextData.vet_visit_date
-    // 새 모델 — 완료는 '완료' 버튼(markVetVisitCompleted) 또는 서류 자동 충족으로만.
-    // 보호자가 검진일을 바꾸거나 지우면 기존 완료 플래그를 자동 해제 (사전 신고와 동일 안전장치).
+    // 새 모델 — 완료 판정은 done-resolver 가 (1) 모든 필수 서류 ✓ 또는 (2) legacy
+    // vet_visit_confirmed 플래그, (3) spec 없는 destination 의 경우 검진일 입력만으로
+    // 판정. 보호자가 검진일을 바꾸거나 지우면 기존 완료 플래그를 자동 해제 (사전 신고와 동일).
     if (v !== prevDate) delete nextData.vet_visit_confirmed
     // confirmed 파라미터는 admin 호환 위해 남겨두지만 portal 호출은 항상 false 로 전달.
     if (v && confirmed) nextData.vet_visit_confirmed = true
-
-    const { data: updated, error } = await admin
-      .from('cases')
-      .update({ data: nextData })
-      .eq('id', caseId)
-      .select('*')
-      .single()
-    if (error) return { ok: false, error: error.message }
-    return { ok: true, value: updated as CaseRow }
-  } catch (e) {
-    return { ok: false, error: (e as Error).message }
-  }
-}
-
-/**
- * 출국 전 임상검사 step 의 '완료' 플래그(vet_visit_confirmed=true) 를 set — 보호자가
- * detail 하단의 '완료' 버튼을 누를 때 호출. 검진일이 입력돼 있고 오늘 이하여야 set 한다
- * (미입력·미래면 의미 없음 → 거부).
- *
- * done-resolver 가 이 플래그 또는 '큐레이션된 필수 서류가 모두 ✓' 둘 중 하나면 완료로 판정.
- */
-export async function markVetVisitCompleted(caseId: string): Promise<Result<CaseRow>> {
-  try {
-    const access = await assertCaseAccess(caseId)
-    if (!access.ok) return access
-
-    const admin = createAdminClient()
-    const { data: existing, error: fetchErr } = await admin
-      .from('cases')
-      .select('data')
-      .eq('id', caseId)
-      .single()
-    if (fetchErr) return { ok: false, error: fetchErr.message }
-
-    const prev = (existing?.data ?? {}) as Record<string, unknown>
-    const dt = typeof prev.vet_visit_date === 'string' ? prev.vet_visit_date : ''
-    if (dt.length < 10) {
-      return { ok: false, error: '검진일이 입력되어 있지 않습니다.' }
-    }
-    const today = new Date().toISOString().slice(0, 10)
-    if (dt > today) {
-      return { ok: false, error: '검진일이 미래입니다. 검진을 받은 뒤 완료해주세요.' }
-    }
-    const nextData: Record<string, unknown> = { ...prev, vet_visit_confirmed: true }
 
     const { data: updated, error } = await admin
       .from('cases')

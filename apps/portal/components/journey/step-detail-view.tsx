@@ -17,7 +17,6 @@ import {
   getCaseVaccineData,
   markAdvanceNotificationApprovalSkipped,
   markJpExportQuarantineReservationSkipped,
-  markVetVisitCompleted,
   updateAdvanceNotificationDate,
   updateCaseTripType,
   updateFlightFields,
@@ -930,26 +929,6 @@ export function StepDetailView({
       }
     })
   }
-  // 출국 전 임상검사 — 사전 신고/일본 수출검역과 동일 패턴(검진일 ≤ 오늘 + !done + !dirty → '완료' mode).
-  // 완료 경로 두 가지: 보호자 '완료' 클릭 OR 큐레이션된 필수 서류가 모두 ✓ (자동, done-resolver).
-  const vetVisitInProgress = isVetVisit && savedVetVisitDate.length >= 10 && savedVetVisitDate <= todayStr && !done
-  const vetVisitCompleteMode = vetVisitInProgress && !dirty
-  const [completingVetVisit, setCompletingVetVisit] = useState(false)
-  const handleCompleteVetVisit = () => {
-    if (completingVetVisit) return
-    setCompletingVetVisit(true)
-    startTransition(async () => {
-      const res = await markVetVisitCompleted(caseId)
-      setCompletingVetVisit(false)
-      if (res.ok) {
-        updateCase(res.value)
-        router.replace(`/cases/${caseId}/journey`)
-      } else {
-        setStatus('error')
-        setError(res.error)
-      }
-    })
-  }
   const [convertingTrip, setConvertingTrip] = useState(false)
   const router = useRouter()
   const confirm = useConfirm()
@@ -1563,8 +1542,8 @@ export function StepDetailView({
           {/* 저장 중·저장됨은 별도 줄 대신 버튼 라벨로 — 첨부 영역과 겹치지 않음.
               미래 날짜(예정)면 라벨을 '예정일로 저장'으로 바꿔 누르기 전에 의도를 알린다.
               사전 신고 허가증 대기(advanceSkipMode) / 일본 수출검역 신청 진행
-              (jpExportSkipMode) / 출국 전 임상검사 진행(vetVisitCompleteMode) 이면 같은
-              버튼이 '완료'로 전환 — 저장할 변경이 없는 상태에서 명시적 완료 액션을 직접 노출. */}
+              (jpExportSkipMode)이면 같은 버튼이 '완료'로 전환 — 저장할 변경이 없는 상태에서
+              명시적 완료 액션(skip 플래그 set)을 직접 노출. */}
           <button
             type="button"
             onClick={
@@ -1572,16 +1551,13 @@ export function StepDetailView({
                 ? handleSkipAdvanceApproval
                 : jpExportSkipMode
                   ? handleSkipJpExportReservation
-                  : vetVisitCompleteMode
-                    ? handleCompleteVetVisit
-                    : handleSave
+                  : handleSave
             }
             disabled={
-              (!canSave && !advanceSkipMode && !jpExportSkipMode && !vetVisitCompleteMode) ||
+              (!canSave && !advanceSkipMode && !jpExportSkipMode) ||
               status === 'saving' ||
               skippingApproval ||
-              skippingJpExport ||
-              completingVetVisit
+              skippingJpExport
             }
             aria-live="polite"
             style={{
@@ -1592,20 +1568,18 @@ export function StepDetailView({
               border: 0,
               background: justSaved
                 ? C.sage
-                : (canSave || advanceSkipMode || jpExportSkipMode || vetVisitCompleteMode) &&
+                : (canSave || advanceSkipMode || jpExportSkipMode) &&
                     status !== 'saving' &&
                     !skippingApproval &&
-                    !skippingJpExport &&
-                    !completingVetVisit
+                    !skippingJpExport
                   ? C.accent
                   : 'var(--pm-line)',
               color:
                 justSaved ||
-                ((canSave || advanceSkipMode || jpExportSkipMode || vetVisitCompleteMode) &&
+                ((canSave || advanceSkipMode || jpExportSkipMode) &&
                   status !== 'saving' &&
                   !skippingApproval &&
-                  !skippingJpExport &&
-                  !completingVetVisit)
+                  !skippingJpExport)
                   ? '#fff'
                   : C.ink3,
               fontFamily: 'inherit',
@@ -1613,11 +1587,10 @@ export function StepDetailView({
               fontWeight: 600,
               letterSpacing: '-0.005em',
               cursor:
-                (canSave || advanceSkipMode || jpExportSkipMode || vetVisitCompleteMode) &&
+                (canSave || advanceSkipMode || jpExportSkipMode) &&
                 status !== 'saving' &&
                 !skippingApproval &&
-                !skippingJpExport &&
-                !completingVetVisit
+                !skippingJpExport
                   ? 'pointer'
                   : 'not-allowed',
               transition: 'background .15s, color .15s',
@@ -1625,11 +1598,11 @@ export function StepDetailView({
           >
             {status === 'saving'
               ? '저장 중…'
-              : skippingApproval || skippingJpExport || completingVetVisit
+              : skippingApproval || skippingJpExport
                 ? '처리 중…'
                 : justSaved
                   ? '✓ 저장됨'
-                  : advanceSkipMode || jpExportSkipMode || vetVisitCompleteMode
+                  : advanceSkipMode || jpExportSkipMode
                     ? '완료'
                     : formUpcoming ||
                         jpExportApplicationUpcoming ||
