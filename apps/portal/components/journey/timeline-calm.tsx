@@ -23,6 +23,14 @@ function formatKoreanDate(iso: string): string {
   return `${y}년 ${Number(m)}월 ${Number(d)}일`
 }
 
+/** 'YYYY-MM-DD' 두 날짜 → 'YYYY년 M월 D일 ~ M월 D일' (같은 해면 연도 1회). 왕복 완료 기간용. */
+function formatDateRange(startIso: string, endIso: string): string {
+  const sy = startIso.slice(0, 4)
+  const ey = endIso.slice(0, 4)
+  const end = sy === ey ? formatKoreanDate(endIso).replace(/^\d+년\s*/, '') : formatKoreanDate(endIso)
+  return `${formatKoreanDate(startIso)} ~ ${end}`
+}
+
 /**
  * Calm 디자인 시스템의 여정 화면.
  *
@@ -142,6 +150,13 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
   const animOffset = CIRC * (1 - animPct)
 
   const dDayLabel = formatDDay(trip.daysLeft)
+
+  // 완료 배너 날짜 — 왕복은 출발~도착(귀국) 범위, 편도는 도착일만.
+  const arrivalText = journeyCompleteDate ? formatKoreanDate(journeyCompleteDate) : ''
+  const journeyDateText =
+    trip.tripType === 'round' && trip.departureDate && journeyCompleteDate
+      ? formatDateRange(trip.departureDate, journeyCompleteDate)
+      : arrivalText
 
   // 일정 카드 한 행 — 동그라미(번호·상태) + 항목명 + 날짜. index 는 전체 일정 기준
   // 0-based, isLast 는 소속 카드 내 마지막 행 여부(구분선 생략).
@@ -498,52 +513,44 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
 
             <div style={{ ...monoCap, color: C.sage }}>여정 완료</div>
 
-            {/* 펫 아바타 + 헤드라인 */}
-            <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ flexShrink: 0 }}>
-                <PetAvatar size={40} />
-              </span>
-              <h3
-                style={{
-                  ...serif,
-                  margin: 0,
-                  fontSize: 21,
-                  lineHeight: 1.18,
-                  color: 'var(--pm-ink)',
-                  fontWeight: 500,
-                  textWrap: 'balance' as React.CSSProperties['textWrap'],
-                }}
-              >
-                {withWaGwa(pet.name)} 무사히 도착했어요
-              </h3>
-            </div>
+            {/* 헤드라인 — 아바타는 상단 헤더와 중복이라 제외. */}
+            <h3
+              style={{
+                ...serif,
+                margin: '14px 0 0',
+                fontSize: 21,
+                lineHeight: 1.18,
+                color: 'var(--pm-ink)',
+                fontWeight: 500,
+                textWrap: 'balance' as React.CSSProperties['textWrap'],
+              }}
+            >
+              {withWaGwa(pet.name)} 무사히 도착했어요
+            </h3>
 
-            {/* 경로 + 완료일 */}
+            {/* 경로 + 날짜 — 경로 '한국 - 일본', 날짜는 왕복=출발~도착 / 편도=도착일만. */}
             <div
               style={{
                 marginTop: 12,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
                 fontSize: 12,
                 letterSpacing: '0.01em',
                 color: 'rgba(45,38,28,.6)',
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
-              <span>{trip.fromCity}</span>
-              <span style={{ color: C.sage }}>{trip.tripType === 'round' ? '⇄' : '→'}</span>
-              <span>{trip.toCity}</span>
-              {journeyCompleteDate && (
+              <span>
+                {trip.fromCity} - {trip.toCity}
+              </span>
+              {journeyDateText && (
                 <>
-                  <span style={{ color: 'rgba(45,38,28,.3)' }}>·</span>
-                  <span>{formatKoreanDate(journeyCompleteDate)}</span>
+                  <span style={{ color: 'rgba(45,38,28,.3)', margin: '0 6px' }}>·</span>
+                  <span>{journeyDateText}</span>
                 </>
               )}
             </div>
 
             <p style={{ margin: '12px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>
-              긴 여정을 잘 마쳤어요. 함께한 펫무브 이야기를 들려주세요.
+              펫무브와 함께한 여행 어떠셨나요?
             </p>
             <Link
               href={`/cases/${caseId}/feedback`}
