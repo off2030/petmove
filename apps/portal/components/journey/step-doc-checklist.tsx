@@ -69,35 +69,27 @@ export function StepDocChecklist({ caseId, currentStepId }: { caseId: string; cu
     ink3: 'var(--pm-ink-3)',
     sage: 'var(--pm-sage)',
   } as const
-  const monoCap: React.CSSProperties = {
-    fontSize: 11,
-    letterSpacing: '0.16em',
-    textTransform: 'uppercase',
-    color: C.ink3,
-    fontWeight: 500,
-  }
 
   // '해당없음' 은 분모에서 빠지고 분자에 1로 친다(서류 탭 카운팅과 같은 규칙).
   const totalDenom = rows.filter((r) => !r.na).length
   const doneNum = rows.filter((r) => r.verified || r.na).length
 
+  // 제목은 외부 h3('서류 체크리스트')가 담당 — 이 카드 내부엔 카운트만 우측에 노출.
   return (
-    <section
+    <div
       style={{
-        marginTop: 16,
         padding: '18px 18px',
         borderRadius: 18,
         background: C.surface,
         border: `.5px solid ${C.line}`,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-        <div style={{ ...monoCap }}>서류 체크리스트</div>
-        <div style={{ fontSize: 12, color: C.ink3, fontVariantNumeric: 'tabular-nums' }}>
-          {doneNum}/{totalDenom}
-        </div>
+      <div
+        style={{ fontSize: 12, color: C.ink3, fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}
+      >
+        {doneNum}/{totalDenom}
       </div>
-      <ul style={{ margin: '12px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <ul style={{ margin: '8px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
         {rows.map((row) => {
           const checked = row.verified || row.na
           return (
@@ -158,6 +150,6 @@ export function StepDocChecklist({ caseId, currentStepId }: { caseId: string; cu
         전체 서류 보기
         <span style={{ color: C.ink3 }}>→</span>
       </Link>
-    </section>
+    </div>
   )
 }

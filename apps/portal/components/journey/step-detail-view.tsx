@@ -1181,13 +1181,6 @@ export function StepDetailView({
           })}
         </section>
 
-        {/* 서류 체크리스트 카드 — 출국 전 임상검사·검역증명서 발급 step 에서 노출.
-            서류 탭(buildDocsView)과 같은 시그널을 사용해 자동 동기 — 서류 탭에서
-            완료 표시한 항목이 여기에도 ✓ 로 보인다. */}
-        {(step.id === 'vet-visit' || step.id === 'certificate-issue') && (
-          <StepDocChecklist caseId={caseId} currentStepId={step.id} />
-        )}
-
         {/* Situational 안내 — step config 가 caseRow 상태에 따라 동적으로 만든 메시지.
             timeline 의 desc 와 동일 내용이라 detail 페이지에서도 같은 정보 전달.
             항공권 step + 왕복 + 출국만 입력 상태에선 '편도 일정으로 전환' 토글을 노출.
@@ -1479,6 +1472,16 @@ export function StepDetailView({
             <p style={{ marginTop: 10, fontSize: 12, color: C.ink3, lineHeight: 1.5 }}>
               입력 기능을 준비 중이에요. 지금은 읽기 전용입니다.
             </p>
+          </section>
+        )}
+
+        {/* 서류 체크리스트 — 출국 전 임상검사·검역증명서 발급 step. 입력 섹션 다음에 배치 —
+            보호자가 검진일 먼저 입력하고 나서 서류 진행 상황을 보는 흐름. 서류 탭과 같은
+            시그널을 사용해 자동 동기. */}
+        {(step.id === 'vet-visit' || step.id === 'certificate-issue') && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>서류 체크리스트</h3>
+            <StepDocChecklist caseId={caseId} currentStepId={step.id} />
           </section>
         )}
 
