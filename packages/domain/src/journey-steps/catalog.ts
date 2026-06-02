@@ -638,7 +638,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '출국 전 임상검사',
     shortLabel: '내원',
     description:
-      '출국일 기준 10일 이내에 임상 수의사의 검진을 받으세요.\n검역소에 제출할 서류를 준비하세요.',
+      '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.\n검역소에 제출할 서류를 준비하세요.',
     doneSummary: '출국 전 임상검사를 받았습니다.',
     cardLine: '임상 수의사의 검진을 받고 검역소에 제출할 서류를 준비하세요.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
