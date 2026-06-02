@@ -247,6 +247,22 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     },
     order: 40,
     done: 'has-titer-entry',
+    // 검사 → 결과 2단계 (사전 신고·일본 수출검역 신청과 동일 모델). 채혈일이 입력됐고
+    // (오늘 이하) 아직 결과(value)·완료 플래그가 없으면 '검사 진행 중' 안내. 미래 채혈일
+    // (=예정)·완료 상태에선 숨김.
+    situational: (caseRow) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const arr = Array.isArray(data.rabies_titer_records)
+        ? (data.rabies_titer_records as Array<Record<string, unknown>>)
+        : []
+      const primary = arr[0]
+      const date = primary && typeof primary.date === 'string' ? primary.date : ''
+      if (date.length < 10 || date > new Date().toISOString().slice(0, 10)) return undefined
+      if (data.rabies_titer_result_confirmed === true) return undefined
+      if (typeof primary?.value === 'string' && primary.value.trim().length > 0) return undefined
+      const msg = '광견병 항체 검사를 진행 중입니다. 결과가 나오면 결과를 입력하시거나 완료 버튼을 눌러주세요.'
+      return { desc: msg, cardDesc: msg }
+    },
     inputs: [
       { key: 'rabies_titer_date', label: '채혈일', type: 'date' },
       { key: 'rabies_titer_lab', label: '검사기관', type: 'select' },

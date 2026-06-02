@@ -76,8 +76,23 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       }
       return true
     }
-    case 'has-titer-entry':
-      return readTiterEntries(caseRow).length > 0
+    case 'has-titer-entry': {
+      // 검사 → 결과 2단계 (사전 신고·일본 수출검역 신청과 동일 모델).
+      //  - 채혈일(primary record[0])만 있으면 in_progress (검사 진행 중, done 아님).
+      //  - 결과값(value) 입력 OR 보호자 '완료' 플래그(rabies_titer_result_confirmed) 면 done.
+      // 180일 앵커(flight-purchase)·procedure-check 는 readTiterEntries(채혈일)를 직접 봐서
+      // 무관 — 채혈일이 곧 1회차 검사일이라는 의미는 그대로다.
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const arr = Array.isArray(data.rabies_titer_records)
+        ? (data.rabies_titer_records as Array<Record<string, unknown>>)
+        : []
+      const primary = arr[0]
+      const hasDate =
+        !!primary && typeof primary.date === 'string' && (primary.date as string).length >= 10
+      if (!hasDate) return false
+      if (data.rabies_titer_result_confirmed === true) return true
+      return typeof primary.value === 'string' && (primary.value as string).trim().length > 0
+    }
     case 'has-extra-titer': {
       // 추가 항체 검사(2회+) 는 (a) 2개 이상 입력되고, (b) 입국일이 입력된 경우 어떤 titer
       // 의 2년 유효기간이 입국일을 커버해야 완료. 못 커버하면 추가 검사가 더 필요한 상태.

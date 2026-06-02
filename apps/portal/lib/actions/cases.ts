@@ -504,6 +504,60 @@ export async function updateTiterFields(
       arr[0] = entry
       nextData.rabies_titer_records = arr
     }
+    // 채혈일(1회차 검사일)이 바뀌거나 지워지면 '완료(결과 확인)' 플래그 해제 — 이전
+    // 결과·완료가 새 검사에 그대로 적용되지 않도록. 사전 신고·수출검역과 동일 안전장치.
+    const prevPrimaryDate =
+      slot && typeof slot === 'object' && typeof (slot as Record<string, unknown>).date === 'string'
+        ? ((slot as Record<string, unknown>).date as string)
+        : ''
+    const newPrimaryDate = typeof entry.date === 'string' ? (entry.date as string) : ''
+    if (newPrimaryDate !== prevPrimaryDate) delete nextData.rabies_titer_result_confirmed
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * 광견병 항체 검사 step 의 '결과 확인 완료' 플래그(rabies_titer_result_confirmed=true) 를
+ * set — 보호자가 검사결과 수치를 직접 입력하지 않고 detail 하단의 '완료' 버튼을 누를 때
+ * 호출. 채혈일(1회차 검사일)이 입력돼 있어야 set (없으면 의미 없음 → 거부).
+ *
+ * done-resolver 가 이 플래그 또는 결과값(value) 입력 둘 중 하나면 완료로 판정.
+ * 사전 신고·일본 수출검역 신청과 동일 2단계 모델.
+ */
+export async function markTiterResultConfirmed(caseId: string): Promise<Result<CaseRow>> {
+  try {
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const arr = Array.isArray(prev.rabies_titer_records)
+      ? (prev.rabies_titer_records as Array<Record<string, unknown>>)
+      : []
+    const primary = arr[0]
+    const hasDate =
+      !!primary && typeof primary.date === 'string' && (primary.date as string).length >= 10
+    if (!hasDate) {
+      return { ok: false, error: '채혈일이 입력되어 있지 않습니다.' }
+    }
+    const nextData: Record<string, unknown> = { ...prev, rabies_titer_result_confirmed: true }
 
     const { data: updated, error } = await admin
       .from('cases')

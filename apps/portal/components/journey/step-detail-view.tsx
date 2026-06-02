@@ -17,6 +17,7 @@ import {
   getCaseVaccineData,
   markAdvanceNotificationApprovalSkipped,
   markJpExportQuarantineReservationSkipped,
+  markTiterResultConfirmed,
   updateAdvanceNotificationDate,
   updateCaseTripType,
   updateFlightFields,
@@ -312,6 +313,9 @@ export function StepDetailView({
   // (필수 서류 ✓ = has-vet-visit)이라 그대로 유지, canSave 도 dirty 그대로.
   const vetVisitUpcoming =
     isVetVisit && vetVisitDate.length >= 10 && vetVisitDate > todayStr
+  // 광견병 항체 검사 — 채혈일이 미래면 '예정일로 저장'. 완료 판정은 2단계 모델
+  // (결과값 OR 완료 플래그 = has-titer-entry)이라 canSave 는 dirty 그대로.
+  const titerUpcoming = isTiter && titerForm.date.length >= 10 && titerForm.date > todayStr
 
   // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
   useEffect(() => {
@@ -924,6 +928,28 @@ export function StepDetailView({
     startTransition(async () => {
       const res = await markJpExportQuarantineReservationSkipped(caseId)
       setSkippingJpExport(false)
+      if (res.ok) {
+        updateCase(res.value)
+        router.replace(`/cases/${caseId}/journey`)
+      } else {
+        setStatus('error')
+        setError(res.error)
+      }
+    })
+  }
+  // 광견병 항체 검사 — 사전 신고·수출검역과 동일 2단계.
+  //  - 채혈일 입력(오늘 이하) + 미완료 = '검사 진행 중'. 하단 저장 버튼이 titerCompleteMode
+  //    로 '완료' 전환 → 결과 확인 플래그 set. (결과값을 직접 입력해 저장해도 done.)
+  const isTiterInProgress =
+    isTiter && savedTiterForm.date.length >= 10 && savedTiterForm.date <= todayStr && !done
+  const titerCompleteMode = isTiterInProgress && !dirty
+  const [completingTiter, setCompletingTiter] = useState(false)
+  const handleCompleteTiter = () => {
+    if (completingTiter) return
+    setCompletingTiter(true)
+    startTransition(async () => {
+      const res = await markTiterResultConfirmed(caseId)
+      setCompletingTiter(false)
       if (res.ok) {
         updateCase(res.value)
         router.replace(`/cases/${caseId}/journey`)
@@ -1546,8 +1572,13 @@ export function StepDetailView({
           {/* 저장 중·저장됨은 별도 줄 대신 버튼 라벨로 — 첨부 영역과 겹치지 않음.
               미래 날짜(예정)면 라벨을 '예정일로 저장'으로 바꿔 누르기 전에 의도를 알린다.
               사전 신고 허가증 대기(advanceSkipMode) / 일본 수출검역 신청 진행
-              (jpExportSkipMode)이면 같은 버튼이 '완료'로 전환 — 저장할 변경이 없는 상태에서
-              명시적 완료 액션(skip 플래그 set)을 직접 노출. */}
+              (jpExportSkipMode) / 광견병 항체 검사 진행(titerCompleteMode)이면 같은 버튼이
+              '완료'로 전환 — 저장할 변경이 없는 상태에서 명시적 완료 액션을 직접 노출. */}
+          {(() => {
+            const completeMode = advanceSkipMode || jpExportSkipMode || titerCompleteMode
+            const processing = skippingApproval || skippingJpExport || completingTiter
+            const active = (canSave || completeMode) && status !== 'saving' && !processing
+            return (
           <button
             type="button"
             onClick={
@@ -1555,14 +1586,11 @@ export function StepDetailView({
                 ? handleSkipAdvanceApproval
                 : jpExportSkipMode
                   ? handleSkipJpExportReservation
-                  : handleSave
+                  : titerCompleteMode
+                    ? handleCompleteTiter
+                    : handleSave
             }
-            disabled={
-              (!canSave && !advanceSkipMode && !jpExportSkipMode) ||
-              status === 'saving' ||
-              skippingApproval ||
-              skippingJpExport
-            }
+            disabled={!active}
             aria-live="polite"
             style={{
               pointerEvents: 'auto',
@@ -1570,52 +1598,35 @@ export function StepDetailView({
               padding: '14px 0',
               borderRadius: 14,
               border: 0,
-              background: justSaved
-                ? C.sage
-                : (canSave || advanceSkipMode || jpExportSkipMode) &&
-                    status !== 'saving' &&
-                    !skippingApproval &&
-                    !skippingJpExport
-                  ? C.accent
-                  : 'var(--pm-line)',
-              color:
-                justSaved ||
-                ((canSave || advanceSkipMode || jpExportSkipMode) &&
-                  status !== 'saving' &&
-                  !skippingApproval &&
-                  !skippingJpExport)
-                  ? '#fff'
-                  : C.ink3,
+              background: justSaved ? C.sage : active ? C.accent : 'var(--pm-line)',
+              color: justSaved || active ? '#fff' : C.ink3,
               fontFamily: 'inherit',
               fontSize: 15,
               fontWeight: 600,
               letterSpacing: '-0.005em',
-              cursor:
-                (canSave || advanceSkipMode || jpExportSkipMode) &&
-                status !== 'saving' &&
-                !skippingApproval &&
-                !skippingJpExport
-                  ? 'pointer'
-                  : 'not-allowed',
+              cursor: active ? 'pointer' : 'not-allowed',
               transition: 'background .15s, color .15s',
             }}
           >
             {status === 'saving'
               ? '저장 중…'
-              : skippingApproval || skippingJpExport
+              : processing
                 ? '처리 중…'
                 : justSaved
                   ? '✓ 저장됨'
-                  : advanceSkipMode || jpExportSkipMode
+                  : completeMode
                     ? '완료'
                     : formUpcoming ||
                         jpExportApplicationUpcoming ||
                         advanceUpcoming ||
                         rabiesExtraUpcoming ||
-                        vetVisitUpcoming
+                        vetVisitUpcoming ||
+                        titerUpcoming
                       ? '예정일로 저장'
                       : '저장'}
           </button>
+            )
+          })()}
         </div>
       )}
     </div>

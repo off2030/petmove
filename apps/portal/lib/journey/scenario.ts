@@ -426,7 +426,8 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
     const isAwaitingStep =
       (step.id === 'advance-notification' ||
         step.id === 'jp-export-quarantine' ||
-        step.id === 'vet-visit') &&
+        step.id === 'vet-visit' ||
+        step.id === 'rabies-titer') &&
       !done &&
       !!sit
     const infoChecks = (infoByStep.get(step.id) ?? 0) + (isAwaitingStep ? 1 : 0)
