@@ -1521,6 +1521,16 @@ export async function updateCaseInfoFields(
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
+    // 일본 노선 — 출국일이 광견병 항체 검사일 + 180일 이전이면 저장 거부.
+    // updateFlightFields 와 같은 정책 — 회복 경로 없는 위반만 hard 차단.
+    {
+      const entryErr = validateJpEntryDate(input.departure_date.trim(), {
+        data: prev,
+        destination: input.destination,
+        departureDate: null,
+      })
+      if (entryErr) return { ok: false, error: entryErr }
+    }
     const nextData: Record<string, unknown> = { ...prev }
 
     for (const key of INFO_DATA_KEYS) {
