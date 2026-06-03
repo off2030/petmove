@@ -985,8 +985,8 @@ export function StepDetailView({
       const ok = await confirm({
         message: '이후 일정이 이미 입력돼 있어요',
         description:
-          '이 단계를 수정·삭제하면 이미 입력한 이후 일정과 어긋날 수 있습니다. 그래도 진행하면 저장 후 어긋난 일정에 주의가 표시됩니다.',
-        okLabel: '계속 진행',
+          '이 단계를 수정·삭제하면 이미 입력한 이후 일정과 어긋날 수 있습니다. 이후 일정을 확인해주세요.',
+        okLabel: '확인',
       })
       if (!ok) return
     }
