@@ -97,7 +97,7 @@ const messages = {
     phoneFormatError: '전화번호는 010-1234-5678 형식으로 입력해주세요.',
     microchipFormatErrorPrefixSingle: '',
     microchipFormatErrorPrefixN: (n: number) => `반려동물 ${n}: `,
-    microchipFormatError: '마이크로칩 번호는 15자리 숫자여야 합니다.',
+    microchipFormatError: '15자리 숫자를 입력해주세요.',
     topLabels: {
       destination: '목적지',
       customerName: '성함',
