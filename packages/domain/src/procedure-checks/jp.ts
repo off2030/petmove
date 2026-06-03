@@ -167,7 +167,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       // 마이크로칩이 2차보다도 늦음 → 두 조건 모두 불충족
       return {
         ok: false,
-        message: '마이크로칩이 2차 광견병 백신보다 늦습니다. 재접종이 필요합니다.',
+        message: '마이크로칩이 2차 광견병 백신보다 늦습니다. 마이크로칩 삽입일 혹은 접종일을 수정하세요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -202,7 +202,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (second && second.date < microchip) {
         return {
           ok: false,
-          message: '마이크로칩이 2차 광견병 백신보다 늦습니다. 재접종이 필요합니다.',
+          message: '마이크로칩이 2차 광견병 백신보다 늦습니다. 마이크로칩 삽입일 혹은 접종일을 수정하세요.',
           offendingPaths: [
             'microchip_implant_date',
             `rabies_dates[${first.originalIndex}].date`,
