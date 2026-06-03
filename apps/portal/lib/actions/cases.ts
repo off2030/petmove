@@ -728,45 +728,10 @@ export async function updateFlightFields(
       const check = validateVetVisitVsDeparture(currentVisit, newEntryDate, destination)
       if (!check.ok) return { ok: false, error: check.error }
     }
-    // 앵커(항공편) 수정 시 역검증 — 이미 입력된 일본 수출검역 예약일·검역(방문)일이 새 항공편
-    // 구간(일본 입국일 ≤ x ≤ 귀국일)을 벗어나지 않는지 확인. 예약·검역을 먼저 등록한 뒤 앞의
-    // 항공편을 당겨 생기는 정합성 깨짐을 차단한다(내원일 윈도우 룰과 동일한 역방향 규칙).
-    // 저장 시점 정방향 검증(updateJpExportQuarantineFields)과 짝을 이루는 두 번째 규칙.
-    const newReturnDate = typeof fields.return_date === 'string' ? fields.return_date.trim() : ''
-    const resvDate =
-      typeof prev.jp_export_quarantine_date === 'string' ? prev.jp_export_quarantine_date.slice(0, 10) : ''
-    const visitDate =
-      typeof prev.jp_export_quarantine_visit_date === 'string'
-        ? prev.jp_export_quarantine_visit_date.slice(0, 10)
-        : ''
-    if (newReturnDate) {
-      if (resvDate && resvDate > newReturnDate) {
-        return {
-          ok: false,
-          error: `귀국 항공편(${formatKr(newReturnDate)})이 이미 입력한 일본 수출 동물검역 예약일(${formatKr(resvDate)})보다 빠릅니다. 예약일을 먼저 수정하세요.`,
-        }
-      }
-      if (visitDate && visitDate > newReturnDate) {
-        return {
-          ok: false,
-          error: `귀국 항공편(${formatKr(newReturnDate)})이 이미 입력한 일본 수출 동물검역일(${formatKr(visitDate)})보다 빠릅니다. 검역일을 먼저 수정하세요.`,
-        }
-      }
-    }
-    if (newEntryDate) {
-      if (resvDate && resvDate < newEntryDate) {
-        return {
-          ok: false,
-          error: `일본 입국 항공편(${formatKr(newEntryDate)})이 이미 입력한 일본 수출 동물검역 예약일(${formatKr(resvDate)})보다 늦습니다. 예약일을 먼저 수정하세요.`,
-        }
-      }
-      if (visitDate && visitDate < newEntryDate) {
-        return {
-          ok: false,
-          error: `일본 입국 항공편(${formatKr(newEntryDate)})이 이미 입력한 일본 수출 동물검역일(${formatKr(visitDate)})보다 늦습니다. 검역일을 먼저 수정하세요.`,
-        }
-      }
-    }
+    // 항공편(앵커)을 나중에 수정해 이미 입력된 검역 예약·검역일이 구간을 벗어나는 경우는
+    // 여기서 하드 차단하지 않는다 — 이미 완료된 이후 일정이 있으면 보호자가 갇히고, 자동
+    // 리셋은 실제 기록을 지운다. 대신 journey 의 evaluateDateWindows 정합성 패스가 해당 검역
+    // step 에 '주의'를 띄워 보호자가 이후 일정을 검토·수정하도록 유도한다(입력 데이터는 보존).
     const nextData: Record<string, unknown> = { ...prev }
     for (const key of FLIGHT_DATA_KEYS) {
       const v = typeof fields[key] === 'string' ? (fields[key] as string).trim() : ''
