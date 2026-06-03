@@ -50,7 +50,7 @@ export function useCaseEditForm(caseRow: CaseRow, caseId: string): UseCaseEditFo
     if (!dirty || status === 'saving') return
     if (form.microchip && form.microchip.length !== 15) {
       setStatus('error')
-      setError('마이크로칩 번호는 15자리여야 합니다.')
+      setError('15자리 숫자를 입력해주세요.')
       return
     }
     setStatus('saving')

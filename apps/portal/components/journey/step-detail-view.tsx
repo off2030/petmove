@@ -450,7 +450,7 @@ export function StepDetailView({
   // 뜨지 않게 한다(검증 → 통과 시에만 확인 → 저장).
   function getSaveBlockError(): string | null {
     if (isMicrochip) {
-      if (chip !== '' && chip.length !== 15) return '마이크로칩 번호는 15자리여야 합니다.'
+      if (chip !== '' && chip.length !== 15) return '15자리 숫자를 입력해주세요.'
       const birth = readBirthDate(caseRow?.data)
       if (date && birth && date < birth) {
         return '시술일이 출생일보다 빠릅니다. 시술일 또는 출생일을 확인하세요.'
