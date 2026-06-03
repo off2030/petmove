@@ -48,7 +48,7 @@ function validateVetVisitVsDeparture(
   const v = String(visit).slice(0, 10)
   const d = String(dep).slice(0, 10)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(v) || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return { ok: true }
-  if (v > d) return { ok: false, error: '입력한 날짜가 출국일 이후입니다. 출국 전 임상검사는 출국 전에 받아야 합니다.' }
+  if (v > d) return { ok: false, error: '입력한 날짜가 출국일보다 늦습니다. 출국 전 임상검사는 출국 전에 받아야 합니다.' }
   const va = new Date(v + 'T00:00:00Z').getTime()
   const da = new Date(d + 'T00:00:00Z').getTime()
   if (isNaN(va) || isNaN(da)) return { ok: true }
