@@ -3,7 +3,7 @@ import {
   JOURNEY_STEP_CATALOG,
   buildCaseJourneyContext,
   evaluateChainConsistency,
-  evaluateDateWindows,
+  evaluateDateConsistency,
   findStepForCheck,
   getStepsForCase,
   resolveCompletedDate,
@@ -215,14 +215,15 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
   // 정합성 패스 — 선행/순서 불변식 위반을 해당(후행) step 에 '주의'로 표면화.
   // done(데이터 유무)·procedure-check 와 무관한 참조 무결성 레이어. 위반 없으면 빈 맵.
   //  1) evaluateChainConsistency — 백신·항체 체인의 선행존재·시간순서(완료일 기준).
-  //  2) evaluateDateWindows — 항공편(앵커) 구간을 벗어난 검역 예약·검역일(원시 날짜 필드 기준).
-  //     항공편을 나중에 수정해 이후 일정이 어긋났을 때 하드 차단·리셋 대신 '주의'로 검토 유도.
-  // step 당 1건 — 체인 정합성을 우선하고, 비어 있을 때만 날짜 구간 위반을 채운다.
+  //  2) evaluateDateConsistency — 이미 입력된 검역·검사 날짜를 각자의 순방향 검증으로 재실행.
+  //     항공편(앵커)을 나중에 수정해 이후 일정이 어긋났을 때, 하드 차단·리셋 대신 '주의'로
+  //     검토를 유도. 저장 시점 검증과 같은 함수(@petmove/domain date-rules)를 재사용한다.
+  // step 당 1건 — 체인 정합성을 우선하고, 비어 있을 때만 날짜 검증 위반을 채운다.
   const consistencyByStep = new Map<string, string>()
   for (const i of evaluateChainConsistency(applicableSteps, caseRow)) {
     if (!consistencyByStep.has(i.stepId)) consistencyByStep.set(i.stepId, i.message)
   }
-  for (const i of evaluateDateWindows(applicableSteps, caseRow)) {
+  for (const i of evaluateDateConsistency(applicableSteps, caseRow)) {
     if (!consistencyByStep.has(i.stepId)) consistencyByStep.set(i.stepId, i.message)
   }
 
