@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import {
   createVaccineLookups,
   findRabiesChainBreak,
+  TITER_ENTRY_TIMING_CHECK_IDS,
   type CheckResult,
   type ProcedureCheck,
   type StepDefinition,
@@ -77,6 +78,7 @@ export function StepDetailView({
   destinationKey,
   tripType,
   dateConsistencyMessage,
+  hasDownstreamData,
 }: {
   caseId: string
   step: StepDefinition
@@ -89,6 +91,8 @@ export function StepDetailView({
   tripType: 'round' | 'one_way'
   /** 날짜 정합성 위반 '주의' 문구 (앞 단계 수정으로 어긋난 경우) — 없으면 null. 일정 타임라인과 동일 출처. */
   dateConsistencyMessage: string | null
+  /** 이 step 보다 뒤(후행) 적용 단계에 이미 입력된 데이터가 있는지 — 수정·삭제 전 '주의' 확인창 조건. */
+  hasDownstreamData: boolean
 }) {
   const isMicrochip = step.id === 'microchip'
   const isRabies1 = step.id === 'rabies-vaccine-1'
@@ -854,8 +858,15 @@ export function StepDetailView({
   }
 
   // ok=false 체크를 톤별로 분리 — '주의'(blocker/warning) vs '안내'(info).
-  const failed = checkResults.filter((c) => !c.result.ok && c.check.severity !== 'info')
-  const notices = checkResults.filter((c) => !c.result.ok && c.check.severity === 'info')
+  // 단 항체 검사↔출국 타이밍(180일·2년)은 info 라도 '주의'로 격상 — 타임라인 표시와 일치.
+  const failed = checkResults.filter(
+    (c) =>
+      !c.result.ok && (c.check.severity !== 'info' || TITER_ENTRY_TIMING_CHECK_IDS.has(c.check.id)),
+  )
+  const notices = checkResults.filter(
+    (c) =>
+      !c.result.ok && c.check.severity === 'info' && !TITER_ENTRY_TIMING_CHECK_IDS.has(c.check.id),
+  )
   // step config 의 situational 메시지 — timeline desc 와 동일 내용을 detail 에도 노출.
   // 같은 룰을 mirror 한 procedure-check 가 동일 메시지로 이미 떴으면(예: 추가 백신
   // chain-break: catalog situational ↔ jp.rabies-extra-within-previous-validity)
@@ -965,6 +976,22 @@ export function StepDetailView({
   const [convertingTrip, setConvertingTrip] = useState(false)
   const router = useRouter()
   const confirm = useConfirm()
+  // 앞(선행) 단계를 수정·삭제하는데 뒤(후행) 단계에 이미 입력된 데이터가 있으면, 저장 전에
+  // '이후 일정이 입력돼 있다'는 주의 확인창을 띄운다. 진행을 선택하면 그대로 저장(하드 차단 X).
+  // 저장 후엔 정합성 재검증(scenario)으로 어긋난 이후 일정이 '주의'로 표면화된다.
+  const handleSaveClick = async () => {
+    if (!canSave) return
+    if (dirty && hasDownstreamData) {
+      const ok = await confirm({
+        message: '이후 일정이 이미 입력돼 있어요',
+        description:
+          '이 단계를 수정·삭제하면 이미 입력한 이후 일정과 어긋날 수 있습니다. 그래도 진행하면 저장 후 어긋난 일정에 주의가 표시됩니다.',
+        okLabel: '계속 진행',
+      })
+      if (!ok) return
+    }
+    handleSave()
+  }
   const handleConvertToOneWay = async () => {
     if (convertingTrip) return
     const ok = await confirm({
@@ -1581,7 +1608,7 @@ export function StepDetailView({
                   ? handleSkipJpExportReservation
                   : titerCompleteMode
                     ? handleCompleteTiter
-                    : handleSave
+                    : handleSaveClick
             }
             disabled={!active}
             aria-live="polite"

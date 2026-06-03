@@ -58,6 +58,17 @@ export const ALL_PROCEDURE_CHECKS: ProcedureCheck[] = [
   ...CA_CHECKS,
 ]
 
+/**
+ * 항체 검사일 ↔ 출국(입국)일 타이밍 위반 — '안내'가 아니라 정합성 '주의'로 격상해 표면화할
+ * 체크 집합. 앞(항체 검사) 단계를 수정해 이후(출국) 일정이 어긋난 정합성 문제라, 정방향
+ * 안내보다 강한 신호가 맞다. portal 의 scenario(타임라인 desc + 주의 배지) 와
+ * step-detail-view(상세 '주의' 박스)가 같은 집합을 읽어 일관 표시한다.
+ */
+export const TITER_ENTRY_TIMING_CHECK_IDS = new Set<string>([
+  'jp.entry-180days-after-titer',
+  'jp.entry-within-2years-of-titer',
+])
+
 /** check 의 country 가 target 키에 매칭되는지. 'all' 또는 배열에 포함되면 true. */
 export function checkAppliesTo(checkCountry: CountryKey, target: string): boolean {
   if (checkCountry === 'all') return true

@@ -63,6 +63,11 @@ export default function CaseJourneyStepPage({
   const dateConsistencyMessage =
     evaluateDateConsistency(applicable, caseRow).find((i) => i.stepId === baseStep.id)?.message ??
     null
+  // 이 step 보다 뒤(후행) 적용 단계에 이미 입력된 데이터가 있는지 — 수정·삭제 전 '주의'
+  // 확인창 조건. 뒤 일정이 있으면 앞 단계 변경이 정합성을 깨뜨릴 수 있어 사전 경고한다.
+  const hasDownstreamData = applicable
+    .slice(stepIndex + 1)
+    .some((s) => resolveDone(s.done, caseRow))
 
   return (
     <StepDetailView
@@ -74,6 +79,7 @@ export default function CaseJourneyStepPage({
       destinationKey={ctx.destinationKey}
       tripType={ctx.tripType}
       dateConsistencyMessage={dateConsistencyMessage}
+      hasDownstreamData={hasDownstreamData}
     />
   )
 }
