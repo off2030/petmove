@@ -15,7 +15,20 @@ import { cookies } from 'next/headers'
 import { createAdminClient } from '@petmove/auth'
 import { verifyPreviewToken } from '@petmove/auth/preview-token'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
-import { emptyVaccineProductsData, applyAutoFillRules, findRabiesChainBreak, getVetVisitWindowDays, type CaseRow, type VaccineProductsData } from '@petmove/domain'
+import {
+  emptyVaccineProductsData,
+  applyAutoFillRules,
+  findRabiesChainBreak,
+  getVetVisitWindowDays,
+  validateJpExportReservationDate,
+  validateJpExportVisitDate,
+  validateKrExportDate,
+  validateJpImportDate,
+  validateKrImportDate,
+  validateVetVisitDate,
+  type CaseRow,
+  type VaccineProductsData,
+} from '@petmove/domain'
 import { AVATAR_COLOR_IDS, AVATAR_EMOJIS, type AvatarColorId } from '@/lib/avatar'
 import { assertCaseAccess, type Result } from './_shared'
 
@@ -303,14 +316,6 @@ export async function updateRabiesEntryFields(
 
 function isEmptyObject(v: unknown): boolean {
   return !!v && typeof v === 'object' && Object.keys(v as object).length === 0
-}
-
-/** 'YYYY-MM-DD' → 'YYYY년 M월 D일'. 형식 어긋나면 원문. 액션 에러 메시지 표시용. */
-function formatKr(iso: string): string {
-  const parts = iso.slice(0, 10).split('-')
-  if (parts.length !== 3) return iso
-  const [y, m, d] = parts
-  return `${y}년 ${Number(m)}월 ${Number(d)}일`
 }
 
 /**
@@ -1005,23 +1010,16 @@ export async function updateVetVisitDate(
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const v = typeof date === 'string' ? date.trim() : ''
-    // 내원일 ↔ 출국일 윈도우 룰 — 목적지별 (한국 APQA 디폴트 10일).
-    if (v) {
+    // 내원일 정합성 — 출국일 이전·목적지별 윈도우 이내 + 한국 수출검역일 이전. 저장 시점 검증과
+    // 재검증(evaluateDateConsistency)이 같은 함수를 쓴다(@petmove/domain date-rules).
+    {
       const row = existing as { departure_date: string | null; destination: string | null }
-      const check = validateVetVisitVsDeparture(v, row.departure_date, row.destination)
-      if (!check.ok) return { ok: false, error: check.error }
-    }
-    // 출국 전 임상검사는 한국 수출 동물검역보다 늦을 수 없음 (검역 때 임상검사 서류 제출) —
-    // 수출 검역일이 이미 입력돼 있으면 그보다 늦은 임상검사일은 저장 거부 (역방향 cross-check).
-    const krExport =
-      typeof prev.kr_export_quarantine_date === 'string' && prev.kr_export_quarantine_date.length >= 10
-        ? prev.kr_export_quarantine_date.slice(0, 10)
-        : ''
-    if (v && krExport && v > krExport) {
-      return {
-        ok: false,
-        error: `출국 전 임상검사일은 한국 수출 동물검역일(${formatKr(krExport)})보다 늦을 수 없습니다.`,
-      }
+      const vetErr = validateVetVisitDate(v, {
+        data: prev,
+        destination: row.destination,
+        departureDate: row.departure_date,
+      })
+      if (vetErr) return { ok: false, error: vetErr }
     }
     const nextData: Record<string, unknown> = { ...prev }
     const prevDate = typeof prev.vet_visit_date === 'string' ? prev.vet_visit_date : ''
@@ -1075,39 +1073,14 @@ export async function updateKrExportQuarantineDate(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
-    // 한국 수출 동물검역은 출국 전 임상검사 후 ~ 출국 항공편 전 사이에 받는 절차.
-    //  - 임상검사일보다 빠를 수 없음 (검역 때 임상검사 서류를 제출하므로).
-    //  - 출국일(출국 항공편 날짜)보다 늦을 수 없음 (출국 전에 받는 검역).
-    //  - 출국일 기준 N일(목적지별 윈도우, 한국·일본 10일=출국 9일 전) 이내여야 함.
-    // 논리적 불가능 조건이라 저장 거부. 각 anchor 미입력 시 해당 검증만 SKIP.
-    const vetVisit =
-      typeof prev.vet_visit_date === 'string' && prev.vet_visit_date.length >= 10
-        ? prev.vet_visit_date.slice(0, 10)
-        : ''
-    if (v && vetVisit && v < vetVisit) {
-      return { ok: false, error: `검역일은 출국 전 임상검사일(${formatKr(vetVisit)})보다 빠를 수 없습니다.` }
-    }
-    const depart =
-      typeof prev.entry_date === 'string' && prev.entry_date.length >= 10
-        ? prev.entry_date.slice(0, 10)
-        : typeof prev.departure_flight_date === 'string' && prev.departure_flight_date.length >= 10
-          ? prev.departure_flight_date.slice(0, 10)
-          : ''
-    if (v && depart) {
-      if (v > depart) {
-        return { ok: false, error: `검역일은 출국일(${formatKr(depart)})보다 늦을 수 없습니다.` }
-      }
-      const days = Math.round(
-        (new Date(depart + 'T00:00:00Z').getTime() - new Date(v + 'T00:00:00Z').getTime()) /
-          86_400_000,
-      )
-      const windowDays = getVetVisitWindowDays(
-        (existing as { destination: string | null }).destination,
-      )
-      if (days >= windowDays) {
-        return { ok: false, error: `검역일은 출국일 기준 ${windowDays}일 이내여야 합니다.` }
-      }
-    }
+    // 검역일 정합성 — 임상검사일 ≤ 검역일 ≤ 출국일, 출국일 기준 목적지별 윈도우 이내. 저장 시점
+    // 검증과 재검증(evaluateDateConsistency)이 같은 함수를 쓴다(@petmove/domain date-rules).
+    const krExportErr = validateKrExportDate(v, {
+      data: prev,
+      destination: (existing as { destination: string | null }).destination,
+      departureDate: null,
+    })
+    if (krExportErr) return { ok: false, error: krExportErr }
     if (v) nextData.kr_export_quarantine_date = v
     else delete nextData.kr_export_quarantine_date
     // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
@@ -1155,26 +1128,10 @@ export async function updateJpImportQuarantineDate(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
-    // 일본 수입 동물검역은 일본 도착 당일 공항 검역소에서 받는 절차 — 검역일은 일본 입국일
-    // (출국 항공편 도착일) 당일 또는 (도착이 늦은 경우) 다음 날만 가능. 그 외는 저장 거부.
-    // 항공편 미입력 시 SKIP.
-    const jpEntry =
-      typeof prev.entry_date === 'string' && prev.entry_date.length >= 10
-        ? prev.entry_date.slice(0, 10)
-        : typeof prev.departure_flight_date === 'string' && prev.departure_flight_date.length >= 10
-          ? prev.departure_flight_date.slice(0, 10)
-          : ''
-    if (v && jpEntry) {
-      const next = new Date(jpEntry + 'T00:00:00Z')
-      next.setUTCDate(next.getUTCDate() + 1)
-      const jpEntryPlus1 = next.toISOString().slice(0, 10)
-      if (v !== jpEntry && v !== jpEntryPlus1) {
-        return {
-          ok: false,
-          error: `검역일은 일본 입국일(${formatKr(jpEntry)}) 당일 또는 다음 날만 가능합니다.`,
-        }
-      }
-    }
+    // 검역일 정합성 — 일본 입국일 당일 또는 다음 날만. 저장 시점 검증과 재검증이 같은 함수를
+    // 쓴다(@petmove/domain date-rules).
+    const jpImportErr = validateJpImportDate(v, { data: prev, destination: null, departureDate: null })
+    if (jpImportErr) return { ok: false, error: jpImportErr }
     if (v) nextData.jp_import_quarantine_date = v
     else delete nextData.jp_import_quarantine_date
     // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
@@ -1222,24 +1179,10 @@ export async function updateJpExportQuarantineVisitDate(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
-    // 일본 수출 동물검역은 일본 도착 후 ~ 귀국 전 사이에 받는 절차 —
-    //  - 일본 입국일(entry_date)보다 빠를 수 없음 (일본 도착 후에 받음).
-    //  - 귀국일(return_date)보다 늦을 수 없음 (귀국 전에 받아야 함).
-    // 논리적 불가능 조건이라 저장 거부. 각 anchor 미입력 시 해당 검증만 SKIP.
-    const jpEntry =
-      typeof prev.entry_date === 'string' && prev.entry_date.length >= 10
-        ? prev.entry_date.slice(0, 10)
-        : ''
-    if (v && jpEntry && v < jpEntry) {
-      return { ok: false, error: `검역일은 일본 입국일(${formatKr(jpEntry)})보다 빠를 수 없습니다.` }
-    }
-    const jpReturn =
-      typeof prev.return_date === 'string' && prev.return_date.length >= 10
-        ? prev.return_date.slice(0, 10)
-        : ''
-    if (v && jpReturn && v > jpReturn) {
-      return { ok: false, error: `검역일은 귀국일(${formatKr(jpReturn)})보다 늦을 수 없습니다.` }
-    }
+    // 검역일 정합성 — 일본 입국일 ≤ 검역일 ≤ 귀국일. 저장 시점 검증과 재검증이 같은 함수를
+    // 쓴다(@petmove/domain date-rules).
+    const jpVisitErr = validateJpExportVisitDate(v, { data: prev, destination: null, departureDate: null })
+    if (jpVisitErr) return { ok: false, error: jpVisitErr }
     if (v) nextData.jp_export_quarantine_visit_date = v
     else delete nextData.jp_export_quarantine_visit_date
     // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
@@ -1287,24 +1230,10 @@ export async function updateKrImportQuarantineDate(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
-    // 한국 수입 동물검역은 귀국 항공편으로 한국 도착 후 공항 검역소에서 받는 절차 —
-    // 검역일은 귀국일(return_date) 당일 또는 (도착이 늦은 경우) 다음 날만 가능. 그 외는 거부.
-    // 귀국 항공편 미입력 시 SKIP. (일본 수입검역과 동일 모델.)
-    const krReturn =
-      typeof prev.return_date === 'string' && prev.return_date.length >= 10
-        ? prev.return_date.slice(0, 10)
-        : ''
-    if (v && krReturn) {
-      const next = new Date(krReturn + 'T00:00:00Z')
-      next.setUTCDate(next.getUTCDate() + 1)
-      const krReturnPlus1 = next.toISOString().slice(0, 10)
-      if (v !== krReturn && v !== krReturnPlus1) {
-        return {
-          ok: false,
-          error: '검역은 귀국 당일에 받아야 합니다. 검역일 혹은 귀국 항공편 날짜를 수정하세요.',
-        }
-      }
-    }
+    // 검역일 정합성 — 귀국일 당일 또는 다음 날만. 저장 시점 검증과 재검증이 같은 함수를
+    // 쓴다(@petmove/domain date-rules).
+    const krImportErr = validateKrImportDate(v, { data: prev, destination: null, departureDate: null })
+    if (krImportErr) return { ok: false, error: krImportErr }
     if (v) nextData.kr_import_quarantine_date = v
     else delete nextData.kr_import_quarantine_date
     // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
@@ -1369,23 +1298,17 @@ export async function updateJpExportQuarantineFields(
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     // 항공편 일정 기준 입력 조건 — 항공편 미입력 시 비교 불가라 SKIP. 입력된 경우에만 차단.
-    const entryDate = typeof prev.entry_date === 'string' ? prev.entry_date : ''
     const returnDate = typeof prev.return_date === 'string' ? prev.return_date : ''
     const trimmedApp = typeof fields.applicationDate === 'string' ? fields.applicationDate.trim() : ''
     const trimmedReserved = typeof fields.date === 'string' ? fields.date.trim() : ''
-    // 예약일 range 먼저 검증 — 신청일 마감의 anchor 로 쓰기 전에 신뢰성 확보.
-    if (trimmedReserved && returnDate && returnDate.length >= 10 && trimmedReserved > returnDate.slice(0, 10)) {
-      return {
-        ok: false,
-        error: '예약일은 귀국일보다 늦을 수 없습니다.',
-      }
-    }
-    if (trimmedReserved && entryDate && entryDate.length >= 10 && trimmedReserved < entryDate.slice(0, 10)) {
-      return {
-        ok: false,
-        error: `예약일은 일본 입국일(${formatKr(entryDate)})보다 빠를 수 없습니다.`,
-      }
-    }
+    // 예약일 range 검증 — 일본 입국일 ≤ 예약일 ≤ 귀국일. 저장 시점 검증과 재검증이 같은 함수를
+    // 쓴다(@petmove/domain date-rules). 신청일 마감의 anchor 로 쓰기 전에 신뢰성 확보.
+    const reservationErr = validateJpExportReservationDate(trimmedReserved, {
+      data: prev,
+      destination: null,
+      departureDate: null,
+    })
+    if (reservationErr) return { ok: false, error: reservationErr }
     // 신청일 마감 — 예약일이 입력돼 있으면 예약일 −10일, 아니면 귀국 항공편 −10일을 마지노선으로.
     // (예약일이 추후 확정될 때 다시 검증되므로, 입력 시점엔 귀국일이 최소 보장 기준.)
     // 위반 메시지는 anchor 와 무관하게 단일 — 보호자가 외울 룰은 결국 '10일 전' 하나.
