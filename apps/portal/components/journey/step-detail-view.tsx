@@ -453,7 +453,7 @@ export function StepDetailView({
       if (chip !== '' && chip.length !== 15) return '15자리 숫자를 입력해주세요.'
       const birth = readBirthDate(caseRow?.data)
       if (date && birth && date < birth) {
-        return '시술일이 출생일보다 빠릅니다. 시술일 또는 출생일을 확인하세요.'
+        return '삽입일이 출생일보다 빠릅니다. 삽입일 또는 출생일을 확인하세요.'
       }
       return null
     }
@@ -474,7 +474,7 @@ export function StepDetailView({
             return '2차 접종일이 1차 접종의 면역 유효기간을 벗어났습니다.'
           }
           const microchip = readImplantDate(caseRow?.data)
-          if (microchip && microchip > rabies.date) return '마이크로칩 시술일 이후에 광견병 백신을 접종해야 합니다.'
+          if (microchip && microchip > rabies.date) return '마이크로칩 삽입일 이후에 광견병 백신을 접종해야 합니다.'
           if (microchip && r1.date < microchip) {
             const titerDates = readAllTiterDates(caseRow?.data)
             if (titerDates.length > 0 && !titerDates.includes(rabies.date)) {

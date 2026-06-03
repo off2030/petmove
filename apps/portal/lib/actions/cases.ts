@@ -147,7 +147,7 @@ export async function updateMicrochipFields(
     let dt: string | null = null
     if (microchipImplantDate != null && microchipImplantDate !== '') {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(microchipImplantDate)) {
-        return { ok: false, error: '시술일 형식은 YYYY-MM-DD 여야 합니다.' }
+        return { ok: false, error: '삽입일 형식은 YYYY-MM-DD 여야 합니다.' }
       }
       dt = microchipImplantDate
     }

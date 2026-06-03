@@ -3,11 +3,11 @@
 import { DateTextField } from '@petmove/ui'
 
 /**
- * 마이크로칩 step 입력 필드(번호 + 시술일). controlled — 부모(step-detail-view)가
+ * 마이크로칩 step 입력 필드(번호 + 삽입일). controlled — 부모(step-detail-view)가
  * state 와 save 로직을 보유. 이 컴포넌트는 mask/위젯만 렌더.
  *
  * - 칩 번호: raw 15-digit store, 3자리 공백 구분 display (apply/page.tsx 와 동일 mask).
- * - 시술일: @petmove/ui 의 DateTextField (apply 와 동일 컴포넌트).
+ * - 삽입일: @petmove/ui 의 DateTextField (apply 와 동일 컴포넌트).
  */
 export function MicrochipInputs({
   chip,
@@ -82,7 +82,7 @@ export function MicrochipInputs({
         />
       </div>
       <div style={{ ...fieldStyle, borderTop: `.5px solid ${C.line}` }}>
-        <div style={labelStyle}>시술일</div>
+        <div style={labelStyle}>삽입일</div>
         <div style={helpStyle}>달력에서 선택하거나 YYYY-MM-DD 로 입력하세요.</div>
         <div style={{ marginTop: 8 }}>
           <DateTextField
