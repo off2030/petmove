@@ -453,7 +453,7 @@ export function StepDetailView({
       if (chip !== '' && chip.length !== 15) return '15자리 숫자를 입력해주세요.'
       const birth = readBirthDate(caseRow?.data)
       if (date && birth && date < birth) {
-        return '삽입일이 출생일보다 빠릅니다. 삽입일 또는 출생일을 확인하세요.'
+        return '마이크로칩 삽입일이 출생일보다 빠릅니다. 날짜를 확인해주세요.'
       }
       return null
     }
