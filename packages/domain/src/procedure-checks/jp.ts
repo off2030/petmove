@@ -261,7 +261,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       }
       if (offendingPaths.length > 0) {
         const message = tooLate
-          ? '2차 광견병 백신 유효기간이 만료되었습니다. 2회 재접종 후 면역 유효기간 이내에 다시 검사를 받으세요.'
+          ? '채혈일이 광견병 백신 면역 유효기간을 벗어났습니다. 접종일, 유효기간, 채혈일을 수정하세요.'
           : '채혈일이 2차 광견병 백신 접종일보다 빠릅니다. 2차 접종 이후 다시 검사를 받으세요.'
         return { ok: false, message, offendingPaths }
       }
