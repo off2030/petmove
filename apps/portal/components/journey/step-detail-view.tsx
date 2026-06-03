@@ -474,7 +474,7 @@ export function StepDetailView({
             return '2차 접종일이 1차 접종의 면역 유효기간을 벗어났습니다.'
           }
           const microchip = readImplantDate(caseRow?.data)
-          if (microchip && microchip > rabies.date) return '마이크로칩 삽입일 이후에 광견병 백신을 접종해야 합니다.'
+          if (microchip && microchip > rabies.date) return '마이크로칩 삽입 이후에 광견병 백신을 접종해야 합니다.'
           if (microchip && r1.date < microchip) {
             const titerDates = readAllTiterDates(caseRow?.data)
             if (titerDates.length > 0 && !titerDates.includes(rabies.date)) {
