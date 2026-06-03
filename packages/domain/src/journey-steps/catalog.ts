@@ -455,23 +455,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       if (deriveJpExportQuarantineStatus(caseRow) !== 'in_progress') return undefined
       // 예약일·시간은 '희망' 데이터일 뿐 완료 판정에 영향 없음 — 보호자가 '완료' 버튼을 직접
       // 눌러야 step 이 done. 사전 신고와 동일 모델.
-      // 예약일(+시간)이 입력돼 있으면 다음 할 일 카드에 예약 일정을 안내 — 보호자가 방문일을
-      // 잊지 않도록. 시간은 HH:mm 형식일 때만 덧붙인다.
-      const resDate =
-        typeof data.jp_export_quarantine_date === 'string' &&
-        data.jp_export_quarantine_date.length >= 10
-          ? data.jp_export_quarantine_date.slice(0, 10)
-          : ''
-      const resTime =
-        typeof data.jp_export_quarantine_time === 'string' &&
-        /^\d{1,2}:\d{2}$/.test(data.jp_export_quarantine_time)
-          ? data.jp_export_quarantine_time
-          : ''
-      if (resDate) {
-        const when = formatKoreanDate(resDate) + (resTime ? ` ${resTime}` : '')
-        const msg = `일본 수출 동물검역 예약: ${when}. 방문 검역 후 완료 버튼을 눌러주세요.`
-        return { desc: msg, cardDesc: msg }
-      }
+      // 예약 일정 안내는 방문 step([[jp-export-quarantine-visit]])이 맡고, 여기는 진행 중 안내만.
       const msg = '일본 수출 동물검역 신청·예약이 진행 중입니다. 예약이 확정되면 완료 버튼을 눌러주세요.'
       return { desc: msg, cardDesc: msg }
     },
