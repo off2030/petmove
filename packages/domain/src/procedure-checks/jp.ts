@@ -46,13 +46,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const age = daysBetween(birth, first.date)
       if (age === null) return SKIP
       if (age < 91) {
-        const eligible = addDays(birth, 91)
-        const eligibleKr = eligible ? formatKoreanDate(eligible) : ''
         return {
           ok: false,
-          message: eligibleKr
-            ? `광견병 백신은 생후 91일이 지난 후 접종해야 합니다. ${eligibleKr} 이후 재접종하세요.`
-            : '광견병 백신은 생후 91일이 지난 후 접종해야 합니다.',
+          message: '1차 광견병 접종은 생후 91일 이후에 해야 합니다.',
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
