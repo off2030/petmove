@@ -186,8 +186,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         const previous = rabies[rabies.length - 2]
         const previousValidUntil = resolveValidUntil(previous.date, previous.valid_until)
         if (previousValidUntil && latest.date > previousValidUntil) {
-          const msg =
-            '직전 광견병 백신 유효기간 만료 전 재접종을 하지 못했습니다. 1, 2차 접종과 검사 후 다시 180일을 기다려야 합니다.'
+          const prevNo = rabies.length - 1
+          const latestNo = rabies.length
+          const msg = `${prevNo}차 백신 유효기간이 만료된 뒤 ${latestNo}차를 접종했습니다. 접종일을 확인해주세요.`
           return { desc: msg, cardDesc: msg }
         }
       }

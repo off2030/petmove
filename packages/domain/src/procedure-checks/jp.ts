@@ -109,10 +109,11 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const previousValidUntil = resolveValidUntil(previous.date, previous.valid_until)
       const withinValidity = !!previousValidUntil && previousValidUntil >= latest.date
       if (!withinValidity) {
+        const prevNo = entries.length - 1
+        const latestNo = entries.length
         return {
           ok: false,
-          message:
-            '직전 광견병 백신 유효기간 만료 전 재접종을 하지 못했습니다. 1, 2차 접종과 검사 후 다시 180일을 기다려야 합니다.',
+          message: `${prevNo}차 백신 유효기간이 만료된 뒤 ${latestNo}차를 접종했습니다. 접종일을 확인해주세요.`,
           offendingPaths: [`rabies_dates[${latest.originalIndex}].date`],
         }
       }
