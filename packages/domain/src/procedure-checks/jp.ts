@@ -159,7 +159,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message:
-            '마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 반드시 2차 광견병 백신과 광견병 항체 검사를 같은 날 해야 합니다.',
+            '마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 2차 광견병 백신과 광견병 항체 검사를 같은 날 해야 합니다.',
           offendingPaths: offending,
         }
       }
@@ -199,7 +199,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message:
-          '마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 반드시 2차 광견병 백신과 광견병 항체 검사를 같은 날 해야 합니다.',
+          '마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 2차 광견병 백신과 광견병 항체 검사를 같은 날 해야 합니다.',
         offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
       }
     },
