@@ -40,12 +40,6 @@ function readDate(data: Record<string, unknown>, key: string): string {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : ''
 }
 
-function addDay(iso: string): string {
-  const d = new Date(iso + 'T00:00:00Z')
-  d.setUTCDate(d.getUTCDate() + 1)
-  return d.toISOString().slice(0, 10)
-}
-
 function daysBetween(from: string, to: string): number {
   return Math.round(
     (new Date(to + 'T00:00:00Z').getTime() - new Date(from + 'T00:00:00Z').getTime()) / 86_400_000,
@@ -95,13 +89,13 @@ export function validateKrExportDate(v: string, ctx: DateRuleContext): string | 
   return null
 }
 
-/** 일본 수입검역일: 일본 입국일 당일 또는 다음 날만. */
+/** 일본 수입검역일: 일본 입국(출국 항공편)보다 빠를 수 없음. 도착 이후(당일 포함)는 제한 없음. */
 export function validateJpImportDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const entry = departFromData(ctx.data)
-  if (entry && v !== entry && v !== addDay(entry)) {
-    return `일본 수입 동물검역일은 일본 입국일(${fmt(entry)}) 당일 또는 다음 날만 가능합니다.`
-  }
+  if (!entry) return null
+  // 일본 도착(출국 항공편) 전에는 받을 수 없음. 도착 이후 날짜는 입력 허용(상한 없음).
+  if (v < entry) return '일본 수입 동물검역일은 일본 입국일보다 빠를 수 없습니다.'
   return null
 }
 
