@@ -73,9 +73,9 @@ export function validateJpExportReservationDate(v: string, ctx: DateRuleContext)
 export function validateJpExportVisitDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const entry = readDate(ctx.data, 'entry_date')
-  if (entry && v < entry) return `검역일은 일본 입국일(${fmt(entry)})보다 빠를 수 없습니다.`
+  if (entry && v < entry) return `일본 수출 동물검역일은 일본 입국일(${fmt(entry)})보다 빠를 수 없습니다.`
   const ret = readDate(ctx.data, 'return_date')
-  if (ret && v > ret) return `검역일은 귀국일(${fmt(ret)})보다 늦을 수 없습니다.`
+  if (ret && v > ret) return `일본 수출 동물검역일은 귀국일(${fmt(ret)})보다 늦을 수 없습니다.`
   return null
 }
 
@@ -111,7 +111,7 @@ export function validateKrImportDate(v: string, ctx: DateRuleContext): string | 
   const ret = readDate(ctx.data, 'return_date')
   if (!ret) return null
   // 한국 도착(귀국 항공편) 전에는 받을 수 없음. 도착 이후 날짜는 입력 허용(상한 없음).
-  if (v < ret) return '한국 수입 동물검역은 입국일보다 빠를 수 없습니다.'
+  if (v < ret) return '한국 수입 동물검역일은 입국일보다 빠를 수 없습니다.'
   return null
 }
 
