@@ -46,9 +46,10 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const age = daysBetween(birth, first.date)
       if (age === null) return SKIP
       if (age < 91) {
+        const eligible = addDays(birth, 91)
         return {
           ok: false,
-          message: '1차 광견병 접종은 생후 91일 이후에 해야 합니다.',
+          message: `1차 광견병 접종은 생후 91일(${formatKoreanDate(eligible)}) 이후에 해야 합니다.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -363,7 +364,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: '신청일이 사전 신고 마감일보다 늦습니다. 신청일 혹은 출국 항공권 날짜를 변경하세요.',
+        message: '일본 입국 40일 전까지 신고를 해야 합니다. 신고가 늦은 경우 입국일을 변경해야 합니다.',
         offendingPaths: ['advance_notification_date', 'departure_date'],
       }
     },
