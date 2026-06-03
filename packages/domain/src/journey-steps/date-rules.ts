@@ -1,5 +1,6 @@
 import type { CaseRow } from '../types'
-import { getVetVisitWindowDays } from '../destination-config'
+import { getVetVisitWindowDays, parseDestinations } from '../destination-config'
+import { addDays, addYears, resolveValidUntil } from '../procedure-checks/utils'
 import type { StepDefinition } from './types'
 
 /**
@@ -52,6 +53,77 @@ function departFromData(data: Record<string, unknown>): string {
 }
 
 // ── 날짜별 순방향 검증 — 위반 시 메시지, 정상이면 null ──────────────────
+
+/**
+ * 일본 입국일(= 출국 항공편 날짜) — **선행 데이터**(광견병 항체 검사·광견병 백신)와의 관계만
+ * hard 차단. 후행 일정(사전 신고 40일·검역 윈도우)과의 관계는 보호자 갇힘 방지를 위해
+ * procedure-check '주의' 배지로만 안내한다.
+ *
+ * 선행 데이터는 항공편을 수정해도 변하지 않으므로 hard 차단해도 사용자가 갇히지 않는다.
+ * 검역 통과 자체가 법적으로 불가능한 입력만 거부 — 다음 세 가지:
+ *  - 항체 검사일 + 180일 ≤ 입국일 (일본 광견병 수입 규정)
+ *  - 항체 검사일 + 2년 ≥ 입국일 (항체 검사 유효기간)
+ *  - 가장 최근 광견병 백신 면역 유효기간 ≥ 입국일 (백신 만료 후 입국 불가)
+ *
+ * 백신 유효기간 체크는 항체 검사 입력 후에만 평가 — procedure-check
+ * `jp.rabies-valid-until-on-departure` 와 동일 정책(검사 전엔 chain 불완전).
+ *
+ * 일본 외 목적지는 SKIP — 다른 국가는 자체 규정.
+ */
+export function validateJpEntryDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  if (!parseDestinations(ctx.destination).includes('japan')) return null
+
+  const titerDates: string[] = []
+  const rawTiters = ctx.data.rabies_titer_records
+  if (Array.isArray(rawTiters)) {
+    for (const r of rawTiters) {
+      if (r && typeof r === 'object') {
+        const d = (r as Record<string, unknown>).date
+        if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) titerDates.push(d)
+      }
+    }
+  }
+  if (titerDates.length === 0) return null
+
+  // 가장 최근 채혈일이 가장 유리(180일·2년 모두 미래로 밂) — ISO 사전순 max.
+  titerDates.sort()
+  const latestTiter = titerDates[titerDates.length - 1]
+  const earliest = addDays(latestTiter, 180)
+  if (earliest && v < earliest) {
+    return `광견병 항체 검사일(${fmt(latestTiter)})로부터 180일이 지난 ${fmt(earliest)} 이후에 일본 입국이 가능합니다.`
+  }
+  const titerValidUntil = addYears(latestTiter, 2)
+  if (titerValidUntil && v > titerValidUntil) {
+    return `광견병 항체 검사 유효기간이 ${fmt(titerValidUntil)}에 만료됩니다. 일본 입국 전 재검사가 필요합니다.`
+  }
+
+  // 광견병 백신 유효기간 — 가장 최근 접종 기준. titer 입력 후에만 평가.
+  const rabiesEntries: Array<{ date: string; valid_until: string | null }> = []
+  const rawRabies = ctx.data.rabies_dates
+  if (Array.isArray(rawRabies)) {
+    for (const r of rawRabies) {
+      if (typeof r === 'string') {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(r)) rabiesEntries.push({ date: r, valid_until: null })
+      } else if (r && typeof r === 'object') {
+        const rec = r as Record<string, unknown>
+        const d = rec.date
+        const vu = rec.valid_until
+        if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+          rabiesEntries.push({ date: d, valid_until: typeof vu === 'string' ? vu : null })
+        }
+      }
+    }
+  }
+  if (rabiesEntries.length === 0) return null
+  rabiesEntries.sort((a, b) => a.date.localeCompare(b.date))
+  const latestRabies = rabiesEntries[rabiesEntries.length - 1]
+  const rabiesValidUntil = resolveValidUntil(latestRabies.date, latestRabies.valid_until)
+  if (rabiesValidUntil && v > rabiesValidUntil) {
+    return `광견병 백신 면역 유효기간이 ${fmt(rabiesValidUntil)}에 만료됩니다. 만료 전 재접종이 필요합니다.`
+  }
+  return null
+}
 
 /** 일본 수출검역 예약일: 일본 입국일 ≤ 예약일 ≤ 귀국일. */
 export function validateJpExportReservationDate(v: string, ctx: DateRuleContext): string | null {

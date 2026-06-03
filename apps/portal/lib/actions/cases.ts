@@ -19,6 +19,7 @@ import {
   emptyVaccineProductsData,
   applyAutoFillRules,
   findRabiesChainBreak,
+  validateJpEntryDate,
   validateJpExportReservationDate,
   validateJpExportVisitDate,
   validateKrExportDate,
@@ -694,12 +695,25 @@ export async function updateFlightFields(
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    // 항공편(앵커)을 나중에 수정해 이미 입력된 이후 일정(내원·임상검사일·검역 예약·검역일)이
-    // 구간을 벗어나는 경우는 여기서 하드 차단하지 않는다 — 이미 입력된 이후 일정이 있으면
-    // 보호자가 갇히고, 자동 리셋은 실제 기록을 지운다. 보호자가 '계속 진행'을 확인한 뒤 저장을
-    // 허용하고, journey 의 정합성 패스(evaluateDateConsistency·항체↔출국 타이밍)가 해당 step 에
-    // '주의'를 띄워 이후 일정을 검토·수정하도록 유도한다(입력 데이터는 보존). 출국 ≤ 귀국·날짜
-    // 형식 같은 항공편 자체의 내재적 정합성만 위에서 하드 차단한다.
+    // 항공편(앵커)을 나중에 수정해 이미 입력된 **후행 일정**(내원·임상검사일·검역 예약·검역일·사전
+    // 신고)이 구간을 벗어나는 경우는 여기서 하드 차단하지 않는다 — 이미 입력된 이후 일정이
+    // 있으면 보호자가 갇히고, 자동 리셋은 실제 기록을 지운다. 보호자가 '계속 진행'을 확인한 뒤
+    // 저장을 허용하고, journey 의 정합성 패스(evaluateDateConsistency·항체↔출국 타이밍)가 해당
+    // step 에 '주의'를 띄워 이후 일정을 검토·수정하도록 유도한다(입력 데이터는 보존).
+    //
+    // 반면 **선행 데이터**(광견병 항체 검사·광견병 백신 유효기간)와의 관계는 항공편 수정으로
+    // 변하지 않으므로 갇힘 위험이 없고, 위반 시 일본 검역 통과 자체가 법적으로 불가능 — 저장을
+    // 거부한다(validateJpEntryDate). 출국 ≤ 귀국·날짜 형식 같은 항공편 자체의 내재적 정합성도
+    // 위에서 함께 하드 차단.
+    {
+      const entryDate = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
+      const entryErr = validateJpEntryDate(entryDate, {
+        data: prev,
+        destination: (existing as { destination: string | null }).destination,
+        departureDate: null,
+      })
+      if (entryErr) return { ok: false, error: entryErr }
+    }
     const nextData: Record<string, unknown> = { ...prev }
     for (const key of FLIGHT_DATA_KEYS) {
       const v = typeof fields[key] === 'string' ? (fields[key] as string).trim() : ''
