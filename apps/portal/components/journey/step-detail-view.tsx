@@ -76,6 +76,7 @@ export function StepDetailView({
   checkResults,
   destinationKey,
   tripType,
+  dateConsistencyMessage,
 }: {
   caseId: string
   step: StepDefinition
@@ -86,6 +87,8 @@ export function StepDetailView({
   /** 정규화된 목적지 키 ('japan' 등) — 입력 cross-validation 분기에 사용. */
   destinationKey: string | null
   tripType: 'round' | 'one_way'
+  /** 날짜 정합성 위반 '주의' 문구 (앞 단계 수정으로 어긋난 경우) — 없으면 null. 일정 타임라인과 동일 출처. */
+  dateConsistencyMessage: string | null
 }) {
   const isMicrochip = step.id === 'microchip'
   const isRabies1 = step.id === 'rabies-vaccine-1'
@@ -1165,6 +1168,25 @@ export function StepDetailView({
             )
           })}
         </section>
+
+        {/* 날짜 정합성 '주의' — 앞 단계(항공편 등) 수정으로 이 step 의 이미 입력된 날짜가
+            어긋난 경우. 일정 타임라인의 '주의' 와 동일 출처·문구를 상세에도 노출. */}
+        {dateConsistencyMessage && (
+          <section
+            style={{
+              marginTop: 16,
+              padding: '14px 16px',
+              borderRadius: 16,
+              background: C.warnBg,
+              border: `.5px solid color-mix(in srgb, ${C.warn} 20%, transparent)`,
+            }}
+          >
+            <div style={{ ...monoCap, color: C.warn, fontWeight: 700, marginBottom: 8 }}>주의</div>
+            <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
+              {dateConsistencyMessage}
+            </div>
+          </section>
+        )}
 
         {/* Situational 안내 — step config 가 caseRow 상태에 따라 동적으로 만든 메시지.
             timeline 의 desc 와 동일 내용이라 detail 페이지에서도 같은 정보 전달.
