@@ -116,18 +116,14 @@ export function validateKrImportDate(v: string, ctx: DateRuleContext): string | 
 }
 
 /**
- * 출국 전 임상검사일: 출국일 이전·윈도우 이내(앞 단계 대비, 항상 검사), 한국 수출검역일 이전.
+ * 출국 전 임상검사일: 출국일(앞 단계) 이전·목적지별 윈도우 이내. **자기 기준(출국일)으로만** 검증.
  *
- * opts.skipExportQuarantine — 한국 수출검역일(후행 단계)보다 늦을 수 없다는 검사를 건너뛴다.
- * 내원일 저장 시점에는 true 로 — 이미 입력된 후행(수출검역)을 참조하는 하드 차단이라, 앞 단계인
- * 내원일을 수정·삭제할 때 보호자를 막지 않는다(확인 후 저장 허용). 정합성 재검증에서는 기본값
- * (false, 검사 ON)으로 같은 함수가 위반을 '주의'로 표면화한다.
+ * 한국 수출검역일과의 관계(임상검사 ≤ 수출검역)는 여기서 보지 않는다 — 그 제약은 의존하는 쪽인
+ * 한국 수출검역 step(validateKrExportDate, 검역일 ≥ 임상검사일)에서만 표면화한다. 내원일이 뒤
+ * 단계(수출검역)를 참조하면, 항공편을 옮겨 내원일을 새 출국일에 맞추려 할 때 옛 수출검역일 때문에
+ * 역행 '주의'/차단이 떠 수정이 막힌다. 내원일은 앞만 보고, 수출검역이 내원일에 맞춰 따라온다.
  */
-export function validateVetVisitDate(
-  v: string,
-  ctx: DateRuleContext,
-  opts?: { skipExportQuarantine?: boolean },
-): string | null {
+export function validateVetVisitDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const dep = ctx.departureDate ? ctx.departureDate.slice(0, 10) : ''
   if (dep && /^\d{4}-\d{2}-\d{2}$/.test(dep)) {
@@ -135,12 +131,6 @@ export function validateVetVisitDate(
     const windowDays = getVetVisitWindowDays(ctx.destination)
     if (daysBetween(v, dep) >= windowDays) {
       return `출국 전 임상검사는 출국일 기준 ${windowDays}일 이내에 받아야 합니다.`
-    }
-  }
-  if (!opts?.skipExportQuarantine) {
-    const krExport = readDate(ctx.data, 'kr_export_quarantine_date')
-    if (krExport && v > krExport) {
-      return `출국 전 임상검사일은 한국 수출 동물검역일(${fmt(krExport)})보다 늦을 수 없습니다.`
     }
   }
   return null

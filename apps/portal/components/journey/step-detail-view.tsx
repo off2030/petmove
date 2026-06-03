@@ -528,11 +528,11 @@ export function StepDetailView({
     // 검역·증명서·내원 — 서버 액션과 동일한 @petmove/domain 검증을 클라이언트에서도 선행.
     const data = (caseRow?.data ?? {}) as Record<string, unknown>
     if (isVetVisit) {
-      return validateVetVisitDate(
-        vetVisitDate.trim(),
-        { data, destination: caseRow?.destination ?? null, departureDate: caseRow?.departure_date ?? null },
-        { skipExportQuarantine: true },
-      )
+      return validateVetVisitDate(vetVisitDate.trim(), {
+        data,
+        destination: caseRow?.destination ?? null,
+        departureDate: caseRow?.departure_date ?? null,
+      })
     }
     if (isCertificateIssue) {
       return validateKrExportDate(krExportQuarantineDate.trim(), {
