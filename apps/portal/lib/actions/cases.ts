@@ -19,7 +19,6 @@ import {
   emptyVaccineProductsData,
   applyAutoFillRules,
   findRabiesChainBreak,
-  getVetVisitWindowDays,
   validateJpExportReservationDate,
   validateJpExportVisitDate,
   validateKrExportDate,
@@ -31,35 +30,6 @@ import {
 } from '@petmove/domain'
 import { AVATAR_COLOR_IDS, AVATAR_EMOJIS, type AvatarColorId } from '@/lib/avatar'
 import { assertCaseAccess, type Result } from './_shared'
-
-/**
- * 내원·임상검진일은 출국일 포함 N일 이내여야 함 — 목적지별 윈도우(@petmove/domain
- * getVetVisitWindowDays). 한국 APQA 디폴트 10일, 말레이·싱가포르 7일,
- * 호주·러시아 5일, 뉴질랜드·터키 3일. 다중 목적지 시 가장 엄격한 윈도우.
- */
-function validateVetVisitVsDeparture(
-  visit: string | null | undefined,
-  dep: string | null | undefined,
-  destination: string | null | undefined,
-): { ok: true } | { ok: false; error: string } {
-  if (!visit || !dep) return { ok: true }
-  const v = String(visit).slice(0, 10)
-  const d = String(dep).slice(0, 10)
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(v) || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return { ok: true }
-  if (v > d) return { ok: false, error: '입력한 날짜가 출국일 이후입니다. 출국 전 임상검사는 출국 전에 받아야 합니다.' }
-  const va = new Date(v + 'T00:00:00Z').getTime()
-  const da = new Date(d + 'T00:00:00Z').getTime()
-  if (isNaN(va) || isNaN(da)) return { ok: true }
-  const days = Math.round((da - va) / 86_400_000)
-  const windowDays = getVetVisitWindowDays(destination)
-  if (days >= windowDays) {
-    return {
-      ok: false,
-      error: `출국 전 임상검사는 출국일 기준 ${windowDays}일 이내에 받아야 합니다.`,
-    }
-  }
-  return { ok: true }
-}
 
 /**
  * 현재 사용자에게 case_customer_links 로 매핑된 모든 케이스.
@@ -724,19 +694,12 @@ export async function updateFlightFields(
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    // 내원일 ↔ 출국일 윈도우 룰 — entry_date 가 departure_date 컬럼과 동기화되므로
-    // 새 entry_date 도 기존 vet_visit_date 와 목적지별 룰을 만족해야 함.
-    const newEntryDate = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
-    if (newEntryDate) {
-      const currentVisit = typeof prev.vet_visit_date === 'string' ? (prev.vet_visit_date as string) : null
-      const destination = (existing as { destination: string | null }).destination
-      const check = validateVetVisitVsDeparture(currentVisit, newEntryDate, destination)
-      if (!check.ok) return { ok: false, error: check.error }
-    }
-    // 항공편(앵커)을 나중에 수정해 이미 입력된 검역 예약·검역일이 구간을 벗어나는 경우는
-    // 여기서 하드 차단하지 않는다 — 이미 완료된 이후 일정이 있으면 보호자가 갇히고, 자동
-    // 리셋은 실제 기록을 지운다. 대신 journey 의 evaluateDateWindows 정합성 패스가 해당 검역
-    // step 에 '주의'를 띄워 보호자가 이후 일정을 검토·수정하도록 유도한다(입력 데이터는 보존).
+    // 항공편(앵커)을 나중에 수정해 이미 입력된 이후 일정(내원·임상검사일·검역 예약·검역일)이
+    // 구간을 벗어나는 경우는 여기서 하드 차단하지 않는다 — 이미 입력된 이후 일정이 있으면
+    // 보호자가 갇히고, 자동 리셋은 실제 기록을 지운다. 보호자가 '계속 진행'을 확인한 뒤 저장을
+    // 허용하고, journey 의 정합성 패스(evaluateDateConsistency·항체↔출국 타이밍)가 해당 step 에
+    // '주의'를 띄워 이후 일정을 검토·수정하도록 유도한다(입력 데이터는 보존). 출국 ≤ 귀국·날짜
+    // 형식 같은 항공편 자체의 내재적 정합성만 위에서 하드 차단한다.
     const nextData: Record<string, unknown> = { ...prev }
     for (const key of FLIGHT_DATA_KEYS) {
       const v = typeof fields[key] === 'string' ? (fields[key] as string).trim() : ''

@@ -657,7 +657,8 @@ export function StepDetailView({
         }
       })
     } else if (isFlight) {
-      // 입국일 cross-entry — 광견병 항체 검사 + 부스터 chain + 사전 신고 40일 마감(일본 한정).
+      // 입국일 전향적 가드 — 일본 미신고 상태에서 사전 신고 40일 여유가 없을 때만 차단.
+      // 항체↔출국 180일 등 이후 일정과의 관계는 저장 후 journey '주의'로 표면화(하드 차단 X).
       const flightError = validateFlightEntryDate(caseRow?.data, flightForm.entry_date, destinationKey)
       if (flightError) {
         setStatus('error')
@@ -1980,18 +1981,15 @@ function titerExtraEqual(a: TiterExtraEntry[], b: TiterExtraEntry[]): boolean {
 }
 
 /**
- * 항공편 입국일 cross-entry 검증. 통과면 null, 실패면 에러 메시지.
- * - rule 1 (차단): 입국일 ≥ 채혈일 + 180일 (어떤 titer 라도 만족하면 통과). 너무
- *   이른 입국은 추가 단계로 해결 안 됨 — 실제 날짜 조정 필요.
- * - rule 2 (차단, 일본 한정): 입국일 ≥ (사전 신고 신청일 OR 오늘) + 40일. 아직 신고 전이면
- *   '오늘+40' 안에는 마감이 지나 신청 자체가 불가능하므로 차단. 이미 신고해뒀으면 '신청일+40'
- *   기준이라, 일찍 신고한 경우 오늘 기준 40일 안 남은 입국일도 허용.
+ * 항공편 입국일 전향적 가드. 통과면 null, 차단이면 에러 메시지.
  *
- * 백신·검사 유효기간 만료 (입국일 > titer +2년, 입국일 > rabies chain) 는 차단 X —
- * 추가 접종·추가 검사로 해결 가능한 계획 사항이라 procedure-check 의 '주의' 로 노출
- * (jp.entry-within-2years-of-titer / jp.rabies-valid-until-on-departure 가 안내).
+ * 차단(일본 한정, 미신고일 때만): 입국일 ≥ 오늘 + 40일. 아직 사전 신고 전이면 '오늘+40' 안에는
+ * 신고 마감이 지나 신청 자체가 불가능하고, procedure-check 는 미신고면 SKIP 이라 대체 '주의'가
+ * 없어 여기서만 막는다.
  *
- * titer 미입력 시 rule 1 만 skip — rule 2 는 destination 만으로 평가 가능.
+ * 이후 일정과의 '관계' 위반(입국일 < 채혈일+180일, 사전 신고 신청일+40 위반, titer +2년·rabies
+ * chain 만료 등)은 차단 X — 보호자가 '계속 진행'을 확인하면 저장을 허용하고, 저장 후 journey 의
+ * 정합성 패스(항체↔출국 타이밍 '주의')와 각 step procedure-check('안내')로 표면화한다.
  */
 function validateFlightEntryDate(
   data: Record<string, unknown> | null | undefined,
@@ -1999,26 +1997,18 @@ function validateFlightEntryDate(
   destinationKey: string | null,
 ): string | null {
   if (!entryDate) return null
-  // rule 2 — 일본 사전 신고 40일 마감. 기준 날짜를 '신고했으면 신청일, 아니면 오늘'로 잡는다.
-  // 40일 규칙의 본질은 '신고일 ≤ 입국일−40'(= 신고할 시간 확보)이라, 이미 미리 신고해뒀다면
-  // 입국이 오늘 기준 40일 미만이어도 신고가 충분히 일찍 됐으면 통과시킨다. 신고 후 입국일을
-  // 신청일+40 이전으로 당기면 여전히 차단 — procedure-check jp.advance-notification-40days-before-entry 와 동일 의미.
+  // 일본 사전 신고 40일 — '아직 미신고' 상태에서만 전향적 가드로 차단한다. 미신고 시
+  // 입국까지 40일이 안 남으면 신고할 시간 자체가 없고, procedure-check 는 미신고면 SKIP 이라
+  // 대체 '주의'가 없다. 이미 신고한 경우(신청일 입력됨)는 이후 단계와의 관계라 하드 차단하지
+  // 않고 저장 후 journey 의 안내/주의로 표면화한다(사전 신고 step 의 자체 검증·정합성 패스).
+  // 항체↔출국 180일 등 '이후 일정과의 관계'도 마찬가지로 여기서 차단하지 않는다.
   if (destinationKey === 'japan') {
     const notif =
       typeof data?.advance_notification_date === 'string' ? data.advance_notification_date : ''
     const filed = notif.length >= 10
-    const anchor = filed ? notif : todayIso()
-    if (daysBetween(anchor, entryDate) < 40) {
-      return filed
-        ? '사전 신고일 기준 입국까지 최소 40일이 필요합니다. 입국일을 늦추거나 신고일을 확인하세요.'
-        : '사전 신고를 위해 일본 입국 때까지 최소 40일 여유 기간이 필요합니다. 사전 신고를 먼저 하신 경우 사전 신고 날짜를 입력해주세요.'
+    if (!filed && daysBetween(todayIso(), entryDate) < 40) {
+      return '사전 신고를 위해 일본 입국 때까지 최소 40일 여유 기간이 필요합니다. 사전 신고를 먼저 하신 경우 사전 신고 날짜를 입력해주세요.'
     }
-  }
-  // rule 1 — titer 후 180일.
-  const titerDates = readAllTiterDates(data)
-  if (titerDates.length === 0) return null
-  if (!titerDates.some((t) => daysBetween(t, entryDate) >= 180)) {
-    return '입국일은 광견병 항체 검사일로부터 180일 후여야 합니다.'
   }
   return null
 }
