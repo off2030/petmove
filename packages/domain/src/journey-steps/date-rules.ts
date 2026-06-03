@@ -105,17 +105,13 @@ export function validateJpImportDate(v: string, ctx: DateRuleContext): string | 
   return null
 }
 
-/** 한국 수입검역일: 귀국일(한국 입국일) 당일 또는 다음 날만. 방향별로 메시지를 분리한다. */
+/** 한국 수입검역일: 한국 입국(귀국 항공편)보다 빠를 수 없음. 도착 이후(당일 포함)는 제한 없음. */
 export function validateKrImportDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const ret = readDate(ctx.data, 'return_date')
   if (!ret) return null
-  // 한국 도착(귀국 항공편) 전에는 받을 수 없음 — 너무 빠른 경우.
+  // 한국 도착(귀국 항공편) 전에는 받을 수 없음. 도착 이후 날짜는 입력 허용(상한 없음).
   if (v < ret) return '한국 수입 동물검역은 입국일보다 빠를 수 없습니다.'
-  // 귀국일 당일·다음 날(도착 지연)을 벗어난 경우 — 너무 늦음.
-  if (v !== ret && v !== addDay(ret)) {
-    return '검역은 귀국 당일에 받아야 합니다. 검역일 혹은 귀국 항공편 날짜를 수정하세요.'
-  }
   return null
 }
 
