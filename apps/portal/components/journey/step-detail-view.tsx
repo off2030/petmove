@@ -462,7 +462,7 @@ export function StepDetailView({
       if (isRabies1 && rabies.date) {
         const birth = readBirthDate(caseRow?.data)
         if (birth && daysBetween(birth, rabies.date) < 91) {
-          return `1차 광견병 접종은 생후 91일 이후(${addDays(birth, 91)} 이후) 가능합니다.`
+          return `1차 광견병 접종은 생후 91일(${addDays(birth, 91)}) 이후에 해야 합니다.`
         }
       }
       if (isRabies2) {
