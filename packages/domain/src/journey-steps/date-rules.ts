@@ -83,13 +83,13 @@ export function validateJpExportVisitDate(v: string, ctx: DateRuleContext): stri
 export function validateKrExportDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const vet = readDate(ctx.data, 'vet_visit_date')
-  if (vet && v < vet) return `검역일은 출국 전 임상검사일(${fmt(vet)})보다 빠를 수 없습니다.`
+  if (vet && v < vet) return `한국 수출 동물검역일은 출국 전 임상검사일(${fmt(vet)})보다 빠를 수 없습니다.`
   const depart = departFromData(ctx.data)
   if (depart) {
-    if (v > depart) return `검역일은 출국일(${fmt(depart)})보다 늦을 수 없습니다.`
+    if (v > depart) return `한국 수출 동물검역일은 출국일(${fmt(depart)})보다 늦을 수 없습니다.`
     const windowDays = getVetVisitWindowDays(ctx.destination)
     if (daysBetween(v, depart) >= windowDays) {
-      return `검역일은 출국일 기준 ${windowDays}일 이내여야 합니다.`
+      return `한국 수출 동물검역일은 출국일 기준 ${windowDays}일 이내여야 합니다.`
     }
   }
   return null
@@ -100,7 +100,7 @@ export function validateJpImportDate(v: string, ctx: DateRuleContext): string | 
   if (!v) return null
   const entry = departFromData(ctx.data)
   if (entry && v !== entry && v !== addDay(entry)) {
-    return `검역일은 일본 입국일(${fmt(entry)}) 당일 또는 다음 날만 가능합니다.`
+    return `일본 수입 동물검역일은 일본 입국일(${fmt(entry)}) 당일 또는 다음 날만 가능합니다.`
   }
   return null
 }
