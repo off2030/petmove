@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import {
   createVaccineLookups,
   findRabiesChainBreak,
-  TITER_ENTRY_TIMING_CHECK_IDS,
+  CONSISTENCY_WARNING_CHECK_IDS,
   type CheckResult,
   type ProcedureCheck,
   type StepDefinition,
@@ -657,14 +657,10 @@ export function StepDetailView({
         }
       })
     } else if (isFlight) {
-      // 입국일 전향적 가드 — 일본 미신고 상태에서 사전 신고 40일 여유가 없을 때만 차단.
-      // 항체↔출국 180일 등 이후 일정과의 관계는 저장 후 journey '주의'로 표면화(하드 차단 X).
-      const flightError = validateFlightEntryDate(caseRow?.data, flightForm.entry_date, destinationKey)
-      if (flightError) {
-        setStatus('error')
-        setError(flightError)
-        return
-      }
+      // 이미 진행된 일정을 되돌려 항공편을 수정하는 흐름 — 이후 일정과의 관계(항체↔출국 180일,
+      // 사전 신고 40일 등)는 하드 차단하지 않는다. '계속 진행' 확인 후 저장하고, 어긋난 이후
+      // 일정은 journey 의 '주의'로 표면화해 차근차근 수정하도록 유도한다. 항공편 자체의 내재적
+      // 정합성(출국 ≤ 귀국·날짜 형식)만 아래에서 하드 차단.
       // 출국 ≤ 귀국 — 둘 다 입력된 경우만 차단. 논리적 불가능 조건.
       if (
         flightForm.entry_date &&
@@ -859,14 +855,14 @@ export function StepDetailView({
   }
 
   // ok=false 체크를 톤별로 분리 — '주의'(blocker/warning) vs '안내'(info).
-  // 단 항체 검사↔출국 타이밍(180일·2년)은 info 라도 '주의'로 격상 — 타임라인 표시와 일치.
+  // 단 단계 간 날짜 관계(항체↔출국·사전 신고 40일)는 info 라도 '주의'로 격상 — 타임라인과 일치.
   const failed = checkResults.filter(
     (c) =>
-      !c.result.ok && (c.check.severity !== 'info' || TITER_ENTRY_TIMING_CHECK_IDS.has(c.check.id)),
+      !c.result.ok && (c.check.severity !== 'info' || CONSISTENCY_WARNING_CHECK_IDS.has(c.check.id)),
   )
   const notices = checkResults.filter(
     (c) =>
-      !c.result.ok && c.check.severity === 'info' && !TITER_ENTRY_TIMING_CHECK_IDS.has(c.check.id),
+      !c.result.ok && c.check.severity === 'info' && !CONSISTENCY_WARNING_CHECK_IDS.has(c.check.id),
   )
   // step config 의 situational 메시지 — timeline desc 와 동일 내용을 detail 에도 노출.
   // 같은 룰을 mirror 한 procedure-check 가 동일 메시지로 이미 떴으면(예: 추가 백신
@@ -1978,39 +1974,6 @@ function titerExtraEqual(a: TiterExtraEntry[], b: TiterExtraEntry[]): boolean {
     }
   }
   return true
-}
-
-/**
- * 항공편 입국일 전향적 가드. 통과면 null, 차단이면 에러 메시지.
- *
- * 차단(일본 한정, 미신고일 때만): 입국일 ≥ 오늘 + 40일. 아직 사전 신고 전이면 '오늘+40' 안에는
- * 신고 마감이 지나 신청 자체가 불가능하고, procedure-check 는 미신고면 SKIP 이라 대체 '주의'가
- * 없어 여기서만 막는다.
- *
- * 이후 일정과의 '관계' 위반(입국일 < 채혈일+180일, 사전 신고 신청일+40 위반, titer +2년·rabies
- * chain 만료 등)은 차단 X — 보호자가 '계속 진행'을 확인하면 저장을 허용하고, 저장 후 journey 의
- * 정합성 패스(항체↔출국 타이밍 '주의')와 각 step procedure-check('안내')로 표면화한다.
- */
-function validateFlightEntryDate(
-  data: Record<string, unknown> | null | undefined,
-  entryDate: string,
-  destinationKey: string | null,
-): string | null {
-  if (!entryDate) return null
-  // 일본 사전 신고 40일 — '아직 미신고' 상태에서만 전향적 가드로 차단한다. 미신고 시
-  // 입국까지 40일이 안 남으면 신고할 시간 자체가 없고, procedure-check 는 미신고면 SKIP 이라
-  // 대체 '주의'가 없다. 이미 신고한 경우(신청일 입력됨)는 이후 단계와의 관계라 하드 차단하지
-  // 않고 저장 후 journey 의 안내/주의로 표면화한다(사전 신고 step 의 자체 검증·정합성 패스).
-  // 항체↔출국 180일 등 '이후 일정과의 관계'도 마찬가지로 여기서 차단하지 않는다.
-  if (destinationKey === 'japan') {
-    const notif =
-      typeof data?.advance_notification_date === 'string' ? data.advance_notification_date : ''
-    const filed = notif.length >= 10
-    if (!filed && daysBetween(todayIso(), entryDate) < 40) {
-      return '사전 신고를 위해 일본 입국 때까지 최소 40일 여유 기간이 필요합니다. 사전 신고를 먼저 하신 경우 사전 신고 날짜를 입력해주세요.'
-    }
-  }
-  return null
 }
 
 /**

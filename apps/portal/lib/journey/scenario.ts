@@ -10,7 +10,7 @@ import {
   resolveDone,
   resolveStepForDestination,
   runChecksForCase,
-  TITER_ENTRY_TIMING_CHECK_IDS,
+  CONSISTENCY_WARNING_CHECK_IDS,
   type StepDefinition,
 } from '@petmove/domain'
 
@@ -262,10 +262,10 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
         const r2 = applicableSteps.find((s) => s.id === 'rabies-vaccine-2')
         if (r2 && resolveDone(r2.done, caseRow)) stepId = 'rabies-titer'
       }
-      // 항체 검사일 ↔ 출국일 타이밍(180일·2년) 위반은 정합성 '주의'로 격상 — '안내' 버킷
-      // 대신 consistencyByStep 으로 보내 타임라인 desc 에 사유를 노출하고 주의 배지로 표시한다.
-      // (앞 단계인 항체 검사를 수정해 이후 출국 일정이 어긋난 정합성 문제라 강한 신호가 맞다.)
-      if (TITER_ENTRY_TIMING_CHECK_IDS.has(check.id)) {
+      // 단계 간 날짜 관계(항체↔출국 180일·2년, 사전 신고 40일) 위반은 정합성 '주의'로 격상 —
+      // '안내' 버킷 대신 consistencyByStep 으로 보내 타임라인 desc 에 사유를 노출하고 주의
+      // 배지로 표시한다. (앞 단계를 수정해 이후 일정이 어긋난 정합성 문제라 강한 신호가 맞다.)
+      if (CONSISTENCY_WARNING_CHECK_IDS.has(check.id)) {
         if (!consistencyByStep.has(stepId)) {
           consistencyByStep.set(stepId, result.message ?? check.description)
         }
