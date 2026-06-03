@@ -59,7 +59,7 @@ export function validateJpExportReservationDate(v: string, ctx: DateRuleContext)
   const ret = readDate(ctx.data, 'return_date')
   if (ret && v > ret) return '수출 동물검역 예약일은 귀국일보다 늦을 수 없습니다.'
   const entry = readDate(ctx.data, 'entry_date')
-  if (entry && v < entry) return `예약일은 일본 입국일(${fmt(entry)})보다 빠를 수 없습니다.`
+  if (entry && v < entry) return `수출 동물검역 예약일은 일본 입국일(${fmt(entry)})보다 빠를 수 없습니다.`
   return null
 }
 
