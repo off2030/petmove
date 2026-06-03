@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
-import type { CaseRow } from '@petmove/domain'
+import { validateJpEntryDate, type CaseRow } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { updateCaseInfoFields, type CaseInfoInput } from '@/lib/actions/cases'
 import { readForm, eqForm } from '@/lib/cases/info-form'
@@ -51,6 +51,18 @@ export function useCaseEditForm(caseRow: CaseRow, caseId: string): UseCaseEditFo
     if (form.microchip && form.microchip.length !== 15) {
       setStatus('error')
       setError('15자리 숫자를 입력해주세요.')
+      return
+    }
+    // 일본 입국일 — 광견병 항체 검사 + 180일 이내면 server 가 거부할 입력. 즉시 차단해
+    // 빨간 박스로 분명히 보이게 (server 결과만 의지하면 토스트가 짧게 사라질 수 있음).
+    const jpEntryErr = validateJpEntryDate(form.departure_date.trim(), {
+      data: (caseRow.data ?? {}) as Record<string, unknown>,
+      destination: form.destination,
+      departureDate: caseRow.departure_date ?? null,
+    })
+    if (jpEntryErr) {
+      setStatus('error')
+      setError(jpEntryErr)
       return
     }
     setStatus('saving')

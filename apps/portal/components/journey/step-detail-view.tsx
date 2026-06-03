@@ -7,6 +7,7 @@ import {
   createVaccineLookups,
   findRabiesChainBreak,
   CONSISTENCY_WARNING_CHECK_IDS,
+  validateJpEntryDate,
   validateJpExportReservationDate,
   validateJpExportVisitDate,
   validateJpImportDate,
@@ -520,6 +521,15 @@ export function StepDetailView({
       ) {
         return '귀국 항공편 날짜는 출국 항공편 날짜 이후여야 합니다.'
       }
+      // 일본 입국일 — 광견병 항체 검사 + 180일 이내면 server 가 거부할 입력. server roundtrip
+      // 전 즉시 차단해 빨간 박스로 분명히 보이게 (server 결과는 form 변경 시 useEffect 가
+      // 해제해 토스트가 짧게 사라질 수 있음).
+      const jpEntryErr = validateJpEntryDate(flightForm.entry_date.trim(), {
+        data: (caseRow?.data ?? {}) as Record<string, unknown>,
+        destination: caseRow?.destination ?? null,
+        departureDate: caseRow?.departure_date ?? null,
+      })
+      if (jpEntryErr) return jpEntryErr
       return null
     }
     if (isAdvanceNotification) {
