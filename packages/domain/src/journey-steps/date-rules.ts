@@ -1,5 +1,5 @@
 import type { CaseRow } from '../types'
-import { getVetVisitWindowDays, parseDestinations } from '../destination-config'
+import { getVetVisitWindowDays, matchesDestinationKey } from '../destination-config'
 import { addDays } from '../procedure-checks/utils'
 import type { StepDefinition } from './types'
 
@@ -69,7 +69,9 @@ function departFromData(data: Record<string, unknown>): string {
  */
 export function validateJpEntryDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
-  if (!parseDestinations(ctx.destination).includes('japan')) return null
+  // destination 토큰 normalize — '일본'/'japan' 양쪽 모두 매칭. parseDestinations + includes('japan')
+  // 만 쓰면 한글 토큰을 놓침.
+  if (!matchesDestinationKey(ctx.destination, 'japan')) return null
 
   const titerDates: string[] = []
   const rawTiters = ctx.data.rabies_titer_records
