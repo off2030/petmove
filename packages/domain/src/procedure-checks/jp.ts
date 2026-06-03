@@ -196,6 +196,20 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (first.date >= microchip) {
         return { ok: true, message: `1차 접종(${first.date}) ≥ 마이크로칩(${microchip}).` }
       }
+      // 마이크로칩 > 1차. 2차도 마이크로칩 전이면 같은 날 룰 적용 불가 — 본 검증
+      // ([[jp.microchip-rabies-sequence]])과 동일 메시지로 격상해 항체 입력 전에도 정확히 안내.
+      const second = rabies[1]
+      if (second && second.date < microchip) {
+        return {
+          ok: false,
+          message: '마이크로칩이 2차 광견병 백신보다 늦습니다. 재접종이 필요합니다.',
+          offendingPaths: [
+            'microchip_implant_date',
+            `rabies_dates[${first.originalIndex}].date`,
+            `rabies_dates[${second.originalIndex}].date`,
+          ],
+        }
+      }
       return {
         ok: false,
         message:
