@@ -7,6 +7,12 @@ import {
   createVaccineLookups,
   findRabiesChainBreak,
   CONSISTENCY_WARNING_CHECK_IDS,
+  validateJpExportReservationDate,
+  validateJpExportVisitDate,
+  validateJpImportDate,
+  validateKrExportDate,
+  validateKrImportDate,
+  validateVetVisitDate,
   type CheckResult,
   type ProcedureCheck,
   type StepDefinition,
@@ -437,21 +443,140 @@ export function StepDetailView({
     [rabiesExtra, rabiesLookups],
   )
 
-  function handleSave() {
-    if (!canSave) return
+  // 저장을 막아야 하는 '입력 불가' 차단 검증을 한 곳에 모은다 — 통과(null)면 저장 가능, 위반이면
+  // 사람이 읽는 에러 메시지. 단계 자체의 내재적 정합성 + 앞(선행) 단계 대비 검증만 차단한다
+  // (이후 일정과의 관계는 차단 X — 확인 후 저장 + 주의). 검역·증명서·내원 step 은 서버 액션과
+  // 같은 @petmove/domain 함수를 클라이언트에서도 선행해, 어차피 차단될 저장에는 확인 팝업이
+  // 뜨지 않게 한다(검증 → 통과 시에만 확인 → 저장).
+  function getSaveBlockError(): string | null {
     if (isMicrochip) {
-      if (chip !== '' && chip.length !== 15) {
-        setStatus('error')
-        setError('마이크로칩 번호는 15자리여야 합니다.')
-        return
-      }
-      // 시술일 ≥ 출생일 (common.microchip-after-birth — 입력 차단으로 이관).
+      if (chip !== '' && chip.length !== 15) return '마이크로칩 번호는 15자리여야 합니다.'
       const birth = readBirthDate(caseRow?.data)
       if (date && birth && date < birth) {
-        setStatus('error')
-        setError('시술일이 출생일보다 빠릅니다. 시술일 또는 출생일을 확인하세요.')
-        return
+        return '시술일이 출생일보다 빠릅니다. 시술일 또는 출생일을 확인하세요.'
       }
+      return null
+    }
+    if (isRabies) {
+      if (isRabies2 && isRabiesEntryExpired(rabies)) return '입력하신 접종은 면역 유효기간이 만료되었습니다.'
+      if (isRabies1 && rabies.date) {
+        const birth = readBirthDate(caseRow?.data)
+        if (birth && daysBetween(birth, rabies.date) < 91) {
+          return `1차 광견병 접종은 생후 91일 이후(${addDays(birth, 91)} 이후) 가능합니다.`
+        }
+      }
+      if (isRabies2) {
+        const r1 = readRabiesEntryForm(caseRow?.data, 0)
+        if (r1.date && rabies.date) {
+          if (daysBetween(r1.date, rabies.date) < 30) return '1·2차 접종 간격은 30일 이상이어야 합니다.'
+          const r1Years = parseValidUntilYears(r1.valid_until)
+          if (r1Years !== null && rabies.date >= addYears(r1.date, r1Years)) {
+            return '2차 접종일이 1차 접종의 면역 유효기간을 벗어났습니다.'
+          }
+          const microchip = readImplantDate(caseRow?.data)
+          if (microchip && microchip > rabies.date) return '마이크로칩 시술일 이후에 광견병 백신을 접종해야 합니다.'
+          if (microchip && r1.date < microchip) {
+            const titerDates = readAllTiterDates(caseRow?.data)
+            if (titerDates.length > 0 && !titerDates.includes(rabies.date)) {
+              return '마이크로칩보다 1차 접종을 먼저 한 경우, 2차 접종일은 광견병 항체 검사일과 같아야 합니다.'
+            }
+          }
+        }
+      }
+      return null
+    }
+    if (isRabiesExtra) {
+      const r1Saved = readRabiesEntryForm(caseRow?.data, 0)
+      const r2Saved = readRabiesEntryForm(caseRow?.data, 1)
+      const chainBreak = findRabiesChainBreak([
+        { date: r1Saved.date, valid_until: r1Saved.valid_until || null },
+        { date: r2Saved.date, valid_until: r2Saved.valid_until || null },
+        ...rabiesExtra.map((e) => ({ date: e.date, valid_until: e.valid_until || null })),
+      ])
+      if (chainBreak) {
+        return `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 합니다.`
+      }
+      return null
+    }
+    if (isTiter) {
+      if (isTiterEntryExpired(titerForm)) return '입력하신 항체 검사는 유효기간이 만료되었습니다.'
+      return validateTiterDate(caseRow?.data, titerForm.date, true)
+    }
+    if (isTiterExtra) {
+      for (const entry of titerExtra) {
+        if (!entry.date) continue
+        if (isTiterEntryExpired(entry)) return `채혈일 ${entry.date}: 입력하신 항체 검사는 유효기간이 만료되었습니다.`
+        const err = validateTiterDate(caseRow?.data, entry.date, false)
+        if (err) return `채혈일 ${entry.date}: ${err}`
+      }
+      return null
+    }
+    if (isFlight) {
+      // 출국 ≤ 귀국 (항공편 내재적 정합성). 이후 일정과의 관계는 차단 X.
+      if (
+        flightForm.entry_date &&
+        flightForm.return_date &&
+        flightForm.return_date < flightForm.entry_date
+      ) {
+        return '귀국 항공편 날짜는 출국 항공편 날짜 이후여야 합니다.'
+      }
+      return null
+    }
+    if (isAdvanceNotification) {
+      return validateAdvanceNotificationDate(caseRow?.data, advanceDate)
+    }
+    // 검역·증명서·내원 — 서버 액션과 동일한 @petmove/domain 검증을 클라이언트에서도 선행.
+    const data = (caseRow?.data ?? {}) as Record<string, unknown>
+    if (isVetVisit) {
+      return validateVetVisitDate(
+        vetVisitDate.trim(),
+        { data, destination: caseRow?.destination ?? null, departureDate: caseRow?.departure_date ?? null },
+        { skipExportQuarantine: true },
+      )
+    }
+    if (isCertificateIssue) {
+      return validateKrExportDate(krExportQuarantineDate.trim(), {
+        data,
+        destination: caseRow?.destination ?? null,
+        departureDate: null,
+      })
+    }
+    if (isJpExportQuarantine) {
+      const reserved = (jpExport.date ?? '').trim()
+      const resErr = validateJpExportReservationDate(reserved, { data, destination: null, departureDate: null })
+      if (resErr) return resErr
+      // 신청일 마감 — 예약일(없으면 귀국일) −10일. 서버 updateJpExportQuarantineFields 와 동일.
+      const app = (jpExport.applicationDate ?? '').trim()
+      if (app) {
+        const returnDate = typeof data.return_date === 'string' ? data.return_date : ''
+        const anchor = reserved || (returnDate.length >= 10 ? returnDate.slice(0, 10) : '')
+        if (anchor && app > addDays(anchor, -10)) {
+          return '일본 수출 동물검역은 최소 10일 전에 신청, 예약해야 합니다.'
+        }
+      }
+      return null
+    }
+    if (isJpImportQuarantine) {
+      return validateJpImportDate(jpImportQuarantineDate.trim(), { data, destination: null, departureDate: null })
+    }
+    if (isJpExportQuarantineVisit) {
+      return validateJpExportVisitDate(jpExportQuarantineVisitDate.trim(), { data, destination: null, departureDate: null })
+    }
+    if (isKrImportQuarantine) {
+      return validateKrImportDate(krImportQuarantineDate.trim(), { data, destination: null, departureDate: null })
+    }
+    return null
+  }
+
+  function handleSave() {
+    if (!canSave) return
+    const blockErr = getSaveBlockError()
+    if (blockErr) {
+      setStatus('error')
+      setError(blockErr)
+      return
+    }
+    if (isMicrochip) {
       setStatus('saving')
       setError(null)
       startTransition(async () => {
@@ -466,62 +591,6 @@ export function StepDetailView({
         }
       })
     } else if (isRabies) {
-      // 2차 한정: 입력 시점에 면역 유효 아님 → 차단 (출국 시점에 유효해야 검역 인정).
-      // 1차는 면제 — 이미 추가 접종을 마친 보호자가 옛 1차 기록을 그대로 등록하는
-      // 케이스에서 만료가 정상이고, 후속 검증(2차 1차유효기간 내·항체 검사 chain)에서 잡힌다.
-      if (isRabies2 && isRabiesEntryExpired(rabies)) {
-        setStatus('error')
-        setError('입력하신 접종은 면역 유효기간이 만료되었습니다.')
-        return
-      }
-      // 1차: 생후 91일 이후만 가능 (jp.rabies-prime-after-91days-old — 입력 차단으로 이관).
-      if (isRabies1 && rabies.date) {
-        const birth = readBirthDate(caseRow?.data)
-        if (birth && daysBetween(birth, rabies.date) < 91) {
-          const eligible = addDays(birth, 91)
-          setStatus('error')
-          setError(`1차 광견병 접종은 생후 91일 이후(${eligible} 이후) 가능합니다.`)
-          return
-        }
-      }
-      // 2차 한정 cross-entry: 1차 접종 이후 + 1차 면역 유효기간 이내 + (1차<마이크로칩이면 2차=항체 검사일)
-      // + 마이크로칩 ≤ 2차 (jp.microchip-rabies-sequence 2차 시점 검증 — 입력 차단으로 이관).
-      if (isRabies2) {
-        const r1 = readRabiesEntryForm(caseRow?.data, 0)
-        if (r1.date && rabies.date) {
-          if (daysBetween(r1.date, rabies.date) < 30) {
-            setStatus('error')
-            setError('1·2차 접종 간격은 30일 이상이어야 합니다.')
-            return
-          }
-          const r1Years = parseValidUntilYears(r1.valid_until)
-          if (r1Years !== null && rabies.date >= addYears(r1.date, r1Years)) {
-            setStatus('error')
-            setError('2차 접종일이 1차 접종의 면역 유효기간을 벗어났습니다.')
-            return
-          }
-          // 마이크로칩 ≤ 2차 (jp.microchip-rabies-sequence): 마이크로칩이 2차보다 늦으면
-          // ①·② 두 조건 모두 위반이라 차단.
-          const microchip = readImplantDate(caseRow?.data)
-          if (microchip && microchip > rabies.date) {
-            setStatus('error')
-            setError('마이크로칩 시술일 이후에 광견병 백신을 접종해야 합니다.')
-            return
-          }
-          // 1차가 마이크로칩보다 빠른 경우: 2차 = 항체 검사일. 항체 검사 미입력 시 검증 불가 →
-          // 통과 (이후 항체 검사 입력 시 procedure-check 가 잡음).
-          if (microchip && r1.date < microchip) {
-            const titerDates = readAllTiterDates(caseRow?.data)
-            if (titerDates.length > 0 && !titerDates.includes(rabies.date)) {
-              setStatus('error')
-              setError(
-                '마이크로칩보다 1차 접종을 먼저 한 경우, 2차 접종일은 광견병 항체 검사일과 같아야 합니다.',
-              )
-              return
-            }
-          }
-        }
-      }
       setStatus('saving')
       setError(null)
       startTransition(async () => {
@@ -545,22 +614,6 @@ export function StepDetailView({
         }
       })
     } else if (isRabiesExtra) {
-      // chain 검증 — 각 접종은 직전 접종 면역 유효기간 이내여야 함. 만료 후 접종은
-      // 새 기초접종이 되어 1·2차+검사+180일 다시 — 입력 단계에서 거부.
-      const r1Saved = readRabiesEntryForm(caseRow?.data, 0)
-      const r2Saved = readRabiesEntryForm(caseRow?.data, 1)
-      const chainBreak = findRabiesChainBreak([
-        { date: r1Saved.date, valid_until: r1Saved.valid_until || null },
-        { date: r2Saved.date, valid_until: r2Saved.valid_until || null },
-        ...rabiesExtra.map((e) => ({ date: e.date, valid_until: e.valid_until || null })),
-      ])
-      if (chainBreak) {
-        setStatus('error')
-        setError(
-          `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 합니다.`,
-        )
-        return
-      }
       setStatus('saving')
       setError(null)
       startTransition(async () => {
@@ -587,18 +640,6 @@ export function StepDetailView({
         }
       })
     } else if (isTiter) {
-      // 첫 항체 검사 — 만료 + 채혈 cross-entry (1차<마이크로칩 시 = 2차 룰 포함).
-      if (isTiterEntryExpired(titerForm)) {
-        setStatus('error')
-        setError('입력하신 항체 검사는 유효기간이 만료되었습니다.')
-        return
-      }
-      const titerError = validateTiterDate(caseRow?.data, titerForm.date, true)
-      if (titerError) {
-        setStatus('error')
-        setError(titerError)
-        return
-      }
       setStatus('saving')
       setError(null)
       startTransition(async () => {
@@ -618,22 +659,6 @@ export function StepDetailView({
         }
       })
     } else if (isTiterExtra) {
-      // 추가 항체 검사 — 만료 + 채혈 cross-entry. rule 3 (=2차) 는 set-level 룰이라
-      // 추가 검사 개별 입력엔 적용 X (procedure-check 가 set 평가).
-      for (const entry of titerExtra) {
-        if (!entry.date) continue
-        if (isTiterEntryExpired(entry)) {
-          setStatus('error')
-          setError(`채혈일 ${entry.date}: 입력하신 항체 검사는 유효기간이 만료되었습니다.`)
-          return
-        }
-        const err = validateTiterDate(caseRow?.data, entry.date, false)
-        if (err) {
-          setStatus('error')
-          setError(`채혈일 ${entry.date}: ${err}`)
-          return
-        }
-      }
       setStatus('saving')
       setError(null)
       startTransition(async () => {
@@ -657,20 +682,6 @@ export function StepDetailView({
         }
       })
     } else if (isFlight) {
-      // 이미 진행된 일정을 되돌려 항공편을 수정하는 흐름 — 이후 일정과의 관계(항체↔출국 180일,
-      // 사전 신고 40일 등)는 하드 차단하지 않는다. '계속 진행' 확인 후 저장하고, 어긋난 이후
-      // 일정은 journey 의 '주의'로 표면화해 차근차근 수정하도록 유도한다. 항공편 자체의 내재적
-      // 정합성(출국 ≤ 귀국·날짜 형식)만 아래에서 하드 차단.
-      // 출국 ≤ 귀국 — 둘 다 입력된 경우만 차단. 논리적 불가능 조건.
-      if (
-        flightForm.entry_date &&
-        flightForm.return_date &&
-        flightForm.return_date < flightForm.entry_date
-      ) {
-        setStatus('error')
-        setError('귀국 항공편 날짜는 출국 항공편 날짜 이후여야 합니다.')
-        return
-      }
       setStatus('saving')
       setError(null)
       startTransition(async () => {
@@ -697,13 +708,6 @@ export function StepDetailView({
         }
       })
     } else if (isAdvanceNotification) {
-      // 입국 40일 전까지 접수돼야 함 — 룰 위반 시 차단 (procedure-check '주의' 로 빠지는 것 방지).
-      const advanceError = validateAdvanceNotificationDate(caseRow?.data, advanceDate)
-      if (advanceError) {
-        setStatus('error')
-        setError(advanceError)
-        return
-      }
       setStatus('saving')
       setError(null)
       startTransition(async () => {
@@ -978,6 +982,14 @@ export function StepDetailView({
   // 저장 후엔 정합성 재검증(scenario)으로 어긋난 이후 일정이 '주의'로 표면화된다.
   const handleSaveClick = async () => {
     if (!canSave) return
+    // 먼저 '입력 불가' 차단 검증 — 어차피 저장이 막힐 거면 확인 팝업 없이 바로 에러만 보여준다.
+    // (확인 → 저장이 막히는 헛걸음 방지. 확인 팝업은 저장이 실제로 가능할 때만 띄운다.)
+    const blockErr = getSaveBlockError()
+    if (blockErr) {
+      setStatus('error')
+      setError(blockErr)
+      return
+    }
     if (dirty && hasDownstreamData) {
       const ok = await confirm({
         message: '이후 일정이 이미 입력돼 있어요',
