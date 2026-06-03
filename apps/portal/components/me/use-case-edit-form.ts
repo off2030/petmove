@@ -53,6 +53,27 @@ export function useCaseEditForm(caseRow: CaseRow, caseId: string): UseCaseEditFo
       setError('15자리 숫자를 입력해주세요.')
       return
     }
+    // 왕복 + 귀국일 < 출국일 — server updateCaseInfoFields 와 동일 검증을 client 에서도
+    // 선행. server 결과만 의지하면 토스트가 form 변경 useEffect 로 짧게 사라져 "저장됐다"고
+    // 오인할 수 있음.
+    if (
+      form.trip_type === 'round' &&
+      form.departure_date &&
+      form.return_date &&
+      form.return_date < form.departure_date
+    ) {
+      setStatus('error')
+      setError('귀국일은 출국일 이후여야 합니다.')
+      return
+    }
+    if (form.weight.trim()) {
+      const n = Number(form.weight)
+      if (!Number.isFinite(n) || n < 0) {
+        setStatus('error')
+        setError('몸무게 형식이 올바르지 않습니다.')
+        return
+      }
+    }
     // 일본 입국일 — 광견병 항체 검사 + 180일 이내면 server 가 거부할 입력. 즉시 차단해
     // 빨간 박스로 분명히 보이게 (server 결과만 의지하면 토스트가 짧게 사라질 수 있음).
     const jpEntryErr = validateJpEntryDate(form.departure_date.trim(), {
