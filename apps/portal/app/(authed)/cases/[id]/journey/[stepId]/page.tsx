@@ -67,7 +67,7 @@ export default function CaseJourneyStepPage({
   // 확인창 조건. 뒤 일정이 있으면 앞 단계 변경이 정합성을 깨뜨릴 수 있어 사전 경고한다.
   const hasDownstreamData = applicable
     .slice(stepIndex + 1)
-    .some((s) => resolveDone(s.done, caseRow))
+    .some((s) => resolveDone(s.done, caseRow) || (s.hasInputData?.(caseRow) ?? false))
 
   return (
     <StepDetailView

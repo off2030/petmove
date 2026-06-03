@@ -410,6 +410,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     order: 47,
     deadline: { anchor: 'entry', daysBefore: 40 },
     done: 'has-advance-notification',
+    // 신청일만 입력된 in_progress 상태도 '입력됨'으로 본다 — 항공편 수정 시 어긋날 수 있어
+    // 확인창에서 잡아야 한다. (done 시그널은 'done' 만 잡음 — 신청·예약은 in_progress 단계 존재.)
+    hasInputData: (caseRow) => deriveAdvanceNotificationStatus(caseRow) !== 'not_started',
     inputs: [{ key: 'advance_notification_date', label: '신청일', type: 'date' }],
     allowAttachments: true,
     attachmentHint: '수입허가증을 사진, PDF로 보관하세요.',
@@ -436,6 +439,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 귀국편 절차라 후속(출국 전 임상검사 등)을 막지 않는다 — 동시에 '다음 할 일' 노출.
     nonBlocking: true,
     done: 'has-jp-export-quarantine',
+    // 신청·예약이 in_progress 인 상태도 '입력됨'으로 본다 (사전 신고와 동일 패턴).
+    hasInputData: (caseRow) => deriveJpExportQuarantineStatus(caseRow) !== 'not_started',
     // 진행 상태는 [[deriveJpExportQuarantineStatus]] 가 단일 출처 — admin 신고탭과 동일.
     // 두 분기:
     //  - skip O (예약 입력 없이 완료 처리): '입력 없이 완료 처리됨' — done 이라 timeline 은

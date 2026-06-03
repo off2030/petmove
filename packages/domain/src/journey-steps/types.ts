@@ -173,6 +173,12 @@ export interface StepDefinition {
   /** 완료 시그널. */
   done: StepDoneSignal
   /**
+   * done 과 별개로, 보호자가 입력한 데이터가 있는지. '이후 일정이 입력돼 있어요' 확인창의
+   * 단일 출처. done 이 in_progress 상태를 표현 못하는 step (derive*Status 패턴 — 신청일만
+   * 입력하고 명시적 '완료' 미클릭) 에서 정의한다. 미정의 시 done 으로 폴백.
+   */
+  hasInputData?: (caseRow: CaseRow) => boolean
+  /**
    * 데이터 조건부 노출. 정의되면 applicability + 이 조건이 둘 다 참일 때만 카탈로그에서
    * 떠오른다. 빈 값이면 항상 적용.
    */
