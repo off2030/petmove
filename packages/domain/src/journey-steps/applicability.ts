@@ -7,6 +7,7 @@ import {
   DESTINATION_OVERRIDES,
 } from '../destination-config'
 import { addDays, addYears, readRabiesEntries, readTiterEntries, resolveValidUntil, todayUtc } from '../procedure-checks/utils'
+import { resolveStepForDestination } from './destination-overrides'
 import type { CaseJourneyContext, StepApplicability, StepAppliesWhenSignal, StepDefinition } from './types'
 
 /**
@@ -163,7 +164,16 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
   }
 }
 
-/** 케이스에 적용되는 step 들을 order 순으로 반환. */
+/**
+ * 케이스에 적용되는 step 들을 order 순으로 반환. destination override 가 머지된 step 을 돌려준다 —
+ * 호출자는 done/title/inputs 등 모든 필드가 일본·EU 등 destinationKey 별로 정확한 값으로 채워진 상태로 받는다.
+ *
+ * 머지를 여기서 한 번에 하는 이유: applicable 배열을 받는 모든 호출자(scenario·page·docs·checklist)에서
+ * base 의 done 시그널(예: 'departure' = 'departure-past')이 평가되어 일본 'departure'(= '일본 수입 동물검역')의
+ * 검역일+확인 룰(has-jp-import-quarantine)을 우회하던 버그가 있었다. 단일 출처로 정돈.
+ *
+ * destinationKey 가 null 이면 머지는 no-op (resolveStepForDestination 이 base 그대로 반환).
+ */
 export function getStepsForCase(
   catalog: readonly StepDefinition[],
   caseRow: CaseRow,
@@ -172,5 +182,6 @@ export function getStepsForCase(
   return catalog
     .filter((s) => isStepApplicable(s.applicability, ctx))
     .filter((s) => appliesWhenMatches(s.appliesWhen, caseRow))
+    .map((s) => resolveStepForDestination(s, ctx.destinationKey))
     .sort((a, b) => a.order - b.order)
 }
