@@ -121,7 +121,7 @@ export function validateVetVisitDate(v: string, ctx: DateRuleContext): string | 
   if (!v) return null
   const dep = ctx.departureDate ? ctx.departureDate.slice(0, 10) : ''
   if (dep && /^\d{4}-\d{2}-\d{2}$/.test(dep)) {
-    if (v > dep) return '입력한 날짜가 출국일 이후입니다. 출국 전 임상검사는 출국 전에 받아야 합니다.'
+    if (v > dep) return '입력한 날짜가 출국일보다 늦습니다. 출국 전 임상검사는 출국 전에 받아야 합니다.'
     const windowDays = getVetVisitWindowDays(ctx.destination)
     if (daysBetween(v, dep) >= windowDays) {
       return `출국 전 임상검사는 출국일 기준 ${windowDays}일 이내에 받아야 합니다.`
