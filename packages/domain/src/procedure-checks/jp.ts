@@ -75,8 +75,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (!withinValidity) {
         return {
           ok: false,
-          message:
-            '1차 광견병 백신 유효기간이 만료되었습니다. 2차 광견병 백신은 1차 광견병 백신 유효기간 이내에 해야 합니다. 재접종이 필요합니다.',
+          message: '2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 합니다.',
           offendingPaths: [`rabies_dates[${second.originalIndex}].date`],
         }
       }
