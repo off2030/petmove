@@ -973,15 +973,17 @@ export async function updateVetVisitDate(
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const v = typeof date === 'string' ? date.trim() : ''
-    // 내원일 정합성 — 출국일 이전·목적지별 윈도우 이내 + 한국 수출검역일 이전. 저장 시점 검증과
-    // 재검증(evaluateDateConsistency)이 같은 함수를 쓴다(@petmove/domain date-rules).
+    // 내원일 정합성 — 출국일 이전·목적지별 윈도우 이내(앞 단계 대비)만 저장 시점에 하드 차단.
+    // 한국 수출검역일(후행 단계)보다 늦을 수 없다는 검사는 skipExportQuarantine 로 건너뛴다 —
+    // 이미 입력된 후행을 참조하는 차단이라 앞 단계인 내원일 수정·삭제를 막지 않는다. 그 위반은
+    // 정합성 재검증(evaluateDateConsistency)이 같은 함수로 '주의'를 띄워 검토를 유도한다.
     {
       const row = existing as { departure_date: string | null; destination: string | null }
-      const vetErr = validateVetVisitDate(v, {
-        data: prev,
-        destination: row.destination,
-        departureDate: row.departure_date,
-      })
+      const vetErr = validateVetVisitDate(
+        v,
+        { data: prev, destination: row.destination, departureDate: row.departure_date },
+        { skipExportQuarantine: true },
+      )
       if (vetErr) return { ok: false, error: vetErr }
     }
     const nextData: Record<string, unknown> = { ...prev }
