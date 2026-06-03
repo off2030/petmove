@@ -355,7 +355,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: '신청일이 사전 신고 마감일보다 늦습니다.',
-        fixHint: `입국일을 ${formatKoreanDate(addDays(notif, 40))} 이후로 변경하세요.`,
+        fixHint: '신청일 혹은 출국 항공권 날짜를 변경하세요.',
         offendingPaths: ['advance_notification_date', 'departure_date'],
       }
     },
