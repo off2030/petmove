@@ -1561,7 +1561,7 @@ export function StepDetailView({
             // bottom-nav 영역(content 41px + max(safe-area, 12px)) 만큼 비워둠 + 12px gap
             paddingBottom: 'calc(max(env(safe-area-inset-bottom, 0px), 12px) + 53px)',
             background:
-              'linear-gradient(180deg, rgba(245,239,232,0) 0%, rgba(245,239,232,.92) 30%, rgba(245,239,232,.92) 100%)',
+              'linear-gradient(180deg, rgb(var(--pm-bg-rgb) / 0) 0%, rgb(var(--pm-bg-rgb) / .92) 30%, rgb(var(--pm-bg-rgb) / .92) 100%)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             zIndex: 39,
