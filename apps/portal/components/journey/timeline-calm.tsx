@@ -361,7 +361,6 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
           <span style={{ alignSelf: 'center' }}>
             <PetAvatar size={36} />
           </span>
-          <OtherCasesRow currentCaseId={caseId} tab="journey" />
           <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: 0, color: C.ink }}>{pet.name}</h1>
           <div
             style={{
@@ -377,6 +376,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
             <span style={{ color: C.ink3 }}>{trip.tripType === 'round' ? '⇄' : '→'}</span>
             <span>{trip.toCity}</span>
           </div>
+          <OtherCasesRow currentCaseId={caseId} tab="journey" />
         </div>
 
         {/* 주의 카드 — 케이스 차원 결격 (견종·마릿수·거주·1년 라이선스 등).

@@ -93,7 +93,6 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
           <span style={{ alignSelf: 'center' }}>
             <PetAvatar size={36} />
           </span>
-          <OtherCasesRow currentCaseId={caseId} tab="docs" />
           <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: 0, color: C.ink }}>{pet.name}</h1>
           <div
             style={{
@@ -109,6 +108,7 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
             <span style={{ color: C.ink3 }}>{trip.tripType === 'round' ? '⇄' : '→'}</span>
             <span>{trip.toCity}</span>
           </div>
+          <OtherCasesRow currentCaseId={caseId} tab="docs" />
         </div>
 
         {useCurated ? (

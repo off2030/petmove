@@ -5,14 +5,13 @@ import { avatarGlyph, avatarGradient, avatarIsEmoji } from '@/lib/avatar'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 
 /**
- * 헤더의 PetAvatar 옆에 들어가는 "다른 동물 아바타" 행.
+ * 헤더 우측 끝에 들어가는 전체 케이스 아바타 행. (이전엔 상단바에 있던 스위처)
  *
- * 케이스가 한 건뿐이면 null — 헤더는 평소처럼 PetAvatar + 이름만.
- * 두 건 이상이면 활성 케이스를 뺀 나머지 동물 아바타(24px, 케이스별 색·이모지)를
- * 가로로 나열. 클릭 시 같은 탭(journey/docs) 의 다른 case 로 이동.
- *
- * 헤더 컨테이너가 alignItems:'baseline' + flexWrap:'wrap' 이라 이 행은 alignSelf:
- * 'center' 로 감싸고, gap 은 부모 12 → 자체 6 으로 살짝 좁힘.
+ * - 케이스 1건이면 null — 헤더는 평소처럼 PetAvatar + 이름만.
+ * - 두 건 이상이면 모든 동물 아바타(28px) 가로 나열. 활성은 brown ring + scale 1,
+ *   비활성은 opacity 0.42 + scale 0.9. 상단바 옛 스타일과 동일.
+ * - 헤더 컨테이너 (display:flex, alignItems:baseline, flexWrap:wrap) 안에서
+ *   marginLeft:'auto' 로 우측 끝 정렬. 좁은 화면이면 자연스럽게 다음 줄로 줄바꿈.
  */
 export function OtherCasesRow({
   currentCaseId,
@@ -26,16 +25,24 @@ export function OtherCasesRow({
 
   return (
     <span
+      className="pm-noscroll"
       style={{
+        marginLeft: 'auto',
         alignSelf: 'center',
         display: 'inline-flex',
         alignItems: 'center',
         gap: 6,
-        marginLeft: -4,
+        // overflow-x:auto 는 spec 상 overflow-y 도 같이 auto 라 ring 이 잘림.
+        // block padding 으로 ring(±4.5px) 들어갈 공간 확보.
+        paddingBlock: 6,
+        paddingInline: 4,
+        marginInline: -4,
+        maxWidth: '60%',
+        overflowX: 'auto',
       }}
     >
       {cases.map((c, i) => {
-        if (c.id === currentCaseId) return null
+        const isActive = c.id === currentCaseId
         const isEmoji = avatarIsEmoji(c)
         return (
           <Link
@@ -46,23 +53,28 @@ export function OtherCasesRow({
             title={c.pet_name ?? '케이스'}
             className="pm-pressable"
             style={{
-              width: 24,
-              height: 24,
+              width: 28,
+              height: 28,
               borderRadius: '50%',
               background: avatarGradient(c, i),
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
+              flexShrink: 0,
               color: '#fff',
               fontFamily: isEmoji
                 ? "-apple-system, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
                 : 'var(--pm-font-display)',
               fontWeight: 600,
-              fontSize: isEmoji ? 13 : 10,
+              fontSize: isEmoji ? 14 : 11,
               lineHeight: 1,
               textDecoration: 'none',
-              boxShadow: 'inset 0 1px 1px rgba(255,255,255,.25)',
-              opacity: 0.7,
+              opacity: isActive ? 1 : 0.42,
+              boxShadow: isActive
+                ? '0 0 0 1.5px var(--pm-ring-bg), 0 0 0 3px var(--pm-ring-accent), 0 1px 2px rgb(var(--pm-ink-rgb) / .10)'
+                : 'inset 0 1px 1px rgba(255,255,255,.25)',
+              transform: isActive ? 'scale(1)' : 'scale(0.9)',
+              transition: 'opacity .2s, transform .2s, box-shadow .2s',
             }}
           >
             {avatarGlyph(c)}
