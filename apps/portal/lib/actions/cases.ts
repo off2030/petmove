@@ -20,12 +20,6 @@ import {
   applyAutoFillRules,
   findRabiesChainBreak,
   validateJpEntryDate,
-  validateJpExportReservationDate,
-  validateJpExportVisitDate,
-  validateKrExportDate,
-  validateJpImportDate,
-  validateKrImportDate,
-  validateVetVisitDate,
   type CaseRow,
   type VaccineProductsData,
 } from '@petmove/domain'
@@ -699,25 +693,9 @@ export async function updateFlightFields(
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    // 항공편(앵커)을 나중에 수정해 이미 입력된 **후행 일정**(내원·임상검사일·검역 예약·검역일·사전
-    // 신고)이 구간을 벗어나는 경우는 여기서 하드 차단하지 않는다 — 이미 입력된 이후 일정이
-    // 있으면 보호자가 갇히고, 자동 리셋은 실제 기록을 지운다. 보호자가 '계속 진행'을 확인한 뒤
-    // 저장을 허용하고, 동일 validate 함수를 매 렌더 재실행하는 procedure-check 룰
-    // (common.*-date-valid / jp.*-date-valid) 이 어긋난 step 에 '주의'를 띄운다(데이터 보존).
-    //
-    // 반면 **선행 데이터**(광견병 항체 검사·광견병 백신 유효기간)와의 관계는 항공편 수정으로
-    // 변하지 않으므로 갇힘 위험이 없고, 위반 시 일본 검역 통과 자체가 법적으로 불가능 — 저장을
-    // 거부한다(validateJpEntryDate). 출국 ≤ 귀국·날짜 형식 같은 항공편 자체의 내재적 정합성도
-    // 위에서 함께 하드 차단.
-    {
-      const entryDate = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
-      const entryErr = validateJpEntryDate(entryDate, {
-        data: prev,
-        destination: (existing as { destination: string | null }).destination,
-        departureDate: null,
-      })
-      if (entryErr) return { ok: false, error: entryErr }
-    }
+    // 일본 입국일 180일·후행 일정과의 관계는 server 에서 차단하지 않는다 — 펫무브 client 가
+    // 입력 불가로 막고, procedure-check 가 어긋난 step 에 '주의'를 띄운다(단일 출처). 출국 ≤ 귀국·
+    // 날짜 형식 같은 항공편 자체의 내재적 정합성은 위에서 형식 검증으로 처리.
     const nextData: Record<string, unknown> = { ...prev }
     for (const key of FLIGHT_DATA_KEYS) {
       const v = typeof fields[key] === 'string' ? (fields[key] as string).trim() : ''
@@ -991,18 +969,8 @@ export async function updateVetVisitDate(
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const v = typeof date === 'string' ? date.trim() : ''
-    // 내원일 정합성 — 출국일(앞 단계) 이전·목적지별 윈도우 이내만 검증. 한국 수출검역일(후행)과의
-    // 관계는 여기서 보지 않는다(validateVetVisitDate 가 자기 기준만 검사) — 그 제약은 의존하는
-    // 한국 수출검역 step 에서만 표면화한다. 저장 시점 검증과 재검증이 같은 함수를 쓴다.
-    {
-      const row = existing as { departure_date: string | null; destination: string | null }
-      const vetErr = validateVetVisitDate(v, {
-        data: prev,
-        destination: row.destination,
-        departureDate: row.departure_date,
-      })
-      if (vetErr) return { ok: false, error: vetErr }
-    }
+    // 내원일 도메인 차단은 server 에 두지 않는다 — client(입력 불가)·procedure-check(주의)가
+    // 같은 함수로 담당(단일 출처).
     const nextData: Record<string, unknown> = { ...prev }
     const prevDate = typeof prev.vet_visit_date === 'string' ? prev.vet_visit_date : ''
     if (v) nextData.vet_visit_date = v
@@ -1055,15 +1023,7 @@ export async function updateKrExportQuarantineDate(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
-    // 검역일 정합성 — 임상검사일 ≤ 검역일 ≤ 출국일, 출국일 기준 목적지별 윈도우 이내. 저장 시
-    // 차단과 매 렌더 재실행(common.kr-export-quarantine-date-valid procedure-check)이
-    // 같은 함수를 사용 — 단일 출처(@petmove/domain date-rules).
-    const krExportErr = validateKrExportDate(v, {
-      data: prev,
-      destination: (existing as { destination: string | null }).destination,
-      departureDate: null,
-    })
-    if (krExportErr) return { ok: false, error: krExportErr }
+    // 검역일 도메인 차단은 client(입력 불가)·procedure-check(주의)가 담당 — server 는 형식만.
     if (v) nextData.kr_export_quarantine_date = v
     else delete nextData.kr_export_quarantine_date
     // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
@@ -1111,10 +1071,7 @@ export async function updateJpImportQuarantineDate(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
-    // 검역일 정합성 — 일본 입국일 당일 또는 다음 날만. 저장 시점 검증과 재검증이 같은 함수를
-    // 쓴다(@petmove/domain date-rules).
-    const jpImportErr = validateJpImportDate(v, { data: prev, destination: null, departureDate: null })
-    if (jpImportErr) return { ok: false, error: jpImportErr }
+    // 검역일 도메인 차단은 client(입력 불가)·procedure-check(주의)가 담당 — server 는 형식만.
     if (v) nextData.jp_import_quarantine_date = v
     else delete nextData.jp_import_quarantine_date
     // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
@@ -1162,10 +1119,7 @@ export async function updateJpExportQuarantineVisitDate(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
-    // 검역일 정합성 — 일본 입국일 ≤ 검역일 ≤ 귀국일. 저장 시점 검증과 재검증이 같은 함수를
-    // 쓴다(@petmove/domain date-rules).
-    const jpVisitErr = validateJpExportVisitDate(v, { data: prev, destination: null, departureDate: null })
-    if (jpVisitErr) return { ok: false, error: jpVisitErr }
+    // 검역일 도메인 차단은 client(입력 불가)·procedure-check(주의)가 담당 — server 는 형식만.
     if (v) nextData.jp_export_quarantine_visit_date = v
     else delete nextData.jp_export_quarantine_visit_date
     // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
@@ -1213,10 +1167,7 @@ export async function updateKrImportQuarantineDate(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
-    // 검역일 정합성 — 귀국일 당일 또는 다음 날만. 저장 시점 검증과 재검증이 같은 함수를
-    // 쓴다(@petmove/domain date-rules).
-    const krImportErr = validateKrImportDate(v, { data: prev, destination: null, departureDate: null })
-    if (krImportErr) return { ok: false, error: krImportErr }
+    // 검역일 도메인 차단은 client(입력 불가)·procedure-check(주의)가 담당 — server 는 형식만.
     if (v) nextData.kr_import_quarantine_date = v
     else delete nextData.kr_import_quarantine_date
     // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
@@ -1280,41 +1231,8 @@ export async function updateJpExportQuarantineFields(
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    // 항공편 일정 기준 입력 조건 — 항공편 미입력 시 비교 불가라 SKIP. 입력된 경우에만 차단.
-    const returnDate = typeof prev.return_date === 'string' ? prev.return_date : ''
-    const trimmedApp = typeof fields.applicationDate === 'string' ? fields.applicationDate.trim() : ''
-    const trimmedReserved = typeof fields.date === 'string' ? fields.date.trim() : ''
-    // 예약일 range 검증 — 일본 입국일 ≤ 예약일 ≤ 귀국일. 저장 시점 검증과 재검증이 같은 함수를
-    // 쓴다(@petmove/domain date-rules). 신청일 마감의 anchor 로 쓰기 전에 신뢰성 확보.
-    const reservationErr = validateJpExportReservationDate(trimmedReserved, {
-      data: prev,
-      destination: null,
-      departureDate: null,
-    })
-    if (reservationErr) return { ok: false, error: reservationErr }
-    // 신청일 마감 — 예약일이 입력돼 있으면 예약일 −10일, 아니면 귀국 항공편 −10일을 마지노선으로.
-    // (예약일이 추후 확정될 때 다시 검증되므로, 입력 시점엔 귀국일이 최소 보장 기준.)
-    // 위반 메시지는 anchor 와 무관하게 단일 — 보호자가 외울 룰은 결국 '10일 전' 하나.
-    if (trimmedApp) {
-      let anchor = ''
-      if (trimmedReserved) {
-        anchor = trimmedReserved
-      } else if (returnDate && returnDate.length >= 10) {
-        anchor = returnDate.slice(0, 10)
-      }
-      if (anchor) {
-        const a = new Date(anchor + 'T00:00:00Z')
-        a.setUTCDate(a.getUTCDate() - 10)
-        const deadline = a.toISOString().slice(0, 10)
-        if (trimmedApp > deadline) {
-          return {
-            ok: false,
-            error: '일본 수출 동물검역은 최소 10일 전에 신청, 예약해야 합니다.',
-          }
-        }
-      }
-    }
-
+    // 예약일·신청일의 도메인 차단(입국일 ≤ 예약일 ≤ 귀국일, 신청 10일 전)은 server 에 두지
+    // 않는다 — client(입력 불가)·procedure-check(주의)가 담당(단일 출처).
     const nextData: Record<string, unknown> = { ...prev }
     const prevApplied =
       typeof prev.jp_export_quarantine_application_date === 'string'
