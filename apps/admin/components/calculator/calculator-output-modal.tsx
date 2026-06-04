@@ -161,25 +161,40 @@ export function CalculatorOutputModal({
     return () => document.removeEventListener('mousedown', onDown)
   }, [pickerOpen])
 
-  // 항목 추가 picker — 모든 국가/종의 항목을 표시 (목적지 외 항목도 추가 가능).
-  // 현재 목적지의 항목을 맨 위에, 나머지는 country_order → item_order 순.
+  // 항목 추가 picker — 항목명 기준 dedupe. 같은 이름은 1번만 보이고
+  // 가격은 현재 목적지의 값을 우선, 없으면 country_order 가장 빠른 국가 값.
+  // 현재 목적지에 있는 항목을 위에(해당 목적지 item_order 순),
+  // 그 외 항목은 아래에 가나다 순.
   const pickerItems = useMemo(() => {
     const current = targetCountry(country, species)
-    const list = allItems.slice().sort((a, b) => {
-      const aCur = a.country === current ? 0 : 1
-      const bCur = b.country === current ? 0 : 1
-      if (aCur !== bCur) return aCur - bCur
+    const byName = new Map<string, CalculatorItem>()
+
+    // 1차: 현재 목적지 항목 우선 등록 (가격·order 의 기준)
+    for (const it of allItems) {
+      if (it.country === current && !byName.has(it.item_name)) {
+        byName.set(it.item_name, it)
+      }
+    }
+    // 2차: 나머지 — country_order → item_order 순회로 첫 등장 채택
+    const ordered = allItems.slice().sort((a, b) => {
       if (a.country_order !== b.country_order) return a.country_order - b.country_order
       return a.item_order - b.item_order
     })
+    for (const it of ordered) {
+      if (!byName.has(it.item_name)) byName.set(it.item_name, it)
+    }
+
+    const all = [...byName.values()]
+    const inCurrent = all
+      .filter((it) => it.country === current)
+      .sort((a, b) => a.item_order - b.item_order)
+    const others = all
+      .filter((it) => it.country !== current)
+      .sort((a, b) => a.item_name.localeCompare(b.item_name, 'ko-KR'))
+    const list = [...inCurrent, ...others]
+
     const q = pickerSearch.trim().toLowerCase()
-    return q
-      ? list.filter(
-          (it) =>
-            it.item_name.toLowerCase().includes(q) ||
-            it.country.toLowerCase().includes(q),
-        )
-      : list
+    return q ? list.filter((it) => it.item_name.toLowerCase().includes(q)) : list
   }, [country, species, allItems, pickerSearch])
 
   // 목적지 dropdown
@@ -487,12 +502,7 @@ export function CalculatorOutputModal({
                           }}
                           className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-accent transition-colors"
                         >
-                          <span className="flex min-w-0 flex-1 items-baseline gap-2">
-                            <span className="truncate font-serif text-[15px]">{it.item_name}</span>
-                            <span className="shrink-0 text-[11px] tracking-[0.5px] text-muted-foreground/70">
-                              {it.country}
-                            </span>
-                          </span>
+                          <span className="truncate font-serif text-[15px]">{it.item_name}</span>
                           <span className="font-mono text-[13px] tabular-nums text-muted-foreground">
                             ₩{fmt(it.cost)}
                           </span>
