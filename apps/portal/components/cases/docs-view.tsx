@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect } from 'react'
 import { getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
 import { useCases } from '@/components/portal-shell/case-data-provider'
+import { OtherCasesRow } from '@/components/cases/other-cases-row'
 import { PetAvatar } from '@/components/cases/pet-avatar'
 import { StepAttachments } from '@/components/journey/step-attachments'
 import type { AutoDocItem, DocsViewData, StoredDocItem } from '@/lib/docs/catalog'
@@ -92,6 +93,7 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
           <span style={{ alignSelf: 'center' }}>
             <PetAvatar size={36} />
           </span>
+          <OtherCasesRow currentCaseId={caseId} tab="docs" />
           <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: 0, color: C.ink }}>{pet.name}</h1>
           <div
             style={{

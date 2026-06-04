@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
+import { OtherCasesRow } from '@/components/cases/other-cases-row'
 import { PetAvatar } from '@/components/cases/pet-avatar'
 import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
 
@@ -360,6 +361,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
           <span style={{ alignSelf: 'center' }}>
             <PetAvatar size={36} />
           </span>
+          <OtherCasesRow currentCaseId={caseId} tab="journey" />
           <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: 0, color: C.ink }}>{pet.name}</h1>
           <div
             style={{

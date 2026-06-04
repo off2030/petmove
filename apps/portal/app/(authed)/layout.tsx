@@ -6,7 +6,6 @@ import { verifyPreviewToken } from '@petmove/auth/preview-token'
 import type { CaseRow } from '@petmove/domain'
 import { BottomNav } from '@/components/portal-shell/bottom-nav'
 import { CaseDataProvider } from '@/components/portal-shell/case-data-provider'
-import { PetSwitcher } from '@/components/portal-shell/pet-switcher'
 import { SwipeTabs } from '@/components/portal-shell/swipe-tabs'
 import { TopBar } from '@/components/portal-shell/top-bar'
 import { listMyCases } from '@/lib/actions/cases'
@@ -98,7 +97,6 @@ function Shell({
           paddingBottom: 88,
         }}
       >
-        <PetSwitcher />
         <SwipeTabs>
           {preview ? (
             // 미리보기: 입력 폼(input/textarea/select/button)을 일괄 비활성 — 읽기 전용.
