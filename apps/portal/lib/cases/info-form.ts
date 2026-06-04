@@ -3,7 +3,7 @@
 // /me/{guardian,animal,travel} sub-page 들이 같은 폼 패턴을 공유.
 
 import type { CaseRow } from '@petmove/domain'
-import { buildCaseJourneyContext } from '@petmove/domain'
+import { buildCaseJourneyContext, todayKst } from '@petmove/domain'
 import type { CaseInfoInput } from '@/lib/actions/cases'
 
 /** caseRow → 편집 폼 state. data jsonb·컬럼을 모두 문자열 필드로 평탄화. */
@@ -61,15 +61,11 @@ export function eqForm(a: CaseInfoInput, b: CaseInfoInput): boolean {
   return JSON.stringify(a) === JSON.stringify(b)
 }
 
-function todayIso(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
 
 /** 출국일 → D-7 / D-DAY / D+3. */
 export function dDayLabel(departureIso: string): string | undefined {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(departureIso)) return undefined
-  const today = new Date(todayIso() + 'T00:00:00')
+  const today = new Date(todayKst() + 'T00:00:00')
   const dep = new Date(departureIso + 'T00:00:00')
   const diff = Math.round((dep.getTime() - today.getTime()) / 86_400_000)
   if (diff > 0) return `D-${diff}`
@@ -81,7 +77,7 @@ export function dDayLabel(departureIso: string): string | undefined {
 export function ageLabel(birthIso: string): string | undefined {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(birthIso)) return undefined
   const b = new Date(birthIso + 'T00:00:00')
-  const t = new Date(todayIso() + 'T00:00:00')
+  const t = new Date(todayKst() + 'T00:00:00')
   if (isNaN(b.getTime())) return undefined
   let years = t.getFullYear() - b.getFullYear()
   let months = t.getMonth() - b.getMonth()

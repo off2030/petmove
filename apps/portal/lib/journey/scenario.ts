@@ -7,6 +7,7 @@ import {
   resolveCompletedDate,
   resolveDone,
   runChecksForCase,
+  todayKst,
   type StepDefinition,
 } from '@petmove/domain'
 
@@ -101,10 +102,6 @@ export interface JourneyData {
    * 견종·마릿수·거주·1년 라이선스 같은 자격 결격이 여기로 들어온다. 빈 배열이면 표시 안 함.
    */
   caseAlerts: CaseAlert[]
-}
-
-function todayKst(): string {
-  return new Date().toISOString().slice(0, 10)
 }
 
 /**

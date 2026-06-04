@@ -21,7 +21,7 @@ import {
   readTiterEntries,
   resolveValidUntil,
   SKIP,
-  todayUtc,
+  todayKst,
   readDepartureDate,
   readVetVisitDate,
 } from './utils'
@@ -429,7 +429,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (dep && validUntil < dep) return SKIP
 
       // 만료 30일 전부터 사전 안내 — 입국일과 무관하게 오늘 기준.
-      const threshold = addDays(todayUtc(), 30)
+      const threshold = addDays(todayKst(), 30)
       if (!threshold || validUntil >= threshold) {
         return { ok: true, message: `만료(${validUntil}) ≥ 오늘+30일.` }
       }
@@ -460,7 +460,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (dep && validUntil < dep) return SKIP
 
       // 만료 30일 전부터 사전 안내 — 입국일과 무관하게 오늘 기준.
-      const threshold = addDays(todayUtc(), 30)
+      const threshold = addDays(todayKst(), 30)
       if (!threshold || validUntil >= threshold) {
         return { ok: true, message: `만료(${validUntil}) ≥ 오늘+30일.` }
       }

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import {
   createVaccineLookups,
   findRabiesChainBreak,
+  todayKst,
   validateAdvanceNotification,
   validateJpEntryDate,
   validateJpExportReservationDate,
@@ -306,7 +307,7 @@ export function StepDetailView({
         : isKrImportQuarantine
           ? savedKrImportQuarantineDate
           : ''
-  const todayStr = todayIso()
+  const todayStr = todayKst()
   // 버튼 문구·저장 확인 여부는 form(입력 중) 날짜 기준. 미래면 '예정일로 저장', 오늘 이하면 '저장'.
   const formUpcoming = isConfirmStep && confirmFormDate.length >= 10 && confirmFormDate > todayStr
   const formArrived = isConfirmStep && confirmFormDate.length >= 10 && confirmFormDate <= todayStr
@@ -1818,21 +1819,13 @@ function isRabiesEntryExpired(form: RabiesEntryForm): boolean {
   if (!form.date) return false
   const years = parseValidUntilYears(form.valid_until)
   if (years === null) return false
-  return todayIso() >= addYears(form.date, years)
+  return todayKst() >= addYears(form.date, years)
 }
 
 function addYears(iso: string, years: number): string {
   const d = new Date(iso + 'T00:00:00Z')
   d.setUTCFullYear(d.getUTCFullYear() + years)
   return d.toISOString().slice(0, 10)
-}
-
-function todayIso(): string {
-  const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
 }
 
 function rabiesFormEqual(a: RabiesEntryForm, b: RabiesEntryForm): boolean {
@@ -1982,7 +1975,7 @@ function titerExtraEqual(a: TiterExtraEntry[], b: TiterExtraEntry[]): boolean {
  */
 function isTiterEntryExpired(form: { date: string }): boolean {
   if (!form.date) return false
-  return todayIso() >= addYears(form.date, 2)
+  return todayKst() >= addYears(form.date, 2)
 }
 
 /**

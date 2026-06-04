@@ -267,10 +267,9 @@ export function addMonths(dateStr: string, n: number): string {
   return `${yyyy}-${mm}-${dd}`
 }
 
-/** 오늘 날짜 'YYYY-MM-DD' (UTC). 만료 임박 등 '오늘 기준' 검증에 사용. */
-export function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10)
-}
+/** 오늘 날짜 'YYYY-MM-DD' (KST). 도메인 단일 출처는 ../dates.ts.
+ *  procedure-checks 모듈에서 쓰기 위해 같이 re-export. */
+export { todayKst } from '../dates'
 
 export function daysBetween(aISO: string, bISO: string): number | null {
   const a = new Date(aISO).getTime()

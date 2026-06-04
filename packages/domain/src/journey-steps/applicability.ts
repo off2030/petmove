@@ -6,7 +6,7 @@ import {
   resolveActiveDestination,
   DESTINATION_OVERRIDES,
 } from '../destination-config'
-import { addDays, addYears, readRabiesEntries, readTiterEntries, resolveValidUntil, todayUtc } from '../procedure-checks/utils'
+import { addDays, addYears, readRabiesEntries, readTiterEntries, resolveValidUntil, todayKst } from '../procedure-checks/utils'
 import { resolveStepForDestination } from './destination-overrides'
 import type { CaseJourneyContext, StepApplicability, StepAppliesWhenSignal, StepDefinition } from './types'
 
@@ -128,10 +128,10 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
 
       // 이미 만료된 면역은 '추가 백신(부스터)' 대상이 아니다 — 유효기간 경과 후
       // 접종은 부스터가 아닌 새 기초접종이라, 1·2차부터 다시 하는 재시작 상황이다.
-      if (validUntil < todayUtc()) return false
+      if (validUntil < todayKst()) return false
 
       // (2) 아직 유효하지만 만료 30일 전 (오늘 기준).
-      if (validUntil < addDays(todayUtc(), 30)) return true
+      if (validUntil < addDays(todayKst(), 30)) return true
 
       // (3) 입국일 전 만료.
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -154,7 +154,7 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
       if (!validUntil) return false
 
       // (2) 만료 30일 전 (오늘 기준).
-      if (validUntil < addDays(todayUtc(), 30)) return true
+      if (validUntil < addDays(todayKst(), 30)) return true
 
       // (3) 입국일 전 만료.
       const data = (caseRow.data ?? {}) as Record<string, unknown>

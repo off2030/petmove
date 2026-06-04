@@ -1,4 +1,4 @@
-import { addYears, readRabiesEntries, readTiterEntries, resolveValidUntil } from '../procedure-checks/utils'
+import { addYears, readRabiesEntries, readTiterEntries, resolveValidUntil, todayKst } from '../procedure-checks/utils'
 import { areAllRequiredDocsVerified, resolveRequiredDocs } from '../required-docs'
 import { buildCaseJourneyContext } from './applicability'
 import {
@@ -273,7 +273,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         : []
       const primary = arr[0]
       const date = primary && typeof primary.date === 'string' ? primary.date : ''
-      if (date.length < 10 || date > new Date().toISOString().slice(0, 10)) return undefined
+      if (date.length < 10 || date > todayKst()) return undefined
       if (data.rabies_titer_result_confirmed === true) return undefined
       if (typeof primary?.value === 'string' && primary.value.trim().length > 0) return undefined
       const msg = '광견병 항체 검사를 진행 중입니다. 결과가 나오면 결과를 입력하시거나 완료 버튼을 눌러주세요.'
@@ -405,7 +405,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 보호자에겐 '신청 완료' 톤이 부적절. stored/admin_demoted_at 별도 시그널은 별개.
       const filed =
         typeof data.advance_notification_date === 'string' ? data.advance_notification_date : ''
-      if (filed.length >= 10 && filed > new Date().toISOString().slice(0, 10)) return undefined
+      if (filed.length >= 10 && filed > todayKst()) return undefined
       // 완료(skip) 상태에선 안내 노출 안 함 — '완료' 자체가 명시적 보호자 액션이라 추가 설명 불필요.
       // 첨부는 언제든 documents 탭에서 올릴 수 있음.
       if (deriveAdvanceNotificationStatus(caseRow) !== 'in_progress') return undefined
@@ -460,7 +460,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         typeof data.jp_export_quarantine_application_date === 'string'
           ? data.jp_export_quarantine_application_date
           : ''
-      if (applied.length >= 10 && applied > new Date().toISOString().slice(0, 10)) return undefined
+      if (applied.length >= 10 && applied > todayKst()) return undefined
       // 완료(skip) 상태에선 안내 노출 안 함 — '완료' 자체가 명시적 보호자 액션이라 추가 설명 불필요.
       // 예약일·시간은 언제든 input 으로 수정 가능.
       if (deriveJpExportQuarantineStatus(caseRow) !== 'in_progress') return undefined
@@ -675,7 +675,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const dt = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
-      if (dt.length < 10 || dt > new Date().toISOString().slice(0, 10)) return undefined
+      if (dt.length < 10 || dt > todayKst()) return undefined
       if (data.vet_visit_confirmed === true) return undefined
       if (resolveRequiredDocs(caseRow.destination, caseRow) === null) return undefined
       // done-resolver(has-vet-visit)와 동일 범위 — vet-visit 시점까지의 서류만 본다.

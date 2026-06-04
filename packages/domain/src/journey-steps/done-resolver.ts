@@ -9,6 +9,7 @@ import {
   readRabiesEntries,
   readTiterEntries,
   resolveValidUntil,
+  todayKst,
 } from '../procedure-checks/utils'
 import type { StepDoneSignal } from './types'
 import { buildCaseJourneyContext } from './applicability'
@@ -60,7 +61,7 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       if (r.length < 3) return false
       const latest = r[r.length - 1]
       // 미래 접종일은 '예정' — 도래해야 완료로 잡힘.
-      if (latest.date > todayIso()) return false
+      if (latest.date > todayKst()) return false
       const previous = r[r.length - 2]
       const previousValidUntil = resolveValidUntil(previous.date, previous.valid_until)
       if (!previousValidUntil || latest.date > previousValidUntil) return false
@@ -132,7 +133,7 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       //  - 큐레이션 spec 자체가 없는 destination — 자동 검증 신호가 없으므로 검진일 입력
       //    만으로 완료 처리 (옛 모델과 동일)
       const dt = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
-      if (dt.length < 10 || dt > todayIso()) return false
+      if (dt.length < 10 || dt > todayKst()) return false
       if (data.vet_visit_confirmed === true) return true
       // 출국 전 임상검사 시점까지 발급되는 서류만 게이트 — 한국 수출 동물검역증(이후 발급)은 제외.
       if (areAllRequiredDocsVerified(caseRow, 'vet-visit')) return true
@@ -181,12 +182,12 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       if (isQuarantineConfirmed(data, 'jp_import_quarantine_date', 'jp_import_quarantine_confirmed')) {
         return true
       }
-      return !!caseRow.departure_date && caseRow.departure_date < todayIso()
+      return !!caseRow.departure_date && caseRow.departure_date < todayKst()
     }
     case 'departure-past': {
       const dep = caseRow.departure_date
       if (!dep) return false
-      return dep < todayIso()
+      return dep < todayKst()
     }
     default:
       return false
@@ -207,10 +208,6 @@ function isQuarantineConfirmed(
   const dt = data[dateKey]
   if (typeof dt !== 'string' || dt.length < 10) return false
   return data[confirmKey] === true
-}
-
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10)
 }
 
 /**
