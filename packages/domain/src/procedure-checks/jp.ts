@@ -484,14 +484,14 @@ export const JP_CHECKS: ProcedureCheck[] = [
     description: '일본 수출 동물검역 예약일은 일본 입국일 이후·한국 귀국일 이전이어야 함.',
     severity: 'warning',
     addedAt: '2026-06-04',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const raw =
         typeof data.jp_export_quarantine_date === 'string'
           ? data.jp_export_quarantine_date.slice(0, 10)
           : ''
       if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
-      const ctx = buildDateRuleContext(caseRow)
+      const ctx = buildDateRuleContext(caseRow, destination)
       const msg = validateJpExportReservationDate(raw, ctx)
       if (msg) {
         return { ok: false, message: msg, offendingPaths: ['jp_export_quarantine_date'] }
@@ -507,14 +507,14 @@ export const JP_CHECKS: ProcedureCheck[] = [
     description: '일본 수출 동물검역일은 일본 입국일 이후·한국 귀국일 이전이어야 함.',
     severity: 'warning',
     addedAt: '2026-06-04',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const raw =
         typeof data.jp_export_quarantine_visit_date === 'string'
           ? data.jp_export_quarantine_visit_date.slice(0, 10)
           : ''
       if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
-      const ctx = buildDateRuleContext(caseRow)
+      const ctx = buildDateRuleContext(caseRow, destination)
       const msg = validateJpExportVisitDate(raw, ctx)
       if (msg) {
         return { ok: false, message: msg, offendingPaths: ['jp_export_quarantine_visit_date'] }
@@ -530,14 +530,14 @@ export const JP_CHECKS: ProcedureCheck[] = [
     description: '일본 수입 동물검역일은 일본 입국일 이후여야 함.',
     severity: 'warning',
     addedAt: '2026-06-04',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const raw =
         typeof data.jp_import_quarantine_date === 'string'
           ? data.jp_import_quarantine_date.slice(0, 10)
           : ''
       if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
-      const ctx = buildDateRuleContext(caseRow)
+      const ctx = buildDateRuleContext(caseRow, destination)
       const msg = validateJpImportDate(raw, ctx)
       if (msg) {
         return { ok: false, message: msg, offendingPaths: ['jp_import_quarantine_date'] }
@@ -553,14 +553,14 @@ export const JP_CHECKS: ProcedureCheck[] = [
     description: '한국 수입 동물검역일은 한국 귀국일 이후여야 함.',
     severity: 'warning',
     addedAt: '2026-06-04',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const raw =
         typeof data.kr_import_quarantine_date === 'string'
           ? data.kr_import_quarantine_date.slice(0, 10)
           : ''
       if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
-      const ctx = buildDateRuleContext(caseRow)
+      const ctx = buildDateRuleContext(caseRow, destination)
       const msg = validateKrImportDate(raw, ctx)
       if (msg) {
         return { ok: false, message: msg, offendingPaths: ['kr_import_quarantine_date'] }

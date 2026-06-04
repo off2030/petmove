@@ -4,6 +4,8 @@ import {
   validateTiterAfterBooster,
   validateVetVisitDate,
 } from '../journey-steps/date-rules'
+import { parseDestinations } from '../destination-config'
+import { readByDestValue } from '../destination-scoped-fields'
 import type { ProcedureCheck } from './types'
 import { readRabiesEntries, readTiterEntries, SKIP } from './utils'
 
@@ -50,11 +52,20 @@ export const COMMON_CHECKS: ProcedureCheck[] = [
     description: '내원일은 출국일 이전이고 목적지별 윈도우(보통 출국 10일 이내)여야 함.',
     severity: 'warning',
     addedAt: '2026-06-04',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const raw = typeof data.vet_visit_date === 'string' ? data.vet_visit_date.slice(0, 10) : ''
+      const isMultiDest = parseDestinations(caseRow.destination).length > 1
+      // 다중 목적지 + 활성 destination 이 있으면 by_dest scope 만 읽음 — 다른 목적지의
+      // 값이 leak 되는 걸 방지(예: KZ tab 에 CN 의 내원일이 끼는 버그).
+      let raw = ''
+      if (isMultiDest && destination) {
+        const v = readByDestValue(data, destination, 'vet_visit_date')
+        raw = typeof v === 'string' ? v.slice(0, 10) : ''
+      } else {
+        raw = typeof data.vet_visit_date === 'string' ? data.vet_visit_date.slice(0, 10) : ''
+      }
       if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
-      const ctx = buildDateRuleContext(caseRow)
+      const ctx = buildDateRuleContext(caseRow, destination)
       const msg = validateVetVisitDate(raw, ctx)
       if (msg) {
         return { ok: false, message: msg, offendingPaths: ['vet_visit_date'] }
@@ -70,14 +81,16 @@ export const COMMON_CHECKS: ProcedureCheck[] = [
     description: '한국 수출검역일은 임상검사 후·출국 전·목적지별 윈도우 이내여야 함.',
     severity: 'warning',
     addedAt: '2026-06-04',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const raw =
         typeof data.kr_export_quarantine_date === 'string'
           ? data.kr_export_quarantine_date.slice(0, 10)
           : ''
       if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
-      const ctx = buildDateRuleContext(caseRow)
+      // destination 을 buildDateRuleContext 에 전달 — 활성 목적지의 vet_visit_date /
+      // departure_date 로 비교(다중 목적지에서 다른 목적지 값 leak 방지).
+      const ctx = buildDateRuleContext(caseRow, destination)
       const msg = validateKrExportDate(raw, ctx)
       if (msg) {
         return { ok: false, message: msg, offendingPaths: ['kr_export_quarantine_date'] }

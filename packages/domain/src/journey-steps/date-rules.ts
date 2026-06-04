@@ -1,5 +1,6 @@
 import type { CaseRow } from '../types'
-import { getVetVisitWindowDays, matchesDestinationKey } from '../destination-config'
+import { getVetVisitWindowDays, matchesDestinationKey, parseDestinations } from '../destination-config'
+import { getDepartureDate, getVetVisitDate, readByDestValue } from '../destination-scoped-fields'
 import { addDays, resolveValidUntil } from '../procedure-checks/utils'
 import type { StepDefinition } from './types'
 
@@ -295,10 +296,56 @@ export function validateTiterAfterBooster(primaryDates: string[], titerDate: str
   return null
 }
 
-/** caseRow → DateRuleContext (저장 액션·재검증 공통). */
-export function buildDateRuleContext(caseRow: CaseRow): DateRuleContext {
+/**
+ * caseRow → DateRuleContext (저장 액션·재검증 공통).
+ *
+ * destination(활성 목적지 토큰) 인자 동작:
+ *   - 다중 목적지 케이스: 해당 destination 의 by_dest 값만 사용. top-level fallback X
+ *     (다른 destination 의 값이 leak 되는 걸 방지 — 예: KZ tab 에서 CN 의 출국일이
+ *     검증에 끼는 버그). 스코프 대상: vet_visit_date / departure_date / entry_date /
+ *     departure_flight_date / return_date (validate 함수가 참조하는 모든 날짜 앵커).
+ *   - 단일 목적지 케이스: 기존 동작(by_dest 우선 + top-level/column fallback).
+ *   - destination 미지정: 기존 동작(top-level data / column).
+ */
+export function buildDateRuleContext(caseRow: CaseRow, destination?: string | null): DateRuleContext {
+  const baseData = (caseRow.data ?? {}) as Record<string, unknown>
+  if (destination) {
+    const isMultiDest = parseDestinations(caseRow.destination).length > 1
+    if (isMultiDest) {
+      // validate 함수가 참조하는 destination-scoped 키를 by_dest 값으로 덮어쓴 view.
+      // 키가 by_dest 에 없으면 undefined 로 덮어 top-level leak 차단.
+      const SCOPED_DATA_KEYS = [
+        'vet_visit_date',
+        'entry_date',
+        'departure_flight_date',
+        'return_date',
+      ]
+      const overrides: Record<string, unknown> = {}
+      for (const key of SCOPED_DATA_KEYS) {
+        const v = readByDestValue(baseData, destination, key)
+        overrides[key] = typeof v === 'string' && v ? v : undefined
+      }
+      const data = { ...baseData, ...overrides }
+      const d = readByDestValue(baseData, destination, 'departure_date')
+      const scopedDep = typeof d === 'string' && d ? d : null
+      return {
+        data,
+        destination,
+        departureDate: scopedDep,
+      }
+    }
+    // 단일 목적지: by_dest 우선 + top-level/column fallback (기존 동작).
+    const scopedVisit = getVetVisitDate(caseRow, destination)
+    const scopedDep = getDepartureDate(caseRow, destination)
+    const data = { ...baseData, vet_visit_date: scopedVisit ?? undefined }
+    return {
+      data,
+      destination,
+      departureDate: scopedDep,
+    }
+  }
   return {
-    data: (caseRow.data ?? {}) as Record<string, unknown>,
+    data: baseData,
     destination: caseRow.destination ?? null,
     departureDate: caseRow.departure_date ?? null,
   }

@@ -108,18 +108,36 @@ export async function updateCaseField(
   // by_dest 경로 적용 조건: 활성 목적지 + scoped 키 + 다중 목적지.
   const useByDest = !!destination && isDestinationScopedKey(key) && isMultiDest
 
-  // 내원일 ↔ 출국일 10일 이내 룰 — 한국 APQA 공통, 모든 목적지에 적용.
+  // 내원일 ↔ 출국일 N일 이내 룰 — 한국 APQA 공통, 모든 목적지에 적용.
   // 입력 시점에 거부 (procedure-check 안내 배지 아님).
+  // 다중 목적지(useByDest)면 비교 대상도 같은 destination scope 안에서만 본다.
+  // top-level fallback 을 허용하면 다른 destination 의 값이 leak 됨 (예: KZ tab 에서 CN 의
+  // 출국일/내원일로 검증돼 KZ 입력이 거부되는 버그).
+  function readScopedDep(): string | null {
+    if (useByDest) {
+      const byDest = currentData['by_dest'] as Record<string, Record<string, unknown>> | undefined
+      const d = byDest?.[destination!]?.['departure_date']
+      return typeof d === 'string' ? d : null
+    }
+    return (row as { departure_date: string | null }).departure_date
+  }
+  function readScopedVisit(): string | null {
+    if (useByDest) {
+      const byDest = currentData['by_dest'] as Record<string, Record<string, unknown>> | undefined
+      const v = byDest?.[destination!]?.['vet_visit_date']
+      return typeof v === 'string' ? v : null
+    }
+    return typeof currentData.vet_visit_date === 'string'
+      ? (currentData.vet_visit_date as string)
+      : null
+  }
+  const windowDest = useByDest ? destination! : destinationRaw
   if (storage === 'data' && key === 'vet_visit_date' && value) {
-    const currentDep = (row as { departure_date: string | null }).departure_date
-    const check = validateVetVisitVsDeparture(value as string, currentDep, destinationRaw)
+    const check = validateVetVisitVsDeparture(value as string, readScopedDep(), windowDest)
     if (!check.ok) return { ok: false, error: check.error }
   }
   if (storage === 'column' && key === 'departure_date' && value) {
-    const currentVisit = typeof currentData.vet_visit_date === 'string'
-      ? (currentData.vet_visit_date as string)
-      : null
-    const check = validateVetVisitVsDeparture(currentVisit, value as string, destinationRaw)
+    const check = validateVetVisitVsDeparture(readScopedVisit(), value as string, windowDest)
     if (!check.ok) return { ok: false, error: check.error }
   }
 
