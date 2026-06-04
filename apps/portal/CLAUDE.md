@@ -36,3 +36,7 @@
 Phase 11.0 9/10 완료. 남은 작업:
 - **11.0.7 내 케이스 목록·상세 UI** — 데이터 레이어 완료, 디자인 freeze 후 4탭 셸 + 화면 구성
 - **11.0.10 베타 배포** — Vercel 도메인·OAuth redirect·Apple Dev·Play Console (사용자 액션)
+
+## 알려진 이슈
+
+- **monorepo 빌드 트리거 누락** — 2026-06-04 확인. `packages/domain` 변경(cee59ea)에 portal Vercel 빌드가 트리거되지 않음(admin 은 정상). Vercel petmove 프로젝트의 Build & Development Settings → "Ignored Build Step" 또는 root watcher 설정이 `apps/portal/**` 만 watch 하고 `packages/**` 무시할 가능성. 임시 복구: apps/portal/ 안에 trivial 변경으로 force rebuild. 근본 해결: Vercel 설정 점검 (사용자 액션).
