@@ -13,6 +13,7 @@ import {
   validateJpImportDate,
   validateKrExportDate,
   validateKrImportDate,
+  validateMicrochipBeforeBooster,
   validateRabiesInterval,
   validateRabiesPrimeAge,
   validateTiterAfterBooster,
@@ -478,8 +479,9 @@ export function StepDetailView({
             { date: rabies.date, valid_until: rabies.valid_until || null },
           ])
           if (chainBreak) return '2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 합니다.'
-          const microchip = readImplantDate(caseRow?.data)
-          if (microchip && microchip > rabies.date) return '마이크로칩 삽입 이후에 광견병 백신을 접종해야 합니다.'
+          // 마이크로칩 ≤ 2차 — procedure-check(jp.microchip-rabies-sequence)와 같은 domain 함수.
+          const chipErr = validateMicrochipBeforeBooster(readImplantDate(caseRow?.data), rabies.date)
+          if (chipErr) return chipErr
           // "1차<칩 → 2차=항체 같은 날" 위반은 2차 입력 시 막지 않는다 — 항체(이후 일정)가
           // 입력된 상태에서 2차를 수정하는 것이라 '주의'(jp.microchip-rabies-sequence)로
           // 표면화한다. 같은 날 입력 불가는 채혈 입력 시점(validateTiterDate)이 담당.

@@ -5,6 +5,7 @@ import {
   validateJpExportVisitDate,
   validateJpImportDate,
   validateKrImportDate,
+  validateMicrochipBeforeBooster,
   validateRabiesInterval,
   validateRabiesPrimeAge,
   validateTiterWithinChain,
@@ -192,12 +193,12 @@ export const JP_CHECKS: ProcedureCheck[] = [
         }
       }
 
-      // 마이크로칩이 2차보다도 늦음 → 두 조건 모두 불충족
-      return {
-        ok: false,
-        message: '마이크로칩이 2차 광견병 백신보다 늦습니다. 마이크로칩 삽입일 혹은 접종일을 수정하세요.',
-        offendingPaths: ['microchip_implant_date'],
+      // 마이크로칩이 2차보다도 늦음 — client 입력 차단과 같은 domain 함수.
+      const chipErr = validateMicrochipBeforeBooster(microchip, second.date)
+      if (chipErr) {
+        return { ok: false, message: chipErr, offendingPaths: ['microchip_implant_date'] }
       }
+      return { ok: true, message: '마이크로칩·접종·검사 타이밍 적합.' }
     },
   },
   {

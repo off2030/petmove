@@ -213,6 +213,22 @@ export function validateRabiesPrimeAge(
   return null
 }
 
+/**
+ * 마이크로칩은 2차 광견병 백신 접종일 이전에 삽입되어야 함 (칩 > 2차면 위반). client(2차 입력 시
+ * 입력 불가)·jp.microchip-rabies-sequence(주의) 공용. 마이크로칩은 과거 사실이라 조치 가능한
+ * 쪽(접종일)으로 안내. 한쪽이 비면 통과.
+ */
+export function validateMicrochipBeforeBooster(
+  microchipDate: string,
+  secondDate: string,
+): string | null {
+  if (!microchipDate || !secondDate) return null
+  if (microchipDate > secondDate) {
+    return '마이크로칩 삽입 이후에 광견병 백신을 접종해야 합니다.'
+  }
+  return null
+}
+
 // 광견병 2차가 1차 면역 유효기간 이내인지(과거 validateRabiesBoosterValidity)는 부스터 chain
 // 검증으로 통합 — findRabiesChainBreak(rabies-chain.ts)가 1차→2차→3차… 전체를 순차 검사한다.
 // client(rabies2/extra 입력 불가)·procedure-check(jp.rabies-booster/extra-validity 주의) 공용.
