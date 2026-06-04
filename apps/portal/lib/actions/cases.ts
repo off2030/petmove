@@ -698,8 +698,8 @@ export async function updateFlightFields(
     // 항공편(앵커)을 나중에 수정해 이미 입력된 **후행 일정**(내원·임상검사일·검역 예약·검역일·사전
     // 신고)이 구간을 벗어나는 경우는 여기서 하드 차단하지 않는다 — 이미 입력된 이후 일정이
     // 있으면 보호자가 갇히고, 자동 리셋은 실제 기록을 지운다. 보호자가 '계속 진행'을 확인한 뒤
-    // 저장을 허용하고, journey 의 정합성 패스(evaluateDateConsistency·항체↔출국 타이밍)가 해당
-    // step 에 '주의'를 띄워 이후 일정을 검토·수정하도록 유도한다(입력 데이터는 보존).
+    // 저장을 허용하고, 동일 validate 함수를 매 렌더 재실행하는 procedure-check 룰
+    // (common.*-date-valid / jp.*-date-valid) 이 어긋난 step 에 '주의'를 띄운다(데이터 보존).
     //
     // 반면 **선행 데이터**(광견병 항체 검사·광견병 백신 유효기간)와의 관계는 항공편 수정으로
     // 변하지 않으므로 갇힘 위험이 없고, 위반 시 일본 검역 통과 자체가 법적으로 불가능 — 저장을
@@ -1051,8 +1051,9 @@ export async function updateKrExportQuarantineDate(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
-    // 검역일 정합성 — 임상검사일 ≤ 검역일 ≤ 출국일, 출국일 기준 목적지별 윈도우 이내. 저장 시점
-    // 검증과 재검증(evaluateDateConsistency)이 같은 함수를 쓴다(@petmove/domain date-rules).
+    // 검역일 정합성 — 임상검사일 ≤ 검역일 ≤ 출국일, 출국일 기준 목적지별 윈도우 이내. 저장 시
+    // 차단과 매 렌더 재실행(common.kr-export-quarantine-date-valid procedure-check)이
+    // 같은 함수를 사용 — 단일 출처(@petmove/domain date-rules).
     const krExportErr = validateKrExportDate(v, {
       data: prev,
       destination: (existing as { destination: string | null }).destination,

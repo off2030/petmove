@@ -1,3 +1,10 @@
+import {
+  buildDateRuleContext,
+  validateJpExportReservationDate,
+  validateJpExportVisitDate,
+  validateJpImportDate,
+  validateKrImportDate,
+} from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   addDays,
@@ -462,6 +469,101 @@ export const JP_CHECKS: ProcedureCheck[] = [
         message: `광견병 항체 검사 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전 재검사를 하세요.`,
         offendingPaths: offending,
       }
+    },
+  },
+  // ── 검역·검사 일정 자기 검증 (일본) ────────────────────────────────────
+  // 입력 시점 server action 차단과 같은 함수를 재실행 — 앞 단계(항공편 등)를 수정해
+  // 이미 입력된 후행 일정이 어긋났을 때 '주의'로 표면화한다.
+  {
+    id: 'jp.export-quarantine-reservation-date-valid',
+    country: 'japan',
+    category: '검역',
+    title: '일본 수출 동물검역 예약일',
+    description: '일본 수출 동물검역 예약일은 일본 입국일 이후·한국 귀국일 이전이어야 함.',
+    severity: 'warning',
+    addedAt: '2026-06-04',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.jp_export_quarantine_date === 'string'
+          ? data.jp_export_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow)
+      const msg = validateJpExportReservationDate(raw, ctx)
+      if (msg) {
+        return { ok: false, message: msg, offendingPaths: ['jp_export_quarantine_date'] }
+      }
+      return { ok: true, message: `예약일(${raw}) 일본 체류 구간 내.` }
+    },
+  },
+  {
+    id: 'jp.export-quarantine-visit-date-valid',
+    country: 'japan',
+    category: '검역',
+    title: '일본 수출 동물검역일',
+    description: '일본 수출 동물검역일은 일본 입국일 이후·한국 귀국일 이전이어야 함.',
+    severity: 'warning',
+    addedAt: '2026-06-04',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.jp_export_quarantine_visit_date === 'string'
+          ? data.jp_export_quarantine_visit_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow)
+      const msg = validateJpExportVisitDate(raw, ctx)
+      if (msg) {
+        return { ok: false, message: msg, offendingPaths: ['jp_export_quarantine_visit_date'] }
+      }
+      return { ok: true, message: `검역일(${raw}) 일본 체류 구간 내.` }
+    },
+  },
+  {
+    id: 'jp.import-quarantine-date-valid',
+    country: 'japan',
+    category: '검역',
+    title: '일본 수입 동물검역일',
+    description: '일본 수입 동물검역일은 일본 입국일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-06-04',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.jp_import_quarantine_date === 'string'
+          ? data.jp_import_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow)
+      const msg = validateJpImportDate(raw, ctx)
+      if (msg) {
+        return { ok: false, message: msg, offendingPaths: ['jp_import_quarantine_date'] }
+      }
+      return { ok: true, message: `일본 수입검역일(${raw}) 입국 이후.` }
+    },
+  },
+  {
+    id: 'jp.kr-import-quarantine-date-valid',
+    country: 'japan',
+    category: '검역',
+    title: '한국 수입 동물검역일',
+    description: '한국 수입 동물검역일은 한국 귀국일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-06-04',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.kr_import_quarantine_date === 'string'
+          ? data.kr_import_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow)
+      const msg = validateKrImportDate(raw, ctx)
+      if (msg) {
+        return { ok: false, message: msg, offendingPaths: ['kr_import_quarantine_date'] }
+      }
+      return { ok: true, message: `한국 수입검역일(${raw}) 귀국 이후.` }
     },
   },
 ]

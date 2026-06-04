@@ -181,50 +181,6 @@ export function buildDateRuleContext(caseRow: CaseRow): DateRuleContext {
   }
 }
 
-// ── 정합성 재검증 — 날짜 필드 → {검증, 표면화 step} ──────────────────────
-interface DateRuleEntry {
-  /** case.data 의 날짜 필드. */
-  field: string
-  /** 위반을 '주의'로 표면화할 step id. */
-  stepId: string
-  validate: (v: string, ctx: DateRuleContext) => string | null
-}
-
-const DATE_RULES: DateRuleEntry[] = [
-  { field: 'vet_visit_date', stepId: 'vet-visit', validate: validateVetVisitDate },
-  { field: 'kr_export_quarantine_date', stepId: 'certificate-issue', validate: validateKrExportDate },
-  { field: 'jp_export_quarantine_date', stepId: 'jp-export-quarantine', validate: validateJpExportReservationDate },
-  {
-    field: 'jp_export_quarantine_visit_date',
-    stepId: 'jp-export-quarantine-visit',
-    validate: validateJpExportVisitDate,
-  },
-  { field: 'jp_import_quarantine_date', stepId: 'departure', validate: validateJpImportDate },
-  { field: 'kr_import_quarantine_date', stepId: 'kr-import-quarantine', validate: validateKrImportDate },
-]
-
-export interface DateConsistencyIssue {
-  stepId: string
-  message: string
-}
-
-/**
- * 이미 입력된 검역·검사 날짜를 각자의 순방향 검증으로 다시 돌려, 현재 항공편·앞 단계와
- * 어긋난 것만 '주의'로 반환한다. 앞 단계(항공편 등)를 수정한 뒤 이후 일정 정합성을
- * 재검증하는 단일 경로 — 저장 시점 검증과 같은 함수를 재사용한다.
- *
- * 값이 없는(=아직 안 잡은) 날짜는 SKIP — 입력된 일정만 본다. 적용 step 이 아닌 항목도 SKIP.
- */
-export function evaluateDateConsistency(steps: StepDefinition[], caseRow: CaseRow): DateConsistencyIssue[] {
-  const present = new Set(steps.map((s) => s.id))
-  const ctx = buildDateRuleContext(caseRow)
-  const issues: DateConsistencyIssue[] = []
-  for (const rule of DATE_RULES) {
-    if (!present.has(rule.stepId)) continue
-    const v = readDate(ctx.data, rule.field)
-    if (!v) continue
-    const msg = rule.validate(v, ctx)
-    if (msg) issues.push({ stepId: rule.stepId, message: msg })
-  }
-  return issues
-}
+// 검역·검사 일정의 자기 검증은 procedure-check 룰로 이관 — common.*-date-valid /
+// jp.*-date-valid 가 매 렌더마다 위 validate 함수들을 재실행해 어긋난 후행 일정을 '주의'로
+// 표면화한다. server action 의 입력 차단도 같은 함수를 직접 호출 — 단일 출처.

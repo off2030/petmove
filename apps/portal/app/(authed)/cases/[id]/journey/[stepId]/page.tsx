@@ -5,7 +5,6 @@ import { use, useEffect } from 'react'
 import {
   JOURNEY_STEP_CATALOG,
   buildCaseJourneyContext,
-  evaluateDateConsistency,
   getChecksForStep,
   getStepsForCase,
   resolveDone,
@@ -58,11 +57,6 @@ export default function CaseJourneyStepPage({
   const step = resolveStepForDestination(baseStep, ctx.destinationKey)
   const done = resolveDone(step.done, caseRow)
   const checkResults = collectStepChecks(step, caseRow, ctx.destinationKey)
-  // 날짜 정합성 '주의' — 앞 단계(항공편 등) 수정으로 이 step 의 이미 입력된 날짜가 어긋난 경우.
-  // 일정 타임라인과 동일 출처(evaluateDateConsistency)라 같은 문구가 상세에도 노출된다.
-  const dateConsistencyMessage =
-    evaluateDateConsistency(applicable, caseRow).find((i) => i.stepId === baseStep.id)?.message ??
-    null
   // 이 step 보다 뒤(후행) 적용 단계에 이미 입력된 데이터가 있는지 — 수정·삭제 전 '주의'
   // 확인창 조건. 뒤 일정이 있으면 앞 단계 변경이 정합성을 깨뜨릴 수 있어 사전 경고한다.
   const hasDownstreamData = applicable
@@ -78,7 +72,6 @@ export default function CaseJourneyStepPage({
       checkResults={checkResults}
       destinationKey={ctx.destinationKey}
       tripType={ctx.tripType}
-      dateConsistencyMessage={dateConsistencyMessage}
       hasDownstreamData={hasDownstreamData}
     />
   )

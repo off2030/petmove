@@ -473,8 +473,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O', label: 'NACCS 신청 페이지' },
       { url: '/guide/jp-quarantine-contacts', label: '일본 동물검역소 연락처' },
     ],
-    // 입력 조건(신청일·예약일 vs 항공편)은 server action(updateJpExportQuarantineFields)이
-    // 거부 — 절차 검증 배지가 아니라 저장 자체를 차단.
+    // 입력 시 server action(updateJpExportQuarantineFields)이 차단하고,
+    // 같은 함수를 매 렌더 재실행하는 jp.export-quarantine-reservation-date-valid 가
+    // 앞 단계(항공편 등) 수정 후 어긋난 케이스를 '주의'로 표면화.
+    validationIds: ['jp.export-quarantine-reservation-date-valid'],
   },
 
   // ── 5. 종합백신 (DHPP·FVRCP) ────────────────────────────────────────────
@@ -682,6 +684,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     inputs: [
       { key: 'vet_visit_date', label: '검진일', type: 'date' },
     ],
+    validationIds: ['common.vet-visit-date-valid'],
   },
 
   // ── 12. 한국 수출 동물검역 ────────────────────────────────────────────
@@ -702,6 +705,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     inputs: [
       { key: 'kr_export_quarantine_date', label: '검역일', type: 'date' },
     ],
+    validationIds: ['common.kr-export-quarantine-date-valid'],
     allowAttachments: true,
     attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
     attachmentLabel: '동물검역증',
@@ -727,6 +731,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // base departure 는 첨부 불가 — 일본 override(일본 수입 동물검역)만 allowAttachments.
     // 첨부 명명은 base catalog 의 attachmentLabel 을 읽으므로 여기 둔다 (일본에서만 효과).
     attachmentLabel: 'Import Quarantine Certificate',
+    // 일본 override 가 jp_import_quarantine_date 입력으로 사용 — 이 룰은 non-JP 케이스에선
+    // country: 'japan' 필터로 자동 비활성.
+    validationIds: ['jp.import-quarantine-date-valid'],
   },
 
   // ── 14. 일본 수출 동물검역 (왕복 케이스 한정 — 귀국편) ──────────────────
@@ -767,6 +774,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     inputs: [
       { key: 'jp_export_quarantine_visit_date', label: '검역일', type: 'date' },
     ],
+    validationIds: ['jp.export-quarantine-visit-date-valid'],
     allowAttachments: true,
     attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
     attachmentLabel: 'Export Quarantine Certificate',
@@ -788,6 +796,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     inputs: [
       { key: 'kr_import_quarantine_date', label: '검역일', type: 'date' },
     ],
+    validationIds: ['jp.kr-import-quarantine-date-valid'],
     allowAttachments: true,
     attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
   },

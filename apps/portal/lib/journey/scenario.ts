@@ -3,7 +3,6 @@ import {
   JOURNEY_STEP_CATALOG,
   buildCaseJourneyContext,
   evaluateChainConsistency,
-  evaluateDateConsistency,
   findStepForCheck,
   getStepsForCase,
   resolveCompletedDate,
@@ -211,18 +210,10 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
 
   const applicableSteps = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
 
-  // 정합성 패스 — 선행/순서 불변식 위반을 해당(후행) step 에 '주의'로 표면화.
-  // done(데이터 유무)·procedure-check 와 무관한 참조 무결성 레이어. 위반 없으면 빈 맵.
-  //  1) evaluateChainConsistency — 백신·항체 체인의 선행존재·시간순서(완료일 기준).
-  //  2) evaluateDateConsistency — 이미 입력된 검역·검사 날짜를 각자의 순방향 검증으로 재실행.
-  //     항공편(앵커)을 나중에 수정해 이후 일정이 어긋났을 때, 하드 차단·리셋 대신 '주의'로
-  //     검토를 유도. 저장 시점 검증과 같은 함수(@petmove/domain date-rules)를 재사용한다.
-  // step 당 1건 — 체인 정합성을 우선하고, 비어 있을 때만 날짜 검증 위반을 채운다.
+  // 정합성 패스 — 광견병 체인의 선행존재·시간순서 위반을 해당(후행) step 에 '주의'로 표면화.
+  // (검역·검사 날짜의 자기 검증은 procedure-check 로 흡수됨 — 아래 한 패스에서 같이 처리.)
   const consistencyByStep = new Map<string, string>()
   for (const i of evaluateChainConsistency(applicableSteps, caseRow)) {
-    if (!consistencyByStep.has(i.stepId)) consistencyByStep.set(i.stepId, i.message)
-  }
-  for (const i of evaluateDateConsistency(applicableSteps, caseRow)) {
     if (!consistencyByStep.has(i.stepId)) consistencyByStep.set(i.stepId, i.message)
   }
 
@@ -231,6 +222,8 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
   const failedByStep = new Map<string, number>()
   const infoByStep = new Map<string, number>()
   const infoMessageByStep = new Map<string, string>()
+  // 주의 카드 본문 — 같은 step 에 여러 주의가 묶이면 첫 메시지만 보존. 타임라인 desc 보조줄.
+  const failedMessageByStep = new Map<string, string>()
   // step 매핑이 없는 non-info 결과 — 견종·마릿수·거주·1년 라이선스 같은 case-level 결격.
   // journey 페이지 상단의 별도 '주의' 카드로 노출된다.
   const caseAlerts: CaseAlert[] = []
@@ -265,6 +258,10 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       // 안내 카드 본문 — 같은 step 에 여러 안내가 묶이면 첫 메시지만 보존.
       if (check.severity === 'info' && !infoMessageByStep.has(stepId)) {
         infoMessageByStep.set(stepId, result.message ?? check.description)
+      }
+      // 주의 본문도 같은 방식 — 첫 메시지를 타임라인 desc 로 노출 (consistency 우선).
+      if (check.severity !== 'info' && !failedMessageByStep.has(stepId)) {
+        failedMessageByStep.set(stepId, result.message ?? check.description)
       }
     }
   }
@@ -458,7 +455,10 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       (isAwaitingStep ? sit?.desc : undefined)
     // 정합성 위반이 있으면 그 메시지를 보조줄로 노출하고 '주의'로 카운트 — done 이어도
     // ⚠ 로 바뀐다(timeline 우선순위 주의 > done). 데이터·완료 상태 자체는 보존.
+    // 체인 정합성(consistencyMsg) 우선, 없으면 procedure-check 주의의 첫 메시지.
     const consistencyMsg = consistencyByStep.get(step.id)
+    const failedMsg = failedMessageByStep.get(step.id)
+    const subtitleMsg = consistencyMsg ?? failedMsg
     const effectiveFailed = failedChecks + (consistencyMsg ? 1 : 0)
     return {
       id: step.id,
@@ -467,7 +467,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       date,
       dateLabel,
       state: done ? 'done' : 'upcoming',
-      desc: consistencyMsg ?? desc,
+      desc: subtitleMsg ?? desc,
       cardDesc,
       failedChecks: effectiveFailed > 0 ? effectiveFailed : undefined,
       infoChecks: infoChecks > 0 ? infoChecks : undefined,
