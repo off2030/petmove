@@ -591,8 +591,6 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                   ? getDetailHintsById(L, rec.product_id, rec.date, weightKg)
                   : getDetailHints(L, label, rec.date, species, weightKg)
                 const suppressHints = !!rec.other_hospital
-                // 본병원(타병원 미체크) 백신 — 약품칸은 지정 약품(hint)만 읽기 전용.
-                const designatedOnly = OTHER_HOSPITAL_LABELS.has(label) && !rec.other_hospital
                 return (
                   <div
                     key={oi}
@@ -675,7 +673,6 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                           value={rec.product}
                           hint={hints.product}
                           suppressHint={suppressHints}
-                          designatedOnly={designatedOnly}
                           placeholder="제품명"
                           isEditing={detailEdit?.idx === oi && detailEdit?.field === 'product'}
                           onStartEdit={() => setDetailEdit({ idx: oi, field: 'product' })}
@@ -689,7 +686,6 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                         value={rec.manufacturer}
                         hint={hints.manufacturer}
                         suppressHint={suppressHints}
-                        designatedOnly={designatedOnly}
                         placeholder="제조사"
                         isEditing={detailEdit?.idx === oi && detailEdit?.field === 'manufacturer'}
                         onStartEdit={() => setDetailEdit({ idx: oi, field: 'manufacturer' })}
@@ -702,7 +698,6 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                         value={rec.lot}
                         hint={hints.lot}
                         suppressHint={suppressHints}
-                        designatedOnly={designatedOnly}
                         placeholder="제품번호"
                         isEditing={detailEdit?.idx === oi && detailEdit?.field === 'lot'}
                         onStartEdit={() => setDetailEdit({ idx: oi, field: 'lot' })}
@@ -717,7 +712,6 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
                             value={rec.expiry}
                             hint={hints.expiry}
                             suppressHint={suppressHints}
-                            designatedOnly={designatedOnly}
                             type="date"
                             placeholder="유효기간"
                             isEditing={detailEdit?.idx === oi && detailEdit?.field === 'expiry'}
@@ -934,14 +928,12 @@ function ProductDropdown({ value, defaultName, options, onChange, saving }: {
 
 /* ── Detail field (text or date, inline editable) ── */
 
-function DetailField({ value, hint, suppressHint, designatedOnly, type, placeholder, isEditing, onStartEdit, onSave, onCancel, saving }: {
+function DetailField({ value, hint, suppressHint, type, placeholder, isEditing, onStartEdit, onSave, onCancel, saving }: {
   value?: string | null
   /** lookup 으로 자동 추론된 값 — 사용자 입력(value) 없을 때 hint 를 옅게 표시. */
   hint?: string | null
   /** true 면 hint 표시 억제 (예: 타병원 접종 record 의 detail 필드). */
   suppressHint?: boolean
-  /** 본병원(타병원 미체크) — 입력값 대신 지정 약품(hint)만 읽기 전용 표시. */
-  designatedOnly?: boolean
   type?: 'text' | 'date'
   placeholder: string
   isEditing: boolean
@@ -951,22 +943,6 @@ function DetailField({ value, hint, suppressHint, designatedOnly, type, placehol
   saving: boolean
 }) {
   const editMode = useSectionEditMode()
-
-  // 본병원 — 지정 약품(카탈로그)만 옅게, 읽기 전용. 입력값은 무시(DB 엔 보존).
-  // 약품을 직접 입력하려면 타병원 접종을 체크한다.
-  if (designatedOnly) {
-    return (
-      <span
-        className={cn(
-          'inline-block rounded-md px-2 py-1 -mx-2 text-xs',
-          hint ? 'text-muted-foreground/70' : 'text-muted-foreground/40 italic',
-        )}
-        title={hint ? '지정 약품' : '지정 약품 없음'}
-      >
-        {hint || placeholder}
-      </span>
-    )
-  }
 
   const effectiveHint = suppressHint ? null : hint
   const cleared = value === ''
