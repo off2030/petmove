@@ -194,25 +194,9 @@ export function validateRabiesInterval(primeDate: string, boosterDate: string): 
   return null
 }
 
-/**
- * 광견병 2차가 1차 면역 유효기간 이내인지 — 유효기간 경과 후 접종은 부스터가 아닌 새 기초접종.
- *
- * primeValidUntilRaw 는 저장값 그대로("N년" 또는 'YYYY-MM-DD' 또는 빈값) — resolveValidUntil 이
- * 어느 형식이든 마지막 유효일로 환산한다(없으면 1년). client·procedure-check 공용 단일 출처.
- * 2차가 마지막 유효일 당일이면 유효(경계 포함). 어느 날짜든 비면 통과.
- */
-export function validateRabiesBoosterValidity(
-  primeDate: string,
-  primeValidUntilRaw: string | null | undefined,
-  boosterDate: string,
-): string | null {
-  if (!primeDate || !boosterDate) return null
-  const validUntil = resolveValidUntil(primeDate, primeValidUntilRaw)
-  if (validUntil && boosterDate > validUntil) {
-    return '2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 합니다.'
-  }
-  return null
-}
+// 광견병 2차가 1차 면역 유효기간 이내인지(과거 validateRabiesBoosterValidity)는 부스터 chain
+// 검증으로 통합 — findRabiesChainBreak(rabies-chain.ts)가 1차→2차→3차… 전체를 순차 검사한다.
+// client(rabies2/extra 입력 불가)·procedure-check(jp.rabies-booster/extra-validity 주의) 공용.
 
 /**
  * 일본 사전 신고(NACCS) 마감 — 신청일은 입국일 40일 이전이어야 함.

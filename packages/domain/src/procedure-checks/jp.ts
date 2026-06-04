@@ -5,10 +5,10 @@ import {
   validateJpExportVisitDate,
   validateJpImportDate,
   validateKrImportDate,
-  validateRabiesBoosterValidity,
   validateRabiesInterval,
   validateTiterWithinChain,
 } from '../journey-steps/date-rules'
+import { findRabiesChainBreak } from '../journey-steps/rabies-chain'
 import type { ProcedureCheck } from './types'
 import {
   addDays,
@@ -106,14 +106,17 @@ export const JP_CHECKS: ProcedureCheck[] = [
       // 1·2차 둘 다 필요 — 하나라도 없으면 skip
       if (entries.length < 2) return SKIP
 
-      const [first, second] = entries
-      // 단일 출처 — client 입력 차단과 같은 함수. valid_until 이 "N년"/날짜 어느 형식이든
-      // resolveValidUntil 이 마지막 유효일로 환산(직접 문자열 비교하던 버그 해소).
-      const msg = validateRabiesBoosterValidity(first.date, first.valid_until, second.date)
-      if (msg) {
-        return { ok: false, message: msg, offendingPaths: [`rabies_dates[${second.originalIndex}].date`] }
+      // 단일 출처 — 부스터 chain 검증(findRabiesChainBreak). 1·2차만 보고, 2차가 1차 면역
+      // 유효기간(resolveValidUntil) 밖이면 위반. 3차+ 는 jp.rabies-extra-within-previous-validity.
+      const brk = findRabiesChainBreak(entries.slice(0, 2))
+      if (brk) {
+        return {
+          ok: false,
+          message: '2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 합니다.',
+          offendingPaths: [`rabies_dates[${entries[1].originalIndex}].date`],
+        }
       }
-      return { ok: true, message: `2차 접종(${second.date})이 1차 유효기간 이내.` }
+      return { ok: true, message: '2차 접종이 1차 유효기간 이내.' }
     },
   },
   {
@@ -130,23 +133,18 @@ export const JP_CHECKS: ProcedureCheck[] = [
       // 3차+ 가 있어야 검사 대상.
       if (entries.length < 3) return SKIP
 
-      const previous = entries[entries.length - 2]
-      const latest = entries[entries.length - 1]
-      const previousValidUntil = resolveValidUntil(previous.date, previous.valid_until)
-      const withinValidity = !!previousValidUntil && previousValidUntil >= latest.date
-      if (!withinValidity) {
-        const prevNo = entries.length - 1
-        const latestNo = entries.length
+      // 전체 chain 순차 검증(findRabiesChainBreak). 3차+ 에서 끊긴 경우만 — 2차 끊김은
+      // jp.rabies-booster-within-prime-validity 담당. (단일 출처: client·B 와 같은 함수.)
+      const brk = findRabiesChainBreak(entries)
+      if (brk && brk.brokenAt >= 3) {
+        const broken = entries[brk.brokenAt - 1]
         return {
           ok: false,
-          message: `${prevNo}차 백신 유효기간이 만료된 뒤 ${latestNo}차를 접종했습니다. 접종일을 확인해주세요.`,
-          offendingPaths: [`rabies_dates[${latest.originalIndex}].date`],
+          message: `${brk.brokenAt - 1}차 백신 유효기간이 만료된 뒤 ${brk.brokenAt}차를 접종했습니다. 접종일을 확인해주세요.`,
+          offendingPaths: [`rabies_dates[${broken.originalIndex}].date`],
         }
       }
-      return {
-        ok: true,
-        message: `추가 접종(${latest.date})이 직전 유효기간(${previousValidUntil}) 이내.`,
-      }
+      return { ok: true, message: '추가 접종이 직전 유효기간 이내.' }
     },
   },
   {

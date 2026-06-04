@@ -13,7 +13,6 @@ import {
   validateJpImportDate,
   validateKrExportDate,
   validateKrImportDate,
-  validateRabiesBoosterValidity,
   validateRabiesInterval,
   validateTiterWithinChain,
   validateVetVisitDate,
@@ -469,11 +468,15 @@ export function StepDetailView({
       if (isRabies2) {
         const r1 = readRabiesEntryForm(caseRow?.data, 0)
         if (r1.date && rabies.date) {
-          // 1·2차 순서·간격(30일)·유효기간 — procedure-check 와 같은 domain 함수(단일 출처).
+          // 1·2차 순서·간격(30일) — procedure-check 와 같은 domain 함수(단일 출처).
           const intervalErr = validateRabiesInterval(r1.date, rabies.date)
           if (intervalErr) return intervalErr
-          const validityErr = validateRabiesBoosterValidity(r1.date, r1.valid_until, rabies.date)
-          if (validityErr) return validityErr
+          // 2차가 1차 면역 유효기간 이내 — 부스터 chain 검증(findRabiesChainBreak, 3차+ 와 단일 출처).
+          const chainBreak = findRabiesChainBreak([
+            { date: r1.date, valid_until: r1.valid_until || null },
+            { date: rabies.date, valid_until: rabies.valid_until || null },
+          ])
+          if (chainBreak) return '2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 합니다.'
           const microchip = readImplantDate(caseRow?.data)
           if (microchip && microchip > rabies.date) return '마이크로칩 삽입 이후에 광견병 백신을 접종해야 합니다.'
           // "1차<칩 → 2차=항체 같은 날" 위반은 2차 입력 시 막지 않는다 — 항체(이후 일정)가
