@@ -61,21 +61,22 @@ jobs:
       - name: Copy env to portal cwd
         run: cp .vercel/.env.production.local apps/portal/.env.production.local
 
-      # 진단: vercel pull 이 production env 를 제대로 다 받았는지 키 목록과 supabase 키
-      # 존재 여부 확인. 값은 노출하지 않고 키 이름만.
-      - name: Inspect env keys (debug)
-        run: |
-          echo "--- env file size ---"
-          wc -c .vercel/.env.production.local || echo "(missing)"
-          echo "--- env keys ---"
-          grep -oE '^[A-Z_][A-Z0-9_]*' .vercel/.env.production.local | sort -u || echo "(no keys parsed)"
-          echo "--- supabase key presence ---"
-          grep -q '^NEXT_PUBLIC_SUPABASE_URL=' .vercel/.env.production.local && echo "NEXT_PUBLIC_SUPABASE_URL: PRESENT" || echo "NEXT_PUBLIC_SUPABASE_URL: MISSING"
-          grep -q '^NEXT_PUBLIC_SUPABASE_ANON_KEY=' .vercel/.env.production.local && echo "NEXT_PUBLIC_SUPABASE_ANON_KEY: PRESENT" || echo "NEXT_PUBLIC_SUPABASE_ANON_KEY: MISSING"
-          grep -q '^SUPABASE_SERVICE_ROLE_KEY=' .vercel/.env.production.local && echo "SUPABASE_SERVICE_ROLE_KEY: PRESENT" || echo "SUPABASE_SERVICE_ROLE_KEY: MISSING"
-
+      # vercel build 가 next build subprocess 에 env 를 자동 전파하지 못하는 패턴이 있어서
+      # (monorepo + rootDirectory 조합 때문으로 추정) bash 의 set -a + source 로 직접
+      # 현재 shell 환경에 export 한 뒤 build·deploy 를 호출. 같은 shell 안이라 subprocess 가
+      # 그대로 상속.
       - name: Build
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        shell: bash
+        run: |
+          set -a
+          source .vercel/.env.production.local
+          set +a
+          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        shell: bash
+        run: |
+          set -a
+          source .vercel/.env.production.local
+          set +a
+          vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
