@@ -46,20 +46,21 @@ export function BottomNav() {
 
   const caseId = caseIdInPath ?? lastCaseId
 
-  // 둥근 카드형 플로팅 바 — 좌우·아래 마진, 라벨 항상 보임. Calm 톤.
+  // 알약 컴팩트 — 폭 자동, 중앙 정렬. active 만 라벨+알약 배경, 비활성은 아이콘만.
   // portal-preview/app.jsx 의 BottomNav 와 동일 디자인 (truth source).
   return (
     <nav
       style={{
         position: 'fixed',
-        left: 12,
-        right: 12,
-        bottom: 'max(env(safe-area-inset-bottom), 14px)',
+        bottom: 'max(env(safe-area-inset-bottom), 16px)',
+        left: '50%',
+        transform: 'translateX(-50%)',
         zIndex: 40,
         display: 'flex',
-        padding: '6px 4px',
-        borderRadius: 22,
-        background: 'rgb(var(--pm-bg-rgb) / 0.88)',
+        gap: 2,
+        padding: 5,
+        borderRadius: 9999,
+        background: 'rgb(var(--pm-bg-rgb) / 0.92)',
         backdropFilter: 'blur(20px) saturate(160%)',
         WebkitBackdropFilter: 'blur(20px) saturate(160%)',
         border: '1px solid rgba(42, 38, 32, 0.06)',
@@ -75,21 +76,26 @@ export function BottomNav() {
           <Link
             key={t.key}
             href={href}
+            aria-label={t.label}
             style={{
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              gap: 3,
-              padding: '8px 6px',
-              flex: 1,
-              borderRadius: 16,
+              gap: 6,
+              padding: active ? '8px 14px' : 10,
+              borderRadius: 9999,
               textDecoration: 'none',
-              color: active ? 'var(--pm-ink)' : 'var(--pm-ink-3)',
-              transition: 'color 180ms ease',
+              color: active ? 'var(--pm-bg)' : 'var(--pm-ink-3)',
+              background: active ? 'var(--pm-ink)' : 'transparent',
+              transition:
+                'background 180ms ease, color 180ms ease, padding 180ms ease',
             }}
           >
             <NavIcon name={t.icon} stroke={active ? 2 : 1.7} />
-            <span style={{ fontSize: 10, fontWeight: active ? 700 : 500 }}>{t.label}</span>
+            {active && (
+              <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '-0.01em' }}>
+                {t.label}
+              </span>
+            )}
           </Link>
         )
       })}

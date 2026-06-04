@@ -98,12 +98,12 @@ function BottomNav({ screen, onNav }) {
     { id: 'info', label: '정보', icon: 'info' },
     { id: 'profile', label: '프로필', icon: 'user' },
   ];
-  // 둥근 카드형 플로팅 바 — 좌우·아래 마진, 라벨 항상 보임. Calm 톤.
+  // 알약 컴팩트 — 폭 자동, 중앙 정렬. active 만 라벨+알약 배경, 비활성은 아이콘만.
   return (
     <div style={{
-      position: 'absolute', left: 12, right: 12, bottom: 18, zIndex: 40,
-      display: 'flex', padding: '6px 4px', borderRadius: 22,
-      background: 'rgba(250,245,240,0.88)',
+      position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)',
+      zIndex: 40, display: 'flex', gap: 2, padding: 5, borderRadius: 9999,
+      background: 'rgba(250,245,240,0.92)',
       backdropFilter: 'blur(20px) saturate(160%)',
       WebkitBackdropFilter: 'blur(20px) saturate(160%)',
       border: '1px solid rgba(42,38,32,0.06)',
@@ -112,15 +112,22 @@ function BottomNav({ screen, onNav }) {
       {items.map(it => {
         const active = screen === it.id;
         return (
-          <button key={it.id} onClick={() => onNav(it.id)} style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-            background: 'transparent', border: 'none', cursor: 'pointer',
-            padding: '8px 6px', flex: 1, fontFamily: 'inherit', borderRadius: 16,
-            color: active ? 'var(--pm-ink)' : 'var(--pm-ink-3)',
-            transition: 'color 180ms ease',
-          }}>
-            <Icon name={it.icon} size={20} stroke={active ? 2 : 1.7}/>
-            <span style={{ fontSize: 10, fontWeight: active ? 700 : 500 }}>{it.label}</span>
+          <button key={it.id} onClick={() => onNav(it.id)}
+            aria-label={it.label}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: active ? 'var(--pm-ink)' : 'transparent',
+              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              padding: active ? '8px 14px' : 10, borderRadius: 9999,
+              color: active ? 'var(--pm-bg)' : 'var(--pm-ink-3)',
+              transition: 'background 180ms ease, color 180ms ease, padding 180ms ease',
+            }}>
+            <Icon name={it.icon} size={19} stroke={active ? 2 : 1.7}/>
+            {active && (
+              <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '-0.01em' }}>
+                {it.label}
+              </span>
+            )}
           </button>
         );
       })}
