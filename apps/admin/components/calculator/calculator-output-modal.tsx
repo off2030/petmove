@@ -161,11 +161,25 @@ export function CalculatorOutputModal({
     return () => document.removeEventListener('mousedown', onDown)
   }, [pickerOpen])
 
+  // 항목 추가 picker — 모든 국가/종의 항목을 표시 (목적지 외 항목도 추가 가능).
+  // 현재 목적지의 항목을 맨 위에, 나머지는 country_order → item_order 순.
   const pickerItems = useMemo(() => {
-    const list = itemsForCountry(country, species).sort((a, b) => a.item_order - b.item_order)
+    const current = targetCountry(country, species)
+    const list = allItems.slice().sort((a, b) => {
+      const aCur = a.country === current ? 0 : 1
+      const bCur = b.country === current ? 0 : 1
+      if (aCur !== bCur) return aCur - bCur
+      if (a.country_order !== b.country_order) return a.country_order - b.country_order
+      return a.item_order - b.item_order
+    })
     const q = pickerSearch.trim().toLowerCase()
-    return q ? list.filter((it) => it.item_name.toLowerCase().includes(q)) : list
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return q
+      ? list.filter(
+          (it) =>
+            it.item_name.toLowerCase().includes(q) ||
+            it.country.toLowerCase().includes(q),
+        )
+      : list
   }, [country, species, allItems, pickerSearch])
 
   // 목적지 dropdown
@@ -473,7 +487,12 @@ export function CalculatorOutputModal({
                           }}
                           className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-accent transition-colors"
                         >
-                          <span className="truncate font-serif text-[15px]">{it.item_name}</span>
+                          <span className="flex min-w-0 flex-1 items-baseline gap-2">
+                            <span className="truncate font-serif text-[15px]">{it.item_name}</span>
+                            <span className="shrink-0 text-[11px] tracking-[0.5px] text-muted-foreground/70">
+                              {it.country}
+                            </span>
+                          </span>
                           <span className="font-mono text-[13px] tabular-nums text-muted-foreground">
                             ₩{fmt(it.cost)}
                           </span>
