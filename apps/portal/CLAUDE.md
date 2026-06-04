@@ -39,4 +39,4 @@ Phase 11.0 9/10 완료. 남은 작업:
 
 ## 알려진 이슈
 
-- **monorepo 빌드 트리거 누락** — 2026-06-04 확인. `packages/domain` 변경(cee59ea)에 portal Vercel 빌드가 트리거되지 않음(admin 은 정상). Vercel petmove 프로젝트의 Build & Development Settings → "Ignored Build Step" 또는 root watcher 설정이 `apps/portal/**` 만 watch 하고 `packages/**` 무시할 가능성. 임시 복구: apps/portal/ 안에 trivial 변경으로 force rebuild. 근본 해결: Vercel 설정 점검 (사용자 액션).
+- **Vercel webhook 끊김** — 2026-06-04 portal 재발(2026-06-03 첫 사례 이튿날). 진단: Vercel Settings → Build & Deployment 설정은 정상(Root `apps/portal`, Include outside Enabled, Ignored Build Step Automatic) 인데 apps/portal/ 변경조차 트리거 안 되면 webhook 끊김. 복구: Settings → Git → Disconnect → 같은 repo Reconnect (환경변수·도메인·빌드 설정 모두 보존). Reconnect 후 자동 트리거 안 되니 새 push 한 번 더 필요.
