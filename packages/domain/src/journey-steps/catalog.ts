@@ -290,6 +290,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       'jp.microchip-rabies-sequence',
       // 마이크로칩 < 1차 사전 안내는 base 매핑이 rabies-vaccine-2 (다음 액션 step).
       // 2차 done 시점에는 scenario.ts 가 동적으로 이 step(rabies-titer)으로 옮긴다.
+      // 광견병 백신 체인 누락·역순 (1차/2차 < 항체) — 모든 국가 공통.
+      'common.rabies-titer-chain-consistent',
     ],
   },
 

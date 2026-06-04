@@ -1,6 +1,13 @@
 import { buildDateRuleContext, validateKrExportDate, validateVetVisitDate } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
-import { SKIP } from './utils'
+import { readRabiesEntries, readTiterEntries, SKIP } from './utils'
+
+/** 'YYYY-MM-DD' → 'YYYY년 M월 D일'. */
+function formatKr(iso: string): string {
+  const parts = iso.split('-')
+  if (parts.length !== 3) return iso
+  return `${parts[0]}년 ${Number(parts[1])}월 ${Number(parts[2])}일`
+}
 
 /**
  * 목적지와 무관하게 항상 적용되는 공통 절차 검증.
@@ -78,6 +85,49 @@ export const COMMON_CHECKS: ProcedureCheck[] = [
         return { ok: false, message: msg, offendingPaths: ['kr_export_quarantine_date'] }
       }
       return { ok: true, message: `한국 수출검역일(${raw}) 유효 범위 내.` }
+    },
+  },
+  // ── 광견병 체인 정합성 ───────────────────────────────────────────────
+  // 항체 검사가 입력된 상태에서 선행 광견병 접종(1차·2차)이 (a) 누락이거나 (b) 항체보다
+  // 늦은 경우 '주의'. 보호자가 앞 단계를 수정·삭제해서 체인이 깨졌을 때 후행(항체) step
+  // 에 표면화한다. 광견병 백신은 모든 국가의 필수 선행 단계라 country: 'all'.
+  {
+    id: 'common.rabies-titer-chain-consistent',
+    country: 'all',
+    category: '광견병',
+    title: '광견병 항체 검사 일정',
+    description: '광견병 항체 검사일은 광견병 백신(1차·2차) 접종 후여야 하며, 선행이 모두 입력되어 있어야 함.',
+    severity: 'warning',
+    addedAt: '2026-06-04',
+    run: ({ caseRow }) => {
+      const titers = readTiterEntries(caseRow)
+      if (titers.length === 0) return SKIP
+      const rabies = readRabiesEntries(caseRow)
+      // 가장 이른 항체 검사일 — 180일 대기 기준일과 동일 출처(done-resolver 의 has-titer-entry).
+      const titerDate = titers.map((t) => t.date).sort()[0]
+
+      // 시간 순서 위반 우선 — 가장 늦은 선행 백신과 비교.
+      if (rabies.length > 0) {
+        const latestRabies = rabies[rabies.length - 1]
+        if (titerDate < latestRabies.date) {
+          const stage = rabies.length >= 2 ? '광견병 2차' : '광견병 1차'
+          return {
+            ok: false,
+            message: `광견병 항체 검사일(${formatKr(titerDate)})이 ${stage}(${formatKr(latestRabies.date)})보다 빠릅니다. 날짜를 확인해 주세요.`,
+            offendingPaths: ['rabies_titer_records'],
+          }
+        }
+      }
+      // 선행 누락 — 가까운 선행(2차) 우선, 그 다음 1차.
+      if (rabies.length < 2) {
+        const missing = rabies.length === 0 ? '광견병 1차' : '광견병 2차'
+        return {
+          ok: false,
+          message: `${missing} 정보가 없습니다. 입력해 주세요.`,
+          offendingPaths: ['rabies_titer_records'],
+        }
+      }
+      return { ok: true, message: '항체 검사일이 광견병 백신 이후.' }
     },
   },
 ]

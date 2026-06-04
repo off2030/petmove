@@ -2,7 +2,6 @@ import type { CaseRow } from '@petmove/domain'
 import {
   JOURNEY_STEP_CATALOG,
   buildCaseJourneyContext,
-  evaluateChainConsistency,
   findStepForCheck,
   getStepsForCase,
   resolveCompletedDate,
@@ -210,15 +209,9 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
 
   const applicableSteps = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
 
-  // 정합성 패스 — 광견병 체인의 선행존재·시간순서 위반을 해당(후행) step 에 '주의'로 표면화.
-  // (검역·검사 날짜의 자기 검증은 procedure-check 로 흡수됨 — 아래 한 패스에서 같이 처리.)
-  const consistencyByStep = new Map<string, string>()
-  for (const i of evaluateChainConsistency(applicableSteps, caseRow)) {
-    if (!consistencyByStep.has(i.stepId)) consistencyByStep.set(i.stepId, i.message)
-  }
-
   // procedure-check 결과를 step 단위로 집계. severity 'info' 는 차분한 '안내'
   // 톤으로 분리, 그 외(blocker/warning)는 '주의'. destinationKey 없으면 빈 맵.
+  // 광견병 체인 정합성·검역·검사 일정 자기검증·국가별 의료 룰 모두 동일 패스로 평가된다.
   const failedByStep = new Map<string, number>()
   const infoByStep = new Map<string, number>()
   const infoMessageByStep = new Map<string, string>()
@@ -453,13 +446,9 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       infoMessageByStep.get(step.id) ??
       (isAdvisory && !done ? desc : undefined) ??
       (isAwaitingStep ? sit?.desc : undefined)
-    // 정합성 위반이 있으면 그 메시지를 보조줄로 노출하고 '주의'로 카운트 — done 이어도
-    // ⚠ 로 바뀐다(timeline 우선순위 주의 > done). 데이터·완료 상태 자체는 보존.
-    // 체인 정합성(consistencyMsg) 우선, 없으면 procedure-check 주의의 첫 메시지.
-    const consistencyMsg = consistencyByStep.get(step.id)
+    // procedure-check 주의가 있으면 첫 메시지를 보조줄로 노출 — done 이어도 ⚠ 로 바뀐다
+    // (timeline 우선순위 주의 > done). 데이터·완료 상태 자체는 보존.
     const failedMsg = failedMessageByStep.get(step.id)
-    const subtitleMsg = consistencyMsg ?? failedMsg
-    const effectiveFailed = failedChecks + (consistencyMsg ? 1 : 0)
     return {
       id: step.id,
       label: step.title,
@@ -467,9 +456,9 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       date,
       dateLabel,
       state: done ? 'done' : 'upcoming',
-      desc: subtitleMsg ?? desc,
+      desc: failedMsg ?? desc,
       cardDesc,
-      failedChecks: effectiveFailed > 0 ? effectiveFailed : undefined,
+      failedChecks: failedChecks > 0 ? failedChecks : undefined,
       infoChecks: infoChecks > 0 ? infoChecks : undefined,
       advisory: isAdvisory ? true : undefined,
       infoMessage,

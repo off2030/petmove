@@ -1,7 +1,6 @@
 export * from './types'
 export * from './applicability'
 export * from './done-resolver'
-export * from './consistency'
 export * from './date-rules'
 export * from './destination-overrides'
 export * from './check-mapping'
