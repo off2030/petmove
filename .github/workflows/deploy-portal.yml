@@ -55,6 +55,12 @@ jobs:
       - name: Pull Vercel environment
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
+      # vercel pull 은 root 의 .vercel/.env.production.local 만 생성한다. 그런데 next build
+      # 가 실행되는 cwd 는 apps/portal(rootDirectory) 라 dotenv 가 그 env 파일을 못 본다.
+      # apps/portal/.env.production.local 로 복사해서 next 가 직접 읽게 한다.
+      - name: Copy env to portal cwd
+        run: cp .vercel/.env.production.local apps/portal/.env.production.local
+
       - name: Build
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
