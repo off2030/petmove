@@ -1,0 +1,62 @@
+name: Deploy Portal
+
+# Vercel webhook 의존을 끊기 위해 GitHub Actions 에서 직접 배포한다.
+# (Vercel Git 통합은 webhook 끊김이 잦아 신뢰할 수 없음 — apps/portal/CLAUDE.md 노트 참고)
+# trigger: master 에 push 되고 portal 빌드에 영향 있는 파일이 변경됐을 때만.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'apps/portal/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - '.github/workflows/deploy-portal.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-portal-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build + Deploy to Vercel
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Vercel CLI
+        run: pnpm add -g vercel@latest
+
+      - name: Pull Vercel environment
+        working-directory: apps/portal
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build
+        working-directory: apps/portal
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy
+        working-directory: apps/portal
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
