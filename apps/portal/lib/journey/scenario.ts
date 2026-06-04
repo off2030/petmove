@@ -252,7 +252,7 @@ export function buildJourney(caseRow: CaseRow): JourneyData {
       if (check.severity === 'info' && !infoMessageByStep.has(stepId)) {
         infoMessageByStep.set(stepId, result.message ?? check.description)
       }
-      // 주의 본문도 같은 방식 — 첫 메시지를 타임라인 desc 로 노출 (consistency 우선).
+      // 주의 본문도 같은 방식 — 첫 메시지를 타임라인 desc 보조줄로 노출.
       if (check.severity !== 'info' && !failedMessageByStep.has(stepId)) {
         failedMessageByStep.set(stepId, result.message ?? check.description)
       }
