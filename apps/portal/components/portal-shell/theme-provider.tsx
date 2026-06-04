@@ -33,10 +33,13 @@ function resolve(mode: ThemeMode): Resolved {
   return mode
 }
 
-/** <html data-theme> + meta theme-color 동기. (no-flash 스크립트와 동일 결과) */
+/** <html data-theme> + .dark 클래스 + meta theme-color 동기. (no-flash 스크립트와 동일 결과)
+ *  .dark 클래스는 globals.css 의 PMW 토큰(`--background`/`--foreground` 등 .dark 매칭) 다크 적용에 필요.
+ *  body 의 `bg-background text-foreground` 가 PMW 토큰을 쓰는데 data-theme 만으로는 안 잡혀 라이트 그대로 보이는 버그 방지. */
 function apply(resolved: Resolved) {
   if (typeof document === 'undefined') return
   document.documentElement.dataset.theme = resolved
+  document.documentElement.classList.toggle('dark', resolved === 'dark')
   let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null
   if (!meta) {
     meta = document.createElement('meta')
