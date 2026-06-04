@@ -155,7 +155,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩, 접종, 검사 타이밍',
     description:
       '① 마이크로칩 ≤ 1차 < 2차 ≤ 항체 검사, 또는 ② 1차 < 마이크로칩 ≤ 2차이면서 2차 접종일 = 항체 검사일. 둘 중 하나 충족 필요.',
-    severity: 'info',
+    // 채혈(항체) 입력 시 client 가 입력 불가로 막고, 입력 후 2차·칩을 수정해 깨지면 이 룰이
+    // '주의'로 표면화. 조건 ②(같은 날)는 항체 미입력 시 SKIP 이라 채혈 전(다음 할 일)엔 안 뜸.
+    severity: 'warning',
     addedAt: '2026-04-21',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>

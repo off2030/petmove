@@ -475,12 +475,9 @@ export function StepDetailView({
           if (validityErr) return validityErr
           const microchip = readImplantDate(caseRow?.data)
           if (microchip && microchip > rabies.date) return '마이크로칩 삽입 이후에 광견병 백신을 접종해야 합니다.'
-          if (microchip && r1.date < microchip) {
-            const titerDates = readAllTiterDates(caseRow?.data)
-            if (titerDates.length > 0 && !titerDates.includes(rabies.date)) {
-              return '마이크로칩보다 1차 접종을 먼저 한 경우, 2차 접종일은 광견병 항체 검사일과 같아야 합니다.'
-            }
-          }
+          // "1차<칩 → 2차=항체 같은 날" 위반은 2차 입력 시 막지 않는다 — 항체(이후 일정)가
+          // 입력된 상태에서 2차를 수정하는 것이라 '주의'(jp.microchip-rabies-sequence)로
+          // 표면화한다. 같은 날 입력 불가는 채혈 입력 시점(validateTiterDate)이 담당.
         }
       }
       return null
@@ -2051,19 +2048,6 @@ function computeRabiesChainEnd(data: Record<string, unknown> | null | undefined)
     }
   }
   return chainEnd
-}
-
-/**
- * 모든 항체 검사 record 의 date 만 모아 반환 (index 0 + extras). 광견병 2차 cross-entry
- * 검증("2차 = 항체 검사일")에서 사용 — 어느 한 검사 date 와 일치하면 통과.
- */
-function readAllTiterDates(data: Record<string, unknown> | null | undefined): string[] {
-  if (!data) return []
-  const arr = data['rabies_titer_records']
-  if (!Array.isArray(arr)) return []
-  return arr
-    .map((r) => (r && typeof r === 'object' ? (r as { date?: string }).date : undefined))
-    .filter((d): d is string => typeof d === 'string' && d.length >= 10)
 }
 
 /** 채혈일·검사기관·검사결과 — caseRow.data.rabies_titer_records[0] 의 date / lab / value. */
