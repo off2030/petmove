@@ -49,22 +49,12 @@ jobs:
       - name: Install Vercel CLI
         run: pnpm add -g vercel@latest
 
-      - name: Pull Vercel environment
+      # vercel pull 로 project.json 만 받아서 prj/org id 인식시키고, 빌드는 Vercel 서버에
+      # 위임한다. --prebuilt 없이 vercel deploy --prod 를 하면 vercel CLI 가 source 를
+      # zip 으로 업로드 → Vercel 환경에서 빌드 → 배포. webhook 빌드와 동일한 환경·env
+      # 처리. GitHub Actions 는 trigger 역할.
+      - name: Pull Vercel project metadata
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
-      # vercel build 가 monorepo rootDirectory 를 처리하면서 .env 를 next build subprocess
-      # 에 전파하지 못하는 버그. 우회: project.json 의 rootDirectory 제거 + .vercel 폴더
-      # 자체를 apps/portal 안으로 옮긴 뒤 cwd 를 apps/portal 로 잡고 빌드. 이러면
-      # vercel build·next build 모두 같은 폴더에서 .env.production.local 을 본다.
-      - name: Move .vercel into portal
-        run: |
-          node -e "const fs=require('fs'); const p='.vercel/project.json'; const j=JSON.parse(fs.readFileSync(p,'utf8')); if(j.settings){delete j.settings.rootDirectory;} fs.writeFileSync(p, JSON.stringify(j,null,2));"
-          mv .vercel apps/portal/.vercel
-
-      - name: Build
-        working-directory: apps/portal
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy
-        working-directory: apps/portal
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy (build on Vercel)
+        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
