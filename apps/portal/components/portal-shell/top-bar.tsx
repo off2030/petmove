@@ -80,8 +80,13 @@ export function TopBar() {
         paddingBlock: 0,
         boxSizing: 'border-box',
         pointerEvents: 'none',
+        // 하단 바 카드 모양(둥근 22, 알파 0.50)과 어울리도록 — 상단도 하단 모서리만
+        // 살짝 둥글리고, 그라데이션 끝 알파를 0 → 0.50 으로 두어 라운드가 보이게.
+        // 풀-와이드는 유지 — 카드로 갇히면 답답함.
+        borderBottomLeftRadius: 18,
+        borderBottomRightRadius: 18,
         background:
-          'linear-gradient(180deg, rgb(var(--pm-bg-rgb) / .95) 0%, rgb(var(--pm-bg-rgb) / .92) 60%, rgb(var(--pm-bg-rgb) / 0) 100%)',
+          'linear-gradient(180deg, rgb(var(--pm-bg-rgb) / .85) 0%, rgb(var(--pm-bg-rgb) / .70) 60%, rgb(var(--pm-bg-rgb) / .50) 100%)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
       }}
