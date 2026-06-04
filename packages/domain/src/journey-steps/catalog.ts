@@ -149,9 +149,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 보관하세요.',
     attachmentLabel: '광견병백신',
     validationIds: [
-      // jp.rabies-prime-booster-interval (30일 간격), jp.rabies-booster-within-prime-validity
-      // (2차가 1차 유효기간 내), jp.microchip-rabies-sequence (마이크로칩 ≤ 2차) 는
-      // portal 입력 차단으로 이관 — 제거.
+      // 1차 입력 차단(client)이 막는 1·2차 관계를, 1차를 나중에 수정해 깨진 경우엔 2차 step
+      // 에 '주의'로 재검증한다 — 입력 차단은 1차 수정 경로를 못 잡으므로 procedure-check 가
+      // 같은 조건을 매 렌더 재실행한다(검증 단일 출처).
+      'jp.rabies-prime-booster-interval', // 1·2차 간격 30일 이상
+      'jp.rabies-booster-within-prime-validity', // 2차가 1차 면역 유효기간 이내
+      // jp.microchip-rabies-sequence (마이크로칩 ≤ 2차) 는 rabies-titer step 에서 안내.
       // jp.rabies-valid-until-on-departure 는 입국일(entry_date) 기준이라 항공권
       // 구매 step 에서 안내 — 백신 입력 시점엔 보호자가 조치 못 함.
       'jp.rabies-prime-before-microchip',

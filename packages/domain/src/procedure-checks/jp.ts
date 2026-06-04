@@ -63,14 +63,48 @@ export const JP_CHECKS: ProcedureCheck[] = [
       return { ok: true, message: `1차 접종일(${first.date}) 생후 ${age}일령.` }
     },
   },
-{
+  {
+    id: 'jp.rabies-prime-booster-interval',
+    country: 'japan',
+    category: '광견병',
+    title: '광견병 백신 타이밍',
+    description: '1차·2차 광견병 접종일 간격이 30일 이상이어야 함.',
+    // 2차 입력 시점엔 client 입력 차단(step-detail-view getSaveBlockError)이 30일 미만을
+    // 막는다. 이 룰은 같은 조건을 매 렌더 재실행해 — 1차를 나중에 수정해 간격이 깨졌을 때
+    // 2차 step 에 '주의'로 표면화한다(입력 차단은 1차 수정 경로를 못 잡음).
+    severity: 'warning',
+    addedAt: '2026-04-21',
+    run: ({ caseRow }) => {
+      const entries = readRabiesEntries(caseRow)
+      // 1·2차 둘 다 필요 — 하나라도 없으면 skip
+      if (entries.length < 2) return SKIP
+
+      const [first, second] = entries
+      const gap = daysBetween(first.date, second.date)
+      if (gap === null) return SKIP
+
+      const secondPath = `rabies_dates[${second.originalIndex}].date`
+      if (gap < 30) {
+        // 유효한 2차 접종 가능 시점 = 1차 접종일 + 30일.
+        const earliestKr = formatKoreanDate(addDays(first.date, 30))
+        return {
+          ok: false,
+          message: `1·2차 접종 간격은 30일 이상이어야 합니다. 현재 ${gap}일로, 2차 접종일은 ${earliestKr} 이후여야 합니다.`,
+          offendingPaths: [secondPath],
+        }
+      }
+      return { ok: true, message: `1·2차 접종 간격 ${gap}일.` }
+    },
+  },
+  {
     id: 'jp.rabies-booster-within-prime-validity',
     country: 'japan',
     category: '광견병',
     title: '백신 유효기간 만료',
     description:
       '2차 광견병 접종은 1차 접종의 면역 유효기간 이내여야 함. 유효기간 경과 후 접종은 추가접종이 아닌 새 기초접종으로 간주됨.',
-    severity: 'info',
+    // 2차 입력 시 client 차단 + 1차 수정 후 재검증 '주의' (30일 간격 룰과 동일 패턴).
+    severity: 'warning',
     addedAt: '2026-05-16',
     run: ({ caseRow, destination }) => {
       const entries = readRabiesEntries(caseRow)
