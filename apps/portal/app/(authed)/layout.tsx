@@ -94,7 +94,9 @@ function Shell({
         style={{
           flex: 1,
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + 48px)',
-          paddingBottom: 88,
+          // 작게 — 콘텐츠가 플로팅 nav 영역으로 흘러가서 Liquid Glass 가
+          // 실제로 뒤를 비추도록. 끝까지 스크롤 시 마지막 항목은 nav blur 너머로 살짝 보임.
+          paddingBottom: 28,
         }}
       >
         <SwipeTabs>

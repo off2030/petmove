@@ -52,6 +52,9 @@
      rgb(var(--pm-bg-rgb) / α) 로 테마를 따라가도록. (다크에서 dark 블록이 트리플을 교체) */
   --pm-bg-rgb: 245 239 232;
   --pm-surface-rgb: 251 247 241;
+  /* glass 톤 — 페이지 배경(살구 톤)과 의도적으로 다른 색.
+     하단 플로팅 nav 의 Liquid Glass 효과가 비치도록 흰색(라이트)/딥브라운(다크). */
+  --pm-glass-rgb: 255 255 255;
   /* ink 의 rgb 트리플 — 하드코딩 hairline/틴트(rgba(42,38,32,.NN))가
      rgb(var(--pm-ink-rgb) / .NN) 로 다크에서 반전되도록. (스크림·그림자는 제외, literal 유지) */
   --pm-ink-rgb: 42 38 32;
@@ -91,6 +94,7 @@
   --pm-bg-rgb: 28 25 22;
   --pm-surface-rgb: 38 34 32;
   --pm-ink-rgb: 236 228 216;
+  --pm-glass-rgb: 60 55 50;
   --pm-ring-bg: #1C1916;
   --pm-ring-accent: #C9AC7C;
 }
