@@ -214,6 +214,18 @@ export function validateRabiesBoosterValidity(
   return null
 }
 
+/**
+ * 일본 사전 신고(NACCS) 마감 — 신청일은 입국일 40일 이전이어야 함.
+ * client(신청 입력 시 입력 불가)·procedure-check(입국일 수정 후 주의) 공용. 한쪽 비면 통과.
+ */
+export function validateAdvanceNotification(notifDate: string, entryDate: string): string | null {
+  if (!notifDate || !entryDate) return null
+  if (daysBetween(notifDate, entryDate) < 40) {
+    return '일본 입국 40일 전까지 신고를 해야 합니다. 신고가 늦은 경우 입국일을 변경해야 합니다.'
+  }
+  return null
+}
+
 /** caseRow → DateRuleContext (저장 액션·재검증 공통). */
 export function buildDateRuleContext(caseRow: CaseRow): DateRuleContext {
   return {

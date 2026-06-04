@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import {
   createVaccineLookups,
   findRabiesChainBreak,
+  validateAdvanceNotification,
   validateJpEntryDate,
   validateJpExportReservationDate,
   validateJpExportVisitDate,
@@ -531,7 +532,8 @@ export function StepDetailView({
       return null
     }
     if (isAdvanceNotification) {
-      return validateAdvanceNotificationDate(caseRow?.data, advanceDate)
+      const entry = typeof caseRow?.data?.entry_date === 'string' ? (caseRow.data.entry_date as string) : ''
+      return validateAdvanceNotification(advanceDate, entry)
     }
     // 검역·증명서·내원 — 서버 액션과 동일한 @petmove/domain 검증을 클라이언트에서도 선행.
     const data = (caseRow?.data ?? {}) as Record<string, unknown>
@@ -1968,25 +1970,6 @@ function titerExtraEqual(a: TiterExtraEntry[], b: TiterExtraEntry[]): boolean {
     }
   }
   return true
-}
-
-/**
- * 사전 신고(NACCS) 신청일 cross-entry 검증. 통과면 null, 실패면 에러 메시지.
- * - 룰: 신청일 ≤ 입국일 − 40일 (procedure-check jp.advance-notification-40days-before-entry 와 동일).
- *
- * 입국일(entry_date) 미입력 시 skip — 항공편 결정 후 평가되도록 둠.
- */
-function validateAdvanceNotificationDate(
-  data: Record<string, unknown> | null | undefined,
-  notifDate: string,
-): string | null {
-  if (!notifDate) return null
-  const entry = typeof data?.entry_date === 'string' ? data.entry_date : ''
-  if (!entry) return null
-  if (daysBetween(notifDate, entry) < 40) {
-    return '일본 입국 40일 전까지 신고를 해야 합니다. 신고가 늦은 경우 입국일을 변경해야 합니다.'
-  }
-  return null
 }
 
 /** 두 YYYY-MM-DD 날짜 사이의 일수 차이 (to - from). 형식이 깨지면 NaN. */

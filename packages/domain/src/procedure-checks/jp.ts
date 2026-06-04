@@ -1,5 +1,6 @@
 import {
   buildDateRuleContext,
+  validateAdvanceNotification,
   validateJpExportReservationDate,
   validateJpExportVisitDate,
   validateJpImportDate,
@@ -384,17 +385,12 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const entry = readDepartureDate(caseRow, destination) ?? ''
       // 필수: 사전 신고 신청일 + 출국일(=입국일)
       if (!notif || !entry) return SKIP
-
-      const deadline = addDays(entry, -40)
-      if (!deadline) return SKIP
-      if (notif <= deadline) {
-        return { ok: true, message: `신청일(${notif}) ≤ 마감(${deadline}).` }
+      // 단일 출처 — client 입력 차단과 같은 함수.
+      const msg = validateAdvanceNotification(notif, entry)
+      if (msg) {
+        return { ok: false, message: msg, offendingPaths: ['advance_notification_date', 'departure_date'] }
       }
-      return {
-        ok: false,
-        message: '일본 입국 40일 전까지 신고를 해야 합니다. 신고가 늦은 경우 입국일을 변경해야 합니다.',
-        offendingPaths: ['advance_notification_date', 'departure_date'],
-      }
+      return { ok: true, message: '사전 신고 마감 이내.' }
     },
   },
   {
