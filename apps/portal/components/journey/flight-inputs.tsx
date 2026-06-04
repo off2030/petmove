@@ -190,7 +190,7 @@ function TransportSelect({ value, onChange }: { value: string; onChange: (next: 
               padding: '8px 16px',
               borderRadius: 999,
               border: `1px solid ${selected ? C.ink : C.line}`,
-              background: selected ? C.ink : '#fff',
+              background: selected ? C.ink : 'var(--pm-surface)',
               color: selected ? C.surface : C.ink2,
               fontFamily: 'inherit',
               fontSize: 14,

@@ -122,7 +122,7 @@ export function TiterInputs({
                   padding: '11px 12px',
                   border: `1px solid ${selected ? C.accent : C.line}`,
                   borderRadius: 10,
-                  background: selected ? C.accentSoft : '#fff',
+                  background: selected ? C.accentSoft : 'var(--pm-surface)',
                   fontFamily: 'inherit',
                   fontSize: 15,
                   color: C.ink,

@@ -171,7 +171,7 @@ export function RabiesEntryInputs({
                         padding: '9px 0',
                         borderRadius: 10,
                         border: `1px solid ${selected ? C.ink : C.line}`,
-                        background: selected ? C.ink : '#fff',
+                        background: selected ? C.ink : 'var(--pm-surface)',
                         color: selected ? C.surface : C.ink2,
                         fontFamily: 'inherit',
                         fontSize: 14,

@@ -436,7 +436,7 @@ function optionRowStyle(selected: boolean): React.CSSProperties {
     padding: '13px 14px',
     border: `1px solid ${selected ? C.accent : C.line}`,
     borderRadius: 12,
-    background: selected ? C.accentSoft : '#fff',
+    background: selected ? C.accentSoft : 'var(--pm-surface)',
     fontFamily: 'inherit',
     fontSize: 16,
     color: C.ink,
