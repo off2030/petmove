@@ -61,6 +61,19 @@ jobs:
       - name: Copy env to portal cwd
         run: cp .vercel/.env.production.local apps/portal/.env.production.local
 
+      # 진단: vercel pull 이 production env 를 제대로 다 받았는지 키 목록과 supabase 키
+      # 존재 여부 확인. 값은 노출하지 않고 키 이름만.
+      - name: Inspect env keys (debug)
+        run: |
+          echo "--- env file size ---"
+          wc -c .vercel/.env.production.local || echo "(missing)"
+          echo "--- env keys ---"
+          grep -oE '^[A-Z_][A-Z0-9_]*' .vercel/.env.production.local | sort -u || echo "(no keys parsed)"
+          echo "--- supabase key presence ---"
+          grep -q '^NEXT_PUBLIC_SUPABASE_URL=' .vercel/.env.production.local && echo "NEXT_PUBLIC_SUPABASE_URL: PRESENT" || echo "NEXT_PUBLIC_SUPABASE_URL: MISSING"
+          grep -q '^NEXT_PUBLIC_SUPABASE_ANON_KEY=' .vercel/.env.production.local && echo "NEXT_PUBLIC_SUPABASE_ANON_KEY: PRESENT" || echo "NEXT_PUBLIC_SUPABASE_ANON_KEY: MISSING"
+          grep -q '^SUPABASE_SERVICE_ROLE_KEY=' .vercel/.env.production.local && echo "SUPABASE_SERVICE_ROLE_KEY: PRESENT" || echo "SUPABASE_SERVICE_ROLE_KEY: MISSING"
+
       - name: Build
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
