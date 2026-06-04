@@ -236,17 +236,17 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
       return caseRow.created_at ? caseRow.created_at.slice(0, 10) : null
     }
     case 'has-rabies-entry': {
-      // 1차 = 가장 이른 광견병 접종일 (readRabiesEntries 는 날짜 오름차순 정렬)
+      // 1차 = 입력 순서 첫 번째 (rabies_dates[0], 상세 폼의 '1차 칸'과 동일 정의)
       const r = readRabiesEntries(caseRow)
       return r.length > 0 ? r[0].date : null
     }
     case 'has-rabies-booster': {
-      // 2차 = 두 번째 광견병 접종일
+      // 2차 = 입력 순서 두 번째 (rabies_dates[1])
       const r = readRabiesEntries(caseRow)
       return r.length >= 2 ? r[1].date : null
     }
     case 'has-extra-rabies': {
-      // 추가 접종(3차+) = 가장 최근 접종일 (readRabiesEntries 는 오름차순 정렬)
+      // 추가 접종(3차+) = 입력 순서 마지막 (가장 최근에 추가한 항목)
       const r = readRabiesEntries(caseRow)
       return r.length >= 3 ? r[r.length - 1].date : null
     }

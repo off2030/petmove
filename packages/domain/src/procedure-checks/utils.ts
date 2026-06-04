@@ -55,6 +55,16 @@ export interface ParasiteEntry {
 
 // ── caseRow.data 리더 ──
 
+/**
+ * case.data.rabies_dates 를 **입력(배열) 순서 그대로** 반환 — index 0=1차, 1=2차, 2+=추가.
+ *
+ * 날짜순으로 재정렬하지 않는다. 정렬하면 "1차 = 날짜가 가장 이른 접종"이 되어, 상세 입력
+ * 폼(1차 칸 = 배열 index 0)과 1·2차 매핑이 어긋난다 — 2차를 1차보다 빠른 날짜로 입력하면
+ * 타임라인·검증과 상세가 서로 다른 날짜를 1차로 보여주는 버그. 입력 칸이 곧 차수라는 단일
+ * 정의를 따르고, 1차 ≤ 2차 시간순은 저장 시점 입력 차단(updateRabiesEntryFields)이 보장한다.
+ *
+ * originalIndex 는 raw 배열 위치 — offendingPaths 의 rabies_dates[i] 경로와 일치.
+ */
 export function readRabiesEntries(caseRow: CaseRow): RabiesEntry[] {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const raw = data.rabies_dates
@@ -65,7 +75,6 @@ export function readRabiesEntries(caseRow: CaseRow): RabiesEntry[] {
       return { date: rec.date ?? '', valid_until: rec.valid_until ?? null, originalIndex }
     })
     .filter((r) => typeof r.date === 'string' && r.date.length >= 10)
-    .sort((a, b) => a.date.localeCompare(b.date))
 }
 
 export function readTiterEntries(caseRow: CaseRow): TiterEntry[] {
