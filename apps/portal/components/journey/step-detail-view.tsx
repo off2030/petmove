@@ -12,6 +12,7 @@ import {
   validateJpImportDate,
   validateKrExportDate,
   validateKrImportDate,
+  validateRabiesBoosterValidity,
   validateRabiesInterval,
   validateVetVisitDate,
   type CheckResult,
@@ -466,13 +467,11 @@ export function StepDetailView({
       if (isRabies2) {
         const r1 = readRabiesEntryForm(caseRow?.data, 0)
         if (r1.date && rabies.date) {
-          // 1·2차 순서·간격(30일) — procedure-check 와 같은 domain 함수(단일 출처).
+          // 1·2차 순서·간격(30일)·유효기간 — procedure-check 와 같은 domain 함수(단일 출처).
           const intervalErr = validateRabiesInterval(r1.date, rabies.date)
           if (intervalErr) return intervalErr
-          const r1Years = parseValidUntilYears(r1.valid_until)
-          if (r1Years !== null && rabies.date >= addYears(r1.date, r1Years)) {
-            return '2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 합니다.'
-          }
+          const validityErr = validateRabiesBoosterValidity(r1.date, r1.valid_until, rabies.date)
+          if (validityErr) return validityErr
           const microchip = readImplantDate(caseRow?.data)
           if (microchip && microchip > rabies.date) return '마이크로칩 삽입 이후에 광견병 백신을 접종해야 합니다.'
           if (microchip && r1.date < microchip) {

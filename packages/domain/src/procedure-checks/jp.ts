@@ -4,12 +4,12 @@ import {
   validateJpExportVisitDate,
   validateJpImportDate,
   validateKrImportDate,
+  validateRabiesBoosterValidity,
   validateRabiesInterval,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   addDays,
-  addOneYear,
   addYears,
   daysBetween,
   formatKoreanDate,
@@ -99,25 +99,19 @@ export const JP_CHECKS: ProcedureCheck[] = [
     // 2차 입력 시 client 차단 + 1차 수정 후 재검증 '주의' (30일 간격 룰과 동일 패턴).
     severity: 'warning',
     addedAt: '2026-05-16',
-    run: ({ caseRow, destination }) => {
+    run: ({ caseRow }) => {
       const entries = readRabiesEntries(caseRow)
       // 1·2차 둘 다 필요 — 하나라도 없으면 skip
       if (entries.length < 2) return SKIP
 
       const [first, second] = entries
-      const validUntil = first.valid_until || addOneYear(first.date)
-      const withinValidity = !!validUntil && validUntil >= second.date
-      if (!withinValidity) {
-        return {
-          ok: false,
-          message: '2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 합니다.',
-          offendingPaths: [`rabies_dates[${second.originalIndex}].date`],
-        }
+      // 단일 출처 — client 입력 차단과 같은 함수. valid_until 이 "N년"/날짜 어느 형식이든
+      // resolveValidUntil 이 마지막 유효일로 환산(직접 문자열 비교하던 버그 해소).
+      const msg = validateRabiesBoosterValidity(first.date, first.valid_until, second.date)
+      if (msg) {
+        return { ok: false, message: msg, offendingPaths: [`rabies_dates[${second.originalIndex}].date`] }
       }
-      return {
-        ok: true,
-        message: `2차 접종(${second.date})이 1차 유효기간(${validUntil}) 이내.`,
-      }
+      return { ok: true, message: `2차 접종(${second.date})이 1차 유효기간 이내.` }
     },
   },
   {

@@ -1,6 +1,6 @@
 import type { CaseRow } from '../types'
 import { getVetVisitWindowDays, matchesDestinationKey } from '../destination-config'
-import { addDays } from '../procedure-checks/utils'
+import { addDays, resolveValidUntil } from '../procedure-checks/utils'
 import type { StepDefinition } from './types'
 
 /**
@@ -190,6 +190,26 @@ export function validateRabiesInterval(primeDate: string, boosterDate: string): 
   if (gap < 30) {
     const earliest = addDays(primeDate, 30)
     return `1·2차 접종 간격은 30일 이상이어야 합니다. 현재 ${gap}일로, 2차 접종일은 ${earliest ? fmt(earliest) : ''} 이후여야 합니다.`
+  }
+  return null
+}
+
+/**
+ * 광견병 2차가 1차 면역 유효기간 이내인지 — 유효기간 경과 후 접종은 부스터가 아닌 새 기초접종.
+ *
+ * primeValidUntilRaw 는 저장값 그대로("N년" 또는 'YYYY-MM-DD' 또는 빈값) — resolveValidUntil 이
+ * 어느 형식이든 마지막 유효일로 환산한다(없으면 1년). client·procedure-check 공용 단일 출처.
+ * 2차가 마지막 유효일 당일이면 유효(경계 포함). 어느 날짜든 비면 통과.
+ */
+export function validateRabiesBoosterValidity(
+  primeDate: string,
+  primeValidUntilRaw: string | null | undefined,
+  boosterDate: string,
+): string | null {
+  if (!primeDate || !boosterDate) return null
+  const validUntil = resolveValidUntil(primeDate, primeValidUntilRaw)
+  if (validUntil && boosterDate > validUntil) {
+    return '2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 합니다.'
   }
   return null
 }
