@@ -39,4 +39,4 @@ Phase 11.0 9/10 완료. 남은 작업:
 
 ## 알려진 이슈
 
-- **Vercel webhook 끊김** — 2026-06-04 portal 재발(2026-06-03 첫 사례 이튿날). 진단: Vercel Settings → Build & Deployment 설정은 정상(Root `apps/portal`, Include outside Enabled, Ignored Build Step Automatic) 인데 apps/portal/ 변경조차 트리거 안 되면 webhook 끊김. 복구: Settings → Git → Disconnect → 같은 repo Reconnect (환경변수·도메인·빌드 설정 모두 보존). Reconnect 후 자동 트리거 안 되니 새 push 한 번 더 필요.
+- **Vercel webhook 끊김** — 2026-06-04 portal 재발(2026-06-03 첫 사례 이튿날). 진단: Vercel Build & Deployment 설정은 정상(Root `apps/portal`, Include outside Enabled, Ignored Build Step Automatic) 인데 apps/portal/ 변경조차 트리거 안 되면 webhook 끊김. 효과 본 복구 시퀀스 (2026-06-04 실측): (1) Vercel Settings → Git → Disconnect → 같은 repo Reconnect (환경변수·도메인·빌드 설정 모두 보존, 그러나 이것만으로는 안 풀림). (2) Deploy Hook 생성·curl 호출 — PENDING 응답만 받고 빌드 미생성. (3) **GitHub Settings → Installed GitHub Apps → Vercel → Configure 진입 (sudo mode 이메일 인증 필요, 사용자 액션). 권한·repo 정상 확인 후 페이지 방문만으로도 webhook subscription refresh 됨**. (4) 빈 commit push 로 검증 — 트리거 정상화. 핵심: (3)이 가장 가능성 높은 진짜 풀림 트리거. (1)·(2)만으로는 안 풀린 사례.
