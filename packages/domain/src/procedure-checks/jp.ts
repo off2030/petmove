@@ -7,6 +7,7 @@ import {
   validateKrImportDate,
   validateRabiesBoosterValidity,
   validateRabiesInterval,
+  validateTiterWithinChain,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
@@ -256,46 +257,32 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 항체 검사 타이밍',
     description:
-      '채혈일은 2차 접종일 이후이며, 2차부터 끊김 없이 이어진 부스터 chain 의 면역 유효기간 이내여야 함.',
-    severity: 'info',
+      '채혈일은 2차부터 끊김 없이 이어진 부스터 chain 의 면역 유효기간 이내여야 함 (규칙 B).',
+    // 채혈 입력 시 client 가 입력 불가로 막고(validateTiterWithinChain 공용), 입력 후 부스터를
+    // 수정해 채혈이 유효기간 밖으로 밀려나면 '주의'. 채혈≥2차(규칙 A)는
+    // common.rabies-titer-chain-consistent 가 담당 — 여기는 chain 만료(B)만 본다.
+    severity: 'warning',
     addedAt: '2026-04-21',
-    run: ({ caseRow, destination }) => {
+    run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
       const titers = readTiterEntries(caseRow)
       // 필수: 2차 접종 기록 + 1개 이상의 항체 검사
       if (rabies.length < 2 || titers.length === 0) return SKIP
 
-      const second = rabies[1]
-      // 2차부터 시작해 매 부스터가 직전 면역기간 안에 들어왔다면 chain 이 이어진 것으로 보고
-      // 가장 최신 부스터의 valid_until 까지 면역 인정. 어디선가 끊기면 거기서 멈춤.
-      let chainEnd = resolveValidUntil(second.date, second.valid_until)
-      for (let i = 2; i < rabies.length; i++) {
-        const dose = rabies[i]
-        if (dose.date <= chainEnd) {
-          chainEnd = resolveValidUntil(dose.date, dose.valid_until)
-        } else {
-          break
-        }
-      }
-
-      // 채혈은 2차 접종일 이후 ~ 부스터 면역 유효기간 이내여야 함.
-      // 둘 다 위반 가능한 record 가 섞이면 만료(tooLate) 가 더 무거운 신호라 우선.
+      // 단일 출처 — client 입력 차단과 같은 함수. boosters = 2차부터(입력 순서).
+      const boosters = rabies.slice(1)
       const offendingPaths: string[] = []
-      let tooLate = false
       for (const t of titers) {
-        const path = `rabies_titer_records[${t.originalIndex}].date`
-        if (t.date < second.date) {
-          offendingPaths.push(path)
-        } else if (chainEnd && t.date > chainEnd) {
-          offendingPaths.push(path)
-          tooLate = true
+        if (validateTiterWithinChain(boosters, t.date)) {
+          offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
         }
       }
       if (offendingPaths.length > 0) {
-        const message = tooLate
-          ? '채혈일이 광견병 백신 면역 유효기간을 벗어났습니다. 접종일, 유효기간, 채혈일을 수정하세요.'
-          : '채혈일이 2차 광견병 백신 접종일보다 빠릅니다. 접종일 혹은 채혈일을 수정하세요.'
-        return { ok: false, message, offendingPaths }
+        return {
+          ok: false,
+          message: '채혈일이 광견병 백신 면역 유효기간을 벗어났습니다. 접종일, 유효기간, 채혈일을 수정하세요.',
+          offendingPaths,
+        }
       }
       return { ok: true, message: '항체 검사 시기 적합.' }
     },

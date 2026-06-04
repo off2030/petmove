@@ -226,6 +226,40 @@ export function validateAdvanceNotification(notifDate: string, entryDate: string
   return null
 }
 
+/**
+ * 광견병 부스터 chain 의 면역 최종 만료일. 2차(boosters[0])부터 시작해 매 부스터가 직전
+ * 만료일 이내면 chain 연장, 끊기면 멈춤. valid_until 은 "N년"·날짜 어느 형식이든
+ * resolveValidUntil 로 환산. boosters = 2차부터의 [{date, valid_until}] (입력 순서). 비면 ''.
+ */
+export function rabiesBoosterChainEnd(
+  boosters: Array<{ date: string; valid_until?: string | null }>,
+): string {
+  if (boosters.length === 0 || !boosters[0].date) return ''
+  let chainEnd = resolveValidUntil(boosters[0].date, boosters[0].valid_until)
+  for (let i = 1; i < boosters.length; i++) {
+    if (boosters[i].date && boosters[i].date <= chainEnd) {
+      chainEnd = resolveValidUntil(boosters[i].date, boosters[i].valid_until)
+    } else break
+  }
+  return chainEnd
+}
+
+/**
+ * 채혈일이 부스터 chain 면역 유효기간 이내인지 (규칙 B). 마지막 유효일 당일까지 유효.
+ * client(채혈 입력 시 입력 불가)·procedure-check(부스터 수정 후 주의) 공용. 채혈 미입력 시 통과.
+ */
+export function validateTiterWithinChain(
+  boosters: Array<{ date: string; valid_until?: string | null }>,
+  titerDate: string,
+): string | null {
+  if (!titerDate) return null
+  const chainEnd = rabiesBoosterChainEnd(boosters)
+  if (chainEnd && titerDate > chainEnd) {
+    return '채혈일이 광견병 백신 면역 유효기간을 벗어났습니다.'
+  }
+  return null
+}
+
 /** caseRow → DateRuleContext (저장 액션·재검증 공통). */
 export function buildDateRuleContext(caseRow: CaseRow): DateRuleContext {
   return {

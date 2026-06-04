@@ -15,6 +15,7 @@ import {
   validateKrImportDate,
   validateRabiesBoosterValidity,
   validateRabiesInterval,
+  validateTiterWithinChain,
   validateVetVisitDate,
   type CheckResult,
   type ProcedureCheck,
@@ -2003,10 +2004,14 @@ function validateTiterDate(
   if (date < r2.date) {
     return '채혈일은 2차 접종일 이후여야 합니다.'
   }
-  const chainEnd = computeRabiesChainEnd(data)
-  if (chainEnd && date >= chainEnd) {
-    return '채혈일이 광견병 백신 면역 유효기간을 벗어났습니다.'
-  }
+  // 규칙 B — 부스터 chain 유효기간 이내. procedure-check 와 같은 domain 함수(단일 출처).
+  const rabiesArr = Array.isArray(data?.['rabies_dates']) ? (data!['rabies_dates'] as unknown[]) : []
+  const boosters = rabiesArr.slice(1).map((r) => {
+    const rec = (r && typeof r === 'object' ? r : {}) as { date?: string; valid_until?: string | null }
+    return { date: typeof rec.date === 'string' ? rec.date : '', valid_until: rec.valid_until ?? null }
+  })
+  const chainErr = validateTiterWithinChain(boosters, date)
+  if (chainErr) return chainErr
   if (isFirstTiter) {
     const r1 = readRabiesEntryForm(data, 0)
     const microchip = readImplantDate(data)
@@ -2015,39 +2020,6 @@ function validateTiterDate(
     }
   }
   return null
-}
-
-/**
- * 광견병 부스터 chain 의 최종 만료일(anniversary, 마지막 유효일+1) 계산.
- * 2차부터 시작, 매 부스터(3차+)가 직전 chain 만료일 이전이면 chain 연장. 끊기면 멈춤.
- * 2차가 없거나 valid_until 파싱 실패 시 null — 룰 2 skip.
- */
-function computeRabiesChainEnd(data: Record<string, unknown> | null | undefined): string | null {
-  if (!data) return null
-  const arr = data['rabies_dates']
-  if (!Array.isArray(arr)) return null
-  const entries: Array<{ date: string; years: number }> = []
-  for (let i = 1; i < arr.length; i++) {
-    const rec = arr[i]
-    if (!rec || typeof rec !== 'object') continue
-    const r = rec as Record<string, unknown>
-    const date = typeof r.date === 'string' ? r.date : ''
-    if (!date) continue
-    const years = parseValidUntilYears(typeof r.valid_until === 'string' ? r.valid_until : '')
-    if (years === null) continue
-    entries.push({ date, years })
-  }
-  if (entries.length === 0) return null
-  entries.sort((a, b) => a.date.localeCompare(b.date))
-  let chainEnd = addYears(entries[0].date, entries[0].years)
-  for (let i = 1; i < entries.length; i++) {
-    if (entries[i].date < chainEnd) {
-      chainEnd = addYears(entries[i].date, entries[i].years)
-    } else {
-      break
-    }
-  }
-  return chainEnd
 }
 
 /** 채혈일·검사기관·검사결과 — caseRow.data.rabies_titer_records[0] 의 date / lab / value. */
