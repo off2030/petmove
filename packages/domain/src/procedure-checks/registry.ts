@@ -58,24 +58,6 @@ export const ALL_PROCEDURE_CHECKS: ProcedureCheck[] = [
   ...CA_CHECKS,
 ]
 
-/**
- * 단계 간 날짜 관계 위반 중 '안내'가 아니라 정합성 '주의'로 격상해 표면화할 체크 집합.
- *
- * 이미 진행된 일정을 되돌려 앞 단계(항체 검사·항공편 등)를 수정하면 이후 일정이 어긋날 수
- * 있는데, 이는 저장 시점에 하드 차단하지 않고(확인 후 저장 허용) 해당 step 에 '주의'로 띄워
- * 차근차근 수정하도록 유도한다. 정방향 '안내'보다 강한 신호가 맞다. portal 의
- * scenario(타임라인 desc + 주의 배지)와 step-detail-view(상세 '주의' 박스)가 같은 집합을 읽어
- * 일관 표시한다.
- *
- *  - 항체 검사일 ↔ 출국(입국)일 타이밍(180일·2년)
- *  - 사전 신고 신청일 ↔ 입국일 40일 마감
- */
-export const CONSISTENCY_WARNING_CHECK_IDS = new Set<string>([
-  'jp.entry-180days-after-titer',
-  'jp.entry-within-2years-of-titer',
-  'jp.advance-notification-40days-before-entry',
-])
-
 /** check 의 country 가 target 키에 매칭되는지. 'all' 또는 배열에 포함되면 true. */
 export function checkAppliesTo(checkCountry: CountryKey, target: string): boolean {
   if (checkCountry === 'all') return true

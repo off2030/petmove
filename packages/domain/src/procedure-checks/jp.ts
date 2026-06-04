@@ -275,7 +275,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '일본 입국 타이밍',
     description: '항공편 입국일은 광견병 항체 검사 채혈일로부터 180일이 지난 시점이어야 함.',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-17',
     run: ({ caseRow, destination }) => {
       // 한일 노선 = 출국일이 일본 입국일 — departure_date 사용.
@@ -314,7 +314,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 항체 검사 유효기간 만료',
     description: '항공편 입국일은 광견병 항체 검사 채혈일 포함 2년 이내여야 함 (항체 검사 유효기간).',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-17',
     run: ({ caseRow, destination }) => {
       // 한일 노선 = 출국일이 일본 입국일 — departure_date 사용.
@@ -346,7 +346,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '일정',
     title: '사전 신고는 입국 40일 전까지',
     description: '일본 동물검역소 사전 신고(NACCS)는 입국일로부터 40일 이전에 접수되어야 함.',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-17',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>

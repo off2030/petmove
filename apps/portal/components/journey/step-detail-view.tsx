@@ -6,7 +6,6 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import {
   createVaccineLookups,
   findRabiesChainBreak,
-  CONSISTENCY_WARNING_CHECK_IDS,
   validateJpEntryDate,
   validateJpExportReservationDate,
   validateJpExportVisitDate,
@@ -869,15 +868,8 @@ export function StepDetailView({
   }
 
   // ok=false 체크를 톤별로 분리 — '주의'(blocker/warning) vs '안내'(info).
-  // 단 단계 간 날짜 관계(항체↔출국·사전 신고 40일)는 info 라도 '주의'로 격상 — 타임라인과 일치.
-  const failed = checkResults.filter(
-    (c) =>
-      !c.result.ok && (c.check.severity !== 'info' || CONSISTENCY_WARNING_CHECK_IDS.has(c.check.id)),
-  )
-  const notices = checkResults.filter(
-    (c) =>
-      !c.result.ok && c.check.severity === 'info' && !CONSISTENCY_WARNING_CHECK_IDS.has(c.check.id),
-  )
+  const failed = checkResults.filter((c) => !c.result.ok && c.check.severity !== 'info')
+  const notices = checkResults.filter((c) => !c.result.ok && c.check.severity === 'info')
   // step config 의 situational 메시지 — timeline desc 와 동일 내용을 detail 에도 노출.
   // 같은 룰을 mirror 한 procedure-check 가 동일 메시지로 이미 떴으면(예: 추가 백신
   // chain-break: catalog situational ↔ jp.rabies-extra-within-previous-validity)
