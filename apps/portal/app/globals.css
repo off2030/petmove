@@ -55,6 +55,14 @@
   /* glass 톤 — 페이지 배경(살구 톤)과 의도적으로 다른 색.
      하단 플로팅 nav 의 Liquid Glass 효과가 비치도록 흰색(라이트)/딥브라운(다크). */
   --pm-glass-rgb: 255 255 255;
+
+  /* timeline 카드 그라데이션 — 다크 분기 필요해 토큰화. 단계 카드(cardList),
+     소프트 카드(cardSoft), hero 카드(cardHero), sage 합성 베이스(cardSageBase).
+     라이트는 베이지 paper 톤, 다크는 페이지 배경(#1C1916) 위 살짝 밝은 warm 다크. */
+  --pm-card-soft: linear-gradient(160deg, #F0E8DB 0%, #EDE4D7 50%, #E6DDCD 100%);
+  --pm-card-list: linear-gradient(160deg, #F5EDE0 0%, #F2E9DC 50%, #ECE3D3 100%);
+  --pm-card-hero: radial-gradient(140% 100% at 80% 18%, #E8DECC 0%, #DCD2BD 45%, #CBC1AB 100%);
+  --pm-card-sage-base: #F1E9DC;
   /* ink 의 rgb 트리플 — 하드코딩 hairline/틴트(rgba(42,38,32,.NN))가
      rgb(var(--pm-ink-rgb) / .NN) 로 다크에서 반전되도록. (스크림·그림자는 제외, literal 유지) */
   --pm-ink-rgb: 42 38 32;
@@ -95,6 +103,11 @@
   --pm-surface-rgb: 38 34 32;
   --pm-ink-rgb: 236 228 216;
   --pm-glass-rgb: 60 55 50;
+  /* 다크: 페이지 #1C1916 위에서 카드가 살짝 떠보이도록 warm 다크 베이지. */
+  --pm-card-soft: linear-gradient(160deg, #2A2520 0%, #2F2924 50%, #322C27 100%);
+  --pm-card-list: linear-gradient(160deg, #2D2823 0%, #322C27 50%, #36302A 100%);
+  --pm-card-hero: radial-gradient(140% 100% at 80% 18%, #36302A 0%, #3A332D 45%, #3F362F 100%);
+  --pm-card-sage-base: #2C2724;
   --pm-ring-bg: #1C1916;
   --pm-ring-accent: #C9AC7C;
 }

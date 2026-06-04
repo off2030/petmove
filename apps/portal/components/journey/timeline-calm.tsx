@@ -58,9 +58,10 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
     warnBg: 'rgba(194,106,74,0.08)',
     info: 'var(--pm-info)',
     infoBg: 'rgba(201,166,99,0.08)',
-    cardSoft: 'linear-gradient(160deg, #F0E8DB 0%, #EDE4D7 50%, #E6DDCD 100%)',
-    cardList: 'linear-gradient(160deg, #F5EDE0 0%, #F2E9DC 50%, #ECE3D3 100%)',
-    cardHero: 'radial-gradient(140% 100% at 80% 18%, #E8DECC 0%, #DCD2BD 45%, #CBC1AB 100%)',
+    // 그라데이션은 globals.css 의 --pm-card-* 토큰을 따른다 (light/dark 자동 분기).
+    cardSoft: 'var(--pm-card-soft)',
+    cardList: 'var(--pm-card-list)',
+    cardHero: 'var(--pm-card-hero)',
   } as const
 
   // 주의가 발생한 stage 들 — 실패한 비-info 체크(실제 문제)가 있는 경우만.
@@ -469,7 +470,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               padding: 22,
               borderRadius: 22,
               overflow: 'hidden',
-              background: 'color-mix(in srgb, var(--pm-sage) 11%, #F1E9DC)',
+              background: 'color-mix(in srgb, var(--pm-sage) 11%, var(--pm-card-sage-base))',
               boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
             }}
           >
