@@ -102,24 +102,24 @@ function BottomNav({ screen, onNav }) {
   return (
     <div style={{
       position: 'absolute', bottom: 22, left: '50%', transform: 'translateX(-50%)',
-      zIndex: 40, display: 'flex', gap: 4, padding: 6, borderRadius: 9999,
-      background: 'rgba(255,255,255,0.55)',
+      zIndex: 40, display: 'flex', gap: 12, padding: 6, borderRadius: 9999,
+      background: 'rgba(255,255,255,0.30)',
       backdropFilter: 'blur(28px) saturate(180%)',
       WebkitBackdropFilter: 'blur(28px) saturate(180%)',
-      border: '1px solid rgba(255,255,255,0.7)',
-      boxShadow: '0 14px 36px -10px rgba(0,0,0,0.20), 0 2px 8px -2px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.75)',
+      border: '1px solid rgba(255,255,255,0.45)',
+      boxShadow: '0 14px 36px -10px rgba(0,0,0,0.20), 0 2px 8px -2px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.55)',
     }}>
       {items.map(it => {
         const active = screen === it.id;
         return (
           <button key={it.id} onClick={() => onNav(it.id)} style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-            background: active ? 'rgba(255,255,255,0.9)' : 'transparent',
+            background: active ? 'rgba(255,255,255,0.75)' : 'transparent',
             border: 'none', cursor: 'pointer',
-            padding: '7px 14px', borderRadius: 9999, fontFamily: 'inherit',
+            padding: '7px 20px', borderRadius: 9999, fontFamily: 'inherit',
             color: active ? 'var(--pm-ink)' : 'var(--pm-ink-3)',
             boxShadow: active
-              ? '0 1px 2px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)'
+              ? '0 1px 2px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.75)'
               : 'none',
             transition: 'background 180ms ease, color 180ms ease',
           }}>

@@ -58,17 +58,17 @@ export function BottomNav() {
         transform: 'translateX(-50%)',
         zIndex: 40,
         display: 'flex',
-        gap: 4,
+        gap: 12,
         padding: 6,
         borderRadius: 9999,
-        background: 'rgb(var(--pm-glass-rgb) / 0.55)',
+        background: 'rgb(var(--pm-glass-rgb) / 0.30)',
         backdropFilter: 'blur(28px) saturate(180%)',
         WebkitBackdropFilter: 'blur(28px) saturate(180%)',
-        border: '1px solid rgb(var(--pm-glass-rgb) / 0.7)',
+        border: '1px solid rgb(var(--pm-glass-rgb) / 0.45)',
         boxShadow:
           '0 14px 36px -10px rgba(0, 0, 0, 0.20),' +
           ' 0 2px 8px -2px rgba(0, 0, 0, 0.08),' +
-          ' inset 0 1px 0 rgb(var(--pm-glass-rgb) / 0.75)',
+          ' inset 0 1px 0 rgb(var(--pm-glass-rgb) / 0.55)',
       }}
     >
       {TABS.map((t) => {
@@ -83,13 +83,13 @@ export function BottomNav() {
               flexDirection: 'column',
               alignItems: 'center',
               gap: 2,
-              padding: '7px 14px',
+              padding: '7px 20px',
               borderRadius: 9999,
               textDecoration: 'none',
               color: active ? 'var(--pm-ink)' : 'var(--pm-ink-3)',
-              background: active ? 'rgb(var(--pm-glass-rgb) / 0.9)' : 'transparent',
+              background: active ? 'rgb(var(--pm-glass-rgb) / 0.75)' : 'transparent',
               boxShadow: active
-                ? '0 1px 2px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgb(var(--pm-glass-rgb) / 0.9)'
+                ? '0 1px 2px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgb(var(--pm-glass-rgb) / 0.75)'
                 : 'none',
               transition: 'background 180ms ease, color 180ms ease',
             }}
