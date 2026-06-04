@@ -1,13 +1,11 @@
-import { buildDateRuleContext, validateKrExportDate, validateVetVisitDate } from '../journey-steps/date-rules'
+import {
+  buildDateRuleContext,
+  validateKrExportDate,
+  validateTiterAfterBooster,
+  validateVetVisitDate,
+} from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import { readRabiesEntries, readTiterEntries, SKIP } from './utils'
-
-/** 'YYYY-MM-DD' → 'YYYY년 M월 D일'. */
-function formatKr(iso: string): string {
-  const parts = iso.split('-')
-  if (parts.length !== 3) return iso
-  return `${parts[0]}년 ${Number(parts[1])}월 ${Number(parts[2])}일`
-}
 
 /**
  * 목적지와 무관하게 항상 적용되는 공통 절차 검증.
@@ -106,18 +104,13 @@ export const COMMON_CHECKS: ProcedureCheck[] = [
       // 가장 이른 항체 검사일 — 180일 대기 기준일과 동일 출처(done-resolver 의 has-titer-entry).
       const titerDate = titers.map((t) => t.date).sort()[0]
 
-      // 시간 순서 위반 우선 — 선행 백신(1차·2차) 중 날짜가 가장 늦은 것과 비교. readRabiesEntries
-      // 는 입력 순서라 배열 위치로 최신을 가정할 수 없어, 1·2차 날짜에서 명시적으로 max 를 구한다.
-      const primaryDates = rabies.slice(0, 2).map((r) => r.date)
-      if (primaryDates.length > 0) {
-        const latestPrimary = primaryDates.reduce((m, d) => (d > m ? d : m))
-        if (titerDate < latestPrimary) {
-          return {
-            ok: false,
-            message: `광견병 항체 검사일(${formatKr(titerDate)})이 광견병 백신 접종일(${formatKr(latestPrimary)})보다 빠릅니다. 날짜를 확인해 주세요.`,
-            offendingPaths: ['rabies_titer_records'],
-          }
-        }
+      // 시간 순서 위반(채혈 ≥ 1·2차) — client 입력 차단과 같은 domain 함수(단일 출처).
+      const orderMsg = validateTiterAfterBooster(
+        rabies.slice(0, 2).map((r) => r.date),
+        titerDate,
+      )
+      if (orderMsg) {
+        return { ok: false, message: orderMsg, offendingPaths: ['rabies_titer_records'] }
       }
       // 선행 누락 — 가까운 선행(2차) 우선, 그 다음 1차.
       if (rabies.length < 2) {

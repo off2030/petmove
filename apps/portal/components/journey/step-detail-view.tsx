@@ -14,6 +14,7 @@ import {
   validateKrExportDate,
   validateKrImportDate,
   validateRabiesInterval,
+  validateTiterAfterBooster,
   validateTiterWithinChain,
   validateVetVisitDate,
   type CheckResult,
@@ -2004,9 +2005,11 @@ function validateTiterDate(
   if (!date) return null
   const r2 = readRabiesEntryForm(data, 1)
   if (!r2.date) return null
-  if (date < r2.date) {
-    return '채혈일은 2차 접종일 이후여야 합니다.'
-  }
+  const r1 = readRabiesEntryForm(data, 0)
+  // 규칙 A — 채혈 ≥ 1·2차 접종일. procedure-check(common.rabies-titer-chain-consistent)와 같은
+  // domain 함수(단일 출처).
+  const afterErr = validateTiterAfterBooster([r1.date, r2.date], date)
+  if (afterErr) return afterErr
   // 규칙 B — 부스터 chain 유효기간 이내. procedure-check 와 같은 domain 함수(단일 출처).
   const rabiesArr = Array.isArray(data?.['rabies_dates']) ? (data!['rabies_dates'] as unknown[]) : []
   const boosters = rabiesArr.slice(1).map((r) => {
@@ -2016,7 +2019,6 @@ function validateTiterDate(
   const chainErr = validateTiterWithinChain(boosters, date)
   if (chainErr) return chainErr
   if (isFirstTiter) {
-    const r1 = readRabiesEntryForm(data, 0)
     const microchip = readImplantDate(data)
     if (r1.date && microchip && r1.date < microchip && date !== r2.date) {
       return '마이크로칩보다 1차 접종을 먼저 한 경우, 채혈일은 2차 접종일과 같아야 합니다.'

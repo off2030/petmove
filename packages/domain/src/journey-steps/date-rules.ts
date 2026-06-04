@@ -244,6 +244,22 @@ export function validateTiterWithinChain(
   return null
 }
 
+/**
+ * 채혈일은 광견병 백신(1·2차 중 늦은 날) 접종 이후여야 함 (규칙 A). primaryDates = 1·2차 날짜.
+ * client(채혈 입력 시 입력 불가)·common.rabies-titer-chain-consistent(2차 수정 후 주의) 공용.
+ * 1·2차 모두 미입력이면 통과(누락은 별도 체크).
+ */
+export function validateTiterAfterBooster(primaryDates: string[], titerDate: string): string | null {
+  if (!titerDate) return null
+  const valid = primaryDates.filter((d) => d && d.length >= 10)
+  if (valid.length === 0) return null
+  const latest = valid.reduce((m, d) => (d > m ? d : m))
+  if (titerDate < latest) {
+    return `광견병 항체 검사일(${fmt(titerDate)})이 광견병 백신 접종일(${fmt(latest)})보다 빠릅니다. 날짜를 확인해 주세요.`
+  }
+  return null
+}
+
 /** caseRow → DateRuleContext (저장 액션·재검증 공통). */
 export function buildDateRuleContext(caseRow: CaseRow): DateRuleContext {
   return {
