@@ -98,18 +98,16 @@ function BottomNav({ screen, onNav }) {
     { id: 'info', label: '정보', icon: 'info' },
     { id: 'profile', label: '프로필', icon: 'user' },
   ];
-  // 풀-와이드 + 플로팅 느낌 하이브리드 — 위쪽 라운드 + 미세 위 그림자 + blur + 반투명.
+  // 둥근 카드형 플로팅 바 — 좌우·아래 마진, 라벨 항상 보임. Calm 톤.
   return (
     <div style={{
-      position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 40,
-      paddingTop: 8, paddingLeft: 12, paddingRight: 12, paddingBottom: 30,
-      display: 'flex', justifyContent: 'space-around',
-      borderTopLeftRadius: 20, borderTopRightRadius: 20,
-      background: 'rgba(250,245,240,0.50)',
+      position: 'absolute', left: 12, right: 12, bottom: 18, zIndex: 40,
+      display: 'flex', padding: '6px 4px', borderRadius: 22,
+      background: 'rgba(250,245,240,0.75)',
       backdropFilter: 'blur(20px) saturate(160%)',
       WebkitBackdropFilter: 'blur(20px) saturate(160%)',
-      borderTop: '1px solid rgba(42,38,32,0.06)',
-      boxShadow: '0 -8px 24px -8px rgba(0,0,0,0.06)',
+      border: '1px solid rgba(42,38,32,0.06)',
+      boxShadow: '0 12px 28px -10px rgba(0,0,0,0.16), 0 2px 6px -2px rgba(0,0,0,0.06)',
     }}>
       {items.map(it => {
         const active = screen === it.id;
@@ -117,7 +115,7 @@ function BottomNav({ screen, onNav }) {
           <button key={it.id} onClick={() => onNav(it.id)} style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
             background: 'transparent', border: 'none', cursor: 'pointer',
-            padding: '6px 12px', flex: 1, fontFamily: 'inherit',
+            padding: '8px 6px', flex: 1, fontFamily: 'inherit', borderRadius: 16,
             color: active ? 'var(--pm-ink)' : 'var(--pm-ink-3)',
             transition: 'color 180ms ease',
           }}>

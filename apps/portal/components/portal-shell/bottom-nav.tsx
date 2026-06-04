@@ -46,30 +46,26 @@ export function BottomNav() {
 
   const caseId = caseIdInPath ?? lastCaseId
 
-  // 풀-와이드 + 플로팅 느낌 하이브리드 — 위쪽 라운드 + 미세 위 그림자 + blur + 반투명.
-  // 양쪽 끝은 화면에 닿아 한 손 조작은 그대로, 위쪽만 카드처럼 살짝 떠있는 인상.
+  // 둥근 카드형 플로팅 바 — 좌우·아래 마진, 라벨 항상 보임. Calm 톤.
   // portal-preview/app.jsx 의 BottomNav 와 동일 디자인 (truth source).
   return (
     <nav
       style={{
         position: 'fixed',
-        left: 0,
-        right: 0,
-        bottom: 0,
+        left: 12,
+        right: 12,
+        bottom: 'max(env(safe-area-inset-bottom), 14px)',
         zIndex: 40,
-        paddingTop: 8,
-        paddingLeft: 12,
-        paddingRight: 12,
-        paddingBottom: 'max(env(safe-area-inset-bottom), 12px)',
         display: 'flex',
-        justifyContent: 'space-around',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        background: 'rgb(var(--pm-bg-rgb) / 0.50)',
+        padding: '6px 4px',
+        borderRadius: 22,
+        background: 'rgb(var(--pm-bg-rgb) / 0.75)',
         backdropFilter: 'blur(20px) saturate(160%)',
         WebkitBackdropFilter: 'blur(20px) saturate(160%)',
-        borderTop: '1px solid rgba(42, 38, 32, 0.06)',
-        boxShadow: '0 -8px 24px -8px rgba(0, 0, 0, 0.06)',
+        border: '1px solid rgba(42, 38, 32, 0.06)',
+        boxShadow:
+          '0 12px 28px -10px rgba(0, 0, 0, 0.16),' +
+          ' 0 2px 6px -2px rgba(0, 0, 0, 0.06)',
       }}
     >
       {TABS.map((t) => {
@@ -84,8 +80,9 @@ export function BottomNav() {
               flexDirection: 'column',
               alignItems: 'center',
               gap: 3,
-              padding: '6px 12px',
+              padding: '8px 6px',
               flex: 1,
+              borderRadius: 16,
               textDecoration: 'none',
               color: active ? 'var(--pm-ink)' : 'var(--pm-ink-3)',
               transition: 'color 180ms ease',
