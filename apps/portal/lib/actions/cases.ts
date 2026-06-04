@@ -259,30 +259,9 @@ export async function updateRabiesEntryFields(
       entry.other_hospital = true
     }
 
-    // 광견병 1·2차 순서 — 2차는 1차보다 빠를 수 없고, 1차는 2차보다 늦을 수 없다(같은 날 허용).
-    // 1차가 먼저라는 건 사실상 물리 법칙이라 저장 자체를 거부(입력 불가). 비교 대상 차수가
-    // 미입력이면 통과 — 부분 입력 허용. 이 차단으로 1차 ≤ 2차가 보장되면 입력(배열) 순서가
-    // 곧 시간 순서가 되어 타임라인·검증(readRabiesEntries)·상세 폼이 항상 같은 날짜를 1차로 본다.
-    const thisDate = typeof entry.date === 'string' ? entry.date : ''
-    if (thisDate) {
-      const otherSlot = rabiesArr[index === 0 ? 1 : 0]
-      const otherDate =
-        otherSlot && typeof otherSlot === 'object'
-          ? (otherSlot as Record<string, unknown>).date
-          : undefined
-      if (typeof otherDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(otherDate)) {
-        const fmtKr = (iso: string) => {
-          const p = iso.split('-')
-          return p.length === 3 ? `${p[0]}년 ${Number(p[1])}월 ${Number(p[2])}일` : iso
-        }
-        if (index === 1 && thisDate < otherDate) {
-          return { ok: false, error: `광견병 2차 접종일은 1차 접종일(${fmtKr(otherDate)})보다 빠를 수 없습니다.` }
-        }
-        if (index === 0 && thisDate > otherDate) {
-          return { ok: false, error: `광견병 1차 접종일은 2차 접종일(${fmtKr(otherDate)})보다 늦을 수 없습니다.` }
-        }
-      }
-    }
+    // 광견병 1·2차 순서·간격 차단은 server 에 두지 않는다 — 펫무브 client(2차 입력 시
+    // validateRabiesInterval 입력 불가)와 procedure-check(1차 수정 후 2차 step '주의')가
+    // 같은 domain 함수로 담당한다. server 는 데이터 형식만 검증(단일 출처 모델).
 
     // 앞 index 를 빈 객체로 패딩 (sparse 배열 방지) 후 해당 index 설정.
     while (rabiesArr.length < index) rabiesArr.push({})

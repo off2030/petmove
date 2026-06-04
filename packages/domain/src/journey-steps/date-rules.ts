@@ -172,6 +172,28 @@ export function validateVetVisitDate(v: string, ctx: DateRuleContext): string | 
   return null
 }
 
+// ── 광견병 1·2차 관계 검증 (날짜만 받는 순수 함수 — client 입력 차단·procedure-check 공용) ──
+
+/**
+ * 광견병 1·2차 접종 간격 — 2차는 1차 이후이고, 1차 + 30일 이상이어야 함.
+ *
+ * 단일 출처: 펫무브 client(2차 입력 시 입력 불가) + procedure-check(1차 수정 후 2차 step '주의')
+ * 가 같은 함수를 호출한다. 순서 위반(2차 < 1차)과 간격 부족(< 30일)을 구분해 메시지를 낸다.
+ * 어느 한쪽 날짜가 비면 비교 불가라 null(통과).
+ */
+export function validateRabiesInterval(primeDate: string, boosterDate: string): string | null {
+  if (!primeDate || !boosterDate) return null
+  const gap = daysBetween(primeDate, boosterDate)
+  if (gap < 0) {
+    return `광견병 2차 접종일이 1차 접종일(${fmt(primeDate)})보다 빠릅니다. 날짜를 확인해 주세요.`
+  }
+  if (gap < 30) {
+    const earliest = addDays(primeDate, 30)
+    return `1·2차 접종 간격은 30일 이상이어야 합니다. 현재 ${gap}일로, 2차 접종일은 ${earliest ? fmt(earliest) : ''} 이후여야 합니다.`
+  }
+  return null
+}
+
 /** caseRow → DateRuleContext (저장 액션·재검증 공통). */
 export function buildDateRuleContext(caseRow: CaseRow): DateRuleContext {
   return {

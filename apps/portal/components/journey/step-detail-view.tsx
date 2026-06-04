@@ -12,6 +12,7 @@ import {
   validateJpImportDate,
   validateKrExportDate,
   validateKrImportDate,
+  validateRabiesInterval,
   validateVetVisitDate,
   type CheckResult,
   type ProcedureCheck,
@@ -465,7 +466,9 @@ export function StepDetailView({
       if (isRabies2) {
         const r1 = readRabiesEntryForm(caseRow?.data, 0)
         if (r1.date && rabies.date) {
-          if (daysBetween(r1.date, rabies.date) < 30) return '1·2차 접종 간격은 30일 이상이어야 합니다.'
+          // 1·2차 순서·간격(30일) — procedure-check 와 같은 domain 함수(단일 출처).
+          const intervalErr = validateRabiesInterval(r1.date, rabies.date)
+          if (intervalErr) return intervalErr
           const r1Years = parseValidUntilYears(r1.valid_until)
           if (r1Years !== null && rabies.date >= addYears(r1.date, r1Years)) {
             return '2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 합니다.'

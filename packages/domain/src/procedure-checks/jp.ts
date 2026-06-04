@@ -4,6 +4,7 @@ import {
   validateJpExportVisitDate,
   validateJpImportDate,
   validateKrImportDate,
+  validateRabiesInterval,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
@@ -80,20 +81,12 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (entries.length < 2) return SKIP
 
       const [first, second] = entries
-      const gap = daysBetween(first.date, second.date)
-      if (gap === null) return SKIP
-
-      const secondPath = `rabies_dates[${second.originalIndex}].date`
-      if (gap < 30) {
-        // 유효한 2차 접종 가능 시점 = 1차 접종일 + 30일.
-        const earliestKr = formatKoreanDate(addDays(first.date, 30))
-        return {
-          ok: false,
-          message: `1·2차 접종 간격은 30일 이상이어야 합니다. 현재 ${gap}일로, 2차 접종일은 ${earliestKr} 이후여야 합니다.`,
-          offendingPaths: [secondPath],
-        }
+      // 단일 출처 — client 입력 차단과 같은 함수. 순서·간격 위반 메시지 동일.
+      const msg = validateRabiesInterval(first.date, second.date)
+      if (msg) {
+        return { ok: false, message: msg, offendingPaths: [`rabies_dates[${second.originalIndex}].date`] }
       }
-      return { ok: true, message: `1·2차 접종 간격 ${gap}일.` }
+      return { ok: true, message: `1·2차 접종 간격 OK.` }
     },
   },
   {
