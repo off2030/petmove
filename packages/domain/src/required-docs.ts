@@ -133,17 +133,21 @@ export function resolveRequiredDocs(
     const naAllowed = spec.naAllowed === true
     // '해당없음' 으로 표시한 서류는 보유 판정 자체를 끈다(첨부가 있어도 카운트 제외).
     const na = naAllowed && naFlags[spec.id] === true
+    // 발급 step — 명시(issuanceStepId) 우선, kind='step' 이면 stepRef 폴백.
+    const issuanceStepId = spec.issuanceStepId ?? (spec.kind === 'step' ? spec.stepRef : undefined)
+    // 발급 step 시작 여부 — 1차 입력(검진일·신청일 등) 존재 = started. 일정탭이 단일 truth 라
+    // manual 서류 verified 의 전제 조건으로 사용: 단계가 시작 전이면 수기 플래그·첨부가 남아있어도
+    // 보유로 인정하지 않음 → 단계 되돌리기(검진일 삭제) 시 서류도 자동으로 '발급 예정'으로 복귀.
+    const issuanceStarted = !isIssuanceNotStarted(issuanceStepId, caseRow)
     const verified =
       !na &&
       (spec.kind === 'manual'
-        ? // 수기 발급완료 플래그 OR 사본 첨부가 있으면 '보유'.
-          flags[spec.id] === true || hasAttachmentForStep(caseRow, attachStepId)
+        ? // 발급 step 시작됨 AND (수기 발급완료 플래그 OR 사본 첨부) → '보유'.
+          issuanceStarted && (flags[spec.id] === true || hasAttachmentForStep(caseRow, attachStepId))
         : spec.stepRef
           ? resolveStepDone(spec.stepRef, caseRow)
           : false)
-    // 발급 step — 명시(issuanceStepId) 우선, kind='step' 이면 stepRef 폴백.
-    const issuanceStepId = spec.issuanceStepId ?? (spec.kind === 'step' ? spec.stepRef : undefined)
-    const awaiting = !verified && !na && isIssuanceNotStarted(issuanceStepId, caseRow)
+    const awaiting = !verified && !na && !issuanceStarted
     return {
       id: spec.id,
       name: spec.name,
