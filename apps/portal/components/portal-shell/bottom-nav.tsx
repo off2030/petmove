@@ -46,7 +46,7 @@ export function BottomNav() {
 
   const caseId = caseIdInPath ?? lastCaseId
 
-  // 알약 컴팩트 — 폭 자동, 중앙 정렬. active 만 라벨+알약 배경, 비활성은 아이콘만.
+  // Liquid Glass (iOS 26 풍) — 매우 투명 + 강한 blur + hairline + active 알약.
   // portal-preview/app.jsx 의 BottomNav 와 동일 디자인 (truth source).
   return (
     <nav
@@ -57,16 +57,17 @@ export function BottomNav() {
         transform: 'translateX(-50%)',
         zIndex: 40,
         display: 'flex',
-        gap: 2,
-        padding: 5,
+        gap: 4,
+        padding: 6,
         borderRadius: 9999,
-        background: 'rgb(var(--pm-bg-rgb) / 0.92)',
-        backdropFilter: 'blur(20px) saturate(160%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(160%)',
-        border: '1px solid rgba(42, 38, 32, 0.06)',
+        background: 'rgb(var(--pm-bg-rgb) / 0.45)',
+        backdropFilter: 'blur(28px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+        border: '1px solid rgba(255, 255, 255, 0.55)',
         boxShadow:
-          '0 12px 28px -10px rgba(0, 0, 0, 0.16),' +
-          ' 0 2px 6px -2px rgba(0, 0, 0, 0.06)',
+          '0 14px 36px -10px rgba(0, 0, 0, 0.18),' +
+          ' 0 2px 8px -2px rgba(0, 0, 0, 0.08),' +
+          ' inset 0 1px 0 rgba(255, 255, 255, 0.65)',
       }}
     >
       {TABS.map((t) => {
@@ -76,26 +77,24 @@ export function BottomNav() {
           <Link
             key={t.key}
             href={href}
-            aria-label={t.label}
             style={{
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              gap: 6,
-              padding: active ? '8px 14px' : 10,
+              gap: 2,
+              padding: '7px 14px',
               borderRadius: 9999,
               textDecoration: 'none',
-              color: active ? 'var(--pm-bg)' : 'var(--pm-ink-3)',
-              background: active ? 'var(--pm-ink)' : 'transparent',
-              transition:
-                'background 180ms ease, color 180ms ease, padding 180ms ease',
+              color: active ? 'var(--pm-ink)' : 'var(--pm-ink-3)',
+              background: active ? 'rgb(var(--pm-bg-rgb) / 0.85)' : 'transparent',
+              boxShadow: active
+                ? '0 1px 2px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.85)'
+                : 'none',
+              transition: 'background 180ms ease, color 180ms ease',
             }}
           >
             <NavIcon name={t.icon} stroke={active ? 2 : 1.7} />
-            {active && (
-              <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '-0.01em' }}>
-                {t.label}
-              </span>
-            )}
+            <span style={{ fontSize: 10, fontWeight: active ? 700 : 500 }}>{t.label}</span>
           </Link>
         )
       })}

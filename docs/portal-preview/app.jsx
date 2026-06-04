@@ -98,36 +98,33 @@ function BottomNav({ screen, onNav }) {
     { id: 'info', label: '정보', icon: 'info' },
     { id: 'profile', label: '프로필', icon: 'user' },
   ];
-  // 알약 컴팩트 — 폭 자동, 중앙 정렬. active 만 라벨+알약 배경, 비활성은 아이콘만.
+  // Liquid Glass (iOS 26 풍) — 매우 투명 + 강한 blur + hairline + active 알약.
   return (
     <div style={{
-      position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)',
-      zIndex: 40, display: 'flex', gap: 2, padding: 5, borderRadius: 9999,
-      background: 'rgba(250,245,240,0.92)',
-      backdropFilter: 'blur(20px) saturate(160%)',
-      WebkitBackdropFilter: 'blur(20px) saturate(160%)',
-      border: '1px solid rgba(42,38,32,0.06)',
-      boxShadow: '0 12px 28px -10px rgba(0,0,0,0.16), 0 2px 6px -2px rgba(0,0,0,0.06)',
+      position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+      zIndex: 40, display: 'flex', gap: 4, padding: 6, borderRadius: 9999,
+      background: 'rgba(250,245,240,0.45)',
+      backdropFilter: 'blur(28px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+      border: '1px solid rgba(255,255,255,0.55)',
+      boxShadow: '0 14px 36px -10px rgba(0,0,0,0.18), 0 2px 8px -2px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.65)',
     }}>
       {items.map(it => {
         const active = screen === it.id;
         return (
-          <button key={it.id} onClick={() => onNav(it.id)}
-            aria-label={it.label}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              background: active ? 'var(--pm-ink)' : 'transparent',
-              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-              padding: active ? '8px 14px' : 10, borderRadius: 9999,
-              color: active ? 'var(--pm-bg)' : 'var(--pm-ink-3)',
-              transition: 'background 180ms ease, color 180ms ease, padding 180ms ease',
-            }}>
+          <button key={it.id} onClick={() => onNav(it.id)} style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+            background: active ? 'rgba(255,253,250,0.85)' : 'transparent',
+            border: 'none', cursor: 'pointer',
+            padding: '7px 14px', borderRadius: 9999, fontFamily: 'inherit',
+            color: active ? 'var(--pm-ink)' : 'var(--pm-ink-3)',
+            boxShadow: active
+              ? '0 1px 2px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.85)'
+              : 'none',
+            transition: 'background 180ms ease, color 180ms ease',
+          }}>
             <Icon name={it.icon} size={19} stroke={active ? 2 : 1.7}/>
-            {active && (
-              <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '-0.01em' }}>
-                {it.label}
-              </span>
-            )}
+            <span style={{ fontSize: 10, fontWeight: active ? 700 : 500 }}>{it.label}</span>
           </button>
         );
       })}
