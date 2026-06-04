@@ -161,7 +161,7 @@ function MapCard({ map, onZoom }: { map: AirportMap; onZoom: () => void }) {
             height: 'auto',
             borderRadius: 14,
             border: `.5px solid ${C.line}`,
-            background: '#fff',
+            background: 'var(--pm-surface)',
           }}
         />
       </button>

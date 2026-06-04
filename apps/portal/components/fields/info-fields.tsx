@@ -547,7 +547,7 @@ export function DestinationField({
           autoFocus
           style={{
             width: '100%',
-            background: '#fff',
+            background: 'var(--pm-surface)',
             border: `1px solid ${C.line}`,
             borderRadius: 10,
             padding: '11px 12px',

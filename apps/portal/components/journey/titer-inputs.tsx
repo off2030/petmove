@@ -73,7 +73,7 @@ export function TiterInputs({
     padding: '10px 12px',
     border: `1px solid ${C.line}`,
     borderRadius: 10,
-    background: '#fff',
+    background: 'var(--pm-surface)',
     fontFamily: 'inherit',
     fontSize: 15,
     color: C.ink,

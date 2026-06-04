@@ -453,7 +453,7 @@ function PreviewCard({
           </button>
         )}
       </div>
-      <div style={{ borderTop: `.5px solid ${C.line}`, background: '#fff' }}>
+      <div style={{ borderTop: `.5px solid ${C.line}`, background: 'var(--pm-surface)' }}>
         {error ? (
           <div style={{ padding: 16, fontSize: 12, color: C.warn, textAlign: 'center' }}>
             {error}

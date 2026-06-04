@@ -163,7 +163,7 @@ export function StepDocChecklist({ caseId, currentStepId }: { caseId: string; cu
           padding: '9px 14px',
           borderRadius: 999,
           border: `.5px solid ${C.line}`,
-          background: 'rgba(255,253,247,.55)',
+          background: 'rgb(var(--pm-surface-rgb) / 0.55)',
           color: C.ink,
           fontSize: 13,
           fontWeight: 500,
