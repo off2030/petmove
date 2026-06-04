@@ -98,24 +98,32 @@ function BottomNav({ screen, onNav }) {
     { id: 'info', label: '정보', icon: 'info' },
     { id: 'profile', label: '프로필', icon: 'user' },
   ];
+  // Liquid Glass (iOS 26 풍) — 매우 투명 + 강한 blur + hairline + active 알약.
   return (
     <div style={{
-      position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 40,
-      paddingBottom: 30, paddingTop: 8, paddingLeft: 12, paddingRight: 12,
-      display: 'flex', justifyContent: 'space-around',
-      background: 'linear-gradient(180deg, rgba(250,245,240,0) 0%, rgba(250,245,240,.95) 60%)',
-      backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+      position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+      zIndex: 40, display: 'flex', gap: 4, padding: 6, borderRadius: 9999,
+      background: 'rgba(250,245,240,0.45)',
+      backdropFilter: 'blur(28px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+      border: '1px solid rgba(255,255,255,0.55)',
+      boxShadow: '0 14px 36px -10px rgba(0,0,0,0.18), 0 2px 8px -2px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.65)',
     }}>
       {items.map(it => {
         const active = screen === it.id;
         return (
           <button key={it.id} onClick={() => onNav(it.id)} style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-            background: 'transparent', border: 'none', cursor: 'pointer',
-            padding: '6px 12px', flex: 1, fontFamily: 'inherit',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+            background: active ? 'rgba(255,253,250,0.85)' : 'transparent',
+            border: 'none', cursor: 'pointer',
+            padding: '7px 14px', borderRadius: 9999, fontFamily: 'inherit',
             color: active ? 'var(--pm-ink)' : 'var(--pm-ink-3)',
+            boxShadow: active
+              ? '0 1px 2px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.85)'
+              : 'none',
+            transition: 'background 180ms ease, color 180ms ease',
           }}>
-            <Icon name={it.icon} size={20} stroke={active ? 2 : 1.7}/>
+            <Icon name={it.icon} size={19} stroke={active ? 2 : 1.7}/>
             <span style={{ fontSize: 10, fontWeight: active ? 700 : 500 }}>{it.label}</span>
           </button>
         );

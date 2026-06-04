@@ -46,23 +46,28 @@ export function BottomNav() {
 
   const caseId = caseIdInPath ?? lastCaseId
 
+  // Liquid Glass (iOS 26 풍) — 매우 투명 + 강한 blur + hairline + active 알약.
+  // portal-preview/app.jsx 의 BottomNav 와 동일 디자인 (truth source).
   return (
     <nav
       style={{
         position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
+        bottom: 'max(env(safe-area-inset-bottom), 16px)',
+        left: '50%',
+        transform: 'translateX(-50%)',
         zIndex: 40,
-        paddingTop: 8,
-        paddingLeft: 12,
-        paddingRight: 12,
-        paddingBottom: 'max(env(safe-area-inset-bottom), 12px)',
         display: 'flex',
-        justifyContent: 'space-around',
-        background: 'linear-gradient(180deg, rgb(var(--pm-bg-rgb) / 0) 0%, rgb(var(--pm-bg-rgb) / .95) 60%)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        gap: 4,
+        padding: 6,
+        borderRadius: 9999,
+        background: 'rgb(var(--pm-bg-rgb) / 0.45)',
+        backdropFilter: 'blur(28px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+        border: '1px solid rgba(255, 255, 255, 0.55)',
+        boxShadow:
+          '0 14px 36px -10px rgba(0, 0, 0, 0.18),' +
+          ' 0 2px 8px -2px rgba(0, 0, 0, 0.08),' +
+          ' inset 0 1px 0 rgba(255, 255, 255, 0.65)',
       }}
     >
       {TABS.map((t) => {
@@ -76,11 +81,16 @@ export function BottomNav() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 3,
-              padding: '6px 12px',
-              flex: 1,
+              gap: 2,
+              padding: '7px 14px',
+              borderRadius: 9999,
               textDecoration: 'none',
               color: active ? 'var(--pm-ink)' : 'var(--pm-ink-3)',
+              background: active ? 'rgb(var(--pm-bg-rgb) / 0.85)' : 'transparent',
+              boxShadow: active
+                ? '0 1px 2px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.85)'
+                : 'none',
+              transition: 'background 180ms ease, color 180ms ease',
             }}
           >
             <NavIcon name={t.icon} stroke={active ? 2 : 1.7} />
