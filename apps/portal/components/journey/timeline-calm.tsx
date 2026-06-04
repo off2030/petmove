@@ -388,7 +388,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               borderRadius: 22,
               background: C.warnBg,
               border: `.5px solid color-mix(in srgb, ${C.warn} 20%, transparent)`,
-              boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
+              boxShadow: 'var(--pm-card-rim)',
             }}
           >
             <div style={{ ...monoCap, color: C.warn, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -471,7 +471,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               borderRadius: 22,
               overflow: 'hidden',
               background: 'color-mix(in srgb, var(--pm-sage) 11%, var(--pm-card-sage-base))',
-              boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
+              boxShadow: 'var(--pm-card-rim)',
             }}
           >
             {/* 도착 도장 — 여권 스탬프 톤. 살짝 기울인 이중 링 + 텍스트, 반투명 sage. */}
@@ -591,7 +591,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               padding: 22,
               borderRadius: 22,
               background: C.cardSoft,
-              boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
+              boxShadow: 'var(--pm-card-rim)',
             }}
           >
             {/* D-day 는 진행률 링 카드에만 — 중복 방지로 헤더는 라벨만. */}
@@ -666,7 +666,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               padding: 22,
               borderRadius: 22,
               background: C.cardSoft,
-              boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
+              boxShadow: 'var(--pm-card-rim)',
             }}
           >
             <div style={{ ...monoCap, color: C.info }}>안내</div>
@@ -714,7 +714,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
             padding: '28px 18px 22px',
             borderRadius: 22,
             background: C.cardHero,
-            boxShadow: '0 1px 0 rgba(255,255,255,.35) inset',
+            boxShadow: 'var(--pm-card-rim-soft)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -768,7 +768,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               style={{
                 background: C.cardList,
                 borderRadius: 20,
-                boxShadow: '0 1px 0 rgba(255,255,255,.45) inset',
+                boxShadow: 'var(--pm-card-rim)',
                 padding: '4px 14px',
               }}
             >
