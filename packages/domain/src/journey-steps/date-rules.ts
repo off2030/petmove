@@ -194,6 +194,25 @@ export function validateRabiesInterval(primeDate: string, boosterDate: string): 
   return null
 }
 
+/**
+ * 광견병 1차 접종은 생후 minDays(일본 91일) 이후여야 함. client(1차 입력 시 입력 불가)·
+ * procedure-check(출생일·1차 수정 후 주의) 공용. minDays 는 목적지별로 다를 수 있어 인자(기본 91,
+ * 예: EU 84). 출생일·접종일 한쪽이 비면 통과.
+ */
+export function validateRabiesPrimeAge(
+  birthDate: string,
+  primeDate: string,
+  minDays = 91,
+): string | null {
+  if (!birthDate || !primeDate) return null
+  const age = daysBetween(birthDate, primeDate)
+  if (age < minDays) {
+    const eligible = addDays(birthDate, minDays)
+    return `1차 광견병 접종은 생후 ${minDays}일(${eligible ? fmt(eligible) : ''}) 이후에 해야 합니다.`
+  }
+  return null
+}
+
 // 광견병 2차가 1차 면역 유효기간 이내인지(과거 validateRabiesBoosterValidity)는 부스터 chain
 // 검증으로 통합 — findRabiesChainBreak(rabies-chain.ts)가 1차→2차→3차… 전체를 순차 검사한다.
 // client(rabies2/extra 입력 불가)·procedure-check(jp.rabies-booster/extra-validity 주의) 공용.

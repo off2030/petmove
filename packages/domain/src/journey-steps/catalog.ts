@@ -121,7 +121,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     allowAttachments: true,
     attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 보관하세요.',
     attachmentLabel: '광견병백신',
-    // jp.rabies-prime-after-91days-old (생후 91일 이후 1차) 은 portal 입력 차단으로 이관.
+    // 1차 입력 시 client 입력 불가, 출생일·1차 수정 후 주의(jp.rabies-prime-after-91days-old).
+    validationIds: ['jp.rabies-prime-after-91days-old'],
   },
 
   // ── 4. 광견병 백신 2차 ─────────────────────────────────────────────────

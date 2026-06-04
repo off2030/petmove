@@ -14,6 +14,7 @@ import {
   validateKrExportDate,
   validateKrImportDate,
   validateRabiesInterval,
+  validateRabiesPrimeAge,
   validateTiterAfterBooster,
   validateTiterWithinChain,
   validateVetVisitDate,
@@ -461,10 +462,9 @@ export function StepDetailView({
     if (isRabies) {
       if (isRabies2 && isRabiesEntryExpired(rabies)) return '입력하신 접종은 면역 유효기간이 만료되었습니다.'
       if (isRabies1 && rabies.date) {
-        const birth = readBirthDate(caseRow?.data)
-        if (birth && daysBetween(birth, rabies.date) < 91) {
-          return `1차 광견병 접종은 생후 91일(${addDays(birth, 91)}) 이후에 해야 합니다.`
-        }
+        // 1차 생후 91일 — procedure-check(jp.rabies-prime-after-91days-old)와 같은 domain 함수.
+        const ageErr = validateRabiesPrimeAge(readBirthDate(caseRow?.data), rabies.date)
+        if (ageErr) return ageErr
       }
       if (isRabies2) {
         const r1 = readRabiesEntryForm(caseRow?.data, 0)
@@ -1972,12 +1972,6 @@ function titerExtraEqual(a: TiterExtraEntry[], b: TiterExtraEntry[]): boolean {
     }
   }
   return true
-}
-
-/** 두 YYYY-MM-DD 날짜 사이의 일수 차이 (to - from). 형식이 깨지면 NaN. */
-function daysBetween(fromIso: string, toIso: string): number {
-  const ms = new Date(toIso + 'T00:00:00Z').getTime() - new Date(fromIso + 'T00:00:00Z').getTime()
-  return Math.round(ms / 86_400_000)
 }
 
 /**

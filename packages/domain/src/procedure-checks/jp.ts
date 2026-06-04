@@ -6,6 +6,7 @@ import {
   validateJpImportDate,
   validateKrImportDate,
   validateRabiesInterval,
+  validateRabiesPrimeAge,
   validateTiterWithinChain,
 } from '../journey-steps/date-rules'
 import { findRabiesChainBreak } from '../journey-steps/rabies-chain'
@@ -44,26 +45,22 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 백신 타이밍',
     description: '광견병 1차 접종일은 생년월일 기준 91일 이후여야 함.',
-    severity: 'info',
+    // 1차 입력 시 client 입력 불가, 출생일·1차 수정 후 주의. 일본 기준 91일(목적지별 차이는 후속).
+    severity: 'warning',
     addedAt: '2026-04-21',
-    run: ({ caseRow, destination }) => {
+    run: ({ caseRow }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const birth = typeof data.birth_date === 'string' ? data.birth_date : ''
       const rabies = readRabiesEntries(caseRow)
       if (!birth || rabies.length === 0) return SKIP
 
       const first = rabies[0]
-      const age = daysBetween(birth, first.date)
-      if (age === null) return SKIP
-      if (age < 91) {
-        const eligible = addDays(birth, 91)
-        return {
-          ok: false,
-          message: `1차 광견병 접종은 생후 91일(${formatKoreanDate(eligible)}) 이후에 해야 합니다.`,
-          offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
-        }
+      // 단일 출처 — client 입력 차단과 같은 함수.
+      const msg = validateRabiesPrimeAge(birth, first.date)
+      if (msg) {
+        return { ok: false, message: msg, offendingPaths: [`rabies_dates[${first.originalIndex}].date`] }
       }
-      return { ok: true, message: `1차 접종일(${first.date}) 생후 ${age}일령.` }
+      return { ok: true, message: `1차 접종일(${first.date}) 생후 91일 이후.` }
     },
   },
   {
