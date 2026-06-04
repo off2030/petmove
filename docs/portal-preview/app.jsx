@@ -98,32 +98,28 @@ function BottomNav({ screen, onNav }) {
     { id: 'info', label: '정보', icon: 'info' },
     { id: 'profile', label: '프로필', icon: 'user' },
   ];
-  // Liquid Glass (iOS 26 풍) — 흰색 글래스로 페이지 살구 톤과 의도적 대비.
+  // 둥근 카드형 플로팅 바 — 좌우·아래 마진, 라벨 항상 보임. Calm 톤.
   return (
     <div style={{
-      position: 'absolute', bottom: 22, left: '50%', transform: 'translateX(-50%)',
-      zIndex: 40, display: 'flex', gap: 12, padding: 6, borderRadius: 9999,
-      background: 'rgba(255,255,255,0.30)',
-      backdropFilter: 'blur(28px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(28px) saturate(180%)',
-      border: '1px solid rgba(255,255,255,0.45)',
-      boxShadow: '0 14px 36px -10px rgba(0,0,0,0.20), 0 2px 8px -2px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.55)',
+      position: 'absolute', left: 12, right: 12, bottom: 18, zIndex: 40,
+      display: 'flex', padding: '6px 4px', borderRadius: 22,
+      background: 'rgba(250,245,240,0.50)',
+      backdropFilter: 'blur(20px) saturate(160%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+      border: '1px solid rgba(42,38,32,0.06)',
+      boxShadow: '0 12px 28px -10px rgba(0,0,0,0.16), 0 2px 6px -2px rgba(0,0,0,0.06)',
     }}>
       {items.map(it => {
         const active = screen === it.id;
         return (
           <button key={it.id} onClick={() => onNav(it.id)} style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-            background: active ? 'rgba(255,255,255,0.75)' : 'transparent',
-            border: 'none', cursor: 'pointer',
-            padding: '7px 20px', borderRadius: 9999, fontFamily: 'inherit',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            padding: '8px 6px', flex: 1, fontFamily: 'inherit', borderRadius: 16,
             color: active ? 'var(--pm-ink)' : 'var(--pm-ink-3)',
-            boxShadow: active
-              ? '0 1px 2px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.75)'
-              : 'none',
-            transition: 'background 180ms ease, color 180ms ease',
+            transition: 'color 180ms ease',
           }}>
-            <Icon name={it.icon} size={19} stroke={active ? 2 : 1.7}/>
+            <Icon name={it.icon} size={20} stroke={active ? 2 : 1.7}/>
             <span style={{ fontSize: 10, fontWeight: active ? 700 : 500 }}>{it.label}</span>
           </button>
         );
