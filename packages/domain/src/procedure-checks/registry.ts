@@ -3,7 +3,6 @@ import { AU_CHECKS } from './au'
 import { BR_CHECKS } from './br'
 import { CA_CHECKS } from './ca'
 import { CN_CHECKS } from './cn'
-import { COMMON_CHECKS } from './common'
 import { EU_CHECKS } from './eu'
 import { GU_CHECKS } from './gu'
 import { HI_CHECKS } from './hi'
@@ -32,7 +31,6 @@ import type { CheckContext, CheckResult, CountryKey, ProcedureCheck } from './ty
  * 2) 이 파일에 import 하고 아래 배열에 펼치기
  */
 export const ALL_PROCEDURE_CHECKS: ProcedureCheck[] = [
-  ...COMMON_CHECKS,
   ...JP_CHECKS,
   ...SG_CHECKS,
   ...EU_CHECKS,
@@ -58,20 +56,19 @@ export const ALL_PROCEDURE_CHECKS: ProcedureCheck[] = [
   ...CA_CHECKS,
 ]
 
-/** check 의 country 가 target 키에 매칭되는지. 'all' 또는 배열에 포함되면 true. */
+/** check 의 country 가 target 키에 매칭되는지. 배열에 포함되면 true. */
 export function checkAppliesTo(checkCountry: CountryKey, target: string): boolean {
-  if (checkCountry === 'all') return true
   if (Array.isArray(checkCountry)) return checkCountry.includes(target)
   return checkCountry === target
 }
 
-/** 한 체크가 등록된 모든 국가 키 (단일 → [k], 배열 → 그대로, 'all' → ['all']). */
+/** 한 체크가 등록된 모든 국가 키 (단일 → [k], 배열 → 그대로). */
 export function checkCountryKeys(checkCountry: CountryKey): string[] {
   if (Array.isArray(checkCountry)) return checkCountry
   return [checkCountry]
 }
 
-/** 국가 키로 그룹화. 'all' 은 공통. 다중 국가 규칙은 각 국가에 모두 등록됨. */
+/** 국가 키로 그룹화. 다중 국가 규칙은 각 국가에 모두 등록됨. */
 export function groupChecksByCountry(): Record<string, ProcedureCheck[]> {
   const out: Record<string, ProcedureCheck[]> = {}
   for (const c of ALL_PROCEDURE_CHECKS) {
@@ -82,7 +79,7 @@ export function groupChecksByCountry(): Record<string, ProcedureCheck[]> {
   return out
 }
 
-/** 특정 국가 케이스에 적용될 체크 = 해당 국가 + 'all'. */
+/** 특정 국가 케이스에 적용될 체크. */
 export function getChecksForCountry(country: string): ProcedureCheck[] {
   return ALL_PROCEDURE_CHECKS.filter((c) => checkAppliesTo(c.country, country))
 }

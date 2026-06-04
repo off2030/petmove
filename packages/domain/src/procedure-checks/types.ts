@@ -6,9 +6,11 @@ export type CheckSeverity = 'blocker' | 'warning' | 'info'
  * destination-config 의 키와 동일.
  * - 단일 문자열: 한 국가 전용 (예: 'japan')
  * - 배열: 같은 규칙을 여러 국가에 등록 (예: EU 패밀리 ['eu','uk','switzerland',...])
- * - 'all': 전 국가 공통
+ *
+ * **'all' 같은 공통 키는 의도적으로 없음** — 모든 룰은 명시적으로 적용 목적지를
+ * 선언해야 한다. 잘못된 가정의 누수(다른 국가에 일본 룰이 새는 등)를 원천 차단.
  */
-export type CountryKey = string | string[] | 'all'
+export type CountryKey = string | string[]
 
 export interface ProcedureCheck {
   /** 전역 유일 id. `<국가코드>.<이름>` 형식 권장. 예: 'jp.rabies-titer-validity' */

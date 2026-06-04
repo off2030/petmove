@@ -8,6 +8,7 @@ import {
   validateMicrochipBeforeBooster,
   validateRabiesInterval,
   validateRabiesPrimeAge,
+  validateTiterAfterBooster,
   validateTiterWithinChain,
 } from '../journey-steps/date-rules'
 import { findRabiesChainBreak } from '../journey-steps/rabies-chain'
@@ -62,6 +63,45 @@ export const JP_CHECKS: ProcedureCheck[] = [
         return { ok: false, message: msg, offendingPaths: [`rabies_dates[${first.originalIndex}].date`] }
       }
       return { ok: true, message: `1차 접종일(${first.date}) 생후 91일 이후.` }
+    },
+  },
+  {
+    id: 'jp.rabies-titer-chain-consistent',
+    country: 'japan',
+    category: '광견병',
+    title: '광견병 항체 검사 일정',
+    description:
+      '일본은 광견병 1차 + 2차 접종 후 항체 검사(RNATT) 가 필수. 항체 검사가 입력된 상태에서 선행 광견병 접종(1차·2차)이 누락이거나 항체보다 늦으면 주의.',
+    // 채혈은 client 에서 입력 차단됨(step-detail-view validateTiterAfterBooster).
+    // 이 룰은 앞 단계(1·2차)를 수정해 RNATT 가 어긋나는 경로(client 미차단)를 '주의'로
+    // 표면화. 일본은 2차도 필수라 국가 단위에서 처리(NZ/EU/AU/UK 등 1차만 요구하는 국가
+    // 에는 해당 국가 파일에 별도 룰을 두면 됨 — country: 'all' 분류 금지).
+    severity: 'warning',
+    addedAt: '2026-06-04',
+    run: ({ caseRow }) => {
+      const titers = readTiterEntries(caseRow)
+      if (titers.length === 0) return SKIP
+      const rabies = readRabiesEntries(caseRow)
+      const titerDate = titers.map((t) => t.date).sort()[0]
+
+      // 시간 순서 위반 — client 입력 차단과 같은 domain 함수(단일 출처).
+      const orderMsg = validateTiterAfterBooster(
+        rabies.slice(0, 2).map((r) => r.date),
+        titerDate,
+      )
+      if (orderMsg) {
+        return { ok: false, message: orderMsg, offendingPaths: ['rabies_titer_records'] }
+      }
+      // 선행 누락 — 가까운 선행(2차) 우선, 그 다음 1차.
+      if (rabies.length < 2) {
+        const missing = rabies.length === 0 ? '광견병 1차' : '광견병 2차'
+        return {
+          ok: false,
+          message: `${missing} 정보가 없습니다. 입력해 주세요.`,
+          offendingPaths: ['rabies_titer_records'],
+        }
+      }
+      return { ok: true, message: '항체 검사일이 광견병 백신 이후.' }
     },
   },
   {
