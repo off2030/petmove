@@ -104,7 +104,7 @@ function BottomNav({ screen, onNav }) {
     <div style={{
       position: 'absolute', left: 12, right: 12, bottom: 18, zIndex: 40,
       display: 'flex', padding: '6px 4px', borderRadius: 22,
-      background: 'rgba(250,245,240,0.75)',
+      background: 'rgba(250,245,240,0.60)',
       backdropFilter: 'blur(20px) saturate(160%)',
       WebkitBackdropFilter: 'blur(20px) saturate(160%)',
       border: '1px solid rgba(42,38,32,0.06)',

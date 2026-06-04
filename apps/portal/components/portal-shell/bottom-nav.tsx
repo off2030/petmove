@@ -59,7 +59,7 @@ export function BottomNav() {
         display: 'flex',
         padding: '6px 4px',
         borderRadius: 22,
-        background: 'rgb(var(--pm-bg-rgb) / 0.75)',
+        background: 'rgb(var(--pm-bg-rgb) / 0.60)',
         backdropFilter: 'blur(20px) saturate(160%)',
         WebkitBackdropFilter: 'blur(20px) saturate(160%)',
         border: '1px solid rgba(42, 38, 32, 0.06)',
