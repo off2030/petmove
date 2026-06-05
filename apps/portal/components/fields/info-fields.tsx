@@ -295,6 +295,70 @@ export function TextField({
   )
 }
 
+// ── SplitNameField (영문 성·이름 두 input 한 줄) ──────────────────────────
+
+/**
+ * 한 라벨 아래 두 input 가로 — 영문 이름·성 분리 입력용.
+ * 순서는 First Last(이름 → 성) — 합본 column `${first} ${last}` 와 일관, 영어 표기 자연.
+ * placeholder 로 어느 칸이 이름/성인지 안내.
+ */
+export function SplitNameField({
+  label,
+  firstValue,
+  lastValue,
+  onChangeFirst,
+  onChangeLast,
+  firstPlaceholder = '이름',
+  lastPlaceholder = '성',
+  last,
+}: {
+  label: string
+  firstValue: string
+  lastValue: string
+  onChangeFirst: (next: string) => void
+  onChangeLast: (next: string) => void
+  firstPlaceholder?: string
+  lastPlaceholder?: string
+  last?: boolean
+}) {
+  const inputStyle: React.CSSProperties = {
+    flex: 1,
+    minWidth: 0,
+    textAlign: 'left',
+    background: 'transparent',
+    border: 0,
+    outline: 'none',
+    padding: 0,
+    fontFamily: 'var(--pm-font-display)',
+    fontSize: 15,
+    fontWeight: 500,
+    color: C.ink,
+  }
+  return (
+    <InlineRow label={label} last={last}>
+      <div style={{ display: 'flex', gap: 10, flex: 1, minWidth: 0, alignItems: 'baseline' }}>
+        <input
+          className="pm-field-input"
+          type="text"
+          value={firstValue}
+          onChange={(e) => onChangeFirst(e.target.value)}
+          placeholder={firstPlaceholder}
+          style={inputStyle}
+        />
+        <span style={{ flexShrink: 0, color: C.ink3, fontSize: 13 }}>·</span>
+        <input
+          className="pm-field-input"
+          type="text"
+          value={lastValue}
+          onChange={(e) => onChangeLast(e.target.value)}
+          placeholder={lastPlaceholder}
+          style={inputStyle}
+        />
+      </div>
+    </InlineRow>
+  )
+}
+
 // ── DateField ────────────────────────────────────────────────────────────
 
 export function DateField({

@@ -1,7 +1,7 @@
 'use client'
 
 import type { CaseRow } from '@petmove/domain'
-import { TextField } from '@/components/fields/info-fields'
+import { SplitNameField, TextField } from '@/components/fields/info-fields'
 import { EditPageShell, SectionCard, StickySaveBar } from './settings-shared'
 import { useCaseEditForm } from './use-case-edit-form'
 
@@ -27,17 +27,14 @@ export function GuardianEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId
           onChange={(v) => set('customer_name', v)}
           placeholder="예: 홍길동"
         />
-        <TextField
+        <SplitNameField
           label="영문 이름"
-          value={form.customer_first_name_en}
-          onChange={(v) => set('customer_first_name_en', v)}
-          placeholder="예: Gildong"
-        />
-        <TextField
-          label="영문 성"
-          value={form.customer_last_name_en}
-          onChange={(v) => set('customer_last_name_en', v)}
-          placeholder="예: Hong"
+          firstValue={form.customer_first_name_en}
+          lastValue={form.customer_last_name_en}
+          onChangeFirst={(v) => set('customer_first_name_en', v)}
+          onChangeLast={(v) => set('customer_last_name_en', v)}
+          firstPlaceholder="이름 · Gildong"
+          lastPlaceholder="성 · Hong"
         />
         <TextField
           label="전화번호"
