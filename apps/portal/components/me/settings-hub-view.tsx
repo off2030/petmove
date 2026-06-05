@@ -287,23 +287,20 @@ function PartnerStubCard({
 
 // ── 계정 (외부 mono-cap + 카드 내 행 리스트) ─────────────────────────────
 
-function AccountSection({ email, href }: { email: string | null; href: string }) {
+// 계정 '관리'(이메일 변경·로그아웃 등)는 설정(/settings)에 단일 진입점으로 둔다.
+// 여기 내 정보에서는 현재 로그인 이메일만 정보로 표시(비클릭) — 진입점 중복 제거.
+function AccountSection({ email }: { email: string | null }) {
   return (
     <>
       <div style={{ ...monoCap, marginTop: 24, marginBottom: 10, padding: '0 4px' }}>
         계정
       </div>
-      <Link
-        href={href}
-        className="pm-pressable"
+      <div
         style={{
-          display: 'block',
           background: C.surface,
           border: `.5px solid ${C.line}`,
           borderRadius: CARD_RADIUS,
           padding: '4px 16px',
-          textDecoration: 'none',
-          color: 'inherit',
         }}
       >
         <div
@@ -329,7 +326,7 @@ function AccountSection({ email, href }: { email: string | null; href: string })
             {email ?? '—'}
           </span>
         </div>
-      </Link>
+      </div>
     </>
   )
 }
@@ -383,7 +380,7 @@ export function SettingsHubView() {
           />
         </div>
 
-        <AccountSection email={view.account.email} href="/me/account" />
+        <AccountSection email={view.account.email} />
       </div>
     </div>
   )
