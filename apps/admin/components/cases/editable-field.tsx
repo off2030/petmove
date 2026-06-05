@@ -263,6 +263,21 @@ export function EditableField({
         return
       }
     }
+    // 전화번호 — 010 + 8자리 강제 (펫무브 portal 과 동일). 빈 값은 OK.
+    if (spec.key === 'phone' && value.trim()) {
+      const digits = value.trim().replace(/\D/g, '')
+      if (!/^010\d{8}$/.test(digits)) {
+        setError('010-XXXX-XXXX 형식으로 입력해 주세요')
+        return
+      }
+    }
+    // 이메일 — 단순 형식(sub@domain.tld). 빈 값은 OK.
+    if (spec.key === 'email' && value.trim()) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
+        setError('이메일 형식이 올바르지 않습니다')
+        return
+      }
+    }
 
     const coerced = coerceInputValue(spec, value)
     const prev = rawValue

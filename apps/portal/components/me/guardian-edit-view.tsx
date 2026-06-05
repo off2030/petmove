@@ -57,13 +57,27 @@ export function GuardianEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId
           addressZipcode={form.address_zipcode}
           addressEn={form.address_en}
           onSearchComplete={(data) => {
-            // 새 주소 → 옛 상세주소·도로명·영문·우편번호 한 번에 갱신.
+            // 새 주소 → 옛 상세주소·영문·우편번호 한 번에 갱신. address_kr 은 도로명만
+            // (admin 합본 패턴 follow — 상세 입력 시 합본 갱신).
             set('address_kr', data.roadAddress)
             set('address_en', data.roadAddressEnglish)
             set('address_zipcode', data.zonecode)
             set('address_detail_kr', '')
           }}
-          onChangeDetail={(v) => set('address_detail_kr', v)}
+          onChangeDetail={(v) => {
+            // admin PDF fill 의 splitKrAddress 가 full.endsWith(stored) 로 detail 을
+            // 떼어내므로 address_kr 을 "${도로명} ${상세}" 합본으로 저장한다. 도로명은
+            // 현재 address_kr 에서 옛 detail 을 떼어내 추출 (없으면 전체가 도로명).
+            const fullPrev = form.address_kr.trim()
+            const detailPrev = form.address_detail_kr.trim()
+            const road =
+              detailPrev && fullPrev.endsWith(detailPrev)
+                ? fullPrev.slice(0, -detailPrev.length).trim()
+                : fullPrev
+            const next = v.trim() ? `${road} ${v.trim()}`.trim() : road
+            set('address_kr', next)
+            set('address_detail_kr', v)
+          }}
           last
         />
       </SectionCard>
