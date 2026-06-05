@@ -134,7 +134,7 @@ export function CaseHeader({
           display: 'flex',
           flexDirection: wrapped ? 'column' : 'row',
           alignItems: wrapped ? 'flex-start' : 'center',
-          gap: wrapped ? 6 : 12,
+          gap: wrapped ? 16 : 12,
         }}
       >
         {wrapped && <OtherCasesRow currentCaseId={caseId} tab={tab} />}
