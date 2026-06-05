@@ -64,9 +64,11 @@ function dotDate(iso: string): string {
 
 // ── Row chrome ───────────────────────────────────────────────────────────
 
+// 라벨 위/값 아래 stack 톤 — Material 3 / Linear 패턴. 긴 한국어·영문 주소도 자연스럽게.
+// (옛 iOS 설정 톤: 라벨 좌·값 우. 주소 wrap 시 우측 시작 줄바꿈이 어색해 stack 으로 전환.)
 const labelStyle: React.CSSProperties = {
-  fontSize: 13,
-  color: C.ink2,
+  fontSize: 12,
+  color: C.ink3,
   flexShrink: 0,
 }
 
@@ -74,28 +76,26 @@ function InlineRow({
   label,
   last,
   children,
-  alignTop,
 }: {
   label: string
   last?: boolean
   children: React.ReactNode
-  /** 값이 여러 줄로 늘어날 수 있을 때(주소 등) 라벨을 위로 정렬. */
+  /** (옛 우측 정렬 시절) 값이 여러 줄로 늘어날 때 라벨 top 정렬 — stack 톤에선 무의미, 호환만. */
   alignTop?: boolean
 }) {
   return (
     <div
       style={{
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: alignTop ? 'flex-start' : 'center',
+        flexDirection: 'column',
+        alignItems: 'stretch',
         padding: '11px 0',
         borderBottom: last ? 'none' : `.5px solid ${C.line}`,
-        gap: 12,
-        minHeight: 46,
+        gap: 4,
       }}
     >
-      <span style={{ ...labelStyle, ...(alignTop ? { paddingTop: 2 } : null) }}>{label}</span>
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'flex-end' }}>
+      <span style={labelStyle}>{label}</span>
+      <div style={{ minWidth: 0, display: 'flex', justifyContent: 'flex-start' }}>
         {children}
       </div>
     </div>
@@ -130,7 +130,7 @@ function AutoGrowTextarea({
       style={{
         flex: 1,
         minWidth: 0,
-        textAlign: 'right',
+        textAlign: 'left',
         background: 'transparent',
         border: 0,
         outline: 'none',
@@ -171,7 +171,7 @@ function TriggerButton({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'flex-end',
+        alignItems: 'flex-start',
         gap: 2,
         maxWidth: '100%',
         background: 'transparent',
@@ -179,6 +179,7 @@ function TriggerButton({
         padding: 0,
         cursor: 'pointer',
         fontFamily: 'inherit',
+        textAlign: 'left',
       }}
     >
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, maxWidth: '100%' }}>
@@ -272,7 +273,7 @@ export function TextField({
         style={{
           flex: 1,
           minWidth: 0,
-          textAlign: 'right',
+          textAlign: 'left',
           background: 'transparent',
           border: 0,
           outline: 'none',
