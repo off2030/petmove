@@ -69,7 +69,6 @@ export function PetAvatarPicker({ case_, pet }: { case_: CaseRow; pet: PetBlock 
               <span
                 style={{
                   ...serif,
-                  fontStyle: 'italic',
                   fontSize: 13,
                   color: C.ink3,
                   fontWeight: 400,

@@ -16,7 +16,7 @@ import { C, serif, monoCap } from './settings-shared'
 /**
  * 내 정보 탭 허브 (/me) — 카테고리별 카드 리스트. (앱 설정은 상단바 ⚙ → /settings)
  * 카테고리 라벨(보호자·반려동물·여행정보·동물병원·에이전시)은 모두 카드 밖 mono-cap.
- *   - 보호자 → Hero (아바타 52, 이름 20 serif + 영문 italic, 부제=계정 이메일)
+ *   - 보호자 → Hero (아바타 52, 이름 20 serif + 영문 정자체 13, 부제=계정 이메일)
  *   - 반려동물 → Hero 카드 N개 + '동물 추가' 버튼(→ /apply). 삭제는 동물 상세에서.
  *   - 여행정보 → Partner (본문 row, 아바타 44)
  *   - 동물병원·에이전시 → Partner stub (dashed, placeholder)
@@ -103,7 +103,7 @@ function HeroLinkCard({
               {nameKo ?? '이름 미설정'}
             </span>
             {nameEn && (
-              <span style={{ ...serif, fontStyle: 'italic', fontSize: 13, color: C.ink3, fontWeight: 400 }}>
+              <span style={{ ...serif, fontSize: 13, color: C.ink3, fontWeight: 400 }}>
                 {nameEn}
               </span>
             )}
