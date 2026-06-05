@@ -269,6 +269,13 @@ function destinationIsChina(dest: unknown): boolean {
   return dest.split(',').map(s => s.trim()).includes('중국')
 }
 
+/** 호주·뉴질랜드 목적지 — 별지25 제조번호 칸에 면역유효기간 병기 대상. */
+function destinationIsAuNz(dest: unknown): boolean {
+  if (typeof dest !== 'string' || !dest) return false
+  const tokens = dest.split(',').map(s => s.trim())
+  return tokens.includes('호주') || tokens.includes('뉴질랜드')
+}
+
 /** YYYY-MM-DD → YYYY/MM/DD for Japan forms. */
 function fmtDate(s: unknown): string {
   if (typeof s !== 'string' || !s) return ''
@@ -1638,13 +1645,19 @@ function resolveField(
   // Form25 "기타 예방접종" slot filler. `other_vacc_seq:<attr>[<n>]`.
   // Pulls the nth entry of the compressed vaccine sequence built from
   // comprehensive → external → internal (skipping missing types).
-  const seqMatch = transform?.match(/^other_vacc_seq:(type|name|manufacturer|serial|date)\[(\d+)\]$/)
+  // `serial_with_expiry` — 호주·뉴질랜드 목적지에서만 batch + 면역유효기간(접종) 병기.
+  // 그 외 목적지/구충은 batch 만. (별지25는 모든 목적지 공용이라 destination gating.)
+  const seqMatch = transform?.match(/^other_vacc_seq:(type|name|manufacturer|serial|serial_with_expiry|date)\[(\d+)\]$/)
   if (seqMatch) {
-    const attr = seqMatch[1] as keyof OtherVacEntry
+    const attr = seqMatch[1]
     const idx = Number(seqMatch[2])
     const entry = buildOtherVaccineSequence(data, allowedVaccines)[idx]
     if (!entry) return ''
-    return entry[attr]
+    if (attr === 'serial_with_expiry') {
+      const suffix = destinationIsAuNz(caseRow.destination) ? entry.validity : ''
+      return joinBatchExpiry(entry.serial, suffix)
+    }
+    return entry[attr as keyof OtherVacEntry]
   }
 
   // Form25AuNz expanded filler (8 slots, 3 doses per type).
@@ -1660,7 +1673,9 @@ function resolveField(
     const entry = buildExpandedVaccineSequence(data, 3, allowedVaccines)[idx]
     if (!entry) return ''
     if (attr === 'serial_with_expiry') {
-      return joinBatchExpiry(entry.serial, entry.validity || entry.expiry)
+      // 백신 = 면역유효기간(호주·뉴질랜드 한정), 구충 = 제품 사용기한 폴백.
+      const validity = destinationIsAuNz(caseRow.destination) ? entry.validity : ''
+      return joinBatchExpiry(entry.serial, validity || entry.expiry)
     }
     return entry[attr as keyof OtherVacEntry]
   }
@@ -1836,8 +1851,11 @@ function resolveField(
     if (attr === 'manufacturer') return merged.manufacturer
     if (attr === 'serial') return merged.serial
     if (attr === 'serial_with_expiry') {
-      // 광견병 = 면역유효기간(접종일+valid_until) 병기. 그 외(구충)는 제품 사용기한 폴백.
-      const suffix = kind === 'rabies' ? resolveValidityTo(rec, date, 1) : (merged.expiry ?? '')
+      // 광견병 = 면역유효기간(접종일+valid_until) 병기 — 호주·뉴질랜드 목적지 한정.
+      // 그 외(구충)는 제품 사용기한 폴백. (별지25 공용 서식이라 destination gating.)
+      const suffix = kind === 'rabies'
+        ? (destinationIsAuNz(caseRow.destination) ? resolveValidityTo(rec, date, 1) : '')
+        : (merged.expiry ?? '')
       return joinBatchExpiry(merged.serial, suffix)
     }
     if (attr === 'validity_from') return fmtDate(p?.validityFrom ?? '')

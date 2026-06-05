@@ -578,7 +578,8 @@
       },
       "rabies1_serial": {
         "source": "rabies_dates",
-        "transform": "vaccine:rabies:serial[0]"
+        "transform": "vaccine:rabies:serial_with_expiry[0]",
+        "note": "호주·뉴질랜드 목적지면 batch + 면역유효기간 병기, 그 외 batch만"
       },
       "rabies1_vacc_date": {
         "source": "rabies_dates",
@@ -607,7 +608,7 @@
       },
       "rabies2_serial": {
         "source": "rabies_dates",
-        "transform": "vaccine:rabies:serial[1]"
+        "transform": "vaccine:rabies:serial_with_expiry[1]"
       },
       "rabies2_vacc_date": {
         "source": "rabies_dates",
@@ -635,7 +636,7 @@
       },
       "rabies3_serial": {
         "source": "rabies_dates",
-        "transform": "vaccine:rabies:serial[2]"
+        "transform": "vaccine:rabies:serial_with_expiry[2]"
       },
       "rabies3_vacc_date": {
         "source": "rabies_dates",
@@ -668,7 +669,8 @@
       },
       "other1_serial": {
         "source": null,
-        "transform": "other_vacc_seq:serial[0]"
+        "transform": "other_vacc_seq:serial_with_expiry[0]",
+        "note": "호주·뉴질랜드 목적지면 batch + 면역유효기간(백신) 병기, 그 외 batch만"
       },
       "other1_date": {
         "source": null,
@@ -688,7 +690,7 @@
       },
       "other2_serial": {
         "source": null,
-        "transform": "other_vacc_seq:serial[1]"
+        "transform": "other_vacc_seq:serial_with_expiry[1]"
       },
       "other2_date": {
         "source": null,
@@ -708,7 +710,7 @@
       },
       "other3_serial": {
         "source": null,
-        "transform": "other_vacc_seq:serial[2]"
+        "transform": "other_vacc_seq:serial_with_expiry[2]"
       },
       "other3_date": {
         "source": null,
