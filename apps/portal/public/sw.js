@@ -8,7 +8,7 @@
  *   - GET HTML 문서 → network-first (실패 시 cache, 캐시도 없으면 /offline 폴백).
  *   - POST / Server Actions / Supabase → 항상 network 직통.
  */
-const VERSION = 'portal-v6'
+const VERSION = 'portal-v7'
 const STATIC_CACHE = `portal-static-${VERSION}`
 const PAGE_CACHE = `portal-page-${VERSION}`
 const OFFLINE_URL = '/offline'

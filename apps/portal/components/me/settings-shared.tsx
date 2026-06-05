@@ -208,15 +208,17 @@ export function StickySaveBar({
     }
   }, [])
 
+  // 키보드 올라오면 bar 자체를 unmount — bottom 음수·transform·display 처리 모두 일부
+  // 안드로이드 크롬에서 무시되는 케이스가 있어 가장 확실한 컴포넌트 미렌더로 처리.
+  if (keyboardOpen) return null
+
   return (
     <div
       style={{
         position: 'fixed',
         left: 0,
         right: 0,
-        // 키보드 올라오면 bar 를 viewport 아래로 완전히 밀어낸다. transform + backdrop-filter
-        // 조합이 일부 안드로이드 크롬 빌드에서 무시되므로 bottom 자체를 음수로 옮긴다.
-        bottom: keyboardOpen ? -200 : 0,
+        bottom: 0,
         paddingTop: 12,
         paddingLeft: 20,
         paddingRight: 20,
@@ -227,7 +229,6 @@ export function StickySaveBar({
         WebkitBackdropFilter: 'blur(20px)',
         zIndex: 39,
         pointerEvents: 'none',
-        transition: 'bottom .18s ease',
       }}
     >
       {status === 'error' && (

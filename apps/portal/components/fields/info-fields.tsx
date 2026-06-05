@@ -395,7 +395,7 @@ export function SplitNameField({
   const lastSize = Math.max((lastValue || lastPlaceholder).length + 1, 4)
   return (
     <InlineRow label={label} last={last}>
-      <div style={{ display: 'flex', gap: 6, flex: 1, minWidth: 0, alignItems: 'baseline', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 6, flex: 1, minWidth: 0, alignItems: 'baseline', flexWrap: 'nowrap' }}>
         <input
           className="pm-field-input"
           type="text"
