@@ -16,6 +16,16 @@ interface Props {
   includeVet?: boolean
   /** 다중 목적지 케이스의 활성 목적지 — PDF 생성 시 by_dest 평탄화에 사용. */
   destination?: string | null
+  /**
+   * 발급 직전 사전 안내 — 절차 검증 실패 + 빈 필드를 동물별로 묶어 한 다이얼로그에 표시.
+   * cases-app.tsx 의 preflightConfirmMulti 가 흘러 들어온다.
+   * false 반환 시 발급 중단.
+   */
+  onPreflightConfirm?: (
+    caseIds: string[],
+    destination: string | null,
+    formKey: string,
+  ) => Promise<boolean>
   onClose: () => void
 }
 
@@ -55,7 +65,7 @@ function simulatePackCount(
   return docs
 }
 
-export function MultiFormDialog({ caseId, formKey, includeVet, destination, onClose }: Props) {
+export function MultiFormDialog({ caseId, formKey, includeVet, destination, onPreflightConfirm, onClose }: Props) {
   const [preview, setPreview] = useState<SiblingPreview | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
@@ -86,6 +96,11 @@ export function MultiFormDialog({ caseId, formKey, includeVet, destination, onCl
     const ids = selectedCases.map(c => c.id)
     if (ids.length === 0) return
     startGen(async () => {
+      // 발급 직전 사전 안내 — 절차 검증 실패 + 빈 필드 (동물별 묶음, ①A + ②B 폼별 1회)
+      if (onPreflightConfirm) {
+        const ok = await onPreflightConfirm(ids, destination ?? null, formKey)
+        if (!ok) return
+      }
       try {
         await downloadMultipartPdfRequest(
           { kind: 'multi', formKey, caseIds: ids, includeVet, destination },

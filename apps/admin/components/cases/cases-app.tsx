@@ -30,6 +30,7 @@ import type { CaseRow } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
 import { evaluateCase } from './verification-context'
 import { listOrgDisabledChecks } from '@/lib/actions/org-disabled-checks'
+import { inspectMissingPdfFields } from '@/lib/actions/inspect-missing-pdf-fields'
 
 function downloadBase64Pdf(base64: string, filename: string) {
   const link = document.createElement('a')
@@ -248,14 +249,37 @@ function Inner() {
   }, [])
 
   const confirmIfFailing = useCallback(
-    async (caseRow: CaseRow, destination: string | null): Promise<boolean> => {
+    async (caseRow: CaseRow, destination: string | null, formKey?: string): Promise<boolean> => {
+      // 1) 절차 검증 — blocker/warning 만 노출 (info 는 안 묻고 통과)
       const results = evaluateCase(caseRow, destination, disabledChecks)
       const failing = results.filter((r) => !r.result.ok && r.check.severity !== 'info')
-      if (failing.length === 0) return true
-      const lines = failing.slice(0, 8).map(({ result }) => `• ${result.message}`)
-      if (failing.length > 8) lines.push(`외 ${failing.length - 8}건…`)
+
+      // 2) PDF 빈 필드 — formKey 있을 때만 검사
+      let missingLabels: string[] = []
+      if (formKey) {
+        const r = await inspectMissingPdfFields(formKey, [caseRow.id], destination)
+        if (r.ok && r.cases.length > 0) missingLabels = r.cases[0].missingLabels
+      }
+
+      if (failing.length === 0 && missingLabels.length === 0) return true
+
+      // 한 다이얼로그에 합쳐 표시 (①A)
+      const lines: string[] = []
+      if (failing.length > 0) {
+        lines.push('검증 실패:')
+        lines.push(...failing.slice(0, 8).map(({ result }) => `  • ${result.message}`))
+        if (failing.length > 8) lines.push(`  외 ${failing.length - 8}건…`)
+      }
+      if (missingLabels.length > 0) {
+        if (lines.length > 0) lines.push('')
+        lines.push('비어 있는 정보:')
+        lines.push(...missingLabels.map((l) => `  • ${l}`))
+      }
+      const titleParts: string[] = []
+      if (failing.length > 0) titleParts.push(`검증 실패 ${failing.length}건`)
+      if (missingLabels.length > 0) titleParts.push(`비어 있는 정보 ${missingLabels.length}개`)
       return confirm({
-        message: `검증 실패 ${failing.length}건이 있습니다. 그래도 발급할까요?`,
+        message: `${titleParts.join(' · ')}이 있습니다. 그래도 발급할까요?`,
         description: lines.join('\n'),
         okLabel: '발급',
         cancelLabel: '취소',
@@ -263,6 +287,63 @@ function Inner() {
       })
     },
     [confirm, disabledChecks],
+  )
+
+  /**
+   * Multi-form (AnnexIII / UK / NZ / VBC) 발급용 — 선택된 여러 케이스를 한 다이얼로그
+   * 안에서 동물별로 묶어 절차 검증 + 빈 필드 사전 안내. MultiFormDialog 가 발급 직전 호출.
+   */
+  const preflightConfirmMulti = useCallback(
+    async (caseIds: string[], destination: string | null, formKey: string): Promise<boolean> => {
+      // 1) 케이스별 절차 검증 (cases context 에서 로드)
+      const rows = caseIds
+        .map((id) => cases.find((c) => c.id === id))
+        .filter((c): c is CaseRow => !!c)
+      const perCase = rows.map((row) => {
+        const results = evaluateCase(row, destination, disabledChecks)
+        const failing = results.filter((r) => !r.result.ok && r.check.severity !== 'info')
+        return { row, failing: failing.map((f) => f.result.message) }
+      })
+      // 2) 빈 필드 — 한 번에 모든 ids 요청
+      const r = await inspectMissingPdfFields(formKey, caseIds, destination)
+      const missingByCase = new Map<string, string[]>()
+      if (r.ok) for (const c of r.cases) missingByCase.set(c.caseId, c.missingLabels)
+
+      // 동물별 블록 구성
+      const blocks: string[] = []
+      let totalFailing = 0
+      let totalMissing = 0
+      for (const { row, failing } of perCase) {
+        const missing = missingByCase.get(row.id) ?? []
+        if (failing.length === 0 && missing.length === 0) continue
+        const heading = row.pet_name ?? row.pet_name_en ?? row.customer_name ?? '(이름 없음)'
+        const inner: string[] = [`${heading}:`]
+        if (failing.length > 0) {
+          inner.push(...failing.slice(0, 5).map((m) => `  • ${m}`))
+          if (failing.length > 5) inner.push(`  외 ${failing.length - 5}건…`)
+          totalFailing += failing.length
+        }
+        if (missing.length > 0) {
+          if (failing.length > 0) inner.push('  ── 비어 있는 정보:')
+          inner.push(...missing.map((l) => `  • ${l}`))
+          totalMissing += missing.length
+        }
+        blocks.push(inner.join('\n'))
+      }
+      if (blocks.length === 0) return true
+
+      const titleParts: string[] = []
+      if (totalFailing > 0) titleParts.push(`검증 실패 ${totalFailing}건`)
+      if (totalMissing > 0) titleParts.push(`비어 있는 정보 ${totalMissing}개`)
+      return confirm({
+        message: `${titleParts.join(' · ')}이 있습니다. 그래도 발급할까요?`,
+        description: blocks.join('\n\n'),
+        okLabel: '발급',
+        cancelLabel: '취소',
+        variant: 'destructive',
+      })
+    },
+    [cases, confirm, disabledChecks],
   )
 
   // Reset detail scroll to top when selected case changes
@@ -388,7 +469,7 @@ function Inner() {
   const downloadCertPdf = useCallback(
     async (formKey: string, caseId: string, destination: string | null, rabiesIndices?: number[]) => {
       const row = cases.find((c) => c.id === caseId)
-      if (row && !(await confirmIfFailing(row, destination))) return
+      if (row && !(await confirmIfFailing(row, destination, formKey))) return
       try {
         await downloadPdfRequest({
           kind: 'single',
@@ -486,6 +567,7 @@ function Inner() {
             formKey={multiForm.formKey}
             includeVet={includeVet}
             destination={multiForm.destination}
+            onPreflightConfirm={preflightConfirmMulti}
             onClose={() => setMultiForm(null)}
           />
         )}
