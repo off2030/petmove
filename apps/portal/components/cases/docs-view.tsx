@@ -89,24 +89,26 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
     >
       <div style={{ padding: '0 24px' }}>
         {/* Header */}
-        <div style={{ paddingTop: 8, display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ alignSelf: 'center' }}>
-            <PetAvatar size={36} />
-          </span>
-          <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: 0, color: C.ink }}>{pet.name}</h1>
-          <div
-            style={{
-              fontSize: 12,
-              color: C.ink2,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              transform: 'translateY(-2px)',
-            }}
-          >
-            <span>{trip.fromCity}</span>
-            <span style={{ color: C.ink3 }}>{trip.tripType === 'round' ? '⇄' : '→'}</span>
-            <span>{trip.toCity}</span>
+        <div style={{ paddingTop: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+            <span style={{ alignSelf: 'center' }}>
+              <PetAvatar size={36} />
+            </span>
+            <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: 0, color: C.ink }}>{pet.name}</h1>
+            <div
+              style={{
+                fontSize: 12,
+                color: C.ink2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                transform: 'translateY(-2px)',
+              }}
+            >
+              <span>{trip.fromCity}</span>
+              <span style={{ color: C.ink3 }}>{trip.tripType === 'round' ? '⇄' : '→'}</span>
+              <span>{trip.toCity}</span>
+            </div>
           </div>
           <OtherCasesRow currentCaseId={caseId} tab="docs" />
         </div>

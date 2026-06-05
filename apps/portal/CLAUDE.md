@@ -37,6 +37,14 @@ Phase 11.0 9/10 완료. 남은 작업:
 - **11.0.7 내 케이스 목록·상세 UI** — 데이터 레이어 완료, 디자인 freeze 후 4탭 셸 + 화면 구성
 - **11.0.10 베타 배포** — Vercel 도메인·OAuth redirect·Apple Dev·Play Console (사용자 액션)
 
-## 알려진 이슈
+## 배포 (2026-06-05~ 현행)
 
-- **Vercel webhook 끊김** — 2026-06-04 portal 재발(2026-06-03 첫 사례 이튿날). 진단: Vercel Build & Deployment 설정은 정상(Root `apps/portal`, Include outside Enabled, Ignored Build Step Automatic) 인데 apps/portal/ 변경조차 트리거 안 되면 webhook 끊김. 효과 본 복구 시퀀스 (2026-06-04 실측): (1) Vercel Settings → Git → Disconnect → 같은 repo Reconnect (환경변수·도메인·빌드 설정 모두 보존, 그러나 이것만으로는 안 풀림). (2) Deploy Hook 생성·curl 호출 — PENDING 응답만 받고 빌드 미생성. (3) **GitHub Settings → Installed GitHub Apps → Vercel → Configure 진입 (sudo mode 이메일 인증 필요, 사용자 액션). 권한·repo 정상 확인 후 페이지 방문만으로도 webhook subscription refresh 됨**. (4) 빈 commit push 로 검증 — 트리거 정상화. 핵심: (3)이 가장 가능성 높은 진짜 풀림 트리거. (1)·(2)만으로는 안 풀린 사례.
+**portal 은 Vercel webhook 이 아니라 GitHub Actions `.github/workflows/deploy-portal.yml` 로만 배포한다.** (webhook 이 6일새 3회 끊겨 졸업시킴 — Vercel Settings→Git 연결은 Disconnect 상태.)
+
+- **자동 배포**: `apps/portal/**`·`packages/**`·workspace 설정 파일을 변경해 master push → Actions 가 `vercel deploy --prod`(서버 빌드)로 자동 배포(1~2분). 평소 작업은 이걸로 끝.
+- **빈 ping 커밋·문서만 커밋은 자동배포 안 됨** (paths 필터). 코드 변경 없이 재배포만 필요하면 GitHub → Actions → **Deploy Portal → Run workflow**(master).
+- **확인 위치 = GitHub Actions** (Vercel 대시보드 아님). "webhook 끊김" 진단은 더 이상 불필요.
+- Vercel 무료(Hobby) **일일 배포 한도 100/day, rolling 24h**. 초과 시 deploy 단계 ~30초 즉사(`api-deployments-free-per-day`). 회복까지 대기 또는 Pro 업글.
+- Secrets: `VERCEL_TOKEN`/`VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` (GitHub repo secrets). 상세: 메모리 `project_portal_deploy_github_actions`.
+
+(과거 webhook 끊김 진단·복구 기록은 메모리 `project_petmovework_vercel_deploy` 참고 — admin 은 아직 webhook 사용 중일 수 있음.)
