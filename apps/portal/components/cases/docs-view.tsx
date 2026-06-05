@@ -89,8 +89,9 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
     >
       <div style={{ padding: '0 24px' }}>
         {/* Header */}
-        <div style={{ paddingTop: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+        <div style={{ paddingTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+          <OtherCasesRow currentCaseId={caseId} tab="docs" />
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', width: '100%', minWidth: 0 }}>
             <span style={{ alignSelf: 'center' }}>
               <PetAvatar size={36} />
             </span>
@@ -110,7 +111,6 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
               <span>{trip.toCity}</span>
             </div>
           </div>
-          <OtherCasesRow currentCaseId={caseId} tab="docs" />
         </div>
 
         {useCurated ? (

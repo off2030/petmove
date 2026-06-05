@@ -357,8 +357,9 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
     >
       <div style={{ padding: '0 24px' }}>
         {/* Header */}
-        <div style={{ paddingTop: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+        <div style={{ paddingTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+          <OtherCasesRow currentCaseId={caseId} tab="journey" />
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', width: '100%', minWidth: 0 }}>
             <span style={{ alignSelf: 'center' }}>
               <PetAvatar size={36} />
             </span>
@@ -378,7 +379,6 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
               <span>{trip.toCity}</span>
             </div>
           </div>
-          <OtherCasesRow currentCaseId={caseId} tab="journey" />
         </div>
 
         {/* 주의 카드 — 케이스 차원 결격 (견종·마릿수·거주·1년 라이선스 등).
