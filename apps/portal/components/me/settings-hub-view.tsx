@@ -15,50 +15,24 @@ import { C, serif, monoCap } from './settings-shared'
 
 /**
  * 내 정보 탭 허브 (/me) — 카테고리별 카드 리스트. (앱 설정은 상단바 ⚙ → /settings)
- * 카테고리 라벨(보호자·반려동물·여행 정보·동물병원·운송 업체)은 모두 카드 밖 mono-cap.
- *   - 보호자 → Hero (아바타 52, 이름 20 serif + 영문 정자체 13, 부제=전화번호+이메일)
- *   - 반려동물 → Hero 카드 N개 + '동물 추가' 버튼(→ /apply). 삭제는 동물 상세에서.
- *   - 여행 정보 → Partner (본문 row, 아바타 44)
- *   - 동물병원·운송 업체 → Partner stub (dashed, placeholder)
- * 카드 자체가 Link → 탭하면 sub-page. 옛 톤에 chevron 은 없으므로 제거.
- * (옛 '계정' 섹션은 제거 — 이메일은 보호자 카드로, 계정 관리는 /settings 단일 진입.)
+ * 카테고리 라벨(보호자·반려동물·동물병원·운송 업체)은 모두 카드 밖 mono-cap.
+ *   - 보호자 → Hero 1개 (아바타 52, 부제=전화번호+이메일). 공통.
+ *   - 반려동물 → Hero 카드 N개 + '동물 추가' 버튼(→ /apply). 각 카드 안에 그 동물의
+ *     여행 요약(목적지·유형·D-day) 이 footer 로 들어감. 카드 탭 → /me/animal/[caseId]
+ *     에서 동물 정보 + 여행 정보 함께 편집. 삭제도 동물 상세에서.
+ *   - 동물병원·운송 업체 → Partner stub (dashed, placeholder). 보호자 단위 공통.
+ * (옛 '여행 정보' 단독 섹션과 '계정' 섹션은 폐기 — 여행은 동물 카드 안으로, 계정은
+ *  /settings 단일 진입.)
  */
 
 const CARD_RADIUS = 18
 const CARD_PADDING = 18
 const HERO_AVATAR = 52
-const PARTNER_AVATAR = 44
 
 const num: CSSProperties = {
   fontFamily: 'var(--pm-font-display)',
   fontVariantNumeric: 'tabular-nums',
   fontWeight: 400,
-}
-
-// ── 아이콘 ────────────────────────────────────────────────────────────────
-
-function MedicalIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M9 11H5a2 2 0 0 0-2 2v7h18v-7a2 2 0 0 0-2-2h-4M12 11V3M9 7h6" />
-    </svg>
-  )
-}
-function PlaneIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
-    </svg>
-  )
-}
-function RouteIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <circle cx="6" cy="19" r="2.2" />
-      <circle cx="18" cy="5" r="2.2" />
-      <path d="M8 19h6a4 4 0 0 0 0-8h-4a4 4 0 0 1 0-8h6" />
-    </svg>
-  )
 }
 
 // ── Hero 톤 (보호자·동물) ─────────────────────────────────────────────────
@@ -73,6 +47,7 @@ function HeroLinkCard({
   subtitleMono,
   extra,
   extraMono = true,
+  footer,
 }: {
   href: string
   avatar: ReactNode
@@ -86,6 +61,8 @@ function HeroLinkCard({
   extra?: string | null
   /** extra 폰트 톤. 기본 true(num) — 이메일/한글 메타는 호출자가 false 로 지정. */
   extraMono?: boolean
+  /** 본체 아래 sub-section — 동물 카드의 여행 요약 같은 보조 영역용. divider 와 함께 렌더. */
+  footer?: ReactNode
 }) {
   return (
     <Link
@@ -93,7 +70,6 @@ function HeroLinkCard({
       className="pm-pressable"
       style={{
         display: 'block',
-        padding: CARD_PADDING,
         borderRadius: CARD_RADIUS,
         background: C.surface,
         border: `.5px solid ${C.line}`,
@@ -101,7 +77,7 @@ function HeroLinkCard({
         color: 'inherit',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div style={{ padding: CARD_PADDING, display: 'flex', alignItems: 'center', gap: 14 }}>
         {avatar}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
@@ -144,6 +120,12 @@ function HeroLinkCard({
           )}
         </div>
       </div>
+      {footer && (
+        <>
+          <div style={{ height: 0.5, background: C.line, margin: `0 ${CARD_PADDING}px` }} />
+          <div style={{ padding: `12px ${CARD_PADDING}px` }}>{footer}</div>
+        </>
+      )}
     </Link>
   )
 }
@@ -200,19 +182,21 @@ function PetCard({ case_, index, href }: { case_: CaseRow; index: number; href: 
       subtitleMono
       extra={meta || (!pet.microchip ? '아바타를 눌러 정보를 등록해보세요' : null)}
       extraMono={false}
+      footer={<PetTravelSummary case_={case_} />}
     />
   )
 }
 
-// ── Partner 톤 (여행) ─────────────────────────────────────────────────────
-
-const TRIP_LABEL: Record<string, string> = { round: '왕복', one_way: '편도' }
-
-function TravelCard({ case_, href }: { case_: CaseRow; href: string }) {
+/**
+ * 동물 카드 안 여행 요약 — 목적지·유형·D-day 한 줄. 케이스의 여행 정보가 하나도
+ * 없으면(목적지·출국일 모두 빈) null 반환해 footer 자체가 노출 안 됨.
+ */
+function PetTravelSummary({ case_ }: { case_: CaseRow }) {
   const data = (case_.data ?? {}) as Record<string, unknown>
   const tripType = typeof data.trip_type === 'string' ? data.trip_type : null
   const dest = case_.destination?.trim() || null
   const departure = case_.departure_date?.trim() || null
+  if (!dest && !departure) return null
 
   const route = dest ? `한국 ${tripType === 'round' ? '⇄' : '→'} ${dest}` : null
   const subParts = [
@@ -222,69 +206,43 @@ function TravelCard({ case_, href }: { case_: CaseRow; href: string }) {
   const sub = subParts.join(' · ')
 
   return (
-    <Link
-      href={href}
-      className="pm-pressable"
-      style={{
-        display: 'block',
-        padding: CARD_PADDING,
-        borderRadius: CARD_RADIUS,
-        background: C.surface,
-        border: `.5px solid ${C.line}`,
-        textDecoration: 'none',
-        color: 'inherit',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div
-          style={{
-            width: PARTNER_AVATAR,
-            height: PARTNER_AVATAR,
-            borderRadius: '50%',
-            flexShrink: 0,
-            background: C.soft,
-            color: C.accent,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <RouteIcon />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              ...serif,
-              fontSize: 17,
-              color: route ? C.ink : C.ink3,
-              lineHeight: 1.2,
-              fontVariantNumeric: 'tabular-nums',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {route ?? '여행지 미설정'}
-          </div>
-          {sub && (
-            <div
-              style={{
-                fontSize: 12,
-                color: C.ink3,
-                marginTop: 3,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {sub}
-            </div>
-          )}
-        </div>
-      </div>
-    </Link>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+        style={{ flexShrink: 0, color: C.ink3 }}
+      >
+        <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
+      </svg>
+      <span
+        style={{
+          flex: 1,
+          minWidth: 0,
+          fontSize: 12,
+          color: route ? C.ink2 : C.ink3,
+          fontVariantNumeric: 'tabular-nums',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {route ?? '여행지 미설정'}
+        {sub && <span style={{ color: C.ink3 }}> · {sub}</span>}
+      </span>
+    </div>
   )
 }
+
+// ── 여행 요약 (동물 카드 footer 용) ───────────────────────────────────────
+
+const TRIP_LABEL: Record<string, string> = { round: '왕복', one_way: '편도' }
 
 // ── Partner stub (병원·운송 업체) ─────────────────────────────────────────
 
@@ -404,12 +362,6 @@ export function SettingsHubView() {
             <AddAnimalCard href="/apply" />
           </div>
         </Section>
-
-        {primary && (
-          <Section label="여행 정보">
-            <TravelCard case_={primary} href="/me/travel" />
-          </Section>
-        )}
 
         <Section label="동물병원">
           <PartnerStubCard

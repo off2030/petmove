@@ -13,8 +13,9 @@ import { PetAvatarPicker } from '@/components/me/pet-avatar-picker'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { softDeleteMyCase } from '@/lib/actions/cases'
 import { buildPetBlock } from '@/lib/profile/catalog'
-import { ageLabel } from '@/lib/cases/info-form'
+import { ageLabel, hasSiblingCase } from '@/lib/cases/info-form'
 import { C, EditPageShell, SectionCard, StickySaveBar } from './settings-shared'
+import { TravelFormSections } from './travel-form-sections'
 import { useCaseEditForm } from './use-case-edit-form'
 
 /**
@@ -35,7 +36,9 @@ const SEX_OPTIONS: readonly FieldOption[] = [
 ]
 
 export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string }) {
+  const { cases } = useCases()
   const { form, set, dirty, status, error, handleSave } = useCaseEditForm(caseRow, caseId)
+  const hasSibling = hasSiblingCase(cases, caseRow)
 
   return (
     <EditPageShell
@@ -119,6 +122,15 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
           last
         />
       </SectionCard>
+
+      {/* 여행 정보 — TravelEditView 와 공유. 같은 useCaseEditForm 폼이라 한 번 저장으로 묶임. */}
+      <TravelFormSections
+        caseRow={caseRow}
+        form={form}
+        set={set}
+        hasSibling={hasSibling}
+        marginTop={24}
+      />
 
       <DeleteAnimalSection caseId={caseId} petName={buildPetBlock(caseRow).name} />
     </EditPageShell>
