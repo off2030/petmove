@@ -41,13 +41,22 @@ const supabase = createClient(
 console.log(`Mode: ${APPLY ? 'APPLY (변경 반영)' : 'DRY-RUN (미반영)'}`)
 console.log('─'.repeat(60))
 
-const { data, error } = await supabase
+// PostgREST 기본 max-rows 한도(1000) 우회 — 전체 cases 를 페이지네이션으로 수집.
+const { count, error: cErr } = await supabase
   .from('cases')
-  .select('id, customer_name, pet_name, data')
+  .select('id', { count: 'exact', head: true })
+if (cErr) { console.error('DB count error:', cErr.message); process.exit(1) }
 
-if (error) {
-  console.error('DB error:', error.message)
-  process.exit(1)
+let data = []
+const pageSize = 1000
+for (let from = 0; from < (count ?? 0); from += pageSize) {
+  const to = Math.min(from + pageSize - 1, count - 1)
+  const { data: page, error } = await supabase
+    .from('cases')
+    .select('id, customer_name, pet_name, data')
+    .range(from, to)
+  if (error) { console.error('DB error:', error.message); process.exit(1) }
+  data = data.concat(page)
 }
 
 let scanned = 0
