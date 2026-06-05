@@ -15,12 +15,12 @@ import { C, serif, monoCap } from './settings-shared'
 
 /**
  * 내 정보 탭 허브 (/me) — 카테고리별 카드 리스트. (앱 설정은 상단바 ⚙ → /settings)
- * 카테고리 라벨(보호자·반려동물·동물병원·운송 업체)은 모두 카드 밖 mono-cap.
+ * 카테고리 라벨(보호자·반려동물·담당 동물병원·동물 운송 업체)은 모두 카드 밖 mono-cap.
  *   - 보호자 → Hero 1개 (아바타 52, 부제=전화번호+이메일). 공통.
  *   - 반려동물 → Hero 카드 N개 + '동물 추가' 버튼(→ /apply). 각 카드 안에 그 동물의
  *     여행 요약(목적지·유형·D-day) 이 footer 로 들어감. 카드 탭 → /me/animal/[caseId]
  *     에서 동물 정보 + 여행 정보 함께 편집. 삭제도 동물 상세에서.
- *   - 동물병원·운송 업체 → Partner stub (dashed, placeholder). 보호자 단위 공통.
+ *   - 담당 동물병원·동물 운송 업체 → Partner stub (dashed, placeholder). 보호자 단위 공통.
  * (옛 '여행 정보' 단독 섹션과 '계정' 섹션은 폐기 — 여행은 동물 카드 안으로, 계정은
  *  /settings 단일 진입.)
  */
@@ -363,16 +363,16 @@ export function SettingsHubView() {
           </div>
         </Section>
 
-        <Section label="동물병원">
+        <Section label="담당 동물병원">
           <PartnerStubCard
             placeholder="담당 동물병원 정보가 등록되면 표시됩니다."
             href="/me/vet"
           />
         </Section>
 
-        <Section label="운송 업체">
+        <Section label="동물 운송 업체">
           <PartnerStubCard
-            placeholder="동물 출국을 담당하는 운송 업체 정보가 등록되면 표시됩니다."
+            placeholder="동물 운송 업체 정보가 등록되면 표시됩니다."
             href="/me/agency"
           />
         </Section>
