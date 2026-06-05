@@ -248,7 +248,7 @@ export function RequiredDocDetail({
         {/* 서식 받기 — 빈 지정 양식 다운로드(별지25 등). 보호자가 받아 동물병원에 제출. */}
         {doc.templates && doc.templates.length > 0 && (
           <>
-            <SectionLabel>서식 받기</SectionLabel>
+            <SectionLabel>서식 다운로드</SectionLabel>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {doc.templates.map((t) => (
                 <a
@@ -288,7 +288,7 @@ export function RequiredDocDetail({
                     {t.label.startsWith('PDF') ? 'PDF' : 'HWP'}
                   </span>
                   <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 500 }}>
-                    {t.label} 서식 받기
+                    {t.label} 서식 다운로드
                   </span>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.ink3} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
