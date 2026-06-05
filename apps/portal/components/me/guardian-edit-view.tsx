@@ -22,7 +22,7 @@ export function GuardianEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId
     >
       <SectionCard marginTop={8}>
         <TextField
-          label="성함"
+          label="이름"
           value={form.customer_name}
           onChange={(v) => set('customer_name', v)}
           placeholder="예: 홍길동"
