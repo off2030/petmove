@@ -14,6 +14,9 @@ on:
       - 'pnpm-workspace.yaml'
       - 'turbo.json'
       - '.github/workflows/deploy-portal.yml'
+      # 문서·메모리(.md)만 바뀐 경우는 배포 트리거 제외 — 빌드 결과물에 영향 없고
+      # 무료 일일 한도(100/day)를 아끼기 위함. 코드+문서 같이 바뀌면 코드가 매칭되어 정상 배포.
+      - '!**/*.md'
   workflow_dispatch:
 
 concurrency:
