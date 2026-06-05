@@ -820,9 +820,16 @@ export function AddressSearchField({
     fontWeight: 400,
   }
 
+  // 저장은 합본(`${도로명} ${상세}`) 으로 admin PDF 호환을 유지하되, 화면 표시는 도로명만
+  // 보여준다 — '주소' row 와 '상세주소' row 가 같은 상세 텍스트로 중복되는 어색함 제거.
+  const roadOnlyDisplay =
+    addressDetailKr && addressKr.endsWith(addressDetailKr)
+      ? addressKr.slice(0, -addressDetailKr.length).trim()
+      : addressKr
+
   return (
     <>
-      {/* 주소(도로명) — 클릭 시 검색 모달 */}
+      {/* 주소(도로명) — 클릭 시 검색 모달. 합본 저장에서 detail 제외해 표시. */}
       <InlineRow label="주소" alignTop>
         <button
           type="button"
@@ -839,8 +846,8 @@ export function AddressSearchField({
             fontFamily: 'inherit',
           }}
         >
-          <span style={addressKr ? readOnlyValueStyle : placeholderStyle}>
-            {addressKr || (scriptLoaded ? '클릭하여 검색' : '주소 검색 준비 중…')}
+          <span style={roadOnlyDisplay ? readOnlyValueStyle : placeholderStyle}>
+            {roadOnlyDisplay || (scriptLoaded ? '클릭하여 검색' : '주소 검색 준비 중…')}
           </span>
         </button>
       </InlineRow>
