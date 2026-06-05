@@ -176,49 +176,33 @@ export function StickySaveBar({
   const canSave = dirty && status !== 'saving'
 
   // 모바일 키보드가 올라오면 fixed bar 가 viewport bottom 에 붙은 채 input 위로 올라와
-  // 입력 필드를 가린다. visualViewport API 로 감지하고, Capacitor WebView / 옛 브라우저
-  // 대비로 focusin/focusout 이벤트도 fallback 으로 묶어 bar 를 슬라이드 다운시킨다.
+  // 입력 필드를 가린다.
+  //
+  // 안드로이드 크롬: viewport meta interactiveWidget=resizes-content 가 layout viewport
+  // 도 같이 작아지게 해 visualViewport 차이로는 감지 불가 → focusin/focusout 으로 잡는다.
+  // input·textarea 포커스 시 키보드 올라옴 = 동등 신호.
+  // iOS Safari: focusin 도 정상 발화 → 같은 처리로 커버.
   const [keyboardOpen, setKeyboardOpen] = useState(false)
   useEffect(() => {
     if (typeof window === 'undefined') return
-    let vvOpen = false
-    let focusOpen = false
-    const updateOpen = () => setKeyboardOpen(vvOpen || focusOpen)
-
-    // visualViewport — 모던 브라우저 (iOS Safari 13+, Chrome 등)
-    const vv = window.visualViewport
-    let vvListener: (() => void) | null = null
-    if (vv) {
-      vvListener = () => {
-        // 임계값 50px — 주소창 숨김 같은 작은 변화는 무시. 키보드는 보통 200px+.
-        vvOpen = window.innerHeight - vv.height > 50
-        updateOpen()
-      }
-      vvListener()
-      vv.addEventListener('resize', vvListener)
-    }
-
-    // focusin/focusout — Capacitor WebView 등 visualViewport 미지원 환경 fallback.
-    // input/textarea 포커스 시 활성.
     function isEditable(t: EventTarget | null): boolean {
       if (!(t instanceof HTMLElement)) return false
       if (t.tagName === 'INPUT') {
         const type = (t as HTMLInputElement).type
-        return type !== 'button' && type !== 'submit' && type !== 'checkbox' && type !== 'radio'
+        const nonEditable = ['button', 'submit', 'reset', 'checkbox', 'radio', 'file', 'image', 'hidden', 'range', 'color']
+        return !nonEditable.includes(type)
       }
       return t.tagName === 'TEXTAREA' || t.isContentEditable
     }
     function onFocusIn(e: FocusEvent) {
-      if (isEditable(e.target)) { focusOpen = true; updateOpen() }
+      if (isEditable(e.target)) setKeyboardOpen(true)
     }
     function onFocusOut(e: FocusEvent) {
-      if (isEditable(e.target)) { focusOpen = false; updateOpen() }
+      if (isEditable(e.target)) setKeyboardOpen(false)
     }
     document.addEventListener('focusin', onFocusIn)
     document.addEventListener('focusout', onFocusOut)
-
     return () => {
-      if (vv && vvListener) vv.removeEventListener('resize', vvListener)
       document.removeEventListener('focusin', onFocusIn)
       document.removeEventListener('focusout', onFocusOut)
     }
@@ -230,7 +214,9 @@ export function StickySaveBar({
         position: 'fixed',
         left: 0,
         right: 0,
-        bottom: 0,
+        // 키보드 올라오면 bar 를 viewport 아래로 완전히 밀어낸다. transform + backdrop-filter
+        // 조합이 일부 안드로이드 크롬 빌드에서 무시되므로 bottom 자체를 음수로 옮긴다.
+        bottom: keyboardOpen ? -200 : 0,
         paddingTop: 12,
         paddingLeft: 20,
         paddingRight: 20,
@@ -241,8 +227,7 @@ export function StickySaveBar({
         WebkitBackdropFilter: 'blur(20px)',
         zIndex: 39,
         pointerEvents: 'none',
-        transform: keyboardOpen ? 'translateY(100%)' : 'none',
-        transition: 'transform .18s ease',
+        transition: 'bottom .18s ease',
       }}
     >
       {status === 'error' && (
