@@ -7,7 +7,7 @@ import { cn, roundIconBtn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@petmove/domain'
-import { listParasiteFamilies, type VaccineLookups } from '@petmove/domain'
+import { listParasiteFamilies, normalizeRabiesOrder, type VaccineLookups } from '@petmove/domain'
 import { useVaccineLookups } from '@/components/providers/vaccine-data-provider'
 import { extractVaccineInfo } from '@/lib/actions/extract-vaccine'
 import { uploadFileToNotes } from '@/lib/notes-upload'
@@ -233,7 +233,11 @@ export function RepeatableDateField({ caseId, caseRow, label, dataKey, legacyKey
     setDetailEdit(null)
   }
 
-  async function saveRecords(next: VacRecord[]) {
+  async function saveRecords(rawNext: VacRecord[]) {
+    // 광견병만 시간순 정규화 — "index 0 = 1차" 불변식을 저장 시점에 보장(portal/PDF 무영향:
+    // portal 은 이미 정렬·sparse 배열만 만들고, PDF 는 sortedAsc 로 내부 재정렬). all-dated 일
+    // 때만 정렬하므로 portal 이 만든 배열엔 개입하지 않음. 다른 백신은 그대로.
+    const next = dataKey === 'rabies_dates' ? normalizeRabiesOrder(rawNext) : rawNext
     const val = next.length > 0 ? next : null
     // Optimistic — UI 즉시 반영. 서버 응답이 늦어도 토글이 즉시 반응함.
     const prevSnapshot = records

@@ -196,6 +196,31 @@ export function validateRabiesInterval(primeDate: string, boosterDate: string): 
 }
 
 /**
+ * 광견병 저장 배열을 시간순으로 정규화 — "index 0 = 가장 이른 접종 = 1차" 불변식을
+ * **write 시점**에 보장한다. (reader 정렬은 금지 — procedure-checks/utils.ts readRabiesEntries
+ * 주석 참고. 폼의 1차 칸 = index 0 매핑이 어긋나는 버그를 막기 위해 reader 는 raw 순서를 쓴다.)
+ *
+ * 펫무브(portal)는 클라이언트 입력 차단(validateRabiesInterval)으로 이 순서를 보장하지만,
+ * 펫무브워크(admin)의 카드형 편집기·AI 추출은 비순차 배열을 만들 수 있다. 이 함수를 admin
+ * 저장 직전에 호출해 동일 불변식을 admin 에서도 맞춘다.
+ *
+ * **모든 항목이 유효 date(YYYY-MM-DD, ≥10자)일 때만** 안정 정렬한다. 빈/phantom date 가
+ * 하나라도 있으면 원본을 그대로 반환 — portal 의 고정 슬롯(index=차수)·sparse 패딩 의미를
+ * 건드리지 않기 위함(= portal 이 만든 배열에는 절대 개입하지 않음을 보장). 동일 날짜는
+ * 입력 순서를 보존한다.
+ */
+export function normalizeRabiesOrder<T extends { date?: string | null }>(records: T[]): T[] {
+  const allDated = records.every(
+    (r) => typeof r.date === 'string' && r.date.length >= 10,
+  )
+  if (!allDated) return records
+  return records
+    .map((r, i) => ({ r, i }))
+    .sort((a, b) => (a.r.date as string).localeCompare(b.r.date as string) || a.i - b.i)
+    .map((x) => x.r)
+}
+
+/**
  * 광견병 1차 접종은 생후 minDays(일본 91일) 이후여야 함. client(1차 입력 시 입력 불가)·
  * procedure-check(출생일·1차 수정 후 주의) 공용. minDays 는 목적지별로 다를 수 있어 인자(기본 91,
  * 예: EU 84). 출생일·접종일 한쪽이 비면 통과.
