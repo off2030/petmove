@@ -64,38 +64,41 @@ function dotDate(iso: string): string {
 
 // ── Row chrome ───────────────────────────────────────────────────────────
 
-// 라벨 위/값 아래 stack 톤 — Material 3 / Linear 패턴. 긴 한국어·영문 주소도 자연스럽게.
-// (옛 iOS 설정 톤: 라벨 좌·값 우. 주소 wrap 시 우측 시작 줄바꿈이 어색해 stack 으로 전환.)
+// 라벨 좌측 + 값 좌측(라벨 옆에서 시작) — 단순·일관 톤. 라벨 폭 고정으로 값이 같은
+// 컬럼에서 시작하게 정렬. 값이 여러 줄로 늘어날 때(주소)는 alignTop 로 라벨 위 정렬.
 const labelStyle: React.CSSProperties = {
-  fontSize: 12,
-  color: C.ink3,
+  fontSize: 13,
+  color: C.ink2,
   flexShrink: 0,
+  width: 88,
 }
 
 function InlineRow({
   label,
   last,
   children,
+  alignTop,
 }: {
   label: string
   last?: boolean
   children: React.ReactNode
-  /** (옛 우측 정렬 시절) 값이 여러 줄로 늘어날 때 라벨 top 정렬 — stack 톤에선 무의미, 호환만. */
+  /** 값이 여러 줄로 늘어날 수 있을 때(주소 등) 라벨을 위로 정렬. */
   alignTop?: boolean
 }) {
   return (
     <div
       style={{
         display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'stretch',
+        flexDirection: 'row',
+        alignItems: alignTop ? 'flex-start' : 'center',
         padding: '11px 0',
         borderBottom: last ? 'none' : `.5px solid ${C.line}`,
-        gap: 4,
+        gap: 16,
+        minHeight: 46,
       }}
     >
-      <span style={labelStyle}>{label}</span>
-      <div style={{ minWidth: 0, display: 'flex', justifyContent: 'flex-start' }}>
+      <span style={{ ...labelStyle, ...(alignTop ? { paddingTop: 2 } : null) }}>{label}</span>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'flex-start' }}>
         {children}
       </div>
     </div>
