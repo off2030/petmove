@@ -14,12 +14,14 @@ import { PetAvatarDisplay } from './pet-avatar-display'
 import { C, serif, monoCap } from './settings-shared'
 
 /**
- * 내 정보 탭 허브 (/me) — 카드 리스트. (앱 설정은 상단바 ⚙ → /settings)
- * 시각 톤: 옛 ProfileView 의 HeroCard / PartnerCard / AccountSection 그대로.
- *   - 보호자·동물 → Hero (padding 18, 아바타 52, 이름 20 serif + 영문 italic)
- *   - 여행·병원·에이전시 → Partner (mono-cap 헤더 + 본문 row, 아바타 44)
- *   - 계정 → 외부 mono-cap 라벨 + 카드 내 행(이메일)
+ * 내 정보 탭 허브 (/me) — 카테고리별 카드 리스트. (앱 설정은 상단바 ⚙ → /settings)
+ * 카테고리 라벨(보호자·반려동물·여행정보·동물병원·에이전시)은 모두 카드 밖 mono-cap.
+ *   - 보호자 → Hero (아바타 52, 이름 20 serif + 영문 italic, 부제=계정 이메일)
+ *   - 반려동물 → Hero 카드 N개 + '동물 추가' 버튼(→ /apply). 삭제는 동물 상세에서.
+ *   - 여행정보 → Partner (본문 row, 아바타 44)
+ *   - 동물병원·에이전시 → Partner stub (dashed, placeholder)
  * 카드 자체가 Link → 탭하면 sub-page. 옛 톤에 chevron 은 없으므로 제거.
+ * (옛 '계정' 섹션은 제거 — 이메일은 보호자 카드로, 계정 관리는 /settings 단일 진입.)
  */
 
 const CARD_RADIUS = 18
@@ -142,14 +144,16 @@ function GuardianCard({ data, href }: { data: GuardianBlock; href: string }) {
       {data.initials}
     </div>
   )
+  // 카테고리 라벨('보호자')이 카드 밖으로 나가므로, 카드 안 부제는 relation('보호자')
+  // 대신 계정 이메일을 보여준다 — 옛 '계정' 섹션을 없애고 이메일을 여기로 합쳤다.
   return (
     <HeroLinkCard
       href={href}
       avatar={avatar}
       nameKo={data.name}
       nameEn={data.nameEn}
-      subtitle={data.relation}
-      subtitleMuted
+      subtitle={data.email ?? '이메일 미설정'}
+      subtitleMuted={!data.email}
     />
   )
 }
@@ -200,8 +204,7 @@ function TravelCard({ case_, href }: { case_: CaseRow; href: string }) {
         color: 'inherit',
       }}
     >
-      <div style={monoCap}>여행정보</div>
-      <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         <div
           style={{
             width: PARTNER_AVATAR,
@@ -255,11 +258,9 @@ function TravelCard({ case_, href }: { case_: CaseRow; href: string }) {
 // ── Partner stub (병원·에이전시) ─────────────────────────────────────────
 
 function PartnerStubCard({
-  cap,
   placeholder,
   href,
 }: {
-  cap: string
   placeholder: string
   href: string
 }) {
@@ -277,57 +278,62 @@ function PartnerStubCard({
         color: 'inherit',
       }}
     >
-      <div style={monoCap}>{cap}</div>
-      <div style={{ marginTop: 10, fontSize: 13, color: C.ink3, lineHeight: 1.55 }}>
+      <div style={{ fontSize: 13, color: C.ink3, lineHeight: 1.55 }}>
         {placeholder}
       </div>
     </Link>
   )
 }
 
-// ── 계정 (외부 mono-cap + 카드 내 행 리스트) ─────────────────────────────
+// ── 섹션 래퍼 (카드 밖 카테고리 라벨) ────────────────────────────────────
 
-// 계정 '관리'(이메일 변경·로그아웃 등)는 설정(/settings)에 단일 진입점으로 둔다.
-// 여기 내 정보에서는 현재 로그인 이메일만 정보로 표시(비클릭) — 진입점 중복 제거.
-function AccountSection({ email }: { email: string | null }) {
+/** 카드 위에 mono-cap 카테고리 라벨을 얹는 섹션 묶음. 모든 카테고리 공통 톤. */
+function Section({
+  label,
+  children,
+  first,
+}: {
+  label: string
+  children: ReactNode
+  first?: boolean
+}) {
   return (
-    <>
-      <div style={{ ...monoCap, marginTop: 24, marginBottom: 10, padding: '0 4px' }}>
-        계정
-      </div>
-      <div
-        style={{
-          background: C.surface,
-          border: `.5px solid ${C.line}`,
-          borderRadius: CARD_RADIUS,
-          padding: '4px 16px',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '13px 0',
-            gap: 12,
-          }}
-        >
-          <span style={{ fontSize: 13, color: C.ink2 }}>이메일</span>
-          <span
-            style={{
-              fontSize: 15,
-              color: email ? C.ink : C.ink3,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              minWidth: 0,
-            }}
-          >
-            {email ?? '—'}
-          </span>
-        </div>
-      </div>
-    </>
+    <div style={{ marginTop: first ? 22 : 26 }}>
+      <div style={{ ...monoCap, marginBottom: 10, padding: '0 4px' }}>{label}</div>
+      {children}
+    </div>
+  )
+}
+
+// ── 동물 추가 (반려동물 섹션 하단 버튼 → 신청 폼) ─────────────────────────
+
+/** '동물 추가' — 새 케이스 신청(/apply)으로. dashed 카드 + 가운데 + 라벨. */
+function AddAnimalCard({ href }: { href: string }) {
+  return (
+    <Link
+      href={href}
+      className="pm-pressable"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        padding: '15px 18px',
+        borderRadius: CARD_RADIUS,
+        background: 'transparent',
+        border: `.5px dashed ${C.line}`,
+        textDecoration: 'none',
+        color: C.ink2,
+        fontSize: 14,
+        fontWeight: 500,
+      }}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+      동물 추가
+    </Link>
   )
 }
 
@@ -355,32 +361,38 @@ export function SettingsHubView() {
           내 정보
         </h1>
 
-        <div
-          style={{
-            marginTop: 22,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 14,
-          }}
-        >
+        <Section label="보호자" first>
           <GuardianCard data={view.guardian} href="/me/guardian" />
-          {cases.map((c, i) => (
-            <PetCard key={c.id} case_={c} index={i} href={`/me/animal/${c.id}`} />
-          ))}
-          {primary && <TravelCard case_={primary} href="/me/travel" />}
+        </Section>
+
+        <Section label="반려동물">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {cases.map((c, i) => (
+              <PetCard key={c.id} case_={c} index={i} href={`/me/animal/${c.id}`} />
+            ))}
+            <AddAnimalCard href="/apply" />
+          </div>
+        </Section>
+
+        {primary && (
+          <Section label="여행정보">
+            <TravelCard case_={primary} href="/me/travel" />
+          </Section>
+        )}
+
+        <Section label="동물병원">
           <PartnerStubCard
-            cap="동물병원"
             placeholder="담당 동물병원 정보가 등록되면 표시됩니다."
             href="/me/vet"
           />
+        </Section>
+
+        <Section label="에이전시">
           <PartnerStubCard
-            cap="에이전시"
             placeholder="출국 운송을 맡은 에이전시 정보가 등록되면 표시됩니다."
             href="/me/agency"
           />
-        </div>
-
-        <AccountSection email={view.account.email} />
+        </Section>
       </div>
     </div>
   )

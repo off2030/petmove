@@ -76,6 +76,31 @@ export async function getMyCase(caseId: string): Promise<Result<CaseRow | null>>
 }
 
 /**
+ * 보호자가 본인 케이스(동물)를 소프트 삭제 — cases.deleted_at 에 현재 시각 기록.
+ *
+ * listMyCases / getMyCase 가 `deleted_at is null` 로 필터하므로 즉시 목록·앱에서 사라진다.
+ * 운영자(펫무브워크)에는 행이 남아 복구·정산이 가능(완전 삭제 아님). cases_update RLS 는
+ * org_member 만 허용 → service role 로 우회하되 assertCaseAccess 로 본인 link 를 먼저 검증.
+ */
+export async function softDeleteMyCase(caseId: string): Promise<Result<{ id: string }>> {
+  try {
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { error } = await admin
+      .from('cases')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', caseId)
+      .is('deleted_at', null)
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: { id: caseId } }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
  * 보호자가 자기 케이스의 아바타(이모지·색)를 갱신.
  *
  * cases_update RLS 는 org_member 만 허용 → service role 로 우회. 그 대신

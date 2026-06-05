@@ -1,5 +1,7 @@
 'use client'
 
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import type { CaseRow } from '@petmove/domain'
 import {
   DateField,
@@ -8,6 +10,8 @@ import {
   type FieldOption,
 } from '@/components/fields/info-fields'
 import { PetAvatarPicker } from '@/components/me/pet-avatar-picker'
+import { useCases } from '@/components/portal-shell/case-data-provider'
+import { softDeleteMyCase } from '@/lib/actions/cases'
 import { buildPetBlock } from '@/lib/profile/catalog'
 import { ageLabel } from '@/lib/cases/info-form'
 import { C, EditPageShell, SectionCard, StickySaveBar } from './settings-shared'
@@ -115,6 +119,120 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
           last
         />
       </SectionCard>
+
+      <DeleteAnimalSection caseId={caseId} petName={buildPetBlock(caseRow).name} />
     </EditPageShell>
+  )
+}
+
+/**
+ * 동물(케이스) 삭제 — 2단계 인라인 확인. 소프트 삭제(deleted_at)라 목록·앱에서 사라지고
+ * 운영자에게는 남아 복구 가능. 삭제 후 케이스 목록을 새로고침하고 내 정보로 복귀.
+ */
+function DeleteAnimalSection({ caseId, petName }: { caseId: string; petName: string | null }) {
+  const router = useRouter()
+  const { refreshCases } = useCases()
+  const [confirming, setConfirming] = useState(false)
+  const [busy, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+
+  function handleDelete() {
+    setError(null)
+    startTransition(async () => {
+      const res = await softDeleteMyCase(caseId)
+      if (!res.ok) {
+        setError(res.error)
+        return
+      }
+      // 먼저 내 정보로 이동 — 이 페이지(useCase(caseId))가 삭제된 케이스로 notFound()
+      // 를 띄우기 전에 떠난다. 목록 갱신은 이동 후 백그라운드로 (provider 는 layout 에 살아있음).
+      router.replace('/me')
+      void refreshCases()
+    })
+  }
+
+  const btn: React.CSSProperties = {
+    flex: 1,
+    padding: '12px 0',
+    borderRadius: 12,
+    fontFamily: 'inherit',
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: busy ? 'not-allowed' : 'pointer',
+  }
+
+  return (
+    <div style={{ marginTop: 32 }}>
+      {!confirming ? (
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          style={{
+            width: '100%',
+            padding: '13px 0',
+            borderRadius: 14,
+            border: `1px solid color-mix(in srgb, ${C.warn} 30%, transparent)`,
+            background: 'transparent',
+            color: C.warn,
+            fontFamily: 'inherit',
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          동물 삭제
+        </button>
+      ) : (
+        <div
+          style={{
+            padding: 16,
+            borderRadius: 14,
+            background: C.surface,
+            border: `.5px solid ${C.line}`,
+          }}
+        >
+          <p style={{ margin: 0, fontSize: 14, color: C.ink, lineHeight: 1.55 }}>
+            {petName ? `'${petName}'` : '이 동물'}을(를) 삭제할까요?
+          </p>
+          <p style={{ margin: '6px 0 0', fontSize: 12, color: C.ink3, lineHeight: 1.55 }}>
+            일정·서류가 목록에서 사라집니다. 복구가 필요하면 펫무브에 문의해주세요.
+          </p>
+          {error && (
+            <p style={{ margin: '10px 0 0', fontSize: 12, color: C.warn, lineHeight: 1.5 }}>{error}</p>
+          )}
+          <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+            <button
+              type="button"
+              onClick={() => {
+                setConfirming(false)
+                setError(null)
+              }}
+              disabled={busy}
+              style={{
+                ...btn,
+                border: `1px solid ${C.line}`,
+                background: 'transparent',
+                color: C.ink2,
+              }}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={busy}
+              style={{
+                ...btn,
+                border: 0,
+                background: C.warn,
+                color: '#fff',
+              }}
+            >
+              {busy ? '삭제 중…' : '삭제'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
