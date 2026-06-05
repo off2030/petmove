@@ -164,11 +164,11 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
       let createdAtIdx: number | null = null
 
       if (targetIdx !== null && records[targetIdx]) {
-        // 특정 record 업데이트 — 빈 필드만 채움.
+        // 특정 record 업데이트 — 붙여넣은 결과지가 우선(덮어쓰기). 추출 못 한 필드는 기존 유지.
         nextRecords = records.map((r, i) => i === targetIdx ? {
           ...r,
-          value: r.value || xValue || null,
-          received_date: r.received_date || xReceived || null,
+          value: xValue || r.value || null,
+          received_date: xReceived || r.received_date || null,
         } : r)
       } else if (xValue) {
         // 새 record — 추출된 값(+ 가능 시 수령일)을 가진 신규 row.
@@ -178,14 +178,14 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
         createdNewRecord = true
       }
 
+      // 실제로 값이 바뀐 경우에만 "업데이트됨" 보고 (변경 전후 비교).
       const applied = { value: false, received: false }
-      if (xValue && nextRecords !== records) applied.value = true
-      if (xReceived && nextRecords !== records) {
-        // record-level 적용 여부 확인
-        const idx = targetIdx !== null ? targetIdx : createdAtIdx
-        if (idx !== null && nextRecords[idx]?.received_date === xReceived) {
-          applied.received = true
-        }
+      const appliedIdx = targetIdx !== null ? targetIdx : createdAtIdx
+      if (appliedIdx !== null) {
+        const before = records[appliedIdx]
+        const after = nextRecords[appliedIdx]
+        if (xValue && after?.value === xValue && before?.value !== xValue) applied.value = true
+        if (xReceived && after?.received_date === xReceived && before?.received_date !== xReceived) applied.received = true
       }
 
       if (nextRecords !== records) {
