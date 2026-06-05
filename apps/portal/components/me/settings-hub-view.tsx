@@ -16,7 +16,7 @@ import { C, serif, monoCap } from './settings-shared'
 /**
  * 내 정보 탭 허브 (/me) — 카테고리별 카드 리스트. (앱 설정은 상단바 ⚙ → /settings)
  * 카테고리 라벨(보호자·반려동물·여행정보·동물병원·에이전시)은 모두 카드 밖 mono-cap.
- *   - 보호자 → Hero (아바타 52, 이름 20 serif + 영문 정자체 13, 부제=계정 이메일)
+ *   - 보호자 → Hero (아바타 52, 이름 20 serif + 영문 정자체 13, 부제=전화번호+이메일)
  *   - 반려동물 → Hero 카드 N개 + '동물 추가' 버튼(→ /apply). 삭제는 동물 상세에서.
  *   - 여행정보 → Partner (본문 row, 아바타 44)
  *   - 동물병원·에이전시 → Partner stub (dashed, placeholder)
@@ -70,7 +70,9 @@ function HeroLinkCard({
   nameEn,
   subtitle,
   subtitleMuted,
+  subtitleMono,
   extra,
+  extraMono = true,
 }: {
   href: string
   avatar: ReactNode
@@ -78,8 +80,12 @@ function HeroLinkCard({
   nameEn: string | null
   subtitle: string
   subtitleMuted?: boolean
-  /** subtitle 아래 한 줄 — 보호자 카드의 전화번호 / 동물 카드의 마이크로칩 같은 핵심 식별자용. */
+  /** subtitle 폰트를 num/tabular(mono) 톤으로 — 전화번호·마이크로칩 같은 식별자용. */
+  subtitleMono?: boolean
+  /** subtitle 아래 한 줄 — 보조 정보용 (보호자: 이메일, 동물: breed·age·weight). */
   extra?: string | null
+  /** extra 폰트 톤. 기본 true(num) — 이메일/한글 메타는 호출자가 false 로 지정. */
+  extraMono?: boolean
 }) {
   return (
     <Link
@@ -110,6 +116,7 @@ function HeroLinkCard({
           </div>
           <div
             style={{
+              ...(subtitleMono ? num : {}),
               fontSize: 12,
               color: subtitleMuted ? C.ink3 : C.ink2,
               marginTop: 4,
@@ -123,7 +130,7 @@ function HeroLinkCard({
           {extra && (
             <div
               style={{
-                ...num,
+                ...(extraMono ? num : {}),
                 fontSize: 12,
                 color: C.ink3,
                 marginTop: 2,
@@ -162,17 +169,19 @@ function GuardianCard({ data, href }: { data: GuardianBlock; href: string }) {
       {data.initials}
     </div>
   )
-  // 카테고리 라벨('보호자')이 카드 밖으로 나가므로, 카드 안 부제는 relation('보호자')
-  // 대신 계정 이메일 + 전화번호를 보여준다 — 옛 '계정' 섹션을 없애고 이메일을 여기로 합쳤다.
+  // 카테고리 라벨('보호자')이 카드 밖으로 나가므로, 카드 안에는 핵심 식별자(전화번호)를
+  // 위, 보조(이메일)를 아래로. 옛 '계정' 섹션 폐기로 이메일은 여기 보조 줄에 합쳤다.
   return (
     <HeroLinkCard
       href={href}
       avatar={avatar}
       nameKo={data.name}
       nameEn={data.nameEn}
-      subtitle={data.email ?? '이메일 미설정'}
-      subtitleMuted={!data.email}
-      extra={data.phone}
+      subtitle={data.phone ?? '전화번호 미설정'}
+      subtitleMuted={!data.phone}
+      subtitleMono
+      extra={data.email}
+      extraMono={false}
     />
   )
 }
@@ -186,9 +195,11 @@ function PetCard({ case_, index, href }: { case_: CaseRow; index: number; href: 
       avatar={<PetAvatarDisplay case_={case_} index={index} size={HERO_AVATAR} />}
       nameKo={pet.name}
       nameEn={pet.nameEn}
-      subtitle={meta || '아바타를 눌러 정보를 등록해보세요'}
-      subtitleMuted={!meta}
-      extra={pet.microchip}
+      subtitle={pet.microchip ?? '마이크로칩 미등록'}
+      subtitleMuted={!pet.microchip}
+      subtitleMono
+      extra={meta || (!pet.microchip ? '아바타를 눌러 정보를 등록해보세요' : null)}
+      extraMono={false}
     />
   )
 }
