@@ -36,6 +36,8 @@ export interface PetBlock {
   breed: string | null
   ageLabel: string | null
   weight: string | null
+  /** 마이크로칩 번호. 3자리씩 그룹화된 표시용 문자열 (ISO 11784 15자리). */
+  microchip: string | null
 }
 
 export interface PartnerBlock {
@@ -101,7 +103,16 @@ export function buildPetBlock(case_: CaseRow): PetBlock {
     breed: pickString(data, 'breed'),
     ageLabel: ageLabel(pickString(data, 'birth_date')),
     weight: pickString(data, 'weight'),
+    microchip: formatMicrochip(case_.microchip),
   }
+}
+
+/** 마이크로칩 번호 3자리씩 좌→우 그룹화. ISO 11784 15자리면 5그룹, 그 외 길이도 동일 규칙. */
+function formatMicrochip(raw: string | null | undefined): string | null {
+  if (!raw) return null
+  const digits = String(raw).replace(/\D/g, '')
+  if (!digits) return null
+  return digits.replace(/(\d{3})(?=\d)/g, '$1 ')
 }
 
 // ── 헬퍼 ─────────────────────────────────────────────────────────────────

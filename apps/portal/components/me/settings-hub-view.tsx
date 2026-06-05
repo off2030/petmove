@@ -70,6 +70,7 @@ function HeroLinkCard({
   nameEn,
   subtitle,
   subtitleMuted,
+  extra,
 }: {
   href: string
   avatar: ReactNode
@@ -77,6 +78,8 @@ function HeroLinkCard({
   nameEn: string | null
   subtitle: string
   subtitleMuted?: boolean
+  /** subtitle 아래 한 줄 — 보호자 카드의 전화번호 / 동물 카드의 마이크로칩 같은 핵심 식별자용. */
+  extra?: string | null
 }) {
   return (
     <Link
@@ -117,6 +120,21 @@ function HeroLinkCard({
           >
             {subtitle}
           </div>
+          {extra && (
+            <div
+              style={{
+                ...num,
+                fontSize: 12,
+                color: C.ink3,
+                marginTop: 2,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {extra}
+            </div>
+          )}
         </div>
       </div>
     </Link>
@@ -145,7 +163,7 @@ function GuardianCard({ data, href }: { data: GuardianBlock; href: string }) {
     </div>
   )
   // 카테고리 라벨('보호자')이 카드 밖으로 나가므로, 카드 안 부제는 relation('보호자')
-  // 대신 계정 이메일을 보여준다 — 옛 '계정' 섹션을 없애고 이메일을 여기로 합쳤다.
+  // 대신 계정 이메일 + 전화번호를 보여준다 — 옛 '계정' 섹션을 없애고 이메일을 여기로 합쳤다.
   return (
     <HeroLinkCard
       href={href}
@@ -154,6 +172,7 @@ function GuardianCard({ data, href }: { data: GuardianBlock; href: string }) {
       nameEn={data.nameEn}
       subtitle={data.email ?? '이메일 미설정'}
       subtitleMuted={!data.email}
+      extra={data.phone}
     />
   )
 }
@@ -169,6 +188,7 @@ function PetCard({ case_, index, href }: { case_: CaseRow; index: number; href: 
       nameEn={pet.nameEn}
       subtitle={meta || '아바타를 눌러 정보를 등록해보세요'}
       subtitleMuted={!meta}
+      extra={pet.microchip}
     />
   )
 }
