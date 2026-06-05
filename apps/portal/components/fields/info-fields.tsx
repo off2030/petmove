@@ -142,7 +142,7 @@ function AutoGrowTextarea({
         resize: 'none',
         overflow: 'hidden',
         fontFamily: 'var(--pm-font-display)',
-        fontSize: 17,
+        fontSize: 16,
         fontWeight: 500,
         lineHeight: 1.4,
         color: C.ink,
@@ -188,7 +188,7 @@ function TriggerButton({
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, maxWidth: '100%' }}>
         <span
           style={{
-            fontSize: 17,
+            fontSize: 16,
             fontWeight: empty ? 400 : 500,
             color: empty ? C.ink3 : C.ink,
             fontFamily: 'var(--pm-font-display)',
@@ -282,7 +282,7 @@ export function TextField({
           outline: 'none',
           padding: 0,
           fontFamily: 'var(--pm-font-display)',
-          fontSize: 17,
+          fontSize: 16,
           fontWeight: 500,
           color: C.ink,
           fontVariantNumeric: 'tabular-nums',
