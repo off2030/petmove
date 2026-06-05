@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import type { CSSProperties, ReactNode } from 'react'
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 
 /**
  * 설정 sub-page 공유 컴포넌트: 팔레트 / 헤더+뒤로 / 섹션 카드 / 하단 sticky 저장 바.
@@ -175,6 +175,23 @@ export function StickySaveBar({
   const justSaved = status === 'saved' && !dirty
   const canSave = dirty && status !== 'saving'
 
+  // 모바일 키보드가 올라오면 fixed bar 가 viewport bottom 에 붙은 채 input 위로 올라와
+  // 입력 필드를 가린다. visualViewport API 로 키보드를 감지해 그 동안 bar 를 슬라이드
+  // 다운시킨다 (unfocus 시 자연 복귀).
+  const [keyboardOpen, setKeyboardOpen] = useState(false)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return
+    const vv = window.visualViewport
+    function onResize() {
+      const diff = window.innerHeight - vv.height
+      // 임계값 100px — 주소창 숨김 같은 작은 변화는 무시, 실제 키보드만 잡음.
+      setKeyboardOpen(diff > 100)
+    }
+    onResize()
+    vv.addEventListener('resize', onResize)
+    return () => vv.removeEventListener('resize', onResize)
+  }, [])
+
   return (
     <div
       style={{
@@ -192,6 +209,8 @@ export function StickySaveBar({
         WebkitBackdropFilter: 'blur(20px)',
         zIndex: 39,
         pointerEvents: 'none',
+        transform: keyboardOpen ? 'translateY(100%)' : 'none',
+        transition: 'transform .18s ease',
       }}
     >
       {status === 'error' && (
