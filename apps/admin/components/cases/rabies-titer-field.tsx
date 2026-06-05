@@ -154,7 +154,10 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
         return
       }
       const xValue = stripTiterUnit(result.data.value)
-      const xReceived = result.data.sample_received_date
+      // 샘플수령일(received_date)은 호주·하와이·괌 전용(RNATT 180일 대기 기준).
+      // 그 외 목적지(뉴질랜드 등)는 필드 미표시·검증 미사용이므로 추출값을 무시한다 —
+      // 적용 시 메시지에 "샘플수령일 업데이트됨"이 잘못 떠 혼란을 준다.
+      const xReceived = showReceivedDate ? result.data.sample_received_date : null
 
       let nextRecords: TiterRecord[] = records
       let createdNewRecord = false
