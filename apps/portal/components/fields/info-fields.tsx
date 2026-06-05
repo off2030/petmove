@@ -373,11 +373,12 @@ export function SplitNameField({
       else setter(filterToEnglish(raw))
     }
   }
-  // field-sizing: content 로 input 폭이 입력 길이에 맞춰 줄어 들도록 — 빈 상태엔 placeholder
-  // 폭 만큼, 채워지면 텍스트 폭 만큼. 두 input 사이 공백만으로 한 줄 이름처럼 보임.
-  // (Safari iOS 17.4+ / Chrome 123+ 지원; 미지원 환경은 minWidth 로 자연 폭.)
+  // input 폭을 글자 수에 맞춤 — HTML size 속성. field-sizing: content 가 미지원이거나
+  // CSS 인라인으로 안 먹는 환경에서도 안정적. 빈 상태엔 placeholder 폭, 채워지면 텍스트
+  // 폭 + 약간 여유. 두 input 사이 공백만으로 한 줄 이름처럼 보임.
   const inputStyle: React.CSSProperties = {
-    minWidth: 80,
+    width: 'auto',
+    minWidth: 0,
     textAlign: 'left',
     background: 'transparent',
     border: 0,
@@ -387,16 +388,18 @@ export function SplitNameField({
     fontSize: 15,
     fontWeight: 500,
     color: C.ink,
-    fieldSizing: 'content',
-  } as React.CSSProperties
+  }
   const changeFirst = makeChange(composingFirstRef, onChangeFirst)
   const changeLast = makeChange(composingLastRef, onChangeLast)
+  const firstSize = Math.max((firstValue || firstPlaceholder).length + 1, 4)
+  const lastSize = Math.max((lastValue || lastPlaceholder).length + 1, 4)
   return (
     <InlineRow label={label} last={last}>
       <div style={{ display: 'flex', gap: 6, flex: 1, minWidth: 0, alignItems: 'baseline', flexWrap: 'wrap' }}>
         <input
           className="pm-field-input"
           type="text"
+          size={firstSize}
           value={firstValue}
           onChange={(e) => changeFirst(e.target.value)}
           onCompositionStart={() => { composingFirstRef.current = true }}
@@ -410,6 +413,7 @@ export function SplitNameField({
         <input
           className="pm-field-input"
           type="text"
+          size={lastSize}
           value={lastValue}
           onChange={(e) => changeLast(e.target.value)}
           onCompositionStart={() => { composingLastRef.current = true }}
