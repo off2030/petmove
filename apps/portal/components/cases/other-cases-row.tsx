@@ -27,7 +27,6 @@ export function OtherCasesRow({
     <span
       className="pm-noscroll"
       style={{
-        alignSelf: 'center',
         display: 'inline-flex',
         alignItems: 'center',
         gap: 6,
