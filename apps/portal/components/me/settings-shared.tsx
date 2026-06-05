@@ -176,20 +176,52 @@ export function StickySaveBar({
   const canSave = dirty && status !== 'saving'
 
   // 모바일 키보드가 올라오면 fixed bar 가 viewport bottom 에 붙은 채 input 위로 올라와
-  // 입력 필드를 가린다. visualViewport API 로 키보드를 감지해 그 동안 bar 를 슬라이드
-  // 다운시킨다 (unfocus 시 자연 복귀).
+  // 입력 필드를 가린다. visualViewport API 로 감지하고, Capacitor WebView / 옛 브라우저
+  // 대비로 focusin/focusout 이벤트도 fallback 으로 묶어 bar 를 슬라이드 다운시킨다.
   const [keyboardOpen, setKeyboardOpen] = useState(false)
   useEffect(() => {
-    if (typeof window === 'undefined' || !window.visualViewport) return
+    if (typeof window === 'undefined') return
+    let vvOpen = false
+    let focusOpen = false
+    const updateOpen = () => setKeyboardOpen(vvOpen || focusOpen)
+
+    // visualViewport — 모던 브라우저 (iOS Safari 13+, Chrome 등)
     const vv = window.visualViewport
-    function onResize() {
-      const diff = window.innerHeight - vv.height
-      // 임계값 100px — 주소창 숨김 같은 작은 변화는 무시, 실제 키보드만 잡음.
-      setKeyboardOpen(diff > 100)
+    let vvListener: (() => void) | null = null
+    if (vv) {
+      vvListener = () => {
+        // 임계값 50px — 주소창 숨김 같은 작은 변화는 무시. 키보드는 보통 200px+.
+        vvOpen = window.innerHeight - vv.height > 50
+        updateOpen()
+      }
+      vvListener()
+      vv.addEventListener('resize', vvListener)
     }
-    onResize()
-    vv.addEventListener('resize', onResize)
-    return () => vv.removeEventListener('resize', onResize)
+
+    // focusin/focusout — Capacitor WebView 등 visualViewport 미지원 환경 fallback.
+    // input/textarea 포커스 시 활성.
+    function isEditable(t: EventTarget | null): boolean {
+      if (!(t instanceof HTMLElement)) return false
+      if (t.tagName === 'INPUT') {
+        const type = (t as HTMLInputElement).type
+        return type !== 'button' && type !== 'submit' && type !== 'checkbox' && type !== 'radio'
+      }
+      return t.tagName === 'TEXTAREA' || t.isContentEditable
+    }
+    function onFocusIn(e: FocusEvent) {
+      if (isEditable(e.target)) { focusOpen = true; updateOpen() }
+    }
+    function onFocusOut(e: FocusEvent) {
+      if (isEditable(e.target)) { focusOpen = false; updateOpen() }
+    }
+    document.addEventListener('focusin', onFocusIn)
+    document.addEventListener('focusout', onFocusOut)
+
+    return () => {
+      if (vv && vvListener) vv.removeEventListener('resize', vvListener)
+      document.removeEventListener('focusin', onFocusIn)
+      document.removeEventListener('focusout', onFocusOut)
+    }
   }, [])
 
   return (
