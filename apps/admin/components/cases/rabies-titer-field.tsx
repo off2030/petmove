@@ -154,8 +154,6 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
         return
       }
       const xValue = stripTiterUnit(result.data.value)
-      // 채혈일(검사일) — 뉴질랜드 RNATT 3~24개월 룰이 record.date 를 기준으로 본다.
-      const xDate = result.data.collection_date
       // 샘플수령일(received_date)은 호주·하와이·괌 전용(RNATT 180일 대기 기준).
       // 그 외 목적지(뉴질랜드 등)는 필드 미표시·검증 미사용이므로 추출값을 무시한다 —
       // 적용 시 메시지에 "샘플수령일 업데이트됨"이 잘못 떠 혼란을 준다.
@@ -169,26 +167,25 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
         // 특정 record 업데이트 — 빈 필드만 채움.
         nextRecords = records.map((r, i) => i === targetIdx ? {
           ...r,
-          date: r.date || xDate || null,
           value: r.value || xValue || null,
           received_date: r.received_date || xReceived || null,
         } : r)
-      } else if (xValue || xDate) {
-        // 새 record — 추출된 검사일·수치(+ 가능 시 수령일)를 가진 신규 row.
+      } else if (xValue) {
+        // 새 record — 추출된 값(+ 가능 시 수령일)을 가진 신규 row.
         const detectedLab = autoDetectLab(destination, inspectionConfig.titerRules, inspectionConfig.titerDefault)
-        nextRecords = [...records, { date: xDate || null, value: xValue ?? null, lab: detectedLab, received_date: xReceived || null }]
+        nextRecords = [...records, { date: null, value: xValue, lab: detectedLab, received_date: xReceived || null }]
         createdAtIdx = records.length
         createdNewRecord = true
       }
 
-      // record-level 실제 적용 여부 확인 (대상 record 의 필드가 추출값과 일치할 때만 보고).
-      const applied = { date: false, value: false, received: false }
-      const appliedIdx = targetIdx !== null ? targetIdx : createdAtIdx
-      if (nextRecords !== records && appliedIdx !== null) {
-        const rec = nextRecords[appliedIdx]
-        if (xDate && rec?.date === xDate) applied.date = true
-        if (xValue && rec?.value === xValue) applied.value = true
-        if (xReceived && rec?.received_date === xReceived) applied.received = true
+      const applied = { value: false, received: false }
+      if (xValue && nextRecords !== records) applied.value = true
+      if (xReceived && nextRecords !== records) {
+        // record-level 적용 여부 확인
+        const idx = targetIdx !== null ? targetIdx : createdAtIdx
+        if (idx !== null && nextRecords[idx]?.received_date === xReceived) {
+          applied.received = true
+        }
       }
 
       if (nextRecords !== records) {
@@ -202,7 +199,6 @@ export function RabiesTiterField({ caseId, caseRow, destination }: { caseId: str
       }
 
       const msgs: string[] = []
-      if (applied.date) msgs.push('검사일')
       if (applied.value) msgs.push('수치')
       if (applied.received) msgs.push('샘플수령일')
       setExtractMsg(msgs.length > 0 ? `${msgs.join('·')} 업데이트됨` : '새로운 정보가 없습니다')

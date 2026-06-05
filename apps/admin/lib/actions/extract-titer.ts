@@ -8,9 +8,7 @@ const TITER_EXTRACTION_MODEL = process.env.OPENAI_TITER_MODEL?.trim() || 'gpt-4.
 export interface TiterInfo {
   /** 검사수치 — 예: "3.0", "≥0.5 IU/mL", "2.48" */
   value: string | null
-  /** 채혈일 — Collection Date / Date of Sampling / 채혈일 (뉴질랜드 RNATT 3~24개월 룰 기준) */
-  collection_date: string | null
-  /** 샘플수령일 — Date Received / 샘플수령일 (호주 RNATT 180일 대기 기준) */
+  /** 샘플수령일 — Date Received / 샘플수령일 (호주용) */
   sample_received_date: string | null
 }
 
@@ -23,7 +21,6 @@ const SYSTEM_PROMPT = `You extract rabies antibody titer test result information
 Return ONLY a JSON object:
 {
   "value": "Numerical titer result as a string (e.g. '3.0', '0.62', '≥0.5 IU/mL', '2.48') or null",
-  "collection_date": "YYYY-MM-DD — date the blood sample was COLLECTED/DRAWN from the animal (채혈일/Collection Date/Date of Sampling/Date Drawn/Date of Blood Collection/Sampling Date) or null",
   "sample_received_date": "YYYY-MM-DD — date the laboratory received the sample (샘플수령일/Date Received/Received/Reception Date) or null"
 }
 
@@ -35,13 +32,12 @@ CRITICAL ANTI-HALLUCINATION RULES:
 
 FIELD GUIDELINES:
 - "value" is the rabies antibody titer numeric result. Typical forms: "0.6", "2.48", "≥0.5", "3.0 IU/mL". Include the unit (IU/mL) only if it appears next to the number, otherwise just the number as string. If multiple values (different methods), prefer the primary/FAVN value.
-- "collection_date" is when the blood sample was COLLECTED/DRAWN from the animal. Labels: 채혈일, Collection Date, Date of Sampling, Sampling Date, Date Drawn, Date of Blood Collection, Date Collected. This is the sampling date, NOT the lab-received date, NOT the test date, NOT the report date. Return null if no collection/sampling label is present.
 - "sample_received_date" is when the testing lab RECEIVED the sample. Labels: 샘플수령일, Date Received, Received, Reception Date, Arrival Date, Sample Received, Date of Receipt. This is DIFFERENT from:
-    * Collection Date / 채혈일 / Date of Sampling (when sample was drawn — use collection_date, NOT this)
-    * Test Date / 검사일 (when lab tested — do NOT use for either field)
+    * Collection Date / 채혈일 / Date of Sampling (when sample was drawn — do NOT use)
+    * Test Date / 검사일 (when lab tested — do NOT use)
     * Report Date / 보고일 (when report was issued — do NOT use)
     * Print Date (document printing time — do NOT use)
-  Return null if no "Received" equivalent label is present. collection_date and sample_received_date are SEPARATE — never copy one into the other.
+  Return null if no "Received" equivalent label is present.
 - Convert all date formats to YYYY-MM-DD (e.g. "05 JUL 26" → "2026-07-05").
 - If the document is not a rabies antibody titer report, return all nulls.
 - Return ONLY valid JSON, no markdown, no explanation.`
