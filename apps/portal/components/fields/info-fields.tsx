@@ -93,7 +93,7 @@ function InlineRow({
         alignItems: alignTop ? 'flex-start' : 'center',
         padding: '11px 0',
         borderBottom: last ? 'none' : `.5px solid ${C.line}`,
-        gap: 16,
+        gap: 12,
         minHeight: 46,
       }}
     >
@@ -142,7 +142,7 @@ function AutoGrowTextarea({
         resize: 'none',
         overflow: 'hidden',
         fontFamily: 'var(--pm-font-display)',
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: 500,
         lineHeight: 1.4,
         color: C.ink,
@@ -188,7 +188,7 @@ function TriggerButton({
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, maxWidth: '100%' }}>
         <span
           style={{
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: empty ? 400 : 500,
             color: empty ? C.ink3 : C.ink,
             fontFamily: 'var(--pm-font-display)',
@@ -282,7 +282,7 @@ export function TextField({
           outline: 'none',
           padding: 0,
           fontFamily: 'var(--pm-font-display)',
-          fontSize: 16,
+          fontSize: 15,
           fontWeight: 500,
           color: C.ink,
           fontVariantNumeric: 'tabular-nums',
