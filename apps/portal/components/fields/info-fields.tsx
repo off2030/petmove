@@ -93,7 +93,7 @@ function InlineRow({
         alignItems: alignTop ? 'flex-start' : 'center',
         padding: '11px 0',
         borderBottom: last ? 'none' : `.5px solid ${C.line}`,
-        gap: 12,
+        gap: 8,
         minHeight: 46,
       }}
     >

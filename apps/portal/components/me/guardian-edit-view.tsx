@@ -55,7 +55,7 @@ export function GuardianEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId
           placeholder="example@email.com"
         />
         <TextField
-          label="한국주소"
+          label="주소"
           value={form.address_kr}
           onChange={(v) => set('address_kr', v)}
           placeholder="도로명 주소"
@@ -69,7 +69,7 @@ export function GuardianEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId
           placeholder="00000"
         />
         <TextField
-          label="영문주소"
+          label="영문 주소"
           value={form.address_en}
           onChange={(v) => set('address_en', v)}
           placeholder="English address"
