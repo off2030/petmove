@@ -245,6 +245,62 @@ export function RequiredDocDetail({
           })()}
         </section>
 
+        {/* 서식 받기 — 빈 지정 양식 다운로드(별지25 등). 보호자가 받아 동물병원에 제출. */}
+        {doc.templates && doc.templates.length > 0 && (
+          <>
+            <SectionLabel>서식 받기</SectionLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {doc.templates.map((t) => (
+                <a
+                  key={t.href}
+                  href={t.href}
+                  download={t.filename}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '14px 16px',
+                    borderRadius: 14,
+                    border: `1px solid ${C.line}`,
+                    background: C.surface,
+                    color: C.ink,
+                    textDecoration: 'none',
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 30,
+                      height: 38,
+                      flexShrink: 0,
+                      borderRadius: 4,
+                      background: C.soft,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 9,
+                      fontWeight: 600,
+                      letterSpacing: '0.04em',
+                      color: C.accent,
+                    }}
+                  >
+                    {t.label.startsWith('PDF') ? 'PDF' : 'HWP'}
+                  </span>
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 500 }}>
+                    {t.label} 서식 받기
+                  </span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.ink3} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                </a>
+              ))}
+            </div>
+          </>
+        )}
+
         {/* 첨부 — 모든 필수 서류. ① 미리보기(이미지/PDF, 삭제 ×) → ② 파일 추가 버튼.
             attachStepId 태그로 업로드·삭제 (별지25 등은 doc.id, step 연동은 공유 step).
             수기 서류는 사본을 첨부하면 그 자체가 발급 증빙이라 '보유' 처리된다. */}

@@ -42,6 +42,21 @@ export interface RequiredDocItem {
    * 그 외(별지25 등)는 doc.id 자체. 이 키로 case.data.documents 를 태깅·필터.
    */
   attachStepId: string
+  /**
+   * 빈 서식 다운로드 — 보호자가 받아 동물병원에 제출하는 지정 양식(예: 별지25). 상세 페이지에
+   * '서식 받기' 섹션으로 노출. portal /public 정적 파일 경로.
+   */
+  templates?: DocTemplate[]
+}
+
+/** 다운로드 가능한 빈 서식 파일 한 건. */
+export interface DocTemplate {
+  /** 버튼 라벨 (예: 'PDF', '한글(HWP)'). */
+  label: string
+  /** portal /public 기준 경로 (예: '/forms/form25.pdf'). */
+  href: string
+  /** 저장 시 파일명 (download 속성). */
+  filename: string
 }
 
 interface RequiredDocSpec {
@@ -63,6 +78,8 @@ interface RequiredDocSpec {
   description: string
   /** preview 영역에 노출할 step 의 업로드. 없으면 preview 영역 placeholder. */
   previewStepId?: string
+  /** 다운로드 가능한 빈 서식(지정 양식). 상세 페이지 '서식 받기' 섹션. */
+  templates?: DocTemplate[]
 }
 
 const SPECS: Record<string, RequiredDocSpec[]> = {
@@ -95,6 +112,10 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       issuanceStepId: 'vet-visit',
       description:
         '농림축산검역본부 지정 양식의 접종 및 건강증명서입니다.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급합니다.\n\n원본 2부를 준비해서, 동물검역 때 1부를 제출합니다.\n\n접종과 출국 전 임상검사를 한 동물병원이 다른 경우, 각각의 동물병원에서 별개의 증명서를 받아야 하는 점에 주의하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+      templates: [
+        { label: 'PDF', href: '/forms/form25.pdf', filename: '별지 제25호 서식.pdf' },
+        { label: '한글(HWP)', href: '/forms/form25.hwp', filename: '별지 제25호 서식.hwp' },
+      ],
     },
     {
       id: 'form-ac-or-re',
@@ -160,6 +181,7 @@ export function resolveRequiredDocs(
       previewStepId: spec.previewStepId,
       attachStepId,
       verified,
+      templates: spec.templates,
     }
   })
 }
