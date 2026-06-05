@@ -2,8 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
-import { OtherCasesRow } from '@/components/cases/other-cases-row'
-import { PetAvatar } from '@/components/cases/pet-avatar'
+import { CaseHeader } from '@/components/cases/case-header'
 import type { JourneyData, JourneyStage } from '@/lib/journey/scenario'
 
 /** 이름 + 와/과 — 마지막 글자 받침 유무로 결정. 한글 음절이 아니면(영문 등) '와' 기본. */
@@ -357,29 +356,18 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
     >
       <div style={{ padding: '0 24px' }}>
         {/* Header */}
-        <div style={{ paddingTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
-          <OtherCasesRow currentCaseId={caseId} tab="journey" />
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', width: '100%', minWidth: 0 }}>
-            <span style={{ alignSelf: 'center' }}>
-              <PetAvatar size={36} />
-            </span>
-            <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: 0, color: C.ink }}>{pet.name}</h1>
-            <div
-              style={{
-                fontSize: 12,
-                color: C.ink2,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                transform: 'translateY(-2px)',
-              }}
-            >
-              <span>{trip.fromCity}</span>
-              <span style={{ color: C.ink3 }}>{trip.tripType === 'round' ? '⇄' : '→'}</span>
-              <span>{trip.toCity}</span>
-            </div>
-          </div>
-        </div>
+        <CaseHeader
+          caseId={caseId}
+          tab="journey"
+          petName={pet.name}
+          fromCity={trip.fromCity}
+          toCity={trip.toCity}
+          tripType={trip.tripType}
+          ink={C.ink}
+          ink2={C.ink2}
+          ink3={C.ink3}
+          serif={serif}
+        />
 
         {/* 주의 카드 — 케이스 차원 결격 (견종·마릿수·거주·1년 라이선스 등).
             step 안에 묶이지 않고 보호자가 케이스 자체를 재검토해야 하는 신호라 별도 카드로.

@@ -4,8 +4,7 @@ import Link from 'next/link'
 import { useEffect } from 'react'
 import { getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
 import { useCases } from '@/components/portal-shell/case-data-provider'
-import { OtherCasesRow } from '@/components/cases/other-cases-row'
-import { PetAvatar } from '@/components/cases/pet-avatar'
+import { CaseHeader } from '@/components/cases/case-header'
 import { StepAttachments } from '@/components/journey/step-attachments'
 import type { AutoDocItem, DocsViewData, StoredDocItem } from '@/lib/docs/catalog'
 
@@ -89,29 +88,18 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
     >
       <div style={{ padding: '0 24px' }}>
         {/* Header */}
-        <div style={{ paddingTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
-          <OtherCasesRow currentCaseId={caseId} tab="docs" />
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', width: '100%', minWidth: 0 }}>
-            <span style={{ alignSelf: 'center' }}>
-              <PetAvatar size={36} />
-            </span>
-            <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: 0, color: C.ink }}>{pet.name}</h1>
-            <div
-              style={{
-                fontSize: 12,
-                color: C.ink2,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                transform: 'translateY(-2px)',
-              }}
-            >
-              <span>{trip.fromCity}</span>
-              <span style={{ color: C.ink3 }}>{trip.tripType === 'round' ? '⇄' : '→'}</span>
-              <span>{trip.toCity}</span>
-            </div>
-          </div>
-        </div>
+        <CaseHeader
+          caseId={caseId}
+          tab="docs"
+          petName={pet.name}
+          fromCity={trip.fromCity}
+          toCity={trip.toCity}
+          tripType={trip.tripType}
+          ink={C.ink}
+          ink2={C.ink2}
+          ink3={C.ink3}
+          serif={serif}
+        />
 
         {useCurated ? (
           /* 큐레이션 모드: 국가별 '필수 서류' 한 섹션 (예: 일본 5건) */
