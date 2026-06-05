@@ -250,7 +250,10 @@ export function RequiredDocDetail({
           <>
             <SectionLabel>서식 다운로드</SectionLabel>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {doc.templates.map((t) => (
+              {doc.templates.map((t) => {
+                const ext = t.href.split('.').pop()?.toLowerCase() ?? ''
+                const badge = ext === 'pdf' ? 'PDF' : ext === 'hwp' ? 'HWP' : 'XLS'
+                return (
                 <a
                   key={t.href}
                   href={t.href}
@@ -285,7 +288,7 @@ export function RequiredDocDetail({
                       color: C.accent,
                     }}
                   >
-                    {t.label.startsWith('PDF') ? 'PDF' : 'HWP'}
+                    {badge}
                   </span>
                   <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 500 }}>
                     {t.label} 서식 다운로드
@@ -296,7 +299,8 @@ export function RequiredDocDetail({
                     <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
                 </a>
-              ))}
+                )
+              })}
             </div>
           </>
         )}

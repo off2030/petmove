@@ -113,8 +113,8 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       description:
         '농림축산검역본부 지정 양식의 접종 및 건강증명서입니다.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급합니다.\n\n원본 2부를 준비해서, 동물검역 때 1부를 제출합니다.\n\n접종과 출국 전 임상검사를 한 동물병원이 다른 경우, 각각의 동물병원에서 별개의 증명서를 받아야 하는 점에 주의하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
       templates: [
-        { label: 'PDF', href: '/forms/form25.pdf', filename: '별지 제25호 서식.pdf' },
-        { label: '한글(HWP)', href: '/forms/form25.hwp', filename: '별지 제25호 서식.hwp' },
+        { label: 'PDF', href: '/forms/form25.pdf', filename: '별지 제 25호 서식.pdf' },
+        { label: '한글(HWP)', href: '/forms/form25.hwp', filename: '별지 제 25호 서식.hwp' },
       ],
     },
     {
@@ -125,6 +125,12 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       issuanceStepId: 'vet-visit',
       description:
         '일본 지정 양식의 접종, 검사 및 건강증명서입니다.\n\n일본에 처음 입국하는 경우 FormAC를 준비합니다.\n\n재입국의 경우 FormRE와 일본 수출동물검역증을 준비합니다.\n\n출국일 기준 10일 이내에 임상 수의사의 서명을 받습니다.\n\n한국 수출 동물검역 때 검역관 확인·서명을 받습니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+      templates: [
+        { label: 'FormAC (PDF)', href: '/forms/form-ac.pdf', filename: 'FormAC.pdf' },
+        { label: 'FormAC (Excel)', href: '/forms/form-ac.xlsx', filename: 'FormAC.xlsx' },
+        { label: 'FormRE (PDF)', href: '/forms/form-re.pdf', filename: 'FormRE.pdf' },
+        { label: 'FormRE (Excel)', href: '/forms/form-re.xlsm', filename: 'FormRE.xlsm' },
+      ],
     },
     {
       id: 'kr-export-quarantine-cert',
