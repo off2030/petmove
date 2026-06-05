@@ -349,8 +349,8 @@ export function SplitNameField({
   lastValue,
   onChangeFirst,
   onChangeLast,
-  firstPlaceholder = '이름',
-  lastPlaceholder = '성',
+  firstPlaceholder = 'Gildong',
+  lastPlaceholder = 'Hong',
   last,
 }: {
   label: string
@@ -373,9 +373,11 @@ export function SplitNameField({
       else setter(filterToEnglish(raw))
     }
   }
+  // field-sizing: content 로 input 폭이 입력 길이에 맞춰 줄어 들도록 — 빈 상태엔 placeholder
+  // 폭 만큼, 채워지면 텍스트 폭 만큼. 두 input 사이 공백만으로 한 줄 이름처럼 보임.
+  // (Safari iOS 17.4+ / Chrome 123+ 지원; 미지원 환경은 minWidth 로 자연 폭.)
   const inputStyle: React.CSSProperties = {
-    flex: 1,
-    minWidth: 0,
+    minWidth: 80,
     textAlign: 'left',
     background: 'transparent',
     border: 0,
@@ -385,12 +387,13 @@ export function SplitNameField({
     fontSize: 15,
     fontWeight: 500,
     color: C.ink,
-  }
+    fieldSizing: 'content',
+  } as React.CSSProperties
   const changeFirst = makeChange(composingFirstRef, onChangeFirst)
   const changeLast = makeChange(composingLastRef, onChangeLast)
   return (
     <InlineRow label={label} last={last}>
-      <div style={{ display: 'flex', gap: 10, flex: 1, minWidth: 0, alignItems: 'baseline' }}>
+      <div style={{ display: 'flex', gap: 6, flex: 1, minWidth: 0, alignItems: 'baseline', flexWrap: 'wrap' }}>
         <input
           className="pm-field-input"
           type="text"
@@ -404,7 +407,6 @@ export function SplitNameField({
           placeholder={firstPlaceholder}
           style={inputStyle}
         />
-        <span style={{ flexShrink: 0, color: C.ink3, fontSize: 13 }}>·</span>
         <input
           className="pm-field-input"
           type="text"

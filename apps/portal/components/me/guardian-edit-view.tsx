@@ -33,8 +33,6 @@ export function GuardianEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId
           lastValue={form.customer_last_name_en}
           onChangeFirst={(v) => set('customer_first_name_en', v)}
           onChangeLast={(v) => set('customer_last_name_en', v)}
-          firstPlaceholder="이름 · Gildong"
-          lastPlaceholder="성 · Hong"
         />
         <TextField
           label="전화번호"
