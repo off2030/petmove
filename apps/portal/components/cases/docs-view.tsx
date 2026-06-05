@@ -160,7 +160,7 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
         <SectionLabel right={`${storedDocs.length}건`}>보관함</SectionLabel>
         {storedDocs.length === 0 ? (
           <EmptyHint>
-            일정에서 첨부한 사진, PDF를 한눈에 보고 파일 추가를 할 수 있습니다.
+            일정에서 첨부한 사진, PDF를 한 눈에 볼 수 있습니다.
           </EmptyHint>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -196,7 +196,7 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
             stepId="misc"
             documents={[]}
             hideList
-            hint="발급받은 서류 사본을 사진/PDF로 올릴 수 있습니다."
+            hint="추가로 보관하고 싶은 사진, PDF를 저장하세요."
           />
         </div>
       </div>
