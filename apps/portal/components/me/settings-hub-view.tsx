@@ -15,11 +15,11 @@ import { C, serif, monoCap } from './settings-shared'
 
 /**
  * 내 정보 탭 허브 (/me) — 카테고리별 카드 리스트. (앱 설정은 상단바 ⚙ → /settings)
- * 카테고리 라벨(보호자·반려동물·여행정보·동물병원·에이전시)은 모두 카드 밖 mono-cap.
+ * 카테고리 라벨(보호자·반려동물·여행 정보·동물병원·운송 업체)은 모두 카드 밖 mono-cap.
  *   - 보호자 → Hero (아바타 52, 이름 20 serif + 영문 정자체 13, 부제=전화번호+이메일)
  *   - 반려동물 → Hero 카드 N개 + '동물 추가' 버튼(→ /apply). 삭제는 동물 상세에서.
- *   - 여행정보 → Partner (본문 row, 아바타 44)
- *   - 동물병원·에이전시 → Partner stub (dashed, placeholder)
+ *   - 여행 정보 → Partner (본문 row, 아바타 44)
+ *   - 동물병원·운송 업체 → Partner stub (dashed, placeholder)
  * 카드 자체가 Link → 탭하면 sub-page. 옛 톤에 chevron 은 없으므로 제거.
  * (옛 '계정' 섹션은 제거 — 이메일은 보호자 카드로, 계정 관리는 /settings 단일 진입.)
  */
@@ -286,7 +286,7 @@ function TravelCard({ case_, href }: { case_: CaseRow; href: string }) {
   )
 }
 
-// ── Partner stub (병원·에이전시) ─────────────────────────────────────────
+// ── Partner stub (병원·운송 업체) ─────────────────────────────────────────
 
 function PartnerStubCard({
   placeholder,
@@ -406,7 +406,7 @@ export function SettingsHubView() {
         </Section>
 
         {primary && (
-          <Section label="여행정보">
+          <Section label="여행 정보">
             <TravelCard case_={primary} href="/me/travel" />
           </Section>
         )}
@@ -418,9 +418,9 @@ export function SettingsHubView() {
           />
         </Section>
 
-        <Section label="에이전시">
+        <Section label="운송 업체">
           <PartnerStubCard
-            placeholder="출국 운송을 맡은 에이전시 정보가 등록되면 표시됩니다."
+            placeholder="동물 출국을 담당하는 운송 업체 정보가 등록되면 표시됩니다."
             href="/me/agency"
           />
         </Section>

@@ -4,11 +4,11 @@ import type { CustomerProfileRow } from '@/lib/actions/profile'
 /**
  * Portal 프로필(/me) 데이터 모델.
  *
- * 시각 소스: docs/portal-preview/app.jsx 의 `Profile` — Guardian+Pet hero + 동물병원 + 에이전시 + 계정.
+ * 시각 소스: docs/portal-preview/app.jsx 의 `Profile` — Guardian+Pet hero + 동물병원 + 운송 업체 + 계정.
  * `/me` 는 case-외 페이지라 primary case (가장 최근 업데이트된 케이스) 의 정보로 hero 와
  * partner 카드를 채운다. 케이스 0건이면 hero pet 줄 / partner 카드 모두 null.
  *
- * 동물병원·에이전시 정보의 출처가 admin 전용이라 portal MVP 에서는 일단 null →
+ * 동물병원·운송 업체 정보의 출처가 admin 전용이라 portal MVP 에서는 일단 null →
  * placeholder 카드. 추후 admin 의 organization 정보를 portal RLS 가 읽을 수 있게 되면
  * 빌더 인자만 추가하면 됨.
  */
@@ -79,7 +79,7 @@ export function buildProfileView({
     initials: deriveInitials(customerNameKo, customerNameEn, userEmail),
   }
 
-  // 동물병원·에이전시 정보는 admin 의 organization 영역. portal RLS 통과 X — Phase 11.1 후속.
+  // 동물병원·운송 업체 정보는 admin 의 organization 영역. portal RLS 통과 X — Phase 11.1 후속.
   // 시안의 카드 모양을 유지하면서 데이터는 null → 컴포넌트에서 placeholder 렌더.
   const clinic: PartnerBlock | null = null
   const transport: PartnerBlock | null = null

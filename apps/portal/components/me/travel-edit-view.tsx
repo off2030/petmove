@@ -15,7 +15,7 @@ import { EditPageShell, SectionCard, StickySaveBar } from './settings-shared'
 import { useCaseEditForm } from './use-case-edit-form'
 
 /**
- * 설정 > 여행정보 — /me/travel.
+ * 설정 > 여행 정보 — /me/travel.
  * 기본(여행지·왕복편도·함께/따로) + 출국일·귀국일 + 항공권 + 일본 수출검역 예약(왕복+일본).
  * "함께 여행 / 따로 여행" 라벨은 기존 "함께 / 개별" 의 rename.
  */
@@ -40,7 +40,7 @@ export function TravelEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
 
   return (
     <EditPageShell
-      title="여행정보"
+      title="여행 정보"
       bottomBar={
         <StickySaveBar dirty={dirty} status={status} error={error} onSave={handleSave} />
       }
