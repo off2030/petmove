@@ -74,6 +74,19 @@ export function useCaseEditForm(caseRow: CaseRow, caseId: string): UseCaseEditFo
         return
       }
     }
+    // 전화번호 — 입력 시 010 + 8자리 (총 11자리 숫자) 강제. mask='phone' 으로
+    // 이미 숫자만 들어오므로 길이·prefix 만 확인.
+    if (form.phone && !/^010\d{8}$/.test(form.phone)) {
+      setStatus('error')
+      setError('전화번호는 010-XXXX-XXXX 형식으로 입력해 주세요.')
+      return
+    }
+    // 이메일 — 빈 값 OK, 입력 시 단순 형식 검증 (sub@domain.tld).
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      setStatus('error')
+      setError('이메일 형식이 올바르지 않습니다.')
+      return
+    }
     // 일본 입국일 — 광견병 항체 검사 + 180일 이내면 server 가 거부할 입력. 즉시 차단해
     // 빨간 박스로 분명히 보이게 (server 결과만 의지하면 토스트가 짧게 사라질 수 있음).
     const jpEntryErr = validateJpEntryDate(form.departure_date.trim(), {

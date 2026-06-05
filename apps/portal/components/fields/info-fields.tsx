@@ -1,7 +1,9 @@
 'use client'
 
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import destsData from '@petmove/domain/data/destinations.json'
+import type { DaumPostcodeResult } from '@/types/daum'
 import { BottomSheet } from './bottom-sheet'
 import { PortalCalendar, ymdLocal } from './portal-calendar'
 
@@ -62,6 +64,13 @@ function dotDate(iso: string): string {
   return iso ? iso.replace(/-/g, '·') : ''
 }
 
+/** 한글(자모·완성형) 제거 + 첫 글자 자동 대문자. 영문 이름 입력 강제용. */
+function filterToEnglish(raw: string): string {
+  return raw
+    .replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
+    .replace(/\b[a-z]/g, (c) => c.toUpperCase())
+}
+
 // ── Row chrome ───────────────────────────────────────────────────────────
 
 // 라벨 좌측 + 값 좌측(라벨 옆에서 시작) — 단순·일관 톤. 라벨 폭 고정으로 값이 같은
@@ -105,15 +114,19 @@ function InlineRow({
   )
 }
 
-/** 인라인 행 안에서 다른 값들과 같은 글꼴·우측정렬을 유지하되 길면 줄바꿈되는 입력(주소). */
+/** 인라인 행 안에서 다른 값들과 같은 글꼴·정렬을 유지하되 길면 줄바꿈되는 입력(주소). */
 function AutoGrowTextarea({
   value,
   onChange,
   placeholder,
+  readOnly,
+  onClick,
 }: {
   value: string
   onChange: (next: string) => void
   placeholder?: string
+  readOnly?: boolean
+  onClick?: () => void
 }) {
   const ref = useRef<HTMLTextAreaElement>(null)
   useLayoutEffect(() => {
@@ -129,6 +142,8 @@ function AutoGrowTextarea({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
+      readOnly={readOnly}
+      onClick={onClick}
       rows={1}
       style={{
         flex: 1,
@@ -146,6 +161,7 @@ function AutoGrowTextarea({
         fontWeight: 500,
         lineHeight: 1.4,
         color: C.ink,
+        cursor: readOnly ? 'pointer' : 'text',
       }}
     />
   )
@@ -228,19 +244,26 @@ export function TextField({
   inputMode,
   stacked,
   suffix,
+  readOnly,
+  onClick,
 }: {
   label: string
   value: string
   onChange: (next: string) => void
   placeholder?: string
   last?: boolean
-  mask?: 'phone' | 'microchip' | 'weight' | 'time'
+  mask?: 'phone' | 'microchip' | 'weight' | 'time' | 'en-name'
   inputMode?: 'text' | 'numeric' | 'decimal' | 'tel' | 'email'
   /** true 면 라벨 위 + 입력 아래 (긴 텍스트: 주소). */
   stacked?: boolean
   /** 인라인 입력 우측 단위 표기 (예: kg). */
   suffix?: string
+  /** 읽기 전용 — 주소 검색 결과 같은 자동 입력 칸. */
+  readOnly?: boolean
+  /** readOnly 일 때 input 클릭 시 동작 (모달 열기 등). */
+  onClick?: () => void
 }) {
+  const composingRef = useRef(false)
   const display =
     mask === 'phone' ? formatPhone(value) : mask === 'microchip' ? formatChip(value) : value
 
@@ -253,13 +276,23 @@ export function TextField({
       const parts = cleaned.split('.')
       onChange(parts.length > 2 ? `${parts[0]}.${parts.slice(1).join('')}` : cleaned)
     } else if (mask === 'time') onChange(normalizeTime(raw))
-    else onChange(raw)
+    else if (mask === 'en-name') {
+      // composing(IME) 중에는 raw 그대로 — 한글 자모 조합 중 끊김 방지. 조합 끝나면 필터링.
+      if (composingRef.current) onChange(raw)
+      else onChange(filterToEnglish(raw))
+    } else onChange(raw)
   }
 
   if (stacked) {
     return (
       <InlineRow label={label} last={last} alignTop>
-        <AutoGrowTextarea value={value} onChange={handle} placeholder={placeholder} />
+        <AutoGrowTextarea
+          value={value}
+          onChange={handle}
+          placeholder={placeholder}
+          readOnly={readOnly}
+          onClick={onClick}
+        />
       </InlineRow>
     )
   }
@@ -271,6 +304,13 @@ export function TextField({
         type="text"
         inputMode={inputMode}
         value={display}
+        readOnly={readOnly}
+        onClick={onClick}
+        onCompositionStart={() => { composingRef.current = true }}
+        onCompositionEnd={(e) => {
+          composingRef.current = false
+          if (mask === 'en-name') handle((e.target as HTMLInputElement).value)
+        }}
         onChange={(e) => handle(e.target.value)}
         placeholder={placeholder}
         style={{
@@ -286,6 +326,7 @@ export function TextField({
           fontWeight: 500,
           color: C.ink,
           fontVariantNumeric: 'tabular-nums',
+          cursor: readOnly ? 'pointer' : 'text',
         }}
       />
       {suffix && (
@@ -321,6 +362,17 @@ export function SplitNameField({
   lastPlaceholder?: string
   last?: boolean
 }) {
+  const composingFirstRef = useRef(false)
+  const composingLastRef = useRef(false)
+  function makeChange(
+    composingRef: React.MutableRefObject<boolean>,
+    setter: (v: string) => void,
+  ) {
+    return (raw: string) => {
+      if (composingRef.current) setter(raw)
+      else setter(filterToEnglish(raw))
+    }
+  }
   const inputStyle: React.CSSProperties = {
     flex: 1,
     minWidth: 0,
@@ -334,6 +386,8 @@ export function SplitNameField({
     fontWeight: 500,
     color: C.ink,
   }
+  const changeFirst = makeChange(composingFirstRef, onChangeFirst)
+  const changeLast = makeChange(composingLastRef, onChangeLast)
   return (
     <InlineRow label={label} last={last}>
       <div style={{ display: 'flex', gap: 10, flex: 1, minWidth: 0, alignItems: 'baseline' }}>
@@ -341,7 +395,12 @@ export function SplitNameField({
           className="pm-field-input"
           type="text"
           value={firstValue}
-          onChange={(e) => onChangeFirst(e.target.value)}
+          onChange={(e) => changeFirst(e.target.value)}
+          onCompositionStart={() => { composingFirstRef.current = true }}
+          onCompositionEnd={(e) => {
+            composingFirstRef.current = false
+            changeFirst((e.target as HTMLInputElement).value)
+          }}
           placeholder={firstPlaceholder}
           style={inputStyle}
         />
@@ -350,7 +409,12 @@ export function SplitNameField({
           className="pm-field-input"
           type="text"
           value={lastValue}
-          onChange={(e) => onChangeLast(e.target.value)}
+          onChange={(e) => changeLast(e.target.value)}
+          onCompositionStart={() => { composingLastRef.current = true }}
+          onCompositionEnd={(e) => {
+            composingLastRef.current = false
+            changeLast((e.target as HTMLInputElement).value)
+          }}
           placeholder={lastPlaceholder}
           style={inputStyle}
         />
@@ -660,5 +724,191 @@ export function DestinationField({
         </div>
       </BottomSheet>
     </InlineRow>
+  )
+}
+
+// ── AddressSearchField (주소 검색 입력) ───────────────────────────────────
+
+/**
+ * 주소 검색 4개 row 묶음 — 주소(도로명, 클릭→검색) / 상세주소(직접 입력) / 우편번호 /
+ * 영문 주소. 도로명·우편번호·영문 주소는 Daum Postcode 검색 결과로만 채워지고
+ * 사용자가 직접 입력할 수 없다. 상세주소(동·호수)는 검색 후 사용자가 추가 입력.
+ *
+ * Daum Postcode 스크립트는 첫 사용 시 head 에 동적 로드. apply 와 share-form 의
+ * 패턴을 한 컴포넌트로 추출.
+ */
+export function AddressSearchField({
+  addressKr,
+  addressDetailKr,
+  addressZipcode,
+  addressEn,
+  onSearchComplete,
+  onChangeDetail,
+  last,
+}: {
+  addressKr: string
+  addressDetailKr: string
+  addressZipcode: string
+  addressEn: string
+  /** 검색 완료 → 도로명·영문·우편번호 한 번에 채움. 옛 상세주소는 호출자가 비움. */
+  onSearchComplete: (data: DaumPostcodeResult) => void
+  onChangeDetail: (next: string) => void
+  last?: boolean
+}) {
+  const [scriptLoaded, setScriptLoaded] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const modalRef = useRef<HTMLDivElement>(null)
+  const detailRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.daum?.Postcode) {
+      setScriptLoaded(true)
+      return
+    }
+    const script = document.createElement('script')
+    script.src = 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js'
+    script.async = true
+    script.onload = () => setScriptLoaded(true)
+    document.head.appendChild(script)
+  }, [])
+
+  useEffect(() => {
+    if (!showModal) return
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setShowModal(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [showModal])
+
+  function openSearch() {
+    if (!scriptLoaded || !window.daum?.Postcode) return
+    setShowModal(true)
+    setTimeout(() => {
+      if (!modalRef.current) return
+      new window.daum.Postcode({
+        width: '100%',
+        height: '100%',
+        oncomplete(data: DaumPostcodeResult) {
+          onSearchComplete(data)
+          setShowModal(false)
+          setTimeout(() => detailRef.current?.focus(), 100)
+        },
+      }).embed(modalRef.current)
+    }, 100)
+  }
+
+  const readOnlyValueStyle: React.CSSProperties = {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 15,
+    fontWeight: 500,
+    color: C.ink,
+    fontFamily: 'var(--pm-font-display)',
+    fontVariantNumeric: 'tabular-nums',
+    lineHeight: 1.4,
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+  }
+  const placeholderStyle: React.CSSProperties = {
+    ...readOnlyValueStyle,
+    color: C.ink3,
+    fontWeight: 400,
+  }
+
+  return (
+    <>
+      {/* 주소(도로명) — 클릭 시 검색 모달 */}
+      <InlineRow label="주소" alignTop>
+        <button
+          type="button"
+          onClick={openSearch}
+          disabled={!scriptLoaded}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            background: 'transparent',
+            border: 0,
+            padding: 0,
+            textAlign: 'left',
+            cursor: scriptLoaded ? 'pointer' : 'wait',
+            fontFamily: 'inherit',
+          }}
+        >
+          <span style={addressKr ? readOnlyValueStyle : placeholderStyle}>
+            {addressKr || (scriptLoaded ? '클릭하여 검색' : '주소 검색 준비 중…')}
+          </span>
+        </button>
+      </InlineRow>
+
+      {/* 상세주소 — 직접 입력 */}
+      <InlineRow label="상세주소">
+        <input
+          ref={detailRef}
+          className="pm-field-input"
+          type="text"
+          value={addressDetailKr}
+          onChange={(e) => onChangeDetail(e.target.value)}
+          placeholder="동·호수 등"
+          style={{
+            flex: 1,
+            minWidth: 0,
+            textAlign: 'left',
+            background: 'transparent',
+            border: 0,
+            outline: 'none',
+            padding: 0,
+            fontFamily: 'var(--pm-font-display)',
+            fontSize: 15,
+            fontWeight: 500,
+            color: C.ink,
+          }}
+        />
+      </InlineRow>
+
+      {/* 우편번호 — readonly */}
+      <InlineRow label="우편번호">
+        <span style={addressZipcode ? readOnlyValueStyle : placeholderStyle}>
+          {addressZipcode || '검색 후 자동 입력'}
+        </span>
+      </InlineRow>
+
+      {/* 영문 주소 — readonly */}
+      <InlineRow label="영문 주소" last={last} alignTop>
+        <span style={addressEn ? readOnlyValueStyle : placeholderStyle}>
+          {addressEn || '검색 후 자동 입력'}
+        </span>
+      </InlineRow>
+
+      {/* Daum Postcode 임베드 모달 */}
+      {showModal && typeof document !== 'undefined' && createPortal(
+        <div
+          onClick={() => setShowModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 50,
+            background: 'rgba(0,0,0,.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <div
+            ref={modalRef}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: 480,
+              height: '70vh',
+              background: C.surface,
+              borderRadius: 16,
+              border: `.5px solid ${C.line}`,
+              overflow: 'hidden',
+            }}
+          />
+        </div>,
+        document.body,
+      )}
+    </>
   )
 }

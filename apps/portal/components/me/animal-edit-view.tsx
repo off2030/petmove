@@ -72,6 +72,7 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
           value={form.pet_name_en}
           onChange={(v) => set('pet_name_en', v)}
           placeholder="예: Maru"
+          mask="en-name"
         />
         <TextField
           label="마이크로칩번호"

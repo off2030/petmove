@@ -48,6 +48,7 @@ export function readForm(caseRow: CaseRow): CaseInfoInput {
     phone: s('phone').replace(/\D/g, ''),
     email: s('email'),
     address_kr: sFallback('address_kr', 'address_ko'),
+    address_detail_kr: s('address_detail_kr'),
     address_zipcode: sFallback('address_zipcode', 'postal_code', 'zipcode'),
     address_en: sFallback('address_en', 'address_overseas'),
     birth_date: s('birth_date'),

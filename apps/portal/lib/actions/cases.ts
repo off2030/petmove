@@ -1369,6 +1369,8 @@ export interface CaseInfoInput {
   phone: string
   email: string
   address_kr: string
+  /** 상세주소 (동·호수 등) — 검색 결과로 채워지는 도로명과 분리. */
+  address_detail_kr: string
   address_zipcode: string
   address_en: string
   birth_date: string
@@ -1400,6 +1402,7 @@ const INFO_DATA_KEYS = [
   'phone',
   'email',
   'address_kr',
+  'address_detail_kr',
   'address_zipcode',
   'address_en',
   'birth_date',

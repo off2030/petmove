@@ -1,7 +1,7 @@
 'use client'
 
 import type { CaseRow } from '@petmove/domain'
-import { SplitNameField, TextField } from '@/components/fields/info-fields'
+import { AddressSearchField, SplitNameField, TextField } from '@/components/fields/info-fields'
 import { EditPageShell, SectionCard, StickySaveBar } from './settings-shared'
 import { useCaseEditForm } from './use-case-edit-form'
 
@@ -51,26 +51,19 @@ export function GuardianEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId
           inputMode="email"
           placeholder="example@email.com"
         />
-        <TextField
-          label="주소"
-          value={form.address_kr}
-          onChange={(v) => set('address_kr', v)}
-          placeholder="도로명 주소"
-          stacked
-        />
-        <TextField
-          label="우편번호"
-          value={form.address_zipcode}
-          onChange={(v) => set('address_zipcode', v)}
-          inputMode="numeric"
-          placeholder="00000"
-        />
-        <TextField
-          label="영문 주소"
-          value={form.address_en}
-          onChange={(v) => set('address_en', v)}
-          placeholder="English address"
-          stacked
+        <AddressSearchField
+          addressKr={form.address_kr}
+          addressDetailKr={form.address_detail_kr}
+          addressZipcode={form.address_zipcode}
+          addressEn={form.address_en}
+          onSearchComplete={(data) => {
+            // 새 주소 → 옛 상세주소·도로명·영문·우편번호 한 번에 갱신.
+            set('address_kr', data.roadAddress)
+            set('address_en', data.roadAddressEnglish)
+            set('address_zipcode', data.zonecode)
+            set('address_detail_kr', '')
+          }}
+          onChangeDetail={(v) => set('address_detail_kr', v)}
           last
         />
       </SectionCard>
