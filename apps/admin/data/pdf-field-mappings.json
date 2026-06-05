@@ -889,7 +889,7 @@
       "rabies1_serial": {
         "source": "rabies_dates",
         "transform": "vaccine:rabies:serial_with_expiry[0]",
-        "note": "AU/NZ: batch + product expiry 병기"
+        "note": "AU/NZ: batch + 면역유효기간(접종일+valid_until) 병기"
       },
       "rabies1_vacc_date": {
         "source": "rabies_dates",
@@ -919,7 +919,7 @@
       "rabies2_serial": {
         "source": "rabies_dates",
         "transform": "vaccine:rabies:serial_with_expiry[1]",
-        "note": "AU/NZ: batch + product expiry 병기"
+        "note": "AU/NZ: batch + 면역유효기간(접종일+valid_until) 병기"
       },
       "rabies2_vacc_date": {
         "source": "rabies_dates",
@@ -953,7 +953,7 @@
       "other1_serial": {
         "source": null,
         "transform": "expanded_vacc_seq:serial_with_expiry[0]",
-        "note": "AU/NZ: batch + product expiry 병기"
+        "note": "AU/NZ: batch + 면역유효기간(접종) / 제품 사용기한(구충) 병기"
       },
       "other1_date": {
         "source": null,

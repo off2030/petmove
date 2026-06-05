@@ -470,8 +470,13 @@ interface OtherVacEntry {
   serial: string
   /** Product (batch) expiry — catalog's `expiry` field. Empty when unknown
    * (e.g. parasiticide without batch-level expiry data). Used by Form25AuNz's
-   * serial_with_expiry renderer which must show batch + expiry in one cell. */
+   * serial_with_expiry renderer as the fallback (parasiticides) batch-cell suffix. */
   expiry: string
+  /** Immunity validity end (면역유효기간) — vaccination date + valid_until (default 1y),
+   * as 'YYYY/MM/DD'. Empty for parasiticides (no immunity window). Form25AuNz's
+   * serial_with_expiry renderer prefers this over `expiry` so vaccine rows show
+   * "batch / 면역유효기간". */
+  validity: string
   date: string
 }
 /**
@@ -516,7 +521,7 @@ function buildVaccineSequenceUnified(
     for (const rec of rabiesOverflow as ParasiteRecord[]) {
       if (!rec?.date) continue
       const p = lookupRabies(rec.date)
-      out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
+      out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), validity: resolveValidityTo(rec, rec.date, 1), date: fmtDate(rec.date) })
     }
   }
 
@@ -524,7 +529,7 @@ function buildVaccineSequenceUnified(
   if (allowed('general')) {
     for (const rec of latestAscending(data.general_vaccine_dates)) {
       const p = hasSpecies ? lookupComprehensive(species as 'dog' | 'cat', rec.date) : null
-      out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
+      out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), validity: resolveValidityTo(rec, rec.date, 1), date: fmtDate(rec.date) })
     }
   }
 
@@ -532,7 +537,7 @@ function buildVaccineSequenceUnified(
   if (allowed('civ')) {
     for (const rec of latestAscending(data.civ_dates)) {
       const p = lookupCiv(rec.date)
-      out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
+      out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), validity: resolveValidityTo(rec, rec.date, 1), date: fmtDate(rec.date) })
     }
   }
 
@@ -540,7 +545,7 @@ function buildVaccineSequenceUnified(
   if (allowed('kennel')) {
     for (const rec of latestAscending(data.kennel_cough_dates)) {
       const p = lookupKennelCough()
-      out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
+      out.push({ type: 'Vaccination', ...applyRecOverrides(rec, p), validity: resolveValidityTo(rec, rec.date, 1), date: fmtDate(rec.date) })
     }
   }
 
@@ -555,7 +560,7 @@ function buildVaccineSequenceUnified(
   const pushParasite = (rec: ParasiteRecord, side: 'external' | 'internal' | 'heartworm') => {
     if (rec.product_id) {
       const p = lookupParasiteById(rec.product_id, { date: rec.date, weightKg })
-      out.push({ type: 'Parasiticide', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
+      out.push({ type: 'Parasiticide', ...applyRecOverrides(rec, p), validity: '', date: fmtDate(rec.date) })
       return
     }
     let p: { vaccine?: string; product?: string; manufacturer?: string; batch?: string | null; expiry?: string | null } | null = null
@@ -564,7 +569,7 @@ function buildVaccineSequenceUnified(
       else if (side === 'internal') p = lookupInternalParasite(species as 'dog' | 'cat', rec.date, weightKg)
       else p = lookupHeartworm(species as 'dog' | 'cat', weightKg)
     }
-    out.push({ type: 'Parasiticide', ...applyRecOverrides(rec, p), date: fmtDate(rec.date) })
+    out.push({ type: 'Parasiticide', ...applyRecOverrides(rec, p), validity: '', date: fmtDate(rec.date) })
   }
   for (const rec of externalRecords) pushParasite(rec, 'external')
 
@@ -1644,8 +1649,10 @@ function resolveField(
 
   // Form25AuNz expanded filler (8 slots, 3 doses per type).
   // Order: 종합백신 → CIV → 켄넬코프(미구현) → 외부구충 → 내부구충.
-  // `serial_with_expiry` — AU/NZ variant that combines batch + product expiry
-  // into one cell (e.g. "G98321 / 2027-10-07"). Empty string when no entry.
+  // `serial_with_expiry` — AU/NZ variant that combines batch + 면역유효기간 into
+  // one cell (e.g. "G98321 / 2027/05/01"). Vaccinations use the immunity validity
+  // (entry.validity); parasiticides (no immunity window) fall back to the product
+  // batch expiry. Empty string when no entry.
   const expSeqMatch = transform?.match(/^expanded_vacc_seq:(type|name|manufacturer|serial|serial_with_expiry|date)\[(\d+)\]$/)
   if (expSeqMatch) {
     const attr = expSeqMatch[1]
@@ -1653,7 +1660,7 @@ function resolveField(
     const entry = buildExpandedVaccineSequence(data, 3, allowedVaccines)[idx]
     if (!entry) return ''
     if (attr === 'serial_with_expiry') {
-      return entry.expiry ? `${entry.serial} / ${entry.expiry}` : entry.serial
+      return joinBatchExpiry(entry.serial, entry.validity || entry.expiry)
     }
     return entry[attr as keyof OtherVacEntry]
   }
@@ -1801,8 +1808,9 @@ function resolveField(
   //   kind = rabies | ext_parasite | int_parasite
   //   attr = name | manufacturer | serial | date | validity_from | validity_to
   // validity_from/to are only defined for rabies (uses lookupRabies's 1-year window).
-  // `serial_with_expiry` attr concatenates batch + product expiry, used by
-  // Form25AuNz where rows need "batch / 2027-10-07" in the batch cell.
+  // `serial_with_expiry` attr concatenates batch + 면역유효기간 for rabies
+  // (vaccination), used by Form25AuNz where rows need "batch / 2027/05/01" in the
+  // batch cell. Parasite kinds fall back to the product batch expiry.
   const vacMatch = transform?.match(/^vaccine:(rabies|ext_parasite|int_parasite):(name|manufacturer|serial|serial_with_expiry|date|validity_from|validity_to)\[(\d+)\]$/)
   if (vacMatch) {
     const kind = vacMatch[1]
@@ -1828,7 +1836,9 @@ function resolveField(
     if (attr === 'manufacturer') return merged.manufacturer
     if (attr === 'serial') return merged.serial
     if (attr === 'serial_with_expiry') {
-      return joinBatchExpiry(merged.serial, merged.expiry ?? '')
+      // 광견병 = 면역유효기간(접종일+valid_until) 병기. 그 외(구충)는 제품 사용기한 폴백.
+      const suffix = kind === 'rabies' ? resolveValidityTo(rec, date, 1) : (merged.expiry ?? '')
+      return joinBatchExpiry(merged.serial, suffix)
     }
     if (attr === 'validity_from') return fmtDate(p?.validityFrom ?? '')
     if (attr === 'validity_to') return fmtDate(p?.validityTo ?? '')
