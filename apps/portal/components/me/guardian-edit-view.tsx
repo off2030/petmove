@@ -28,10 +28,16 @@ export function GuardianEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId
           placeholder="예: 홍길동"
         />
         <TextField
-          label="영문 성함"
-          value={form.customer_name_en}
-          onChange={(v) => set('customer_name_en', v)}
-          placeholder="예: Gildong Hong"
+          label="영문 이름"
+          value={form.customer_first_name_en}
+          onChange={(v) => set('customer_first_name_en', v)}
+          placeholder="예: Gildong"
+        />
+        <TextField
+          label="영문 성"
+          value={form.customer_last_name_en}
+          onChange={(v) => set('customer_last_name_en', v)}
+          placeholder="예: Hong"
         />
         <TextField
           label="전화번호"

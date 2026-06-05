@@ -1355,7 +1355,12 @@ export async function saveCaseFeedback(
  */
 export interface CaseInfoInput {
   customer_name: string
+  /** 합본 (column) — 분리 입력 시 `${first} ${last}` 로 자동 갱신. legacy 호환. */
   customer_name_en: string
+  /** 영문 이름 (data jsonb 분리 저장). admin pdf-fill 의 권위 소스. */
+  customer_first_name_en: string
+  /** 영문 성 (data jsonb 분리 저장). admin pdf-fill 의 권위 소스. */
+  customer_last_name_en: string
   pet_name: string
   pet_name_en: string
   microchip: string
@@ -1487,6 +1492,25 @@ export async function updateCaseInfoFields(
       else delete nextData[key]
     }
 
+    // 영문 성·이름 분리 저장 + 합본 column 자동 갱신.
+    // - 분리 입력이 하나라도 있으면 그게 권위 → data 에 분리 저장 + column 은 `${first} ${last}` 로 갱신
+    //   (화면 표기·/apply·admin pdf-fill source 와 동일한 First Last 순서).
+    // - 분리 입력이 모두 비면 input.customer_name_en (자유 입력 legacy 경로) 그대로 column 저장.
+    const firstEn = (input.customer_first_name_en ?? '').trim()
+    const lastEn = (input.customer_last_name_en ?? '').trim()
+    let nameEnColumn: string | null
+    if (firstEn || lastEn) {
+      if (firstEn) nextData.customer_first_name_en = firstEn
+      else delete nextData.customer_first_name_en
+      if (lastEn) nextData.customer_last_name_en = lastEn
+      else delete nextData.customer_last_name_en
+      nameEnColumn = [firstEn, lastEn].filter(Boolean).join(' ').trim() || null
+    } else {
+      delete nextData.customer_first_name_en
+      delete nextData.customer_last_name_en
+      nameEnColumn = input.customer_name_en.trim() || null
+    }
+
     if (weightNum === null) delete nextData.weight
     else nextData.weight = weightNum
 
@@ -1508,7 +1532,7 @@ export async function updateCaseInfoFields(
       .from('cases')
       .update({
         customer_name: input.customer_name.trim(),
-        customer_name_en: input.customer_name_en.trim() || null,
+        customer_name_en: nameEnColumn,
         pet_name: input.pet_name.trim() || null,
         pet_name_en: input.pet_name_en.trim() || null,
         microchip: chip,

@@ -22,9 +22,24 @@ export function readForm(caseRow: CaseRow): CaseInfoInput {
     }
     return ''
   }
+  // 영문 성·이름 — data 분리 필드(권위) 우선. 없으면 caseRow.customer_name_en 합본을
+  // Last First 순서로 split fallback (admin pdf-fill 의 fallback 가정과 일관).
+  // 새로 저장된 케이스는 항상 분리 필드를 갖게 되고, 옛 자유 입력 데이터만 fallback 을 탄다.
+  let firstNameEn = s('customer_first_name_en')
+  let lastNameEn = s('customer_last_name_en')
+  if (!firstNameEn && !lastNameEn) {
+    const composite = (caseRow.customer_name_en ?? '').trim()
+    if (composite) {
+      const parts = composite.split(/\s+/).filter(Boolean)
+      lastNameEn = parts[0] ?? ''
+      firstNameEn = parts.slice(1).join(' ')
+    }
+  }
   return {
     customer_name: caseRow.customer_name ?? '',
     customer_name_en: caseRow.customer_name_en ?? '',
+    customer_first_name_en: firstNameEn,
+    customer_last_name_en: lastNameEn,
     pet_name: caseRow.pet_name ?? '',
     pet_name_en: caseRow.pet_name_en ?? '',
     microchip: (caseRow.microchip ?? '').replace(/\D/g, ''),
