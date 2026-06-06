@@ -5,12 +5,19 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import destsData from '@petmove/domain/data/destinations.json'
 import { useConfirm } from '@petmove/ui'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
+import { SegmentField, type FieldOption } from '@/components/fields/info-fields'
 import { C, SectionCard } from './settings-shared'
 import {
   addCaseDestination,
   removeCaseDestination,
+  setCaseDestinationTripType,
 } from '@/lib/actions/destinations'
 import { useCases } from '@/components/portal-shell/case-data-provider'
+
+const TRIP_OPTIONS: readonly FieldOption[] = [
+  { value: 'round', label: '왕복' },
+  { value: 'one_way', label: '편도' },
+]
 
 /**
  * 동물 상세 페이지의 '여정' 섹션 — 한 case 의 multi-destination 칩 UI.
@@ -194,6 +201,27 @@ export function DestinationChips({
           + 목적지 추가
         </button>
       </div>
+
+      {/* 활성 목적지의 왕복·편도 토글 — destinations 가 1개 이상 있고 active 가 있을 때만. */}
+      {activeDest && destinations.includes(activeDest) && (
+        <SegmentField
+          label={`${activeDest} 왕복·편도`}
+          value={tripTypeByDest[activeDest] ?? 'round'}
+          onChange={(v) => {
+            const nextTT = v === 'one_way' ? 'one_way' : 'round'
+            startTransition(async () => {
+              const r = await setCaseDestinationTripType(caseId, activeDest, nextTT)
+              if (!r.ok) {
+                alert(`오류: ${r.error}`)
+                return
+              }
+              await refreshCases()
+            })
+          }}
+          options={TRIP_OPTIONS}
+          last
+        />
+      )}
 
       <BottomSheet
         open={sheetOpen}
