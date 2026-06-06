@@ -30,8 +30,8 @@ const TRIP_OPTIONS: readonly FieldOption[] = [
   { value: 'one_way', label: '편도' },
 ]
 const CO_PROGRESS_OPTIONS: readonly FieldOption[] = [
-  { value: 'on', label: '함께 여행' },
-  { value: 'off', label: '따로 여행' },
+  { value: 'on', label: '예' },
+  { value: 'off', label: '아니오' },
 ]
 
 interface Props {
@@ -76,7 +76,7 @@ export function TravelFormSections({
         />
         {hasSibling && (
           <SegmentField
-            label="동시 진행"
+            label="함께 여행"
             value={form.co_progress ? 'on' : 'off'}
             onChange={(v) => set('co_progress', v === 'on')}
             options={CO_PROGRESS_OPTIONS}
@@ -103,7 +103,7 @@ export function TravelFormSections({
         />
         {hasSibling && (
           <SegmentField
-            label="동시 진행"
+            label="함께 여행"
             value={form.co_progress ? 'on' : 'off'}
             onChange={(v) => set('co_progress', v === 'on')}
             options={CO_PROGRESS_OPTIONS}
