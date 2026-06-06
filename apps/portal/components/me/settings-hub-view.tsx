@@ -213,27 +213,18 @@ function PetCard({ case_, index, href }: { case_: CaseRow; index: number; href: 
 
 // ── 여행 요약 헬퍼 ───────────────────────────────────────────────────────
 
-const TRIP_LABEL: Record<string, string> = { round: '왕복', one_way: '편도' }
-
 /**
- * 동물 카드 subtitle 용 여행 요약 한 줄 — '한국 ⇄ 일본 · 왕복'.
+ * 동물 카드 subtitle 용 여행 요약 한 줄 — '한국 ⇄ 일본' (왕복) 또는 '한국 → 일본' (편도).
  *
  * tripType 은 buildCaseJourneyContext 로 — data.trip_type 이 string 이거나
- * destination-scoped 객체({ '일본': 'round' }) 인 두 형식 모두 정확히 분기 ('round' →
- * 양방향 ⇄, 그 외 → 단방향 →). 단순 typeof string 체크는 객체 형식을 놓쳐 늘 단방향이
- * 보였었다.
- *
- * D-day 는 카드에서 제외 — 사용자 요청에 따라 카드를 가볍게.
+ * destination-scoped 객체({ '일본': 'round' }) 인 두 형식 모두 정확히 분기. 화살표만으로
+ * 왕복/편도 구분이 충분하므로 별도 라벨('왕복'·'편도')은 카드에서 제외.
  */
 function petTravelSummaryText(case_: CaseRow): string | null {
   const dest = case_.destination?.trim() || null
   if (!dest) return null
-
-  const ctx = buildCaseJourneyContext(case_)
-  const arrow = ctx.tripType === 'round' ? '⇄' : '→'
-  const parts: string[] = [`한국 ${arrow} ${dest}`]
-  if (ctx.tripType && TRIP_LABEL[ctx.tripType]) parts.push(TRIP_LABEL[ctx.tripType])
-  return parts.join(' · ')
+  const arrow = buildCaseJourneyContext(case_).tripType === 'round' ? '⇄' : '→'
+  return `한국 ${arrow} ${dest}`
 }
 
 // ── Partner stub (병원·운송 업체) ─────────────────────────────────────────
