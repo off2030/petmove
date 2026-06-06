@@ -196,78 +196,46 @@ function GuardianCard({ data, href }: { data: GuardianBlock; href: string }) {
 function PetCard({ case_, index, href }: { case_: CaseRow; index: number; href: string }) {
   const pet = buildPetBlock(case_)
   const meta = [pet.breed, pet.ageLabel, pet.weight].filter(Boolean).join(' · ')
+  const travel = petTravelSummaryText(case_)
   return (
     <HeroLinkCard
       href={href}
       avatar={<PetAvatarDisplay case_={case_} index={index} size={HERO_AVATAR} />}
       nameKo={pet.name}
       nameEn={pet.nameEn}
-      subtitle={pet.microchip ?? '마이크로칩 미등록'}
-      subtitleMuted={!pet.microchip}
+      subtitle={travel ?? '여행지 미설정'}
+      subtitleMuted={!travel}
       subtitleMono
-      extra={meta || (!pet.microchip ? '아바타를 눌러 정보를 등록해보세요' : null)}
+      extra={meta || (!travel ? '아바타를 눌러 정보를 등록해보세요' : null)}
       extraMono={false}
-      footer={<PetTravelSummary case_={case_} />}
     />
   )
 }
 
+// ── 여행 요약 헬퍼 ───────────────────────────────────────────────────────
+
+const TRIP_LABEL: Record<string, string> = { round: '왕복', one_way: '편도' }
+
 /**
- * 동물 카드 안 여행 요약 — 목적지·유형·D-day 한 줄. 케이스의 여행 정보가 하나도
- * 없으면(목적지·출국일 모두 빈) null 반환해 footer 자체가 노출 안 됨.
+ * 동물 카드 subtitle 용 여행 요약 한 줄. 목적지가 있으면 '한국 ⇄ 일본 · 왕복 · D-30'
+ * 같은 합본, 출국일만 있으면 'D-30', 둘 다 없으면 null.
  */
-function PetTravelSummary({ case_ }: { case_: CaseRow }) {
+function petTravelSummaryText(case_: CaseRow): string | null {
   const data = (case_.data ?? {}) as Record<string, unknown>
   const tripType = typeof data.trip_type === 'string' ? data.trip_type : null
   const dest = case_.destination?.trim() || null
   const departure = case_.departure_date?.trim() || null
   if (!dest && !departure) return null
 
-  const route = dest ? `한국 ${tripType === 'round' ? '⇄' : '→'} ${dest}` : null
-  const subParts = [
-    tripType ? TRIP_LABEL[tripType] : null,
-    departure ? dDayLabel(departure) : null,
-  ].filter(Boolean)
-  const sub = subParts.join(' · ')
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-        style={{ flexShrink: 0, color: C.ink3 }}
-      >
-        <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
-      </svg>
-      <span
-        style={{
-          flex: 1,
-          minWidth: 0,
-          fontSize: 12,
-          color: route ? C.ink2 : C.ink3,
-          fontVariantNumeric: 'tabular-nums',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {route ?? '여행지 미설정'}
-        {sub && <span style={{ color: C.ink3 }}> · {sub}</span>}
-      </span>
-    </div>
-  )
+  const parts: string[] = []
+  if (dest) parts.push(`한국 ${tripType === 'round' ? '⇄' : '→'} ${dest}`)
+  if (tripType && TRIP_LABEL[tripType]) parts.push(TRIP_LABEL[tripType])
+  if (departure) {
+    const d = dDayLabel(departure)
+    if (d) parts.push(d)
+  }
+  return parts.length > 0 ? parts.join(' · ') : null
 }
-
-// ── 여행 요약 (동물 카드 footer 용) ───────────────────────────────────────
-
-const TRIP_LABEL: Record<string, string> = { round: '왕복', one_way: '편도' }
 
 // ── Partner stub (병원·운송 업체) ─────────────────────────────────────────
 
