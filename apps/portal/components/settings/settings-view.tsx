@@ -21,7 +21,7 @@ const MS_PER_DAY = 24 * 3600 * 1000
  */
 
 const ROW_PAD = '13px 0'
-const SUPPORT_EMAIL = 'support@petmove.co.kr'
+const SUPPORT_EMAIL = 'petmove@naver.com'
 
 /** label 좌 + 우측 슬롯(값/쉐브론). 마지막이 아니면 하단 hairline. */
 function Row({
