@@ -60,6 +60,29 @@ export default async function CasesPage() {
           </Link>
         )
       })}
+      <Link
+        href="/apply"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          padding: '15px 18px',
+          borderRadius: 14,
+          background: 'transparent',
+          border: '.5px dashed var(--pm-line)',
+          textDecoration: 'none',
+          color: 'var(--pm-ink-2)',
+          fontSize: 14,
+          fontWeight: 500,
+        }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        여정 추가
+      </Link>
     </div>
   )
 }

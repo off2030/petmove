@@ -317,9 +317,9 @@ function Section({
   )
 }
 
-// ── 동물 추가 (반려동물 섹션 하단 버튼 → 신청 폼) ─────────────────────────
+// ── 여정 추가 (반려동물 섹션 하단 버튼 → 신청 폼) ─────────────────────────
 
-/** '동물 추가' — 새 케이스 신청(/apply)으로. dashed 카드 + 가운데 + 라벨. */
+/** '여정 추가' — 새 case 신청(/apply)으로. dashed 카드 + 가운데 + 라벨. */
 function AddAnimalCard({ href }: { href: string }) {
   return (
     <Link
@@ -344,7 +344,7 @@ function AddAnimalCard({ href }: { href: string }) {
         <line x1="12" y1="5" x2="12" y2="19" />
         <line x1="5" y1="12" x2="19" y2="12" />
       </svg>
-      동물 추가
+      여정 추가
     </Link>
   )
 }
