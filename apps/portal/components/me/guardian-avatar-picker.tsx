@@ -215,7 +215,8 @@ function PickerGrid({
     width: 'auto',
     padding: '0 12px',
     background: 'transparent',
-    color: C.ink3,
+    // C.ink3 는 어두운 surface 위에서 너무 약함 — ink2 로 가독성 확보.
+    color: C.ink2,
     fontSize: 11,
     fontWeight: 500,
     boxShadow: `inset 0 0 0 .5px ${C.line}`,
@@ -243,7 +244,13 @@ function PickerGrid({
           {currentPhoto ? '사진 바꾸기' : '사진 올리기'}
         </button>
         {currentPhoto && (
-          <button type="button" disabled={busy} onClick={onRemovePhoto} style={resetBtn}>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onRemovePhoto}
+            // '사진 바꾸기' 와 같은 actionBtn 톤으로 통일. destructive 는 색만 약하게.
+            style={{ ...actionBtn, color: C.ink3 }}
+          >
             사진 제거
           </button>
         )}
