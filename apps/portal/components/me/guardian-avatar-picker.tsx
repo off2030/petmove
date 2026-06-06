@@ -125,9 +125,6 @@ export function GuardianAvatarPicker({ profile, userId, initials, onUpdated }: P
           <div style={{ fontSize: 13, color: C.ink2, fontWeight: 500 }}>
             {open ? '사진·색상 선택' : '프로필 이미지 설정'}
           </div>
-          <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
-            {open ? '눌러서 닫기' : '눌러서 사진·색상을 바꿔보세요'}
-          </div>
         </div>
       </div>
 
