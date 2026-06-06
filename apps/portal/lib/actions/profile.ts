@@ -14,6 +14,7 @@
 import { redirect } from 'next/navigation'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
 import { revalidatePath } from 'next/cache'
+import { AVATAR_COLOR_IDS, GUARDIAN_AVATAR_EMOJIS } from '@/lib/avatar'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 
@@ -64,10 +65,10 @@ export interface UpdateProfileInput {
   avatar_photo_url?: string | null
 }
 
-// avatar 화이트리스트 — lib/avatar.ts 의 AVATAR_EMOJIS / AVATAR_COLOR_IDS 와 동일.
-// 새 이모지/색 추가 시 양쪽 같이 수정.
-const ALLOWED_AVATAR_EMOJIS = new Set(['🐶', '🐱', '🐰', '🐹', '🐢', '🐦', '🦜', '🐾'])
-const ALLOWED_AVATAR_COLORS = new Set(['orange', 'purple', 'sage', 'rose', 'ocean', 'sand', 'slate', 'terracotta'])
+// 화이트리스트 — 단일 출처(lib/avatar.ts)에서 import. 보호자는 사람 이모지 세트
+// (GUARDIAN_AVATAR_EMOJIS) 만 허용. 펫용 동물 세트(AVATAR_EMOJIS) 는 별개.
+const ALLOWED_AVATAR_EMOJIS = new Set<string>(GUARDIAN_AVATAR_EMOJIS)
+const ALLOWED_AVATAR_COLORS = new Set<string>(AVATAR_COLOR_IDS)
 
 export async function updateMyProfile(
   input: UpdateProfileInput,
