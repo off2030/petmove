@@ -198,8 +198,11 @@ function earliestDate(step: StepDefinition, caseRow: CaseRow): string | null {
 const PASSED_UNCONFIRMED_MSG =
   '예정일이 지났습니다. 저장 버튼을 눌러서 완료로 전환하시거나, 새로운 예정일을 등록하실 수 있습니다.'
 
-export function buildJourney(caseRow: CaseRow): JourneyData {
-  const ctx = buildCaseJourneyContext(caseRow)
+export function buildJourney(
+  caseRow: CaseRow,
+  activeDestination?: string | null,
+): JourneyData {
+  const ctx = buildCaseJourneyContext(caseRow, activeDestination)
   const today = todayKst()
   const dep = caseRow.departure_date
   const daysLeft = dep ? daysBetween(today, dep) : null

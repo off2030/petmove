@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { use, useEffect } from 'react'
 import { buildJourney } from '@/lib/journey/scenario'
 import { TimelineCalm } from '@/components/journey/timeline-calm'
@@ -20,12 +20,16 @@ export default function CaseJourneyPage({
   const { id } = use(params)
   const caseRow = useCase(id)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const activeDest = searchParams.get('dest')
   // 케이스가 없으면(예: 운영자가 펫무브워크에서 삭제) 404 대신 내 케이스 목록으로 — 부드럽게.
   useEffect(() => {
     if (!caseRow) router.replace('/cases')
   }, [caseRow, router])
   if (!caseRow) return null
 
-  const data = buildJourney(caseRow)
+  // multi-destination: activeDest 가 토큰 목록에 있으면 그걸로 분기.
+  // 단일 케이스나 없으면 첫 토큰(buildCaseJourneyContext 내부 fallback).
+  const data = buildJourney(caseRow, activeDest)
   return <TimelineCalm data={data} caseId={id} />
 }

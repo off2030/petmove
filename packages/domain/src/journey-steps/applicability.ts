@@ -16,10 +16,16 @@ import type { CaseJourneyContext, StepApplicability, StepAppliesWhenSignal, Step
  * 다중 목적지 케이스는 첫 토큰만 사용 (설계 §8). destination-config 키와 매칭되지 않으면
  * destinationKey=null — 'all' 매칭만 통과한다.
  */
-export function buildCaseJourneyContext(caseRow: CaseRow): CaseJourneyContext {
+export function buildCaseJourneyContext(
+  caseRow: CaseRow,
+  activeDestination?: string | null,
+): CaseJourneyContext {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const rawTokens = parseDestinations(caseRow.destination)
-  const activeToken = resolveActiveDestination(caseRow.destination, null)
+  // activeDestination 이 명시되고 목적지 목록에 포함돼 있으면 그걸 사용, 아니면 첫 토큰
+  const explicit =
+    activeDestination && rawTokens.includes(activeDestination) ? activeDestination : null
+  const activeToken = explicit ?? resolveActiveDestination(caseRow.destination, null)
   const destinationKey = activeToken ? findDestinationKey(activeToken) : null
 
   const speciesRaw = typeof data.species === 'string' ? data.species.toLowerCase() : ''

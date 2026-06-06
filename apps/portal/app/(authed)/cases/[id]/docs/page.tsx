@@ -1,6 +1,6 @@
 'use client'
 
-import { notFound } from 'next/navigation'
+import { notFound, useSearchParams } from 'next/navigation'
 import { use } from 'react'
 import { buildDocsView } from '@/lib/docs/catalog'
 import { DocsView } from '@/components/cases/docs-view'
@@ -16,8 +16,11 @@ export default function CaseDocsPage({
 }) {
   const { id } = use(params)
   const caseRow = useCase(id)
+  const searchParams = useSearchParams()
+  const activeDest = searchParams.get('dest')
   if (!caseRow) notFound()
 
-  const data = buildDocsView(caseRow)
+  // multi-destination: ?dest=<token> → buildDocsView 가 그 토큰의 by_dest 분기 (단일·미지정은 첫 토큰)
+  const data = buildDocsView(caseRow, activeDest)
   return <DocsView data={data} caseId={id} />
 }

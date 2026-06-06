@@ -69,8 +69,11 @@ export interface StoredDocItem {
   fresh: boolean
 }
 
-export function buildDocsView(caseRow: CaseRow): DocsViewData {
-  const ctx = buildCaseJourneyContext(caseRow)
+export function buildDocsView(
+  caseRow: CaseRow,
+  activeDestination?: string | null,
+): DocsViewData {
+  const ctx = buildCaseJourneyContext(caseRow, activeDestination)
   const applicableSteps = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
   const requiredDocs = resolveRequiredDocs(caseRow.destination, caseRow)
 

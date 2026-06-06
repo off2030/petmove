@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { DestinationSwitcher } from '@/components/cases/destination-switcher'
 import { OtherCasesRow } from '@/components/cases/other-cases-row'
 import { PetAvatar } from '@/components/cases/pet-avatar'
 import { PetAvatarDisplay } from '@/components/me/pet-avatar-display'
@@ -160,6 +161,7 @@ export function CaseHeader({
         </div>
         {!wrapped && <OtherCasesRow currentCaseId={caseId} tab={tab} />}
       </div>
+      {case_ && <DestinationSwitcher caseRow={case_} />}
     </div>
   )
 }
