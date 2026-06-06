@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { OtherCasesRow } from '@/components/cases/other-cases-row'
 import { PetAvatar } from '@/components/cases/pet-avatar'
+import { PetAvatarDisplay } from '@/components/me/pet-avatar-display'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 
 type Tab = 'journey' | 'docs'
@@ -46,6 +47,8 @@ export function CaseHeader({
   serif: React.CSSProperties
 }) {
   const { cases } = useCases()
+  const caseIndex = cases.findIndex((c) => c.id === caseId)
+  const case_ = caseIndex >= 0 ? cases[caseIndex] : null
   const probeRef = useRef<HTMLDivElement>(null)
   const [wrapped, setWrapped] = useState(false)
 
@@ -73,7 +76,11 @@ export function CaseHeader({
   const leftGroup = (
     <>
       <span style={{ alignSelf: 'center' }}>
-        <PetAvatar size={36} />
+        {case_ ? (
+          <PetAvatarDisplay case_={case_} index={caseIndex} size={36} />
+        ) : (
+          <PetAvatar size={36} />
+        )}
       </span>
       <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: 0, color: ink }}>
         {petName}
