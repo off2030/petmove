@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import type { CSSProperties, ReactNode } from 'react'
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { buildCaseJourneyContext, type CaseRow } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import {
@@ -11,6 +11,7 @@ import {
 } from '@/lib/profile/catalog'
 import { AVATAR_GRADIENTS, avatarTextColor, isAvatarColorId } from '@/lib/avatar'
 import { dDayLabel } from '@/lib/cases/info-form'
+import { getMyPartnerOrgs, type PartnerOrg } from '@/lib/actions/partners'
 import { PetAvatarDisplay } from './pet-avatar-display'
 import { C, serif, monoCap } from './settings-shared'
 
@@ -227,15 +228,37 @@ function petTravelSummaryText(case_: CaseRow): string | null {
   return `한국 ${arrow} ${dest}`
 }
 
-// ── Partner stub (병원·운송 업체) ─────────────────────────────────────────
+// ── Partner card (병원·운송 업체) ─────────────────────────────────────────
+// 연결됨: 조직 이름(+ both 면 배지) 표시. 미연결: dashed placeholder.
 
-function PartnerStubCard({
+function PartnerCard({
+  org,
   placeholder,
   href,
 }: {
+  org: PartnerOrg | null
   placeholder: string
   href: string
 }) {
+  if (!org) {
+    return (
+      <Link
+        href={href}
+        className="pm-pressable"
+        style={{
+          display: 'block',
+          padding: CARD_PADDING,
+          borderRadius: CARD_RADIUS,
+          background: C.surface,
+          border: `.5px dashed ${C.line}`,
+          textDecoration: 'none',
+          color: 'inherit',
+        }}
+      >
+        <div style={{ fontSize: 13, color: C.ink3, lineHeight: 1.55 }}>{placeholder}</div>
+      </Link>
+    )
+  }
   return (
     <Link
       href={href}
@@ -245,14 +268,31 @@ function PartnerStubCard({
         padding: CARD_PADDING,
         borderRadius: CARD_RADIUS,
         background: C.surface,
-        border: `.5px dashed ${C.line}`,
+        border: `.5px solid ${C.line}`,
         textDecoration: 'none',
         color: 'inherit',
       }}
     >
-      <div style={{ fontSize: 13, color: C.ink3, lineHeight: 1.55 }}>
-        {placeholder}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ ...serif, fontSize: 17, color: C.ink }}>{org.name}</span>
+        {org.org_type === 'both' && (
+          <span
+            style={{
+              fontSize: 11,
+              padding: '2px 7px',
+              borderRadius: 999,
+              background: C.soft,
+              color: C.ink2,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            병원·운송
+          </span>
+        )}
       </div>
+      {org.name_en && (
+        <div style={{ fontSize: 12, color: C.ink3, marginTop: 3 }}>{org.name_en}</div>
+      )}
     </Link>
   )
 }
@@ -316,6 +356,31 @@ export function SettingsHubView() {
   const primary = cases[0] ?? null
   const view = buildProfileView({ userEmail, customerProfile: profile, primaryCase: primary })
 
+  // 담당 조직(병원·운송) 카드 채움 — 첫 케이스의 vet/transport_org_id 기준.
+  // cases 가 갱신될 때(refreshCases 후) vet/transport_org_id 변경되면 재 fetch.
+  const partnerKey = primary
+    ? `${primary.vet_org_id ?? ''}|${primary.transport_org_id ?? ''}`
+    : ''
+  const [partners, setPartners] = useState<{
+    vet: PartnerOrg | null
+    transport: PartnerOrg | null
+  } | null>(null)
+  useEffect(() => {
+    if (!primary) {
+      setPartners({ vet: null, transport: null })
+      return
+    }
+    let cancelled = false
+    getMyPartnerOrgs().then((r) => {
+      if (cancelled) return
+      if (r.ok) setPartners(r.value)
+    })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partnerKey])
+
   return (
     <div
       className="pm-fade-up pm-noscroll"
@@ -347,15 +412,17 @@ export function SettingsHubView() {
         </Section>
 
         <Section label="담당 동물병원">
-          <PartnerStubCard
-            placeholder="담당 동물병원 정보가 등록되면 표시됩니다."
+          <PartnerCard
+            org={partners?.vet ?? null}
+            placeholder="탭하여 담당 동물병원을 선택하세요."
             href="/me/vet"
           />
         </Section>
 
         <Section label="동물 운송 업체">
-          <PartnerStubCard
-            placeholder="동물 운송 업체 정보가 등록되면 표시됩니다."
+          <PartnerCard
+            org={partners?.transport ?? null}
+            placeholder="탭하여 운송업체를 선택하세요."
             href="/me/agency"
           />
         </Section>
