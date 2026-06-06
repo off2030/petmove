@@ -35,8 +35,16 @@ export default async function CasesPage() {
       </h1>
       {cases.map((c) => {
         const petName = c.pet_name ?? '이름 미정'
-        const dest = c.destination ?? ''
-        const tripType = buildCaseJourneyContext(c).tripType
+        const tokens = (c.destination ?? '')
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
+        const tripTypeRaw = (c.data as Record<string, unknown> | null)?.trip_type
+        const tripTypeByDest =
+          tripTypeRaw && typeof tripTypeRaw === 'object' && !Array.isArray(tripTypeRaw)
+            ? (tripTypeRaw as Record<string, 'round' | 'one_way'>)
+            : {}
+        const fallbackTripType = buildCaseJourneyContext(c).tripType
         return (
           <Link
             key={c.id}
@@ -52,9 +60,39 @@ export default async function CasesPage() {
             }}
           >
             <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em' }}>{petName}</div>
-            {dest && (
+            {tokens.length === 1 && (
               <div style={{ fontSize: 13, color: 'var(--pm-ink-2)', marginTop: 4 }}>
-                한국 {tripType === 'round' ? '⇄' : '→'} {dest}
+                한국 {(tripTypeByDest[tokens[0]] ?? fallbackTripType) === 'round' ? '⇄' : '→'}{' '}
+                {tokens[0]}
+              </div>
+            )}
+            {tokens.length > 1 && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 5,
+                  marginTop: 6,
+                }}
+              >
+                {tokens.map((t) => {
+                  const arrow = (tripTypeByDest[t] ?? 'round') === 'round' ? '⇄' : '→'
+                  return (
+                    <span
+                      key={t}
+                      style={{
+                        padding: '3px 8px',
+                        borderRadius: 999,
+                        background: 'var(--pm-accent-soft)',
+                        color: 'var(--pm-ink-2)',
+                        fontSize: 12,
+                        fontWeight: 500,
+                      }}
+                    >
+                      {t} {arrow}
+                    </span>
+                  )
+                })}
               </div>
             )}
           </Link>
