@@ -44,6 +44,36 @@ export function BottomNav() {
     }
   }, [caseIdInPath])
 
+  // 모바일 키보드가 올라오면 fixed nav 가 viewport bottom 에 붙어 input 위로 떠올라
+  // 가린다. input/textarea 포커스 동안 nav 자체를 미렌더 (StickySaveBar 와 동일 패턴).
+  const [keyboardOpen, setKeyboardOpen] = useState(false)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    function isEditable(t: EventTarget | null): boolean {
+      if (!(t instanceof HTMLElement)) return false
+      if (t.tagName === 'INPUT') {
+        const type = (t as HTMLInputElement).type
+        const nonEditable = ['button', 'submit', 'reset', 'checkbox', 'radio', 'file', 'image', 'hidden', 'range', 'color']
+        return !nonEditable.includes(type)
+      }
+      return t.tagName === 'TEXTAREA' || t.isContentEditable
+    }
+    function onFocusIn(e: FocusEvent) {
+      if (isEditable(e.target)) setKeyboardOpen(true)
+    }
+    function onFocusOut(e: FocusEvent) {
+      if (isEditable(e.target)) setKeyboardOpen(false)
+    }
+    document.addEventListener('focusin', onFocusIn)
+    document.addEventListener('focusout', onFocusOut)
+    return () => {
+      document.removeEventListener('focusin', onFocusIn)
+      document.removeEventListener('focusout', onFocusOut)
+    }
+  }, [])
+
+  if (keyboardOpen) return null
+
   const caseId = caseIdInPath ?? lastCaseId
 
   // 둥근 카드형 플로팅 바 — 좌우·아래 마진, 라벨 항상 보임. Calm 톤.
