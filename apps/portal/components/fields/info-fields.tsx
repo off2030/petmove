@@ -373,33 +373,64 @@ export function SplitNameField({
       else setter(filterToEnglish(raw))
     }
   }
-  // input 폭을 글자 수에 맞춤 — HTML size 속성. field-sizing: content 가 미지원이거나
-  // CSS 인라인으로 안 먹는 환경에서도 안정적. 빈 상태엔 placeholder 폭, 채워지면 텍스트
-  // 폭 + 약간 여유. 두 input 사이 공백만으로 한 줄 이름처럼 보임.
+  // input 폭을 실측 — HTML size·field-sizing 둘 다 모바일 크롬에서 사실상 무시됐다.
+  // hidden span 으로 텍스트 폭을 직접 측정해서 input width 를 픽셀로 박는다.
+  const firstMeasureRef = useRef<HTMLSpanElement>(null)
+  const lastMeasureRef = useRef<HTMLSpanElement>(null)
+  const [firstW, setFirstW] = useState(60)
+  const [lastW, setLastW] = useState(40)
+  useLayoutEffect(() => {
+    if (firstMeasureRef.current) {
+      // +2px 캐럿 여유.
+      setFirstW(Math.max(firstMeasureRef.current.offsetWidth + 2, 16))
+    }
+  }, [firstValue, firstPlaceholder])
+  useLayoutEffect(() => {
+    if (lastMeasureRef.current) {
+      setLastW(Math.max(lastMeasureRef.current.offsetWidth + 2, 16))
+    }
+  }, [lastValue, lastPlaceholder])
+
+  const textStyle: React.CSSProperties = {
+    fontFamily: 'var(--pm-font-display)',
+    fontSize: 15,
+    fontWeight: 500,
+    letterSpacing: 0,
+  }
   const inputStyle: React.CSSProperties = {
-    width: 'auto',
+    ...textStyle,
     minWidth: 0,
     textAlign: 'left',
     background: 'transparent',
     border: 0,
     outline: 'none',
     padding: 0,
-    fontFamily: 'var(--pm-font-display)',
-    fontSize: 15,
-    fontWeight: 500,
+    margin: 0,
     color: C.ink,
+    boxSizing: 'content-box',
+    flexShrink: 0,
+  }
+  const measureStyle: React.CSSProperties = {
+    ...textStyle,
+    position: 'absolute',
+    visibility: 'hidden',
+    whiteSpace: 'pre',
+    pointerEvents: 'none',
   }
   const changeFirst = makeChange(composingFirstRef, onChangeFirst)
   const changeLast = makeChange(composingLastRef, onChangeLast)
-  const firstSize = Math.max((firstValue || firstPlaceholder).length + 1, 4)
-  const lastSize = Math.max((lastValue || lastPlaceholder).length + 1, 4)
   return (
     <InlineRow label={label} last={last}>
-      <div style={{ display: 'flex', gap: 6, flex: 1, minWidth: 0, alignItems: 'baseline', flexWrap: 'nowrap' }}>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'baseline', flexWrap: 'nowrap', position: 'relative' }}>
+        <span ref={firstMeasureRef} style={measureStyle} aria-hidden>
+          {firstValue || firstPlaceholder}
+        </span>
+        <span ref={lastMeasureRef} style={measureStyle} aria-hidden>
+          {lastValue || lastPlaceholder}
+        </span>
         <input
           className="pm-field-input"
           type="text"
-          size={firstSize}
           value={firstValue}
           onChange={(e) => changeFirst(e.target.value)}
           onCompositionStart={() => { composingFirstRef.current = true }}
@@ -408,12 +439,11 @@ export function SplitNameField({
             changeFirst((e.target as HTMLInputElement).value)
           }}
           placeholder={firstPlaceholder}
-          style={inputStyle}
+          style={{ ...inputStyle, width: firstW }}
         />
         <input
           className="pm-field-input"
           type="text"
-          size={lastSize}
           value={lastValue}
           onChange={(e) => changeLast(e.target.value)}
           onCompositionStart={() => { composingLastRef.current = true }}
@@ -422,7 +452,7 @@ export function SplitNameField({
             changeLast((e.target as HTMLInputElement).value)
           }}
           placeholder={lastPlaceholder}
-          style={inputStyle}
+          style={{ ...inputStyle, width: lastW }}
         />
       </div>
     </InlineRow>
