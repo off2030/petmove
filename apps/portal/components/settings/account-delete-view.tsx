@@ -45,8 +45,7 @@ export function AccountDeleteView() {
   async function handleRequest() {
     const ok = await confirm({
       message: '계정을 삭제하시겠습니까?',
-      description:
-        '7일 유예 기간이 시작되며 같은 메뉴에서 취소할 수 있습니다. 유예 후 회원 정보는 파기되고 출국 절차 기록은 익명화되어 보존됩니다.',
+      description: '7일 유예 후 회원 정보가 삭제되며 되돌릴 수 없습니다.',
       okLabel: '삭제 요청',
       variant: 'destructive',
     })
@@ -110,20 +109,10 @@ export function AccountDeleteView() {
       ) : (
         <>
           <SectionCard marginTop={8}>
-            <div style={{ padding: '14px 0', fontSize: 13, color: C.ink2, lineHeight: 1.6 }}>
-              계정 삭제를 요청하면 7일 유예 기간이 시작됩니다. 유예 중에는 이 메뉴에서 취소할 수
-              있고, 유예 종료 시 다음과 같이 처리됩니다.
-              <ul style={{ margin: '10px 0 0', paddingLeft: 20, color: C.ink2 }}>
-                <li>회원 가입 정보(이름·이메일·연락처)는 파기됩니다.</li>
-                <li>
-                  출국 절차 기록은 보호자 식별 정보가 제거된 상태로 보존됩니다
-                  (서비스 품질 개선 및 재이용 안내 — 3년).
-                </li>
-                <li>
-                  신청폼을 통해 진행 중인 절차가 있는 경우, 담당 동물병원·운송업체 운영자에게
-                  절차 마무리 안내가 전달됩니다.
-                </li>
-              </ul>
+            <div style={{ padding: '14px 0', fontSize: 13, color: C.ink2, lineHeight: 1.7 }}>
+              <div>계정 삭제를 요청하면 7일 유예 후 회원 정보가 삭제됩니다.</div>
+              <div>삭제 후에는 되돌릴 수 없습니다.</div>
+              <div>유예 중에는 이 메뉴에서 취소할 수 있습니다.</div>
             </div>
           </SectionCard>
 
@@ -131,13 +120,23 @@ export function AccountDeleteView() {
             <SectionCard label="현재 등록된 케이스">
               <div
                 style={{
-                  padding: '13px 0',
+                  padding: '13px 0 6px',
                   fontSize: 15,
                   color: C.ink,
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
                 {caseCount}건
+              </div>
+              <div
+                style={{
+                  padding: '0 0 13px',
+                  fontSize: 12,
+                  color: C.ink3,
+                  lineHeight: 1.55,
+                }}
+              >
+                신청폼을 통해 진행 중인 절차는 담당 운영자에게 안내가 전달됩니다.
               </div>
             </SectionCard>
           )}
