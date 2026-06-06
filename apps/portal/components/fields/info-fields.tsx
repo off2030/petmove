@@ -656,41 +656,47 @@ export function SegmentField({
   onChange,
   options,
   last,
+  sub,
 }: {
   label: string
   value: string
   onChange: (next: string) => void
   options: readonly FieldOption[]
   last?: boolean
+  /** 옵션 아래 보조 텍스트 (도움말). */
+  sub?: string
 }) {
   return (
-    <InlineRow label={label} last={last}>
-      <div style={{ display: 'flex', gap: 6 }}>
-        {options.map((o) => {
-          const selected = o.value === value
-          return (
-            <button
-              key={o.value}
-              type="button"
-              onClick={() => onChange(o.value)}
-              aria-pressed={selected}
-              style={{
-                padding: '7px 16px',
-                borderRadius: 999,
-                border: `1px solid ${selected ? C.ink : C.line}`,
-                background: selected ? C.ink : 'transparent',
-                color: selected ? C.surface : C.ink2,
-                fontFamily: 'inherit',
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'background .12s, color .12s, border-color .12s',
-              }}
-            >
-              {o.label}
-            </button>
-          )
-        })}
+    <InlineRow label={label} last={last} alignTop={!!sub}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {options.map((o) => {
+            const selected = o.value === value
+            return (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => onChange(o.value)}
+                aria-pressed={selected}
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: 999,
+                  border: `1px solid ${selected ? C.ink : C.line}`,
+                  background: selected ? C.ink : 'transparent',
+                  color: selected ? C.surface : C.ink2,
+                  fontFamily: 'inherit',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'background .12s, color .12s, border-color .12s',
+                }}
+              >
+                {o.label}
+              </button>
+            )
+          })}
+        </div>
+        {sub && <span style={{ fontSize: 12, color: C.ink3, lineHeight: 1.4 }}>{sub}</span>}
       </div>
     </InlineRow>
   )

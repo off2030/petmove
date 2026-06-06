@@ -80,6 +80,7 @@ export function TravelFormSections({
             value={form.co_progress ? 'on' : 'off'}
             onChange={(v) => set('co_progress', v === 'on')}
             options={CO_PROGRESS_OPTIONS}
+            sub="한 마리에 입력한 일정·절차를 다른 동물에도 같이 반영해요"
             last
           />
         )}
@@ -107,6 +108,7 @@ export function TravelFormSections({
             value={form.co_progress ? 'on' : 'off'}
             onChange={(v) => set('co_progress', v === 'on')}
             options={CO_PROGRESS_OPTIONS}
+            sub="한 마리에 입력한 일정·절차를 다른 동물에도 같이 반영해요"
           />
         )}
         <DateField
