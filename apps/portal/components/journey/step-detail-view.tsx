@@ -462,7 +462,8 @@ export function StepDetailView({
       return null
     }
     if (isRabies) {
-      if (isRabies2 && isRabiesEntryExpired(rabies)) return '입력하신 접종은 면역 유효기간이 만료되었습니다.'
+      // 만료된 과거 이력은 사실 데이터로 입력 허용 — 갱신 여부는 추가 접종/검사 step 의 chain
+      // 검증과 procedure-check 주의(jp.rabies-extra-within-previous-validity 등)가 표면화한다.
       if (isRabies1 && rabies.date) {
         // 1차 생후 91일 — procedure-check(jp.rabies-prime-after-91days-old)와 같은 domain 함수.
         const ageErr = validateRabiesPrimeAge(readBirthDate(caseRow?.data), rabies.date)
@@ -504,13 +505,13 @@ export function StepDetailView({
       return null
     }
     if (isTiter) {
-      if (isTiterEntryExpired(titerForm)) return '입력하신 항체 검사는 유효기간이 만료되었습니다.'
+      // 만료된 과거 검사는 사실 데이터로 입력 허용 — 갱신 여부는 추가 검사/접종 step 의 검증과
+      // procedure-check 주의(만료 후 추가 접종/검사 안내)가 표면화한다.
       return validateTiterDate(caseRow?.data, titerForm.date, true)
     }
     if (isTiterExtra) {
       for (const entry of titerExtra) {
         if (!entry.date) continue
-        if (isTiterEntryExpired(entry)) return `채혈일 ${entry.date}: 입력하신 항체 검사는 유효기간이 만료되었습니다.`
         const err = validateTiterDate(caseRow?.data, entry.date, false)
         if (err) return `채혈일 ${entry.date}: ${err}`
       }
@@ -1799,35 +1800,6 @@ function readRabiesOtherHospital(
   return (entry as Record<string, unknown>).other_hospital === true
 }
 
-/**
- * "N년" 문자열에서 연수 추출. 빈 값은 UI에서 "1년" 디폴트로 시각 선택돼 있으므로 1로 가정.
- * 파싱 실패 시 null.
- */
-function parseValidUntilYears(value: string): number | null {
-  const raw = value.trim() || '1년'
-  const m = raw.match(/^(\d+)\s*년$/)
-  if (!m) return null
-  return Number(m[1])
-}
-
-/**
- * 광견병 폼의 "오늘 기준 면역 만료" 판정.
- * date 만 있어도 판정 — valid_until 빈 값은 UI 디폴트 1년으로 간주. 접종일 + N년 이
- * 오늘 이전·당일이면 만료 (1주년 -1일 까지 인정 = addYears(date, N) > today).
- */
-function isRabiesEntryExpired(form: RabiesEntryForm): boolean {
-  if (!form.date) return false
-  const years = parseValidUntilYears(form.valid_until)
-  if (years === null) return false
-  return todayKst() >= addYears(form.date, years)
-}
-
-function addYears(iso: string, years: number): string {
-  const d = new Date(iso + 'T00:00:00Z')
-  d.setUTCFullYear(d.getUTCFullYear() + years)
-  return d.toISOString().slice(0, 10)
-}
-
 function rabiesFormEqual(a: RabiesEntryForm, b: RabiesEntryForm): boolean {
   return (
     a.date === b.date &&
@@ -1967,15 +1939,6 @@ function titerExtraEqual(a: TiterExtraEntry[], b: TiterExtraEntry[]): boolean {
     }
   }
   return true
-}
-
-/**
- * 항체 검사 "오늘 기준 유효기간 만료" 판정. 항체 검사 유효기간은 채혈 + 2년
- * (마지막 유효일 = addYears(date,2) -1일). today >= addYears(date,2) 이면 만료.
- */
-function isTiterEntryExpired(form: { date: string }): boolean {
-  if (!form.date) return false
-  return todayKst() >= addYears(form.date, 2)
 }
 
 /**
