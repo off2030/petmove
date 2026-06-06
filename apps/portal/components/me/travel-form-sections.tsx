@@ -42,6 +42,8 @@ interface Props {
   hasSibling: boolean
   /** 첫 SectionCard("기본") 의 marginTop. 기본 8 (TravelEditView 의 기존 값). */
   marginTop?: number
+  /** true 면 '기본'(여행지·유형·날짜)만 — 항공권·일본 수출검역 섹션 숨김. 펫 프로필(/me/animal)용. */
+  basicOnly?: boolean
 }
 
 export function TravelFormSections({
@@ -50,6 +52,7 @@ export function TravelFormSections({
   set,
   hasSibling,
   marginTop = 8,
+  basicOnly = false,
 }: Props) {
   const isRound = form.trip_type === 'round'
   const isJapan =
@@ -94,6 +97,8 @@ export function TravelFormSections({
         )}
       </SectionCard>
 
+      {basicOnly ? null : (
+        <>
       <SectionCard label="출국 항공권">
         <TextField
           label="출발 공항"
@@ -169,6 +174,8 @@ export function TravelFormSections({
             last
           />
         </SectionCard>
+      )}
+        </>
       )}
     </>
   )

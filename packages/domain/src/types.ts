@@ -14,6 +14,7 @@ export interface CaseRow {
   assigned_to: string | null
   avatar_emoji: string | null
   avatar_color: string | null
+  avatar_photo_url: string | null
   data: Record<string, unknown>
   created_at: string
   updated_at: string

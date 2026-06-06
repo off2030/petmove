@@ -92,7 +92,7 @@ async function generateStandalone(
     pet_name: null, pet_name_en: null,
     destination: null, departure_date: null,
     assigned_to: null,
-    avatar_emoji: null, avatar_color: null,
+    avatar_emoji: null, avatar_color: null, avatar_photo_url: null,
     data: {},
     created_at: '', updated_at: '',
   }

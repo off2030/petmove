@@ -4,6 +4,8 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import type { CaseRow } from '@petmove/domain'
 import {
+  BreedField,
+  ColorField,
   DateField,
   OptionField,
   TextField,
@@ -13,7 +15,7 @@ import { PetAvatarPicker } from '@/components/me/pet-avatar-picker'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { softDeleteMyCase } from '@/lib/actions/cases'
 import { buildPetBlock } from '@/lib/profile/catalog'
-import { ageLabel, hasSiblingCase } from '@/lib/cases/info-form'
+import { hasSiblingCase } from '@/lib/cases/info-form'
 import { C, EditPageShell, SectionCard, StickySaveBar } from './settings-shared'
 import { TravelFormSections } from './travel-form-sections'
 import { useCaseEditForm } from './use-case-edit-form'
@@ -75,7 +77,7 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
           mask="en-name"
         />
         <TextField
-          label="마이크로칩번호"
+          label="마이크로칩"
           value={form.microchip}
           onChange={(v) => set('microchip', v)}
           mask="microchip"
@@ -86,25 +88,38 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
           label="생년월일"
           value={form.birth_date}
           onChange={(v) => set('birth_date', v)}
-          sub={ageLabel(form.birth_date)}
         />
         <OptionField
           label="종"
           value={form.species}
-          onChange={(v) => set('species', v)}
+          onChange={(v) => {
+            // 종이 바뀌면 다른 종의 품종 선택은 무효 → 품종 초기화 (신청폼과 동일).
+            if (v !== form.species && (form.breed || form.breed_en)) {
+              set('breed', '')
+              set('breed_en', '')
+            }
+            set('species', v)
+          }}
           options={SPECIES_OPTIONS}
         />
-        <TextField
+        <BreedField
           label="품종"
-          value={form.breed}
-          onChange={(v) => set('breed', v)}
-          placeholder="예: 말티즈"
+          species={form.species}
+          breedKo={form.breed}
+          breedEn={form.breed_en}
+          onChange={(ko, en) => {
+            set('breed', ko)
+            set('breed_en', en)
+          }}
         />
-        <TextField
+        <ColorField
           label="모색"
-          value={form.color}
-          onChange={(v) => set('color', v)}
-          placeholder="예: 흰색"
+          colorKo={form.color}
+          colorEn={form.color_en}
+          onChange={(ko, en) => {
+            set('color', ko)
+            set('color_en', en)
+          }}
         />
         <OptionField
           label="성별"
@@ -124,13 +139,15 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
         />
       </SectionCard>
 
-      {/* 여행 정보 — TravelEditView 와 공유. 같은 useCaseEditForm 폼이라 한 번 저장으로 묶임. */}
+      {/* 여행 정보 — '기본'(여행지·유형·날짜)만. 항공권·일본 수출검역은 /me/travel 에서.
+          같은 useCaseEditForm 폼이라 한 번 저장으로 묶임. */}
       <TravelFormSections
         caseRow={caseRow}
         form={form}
         set={set}
         hasSibling={hasSibling}
         marginTop={24}
+        basicOnly
       />
 
       <DeleteAnimalSection caseId={caseId} petName={buildPetBlock(caseRow).name} />

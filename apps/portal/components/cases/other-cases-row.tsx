@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { avatarGlyph, avatarGradient, avatarIsEmoji } from '@/lib/avatar'
+import { avatarGlyph, avatarGlyphColor, avatarGradient, avatarPhoto } from '@/lib/avatar'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 
 /**
@@ -40,7 +40,7 @@ export function OtherCasesRow({
     >
       {cases.map((c, i) => {
         const isActive = c.id === currentCaseId
-        const isEmoji = avatarIsEmoji(c)
+        const photo = avatarPhoto(c)
         return (
           <Link
             key={c.id}
@@ -53,17 +53,16 @@ export function OtherCasesRow({
               width: 28,
               height: 28,
               borderRadius: '50%',
-              background: avatarGradient(c, i),
+              background: photo ? '#0000' : avatarGradient(c, i),
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
-              color: '#fff',
-              fontFamily: isEmoji
-                ? "-apple-system, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
-                : 'var(--pm-font-display)',
+              overflow: 'hidden',
+              color: avatarGlyphColor(c, i),
+              fontFamily: 'var(--pm-font-display)',
               fontWeight: 600,
-              fontSize: isEmoji ? 14 : 11,
+              fontSize: 11,
               lineHeight: 1,
               textDecoration: 'none',
               opacity: isActive ? 1 : 0.42,
@@ -74,7 +73,12 @@ export function OtherCasesRow({
               transition: 'opacity .2s, transform .2s, box-shadow .2s',
             }}
           >
-            {avatarGlyph(c)}
+            {photo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              avatarGlyph(c)
+            )}
           </Link>
         )
       })}

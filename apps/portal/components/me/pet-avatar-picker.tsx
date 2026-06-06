@@ -1,42 +1,98 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
+import { supabaseBrowser } from '@petmove/auth'
 import type { CaseRow } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { updateCaseAvatar } from '@/lib/actions/cases'
 import {
   AVATAR_COLOR_IDS,
-  AVATAR_EMOJIS,
   AVATAR_GRADIENTS,
+  avatarColorId,
   avatarGlyph,
+  avatarGlyphColor,
   avatarGradient,
-  avatarIsEmoji,
   type AvatarColorId,
 } from '@/lib/avatar'
+import { resizeImage } from '@/lib/image'
 import type { PetBlock } from '@/lib/profile/catalog'
 
 /**
- * /me Profile 펫 카드의 hero 행. 아바타 탭 → 인라인으로 picker grid 가 펼쳐짐.
+ * /me 동물 카드의 hero 행 — 보호자 아바타(GuardianAvatarPicker)와 동일 모델.
+ * 우선순위: 사진 > 색상 원 + 이름 이니셜. (이모지 picker 제거.)
  *
- * - 아바타 자체가 hero 의 큰 원형 (52px). 헬퍼로 이모지/색 fallback 통일.
- * - 탭 시 같은 hero card 안에서 아래쪽으로 이모지 행 + 색상 행 + 초기화 버튼 노출.
- * - 선택 즉시 server action 호출, 응답으로 받은 case 로 Context 업데이트
- *   → TopBar 아바타도 동시에 갱신.
+ * - 아바타 자체가 hero 의 큰 원형(52px). 탭하면 인라인으로 사진·색상 picker 펼침.
+ * - 사진 업로드는 user-avatars 버킷({user_id}/pets/{caseId}/...)으로 직접 — RLS 통과.
+ *   URL 은 updateCaseAvatar 의 user-avatars 도메인 검증을 통과해 cases.avatar_photo_url 저장.
+ * - 선택 즉시 server action → 응답 case 로 Context 업데이트(헤더 스위처도 동시 갱신).
  */
-export function PetAvatarPicker({ case_, pet }: { case_: CaseRow; pet: PetBlock }) {
-  const [open, setOpen] = useState(false)
-  // 보호자 케이스 목록 내 index — avatarGradient 의 cyclic fallback 에 사용.
-  // 음수(=목록에 없음)는 -1 그대로 넘기면 avatarGradient 내부에서 hash fallback.
-  const { cases } = useCases()
-  const idx = cases.findIndex((c) => c.id === case_.id)
 
-  const C = {
-    ink: 'var(--pm-ink)',
-    ink2: 'var(--pm-ink-2)',
-    ink3: 'var(--pm-ink-3)',
-    line: 'var(--pm-line)',
-    soft: '#F0E8DB',
-  } as const
+const C = {
+  ink: 'var(--pm-ink)',
+  ink2: 'var(--pm-ink-2)',
+  ink3: 'var(--pm-ink-3)',
+  line: 'var(--pm-line)',
+  surface: 'var(--pm-surface)',
+} as const
+
+export function PetAvatarPicker({ case_, pet }: { case_: CaseRow; pet: PetBlock }) {
+  const { cases, profile, updateCase } = useCases()
+  const idx = cases.findIndex((c) => c.id === case_.id)
+  const userId = profile?.user_id ?? ''
+
+  const [open, setOpen] = useState(false)
+  const [pending, startTransition] = useTransition()
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const currentColor: AvatarColorId | null = (case_.avatar_color as AvatarColorId | null) ?? null
+  const currentPhoto = case_.avatar_photo_url || null
+
+  function commit(patch: Parameters<typeof updateCaseAvatar>[1]) {
+    setError(null)
+    startTransition(async () => {
+      const r = await updateCaseAvatar(case_.id, patch)
+      if (r.ok) updateCase(r.value)
+      else setError(r.error)
+    })
+  }
+
+  async function handleFile(file: File | undefined | null) {
+    if (!file) return
+    if (!userId) {
+      setError('로그인 정보를 확인할 수 없습니다.')
+      return
+    }
+    setError(null)
+    setUploading(true)
+    try {
+      const blob = await resizeImage(file, 400, 0.85)
+      const id =
+        typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())
+      const path = `${userId}/pets/${case_.id}/${id}.jpg`
+      const { error: upErr } = await supabaseBrowser.storage.from('user-avatars').upload(path, blob, {
+        contentType: 'image/jpeg',
+        cacheControl: '3600',
+        upsert: false,
+      })
+      if (upErr) {
+        setError(upErr.message)
+        return
+      }
+      const { data: pub } = supabaseBrowser.storage.from('user-avatars').getPublicUrl(path)
+      const r = await updateCaseAvatar(case_.id, { avatar_photo_url: pub.publicUrl })
+      if (r.ok) updateCase(r.value)
+      else setError(r.error)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
+  const busy = pending || uploading
   const serif: React.CSSProperties = {
     fontFamily: 'var(--pm-font-display)',
     fontWeight: 500,
@@ -46,41 +102,66 @@ export function PetAvatarPicker({ case_, pet }: { case_: CaseRow; pet: PetBlock 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          aria-label="펫 아바타 변경"
-          aria-expanded={open}
-          className="pm-pressable"
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label="프로필 이미지 변경"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            setOpen((o) => !o)
+          }
+        }}
+        className="pm-pressable"
+        style={{ display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }}
+      >
+        <div
           style={{
-            ...avatarCircleStyle(case_, 52, idx),
-            border: 'none',
-            padding: 0,
-            cursor: 'pointer',
+            width: 52,
+            height: 52,
+            borderRadius: '50%',
+            background: currentPhoto ? '#0000' : avatarGradient(case_, idx),
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            overflow: 'hidden',
+            boxShadow: currentPhoto
+              ? 'none'
+              : 'inset 0 1px 1px rgba(255,255,255,.25), 0 1px 2px rgba(0,0,0,.06)',
           }}
         >
-          <span style={avatarGlyphSpanStyle(case_, 52)}>{avatarGlyph(case_)}</span>
-        </button>
+          {currentPhoto ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={currentPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <span
+              style={{
+                color: avatarGlyphColor(case_, idx),
+                fontFamily: 'var(--pm-font-display)',
+                fontWeight: 500,
+                fontSize: Math.round(52 * 0.36),
+                lineHeight: 1,
+              }}
+            >
+              {avatarGlyph(case_)}
+            </span>
+          )}
+        </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
             <span style={{ ...serif, fontSize: 18, color: C.ink }}>{pet.name ?? '이름 미정'}</span>
             {pet.nameEn && (
-              <span
-                style={{
-                  ...serif,
-                  fontSize: 13,
-                  color: C.ink3,
-                  fontWeight: 400,
-                }}
-              >
-                {pet.nameEn}
-              </span>
+              <span style={{ ...serif, fontSize: 13, color: C.ink3, fontWeight: 400 }}>{pet.nameEn}</span>
             )}
           </div>
           <div style={{ fontSize: 12, color: C.ink3, marginTop: 4 }}>
-            {[pet.breed, pet.ageLabel, pet.weight].filter(Boolean).join(' · ') ||
-              '아바타를 눌러 이모지·색상을 바꿔보세요'}
+            {open
+              ? '눌러서 닫기'
+              : [pet.breed, pet.ageLabel, pet.weight].filter(Boolean).join(' · ') ||
+                '눌러서 사진·색상을 바꿔보세요'}
           </div>
         </div>
       </div>
@@ -88,7 +169,25 @@ export function PetAvatarPicker({ case_, pet }: { case_: CaseRow; pet: PetBlock 
       {open && (
         <>
           <div style={{ height: 0.5, background: C.line }} />
-          <PickerGrid case_={case_} C={C} />
+          <PickerGrid
+            case_={case_}
+            index={idx}
+            currentColor={currentColor}
+            currentPhoto={currentPhoto}
+            busy={busy}
+            onPickColor={(c) => commit({ avatar_color: c })}
+            onResetColor={() => commit({ avatar_color: null })}
+            onPickPhotoClick={() => fileRef.current?.click()}
+            onRemovePhoto={() => commit({ avatar_photo_url: null })}
+          />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            onChange={(e) => handleFile(e.target.files?.[0])}
+            style={{ display: 'none' }}
+          />
+          {error && <div style={{ fontSize: 12, color: '#B45C5C' }}>{error}</div>}
         </>
       )}
     </div>
@@ -99,15 +198,25 @@ export function PetAvatarPicker({ case_, pet }: { case_: CaseRow; pet: PetBlock 
 
 function PickerGrid({
   case_,
-  C,
+  index,
+  currentColor,
+  currentPhoto,
+  busy,
+  onPickColor,
+  onResetColor,
+  onPickPhotoClick,
+  onRemovePhoto,
 }: {
   case_: CaseRow
-  C: { ink: string; ink2: string; ink3: string; line: string; soft: string }
+  index: number
+  currentColor: AvatarColorId | null
+  currentPhoto: string | null
+  busy: boolean
+  onPickColor: (c: AvatarColorId) => void
+  onResetColor: () => void
+  onPickPhotoClick: () => void
+  onRemovePhoto: () => void
 }) {
-  const { updateCase } = useCases()
-  const [pending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
-
   const monoCap: React.CSSProperties = {
     fontSize: 10,
     letterSpacing: '0.16em',
@@ -115,28 +224,12 @@ function PickerGrid({
     color: C.ink3,
     fontWeight: 500,
   }
-
-  function commit(emoji: string | null, color: AvatarColorId | null) {
-    setError(null)
-    startTransition(async () => {
-      const r = await updateCaseAvatar(case_.id, emoji, color)
-      if (r.ok) updateCase(r.value)
-      else setError(r.error)
-    })
-  }
-
-  const currentEmoji = case_.avatar_emoji ?? null
-  const currentColor =
-    case_.avatar_color && (AVATAR_COLOR_IDS as readonly string[]).includes(case_.avatar_color)
-      ? (case_.avatar_color as AvatarColorId)
-      : null
-
   const slotBase: React.CSSProperties = {
     width: 34,
     height: 34,
     borderRadius: '50%',
     border: 'none',
-    cursor: pending ? 'progress' : 'pointer',
+    cursor: busy ? 'progress' : 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -144,54 +237,36 @@ function PickerGrid({
     flexShrink: 0,
     transition: 'transform .15s, box-shadow .15s',
   }
+  const actionBtn: React.CSSProperties = {
+    height: 32,
+    padding: '0 14px',
+    borderRadius: 999,
+    border: `.5px solid ${C.line}`,
+    background: C.surface,
+    color: C.ink,
+    fontSize: 12,
+    fontWeight: 500,
+    cursor: busy ? 'progress' : 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+  }
+
+  // '기본' 색 = avatar_color 미설정 시 실제 적용되는 cyclic/hash 색 — 그 색을 미리보기로.
+  const defaultColor = avatarColorId({ id: case_.id, avatar_color: null }, index)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, opacity: pending ? 0.6 : 1 }}>
-      <div style={monoCap}>이모지</div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {AVATAR_EMOJIS.map((e) => {
-          const selected = currentEmoji === e
-          return (
-            <button
-              key={e}
-              type="button"
-              disabled={pending}
-              onClick={() => commit(e, currentColor)}
-              aria-label={`이모지 ${e}`}
-              aria-pressed={selected}
-              style={{
-                ...slotBase,
-                background: 'var(--pm-surface)',
-                fontSize: 18,
-                lineHeight: 1,
-                boxShadow: selected
-                  ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px #735B3D'
-                  : `inset 0 0 0 .5px ${C.line}`,
-              }}
-            >
-              {e}
-            </button>
-          )
-        })}
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => commit(null, currentColor)}
-          aria-label="이모지 초기화"
-          title="이모지 초기화 (이름 첫 글자로 돌아가기)"
-          style={{
-            ...slotBase,
-            width: 'auto',
-            padding: '0 12px',
-            background: 'transparent',
-            color: C.ink3,
-            fontSize: 11,
-            fontWeight: 500,
-            boxShadow: `inset 0 0 0 .5px ${C.line}`,
-          }}
-        >
-          기본
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, opacity: busy ? 0.6 : 1 }}>
+      <div style={monoCap}>사진</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+        <button type="button" disabled={busy} onClick={onPickPhotoClick} style={actionBtn}>
+          {currentPhoto ? '사진 바꾸기' : '사진 올리기'}
         </button>
+        {currentPhoto && (
+          <button type="button" disabled={busy} onClick={onRemovePhoto} style={{ ...actionBtn, color: C.ink3 }}>
+            사진 제거
+          </button>
+        )}
       </div>
 
       <div style={{ ...monoCap, marginTop: 4 }}>색상</div>
@@ -202,8 +277,8 @@ function PickerGrid({
             <button
               key={id}
               type="button"
-              disabled={pending}
-              onClick={() => commit(currentEmoji, id)}
+              disabled={busy}
+              onClick={() => onPickColor(id)}
               aria-label={`색상 ${id}`}
               aria-pressed={selected}
               style={{
@@ -216,59 +291,27 @@ function PickerGrid({
             />
           )
         })}
+        {/* 기본(색상 자동) — 다른 swatch 와 동일한 원형. 실제 자동색 미리보기 + 사선으로 "자동". */}
         <button
           type="button"
-          disabled={pending}
-          onClick={() => commit(currentEmoji, null)}
-          aria-label="색상 초기화"
-          title="색상 초기화 (자동 색으로 돌아가기)"
+          disabled={busy}
+          onClick={onResetColor}
+          aria-label="기본 색상"
+          aria-pressed={currentColor === null}
           style={{
             ...slotBase,
-            width: 'auto',
-            padding: '0 12px',
-            background: 'transparent',
-            color: C.ink3,
-            fontSize: 11,
-            fontWeight: 500,
-            boxShadow: `inset 0 0 0 .5px ${C.line}`,
+            background: AVATAR_GRADIENTS[defaultColor],
+            boxShadow:
+              currentColor === null
+                ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px #735B3D'
+                : `inset 0 0 0 .5px ${C.line}`,
           }}
         >
-          기본
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+            <line x1="3.5" y1="12.5" x2="12.5" y2="3.5" stroke="#fff" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
         </button>
       </div>
-
-      {error && (
-        <div style={{ fontSize: 12, color: '#B45C5C', marginTop: 4 }}>{error}</div>
-      )}
     </div>
   )
-}
-
-// ── Avatar circle 스타일 ─────────────────────────────────────────────────
-
-function avatarCircleStyle(c: CaseRow, size: number, index?: number): React.CSSProperties {
-  return {
-    width: size,
-    height: size,
-    borderRadius: '50%',
-    background: avatarGradient(c, index),
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    boxShadow: 'inset 0 1px 1px rgba(255,255,255,.25), 0 1px 2px rgba(0,0,0,.06)',
-  }
-}
-
-function avatarGlyphSpanStyle(c: CaseRow, size: number): React.CSSProperties {
-  const isEmoji = avatarIsEmoji(c)
-  return {
-    color: '#fff',
-    fontFamily: isEmoji
-      ? "-apple-system, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
-      : 'var(--pm-font-display)',
-    fontWeight: 600,
-    fontSize: isEmoji ? Math.round(size * 0.5) : Math.round(size * 0.36),
-    lineHeight: 1,
-  }
 }

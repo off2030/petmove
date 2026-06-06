@@ -3,6 +3,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import destsData from '@petmove/domain/data/destinations.json'
+import breedsData from '@petmove/domain/data/breeds.json'
+import colorsData from '@petmove/domain/data/colors.json'
 import type { DaumPostcodeResult } from '@/types/daum'
 import { BottomSheet } from './bottom-sheet'
 import { PortalCalendar, ymdLocal } from './portal-calendar'
@@ -34,6 +36,31 @@ interface Dest {
   en: string
 }
 const DESTS = destsData as Dest[]
+
+interface Breed {
+  ko: string
+  en: string
+  type: string
+  alias?: string[]
+}
+const BREEDS = breedsData as Breed[]
+
+interface ColorItem {
+  ko: string
+  en: string
+  alias?: string[]
+}
+const COLORS = colorsData as ColorItem[]
+
+// 모색 스와치용 HEX (colors.json 의 ko 와 매칭, 신청폼과 동일).
+const COLOR_HEX: Record<string, string> = {
+  흰색: '#FFFFFF',
+  검정: '#141413',
+  갈색: '#6D4A2B',
+  황색: '#E8B84A',
+  크림: '#F5E6C8',
+  회색: '#9CA3AF',
+}
 
 // ── 마스크/포맷 헬퍼 ─────────────────────────────────────────────────────
 
@@ -759,6 +786,198 @@ export function DestinationField({
           })}
         </div>
       </BottomSheet>
+    </InlineRow>
+  )
+}
+
+// ── BreedField (품종 검색 — 종 필터) ─────────────────────────────────────
+
+/**
+ * 품종 선택 — 종(species)으로 필터된 검색형 바텀시트. 선택 시 한글·영문을 함께 넘긴다
+ * (admin pdf-fill 이 breed_en 을 권위 소스로 읽으므로 둘 다 저장돼야 동기화 유지).
+ * 종 미선택이면 비활성 — "종을 먼저 선택".
+ */
+export function BreedField({
+  label,
+  species,
+  breedKo,
+  breedEn,
+  onChange,
+  last,
+}: {
+  label: string
+  species: string
+  breedKo: string
+  breedEn: string
+  /** (한글, 영문) 동시 갱신. */
+  onChange: (ko: string, en: string) => void
+  last?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const disabled = !species
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return BREEDS.filter((b) => {
+      if (species && b.type !== species) return false
+      if (!q) return true
+      return b.ko.includes(q) || b.en.toLowerCase().includes(q) || b.alias?.some((a) => a.toLowerCase().includes(q))
+    })
+  }, [query, species])
+
+  return (
+    <InlineRow label={label} last={last}>
+      <TriggerButton
+        display={breedKo}
+        empty={!breedKo}
+        icon="chevron"
+        onClick={() => {
+          if (disabled) return
+          setQuery('')
+          setOpen(true)
+        }}
+        sub={breedKo && breedEn ? breedEn : undefined}
+      />
+      <BottomSheet open={open} onClose={() => setOpen(false)} title={label}>
+        <input
+          className="pm-field-input"
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="품종 검색 · 말티즈 / Maltese"
+          autoFocus
+          style={{
+            width: '100%',
+            background: 'var(--pm-surface)',
+            border: `1px solid ${C.line}`,
+            borderRadius: 10,
+            padding: '11px 12px',
+            fontFamily: 'inherit',
+            fontSize: 15,
+            color: C.ink,
+            outline: 'none',
+            boxSizing: 'border-box',
+            marginBottom: 10,
+          }}
+        />
+        <div
+          className="pm-noscroll"
+          style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: '52vh', overflow: 'auto' }}
+        >
+          {filtered.length === 0 && (
+            <div style={{ fontSize: 13, color: C.ink3, padding: '12px 4px' }}>검색 결과 없음</div>
+          )}
+          {filtered.map((b) => {
+            const selected = b.ko === breedKo
+            return (
+              <button
+                key={`${b.ko}|${b.en}`}
+                type="button"
+                onClick={() => {
+                  onChange(b.ko, b.en)
+                  setOpen(false)
+                }}
+                style={{ ...optionRowStyle(selected), padding: '11px 14px' }}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8, minWidth: 0 }}>
+                  <span style={{ fontSize: 16 }}>{b.ko}</span>
+                  <span style={{ fontSize: 12, color: C.ink3 }}>{b.en}</span>
+                </span>
+                {selected && <CheckMark />}
+              </button>
+            )
+          })}
+        </div>
+      </BottomSheet>
+    </InlineRow>
+  )
+}
+
+// ── ColorField (모색 — 칩 다중선택, 최대 3) ──────────────────────────────
+
+/**
+ * 모색 선택 — colors.json 의 6색을 칩으로 다중선택(최대 3). 신청폼과 동일.
+ * 저장은 한글·영문 각각 쉼표 구분 문자열 (admin pdf-fill 이 color_en 을 읽으므로 둘 다 저장).
+ * colorKo/colorEn 은 쉼표 구분 — colors.json 순서로 재구성해 일관 유지.
+ */
+export function ColorField({
+  label,
+  colorKo,
+  onChange,
+  last,
+}: {
+  label: string
+  /** 쉼표 구분 한글 모색. */
+  colorKo: string
+  colorEn?: string
+  /** (한글, 영문) 쉼표 구분으로 동시 갱신. */
+  onChange: (ko: string, en: string) => void
+  last?: boolean
+}) {
+  const selected = useMemo(
+    () => new Set(colorKo.split(',').map((s) => s.trim()).filter(Boolean)),
+    [colorKo],
+  )
+
+  function toggle(ko: string) {
+    const next = new Set(selected)
+    if (next.has(ko)) next.delete(ko)
+    else if (next.size < 3) next.add(ko)
+    else return
+    // colors.json 순서로 재구성.
+    const ordered = COLORS.filter((c) => next.has(c.ko))
+    onChange(ordered.map((c) => c.ko).join(', '), ordered.map((c) => c.en).join(', '))
+  }
+
+  return (
+    <InlineRow label={label} last={last} alignTop>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, paddingTop: 1 }}>
+        {COLORS.map((c) => {
+          const on = selected.has(c.ko)
+          const blocked = !on && selected.size >= 3
+          return (
+            <button
+              key={c.ko}
+              type="button"
+              onClick={() => toggle(c.ko)}
+              aria-pressed={on}
+              disabled={blocked}
+              style={{
+                height: 32,
+                paddingLeft: 7,
+                paddingRight: 12,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                borderRadius: 999,
+                border: `1px solid ${on ? C.ink : C.line}`,
+                background: on ? C.ink : 'transparent',
+                color: on ? C.surface : C.ink2,
+                fontFamily: 'inherit',
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: blocked ? 'not-allowed' : 'pointer',
+                opacity: blocked ? 0.4 : 1,
+                transition: 'background .12s, color .12s, border-color .12s',
+              }}
+            >
+              <span
+                aria-hidden
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: '50%',
+                  flexShrink: 0,
+                  background: COLOR_HEX[c.ko] ?? '#999',
+                  boxShadow: on ? 'inset 0 0 0 1px rgba(255,255,255,.4)' : 'inset 0 0 0 1px rgba(0,0,0,.15)',
+                }}
+              />
+              {c.ko}
+            </button>
+          )
+        })}
+      </div>
     </InlineRow>
   )
 }

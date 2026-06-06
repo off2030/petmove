@@ -23,7 +23,7 @@ import {
   type CaseRow,
   type VaccineProductsData,
 } from '@petmove/domain'
-import { AVATAR_COLOR_IDS, AVATAR_EMOJIS, type AvatarColorId } from '@/lib/avatar'
+import { AVATAR_COLOR_IDS, type AvatarColorId } from '@/lib/avatar'
 import { assertCaseAccess, type Result } from './_shared'
 
 /**
@@ -101,26 +101,37 @@ export async function softDeleteMyCase(caseId: string): Promise<Result<{ id: str
 }
 
 /**
- * 보호자가 자기 케이스의 아바타(이모지·색)를 갱신.
+ * 보호자가 자기 케이스의 아바타(색상·사진)를 갱신. 보호자 아바타(updateMyProfile)와 동일 모델.
  *
  * cases_update RLS 는 org_member 만 허용 → service role 로 우회. 그 대신
  * (1) auth 확인, (2) case_customer_links 로 본인 ↔ 케이스 매핑 검증,
- * (3) 화이트리스트(AVATAR_EMOJIS / AVATAR_COLOR_IDS) 검증, (4) avatar_*
- * 컬럼만 update — 4중 차단으로 다른 컬럼/케이스에 손댈 길 없음.
+ * (3) color 화이트리스트 / photo_url 은 user-avatars 도메인 검증, (4) avatar_*
+ * 컬럼만 update — 다른 컬럼/케이스에 손댈 길 없음.
  *
- * emoji / color 를 null 로 보내면 "해제" (자동 fallback 로 복귀).
+ * patch 에 준 키만 갱신. null 로 보내면 "해제" (자동 fallback 로 복귀).
+ * 사진 업로드는 client 가 user-avatars 버킷({user_id}/pets/...)으로 직접 — 여기는 URL 만 저장.
  */
 export async function updateCaseAvatar(
   caseId: string,
-  emoji: string | null,
-  color: AvatarColorId | null,
+  patch: { avatar_color?: AvatarColorId | null; avatar_photo_url?: string | null },
 ): Promise<Result<CaseRow>> {
   try {
-    if (emoji !== null && !AVATAR_EMOJIS.includes(emoji)) {
-      return { ok: false, error: '허용되지 않은 이모지' }
+    const update: Record<string, unknown> = {}
+    if (patch.avatar_color !== undefined) {
+      if (patch.avatar_color !== null && !AVATAR_COLOR_IDS.includes(patch.avatar_color)) {
+        return { ok: false, error: '허용되지 않은 색상' }
+      }
+      update.avatar_color = patch.avatar_color
     }
-    if (color !== null && !AVATAR_COLOR_IDS.includes(color)) {
-      return { ok: false, error: '허용되지 않은 색상' }
+    if (patch.avatar_photo_url !== undefined) {
+      const url = patch.avatar_photo_url?.trim() || null
+      if (url && !/\/storage\/v1\/object\/public\/user-avatars\//.test(url)) {
+        return { ok: false, error: '허용되지 않은 사진 경로입니다.' }
+      }
+      update.avatar_photo_url = url
+    }
+    if (Object.keys(update).length === 0) {
+      return { ok: false, error: '변경할 내용이 없습니다.' }
     }
 
     const access = await assertCaseAccess(caseId)
@@ -129,7 +140,7 @@ export async function updateCaseAvatar(
     const admin = createAdminClient()
     const { data, error } = await admin
       .from('cases')
-      .update({ avatar_emoji: emoji, avatar_color: color })
+      .update(update)
       .eq('id', caseId)
       .select('*')
       .single()
@@ -1376,7 +1387,11 @@ export interface CaseInfoInput {
   birth_date: string
   species: string
   breed: string
+  /** 영문 품종 — admin pdf-fill 의 권위 소스. breed 선택 시 카탈로그에서 함께 저장. */
+  breed_en: string
   color: string
+  /** 영문 모색 (쉼표 구분) — admin pdf-fill 의 권위 소스. color 선택 시 함께 저장. */
+  color_en: string
   sex: string
   weight: string
   trip_type: 'round' | 'one_way'
@@ -1408,7 +1423,9 @@ const INFO_DATA_KEYS = [
   'birth_date',
   'species',
   'breed',
+  'breed_en',
   'color',
+  'color_en',
   'sex',
   'return_date',
   'entry_departure_airport',
