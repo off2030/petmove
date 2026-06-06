@@ -15,7 +15,6 @@ import {
   type AvatarColorId,
 } from '@/lib/avatar'
 import { resizeImage } from '@/lib/image'
-import type { PetBlock } from '@/lib/profile/catalog'
 
 /**
  * /me 동물 카드의 hero 행 — 보호자 아바타(GuardianAvatarPicker)와 동일 모델.
@@ -35,7 +34,7 @@ const C = {
   surface: 'var(--pm-surface)',
 } as const
 
-export function PetAvatarPicker({ case_, pet }: { case_: CaseRow; pet: PetBlock }) {
+export function PetAvatarPicker({ case_ }: { case_: CaseRow }) {
   const { cases, profile, updateCase } = useCases()
   const idx = cases.findIndex((c) => c.id === case_.id)
   const userId = profile?.user_id ?? ''
@@ -93,12 +92,6 @@ export function PetAvatarPicker({ case_, pet }: { case_: CaseRow; pet: PetBlock 
   }
 
   const busy = pending || uploading
-  const serif: React.CSSProperties = {
-    fontFamily: 'var(--pm-font-display)',
-    fontWeight: 500,
-    letterSpacing: '-0.01em',
-    fontVariantNumeric: 'tabular-nums',
-  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -151,17 +144,8 @@ export function PetAvatarPicker({ case_, pet }: { case_: CaseRow; pet: PetBlock 
           )}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ ...serif, fontSize: 18, color: C.ink }}>{pet.name ?? '이름 미정'}</span>
-            {pet.nameEn && (
-              <span style={{ ...serif, fontSize: 13, color: C.ink3, fontWeight: 400 }}>{pet.nameEn}</span>
-            )}
-          </div>
-          <div style={{ fontSize: 12, color: C.ink3, marginTop: 4 }}>
-            {open
-              ? '눌러서 닫기'
-              : [pet.breed, pet.ageLabel, pet.weight].filter(Boolean).join(' · ') ||
-                '눌러서 사진·색상을 바꿔보세요'}
+          <div style={{ fontSize: 13, color: C.ink2, fontWeight: 500 }}>
+            {open ? '사진·색상 선택' : '프로필 이미지 설정'}
           </div>
         </div>
       </div>

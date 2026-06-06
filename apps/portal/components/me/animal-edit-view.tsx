@@ -59,7 +59,7 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
           border: `.5px solid ${C.line}`,
         }}
       >
-        <PetAvatarPicker case_={caseRow} pet={buildPetBlock(caseRow)} />
+        <PetAvatarPicker case_={caseRow} />
       </div>
 
       <SectionCard marginTop={16}>
