@@ -25,10 +25,10 @@ import { useCaseEditForm } from './use-case-edit-form'
  * 아바타(PetAvatarPicker) + 현 InfoView "동물 정보" 9개 필드.
  */
 
+// 신청폼(apply-form)과 동일하게 강아지·고양이만. admin pdf-fill 도 dog/cat 만 처리.
 const SPECIES_OPTIONS: readonly FieldOption[] = [
   { value: 'dog', label: '강아지' },
   { value: 'cat', label: '고양이' },
-  { value: 'other', label: '기타' },
 ]
 const SEX_OPTIONS: readonly FieldOption[] = [
   { value: 'male', label: '수컷' },
