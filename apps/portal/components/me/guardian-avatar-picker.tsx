@@ -5,7 +5,6 @@ import { supabaseBrowser } from '@petmove/auth'
 import {
   AVATAR_COLOR_IDS,
   AVATAR_GRADIENTS,
-  GUARDIAN_AVATAR_EMOJIS,
   isAvatarColorId,
   type AvatarColorId,
 } from '@/lib/avatar'
@@ -45,7 +44,6 @@ export function GuardianAvatarPicker({ profile, userId, initials, onUpdated }: P
   const [error, setError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const currentEmoji = profile?.avatar_emoji ?? null
   const currentColor: AvatarColorId | null = isAvatarColorId(profile?.avatar_color ?? null)
     ? (profile!.avatar_color as AvatarColorId)
     : null
@@ -119,17 +117,15 @@ export function GuardianAvatarPicker({ profile, userId, initials, onUpdated }: P
             // eslint-disable-next-line @next/next/no-img-element
             <img src={currentPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
-            <span style={glyphSpanStyle(52, !!currentEmoji)}>
-              {currentEmoji || initials}
-            </span>
+            <span style={glyphSpanStyle(52)}>{initials}</span>
           )}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13, color: C.ink2, fontWeight: 500 }}>
-            {open ? '사진·이모지·색상 선택' : '프로필 이미지 설정'}
+            {open ? '사진·색상 선택' : '프로필 이미지 설정'}
           </div>
           <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
-            {open ? '눌러서 닫기' : '눌러서 사진·이모지·색상을 바꿔보세요'}
+            {open ? '눌러서 닫기' : '눌러서 사진·색상을 바꿔보세요'}
           </div>
         </div>
       </div>
@@ -138,13 +134,10 @@ export function GuardianAvatarPicker({ profile, userId, initials, onUpdated }: P
         <>
           <div style={{ height: 0.5, background: C.line }} />
           <PickerGrid
-            currentEmoji={currentEmoji}
             currentColor={currentColor}
             currentPhoto={currentPhoto}
             busy={busy}
-            onPickEmoji={(e) => commit({ avatar_emoji: e })}
             onPickColor={(c) => commit({ avatar_color: c })}
-            onResetEmoji={() => commit({ avatar_emoji: null })}
             onResetColor={() => commit({ avatar_color: null })}
             onPickPhotoClick={() => fileRef.current?.click()}
             onRemovePhoto={() => commit({ avatar_photo_url: null })}
@@ -168,24 +161,18 @@ export function GuardianAvatarPicker({ profile, userId, initials, onUpdated }: P
 // ── Picker grid ─────────────────────────────────────────────────────────
 
 function PickerGrid({
-  currentEmoji,
   currentColor,
   currentPhoto,
   busy,
-  onPickEmoji,
   onPickColor,
-  onResetEmoji,
   onResetColor,
   onPickPhotoClick,
   onRemovePhoto,
 }: {
-  currentEmoji: string | null
   currentColor: AvatarColorId | null
   currentPhoto: string | null
   busy: boolean
-  onPickEmoji: (e: string) => void
   onPickColor: (c: AvatarColorId) => void
-  onResetEmoji: () => void
   onResetColor: () => void
   onPickPhotoClick: () => void
   onRemovePhoto: () => void
@@ -256,37 +243,6 @@ function PickerGrid({
         )}
       </div>
 
-      <div style={{ ...monoCap, marginTop: 4 }}>이모지</div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {GUARDIAN_AVATAR_EMOJIS.map((e) => {
-          const selected = currentEmoji === e
-          return (
-            <button
-              key={e}
-              type="button"
-              disabled={busy}
-              onClick={() => onPickEmoji(e)}
-              aria-label={`이모지 ${e}`}
-              aria-pressed={selected}
-              style={{
-                ...slotBase,
-                background: C.surface,
-                fontSize: 18,
-                lineHeight: 1,
-                boxShadow: selected
-                  ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px #735B3D'
-                  : `inset 0 0 0 .5px ${C.line}`,
-              }}
-            >
-              {e}
-            </button>
-          )
-        })}
-        <button type="button" disabled={busy} onClick={onResetEmoji} aria-label="이모지 초기화" style={resetBtn}>
-          기본
-        </button>
-      </div>
-
       <div style={{ ...monoCap, marginTop: 4 }}>색상</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {AVATAR_COLOR_IDS.map((id) => {
@@ -341,14 +297,12 @@ function avatarCircleStyle(
   }
 }
 
-function glyphSpanStyle(size: number, isEmoji: boolean): React.CSSProperties {
+function glyphSpanStyle(size: number): React.CSSProperties {
   return {
-    color: isEmoji ? '#fff' : 'var(--pm-accent)',
-    fontFamily: isEmoji
-      ? "-apple-system, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
-      : 'var(--pm-font-display)',
-    fontWeight: isEmoji ? 600 : 500,
-    fontSize: isEmoji ? Math.round(size * 0.5) : Math.round(size * 0.36),
+    color: 'var(--pm-accent)',
+    fontFamily: 'var(--pm-font-display)',
+    fontWeight: 500,
+    fontSize: Math.round(size * 0.36),
     lineHeight: 1,
   }
 }

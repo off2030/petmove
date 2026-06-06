@@ -14,7 +14,7 @@
 import { redirect } from 'next/navigation'
 import { createClient, getCurrentUser } from '@petmove/auth/server'
 import { revalidatePath } from 'next/cache'
-import { AVATAR_COLOR_IDS, GUARDIAN_AVATAR_EMOJIS } from '@/lib/avatar'
+import { AVATAR_COLOR_IDS } from '@/lib/avatar'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 
@@ -59,15 +59,12 @@ export interface UpdateProfileInput {
   phone?: string | null
   preferred_language?: 'ko' | 'en' | 'ja' | 'zh'
   marketing_opt_in?: boolean
-  /** 아바타 — null 로 보내면 reset. 이모지·색은 화이트리스트 검증, photo_url 은 도메인 검증. */
-  avatar_emoji?: string | null
+  /** 아바타 — null 로 보내면 reset. 색은 화이트리스트 검증, photo_url 은 도메인 검증. */
   avatar_color?: string | null
   avatar_photo_url?: string | null
 }
 
-// 화이트리스트 — 단일 출처(lib/avatar.ts)에서 import. 보호자는 사람 이모지 세트
-// (GUARDIAN_AVATAR_EMOJIS) 만 허용. 펫용 동물 세트(AVATAR_EMOJIS) 는 별개.
-const ALLOWED_AVATAR_EMOJIS = new Set<string>(GUARDIAN_AVATAR_EMOJIS)
+// 화이트리스트 — 단일 출처(lib/avatar.ts)에서 import.
 const ALLOWED_AVATAR_COLORS = new Set<string>(AVATAR_COLOR_IDS)
 
 export async function updateMyProfile(
@@ -84,13 +81,6 @@ export async function updateMyProfile(
     if (input.phone !== undefined) patch.phone = input.phone?.trim() || null
     if (input.preferred_language !== undefined) patch.preferred_language = input.preferred_language
     if (input.marketing_opt_in !== undefined) patch.marketing_opt_in = input.marketing_opt_in
-    if (input.avatar_emoji !== undefined) {
-      // null = reset. 빈 값 외에는 화이트리스트 검증.
-      if (input.avatar_emoji && !ALLOWED_AVATAR_EMOJIS.has(input.avatar_emoji)) {
-        return { ok: false, error: '허용되지 않은 아바타 이모지입니다.' }
-      }
-      patch.avatar_emoji = input.avatar_emoji || null
-    }
     if (input.avatar_color !== undefined) {
       if (input.avatar_color && !ALLOWED_AVATAR_COLORS.has(input.avatar_color)) {
         return { ok: false, error: '허용되지 않은 아바타 색상입니다.' }

@@ -131,7 +131,7 @@ function HeroLinkCard({
   )
 }
 
-/** 보호자 카드 안 아바타 — photo > emoji+color > 이니셜 fallback. /me hub 와 sub-page 공용 X (sub-page 는 picker 자체 사용). */
+/** 보호자 카드 안 아바타 — photo > 이니셜+색상 fallback. /me hub 와 sub-page 공용 X (sub-page 는 picker 자체 사용). */
 function GuardianAvatarDisplay({ data, size }: { data: GuardianBlock; size: number }) {
   if (data.avatarPhotoUrl) {
     return (
@@ -150,7 +150,6 @@ function GuardianAvatarDisplay({ data, size }: { data: GuardianBlock; size: numb
     )
   }
   const color = isAvatarColorId(data.avatarColor) ? data.avatarColor : null
-  const isEmoji = !!data.avatarEmoji
   return (
     <div
       style={{
@@ -159,20 +158,18 @@ function GuardianAvatarDisplay({ data, size }: { data: GuardianBlock; size: numb
         borderRadius: '50%',
         flexShrink: 0,
         background: color ? AVATAR_GRADIENTS[color] : C.soft,
-        color: color || isEmoji ? '#fff' : C.accent,
+        color: color ? '#fff' : C.accent,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        ...(isEmoji ? {} : num),
-        fontFamily: isEmoji
-          ? "-apple-system, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
-          : 'var(--pm-font-display)',
-        fontSize: isEmoji ? Math.round(size * 0.5) : Math.round(size * 0.36),
-        fontWeight: isEmoji ? 600 : 500,
+        ...num,
+        fontFamily: 'var(--pm-font-display)',
+        fontSize: Math.round(size * 0.36),
+        fontWeight: 500,
         lineHeight: 1,
       }}
     >
-      {data.avatarEmoji || data.initials}
+      {data.initials}
     </div>
   )
 }
