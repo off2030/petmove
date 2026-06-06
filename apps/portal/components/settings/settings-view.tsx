@@ -3,8 +3,12 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { signOut } from '@/lib/actions/profile'
+import { useCases } from '@/components/portal-shell/case-data-provider'
 import { C, EditPageShell, SectionCard } from '@/components/me/settings-shared'
 import { ThemeSwitcher } from './theme-switcher'
+
+const DELETION_GRACE_DAYS = 7
+const MS_PER_DAY = 24 * 3600 * 1000
 
 /**
  * 앱 설정 (/settings) — 상단바 ⚙ 진입.
@@ -125,6 +129,17 @@ function ValueRow({
 export function SettingsView() {
   const version = process.env.NEXT_PUBLIC_APP_VERSION
   const gitSha = process.env.NEXT_PUBLIC_GIT_SHA
+  const { profile } = useCases()
+  const scheduledAt = profile?.deletion_scheduled_at ?? null
+  const daysLeft = scheduledAt
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(scheduledAt).getTime() + DELETION_GRACE_DAYS * MS_PER_DAY - Date.now()) /
+            MS_PER_DAY,
+        ),
+      )
+    : null
 
   return (
     <EditPageShell title="설정" backHref="/me" backLabel="내 정보">
@@ -189,9 +204,28 @@ export function SettingsView() {
         </form>
       </SectionCard>
 
-      {/* 계정 삭제 — 단독 카드, 준비 중. 자리만 마련. */}
+      {/* 계정 삭제 — 단독 카드. 유예 중이면 'D-N 일 후 삭제 예정' 부제 노출. */}
       <SectionCard>
-        <ValueRow label="계정 삭제" value="준비 중" last />
+        <Link
+          href="/settings/account-delete"
+          prefetch
+          style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
+        >
+          <Row
+            label="계정 삭제"
+            right={
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                {daysLeft !== null && (
+                  <span style={{ fontSize: 13, color: C.warn }}>
+                    {daysLeft > 0 ? `${daysLeft}일 후 삭제 예정` : '오늘 삭제 예정'}
+                  </span>
+                )}
+                {chevron}
+              </span>
+            }
+            last
+          />
+        </Link>
       </SectionCard>
     </EditPageShell>
   )

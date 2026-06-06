@@ -31,6 +31,8 @@ export interface CustomerProfileRow {
   avatar_emoji: string | null
   avatar_color: string | null
   avatar_photo_url: string | null
+  /** 회원 탈퇴 요청 시각. NULL = 활성, 값 있으면 +7일 후 cron 이 hard delete + 케이스 익명화. */
+  deletion_scheduled_at: string | null
   created_at: string
   updated_at: string
 }
@@ -138,6 +140,53 @@ export async function signOut(): Promise<void> {
     /* 이미 만료된 토큰이어도 cookie 정리는 진행 */
   }
   redirect('/login')
+}
+
+/**
+ * 회원 탈퇴 요청 — customer_profiles.deletion_scheduled_at 에 현재 시각 기록.
+ *
+ * 유예 기간(요청 시각 +7일) 동안 cancelAccountDeletion 으로 취소 가능. 유예 종료
+ * 후 cron 이 auth.users DELETE (cascade 로 customer_profiles + case_customer_links
+ * 함께 삭제) + cases.customer_name / data.email / data.phone 익명화.
+ *
+ * 정책 근거: docs/legal/privacy.md §4 회원 탈퇴 및 정보 삭제.
+ */
+export async function requestAccountDeletion(): Promise<Result<{ scheduledAt: string }>> {
+  try {
+    const user = await getCurrentUser()
+    if (!user) return { ok: false, error: '인증 필요' }
+    const supabase = await createClient()
+    const now = new Date().toISOString()
+    const { error } = await supabase
+      .from('customer_profiles')
+      .update({ deletion_scheduled_at: now })
+      .eq('user_id', user.id)
+    if (error) return { ok: false, error: error.message }
+    revalidatePath('/settings')
+    revalidatePath('/settings/account-delete')
+    return { ok: true, value: { scheduledAt: now } }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/** 탈퇴 요청 취소 — deletion_scheduled_at = NULL. 유예 종료 전까지만 의미 있음. */
+export async function cancelAccountDeletion(): Promise<Result<true>> {
+  try {
+    const user = await getCurrentUser()
+    if (!user) return { ok: false, error: '인증 필요' }
+    const supabase = await createClient()
+    const { error } = await supabase
+      .from('customer_profiles')
+      .update({ deletion_scheduled_at: null })
+      .eq('user_id', user.id)
+    if (error) return { ok: false, error: error.message }
+    revalidatePath('/settings')
+    revalidatePath('/settings/account-delete')
+    return { ok: true, value: true }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
 }
 
 export async function autoLinkCasesByPhone(): Promise<Result<{ linked: number }>> {
