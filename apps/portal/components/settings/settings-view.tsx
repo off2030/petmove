@@ -179,8 +179,10 @@ export function SettingsView() {
         />
       </SectionCard>
 
-      {/* 로그아웃 — 단독 카드. form action 직접 호출. */}
-      <SectionCard>
+      {/* 계정 — 로그아웃 + 계정 삭제. 단독 카드 두 개로 분리하던 것을 한 카드로 묶어
+          마지막 라벨('앱 정보')이 시각적으로 흡수해 보이는 문제 해결. 계정 삭제 우측엔
+          유예 중이면 'D-N 일 후 삭제 예정' 부제 노출. */}
+      <SectionCard label="계정">
         <form action={signOut}>
           <button
             type="submit"
@@ -189,6 +191,7 @@ export function SettingsView() {
               padding: ROW_PAD,
               background: 'transparent',
               border: 'none',
+              borderBottom: `.5px solid ${C.line}`,
               textAlign: 'left',
               cursor: 'pointer',
               display: 'flex',
@@ -202,10 +205,6 @@ export function SettingsView() {
             {chevron}
           </button>
         </form>
-      </SectionCard>
-
-      {/* 계정 삭제 — 단독 카드. 유예 중이면 'D-N 일 후 삭제 예정' 부제 노출. */}
-      <SectionCard>
         <Link
           href="/settings/account-delete"
           prefetch
