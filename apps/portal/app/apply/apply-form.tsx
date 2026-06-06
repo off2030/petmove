@@ -324,7 +324,21 @@ const secondaryButtonClass = cn(
   'border border-[rgba(42,38,32,0.16)] bg-[#FBF7F1] text-[#2A2620] hover:bg-[#F0E8DC]',
 )
 
-const TOTAL_STEPS = 4
+/**
+ * 보호자 정보 prefill — 직영 '동물 추가' 시 기존 케이스에서 가져온 소유주 정보.
+ * 있으면 소유주 입력 단계를 건너뛰고(이미 아는 정보) 목적지→동물→선택만 진행.
+ */
+export interface OwnerPrefill {
+  customerName: string
+  lastNameEn: string
+  firstNameEn: string
+  phone: string
+  addressKr: string
+  addressEn: string
+  zipcode: string
+  sido: string
+  sigungu: string
+}
 
 /* ── Field Row helper — label(left) + REQ/hint(right) + input(below) ── */
 function FieldRow({
@@ -501,14 +515,31 @@ function StepProgress({ step, total }: { step: number; total: number }) {
   )
 }
 
-export function ApplyForm({ orgId, orgName, isPublic }: { orgId: string; orgName: string; isPublic: boolean }) {
+export function ApplyForm({
+  orgId,
+  orgName,
+  isPublic,
+  prefillOwner,
+}: {
+  orgId: string
+  orgName: string
+  isPublic: boolean
+  /** 직영 '동물 추가' — 기존 보호자 정보. 있으면 소유주 단계 건너뜀. */
+  prefillOwner?: OwnerPrefill | null
+}) {
   const router = useRouter()
   const [lang, setLang] = useState<Lang>('ko')
   const m = messages[lang]
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [missing, setMissing] = useState<Set<string>>(() => new Set())
+  // 보호자 정보가 prefill 되면 소유주(step 2) 를 건너뛴 [1,3,4] 흐름.
+  const skipOwner = !!prefillOwner
+  const visibleSteps = skipOwner ? [1, 3, 4] : [1, 2, 3, 4]
   const [step, setStep] = useState(1)
+  const stepPos = Math.max(0, visibleSteps.indexOf(step))
+  const isFirstStep = stepPos === 0
+  const isLastStep = stepPos === visibleSteps.length - 1
   const [submitted, setSubmitted] = useState(false)  // 공개(조직별) 폼 제출 후 '접수 완료' 화면
   // 마지막 단계 도착 시각 — 단계 전환 직후의 모바일 ghost click/더블탭으로 인한 자동 제출 방지.
   const lastAdvanceRef = useRef(0)
@@ -518,17 +549,18 @@ export function ApplyForm({ orgId, orgName, isPublic }: { orgId: string; orgName
   const [destQuery, setDestQuery] = useState('')
   const [destSheetOpen, setDestSheetOpen] = useState(false)
   const [tripType, setTripType] = useState<'round' | 'one_way'>('round')
-  const [customerName, setCustomerName] = useState('')
-  const [customerLastNameEn, setCustomerLastNameEn] = useState('')
-  const [customerFirstNameEn, setCustomerFirstNameEn] = useState('')
-  const [phone, setPhone] = useState('')
+  const [customerName, setCustomerName] = useState(prefillOwner?.customerName ?? '')
+  const [customerLastNameEn, setCustomerLastNameEn] = useState(prefillOwner?.lastNameEn ?? '')
+  const [customerFirstNameEn, setCustomerFirstNameEn] = useState(prefillOwner?.firstNameEn ?? '')
+  const [phone, setPhone] = useState(prefillOwner?.phone ?? '')
   const [email, setEmail] = useState('')  // 공개(조직별) 폼만 — 직영은 계정 이메일 사용
-  const [addressKr, setAddressKr] = useState('')  // 검색된 기본주소
+  // prefill 의 address_kr 은 이미 상세주소 합본 — addressDetail 은 비우고 그대로 제출.
+  const [addressKr, setAddressKr] = useState(prefillOwner?.addressKr ?? '')  // 검색된 기본주소
   const [addressDetail, setAddressDetail] = useState('')  // 상세주소
-  const [addressEn, setAddressEn] = useState('')
-  const [addressZipcode, setAddressZipcode] = useState('')
-  const [addressSido, setAddressSido] = useState('')
-  const [addressSigungu, setAddressSigungu] = useState('')
+  const [addressEn, setAddressEn] = useState(prefillOwner?.addressEn ?? '')
+  const [addressZipcode, setAddressZipcode] = useState(prefillOwner?.zipcode ?? '')
+  const [addressSido, setAddressSido] = useState(prefillOwner?.sido ?? '')
+  const [addressSigungu, setAddressSigungu] = useState(prefillOwner?.sigungu ?? '')
 
   // Daum Postcode
   const [scriptLoaded, setScriptLoaded] = useState(false)
@@ -723,7 +755,7 @@ export function ApplyForm({ orgId, orgName, isPublic }: { orgId: string; orgName
     }
     setMissing(new Set())
     setError(null)
-    setStep((s) => Math.min(s + 1, TOTAL_STEPS))
+    setStep(visibleSteps[Math.min(stepPos + 1, visibleSteps.length - 1)])
     lastAdvanceRef.current = Date.now()  // 방금 단계 전환 — 직후 자동 제출(ghost click) 차단용
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -731,20 +763,20 @@ export function ApplyForm({ orgId, orgName, isPublic }: { orgId: string; orgName
   function goBack() {
     setMissing(new Set())
     setError(null)
-    setStep((s) => Math.max(s - 1, 1))
+    setStep(visibleSteps[Math.max(stepPos - 1, 0)])
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     // 마지막 단계가 아니면 Enter/submit 은 다음 단계로.
-    if (step < TOTAL_STEPS) { goNext(); return }
+    if (!isLastStep) { goNext(); return }
     // 막 마지막 단계로 전환된 직후(모바일 ghost click/더블탭)의 자동 제출 차단.
     // 사용자가 '제출'을 의도적으로 누르려면 단계 전환 후 잠깐(>0.6s) 뒤여야 함.
     if (Date.now() - lastAdvanceRef.current < 600) return
 
-    // 최종 제출 — 전 단계 재검증, 이상 있으면 해당 단계로 이동.
-    for (let s = 1; s <= TOTAL_STEPS; s++) {
+    // 최종 제출 — 보이는 단계만 재검증(skipOwner 면 소유주 단계 제외), 이상 있으면 해당 단계로 이동.
+    for (const s of visibleSteps) {
       const { miss, formatError } = collectMissing(s)
       if (miss.size > 0 || formatError) {
         setStep(s)
@@ -861,7 +893,7 @@ export function ApplyForm({ orgId, orgName, isPublic }: { orgId: string; orgName
               </button>
             </div>
           </div>
-          <StepProgress step={step} total={TOTAL_STEPS} />
+          <StepProgress step={stepPos + 1} total={visibleSteps.length} />
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-md"
@@ -1075,12 +1107,12 @@ export function ApplyForm({ orgId, orgName, isPublic }: { orgId: string; orgName
 
           {/* Navigation — 이전 / 다음 · 마지막 단계는 제출 */}
           <div className="flex gap-sm pt-2">
-            {step > 1 && (
+            {!isFirstStep && (
               <button type="button" onClick={goBack} className={secondaryButtonClass}>
                 {m.back}
               </button>
             )}
-            {step < TOTAL_STEPS ? (
+            {!isLastStep ? (
               <button type="button" onClick={goNext} className={cn(primaryButtonClass, 'flex-1')}>
                 {m.next}
               </button>
@@ -1091,7 +1123,7 @@ export function ApplyForm({ orgId, orgName, isPublic }: { orgId: string; orgName
             )}
           </div>
 
-          {step === TOTAL_STEPS && (
+          {isLastStep && (
             <p className="text-center font-display text-[11px] uppercase tracking-[1.5px] text-[#9A9286] pb-10">
               {m.submitFooter}
             </p>
