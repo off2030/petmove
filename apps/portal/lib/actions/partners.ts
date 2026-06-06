@@ -183,11 +183,36 @@ async function setPartnerOrg(
     const caseIds = (links ?? []).map((l) => (l as { case_id: string }).case_id)
     if (caseIds.length === 0) return { ok: true, value: { updated: 0 } }
 
+    // UPDATE 전 prev 값 + customer_name 수집 — 알림 분기 계산용.
+    const column = COLUMN_BY_ROLE[role]
+    const { data: prevCases } = await admin
+      .from('cases')
+      .select(`id, customer_name, ${column}`)
+      .in('id', caseIds)
+    const prevRows = (prevCases ?? []) as Array<Record<string, unknown>>
+    const prevOrgIds = new Set(
+      prevRows.map((r) => r[column]).filter((v): v is string => typeof v === 'string' && !!v),
+    )
+    const customerName = ((prevRows[0]?.customer_name as string | null) ?? '').trim()
+
     const { error: updateError } = await admin
       .from('cases')
-      .update({ [COLUMN_BY_ROLE[role]]: orgId })
+      .update({ [column]: orgId })
       .in('id', caseIds)
     if (updateError) return { ok: false, error: updateError.message }
+
+    // 알림 — 옛 조직(새 값과 다른) 에 '해제', 새 조직에 '연결'. best-effort.
+    try {
+      await notifyPartnerChange(admin, {
+        role,
+        prevOrgIds: [...prevOrgIds].filter((id) => id !== orgId),
+        newOrgId: orgId,
+        customerName: customerName || '보호자',
+        caseCount: caseIds.length,
+      })
+    } catch {
+      /* 알림 실패가 UPDATE 성공을 막지 않음 */
+    }
 
     revalidatePath('/me')
     revalidatePath('/me/vet')
@@ -195,5 +220,106 @@ async function setPartnerOrg(
     return { ok: true, value: { updated: caseIds.length } }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
+  }
+}
+
+// ─────────────────────────────────────────────────
+// 봇 알림 — 연결/해제 시 운영자 system 대화방에 펫무브워크 봇 메시지
+// notify_new_apply_case 패턴(20260516000001) 재사용. row 별 트리거가 아니라
+// 보호자 단위로 1회만 발송 — 케이스 N개여도 메시지는 조직별 1건.
+// ─────────────────────────────────────────────────
+
+const ROLE_LABEL: Record<PartnerRole, string> = {
+  vet: '담당 동물병원',
+  transport: '운송업체',
+}
+
+type AdminClient = ReturnType<
+  typeof import('@petmove/auth') extends { createAdminClient: () => infer R } ? () => R : never
+>
+
+async function notifyPartnerChange(
+  admin: AdminClient,
+  args: {
+    role: PartnerRole
+    prevOrgIds: string[]
+    newOrgId: string | null
+    customerName: string
+    caseCount: number
+  },
+): Promise<void> {
+  // 봇 사용자 — 없으면 알림 skip (super-admin 의 봇 설정에서 생성됨).
+  const { data: bot } = await admin
+    .from('profiles')
+    .select('id')
+    .eq('email', 'bot@petmove.work')
+    .maybeSingle()
+  const botId = (bot as { id: string } | null)?.id
+  if (!botId) return
+
+  const label = ROLE_LABEL[args.role]
+  const sizeNote = args.caseCount > 1 ? ` (케이스 ${args.caseCount}건)` : ''
+
+  for (const orgId of args.prevOrgIds) {
+    await sendBotMessageToOrg(
+      admin,
+      botId,
+      orgId,
+      `${label} 연결 해제 — ${args.customerName} 보호자가 ${label} 연결을 해제했습니다.${sizeNote}`,
+    )
+  }
+  if (args.newOrgId) {
+    await sendBotMessageToOrg(
+      admin,
+      botId,
+      args.newOrgId,
+      `새 ${label} 연결 — ${args.customerName} 보호자가 ${label} 로 연결했습니다.${sizeNote}`,
+    )
+  }
+}
+
+/** 조직의 모든 멤버에게 system 대화방을 통해 봇 메시지 1건씩. */
+async function sendBotMessageToOrg(
+  admin: AdminClient,
+  botId: string,
+  orgId: string,
+  body: string,
+): Promise<void> {
+  const { data: members } = await admin
+    .from('memberships')
+    .select('user_id')
+    .eq('org_id', orgId)
+  for (const m of (members ?? []) as Array<{ user_id: string }>) {
+    const userId = m.user_id
+    // system 대화방 — 사용자별 1개, 없으면 생성.
+    const { data: existing } = await admin
+      .from('conversations')
+      .select('id')
+      .eq('kind', 'system')
+      .eq('created_by', userId)
+      .limit(1)
+      .maybeSingle()
+    let convId = (existing as { id: string } | null)?.id ?? null
+    if (!convId) {
+      const { data: created } = await admin
+        .from('conversations')
+        .insert({ kind: 'system', created_by: userId, name: null })
+        .select('id')
+        .single()
+      convId = (created as { id: string } | null)?.id ?? null
+    }
+    if (!convId) continue
+    await admin
+      .from('conversation_participants')
+      .upsert(
+        [
+          { conversation_id: convId, user_id: userId },
+          { conversation_id: convId, user_id: botId },
+        ],
+        { onConflict: 'conversation_id,user_id', ignoreDuplicates: true },
+      )
+    await admin
+      .from('messages')
+      .insert({ conversation_id: convId, sender_user_id: botId, content: body })
   }
 }
