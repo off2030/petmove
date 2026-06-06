@@ -76,7 +76,7 @@ export function TravelFormSections({
         />
         {hasSibling && (
           <SegmentField
-            label="함께 여행"
+            label="함께 준비"
             value={form.co_progress ? 'on' : 'off'}
             onChange={(v) => set('co_progress', v === 'on')}
             options={CO_PROGRESS_OPTIONS}
@@ -103,7 +103,7 @@ export function TravelFormSections({
         />
         {hasSibling && (
           <SegmentField
-            label="함께 여행"
+            label="함께 준비"
             value={form.co_progress ? 'on' : 'off'}
             onChange={(v) => set('co_progress', v === 'on')}
             options={CO_PROGRESS_OPTIONS}

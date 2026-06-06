@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import type { CSSProperties, ReactNode } from 'react'
-import type { CaseRow } from '@petmove/domain'
+import { buildCaseJourneyContext, type CaseRow } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import {
   buildProfileView,
@@ -203,10 +203,9 @@ function PetCard({ case_, index, href }: { case_: CaseRow; index: number; href: 
       avatar={<PetAvatarDisplay case_={case_} index={index} size={HERO_AVATAR} />}
       nameKo={pet.name}
       nameEn={pet.nameEn}
-      subtitle={travel ?? '여행지 미설정'}
-      subtitleMuted={!travel}
-      subtitleMono
-      extra={meta || (!travel ? '아바타를 눌러 정보를 등록해보세요' : null)}
+      subtitle={meta || '아바타를 눌러 정보를 등록해보세요'}
+      subtitleMuted={!meta}
+      extra={travel}
       extraMono={false}
     />
   )
@@ -217,24 +216,24 @@ function PetCard({ case_, index, href }: { case_: CaseRow; index: number; href: 
 const TRIP_LABEL: Record<string, string> = { round: '왕복', one_way: '편도' }
 
 /**
- * 동물 카드 subtitle 용 여행 요약 한 줄. 목적지가 있으면 '한국 ⇄ 일본 · 왕복 · D-30'
- * 같은 합본, 출국일만 있으면 'D-30', 둘 다 없으면 null.
+ * 동물 카드 subtitle 용 여행 요약 한 줄 — '한국 ⇄ 일본 · 왕복'.
+ *
+ * tripType 은 buildCaseJourneyContext 로 — data.trip_type 이 string 이거나
+ * destination-scoped 객체({ '일본': 'round' }) 인 두 형식 모두 정확히 분기 ('round' →
+ * 양방향 ⇄, 그 외 → 단방향 →). 단순 typeof string 체크는 객체 형식을 놓쳐 늘 단방향이
+ * 보였었다.
+ *
+ * D-day 는 카드에서 제외 — 사용자 요청에 따라 카드를 가볍게.
  */
 function petTravelSummaryText(case_: CaseRow): string | null {
-  const data = (case_.data ?? {}) as Record<string, unknown>
-  const tripType = typeof data.trip_type === 'string' ? data.trip_type : null
   const dest = case_.destination?.trim() || null
-  const departure = case_.departure_date?.trim() || null
-  if (!dest && !departure) return null
+  if (!dest) return null
 
-  const parts: string[] = []
-  if (dest) parts.push(`한국 ${tripType === 'round' ? '⇄' : '→'} ${dest}`)
-  if (tripType && TRIP_LABEL[tripType]) parts.push(TRIP_LABEL[tripType])
-  if (departure) {
-    const d = dDayLabel(departure)
-    if (d) parts.push(d)
-  }
-  return parts.length > 0 ? parts.join(' · ') : null
+  const ctx = buildCaseJourneyContext(case_)
+  const arrow = ctx.tripType === 'round' ? '⇄' : '→'
+  const parts: string[] = [`한국 ${arrow} ${dest}`]
+  if (ctx.tripType && TRIP_LABEL[ctx.tripType]) parts.push(TRIP_LABEL[ctx.tripType])
+  return parts.join(' · ')
 }
 
 // ── Partner stub (병원·운송 업체) ─────────────────────────────────────────
