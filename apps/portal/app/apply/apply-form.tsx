@@ -533,9 +533,11 @@ export function ApplyForm({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [missing, setMissing] = useState<Set<string>>(() => new Set())
-  // 보호자 정보가 prefill 되면 소유주(step 2) 를 건너뛴 [1,3,4] 흐름.
+  // 보호자 정보가 prefill 되면 소유주(step 2) 를 건너뛴 흐름. 옛 step 4(추가 정보 / 선택)는
+  // 폐기 — 신청 시점에는 묻지 않고 동물 상세에서 사후 입력. PetFormSection 의 'optional'
+  // 분기는 코드 보존(향후 복원 대비).
   const skipOwner = !!prefillOwner
-  const visibleSteps = skipOwner ? [1, 3, 4] : [1, 2, 3, 4]
+  const visibleSteps = skipOwner ? [1, 3] : [1, 2, 3]
   const [step, setStep] = useState(1)
   const stepPos = Math.max(0, visibleSteps.indexOf(step))
   const isFirstStep = stepPos === 0
@@ -1067,36 +1069,7 @@ export function ApplyForm({
           )}
           </>)}
 
-          {/* Step 4 · 추가 정보 (선택) */}
-          {step === 4 && (<>
-          <div className="px-1 pb-1">
-            <p className="font-display text-[15px] text-[#2A2620]">{m.optionalStepTitle}</p>
-            <p className="mt-1 font-display text-[13px] text-[#9A9286]/80">{m.optionalHint}</p>
-          </div>
-          {pets.map((pet, pi) => (
-          <section key={pi} className={sectionCardClass}>
-            {pets.length > 1 && (
-              <div className="flex items-baseline gap-[10px] pb-3 border-b border-[rgba(42,38,32,0.12)] mb-1">
-                <h2 className={sectionTitleClass}>{m.petInfoN(pi + 1)}</h2>
-              </div>
-            )}
-            <PetFormSection
-              part="optional"
-              pet={pet}
-              index={pi}
-              updatePet={updatePet}
-              enWarnings={enWarnings}
-              composingRef={composingRef}
-              handleEnInput={handleEnInput}
-              handleEnCompositionEnd={handleEnCompositionEnd}
-              getFilteredBreeds={getFilteredBreeds}
-              missing={missing}
-              m={m}
-              lang={lang}
-            />
-          </section>
-          ))}
-          </>)}
+          {/* Step 4(추가 정보 / 선택) 폐기 — 신청 시점에 묻지 않고 동물 상세에서 사후 입력. */}
 
           {/* Error */}
           {error && (
