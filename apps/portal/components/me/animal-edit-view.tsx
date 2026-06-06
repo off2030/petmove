@@ -155,6 +155,16 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
   )
 }
 
+/** 한국어 받침에 맞춰 조사 선택 — 마지막 글자가 한글이고 종성 있으면 withJong, 아니면 withoutJong. */
+function josa(name: string, withJong: string, withoutJong: string): string {
+  if (!name) return withoutJong
+  const last = name[name.length - 1]
+  const code = last.charCodeAt(0)
+  if (code < 0xac00 || code > 0xd7a3) return withoutJong
+  const hasJong = (code - 0xac00) % 28 !== 0
+  return hasJong ? withJong : withoutJong
+}
+
 /**
  * 동물(케이스) 삭제 — 2단계 인라인 확인. 소프트 삭제(deleted_at)라 목록·앱에서 사라지고
  * 운영자에게는 남아 복구 가능. 삭제 후 케이스 목록을 새로고침하고 내 정보로 복귀.
@@ -225,10 +235,10 @@ function DeleteAnimalSection({ caseId, petName }: { caseId: string; petName: str
           }}
         >
           <p style={{ margin: 0, fontSize: 14, color: C.ink, lineHeight: 1.55 }}>
-            {petName ? `'${petName}'` : '이 동물'}을(를) 삭제할까요?
+            {petName ? `'${petName}'` : '이 동물'}{petName ? josa(petName, '을', '를') : '을'} 삭제할까요?
           </p>
           <p style={{ margin: '6px 0 0', fontSize: 12, color: C.ink3, lineHeight: 1.55 }}>
-            일정·서류가 목록에서 사라집니다. 복구가 필요하면 펫무브에 문의해주세요.
+            {petName ? `${petName}의` : '이 동물의'} 모든 기록이 삭제됩니다.
           </p>
           {error && (
             <p style={{ margin: '10px 0 0', fontSize: 12, color: C.warn, lineHeight: 1.5 }}>{error}</p>
