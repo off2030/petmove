@@ -1096,11 +1096,7 @@ export function ApplyForm({
             )}
           </div>
 
-          {isLastStep && (
-            <p className="text-center font-display text-[11px] uppercase tracking-[1.5px] text-[#9A9286] pb-10">
-              {m.submitFooter}
-            </p>
-          )}
+          {/* submitFooter 폐기 — 마지막 단계의 안내 문구는 표시하지 않음. */}
         </form>
       </div>
 
