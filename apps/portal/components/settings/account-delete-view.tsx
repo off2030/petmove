@@ -2,6 +2,7 @@
 
 import { useTransition, type CSSProperties } from 'react'
 import { useRouter } from 'next/navigation'
+import { buildCaseJourneyContext, type CaseRow } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { requestAccountDeletion, cancelAccountDeletion } from '@/lib/actions/profile'
@@ -28,6 +29,14 @@ function formatDate(iso: string): string {
 
 function daysUntil(iso: string): number {
   return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / MS_PER_DAY))
+}
+
+/** '한국 ⇄ 일본' (왕복) 또는 '한국 → 일본' (편도). 목적지 미설정이면 null. */
+function travelSummary(case_: CaseRow): string | null {
+  const dest = case_.destination?.trim() || null
+  if (!dest) return null
+  const arrow = buildCaseJourneyContext(case_).tripType === 'round' ? '⇄' : '→'
+  return `한국 ${arrow} ${dest}`
 }
 
 export function AccountDeleteView() {
@@ -109,35 +118,36 @@ export function AccountDeleteView() {
       ) : (
         <>
           <SectionCard marginTop={8}>
-            <div style={{ padding: '14px 0', fontSize: 13, color: C.ink2, lineHeight: 1.7 }}>
-              <div>계정 삭제를 요청하면 7일 유예 후 회원 정보가 삭제됩니다.</div>
-              <div>삭제 후에는 되돌릴 수 없습니다.</div>
-              <div>유예 중에는 이 메뉴에서 취소할 수 있습니다.</div>
-            </div>
+            <p style={{ margin: 0, padding: '14px 0', fontSize: 13, color: C.ink2, lineHeight: 1.7 }}>
+              계정 삭제를 요청하면 7일 유예 후 회원 정보가 삭제됩니다. 삭제 후에는 되돌릴 수 없으며,
+              유예 중에는 이 메뉴에서 취소할 수 있습니다.
+            </p>
           </SectionCard>
 
           {caseCount > 0 && (
             <SectionCard label="현재 등록된 케이스">
-              <div
-                style={{
-                  padding: '13px 0 6px',
-                  fontSize: 15,
-                  color: C.ink,
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {caseCount}건
-              </div>
-              <div
-                style={{
-                  padding: '0 0 13px',
-                  fontSize: 12,
-                  color: C.ink3,
-                  lineHeight: 1.55,
-                }}
-              >
-                신청폼을 통해 진행 중인 절차는 담당 운영자에게 안내가 전달됩니다.
-              </div>
+              {cases.map((c, i) => {
+                const name = c.pet_name?.trim() || '이름 미설정'
+                const travel = travelSummary(c)
+                return (
+                  <div
+                    key={c.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'baseline',
+                      padding: '11px 0',
+                      borderBottom: i === cases.length - 1 ? 'none' : `.5px solid ${C.line}`,
+                      gap: 12,
+                    }}
+                  >
+                    <span style={{ fontSize: 15, color: C.ink }}>{name}</span>
+                    <span style={{ fontSize: 13, color: travel ? C.ink2 : C.ink3 }}>
+                      {travel ?? '목적지 미설정'}
+                    </span>
+                  </div>
+                )
+              })}
             </SectionCard>
           )}
 
