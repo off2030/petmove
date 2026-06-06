@@ -5,6 +5,7 @@ import { supabaseBrowser } from '@petmove/auth'
 import {
   AVATAR_COLOR_IDS,
   AVATAR_GRADIENTS,
+  avatarTextColor,
   isAvatarColorId,
   type AvatarColorId,
 } from '@/lib/avatar'
@@ -117,7 +118,7 @@ export function GuardianAvatarPicker({ profile, userId, initials, onUpdated }: P
             // eslint-disable-next-line @next/next/no-img-element
             <img src={currentPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
-            <span style={glyphSpanStyle(52)}>{initials}</span>
+            <span style={glyphSpanStyle(52, currentColor)}>{initials}</span>
           )}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -197,17 +198,6 @@ function PickerGrid({
     flexShrink: 0,
     transition: 'transform .15s, box-shadow .15s',
   }
-  const resetBtn: React.CSSProperties = {
-    ...slotBase,
-    width: 'auto',
-    padding: '0 12px',
-    background: 'transparent',
-    // C.ink3 는 어두운 surface 위에서 너무 약함 — ink2 로 가독성 확보.
-    color: C.ink2,
-    fontSize: 11,
-    fontWeight: 500,
-    boxShadow: `inset 0 0 0 .5px ${C.line}`,
-  }
   const actionBtn: React.CSSProperties = {
     height: 32,
     padding: '0 14px',
@@ -265,8 +255,33 @@ function PickerGrid({
             />
           )
         })}
-        <button type="button" disabled={busy} onClick={onResetColor} aria-label="색상 초기화" style={resetBtn}>
-          기본
+        {/* 기본(색상 없음) — 다른 swatch 와 동일한 원형. 사선으로 "없음" 표현. */}
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onResetColor}
+          aria-label="기본 색상"
+          aria-pressed={currentColor === null}
+          style={{
+            ...slotBase,
+            background: 'var(--pm-accent-soft)',
+            boxShadow:
+              currentColor === null
+                ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px #735B3D'
+                : `inset 0 0 0 .5px ${C.line}`,
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+            <line
+              x1="3.5"
+              y1="12.5"
+              x2="12.5"
+              y2="3.5"
+              stroke="var(--pm-accent)"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+            />
+          </svg>
         </button>
       </div>
     </div>
@@ -297,9 +312,9 @@ function avatarCircleStyle(
   }
 }
 
-function glyphSpanStyle(size: number): React.CSSProperties {
+function glyphSpanStyle(size: number, color: AvatarColorId | null): React.CSSProperties {
   return {
-    color: 'var(--pm-accent)',
+    color: avatarTextColor(color),
     fontFamily: 'var(--pm-font-display)',
     fontWeight: 500,
     fontSize: Math.round(size * 0.36),

@@ -45,6 +45,26 @@ export const AVATAR_GRADIENTS: Record<AvatarColorId, string> = {
 }
 
 /**
+ * 각 그라데이션 위에 올리는 이니셜 글자색. 밝은 파스텔(sage·rose·ocean·sand·slate)은
+ * 같은 계열 진한 색, 어두운/채도 높은 색(orange·terracotta·purple)은 흰색 — 대비 확보.
+ */
+export const AVATAR_TEXT_COLORS: Record<AvatarColorId, string> = {
+  orange: '#FFFFFF',
+  purple: '#FFFFFF',
+  terracotta: '#FFFFFF',
+  sage: '#3F5C43',
+  rose: '#8A4744',
+  ocean: '#2F5167',
+  sand: '#6E5727',
+  slate: '#3A4150',
+}
+
+/** 아바타 배경색에 맞는 이니셜 글자색. color 없으면 기본(accent-soft 위 accent). */
+export function avatarTextColor(color: AvatarColorId | null): string {
+  return color ? AVATAR_TEXT_COLORS[color] : 'var(--pm-accent)'
+}
+
+/**
  * Index 정보 없는 호출자(단일 케이스 페이지 등)를 위한 hash fallback.
  * 보호자 케이스 목록(TopBar / Picker)에선 index 를 넘겨 충돌 없는 순환 사용.
  */

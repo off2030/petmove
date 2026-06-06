@@ -9,7 +9,7 @@ import {
   buildPetBlock,
   type GuardianBlock,
 } from '@/lib/profile/catalog'
-import { AVATAR_GRADIENTS, isAvatarColorId } from '@/lib/avatar'
+import { AVATAR_GRADIENTS, avatarTextColor, isAvatarColorId } from '@/lib/avatar'
 import { dDayLabel } from '@/lib/cases/info-form'
 import { PetAvatarDisplay } from './pet-avatar-display'
 import { C, serif, monoCap } from './settings-shared'
@@ -158,7 +158,7 @@ function GuardianAvatarDisplay({ data, size }: { data: GuardianBlock; size: numb
         borderRadius: '50%',
         flexShrink: 0,
         background: color ? AVATAR_GRADIENTS[color] : C.soft,
-        color: color ? '#fff' : C.accent,
+        color: avatarTextColor(color),
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
