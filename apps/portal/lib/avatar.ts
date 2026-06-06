@@ -61,6 +61,21 @@ export const AVATAR_EMOJIS: readonly string[] = [
   '🐾',
 ] as const
 
+/**
+ * 보호자(사람) 아바타용 이모지. 펫 picker 의 동물 세트와 분리 — 보호자에는 사람 모양.
+ * 여성·남성·중립 + 연령대를 섞어 누구나 자기 비슷한 걸 고를 수 있게.
+ */
+export const GUARDIAN_AVATAR_EMOJIS: readonly string[] = [
+  '👩',
+  '👨',
+  '🧑',
+  '👧',
+  '👦',
+  '👵',
+  '👴',
+  '🧓',
+] as const
+
 export function isAvatarColorId(value: string | null | undefined): value is AvatarColorId {
   return !!value && (AVATAR_COLOR_IDS as readonly string[]).includes(value)
 }

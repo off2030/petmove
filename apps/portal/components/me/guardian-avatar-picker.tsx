@@ -4,8 +4,8 @@ import { useRef, useState, useTransition } from 'react'
 import { supabaseBrowser } from '@petmove/auth'
 import {
   AVATAR_COLOR_IDS,
-  AVATAR_EMOJIS,
   AVATAR_GRADIENTS,
+  GUARDIAN_AVATAR_EMOJIS,
   isAvatarColorId,
   type AvatarColorId,
 } from '@/lib/avatar'
@@ -97,7 +97,7 @@ export function GuardianAvatarPicker({ profile, userId, initials, onUpdated }: P
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
-          aria-label="보호자 아바타 변경"
+          aria-label="프로필 이미지 변경"
           aria-expanded={open}
           className="pm-pressable"
           style={{
@@ -119,10 +119,10 @@ export function GuardianAvatarPicker({ profile, userId, initials, onUpdated }: P
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13, color: C.ink2, fontWeight: 500 }}>
-            {open ? '이모지·색상·사진 선택' : '아바타'}
+            {open ? '사진·이모지·색상 선택' : '프로필 이미지 설정'}
           </div>
           <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
-            {open ? '눌러서 닫기' : '아바타를 눌러 이모지·색상·사진을 바꿔보세요'}
+            {open ? '눌러서 닫기' : '눌러서 사진·이모지·색상을 바꿔보세요'}
           </div>
         </div>
       </div>
@@ -244,7 +244,7 @@ function PickerGrid({
 
       <div style={{ ...monoCap, marginTop: 4 }}>이모지</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {AVATAR_EMOJIS.map((e) => {
+        {GUARDIAN_AVATAR_EMOJIS.map((e) => {
           const selected = currentEmoji === e
           return (
             <button
