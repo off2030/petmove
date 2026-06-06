@@ -15,6 +15,10 @@ export interface CaseRow {
   avatar_emoji: string | null
   avatar_color: string | null
   avatar_photo_url: string | null
+  /** 보호자가 [내 정보 > 담당 동물병원] 에서 선택한 조직 — 미연결 시 NULL. */
+  vet_org_id: string | null
+  /** 보호자가 [내 정보 > 운송업체] 에서 선택한 조직 — 미연결 시 NULL. */
+  transport_org_id: string | null
   data: Record<string, unknown>
   created_at: string
   updated_at: string
