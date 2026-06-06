@@ -1,17 +1,26 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
+import { execSync } from 'node:child_process'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // package.json 의 version 을 클라이언트에 노출 — 설정 > 앱 정보 행에서 표시.
 const require = createRequire(import.meta.url)
 const pkgVersion = require('./package.json').version
+// 빌드 시점의 git short SHA — 설정 > 앱 정보 의 부제(베타 단계 버그 신고용).
+// Vercel 환경에서는 VERCEL_GIT_COMMIT_SHA 가 자동 제공, 로컬은 git rev-parse fallback.
+const gitSha = (() => {
+  const fromVercel = process.env.VERCEL_GIT_COMMIT_SHA
+  if (fromVercel) return fromVercel.slice(0, 7)
+  try { return execSync('git rev-parse --short HEAD').toString().trim() } catch { return '' }
+})()
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   env: {
     NEXT_PUBLIC_APP_VERSION: pkgVersion,
+    NEXT_PUBLIC_GIT_SHA: gitSha,
   },
   // Monorepo root — Vercel 의 serverless 함수가 packages/* 를 번들에 포함하도록.
   outputFileTracingRoot: path.join(__dirname, '../../'),

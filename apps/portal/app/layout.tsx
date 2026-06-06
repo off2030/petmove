@@ -6,8 +6,8 @@ import { ServiceWorkerRegister } from '@/components/sw-register'
 import { ThemeProvider } from '@/components/portal-shell/theme-provider'
 
 // 최초 paint 전(하이드레이션 전) <html data-theme> + theme-color 를 동기 설정해 다크모드 FOUC 방지.
-// 저장된 pm-theme(없으면 system) → OS 설정으로 라이트/다크 결정. ThemeProvider 가 이후 상태를 이어받음.
-const themeNoFlash = `(function(){try{var m=localStorage.getItem('pm-theme')||'system';var d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.classList.toggle('dark',d);var c=d?'#1C1916':'#F5EFE8';var e=document.querySelector('meta[name="theme-color"]');if(!e){e=document.createElement('meta');e.setAttribute('name','theme-color');document.head.appendChild(e);}e.setAttribute('content',c);}catch(_){}})();`
+// 저장된 pm-theme(없으면 light) → 'system' 일 때만 OS 따라감. ThemeProvider 가 이후 상태를 이어받음.
+const themeNoFlash = `(function(){try{var m=localStorage.getItem('pm-theme')||'light';var d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.classList.toggle('dark',d);var c=d?'#1C1916':'#F5EFE8';var e=document.querySelector('meta[name="theme-color"]');if(!e){e=document.createElement('meta');e.setAttribute('name','theme-color');document.head.appendChild(e);}e.setAttribute('content',c);}catch(_){}})();`
 
 // Portal 폰트 스택 — next/font self-host Inter Tight + globals.css @font-face 의 Pretendard/Alonzo.
 // CSS 변수 --font-sans 로 노출하고, globals.css 가 semantic 토큰

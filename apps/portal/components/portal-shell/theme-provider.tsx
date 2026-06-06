@@ -50,13 +50,14 @@ function apply(resolved: Resolved) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // 초기값 'system' — hydration mismatch 방지(서버는 항상 동일). 실제 값은 mount 후 localStorage 에서.
-  const [mode, setModeState] = useState<ThemeMode>('system')
+  // 초기값 'light' — 디폴트는 라이트 고정(사용자가 설정 > 화면 에서 명시적으로 system/dark 선택).
+  // hydration mismatch 방지 위해 서버·클라이언트 일치 필요 — no-flash 스크립트의 디폴트와 동일해야.
+  const [mode, setModeState] = useState<ThemeMode>('light')
   const [resolved, setResolved] = useState<Resolved>('light')
 
   // mount: localStorage 의 저장된 mode 로 동기 (no-flash 스크립트가 이미 DOM 엔 반영함).
   useEffect(() => {
-    const stored = (localStorage.getItem(STORAGE_KEY) as ThemeMode | null) ?? 'system'
+    const stored = (localStorage.getItem(STORAGE_KEY) as ThemeMode | null) ?? 'light'
     setModeState(stored)
     setResolved(resolve(stored))
   }, [])

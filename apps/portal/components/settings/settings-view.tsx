@@ -2,19 +2,22 @@
 
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { signOut } from '@/lib/actions/profile'
 import { C, EditPageShell, SectionCard } from '@/components/me/settings-shared'
 import { ThemeSwitcher } from './theme-switcher'
 
 /**
- * 앱 설정 허브 (/settings) — 상단바 ⚙ 진입.
+ * 앱 설정 (/settings) — 상단바 ⚙ 진입.
  * 등록 데이터(보호자·반려동물·여행 등)는 /me(내 정보), 여기는 앱 환경/계정/법적 항목.
- *   화면(테마) · 계정 · 약관·정책 · 지원 · 앱 정보.
+ *   알림 · 화면(테마) · 약관·정책 · 지원 · 앱 정보 · 로그아웃 · 계정 삭제.
  * 톤: settings-shared 의 EditPageShell + SectionCard 재사용 (내 정보 탭과 동일).
  *
- * 테마 row 는 Phase 1 에선 '준비 중' — 실제 3단(시스템/라이트/다크) 스위처는 다크모드 도입 시 연결.
+ * 옛 `/me/account` 페이지(이메일·알림·로그아웃 3 row) 는 폐기 — 이메일은 보호자 카드에
+ * 이미 있고, 알림·로그아웃은 여기 톱레벨로 끌어올렸다. 계정 삭제 자리는 마련(준비 중).
  */
 
 const ROW_PAD = '13px 0'
+const SUPPORT_EMAIL = 'support@petmove.co.kr'
 
 /** label 좌 + 우측 슬롯(값/쉐브론). 마지막이 아니면 하단 hairline. */
 function Row({
@@ -58,21 +61,62 @@ function LinkRow({ href, label, last }: { href: string; label: string; last?: bo
   )
 }
 
-/** 외부 링크(mailto 등) 행. */
-function ExtRow({ href, label, last }: { href: string; label: string; last?: boolean }) {
+/** 외부 링크(mailto 등) 행 — 라벨 좌, 주소(또는 값) + 쉐브론 우. 주소를 그대로 노출해 사용자가
+ *  어디로 이동하는지 인지할 수 있게 한다. */
+function ExtRow({
+  href,
+  label,
+  value,
+  last,
+}: {
+  href: string
+  label: string
+  value?: string
+  last?: boolean
+}) {
+  const right = (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+      {value && (
+        <span
+          style={{
+            fontSize: 13,
+            color: C.ink3,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            maxWidth: 220,
+          }}
+        >
+          {value}
+        </span>
+      )}
+      {chevron}
+    </span>
+  )
   return (
     <a href={href} style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
-      <Row label={label} right={chevron} last={last} />
+      <Row label={label} right={right} last={last} />
     </a>
   )
 }
 
-/** 값 표시 전용 행 (이동 없음). */
-function ValueRow({ label, value, last }: { label: string; value: string; last?: boolean }) {
+/** 값 표시 전용 행 (이동 없음). placeholder 톤(ink3) 또는 본문 톤(ink) 선택. */
+function ValueRow({
+  label,
+  value,
+  muted = true,
+  last,
+}: {
+  label: string
+  value: string
+  /** 값을 placeholder 톤(ink3)으로 — '준비 중' 같은 미구현 표시용. 기본 true. */
+  muted?: boolean
+  last?: boolean
+}) {
   return (
     <Row
       label={label}
-      right={<span style={{ fontSize: 15, color: C.ink3 }}>{value}</span>}
+      right={<span style={{ fontSize: 15, color: muted ? C.ink3 : C.ink2 }}>{value}</span>}
       last={last}
     />
   )
@@ -80,17 +124,18 @@ function ValueRow({ label, value, last }: { label: string; value: string; last?:
 
 export function SettingsView() {
   const version = process.env.NEXT_PUBLIC_APP_VERSION
+  const gitSha = process.env.NEXT_PUBLIC_GIT_SHA
 
   return (
     <EditPageShell title="설정" backHref="/me" backLabel="내 정보">
-      <SectionCard label="화면" marginTop={8}>
+      <SectionCard label="알림" marginTop={8}>
+        <ValueRow label="푸시 알림" value="준비 중" last />
+      </SectionCard>
+
+      <SectionCard label="화면">
         <div style={{ padding: '14px 0' }}>
           <ThemeSwitcher />
         </div>
-      </SectionCard>
-
-      <SectionCard label="계정">
-        <LinkRow href="/me/account" label="계정 관리" last />
       </SectionCard>
 
       <SectionCard label="약관·정책">
@@ -99,11 +144,54 @@ export function SettingsView() {
       </SectionCard>
 
       <SectionCard label="지원">
-        <ExtRow href="mailto:support@petmove.co.kr" label="문의·지원" last />
+        <ExtRow href={`mailto:${SUPPORT_EMAIL}`} label="이메일" value={SUPPORT_EMAIL} last />
       </SectionCard>
 
       <SectionCard label="앱 정보">
-        <ValueRow label="버전" value={version ? `v${version}` : '—'} last />
+        <Row
+          label="버전"
+          right={
+            <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6 }}>
+              <span style={{ fontSize: 15, color: C.ink2 }}>{version ? `v${version}` : '—'}</span>
+              {gitSha && (
+                <span style={{ fontSize: 11, color: C.ink3, fontVariantNumeric: 'tabular-nums' }}>
+                  {gitSha}
+                </span>
+              )}
+            </span>
+          }
+          last
+        />
+      </SectionCard>
+
+      {/* 로그아웃 — 단독 카드. form action 직접 호출. */}
+      <SectionCard>
+        <form action={signOut}>
+          <button
+            type="submit"
+            style={{
+              width: '100%',
+              padding: ROW_PAD,
+              background: 'transparent',
+              border: 'none',
+              textAlign: 'left',
+              cursor: 'pointer',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              color: 'inherit',
+              fontFamily: 'inherit',
+            }}
+          >
+            <span style={{ fontSize: 13, color: C.ink2 }}>로그아웃</span>
+            {chevron}
+          </button>
+        </form>
+      </SectionCard>
+
+      {/* 계정 삭제 — 단독 카드, 준비 중. 자리만 마련. */}
+      <SectionCard>
+        <ValueRow label="계정 삭제" value="준비 중" last />
       </SectionCard>
     </EditPageShell>
   )
