@@ -119,7 +119,7 @@ export function AccountDeleteView() {
           </SectionCard>
 
           {caseCount > 0 && (
-            <SectionCard label="현재 등록된 케이스">
+            <SectionCard label="현재 등록된 여정">
               {cases.map((c, i) => {
                 const name = c.pet_name?.trim() || '이름 미설정'
                 const travel = travelSummary(c)

@@ -811,7 +811,7 @@ export async function updateCaseTripType(
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const destToken = (existing?.destination ?? '').split(',')[0]?.trim() ?? ''
-    if (!destToken) return { ok: false, error: '목적지가 설정되지 않은 케이스입니다.' }
+    if (!destToken) return { ok: false, error: '목적지가 설정되지 않은 여정입니다.' }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData: Record<string, unknown> = { ...prev }
@@ -1622,7 +1622,7 @@ export async function getCaseVaccineData(caseId: string): Promise<Result<Vaccine
       .eq('id', caseId)
       .single()
     if (caseErr || !caseRow) {
-      return { ok: false, error: caseErr?.message ?? '케이스를 찾을 수 없습니다.' }
+      return { ok: false, error: caseErr?.message ?? '여정을 찾을 수 없습니다.' }
     }
 
     const { data: rows, error } = await admin

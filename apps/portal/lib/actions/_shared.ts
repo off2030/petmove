@@ -18,6 +18,6 @@ export async function assertCaseAccess(caseId: string): Promise<Result<true>> {
     .eq('user_id', user.id)
     .maybeSingle()
   if (linkErr) return { ok: false, error: linkErr.message }
-  if (!link) return { ok: false, error: '이 케이스에 접근 권한이 없습니다.' }
+  if (!link) return { ok: false, error: '이 여정에 접근 권한이 없습니다.' }
   return { ok: true, value: true }
 }

@@ -110,7 +110,7 @@ export function ShareForm({ initial }: Props) {
         title="제출 완료"
         description={
           <>
-            입력해주신 정보가 {view.org_name || '담당 조직'} 케이스에 반영되었습니다.
+            입력해주신 정보가 {view.org_name || '담당 조직'} 여정에 반영되었습니다.
             <br />
             감사합니다.
           </>

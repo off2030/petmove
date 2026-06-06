@@ -231,7 +231,7 @@ export async function getShareLinkByToken(
       .select('*')
       .eq('id', row.case_id)
       .maybeSingle()
-    if (!caseRow) return { ok: false, error: '연결된 케이스를 찾을 수 없습니다' }
+    if (!caseRow) return { ok: false, error: '연결된 여정을 찾을 수 없습니다' }
     const { data: orgRow } = await admin
       .from('organizations')
       .select('name, name_en')

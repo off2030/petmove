@@ -31,7 +31,7 @@ export default async function CasesPage() {
           margin: '12px 0 16px',
         }}
       >
-        내 케이스
+        내 여정
       </h1>
       {cases.map((c) => {
         const petName = c.pet_name ?? '이름 미정'
@@ -115,7 +115,7 @@ function EmptyState() {
 function ErrorState({ message }: { message: string }) {
   return (
     <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-      <p style={{ fontSize: 15, color: '#A04525' }}>케이스를 불러오지 못했습니다.</p>
+      <p style={{ fontSize: 15, color: '#A04525' }}>여정을 불러오지 못했습니다.</p>
       <p style={{ fontSize: 12, color: 'var(--pm-ink-3)', marginTop: 8 }}>{message}</p>
     </div>
   )
