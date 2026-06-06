@@ -161,7 +161,7 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
  */
 function DeleteAnimalSection({ caseId, petName }: { caseId: string; petName: string | null }) {
   const router = useRouter()
-  const { refreshCases } = useCases()
+  const { refreshCases, removeCase } = useCases()
   const [confirming, setConfirming] = useState(false)
   const [busy, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -174,6 +174,9 @@ function DeleteAnimalSection({ caseId, petName }: { caseId: string; petName: str
         setError(res.error)
         return
       }
+      // 즉시 client state 에서 제거 + lastCaseId 정리 — 안 그러면 다른 탭(/cases·/docs)이
+      // 옛 cases 잔상으로 삭제된 케이스를 보여주거나 lastCaseId 기반 url 로 404 가 뜬다.
+      removeCase(caseId)
       // 먼저 내 정보로 이동 — 이 페이지(useCase(caseId))가 삭제된 케이스로 notFound()
       // 를 띄우기 전에 떠난다. 목록 갱신은 이동 후 백그라운드로 (provider 는 layout 에 살아있음).
       router.replace('/me')

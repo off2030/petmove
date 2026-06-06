@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { useCases } from './case-data-provider'
 import { readLastCaseId, writeLastCaseId } from './last-case'
 
 /**
@@ -33,6 +34,7 @@ function caseIdFromPath(pathname: string): string | null {
 export function BottomNav() {
   const pathname = usePathname()
   const caseIdInPath = caseIdFromPath(pathname)
+  const { cases } = useCases()
   const [lastCaseId, setLastCaseId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -74,7 +76,11 @@ export function BottomNav() {
 
   if (keyboardOpen) return null
 
-  const caseId = caseIdInPath ?? lastCaseId
+  // lastCaseId 가 cases 에 더 이상 없으면(삭제됨) 첫 케이스로 폴백 — 옛 caseId 그대로 쓰면
+  // /cases/{deleted-id}/docs 같은 url 이 404 로 떨어진다.
+  const lastIdValid = lastCaseId && cases.some((c) => c.id === lastCaseId)
+  const fallbackId = lastIdValid ? lastCaseId : cases[0]?.id ?? null
+  const caseId = caseIdInPath ?? fallbackId
 
   // 둥근 카드형 플로팅 바 — 좌우·아래 마진, 라벨 항상 보임. Calm 톤.
   // portal-preview/app.jsx 의 BottomNav 와 동일 디자인 (truth source).

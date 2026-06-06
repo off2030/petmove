@@ -14,6 +14,7 @@ import {
 } from 'react'
 import { listMyCases } from '@/lib/actions/cases'
 import { getMyProfile, type CustomerProfileRow } from '@/lib/actions/profile'
+import { LAST_CASE_KEY } from './last-case'
 
 /**
  * 보호자의 모든 데이터(케이스 + 프로파일)를 한 번 fetch 해 Context 로 공유.
@@ -35,6 +36,8 @@ type CaseDataContextValue = {
   refreshProfile: () => Promise<void>
   updateCase: (next: CaseRow) => void
   updateProfile: (next: CustomerProfileRow) => void
+  /** 케이스 삭제 후 즉시 client 갱신 — refreshCases 백그라운드 동안 잔상 방지 + lastCaseId 정리. */
+  removeCase: (id: string) => void
 }
 
 const CaseDataContext = createContext<CaseDataContextValue | null>(null)
@@ -143,6 +146,19 @@ export function CaseDataProvider({
 
   const updateProfile = useCallback((next: CustomerProfileRow) => {
     setProfile(next)
+  }, [])
+
+  const removeCase = useCallback((id: string) => {
+    setCases((prev) => prev.filter((c) => c.id !== id))
+    // lastCaseId 가 삭제된 케이스를 가리키고 있으면 비움 — bottom-nav / swipe-tabs 가
+    // 다음 케이스로 폴백. 안 비우면 /cases/{삭제된id}/docs 등으로 가서 404.
+    try {
+      if (window.sessionStorage.getItem(LAST_CASE_KEY) === id) {
+        window.sessionStorage.removeItem(LAST_CASE_KEY)
+      }
+    } catch {
+      /* sessionStorage 접근 실패 — 무시 */
+    }
   }, [])
 
   // Realtime — 첫 paint 안정 후로 지연. WebSocket 핸드셰이크 + supabase realtime 모듈 파싱이
@@ -256,8 +272,9 @@ export function CaseDataProvider({
       refreshProfile,
       updateCase,
       updateProfile,
+      removeCase,
     }),
-    [cases, profile, userEmail, refreshCases, refreshProfile, updateCase, updateProfile],
+    [cases, profile, userEmail, refreshCases, refreshProfile, updateCase, updateProfile, removeCase],
   )
 
   return <CaseDataContext.Provider value={value}>{children}</CaseDataContext.Provider>
