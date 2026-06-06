@@ -1,7 +1,6 @@
 'use client'
 
 import { useTransition, type CSSProperties } from 'react'
-import { useRouter } from 'next/navigation'
 import { buildCaseJourneyContext, type CaseRow } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
 import { useCases } from '@/components/portal-shell/case-data-provider'
@@ -40,9 +39,8 @@ function travelSummary(case_: CaseRow): string | null {
 }
 
 export function AccountDeleteView() {
-  const { cases, profile } = useCases()
+  const { cases, profile, refreshProfile } = useCases()
   const confirm = useConfirm()
-  const router = useRouter()
   const [pending, startTransition] = useTransition()
 
   const scheduledAt = profile?.deletion_scheduled_at ?? null
@@ -65,7 +63,7 @@ export function AccountDeleteView() {
         alert(`오류: ${result.error}`)
         return
       }
-      router.refresh()
+      await refreshProfile()
     })
   }
 
@@ -81,7 +79,7 @@ export function AccountDeleteView() {
         alert(`오류: ${result.error}`)
         return
       }
-      router.refresh()
+      await refreshProfile()
     })
   }
 
