@@ -67,12 +67,9 @@ export function AccountDeleteView() {
     })
   }
 
-  async function handleCancel() {
-    const ok = await confirm({
-      message: '계정 삭제 요청을 취소하시겠습니까?',
-      okLabel: '예, 취소',
-    })
-    if (!ok) return
+  // 취소는 reversible 한 undo 동작 — 모달 없이 즉시 실행. 잘못 눌렀으면 '계정 삭제 요청'
+  // 버튼을 다시 눌러 모달까지 다시 받으면 되므로 안전.
+  function handleCancel() {
     startTransition(async () => {
       const result = await cancelAccountDeletion()
       if (!result.ok) {
@@ -96,8 +93,7 @@ export function AccountDeleteView() {
                 </span>
               </div>
               <div style={{ fontSize: 13, color: C.ink3, marginTop: 8, lineHeight: 1.55 }}>
-                예정일 이전에는 아래에서 취소할 수 있습니다. 예정일이 되면 회원 정보는 파기되고,
-                출국 절차 기록은 보호자 식별 정보가 제거된 상태로 보존됩니다.
+                유예 기간 동안은 삭제 요청을 취소할 수 있습니다.
               </div>
             </div>
           </SectionCard>
@@ -109,7 +105,7 @@ export function AccountDeleteView() {
               disabled={pending}
               style={{ ...buttonStyle, color: C.ink2, opacity: pending ? 0.5 : 1 }}
             >
-              요청 취소
+              취소
             </button>
           </SectionCard>
         </>
