@@ -1,0 +1,340 @@
+'use client'
+
+import { useRef, useState, useTransition } from 'react'
+import { supabaseBrowser } from '@petmove/auth'
+import {
+  AVATAR_COLOR_IDS,
+  AVATAR_EMOJIS,
+  AVATAR_GRADIENTS,
+  isAvatarColorId,
+  type AvatarColorId,
+} from '@/lib/avatar'
+import { resizeImage } from '@/lib/image'
+import { updateMyProfile, type CustomerProfileRow } from '@/lib/actions/profile'
+
+/**
+ * 보호자 아바타 picker — PetAvatarPicker 의 패턴 + 사진 업로드 옵션.
+ *
+ * 표시 우선순위: avatar_photo_url > avatar_emoji + avatar_color > 이니셜(기본).
+ * 사진 업로드는 user-avatars bucket (RLS: 본인 폴더만 INSERT 허용) 으로 직접 — server 액션
+ * 우회. URL 은 updateMyProfile 의 user-avatars 도메인 검증을 통과해 저장.
+ */
+
+interface Props {
+  profile: CustomerProfileRow | null
+  userId: string
+  /** 이니셜 (한글 이름 끝 2자 등). photo·emoji 둘 다 없을 때 표시. */
+  initials: string
+  onUpdated: (profile: CustomerProfileRow) => void
+}
+
+const C = {
+  ink: 'var(--pm-ink)',
+  ink2: 'var(--pm-ink-2)',
+  ink3: 'var(--pm-ink-3)',
+  line: 'var(--pm-line)',
+  surface: 'var(--pm-surface)',
+  accent: 'var(--pm-accent)',
+  accentSoft: 'var(--pm-accent-soft)',
+} as const
+
+export function GuardianAvatarPicker({ profile, userId, initials, onUpdated }: Props) {
+  const [open, setOpen] = useState(false)
+  const [pending, startTransition] = useTransition()
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const currentEmoji = profile?.avatar_emoji ?? null
+  const currentColor: AvatarColorId | null = isAvatarColorId(profile?.avatar_color ?? null)
+    ? (profile!.avatar_color as AvatarColorId)
+    : null
+  const currentPhoto = profile?.avatar_photo_url ?? null
+
+  function commit(patch: Parameters<typeof updateMyProfile>[0]) {
+    setError(null)
+    startTransition(async () => {
+      const r = await updateMyProfile(patch)
+      if (r.ok) onUpdated(r.value)
+      else setError(r.error)
+    })
+  }
+
+  async function handleFile(file: File | undefined | null) {
+    if (!file) return
+    setError(null)
+    setUploading(true)
+    try {
+      const blob = await resizeImage(file, 400, 0.85)
+      const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())
+      const path = `${userId}/${id}.jpg`
+      const { error: upErr } = await supabaseBrowser.storage.from('user-avatars').upload(path, blob, {
+        contentType: 'image/jpeg',
+        cacheControl: '3600',
+        upsert: false,
+      })
+      if (upErr) {
+        setError(upErr.message)
+        return
+      }
+      const { data: pub } = supabaseBrowser.storage.from('user-avatars').getPublicUrl(path)
+      const r = await updateMyProfile({ avatar_photo_url: pub.publicUrl })
+      if (r.ok) onUpdated(r.value)
+      else setError(r.error)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
+  const busy = pending || uploading
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-label="보호자 아바타 변경"
+          aria-expanded={open}
+          className="pm-pressable"
+          style={{
+            ...avatarCircleStyle(52, currentColor, currentPhoto),
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            overflow: 'hidden',
+          }}
+        >
+          {currentPhoto ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={currentPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <span style={glyphSpanStyle(52, !!currentEmoji)}>
+              {currentEmoji || initials}
+            </span>
+          )}
+        </button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, color: C.ink2, fontWeight: 500 }}>
+            {open ? '이모지·색상·사진 선택' : '아바타'}
+          </div>
+          <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
+            {open ? '눌러서 닫기' : '아바타를 눌러 이모지·색상·사진을 바꿔보세요'}
+          </div>
+        </div>
+      </div>
+
+      {open && (
+        <>
+          <div style={{ height: 0.5, background: C.line }} />
+          <PickerGrid
+            currentEmoji={currentEmoji}
+            currentColor={currentColor}
+            currentPhoto={currentPhoto}
+            busy={busy}
+            onPickEmoji={(e) => commit({ avatar_emoji: e })}
+            onPickColor={(c) => commit({ avatar_color: c })}
+            onResetEmoji={() => commit({ avatar_emoji: null })}
+            onResetColor={() => commit({ avatar_color: null })}
+            onPickPhotoClick={() => fileRef.current?.click()}
+            onRemovePhoto={() => commit({ avatar_photo_url: null })}
+          />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            onChange={(e) => handleFile(e.target.files?.[0])}
+            style={{ display: 'none' }}
+          />
+          {error && (
+            <div style={{ fontSize: 12, color: '#B45C5C' }}>{error}</div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+// ── Picker grid ─────────────────────────────────────────────────────────
+
+function PickerGrid({
+  currentEmoji,
+  currentColor,
+  currentPhoto,
+  busy,
+  onPickEmoji,
+  onPickColor,
+  onResetEmoji,
+  onResetColor,
+  onPickPhotoClick,
+  onRemovePhoto,
+}: {
+  currentEmoji: string | null
+  currentColor: AvatarColorId | null
+  currentPhoto: string | null
+  busy: boolean
+  onPickEmoji: (e: string) => void
+  onPickColor: (c: AvatarColorId) => void
+  onResetEmoji: () => void
+  onResetColor: () => void
+  onPickPhotoClick: () => void
+  onRemovePhoto: () => void
+}) {
+  const monoCap: React.CSSProperties = {
+    fontSize: 10,
+    letterSpacing: '0.16em',
+    textTransform: 'uppercase',
+    color: C.ink3,
+    fontWeight: 500,
+  }
+  const slotBase: React.CSSProperties = {
+    width: 34,
+    height: 34,
+    borderRadius: '50%',
+    border: 'none',
+    cursor: busy ? 'progress' : 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 0,
+    flexShrink: 0,
+    transition: 'transform .15s, box-shadow .15s',
+  }
+  const resetBtn: React.CSSProperties = {
+    ...slotBase,
+    width: 'auto',
+    padding: '0 12px',
+    background: 'transparent',
+    color: C.ink3,
+    fontSize: 11,
+    fontWeight: 500,
+    boxShadow: `inset 0 0 0 .5px ${C.line}`,
+  }
+  const actionBtn: React.CSSProperties = {
+    height: 32,
+    padding: '0 14px',
+    borderRadius: 999,
+    border: `.5px solid ${C.line}`,
+    background: C.surface,
+    color: C.ink,
+    fontSize: 12,
+    fontWeight: 500,
+    cursor: busy ? 'progress' : 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, opacity: busy ? 0.6 : 1 }}>
+      <div style={monoCap}>사진</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+        <button type="button" disabled={busy} onClick={onPickPhotoClick} style={actionBtn}>
+          {currentPhoto ? '사진 바꾸기' : '사진 올리기'}
+        </button>
+        {currentPhoto && (
+          <button type="button" disabled={busy} onClick={onRemovePhoto} style={resetBtn}>
+            사진 제거
+          </button>
+        )}
+      </div>
+
+      <div style={{ ...monoCap, marginTop: 4 }}>이모지</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {AVATAR_EMOJIS.map((e) => {
+          const selected = currentEmoji === e
+          return (
+            <button
+              key={e}
+              type="button"
+              disabled={busy}
+              onClick={() => onPickEmoji(e)}
+              aria-label={`이모지 ${e}`}
+              aria-pressed={selected}
+              style={{
+                ...slotBase,
+                background: C.surface,
+                fontSize: 18,
+                lineHeight: 1,
+                boxShadow: selected
+                  ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px #735B3D'
+                  : `inset 0 0 0 .5px ${C.line}`,
+              }}
+            >
+              {e}
+            </button>
+          )
+        })}
+        <button type="button" disabled={busy} onClick={onResetEmoji} aria-label="이모지 초기화" style={resetBtn}>
+          기본
+        </button>
+      </div>
+
+      <div style={{ ...monoCap, marginTop: 4 }}>색상</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {AVATAR_COLOR_IDS.map((id) => {
+          const selected = currentColor === id
+          return (
+            <button
+              key={id}
+              type="button"
+              disabled={busy}
+              onClick={() => onPickColor(id)}
+              aria-label={`색상 ${id}`}
+              aria-pressed={selected}
+              style={{
+                ...slotBase,
+                background: AVATAR_GRADIENTS[id],
+                boxShadow: selected
+                  ? '0 0 0 1.5px var(--pm-surface), 0 0 0 3px #735B3D'
+                  : 'inset 0 1px 1px rgba(255,255,255,.25)',
+              }}
+            />
+          )
+        })}
+        <button type="button" disabled={busy} onClick={onResetColor} aria-label="색상 초기화" style={resetBtn}>
+          기본
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── Avatar circle 스타일 ─────────────────────────────────────────────────
+
+function avatarCircleStyle(
+  size: number,
+  color: AvatarColorId | null,
+  photo: string | null,
+): React.CSSProperties {
+  return {
+    width: size,
+    height: size,
+    borderRadius: '50%',
+    background: photo
+      ? '#0000'
+      : color
+        ? AVATAR_GRADIENTS[color]
+        : 'var(--pm-accent-soft)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    boxShadow: photo ? 'none' : 'inset 0 1px 1px rgba(255,255,255,.25), 0 1px 2px rgba(0,0,0,.06)',
+  }
+}
+
+function glyphSpanStyle(size: number, isEmoji: boolean): React.CSSProperties {
+  return {
+    color: isEmoji ? '#fff' : 'var(--pm-accent)',
+    fontFamily: isEmoji
+      ? "-apple-system, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
+      : 'var(--pm-font-display)',
+    fontWeight: isEmoji ? 600 : 500,
+    fontSize: isEmoji ? Math.round(size * 0.5) : Math.round(size * 0.36),
+    lineHeight: 1,
+  }
+}

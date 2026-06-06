@@ -26,6 +26,10 @@ export interface CustomerProfileRow {
   marketing_opt_in: boolean
   terms_accepted_at: string | null
   privacy_accepted_at: string | null
+  /** 아바타 — 우선순위: avatar_photo_url > avatar_emoji+color > 기본(이니셜). */
+  avatar_emoji: string | null
+  avatar_color: string | null
+  avatar_photo_url: string | null
   created_at: string
   updated_at: string
 }
@@ -54,7 +58,16 @@ export interface UpdateProfileInput {
   phone?: string | null
   preferred_language?: 'ko' | 'en' | 'ja' | 'zh'
   marketing_opt_in?: boolean
+  /** 아바타 — null 로 보내면 reset. 이모지·색은 화이트리스트 검증, photo_url 은 도메인 검증. */
+  avatar_emoji?: string | null
+  avatar_color?: string | null
+  avatar_photo_url?: string | null
 }
+
+// avatar 화이트리스트 — lib/avatar.ts 의 AVATAR_EMOJIS / AVATAR_COLOR_IDS 와 동일.
+// 새 이모지/색 추가 시 양쪽 같이 수정.
+const ALLOWED_AVATAR_EMOJIS = new Set(['🐶', '🐱', '🐰', '🐹', '🐢', '🐦', '🦜', '🐾'])
+const ALLOWED_AVATAR_COLORS = new Set(['orange', 'purple', 'sage', 'rose', 'ocean', 'sand', 'slate', 'terracotta'])
 
 export async function updateMyProfile(
   input: UpdateProfileInput,
@@ -70,6 +83,27 @@ export async function updateMyProfile(
     if (input.phone !== undefined) patch.phone = input.phone?.trim() || null
     if (input.preferred_language !== undefined) patch.preferred_language = input.preferred_language
     if (input.marketing_opt_in !== undefined) patch.marketing_opt_in = input.marketing_opt_in
+    if (input.avatar_emoji !== undefined) {
+      // null = reset. 빈 값 외에는 화이트리스트 검증.
+      if (input.avatar_emoji && !ALLOWED_AVATAR_EMOJIS.has(input.avatar_emoji)) {
+        return { ok: false, error: '허용되지 않은 아바타 이모지입니다.' }
+      }
+      patch.avatar_emoji = input.avatar_emoji || null
+    }
+    if (input.avatar_color !== undefined) {
+      if (input.avatar_color && !ALLOWED_AVATAR_COLORS.has(input.avatar_color)) {
+        return { ok: false, error: '허용되지 않은 아바타 색상입니다.' }
+      }
+      patch.avatar_color = input.avatar_color || null
+    }
+    if (input.avatar_photo_url !== undefined) {
+      // user-avatars bucket 의 supabase URL 만 허용 — 외부 도메인 차단.
+      const url = input.avatar_photo_url?.trim() || null
+      if (url && !/\/storage\/v1\/object\/public\/user-avatars\//.test(url)) {
+        return { ok: false, error: '허용되지 않은 사진 경로입니다.' }
+      }
+      patch.avatar_photo_url = url
+    }
 
     if (Object.keys(patch).length === 0) {
       return getMyProfile() as Promise<Result<CustomerProfileRow>>

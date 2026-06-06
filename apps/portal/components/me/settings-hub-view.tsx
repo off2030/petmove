@@ -9,6 +9,7 @@ import {
   buildPetBlock,
   type GuardianBlock,
 } from '@/lib/profile/catalog'
+import { AVATAR_GRADIENTS, isAvatarColorId } from '@/lib/avatar'
 import { dDayLabel } from '@/lib/cases/info-form'
 import { PetAvatarDisplay } from './pet-avatar-display'
 import { C, serif, monoCap } from './settings-shared'
@@ -130,27 +131,54 @@ function HeroLinkCard({
   )
 }
 
-function GuardianCard({ data, href }: { data: GuardianBlock; href: string }) {
-  const avatar = (
+/** 보호자 카드 안 아바타 — photo > emoji+color > 이니셜 fallback. /me hub 와 sub-page 공용 X (sub-page 는 picker 자체 사용). */
+function GuardianAvatarDisplay({ data, size }: { data: GuardianBlock; size: number }) {
+  if (data.avatarPhotoUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={data.avatarPhotoUrl}
+        alt=""
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          objectFit: 'cover',
+          flexShrink: 0,
+        }}
+      />
+    )
+  }
+  const color = isAvatarColorId(data.avatarColor) ? data.avatarColor : null
+  const isEmoji = !!data.avatarEmoji
+  return (
     <div
       style={{
-        width: HERO_AVATAR,
-        height: HERO_AVATAR,
+        width: size,
+        height: size,
         borderRadius: '50%',
         flexShrink: 0,
-        background: C.soft,
-        color: C.accent,
+        background: color ? AVATAR_GRADIENTS[color] : C.soft,
+        color: color || isEmoji ? '#fff' : C.accent,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        ...num,
-        fontSize: 20,
-        fontWeight: 500,
+        ...(isEmoji ? {} : num),
+        fontFamily: isEmoji
+          ? "-apple-system, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif"
+          : 'var(--pm-font-display)',
+        fontSize: isEmoji ? Math.round(size * 0.5) : Math.round(size * 0.36),
+        fontWeight: isEmoji ? 600 : 500,
+        lineHeight: 1,
       }}
     >
-      {data.initials}
+      {data.avatarEmoji || data.initials}
     </div>
   )
+}
+
+function GuardianCard({ data, href }: { data: GuardianBlock; href: string }) {
+  const avatar = <GuardianAvatarDisplay data={data} size={HERO_AVATAR} />
   // 카테고리 라벨('보호자')이 카드 밖으로 나가므로, 카드 안에는 핵심 식별자(전화번호)를
   // 위, 보조(이메일)를 아래로. 옛 '계정' 섹션 폐기로 이메일은 여기 보조 줄에 합쳤다.
   return (

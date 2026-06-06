@@ -28,6 +28,10 @@ export interface GuardianBlock {
   email: string | null
   /** Avatar 안 텍스트 (한글 이름의 끝 2자 또는 영문 이니셜). */
   initials: string
+  /** 사용자가 직접 고른 이모지·색·사진. customer_profiles 에서 옴. */
+  avatarEmoji: string | null
+  avatarColor: string | null
+  avatarPhotoUrl: string | null
 }
 
 export interface PetBlock {
@@ -77,6 +81,9 @@ export function buildProfileView({
     phone: pickString(data, 'phone') ?? customerProfile?.phone ?? null,
     email: userEmail ?? pickString(data, 'email'),
     initials: deriveInitials(customerNameKo, customerNameEn, userEmail),
+    avatarEmoji: customerProfile?.avatar_emoji ?? null,
+    avatarColor: customerProfile?.avatar_color ?? null,
+    avatarPhotoUrl: customerProfile?.avatar_photo_url ?? null,
   }
 
   // 동물병원·운송 업체 정보는 admin 의 organization 영역. portal RLS 통과 X — Phase 11.1 후속.
@@ -124,7 +131,7 @@ function pickString(data: Record<string, unknown>, key: string): string | null {
   return t.length > 0 ? t : null
 }
 
-function deriveInitials(ko: string | null, en: string | null, email: string | null): string {
+export function deriveInitials(ko: string | null, en: string | null, email: string | null): string {
   if (ko && ko.length >= 1) return ko.slice(-2)
   if (en) {
     const parts = en.trim().split(/\s+/).filter(Boolean)

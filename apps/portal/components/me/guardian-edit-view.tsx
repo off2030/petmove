@@ -2,7 +2,10 @@
 
 import type { CaseRow } from '@petmove/domain'
 import { AddressSearchField, SplitNameField, TextField } from '@/components/fields/info-fields'
-import { EditPageShell, SectionCard, StickySaveBar } from './settings-shared'
+import { useCases } from '@/components/portal-shell/case-data-provider'
+import { deriveInitials } from '@/lib/profile/catalog'
+import { C, EditPageShell, SectionCard, StickySaveBar } from './settings-shared'
+import { GuardianAvatarPicker } from './guardian-avatar-picker'
 import { useCaseEditForm } from './use-case-edit-form'
 
 /**
@@ -12,6 +15,12 @@ import { useCaseEditForm } from './use-case-edit-form'
  */
 export function GuardianEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string }) {
   const { form, set, dirty, status, error, handleSave } = useCaseEditForm(caseRow, caseId)
+  const { profile, userEmail, updateProfile } = useCases()
+  const initials = deriveInitials(
+    caseRow.customer_name ?? profile?.display_name ?? null,
+    caseRow.customer_name_en ?? null,
+    userEmail,
+  )
 
   return (
     <EditPageShell
@@ -20,7 +29,25 @@ export function GuardianEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId
         <StickySaveBar dirty={dirty} status={status} error={error} onSave={handleSave} />
       }
     >
-      <SectionCard marginTop={8}>
+      {/* 아바타 — 이모지·색·사진 picker. PetAvatarPicker 와 동일 위치(상단). */}
+      <div
+        style={{
+          marginTop: 8,
+          padding: 18,
+          borderRadius: 18,
+          background: C.surface,
+          border: `.5px solid ${C.line}`,
+        }}
+      >
+        <GuardianAvatarPicker
+          profile={profile}
+          userId={profile?.user_id ?? ''}
+          initials={initials}
+          onUpdated={updateProfile}
+        />
+      </div>
+
+      <SectionCard marginTop={16}>
         <TextField
           label="이름"
           value={form.customer_name}
