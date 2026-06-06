@@ -93,18 +93,25 @@ export function GuardianAvatarPicker({ profile, userId, initials, onUpdated }: P
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          aria-label="프로필 이미지 변경"
-          aria-expanded={open}
-          className="pm-pressable"
+      {/* 헤더 영역 전체가 토글 — 아바타·텍스트 어느 쪽 눌러도 picker 열림/닫힘. */}
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label="프로필 이미지 변경"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            setOpen((o) => !o)
+          }
+        }}
+        className="pm-pressable"
+        style={{ display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }}
+      >
+        <div
           style={{
             ...avatarCircleStyle(52, currentColor, currentPhoto),
-            border: 'none',
-            padding: 0,
-            cursor: 'pointer',
             overflow: 'hidden',
           }}
         >
@@ -116,7 +123,7 @@ export function GuardianAvatarPicker({ profile, userId, initials, onUpdated }: P
               {currentEmoji || initials}
             </span>
           )}
-        </button>
+        </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13, color: C.ink2, fontWeight: 500 }}>
             {open ? '사진·이모지·색상 선택' : '프로필 이미지 설정'}
