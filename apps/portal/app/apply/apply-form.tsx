@@ -831,13 +831,15 @@ export function ApplyForm({
     }
 
     if (allOk) {
-      // 직영(로그인): 본인 케이스 화면으로. /cases 가 1건이면 그 케이스 /journey 로 자동 redirect.
-      // 조직별 공개폼(미로그인): /cases 는 로그인 필요 → '접수 완료' 화면을 보여준다.
+      // 직영(로그인): 내 정보 hub 로. 추가된 동물이 카드 목록에 바로 보이고,
+      // 동물 삭제 직후 흐름과 동일한 도착지 — 사용자 mental model 일관.
+      // 조직별 공개폼(미로그인): /me 는 로그인 필요 → '접수 완료' 화면을 보여준다.
       if (isPublic) {
         setSubmitted(true)
         setSubmitting(false)
       } else {
-        router.push('/cases')
+        router.push('/me')
+        router.refresh()
       }
     } else {
       setSubmitting(false)
