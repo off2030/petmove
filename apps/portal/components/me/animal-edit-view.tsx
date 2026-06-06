@@ -18,6 +18,7 @@ import { buildPetBlock } from '@/lib/profile/catalog'
 import { hasSiblingCase } from '@/lib/cases/info-form'
 import { C, EditPageShell, SectionCard, StickySaveBar } from './settings-shared'
 import { TravelFormSections } from './travel-form-sections'
+import { DestinationChips } from './destination-chips'
 import { useCaseEditForm } from './use-case-edit-form'
 
 /**
@@ -41,6 +42,18 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
   const { cases } = useCases()
   const { form, set, dirty, status, error, handleSave } = useCaseEditForm(caseRow, caseId)
   const hasSibling = hasSiblingCase(cases, caseRow)
+
+  // multi-destination 입력값 — '여정' 칩 섹션 (Phase 3).
+  // caseRow.destination 쉼표 구분 + data.trip_type 객체 형식 모두 인지.
+  const destinations = (caseRow.destination ?? '')
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean)
+  const tripTypeRaw = (caseRow.data as Record<string, unknown> | null)?.trip_type
+  const tripTypeByDest: Record<string, 'round' | 'one_way'> =
+    tripTypeRaw && typeof tripTypeRaw === 'object' && !Array.isArray(tripTypeRaw)
+      ? (tripTypeRaw as Record<string, 'round' | 'one_way'>)
+      : {}
 
   return (
     <EditPageShell
@@ -139,8 +152,17 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
         />
       </SectionCard>
 
+      {/* 여정 칩 — multi-destination. 같은 동물에 N 목적지 표시·전환·추가·제거 (Phase 3).
+          activeDestination 은 URL ?dest=<token>. '+' 클릭 시 검색 바텀시트. */}
+      <DestinationChips
+        caseId={caseId}
+        destinations={destinations}
+        tripTypeByDest={tripTypeByDest}
+      />
+
       {/* 여행 정보 — '기본'(여행지·유형·날짜)만. 항공권·일본 수출검역은 /me/travel 에서.
-          같은 useCaseEditForm 폼이라 한 번 저장으로 묶임. */}
+          같은 useCaseEditForm 폼이라 한 번 저장으로 묶임.
+          (현재 단계: 단일 destination 폼 그대로 — activeDestination 분기는 다음 단계.) */}
       <TravelFormSections
         caseRow={caseRow}
         form={form}
