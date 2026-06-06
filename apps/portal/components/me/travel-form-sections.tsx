@@ -9,7 +9,7 @@ import {
   type FieldOption,
 } from '@/components/fields/info-fields'
 import { dDayLabel } from '@/lib/cases/info-form'
-import { SectionCard } from './settings-shared'
+import { C, SectionCard } from './settings-shared'
 import type { UseCaseEditForm } from './use-case-edit-form'
 
 /**
@@ -58,6 +58,66 @@ export function TravelFormSections({
   const isJapan =
     buildCaseJourneyContext({ ...caseRow, destination: form.destination }).destinationKey === 'japan'
 
+  // 펫 프로필(basicOnly) — 카테고리명·유형 라벨·출국/귀국일 없이 목적지 + 왕복/편도만.
+  if (basicOnly) {
+    return (
+      <SectionCard marginTop={marginTop}>
+        <DestinationField
+          label="목적지"
+          value={form.destination}
+          onChange={(v) => set('destination', v)}
+          last={!hasSibling}
+        />
+        {/* 왕복/편도 — 라벨 없이 칩만 (신청폼과 동일). */}
+        <div
+          style={{
+            display: 'flex',
+            gap: 6,
+            padding: '11px 0',
+            minHeight: 46,
+            alignItems: 'center',
+            borderBottom: hasSibling ? `.5px solid ${C.line}` : 'none',
+          }}
+        >
+          {TRIP_OPTIONS.map((o) => {
+            const selected = form.trip_type === o.value
+            return (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => set('trip_type', o.value === 'one_way' ? 'one_way' : 'round')}
+                aria-pressed={selected}
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: 999,
+                  border: `1px solid ${selected ? C.ink : C.line}`,
+                  background: selected ? C.ink : 'transparent',
+                  color: selected ? C.surface : C.ink2,
+                  fontFamily: 'inherit',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'background .12s, color .12s, border-color .12s',
+                }}
+              >
+                {o.label}
+              </button>
+            )
+          })}
+        </div>
+        {hasSibling && (
+          <SegmentField
+            label="동시 진행"
+            value={form.co_progress ? 'on' : 'off'}
+            onChange={(v) => set('co_progress', v === 'on')}
+            options={CO_PROGRESS_OPTIONS}
+            last
+          />
+        )}
+      </SectionCard>
+    )
+  }
+
   return (
     <>
       <SectionCard label="기본" marginTop={marginTop}>
@@ -97,8 +157,6 @@ export function TravelFormSections({
         )}
       </SectionCard>
 
-      {basicOnly ? null : (
-        <>
       <SectionCard label="출국 항공권">
         <TextField
           label="출발 공항"
@@ -174,8 +232,6 @@ export function TravelFormSections({
             last
           />
         </SectionCard>
-      )}
-        </>
       )}
     </>
   )
