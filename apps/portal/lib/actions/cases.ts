@@ -1586,15 +1586,12 @@ export async function updateCaseInfoFields(
     if (weightNum === null) delete nextData.weight
     else nextData.weight = weightNum
 
-    // 동시 진행(co_progress)·왕복편도(trip_type) 는 둘 다 목적지 카드(DestinationChips)의
-    // 토글이 목적지별로 즉시 저장(setCaseCoProgress · setCaseDestinationTripType)으로 단일
-    // 관리한다. 이 벌크 폼 저장에서는 둘 다 건드리지 않음 — 칩에서 방금 바꾼 목적지별 값을,
-    // 첫 토큰 기준으로 평탄화된 stale 폼 값으로 덮어쓰는 충돌을 막기 위해. (prev 스프레드로
-    // 기존 co_progress · trip_type 맵은 그대로 보존된다.)
-    //
-    // 예: AnimalEditView 에서 이름을 고쳐 폼이 dirty 인 채로 칩에서 일본을 편도로 바꾸면,
-    //   useCaseEditForm 가 dirty 라 새 caseRow 를 안 받아 폼 trip_type 은 stale('round').
-    //   이때 이름 저장(벌크)이 trip_type[일본]=round 로 되돌리던 회귀를 제거한다.
+    // 동시 진행(co_progress)·왕복편도(trip_type) 는 목적지별 값이라 이 벌크 폼에선 건드리지 않는다.
+    // CaseInfoInput.trip_type 은 첫 토큰 기준 단일값으로 평탄화돼 다중 목적지를 못 담는다 —
+    // 여기서 쓰면 목적지별로 정한 값을 stale 단일값으로 덮어쓴다. 둘 다 목적지 카드의 여정 저장
+    // (useAnimalEditForm 이 setCaseCoProgress · setCaseDestinationTripType 를 목적지별로 호출)이
+    // 전담한다. 이 폼과 여정은 같은 '저장' 버튼에서 함께 커밋되며, 여정 action 이 먼저 실행돼
+    // co_progress · trip_type · by_dest 를 정리한 뒤 이 폼이 prev 스프레드로 그 맵을 보존한다.
 
     const { data: updated, error } = await admin
       .from('cases')

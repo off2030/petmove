@@ -15,10 +15,9 @@ import { PetAvatarPicker } from '@/components/me/pet-avatar-picker'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { softDeleteMyCase } from '@/lib/actions/cases'
 import { buildPetBlock } from '@/lib/profile/catalog'
-import { hasSiblingForDestination } from '@/lib/cases/info-form'
 import { C, EditPageShell, SectionCard } from './settings-shared'
 import { DestinationChips } from './destination-chips'
-import { useCaseEditForm } from './use-case-edit-form'
+import { useAnimalEditForm } from './use-animal-edit-form'
 
 /**
  * 설정 > 동물 — /me/animal.
@@ -38,27 +37,20 @@ const SEX_OPTIONS: readonly FieldOption[] = [
 ]
 
 export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string }) {
-  const { cases } = useCases()
-  const { form, set, dirty, status, error, handleSave } = useCaseEditForm(caseRow, caseId)
-
-  // multi-destination 입력값 — '여정' 칩 섹션 (Phase 3).
-  // caseRow.destination 쉼표 구분 + data.trip_type 객체 형식 모두 인지.
-  const destinations = (caseRow.destination ?? '')
-    .split(',')
-    .map((t) => t.trim())
-    .filter(Boolean)
-  const tripTypeRaw = (caseRow.data as Record<string, unknown> | null)?.trip_type
-  const tripTypeByDest: Record<string, 'round' | 'one_way'> =
-    tripTypeRaw && typeof tripTypeRaw === 'object' && !Array.isArray(tripTypeRaw)
-      ? (tripTypeRaw as Record<string, 'round' | 'one_way'>)
-      : {}
-
-  // '함께 준비'(co_progress) — 동물 1마리에 1개 값(케이스 단위, 디폴트 on).
-  // 토글은 목적지 카드별로 노출하되, 같은 곳으로 가는 형제(다른 동물)가 있는 목적지만.
-  const coProgress = ((caseRow.data as Record<string, unknown> | null)?.co_progress) !== false
-  const coProgressDests = new Set(
-    destinations.filter((d) => hasSiblingForDestination(cases, caseRow, d)),
-  )
+  const {
+    form,
+    set,
+    journey,
+    stageAdd,
+    stageRemove,
+    stageRestore,
+    stageTripType,
+    stageCoProgress,
+    dirty,
+    status,
+    error,
+    handleSave,
+  } = useAnimalEditForm(caseRow, caseId)
 
   return (
     <EditPageShell title="반려동물">
@@ -152,20 +144,26 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
         />
       </SectionCard>
 
-      {/* 저장 버튼은 동물 정보 카드 바로 아래 — 이 버튼이 '동물 정보'만 저장한다는 걸 분명히 한다.
-          아래 여정 섹션은 칩이 즉시 저장(저장 버튼과 무관)이라 버튼 위로 분리해 혼동을 없앤다. */}
-      <InlineSaveButton dirty={dirty} status={status} error={error} onSave={handleSave} />
-
-      {/* 여정 칩 — multi-destination. 같은 동물에 N 목적지 표시·전환·추가·제거.
-          목적지·왕복편도·함께 준비 입력은 칩이 흡수 (즉시 저장 — 동물 정보 폼 저장과 별개).
+      {/* 여정 — multi-destination. 같은 동물에 N 목적지 표시·전환·추가·제거.
+          목적지·왕복편도·함께 준비 입력은 로컬 staged — 아래 '저장' 버튼에서 동물 정보와 함께 커밋.
           '함께 준비' 는 같은 목적지로 가는 형제가 있는 카드에만 노출. */}
       <DestinationChips
-        caseId={caseId}
-        destinations={destinations}
-        tripTypeByDest={tripTypeByDest}
-        coProgress={coProgress}
-        coProgressDests={coProgressDests}
+        cards={journey.cards}
+        selected={journey.selected}
+        tripTypeByDest={journey.tripTypeByDest}
+        coProgress={journey.coProgress}
+        coProgressDests={journey.coProgressDests}
+        disabled={status === 'saving'}
+        onStageTripType={stageTripType}
+        onStageCoProgress={stageCoProgress}
+        onStageRemove={stageRemove}
+        onStageRestore={stageRestore}
+        onStageAdd={stageAdd}
       />
+
+      {/* 저장 버튼 — 동물 정보 + 여정 변경을 함께 저장한다. '동물 삭제' 바로 위.
+          (삭제·함께 준비 해제 confirm 은 이 버튼을 누를 때 뜬다.) */}
+      <InlineSaveButton dirty={dirty} status={status} error={error} onSave={handleSave} />
 
       <DeleteAnimalSection caseId={caseId} petName={buildPetBlock(caseRow).name} />
     </EditPageShell>
