@@ -274,10 +274,10 @@ function PartnerCard({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <OrgAvatar name={org.name} url={org.avatar_url} size={40} />
+        <OrgAvatar name={org.name} url={org.avatar_url} size={46} />
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ ...serif, fontSize: 17, color: C.ink }}>{org.name}</span>
+            <span style={{ ...serif, fontSize: 18, color: C.ink }}>{org.name}</span>
             {org.org_type === 'both' && (
               <span
                 style={{
