@@ -111,14 +111,40 @@ export function DestinationChips({
     })
   }
 
-  function handleTripTypeChange(dest: string, value: string) {
+  async function handleTripTypeChange(dest: string, value: string) {
     const nextTT = value === 'one_way' ? 'one_way' : 'round'
     if ((tripTypeByDest[dest] ?? 'round') === nextTT) return
+
+    // 이 목적지가 지금 함께 준비로 묶여 있으면(같은 곳·같은 트립 형제 + co_progress on),
+    // 왕복/편도를 바꾸면 트립이 어긋나 묶임이 풀린다. 바꾸기 전에 확인하고, 확인하면 해제.
+    const wasLinked = coProgress && coProgressDests.has(dest)
+    if (wasLinked) {
+      const linked = [...coProgressDests]
+      const ok = await confirm({
+        message: '함께 준비가 해제돼요',
+        description:
+          linked.length > 1
+            ? `왕복·편도가 달라지면 같은 여정이 아니게 돼서, 이 동물의 함께 준비(${linked.join('·')})가 모두 해제됩니다. 계속할까요?`
+            : `왕복·편도가 달라지면 같은 여정이 아니게 돼서, '${dest}'의 함께 준비가 해제됩니다. 계속할까요?`,
+        okLabel: '바꾸고 해제',
+      })
+      if (!ok) return
+    }
+
     startTransition(async () => {
       const r = await setCaseDestinationTripType(caseId, dest, nextTT)
       if (!r.ok) {
         alert(`오류: ${r.error}`)
         return
+      }
+      // 묶여 있던 목적지의 트립을 바꿨으면 함께 준비 해제 — 엔진 동기화 중단(co_progress=false).
+      // 동물당 스위치 1개라 공유 목적지 2개+ 면 통째 해제(설계 확정). 다시 켜려면 토글로.
+      if (wasLinked) {
+        const r2 = await setCaseCoProgress(caseId, false)
+        if (!r2.ok) {
+          alert(`오류: ${r2.error}`)
+          return
+        }
       }
       await refreshCases()
     })

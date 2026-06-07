@@ -142,13 +142,26 @@ export function hasSiblingForDestination(
   if (!g.name || !g.phone) return false
   const target = dest.trim()
   if (!target) return false
+  // 조건 3 — 그 목적지의 왕복/편도가 형제와 일치해야 '같은 여정'. 다르면 함께 준비 노출 X.
+  const myTrip = tripTypeForDest(current, target)
   return cases.some((c) => {
     if (c.id === current.id) return false
     const cg = guardianKey(c)
     if (cg.name !== g.name || cg.phone !== g.phone) return false
-    return (c.destination ?? '')
+    const sharesDest = (c.destination ?? '')
       .split(',')
       .map((t) => t.trim())
       .includes(target)
+    if (!sharesDest) return false
+    return tripTypeForDest(c, target) === myTrip
   })
+}
+
+/** 케이스의 한 목적지 왕복/편도 — data.trip_type[dest], 기본 'round'. */
+function tripTypeForDest(c: CaseRow, dest: string): 'round' | 'one_way' {
+  const tt = (c.data as Record<string, unknown> | null)?.trip_type
+  if (tt && typeof tt === 'object' && !Array.isArray(tt)) {
+    return (tt as Record<string, unknown>)[dest] === 'one_way' ? 'one_way' : 'round'
+  }
+  return 'round'
 }
