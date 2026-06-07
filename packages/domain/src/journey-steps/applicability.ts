@@ -132,11 +132,12 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return false
 
-      // 이미 만료된 면역은 '추가 백신(부스터)' 대상이 아니다 — 유효기간 경과 후
-      // 접종은 부스터가 아닌 새 기초접종이라, 1·2차부터 다시 하는 재시작 상황이다.
-      if (validUntil < todayKst()) return false
-
-      // (2) 아직 유효하지만 만료 30일 전 (오늘 기준).
+      // (2) 만료됐거나(이미 과거) 만료 30일 전 (오늘 기준).
+      //   todayKst() 는 보호자가 앱을 보는 시점일 뿐 — 유효기간이 이미 지났어도 카드를
+      //   숨기지 않는다. (a) 유효기간 내에 받은 추가 접종을 늦게 입력하는 보호자가 입력할
+      //   곳을 잃지 않도록, (b) 이미 만료된 케이스는 재접종(재시작) 안내를 받아야 하므로.
+      //   만료 후 날짜로의 부스터 입력 자체는 chain 검증(findRabiesChainBreak, client+server)
+      //   이 거부하므로 카드를 미리 숨길 이유가 없다. (titer-extra-applicable 과 동일 동작.)
       if (validUntil < addDays(todayKst(), 30)) return true
 
       // (3) 입국일 전 만료.
