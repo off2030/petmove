@@ -152,6 +152,10 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
         />
       </SectionCard>
 
+      {/* 저장 버튼은 동물 정보 카드 바로 아래 — 이 버튼이 '동물 정보'만 저장한다는 걸 분명히 한다.
+          아래 여정 섹션은 칩이 즉시 저장(저장 버튼과 무관)이라 버튼 위로 분리해 혼동을 없앤다. */}
+      <InlineSaveButton dirty={dirty} status={status} error={error} onSave={handleSave} />
+
       {/* 여정 칩 — multi-destination. 같은 동물에 N 목적지 표시·전환·추가·제거.
           목적지·왕복편도·함께 준비 입력은 칩이 흡수 (즉시 저장 — 동물 정보 폼 저장과 별개).
           '함께 준비' 는 같은 목적지로 가는 형제가 있는 카드에만 노출. */}
@@ -162,8 +166,6 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
         coProgress={coProgress}
         coProgressDests={coProgressDests}
       />
-
-      <InlineSaveButton dirty={dirty} status={status} error={error} onSave={handleSave} />
 
       <DeleteAnimalSection caseId={caseId} petName={buildPetBlock(caseRow).name} />
     </EditPageShell>
