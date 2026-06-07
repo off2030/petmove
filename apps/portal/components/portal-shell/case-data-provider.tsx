@@ -1,6 +1,6 @@
 'use client'
 
-import { supabaseBrowser } from '@petmove/auth'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 import type { CaseRow } from '@petmove/domain'
 import { useRouter } from 'next/navigation'
 import {
@@ -251,6 +251,16 @@ export function CaseDataProvider({
     const onRefresh = () => {
       void refreshCases()
       void refreshProfile()
+      // 토큰 갱신 주체를 서버(미들웨어)로 모았으므로(browser autoRefreshToken off), 백그라운드
+      // 복귀 시 realtime 이 최신 access token 을 쓰도록 다시 물린다. getSession 은 만료됐을 때만
+      // on-demand 로 갱신하며, 이는 위 refetch(서버 갱신)와 같은 순간이라 10초 reuse 창에서 안전.
+      // 일시 오류(네트워크 등)는 무시 — 다음 복귀에 재시도.
+      void supabaseBrowser.auth
+        .getSession()
+        .then(({ data }) => {
+          if (data.session) supabaseBrowser.realtime.setAuth(data.session.access_token)
+        })
+        .catch(() => {})
     }
     const onVisibility = () => {
       if (!document.hidden) onRefresh()
