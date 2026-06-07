@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import destsData from '@petmove/domain/data/destinations.json'
 import { useConfirm } from '@petmove/ui'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
@@ -58,6 +59,7 @@ export function DestinationChips({
 }) {
   const confirm = useConfirm()
   const { refreshCases } = useCases()
+  const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -90,6 +92,9 @@ export function DestinationChips({
         return
       }
       await refreshCases()
+      // /cases(내 여정)·/me 등 서버 컴포넌트가 listMyCases 를 직접 읽어 클라 provider 갱신만으론
+      // 안 바뀐다 — Router Cache 를 비워 다음 진입 시 새로 가져오게 한다(목적지 추가/삭제 반영).
+      router.refresh()
     })
   }
 
@@ -108,6 +113,7 @@ export function DestinationChips({
         return
       }
       await refreshCases()
+      router.refresh()
     })
   }
 
@@ -150,6 +156,7 @@ export function DestinationChips({
         return
       }
       await refreshCases()
+      router.refresh()
     })
   }
 
@@ -163,6 +170,7 @@ export function DestinationChips({
         return
       }
       await refreshCases()
+      router.refresh()
     })
   }
 
