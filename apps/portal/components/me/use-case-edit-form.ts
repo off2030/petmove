@@ -102,7 +102,7 @@ export function useCaseEditForm(caseRow: CaseRow, caseId: string): UseCaseEditFo
     setStatus('saving')
     setError(null)
     startTransition(async () => {
-      const res = await updateCaseInfoFields(caseId, form)
+      const res = await updateCaseInfoFields(caseId, form, base)
       if (res.ok) {
         const fresh = readForm(res.value)
         setForm(fresh)

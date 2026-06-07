@@ -10,8 +10,8 @@ import { useCaseEditForm } from './use-case-edit-form'
 
 /**
  * 설정 > 보호자 — /me/guardian.
- * 현 InfoView 의 "보호자 정보" 섹션 7개 필드. 저장은 updateCaseInfoFields(전체 폼) 호출.
- * (form 의 다른 필드는 caseRow 에서 읽은 값 그대로 유지되므로 안전.)
+ * 현 InfoView 의 "보호자 정보" 섹션 7개 필드. 저장은 useCaseEditForm → updateCaseInfoFields.
+ * (base 대비 바뀐 칸만 반영 → 다른 화면·주체가 채운 나머지 필드는 안 지워진다.)
  */
 export function GuardianEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string }) {
   const { form, set, dirty, status, error, handleSave } = useCaseEditForm(caseRow, caseId)

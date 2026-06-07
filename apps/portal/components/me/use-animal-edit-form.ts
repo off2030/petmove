@@ -315,10 +315,11 @@ export function useAnimalEditForm(caseRow: CaseRow, caseId: string): UseAnimalEd
           // ⑥ 동물 정보 — destination 은 최종 목적지 목록으로 맞춰 충돌 제거(journey 가 이미 쓴 값과 동일).
           let saved: CaseRow | null = null
           if (animalDirty) {
-            const r = await updateCaseInfoFields(caseId, {
-              ...form,
-              destination: finalDests.join(', '),
-            })
+            const r = await updateCaseInfoFields(
+              caseId,
+              { ...form, destination: finalDests.join(', ') },
+              formBase,
+            )
             if (!r.ok) throw new Error(r.error)
             saved = r.value
             updateCase(r.value)

@@ -27,6 +27,7 @@ import {
   type VaccineProductsData,
 } from '@petmove/domain'
 import { AVATAR_COLOR_IDS, type AvatarColorId } from '@/lib/avatar'
+import { readForm } from '@/lib/cases/info-form'
 import { assertCaseAccess, type Result } from './_shared'
 
 /**
@@ -1492,17 +1493,70 @@ const INFO_DATA_KEYS = [
   'jp_export_quarantine_time',
 ] as const
 
+/**
+ * 이 폼이 책임지는 필드(컬럼+data) 전체 — base diff·충돌 검사 대상.
+ * 여정 소유 필드(destination·trip_type·co_progress)는 destination action 들이 따로
+ * 관리하므로 제외한다. 제외 필드는 effective 가 항상 DB 최신값(fresh)을 유지한다.
+ */
+const OWNED_INFO_KEYS = [
+  ...INFO_DATA_KEYS,
+  'customer_name',
+  'customer_name_en',
+  'customer_first_name_en',
+  'customer_last_name_en',
+  'pet_name',
+  'pet_name_en',
+  'microchip',
+  'departure_date',
+  'weight',
+] as const satisfies readonly (keyof CaseInfoInput)[]
+
 export async function updateCaseInfoFields(
   caseId: string,
   input: CaseInfoInput,
+  /**
+   * 폼을 연 시점의 값(base). 주면 "그 사이 다른 곳에서 바뀐 칸"을 덮어쓰지 않도록
+   * DB 최신값 위에 사용자가 바꾼 칸만 얹어 저장한다(= 바뀐 칸만 반영). 안 주면(구 호출)
+   * 기존처럼 input 전체를 권위로 사용.
+   */
+  base?: CaseInfoInput,
 ): Promise<Result<CaseRow>> {
   try {
-    // ── 검증 ──
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: freshRow, error: fetchErr } = await admin
+      .from('cases')
+      .select('*')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+    const fresh = freshRow as CaseRow
+
+    // ── (나) 바뀐 칸만 반영 ──
+    // base(폼 연 시점 값)가 오면, DB 최신값(readForm) 위에 "사용자가 바꾼 칸"만 얹어
+    // effective 를 만든다. 안 건드린 칸은 최신값을 그대로 유지 → 그 사이 다른 곳에서
+    // 채운 항공편 등이 안 지워진다. 여정 소유 필드는 OWNED 에서 빠져 항상 최신값 유지.
+    // base 가 없으면(구 호출) input 전체를 권위로 사용(기존 동작).
+    let effective: CaseInfoInput
+    if (base) {
+      const merged: CaseInfoInput = { ...readForm(fresh) }
+      const sink = merged as unknown as Record<string, unknown>
+      for (const key of OWNED_INFO_KEYS) {
+        if (input[key] !== base[key]) sink[key] = input[key]
+      }
+      effective = merged
+    } else {
+      effective = input
+    }
+
+    // ── 검증 (최종 저장 상태 기준) ──
     for (const v of [
-      input.departure_date,
-      input.birth_date,
-      input.return_date,
-      input.jp_export_quarantine_date,
+      effective.departure_date,
+      effective.birth_date,
+      effective.return_date,
+      effective.jp_export_quarantine_date,
     ]) {
       if (v && !ISO_DATE_RE.test(v)) {
         return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
@@ -1510,48 +1564,37 @@ export async function updateCaseInfoFields(
     }
     // 출국일 ≤ 귀국일 — 둘 다 입력된 왕복 케이스에서만 검사. 논리적 불가능 조건이므로 저장 거부.
     if (
-      input.trip_type === 'round' &&
-      input.departure_date &&
-      input.return_date &&
-      input.return_date < input.departure_date
+      effective.trip_type === 'round' &&
+      effective.departure_date &&
+      effective.return_date &&
+      effective.return_date < effective.departure_date
     ) {
       return { ok: false, error: '귀국일은 출국일 이후여야 합니다.' }
     }
     let chip: string | null = null
-    if (input.microchip) {
-      const digits = input.microchip.replace(/\D/g, '')
+    if (effective.microchip) {
+      const digits = effective.microchip.replace(/\D/g, '')
       if (digits.length !== 15) {
         return { ok: false, error: '15자리 숫자를 입력해주세요.' }
       }
       chip = digits
     }
     let weightNum: number | null = null
-    if (input.weight.trim()) {
-      const n = Number(input.weight)
+    if (effective.weight.trim()) {
+      const n = Number(effective.weight)
       if (!Number.isFinite(n) || n < 0) {
         return { ok: false, error: '몸무게 형식이 올바르지 않습니다.' }
       }
       weightNum = n
     }
 
-    const access = await assertCaseAccess(caseId)
-    if (!access.ok) return access
-
-    const admin = createAdminClient()
-    const { data: existing, error: fetchErr } = await admin
-      .from('cases')
-      .select('data')
-      .eq('id', caseId)
-      .single()
-    if (fetchErr) return { ok: false, error: fetchErr.message }
-
-    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const prev = (fresh.data ?? {}) as Record<string, unknown>
     // 일본 노선 — 출국일이 광견병 항체 검사일 + 180일 이전이면 저장 거부.
     // updateFlightFields 와 같은 정책 — 회복 경로 없는 위반만 hard 차단.
     {
-      const entryErr = validateJpEntryDate(input.departure_date.trim(), {
+      const entryErr = validateJpEntryDate(effective.departure_date.trim(), {
         data: prev,
-        destination: input.destination,
+        destination: effective.destination,
         departureDate: null,
       })
       if (entryErr) return { ok: false, error: entryErr }
@@ -1559,7 +1602,7 @@ export async function updateCaseInfoFields(
     const nextData: Record<string, unknown> = { ...prev }
 
     for (const key of INFO_DATA_KEYS) {
-      const v = (input[key] ?? '').trim()
+      const v = (effective[key] ?? '').trim()
       if (v) nextData[key] = v
       else delete nextData[key]
     }
@@ -1567,9 +1610,9 @@ export async function updateCaseInfoFields(
     // 영문 성·이름 분리 저장 + 합본 column 자동 갱신.
     // - 분리 입력이 하나라도 있으면 그게 권위 → data 에 분리 저장 + column 은 `${first} ${last}` 로 갱신
     //   (화면 표기·/apply·admin pdf-fill source 와 동일한 First Last 순서).
-    // - 분리 입력이 모두 비면 input.customer_name_en (자유 입력 legacy 경로) 그대로 column 저장.
-    const firstEn = (input.customer_first_name_en ?? '').trim()
-    const lastEn = (input.customer_last_name_en ?? '').trim()
+    // - 분리 입력이 모두 비면 customer_name_en (자유 입력 legacy 경로) 그대로 column 저장.
+    const firstEn = (effective.customer_first_name_en ?? '').trim()
+    const lastEn = (effective.customer_last_name_en ?? '').trim()
     let nameEnColumn: string | null
     if (firstEn || lastEn) {
       if (firstEn) nextData.customer_first_name_en = firstEn
@@ -1580,29 +1623,26 @@ export async function updateCaseInfoFields(
     } else {
       delete nextData.customer_first_name_en
       delete nextData.customer_last_name_en
-      nameEnColumn = input.customer_name_en.trim() || null
+      nameEnColumn = effective.customer_name_en.trim() || null
     }
 
     if (weightNum === null) delete nextData.weight
     else nextData.weight = weightNum
 
-    // 동시 진행(co_progress)·왕복편도(trip_type) 는 목적지별 값이라 이 벌크 폼에선 건드리지 않는다.
-    // CaseInfoInput.trip_type 은 첫 토큰 기준 단일값으로 평탄화돼 다중 목적지를 못 담는다 —
-    // 여기서 쓰면 목적지별로 정한 값을 stale 단일값으로 덮어쓴다. 둘 다 목적지 카드의 여정 저장
-    // (useAnimalEditForm 이 setCaseCoProgress · setCaseDestinationTripType 를 목적지별로 호출)이
-    // 전담한다. 이 폼과 여정은 같은 '저장' 버튼에서 함께 커밋되며, 여정 action 이 먼저 실행돼
-    // co_progress · trip_type · by_dest 를 정리한 뒤 이 폼이 prev 스프레드로 그 맵을 보존한다.
+    // 동시 진행(co_progress)·왕복편도(trip_type)·destination 은 여정 소유라 OWNED 에서 제외 —
+    // effective 가 항상 fresh(최신) 값을 유지하므로 이 폼 저장이 여정 action 결과를 덮지 않는다.
+    // (useAnimalEditForm 은 여정 action 을 먼저 실행한 뒤 이 폼을 호출 → fresh 가 그 결과를 포함.)
 
     const { data: updated, error } = await admin
       .from('cases')
       .update({
-        customer_name: input.customer_name.trim(),
+        customer_name: effective.customer_name.trim(),
         customer_name_en: nameEnColumn,
-        pet_name: input.pet_name.trim() || null,
-        pet_name_en: input.pet_name_en.trim() || null,
+        pet_name: effective.pet_name.trim() || null,
+        pet_name_en: effective.pet_name_en.trim() || null,
         microchip: chip,
-        destination: input.destination.trim() || null,
-        departure_date: input.departure_date || null,
+        destination: effective.destination.trim() || null,
+        departure_date: effective.departure_date || null,
         data: nextData,
       })
       .eq('id', caseId)
