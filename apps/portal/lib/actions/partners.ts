@@ -32,6 +32,8 @@ export interface PartnerOrg {
   name: string
   name_en: string | null
   org_type: 'hospital' | 'transport' | 'both'
+  /** 조직 아바타/로고 public URL — 펫무브워크 조직정보에서 설정. 없으면 null(이니셜 fallback). */
+  avatar_url: string | null
 }
 
 const PARTNER_TYPES_BY_ROLE: Record<PartnerRole, readonly string[]> = {
@@ -77,7 +79,7 @@ export async function getMyPartnerOrgs(): Promise<
 
     const { data: orgs, error: orgsError } = await supabase
       .from('organizations')
-      .select('id, name, name_en, org_type')
+      .select('id, name, name_en, org_type, avatar_url')
       .in('id', ids)
     if (orgsError) return { ok: false, error: orgsError.message }
 
@@ -106,7 +108,7 @@ export async function listAvailableOrgs(role: PartnerRole): Promise<Result<Partn
     const supabase = await createClient()
     const { data, error } = await supabase
       .from('organizations')
-      .select('id, name, name_en, org_type')
+      .select('id, name, name_en, org_type, avatar_url')
       .in('org_type', PARTNER_TYPES_BY_ROLE[role] as unknown as string[])
       .order('name', { ascending: true })
     if (error) return { ok: false, error: error.message }
@@ -202,6 +204,47 @@ async function setPartnerOrg(
         .filter((v): v is string => typeof v === 'string' && !!v && v !== PLATFORM_ORG_ID),
     )
     const customerName = ((prevRows[0]?.customer_name as string | null) ?? '').trim()
+
+    // 5b. 담당 병원을 다른 병원으로 바꾸기 직전 — 본병원 광견병 접종의 약품을 "변경 전"
+    // 카탈로그로 케이스에 복사 저장(snapshot)하고 타병원(other_hospital=true)으로 전환한다.
+    // 안 하면 새 병원 카탈로그 기준으로 약품 표시가 바뀌어 과거 기록이 변질된다. 새 병원
+    // 입장에선 그 접종이 타병원 접종이기도 하다. (광견병 한정 — 다른 백신 snapshot 은 후속.)
+    // co_progress 트리거는 형제로 전파하지만, 형제도 같은 caseIds 라 동일 snapshot → 멱등.
+    if (role === 'vet' && orgId !== null) {
+      const { createVaccineLookups } = await import('@petmove/domain')
+      const { getCaseVaccineData } = await import('./cases')
+      for (const r of prevRows) {
+        const cid = r.id as string
+        const prevOrg = r[column] as string | null
+        if (!cid || !prevOrg || prevOrg === PLATFORM_ORG_ID || prevOrg === orgId) continue
+        const vd = await getCaseVaccineData(cid)
+        if (!vd.ok) continue
+        const lookups = createVaccineLookups(vd.value)
+        const { data: cr } = await admin.from('cases').select('data').eq('id', cid).maybeSingle()
+        const cdata = ((cr as { data: Record<string, unknown> } | null)?.data ?? {}) as Record<string, unknown>
+        const rabies = Array.isArray(cdata.rabies_dates)
+          ? (cdata.rabies_dates as Array<Record<string, unknown>>)
+          : []
+        let touched = false
+        const nextRabies = rabies.map((e) => {
+          if (!e || typeof e !== 'object' || (e as { other_hospital?: boolean }).other_hospital === true) return e
+          const date = typeof e.date === 'string' ? e.date : ''
+          const hint = date ? lookups.lookupRabies(date) : null
+          touched = true
+          return {
+            ...e,
+            product: e.product || hint?.vaccine || hint?.product || '',
+            manufacturer: e.manufacturer || hint?.manufacturer || '',
+            lot: e.lot || hint?.batch || '',
+            expiry: e.expiry || hint?.expiry || '',
+            other_hospital: true,
+          }
+        })
+        if (touched) {
+          await admin.from('cases').update({ data: { ...cdata, rabies_dates: nextRabies } }).eq('id', cid)
+        }
+      }
+    }
 
     // 담당 병원(vet)은 org_id 컬럼 — 해제(null)면 직영(platform)으로 되돌림(org_id 는 NOT NULL).
     // 운송(transport)은 transport_org_id — null(해제) 허용.

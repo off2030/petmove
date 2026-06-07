@@ -37,6 +37,62 @@ export const monoCap: CSSProperties = {
   fontWeight: 500,
 }
 
+/**
+ * 조직(담당 동물병원·운송업체) 아바타. 펫무브워크 조직정보에서 설정한 로고를 표시.
+ * 보호자·반려동물(원형)과 구분하려 둥근 사각형(로고 톤). url 없으면 이름 이니셜 fallback.
+ */
+export function OrgAvatar({
+  name,
+  url,
+  size = 40,
+}: {
+  name: string
+  url?: string | null
+  size?: number
+}) {
+  const radius = Math.round(size * 0.28)
+  if (url) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={url}
+        alt=""
+        width={size}
+        height={size}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: radius,
+          objectFit: 'cover',
+          flexShrink: 0,
+          background: C.soft,
+          border: `.5px solid ${C.line}`,
+        }}
+      />
+    )
+  }
+  const initial = (name?.trim()?.[0] ?? '?').toUpperCase()
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: radius,
+        background: C.soft,
+        color: C.ink2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: Math.round(size * 0.4),
+        flexShrink: 0,
+        ...serif,
+      }}
+    >
+      {initial}
+    </div>
+  )
+}
+
 /** 좌측 화살표 + 라벨로 부모 페이지로 복귀. */
 export function BackLink({ href, label }: { href: string; label: string }) {
   return (

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useTransition, type CSSProperties } from 
 import { useConfirm } from '@petmove/ui'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
-import { C, EditPageShell, SectionCard } from './settings-shared'
+import { C, EditPageShell, SectionCard, OrgAvatar } from './settings-shared'
 import {
   listAvailableOrgs,
   setVetOrg,
@@ -141,20 +141,23 @@ export function PartnerEditView({ role }: { role: PartnerRole }) {
       {currentOrg ? (
         <>
           <SectionCard marginTop={8}>
-            <div style={{ padding: '16px 0' }}>
-              <div
-                style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}
-              >
-                <span style={{ fontSize: 16, fontWeight: 500, color: C.ink }}>
-                  {currentOrg.name}
-                </span>
-                {currentOrg.org_type === 'both' && <BothBadge />}
-              </div>
-              {currentOrg.name_en && (
-                <div style={{ fontSize: 13, color: C.ink3, marginTop: 4 }}>
-                  {currentOrg.name_en}
+            <div style={{ padding: '16px 0', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <OrgAvatar name={currentOrg.name} url={currentOrg.avatar_url} size={44} />
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}
+                >
+                  <span style={{ fontSize: 16, fontWeight: 500, color: C.ink }}>
+                    {currentOrg.name}
+                  </span>
+                  {currentOrg.org_type === 'both' && <BothBadge />}
                 </div>
-              )}
+                {currentOrg.name_en && (
+                  <div style={{ fontSize: 13, color: C.ink3, marginTop: 4 }}>
+                    {currentOrg.name_en}
+                  </div>
+                )}
+              </div>
             </div>
           </SectionCard>
 
@@ -246,11 +249,12 @@ export function PartnerEditView({ role }: { role: PartnerRole }) {
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 8,
+                      gap: 10,
                       flexWrap: 'wrap',
                       minWidth: 0,
                     }}
                   >
+                    <OrgAvatar name={org.name} url={org.avatar_url} size={32} />
                     <span
                       style={{
                         fontSize: 15,

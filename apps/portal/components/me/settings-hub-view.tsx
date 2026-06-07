@@ -13,7 +13,7 @@ import { AVATAR_GRADIENTS, avatarTextColor, isAvatarColorId } from '@/lib/avatar
 import { dDayLabel } from '@/lib/cases/info-form'
 import { getMyPartnerOrgs, type PartnerOrg } from '@/lib/actions/partners'
 import { PetAvatarDisplay } from './pet-avatar-display'
-import { C, serif, monoCap } from './settings-shared'
+import { C, serif, monoCap, OrgAvatar } from './settings-shared'
 
 /**
  * 내 정보 탭 허브 (/me) — 카테고리별 카드 리스트. (앱 설정은 상단바 ⚙ → /settings)
@@ -273,26 +273,31 @@ function PartnerCard({
         color: 'inherit',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <span style={{ ...serif, fontSize: 17, color: C.ink }}>{org.name}</span>
-        {org.org_type === 'both' && (
-          <span
-            style={{
-              fontSize: 11,
-              padding: '2px 7px',
-              borderRadius: 999,
-              background: C.soft,
-              color: C.ink2,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            병원·운송
-          </span>
-        )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <OrgAvatar name={org.name} url={org.avatar_url} size={40} />
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ ...serif, fontSize: 17, color: C.ink }}>{org.name}</span>
+            {org.org_type === 'both' && (
+              <span
+                style={{
+                  fontSize: 11,
+                  padding: '2px 7px',
+                  borderRadius: 999,
+                  background: C.soft,
+                  color: C.ink2,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                병원·운송
+              </span>
+            )}
+          </div>
+          {org.name_en && (
+            <div style={{ fontSize: 12, color: C.ink3, marginTop: 3 }}>{org.name_en}</div>
+          )}
+        </div>
       </div>
-      {org.name_en && (
-        <div style={{ fontSize: 12, color: C.ink3, marginTop: 3 }}>{org.name_en}</div>
-      )}
     </Link>
   )
 }

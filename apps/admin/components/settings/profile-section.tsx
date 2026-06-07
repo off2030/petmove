@@ -14,42 +14,11 @@ import {
 import { Avatar, avatarInitial } from '@/components/ui/avatar'
 import { supabaseBrowser } from '@petmove/auth'
 import { PushPermission } from '@/components/pwa/push-permission'
+import { resizeSquareJpeg } from '@/lib/image/resize-avatar'
 import { cn } from '@/lib/utils'
 
 const AVATAR_MAX_BYTES = 20 * 1024 * 1024
 const AVATAR_ACCEPT = 'image/png,image/jpeg,image/webp,image/gif'
-const AVATAR_TARGET_PX = 512
-const AVATAR_JPEG_QUALITY = 0.9
-
-async function resizeAvatar(file: File): Promise<Blob> {
-  const url = URL.createObjectURL(file)
-  try {
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const el = new Image()
-      el.onload = () => resolve(el)
-      el.onerror = () => reject(new Error('이미지를 읽을 수 없습니다.'))
-      el.src = url
-    })
-    const side = Math.min(img.naturalWidth, img.naturalHeight)
-    const sx = (img.naturalWidth - side) / 2
-    const sy = (img.naturalHeight - side) / 2
-    const canvas = document.createElement('canvas')
-    canvas.width = AVATAR_TARGET_PX
-    canvas.height = AVATAR_TARGET_PX
-    const ctx = canvas.getContext('2d')
-    if (!ctx) throw new Error('Canvas 2D 미지원 브라우저')
-    ctx.drawImage(img, sx, sy, side, side, 0, 0, AVATAR_TARGET_PX, AVATAR_TARGET_PX)
-    return await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob(
-        (b) => (b ? resolve(b) : reject(new Error('이미지 변환 실패'))),
-        'image/jpeg',
-        AVATAR_JPEG_QUALITY,
-      )
-    })
-  } finally {
-    URL.revokeObjectURL(url)
-  }
-}
 
 function formatSavedAgo(date: Date | null): string {
   if (!date) return ''
@@ -274,7 +243,7 @@ function AvatarRow({
     try {
       let blob: Blob
       try {
-        blob = await resizeAvatar(file)
+        blob = await resizeSquareJpeg(file)
       } catch (e) {
         onError(`이미지 처리 실패: ${e instanceof Error ? e.message : String(e)}`)
         return

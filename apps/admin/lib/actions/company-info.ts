@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@petmove/auth/server'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
+import { getMyOrgRole } from './my-role'
 import { DEFAULT_VET_INFO, loadVetInfo, saveVetInfo, type VetInfo } from '@/lib/vet-info'
 
 export type OrgType = 'hospital' | 'transport' | 'both'
@@ -122,6 +123,121 @@ export async function updateOrgType(next: OrgType): Promise<{ ok: true; org_type
     if (error) return { ok: false, error: error.message }
     revalidatePath('/settings')
     return { ok: true, org_type: next }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+  }
+}
+
+// ─────────────────────────────────────────────────
+// 조직 아바타/로고 — organizations.avatar_url (20260608000009)
+//
+// 펫무브 보호자 화면(담당 병원·운송 카드)에 표시되는 조직 아바타. 사진은 user-avatars
+// 버킷의 org/{orgId}/ 경로에 저장(보호자 아바타와 동일 버킷 관례). 업로드/제거는 조직
+// 관리자만 — service-role(admin client)로 user-avatars insert RLS(첫 폴더=auth.uid()) 우회
+// 하므로, 반드시 isAdmin 가드를 통과한 뒤에만 admin client 를 쓴다(admin CLAUDE.md 규칙 6).
+// 클라이언트가 미리 512px 정사각 JPEG 로 리사이즈한 Blob 을 FormData 'file' 로 전달한다.
+// ─────────────────────────────────────────────────
+
+const ORG_AVATAR_BUCKET = 'user-avatars'
+
+export async function getOrgAvatar(): Promise<string | null> {
+  try {
+    const supabase = await createClient()
+    const orgId = await getActiveOrgId()
+    const { data } = await supabase
+      .from('organizations')
+      .select('avatar_url')
+      .eq('id', orgId)
+      .maybeSingle()
+    return (data as { avatar_url?: string | null } | null)?.avatar_url ?? null
+  } catch {
+    return null
+  }
+}
+
+export async function uploadOrgAvatar(
+  formData: FormData,
+): Promise<{ ok: true; avatar_url: string } | { ok: false; error: string }> {
+  try {
+    const role = await getMyOrgRole()
+    if (!role.isAdmin) return { ok: false, error: '조직 관리자만 변경할 수 있습니다.' }
+
+    const file = formData.get('file')
+    if (!(file instanceof Blob)) return { ok: false, error: '파일이 없습니다.' }
+    if (file.size > 5 * 1024 * 1024) return { ok: false, error: '파일이 너무 큽니다 (최대 5MB).' }
+
+    const orgId = await getActiveOrgId()
+    const { createAdminClient } = await import('@petmove/auth')
+    const admin = createAdminClient()
+
+    // 기존 아바타 경로 — 새 업로드 성공 후 정리.
+    const { data: prev } = await admin
+      .from('organizations')
+      .select('avatar_url')
+      .eq('id', orgId)
+      .maybeSingle()
+    const oldUrl = (prev as { avatar_url?: string | null } | null)?.avatar_url ?? null
+
+    const path = `org/${orgId}/${crypto.randomUUID()}.jpg`
+    const buffer = await file.arrayBuffer()
+    const { error: upErr } = await admin.storage
+      .from(ORG_AVATAR_BUCKET)
+      .upload(path, buffer, { cacheControl: '3600', upsert: false, contentType: 'image/jpeg' })
+    if (upErr) return { ok: false, error: `업로드 실패: ${upErr.message}` }
+
+    const { data: pub } = admin.storage.from(ORG_AVATAR_BUCKET).getPublicUrl(path)
+    const publicUrl = pub.publicUrl
+
+    const { error: updErr } = await admin
+      .from('organizations')
+      .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
+      .eq('id', orgId)
+    if (updErr) {
+      await admin.storage.from(ORG_AVATAR_BUCKET).remove([path])
+      return { ok: false, error: updErr.message }
+    }
+
+    if (oldUrl) {
+      const oldPath = oldUrl.split(`/${ORG_AVATAR_BUCKET}/`)[1]
+      if (oldPath) await admin.storage.from(ORG_AVATAR_BUCKET).remove([oldPath])
+    }
+
+    revalidatePath('/settings')
+    return { ok: true, avatar_url: publicUrl }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+  }
+}
+
+export async function removeOrgAvatar(): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const role = await getMyOrgRole()
+    if (!role.isAdmin) return { ok: false, error: '조직 관리자만 변경할 수 있습니다.' }
+
+    const orgId = await getActiveOrgId()
+    const { createAdminClient } = await import('@petmove/auth')
+    const admin = createAdminClient()
+
+    const { data: prev } = await admin
+      .from('organizations')
+      .select('avatar_url')
+      .eq('id', orgId)
+      .maybeSingle()
+    const oldUrl = (prev as { avatar_url?: string | null } | null)?.avatar_url ?? null
+
+    const { error: updErr } = await admin
+      .from('organizations')
+      .update({ avatar_url: null, updated_at: new Date().toISOString() })
+      .eq('id', orgId)
+    if (updErr) return { ok: false, error: updErr.message }
+
+    if (oldUrl) {
+      const oldPath = oldUrl.split(`/${ORG_AVATAR_BUCKET}/`)[1]
+      if (oldPath) await admin.storage.from(ORG_AVATAR_BUCKET).remove([oldPath])
+    }
+
+    revalidatePath('/settings')
+    return { ok: true }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) }
   }
