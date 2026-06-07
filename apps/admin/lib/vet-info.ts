@@ -135,24 +135,27 @@ export const VET_INFO = new Proxy({} as VetInfo, {
  *
  * PDF 생성 경로는 loadEffectiveVetInfo() 사용해야 본인 정보가 cert 에 반영됨.
  */
-export async function loadVetInfo(): Promise<VetInfo> {
+export async function loadVetInfo(orgId?: string): Promise<VetInfo> {
   try {
     const { createClient } = await import('@petmove/auth/server')
-    const { getActiveOrgId } = await import('@/lib/supabase/active-org')
     const supabase = await createClient()
-    const orgId = await getActiveOrgId()
+    const targetOrg = orgId ?? (await (await import('@/lib/supabase/active-org')).getActiveOrgId())
     const { data } = await supabase
       .from('organization_settings')
       .select('value')
-      .eq('org_id', orgId)
+      .eq('org_id', targetOrg)
       .eq('key', 'company_info')
       .maybeSingle()
     const override = (data?.value as Partial<VetInfo> | null) ?? {}
-    _cached = { ...DEFAULT_VET_INFO, ...override }
+    const result = { ...DEFAULT_VET_INFO, ...override }
+    // 활성 조직 조회일 때만 PDF용 module 캐시 갱신. 슈퍼어드민이 남의 조직(orgId 지정)을
+    // 조회할 때는 캐시를 건드리지 않는다(PDF 발급자 정보 오염 방지).
+    if (!orgId) _cached = result
+    return result
   } catch {
-    _cached = DEFAULT_VET_INFO
+    if (!orgId) _cached = DEFAULT_VET_INFO
+    return DEFAULT_VET_INFO
   }
-  return _cached
 }
 
 /**
@@ -224,26 +227,26 @@ export async function loadEffectiveVetInfo(): Promise<VetInfo> {
  * 통째로 wipe 되는 사고가 발생함. DB 의 현재 값을 base 로 잡으면 캐시 상태와 무관하게
  * 안전하게 부분 갱신.
  */
-export async function saveVetInfo(patch: Partial<VetInfo>): Promise<VetInfo> {
+export async function saveVetInfo(patch: Partial<VetInfo>, orgId?: string): Promise<VetInfo> {
   const { createClient } = await import('@petmove/auth/server')
-  const { getActiveOrgId } = await import('@/lib/supabase/active-org')
   const supabase = await createClient()
-  const orgId = await getActiveOrgId()
+  const targetOrg = orgId ?? (await (await import('@/lib/supabase/active-org')).getActiveOrgId())
   const { data: existingRow } = await supabase
     .from('organization_settings')
     .select('value')
-    .eq('org_id', orgId)
+    .eq('org_id', targetOrg)
     .eq('key', 'company_info')
     .maybeSingle()
   const existing = (existingRow?.value as Partial<VetInfo> | null) ?? {}
   const merged: VetInfo = { ...DEFAULT_VET_INFO, ...existing, ...patch }
   const { error } = await supabase
     .from('organization_settings')
-    .upsert({ org_id: orgId, key: 'company_info', value: merged, updated_at: new Date().toISOString() })
+    .upsert({ org_id: targetOrg, key: 'company_info', value: merged, updated_at: new Date().toISOString() })
   if (error) {
     console.error('[saveVetInfo] upsert error:', error)
     throw new Error(error.message)
   }
-  _cached = merged
+  // 활성 조직 저장일 때만 캐시 갱신 (슈퍼어드민의 타 조직 저장은 캐시 오염 방지).
+  if (!orgId) _cached = merged
   return merged
 }

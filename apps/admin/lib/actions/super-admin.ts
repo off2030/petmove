@@ -8,6 +8,8 @@ import { sendEmail, inviteFromAddress } from '@/lib/email/resend'
 import { inviteEmailHtml, inviteEmailSubject } from '@/lib/email/invite-template'
 import { IMPERSONATION_COOKIE } from '@/lib/supabase/active-org'
 import type { InviteRole } from './invites'
+import type { VetInfo } from '@/lib/vet-info'
+import type { OrgType } from '@/lib/actions/company-info'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 
@@ -29,6 +31,8 @@ export interface OrgDetail {
   id: string
   name: string
   business_number: string | null
+  org_type: OrgType
+  avatar_url: string | null
   created_at: string
   members: { user_id: string; email: string; name: string | null; role: string; joined_at: string }[]
   invites: { id: string; email: string; role: string; token: string; expires_at: string; created_at: string }[]
@@ -100,7 +104,7 @@ export async function getOrgDetail(orgId: string): Promise<Result<OrgDetail>> {
     const admin = createAdminClient()
     const { data: org, error: orgErr } = await admin
       .from('organizations')
-      .select('id, name, business_number, created_at')
+      .select('id, name, business_number, org_type, avatar_url, created_at')
       .eq('id', orgId)
       .maybeSingle()
     if (orgErr) return { ok: false, error: orgErr.message }
@@ -162,6 +166,8 @@ export async function getOrgDetail(orgId: string): Promise<Result<OrgDetail>> {
         id: org.id as string,
         name: org.name as string,
         business_number: (org.business_number as string | null) ?? null,
+        org_type: ((org.org_type as OrgType | null) ?? 'hospital'),
+        avatar_url: (org.avatar_url as string | null) ?? null,
         created_at: org.created_at as string,
         members,
         invites,
@@ -544,7 +550,7 @@ export async function clearImpersonation(): Promise<Result<null>> {
   }
 }
 
-export async function createOrg(input: { name: string }): Promise<Result<{ id: string }>> {
+export async function createOrg(input: { name: string; orgType?: OrgType }): Promise<Result<{ id: string }>> {
   const gate = await requireSuperAdmin()
   if (!gate.ok) return gate
   const name = input.name.trim()
@@ -553,11 +559,136 @@ export async function createOrg(input: { name: string }): Promise<Result<{ id: s
     const admin = createAdminClient()
     const { data, error } = await admin
       .from('organizations')
-      .insert({ name })
+      .insert({ name, org_type: input.orgType ?? 'hospital' })
       .select('id')
       .single()
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: { id: data.id as string } }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+// ─────────────────────────────────────────────────
+// 조직 정보·유형·아바타 — 슈퍼어드민이 임의 조직(orgId)을 직접 편집.
+// 조직 정보(company_info)는 organization_settings RLS 의 super_admin 예외 덕에 vet-info
+// 헬퍼(createClient)를 그대로 재사용. org_type·아바타는 organizations 테이블이라 admin client.
+// ─────────────────────────────────────────────────
+
+/** 조직 정보(organization_settings.company_info) 조회. */
+export async function getOrgCompanyInfo(orgId: string): Promise<Result<VetInfo>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  try {
+    const { loadVetInfo } = await import('@/lib/vet-info')
+    return { ok: true, value: await loadVetInfo(orgId) }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/** 조직 정보 부분 저장. */
+export async function updateOrgCompanyInfo(input: {
+  orgId: string
+  patch: Partial<VetInfo>
+}): Promise<Result<VetInfo>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  try {
+    const { saveVetInfo } = await import('@/lib/vet-info')
+    return { ok: true, value: await saveVetInfo(input.patch, input.orgId) }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/** 조직 유형 설정 (organizations.org_type). */
+export async function setOrgType(input: {
+  orgId: string
+  orgType: OrgType
+}): Promise<Result<{ org_type: OrgType }>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  try {
+    const admin = createAdminClient()
+    const { error } = await admin
+      .from('organizations')
+      .update({ org_type: input.orgType, updated_at: new Date().toISOString() })
+      .eq('id', input.orgId)
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: { org_type: input.orgType } }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+// ── 조직 아바타 (orgId 지정) — company-info 의 활성조직 버전과 동일 로직, super_admin 가드 ──
+const SA_ORG_AVATAR_BUCKET = 'user-avatars'
+
+export async function uploadOrgAvatarById(
+  orgId: string,
+  formData: FormData,
+): Promise<Result<{ avatar_url: string }>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  try {
+    const file = formData.get('file')
+    if (!(file instanceof Blob)) return { ok: false, error: '파일이 없습니다.' }
+    if (file.size > 5 * 1024 * 1024) return { ok: false, error: '파일이 너무 큽니다 (최대 5MB).' }
+    const admin = createAdminClient()
+    const { data: prev } = await admin
+      .from('organizations')
+      .select('avatar_url')
+      .eq('id', orgId)
+      .maybeSingle()
+    const oldUrl = (prev as { avatar_url?: string | null } | null)?.avatar_url ?? null
+    const path = `org/${orgId}/${crypto.randomUUID()}.jpg`
+    const buffer = await file.arrayBuffer()
+    const { error: upErr } = await admin.storage
+      .from(SA_ORG_AVATAR_BUCKET)
+      .upload(path, buffer, { cacheControl: '3600', upsert: false, contentType: 'image/jpeg' })
+    if (upErr) return { ok: false, error: `업로드 실패: ${upErr.message}` }
+    const { data: pub } = admin.storage.from(SA_ORG_AVATAR_BUCKET).getPublicUrl(path)
+    const publicUrl = pub.publicUrl
+    const { error: updErr } = await admin
+      .from('organizations')
+      .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
+      .eq('id', orgId)
+    if (updErr) {
+      await admin.storage.from(SA_ORG_AVATAR_BUCKET).remove([path])
+      return { ok: false, error: updErr.message }
+    }
+    if (oldUrl) {
+      const oldPath = oldUrl.split(`/${SA_ORG_AVATAR_BUCKET}/`)[1]
+      if (oldPath) await admin.storage.from(SA_ORG_AVATAR_BUCKET).remove([oldPath])
+    }
+    return { ok: true, value: { avatar_url: publicUrl } }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+export async function removeOrgAvatarById(orgId: string): Promise<Result<Record<string, never>>> {
+  const gate = await requireSuperAdmin()
+  if (!gate.ok) return gate
+  try {
+    const admin = createAdminClient()
+    const { data: prev } = await admin
+      .from('organizations')
+      .select('avatar_url')
+      .eq('id', orgId)
+      .maybeSingle()
+    const oldUrl = (prev as { avatar_url?: string | null } | null)?.avatar_url ?? null
+    const { error: updErr } = await admin
+      .from('organizations')
+      .update({ avatar_url: null, updated_at: new Date().toISOString() })
+      .eq('id', orgId)
+    if (updErr) return { ok: false, error: updErr.message }
+    if (oldUrl) {
+      const oldPath = oldUrl.split(`/${SA_ORG_AVATAR_BUCKET}/`)[1]
+      if (oldPath) await admin.storage.from(SA_ORG_AVATAR_BUCKET).remove([oldPath])
+    }
+    return { ok: true, value: {} }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }

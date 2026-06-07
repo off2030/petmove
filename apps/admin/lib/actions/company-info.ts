@@ -15,44 +15,12 @@ export async function getCompanyInfo(): Promise<VetInfo> {
 export async function updateCompanyInfo(patch: Partial<VetInfo>): Promise<{ ok: true; info: VetInfo } | { ok: false; error: string }> {
   try {
     const info = await saveVetInfo(patch)
-    await syncOrgTypeFromData(info)
+    // org_type 자동판정 제거 — 유형은 슈퍼어드민(또는 조직 관리자)이 명시 선택한다
+    // (docs/org-model-refactor.md). 정보 입력으로 추측하지 않는다.
     revalidatePath('/settings')
     return { ok: true, info }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) }
-  }
-}
-
-/**
- * org_type 자동 판정 — 채운 정보로 결정. 별도 '유형 선택' UI 없이, 조직정보 탭에
- * 입력한 내용으로 PDF 발급자 동작이 정해지도록.
- *   병원 정보(clinic_ko) + 운송 정보(transport_company_ko) 둘 다 → both
- *   운송만 → transport (PDF 수의사 칸 비움)
- *   그 외 → hospital
- * 직영(platform) 은 제외 — 절대 덮어쓰지 않음. best-effort(실패가 저장을 막지 않음).
- */
-async function syncOrgTypeFromData(info: VetInfo): Promise<void> {
-  try {
-    const supabase = await createClient()
-    const orgId = await getActiveOrgId()
-    const { data: cur } = await supabase
-      .from('organizations')
-      .select('org_type')
-      .eq('id', orgId)
-      .maybeSingle()
-    const curType = (cur as { org_type?: string } | null)?.org_type
-    if (curType === 'platform') return // 직영은 자동판정 대상 아님
-    const hasHospital = !!info.clinic_ko?.trim()
-    const hasTransport = !!info.transport_company_ko?.trim()
-    const next: OrgType = hasHospital && hasTransport ? 'both' : hasTransport ? 'transport' : 'hospital'
-    if (curType !== next) {
-      await supabase
-        .from('organizations')
-        .update({ org_type: next, updated_at: new Date().toISOString() })
-        .eq('id', orgId)
-    }
-  } catch {
-    // best-effort: org_type 판정 실패가 회사 정보 저장을 막지 않음
   }
 }
 
