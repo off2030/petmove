@@ -20,7 +20,7 @@ const CO_PROGRESS_OPTIONS: readonly FieldOption[] = [
  *
  *  - 카드 1장 = 목적지 1개. 카드 안에 '목적지' 라벨 행(목적지명) + 왕복·편도 토글.
  *  - 같은 곳으로 가는 형제(같은 보호자의 다른 동물)가 있는 목적지에는 '함께 준비' 토글도 노출.
- *  - 목적지명 행 우측 '삭제' 텍스트 버튼 → 삭제 예정 표시(되돌리기 가능).
+ *  - 목적지명 행 우측 삭제(휴지통 아이콘 — 광견병/항체 카드와 통일) → 삭제 예정 표시(되돌리기 가능).
  *  - 카드 스택 아래 "+ 목적지 추가" dashed 버튼 → BottomSheet (검색 + 목록).
  *
  * 모든 변경은 **부모(useAnimalEditForm)의 로컬 상태만 갱신**한다 — 즉시 저장하지 않고
@@ -154,16 +154,33 @@ export function DestinationChips({
                   aria-label={`${dest} 삭제`}
                   style={{
                     flexShrink: 0,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 32,
+                    height: 32,
+                    borderRadius: 999,
+                    border: 0,
                     background: 'transparent',
-                    border: 'none',
-                    padding: '4px 0',
                     color: C.ink3,
                     cursor: disabled ? 'not-allowed' : 'pointer',
-                    fontFamily: 'inherit',
-                    fontSize: 13,
                   }}
                 >
-                  삭제
+                  {/* 휴지통 — 광견병/항체 추가 카드(rabies-extra·titer-extra)와 동일 아이콘으로 통일. */}
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M3 6h18" />
+                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  </svg>
                 </button>
               )}
             </div>
