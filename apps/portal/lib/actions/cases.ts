@@ -19,6 +19,7 @@ import {
   emptyVaccineProductsData,
   applyAutoFillRules,
   findRabiesChainBreak,
+  normalizeRabiesOrder,
   validateJpEntryDate,
   type CaseRow,
   type VaccineProductsData,
@@ -296,15 +297,18 @@ export async function updateRabiesEntryFields(
     // 앞 index 를 빈 객체로 패딩 (sparse 배열 방지) 후 해당 index 설정.
     while (rabiesArr.length < index) rabiesArr.push({})
     rabiesArr[index] = entry
-    // 끝의 phantom (date 없는 entry — 빈 객체 또는 {other_hospital: true} 만 남은
-    // 잔여물) 제거. hasValidDate 기반이라 기존 phantom 도 함께 정리됨.
-    while (rabiesArr.length > 0 && !hasValidDate(rabiesArr[rabiesArr.length - 1])) {
-      rabiesArr.pop()
-    }
+    // date 없는 phantom 을 전체 제거 — 끝뿐 아니라 중간·앞쪽(1차 자리)도. 1차를 비우면
+    // 뒤 회차가 당겨지고, 날짜순으로 정렬해 "index 0 = 가장 이른 = 1차" 불변식을 저장
+    // 시점에 보장한다. 펫무브워크(normalizeRabiesOrder)와 동일 모델로 통일 — 펫무브도
+    // '고정 슬롯'이 아니라 '날짜순 압축 리스트'를 저장한다. (앞쪽 phantom·회차 어긋남 해소.)
+    const compacted = rabiesArr.filter(hasValidDate)
+    const sorted = normalizeRabiesOrder(
+      compacted as Array<Record<string, unknown> & { date?: string | null }>,
+    )
 
     const nextData: Record<string, unknown> = { ...prev }
-    if (rabiesArr.length === 0) delete nextData.rabies_dates
-    else nextData.rabies_dates = rabiesArr
+    if (sorted.length === 0) delete nextData.rabies_dates
+    else nextData.rabies_dates = sorted
 
     const { data: updated, error } = await admin
       .from('cases')

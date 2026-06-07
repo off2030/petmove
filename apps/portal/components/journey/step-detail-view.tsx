@@ -1000,10 +1000,19 @@ export function StepDetailView({
       return
     }
     if (dirty && hasDownstreamData) {
+      // 1차 광견병 접종일을 비우는(삭제) 경우 — 저장 시 빈 슬롯이 압축되어 2차가 1차로
+      // 올라간다(펫무브워크와 통일된 날짜순 모델). 기존 '이후 일정' 경고에 그 결과를 덧붙여
+      // 보호자가 인지하게 한다. 1차 날짜 변경(수정)·다른 단계는 기존 범용 문구 그대로.
+      const isRabies1Deletion =
+        isRabies1 &&
+        savedRabies.date.length > 0 &&
+        rabies.date.trim() === '' &&
+        readRabiesEntryForm(caseRow?.data, 1).date.length > 0
       const ok = await confirm({
         message: '이후 일정이 이미 입력돼 있어요',
-        description:
-          '이 단계를 수정·삭제하면 이미 입력한 이후 일정과 어긋날 수 있습니다. 이후 일정을 확인해주세요.',
+        description: isRabies1Deletion
+          ? '이 단계를 삭제하면 이미 입력한 이후 일정과 어긋날 수 있습니다. 이후 일정을 확인해주세요.\n\n1차 광견병 기록이 삭제되고, 2차 광견병 기록이 1차로 올라갑니다. 이대로 진행할까요?'
+          : '이 단계를 수정·삭제하면 이미 입력한 이후 일정과 어긋날 수 있습니다. 이후 일정을 확인해주세요.',
         okLabel: '확인',
       })
       if (!ok) return
