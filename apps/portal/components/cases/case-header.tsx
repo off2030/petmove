@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { DestinationSwitcher } from '@/components/cases/destination-switcher'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { OtherCasesRow } from '@/components/cases/other-cases-row'
 import { PetAvatar } from '@/components/cases/pet-avatar'
 import { PetAvatarDisplay } from '@/components/me/pet-avatar-display'
@@ -48,10 +49,34 @@ export function CaseHeader({
   serif: React.CSSProperties
 }) {
   const { cases } = useCases()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const caseIndex = cases.findIndex((c) => c.id === caseId)
   const case_ = caseIndex >= 0 ? cases[caseIndex] : null
   const probeRef = useRef<HTMLDivElement>(null)
   const [wrapped, setWrapped] = useState(false)
+  const [destSheetOpen, setDestSheetOpen] = useState(false)
+
+  // 목적지 토큰 — 2개 이상이면 라우트(예: 한국 ⇄ 일본)를 눌러 활성 목적지를 전환한다.
+  // (목적지 추가/삭제·왕복편도는 동물 상세의 DestinationChips 전용 — 여기선 '전환'만.)
+  const tokens = (case_?.destination ?? '')
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean)
+  const multiDest = tokens.length > 1
+  const activeDest = searchParams.get('dest') ?? tokens[0] ?? ''
+  const tripTypeRaw = (case_?.data as Record<string, unknown> | null | undefined)?.trip_type
+  const tripTypeByDest =
+    tripTypeRaw && typeof tripTypeRaw === 'object' && !Array.isArray(tripTypeRaw)
+      ? (tripTypeRaw as Record<string, 'round' | 'one_way'>)
+      : {}
+
+  function selectDest(dest: string) {
+    setDestSheetOpen(false)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('dest', dest)
+    router.replace(`?${params.toString()}`, { scroll: false })
+  }
 
   useEffect(() => {
     const el = probeRef.current
@@ -72,7 +97,76 @@ export function CaseHeader({
     const ro = new ResizeObserver(measure)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [petName, fromCity, toCity, tripType, cases.length])
+  }, [petName, fromCity, toCity, tripType, cases.length, tokens.length])
+
+  const routeContent = (
+    <>
+      <span>{fromCity}</span>
+      <span style={{ color: ink3 }}>{tripType === 'round' ? '⇄' : '→'}</span>
+      <span>{toCity}</span>
+      {multiDest && (
+        <svg
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={ink3}
+          strokeWidth="2.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+          style={{
+            flexShrink: 0,
+            marginLeft: 1,
+            transform: destSheetOpen ? 'rotate(180deg)' : 'none',
+            transition: 'transform .18s',
+          }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      )}
+    </>
+  )
+
+  // 라우트(출발 ⇄ 목적지). 목적지 2개 이상이면 버튼(꺾쇠 + 바텀시트), 1개면 평문.
+  const routeEl = multiDest ? (
+    <button
+      type="button"
+      onClick={() => setDestSheetOpen(true)}
+      aria-haspopup="dialog"
+      aria-expanded={destSheetOpen}
+      aria-label="목적지 전환"
+      style={{
+        fontSize: 12,
+        color: ink2,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        transform: 'translateY(-2px)',
+        background: 'transparent',
+        border: 'none',
+        padding: 0,
+        margin: 0,
+        fontFamily: 'inherit',
+        cursor: 'pointer',
+      }}
+    >
+      {routeContent}
+    </button>
+  ) : (
+    <div
+      style={{
+        fontSize: 12,
+        color: ink2,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        transform: 'translateY(-2px)',
+      }}
+    >
+      {routeContent}
+    </div>
+  )
 
   const leftGroup = (
     <>
@@ -86,20 +180,7 @@ export function CaseHeader({
       <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: 0, color: ink }}>
         {petName}
       </h1>
-      <div
-        style={{
-          fontSize: 12,
-          color: ink2,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          transform: 'translateY(-2px)',
-        }}
-      >
-        <span>{fromCity}</span>
-        <span style={{ color: ink3 }}>{tripType === 'round' ? '⇄' : '→'}</span>
-        <span>{toCity}</span>
-      </div>
+      {routeEl}
     </>
   )
 
@@ -161,7 +242,73 @@ export function CaseHeader({
         </div>
         {!wrapped && <OtherCasesRow currentCaseId={caseId} tab={tab} />}
       </div>
-      {case_ && <DestinationSwitcher caseRow={case_} />}
+      {multiDest && (
+        <BottomSheet
+          open={destSheetOpen}
+          onClose={() => setDestSheetOpen(false)}
+          title="목적지"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 4 }}>
+            {tokens.map((t) => {
+              const isActive = t === activeDest
+              const arrow = (tripTypeByDest[t] ?? 'round') === 'round' ? '⇄' : '→'
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => selectDest(t)}
+                  aria-pressed={isActive}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    width: '100%',
+                    padding: '15px 0',
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: '.5px solid var(--pm-line)',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    textAlign: 'left',
+                  }}
+                >
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      fontSize: 16,
+                      color: isActive ? ink : ink2,
+                      fontWeight: isActive ? 600 : 400,
+                    }}
+                  >
+                    <span>{fromCity}</span>
+                    <span style={{ color: ink3 }}>{arrow}</span>
+                    <span>{t}</span>
+                  </span>
+                  {isActive && (
+                    <svg
+                      width="17"
+                      height="17"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke={ink}
+                      strokeWidth="2.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                      style={{ flexShrink: 0 }}
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </BottomSheet>
+      )}
     </div>
   )
 }
