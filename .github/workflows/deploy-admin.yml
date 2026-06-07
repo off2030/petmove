@@ -1,0 +1,65 @@
+name: Deploy Admin
+
+# 펫무브워크(admin) — Vercel webhook 끊김이 잦아 GitHub Actions 에서 직접 배포한다.
+# (portal 과 동일 방식 — deploy-portal.yml 참고. webhook 졸업.)
+# trigger: master 에 push 되고 admin 빌드에 영향 있는 파일이 변경됐을 때만.
+#
+# 필요한 GitHub Secrets:
+#   VERCEL_TOKEN          — portal 과 공유 (Vercel 계정 토큰)
+#   VERCEL_ORG_ID         — portal 과 공유 (같은 Vercel 팀/계정)
+#   VERCEL_PROJECT_ID_ADMIN — admin(petmovework) Vercel 프로젝트 ID (★ 새로 추가 필요)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'apps/admin/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - '.github/workflows/deploy-admin.yml'
+      # 문서·메모리(.md)만 바뀐 경우는 배포 제외 — 빌드 결과물 영향 없고 무료 한도 절약.
+      - '!**/*.md'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-admin-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build + Deploy to Vercel
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Vercel CLI
+        run: pnpm add -g vercel@latest
+
+      # vercel pull 로 project.json(prj/org id) 만 받고, 빌드는 Vercel 서버에 위임.
+      # webhook 빌드와 동일한 환경·env 처리. GitHub Actions 는 trigger 역할.
+      - name: Pull Vercel project metadata
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy (build on Vercel)
+        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
