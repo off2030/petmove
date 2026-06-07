@@ -67,7 +67,7 @@ export async function createCaseWithData(
     .single()
 
   if (error) {
-    if (error.message.includes('cases_org_microchip_unique')) {
+    if (error.message.includes('cases_microchip_global_unique')) {
       return { ok: false, error: '이미 등록된 마이크로칩 번호입니다' }
     }
     return { ok: false, error: error.message }

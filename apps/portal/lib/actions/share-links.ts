@@ -501,7 +501,7 @@ export async function submitShareLink(
           })
           .eq('id', row.id)
           .eq('submitted_at', submittedAt)
-        if (upErr.message.includes('cases_org_microchip_unique')) {
+        if (upErr.message.includes('cases_microchip_global_unique')) {
           return { ok: false, error: '이미 등록된 마이크로칩 번호입니다' }
         }
         return { ok: false, error: upErr.message }

@@ -284,7 +284,7 @@ export async function updateCaseField(
     .update(updateObj)
     .eq('id', caseId)
   if (updErr) {
-    if (updErr.message.includes('cases_org_microchip_unique')) {
+    if (updErr.message.includes('cases_microchip_global_unique')) {
       return { ok: false, error: '이미 등록된 번호입니다' }
     }
     return { ok: false, error: updErr.message }
