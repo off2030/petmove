@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { avatarGlyph, avatarGlyphColor, avatarGradient, avatarPhoto } from '@/lib/avatar'
 import { useCases } from '@/components/portal-shell/case-data-provider'
+import { hasJourney } from '@/lib/cases/journey-filter'
 
 /**
  * 헤더 우측 끝에 들어가는 전체 케이스 아바타 행. (이전엔 상단바에 있던 스위처)
@@ -21,7 +22,9 @@ export function OtherCasesRow({
   tab: 'journey' | 'docs'
 }) {
   const { cases } = useCases()
-  if (cases.length < 2) return null
+  // 여정(목적지) 있는 동물만 — 목적지 다 지운 동물은 전환 아바타에서도 빠진다.
+  const journeyCases = cases.filter(hasJourney)
+  if (journeyCases.length < 2) return null
 
   return (
     <span
@@ -38,7 +41,9 @@ export function OtherCasesRow({
         marginInline: -4,
       }}
     >
-      {cases.map((c, i) => {
+      {journeyCases.map((c) => {
+        // 아바타 색 index 는 전체 목록 기준 — /me 등 다른 화면과 같은 색 유지.
+        const i = cases.findIndex((x) => x.id === c.id)
         const isActive = c.id === currentCaseId
         const photo = avatarPhoto(c)
         return (

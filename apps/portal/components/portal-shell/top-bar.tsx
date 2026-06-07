@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { useCases } from './case-data-provider'
+import { hasJourney } from '@/lib/cases/journey-filter'
 import { readLastCaseId } from './last-case'
 
 /**
@@ -31,7 +33,14 @@ export function TopBar() {
   useEffect(() => {
     if (!activeCaseId) setLastCaseId(readLastCaseId())
   }, [activeCaseId])
-  const homeCaseId = activeCaseId ?? lastCaseId
+  // 워드마크는 '여정(목적지) 있는 동물'의 일정으로 — 목적지 0개면 첫 여정 동물, 없으면 /cases.
+  const { cases } = useCases()
+  const journeyCases = cases.filter(hasJourney)
+  const candidate = activeCaseId ?? lastCaseId
+  const homeCaseId =
+    candidate && journeyCases.some((c) => c.id === candidate)
+      ? candidate
+      : journeyCases[0]?.id ?? null
   const homeHref = homeCaseId ? `/cases/${homeCaseId}/journey` : '/cases'
 
   const btn: React.CSSProperties = {

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { buildCaseJourneyContext } from '@petmove/domain'
 import { listMyCases } from '@/lib/actions/cases'
+import { hasJourney } from '@/lib/cases/journey-filter'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,9 +17,12 @@ export default async function CasesPage() {
   const result = await listMyCases()
   if (!result.ok) return <ErrorState message={result.error} />
   const cases = result.value
+  // 여정(목적지) 있는 동물만 — 목적지 0개 동물은 '반려동물'(내 정보)엔 남지만 여정 목록엔 안 뜬다.
+  const journeyCases = cases.filter(hasJourney)
 
   if (cases.length === 0) return <EmptyState />
-  if (cases.length === 1) redirect(`/cases/${cases[0].id}/journey`)
+  if (journeyCases.length === 0) return <NoJourneyState />
+  if (journeyCases.length === 1) redirect(`/cases/${journeyCases[0].id}/journey`)
 
   return (
     <div style={{ padding: '32px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -33,7 +37,7 @@ export default async function CasesPage() {
       >
         내 여정
       </h1>
-      {cases.map((c) => {
+      {journeyCases.map((c) => {
         const petName = c.pet_name ?? '이름 미정'
         const tokens = (c.destination ?? '')
           .split(',')
@@ -145,6 +149,61 @@ function EmptyState() {
         }}
       >
         시작하기
+      </Link>
+    </div>
+  )
+}
+
+/**
+ * 동물(반려동물)은 있는데 여정(목적지)이 하나도 없을 때 — '내 여정' 탭의 빈 상태.
+ * 동물이 0마리인 EmptyState(환영)와 구분. 목적지 추가 진입로는 내 정보 → 반려동물.
+ */
+function NoJourneyState() {
+  return (
+    <div
+      className="pm-fade-up"
+      style={{
+        minHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - 48px - 88px)',
+        padding: '24px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        gap: 14,
+      }}
+    >
+      <h1
+        style={{
+          fontFamily: 'var(--pm-font-display)',
+          fontSize: 21,
+          fontWeight: 500,
+          letterSpacing: '-0.01em',
+          lineHeight: 1.4,
+          margin: 0,
+          color: 'var(--pm-ink)',
+        }}
+      >
+        아직 준비 중인 여정이 없어요
+      </h1>
+      <p style={{ fontSize: 14, color: 'var(--pm-ink-3)', margin: 0, lineHeight: 1.5 }}>
+        목적지를 추가해보세요
+      </p>
+      <Link
+        href="/me"
+        style={{
+          marginTop: 4,
+          padding: '11px 22px',
+          borderRadius: 999,
+          background: 'var(--pm-accent)',
+          color: 'var(--pm-surface)',
+          fontSize: 13,
+          fontWeight: 600,
+          letterSpacing: '-0.005em',
+          textDecoration: 'none',
+        }}
+      >
+        반려동물 보기
       </Link>
     </div>
   )

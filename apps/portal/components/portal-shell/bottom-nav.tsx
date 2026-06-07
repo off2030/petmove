@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useCases } from './case-data-provider'
+import { hasJourney } from '@/lib/cases/journey-filter'
 import { readLastCaseId, writeLastCaseId } from './last-case'
 
 /**
@@ -76,10 +77,13 @@ export function BottomNav() {
 
   if (keyboardOpen) return null
 
-  // lastCaseId 가 cases 에 더 이상 없으면(삭제됨) 첫 케이스로 폴백 — 옛 caseId 그대로 쓰면
-  // /cases/{deleted-id}/docs 같은 url 이 404 로 떨어진다.
-  const lastIdValid = lastCaseId && cases.some((c) => c.id === lastCaseId)
-  const fallbackId = lastIdValid ? lastCaseId : cases[0]?.id ?? null
+  // 일정·서류 탭 진입 케이스 = '여정(목적지) 있는 동물'만. 목적지 다 지운 동물은 제외 —
+  // lastCaseId 가 여정 케이스가 아니면(삭제됐거나 목적지 0개) 첫 여정 케이스로 폴백한다.
+  // (동물 상세에서 마지막 목적지를 지우면, 일정 탭이 자동으로 다른 여정 동물로 전환됨.)
+  // 여정 케이스가 하나도 없으면 null → /cases 가 '준비 중인 여정 없음' 빈 상태를 보여준다.
+  const journeyCases = cases.filter(hasJourney)
+  const lastIdValid = lastCaseId && journeyCases.some((c) => c.id === lastCaseId)
+  const fallbackId = lastIdValid ? lastCaseId : journeyCases[0]?.id ?? null
   const caseId = caseIdInPath ?? fallbackId
 
   // 둥근 카드형 플로팅 바 — 좌우·아래 마진, 라벨 항상 보임. Calm 톤.
