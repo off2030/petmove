@@ -3,6 +3,8 @@
 > portal `/cases/[id]/journey` 의 데이터 모델 단일 출처. 작성 2026-05-12.
 >
 > portal-plan.md §6 "타임라인 뷰" 의 구체화. 코드 위치: `packages/domain/src/journey-steps/`.
+>
+> 이 문서는 step **카탈로그**(어떤 절차가 있나)만 다룬다. 여정의 **완료·지난 여정·다중 여정·관련성·표식** 생애주기는 상위 문서 [journey-lifecycle-design.md](journey-lifecycle-design.md) 참조.
 
 ---
 
