@@ -31,4 +31,13 @@
 
 ## 현재 진행
 
-prod 운영 중. 케이스 CRUD, 자동 검증·PDF 생성, 메시지, 검사·일정 관리, 결제, super-admin 완비. 마이그 93건 적용.
+prod 운영 중. 케이스 CRUD, 자동 검증·PDF 생성, 메시지, 검사·일정 관리, 결제, super-admin 완비.
+
+## 배포 (2026-06-07~ 현행)
+
+**admin 도 portal 처럼 GitHub Actions `.github/workflows/deploy-admin.yml` 로만 배포한다.** (Vercel webhook 끊김이 잦아 졸업 — Vercel petmovework Git 연결은 Disconnect 상태.)
+
+- **자동 배포**: `apps/admin/**`·`packages/**`·workspace 설정 파일을 변경해 master push → Actions 가 `vercel deploy --prod`(서버 빌드)로 자동 배포(1~2분). 문서(.md)만 커밋은 paths 필터로 제외.
+- **수동 재배포**: GitHub → Actions → **Deploy Admin → Run workflow**(master).
+- **확인 위치 = GitHub Actions** (Vercel 대시보드 아님).
+- Secrets: `VERCEL_TOKEN`·`VERCEL_ORG_ID`(portal 공유) + `VERCEL_PROJECT_ID_ADMIN`(admin 전용 = petmovework 프로젝트 ID). GitHub repo secrets.
