@@ -46,7 +46,7 @@
 
 - [x] **1. 마이크로칩 전역 unique** — 독립·안전(현재 중복 없음). 마이그레이션 1개. ✅ 20260608000005
 - [x] **2. co_progress 보호자 기준** — 트리거에서 `org_id` 매칭 제거 → 보호자(이름+전화, 추후 case_customer_links) 기준. admin+portal 공유 트리거. ✅ 20260608000006
-- [ ] **3. RLS 개편** — 가시성·삭제를 `org_id`+`transport_org_id`+고객+본사로. `vet_org_id` 정책 제거.
+- [x] **3. RLS 개편** — 가시성·삭제를 `org_id`+`transport_org_id`+고객+본사로. `vet_org_id` 정책 제거 + vet_org_id→org_id 백필. ✅ 20260608000007
 - [ ] **4. 신청 연결 org_type 분기** — `apply-case`가 위 표대로 슬롯 분기.
 - [ ] **5. 담당 변경 = `org_id` 이동 + snapshot** — `partners.ts`(담당 병원=`org_id` 변경), 본병원→타병원+약품 복사 로직.
 - [ ] **6. 새 동물 자동 연결 + 충돌 규칙** — 케이스 생성 시 기존 담당 복사. 다른 병원 신청=이동.
