@@ -9,6 +9,7 @@ import { C, SectionCard, monoCap } from './settings-shared'
 import {
   addCaseDestination,
   removeCaseDestination,
+  setCaseCoProgress,
   setCaseDestinationTripType,
 } from '@/lib/actions/destinations'
 import { useCases } from '@/components/portal-shell/case-data-provider'
@@ -17,16 +18,21 @@ const TRIP_OPTIONS: readonly FieldOption[] = [
   { value: 'round', label: '왕복' },
   { value: 'one_way', label: '편도' },
 ]
+const CO_PROGRESS_OPTIONS: readonly FieldOption[] = [
+  { value: 'on', label: '예' },
+  { value: 'off', label: '아니오' },
+]
 
 /**
  * 동물 상세 페이지의 '여정' 섹션 — 한 case 의 multi-destination 카드 스택 UI.
  *
- *  - 카드 1장 = 목적지 1개. 카드 안에 목적지명(헤더) + 왕복·편도 토글.
- *  - 카드 헤더 우측 '삭제' 텍스트 버튼 → ConfirmProvider → removeCaseDestination.
+ *  - 카드 1장 = 목적지 1개. 카드 안에 '목적지' 라벨 행(목적지명) + 왕복·편도 토글.
+ *  - 같은 곳으로 가는 형제(같은 보호자의 다른 동물)가 있는 목적지에는 '함께 준비' 토글도 노출.
+ *  - 목적지명 행 우측 '삭제' 텍스트 버튼 → ConfirmProvider → removeCaseDestination.
  *  - 카드 스택 아래 "+ 목적지 추가" dashed 버튼 → BottomSheet (검색 + 목록).
  *
- * 목적지 추가/삭제/왕복편도 토글은 즉시 server action 으로 저장 (useCaseEditForm
- * 의 dirty 흐름과 무관). 동물 정보 폼 저장과 별개로 동작.
+ * 목적지 추가/삭제·왕복편도·함께 준비 토글은 모두 즉시 server action 으로 저장
+ * (useCaseEditForm 의 dirty 흐름과 무관). 동물 정보 폼 저장과 별개로 동작.
  */
 
 interface Dest {
@@ -39,10 +45,16 @@ export function DestinationChips({
   caseId,
   destinations,
   tripTypeByDest,
+  coProgress,
+  coProgressDests,
 }: {
   caseId: string
   destinations: string[]
   tripTypeByDest: Record<string, 'round' | 'one_way'>
+  /** '함께 준비'(co_progress) 현재 값 — 동물 1마리에 1개(케이스 단위). */
+  coProgress: boolean
+  /** '함께 준비' 토글을 노출할 목적지 집합 — 같은 곳 가는 형제가 있는 목적지만. */
+  coProgressDests: Set<string>
 }) {
   const confirm = useConfirm()
   const { refreshCases } = useCases()
@@ -112,6 +124,19 @@ export function DestinationChips({
     })
   }
 
+  function handleCoProgressChange(value: string) {
+    const next = value === 'on'
+    if (coProgress === next) return
+    startTransition(async () => {
+      const r = await setCaseCoProgress(caseId, next)
+      if (!r.ok) {
+        alert(`오류: ${r.error}`)
+        return
+      }
+      await refreshCases()
+    })
+  }
+
   return (
     <>
       <div style={{ ...monoCap, marginTop: 24, marginBottom: 10, padding: '0 4px' }}>
@@ -120,20 +145,35 @@ export function DestinationChips({
 
       {destinations.map((dest, i) => {
         const tt = tripTypeByDest[dest] ?? 'round'
-        const arrow = tt === 'round' ? '⇄' : '→'
+        const showCoProgress = coProgressDests.has(dest)
         return (
           <SectionCard key={dest} marginTop={i === 0 ? 0 : 10}>
+            {/* 목적지명 — '목적지' 라벨 행 (다른 필드 행과 같은 톤) + 우측 삭제. 화살표 없음. */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '14px 0 12px',
+                gap: 8,
+                padding: '11px 0',
                 borderBottom: `.5px solid ${C.line}`,
+                minHeight: 46,
               }}
             >
-              <span style={{ fontSize: 16, color: C.ink, fontWeight: 500 }}>
-                {dest} <span style={{ color: C.ink3, fontWeight: 400 }}>{arrow}</span>
+              <span style={{ fontSize: 13, color: C.ink2, flexShrink: 0, width: 88 }}>목적지</span>
+              <span
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  fontSize: 15,
+                  fontWeight: 500,
+                  color: C.ink,
+                  fontFamily: 'var(--pm-font-display)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {dest}
               </span>
               <button
                 type="button"
@@ -141,6 +181,7 @@ export function DestinationChips({
                 disabled={pending}
                 aria-label={`${dest} 삭제`}
                 style={{
+                  flexShrink: 0,
                   background: 'transparent',
                   border: 'none',
                   padding: '4px 0',
@@ -158,8 +199,19 @@ export function DestinationChips({
               value={tt}
               onChange={(v) => handleTripTypeChange(dest, v)}
               options={TRIP_OPTIONS}
-              last
+              last={!showCoProgress}
             />
+            {/* 함께 준비 — 같은 목적지로 가는 형제(다른 동물)가 있을 때만. 값은 동물 1마리에 1개. */}
+            {showCoProgress && (
+              <SegmentField
+                label="함께 준비"
+                value={coProgress ? 'on' : 'off'}
+                onChange={handleCoProgressChange}
+                options={CO_PROGRESS_OPTIONS}
+                sub="한 마리에 입력한 일정·절차를 다른 동물에도 같이 반영해요"
+                last
+              />
+            )}
           </SectionCard>
         )
       })}

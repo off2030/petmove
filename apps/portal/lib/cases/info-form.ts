@@ -109,17 +109,46 @@ export function ageLabel(birthIso: string): string | undefined {
   return `연령 ${years}세 ${months}개월`
 }
 
+/** 케이스의 보호자 식별 키 — 이름(trim) + 전화(숫자만). 형제 묶기 기준(DB 트리거와 동일). */
+function guardianKey(c: CaseRow): { name: string; phone: string } {
+  return {
+    name: (c.customer_name ?? '').trim(),
+    phone: String(((c.data ?? {}) as Record<string, unknown>).phone ?? '').replace(/\D/g, ''),
+  }
+}
+
 /** 같은 보호자(이름+전화)의 다른 동물이 있는지 — 동시 진행 토글 노출 기준. */
 export function hasSiblingCase(cases: CaseRow[], current: CaseRow): boolean {
-  const name = (current.customer_name ?? '').trim()
-  const phone = String(
-    ((current.data ?? {}) as Record<string, unknown>).phone ?? '',
-  ).replace(/\D/g, '')
-  if (!name || !phone) return false
-  return cases.some(
-    (c) =>
-      c.id !== current.id &&
-      (c.customer_name ?? '').trim() === name &&
-      String(((c.data ?? {}) as Record<string, unknown>).phone ?? '').replace(/\D/g, '') === phone,
-  )
+  const g = guardianKey(current)
+  if (!g.name || !g.phone) return false
+  return cases.some((c) => {
+    if (c.id === current.id) return false
+    const cg = guardianKey(c)
+    return cg.name === g.name && cg.phone === g.phone
+  })
+}
+
+/**
+ * 같은 보호자의 다른 동물 중, 같은 목적지(dest)로 가는 여정이 있는지.
+ * '함께 준비' 토글을 목적지 카드별로 노출하는 기준 — 같은 곳으로 가는 형제가 있을 때만 노출.
+ * (보호자에게 동물이 2마리 이상 + 같은 목적지 여정 존재 = 두 조건을 한 번에 충족.)
+ */
+export function hasSiblingForDestination(
+  cases: CaseRow[],
+  current: CaseRow,
+  dest: string,
+): boolean {
+  const g = guardianKey(current)
+  if (!g.name || !g.phone) return false
+  const target = dest.trim()
+  if (!target) return false
+  return cases.some((c) => {
+    if (c.id === current.id) return false
+    const cg = guardianKey(c)
+    if (cg.name !== g.name || cg.phone !== g.phone) return false
+    return (c.destination ?? '')
+      .split(',')
+      .map((t) => t.trim())
+      .includes(target)
+  })
 }

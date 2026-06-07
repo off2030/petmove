@@ -234,3 +234,58 @@ export async function setCaseDestinationTripType(
     return { ok: false, error: (e as Error).message }
   }
 }
+
+/**
+ * 한 case(동물)의 '함께 준비'(co_progress) 토글 — data.co_progress 만 갱신, 즉시 저장.
+ * 목적지 카드의 SegmentField "함께 준비" 가 호출 (왕복·편도와 동일하게 즉시 반영).
+ *
+ * 값은 케이스 단위 1개 — DB 트리거 cases_sync_co_progress 가 같은 보호자(이름+전화) 형제에게
+ * 절차·일정을 부분 연동(동시값만)한다. 트리거는 보호자 단위라 목적지 무관 — 이 토글의
+ * 목적지별 노출은 UI 차원이고, 켜고 끄는 값 자체는 동물 1마리에 1개다.
+ */
+export async function setCaseCoProgress(
+  caseId: string,
+  value: boolean,
+): Promise<Result<true>> {
+  try {
+    const user = await getCurrentUser()
+    if (!user) return { ok: false, error: '인증 필요' }
+
+    const { createAdminClient } = await import('@petmove/auth')
+    const admin = createAdminClient()
+
+    const { data: link } = await admin
+      .from('case_customer_links')
+      .select('case_id')
+      .eq('case_id', caseId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (!link) return { ok: false, error: '이 여정에 접근 권한이 없습니다.' }
+
+    const { data: row, error: rowErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (rowErr || !row) return { ok: false, error: rowErr?.message ?? '여정을 찾을 수 없습니다.' }
+    const data = ((row as { data: Record<string, unknown> | null }).data ?? {}) as Record<
+      string,
+      unknown
+    >
+    const nextData = { ...data, co_progress: value }
+
+    const { error: updErr } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+    if (updErr) return { ok: false, error: updErr.message }
+
+    revalidatePath('/me')
+    revalidatePath(`/me/animal/${caseId}`)
+    revalidatePath('/cases')
+    revalidatePath(`/cases/${caseId}/journey`)
+    return { ok: true, value: true }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}

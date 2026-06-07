@@ -1538,8 +1538,9 @@ export async function updateCaseInfoFields(
     if (weightNum === null) delete nextData.weight
     else nextData.weight = weightNum
 
-    // 동시 진행 플래그 — 명시적 boolean 으로 저장 (디폴트 on = 키 없음 또는 false 아님).
-    nextData.co_progress = input.co_progress
+    // 동시 진행(co_progress)은 목적지 카드의 토글이 즉시 저장(setCaseCoProgress)으로 단일
+    // 관리한다. 폼 저장에서는 건드리지 않음 — 즉시 토글한 값을 stale 폼 값으로 덮어쓰는
+    // 충돌을 막기 위해. (prev 스프레드로 기존 co_progress 는 그대로 보존된다.)
 
     // trip_type — 활성 목적지 토큰 키로 머지 (다른 토큰의 기존 값 보존).
     const destToken = input.destination.split(',')[0]?.trim() ?? ''

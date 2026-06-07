@@ -8,7 +8,6 @@ import {
   ColorField,
   DateField,
   OptionField,
-  SegmentField,
   TextField,
   type FieldOption,
 } from '@/components/fields/info-fields'
@@ -16,15 +15,10 @@ import { PetAvatarPicker } from '@/components/me/pet-avatar-picker'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { softDeleteMyCase } from '@/lib/actions/cases'
 import { buildPetBlock } from '@/lib/profile/catalog'
-import { hasSiblingCase } from '@/lib/cases/info-form'
+import { hasSiblingForDestination } from '@/lib/cases/info-form'
 import { C, EditPageShell, SectionCard } from './settings-shared'
 import { DestinationChips } from './destination-chips'
 import { useCaseEditForm } from './use-case-edit-form'
-
-const CO_PROGRESS_OPTIONS: readonly FieldOption[] = [
-  { value: 'on', label: '예' },
-  { value: 'off', label: '아니오' },
-]
 
 /**
  * 설정 > 동물 — /me/animal.
@@ -46,7 +40,6 @@ const SEX_OPTIONS: readonly FieldOption[] = [
 export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string }) {
   const { cases } = useCases()
   const { form, set, dirty, status, error, handleSave } = useCaseEditForm(caseRow, caseId)
-  const hasSibling = hasSiblingCase(cases, caseRow)
 
   // multi-destination 입력값 — '여정' 칩 섹션 (Phase 3).
   // caseRow.destination 쉼표 구분 + data.trip_type 객체 형식 모두 인지.
@@ -59,6 +52,13 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
     tripTypeRaw && typeof tripTypeRaw === 'object' && !Array.isArray(tripTypeRaw)
       ? (tripTypeRaw as Record<string, 'round' | 'one_way'>)
       : {}
+
+  // '함께 준비'(co_progress) — 동물 1마리에 1개 값(케이스 단위, 디폴트 on).
+  // 토글은 목적지 카드별로 노출하되, 같은 곳으로 가는 형제(다른 동물)가 있는 목적지만.
+  const coProgress = ((caseRow.data as Record<string, unknown> | null)?.co_progress) !== false
+  const coProgressDests = new Set(
+    destinations.filter((d) => hasSiblingForDestination(cases, caseRow, d)),
+  )
 
   return (
     <EditPageShell title="동물">
@@ -153,27 +153,15 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
       </SectionCard>
 
       {/* 여정 칩 — multi-destination. 같은 동물에 N 목적지 표시·전환·추가·제거.
-          activeDestination 은 URL ?dest=<token>. '+' 클릭 시 검색 바텀시트.
-          (목적지·왕복편도 입력은 칩이 흡수 — 옛 TravelFormSections basicOnly 행 폐기.) */}
+          목적지·왕복편도·함께 준비 입력은 칩이 흡수 (즉시 저장 — 동물 정보 폼 저장과 별개).
+          '함께 준비' 는 같은 목적지로 가는 형제가 있는 카드에만 노출. */}
       <DestinationChips
         caseId={caseId}
         destinations={destinations}
         tripTypeByDest={tripTypeByDest}
+        coProgress={coProgress}
+        coProgressDests={coProgressDests}
       />
-
-      {/* 함께 준비 — 보호자의 다른 동물 케이스에 절차·정보 자동 반영 (destination 무관). */}
-      {hasSibling && (
-        <SectionCard marginTop={16}>
-          <SegmentField
-            label="함께 준비"
-            value={form.co_progress ? 'on' : 'off'}
-            onChange={(v) => set('co_progress', v === 'on')}
-            options={CO_PROGRESS_OPTIONS}
-            sub="한 마리에 입력한 일정·절차를 다른 동물에도 같이 반영해요"
-            last
-          />
-        </SectionCard>
-      )}
 
       <InlineSaveButton dirty={dirty} status={status} error={error} onSave={handleSave} />
 
