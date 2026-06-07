@@ -62,22 +62,31 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
   const coProgress =
     ((currentCase?.data as Record<string, unknown> | undefined)?.co_progress) !== false
   // 토글은 같은 보호자가 동물 ≥2 마리를 준비할 때만 노출 — 형제가 없으면 동기화할
-  // 대상이 없어 무의미하다. 형제 판정 기준은 DB 트리거 cases_sync_co_progress 와 동일:
-  // 이름(customer_name)·전화(data.phone 숫자) 가 둘 다 있고 정확히 일치.
+  // 대상이 없어 무의미하다. 형제 판정 기준은 DB 트리거 cases_sync_co_progress 와 동일
+  // (이메일 우선 + 이름·전화 폴백): 이메일이 양쪽에 있고 일치하거나, 이름+전화가 양쪽에
+  // 있고 일치하면 형제.
+  const currentEmail = String(
+    (currentCase?.data as Record<string, unknown> | undefined)?.email ?? '',
+  ).trim().toLowerCase()
   const currentName = (currentCase?.customer_name ?? '').trim()
   const currentPhone = String(
     (currentCase?.data as Record<string, unknown> | undefined)?.phone ?? '',
   ).replace(/\D/g, '')
   const hasSibling =
-    currentName !== '' &&
-    currentPhone !== '' &&
-    cases.some(
-      (c) =>
-        c.id !== caseId &&
-        (c.customer_name ?? '').trim() === currentName &&
-        String((c.data as Record<string, unknown> | undefined)?.phone ?? '').replace(/\D/g, '') ===
-          currentPhone,
-    )
+    (currentEmail !== '' || (currentName !== '' && currentPhone !== '')) &&
+    cases.some((c) => {
+      if (c.id === caseId) return false
+      const cEmail = String((c.data as Record<string, unknown> | undefined)?.email ?? '')
+        .trim()
+        .toLowerCase()
+      if (currentEmail !== '' && cEmail !== '' && cEmail === currentEmail) return true
+      const cName = (c.customer_name ?? '').trim()
+      const cPhone = String((c.data as Record<string, unknown> | undefined)?.phone ?? '').replace(
+        /\D/g,
+        '',
+      )
+      return currentName !== '' && currentPhone !== '' && cName === currentName && cPhone === currentPhone
+    })
   async function setCoProgress(value: boolean) {
     updateLocalCaseField(caseId, 'data', 'co_progress', value)
     await updateCaseField(caseId, 'data', 'co_progress', value)

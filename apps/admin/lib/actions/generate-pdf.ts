@@ -395,17 +395,32 @@ export async function fetchSiblings(caseId: string, activeDestination?: string |
   if (pivotErr || !pivot) return { ok: false, error: pivotErr?.message ?? '케이스를 찾을 수 없습니다' }
   const p = pivot as CaseRow
 
-  // 1차 필터: customer_name + destination 일치 (server side).
-  // P1 #14: org_id 도 명시 (RLS 와 중복이지만 인덱스 활용 + 의도 명확) + cap 50.
-  // 같은 고객 이름 + 같은 목적지 케이스 50 건 초과는 매우 비정상이라 cap 안전.
-  let q = supabase
-    .from('cases')
-    .select('*')
-    .eq('org_id', p.org_id)
+  // 1차 필터: 같은 보호자(이메일 우선 + 이름 폴백) + 같은 목적지 (server side).
+  // co_progress 트리거와 동일하게 이메일이 있으면 이메일로도 매칭 — 이름 표기가
+  // 달라도(영문/한글) 같은 보호자를 잡는다. org_id 명시(인덱스+의도) + 같은 목적지.
+  // 이름·이메일 각각 cap 50 (초과는 매우 비정상이라 안전).
+  const pEmail = String((p.data as Record<string, unknown> | undefined)?.email ?? '')
+    .trim()
+    .toLowerCase()
+  const baseQuery = () => {
+    const base = supabase.from('cases').select('*').eq('org_id', p.org_id)
+    return p.destination ? base.eq('destination', p.destination) : base.is('destination', null)
+  }
+  const { data: byName, error: nameErr } = await baseQuery()
     .eq('customer_name', p.customer_name)
-  q = p.destination ? q.eq('destination', p.destination) : q.is('destination', null)
-  const { data: rows, error } = await q.limit(50)
-  if (error) return { ok: false, error: error.message }
+    .limit(50)
+  if (nameErr) return { ok: false, error: nameErr.message }
+  const candidates = new Map<string, CaseRow>(
+    (byName ?? []).map((r) => [(r as CaseRow).id, r as CaseRow]),
+  )
+  if (pEmail) {
+    const { data: byEmail, error: emailErr } = await baseQuery()
+      .filter('data->>email', 'eq', pEmail)
+      .limit(50)
+    if (emailErr) return { ok: false, error: emailErr.message }
+    for (const r of byEmail ?? []) candidates.set((r as CaseRow).id, r as CaseRow)
+  }
+  const rows = [...candidates.values()]
 
   // 2차 필터: 활성 목적지 기준 출국일 OR 내원일 일치.
   // by_dest 우선, 없으면 column/data fallback — destination-scoped-fields 헬퍼가 처리.
@@ -421,7 +436,7 @@ export async function fetchSiblings(caseId: string, activeDestination?: string |
     return sameDeparture || sameVet
   }
 
-  const all = (rows ?? []) as CaseRow[]
+  const all = rows
   const matched = all.filter(matchesPivot)
   // Pivot first, rest by created_at ascending (stable ordering).
   const sorted = [

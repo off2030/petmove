@@ -113,7 +113,7 @@ create table case_customer_links (
   case_id uuid not null references cases(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
   linked_at timestamptz default now(),
-  linked_via text,               -- 'share-token' / 'email-match' / 'phone-match' / 'manual'
+  linked_via text,               -- 'share-token' / 'email-match' / 'self-apply' / 'manual' (+ legacy 'phone-match', 미사용)
   primary key (case_id, user_id)
 );
 ```
@@ -228,7 +228,7 @@ petmove/
 1. ✅ **스캐폴딩** — `apps/portal` Next.js 16 + 공유 패키지 wire (f5bba0f)
 2. ✅ **packages/ui 승격** — PageShell, ListRow, PillButton, DateTextField, Calendar, ConfirmProvider 등 (0bf559f, 77c2c39)
 3. ✅ **인증** — `customer_profiles` 마이그 + `@petmove/auth` 분리 + /login + /auth/callback + ensureCustomerProfile (562c3ba, 8bc35be, d66c111)
-4. ✅ **케이스 매칭** — `case_customer_links` + RLS (SECURITY DEFINER) + autoLinkCasesByEmail + autoLinkCasesByPhone + backfill 스크립트 (8d9018b, 98b222c, b856b3f, c790e31)
+4. ✅ **케이스 매칭** — `case_customer_links` + RLS (SECURITY DEFINER) + autoLinkCasesByEmail + backfill 스크립트 (8d9018b, 98b222c, b856b3f, c790e31). 이메일 단일 기준 통일로 미사용 autoLinkCasesByPhone 제거(20260608).
 5. ✅ **anon 토큰 뷰 이전** — `/share/[token]` portal + admin redirect (c8d5d4e, 1c71d22)
 6. ✅ **신청서 이전** — `/apply` portal + admin redirect (bc85993)
 7. ⏳ **내 케이스 목록 + 상세** — 데이터 레이어 완료 (listMyCases, getMyCase: accce10), UI 는 디자인 freeze 대기
