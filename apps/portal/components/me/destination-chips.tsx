@@ -1,12 +1,11 @@
 'use client'
 
-import { useMemo, useState, useTransition, type CSSProperties } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useMemo, useState, useTransition } from 'react'
 import destsData from '@petmove/domain/data/destinations.json'
 import { useConfirm } from '@petmove/ui'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { SegmentField, type FieldOption } from '@/components/fields/info-fields'
-import { C, SectionCard } from './settings-shared'
+import { C, SectionCard, monoCap } from './settings-shared'
 import {
   addCaseDestination,
   removeCaseDestination,
@@ -20,17 +19,14 @@ const TRIP_OPTIONS: readonly FieldOption[] = [
 ]
 
 /**
- * 동물 상세 페이지의 '여정' 섹션 — 한 case 의 multi-destination 칩 UI.
+ * 동물 상세 페이지의 '여정' 섹션 — 한 case 의 multi-destination 카드 스택 UI.
  *
- *  - 칩: 목적지 토큰. 활성 칩(URL ?dest=<token>) 은 검정 배경. 클릭 시 활성 전환.
- *  - 칩 옆 × 버튼: 제거(ConfirmProvider 모달) → removeCaseDestination.
- *  - "+ 목적지 추가" 칩: 바텀시트 → 검색 + 목록 → addCaseDestination.
+ *  - 카드 1장 = 목적지 1개. 카드 안에 목적지명(헤더) + 왕복·편도 토글.
+ *  - 카드 헤더 우측 '삭제' 텍스트 버튼 → ConfirmProvider → removeCaseDestination.
+ *  - 카드 스택 아래 "+ 목적지 추가" dashed 버튼 → BottomSheet (검색 + 목록).
  *
- * URL ?dest=<token> 이 진입점: 새로고침·뒤로가기에도 같은 목적지 화면 유지.
- * '?dest' 미 지정이면 첫 토큰을 활성으로 간주.
- *
- * trip_type 토글(왕복·편도)은 칩에 표시만 (⇄ 또는 →). 변경은 TravelFormSections
- * 안의 SegmentField 에서 (이 단계에선 표시만, 토글 액션은 다음 단계).
+ * 목적지 추가/삭제/왕복편도 토글은 즉시 server action 으로 저장 (useCaseEditForm
+ * 의 dirty 흐름과 무관). 동물 정보 폼 저장과 별개로 동작.
  */
 
 interface Dest {
@@ -48,15 +44,11 @@ export function DestinationChips({
   destinations: string[]
   tripTypeByDest: Record<string, 'round' | 'one_way'>
 }) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
   const confirm = useConfirm()
   const { refreshCases } = useCases()
   const [pending, startTransition] = useTransition()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [query, setQuery] = useState('')
-
-  const activeDest = searchParams.get('dest') ?? destinations[0] ?? null
 
   // 추가 가능한 목적지 — 이미 선택된 토큰 제외.
   const available = useMemo(() => {
@@ -72,12 +64,6 @@ export function DestinationChips({
     )
   }, [query, available])
 
-  function setActive(dest: string) {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('dest', dest)
-    router.replace(`?${params.toString()}`, { scroll: false })
-  }
-
   function openSheet() {
     setQuery('')
     setSheetOpen(true)
@@ -92,7 +78,6 @@ export function DestinationChips({
         return
       }
       await refreshCases()
-      setActive(dest)
     })
   }
 
@@ -111,66 +96,45 @@ export function DestinationChips({
         return
       }
       await refreshCases()
-      // 활성 목적지를 삭제했으면 첫 남은 토큰으로 active 이동, 없으면 ?dest 제거.
-      if (dest === activeDest) {
-        const remaining = destinations.filter((t) => t !== dest)
-        const params = new URLSearchParams(searchParams.toString())
-        if (remaining[0]) params.set('dest', remaining[0])
-        else params.delete('dest')
-        const qs = params.toString()
-        router.replace(qs ? `?${qs}` : '?', { scroll: false })
+    })
+  }
+
+  function handleTripTypeChange(dest: string, value: string) {
+    const nextTT = value === 'one_way' ? 'one_way' : 'round'
+    if ((tripTypeByDest[dest] ?? 'round') === nextTT) return
+    startTransition(async () => {
+      const r = await setCaseDestinationTripType(caseId, dest, nextTT)
+      if (!r.ok) {
+        alert(`오류: ${r.error}`)
+        return
       }
+      await refreshCases()
     })
   }
 
   return (
-    <SectionCard label="여정" marginTop={16}>
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 6,
-          padding: '14px 0',
-        }}
-      >
-        {destinations.map((dest) => {
-          const active = dest === activeDest
-          const tt = tripTypeByDest[dest] ?? 'round'
-          const arrow = tt === 'round' ? '⇄' : '→'
-          return (
-            <span
-              key={dest}
+    <>
+      <div style={{ ...monoCap, marginTop: 24, marginBottom: 10, padding: '0 4px' }}>
+        여정
+      </div>
+
+      {destinations.map((dest, i) => {
+        const tt = tripTypeByDest[dest] ?? 'round'
+        const arrow = tt === 'round' ? '⇄' : '→'
+        return (
+          <SectionCard key={dest} marginTop={i === 0 ? 0 : 10}>
+            <div
               style={{
-                display: 'inline-flex',
+                display: 'flex',
                 alignItems: 'center',
-                gap: 4,
-                padding: '6px 4px 6px 12px',
-                borderRadius: 999,
-                border: `1px solid ${active ? C.ink : C.line}`,
-                background: active ? C.ink : 'transparent',
-                color: active ? C.surface : C.ink2,
-                fontSize: 13,
-                fontWeight: 500,
-                transition: 'background .12s, color .12s, border-color .12s',
+                justifyContent: 'space-between',
+                padding: '14px 0 12px',
+                borderBottom: `.5px solid ${C.line}`,
               }}
             >
-              <button
-                type="button"
-                onClick={() => setActive(dest)}
-                disabled={pending}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  padding: 0,
-                  color: 'inherit',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  fontSize: 13,
-                  fontWeight: 500,
-                }}
-              >
-                {dest} {arrow}
-              </button>
+              <span style={{ fontSize: 16, color: C.ink, fontWeight: 500 }}>
+                {dest} <span style={{ color: C.ink3, fontWeight: 400 }}>{arrow}</span>
+              </span>
               <button
                 type="button"
                 onClick={() => handleRemove(dest)}
@@ -179,49 +143,47 @@ export function DestinationChips({
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  padding: '0 6px',
-                  color: 'inherit',
-                  cursor: 'pointer',
+                  padding: '4px 0',
+                  color: C.ink3,
+                  cursor: pending ? 'not-allowed' : 'pointer',
                   fontFamily: 'inherit',
-                  fontSize: 14,
-                  opacity: 0.7,
+                  fontSize: 13,
                 }}
               >
-                ×
+                삭제
               </button>
-            </span>
-          )
-        })}
-        <button
-          type="button"
-          onClick={openSheet}
-          disabled={pending}
-          style={addChipStyle}
-        >
-          + 목적지 추가
-        </button>
-      </div>
+            </div>
+            <SegmentField
+              label="왕복·편도"
+              value={tt}
+              onChange={(v) => handleTripTypeChange(dest, v)}
+              options={TRIP_OPTIONS}
+              last
+            />
+          </SectionCard>
+        )
+      })}
 
-      {/* 활성 목적지의 왕복·편도 토글 — destinations 가 1개 이상 있고 active 가 있을 때만. */}
-      {activeDest && destinations.includes(activeDest) && (
-        <SegmentField
-          label={`${activeDest} 왕복·편도`}
-          value={tripTypeByDest[activeDest] ?? 'round'}
-          onChange={(v) => {
-            const nextTT = v === 'one_way' ? 'one_way' : 'round'
-            startTransition(async () => {
-              const r = await setCaseDestinationTripType(caseId, activeDest, nextTT)
-              if (!r.ok) {
-                alert(`오류: ${r.error}`)
-                return
-              }
-              await refreshCases()
-            })
-          }}
-          options={TRIP_OPTIONS}
-          last
-        />
-      )}
+      <button
+        type="button"
+        onClick={openSheet}
+        disabled={pending}
+        style={{
+          marginTop: 10,
+          width: '100%',
+          padding: '14px 0',
+          borderRadius: 14,
+          border: `1px dashed ${C.line}`,
+          background: 'transparent',
+          color: C.ink3,
+          fontFamily: 'inherit',
+          fontSize: 14,
+          fontWeight: 500,
+          cursor: pending ? 'not-allowed' : 'pointer',
+        }}
+      >
+        + 목적지 추가
+      </button>
 
       <BottomSheet
         open={sheetOpen}
@@ -282,18 +244,6 @@ export function DestinationChips({
           )}
         </div>
       </BottomSheet>
-    </SectionCard>
+    </>
   )
-}
-
-const addChipStyle: CSSProperties = {
-  padding: '6px 14px',
-  borderRadius: 999,
-  border: `1px dashed ${C.line}`,
-  background: 'transparent',
-  color: C.ink3,
-  fontSize: 13,
-  fontWeight: 500,
-  cursor: 'pointer',
-  fontFamily: 'inherit',
 }

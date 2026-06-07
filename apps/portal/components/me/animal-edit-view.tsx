@@ -17,7 +17,7 @@ import { useCases } from '@/components/portal-shell/case-data-provider'
 import { softDeleteMyCase } from '@/lib/actions/cases'
 import { buildPetBlock } from '@/lib/profile/catalog'
 import { hasSiblingCase } from '@/lib/cases/info-form'
-import { C, EditPageShell, SectionCard, StickySaveBar } from './settings-shared'
+import { C, EditPageShell, SectionCard } from './settings-shared'
 import { DestinationChips } from './destination-chips'
 import { useCaseEditForm } from './use-case-edit-form'
 
@@ -61,12 +61,7 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
       : {}
 
   return (
-    <EditPageShell
-      title="동물"
-      bottomBar={
-        <StickySaveBar dirty={dirty} status={status} error={error} onSave={handleSave} />
-      }
-    >
+    <EditPageShell title="동물">
       {/* 아바타 — ProfileView hero 카드에서 쓰던 picker 재사용 */}
       <div
         style={{
@@ -180,8 +175,73 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
         </SectionCard>
       )}
 
+      <InlineSaveButton dirty={dirty} status={status} error={error} onSave={handleSave} />
+
       <DeleteAnimalSection caseId={caseId} petName={buildPetBlock(caseRow).name} />
     </EditPageShell>
+  )
+}
+
+/**
+ * 인라인 저장 버튼 — sticky 가 아닌, 본문 흐름 안의 풀폭 버튼.
+ * 폼 내용 끝, '동물 삭제' 위에 자리잡아 저장→삭제 순서로 노출된다.
+ * StickySaveBar 와 dirty/status 의미는 동일.
+ */
+function InlineSaveButton({
+  dirty,
+  status,
+  error,
+  onSave,
+}: {
+  dirty: boolean
+  status: 'idle' | 'saving' | 'saved' | 'error'
+  error: string | null
+  onSave: () => void
+}) {
+  const justSaved = status === 'saved' && !dirty
+  const canSave = dirty && status !== 'saving'
+  return (
+    <div style={{ marginTop: 28 }}>
+      {status === 'error' && (
+        <div
+          role="alert"
+          style={{
+            marginBottom: 8,
+            padding: '9px 12px',
+            borderRadius: 10,
+            background: C.surface,
+            border: `.5px solid color-mix(in srgb, ${C.warn} 33%, transparent)`,
+            color: C.warn,
+            fontSize: 12,
+            textAlign: 'center',
+          }}
+        >
+          {error ?? '저장 실패'}
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={onSave}
+        disabled={!canSave}
+        aria-live="polite"
+        style={{
+          width: '100%',
+          padding: '14px 0',
+          borderRadius: 14,
+          border: 0,
+          background: justSaved ? C.sage : canSave ? C.accent : C.line,
+          color: justSaved || canSave ? '#fff' : C.ink3,
+          fontFamily: 'inherit',
+          fontSize: 15,
+          fontWeight: 600,
+          letterSpacing: '-0.005em',
+          cursor: canSave ? 'pointer' : 'not-allowed',
+          transition: 'background .15s, color .15s',
+        }}
+      >
+        {status === 'saving' ? '저장 중…' : justSaved ? '✓ 저장됨' : '저장'}
+      </button>
+    </div>
   )
 }
 
