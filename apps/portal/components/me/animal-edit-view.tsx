@@ -61,7 +61,7 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
   )
 
   return (
-    <EditPageShell title="동물">
+    <EditPageShell title="반려동물">
       {/* 아바타 — ProfileView hero 카드에서 쓰던 picker 재사용 */}
       <div
         style={{
