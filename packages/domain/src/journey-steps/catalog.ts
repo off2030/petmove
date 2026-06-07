@@ -1,4 +1,4 @@
-import { addYears, readRabiesEntries, readTiterEntries, todayKst } from '../procedure-checks/utils'
+import { addYears, readRabiesEntries, readTiterEntries, resolveValidUntil, todayKst } from '../procedure-checks/utils'
 import { areAllRequiredDocsVerified, resolveRequiredDocs } from '../required-docs'
 import { buildCaseJourneyContext } from './applicability'
 import {
@@ -173,16 +173,27 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     doneSummary: '광견병 백신을 추가 접종했습니다.',
     // 미래 만료 대비 reminder — 본 흐름의 다음 단계(사전 신고 등)를 다음 할 일에서 가리지 않는다.
     advisoryOnly: true,
-    // 추가 접종이 필요해 카드가 떴을 때(유효기간 만료·임박)의 안내 — 입력 시점이나 만료일
-    // 계산 없이 '추가 접종 기록을 입력해주세요' 단일 안내. 입력 시점은 무관하다(유효기간 내에
-    // 받은 접종을 늦게 입력하는 경우 포함). 날짜 정합성(만료 후 접종 등)은 입력 시 chain 검증
-    // (findRabiesChainBreak, client+server)이 입력 불가로 거부하고, 이미 잘못 입력된 3차+ 기록은
-    // procedure-check(jp.rabies-extra-within-previous-validity)가 '안내'로 표면화한다 —
-    // situational 에서 만료일·재접종 시점을 단정하지 않는다.
+    // 카드가 떴을 때(유효기간 만료·임박)의 안내 — 만료 여부로 두 문구를 분기한다.
+    //  - 만료 전(validUntil ≥ 오늘): 만료일 + '만료 전에 추가 접종을 하세요' (마감 안내).
+    //  - 만료 후(validUntil < 오늘): 만료일 + '추가 접종 기록을 입력해주세요' (입력 요청).
+    // 입력 시점은 무관하다(유효기간 내에 받은 접종을 늦게 입력하는 경우 포함). 만료 후 날짜의
+    // 접종 입력 자체는 chain 검증(findRabiesChainBreak, client+server)이 입력 불가로 거부하고,
+    // 이미 잘못 입력된 3차+ 기록은 procedure-check(jp.rabies-extra-within-previous-validity)가
+    // '안내'로 표면화한다. valid_until 미입력 시 date + 1년 폴백(resolveValidUntil).
     situational: (caseRow) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return undefined
-      const msg = '추가 접종 기록을 입력해주세요.'
+      const latest = rabies[rabies.length - 1]
+      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      // 유효기간 산출 불가 — 만료일을 단정하지 않고 입력만 요청.
+      if (!validUntil) {
+        const msg = '추가 접종 기록을 입력해주세요.'
+        return { desc: msg, cardDesc: msg }
+      }
+      const msg =
+        validUntil < todayKst()
+          ? `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력해주세요.`
+          : `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전에 추가 접종을 하세요.`
       return { desc: msg, cardDesc: msg }
     },
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
