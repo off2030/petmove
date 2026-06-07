@@ -58,15 +58,30 @@ export async function applyCase(input: ApplyInput): Promise<
 
   const supabase = createAdminClient()
 
-  // 신청 대상 org 결정 — 유효한 조직 id 가 오면 그 org, 아니면 직영(펫무브).
+  // 신청 조직의 org_type 에 따라 슬롯 분기 (docs/org-model-refactor.md 4단계):
+  //   hospital → 담당 병원(org_id)
+  //   transport → 운송(transport_org_id), 담당 병원은 미정(platform 유지)
+  //   both → 둘 다 그 조직
+  //   조직 미지정·기타 → 직영(platform) 유지 = 담당 미정
   let orgId = DIRECT_ORG_ID
+  let transportOrgId: string | null = null
   if (input.org_id) {
     const { data: org } = await supabase
       .from('organizations')
-      .select('id')
+      .select('id, org_type')
       .eq('id', input.org_id)
       .maybeSingle()
-    if (org) orgId = org.id as string
+    if (org) {
+      const o = org as { id: string; org_type: string }
+      if (o.org_type === 'hospital') {
+        orgId = o.id
+      } else if (o.org_type === 'transport') {
+        transportOrgId = o.id
+      } else if (o.org_type === 'both') {
+        orgId = o.id
+        transportOrgId = o.id
+      }
+    }
   }
 
   const data: Record<string, unknown> = {
@@ -108,6 +123,7 @@ export async function applyCase(input: ApplyInput): Promise<
     .from('cases')
     .insert({
       org_id: orgId,
+      transport_org_id: transportOrgId,
       // 공개 신청폼 출처 표시 — DB 트리거가 이 값으로 운영자 봇 알림을 발송한다.
       source: 'apply_form',
       customer_name: input.customer_name,
