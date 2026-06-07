@@ -22,7 +22,7 @@
 | 조직 테이블 | `organizations` + `org_type`(hospital/transport/both/platform) **그대로** — 운송 별도 테이블 X |
 | 가시성(읽기·수정) | `org_id`(병원) + `transport_org_id`(운송) + 고객(case_customer_links) + 본사(super_admin) |
 | 삭제 권한 | 병원 + 운송 둘 다 (v1 동일권한, 필드별 차등은 나중) |
-| co_progress(함께 준비) | **보호자 단위** — org 무관, 본인 동물끼리 |
+| co_progress(함께 준비) | **보호자 단위 + 동시값만 연동** — 빈 칸 채움·동시 입력값은 연동, 각자/기존값은 독립(덮어쓰기·소실 방지) |
 | 담당 = 고객 단위 | 한 보호자의 모든 동물이 같은 담당. 새 동물 등록 시 기존 담당 자동 연결 |
 | 신청 연결 | org_type별 슬롯: hospital→`org_id`, transport→`transport_org_id`, both→둘 다, 직영→platform |
 | 담당 병원 변경 | `org_id` 이동 + **snapshot**(본병원 접종→타병원 전환 + 약품 정보 복사 저장) |
@@ -45,7 +45,7 @@
 ## 단계 계획 (안전 순서 — prod 운영 중, 각 단계 커밋·검증)
 
 - [x] **1. 마이크로칩 전역 unique** — 독립·안전(현재 중복 없음). 마이그레이션 1개. ✅ 20260608000005
-- [x] **2. co_progress 보호자 기준** — 트리거에서 `org_id` 매칭 제거 → 보호자(이름+전화, 추후 case_customer_links) 기준. admin+portal 공유 트리거. ✅ 20260608000006
+- [x] **2. co_progress 보호자 기준 + 부분 연동** — ⓐ 트리거에서 `org_id` 매칭 제거(보호자=이름+전화 기준) ✅ 20260608000006. ⓑ "동시 입력값만 연동, 각자값 독립"으로 전환 — 형제 값이 비었으면 채움 / 내 옛 값과 같으면 같이 변경·삭제 / 다르면 보존(진행 다른 동물 덮어쓰기·소실 방지). 광견병 배열·titer 동일. ✅ 20260608000008
 - [x] **3. RLS 개편** — 가시성·삭제를 `org_id`+`transport_org_id`+고객+본사로. `vet_org_id` 정책 제거 + vet_org_id→org_id 백필. ✅ 20260608000007
 - [ ] **4. 신청 연결 org_type 분기** — `apply-case`가 위 표대로 슬롯 분기.
 - [x] **5. 담당 변경 = `org_id` 이동** — `partners.ts`·담당편집·내정보 허브를 org_id 기반으로 전환(과도기 해소). ✅
