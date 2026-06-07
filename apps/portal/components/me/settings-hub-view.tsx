@@ -30,6 +30,7 @@ import { C, serif, monoCap, OrgAvatar } from './settings-shared'
 const CARD_RADIUS = 18
 const CARD_PADDING = 18
 const HERO_AVATAR = 52
+const PARTNER_AVATAR = 46 // 담당 동물병원·운송업체 카드 아바타 — Hero(52)보다 한 단계 작게
 
 const num: CSSProperties = {
   fontFamily: 'var(--pm-font-display)',
@@ -255,7 +256,37 @@ function PartnerCard({
           color: 'inherit',
         }}
       >
-        <div style={{ fontSize: 13, color: C.ink3, lineHeight: 1.55 }}>{placeholder}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* 빈 슬롯 — 채워진 카드(아바타+이름)와 높이를 맞추는 점선 자리표시 */}
+          <div
+            aria-hidden
+            style={{
+              width: PARTNER_AVATAR,
+              height: PARTNER_AVATAR,
+              borderRadius: Math.round(PARTNER_AVATAR * 0.28),
+              border: `1px dashed ${C.line}`,
+              color: C.ink3,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </div>
+          <div style={{ fontSize: 13, color: C.ink3, lineHeight: 1.55 }}>{placeholder}</div>
+        </div>
       </Link>
     )
   }
@@ -274,7 +305,7 @@ function PartnerCard({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <OrgAvatar name={org.name} url={org.avatar_url} size={46} />
+        <OrgAvatar name={org.name} url={org.avatar_url} size={PARTNER_AVATAR} />
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={{ ...serif, fontSize: 18, color: C.ink }}>{org.name}</span>
@@ -424,10 +455,10 @@ export function SettingsHubView() {
           />
         </Section>
 
-        <Section label="동물 운송 업체">
+        <Section label="담당 운송업체">
           <PartnerCard
             org={partners?.transport ?? null}
-            placeholder="운송업체를 연결해 보세요"
+            placeholder="담당 운송업체를 연결해 보세요"
             href="/me/agency"
           />
         </Section>
