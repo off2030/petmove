@@ -38,8 +38,19 @@ function formatDateRange(startIso: string, endIso: string): string {
  * 라 인라인 style 로 유지. 디자인 freeze 단계에서 portal-preview JSX 가 truth, 이 코드는
  * 그것을 비교적 충실히 옮긴 것.
  */
-export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: string }) {
+export function TimelineCalm({
+  data,
+  caseId,
+  activeDest,
+}: {
+  data: JourneyData
+  caseId: string
+  /** 활성 목적지(?dest=) — step 상세 링크에 붙여 다중 목적지에서 선택 목적지를 유지. */
+  activeDest?: string | null
+}) {
   const { stages, trip, pet, nextStages, caseAlerts, journeyComplete, journeyCompleteDate } = data
+  // step 상세로 넘어갈 때 활성 목적지를 유지하기 위한 쿼리. 단일 목적지면 빈 문자열.
+  const destQuery = activeDest ? `?dest=${encodeURIComponent(activeDest)}` : ''
   const total = stages.length
   const done = stages.filter((s) => s.state === 'done').length
   const pct = done / total
@@ -179,7 +190,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
     return (
       <Link
         key={s.id}
-        href={`/cases/${caseId}/journey/${s.id}`}
+        href={`/cases/${caseId}/journey/${s.id}${destQuery}`}
         style={{
           display: 'flex',
           alignItems: 'flex-start',
@@ -426,7 +437,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
             입력 차단 외 stage-level 룰이 추가될 가능성을 위해 로직은 유지. */}
         {warnedStages.length > 0 && firstWarnedStage && (
           <Link
-            href={`/cases/${caseId}/journey/${firstWarnedStage.id}`}
+            href={`/cases/${caseId}/journey/${firstWarnedStage.id}${destQuery}`}
             className="pm-pressable"
             style={{
               display: 'flex',
@@ -591,7 +602,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
             {nextStages.map((stage, i) => (
               <Link
                 key={stage.id}
-                href={`/cases/${caseId}/journey/${stage.id}`}
+                href={`/cases/${caseId}/journey/${stage.id}${destQuery}`}
                 className="pm-pressable"
                 style={{
                   display: 'block',
@@ -665,7 +676,7 @@ export function TimelineCalm({ data, caseId }: { data: JourneyData; caseId: stri
             {infoStages.map((stage, i) => (
               <Link
                 key={stage.id}
-                href={`/cases/${caseId}/journey/${stage.id}`}
+                href={`/cases/${caseId}/journey/${stage.id}${destQuery}`}
                 className="pm-pressable"
                 style={{
                   display: 'block',

@@ -10,6 +10,7 @@ import {
   type CertDefinition,
   type RequiredDocItem,
 } from '@petmove/domain'
+import { activeDestinationView } from '@/lib/cases/active-destination'
 import { formatFileSize, readCaseDocuments } from '@/lib/documents'
 
 /**
@@ -70,10 +71,12 @@ export interface StoredDocItem {
 }
 
 export function buildDocsView(
-  caseRow: CaseRow,
+  caseRowInput: CaseRow,
   activeDestination?: string | null,
 ): DocsViewData {
-  const ctx = buildCaseJourneyContext(caseRow, activeDestination)
+  // 다중 목적지: 활성 목적지 1개짜리 뷰로 좁혀 서류·증명서·체크리스트를 그 목적지 기준으로.
+  const caseRow = activeDestinationView(caseRowInput, activeDestination)
+  const ctx = buildCaseJourneyContext(caseRow)
   const applicableSteps = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
   const requiredDocs = resolveRequiredDocs(caseRow.destination, caseRow)
 

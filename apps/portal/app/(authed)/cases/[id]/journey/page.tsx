@@ -31,5 +31,5 @@ export default function CaseJourneyPage({
   // multi-destination: activeDest 가 토큰 목록에 있으면 그걸로 분기.
   // 단일 케이스나 없으면 첫 토큰(buildCaseJourneyContext 내부 fallback).
   const data = buildJourney(caseRow, activeDest)
-  return <TimelineCalm data={data} caseId={id} />
+  return <TimelineCalm data={data} caseId={id} activeDest={activeDest} />
 }

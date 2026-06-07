@@ -1,6 +1,6 @@
 'use client'
 
-import { notFound, useRouter } from 'next/navigation'
+import { notFound, useRouter, useSearchParams } from 'next/navigation'
 import { use, useEffect } from 'react'
 import {
   JOURNEY_STEP_CATALOG,
@@ -16,6 +16,7 @@ import {
   type StepDefinition,
 } from '@petmove/domain'
 import { StepDetailView } from '@/components/journey/step-detail-view'
+import { activeDestinationView } from '@/lib/cases/active-destination'
 import { useCase } from '@/components/portal-shell/case-data-provider'
 
 /**
@@ -34,13 +35,17 @@ export default function CaseJourneyStepPage({
 }) {
   const { id, stepId } = use(params)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const activeDest = searchParams.get('dest')
   const caseRow = useCase(id)
   if (!caseRow) notFound()
 
   const baseStep = JOURNEY_STEP_CATALOG.find((s) => s.id === stepId)
   if (!baseStep) notFound()
 
-  const applicable = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
+  // 다중 목적지: 활성 목적지(?dest=) 1개짜리 뷰로 좁혀 단계 적용·완료·검증을 그 목적지 기준으로.
+  const view = activeDestinationView(caseRow, activeDest)
+  const applicable = getStepsForCase(JOURNEY_STEP_CATALOG, view)
   const stepIndex = applicable.findIndex((s) => s.id === baseStep.id)
   // 케이스 데이터 변경(예: 추가 검사 항목 삭제)으로 step 이 더 이상 적용 안 되면
   // 일정 목록으로 — 자기 자신을 보고 있던 사용자에게 404 대신 정상 화면을 보여준다.
@@ -52,16 +57,16 @@ export default function CaseJourneyStepPage({
   }, [stepIndex, id, router])
   if (stepIndex === -1) return null
 
-  const ctx = buildCaseJourneyContext(caseRow)
+  const ctx = buildCaseJourneyContext(view)
   // 목적지별 description/title override 적용. validation 은 base.done/validationIds 그대로.
   const step = resolveStepForDestination(baseStep, ctx.destinationKey)
-  const done = resolveDone(step.done, caseRow)
-  const checkResults = collectStepChecks(step, caseRow, ctx.destinationKey)
+  const done = resolveDone(step.done, view)
+  const checkResults = collectStepChecks(step, view, ctx.destinationKey)
   // 이 step 보다 뒤(후행) 적용 단계에 이미 입력된 데이터가 있는지 — 수정·삭제 전 '주의'
   // 확인창 조건. 뒤 일정이 있으면 앞 단계 변경이 정합성을 깨뜨릴 수 있어 사전 경고한다.
   const hasDownstreamData = applicable
     .slice(stepIndex + 1)
-    .some((s) => resolveDone(s.done, caseRow) || (s.hasInputData?.(caseRow) ?? false))
+    .some((s) => resolveDone(s.done, view) || (s.hasInputData?.(view) ?? false))
 
   return (
     <StepDetailView

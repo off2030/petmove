@@ -10,6 +10,7 @@ import {
   todayKst,
   type StepDefinition,
 } from '@petmove/domain'
+import { activeDestinationView } from '@/lib/cases/active-destination'
 
 /**
  * Portal 여정(/journey) 화면 데이터 모델.
@@ -199,10 +200,13 @@ const PASSED_UNCONFIRMED_MSG =
   '예정일이 지났습니다. 저장 버튼을 눌러서 완료로 전환하시거나, 새로운 예정일을 등록하실 수 있습니다.'
 
 export function buildJourney(
-  caseRow: CaseRow,
+  caseRowInput: CaseRow,
   activeDestination?: string | null,
 ): JourneyData {
-  const ctx = buildCaseJourneyContext(caseRow, activeDestination)
+  // 다중 목적지: 활성 목적지 1개짜리 뷰로 좁혀, 아래 단일목적지 가정 로직을 그대로 태운다.
+  // (단계 적용·완료 판정·검증·표시 날짜가 모두 활성 목적지 기준이 된다. 단일 목적지면 무변경.)
+  const caseRow = activeDestinationView(caseRowInput, activeDestination)
+  const ctx = buildCaseJourneyContext(caseRow)
   const today = todayKst()
   const dep = caseRow.departure_date
   const daysLeft = dep ? daysBetween(today, dep) : null
