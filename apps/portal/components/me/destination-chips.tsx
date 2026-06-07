@@ -132,19 +132,22 @@ export function DestinationChips({
     }
 
     startTransition(async () => {
+      // 순서 중요 — 묶여 있던 목적지면 trip 변경 '전에' 먼저 해제(co_progress=false).
+      // 그래야 이어지는 trip 변경이 엔진(동기화 트리거)을 타고 형제로 전파되지 않는다
+      // (트리거는 co_progress=false 인 원본은 동기화하지 않음). 반대 순서면 바뀐 trip 이
+      // 형제에 새어 들어가 형제의 왕복/편도까지 바뀐다. 동물당 스위치 1개라 공유 목적지
+      // 2개+ 면 통째 해제(설계 확정). 다시 켜려면 토글로.
+      if (wasLinked) {
+        const r0 = await setCaseCoProgress(caseId, false)
+        if (!r0.ok) {
+          alert(`오류: ${r0.error}`)
+          return
+        }
+      }
       const r = await setCaseDestinationTripType(caseId, dest, nextTT)
       if (!r.ok) {
         alert(`오류: ${r.error}`)
         return
-      }
-      // 묶여 있던 목적지의 트립을 바꿨으면 함께 준비 해제 — 엔진 동기화 중단(co_progress=false).
-      // 동물당 스위치 1개라 공유 목적지 2개+ 면 통째 해제(설계 확정). 다시 켜려면 토글로.
-      if (wasLinked) {
-        const r2 = await setCaseCoProgress(caseId, false)
-        if (!r2.ok) {
-          alert(`오류: ${r2.error}`)
-          return
-        }
       }
       await refreshCases()
     })
