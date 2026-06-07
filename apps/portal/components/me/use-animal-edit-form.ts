@@ -13,6 +13,7 @@ import {
   setCaseDestinationTripType,
 } from '@/lib/actions/destinations'
 import { eqForm, hasSiblingForDestination, readForm } from '@/lib/cases/info-form'
+import { showConflictNotice } from '@/lib/cases/conflict-notice'
 
 /**
  * 동물 상세(/me/animal) 전용 편집 hook — '동물 정보' 폼 + '여정'(목적지·왕복편도·함께 준비)을
@@ -320,7 +321,16 @@ export function useAnimalEditForm(caseRow: CaseRow, caseId: string): UseAnimalEd
               { ...form, destination: finalDests.join(', ') },
               formBase,
             )
-            if (!r.ok) throw new Error(r.error)
+            if (!r.ok) {
+              if ('conflict' in r && r.conflict) {
+                // 같은 칸을 그 사이 다른 곳에서 바꿈 — 동물 정보는 저장 안 됨(여정 변경은
+                // 이미 반영). 안내 후 최신 내용 불러오기.
+                setStatus('idle')
+                await showConflictNotice(confirm)
+                return
+              }
+              throw new Error(r.error)
+            }
             saved = r.value
             updateCase(r.value)
           }

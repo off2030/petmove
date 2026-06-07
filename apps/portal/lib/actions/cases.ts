@@ -1511,6 +1511,9 @@ const OWNED_INFO_KEYS = [
   'weight',
 ] as const satisfies readonly (keyof CaseInfoInput)[]
 
+/** 동시수정 충돌 시 결과 — 클라이언트가 conflict 로 분기해 안내 팝업을 띄운다. */
+const CONFLICT_MESSAGE = '다른 곳에서 정보가 수정되어, 방금 저장은 반영되지 않았어요.'
+
 export async function updateCaseInfoFields(
   caseId: string,
   input: CaseInfoInput,
@@ -1520,7 +1523,7 @@ export async function updateCaseInfoFields(
    * 기존처럼 input 전체를 권위로 사용.
    */
   base?: CaseInfoInput,
-): Promise<Result<CaseRow>> {
+): Promise<Result<CaseRow> | { ok: false; error: string; conflict: true }> {
   try {
     const access = await assertCaseAccess(caseId)
     if (!access.ok) return access
@@ -1541,7 +1544,21 @@ export async function updateCaseInfoFields(
     // base 가 없으면(구 호출) input 전체를 권위로 사용(기존 동작).
     let effective: CaseInfoInput
     if (base) {
-      const merged: CaseInfoInput = { ...readForm(fresh) }
+      const current = readForm(fresh)
+      // ── (가) 동시수정 충돌 감지 ──
+      // 내가 바꾼 칸을, 폼을 연 사이 다른 곳에서 "다른 값"으로 바꿨으면 저장 거부.
+      // current=DB 최신, base=폼 연 시점, input=내가 바꾼 값. 같은 값으로 바뀐 경우는
+      // (current===input) 충돌 아님. 충돌이면 아무것도 쓰지 않고 그대로 반려한다.
+      for (const key of OWNED_INFO_KEYS) {
+        if (
+          input[key] !== base[key] &&
+          current[key] !== base[key] &&
+          current[key] !== input[key]
+        ) {
+          return { ok: false, error: CONFLICT_MESSAGE, conflict: true }
+        }
+      }
+      const merged: CaseInfoInput = { ...current }
       const sink = merged as unknown as Record<string, unknown>
       for (const key of OWNED_INFO_KEYS) {
         if (input[key] !== base[key]) sink[key] = input[key]

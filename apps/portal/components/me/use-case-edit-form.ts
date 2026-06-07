@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { validateJpEntryDate, type CaseRow } from '@petmove/domain'
+import { useConfirm } from '@petmove/ui'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { updateCaseInfoFields, type CaseInfoInput } from '@/lib/actions/cases'
 import { readForm, eqForm } from '@/lib/cases/info-form'
+import { showConflictNotice } from '@/lib/cases/conflict-notice'
 
 /**
  * 설정 sub-page 들이 공통으로 쓰는 폼 hook.
@@ -25,6 +27,7 @@ export interface UseCaseEditForm {
 
 export function useCaseEditForm(caseRow: CaseRow, caseId: string): UseCaseEditForm {
   const { updateCase } = useCases()
+  const confirm = useConfirm()
   const [form, setForm] = useState<CaseInfoInput>(() => readForm(caseRow))
   const [base, setBase] = useState<CaseInfoInput>(() => readForm(caseRow))
   const [status, setStatus] = useState<EditFormStatus>('idle')
@@ -110,6 +113,10 @@ export function useCaseEditForm(caseRow: CaseRow, caseId: string): UseCaseEditFo
         updateCase(res.value)
         setStatus('saved')
         window.setTimeout(() => setStatus('idle'), 1500)
+      } else if ('conflict' in res && res.conflict) {
+        // 같은 칸을 그 사이 다른 곳에서 바꿈 — 저장 안 됨. 안내 후 최신 내용 불러오기.
+        setStatus('idle')
+        await showConflictNotice(confirm)
       } else {
         setStatus('error')
         setError(res.error)

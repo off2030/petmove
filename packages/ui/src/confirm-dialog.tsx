@@ -12,6 +12,8 @@ interface ConfirmOptions {
   okLabel?: string
   cancelLabel?: string
   variant?: Variant
+  /** 취소 버튼을 숨기고 확인 버튼만 — 되돌릴 수 없는 안내(예: 동시수정 알림)용. */
+  okOnly?: boolean
 }
 
 type ConfirmFn = (input: string | ConfirmOptions) => Promise<boolean>
@@ -88,13 +90,15 @@ function ConfirmDialog({ state, onClose }: { state: PendingState; onClose: (ok: 
           <p className="mt-2 text-sm text-muted-foreground whitespace-pre-line">{state.description}</p>
         )}
         <div className="mt-6 flex justify-end gap-sm">
-          <button
-            type="button"
-            onClick={() => onClose(false)}
-            className="px-md py-1.5 text-sm rounded-md border border-border hover:bg-accent/60 transition-colors"
-          >
-            {cancelLabel}
-          </button>
+          {!state.okOnly && (
+            <button
+              type="button"
+              onClick={() => onClose(false)}
+              className="px-md py-1.5 text-sm rounded-md border border-border hover:bg-accent/60 transition-colors"
+            >
+              {cancelLabel}
+            </button>
+          )}
           <button
             ref={okRef}
             type="button"
