@@ -6,23 +6,31 @@ import { useConfirm } from '@petmove/ui'
 import {
   createOrg,
   deleteOrg,
+  getOrgCompanyInfo,
   getOrgDetail,
   grantSuperAdmin,
   inviteToOrg,
   listAllOrgs,
   listSuperAdminsAll,
   removeMemberFromOrg,
+  removeOrgAvatarById,
   revokeOrgInvite,
   revokeSuperAdmin,
   setImpersonation,
+  setOrgType,
   updateOrgBusinessNumber,
+  updateOrgCompanyInfo,
   updateOrgMemberRole,
+  uploadOrgAvatarById,
   type OrgDetail,
   type OrgSummary,
   type SuperAdminEntry,
 } from '@/lib/actions/super-admin'
+import type { OrgType } from '@/lib/actions/company-info'
+import type { VetInfo } from '@/lib/vet-info'
 import type { InviteRole } from '@/lib/actions/invites'
 import { TopBar } from '@/components/layout/topbar'
+import { OrgInfoForm } from '@/components/settings/org-info-form'
 import { PillButton } from '@petmove/ui'
 import { cn } from '@/lib/utils'
 
@@ -401,6 +409,30 @@ export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, curr
                       </div>
                     </header>
 
+                    {/* 조직정보 — 유형/아바타/병원·운송 필드. 멤버 설정과 동일 폼(OrgInfoForm)을
+                        공유하되 슈퍼어드민은 유형까지 편집(canEditOrgType). */}
+                    <section>
+                      <div className="flex items-baseline justify-between pb-sm border-b border-border/80 mb-sm">
+                        <h3 className="font-serif text-[17px] text-foreground">조직정보</h3>
+                      </div>
+                      <OrgInfoSection
+                        key={selected.id}
+                        orgId={selected.id}
+                        orgType={selected.org_type}
+                        avatarUrl={selected.avatar_url}
+                        onAvatarChange={(next) =>
+                          setSelected((prev) =>
+                            prev && prev.id === selected.id ? { ...prev, avatar_url: next } : prev,
+                          )
+                        }
+                        onOrgTypeChange={(next) =>
+                          setSelected((prev) =>
+                            prev && prev.id === selected.id ? { ...prev, org_type: next } : prev,
+                          )
+                        }
+                      />
+                    </section>
+
                     {/* Members */}
                     <section>
                       <div className="flex items-baseline justify-between pb-sm border-b border-border/80 mb-sm">
@@ -760,6 +792,85 @@ function RoleSelect({
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * 슈퍼어드민 조직 상세의 조직정보 폼 래퍼. selected.id 로 getOrgCompanyInfo 를 로드해
+ * OrgInfoForm 에 주입. orgId 가 바뀌면 부모가 key 로 remount 시키므로 useEffect 의존성은
+ * 단순(마운트 1회 로드)하게 둔다. 저장/유형/아바타는 orgId 지정 server action 으로 위임.
+ */
+function OrgInfoSection({
+  orgId,
+  orgType,
+  avatarUrl,
+  onAvatarChange,
+  onOrgTypeChange,
+}: {
+  orgId: string
+  orgType: OrgType
+  avatarUrl: string | null
+  onAvatarChange: (next: string | null) => void
+  onOrgTypeChange: (next: OrgType) => void
+}) {
+  const [info, setInfo] = useState<VetInfo | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    getOrgCompanyInfo(orgId).then((r) => {
+      if (!alive) return
+      if (r.ok) setInfo(r.value)
+      else setError(r.error)
+    })
+    return () => { alive = false }
+  }, [orgId])
+
+  if (error) {
+    return <p className="font-serif text-[13px] text-destructive py-2">{error}</p>
+  }
+  if (!info) {
+    return (
+      <p className="py-3 font-serif italic text-[12px] text-muted-foreground/60">불러오는 중...</p>
+    )
+  }
+
+  return (
+    <OrgInfoForm
+      info={info}
+      orgType={orgType}
+      isAdmin
+      canEditOrgType
+      onSaveFields={async (patch) => {
+        const r = await updateOrgCompanyInfo({ orgId, patch })
+        return r.ok ? { ok: true, info: r.value } : { ok: false, error: r.error }
+      }}
+      onSetOrgType={async (t) => {
+        const r = await setOrgType({ orgId, orgType: t })
+        if (r.ok) {
+          onOrgTypeChange(t)
+          return { ok: true }
+        }
+        return { ok: false, error: r.error }
+      }}
+      avatarUrl={avatarUrl}
+      onAvatarUpload={async (fd) => {
+        const r = await uploadOrgAvatarById(orgId, fd)
+        if (r.ok) {
+          onAvatarChange(r.value.avatar_url)
+          return { ok: true, avatar_url: r.value.avatar_url }
+        }
+        return { ok: false, error: r.error }
+      }}
+      onAvatarRemove={async () => {
+        const r = await removeOrgAvatarById(orgId)
+        if (r.ok) {
+          onAvatarChange(null)
+          return { ok: true }
+        }
+        return { ok: false, error: r.error }
+      }}
+    />
   )
 }
 

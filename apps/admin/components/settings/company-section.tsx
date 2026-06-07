@@ -1,12 +1,12 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { Plus, X } from 'lucide-react'
 import {
   getCompanyInfo,
   updateCompanyInfo,
   resetCompanyInfo,
   getOrgType,
+  updateOrgType,
   hasCompanyInfoDefault,
   getOrgAvatar,
   uploadOrgAvatar,
@@ -21,71 +21,16 @@ import {
   getActiveOrgDmVisibility,
   updateActiveOrgDmVisibility,
 } from '@/lib/actions/chat'
-import type { CustomField, VetInfo, VetInfoKey } from '@/lib/vet-info'
+import type { VetInfo } from '@/lib/vet-info'
 import type { UserContactInfo, UserContactKey } from '@/lib/user-contact'
 import {
   SettingsShell,
   SettingsSection,
-  SettingsFooter,
   SettingsField,
   SettingsSubsectionTitle as SectionLabel,
 } from './settings-layout'
-import { CompanyAddressSearch, type CompanyAddressResult } from './company-address-search'
-import { Avatar, avatarInitial } from '@/components/ui/avatar'
-import { resizeSquareJpeg } from '@/lib/image/resize-avatar'
-import { useConfirm } from '@petmove/ui'
+import { OrgInfoForm } from './org-info-form'
 import { cn } from '@/lib/utils'
-
-const AVATAR_MAX_BYTES = 20 * 1024 * 1024
-const AVATAR_ACCEPT = 'image/png,image/jpeg,image/webp,image/gif'
-
-interface FieldDef {
-  key: VetInfoKey
-  label: string
-  group: string
-  type?: 'text' | 'textarea'
-}
-
-/**
- * org_type 별 필드 그룹 구성.
- * hospital: 병원 + 수의사. transport: 회사 정보만.
- */
-const HOSPITAL_GROUPS = ['Clinic', 'Veterinarian'] as const
-const TRANSPORT_GROUPS = ['Company'] as const
-
-const GROUP_LABELS: Record<string, string> = {
-  Clinic: '병원',
-  Veterinarian: '수의사',
-  Company: '회사',
-}
-
-// org-level (모든 멤버 공유) 필드만 — 개인 담당자 정보(이름·휴대폰·면허) 는 user-level
-// 로 분리되어 "내 담당자 정보" 섹션에서 별도 편집.
-const HOSPITAL_FIELDS: FieldDef[] = [
-  { key: 'clinic_ko', label: '병원명', group: 'Clinic' },
-  { key: 'clinic_en', label: '영문 병원명', group: 'Clinic' },
-  { key: 'address_ko', label: '주소', group: 'Clinic', type: 'textarea' },
-  { key: 'address_en', label: '영문 주소', group: 'Clinic', type: 'textarea' },
-  { key: 'postal_code', label: '우편번호', group: 'Clinic' },
-  { key: 'phone', label: '전화', group: 'Clinic' },
-  { key: 'email', label: '이메일', group: 'Clinic' },
-]
-
-const TRANSPORT_FIELDS: FieldDef[] = [
-  { key: 'transport_company_ko', label: '회사명', group: 'Company' },
-  { key: 'transport_company_en', label: '영문 회사명', group: 'Company' },
-  { key: 'transport_address_ko', label: '주소', group: 'Company', type: 'textarea' },
-  { key: 'transport_address_en', label: '영문 주소', group: 'Company', type: 'textarea' },
-  { key: 'transport_postal_code', label: '우편번호', group: 'Company' },
-]
-
-/** First/Last 분리 영문명 키 → 합성된 단일 키 매핑. handleSave 가 같이 갱신. */
-const SPLIT_NAME_PARENT: Record<string, { first: VetInfoKey; last: VetInfoKey; combined: VetInfoKey }> = {
-  name_first_en:                { first: 'name_first_en',                last: 'name_last_en',                combined: 'name_en' },
-  name_last_en:                 { first: 'name_first_en',                last: 'name_last_en',                combined: 'name_en' },
-  transport_contact_first_en:   { first: 'transport_contact_first_en',   last: 'transport_contact_last_en',   combined: 'transport_contact_en' },
-  transport_contact_last_en:    { first: 'transport_contact_first_en',   last: 'transport_contact_last_en',   combined: 'transport_contact_en' },
-}
 
 /** user-contact 발급자 영문명 split → 합성 키. 수의사/담당자 독립 저장. */
 const USER_SPLIT_NAME: Partial<Record<UserContactKey, { first: UserContactKey; last: UserContactKey; combined: UserContactKey }>> = {
@@ -95,9 +40,8 @@ const USER_SPLIT_NAME: Partial<Record<UserContactKey, { first: UserContactKey; l
   transport_name_last_en:  { first: 'transport_name_first_en', last: 'transport_name_last_en', combined: 'transport_name_en' },
 }
 
-
 /**
- * 한국 전화번호 자동 포맷 — phone / mobile_phone / transport_mobile_phone 입력에 적용.
+ * 한국 전화번호 자동 포맷 — mobile_phone / transport_mobile_phone 입력에 적용.
  *  - 11 digits "01012345678" → "010-1234-5678"
  *  - 10 digits "0212345678" (서울) → "02-1234-5678"
  *  - 10 digits "0311234567" (지역) → "031-123-4567"
@@ -116,29 +60,6 @@ function formatPhoneForSave(raw: string): string {
   if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`
   return trimmed
 }
-
-/**
- * 한국 전화번호 → 국제표기 자동 변환. 매칭 실패 시 원본 보존.
- *   "02-872-7588"  → "+82-2-872-7588"
- *   "010-1234-5678" → "+82-10-1234-5678"
- *   "031-123-4567" → "+82-31-123-4567"
- * 매칭 키: 첫 area code 가 0 으로 시작 → 0 제거 + "+82-" prefix.
- */
-function derivePhoneIntl(raw: string): string {
-  const formatted = formatPhoneForSave(raw)
-  if (!formatted) return ''
-  // 이미 +82 / + 로 시작하면 그대로.
-  if (/^\+/.test(formatted)) return formatted
-  const m = formatted.match(/^0(\d{1,2})-(.+)$/)
-  if (!m) return formatted
-  return `+82-${m[1]}-${m[2]}`
-}
-
-const PHONE_KEYS: Set<VetInfoKey> = new Set([
-  'phone',
-  'mobile_phone',
-  'transport_mobile_phone',
-])
 
 /** 영문만 남기고 한글 자모/완성형 제거. 케이스 상세의 customer-name-row 와 동일. */
 function filterKorean(str: string): string {
@@ -171,16 +92,14 @@ export function CompanySection({
   initialOrgType?: OrgType | null
   isAdmin?: boolean
 } = {}) {
-  const confirm = useConfirm()
   const [info, setInfo] = useState<VetInfo | null>(initialInfo)
   const [orgType, setOrgType] = useState<OrgType | null>(initialOrgType)
-  // 동물병원/운송회사 탭 — 유형 '선택'이 아니라 보기·입력 전환(둘 다 입력 가능).
-  // org_type 은 저장 시 채운 정보로 자동 판정(서버). 여긴 어느 쪽 필드를 보여줄지만 결정.
-  const [viewTab, setViewTab] = useState<'hospital' | 'transport'>(
+  // 발급자(본인) 정보를 수의사/담당자 중 어느 쪽으로 보여줄지. 단일 유형이면 orgType 을
+  // 따라가고(병원→수의사, 운송→담당자), 'both' 일 때만 토글을 노출해 전환.
+  // 조직정보 폼(OrgInfoForm)은 자체 viewTab 을 들고 있고, 여긴 발급자 섹션 전용.
+  const [issuerTab, setIssuerTab] = useState<'hospital' | 'transport'>(
     initialOrgType === 'transport' ? 'transport' : 'hospital',
   )
-  const [drafts, setDrafts] = useState<Partial<Record<VetInfoKey, string>>>({})
-  const [savingKey, setSavingKey] = useState<VetInfoKey | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [hasDefault, setHasDefault] = useState(false)
@@ -210,6 +129,13 @@ export function CompanySection({
     return () => { alive = false }
   }, [])
 
+  // 발급자 보기 탭을 유형에 맞춰 정렬 — 단일 유형(운송)이면 담당자 쪽으로. 'both' 면
+  // 사용자가 토글로 자유 전환하므로 강제하지 않음.
+  useEffect(() => {
+    if (orgType === 'transport') setIssuerTab('transport')
+    else if (orgType === 'hospital') setIssuerTab('hospital')
+  }, [orgType])
+
   useEffect(() => {
     let alive = true
     hasCompanyInfoDefault().then((v) => { if (alive) setHasDefault(v) })
@@ -217,6 +143,7 @@ export function CompanySection({
   }, [])
 
   // 조직 아바타(organizations.avatar_url) — org-level. 펫무브 보호자 화면에 표시됨.
+  // OrgInfoForm 에 초기값으로 넘긴다(폼 내부에서 업로드/제거 후 자체 갱신).
   useEffect(() => {
     let alive = true
     getOrgAvatar().then((u) => { if (alive) setOrgAvatarUrl(u) })
@@ -236,58 +163,6 @@ export function CompanySection({
     const id = setInterval(() => setTick((n) => n + 1), 10_000)
     return () => clearInterval(id)
   }, [lastSaved])
-
-  function valueOf(key: VetInfoKey): string {
-    if (drafts[key] !== undefined) return drafts[key] ?? ''
-    const raw = info?.[key] ?? ''
-    // 전화 필드는 표시 시점에도 포맷 — DB 에 저장된 기존 값(예: "02-8727588")도
-    // 사용자가 화면에서는 항상 정규 형식("02-872-7588")으로 보이게.
-    if (PHONE_KEYS.has(key)) return formatPhoneForSave(raw)
-    return raw
-  }
-
-  function handleChange(key: VetInfoKey, v: string) {
-    setDrafts((d) => ({ ...d, [key]: v }))
-  }
-
-  function handleSave(key: VetInfoKey) {
-    if (!info) return
-    const draftVal = drafts[key]
-    if (draftVal === undefined || draftVal === info[key]) {
-      setDrafts((d) => { const { [key]: _, ...rest } = d; return rest })
-      return
-    }
-    // 전화번호 키는 자동 포맷 ("02-8727588" → "02-872-7588" 등). 매칭 실패 시 원본 보존.
-    const next = PHONE_KEYS.has(key) ? formatPhoneForSave(draftVal) : draftVal
-    // 영문 First/Last split — 한쪽 변경 시 합성된 base 키도 함께 저장.
-    // (PDF 매핑이 합성 결과를 읽으므로 sync 필수.)
-    const patch: Partial<VetInfo> = { [key]: next }
-    const split = SPLIT_NAME_PARENT[key]
-    if (split) {
-      const first = (key === split.first ? next : (info[split.first] as string) ?? '').trim()
-      const last = (key === split.last ? next : (info[split.last] as string) ?? '').trim()
-      patch[split.combined] = [first, last].filter(Boolean).join(' ')
-    }
-    // phone 저장 시 phone_intl 도 자동 파생 ("02-872-7588" → "+82-2-872-7588").
-    // 별지25 hospital_phone, OVD/AnnexIII clinic phone 등 PDF 매핑이 vet:phone_intl 를
-    // 직접 read 하므로 sync 필수.
-    if (key === 'phone') {
-      patch.phone_intl = derivePhoneIntl(next)
-    }
-    setSavingKey(key)
-    setError(null)
-    startTransition(async () => {
-      const r = await updateCompanyInfo(patch)
-      setSavingKey(null)
-      if (r.ok) {
-        setInfo(r.info)
-        setDrafts((d) => { const { [key]: _, ...rest } = d; return rest })
-        setLastSaved(new Date())
-      } else {
-        setError(r.error)
-      }
-    })
-  }
 
   // ────────────────────────────────────────────────────────────────────
   // user-level 핸들러 — 본인 담당자 정보 (이름·휴대폰·면허)
@@ -339,111 +214,6 @@ export function CompanySection({
     setMyDrafts((d) => { const { [key]: _, ...rest } = d; return rest })
   }
 
-  /**
-   * Daum Postcode 검색 결과를 한국주소/영문주소/우편번호 한 번에 저장.
-   * org_type 별로 저장 키 다름:
-   *   hospital  → address_ko / address_en / postal_code
-   *   transport → transport_address_ko / transport_address_en / transport_postal_code
-   */
-  function handleAddressSelected(
-    result: CompanyAddressResult,
-    addressKey: 'address_ko' | 'transport_address_ko' = 'address_ko',
-  ) {
-    if (!info) return
-    setError(null)
-    // 'both' 는 병원·운송 주소가 둘 다 있으므로, 전역 org_type 이 아니라 검색을 띄운
-    // 주소 필드(addressKey)로 어느 쪽 키에 저장할지 결정.
-    const isTransport = addressKey === 'transport_address_ko'
-    const krKey: VetInfoKey = isTransport ? 'transport_address_ko' : 'address_ko'
-    const enKey: VetInfoKey = isTransport ? 'transport_address_en' : 'address_en'
-    const zipKey: VetInfoKey = isTransport ? 'transport_postal_code' : 'postal_code'
-    // draft 비우기 — 검색 결과로 즉시 덮어쓸 거라 사용자 편집 중인 draft 와 충돌 방지.
-    setDrafts((d) => {
-      const next = { ...d }
-      delete next[krKey]
-      delete next[enKey]
-      delete next[zipKey]
-      return next
-    })
-    const patch: Partial<VetInfo> = {
-      [krKey]: result.address_ko,
-      [enKey]: result.address_en,
-      [zipKey]: result.postal_code,
-    }
-    startTransition(async () => {
-      const r = await updateCompanyInfo(patch)
-      if (r.ok) {
-        setInfo(r.info)
-        setLastSaved(new Date())
-      } else {
-        setError(r.error)
-      }
-    })
-  }
-
-  /**
-   * 추가 정보 키 — active org_type 별로 독립 저장.
-   * hospital → custom_fields (legacy 호환)
-   * transport → transport_custom_fields
-   */
-  const customFieldsKey: 'custom_fields' | 'transport_custom_fields' =
-    viewTab === 'transport' ? 'transport_custom_fields' : 'custom_fields'
-
-  function getCustomFields(source: VetInfo | null): CustomField[] {
-    if (!source) return []
-    return source[customFieldsKey] ?? []
-  }
-
-  /** custom_fields 통째로 교체 저장. 각 row 의 label/value blur 마다 호출. */
-  function saveCustomFields(next: CustomField[]) {
-    if (!info) return
-    setError(null)
-    startTransition(async () => {
-      const r = await updateCompanyInfo({ [customFieldsKey]: next } as Partial<VetInfo>)
-      if (r.ok) {
-        setInfo(r.info)
-        setLastSaved(new Date())
-      } else {
-        setError(r.error)
-      }
-    })
-  }
-
-  function addCustomField() {
-    if (!info || !isAdmin) return
-    const id = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
-      ? crypto.randomUUID()
-      : `cf_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-    const next = [...getCustomFields(info), { id, label: '', value: '' }]
-    setInfo({ ...info, [customFieldsKey]: next })
-  }
-
-  function updateCustomField(id: string, patch: Partial<CustomField>) {
-    if (!info) return
-    const next = getCustomFields(info).map((f) => f.id === id ? { ...f, ...patch } : f)
-    setInfo({ ...info, [customFieldsKey]: next })
-  }
-
-  function removeCustomField(id: string) {
-    if (!info) return
-    const next = getCustomFields(info).filter((f) => f.id !== id)
-    setInfo({ ...info, [customFieldsKey]: next })
-    saveCustomFields(next)
-  }
-
-  async function handleReset() {
-    if (!await confirm({ message: '회사 정보를 기본값으로 되돌릴까요?', okLabel: '되돌리기' })) return
-    setError(null)
-    const r = await resetCompanyInfo()
-    if (r.ok) {
-      setInfo(r.info)
-      setDrafts({})
-      setLastSaved(new Date())
-    } else {
-      setError(r.error)
-    }
-  }
-
   if (!info || !orgType) {
     return (
       <SettingsShell>
@@ -452,7 +222,7 @@ export function CompanySection({
     )
   }
 
-  const isTransport = viewTab === 'transport'
+  const isTransport = issuerTab === 'transport'
   // 발급자(본인) 키 — 수의사(hospital)와 담당자(transport)는 독립 필드(연동 X).
   const issuerKeys = isTransport
     ? { ko: 'transport_name_ko', first: 'transport_name_first_en', last: 'transport_name_last_en', mobile: 'transport_mobile_phone' } as const
@@ -466,160 +236,56 @@ export function CompanySection({
     const v = info?.[k]
     return typeof v === 'string' ? v : ''
   }
-  const groups: readonly string[] = isTransport ? TRANSPORT_GROUPS : HOSPITAL_GROUPS
-  const fields: FieldDef[] = isTransport ? TRANSPORT_FIELDS : HOSPITAL_FIELDS
 
   const title = '조직정보'
 
   return (
     <SettingsShell>
       <SettingsSection title={title}>
-        {/* 조직 아바타 — org-level(병원·운송 공용). 펫무브 보호자 [내 정보] 의
-            담당 동물병원·운송업체 카드에 이 이미지가 표시됨. */}
-        <section className="mb-lg">
-          <SectionLabel className="mb-2">아바타</SectionLabel>
-          <div className="border-t border-border/80">
-            <OrgAvatarRow
-              url={orgAvatarUrl}
-              isAdmin={isAdmin}
-              fallbackLabel={info.clinic_ko || info.transport_company_ko || ''}
-              onChange={setOrgAvatarUrl}
-              onSaved={() => setLastSaved(new Date())}
-              onError={setError}
-            />
-          </div>
-        </section>
-
-        {/* 동물병원/운송회사 — 보기·입력 전환 탭. 유형 '선택' 아님(유형은 저장 시 자동 판정).
-            해당하는 쪽만 채우거나 둘 다 채우면 됨. */}
-        <section className="mb-lg">
-          <div className="flex items-center gap-xs">
-            {(['hospital', 'transport'] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setViewTab(t)}
-                className={cn(
-                  'h-9 px-lg font-serif text-[14px] rounded-full border transition-colors',
-                  viewTab === t
-                    ? 'border-primary/50 bg-primary/10 text-primary'
-                    : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
-                )}
-              >
-                {t === 'hospital' ? '동물병원' : '운송회사'}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {!isAdmin && (
-          <p className="mb-xl font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
-            조직 정보는 관리자만 수정할 수 있습니다. 변경이 필요하면 조직 관리자에게 요청해 주세요.
-          </p>
-        )}
-
-        {/* Field groups */}
-        {groups.map((group) => {
-          const groupFields = fields.filter((f) => f.group === group)
-          // org-level 필드가 없는 그룹(예: 수의사 — 본인 정보는 아래 발급자 섹션) 은 빈 헤더만
-          // 뜨므로 건너뛴다. (동물병원에 '수의사'가 두 번 보이던 문제.)
-          if (groupFields.length === 0) return null
-          return (
-          <section key={group} className="mb-xl">
-            <SectionLabel className="mb-2">{GROUP_LABELS[group] ?? group}</SectionLabel>
-            <div className="border-t border-border/80">
-              {groupFields.map((f) => {
-                const saving = savingKey === f.key
-                // 한국주소 행에 한정해 우측에 "주소검색" 버튼 노출 — 검색 결과로
-                // 한국/영문/우편번호 세 필드를 한 번에 저장 (handleAddressSelected).
-                // hospital → address_ko, transport → transport_address_ko.
-                const showAddressSearch = isAdmin && (f.key === 'address_ko' || f.key === 'transport_address_ko')
-
-                // 영문 First/Last 한 줄 합성 행 — name_first_en / transport_contact_first_en
-                // 만났을 때 두 input 을 한 행에 같이 그리고, 짝(name_last_en/...) 은 skip.
-                const split = SPLIT_NAME_PARENT[f.key]
-                if (split && f.key === split.first) {
-                  return (
-                    <EnglishNameSplitRow
-                      key={f.key}
-                      firstKey={split.first}
-                      lastKey={split.last}
-                      firstValue={valueOf(split.first)}
-                      lastValue={valueOf(split.last)}
-                      isAdmin={isAdmin}
-                      saving={savingKey === split.first || savingKey === split.last}
-                      onChange={handleChange}
-                      onCommit={handleSave}
-                      onCancel={(k) => setDrafts((d) => { const { [k]: _, ...rest } = d; return rest })}
-                    />
-                  )
-                }
-                if (split && f.key === split.last) return null  // 짝꿍이 already rendered
-
-                return (
-                  <SettingsField key={f.key} label={f.label}>
-                    <div className="flex items-start gap-sm">
-                      {f.type === 'textarea' ? (
-                        <textarea
-                          value={valueOf(f.key)}
-                          onChange={(e) => handleChange(f.key, e.target.value)}
-                          onBlur={() => handleSave(f.key)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Escape') {
-                              setDrafts((d) => { const { [f.key]: _, ...rest } = d; return rest })
-                            }
-                          }}
-                          rows={1}
-                          placeholder={isAdmin ? '—' : ''}
-                          readOnly={!isAdmin}
-                          className={cn(
-                            'flex-1 min-w-0 bg-transparent font-serif text-[15px] leading-snug text-foreground resize-y border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 transition-colors placeholder:text-muted-foreground/30',
-                            saving && 'opacity-60',
-                            !isAdmin && 'cursor-default',
-                          )}
-                        />
-                      ) : (
-                        <input
-                          type="text"
-                          value={valueOf(f.key)}
-                          onChange={(e) => handleChange(f.key, e.target.value)}
-                          onBlur={() => handleSave(f.key)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-                            if (e.key === 'Escape') {
-                              setDrafts((d) => { const { [f.key]: _, ...rest } = d; return rest })
-                            }
-                          }}
-                          placeholder={isAdmin ? '—' : ''}
-                          readOnly={!isAdmin}
-                          className={cn(
-                            'flex-1 min-w-0 bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 transition-colors placeholder:text-muted-foreground/30',
-                            saving && 'opacity-60',
-                            !isAdmin && 'cursor-default',
-                          )}
-                        />
-                      )}
-                      {showAddressSearch && (
-                        <CompanyAddressSearch
-                          onSelected={(result) => handleAddressSelected(result, f.key as 'address_ko' | 'transport_address_ko')}
-                          className="shrink-0 mt-0.5 inline-flex h-7 items-center rounded border px-2 font-serif text-[12px] border-border/80 text-muted-foreground hover:bg-accent/60 hover:text-foreground transition-colors disabled:opacity-50"
-                        />
-                      )}
-                    </div>
-                  </SettingsField>
-                )
-              })}
-            </div>
-          </section>
-          )
-        })}
+        {/* 조직정보(아바타·병원/운송 필드·추가정보·기본값 복원) — 슈퍼어드민 화면과 공유.
+            멤버는 유형 변경 불가(canEditOrgType=false), 보기 전환 탭만. */}
+        <OrgInfoForm
+          info={info}
+          orgType={orgType}
+          isAdmin={isAdmin}
+          canEditOrgType={false}
+          onSaveFields={updateCompanyInfo}
+          onSetOrgType={updateOrgType}
+          avatarUrl={orgAvatarUrl}
+          onAvatarUpload={uploadOrgAvatar}
+          onAvatarRemove={removeOrgAvatar}
+          onReset={resetCompanyInfo}
+          hasDefault={hasDefault}
+        />
 
         {/* 발급자 본인 정보 — 동물병원이면 "수의사", 운송회사면 "담당자" 그룹으로 노출.
             로그인 사용자 본인 (profiles.contact_info) 만 보이고 편집됨. 한 조직에 멤버
             여럿일 때 각자 본인 명의로 cert 발급되도록 — PDF 매핑(vet:name_en 등) 은
             org_type 에 따라 hospital 측 vet 키 / transport 측 transport_contact 키로
             overlay. 다른 멤버에게는 영향 없음. */}
-        <section className="mb-xl">
+        <section className="mt-xl mb-xl">
+          {/* 발급자 정보를 수의사/담당자 중 어느 쪽으로 입력할지 전환하는 보기 탭.
+              'both' 유형에서만 노출 — 단일 유형은 위 sync effect 가 orgType 을 따라 고정.
+              OrgInfoForm 내부 탭과 별개 — 발급자(본인) 섹션 전용. */}
+          {orgType === 'both' && (
+            <div className="mb-md flex items-center gap-xs">
+              {(['hospital', 'transport'] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setIssuerTab(t)}
+                  className={cn(
+                    'h-8 px-md font-serif text-[13px] rounded-full border transition-colors',
+                    issuerTab === t
+                      ? 'border-primary/50 bg-primary/10 text-primary'
+                      : 'border-border/80 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+                  )}
+                >
+                  {t === 'hospital' ? '수의사' : '담당자'}
+                </button>
+              ))}
+            </div>
+          )}
           <SectionLabel className="mb-2">{isTransport ? '담당자' : '수의사'}</SectionLabel>
           <p className="mb-2 font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed max-w-md">
             본인 정보를 넣으면 그 이름·휴대폰{isTransport ? '' : '·면허'}로 발급되고, 비워두면 회색 글씨의 조직 기본값으로 발급됩니다.
@@ -702,41 +368,6 @@ export function CompanySection({
           </div>
         </section>
 
-
-        {/* 사용자 정의 추가 필드 — 라벨/값 자유 입력 */}
-        <section className="mb-xl">
-          <SectionLabel className="mb-2">추가 정보</SectionLabel>
-          <div className="border-t border-border/80">
-            {getCustomFields(info).map((f) => (
-              <CustomFieldRow
-                key={f.id}
-                field={f}
-                isAdmin={isAdmin}
-                onChange={(patch) => updateCustomField(f.id, patch)}
-                onCommit={() => saveCustomFields(getCustomFields(info))}
-                onRemove={() => removeCustomField(f.id)}
-              />
-            ))}
-            {isAdmin && (
-              <div className="py-3 border-b border-dotted border-border/80">
-                <button
-                  type="button"
-                  onClick={addCustomField}
-                  className="inline-flex items-center gap-xs font-serif text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <Plus size={14} />
-                  <span>정보 추가</span>
-                </button>
-              </div>
-            )}
-            {!isAdmin && getCustomFields(info).length === 0 && (
-              <p className="py-3 font-serif italic text-[12px] text-muted-foreground/60">
-                추가 정보가 없습니다.
-              </p>
-            )}
-          </div>
-        </section>
-
         {/* DM 노출 — admin 만 변경 */}
         {isAdmin && (
           <section className="mb-xl">
@@ -753,24 +384,14 @@ export function CompanySection({
         {error && (
           <p className="font-serif text-[13px] text-destructive mb-md">{error}</p>
         )}
-      </SettingsSection>
 
-      <SettingsFooter className="justify-between">
-        {isAdmin && hasDefault ? (
-          <button
-            type="button"
-            onClick={handleReset}
-            className="font-serif text-[12px] text-muted-foreground/60 hover:text-destructive transition-colors"
-          >
-            기본값으로 되돌리기
-          </button>
-        ) : (
-          <span />
+        {/* 발급자/DM 저장시각 — 조직정보 자체 풋터는 OrgInfoForm 내부에 있음. */}
+        {lastSaved && (
+          <p className="text-right font-serif italic text-[12px] text-muted-foreground/60">
+            {formatSavedAgo(lastSaved)}
+          </p>
         )}
-        <span className="font-serif italic text-[12px] text-muted-foreground/60">
-          {formatSavedAgo(lastSaved)}
-        </span>
-      </SettingsFooter>
+      </SettingsSection>
     </SettingsShell>
   )
 }
@@ -778,6 +399,9 @@ export function CompanySection({
 /**
  * 영문명 First/Last 합성 행 — 케이스 상세의 customer-name-row 와 동일 패턴 (이름은 단일 행).
  * IME 입력 중에는 한글 자모 통과시키고 composition end 시점에 필터·대문자화 후 commit.
+ *
+ * (OrgInfoForm 에도 동일 컴포넌트가 있음 — 거긴 조직정보 영문명, 여긴 발급자 본인 영문명.
+ *  제네릭 키 타입이 달라 각자 보유. 시각/동작은 동일하게 유지.)
  */
 function EnglishNameSplitRow<K extends string>({
   label = '영문명',
@@ -879,66 +503,6 @@ function EnglishNameSplitRow<K extends string>({
   )
 }
 
-function CustomFieldRow({
-  field,
-  isAdmin,
-  onChange,
-  onCommit,
-  onRemove,
-}: {
-  field: CustomField
-  isAdmin: boolean
-  onChange: (patch: Partial<CustomField>) => void
-  onCommit: () => void
-  onRemove: () => void
-}) {
-  return (
-    <div className="grid grid-cols-[150px_1fr_auto] items-baseline gap-md py-3 border-b border-dotted border-border/80 group">
-      <input
-        type="text"
-        value={field.label}
-        onChange={(e) => onChange({ label: e.target.value })}
-        onBlur={onCommit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-        }}
-        placeholder={isAdmin ? '항목명' : ''}
-        readOnly={!isAdmin}
-        className={cn(
-          'w-full bg-transparent font-serif text-[13px] leading-none text-muted-foreground pt-0.5 border-0 px-0 py-1 focus:outline-none focus:ring-0 placeholder:text-muted-foreground/30',
-          !isAdmin && 'cursor-default',
-        )}
-      />
-      <input
-        type="text"
-        value={field.value}
-        onChange={(e) => onChange({ value: e.target.value })}
-        onBlur={onCommit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-        }}
-        placeholder={isAdmin ? '—' : ''}
-        readOnly={!isAdmin}
-        className={cn(
-          'w-full bg-transparent font-serif text-[15px] leading-snug text-foreground border-0 px-0 py-1 min-h-[28px] focus:outline-none focus:ring-0 placeholder:text-muted-foreground/30',
-          !isAdmin && 'cursor-default',
-        )}
-      />
-      {isAdmin && (
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label="항목 삭제"
-          title="삭제"
-          className="opacity-0 group-hover:opacity-100 inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive transition-all"
-        >
-          <X size={14} />
-        </button>
-      )}
-    </div>
-  )
-}
-
 function OrgDmVisibilityRow({
   onError,
   onSaved,
@@ -995,138 +559,6 @@ function OrgDmVisibilityRow({
         <span className="font-serif italic text-[12px] text-muted-foreground/70 leading-relaxed">
           끄면 외부 조직 사용자가 새 대화 만들기에서 우리 조직을 찾을 수 없습니다. 같은 조직 내부 검색은 영향 없음.
         </span>
-      </div>
-    </SettingsField>
-  )
-}
-
-/**
- * 조직 아바타 업로드/제거 행. profile-section 의 AvatarRow 와 동일 패턴(클라 리사이즈 →
- * 서버액션 업로드)이되, 대상이 organizations.avatar_url 이고 권한이 조직 관리자라는 점만 다름.
- * 비관리자는 읽기 전용(이미지 + 안내문).
- */
-function OrgAvatarRow({
-  url,
-  isAdmin,
-  fallbackLabel,
-  onChange,
-  onSaved,
-  onError,
-}: {
-  url: string | null
-  isAdmin: boolean
-  fallbackLabel: string
-  onChange: (url: string | null) => void
-  onSaved: () => void
-  onError: (msg: string | null) => void
-}) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [busy, setBusy] = useState(false)
-  const [, startTransition] = useTransition()
-
-  const label = avatarInitial(fallbackLabel || '조직')
-
-  function pickFile() {
-    fileInputRef.current?.click()
-  }
-
-  async function handleFile(file: File) {
-    if (file.size > AVATAR_MAX_BYTES) {
-      onError(`파일이 너무 큽니다 (최대 20MB). 현재 ${(file.size / 1024 / 1024).toFixed(1)}MB`)
-      return
-    }
-    setBusy(true)
-    onError(null)
-    try {
-      let blob: Blob
-      try {
-        blob = await resizeSquareJpeg(file)
-      } catch (e) {
-        onError(`이미지 처리 실패: ${e instanceof Error ? e.message : String(e)}`)
-        return
-      }
-      const fd = new FormData()
-      fd.append('file', blob, 'avatar.jpg')
-      const r = await uploadOrgAvatar(fd)
-      if (!r.ok) {
-        onError(r.error)
-        return
-      }
-      onChange(r.avatar_url)
-      onSaved()
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  function handleRemove() {
-    if (!url) return
-    setBusy(true)
-    onError(null)
-    startTransition(async () => {
-      const r = await removeOrgAvatar()
-      setBusy(false)
-      if (!r.ok) {
-        onError(r.error)
-        return
-      }
-      onChange(null)
-      onSaved()
-    })
-  }
-
-  return (
-    <SettingsField label="조직 아바타" align="center">
-      <div className="flex items-center gap-md">
-        <Avatar label={label} imageUrl={url} size="md" />
-        {isAdmin ? (
-          <>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={AVATAR_ACCEPT}
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0]
-                if (f) void handleFile(f)
-                e.target.value = ''
-              }}
-            />
-            <button
-              type="button"
-              onClick={pickFile}
-              disabled={busy}
-              className={cn(
-                'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
-                'border-border/80 text-foreground hover:bg-muted/40',
-                busy && 'opacity-60',
-              )}
-            >
-              {url ? '이미지 변경' : '이미지 업로드'}
-            </button>
-            {url && (
-              <button
-                type="button"
-                onClick={handleRemove}
-                disabled={busy}
-                className={cn(
-                  'h-8 px-md font-serif text-[14px] rounded-full border transition-colors whitespace-nowrap shrink-0',
-                  'border-border/80 text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40',
-                  busy && 'opacity-60',
-                )}
-              >
-                제거
-              </button>
-            )}
-            <span className="font-serif italic text-[12px] text-muted-foreground/70">
-              PNG · JPG · WebP · GIF · 자동 512px · 펫무브 보호자 화면에 표시
-            </span>
-          </>
-        ) : (
-          <span className="font-serif italic text-[12px] text-muted-foreground/70">
-            {url ? '조직 관리자만 변경할 수 있습니다.' : '설정된 조직 아바타가 없습니다.'}
-          </span>
-        )}
       </div>
     </SettingsField>
   )
