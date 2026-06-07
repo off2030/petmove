@@ -351,6 +351,21 @@ export function RequiredDocDetail({
               <button type="button" disabled style={disabledBtn}>
                 완료
               </button>
+            ) : doc.awaiting ? (
+              // 발급 예정 — 발급(선행 step) 전이라 아직 받지 못한 서류. 직접 '완료' 불가
+              // (체크리스트 '발급 예정' 과 동일 게이트). 완료 경로: ① 발급 단계 도래로 awaiting
+              // 해제되면 완료 활성, ② 미리 받았으면 위에서 첨부 → 첨부가 발급 증빙이라 완료.
+              // naAllowed 면 '해당없음' 은 그대로 허용.
+              <>
+                <button type="button" disabled style={disabledBtn}>
+                  완료
+                </button>
+                {doc.naAllowed && (
+                  <button type="button" onClick={handleToggleNa} disabled={busy} style={naBtn}>
+                    해당없음
+                  </button>
+                )}
+              </>
             ) : (
               <>
                 <button
