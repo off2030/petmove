@@ -20,7 +20,9 @@ import {
   applyAutoFillRules,
   findRabiesChainBreak,
   normalizeRabiesOrder,
+  parseDestinations,
   validateJpEntryDate,
+  writeByDestValue,
   type CaseRow,
   type VaccineProductsData,
 } from '@petmove/domain'
@@ -704,6 +706,8 @@ const FLIGHT_DATA_KEYS = [
 export async function updateFlightFields(
   caseId: string,
   fields: Record<(typeof FLIGHT_DATA_KEYS)[number], string | null>,
+  /** 다중 목적지 케이스에서 활성 목적지 토큰 — 지정 + 다중이면 항공권/출국일을 by_dest 에 분리 저장. */
+  destination?: string | null,
 ): Promise<Result<CaseRow>> {
   try {
     for (const key of ['entry_date', 'return_date'] as const) {
@@ -733,6 +737,31 @@ export async function updateFlightFields(
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
+
+    // 다중 목적지 + 활성 목적지 지정 → 항공권 필드 + 출국일을 by_dest[destination] 에 분리 저장.
+    // 부수효과(departure_date 컬럼 sync·auto-fill)는 by_dest 경로에선 스킵 — admin updateCaseField
+    // 와 동일. 컬럼은 단일값이라 다중 목적지를 못 담고, flatten 이 by_dest[dest].departure_date 를
+    // 우선 읽어 has-flight-date·D-day 가 목적지별로 작동한다.
+    const isMultiDest =
+      parseDestinations((existing as { destination: string | null }).destination).length > 1
+    if (destination && isMultiDest) {
+      let merged: Record<string, unknown> = { ...prev }
+      for (const key of FLIGHT_DATA_KEYS) {
+        const val = typeof fields[key] === 'string' ? (fields[key] as string).trim() : ''
+        merged = writeByDestValue(merged, destination, key, val || null)
+      }
+      const entryDate = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
+      merged = writeByDestValue(merged, destination, 'departure_date', entryDate || null)
+      const { data: updated, error } = await admin
+        .from('cases')
+        .update({ data: merged })
+        .eq('id', caseId)
+        .select('*')
+        .single()
+      if (error) return { ok: false, error: error.message }
+      return { ok: true, value: updated as CaseRow }
+    }
+
     // 일본 입국일 180일·후행 일정과의 관계는 server 에서 차단하지 않는다 — 펫무브 client 가
     // 입력 불가로 막고, procedure-check 가 어긋난 step 에 '주의'를 띄운다(단일 출처). 출국 ≤ 귀국·
     // 날짜 형식 같은 항공편 자체의 내재적 정합성은 위에서 형식 검증으로 처리.
@@ -990,6 +1019,8 @@ export async function updateVetVisitDate(
   caseId: string,
   date: string | null,
   confirmed: boolean,
+  /** 다중 목적지 케이스에서 활성 목적지 토큰 — 지정 + 다중이면 by_dest[destination] 에 분리 저장. */
+  destination?: string | null,
 ): Promise<Result<CaseRow>> {
   try {
     if (date != null && date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -1009,6 +1040,23 @@ export async function updateVetVisitDate(
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const v = typeof date === 'string' ? date.trim() : ''
+
+    // 다중 목적지 + 활성 목적지 지정 → vet_visit_date 를 by_dest[destination] 에 분리 저장.
+    // (vet_visit_date 는 destination-scoped 필드. 단일 목적지/미지정은 아래 top-level 경로 — 무변경.)
+    const isMultiDest =
+      parseDestinations((existing as { destination: string | null }).destination).length > 1
+    if (destination && isMultiDest) {
+      const nextData = writeByDestValue(prev, destination, 'vet_visit_date', v || null)
+      const { data: updated, error } = await admin
+        .from('cases')
+        .update({ data: nextData })
+        .eq('id', caseId)
+        .select('*')
+        .single()
+      if (error) return { ok: false, error: error.message }
+      return { ok: true, value: updated as CaseRow }
+    }
+
     // 내원일 도메인 차단은 server 에 두지 않는다 — client(입력 불가)·procedure-check(주의)가
     // 같은 함수로 담당(단일 출처).
     const nextData: Record<string, unknown> = { ...prev }

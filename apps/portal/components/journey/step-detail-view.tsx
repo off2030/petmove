@@ -26,6 +26,7 @@ import {
   type VaccineProductsData,
 } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
+import { activeDestinationView } from '@/lib/cases/active-destination'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
 import {
   getCaseVaccineData,
@@ -91,6 +92,7 @@ export function StepDetailView({
   destinationKey,
   tripType,
   hasDownstreamData,
+  activeDest,
 }: {
   caseId: string
   step: StepDefinition
@@ -103,6 +105,8 @@ export function StepDetailView({
   tripType: 'round' | 'one_way'
   /** 이 step 보다 뒤(후행) 적용 단계에 이미 입력된 데이터가 있는지 — 수정·삭제 전 '주의' 확인창 조건. */
   hasDownstreamData: boolean
+  /** 활성 목적지(?dest=) 토큰 — 다중 목적지에서 입력값 읽기·저장을 그 목적지(by_dest)로 분기. */
+  activeDest?: string | null
 }) {
   const isMicrochip = step.id === 'microchip'
   const isRabies1 = step.id === 'rabies-vaccine-1'
@@ -138,7 +142,15 @@ export function StepDetailView({
     isJpImportQuarantine ||
     isJpExportQuarantineVisit ||
     isKrImportQuarantine
-  const caseRow = useCase(caseId)
+  const caseRowRaw = useCase(caseId)
+  // 다중 목적지: 활성 목적지(?dest=) 1개짜리 뷰로 좁힌다 — 아래 모든 saved* 읽기·동기화
+  // useEffect 가 그 목적지(by_dest) 기준이 된다. 단일 목적지면 뷰가 원본과 동일(무변경).
+  // useMemo 로 식별자 안정화 — 매 렌더 새 객체면 [caseRow?.data] deps useEffect 가 폼을 계속
+  // 되돌려 입력이 막힌다.
+  const caseRow = useMemo(
+    () => (caseRowRaw ? activeDestinationView(caseRowRaw, activeDest) : caseRowRaw),
+    [caseRowRaw, activeDest],
+  )
   const { updateCase } = useCases()
 
   // 인터랙티브 step 폼 state — 다른 step 에서는 렌더 안 함. hooks 는 매번 호출.
@@ -701,21 +713,27 @@ export function StepDetailView({
       setStatus('saving')
       setError(null)
       startTransition(async () => {
-        const res = await updateFlightFields(caseId, {
-          entry_date: flightForm.entry_date || null,
-          entry_departure_airport: flightForm.entry_departure_airport || null,
-          entry_airport: flightForm.entry_airport || null,
-          entry_flight_number: flightForm.entry_flight_number || null,
-          entry_transport: flightForm.entry_transport || null,
-          return_date: flightForm.return_date || null,
-          return_departure_airport: flightForm.return_departure_airport || null,
-          return_arrival_airport: flightForm.return_arrival_airport || null,
-          return_flight_number: flightForm.return_flight_number || null,
-          return_transport: flightForm.return_transport || null,
-        })
+        const res = await updateFlightFields(
+          caseId,
+          {
+            entry_date: flightForm.entry_date || null,
+            entry_departure_airport: flightForm.entry_departure_airport || null,
+            entry_airport: flightForm.entry_airport || null,
+            entry_flight_number: flightForm.entry_flight_number || null,
+            entry_transport: flightForm.entry_transport || null,
+            return_date: flightForm.return_date || null,
+            return_departure_airport: flightForm.return_departure_airport || null,
+            return_arrival_airport: flightForm.return_arrival_airport || null,
+            return_flight_number: flightForm.return_flight_number || null,
+            return_transport: flightForm.return_transport || null,
+          },
+          caseRow?.destination ?? null,
+        )
         if (res.ok) {
           updateCase(res.value)
-          setFlightForm(readFlightForm(res.value.data))
+          // by_dest 저장 시 res.value.data 는 top-level 이 아니라 by_dest 에 있으므로, 활성
+          // 목적지 뷰로 평탄화해서 폼을 동기화 (단일 목적지면 뷰가 원본과 동일).
+          setFlightForm(readFlightForm(activeDestinationView(res.value, activeDest).data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -743,10 +761,15 @@ export function StepDetailView({
       setError(null)
       startTransition(async () => {
         // 새 모델 — 저장은 데이터 저장만 (완료 처리 X). 완료는 '완료' 버튼/서류 자동.
-        const res = await updateVetVisitDate(caseId, vetVisitDate || null, false)
+        const res = await updateVetVisitDate(
+          caseId,
+          vetVisitDate || null,
+          false,
+          caseRow?.destination ?? null,
+        )
         if (res.ok) {
           updateCase(res.value)
-          setVetVisitDate(readVetVisitDate(res.value.data))
+          setVetVisitDate(readVetVisitDate(activeDestinationView(res.value, activeDest).data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -1518,7 +1541,7 @@ export function StepDetailView({
         {(step.id === 'vet-visit' || step.id === 'certificate-issue') && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>서류 체크리스트</h3>
-            <StepDocChecklist caseId={caseId} currentStepId={step.id} />
+            <StepDocChecklist caseId={caseId} currentStepId={step.id} activeDest={activeDest} />
           </section>
         )}
 

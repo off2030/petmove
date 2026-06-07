@@ -8,6 +8,7 @@ import {
   resolveDone,
   resolveRequiredDocs,
 } from '@petmove/domain'
+import { activeDestinationView } from '@/lib/cases/active-destination'
 import { useCase } from '@/components/portal-shell/case-data-provider'
 
 interface ChecklistRow {
@@ -27,8 +28,21 @@ interface ChecklistRow {
  * 예: 출국 전 임상검사(vet-visit, order 110)엔 한국 수출 동물검역증(stepRef
  * certificate-issue, order 120)이 미래 단계 서류라 보이지 않는다.
  */
-export function StepDocChecklist({ caseId, currentStepId }: { caseId: string; currentStepId: string }) {
-  const caseRow = useCase(caseId)
+export function StepDocChecklist({
+  caseId,
+  currentStepId,
+  activeDest,
+}: {
+  caseId: string
+  currentStepId: string
+  /** 활성 목적지(?dest=) — 다중 목적지에서 서류 체크리스트를 그 목적지 기준으로. */
+  activeDest?: string | null
+}) {
+  const caseRowRaw = useCase(caseId)
+  const caseRow = useMemo(
+    () => (caseRowRaw ? activeDestinationView(caseRowRaw, activeDest) : caseRowRaw),
+    [caseRowRaw, activeDest],
+  )
   const rows = useMemo<ChecklistRow[]>(() => {
     if (!caseRow) return []
     const currentOrder = JOURNEY_STEP_CATALOG.find((s) => s.id === currentStepId)?.order ?? Infinity

@@ -78,6 +78,7 @@ export default function CaseJourneyStepPage({
       destinationKey={ctx.destinationKey}
       tripType={ctx.tripType}
       hasDownstreamData={hasDownstreamData}
+      activeDest={activeDest}
     />
   )
 }
