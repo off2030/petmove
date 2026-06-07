@@ -53,6 +53,9 @@ const ROLE_CONFIG: Record<PartnerRole, RoleConfig> = {
   },
 }
 
+// 펫무브 직영(platform) — 담당 병원 미정. org_id 가 이 값이면 미연결로 표시.
+const PLATFORM_ORG_ID = '00000000-0000-0000-0000-000000000002'
+
 export function PartnerEditView({ role }: { role: PartnerRole }) {
   const { cases, refreshCases } = useCases()
   const confirm = useConfirm()
@@ -66,7 +69,11 @@ export function PartnerEditView({ role }: { role: PartnerRole }) {
   const currentOrgId = useMemo<string | null>(() => {
     const first = cases[0]
     if (!first) return null
-    return role === 'vet' ? first.vet_org_id : first.transport_org_id
+    // 담당 병원 = org_id (platform = 담당 미정 → null). 운송 = transport_org_id.
+    if (role === 'vet') {
+      return first.org_id && first.org_id !== PLATFORM_ORG_ID ? first.org_id : null
+    }
+    return first.transport_org_id
   }, [cases, role])
 
   // 카탈로그 fetch — 마운트 시 1회. 현재 연결 조직 이름·메타 표시에도 재사용.

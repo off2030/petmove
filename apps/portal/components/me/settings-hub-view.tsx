@@ -359,7 +359,7 @@ export function SettingsHubView() {
   // 담당 조직(병원·운송) 카드 채움 — 첫 케이스의 vet/transport_org_id 기준.
   // cases 가 갱신될 때(refreshCases 후) vet/transport_org_id 변경되면 재 fetch.
   const partnerKey = primary
-    ? `${primary.vet_org_id ?? ''}|${primary.transport_org_id ?? ''}`
+    ? `${primary.org_id ?? ''}|${primary.transport_org_id ?? ''}`
     : ''
   const [partners, setPartners] = useState<{
     vet: PartnerOrg | null

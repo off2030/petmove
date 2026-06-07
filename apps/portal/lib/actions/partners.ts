@@ -20,6 +20,9 @@
 import { createClient, getCurrentUser } from '@petmove/auth/server'
 import { revalidatePath } from 'next/cache'
 
+// 펫무브 직영(platform) — 담당 동물병원 미정 상태. org_id 가 이 값이면 담당 병원 없음.
+const PLATFORM_ORG_ID = '00000000-0000-0000-0000-000000000002'
+
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 
 export type PartnerRole = 'vet' | 'transport'
@@ -59,12 +62,14 @@ export async function getMyPartnerOrgs(): Promise<
     const caseId = (links[0] as { case_id: string }).case_id
     const { data: caseRow, error: caseError } = await supabase
       .from('cases')
-      .select('vet_org_id, transport_org_id')
+      .select('org_id, transport_org_id')
       .eq('id', caseId)
       .maybeSingle()
     if (caseError) return { ok: false, error: caseError.message }
 
-    const vetId = (caseRow as { vet_org_id: string | null } | null)?.vet_org_id ?? null
+    // 담당 병원 = org_id (platform = 담당 미정 → null 로 표시). 운송 = transport_org_id.
+    const orgId = (caseRow as { org_id: string | null } | null)?.org_id ?? null
+    const vetId = orgId && orgId !== PLATFORM_ORG_ID ? orgId : null
     const tspId =
       (caseRow as { transport_org_id: string | null } | null)?.transport_org_id ?? null
     const ids = [vetId, tspId].filter((v): v is string => !!v)
@@ -135,8 +140,9 @@ export async function unsetTransportOrg(): Promise<Result<{ updated: number }>> 
 // 공용 헬퍼
 // ─────────────────────────────────────────────────
 
-const COLUMN_BY_ROLE: Record<PartnerRole, 'vet_org_id' | 'transport_org_id'> = {
-  vet: 'vet_org_id',
+// 담당 병원은 org_id 컬럼(= 케이스 소유 조직)으로 일원화. 운송은 transport_org_id.
+const COLUMN_BY_ROLE: Record<PartnerRole, 'org_id' | 'transport_org_id'> = {
+  vet: 'org_id',
   transport: 'transport_org_id',
 }
 
@@ -191,13 +197,18 @@ async function setPartnerOrg(
       .in('id', caseIds)
     const prevRows = (prevCases ?? []) as Array<Record<string, unknown>>
     const prevOrgIds = new Set(
-      prevRows.map((r) => r[column]).filter((v): v is string => typeof v === 'string' && !!v),
+      prevRows
+        .map((r) => r[column])
+        .filter((v): v is string => typeof v === 'string' && !!v && v !== PLATFORM_ORG_ID),
     )
     const customerName = ((prevRows[0]?.customer_name as string | null) ?? '').trim()
 
+    // 담당 병원(vet)은 org_id 컬럼 — 해제(null)면 직영(platform)으로 되돌림(org_id 는 NOT NULL).
+    // 운송(transport)은 transport_org_id — null(해제) 허용.
+    const nextValue = role === 'vet' ? (orgId ?? PLATFORM_ORG_ID) : orgId
     const { error: updateError } = await admin
       .from('cases')
-      .update({ [column]: orgId })
+      .update({ [column]: nextValue })
       .in('id', caseIds)
     if (updateError) return { ok: false, error: updateError.message }
 
