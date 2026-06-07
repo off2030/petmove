@@ -49,7 +49,7 @@
 - [x] **3. RLS 개편** — 가시성·삭제를 `org_id`+`transport_org_id`+고객+본사로. `vet_org_id` 정책 제거 + vet_org_id→org_id 백필. ✅ 20260608000007
 - [ ] **4. 신청 연결 org_type 분기** — `apply-case`가 위 표대로 슬롯 분기.
 - [x] **5. 담당 변경 = `org_id` 이동** — `partners.ts`·담당편집·내정보 허브를 org_id 기반으로 전환(과도기 해소). ✅
-- [ ] **5b. snapshot (둘째 병원 시)** — 담당 병원 변경 시 본병원 접종→타병원 전환 + 약품 복사. 지금은 변경 대상(다른 병원)이 없어 발동·테스트 불가 → 둘째 병원 준비 시점에 구현·검증.
+- [x] **5b. snapshot** — 담당 병원 변경(org_id 이동) 직전, 본병원 광견병 접종 약품을 변경 전 카탈로그(`lookupRabies`)로 케이스에 복사 + 타병원 전환(`other_hospital=true`). 새 병원 카탈로그로의 변질 방지. co_progress 부분연동이라 형제 전파 멱등. ✅ test 조직 추가로 구현 (광견병 한정 — 다른 백신 snapshot 후속).
 - [x] **6. 새 동물 자동 연결(고객 단위)** — 직영+로그인 신청 시 기존 담당 승계. ✅ (다른 병원 신청=이동 충돌 규칙은 둘째 병원 시)
 - [x] **7. portal UI** — 변경 확인 문구 + 미연결 placeholder 카피. ✅
 - [x] **8. 코드 정리** — admin+portal `vet_org_id` 참조·타입·주석 전부 제거(타입체크 통과로 무참조 확인). admin transport_org_id 정합 포함. ✅
