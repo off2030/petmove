@@ -93,6 +93,7 @@ async function generateStandalone(
     destination: null, departure_date: null,
     assigned_to: null,
     avatar_emoji: null, avatar_color: null, avatar_photo_url: null,
+    transport_org_id: null,
     data: {},
     created_at: '', updated_at: '',
   }

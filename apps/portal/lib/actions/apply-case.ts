@@ -84,6 +84,35 @@ export async function applyCase(input: ApplyInput): Promise<
     }
   }
 
+  // 고객 단위 담당 (docs/org-model-refactor.md 6단계) — 직영(담당 미지정) + 로그인이고
+  // 기존 담당이 있으면 그 담당을 승계한다. 한 보호자의 동물은 같은 담당을 공유.
+  // 공개 신청폼(input.org_id 지정)은 명시 병원이라 위 분기를 그대로 따른다.
+  // (다른 병원 신청 시 기존 담당이 그 병원으로 이동하는 충돌 규칙은 둘째 병원 생길 때.)
+  if (orgId === DIRECT_ORG_ID && transportOrgId === null && user) {
+    const { data: links } = await supabase
+      .from('case_customer_links')
+      .select('case_id')
+      .eq('user_id', user.id)
+      .limit(50)
+    const ids = (links ?? []).map((l) => (l as { case_id: string }).case_id)
+    if (ids.length > 0) {
+      const { data: existing } = await supabase
+        .from('cases')
+        .select('org_id, transport_org_id')
+        .in('id', ids)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+      const e = existing?.[0] as
+        | { org_id: string; transport_org_id: string | null }
+        | undefined
+      if (e) {
+        orgId = e.org_id
+        transportOrgId = e.transport_org_id
+      }
+    }
+  }
+
   const data: Record<string, unknown> = {
     customer_last_name_en: input.customer_last_name_en,
     customer_first_name_en: input.customer_first_name_en,

@@ -40,7 +40,7 @@ const PARTNER_TYPES_BY_ROLE: Record<PartnerRole, readonly string[]> = {
 }
 
 /**
- * 보호자의 현재 연결 조직 — 본인 첫 케이스의 vet_org_id / transport_org_id 를 보고
+ * 보호자의 현재 연결 조직 — 본인 첫 케이스의 org_id(담당 병원) / transport_org_id 를 보고
  * 조직 정보를 한 번에 반환. 통일 정책 전제(모든 본인 케이스 동일 값). 케이스 없거나
  * 미연결이면 해당 키 null. [내 정보] 허브에서 카드별 이름 표시용.
  */
@@ -116,7 +116,7 @@ export async function listAvailableOrgs(role: PartnerRole): Promise<Result<Partn
   }
 }
 
-/** 본인 모든 케이스에 vet_org_id 일괄 갱신. */
+/** 본인 모든 케이스에 담당 병원(org_id) 일괄 갱신. */
 export async function setVetOrg(orgId: string): Promise<Result<{ updated: number }>> {
   return setPartnerOrg('vet', orgId)
 }
@@ -126,7 +126,7 @@ export async function setTransportOrg(orgId: string): Promise<Result<{ updated: 
   return setPartnerOrg('transport', orgId)
 }
 
-/** vet_org_id 해제 — 본인 모든 케이스의 컬럼을 NULL. */
+/** 담당 병원 해제 — 본인 모든 케이스의 org_id 를 직영(platform)으로. */
 export async function unsetVetOrg(): Promise<Result<{ updated: number }>> {
   return setPartnerOrg('vet', null)
 }
@@ -147,7 +147,7 @@ const COLUMN_BY_ROLE: Record<PartnerRole, 'org_id' | 'transport_org_id'> = {
 }
 
 /**
- * role 에 따라 cases.vet_org_id 또는 transport_org_id 를 일괄 갱신.
+ * role 에 따라 cases.org_id(담당 병원) 또는 transport_org_id 를 일괄 갱신.
  *
  * - orgId 가 null 이면 해제, 값이면 유효성 검증 후 갱신.
  * - 검증: 조직 존재 + org_type 가 role 에 허용된 타입인지 확인 (RLS 도 차단하지만

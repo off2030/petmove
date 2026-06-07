@@ -19,7 +19,7 @@ import {
  * 담당 동물병원(/me/vet) / 운송업체(/me/agency) 공통 화면.
  *
  * role 별로 라벨·카탈로그 필터만 다르고 UI/로직 동일. 보호자 단위 통일 — 한 곳에서
- * 정하면 본인 모든 케이스에 일괄 적용. 첫 케이스의 vet_org_id/transport_org_id 로
+ * 정하면 본인 모든 케이스에 일괄 적용. 첫 케이스의 org_id(담당 병원)/transport_org_id 로
  * 현재 연결 상태 표시(모든 케이스가 동일하게 유지된다는 통일 정책 전제).
  *
  * 흐름:
@@ -93,8 +93,20 @@ export function PartnerEditView({ role }: { role: PartnerRole }) {
     return orgs.find((o) => o.id === currentOrgId) ?? null
   }, [currentOrgId, orgs])
 
-  function handleSelect(orgId: string) {
+  async function handleSelect(orgId: string) {
     setSheetOpen(false)
+    // 기존 담당이 있고 다른 조직으로 바꾸는 경우 — 이전 조직이 더 못 본다는 안내(확인).
+    if (currentOrgId && currentOrgId !== orgId) {
+      const ok = await confirm({
+        message:
+          role === 'vet'
+            ? '현재 담당 동물병원이 더 이상 내 정보를 볼 수 없어요. 진행할까요?'
+            : '현재 운송업체가 더 이상 내 정보를 볼 수 없어요. 진행할까요?',
+        okLabel: '변경',
+        variant: 'destructive',
+      })
+      if (!ok) return
+    }
     startTransition(async () => {
       const action = role === 'vet' ? setVetOrg : setTransportOrg
       const result = await action(orgId)

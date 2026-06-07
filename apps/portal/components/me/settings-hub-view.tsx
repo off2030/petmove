@@ -414,7 +414,7 @@ export function SettingsHubView() {
         <Section label="담당 동물병원">
           <PartnerCard
             org={partners?.vet ?? null}
-            placeholder="탭하여 담당 동물병원을 선택하세요."
+            placeholder="담당 동물병원을 연결해 보세요"
             href="/me/vet"
           />
         </Section>
@@ -422,7 +422,7 @@ export function SettingsHubView() {
         <Section label="동물 운송 업체">
           <PartnerCard
             org={partners?.transport ?? null}
-            placeholder="탭하여 운송업체를 선택하세요."
+            placeholder="운송업체를 연결해 보세요"
             href="/me/agency"
           />
         </Section>

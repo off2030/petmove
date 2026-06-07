@@ -6,7 +6,7 @@ import type { CaseRow } from '@petmove/domain'
 import { getActiveOrgId } from '@/lib/supabase/active-org'
 
 const CASE_COLUMNS =
-  'id, org_id, microchip, microchip_extra, customer_name, customer_name_en, pet_name, pet_name_en, destination, departure_date, assigned_to, avatar_emoji, avatar_color, avatar_photo_url, data, created_at, updated_at, deleted_at'
+  'id, org_id, microchip, microchip_extra, customer_name, customer_name_en, pet_name, pet_name_en, destination, departure_date, assigned_to, avatar_emoji, avatar_color, avatar_photo_url, transport_org_id, data, created_at, updated_at, deleted_at'
 
 /**
  * 활성 조직의 모든(미삭제) 케이스를 created_at 내림차순으로 반환.
