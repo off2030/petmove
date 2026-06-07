@@ -380,6 +380,7 @@ export function SuperAdminApp({ initialOrgs, initialSuperAdmins, userEmail, curr
                         <span className="inline-flex items-baseline gap-xs">
                           <span className="font-serif italic">사업자번호</span>
                           <BusinessNumberField
+                            key={selected.id}
                             orgId={selected.id}
                             value={selected.business_number}
                             onSaved={(next) =>
