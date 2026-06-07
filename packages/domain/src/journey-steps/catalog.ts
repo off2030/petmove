@@ -1,4 +1,4 @@
-import { addYears, readRabiesEntries, readTiterEntries, resolveValidUntil, todayKst } from '../procedure-checks/utils'
+import { addYears, readRabiesEntries, readTiterEntries, todayKst } from '../procedure-checks/utils'
 import { areAllRequiredDocsVerified, resolveRequiredDocs } from '../required-docs'
 import { buildCaseJourneyContext } from './applicability'
 import {
@@ -173,46 +173,17 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     doneSummary: '광견병 백신을 추가 접종했습니다.',
     // 미래 만료 대비 reminder — 본 흐름의 다음 단계(사전 신고 등)를 다음 할 일에서 가리지 않는다.
     advisoryOnly: true,
-    // 상황별 문구 분기:
-    //  - 3차+ 입력됐는데 직전 백신 유효기간 만료 후 접종 → chain 깨짐. 1차부터 재시작.
-    //  - 입국일 미입력 → 만료일 + '만료 전 재접종' (만료 임박 체크와 동일 문구).
-    //  - 입국일 입력 & 유효기간이 입국일 전 만료 → '입국일 전 만료' 경고.
-    //  - 그 외(입국일 후 만료)는 상황별 문구 없음 — 고정 description 이 노출된다.
-    // departure_date 폴백 안 씀(보호자 미입력 잔여값으로 단정 X). valid_until 미입력 시 date + 1년 폴백.
+    // 추가 접종이 필요해 카드가 떴을 때(유효기간 만료·임박)의 안내 — 입력 시점이나 만료일
+    // 계산 없이 '추가 접종 기록을 입력해주세요' 단일 안내. 입력 시점은 무관하다(유효기간 내에
+    // 받은 접종을 늦게 입력하는 경우 포함). 날짜 정합성(만료 후 접종 등)은 입력 시 chain 검증
+    // (findRabiesChainBreak, client+server)이 입력 불가로 거부하고, 이미 잘못 입력된 3차+ 기록은
+    // procedure-check(jp.rabies-extra-within-previous-validity)가 '안내'로 표면화한다 —
+    // situational 에서 만료일·재접종 시점을 단정하지 않는다.
     situational: (caseRow) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return undefined
-      const latest = rabies[rabies.length - 1]
-
-      // chain-broken: 추가 도즈가 직전 유효기간 이후라 부스터 미인정 — 1·2차+검사+180일 재시작.
-      // (동일 룰: jp.rabies-extra-within-previous-validity blocker)
-      if (rabies.length >= 3) {
-        const previous = rabies[rabies.length - 2]
-        const previousValidUntil = resolveValidUntil(previous.date, previous.valid_until)
-        if (previousValidUntil && latest.date > previousValidUntil) {
-          const prevNo = rabies.length - 1
-          const latestNo = rabies.length
-          const msg = `${prevNo}차 백신 유효기간이 만료된 뒤 ${latestNo}차를 접종했습니다. 접종일을 확인해주세요.`
-          return { desc: msg, cardDesc: msg }
-        }
-      }
-
-      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
-      if (!validUntil) return undefined
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const entry = typeof data.entry_date === 'string' ? data.entry_date : ''
-      if (!entry) {
-        // 입국일 미입력 — 만료일 + 재접종 안내.
-        const msg = `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전 재접종을 하세요.`
-        return { desc: msg, cardDesc: msg }
-      }
-      // 입국일 전 만료 — 입국 전 재접종 필수.
-      if (validUntil < entry) {
-        const msg = `광견병 백신 유효기간이 일본 입국일 전에 만료됩니다. ${formatKoreanDate(validUntil)} 전에 재접종 하세요.`
-        return { desc: msg, cardDesc: msg }
-      }
-      // 입국일 후 만료 — 상황별 문구 없음 (고정 description 노출).
-      return undefined
+      const msg = '추가 접종 기록을 입력해주세요.'
+      return { desc: msg, cardDesc: msg }
     },
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
     // 3차+ 입력됐거나 최근 접종 유효기간이 입국일+30일 전 만료(추가 접종 필요) 일 때 노출.
