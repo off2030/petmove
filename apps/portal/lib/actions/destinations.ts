@@ -18,7 +18,13 @@
 
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from '@petmove/auth/server'
-import { summarizeJourney, resolveDone, type PastJourneySummary, type CaseRow } from '@petmove/domain'
+import {
+  summarizeJourney,
+  resolveDone,
+  DESTINATION_SCOPED_FIELD_KEYS,
+  type PastJourneySummary,
+  type CaseRow,
+} from '@petmove/domain'
 import { activeDestinationView } from '@/lib/cases/active-destination'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
@@ -135,20 +141,17 @@ export async function addCaseDestination(
     // (= 새 목적지 올렸는데 완료 카드만 뜨고 리셋 안 되는 버그). 검역이 by_dest 로 분리되기 전 방어.
     // 백신·항체(rabies_* 등 동물 단위 기록)는 건드리지 않는다.
     if (demoted.length > 0) {
-      for (const k of [
-        'kr_import_quarantine_date',
-        'kr_import_quarantine_confirmed',
-        'jp_import_quarantine_date',
-        'jp_import_quarantine_confirmed',
-        'jp_export_quarantine_visit_date',
-        'jp_export_quarantine_visit_confirmed',
-      ]) {
+      // 완료로 내려간 여정의 공용(top-level) 목적지별 값을 전부 비운다 — 새 목적지가 물려받아
+      // '완료/누수'(검역·항공권·귀국일 → prompt 오발동·항공권 잔존)되지 않게. design: 새 목적지는
+      // 항공권부터 리셋. 단 임상검사 내원일(vet_visit_date)·백신·항체(scoped 아님)는 동물 단위라 유지.
+      for (const k of DESTINATION_SCOPED_FIELD_KEYS) {
+        if (k === 'vet_visit_date') continue
         delete nextData[k]
       }
       const ac = { ...((nextData.arrival_confirmed as Record<string, unknown> | undefined) ?? {}) }
       for (const t of demoted) delete ac[t]
       nextData.arrival_confirmed = ac
-      // 편도 has-arrived(출국일 경과) 누수도 차단 — 공용 출국일 컬럼을 비운다(새 목적지 출국일은 by_dest).
+      // 출국일 컬럼도 비움(새 목적지 출국일은 by_dest).
       updatePayload.departure_date = null
     }
 
