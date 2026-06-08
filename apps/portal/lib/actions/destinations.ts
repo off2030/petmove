@@ -18,6 +18,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from '@petmove/auth/server'
+import { summarizeJourney, type PastJourneySummary } from '@petmove/domain'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 type TripType = 'round' | 'one_way'
@@ -285,6 +286,120 @@ export async function setCaseCoProgress(
     revalidatePath('/cases')
     revalidatePath(`/cases/${caseId}/journey`)
     return { ok: true, value: true }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * 한 목적지(여정)를 완료/취소 처리 → 지난 여정으로 내림. (design journey-lifecycle §4·§5)
+ *
+ * - 그 목적지의 by_dest(출국·귀국일·왕복여부)를 요약(summarizeJourney)해 data.past_journeys 에 push.
+ * - by_dest[dest]·trip_type[dest] 삭제 + destination 토큰에서 제거 → 진행 중에서 빠지고 지난 여정으로.
+ * - outcome 'done'=잘 다녀옴(도장) / 'cancelled'=취소.
+ * - completedDate 미지정 시 오늘(서버 기준).
+ *
+ * ⚠️ 아직 UI 에서 호출 안 됨(완료 확인 prompt·스태프 액션 단계에서 연결). hasJourney·첫 화면이
+ * past_journeys 를 반영하도록 하는 작업은 다음 단계(지난 여정 카드)에서 함께.
+ */
+export async function markJourneyComplete(
+  caseId: string,
+  destination: string,
+  outcome: 'done' | 'cancelled' = 'done',
+  completedDate?: string,
+): Promise<Result<{ destinations: string[] }>> {
+  try {
+    const dest = destination.trim()
+    if (!dest) return { ok: false, error: '목적지가 비어 있습니다.' }
+
+    const user = await getCurrentUser()
+    if (!user) return { ok: false, error: '인증 필요' }
+
+    const { createAdminClient } = await import('@petmove/auth')
+    const admin = createAdminClient()
+
+    const { data: link } = await admin
+      .from('case_customer_links')
+      .select('case_id')
+      .eq('case_id', caseId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (!link) return { ok: false, error: '이 여정에 접근 권한이 없습니다.' }
+
+    const { data: row, error: rowErr } = await admin
+      .from('cases')
+      .select('destination, departure_date, data')
+      .eq('id', caseId)
+      .single()
+    if (rowErr || !row) return { ok: false, error: rowErr?.message ?? '여정을 찾을 수 없습니다.' }
+
+    const r = row as {
+      destination: string | null
+      departure_date: string | null
+      data: Record<string, unknown> | null
+    }
+    const tokens = parseDestTokens(r.destination)
+    if (!tokens.includes(dest)) {
+      // 이미 진행 중에 없음 — 멱등 성공.
+      return { ok: true, value: { destinations: tokens } }
+    }
+
+    const data = (r.data ?? {}) as Record<string, unknown>
+    const byDestAll = {
+      ...((data.by_dest as Record<string, Record<string, unknown>> | undefined) ?? {}),
+    }
+    const byDestEntry = (byDestAll[dest] ?? {}) as Record<string, unknown>
+    const tripType = (((data.trip_type as Record<string, TripType> | undefined) ?? {})[dest] ??
+      'round') as TripType
+
+    // by_dest[dest] 우선(null sentinel 포함), 없으면 컬럼/top-level fallback.
+    const readScoped = (key: string, columnFallback?: unknown): unknown => {
+      if (key in byDestEntry) return byDestEntry[key]
+      return columnFallback !== undefined ? columnFallback : data[key] ?? null
+    }
+    const departureDate = (readScoped('departure_date', r.departure_date ?? null) as
+      | string
+      | null) ?? null
+    const returnDate = (readScoped('return_date') as string | null) ?? null
+
+    const today = new Date().toISOString().slice(0, 10)
+    const summary: PastJourneySummary = summarizeJourney(
+      { destination: dest, tripType, departureDate, returnDate },
+      outcome,
+      completedDate ?? today,
+    )
+
+    const pastJourneys: PastJourneySummary[] = [
+      ...((data.past_journeys as PastJourneySummary[] | undefined) ?? []),
+      summary,
+    ]
+
+    delete byDestAll[dest]
+    const tripTypeAll = {
+      ...((data.trip_type as Record<string, TripType> | undefined) ?? {}),
+    }
+    delete tripTypeAll[dest]
+
+    const nextTokens = tokens.filter((t) => t !== dest)
+    const nextDest = joinDestTokens(nextTokens)
+    const nextData = {
+      ...data,
+      by_dest: byDestAll,
+      trip_type: tripTypeAll,
+      past_journeys: pastJourneys,
+    }
+
+    const { error: updErr } = await admin
+      .from('cases')
+      .update({ destination: nextDest, data: nextData })
+      .eq('id', caseId)
+    if (updErr) return { ok: false, error: updErr.message }
+
+    revalidatePath('/me')
+    revalidatePath(`/me/animal/${caseId}`)
+    revalidatePath('/cases')
+    revalidatePath(`/cases/${caseId}/journey`)
+    return { ok: true, value: { destinations: nextTokens } }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }
