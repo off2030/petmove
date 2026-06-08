@@ -42,6 +42,7 @@ export const INFECTIOUS_LABS: { value: string; label: string }[] = [
   { value: 'ksvdl', label: 'KSVDL' },
   { value: 'vbddl', label: 'VBDDL' },
   { value: 'apqa_hq', label: 'APQA HQ' },
+  { value: 'arc_ovi', label: 'ARC-OVI' },
 ]
 
 /** 유럽연합(EU) 27개 회원국 — "유럽연합" 그룹 기본 구성. */
@@ -72,6 +73,7 @@ export const DEFAULT_INSPECTION_CONFIG: InspectionConfig = {
   infectiousRules: [
     { countries: ['호주'], labs: ['ksvdl'] },
     { countries: ['뉴질랜드'], labs: ['apqa_hq', 'vbddl'] },
+    { countries: ['남아프리카공화국'], labs: ['arc_ovi'] },
   ],
 }
 
