@@ -1088,10 +1088,52 @@ export async function updateVetVisitDate(
  * 한국 수출 동물검역 step 의 검역일을 patch — case.data.kr_export_quarantine_date
  * (YYYY-MM-DD). 빈/null 이면 키 제거. data 의 다른 키는 fetch-merge 로 보존.
  */
+/**
+ * 검역 날짜+확인 플래그를 destination scope 에 맞게 저장.
+ * - 다중 목적지 + destination 지정 → `data.by_dest[destination]` 에 저장 + top-level 잔존 제거
+ *   (안 그러면 다른 목적지가 flatten fallback 으로 그 검역을 물려받는 누수 발생).
+ * - 단일 목적지(또는 destination 미지정) → 기존 top-level.
+ * design: 검역은 목적지별(모든 절차 목적지별).
+ */
+function applyQuarantine(
+  prev: Record<string, unknown>,
+  destination: string | null | undefined,
+  destinationRaw: string | null,
+  dateKey: string,
+  confirmKey: string,
+  v: string,
+  confirmed: boolean,
+): Record<string, unknown> {
+  const isMulti = parseDestinations(destinationRaw).length > 1
+  const useByDest = !!destination && isMulti
+  const nextData: Record<string, unknown> = { ...prev }
+  if (useByDest) {
+    const byDest = {
+      ...((prev.by_dest as Record<string, Record<string, unknown>> | undefined) ?? {}),
+    }
+    const destObj = { ...(byDest[destination as string] ?? {}) }
+    if (v) destObj[dateKey] = v
+    else delete destObj[dateKey]
+    if (v && confirmed) destObj[confirmKey] = true
+    else delete destObj[confirmKey]
+    byDest[destination as string] = destObj
+    nextData.by_dest = byDest
+    delete nextData[dateKey]
+    delete nextData[confirmKey]
+  } else {
+    if (v) nextData[dateKey] = v
+    else delete nextData[dateKey]
+    if (v && confirmed) nextData[confirmKey] = true
+    else delete nextData[confirmKey]
+  }
+  return nextData
+}
+
 export async function updateKrExportQuarantineDate(
   caseId: string,
   date: string | null,
   confirmed: boolean,
+  destination?: string | null,
 ): Promise<Result<CaseRow>> {
   try {
     if (date != null && date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -1110,14 +1152,17 @@ export async function updateKrExportQuarantineDate(
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
     // 검역일 도메인 차단은 client(입력 불가)·procedure-check(주의)가 담당 — server 는 형식만.
-    if (v) nextData.kr_export_quarantine_date = v
-    else delete nextData.kr_export_quarantine_date
-    // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
-    if (v && confirmed) nextData.kr_export_quarantine_confirmed = true
-    else delete nextData.kr_export_quarantine_confirmed
+    const nextData = applyQuarantine(
+      prev,
+      destination,
+      (existing as { destination: string | null }).destination,
+      'kr_export_quarantine_date',
+      'kr_export_quarantine_confirmed',
+      v,
+      confirmed,
+    )
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1140,6 +1185,7 @@ export async function updateJpImportQuarantineDate(
   caseId: string,
   date: string | null,
   confirmed: boolean,
+  destination?: string | null,
 ): Promise<Result<CaseRow>> {
   try {
     if (date != null && date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -1152,20 +1198,22 @@ export async function updateJpImportQuarantineDate(
     const admin = createAdminClient()
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
-      .select('data')
+      .select('data, destination')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
-    // 검역일 도메인 차단은 client(입력 불가)·procedure-check(주의)가 담당 — server 는 형식만.
-    if (v) nextData.jp_import_quarantine_date = v
-    else delete nextData.jp_import_quarantine_date
-    // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
-    if (v && confirmed) nextData.jp_import_quarantine_confirmed = true
-    else delete nextData.jp_import_quarantine_confirmed
+    const nextData = applyQuarantine(
+      prev,
+      destination,
+      (existing as { destination: string | null }).destination,
+      'jp_import_quarantine_date',
+      'jp_import_quarantine_confirmed',
+      v,
+      confirmed,
+    )
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1188,6 +1236,7 @@ export async function updateJpExportQuarantineVisitDate(
   caseId: string,
   date: string | null,
   confirmed: boolean,
+  destination?: string | null,
 ): Promise<Result<CaseRow>> {
   try {
     if (date != null && date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -1200,20 +1249,22 @@ export async function updateJpExportQuarantineVisitDate(
     const admin = createAdminClient()
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
-      .select('data')
+      .select('data, destination')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
-    // 검역일 도메인 차단은 client(입력 불가)·procedure-check(주의)가 담당 — server 는 형식만.
-    if (v) nextData.jp_export_quarantine_visit_date = v
-    else delete nextData.jp_export_quarantine_visit_date
-    // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
-    if (v && confirmed) nextData.jp_export_quarantine_visit_confirmed = true
-    else delete nextData.jp_export_quarantine_visit_confirmed
+    const nextData = applyQuarantine(
+      prev,
+      destination,
+      (existing as { destination: string | null }).destination,
+      'jp_export_quarantine_visit_date',
+      'jp_export_quarantine_visit_confirmed',
+      v,
+      confirmed,
+    )
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1236,6 +1287,7 @@ export async function updateKrImportQuarantineDate(
   caseId: string,
   date: string | null,
   confirmed: boolean,
+  destination?: string | null,
 ): Promise<Result<CaseRow>> {
   try {
     if (date != null && date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -1248,20 +1300,22 @@ export async function updateKrImportQuarantineDate(
     const admin = createAdminClient()
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
-      .select('data')
+      .select('data, destination')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    const nextData: Record<string, unknown> = { ...prev }
     const v = typeof date === 'string' ? date.trim() : ''
-    // 검역일 도메인 차단은 client(입력 불가)·procedure-check(주의)가 담당 — server 는 형식만.
-    if (v) nextData.kr_import_quarantine_date = v
-    else delete nextData.kr_import_quarantine_date
-    // 보호자 '저장' 확인 플래그 — 검역일이 오늘 이하라 완료 처리할 때만 set, 미래·빈값이면 clear.
-    if (v && confirmed) nextData.kr_import_quarantine_confirmed = true
-    else delete nextData.kr_import_quarantine_confirmed
+    const nextData = applyQuarantine(
+      prev,
+      destination,
+      (existing as { destination: string | null }).destination,
+      'kr_import_quarantine_date',
+      'kr_import_quarantine_confirmed',
+      v,
+      confirmed,
+    )
 
     const { data: updated, error } = await admin
       .from('cases')

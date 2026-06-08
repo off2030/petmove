@@ -800,10 +800,10 @@ export function StepDetailView({
       setStatus('saving')
       setError(null)
       startTransition(async () => {
-        const res = await updateKrExportQuarantineDate(caseId, krExportQuarantineDate || null, formArrived)
+        const res = await updateKrExportQuarantineDate(caseId, krExportQuarantineDate || null, formArrived, activeDest)
         if (res.ok) {
           updateCase(res.value)
-          setKrExportQuarantineDate(readKrExportQuarantineDate(res.value.data))
+          setKrExportQuarantineDate(readKrExportQuarantineDate(activeDestinationView(res.value, activeDest).data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -815,10 +815,10 @@ export function StepDetailView({
       setStatus('saving')
       setError(null)
       startTransition(async () => {
-        const res = await updateJpImportQuarantineDate(caseId, jpImportQuarantineDate || null, formArrived)
+        const res = await updateJpImportQuarantineDate(caseId, jpImportQuarantineDate || null, formArrived, activeDest)
         if (res.ok) {
           updateCase(res.value)
-          setJpImportQuarantineDate(readJpImportQuarantineDate(res.value.data))
+          setJpImportQuarantineDate(readJpImportQuarantineDate(activeDestinationView(res.value, activeDest).data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -834,10 +834,13 @@ export function StepDetailView({
           caseId,
           jpExportQuarantineVisitDate || null,
           formArrived,
+          activeDest,
         )
         if (res.ok) {
           updateCase(res.value)
-          setJpExportQuarantineVisitDate(readJpExportQuarantineVisitDate(res.value.data))
+          setJpExportQuarantineVisitDate(
+            readJpExportQuarantineVisitDate(activeDestinationView(res.value, activeDest).data),
+          )
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -849,10 +852,10 @@ export function StepDetailView({
       setStatus('saving')
       setError(null)
       startTransition(async () => {
-        const res = await updateKrImportQuarantineDate(caseId, krImportQuarantineDate || null, formArrived)
+        const res = await updateKrImportQuarantineDate(caseId, krImportQuarantineDate || null, formArrived, activeDest)
         if (res.ok) {
           updateCase(res.value)
-          setKrImportQuarantineDate(readKrImportQuarantineDate(res.value.data))
+          setKrImportQuarantineDate(readKrImportQuarantineDate(activeDestinationView(res.value, activeDest).data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {

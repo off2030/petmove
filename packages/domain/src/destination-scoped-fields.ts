@@ -49,6 +49,19 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'deworming_time',
   // 도착국 거주지 주소 — destination 별로 다른 주소
   'address_overseas',
+  // 검역 — 출입국마다(목적지마다) 별도. 한 동물이 여러 나라를 동시에 진행하므로
+  // 검역 완료도 by_dest 로 분리돼야 한다(공용이면 한 나라 완료가 다른 나라로 누수).
+  'kr_export_quarantine_date',
+  'kr_export_quarantine_confirmed',
+  'jp_import_quarantine_date',
+  'jp_import_quarantine_confirmed',
+  'jp_export_quarantine_visit_date',
+  'jp_export_quarantine_visit_confirmed',
+  'jp_export_quarantine_application_date',
+  'jp_export_quarantine_date',
+  'jp_export_quarantine_time',
+  'kr_import_quarantine_date',
+  'kr_import_quarantine_confirmed',
 ])
 
 export function isDestinationScopedKey(key: string): boolean {
