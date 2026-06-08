@@ -698,8 +698,8 @@ export function SegmentField({
                   padding: '6px 14px',
                   borderRadius: 999,
                   border: 0,
-                  background: selected ? C.ink : 'transparent',
-                  color: selected ? C.surface : C.ink2,
+                  background: selected ? C.accent : 'transparent',
+                  color: selected ? '#fff' : C.ink2,
                   fontFamily: 'inherit',
                   fontSize: 13,
                   fontWeight: 500,
@@ -721,7 +721,7 @@ export function SegmentField({
 // ── SwitchField (On/Off 토글 스위치 — 함께 준비) ──────────────────────────
 
 /**
- * iOS 식 On/Off 토글 스위치. 불리언 한 값 — 트랙(켜짐=ink, 모색·분절 토글 선택색과 통일) + 미끄러지는 흰 thumb.
+ * iOS 식 On/Off 토글 스위치. 불리언 한 값 — 트랙(켜짐=accent 골드, 앱 활성색 통일) + 미끄러지는 흰 thumb.
  * SegmentField 와 같은 InlineRow 레이아웃·sub 보조문구를 지원.
  */
 export function SwitchField({
@@ -754,7 +754,7 @@ export function SwitchField({
             padding: 0,
             border: 0,
             borderRadius: 999,
-            background: checked ? C.ink : 'color-mix(in srgb, var(--pm-ink) 18%, transparent)',
+            background: checked ? C.accent : 'color-mix(in srgb, var(--pm-ink) 18%, transparent)',
             cursor: 'pointer',
             transition: 'background .18s',
           }}
@@ -1036,9 +1036,9 @@ export function ColorField({
                 justifyContent: 'center',
                 gap: 6,
                 borderRadius: 999,
-                border: `1px solid ${on ? C.ink : C.line}`,
-                background: on ? C.ink : 'transparent',
-                color: on ? C.surface : C.ink2,
+                border: `1px solid ${on ? C.accent : C.line}`,
+                background: on ? C.accentSoft : 'transparent',
+                color: on ? C.ink : C.ink2,
                 fontFamily: 'inherit',
                 fontSize: 13,
                 fontWeight: 500,
@@ -1055,7 +1055,7 @@ export function ColorField({
                   borderRadius: '50%',
                   flexShrink: 0,
                   background: COLOR_HEX[c.ko] ?? '#999',
-                  boxShadow: on ? 'inset 0 0 0 1px rgba(255,255,255,.4)' : 'inset 0 0 0 1px rgba(0,0,0,.15)',
+                  boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.15)',
                 }}
               />
               {c.ko}
