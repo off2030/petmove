@@ -721,7 +721,7 @@ export function SegmentField({
 // ── SwitchField (On/Off 토글 스위치 — 함께 준비) ──────────────────────────
 
 /**
- * iOS 식 On/Off 토글 스위치. 불리언 한 값 — 트랙(켜짐=accent) + 미끄러지는 흰 thumb.
+ * iOS 식 On/Off 토글 스위치. 불리언 한 값 — 트랙(켜짐=ink, 모색·분절 토글 선택색과 통일) + 미끄러지는 흰 thumb.
  * SegmentField 와 같은 InlineRow 레이아웃·sub 보조문구를 지원.
  */
 export function SwitchField({
@@ -754,7 +754,7 @@ export function SwitchField({
             padding: 0,
             border: 0,
             borderRadius: 999,
-            background: checked ? C.accent : 'color-mix(in srgb, var(--pm-ink) 18%, transparent)',
+            background: checked ? C.ink : 'color-mix(in srgb, var(--pm-ink) 18%, transparent)',
             cursor: 'pointer',
             transition: 'background .18s',
           }}
