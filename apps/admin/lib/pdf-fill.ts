@@ -136,6 +136,21 @@ type FormMapping = {
    * Coordinates are PDF user-space (origin = bottom-left), size defaults to 10pt.
    */
   textOverlays?: { page?: number; x: number; y: number; text: string; size?: number }[]
+  /**
+   * Conditional ellipse (circle) overlays driven by a data value. For forms
+   * where an option must be circled rather than typed — e.g. SGP's
+   * "Sex (please circle): Male / Neutered Male / Female / Neutered female",
+   * where the labels are baked into the template image so we draw a ring
+   * around the matching option. Coordinates are PDF user-space (origin =
+   * bottom-left); cx/cy = ellipse center, rx/ry = radii (points).
+   * `source` is resolved via readSource; its (lowercased) value selects a case.
+   */
+  markOverlays?: {
+    source: string
+    page?: number
+    borderWidth?: number
+    cases: Record<string, { cx: number; cy: number; rx: number; ry: number }>
+  }[]
 }
 
 type MappingsJson = Record<string, FormMapping>
@@ -3175,6 +3190,30 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
       const page = pages[t.page ?? 0]
       if (!page) continue
       page.drawText(sanitizeForFont(t.text), { x: t.x, y: t.y, size: t.size ?? 10, font: customFont })
+    }
+  }
+
+  // Conditional ellipse overlays — circle the option matching a data value.
+  // e.g. SGP "Sex (please circle):" — draw a ring around Male / Neutered Male /
+  // Female / Neutered female depending on the case's sex. Drawn on page content
+  // so it survives flatten.
+  if (form.markOverlays?.length) {
+    const pages = pdf.getPages()
+    for (const mk of form.markOverlays) {
+      const raw = readSource(mk.source, caseRow, data)
+      const key = String(raw ?? '').toLowerCase()
+      const spec = mk.cases[key]
+      if (!spec) continue
+      const page = pages[mk.page ?? 0]
+      if (!page) continue
+      page.drawEllipse({
+        x: spec.cx,
+        y: spec.cy,
+        xScale: spec.rx,
+        yScale: spec.ry,
+        borderColor: rgb(0, 0, 0),
+        borderWidth: mk.borderWidth ?? 1.2,
+      })
     }
   }
 

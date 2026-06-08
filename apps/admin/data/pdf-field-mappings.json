@@ -3857,10 +3857,24 @@
   },
   "SGP": {
     "template": "SGP.pdf",
-    "description": "Singapore 수출용 반려동물 건강증명서 (Veterinary Certificate for Import of Dogs and Cats — Schedule III). 개/고양이 공통 양식. 성별은 폼에 plain text라 수의사가 직접 동그라미 침.",
+    "description": "Singapore 수출용 반려동물 건강증명서 (Veterinary Certificate for Import of Dogs and Cats — Schedule III). 개/고양이 공통 양식. 성별은 폼에 plain text(Male/Neutered Male/Female/Neutered female)라 폼 필드가 없어, markOverlays 로 케이스 sex 에 맞는 옵션에 자동 동그라미(타원)를 그린다.",
     "filename": "SGP_{pet_name}.pdf",
     "dateFormat": "dmy",
     "flatten": true,
+    "markOverlays": [
+      {
+        "source": "sex",
+        "page": 0,
+        "borderWidth": 1.2,
+        "_note": "p1 'Sex (please circle):' 줄. 라벨이 템플릿 이미지에 인쇄돼 폼 필드가 없음. 좌표는 SGP.pdf 픽셀 분석(2482x3508, 페이지 x∈[15,580] y∈[21.7,820.3])으로 산출. 줄 세로 중심 pageY≈573.",
+        "cases": {
+          "male": { "cx": 191.3, "cy": 573, "rx": 16, "ry": 9 },
+          "neutered_male": { "cx": 260.6, "cy": 573, "rx": 35, "ry": 9 },
+          "female": { "cx": 339.3, "cy": 573, "rx": 21, "ry": 9 },
+          "spayed_female": { "cx": 431.1, "cy": 573, "rx": 39, "ry": 9 }
+        }
+      }
+    ],
     "fields": {
       "text_1vqxe": { "source": null, "note": "p1 NParks/AVS Import Licence No. (수동입력)" },
       "text_2dlhd": { "source": null, "note": "p1 Veterinary Certificate No. (수동입력)" },
