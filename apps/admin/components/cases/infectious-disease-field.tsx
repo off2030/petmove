@@ -8,7 +8,7 @@ import { updateCaseField } from '@/lib/actions/cases'
 import { useCases } from './cases-context'
 import type { CaseRow } from '@petmove/domain'
 import { labColor } from '@/lib/lab-color'
-import { resolveInspectionLabs } from '@petmove/domain'
+import { resolveInspectionLabs, INFECTIOUS_LABS } from '@petmove/domain'
 import { DateTextField } from '@petmove/ui'
 import { DropdownSelect } from '@petmove/ui'
 import { useSectionEditMode } from './section-edit-mode-context'
@@ -19,12 +19,6 @@ interface InfectiousRecord {
   lab: string | null
 }
 
-const LABS = [
-  { value: 'ksvdl', label: 'KSVDL' },
-  { value: 'vbddl', label: 'VBDDL' },
-  { value: 'apqa_hq', label: 'APQA HQ' },
-]
-
 const DATA_KEY = 'infectious_disease_records'
 
 export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseId: string; caseRow: CaseRow; destination?: string | null }) {
@@ -32,6 +26,9 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
   const editMode = useSectionEditMode()
   const confirm = useConfirm()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
+
+  // 검사기관 옵션 = 공용(INFECTIOUS_LABS) + 조직 커스텀. 하드코딩 금지 — 설정에서 추가한 기관도 표시.
+  const labOptions = [...INFECTIOUS_LABS, ...(inspectionConfig.customInfectiousLabs ?? [])]
 
   // Read array (backward compat: old flat key)
   function readRecords(): InfectiousRecord[] {
@@ -131,6 +128,7 @@ export function InfectiousDiseaseField({ caseId, caseRow, destination }: { caseI
             date={group.date}
             indices={group.indices}
             records={records}
+            labOptions={labOptions}
             editIdx={editIdx}
             editField={editField}
             onStartEdit={(idx, f) => { setEditIdx(idx); setEditField(f) }}
@@ -177,12 +175,13 @@ function groupByDate(records: InfectiousRecord[]): { date: string | null; indice
 /* ── 한 행: 날짜 + (같은 날짜의 모든) lab 들 ── */
 
 function InfectiousGroup({
-  date, indices, records, editIdx, editField,
+  date, indices, records, labOptions, editIdx, editField,
   onStartEdit, onStopEdit, onUpdateField, onUpdateGroupDate, onDelete, saving,
 }: {
   date: string | null
   indices: number[]
   records: InfectiousRecord[]
+  labOptions: { value: string; label: string }[]
   editIdx: number | null
   editField: 'date' | 'lab' | null
   onStartEdit: (idx: number, f: 'date' | 'lab') => void
@@ -224,7 +223,7 @@ function InfectiousGroup({
       {/* Labs — | 로 구분하여 나열 */}
       {indices.map((idx, n) => {
         const rec = records[idx]
-        const labObj = LABS.find(l => l.value === rec.lab)
+        const labObj = labOptions.find(l => l.value === rec.lab)
         const labDisplay = labObj?.label || rec.lab || '—'
         const labTone = labColor(rec.lab)
         const labIsEditing = editIdx === idx && editField === 'lab'
@@ -234,7 +233,7 @@ function InfectiousGroup({
             {editMode ? (
               <DropdownSelect
                 value={rec.lab ?? ''}
-                options={[{ value: '', label: '—' }, ...LABS]}
+                options={[{ value: '', label: '—' }, ...labOptions]}
                 onChange={(v) => onUpdateField(idx, 'lab', v || null)}
                 triggerClassName={cn(
                   'text-left',
