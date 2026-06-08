@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Archive } from 'lucide-react'
 import { SectionLabel } from '@/components/ui/section-label'
 import { cn } from '@/lib/utils'
 import { updateCaseField } from '@/lib/actions/cases'
+import { markJourneyCompleteAdmin } from '@/lib/actions/journey-complete'
 import { useCases } from './cases-context'
 import destsData from '@petmove/domain/data/destinations.json'
 import { destCode } from '@/lib/country-code'
@@ -185,6 +186,21 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
     await updateCaseField(caseId, 'column', 'destination', val)
   }
 
+  // 스태프 수동 전환 — 완료된(혹은 다녀온) 여정을 '지난 여정'으로 보관. 삭제와 달리
+  // by_dest 요약을 past_journeys 로 남기고 목적지에서 뺀다. (design journey-lifecycle §4·§5)
+  async function demoteToPast(ko: string) {
+    const ok = await confirm({
+      message: `"${ko}" 여정을 완료해 '지난 여정'으로 보관할까요?`,
+      okLabel: '지난 여정으로',
+    })
+    if (!ok) return
+    const res = await markJourneyCompleteAdmin(caseId, ko, 'done')
+    if (res.ok) {
+      // 칩에서 즉시 제거(낙관적) — past_journeys 표시는 realtime 으로 갱신.
+      updateLocalCaseField(caseId, 'column', 'destination', joinDests(selected.filter((s) => s !== ko)))
+    }
+  }
+
   async function reorderDests(fromIdx: number, toIdx: number) {
     if (fromIdx === toIdx) return
     if (fromIdx < 0 || fromIdx >= selected.length) return
@@ -274,14 +290,24 @@ export function DestinationField({ caseId, destination }: { caseId: string; dest
                     </span>
                   </button>
                   {editMode && (
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); removeDest(ko) }}
-                      className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-pmw-tag-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover/chip:opacity-70 hover:!opacity-100"
-                      title="목적지 삭제"
-                    >
-                      <Trash2 size={12} />
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); demoteToPast(ko) }}
+                        className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-pmw-tag-foreground/60 hover:text-pmw-accent hover:bg-pmw-accent/10 transition-colors opacity-0 group-hover/chip:opacity-70 hover:!opacity-100"
+                        title="지난 여정으로 보관"
+                      >
+                        <Archive size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); removeDest(ko) }}
+                        className="shrink-0 inline-flex items-center justify-center rounded-md p-1 text-pmw-tag-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover/chip:opacity-70 hover:!opacity-100"
+                        title="목적지 삭제"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </>
                   )}
                 </span>
               )
