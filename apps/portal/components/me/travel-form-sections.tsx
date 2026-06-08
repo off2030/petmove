@@ -5,6 +5,7 @@ import {
   DateField,
   DestinationField,
   SegmentField,
+  SwitchField,
   TextField,
   type FieldOption,
 } from '@/components/fields/info-fields'
@@ -28,10 +29,6 @@ import type { UseCaseEditForm } from './use-case-edit-form'
 const TRIP_OPTIONS: readonly FieldOption[] = [
   { value: 'round', label: '왕복' },
   { value: 'one_way', label: '편도' },
-]
-const CO_PROGRESS_OPTIONS: readonly FieldOption[] = [
-  { value: 'on', label: '예' },
-  { value: 'off', label: '아니오' },
 ]
 
 interface Props {
@@ -75,11 +72,10 @@ export function TravelFormSections({
           last={!hasSibling}
         />
         {hasSibling && (
-          <SegmentField
+          <SwitchField
             label="함께 준비"
-            value={form.co_progress ? 'on' : 'off'}
-            onChange={(v) => set('co_progress', v === 'on')}
-            options={CO_PROGRESS_OPTIONS}
+            checked={form.co_progress}
+            onChange={(v) => set('co_progress', v)}
             sub="한 마리에 입력한 일정·절차를 다른 동물에도 같이 반영해요"
             last
           />
@@ -103,11 +99,10 @@ export function TravelFormSections({
           options={TRIP_OPTIONS}
         />
         {hasSibling && (
-          <SegmentField
+          <SwitchField
             label="함께 준비"
-            value={form.co_progress ? 'on' : 'off'}
-            onChange={(v) => set('co_progress', v === 'on')}
-            options={CO_PROGRESS_OPTIONS}
+            checked={form.co_progress}
+            onChange={(v) => set('co_progress', v)}
             sub="한 마리에 입력한 일정·절차를 다른 동물에도 같이 반영해요"
           />
         )}

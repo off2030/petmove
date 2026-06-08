@@ -3,16 +3,12 @@
 import { useMemo, useState } from 'react'
 import destsData from '@petmove/domain/data/destinations.json'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
-import { SegmentField, type FieldOption } from '@/components/fields/info-fields'
+import { SegmentField, SwitchField, type FieldOption } from '@/components/fields/info-fields'
 import { C, SectionCard, monoCap } from './settings-shared'
 
 const TRIP_OPTIONS: readonly FieldOption[] = [
   { value: 'round', label: '왕복' },
   { value: 'one_way', label: '편도' },
-]
-const CO_PROGRESS_OPTIONS: readonly FieldOption[] = [
-  { value: 'on', label: '예' },
-  { value: 'off', label: '아니오' },
 ]
 
 /**
@@ -195,11 +191,10 @@ export function DestinationChips({
                   last={!showCoProgress}
                 />
                 {showCoProgress && (
-                  <SegmentField
+                  <SwitchField
                     label="함께 준비"
-                    value={coProgress ? 'on' : 'off'}
-                    onChange={(v) => onStageCoProgress(v === 'on')}
-                    options={CO_PROGRESS_OPTIONS}
+                    checked={coProgress}
+                    onChange={onStageCoProgress}
                     sub="한 마리에 입력한 일정·절차를 다른 동물에도 같이 반영해요"
                     last
                   />

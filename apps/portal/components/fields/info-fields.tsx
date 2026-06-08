@@ -718,6 +718,68 @@ export function SegmentField({
   )
 }
 
+// ── SwitchField (On/Off 토글 스위치 — 함께 준비) ──────────────────────────
+
+/**
+ * iOS 식 On/Off 토글 스위치. 불리언 한 값 — 트랙(켜짐=accent) + 미끄러지는 흰 thumb.
+ * SegmentField 와 같은 InlineRow 레이아웃·sub 보조문구를 지원.
+ */
+export function SwitchField({
+  label,
+  checked,
+  onChange,
+  last,
+  sub,
+}: {
+  label: string
+  checked: boolean
+  onChange: (next: boolean) => void
+  last?: boolean
+  /** 스위치 아래 보조 텍스트 (도움말). */
+  sub?: string
+}) {
+  return (
+    <InlineRow label={label} last={last} alignTop={!!sub}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={checked}
+          onClick={() => onChange(!checked)}
+          style={{
+            position: 'relative',
+            flexShrink: 0,
+            width: 46,
+            height: 28,
+            padding: 0,
+            border: 0,
+            borderRadius: 999,
+            background: checked ? C.accent : 'color-mix(in srgb, var(--pm-ink) 18%, transparent)',
+            cursor: 'pointer',
+            transition: 'background .18s',
+          }}
+        >
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute',
+              top: 3,
+              left: checked ? 21 : 3,
+              width: 22,
+              height: 22,
+              borderRadius: '50%',
+              background: '#fff',
+              boxShadow: '0 1px 3px rgba(0,0,0,.25)',
+              transition: 'left .18s',
+            }}
+          />
+        </button>
+        {sub && <span style={{ fontSize: 12, color: C.ink3, lineHeight: 1.4 }}>{sub}</span>}
+      </div>
+    </InlineRow>
+  )
+}
+
 // ── DestinationField (여행지 검색) ───────────────────────────────────────
 
 export function DestinationField({
