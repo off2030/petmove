@@ -1,23 +1,19 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { use, useEffect, useState, useTransition } from 'react'
-import { shouldPromptArrival } from '@petmove/domain'
+import { use, useEffect } from 'react'
 import { buildJourney } from '@/lib/journey/scenario'
 import { TimelineCalm } from '@/components/journey/timeline-calm'
-import { CompletionPrompt } from '@/components/journey/completion-prompt'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
-import { markJourneyComplete, dismissCompletionPrompt } from '@/lib/actions/destinations'
 
 /**
  * 케이스별 여정 — /cases/<id>/journey. Client 컴포넌트 — CaseDataProvider 에서 케이스 데이터 읽음.
  *
- * layout 이 케이스 본인 매핑 + initialCases 로 Provider 주입을 보장. 여기서는 useCase(id) 로
- * 메모리에서 바로 조회 — 추가 네트워크 없음. buildJourney 는 순수 함수라 client 에서 실행.
- *
- * 완료 확인 prompt(A형): 출국/귀국일이 지났는데 미완료면 바텀시트로 "잘 마치셨나요?" 확인.
- * design journey-lifecycle §4.2.
+ * ⚠️ 완료 확인 prompt(A형)는 일시 비활성화(2026-06-08). markJourneyComplete 가 완료/취소 시
+ * destination 토큰을 즉시 제거 → 완료 카드(도착 배너)를 볼 새 없이 여정이 사라지고, 모달 오조작으로
+ * 취소까지 발생하는 결함. 재설계(완료 카드 먼저 노출 + 토큰 제거 분리 + 파괴적 동작 확인) 후 재도입.
+ * CompletionPrompt·shouldPromptArrival·markJourneyComplete 코드는 남겨두되 여기서 호출하지 않는다.
  */
 export default function CaseJourneyPage({
   params,
@@ -26,12 +22,10 @@ export default function CaseJourneyPage({
 }) {
   const { id } = use(params)
   const caseRow = useCase(id)
-  const { cases, refreshCases } = useCases()
+  const { cases } = useCases()
   const router = useRouter()
   const searchParams = useSearchParams()
   const activeDest = searchParams.get('dest')
-  const [promptClosed, setPromptClosed] = useState(false)
-  const [busy, startTransition] = useTransition()
 
   // 케이스 없음(운영자 삭제 등) → 목록으로. 목적지 0개(여정 없음) → 다른 여정 동물로 전환,
   // 없으면 목록('준비 중인 여정 없음'). 목적지 다 지운 동물의 일정 탭엔 머무를 수 없게 한다.
@@ -50,57 +44,5 @@ export default function CaseJourneyPage({
   // multi-destination: activeDest 가 토큰 목록에 있으면 그걸로 분기.
   // 단일 케이스나 없으면 첫 토큰(buildCaseJourneyContext 내부 fallback).
   const data = buildJourney(caseRow, activeDest)
-
-  // ── 완료 확인 prompt (A형) 발동 판정 ──
-  const dest = data.trip.toCity
-  const caseData = (caseRow.data ?? {}) as Record<string, unknown>
-  const byDest = ((caseData.by_dest as Record<string, Record<string, unknown>> | undefined)?.[dest] ??
-    {}) as Record<string, unknown>
-  // 왕복=귀국일, 편도=출국일. by_dest 우선 + top-level/컬럼 fallback.
-  const returnDate = (('return_date' in byDest ? byDest.return_date : caseData.return_date) ?? null) as
-    | string
-    | null
-  const anchorDate =
-    data.trip.tripType === 'round' ? returnDate : data.trip.departureDate ?? null
-  const today = new Date().toISOString().slice(0, 10)
-  const dismissedFor =
-    (caseData.completion_prompt_dismissed as Record<string, string> | undefined)?.[dest] ?? null
-  const showPrompt =
-    !promptClosed &&
-    !!dest &&
-    dest !== '—' &&
-    shouldPromptArrival({
-      journeyComplete: data.journeyComplete,
-      anchorDate,
-      today,
-      dismissedFor,
-    })
-
-  function run(action: () => Promise<{ ok: boolean }>) {
-    setPromptClosed(true)
-    startTransition(async () => {
-      const res = await action()
-      if (res.ok) void refreshCases()
-      else setPromptClosed(false)
-    })
-  }
-
-  return (
-    <>
-      <TimelineCalm data={data} caseId={id} activeDest={activeDest} />
-      {showPrompt && (
-        <CompletionPrompt
-          caseRow={caseRow}
-          petName={data.pet.name}
-          destination={dest}
-          busy={busy}
-          onDone={() => run(() => markJourneyComplete(id, dest, 'done'))}
-          onCancel={() => run(() => markJourneyComplete(id, dest, 'cancelled'))}
-          onDismiss={() => {
-            if (anchorDate) run(() => dismissCompletionPrompt(id, dest, anchorDate))
-          }}
-        />
-      )}
-    </>
-  )
+  return <TimelineCalm data={data} caseId={id} activeDest={activeDest} />
 }
