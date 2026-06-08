@@ -602,6 +602,9 @@ export async function updateOrgCompanyInfo(input: {
   }
 }
 
+// 펫무브 직영(platform) 고정 UUID — 유형은 항상 'platform' 으로 고정(변경 불가).
+const PLATFORM_ORG_ID = '00000000-0000-0000-0000-000000000002'
+
 /** 조직 유형 설정 (organizations.org_type). */
 export async function setOrgType(input: {
   orgId: string
@@ -609,6 +612,11 @@ export async function setOrgType(input: {
 }): Promise<Result<{ org_type: OrgType }>> {
   const gate = await requireSuperAdmin()
   if (!gate.ok) return gate
+  // 직영(platform) 의 유형은 바꿀 수 없다 — 'both' 등으로 드리프트되면 보호자 파트너
+  // 카탈로그에 새어 들어가 담당 연결이 깨진다(20260608000014). 유형은 'platform' 고정.
+  if (input.orgId === PLATFORM_ORG_ID) {
+    return { ok: false, error: '펫무브 직영 조직의 유형은 변경할 수 없습니다.' }
+  }
   try {
     const admin = createAdminClient()
     const { error } = await admin

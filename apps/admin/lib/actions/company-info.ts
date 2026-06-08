@@ -80,10 +80,18 @@ export async function getOrgType(): Promise<OrgType> {
   }
 }
 
+// 펫무브 직영(platform) 고정 UUID — 유형 변경 불가.
+const PLATFORM_ORG_ID = '00000000-0000-0000-0000-000000000002'
+
 export async function updateOrgType(next: OrgType): Promise<{ ok: true; org_type: OrgType } | { ok: false; error: string }> {
   try {
     const supabase = await createClient()
     const orgId = await getActiveOrgId()
+    // 직영(platform) 유형은 'platform' 고정 — 'both' 등으로 바뀌면 보호자 파트너 카탈로그에
+    // 새어 담당 연결이 깨진다(20260608000014). 변경 차단.
+    if (orgId === PLATFORM_ORG_ID) {
+      return { ok: false, error: '펫무브 직영 조직의 유형은 변경할 수 없습니다.' }
+    }
     const { error } = await supabase
       .from('organizations')
       .update({ org_type: next, updated_at: new Date().toISOString() })

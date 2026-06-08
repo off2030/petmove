@@ -800,6 +800,9 @@ function RoleSelect({
  * OrgInfoForm 에 주입. orgId 가 바뀌면 부모가 key 로 remount 시키므로 useEffect 의존성은
  * 단순(마운트 1회 로드)하게 둔다. 저장/유형/아바타는 orgId 지정 server action 으로 위임.
  */
+// 펫무브 직영(platform) 고정 UUID — 유형 변경 불가(탭 숨김).
+const PLATFORM_ORG_ID = '00000000-0000-0000-0000-000000000002'
+
 function OrgInfoSection({
   orgId,
   orgType,
@@ -840,7 +843,7 @@ function OrgInfoSection({
       info={info}
       orgType={orgType}
       isAdmin
-      canEditOrgType
+      canEditOrgType={orgId !== PLATFORM_ORG_ID}
       onSaveFields={async (patch) => {
         const r = await updateOrgCompanyInfo({ orgId, patch })
         return r.ok ? { ok: true, info: r.value } : { ok: false, error: r.error }
