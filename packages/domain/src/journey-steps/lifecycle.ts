@@ -135,3 +135,26 @@ export function resolveRelevance(input: {
   for (const k of input.manualAdded ?? []) push(k)
   return result
 }
+
+// ── 완료 확인 prompt 발동 (design §4.2) ──────────────────────────────────────
+
+/**
+ * A형(완료 확인) 발동 여부 — 출국/귀국일이 지났는데 아직 도착(완료) 처리 안 됨.
+ * - anchorDate: 왕복=귀국일, 편도=출국일 (ISO 'YYYY-MM-DD'). 없으면 발동 안 함.
+ * - today: 'YYYY-MM-DD'.
+ * - dismissedFor: 이 목적지에서 마지막으로 "진행 중"으로 닫을 때의 anchorDate.
+ *   같으면 재발동 안 함 — 출국/귀국일이 바뀌면 anchorDate 가 변해 다시 뜬다.
+ *
+ * B형(유효기간 만료·방치)은 유효기간 판정이 필요해 별도 — 추후.
+ */
+export function shouldPromptArrival(input: {
+  journeyComplete: boolean
+  anchorDate: string | null
+  today: string
+  dismissedFor?: string | null
+}): boolean {
+  if (input.journeyComplete) return false
+  if (!input.anchorDate) return false
+  if (input.anchorDate >= input.today) return false
+  return input.dismissedFor !== input.anchorDate
+}

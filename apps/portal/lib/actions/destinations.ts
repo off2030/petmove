@@ -404,3 +404,60 @@ export async function markJourneyComplete(
     return { ok: false, error: (e as Error).message }
   }
 }
+
+/**
+ * 완료 확인 prompt 를 "진행 중"으로 닫음 — 그 목적지의 기준 날짜(anchorDate)를 기록.
+ * 같은 anchorDate 면 재발동 안 함. 출국/귀국일이 바뀌면 anchorDate 가 변해 다시 뜬다. (design §4.2)
+ */
+export async function dismissCompletionPrompt(
+  caseId: string,
+  destination: string,
+  anchorDate: string,
+): Promise<Result<true>> {
+  try {
+    const dest = destination.trim()
+    if (!dest) return { ok: false, error: '목적지가 비어 있습니다.' }
+
+    const user = await getCurrentUser()
+    if (!user) return { ok: false, error: '인증 필요' }
+
+    const { createAdminClient } = await import('@petmove/auth')
+    const admin = createAdminClient()
+
+    const { data: link } = await admin
+      .from('case_customer_links')
+      .select('case_id')
+      .eq('case_id', caseId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (!link) return { ok: false, error: '이 여정에 접근 권한이 없습니다.' }
+
+    const { data: row, error: rowErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (rowErr || !row) return { ok: false, error: rowErr?.message ?? '여정을 찾을 수 없습니다.' }
+
+    const data = ((row as { data: Record<string, unknown> | null }).data ?? {}) as Record<
+      string,
+      unknown
+    >
+    const dismissed = {
+      ...((data.completion_prompt_dismissed as Record<string, string> | undefined) ?? {}),
+      [dest]: anchorDate,
+    }
+    const nextData = { ...data, completion_prompt_dismissed: dismissed }
+
+    const { error: updErr } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+    if (updErr) return { ok: false, error: updErr.message }
+
+    revalidatePath(`/cases/${caseId}/journey`)
+    return { ok: true, value: true }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
