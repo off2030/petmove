@@ -45,14 +45,15 @@ function MiniStamp({ size = 44, rotate = -6 }) {
 // ── ① 완료 카드 (도착 직후, 일정 탭) ────────────────────────────────────────
 function ArrivalCard() {
   return (
-    <div style={{ margin: '0 24px', padding: '30px 24px 26px', borderRadius: 22, background: C.cardHero, boxShadow: '0 1px 0 rgba(255,255,255,.35) inset', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-      <ArrivalStamp size={112} date="2025.11" />
-      <h2 style={{ ...serif, fontSize: 24, margin: '22px 0 0', color: C.ink, fontWeight: 500 }}>몽이와 잘 도착했어요</h2>
-      <div style={{ fontSize: 13, color: C.ink2, marginTop: 9, display: 'flex', alignItems: 'center', gap: 6 }}>
+    <div style={{ margin: '0 24px', padding: '24px', borderRadius: 22, background: C.cardHero, boxShadow: '0 1px 0 rgba(255,255,255,.35) inset', position: 'relative', overflow: 'hidden' }}>
+      {/* 도장 — 우측 상단 (기존 앱 도착 배너와 동일 위치) */}
+      <div style={{ position: 'absolute', top: 14, right: 14 }}><ArrivalStamp size={88} date="2025.11" /></div>
+      <h2 style={{ ...serif, fontSize: 25, margin: '6px 0 0', color: C.ink, fontWeight: 500, lineHeight: 1.22, maxWidth: '60%' }}>몽이와 잘 도착했어요</h2>
+      <div style={{ fontSize: 13, color: C.ink2, marginTop: 12, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
         <span>한국</span><span style={{ color: C.ink3 }}>⇄</span><span>일본</span>
         <span style={{ ...num, color: C.ink3, marginLeft: 4 }}>2025.06.23 – 11.15</span>
       </div>
-      <button style={{ marginTop: 22, padding: '11px 22px', borderRadius: 999, border: 'none', background: C.accent, color: '#FBF7F1', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+      <button style={{ marginTop: 18, padding: '11px 22px', borderRadius: 999, border: 'none', background: C.accent, color: '#FBF7F1', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
         <Icon name="sparkle" size={15} color="#FBF7F1" /> 소감 남기기
       </button>
     </div>
@@ -127,7 +128,7 @@ function JourneyCardsGallery() {
           <Section label="반려동물 › 여정 · 지난 여정"><PastJourneys /></Section>
           <Section label="완료 확인 · A형 (출국·귀국 다음날)">
             <ConfirmSheet
-              title="몽이와의 일본 여정 잘 마쳤나요?"
+              title="몽이와의 일본 여정, 잘 마치셨나요?"
               options={[
                 { label: '잘 다녀왔어요', kind: 'primary' },
                 { label: '아직 진행 중이에요', kind: 'secondary' },
@@ -137,7 +138,7 @@ function JourneyCardsGallery() {
           </Section>
           <Section label="완료 확인 · B형 (유효기간 만료·방치)">
             <ConfirmSheet
-              title="몽이의 일본 준비가 멈춰 있어요"
+              title="몽이의 일본 여정 준비가 멈춰 있어요"
               sub="광견병 항체 유효기간이 지났어요. 계속 준비하시나요?"
               options={[
                 { label: '네, 계속 준비할게요', kind: 'primary' },
