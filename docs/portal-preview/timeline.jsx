@@ -1,33 +1,6 @@
 // timeline.jsx — Calm 디자인 시스템 (Stone palette + Fraunces serif)
 // 최종 디자인은 Calm 변형만 사용 (chat2: "타임라인 뷰 링뷰 제거" 이후)
 
-// 여정 라우트 + 표식 (docs/journey-lifecycle-design.md §8)
-// 출국일 기준: 진행 중 단일=표식 없음 / 같은 목적지 2개=출국월(뒤 일정 ink3 흐림) /
-// 출국일 미정='준비 중' / 지난 여정=출국 년월일 + ✓(흐림). '한국 ⇄ 일본' 왕복 유지.
-//   trip.mark        — 라우트 옆 표식 텍스트 ('6월' / '준비 중' / '2025.06.23'), 없으면 미표시
-//   trip.dimmed      — 같은 목적지 중 뒤 일정 → ink3 흐림
-//   trip.journeyState — 'past' 면 흐림 + 완료 체크
-function RouteLabel({ trip, C }) {
-  const isPast = trip.journeyState === 'past';
-  const dim = isPast || trip.dimmed;
-  return (
-    <div style={{ fontSize: 12.5, color: dim ? C.ink3 : C.ink2, display: 'flex', alignItems: 'center', gap: 6, transform: 'translateY(-2px)' }}>
-      <span>{trip.fromCity}</span>
-      <span style={{ color: C.ink3 }}>{trip.tripType === 'roundtrip' ? '⇄' : '→'}</span>
-      <span>{trip.toCity}</span>
-      {trip.mark && <>
-        <span style={{ color: C.ink3, opacity: .55 }}>·</span>
-        <span style={{ color: C.ink3, fontVariantNumeric: 'tabular-nums' }}>{trip.mark}</span>
-      </>}
-      {isPast && (
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={C.ink3} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 1 }}>
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
-      )}
-    </div>
-  );
-}
-
 function Timeline({ scenario, onNav, ringShape = 'H' }) {
   return <TimelineCalm scenario={scenario} onNav={onNav} ringShape={ringShape} />;
 }
@@ -92,7 +65,11 @@ function TimelineCalm({ scenario, onNav, ringShape = 'H' }) {
           <h1 style={{ ...serif, fontSize: 30, lineHeight: 1.12, margin: 0, color: C.ink }}>
             {pet.name}
           </h1>
-          <RouteLabel trip={trip} C={C} />
+          <div style={{ fontSize: 12.5, color: C.ink2, display: 'flex', alignItems: 'center', gap: 6, transform: 'translateY(-2px)' }}>
+            <span>{trip.fromCity}</span>
+            <span style={{ color: C.ink3 }}>{trip.tripType === 'roundtrip' ? '⇄' : '→'}</span>
+            <span>{trip.toCity}</span>
+          </div>
         </div>
 
         {/* 다음 할 일 — soft taupe gradient card. 헤더 1회 + 할 일 항목들(각 행 클릭 가능, 구분선).
@@ -246,26 +223,6 @@ function TimelineCalm({ scenario, onNav, ringShape = 'H' }) {
               </div>
             );
           })}
-        </div>
-
-        {/* DEMO — 여정 표식 규칙 미리보기 (시안 전용, 구현 시 제거).
-            실제 헤더 라우트는 위 <RouteLabel>. 규칙: docs/journey-lifecycle-design.md §8 */}
-        <h3 style={{ ...serif, margin: '24px 0 12px', fontSize: 16 }}>
-          여정 표식 <span style={{ fontSize: 11, color: C.ink3, fontWeight: 400 }}>· 미리보기</span>
-        </h3>
-        <div style={{ background: C.cardList, borderRadius: 20, boxShadow: '0 1px 0 rgba(255,255,255,.45) inset', padding: '6px 16px' }}>
-          {[
-            { cap: '진행 중 · 단일', trip: { fromCity: '한국', toCity: '일본', tripType: 'roundtrip' } },
-            { cap: '같은 목적지 2개 · 먼저', trip: { fromCity: '한국', toCity: '일본', tripType: 'roundtrip', mark: '6월' } },
-            { cap: '같은 목적지 2개 · 나중', trip: { fromCity: '한국', toCity: '일본', tripType: 'roundtrip', mark: '10월', dimmed: true } },
-            { cap: '출국일 미정', trip: { fromCity: '한국', toCity: '일본', tripType: 'roundtrip', mark: '준비 중' } },
-            { cap: '지난 여정', trip: { fromCity: '한국', toCity: '일본', tripType: 'roundtrip', mark: '2025.06.23', journeyState: 'past' } },
-          ].map((v, i, arr) => (
-            <div key={v.cap} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 0', borderBottom: i === arr.length - 1 ? 'none' : `.5px solid ${C.line}` }}>
-              <span style={{ ...monoCap, fontSize: 9.5 }}>{v.cap}</span>
-              <RouteLabel trip={v.trip} C={C} />
-            </div>
-          ))}
         </div>
 
       </div>
