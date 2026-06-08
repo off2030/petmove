@@ -164,6 +164,7 @@ const LAB_INFO: Record<string, { name: string; country: string }> = {
   ksvdl_r:     { name: 'Kansas State Rabies Laboratory', country: 'United States of America' },
   ksvdl:       { name: 'Kansas Veterinary Diagnostic Laboratory', country: 'United States of America' },
   vbddl:       { name: 'Vector Borne Disease Diagnostic Laboratory', country: 'United States of America' },
+  arc_ovr:     { name: 'ARC-Onderstepoort Veterinary Research', country: 'South Africa' },
 }
 
 /**
@@ -203,6 +204,17 @@ const LAB_SHIPPING: Record<string, { name: string; country: string; block: strin
       'Kansas State Rabies Laboratory, 2005 Research Park Circle',
       'Manhattan, KS, 66502, USA',
       'Tax ID#: 48-0771751',
+    ].join('\n'),
+  },
+  arc_ovr: {
+    name: 'ARC-Onderstepoort Veterinary Research',
+    country: 'South Africa',
+    block: [
+      'ARC-Onderstepoort Veterinary Research (ARC-OVR)',
+      'Diagnostic Registration, 100 Old Soutpan Road',
+      'Onderstepoort, 0110, South Africa',
+      'Tel. +27-12-529-9272 / email: LopezL@arc.agric.za',
+      'VAT No.: 4140125313 / SARS Importers Code: CU01763412',
     ].join('\n'),
   },
 }

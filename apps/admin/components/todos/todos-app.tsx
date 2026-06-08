@@ -1153,6 +1153,7 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
     { value: 'ksvdl_r', label: 'KSVDL-R' },
     { value: 'ksvdl', label: 'KSVDL' },
     { value: 'vbddl', label: 'VBDDL' },
+    { value: 'arc_ovr', label: 'ARC-OVR (남아공)' },
   ]
   const speciesOptions: { value: 'dog' | 'cat'; label: string }[] = [
     { value: 'dog', label: '개 (canine)' },
