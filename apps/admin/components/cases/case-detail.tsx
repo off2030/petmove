@@ -36,6 +36,7 @@ import { NotesField } from './notes-field'
 // 통합 리팩터: country-specific extra section 컴포넌트들은 더 이상 라우팅 안 됨.
 // 모든 destination 이 SimpleExtraSection 으로 일반 렌더링됨. 컴포넌트 파일은 보관 (file extraction 로직 등 향후 통합 가능).
 import { OverseasAddressField } from './overseas-address-field'
+import { PastJourneysAdminSection } from './past-journeys-admin'
 import { useCases } from './cases-context'
 import { VerificationProvider, severityTextClass, tooltipText, useFieldVerification } from './verification-context'
 import { SectionEditModeProvider, useSectionEditMode } from './section-edit-mode-context'
@@ -401,6 +402,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
         </React.Fragment>
         )
       })}
+      <PastJourneysAdminSection caseRow={caseRow} />
     </div>
     </VerificationProvider>
   )
