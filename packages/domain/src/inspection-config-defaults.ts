@@ -67,6 +67,7 @@ export const DEFAULT_INSPECTION_CONFIG: InspectionConfig = {
     { label: '유럽연합', countries: [...EU_COUNTRIES], labs: ['apqa_eu'] },
     { countries: ['영국'], labs: ['apqa_eu'] },
     { countries: ['스위스'], labs: ['apqa_eu'] },
+    { countries: ['터키'], labs: ['apqa_eu'] },
   ],
   infectiousRules: [
     { countries: ['호주'], labs: ['ksvdl'] },

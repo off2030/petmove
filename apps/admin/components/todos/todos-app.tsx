@@ -953,8 +953,8 @@ export function TodosInspectionActions({ query }: { query: string }) {
   )
   const ksvdlRows = pendingRows.filter((r) => r.lab === 'ksvdl')
   const nzRows = pendingRows.filter((r) => r.lab === 'nz_combined')
-  // APQA EU titer 행 = EU/영국/스위스 광견병중화항체검사 신청 대상.
-  // inspection-config 의 titerRules 가 EU·UK·CH → apqa_eu 로 매핑.
+  // APQA EU titer 행 = EU/영국/스위스/터키 광견병중화항체검사 신청 대상.
+  // inspection-config 의 titerRules 가 EU·UK·CH·TR → apqa_eu 로 매핑.
   const euApqaRows = pendingRows.filter((r) => r.kind === 'titer' && r.lab === 'apqa_eu')
   // Invoice 활성화: KSVDL-R(titer) · KSVDL(호주 infectious) · VBDDL(뉴질랜드 묶음) 중 한 건이라도 진행 중이면 활성.
   const invoiceRows = pendingRows.filter(

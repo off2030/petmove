@@ -76,21 +76,21 @@ function normalizeLabOptions(raw: unknown): InspectionLabOption[] {
 }
 
 /**
- * EU/영국/스위스 titerRule 의 apqa_hq → apqa_eu 자동 교체.
+ * EU/영국/스위스/터키 titerRule 의 apqa_hq → apqa_eu 자동 교체.
  *
- * 2026-05-04 APQA EU 검사기관 신설로 EU/UK/CH 광견병항체검사 표시기관이 분리됨.
+ * 2026-05-04 APQA EU 검사기관 신설로 EU/UK/CH/TR 광견병항체검사 표시기관이 분리됨.
  * 기존 조직 설정이 apqa_hq 로 저장돼 있으면 DB 마이그레이션 없이도 즉시 새 라벨이
  * 노출되도록 read-path 에서 보강. 사용자가 명시적으로 apqa_hq 를 다시 지정하려면
  * Settings 에서 직접 입력해야 하지만(드문 케이스), 대다수 조직에서 자동 보정 효과.
  *
- * 적용 조건: 룰의 countries 가 EU 27개국 / 스위스 / 영국 의 부분집합.
+ * 적용 조건: 룰의 countries 가 EU 27개국 / 스위스 / 영국 / 터키 의 부분집합.
  */
 const EU_UK_CH = new Set([
   '독일', '프랑스', '이탈리아', '스페인', '네덜란드', '벨기에', '오스트리아',
   '스웨덴', '덴마크', '핀란드', '폴란드', '체코', '헝가리', '포르투갈',
   '그리스', '루마니아', '불가리아', '크로아티아', '슬로바키아', '슬로베니아',
   '리투아니아', '라트비아', '에스토니아', '룩셈부르크', '몰타', '키프로스',
-  '아일랜드', '스위스', '영국',
+  '아일랜드', '스위스', '영국', '터키',
 ])
 
 function applyApqaEuShim(rules: InspectionLabRule[]): InspectionLabRule[] {
