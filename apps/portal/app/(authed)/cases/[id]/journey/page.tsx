@@ -1,19 +1,24 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { use, useEffect } from 'react'
+import { use, useEffect, useState, useTransition } from 'react'
+import { shouldPromptArrival } from '@petmove/domain'
+import { useConfirm } from '@petmove/ui'
 import { buildJourney } from '@/lib/journey/scenario'
 import { TimelineCalm } from '@/components/journey/timeline-calm'
+import { CompletionPrompt } from '@/components/journey/completion-prompt'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
+import { confirmArrival, markJourneyComplete, dismissCompletionPrompt } from '@/lib/actions/destinations'
 
 /**
- * 케이스별 여정 — /cases/<id>/journey. Client 컴포넌트 — CaseDataProvider 에서 케이스 데이터 읽음.
+ * 케이스별 여정 — /cases/<id>/journey. Client — CaseDataProvider 에서 케이스 데이터 읽음.
  *
- * ⚠️ 완료 확인 prompt(A형)는 일시 비활성화(2026-06-08). markJourneyComplete 가 완료/취소 시
- * destination 토큰을 즉시 제거 → 완료 카드(도착 배너)를 볼 새 없이 여정이 사라지고, 모달 오조작으로
- * 취소까지 발생하는 결함. 재설계(완료 카드 먼저 노출 + 토큰 제거 분리 + 파괴적 동작 확인) 후 재도입.
- * CompletionPrompt·shouldPromptArrival·markJourneyComplete 코드는 남겨두되 여기서 호출하지 않는다.
+ * 완료 확인 prompt(A형, design §4.2): 출국/귀국일이 지났는데 미완료면 바텀시트.
+ * - "잘 다녀왔어요" → confirmArrival(도착 확인) → **완료 카드가 뜬다(여정 제거 X)**.
+ * - "아직 진행 중" → dismiss(이 anchorDate 동안 재발동 안 함).
+ * - "이 여정은 취소할게요" → **confirm 한 번 더** → markJourneyComplete(cancelled).
+ *   (지난 결함: 즉시 제거 + 오조작 취소 → 도착 확인/취소 분리 + 취소 confirm 으로 방지.)
  */
 export default function CaseJourneyPage({
   params,
@@ -22,13 +27,14 @@ export default function CaseJourneyPage({
 }) {
   const { id } = use(params)
   const caseRow = useCase(id)
-  const { cases } = useCases()
+  const { cases, refreshCases } = useCases()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const confirm = useConfirm()
   const activeDest = searchParams.get('dest')
+  const [promptClosed, setPromptClosed] = useState(false)
+  const [busy, startTransition] = useTransition()
 
-  // 케이스 없음(운영자 삭제 등) → 목록으로. 목적지 0개(여정 없음) → 다른 여정 동물로 전환,
-  // 없으면 목록('준비 중인 여정 없음'). 목적지 다 지운 동물의 일정 탭엔 머무를 수 없게 한다.
   useEffect(() => {
     if (!caseRow) {
       router.replace('/cases')
@@ -41,8 +47,64 @@ export default function CaseJourneyPage({
   }, [caseRow, cases, id, router])
   if (!caseRow || !hasJourney(caseRow)) return null
 
-  // multi-destination: activeDest 가 토큰 목록에 있으면 그걸로 분기.
-  // 단일 케이스나 없으면 첫 토큰(buildCaseJourneyContext 내부 fallback).
   const data = buildJourney(caseRow, activeDest)
-  return <TimelineCalm data={data} caseId={id} activeDest={activeDest} />
+
+  // ── 완료 확인 prompt (A형) 발동 판정 ──
+  const dest = data.trip.toCity
+  const caseData = (caseRow.data ?? {}) as Record<string, unknown>
+  const byDest = ((caseData.by_dest as Record<string, Record<string, unknown>> | undefined)?.[dest] ??
+    {}) as Record<string, unknown>
+  const returnDate = (('return_date' in byDest ? byDest.return_date : caseData.return_date) ?? null) as
+    | string
+    | null
+  const anchorDate =
+    data.trip.tripType === 'round' ? returnDate : data.trip.departureDate ?? null
+  const today = new Date().toISOString().slice(0, 10)
+  const dismissedFor =
+    (caseData.completion_prompt_dismissed as Record<string, string> | undefined)?.[dest] ?? null
+  const showPrompt =
+    !promptClosed &&
+    !!dest &&
+    dest !== '—' &&
+    shouldPromptArrival({
+      journeyComplete: data.journeyComplete,
+      anchorDate,
+      today,
+      dismissedFor,
+    })
+
+  function run(action: () => Promise<{ ok: boolean }>) {
+    setPromptClosed(true)
+    startTransition(async () => {
+      const res = await action()
+      if (res.ok) void refreshCases()
+      else setPromptClosed(false)
+    })
+  }
+
+  return (
+    <>
+      <TimelineCalm data={data} caseId={id} activeDest={activeDest} />
+      {showPrompt && (
+        <CompletionPrompt
+          caseRow={caseRow}
+          petName={data.pet.name}
+          destination={dest}
+          busy={busy}
+          onDone={() => run(() => confirmArrival(id, dest))}
+          onDismiss={() => {
+            if (anchorDate) run(() => dismissCompletionPrompt(id, dest, anchorDate))
+          }}
+          onCancel={async () => {
+            const ok = await confirm({
+              message: `${dest} 여정을 취소할까요? 되돌릴 수 없어요.`,
+              okLabel: '취소',
+              variant: 'destructive',
+            })
+            if (ok) run(() => markJourneyComplete(id, dest, 'cancelled'))
+          }}
+        />
+      )}
+    </>
+  )
 }

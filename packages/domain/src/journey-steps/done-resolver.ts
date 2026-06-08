@@ -175,8 +175,19 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
     case 'has-arrived': {
       // 도착 완료 — 왕복은 한국 수입검역, 편도는 일본 수입검역(있으면) 확인 / 출국일 경과.
       // 검역 step 과 동일하게 보호자 '저장' 확인 플래그로 완료. 비-일본 편도는 출국일 경과로 자동.
-      const { tripType } = buildCaseJourneyContext(caseRow)
-      if (tripType === 'round') {
+      const ctx = buildCaseJourneyContext(caseRow)
+      // 또는 보호자가 완료 확인 prompt '잘 다녀왔어요' 로 직접 확인 — 목적지별 map.
+      // (검역 미체크하고 다녀온 경우 보완. 완료 카드를 띄우는 용도 — 여정을 제거하지 않는다.)
+      const ac = data.arrival_confirmed
+      if (
+        ctx.destinationToken &&
+        ac != null &&
+        typeof ac === 'object' &&
+        (ac as Record<string, unknown>)[ctx.destinationToken] === true
+      ) {
+        return true
+      }
+      if (ctx.tripType === 'round') {
         return isQuarantineConfirmed(data, 'kr_import_quarantine_date', 'kr_import_quarantine_confirmed')
       }
       if (isQuarantineConfirmed(data, 'jp_import_quarantine_date', 'jp_import_quarantine_confirmed')) {

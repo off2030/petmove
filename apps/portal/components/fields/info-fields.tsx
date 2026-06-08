@@ -16,7 +16,8 @@ import { PortalCalendar, ymdLocal } from './portal-calendar'
  *  - TextField        : 인라인/스택 텍스트 입력 (전화·칩 마스크 지원)
  *  - DateField        : 바텀시트 달력 (Stone 톤 PortalCalendar)
  *  - OptionField      : 바텀시트 선택 목록 (종·성별)
- *  - SegmentField     : 인라인 2~3 분절 선택 (여행 유형)
+ *  - SegmentField     : 인라인 분절 토글 (왕복/편도·유형, 칸 너비 동일)
+ *  - SwitchField      : 인라인 On/Off 토글 스위치 (함께 준비)
  *  - DestinationField : 검색형 바텀시트 (여행지)
  */
 
@@ -673,11 +674,13 @@ export function SegmentField({
   return (
     <InlineRow label={label} last={last} alignTop={!!sub}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
-        {/* 연결된 분절 토글 — 한 트랙 안에 두 칸, 선택된 칸만 채워진다(모색 칩과 같은 ~32px 높이). */}
+        {/* 연결된 분절 토글 — 한 트랙 안에 칸 너비 동일(grid 1fr), 선택된 칸만 채워진다(~32px 높이). */}
         <div
           role="group"
           style={{
-            display: 'inline-flex',
+            display: 'grid',
+            gridAutoFlow: 'column',
+            gridAutoColumns: '1fr',
             padding: 2,
             borderRadius: 999,
             background: 'color-mix(in srgb, var(--pm-ink) 8%, transparent)',

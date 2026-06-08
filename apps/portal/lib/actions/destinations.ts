@@ -489,3 +489,59 @@ export async function dismissCompletionPrompt(
     return { ok: false, error: (e as Error).message }
   }
 }
+
+/**
+ * 보호자 완료 확인 — '잘 다녀왔어요'. 도착 확인 플래그를 목적지별로 set → has-arrived 가
+ * 인정 → 완료 카드(도착 배너)가 뜬다. **여정을 제거하지 않는다** (지난 여정 이동은
+ * 새 목적지 추가 시 / 스태프 전환). design journey-lifecycle §4.2
+ */
+export async function confirmArrival(caseId: string, destination: string): Promise<Result<true>> {
+  try {
+    const dest = destination.trim()
+    if (!dest) return { ok: false, error: '목적지가 비어 있습니다.' }
+
+    const user = await getCurrentUser()
+    if (!user) return { ok: false, error: '인증 필요' }
+
+    const { createAdminClient } = await import('@petmove/auth')
+    const admin = createAdminClient()
+
+    const { data: link } = await admin
+      .from('case_customer_links')
+      .select('case_id')
+      .eq('case_id', caseId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (!link) return { ok: false, error: '이 여정에 접근 권한이 없습니다.' }
+
+    const { data: row, error: rowErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (rowErr || !row) return { ok: false, error: rowErr?.message ?? '여정을 찾을 수 없습니다.' }
+
+    const data = ((row as { data: Record<string, unknown> | null }).data ?? {}) as Record<
+      string,
+      unknown
+    >
+    const arrival = {
+      ...((data.arrival_confirmed as Record<string, boolean> | undefined) ?? {}),
+      [dest]: true,
+    }
+    const nextData = { ...data, arrival_confirmed: arrival }
+
+    const { error: updErr } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+    if (updErr) return { ok: false, error: updErr.message }
+
+    revalidatePath('/me')
+    revalidatePath('/cases')
+    revalidatePath(`/cases/${caseId}/journey`)
+    return { ok: true, value: true }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
