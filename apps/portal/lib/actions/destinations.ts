@@ -93,6 +93,7 @@ export async function addCaseDestination(
       ...((data.past_journeys as PastJourneySummary[] | undefined) ?? []),
     ]
     const today = new Date().toISOString().slice(0, 10)
+    const demoted: string[] = []
     let remaining = [...tokens]
     for (const token of tokens) {
       const view = activeDestinationView(caseRow, token)
@@ -113,6 +114,7 @@ export async function addCaseDestination(
       delete byDestAll[token]
       delete tripTypeAll[token]
       remaining = remaining.filter((t) => t !== token)
+      demoted.push(token)
     }
 
     // 새 목적지 추가
@@ -120,11 +122,39 @@ export async function addCaseDestination(
     tripTypeAll[dest] = tripType
     byDestAll[dest] = {}
     const nextDest = joinDestTokens(remaining)
-    const nextData = { ...data, trip_type: tripTypeAll, by_dest: byDestAll, past_journeys: pastJourneys }
+    const nextData: Record<string, unknown> = {
+      ...data,
+      trip_type: tripTypeAll,
+      by_dest: byDestAll,
+      past_journeys: pastJourneys,
+    }
+    const updatePayload: Record<string, unknown> = { destination: nextDest, data: nextData }
+
+    // ⚠️ 누수 차단: 완료 여정을 내렸으면, **목적지별 칸이 없는 공용 완료 신호**(검역·도착·출국일)를
+    // 비운다. 안 비우면 새 목적지가 이 top-level 신호를 그대로 물려받아 즉시 '완료'로 오판된다
+    // (= 새 목적지 올렸는데 완료 카드만 뜨고 리셋 안 되는 버그). 검역이 by_dest 로 분리되기 전 방어.
+    // 백신·항체(rabies_* 등 동물 단위 기록)는 건드리지 않는다.
+    if (demoted.length > 0) {
+      for (const k of [
+        'kr_import_quarantine_date',
+        'kr_import_quarantine_confirmed',
+        'jp_import_quarantine_date',
+        'jp_import_quarantine_confirmed',
+        'jp_export_quarantine_visit_date',
+        'jp_export_quarantine_visit_confirmed',
+      ]) {
+        delete nextData[k]
+      }
+      const ac = { ...((nextData.arrival_confirmed as Record<string, unknown> | undefined) ?? {}) }
+      for (const t of demoted) delete ac[t]
+      nextData.arrival_confirmed = ac
+      // 편도 has-arrived(출국일 경과) 누수도 차단 — 공용 출국일 컬럼을 비운다(새 목적지 출국일은 by_dest).
+      updatePayload.departure_date = null
+    }
 
     const { error: updErr } = await admin
       .from('cases')
-      .update({ destination: nextDest, data: nextData })
+      .update(updatePayload)
       .eq('id', caseId)
     if (updErr) return { ok: false, error: updErr.message }
 
