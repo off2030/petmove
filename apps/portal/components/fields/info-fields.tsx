@@ -102,11 +102,15 @@ function filterToEnglish(raw: string): string {
 
 // 라벨 좌측 + 값 좌측(라벨 옆에서 시작) — 단순·일관 톤. 라벨 폭 고정으로 값이 같은
 // 컬럼에서 시작하게 정렬. 값이 여러 줄로 늘어날 때(주소)는 alignTop 로 라벨 위 정렬.
+// 라벨 폭 — '내 정보' 모든 편집 화면이 공유. 가장 긴 라벨('마이크로칩'·'왕복 · 편도')이
+// 안 깨지는 한도까지 좁혀 라벨·값 간격을 줄였다(88→70). 70px 는 폰트 로드 실패·swap 순간
+// 시스템 한글 폴백(Malgun 기준 '마이크로칩' 65px)까지 커버. nowrap 으로 어떤 폴백에서도 줄바꿈 방지.
 const labelStyle: React.CSSProperties = {
   fontSize: 13,
   color: C.ink2,
   flexShrink: 0,
-  width: 88,
+  width: 70,
+  whiteSpace: 'nowrap',
 }
 
 function InlineRow({
@@ -938,7 +942,7 @@ export function ColorField({
 
   return (
     <InlineRow label={label} last={last} alignTop>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, paddingTop: 1 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, paddingTop: 1, width: '100%' }}>
         {COLORS.map((c) => {
           const on = selected.has(c.ko)
           const blocked = !on && selected.size >= 3
@@ -951,10 +955,11 @@ export function ColorField({
               disabled={blocked}
               style={{
                 height: 32,
-                paddingLeft: 7,
-                paddingRight: 12,
-                display: 'inline-flex',
+                paddingLeft: 8,
+                paddingRight: 8,
+                display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: 6,
                 borderRadius: 999,
                 border: `1px solid ${on ? C.ink : C.line}`,
