@@ -106,6 +106,24 @@ function applyApqaEuShim(rules: InspectionLabRule[]): InspectionLabRule[] {
   })
 }
 
+/**
+ * 새로 신설된 built-in 전염병검사 기관 규칙을 기존 조직의 persisted 설정에도 보강.
+ *
+ * 2026-06 남아프리카공화국 → ARC-OVI 신설. DB 에 inspection_config 가 이미 저장된
+ * 조직은 DEFAULT_INSPECTION_CONFIG 변경이 반영되지 않으므로(load 시 persisted 우선),
+ * read-path 에서 보강해 마이그레이션 없이 즉시 적용. (applyApqaEuShim 과 동일 취지.)
+ *
+ * persisted 규칙에 한 번도 등장하지 않은 국가의 DEFAULT 규칙만 합쳐, 조직이 의도적으로
+ * 편집·삭제한 기존 규칙은 건드리지 않는다.
+ */
+function mergeMissingInfectiousDefaults(rules: InspectionLabRule[]): InspectionLabRule[] {
+  const covered = new Set(rules.flatMap(r => r.countries))
+  const missing = DEFAULT_INSPECTION_CONFIG.infectiousRules.filter(
+    dr => dr.countries.every(c => !covered.has(c)),
+  )
+  return missing.length > 0 ? [...rules, ...missing] : rules
+}
+
 function normalize(raw: unknown): InspectionConfig {
   const src = (raw && typeof raw === 'object') ? (raw as Record<string, unknown>) : {}
   const titerDefault = typeof src.titerDefault === 'string' && src.titerDefault.trim()
@@ -121,7 +139,7 @@ function normalize(raw: unknown): InspectionConfig {
   return {
     titerDefault,
     titerRules: applyApqaEuShim(normalizeRules(titerRaw)),
-    infectiousRules: normalizeRules(infectiousRaw),
+    infectiousRules: mergeMissingInfectiousDefaults(normalizeRules(infectiousRaw)),
     ...(customTiterLabs.length > 0 ? { customTiterLabs } : {}),
     ...(customInfectiousLabs.length > 0 ? { customInfectiousLabs } : {}),
   }
