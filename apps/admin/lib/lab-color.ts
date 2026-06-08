@@ -26,6 +26,7 @@ const LAB_TO_TONE: Record<string, ToneKey> = {
   ksvdl_r: 'red',
   ksvdl: 'mauve',
   vbddl: 'plum',
+  arc_ovi: 'neutral',
 }
 
 export function labColor(lab: string | null | undefined): LabColor | null {

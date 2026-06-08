@@ -67,6 +67,7 @@ const LAB_OPTIONS = [
   { value: 'ksvdl_r', label: 'KSVDL-R' },
   { value: 'ksvdl', label: 'KSVDL' },
   { value: 'vbddl', label: 'VBDDL' },
+  { value: 'arc_ovi', label: 'ARC-OVI' },
 ]
 
 /**
@@ -308,6 +309,30 @@ function buildInspectionRows(
         dateStorage: { kind: 'infectious_multi', labs: nzLabs },
       })
     }
+    // 3) 전염병검사 — 그 외 국가 (설정 infectiousRules 매칭). AU/NZ 는 위에서 전용 처리.
+    //    케이스의 목적지 토큰마다 매칭 규칙의 lab 별로 1행. 검사일(해당 lab record) 또는
+    //    그 목적지 출국일 중 하나라도 있으면 탭에 올린다(호주 동작과 동일).
+    const infRecs = readInfectiousRecords(c)
+    for (const dest of parseDestinations(c.destination)) {
+      if (matchesDestinationKey(dest, 'australia') || matchesDestinationKey(dest, 'new_zealand')) continue
+      const rule = infectiousRules.find(r => r.countries.includes(dest))
+      if (!rule || rule.labs.length === 0) continue
+      const depDate = getDepartureDate(c, dest) ?? ''
+      for (const lab of rule.labs) {
+        const existing = infRecs.find(r => r.lab === lab)
+        const referenceDate = existing?.date || depDate
+        if (!referenceDate) continue
+        rows.push({
+          id: `${c.id}:inf:${dest}:${lab}`,
+          caseRow: c,
+          kind: 'infectious',
+          lab,
+          date: existing?.date ?? '',
+          dateEditable: true,
+          dateStorage: { kind: 'infectious', lab },
+        })
+      }
+    }
   }
   return rows
 }
@@ -322,6 +347,7 @@ const LAB_SORT_ORDER: Record<string, number> = {
   ksvdl: 5,
   vbddl: 6,
   nz_combined: 6,
+  arc_ovi: 7,
 }
 
 // 모든 데이터 컬럼은 통일 너비.
