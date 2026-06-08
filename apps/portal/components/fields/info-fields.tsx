@@ -673,7 +673,16 @@ export function SegmentField({
   return (
     <InlineRow label={label} last={last} alignTop={!!sub}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
-        <div style={{ display: 'flex', gap: 6 }}>
+        {/* 연결된 분절 토글 — 한 트랙 안에 두 칸, 선택된 칸만 채워진다(모색 칩과 같은 ~32px 높이). */}
+        <div
+          role="group"
+          style={{
+            display: 'inline-flex',
+            padding: 2,
+            borderRadius: 999,
+            background: 'color-mix(in srgb, var(--pm-ink) 8%, transparent)',
+          }}
+        >
           {options.map((o) => {
             const selected = o.value === value
             return (
@@ -683,16 +692,16 @@ export function SegmentField({
                 onClick={() => onChange(o.value)}
                 aria-pressed={selected}
                 style={{
-                  padding: '7px 16px',
+                  padding: '6px 14px',
                   borderRadius: 999,
-                  border: `1px solid ${selected ? C.ink : C.line}`,
+                  border: 0,
                   background: selected ? C.ink : 'transparent',
                   color: selected ? C.surface : C.ink2,
                   fontFamily: 'inherit',
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: 500,
                   cursor: 'pointer',
-                  transition: 'background .12s, color .12s, border-color .12s',
+                  transition: 'background .15s, color .15s',
                 }}
               >
                 {o.label}
