@@ -18,7 +18,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from '@petmove/auth/server'
-import { summarizeJourney, type PastJourneySummary } from '@petmove/domain'
+import { summarizeJourney, resolveDone, type PastJourneySummary, type CaseRow } from '@petmove/domain'
+import { activeDestinationView } from '@/lib/cases/active-destination'
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 type TripType = 'round' | 'one_way'
@@ -70,29 +71,56 @@ export async function addCaseDestination(
 
     const { data: row, error: rowErr } = await admin
       .from('cases')
-      .select('destination, data')
+      .select('*')
       .eq('id', caseId)
       .single()
     if (rowErr || !row) return { ok: false, error: rowErr?.message ?? '여정을 찾을 수 없습니다.' }
 
-    const r = row as { destination: string | null; data: Record<string, unknown> | null }
-    const tokens = parseDestTokens(r.destination)
+    const caseRow = row as CaseRow
+    const tokens = parseDestTokens(caseRow.destination)
     if (tokens.includes(dest)) {
       return { ok: true, value: { destinations: tokens, added: false } }
     }
-    const nextTokens = [...tokens, dest]
-    const nextDest = joinDestTokens(nextTokens)
+    const data = (caseRow.data ?? {}) as Record<string, unknown>
 
-    const data = (r.data ?? {}) as Record<string, unknown>
-    const nextTripType: Record<string, TripType> = {
-      ...((data.trip_type as Record<string, TripType> | undefined) ?? {}),
-      [dest]: tripType,
-    }
-    const nextByDest: Record<string, Record<string, unknown>> = {
+    // 완료(has-arrived)된 기존 여정을 지난 여정으로 내림 — **새 목적지가 생길 때만**.
+    // (완료 즉시 제거 X — 완료 카드는 진행 중 다른 여정이 없으면 그대로 유지. design §4·§6)
+    const byDestAll = {
       ...((data.by_dest as Record<string, Record<string, unknown>> | undefined) ?? {}),
-      [dest]: {},
     }
-    const nextData = { ...data, trip_type: nextTripType, by_dest: nextByDest }
+    const tripTypeAll = { ...((data.trip_type as Record<string, TripType> | undefined) ?? {}) }
+    const pastJourneys: PastJourneySummary[] = [
+      ...((data.past_journeys as PastJourneySummary[] | undefined) ?? []),
+    ]
+    const today = new Date().toISOString().slice(0, 10)
+    let remaining = [...tokens]
+    for (const token of tokens) {
+      const view = activeDestinationView(caseRow, token)
+      if (!resolveDone('has-arrived', view)) continue // 미완료 여정은 그대로 (병렬 유지)
+      const viewData = (view.data ?? {}) as Record<string, unknown>
+      pastJourneys.push(
+        summarizeJourney(
+          {
+            destination: token,
+            tripType: tripTypeAll[token] ?? 'round',
+            departureDate: (view.departure_date ?? null) as string | null,
+            returnDate: (viewData.return_date ?? null) as string | null,
+          },
+          'done',
+          today,
+        ),
+      )
+      delete byDestAll[token]
+      delete tripTypeAll[token]
+      remaining = remaining.filter((t) => t !== token)
+    }
+
+    // 새 목적지 추가
+    remaining.push(dest)
+    tripTypeAll[dest] = tripType
+    byDestAll[dest] = {}
+    const nextDest = joinDestTokens(remaining)
+    const nextData = { ...data, trip_type: tripTypeAll, by_dest: byDestAll, past_journeys: pastJourneys }
 
     const { error: updErr } = await admin
       .from('cases')
@@ -104,7 +132,7 @@ export async function addCaseDestination(
     revalidatePath(`/me/animal/${caseId}`)
     revalidatePath('/cases')
     revalidatePath(`/cases/${caseId}/journey`)
-    return { ok: true, value: { destinations: nextTokens, added: true } }
+    return { ok: true, value: { destinations: remaining, added: true } }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
   }
