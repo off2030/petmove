@@ -96,12 +96,17 @@ export default function CaseJourneyPage({
             if (anchorDate) run(() => dismissCompletionPrompt(id, dest, anchorDate))
           }}
           onCancel={async () => {
+            // 시트를 먼저 내리고 확인창을 띄운다. 시트(zIndex 200)가 공용 confirm(z-100)
+            // 보다 위라, 안 내리면 확인창이 시트 뒤에 깔린다. 한 번에 모달 하나만.
+            setPromptClosed(true)
             const ok = await confirm({
               message: `${dest} 여정을 취소할까요? 되돌릴 수 없어요.`,
-              okLabel: '취소',
+              okLabel: '네, 취소할게요',
+              cancelLabel: '아니요',
               variant: 'destructive',
             })
             if (ok) run(() => markJourneyComplete(id, dest, 'cancelled'))
+            else setPromptClosed(false) // 되돌리면 완료 확인 시트로 복귀
           }}
         />
       )}
