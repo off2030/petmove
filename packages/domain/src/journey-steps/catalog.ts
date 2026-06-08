@@ -533,10 +533,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '전염병 검사',
     shortLabel: '전염병',
     description:
-      '호주(Brucella/Leptospira/Leishmania 등), 뉴질랜드 — 인증 실험실에서 음성 확인이 필요합니다.',
+      '호주(Brucella/Leptospira/Leishmania 등), 뉴질랜드, 남아프리카공화국 — 인증 실험실에서 음성 확인이 필요합니다.',
     doneSummary: '전염병 검사를 받았습니다.',
     applicability: {
-      destinations: ['australia', 'new_zealand'],
+      destinations: ['australia', 'new_zealand', 'south_africa'],
       species: 'all',
       tripType: 'all',
     },
