@@ -17,6 +17,7 @@ import { softDeleteMyCase } from '@/lib/actions/cases'
 import { buildPetBlock } from '@/lib/profile/catalog'
 import { C, EditPageShell, SectionCard } from './settings-shared'
 import { DestinationChips } from './destination-chips'
+import { PastJourneysSection } from './past-journeys-section'
 import { useAnimalEditForm } from './use-animal-edit-form'
 
 /**
@@ -160,6 +161,9 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
         onStageRestore={stageRestore}
         onStageAdd={stageAdd}
       />
+
+      {/* 지난 여정 — 완료/취소된 여정 요약(도장 카드). past_journeys 없으면 자동 숨김. */}
+      <PastJourneysSection caseRow={caseRow} />
 
       {/* 저장 버튼 — 동물 정보 + 여정 변경을 함께 저장한다. '동물 삭제' 바로 위.
           (삭제·함께 준비 해제 confirm 은 이 버튼을 누를 때 뜬다.) */}
