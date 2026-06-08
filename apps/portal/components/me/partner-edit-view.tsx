@@ -69,11 +69,13 @@ export function PartnerEditView({ role }: { role: PartnerRole }) {
   const currentOrgId = useMemo<string | null>(() => {
     const first = cases[0]
     if (!first) return null
-    // 담당 병원 = org_id (platform = 담당 미정 → null). 운송 = transport_org_id.
+    // 담당 병원 = org_id, 운송 = transport_org_id. 둘 다 platform = 담당 미정 → null.
     if (role === 'vet') {
       return first.org_id && first.org_id !== PLATFORM_ORG_ID ? first.org_id : null
     }
-    return first.transport_org_id
+    return first.transport_org_id && first.transport_org_id !== PLATFORM_ORG_ID
+      ? first.transport_org_id
+      : null
   }, [cases, role])
 
   // 카탈로그 fetch — 마운트 시 1회. 현재 연결 조직 이름·메타 표시에도 재사용.

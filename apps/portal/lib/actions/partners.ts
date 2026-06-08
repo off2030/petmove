@@ -69,11 +69,12 @@ export async function getMyPartnerOrgs(): Promise<
       .maybeSingle()
     if (caseError) return { ok: false, error: caseError.message }
 
-    // 담당 병원 = org_id (platform = 담당 미정 → null 로 표시). 운송 = transport_org_id.
+    // 담당 병원 = org_id, 운송 = transport_org_id. 둘 다 platform = 담당 미정 → null 표시.
     const orgId = (caseRow as { org_id: string | null } | null)?.org_id ?? null
     const vetId = orgId && orgId !== PLATFORM_ORG_ID ? orgId : null
-    const tspId =
+    const tspRaw =
       (caseRow as { transport_org_id: string | null } | null)?.transport_org_id ?? null
+    const tspId = tspRaw && tspRaw !== PLATFORM_ORG_ID ? tspRaw : null
     const ids = [vetId, tspId].filter((v): v is string => !!v)
     if (ids.length === 0) return { ok: true, value: { vet: null, transport: null } }
 
@@ -98,8 +99,9 @@ export async function getMyPartnerOrgs(): Promise<
 
 /**
  * 카드 바텀시트에 노출할 조직 목록. role 에 따라 hospital/both 또는 transport/both 만.
- * platform 은 RLS 정책에서 제외되어 자동으로 안 보임 — 보호자가 직영 조직을 잘못
- * 선택할 가능성 차단.
+ * platform(펫무브 직영) 은 id 로 명시 제외 — org_type 이 드리프트('both' 등)로 바뀌어도
+ * 보호자 카탈로그에 새지 않도록. (직영을 담당으로 고르면 org_id 가 platform 으로 돌아가
+ * "담당 미정"=연결 해제처럼 동작하는 결함 방지. 해제는 unset* 로만.)
  */
 export async function listAvailableOrgs(role: PartnerRole): Promise<Result<PartnerOrg[]>> {
   try {
@@ -110,6 +112,7 @@ export async function listAvailableOrgs(role: PartnerRole): Promise<Result<Partn
       .from('organizations')
       .select('id, name, name_en, org_type, avatar_url')
       .in('org_type', PARTNER_TYPES_BY_ROLE[role] as unknown as string[])
+      .neq('id', PLATFORM_ORG_ID)
       .order('name', { ascending: true })
     if (error) return { ok: false, error: error.message }
     return { ok: true, value: (data ?? []) as PartnerOrg[] }
@@ -166,6 +169,11 @@ async function setPartnerOrg(
     if (!user) return { ok: false, error: '인증 필요' }
 
     if (orgId !== null) {
+      // 플랫폼(직영)은 담당으로 설정 불가 — org_id=platform 은 "담당 미정" 의미라
+      // 연결이 아니라 해제가 된다. 해제는 unsetVetOrg/unsetTransportOrg 로만.
+      if (orgId === PLATFORM_ORG_ID) {
+        return { ok: false, error: '펫무브 직영은 담당으로 선택할 수 없습니다.' }
+      }
       const supabase = await createClient()
       const { data: org, error: orgError } = await supabase
         .from('organizations')
