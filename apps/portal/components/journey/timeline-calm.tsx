@@ -466,6 +466,7 @@ export function TimelineCalm({
         {/* 여정 완료 배너 — 마지막 절차가 끝나면 '다음 할 일' 자리에 노출. 옛 journey-complete
             마커 step 을 대체. 완료의 긍정 톤(sage)으로 다음 할 일·안내 카드와 구분. */}
         {journeyComplete && (
+          <>
           <div
             style={{
               position: 'relative',
@@ -556,15 +557,37 @@ export function TimelineCalm({
                 </>
               )}
             </div>
+          </div>
 
-            <p style={{ margin: '12px 0 0', fontSize: 13, lineHeight: 1.55, color: 'rgba(45,38,28,.65)' }}>
+          {/* 소감 카드 — 완료 카드에서 분리. 도착(완료)의 긍정 톤과 별개로, 차분한 taupe
+              면에 소감 유도만 담는다. design journey-lifecycle §5. */}
+          <div
+            style={{
+              marginTop: 14,
+              padding: 22,
+              borderRadius: 22,
+              background: C.cardSoft,
+              boxShadow: 'var(--pm-card-rim)',
+            }}
+          >
+            <h3
+              style={{
+                ...serif,
+                margin: 0,
+                fontSize: 18,
+                lineHeight: 1.25,
+                color: 'var(--pm-ink)',
+                fontWeight: 500,
+                textWrap: 'balance' as React.CSSProperties['textWrap'],
+              }}
+            >
               펫무브와 함께한 여정 어떠셨나요?
-            </p>
+            </h3>
             <Link
               href={`/cases/${caseId}/feedback`}
               className="pm-pressable"
               style={{
-                marginTop: 18,
+                marginTop: 16,
                 padding: '10px 16px',
                 borderRadius: 999,
                 border: `.5px solid color-mix(in srgb, var(--pm-sage) 45%, transparent)`,
@@ -583,6 +606,7 @@ export function TimelineCalm({
               <span style={{ color: C.sage }}>→</span>
             </Link>
           </div>
+          </>
         )}
 
         {/* 다음 할 일 카드 — soft taupe. 헤더 1회 + 할 일 항목들(각 행이 링크, 구분선).

@@ -42,19 +42,29 @@ function MiniStamp({ size = 44, rotate = -6 }) {
   );
 }
 
-// ── ① 완료 카드 (도착 직후, 일정 탭) ────────────────────────────────────────
+// ── ① 완료 카드 (도착 직후, 일정 탭) — 소감은 ①-b 로 분리 ────────────────────
 function ArrivalCard() {
   return (
     <div style={{ margin: '0 24px', padding: '24px', borderRadius: 22, background: C.cardHero, boxShadow: '0 1px 0 rgba(255,255,255,.35) inset', position: 'relative', overflow: 'hidden' }}>
       {/* 도장 — 우측 상단 (기존 앱 도착 배너와 동일 위치) */}
       <div style={{ position: 'absolute', top: 14, right: 14 }}><ArrivalStamp size={88} date="2025.11" /></div>
-      <h2 style={{ ...serif, fontSize: 25, margin: '6px 0 0', color: C.ink, fontWeight: 500, lineHeight: 1.22, maxWidth: '60%' }}>몽이와 잘 도착했어요</h2>
+      <div style={{ ...monoCap, color: C.sageDeep }}>여정 완료</div>
+      <h2 style={{ ...serif, fontSize: 25, margin: '12px 0 0', color: C.ink, fontWeight: 500, lineHeight: 1.22, maxWidth: '60%' }}>몽이와 잘 도착했어요</h2>
       <div style={{ fontSize: 13, color: C.ink2, marginTop: 12, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
         <span>한국</span><span style={{ color: C.ink3 }}>⇄</span><span>일본</span>
         <span style={{ ...num, color: C.ink3, marginLeft: 4 }}>2025.06.23 – 11.15</span>
       </div>
-      <button style={{ marginTop: 18, padding: '11px 22px', borderRadius: 999, border: 'none', background: C.accent, color: '#FBF7F1', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
-        <Icon name="sparkle" size={15} color="#FBF7F1" /> 소감 남기기
+    </div>
+  );
+}
+
+// ── ①-b 소감 카드 (완료 카드 바로 아래 — 차분한 taupe 면에 소감 유도만) ────────
+function FeedbackCard() {
+  return (
+    <div style={{ margin: '14px 24px 0', padding: '22px 24px', borderRadius: 22, background: C.cardList, boxShadow: '0 1px 0 rgba(255,255,255,.45) inset' }}>
+      <h3 style={{ ...serif, fontSize: 18, margin: 0, color: C.ink, fontWeight: 500, lineHeight: 1.25 }}>펫무브와 함께한 여정 어떠셨나요?</h3>
+      <button style={{ marginTop: 16, padding: '10px 18px', borderRadius: 999, border: `1px solid ${C.line2}`, background: C.surface, color: C.ink, fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+        소감 남기기 <span style={{ color: C.sageDeep }}>→</span>
       </button>
     </div>
   );
@@ -124,7 +134,10 @@ function JourneyCardsGallery() {
       <IOSDevice width={390} height={844}>
         <div className="pm-noscroll" style={{ height: '100%', overflow: 'auto', background: C.bg }}>
           <div style={{ ...serif, fontSize: 25, color: C.ink, padding: '64px 24px 24px', fontWeight: 500 }}>여정 카드 시안</div>
-          <Section label="일정 탭 · 완료 카드"><ArrivalCard /></Section>
+          <Section label="일정 탭 · 완료 카드">
+            <ArrivalCard />
+            <FeedbackCard />
+          </Section>
           <Section label="반려동물 › 여정 · 지난 여정"><PastJourneys /></Section>
           <Section label="완료 확인 · A형 (출국·귀국 다음날)">
             <ConfirmSheet
