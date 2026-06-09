@@ -97,7 +97,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
         const missing = rabies.length === 0 ? '광견병 1차' : '광견병 2차'
         return {
           ok: false,
-          message: `${missing} 정보가 없습니다. 입력해 주세요.`,
+          message: `${missing} 정보가 없습니다. 입력하세요.`,
           offendingPaths: ['rabies_titer_records'],
         }
       }
@@ -178,7 +178,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
         const broken = entries[brk.brokenAt - 1]
         return {
           ok: false,
-          message: `${brk.brokenAt - 1}차 백신 유효기간이 만료된 뒤 ${brk.brokenAt}차를 접종했습니다. 접종일을 확인해주세요.`,
+          message: `${brk.brokenAt - 1}차 백신 유효기간이 만료된 뒤 ${brk.brokenAt}차를 접종했습니다. 접종일을 확인하세요.`,
           offendingPaths: [`rabies_dates[${broken.originalIndex}].date`],
         }
       }

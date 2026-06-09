@@ -18,7 +18,7 @@ export async function showConflictNotice(confirm: ConfirmFn): Promise<void> {
   await confirm({
     message: '내용이 바뀌었어요',
     description:
-      '다른 곳에서 정보가 수정되어, 방금 저장은 반영되지 않았어요. 최신 내용을 불러와 다시 입력해 주세요.',
+      '다른 곳에서 정보가 수정되어, 방금 저장은 반영되지 않았어요. 최신 내용을 불러와 다시 입력하세요.',
     okLabel: '최신 내용 불러오기',
     okOnly: true,
   })

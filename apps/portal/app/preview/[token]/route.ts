@@ -21,7 +21,7 @@ export async function GET(
   const payload = verifyPreviewToken(token)
   if (!payload) {
     return new NextResponse(
-      '미리보기 링크가 만료되었거나 올바르지 않습니다. 펫무브워크에서 다시 열어 주세요.',
+      '미리보기 링크가 만료되었거나 올바르지 않습니다. 펫무브워크에서 다시 열어 보세요.',
       { status: 403, headers: { 'content-type': 'text/plain; charset=utf-8' } },
     )
   }

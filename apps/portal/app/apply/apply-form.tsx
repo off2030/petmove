@@ -68,7 +68,7 @@ const messages = {
     speciesOther: '기타',
     breed: '품종',
     breedPlaceholder: '품종 검색 · 말티즈 / Maltese',
-    breedSelectSpeciesFirst: '종을 먼저 선택해주세요',
+    breedSelectSpeciesFirst: '종을 먼저 선택하세요',
     color: '모색',
     colorHint: '가장 비슷한 색상을 최대 3개까지 선택',
     sex: '성별',
@@ -80,7 +80,7 @@ const messages = {
     weightHint: 'kg',
     weightPlaceholder: '예: 5.2',
     optional: 'Optional',
-    optionalHint: '아시는 부분만 작성해주세요',
+    optionalHint: '아시는 부분만 작성하세요',
     microchip: '마이크로칩 번호',
     microchipHint: '15자리',
     microchipDate: '마이크로칩 삽입일',
@@ -94,10 +94,10 @@ const messages = {
     optionalStepTitle: '추가 정보 (선택)',
     addressModalTitle: '주소 검색',
     fillRequest: '작성 요청',
-    phoneFormatError: '전화번호는 010-1234-5678 형식으로 입력해주세요.',
+    phoneFormatError: '전화번호는 010-1234-5678 형식으로 입력하세요.',
     microchipFormatErrorPrefixSingle: '',
     microchipFormatErrorPrefixN: (n: number) => `반려동물 ${n}: `,
-    microchipFormatError: '15자리 숫자를 입력해주세요.',
+    microchipFormatError: '15자리 숫자를 입력하세요.',
     topLabels: {
       destination: '목적지',
       customerName: '이름',
@@ -124,7 +124,7 @@ const messages = {
       const code = last.charCodeAt(0)
       const hasJongseong = code >= 0xAC00 && code <= 0xD7A3 && (code - 0xAC00) % 28 !== 0
       const particle = hasJongseong ? '을' : '를'
-      return `${parts.join(', ')}${particle} 입력해주세요.`
+      return `${parts.join(', ')}${particle} 입력하세요.`
     },
   },
   en: {

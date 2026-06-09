@@ -186,7 +186,7 @@ export function validateRabiesInterval(primeDate: string, boosterDate: string): 
   if (!primeDate || !boosterDate) return null
   const gap = daysBetween(primeDate, boosterDate)
   if (gap < 0) {
-    return `광견병 2차 접종일이 1차 접종일(${fmt(primeDate)})보다 빠릅니다. 날짜를 확인해 주세요.`
+    return `광견병 2차 접종일이 1차 접종일(${fmt(primeDate)})보다 빠릅니다. 날짜를 확인하세요.`
   }
   if (gap < 30) {
     const earliest = addDays(primeDate, 30)
@@ -316,7 +316,7 @@ export function validateTiterAfterBooster(primaryDates: string[], titerDate: str
   if (valid.length === 0) return null
   const latest = valid.reduce((m, d) => (d > m ? d : m))
   if (titerDate < latest) {
-    return `광견병 항체 검사일(${fmt(titerDate)})이 광견병 백신 접종일(${fmt(latest)})보다 빠릅니다. 날짜를 확인해 주세요.`
+    return `광견병 항체 검사일(${fmt(titerDate)})이 광견병 백신 접종일(${fmt(latest)})보다 빠릅니다. 날짜를 확인하세요.`
   }
   return null
 }

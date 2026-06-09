@@ -15,7 +15,7 @@ export default function OfflinePage() {
         <p className="mb-md text-[14px] text-foreground/60 leading-relaxed">
           네트워크 연결이 없어 이 페이지를 불러올 수 없습니다.
           <br />
-          연결을 확인하고 다시 시도해주세요.
+          연결을 확인하고 다시 시도하세요.
         </p>
         <ReloadButton />
       </div>

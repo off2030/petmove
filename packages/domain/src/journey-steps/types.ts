@@ -150,7 +150,7 @@ export interface StepDefinition {
   /**
    * 데이터 상태에 따라 desc(전체 일정 row 보조줄) / cardDesc(다음 할 일 카드 본문) 를
    * 동적으로 갈아끼우는 훅. 예: 마이크로칩 번호만 입력되고 시술일이 비면
-   * '마이크로칩 삽입 날짜를 입력해주세요.' 로 안내.
+   * '마이크로칩 삽입 날짜를 입력하세요.' 로 안내.
    *
    * desc 우선순위: 완료 시 doneSummary > situational.desc > description 첫 문장,
    * 미완료 시 situational.desc > description 첫 문장. (완료된 step 은 과거형 narration

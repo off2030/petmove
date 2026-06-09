@@ -8,7 +8,7 @@ export default function MeGuardianPage() {
   const { cases } = useCases()
   const primary = cases[0]
   if (!primary) {
-    return <ComingSoonView title="보호자" message="먼저 케이스를 등록해주세요." />
+    return <ComingSoonView title="보호자" message="먼저 케이스를 등록하세요." />
   }
   return <GuardianEditView caseRow={primary} caseId={primary.id} />
 }

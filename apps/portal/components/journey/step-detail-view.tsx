@@ -468,10 +468,10 @@ export function StepDetailView({
   // 뜨지 않게 한다(검증 → 통과 시에만 확인 → 저장).
   function getSaveBlockError(): string | null {
     if (isMicrochip) {
-      if (chip !== '' && chip.length !== 15) return '15자리 숫자를 입력해주세요.'
+      if (chip !== '' && chip.length !== 15) return '15자리 숫자를 입력하세요.'
       const birth = readBirthDate(caseRow?.data)
       if (date && birth && date < birth) {
-        return '마이크로칩 삽입일이 출생일보다 빠릅니다. 날짜를 확인해주세요.'
+        return '마이크로칩 삽입일이 출생일보다 빠릅니다. 날짜를 확인하세요.'
       }
       return null
     }
@@ -1043,8 +1043,8 @@ export function StepDetailView({
       const ok = await confirm({
         message: '이후 일정이 이미 입력돼 있어요',
         description: isRabies1Deletion
-          ? '이 단계를 삭제하면 이미 입력한 이후 일정과 어긋날 수 있습니다. 이후 일정을 확인해주세요.\n\n1차 광견병 기록이 삭제되고, 2차 광견병 기록이 1차로 올라갑니다. 이대로 진행할까요?'
-          : '이 단계를 수정·삭제하면 이미 입력한 이후 일정과 어긋날 수 있습니다. 이후 일정을 확인해주세요.',
+          ? '이 단계를 삭제하면 이미 입력한 이후 일정과 어긋날 수 있습니다. 이후 일정을 확인하세요.\n\n1차 광견병 기록이 삭제되고, 2차 광견병 기록이 1차로 올라갑니다. 이대로 진행할까요?'
+          : '이 단계를 수정·삭제하면 이미 입력한 이후 일정과 어긋날 수 있습니다. 이후 일정을 확인하세요.',
         okLabel: '확인',
       })
       if (!ok) return

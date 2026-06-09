@@ -53,7 +53,7 @@ export function useCaseEditForm(caseRow: CaseRow, caseId: string): UseCaseEditFo
     if (!dirty || status === 'saving') return
     if (form.microchip && form.microchip.length !== 15) {
       setStatus('error')
-      setError('15자리 숫자를 입력해주세요.')
+      setError('15자리 숫자를 입력하세요.')
       return
     }
     // 왕복 + 귀국일 < 출국일 — server updateCaseInfoFields 와 동일 검증을 client 에서도
@@ -81,7 +81,7 @@ export function useCaseEditForm(caseRow: CaseRow, caseId: string): UseCaseEditFo
     // 이미 숫자만 들어오므로 길이·prefix 만 확인.
     if (form.phone && !/^010\d{8}$/.test(form.phone)) {
       setStatus('error')
-      setError('전화번호는 010-XXXX-XXXX 형식으로 입력해 주세요.')
+      setError('전화번호는 010-XXXX-XXXX 형식으로 입력하세요.')
       return
     }
     // 이메일 — 빈 값 OK, 입력 시 단순 형식 검증 (sub@domain.tld).

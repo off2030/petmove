@@ -125,7 +125,7 @@ export function ShareForm({ initial }: Props) {
       <StatusScreen
         eyebrow="Expired"
         title="만료된 링크입니다"
-        description="담당자에게 새 링크를 요청해주세요."
+        description="담당자에게 새 링크를 요청하세요."
       />
     )
   }
@@ -989,7 +989,7 @@ function BreedSearchInput({
             }
           }}
           onBlur={() => setTimeout(() => setQuery(''), 300)}
-          placeholder={speciesValue ? '품종 검색 · 말티즈 / Maltese' : '종을 먼저 선택해주세요'}
+          placeholder={speciesValue ? '품종 검색 · 말티즈 / Maltese' : '종을 먼저 선택하세요'}
           disabled={!speciesValue}
           className={cn(inputClass, !speciesValue && 'opacity-50')}
         />
@@ -1294,7 +1294,7 @@ function getFieldPlaceholder(field: ShareFieldSpec): string {
   if (key.includes('flight') || lowerLabel.includes('항공편')) return '예: KE001'
   if (key.includes('airport') || lowerLabel.includes('공항')) return '예: ICN'
   if (field.type === 'number') return '예: 1'
-  return '입력해주세요'
+  return '입력하세요'
 }
 
 type GroupedBlock = { subgroup?: string; fields: ShareFieldSpec[] }

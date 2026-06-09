@@ -228,7 +228,7 @@ export function useAnimalEditForm(caseRow: CaseRow, caseId: string): UseAnimalEd
     // 동물 정보 입력 검증 — 이 페이지에서 편집되는 필드만 선제 검증(나머지는 server).
     if (form.microchip && form.microchip.replace(/\D/g, '').length !== 15) {
       setStatus('error')
-      setError('15자리 숫자를 입력해주세요.')
+      setError('15자리 숫자를 입력하세요.')
       return
     }
     if (form.weight.trim()) {

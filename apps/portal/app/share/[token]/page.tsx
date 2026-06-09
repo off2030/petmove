@@ -14,8 +14,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // org 이름만 노출 — 보호자/펫 이름은 PII 라 미리보기에 안 띄움.
   // fallback 은 고객 친화 브랜드 "펫무브" (직원용 admin 앱 이름인 "펫무브워크" X).
   const orgName = r.ok ? (r.value.org_name || '펫무브') : '펫무브'
-  const title = `${orgName} - 다음 정보를 입력해주세요!`
-  const description = '링크를 열어 반려동물 해외 이동에 필요한 정보를 입력해 주세요.'
+  const title = `${orgName} - 다음 정보를 입력하세요!`
+  const description = '링크를 열어 반려동물 해외 이동에 필요한 정보를 입력하세요.'
   return {
     title,
     description,

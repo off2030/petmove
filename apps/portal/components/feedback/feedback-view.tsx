@@ -279,7 +279,7 @@ export function FeedbackView({ caseId }: { caseId: string }) {
               textAlign: 'center',
             }}
           >
-            {error ?? '저장에 실패했어요. 잠시 후 다시 시도해주세요.'}
+            {error ?? '저장에 실패했어요. 잠시 후 다시 시도하세요.'}
           </div>
         )}
 

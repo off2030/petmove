@@ -20,7 +20,7 @@ export default function MeTravelPage() {
   }, [primary, router])
 
   if (!primary) {
-    return <ComingSoonView title="여행 정보" message="먼저 케이스를 등록해주세요." />
+    return <ComingSoonView title="여행 정보" message="먼저 케이스를 등록하세요." />
   }
   return null
 }

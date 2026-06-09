@@ -174,7 +174,7 @@ export async function updateMicrochipFields(
     if (microchip != null && microchip !== '') {
       const digits = microchip.replace(/\D/g, '')
       if (digits.length !== 15) {
-        return { ok: false, error: '15자리 숫자를 입력해주세요.' }
+        return { ok: false, error: '15자리 숫자를 입력하세요.' }
       }
       chip = digits
     }
@@ -1703,7 +1703,7 @@ export async function updateCaseInfoFields(
     if (effective.microchip) {
       const digits = effective.microchip.replace(/\D/g, '')
       if (digits.length !== 15) {
-        return { ok: false, error: '15자리 숫자를 입력해주세요.' }
+        return { ok: false, error: '15자리 숫자를 입력하세요.' }
       }
       chip = digits
     }
