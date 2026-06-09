@@ -12,6 +12,7 @@ import {
   deriveJpExportQuarantineStatus,
   getDepartureDate,
   getVetVisitDate,
+  hasByDestEntry,
   matchesDestinationKey,
   parseDestinations,
   readByDestValue,
@@ -188,6 +189,8 @@ function importReportReturnDate(row: CaseRow): string {
   const data = (row.data as Record<string, unknown> | null) ?? null
   const v = readByDestValue(data, activeDest, 'return_date')
   if (typeof v === 'string' && v) return v
+  // 다중 목적지 + by_dest 관리: top-level fallback 안 함 — 누수 차단(B).
+  if (parseDestinations(row.destination).length > 1 && hasByDestEntry(data, activeDest)) return ''
   const top = data?.return_date
   return typeof top === 'string' && top ? top : ''
 }

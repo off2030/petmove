@@ -23,6 +23,7 @@ import {
   parseDestinations,
   validateJpEntryDate,
   writeByDestValue,
+  readByDestValue,
   type CaseRow,
   type VaccineProductsData,
 } from '@petmove/domain'
@@ -743,9 +744,10 @@ export async function updateFlightFields(
     // 부수효과(departure_date 컬럼 sync·auto-fill)는 by_dest 경로에선 스킵 — admin updateCaseField
     // 와 동일. 컬럼은 단일값이라 다중 목적지를 못 담고, flatten 이 by_dest[dest].departure_date 를
     // 우선 읽어 has-flight-date·D-day 가 목적지별로 작동한다.
-    const isMultiDest =
-      parseDestinations((existing as { destination: string | null }).destination).length > 1
-    if (destination && isMultiDest) {
+    const isSingleDest =
+      parseDestinations((existing as { destination: string | null }).destination).length === 1
+    // B: 단일도 by_dest 통일 — 활성 목적지 토큰만 있으면 항공권 필드 + 출국일을 by_dest[destination] 에 저장.
+    if (destination) {
       let merged: Record<string, unknown> = { ...prev }
       for (const key of FLIGHT_DATA_KEYS) {
         const val = typeof fields[key] === 'string' ? (fields[key] as string).trim() : ''
@@ -753,13 +755,41 @@ export async function updateFlightFields(
       }
       const entryDate = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
       merged = writeByDestValue(merged, destination, 'departure_date', entryDate || null)
-      const { data: updated, error } = await admin
+
+      // 공용 부수효과 패리티 — 단일 목적지 한정(다중은 종전대로 by_dest 만). top-level 경로와 동일하게:
+      //  · flight_info_recorded_at(항공권 구매 step 표시일) 최초 캡처 / 전부 지워지면 정리
+      //  · departure_date 컬럼 동기화(목록 필터·정렬·auto-fill 호환, read 는 by_dest 우선)
+      const updatePayload: Record<string, unknown> = { data: merged }
+      if (isSingleDest) {
+        const hasAnyFlightInfo = FLIGHT_DATA_KEYS.some((key) => {
+          const v = fields[key]
+          return typeof v === 'string' && v.trim().length > 0
+        })
+        if (hasAnyFlightInfo && typeof merged.flight_info_recorded_at !== 'string') {
+          merged.flight_info_recorded_at = new Date().toISOString().slice(0, 10)
+        } else if (!hasAnyFlightInfo) {
+          delete merged.flight_info_recorded_at
+        }
+        updatePayload.departure_date = entryDate || null
+      }
+
+      const { error: updErr } = await admin.from('cases').update(updatePayload).eq('id', caseId)
+      if (updErr) return { ok: false, error: updErr.message }
+
+      // 단일 목적지: 출국일 변경 시 org_auto_fill_rules(일본 departure↔departure_flight_date sync 등)를
+      // by_dest 경로로 적용 — top-level 경로의 applyAutoFillRules 와 동일.
+      if (isSingleDest) {
+        try {
+          await applyAutoFillRules(admin, caseId, 'departure_date', destination)
+        } catch { /* best-effort */ }
+      }
+
+      const { data: updated, error: refetchErr } = await admin
         .from('cases')
-        .update({ data: merged })
-        .eq('id', caseId)
         .select('*')
+        .eq('id', caseId)
         .single()
-      if (error) return { ok: false, error: error.message }
+      if (refetchErr) return { ok: false, error: refetchErr.message }
       return { ok: true, value: updated as CaseRow }
     }
 
@@ -1042,12 +1072,27 @@ export async function updateVetVisitDate(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const v = typeof date === 'string' ? date.trim() : ''
 
-    // 다중 목적지 + 활성 목적지 지정 → vet_visit_date 를 by_dest[destination] 에 분리 저장.
-    // (vet_visit_date 는 destination-scoped 필드. 단일 목적지/미지정은 아래 top-level 경로 — 무변경.)
-    const isMultiDest =
-      parseDestinations((existing as { destination: string | null }).destination).length > 1
-    if (destination && isMultiDest) {
-      const nextData = writeByDestValue(prev, destination, 'vet_visit_date', v || null)
+    // B: 단일도 by_dest 통일 — 활성 목적지 토큰만 있으면 vet_visit_date 를 by_dest[destination] 에 저장.
+    // (vet_visit_date 는 destination-scoped 필드. destination 미지정만 아래 top-level 경로.)
+    const isSingleDest =
+      parseDestinations((existing as { destination: string | null }).destination).length === 1
+    if (destination) {
+      let nextData = writeByDestValue(prev, destination, 'vet_visit_date', v || null)
+      // 검진일이 바뀌거나 지워지면 legacy 완료 플래그(vet_visit_confirmed, 공용)를 해제 — top-level 경로와
+      // 동일. 단일 목적지 한정(공용 단일값이라 다중 목적지에선 의미 모호 → 종전 유지).
+      if (isSingleDest && 'vet_visit_confirmed' in nextData) {
+        const prevByDest = readByDestValue(prev, destination, 'vet_visit_date')
+        const prevDate =
+          typeof prevByDest === 'string'
+            ? prevByDest
+            : typeof prev.vet_visit_date === 'string'
+              ? prev.vet_visit_date
+              : ''
+        if (v !== prevDate) {
+          nextData = { ...nextData }
+          delete (nextData as Record<string, unknown>).vet_visit_confirmed
+        }
+      }
       const { data: updated, error } = await admin
         .from('cases')
         .update({ data: nextData })
@@ -1098,14 +1143,13 @@ export async function updateVetVisitDate(
 function applyQuarantine(
   prev: Record<string, unknown>,
   destination: string | null | undefined,
-  destinationRaw: string | null,
   dateKey: string,
   confirmKey: string,
   v: string,
   confirmed: boolean,
 ): Record<string, unknown> {
-  const isMulti = parseDestinations(destinationRaw).length > 1
-  const useByDest = !!destination && isMulti
+  // B: 단일도 by_dest 통일 — isMulti 게이트 제거. 활성 목적지 토큰만 있으면 by_dest 경로.
+  const useByDest = !!destination
   const nextData: Record<string, unknown> = { ...prev }
   if (useByDest) {
     const byDest = {
@@ -1157,7 +1201,6 @@ export async function updateKrExportQuarantineDate(
     const nextData = applyQuarantine(
       prev,
       destination,
-      (existing as { destination: string | null }).destination,
       'kr_export_quarantine_date',
       'kr_export_quarantine_confirmed',
       v,
@@ -1208,7 +1251,6 @@ export async function updateJpImportQuarantineDate(
     const nextData = applyQuarantine(
       prev,
       destination,
-      (existing as { destination: string | null }).destination,
       'jp_import_quarantine_date',
       'jp_import_quarantine_confirmed',
       v,
@@ -1259,7 +1301,6 @@ export async function updateJpExportQuarantineVisitDate(
     const nextData = applyQuarantine(
       prev,
       destination,
-      (existing as { destination: string | null }).destination,
       'jp_export_quarantine_visit_date',
       'jp_export_quarantine_visit_confirmed',
       v,
@@ -1310,7 +1351,6 @@ export async function updateKrImportQuarantineDate(
     const nextData = applyQuarantine(
       prev,
       destination,
-      (existing as { destination: string | null }).destination,
       'kr_import_quarantine_date',
       'kr_import_quarantine_confirmed',
       v,
@@ -1341,6 +1381,8 @@ export async function updateKrImportQuarantineDate(
 export async function updateJpExportQuarantineFields(
   caseId: string,
   fields: { applicationDate: string | null; date: string | null; time: string | null },
+  /** 활성 목적지 토큰 — 지정되면 예약 3필드(신청일·예약일·시간)를 by_dest[destination] 에 저장 (B). */
+  destination?: string | null,
 ): Promise<Result<CaseRow>> {
   try {
     if (
@@ -1376,21 +1418,36 @@ export async function updateJpExportQuarantineFields(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     // 예약일·신청일의 도메인 차단(입국일 ≤ 예약일 ≤ 귀국일, 신청 10일 전)은 server 에 두지
     // 않는다 — client(입력 불가)·procedure-check(주의)가 담당(단일 출처).
-    const nextData: Record<string, unknown> = { ...prev }
-    const prevApplied =
-      typeof prev.jp_export_quarantine_application_date === 'string'
-        ? prev.jp_export_quarantine_application_date
-        : ''
+    let nextData: Record<string, unknown> = { ...prev }
     const a = typeof fields.applicationDate === 'string' ? fields.applicationDate.trim() : ''
-    if (a) nextData.jp_export_quarantine_application_date = a
-    else delete nextData.jp_export_quarantine_application_date
-    // 신청일이 바뀌거나 지워지면 '완료 처리(skip)'를 해제 — 사전 신고와 동일 사유.
-    if (a !== prevApplied) delete nextData.jp_export_quarantine_reservation_skipped
     const d = typeof fields.date === 'string' ? fields.date.trim() : ''
-    if (d) nextData.jp_export_quarantine_date = d
-    else delete nextData.jp_export_quarantine_date
-    if (time) nextData.jp_export_quarantine_time = time
-    else delete nextData.jp_export_quarantine_time
+    // 신청일 이전값 — by_dest(scoped) 우선, 마이그 전 top-level fallback.
+    const prevAppliedRaw = readByDestValue(prev, destination, 'jp_export_quarantine_application_date')
+    const prevApplied =
+      typeof prevAppliedRaw === 'string'
+        ? prevAppliedRaw
+        : typeof prev.jp_export_quarantine_application_date === 'string'
+          ? prev.jp_export_quarantine_application_date
+          : ''
+    if (destination) {
+      // B: 단일도 by_dest 통일 — 예약 3필드를 by_dest[destination] 에 저장 + top-level 잔존 제거.
+      nextData = writeByDestValue(nextData, destination, 'jp_export_quarantine_application_date', a || null)
+      nextData = writeByDestValue(nextData, destination, 'jp_export_quarantine_date', d || null)
+      nextData = writeByDestValue(nextData, destination, 'jp_export_quarantine_time', time || null)
+      delete nextData.jp_export_quarantine_application_date
+      delete nextData.jp_export_quarantine_date
+      delete nextData.jp_export_quarantine_time
+    } else {
+      if (a) nextData.jp_export_quarantine_application_date = a
+      else delete nextData.jp_export_quarantine_application_date
+      if (d) nextData.jp_export_quarantine_date = d
+      else delete nextData.jp_export_quarantine_date
+      if (time) nextData.jp_export_quarantine_time = time
+      else delete nextData.jp_export_quarantine_time
+    }
+    // 신청일이 바뀌거나 지워지면 '완료 처리(skip)'를 해제 — 사전 신고와 동일 사유.
+    // reservation_skipped 는 일본 전용 키(다른 목적지가 같은 step 을 안 가져 누수 없음) → 공용 유지.
+    if (a !== prevApplied) delete nextData.jp_export_quarantine_reservation_skipped
     // 예약일·시간은 '희망/예정' 데이터일 뿐, 완료 판정에 영향 없음 — 보호자가 하단 '완료'
     // 버튼(reservation_skipped 플래그)을 명시적으로 눌러야 step 이 done. 사전 신고와 동일 모델.
     // 기존에 admin 토글로 confirmed=true 가 세팅된 케이스가 있다면 그 값은 그대로 둔다

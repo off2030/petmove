@@ -1,5 +1,6 @@
 import type { CaseRow, FieldDefinition } from './types'
-import { isDestinationScopedKey, readByDestValue } from './destination-scoped-fields'
+import { isDestinationScopedKey, readByDestValue, hasByDestEntry } from './destination-scoped-fields'
+import { parseDestinations } from './destination-config'
 
 /**
  * Normalize a microchip string to the canonical "NNN NNN NNN NNN NNN" form.
@@ -277,8 +278,12 @@ export function readCaseField(row: CaseRow, spec: FieldSpec, destination?: strin
     return null
   }
   if (destination && isDestinationScopedKey(spec.key)) {
-    const v = readByDestValue((row.data as Record<string, unknown>) ?? null, destination, spec.key)
+    const data = (row.data as Record<string, unknown>) ?? null
+    const v = readByDestValue(data, destination, spec.key)
     if (v !== undefined) return v
+    // 다중 목적지 + 그 목적지가 by_dest 로 관리: 컬럼/top-level fallback 안 함 — 다른 목적지(또는
+    // 단일 시절)의 잔존값이 이 목적지로 새는 것 차단(B). 단일/엔트리 없음은 아래 fallback 유지.
+    if (parseDestinations(row.destination).length > 1 && hasByDestEntry(data, destination)) return null
   }
   if (spec.storage === 'column') {
     return (row as unknown as Record<string, unknown>)[spec.key] ?? null

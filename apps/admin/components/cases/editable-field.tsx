@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { FieldSpec } from '@petmove/domain'
-import { calculateAge, coerceInputValue, renderFieldValue, isDestinationScopedKey, parseDestinations } from '@petmove/domain'
+import { calculateAge, coerceInputValue, renderFieldValue, isDestinationScopedKey, resolveActiveDestination } from '@petmove/domain'
 import { updateCaseField } from '@/lib/actions/cases'
 import { CopyButton } from '@/components/cases/copy-button'
 import { useCases } from '@/components/cases/cases-context'
@@ -102,12 +102,13 @@ export function EditableField({
   compact?: boolean
 }) {
   const { cases, updateLocalCaseField, replaceLocalCaseData, activeDestination } = useCases()
-  // 다중 목적지 + activeDestination + scoped 키 → data.by_dest[destination][key] 경로.
+  // scoped 키 → data.by_dest[destination][key] 경로 (B: 단일도 by_dest 통일).
+  // 단일 목적지면 resolveActiveDestination 이 유일 토큰을 돌려줘 그 칸으로 저장된다.
   // destArg 가 set 이면 server action·local mutator 둘 다 5번째 인자로 전달.
   const currentCase = cases.find((c) => c.id === caseId)
-  const isMultiDest = parseDestinations(currentCase?.destination).length > 1
-  const useByDest = isMultiDest && !!activeDestination && isDestinationScopedKey(spec.key)
-  const destArg: string | null | undefined = useByDest ? activeDestination : undefined
+  const activeDest = resolveActiveDestination(currentCase?.destination, activeDestination)
+  const useByDest = !!activeDest && isDestinationScopedKey(spec.key)
+  const destArg: string | null | undefined = useByDest ? activeDest : undefined
   const { settings: detailViewSettings } = useDetailViewSettings()
   const confirm = useConfirm()
   const editMode = useSectionEditMode()

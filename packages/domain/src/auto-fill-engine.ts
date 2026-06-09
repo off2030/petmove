@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { DESTINATION_OVERRIDES, matchesDestinationKey, parseDestinations } from './destination-config'
+import { DESTINATION_OVERRIDES, matchesDestinationKey } from './destination-config'
 import { resolveInspectionLabs, type InspectionLabRule } from './inspection-config-defaults'
 import {
   isDestinationScopedKey,
@@ -342,8 +342,9 @@ export async function applyAutoFillRules(
     const processedTriggers = new Set<string>()
     const writtenTargetsAll = new Set<string>()
 
-    // 다중 목적지가 아니면 activeDest 무시 (단일이면 by_dest 미사용).
-    const effectiveActiveDest = parseDestinations(destination).length > 1 ? (activeDest ?? null) : null
+    // activeDest 가 주어지면 단일/다중 무관하게 by_dest 경로 사용 (B: 단일도 by_dest 통일).
+    // 호출부가 activeDest 를 안 넘기면(top-level 경로용) null → 종전과 동일.
+    const effectiveActiveDest = activeDest ?? null
     for (let iter = 0; iter < MAX_ITER; iter++) {
       const written = new Set<string>()
       for (const rule of matchedRules) {

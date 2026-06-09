@@ -781,11 +781,15 @@ export function StepDetailView({
       setStatus('saving')
       setError(null)
       startTransition(async () => {
-        const res = await updateJpExportQuarantineFields(caseId, {
-          applicationDate: jpExport.applicationDate || null,
-          date: jpExport.date || null,
-          time: jpExport.time || null,
-        })
+        const res = await updateJpExportQuarantineFields(
+          caseId,
+          {
+            applicationDate: jpExport.applicationDate || null,
+            date: jpExport.date || null,
+            time: jpExport.time || null,
+          },
+          activeDest,
+        )
         if (res.ok) {
           updateCase(res.value)
           setJpExport(readJpExportForm(res.value.data))

@@ -8,7 +8,7 @@ import {
   HIDDEN_EN_KEYS,
   readCaseField,
 } from '@petmove/domain'
-import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, matchesDestinationKey, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, resolveActiveDestination, getTripType, isRabiesTiterHiddenForOneWay, isDestinationScopedKey, parseDestinations, applyDestinationFieldOverride, type ExtraFieldDef } from '@petmove/domain'
+import { getAllowedFields, getVaccineList, getEffectiveVaccineEntries, getEffectiveExtraFieldEntries, getDestinationOverride, matchesDestinationKey, TOGGLEABLE_FIELDS, vaccineMatchesSpecies, findCustomDestination, EXTRA_FIELD_KEY_LABELS, readEffectiveExtraValue, resolveActiveDestination, getTripType, isRabiesTiterHiddenForOneWay, isDestinationScopedKey, applyDestinationFieldOverride, type ExtraFieldDef } from '@petmove/domain'
 import { buildShareFieldDescriptors } from '@petmove/domain'
 import { useDestinationOverrides } from '@/components/providers/destination-overrides-provider'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
@@ -540,11 +540,11 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
   const { updateLocalCaseField, activeDestination } = useCases()
   const confirm = useConfirm()
   const data = (caseRow.data ?? {}) as Record<string, unknown>
-  // 다중 목적지 + 활성 목적지 일 때 destination-scoped 키 입력은 by_dest 경로로 라우팅.
+  // scoped 키 입력은 by_dest 경로로 라우팅 (B: 단일도 by_dest 통일).
+  // 단일 목적지면 resolveActiveDestination 이 유일 토큰을 돌려줘 그 칸으로 저장된다.
   const activeDest = resolveActiveDestination(caseRow.destination, activeDestination)
-  const isMultiDest = parseDestinations(caseRow.destination).length > 1
   const destArgFor = (key: string): string | null | undefined =>
-    isMultiDest && activeDest && isDestinationScopedKey(key) ? activeDest : undefined
+    activeDest && isDestinationScopedKey(key) ? activeDest : undefined
   const [extracting, setExtracting] = useState(false)
   const [extractMsg, setExtractMsg] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)

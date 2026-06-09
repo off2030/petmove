@@ -67,8 +67,27 @@
 ### procedure-checks — destination 전달 (P1)
 - `packages/domain/src/procedure-checks/*.ts` 는 flatten 안 거치고 caseRow 직접 → 호출부에서 activeDest 를 항상 전달하도록 확인.
 
+### 4.A 읽기 가드 — 컬럼/top-level 잔존 누수 (문서 초안이 놓친 부분)
+초안 §4는 "읽기 이미 안전"이라 했으나, **departure_date 컬럼을 유지(필터·정렬·auto-fill)**하기로 한 탓에
+컬럼이 누수 벡터가 된다 — 새 빈 목적지가 `getDepartureDate`/`flatten` 의 컬럼 fallback 으로 다른
+목적지 출국일을 물려받음. 그래서 읽기 측에 가드를 넣음:
+- **다중 목적지 + 그 목적지가 by_dest 로 관리됨(엔트리 존재)** → 컬럼/top-level fallback **안 함**(그 칸만 신뢰).
+- **단일/엔트리 없음** → 기존 fallback 유지(누수 상대 없음 + 마이그 전 호환).
+- 적용: `flattenCaseForDestination`(다중 strict 분기)·`getDepartureDate`·`getVetVisitDate`·`readCaseField`·
+  todos `importReportReturnDate`. 헬퍼 `hasByDestEntry` 추가.
+- `readEffectiveExtraValue` 는 시그니처에 목적지 카운트가 없어 미적용 — 마이그가 top-level 을 비우면
+  안전(legacy country_extra 경로의 다중 edge 만 잔존, 좁고 기존부터 있던 것).
+
+### 4.B 공용 부수효과 패리티 — 단일이 by_dest 경로로 와도 종전과 동일하게
+단일 케이스가 by_dest 분기로 오면 종전 top-level 분기가 하던 **공용(단일값) 부수효과**가 빠진다.
+원칙: **단일은 종전과 동일(데이터 위치만 by_dest), 다중은 종전 유지**(`isSingleDest` 가드).
+- admin `updateCaseField`: 출국일 컬럼 sync + 내원가능일(출국-9) + 서류/신고 상태 리셋.
+- portal `updateFlightFields`: flight_info_recorded_at + 출국일 컬럼 + `applyAutoFillRules(…, destination)`.
+- portal `updateVetVisitDate`: vet_visit_confirmed 클리어.
+
 ### 안전 (수정 불필요)
 - PDF(`generate-pdf.ts` flatten 자동)·auto-fill·admin/portal 표시.
+- `addCaseDestination` 전환 처리: 읽기 가드(4.A)가 컬럼 누수를 막으므로 추가 컬럼-clear 불필요.
 
 ---
 
@@ -85,18 +104,31 @@
 
 ## 6. 진행 체크리스트 (매 단계 갱신 — 새 세션은 여기를 본다)
 
+> **B 확정 (2026-06-09, 사용자).** 조사 중 B의 실제 범위가 문서 §4 초안보다 큼이 드러남:
+> 게이트가 1곳이 아니라 **3곳**(화면·서버·auto-fill 엔진) + **공용 부수효과 패리티** +
+> **읽기 가드**(컬럼/top-level 잔존 누수 차단) + 전체 마이그. 아래 §4.A/§4.B 참고.
+
+**쓰기 — 게이트 제거 + 단일 패리티 (배포 완료 대상):**
 - [x] 검역 키 `DESTINATION_SCOPED_FIELD_KEYS` 등록 (커밋 `ba70ab0`)
-- [x] portal 검역 저장 4함수 by_dest (`updateKr/JpXxxQuarantineDate` + `applyQuarantine`) (커밋 `ba70ab0`)
-- [x] step-detail 검역 저장 호출 activeDest + 저장 후 flatten read (커밋 `ba70ab0`)
-- [x] **vet_visit_date = 목적지별 확정** (2026-06-09, 출국마다 새로) — d31d771 의 vet_visit 유지 예외 제거(완료 내림 시 함께 비움)
-- [ ] 저장 게이트 제거 — admin `updateCaseField` (isMultiDest 제거)
-- [ ] 저장 게이트 제거 — portal `updateFlightFields` / `updateVetVisitDate` / `applyQuarantine`
-- [ ] 예약 by_dest — `updateJpExportQuarantineFields`(application_date/date/time) + 호출 step-detail:784
-- [ ] 저장 게이트 제거 — `share-links.ts`
-- [ ] 마이그레이션 스크립트 (단일 케이스 top-level → by_dest, dry-run)
-- [ ] procedure-checks destination 전달 확인/수정
+- [x] portal 검역 저장 4함수 by_dest + step-detail activeDest (커밋 `ba70ab0`)
+- [x] **vet_visit_date = 목적지별 확정** (2026-06-09) — d31d771 vet_visit 유지 예외 제거
+- [x] auto-fill 엔진 게이트 제거 (`effectiveActiveDest = activeDest ?? null`)
+- [x] admin `updateCaseField` 게이트 제거 + **단일 패리티**(출국일 컬럼 sync·내원가능일·서류/신고 상태 리셋)
+- [x] admin 화면 게이트 제거 — `editable-field`·`case-detail` (resolveActiveDestination)
+- [x] portal `updateVetVisitDate`(+vet_visit_confirmed 클리어)·`updateFlightFields`(+flight_info·컬럼·auto-fill 패리티)·`applyQuarantine`
+- [x] 예약 by_dest — `updateJpExportQuarantineFields`(+destination 인자) + step-detail activeDest 전달
+- [x] `share-links.ts` 게이트 제거 (scope 미지정 시 단일 유일 토큰으로 resolve)
+
+**읽기 — 다중 목적지 누수 가드 (컬럼·top-level 잔존):**
+- [x] `flattenCaseForDestination` 다중 분기 strict(destObj 만 신뢰)
+- [x] `getDepartureDate`·`getVetVisitDate`·`readCaseField`·todos `importReportReturnDate` 다중 가드
+- [x] procedure-checks destination 전달 — 확인 완료(admin `viewDestination`=활성/유일 토큰, portal=flatten). 변경 불필요.
+
+**마이그 / 검증 / 정리:**
+- [x] 마이그레이션 스크립트 작성 — `scripts/migrate-by-dest-unify.mjs` (dry-run 기본, `--apply`)
+- [ ] **마이그 dry-run → 사용자 확인 → apply** (prod write — 코드 배포 후 실행)
 - [ ] 검증 (다중 검역 누수 차단 + PDF·auto-fill·표시 회귀)
-- [ ] 임시패치 정리 — `cf46c2e`(완료 시 검역 비움)·`d31d771`(완료 시 scoped 비움)는 B 완료 후 불필요 → 단순화
+- [ ] 임시패치 정리 — `cf46c2e`·`d31d771`·addCaseDestination demoted-block(읽기 가드로 일부 redundant) 단순화 검토
 
 ---
 

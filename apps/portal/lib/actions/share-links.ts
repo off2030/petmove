@@ -411,9 +411,11 @@ export async function submitShareLink(
       .maybeSingle()
     const current = ((caseInfo?.data as Record<string, unknown> | null) ?? {})
     const caseDestination = (caseInfo as { destination?: string | null } | null)?.destination ?? null
-    const isMultiDest = parseDestinations(caseDestination).length > 1
-    const scope = row.destination_scope ?? null
-    const useByDest = isMultiDest && !!scope
+    // B: 단일도 by_dest 통일 — scope 미지정이면 단일 목적지의 유일 토큰으로 resolve.
+    // (다중 목적지인데 scope 가 없으면 어느 칸인지 알 수 없어 종전대로 top-level.)
+    const caseDests = parseDestinations(caseDestination)
+    const scope = row.destination_scope ?? (caseDests.length === 1 ? caseDests[0] : null)
+    const useByDest = !!scope
 
     // colUpdate 처리 — by_dest 모드면 departure_date 같은 scoped 컬럼은 by_dest 로.
     const colNonScoped: Record<string, unknown> = {}

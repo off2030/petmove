@@ -104,9 +104,9 @@ export async function updateCaseField(
   const orgId = (row as { org_id: string }).org_id
   const currentData = ((row as { data: Record<string, unknown> | null }).data ?? {}) as Record<string, unknown>
   const destinationRaw = (row as { destination: string | null }).destination
-  const isMultiDest = parseDestinations(destinationRaw).length > 1
-  // by_dest 경로 적용 조건: 활성 목적지 + scoped 키 + 다중 목적지.
-  const useByDest = !!destination && isDestinationScopedKey(key) && isMultiDest
+  const isSingleDest = parseDestinations(destinationRaw).length === 1
+  // by_dest 경로 적용 조건: 활성 목적지 + scoped 키 (B: 단일도 by_dest 통일 — isMultiDest 게이트 제거).
+  const useByDest = !!destination && isDestinationScopedKey(key)
 
   // 내원일 ↔ 출국일 N일 이내 룰 — 한국 APQA 공통, 모든 목적지에 적용.
   // 입력 시점에 거부 (procedure-check 안내 배지 아님).
@@ -158,9 +158,61 @@ export async function updateCaseField(
     nextByDest[destination!] = nextDestObj
     const nextData = { ...currentData }
     nextData['by_dest'] = nextByDest
+
+    // 공용 부수효과 패리티 — 단일 목적지 케이스 한정.
+    // B(단일도 by_dest) 전환으로 단일 케이스의 scoped 키 저장이 이 분기로 들어온다. 종전 top-level
+    // 경로가 하던 공용 부수효과(출국일 컬럼 sync·내원가능일·서류/신고 상태 리셋)를 단일 케이스에선
+    // 동일하게 재현한다. 다중 목적지는 공용 필드(단일값)의 의미가 모호하므로 종전대로 미적용.
+    const updateObj: Record<string, unknown> = { data: nextData }
+    if (isSingleDest) {
+      const today = new Date().toISOString().slice(0, 10)
+      const changed = oldValueByDest !== serializeForHistory('data', value)
+      if (key === 'departure_date') {
+        // 출국일 컬럼 동기화 — 목록 필터·정렬·auto-fill 컬럼 호환(read 는 by_dest 우선, 컬럼은 유지).
+        updateObj['departure_date'] = value ? value : null
+        // 내원가능일(= 출국일 - 9) 자동 채움.
+        if (value) {
+          try {
+            const d = new Date(String(value))
+            if (!isNaN(d.getTime())) {
+              d.setDate(d.getDate() - 9)
+              nextData.vet_available_date = d.toISOString().split('T')[0]
+            }
+          } catch { /* 날짜 계산 실패 무시 */ }
+        }
+      }
+      // 서류/신고 상태 리셋 — 내원일/출국일 변경 시 'done' 클리어 (재출국 정리). top-level 경로와 동일.
+      if ((key === 'vet_visit_date' || key === 'departure_date') && changed) {
+        if (currentData.export_doc_status === 'done') {
+          let shouldReset = false
+          if (key === 'vet_visit_date') {
+            shouldReset = true
+          } else {
+            const visit = readScopedVisit()
+            if (!visit || visit < today) shouldReset = true
+          }
+          if (shouldReset) delete nextData.export_doc_status
+        }
+        if (key === 'departure_date') {
+          const prevDep =
+            typeof destObjPrev['departure_date'] === 'string'
+              ? (destObjPrev['departure_date'] as string)
+              : ((row as { departure_date: string | null }).departure_date ?? '')
+          const wasPast = !!prevDep && prevDep < today
+          const someDone =
+            currentData.import_import_status === 'done' || currentData.import_export_status === 'done'
+          if (wasPast && someDone) {
+            delete nextData.import_import_status
+            delete nextData.import_export_status
+            delete nextData.import_report_dismissed
+          }
+        }
+      }
+    }
+
     const { error: updErr } = await supabase
       .from('cases')
-      .update({ data: nextData })
+      .update(updateObj)
       .eq('id', caseId)
     if (updErr) return { ok: false, error: updErr.message }
     const newValueByDest = serializeForHistory('data', value)
