@@ -86,8 +86,8 @@ function journeyDirty(base: JourneyBase, live: JourneyLive): boolean {
 }
 
 export interface AnimalJourneyVM {
-  /** 화면 렌더용 카드 목록 — base 순서(삭제분 제외) 뒤에 추가분. 삭제 표시된 목적지는 즉시 사라진다. */
-  cards: Array<{ dest: string; added: boolean }>
+  /** 화면 렌더용 카드 목록 — base 순서(삭제예정 포함) 뒤에 추가분. */
+  cards: Array<{ dest: string; removing: boolean; added: boolean }>
   /** 추가 바텀시트의 제외 기준 — 현재 선택된(live) 목적지. */
   selected: string[]
   tripTypeByDest: Record<string, TripType>
@@ -205,10 +205,9 @@ export function useAnimalEditForm(caseRow: CaseRow, caseId: string): UseAnimalEd
   // ── 화면 view-model ──
   const journey = useMemo<AnimalJourneyVM>(() => {
     const removed = new Set(live.removals)
-    // 삭제 표시된 base 목적지는 카드에서 즉시 제외(되돌리기 없음) — 실제 삭제는 '저장' 시점에 커밋.
     const cards = [
-      ...base.destinations.filter((dest) => !removed.has(dest)).map((dest) => ({ dest, added: false })),
-      ...live.added.map((dest) => ({ dest, added: true })),
+      ...base.destinations.map((dest) => ({ dest, removing: removed.has(dest), added: false })),
+      ...live.added.map((dest) => ({ dest, removing: false, added: true })),
     ]
     const selected = liveDestinations(base, live)
     // 함께 준비 노출 기준 — live 트립을 반영한 합성 caseRow 로 형제 매칭.

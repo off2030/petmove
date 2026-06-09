@@ -45,6 +45,7 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
     journey,
     stageAdd,
     stageRemove,
+    stageRestore,
     stageTripType,
     stageCoProgress,
     dirty,
@@ -160,6 +161,7 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
         onStageTripType={stageTripType}
         onStageCoProgress={stageCoProgress}
         onStageRemove={stageRemove}
+        onStageRestore={stageRestore}
         onStageAdd={stageAdd}
       />
 
