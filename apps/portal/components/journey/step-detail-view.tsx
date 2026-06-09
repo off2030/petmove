@@ -28,6 +28,7 @@ import {
 import { useConfirm } from '@petmove/ui'
 import { activeDestinationView } from '@/lib/cases/active-destination'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
+import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
 import {
   getCaseVaccineData,
   markAdvanceNotificationApprovalSkipped,
@@ -291,6 +292,7 @@ export function StepDetailView({
     jpImportQuarantineDirty ||
     jpExportQuarantineVisitDirty ||
     krImportQuarantineDirty
+  useUnsavedGuard(dirty)
   // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
   const justSaved = status === 'saved' && !dirty
   // 검역·검사 4단계 — '저장' 클릭(확인)으로 완료하는 step. 미래 날짜=예정(저장만 됨),

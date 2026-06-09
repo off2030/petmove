@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState, useTransition, type CSSProperties } from 'react'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
+import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
 import { saveCaseFeedback } from '@/lib/actions/cases'
 
 /**
@@ -89,6 +90,7 @@ export function FeedbackView({ caseId }: { caseId: string }) {
   const [, startTransition] = useTransition()
 
   const dirty = rating !== saved.rating || text.trim() !== saved.text
+  useUnsavedGuard(dirty)
   const hasContent = rating !== null || text.trim().length > 0
   const alreadySent = saved.rating !== null || saved.text.length > 0
   const justSaved = status === 'saved' && !dirty

@@ -3,6 +3,7 @@
 import type { CaseRow } from '@petmove/domain'
 import { AddressSearchField, SplitNameField, TextField } from '@/components/fields/info-fields'
 import { useCases } from '@/components/portal-shell/case-data-provider'
+import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
 import { deriveInitials } from '@/lib/profile/catalog'
 import { C, EditPageShell, SectionCard, StickySaveBar } from './settings-shared'
 import { GuardianAvatarPicker } from './guardian-avatar-picker'
@@ -15,6 +16,7 @@ import { useCaseEditForm } from './use-case-edit-form'
  */
 export function GuardianEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string }) {
   const { form, set, dirty, status, error, handleSave } = useCaseEditForm(caseRow, caseId)
+  useUnsavedGuard(dirty)
   const { profile, userEmail, updateProfile } = useCases()
   const initials = deriveInitials(
     caseRow.customer_name ?? profile?.display_name ?? null,

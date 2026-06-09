@@ -2,6 +2,7 @@
 
 import type { CaseRow } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
+import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
 import { hasSiblingCase } from '@/lib/cases/info-form'
 import { EditPageShell, StickySaveBar } from './settings-shared'
 import { TravelFormSections } from './travel-form-sections'
@@ -18,6 +19,7 @@ import { useCaseEditForm } from './use-case-edit-form'
 export function TravelEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: string }) {
   const { cases } = useCases()
   const { form, set, dirty, status, error, handleSave } = useCaseEditForm(caseRow, caseId)
+  useUnsavedGuard(dirty)
   const hasSibling = hasSiblingCase(cases, caseRow)
 
   return (

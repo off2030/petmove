@@ -3,6 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import { readLastCaseId, writeLastCaseId } from './last-case'
+import { useNavGuard } from './nav-guard'
 
 /**
  * 3탭(일정/서류/내 정보) 좌우 스와이프 내비. (앱 설정 /settings 은 ⚙ 진입 — 스와이프 대상 아님)
@@ -89,6 +90,7 @@ function hrefFor(tab: Tab, caseId: string | null): string {
 export function SwipeTabs({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
+  const navGuard = useNavGuard()
   const tab = currentTab(pathname)
   const caseId = caseIdFromPath(pathname)
 
@@ -198,7 +200,10 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
       const next = idx + dir
       if (next < 0 || next >= TAB_ORDER.length) return
 
-      router.push(hrefFor(TAB_ORDER[next], caseId))
+      // 미저장 변경이 있으면 '저장하지 않고 나갈까요?' confirm 후에만 탭 전환.
+      const proceed = () => router.push(hrefFor(TAB_ORDER[next], caseId))
+      if (navGuard) navGuard.guard(proceed)
+      else proceed()
     }
 
     const onCancel = () => {
@@ -216,7 +221,7 @@ export function SwipeTabs({ children }: { children: React.ReactNode }) {
       window.removeEventListener('touchend', onEnd)
       window.removeEventListener('touchcancel', onCancel)
     }
-  }, [tab, caseId, router])
+  }, [tab, caseId, router, navGuard])
 
   return <>{children}</>
 }

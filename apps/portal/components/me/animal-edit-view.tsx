@@ -13,6 +13,7 @@ import {
 } from '@/components/fields/info-fields'
 import { PetAvatarPicker } from '@/components/me/pet-avatar-picker'
 import { useCases } from '@/components/portal-shell/case-data-provider'
+import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
 import { softDeleteMyCase } from '@/lib/actions/cases'
 import { buildPetBlock } from '@/lib/profile/catalog'
 import { C, EditPageShell, SectionCard } from './settings-shared'
@@ -52,6 +53,8 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
     error,
     handleSave,
   } = useAnimalEditForm(caseRow, caseId)
+
+  useUnsavedGuard(dirty)
 
   return (
     <EditPageShell title="반려동물">
