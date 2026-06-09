@@ -440,9 +440,14 @@ export const JP_CHECKS: ProcedureCheck[] = [
       if (!validUntil) return SKIP
 
       if (validUntil < dep) {
+        // 이미 만료(과거)와 입국 전 만료 예정(미래) 분기 — '추가 백신' 카드·situational 과 동일 문구.
+        const message =
+          validUntil < todayKst()
+            ? `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
+            : `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전에 추가 접종을 하세요.`
         return {
           ok: false,
-          message: `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전 재접종이 필요합니다.`,
+          message,
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
