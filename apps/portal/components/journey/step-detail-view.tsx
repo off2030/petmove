@@ -517,7 +517,7 @@ export function StepDetailView({
       ])
       if (chainBreak) {
         return chainBreak.reason === 'too-early'
-          ? `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 접종일 이후여야 합니다.`
+          ? `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 접종일보다 늦어야 합니다.`
           : `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 합니다.`
       }
       return null
