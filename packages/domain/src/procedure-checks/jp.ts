@@ -162,9 +162,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.rabies-extra-within-previous-validity',
     country: 'japan',
     category: '광견병',
-    title: '광견병 추가 접종 타이밍',
+    title: '백신 유효기간 만료',
     description:
-      '추가(3차+) 광견병 접종은 직전 접종일 이후이고, 직전 광견병 백신의 면역 유효기간 이내여야 함. 순서가 거꾸로이거나 유효기간 경과 후 접종은 부스터가 아닌 새 기초접종으로 간주됨.',
+      '추가(3차+) 광견병 접종은 직전 광견병 백신의 면역 유효기간 이내여야 함. 유효기간 경과 후 접종은 부스터가 아닌 새 기초접종으로 간주됨.',
     severity: 'info',
     addedAt: '2026-05-24',
     run: ({ caseRow, destination }) => {
@@ -174,15 +174,14 @@ export const JP_CHECKS: ProcedureCheck[] = [
 
       // 전체 chain 순차 검증(findRabiesChainBreak). 3차+ 에서 끊긴 경우만 — 2차 끊김은
       // jp.rabies-booster-within-prime-validity 담당. (단일 출처: client·B 와 같은 함수.)
+      // 순서 위반(too-early)은 입력 단계에서 거부되므로 안내하지 않는다 — 나중에 앞 차수를
+      // 수정해 깨지는 '유효기간 경과(expired)'만 '주의'로 표면화. (입력 차단이 못 잡는 경로.)
       const brk = findRabiesChainBreak(entries)
-      if (brk && brk.brokenAt >= 3) {
+      if (brk && brk.brokenAt >= 3 && brk.reason === 'expired') {
         const broken = entries[brk.brokenAt - 1]
         return {
           ok: false,
-          message:
-            brk.reason === 'too-early'
-              ? `${brk.brokenAt}차 접종일이 ${brk.brokenAt - 1}차 접종일보다 빠릅니다. 접종일을 확인하세요.`
-              : `${brk.brokenAt - 1}차 백신 유효기간이 만료된 뒤 ${brk.brokenAt}차를 접종했습니다. 접종일을 확인하세요.`,
+          message: `${brk.brokenAt - 1}차 백신 유효기간이 만료된 뒤 ${brk.brokenAt}차를 접종했습니다. 접종일을 확인하세요.`,
           offendingPaths: [`rabies_dates[${broken.originalIndex}].date`],
         }
       }

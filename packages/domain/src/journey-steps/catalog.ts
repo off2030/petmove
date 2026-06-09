@@ -5,7 +5,6 @@ import {
   deriveAdvanceNotificationStatus,
   deriveJpExportQuarantineStatus,
 } from './report-status'
-import { findRabiesChainBreak } from './rabies-chain'
 import type { StepDefinition } from './types'
 
 /** 'YYYY-MM-DD' → 'YYYY년 M월 D일'. 형식이 아니면 원문 반환. */
@@ -184,15 +183,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     situational: (caseRow) => {
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return undefined
-      // chain 정합성(순서·만료 후 접종)이 깨졌으면 그 정정 안내를 우선 — '만료' 안내보다 날짜 수정이 먼저.
-      const brk = findRabiesChainBreak(rabies)
-      if (brk && brk.brokenAt >= 3) {
-        const fix =
-          brk.reason === 'too-early'
-            ? `${brk.brokenAt}차 접종일이 ${brk.brokenAt - 1}차 접종일보다 빠릅니다. 접종일을 확인하세요.`
-            : `${brk.brokenAt - 1}차 백신 유효기간이 만료된 뒤 ${brk.brokenAt}차를 접종했습니다. 접종일을 확인하세요.`
-        return { desc: fix, cardDesc: fix }
-      }
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       // 유효기간 산출 불가 — 만료일을 단정하지 않고 입력만 요청.
