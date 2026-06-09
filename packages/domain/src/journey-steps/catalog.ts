@@ -72,7 +72,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const hasNumber = number.length > 0
       const hasImplant = implant.length >= 10
       if (hasNumber === hasImplant) return undefined
-      const msg = hasNumber ? '마이크로칩 삽입 날짜를 입력해주세요.' : '마이크로칩 번호를 입력해주세요.'
+      const msg = hasNumber ? '마이크로칩 삽입 날짜를 입력하세요.' : '마이크로칩 번호를 입력하세요.'
       return { desc: msg, cardDesc: msg }
     },
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
@@ -175,7 +175,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     advisoryOnly: true,
     // 카드가 떴을 때(유효기간 만료·임박)의 안내 — 만료 여부로 두 문구를 분기한다.
     //  - 만료 전(validUntil ≥ 오늘): 만료일 + '만료 전에 추가 접종을 하세요' (마감 안내).
-    //  - 만료 후(validUntil < 오늘): 만료일 + '추가 접종 기록을 입력해주세요' (입력 요청).
+    //  - 만료 후(validUntil < 오늘): 만료일 + '추가 접종 기록을 입력하세요' (입력 요청).
     // 입력 시점은 무관하다(유효기간 내에 받은 접종을 늦게 입력하는 경우 포함). 만료 후 날짜의
     // 접종 입력 자체는 chain 검증(findRabiesChainBreak, client+server)이 입력 불가로 거부하고,
     // 이미 잘못 입력된 3차+ 기록은 procedure-check(jp.rabies-extra-within-previous-validity)가
@@ -187,12 +187,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       // 유효기간 산출 불가 — 만료일을 단정하지 않고 입력만 요청.
       if (!validUntil) {
-        const msg = '추가 접종 기록을 입력해주세요.'
+        const msg = '추가 접종 기록을 입력하세요.'
         return { desc: msg, cardDesc: msg }
       }
       const msg =
         validUntil < todayKst()
-          ? `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력해주세요.`
+          ? `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
           : `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전에 추가 접종을 하세요.`
       return { desc: msg, cardDesc: msg }
     },
@@ -258,7 +258,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       if (date.length < 10 || date > todayKst()) return undefined
       if (data.rabies_titer_result_confirmed === true) return undefined
       if (typeof primary?.value === 'string' && primary.value.trim().length > 0) return undefined
-      const msg = '광견병 항체 검사를 진행 중입니다. 결과가 나오면 결과를 입력하시거나 완료 버튼을 눌러주세요.'
+      const msg = '광견병 항체 검사를 진행 중입니다. 결과가 나오면 결과를 입력하거나 완료 버튼을 누르세요.'
       return { desc: msg, cardDesc: msg }
     },
     inputs: [
@@ -326,7 +326,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       '입국 가능 시기에 맞춰 항공권을 구매하세요.\n\n채혈일로부터 180일 후 ~ 2년 사이에 입국할 수 있습니다.\n사전 신고를 위해 입국 40일 전까지 항공권을 구매해야 합니다. 여유 있게 2달 전까지 구매하는 것이 좋습니다.\n일본 입국 때 광견병 예방접종 면역 유효기간이 남아있어야 합니다.\n항공사에 반려동물 동반 가능 여부를 확인하세요.',
     doneSummary: '항공권을 구매했습니다.',
     cardLine: '일본에 입국할 수 있습니다.',
-    // 왕복인데 출국 항공권만 입력되고 귀국 미입력 시 — '귀국 항공권 정보를 입력해주세요.'
+    // 왕복인데 출국 항공권만 입력되고 귀국 미입력 시 — '귀국 항공권 정보를 입력하세요.'
     // (has-flight-date done 시그널도 동일 조건으로 미완료 처리하여 다음 단계 진행 차단.)
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -335,7 +335,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       if (!hasEntry || hasReturn) return undefined
       const ctx = buildCaseJourneyContext(caseRow)
       if (ctx.tripType !== 'round') return undefined
-      const msg = '귀국 항공권 정보를 입력해주세요.'
+      const msg = '귀국 항공권 정보를 입력하세요.'
       return { desc: msg, cardDesc: msg }
     },
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
@@ -393,7 +393,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 완료(skip) 상태에선 안내 노출 안 함 — '완료' 자체가 명시적 보호자 액션이라 추가 설명 불필요.
       // 첨부는 언제든 documents 탭에서 올릴 수 있음.
       if (deriveAdvanceNotificationStatus(caseRow) !== 'in_progress') return undefined
-      const msg = '사전 신고를 진행 중입니다. 허가증이 나오면 파일을 첨부하시거나 완료 버튼을 눌러주세요.'
+      const msg = '사전 신고를 진행 중입니다. 허가증이 나오면 파일을 첨부하거나 완료 버튼을 누르세요.'
       return { desc: msg, cardDesc: msg }
     },
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
@@ -451,7 +451,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 예약일·시간은 '희망' 데이터일 뿐 완료 판정에 영향 없음 — 보호자가 '완료' 버튼을 직접
       // 눌러야 step 이 done. 사전 신고와 동일 모델.
       // 예약 일정 안내는 방문 step([[jp-export-quarantine-visit]])이 맡고, 여기는 진행 중 안내만.
-      const msg = '일본 수출 동물검역 신청·예약이 진행 중입니다. 예약이 확정되면 완료 버튼을 눌러주세요.'
+      const msg = '일본 수출 동물검역 신청·예약이 진행 중입니다. 예약이 확정되면 완료 버튼을 누르세요.'
       return { desc: msg, cardDesc: msg }
     },
     inputs: [
