@@ -134,14 +134,18 @@
 - [x] 검증 spot-check — `scripts/verify-bydest-spotcheck.mjs`. 단일 정상(top-level 비움·by_dest·컬럼 유지).
   **다중 entry-less 누수 발견→가드 정정**(§4.A). 잔존: 일부 다중 케이스 by_dest 중복 데이터(마이그 전부터, 코드 무관).
 - [ ] 배포 후 실사용 검증 (다중 케이스 표시·PDF·auto-fill 회귀 — 코드 2차 배포 후)
-- [ ] 임시패치 정리 — `cf46c2e`·`d31d771`·addCaseDestination demoted-block(읽기 가드로 일부 redundant) 단순화 검토
+- [x] 임시패치 정리 — **검토 완료(2026-06-09): 제거 X**. `cf46c2e`·`d31d771` = addCaseDestination
+  demoted-block 한 곳. 검토 결과 임시 아님·영구 필수: ① 출국일 컬럼 null + ② arrival_confirmed 정리는
+  **demote→단일 결과** 케이스에 필수(단일은 읽기 가드 미적용 → 컬럼 fallback 살아있음), ③ top-level scoped
+  clear 는 정상 no-op이나 scope 없는 다중 share-link 엣지 방어. "임시/by_dest 분리 전"이라던 오해성 주석만 정정.
 
 ---
 
 ## 7. 주의사항
 
 - **prod 마이그는 거의 모든 케이스(단일이 대부분)** 를 건드린다 — 가장 신중. 반드시 dry-run 먼저, 백업/검증 후 apply.
-- 임시패치 `cf46c2e`·`d31d771` 은 B 전까지 누수를 막는 방어막. B 마이그 완료 후 제거/단순화 가능.
+- `cf46c2e`·`d31d771`(= addCaseDestination demoted-block)은 검토 결과 **임시 아닌 영구 필수 로직**으로
+  확정(2026-06-09) — §6 마지막 항목 참고. 제거하지 말 것(특히 컬럼 null·arrival_confirmed). 주석만 정정함.
 - 검역 1차(`ba70ab0`)는 B의 일부를 이미 했다(검역 키 등록 + portal 검역 저장 by_dest). 체크리스트가 그 위에서 이어진다.
 
 ## 8. 관련 문서

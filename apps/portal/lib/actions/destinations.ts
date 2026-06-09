@@ -136,21 +136,22 @@ export async function addCaseDestination(
     }
     const updatePayload: Record<string, unknown> = { destination: nextDest, data: nextData }
 
-    // ⚠️ 누수 차단: 완료 여정을 내렸으면, **목적지별 칸이 없는 공용 완료 신호**(검역·도착·출국일)를
-    // 비운다. 안 비우면 새 목적지가 이 top-level 신호를 그대로 물려받아 즉시 '완료'로 오판된다
-    // (= 새 목적지 올렸는데 완료 카드만 뜨고 리셋 안 되는 버그). 검역이 by_dest 로 분리되기 전 방어.
-    // 백신·항체(rabies_* 등 동물 단위 기록)는 건드리지 않는다.
+    // demote 로 완료 여정을 내린 뒤, 남은(+새) 목적지가 직전 여정의 '공용' 잔존(도착확인·출국일 컬럼)을
+    // 물려받지 않게 정리한다. ⚠️ 임시패치 아님 — 영구 로직. 핵심은 **결과가 단일 목적지가 되는 경우**
+    // (완료된 유일 여정 자리에 새 목적지): 단일은 읽기 가드(다중 전용)가 적용 안 돼 컬럼/top-level
+    // fallback 이 살아있으므로, 안 비우면 새 목적지가 이전 출국일/도착확인을 물려받아 '완료'로 오판된다.
+    // (다중 결과는 읽기 가드가 처리하지만, 단일 결과 대비 + 방어로 항상 비운다.) 백신·항체(동물 단위)는 유지.
     if (demoted.length > 0) {
-      // 완료로 내려간 여정의 공용(top-level) 목적지별 값을 전부 비운다 — 새 목적지가 물려받아
-      // '완료/누수'(검역·항공권·귀국일·내원일 → prompt 오발동·잔존)되지 않게. 마이크로칩·백신·항체는
-      // scoped 가 아니라(동물 단위) 안 건드림. 임상검사 내원일(vet_visit)은 목적지별이라 함께 비운다.
+      // top-level scoped 잔존 방어 비움 — B(by_dest 통일) 후 정상 상태엔 없어 보통 no-op이지만,
+      // scope 미지정 다중 share-link 등 엣지에서 top-level 에 들어올 수 있어 단일 결과 누수를 막는다.
       for (const k of DESTINATION_SCOPED_FIELD_KEYS) {
         delete nextData[k]
       }
+      // 내려간 여정의 도착확인 플래그 제거 — 지난 여정 이동에 따른 demote 정리(누수와 무관, 필수).
       const ac = { ...((nextData.arrival_confirmed as Record<string, unknown> | undefined) ?? {}) }
       for (const t of demoted) delete ac[t]
       nextData.arrival_confirmed = ac
-      // 출국일 컬럼도 비움(새 목적지 출국일은 by_dest).
+      // 출국일 컬럼 비움 — 새(특히 단일 결과) 목적지가 이전 출국일을 컬럼으로 물려받지 않게(필수).
       updatePayload.departure_date = null
     }
 
