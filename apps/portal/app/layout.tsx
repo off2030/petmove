@@ -4,6 +4,7 @@ import './globals.css'
 import { ConfirmProvider } from '@petmove/ui'
 import { ServiceWorkerRegister } from '@/components/sw-register'
 import { ThemeProvider } from '@/components/portal-shell/theme-provider'
+import { NavGuardProvider } from '@/components/portal-shell/nav-guard'
 
 // 최초 paint 전(하이드레이션 전) <html data-theme> + theme-color 를 동기 설정해 다크모드 FOUC 방지.
 // 저장된 pm-theme(없으면 light) → 'system' 일 때만 OS 따라감. ThemeProvider 가 이후 상태를 이어받음.
@@ -58,9 +59,11 @@ export default function RootLayout({
         <ServiceWorkerRegister />
         <ThemeProvider>
           <ConfirmProvider>
-            <div className="flex flex-col h-dvh">
-              {children}
-            </div>
+            <NavGuardProvider>
+              <div className="flex flex-col h-dvh">
+                {children}
+              </div>
+            </NavGuardProvider>
           </ConfirmProvider>
         </ThemeProvider>
       </body>

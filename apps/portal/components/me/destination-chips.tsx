@@ -16,7 +16,8 @@ const TRIP_OPTIONS: readonly FieldOption[] = [
  *
  *  - 카드 1장 = 목적지 1개. 카드 안에 '목적지' 라벨 행(목적지명) + 왕복·편도 토글.
  *  - 같은 곳으로 가는 형제(같은 보호자의 다른 동물)가 있는 목적지에는 '함께 준비' 토글도 노출.
- *  - 목적지명 행 우측 삭제(휴지통 아이콘 — 광견병/항체 카드와 통일) → 삭제 예정 표시(되돌리기 가능).
+ *  - 목적지명 행 우측 삭제(휴지통 아이콘 — 광견병/항체 카드와 통일) → 카드가 즉시 사라진다(되돌리기 없음).
+ *    실수로 지웠으면 "+ 목적지 추가" 로 같은 목적지를 다시 고르면 복구된다.
  *  - 카드 스택 아래 "+ 목적지 추가" dashed 버튼 → BottomSheet (검색 + 목록).
  *
  * 모든 변경은 **부모(useAnimalEditForm)의 로컬 상태만 갱신**한다 — 즉시 저장하지 않고
@@ -30,8 +31,8 @@ interface Dest {
 const DESTS = destsData as Dest[]
 
 export interface DestinationChipsProps {
-  /** 렌더용 카드 — base 순서(삭제예정 포함) 뒤에 추가분. */
-  cards: Array<{ dest: string; removing: boolean; added: boolean }>
+  /** 렌더용 카드 — base 순서(삭제분 제외) 뒤에 추가분. */
+  cards: Array<{ dest: string; added: boolean }>
   /** 추가 바텀시트 제외 기준 — 현재 선택된 목적지. */
   selected: string[]
   tripTypeByDest: Record<string, 'round' | 'one_way'>
@@ -42,7 +43,6 @@ export interface DestinationChipsProps {
   onStageTripType: (dest: string, value: 'round' | 'one_way') => void
   onStageCoProgress: (value: boolean) => void
   onStageRemove: (dest: string) => void
-  onStageRestore: (dest: string) => void
   onStageAdd: (dest: string) => void
 }
 
@@ -56,7 +56,6 @@ export function DestinationChips({
   onStageTripType,
   onStageCoProgress,
   onStageRemove,
-  onStageRestore,
   onStageAdd,
 }: DestinationChipsProps) {
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -88,19 +87,19 @@ export function DestinationChips({
     <>
       <div style={{ ...monoCap, marginTop: 24, marginBottom: 10, padding: '0 4px' }}>여정</div>
 
-      {cards.map(({ dest, removing }, i) => {
+      {cards.map(({ dest }, i) => {
         const trip = tripTypeByDest[dest] === 'one_way' ? 'one_way' : 'round'
         const showCoProgress = coProgressDests.has(dest)
         return (
           <SectionCard key={dest} marginTop={i === 0 ? 0 : 10}>
-            {/* 목적지명 — '목적지' 라벨 행 + 우측 삭제/되돌리기. */}
+            {/* 목적지명 — '목적지' 라벨 행 + 우측 삭제(휴지통). 누르면 카드가 즉시 사라진다(되돌리기 없음). */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
                 padding: '11px 0',
-                borderBottom: removing ? 'none' : `.5px solid ${C.line}`,
+                borderBottom: `.5px solid ${C.line}`,
                 minHeight: 46,
               }}
             >
@@ -111,9 +110,8 @@ export function DestinationChips({
                   minWidth: 0,
                   fontSize: 15,
                   fontWeight: 500,
-                  color: removing ? C.ink3 : C.ink,
+                  color: C.ink,
                   fontFamily: 'var(--pm-font-display)',
-                  textDecoration: removing ? 'line-through' : 'none',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -121,85 +119,57 @@ export function DestinationChips({
               >
                 {dest}
               </span>
-              {removing ? (
-                <>
-                  <span style={{ flexShrink: 0, fontSize: 12, color: C.ink3 }}>삭제 예정</span>
-                  <button
-                    type="button"
-                    onClick={() => onStageRestore(dest)}
-                    disabled={disabled}
-                    style={{
-                      flexShrink: 0,
-                      background: 'transparent',
-                      border: 'none',
-                      padding: '4px 0 4px 10px',
-                      color: C.accent,
-                      cursor: disabled ? 'not-allowed' : 'pointer',
-                      fontFamily: 'inherit',
-                      fontSize: 13,
-                    }}
-                  >
-                    되돌리기
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => onStageRemove(dest)}
-                  disabled={disabled}
-                  aria-label={`${dest} 삭제`}
-                  style={{
-                    flexShrink: 0,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 32,
-                    height: 32,
-                    borderRadius: 999,
-                    border: 0,
-                    background: 'transparent',
-                    color: C.ink3,
-                    cursor: disabled ? 'not-allowed' : 'pointer',
-                  }}
+              <button
+                type="button"
+                onClick={() => onStageRemove(dest)}
+                disabled={disabled}
+                aria-label={`${dest} 삭제`}
+                style={{
+                  flexShrink: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 32,
+                  height: 32,
+                  borderRadius: 999,
+                  border: 0,
+                  background: 'transparent',
+                  color: C.ink3,
+                  cursor: disabled ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {/* 휴지통 — 광견병/항체 추가 카드(rabies-extra·titer-extra)와 동일 아이콘으로 통일. */}
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
-                  {/* 휴지통 — 광견병/항체 추가 카드(rabies-extra·titer-extra)와 동일 아이콘으로 통일. */}
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M3 6h18" />
-                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                  </svg>
-                </button>
-              )}
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                </svg>
+              </button>
             </div>
-            {/* 삭제 예정이면 입력 행은 감춘다 — 되돌리면 다시 보임. */}
-            {!removing && (
-              <>
-                <SegmentField
-                  label="왕복·편도"
-                  value={trip}
-                  onChange={(v) => onStageTripType(dest, v === 'one_way' ? 'one_way' : 'round')}
-                  options={TRIP_OPTIONS}
-                  last={!showCoProgress}
-                />
-                {showCoProgress && (
-                  <SwitchField
-                    label="함께 준비"
-                    checked={coProgress}
-                    onChange={onStageCoProgress}
-                    sub="한 마리에 입력한 일정·절차를 다른 동물에도 같이 반영해요"
-                    last
-                  />
-                )}
-              </>
+            <SegmentField
+              label="왕복·편도"
+              value={trip}
+              onChange={(v) => onStageTripType(dest, v === 'one_way' ? 'one_way' : 'round')}
+              options={TRIP_OPTIONS}
+              last={!showCoProgress}
+            />
+            {showCoProgress && (
+              <SwitchField
+                label="함께 준비"
+                checked={coProgress}
+                onChange={onStageCoProgress}
+                sub="한 마리에 입력한 일정·절차를 다른 동물에도 같이 반영해요"
+                last
+              />
             )}
           </SectionCard>
         )
