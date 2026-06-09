@@ -44,7 +44,7 @@
 - 공용 = `DESTINATION_SCOPED_FIELD_KEYS` 에 **없는** 키. 그대로 둔다.
 - 목적지별 = `DESTINATION_SCOPED_FIELD_KEYS` (현재 32개: 일정2·출국항공7·귀국5·증명3·시간1·주소1·검역11+예약). 전부 `by_dest`.
 
-⚠️ **임상검사 내원일(vet_visit_date) 분류는 사용자 최종 확인 대기** — "출국마다 새로 받는다"고 보면 목적지별(현재 가정), "검사는 기존 값"에 포함이면 공용. 진행 전 확정할 것.
+✅ **임상검사 내원일(`vet_visit_date`) = 목적지별 확정 (2026-06-09, 사용자)** — 출국 직전(출국 N일 전)에 받는 거라 출국마다 다름. 새 목적지면 리셋. (항체·전염병 '검사'와 달리 출입국 종속.)
 
 ---
 
@@ -88,7 +88,7 @@
 - [x] 검역 키 `DESTINATION_SCOPED_FIELD_KEYS` 등록 (커밋 `ba70ab0`)
 - [x] portal 검역 저장 4함수 by_dest (`updateKr/JpXxxQuarantineDate` + `applyQuarantine`) (커밋 `ba70ab0`)
 - [x] step-detail 검역 저장 호출 activeDest + 저장 후 flatten read (커밋 `ba70ab0`)
-- [ ] **vet_visit_date 분류 사용자 확정** (공용 vs 목적지별) ← 진행 전 필수
+- [x] **vet_visit_date = 목적지별 확정** (2026-06-09, 출국마다 새로) — d31d771 의 vet_visit 유지 예외 제거(완료 내림 시 함께 비움)
 - [ ] 저장 게이트 제거 — admin `updateCaseField` (isMultiDest 제거)
 - [ ] 저장 게이트 제거 — portal `updateFlightFields` / `updateVetVisitDate` / `applyQuarantine`
 - [ ] 예약 by_dest — `updateJpExportQuarantineFields`(application_date/date/time) + 호출 step-detail:784

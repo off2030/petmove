@@ -142,10 +142,9 @@ export async function addCaseDestination(
     // 백신·항체(rabies_* 등 동물 단위 기록)는 건드리지 않는다.
     if (demoted.length > 0) {
       // 완료로 내려간 여정의 공용(top-level) 목적지별 값을 전부 비운다 — 새 목적지가 물려받아
-      // '완료/누수'(검역·항공권·귀국일 → prompt 오발동·항공권 잔존)되지 않게. design: 새 목적지는
-      // 항공권부터 리셋. 단 임상검사 내원일(vet_visit_date)·백신·항체(scoped 아님)는 동물 단위라 유지.
+      // '완료/누수'(검역·항공권·귀국일·내원일 → prompt 오발동·잔존)되지 않게. 마이크로칩·백신·항체는
+      // scoped 가 아니라(동물 단위) 안 건드림. 임상검사 내원일(vet_visit)은 목적지별이라 함께 비운다.
       for (const k of DESTINATION_SCOPED_FIELD_KEYS) {
-        if (k === 'vet_visit_date') continue
         delete nextData[k]
       }
       const ac = { ...((nextData.arrival_confirmed as Record<string, unknown> | undefined) ?? {}) }
