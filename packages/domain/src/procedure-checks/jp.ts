@@ -162,9 +162,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.rabies-extra-within-previous-validity',
     country: 'japan',
     category: '광견병',
-    title: '백신 유효기간 만료',
+    title: '광견병 추가 접종 확인',
     description:
-      '추가(3차+) 광견병 접종은 직전 광견병 백신의 면역 유효기간 이내여야 함. 유효기간 경과 후 접종은 부스터가 아닌 새 기초접종으로 간주됨.',
+      '추가(3차+) 광견병 접종은 직전 접종일 이후이고, 직전 광견병 백신의 면역 유효기간 이내여야 함. 순서가 거꾸로이거나 유효기간 경과 후 접종은 부스터가 아닌 새 기초접종으로 간주됨.',
     severity: 'info',
     addedAt: '2026-05-24',
     run: ({ caseRow, destination }) => {
@@ -470,26 +470,26 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const dep = readDepartureDate(caseRow, destination) ?? ''
       const rabies = readRabiesEntries(caseRow)
       if (rabies.length === 0) return SKIP
+      // chain 이 깨진 경우(순서 위반·만료 후 접종)는 jp.rabies-extra-within-previous-validity 가
+      // 안내 — '만료 임박' 안내를 중복으로 얹지 않는다.
+      if (findRabiesChainBreak(rabies)) return SKIP
 
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       if (!validUntil) return SKIP
       // 입국일 전 만료 케이스는 blocker(jp.rabies-valid-until-on-departure)가 잡음 — info 는 SKIP.
       if (dep && validUntil < dep) return SKIP
+      // 이미 만료된 경우는 '임박'이 아님 — 타임라인/카드 situational 이 '만료되었습니다'로 안내한다.
+      if (validUntil < todayKst()) return SKIP
 
-      // 만료 30일 전부터 사전 안내 — 입국일과 무관하게 오늘 기준.
+      // 만료 30일 전부터 사전 안내 — 입국일과 무관하게 오늘 기준. (제목 '만료 임박'과 일치)
       const threshold = addDays(todayKst(), 30)
       if (!threshold || validUntil >= threshold) {
         return { ok: true, message: `만료(${validUntil}) ≥ 오늘+30일.` }
       }
-      // 이미 만료(과거)와 임박(미래) 분기 — '추가 백신' 카드·타임라인 situational(catalog.ts)과 동일 문구.
-      const message =
-        validUntil < todayKst()
-          ? `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
-          : `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전에 추가 접종을 하세요.`
       return {
         ok: false,
-        message,
+        message: `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전에 추가 접종을 하세요.`,
         offendingPaths: [`rabies_dates[${latest.originalIndex}].date`],
       }
     },
