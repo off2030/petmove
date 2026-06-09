@@ -47,7 +47,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '펫무브 등록',
     shortLabel: '등록',
     description:
-      '보호자와 반려동물 정보가 등록되었습니다.\n\n등록하신 정보는 검역을 위한 필수 정보입니다. 매 단계마다 동일한 정보로 준비를 진행하세요. 진행 중 정보를 변경해야 하는 경우 담당 동물병원, 에이전시, 검역소와 상의하세요.\n\n내 정보에서 확인, 수정할 수 있습니다.',
+      '보호자와 반려동물 정보가 등록되었습니다.\n\n등록하신 정보는 검역 준비의 여러 단계에 사용됩니다. 준비 중 정보가 변경되는 경우, 담당 동물병원, 운송업체, 검역소와 상의하세요.\n\n내 정보에서 확인, 수정할 수 있습니다.',
     doneSummary: '보호자와 반려동물 정보가 등록되었습니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 10,
@@ -61,7 +61,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '마이크로칩 삽입',
     shortLabel: '칩',
     description:
-      '국제 표준 규격(15자리 번호)의 내장형 마이크로칩을 삽입합니다.\n강아지는 동물등록도 필수입니다.',
+      '국제 표준 규격(15자리 번호)의 내장형 마이크로칩을 삽입하세요.\n강아지는 동물등록도 함께 진행하세요.',
     doneSummary: '마이크로칩을 삽입했습니다.',
     // 마이크로칩 번호와 시술일은 한 쌍 — 한쪽만 채워졌으면 빠진 쪽을 desc/카드에서 직접 요청.
     situational: (caseRow) => {
@@ -104,7 +104,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '광견병 백신(1차)',
     shortLabel: '백신1',
     description:
-      '1차 광견병 백신을 접종합니다.\n\n생후 91일이 지난 후 접종해야 합니다.\n불활화(사독) 또는 재조합(변형) 백신을 사용합니다. (국내 유통되는 거의 모든 백신 허용)',
+      '1차 광견병 백신을 접종하세요.\n\n생후 91일이 지난 후에 접종해야 합니다.\n불활화(사독) 또는 재조합(변형) 백신을 사용하세요. (국내 유통되는 거의 모든 백신 허용)',
     doneSummary: '1차 광견병 백신을 접종했습니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 30,
@@ -132,7 +132,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '광견병 백신(2차)',
     shortLabel: '백신2',
     description:
-      '2차 광견병 백신을 접종합니다.\n\n1차 접종 후 30일 이상 지나서 접종합니다.\n1차 접종 면역 유효기간 이내에 접종합니다.\n일본 입국 때 면역 유효기간이 남아있어야 합니다.',
+      '2차 광견병 백신을 접종하세요.\n\n1차 접종 후 30일 이상 지나서 접종하세요.\n1차 접종 면역 유효기간 이내에 접종하세요.\n일본 입국 때 면역 유효기간이 남아있어야 합니다.',
     doneSummary: '2차 광견병 백신을 접종했습니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 35,
@@ -169,7 +169,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '추가 백신',
     shortLabel: '백신+',
     description:
-      '직전 광견병 백신의 면역 유효기간이 끝나기 전에 재접종합니다.\n\n유효기간이 끝나기 전에 재접종하지 않으면, 1, 2차 접종과 검사 후 다시 180일을 기다려야 합니다.',
+      '직전 광견병 백신의 면역 유효기간이 끝나기 전에 재접종하세요.\n\n유효기간이 끝나기 전에 재접종하지 않으면, 1, 2차 접종과 검사 후 다시 180일을 기다려야 합니다.',
     doneSummary: '광견병 백신을 추가 접종했습니다.',
     // 미래 만료 대비 reminder — 본 흐름의 다음 단계(사전 신고 등)를 다음 할 일에서 가리지 않는다.
     advisoryOnly: true,
@@ -216,7 +216,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '광견병 항체 검사',
     shortLabel: '항체',
     description:
-      '일본 지정 검사기관에서 광견병 항체 검사를 받습니다.\n\n동물병원을 통해 의뢰할 수 있습니다.\n0.5 IU/mL 이상이면 합격입니다.\n2차 접종 면역 유효기간 이내에 검사합니다.',
+      '일본 지정 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있습니다.\n0.5 IU/mL 이상이면 합격입니다.\n2차 접종 면역 유효기간 이내에 검사하세요.',
     doneSummary: '광견병 항체 검사를 받았습니다.',
     applicability: {
       destinations: [
@@ -290,7 +290,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '추가 검사',
     shortLabel: '항체+',
     description:
-      '일본 입국 전 재검사가 필요합니다.\n\n검사 결과가 나올 때까지 수 주가 걸릴 수 있으므로 미리 검사를 받아두길 권장합니다.',
+      '일본 입국 전에 재검사를 받으세요.\n\n검사 결과가 나올 때까지 수 주가 걸릴 수 있으니 미리 검사를 받아두세요.',
     doneSummary: '광견병 항체 검사를 추가로 받았습니다.',
     // 미래 만료 대비 reminder — 본 흐름의 다음 단계를 다음 할 일에서 가리지 않는다.
     advisoryOnly: true,
@@ -373,7 +373,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '사전 신고',
     shortLabel: '신고',
     description:
-      '일본 입국 40일 전까지 신고해야 합니다.\n\nNACCS로 신청한 후 일본 동물검역소 이메일 지시에 적절한 답변 및 대응을 합니다.\n수 주 후 허가증(Approval)을 받을 수 있습니다.\n왕복 일정인 경우 일본 수출 동물검역 신청도 함께 하는 것이 좋습니다.',
+      '일본 입국 40일 전까지 신고하세요.\n\nNACCS로 신청한 후 일본 동물검역소의 이메일 지시에 맞춰 답변·대응하세요.\n수 주 후 허가증(Approval)을 받을 수 있습니다.\n왕복 일정이라면 일본 수출 동물검역 신청도 함께 하는 것이 좋습니다.',
     doneSummary: '일본 동물검역소에 사전 신고를 했습니다.',
     cardLine: '일본 동물검역소에 사전 신고를 하세요.',
     // 진행 상태는 [[deriveAdvanceNotificationStatus]] 가 단일 출처 — admin 신고탭과 동일.
@@ -421,7 +421,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '일본 수출 동물검역 신청',
     shortLabel: '수출',
     description:
-      '일본 동물검역소에 수출 동물검역 신청과 예약을 합니다.\n\n수출 동물검역은 일본에서 한국으로 돌아오기 전에 받아야 하는 필수 절차로, 최소 10일 전까지 신청, 예약해야 합니다.\n수출 동물검역 신청은 NACCS를 통해서 할 수 있습니다.\n예약은 NACCS를 통해 할 수 없습니다. 방문하려는 동물검역소에 이메일로 문의합니다.',
+      '일본 동물검역소에 수출 동물검역을 신청하고 예약하세요.\n\n수출 동물검역은 일본에서 한국으로 돌아오기 전에 받아야 하는 필수 절차로, 최소 10일 전까지 신청·예약해야 합니다.\n수출 동물검역 신청은 NACCS를 통해 할 수 있습니다.\n예약은 NACCS로 할 수 없으니, 방문하려는 동물검역소에 이메일로 문의하세요.',
     doneSummary: '일본 수출 동물검역 신청·예약을 완료했습니다.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
     order: 48,
@@ -476,7 +476,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '종합백신 접종',
     shortLabel: '종합',
     description:
-      '강아지는 DHPP(C), 고양이는 FVRCP. 출국 시점에 유효기간이 남아있어야 합니다.',
+      '강아지는 DHPP(C), 고양이는 FVRCP를 접종하세요. 출국 시점에 유효기간이 남아있어야 합니다.',
     doneSummary: '종합백신을 접종했습니다.',
     applicability: {
       destinations: [
@@ -511,7 +511,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     category: 'vaccination',
     title: '독감(CIV) 접종',
     shortLabel: '독감',
-    description: '호주·뉴질랜드·인도 등 일부 국가는 강아지 인플루엔자 백신을 요구합니다.',
+    description: '강아지 인플루엔자(CIV) 백신을 접종하세요. 호주·뉴질랜드·인도 등 일부 국가에서 요구됩니다.',
     doneSummary: '독감(CIV) 백신을 접종했습니다.',
     applicability: {
       destinations: ['australia', 'new_zealand', 'india'],
@@ -533,7 +533,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '전염병 검사',
     shortLabel: '전염병',
     description:
-      '호주(Brucella/Leptospira/Leishmania 등), 뉴질랜드, 남아프리카공화국 — 인증 실험실에서 음성 확인이 필요합니다.',
+      '인증 실험실에서 전염병 검사를 받아 음성을 확인하세요. 호주(Brucella/Leptospira/Leishmania 등)·뉴질랜드·남아프리카공화국에서 요구됩니다.',
     doneSummary: '전염병 검사를 받았습니다.',
     applicability: {
       destinations: ['australia', 'new_zealand', 'south_africa'],
@@ -555,7 +555,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '외부구충',
     shortLabel: '외부',
     description:
-      'EU 6국·호주·뉴질랜드 등에서 출국 직전 진드기/벼룩 처치가 요구됩니다.',
+      '출국 직전에 진드기·벼룩 처치를 받으세요. EU 6국·호주·뉴질랜드 등에서 요구됩니다.',
     doneSummary: '외부구충 처치를 받았습니다.',
     applicability: {
       destinations: [
@@ -592,7 +592,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '내부구충',
     shortLabel: '내부',
     description:
-      'EU 6국(영국·아일랜드·몰타·노르웨이·핀란드 + 북아일랜드)은 출국 24~120시간 전 praziquantel 류 촌충약이 필수입니다. 시간(분 단위)까지 기록됩니다.',
+      'EU 6국(영국·아일랜드·몰타·노르웨이·핀란드 + 북아일랜드)은 출국 24~120시간 전에 praziquantel 류 촌충약을 투약하세요. 투약 시각(분 단위)까지 기록해야 합니다.',
     doneSummary: '내부구충 투약을 받았습니다.',
     applicability: {
       destinations: [
@@ -626,7 +626,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '수입 허가 신청',
     shortLabel: '허가',
     description:
-      '호주(DAFF), 뉴질랜드(MPI), 대만(APHIA), 말레이시아(DVS) 등은 도착 전 수입허가가 필요합니다. 허가번호가 검역증에 명시되어야 합니다.',
+      '도착 전에 수입허가를 신청하세요. 호주(DAFF)·뉴질랜드(MPI)·대만(APHIA)·말레이시아(DVS) 등에서 필요하며, 허가번호가 검역증에 명시되어야 합니다.',
     doneSummary: '수입 허가를 받았습니다.',
     applicability: {
       destinations: ['australia', 'new_zealand', 'taiwan', 'malaysia'],
@@ -684,7 +684,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '한국 수출 동물검역',
     shortLabel: '검역소',
     description:
-      '출국일 기준 10일 이내에 동물검역소를 방문해 검역을 받습니다.\n반려동물을 데리고 방문해야 합니다.\n필수 서류를 빠짐없이 구비해야 합니다.',
+      '출국일 기준 10일 이내에 동물검역소를 방문해 검역을 받으세요.\n반려동물을 데리고 방문하세요.\n필수 서류를 빠짐없이 챙기세요.',
     doneSummary: '한국 수출 동물검역을 받았습니다.',
     cardLine: '동물검역소를 방문해 검역을 받으세요.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
@@ -712,7 +712,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '출국 · 도착',
     shortLabel: '출국',
     description:
-      '공항 검역대 → 항공 탑승 → 도착지 검역소 입국 심사. 도착 후 일부 국가는 7~10일 자가 격리 또는 검역소 격리가 적용됩니다.',
+      '공항 검역대 → 항공 탑승 → 도착지 검역소 입국 심사 순서로 진행하세요. 도착 후 일부 국가는 7~10일 자가 격리 또는 검역소 격리가 적용됩니다.',
     doneSummary: '출국했습니다.',
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 140,
@@ -733,7 +733,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '일본 수출 동물검역',
     shortLabel: '검역',
     description:
-      '일본 출국 전 동물검역소를 방문해 수출 동물검역을 받습니다.\n반려동물을 데리고 예약한 일정에 방문하세요.\n일본 수출 동물검역증(Export Quarantine Certificate)은 향후 일본에 재입국을 하게 되면 필요할 수 있습니다. 잘 보관해두세요.',
+      '일본 출국 전 동물검역소를 방문해 수출 동물검역을 받으세요.\n반려동물을 데리고 예약한 일정에 방문하세요.\n일본 수출 동물검역증(Export Quarantine Certificate)은 향후 일본에 재입국하게 되면 필요할 수 있으니 잘 보관해두세요.',
     doneSummary: '일본 수출 동물검역을 받았습니다.',
     cardLine: '일본 동물검역소를 방문해 수출 검역을 받으세요.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
@@ -777,7 +777,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '한국 수입 동물검역',
     shortLabel: '수입',
     description:
-      '한국 도착 후 공항 동물검역소에서 수입 동물검역을 받습니다.',
+      '한국 도착 후 공항 동물검역소에서 수입 동물검역을 받으세요.',
     doneSummary: '한국 수입 동물검역을 받았습니다.',
     cardLine: '한국 공항 동물검역소에서 수입 검역을 받으세요.',
     applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
