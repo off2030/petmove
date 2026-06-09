@@ -309,6 +309,13 @@ export function buildJourney(
       typeof caseData.vet_visit_date === 'string' && caseData.vet_visit_date.length >= 10
         ? caseData.vet_visit_date.slice(0, 10)
         : null
+    // 마이크로칩 시술일이 미래로 입력된 경우 — done 시그널이 '오늘 이전'만 완료로 인정하므로
+    // 미완료지만 보호자가 예약해둔 셈이라 '예정 [날짜]' 칩으로 노출(임상검사와 동일 패턴).
+    const microchipImplantDate =
+      typeof caseData.microchip_implant_date === 'string' &&
+      caseData.microchip_implant_date.length >= 10
+        ? caseData.microchip_implant_date.slice(0, 10)
+        : null
     // 한국 수출 동물검역도 동일 — 검역일이 미래면 미완료지만 잡아둔 일정이므로 '예정' 으로 노출.
     const krExportQuarantineDate =
       typeof caseData.kr_export_quarantine_date === 'string' &&
@@ -378,9 +385,15 @@ export function buildJourney(
                 ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? krExportQuarantineDate
                 : step.id === 'jp-export-quarantine'
                   ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? jpExportApplicationDate
-                  : done
-                    ? resolveCompletedDate(step.done, caseRow)
-                    : fallbackDate
+                  : step.id === 'microchip'
+                    ? done
+                      ? resolveCompletedDate(step.done, caseRow)
+                      : microchipImplantDate && microchipImplantDate > today
+                        ? microchipImplantDate
+                        : null
+                    : done
+                      ? resolveCompletedDate(step.done, caseRow)
+                      : fallbackDate
     // 칩 라벨 분기 — '마감 26·11·21' (단일 non-window 마감일이 표시 날짜인 경우) vs
     // '예정 …' (그 외 일정·이벤트·window 시작·기간 시작 등). 사전 신고처럼 deadline 자체가
     // 보호자의 행동 마감일일 때만 '마감'. window 마감(출국 10일 이내 검진 등)은 구간 시작이라 '예정' 유지.

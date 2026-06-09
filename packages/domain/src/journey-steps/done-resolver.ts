@@ -47,7 +47,10 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       // 체크의 기준일이라 없으면 후속 단계 검증이 무력화됨.
       if (!caseRow.microchip || caseRow.microchip.length === 0) return false
       const implant = data.microchip_implant_date
-      return typeof implant === 'string' && implant.length >= 10
+      if (typeof implant !== 'string' || implant.length < 10) return false
+      // 시술일이 미래(예정)면 아직 삽입 전 — 날짜가 도래해야 완료(출국 전 임상검사·검역과 동일).
+      // 날짜 값 자체는 후속 검증(after-microchip 등)에 그대로 쓰이므로 보존하고, 완료 판정만 미룬다.
+      return implant.slice(0, 10) <= todayKst()
     }
     case 'has-rabies-entry':
       return readRabiesEntries(caseRow).length > 0
