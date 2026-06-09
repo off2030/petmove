@@ -13,6 +13,7 @@ import {
 } from '../procedure-checks/utils'
 import type { StepDoneSignal } from './types'
 import { buildCaseJourneyContext } from './applicability'
+import { findRabiesChainBreak } from './rabies-chain'
 import {
   deriveAdvanceNotificationStatus,
   deriveJpExportQuarantineStatus,
@@ -65,9 +66,8 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       const latest = r[r.length - 1]
       // 미래 접종일은 '예정' — 도래해야 완료로 잡힘.
       if (latest.date > todayKst()) return false
-      const previous = r[r.length - 2]
-      const previousValidUntil = resolveValidUntil(previous.date, previous.valid_until)
-      if (!previousValidUntil || latest.date > previousValidUntil) return false
+      // chain 정합성 — 순서 위반(직전 차수보다 이른 날짜)이나 유효기간 만료 후 접종이면 미완료.
+      if (findRabiesChainBreak(r)) return false
       // 입국일 = data.entry_date 우선, 없으면 케이스의 출국일(departure_date) 폴백.
       // 일본 등 entry_date 미사용 destination 에서도 검증 동작.
       const entry =

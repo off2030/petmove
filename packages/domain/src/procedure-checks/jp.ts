@@ -146,8 +146,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
 
       // 단일 출처 — 부스터 chain 검증(findRabiesChainBreak). 1·2차만 보고, 2차가 1차 면역
       // 유효기간(resolveValidUntil) 밖이면 위반. 3차+ 는 jp.rabies-extra-within-previous-validity.
+      // 순서(2차 ≥ 1차)는 jp.rabies-prime-booster-interval 이 담당 — 여기선 유효기간 경과만.
       const brk = findRabiesChainBreak(entries.slice(0, 2))
-      if (brk) {
+      if (brk && brk.reason === 'expired') {
         return {
           ok: false,
           message: '2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 합니다.',
@@ -178,7 +179,10 @@ export const JP_CHECKS: ProcedureCheck[] = [
         const broken = entries[brk.brokenAt - 1]
         return {
           ok: false,
-          message: `${brk.brokenAt - 1}차 백신 유효기간이 만료된 뒤 ${brk.brokenAt}차를 접종했습니다. 접종일을 확인하세요.`,
+          message:
+            brk.reason === 'too-early'
+              ? `${brk.brokenAt}차 접종일이 ${brk.brokenAt - 1}차 접종일보다 빠릅니다. 접종일을 확인하세요.`
+              : `${brk.brokenAt - 1}차 백신 유효기간이 만료된 뒤 ${brk.brokenAt}차를 접종했습니다. 접종일을 확인하세요.`,
           offendingPaths: [`rabies_dates[${broken.originalIndex}].date`],
         }
       }

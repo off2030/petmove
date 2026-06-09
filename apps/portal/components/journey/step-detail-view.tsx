@@ -494,7 +494,9 @@ export function StepDetailView({
             { date: r1.date, valid_until: r1.valid_until || null },
             { date: rabies.date, valid_until: rabies.valid_until || null },
           ])
-          if (chainBreak) return '2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 합니다.'
+          // 순서(2차 ≥ 1차)는 위 validateRabiesInterval 이 담당 — 여기선 유효기간 경과만.
+          if (chainBreak && chainBreak.reason === 'expired')
+            return '2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 합니다.'
           // 마이크로칩 ≤ 2차 — procedure-check(jp.microchip-rabies-sequence)와 같은 domain 함수.
           const chipErr = validateMicrochipBeforeBooster(readImplantDate(caseRow?.data), rabies.date)
           if (chipErr) return chipErr
@@ -514,7 +516,9 @@ export function StepDetailView({
         ...rabiesExtra.map((e) => ({ date: e.date, valid_until: e.valid_until || null })),
       ])
       if (chainBreak) {
-        return `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 합니다.`
+        return chainBreak.reason === 'too-early'
+          ? `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 접종일 이후여야 합니다.`
+          : `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 합니다.`
       }
       return null
     }

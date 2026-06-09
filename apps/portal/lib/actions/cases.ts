@@ -445,7 +445,10 @@ export async function updateRabiesExtraEntries(
     if (chainBreak) {
       return {
         ok: false,
-        error: `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 합니다.`,
+        error:
+          chainBreak.reason === 'too-early'
+            ? `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 접종일 이후여야 합니다.`
+            : `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 합니다.`,
       }
     }
 

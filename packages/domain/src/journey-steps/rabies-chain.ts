@@ -14,13 +14,24 @@ import { resolveValidUntil } from '../procedure-checks/utils'
 export interface RabiesChainBreak {
   /** chain 이 깨진 접종의 1-based dose number (3차이면 3). */
   brokenAt: number
+  /**
+   * 깨진 사유:
+   *  - 'too-early': 직전 차수보다 이른 날짜(예: 3차가 2차보다 빠름) — 순서 위반.
+   *  - 'expired'  : 직전 접종의 면역 유효기간을 넘긴 날짜 — chain 끊김(새 기초접종).
+   */
+  reason: 'too-early' | 'expired'
+  /** 직전 접종일 (YYYY-MM-DD). */
+  prevDate: string
   /** 직전 접종의 면역 유효기간 마지막일 (YYYY-MM-DD). */
   prevValidUntil: string
 }
 
 /**
- * entries 는 시간순(1·2·3차...) 정렬되어 들어와야 한다. 빈 date 는 자동 skip.
+ * entries 는 차수 순서(1·2·3차...)대로 들어와야 한다. 빈 date 는 자동 skip.
  * chain 깨진 첫 지점 1건만 반환 — 그 지점이 막히면 그 뒤는 의미 없음.
+ *
+ * 각 접종(n)은 (a) 직전 접종(n-1) **이후**이고, (b) 직전 접종의 면역 유효기간 **이내**여야
+ * 부스터로 인정된다. (a) 위반은 'too-early'(순서 거꾸로), (b) 위반은 'expired'(만료 후).
  */
 export function findRabiesChainBreak(
   entries: { date: string; valid_until?: string | null }[],
@@ -32,8 +43,13 @@ export function findRabiesChainBreak(
     const prev = valid[i - 1]
     const cur = valid[i]
     const prevValidUntil = resolveValidUntil(prev.date, prev.valid_until)
+    // (a) 순서 위반 — 직전 차수보다 이른 날짜.
+    if (cur.date < prev.date) {
+      return { brokenAt: i + 1, reason: 'too-early', prevDate: prev.date, prevValidUntil }
+    }
+    // (b) 유효기간 경과 — 부스터가 직전 면역 유효기간을 넘김.
     if (cur.date > prevValidUntil) {
-      return { brokenAt: i + 1, prevValidUntil }
+      return { brokenAt: i + 1, reason: 'expired', prevDate: prev.date, prevValidUntil }
     }
   }
   return null
