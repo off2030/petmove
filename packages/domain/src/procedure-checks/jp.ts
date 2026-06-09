@@ -162,7 +162,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.rabies-extra-within-previous-validity',
     country: 'japan',
     category: '광견병',
-    title: '광견병 추가 접종 확인',
+    title: '광견병 추가 접종 타이밍',
     description:
       '추가(3차+) 광견병 접종은 직전 접종일 이후이고, 직전 광견병 백신의 면역 유효기간 이내여야 함. 순서가 거꾸로이거나 유효기간 경과 후 접종은 부스터가 아닌 새 기초접종으로 간주됨.',
     severity: 'info',
