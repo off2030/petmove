@@ -9,7 +9,7 @@ import { TimelineCalm } from '@/components/journey/timeline-calm'
 import { CompletionPrompt } from '@/components/journey/completion-prompt'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
-import { confirmArrival, markJourneyComplete, dismissCompletionPrompt } from '@/lib/actions/destinations'
+import { confirmArrival, removeCaseDestination, dismissCompletionPrompt } from '@/lib/actions/destinations'
 
 /**
  * 케이스별 여정 — /cases/<id>/journey. Client — CaseDataProvider 에서 케이스 데이터 읽음.
@@ -17,7 +17,8 @@ import { confirmArrival, markJourneyComplete, dismissCompletionPrompt } from '@/
  * 완료 확인 prompt(A형, design §4.2): 출국/귀국일이 지났는데 미완료면 바텀시트.
  * - "잘 다녀왔어요" → confirmArrival(도착 확인) → **완료 카드가 뜬다(여정 제거 X)**.
  * - "아직 진행 중" → dismiss(이 anchorDate 동안 재발동 안 함).
- * - "이 여정은 취소할게요" → **confirm 한 번 더** → markJourneyComplete(cancelled).
+ * - "이 여정은 취소할게요" → **confirm 한 번 더** → removeCaseDestination(깨끗이 제거).
+ *   취소=삭제로 통일(2026-06): 지난 여정에 비석 안 남김. by_dest·trip_type 까지 정리.
  *   (지난 결함: 즉시 제거 + 오조작 취소 → 도착 확인/취소 분리 + 취소 confirm 으로 방지.)
  */
 export default function CaseJourneyPage({
@@ -105,7 +106,7 @@ export default function CaseJourneyPage({
               cancelLabel: '아니요',
               variant: 'destructive',
             })
-            if (ok) run(() => markJourneyComplete(id, dest, 'cancelled'))
+            if (ok) run(() => removeCaseDestination(id, dest))
             else setPromptClosed(false) // 되돌리면 완료 확인 시트로 복귀
           }}
         />
