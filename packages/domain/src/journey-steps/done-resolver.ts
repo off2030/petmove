@@ -68,16 +68,16 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       if (latest.date > todayKst()) return false
       // chain 정합성 — 순서 위반(직전 차수보다 이른 날짜)이나 유효기간 만료 후 접종이면 미완료.
       if (findRabiesChainBreak(r)) return false
-      // 입국일 = data.entry_date 우선, 없으면 케이스의 출국일(departure_date) 폴백.
-      // 일본 등 entry_date 미사용 destination 에서도 검증 동작.
+      // 최신 추가 접종의 면역 유효기간이 이미 지났으면(만료) 또 접종해야 하므로 미완료.
+      const latestValidUntil = resolveValidUntil(latest.date, latest.valid_until)
+      if (!latestValidUntil || latestValidUntil < todayKst()) return false
+      // 입국일이 입력된 경우, 그 유효기간이 입국일까지 커버해야 함. (entry_date 우선,
+      // 없으면 케이스 출국일 폴백 — 일본 등 entry_date 미사용 destination 도 동작.)
       const entry =
         (typeof data.entry_date === 'string' && data.entry_date) ||
         (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
         ''
-      if (entry) {
-        const latestValidUntil = resolveValidUntil(latest.date, latest.valid_until)
-        if (!latestValidUntil || latestValidUntil < entry) return false
-      }
+      if (entry && latestValidUntil < entry) return false
       return true
     }
     case 'has-titer-entry': {
