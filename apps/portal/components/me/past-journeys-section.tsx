@@ -13,12 +13,16 @@ import { C } from './settings-shared'
 function readPastJourneys(caseRow: CaseRow): PastJourneySummary[] {
   const raw = (caseRow.data as Record<string, unknown> | null | undefined)?.past_journeys
   if (!Array.isArray(raw)) return []
+  // 고객 화면엔 '잘 다녀온'(done) 여정만 도장으로 남긴다. 취소(cancelled)는 숨김 —
+  // 데이터엔 그대로 남아 운영자(펫무브워크 case-detail)는 완료·취소 모두 본다.
   // 최신 완료순(completedDate 내림차순). 문자열 ISO 사전식 비교.
-  return [...(raw as PastJourneySummary[])].sort((a, b) => {
-    const x = a.completedDate ?? ''
-    const y = b.completedDate ?? ''
-    return x > y ? -1 : x < y ? 1 : 0
-  })
+  return (raw as PastJourneySummary[])
+    .filter((j) => j.outcome === 'done')
+    .sort((a, b) => {
+      const x = a.completedDate ?? ''
+      const y = b.completedDate ?? ''
+      return x > y ? -1 : x < y ? 1 : 0
+    })
 }
 
 /** 도장 — 완료는 sage 체크, 취소는 회색 X. */
