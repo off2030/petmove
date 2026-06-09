@@ -176,23 +176,21 @@ export function validateVetVisitDate(v: string, ctx: DateRuleContext): string | 
 // ── 광견병 1·2차 관계 검증 (날짜만 받는 순수 함수 — client 입력 차단·procedure-check 공용) ──
 
 /**
- * 광견병 1·2차 접종 간격 — 2차는 1차 이후이고, 1차 + 30일 이상이어야 함.
+ * 광견병 1·2차 접종 간격 — 2차는 1차 접종일로부터 30일 이후여야 함.
  *
  * 단일 출처: 펫무브 client(2차 입력 시 입력 불가) + procedure-check(1차 수정 후 2차 step '주의')
- * 가 같은 함수를 호출한다. 순서 위반(2차 < 1차)과 간격 부족(< 30일)을 구분해 메시지를 낸다.
+ * 가 같은 함수를 호출한다. 순서 위반(2차 < 1차)과 간격 부족(< 30일)은 모두 같은 요건
+ * (2차 ≥ 1차 + 30일) 위반이므로, 어느 쪽이든 **실행 가능한 목표 날짜(1차 + 30일)** 를 안내한다.
  * 어느 한쪽 날짜가 비면 비교 불가라 null(통과).
  */
 export function validateRabiesInterval(primeDate: string, boosterDate: string): string | null {
   if (!primeDate || !boosterDate) return null
   const gap = daysBetween(primeDate, boosterDate)
-  if (gap < 0) {
-    return `광견병 2차 접종일이 1차 접종일(${fmt(primeDate)})보다 빠릅니다. 날짜를 확인하세요.`
-  }
-  if (gap < 30) {
-    const earliest = addDays(primeDate, 30)
-    return `1·2차 접종 간격은 30일 이상이어야 합니다. 현재 ${gap}일로, 2차 접종일은 ${earliest ? fmt(earliest) : ''} 이후여야 합니다.`
-  }
-  return null
+  if (gap >= 30) return null
+  const earliest = addDays(primeDate, 30)
+  return earliest
+    ? `2차 광견병 접종은 1차 접종일(${fmt(primeDate)})로부터 30일 이후에 해야 합니다. ${fmt(earliest)} 이후로 입력하세요.`
+    : `2차 광견병 접종은 1차 접종일(${fmt(primeDate)})로부터 30일 이후에 해야 합니다.`
 }
 
 /**
