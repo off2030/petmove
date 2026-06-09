@@ -69,14 +69,17 @@
 
 ### 4.A 읽기 가드 — 컬럼/top-level 잔존 누수 (문서 초안이 놓친 부분)
 초안 §4는 "읽기 이미 안전"이라 했으나, **departure_date 컬럼을 유지(필터·정렬·auto-fill)**하기로 한 탓에
-컬럼이 누수 벡터가 된다 — 새 빈 목적지가 `getDepartureDate`/`flatten` 의 컬럼 fallback 으로 다른
-목적지 출국일을 물려받음. 그래서 읽기 측에 가드를 넣음:
-- **다중 목적지 + 그 목적지가 by_dest 로 관리됨(엔트리 존재)** → 컬럼/top-level fallback **안 함**(그 칸만 신뢰).
-- **단일/엔트리 없음** → 기존 fallback 유지(누수 상대 없음 + 마이그 전 호환).
-- 적용: `flattenCaseForDestination`(다중 strict 분기)·`getDepartureDate`·`getVetVisitDate`·`readCaseField`·
-  todos `importReportReturnDate`. 헬퍼 `hasByDestEntry` 추가.
-- `readEffectiveExtraValue` 는 시그니처에 목적지 카운트가 없어 미적용 — 마이그가 top-level 을 비우면
-  안전(legacy country_extra 경로의 다중 edge 만 잔존, 좁고 기존부터 있던 것).
+컬럼이 누수 벡터가 된다 — 빈/엔트리없는 목적지가 컬럼 fallback 으로 다른 목적지 출국일을 물려받음.
+그래서 읽기 측에 가드:
+- **다중 목적지 + 특정 목적지 지정** → by_dest 만 신뢰. 컬럼/top-level fallback **안 함**. ⚠️ **엔트리 유무
+  무관** — 처음엔 "엔트리 있을 때만"(hasByDestEntry)으로 했다가, 검증 spot-check 에서 by_dest 엔트리가
+  아예 없는 다중 목적지(예: admin destination-field 로만 추가된 `중국`)가 컬럼을 그대로 물려받는 누수를
+  발견해 **multi 단독 가드**로 정정함(hasByDestEntry 제거).
+- **단일** → 기존 fallback 유지(누수 상대 없음 + 마이그 전 호환).
+- 적용: `flattenCaseForDestination`(다중 strict — 엔트리 없어도 빈값 처리)·`getDepartureDate`·`getVetVisitDate`·
+  `readCaseField`·todos `importReportReturnDate`·auto-fill `readScalarDate`(트리거 누수 차단).
+- `readEffectiveExtraValue` 는 시그니처에 목적지 카운트가 없어 미적용 — 마이그가 top-level 을 비워 안전
+  (legacy country_extra 경로의 다중 edge 만 잔존, 좁고 기존부터 있던 것).
 
 ### 4.B 공용 부수효과 패리티 — 단일이 by_dest 경로로 와도 종전과 동일하게
 단일 케이스가 by_dest 분기로 오면 종전 top-level 분기가 하던 **공용(단일값) 부수효과**가 빠진다.
@@ -125,9 +128,12 @@
 - [x] procedure-checks destination 전달 — 확인 완료(admin `viewDestination`=활성/유일 토큰, portal=flatten). 변경 불필요.
 
 **마이그 / 검증 / 정리:**
-- [x] 마이그레이션 스크립트 작성 — `scripts/migrate-by-dest-unify.mjs` (dry-run 기본, `--apply`)
-- [ ] **마이그 dry-run → 사용자 확인 → apply** (prod write — 코드 배포 후 실행)
-- [ ] 검증 (다중 검역 누수 차단 + PDF·auto-fill·표시 회귀)
+- [x] 마이그레이션 스크립트 — `scripts/migrate-by-dest-unify.mjs` (dry-run 기본, `--apply`, pre-image 백업)
+- [x] **마이그 적용 완료** (2026-06-09) — 1949 중 159건(단일 146/다중 13) top-level→by_dest, 실패 0,
+  pre-image 백업 `scripts/backup-bydest-*.json`(gitignore). 멱등 재실행 0건 확인.
+- [x] 검증 spot-check — `scripts/verify-bydest-spotcheck.mjs`. 단일 정상(top-level 비움·by_dest·컬럼 유지).
+  **다중 entry-less 누수 발견→가드 정정**(§4.A). 잔존: 일부 다중 케이스 by_dest 중복 데이터(마이그 전부터, 코드 무관).
+- [ ] 배포 후 실사용 검증 (다중 케이스 표시·PDF·auto-fill 회귀 — 코드 2차 배포 후)
 - [ ] 임시패치 정리 — `cf46c2e`·`d31d771`·addCaseDestination demoted-block(읽기 가드로 일부 redundant) 단순화 검토
 
 ---

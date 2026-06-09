@@ -25,7 +25,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -163,7 +163,6 @@ console.log(`총 케이스: ${all.length}`)
 console.log(`모드: ${APPLY ? '⚠️  APPLY (실제 쓰기)' : 'DRY-RUN (쓰기 없음)'}`)
 console.log('─'.repeat(60))
 
-let touched = 0
 let touchedSingle = 0
 let touchedMulti = 0
 const keyCounts = {}
@@ -171,16 +170,37 @@ let applied = 0
 let applyErrors = 0
 const samples = []
 
+// 1차: 변경 대상 + 통계 수집 (쓰기 전).
+const plans = []
 for (const row of all) {
   const plan = planCase(row)
   if (!plan) continue
-  touched++
+  plans.push({ row, plan })
   if (plan.multi) touchedMulti++
   else touchedSingle++
   for (const k of plan.movedKeys) keyCounts[k] = (keyCounts[k] ?? 0) + 1
   if (samples.length < 12) {
     samples.push(`  ${row.id.slice(0, 8)} [${plan.multi ? '다중' : '단일'}] → by_dest[${plan.target}] : ${plan.movedKeys.join(', ') || '(top-level 잔존 정리만)'}`)
   }
+}
+const touched = plans.length
+
+// 백업: 변경 대상의 pre-image 를 파일로 (어떤 쓰기보다 먼저). 복구용.
+if (APPLY && plans.length > 0) {
+  const backup = plans.map(({ row }) => ({
+    id: row.id,
+    destination: row.destination,
+    data: row.data,
+    departure_date: row.departure_date,
+  }))
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const fname = path.join(ROOT, `scripts/backup-bydest-${stamp}.json`)
+  writeFileSync(fname, JSON.stringify(backup, null, 2))
+  console.log(`백업 저장: ${fname} (${backup.length}건 pre-image)`)
+}
+
+// 2차: 적용.
+for (const { row, plan } of plans) {
   if (APPLY) {
     const { error } = await supabase.from('cases').update({ data: plan.data }).eq('id', row.id)
     if (error) {

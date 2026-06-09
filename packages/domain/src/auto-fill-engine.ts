@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { DESTINATION_OVERRIDES, matchesDestinationKey } from './destination-config'
+import { DESTINATION_OVERRIDES, matchesDestinationKey, parseDestinations } from './destination-config'
 import { resolveInspectionLabs, type InspectionLabRule } from './inspection-config-defaults'
 import {
   isDestinationScopedKey,
@@ -98,6 +98,9 @@ function readScalarDate(c: CaseSnapshot, key: string, activeDest?: string | null
     if (typeof v === 'string' && v) return v
     // by_dest 에 명시적 null sentinel 이면 fallback 안 함 (값 없음).
     if (v === null) return null
+    // 다중 목적지: by_dest 미존재(undefined)여도 컬럼/top-level fallback 안 함 — 다른 목적지 값을
+    // 트리거로 끌어다 자동채움이 새 목적지 by_dest 에 쓰는 누수 차단(B).
+    if (parseDestinations(c.destination).length > 1) return null
   }
   if (key === 'departure_date') {
     // departure_date 는 column. 호출부에서 data 에 섞어 전달할 수도 있으므로 검사.

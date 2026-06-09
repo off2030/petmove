@@ -120,20 +120,6 @@ export function writeByDestValue(
 }
 
 /**
- * `data.by_dest[destination]` 엔트리(객체)가 존재하는지 — 키 단위가 아니라 목적지 칸 자체.
- * 빈 객체(`{}`)도 "존재"로 본다(새로 추가된 목적지). 다중 목적지에서 top-level/컬럼 fallback 을
- * 막을지 판단하는 데 쓴다 — 칸이 있으면 그 목적지는 by_dest 로 관리되는 것.
- */
-export function hasByDestEntry(
-  data: Record<string, unknown> | null | undefined,
-  destination: string | null | undefined,
-): boolean {
-  if (!data || !destination) return false
-  const byDest = data['by_dest'] as Record<string, unknown> | undefined
-  return !!byDest && Object.prototype.hasOwnProperty.call(byDest, destination)
-}
-
-/**
  * 탭(신고·서류·검사)에서 케이스 한 줄이 대표할 "활성 목적지" 해석.
  *
  * 우선순위:
@@ -170,7 +156,8 @@ export function getDepartureDate(
   const data = caseRow.data as Record<string, unknown> | null
   const v = readByDestValue(data, destination, 'departure_date')
   if (typeof v === 'string' && v) return v
-  if (parseDestinations(caseRow.destination).length > 1 && hasByDestEntry(data, destination)) return null
+  // 다중 목적지 + 특정 목적지 지정 → by_dest 만 신뢰. 컬럼 fallback 안 함(엔트리 유무 무관) — 누수 차단(B).
+  if (destination && parseDestinations(caseRow.destination).length > 1) return null
   return caseRow.departure_date ?? null
 }
 
@@ -187,7 +174,8 @@ export function getVetVisitDate(
   const data = (caseRow.data as Record<string, unknown> | null) ?? null
   const v = readByDestValue(data, destination, 'vet_visit_date')
   if (typeof v === 'string' && v) return v
-  if (parseDestinations(caseRow.destination).length > 1 && hasByDestEntry(data, destination)) return null
+  // 다중 목적지 + 특정 목적지 지정 → by_dest 만 신뢰. top-level fallback 안 함 — 누수 차단(B).
+  if (destination && parseDestinations(caseRow.destination).length > 1) return null
   const top = data?.['vet_visit_date']
   return typeof top === 'string' && top ? top : null
 }
@@ -211,32 +199,34 @@ export function flattenCaseForDestination<T extends CaseRow>(
   const data = (caseRow.data as Record<string, unknown> | null) ?? {}
   const byDest = data['by_dest'] as Record<string, Record<string, unknown>> | undefined
   const destObj = byDest?.[destination]
-  if (!destObj) return caseRow
   const isMulti = parseDestinations(caseRow.destination).length > 1
+  // 단일/legacy + by_dest 엔트리 없음: top-level/컬럼 그대로(누수 상대 없음). 다중은 엔트리가
+  // 없어도 strict 처리(아래) — 컬럼/top-level 잔존을 물려받지 않게.
+  if (!isMulti && !destObj) return caseRow
   const nextData: Record<string, unknown> = { ...data }
   delete nextData['by_dest']
   let nextDeparture = caseRow.departure_date
   if (isMulti) {
-    // 다중 목적지 + by_dest 로 관리되는 목적지: scoped 키는 destObj 만 신뢰한다. top-level/컬럼에
-    // 남은 잔존값은 다른 목적지(또는 단일 시절) 것일 수 있으므로 무시 — 누수 차단(B). destObj 에
-    // 없는 scoped 키는 "이 목적지엔 미입력"으로 비운다.
+    // 다중 목적지: scoped 키는 by_dest[dest] 만 신뢰. top-level/컬럼 잔존은 다른 목적지(또는 단일
+    // 시절) 것일 수 있으므로 무시 — 누수 차단(B). 엔트리 자체가 없으면 전부 미입력으로 비운다.
+    const obj = destObj ?? {}
     for (const k of DESTINATION_SCOPED_FIELD_KEYS) {
       if (k === 'departure_date') continue
-      const has = Object.prototype.hasOwnProperty.call(destObj, k)
-      const v = has ? destObj[k] : undefined
+      const has = Object.prototype.hasOwnProperty.call(obj, k)
+      const v = has ? obj[k] : undefined
       if (!has || v === null || v === undefined) delete nextData[k]
       else nextData[k] = v
     }
     nextDeparture =
-      typeof destObj['departure_date'] === 'string' && destObj['departure_date']
-        ? (destObj['departure_date'] as string)
+      typeof obj['departure_date'] === 'string' && obj['departure_date']
+        ? (obj['departure_date'] as string)
         : null
   } else {
     // 단일/legacy: destObj 에 있는 키만 덮어쓰고 나머지는 top-level/컬럼 유지 (누수 상대가 없고,
     // 마이그 전·부분 by_dest 상태에서도 호환). null sentinel → 명시적 비움.
-    for (const k of Object.keys(destObj)) {
+    for (const k of Object.keys(destObj as Record<string, unknown>)) {
       if (!DESTINATION_SCOPED_FIELD_KEYS.has(k)) continue
-      const v = destObj[k]
+      const v = (destObj as Record<string, unknown>)[k]
       if (k === 'departure_date') {
         nextDeparture = typeof v === 'string' && v ? v : null
       } else {
