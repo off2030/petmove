@@ -59,6 +59,7 @@ storage_backup/
 backups/
 # 마이그 스크립트가 만드는 prod 데이터 백업(PII) — 절대 커밋 금지.
 scripts/backup-bydest-*.json
+scripts/backup-*.json
 .vercel
 
 # Sentry Config File

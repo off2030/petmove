@@ -279,6 +279,23 @@ export async function updateCaseField(
         }
       } catch { /* 날짜 계산 실패 무시 */ }
     }
+    // 단일 목적지 departure_date 컬럼 쓰기는 by_dest 와 lockstep 유지 — destArg 없이(by_dest 우회)
+    // 컬럼만 비우면 화면은 by_dest 우선이라 옛 값이 남아 "삭제가 안 되는" 유령이 된다(과거 누수 사례).
+    // 단일 목적지면 유일 토큰의 by_dest.departure_date 도 같은 값으로 동기화(빈 값은 null sentinel).
+    if (key === 'departure_date') {
+      const tokens = parseDestinations(destinationRaw)
+      if (tokens.length === 1) {
+        const soleDest = tokens[0]
+        const byDest: Record<string, Record<string, unknown>> = {
+          ...((nextData['by_dest'] as Record<string, Record<string, unknown>> | undefined) ?? {}),
+        }
+        const destObj = { ...(byDest[soleDest] ?? {}) }
+        destObj['departure_date'] = value === null || value === undefined || value === '' ? null : value
+        byDest[soleDest] = destObj
+        nextData['by_dest'] = byDest
+        dataMutated = true
+      }
+    }
   } else {
     if (value === null || value === undefined || value === '') {
       delete nextData[key]
