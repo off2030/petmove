@@ -178,6 +178,10 @@ export async function generateKsvdl(caseId: string, opts?: GenerateOpts) {
 export async function generateVbddl(caseId: string, opts?: GenerateOpts) {
   return generate('VBDDL', caseId, opts)
 }
+/** 남아프리카공화국 ARC-OVI 전염병검사 시료제출서 (Form 6). */
+export async function generateArcOvi(caseId: string, opts?: GenerateOpts) {
+  return generate('ARC-OVI', caseId, opts)
+}
 
 /**
  * Invoice / ESD — 클리닉 레벨 배송 서류. caseId 없이 tube_count/consignee_lab 만

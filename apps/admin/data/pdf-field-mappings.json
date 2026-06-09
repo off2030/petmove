@@ -4637,6 +4637,50 @@
       "text_23ehd":  { "source": "birth_date",    "note": "DOB/AGE" }
     }
   },
+  "ARC-OVI": {
+    "template": "ARC-OVI.pdf",
+    "description": "ARC-Onderstepoort Veterinary Research (남아프리카공화국) Sample Submission Form (Form 6). 남아공 수입 전염병검사(Brucella Canis·Trypanosoma evansi·Babesia gibsoni·Leishmaniosis·Dirofilaria immitis) 시료 제출용. SENDER/계정책임자 두 칸 모두 발송 병원 정보로 채우고, 동물 정보는 케이스에서, 검사항목·목적·시료 내역은 남아공 고정값으로 채움. 필드명은 온라인 폼 자동생성(text_N) — 좌표로 라벨 매핑.",
+    "filename": "ARC-OVI_{pet_name}.pdf",
+    "dateFormat": "ymd_slash",
+    "flatten": true,
+    "fields": {
+      "text_1henc":  { "source": null, "transform": "vet:name_en",            "note": "SENDER 이름 (성명)" },
+      "text_2ieph":  { "source": null, "default": "Registered Veterinarian",  "note": "SENDER TITLE (직함)" },
+      "text_3ustl":  { "source": null, "transform": "vet:custom:Initials|이니셜", "note": "SENDER INITIALS — custom_fields 'Initials' 라벨. 없으면 빈 값" },
+      "text_6jxnq":  { "source": null, "transform": "vet:name_last_en",       "note": "SENDER Surname (성)" },
+      "text_8gmry":  { "source": null, "transform": "vet:clinic_en",          "note": "SENDER Clinic/Company Name (영문 병원명)" },
+      "text_10mtog": { "source": null, "transform": "vet:address_en",         "note": "SENDER Postal address (영문 주소)" },
+      "text_14qtqp": { "source": null, "transform": "vet:phone_intl",         "note": "SENDER Tel (국제전화)" },
+      "text_18ubzr": { "source": null, "transform": "vet:mobile_phone",       "note": "SENDER Mobile number" },
+      "text_19jhpd": { "source": null, "transform": "vet:email",              "note": "SENDER E-mail" },
+
+      "text_4eccu":  { "source": null, "default": "Registered Veterinarian",  "note": "PERSON RESPONSIBLE FOR ACCOUNT — TITLE (발송 병원과 동일)" },
+      "text_5nnwx":  { "source": null, "transform": "vet:custom:Initials|이니셜", "note": "PERSON RESPONSIBLE — INITIALS" },
+      "text_7aada":  { "source": null, "transform": "vet:name_last_en",       "note": "PERSON RESPONSIBLE — Surname (성)" },
+      "text_9grby":  { "source": null, "transform": "vet:clinic_en",          "note": "PERSON RESPONSIBLE — Clinic/Company Name" },
+      "text_12mgdp": { "source": null, "transform": "vet:address_en",         "note": "PERSON RESPONSIBLE — Postal address" },
+      "text_13mzfl": { "source": null, "transform": "vet:email",              "note": "PERSON RESPONSIBLE — E-mail" },
+      "text_17bdje": { "source": null, "transform": "vet:phone_intl",         "note": "PERSON RESPONSIBLE — Tel" },
+
+      "text_29iedo": { "source": "species", "transform": "species_paren_en",  "note": "ANIMAL Species — Canine(Dog)/Feline(Cat)" },
+      "text_37ubpl": { "source": null, "default": "1",                        "note": "Number of animals sampled — 1두" },
+      "text_38jeru": { "source": null, "default": "ISO standard",             "note": "Microchip type — ISO 표준" },
+      "text_36vpfx": { "source": "microchip",     "note": "Microchip number" },
+      "text_40hqss": { "source": "sex", "transform": "sex_simple_en", "note": "Sex — Male/Female (neutered/spayed)" },
+      "text_42pk":   { "source": "pet_name_en",   "note": "Animal Name" },
+      "text_43fhpr": { "source": "breed_en",      "note": "Breed" },
+      "text_44qenl": { "source": "color_en",      "note": "Colour" },
+      "text_45juqz": { "source": "birth_date",    "note": "Date of birth" },
+
+      "text_46bzgh": { "source": null, "default": "Brucella Canis, Trypanosoma evansi, Babesia gibsoni", "note": "TEST(S) REQUIRED 1줄 — 남아공 수입 고정 검사항목" },
+      "text_47dysw": { "source": null, "default": "Leishmaniosis, Dirofilaria immitis", "note": "TEST(S) REQUIRED 2줄" },
+      "text_48wdfs": { "source": null, "default": "Smear examination",        "note": "TEST(S) REQUIRED 3줄 — 검사 방법" },
+
+      "text_50hof":  { "source": null, "default": "Import into South Africa", "note": "Purpose for testing (Mandatory) — 남아공 수입" },
+      "text_58dxit": { "source": null, "default": "Serum 3ml × 2, Blood smear × 2, EDTA 0.5ml × 10", "note": "Number of specimen/s — 시료 내역 고정값" },
+      "text_54so":   { "source": "vet_visit_date", "note": "Collection date — 채혈(내원)일" }
+    }
+  },
   "ESD": {
     "template": "ESD.pdf",
     "description": "Exempt Specimen Declaration — 혈청 등 진단 검체를 해외 실험실(KSVDL/VBDDL 등)로 FedEx 발송 시 세관 통관용 수의사 선언서. 가변 항목: 튜브 갯수, 수신 실험실, 조직 정보(이름/주소/연락처/면허). 종(species) 은 템플릿 기본값 유지.",

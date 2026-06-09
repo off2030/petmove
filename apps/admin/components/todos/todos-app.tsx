@@ -980,6 +980,7 @@ export function TodosInspectionActions({ query }: { query: string }) {
     (r) => readInspectionStatus(r) === 'waiting',
   )
   const ksvdlRows = pendingRows.filter((r) => r.lab === 'ksvdl')
+  const arcRows = pendingRows.filter((r) => r.lab === 'arc_ovi')
   const nzRows = pendingRows.filter((r) => r.lab === 'nz_combined')
   // APQA EU titer 행 = EU/영국/스위스/터키 광견병중화항체검사 신청 대상.
   // inspection-config 의 titerRules 가 EU·UK·CH·TR → apqa_eu 로 매핑.
@@ -993,7 +994,7 @@ export function TodosInspectionActions({ query }: { query: string }) {
   )
 
   const [menuOpen, setMenuOpen] = useState(false)
-  const [activeDialog, setActiveDialog] = useState<'invoice' | 'ksvdl' | 'vbddl_apqa' | 'apqa_eu' | null>(null)
+  const [activeDialog, setActiveDialog] = useState<'invoice' | 'ksvdl' | 'arc_ovi' | 'vbddl_apqa' | 'apqa_eu' | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -1048,6 +1049,15 @@ export function TodosInspectionActions({ query }: { query: string }) {
           </button>
           <button
             type="button"
+            onClick={() => { if (arcRows.length > 0) { setActiveDialog('arc_ovi'); setMenuOpen(false) } }}
+            disabled={arcRows.length === 0}
+            className={itemClass(arcRows.length === 0)}
+            title={arcRows.length === 0 ? '대상 케이스가 없습니다' : undefined}
+          >
+            ARC-OVI
+          </button>
+          <button
+            type="button"
             onClick={() => { if (nzRows.length > 0) { setActiveDialog('vbddl_apqa'); setMenuOpen(false) } }}
             disabled={nzRows.length === 0}
             className={itemClass(nzRows.length === 0)}
@@ -1074,6 +1084,14 @@ export function TodosInspectionActions({ query }: { query: string }) {
           label="KSVDL"
           rows={ksvdlRows}
           request={(caseId) => ({ kind: 'single', formKey: 'KSVDL', caseId })}
+          onClose={() => setActiveDialog(null)}
+        />
+      )}
+      {activeDialog === 'arc_ovi' && (
+        <BulkApplyDialog
+          label="ARC-OVI"
+          rows={arcRows}
+          request={(caseId) => ({ kind: 'single', formKey: 'ARC-OVI', caseId })}
           onClose={() => setActiveDialog(null)}
         />
       )}

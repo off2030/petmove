@@ -23,6 +23,7 @@ export type SinglePdfRequest = {
     | 'APQA_HQ_EU'
     | 'KSVDL'
     | 'VBDDL'
+    | 'ARC-OVI'
   caseId: string
   includeSignature?: boolean
   includeVet?: boolean

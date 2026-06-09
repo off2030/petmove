@@ -1895,6 +1895,14 @@ function resolveField(
     return SPECIES_EN[String(raw ?? '').toLowerCase()] ?? ''
   }
 
+  // "Canine(Dog)" / "Feline(Cat)" — ARC-OVI(남아공) 시료제출서 Species 칸 표기.
+  if (transform === 'species_paren_en') {
+    const s = String(raw ?? '').toLowerCase()
+    if (s === 'dog') return 'Canine(Dog)'
+    if (s === 'cat') return 'Feline(Cat)'
+    return ''
+  }
+
   if (transform === 'sex_label') {
     return SEX_LABEL_EN[String(raw ?? '').toLowerCase()] ?? ''
   }
