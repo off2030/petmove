@@ -218,7 +218,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       }
       // 예정일이 도래(≤오늘)했고 입국일도 덮지만 아직 '저장'으로 확인 전 — 저장으로 완료 안내.
       if (latest.date <= today && data.rabies_extra_confirmed === false) {
-        const msg = '추가 접종 예정일이 지났습니다. 완료 버튼을 눌러주세요.'
+        const msg = '추가 접종 예정일이 지났습니다. 추가 접종을 하셨다면 완료 버튼을 눌러주세요.'
         return { desc: msg, cardDesc: msg }
       }
       return undefined
@@ -355,7 +355,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 유효기간이 입국일을 덮으면(아직 유효) — 도래·미확인이면 저장 안내, 아니면 안내 불필요.
       if (entry && validUntil >= entry) {
         if (latest.date <= today && data.titer_extra_confirmed === false) {
-          const msg = '추가 검사 예정일이 지났습니다. 완료 버튼을 눌러주세요.'
+          const msg = '추가 검사 예정일이 지났습니다. 추가 검사를 하셨다면 완료 버튼을 눌러주세요.'
           return { desc: msg, cardDesc: msg }
         }
         return undefined
