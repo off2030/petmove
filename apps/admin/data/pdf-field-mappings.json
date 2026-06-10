@@ -4646,7 +4646,7 @@
     "fields": {
       "text_1henc":  { "source": null, "transform": "vet:name_en",            "note": "SENDER 이름 (성명)" },
       "text_2ieph":  { "source": null, "default": "Registered Veterinarian",  "note": "SENDER TITLE (직함)" },
-      "text_3ustl":  { "source": null, "transform": "vet:custom:Initials|이니셜", "note": "SENDER INITIALS — custom_fields 'Initials' 라벨. 없으면 빈 값" },
+      "text_3ustl":  { "source": null, "transform": "vet:initials",            "note": "SENDER INITIALS — custom_fields 'Initials' 우선, 없으면 name_en 첫 글자" },
       "text_6jxnq":  { "source": null, "transform": "vet:name_last_en",       "note": "SENDER Surname (성)" },
       "text_8gmry":  { "source": null, "transform": "vet:clinic_en",          "note": "SENDER Clinic/Company Name (영문 병원명)" },
       "text_10mtog": { "source": null, "transform": "vet:address_en",         "note": "SENDER Postal address (영문 주소)" },
@@ -4655,17 +4655,20 @@
       "text_19jhpd": { "source": null, "transform": "vet:email",              "note": "SENDER E-mail" },
 
       "text_4eccu":  { "source": null, "default": "Registered Veterinarian",  "note": "PERSON RESPONSIBLE FOR ACCOUNT — TITLE (발송 병원과 동일)" },
-      "text_5nnwx":  { "source": null, "transform": "vet:custom:Initials|이니셜", "note": "PERSON RESPONSIBLE — INITIALS" },
+      "text_5nnwx":  { "source": null, "transform": "vet:initials",            "note": "PERSON RESPONSIBLE — INITIALS (발송 수의사와 동일)" },
       "text_7aada":  { "source": null, "transform": "vet:name_last_en",       "note": "PERSON RESPONSIBLE — Surname (성)" },
       "text_9grby":  { "source": null, "transform": "vet:clinic_en",          "note": "PERSON RESPONSIBLE — Clinic/Company Name" },
       "text_12mgdp": { "source": null, "transform": "vet:address_en",         "note": "PERSON RESPONSIBLE — Postal address" },
       "text_13mzfl": { "source": null, "transform": "vet:email",              "note": "PERSON RESPONSIBLE — E-mail" },
       "text_17bdje": { "source": null, "transform": "vet:phone_intl",         "note": "PERSON RESPONSIBLE — Tel" },
 
+      "text_21rlvn": { "source": "customer_name_en", "note": "OWNER — 반려동물 보호자명 (가이드라인상 필수: owner field 에 보호자명 표기)" },
+
       "text_29iedo": { "source": "species", "transform": "species_paren_en",  "note": "ANIMAL Species — Canine(Dog)/Feline(Cat)" },
       "text_37ubpl": { "source": null, "default": "1",                        "note": "Number of animals sampled — 1두" },
       "text_38jeru": { "source": null, "default": "ISO standard",             "note": "Microchip type — ISO 표준" },
       "text_36vpfx": { "source": "microchip",     "note": "Microchip number" },
+      "text_39izi":  { "source": "birth_date", "transform": "age_en",         "note": "Age — birth_date 기준 영문 나이" },
       "text_40hqss": { "source": "sex", "transform": "sex_simple_en", "note": "Sex — Male/Female (neutered/spayed)" },
       "text_42pk":   { "source": "pet_name_en",   "note": "Animal Name" },
       "text_43fhpr": { "source": "breed_en",      "note": "Breed" },
@@ -4677,7 +4680,10 @@
       "text_48wdfs": { "source": null, "default": "Smear examination",        "note": "TEST(S) REQUIRED 3줄 — 검사 방법" },
 
       "text_50hof":  { "source": null, "default": "Import into South Africa", "note": "Purpose for testing (Mandatory) — 남아공 수입" },
-      "text_58dxit": { "source": null, "default": "Serum 3ml × 2, Blood smear × 2, EDTA 0.5ml × 10", "note": "Number of specimen/s — 시료 내역 고정값" },
+      "text_55iblu": { "source": null, "default": "Serum 3ml × 2 (centrifuged)", "note": "Type of specimen/s 1줄 — 가이드라인: 2×3ml 혈청(원심분리)" },
+      "text_56jrkp": { "source": null, "default": "Unstained blood smear × 2", "note": "Type of specimen/s 2줄 — 무염색 혈액도말 ×2" },
+      "text_57cmub": { "source": null, "default": "EDTA whole blood 5ml × 1 (purple top)", "note": "Type of specimen/s 3줄 — EDTA 전혈 5ml ×1 (Dirofilaria용)" },
+      "text_58dxit": { "source": null, "default": "5 (Serum ×2, Blood smear ×2, EDTA ×1)", "note": "Number of specimen/s — 총 5개" },
       "text_54so":   { "source": "vet_visit_date", "note": "Collection date — 채혈(내원)일" }
     }
   },

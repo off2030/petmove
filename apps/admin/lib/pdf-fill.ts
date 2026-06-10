@@ -1964,6 +1964,17 @@ function resolveField(
     return a.years === 0 ? `${a.months}개월` : `${a.years}살`
   }
 
+  // English age label — birth_date 기준 "N years (M months)". ARC-OVI Age 칸용.
+  if (transform === 'age_en') {
+    const a = ageParts(raw, issueDateOf(data))
+    if (!a) return ''
+    const y = a.years === 1 ? '1 year' : `${a.years} years`
+    const m = a.months === 1 ? '1 month' : `${a.months} months`
+    if (a.years === 0) return m
+    if (a.months === 0) return y
+    return `${y} ${m}`
+  }
+
   // 검역본부 EU 시료채취 내역서용 — "축종(품종)". species_ko + "(" + breed + ")".
   // species 가 dog/cat 이 아니면 breed 만 반환. breed 비어 있으면 species_ko 만.
   if (transform === 'species_breed_ko' || transform === 'species_breed_count_ko') {
@@ -1982,6 +1993,17 @@ function resolveField(
   const vetMatch = transform?.match(/^vet:(.+)$/)
   if (vetMatch) {
     const key = vetMatch[1]
+    // vet:initials — custom_fields 의 'Initials'/'이니셜' 라벨 우선, 없으면
+    // name_en 의 각 단어 첫 글자(대문자)로 도출 (예: "Jinwon Lee" → "JL").
+    // ARC-OVI 처럼 수의사 이니셜 칸이 있는 서식용.
+    if (key === 'initials') {
+      const customs = VET_INFO.custom_fields ?? []
+      const found = customs.find((f) => ['initials', '이니셜'].includes(f.label.trim().toLowerCase()))?.value
+      if (found && found.trim()) return found.trim()
+      const name = String(VET_INFO.name_en ?? '').trim()
+      if (!name) return ''
+      return name.split(/\s+/).map((t) => t[0]?.toUpperCase() ?? '').join('')
+    }
     // ESD "Tel. {phone} / Email. {email}" 한 줄 — 신규 ESD 템플릿 text_8xjgc 용
     if (key === 'esd_contact_block') {
       const v = VET_INFO
