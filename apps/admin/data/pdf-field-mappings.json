@@ -4644,6 +4644,9 @@
     "dateFormat": "ymd_slash",
     "flatten": true,
     "fields": {
+      "text_50idgl": { "source": "pet_name_en", "note": "Sender Ref — 반려동물 이름(발송 추적 참조). Lab No/Time delivered 는 ARC 사무용이라 비움" },
+      "text_51pt":   { "source": "vet_visit_date", "note": "Date — 작성/발송일(내원일)" },
+
       "text_1henc":  { "source": null, "transform": "vet:name_en",            "note": "SENDER 이름 (성명)" },
       "text_2ieph":  { "source": null, "default": "Registered Veterinarian",  "note": "SENDER TITLE (직함)" },
       "text_3ustl":  { "source": null, "transform": "vet:initials",            "note": "SENDER INITIALS — custom_fields 'Initials' 우선, 없으면 name_en 첫 글자" },
