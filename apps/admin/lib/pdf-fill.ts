@@ -1895,6 +1895,14 @@ function resolveField(
     return SPECIES_EN[String(raw ?? '').toLowerCase()] ?? ''
   }
 
+  // 범용 이니셜 — raw 문자열의 각 단어 첫 글자(대문자). ARC-OVI OWNER INITIALS 등.
+  // 예: "Jadene Frances Pillay" → "JFP". (수의사용은 vet:initials 별도)
+  if (transform === 'initials') {
+    const s = String(raw ?? '').trim()
+    if (!s) return ''
+    return s.split(/\s+/).map((w) => w[0]?.toUpperCase() ?? '').join('')
+  }
+
   // "Canine(Dog)" / "Feline(Cat)" — ARC-OVI(남아공) 시료제출서 Species 칸 표기.
   if (transform === 'species_paren_en') {
     const s = String(raw ?? '').toLowerCase()
