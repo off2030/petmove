@@ -1903,6 +1903,31 @@ function resolveField(
     return ''
   }
 
+  // ARC-OVI Sender Ref — "{PREFIX}-{YYYYMMDD}-01" (예: LVMC-20260609-01).
+  //  - PREFIX: custom_fields 'Ref Prefix'/'참조접두' 우선, 없으면 clinic_en 머리글자
+  //            (Lausanne Veterinary Medical Center → LVMC).
+  //  - 날짜: raw(vet_visit_date) 있으면 사용, 없으면 오늘. YYYYMMDD(구분자 없음).
+  //  - 일련번호: 01 고정 (케이스당 1건 제출 기준).
+  if (transform === 'arc_sender_ref') {
+    const customs = VET_INFO.custom_fields ?? []
+    const pref = customs.find((f) => ['ref prefix', 'sender ref', '참조접두', '참조 접두'].includes(f.label.trim().toLowerCase()))?.value
+    let prefix = pref && pref.trim() ? pref.trim() : ''
+    if (!prefix) {
+      const clinic = String(VET_INFO.clinic_en ?? '').trim()
+      prefix = clinic.split(/\s+/).map((w) => w[0]?.toUpperCase() ?? '').join('') || 'REF'
+    }
+    const s = String(raw ?? '').trim()
+    const md = s.match(/^(\d{4})[-/](\d{2})[-/](\d{2})/)
+    let ymd: string
+    if (md) {
+      ymd = `${md[1]}${md[2]}${md[3]}`
+    } else {
+      const d = new Date()
+      ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
+    }
+    return `${prefix}-${ymd}-01`
+  }
+
   if (transform === 'sex_label') {
     return SEX_LABEL_EN[String(raw ?? '').toLowerCase()] ?? ''
   }

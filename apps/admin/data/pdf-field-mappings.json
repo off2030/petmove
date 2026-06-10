@@ -4644,8 +4644,8 @@
     "dateFormat": "ymd_slash",
     "flatten": true,
     "fields": {
-      "text_50idgl": { "source": "pet_name_en", "note": "Sender Ref — 반려동물 이름(발송 추적 참조). Lab No/Time delivered 는 ARC 사무용이라 비움" },
-      "text_51pt":   { "source": "vet_visit_date", "note": "Date — 작성/발송일(내원일)" },
+      "text_50idgl": { "source": "vet_visit_date", "transform": "arc_sender_ref", "note": "Sender Ref — {병원머리글자}-{YYYYMMDD}-01 (예: LVMC-20260609-01). 날짜는 내원일, 없으면 오늘. Lab No/Time delivered 는 ARC 사무용이라 비움" },
+      "text_51pt":   { "source": "vet_visit_date", "transform": "date_or_today", "note": "Date — 작성/발송일(내원일, 없으면 오늘)" },
 
       "text_1henc":  { "source": null, "transform": "vet:name_en",            "note": "SENDER 이름 (성명)" },
       "text_2ieph":  { "source": null, "default": "Registered Veterinarian",  "note": "SENDER TITLE (직함)" },
