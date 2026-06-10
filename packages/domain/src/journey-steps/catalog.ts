@@ -190,11 +190,14 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         const msg = '추가 접종 기록을 입력하세요.'
         return { desc: msg, cardDesc: msg }
       }
-      const msg =
-        validUntil < todayKst()
-          ? `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
-          : `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전에 추가 접종을 하세요.`
-      return { desc: msg, cardDesc: msg }
+      // 이미 만료된 경우만 안내 — 추가 접종 기록 입력 요청.
+      // 만료 전(임박 포함)은 jp.rabies-validity-expires-soon 이 '만료 30일 전'부터 담당한다.
+      // (situational 은 30일 조건이 없어 만료가 한참 남았는데도 안내가 떴던 버그.)
+      if (validUntil < todayKst()) {
+        const msg = `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
+        return { desc: msg, cardDesc: msg }
+      }
+      return undefined
     },
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
     // 3차+ 입력됐거나 최근 접종 유효기간이 입국일+30일 전 만료(추가 접종 필요) 일 때 노출.
