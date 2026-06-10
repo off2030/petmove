@@ -210,7 +210,7 @@ const LAB_SHIPPING: Record<string, { name: string; country: string; block: strin
     name: 'ARC-Onderstepoort Veterinary Research',
     country: 'South Africa',
     block: [
-      'ARC-Onderstepoort Veterinary Research (ARC-OVR)',
+      'ARC-Onderstepoort Veterinary Research (ARC-OVI)',
       'Diagnostic Registration, 100 Old Soutpan Road',
       'Onderstepoort, 0110, South Africa',
       'Tel. +27-12-529-9272 / email: LopezL@arc.agric.za',
