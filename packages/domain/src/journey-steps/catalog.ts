@@ -371,7 +371,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     done: 'has-extra-titer',
     allowAttachments: true,
     attachmentHint: '검사결과지 사본을 사진, PDF로 보관하세요.',
-    validationIds: ['jp.titer-validity-expires-soon'],
+    validationIds: ['jp.titer-validity-expires-soon', 'jp.titer-extra-within-rabies-validity'],
   },
 
   // ── 항공권 구매 (일본 전용) ──────────────────────────────────────────────
