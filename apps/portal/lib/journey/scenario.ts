@@ -359,6 +359,26 @@ export function buildJourney(
     // (검역·임상검사와 동일 패턴. 도래·확인 후엔 done 으로 완료 처리되어 여기 안 옴.)
     const rabiesExtraUpcomingDate =
       step.id === 'rabies-vaccine-extra' ? latestEntryDate(caseData.rabies_dates, 2) : null
+    // 추가 검사 — 입국일 이전에 예약한(미래) 채혈이 있으면 '예정 [날짜]' 칩. 입국 후 채혈은
+    // 그 입국을 보증 못 하므로 제외(무의미한 미래 채혈을 예정으로 오인 노출하지 않음).
+    const titerExtraUpcomingDate = (() => {
+      if (step.id !== 'rabies-titer-extra' || !Array.isArray(caseData.rabies_titer_records))
+        return null
+      const entryBound =
+        (typeof caseData.entry_date === 'string' && caseData.entry_date.length >= 10
+          ? caseData.entry_date.slice(0, 10)
+          : '') ||
+        (typeof dep === 'string' && dep.length >= 10 ? dep.slice(0, 10) : '')
+      let max = ''
+      for (const r of (caseData.rabies_titer_records as unknown[]).slice(1)) {
+        const d =
+          r && typeof r === 'object' && typeof (r as Record<string, unknown>).date === 'string'
+            ? ((r as Record<string, unknown>).date as string)
+            : ''
+        if (d.length >= 10 && d > today && (!entryBound || d <= entryBound) && d > max) max = d
+      }
+      return max || null
+    })()
     // 검역·검사 5단계는 '저장' 확인으로 완료(날짜 ≤ 오늘 자동완료 아님). 각 step 의 '자기 검진일'.
     const jpImportOwnDate =
       typeof caseData.jp_import_quarantine_date === 'string' &&
@@ -434,9 +454,13 @@ export function buildJourney(
                         : rabiesExtraUpcomingDate && rabiesExtraUpcomingDate > today
                           ? rabiesExtraUpcomingDate
                           : null
-                      : done
-                        ? resolveCompletedDate(step.done, caseRow)
-                        : fallbackDate
+                      : step.id === 'rabies-titer-extra'
+                        ? done
+                          ? resolveCompletedDate(step.done, caseRow)
+                          : titerExtraUpcomingDate
+                        : done
+                          ? resolveCompletedDate(step.done, caseRow)
+                          : fallbackDate
     // 칩 라벨 분기 — '마감 26·11·21' (단일 non-window 마감일이 표시 날짜인 경우) vs
     // '예정 …' (그 외 일정·이벤트·window 시작·기간 시작 등). 사전 신고처럼 deadline 자체가
     // 보호자의 행동 마감일일 때만 '마감'. window 마감(출국 10일 이내 검진 등)은 구간 시작이라 '예정' 유지.

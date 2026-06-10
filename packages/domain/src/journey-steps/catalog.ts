@@ -332,15 +332,35 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         (typeof data.entry_date === 'string' && data.entry_date) ||
         (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
         ''
-      // 현재 유효기간 = 입국일 이전에 한 채혈 중 가장 최근 것 + 2년. 입국 후(또는 미래)
-      // 채혈은 그 입국을 보증 못 하므로 제외. readTiterEntries 는 입력 순서라 명시 정렬.
+      const today = todayKst()
+      // 현재 유효기간 = 입국일 이전에 한 채혈 중 가장 최근 것 + 2년. 입국 후 채혈은 그 입국을
+      // 보증 못 하므로 제외. readTiterEntries 는 입력 순서라 명시 정렬.
       const prior = entry ? titers.filter((t) => t.date <= entry) : titers
-      if (prior.length === 0) return undefined
+      if (prior.length === 0) {
+        // 입국 전 유효 채혈이 없음(입국 후 채혈만 있는 경우 포함) — 재검사 안내.
+        const msg = '일본 입국 전에 재검사를 받으세요.'
+        return { desc: msg, cardDesc: msg }
+      }
       const latest = [...prior].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
       const validUntil = addYears(latest.date, 2)
       if (!validUntil) return undefined
-      // 유효기간이 입국일을 덮으면(아직 유효) 재검사 안내 불필요.
-      if (entry && validUntil >= entry) return undefined
+      // 예정(미래) 추가 검사 — 도래 후 '저장' 확인으로 완료. 입국일을 덮는(또는 입국일 미정)
+      // 예약이면 예약 안내. advisory step 이라 일정·상세가 모두 이 situational 을 안내문으로
+      // 쓰므로, undefined 면 일정은 정적 요약으로 fallback 되고 상세엔 안내 박스가 사라져 어긋난다.
+      // (추가 백신 situational 과 동일 패턴.)
+      if (latest.date > today && (!entry || validUntil >= entry)) {
+        const msg = `${formatKoreanDate(latest.date)} 추가 검사 예정입니다. 검사일이 되면 저장하여 완료하세요.`
+        return { desc: msg, cardDesc: msg }
+      }
+      // 유효기간이 입국일을 덮으면(아직 유효) — 도래·미확인이면 저장 안내, 아니면 안내 불필요.
+      if (entry && validUntil >= entry) {
+        if (latest.date <= today && data.titer_extra_confirmed === false) {
+          const msg = '추가 검사 예정일이 지났습니다. 저장 버튼을 눌러 완료하세요.'
+          return { desc: msg, cardDesc: msg }
+        }
+        return undefined
+      }
+      // 입국일 전 만료 — 재검사 필요.
       const msg = `직전 검사의 유효기간이 일본 입국일 전에 만료됩니다. ${formatKoreanDate(validUntil)}까지 재검사 하세요.`
       return { desc: msg, cardDesc: msg }
     },
