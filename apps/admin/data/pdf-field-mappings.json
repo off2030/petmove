@@ -4657,13 +4657,11 @@
       "text_18ubzr": { "source": null, "transform": "vet:mobile_phone_intl",  "note": "SENDER Mobile number — 국제표기(+82-10-…)" },
       "text_19jhpd": { "source": null, "transform": "vet:email",              "note": "SENDER E-mail" },
 
-      "text_4eccu":  { "source": null, "default": "Registered Veterinarian",  "note": "PERSON RESPONSIBLE FOR ACCOUNT — TITLE (발송 병원과 동일)" },
-      "text_5nnwx":  { "source": null, "transform": "vet:initials",            "note": "PERSON RESPONSIBLE — INITIALS (발송 수의사와 동일)" },
-      "text_7aada":  { "source": null, "transform": "vet:name_last_en",       "note": "PERSON RESPONSIBLE — Surname (성)" },
-      "text_9grby":  { "source": null, "transform": "vet:clinic_en",          "note": "PERSON RESPONSIBLE — Clinic/Company Name" },
-      "text_12mgdp": { "source": null, "transform": "vet:address_en",         "note": "PERSON RESPONSIBLE — Postal address" },
-      "text_13mzfl": { "source": null, "transform": "vet:email",              "note": "PERSON RESPONSIBLE — E-mail" },
-      "text_17bdje": { "source": null, "transform": "vet:phone_intl",         "note": "PERSON RESPONSIBLE — Tel" },
+      "text_5nnwx":  { "source": "customer_first_name_en", "transform": "initials", "note": "RESPONSIBLE FOR ACCOUNT(결제자=보호자) — INITIALS (이름 머리글자, 성 제외)" },
+      "text_7aada":  { "source": "customer_last_name_en", "note": "RESPONSIBLE FOR ACCOUNT — Surname (보호자 성)" },
+      "text_12mgdp": { "source": "address_en", "note": "RESPONSIBLE FOR ACCOUNT — Postal address (보호자 한국 주소)" },
+      "text_13mzfl": { "source": "email", "note": "RESPONSIBLE FOR ACCOUNT — E-mail (보호자 이메일)" },
+      "text_17bdje": { "source": "phone", "transform": "phone_intl_kr", "note": "RESPONSIBLE FOR ACCOUNT — Tel (보호자 연락처, 국제표기). TITLE/Clinic·Company/Fax 는 개인이라 비움" },
 
       "text_21rlvn": { "source": "customer_name_en", "note": "OWNER 이름 — 반려동물 보호자명 (가이드라인상 필수)" },
       "text_23hewd": { "source": "customer_first_name_en", "transform": "initials", "note": "OWNER INITIALS — 보호자 이름(given name) 머리글자, 성 제외 (예: Jadene Frances → JF)" },
