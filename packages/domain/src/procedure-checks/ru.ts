@@ -134,7 +134,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: msgs.join(' / '),
-          fixHint: '1년 라이선스 백신으로 재접종해야 합니다.',
+          fixHint: '1년 라이선스 백신으로 추가 접종을 해야 합니다.',
           offendingPaths: offending,
         }
       }
@@ -252,7 +252,7 @@ export const RU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: msgs.join(' / '),
-          fixHint: '1년 라이선스 백신으로 재접종해야 합니다.',
+          fixHint: '1년 라이선스 백신으로 추가 접종을 해야 합니다.',
           offendingPaths: offending,
         }
       }

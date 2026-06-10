@@ -162,7 +162,7 @@ export const VN_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: msgs.join(' / '),
-          fixHint: '1년 라이선스 백신으로 재접종하세요.',
+          fixHint: '1년 라이선스 백신으로 추가 접종을 하세요.',
           offendingPaths: offending,
         }
       }

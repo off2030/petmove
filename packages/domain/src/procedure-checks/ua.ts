@@ -273,7 +273,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: problems.join(' / '),
-          fixHint: '항체가는 0.5 IU/ml 이상이어야 하며, 미달 시 재접종 후 재검사가 필요합니다.',
+          fixHint: '항체가는 0.5 IU/ml 이상이어야 하며, 미달 시 추가 접종 후 재검사가 필요합니다.',
           offendingPaths: offending,
         }
       }
