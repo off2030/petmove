@@ -377,12 +377,11 @@ function FieldInput({
   }
 
   // 운송방법 — 보호자 친근 라벨 chip. 내부 value 는 영문 코드 그대로(case detail 매핑 호환).
-  // Cargo(Sea) 는 외부 수신자에게 묻지 않음 — 발신자가 케이스 상세에서 직접 조정.
+  // Cargo / Cargo(Sea) 는 외부 수신자에게 묻지 않음 — 발신자가 케이스 상세에서 직접 조정.
   if (field.key === 'entry_transport' || field.key === 'return_transport') {
     const TRANSPORT_OPTIONS = [
       { value: 'Carry-on', label: '기내탑승' },
       { value: 'Checked-baggage', label: '위탁수하물' },
-      { value: 'Cargo', label: '화물운송' },
     ]
     return (
       <FieldRow label={field.label}>

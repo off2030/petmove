@@ -32,14 +32,13 @@ const C = {
 } as const
 
 /**
- * 운송 방법 선택지 — 보호자 친근 라벨 chip. share 폼(share-form.tsx)의 고객용 3지와 동일.
+ * 운송 방법 선택지 — 보호자 친근 라벨 chip. share 폼(share-form.tsx)의 고객용 2지와 동일.
  * value 는 펫무브워크 추가정보 TRANSPORT_OPTIONS 와 같은 영문 코드라 수출서류 생성과
- * round-trip. Cargo(Sea) 는 고객에게 받지 않음 — 케이스 상세에서 발신자가 직접 조정.
+ * round-trip. Cargo / Cargo(Sea) 는 고객에게 받지 않음 — 케이스 상세에서 발신자가 직접 조정.
  */
 const TRANSPORT_OPTIONS: readonly { value: string; label: string }[] = [
   { value: 'Carry-on', label: '기내탑승' },
   { value: 'Checked-baggage', label: '위탁수하물' },
-  { value: 'Cargo', label: '화물운송' },
 ]
 
 interface FlightField {
