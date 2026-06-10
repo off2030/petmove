@@ -186,6 +186,10 @@ export async function generateArcOvi(caseId: string, opts?: GenerateOpts) {
 export async function generateVhcMip(caseId: string, opts?: GenerateOpts) {
   return generate('VHC_MIP', caseId, opts)
 }
+/** 수의사면허증 영문 번역본 (남아공 제출용) — 번역확인 Date 만 채움. */
+export async function generateVetLicenseZa(caseId: string, opts?: GenerateOpts) {
+  return generate('VetLicense_ZA', caseId, opts)
+}
 
 /**
  * Invoice / ESD — 클리닉 레벨 배송 서류. caseId 없이 tube_count/consignee_lab 만

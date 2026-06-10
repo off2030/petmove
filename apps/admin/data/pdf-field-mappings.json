@@ -4730,6 +4730,16 @@
       "text_31kiav": { "source": null, "transform": "vet:country", "note": "p2 Address 3 — 국가(한 줄). 이메일은 제외" }
     }
   },
+  "VetLicense_ZA": {
+    "template": "VetLicense_ZA.pdf",
+    "description": "수의사면허증 영문 번역본 (남아공 제출용). page2 TRANSLATOR'S CERTIFICATION 의 Date 칸 하나만 자동 채움(채혈일=발급일). 나머지(이름·면허번호·서명·병원 도장)는 템플릿 고정/수기.",
+    "filename": "VetLicense_{pet_name}.pdf",
+    "dateFormat": "ymd_dash",
+    "flatten": true,
+    "fields": {
+      "text_1kfcf": { "source": "infectious_date:arc_ovi", "note": "p2 TRANSLATOR'S CERTIFICATION Date — 채혈일(없으면 내원일)" }
+    }
+  },
   "ESD": {
     "template": "ESD.pdf",
     "description": "Exempt Specimen Declaration — 혈청 등 진단 검체를 해외 실험실(KSVDL/VBDDL 등)로 FedEx 발송 시 세관 통관용 수의사 선언서. 가변 항목: 튜브 갯수, 수신 실험실, 조직 정보(이름/주소/연락처/면허). 종(species) 은 템플릿 기본값 유지.",

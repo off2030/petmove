@@ -994,7 +994,7 @@ export function TodosInspectionActions({ query }: { query: string }) {
   )
 
   const [menuOpen, setMenuOpen] = useState(false)
-  const [activeDialog, setActiveDialog] = useState<'invoice' | 'ksvdl' | 'arc_ovi' | 'vhc_mip' | 'vbddl_apqa' | 'apqa_eu' | null>(null)
+  const [activeDialog, setActiveDialog] = useState<'invoice' | 'ksvdl' | 'arc_ovi' | 'vhc_mip' | 'vet_license_za' | 'vbddl_apqa' | 'apqa_eu' | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -1067,6 +1067,15 @@ export function TodosInspectionActions({ query }: { query: string }) {
           </button>
           <button
             type="button"
+            onClick={() => { if (arcRows.length > 0) { setActiveDialog('vet_license_za'); setMenuOpen(false) } }}
+            disabled={arcRows.length === 0}
+            className={itemClass(arcRows.length === 0)}
+            title={arcRows.length === 0 ? '대상 케이스가 없습니다' : undefined}
+          >
+            수의사면허증 (남아공)
+          </button>
+          <button
+            type="button"
             onClick={() => { if (nzRows.length > 0) { setActiveDialog('vbddl_apqa'); setMenuOpen(false) } }}
             disabled={nzRows.length === 0}
             className={itemClass(nzRows.length === 0)}
@@ -1109,6 +1118,14 @@ export function TodosInspectionActions({ query }: { query: string }) {
           label="VHC (남아공)"
           rows={arcRows}
           request={(caseId) => ({ kind: 'single', formKey: 'VHC_MIP', caseId })}
+          onClose={() => setActiveDialog(null)}
+        />
+      )}
+      {activeDialog === 'vet_license_za' && (
+        <BulkApplyDialog
+          label="수의사면허증 (남아공)"
+          rows={arcRows}
+          request={(caseId) => ({ kind: 'single', formKey: 'VetLicense_ZA', caseId })}
           onClose={() => setActiveDialog(null)}
         />
       )}
