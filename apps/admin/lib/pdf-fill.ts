@@ -1896,11 +1896,10 @@ function resolveField(
   }
 
   // 범용 접두어 — `prefix:<라벨>` 형태로 source 값 앞에 고정 라벨을 붙임.
-  // 값이 비면 라벨도 출력 안 함(빈 값). 예: prefix:"Unique Identification: Microchip No. ".
+  // 값이 비어도 라벨은 항상 출력(수기 기입용). 예: prefix:"Microchip No. ".
   const prefixMatch = transform?.match(/^prefix:(.+)$/)
   if (prefixMatch) {
     const s = String(raw ?? '').trim()
-    if (!s) return ''
     return prefixMatch[1] + s
   }
 
