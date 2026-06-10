@@ -182,6 +182,10 @@ export async function generateVbddl(caseId: string, opts?: GenerateOpts) {
 export async function generateArcOvi(caseId: string, opts?: GenerateOpts) {
   return generate('ARC-OVI', caseId, opts)
 }
+/** 남아프리카공화국 진단시료 수입용 Veterinary Health Certificate (MIP). */
+export async function generateVhcMip(caseId: string, opts?: GenerateOpts) {
+  return generate('VHC_MIP', caseId, opts)
+}
 
 /**
  * Invoice / ESD — 클리닉 레벨 배송 서류. caseId 없이 tube_count/consignee_lab 만

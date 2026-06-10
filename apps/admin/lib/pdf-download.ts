@@ -24,6 +24,7 @@ export type SinglePdfRequest = {
     | 'KSVDL'
     | 'VBDDL'
     | 'ARC-OVI'
+    | 'VHC_MIP'
   caseId: string
   includeSignature?: boolean
   includeVet?: boolean

@@ -21,6 +21,7 @@ import {
   generateInvoiceAndESD,
   generateKsvdl,
   generateArcOvi,
+  generateVhcMip,
   generateNZ,
   generateNZMulti,
   generateVBCMulti,
@@ -64,6 +65,7 @@ type SinglePdfBody = {
     | 'KSVDL'
     | 'VBDDL'
     | 'ARC-OVI'
+    | 'VHC_MIP'
   caseId: string
   includeSignature?: boolean
   includeVet?: boolean
@@ -126,6 +128,7 @@ const SINGLE_GENERATORS = {
   KSVDL: generateKsvdl,
   VBDDL: generateVbddl,
   'ARC-OVI': generateArcOvi,
+  VHC_MIP: generateVhcMip,
 } as const
 
 function jsonError(error: string, status = 400, extra?: Record<string, unknown>) {
