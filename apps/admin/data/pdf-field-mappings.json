@@ -4657,6 +4657,8 @@
       "text_18ubzr": { "source": null, "transform": "vet:mobile_phone_intl",  "note": "SENDER Mobile number — 국제표기(+82-10-…)" },
       "text_19jhpd": { "source": null, "transform": "vet:email",              "note": "SENDER E-mail" },
 
+      "text_4eccu":  { "source": null, "note": "RESPONSIBLE FOR ACCOUNT — TITLE: 보호자 개인이라 비움 (템플릿 기본값 'Registered Veterinarian' 지움)" },
+      "text_9grby":  { "source": null, "note": "RESPONSIBLE FOR ACCOUNT — Clinic/Company Name: 보호자 개인이라 비움 (템플릿 기본값 지움)" },
       "text_5nnwx":  { "source": "customer_first_name_en", "transform": "initials", "note": "RESPONSIBLE FOR ACCOUNT(결제자=보호자) — INITIALS (이름 머리글자, 성 제외)" },
       "text_7aada":  { "source": "customer_last_name_en", "note": "RESPONSIBLE FOR ACCOUNT — Surname (보호자 성)" },
       "text_12mgdp": { "source": "address_en", "note": "RESPONSIBLE FOR ACCOUNT — Postal address (보호자 한국 주소)" },
