@@ -199,6 +199,20 @@ function earliestDate(step: StepDefinition, caseRow: CaseRow): string | null {
 const PASSED_UNCONFIRMED_MSG =
   '예정일이 지났습니다. 저장 버튼을 눌러서 완료로 전환하시거나, 새로운 예정일을 등록하실 수 있습니다.'
 
+/**
+ * 어느 step 에도 매핑하지 않았지만, '추가 백신·추가 검사' advisory step 의 situational 안내가
+ * 같은 조건을 더 정확한 맥락에서 전달하므로 상단 case-level '주의' 배너로는 띄우지 않는 체크.
+ *
+ * 이 규칙들은 admin(펫무브워크)에선 'warning'(문서 발행 전 운영자 경고)로 살아있어야 하므로
+ * 규칙 severity 자체는 바꾸지 않고, 포털 표시에서만 제외한다.
+ *  - jp.entry-within-2years-of-titer  → '추가 검사'(rabies-titer-extra) 안내가 재검사를 가리킴
+ *  - jp.rabies-valid-until-on-departure → '추가 백신'(rabies-vaccine-extra) (이미 info 라 묻히지만 명시)
+ */
+const ADVISORY_DEFERRED_CHECKS = new Set<string>([
+  'jp.entry-within-2years-of-titer',
+  'jp.rabies-valid-until-on-departure',
+])
+
 export function buildJourney(
   caseRowInput: CaseRow,
   activeDestination?: string | null,
@@ -232,6 +246,8 @@ export function buildJourney(
       if (result.ok) continue
       let stepId = findStepForCheck(check.id)
       if (!stepId) {
+        // advisory step(추가 백신·추가 검사)이 같은 조건을 안내로 처리 — 상단 주의로 중복 노출 안 함.
+        if (ADVISORY_DEFERRED_CHECKS.has(check.id)) continue
         // step 에 매핑되지 않은 non-info = case-level 결격. 별도 영역에 모은다.
         if (check.severity !== 'info') {
           caseAlerts.push({
