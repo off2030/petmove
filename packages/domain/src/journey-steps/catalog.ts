@@ -202,7 +202,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 안내문으로 쓰므로, undefined 를 반환하면 일정은 정적 요약으로 fallback 되고 상세엔
       // 안내 박스가 사라져 둘이 어긋난다(예정 상태에서 안내문 불일치 버그).
       if (latest.date > today && (!entry || validUntil >= entry)) {
-        const msg = `${formatKoreanDate(latest.date)} 추가 접종 예정입니다. 접종일이 되면 저장하여 완료하세요.`
+        const msg = `${formatKoreanDate(latest.date)} 추가 접종 예정입니다. 접종 후 완료 버튼을 눌러주세요.`
         return { desc: msg, cardDesc: msg }
       }
       // 이미 만료 — 추가 접종 기록 입력 요청. (만료 전 임박은 jp.rabies-validity-expires-soon 담당.)
@@ -349,7 +349,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 쓰므로, undefined 면 일정은 정적 요약으로 fallback 되고 상세엔 안내 박스가 사라져 어긋난다.
       // (추가 백신 situational 과 동일 패턴.)
       if (latest.date > today && (!entry || validUntil >= entry)) {
-        const msg = `${formatKoreanDate(latest.date)} 추가 검사 예정입니다. 검사일이 되면 저장하여 완료하세요.`
+        const msg = `${formatKoreanDate(latest.date)} 추가 검사 예정입니다. 검사 후 완료 버튼을 눌러주세요.`
         return { desc: msg, cardDesc: msg }
       }
       // 유효기간이 입국일을 덮으면(아직 유효) — 도래·미확인이면 저장 안내, 아니면 안내 불필요.
