@@ -379,14 +379,19 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const titers = readTiterEntries(caseRow)
       if (!entryDate || titers.length === 0) return SKIP
 
-      const valid = titers.find((t) => addYears(t.date, 2) >= entryDate)
+      // 입국일 이전에 한 채혈만 그 입국을 보증할 수 있음 — 입국 후(또는 미래) 채혈은
+      // 자기 +2년이 당연히 입국일보다 뒤라 '유효'로 오판되므로 t.date <= 입국일 조건 필수.
+      const valid = titers.find((t) => t.date <= entryDate && addYears(t.date, 2) >= entryDate)
       if (valid) {
         return {
           ok: true,
           message: `항체 검사(${valid.date}) 유효(${addYears(valid.date, 2)}) ≥ 입국일(${entryDate}).`,
         }
       }
-      const newest = [...titers].sort((a, b) => b.date.localeCompare(a.date))[0]
+      // 만료일 메시지는 입국일 이전 채혈 중 가장 최근 것의 유효기간(= 현재 유효기간)을 보여준다.
+      // 입국 전 채혈이 하나도 없으면 전체 중 가장 최근으로 폴백.
+      const prior = titers.filter((t) => t.date <= entryDate)
+      const newest = [...(prior.length ? prior : titers)].sort((a, b) => b.date.localeCompare(a.date))[0]
       const validUntilKr = formatKoreanDate(addYears(newest.date, 2))
       const offending: string[] = ['departure_date']
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)

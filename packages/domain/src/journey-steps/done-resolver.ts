@@ -114,6 +114,7 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
         ''
       if (entry) {
         const hasValid = t.some((titer) => {
+          if (titer.date > entry) return false // 입국 후 채혈은 그 입국을 보증 못 함
           const v = addYears(titer.date, 2)
           return !!v && v >= entry
         })

@@ -314,10 +314,21 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     situational: (caseRow) => {
       const titers = readTiterEntries(caseRow)
       if (titers.length === 0) return undefined
-      // 가장 최근(=date 기준 최신) 검사 — readTiterEntries 는 ascending 정렬이라 마지막.
-      const latest = [...titers].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
+      // 입국일 = entry_date 우선, 없으면 출국일 폴백 (일본 등).
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const entry =
+        (typeof data.entry_date === 'string' && data.entry_date) ||
+        (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
+        ''
+      // 현재 유효기간 = 입국일 이전에 한 채혈 중 가장 최근 것 + 2년. 입국 후(또는 미래)
+      // 채혈은 그 입국을 보증 못 하므로 제외. readTiterEntries 는 입력 순서라 명시 정렬.
+      const prior = entry ? titers.filter((t) => t.date <= entry) : titers
+      if (prior.length === 0) return undefined
+      const latest = [...prior].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
       const validUntil = addYears(latest.date, 2)
       if (!validUntil) return undefined
+      // 유효기간이 입국일을 덮으면(아직 유효) 재검사 안내 불필요.
+      if (entry && validUntil >= entry) return undefined
       const msg = `직전 검사의 유효기간이 일본 입국일 전에 만료됩니다. ${formatKoreanDate(validUntil)}까지 재검사 하세요.`
       return { desc: msg, cardDesc: msg }
     },
