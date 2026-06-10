@@ -4708,6 +4708,7 @@
       "text_5atie":  { "source": null, "default": "Serum, unstained blood smear, EDTA whole blood", "note": "p1 A.1.a) Type of sample" },
       "text_6vgec":  { "source": "species", "transform": "species_paren_en", "note": "p1 A.1.b) Species of origin — Canine(Dog)/Feline(Cat)" },
       "text_7krhr":  { "source": null, "default": "1 package", "note": "p1 A.2 Type and number of packages" },
+      "text_10jlvd": { "source": "microchip_combined", "note": "p1 A.4 Identification marks — 마이크로칩 번호(주칩+보조칩)" },
       "text_12jirj": { "source": null, "transform": "vet:clinic_en", "note": "p1 B.1 Origin of specimen/s — 채취 병원명" },
       "text_13svcg": { "source": null, "transform": "vet:address_en", "note": "p1 B.1 Origin of specimen/s — 병원 주소" },
       "text_14iwcs": { "source": null, "transform": "vet:clinic_en", "note": "p1 B.2 Name and Address of exporter — 병원명" },
