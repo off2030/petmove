@@ -4703,7 +4703,7 @@
     "flatten": true,
     "fields": {
       "text_1hnad":  { "source": "infectious_date:arc_ovi", "transform": "arc_sender_ref", "note": "p1 CERTIFICATE NUMBER (1) — ARC-OVI Sender Ref 와 동일(LVMC-YYYYMMDD-01)" },
-      "text_2owvx":  { "source": null, "transform": "vet:clinic_en", "note": "p1 RESPONSIBLE VETERINARY AUTHORITY — 등록수의사 기관(병원명). 정부기관(APQA)이면 수정" },
+      "text_2owvx":  { "source": null, "default": "Animal and Plant Quarantine Agency (APQA)", "note": "p1 RESPONSIBLE VETERINARY AUTHORITY — 한국 정부 검역당국 APQA 고정" },
       "text_3pqtn":  { "source": null, "transform": "vet:name_en", "note": "p1 ISSUING VETERINARIAN/VETERINARY AUTHORITY — 발급 수의사" },
       "text_5atie":  { "source": null, "default": "Serum, unstained blood smear, EDTA whole blood", "note": "p1 A.1.a) Type of sample" },
       "text_6vgec":  { "source": "species", "transform": "species_paren_en", "note": "p1 A.1.b) Species of origin — Canine(Dog)/Feline(Cat)" },
