@@ -317,7 +317,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '추가 검사',
     shortLabel: '항체+',
     description:
-      '일본 입국 전에 재검사를 받으세요.\n\n검사 결과가 나올 때까지 수 주가 걸릴 수 있으니 미리 검사를 받아두세요.',
+      '일본 입국 전에 재검사를 받으세요.\n\n검사 결과가 나올 때까지 수 주가 걸리는 점을 고려해 여유 있게 검사를 진행하세요.',
     doneSummary: '광견병 항체 검사를 추가로 받았습니다.',
     // 미래 만료 대비 reminder — 본 흐름의 다음 단계를 다음 할 일에서 가리지 않는다.
     advisoryOnly: true,
