@@ -169,7 +169,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '추가 백신',
     shortLabel: '백신+',
     description:
-      '직전 광견병 백신의 면역 유효기간이 끝나기 전에 재접종하세요.\n\n유효기간이 끝나기 전에 재접종하지 않으면, 1, 2차 접종과 검사 후 다시 180일을 기다려야 합니다.',
+      '직전 광견병 백신의 면역 유효기간이 끝나기 전에 추가 접종을 하세요.\n\n유효기간이 끝나기 전에 추가 접종을 하지 않으면, 1, 2차 접종과 검사 후 다시 180일을 기다려야 합니다.',
     doneSummary: '광견병 백신을 추가 접종했습니다.',
     // 미래 만료 대비 reminder — 본 흐름의 다음 단계(사전 신고 등)를 다음 할 일에서 가리지 않는다.
     advisoryOnly: true,
@@ -206,7 +206,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
         ''
       if (entry && validUntil < entry) {
-        const msg = `광견병 백신 유효기간이 일본 입국일 전인 ${formatKoreanDate(validUntil)}에 만료됩니다. 입국 전에 추가 접종을 하세요.`
+        const msg = `광견병 백신 유효기간이 일본 입국 전에 만료됩니다. ${formatKoreanDate(validUntil)}까지 추가 접종을 하세요.`
         return { desc: msg, cardDesc: msg }
       }
       return undefined
