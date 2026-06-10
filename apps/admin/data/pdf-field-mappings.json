@@ -4654,7 +4654,7 @@
       "text_8gmry":  { "source": null, "transform": "vet:clinic_en",          "note": "SENDER Clinic/Company Name (영문 병원명)" },
       "text_10mtog": { "source": null, "transform": "vet:address_en",         "note": "SENDER Postal address (영문 주소)" },
       "text_14qtqp": { "source": null, "transform": "vet:phone_intl",         "note": "SENDER Tel (국제전화)" },
-      "text_18ubzr": { "source": null, "transform": "vet:mobile_phone",       "note": "SENDER Mobile number" },
+      "text_18ubzr": { "source": null, "transform": "vet:mobile_phone_intl",  "note": "SENDER Mobile number — 국제표기(+82-10-…)" },
       "text_19jhpd": { "source": null, "transform": "vet:email",              "note": "SENDER E-mail" },
 
       "text_4eccu":  { "source": null, "default": "Registered Veterinarian",  "note": "PERSON RESPONSIBLE FOR ACCOUNT — TITLE (발송 병원과 동일)" },
