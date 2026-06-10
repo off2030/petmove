@@ -2143,6 +2143,13 @@ function resolveField(
       if (segs.length < 2) return full
       return segs[segs.length - 2]
     }
+    // vet:country — 영문주소(address_en)의 마지막 콤마 세그먼트(국가). 별도 country 필드 없음.
+    if (key === 'country') {
+      const full = String(VET_INFO.address_en ?? '').trim()
+      if (!full) return ''
+      const segs = full.split(',').map(s => s.trim()).filter(Boolean)
+      return segs[segs.length - 1] ?? ''
+    }
     // vet:address_ko — 한글주소에서 leading/trailing 국가명("대한민국"/"한국"/"Republic of Korea"
     // /"Korea") 제거. 국내 신청서(APQA HQ 등) 에서는 국가 표기가 불필요하므로 자동 제거.
     if (key === 'address_ko') {

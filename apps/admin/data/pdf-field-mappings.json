@@ -4725,8 +4725,8 @@
       "text_27ppxv": { "source": null, "default": "Registered Veterinarian", "note": "p2 Designation" },
       "text_28rnbc": { "source": null, "transform": "vet:license_no", "note": "p2 Registration number (3) — 수의사 면허번호" },
       "text_29gjnv": { "source": null, "transform": "vet:clinic_en", "note": "p2 Address 1 — 병원명" },
-      "text_30oprq": { "source": null, "transform": "vet:address_en", "note": "p2 Address 2 — 병원 주소" },
-      "text_31kiav": { "source": null, "transform": "vet:esd_contact_block", "note": "p2 Address 3 — Tel/Email" }
+      "text_30oprq": { "source": null, "transform": "vet:address_en_no_country", "note": "p2 Address 2 — 병원 주소(국가 제외)" },
+      "text_31kiav": { "source": null, "transform": "vet:country", "note": "p2 Address 3 — 국가(한 줄). 이메일은 제외" }
     }
   },
   "ESD": {
