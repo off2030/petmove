@@ -190,23 +190,35 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         const msg = '추가 접종 기록을 입력하세요.'
         return { desc: msg, cardDesc: msg }
       }
-      // 이미 만료된 경우만 안내 — 추가 접종 기록 입력 요청.
-      // 만료 전(임박 포함)은 jp.rabies-validity-expires-soon 이 '만료 30일 전'부터 담당한다.
-      // (situational 은 30일 조건이 없어 만료가 한참 남았는데도 안내가 떴던 버그.)
-      if (validUntil < todayKst()) {
-        const msg = `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
-        return { desc: msg, cardDesc: msg }
-      }
-      // 오늘은 아직 유효하지만 입국일 전에 만료 — 이 step 이 미완료로 남는 실제 사유.
-      // (has-extra-rabies done 룰이 "최신 유효기간 < 입국일" 이면 미완료로 잡는 것과 짝.)
       // 입국일은 entry_date 우선, 없으면 출국일(departure_date) 폴백 — done 룰과 동일.
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const entry =
         (typeof data.entry_date === 'string' && data.entry_date) ||
         (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
         ''
+      const today = todayKst()
+      // 예정(미래) 추가 접종 — 도래 후 '저장' 확인으로 완료. 입국일을 덮는(또는 입국일 미정)
+      // 예약이면 예약 안내문을 띄운다. advisory step 이라 일정·상세가 모두 이 situational 을
+      // 안내문으로 쓰므로, undefined 를 반환하면 일정은 정적 요약으로 fallback 되고 상세엔
+      // 안내 박스가 사라져 둘이 어긋난다(예정 상태에서 안내문 불일치 버그).
+      if (latest.date > today && (!entry || validUntil >= entry)) {
+        const msg = `${formatKoreanDate(latest.date)} 추가 접종 예정입니다. 접종일이 되면 저장하여 완료하세요.`
+        return { desc: msg, cardDesc: msg }
+      }
+      // 이미 만료 — 추가 접종 기록 입력 요청. (만료 전 임박은 jp.rabies-validity-expires-soon 담당.)
+      if (validUntil < today) {
+        const msg = `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
+        return { desc: msg, cardDesc: msg }
+      }
+      // 오늘은 아직 유효하지만 입국일 전에 만료 — 이 step 이 미완료로 남는 실제 사유.
+      // (has-extra-rabies done 룰이 "최신 유효기간 < 입국일" 이면 미완료로 잡는 것과 짝.)
       if (entry && validUntil < entry) {
         const msg = `광견병 백신 유효기간이 일본 입국 전에 만료됩니다. ${formatKoreanDate(validUntil)}까지 추가 접종을 하세요.`
+        return { desc: msg, cardDesc: msg }
+      }
+      // 예정일이 도래(≤오늘)했고 입국일도 덮지만 아직 '저장'으로 확인 전 — 저장으로 완료 안내.
+      if (latest.date <= today && data.rabies_extra_confirmed === false) {
+        const msg = '추가 접종 예정일이 지났습니다. 저장 버튼을 눌러 완료하세요.'
         return { desc: msg, cardDesc: msg }
       }
       return undefined

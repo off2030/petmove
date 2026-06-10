@@ -116,6 +116,23 @@ function firstSentence(text: string): string {
   return text.slice(0, m.index + 1).trim()
 }
 
+/**
+ * 배열(rabies_dates / rabies_titer_records)에서 fromIndex 이상 항목 중 가장 늦은 date.
+ * 추가 접종·추가 검사 step 의 '예정 [날짜]' 칩 날짜 계산용. 없으면 null.
+ */
+function latestEntryDate(arr: unknown, fromIndex: number): string | null {
+  if (!Array.isArray(arr)) return null
+  let max = ''
+  for (const r of arr.slice(fromIndex)) {
+    const d =
+      r && typeof r === 'object' && typeof (r as Record<string, unknown>).date === 'string'
+        ? ((r as Record<string, unknown>).date as string)
+        : ''
+    if (d.length >= 10 && d > max) max = d
+  }
+  return max || null
+}
+
 function daysBetween(fromIso: string, toIso: string): number {
   const ms = new Date(toIso + 'T00:00:00Z').getTime() - new Date(fromIso + 'T00:00:00Z').getTime()
   return Math.round(ms / 86_400_000)
@@ -338,6 +355,10 @@ export function buildJourney(
       caseData.kr_export_quarantine_date.length >= 10
         ? caseData.kr_export_quarantine_date.slice(0, 10)
         : null
+    // 추가 접종(3차+) — 가장 최근 추가 접종일이 미래(예정)면 '예정 [날짜]' 칩으로 노출.
+    // (검역·임상검사와 동일 패턴. 도래·확인 후엔 done 으로 완료 처리되어 여기 안 옴.)
+    const rabiesExtraUpcomingDate =
+      step.id === 'rabies-vaccine-extra' ? latestEntryDate(caseData.rabies_dates, 2) : null
     // 검역·검사 5단계는 '저장' 확인으로 완료(날짜 ≤ 오늘 자동완료 아님). 각 step 의 '자기 검진일'.
     const jpImportOwnDate =
       typeof caseData.jp_import_quarantine_date === 'string' &&
@@ -407,9 +428,15 @@ export function buildJourney(
                       : microchipImplantDate && microchipImplantDate > today
                         ? microchipImplantDate
                         : null
-                    : done
-                      ? resolveCompletedDate(step.done, caseRow)
-                      : fallbackDate
+                    : step.id === 'rabies-vaccine-extra'
+                      ? done
+                        ? resolveCompletedDate(step.done, caseRow)
+                        : rabiesExtraUpcomingDate && rabiesExtraUpcomingDate > today
+                          ? rabiesExtraUpcomingDate
+                          : null
+                      : done
+                        ? resolveCompletedDate(step.done, caseRow)
+                        : fallbackDate
     // 칩 라벨 분기 — '마감 26·11·21' (단일 non-window 마감일이 표시 날짜인 경우) vs
     // '예정 …' (그 외 일정·이벤트·window 시작·기간 시작 등). 사전 신고처럼 deadline 자체가
     // 보호자의 행동 마감일일 때만 '마감'. window 마감(출국 10일 이내 검진 등)은 구간 시작이라 '예정' 유지.
