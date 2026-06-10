@@ -994,7 +994,7 @@ export function TodosInspectionActions({ query }: { query: string }) {
   )
 
   const [menuOpen, setMenuOpen] = useState(false)
-  const [activeDialog, setActiveDialog] = useState<'invoice' | 'ksvdl' | 'arc_ovi' | 'vhc_mip' | 'vet_license_za' | 'vbddl_apqa' | 'apqa_eu' | null>(null)
+  const [activeDialog, setActiveDialog] = useState<'invoice' | 'ksvdl' | 'arc_ovi' | 'vbddl_apqa' | 'apqa_eu' | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -1052,27 +1052,9 @@ export function TodosInspectionActions({ query }: { query: string }) {
             onClick={() => { if (arcRows.length > 0) { setActiveDialog('arc_ovi'); setMenuOpen(false) } }}
             disabled={arcRows.length === 0}
             className={itemClass(arcRows.length === 0)}
-            title={arcRows.length === 0 ? '대상 케이스가 없습니다' : undefined}
+            title={arcRows.length === 0 ? '대상 케이스가 없습니다' : '시료제출서 + VHC + 수의사면허증 3종 병합'}
           >
             ARC-OVI
-          </button>
-          <button
-            type="button"
-            onClick={() => { if (arcRows.length > 0) { setActiveDialog('vhc_mip'); setMenuOpen(false) } }}
-            disabled={arcRows.length === 0}
-            className={itemClass(arcRows.length === 0)}
-            title={arcRows.length === 0 ? '대상 케이스가 없습니다' : undefined}
-          >
-            VHC (남아공)
-          </button>
-          <button
-            type="button"
-            onClick={() => { if (arcRows.length > 0) { setActiveDialog('vet_license_za'); setMenuOpen(false) } }}
-            disabled={arcRows.length === 0}
-            className={itemClass(arcRows.length === 0)}
-            title={arcRows.length === 0 ? '대상 케이스가 없습니다' : undefined}
-          >
-            수의사면허증 (남아공)
           </button>
           <button
             type="button"
@@ -1107,25 +1089,9 @@ export function TodosInspectionActions({ query }: { query: string }) {
       )}
       {activeDialog === 'arc_ovi' && (
         <BulkApplyDialog
-          label="ARC-OVI"
+          label="ARC-OVI (시료제출서+VHC+면허증)"
           rows={arcRows}
-          request={(caseId) => ({ kind: 'single', formKey: 'ARC-OVI', caseId })}
-          onClose={() => setActiveDialog(null)}
-        />
-      )}
-      {activeDialog === 'vhc_mip' && (
-        <BulkApplyDialog
-          label="VHC (남아공)"
-          rows={arcRows}
-          request={(caseId) => ({ kind: 'single', formKey: 'VHC_MIP', caseId })}
-          onClose={() => setActiveDialog(null)}
-        />
-      )}
-      {activeDialog === 'vet_license_za' && (
-        <BulkApplyDialog
-          label="수의사면허증 (남아공)"
-          rows={arcRows}
-          request={(caseId) => ({ kind: 'single', formKey: 'VetLicense_ZA', caseId })}
+          request={(caseId) => ({ kind: 'bundle', variant: 'arc-ovi-pack', caseId })}
           onClose={() => setActiveDialog(null)}
         />
       )}

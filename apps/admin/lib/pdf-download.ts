@@ -55,7 +55,7 @@ export type ShipmentPdfRequest = {
 
 export type BundlePdfRequest = {
   kind: 'bundle'
-  variant: 'nz-infection-pack'
+  variant: 'nz-infection-pack' | 'arc-ovi-pack'
   caseId: string
   includeSignature?: boolean
   includeVet?: boolean

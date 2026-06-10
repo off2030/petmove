@@ -23,6 +23,7 @@ import {
   generateArcOvi,
   generateVhcMip,
   generateVetLicenseZa,
+  generateArcOviPack,
   generateNZ,
   generateNZMulti,
   generateVBCMulti,
@@ -96,7 +97,7 @@ type ShipmentPdfBody = {
 
 type BundlePdfBody = {
   kind: 'bundle'
-  variant: 'nz-infection-pack'
+  variant: 'nz-infection-pack' | 'arc-ovi-pack'
   caseId: string
   includeSignature?: boolean
   includeVet?: boolean
@@ -194,11 +195,15 @@ export async function POST(req: NextRequest) {
     }
 
     if (body.kind === 'bundle') {
-      const result = await generateNzInfectionPack(body.caseId, {
+      const opts = {
         includeSignature: body.includeSignature,
         includeVet: body.includeVet,
         destination: body.destination,
-      })
+      }
+      const result =
+        body.variant === 'arc-ovi-pack'
+          ? await generateArcOviPack(body.caseId, opts)
+          : await generateNzInfectionPack(body.caseId, opts)
       if (!result.ok) return jsonError(result.error, 500)
       return pdfResponse(result.pdf, result.filename)
     }

@@ -192,6 +192,35 @@ export async function generateVetLicenseZa(caseId: string, opts?: GenerateOpts) 
 }
 
 /**
+ * 남아공 ARC-OVI 발송 서류 3종을 하나의 PDF로 병합:
+ * ① ARC-OVI 시료제출서 → ② VHC for MIP 건강증명서 → ③ 수의사면허증 영문본.
+ */
+export async function generateArcOviPack(caseId: string, opts?: GenerateOpts): Promise<GeneratePdfResult> {
+  const { PDFDocument } = await import('pdf-lib')
+  const [arc, vhc, lic] = await Promise.all([
+    generateArcOvi(caseId, opts),
+    generateVhcMip(caseId, opts),
+    generateVetLicenseZa(caseId, opts),
+  ])
+  if (!arc.ok) return arc
+  if (!vhc.ok) return vhc
+  if (!lic.ok) return lic
+
+  const merged = await PDFDocument.create()
+  for (const r of [arc, vhc, lic]) {
+    const doc = await PDFDocument.load(Buffer.from(r.pdf, 'base64'))
+    const pages = await merged.copyPages(doc, doc.getPageIndices())
+    pages.forEach(p => merged.addPage(p))
+  }
+  const pdfBytes = await merged.save()
+  return {
+    ok: true,
+    pdf: Buffer.from(pdfBytes).toString('base64'),
+    filename: arc.filename.replace(/^ARC-OVI_/, 'ARC-OVI_Pack_'),
+  }
+}
+
+/**
  * Invoice / ESD — 클리닉 레벨 배송 서류. caseId 없이 tube_count/consignee_lab 만
  * 받아 생성. 반환 파일명에는 튜브 갯수를 기록.
  */
