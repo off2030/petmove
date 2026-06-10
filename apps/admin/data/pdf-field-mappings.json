@@ -4641,7 +4641,7 @@
     "template": "ARC-OVI.pdf",
     "description": "ARC-Onderstepoort Veterinary Research (남아프리카공화국) Sample Submission Form (Form 6). 남아공 수입 전염병검사(Brucella Canis·Trypanosoma evansi·Babesia gibsoni·Leishmaniosis·Dirofilaria immitis) 시료 제출용. SENDER/계정책임자 두 칸 모두 발송 병원 정보로 채우고, 동물 정보는 케이스에서, 검사항목·목적·시료 내역은 남아공 고정값으로 채움. 필드명은 온라인 폼 자동생성(text_N) — 좌표로 라벨 매핑.",
     "filename": "ARC-OVI_{pet_name}.pdf",
-    "dateFormat": "ymd_slash",
+    "dateFormat": "ymd_dash",
     "flatten": true,
     "fields": {
       "text_50idgl": { "source": "infectious_date:arc_ovi", "transform": "arc_sender_ref", "note": "Sender Ref — {병원머리글자}-{YYYYMMDD}-01 (예: LVMC-20260609-01). 날짜는 채혈일(arc_ovi 검사일, 없으면 내원일). Lab No/Time delivered 는 ARC 사무용이라 비움" },
@@ -4676,7 +4676,7 @@
       "text_37ubpl": { "source": null, "default": "1",                        "note": "Number of animals sampled — 1두" },
       "text_38jeru": { "source": null, "default": "ISO standard",             "note": "Microchip type — ISO 표준" },
       "text_36vpfx": { "source": "microchip_combined", "note": "Microchip number — 주칩(컬럼)+보조칩(microchip_secondary) 포함. 둘 다 비면 케이스에 칩 미입력" },
-      "text_39izi":  { "source": "birth_date", "transform": "age_en",         "note": "Age — birth_date 기준 영문 나이" },
+      "text_39izi":  { "source": "birth_date", "transform": "age_en_arc",     "note": "Age — 채혈일(폼 Date) 기준 영문 나이" },
       "text_40hqss": { "source": "sex", "transform": "sex_simple_en", "note": "Sex — Male/Female (neutered/spayed)" },
       "text_42pk":   { "source": "pet_name_en",   "note": "Animal Name" },
       "text_43fhpr": { "source": "breed_en",      "note": "Breed" },

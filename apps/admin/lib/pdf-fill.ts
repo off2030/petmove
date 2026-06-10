@@ -110,7 +110,7 @@ type FormMapping = {
    * 'ymd_slash' — normalize to YYYY/MM/DD with zero-padded month/day (e.g. Form25).
    * Default (undefined) preserves the transform's output.
    */
-  dateFormat?: 'dmy' | 'mdy_slash' | 'ymd_slash' | 'dmmmy'
+  dateFormat?: 'dmy' | 'mdy_slash' | 'ymd_slash' | 'ymd_dash' | 'dmmmy'
   /**
    * true면 템플릿에 이미 기입된 텍스트 필드 값을 보존 — 매핑에 나열된
    * 필드만 새로 채우고 나머지는 템플릿 원본 appearance 그대로 유지.
@@ -1992,15 +1992,32 @@ function resolveField(
     return a.years === 0 ? `${a.months}개월` : `${a.years}살`
   }
 
-  // English age label — birth_date 기준 "N years (M months)". ARC-OVI Age 칸용.
-  if (transform === 'age_en') {
-    const a = ageParts(raw, issueDateOf(data))
+  // English age label — birth_date 기준 "N years (M months)".
+  const fmtAgeEn = (a: { years: number; months: number } | null): string => {
     if (!a) return ''
     const y = a.years === 1 ? '1 year' : `${a.years} years`
     const m = a.months === 1 ? '1 month' : `${a.months} months`
     if (a.years === 0) return m
     if (a.months === 0) return y
     return `${y} ${m}`
+  }
+  // 발급일(내원일/오늘) 기준 나이.
+  if (transform === 'age_en') {
+    return fmtAgeEn(ageParts(raw, issueDateOf(data)))
+  }
+  // 채혈일 기준 나이 — ARC-OVI Age 칸. 폼의 Date(=채혈일)와 동일 기준일로 계산해
+  // 나이와 날짜가 일관되게. 채혈일 = arc_ovi 검사일 → 없으면 내원일 → 없으면 오늘.
+  if (transform === 'age_en_arc') {
+    let asOfStr = ''
+    const recs = data.infectious_disease_records
+    if (Array.isArray(recs)) {
+      const rec = (recs as Array<{ lab?: string; date?: string | null }>).find(r => r.lab === 'arc_ovi')
+      if (rec?.date) asOfStr = String(rec.date)
+    }
+    if (!asOfStr) asOfStr = String(data.vet_visit_date ?? '')
+    const m = asOfStr.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+    const asOf = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date()
+    return fmtAgeEn(ageParts(raw, asOf))
   }
 
   // 검역본부 EU 시료채취 내역서용 — "축종(품종)". species_ko + "(" + breed + ")".
@@ -3151,6 +3168,8 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
     s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/, (_, y, m, d) => `${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}/${y}`)
   const toSlashYmd = (s: string): string =>
     s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/, (_, y, m, d) => `${y}/${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`)
+  const toDashYmd = (s: string): string =>
+    s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/, (_, y, m, d) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`)
   const MONTHS_SHORT_1 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const toDmmmY_1 = (s: string): string =>
     s.replace(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/, (_, y, m, d) => `${String(d).padStart(2, '0')}/${MONTHS_SHORT_1[Number(m) - 1] ?? m}/${y}`)
@@ -3164,6 +3183,8 @@ async function fillPdfCore(formKey: string, caseRow: CaseRow, options?: FillOpti
     ? (s: unknown): unknown => (typeof s === 'string' ? eachPart(toMdy_1)(s) : s)
     : form.dateFormat === 'ymd_slash'
     ? (s: unknown): unknown => (typeof s === 'string' ? eachPart(toSlashYmd)(s) : s)
+    : form.dateFormat === 'ymd_dash'
+    ? (s: unknown): unknown => (typeof s === 'string' ? eachPart(toDashYmd)(s) : s)
     : form.dateFormat === 'dmmmy'
     ? (s: unknown): unknown => (typeof s === 'string' ? eachPart(toDmmmY_1)(s) : s)
     : (s: unknown): unknown => s
