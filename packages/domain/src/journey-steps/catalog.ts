@@ -197,6 +197,18 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         const msg = `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
         return { desc: msg, cardDesc: msg }
       }
+      // 오늘은 아직 유효하지만 입국일 전에 만료 — 이 step 이 미완료로 남는 실제 사유.
+      // (has-extra-rabies done 룰이 "최신 유효기간 < 입국일" 이면 미완료로 잡는 것과 짝.)
+      // 입국일은 entry_date 우선, 없으면 출국일(departure_date) 폴백 — done 룰과 동일.
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const entry =
+        (typeof data.entry_date === 'string' && data.entry_date) ||
+        (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
+        ''
+      if (entry && validUntil < entry) {
+        const msg = `광견병 백신 유효기간이 일본 입국일 전인 ${formatKoreanDate(validUntil)}에 만료됩니다. 입국 전에 추가 접종을 하세요.`
+        return { desc: msg, cardDesc: msg }
+      }
       return undefined
     },
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
