@@ -130,7 +130,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})의 유효기간(${validUntil})과 출국일(${dep})의 차이가 ${cushion}일이라 검역 10일을 cover할 수 없습니다.`,
-          fixHint: '출국 전 추가 접종이 필요합니다. 만료 후 접종은 1차로 간주되어 RNATT 재검사가 필요합니다.',
+          fixHint: '출국 전 추가 접종이 필요합니다. 만료 후 접종은 1차로 간주되어 RNATT 추가 검사가 필요합니다.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -206,7 +206,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: msgs.join(' / '),
-          fixHint: '만료 후 접종은 primary 로 취급되어 6-12개월 대기 + RNATT 재검사가 필요합니다.',
+          fixHint: '만료 후 접종은 primary 로 취급되어 6-12개월 대기 + RNATT 추가 검사가 필요합니다.',
           offendingPaths: Array.from(new Set(offending)),
         }
       }
@@ -253,11 +253,11 @@ export const NZ_CHECKS: ProcedureCheck[] = [
             ? `채혈일(${newest.date})이 출국일(${dep}) 이후입니다.`
             : lower > dep
               ? `RNATT(${newest.date}) + 3개월(${lower})이 출국일(${dep})보다 늦어 3개월에 미달합니다.`
-              : `RNATT(${newest.date}) + 24개월(${upper})이 출국일(${dep})보다 빨라 24개월을 초과하므로 재검사가 필요합니다.`
+              : `RNATT(${newest.date}) + 24개월(${upper})이 출국일(${dep})보다 빨라 24개월을 초과하므로 추가 검사가 필요합니다.`
       return {
         ok: false,
         message: reason,
-        fixHint: `출국일을 ${lower} ~ ${upper} 범위로 조정하거나 RNATT 재검사를 하세요.`,
+        fixHint: `출국일을 ${lower} ~ ${upper} 범위로 조정하거나 RNATT 추가 검사를 하세요.`,
         offendingPaths: offending,
       }
     },

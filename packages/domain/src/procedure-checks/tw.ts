@@ -197,11 +197,11 @@ export const TW_CHECKS: ProcedureCheck[] = [
             ? `채혈일(${newest.date})이 출국일(${dep})보다 이후입니다.`
             : days < 180
               ? `RNATT 채혈일(${newest.date})부터 출국일(${dep})까지 ${days}일입니다. 180일 이상이어야 합니다.`
-              : `RNATT 채혈일(${newest.date})에 1년을 더한 날(${upper})이 출국일(${dep})보다 빠릅니다. 1년을 초과하여 재검사가 필요합니다.`
+              : `RNATT 채혈일(${newest.date})에 1년을 더한 날(${upper})이 출국일(${dep})보다 빠릅니다. 1년을 초과하여 추가 검사가 필요합니다.`
       return {
         ok: false,
         message: reason,
-        fixHint: `출국일을 ${newest.date} 기준 180일 이후 ~ ${upper} 사이로 조정하거나 RNATT를 재검사하세요.`,
+        fixHint: `출국일을 ${newest.date} 기준 180일 이후 ~ ${upper} 사이로 조정하거나 RNATT 추가 검사를 하세요.`,
         offendingPaths: offending,
       }
     },

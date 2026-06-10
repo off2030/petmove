@@ -317,7 +317,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '추가 검사',
     shortLabel: '항체+',
     description:
-      '일본 입국 전에 재검사를 받으세요.\n\n검사 결과가 나올 때까지 수 주가 걸리는 점을 고려해 여유 있게 검사를 진행하세요.',
+      '일본 입국 전에 추가 검사를 받으세요.\n\n검사 결과가 나올 때까지 수 주가 걸리는 점을 고려해 여유 있게 검사를 진행하세요.',
     doneSummary: '광견병 항체 검사를 추가로 받았습니다.',
     // 미래 만료 대비 reminder — 본 흐름의 다음 단계를 다음 할 일에서 가리지 않는다.
     advisoryOnly: true,
@@ -338,7 +338,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const prior = entry ? titers.filter((t) => t.date <= entry) : titers
       if (prior.length === 0) {
         // 입국 전 유효 채혈이 없음(입국 후 채혈만 있는 경우 포함) — 재검사 안내.
-        const msg = '일본 입국 전에 재검사를 받으세요.'
+        const msg = '일본 입국 전에 추가 검사를 받으세요.'
         return { desc: msg, cardDesc: msg }
       }
       const latest = [...prior].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
@@ -361,7 +361,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         return undefined
       }
       // 입국일 전 만료 — 재검사 필요.
-      const msg = `직전 검사의 유효기간이 일본 입국일 전에 만료됩니다. ${formatKoreanDate(validUntil)}까지 재검사 하세요.`
+      const msg = '직전 검사의 유효기간이 일본 입국 전에 만료됩니다. 일본 입국 전에 추가 검사를 진행하세요.'
       return { desc: msg, cardDesc: msg }
     },
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },

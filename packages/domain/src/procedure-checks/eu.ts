@@ -215,7 +215,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 이전에 만료됩니다.`,
-          fixHint: '출국 전 추가 접종이 필요합니다. 부스터 chain이 끊기면 RNATT 재검사가 필요합니다.',
+          fixHint: '출국 전 추가 접종이 필요합니다. 부스터 chain이 끊기면 RNATT 추가 검사가 필요합니다.',
           offendingPaths: [
             'departure_date',
             `rabies_dates[${latest.originalIndex}].date`,

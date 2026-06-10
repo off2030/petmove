@@ -235,7 +235,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `최신 항체 검사(${newest.date})의 유효기간(${expiry})이 출국일(${dep})보다 빠릅니다. 1년을 초과했습니다.`,
-        fixHint: '재검사를 받거나 출국일을 채혈일 + 1년 이내로 조정하세요.',
+        fixHint: '추가 검사를 받거나 출국일을 채혈일 + 1년 이내로 조정하세요.',
         offendingPaths: offending,
       }
     },
@@ -273,7 +273,7 @@ export const UA_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message: problems.join(' / '),
-          fixHint: '항체가는 0.5 IU/ml 이상이어야 하며, 미달 시 추가 접종 후 재검사가 필요합니다.',
+          fixHint: '항체가는 0.5 IU/ml 이상이어야 하며, 미달 시 추가 접종 후 추가 검사가 필요합니다.',
           offendingPaths: offending,
         }
       }

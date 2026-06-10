@@ -275,11 +275,11 @@ export const HI_CHECKS: ProcedureCheck[] = [
             ? `${label}(${newestBasis})이 출국일(${dep})보다 이후입니다.`
             : days < 30
               ? `${label}(${newestBasis})부터 출국(${dep})까지 ${days}일로 30일에 미달하여 대기 기간이 부족합니다.`
-              : `${label}(${newestBasis})에 36개월을 더한 날(${upper})이 출국일(${dep})보다 빨라 36개월을 초과하므로 재검사가 필요합니다.`
+              : `${label}(${newestBasis})에 36개월을 더한 날(${upper})이 출국일(${dep})보다 빨라 36개월을 초과하므로 추가 검사가 필요합니다.`
       return {
         ok: false,
         message: reason,
-        fixHint: '출국일을 조정하거나 FAVN 재검사를 하세요. 실제 lab 수령일을 입력하지 않은 경우 채혈일에서 며칠 더 여유를 두는 것이 안전합니다.',
+        fixHint: '출국일을 조정하거나 FAVN 추가 검사를 하세요. 실제 lab 수령일을 입력하지 않은 경우 채혈일에서 며칠 더 여유를 두는 것이 안전합니다.',
         offendingPaths: offending,
       }
     },

@@ -200,7 +200,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
       return {
         ok: false,
         message: `최신 RNATT(${newest.date})의 유효기간(${newestValidUntil})이 출국일(${dep})보다 빠릅니다.`,
-        fixHint: '재검사를 하거나 출국일을 검사일 + 12개월 이내로 조정하세요.',
+        fixHint: '추가 검사를 하거나 출국일을 검사일 + 12개월 이내로 조정하세요.',
         offendingPaths: offending,
       }
     },
