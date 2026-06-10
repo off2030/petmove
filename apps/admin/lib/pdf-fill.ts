@@ -1895,6 +1895,15 @@ function resolveField(
     return SPECIES_EN[String(raw ?? '').toLowerCase()] ?? ''
   }
 
+  // 범용 접두어 — `prefix:<라벨>` 형태로 source 값 앞에 고정 라벨을 붙임.
+  // 값이 비면 라벨도 출력 안 함(빈 값). 예: prefix:"Unique Identification: Microchip No. ".
+  const prefixMatch = transform?.match(/^prefix:(.+)$/)
+  if (prefixMatch) {
+    const s = String(raw ?? '').trim()
+    if (!s) return ''
+    return prefixMatch[1] + s
+  }
+
   // 범용 이니셜 — raw 문자열의 각 단어 첫 글자(대문자). ARC-OVI OWNER INITIALS 등.
   // 예: "Jadene Frances Pillay" → "JFP". (수의사용은 vet:initials 별도)
   if (transform === 'initials') {

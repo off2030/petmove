@@ -4719,6 +4719,7 @@
       "text_18grcw": { "source": null, "default": "ARC-Onderstepoort Veterinary Research, Diagnostic Registration", "note": "p2 C.1 Consignee 1줄 (고정)" },
       "text_19njyu": { "source": null, "default": "100 Old Soutpan Road, Onderstepoort, 0110, South Africa", "note": "p2 C.1 Consignee 2줄 (고정)" },
       "text_20qvko": { "source": null, "default": "FedEx, Airway Bill No.: ____________________", "note": "p2 C.2 Means of transport — FedEx 고정 + AWB 번호 수기 기입란 표시" },
+      "text_22upvk": { "source": "microchip_combined", "transform": "prefix:Unique Identification: Microchip No. ", "note": "p2 D.2 Unique identification — 마이크로칩 번호 (라벨+칩)" },
       "text_24fwcu": { "source": null, "transform": "vet:city", "note": "p2 Issued at — 병원 도시" },
       "text_25mvwm": { "source": "infectious_date:arc_ovi", "note": "p2 Issued on — 채혈일(없으면 내원일)" },
       "text_26atup": { "source": null, "transform": "vet:name_en", "note": "p2 Name in print — 수의사" },
