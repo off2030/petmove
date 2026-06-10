@@ -63,6 +63,9 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       // 둘 중 하나라도 못 만족하면 추가 접종이 더 필요한 상태 → 미완료.
       const r = readRabiesEntries(caseRow)
       if (r.length < 3) return false
+      // 예정(미래)으로 저장한 추가 접종은 도래 후 '저장' 클릭으로 확인해야 완료.
+      // false = 아직 확인 전. undefined = 옛 데이터 → 아래 날짜 게이트로 폴백(회귀 방지).
+      if (data.rabies_extra_confirmed === false) return false
       const latest = r[r.length - 1]
       // 미래 접종일은 '예정' — 도래해야 완료로 잡힘.
       if (latest.date > todayKst()) return false
@@ -103,6 +106,9 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       // 못 만족하면 추가 검사가 더 필요한 상태.
       const t = readTiterEntries(caseRow)
       if (t.length < 2) return false
+      // 예정(미래)으로 저장한 추가 검사는 도래 후 '저장' 클릭으로 확인해야 완료.
+      // false = 아직 확인 전. undefined = 옛 데이터 → 아래 날짜 게이트로 폴백(회귀 방지).
+      if (data.titer_extra_confirmed === false) return false
       // 미래 채혈일은 '예정' — 도래해야 완료로 잡힘. (추가 백신 has-extra-rabies 와 동일 게이트.)
       // readTiterEntries 는 입력 순서라 위치로 최신을 못 잡음 — 최대 날짜로 판정.
       const latestTiterDate = t.reduce((max, e) => (e.date > max ? e.date : max), '')

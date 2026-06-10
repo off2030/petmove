@@ -21,6 +21,7 @@ import {
   findRabiesChainBreak,
   normalizeRabiesOrder,
   parseDestinations,
+  todayKst,
   validateJpEntryDate,
   writeByDestValue,
   readByDestValue,
@@ -456,6 +457,24 @@ export async function updateRabiesExtraEntries(
     if (rabiesNext.length === 0) delete nextData.rabies_dates
     else nextData.rabies_dates = rabiesNext
 
+    // 추가 접종(3차+) 확인 플래그 — 가장 최근 추가 접종일이 도래(≤ 오늘)했으면 보호자가 실제
+    // 접종을 확인하며 저장한 것으로 보고 완료(true). 미래(예정)면 false — 도래 후 '저장' 클릭으로
+    // 확인. 추가 접종이 없으면 제거. (검역 5단계 확인 모델과 동일 취지. 옛 데이터는 플래그가
+    // 없어 done-resolver 가 날짜 게이트로 폴백 → 회귀 없음.)
+    const rabiesExtraEntries = rabiesNext.slice(2)
+    if (rabiesExtraEntries.length === 0) {
+      delete nextData.rabies_extra_confirmed
+    } else {
+      const latestExtra = rabiesExtraEntries.reduce<string>((max, r) => {
+        const d =
+          r && typeof r === 'object' && typeof (r as Record<string, unknown>).date === 'string'
+            ? ((r as Record<string, unknown>).date as string)
+            : ''
+        return d > max ? d : max
+      }, '')
+      nextData.rabies_extra_confirmed = latestExtra !== '' && latestExtra <= todayKst()
+    }
+
     const { data: updated, error } = await admin
       .from('cases')
       .update({ data: nextData })
@@ -673,6 +692,22 @@ export async function updateTiterExtraEntries(
     const nextData: Record<string, unknown> = { ...prev }
     if (titerNext.length === 0) delete nextData.rabies_titer_records
     else nextData.rabies_titer_records = titerNext
+
+    // 추가 검사(2회+) 확인 플래그 — 추가 접종과 동일. 가장 최근 추가 채혈일이 도래(≤ 오늘)면
+    // true, 미래(예정)면 false. 추가 채혈이 없으면 제거.
+    const titerExtraEntries = titerNext.slice(1)
+    if (titerExtraEntries.length === 0) {
+      delete nextData.titer_extra_confirmed
+    } else {
+      const latestExtra = titerExtraEntries.reduce<string>((max, r) => {
+        const d =
+          r && typeof r === 'object' && typeof (r as Record<string, unknown>).date === 'string'
+            ? ((r as Record<string, unknown>).date as string)
+            : ''
+        return d > max ? d : max
+      }, '')
+      nextData.titer_extra_confirmed = latestExtra !== '' && latestExtra <= todayKst()
+    }
 
     const { data: updated, error } = await admin
       .from('cases')

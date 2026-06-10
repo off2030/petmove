@@ -328,8 +328,26 @@ export function StepDetailView({
   // 저장된 검진일이 오늘 이하인데 아직 확인(done) 전 — '예정일 지남, 저장 필요' 안내 노출.
   const savedArrivedUnconfirmed =
     isConfirmStep && confirmSavedDate.length >= 10 && confirmSavedDate <= todayStr && !done
+  // 추가 접종·추가 검사 — 저장된 가장 최근 추가 항목 날짜가 도래(≤ 오늘)했는데 아직 완료 전이면
+  // '저장' 버튼을 활성화해 보호자가 실제 접종/검사를 확인(클릭) 후 완료하도록 한다. (검역 5단계와 동일.)
+  const savedRabiesExtraLatest = savedRabiesExtra.reduce<string>(
+    (m, e) => (typeof e.date === 'string' && e.date.length >= 10 && e.date > m ? e.date : m),
+    '',
+  )
+  const rabiesExtraArrivedUnconfirmed =
+    isRabiesExtra && !done && savedRabiesExtraLatest !== '' && savedRabiesExtraLatest <= todayStr
+  const savedTiterExtraLatest = savedTiterExtra.reduce<string>(
+    (m, e) => (typeof e.date === 'string' && e.date.length >= 10 && e.date > m ? e.date : m),
+    '',
+  )
+  const titerExtraArrivedUnconfirmed =
+    isTiterExtra && !done && savedTiterExtraLatest !== '' && savedTiterExtraLatest <= todayStr
   // 저장 버튼 활성: 변경됨(dirty) OR 검진일 도래했는데 아직 확인 전(저장 클릭으로 완료).
-  const canSave = dirty || (formArrived && !done)
+  const canSave =
+    dirty ||
+    (formArrived && !done) ||
+    rabiesExtraArrivedUnconfirmed ||
+    titerExtraArrivedUnconfirmed
   // 신청·신고 step(검역 5단계 외) — 신청일/신고일이 미래면 버튼 라벨을 '예정일로 저장'으로.
   // 완료 판정은 신청일이 오늘 이하로 도래한 뒤(+ 예약/허가증/skip). canSave 는 dirty 그대로.
   const jpExportApplicationUpcoming =
@@ -347,6 +365,10 @@ export function StepDetailView({
   // 광견병 항체 검사 — 채혈일이 미래면 '예정일로 저장'. 완료 판정은 2단계 모델
   // (결과값 OR 완료 플래그 = has-titer-entry)이라 canSave 는 dirty 그대로.
   const titerUpcoming = isTiter && titerForm.date.length >= 10 && titerForm.date > todayStr
+  // 추가 검사 — 입력 entry 중 하나라도 미래면 '예정일로 저장'. (추가 백신 rabiesExtraUpcoming 과 동일.)
+  const titerExtraUpcoming =
+    isTiterExtra &&
+    titerExtra.some((e) => typeof e.date === 'string' && e.date.length >= 10 && e.date > todayStr)
 
   // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
   useEffect(() => {
@@ -1685,7 +1707,8 @@ export function StepDetailView({
                         advanceUpcoming ||
                         rabiesExtraUpcoming ||
                         vetVisitUpcoming ||
-                        titerUpcoming
+                        titerUpcoming ||
+                        titerExtraUpcoming
                       ? '예정일로 저장'
                       : '저장'}
           </button>
