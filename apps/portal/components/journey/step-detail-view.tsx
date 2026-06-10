@@ -1710,7 +1710,11 @@ export function StepDetailView({
                         titerUpcoming ||
                         titerExtraUpcoming
                       ? '예정일로 저장'
-                      : '저장'}
+                      : // 추가 접종·추가 검사 — 도래(오늘 이하)한 입력의 저장 = 완료 확인.
+                        // 안내문도 "완료 버튼을 눌러주세요"라 라벨을 '완료'로 맞춘다.
+                        isRabiesExtra || isTiterExtra
+                        ? '완료'
+                        : '저장'}
           </button>
             )
           })()}
