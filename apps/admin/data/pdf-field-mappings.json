@@ -4644,8 +4644,8 @@
     "dateFormat": "ymd_slash",
     "flatten": true,
     "fields": {
-      "text_50idgl": { "source": "vet_visit_date", "transform": "arc_sender_ref", "note": "Sender Ref — {병원머리글자}-{YYYYMMDD}-01 (예: LVMC-20260609-01). 날짜는 내원일, 없으면 오늘. Lab No/Time delivered 는 ARC 사무용이라 비움" },
-      "text_51pt":   { "source": "vet_visit_date", "transform": "date_or_today", "note": "Date — 작성/발송일(내원일, 없으면 오늘)" },
+      "text_50idgl": { "source": "infectious_date:arc_ovi", "transform": "arc_sender_ref", "note": "Sender Ref — {병원머리글자}-{YYYYMMDD}-01 (예: LVMC-20260609-01). 날짜는 채혈일(arc_ovi 검사일, 없으면 내원일). Lab No/Time delivered 는 ARC 사무용이라 비움" },
+      "text_51pt":   { "source": "infectious_date:arc_ovi", "note": "Date — 채혈일 (arc_ovi 검사일, 없으면 내원일)" },
 
       "text_1henc":  { "source": null, "transform": "vet:name_en",            "note": "SENDER 이름 (성명)" },
       "text_2ieph":  { "source": null, "default": "Registered Veterinarian",  "note": "SENDER TITLE (직함)" },
@@ -4687,7 +4687,7 @@
       "text_56jrkp": { "source": null, "default": "Unstained blood smear × 2", "note": "Type of specimen/s 2줄 — 무염색 혈액도말 ×2" },
       "text_57cmub": { "source": null, "default": "EDTA whole blood 5ml × 1 (purple top)", "note": "Type of specimen/s 3줄 — EDTA 전혈 5ml ×1 (Dirofilaria용)" },
       "text_58dxit": { "source": null, "default": "5 (Serum ×2, Blood smear ×2, EDTA ×1)", "note": "Number of specimen/s — 총 5개" },
-      "text_54so":   { "source": "vet_visit_date", "note": "Collection date — 채혈(내원)일" }
+      "text_54so":   { "source": "infectious_date:arc_ovi", "note": "Collection date — 채혈일 (arc_ovi 검사일, 없으면 내원일)" }
     }
   },
   "ESD": {
