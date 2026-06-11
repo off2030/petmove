@@ -207,7 +207,7 @@ export function StepDocChecklist({
           textDecoration: 'none',
         }}
       >
-        서류 준비하러 가기
+        자세히
         <span style={{ color: C.ink3 }}>→</span>
       </Link>
     </div>
