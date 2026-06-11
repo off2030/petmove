@@ -1,4 +1,5 @@
 import type { CaseRow } from './types'
+import { todayKst } from './dates'
 import { JOURNEY_STEP_CATALOG } from './journey-steps/catalog'
 import { resolveCompletedDate, resolveDone } from './journey-steps/done-resolver'
 
@@ -198,16 +199,20 @@ export function resolveRequiredDocs(
  * verified 가 true 라 awaiting 자체가 false.
  *
  * 'started' 판별: resolveCompletedDate 가 그 step 의 1차 날짜를 done 여부와 무관하게
- * 반환한다(없으면 null) — 채혈일만 입력된 진행 중 검사도 시작됨으로 잡힌다. 그래서:
- *   - 광견병 항체 검사 진행 중(채혈일 있음) → 결과지 '준비중'(활성)
- *   - 사전 신고 진행 중(신청일 있음) → 허가증 '준비중', 그 뒤(검진·검역) 발급 서류는 발급 예정
+ * 반환한다(없으면 null). 단 그 날짜가 **도래(≤ 오늘)** 했을 때만 시작으로 본다 —
+ * 미래(예정) 검진일·신청일·채혈일은 아직 그 단계가 일어나기 전이라, 거기서 발급되는
+ * 서류(별지25·FormAC·결과지·허가증 등)를 '보유/준비중'으로 잡지 않는다(발급 예정 유지).
+ * (단계 완료(done-resolver)도 동일하게 날짜 ≤ 오늘 게이트를 둔다 — 표시·완료 일관.) 그래서:
+ *   - 광견병 항체 검사 도래(채혈일 ≤ 오늘) → 결과지 '준비중'(활성), 미래 채혈 예정이면 발급 예정
+ *   - 사전 신고 도래(신청일 ≤ 오늘) → 허가증 '준비중', 그 뒤(검진·검역) 발급 서류는 발급 예정
  * issuance step 미지정·카탈로그 누락이면 false (보수적: dim 처리 안 함).
  */
 function isIssuanceNotStarted(issuanceStepId: string | undefined, caseRow: CaseRow): boolean {
   if (!issuanceStepId) return false
   const step = JOURNEY_STEP_CATALOG.find((s) => s.id === issuanceStepId)
   if (!step) return false
-  return resolveCompletedDate(step.done, caseRow) === null
+  const completed = resolveCompletedDate(step.done, caseRow)
+  return completed === null || completed.slice(0, 10) > todayKst()
 }
 
 /** case.data.documents 에 해당 stepId 태그의 파일이 하나라도 있으면 true. */
