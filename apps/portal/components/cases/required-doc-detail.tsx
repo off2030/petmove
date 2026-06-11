@@ -23,10 +23,13 @@ export function RequiredDocDetail({
   caseId,
   doc,
   previewDocs,
+  activeDest,
 }: {
   caseId: string
   doc: RequiredDocItem
   previewDocs: CaseDocument[]
+  /** 활성 목적지(?dest=) — 다중 목적지에서 완료/해당없음을 그 목적지(by_dest)로 저장. */
+  activeDest?: string | null
 }) {
   const C = {
     bg: 'var(--pm-bg)',
@@ -74,7 +77,7 @@ export function RequiredDocDetail({
   function handleToggle() {
     setError(null)
     startTransition(async () => {
-      const res = await setRequiredDocComplete(caseId, doc.id, !doc.verified)
+      const res = await setRequiredDocComplete(caseId, doc.id, !doc.verified, activeDest)
       if (res.ok) updateCase(res.value)
       else setError(res.error)
     })
@@ -83,7 +86,7 @@ export function RequiredDocDetail({
   function handleToggleNa() {
     setError(null)
     startTransition(async () => {
-      const res = await setRequiredDocNa(caseId, doc.id, !doc.na)
+      const res = await setRequiredDocNa(caseId, doc.id, !doc.na, activeDest)
       if (res.ok) updateCase(res.value)
       else setError(res.error)
     })

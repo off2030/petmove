@@ -13,23 +13,35 @@
 
 import { createAdminClient } from '@petmove/auth'
 import type { CaseRow } from '@petmove/domain'
+import { parseDestinations, readByDestValue, writeByDestValue } from '@petmove/domain'
 import { assertCaseAccess, type Result } from './_shared'
+
+/** apply 가 쓰기 위치(전역 top-level vs by_dest[목적지])를 알 수 있게 전달하는 컨텍스트. */
+interface DocStateScope {
+  /** by_dest[destination] 에 쓸지 여부 — 다중 목적지 + destination 지정 시에만 true. */
+  useByDest: boolean
+  /** 활성 목적지 토큰 (useByDest 일 때 유효). */
+  destination: string | null
+}
 
 export async function setRequiredDocComplete(
   caseId: string,
   docId: string,
   complete: boolean,
+  destination?: string | null,
 ): Promise<Result<CaseRow>> {
-  return mutateDocState(caseId, docId, (data) => {
-    const flags = readFlags(data, 'required_doc_flags')
-    const na = readFlags(data, 'required_doc_na')
+  return mutateDocState(caseId, docId, destination, (data, scope) => {
+    const flags = readScopedFlags(data, scope, 'required_doc_flags')
+    const na = readScopedFlags(data, scope, 'required_doc_na')
     if (complete) {
       flags[docId] = true
       delete na[docId] // 완료로 표시하면 '해당없음' 해제.
     } else {
       delete flags[docId]
     }
-    return { ...data, required_doc_flags: flags, required_doc_na: na }
+    let next = writeScopedFlags(data, scope, 'required_doc_flags', flags)
+    next = writeScopedFlags(next, scope, 'required_doc_na', na)
+    return next
   })
 }
 
@@ -37,17 +49,20 @@ export async function setRequiredDocNa(
   caseId: string,
   docId: string,
   na: boolean,
+  destination?: string | null,
 ): Promise<Result<CaseRow>> {
-  return mutateDocState(caseId, docId, (data) => {
-    const flags = readFlags(data, 'required_doc_flags')
-    const naFlags = readFlags(data, 'required_doc_na')
+  return mutateDocState(caseId, docId, destination, (data, scope) => {
+    const flags = readScopedFlags(data, scope, 'required_doc_flags')
+    const naFlags = readScopedFlags(data, scope, 'required_doc_na')
     if (na) {
       naFlags[docId] = true
       delete flags[docId] // 해당없음으로 표시하면 '완료' 해제.
     } else {
       delete naFlags[docId]
     }
-    return { ...data, required_doc_flags: flags, required_doc_na: naFlags }
+    let next = writeScopedFlags(data, scope, 'required_doc_flags', flags)
+    next = writeScopedFlags(next, scope, 'required_doc_na', naFlags)
+    return next
   })
 }
 
@@ -55,7 +70,8 @@ export async function setRequiredDocNa(
 async function mutateDocState(
   caseId: string,
   docId: string,
-  apply: (data: Record<string, unknown>) => Record<string, unknown>,
+  destination: string | null | undefined,
+  apply: (data: Record<string, unknown>, scope: DocStateScope) => Record<string, unknown>,
 ): Promise<Result<CaseRow>> {
   try {
     if (!caseId || !docId) return { ok: false, error: '잘못된 요청입니다.' }
@@ -66,13 +82,17 @@ async function mutateDocState(
     const admin = createAdminClient()
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
-      .select('data')
+      .select('data,destination')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    const nextData = apply(prev)
+    // 다중 목적지 케이스 + 활성 목적지 지정 시에만 by_dest 로 분리 저장. 단일 목적지는 기존
+    // top-level 동작 그대로(읽기 flatten 이 단일에선 top-level fallback 이라 정합).
+    const isMulti = parseDestinations(existing?.destination ?? null).length > 1
+    const useByDest = isMulti && !!destination
+    const nextData = apply(prev, { useByDest, destination: destination ?? null })
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -87,11 +107,34 @@ async function mutateDocState(
   }
 }
 
-/** case.data[key] 를 boolean 맵으로 복사 — true 값만 남긴다(가변 사본 반환). */
-function readFlags(data: Record<string, unknown>, key: string): Record<string, boolean> {
-  const raw = data[key]
+/**
+ * 활성 위치에서 boolean 맵을 읽어 가변 사본 반환 — true 값만 남긴다.
+ * useByDest 면 by_dest[목적지][key] 만 본다(top-level 누수 미상속 — flatten strict 와 동일).
+ * 단일/미지정이면 top-level data[key].
+ */
+function readScopedFlags(
+  data: Record<string, unknown>,
+  scope: DocStateScope,
+  key: string,
+): Record<string, boolean> {
+  const raw = scope.useByDest && scope.destination
+    ? readByDestValue(data, scope.destination, key)
+    : data[key]
   if (!raw || typeof raw !== 'object') return {}
   return Object.fromEntries(
     Object.entries(raw as Record<string, unknown>).filter(([, v]) => v === true),
   ) as Record<string, boolean>
+}
+
+/** boolean 맵을 활성 위치(by_dest[목적지] 또는 top-level)에 기록한 새 data 반환. */
+function writeScopedFlags(
+  data: Record<string, unknown>,
+  scope: DocStateScope,
+  key: string,
+  map: Record<string, boolean>,
+): Record<string, unknown> {
+  if (scope.useByDest && scope.destination) {
+    return writeByDestValue(data, scope.destination, key, map)
+  }
+  return { ...data, [key]: map }
 }
