@@ -531,7 +531,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'general-vaccine',
     category: 'vaccination',
-    title: '종합백신 접종',
+    title: '종합백신',
     shortLabel: '종합',
     description:
       '강아지는 DHPP(C), 고양이는 FVRCP를 접종하세요. 출국 시점에 유효기간이 남아있어야 합니다.',
@@ -567,7 +567,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'civ-vaccine',
     category: 'vaccination',
-    title: '독감(CIV) 접종',
+    title: '독감(CIV) 백신',
     shortLabel: '독감',
     description: '강아지 인플루엔자(CIV) 백신을 접종하세요. 호주·뉴질랜드·인도 등 일부 국가에서 요구됩니다.',
     doneSummary: '독감(CIV) 백신을 접종했습니다.',
