@@ -96,7 +96,9 @@ export function FeedbackView({ caseId }: { caseId: string }) {
   const hasContent = rating !== null || text.trim().length > 0
   const alreadySent = saved.rating !== null || saved.text.length > 0
   const justSaved = status === 'saved' && !dirty
-  const canSend = hasContent && dirty && status !== 'saving'
+  // 내용이 있으면 저장, 또는 이미 남긴 의견을 비웠으면(삭제) 그 비움도 저장. 빈 상태에서
+  // 처음부터 빈 채로는 저장할 게 없음(dirty=false). 저장 액션은 빈 값이면 feedback 을 삭제.
+  const canSend = (hasContent || alreadySent) && dirty && status !== 'saving'
 
   function handleSubmit() {
     if (!canSend) return
