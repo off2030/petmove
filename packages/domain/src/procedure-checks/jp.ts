@@ -217,6 +217,12 @@ export const JP_CHECKS: ProcedureCheck[] = [
 
       // 조건 2: 1차 < 마이크로칩 ≤ 2차 AND 2차 == 항체 검사일
       if (microchip <= second.date) {
+        // 부스터(3차+)가 있으면 마이크로칩 이후의 유효 접종이 존재(칩 ≤ 2차 ≤ 부스터) —
+        // 초기 2-dose 시리즈의 "2차=항체 같은 날" 제약은 더 이상 의미가 없다. 채혈은
+        // 부스터 기준 chain 룰(jp.rabies-titer-vs-booster 등)이 담당하므로 순서만 통과.
+        if (rabies.length >= 3) {
+          return { ok: true, message: `부스터(${rabies[2].date}) 존재 — 마이크로칩 순서 충족, 채혈은 chain 기준.` }
+        }
         // 항체 검사 미입력 → 아직 판정 불가, skip
         if (titers.length === 0) return SKIP
         const matching = titers.find((t) => t.date === second.date)
@@ -259,6 +265,9 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const rabies = readRabiesEntries(caseRow)
       // 필수: 마이크로칩 시술일 + 1차 접종 기록
       if (!microchip || rabies.length === 0) return SKIP
+      // 부스터(3차+)가 있으면 마이크로칩 이후 유효 접종이 존재 — "2차와 항체 같은 날"
+      // 사전 안내는 초기 시리즈용이라 더 이상 유효하지 않다. 채혈은 부스터 chain 기준.
+      if (rabies.length >= 3) return SKIP
       // 항체 검사 입력 후에는 jp.microchip-rabies-sequence 가 본 검증 — 사전 안내 종료.
       // (2차 입력만으로는 사라지지 않음 — 보호자가 "2차와 항체 검사를 같은 날" 룰을
       // 잊지 않도록 항체 검사 입력까지 안내 유지.)
