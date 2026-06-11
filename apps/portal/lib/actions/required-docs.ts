@@ -13,8 +13,24 @@
 
 import { createAdminClient } from '@petmove/auth'
 import type { CaseRow } from '@petmove/domain'
-import { parseDestinations, readByDestValue, writeByDestValue } from '@petmove/domain'
+import { parseDestinations, readByDestValue, resolveActiveDestination, writeByDestValue } from '@petmove/domain'
 import { assertCaseAccess, type Result } from './_shared'
+
+/**
+ * 쓰기 측 by_dest 토큰을 읽기(activeDestinationView/buildCaseJourneyContext)와 **동일하게** 해석.
+ * 다중 목적지면 항상 by_dest[활성토큰] — activeDest 미지정이어도 첫 토큰으로 떨어져 읽기와 일치한다.
+ * (회귀 원인: 과거 `useByDest = isMulti && !!destination` 이라 ?dest 없는 화면에서 activeDest 가
+ *  비면 top-level 에 써서, 읽기는 strict by_dest 라 영영 반영 안 됐다 — 서류 '있어요' 미반영 버그.)
+ */
+function resolveDocScope(
+  destinationStr: string | null | undefined,
+  activeDest: string | null | undefined,
+): DocStateScope {
+  const tokens = parseDestinations(destinationStr ?? null)
+  if (tokens.length <= 1) return { useByDest: false, destination: null }
+  const explicit = activeDest && tokens.includes(activeDest) ? activeDest : null
+  return { useByDest: true, destination: explicit ?? resolveActiveDestination(destinationStr ?? null, null) }
+}
 
 /** apply 가 쓰기 위치(전역 top-level vs by_dest[목적지])를 알 수 있게 전달하는 컨텍스트. */
 interface DocStateScope {
@@ -72,8 +88,7 @@ export async function setRequiredDocsComplete(
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    const isMulti = parseDestinations(existing?.destination ?? null).length > 1
-    const scope: DocStateScope = { useByDest: isMulti && !!destination, destination: destination ?? null }
+    const scope = resolveDocScope(existing?.destination, destination)
     const flags = readScopedFlags(prev, scope, 'required_doc_flags')
     const na = readScopedFlags(prev, scope, 'required_doc_na')
     for (const id of docIds) {
@@ -141,9 +156,8 @@ async function mutateDocState(
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     // 다중 목적지 케이스 + 활성 목적지 지정 시에만 by_dest 로 분리 저장. 단일 목적지는 기존
     // top-level 동작 그대로(읽기 flatten 이 단일에선 top-level fallback 이라 정합).
-    const isMulti = parseDestinations(existing?.destination ?? null).length > 1
-    const useByDest = isMulti && !!destination
-    const nextData = apply(prev, { useByDest, destination: destination ?? null })
+    const scope = resolveDocScope(existing?.destination, destination)
+    const nextData = apply(prev, scope)
 
     const { data: updated, error } = await admin
       .from('cases')
