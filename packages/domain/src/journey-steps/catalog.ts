@@ -722,7 +722,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       if (resolveRequiredDocs(caseRow.destination, caseRow) === null) return undefined
       // done-resolver(has-vet-visit)와 동일 범위 — vet-visit 시점까지의 서류만 본다.
       if (areAllRequiredDocsVerified(caseRow, 'vet-visit')) return undefined
-      const msg = '출국 전 임상검사를 받았습니다. 서류 체크리스트를 확인하세요.'
+      const msg = '출국 전 임상검사를 받았습니다. 서류를 모두 준비하면 이 단계가 완료됩니다.'
       return { desc: msg, cardDesc: msg }
     },
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },

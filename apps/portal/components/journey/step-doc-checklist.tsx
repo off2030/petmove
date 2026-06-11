@@ -17,6 +17,8 @@ interface ChecklistRow {
   /** verified: 보유 또는 완료. na: 해당 없음 처리(분모 제외, ✓ 톤). */
   verified: boolean
   na: boolean
+  /** 항목 탭 시 이동할 경로 — 큐레이션 서류는 그 서류 상세(완료 버튼), 폴백은 서류 탭. */
+  href: string
 }
 
 /**
@@ -43,6 +45,7 @@ export function StepDocChecklist({
     () => (caseRowRaw ? activeDestinationView(caseRowRaw, activeDest) : caseRowRaw),
     [caseRowRaw, activeDest],
   )
+  const destQuery = activeDest ? `?dest=${encodeURIComponent(activeDest)}` : ''
   const rows = useMemo<ChecklistRow[]>(() => {
     if (!caseRow) return []
     const currentOrder = JOURNEY_STEP_CATALOG.find((s) => s.id === currentStepId)?.order ?? Infinity
@@ -60,6 +63,8 @@ export function StepDocChecklist({
           name: d.name,
           verified: d.verified,
           na: d.na,
+          // 큐레이션 서류 — 그 서류 상세로(완료/해당없음 버튼이 거기 있음).
+          href: `/cases/${caseId}/docs/${d.id}${destQuery}`,
         }))
     }
     const steps = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
@@ -70,8 +75,10 @@ export function StepDocChecklist({
         name: s.title,
         verified: resolveDone(s.done, caseRow),
         na: false,
+        // 폴백(spec 없는 목적지) — 서류 상세 페이지가 없으므로 서류 탭으로.
+        href: `/cases/${caseId}/docs${destQuery}`,
       }))
-  }, [caseRow, currentStepId])
+  }, [caseRow, currentStepId, caseId, destQuery])
 
   if (rows.length === 0) return null
 
@@ -134,38 +141,52 @@ export function StepDocChecklist({
         {rows.map((row) => {
           const checked = row.verified || row.na
           return (
-            <li
-              key={row.id}
-              style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14, lineHeight: 1.45 }}
-            >
-              <span
-                aria-hidden
+            <li key={row.id}>
+              {/* 항목 전체가 그 서류 상세(완료/해당없음 버튼)로 가는 링크 — 우측 › 로 이동 신호.
+                  "여기서 완료하나?" 혼란을 없애고, 안 채워진 서류를 탭하면 바로 완료 화면으로. */}
+              <Link
+                href={row.href}
                 style={{
-                  flexShrink: 0,
-                  width: 18,
-                  height: 18,
-                  borderRadius: '50%',
-                  marginTop: 2,
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  background: checked ? C.sage : 'transparent',
-                  border: checked ? 'none' : `1px solid ${C.line}`,
-                  color: checked ? C.surface : C.ink3,
+                  gap: 10,
+                  fontSize: 14,
+                  lineHeight: 1.45,
+                  textDecoration: 'none',
+                  color: 'inherit',
                 }}
               >
-                {checked && (
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
+                <span
+                  aria-hidden
+                  style={{
+                    flexShrink: 0,
+                    width: 18,
+                    height: 18,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: checked ? C.sage : 'transparent',
+                    border: checked ? 'none' : `1px solid ${C.line}`,
+                    color: checked ? C.surface : C.ink3,
+                  }}
+                >
+                  {checked && (
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </span>
+                <span style={{ color: checked ? C.ink2 : C.ink, textDecoration: row.na ? 'line-through' : 'none' }}>
+                  {row.name}
+                </span>
+                {row.na && (
+                  <span style={{ fontSize: 11, color: C.ink3 }}>해당 없음</span>
                 )}
-              </span>
-              <span style={{ color: checked ? C.ink2 : C.ink, textDecoration: row.na ? 'line-through' : 'none' }}>
-                {row.name}
-              </span>
-              {row.na && (
-                <span style={{ marginLeft: 4, fontSize: 11, color: C.ink3 }}>해당 없음</span>
-              )}
+                <span aria-hidden style={{ marginLeft: 'auto', flexShrink: 0, color: C.ink3, fontSize: 16 }}>
+                  ›
+                </span>
+              </Link>
             </li>
           )
         })}
@@ -188,7 +209,7 @@ export function StepDocChecklist({
           textDecoration: 'none',
         }}
       >
-        서류 자세히 보기
+        서류 준비하러 가기
         <span style={{ color: C.ink3 }}>→</span>
       </Link>
     </div>

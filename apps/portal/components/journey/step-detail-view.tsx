@@ -1580,7 +1580,7 @@ export function StepDetailView({
             시그널을 사용해 자동 동기. */}
         {(step.id === 'vet-visit' || step.id === 'certificate-issue') && (
           <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>서류 체크리스트</h3>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>서류 준비 현황</h3>
             <StepDocChecklist caseId={caseId} currentStepId={step.id} activeDest={activeDest} />
           </section>
         )}
