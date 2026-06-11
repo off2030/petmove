@@ -76,6 +76,40 @@ export function isDestinationScopedKey(key: string): boolean {
 }
 
 /**
+ * 의도적으로 **케이스 공통(전역)** 으로 두는 case.data 키 — 목적지가 달라도 같은 값.
+ *
+ * 두 부류:
+ *   1) 동물·보호자 신원·이력 — 동물 한 마리/보호자 한 명의 사실이라 목적지 무관.
+ *      (이름, 체중, 마이크로칩, 광견병 접종·항체 이력 + 그 확인 플래그)
+ *   2) 스코핑 기반 구조물 — 그 자체가 destination 별 분기를 담는 컨테이너거나 케이스 단위 메타.
+ *      (by_dest, destination-keyed 맵 trip_type/arrival_confirmed, past_journeys)
+ *
+ * scoping lint(scripts/lint-destination-scoping.mjs)가 이 명단 + DESTINATION_SCOPED_FIELD_KEYS
+ * 로 "분류됨"을 판정한다. 새 case.data 키는 둘 중 하나에 반드시 등록 — 안 하면 lint 실패.
+ */
+export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
+  // 1) 동물·보호자 신원·이력 (동물/보호자 단위 — 목적지 무관)
+  'customer_first_name_en',
+  'customer_last_name_en',
+  'weight',
+  'microchip_implant_date',
+  'rabies_dates',
+  'rabies_titer_records',
+  'rabies_extra_confirmed',
+  'rabies_titer_result_confirmed',
+  'titer_extra_confirmed',
+  // 2) 스코핑 기반 구조물·케이스 단위 메타
+  'by_dest', //              destination 별 분기를 담는 컨테이너 그 자체
+  'trip_type', //            destination 키 맵(내부적으로 목적지별 — 컨테이너는 전역)
+  'arrival_confirmed', //    destination 키 맵(도착확인 — 컨테이너는 전역)
+  'past_journeys', //        완료된 여정 비석 목록(케이스 단위)
+])
+
+export function isGlobalCaseDataKey(key: string): boolean {
+  return GLOBAL_CASE_DATA_KEYS.has(key)
+}
+
+/**
  * `data.by_dest[destination][key]` 읽기.
  *
  * - 키 미존재: `undefined` (caller 는 top-level/column fallback 으로 진행)

@@ -29,11 +29,13 @@ function run(cmd, args, label) {
 
 const eslintCode = await run('pnpm', ['exec', 'turbo', 'lint'], 'turbo lint (eslint)')
 const rlsCode = await run('node', ['scripts/lint-rls.mjs'], 'RLS recursion lint')
+const scopeCode = await run('node', ['scripts/lint-destination-scoping.mjs'], 'destination scoping lint')
 
 const summary = [
   `  turbo lint:  ${eslintCode === 0 ? '✓ pass' : `✗ exit ${eslintCode}`}`,
   `  lint:rls:    ${rlsCode === 0 ? '✓ pass' : `✗ exit ${rlsCode}`}`,
+  `  lint:scope:  ${scopeCode === 0 ? '✓ pass' : `✗ exit ${scopeCode}`}`,
 ].join('\n')
 console.log(`\n─── summary ───\n${summary}`)
 
-process.exit(Math.max(eslintCode, rlsCode))
+process.exit(Math.max(eslintCode, rlsCode, scopeCode))
