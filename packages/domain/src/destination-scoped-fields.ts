@@ -26,6 +26,11 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 일정
   'departure_date',
   'vet_visit_date',
+  // 검진 완료(legacy '저장=완료'·admin 토글) 플래그 — 검진일과 같은 step(전 목적지)이라
+  // 같이 분리. 안 하면 한 목적지 검진 완료가 다른 목적지로 누수(검진일은 분리됐는데 완료만
+  // 전역이면 어긋남). 현행 코드는 이 값을 true 로 쓰지 않아(legacy 데이터만 존재) 다중
+  // 목적지 read 에서 flatten strict 가 전역 잔존을 떨궈주는 효과가 주효.
+  'vet_visit_confirmed',
   // 출국 항공편 — 한국 출발 (departure_*) + 도착국 도착 (entry_*)
   'departure_flight_date',
   'entry_date',
@@ -103,6 +108,12 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   'trip_type', //            destination 키 맵(내부적으로 목적지별 — 컨테이너는 전역)
   'arrival_confirmed', //    destination 키 맵(도착확인 — 컨테이너는 전역)
   'past_journeys', //        완료된 여정 비석 목록(케이스 단위)
+  // 3) 첨부 파일 — **의도적으로 케이스 공유**. 보호자가 올린 파일은 동물/케이스의 자산이라
+  //    목적지와 무관하게 서류함에서 늘 보여야 한다(목적지 분리해도 기존 첨부 사라지지 않게).
+  //    필수서류 체크리스트는 목적지별 spec 으로 노출되므로(예: 별지25 는 일본만) 같은 첨부가
+  //    다른 목적지 체크리스트에 잘못 카운트되지 않는다 — 전역 저장이라도 교차 누수 없음.
+  'documents', //            stepId 태그 첨부 배열(케이스 공유)
+  'notes', //                첨부 메모 맵(documents 와 한 묶음)
 ])
 
 export function isGlobalCaseDataKey(key: string): boolean {

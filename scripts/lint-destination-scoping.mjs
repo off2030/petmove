@@ -52,16 +52,16 @@ const GLOBAL = parseStringSet('GLOBAL_CASE_DATA_KEYS') ?? new Set()
 // "현행 유지(grandfather)" 한다. ⚠️ 여기 **새로 추가하지 말 것**. 신규 키는 SCOPED 또는
 // GLOBAL 로 분류해야 한다. 아래 항목은 점진적으로 위 두 명단으로 옮겨 비워가는 게 목표.
 //
-//   🔴 = 목적지별이어야 할 가능성 높음(검증·완료 누수 후보 — 다음 수정 대상)
+//   🟢 = 일본 전용 단계라 케이스당 1개 → 동시 다중목적지 누수 없음(전역 저장 OK, 현행 유지)
 //   🟡 = 조사 필요
 //   ⚪ = 케이스 data 아님(오탐, 로컬 변수)
+//
+// (2026-06-11 분류 완료로 baseline 에서 졸업: vet_visit_confirmed → SCOPED,
+//  documents/notes → GLOBAL. 나머지는 아래.)
 const SCOPING_LINT_BASELINE = new Set([
-  'advance_notification_date', //               🔴 일본 사전신고일 — 목적지별 후보
-  'advance_notification_approval_skipped', //   🔴 일본 사전신고 skip — 목적지별 후보
-  'jp_export_quarantine_reservation_skipped', // 🔴 일본 수출검역 예약 skip — 목적지별 후보
-  'vet_visit_confirmed', //                     🔴 임상검사 확인(vet_visit_date 는 이미 scoped) — 목적지별 후보
-  'documents', //                               🔴 첨부 — 같은 전역 누수(별도 마이그 필요, 후속)
-  'notes', //                                   🔴 첨부 메모(documents 와 한 묶음)
+  'advance_notification_date', //               🟢 일본 사전신고일 — 일본 단일 단계
+  'advance_notification_approval_skipped', //   🟢 일본 사전신고 skip — 일본 단일 단계
+  'jp_export_quarantine_reservation_skipped', // 🟢 일본 수출검역 예약 skip — 일본 단일 단계
   'feedback', //                                🟡 여정 만족도 — 목적지별 여정이면 분리 검토
   'flight_info_recorded_at', //                 🟡 항공정보 기록시각 메타
   'co_progress', //                             🟡 공동 진행 상태
