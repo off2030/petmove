@@ -3,6 +3,7 @@ import { AU_CHECKS } from './au'
 import { BR_CHECKS } from './br'
 import { CA_CHECKS } from './ca'
 import { CN_CHECKS } from './cn'
+import { COMMON_CHECKS } from './common'
 import { EU_CHECKS } from './eu'
 import { GU_CHECKS } from './gu'
 import { HI_CHECKS } from './hi'
@@ -31,6 +32,7 @@ import type { CheckContext, CheckResult, CountryKey, ProcedureCheck } from './ty
  * 2) 이 파일에 import 하고 아래 배열에 펼치기
  */
 export const ALL_PROCEDURE_CHECKS: ProcedureCheck[] = [
+  ...COMMON_CHECKS,
   ...JP_CHECKS,
   ...SG_CHECKS,
   ...EU_CHECKS,
