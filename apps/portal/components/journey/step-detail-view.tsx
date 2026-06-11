@@ -507,6 +507,11 @@ export function StepDetailView({
       }
       if (isRabies2) {
         const r1 = readRabiesEntryForm(caseRow?.data, 0)
+        // 1차가 비어 있는데 2차를 넣으면 '날짜순 압축' 모델상 저장 시 1차로 당겨져 슬롯이
+        // 어긋난다. 말없이 옮기는 대신 1차를 먼저 입력하도록 막는다(server 동일 차단 — 단일 출처).
+        if (rabies.date && !r1.date) {
+          return '1차 접종일을 먼저 입력하세요.'
+        }
         if (r1.date && rabies.date) {
           // 1·2차 순서·간격(30일) — procedure-check 와 같은 domain 함수(단일 출처).
           const intervalErr = validateRabiesInterval(r1.date, rabies.date)

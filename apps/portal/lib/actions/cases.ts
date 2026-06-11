@@ -299,6 +299,14 @@ export async function updateRabiesEntryFields(
     // validateRabiesInterval 입력 불가)와 procedure-check(1차 수정 후 2차 step '주의')가
     // 같은 domain 함수로 담당한다. server 는 데이터 형식만 검증(단일 출처 모델).
 
+    // 단, 2차(index 1)에 유효 날짜를 넣는데 1차(index 0)가 비어 있으면 거부 — '날짜순 압축'
+    // 모델상 1차 없는 2차는 저장 시 1차로 당겨져 슬롯이 어긋난다(2차로 넣은 게 1차로 이동).
+    // 말없이 옮기는 대신 1차를 먼저 입력하도록 막는다(논리적으로 2차는 1차 없이 존재 불가).
+    // client getSaveBlockError 의 isRabies2 분기와 동일 조건 — 단일 출처. 3차+ 는 별도 함수.
+    if (index === 1 && hasValidDate(entry) && !hasValidDate(rabiesArr[0])) {
+      return { ok: false, error: '1차 접종일을 먼저 입력하세요.' }
+    }
+
     // 앞 index 를 빈 객체로 패딩 (sparse 배열 방지) 후 해당 index 설정.
     while (rabiesArr.length < index) rabiesArr.push({})
     rabiesArr[index] = entry
