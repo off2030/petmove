@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import {
   createVaccineLookups,
   findRabiesChainBreak,
+  resolveRequiredDocs,
   todayKst,
   validateAdvanceNotification,
   validateJpEntryDate,
@@ -49,6 +50,7 @@ import {
   updateTiterFields,
   updateVetVisitDate,
 } from '@/lib/actions/cases'
+import { setRequiredDocsComplete } from '@/lib/actions/required-docs'
 import { readCaseDocuments } from '@/lib/documents'
 import { AdvanceNotificationInputs } from './advance-notification-inputs'
 import { FlightInputs, type FlightForm } from './flight-inputs'
@@ -1046,6 +1048,39 @@ export function StepDetailView({
       }
     })
   }
+  // 출국 전 임상검사 — 검진일 저장(오늘 이하) + 미완료면 하단 버튼을 '모두 있어요'로 전환.
+  // 누르면 수기 필수 서류(별지25·FormAC/RE 등)를 일괄 '있음' 처리 → 자동 서류(항체 결과지·
+  // 허가증)와 합쳐져 done-resolver(필수 서류 모두 ✓)가 단계를 완료한다. 자동 서류는 플래그를
+  // 안 보므로 수기 서류 id 만 넘긴다.
+  const vetVisitManualDocIds = useMemo(() => {
+    if (!isVetVisit || !caseRow) return [] as string[]
+    const docs = resolveRequiredDocs(caseRow.destination, caseRow)
+    if (!docs) return [] as string[]
+    return docs.filter((d) => d.manual && !d.na).map((d) => d.id)
+  }, [isVetVisit, caseRow])
+  const vetVisitConfirmMode =
+    isVetVisit &&
+    savedVetVisitDate.length >= 10 &&
+    savedVetVisitDate <= todayStr &&
+    !done &&
+    !dirty &&
+    vetVisitManualDocIds.length > 0
+  const [confirmingVetDocs, setConfirmingVetDocs] = useState(false)
+  const handleConfirmVetVisitDocs = () => {
+    if (confirmingVetDocs) return
+    setConfirmingVetDocs(true)
+    startTransition(async () => {
+      const res = await setRequiredDocsComplete(caseId, vetVisitManualDocIds, activeDest)
+      setConfirmingVetDocs(false)
+      if (res.ok) {
+        updateCase(res.value)
+        router.replace(`/cases/${caseId}/journey`)
+      } else {
+        setStatus('error')
+        setError(res.error)
+      }
+    })
+  }
   const [convertingTrip, setConvertingTrip] = useState(false)
   const router = useRouter()
   const confirm = useConfirm()
@@ -1667,8 +1702,8 @@ export function StepDetailView({
               (jpExportSkipMode) / 광견병 항체 검사 진행(titerCompleteMode)이면 같은 버튼이
               '완료'로 전환 — 저장할 변경이 없는 상태에서 명시적 완료 액션을 직접 노출. */}
           {(() => {
-            const completeMode = advanceSkipMode || jpExportSkipMode || titerCompleteMode
-            const processing = skippingApproval || skippingJpExport || completingTiter
+            const completeMode = advanceSkipMode || jpExportSkipMode || titerCompleteMode || vetVisitConfirmMode
+            const processing = skippingApproval || skippingJpExport || completingTiter || confirmingVetDocs
             const active = (canSave || completeMode) && status !== 'saving' && !processing
             return (
           <button
@@ -1680,7 +1715,9 @@ export function StepDetailView({
                   ? handleSkipJpExportReservation
                   : titerCompleteMode
                     ? handleCompleteTiter
-                    : handleSaveClick
+                    : vetVisitConfirmMode
+                      ? handleConfirmVetVisitDocs
+                      : handleSaveClick
             }
             disabled={!active}
             aria-live="polite"
@@ -1706,8 +1743,10 @@ export function StepDetailView({
                 ? '처리 중…'
                 : justSaved
                   ? '✓ 저장됨'
-                  : completeMode
-                    ? '완료'
+                  : vetVisitConfirmMode
+                    ? '모두 있어요'
+                    : completeMode
+                      ? '완료'
                     : formUpcoming ||
                         jpExportApplicationUpcoming ||
                         advanceUpcoming ||

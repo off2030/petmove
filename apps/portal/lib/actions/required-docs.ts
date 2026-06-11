@@ -45,6 +45,57 @@ export async function setRequiredDocComplete(
   })
 }
 
+/**
+ * 여러 필수 서류를 한 번에 '있음'(required_doc_flags=true)으로 표시 — vet-visit 의
+ * '모두 있어요' 버튼이 수기 서류(별지25·FormAC/RE 등)를 일괄 보유 처리할 때 사용.
+ * 자동 판정 서류(kind='step')는 플래그를 안 보므로 영향 없음 — 호출부가 수기 서류 id 만 넘긴다.
+ * '해당없음' 은 보유로 덮어쓴다(개별 토글과 동일 규칙). 스코핑은 단건 토글과 같다.
+ */
+export async function setRequiredDocsComplete(
+  caseId: string,
+  docIds: string[],
+  destination?: string | null,
+): Promise<Result<CaseRow>> {
+  try {
+    if (!caseId || !Array.isArray(docIds) || docIds.length === 0) {
+      return { ok: false, error: '잘못된 요청입니다.' }
+    }
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data,destination')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const isMulti = parseDestinations(existing?.destination ?? null).length > 1
+    const scope: DocStateScope = { useByDest: isMulti && !!destination, destination: destination ?? null }
+    const flags = readScopedFlags(prev, scope, 'required_doc_flags')
+    const na = readScopedFlags(prev, scope, 'required_doc_na')
+    for (const id of docIds) {
+      flags[id] = true
+      delete na[id]
+    }
+    let next = writeScopedFlags(prev, scope, 'required_doc_flags', flags)
+    next = writeScopedFlags(next, scope, 'required_doc_na', na)
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: next })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 export async function setRequiredDocNa(
   caseId: string,
   docId: string,
