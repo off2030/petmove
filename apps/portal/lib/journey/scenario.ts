@@ -214,7 +214,7 @@ function earliestDate(step: StepDefinition, caseRow: CaseRow): string | null {
  * 자동 완료가 아니라 직접 확인 방식이라, 지난 일정을 어떻게 처리할지 알려준다.
  */
 const PASSED_UNCONFIRMED_MSG =
-  '예정일이 지났습니다. 저장 버튼을 눌러서 완료로 전환하시거나, 새로운 예정일을 등록하실 수 있습니다.'
+  '예정일이 되었습니다. 저장 버튼을 눌러서 완료로 전환하시거나, 새로운 예정일을 등록하실 수 있습니다.'
 
 /**
  * 어느 step 에도 매핑하지 않았지만, '추가 백신·추가 검사' advisory step 의 situational 안내가

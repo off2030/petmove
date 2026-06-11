@@ -1646,7 +1646,7 @@ export function StepDetailView({
             }}
           >
             <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
-              예정일이 지났습니다. 저장 버튼을 눌러서 완료로 전환하시거나, 새로운 예정일을 등록하실 수 있습니다.
+              예정일이 되었습니다. 저장 버튼을 눌러서 완료로 전환하시거나, 새로운 예정일을 등록하실 수 있습니다.
             </div>
           </section>
         )}
