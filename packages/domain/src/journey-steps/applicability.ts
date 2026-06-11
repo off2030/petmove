@@ -58,17 +58,21 @@ function findDestinationKey(destinationToken: string): string | null {
 
 /** 한 step 의 적용 조건이 케이스 컨텍스트에 맞는지. */
 export function isStepApplicable(applicability: StepApplicability, ctx: CaseJourneyContext): boolean {
-  // 목적지 — 'all' 또는 destinationKey 가 배열에 포함되어야 함
-  if (applicability.destinations !== 'all') {
-    if (!ctx.destinationKey) return false
-    if (!applicability.destinations.includes(ctx.destinationKey)) return false
-  }
+  const dk = ctx.destinationKey
+  // 제외 목적지 — destinations 매칭과 무관하게 우선 제외 (예: 1회면 충분한 나라의 광견병 2차).
+  if (dk && applicability.excludeDestinations?.includes(dk)) return false
+  // 목적지 매칭 — 본 목적지(destinations) 또는 왕복전용 목적지(roundOnlyDestinations) 둘 중 하나.
+  const inMain = applicability.destinations === 'all' || (!!dk && applicability.destinations.includes(dk))
+  const inRoundOnly = !!dk && (applicability.roundOnlyDestinations?.includes(dk) ?? false)
+  if (!inMain && !inRoundOnly) return false
+  // 왕복전용 목적지는 왕복 케이스에만 적용(엔트리 요건 없이 귀국 요건만 있는 경우).
+  if (!inMain && inRoundOnly && ctx.tripType !== 'round') return false
   // 종 — 'all' 또는 매칭. species 미상은 모든 종 통과(보수적으로 보여줌)
   if (applicability.species !== 'all' && ctx.species && applicability.species !== ctx.species) {
     return false
   }
-  // 왕복/편도 — 'all' 또는 매칭
-  if (applicability.tripType !== 'all' && applicability.tripType !== ctx.tripType) {
+  // 왕복/편도 — 본 목적지에만 적용(왕복전용은 위에서 처리). 'all' 또는 매칭.
+  if (inMain && applicability.tripType !== 'all' && applicability.tripType !== ctx.tripType) {
     return false
   }
   return true

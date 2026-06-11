@@ -134,7 +134,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '2차 광견병 백신을 접종하세요.\n\n1차 접종 후 30일 이상 지나서 접종하세요.\n1차 접종 면역 유효기간 이내에 접종하세요.\n일본 입국 때 면역 유효기간이 남아있어야 합니다.',
     doneSummary: '2차 광견병 백신을 접종했습니다.',
-    applicability: { destinations: 'all', species: 'all', tripType: 'all' },
+    // 1회면 충분한 나라는 2차 미노출(태국 등 — 가이드·procedure-check 에 2회 강제 없음).
+    applicability: { destinations: 'all', excludeDestinations: ['thailand'], species: 'all', tripType: 'all' },
     order: 35,
     earliest: { anchor: 'step:rabies-vaccine-1', daysAfter: 30 },
     done: 'has-rabies-booster',
@@ -268,6 +269,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'ukraine',
         'israel',
       ],
+      // 입국엔 항체검사 불필요하나 한국 귀국 시 필수인 나라 — 왕복에만 노출(태국 등).
+      roundOnlyDestinations: ['thailand'],
       species: 'all',
       tripType: 'all',
     },
@@ -689,7 +692,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       '도착 전에 수입허가를 신청하세요. 호주(DAFF)·뉴질랜드(MPI)·대만(APHIA)·말레이시아(DVS) 등에서 필요하며, 허가번호가 검역증에 명시되어야 합니다.',
     doneSummary: '수입 허가를 받았습니다.',
     applicability: {
-      destinations: ['australia', 'new_zealand', 'taiwan', 'malaysia'],
+      destinations: ['australia', 'new_zealand', 'taiwan', 'malaysia', 'thailand'],
       species: 'all',
       tripType: 'all',
     },
@@ -840,7 +843,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       '한국 도착 후 공항 동물검역소에서 수입 동물검역을 받으세요.',
     doneSummary: '한국 수입 동물검역을 받았습니다.',
     cardLine: '한국 공항 동물검역소에서 수입 검역을 받으세요.',
-    applicability: { destinations: ['japan'], species: 'all', tripType: 'round' },
+    // 모든 나라 왕복의 공통 마지막 — 귀국 후 한국 공항 검역. (일본 전용 → 전 목적지 왕복 공통)
+    applicability: { destinations: 'all', species: 'all', tripType: 'round' },
     order: 160,
     done: 'has-kr-import-quarantine',
     inputs: [

@@ -24,6 +24,17 @@ export type DestinationFilter = 'all' | string[]
 
 export interface StepApplicability {
   destinations: DestinationFilter
+  /**
+   * destinations 가 'all'/배열이어도 여기에 있는 목적지는 제외(미적용).
+   * 예: 광견병 2차는 'all' 이지만 1회면 충분한 나라(태국 등)는 제외.
+   */
+  excludeDestinations?: string[]
+  /**
+   * destinations(엔트리 요건)와 별개로, 이 목적지는 **왕복에만** 적용한다.
+   * 엔트리엔 불필요하지만 귀국(한국 재입국) 요건으로 필요한 단계용.
+   * 예: 태국은 입국엔 항체검사 불필요하나 한국 귀국 시 필수 → 왕복에만 노출.
+   */
+  roundOnlyDestinations?: string[]
   species: StepSpeciesFilter
   tripType: StepTripTypeFilter
 }
