@@ -112,7 +112,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '항체 검사는 광견병 접종 30일 후',
     description:
-      'RNATT 채혈일은 직전 광견병 접종(1차 또는 부스터)으로부터 30일 이후여야 함. (EU Reg 576/2013 Annex IV)',
+      'RNATT 채혈일은 광견병 접종으로부터 30일 이후여야 함. 부스터 chain 이 끊기지 않았으면(직전 접종 면역 유효 중 추가 접종) 30일 요건은 이전 접종이 충족 — 부스터를 채혈 당일 맞아도 시계 리셋 X. chain 끊긴 뒤 새 접종은 1차로 보고 30일 요구. (EU Reg 576/2013 Annex IV)',
     severity: 'info',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
@@ -123,17 +123,32 @@ export const EU_CHECKS: ProcedureCheck[] = [
       const offendingPaths: string[] = []
       const problems: string[] = []
       for (const t of titers) {
-        const priorDoses = rabies.filter((r) => r.date <= t.date)
+        // 채혈일 이전(당일 포함) 접종만 날짜순 정렬
+        const priorDoses = rabies
+          .filter((r) => r.date <= t.date)
+          .sort((a, b) => a.date.localeCompare(b.date))
         if (priorDoses.length === 0) {
           offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
           problems.push(`채혈일(${t.date}) 이전의 광견병 접종 기록이 없습니다.`)
           continue
         }
-        const latest = priorDoses[priorDoses.length - 1]
-        const gap = daysBetween(latest.date, t.date)
+        // 가장 최근 접종에서 시작해 chain 을 거슬러 올라간다. 이전 접종의 면역
+        // 유효기간이 다음 접종일까지 살아있으면 chain 유지 → 30일 시계는 그 이전
+        // 접종 기준. 만료 뒤 맞은 접종에서 chain 이 끊기면 거기서 멈춘다.
+        let chainStart = priorDoses[priorDoses.length - 1]
+        for (let i = priorDoses.length - 2; i >= 0; i--) {
+          const earlier = priorDoses[i]
+          const validUntil = resolveValidUntil(earlier.date, earlier.valid_until)
+          if (validUntil >= chainStart.date) {
+            chainStart = earlier
+          } else {
+            break
+          }
+        }
+        const gap = daysBetween(chainStart.date, t.date)
         if (gap === null || gap < 30) {
           offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date})과 직전 접종일(${latest.date})의 간격이 ${gap ?? '?'}일로 30일 미만입니다.`)
+          problems.push(`채혈일(${t.date})과 직전 유효 접종(${chainStart.date})의 간격이 ${gap ?? '?'}일로 30일 미만입니다.`)
         }
       }
       if (offendingPaths.length > 0) {
