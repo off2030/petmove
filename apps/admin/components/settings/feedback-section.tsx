@@ -102,7 +102,7 @@ export function FeedbackSection() {
                 )}
                 <div className="space-y-sm">
                   {g.items.map((e) => (
-                    <FeedbackCard key={e.caseId} entry={e} />
+                    <FeedbackCard key={`${e.caseId}:${e.destination ?? ''}`} entry={e} />
                   ))}
                 </div>
               </div>
@@ -124,7 +124,14 @@ function FeedbackCard({ entry }: { entry: FeedbackEntry }) {
       className="block rounded-sm border border-border/80 px-lg py-md transition-colors hover:border-foreground/40 hover:bg-muted/30"
     >
       <div className="flex items-baseline justify-between gap-md">
-        <span className="font-serif text-[15px] text-foreground">{who || '케이스'}</span>
+        <span className="flex items-baseline gap-2">
+          <span className="font-serif text-[15px] text-foreground">{who || '케이스'}</span>
+          {entry.destination && (
+            <span className="shrink-0 rounded-sm bg-muted/60 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+              {entry.destination}
+            </span>
+          )}
+        </span>
         <span className="shrink-0 font-mono text-[12px] text-muted-foreground/70">
           {formatDate(entry.submittedAt)}
         </span>

@@ -5,9 +5,12 @@
 
 import { createClient } from '@petmove/auth/server'
 import { createAdminClient } from '@petmove/auth'
+import { listJourneyFeedback, parseDestinations } from '@petmove/domain'
 
 export interface FeedbackEntry {
   caseId: string
+  /** 의견을 남긴 목적지 토큰(여정별). legacy 단일 의견·미상이면 null. */
+  destination: string | null
   orgId: string
   orgName: string | null
   customerName: string | null
@@ -21,30 +24,16 @@ export type ListFeedbackResult =
   | { ok: true; entries: FeedbackEntry[]; isSuperAdmin: boolean }
   | { ok: false; error: string }
 
-function readFeedback(
-  data: unknown,
-): { rating: number | null; text: string; submittedAt: string | null } | null {
-  if (!data || typeof data !== 'object') return null
-  const fb = (data as Record<string, unknown>).feedback
-  if (!fb || typeof fb !== 'object') return null
-  const r = (fb as Record<string, unknown>).rating
-  const t = (fb as Record<string, unknown>).text
-  const s = (fb as Record<string, unknown>).submittedAt
-  const rating = typeof r === 'number' ? r : null
-  const text = typeof t === 'string' ? t : ''
-  if (rating === null && !text) return null
-  return { rating, text, submittedAt: typeof s === 'string' ? s : null }
-}
-
 interface CaseRow {
   id: string
   org_id: string
   customer_name: string | null
   pet_name: string | null
+  destination: string | null
   data: unknown
 }
 
-const COLUMNS = 'id, org_id, customer_name, pet_name, data'
+const COLUMNS = 'id, org_id, customer_name, pet_name, destination, data'
 
 /**
  * 고객 의견 목록을 반환.
@@ -100,18 +89,24 @@ export async function listFeedback(): Promise<ListFeedbackResult> {
 
   const entries: FeedbackEntry[] = []
   for (const r of rows) {
-    const fb = readFeedback(r.data)
-    if (!fb) continue
-    entries.push({
-      caseId: r.id,
-      orgId: r.org_id,
-      orgName: orgNameById.get(r.org_id) ?? null,
-      customerName: r.customer_name,
-      petName: r.pet_name,
-      rating: fb.rating,
-      text: fb.text,
-      submittedAt: fb.submittedAt,
-    })
+    const firstToken = parseDestinations(r.destination)[0] ?? null
+    // 케이스당 목적지별 의견 — 여러 여정이면 여러 건. legacy 단일 의견은 firstToken 1건.
+    for (const { destination, feedback } of listJourneyFeedback(
+      r.data as Record<string, unknown> | null,
+      firstToken,
+    )) {
+      entries.push({
+        caseId: r.id,
+        destination,
+        orgId: r.org_id,
+        orgName: orgNameById.get(r.org_id) ?? null,
+        customerName: r.customer_name,
+        petName: r.pet_name,
+        rating: feedback.rating,
+        text: feedback.text,
+        submittedAt: feedback.submittedAt,
+      })
+    }
   }
 
   // 최신 의견부터 (submittedAt ISO 내림차순, 없으면 뒤로).

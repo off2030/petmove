@@ -127,7 +127,9 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   // 4) 케이스 단위 메타·설정 / destination 키 맵 / 일본 단일 단계 (전수 조사 2026-06-11)
   'co_progress', //          '함께 준비' — 동물 1마리당 1개(DB 트리거가 보호자 형제 동기화). 의도적 케이스 단위
   'completion_prompt_dismissed', // destination 키 맵({[dest]: anchorDate}) — 내부적으로 이미 목적지별
-  'feedback', //             여정 만족도 의견(케이스 단위). 완료 게이트 아님. 여정별 분리는 별도 기능 작업
+  'feedback', //             여정 만족도 의견 — { [목적지]: {rating,text,submittedAt} } 키 맵(내부 목적지별,
+  //                          컨테이너는 전역). arrival_confirmed 와 같은 패턴이라 demote(by_dest 삭제) 후에도
+  //                          의견 데이터는 살아남는다. 완료 게이트 아님. legacy 단일 객체는 read/write 시점 호환.
   'vet_available_date', //   출국일 파생 내원가능일(admin) — 단일 목적지에서만 기록(다중 부수효과 스킵)이라 누수 없음
   // 일본 전용 단계 신호 — 케이스당 일본 1개뿐이라 동시 다중목적지 누수 없음. portal·admin 양쪽이
   // top-level 로 read/write 해 정합(스코핑하면 양쪽 다 고쳐야 하고 실익 없음).

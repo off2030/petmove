@@ -464,3 +464,225 @@ export async function confirmArrival(caseId: string, destination: string): Promi
     return { ok: false, error: (e as Error).message }
   }
 }
+
+/** 되돌리기(undo)용 스냅샷 — finishJourney 직전의 그 목적지 상태. */
+export interface JourneySnapshot {
+  /** 직전 destination 컬럼 전체(토큰 순서 복원용). */
+  prevDestination: string | null
+  /** 직전 departure_date 컬럼. */
+  prevDeparture: string | null
+  /** by_dest[dest] 직전 값. */
+  byDestEntry: Record<string, unknown> | null
+  /** trip_type[dest] 직전 값. */
+  tripType: TripType | null
+  /** arrival_confirmed[dest] 직전 값. */
+  arrivalConfirmed: boolean
+}
+
+/**
+ * 여정 마무리 — 완료된 한 목적지를 지난 여정(past_journeys)으로 내림.
+ *
+ * 보호자가 완료 카드의 '여정 마무리하기'로 호출. addCaseDestination 의 demote 로직과 동일한
+ * 정리(요약 push + by_dest/trip_type/arrival_confirmed/completion_prompt_dismissed 정리 +
+ * 단일화 시 top-level scoped 잔존·출국일 컬럼 비움)를 **그 한 목적지에만** 적용한다.
+ *
+ * 안전장치(design §6 "다른 여정 없음 → 그대로 유지"): 진행/완료 막론 다른 목적지가 하나도 안
+ * 남으면 거부 — 유일한 여정이 사라지지 않게(과거 '즉시 제거' 사고 방지).
+ * feedback(목적지 키 맵)은 건드리지 않아 마무리 후에도 그 목적지 의견은 보존된다.
+ */
+export async function finishJourney(
+  caseId: string,
+  destination: string,
+): Promise<Result<{ destinations: string[] }>> {
+  try {
+    const dest = destination.trim()
+    if (!dest) return { ok: false, error: '목적지가 비어 있습니다.' }
+
+    const user = await getCurrentUser()
+    if (!user) return { ok: false, error: '인증 필요' }
+
+    const { createAdminClient } = await import('@petmove/auth')
+    const admin = createAdminClient()
+
+    const { data: link } = await admin
+      .from('case_customer_links')
+      .select('case_id')
+      .eq('case_id', caseId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (!link) return { ok: false, error: '이 여정에 접근 권한이 없습니다.' }
+
+    const { data: row, error: rowErr } = await admin
+      .from('cases')
+      .select('*')
+      .eq('id', caseId)
+      .single()
+    if (rowErr || !row) return { ok: false, error: rowErr?.message ?? '여정을 찾을 수 없습니다.' }
+
+    const caseRow = row as CaseRow
+    const tokens = parseDestTokens(caseRow.destination)
+    if (!tokens.includes(dest)) {
+      return { ok: true, value: { destinations: tokens } } // 이미 내려감 — no-op
+    }
+    if (tokens.length < 2) {
+      return {
+        ok: false,
+        error: '진행 중인 다른 여정이 있을 때만 마무리할 수 있어요.',
+      }
+    }
+    const view = activeDestinationView(caseRow, dest)
+    if (!resolveDone('has-arrived', view)) {
+      return { ok: false, error: '아직 완료되지 않은 여정이에요.' }
+    }
+
+    const data = (caseRow.data ?? {}) as Record<string, unknown>
+    const byDest = { ...((data.by_dest as Record<string, Record<string, unknown>> | undefined) ?? {}) }
+    const tripType = { ...((data.trip_type as Record<string, TripType> | undefined) ?? {}) }
+    const pastJourneys: PastJourneySummary[] = [
+      ...((data.past_journeys as PastJourneySummary[] | undefined) ?? []),
+    ]
+    const today = new Date().toISOString().slice(0, 10)
+    const viewData = (view.data ?? {}) as Record<string, unknown>
+    pastJourneys.push(
+      summarizeJourney(
+        {
+          destination: dest,
+          tripType: tripType[dest] ?? 'round',
+          departureDate: (view.departure_date ?? null) as string | null,
+          returnDate: (viewData.return_date ?? null) as string | null,
+        },
+        'done',
+        today,
+      ),
+    )
+    delete byDest[dest]
+    delete tripType[dest]
+    const remaining = tokens.filter((t) => t !== dest)
+    const nextDest = joinDestTokens(remaining)
+
+    const nextData: Record<string, unknown> = {
+      ...data,
+      trip_type: tripType,
+      by_dest: byDest,
+      past_journeys: pastJourneys,
+    }
+    const updatePayload: Record<string, unknown> = { destination: nextDest, data: nextData }
+
+    // demote 정리 (addCaseDestination 와 동일) — 남은(특히 단일 결과) 목적지가 내려간 여정의
+    // 공용 잔존(top-level scoped·도착확인·출국일 컬럼)을 물려받지 않게.
+    for (const k of DESTINATION_SCOPED_FIELD_KEYS) delete nextData[k]
+    const ac = { ...((nextData.arrival_confirmed as Record<string, unknown> | undefined) ?? {}) }
+    delete ac[dest]
+    nextData.arrival_confirmed = ac
+    const cpd = {
+      ...((nextData.completion_prompt_dismissed as Record<string, unknown> | undefined) ?? {}),
+    }
+    delete cpd[dest]
+    nextData.completion_prompt_dismissed = cpd
+    updatePayload.departure_date = null
+
+    const { error: updErr } = await admin
+      .from('cases')
+      .update(updatePayload)
+      .eq('id', caseId)
+    if (updErr) return { ok: false, error: updErr.message }
+
+    revalidatePath('/me')
+    revalidatePath(`/me/animal/${caseId}`)
+    revalidatePath('/cases')
+    revalidatePath(`/cases/${caseId}/journey`)
+    return { ok: true, value: { destinations: remaining } }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * 여정 마무리 되돌리기(undo) — finishJourney 직전 스냅샷으로 그 목적지를 진행 중으로 복원.
+ * 마무리 직후 토스트의 '되돌리기'가 호출. 그 목적지 키들만 되돌리고 방금 추가한 past_journeys
+ * 비석 1건을 제거한다(다른 목적지는 안 건드림).
+ */
+export async function restoreJourney(
+  caseId: string,
+  destination: string,
+  snapshot: JourneySnapshot,
+): Promise<Result<{ destinations: string[] }>> {
+  try {
+    const dest = destination.trim()
+    if (!dest) return { ok: false, error: '목적지가 비어 있습니다.' }
+
+    const user = await getCurrentUser()
+    if (!user) return { ok: false, error: '인증 필요' }
+
+    const { createAdminClient } = await import('@petmove/auth')
+    const admin = createAdminClient()
+
+    const { data: link } = await admin
+      .from('case_customer_links')
+      .select('case_id')
+      .eq('case_id', caseId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (!link) return { ok: false, error: '이 여정에 접근 권한이 없습니다.' }
+
+    const { data: row, error: rowErr } = await admin
+      .from('cases')
+      .select('destination, data')
+      .eq('id', caseId)
+      .single()
+    if (rowErr || !row) return { ok: false, error: rowErr?.message ?? '여정을 찾을 수 없습니다.' }
+
+    const r = row as { destination: string | null; data: Record<string, unknown> | null }
+    const tokens = parseDestTokens(r.destination)
+    if (tokens.includes(dest)) {
+      return { ok: true, value: { destinations: tokens } } // 이미 복원됨 — no-op
+    }
+    const data = (r.data ?? {}) as Record<string, unknown>
+
+    const byDest = { ...((data.by_dest as Record<string, Record<string, unknown>> | undefined) ?? {}) }
+    if (snapshot.byDestEntry && typeof snapshot.byDestEntry === 'object') {
+      byDest[dest] = snapshot.byDestEntry
+    }
+    const tripType = { ...((data.trip_type as Record<string, TripType> | undefined) ?? {}) }
+    if (snapshot.tripType === 'round' || snapshot.tripType === 'one_way') {
+      tripType[dest] = snapshot.tripType
+    }
+    const arrival = { ...((data.arrival_confirmed as Record<string, boolean> | undefined) ?? {}) }
+    if (snapshot.arrivalConfirmed) arrival[dest] = true
+
+    // 방금 추가한 비석(목적지 일치 + done) 마지막 1건 제거.
+    const past = [...((data.past_journeys as PastJourneySummary[] | undefined) ?? [])]
+    for (let i = past.length - 1; i >= 0; i--) {
+      if (past[i]?.destination === dest && past[i]?.outcome === 'done') {
+        past.splice(i, 1)
+        break
+      }
+    }
+
+    const nextData: Record<string, unknown> = {
+      ...data,
+      by_dest: byDest,
+      trip_type: tripType,
+      arrival_confirmed: arrival,
+      past_journeys: past,
+    }
+
+    // 토큰 순서 복원 — 스냅샷의 직전 destination 컬럼 전체를 그대로 되돌린다(없으면 append).
+    const snapTokens = parseDestTokens(snapshot.prevDestination)
+    const nextDest = snapTokens.includes(dest) ? snapshot.prevDestination ?? '' : joinDestTokens([...tokens, dest])
+
+    const { error: updErr } = await admin
+      .from('cases')
+      .update({ destination: nextDest, data: nextData, departure_date: snapshot.prevDeparture ?? null })
+      .eq('id', caseId)
+    if (updErr) return { ok: false, error: updErr.message }
+
+    revalidatePath('/me')
+    revalidatePath(`/me/animal/${caseId}`)
+    revalidatePath('/cases')
+    revalidatePath(`/cases/${caseId}/journey`)
+    return { ok: true, value: { destinations: parseDestTokens(nextDest) } }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}

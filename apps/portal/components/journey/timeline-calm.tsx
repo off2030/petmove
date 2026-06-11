@@ -42,11 +42,20 @@ export function TimelineCalm({
   data,
   caseId,
   activeDest,
+  canFinishJourney = false,
+  finishing = false,
+  onFinishJourney,
 }: {
   data: JourneyData
   caseId: string
   /** 활성 목적지(?dest=) — step 상세 링크에 붙여 다중 목적지에서 선택 목적지를 유지. */
   activeDest?: string | null
+  /** 완료된 이 여정을 '지난 여정'으로 내릴 수 있는지(다중 목적지 + 완료). 완료 카드 아래 버튼 노출. */
+  canFinishJourney?: boolean
+  /** 마무리 처리 중(버튼 비활성). */
+  finishing?: boolean
+  /** '여정 마무리하기' 클릭 — 페이지가 finishJourney + 되돌리기 토스트를 담당. */
+  onFinishJourney?: () => void
 }) {
   const { stages, trip, pet, nextStages, caseAlerts, journeyComplete, journeyCompleteDate } = data
   // step 상세로 넘어갈 때 활성 목적지를 유지하기 위한 쿼리. 단일 목적지면 빈 문자열.
@@ -584,7 +593,7 @@ export function TimelineCalm({
               펫무브와 함께한 여정 어떠셨나요?
             </h3>
             <Link
-              href={`/cases/${caseId}/feedback`}
+              href={`/cases/${caseId}/feedback?dest=${encodeURIComponent(trip.toCity)}`}
               className="pm-pressable"
               style={{
                 marginTop: 16,
@@ -606,6 +615,55 @@ export function TimelineCalm({
               <span style={{ color: C.sage }}>→</span>
             </Link>
           </div>
+
+          {/* 여정 마무리하기 — 다중 목적지 중 이 여정이 완료됐을 때만. 누르면 '지난 여정'으로
+              내리고 다른 진행 중 여정으로 전환. 소감은 내리기 전(위 카드)에 남긴다. design §6. */}
+          {canFinishJourney && (
+            <div
+              style={{
+                marginTop: 14,
+                padding: 20,
+                borderRadius: 22,
+                background: C.cardSoft,
+                boxShadow: 'var(--pm-card-rim)',
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 13,
+                  lineHeight: 1.55,
+                  color: C.ink2,
+                }}
+              >
+                이 여정을 마무리하면 <b style={{ color: C.ink }}>지난 여정</b>으로 정리되고, 진행
+                중인 다른 여정으로 넘어가요.
+              </p>
+              <button
+                type="button"
+                onClick={onFinishJourney}
+                disabled={finishing}
+                className="pm-pressable"
+                style={{
+                  marginTop: 14,
+                  width: '100%',
+                  padding: '12px 0',
+                  borderRadius: 14,
+                  border: `.5px solid color-mix(in srgb, var(--pm-sage) 45%, transparent)`,
+                  background: 'var(--pm-surface)',
+                  color: 'var(--pm-ink)',
+                  fontFamily: 'inherit',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  letterSpacing: '-0.005em',
+                  cursor: finishing ? 'default' : 'pointer',
+                  opacity: finishing ? 0.6 : 1,
+                }}
+              >
+                {finishing ? '마무리하는 중…' : '여정 마무리하기'}
+              </button>
+            </div>
+          )}
           </>
         )}
 

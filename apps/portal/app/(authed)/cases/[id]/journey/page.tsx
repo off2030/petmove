@@ -2,14 +2,21 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { use, useEffect, useState, useTransition } from 'react'
-import { shouldPromptArrival } from '@petmove/domain'
+import { parseDestinations, shouldPromptArrival } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
 import { buildJourney } from '@/lib/journey/scenario'
 import { TimelineCalm } from '@/components/journey/timeline-calm'
 import { CompletionPrompt } from '@/components/journey/completion-prompt'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
-import { confirmArrival, removeCaseDestination, dismissCompletionPrompt } from '@/lib/actions/destinations'
+import {
+  confirmArrival,
+  removeCaseDestination,
+  dismissCompletionPrompt,
+  finishJourney,
+  restoreJourney,
+  type JourneySnapshot,
+} from '@/lib/actions/destinations'
 
 /**
  * 케이스별 여정 — /cases/<id>/journey. Client — CaseDataProvider 에서 케이스 데이터 읽음.
@@ -35,6 +42,9 @@ export default function CaseJourneyPage({
   const activeDest = searchParams.get('dest')
   const [promptClosed, setPromptClosed] = useState(false)
   const [busy, startTransition] = useTransition()
+  const [finishing, startFinish] = useTransition()
+  // 마무리 직후 '되돌리기' 토스트 — 그 목적지 + 직전 스냅샷.
+  const [undo, setUndo] = useState<{ dest: string; snap: JourneySnapshot } | null>(null)
 
   useEffect(() => {
     if (!caseRow) {
@@ -46,6 +56,14 @@ export default function CaseJourneyPage({
       router.replace(other ? `/cases/${other.id}/journey` : '/cases')
     }
   }, [caseRow, cases, id, router])
+
+  // 되돌리기 토스트 자동 해제(7초). dest 키가 바뀌면 타이머 재설정.
+  useEffect(() => {
+    if (!undo) return
+    const t = window.setTimeout(() => setUndo(null), 7000)
+    return () => window.clearTimeout(t)
+  }, [undo])
+
   if (!caseRow || !hasJourney(caseRow)) return null
 
   const data = buildJourney(caseRow, activeDest)
@@ -83,9 +101,104 @@ export default function CaseJourneyPage({
     })
   }
 
+  // ── 여정 마무리하기(다중 목적지 + 이 여정 완료) ──
+  const destTokens = parseDestinations(caseRow.destination)
+  const canFinish = data.journeyComplete && destTokens.length >= 2
+
+  function handleFinish() {
+    if (!canFinish) return
+    // 마무리 직전 스냅샷(되돌리기용) — 현재 caseRow 에서 그 목적지 키들을 캡처.
+    const cd = (caseRow!.data ?? {}) as Record<string, unknown>
+    const byDest = (cd.by_dest as Record<string, Record<string, unknown>> | undefined)?.[dest] ?? null
+    const tripTypeMap = cd.trip_type as Record<string, 'round' | 'one_way'> | undefined
+    const arrivalMap = cd.arrival_confirmed as Record<string, boolean> | undefined
+    const snap: JourneySnapshot = {
+      prevDestination: caseRow!.destination,
+      prevDeparture: caseRow!.departure_date,
+      byDestEntry: byDest,
+      tripType: tripTypeMap?.[dest] ?? null,
+      arrivalConfirmed: !!arrivalMap?.[dest],
+    }
+    startFinish(async () => {
+      const res = await finishJourney(id, dest)
+      if (res.ok) {
+        await refreshCases()
+        setUndo({ dest, snap })
+        const next = res.value.destinations[0]
+        router.replace(next ? `/cases/${id}/journey?dest=${encodeURIComponent(next)}` : `/cases/${id}/journey`)
+      }
+    })
+  }
+
+  function handleUndo() {
+    if (!undo) return
+    const { dest: d, snap } = undo
+    setUndo(null)
+    startFinish(async () => {
+      const res = await restoreJourney(id, d, snap)
+      if (res.ok) {
+        await refreshCases()
+        router.replace(`/cases/${id}/journey?dest=${encodeURIComponent(d)}`)
+      } else {
+        setUndo({ dest: d, snap }) // 실패 시 토스트 복구
+      }
+    })
+  }
+
   return (
     <>
-      <TimelineCalm data={data} caseId={id} activeDest={activeDest} />
+      <TimelineCalm
+        data={data}
+        caseId={id}
+        activeDest={activeDest}
+        canFinishJourney={canFinish}
+        finishing={finishing}
+        onFinishJourney={handleFinish}
+      />
+      {undo && (
+        <div
+          role="status"
+          style={{
+            position: 'fixed',
+            left: '50%',
+            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)',
+            transform: 'translateX(-50%)',
+            zIndex: 220,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+            maxWidth: 'calc(100% - 32px)',
+            padding: '12px 16px',
+            borderRadius: 14,
+            background: 'var(--pm-ink)',
+            color: 'var(--pm-bg)',
+            boxShadow: '0 8px 28px rgba(0,0,0,.22)',
+            fontSize: 13.5,
+            fontWeight: 500,
+          }}
+        >
+          <span>여정을 마무리했어요.</span>
+          <button
+            type="button"
+            onClick={handleUndo}
+            disabled={finishing}
+            className="pm-pressable"
+            style={{
+              flexShrink: 0,
+              border: 0,
+              background: 'transparent',
+              color: 'var(--pm-bg)',
+              fontFamily: 'inherit',
+              fontSize: 13.5,
+              fontWeight: 700,
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }}
+          >
+            되돌리기
+          </button>
+        </div>
+      )}
       {showPrompt && (
         <CompletionPrompt
           caseRow={caseRow}

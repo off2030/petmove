@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { useState, useTransition, type CSSProperties } from 'react'
+import { parseDestinations, readJourneyFeedback } from '@petmove/domain'
 import { useCase, useCases } from '@/components/portal-shell/case-data-provider'
 import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
 import { saveCaseFeedback } from '@/lib/actions/cases'
 
 /**
- * 여정 완료 후 보호자 의견 화면 — /cases/<id>/feedback.
- * 만족도(얼굴 5단계 모노톤) + 자유 의견. case.data.feedback 에 저장(케이스별).
+ * 여정 완료 후 보호자 의견 화면 — /cases/<id>/feedback?dest=<목적지>.
+ * 만족도(얼굴 5단계 모노톤) + 자유 의견. case.data.feedback 의 **목적지 칸**에 저장(여정별).
  * 한 번 보낸 뒤에도 수정해서 다시 보낼 수 있다.
  */
 
@@ -66,24 +67,13 @@ function FaceIcon({ level, size = 30 }: { level: number; size?: number }) {
   )
 }
 
-function readFeedback(data: Record<string, unknown> | null | undefined): {
-  rating: number | null
-  text: string
-} {
-  const fb = data?.feedback
-  if (!fb || typeof fb !== 'object') return { rating: null, text: '' }
-  const r = (fb as Record<string, unknown>).rating
-  const t = (fb as Record<string, unknown>).text
-  return {
-    rating: typeof r === 'number' ? r : null,
-    text: typeof t === 'string' ? t : '',
-  }
-}
-
-export function FeedbackView({ caseId }: { caseId: string }) {
+export function FeedbackView({ caseId, dest }: { caseId: string; dest: string | null }) {
   const caseRow = useCase(caseId)
   const { updateCase } = useCases()
-  const saved = readFeedback(caseRow?.data)
+  // 목적지 칸의 의견 읽기 — legacy 단일 객체는 첫 목적지 것으로 호환.
+  const firstToken = parseDestinations(caseRow?.destination)[0] ?? null
+  const fb = readJourneyFeedback(caseRow?.data, dest ?? firstToken, firstToken)
+  const saved = { rating: fb?.rating ?? null, text: fb?.text ?? '' }
 
   const [rating, setRating] = useState<number | null>(saved.rating)
   const [text, setText] = useState(saved.text)
@@ -105,7 +95,7 @@ export function FeedbackView({ caseId }: { caseId: string }) {
     setStatus('saving')
     setError(null)
     startTransition(async () => {
-      const res = await saveCaseFeedback(caseId, rating, text.trim() || null)
+      const res = await saveCaseFeedback(caseId, dest ?? firstToken, rating, text.trim() || null)
       if (res.ok) {
         updateCase(res.value)
         setStatus('saved')
@@ -144,7 +134,7 @@ export function FeedbackView({ caseId }: { caseId: string }) {
     >
       <div style={{ padding: '0 20px' }}>
         <Link
-          href={`/cases/${caseId}/journey`}
+          href={`/cases/${caseId}/journey${dest ? `?dest=${encodeURIComponent(dest)}` : ''}`}
           style={{
             ...monoCap,
             display: 'inline-flex',
