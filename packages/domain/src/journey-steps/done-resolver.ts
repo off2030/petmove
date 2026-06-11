@@ -183,9 +183,6 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return isQuarantineConfirmed(data, 'kr_export_quarantine_date', 'kr_export_quarantine_confirmed')
     case 'has-jp-import-quarantine':
       return isQuarantineConfirmed(data, 'jp_import_quarantine_date', 'jp_import_quarantine_confirmed')
-    case 'has-import-quarantine':
-      // 도착국 수입검역(일본 외 공용) — 검역일 입력 + 보호자 '완료' 확인.
-      return isQuarantineConfirmed(data, 'import_quarantine_date', 'import_quarantine_confirmed')
     case 'has-jp-export-quarantine-visit':
       return isQuarantineConfirmed(data, 'jp_export_quarantine_visit_date', 'jp_export_quarantine_visit_confirmed')
     case 'has-kr-import-quarantine':
@@ -209,9 +206,6 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
         return isQuarantineConfirmed(data, 'kr_import_quarantine_date', 'kr_import_quarantine_confirmed')
       }
       if (isQuarantineConfirmed(data, 'jp_import_quarantine_date', 'jp_import_quarantine_confirmed')) {
-        return true
-      }
-      if (isQuarantineConfirmed(data, 'import_quarantine_date', 'import_quarantine_confirmed')) {
         return true
       }
       return !!caseRow.departure_date && caseRow.departure_date < todayKst()
@@ -355,11 +349,6 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
         typeof data.jp_import_quarantine_date === 'string' ? data.jp_import_quarantine_date : null
       return dt && dt.length >= 10 ? dt.slice(0, 10) : null
     }
-    case 'has-import-quarantine': {
-      const dt =
-        typeof data.import_quarantine_date === 'string' ? data.import_quarantine_date : null
-      return dt && dt.length >= 10 ? dt.slice(0, 10) : null
-    }
     case 'has-jp-export-quarantine-visit': {
       const dt =
         typeof data.jp_export_quarantine_visit_date === 'string'
@@ -382,9 +371,6 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
       const jp =
         typeof data.jp_import_quarantine_date === 'string' ? data.jp_import_quarantine_date : null
       if (jp && jp.length >= 10) return jp.slice(0, 10)
-      const imp =
-        typeof data.import_quarantine_date === 'string' ? data.import_quarantine_date : null
-      if (imp && imp.length >= 10) return imp.slice(0, 10)
       return caseRow.departure_date ?? null
     }
     case 'departure-past':
