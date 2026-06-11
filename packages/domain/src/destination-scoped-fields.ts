@@ -64,6 +64,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'kr_export_quarantine_confirmed',
   'jp_import_quarantine_date',
   'jp_import_quarantine_confirmed',
+  // 도착국 수입검역(일본 외 공용) — 목적지별 도착검역일·확인 플래그.
+  'import_quarantine_date',
+  'import_quarantine_confirmed',
   'jp_export_quarantine_visit_date',
   'jp_export_quarantine_visit_confirmed',
   'jp_export_quarantine_application_date',
