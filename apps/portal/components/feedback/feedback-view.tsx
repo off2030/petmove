@@ -24,12 +24,14 @@ const C = {
   warn: 'var(--pm-warn)',
 } as const
 
+// 표시 순서는 '아주 좋아요'(level 5)를 맨 앞으로 — 긍정 선택을 앞세워 응답 문턱을 낮춘다.
+// level(저장값)은 그대로라 점수 의미는 불변, 화면 순서만 역순.
 const FACES: { level: number; label: string }[] = [
-  { level: 1, label: '많이 아쉬워요' },
-  { level: 2, label: '아쉬워요' },
-  { level: 3, label: '보통이에요' },
-  { level: 4, label: '좋았어요' },
   { level: 5, label: '아주 좋아요' },
+  { level: 4, label: '좋았어요' },
+  { level: 3, label: '보통이에요' },
+  { level: 2, label: '아쉬워요' },
+  { level: 1, label: '많이 아쉬워요' },
 ]
 
 /** 모노톤 라인 얼굴 — level(1~5)에 따라 입 곡선이 찡그림→미소로 변한다. */
