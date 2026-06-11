@@ -3,9 +3,10 @@
 import { DateTextField } from '@petmove/ui'
 
 /**
- * 도착국 수입 동물검역 step 입력 필드 — 검역일 1개. 일본 외 공용(나라별 'departure' override).
- * controlled — 부모(step-detail-view)가 state·save 를 보유. 저장 형식은
- * case.data.import_quarantine_date (YYYY-MM-DD). 일본은 JpImportQuarantineInputs 별도.
+ * 수입 동물검역 step 입력 필드 — 검역일 1개. 일본 + 그 외 나라('departure' override) 공용.
+ * 카드 제목이 '[국가] 수입 동물검역'이라 부제엔 나라 수식어를 두지 않는다. controlled —
+ * 부모(step-detail-view)가 state·save 보유. 저장 키는 호출부가 결정(일본=jp_import_quarantine_date,
+ * 그 외=import_quarantine_date).
  */
 export function ImportQuarantineInputs({
   date,
@@ -33,7 +34,7 @@ export function ImportQuarantineInputs({
       <div style={{ padding: '14px 0' }}>
         <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>검역일</div>
         <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
-          도착국 공항 동물검역소에서 수입 검역을 받은 날짜
+          공항 동물검역소에서 수입 검역을 받은 날짜
         </div>
         <div style={{ marginTop: 8 }}>
           <DateTextField value={date} onChange={onChange} placeholder="YYYY-MM-DD" block />
