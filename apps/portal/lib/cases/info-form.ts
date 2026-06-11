@@ -3,7 +3,7 @@
 // /me/{guardian,animal,travel} sub-page 들이 같은 폼 패턴을 공유.
 
 import type { CaseRow } from '@petmove/domain'
-import { buildCaseJourneyContext, todayKst } from '@petmove/domain'
+import { buildCaseJourneyContext, parseDestinations, readByDestValue, todayKst } from '@petmove/domain'
 import type { CaseInfoInput } from '@/lib/actions/cases'
 
 /** caseRow → 편집 폼 state. data jsonb·컬럼을 모두 문자열 필드로 평탄화. */
@@ -21,6 +21,21 @@ export function readForm(caseRow: CaseRow): CaseInfoInput {
       if (v) return v
     }
     return ''
+  }
+  // 목적지 스코핑 필드(항공편·일본 수출검역) — by_dest[활성토큰] 우선으로 읽는다. 활성 토큰은
+  // 저장(updateCaseInfoFields)과 동일하게 buildCaseJourneyContext 로 해석(?dest 없으면 첫 토큰).
+  // 단일/legacy 는 top-level fallback, 다중은 strict(다른 목적지 값 누수 차단). 안 그러면 여정이
+  // by_dest 로 저장한 값을 폼이 못 읽거나(다중), 폼이 top-level 로 저장한 값을 여정이 못 봄.
+  const isMulti = parseDestinations(caseRow.destination).length > 1
+  const token = buildCaseJourneyContext(caseRow).destinationToken
+  const sScoped = (key: string): string => {
+    if (token) {
+      const v = readByDestValue(data, token, key)
+      if (typeof v === 'string') return v
+      if (v === null) return '' // 명시적 비움 — fallback 안 함
+      if (isMulti) return '' // 다중 + by_dest 미존재 → strict 빈
+    }
+    return s(key) // 단일/legacy → top-level
   }
   // 영문 성·이름 — data 분리 필드(권위) 우선. 없으면 caseRow.customer_name_en 합본을
   // Last First 순서로 split fallback (admin pdf-fill 의 fallback 가정과 일관).
@@ -61,17 +76,17 @@ export function readForm(caseRow: CaseRow): CaseInfoInput {
     weight: s('weight'),
     trip_type: buildCaseJourneyContext(caseRow).tripType,
     co_progress: data.co_progress !== false,
-    return_date: s('return_date'),
-    entry_departure_airport: s('entry_departure_airport'),
-    entry_airport: s('entry_airport'),
-    entry_flight_number: s('entry_flight_number'),
-    entry_transport: s('entry_transport'),
-    return_departure_airport: s('return_departure_airport'),
-    return_arrival_airport: s('return_arrival_airport'),
-    return_flight_number: s('return_flight_number'),
-    return_transport: s('return_transport'),
-    jp_export_quarantine_date: s('jp_export_quarantine_date'),
-    jp_export_quarantine_time: s('jp_export_quarantine_time'),
+    return_date: sScoped('return_date'),
+    entry_departure_airport: sScoped('entry_departure_airport'),
+    entry_airport: sScoped('entry_airport'),
+    entry_flight_number: sScoped('entry_flight_number'),
+    entry_transport: sScoped('entry_transport'),
+    return_departure_airport: sScoped('return_departure_airport'),
+    return_arrival_airport: sScoped('return_arrival_airport'),
+    return_flight_number: sScoped('return_flight_number'),
+    return_transport: sScoped('return_transport'),
+    jp_export_quarantine_date: sScoped('jp_export_quarantine_date'),
+    jp_export_quarantine_time: sScoped('jp_export_quarantine_time'),
   }
 }
 

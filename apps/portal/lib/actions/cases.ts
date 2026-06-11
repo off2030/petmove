@@ -20,6 +20,7 @@ import {
   applyAutoFillRules,
   buildCaseJourneyContext,
   findRabiesChainBreak,
+  isDestinationScopedKey,
   normalizeRabiesOrder,
   parseDestinations,
   todayKst,
@@ -1872,12 +1873,21 @@ export async function updateCaseInfoFields(
       })
       if (entryErr) return { ok: false, error: entryErr }
     }
-    const nextData: Record<string, unknown> = { ...prev }
+    let nextData: Record<string, unknown> = { ...prev }
 
+    // 스코핑 필드(항공편·일본 수출검역)는 by_dest[활성토큰]에 저장 — readForm 과 동일 토큰으로
+    // 해석(?dest 없으면 첫 토큰). 안 그러면 폼이 top-level 에 써 다중 목적지 여정(strict by_dest)이
+    // 못 본다. 단일 목적지도 by_dest 로 통일(읽기 fallback 으로 정합).
+    const infoToken = resolveWriteToken(effective.destination, prev, null)
     for (const key of INFO_DATA_KEYS) {
       const v = (effective[key] ?? '').trim()
-      if (v) nextData[key] = v
-      else delete nextData[key]
+      if (infoToken && isDestinationScopedKey(key)) {
+        nextData = writeByDestValue(nextData, infoToken, key, v || null)
+      } else if (v) {
+        nextData[key] = v
+      } else {
+        delete nextData[key]
+      }
     }
 
     // 영문 성·이름 분리 저장 + 합본 column 자동 갱신.
