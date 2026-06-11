@@ -216,8 +216,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         const msg = `광견병 백신 유효기간이 일본 입국 전에 만료됩니다. ${formatKoreanDate(validUntil)}까지 추가 접종을 하세요.`
         return { desc: msg, cardDesc: msg }
       }
-      // 예정일이 도래(≤오늘)했고 입국일도 덮지만 아직 '저장'으로 확인 전 — 저장으로 완료 안내.
-      if (latest.date <= today && data.rabies_extra_confirmed === false) {
+      // 예정일이 지났는데(다음날부터 — 당일 제외) 아직 '저장'으로 확인 전 — 저장으로 완료 안내.
+      // 당일(예정일 == 오늘)엔 '지났다'가 부정확하므로 기본 안내문으로 둔다(검역 5단계와 동일).
+      if (latest.date < today && data.rabies_extra_confirmed === false) {
         const msg = '추가 접종 예정일이 지났습니다. 완료 버튼을 눌러주세요. 추가 접종을 하지 못한 경우, 1차 접종부터 다시 준비하세요.'
         return { desc: msg, cardDesc: msg }
       }
@@ -354,7 +355,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       }
       // 유효기간이 입국일을 덮으면(아직 유효) — 도래·미확인이면 저장 안내, 아니면 안내 불필요.
       if (entry && validUntil >= entry) {
-        if (latest.date <= today && data.titer_extra_confirmed === false) {
+        // 예정일 다음날부터(당일 제외) — 당일엔 '지났다'가 부정확하므로 기본 안내문으로 둔다.
+        if (latest.date < today && data.titer_extra_confirmed === false) {
           const msg = '추가 검사 예정일이 지났습니다. 추가 검사를 하셨다면 완료 버튼을 눌러주세요.'
           return { desc: msg, cardDesc: msg }
         }
