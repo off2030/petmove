@@ -215,24 +215,24 @@ export const JP_CHECKS: ProcedureCheck[] = [
         return { ok: true, message: `마이크로칩(${microchip}) ≤ 1차 접종(${first.date}).` }
       }
 
-      // 조건 2: 1차 < 마이크로칩 ≤ 2차 AND 2차 == 항체 검사일
+      // 조건 2: 1차 < 마이크로칩 ≤ 2차 AND 2차 == 1차(기준) 항체 검사일
       if (microchip <= second.date) {
-        // 항체 검사 미입력 → 아직 판정 불가, skip
-        if (titers.length === 0) return SKIP
-        const matching = titers.find((t) => t.date === second.date)
-        if (matching) {
+        // 이 룰은 '1차(기준) 항체 검사'만 본다 — 추가 검사(2차+)는 jp.titer-extra-* 담당.
+        // 추가 검사가 남아있어도 1차 채혈을 지웠으면 미입력으로 보고 사전 안내
+        // (jp.rabies-prime-before-microchip)로 환원해야 한다. (jp.rabies-titer-vs-booster 와 동일 패턴.)
+        const primary = titers.find((t) => t.originalIndex === 0)
+        if (!primary) return SKIP
+        if (primary.date === second.date) {
           return {
             ok: true,
             message: `마이크로칩이 1·2차 사이, 2차 접종일과 항체 검사일 동일(${second.date}).`,
           }
         }
-        const offending = ['microchip_implant_date']
-        for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
         return {
           ok: false,
           message:
             '마이크로칩보다 1차 광견병 백신을 먼저 한 경우, 2차 광견병 백신과 광견병 항체 검사를 같은 날 해야 합니다.',
-          offendingPaths: offending,
+          offendingPaths: ['microchip_implant_date', `rabies_titer_records[${primary.originalIndex}].date`],
         }
       }
 
@@ -259,10 +259,11 @@ export const JP_CHECKS: ProcedureCheck[] = [
       const rabies = readRabiesEntries(caseRow)
       // 필수: 마이크로칩 시술일 + 1차 접종 기록
       if (!microchip || rabies.length === 0) return SKIP
-      // 항체 검사 입력 후에는 jp.microchip-rabies-sequence 가 본 검증 — 사전 안내 종료.
+      // 1차(기준) 항체 검사 입력 후에는 jp.microchip-rabies-sequence 가 본 검증 — 사전 안내 종료.
       // (2차 입력만으로는 사라지지 않음 — 보호자가 "2차와 항체 검사를 같은 날" 룰을
-      // 잊지 않도록 항체 검사 입력까지 안내 유지.)
-      if (readTiterEntries(caseRow).length > 0) return SKIP
+      // 잊지 않도록 1차 채혈 입력까지 안내 유지. 추가 검사(2차+)만 있고 1차 채혈을
+      // 지운 상태면 미입력으로 보고 안내를 다시 띄운다 — 검증 실패가 아니므로 '주의' 아님.)
+      if (readTiterEntries(caseRow).some((t) => t.originalIndex === 0)) return SKIP
 
       const first = rabies[0]
       if (first.date >= microchip) {
