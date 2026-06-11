@@ -352,7 +352,7 @@ export function RequiredDocDetail({
               </button>
             ) : hasAttachment ? (
               <button type="button" disabled style={disabledBtn}>
-                완료
+                ✓ 있음
               </button>
             ) : doc.awaiting ? (
               // 발급 예정 — 발급(선행 step) 전이라 아직 받지 못한 서류. 직접 '완료' 불가
@@ -361,7 +361,7 @@ export function RequiredDocDetail({
               // naAllowed 면 '해당없음' 은 그대로 허용.
               <>
                 <button type="button" disabled style={disabledBtn}>
-                  완료
+                  있어요
                 </button>
                 {doc.naAllowed && (
                   <button type="button" onClick={handleToggleNa} disabled={busy} style={naBtn}>
@@ -377,7 +377,7 @@ export function RequiredDocDetail({
                   disabled={busy}
                   style={doc.verified ? outlineBtn : primaryBtn}
                 >
-                  {busy ? '처리 중…' : doc.verified ? '완료 취소' : '완료'}
+                  {busy ? '처리 중…' : doc.verified ? '✓ 있음' : '있어요'}
                 </button>
                 {doc.naAllowed && !doc.verified && (
                   <button

@@ -346,7 +346,7 @@ function ChecklistRow({
           fontWeight: 600,
         }}
       >
-        {ok ? '보유' : na ? '해당없음' : awaiting ? '발급 예정' : pendingLabel}
+        {ok ? '있음' : na ? '해당없음' : awaiting ? '발급 예정' : pendingLabel}
       </span>
     </>
   )
