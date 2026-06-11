@@ -1317,6 +1317,61 @@ export async function updateJpImportQuarantineDate(
 }
 
 /**
+ * 나라별 도착 수입검역(일본 외) step 의 검역일을 patch — fieldKey 는 그 나라 검역일 필드
+ * (예: 'th_import_quarantine_date'). 한 액션이 모든 나라를 처리. confirmed=true(도래 후 '완료')면
+ * '{국가}_import_quarantine_confirmed' 도 set. 스코핑(by_dest)은 applyQuarantine 공통.
+ */
+export async function updateImportQuarantineDate(
+  caseId: string,
+  fieldKey: string,
+  date: string | null,
+  confirmed: boolean,
+  destination?: string | null,
+): Promise<Result<CaseRow>> {
+  try {
+    if (!/^[a-z]+_import_quarantine_date$/.test(fieldKey)) {
+      return { ok: false, error: '잘못된 검역일 필드입니다.' }
+    }
+    if (date != null && date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+    }
+
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data, destination')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const v = typeof date === 'string' ? date.trim() : ''
+    const nextData = applyQuarantine(
+      prev,
+      destination,
+      fieldKey,
+      fieldKey.replace(/_date$/, '_confirmed'),
+      v,
+      confirmed,
+    )
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
  * 일본 수출 동물검역 step 의 검역일을 patch — case.data.jp_export_quarantine_visit_date
  * (YYYY-MM-DD). 빈/null 이면 키 제거. data 의 다른 키는 fetch-merge 로 보존.
  */

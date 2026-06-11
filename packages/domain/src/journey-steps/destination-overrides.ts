@@ -39,6 +39,29 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       ],
     },
   },
+  // 일본을 뼈대로 — 'departure' 공용 카드를 그 나라 '[국가] 수입 동물검역' 도착 카드로 교체.
+  // 목적지마다 따로 작성(검역일 필드도 나라별: {국가}_import_quarantine_date). 제목·설명은
+  // 그 나라 가이드 기준, 일본과 같은 부분은 같은 문구. 완료신호는 그 나라 검역일 필드를 실어 보낸다.
+  thailand: {
+    departure: {
+      title: '태국 수입 동물검역',
+      shortLabel: '수입',
+      description:
+        '태국 도착 후 공항 동물검역소(AQS)에서 수입 검역을 받으세요.\n검역 수수료는 동물 1마리당 500바트(현금)입니다.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 바로 인도됩니다. 서류가 미비하거나 전염병 증상이 있으면 최대 30일 격리될 수 있으며, 격리 비용은 보호자가 부담합니다.',
+      doneSummary: '태국 수입 동물검역을 받았습니다.',
+      done: 'import-quarantine:th_import_quarantine_date',
+      inputs: [
+        {
+          key: 'th_import_quarantine_date',
+          label: '검역일',
+          type: 'date',
+          helpText: '태국 동물검역소(AQS)에서 수입 검역을 받은 날짜',
+        },
+      ],
+      allowAttachments: true,
+      attachmentHint: '검역증(수입승인서 R-6·수입허가증 R-7) 사본을 사진, PDF로 저장하세요.',
+    },
+  },
 }
 
 /**

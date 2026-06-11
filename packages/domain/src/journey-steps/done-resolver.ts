@@ -40,6 +40,13 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
 
   const data = (caseRow.data ?? {}) as Record<string, unknown>
 
+  // import-quarantine:<field> — 나라별 도착 수입검역(일본 외). 검역일 입력(≤오늘) + 보호자 '완료'
+  // 확인. confirmed 키는 <field>의 _date→_confirmed. 한 분기가 모든 나라 처리.
+  if (typeof signal === 'string' && signal.startsWith('import-quarantine:')) {
+    const field = signal.slice('import-quarantine:'.length)
+    return isQuarantineConfirmed(data, field, field.replace(/_date$/, '_confirmed'))
+  }
+
   switch (signal) {
     case 'always-done':
       return true
@@ -247,6 +254,13 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
   if (typeof signal === 'string' && signal.startsWith('manual-flag:')) return null
 
   const data = (caseRow.data ?? {}) as Record<string, unknown>
+
+  // import-quarantine:<field> — 나라별 도착 수입검역. 표시일 = 그 나라 검역일 필드 값.
+  if (typeof signal === 'string' && signal.startsWith('import-quarantine:')) {
+    const field = signal.slice('import-quarantine:'.length)
+    const dt = typeof data[field] === 'string' ? (data[field] as string) : null
+    return dt && dt.length >= 10 ? dt.slice(0, 10) : null
+  }
 
   switch (signal) {
     case 'always-done':

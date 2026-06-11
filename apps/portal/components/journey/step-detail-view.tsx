@@ -39,6 +39,7 @@ import {
   updateCaseTripType,
   updateFlightFields,
   updateJpExportQuarantineFields,
+  updateImportQuarantineDate,
   updateJpExportQuarantineVisitDate,
   updateJpImportQuarantineDate,
   updateKrExportQuarantineDate,
@@ -56,6 +57,7 @@ import { AdvanceNotificationInputs } from './advance-notification-inputs'
 import { FlightInputs, type FlightForm } from './flight-inputs'
 import { JpExportQuarantineInputs, type JpExportForm } from './jp-export-quarantine-inputs'
 import { JpExportQuarantineVisitInputs } from './jp-export-quarantine-visit-inputs'
+import { ImportQuarantineInputs } from './import-quarantine-inputs'
 import { JpImportQuarantineInputs } from './jp-import-quarantine-inputs'
 import { KrExportQuarantineInputs } from './kr-export-quarantine-inputs'
 import { KrImportQuarantineInputs } from './kr-import-quarantine-inputs'
@@ -129,6 +131,17 @@ export function StepDetailView({
   const isJpImportQuarantine =
     step.id === 'departure' &&
     (step.inputs ?? []).some((i) => i.key === 'jp_import_quarantine_date')
+  // 나라별 도착 수입검역(일본 외) — departure override 가 '{국가}_import_quarantine_date' input 을
+  // 싣는다. 검역일 필드 key·부제 문구를 override 에서 동적으로 읽어 한 벌의 배선으로 모든 나라 처리.
+  const importQuarantineField =
+    step.id === 'departure'
+      ? ((step.inputs ?? []).find(
+          (i) => /_import_quarantine_date$/.test(i.key) && i.key !== 'jp_import_quarantine_date',
+        )?.key ?? null)
+      : null
+  const isImportQuarantine = importQuarantineField !== null
+  const importQuarantineSubtitle =
+    (step.inputs ?? []).find((i) => i.key === importQuarantineField)?.helpText ?? ''
   const isJpExportQuarantineVisit = step.id === 'jp-export-quarantine-visit'
   const isKrImportQuarantine = step.id === 'kr-import-quarantine'
   const isInteractive =
@@ -144,7 +157,8 @@ export function StepDetailView({
     isCertificateIssue ||
     isJpImportQuarantine ||
     isJpExportQuarantineVisit ||
-    isKrImportQuarantine
+    isKrImportQuarantine ||
+    isImportQuarantine
   const caseRowRaw = useCase(caseId)
   // 다중 목적지: 활성 목적지(?dest=) 1개짜리 뷰로 좁힌다 — 아래 모든 saved* 읽기·동기화
   // useEffect 가 그 목적지(by_dest) 기준이 된다. 단일 목적지면 뷰가 원본과 동일(무변경).
@@ -217,6 +231,15 @@ export function StepDetailView({
     savedKrImportQuarantineDate || (isKrImportQuarantine ? savedFlightForm.return_date.slice(0, 10) : '')
   const [krImportQuarantineDate, setKrImportQuarantineDate] = useState(krImportQuarantineBaseline)
 
+  // 나라별 도착 수입검역 — 동적 필드(importQuarantineField)에서 저장값. baseline 자동채움 없음
+  // (비일본은 항공권 step 부재). 입력해야 dirty.
+  const importQData = (caseRow?.data ?? {}) as Record<string, unknown>
+  const savedImportQuarantineDate =
+    importQuarantineField && typeof importQData[importQuarantineField] === 'string'
+      ? (importQData[importQuarantineField] as string)
+      : ''
+  const [importQuarantineDate, setImportQuarantineDate] = useState(savedImportQuarantineDate)
+
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
@@ -280,6 +303,8 @@ export function StepDetailView({
     isJpExportQuarantineVisit && jpExportQuarantineVisitDate !== jpExportQuarantineVisitBaseline
   const krImportQuarantineDirty =
     isKrImportQuarantine && krImportQuarantineDate !== krImportQuarantineBaseline
+  const importQuarantineDirty =
+    isImportQuarantine && importQuarantineDate !== savedImportQuarantineDate
   const dirty =
     microchipDirty ||
     rabiesDirty ||
@@ -293,7 +318,8 @@ export function StepDetailView({
     krExportQuarantineDirty ||
     jpImportQuarantineDirty ||
     jpExportQuarantineVisitDirty ||
-    krImportQuarantineDirty
+    krImportQuarantineDirty ||
+    importQuarantineDirty
   useUnsavedGuard(dirty)
   // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
   const justSaved = status === 'saved' && !dirty
@@ -304,7 +330,8 @@ export function StepDetailView({
     isCertificateIssue ||
     isJpImportQuarantine ||
     isJpExportQuarantineVisit ||
-    isKrImportQuarantine
+    isKrImportQuarantine ||
+    isImportQuarantine
   const confirmFormDate = isCertificateIssue
     ? krExportQuarantineDate
     : isJpImportQuarantine
@@ -313,7 +340,9 @@ export function StepDetailView({
         ? jpExportQuarantineVisitDate
         : isKrImportQuarantine
           ? krImportQuarantineDate
-          : ''
+          : isImportQuarantine
+            ? importQuarantineDate
+            : ''
   const confirmSavedDate = isCertificateIssue
     ? savedKrExportQuarantineDate
     : isJpImportQuarantine
@@ -322,7 +351,9 @@ export function StepDetailView({
         ? savedJpExportQuarantineVisitDate
         : isKrImportQuarantine
           ? savedKrImportQuarantineDate
-          : ''
+          : isImportQuarantine
+            ? savedImportQuarantineDate
+            : ''
   const todayStr = todayKst()
   // 버튼 문구·저장 확인 여부는 form(입력 중) 날짜 기준. 미래면 '예정일로 저장', 오늘 이하면 '저장'.
   const formUpcoming = isConfirmStep && confirmFormDate.length >= 10 && confirmFormDate > todayStr
@@ -441,6 +472,17 @@ export function StepDetailView({
   }, [caseRow?.data])
   useEffect(() => {
     if (!jpImportQuarantineDirty) setJpImportQuarantineDate(jpImportQuarantineBaseline)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data])
+  useEffect(() => {
+    if (!importQuarantineDirty) {
+      const d = (caseRow?.data ?? {}) as Record<string, unknown>
+      setImportQuarantineDate(
+        importQuarantineField && typeof d[importQuarantineField] === 'string'
+          ? (d[importQuarantineField] as string)
+          : '',
+      )
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
@@ -848,6 +890,30 @@ export function StepDetailView({
         if (res.ok) {
           updateCase(res.value)
           setKrExportQuarantineDate(readKrExportQuarantineDate(activeDestinationView(res.value, activeDest).data))
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    } else if (isImportQuarantine && importQuarantineField) {
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        const res = await updateImportQuarantineDate(
+          caseId,
+          importQuarantineField,
+          importQuarantineDate || null,
+          formArrived,
+          activeDest,
+        )
+        if (res.ok) {
+          updateCase(res.value)
+          const d = (activeDestinationView(res.value, activeDest).data ?? {}) as Record<string, unknown>
+          setImportQuarantineDate(
+            typeof d[importQuarantineField] === 'string' ? (d[importQuarantineField] as string) : '',
+          )
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -1551,6 +1617,16 @@ export function StepDetailView({
             <JpImportQuarantineInputs
               date={jpImportQuarantineDate}
               onChange={setJpImportQuarantineDate}
+            />
+          </section>
+        )}
+        {isImportQuarantine && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
+            <ImportQuarantineInputs
+              date={importQuarantineDate}
+              onChange={setImportQuarantineDate}
+              subtitle={importQuarantineSubtitle}
             />
           </section>
         )}

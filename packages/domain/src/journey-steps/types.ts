@@ -84,6 +84,9 @@ export type StepDoneSignal =
   | 'has-kr-import-quarantine'     // 한국 수입검역 — kr_import_quarantine_date 입력 시 완료
   | 'has-arrived'                  // 도착 완료 마일스톤 — 마지막 검역(편도=일본 수입 / 왕복=한국 수입) 완료 시
   | 'departure-past'
+  // 나라별 도착 수입검역(일본 외) — signal 에 그 나라 검역일 필드 key 를 실어 한 resolver 가
+  // 모든 나라를 처리(예: 'import-quarantine:th_import_quarantine_date'). confirmed 키는 _date→_confirmed.
+  | `import-quarantine:${string}`
   | `manual-flag:${string}`
 
 /**

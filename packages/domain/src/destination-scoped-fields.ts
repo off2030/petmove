@@ -71,6 +71,10 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'jp_export_quarantine_time',
   'kr_import_quarantine_date',
   'kr_import_quarantine_confirmed',
+  // 나라별 도착 수입검역(일본 외) — '{국가}_import_quarantine_date/_confirmed'. 목적지마다 따로
+  // 저장(by_dest)되도록 등록. 나라 추가 시 그 나라 키 2개를 여기에 추가.
+  'th_import_quarantine_date',
+  'th_import_quarantine_confirmed',
   // 필수 서류 수기 상태(완료/해당없음) — docId→bool 맵(객체 값). 검역과 같은 이유로 목적지별
   // 분리: 한 목적지에서 표시한 서류 완료가 다른 목적지(또는 단일 시절 전역값)로 누수돼 자동
   // 완료로 오판되는 걸 막는다. 스칼라 폼 필드가 아니라 객체지만, flatten/by_dest 헬퍼는 값
