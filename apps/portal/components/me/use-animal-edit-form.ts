@@ -268,18 +268,10 @@ export function useAnimalEditForm(caseRow: CaseRow, caseId: string): UseAnimalEd
         })
         if (!ok) return // 저장 취소 — staged 상태 유지.
       }
-      if (forceUnlink) {
-        const linked = baseCoProgressDests
-        const ok = await confirm({
-          message: '함께 준비가 해제돼요',
-          description:
-            linked.length > 1
-              ? `왕복·편도가 달라지면 같은 여정이 아니게 돼서, 이 동물의 함께 준비(${linked.join('·')})가 모두 해제됩니다. 계속할까요?`
-              : `왕복·편도가 달라지면 같은 여정이 아니게 돼서, 함께 준비가 해제됩니다. 계속할까요?`,
-          okLabel: '바꾸고 해제',
-        })
-        if (!ok) return
-      }
+      // '함께 준비' 토글은 펫무브앱에서 제거(펫무브워크 전용). 트립이 형제와 달라지면
+      // 같은 여정이 아니게 돼 co_progress 를 자동 해제하는 동작(forceUnlink → ① 단계)은
+      // 데이터 정합을 위해 그대로 두되, 보호자에겐 '함께 준비' 개념을 노출하지 않으므로
+      // 확인창 없이 조용히 처리한다.
 
       setStatus('saving')
       setError(null)

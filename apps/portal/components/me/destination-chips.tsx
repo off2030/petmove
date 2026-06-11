@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import destsData from '@petmove/domain/data/destinations.json'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
-import { SegmentField, SwitchField, type FieldOption } from '@/components/fields/info-fields'
+import { SegmentField, type FieldOption } from '@/components/fields/info-fields'
 import { C, SectionCard, monoCap } from './settings-shared'
 
 const TRIP_OPTIONS: readonly FieldOption[] = [
@@ -35,6 +35,8 @@ export interface DestinationChipsProps {
   /** 추가 바텀시트 제외 기준 — 현재 선택된 목적지. */
   selected: string[]
   tripTypeByDest: Record<string, 'round' | 'one_way'>
+  // '함께 준비'(co_progress) 토글은 펫무브앱에서 제거(펫무브워크 전용). 데이터·동기화는 유지하되
+  // 보호자에게 노출하지 않음. 호환 위해 prop 은 남겨둠(부모가 계속 전달) — 후속 정리 대상.
   coProgress: boolean
   coProgressDests: Set<string>
   /** 저장 진행 중 — 입력 잠금. */
@@ -50,11 +52,8 @@ export function DestinationChips({
   cards,
   selected,
   tripTypeByDest,
-  coProgress,
-  coProgressDests,
   disabled,
   onStageTripType,
-  onStageCoProgress,
   onStageRemove,
   onStageRestore,
   onStageAdd,
@@ -90,7 +89,6 @@ export function DestinationChips({
 
       {cards.map(({ dest, removing }, i) => {
         const trip = tripTypeByDest[dest] === 'one_way' ? 'one_way' : 'round'
-        const showCoProgress = coProgressDests.has(dest)
         return (
           <SectionCard key={dest} marginTop={i === 0 ? 0 : 10}>
             {/* 목적지명 — '목적지' 라벨 행 + 우측 삭제/되돌리기. */}
@@ -188,17 +186,9 @@ export function DestinationChips({
                   value={trip}
                   onChange={(v) => onStageTripType(dest, v === 'one_way' ? 'one_way' : 'round')}
                   options={TRIP_OPTIONS}
-                  last={!showCoProgress}
+                  last
                 />
-                {showCoProgress && (
-                  <SwitchField
-                    label="함께 준비"
-                    checked={coProgress}
-                    onChange={onStageCoProgress}
-                    sub="한 마리에 입력한 일정·절차를 다른 동물에도 같이 반영해요"
-                    last
-                  />
-                )}
+                {/* '함께 준비'(co_progress) 토글 제거 — 펫무브워크 전용. */}
               </>
             )}
           </SectionCard>

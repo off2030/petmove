@@ -5,7 +5,6 @@ import {
   DateField,
   DestinationField,
   SegmentField,
-  SwitchField,
   TextField,
   type FieldOption,
 } from '@/components/fields/info-fields'
@@ -35,7 +34,8 @@ interface Props {
   caseRow: CaseRow
   form: UseCaseEditForm['form']
   set: UseCaseEditForm['set']
-  /** 같은 보호자의 다른 케이스가 있는지 — '동시 진행' 토글 노출 여부. */
+  /** (미사용) '함께 준비'(co_progress) 토글은 펫무브앱에서 제거 — 펫무브워크 전용. 호환 위해
+   *  prop 은 남겨둠(부모가 계속 전달). 후속 정리 대상. */
   hasSibling: boolean
   /** 첫 SectionCard("기본") 의 marginTop. 기본 8 (TravelEditView 의 기존 값). */
   marginTop?: number
@@ -47,7 +47,6 @@ export function TravelFormSections({
   caseRow,
   form,
   set,
-  hasSibling,
   marginTop = 8,
   basicOnly = false,
 }: Props) {
@@ -69,17 +68,9 @@ export function TravelFormSections({
           value={form.trip_type}
           onChange={(v) => set('trip_type', v === 'one_way' ? 'one_way' : 'round')}
           options={TRIP_OPTIONS}
-          last={!hasSibling}
+          last
         />
-        {hasSibling && (
-          <SwitchField
-            label="함께 준비"
-            checked={form.co_progress}
-            onChange={(v) => set('co_progress', v)}
-            sub="한 마리에 입력한 일정·절차를 다른 동물에도 같이 반영해요"
-            last
-          />
-        )}
+        {/* '함께 준비'(co_progress) 토글 제거 — 펫무브워크 전용. */}
       </SectionCard>
     )
   }
@@ -98,14 +89,7 @@ export function TravelFormSections({
           onChange={(v) => set('trip_type', v === 'one_way' ? 'one_way' : 'round')}
           options={TRIP_OPTIONS}
         />
-        {hasSibling && (
-          <SwitchField
-            label="함께 준비"
-            checked={form.co_progress}
-            onChange={(v) => set('co_progress', v)}
-            sub="한 마리에 입력한 일정·절차를 다른 동물에도 같이 반영해요"
-          />
-        )}
+        {/* '함께 준비'(co_progress) 토글 제거 — 펫무브워크 전용. */}
         <DateField
           label="출국일"
           value={form.departure_date}
