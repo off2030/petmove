@@ -1329,7 +1329,7 @@ export async function updateImportQuarantineDate(
   destination?: string | null,
 ): Promise<Result<CaseRow>> {
   try {
-    if (!/^[a-z]+_import_quarantine_date$/.test(fieldKey)) {
+    if (!/^[a-z]+_(import|export)_quarantine_date$/.test(fieldKey)) {
       return { ok: false, error: '잘못된 검역일 필드입니다.' }
     }
     if (date != null && date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {

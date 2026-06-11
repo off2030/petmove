@@ -133,11 +133,11 @@ export function StepDetailView({
     (step.inputs ?? []).some((i) => i.key === 'jp_import_quarantine_date')
   // 나라별 도착 수입검역(일본 외) — departure override 가 '{국가}_import_quarantine_date' input 을
   // 싣는다. 검역일 필드 key·부제 문구를 override 에서 동적으로 읽어 한 벌의 배선으로 모든 나라 처리.
+  // 나라별 도착(수입)·출국(수출) 검역 — done 시그널 'quarantine:<검역일필드>' 가 그 나라 필드를
+  // 실어 한 벌의 배선으로 모든 나라·도착/출국을 처리. 검역일 필드 key·부제(input.helpText)를 동적으로 읽음.
   const importQuarantineField =
-    step.id === 'departure'
-      ? ((step.inputs ?? []).find(
-          (i) => /_import_quarantine_date$/.test(i.key) && i.key !== 'jp_import_quarantine_date',
-        )?.key ?? null)
+    typeof step.done === 'string' && step.done.startsWith('quarantine:')
+      ? step.done.slice('quarantine:'.length)
       : null
   const isImportQuarantine = importQuarantineField !== null
   const importQuarantineSubtitle =

@@ -49,7 +49,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       description:
         '태국 도착 후 공항 동물검역소(AQS)에서 수입 검역을 받으세요.\n검역 수수료는 동물 1마리당 500바트(현금)입니다.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 바로 인도됩니다. 서류가 미비하거나 전염병 증상이 있으면 최대 30일 격리될 수 있으며, 격리 비용은 보호자가 부담합니다.',
       doneSummary: '태국 수입 동물검역을 받았습니다.',
-      done: 'import-quarantine:th_import_quarantine_date',
+      done: 'quarantine:th_import_quarantine_date',
       inputs: [
         {
           key: 'th_import_quarantine_date',

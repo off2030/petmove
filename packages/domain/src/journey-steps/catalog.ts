@@ -833,6 +833,33 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentLabel: 'Export Quarantine Certificate',
   },
 
+  // ── 태국 수출 동물검역 (왕복 — 귀국 출국 시, 태국 전용) ───────────────────
+  // 태국 축산국(DLD) 출국 검역. 일본의 수출검역(검역소 방문)에 대응하는 태국판 — 나라별 단계.
+  // 완료신호 'quarantine:<필드>' 로 도착 수입검역과 같은 confirm 메커니즘 재사용(검역일+완료).
+  {
+    id: 'th-export-quarantine',
+    category: 'document',
+    title: '태국 수출 동물검역',
+    shortLabel: '수출',
+    description:
+      '태국 출국 전 동물검역소에서 수출 동물검역을 받으세요.\n출발 3~7영업일 전에 태국 축산국(DLD)에 수출 허가를 신청합니다.\n출발 2~3일 전(공항에서는 48시간 전)에 동물검역소에서 반려동물과 서류 검사를 받습니다.\n검사 통과 후 수출허가증과 태국 건강증명서가 발급됩니다.',
+    doneSummary: '태국 수출 동물검역을 받았습니다.',
+    cardLine: '태국 동물검역소에서 수출 검역을 받으세요.',
+    applicability: { destinations: ['thailand'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:th_export_quarantine_date',
+    inputs: [
+      {
+        key: 'th_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '태국 동물검역소에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '수출허가증·건강증명서 사본을 사진, PDF로 저장하세요.',
+  },
+
   // ── 15. 한국 수입 동물검역 (왕복 케이스 한정 — 귀국 후) ─────────────────
   {
     id: 'kr-import-quarantine',
