@@ -156,13 +156,9 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
           </>
         )}
 
-        {/* 3) 보관함 */}
+        {/* 3) 보관함 — 라벨 + '파일 추가' 카드만으로 직관적이라 빈 상태 설명문 생략. */}
         <SectionLabel right={`${storedDocs.length}건`}>보관함</SectionLabel>
-        {storedDocs.length === 0 ? (
-          <EmptyHint>
-            일정에서 첨부한 사진, PDF를 한 눈에 볼 수 있습니다.
-          </EmptyHint>
-        ) : (
+        {storedDocs.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {storedDocs.map((d) => (
               <div
