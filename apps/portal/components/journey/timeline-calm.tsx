@@ -602,7 +602,7 @@ export function TimelineCalm({
                 textDecoration: 'none',
               }}
             >
-              소감 남기기
+              의견 남기기
               <span style={{ color: C.sage }}>→</span>
             </Link>
           </div>

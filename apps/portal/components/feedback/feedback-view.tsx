@@ -166,12 +166,10 @@ export function FeedbackView({ caseId }: { caseId: string }) {
         </Link>
 
         <h1 style={{ ...serif, fontSize: 24, lineHeight: 1.2, margin: '12px 0 0', color: C.ink }}>
-          소감 남기기
+          의견 남기기
         </h1>
         <p style={{ marginTop: 8, fontSize: 15, lineHeight: 1.6, color: C.ink2 }}>
           펫무브와 함께한 여정 어떠셨나요?
-          <br />
-          소중한 소감 부탁드립니다.
         </p>
 
         {/* 만족도 — 얼굴 5단계 (모노톤) */}
@@ -262,7 +260,7 @@ export function FeedbackView({ caseId }: { caseId: string }) {
               lineHeight: 1.5,
             }}
           >
-            소중한 소감 감사합니다 🙏 언제든 수정해서 다시 남기실 수 있어요.
+            소중한 의견 감사합니다 🙏
           </div>
         )}
         {status === 'error' && (
