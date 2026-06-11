@@ -1575,10 +1575,11 @@ export function StepDetailView({
           </section>
         )}
 
-        {/* 서류 체크리스트 — 출국 전 임상검사·검역증명서 발급 step. 입력 섹션 다음에 배치 —
-            보호자가 검진일 먼저 입력하고 나서 서류 진행 상황을 보는 흐름. 서류 탭과 같은
-            시그널을 사용해 자동 동기. */}
-        {(step.id === 'vet-visit' || step.id === 'certificate-issue') && (
+        {/* 서류 준비 현황 — 출국 전 임상검사(vet-visit)에만. 이 단계의 완료가 '필수 서류 모두
+            ✓'에 달려 있어 현황 표시가 완료 안내로서 의미가 있다. 한국 수출 동물검역
+            (certificate-issue)은 검역일 입력+저장으로 완료(date 기반)라 서류 현황이 완료와
+            무관 → 오해를 줘 제외(서류는 아래 '첨부' + 서류 탭에서 다룬다). */}
+        {step.id === 'vet-visit' && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>서류 준비 현황</h3>
             <StepDocChecklist caseId={caseId} currentStepId={step.id} activeDest={activeDest} />
