@@ -331,6 +331,10 @@ export function StepDetailView({
   // 저장 필요' 안내 노출. 당일(예정일 == 오늘)엔 배너 없이 저장 버튼만 활성(formArrived)으로 둔다.
   const savedArrivedUnconfirmed =
     isConfirmStep && confirmSavedDate.length >= 10 && confirmSavedDate < todayStr && !done
+  // 예정으로 저장한 검역일이 도래(≤ 오늘)했고 아직 미완료 — 변경 없이 누르면 완료 확정이므로
+  // 버튼 라벨을 '완료'로 한다. 입력·변경 중(dirty)이면 '저장'/'예정일로 저장' 유지 — 즉
+  // '검역일을 넣을 때 = 저장', '예정 저장분이 당일 도래 = 완료'. (추가 백신·검사와 동일 톤.)
+  const confirmArrivedComplete = isConfirmStep && formArrived && !dirty && !done
   // 추가 접종·추가 검사 — 저장된 가장 최근 추가 항목 날짜가 도래(≤ 오늘)했는데 아직 완료 전이면
   // '저장' 버튼을 활성화해 보호자가 실제 접종/검사를 확인(클릭) 후 완료하도록 한다. (검역 5단계와 동일.)
   const savedRabiesExtraLatest = savedRabiesExtra.reduce<string>(
@@ -1647,7 +1651,7 @@ export function StepDetailView({
             }}
           >
             <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
-              예정일이 지났습니다. 저장 버튼을 눌러서 완료로 전환하시거나, 새로운 예정일을 등록하실 수 있습니다.
+              예정일이 지났습니다. 완료 버튼을 눌러 완료하시거나, 새로운 예정일을 등록하실 수 있습니다.
             </div>
           </section>
         )}
@@ -1757,8 +1761,9 @@ export function StepDetailView({
                         titerExtraUpcoming
                       ? '예정일로 저장'
                       : // 추가 접종·추가 검사 — 도래(오늘 이하)한 입력의 저장 = 완료 확인.
+                        // 검역 confirm 단계도 예정 저장분이 도래하면(미변경) 완료 확정이라 '완료'.
                         // 안내문도 "완료 버튼을 눌러주세요"라 라벨을 '완료'로 맞춘다.
-                        isRabiesExtra || isTiterExtra
+                        isRabiesExtra || isTiterExtra || confirmArrivedComplete
                         ? '완료'
                         : '저장'}
           </button>
