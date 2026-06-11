@@ -18,6 +18,7 @@ import { createClient, getCurrentUser } from '@petmove/auth/server'
 import {
   emptyVaccineProductsData,
   applyAutoFillRules,
+  buildCaseJourneyContext,
   findRabiesChainBreak,
   normalizeRabiesOrder,
   parseDestinations,
@@ -1180,33 +1181,57 @@ export async function updateVetVisitDate(
  * (YYYY-MM-DD). 빈/null 이면 키 제거. data 의 다른 키는 fetch-merge 로 보존.
  */
 /**
+ * 활성 목적지 토큰을 읽기(flatten)와 동일하게 해석한다 — `buildCaseJourneyContext`:
+ * activeDest 가 목적지 목록에 있으면 그것, 아니면 첫 토큰, 목적지 자체가 없으면 null.
+ *
+ * 중요: 진입로 대부분이 `?dest=` 없이 일정에 들어와 activeDest=null 이 된다. 이때 읽기는
+ * 첫 토큰으로 fallback 해 `by_dest[첫토큰]` 만 보고 top-level scoped 키는 삭제하는데, 쓰기가
+ * activeDest=null 을 그대로 top-level 에 저장하면 저장/읽기 위치가 어긋나 (다중 목적지 케이스에서)
+ * 완료가 즉시 증발한다. 쓰기도 같은 토큰으로 해석해 by_dest 에 저장하면 일치한다.
+ */
+function resolveWriteToken(
+  destinationColumn: string | null | undefined,
+  prevData: Record<string, unknown>,
+  activeDest: string | null | undefined,
+): string | null {
+  return buildCaseJourneyContext(
+    { destination: destinationColumn ?? null, data: prevData } as CaseRow,
+    activeDest ?? null,
+  ).destinationToken
+}
+
+/**
  * 검역 날짜+확인 플래그를 destination scope 에 맞게 저장.
- * - 다중 목적지 + destination 지정 → `data.by_dest[destination]` 에 저장 + top-level 잔존 제거
+ * - 목적지 토큰이 해석되면 → `data.by_dest[token]` 에 저장 + top-level 잔존 제거
  *   (안 그러면 다른 목적지가 flatten fallback 으로 그 검역을 물려받는 누수 발생).
- * - 단일 목적지(또는 destination 미지정) → 기존 top-level.
+ * - 목적지 자체가 없으면(token=null) → 기존 top-level.
+ * token 은 읽기와 동일하게 `resolveWriteToken` 으로 해석 — activeDest 미지정이어도 첫 토큰으로
+ * fallback 해 저장/읽기 위치를 일치시킨다(완료 증발 버그 차단).
  * design: 검역은 목적지별(모든 절차 목적지별).
  */
 function applyQuarantine(
   prev: Record<string, unknown>,
-  destination: string | null | undefined,
+  destinationColumn: string | null | undefined,
+  activeDest: string | null | undefined,
   dateKey: string,
   confirmKey: string,
   v: string,
   confirmed: boolean,
 ): Record<string, unknown> {
   // B: 단일도 by_dest 통일 — isMulti 게이트 제거. 활성 목적지 토큰만 있으면 by_dest 경로.
-  const useByDest = !!destination
+  const token = resolveWriteToken(destinationColumn, prev, activeDest)
+  const useByDest = !!token
   const nextData: Record<string, unknown> = { ...prev }
   if (useByDest) {
     const byDest = {
       ...((prev.by_dest as Record<string, Record<string, unknown>> | undefined) ?? {}),
     }
-    const destObj = { ...(byDest[destination as string] ?? {}) }
+    const destObj = { ...(byDest[token as string] ?? {}) }
     if (v) destObj[dateKey] = v
     else delete destObj[dateKey]
     if (v && confirmed) destObj[confirmKey] = true
     else delete destObj[confirmKey]
-    byDest[destination as string] = destObj
+    byDest[token as string] = destObj
     nextData.by_dest = byDest
     delete nextData[dateKey]
     delete nextData[confirmKey]
@@ -1246,6 +1271,7 @@ export async function updateKrExportQuarantineDate(
     // 검역일 도메인 차단은 client(입력 불가)·procedure-check(주의)가 담당 — server 는 형식만.
     const nextData = applyQuarantine(
       prev,
+      existing?.destination,
       destination,
       'kr_export_quarantine_date',
       'kr_export_quarantine_confirmed',
@@ -1296,6 +1322,7 @@ export async function updateJpImportQuarantineDate(
     const v = typeof date === 'string' ? date.trim() : ''
     const nextData = applyQuarantine(
       prev,
+      existing?.destination,
       destination,
       'jp_import_quarantine_date',
       'jp_import_quarantine_confirmed',
@@ -1351,6 +1378,7 @@ export async function updateImportQuarantineDate(
     const v = typeof date === 'string' ? date.trim() : ''
     const nextData = applyQuarantine(
       prev,
+      existing?.destination,
       destination,
       fieldKey,
       fieldKey.replace(/_date$/, '_confirmed'),
@@ -1401,6 +1429,7 @@ export async function updateJpExportQuarantineVisitDate(
     const v = typeof date === 'string' ? date.trim() : ''
     const nextData = applyQuarantine(
       prev,
+      existing?.destination,
       destination,
       'jp_export_quarantine_visit_date',
       'jp_export_quarantine_visit_confirmed',
@@ -1451,6 +1480,7 @@ export async function updateKrImportQuarantineDate(
     const v = typeof date === 'string' ? date.trim() : ''
     const nextData = applyQuarantine(
       prev,
+      existing?.destination,
       destination,
       'kr_import_quarantine_date',
       'kr_import_quarantine_confirmed',
@@ -1511,30 +1541,33 @@ export async function updateJpExportQuarantineFields(
     const admin = createAdminClient()
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
-      .select('data')
+      .select('data, destination')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
+    // 활성 목적지 토큰을 읽기와 동일하게 해석 — activeDest 미지정이어도 첫 토큰으로 fallback 해
+    // 저장/읽기 위치를 일치시킨다(완료·예약 데이터 증발 차단).
+    const token = resolveWriteToken(existing?.destination, prev, destination)
     // 예약일·신청일의 도메인 차단(입국일 ≤ 예약일 ≤ 귀국일, 신청 10일 전)은 server 에 두지
     // 않는다 — client(입력 불가)·procedure-check(주의)가 담당(단일 출처).
     let nextData: Record<string, unknown> = { ...prev }
     const a = typeof fields.applicationDate === 'string' ? fields.applicationDate.trim() : ''
     const d = typeof fields.date === 'string' ? fields.date.trim() : ''
     // 신청일 이전값 — by_dest(scoped) 우선, 마이그 전 top-level fallback.
-    const prevAppliedRaw = readByDestValue(prev, destination, 'jp_export_quarantine_application_date')
+    const prevAppliedRaw = readByDestValue(prev, token, 'jp_export_quarantine_application_date')
     const prevApplied =
       typeof prevAppliedRaw === 'string'
         ? prevAppliedRaw
         : typeof prev.jp_export_quarantine_application_date === 'string'
           ? prev.jp_export_quarantine_application_date
           : ''
-    if (destination) {
-      // B: 단일도 by_dest 통일 — 예약 3필드를 by_dest[destination] 에 저장 + top-level 잔존 제거.
-      nextData = writeByDestValue(nextData, destination, 'jp_export_quarantine_application_date', a || null)
-      nextData = writeByDestValue(nextData, destination, 'jp_export_quarantine_date', d || null)
-      nextData = writeByDestValue(nextData, destination, 'jp_export_quarantine_time', time || null)
+    if (token) {
+      // B: 단일도 by_dest 통일 — 예약 3필드를 by_dest[token] 에 저장 + top-level 잔존 제거.
+      nextData = writeByDestValue(nextData, token, 'jp_export_quarantine_application_date', a || null)
+      nextData = writeByDestValue(nextData, token, 'jp_export_quarantine_date', d || null)
+      nextData = writeByDestValue(nextData, token, 'jp_export_quarantine_time', time || null)
       delete nextData.jp_export_quarantine_application_date
       delete nextData.jp_export_quarantine_date
       delete nextData.jp_export_quarantine_time
