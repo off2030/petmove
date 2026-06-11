@@ -22,9 +22,11 @@ import {
   findRabiesChainBreak,
   normalizeRabiesOrder,
   parseDestinations,
+  resolveActiveDestination,
   todayKst,
   validateJpEntryDate,
   writeByDestValue,
+  writeJourneyFeedback,
   readByDestValue,
   type CaseRow,
   type VaccineProductsData,
@@ -791,17 +793,26 @@ export async function updateFlightFields(
     // 부수효과(departure_date 컬럼 sync·auto-fill)는 by_dest 경로에선 스킵 — admin updateCaseField
     // 와 동일. 컬럼은 단일값이라 다중 목적지를 못 담고, flatten 이 by_dest[dest].departure_date 를
     // 우선 읽어 has-flight-date·D-day 가 목적지별로 작동한다.
-    const isSingleDest =
-      parseDestinations((existing as { destination: string | null }).destination).length === 1
-    // B: 단일도 by_dest 통일 — 활성 목적지 토큰만 있으면 항공권 필드 + 출국일을 by_dest[destination] 에 저장.
-    if (destination) {
+    const caseDestStr = (existing as { destination: string | null }).destination
+    const dests = parseDestinations(caseDestStr)
+    const isSingleDest = dests.length === 1
+    // 다중 목적지는 활성 목적지(?dest) 미지정이어도 by_dest 에 써야 한다 — 읽기(flatten·검증)가
+    // strict by_dest 라 top-level/컬럼에 쓰면 출국일이 검증에 안 보여 '주의'가 누락되는 버그.
+    // 읽기와 동일하게: 유효한 활성 토큰이면 그걸, 아니면 다중일 때 첫 토큰으로 해석.
+    const writeDest = isSingleDest
+      ? (destination ?? null)
+      : destination && dests.includes(destination)
+        ? destination
+        : resolveActiveDestination(caseDestStr, null)
+    // B: 단일도 by_dest 통일 — 활성 목적지 토큰만 있으면 항공권 필드 + 출국일을 by_dest[writeDest] 에 저장.
+    if (writeDest) {
       let merged: Record<string, unknown> = { ...prev }
       for (const key of FLIGHT_DATA_KEYS) {
         const val = typeof fields[key] === 'string' ? (fields[key] as string).trim() : ''
-        merged = writeByDestValue(merged, destination, key, val || null)
+        merged = writeByDestValue(merged, writeDest, key, val || null)
       }
       const entryDate = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
-      merged = writeByDestValue(merged, destination, 'departure_date', entryDate || null)
+      merged = writeByDestValue(merged, writeDest, 'departure_date', entryDate || null)
 
       // 공용 부수효과 패리티 — 단일 목적지 한정(다중은 종전대로 by_dest 만). top-level 경로와 동일하게:
       //  · flight_info_recorded_at(항공권 구매 step 표시일) 최초 캡처 / 전부 지워지면 정리
@@ -827,7 +838,7 @@ export async function updateFlightFields(
       // by_dest 경로로 적용 — top-level 경로의 applyAutoFillRules 와 동일.
       if (isSingleDest) {
         try {
-          await applyAutoFillRules(admin, caseId, 'departure_date', destination)
+          await applyAutoFillRules(admin, caseId, 'departure_date', writeDest)
         } catch { /* best-effort */ }
       }
 
@@ -1604,12 +1615,14 @@ export async function updateJpExportQuarantineFields(
 }
 
 /**
- * 여정 완료 후 보호자가 남기는 의견 — case.data.feedback 에 저장.
- * rating(만족도 1~5, 없으면 null) + text(자유 의견). 둘 다 비면 feedback 키 제거.
- * data 의 다른 키는 fetch-merge 로 보존. 케이스별로 저장돼 운영자(펫무브워크)가 확인.
+ * 여정 완료 후 보호자가 남기는 의견 — case.data.feedback 의 **목적지 칸**에 저장.
+ * `feedback = { [목적지]: { rating, text, submittedAt } }` (목적지별). 빈 값이면 그 칸 제거.
+ * destination 미지정이면 케이스 첫 목적지 칸. legacy 단일 객체는 keyed-map 으로 승격(writeJourneyFeedback).
+ * data 의 다른 키는 fetch-merge 로 보존. 운영자(펫무브워크)가 목적지별로 확인.
  */
 export async function saveCaseFeedback(
   caseId: string,
+  destination: string | null,
   rating: number | null,
   text: string | null,
 ): Promise<Result<CaseRow>> {
@@ -1622,20 +1635,25 @@ export async function saveCaseFeedback(
     const admin = createAdminClient()
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
-      .select('data')
+      .select('data, destination')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const tokens = parseDestinations(existing?.destination)
+    const firstToken = tokens[0] ?? null
+    // destination 이 목적지 목록에 있으면 그 칸, 아니면 첫 목적지 칸(읽기와 동일 해석).
+    const destTok =
+      destination && tokens.includes(destination) ? destination : firstToken ?? destination ?? ''
     const r = typeof rating === 'number' && rating >= 1 && rating <= 5 ? Math.round(rating) : null
     const t = typeof text === 'string' ? text.trim() : ''
-    const nextData: Record<string, unknown> = { ...prev }
-    if (r === null && !t) {
-      delete nextData.feedback
-    } else {
-      nextData.feedback = { rating: r, text: t, submittedAt: new Date().toISOString() }
-    }
+    const nextData = writeJourneyFeedback(
+      prev,
+      destTok,
+      firstToken,
+      r === null && !t ? null : { rating: r, text: t, submittedAt: new Date().toISOString() },
+    )
 
     const { data: updated, error } = await admin
       .from('cases')
