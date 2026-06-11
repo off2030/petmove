@@ -52,23 +52,9 @@ const GLOBAL = parseStringSet('GLOBAL_CASE_DATA_KEYS') ?? new Set()
 // "현행 유지(grandfather)" 한다. ⚠️ 여기 **새로 추가하지 말 것**. 신규 키는 SCOPED 또는
 // GLOBAL 로 분류해야 한다. 아래 항목은 점진적으로 위 두 명단으로 옮겨 비워가는 게 목표.
 //
-//   🟢 = 일본 전용 단계라 케이스당 1개 → 동시 다중목적지 누수 없음(전역 저장 OK, 현행 유지)
-//   🟡 = 조사 필요
-//   ⚪ = 케이스 data 아님(오탐, 로컬 변수)
-//
-// (2026-06-11 분류 완료로 baseline 에서 졸업: vet_visit_confirmed → SCOPED,
-//  documents/notes → GLOBAL. 나머지는 아래.)
-const SCOPING_LINT_BASELINE = new Set([
-  'advance_notification_date', //               🟢 일본 사전신고일 — 일본 단일 단계
-  'advance_notification_approval_skipped', //   🟢 일본 사전신고 skip — 일본 단일 단계
-  'jp_export_quarantine_reservation_skipped', // 🟢 일본 수출검역 예약 skip — 일본 단일 단계
-  'feedback', //                                🟡 여정 만족도 — 목적지별 여정이면 분리 검토
-  'flight_info_recorded_at', //                 🟡 항공정보 기록시각 메타
-  'co_progress', //                             🟡 공동 진행 상태
-  'completion_prompt_dismissed', //             🟡 완료 prompt dismiss
-  'vet_available_date', //                      🟡 (admin) 병원 가능일
-  'nextNotes', //                               ⚪ 로컬 변수(오탐)
-])
+// 2026-06-11 전수 조사 완료로 **baseline 비움** — 모든 기존 키를 SCOPED/GLOBAL 로 분류.
+// 새 미분류 키는 곧바로 lint 실패. (mechanism 은 유지 — 향후 불가피한 grandfather 용.)
+const SCOPING_LINT_BASELINE = new Set([])
 
 // ── 2) 스캔 대상 — 케이스 data 를 쓰는 server action 계층 ──────────────────
 const SCAN_DIRS = [
@@ -105,12 +91,16 @@ function spreadSiblings(content) {
       if (ch === '{') depth++
       else if (ch === '}') { depth--; if (depth === 0) break }
       else if (depth === 1) {
-        // 깊이 1 에서 식별자: 패턴
+        // 깊이 1 에서 `IDENT:` = 객체 키. 단, 객체 키는 바로 앞이 `{` 또는 `,` 여야 한다 —
+        // 그래야 삼항연산자 콜론(`cond ? a : b` 의 `a :`)을 키로 오인하지 않는다.
         const rest = content.slice(i)
         const km = rest.match(/^([A-Za-z_$][\w$]*)\s*:/)
         if (km) {
-          const line = content.slice(0, i).split('\n').length
-          found.push({ key: km[1], line })
+          const prev = content.slice(0, i).replace(/\s+$/, '').slice(-1)
+          if (prev === '{' || prev === ',') {
+            const line = content.slice(0, i).split('\n').length
+            found.push({ key: km[1], line })
+          }
           i += km[1].length
         }
       }

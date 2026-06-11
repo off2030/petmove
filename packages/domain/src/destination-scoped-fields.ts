@@ -31,6 +31,10 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 전역이면 어긋남). 현행 코드는 이 값을 true 로 쓰지 않아(legacy 데이터만 존재) 다중
   // 목적지 read 에서 flatten strict 가 전역 잔존을 떨궈주는 효과가 주효.
   'vet_visit_confirmed',
+  // 항공권 구매 step 표시일(항공정보 최초 입력 시각) — 항공편 필드가 목적지별이라 같이 분리.
+  // 현행 코드는 단일 목적지에서만 기록(다중은 미기록)하지만, scoped 로 두면 다중 read 에서
+  // flatten 이 전역 잔존을 떨궈 단일→다중 전환 시 표시일 누수를 막는다.
+  'flight_info_recorded_at',
   // 출국 항공편 — 한국 출발 (departure_*) + 도착국 도착 (entry_*)
   'departure_flight_date',
   'entry_date',
@@ -114,6 +118,16 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   //    다른 목적지 체크리스트에 잘못 카운트되지 않는다 — 전역 저장이라도 교차 누수 없음.
   'documents', //            stepId 태그 첨부 배열(케이스 공유)
   'notes', //                첨부 메모 맵(documents 와 한 묶음)
+  // 4) 케이스 단위 메타·설정 / destination 키 맵 / 일본 단일 단계 (전수 조사 2026-06-11)
+  'co_progress', //          '함께 준비' — 동물 1마리당 1개(DB 트리거가 보호자 형제 동기화). 의도적 케이스 단위
+  'completion_prompt_dismissed', // destination 키 맵({[dest]: anchorDate}) — 내부적으로 이미 목적지별
+  'feedback', //             여정 만족도 의견(케이스 단위). 완료 게이트 아님. 여정별 분리는 별도 기능 작업
+  'vet_available_date', //   출국일 파생 내원가능일(admin) — 단일 목적지에서만 기록(다중 부수효과 스킵)이라 누수 없음
+  // 일본 전용 단계 신호 — 케이스당 일본 1개뿐이라 동시 다중목적지 누수 없음. portal·admin 양쪽이
+  // top-level 로 read/write 해 정합(스코핑하면 양쪽 다 고쳐야 하고 실익 없음).
+  'advance_notification_date',
+  'advance_notification_approval_skipped',
+  'jp_export_quarantine_reservation_skipped',
 ])
 
 export function isGlobalCaseDataKey(key: string): boolean {
