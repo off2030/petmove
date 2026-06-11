@@ -120,7 +120,7 @@ export function validateJpExportVisitDate(v: string, ctx: DateRuleContext): stri
 export function validateKrExportDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const vet = readDate(ctx.data, 'vet_visit_date')
-  if (vet && v < vet) return `한국 수출 동물검역은 출국 전 임상검사(${fmt(vet)}) 당일 이후에 받을 수 있습니다.`
+  if (vet && v < vet) return `한국 수출 동물검역은 출국 전 임상검사 후 받을 수 있습니다.`
   const depart = departFromData(ctx.data)
   if (depart) {
     if (v > depart) return `한국 수출 동물검역일은 출국일(${fmt(depart)})보다 늦을 수 없습니다.`
