@@ -58,6 +58,7 @@ import { FlightInputs, type FlightForm } from './flight-inputs'
 import { JpExportQuarantineInputs, type JpExportForm } from './jp-export-quarantine-inputs'
 import { JpExportQuarantineVisitInputs } from './jp-export-quarantine-visit-inputs'
 import { ImportQuarantineInputs } from './import-quarantine-inputs'
+import { JpImportQuarantineInputs } from './jp-import-quarantine-inputs'
 import { KrExportQuarantineInputs } from './kr-export-quarantine-inputs'
 import { KrImportQuarantineInputs } from './kr-import-quarantine-inputs'
 import { MicrochipInputs } from './microchip-inputs'
@@ -1586,7 +1587,7 @@ export function StepDetailView({
         {isJpImportQuarantine && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
-            <ImportQuarantineInputs
+            <JpImportQuarantineInputs
               date={jpImportQuarantineDate}
               onChange={setJpImportQuarantineDate}
             />
