@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import destsData from '@petmove/domain/data/destinations.json'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { SegmentField, type FieldOption } from '@/components/fields/info-fields'
@@ -46,6 +46,8 @@ export interface DestinationChipsProps {
   onStageRemove: (dest: string) => void
   onStageRestore: (dest: string) => void
   onStageAdd: (dest: string) => void
+  /** 목적지 카드와 '목적지 추가' 버튼 사이에 끼워 넣는 슬롯 (지난 여정 카드). */
+  afterCards?: ReactNode
 }
 
 export function DestinationChips({
@@ -57,6 +59,7 @@ export function DestinationChips({
   onStageRemove,
   onStageRestore,
   onStageAdd,
+  afterCards,
 }: DestinationChipsProps) {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -195,12 +198,15 @@ export function DestinationChips({
         )
       })}
 
+      {/* 지난 여정 카드 — 목적지 카드 아래, '목적지 추가' 버튼 위. */}
+      {afterCards}
+
       <button
         type="button"
         onClick={openSheet}
         disabled={disabled}
         style={{
-          marginTop: cards.length === 0 ? 0 : 10,
+          marginTop: 10,
           width: '100%',
           padding: '14px 0',
           borderRadius: 14,

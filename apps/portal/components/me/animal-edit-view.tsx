@@ -163,11 +163,10 @@ export function AnimalEditView({ caseRow, caseId }: { caseRow: CaseRow; caseId: 
         onStageRemove={stageRemove}
         onStageRestore={stageRestore}
         onStageAdd={stageAdd}
+        // 지난 여정 — 목적지 카드 아래, '목적지 추가' 버튼 위에 끼워 넣는 접이식 작은 카드.
+        // 평소 'History · N' 한 줄, 펼치면 완료 여정 도장 목록. past_journeys 없으면 자동 숨김.
+        afterCards={<PastJourneysSection caseRow={caseRow} />}
       />
-
-      {/* 지난 여정 — 여정 섹션 끝(목적지 카드 아래)에 붙는 접이식 작은 카드.
-          평소 'History · N' 한 줄, 펼치면 완료 여정 도장 목록. past_journeys 없으면 자동 숨김. */}
-      <PastJourneysSection caseRow={caseRow} />
 
       {/* 저장 버튼 — 동물 정보 + 여정 변경을 함께 저장한다. '동물 삭제' 바로 위.
           (삭제·함께 준비 해제 confirm 은 이 버튼을 누를 때 뜬다.) */}
