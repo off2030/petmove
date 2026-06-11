@@ -327,9 +327,10 @@ export function StepDetailView({
   // 버튼 문구·저장 확인 여부는 form(입력 중) 날짜 기준. 미래면 '예정일로 저장', 오늘 이하면 '저장'.
   const formUpcoming = isConfirmStep && confirmFormDate.length >= 10 && confirmFormDate > todayStr
   const formArrived = isConfirmStep && confirmFormDate.length >= 10 && confirmFormDate <= todayStr
-  // 저장된 검진일이 오늘 이하인데 아직 확인(done) 전 — '예정일 지남, 저장 필요' 안내 노출.
+  // 저장된 예정일이 지났는데(예정일 다음날부터 — 당일 제외) 아직 확인(done) 전 — '예정일 지남,
+  // 저장 필요' 안내 노출. 당일(예정일 == 오늘)엔 배너 없이 저장 버튼만 활성(formArrived)으로 둔다.
   const savedArrivedUnconfirmed =
-    isConfirmStep && confirmSavedDate.length >= 10 && confirmSavedDate <= todayStr && !done
+    isConfirmStep && confirmSavedDate.length >= 10 && confirmSavedDate < todayStr && !done
   // 추가 접종·추가 검사 — 저장된 가장 최근 추가 항목 날짜가 도래(≤ 오늘)했는데 아직 완료 전이면
   // '저장' 버튼을 활성화해 보호자가 실제 접종/검사를 확인(클릭) 후 완료하도록 한다. (검역 5단계와 동일.)
   const savedRabiesExtraLatest = savedRabiesExtra.reduce<string>(
@@ -1646,7 +1647,7 @@ export function StepDetailView({
             }}
           >
             <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
-              예정일이 되었습니다. 저장 버튼을 눌러서 완료로 전환하시거나, 새로운 예정일을 등록하실 수 있습니다.
+              예정일이 지났습니다. 저장 버튼을 눌러서 완료로 전환하시거나, 새로운 예정일을 등록하실 수 있습니다.
             </div>
           </section>
         )}

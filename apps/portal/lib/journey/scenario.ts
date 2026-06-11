@@ -214,7 +214,7 @@ function earliestDate(step: StepDefinition, caseRow: CaseRow): string | null {
  * 자동 완료가 아니라 직접 확인 방식이라, 지난 일정을 어떻게 처리할지 알려준다.
  */
 const PASSED_UNCONFIRMED_MSG =
-  '예정일이 되었습니다. 저장 버튼을 눌러서 완료로 전환하시거나, 새로운 예정일을 등록하실 수 있습니다.'
+  '예정일이 지났습니다. 저장 버튼을 눌러서 완료로 전환하시거나, 새로운 예정일을 등록하실 수 있습니다.'
 
 /**
  * 어느 step 에도 매핑하지 않았지만, '추가 백신·추가 검사' advisory step 의 situational 안내가
@@ -411,8 +411,9 @@ export function buildJourney(
             : step.id === 'kr-import-quarantine'
               ? (krImportOwnDate ?? flightReturnDate)
               : null
-    // 예정일이 지났는데 아직 확인(done) 전 — '예정 [지난 날짜]' 대신 안내 문구로 표시.
-    const passedUnconfirmed = !done && !!ownConfirmDate && ownConfirmDate <= today
+    // 예정일이 지났는데(예정일 다음날부터 — 당일은 제외) 아직 확인(done) 전 — '예정 [지난 날짜]'
+    // 대신 안내 문구로 표시. 당일(예정일 == 오늘)엔 아직 '지났다'가 아니라 정상 안내로 둔다.
+    const passedUnconfirmed = !done && !!ownConfirmDate && ownConfirmDate < today
     // 미완 step 의 타임라인 표시일 — step 의 직접 입력 필드(advance_notification_date 등)는
     // 비어있는데 earliest(다른 step 완료일 기준 계산값)만으로 '예정 [날짜]' 칩을 띄우면
     // 일정이 정해진 것처럼 오해됨. 따라서:
