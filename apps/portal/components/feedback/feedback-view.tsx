@@ -260,7 +260,7 @@ export function FeedbackView({ caseId }: { caseId: string }) {
               lineHeight: 1.5,
             }}
           >
-            소중한 의견 감사합니다 🙏
+            소중한 의견 감사합니다. 즐거운 하루 되세요 🙏
           </div>
         )}
         {status === 'error' && (
