@@ -107,10 +107,8 @@ export function StepDocChecklist({
         border: `.5px solid ${C.line}`,
       }}
     >
-      <div
-        style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}
-      >
-        <span style={{ fontSize: 12, color: C.ink3, letterSpacing: '0.02em' }}>서류 준비</span>
+      {/* '서류 준비 현황' 제목이 바로 위에 있어 라벨은 생략 — 카운트만 우측에. */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <span style={{ fontSize: 12, color: C.ink3, fontVariantNumeric: 'tabular-nums' }}>
           {doneNum}/{totalDenom}
         </span>
