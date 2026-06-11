@@ -22,7 +22,6 @@ import {
   findRabiesChainBreak,
   normalizeRabiesOrder,
   parseDestinations,
-  resolveActiveDestination,
   todayKst,
   validateJpEntryDate,
   writeByDestValue,
@@ -794,17 +793,11 @@ export async function updateFlightFields(
     // 와 동일. 컬럼은 단일값이라 다중 목적지를 못 담고, flatten 이 by_dest[dest].departure_date 를
     // 우선 읽어 has-flight-date·D-day 가 목적지별로 작동한다.
     const caseDestStr = (existing as { destination: string | null }).destination
-    const dests = parseDestinations(caseDestStr)
-    const isSingleDest = dests.length === 1
-    // 다중 목적지는 활성 목적지(?dest) 미지정이어도 by_dest 에 써야 한다 — 읽기(flatten·검증)가
-    // strict by_dest 라 top-level/컬럼에 쓰면 출국일이 검증에 안 보여 '주의'가 누락되는 버그.
-    // 읽기와 동일하게: 유효한 활성 토큰이면 그걸, 아니면 다중일 때 첫 토큰으로 해석.
-    const writeDest = isSingleDest
-      ? (destination ?? null)
-      : destination && dests.includes(destination)
-        ? destination
-        : resolveActiveDestination(caseDestStr, null)
-    // B: 단일도 by_dest 통일 — 활성 목적지 토큰만 있으면 항공권 필드 + 출국일을 by_dest[writeDest] 에 저장.
+    const isSingleDest = parseDestinations(caseDestStr).length === 1
+    // 활성 목적지 토큰을 읽기(flatten)와 동일하게 해석 — ?dest 미지정이어도 첫 토큰으로 fallback 해
+    // 항공권 필드·출국일을 by_dest 에 저장한다. 읽기는 strict by_dest 라 top-level/컬럼에 쓰면
+    // 출국일이 검증에 안 보여 '주의'가 누락됐다. 검역·검진과 동일 패턴(resolveWriteToken, 로컬 함수).
+    const writeDest = resolveWriteToken(caseDestStr, prev, destination)
     if (writeDest) {
       let merged: Record<string, unknown> = { ...prev }
       for (const key of FLIGHT_DATA_KEYS) {
