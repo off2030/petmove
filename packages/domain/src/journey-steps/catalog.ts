@@ -431,7 +431,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '사전 신고',
     shortLabel: '신고',
     description:
-      '일본 입국 40일 전까지 신고하세요.\n\nNACCS에서 신청하고 일본 동물검역소의 이메일 안내에 따르세요.\n절차가 완료되면 허가증(Approval)이 발급됩니다.\n왕복 일정이라면 일본 수출 동물검역 신청도 함께 하는 것이 좋습니다.',
+      '일본 입국 40일 전까지 신고하세요.\n\nNACCS에서 신청하고 일본 동물검역소의 이메일 안내에 따르세요.\n절차가 완료되면 허가증(Approval)이 발급됩니다.\n왕복 일정이면 일본 수출 동물검역 신청도 함께 하세요.',
     doneSummary: '일본 동물검역소에 사전 신고를 했습니다.',
     cardLine: '일본 동물검역소에 사전 신고를 하세요.',
     // 진행 상태는 [[deriveAdvanceNotificationStatus]] 가 단일 출처 — admin 신고탭과 동일.
