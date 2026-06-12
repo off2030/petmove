@@ -159,27 +159,9 @@ export const TH_CHECKS: ProcedureCheck[] = [
   },
 
   // ── 종합백신 ──
-  {
-    id: 'th.general-vaccine-required',
-    country: COUNTRY,
-    category: '종합백신',
-    title: '종합백신 접종 필수',
-    description:
-      'DLD: 강아지 DHPPL (Distemper/Hepatitis/Parvo/Lepto/Parainflu) / 고양이 FVRCP (Panleukopenia 포함) 의무. (DLD: "Animals must be vaccinated ... against Rabies, Distemper, Hepatitis, Parvo and Leptospirosis for dogs, and Rabies and Feline Panleukopenia for cats")',
-    severity: 'info',
-    addedAt: '2026-05-07',
-    run: ({ caseRow, destination }) => {
-      const entries = readGeneralVaccineEntries(caseRow)
-      if (entries.length === 0) {
-        return {
-          ok: false,
-          message: '종합백신 기록이 없습니다. DLD 의무 사항입니다.',
-          fixHint: '강아지는 DHPPL, 고양이는 FVRCP(Panleukopenia 포함) 접종 후 등록하세요.',
-        }
-      }
-      return { ok: true, message: `종합백신 ${entries.length}회 기록됨.` }
-    },
-  },
+  // (구 th.general-vaccine-required — "기록 없음" 안내 룰은 제거. 여정의 종합백신 카드가
+  //  미완료 상태로 같은 사실을 이미 전달하므로 중복 노출이었음. 다른 룰과 동일하게
+  //  "입력 없으면 SKIP" 컨벤션으로 통일. 2026-06-12)
   {
     id: 'th.general-vaccine-21days-before-arrival',
     country: COUNTRY,
