@@ -88,7 +88,7 @@ export function GeneralVaccineInputs({
         <EntryCard
           key={i}
           entry={entry}
-          title={`${vaccineLabel} ${i + 1}차`}
+          title={i === 0 ? vaccineLabel : `${vaccineLabel} ${i + 1}차`}
           dateLabel={dateLabel}
           showValidUntil={showValidUntil}
           showProduct={showProduct}

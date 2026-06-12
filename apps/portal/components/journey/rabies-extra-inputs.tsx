@@ -174,7 +174,7 @@ function ExtraCard({
         }}
       >
         <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>
-          광견병 백신({doseNumber}차)
+          {doseNumber === 1 ? '광견병 백신' : `광견병 백신 ${doseNumber}차`}
         </div>
         <button
           type="button"
