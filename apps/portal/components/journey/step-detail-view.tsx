@@ -867,6 +867,18 @@ export function StepDetailView({
           return '면역 유효기간이 접종일보다 빠릅니다. 날짜를 확인하세요.'
         }
       }
+      // 칩 이후 접종 — 광견병과 동일. 가장 이른 접종이 칩보다 빠르면 차단(칩 식별 연계).
+      // 단일 출처는 목적지 override 의 *.microchip-before-general-vaccine 매핑(태국·필리핀).
+      if ((step.validationIds ?? []).some((id) => id.endsWith('.microchip-before-general-vaccine'))) {
+        const earliest = generalVaccine
+          .map((e) => e.date)
+          .filter((d) => d.length >= 10)
+          .sort()[0]
+        if (earliest) {
+          const chipErr = validateMicrochipBeforeBooster(readImplantDate(caseRow?.data), earliest)
+          if (chipErr) return chipErr
+        }
+      }
       return null
     }
     if (isParasite) {

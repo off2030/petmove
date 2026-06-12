@@ -71,6 +71,32 @@ export const PH_CHECKS: ProcedureCheck[] = [
       }
     },
   },
+  {
+    id: 'ph.microchip-before-general-vaccine',
+    country: COUNTRY,
+    category: '마이크로칩',
+    title: '마이크로칩, 종합백신 타이밍',
+    description:
+      '마이크로칩(ISO 11784/11785, 15자리)이 종합백신 접종일과 같거나 이전이어야 함. 칩으로 식별된 동물의 접종만 인정 — 백신 입력 시 client 차단과 짝, 칩 시술일 수정 후 깨진 경우를 주의로 표면화.',
+    severity: 'warning',
+    addedAt: '2026-06-12',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const microchip = typeof data.microchip_implant_date === 'string' ? data.microchip_implant_date : ''
+      const entries = readGeneralVaccineEntries(caseRow)
+      if (!microchip || entries.length === 0) return SKIP
+
+      const first = entries[0] // readGeneralVaccineEntries 는 날짜순 정렬 — [0] = 가장 이른 접종.
+      if (microchip <= first.date) {
+        return { ok: true, message: `마이크로칩(${microchip}) ≤ 종합백신(${first.date}).` }
+      }
+      return {
+        ok: false,
+        message: '접종일은 마이크로칩 삽입일 이후여야 합니다.',
+        offendingPaths: ['microchip_implant_date', `general_vaccine_dates[${first.originalIndex}].date`],
+      }
+    },
+  },
 
   // ── 광견병 ──
   {
