@@ -2,6 +2,7 @@ import {
   buildDateRuleContext,
   validateKrImportDate,
   validateThImportPermitDate,
+  validateThImportPermitVaccineGap,
 } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
@@ -47,9 +48,9 @@ export const TH_CHECKS: ProcedureCheck[] = [
     id: 'th.microchip-before-rabies',
     country: COUNTRY,
     category: '마이크로칩',
-    title: '마이크로칩은 광견병 1차 접종 이전 시술',
+    title: '마이크로칩, 백신 타이밍',
     description:
-      '마이크로칩(ISO 11784/11785)이 광견병 1차 접종일과 같거나 이전이어야 함. 입국 시 칩 번호와 서류 일치 검증. (DLD 표준)',
+      '마이크로칩(ISO 11784/11785)이 광견병 접종일과 같거나 이전이어야 함. 입국 시 칩 번호와 서류 일치 검증. (DLD 표준) 백신 입력 시 client 차단(validateMicrochipBeforeBooster)과 짝 — 칩 시술일을 나중에 수정해 깨진 경우를 주의로 표면화.',
     severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
@@ -60,13 +61,12 @@ export const TH_CHECKS: ProcedureCheck[] = [
 
       const first = rabies[0]
       if (microchip <= first.date) {
-        return { ok: true, message: `마이크로칩(${microchip}) ≤ 1차 접종(${first.date}).` }
+        return { ok: true, message: `마이크로칩(${microchip}) ≤ 접종(${first.date}).` }
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦습니다.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 합니다.',
-        offendingPaths: ['microchip_implant_date'],
+        message: '접종일은 마이크로칩 삽입일 이후여야 합니다.',
+        offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
       }
     },
   },
@@ -283,6 +283,33 @@ export const TH_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: entry ? `신청일(${filed}) 입국(${entry}) 9일 이전.` : `신청일(${filed}) 입력됨 (입국일 미입력).` }
+    },
+  },
+  {
+    id: 'th.import-permit-14days-after-vaccines',
+    country: COUNTRY,
+    category: '수입허가',
+    title: '백신, 수입 허가 타이밍',
+    description:
+      '수입 허가 신청은 광견병·종합백신의 가장 최근 접종일 + 14일(2주) 이후. 입력 차단(validateThImportPermitVaccineGap)과 같은 함수 — 백신을 나중에 수정해 깨진 경우를 주의로 표면화.',
+    severity: 'warning',
+    addedAt: '2026-06-12',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed =
+        typeof data.import_permit_application_date === 'string'
+          ? data.import_permit_application_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const msg = validateThImportPermitVaccineGap(filed, data)
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['import_permit_application_date'],
+        }
+      }
+      return { ok: true, message: `신청일(${filed}) 백신 접종 14일 이후.` }
     },
   },
 

@@ -20,9 +20,13 @@ import {
   validateRabiesPrimeAge,
   validateChImportPermitDate,
   validateEuEntryDate,
+  validateEuTiterAfterVaccine,
   validateIeAdvanceNoticeDate,
   validatePhEntryDate,
+  validatePhImportPermitVaccineGap,
   validateThEntryDate,
+  validateThImportPermitVaccineGap,
+  EU_ENTRY_FAMILY,
   validateThImportPermitDate,
   validateTiterAfterBooster,
   validateTiterWithinChain,
@@ -648,6 +652,14 @@ export function StepDetailView({
           step.earliest?.anchor === 'birth' ? step.earliest.daysAfter : undefined
         const ageErr = validateRabiesPrimeAge(readBirthDate(caseRow?.data), rabies.date, minAgeDays)
         if (ageErr) return ageErr
+        // 칩 시술 이후 접종 — 1회 접종 국가(태국·필리핀·EU 패밀리)는 1차(유일한 접종)가
+        // 칩 이전이면 무효라 입력 차단. 단일 출처는 목적지 override 의
+        // *.microchip-before-rabies 매핑 (일본은 2차 입력 시 차단하는 기존 모델 유지 —
+        // 1차는 jp.rabies-prime-before-microchip 주의가 다음 단계에서 안내).
+        if ((step.validationIds ?? []).some((id) => id.endsWith('.microchip-before-rabies'))) {
+          const chipErr = validateMicrochipBeforeBooster(readImplantDate(caseRow?.data), rabies.date)
+          if (chipErr) return chipErr
+        }
       }
       if (isRabies2) {
         const r1 = readRabiesEntryForm(caseRow?.data, 0)
@@ -694,6 +706,15 @@ export function StepDetailView({
       return null
     }
     if (isTiter) {
+      // EU 패밀리 — 채혈은 직전 유효 접종 + 30일 이후 (chain 유지 시 시계 리셋 X).
+      // procedure-check(eu.titer-min-30days-after-vaccine)와 같은 알고리즘의 입력 차단.
+      if (destinationKey && EU_ENTRY_FAMILY.includes(destinationKey)) {
+        const err30 = validateEuTiterAfterVaccine(
+          readRabiesDoseList(caseRow?.data),
+          titerForm.date.trim(),
+        )
+        if (err30) return err30
+      }
       // 만료된 과거 검사는 사실 데이터로 입력 허용 — 갱신 여부는 추가 검사/접종 step 의 검증과
       // procedure-check 주의(만료 후 추가 접종/검사 안내)가 표면화한다.
       return validateTiterDate(caseRow?.data, titerForm.date, true)
@@ -737,10 +758,25 @@ export function StepDetailView({
       return null
     }
     if (isGeneralVaccine) {
-      // 유효기간 < 접종일 — 논리적 불가능 조건이라 저장 거부.
+      const birth = readBirthDate(caseRow?.data)
       for (const e of generalVaccine) {
+        // 출생일 이전 접종 — 논리적 불가능 조건이라 저장 거부.
+        if (e.date && birth && e.date < birth) {
+          return '접종일이 출생일보다 빠릅니다. 날짜를 확인하세요.'
+        }
+        // 유효기간 < 접종일 — 논리적 불가능 조건이라 저장 거부.
         if (e.date && e.valid_until && e.valid_until < e.date) {
           return '면역 유효기간이 접종일보다 빠릅니다. 날짜를 확인하세요.'
+        }
+      }
+      return null
+    }
+    if (isParasite) {
+      // 출생일 이전 처치 — 논리적 불가능 조건이라 저장 거부.
+      const birth = readBirthDate(caseRow?.data)
+      for (const e of parasite) {
+        if (e.date && birth && e.date < birth) {
+          return '처치일이 출생일보다 빠릅니다. 날짜를 확인하세요.'
         }
       }
       return null
@@ -748,13 +784,20 @@ export function StepDetailView({
     if (isImportPermit) {
       const data = (caseRow?.data ?? {}) as Record<string, unknown>
       const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
-      // 태국 — 신청일이 입국일 9일(7영업일) 이내면 차단.
+      const filed = importPermit.applicationDate.trim()
+      // 태국 — 신청일이 입국일 9일(7영업일) 이내·백신 접종 14일(2주) 이내면 차단.
       if (destinationKey === 'thailand') {
-        return validateThImportPermitDate(importPermit.applicationDate.trim(), entry)
+        return (
+          validateThImportPermitDate(filed, entry) ?? validateThImportPermitVaccineGap(filed, data)
+        )
+      }
+      // 필리핀 — 신청일이 백신 1차(단일 접종) 14일 이내면 차단 (부스터 면제).
+      if (destinationKey === 'philippines') {
+        return validatePhImportPermitVaccineGap(filed, data)
       }
       // 스위스 — 신청일이 입국일 3주(21일) 이내면 차단.
       if (destinationKey === 'switzerland') {
-        return validateChImportPermitDate(importPermit.applicationDate.trim(), entry)
+        return validateChImportPermitDate(filed, entry)
       }
       return null
     }
@@ -2327,6 +2370,22 @@ function readBirthDate(data: Record<string, unknown> | null | undefined): string
   if (!data) return ''
   const v = data['birth_date']
   return typeof v === 'string' ? v : ''
+}
+
+/** rabies_dates → [{date, valid_until}] (EU 채혈 30일 차단용 — 전체 접종 이력). */
+function readRabiesDoseList(
+  data: Record<string, unknown> | null | undefined,
+): Array<{ date: string; valid_until?: string | null }> {
+  if (!data || !Array.isArray(data['rabies_dates'])) return []
+  const out: Array<{ date: string; valid_until?: string | null }> = []
+  for (const r of data['rabies_dates'] as unknown[]) {
+    if (!r || typeof r !== 'object') continue
+    const rec = r as Record<string, unknown>
+    const date = typeof rec.date === 'string' ? rec.date : ''
+    if (date.length < 10) continue
+    out.push({ date, valid_until: typeof rec.valid_until === 'string' ? rec.valid_until : null })
+  }
+  return out
 }
 
 function addDays(iso: string, days: number): string {

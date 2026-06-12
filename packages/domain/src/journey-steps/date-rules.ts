@@ -182,8 +182,106 @@ export function validatePhEntryDate(v: string, ctx: DateRuleContext): string | n
  * EU 패밀리(EU·영국·아일랜드·몰타·노르웨이·핀란드·스위스) — destination-config 키.
  * procedure-checks/eu.ts 의 EU_REGIME 과 같은 목록 — eu.ts 가 이 파일을 import 하므로
  * (순환 방지) 여기 별도로 둔다. 목록 변경 시 양쪽 함께.
+ * client(step-detail-view)도 destinationKey 분기에 사용 — export.
  */
-const EU_ENTRY_FAMILY = ['eu', 'uk', 'ireland', 'malta', 'norway', 'finland', 'switzerland']
+export const EU_ENTRY_FAMILY = ['eu', 'uk', 'ireland', 'malta', 'norway', 'finland', 'switzerland']
+
+/** data[key] 배열에서 유효 날짜(들)를 뽑는다 — [{date}] 객체·문자열 항목 모두 지원. */
+function readDateArray(data: Record<string, unknown>, key: string): string[] {
+  const raw = data[key]
+  if (!Array.isArray(raw)) return []
+  const out: string[] = []
+  for (const r of raw) {
+    const d =
+      typeof r === 'string'
+        ? r
+        : r && typeof r === 'object'
+          ? (r as Record<string, unknown>).date
+          : null
+    if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d.slice(0, 10))) out.push(d.slice(0, 10))
+  }
+  return out
+}
+
+/**
+ * EU 패밀리 — 항체 검사 채혈일은 직전 유효 광견병 접종으로부터 30일 이후여야 함.
+ * 부스터 chain 이 끊기지 않았으면(직전 접종 면역 유효 중 추가 접종) 30일 시계는 chain 시작
+ * 접종 기준 — 채혈 당일 부스터를 맞아도 리셋되지 않는다. (eu.titer-min-30days-after-vaccine
+ * 과 동일 알고리즘 — client 채혈 입력 차단용 단일 함수.)
+ *
+ * doses = rabies_dates 형태의 [{date, valid_until}] (입력 순서 무관). 채혈·접종 한쪽 비면 통과.
+ */
+export function validateEuTiterAfterVaccine(
+  doses: Array<{ date: string; valid_until?: string | null }>,
+  titerDate: string,
+): string | null {
+  if (!titerDate) return null
+  const prior = doses
+    .filter((d) => typeof d.date === 'string' && d.date.length >= 10 && d.date <= titerDate)
+    .sort((a, b) => a.date.localeCompare(b.date))
+  if (prior.length === 0) return null // 접종-채혈 순서 자체는 validateTiterAfterBooster 담당
+  let chainStart = prior[prior.length - 1]
+  for (let i = prior.length - 2; i >= 0; i--) {
+    const earlier = prior[i]
+    const validUntil = resolveValidUntil(earlier.date, earlier.valid_until)
+    if (validUntil && validUntil >= chainStart.date) chainStart = earlier
+    else break
+  }
+  if (daysBetween(chainStart.date, titerDate) < 30) {
+    const earliest = addDays(chainStart.date, 30)
+    return `광견병 항체 검사는 백신 접종일(${fmt(chainStart.date)})로부터 30일이 지난 후에 받을 수 있습니다.${earliest ? ` ${fmt(earliest)} 이후로 입력하세요.` : ''}`
+  }
+  return null
+}
+
+/**
+ * 태국 — 수입 허가 신청일은 광견병·종합백신의 가장 최근 접종일 + 14일(2주) 이후여야 함.
+ * (DLD/petmove 가이드 — 백신은 신청 14일 전 완료. 보수적으로 모든 접종에 적용.)
+ * client(신청 입력 시 입력 불가)·procedure-check(백신 수정 후 주의) 공용. 한쪽 비면 통과.
+ */
+export function validateThImportPermitVaccineGap(
+  filedDate: string,
+  data: Record<string, unknown>,
+): string | null {
+  if (!filedDate) return null
+  for (const [key, label] of [
+    ['rabies_dates', '광견병 백신'],
+    ['general_vaccine_dates', '종합백신'],
+  ] as const) {
+    const dates = readDateArray(data, key)
+    if (dates.length === 0) continue
+    const latest = dates.reduce((m, d) => (d > m ? d : m))
+    const earliest = addDays(latest, 14)
+    if (earliest && filedDate < earliest) {
+      return `${label} 접종일(${fmt(latest)})로부터 14일(2주)이 지난 ${fmt(earliest)} 이후에 수입 허가를 신청할 수 있습니다.`
+    }
+  }
+  return null
+}
+
+/**
+ * 필리핀 — 수입허가증(SPSIC) 신청일은 광견병·종합백신 **1차(단일 접종)** 기준 14일 이후.
+ * 부스터(2회 이상)는 BAI 면제(즉시 신청 가능) — 단일 접종일 때만 검사.
+ * client·procedure-check 공용. 한쪽 비면 통과.
+ */
+export function validatePhImportPermitVaccineGap(
+  filedDate: string,
+  data: Record<string, unknown>,
+): string | null {
+  if (!filedDate) return null
+  for (const [key, label] of [
+    ['rabies_dates', '광견병 백신'],
+    ['general_vaccine_dates', '종합백신'],
+  ] as const) {
+    const dates = readDateArray(data, key)
+    if (dates.length !== 1) continue // 0건 = 비교 불가, 2건+ = 부스터 면제
+    const earliest = addDays(dates[0], 14)
+    if (earliest && filedDate < earliest) {
+      return `${label} 접종일(${fmt(dates[0])})로부터 14일이 지난 ${fmt(earliest)} 이후에 수입허가증(SPSIC)을 신청할 수 있습니다.`
+    }
+  }
+  return null
+}
 
 /**
  * EU 패밀리 입국일(= 출국 항공편 날짜) — 광견병 항체 검사 채혈일 + 3개월(캘린더) 미만 입국만

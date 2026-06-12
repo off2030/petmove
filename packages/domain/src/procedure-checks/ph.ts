@@ -1,4 +1,8 @@
-import { buildDateRuleContext, validateKrImportDate } from '../journey-steps/date-rules'
+import {
+  buildDateRuleContext,
+  validateKrImportDate,
+  validatePhImportPermitVaccineGap,
+} from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   daysBetween,
@@ -44,9 +48,9 @@ export const PH_CHECKS: ProcedureCheck[] = [
     id: 'ph.microchip-before-rabies',
     country: COUNTRY,
     category: '마이크로칩',
-    title: '마이크로칩은 광견병 1차 접종 이전 시술',
+    title: '마이크로칩, 백신 타이밍',
     description:
-      '마이크로칩(ISO 11784/11785, 15자리)이 광견병 1차 접종일과 같거나 이전이어야 함. 매 준비 단계마다 칩 스캔 확인 필수. (BAI SPSIC)',
+      '마이크로칩(ISO 11784/11785, 15자리)이 광견병 접종일과 같거나 이전이어야 함. 매 준비 단계마다 칩 스캔 확인 필수. (BAI SPSIC) 백신 입력 시 client 차단(validateMicrochipBeforeBooster)과 짝.',
     severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
@@ -57,13 +61,12 @@ export const PH_CHECKS: ProcedureCheck[] = [
 
       const first = rabies[0]
       if (microchip <= first.date) {
-        return { ok: true, message: `마이크로칩(${microchip}) ≤ 1차 접종(${first.date}).` }
+        return { ok: true, message: `마이크로칩(${microchip}) ≤ 접종(${first.date}).` }
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦습니다.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 합니다.',
-        offendingPaths: ['microchip_implant_date'],
+        message: '접종일은 마이크로칩 삽입일 이후여야 합니다.',
+        offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
       }
     },
   },
@@ -274,6 +277,35 @@ export const PH_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: '보호자 케이스 ≤ 3건.' }
+    },
+  },
+
+  // ── 수입허가(SPSIC) — 백신 14일 후 신청 (부스터 면제) ──
+  {
+    id: 'ph.import-permit-14days-after-vaccines',
+    country: COUNTRY,
+    category: '수입허가',
+    title: '백신, 수입허가증(SPSIC) 타이밍',
+    description:
+      'SPSIC 신청은 광견병·종합백신 1차(단일 접종) 기준 14일 이후 — 부스터(2회+)는 BAI 면제. 입력 차단(validatePhImportPermitVaccineGap)과 같은 함수.',
+    severity: 'warning',
+    addedAt: '2026-06-12',
+    run: ({ caseRow }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed =
+        typeof data.import_permit_application_date === 'string'
+          ? data.import_permit_application_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const msg = validatePhImportPermitVaccineGap(filed, data)
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['import_permit_application_date'],
+        }
+      }
+      return { ok: true, message: `신청일(${filed}) 백신 접종 14일 이후 (또는 부스터 면제).` }
     },
   },
 

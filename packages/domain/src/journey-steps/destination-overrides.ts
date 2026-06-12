@@ -101,7 +101,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       cardLine: '태국 수입 허가를 신청하세요.',
       deadline: { anchor: 'departure', daysBefore: 14 },
       links: [{ url: '/guide/th-aqs-contacts', label: '태국 동물검역소(AQS) 연락처' }],
-      validationIds: ['th.import-permit-9days-before-entry'],
+      validationIds: [
+        'th.import-permit-9days-before-entry',
+        'th.import-permit-14days-after-vaccines',
+      ],
     },
     departure: {
       title: '태국 수입 동물검역',
@@ -193,6 +196,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         { url: 'https://www.bai.gov.ph/Travelers/PET', label: 'BAI 반려동물 수입 안내' },
       ],
       attachmentLabel: '수입허가증(SPSIC)',
+      validationIds: ['ph.import-permit-14days-after-vaccines'],
     },
     departure: {
       title: '필리핀 수입 동물검역',

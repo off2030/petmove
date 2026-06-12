@@ -58,9 +58,9 @@ export const EU_CHECKS: ProcedureCheck[] = [
     id: 'eu.microchip-before-rabies',
     country: EU_REGIME,
     category: '마이크로칩',
-    title: '마이크로칩은 광견병 1차 접종 이전 시술',
+    title: '마이크로칩, 백신 타이밍',
     description:
-      '마이크로칩이 광견병 1차 접종일보다 먼저 시술되어 있어야 함. 칩 시술 후의 접종만 인정. (EU Reg 576/2013)',
+      '마이크로칩이 광견병 접종일보다 먼저 시술되어 있어야 함. 칩 시술 후의 접종만 인정. (EU Reg 576/2013) 백신 입력 시 client 차단(validateMicrochipBeforeBooster)과 짝.',
     severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
@@ -71,13 +71,12 @@ export const EU_CHECKS: ProcedureCheck[] = [
 
       const first = rabies[0]
       if (microchip <= first.date) {
-        return { ok: true, message: `마이크로칩(${microchip}) ≤ 1차 접종(${first.date}).` }
+        return { ok: true, message: `마이크로칩(${microchip}) ≤ 접종(${first.date}).` }
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦습니다.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 합니다.',
-        offendingPaths: ['microchip_implant_date'],
+        message: '접종일은 마이크로칩 삽입일 이후여야 합니다.',
+        offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
       }
     },
   },
