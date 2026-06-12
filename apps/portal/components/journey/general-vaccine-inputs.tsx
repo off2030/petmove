@@ -46,6 +46,14 @@ const PRODUCT_FIELDS: ReadonlyArray<{
   { key: 'expiry', label: '제품 유효기간', kind: 'date' },
 ]
 
+/** "N년" 문자열 → 선택된 연수. 빈값은 1년 기본. 그 외(날짜 등)는 미선택. (광견병과 동일.) */
+function selectedYear(value: string): string | null {
+  const m = value.match(/^(\d+)\s*년$/)
+  if (m) return m[1]
+  if (value.trim() === '') return '1'
+  return null
+}
+
 export function GeneralVaccineInputs({
   entries,
   vaccineLabel,
@@ -224,16 +232,32 @@ function EntryCard({
       {showValidUntil && (
         <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
           <div style={labelStyle}>면역 유효기간</div>
-          <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
-            백신 증명서·수첩에 적힌 다음 접종 예정일
-          </div>
-          <div style={{ marginTop: 8 }}>
-            <DateTextField
-              value={entry.valid_until}
-              onChange={(v) => onChange('valid_until', v)}
-              placeholder="YYYY-MM-DD"
-              block
-            />
+          <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+            {(['1', '2', '3'] as const).map((n) => {
+              const selected = selectedYear(entry.valid_until) === n
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => onChange('valid_until', `${n}년`)}
+                  style={{
+                    flex: 1,
+                    padding: '9px 0',
+                    borderRadius: 10,
+                    border: `1px solid ${selected ? C.ink : C.line}`,
+                    background: selected ? C.ink : 'var(--pm-surface)',
+                    color: selected ? C.surface : C.ink2,
+                    fontFamily: 'inherit',
+                    fontSize: 14,
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    transition: 'background .12s, color .12s, border-color .12s',
+                  }}
+                >
+                  {n}년
+                </button>
+              )
+            })}
           </div>
         </div>
       )}

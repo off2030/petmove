@@ -70,6 +70,8 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       if (r.length === 0) return false
       const latest = [...r].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      // 이미 만료(오늘 기준) — 출국일 입력 여부와 무관하게 추가 접종 필요 → 미완료.
+      if (validUntil && validUntil < todayKst()) return false
       const entry =
         (typeof data.entry_date === 'string' && data.entry_date) ||
         (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
@@ -159,6 +161,8 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       if (entries.length === 0) return false
       const latest = [...entries].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      // 이미 만료(오늘 기준) — 출국일 입력 여부와 무관하게 추가 접종 필요 → 미완료.
+      if (validUntil && validUntil < todayKst()) return false
       const entry =
         (typeof data.entry_date === 'string' && data.entry_date) ||
         (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
