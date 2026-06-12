@@ -151,7 +151,7 @@ export function RequiredDocDetail({
       <div style={{ padding: '0 24px' }}>
         {/* Back link */}
         <Link
-          href={`/cases/${caseId}/docs`}
+          href={`/cases/${caseId}/docs${activeDest ? `?dest=${encodeURIComponent(activeDest)}` : ''}`}
           style={{
             ...monoCap,
             display: 'inline-flex',

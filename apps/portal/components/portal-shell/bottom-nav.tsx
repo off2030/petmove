@@ -1,11 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useCases } from './case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
-import { readLastCaseId, writeLastCaseId } from './last-case'
+import { readLastCaseId, readLastDest, writeLastCaseId, writeLastDest } from './last-case'
 
 /**
  * 보호자 앱 하단 3탭 — case-aware.
@@ -37,15 +37,31 @@ export function BottomNav() {
   const caseIdInPath = caseIdFromPath(pathname)
   const { cases } = useCases()
   const [lastCaseId, setLastCaseId] = useState<string | null>(null)
+  // 다중 목적지 — 활성 목적지(?dest=)를 케이스별로 기억해 탭 전환 시 링크에 붙인다.
+  // 안 붙이면 탭을 누를 때마다 기본(첫) 목적지로 리셋된다. { id, dest } 쌍으로 들고
+  // 최종 caseId 와 일치할 때만 사용 (다른 케이스의 dest 가 새는 것 방지).
+  const searchParams = useSearchParams()
+  const destInUrl = searchParams.get('dest')
+  const [lastDest, setLastDest] = useState<{ id: string; dest: string } | null>(null)
 
   useEffect(() => {
     if (caseIdInPath) {
       writeLastCaseId(caseIdInPath)
       setLastCaseId(caseIdInPath)
+      if (destInUrl) {
+        writeLastDest(caseIdInPath, destInUrl)
+        setLastDest({ id: caseIdInPath, dest: destInUrl })
+      } else {
+        const d = readLastDest(caseIdInPath)
+        setLastDest(d ? { id: caseIdInPath, dest: d } : null)
+      }
     } else {
-      setLastCaseId(readLastCaseId())
+      const id = readLastCaseId()
+      setLastCaseId(id)
+      const d = id ? readLastDest(id) : null
+      setLastDest(id && d ? { id, dest: d } : null)
     }
-  }, [caseIdInPath])
+  }, [caseIdInPath, destInUrl])
 
   // 모바일 키보드가 올라오면 fixed nav 가 viewport bottom 에 붙어 input 위로 떠올라
   // 가린다. input/textarea 포커스 동안 nav 자체를 미렌더 (StickySaveBar 와 동일 패턴).
@@ -109,7 +125,7 @@ export function BottomNav() {
       }}
     >
       {TABS.map((t) => {
-        const href = hrefFor(t.key, caseId)
+        const href = hrefFor(t.key, caseId, lastDest?.id === caseId ? lastDest.dest : null)
         const active = isActive(t.key, pathname)
         return (
           <Link
@@ -137,10 +153,10 @@ export function BottomNav() {
   )
 }
 
-function hrefFor(key: Tab['key'], caseId: string | null): string {
+function hrefFor(key: Tab['key'], caseId: string | null, dest: string | null): string {
   if (key === 'me') return '/me'
   if (!caseId) return '/cases'
-  return `/cases/${caseId}/${key}`
+  return `/cases/${caseId}/${key}${dest ? `?dest=${encodeURIComponent(dest)}` : ''}`
 }
 
 function isActive(key: Tab['key'], pathname: string): boolean {

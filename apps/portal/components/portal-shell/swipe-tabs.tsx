@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
-import { readLastCaseId, writeLastCaseId } from './last-case'
+import { readLastCaseId, readLastDest, writeLastCaseId } from './last-case'
 import { useNavGuard } from './nav-guard'
 
 /**
@@ -84,7 +84,10 @@ function hrefFor(tab: Tab, caseId: string | null): string {
   if (tab === 'me') return '/me'
   const id = caseId ?? readLastCaseId()
   if (!id) return '/cases'
-  return `/cases/${id}/${tab}`
+  // 다중 목적지 — 케이스별 마지막 활성 목적지(?dest=) 유지 (bottom-nav 가 기록, 여기선 읽기만).
+  // 스와이프 핸들러(이벤트 시점)에서만 호출되므로 sessionStorage 접근 안전.
+  const dest = readLastDest(id)
+  return `/cases/${id}/${tab}${dest ? `?dest=${encodeURIComponent(dest)}` : ''}`
 }
 
 export function SwipeTabs({ children }: { children: React.ReactNode }) {

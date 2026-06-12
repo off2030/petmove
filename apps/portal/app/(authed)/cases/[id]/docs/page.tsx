@@ -36,5 +36,5 @@ export default function CaseDocsPage({
 
   // multi-destination: ?dest=<token> → buildDocsView 가 그 토큰의 by_dest 분기 (단일·미지정은 첫 토큰)
   const data = buildDocsView(caseRow, activeDest)
-  return <DocsView data={data} caseId={id} />
+  return <DocsView data={data} caseId={id} activeDest={activeDest} />
 }

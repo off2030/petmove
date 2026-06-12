@@ -14,7 +14,17 @@ import type { AutoDocItem, DocsViewData, StoredDocItem } from '@/lib/docs/catalo
  * 시각 소스: docs/portal-preview/docs.jsx — 그대로 옮김.
  * Phase 1 read-only: 업로드 버튼은 placeholder, 다운로드 버튼은 표시만.
  */
-export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string }) {
+export function DocsView({
+  data,
+  caseId,
+  activeDest,
+}: {
+  data: DocsViewData
+  caseId: string
+  /** 활성 목적지(?dest=) — 다중 목적지에서 서류 상세로 들어갈 때 유지. */
+  activeDest?: string | null
+}) {
+  const destQuery = activeDest ? `?dest=${encodeURIComponent(activeDest)}` : ''
   const C = {
     bg: 'var(--pm-bg)',
     surface: 'var(--pm-surface)',
@@ -113,7 +123,7 @@ export function DocsView({ data, caseId }: { data: DocsViewData; caseId: string 
                   C={C}
                   monoCap={monoCap}
                   pendingLabel="준비중"
-                  href={`/cases/${caseId}/docs/${d.id}`}
+                  href={`/cases/${caseId}/docs/${d.id}${destQuery}`}
                 />
               ))}
             </div>
