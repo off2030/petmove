@@ -155,7 +155,7 @@ export const MN_CHECKS: ProcedureCheck[] = [
         const msgs: string[] = []
         for (const v of violations) {
           offending.push(`rabies_dates[${v.entry.originalIndex}].valid_until`)
-          msgs.push(`${v.entry.date} 백신의 유효기간이 ${v.days}일로 364일(1년)을 초과합니다. 3년 백신은 인정되지 않습니다.`)
+          msgs.push(`${v.entry.date} 백신의 면역 유효기간이 ${v.days}일로 364일(1년)을 초과합니다. 3년 백신은 인정되지 않습니다.`)
         }
         return {
           ok: false,

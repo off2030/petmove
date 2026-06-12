@@ -133,7 +133,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.rabies-booster-within-prime-validity',
     country: 'japan',
     category: '광견병',
-    title: '백신 유효기간 만료',
+    title: '백신 면역 유효기간 만료',
     description:
       '2차 광견병 접종은 1차 접종의 면역 유효기간 이내여야 함. 유효기간 경과 후 접종은 추가접종이 아닌 새 기초접종으로 간주됨.',
     // 2차 입력 시 client 차단 + 1차 수정 후 재검증 '주의' (30일 간격 룰과 동일 패턴).
@@ -162,7 +162,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.rabies-extra-within-previous-validity',
     country: 'japan',
     category: '광견병',
-    title: '백신 유효기간 만료',
+    title: '백신 면역 유효기간 만료',
     description:
       '추가(3차+) 광견병 접종은 직전 광견병 백신의 면역 유효기간 이내여야 함. 유효기간 경과 후 접종은 부스터가 아닌 새 기초접종으로 간주됨.',
     severity: 'info',
@@ -181,7 +181,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
         const broken = entries[brk.brokenAt - 1]
         return {
           ok: false,
-          message: `${brk.brokenAt - 1}차 백신 유효기간이 만료된 뒤 ${brk.brokenAt}차를 접종했습니다. 접종일을 확인하세요.`,
+          message: `${brk.brokenAt - 1}차 백신 면역 유효기간이 만료된 뒤 ${brk.brokenAt}차를 접종했습니다. 접종일을 확인하세요.`,
           offendingPaths: [`rabies_dates[${broken.originalIndex}].date`],
         }
       }
@@ -464,7 +464,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.rabies-valid-until-on-departure',
     country: 'japan',
     category: '광견병',
-    title: '광견병 백신 유효기간 만료',
+    title: '광견병 백신 면역 유효기간 만료',
     description: '입국일에 가장 최근 광견병 접종의 면역 유효기간이 만료되지 않아야 함.',
     severity: 'info',
     addedAt: '2026-04-21',
@@ -485,8 +485,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
         // 이미 만료(과거)와 입국 전 만료 예정(미래) 분기 — '추가 백신' 카드·situational 과 동일 문구.
         const message =
           validUntil < todayKst()
-            ? `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
-            : `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전에 추가 접종을 하세요.`
+            ? `광견병 백신 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
+            : `광견병 백신 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전에 추가 접종을 하세요.`
         return {
           ok: false,
           message,
@@ -500,7 +500,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
     id: 'jp.rabies-validity-expires-soon',
     country: 'japan',
     category: '광견병',
-    title: '광견병 백신 유효기간 만료 임박',
+    title: '광견병 백신 면역 유효기간 만료 임박',
     description: '광견병 백신 면역 유효기간이 오늘로부터 30일 이내로 남았을 때 사전 안내.',
     severity: 'info',
     addedAt: '2026-05-21',
@@ -527,7 +527,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `광견병 백신 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전에 추가 접종을 하세요.`,
+        message: `광견병 백신 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전에 추가 접종을 하세요.`,
         offendingPaths: [`rabies_dates[${latest.originalIndex}].date`],
       }
     },

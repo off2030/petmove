@@ -63,7 +63,7 @@ function departFromData(data: Record<string, unknown>): string {
  *
  * 회복 가능한 인접 위반들은 hard 차단 X — procedure-check '주의' 배지가 안내:
  *  - 검사 유효기간(2년) 만료 → 재검사로 회복 (jp.entry-within-2years-of-titer)
- *  - 백신 유효기간 만료 → 재접종으로 회복 (jp.rabies-valid-until-on-departure)
+ *  - 백신 면역 유효기간 만료 → 재접종으로 회복 (jp.rabies-valid-until-on-departure)
  *  - 사전 신고 40일·검역 윈도우 등 후행 일정 — 항공편 수정 시 갇힘 방지
  *
  * 일본 외 목적지·항체 검사 미입력 시 SKIP.
