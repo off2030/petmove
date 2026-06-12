@@ -53,8 +53,15 @@ export default function CaseJourneyStepPage({
   // prod 빌드에서 "couldn't load" 에러가 난다 (dev 에선 우회됨). router.replace 를
   // effect 에서 호출하는 게 client 안전 패턴.
   useEffect(() => {
-    if (stepIndex === -1) router.replace(`/cases/${id}/journey`)
-  }, [stepIndex, id, router])
+    // 다중 목적지: 활성 목적지(?dest=) 보존 — 안 하면 기본(첫) 목적지로 튕긴다.
+    if (stepIndex === -1) {
+      router.replace(
+        activeDest
+          ? `/cases/${id}/journey?dest=${encodeURIComponent(activeDest)}`
+          : `/cases/${id}/journey`,
+      )
+    }
+  }, [stepIndex, id, router, activeDest])
   if (stepIndex === -1) return null
 
   const ctx = buildCaseJourneyContext(view)

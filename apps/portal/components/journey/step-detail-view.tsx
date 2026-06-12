@@ -185,6 +185,11 @@ export function StepDetailView({
     isGeneralVaccine ||
     isImportPermit ||
     isParasite
+  // 일정 화면 복귀 경로 — 다중 목적지에서 활성 목적지(?dest=)를 보존해야 저장·완료 후
+  // 다른 목적지(기본=첫 토큰)로 튕기지 않는다. 뒤로 링크·완료 후 replace 모두 이걸 사용.
+  const journeyHref = activeDest
+    ? `/cases/${caseId}/journey?dest=${encodeURIComponent(activeDest)}`
+    : `/cases/${caseId}/journey`
   const caseRowRaw = useCase(caseId)
   // 다중 목적지: 활성 목적지(?dest=) 1개짜리 뷰로 좁힌다 — 아래 모든 saved* 읽기·동기화
   // useEffect 가 그 목적지(by_dest) 기준이 된다. 단일 목적지면 뷰가 원본과 동일(무변경).
@@ -1252,7 +1257,7 @@ export function StepDetailView({
       setSkippingApproval(false)
       if (res.ok) {
         updateCase(res.value)
-        router.replace(`/cases/${caseId}/journey`)
+        router.replace(journeyHref)
       } else {
         setStatus('error')
         setError(res.error)
@@ -1283,7 +1288,7 @@ export function StepDetailView({
       setSkippingJpExport(false)
       if (res.ok) {
         updateCase(res.value)
-        router.replace(`/cases/${caseId}/journey`)
+        router.replace(journeyHref)
       } else {
         setStatus('error')
         setError(res.error)
@@ -1307,7 +1312,7 @@ export function StepDetailView({
       setCompletingImportPermit(false)
       if (res.ok) {
         updateCase(res.value)
-        router.replace(`/cases/${caseId}/journey`)
+        router.replace(journeyHref)
       } else {
         setStatus('error')
         setError(res.error)
@@ -1329,7 +1334,7 @@ export function StepDetailView({
       setCompletingTiter(false)
       if (res.ok) {
         updateCase(res.value)
-        router.replace(`/cases/${caseId}/journey`)
+        router.replace(journeyHref)
       } else {
         setStatus('error')
         setError(res.error)
@@ -1362,7 +1367,7 @@ export function StepDetailView({
       setConfirmingVetDocs(false)
       if (res.ok) {
         updateCase(res.value)
-        router.replace(`/cases/${caseId}/journey`)
+        router.replace(journeyHref)
       } else {
         setStatus('error')
         setError(res.error)
@@ -1421,7 +1426,7 @@ export function StepDetailView({
       if (res.ok) {
         updateCase(res.value)
         // 전환 후 일정으로 — 사전 신고가 다음 할 일로 자동 승격된 상태를 보여준다.
-        router.replace(`/cases/${caseId}/journey`)
+        router.replace(journeyHref)
       } else {
         setStatus('error')
         setError(res.error)
@@ -1446,7 +1451,7 @@ export function StepDetailView({
       <div style={{ padding: '0 20px' }}>
         {/* Back link — 서류 상세와 동일한 chevron + 작은 라벨 스타일. */}
         <Link
-          href={`/cases/${caseId}/journey`}
+          href={journeyHref}
           style={{
             ...monoCap,
             display: 'inline-flex',
