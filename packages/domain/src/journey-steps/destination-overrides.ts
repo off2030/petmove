@@ -83,12 +83,13 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['th.microchip-before-general-vaccine'],
     },
     // 항공권 구매 — 일본(항체검사 180일)과 제약이 달라 교체: 백신 21일 대기 + 수입허가
-    // 일정(60일 유효)이 기준. 백신·수입허가 뒤로 순서 조정(order 105 — 수입허가 100 다음).
+    // 일정(60일 유효)이 기준. 수입 허가 신청에 항공편 일정이 필요하므로 항공권을 수입허가(100)
+    // 앞에 둔다(order 90).
     'flight-purchase': {
       description:
         '태국 입국 가능 시기에 맞춰 항공권을 구매하세요.\n\n광견병 백신과 종합백신 접종일로부터 21일이 지난 후에 입국할 수 있습니다.\n수입 허가 신청에 항공편 일정이 필요합니다. 늦어도 입국 2주 전까지 항공권을 준비하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
       cardLine: '태국에 입국할 수 있습니다.',
-      order: 105,
+      order: 90,
       // 일본의 180일 anchor(항체 검사) 미적용 — 21일 룰은 입력 차단(validateThEntryDate)과
       // 아래 procedure-check 가 담당.
       earliest: undefined,
@@ -105,7 +106,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // (base 카드의 deriveImportPermitStatus 모델 그대로, 문구·마감만 태국 기준).
     'import-permit': {
       description:
-        '입국 공항 동물검역소에 수입 허가를 신청하세요.\n\n입국 7영업일 전까지 이메일로 신청합니다.\n신청서(R1/1), 여권 사본, 항공편 일정, 반려동물 사진, 마이크로칩·예방접종 증명서, 백신 수첩 등이 필요합니다.\n수입 허가증은 발급일로부터 60일간 유효합니다.',
+        '입국 공항 동물검역소에 수입 허가를 신청하세요.\n\n입국 7영업일 전까지 이메일로 신청합니다.\n신청서(R1/1), 여권 사본, 항공편 일정, 반려동물 사진, 마이크로칩·예방접종 증명서, 백신 수첩이 필요합니다.\n수입 허가증은 발급일로부터 60일간 유효합니다.',
       doneSummary: '태국 수입허가증을 받았습니다.',
       cardLine: '태국 수입 허가를 신청하세요.',
       deadline: { anchor: 'departure', daysBefore: 14 },

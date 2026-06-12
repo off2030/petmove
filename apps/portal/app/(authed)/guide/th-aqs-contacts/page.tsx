@@ -72,18 +72,11 @@ export default function ThAqsContactsPage() {
 }
 
 function Section({ section, first }: { section: ContactSection; first: boolean }) {
+  // 소제목(section.title)·설명(subtitle)은 페이지 h1 과 중복이라 노출하지 않고 카드만 바로 보여준다.
   return (
-    <div style={{ marginTop: first ? 26 : 32 }}>
-      <h2 style={{ ...serif, fontSize: 19, margin: 0, color: C.ink, lineHeight: 1.3 }}>
-        {section.title}
-      </h2>
-      {section.subtitle && (
-        <div style={{ fontSize: 12, color: C.ink3, marginTop: 4, lineHeight: 1.5 }}>
-          {section.subtitle}
-        </div>
-      )}
+    <div style={{ marginTop: first ? 18 : 32 }}>
       {section.rows && (
-        <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {section.rows.map((row) => (
             <ContactCard key={`${section.title}-${row.name}`} row={row} />
           ))}

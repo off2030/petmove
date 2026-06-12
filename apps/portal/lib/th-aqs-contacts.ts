@@ -17,7 +17,7 @@ export const TH_AQS_CONTACTS: ContactSection[] = [
     rows: [
       {
         name: '수완나품 국제공항 (BKK)',
-        location: '방콕 — 입국 심사 후 수하물 8번 벨트 근처',
+        location: '방콕',
         phones: [],
         faxes: [],
         emails: [{ address: 'qsap_bkk_import@dld.go.th' }],
