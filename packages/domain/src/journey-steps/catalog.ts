@@ -136,7 +136,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const today = todayKst()
       if (latest.date > today) return undefined
       if (validUntil < today) {
-        const msg = `지난 광견병 백신의 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
+        const msg = `직전 광견병 백신의 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
         return { desc: msg, cardDesc: msg }
       }
       if (entry && validUntil < entry) {
@@ -255,7 +255,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       }
       // 이미 만료 — 추가 접종 기록 입력 요청. (만료 전 임박은 jp.rabies-validity-expires-soon 담당.)
       if (validUntil < today) {
-        const msg = `지난 백신의 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요. 추가 접종을 하지 못한 경우, 1차 접종부터 다시 준비하세요.`
+        const msg = `직전 광견병 백신의 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요. 추가 접종을 하지 못한 경우, 1차 접종부터 다시 준비하세요.`
         return { desc: msg, cardDesc: msg }
       }
       // 오늘은 아직 유효하지만 입국일 전에 만료 — 이 step 이 미완료로 남는 실제 사유.
@@ -690,7 +690,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 미래(예정) 접종만 있으면 기본 안내로 둔다.
       if (latest.date > today) return undefined
       if (validUntil < today) {
-        const msg = `지난 종합백신의 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
+        const msg = `직전 종합백신의 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
         return { desc: msg, cardDesc: msg }
       }
       if (entry && validUntil < entry) {
