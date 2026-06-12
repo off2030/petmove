@@ -8,8 +8,6 @@ import {
   getChecksForStep,
   getStepsForCase,
   resolveDone,
-  resolveStepForDestination,
-  resolveStepForSpecies,
   runChecksForCase,
   type CaseRow,
   type CheckResult,
@@ -66,12 +64,11 @@ export default function CaseJourneyStepPage({
   if (stepIndex === -1) return null
 
   const ctx = buildCaseJourneyContext(view)
-  // 목적지별 description/title override + 종(개/고양이)별 본문 분기 — getStepsForCase 와 동일
-  // 순서로 적용해야 전체 일정·상세가 같은 step 을 본다(종합백신 descriptionBySpecies 등).
-  const step = resolveStepForSpecies(
-    resolveStepForDestination(baseStep, ctx.destinationKey),
-    ctx.species,
-  )
+  // 상세 step 은 전체 일정(getStepsForCase) 결과에서 그대로 꺼낸다 — 목적지 override·종 분기
+  // 등 모든 변환이 이미 적용된 동일 객체라, 두 화면(일정 목록·단계 상세)이 구조적으로 항상
+  // 같은 step 을 본다. (예전엔 상세가 catalog 에서 직접 꺼내 변환을 재적용하다 종 분기를
+  // 빠뜨린 회귀가 있었음 — 단일 출처로 정돈.)
+  const step = applicable[stepIndex]
   const done = resolveDone(step.done, view)
   const checkResults = collectStepChecks(step, view, ctx.destinationKey)
   // 이 step 보다 뒤(후행) 적용 단계에 이미 입력된 데이터가 있는지 — 수정·삭제 전 '주의'
