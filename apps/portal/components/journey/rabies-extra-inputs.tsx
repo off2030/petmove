@@ -66,6 +66,7 @@ export function RabiesExtraInputs({
   onRemove,
   onAdd,
   productHintsFor,
+  startDose = 3,
 }: {
   entries: RabiesExtraEntry[]
   onChange: (index: number, key: keyof RabiesEntryForm, next: string) => void
@@ -73,6 +74,8 @@ export function RabiesExtraInputs({
   onAdd: () => void
   /** 각 entry 의 접종일 기준 카탈로그 자동 추론 — 본병원일 때 약품 4필드에 읽기 전용 표시. */
   productHintsFor: (index: number) => RabiesProductHints | null
+  /** 첫 카드의 차수 — 일본 3(차), 1회 접종국(태국 등) 2(차). */
+  startDose?: number
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -80,7 +83,7 @@ export function RabiesExtraInputs({
         <ExtraCard
           key={i}
           entry={entry}
-          doseNumber={i + 3}
+          doseNumber={i + startDose}
           onChange={(key, next) => onChange(i, key, next)}
           onRemove={() => onRemove(i)}
           productHints={productHintsFor(i)}

@@ -27,6 +27,7 @@ import {
   validateThEntryDate,
   validateThImportPermitVaccineGap,
   EU_ENTRY_FAMILY,
+  SINGLE_DOSE_RABIES_DESTINATIONS,
   validateThImportPermitDate,
   validateTiterAfterBooster,
   validateTiterWithinChain,
@@ -216,8 +217,11 @@ export function StepDetailView({
   // 광견병 step 한정 — org 백신 카탈로그 ("지정 약품" 힌트 계산용).
   const [vaccineData, setVaccineData] = useState<VaccineProductsData | null>(null)
 
-  // 광견병 추가 백신(3차+) — 빈 상태에서도 입력칸 한 장이 보이도록 최소 1장 유지.
-  const savedRabiesExtra = readRabiesExtraEntries(caseRow?.data)
+  // 광견병 추가 백신 — 일본은 3차+(index 2~), 1회 접종국(태국·필리핀·EU)은 2차+(index 1~).
+  // 빈 상태에서도 입력칸 한 장이 보이도록 최소 1장 유지.
+  const rabiesExtraBase =
+    destinationKey && SINGLE_DOSE_RABIES_DESTINATIONS.includes(destinationKey) ? 1 : 2
+  const savedRabiesExtra = readRabiesExtraEntries(caseRow?.data, rabiesExtraBase)
   const [rabiesExtra, setRabiesExtra] = useState<RabiesExtraEntry[]>(
     savedRabiesExtra.length === 0 ? [makeEmptyExtra()] : savedRabiesExtra,
   )
@@ -500,7 +504,7 @@ export function StepDetailView({
   }, [caseRow?.data])
   useEffect(() => {
     if (!rabiesExtraDirty) {
-      const next = readRabiesExtraEntries(caseRow?.data)
+      const next = readRabiesExtraEntries(caseRow?.data, rabiesExtraBase)
       setRabiesExtra(next.length === 0 ? [makeEmptyExtra()] : next)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -691,11 +695,12 @@ export function StepDetailView({
       return null
     }
     if (isRabiesExtra) {
-      const r1Saved = readRabiesEntryForm(caseRow?.data, 0)
-      const r2Saved = readRabiesEntryForm(caseRow?.data, 1)
+      // 프라임 시리즈 = 일본 1·2차(index 0·1) / 1회 접종국 1차(index 0)만.
+      const primes = Array.from({ length: rabiesExtraBase }, (_, i) =>
+        readRabiesEntryForm(caseRow?.data, i),
+      )
       const chainBreak = findRabiesChainBreak([
-        { date: r1Saved.date, valid_until: r1Saved.valid_until || null },
-        { date: r2Saved.date, valid_until: r2Saved.valid_until || null },
+        ...primes.map((p) => ({ date: p.date, valid_until: p.valid_until || null })),
         ...rabiesExtra.map((e) => ({ date: e.date, valid_until: e.valid_until || null })),
       ])
       if (chainBreak) {
@@ -913,10 +918,11 @@ export function StepDetailView({
             lot: e.lot || null,
             expiry: e.expiry || null,
           })),
+          rabiesExtraBase,
         )
         if (res.ok) {
           updateCase(res.value)
-          const next = readRabiesExtraEntries(res.value.data)
+          const next = readRabiesExtraEntries(res.value.data, rabiesExtraBase)
           setRabiesExtra(next.length === 0 ? [makeEmptyExtra()] : next)
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
@@ -1790,6 +1796,7 @@ export function StepDetailView({
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <RabiesExtraInputs
               entries={rabiesExtra}
+              startDose={rabiesExtraBase + 1}
               onChange={(idx, key, next) =>
                 setRabiesExtra((prev) =>
                   prev.map((e, i) => (i === idx ? { ...e, [key]: next } : e)),
@@ -2472,18 +2479,20 @@ function makeEmptyExtra(): RabiesExtraEntry {
 }
 
 /**
- * case.data.rabies_dates 의 index 2 이상(3차+)을 RabiesExtraEntry[] 로 읽는다.
+ * case.data.rabies_dates 의 baseIndex 이상(일본 2=3차+ / 1회 접종국 1=2차+)을
+ * RabiesExtraEntry[] 로 읽는다.
  * other_hospital 미정의는 portal 정책상 true 로 본다 (1·2차 readRabiesOtherHospital 와 동일).
  */
 function readRabiesExtraEntries(
   data: Record<string, unknown> | null | undefined,
+  baseIndex = 2,
 ): RabiesExtraEntry[] {
   if (!data) return []
   const arr = data['rabies_dates']
   if (!Array.isArray(arr)) return []
   const str = (v: unknown) => (typeof v === 'string' ? v : '')
   const out: RabiesExtraEntry[] = []
-  for (let i = 2; i < arr.length; i++) {
+  for (let i = baseIndex; i < arr.length; i++) {
     const rec = arr[i]
     if (typeof rec === 'string') {
       out.push({

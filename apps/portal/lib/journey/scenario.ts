@@ -1,6 +1,7 @@
 import type { CaseRow } from '@petmove/domain'
 import {
   JOURNEY_STEP_CATALOG,
+  SINGLE_DOSE_RABIES_DESTINATIONS,
   buildCaseJourneyContext,
   findStepForCheck,
   getStepsForCase,
@@ -228,6 +229,10 @@ const PASSED_UNCONFIRMED_MSG =
 const ADVISORY_DEFERRED_CHECKS = new Set<string>([
   'jp.entry-within-2years-of-titer',
   'jp.rabies-valid-until-on-departure',
+  // 1회 접종국의 광견병 만료 룰 — '추가 백신' 카드 situational 이 같은 조건을 안내 (일본 모델).
+  'th.rabies-not-expired-on-arrival',
+  'ph.rabies-not-expired-on-arrival',
+  'eu.rabies-valid-until-on-departure',
 ])
 
 export function buildJourney(
@@ -364,10 +369,15 @@ export function buildJourney(
       caseData.kr_export_quarantine_date.length >= 10
         ? caseData.kr_export_quarantine_date.slice(0, 10)
         : null
-    // 추가 접종(3차+) — 가장 최근 추가 접종일이 미래(예정)면 '예정 [날짜]' 칩으로 노출.
-    // (검역·임상검사와 동일 패턴. 도래·확인 후엔 done 으로 완료 처리되어 여기 안 옴.)
+    // 추가 접종(일본 3차+/1회 접종국 2차+) — 가장 최근 추가 접종일이 미래(예정)면 '예정 [날짜]'
+    // 칩으로 노출. (검역·임상검사와 동일 패턴. 도래·확인 후엔 done 으로 완료 처리되어 여기 안 옴.)
     const rabiesExtraUpcomingDate =
-      step.id === 'rabies-vaccine-extra' ? latestEntryDate(caseData.rabies_dates, 2) : null
+      step.id === 'rabies-vaccine-extra'
+        ? latestEntryDate(
+            caseData.rabies_dates,
+            SINGLE_DOSE_RABIES_DESTINATIONS.includes(ctx.destinationKey ?? '') ? 1 : 2,
+          )
+        : null
     // 추가 검사 — 입국일 이전에 예약한(미래) 채혈이 있으면 '예정 [날짜]' 칩. 입국 후 채혈은
     // 그 입국을 보증 못 하므로 제외(무의미한 미래 채혈을 예정으로 오인 노출하지 않음).
     const titerExtraUpcomingDate = (() => {

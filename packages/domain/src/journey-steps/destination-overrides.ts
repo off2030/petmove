@@ -85,9 +85,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // 일본의 180일 anchor(항체 검사) 미적용 — 21일 룰은 입력 차단(validateThEntryDate)과
       // 아래 procedure-check 가 담당.
       earliest: undefined,
+      // th.rabies-not-expired-on-arrival 은 항공권이 아니라 '추가 백신' 카드의 situational
+      // 안내가 담당 (일본 jp.rabies-valid-until-on-departure 와 동일 모델 — scenario 의
+      // ADVISORY_DEFERRED_CHECKS 로 상단 주의 중복 차단).
       validationIds: [
         'th.rabies-21days-before-arrival',
-        'th.rabies-not-expired-on-arrival',
         'th.general-vaccine-21days-before-arrival',
         'th.general-vaccine-not-expired-on-arrival',
       ],
@@ -176,10 +178,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       cardLine: '필리핀에 입국할 수 있습니다.',
       order: 95,
       earliest: undefined,
+      // ph.rabies-not-expired-on-arrival 은 '추가 백신' 카드 situational 이 담당 (태국과 동일).
       validationIds: [
         'ph.min-120days-on-arrival',
         'ph.rabies-prime-21days-before-arrival',
-        'ph.rabies-not-expired-on-arrival',
         'ph.general-vaccine-prime-21days-before-arrival',
         'ph.general-vaccine-not-expired-on-arrival',
       ],
@@ -302,7 +304,8 @@ function euFamilyOverrides(opts: {
       cardLine: `${label}에 입국할 수 있습니다.`,
       // 3개월은 캘린더 기준(89~92일 가변)이라 고정 일수 earliest 미적용 — 입력 차단이 담당.
       earliest: undefined,
-      validationIds: ['eu.departure-min-3months-after-titer', 'eu.rabies-valid-until-on-departure'],
+      // eu.rabies-valid-until-on-departure 는 '추가 백신' 카드 situational 이 담당 (일본 모델).
+      validationIds: ['eu.departure-min-3months-after-titer'],
     },
     // 도착 — 여행자 입국 지점(TPE) 서류·마이크로칩 확인. 검역 confirm 모델 재사용.
     // 필드는 패밀리 공용(eu_import_quarantine_date) — by_dest 가 목적지별 분리 보장.

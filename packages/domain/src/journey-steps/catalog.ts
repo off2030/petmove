@@ -1,6 +1,9 @@
 import { addYears, readRabiesEntries, readTiterEntries, resolveValidUntil, todayKst } from '../procedure-checks/utils'
 import { areAllRequiredDocsVerified, resolveRequiredDocs } from '../required-docs'
-import { buildCaseJourneyContext } from './applicability'
+import {
+  buildCaseJourneyContext,
+  SINGLE_DOSE_RABIES_DESTINATIONS,
+} from './applicability'
 import {
   deriveAdvanceNotificationStatus,
   deriveImportPermitStatus,
@@ -137,19 +140,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     doneSummary: '2차 광견병 백신을 접종했습니다.',
     // 1회면 충분한 나라는 2차 미노출(태국·필리핀·EU 패밀리 등 — 가이드·procedure-check 에
     // 2회 강제 없음. EU 는 1회 접종 + 항체 검사 모델 — 추가 접종은 유효기간 유지용).
+    // 목록 단일 출처: SINGLE_DOSE_RABIES_DESTINATIONS (추가 백신 카드 노출·완료 판정과 공유).
     applicability: {
       destinations: 'all',
-      excludeDestinations: [
-        'thailand',
-        'philippines',
-        'eu',
-        'uk',
-        'ireland',
-        'malta',
-        'norway',
-        'finland',
-        'switzerland',
-      ],
+      excludeDestinations: [...SINGLE_DOSE_RABIES_DESTINATIONS],
       species: 'all',
       tripType: 'all',
     },
@@ -231,7 +225,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 오늘은 아직 유효하지만 입국일 전에 만료 — 이 step 이 미완료로 남는 실제 사유.
       // (has-extra-rabies done 룰이 "최신 유효기간 < 입국일" 이면 미완료로 잡는 것과 짝.)
       if (entry && validUntil < entry) {
-        const msg = `광견병 백신 유효기간이 일본 입국 전에 만료됩니다. ${formatKoreanDate(validUntil)}까지 추가 접종을 하세요.`
+        // 목적지 표기 — 일본·태국·EU 등 카드가 뜨는 모든 나라에서 그 나라 이름으로 안내.
+        const token = buildCaseJourneyContext(caseRow).destinationToken
+        const msg = `광견병 백신 유효기간이 ${token ? `${token} ` : ''}입국 전에 만료됩니다. ${formatKoreanDate(validUntil)}까지 추가 접종을 하세요.`
         return { desc: msg, cardDesc: msg }
       }
       // 예정일이 지났는데(다음날부터 — 당일 제외) 아직 '저장'으로 확인 전 — 저장으로 완료 안내.
@@ -242,8 +238,14 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       }
       return undefined
     },
-    applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
-    // 3차+ 입력됐거나 최근 접종 유효기간이 입국일+30일 전 만료(추가 접종 필요) 일 때 노출.
+    // 일본(2회 프라임 + 3차+) + 1회 접종국(1차 + 부스터) — 유효기간 만료 대비 reminder 공용.
+    applicability: {
+      destinations: ['japan', ...SINGLE_DOSE_RABIES_DESTINATIONS],
+      species: 'all',
+      tripType: 'all',
+    },
+    // 추가 접종(일본 3차+/1회국 2차+) 입력됐거나 최근 접종 유효기간이 만료 임박·입국 전
+    // 만료(추가 접종 필요)일 때 노출.
     appliesWhen: 'rabies-extra-applicable',
     order: 37,
     done: 'has-extra-rabies',

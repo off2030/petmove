@@ -388,8 +388,13 @@ export async function updateRabiesExtraEntries(
     lot: string | null
     expiry: string | null
   }>,
+  /** 추가 접종 시작 index — 일본 2(3차+), 1회 접종국(태국·필리핀·EU) 1(2차+). */
+  baseIndex: 1 | 2 = 2,
 ): Promise<Result<CaseRow>> {
   try {
+    if (baseIndex !== 1 && baseIndex !== 2) {
+      return { ok: false, error: '잘못된 요청입니다.' }
+    }
     for (const e of entries) {
       for (const key of ['date', 'expiry'] as const) {
         const v = e[key]
@@ -414,8 +419,8 @@ export async function updateRabiesExtraEntries(
     const rabiesArr = Array.isArray(prev.rabies_dates)
       ? [...(prev.rabies_dates as unknown[])]
       : []
-    const preserved = rabiesArr.slice(0, 2)
-    const prevExtras = rabiesArr.slice(2)
+    const preserved = rabiesArr.slice(0, baseIndex)
+    const prevExtras = rabiesArr.slice(baseIndex)
 
     const newExtras: Record<string, unknown>[] = []
     for (let i = 0; i < entries.length; i++) {
@@ -471,11 +476,11 @@ export async function updateRabiesExtraEntries(
     if (rabiesNext.length === 0) delete nextData.rabies_dates
     else nextData.rabies_dates = rabiesNext
 
-    // 추가 접종(3차+) 확인 플래그 — 가장 최근 추가 접종일이 도래(≤ 오늘)했으면 보호자가 실제
+    // 추가 접종 확인 플래그 — 가장 최근 추가 접종일이 도래(≤ 오늘)했으면 보호자가 실제
     // 접종을 확인하며 저장한 것으로 보고 완료(true). 미래(예정)면 false — 도래 후 '저장' 클릭으로
     // 확인. 추가 접종이 없으면 제거. (검역 5단계 확인 모델과 동일 취지. 옛 데이터는 플래그가
     // 없어 done-resolver 가 날짜 게이트로 폴백 → 회귀 없음.)
-    const rabiesExtraEntries = rabiesNext.slice(2)
+    const rabiesExtraEntries = rabiesNext.slice(baseIndex)
     if (rabiesExtraEntries.length === 0) {
       delete nextData.rabies_extra_confirmed
     } else {

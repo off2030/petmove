@@ -12,7 +12,7 @@ import {
   todayKst,
 } from '../procedure-checks/utils'
 import type { StepDoneSignal } from './types'
-import { buildCaseJourneyContext } from './applicability'
+import { buildCaseJourneyContext, isSingleDoseRabiesCase } from './applicability'
 import { findRabiesChainBreak } from './rabies-chain'
 import {
   deriveAdvanceNotificationStatus,
@@ -66,11 +66,12 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
     case 'has-rabies-booster':
       return readRabiesEntries(caseRow).length >= 2
     case 'has-extra-rabies': {
-      // 추가 접종(3차+) 은 (a) 직전 백신의 면역 유효기간 이내에 받아 chain 유지하고,
-      // (b) 입국일이 입력된 경우 최신 booster 유효기간이 입국일을 커버해야 완료.
-      // 둘 중 하나라도 못 만족하면 추가 접종이 더 필요한 상태 → 미완료.
+      // 추가 접종(일본 3차+ / 1회 접종국 2차+)은 (a) 직전 백신의 면역 유효기간 이내에 받아
+      // chain 유지하고, (b) 입국일이 입력된 경우 최신 booster 유효기간이 입국일을 커버해야
+      // 완료. 둘 중 하나라도 못 만족하면 추가 접종이 더 필요한 상태 → 미완료.
+      const minExtraCount = isSingleDoseRabiesCase(caseRow) ? 2 : 3
       const r = readRabiesEntries(caseRow)
-      if (r.length < 3) return false
+      if (r.length < minExtraCount) return false
       // 예정(미래)으로 저장한 추가 접종은 도래 후 '저장' 클릭으로 확인해야 완료.
       // false = 아직 확인 전. undefined = 옛 데이터 → 아래 날짜 게이트로 폴백(회귀 방지).
       if (data.rabies_extra_confirmed === false) return false
@@ -288,9 +289,10 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
       return r.length >= 2 ? r[1].date : null
     }
     case 'has-extra-rabies': {
-      // 추가 접종(3차+) = 입력 순서 마지막 (가장 최근에 추가한 항목)
+      // 추가 접종(일본 3차+ / 1회 접종국 2차+) = 입력 순서 마지막 (가장 최근에 추가한 항목)
+      const minExtraCount = isSingleDoseRabiesCase(caseRow) ? 2 : 3
       const r = readRabiesEntries(caseRow)
-      return r.length >= 3 ? r[r.length - 1].date : null
+      return r.length >= minExtraCount ? r[r.length - 1].date : null
     }
     case 'has-titer-entry': {
       // 1회차 = 가장 이른 항체 검사일 (180일 대기·2년 입국 기한의 기준일).

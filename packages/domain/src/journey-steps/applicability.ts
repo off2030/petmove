@@ -46,6 +46,29 @@ export function buildCaseJourneyContext(
   }
 }
 
+/**
+ * 광견병 1회 접종(+ 필요 시 유효기간 유지용 부스터) 모델인 목적지 — destination-config 키.
+ * 단일 출처: catalog 의 rabies-vaccine-2 excludeDestinations 와 추가 백신(rabies-vaccine-extra)
+ * 노출·완료 판정(2개=부스터 vs 일본 3개=3차+)이 모두 이 목록을 본다.
+ */
+export const SINGLE_DOSE_RABIES_DESTINATIONS: string[] = [
+  'thailand',
+  'philippines',
+  'eu',
+  'uk',
+  'ireland',
+  'malta',
+  'norway',
+  'finland',
+  'switzerland',
+]
+
+/** 케이스가 광견병 1회 접종 모델 목적지인지. */
+export function isSingleDoseRabiesCase(caseRow: CaseRow): boolean {
+  const key = buildCaseJourneyContext(caseRow).destinationKey
+  return !!key && SINGLE_DOSE_RABIES_DESTINATIONS.includes(key)
+}
+
 /** destination 토큰(예: '일본', 'france')을 DESTINATION_OVERRIDES 키('japan', 'eu')로 정규화. */
 function findDestinationKey(destinationToken: string): string | null {
   const override = getDestinationOverride(destinationToken)
@@ -117,20 +140,23 @@ function appliesWhenMatches(signal: StepAppliesWhenSignal | undefined, caseRow: 
       return count >= 2
     }
     case 'rabies-extra-applicable': {
-      // (1) 이미 3차+ 입력 — 기존 has-extra-rabies 와 동일 의미. 입력된 기록을 계속
-      //     표시할 수 있어야 하므로 OR 의 한 쪽.
+      // (1) 이미 추가 접종 입력 — 기존 has-extra-rabies 와 동일 의미. 입력된 기록을 계속
+      //     표시할 수 있어야 하므로 OR 의 한 쪽. 추가 접종 = 일본(2회 프라임)은 3차+,
+      //     1회 접종국(태국·필리핀·EU — SINGLE_DOSE_RABIES_DESTINATIONS)은 2차+.
       // (2) 직전 광견병 접종의 면역 유효기간 만료 30일 전 — 오늘 기준 사전 안내.
-      //     일본 입국일과 무관하게 '곧 만료되니 재접종 준비' 를 알린다.
-      // (3) 면역 유효기간이 일본 입국일 전에 만료 — 입국 전 재접종 필수.
+      //     입국일과 무관하게 '곧 만료되니 재접종 준비' 를 알린다.
+      // (3) 면역 유효기간이 입국일 전에 만료 — 입국 전 재접종 필수.
       //     입국일은 보호자가 입력한 entry_date 만 본다 — departure_date 폴백 안 씀.
       //     항공권 step 미완료 등으로 보호자가 입력하지 않은 departure_date 잔여값이
       //     남아 있어도 그걸로 step 을 띄우지 않는다. entry_date 미입력이면 (2) 만 적용.
+      const singleDose = isSingleDoseRabiesCase(caseRow)
+      const primeCount = singleDose ? 1 : 2
       const rabies = readRabiesEntries(caseRow)
-      if (rabies.length >= 3) return true
-      // (2)(3) 은 1·2차 프라임 시리즈가 끝난 뒤에만 의미 — 1차만 입력된 상태면
-      // 다음 단계는 2차 백신이지 추가 백신이 아니다 (1차 유효기간 만료/임박
-      // 안내는 2차 백신 step 담당). rabies 2개 미만이면 미노출.
-      if (rabies.length < 2) return false
+      if (rabies.length >= primeCount + 1) return true
+      // (2)(3) 은 프라임 시리즈(일본 1·2차 / 1회 접종국 1차)가 끝난 뒤에만 의미 — 일본에서
+      // 1차만 입력된 상태면 다음 단계는 2차 백신이지 추가 백신이 아니다 (1차 유효기간
+      // 만료/임박 안내는 2차 백신 step 담당).
+      if (rabies.length < primeCount) return false
 
       const latest = rabies[rabies.length - 1]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
