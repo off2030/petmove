@@ -325,7 +325,11 @@ export function StepDetailView({
   const microchipDirty = isMicrochip && (chip !== savedChip || date !== savedDate)
   // 단일 카드(1회국)는 rabies 단일 폼이 아니라 목록(rabiesList)을 본다.
   const rabiesDirty = isRabies && !isRabiesSingleCard && !rabiesFormEqual(rabies, savedRabies)
-  const rabiesListDirty = isRabiesSingleCard && !rabiesExtraEqual(rabiesList, savedRabiesList)
+  // 가변 목록은 빈 상태에서도 입력칸 1장을 띄운다(state) — 저장값(빈 카드 제외)과 length 가
+  // 어긋나 항상 dirty 로 잡히던 버그. 비교 전 양쪽에서 빈 카드를 걸러 실제 입력만 비교한다.
+  const rabiesListDirty =
+    isRabiesSingleCard &&
+    !rabiesExtraEqual(rabiesList.filter(vaccineEntryFilled), savedRabiesList.filter(vaccineEntryFilled))
   // 저장 검증 실패 후 사용자가 form 을 만지면 error 자동 해제 — 시각 신호로 "다시 시도
   // 가능". dirty 자체는 form vs saved 비교라 사용자 변경이 같은 값으로 돌아가면 dirty=false
   // 가 되어 button disabled, 새 값이면 활성화. error 자동 해제는 step 무관 공통 처리.
@@ -355,13 +359,17 @@ export function StepDetailView({
     importPermit,
     parasite,
   ])
-  const rabiesExtraDirty = isRabiesExtra && !rabiesExtraEqual(rabiesExtra, savedRabiesExtra)
+  const rabiesExtraDirty =
+    isRabiesExtra &&
+    !rabiesExtraEqual(rabiesExtra.filter(vaccineEntryFilled), savedRabiesExtra.filter(vaccineEntryFilled))
   const titerDirty =
     isTiter &&
     (titerForm.date !== savedTiterForm.date ||
       titerForm.lab !== savedTiterForm.lab ||
       titerForm.value !== savedTiterForm.value)
-  const titerExtraDirty = isTiterExtra && !titerExtraEqual(titerExtra, savedTiterExtra)
+  const titerExtraDirty =
+    isTiterExtra &&
+    !titerExtraEqual(titerExtra.filter(titerEntryFilled), savedTiterExtra.filter(titerEntryFilled))
   const flightDirty = isFlight && !flightFormEqual(flightForm, savedFlightForm)
   const advanceDirty = isAdvanceNotification && advanceDate !== savedAdvanceDate
   const vetVisitDirty = isVetVisit && vetVisitDate !== savedVetVisitDate
@@ -377,12 +385,15 @@ export function StepDetailView({
   const importQuarantineDirty =
     isImportQuarantine && importQuarantineDate !== savedImportQuarantineDate
   const generalVaccineDirty =
-    isGeneralVaccine && !generalVaccineEqual(generalVaccine, savedGeneralVaccine)
+    isGeneralVaccine &&
+    !generalVaccineEqual(generalVaccine.filter(vaccineEntryFilled), savedGeneralVaccine.filter(vaccineEntryFilled))
   const importPermitDirty =
     isImportPermit &&
     (importPermit.applicationDate !== savedImportPermit.applicationDate ||
       importPermit.permitNo !== savedImportPermit.permitNo)
-  const parasiteDirty = isParasite && !generalVaccineEqual(parasite, savedParasite)
+  const parasiteDirty =
+    isParasite &&
+    !generalVaccineEqual(parasite.filter(vaccineEntryFilled), savedParasite.filter(vaccineEntryFilled))
   const dirty =
     microchipDirty ||
     rabiesDirty ||
@@ -2458,6 +2469,23 @@ function readGeneralVaccineForm(
     }
   }
   return out
+}
+
+/** 백신/광견병 목록 entry 에 실제 입력이 있는지 — 빈 placeholder 카드를 dirty 비교에서 제외. */
+function vaccineEntryFilled(e: {
+  date?: string
+  valid_until?: string
+  product?: string
+  manufacturer?: string
+  lot?: string
+  expiry?: string
+}): boolean {
+  return !!(e.date || e.valid_until || e.product || e.manufacturer || e.lot || e.expiry)
+}
+
+/** 항체 검사 목록 entry 에 실제 입력이 있는지 — 빈 placeholder 카드를 dirty 비교에서 제외. */
+function titerEntryFilled(e: { date?: string; lab?: string; value?: string }): boolean {
+  return !!(e.date || e.lab || e.value)
 }
 
 function makeEmptyGeneralVaccine(): GeneralVaccineEntry {
