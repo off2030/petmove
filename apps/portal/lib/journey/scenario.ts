@@ -517,13 +517,16 @@ export function buildJourney(
     // situational.cardDesc 가 있으면 모든 날짜 로직을 덮어쓴다.
     // (참고: recommended 는 일정 row 표시일만 영향 — 카드 본문은 마감 기준 유지.)
     const cardLine = step.cardLine ?? summary
+    // 가능 시작일(earliest)이 이미 지났으면 날짜 조건은 무의미 — "2024년 …일 이후 접종하세요"
+    // 같은 과거 날짜 노출을 막고 행동 문구만 남긴다(미래일 때만 "{날짜} 이후 …" 프리픽스).
+    const upcomingEarliest = earliest && earliest > today ? earliest : null
     const cardDesc = passedUnconfirmed
       ? PASSED_UNCONFIRMED_MSG
       : done
       ? undefined
       : (sit?.cardDesc
-          ?? (earliest
-            ? `${formatKoreanDate(earliest)} 이후 ${cardLine}`
+          ?? (upcomingEarliest
+            ? `${formatKoreanDate(upcomingEarliest)} 이후 ${cardLine}`
             : deadline && deadlineEnd
               ? `${formatKoreanDate(deadline)} ~ ${formatRangeEnd(deadline, deadlineEnd)} 사이에 ${cardLine}`
               : deadline
