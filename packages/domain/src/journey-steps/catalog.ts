@@ -670,6 +670,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     },
     order: 50,
     done: 'has-general-vaccine',
+    // 광견병 백신과 순서 의존 없음 — 마이크로칩 이후 둘 다 동시에 '다음 할 일'.
+    concurrent: true,
     // 광견병 추가 백신과 동일 — 최근 접종 유효기간이 입국 전 만료되면 추가 접종 안내.
     // (만료 여부로 문구 분기. 종합백신은 한 카드 안 목록이라 별도 추가 카드 없이 같은 카드에서
     // 추가 입력 — done(has-general-vaccine)이 만료 시 미완료로 잡는 것과 짝.)

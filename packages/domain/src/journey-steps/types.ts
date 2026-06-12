@@ -240,6 +240,13 @@ export interface StepDefinition {
    * 'upcoming' 으로 표시.
    */
   advisoryOnly?: boolean
+  /**
+   * true 면 직전 main step 과 순서 의존이 없어 '다음 할 일'에 함께 노출된다(병렬 접종).
+   * 예: 광견병 백신과 종합백신은 마이크로칩 이후 순서가 없어 둘 다 동시에 다음 할 일.
+   * 'current' 승격이 mainIdx 직후의 concurrent step 들을 같이 올린다(사이에 비-concurrent
+   * 미완료 step 이 있으면 멈춤 — 그 step 이 선행이라는 뜻).
+   */
+  concurrent?: boolean
 }
 
 // ── 런타임 컨텍스트 ──────────────────────────────────────────────────────

@@ -553,7 +553,11 @@ export function buildJourney(
         step.id === 'jp-export-quarantine' ||
         step.id === 'import-permit' ||
         step.id === 'vet-visit' ||
-        step.id === 'rabies-titer') &&
+        step.id === 'rabies-titer' ||
+        // 광견병·종합백신 — 유효기간 만료(situational 안내) 시 '안내' 톤으로(일본 추가백신과 동일).
+        // 미접종(sit undefined)이면 isAwaitingStep=false 라 일반 '다음 할 일' 그대로.
+        step.id === 'rabies-vaccine-1' ||
+        step.id === 'general-vaccine') &&
       !done &&
       !!sit
     const infoChecks = (infoByStep.get(step.id) ?? 0) + (isAwaitingStep ? 1 : 0)
@@ -592,10 +596,26 @@ export function buildJourney(
   // 다음 단계를 가리지 않도록 두 lane 모두에서 제외.
   const nonBlockingIds = new Set(applicableSteps.filter((s) => s.nonBlocking).map((s) => s.id))
   const advisoryOnlyIds = new Set(applicableSteps.filter((s) => s.advisoryOnly).map((s) => s.id))
+  const concurrentIds = new Set(applicableSteps.filter((s) => s.concurrent).map((s) => s.id))
   const mainIdx = stages.findIndex(
     (s) => s.state === 'upcoming' && !nonBlockingIds.has(s.id) && !advisoryOnlyIds.has(s.id),
   )
-  if (mainIdx >= 0) stages[mainIdx].state = 'current'
+  if (mainIdx >= 0) {
+    stages[mainIdx].state = 'current'
+    // mainIdx 직후의 concurrent step(순서 의존 없는 병렬 접종 — 광견병·종합백신)도 함께 current.
+    // 사이에 비-concurrent 미완료 step 이 있으면 멈춘다(그 step 이 선행). done·nonBlocking·
+    // advisory 는 건너뛴다.
+    for (let i = mainIdx + 1; i < stages.length; i++) {
+      const s = stages[i]
+      if (s.state !== 'upcoming') continue
+      if (nonBlockingIds.has(s.id) || advisoryOnlyIds.has(s.id)) continue
+      if (concurrentIds.has(s.id)) {
+        s.state = 'current'
+        continue
+      }
+      break
+    }
+  }
   // return lane step 별 노출 조건 — 충족돼야 다음 할 일에 올림.
   // 수출검역 신청은 귀국 항공편이 정해진 뒤에야 예약 가능 — return_date 입력 시점부터 노출.
   // (entry_date 만 입력된 출국편 단독 상태에선 step 자체는 applicable 하지만 다음 할 일은 X.)
