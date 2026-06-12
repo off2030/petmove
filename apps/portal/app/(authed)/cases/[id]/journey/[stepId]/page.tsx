@@ -9,6 +9,7 @@ import {
   getStepsForCase,
   resolveDone,
   resolveStepForDestination,
+  resolveStepForSpecies,
   runChecksForCase,
   type CaseRow,
   type CheckResult,
@@ -65,8 +66,12 @@ export default function CaseJourneyStepPage({
   if (stepIndex === -1) return null
 
   const ctx = buildCaseJourneyContext(view)
-  // 목적지별 description/title override 적용. validation 은 base.done/validationIds 그대로.
-  const step = resolveStepForDestination(baseStep, ctx.destinationKey)
+  // 목적지별 description/title override + 종(개/고양이)별 본문 분기 — getStepsForCase 와 동일
+  // 순서로 적용해야 전체 일정·상세가 같은 step 을 본다(종합백신 descriptionBySpecies 등).
+  const step = resolveStepForSpecies(
+    resolveStepForDestination(baseStep, ctx.destinationKey),
+    ctx.species,
+  )
   const done = resolveDone(step.done, view)
   const checkResults = collectStepChecks(step, view, ctx.destinationKey)
   // 이 step 보다 뒤(후행) 적용 단계에 이미 입력된 데이터가 있는지 — 수정·삭제 전 '주의'

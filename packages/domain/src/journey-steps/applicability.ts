@@ -228,8 +228,11 @@ export function getStepsForCase(
  * 종(개/고양이)별 본문 교체 — descriptionBySpecies 가 있고 케이스의 종이 확정돼 있으면
  * description 을 그 종의 텍스트로 바꾼다. 종 미상이면 description(통합문) 그대로 — 모든
  * 소비자(scenario 보조줄·상세 페이지·docs)가 description 만 읽으므로 여기 한 곳에서 처리.
+ *
+ * getStepsForCase 는 자동 적용하지만, step 상세 페이지처럼 catalog 에서 직접 step 을 꺼내
+ * resolveStepForDestination 만 거치는 경로는 이 함수도 명시 호출해야 한다(export 이유).
  */
-function resolveStepForSpecies(
+export function resolveStepForSpecies(
   step: StepDefinition,
   species: 'dog' | 'cat' | null,
 ): StepDefinition {
