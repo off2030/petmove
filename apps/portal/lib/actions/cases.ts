@@ -24,6 +24,7 @@ import {
   normalizeRabiesOrder,
   parseDestinations,
   todayKst,
+  validateEuEntryDate,
   validateJpEntryDate,
   validatePhEntryDate,
   validateThEntryDate,
@@ -1363,7 +1364,11 @@ export async function updateImportQuarantineDate(
   destination?: string | null,
 ): Promise<Result<CaseRow>> {
   try {
-    if (!/^[a-z]+_(import|export)_quarantine_date$/.test(fieldKey)) {
+    // 검역일 패턴 + 같은 confirm 메커니즘을 쓰는 확장 필드(아일랜드 사전 통지).
+    if (
+      !/^[a-z]+_(import|export)_quarantine_date$/.test(fieldKey) &&
+      fieldKey !== 'ie_advance_notice_date'
+    ) {
       return { ok: false, error: '잘못된 검역일 필드입니다.' }
     }
     if (date != null && date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -2144,7 +2149,8 @@ export async function updateCaseInfoFields(
       const entryErr =
         validateJpEntryDate(effective.departure_date.trim(), ruleCtx) ??
         validateThEntryDate(effective.departure_date.trim(), ruleCtx) ??
-        validatePhEntryDate(effective.departure_date.trim(), ruleCtx)
+        validatePhEntryDate(effective.departure_date.trim(), ruleCtx) ??
+        validateEuEntryDate(effective.departure_date.trim(), ruleCtx)
       if (entryErr) return { ok: false, error: entryErr }
     }
     let nextData: Record<string, unknown> = { ...prev }

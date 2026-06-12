@@ -1,7 +1,7 @@
 import type { CaseRow } from '../types'
 import { getVetVisitWindowDays, matchesDestinationKey, parseDestinations } from '../destination-config'
 import { getDepartureDate, getVetVisitDate, readByDestValue } from '../destination-scoped-fields'
-import { addDays, resolveValidUntil } from '../procedure-checks/utils'
+import { addDays, addMonths, resolveValidUntil } from '../procedure-checks/utils'
 import type { StepDefinition } from './types'
 
 /**
@@ -174,6 +174,72 @@ export function validatePhEntryDate(v: string, ctx: DateRuleContext): string | n
   const earliest = addDays(birth, 120)
   if (earliest && v < earliest) {
     return `생후 120일(4개월)이 지난 ${fmt(earliest)} 이후에 필리핀 입국이 가능합니다.`
+  }
+  return null
+}
+
+/**
+ * EU 패밀리(EU·영국·아일랜드·몰타·노르웨이·핀란드·스위스) — destination-config 키.
+ * procedure-checks/eu.ts 의 EU_REGIME 과 같은 목록 — eu.ts 가 이 파일을 import 하므로
+ * (순환 방지) 여기 별도로 둔다. 목록 변경 시 양쪽 함께.
+ */
+const EU_ENTRY_FAMILY = ['eu', 'uk', 'ireland', 'malta', 'norway', 'finland', 'switzerland']
+
+/**
+ * EU 패밀리 입국일(= 출국 항공편 날짜) — 광견병 항체 검사 채혈일 + 3개월(캘린더) 미만 입국만
+ * hard 차단. 일본 180일 룰과 같은 기준: 재검사해도 새 채혈일 + 3개월을 다시 기다려야 하므로
+ * 회복 경로가 입국일 변경뿐. (EU Reg 576/2013 Art.12 — "at least three months")
+ *
+ * EU 패밀리 외 목적지·항체 검사 미입력 시 SKIP.
+ */
+export function validateEuEntryDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  if (!EU_ENTRY_FAMILY.some((key) => matchesDestinationKey(ctx.destination, key))) return null
+
+  const titerDates: string[] = []
+  const rawTiters = ctx.data.rabies_titer_records
+  if (Array.isArray(rawTiters)) {
+    for (const r of rawTiters) {
+      if (r && typeof r === 'object') {
+        const d = (r as Record<string, unknown>).date
+        if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) titerDates.push(d)
+      }
+    }
+  }
+  if (titerDates.length === 0) return null
+
+  // 채혈 + 3개월 ≤ 입국일을 만족하는 채혈이 하나라도 있으면 통과 (eu.departure-min-3months 와 동일).
+  titerDates.sort()
+  const ok = titerDates.some((t) => {
+    const earliest = addMonths(t, 3)
+    return !!earliest && earliest <= v
+  })
+  if (ok) return null
+  const earliestTiter = titerDates[0]
+  const earliest = addMonths(earliestTiter, 3)
+  return `광견병 항체 검사일(${fmt(earliestTiter)})로부터 3개월이 지난 ${earliest ? fmt(earliest) : ''} 이후에 입국이 가능합니다.`
+}
+
+/**
+ * 아일랜드 사전 통지일 — 입국일 24시간(1일) 전까지 제출해야 함.
+ * client(통지 입력 시 입력 불가)·procedure-check(입국일 수정 후 주의) 공용. 한쪽 비면 통과.
+ */
+export function validateIeAdvanceNoticeDate(noticeDate: string, entryDate: string): string | null {
+  if (!noticeDate || !entryDate) return null
+  if (daysBetween(noticeDate, entryDate) < 1) {
+    return '아일랜드 입국 24시간(1일) 전까지 사전 통지를 해야 합니다. 통지가 늦은 경우 입국일을 변경해야 합니다.'
+  }
+  return null
+}
+
+/**
+ * 스위스 수입허가(FSVO) 신청일 — 입국일 3주(21일) 전까지 신청해야 함.
+ * client(신청 입력 시 입력 불가)·procedure-check(입국일 수정 후 주의) 공용. 한쪽 비면 통과.
+ */
+export function validateChImportPermitDate(filedDate: string, entryDate: string): string | null {
+  if (!filedDate || !entryDate) return null
+  if (daysBetween(filedDate, entryDate) < 21) {
+    return '스위스 입국 3주(21일) 전까지 수입허가를 신청해야 합니다. 신청이 늦은 경우 입국일을 변경해야 합니다.'
   }
   return null
 }

@@ -11,10 +11,13 @@ export function ImportQuarantineInputs({
   date,
   onChange,
   subtitle,
+  label = '검역일',
 }: {
   date: string
   onChange: (next: string) => void
   subtitle: string
+  /** 날짜 필드 라벨 — 검역 '검역일', EU 입국 '검사일', 증명서 '발급일', 사전 통지 '통지일'. */
+  label?: string
 }) {
   const C = {
     surface: 'var(--pm-surface)',
@@ -33,7 +36,7 @@ export function ImportQuarantineInputs({
       }}
     >
       <div style={{ padding: '14px 0' }}>
-        <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>검역일</div>
+        <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>{label}</div>
         {subtitle && (
           <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>{subtitle}</div>
         )}

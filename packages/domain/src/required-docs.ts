@@ -1,6 +1,6 @@
 import type { CaseRow } from './types'
 import { todayKst } from './dates'
-import { getTripType } from './destination-config'
+import { DESTINATION_OVERRIDES, getDestinationOverride, getTripType } from './destination-config'
 import { JOURNEY_STEP_CATALOG } from './journey-steps/catalog'
 import { resolveCompletedDate, resolveDone } from './journey-steps/done-resolver'
 
@@ -254,12 +254,93 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
   ],
 }
 
+/**
+ * EU 패밀리 공용 서류 스펙 — 나라 표기(label)만 갈아끼우는 factory. EU 의 destination 토큰은
+ * 나라 이름('프랑스' 등)이라 SPECS(토큰 키)에 못 담는다 — destinationKey 기반 SPECS_BY_KEY 로
+ * 조회 (resolveRequiredDocs 의 2차 lookup).
+ */
+function euFamilyDocSpecs(label: string, opts?: { withImportPermit?: boolean }): RequiredDocSpec[] {
+  const specs: RequiredDocSpec[] = [
+    {
+      id: 'eu-rabies-titer-result',
+      name: '광견병 항체 검사 결과지',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'rabies-titer',
+      description:
+        '검사를 의뢰한 동물병원을 통해 발급받습니다. 검사는 농림축산검역본부에서 합니다.\n\n' +
+        `${label} 입국 검사 때 반드시 원본이 필요합니다.\n\n광견병 백신을 유효기간 안에 계속 추가 접종하면 결과지는 계속 유효합니다.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리합니다.`,
+      previewStepId: 'rabies-titer',
+    },
+    {
+      id: 'eu-health-cert',
+      name: '건강증명서(입국용)',
+      source: '동물병원·농림축산검역본부',
+      kind: 'manual',
+      issuanceStepId: 'vet-visit',
+      description:
+        `${label} 입국용 건강증명서입니다.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 동물검역 때 검역관의 확인을 받습니다.\n\n마이크로칩 번호, 광견병 백신 접종 내용, 항체 검사 결과가 기재되어야 합니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.`,
+    },
+    {
+      id: 'eu-kr-export-quarantine-cert',
+      name: '한국 수출 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'certificate-issue',
+      description:
+        `한국 수출 동물검역 후 발급받습니다.\n\n${label} 입국 검사 때 제시해야 할 수 있습니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.`,
+      previewStepId: 'certificate-issue',
+    },
+  ]
+  if (opts?.withImportPermit) {
+    specs.unshift({
+      id: 'eu-import-permit-doc',
+      name: '수입허가증(FSVO)',
+      source: '스위스 연방 식품안전수의청(FSVO)',
+      kind: 'step',
+      stepRef: 'import-permit',
+      description:
+        '스위스 연방 식품안전수의청(FSVO)에서 발급받습니다.\n\n입국 최소 3주 전까지 신청해야 합니다.\n\n스위스 입국 검사 때 원본을 제시해야 합니다.\n\n앱에 저장해두면 필요할 때 쉽게 사용하실 수 있습니다.',
+      previewStepId: 'import-permit',
+    })
+  }
+  return specs
+}
+
+/**
+ * destinationKey(destination-config 키) 기반 스펙 — EU 패밀리처럼 destination 토큰이 나라마다
+ * 달라(프랑스·독일…) 토큰 키(SPECS)로 못 담는 목적지용. resolveRequiredDocs 가 토큰 매칭 실패
+ * 시 여기로 폴백.
+ */
+const SPECS_BY_KEY: Record<string, RequiredDocSpec[]> = {
+  eu: euFamilyDocSpecs('유럽연합(EU)'),
+  uk: euFamilyDocSpecs('영국'),
+  ireland: euFamilyDocSpecs('아일랜드'),
+  malta: euFamilyDocSpecs('몰타'),
+  norway: euFamilyDocSpecs('노르웨이'),
+  finland: euFamilyDocSpecs('핀란드'),
+  switzerland: euFamilyDocSpecs('스위스', { withImportPermit: true }),
+}
+
+/** destination 토큰('프랑스'·'영국' 등) → destination-config 키('eu'·'uk'). 매칭 실패 시 null. */
+function findDestinationKeyForDocs(destinationToken: string): string | null {
+  const override = getDestinationOverride(destinationToken)
+  if (!override) return null
+  for (const [key, value] of Object.entries(DESTINATION_OVERRIDES)) {
+    if (value === override) return key
+  }
+  return null
+}
+
 export function resolveRequiredDocs(
   destination: string | null | undefined,
   caseRow: CaseRow,
 ): RequiredDocItem[] | null {
   if (!destination) return null
-  const allSpecs = SPECS[destination]
+  // 1차: destination 토큰 키('일본'·'태국' 등) / 2차: destination-config 키('eu'·'uk' 등 —
+  // EU 패밀리처럼 토큰이 나라 이름이라 열거 불가능한 목적지).
+  const keyForDocs = findDestinationKeyForDocs(destination)
+  const allSpecs = SPECS[destination] ?? (keyForDocs ? SPECS_BY_KEY[keyForDocs] : undefined)
   if (!allSpecs) return null
   // 왕복 전용 서류(예: 한국 귀국용 항체 검사 결과지)는 편도 케이스에서 제외 —
   // 목록·vet-visit 완료 게이트 양쪽에서 빠진다.

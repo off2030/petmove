@@ -218,6 +218,116 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['ph.kr-import-quarantine-date-valid'],
     },
   },
+
+  // ── EU 패밀리 — 규정 동일(EU Reg 576/2013), 카드 한 벌을 만들어 7개 키에 복사 ─────
+  // 예외만 나라별: 영국=촌충+화물 운송 / 아일랜드=촌충+사전 통지(ie-advance-notice 카드) /
+  // 몰타·노르웨이·핀란드=촌충 / 스위스=수입허가(FSVO). 촌충 카드(echinococcus-treatment)와
+  // 사전 통지 카드는 catalog 의 applicability 가 담당 — 여기는 문구·검증 매핑만.
+  // 출처: EU Reg 576/2013·2018/772 + petmove.co.kr EU/영국/스위스 가이드 + gov.ie.
+  // 항체 검사 기관: 2026-04-22부터 농림축산검역본부 단일화 (petmove.co.kr 공지).
+  eu: euFamilyOverrides({ label: '유럽연합(EU)' }),
+  uk: euFamilyOverrides({
+    label: '영국',
+    flightExtraLine:
+      '영국 입국 시 반려동물은 보호자와 같은 항공기 객실·수하물로 탈 수 없고 별도 화물로 운송됩니다. 운송 일정을 항공사와 미리 협의하세요.',
+    departureDescription:
+      '영국 도착 후 공항 동물검역소(동물접수센터)에서 수입 검사를 받으세요.\n검역관이 마이크로칩과 서류(건강증명서·광견병 항체 검사 결과지·촌충 구충 기록)를 확인합니다.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 인도됩니다.',
+  }),
+  ireland: euFamilyOverrides({
+    label: '아일랜드',
+    departureDescription:
+      '아일랜드 도착 후 공항에서 입국 검사(Compliance Check)를 받으세요.\n사전 통지 후 이메일로 안내받은 절차에 따라 진행됩니다.\n검역관이 마이크로칩과 서류(건강증명서·광견병 항체 검사 결과지·촌충 구충 기록)를 확인합니다.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 바로 인도됩니다.',
+  }),
+  malta: euFamilyOverrides({ label: '몰타' }),
+  norway: euFamilyOverrides({ label: '노르웨이' }),
+  finland: euFamilyOverrides({ label: '핀란드' }),
+  switzerland: {
+    ...euFamilyOverrides({
+      label: '스위스',
+      flightExtraLine: '반려동물의 스위스 입국은 바젤·제네바·취리히 공항으로만 가능합니다.',
+    }),
+    // 스위스 고유 — FSVO 수입허가 (EU 와 다른 유일한 추가 절차).
+    'import-permit': {
+      description:
+        '스위스 수입허가를 신청하세요.\n\n스위스 연방 식품안전수의청(FSVO)에 입국 최소 3주 전까지 신청해야 합니다.\n발급받은 허가서는 스위스 입국 검사 때 제시합니다.\n반려동물의 스위스 입국은 바젤·제네바·취리히 공항으로만 가능합니다.',
+      doneSummary: '스위스 수입허가증을 받았습니다.',
+      cardLine: '스위스 수입허가를 신청하세요.',
+      deadline: { anchor: 'departure', daysBefore: 21 },
+      links: [
+        {
+          url: 'https://www.blv.admin.ch/blv/en/home/tiere/reisen-mit-heimtieren.html',
+          label: 'FSVO 반려동물 입국 안내',
+        },
+      ],
+      attachmentLabel: '수입허가증(FSVO)',
+      validationIds: ['eu.ch-import-permit-21days-before-entry'],
+    },
+  },
+}
+
+/**
+ * EU 패밀리 공통 카드 한 벌 — 나라 표기(label)와 나라별 한 줄만 갈아끼우는 factory.
+ * 규정이 동일(EU Reg 576/2013)하므로 문구도 한 곳에서 관리한다.
+ */
+function euFamilyOverrides(opts: {
+  /** 카드 문구의 목적지 표기 (예: '영국', '유럽연합(EU)'). */
+  label: string
+  /** 항공권 카드에 덧붙일 나라별 한 줄 (영국 화물 운송·스위스 공항 제한 등). */
+  flightExtraLine?: string
+  /** 입국 검사 카드 본문 교체 (기본: 여행자 입국 지점 TPE 안내). */
+  departureDescription?: string
+}): Partial<Record<string, Partial<StepDefinition>>> {
+  const { label, flightExtraLine, departureDescription } = opts
+  return {
+    // 광견병 백신 — 1회 + 항체 검사 모델(2차 카드 제외). 생후 12주(84일), 마이크로칩 이후.
+    'rabies-vaccine-1': {
+      title: '광견병 백신',
+      shortLabel: '백신',
+      description: `광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 합니다.\n생후 12주(84일)가 지난 후에 접종해야 합니다.\n${label} 입국 때 면역 유효기간이 남아있어야 합니다.\n유효기간이 끝나기 전에 추가 접종을 계속하면 광견병 항체 검사를 다시 받지 않아도 됩니다.`,
+      doneSummary: '광견병 백신을 접종했습니다.',
+      earliest: { anchor: 'birth', daysAfter: 84 },
+      validationIds: ['eu.rabies-prime-after-12weeks', 'eu.microchip-before-rabies'],
+    },
+    // 항체 검사 — 접종 30일 후 채혈. 2026-04-22부터 농림축산검역본부 단일 검사.
+    'rabies-titer': {
+      description: `${label} 입국을 위한 광견병 항체 검사를 받으세요.\n\n광견병 백신 접종 후 30일이 지나서 채혈해야 합니다.\n검사는 농림축산검역본부에서 합니다. 동물병원을 통해 의뢰하세요.\n0.5 IU/mL 이상이면 합격입니다.\n광견병 백신을 유효기간 안에 계속 추가 접종하면 검사 결과는 계속 유효합니다.`,
+      validationIds: ['eu.titer-min-30days-after-vaccine'],
+    },
+    // 항공권 — 채혈 + 3개월(캘린더) 대기. 입력 차단(validateEuEntryDate)과 짝.
+    'flight-purchase': {
+      description: `${label} 입국 가능 시기에 맞춰 항공권을 구매하세요.\n\n광견병 항체 검사 채혈일로부터 3개월이 지난 후에 입국할 수 있습니다.${flightExtraLine ? `\n${flightExtraLine}` : ''}\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.`,
+      cardLine: `${label}에 입국할 수 있습니다.`,
+      // 3개월은 캘린더 기준(89~92일 가변)이라 고정 일수 earliest 미적용 — 입력 차단이 담당.
+      earliest: undefined,
+      validationIds: ['eu.departure-min-3months-after-titer', 'eu.rabies-valid-until-on-departure'],
+    },
+    // 도착 — 여행자 입국 지점(TPE) 서류·마이크로칩 확인. 검역 confirm 모델 재사용.
+    // 필드는 패밀리 공용(eu_import_quarantine_date) — by_dest 가 목적지별 분리 보장.
+    departure: {
+      title: `${label} 입국 검사`,
+      shortLabel: '입국',
+      description:
+        departureDescription ??
+        `${label} 도착 후 공항의 여행자 입국 지점(Travellers' Point of Entry)에서 입국 검사를 받으세요.\n검역관이 마이크로칩과 서류(건강증명서·광견병 항체 검사 결과지)를 확인합니다.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 바로 인도됩니다.`,
+      doneSummary: `${label} 입국 검사를 받았습니다.`,
+      done: 'quarantine:eu_import_quarantine_date',
+      inputs: [
+        {
+          key: 'eu_import_quarantine_date',
+          label: '검사일',
+          type: 'date',
+          helpText: `${label} 도착 후 입국 검사를 받은 날짜`,
+        },
+      ],
+      allowAttachments: true,
+      attachmentHint: '확인받은 서류 사본을 사진, PDF로 저장하세요.',
+      validationIds: ['eu.import-quarantine-date-valid'],
+    },
+    // 한국 수입 동물검역(왕복 마지막) — 검역일 ≥ 귀국일 재검증을 EU 룰로 연결.
+    'kr-import-quarantine': {
+      validationIds: ['eu.kr-import-quarantine-date-valid'],
+    },
+  }
 }
 
 /**

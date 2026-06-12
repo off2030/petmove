@@ -135,8 +135,24 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '2차 광견병 백신을 접종하세요.\n\n1차 접종 후 30일 이상 지나서 접종하세요.\n1차 접종 면역 유효기간 이내에 접종하세요.\n일본 입국 때 면역 유효기간이 남아있어야 합니다.',
     doneSummary: '2차 광견병 백신을 접종했습니다.',
-    // 1회면 충분한 나라는 2차 미노출(태국·필리핀 등 — 가이드·procedure-check 에 2회 강제 없음).
-    applicability: { destinations: 'all', excludeDestinations: ['thailand', 'philippines'], species: 'all', tripType: 'all' },
+    // 1회면 충분한 나라는 2차 미노출(태국·필리핀·EU 패밀리 등 — 가이드·procedure-check 에
+    // 2회 강제 없음. EU 는 1회 접종 + 항체 검사 모델 — 추가 접종은 유효기간 유지용).
+    applicability: {
+      destinations: 'all',
+      excludeDestinations: [
+        'thailand',
+        'philippines',
+        'eu',
+        'uk',
+        'ireland',
+        'malta',
+        'norway',
+        'finland',
+        'switzerland',
+      ],
+      species: 'all',
+      tripType: 'all',
+    },
     order: 35,
     earliest: { anchor: 'step:rabies-vaccine-1', daysAfter: 30 },
     done: 'has-rabies-booster',
@@ -402,8 +418,23 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const msg = '귀국 항공권 정보를 입력하세요.'
       return { desc: msg, cardDesc: msg }
     },
-    // 일본 외 나라는 destination override 로 설명·검증을 그 나라 규정에 맞춰 교체(태국·필리핀 등).
-    applicability: { destinations: ['japan', 'thailand', 'philippines'], species: 'all', tripType: 'all' },
+    // 일본 외 나라는 destination override 로 설명·검증을 그 나라 규정에 맞춰 교체(태국·필리핀·EU 등).
+    applicability: {
+      destinations: [
+        'japan',
+        'thailand',
+        'philippines',
+        'eu',
+        'uk',
+        'ireland',
+        'malta',
+        'norway',
+        'finland',
+        'switzerland',
+      ],
+      species: 'all',
+      tripType: 'all',
+    },
     order: 45,
     earliest: { anchor: 'step:rabies-titer', daysAfter: 180 },
     done: 'has-flight-date',
@@ -477,6 +508,42 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { url: '/guide/jp-quarantine-contacts', label: '일본 동물검역소 연락처' },
     ],
     validationIds: ['jp.advance-notification-40days-before-entry'],
+  },
+
+  // ── 사전 통지 (아일랜드 전용) ──────────────────────────────────────────
+  // 비EU 국가에서 아일랜드 입국 시 도착 24시간 전까지 Advance Notice Portal 로 통지 +
+  // 도착 시 검사(Compliance Check) 예약. 완료신호 'quarantine:<필드>' confirm 메커니즘 재사용
+  // (통지일 입력 + 도래 + 저장 확인 = 완료).
+  {
+    id: 'ie-advance-notice',
+    category: 'permit',
+    title: '사전 통지',
+    shortLabel: '통지',
+    description:
+      '아일랜드 입국 24시간 전까지 사전 통지를 하세요.\n\n아일랜드 농식품해양부의 사전 통지 포털(Advance Notice Portal)에서 양식을 제출합니다.\n제출 후 이메일 안내에 따라 도착 시 검사(Compliance Check) 안내를 확인하세요.\n여행 1주일 전쯤 여유 있게 제출하는 것을 권장합니다.',
+    doneSummary: '아일랜드에 사전 통지를 했습니다.',
+    cardLine: '아일랜드에 사전 통지를 하세요.',
+    applicability: { destinations: ['ireland'], species: 'all', tripType: 'all' },
+    order: 47,
+    deadline: { anchor: 'entry', daysBefore: 1 },
+    done: 'quarantine:ie_advance_notice_date',
+    inputs: [
+      {
+        key: 'ie_advance_notice_date',
+        label: '통지일',
+        type: 'date',
+        helpText: '사전 통지 포털에 양식을 제출한 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '제출 확인·안내 이메일을 사진, PDF로 보관하세요.',
+    links: [
+      {
+        url: 'http://www.pettravel.gov.ie/pets/dogscatsferrets/outsideeu/',
+        label: '아일랜드 사전 통지 안내(공식)',
+      },
+    ],
+    validationIds: ['eu.ie-advance-notice-24h-before-entry'],
   },
 
   // ── 사전 신고 다음 — 일본 수출 동물검역 (왕복 케이스 한정) ──────────────
@@ -622,15 +689,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '외부구충',
     shortLabel: '외부',
     description:
-      '출국 직전에 진드기·벼룩 처치를 받으세요. EU 6국·호주·뉴질랜드 등에서 요구됩니다.',
+      '출국 직전에 진드기·벼룩 처치를 받으세요. 호주·뉴질랜드 등에서 요구됩니다.',
     doneSummary: '외부구충 처치를 받았습니다.',
+    // EU 패밀리(영국·아일랜드·몰타·노르웨이·핀란드)는 외부구충 요건이 없어 제외 —
+    // EU 요건은 촌충(에키노코쿠스, echinococcus-treatment 카드)뿐.
     applicability: {
       destinations: [
-        'uk',
-        'ireland',
-        'malta',
-        'norway',
-        'finland',
         'australia',
         'new_zealand',
         'turkey',
@@ -659,19 +723,15 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '내부구충',
     shortLabel: '내부',
     description:
-      'EU 6국(영국·아일랜드·몰타·노르웨이·핀란드 + 북아일랜드)은 출국 24~120시간 전에 praziquantel 류 촌충약을 투약하세요. 투약 시각(분 단위)까지 기록해야 합니다.',
+      '내부 기생충 구충을 받으세요. 호주·뉴질랜드·필리핀 등에서 요구됩니다.',
     doneSummary: '내부구충 투약을 받았습니다.',
+    // EU 촌충 5국(영국·아일랜드·몰타·노르웨이·핀란드)은 강아지 한정·시점(24~120시간)이 달라
+    // 별도 카드(echinococcus-treatment)로 분리 — 같은 데이터 키(internal_parasite_dates) 공유.
     applicability: {
       destinations: [
-        'uk',
-        'ireland',
-        'malta',
-        'norway',
-        'finland',
         'australia',
         'new_zealand',
         'turkey',
-        'eu',
         'philippines',
       ],
       species: 'all',
@@ -681,9 +741,36 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     done: 'has-internal-parasite',
     inputs: [
       { key: 'internal_parasite_dates', label: '투약일', type: 'date_array' },
-      { key: 'deworming_time', label: '투약 시각 (EU 6국 한정)', type: 'text', helpText: 'YYYY-MM-DD HH:mm 형식' },
     ],
     allowAttachments: true,
+  },
+
+  // ── 촌충 구충 (에키노코쿠스) — 영국·아일랜드·몰타·노르웨이·핀란드, 강아지 한정 ─────
+  // EU Reg 2018/772. 입국 24~120시간(1~5일) 전 프라지콴텔 투여 — 검증은 보수적으로 1~3일
+  // (eu.tapeworm-1to3days-before-departure). 데이터 키는 internal_parasite_dates 공유(admin 정합).
+  {
+    id: 'echinococcus-treatment',
+    category: 'preparation',
+    title: '촌충 구충',
+    shortLabel: '촌충',
+    description:
+      '촌충(에키노코쿠스) 구충을 받으세요.\n\n입국 24~120시간(1~5일) 전에 수의사에게 프라지콴텔 성분의 구충제를 투여받아야 합니다.\n시간 계산이 어긋나지 않도록 입국 1~3일 전 사이를 권장합니다.\n구충 내용과 일시가 건강증명서에 기록되어야 합니다.',
+    doneSummary: '촌충 구충을 받았습니다.',
+    cardLine: '촌충(에키노코쿠스) 구충을 받으세요.',
+    applicability: {
+      destinations: ['uk', 'ireland', 'malta', 'norway', 'finland'],
+      species: 'dog',
+      tripType: 'all',
+    },
+    order: 130,
+    deadline: { anchor: 'departure', daysBefore: 3, window: true },
+    done: 'has-internal-parasite',
+    inputs: [
+      { key: 'internal_parasite_dates', label: '구충일', type: 'date_array' },
+    ],
+    allowAttachments: true,
+    attachmentHint: '구충 기록(증명서·수첩)을 사진, PDF로 보관하세요.',
+    validationIds: ['eu.tapeworm-1to3days-before-departure'],
   },
 
   // ── 10. 수입허가 ───────────────────────────────────────────────────────
@@ -700,7 +787,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     doneSummary: '수입 허가를 받았습니다.',
     cardLine: '수입 허가를 신청하세요.',
     applicability: {
-      destinations: ['australia', 'new_zealand', 'taiwan', 'malaysia', 'thailand', 'philippines'],
+      destinations: ['australia', 'new_zealand', 'taiwan', 'malaysia', 'thailand', 'philippines', 'switzerland'],
       species: 'all',
       tripType: 'all',
     },
@@ -885,6 +972,39 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '수출허가증·건강증명서 사본을 사진, PDF로 저장하세요.',
+  },
+
+  // ── 현지 검역증명서 발급 (왕복 — 귀국 출국 시, EU 패밀리 전용) ─────────────
+  // EU 는 일본·태국 같은 '수출검역소 방문' 제도가 아니라 현지 수의사·정부 기관의 한국
+  // 입국용 증명서 발급이 귀국 준비의 핵심. 완료신호 quarantine: confirm 모델 재사용(발급일).
+  // 필드는 패밀리 공용(eu_export_quarantine_date) — by_dest 스코핑이 목적지별 분리 보장.
+  {
+    id: 'eu-export-cert',
+    category: 'document',
+    title: '현지 검역증명서 발급',
+    shortLabel: '증명서',
+    description:
+      '한국으로 돌아오기 전, 현지 동물병원 또는 정부 기관에서 한국 입국용 건강증명서(검역증명서)를 발급받으세요.\n마이크로칩 번호와 광견병 백신 접종 내용이 기재되어야 합니다.\n광견병 항체 검사 결과지 원본을 함께 준비하세요.\n발급받은 서류는 한국 수입 동물검역 때 제출합니다.',
+    doneSummary: '현지 검역증명서를 발급받았습니다.',
+    cardLine: '한국 입국용 검역증명서를 발급받으세요.',
+    applicability: {
+      destinations: ['eu', 'uk', 'ireland', 'malta', 'norway', 'finland', 'switzerland'],
+      species: 'all',
+      tripType: 'round',
+    },
+    order: 155,
+    done: 'quarantine:eu_export_quarantine_date',
+    validationIds: ['eu.export-cert-date-valid'],
+    inputs: [
+      {
+        key: 'eu_export_quarantine_date',
+        label: '발급일',
+        type: 'date',
+        helpText: '한국 입국용 건강증명서(검역증명서)를 발급받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '건강증명서·검역증명서 사본을 사진, PDF로 저장하세요.',
   },
 
   // ── 필리핀 수출 동물검역 (왕복 — 귀국 출국 시, 필리핀 전용) ───────────────

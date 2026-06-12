@@ -18,6 +18,9 @@ import {
   validateMicrochipBeforeBooster,
   validateRabiesInterval,
   validateRabiesPrimeAge,
+  validateChImportPermitDate,
+  validateEuEntryDate,
+  validateIeAdvanceNoticeDate,
   validatePhEntryDate,
   validateThEntryDate,
   validateThImportPermitDate,
@@ -155,10 +158,12 @@ export function StepDetailView({
   const isKrImportQuarantine = step.id === 'kr-import-quarantine'
   const isGeneralVaccine = step.id === 'general-vaccine'
   const isImportPermit = step.id === 'import-permit'
-  // 구충(내·외부) — 종합백신과 같은 date_array 입력 모델. 필드 키는 base catalog input 과 동일.
+  // 구충(내·외부·촌충) — 종합백신과 같은 date_array 입력 모델. 필드 키는 base catalog input 과
+  // 동일. 촌충(에키노코쿠스, EU 5국)은 내부구충과 데이터 키(internal_parasite_dates)를 공유.
   const isExternalParasite = step.id === 'external-parasite'
   const isInternalParasite = step.id === 'internal-parasite'
-  const isParasite = isExternalParasite || isInternalParasite
+  const isEchinococcus = step.id === 'echinococcus-treatment'
+  const isParasite = isExternalParasite || isInternalParasite || isEchinococcus
   const parasiteFieldKey = isExternalParasite
     ? 'external_parasite_dates'
     : 'internal_parasite_dates'
@@ -721,6 +726,9 @@ export function StepDetailView({
       // 필리핀 입국일 — 생후 120일(4개월) 미만 입국 차단.
       const phEntryErr = validatePhEntryDate(flightForm.entry_date.trim(), entryRuleCtx)
       if (phEntryErr) return phEntryErr
+      // EU 패밀리 입국일 — 항체 검사 채혈 + 3개월 이내면 차단 (일본 180일과 동일 정책).
+      const euEntryErr = validateEuEntryDate(flightForm.entry_date.trim(), entryRuleCtx)
+      if (euEntryErr) return euEntryErr
       return null
     }
     if (isGeneralVaccine) {
@@ -733,13 +741,23 @@ export function StepDetailView({
       return null
     }
     if (isImportPermit) {
-      // 태국 — 신청일이 입국일 9일(7영업일) 이내면 차단. 다른 허가 필요국은 규정 확정 시 추가.
+      const data = (caseRow?.data ?? {}) as Record<string, unknown>
+      const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
+      // 태국 — 신청일이 입국일 9일(7영업일) 이내면 차단.
       if (destinationKey === 'thailand') {
-        const data = (caseRow?.data ?? {}) as Record<string, unknown>
-        const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
         return validateThImportPermitDate(importPermit.applicationDate.trim(), entry)
       }
+      // 스위스 — 신청일이 입국일 3주(21일) 이내면 차단.
+      if (destinationKey === 'switzerland') {
+        return validateChImportPermitDate(importPermit.applicationDate.trim(), entry)
+      }
       return null
+    }
+    // 아일랜드 사전 통지 — 통지일이 입국일 24시간(1일) 이내면 차단.
+    if (step.id === 'ie-advance-notice') {
+      const data = (caseRow?.data ?? {}) as Record<string, unknown>
+      const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
+      return validateIeAdvanceNoticeDate(importQuarantineDate.trim(), entry)
     }
     if (isAdvanceNotification) {
       const entry = typeof caseRow?.data?.entry_date === 'string' ? (caseRow.data.entry_date as string) : ''
@@ -1815,10 +1833,16 @@ export function StepDetailView({
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <GeneralVaccineInputs
               entries={parasite}
-              vaccineLabel={isExternalParasite ? '외부구충' : '내부구충'}
-              dateLabel={isExternalParasite ? '처치일' : '투약일'}
+              vaccineLabel={isExternalParasite ? '외부구충' : isEchinococcus ? '촌충 구충' : '내부구충'}
+              dateLabel={isExternalParasite ? '처치일' : isEchinococcus ? '구충일' : '투약일'}
               showValidUntil={false}
-              addLabel={isExternalParasite ? '+ 처치 기록 추가' : '+ 투약 기록 추가'}
+              addLabel={
+                isExternalParasite
+                  ? '+ 처치 기록 추가'
+                  : isEchinococcus
+                    ? '+ 구충 기록 추가'
+                    : '+ 투약 기록 추가'
+              }
               onChange={(idx, key, next) =>
                 setParasite((prev) => prev.map((e, i) => (i === idx ? { ...e, [key]: next } : e)))
               }
@@ -1878,6 +1902,9 @@ export function StepDetailView({
               date={importQuarantineDate}
               onChange={setImportQuarantineDate}
               subtitle={importQuarantineSubtitle}
+              label={
+                (step.inputs ?? []).find((i) => i.key === importQuarantineField)?.label ?? '검역일'
+              }
             />
           </section>
         )}

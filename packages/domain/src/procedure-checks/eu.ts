@@ -1,3 +1,9 @@
+import {
+  buildDateRuleContext,
+  validateChImportPermitDate,
+  validateIeAdvanceNoticeDate,
+  validateKrImportDate,
+} from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   addMonths,
@@ -55,7 +61,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       '마이크로칩이 광견병 1차 접종일보다 먼저 시술되어 있어야 함. 칩 시술 후의 접종만 인정. (EU Reg 576/2013)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -84,7 +90,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 생후 12주(84일) 이상',
     description:
       '광견병 1차 접종일은 생년월일 기준 12주(84일) 이후여야 함. (EU Reg 576/2013 Annex III)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -113,7 +119,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
     title: '항체 검사는 광견병 접종 30일 후',
     description:
       'RNATT 채혈일은 광견병 접종으로부터 30일 이후여야 함. 부스터 chain 이 끊기지 않았으면(직전 접종 면역 유효 중 추가 접종) 30일 요건은 이전 접종이 충족 — 부스터를 채혈 당일 맞아도 시계 리셋 X. chain 끊긴 뒤 새 접종은 1차로 보고 30일 요구. (EU Reg 576/2013 Annex IV)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -169,7 +175,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
     title: '출국일은 항체 검사일 3개월(캘린더) 이후',
     description:
       'RNATT 채혈일로부터 출국일까지 최소 3개월 경과 필요. 캘린더 기준 — 달에 따라 89~92일이 될 수 있음. (EU Reg 576/2013 Article 12 — "at least three months before")',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -215,7 +221,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
     title: '출국일 시점 광견병 면역 유효',
     description:
       '출국일에 가장 최근 광견병 접종의 면역 유효기간이 만료되지 않아야 함. EU 는 부스터 chain 유지 시 RNATT 결과는 무기한 유효 (재검사 불필요), chain 끊기면 1차부터 재시작.',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -249,7 +255,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
     title: '촌충구충은 출국일 1~3일 전 (보수: 24-120시간 범위)',
     description:
       'Praziquantel(촌충구충)은 입국 24시간 ~ 120시간(1~5일) 사이 투여 (EU Reg 2018/772 — 영국·아일랜드·몰타·노르웨이·핀란드). 사용자 보수 적용: 일 단위 검증 시 24h/120h 경계의 시간 정밀도 손실 위험으로 1~3일까지로 강화.',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-05',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -268,6 +274,166 @@ export const EU_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `촌충구충(${latest.date}) → 출국일(${dep}): ${diff}일.` }
+    },
+  },
+
+  // ── 아일랜드 — 사전 통지 (Advance Notice, 입국 24시간 전) ──
+  {
+    id: 'eu.ie-advance-notice-24h-before-entry',
+    country: ['ireland'],
+    category: '사전통지',
+    title: '사전 통지 마감 (입국 24시간 전)',
+    description:
+      '아일랜드 입국 24시간(1일) 전까지 Advance Notice Portal 로 사전 통지. 입력 차단(validateIeAdvanceNoticeDate)과 같은 함수 — 항공편 수정 후 어긋난 케이스를 주의로 표면화. (gov.ie)',
+    severity: 'warning',
+    addedAt: '2026-06-12',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const notice =
+        typeof data.ie_advance_notice_date === 'string'
+          ? data.ie_advance_notice_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(notice)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      const msg = validateIeAdvanceNoticeDate(notice, entry)
+      if (msg) {
+        return { ok: false, message: msg, offendingPaths: ['ie_advance_notice_date', 'entry_date'] }
+      }
+      return { ok: true, message: entry ? `통지일(${notice}) 입국(${entry}) 1일 이전.` : `통지일(${notice}) 입력됨 (입국일 미입력).` }
+    },
+  },
+
+  // ── 스위스 — FSVO 수입허가 (입국 3주 전) ──
+  {
+    id: 'eu.ch-import-permit-21days-before-entry',
+    country: ['switzerland'],
+    category: '수입허가',
+    title: '수입허가 신청 마감 (입국 3주 전)',
+    description:
+      '스위스 수입허가(FSVO)는 입국 최소 3주(21일) 전 신청. 입력 차단(validateChImportPermitDate)과 같은 함수. (FSVO + petmove.co.kr 스위스 가이드)',
+    severity: 'warning',
+    addedAt: '2026-06-12',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed =
+        typeof data.import_permit_application_date === 'string'
+          ? data.import_permit_application_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      const msg = validateChImportPermitDate(filed, entry)
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['import_permit_application_date', 'entry_date'],
+        }
+      }
+      return { ok: true, message: entry ? `신청일(${filed}) 입국(${entry}) 21일 이전.` : `신청일(${filed}) 입력됨 (입국일 미입력).` }
+    },
+  },
+
+  // ── 검사·증명서 일정 재검증 — 입력 차단과 같은 규칙을 매 렌더 재실행 (jp/th/ph 동일 모델) ──
+  {
+    id: 'eu.import-quarantine-date-valid',
+    country: EU_REGIME,
+    category: '검역',
+    title: '입국 검사일',
+    description: '입국 검사일은 도착(입국)일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-06-12',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.eu_import_quarantine_date === 'string'
+          ? data.eu_import_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: '입국 검사일은 도착(입국)일보다 빠를 수 없습니다.',
+          offendingPaths: ['eu_import_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `입국 검사일(${raw}) 도착 이후.` }
+    },
+  },
+  {
+    id: 'eu.export-cert-date-valid',
+    country: EU_REGIME,
+    category: '검역',
+    title: '현지 검역증명서 발급일',
+    description: '현지 검역증명서 발급일은 도착(입국)일 이후·한국 귀국일 이전이어야 함.',
+    severity: 'warning',
+    addedAt: '2026-06-12',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.eu_export_quarantine_date === 'string'
+          ? data.eu_export_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      const ret =
+        typeof ctx.data.return_date === 'string' && ctx.data.return_date.length >= 10
+          ? ctx.data.return_date.slice(0, 10)
+          : ''
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: '현지 검역증명서 발급일은 도착(입국)일보다 빠를 수 없습니다.',
+          offendingPaths: ['eu_export_quarantine_date'],
+        }
+      }
+      if (ret && raw > ret) {
+        return {
+          ok: false,
+          message: '현지 검역증명서 발급일은 한국 귀국일보다 늦을 수 없습니다.',
+          offendingPaths: ['eu_export_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `발급일(${raw}) 체류 구간 내.` }
+    },
+  },
+  {
+    id: 'eu.kr-import-quarantine-date-valid',
+    country: EU_REGIME,
+    category: '검역',
+    title: '한국 수입 동물검역일',
+    description: '한국 수입 동물검역일은 한국 귀국일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-06-12',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.kr_import_quarantine_date === 'string'
+          ? data.kr_import_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const msg = validateKrImportDate(raw, ctx)
+      if (msg) {
+        return { ok: false, message: msg, offendingPaths: ['kr_import_quarantine_date'] }
+      }
+      return { ok: true, message: `한국 수입검역일(${raw}) 귀국 이후.` }
     },
   },
 ]
