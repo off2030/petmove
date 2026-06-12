@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { buildCaseJourneyContext } from '@petmove/domain'
 import { listMyCases } from '@/lib/actions/cases'
 import { hasJourney } from '@/lib/cases/journey-filter'
 
@@ -42,6 +43,12 @@ export default async function CasesPage() {
           .split(',')
           .map((t) => t.trim())
           .filter(Boolean)
+        const tripTypeRaw = (c.data as Record<string, unknown> | null)?.trip_type
+        const tripTypeByDest =
+          tripTypeRaw && typeof tripTypeRaw === 'object' && !Array.isArray(tripTypeRaw)
+            ? (tripTypeRaw as Record<string, 'round' | 'one_way'>)
+            : {}
+        const fallbackTripType = buildCaseJourneyContext(c).tripType
         return (
           <Link
             key={c.id}
@@ -73,15 +80,19 @@ export default async function CasesPage() {
                     letterSpacing: '-0.005em',
                   }}
                 >
-                  <span style={{ color: 'var(--pm-ink-3)' }}>한국&nbsp;-&nbsp;</span>
-                  {tokens.map((t, i) => (
-                    <span key={t} style={{ display: 'inline-flex', alignItems: 'center' }}>
-                      {i > 0 && (
-                        <span style={{ margin: '0 7px', color: 'var(--pm-ink-3)' }}>·</span>
-                      )}
-                      {t}
-                    </span>
-                  ))}
+                  <span style={{ color: 'var(--pm-ink-3)', marginRight: 6 }}>한국</span>
+                  {tokens.map((t, i) => {
+                    const arrow = (tripTypeByDest[t] ?? fallbackTripType) === 'round' ? '⇄' : '→'
+                    return (
+                      <span key={t} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                        {i > 0 && (
+                          <span style={{ margin: '0 7px', color: 'var(--pm-ink-3)' }}>·</span>
+                        )}
+                        <span style={{ color: 'var(--pm-ink-3)', marginRight: 4 }}>{arrow}</span>
+                        {t}
+                      </span>
+                    )
+                  })}
                 </span>
               </div>
             )}
