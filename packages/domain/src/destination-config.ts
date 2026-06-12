@@ -19,6 +19,13 @@ import type {
 } from './destination-overrides-types'
 import { HARDCODED_VACCINE_SPECIES_DEFAULTS } from './destination-overrides-types'
 
+/**
+ * 한 동물(case)에 동시에 진행할 수 있는 목적지(여정) 최대 개수.
+ * 완료되어 '지난 여정'으로 내려간 목적지는 제외 — 활성 목적지만 카운트.
+ * UI(목적지 추가 버튼)·server action(addCaseDestination) 양쪽에서 이 값으로 막는다.
+ */
+export const MAX_DESTINATIONS_PER_CASE = 3
+
 // ── 디폴트 (모든 국가 공통) ──
 
 export const DEFAULT_CONFIG = {

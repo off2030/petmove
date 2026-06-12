@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, type ReactNode } from 'react'
+import { MAX_DESTINATIONS_PER_CASE } from '@petmove/domain'
 import destsData from '@petmove/domain/data/destinations.json'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { SegmentField, type FieldOption } from '@/components/fields/info-fields'
@@ -63,6 +64,10 @@ export function DestinationChips({
 }: DestinationChipsProps) {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [query, setQuery] = useState('')
+
+  // 활성 목적지(삭제 예정 제외) 개수 — 상한 도달 시 추가 버튼 잠금.
+  const activeCount = cards.filter((c) => !c.removing).length
+  const atLimit = activeCount >= MAX_DESTINATIONS_PER_CASE
 
   // 추가 가능한 목적지 — 이미 선택된 토큰 제외.
   const available = useMemo(() => {
@@ -204,7 +209,7 @@ export function DestinationChips({
       <button
         type="button"
         onClick={openSheet}
-        disabled={disabled}
+        disabled={disabled || atLimit}
         style={{
           marginTop: 10,
           width: '100%',
@@ -216,10 +221,11 @@ export function DestinationChips({
           fontFamily: 'inherit',
           fontSize: 14,
           fontWeight: 500,
-          cursor: disabled ? 'not-allowed' : 'pointer',
+          cursor: disabled || atLimit ? 'not-allowed' : 'pointer',
+          opacity: atLimit ? 0.5 : 1,
         }}
       >
-        + 목적지 추가
+        {atLimit ? `목적지는 최대 ${MAX_DESTINATIONS_PER_CASE}개까지` : '+ 목적지 추가'}
       </button>
 
       <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="목적지 추가">

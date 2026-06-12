@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { buildCaseJourneyContext } from '@petmove/domain'
 import { listMyCases } from '@/lib/actions/cases'
 import { hasJourney } from '@/lib/cases/journey-filter'
 
@@ -43,12 +42,6 @@ export default async function CasesPage() {
           .split(',')
           .map((t) => t.trim())
           .filter(Boolean)
-        const tripTypeRaw = (c.data as Record<string, unknown> | null)?.trip_type
-        const tripTypeByDest =
-          tripTypeRaw && typeof tripTypeRaw === 'object' && !Array.isArray(tripTypeRaw)
-            ? (tripTypeRaw as Record<string, 'round' | 'one_way'>)
-            : {}
-        const fallbackTripType = buildCaseJourneyContext(c).tripType
         return (
           <Link
             key={c.id}
@@ -64,39 +57,32 @@ export default async function CasesPage() {
             }}
           >
             <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em' }}>{petName}</div>
-            {tokens.length === 1 && (
-              <div style={{ fontSize: 13, color: 'var(--pm-ink-2)', marginTop: 4 }}>
-                한국 {(tripTypeByDest[tokens[0]] ?? fallbackTripType) === 'round' ? '⇄' : '→'}{' '}
-                {tokens[0]}
-              </div>
-            )}
-            {tokens.length > 1 && (
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 5,
-                  marginTop: 6,
-                }}
-              >
-                {tokens.map((t) => {
-                  const arrow = (tripTypeByDest[t] ?? 'round') === 'round' ? '⇄' : '→'
-                  return (
-                    <span
-                      key={t}
-                      style={{
-                        padding: '3px 8px',
-                        borderRadius: 999,
-                        background: 'var(--pm-accent-soft)',
-                        color: 'var(--pm-ink-2)',
-                        fontSize: 12,
-                        fontWeight: 500,
-                      }}
-                    >
-                      {t} {arrow}
+            {tokens.length > 0 && (
+              <div style={{ marginTop: 8 }}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    padding: '4px 11px',
+                    borderRadius: 999,
+                    background: 'var(--pm-accent-soft)',
+                    color: 'var(--pm-ink-2)',
+                    fontSize: 12.5,
+                    fontWeight: 500,
+                    letterSpacing: '-0.005em',
+                  }}
+                >
+                  <span style={{ color: 'var(--pm-ink-3)' }}>한국&nbsp;-&nbsp;</span>
+                  {tokens.map((t, i) => (
+                    <span key={t} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                      {i > 0 && (
+                        <span style={{ margin: '0 7px', color: 'var(--pm-ink-3)' }}>·</span>
+                      )}
+                      {t}
                     </span>
-                  )
-                })}
+                  ))}
+                </span>
               </div>
             )}
           </Link>

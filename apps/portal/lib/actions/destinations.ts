@@ -22,6 +22,7 @@ import {
   summarizeJourney,
   resolveDone,
   DESTINATION_SCOPED_FIELD_KEYS,
+  MAX_DESTINATIONS_PER_CASE,
   type PastJourneySummary,
   type CaseRow,
 } from '@petmove/domain'
@@ -121,6 +122,15 @@ export async function addCaseDestination(
       delete tripTypeAll[token]
       remaining = remaining.filter((t) => t !== token)
       demoted.push(token)
+    }
+
+    // 활성 목적지 상한 — 완료 여정 demote 후 남은 개수가 이미 상한이면 추가 거부.
+    // (지난 여정으로 내려간 건 카운트 X. UI 추가 버튼도 같은 상한으로 막지만, 서버에서도 방어.)
+    if (remaining.length >= MAX_DESTINATIONS_PER_CASE) {
+      return {
+        ok: false,
+        error: `목적지는 최대 ${MAX_DESTINATIONS_PER_CASE}개까지 추가할 수 있어요.`,
+      }
     }
 
     // 새 목적지 추가
