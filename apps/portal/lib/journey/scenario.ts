@@ -553,15 +553,16 @@ export function buildJourney(
         step.id === 'jp-export-quarantine' ||
         step.id === 'import-permit' ||
         step.id === 'vet-visit' ||
-        step.id === 'rabies-titer' ||
-        // 광견병·종합백신 — 유효기간 만료(situational 안내) 시 '안내' 톤으로(일본 추가백신과 동일).
-        // 미접종(sit undefined)이면 isAwaitingStep=false 라 일반 '다음 할 일' 그대로.
-        step.id === 'rabies-vaccine-1' ||
-        step.id === 'general-vaccine') &&
+        step.id === 'rabies-titer') &&
       !done &&
       !!sit
     const infoChecks = (infoByStep.get(step.id) ?? 0) + (isAwaitingStep ? 1 : 0)
-    const isAdvisory = step.advisoryOnly === true
+    // 만료 상태의 백신(광견병 단일카드·종합백신)은 일본 추가백신처럼 '안내'로 배치한다 —
+    // situational 안내가 있고 미완료면 advisory 취급(다음 할 일 대신 별도 안내 카드, 일정 row
+    // 안내 톤). 미접종이면 situational 이 undefined 라 일반 '다음 할 일'(접종하세요)로 노출.
+    const isExpiryVaccineState =
+      (step.id === 'rabies-vaccine-1' || step.id === 'general-vaccine') && !done && !!sit?.desc
+    const isAdvisory = step.advisoryOnly === true || isExpiryVaccineState
     // 안내 카드 본문 — info check 메시지가 있으면 그걸, 없으면 advisory step 의 desc(상황별),
     // 신청-완료 awaiting 은 situational desc 자체가 안내문.
     const infoMessage =
@@ -595,20 +596,22 @@ export function buildJourney(
   // advisoryOnly step (추가 백신·추가 검사 등 미래 만료 대비 reminder) 은 본 흐름의
   // 다음 단계를 가리지 않도록 두 lane 모두에서 제외.
   const nonBlockingIds = new Set(applicableSteps.filter((s) => s.nonBlocking).map((s) => s.id))
-  const advisoryOnlyIds = new Set(applicableSteps.filter((s) => s.advisoryOnly).map((s) => s.id))
+  // advisory 배치는 동적 — static advisoryOnly(추가백신·추가검사) + 만료 상태 백신(stage.advisory).
+  // 이들은 '다음 할 일'을 차지하지 않고 별도 '안내' 카드로 빠진다(일본 추가백신과 동일 위치).
+  const advisoryIds = new Set(stages.filter((s) => s.advisory).map((s) => s.id))
   const concurrentIds = new Set(applicableSteps.filter((s) => s.concurrent).map((s) => s.id))
   const mainIdx = stages.findIndex(
-    (s) => s.state === 'upcoming' && !nonBlockingIds.has(s.id) && !advisoryOnlyIds.has(s.id),
+    (s) => s.state === 'upcoming' && !nonBlockingIds.has(s.id) && !advisoryIds.has(s.id),
   )
   if (mainIdx >= 0) {
     stages[mainIdx].state = 'current'
     // mainIdx 직후의 concurrent step(순서 의존 없는 병렬 접종 — 광견병·종합백신)도 함께 current.
     // 사이에 비-concurrent 미완료 step 이 있으면 멈춘다(그 step 이 선행). done·nonBlocking·
-    // advisory 는 건너뛴다.
+    // advisory(만료 백신 포함) 는 건너뛴다.
     for (let i = mainIdx + 1; i < stages.length; i++) {
       const s = stages[i]
       if (s.state !== 'upcoming') continue
-      if (nonBlockingIds.has(s.id) || advisoryOnlyIds.has(s.id)) continue
+      if (nonBlockingIds.has(s.id) || advisoryIds.has(s.id)) continue
       if (concurrentIds.has(s.id)) {
         s.state = 'current'
         continue
@@ -638,7 +641,7 @@ export function buildJourney(
   // 그것뿐일 때까지 가려두면 화면이 공백처럼 보인다.
   if (stages.every((s) => s.state !== 'current')) {
     const firstAdvisory = stages.findIndex(
-      (s) => s.state === 'upcoming' && advisoryOnlyIds.has(s.id),
+      (s) => s.state === 'upcoming' && advisoryIds.has(s.id),
     )
     if (firstAdvisory >= 0) stages[firstAdvisory].state = 'current'
   }
