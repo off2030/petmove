@@ -1,3 +1,8 @@
+import {
+  buildDateRuleContext,
+  validateKrImportDate,
+  validateThImportPermitDate,
+} from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   daysBetween,
@@ -45,7 +50,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       '마이크로칩(ISO 11784/11785)이 광견병 1차 접종일과 같거나 이전이어야 함. 입국 시 칩 번호와 서류 일치 검증. (DLD 표준)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -74,7 +79,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 생후 12주(84일) 이상',
     description:
       '광견병 1차 접종은 생후 최소 12주(84일) 이후. 불활화(사독) 또는 재조합 백신만 인정. (DLD 공식: "at least 3 months old or 12 weeks or 84 days at time of administered")',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -103,7 +108,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     title: '광견병 접종은 출국(=도착) 21일 이전 완료',
     description:
       '가장 최근 광견병 접종이 도착일 기준 21일 이전 완료. (DLD: "primary or discontinuity vaccination must wait for 21 days before departure. Valid booster vaccination, waiting period not required" — 보수적으로 모든 경우 21일 적용)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -131,7 +136,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     title: '도착일에 광견병 면역 유효',
     description:
       '최근 광견병 접종의 면역 유효기간이 도착일 이전 만료되지 않아야 함. valid_until 명시 시 그 값 사용, 미명시 시 디폴트 1년 (`addOneYear`).',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -182,7 +187,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     title: '종합백신 출국(=도착) 21일 이전 완료',
     description:
       '종합백신(강아지 DHPPL / 고양이 Panleukopenia 포함 FVRCP) 가장 최근 접종이 도착일 기준 21일 이전 완료. (DLD: 광견병과 동일 21일 룰 적용 — 1차/단절 시. 유효 부스터 면제하나 보수적으로 모든 경우 적용)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -210,7 +215,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     title: '도착일에 종합백신 면역 유효',
     description:
       '최근 종합백신 면역 유효기간이 도착일 이전 만료되지 않아야 함. valid_until 명시 시 그 값 사용, 미명시 시 디폴트 1년.',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -262,6 +267,136 @@ export const TH_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: `견종 "${breed.ko || breed.en}" 통과.` }
+    },
+  },
+
+  // ── 수입 허가 ──
+  {
+    id: 'th.import-permit-9days-before-entry',
+    country: COUNTRY,
+    category: '수입허가',
+    title: '수입 허가 신청 마감 (입국 7영업일 전)',
+    description:
+      '수입 허가 신청일은 태국 입국일 기준 최소 7영업일(달력일 최소 9일) 이전이어야 함. 입력 시 차단(validateThImportPermitDate)과 같은 함수 — 항공편 수정 후 어긋난 케이스를 주의로 표면화. (DLD: at least 7 business days prior to departure)',
+    severity: 'warning',
+    addedAt: '2026-06-12',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed =
+        typeof data.import_permit_application_date === 'string'
+          ? data.import_permit_application_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      const msg = validateThImportPermitDate(filed, entry)
+      if (msg) {
+        return {
+          ok: false,
+          message: msg,
+          offendingPaths: ['import_permit_application_date', 'entry_date'],
+        }
+      }
+      return { ok: true, message: entry ? `신청일(${filed}) 입국(${entry}) 9일 이전.` : `신청일(${filed}) 입력됨 (입국일 미입력).` }
+    },
+  },
+
+  // ── 검역 일정 재검증 — 입력 차단과 같은 규칙을 매 렌더 재실행 (jp.*-date-valid 와 동일 모델) ──
+  {
+    id: 'th.import-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '태국 수입 동물검역일',
+    description: '태국 수입 동물검역일은 태국 입국일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-06-12',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.th_import_quarantine_date === 'string'
+          ? data.th_import_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: '태국 수입 동물검역일은 태국 입국일보다 빠를 수 없습니다.',
+          offendingPaths: ['th_import_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `태국 수입검역일(${raw}) 입국 이후.` }
+    },
+  },
+  {
+    id: 'th.export-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '태국 수출 동물검역일',
+    description: '태국 수출 동물검역일은 태국 입국일 이후·한국 귀국일 이전이어야 함.',
+    severity: 'warning',
+    addedAt: '2026-06-12',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.th_export_quarantine_date === 'string'
+          ? data.th_export_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      const ret =
+        typeof ctx.data.return_date === 'string' && ctx.data.return_date.length >= 10
+          ? ctx.data.return_date.slice(0, 10)
+          : ''
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: '태국 수출 동물검역일은 태국 입국일보다 빠를 수 없습니다.',
+          offendingPaths: ['th_export_quarantine_date'],
+        }
+      }
+      if (ret && raw > ret) {
+        return {
+          ok: false,
+          message: '태국 수출 동물검역일은 한국 귀국일보다 늦을 수 없습니다.',
+          offendingPaths: ['th_export_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `태국 수출검역일(${raw}) 태국 체류 구간 내.` }
+    },
+  },
+  {
+    id: 'th.kr-import-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '한국 수입 동물검역일',
+    description: '한국 수입 동물검역일은 한국 귀국일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-06-12',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.kr_import_quarantine_date === 'string'
+          ? data.kr_import_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const msg = validateKrImportDate(raw, ctx)
+      if (msg) {
+        return { ok: false, message: msg, offendingPaths: ['kr_import_quarantine_date'] }
+      }
+      return { ok: true, message: `한국 수입검역일(${raw}) 귀국 이후.` }
     },
   },
 ]

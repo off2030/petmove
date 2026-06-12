@@ -88,6 +88,7 @@ export type StepDoneSignal =
   | 'has-vet-visit'
   | 'has-flight-date'              // 항공권 구매 — entry_date(항공편 날짜) 입력 시 완료
   | 'has-advance-notification'     // 사전 신고 — advance_notification_date 입력 시 완료
+  | 'has-import-permit'            // 수입 허가 — deriveImportPermitStatus 'done' (허가번호·첨부·완료 액션)
   | 'has-jp-export-quarantine'     // 일본 수출검역 — jp_export_quarantine_date 입력 시 완료
   | 'has-kr-export-quarantine'     // 한국 수출검역 — kr_export_quarantine_date 입력 시 완료
   | 'has-jp-import-quarantine'     // 일본 수입검역 — jp_import_quarantine_date 입력 시 완료
@@ -155,6 +156,13 @@ export interface StepDefinition {
   shortLabel: string
   /** 상세 페이지 본문 — 마크다운 가능. 절차 규칙을 안내. */
   description: string
+  /**
+   * 종(개/고양이)별 본문 — 종에 따라 절차가 다른 카드(예: 종합백신 — 개 DHPPL / 고양이
+   * FVRCP)용. 케이스의 종이 확정돼 있고 해당 종 텍스트가 있으면 getStepsForCase 가
+   * description 을 이 값으로 교체한다. 종 미상(species null)이면 description(통합문) 폴백 —
+   * 그래서 descriptionBySpecies 를 쓰는 카드도 description 은 항상 채운다.
+   */
+  descriptionBySpecies?: Partial<Record<'dog' | 'cat', string>>
   /**
    * 전체 일정 리스트에서 step 이 완료됐을 때 제목 아래 보조 줄로 노출되는 문구.
    * 과거형 narration ('1차 광견병 백신을 접종했습니다.') 권장.

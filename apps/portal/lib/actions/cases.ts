@@ -25,6 +25,7 @@ import {
   parseDestinations,
   todayKst,
   validateJpEntryDate,
+  validateThEntryDate,
   writeByDestValue,
   writeJourneyFeedback,
   readByDestValue,
@@ -1405,6 +1406,202 @@ export async function updateImportQuarantineDate(
 }
 
 /**
+ * 수입 허가 step(import-permit)의 신청일·허가 번호를 patch — 태국·호주 등 허가 필요국 공용.
+ * 두 키 모두 destination-scoped(by_dest) — 목적지마다 허가를 따로 받는다.
+ * 신청일이 바뀌면 '완료 처리(skip)' 플래그를 해제 — 사전 신고(updateAdvanceNotificationDate)와
+ * 동일 정책. 신청 마감(태국 7영업일) 도메인 차단은 client(입력 불가)·procedure-check(주의)가
+ * 담당 — server 는 형식만.
+ */
+export async function updateImportPermitFields(
+  caseId: string,
+  fields: { application_date: string | null; permit_no: string | null },
+  destination?: string | null,
+): Promise<Result<CaseRow>> {
+  try {
+    const v = typeof fields.application_date === 'string' ? fields.application_date.trim() : ''
+    if (v !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+      return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+    }
+    const permitNo = typeof fields.permit_no === 'string' ? fields.permit_no.trim() : ''
+
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data, destination')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const caseDestStr = (existing as { destination: string | null }).destination
+    const token = resolveWriteToken(caseDestStr, prev, destination)
+
+    let nextData: Record<string, unknown> = { ...prev }
+    if (token) {
+      const prevFiledRaw = readByDestValue(prev, token, 'import_permit_application_date')
+      const prevFiled = typeof prevFiledRaw === 'string' ? prevFiledRaw : ''
+      nextData = writeByDestValue(nextData, token, 'import_permit_application_date', v || null)
+      nextData = writeByDestValue(nextData, token, 'permit_no', permitNo || null)
+      // 신청일 변경·삭제 시 완료 처리(skip) 해제 — 새 신청은 '허가증 대기'부터 다시.
+      if (v !== prevFiled) {
+        nextData = writeByDestValue(nextData, token, 'import_permit_issued_skipped', null)
+      }
+      // top-level 잔존 제거 — 다른 목적지로의 flatten fallback 누수 차단 (applyQuarantine 동일).
+      delete nextData.import_permit_application_date
+      delete nextData.permit_no
+    } else {
+      const prevFiled =
+        typeof prev.import_permit_application_date === 'string'
+          ? prev.import_permit_application_date
+          : ''
+      if (v) nextData.import_permit_application_date = v
+      else delete nextData.import_permit_application_date
+      if (permitNo) nextData.permit_no = permitNo
+      else delete nextData.permit_no
+      if (v !== prevFiled) delete nextData.import_permit_issued_skipped
+    }
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * 수입 허가 '완료' — 허가증 첨부 없이 발급 완료 처리(skip). 신청일이 있어야 의미가 있음
+ * (사전 신고 markAdvanceNotificationApprovalSkipped 와 동일 정책). 플래그는 by_dest 분리.
+ */
+export async function markImportPermitIssued(
+  caseId: string,
+  destination?: string | null,
+): Promise<Result<CaseRow>> {
+  try {
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data, destination')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const caseDestStr = (existing as { destination: string | null }).destination
+    const token = resolveWriteToken(caseDestStr, prev, destination)
+    const filedRaw = token
+      ? readByDestValue(prev, token, 'import_permit_application_date')
+      : prev.import_permit_application_date
+    const filed = typeof filedRaw === 'string' ? filedRaw : ''
+    if (filed.length < 10) {
+      return { ok: false, error: '신청일이 입력되어 있지 않습니다.' }
+    }
+
+    let nextData: Record<string, unknown> = { ...prev }
+    if (token) {
+      nextData = writeByDestValue(nextData, token, 'import_permit_issued_skipped', true)
+      delete nextData.import_permit_issued_skipped
+    } else {
+      nextData.import_permit_issued_skipped = true
+    }
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * 종합백신(general-vaccine step)의 접종 기록을 한 번에 patch — case.data.general_vaccine_dates
+ * 전체 교체. 동물 단위 사실(목적지 무관 전역 키)이라 by_dest 스코핑 없음 (rabies_dates 동일).
+ *
+ * entries 는 화면 순서대로, 같은 인덱스의 기존 record 비관리 키를 보존(updateRabiesExtraEntries
+ * 와 동일 모델). date 없는 phantom 은 drop.
+ */
+export async function updateGeneralVaccineEntries(
+  caseId: string,
+  entries: Array<{ date: string | null; valid_until: string | null }>,
+): Promise<Result<CaseRow>> {
+  try {
+    for (const e of entries) {
+      for (const key of ['date', 'valid_until'] as const) {
+        const v = e[key]
+        if (v != null && v !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+          return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+        }
+      }
+    }
+
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const prevArr = Array.isArray(prev.general_vaccine_dates)
+      ? [...(prev.general_vaccine_dates as unknown[])]
+      : []
+
+    const next: Record<string, unknown>[] = []
+    for (let i = 0; i < entries.length; i++) {
+      const fields = entries[i]
+      const prevSlot = prevArr[i]
+      const prevEntry =
+        prevSlot && typeof prevSlot === 'object'
+          ? { ...(prevSlot as Record<string, unknown>) }
+          : {}
+      const entry: Record<string, unknown> = { ...prevEntry }
+      for (const [key, raw] of Object.entries(fields)) {
+        const val = typeof raw === 'string' ? raw.trim() : raw
+        if (val == null || val === '') delete entry[key]
+        else entry[key] = val
+      }
+      if (!hasValidDate(entry)) continue
+      next.push(entry)
+    }
+
+    const nextData: Record<string, unknown> = { ...prev }
+    if (next.length === 0) delete nextData.general_vaccine_dates
+    else nextData.general_vaccine_dates = next
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
  * 일본 수출 동물검역 step 의 검역일을 patch — case.data.jp_export_quarantine_visit_date
  * (YYYY-MM-DD). 빈/null 이면 키 제거. data 의 다른 키는 fetch-merge 로 보존.
  */
@@ -1864,13 +2061,17 @@ export async function updateCaseInfoFields(
 
     const prev = (fresh.data ?? {}) as Record<string, unknown>
     // 일본 노선 — 출국일이 광견병 항체 검사일 + 180일 이전이면 저장 거부.
+    // 태국 노선 — 출국일이 광견병·종합백신 최근 접종일 + 21일 이전이면 저장 거부.
     // updateFlightFields 와 같은 정책 — 회복 경로 없는 위반만 hard 차단.
     {
-      const entryErr = validateJpEntryDate(effective.departure_date.trim(), {
+      const ruleCtx = {
         data: prev,
         destination: effective.destination,
         departureDate: null,
-      })
+      }
+      const entryErr =
+        validateJpEntryDate(effective.departure_date.trim(), ruleCtx) ??
+        validateThEntryDate(effective.departure_date.trim(), ruleCtx)
       if (entryErr) return { ok: false, error: entryErr }
     }
     let nextData: Record<string, unknown> = { ...prev }

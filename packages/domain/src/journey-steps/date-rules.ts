@@ -96,6 +96,67 @@ export function validateJpEntryDate(v: string, ctx: DateRuleContext): string | n
   return null
 }
 
+/**
+ * 태국 입국일(= 출국 항공편 날짜) — 광견병·종합백신의 최근 접종일 + 21일 미만 입국만 hard 차단.
+ *
+ * 일본 180일 룰(validateJpEntryDate)과 같은 기준: 접종일은 과거 사실이라 21일 대기를 줄일
+ * 방법이 없고, 위반 해소 경로가 "입국일 자체를 늦추는 것"뿐인 입력만 저장 거부.
+ * 면역 유효기간 만료(재접종으로 회복 가능)는 차단 X — procedure-check '주의'가 안내.
+ *
+ * 태국 외 목적지·백신 미입력 시 SKIP. (출처: DLD — primary/discontinuity vaccination must
+ * wait for 21 days before departure. 보수적으로 모든 접종에 21일 적용 — th.ts 와 동일.)
+ */
+export function validateThEntryDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  if (!matchesDestinationKey(ctx.destination, 'thailand')) return null
+
+  const latestOf = (key: string): string => {
+    const raw = ctx.data[key]
+    if (!Array.isArray(raw)) return ''
+    let max = ''
+    for (const r of raw) {
+      const d =
+        typeof r === 'string'
+          ? r
+          : r && typeof r === 'object'
+            ? (r as Record<string, unknown>).date
+            : null
+      if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d.slice(0, 10)) && d > max) {
+        max = d.slice(0, 10)
+      }
+    }
+    return max
+  }
+
+  const targets: Array<[string, string]> = [
+    ['rabies_dates', '광견병 백신'],
+    ['general_vaccine_dates', '종합백신'],
+  ]
+  for (const [key, label] of targets) {
+    const latest = latestOf(key)
+    if (!latest) continue
+    const earliest = addDays(latest, 21)
+    if (earliest && v < earliest) {
+      return `${label} 접종일(${fmt(latest)})로부터 21일이 지난 ${fmt(earliest)} 이후에 태국 입국이 가능합니다.`
+    }
+  }
+  return null
+}
+
+/**
+ * 태국 수입 허가 신청일 — 입국일 9일(7영업일의 최소 달력일) 전까지 신청해야 함.
+ * client(신청 입력 시 입력 불가)·procedure-check(입국일 수정 후 주의) 공용. 한쪽 비면 통과.
+ * (출처: DLD/태국 외교부 — at least 7 business days prior to departure. 영업일→달력일 환산은
+ * 최소값 9일로 차단하고, 카피에서는 여유 있게 2주 전 신청을 권장.)
+ */
+export function validateThImportPermitDate(filedDate: string, entryDate: string): string | null {
+  if (!filedDate || !entryDate) return null
+  if (daysBetween(filedDate, entryDate) < 9) {
+    return '태국 입국 9일(7영업일) 전까지 수입 허가를 신청해야 합니다. 신청이 늦은 경우 입국일을 변경해야 합니다.'
+  }
+  return null
+}
+
 /** 일본 수출검역 예약일: 일본 입국일 ≤ 예약일 ≤ 귀국일. */
 export function validateJpExportReservationDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null

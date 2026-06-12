@@ -194,5 +194,21 @@ export function getStepsForCase(
     .filter((s) => isStepApplicable(s.applicability, ctx))
     .filter((s) => appliesWhenMatches(s.appliesWhen, caseRow))
     .map((s) => resolveStepForDestination(s, ctx.destinationKey))
+    .map((s) => resolveStepForSpecies(s, ctx.species))
     .sort((a, b) => a.order - b.order)
+}
+
+/**
+ * 종(개/고양이)별 본문 교체 — descriptionBySpecies 가 있고 케이스의 종이 확정돼 있으면
+ * description 을 그 종의 텍스트로 바꾼다. 종 미상이면 description(통합문) 그대로 — 모든
+ * 소비자(scenario 보조줄·상세 페이지·docs)가 description 만 읽으므로 여기 한 곳에서 처리.
+ */
+function resolveStepForSpecies(
+  step: StepDefinition,
+  species: 'dog' | 'cat' | null,
+): StepDefinition {
+  if (!step.descriptionBySpecies || !species) return step
+  const text = step.descriptionBySpecies[species]
+  if (!text) return step
+  return { ...step, description: text }
 }

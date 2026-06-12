@@ -3,6 +3,7 @@ import { areAllRequiredDocsVerified, resolveRequiredDocs } from '../required-doc
 import { buildCaseJourneyContext } from './applicability'
 import {
   deriveAdvanceNotificationStatus,
+  deriveImportPermitStatus,
   deriveJpExportQuarantineStatus,
 } from './report-status'
 import type { StepDefinition } from './types'
@@ -401,7 +402,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const msg = '귀국 항공권 정보를 입력하세요.'
       return { desc: msg, cardDesc: msg }
     },
-    applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
+    // 일본 외 나라는 destination override 로 설명·검증을 그 나라 규정에 맞춰 교체(태국 등).
+    applicability: { destinations: ['japan', 'thailand'], species: 'all', tripType: 'all' },
     order: 45,
     earliest: { anchor: 'step:rabies-titer', daysAfter: 180 },
     done: 'has-flight-date',
@@ -566,6 +568,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'general_vaccine_dates', label: '접종일', type: 'date_array', hasValidUntil: true },
     ],
     allowAttachments: true,
+    attachmentHint: '백신 라벨, 증명서, 수첩 등을 사진, PDF로 보관하세요.',
+    attachmentLabel: '종합백신',
   },
 
   // ── 6. 독감(CIV) — 강아지만 ─────────────────────────────────────────────
@@ -683,6 +687,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   },
 
   // ── 10. 수입허가 ───────────────────────────────────────────────────────
+  // 신청 → 허가증 2단계 (사전 신고와 동일 모델). 진행 상태는 [[deriveImportPermitStatus]]
+  // 가 단일 출처 — 신청일 입력 = in_progress, 허가번호·첨부·'완료' = done.
+  // 옛 manual-flag(journey_flags['import-permit-issued'])도 derive 가 done 으로 인정(하위 호환).
   {
     id: 'import-permit',
     category: 'permit',
@@ -691,6 +698,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '도착 전에 수입허가를 신청하세요. 호주(DAFF)·뉴질랜드(MPI)·대만(APHIA)·말레이시아(DVS) 등에서 필요하며, 허가번호가 검역증에 명시되어야 합니다.',
     doneSummary: '수입 허가를 받았습니다.',
+    cardLine: '수입 허가를 신청하세요.',
     applicability: {
       destinations: ['australia', 'new_zealand', 'taiwan', 'malaysia', 'thailand'],
       species: 'all',
@@ -698,12 +706,29 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     },
     order: 100,
     deadline: { anchor: 'departure', daysBefore: 30 },
-    done: 'manual-flag:import-permit-issued',
+    done: 'has-import-permit',
+    // 신청일만 입력된 in_progress 상태도 '입력됨'으로 본다 (사전 신고와 동일 패턴).
+    hasInputData: (caseRow) => deriveImportPermitStatus(caseRow) !== 'not_started',
+    // 신청 완료(in_progress) → '허가증 대기' 안내. 미래 신청일(예정)·완료 상태에선 숨김.
+    situational: (caseRow) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const filed =
+        typeof data.import_permit_application_date === 'string'
+          ? data.import_permit_application_date
+          : ''
+      if (filed.length >= 10 && filed > todayKst()) return undefined
+      if (deriveImportPermitStatus(caseRow) !== 'in_progress') return undefined
+      const msg =
+        '수입 허가 신청을 진행 중입니다. 수입허가증을 받으면 허가 번호를 입력하고 파일을 첨부하거나 완료 버튼을 누르세요.'
+      return { desc: msg, cardDesc: msg }
+    },
     inputs: [
+      { key: 'import_permit_application_date', label: '신청일', type: 'date' },
       { key: 'permit_no', label: '허가 번호', type: 'text' },
     ],
     allowAttachments: true,
-    attachmentHint: '허가서를 사진, PDF로 보관하세요.',
+    attachmentHint: '수입허가증을 사진, PDF로 보관하세요.',
+    attachmentLabel: '수입허가증',
   },
 
   // ── 11. 내원 — 수의사 검진 ──────────────────────────────────────────────
@@ -848,6 +873,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     applicability: { destinations: ['thailand'], species: 'all', tripType: 'round' },
     order: 155,
     done: 'quarantine:th_export_quarantine_date',
+    // 입력 후 항공편 수정으로 어긋난 검역일(태국 입국일 이전·귀국일 이후)을 '주의'로 표면화.
+    validationIds: ['th.export-quarantine-date-valid'],
     inputs: [
       {
         key: 'th_export_quarantine_date',

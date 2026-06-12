@@ -42,12 +42,73 @@ export const STEP_DESTINATION_OVERRIDES: Record<
   // 일본을 뼈대로 — 'departure' 공용 카드를 그 나라 '[국가] 수입 동물검역' 도착 카드로 교체.
   // 목적지마다 따로 작성(검역일 필드도 나라별: {국가}_import_quarantine_date). 제목·설명은
   // 그 나라 가이드 기준, 일본과 같은 부분은 같은 문구. 완료신호는 그 나라 검역일 필드를 실어 보낸다.
+  //
+  // 태국 출처: DLD(축산국) AQS-Suvarnabhumi 공식 안내 + 태국 외교부 PDF(Rev. 30 Jan 2025)
+  // + 주미 태국대사관 — 상세 수치는 procedure-checks/th.ts 헤더 주석 참고.
   thailand: {
+    // 광견병 백신 — 태국은 1회면 충분(2차 카드 제외)이라 '(1차)' 라벨을 떼고, 생후 기준도
+    // 일본(91일)과 달리 12주(84일). 21일 대기·유효기간 요건을 카드에서 직접 안내.
+    'rabies-vaccine-1': {
+      title: '광견병 백신',
+      shortLabel: '백신',
+      description:
+        '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 합니다.\n생후 12주(84일)가 지난 후에 접종해야 합니다.\n태국 입국 21일 전까지 접종을 완료하세요.\n태국 입국 때 면역 유효기간이 남아있어야 합니다.',
+      doneSummary: '광견병 백신을 접종했습니다.',
+      earliest: { anchor: 'birth', daysAfter: 84 },
+      // 21일 대기·유효기간(입국일 기준)은 보호자가 백신 step 에서 조치 못 함 — 항공권
+      // 구매 step(flight-purchase)에 매핑. 여기는 접종일 자체의 요건만.
+      validationIds: ['th.rabies-prime-after-12weeks', 'th.microchip-before-rabies'],
+    },
+    // 광견병 항체 검사 — 태국 입국엔 불필요, 한국 귀국용(왕복에만 노출 — roundOnlyDestinations).
+    // 일본 문구(지정 검사기관·2차 접종)가 맞지 않아 교체.
+    'rabies-titer': {
+      description:
+        '한국으로 돌아올 때 필요한 광견병 항체 검사를 받으세요.\n\n태국 입국에는 필요하지 않지만, 한국 입국 때 반드시 필요합니다.\n동물병원을 통해 의뢰할 수 있습니다.\n0.5 IU/mL 이상이면 합격입니다.\n검사 결과는 채혈일로부터 2년간 유효합니다. 한국으로 돌아오는 날까지 유효해야 합니다.',
+    },
+    // 종합백신 — 태국은 강아지 DHPPL(렙토스피라 포함) / 고양이 범백혈구감소증(FPV).
+    // 종별 요건이 달라 descriptionBySpecies 로 분리 표시. description 은 종 미상 폴백.
+    'general-vaccine': {
+      description:
+        '강아지는 DHPPL(디스템퍼·전염성간염·파보·파라인플루엔자·렙토스피라), 고양이는 범백혈구감소증(FPV)이 포함된 종합백신을 접종하세요.\n\n태국 입국 21일 전까지 접종을 완료하세요.\n태국 입국 때 면역 유효기간이 남아있어야 합니다.',
+      descriptionBySpecies: {
+        dog: '종합백신(DHPPL)을 접종하세요.\n\n디스템퍼·전염성간염·파보바이러스·파라인플루엔자·렙토스피라가 포함되어야 합니다.\n태국 입국 21일 전까지 접종을 완료하세요.\n태국 입국 때 면역 유효기간이 남아있어야 합니다.\n렙토스피라 백신을 맞지 않은 경우, 출국 30일 이내의 렙토스피라 음성 검사 결과가 필요합니다.',
+        cat: '종합백신(FVRCP)을 접종하세요.\n\n범백혈구감소증(FPV)이 포함되어야 합니다.\n태국 입국 21일 전까지 접종을 완료하세요.\n태국 입국 때 면역 유효기간이 남아있어야 합니다.',
+      },
+      validationIds: ['th.general-vaccine-required'],
+    },
+    // 항공권 구매 — 일본(항체검사 180일)과 제약이 달라 교체: 백신 21일 대기 + 수입허가
+    // 일정(60일 유효)이 기준. 백신 뒤·수입허가 앞으로 순서 조정(order 90).
+    'flight-purchase': {
+      description:
+        '태국 입국 가능 시기에 맞춰 항공권을 구매하세요.\n\n광견병 백신과 종합백신 접종일로부터 21일이 지난 후에 입국할 수 있습니다.\n수입 허가 신청에 항공편 일정이 필요합니다. 늦어도 입국 2주 전까지 항공권을 준비하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '태국에 입국할 수 있습니다.',
+      order: 90,
+      // 일본의 180일 anchor(항체 검사) 미적용 — 21일 룰은 입력 차단(validateThEntryDate)과
+      // 아래 procedure-check 가 담당.
+      earliest: undefined,
+      validationIds: [
+        'th.rabies-21days-before-arrival',
+        'th.rabies-not-expired-on-arrival',
+        'th.general-vaccine-21days-before-arrival',
+        'th.general-vaccine-not-expired-on-arrival',
+      ],
+    },
+    // 수입 허가 — 태국 입국 공항 동물검역소(AQS)에 이메일 신청. 신청 → 허가증 2단계
+    // (base 카드의 deriveImportPermitStatus 모델 그대로, 문구·마감만 태국 기준).
+    'import-permit': {
+      description:
+        '태국 입국 공항의 동물검역소(AQS)에 수입 허가를 신청하세요.\n\n입국 7영업일 전까지 신청해야 합니다. 여유 있게 2주 전까지 신청하세요.\n입국 60일 전부터 신청할 수 있습니다.\n신청서(R1/1)와 여권 사본, 마이크로칩·예방접종 증명서, 항공편 일정, 반려동물 사진을 입국 공항 동물검역소 이메일로 보냅니다.\n서류가 완비되면 1~2주 내에 수입허가증이 이메일로 발급됩니다. 수입허가증은 발급일로부터 60일간 유효합니다.',
+      doneSummary: '태국 수입허가증을 받았습니다.',
+      cardLine: '태국 수입 허가를 신청하세요.',
+      deadline: { anchor: 'departure', daysBefore: 14 },
+      links: [{ url: '/guide/th-aqs-contacts', label: '태국 동물검역소(AQS) 연락처' }],
+      validationIds: ['th.import-permit-9days-before-entry'],
+    },
     departure: {
       title: '태국 수입 동물검역',
       shortLabel: '수입',
       description:
-        '태국 도착 후 공항 동물검역소(AQS)에서 수입 검역을 받으세요.\n검역 수수료는 동물 1마리당 500바트(현금)입니다.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 바로 인도됩니다. 서류가 미비하거나 전염병 증상이 있으면 최대 30일 격리될 수 있으며, 격리 비용은 보호자가 부담합니다.',
+        '태국 도착 후 공항 동물검역소(AQS)에서 수입 검역을 받으세요.\n수완나품 공항은 입국 심사 후 수하물 찾는 곳(8번 벨트 근처)에 동물검역소가 있습니다.\n검역 수수료는 동물 1마리당 500바트(현금)입니다.\n검사를 통과하면 수입승인서(R-6)와 수입허가증(R-7)이 발급됩니다.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 바로 인도됩니다. 서류가 미비하거나 전염병 증상이 있으면 최대 30일 격리될 수 있으며, 격리 비용은 보호자가 부담합니다.',
       doneSummary: '태국 수입 동물검역을 받았습니다.',
       done: 'quarantine:th_import_quarantine_date',
       inputs: [
@@ -60,16 +121,12 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       ],
       allowAttachments: true,
       attachmentHint: '검역증(수입승인서 R-6·수입허가증 R-7) 사본을 사진, PDF로 저장하세요.',
+      validationIds: ['th.import-quarantine-date-valid'],
     },
-    // 종합백신 — 태국은 강아지 DHPP+L(렙토스피라 포함). 일본/공용 문구('DHPP')와 달라 교체.
-    'general-vaccine': {
-      description:
-        '강아지는 DHPPL(디스템퍼·전염성간염·파보·파라인플루엔자·렙토스피라), 고양이는 FPV(범백혈구감소증)를 접종하세요.\n태국 입국 최소 21일 전에 접종을 완료해야 합니다.\n렙토스피라 미접종 시 출발 30일 이내에 음성 검사가 필요합니다.',
-    },
-    // 수입 허가 — 태국 입국 공항 동물검역소(AQS) 신청. 일본엔 없는 단계라 태국 문구로 신규.
-    'import-permit': {
-      description:
-        '태국 입국 공항 동물검역소(AQS)에 수입 허가를 신청하세요.\n출발 최소 7영업일 전 ~ 최대 60일 전 사이에 신청합니다.\n서류가 완비되면 1~2주 내에 수입허가증이 발급되며, 발급일로부터 60일간 유효합니다.',
+    // 한국 수입 동물검역(왕복 마지막) — 검역일 ≥ 귀국일 재검증을 태국 룰로 연결.
+    // (base 의 jp.kr-import-quarantine-date-valid 는 country=japan 이라 태국 케이스에선 미실행.)
+    'kr-import-quarantine': {
+      validationIds: ['th.kr-import-quarantine-date-valid'],
     },
   },
 }

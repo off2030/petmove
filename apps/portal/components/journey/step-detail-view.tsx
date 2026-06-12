@@ -18,6 +18,8 @@ import {
   validateMicrochipBeforeBooster,
   validateRabiesInterval,
   validateRabiesPrimeAge,
+  validateThEntryDate,
+  validateThImportPermitDate,
   validateTiterAfterBooster,
   validateTiterWithinChain,
   validateVetVisitDate,
@@ -33,11 +35,14 @@ import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
 import {
   getCaseVaccineData,
   markAdvanceNotificationApprovalSkipped,
+  markImportPermitIssued,
   markJpExportQuarantineReservationSkipped,
   markTiterResultConfirmed,
   updateAdvanceNotificationDate,
   updateCaseTripType,
   updateFlightFields,
+  updateGeneralVaccineEntries,
+  updateImportPermitFields,
   updateJpExportQuarantineFields,
   updateImportQuarantineDate,
   updateJpExportQuarantineVisitDate,
@@ -55,6 +60,8 @@ import { setRequiredDocsComplete } from '@/lib/actions/required-docs'
 import { readCaseDocuments } from '@/lib/documents'
 import { AdvanceNotificationInputs } from './advance-notification-inputs'
 import { FlightInputs, type FlightForm } from './flight-inputs'
+import { GeneralVaccineInputs, type GeneralVaccineEntry } from './general-vaccine-inputs'
+import { ImportPermitInputs, type ImportPermitForm } from './import-permit-inputs'
 import { JpExportQuarantineInputs, type JpExportForm } from './jp-export-quarantine-inputs'
 import { JpExportQuarantineVisitInputs } from './jp-export-quarantine-visit-inputs'
 import { ImportQuarantineInputs } from './import-quarantine-inputs'
@@ -144,6 +151,8 @@ export function StepDetailView({
     (step.inputs ?? []).find((i) => i.key === importQuarantineField)?.helpText ?? ''
   const isJpExportQuarantineVisit = step.id === 'jp-export-quarantine-visit'
   const isKrImportQuarantine = step.id === 'kr-import-quarantine'
+  const isGeneralVaccine = step.id === 'general-vaccine'
+  const isImportPermit = step.id === 'import-permit'
   const isInteractive =
     isMicrochip ||
     isRabies ||
@@ -158,7 +167,9 @@ export function StepDetailView({
     isJpImportQuarantine ||
     isJpExportQuarantineVisit ||
     isKrImportQuarantine ||
-    isImportQuarantine
+    isImportQuarantine ||
+    isGeneralVaccine ||
+    isImportPermit
   const caseRowRaw = useCase(caseId)
   // 다중 목적지: 활성 목적지(?dest=) 1개짜리 뷰로 좁힌다 — 아래 모든 saved* 읽기·동기화
   // useEffect 가 그 목적지(by_dest) 기준이 된다. 단일 목적지면 뷰가 원본과 동일(무변경).
@@ -240,6 +251,16 @@ export function StepDetailView({
       : ''
   const [importQuarantineDate, setImportQuarantineDate] = useState(savedImportQuarantineDate)
 
+  // 종합백신 — 가변 길이 entries. 빈 상태에서도 입력칸 한 장이 보이도록 최소 1장 유지.
+  const savedGeneralVaccine = readGeneralVaccineForm(caseRow?.data)
+  const [generalVaccine, setGeneralVaccine] = useState<GeneralVaccineEntry[]>(
+    savedGeneralVaccine.length === 0 ? [makeEmptyGeneralVaccine()] : savedGeneralVaccine,
+  )
+
+  // 수입 허가 — 신청일 + 허가 번호 (둘 다 스코핑 필드 — 활성 목적지로 flatten 된 caseRow 기준).
+  const savedImportPermit = readImportPermitForm(caseRow?.data)
+  const [importPermit, setImportPermit] = useState<ImportPermitForm>(savedImportPermit)
+
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
@@ -283,6 +304,8 @@ export function StepDetailView({
     jpImportQuarantineDate,
     jpExportQuarantineVisitDate,
     krImportQuarantineDate,
+    generalVaccine,
+    importPermit,
   ])
   const rabiesExtraDirty = isRabiesExtra && !rabiesExtraEqual(rabiesExtra, savedRabiesExtra)
   const titerDirty =
@@ -305,6 +328,12 @@ export function StepDetailView({
     isKrImportQuarantine && krImportQuarantineDate !== krImportQuarantineBaseline
   const importQuarantineDirty =
     isImportQuarantine && importQuarantineDate !== savedImportQuarantineDate
+  const generalVaccineDirty =
+    isGeneralVaccine && !generalVaccineEqual(generalVaccine, savedGeneralVaccine)
+  const importPermitDirty =
+    isImportPermit &&
+    (importPermit.applicationDate !== savedImportPermit.applicationDate ||
+      importPermit.permitNo !== savedImportPermit.permitNo)
   const dirty =
     microchipDirty ||
     rabiesDirty ||
@@ -319,7 +348,9 @@ export function StepDetailView({
     jpImportQuarantineDirty ||
     jpExportQuarantineVisitDirty ||
     krImportQuarantineDirty ||
-    importQuarantineDirty
+    importQuarantineDirty ||
+    generalVaccineDirty ||
+    importPermitDirty
   useUnsavedGuard(dirty)
   // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
   const justSaved = status === 'saved' && !dirty
@@ -407,6 +438,15 @@ export function StepDetailView({
   const titerExtraUpcoming =
     isTiterExtra &&
     titerExtra.some((e) => typeof e.date === 'string' && e.date.length >= 10 && e.date > todayStr)
+  // 종합백신 — 입력 entry 중 하나라도 미래면 '예정일로 저장'. (추가 백신과 동일.)
+  const generalVaccineUpcoming =
+    isGeneralVaccine &&
+    generalVaccine.some((e) => typeof e.date === 'string' && e.date.length >= 10 && e.date > todayStr)
+  // 수입 허가 — 신청일이 미래면 '예정일로 저장'. (사전 신고 advanceUpcoming 과 동일.)
+  const importPermitUpcoming =
+    isImportPermit &&
+    importPermit.applicationDate.length >= 10 &&
+    importPermit.applicationDate > todayStr
 
   // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
   useEffect(() => {
@@ -486,6 +526,17 @@ export function StepDetailView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
+    if (!generalVaccineDirty) {
+      const next = readGeneralVaccineForm(caseRow?.data)
+      setGeneralVaccine(next.length === 0 ? [makeEmptyGeneralVaccine()] : next)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data])
+  useEffect(() => {
+    if (!importPermitDirty) setImportPermit(readImportPermitForm(caseRow?.data))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data])
+  useEffect(() => {
     if (!jpExportQuarantineVisitDirty) setJpExportQuarantineVisitDate(jpExportQuarantineVisitBaseline)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
@@ -550,8 +601,12 @@ export function StepDetailView({
       // 만료된 과거 이력은 사실 데이터로 입력 허용 — 갱신 여부는 추가 접종/검사 step 의 chain
       // 검증과 procedure-check 주의(jp.rabies-extra-within-previous-validity 등)가 표면화한다.
       if (isRabies1 && rabies.date) {
-        // 1차 생후 91일 — procedure-check(jp.rabies-prime-after-91days-old)와 같은 domain 함수.
-        const ageErr = validateRabiesPrimeAge(readBirthDate(caseRow?.data), rabies.date)
+        // 1차 생후 최소 일령 — procedure-check(jp 91일·th 84일 등)와 같은 domain 함수.
+        // 기준 일수는 목적지별 카탈로그 override 의 earliest(birth anchor)가 단일 출처 —
+        // 일본 91일, 태국 84일(12주). override 없는 나라는 기본 91일.
+        const minAgeDays =
+          step.earliest?.anchor === 'birth' ? step.earliest.daysAfter : undefined
+        const ageErr = validateRabiesPrimeAge(readBirthDate(caseRow?.data), rabies.date, minAgeDays)
         if (ageErr) return ageErr
       }
       if (isRabies2) {
@@ -623,12 +678,34 @@ export function StepDetailView({
       // 일본 입국일 — 광견병 항체 검사 + 180일 이내면 server 가 거부할 입력. server roundtrip
       // 전 즉시 차단해 빨간 박스로 분명히 보이게 (server 결과는 form 변경 시 useEffect 가
       // 해제해 토스트가 짧게 사라질 수 있음).
-      const jpEntryErr = validateJpEntryDate(flightForm.entry_date.trim(), {
+      const entryRuleCtx = {
         data: (caseRow?.data ?? {}) as Record<string, unknown>,
         destination: caseRow?.destination ?? null,
         departureDate: caseRow?.departure_date ?? null,
-      })
+      }
+      const jpEntryErr = validateJpEntryDate(flightForm.entry_date.trim(), entryRuleCtx)
       if (jpEntryErr) return jpEntryErr
+      // 태국 입국일 — 광견병·종합백신 접종 + 21일 이내면 차단 (일본 180일과 동일 정책).
+      const thEntryErr = validateThEntryDate(flightForm.entry_date.trim(), entryRuleCtx)
+      if (thEntryErr) return thEntryErr
+      return null
+    }
+    if (isGeneralVaccine) {
+      // 유효기간 < 접종일 — 논리적 불가능 조건이라 저장 거부.
+      for (const e of generalVaccine) {
+        if (e.date && e.valid_until && e.valid_until < e.date) {
+          return '면역 유효기간이 접종일보다 빠릅니다. 날짜를 확인하세요.'
+        }
+      }
+      return null
+    }
+    if (isImportPermit) {
+      // 태국 — 신청일이 입국일 9일(7영업일) 이내면 차단. 다른 허가 필요국은 규정 확정 시 추가.
+      if (destinationKey === 'thailand') {
+        const data = (caseRow?.data ?? {}) as Record<string, unknown>
+        const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
+        return validateThImportPermitDate(importPermit.applicationDate.trim(), entry)
+      }
       return null
     }
     if (isAdvanceNotification) {
@@ -816,6 +893,51 @@ export function StepDetailView({
           // by_dest 저장 시 res.value.data 는 top-level 이 아니라 by_dest 에 있으므로, 활성
           // 목적지 뷰로 평탄화해서 폼을 동기화 (단일 목적지면 뷰가 원본과 동일).
           setFlightForm(readFlightForm(activeDestinationView(res.value, activeDest).data))
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    } else if (isGeneralVaccine) {
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        const res = await updateGeneralVaccineEntries(
+          caseId,
+          generalVaccine.map((e) => ({
+            date: e.date || null,
+            valid_until: e.valid_until || null,
+          })),
+        )
+        if (res.ok) {
+          updateCase(res.value)
+          const next = readGeneralVaccineForm(res.value.data)
+          setGeneralVaccine(next.length === 0 ? [makeEmptyGeneralVaccine()] : next)
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    } else if (isImportPermit) {
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        const res = await updateImportPermitFields(
+          caseId,
+          {
+            application_date: importPermit.applicationDate || null,
+            permit_no: importPermit.permitNo || null,
+          },
+          activeDest,
+        )
+        if (res.ok) {
+          updateCase(res.value)
+          // by_dest 저장 — 활성 목적지 뷰로 평탄화해서 폼 동기화 (항공권 step 과 동일).
+          setImportPermit(readImportPermitForm(activeDestinationView(res.value, activeDest).data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -1088,6 +1210,30 @@ export function StepDetailView({
     startTransition(async () => {
       const res = await markJpExportQuarantineReservationSkipped(caseId)
       setSkippingJpExport(false)
+      if (res.ok) {
+        updateCase(res.value)
+        router.replace(`/cases/${caseId}/journey`)
+      } else {
+        setStatus('error')
+        setError(res.error)
+      }
+    })
+  }
+  // 수입 허가 — 사전 신고와 동일 2단계. 신청일 입력(오늘 이하) + 미완료(허가번호·첨부 없음)
+  // 상태에서 변경이 없으면 하단 저장 버튼이 '완료' 로 전환 → 발급 완료(skip) 플래그 set.
+  const isImportPermitInProgress =
+    isImportPermit &&
+    savedImportPermit.applicationDate.length >= 10 &&
+    savedImportPermit.applicationDate <= todayStr &&
+    !done
+  const importPermitCompleteMode = isImportPermitInProgress && !dirty
+  const [completingImportPermit, setCompletingImportPermit] = useState(false)
+  const handleCompleteImportPermit = () => {
+    if (completingImportPermit) return
+    setCompletingImportPermit(true)
+    startTransition(async () => {
+      const res = await markImportPermitIssued(caseId, activeDest)
+      setCompletingImportPermit(false)
       if (res.ok) {
         updateCase(res.value)
         router.replace(`/cases/${caseId}/journey`)
@@ -1581,6 +1727,36 @@ export function StepDetailView({
             />
           </section>
         )}
+        {isGeneralVaccine && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
+            <GeneralVaccineInputs
+              entries={generalVaccine}
+              vaccineLabel={generalVaccineCardLabel(caseRow?.data, destinationKey)}
+              onChange={(idx, key, next) =>
+                setGeneralVaccine((prev) =>
+                  prev.map((e, i) => (i === idx ? { ...e, [key]: next } : e)),
+                )
+              }
+              onRemove={(idx) =>
+                setGeneralVaccine((prev) => {
+                  const next = prev.filter((_, i) => i !== idx)
+                  return next.length === 0 ? [makeEmptyGeneralVaccine()] : next
+                })
+              }
+              onAdd={() => setGeneralVaccine((prev) => [...prev, makeEmptyGeneralVaccine()])}
+            />
+          </section>
+        )}
+        {isImportPermit && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
+            <ImportPermitInputs
+              form={importPermit}
+              onChange={(key, next) => setImportPermit((prev) => ({ ...prev, [key]: next }))}
+            />
+          </section>
+        )}
         {isAdvanceNotification && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
@@ -1783,8 +1959,10 @@ export function StepDetailView({
               (jpExportSkipMode) / 광견병 항체 검사 진행(titerCompleteMode)이면 같은 버튼이
               '완료'로 전환 — 저장할 변경이 없는 상태에서 명시적 완료 액션을 직접 노출. */}
           {(() => {
-            const completeMode = advanceSkipMode || jpExportSkipMode || titerCompleteMode || vetVisitConfirmMode
-            const processing = skippingApproval || skippingJpExport || completingTiter || confirmingVetDocs
+            const completeMode =
+              advanceSkipMode || jpExportSkipMode || titerCompleteMode || vetVisitConfirmMode || importPermitCompleteMode
+            const processing =
+              skippingApproval || skippingJpExport || completingTiter || confirmingVetDocs || completingImportPermit
             const active = (canSave || completeMode) && status !== 'saving' && !processing
             return (
           <button
@@ -1798,7 +1976,9 @@ export function StepDetailView({
                     ? handleCompleteTiter
                     : vetVisitConfirmMode
                       ? handleConfirmVetVisitDocs
-                      : handleSaveClick
+                      : importPermitCompleteMode
+                        ? handleCompleteImportPermit
+                        : handleSaveClick
             }
             disabled={!active}
             aria-live="polite"
@@ -1834,7 +2014,9 @@ export function StepDetailView({
                         rabiesExtraUpcoming ||
                         vetVisitUpcoming ||
                         titerUpcoming ||
-                        titerExtraUpcoming
+                        titerExtraUpcoming ||
+                        generalVaccineUpcoming ||
+                        importPermitUpcoming
                       ? '예정일로 저장'
                       : // 추가 접종·추가 검사 — 도래(오늘 이하)한 입력의 저장 = 완료 확인.
                         // 검역 confirm 단계도 예정 저장분이 도래하면(미변경) 완료 확정이라 '완료'.
@@ -1935,6 +2117,72 @@ function readImplantDate(data: Record<string, unknown> | null | undefined): stri
   if (!data) return ''
   const v = data['microchip_implant_date']
   return typeof v === 'string' ? v : ''
+}
+
+/**
+ * 종합백신 폼 값을 caseRow.data.general_vaccine_dates 에서 읽어온다.
+ * 항목은 {date, valid_until} 객체 또는 legacy 문자열(접종일만) — 둘 다 폼 모양으로 정규화.
+ */
+function readGeneralVaccineForm(
+  data: Record<string, unknown> | null | undefined,
+): GeneralVaccineEntry[] {
+  if (!data) return []
+  const arr = data['general_vaccine_dates']
+  if (!Array.isArray(arr)) return []
+  const out: GeneralVaccineEntry[] = []
+  for (const item of arr) {
+    if (typeof item === 'string') {
+      if (item.length >= 10) out.push({ date: item.slice(0, 10), valid_until: '' })
+      continue
+    }
+    if (item && typeof item === 'object') {
+      const rec = item as Record<string, unknown>
+      const date = typeof rec.date === 'string' ? rec.date : ''
+      const validUntil = typeof rec.valid_until === 'string' ? rec.valid_until : ''
+      if (date || validUntil) out.push({ date, valid_until: validUntil })
+    }
+  }
+  return out
+}
+
+function makeEmptyGeneralVaccine(): GeneralVaccineEntry {
+  return { date: '', valid_until: '' }
+}
+
+function generalVaccineEqual(a: GeneralVaccineEntry[], b: GeneralVaccineEntry[]): boolean {
+  if (a.length !== b.length) return false
+  return a.every((e, i) => e.date === b[i].date && e.valid_until === b[i].valid_until)
+}
+
+/**
+ * 종합백신 카드 헤더 라벨 — 종(개/고양이)별 백신명. 카드 본문(description)의 종별 분리와
+ * 짝을 맞춘다. 종 미상·기타 목적지는 '종합백신'.
+ */
+function generalVaccineCardLabel(
+  data: Record<string, unknown> | null | undefined,
+  destinationKey: string | null,
+): string {
+  const raw = data && typeof data['species'] === 'string' ? (data['species'] as string).toLowerCase() : ''
+  const isDog = raw === 'dog' || raw === '강아지' || raw === '개'
+  const isCat = raw === 'cat' || raw === '고양이'
+  if (destinationKey === 'thailand') {
+    if (isDog) return '종합백신(DHPPL)'
+    if (isCat) return '종합백신(FVRCP)'
+  }
+  return '종합백신'
+}
+
+/** 수입 허가 폼 값 — import_permit_application_date / permit_no (flatten 된 data 기준). */
+function readImportPermitForm(
+  data: Record<string, unknown> | null | undefined,
+): ImportPermitForm {
+  if (!data) return { applicationDate: '', permitNo: '' }
+  const filed = data['import_permit_application_date']
+  const no = data['permit_no']
+  return {
+    applicationDate: typeof filed === 'string' ? filed : '',
+    permitNo: typeof no === 'string' ? no : '',
+  }
 }
 
 function readBirthDate(data: Record<string, unknown> | null | undefined): string {

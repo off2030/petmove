@@ -16,6 +16,7 @@ import { buildCaseJourneyContext } from './applicability'
 import { findRabiesChainBreak } from './rabies-chain'
 import {
   deriveAdvanceNotificationStatus,
+  deriveImportPermitStatus,
   deriveJpExportQuarantineStatus,
 } from './report-status'
 import { areAllRequiredDocsVerified, resolveRequiredDocs } from '../required-docs'
@@ -181,6 +182,10 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       // 신고 진행 상태는 [[deriveAdvanceNotificationStatus]] 가 단일 출처 — admin 신고 탭과
       // portal 사전 신고 step 이 같이 사용. 'done' = 첨부·skipped·legacy stored 'done'.
       return deriveAdvanceNotificationStatus(caseRow) === 'done'
+    case 'has-import-permit':
+      // 수입 허가도 동일 — [[deriveImportPermitStatus]] 가 단일 출처.
+      // 'done' = 첨부·허가번호·완료 처리(skip)·legacy manual-flag.
+      return deriveImportPermitStatus(caseRow) === 'done'
     case 'has-jp-export-quarantine':
       // 일본 수출검역 신청도 동일 — [[deriveJpExportQuarantineStatus]] 가 단일 출처.
       // 'done' = skipped·confirmed+예약확정·legacy stored 'done'.
@@ -338,6 +343,14 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
     case 'has-advance-notification': {
       const dt =
         typeof data.advance_notification_date === 'string' ? data.advance_notification_date : null
+      return dt && dt.length >= 10 ? dt.slice(0, 10) : null
+    }
+    case 'has-import-permit': {
+      // 수입 허가 step 의 표시일 = 신청일 (사전 신고와 동일 — 보호자 행위 시점).
+      const dt =
+        typeof data.import_permit_application_date === 'string'
+          ? data.import_permit_application_date
+          : null
       return dt && dt.length >= 10 ? dt.slice(0, 10) : null
     }
     case 'has-jp-export-quarantine': {

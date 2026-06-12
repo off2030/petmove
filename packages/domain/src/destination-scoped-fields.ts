@@ -54,6 +54,10 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'permit_no',
   'certificate_no',
   'id_date',
+  // 수입 허가 신청 → 허가증 2단계 (import-permit step, 태국·호주 등 허가 필요국 공용) —
+  // 목적지마다 허가를 따로 받으므로 신청일·완료(skip) 플래그도 by_dest 분리.
+  'import_permit_application_date',
+  'import_permit_issued_skipped',
   // 절차 시간 (EU 촌충국가별 praziquantel 투여시각)
   'deworming_time',
   // 도착국 거주지 주소 — destination 별로 다른 주소
@@ -109,6 +113,7 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   'weight',
   'microchip_implant_date',
   'rabies_dates',
+  'general_vaccine_dates', //   종합백신 접종 이력 — 동물 단위 사실 (rabies_dates 동일)
   'rabies_titer_records',
   'rabies_extra_confirmed',
   'rabies_titer_result_confirmed',

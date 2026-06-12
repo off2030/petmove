@@ -303,10 +303,19 @@ export function buildJourney(
     //  - done → resolveCompletedDate (없으면 dash 로 fallback)
     //  - upcoming → deadline 권장일, 없으면 earliest 가능일
     const isDeparture = step.id === 'departure'
-    // 일본 수입검역(= departure 의 일본 override)은 검역일로 완료·날짜를 잡으므로
-    // departure 의 '출국일' shortcut 에서 제외 — 일반 경로(done→완료일)를 탄다.
+    // 나라별 도착(수입)·출국(수출) 검역 — done 시그널 'quarantine:<검역일필드>' (일본 외 공용
+    // 배선, step-detail-view 와 동일 규약). 그 나라 검역일 필드 key 를 동적으로 읽는다.
+    const quarantineField =
+      typeof step.done === 'string' && step.done.startsWith('quarantine:')
+        ? step.done.slice('quarantine:'.length)
+        : null
+    // 수입검역(= departure 의 목적지 override — 일본 'has-jp-import-quarantine' 또는 그 외
+    // 나라 quarantine: 시그널)은 검역일로 완료·날짜를 잡으므로 departure 의 '출국일'
+    // shortcut 에서 제외 — 일반 경로(done→완료일)를 탄다.
     const isJpImportQuarantine =
-      isDeparture && (step.inputs ?? []).some((i) => i.key === 'jp_import_quarantine_date')
+      isDeparture &&
+      ((step.inputs ?? []).some((i) => i.key === 'jp_import_quarantine_date') ||
+        quarantineField !== null)
     const deadline = deadlineDate(step, caseRow)
     const earliest = earliestDate(step, caseRow)
     // window 마감이면 구간 끝(기준일) — 카드에 'A ~ B' 구간으로 표시.
@@ -385,6 +394,13 @@ export function buildJourney(
       caseData.jp_import_quarantine_date.length >= 10
         ? caseData.jp_import_quarantine_date.slice(0, 10)
         : null
+    // 나라별 검역 step(quarantine:<field>)의 '자기 검역일' — 태국 수입·수출검역 등.
+    const quarantineOwnDate =
+      quarantineField &&
+      typeof caseData[quarantineField] === 'string' &&
+      (caseData[quarantineField] as string).length >= 10
+        ? (caseData[quarantineField] as string).slice(0, 10)
+        : null
     const jpExportVisitOwnDate =
       typeof caseData.jp_export_quarantine_visit_date === 'string' &&
       caseData.jp_export_quarantine_visit_date.length >= 10
@@ -405,12 +421,15 @@ export function buildJourney(
       step.id === 'certificate-issue'
         ? krExportQuarantineDate
         : isJpImportQuarantine
-          ? (jpImportOwnDate ?? flightEntryDate)
+          ? (jpImportOwnDate ?? quarantineOwnDate ?? flightEntryDate)
           : step.id === 'jp-export-quarantine-visit'
             ? (jpExportVisitOwnDate ?? jpExportReservationDate)
             : step.id === 'kr-import-quarantine'
               ? (krImportOwnDate ?? flightReturnDate)
-              : null
+              // 나라별 출국(수출) 검역(태국 등) — 자기 검역일만 (예약 fallback 앵커 없음).
+              : quarantineField
+                ? quarantineOwnDate
+                : null
     // 예정일이 지났는데(예정일 다음날부터 — 당일은 제외) 아직 확인(done) 전 — '예정 [지난 날짜]'
     // 대신 안내 문구로 표시. 당일(예정일 == 오늘)엔 아직 '지났다'가 아니라 정상 안내로 둔다.
     const passedUnconfirmed = !done && !!ownConfirmDate && ownConfirmDate < today
@@ -519,6 +538,7 @@ export function buildJourney(
     const isAwaitingStep =
       (step.id === 'advance-notification' ||
         step.id === 'jp-export-quarantine' ||
+        step.id === 'import-permit' ||
         step.id === 'vet-visit' ||
         step.id === 'rabies-titer') &&
       !done &&

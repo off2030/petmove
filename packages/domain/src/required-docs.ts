@@ -1,5 +1,6 @@
 import type { CaseRow } from './types'
 import { todayKst } from './dates'
+import { getTripType } from './destination-config'
 import { JOURNEY_STEP_CATALOG } from './journey-steps/catalog'
 import { resolveCompletedDate, resolveDone } from './journey-steps/done-resolver'
 
@@ -69,6 +70,11 @@ interface RequiredDocSpec {
   stepRef?: string
   /** 케이스에 따라 불필요할 수 있는 서류 — 상세에서 '해당없음' 토글 노출(예: 첫 입국 시 수출 검역증). */
   naAllowed?: boolean
+  /**
+   * 왕복 케이스에만 필요한 서류 (예: 태국 — 광견병 항체 검사 결과지는 한국 귀국용).
+   * 편도 케이스의 resolveRequiredDocs 결과에서 제외 — vet-visit 완료 게이트에도 안 들어간다.
+   */
+  roundTripOnly?: boolean
   /**
    * 이 서류가 실제로 발급되는 step. kind='step' 이면 stepRef 와 같은 게 보통이라 생략 가능
    * (자동 폴백). kind='manual' 인데 특정 step 의 결과로 발급되는 서류(예: 별지25·FormAC/RE 는
@@ -144,6 +150,57 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'certificate-issue',
     },
   ],
+  '태국': [
+    {
+      id: 'th-import-permit-doc',
+      name: '수입허가증(Import Permit)',
+      source: '태국 동물검역소(AQS)',
+      kind: 'step',
+      stepRef: 'import-permit',
+      description:
+        '수입 허가 신청 후 태국 입국 공항의 동물검역소(AQS)에서 이메일로 발급받습니다.\n\n발급일로부터 60일간 유효합니다.\n\n태국 도착 후 수입 동물검역 때 제시해야 합니다.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용하실 수 있습니다.',
+      previewStepId: 'import-permit',
+    },
+    {
+      id: 'th-health-cert-en',
+      name: '영문 건강증명서(Health Certificate)',
+      source: '동물병원',
+      kind: 'manual',
+      issuanceStepId: 'vet-visit',
+      description:
+        '임상 수의사가 영문으로 발급하는 건강증명서입니다.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급합니다.\n\n수의사 서명이 있는 원본이 필요합니다.\n\n한국 수출 동물검역 때 제출하고, 태국 도착 후 검역에도 사용됩니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+    },
+    {
+      id: 'th-vaccine-cert-en',
+      name: '예방접종 증명서(영문)',
+      source: '동물병원',
+      kind: 'manual',
+      issuanceStepId: 'general-vaccine',
+      description:
+        '광견병 백신과 종합백신의 영문 접종 증명서입니다.\n\n접종한 동물병원에서 발급받습니다. 접종한 동물병원이 여러 곳인 경우, 각 동물병원에서 따로 받아야 합니다.\n\n백신 이름·제조사·접종일·유효기간과 수의사 서명이 들어가야 합니다.\n\n수입 허가 신청과 동물검역에 사용됩니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+    },
+    {
+      id: 'th-rabies-titer-result',
+      name: '광견병 항체 검사 결과지',
+      source: '동물병원',
+      kind: 'step',
+      stepRef: 'rabies-titer',
+      roundTripOnly: true,
+      description:
+        '검사를 의뢰한 동물병원에서 발급받습니다.\n\n태국 입국에는 필요하지 않지만, 한국으로 돌아올 때 반드시 원본이 필요합니다.\n\n광견병 백신 유효기간 유지 시 채혈일로부터 2년까지 사용할 수 있습니다.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리합니다.',
+      previewStepId: 'rabies-titer',
+    },
+    {
+      id: 'th-kr-export-quarantine-cert',
+      name: '한국 수출 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'certificate-issue',
+      description:
+        '한국 수출 동물검역 후 발급받습니다.\n\n태국 수입 동물검역 때 원본을 제시해야 합니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+      previewStepId: 'certificate-issue',
+    },
+  ],
 }
 
 export function resolveRequiredDocs(
@@ -151,8 +208,13 @@ export function resolveRequiredDocs(
   caseRow: CaseRow,
 ): RequiredDocItem[] | null {
   if (!destination) return null
-  const specs = SPECS[destination]
-  if (!specs) return null
+  const allSpecs = SPECS[destination]
+  if (!allSpecs) return null
+  // 왕복 전용 서류(예: 한국 귀국용 항체 검사 결과지)는 편도 케이스에서 제외 —
+  // 목록·vet-visit 완료 게이트 양쪽에서 빠진다.
+  const tripType = getTripType((caseRow.data ?? {}) as Record<string, unknown>, destination)
+  const specs = allSpecs.filter((s) => !s.roundTripOnly || tripType === 'round')
+  if (specs.length === 0) return null
   const flags = readBoolFlags(caseRow, 'required_doc_flags')
   const naFlags = readBoolFlags(caseRow, 'required_doc_na')
   return specs.map((spec) => {

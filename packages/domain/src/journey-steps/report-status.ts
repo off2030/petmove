@@ -63,6 +63,50 @@ export function deriveAdvanceNotificationStatus(caseRow: CaseRow): JpReportStatu
  * 영향 X(존재해도 단순 데이터). 옛 케이스가 confirmed=true 만 있다면 이제 'in_progress'
  * 로 보이며, 보호자가 '완료' 버튼을 한 번 더 누르면 done 으로 정리된다.
  */
+/**
+ * 수입 허가(import-permit step) 진행 상태 — 허가가 필요한 모든 목적지(태국·호주·뉴질랜드·
+ * 대만·말레이시아 등) 공용. 사전 신고와 동일한 신청 → 허가증 2단계 모델.
+ *
+ *  - 첨부(stepId 'import-permit') = 'done'
+ *  - 허가 번호(permit_no) 입력 = 'done' — 번호가 있다는 건 허가증이 나왔다는 뜻.
+ *  - 신청일 입력 + `import_permit_issued_skipped`(첨부 없이 완료 처리) = 'done'
+ *  - 옛 manual-flag `journey_flags['import-permit-issued']` = 'done' (하위 호환)
+ *  - 신청일(import_permit_application_date) 입력 = 'in_progress'
+ *  - 그 외 = 'not_started'
+ *
+ * 신청일·permit_no·skip 플래그는 destination-scoped(by_dest) — 다중 목적지 케이스는
+ * 활성 목적지로 flatten 된 view(caseRow)를 넘겨야 한다 (검역 필드들과 동일 컨벤션).
+ */
+export function deriveImportPermitStatus(caseRow: CaseRow): JpReportStatus {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  const docs = Array.isArray(data.documents) ? data.documents : []
+  const hasAttachment = docs.some(
+    (d) =>
+      !!d &&
+      typeof d === 'object' &&
+      (d as Record<string, unknown>).stepId === 'import-permit',
+  )
+  if (hasAttachment) return 'done'
+  const permitNo = typeof data.permit_no === 'string' ? data.permit_no.trim() : ''
+  if (permitNo.length > 0) return 'done'
+  const filed =
+    typeof data.import_permit_application_date === 'string'
+      ? data.import_permit_application_date
+      : ''
+  // 완료(skip)는 신청일이 있을 때만 유효 — 신청일을 지우면 완료도 해제된다(사전 신고와 동일).
+  if (data.import_permit_issued_skipped === true && filed.length >= 10) return 'done'
+  const flags = data.journey_flags
+  if (
+    flags &&
+    typeof flags === 'object' &&
+    (flags as Record<string, unknown>)['import-permit-issued'] === true
+  ) {
+    return 'done'
+  }
+  if (filed.length >= 10) return 'in_progress'
+  return 'not_started'
+}
+
 export function deriveJpExportQuarantineStatus(caseRow: CaseRow): JpReportStatus {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const stored = data.import_export_status
