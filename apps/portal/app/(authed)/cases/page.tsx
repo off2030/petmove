@@ -65,35 +65,27 @@ export default async function CasesPage() {
           >
             <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em' }}>{petName}</div>
             {tokens.length > 0 && (
-              <div style={{ marginTop: 8 }}>
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    padding: '4px 11px',
-                    borderRadius: 999,
-                    background: 'var(--pm-accent-soft)',
-                    color: 'var(--pm-ink-2)',
-                    fontSize: 12.5,
-                    fontWeight: 500,
-                    letterSpacing: '-0.005em',
-                  }}
-                >
-                  <span style={{ color: 'var(--pm-ink-3)', marginRight: 6 }}>한국</span>
-                  {tokens.map((t, i) => {
-                    const arrow = (tripTypeByDest[t] ?? fallbackTripType) === 'round' ? '⇄' : '→'
-                    return (
-                      <span key={t} style={{ display: 'inline-flex', alignItems: 'center' }}>
-                        {i > 0 && (
-                          <span style={{ margin: '0 7px', color: 'var(--pm-ink-3)' }}>·</span>
-                        )}
-                        <span style={{ color: 'var(--pm-ink-3)', marginRight: 4 }}>{arrow}</span>
-                        {t}
-                      </span>
-                    )
-                  })}
-                </span>
+              <div
+                style={{
+                  fontSize: 13,
+                  color: 'var(--pm-ink-2)',
+                  marginTop: 4,
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                }}
+              >
+                {tokens.map((t, i) => {
+                  const arrow = (tripTypeByDest[t] ?? fallbackTripType) === 'round' ? '⇄' : '→'
+                  return (
+                    <span key={t} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                      {i > 0 && (
+                        <span style={{ margin: '0 8px', color: 'var(--pm-ink-3)' }}>·</span>
+                      )}
+                      한국 {arrow} {t}
+                    </span>
+                  )
+                })}
               </div>
             )}
           </Link>
