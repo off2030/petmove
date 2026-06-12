@@ -1,3 +1,5 @@
+import { todayKst } from '../procedure-checks/utils'
+import { deriveImportPermitStatus } from './report-status'
 import type { StepDefinition } from './types'
 
 /**
@@ -107,7 +109,27 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       doneSummary: '태국 수입허가증을 받았습니다.',
       cardLine: '태국 수입 허가를 신청하세요.',
       deadline: { anchor: 'departure', daysBefore: 14 },
-      links: [{ url: '/guide/th-aqs-contacts', label: '태국 동물검역소(AQS) 연락처' }],
+      // 태국은 허가 번호 대신 첨부·완료 버튼으로 완료 처리 — 입력은 신청일만(base 의 permit_no
+      // 입력 제거). deriveImportPermitStatus 가 첨부/완료 플래그로 done 을 판정하므로 permit_no
+      // 가 없어도 동작한다(신청일=in_progress, 첨부 or 완료 버튼=done).
+      inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
+      // base situational 의 '허가 번호를 입력하고' 안내는 번호 입력을 뺀 태국엔 맞지 않아 교체.
+      situational: (caseRow) => {
+        const data = (caseRow.data ?? {}) as Record<string, unknown>
+        const filed =
+          typeof data.import_permit_application_date === 'string'
+            ? data.import_permit_application_date
+            : ''
+        if (filed.length >= 10 && filed > todayKst()) return undefined
+        if (deriveImportPermitStatus(caseRow) !== 'in_progress') return undefined
+        const msg =
+          '수입 허가 신청을 진행 중입니다. 수입허가증을 받으면 파일을 첨부하거나 완료 버튼을 누르세요.'
+        return { desc: msg, cardDesc: msg }
+      },
+      links: [
+        { url: '/forms/th-import-r1-1.pdf', label: 'R1/1 신청서 양식' },
+        { url: '/guide/th-aqs-contacts', label: '태국 동물검역소(AQS) 연락처' },
+      ],
       validationIds: [
         'th.import-permit-9days-before-entry',
         'th.import-permit-14days-after-vaccines',

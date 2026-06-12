@@ -1775,8 +1775,10 @@ export function StepDetailView({
             </Link>
           )}
           {step.links?.map((l) => {
+            // 정적 파일(/forms/x.pdf 등, 확장자 있는 경로) = 다운로드 → <a download> + '↓'.
+            const isFile = /\/[^/]+\.[a-z0-9]+$/i.test(l.url)
             // 상대 경로(/…) = 앱 내부 페이지 → Next Link + '→', http = 외부 → 새 탭 + '↗'.
-            const internal = l.url.startsWith('/')
+            const internal = l.url.startsWith('/') && !isFile
             // 내부 링크는 inline-flex 로 한 줄에 나란히, 외부 링크는 block 으로 자기 줄.
             const pillStyle: React.CSSProperties = {
               marginTop: 14,
@@ -1801,9 +1803,16 @@ export function StepDetailView({
                 <span style={{ color: C.ink3 }}>→</span>
               </Link>
             ) : (
-              <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" style={pillStyle}>
+              <a
+                key={l.url}
+                href={l.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                {...(isFile ? { download: '' } : {})}
+                style={pillStyle}
+              >
                 {l.label}
-                <span style={{ color: C.ink3 }}>↗</span>
+                <span style={{ color: C.ink3 }}>{isFile ? '↓' : '↗'}</span>
               </a>
             )
           })}
