@@ -1611,6 +1611,24 @@ export async function updateGeneralVaccineEntries(
       next.push(entry)
     }
 
+    // chain 검증 — 각 접종은 직전 접종의 면역 유효기간 이내여야 부스터로 인정(광견병과 동일).
+    // 만료 후 접종은 새 기초접종이 되므로 직전 유효기간 이내 입력만 허용 — findRabiesChainBreak
+    // (범용 체인 검사)로 광견병·종합백신 단일 출처. 클라이언트(getSaveBlockError)도 같은 검증.
+    const gvChainSeq = next.map((r) => ({
+      date: typeof r.date === 'string' ? r.date : '',
+      valid_until: typeof r.valid_until === 'string' ? r.valid_until : null,
+    }))
+    const gvChainBreak = findRabiesChainBreak(gvChainSeq)
+    if (gvChainBreak) {
+      return {
+        ok: false,
+        error:
+          gvChainBreak.reason === 'too-early'
+            ? `${gvChainBreak.brokenAt}차 접종일은 ${gvChainBreak.brokenAt - 1}차 접종일보다 늦어야 합니다.`
+            : `${gvChainBreak.brokenAt}차 접종일은 ${gvChainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 합니다.`,
+      }
+    }
+
     const nextData: Record<string, unknown> = { ...prev }
     if (next.length === 0) delete nextData.general_vaccine_dates
     else nextData.general_vaccine_dates = next

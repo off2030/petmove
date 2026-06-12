@@ -883,6 +883,17 @@ export function StepDetailView({
           if (chipErr) return chipErr
         }
       }
+      // 추가 접종 chain — 각 접종은 직전 접종 면역 유효기간 이내여야 부스터로 인정(광견병과 동일).
+      // 만료 후 접종은 새 기초접종이라 직전 유효기간 이내 입력만 허용 — findRabiesChainBreak(범용)로
+      // 광견병·종합백신 단일 출처. 서버(updateGeneralVaccineEntries)도 같은 검증으로 거부.
+      const chainBreak = findRabiesChainBreak(
+        generalVaccine.map((e) => ({ date: e.date, valid_until: e.valid_until || null })),
+      )
+      if (chainBreak) {
+        return chainBreak.reason === 'too-early'
+          ? `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 접종일보다 늦어야 합니다.`
+          : `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 합니다.`
+      }
       return null
     }
     if (isParasite) {
