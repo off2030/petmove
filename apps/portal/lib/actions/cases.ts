@@ -25,6 +25,7 @@ import {
   parseDestinations,
   todayKst,
   validateJpEntryDate,
+  validatePhEntryDate,
   validateThEntryDate,
   writeByDestValue,
   writeJourneyFeedback,
@@ -1601,6 +1602,74 @@ export async function updateGeneralVaccineEntries(
   }
 }
 
+/** 구충(내·외부) step 의 처치 기록 배열 키 — updateParasiteEntries 화이트리스트. */
+const PARASITE_FIELD_KEYS = new Set(['external_parasite_dates', 'internal_parasite_dates'])
+
+/**
+ * 구충(내·외부) step 의 처치 기록을 한 번에 patch — case.data.<fieldKey> 전체 교체.
+ * 동물 단위 사실(목적지 무관 전역 키) — updateGeneralVaccineEntries 와 동일 모델.
+ */
+export async function updateParasiteEntries(
+  caseId: string,
+  fieldKey: string,
+  entries: Array<{ date: string | null }>,
+): Promise<Result<CaseRow>> {
+  try {
+    if (!PARASITE_FIELD_KEYS.has(fieldKey)) {
+      return { ok: false, error: '잘못된 구충 필드입니다.' }
+    }
+    for (const e of entries) {
+      if (e.date != null && e.date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(e.date)) {
+        return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+      }
+    }
+
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const prevArr = Array.isArray(prev[fieldKey]) ? [...(prev[fieldKey] as unknown[])] : []
+
+    const next: Record<string, unknown>[] = []
+    for (let i = 0; i < entries.length; i++) {
+      const prevSlot = prevArr[i]
+      const prevEntry =
+        prevSlot && typeof prevSlot === 'object'
+          ? { ...(prevSlot as Record<string, unknown>) }
+          : {}
+      const entry: Record<string, unknown> = { ...prevEntry }
+      const v = typeof entries[i].date === 'string' ? (entries[i].date as string).trim() : ''
+      if (v) entry.date = v
+      else delete entry.date
+      if (!hasValidDate(entry)) continue
+      next.push(entry)
+    }
+
+    const nextData: Record<string, unknown> = { ...prev }
+    if (next.length === 0) delete nextData[fieldKey]
+    else nextData[fieldKey] = next
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 /**
  * 일본 수출 동물검역 step 의 검역일을 patch — case.data.jp_export_quarantine_visit_date
  * (YYYY-MM-DD). 빈/null 이면 키 제거. data 의 다른 키는 fetch-merge 로 보존.
@@ -2062,16 +2131,20 @@ export async function updateCaseInfoFields(
     const prev = (fresh.data ?? {}) as Record<string, unknown>
     // 일본 노선 — 출국일이 광견병 항체 검사일 + 180일 이전이면 저장 거부.
     // 태국 노선 — 출국일이 광견병·종합백신 최근 접종일 + 21일 이전이면 저장 거부.
+    // 필리핀 노선 — 출국일이 생후 120일 이전이면 저장 거부.
     // updateFlightFields 와 같은 정책 — 회복 경로 없는 위반만 hard 차단.
     {
       const ruleCtx = {
-        data: prev,
+        // birth_date 는 이 폼에서 함께 수정될 수 있어 폼 값을 우선 (prev 는 stale).
+        // 저장이 아니라 검증용 로컬 view — data 쓰기 아님.
+        data: { ...prev, birth_date: effective.birth_date?.trim() || undefined }, // scoping-lint-ignore
         destination: effective.destination,
         departureDate: null,
       }
       const entryErr =
         validateJpEntryDate(effective.departure_date.trim(), ruleCtx) ??
-        validateThEntryDate(effective.departure_date.trim(), ruleCtx)
+        validateThEntryDate(effective.departure_date.trim(), ruleCtx) ??
+        validatePhEntryDate(effective.departure_date.trim(), ruleCtx)
       if (entryErr) return { ok: false, error: entryErr }
     }
     let nextData: Record<string, unknown> = { ...prev }

@@ -1,3 +1,4 @@
+import { buildDateRuleContext, validateKrImportDate } from '../journey-steps/date-rules'
 import type { ProcedureCheck } from './types'
 import {
   daysBetween,
@@ -46,7 +47,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     title: '마이크로칩은 광견병 1차 접종 이전 시술',
     description:
       '마이크로칩(ISO 11784/11785, 15자리)이 광견병 1차 접종일과 같거나 이전이어야 함. 매 준비 단계마다 칩 스캔 확인 필수. (BAI SPSIC)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -75,7 +76,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종 생후 12주(84일) 이상',
     description:
       '광견병 1차 접종은 생후 최소 12주(84일) 이후. (BAI MC 49 — EU Reg 576/2013 동일 기준)',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -104,7 +105,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     title: '광견병 1차 접종은 출국 21일 이전 완료 (부스터 면제)',
     description:
       'BAI 공식: "initial rabies vaccination should not be less than 14 days prior to application of the SPSIC". SPSIC 신청 ≈ 출국 7-14일 전 → 합산 21일 (dep proxy). **annual booster (2차+) 는 즉시 출국 가능 — BAI 면제** ("animals may be shipped immediately upon vaccination").',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -137,7 +138,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     title: '도착일에 광견병 면역 유효 (접종일 포함 1년 = 364일까지)',
     description:
       '최근 광견병 접종 면역 유효기간이 도착일 이전 만료되지 않아야 함. **접종일 포함 1년 = +364일**까지 허용. valid_until 명시 시 그 값 사용, 미명시 시 디폴트 1년 (`addOneYear` = +364).',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -167,7 +168,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     title: '종합백신 1차 접종은 출국 21일 이전 완료 (부스터 면제)',
     description:
       '종합백신(강아지 DHLPPi / 고양이 FVRCP) 1차 접종이 출국일 기준 21일 이전 완료. **부스터(2차+) 는 즉시 출국 가능 — BAI 면제** (광견병 부스터 면제 정책 동일 적용).',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -200,7 +201,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     title: '도착일에 종합백신 면역 유효 (접종일 포함 1년 = 364일까지)',
     description:
       '최근 종합백신 면역 유효기간이 도착일 이전 만료되지 않아야 함. **접종일 포함 1년 = +364일**까지 허용. valid_until 명시 시 그 값, 미명시 시 디폴트 1년 (`addOneYear` = +364).',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -230,7 +231,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     title: '출국일 시점 만 120일(약 4개월) 이상',
     description:
       '필리핀 SPSIC 신청 자격: 생후 120일(약 4개월) 이상. (BAI MC 49: "Only dogs and cats that are 120 days and above at the time of SPSIC application")',
-    severity: 'info',
+    severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
@@ -273,6 +274,102 @@ export const PH_CHECKS: ProcedureCheck[] = [
         }
       }
       return { ok: true, message: '보호자 케이스 ≤ 3건.' }
+    },
+  },
+
+  // ── 검역 일정 재검증 — 입력 차단과 같은 규칙을 매 렌더 재실행 (jp/th *-date-valid 와 동일 모델) ──
+  {
+    id: 'ph.import-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '필리핀 수입 동물검역일',
+    description: '필리핀 수입 동물검역일은 필리핀 입국일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-06-12',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.ph_import_quarantine_date === 'string'
+          ? data.ph_import_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: '필리핀 수입 동물검역일은 필리핀 입국일보다 빠를 수 없습니다.',
+          offendingPaths: ['ph_import_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `필리핀 수입검역일(${raw}) 입국 이후.` }
+    },
+  },
+  {
+    id: 'ph.export-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '필리핀 수출 동물검역일',
+    description: '필리핀 수출 동물검역일은 필리핀 입국일 이후·한국 귀국일 이전이어야 함.',
+    severity: 'warning',
+    addedAt: '2026-06-12',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.ph_export_quarantine_date === 'string'
+          ? data.ph_export_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const entry =
+        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
+          ? ctx.data.entry_date.slice(0, 10)
+          : ''
+      const ret =
+        typeof ctx.data.return_date === 'string' && ctx.data.return_date.length >= 10
+          ? ctx.data.return_date.slice(0, 10)
+          : ''
+      if (entry && raw < entry) {
+        return {
+          ok: false,
+          message: '필리핀 수출 동물검역일은 필리핀 입국일보다 빠를 수 없습니다.',
+          offendingPaths: ['ph_export_quarantine_date'],
+        }
+      }
+      if (ret && raw > ret) {
+        return {
+          ok: false,
+          message: '필리핀 수출 동물검역일은 한국 귀국일보다 늦을 수 없습니다.',
+          offendingPaths: ['ph_export_quarantine_date'],
+        }
+      }
+      return { ok: true, message: `필리핀 수출검역일(${raw}) 필리핀 체류 구간 내.` }
+    },
+  },
+  {
+    id: 'ph.kr-import-quarantine-date-valid',
+    country: COUNTRY,
+    category: '검역',
+    title: '한국 수입 동물검역일',
+    description: '한국 수입 동물검역일은 한국 귀국일 이후여야 함.',
+    severity: 'warning',
+    addedAt: '2026-06-12',
+    run: ({ caseRow, destination }) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const raw =
+        typeof data.kr_import_quarantine_date === 'string'
+          ? data.kr_import_quarantine_date.slice(0, 10)
+          : ''
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return SKIP
+      const ctx = buildDateRuleContext(caseRow, destination)
+      const msg = validateKrImportDate(raw, ctx)
+      if (msg) {
+        return { ok: false, message: msg, offendingPaths: ['kr_import_quarantine_date'] }
+      }
+      return { ok: true, message: `한국 수입검역일(${raw}) 귀국 이후.` }
     },
   },
 ]

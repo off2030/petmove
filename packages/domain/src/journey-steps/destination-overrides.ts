@@ -129,6 +129,95 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['th.kr-import-quarantine-date-valid'],
     },
   },
+
+  // 필리핀 출처: BAI(동물산업국) MC No.49(2022)·BAI Pet Import 공식 안내 + petmove.co.kr
+  // 필리핀 가이드 — 상세 수치는 procedure-checks/ph.ts 헤더 주석 참고. 태국과 같은 골격
+  // (광견병 1회·종별 종합백신·수입허가 2단계·도착검역) + 필리핀 고유: 구충 7~91일,
+  // 생후 120일 입국 자격, 부스터는 대기 기간 면제.
+  philippines: {
+    'rabies-vaccine-1': {
+      title: '광견병 백신',
+      shortLabel: '백신',
+      description:
+        '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 합니다.\n생후 12주(84일)가 지난 후에 접종해야 합니다.\n수입허가증(SPSIC) 신청 14일 전까지 접종을 완료하세요.\n필리핀 입국 때 면역 유효기간(1년)이 남아있어야 합니다.\n이전 접종의 유효기간 안에 추가 접종(부스터)을 한 경우에는 대기 기간 없이 바로 출국할 수 있습니다.',
+      doneSummary: '광견병 백신을 접종했습니다.',
+      earliest: { anchor: 'birth', daysAfter: 84 },
+      validationIds: ['ph.rabies-prime-after-12weeks', 'ph.microchip-before-rabies'],
+    },
+    'rabies-titer': {
+      description:
+        '한국으로 돌아올 때 필요한 광견병 항체 검사를 받으세요.\n\n필리핀 입국에는 필요하지 않지만, 한국 입국 때 반드시 필요합니다.\n필리핀 현지에서는 검사가 어려우므로 출국 전에 한국에서 미리 받아두세요.\n동물병원을 통해 의뢰할 수 있습니다.\n0.5 IU/mL 이상이면 합격입니다.\n검사 결과는 채혈일로부터 2년간 유효합니다. 한국으로 돌아오는 날까지 유효해야 합니다.',
+    },
+    'general-vaccine': {
+      description:
+        '강아지는 DHLPPi(디스템퍼·전염성간염·렙토스피라·파라인플루엔자·파보바이러스), 고양이는 FVRCP(범백혈구감소증·허피스·칼리시)가 포함된 종합백신을 접종하세요.\n\n수입허가증(SPSIC) 신청 14일 전까지 접종을 완료하세요.\n필리핀 입국 때 면역 유효기간이 남아있어야 합니다.',
+      descriptionBySpecies: {
+        dog: '종합백신(DHLPPi)을 접종하세요.\n\n디스템퍼·전염성간염·렙토스피라·파라인플루엔자·파보바이러스가 포함되어야 합니다.\n수입허가증(SPSIC) 신청 14일 전까지 접종을 완료하세요.\n필리핀 입국 때 면역 유효기간이 남아있어야 합니다.\n이전 접종의 유효기간 안에 추가 접종(부스터)을 한 경우에는 대기 기간 없이 바로 출국할 수 있습니다.',
+        cat: '종합백신(FVRCP)을 접종하세요.\n\n범백혈구감소증·허피스바이러스·칼리시바이러스가 포함되어야 합니다.\n수입허가증(SPSIC) 신청 14일 전까지 접종을 완료하세요.\n필리핀 입국 때 면역 유효기간이 남아있어야 합니다.\n이전 접종의 유효기간 안에 추가 접종(부스터)을 한 경우에는 대기 기간 없이 바로 출국할 수 있습니다.',
+      },
+    },
+    // 구충 — 필리핀은 SPSIC 신청일 기준 7~91일 사이 처치 기록이 필요(내부 필수·외부 권장).
+    // base 문구(EU·호주 중심)와 달라 교체.
+    'external-parasite': {
+      description:
+        '외부 기생충(진드기·벼룩) 구충을 받으세요.\n\n수입허가증(SPSIC) 신청일 기준 91일 이내, 7일 이전에 동물병원에서 받으세요.\n수의사의 치료 기록이 필요합니다.',
+      doneSummary: '외부구충 처치를 받았습니다.',
+    },
+    'internal-parasite': {
+      description:
+        '내부 기생충 구충을 받으세요.\n\n수입허가증(SPSIC) 신청일 기준 91일 이내, 7일 이전에 동물병원에서 받으세요.\n수의사의 치료 기록이 필요합니다.',
+      doneSummary: '내부구충 투약을 받았습니다.',
+    },
+    'flight-purchase': {
+      description:
+        '필리핀 입국 일정에 맞춰 항공권을 구매하세요.\n\n생후 120일(4개월)이 지나야 필리핀에 입국할 수 있습니다.\n광견병 백신과 종합백신을 1회만 접종한 경우, 접종일로부터 21일이 지난 후에 입국할 수 있습니다. (유효기간 안에 추가 접종을 한 경우는 대기 기간이 없습니다.)\n수입 허가 신청에 항공편 일정이 필요합니다. 늦어도 입국 2주 전까지 항공권을 준비하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
+      cardLine: '필리핀에 입국할 수 있습니다.',
+      order: 95,
+      earliest: undefined,
+      validationIds: [
+        'ph.min-120days-on-arrival',
+        'ph.rabies-prime-21days-before-arrival',
+        'ph.rabies-not-expired-on-arrival',
+        'ph.general-vaccine-prime-21days-before-arrival',
+        'ph.general-vaccine-not-expired-on-arrival',
+      ],
+    },
+    'import-permit': {
+      title: '수입허가증(SPSIC) 신청',
+      description:
+        '필리핀 수입허가증(SPSIC)을 신청하세요.\n\nIntercommerce 사이트에서 일회성 수입자(One-time Importer)로 등록한 후 온라인으로 신청합니다.\n광견병·종합백신 접종 14일 후부터 신청할 수 있습니다.\n생후 120일(4개월) 이상이어야 하며, 1회 최대 3마리까지 신청할 수 있습니다.\n예방접종 증명서, 구충 기록, 마이크로칩 증명서, 반려동물 사진을 PDF 또는 JPG(5MB 이하)로 첨부합니다.\n승인까지 수일이 걸립니다. 출발 1~2주 전까지 신청하세요.\n수입허가증은 발급일로부터 60일간 유효하며 연장할 수 없습니다.',
+      doneSummary: '필리핀 수입허가증(SPSIC)을 받았습니다.',
+      cardLine: '필리핀 수입허가증(SPSIC)을 신청하세요.',
+      deadline: { anchor: 'departure', daysBefore: 10 },
+      links: [
+        { url: 'https://www.intercommerce.com.ph/registrationbai.asp', label: 'Intercommerce 수입자 등록' },
+        { url: 'https://www.bai.gov.ph/Travelers/PET', label: 'BAI 반려동물 수입 안내' },
+      ],
+      attachmentLabel: '수입허가증(SPSIC)',
+    },
+    departure: {
+      title: '필리핀 수입 동물검역',
+      shortLabel: '수입',
+      description:
+        '필리핀 도착 후 공항에서 BAI 동물검역관(VQO)에게 수입 검역을 받으세요.\n수입허가증(SPSIC) 원본, 한국 수출 동물검역증 원본, 예방접종 증명서, 마이크로칩 증명서를 제시합니다.\nSPSIC 발급 수수료와 검역 수수료는 도착 공항 검역 사무소에서 납부합니다.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 바로 인도됩니다. 요건을 충족하지 못하면 격리되거나 반송될 수 있으며, 비용은 보호자가 부담합니다.',
+      doneSummary: '필리핀 수입 동물검역을 받았습니다.',
+      done: 'quarantine:ph_import_quarantine_date',
+      inputs: [
+        {
+          key: 'ph_import_quarantine_date',
+          label: '검역일',
+          type: 'date',
+          helpText: 'BAI 동물검역관(VQO)에게 수입 검역을 받은 날짜',
+        },
+      ],
+      allowAttachments: true,
+      attachmentHint: '검역 서류 사본을 사진, PDF로 저장하세요.',
+      validationIds: ['ph.import-quarantine-date-valid'],
+    },
+    'kr-import-quarantine': {
+      validationIds: ['ph.kr-import-quarantine-date-valid'],
+    },
+  },
 }
 
 /**

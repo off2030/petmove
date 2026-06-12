@@ -18,6 +18,7 @@ import {
   validateMicrochipBeforeBooster,
   validateRabiesInterval,
   validateRabiesPrimeAge,
+  validatePhEntryDate,
   validateThEntryDate,
   validateThImportPermitDate,
   validateTiterAfterBooster,
@@ -50,6 +51,7 @@ import {
   updateKrExportQuarantineDate,
   updateKrImportQuarantineDate,
   updateMicrochipFields,
+  updateParasiteEntries,
   updateRabiesEntryFields,
   updateRabiesExtraEntries,
   updateTiterExtraEntries,
@@ -153,6 +155,13 @@ export function StepDetailView({
   const isKrImportQuarantine = step.id === 'kr-import-quarantine'
   const isGeneralVaccine = step.id === 'general-vaccine'
   const isImportPermit = step.id === 'import-permit'
+  // 구충(내·외부) — 종합백신과 같은 date_array 입력 모델. 필드 키는 base catalog input 과 동일.
+  const isExternalParasite = step.id === 'external-parasite'
+  const isInternalParasite = step.id === 'internal-parasite'
+  const isParasite = isExternalParasite || isInternalParasite
+  const parasiteFieldKey = isExternalParasite
+    ? 'external_parasite_dates'
+    : 'internal_parasite_dates'
   const isInteractive =
     isMicrochip ||
     isRabies ||
@@ -169,7 +178,8 @@ export function StepDetailView({
     isKrImportQuarantine ||
     isImportQuarantine ||
     isGeneralVaccine ||
-    isImportPermit
+    isImportPermit ||
+    isParasite
   const caseRowRaw = useCase(caseId)
   // 다중 목적지: 활성 목적지(?dest=) 1개짜리 뷰로 좁힌다 — 아래 모든 saved* 읽기·동기화
   // useEffect 가 그 목적지(by_dest) 기준이 된다. 단일 목적지면 뷰가 원본과 동일(무변경).
@@ -261,6 +271,12 @@ export function StepDetailView({
   const savedImportPermit = readImportPermitForm(caseRow?.data)
   const [importPermit, setImportPermit] = useState<ImportPermitForm>(savedImportPermit)
 
+  // 구충(내·외부) — 가변 길이 entries (종합백신과 동일 모델, 유효기간 없음).
+  const savedParasite = readParasiteForm(caseRow?.data, parasiteFieldKey)
+  const [parasite, setParasite] = useState<GeneralVaccineEntry[]>(
+    savedParasite.length === 0 ? [makeEmptyGeneralVaccine()] : savedParasite,
+  )
+
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
@@ -306,6 +322,7 @@ export function StepDetailView({
     krImportQuarantineDate,
     generalVaccine,
     importPermit,
+    parasite,
   ])
   const rabiesExtraDirty = isRabiesExtra && !rabiesExtraEqual(rabiesExtra, savedRabiesExtra)
   const titerDirty =
@@ -334,6 +351,7 @@ export function StepDetailView({
     isImportPermit &&
     (importPermit.applicationDate !== savedImportPermit.applicationDate ||
       importPermit.permitNo !== savedImportPermit.permitNo)
+  const parasiteDirty = isParasite && !generalVaccineEqual(parasite, savedParasite)
   const dirty =
     microchipDirty ||
     rabiesDirty ||
@@ -350,7 +368,8 @@ export function StepDetailView({
     krImportQuarantineDirty ||
     importQuarantineDirty ||
     generalVaccineDirty ||
-    importPermitDirty
+    importPermitDirty ||
+    parasiteDirty
   useUnsavedGuard(dirty)
   // 저장 직후 1.5s 동안 버튼에 '저장됨' 표시. 그 사이 재편집하면 dirty 가 살아나 자동 해제.
   const justSaved = status === 'saved' && !dirty
@@ -447,6 +466,10 @@ export function StepDetailView({
     isImportPermit &&
     importPermit.applicationDate.length >= 10 &&
     importPermit.applicationDate > todayStr
+  // 구충 — 입력 entry 중 하나라도 미래면 '예정일로 저장'.
+  const parasiteUpcoming =
+    isParasite &&
+    parasite.some((e) => typeof e.date === 'string' && e.date.length >= 10 && e.date > todayStr)
 
   // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
   useEffect(() => {
@@ -534,6 +557,13 @@ export function StepDetailView({
   }, [caseRow?.data])
   useEffect(() => {
     if (!importPermitDirty) setImportPermit(readImportPermitForm(caseRow?.data))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data])
+  useEffect(() => {
+    if (!parasiteDirty) {
+      const next = readParasiteForm(caseRow?.data, parasiteFieldKey)
+      setParasite(next.length === 0 ? [makeEmptyGeneralVaccine()] : next)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
@@ -688,6 +718,9 @@ export function StepDetailView({
       // 태국 입국일 — 광견병·종합백신 접종 + 21일 이내면 차단 (일본 180일과 동일 정책).
       const thEntryErr = validateThEntryDate(flightForm.entry_date.trim(), entryRuleCtx)
       if (thEntryErr) return thEntryErr
+      // 필리핀 입국일 — 생후 120일(4개월) 미만 입국 차단.
+      const phEntryErr = validatePhEntryDate(flightForm.entry_date.trim(), entryRuleCtx)
+      if (phEntryErr) return phEntryErr
       return null
     }
     if (isGeneralVaccine) {
@@ -915,6 +948,26 @@ export function StepDetailView({
           updateCase(res.value)
           const next = readGeneralVaccineForm(res.value.data)
           setGeneralVaccine(next.length === 0 ? [makeEmptyGeneralVaccine()] : next)
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    } else if (isParasite) {
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        const res = await updateParasiteEntries(
+          caseId,
+          parasiteFieldKey,
+          parasite.map((e) => ({ date: e.date || null })),
+        )
+        if (res.ok) {
+          updateCase(res.value)
+          const next = readParasiteForm(res.value.data, parasiteFieldKey)
+          setParasite(next.length === 0 ? [makeEmptyGeneralVaccine()] : next)
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -1757,6 +1810,28 @@ export function StepDetailView({
             />
           </section>
         )}
+        {isParasite && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
+            <GeneralVaccineInputs
+              entries={parasite}
+              vaccineLabel={isExternalParasite ? '외부구충' : '내부구충'}
+              dateLabel={isExternalParasite ? '처치일' : '투약일'}
+              showValidUntil={false}
+              addLabel={isExternalParasite ? '+ 처치 기록 추가' : '+ 투약 기록 추가'}
+              onChange={(idx, key, next) =>
+                setParasite((prev) => prev.map((e, i) => (i === idx ? { ...e, [key]: next } : e)))
+              }
+              onRemove={(idx) =>
+                setParasite((prev) => {
+                  const next = prev.filter((_, i) => i !== idx)
+                  return next.length === 0 ? [makeEmptyGeneralVaccine()] : next
+                })
+              }
+              onAdd={() => setParasite((prev) => [...prev, makeEmptyGeneralVaccine()])}
+            />
+          </section>
+        )}
         {isAdvanceNotification && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
@@ -2016,7 +2091,8 @@ export function StepDetailView({
                         titerUpcoming ||
                         titerExtraUpcoming ||
                         generalVaccineUpcoming ||
-                        importPermitUpcoming
+                        importPermitUpcoming ||
+                        parasiteUpcoming
                       ? '예정일로 저장'
                       : // 추가 접종·추가 검사 — 도래(오늘 이하)한 입력의 저장 = 완료 확인.
                         // 검역 confirm 단계도 예정 저장분이 도래하면(미변경) 완료 확정이라 '완료'.
@@ -2169,7 +2245,37 @@ function generalVaccineCardLabel(
     if (isDog) return '종합백신(DHPPL)'
     if (isCat) return '종합백신(FVRCP)'
   }
+  if (destinationKey === 'philippines') {
+    if (isDog) return '종합백신(DHLPPi)'
+    if (isCat) return '종합백신(FVRCP)'
+  }
   return '종합백신'
+}
+
+/**
+ * 구충(내·외부) 폼 값 — data[fieldKey] 배열에서 읽기. 항목은 {date} 객체 또는 legacy
+ * 문자열(처치일만). GeneralVaccineEntry 모양(valid_until='')으로 정규화해 컴포넌트 공유.
+ */
+function readParasiteForm(
+  data: Record<string, unknown> | null | undefined,
+  fieldKey: string,
+): GeneralVaccineEntry[] {
+  if (!data) return []
+  const arr = data[fieldKey]
+  if (!Array.isArray(arr)) return []
+  const out: GeneralVaccineEntry[] = []
+  for (const item of arr) {
+    if (typeof item === 'string') {
+      if (item.length >= 10) out.push({ date: item.slice(0, 10), valid_until: '' })
+      continue
+    }
+    if (item && typeof item === 'object') {
+      const rec = item as Record<string, unknown>
+      const date = typeof rec.date === 'string' ? rec.date : ''
+      if (date) out.push({ date, valid_until: '' })
+    }
+  }
+  return out
 }
 
 /** 수입 허가 폼 값 — import_permit_application_date / permit_no (flatten 된 data 기준). */

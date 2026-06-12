@@ -29,13 +29,21 @@ export function GeneralVaccineInputs({
   onChange,
   onRemove,
   onAdd,
+  dateLabel = '접종일',
+  showValidUntil = true,
+  addLabel = '+ 접종 기록 추가',
 }: {
   entries: GeneralVaccineEntry[]
-  /** 카드 헤더 라벨 — 종별 백신명 (예: '종합백신(DHPPL)'). */
+  /** 카드 헤더 라벨 — 종별 백신명 (예: '종합백신(DHPPL)') 또는 처치명 ('외부구충'). */
   vaccineLabel: string
   onChange: (index: number, key: keyof GeneralVaccineEntry, next: string) => void
   onRemove: (index: number) => void
   onAdd: () => void
+  /** 날짜 필드 라벨 — 백신 '접종일', 구충 '처치일'/'투약일'. */
+  dateLabel?: string
+  /** 면역 유효기간 필드 노출 — 구충 처치는 유효기간 개념이 없어 숨김. */
+  showValidUntil?: boolean
+  addLabel?: string
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -44,6 +52,8 @@ export function GeneralVaccineInputs({
           key={i}
           entry={entry}
           title={`${vaccineLabel} ${i + 1}차`}
+          dateLabel={dateLabel}
+          showValidUntil={showValidUntil}
           onChange={(key, next) => onChange(i, key, next)}
           onRemove={() => onRemove(i)}
         />
@@ -64,7 +74,7 @@ export function GeneralVaccineInputs({
           cursor: 'pointer',
         }}
       >
-        + 접종 기록 추가
+        {addLabel}
       </button>
     </div>
   )
@@ -73,11 +83,15 @@ export function GeneralVaccineInputs({
 function EntryCard({
   entry,
   title,
+  dateLabel,
+  showValidUntil,
   onChange,
   onRemove,
 }: {
   entry: GeneralVaccineEntry
   title: string
+  dateLabel: string
+  showValidUntil: boolean
   onChange: (key: keyof GeneralVaccineEntry, next: string) => void
   onRemove: () => void
 }) {
@@ -139,7 +153,7 @@ function EntryCard({
       </div>
 
       <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
-        <div style={labelStyle}>접종일</div>
+        <div style={labelStyle}>{dateLabel}</div>
         <div style={{ marginTop: 8 }}>
           <DateTextField
             value={entry.date}
@@ -150,20 +164,22 @@ function EntryCard({
         </div>
       </div>
 
-      <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
-        <div style={labelStyle}>면역 유효기간</div>
-        <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
-          백신 증명서·수첩에 적힌 다음 접종 예정일
+      {showValidUntil && (
+        <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
+          <div style={labelStyle}>면역 유효기간</div>
+          <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
+            백신 증명서·수첩에 적힌 다음 접종 예정일
+          </div>
+          <div style={{ marginTop: 8 }}>
+            <DateTextField
+              value={entry.valid_until}
+              onChange={(v) => onChange('valid_until', v)}
+              placeholder="YYYY-MM-DD"
+              block
+            />
+          </div>
         </div>
-        <div style={{ marginTop: 8 }}>
-          <DateTextField
-            value={entry.valid_until}
-            onChange={(v) => onChange('valid_until', v)}
-            placeholder="YYYY-MM-DD"
-            block
-          />
-        </div>
-      </div>
+      )}
     </div>
   )
 }

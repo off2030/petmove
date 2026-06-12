@@ -201,6 +201,57 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       previewStepId: 'certificate-issue',
     },
   ],
+  '필리핀': [
+    {
+      id: 'ph-spsic-doc',
+      name: '수입허가증(SPSIC)',
+      source: '필리핀 동물산업국(BAI)',
+      kind: 'step',
+      stepRef: 'import-permit',
+      description:
+        'Intercommerce 온라인 신청 후 필리핀 동물산업국(BAI)에서 발급받습니다.\n\n발급일로부터 60일간 유효하며 연장할 수 없습니다.\n\n필리핀 도착 후 수입 동물검역 때 원본을 제시해야 합니다.\n\n앱에 저장해두면 필요할 때 쉽게 사용하실 수 있습니다.',
+      previewStepId: 'import-permit',
+    },
+    {
+      id: 'ph-health-cert-en',
+      name: '영문 건강증명서(Health Certificate)',
+      source: '동물병원',
+      kind: 'manual',
+      issuanceStepId: 'vet-visit',
+      description:
+        '임상 수의사가 영문으로 발급하는 건강증명서입니다.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급합니다.\n\n마이크로칩 번호, 접종 기록, 기생충 치료 확인, 수의사 서명과 면허번호가 들어가야 합니다.\n\n영어로 작성하거나 공인 영문 번역본이 필요합니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+    },
+    {
+      id: 'ph-vaccine-cert-en',
+      name: '예방접종·구충 증명서(영문)',
+      source: '동물병원',
+      kind: 'manual',
+      issuanceStepId: 'general-vaccine',
+      description:
+        '광견병 백신·종합백신의 접종 증명서와 내외부 구충 치료 기록입니다.\n\n접종한 동물병원에서 영문으로 발급받습니다. 접종한 동물병원이 여러 곳인 경우, 각 동물병원에서 따로 받아야 합니다.\n\n백신 이름·제조사·접종일·유효기간과 수의사 서명이 들어가야 합니다.\n\n수입허가증(SPSIC) 신청과 동물검역에 사용됩니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+    },
+    {
+      id: 'ph-rabies-titer-result',
+      name: '광견병 항체 검사 결과지',
+      source: '동물병원',
+      kind: 'step',
+      stepRef: 'rabies-titer',
+      roundTripOnly: true,
+      description:
+        '검사를 의뢰한 동물병원에서 발급받습니다.\n\n필리핀 입국에는 필요하지 않지만, 한국으로 돌아올 때 반드시 원본이 필요합니다. 필리핀 현지에서는 검사가 어려우므로 출국 전에 미리 받아두세요.\n\n광견병 백신 유효기간 유지 시 채혈일로부터 2년까지 사용할 수 있습니다.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리합니다.',
+      previewStepId: 'rabies-titer',
+    },
+    {
+      id: 'ph-kr-export-quarantine-cert',
+      name: '한국 수출 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'certificate-issue',
+      description:
+        '한국 수출 동물검역 후 발급받습니다.\n\n필리핀 수입 동물검역 때 원본을 제시해야 합니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+      previewStepId: 'certificate-issue',
+    },
+  ],
 }
 
 export function resolveRequiredDocs(

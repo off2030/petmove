@@ -135,8 +135,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '2차 광견병 백신을 접종하세요.\n\n1차 접종 후 30일 이상 지나서 접종하세요.\n1차 접종 면역 유효기간 이내에 접종하세요.\n일본 입국 때 면역 유효기간이 남아있어야 합니다.',
     doneSummary: '2차 광견병 백신을 접종했습니다.',
-    // 1회면 충분한 나라는 2차 미노출(태국 등 — 가이드·procedure-check 에 2회 강제 없음).
-    applicability: { destinations: 'all', excludeDestinations: ['thailand'], species: 'all', tripType: 'all' },
+    // 1회면 충분한 나라는 2차 미노출(태국·필리핀 등 — 가이드·procedure-check 에 2회 강제 없음).
+    applicability: { destinations: 'all', excludeDestinations: ['thailand', 'philippines'], species: 'all', tripType: 'all' },
     order: 35,
     earliest: { anchor: 'step:rabies-vaccine-1', daysAfter: 30 },
     done: 'has-rabies-booster',
@@ -270,8 +270,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'ukraine',
         'israel',
       ],
-      // 입국엔 항체검사 불필요하나 한국 귀국 시 필수인 나라 — 왕복에만 노출(태국 등).
-      roundOnlyDestinations: ['thailand'],
+      // 입국엔 항체검사 불필요하나 한국 귀국 시 필수인 나라 — 왕복에만 노출(태국·필리핀 등).
+      roundOnlyDestinations: ['thailand', 'philippines'],
       species: 'all',
       tripType: 'all',
     },
@@ -402,8 +402,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const msg = '귀국 항공권 정보를 입력하세요.'
       return { desc: msg, cardDesc: msg }
     },
-    // 일본 외 나라는 destination override 로 설명·검증을 그 나라 규정에 맞춰 교체(태국 등).
-    applicability: { destinations: ['japan', 'thailand'], species: 'all', tripType: 'all' },
+    // 일본 외 나라는 destination override 로 설명·검증을 그 나라 규정에 맞춰 교체(태국·필리핀 등).
+    applicability: { destinations: ['japan', 'thailand', 'philippines'], species: 'all', tripType: 'all' },
     order: 45,
     earliest: { anchor: 'step:rabies-titer', daysAfter: 180 },
     done: 'has-flight-date',
@@ -700,7 +700,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     doneSummary: '수입 허가를 받았습니다.',
     cardLine: '수입 허가를 신청하세요.',
     applicability: {
-      destinations: ['australia', 'new_zealand', 'taiwan', 'malaysia', 'thailand'],
+      destinations: ['australia', 'new_zealand', 'taiwan', 'malaysia', 'thailand', 'philippines'],
       species: 'all',
       tripType: 'all',
     },
@@ -885,6 +885,33 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     ],
     allowAttachments: true,
     attachmentHint: '수출허가증·건강증명서 사본을 사진, PDF로 저장하세요.',
+  },
+
+  // ── 필리핀 수출 동물검역 (왕복 — 귀국 출국 시, 필리핀 전용) ───────────────
+  // 태국 수출검역과 동일 모델 — 완료신호 'quarantine:<필드>' confirm 메커니즘 재사용.
+  {
+    id: 'ph-export-quarantine',
+    category: 'document',
+    title: '필리핀 수출 동물검역',
+    shortLabel: '수출',
+    description:
+      '필리핀 출국 전 BAI 동물검역소에서 수출 동물검역을 받으세요.\n출국 전에 현지 수의사의 건강증명서를 받고, BAI에서 수출 허가와 검역 확인을 받습니다.\n발급받은 서류는 한국 수입 동물검역 때 제출합니다.\n광견병 항체 검사 결과지(한국 입국용) 원본을 함께 준비하세요.',
+    doneSummary: '필리핀 수출 동물검역을 받았습니다.',
+    cardLine: '필리핀 BAI 동물검역소에서 수출 검역을 받으세요.',
+    applicability: { destinations: ['philippines'], species: 'all', tripType: 'round' },
+    order: 155,
+    done: 'quarantine:ph_export_quarantine_date',
+    validationIds: ['ph.export-quarantine-date-valid'],
+    inputs: [
+      {
+        key: 'ph_export_quarantine_date',
+        label: '검역일',
+        type: 'date',
+        helpText: '필리핀 BAI 동물검역소에서 수출 검역을 받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '수출 허가·건강증명서 사본을 사진, PDF로 저장하세요.',
   },
 
   // ── 15. 한국 수입 동물검역 (왕복 케이스 한정 — 귀국 후) ─────────────────

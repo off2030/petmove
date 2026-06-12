@@ -157,6 +157,27 @@ export function validateThImportPermitDate(filedDate: string, entryDate: string)
   return null
 }
 
+/**
+ * 필리핀 입국일(= 출국 항공편 날짜) — 생후 120일(4개월) 미만 입국만 hard 차단.
+ *
+ * 일본 180일·태국 21일과 같은 기준: 출생일은 바꿀 수 없는 사실이라 위반 해소 경로가
+ * "입국일을 늦추는 것"뿐인 입력만 저장 거부. 백신 21일 대기(부스터로 회복 가능)는 차단 X —
+ * procedure-check '주의'(ph.rabies-prime-21days-before-arrival)가 안내.
+ *
+ * 필리핀 외 목적지·출생일 미입력 시 SKIP. (출처: BAI MC 49 — 120 days and above.)
+ */
+export function validatePhEntryDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  if (!matchesDestinationKey(ctx.destination, 'philippines')) return null
+  const birth = readDate(ctx.data, 'birth_date')
+  if (!birth) return null
+  const earliest = addDays(birth, 120)
+  if (earliest && v < earliest) {
+    return `생후 120일(4개월)이 지난 ${fmt(earliest)} 이후에 필리핀 입국이 가능합니다.`
+  }
+  return null
+}
+
 /** 일본 수출검역 예약일: 일본 입국일 ≤ 예약일 ≤ 귀국일. */
 export function validateJpExportReservationDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
