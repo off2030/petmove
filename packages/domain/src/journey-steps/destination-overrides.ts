@@ -81,12 +81,12 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       validationIds: ['th.microchip-before-general-vaccine'],
     },
     // 항공권 구매 — 일본(항체검사 180일)과 제약이 달라 교체: 백신 21일 대기 + 수입허가
-    // 일정(60일 유효)이 기준. 백신 뒤·수입허가 앞으로 순서 조정(order 90).
+    // 일정(60일 유효)이 기준. 백신·수입허가 뒤로 순서 조정(order 105 — 수입허가 100 다음).
     'flight-purchase': {
       description:
         '태국 입국 가능 시기에 맞춰 항공권을 구매하세요.\n\n광견병 백신과 종합백신 접종일로부터 21일이 지난 후에 입국할 수 있습니다.\n수입 허가 신청에 항공편 일정이 필요합니다. 늦어도 입국 2주 전까지 항공권을 준비하세요.\n항공사에 반려동물 동반 가능 여부를 꼭 확인하세요.',
       cardLine: '태국에 입국할 수 있습니다.',
-      order: 90,
+      order: 105,
       // 일본의 180일 anchor(항체 검사) 미적용 — 21일 룰은 입력 차단(validateThEntryDate)과
       // 아래 procedure-check 가 담당.
       earliest: undefined,
