@@ -1378,8 +1378,13 @@ export function StepDetailView({
   // 같은 룰을 mirror 한 procedure-check 가 동일 메시지로 이미 떴으면(예: 추가 백신
   // chain-break: catalog situational ↔ jp.rabies-extra-within-previous-validity)
   // 안내·주의 두 배너에 같은 문장이 나가니 dedup 한다.
+  //
+  // **완료(done) 시 미표시** — timeline 은 완료면 안내 대신 doneSummary 를 쓰는데(scenario),
+  // 상세만 done 무관하게 안내를 띄우면 "일정엔 완료, 상세엔 안내"의 화면 간 불일치가 난다.
+  // 안내는 미완료(조치 필요) 상태에서만 — 세 곳(다음 할 일·일정 row·상세)이 done 기준으로 일치.
+  // (완료인데 안내가 필요한 상황은 표시로 땜질하지 않고 done 판정 자체를 바로잡는다.)
   const rawSituationalDesc =
-    caseRow && step.situational ? step.situational(caseRow)?.desc : undefined
+    caseRow && step.situational && !done ? step.situational(caseRow)?.desc : undefined
   const situationalDup =
     !!rawSituationalDesc &&
     [...failed, ...notices].some(({ result }) => result.message === rawSituationalDesc)
