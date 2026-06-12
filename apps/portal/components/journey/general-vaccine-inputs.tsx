@@ -1,18 +1,29 @@
 'use client'
 
 import { DateTextField } from '@petmove/ui'
+import type { RabiesProductHints } from './rabies-entry-inputs'
 
 /**
- * 종합백신 step 입력 — 가변 길이 배열 + 추가/삭제 (TiterExtraInputs 와 동일 모델).
+ * 종합백신·구충 step 입력 — 가변 길이 배열 + 추가/삭제 (TiterExtraInputs·RabiesExtraInputs 모델).
  *
- * 저장 형식은 case.data.general_vaccine_dates[index] = { date, valid_until } — 펫무브워크
- * 백신 섹션과 동일 키. 동물 단위 사실이라 목적지 스코핑 없음.
- * 카드 제목은 종별 백신명(개 DHPPL / 고양이 FVRCP)을 부모가 내려준다.
+ * 저장 형식: case.data.general_vaccine_dates[index] = { date, valid_until, product,
+ * manufacturer, lot, expiry, other_hospital } — 광견병(rabies_dates)과 동일 키 구성.
+ * 동물 단위 사실이라 목적지 스코핑 없음.
+ *
+ * 종합백신은 약품 4필드(showProduct) + 펫무브워크 약품 카탈로그 자동추천(productHintsFor)을
+ * 광견병과 동일하게 쓴다. 본병원이면 약품칸 읽기 전용 + 자동 채움, 타병원이면 직접 입력.
+ * 구충 처치는 약품·유효기간이 없어 showProduct·showValidUntil=false 로 날짜만 받는다.
  */
 
 export interface GeneralVaccineEntry {
   date: string
   valid_until: string
+  product: string
+  manufacturer: string
+  lot: string
+  expiry: string
+  /** 펫무브워크가 설정한 타병원 접종 여부. portal 은 표시만 — 신규 카드는 true. */
+  other_hospital: boolean
 }
 
 const C = {
@@ -23,6 +34,18 @@ const C = {
   ink3: 'var(--pm-ink-3)',
 } as const
 
+const PRODUCT_FIELDS: ReadonlyArray<{
+  key: 'product' | 'manufacturer' | 'lot' | 'expiry'
+  label: string
+  kind: 'text' | 'date'
+  placeholder?: string
+}> = [
+  { key: 'product', label: '약품명', kind: 'text', placeholder: '예: Canishot DHPPL' },
+  { key: 'manufacturer', label: '제조사', kind: 'text', placeholder: '예: CAVAC' },
+  { key: 'lot', label: '제조번호', kind: 'text', placeholder: '예: 323 DPL 02' },
+  { key: 'expiry', label: '제품 유효기간', kind: 'date' },
+]
+
 export function GeneralVaccineInputs({
   entries,
   vaccineLabel,
@@ -31,7 +54,9 @@ export function GeneralVaccineInputs({
   onAdd,
   dateLabel = '접종일',
   showValidUntil = true,
+  showProduct = true,
   addLabel = '+ 접종 기록 추가',
+  productHintsFor,
 }: {
   entries: GeneralVaccineEntry[]
   /** 카드 헤더 라벨 — 종별 백신명 (예: '종합백신(DHPPL)') 또는 처치명 ('외부구충'). */
@@ -43,7 +68,11 @@ export function GeneralVaccineInputs({
   dateLabel?: string
   /** 면역 유효기간 필드 노출 — 구충 처치는 유효기간 개념이 없어 숨김. */
   showValidUntil?: boolean
+  /** 약품 4필드(약품명·제조사·제조번호·제품유효기간) 노출 — 백신만. 구충은 숨김. */
+  showProduct?: boolean
   addLabel?: string
+  /** 각 entry 접종일 기준 카탈로그 자동추천 — 본병원일 때 약품 4필드에 읽기 전용 표시(광견병과 동일). */
+  productHintsFor?: (index: number) => RabiesProductHints | null
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -54,6 +83,8 @@ export function GeneralVaccineInputs({
           title={`${vaccineLabel} ${i + 1}차`}
           dateLabel={dateLabel}
           showValidUntil={showValidUntil}
+          showProduct={showProduct}
+          productHints={productHintsFor?.(i) ?? null}
           onChange={(key, next) => onChange(i, key, next)}
           onRemove={() => onRemove(i)}
         />
@@ -85,6 +116,8 @@ function EntryCard({
   title,
   dateLabel,
   showValidUntil,
+  showProduct,
+  productHints,
   onChange,
   onRemove,
 }: {
@@ -92,19 +125,43 @@ function EntryCard({
   title: string
   dateLabel: string
   showValidUntil: boolean
+  showProduct: boolean
+  productHints: RabiesProductHints | null
   onChange: (key: keyof GeneralVaccineEntry, next: string) => void
   onRemove: () => void
 }) {
+  const otherHospital = entry.other_hospital !== false
   const cardStyle: React.CSSProperties = {
     background: C.surface,
     border: `.5px solid ${C.line}`,
     borderRadius: 16,
     padding: '4px 16px',
   }
-  const labelStyle: React.CSSProperties = {
-    fontSize: 13,
+  const labelStyle: React.CSSProperties = { fontSize: 13, color: C.ink, fontWeight: 500 }
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    marginTop: 8,
+    padding: '10px 12px',
+    border: `1px solid ${C.line}`,
+    borderRadius: 10,
+    background: 'var(--pm-surface)',
+    fontFamily: 'inherit',
+    fontSize: 15,
     color: C.ink,
-    fontWeight: 500,
+    outline: 'none',
+    boxSizing: 'border-box',
+  }
+  const designatedStyle: React.CSSProperties = {
+    width: '100%',
+    marginTop: 8,
+    padding: '10px 12px',
+    border: `1px solid ${C.line}`,
+    borderRadius: 10,
+    background: 'rgb(var(--pm-ink-rgb) / .035)',
+    fontFamily: 'inherit',
+    fontSize: 15,
+    color: C.ink2,
+    boxSizing: 'border-box',
   }
 
   return (
@@ -180,6 +237,46 @@ function EntryCard({
           </div>
         </div>
       )}
+
+      {showProduct &&
+        PRODUCT_FIELDS.map((field) => {
+          const designated = !otherHospital
+          const hint = designated ? productHints?.[field.key] : undefined
+          return (
+            <div key={field.key} style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
+              <div style={labelStyle}>
+                {field.label}
+                {designated && (
+                  <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 400, color: C.ink3 }}>
+                    병원 지정
+                  </span>
+                )}
+              </div>
+              {designated ? (
+                <div style={designatedStyle}>
+                  {hint || <span style={{ color: C.ink3 }}>—</span>}
+                </div>
+              ) : field.kind === 'date' ? (
+                <div style={{ marginTop: 8 }}>
+                  <DateTextField
+                    value={entry[field.key]}
+                    onChange={(v) => onChange(field.key, v)}
+                    placeholder="YYYY-MM-DD"
+                    block
+                  />
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  value={entry[field.key]}
+                  onChange={(e) => onChange(field.key, e.target.value)}
+                  placeholder={field.placeholder}
+                  style={inputStyle}
+                />
+              )}
+            </div>
+          )
+        })}
     </div>
   )
 }

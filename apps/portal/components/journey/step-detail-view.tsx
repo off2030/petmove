@@ -509,9 +509,9 @@ export function StepDetailView({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
-  // 광견병 step 진입 시 org 백신 카탈로그를 1회 로드 (1·2차 입력 + 추가 접종 표시 공용).
+  // 광견병·종합백신 step 진입 시 org 백신 카탈로그를 1회 로드 (약품 자동추천 공용).
   useEffect(() => {
-    if (!isRabies && !isRabiesExtra) return
+    if (!isRabies && !isRabiesExtra && !isGeneralVaccine) return
     let cancelled = false
     void getCaseVaccineData(caseId).then((r) => {
       if (!cancelled && r.ok) setVaccineData(r.value)
@@ -519,7 +519,7 @@ export function StepDetailView({
     return () => {
       cancelled = true
     }
-  }, [caseId, isRabies, isRabiesExtra])
+  }, [caseId, isRabies, isRabiesExtra, isGeneralVaccine])
   useEffect(() => {
     if (!titerDirty) setTiterForm(readTiterForm(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -629,6 +629,30 @@ export function StepDetailView({
         }
       }),
     [rabiesExtra, rabiesLookups],
+  )
+  // 종합백신 각 entry 의 접종일 기준 카탈로그 hint — 종(개/고양이)별 lookupComprehensive.
+  // 본병원일 때만 약품 4필드에 읽기 전용 표시 (광견병과 동일 모델).
+  const generalSpecies: 'dog' | 'cat' | null = useMemo(() => {
+    const raw =
+      typeof caseRow?.data?.species === 'string' ? (caseRow.data.species as string).toLowerCase() : ''
+    if (raw === 'dog' || raw === '강아지' || raw === '개') return 'dog'
+    if (raw === 'cat' || raw === '고양이') return 'cat'
+    return null
+  }, [caseRow?.data])
+  const generalVaccineProductHints = useMemo(
+    () =>
+      generalVaccine.map((e): RabiesProductHints | null => {
+        if (!rabiesLookups || !e.date || !generalSpecies) return null
+        const r = rabiesLookups.lookupComprehensive(generalSpecies, e.date)
+        if (!r) return null
+        return {
+          product: r.vaccine || r.product || undefined,
+          manufacturer: r.manufacturer || undefined,
+          lot: r.batch || undefined,
+          expiry: r.expiry || undefined,
+        }
+      }),
+    [generalVaccine, rabiesLookups, generalSpecies],
   )
 
   // 저장을 막아야 하는 '입력 불가' 차단 검증을 한 곳에 모은다 — 통과(null)면 저장 가능, 위반이면
@@ -1014,6 +1038,10 @@ export function StepDetailView({
           generalVaccine.map((e) => ({
             date: e.date || null,
             valid_until: e.valid_until || null,
+            product: e.product || null,
+            manufacturer: e.manufacturer || null,
+            lot: e.lot || null,
+            expiry: e.expiry || null,
           })),
         )
         if (res.ok) {
@@ -1859,6 +1887,7 @@ export function StepDetailView({
             <GeneralVaccineInputs
               entries={generalVaccine}
               vaccineLabel={generalVaccineCardLabel(caseRow?.data, destinationKey)}
+              productHintsFor={(idx) => generalVaccineProductHints[idx] ?? null}
               onChange={(idx, key, next) =>
                 setGeneralVaccine((prev) =>
                   prev.map((e, i) => (i === idx ? { ...e, [key]: next } : e)),
@@ -1891,6 +1920,7 @@ export function StepDetailView({
               vaccineLabel={isExternalParasite ? '외부구충' : isEchinococcus ? '촌충 구충' : '내부구충'}
               dateLabel={isExternalParasite ? '처치일' : isEchinococcus ? '구충일' : '투약일'}
               showValidUntil={false}
+              showProduct={false}
               addLabel={
                 isExternalParasite
                   ? '+ 처치 기록 추가'
@@ -2287,29 +2317,62 @@ function readGeneralVaccineForm(
   if (!data) return []
   const arr = data['general_vaccine_dates']
   if (!Array.isArray(arr)) return []
+  const str = (v: unknown) => (typeof v === 'string' ? v : '')
   const out: GeneralVaccineEntry[] = []
   for (const item of arr) {
     if (typeof item === 'string') {
-      if (item.length >= 10) out.push({ date: item.slice(0, 10), valid_until: '' })
+      // legacy: 날짜 문자열만 — 신규 카드 정책상 타병원(other_hospital:true).
+      if (item.length >= 10) out.push({ ...makeEmptyGeneralVaccine(), date: item.slice(0, 10) })
       continue
     }
     if (item && typeof item === 'object') {
       const rec = item as Record<string, unknown>
-      const date = typeof rec.date === 'string' ? rec.date : ''
-      const validUntil = typeof rec.valid_until === 'string' ? rec.valid_until : ''
-      if (date || validUntil) out.push({ date, valid_until: validUntil })
+      const date = str(rec.date)
+      const validUntil = str(rec.valid_until)
+      const product = str(rec.product)
+      const manufacturer = str(rec.manufacturer)
+      const lot = str(rec.lot)
+      const expiry = str(rec.expiry)
+      if (date || validUntil || product || manufacturer || lot || expiry) {
+        out.push({
+          date,
+          valid_until: validUntil,
+          product,
+          manufacturer,
+          lot,
+          expiry,
+          other_hospital: rec.other_hospital !== false,
+        })
+      }
     }
   }
   return out
 }
 
 function makeEmptyGeneralVaccine(): GeneralVaccineEntry {
-  return { date: '', valid_until: '' }
+  // 신규 카드는 타병원 기본 — 약품칸 직접 입력 가능(본병원이면 펫무브워크가 해제). 광견병과 동일.
+  return {
+    date: '',
+    valid_until: '',
+    product: '',
+    manufacturer: '',
+    lot: '',
+    expiry: '',
+    other_hospital: true,
+  }
 }
 
 function generalVaccineEqual(a: GeneralVaccineEntry[], b: GeneralVaccineEntry[]): boolean {
   if (a.length !== b.length) return false
-  return a.every((e, i) => e.date === b[i].date && e.valid_until === b[i].valid_until)
+  return a.every(
+    (e, i) =>
+      e.date === b[i].date &&
+      e.valid_until === b[i].valid_until &&
+      e.product === b[i].product &&
+      e.manufacturer === b[i].manufacturer &&
+      e.lot === b[i].lot &&
+      e.expiry === b[i].expiry,
+  )
 }
 
 /**
@@ -2348,13 +2411,13 @@ function readParasiteForm(
   const out: GeneralVaccineEntry[] = []
   for (const item of arr) {
     if (typeof item === 'string') {
-      if (item.length >= 10) out.push({ date: item.slice(0, 10), valid_until: '' })
+      if (item.length >= 10) out.push({ ...makeEmptyGeneralVaccine(), date: item.slice(0, 10) })
       continue
     }
     if (item && typeof item === 'object') {
       const rec = item as Record<string, unknown>
       const date = typeof rec.date === 'string' ? rec.date : ''
-      if (date) out.push({ date, valid_until: '' })
+      if (date) out.push({ ...makeEmptyGeneralVaccine(), date })
     }
   }
   return out

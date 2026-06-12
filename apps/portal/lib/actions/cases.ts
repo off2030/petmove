@@ -1549,11 +1549,18 @@ export async function markImportPermitIssued(
  */
 export async function updateGeneralVaccineEntries(
   caseId: string,
-  entries: Array<{ date: string | null; valid_until: string | null }>,
+  entries: Array<{
+    date: string | null
+    valid_until: string | null
+    product?: string | null
+    manufacturer?: string | null
+    lot?: string | null
+    expiry?: string | null
+  }>,
 ): Promise<Result<CaseRow>> {
   try {
     for (const e of entries) {
-      for (const key of ['date', 'valid_until'] as const) {
+      for (const key of ['date', 'valid_until', 'expiry'] as const) {
         const v = e[key]
         if (v != null && v !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
           return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
@@ -1585,6 +1592,7 @@ export async function updateGeneralVaccineEntries(
         prevSlot && typeof prevSlot === 'object'
           ? { ...(prevSlot as Record<string, unknown>) }
           : {}
+      const isFreshEntry = Object.keys(prevEntry).length === 0
       const entry: Record<string, unknown> = { ...prevEntry }
       for (const [key, raw] of Object.entries(fields)) {
         const val = typeof raw === 'string' ? raw.trim() : raw
@@ -1592,6 +1600,14 @@ export async function updateGeneralVaccineEntries(
         else entry[key] = val
       }
       if (!hasValidDate(entry)) continue
+      // 약품 4필드 중 하나라도 채워진 신규 entry 는 '타병원 접종' 기본 — 보호자는 어느 병원
+      // 약품인지 모르는 상태고, admin 이 본병원이면 펫무브워크에서 해제(광견병과 동일 정책).
+      if (
+        isFreshEntry &&
+        ['product', 'manufacturer', 'lot', 'expiry'].some((k) => typeof entry[k] === 'string')
+      ) {
+        entry.other_hospital = true
+      }
       next.push(entry)
     }
 
@@ -2278,23 +2294,27 @@ export async function getCaseVaccineData(caseId: string): Promise<Result<Vaccine
       return { ok: false, error: caseErr?.message ?? '여정을 찾을 수 없습니다.' }
     }
 
+    // 광견병 + 종합백신(개/고양이) 약품 카탈로그 — 둘 다 portal 입력에서 날짜 기준 자동추천에 쓴다.
     const { data: rows, error } = await admin
       .from('org_vaccine_products')
-      .select('vaccine, product, manufacturer, batch, expiry, year')
+      .select('category, vaccine, product, manufacturer, batch, expiry, year')
       .eq('org_id', (caseRow as { org_id: string }).org_id)
-      .eq('category', 'rabies')
+      .in('category', ['rabies', 'comprehensive_dog', 'comprehensive_cat'])
     if (error) return { ok: false, error: error.message }
 
     const value = emptyVaccineProductsData()
-    for (const row of (rows ?? []) as RabiesProductRow[]) {
-      value.rabies.push({
+    for (const row of (rows ?? []) as Array<RabiesProductRow & { category: string }>) {
+      const product = {
         vaccine: row.vaccine ?? undefined,
         product: row.product ?? undefined,
         manufacturer: row.manufacturer,
         batch: row.batch,
         expiry: row.expiry,
         year: row.year ?? undefined,
-      })
+      }
+      if (row.category === 'comprehensive_dog') value.comprehensive_dog.push(product)
+      else if (row.category === 'comprehensive_cat') value.comprehensive_cat.push(product)
+      else value.rabies.push(product)
     }
     return { ok: true, value }
   } catch (e) {

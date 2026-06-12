@@ -137,8 +137,21 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       }
       return true
     }
-    case 'has-general-vaccine':
-      return readGeneralVaccineEntries(caseRow).length > 0
+    case 'has-general-vaccine': {
+      // 광견병과 동일 — 최근 접종 유효기간이 입국일을 커버해야 완료. 입국 전 만료면 추가
+      // 접종이 더 필요한 상태 → 미완료(종합백신 카드가 '다음 할 일'에 남아 추가 접종 안내).
+      // 입국일 미입력이면 입력만으로 완료(기존 동작 유지).
+      const entries = readGeneralVaccineEntries(caseRow)
+      if (entries.length === 0) return false
+      const latest = [...entries].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
+      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      const entry =
+        (typeof data.entry_date === 'string' && data.entry_date) ||
+        (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
+        ''
+      if (entry && validUntil && validUntil < entry) return false
+      return true
+    }
     case 'has-civ-vaccine':
       return readCivEntries(caseRow).length > 0
     case 'has-infectious-disease-test':

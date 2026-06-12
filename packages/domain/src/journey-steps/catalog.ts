@@ -1,4 +1,11 @@
-import { addYears, readRabiesEntries, readTiterEntries, resolveValidUntil, todayKst } from '../procedure-checks/utils'
+import {
+  addYears,
+  readGeneralVaccineEntries,
+  readRabiesEntries,
+  readTiterEntries,
+  resolveValidUntil,
+  todayKst,
+} from '../procedure-checks/utils'
 import { areAllRequiredDocsVerified, resolveRequiredDocs } from '../required-docs'
 import {
   buildCaseJourneyContext,
@@ -633,6 +640,34 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     },
     order: 50,
     done: 'has-general-vaccine',
+    // 광견병 추가 백신과 동일 — 최근 접종 유효기간이 입국 전 만료되면 추가 접종 안내.
+    // (만료 여부로 문구 분기. 종합백신은 한 카드 안 목록이라 별도 추가 카드 없이 같은 카드에서
+    // 추가 입력 — done(has-general-vaccine)이 만료 시 미완료로 잡는 것과 짝.)
+    situational: (caseRow) => {
+      const entries = readGeneralVaccineEntries(caseRow)
+      if (entries.length === 0) return undefined
+      const latest = [...entries].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
+      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      if (!validUntil) return undefined
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const entry =
+        (typeof data.entry_date === 'string' && data.entry_date) ||
+        (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
+        ''
+      const today = todayKst()
+      // 미래(예정) 접종만 있으면 기본 안내로 둔다.
+      if (latest.date > today) return undefined
+      if (validUntil < today) {
+        const msg = `지난 종합백신의 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
+        return { desc: msg, cardDesc: msg }
+      }
+      if (entry && validUntil < entry) {
+        const token = buildCaseJourneyContext(caseRow).destinationToken
+        const msg = `종합백신 유효기간이 ${token ? `${token} ` : ''}입국 전에 만료됩니다. ${formatKoreanDate(validUntil)}까지 추가 접종을 하세요.`
+        return { desc: msg, cardDesc: msg }
+      }
+      return undefined
+    },
     inputs: [
       { key: 'general_vaccine_dates', label: '접종일', type: 'date_array', hasValidUntil: true },
     ],
