@@ -530,10 +530,12 @@ export function validateRabiesPrimeAge(
 export function validateMicrochipBeforeBooster(
   microchipDate: string,
   secondDate: string,
+  /** 백신명 — 메시지에 들어감. 광견병 기본, 종합백신 등은 호출 시 지정. */
+  vaccineLabel = '광견병 백신',
 ): string | null {
   if (!microchipDate || !secondDate) return null
   if (microchipDate > secondDate) {
-    return '마이크로칩 삽입 이후에 광견병 백신을 접종해야 합니다.'
+    return `마이크로칩 삽입 이후에 ${vaccineLabel}을 접종해야 합니다.`
   }
   return null
 }

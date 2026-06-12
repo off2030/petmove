@@ -875,7 +875,11 @@ export function StepDetailView({
           .filter((d) => d.length >= 10)
           .sort()[0]
         if (earliest) {
-          const chipErr = validateMicrochipBeforeBooster(readImplantDate(caseRow?.data), earliest)
+          const chipErr = validateMicrochipBeforeBooster(
+            readImplantDate(caseRow?.data),
+            earliest,
+            '종합백신',
+          )
           if (chipErr) return chipErr
         }
       }
