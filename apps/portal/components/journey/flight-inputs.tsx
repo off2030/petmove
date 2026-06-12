@@ -68,22 +68,30 @@ export function FlightInputs({
   value,
   onChange,
   showReturn,
+  showTransport = true,
 }: {
   value: FlightForm
   onChange: (key: keyof FlightForm, next: string) => void
   showReturn: boolean
+  /**
+   * 운송 방법(transport) 노출 — 일본만 true. 운송 방법 값을 실제로 쓰는 곳은 수출서류 PDF
+   * 의 japan_extra(inbound/outbound transport)뿐이라(pdf-fill.ts), 다른 나라에서는 받지 않는다.
+   */
+  showTransport?: boolean
 }) {
+  const drop = (fields: readonly FlightField[]) =>
+    showTransport ? fields : fields.filter((f) => f.kind !== 'transport')
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       {/* 편도면 그룹이 하나뿐 — '출국 항공권' 라벨 생략(상위 '입력' 헤딩으로 충분). */}
       <FlightGroup
         label={showReturn ? '출국 항공권' : undefined}
-        fields={ENTRY_FIELDS}
+        fields={drop(ENTRY_FIELDS)}
         value={value}
         onChange={onChange}
       />
       {showReturn && (
-        <FlightGroup label="귀국 항공권" fields={RETURN_FIELDS} value={value} onChange={onChange} />
+        <FlightGroup label="귀국 항공권" fields={drop(RETURN_FIELDS)} value={value} onChange={onChange} />
       )}
     </div>
   )

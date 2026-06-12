@@ -2036,6 +2036,8 @@ export function StepDetailView({
               value={flightForm}
               onChange={(key, next) => setFlightForm((prev) => ({ ...prev, [key]: next }))}
               showReturn={tripType === 'round'}
+              // 운송 방법은 일본 수출서류(japan_extra)만 사용 — 일본 케이스에서만 노출.
+              showTransport={destinationKey === 'japan'}
             />
           </section>
         )}
