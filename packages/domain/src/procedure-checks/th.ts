@@ -1,5 +1,6 @@
 import {
   buildDateRuleContext,
+  isThRabiesValidBooster,
   validateKrImportDate,
   validateThImportPermitDate,
   validateThImportPermitVaccineGap,
@@ -107,13 +108,19 @@ export const TH_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '광견병 접종은 출국(=도착) 21일 이전 완료',
     description:
-      '가장 최근 광견병 접종이 도착일 기준 21일 이전 완료. (DLD: "primary or discontinuity vaccination must wait for 21 days before departure. Valid booster vaccination, waiting period not required" — 보수적으로 모든 경우 21일 적용)',
+      '가장 최근 광견병 접종이 도착일 기준 21일 이전 완료. 단, 직전 접종 유효기간 내 재접종한 유효 부스터는 21일 면제. (DLD: "primary or discontinuity vaccination must wait for 21 days before departure. Valid booster vaccination, waiting period not required")',
     severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
       const dep = readDepartureDate(caseRow, destination)
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
+
+      // 유효 부스터(직전 접종 면역 유효기간 내 재접종)는 21일 대기 면제 — DLD 원문.
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      if (isThRabiesValidBooster(data)) {
+        return { ok: true, message: '유효 부스터 — 21일 대기 면제.' }
+      }
 
       const latest = rabies[rabies.length - 1]
       const days = daysBetween(latest.date, dep)

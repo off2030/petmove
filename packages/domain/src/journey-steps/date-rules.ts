@@ -97,14 +97,50 @@ export function validateJpEntryDate(v: string, ctx: DateRuleContext): string | n
 }
 
 /**
+ * 태국 — 최근 광견병 접종이 '유효 부스터'인지: 직전 접종의 면역 유효기간 안에 재접종한 경우.
+ * DLD: "primary or discontinuity vaccination must wait 21 days. **Valid booster — waiting
+ * period not required.**" 즉 chain 이 끊기지 않은 부스터는 21일 대기를 면제한다.
+ * (만료 후 재접종 = discontinuity = 새 1차 취급 → 면제 안 됨.)
+ *
+ * data.rabies_dates 에서 {date, valid_until} 을 날짜순 정렬해, 최근 접종이 직전 접종의
+ * resolveValidUntil 이내면 true. 2회 미만이면 false(1차뿐).
+ */
+export function isThRabiesValidBooster(data: Record<string, unknown>): boolean {
+  const raw = data.rabies_dates
+  if (!Array.isArray(raw)) return false
+  const entries = raw
+    .map((r) => {
+      if (typeof r === 'string') return { date: r, valid_until: null as string | null }
+      if (r && typeof r === 'object') {
+        const rec = r as Record<string, unknown>
+        return {
+          date: typeof rec.date === 'string' ? rec.date : '',
+          valid_until: typeof rec.valid_until === 'string' ? rec.valid_until : null,
+        }
+      }
+      return { date: '', valid_until: null }
+    })
+    .filter((e) => e.date.length >= 10)
+    .sort((a, b) => a.date.localeCompare(b.date))
+  if (entries.length < 2) return false
+  const latest = entries[entries.length - 1]
+  const prev = entries[entries.length - 2]
+  const prevValid = resolveValidUntil(prev.date, prev.valid_until)
+  return !!prevValid && latest.date <= prevValid
+}
+
+/**
  * 태국 입국일(= 출국 항공편 날짜) — 광견병·종합백신의 최근 접종일 + 21일 미만 입국만 hard 차단.
  *
  * 일본 180일 룰(validateJpEntryDate)과 같은 기준: 접종일은 과거 사실이라 21일 대기를 줄일
  * 방법이 없고, 위반 해소 경로가 "입국일 자체를 늦추는 것"뿐인 입력만 저장 거부.
  * 면역 유효기간 만료(재접종으로 회복 가능)는 차단 X — procedure-check '주의'가 안내.
  *
- * 태국 외 목적지·백신 미입력 시 SKIP. (출처: DLD — primary/discontinuity vaccination must
- * wait for 21 days before departure. 보수적으로 모든 접종에 21일 적용 — th.ts 와 동일.)
+ * **광견병 유효 부스터(isThRabiesValidBooster)는 21일 면제** — DLD 원문(valid booster,
+ * waiting period not required). 1차·단절 접종만 21일 적용. 종합백신은 부스터 면제 명시가
+ * 없어 보수적으로 21일 유지.
+ *
+ * 태국 외 목적지·백신 미입력 시 SKIP.
  */
 export function validateThEntryDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
@@ -133,6 +169,8 @@ export function validateThEntryDate(v: string, ctx: DateRuleContext): string | n
     ['general_vaccine_dates', '종합백신'],
   ]
   for (const [key, label] of targets) {
+    // 광견병 유효 부스터는 21일 대기 면제 — chain 유지된 재접종은 바로 입국 가능.
+    if (key === 'rabies_dates' && isThRabiesValidBooster(ctx.data)) continue
     const latest = latestOf(key)
     if (!latest) continue
     const earliest = addDays(latest, 21)
