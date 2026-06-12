@@ -16,9 +16,12 @@ export interface ImportPermitForm {
 export function ImportPermitInputs({
   form,
   onChange,
+  showPermitNo = true,
 }: {
   form: ImportPermitForm
   onChange: (key: keyof ImportPermitForm, next: string) => void
+  /** 허가 번호 입력 노출 — step.inputs 에 permit_no 가 있을 때만(태국은 신청일만). */
+  showPermitNo?: boolean
 }) {
   const C = {
     surface: 'var(--pm-surface)',
@@ -62,19 +65,21 @@ export function ImportPermitInputs({
           />
         </div>
       </div>
-      <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
-        <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>허가 번호</div>
-        <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
-          수입허가증에 기재된 번호 — 허가증을 받은 뒤 입력하세요
+      {showPermitNo && (
+        <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
+          <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>허가 번호</div>
+          <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
+            수입허가증에 기재된 번호 — 허가증을 받은 뒤 입력하세요
+          </div>
+          <input
+            type="text"
+            value={form.permitNo}
+            onChange={(e) => onChange('permitNo', e.target.value)}
+            placeholder="예: 0007/2569"
+            style={{ ...fieldBox, marginTop: 8, width: '100%' }}
+          />
         </div>
-        <input
-          type="text"
-          value={form.permitNo}
-          onChange={(e) => onChange('permitNo', e.target.value)}
-          placeholder="예: 0007/2569"
-          style={{ ...fieldBox, marginTop: 8, width: '100%' }}
-        />
-      </div>
+      )}
     </div>
   )
 }

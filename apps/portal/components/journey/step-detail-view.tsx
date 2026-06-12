@@ -2067,6 +2067,7 @@ export function StepDetailView({
             <ImportPermitInputs
               form={importPermit}
               onChange={(key, next) => setImportPermit((prev) => ({ ...prev, [key]: next }))}
+              showPermitNo={(step.inputs ?? []).some((i) => i.key === 'permit_no')}
             />
           </section>
         )}

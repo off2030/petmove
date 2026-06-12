@@ -127,7 +127,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         return { desc: msg, cardDesc: msg }
       },
       links: [
-        { url: '/forms/th-import-r1-1.pdf', label: 'R1/1 신청서 양식' },
+        { url: '/forms/th-import-r1-1.pdf', label: 'R1/1 서식 다운로드' },
         { url: '/guide/th-aqs-contacts', label: '태국 동물검역소(AQS) 연락처' },
       ],
       validationIds: [
