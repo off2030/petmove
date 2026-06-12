@@ -55,6 +55,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후 접종합니다.\n생후 12주(84일)가 지난 후에 접종해야 합니다.\n입국 21일 전까지 접종해야 합니다.\n수입 허가 신청 2주 전까지 접종해야 합니다.\n입국 때 면역 유효기간이 남아있어야 합니다.',
       doneSummary: '광견병 백신을 접종했습니다.',
       earliest: { anchor: 'birth', daysAfter: 84 },
+      // 1회 접종국 단일 카드 — 최근 접종 유효기간이 입국 전 만료면 미완료(추가 접종 안내).
+      done: 'has-rabies-valid',
       // 21일 대기·유효기간(입국일 기준)은 보호자가 백신 step 에서 조치 못 함 — 항공권
       // 구매 step(flight-purchase)에 매핑. 여기는 접종일 자체의 요건만.
       validationIds: ['th.rabies-prime-after-12weeks', 'th.microchip-before-rabies'],
@@ -148,6 +150,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 합니다.\n생후 12주(84일)가 지난 후에 접종해야 합니다.\n수입허가증(SPSIC) 신청 14일 전까지 접종을 완료하세요.\n필리핀 입국 때 면역 유효기간(1년)이 남아있어야 합니다.\n이전 접종의 유효기간 안에 추가 접종(부스터)을 한 경우에는 대기 기간 없이 바로 출국할 수 있습니다.',
       doneSummary: '광견병 백신을 접종했습니다.',
       earliest: { anchor: 'birth', daysAfter: 84 },
+      done: 'has-rabies-valid',
       validationIds: ['ph.rabies-prime-after-12weeks', 'ph.microchip-before-rabies'],
     },
     'rabies-titer': {
@@ -293,6 +296,7 @@ function euFamilyOverrides(opts: {
       description: `광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 합니다.\n생후 12주(84일)가 지난 후에 접종해야 합니다.\n${label} 입국 때 면역 유효기간이 남아있어야 합니다.\n유효기간이 끝나기 전에 추가 접종을 계속하면 광견병 항체 검사를 다시 받지 않아도 됩니다.`,
       doneSummary: '광견병 백신을 접종했습니다.',
       earliest: { anchor: 'birth', daysAfter: 84 },
+      done: 'has-rabies-valid',
       validationIds: ['eu.rabies-prime-after-12weeks', 'eu.microchip-before-rabies'],
     },
     // 항체 검사 — 접종 30일 후 채혈. 2026-04-22부터 농림축산검역본부 단일 검사.

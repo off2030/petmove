@@ -75,6 +75,7 @@ export type StepDoneSignal =
   | 'always-done'                  // intake 처럼 자동 완료
   | 'microchip-set'
   | 'has-rabies-entry'
+  | 'has-rabies-valid'             // 1회 접종국 단일카드 — 최근 접종 유효기간이 입국일 커버 (만료 시 미완료)
   | 'has-rabies-booster'           // 2차 이상
   | 'has-extra-rabies'             // 3차 이상 (추가 접종)
   | 'has-titer-entry'

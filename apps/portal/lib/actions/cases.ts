@@ -388,11 +388,11 @@ export async function updateRabiesExtraEntries(
     lot: string | null
     expiry: string | null
   }>,
-  /** 추가 접종 시작 index — 일본 2(3차+), 1회 접종국(태국·필리핀·EU) 1(2차+). */
-  baseIndex: 1 | 2 = 2,
+  /** 관리 시작 index — 일본 추가 2(3차+), 1회국 단일카드 0(1차+). */
+  baseIndex: 0 | 1 | 2 = 2,
 ): Promise<Result<CaseRow>> {
   try {
-    if (baseIndex !== 1 && baseIndex !== 2) {
+    if (baseIndex !== 0 && baseIndex !== 1 && baseIndex !== 2) {
       return { ok: false, error: '잘못된 요청입니다.' }
     }
     for (const e of entries) {

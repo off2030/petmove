@@ -9,6 +9,7 @@ import {
 import { areAllRequiredDocsVerified, resolveRequiredDocs } from '../required-docs'
 import {
   buildCaseJourneyContext,
+  isSingleDoseRabiesCase,
   SINGLE_DOSE_RABIES_DESTINATIONS,
 } from './applicability'
 import {
@@ -117,6 +118,34 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     description:
       '1차 광견병 백신을 접종하세요.\n\n생후 91일이 지난 후에 접종해야 합니다.',
     doneSummary: '1차 광견병 백신을 접종했습니다.',
+    // 1회 접종국(태국·필리핀·EU)은 이 카드 하나에서 1·2·3차를 목록으로 입력 + 만료 시 추가 접종
+    // 안내(종합백신과 동일 모델). 일본·하와이(2회국)는 이 situational 이 미적용(undefined) — 기존
+    // 1차/2차/추가 분리 카드 유지. done 은 destination-override 가 1회국에서 has-rabies-valid 로 교체.
+    situational: (caseRow) => {
+      if (!isSingleDoseRabiesCase(caseRow)) return undefined
+      const r = readRabiesEntries(caseRow)
+      if (r.length === 0) return undefined
+      const latest = [...r].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
+      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      if (!validUntil) return undefined
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      const entry =
+        (typeof data.entry_date === 'string' && data.entry_date) ||
+        (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
+        ''
+      const today = todayKst()
+      if (latest.date > today) return undefined
+      if (validUntil < today) {
+        const msg = `지난 광견병 백신의 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
+        return { desc: msg, cardDesc: msg }
+      }
+      if (entry && validUntil < entry) {
+        const token = buildCaseJourneyContext(caseRow).destinationToken
+        const msg = `광견병 백신 유효기간이 ${token ? `${token} ` : ''}입국 전에 만료됩니다. ${formatKoreanDate(validUntil)}까지 추가 접종을 하세요.`
+        return { desc: msg, cardDesc: msg }
+      }
+      return undefined
+    },
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 30,
     earliest: { anchor: 'birth', daysAfter: 91 },
@@ -245,9 +274,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       }
       return undefined
     },
-    // 일본(2회 프라임 + 3차+) + 1회 접종국(1차 + 부스터) — 유효기간 만료 대비 reminder 공용.
+    // 일본(2회 프라임 + 3차+) 전용 별도 카드. 1회 접종국은 광견병 백신 카드 하나에서
+    // 추가 접종을 목록으로 입력하므로 이 카드를 쓰지 않는다(rabies-vaccine-1 단일 카드로 통합).
     applicability: {
-      destinations: ['japan', ...SINGLE_DOSE_RABIES_DESTINATIONS],
+      destinations: ['japan'],
       species: 'all',
       tripType: 'all',
     },

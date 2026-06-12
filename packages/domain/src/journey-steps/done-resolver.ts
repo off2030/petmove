@@ -63,6 +63,20 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
     }
     case 'has-rabies-entry':
       return readRabiesEntries(caseRow).length > 0
+    case 'has-rabies-valid': {
+      // 1회 접종국 단일 카드 — 종합백신(has-general-vaccine)과 동일. 최근 접종 유효기간이
+      // 입국일을 커버해야 완료. 입국 전 만료면 추가 접종 필요 → 미완료. 입국일 없으면 입력만으로 완료.
+      const r = readRabiesEntries(caseRow)
+      if (r.length === 0) return false
+      const latest = [...r].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
+      const validUntil = resolveValidUntil(latest.date, latest.valid_until)
+      const entry =
+        (typeof data.entry_date === 'string' && data.entry_date) ||
+        (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
+        ''
+      if (entry && validUntil && validUntil < entry) return false
+      return true
+    }
     case 'has-rabies-booster':
       return readRabiesEntries(caseRow).length >= 2
     case 'has-extra-rabies': {
@@ -295,6 +309,12 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
       // 1차 = 입력 순서 첫 번째 (rabies_dates[0], 상세 폼의 '1차 칸'과 동일 정의)
       const r = readRabiesEntries(caseRow)
       return r.length > 0 ? r[0].date : null
+    }
+    case 'has-rabies-valid': {
+      // 단일 카드 완료일 = 가장 최근 접종일 (종합백신과 동일).
+      const r = readRabiesEntries(caseRow)
+      if (r.length === 0) return null
+      return [...r].map((e) => e.date).sort().slice(-1)[0]
     }
     case 'has-rabies-booster': {
       // 2차 = 입력 순서 두 번째 (rabies_dates[1])

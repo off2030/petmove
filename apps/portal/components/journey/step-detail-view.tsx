@@ -135,6 +135,10 @@ export function StepDetailView({
   const isRabies2 = step.id === 'rabies-vaccine-2'
   const isRabies = isRabies1 || isRabies2
   const isRabiesExtra = step.id === 'rabies-vaccine-extra'
+  // 1회 접종국(태국·필리핀·EU)에서 광견병 1차 카드는 단일 카드 + 목록(1·2·3차) 입력으로 통합한다
+  // (종합백신과 동일 모델). 일본·하와이(2회국)는 기존 1차 단일 + 별도 추가 백신 카드 유지.
+  const isRabiesSingleCard =
+    isRabies1 && !!destinationKey && SINGLE_DOSE_RABIES_DESTINATIONS.includes(destinationKey)
   // rabies_dates 배열 내 위치 — 1차=0, 2차=1.
   const rabiesIndex = isRabies2 ? 1 : 0
   const isTiter = step.id === 'rabies-titer'
@@ -216,6 +220,12 @@ export function StepDetailView({
   const [rabies, setRabies] = useState<RabiesEntryForm>(savedRabies)
   // 광견병 step 한정 — org 백신 카탈로그 ("지정 약품" 힌트 계산용).
   const [vaccineData, setVaccineData] = useState<VaccineProductsData | null>(null)
+
+  // 1회 접종국 단일 카드 — rabies_dates 전체(index 0~)를 가변 목록으로 관리. 빈 상태 1장 유지.
+  const savedRabiesList = readRabiesExtraEntries(caseRow?.data, 0)
+  const [rabiesList, setRabiesList] = useState<RabiesExtraEntry[]>(
+    savedRabiesList.length === 0 ? [makeEmptyExtra()] : savedRabiesList,
+  )
 
   // 광견병 추가 백신 — 일본은 3차+(index 2~), 1회 접종국(태국·필리핀·EU)은 2차+(index 1~).
   // 빈 상태에서도 입력칸 한 장이 보이도록 최소 1장 유지.
@@ -313,7 +323,9 @@ export function StepDetailView({
   }, [isInteractive, status, error])
 
   const microchipDirty = isMicrochip && (chip !== savedChip || date !== savedDate)
-  const rabiesDirty = isRabies && !rabiesFormEqual(rabies, savedRabies)
+  // 단일 카드(1회국)는 rabies 단일 폼이 아니라 목록(rabiesList)을 본다.
+  const rabiesDirty = isRabies && !isRabiesSingleCard && !rabiesFormEqual(rabies, savedRabies)
+  const rabiesListDirty = isRabiesSingleCard && !rabiesExtraEqual(rabiesList, savedRabiesList)
   // 저장 검증 실패 후 사용자가 form 을 만지면 error 자동 해제 — 시각 신호로 "다시 시도
   // 가능". dirty 자체는 form vs saved 비교라 사용자 변경이 같은 값으로 돌아가면 dirty=false
   // 가 되어 button disabled, 새 값이면 활성화. error 자동 해제는 step 무관 공통 처리.
@@ -327,6 +339,7 @@ export function StepDetailView({
     chip,
     date,
     rabies,
+    rabiesList,
     rabiesExtra,
     titerForm,
     titerExtra,
@@ -373,6 +386,7 @@ export function StepDetailView({
   const dirty =
     microchipDirty ||
     rabiesDirty ||
+    rabiesListDirty ||
     rabiesExtraDirty ||
     titerDirty ||
     titerExtraDirty ||
@@ -503,6 +517,13 @@ export function StepDetailView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
+    if (!rabiesListDirty) {
+      const next = readRabiesExtraEntries(caseRow?.data, 0)
+      setRabiesList(next.length === 0 ? [makeEmptyExtra()] : next)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRow?.data])
+  useEffect(() => {
     if (!rabiesExtraDirty) {
       const next = readRabiesExtraEntries(caseRow?.data, rabiesExtraBase)
       setRabiesExtra(next.length === 0 ? [makeEmptyExtra()] : next)
@@ -630,6 +651,22 @@ export function StepDetailView({
       }),
     [rabiesExtra, rabiesLookups],
   )
+  // 1회국 단일 카드 — 각 entry 접종일 기준 광견병 카탈로그 hint (추가 백신과 동일).
+  const rabiesListProductHints = useMemo(
+    () =>
+      rabiesList.map((e): RabiesProductHints | null => {
+        if (!rabiesLookups || !e.date) return null
+        const r = rabiesLookups.lookupRabies(e.date)
+        if (!r) return null
+        return {
+          product: r.vaccine || r.product || undefined,
+          manufacturer: r.manufacturer || undefined,
+          lot: r.batch || undefined,
+          expiry: r.expiry || undefined,
+        }
+      }),
+    [rabiesList, rabiesLookups],
+  )
   // 종합백신 각 entry 의 접종일 기준 카탈로그 hint — 종(개/고양이)별 lookupComprehensive.
   // 본병원일 때만 약품 4필드에 읽기 전용 표시 (광견병과 동일 모델).
   const generalSpecies: 'dog' | 'cat' | null = useMemo(() => {
@@ -666,6 +703,27 @@ export function StepDetailView({
       const birth = readBirthDate(caseRow?.data)
       if (date && birth && date < birth) {
         return '마이크로칩 삽입일이 출생일보다 빠릅니다. 날짜를 확인하세요.'
+      }
+      return null
+    }
+    if (isRabiesSingleCard) {
+      // 1회국 단일 카드 — 첫 접종(index 0)에 생후 최소 일령·칩 이후 차단, 전체에 chain 검증.
+      const first = rabiesList[0]
+      if (first?.date) {
+        const minAgeDays =
+          step.earliest?.anchor === 'birth' ? step.earliest.daysAfter : undefined
+        const ageErr = validateRabiesPrimeAge(readBirthDate(caseRow?.data), first.date, minAgeDays)
+        if (ageErr) return ageErr
+        const chipErr = validateMicrochipBeforeBooster(readImplantDate(caseRow?.data), first.date)
+        if (chipErr) return chipErr
+      }
+      const chainBreak = findRabiesChainBreak(
+        rabiesList.map((e) => ({ date: e.date, valid_until: e.valid_until || null })),
+      )
+      if (chainBreak) {
+        return chainBreak.reason === 'too-early'
+          ? `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 접종일보다 늦어야 합니다.`
+          : `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 합니다.`
       }
       return null
     }
@@ -898,6 +956,34 @@ export function StepDetailView({
         const res = await updateMicrochipFields(caseId, chip || null, date || null)
         if (res.ok) {
           updateCase(res.value)
+          setStatus('saved')
+          window.setTimeout(() => setStatus('idle'), 1500)
+        } else {
+          setStatus('error')
+          setError(res.error)
+        }
+      })
+    } else if (isRabiesSingleCard) {
+      setStatus('saving')
+      setError(null)
+      startTransition(async () => {
+        // 단일 카드 — rabies_dates 전체를 한 번에 교체(baseIndex 0). 약품 4필드 포함.
+        const res = await updateRabiesExtraEntries(
+          caseId,
+          rabiesList.map((e) => ({
+            date: e.date || null,
+            valid_until: e.valid_until || null,
+            product: e.product || null,
+            manufacturer: e.manufacturer || null,
+            lot: e.lot || null,
+            expiry: e.expiry || null,
+          })),
+          0,
+        )
+        if (res.ok) {
+          updateCase(res.value)
+          const next = readRabiesExtraEntries(res.value.data, 0)
+          setRabiesList(next.length === 0 ? [makeEmptyExtra()] : next)
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -1808,7 +1894,7 @@ export function StepDetailView({
             <MicrochipInputs chip={chip} date={date} onChipChange={setChip} onDateChange={setDate} />
           </section>
         )}
-        {isRabies && (
+        {isRabies && !isRabiesSingleCard && (
           <section style={{ marginTop: 22 }}>
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <RabiesEntryInputs
@@ -1816,6 +1902,26 @@ export function StepDetailView({
               onChange={(key, next) => setRabies((prev) => ({ ...prev, [key]: next }))}
               productHints={rabiesProductHints}
               otherHospital={rabiesOtherHospital}
+            />
+          </section>
+        )}
+        {isRabiesSingleCard && (
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
+            <RabiesExtraInputs
+              entries={rabiesList}
+              startDose={1}
+              onChange={(idx, key, next) =>
+                setRabiesList((prev) => prev.map((e, i) => (i === idx ? { ...e, [key]: next } : e)))
+              }
+              onRemove={(idx) =>
+                setRabiesList((prev) => {
+                  const next = prev.filter((_, i) => i !== idx)
+                  return next.length === 0 ? [makeEmptyExtra()] : next
+                })
+              }
+              onAdd={() => setRabiesList((prev) => [...prev, makeEmptyExtra()])}
+              productHintsFor={(idx) => rabiesListProductHints[idx] ?? null}
             />
           </section>
         )}
