@@ -1,5 +1,6 @@
 import {
   buildDateRuleContext,
+  isValidBooster,
   validateKrImportDate,
   validatePhImportPermitVaccineGap,
 } from '../journey-steps/date-rules'
@@ -105,9 +106,9 @@ export const PH_CHECKS: ProcedureCheck[] = [
     id: 'ph.rabies-prime-21days-before-arrival',
     country: COUNTRY,
     category: '광견병',
-    title: '광견병 1차 접종은 출국 21일 이전 완료 (부스터 면제)',
+    title: '광견병 접종은 출국 21일 이전 완료 (유효 부스터 면제)',
     description:
-      'BAI 공식: "initial rabies vaccination should not be less than 14 days prior to application of the SPSIC". SPSIC 신청 ≈ 출국 7-14일 전 → 합산 21일 (dep proxy). **annual booster (2차+) 는 즉시 출국 가능 — BAI 면제** ("animals may be shipped immediately upon vaccination").',
+      'BAI 공식: "initial rabies vaccination should not be less than 14 days prior to application of the SPSIC". SPSIC 신청 ≈ 출국 7-14일 전 → 합산 21일 (dep proxy). **직전 접종 유효기간 내 재접종한 유효 부스터는 면제** ("annual booster, shipped immediately"). 만료 후 재접종(단절)은 새 1차라 21일 적용.',
     severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
@@ -115,23 +116,25 @@ export const PH_CHECKS: ProcedureCheck[] = [
       const rabies = readRabiesEntries(caseRow)
       if (!dep || rabies.length === 0) return SKIP
 
-      // BAI: 부스터(2차+) 는 시점 제한 없음 — 단일 도즈(1차)만 21일 검증.
-      if (rabies.length >= 2) {
-        return { ok: true, message: `광견병 ${rabies.length}회 접종 — 부스터 BAI 면제 (즉시 출국 가능).` }
+      // 유효 부스터(직전 접종 면역 유효기간 내 재접종)는 21일 면제 — 태국과 동일 기준.
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      if (isValidBooster(data, 'rabies_dates')) {
+        return { ok: true, message: '유효 부스터 — 21일 대기 면제.' }
       }
 
-      const first = rabies[0]
-      const days = daysBetween(first.date, dep)
+      // 유효 부스터가 아니면(1차·단절) 가장 최근 접종 기준 21일.
+      const latest = rabies[rabies.length - 1]
+      const days = daysBetween(latest.date, dep)
       if (days === null) return SKIP
       if (days < 21) {
         return {
           ok: false,
-          message: `1차 접종(${first.date})부터 출국(${dep})까지 ${days}일입니다. 21일 이상이어야 합니다.`,
-          fixHint: `출국일을 ${first.date} 기준 21일 이후로 조정하거나 2차(부스터)를 추가 접종하세요 (부스터는 시점 제한이 없습니다).`,
-          offendingPaths: ['departure_date', `rabies_dates[${first.originalIndex}].date`],
+          message: `최근 접종(${latest.date})부터 출국(${dep})까지 ${days}일입니다. 21일 이상이어야 합니다.`,
+          fixHint: `출국일을 ${latest.date} 기준 21일 이후로 조정하세요. (직전 접종 유효기간 내 재접종이면 21일 면제됩니다.)`,
+          offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `1차 접종(${first.date}) → 출국(${dep}): ${days}일.` }
+      return { ok: true, message: `최근 접종(${latest.date}) → 출국(${dep}): ${days}일.` }
     },
   },
   {
@@ -168,9 +171,9 @@ export const PH_CHECKS: ProcedureCheck[] = [
     id: 'ph.general-vaccine-prime-21days-before-arrival',
     country: COUNTRY,
     category: '종합백신',
-    title: '종합백신 1차 접종은 출국 21일 이전 완료 (부스터 면제)',
+    title: '종합백신 접종은 출국 21일 이전 완료 (유효 부스터 면제)',
     description:
-      '종합백신(강아지 DHLPPi / 고양이 FVRCP) 1차 접종이 출국일 기준 21일 이전 완료. **부스터(2차+) 는 즉시 출국 가능 — BAI 면제** (광견병 부스터 면제 정책 동일 적용).',
+      '종합백신(강아지 DHLPPi / 고양이 FVRCP) 가장 최근 접종이 출국일 기준 21일 이전 완료. **직전 접종 유효기간 내 재접종한 유효 부스터는 면제** (광견병과 동일 기준). 만료 후 재접종(단절)은 새 1차라 21일 적용.',
     severity: 'warning',
     addedAt: '2026-05-06',
     run: ({ caseRow, destination }) => {
@@ -178,23 +181,25 @@ export const PH_CHECKS: ProcedureCheck[] = [
       const entries = readGeneralVaccineEntries(caseRow)
       if (!dep || entries.length === 0) return SKIP
 
-      // BAI: 부스터(2차+) 는 시점 제한 없음 — 단일 도즈(1차)만 21일 검증.
-      if (entries.length >= 2) {
-        return { ok: true, message: `종합백신 ${entries.length}회 접종 — 부스터 BAI 면제 (즉시 출국 가능).` }
+      // 유효 부스터(직전 접종 면역 유효기간 내 재접종)는 21일 면제 — 광견병과 동일 기준.
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      if (isValidBooster(data, 'general_vaccine_dates')) {
+        return { ok: true, message: '유효 부스터 — 21일 대기 면제.' }
       }
 
-      const first = entries[0]
-      const days = daysBetween(first.date, dep)
+      // 유효 부스터가 아니면(1차·단절) 가장 최근 접종 기준 21일.
+      const latest = entries[entries.length - 1]
+      const days = daysBetween(latest.date, dep)
       if (days === null) return SKIP
       if (days < 21) {
         return {
           ok: false,
-          message: `1차 종합백신(${first.date})부터 출국(${dep})까지 ${days}일입니다. 21일 이상이어야 합니다.`,
-          fixHint: `출국일을 ${first.date} 기준 21일 이후로 조정하거나 2차(부스터)를 추가 접종하세요 (부스터는 시점 제한이 없습니다).`,
-          offendingPaths: ['departure_date', `general_vaccine_dates[${first.originalIndex}].date`],
+          message: `최근 종합백신(${latest.date})부터 출국(${dep})까지 ${days}일입니다. 21일 이상이어야 합니다.`,
+          fixHint: `출국일을 ${latest.date} 기준 21일 이후로 조정하세요. (직전 접종 유효기간 내 재접종이면 21일 면제됩니다.)`,
+          offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
-      return { ok: true, message: `1차 종합백신(${first.date}) → 출국(${dep}): ${days}일.` }
+      return { ok: true, message: `최근 종합백신(${latest.date}) → 출국(${dep}): ${days}일.` }
     },
   },
   {

@@ -97,16 +97,17 @@ export function validateJpEntryDate(v: string, ctx: DateRuleContext): string | n
 }
 
 /**
- * 태국 — 최근 광견병 접종이 '유효 부스터'인지: 직전 접종의 면역 유효기간 안에 재접종한 경우.
- * DLD: "primary or discontinuity vaccination must wait 21 days. **Valid booster — waiting
- * period not required.**" 즉 chain 이 끊기지 않은 부스터는 21일 대기를 면제한다.
+ * 백신 배열(key: 'rabies_dates' / 'general_vaccine_dates')의 최근 접종이 '유효 부스터'인지:
+ * 직전 접종의 면역 유효기간 안에 재접종한 경우(chain 미단절). 유효 부스터는 21일 대기 면제.
  * (만료 후 재접종 = discontinuity = 새 1차 취급 → 면제 안 됨.)
  *
- * data.rabies_dates 에서 {date, valid_until} 을 날짜순 정렬해, 최근 접종이 직전 접종의
- * resolveValidUntil 이내면 true. 2회 미만이면 false(1차뿐).
+ * DLD: "primary or discontinuity vaccination must wait 21 days. Valid booster — waiting period
+ * not required." BAI 도 동일(annual booster 즉시 출국). 태국·필리핀 광견병·종합백신 공용.
+ *
+ * 날짜순 정렬해 최근 접종이 직전 접종의 resolveValidUntil 이내면 true. 2회 미만이면 false.
  */
-export function isThRabiesValidBooster(data: Record<string, unknown>): boolean {
-  const raw = data.rabies_dates
+export function isValidBooster(data: Record<string, unknown>, key: string): boolean {
+  const raw = data[key]
   if (!Array.isArray(raw)) return false
   const entries = raw
     .map((r) => {
@@ -170,7 +171,7 @@ export function validateThEntryDate(v: string, ctx: DateRuleContext): string | n
   ]
   for (const [key, label] of targets) {
     // 광견병 유효 부스터는 21일 대기 면제 — chain 유지된 재접종은 바로 입국 가능.
-    if (key === 'rabies_dates' && isThRabiesValidBooster(ctx.data)) continue
+    if (key === 'rabies_dates' && isValidBooster(ctx.data, 'rabies_dates')) continue
     const latest = latestOf(key)
     if (!latest) continue
     const earliest = addDays(latest, 21)

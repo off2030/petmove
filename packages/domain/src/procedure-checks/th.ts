@@ -1,6 +1,6 @@
 import {
   buildDateRuleContext,
-  isThRabiesValidBooster,
+  isValidBooster,
   validateKrImportDate,
   validateThImportPermitDate,
   validateThImportPermitVaccineGap,
@@ -118,7 +118,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
 
       // 유효 부스터(직전 접종 면역 유효기간 내 재접종)는 21일 대기 면제 — DLD 원문.
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      if (isThRabiesValidBooster(data)) {
+      if (isValidBooster(data, 'rabies_dates')) {
         return { ok: true, message: '유효 부스터 — 21일 대기 면제.' }
       }
 
