@@ -1625,6 +1625,25 @@ export function StepDetailView({
       })
       if (!ok) return
     }
+    // 항공권 출발일이 과거(이고 새로 바뀐 값)면 한 번 확인 — 과거 출발일은 여정을 '완료'로
+    // 표시하므로(has-arrived 폴백), 날짜 오입력을 한 번 거른다. 출발일 자체가 안 바뀌면
+    // (공항·편명만 수정) 띄우지 않는다. 출발일 의미는 전 나라 공통이라 모든 항공권 카드에 적용.
+    if (isFlight) {
+      const outbound = (flightForm.departure_date || flightForm.entry_date).trim()
+      const savedOutbound = (savedFlightForm.departure_date || savedFlightForm.entry_date).trim()
+      if (
+        /^\d{4}-\d{2}-\d{2}$/.test(outbound) &&
+        outbound < todayStr &&
+        outbound !== savedOutbound
+      ) {
+        const ok = await confirm({
+          message: '출발일이 지난 날짜예요. 이대로 저장할까요?',
+          okLabel: '네, 저장',
+          cancelLabel: '다시 입력',
+        })
+        if (!ok) return
+      }
+    }
     handleSave()
   }
   const handleConvertToOneWay = async () => {
