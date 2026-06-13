@@ -757,6 +757,18 @@ const FLIGHT_DATA_KEYS = [
 ] as const
 
 /**
+ * 일본 legacy 출발일 fallback(japan_extra.inbound.date) 제거 — 출국일을 비울 때 호출.
+ * departure_flight_date 의 read fallback 이라 남아 있으면 auto-fill sync 가 출국일을 되살린다.
+ */
+function clearLegacyInboundDate(data: Record<string, unknown>): void {
+  const jx = data.japan_extra
+  if (jx && typeof jx === 'object') {
+    const inbound = (jx as Record<string, unknown>).inbound
+    if (inbound && typeof inbound === 'object') delete (inbound as Record<string, unknown>).date
+  }
+}
+
+/**
  * 항공권 구매 step 의 입력 필드를 patch — case.data 의 entry_* / return_* 평탄 키
  * (정보 탭 항공권 섹션·펫무브워크 추가정보와 동일 키)를 갱신.
  *
@@ -829,6 +841,13 @@ export async function updateFlightFields(
       const explicitDep = typeof fields.departure_date === 'string' ? fields.departure_date.trim() : ''
       const departureCol = explicitDep || entryDate
       merged = writeByDestValue(merged, writeDest, 'departure_date', departureCol || null)
+      // 출국일을 비우면 일본 departure_flight_date(+legacy)도 함께 제거 — 양방향 sync 가 stale 한
+      // 출발일에서 출국일을 되살리는 것 방지. (엔진은 빈 source 는 무시·채우기만 하므로 여기서 명시 제거.)
+      if (!departureCol) {
+        merged = writeByDestValue(merged, writeDest, 'departure_flight_date', null)
+        delete merged.departure_flight_date // top-level legacy 저장 위치도 제거(flatten 폴백 차단)
+        clearLegacyInboundDate(merged)
+      }
 
       // 공용 부수효과 패리티 — 단일 목적지 한정(다중은 종전대로 by_dest 만). top-level 경로와 동일하게:
       //  · flight_info_recorded_at(항공권 구매 step 표시일) 최초 캡처 / 전부 지워지면 정리
@@ -897,6 +916,12 @@ export async function updateFlightFields(
     const entryDate = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
     const explicitDep = typeof fields.departure_date === 'string' ? fields.departure_date.trim() : ''
     const departureCol = explicitDep || entryDate
+    // 출국일을 비우면 일본 departure_flight_date(+legacy)도 함께 제거 — by_dest 경로와 동일.
+    // 안 지우면 양방향 sync 가 stale 한 출발일에서 departure_date 컬럼을 되살린다.
+    if (!departureCol) {
+      delete nextData.departure_flight_date
+      clearLegacyInboundDate(nextData)
+    }
     const updatePayload: { data: Record<string, unknown>; departure_date: string | null } = {
       data: nextData,
       departure_date: departureCol || null,
