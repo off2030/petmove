@@ -2278,3 +2278,18 @@ select:-webkit-autofill {
   text-underline-offset: 2px;
 }
 .legal-prose a:hover { text-decoration: none; }
+
+/* 고객앱 미리보기(읽기 전용): 데이터 입력 컨트롤만 비활성화하고,
+   '세부 정보' 펼침 토글([data-preview-allow])은 동작을 유지한다.
+   기존 <fieldset disabled> 는 내부 <button> 까지 모두 막아 펼침이 안 됐음. */
+.pm-preview-ro input,
+.pm-preview-ro textarea,
+.pm-preview-ro select,
+.pm-preview-ro button:not([data-preview-allow]):not([data-preview-allow] *) {
+  pointer-events: none;
+}
+.pm-preview-ro input,
+.pm-preview-ro textarea,
+.pm-preview-ro select {
+  cursor: default;
+}

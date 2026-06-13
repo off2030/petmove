@@ -99,14 +99,13 @@ function Shell({
       >
         <SwipeTabs>
           {preview ? (
-            // 미리보기: 입력 폼(input/textarea/select/button)을 일괄 비활성 — 읽기 전용.
-            // <a> 네비게이션(탭·단계 이동)은 form control 이 아니라 영향 없음.
-            <fieldset
-              disabled
-              style={{ display: 'contents', border: 0, margin: 0, padding: 0, minInlineSize: 0 }}
-            >
+            // 미리보기: 입력 폼(input/textarea/select)과 액션 버튼만 비활성 — 읽기 전용.
+            // 단, '세부 정보' 펼침 토글([data-preview-allow])은 동작을 유지해 내용을 볼 수 있게 한다.
+            // (이전엔 <fieldset disabled> 라 내부 <button> 까지 모두 막혀 펼침이 안 됐음.)
+            // <a> 네비게이션(탭·단계 이동)은 영향 없음.
+            <div className="pm-preview-ro" style={{ display: 'contents' }}>
               {children}
-            </fieldset>
+            </div>
           ) : (
             children
           )}

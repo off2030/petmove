@@ -32,6 +32,8 @@ export function CollapsibleSection({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
+        // 고객앱 미리보기(읽기 전용)에서도 펼침/접힘은 동작해야 함 — globals.css 의 .pm-preview-ro 예외.
+        data-preview-allow=""
         style={{
           display: 'flex',
           alignItems: 'center',
