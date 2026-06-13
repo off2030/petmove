@@ -844,7 +844,7 @@ export function TimelineCalm({
                   <span style={num}>{done}</span>
                   <span> / {total} 단계{dDayLabel ? ` · ${dDayLabel}` : ''}</span>
                 </div>
-                {prepLabel && <div style={{ marginTop: 3, color: C.ink2 }}>{prepLabel}</div>}
+                {prepLabel && <div style={{ marginTop: 3 }}>{prepLabel}</div>}
               </div>
             </div>
           </div>
