@@ -183,16 +183,17 @@ export function validateThEntryDate(v: string, ctx: DateRuleContext): string | n
 }
 
 /**
- * 태국 수입 허가 신청일 — 입국일 9일(7영업일의 최소 달력일) 전까지 신청해야 함.
- * procedure-check '안내'(th.import-permit-9days-before-entry) 전용 — 이미 신청을 마친 뒤
- * 일정을 앞당기는 보호자도 있어 입력 차단(client)·주의 없이 안내(info)로만 표시. 한쪽 비면 통과.
- * (출처: DLD/태국 외교부 — at least 7 business days prior to departure. 영업일→달력일 환산은
- * 최소값 9일로 보고, 카피에서는 여유 있게 2주 전 신청을 권장.)
+ * 수입 허가 신청일은 출국일 이후일 수 없음 — 이미 출국한 뒤엔 신청이 불가능(논리적 불가능).
+ * client(입력 불가)·procedure-check(출국일을 나중에 당겨 어긋난 경우를 주의로) 공용. 한쪽 비면 통과.
+ * (9일·14일 마감과 달리 '신청 자체가 불가능한' 입력이라 차단 대상.)
  */
-export function validateThImportPermitDate(filedDate: string, entryDate: string): string | null {
-  if (!filedDate || !entryDate) return null
-  if (daysBetween(filedDate, entryDate) < 9) {
-    return '입국 7영업일 전까지 수입 허가를 신청해야 합니다. 허가증을 받지 못하는 경우 입국일을 변경해야 합니다.'
+export function validateImportPermitNotAfterDeparture(
+  filedDate: string,
+  departureDate: string,
+): string | null {
+  if (!filedDate || !departureDate) return null
+  if (filedDate.slice(0, 10) > departureDate.slice(0, 10)) {
+    return '수입 허가 신청일은 출국일보다 늦을 수 없습니다. 날짜를 확인하세요.'
   }
   return null
 }

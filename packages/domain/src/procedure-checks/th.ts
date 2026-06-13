@@ -1,8 +1,8 @@
 import {
   buildDateRuleContext,
   isValidBooster,
+  validateImportPermitNotAfterDeparture,
   validateKrImportDate,
-  validateThImportPermitDate,
   validateThImportPermitVaccineGap,
 } from '../journey-steps/date-rules'
 import { todayKst } from '../dates'
@@ -292,51 +292,52 @@ export const TH_CHECKS: ProcedureCheck[] = [
     id: 'th.import-permit-9days-before-entry',
     country: COUNTRY,
     category: '수입허가',
-    title: '수입 허가 신청 마감 (입국 7영업일 전)',
+    title: '수입 허가 신청 마감 (출국 9일 전)',
     description:
-      '수입 허가는 입국(=출국) 최소 7영업일(달력일 9일) 전까지 신청해야 함. 두 상황을 안내(info): ' +
-      '①신청 전 — 오늘(KST) 기준 출국까지 9일 미만이면 "신청 시간 부족" 안내(출국일 앵커). ' +
-      '②신청 후 — 신청일이 입국일 9일 이내면 표시(validateThImportPermitDate). ' +
-      '입력 차단·주의가 아닌 안내로만 — 이미 신청을 마친 뒤 일정을 조정하는 보호자도 있어서. (DLD: at least 7 business days prior to departure)',
+      '수입 허가는 출국(=입국) 최소 7영업일(달력일 9일) 전까지 신청해야 함. 오늘(KST) 기준 출국까지 ' +
+      '9일 미만이면 신청 여부와 무관하게 "신청 시간 부족" 안내(info) — 출국일 앵커 D-day. 신청 전·후를 ' +
+      '한 문구로 통일(신청 후에도 출발 임박이면 허가증 미수령 리스크가 같음). 입력 차단·주의가 아닌 안내로만 ' +
+      '— 리스크 안고 진행하는 보호자도 있어서. (DLD: at least 7 business days prior to departure)',
     severity: 'info',
     addedAt: '2026-06-12',
     run: ({ caseRow, destination }) => {
+      // 신청 여부와 무관 — 오늘(KST) 기준 출국까지 9일 미만이면 안내. 보호자가 입력하는 건
+      // 출국일이므로 출국일을 앵커로 D-day 계산. (단계 완료 시 카드 자체가 안 보임.)
+      const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
+      if (!dep) return SKIP
+      const x = daysBetween(todayKst(), dep)
+      if (x === null || x < 0 || x >= 9) return SKIP // 이미 지남·9일 이상 남음 → 침묵
+      const when = x === 0 ? '오늘 출발 예정입니다.' : `${x}일 후 출발 예정입니다.`
+      return {
+        ok: false,
+        message: `${when} 수입 허가 신청에 필요한 시간이 부족합니다. 출국 전에 허가증을 받지 못하면 출발일을 변경하세요.`,
+        offendingPaths: ['departure_date'],
+      }
+    },
+  },
+  {
+    id: 'th.import-permit-not-after-departure',
+    country: COUNTRY,
+    category: '수입허가',
+    title: '수입 허가 신청일, 출국일 순서',
+    description:
+      '수입 허가 신청일은 출국일 이후일 수 없음(이미 출국한 뒤엔 신청 불가). 입력 차단(validateImportPermitNotAfterDeparture)과 같은 함수 — 출국일을 나중에 당겨 어긋난 경우를 주의로 표면화.',
+    severity: 'warning',
+    addedAt: '2026-06-13',
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const filed = readScopedImportPermitFiled(data, destination)
-      const filedValid = /^\d{4}-\d{2}-\d{2}$/.test(filed)
-
-      // ① 신청 전 — 오늘(KST) 기준 출국까지 9일 미만이면 신청 시간 부족 안내.
-      //    보호자가 입력하는 건 출국일이므로 출국일을 앵커로 D-day 계산.
-      if (!filedValid) {
-        const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
-        if (!dep) return SKIP
-        const x = daysBetween(todayKst(), dep)
-        if (x === null || x < 0 || x >= 9) return SKIP // 이미 지남·9일 이상 남음 → 침묵
-        const when = x === 0 ? '오늘 출발 예정입니다.' : `${x}일 후 출발 예정입니다.`
-        return {
-          ok: false,
-          message: `${when} 수입 허가 신청에 필요한 시간이 부족합니다. 출국 전에 허가증을 받지 못하면 출발일을 변경하세요.`,
-          offendingPaths: ['departure_date'],
-        }
-      }
-
-      // ② 신청 후 — 신청일이 입국일 9일 이내면 표시.
-      const ctx = buildDateRuleContext(caseRow, destination)
-      // 입국일 = 도착일(entry_date) 우선, 미입력 시 출발일(departure_date)로 근사 — 태국 카드는
-      // 도착일이 선택 입력이라, 비어 있으면 출발일을 입국 기준으로 써 9영업일 전 검증을 유지한다.
-      const entry =
-        typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
-          ? ctx.data.entry_date.slice(0, 10)
-          : (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
-      const msg = validateThImportPermitDate(filed, entry)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
+      const msg = validateImportPermitNotAfterDeparture(filed, dep)
       if (msg) {
         return {
           ok: false,
           message: msg,
-          offendingPaths: ['import_permit_application_date', 'entry_date'],
+          offendingPaths: ['import_permit_application_date', 'departure_date'],
         }
       }
-      return { ok: true, message: entry ? `신청일(${filed}) 입국(${entry}) 9일 이전.` : `신청일(${filed}) 입력됨 (입국일 미입력).` }
+      return { ok: true, message: `신청일(${filed}) ≤ 출국일(${dep || '미입력'}).` }
     },
   },
   {
