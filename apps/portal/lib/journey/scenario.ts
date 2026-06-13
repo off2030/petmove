@@ -619,6 +619,9 @@ export function buildJourney(
     // 가능 시작일(earliest)이 이미 지났으면 날짜 조건은 무의미 — "2024년 …일 이후 접종하세요"
     // 같은 과거 날짜 노출을 막고 행동 문구만 남긴다(미래일 때만 "{날짜} 이후 …" 프리픽스).
     const upcomingEarliest = earliest && earliest > today ? earliest : null
+    // 마감일이 이미 지났으면 "{과거 날짜}까지 …" 같은 모순 문구를 막고 행동 문구만 남긴다
+    // (earliest 과거 처리와 동일 선례). window 는 구간 끝(deadlineEnd)이 미래면 아직 유효.
+    const upcomingDeadline = deadline && deadline >= today ? deadline : null
     const cardDesc = passedUnconfirmed
       ? PASSED_UNCONFIRMED_MSG
       : done
@@ -626,11 +629,13 @@ export function buildJourney(
       : (sit?.cardDesc
           ?? (upcomingEarliest
             ? `${formatKoreanDate(upcomingEarliest)} 이후 ${cardLine}`
-            : deadline && deadlineEnd
+            : deadline && deadlineEnd && deadlineEnd >= today
               ? `${formatKoreanDate(deadline)} ~ ${formatRangeEnd(deadline, deadlineEnd)} 사이에 ${cardLine}`
-              : deadline
-                ? `${formatKoreanDate(deadline)}까지 ${cardLine}`
-                : summary))
+              : upcomingDeadline
+                ? `${formatKoreanDate(upcomingDeadline)}까지 ${cardLine}`
+                : deadline
+                  ? cardLine
+                  : summary))
     const failedChecks = failedByStep.get(step.id) ?? 0
     // 액션-완료 두 단계 step (사전 신고·일본 수출검역 신청·출국 전 임상검사) — 신청/검진은
     // 됐지만 완료는 아직(situational 활성, !done) 상태에선 우측 칩이 '안내' 톤으로 바뀌도록
