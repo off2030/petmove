@@ -1133,7 +1133,12 @@ export function StepDetailView({
         const res = await updateFlightFields(
           caseId,
           {
-            departure_date: flightForm.departure_date || null,
+            // 출발일(departure_date)은 태국(departureFirst 레이아웃)만 별도 입력칸이 있다. 그 외(일본 등)는
+            // 입력칸이 없고 출발=입국 같은 날이라, 폼에 남은 stale departure_date 가 updateFlightFields 의
+            // `explicitDep || entryDate` 에서 우선권을 가져 출국일이 안 바뀌는 버그가 있었다. 태국이 아니면
+            // departure_date 를 보내지 않고(null) entry_date 에서 파생시킨다.
+            departure_date:
+              destinationKey === 'thailand' ? flightForm.departure_date || null : null,
             entry_date: flightForm.entry_date || null,
             entry_time: flightForm.entry_time || null,
             entry_departure_airport: flightForm.entry_departure_airport || null,
