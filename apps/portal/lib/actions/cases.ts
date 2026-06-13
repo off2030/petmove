@@ -826,6 +826,11 @@ export async function updateFlightFields(
     // 우선 읽어 has-flight-date·D-day 가 목적지별로 작동한다.
     const caseDestStr = (existing as { destination: string | null }).destination
     const isSingleDest = parseDestinations(caseDestStr).length === 1
+    // 일본은 출국일(departure_date)이 departure_flight_date 와 양방향 sync — 출국일 쓸 때 이 키도
+    // 함께 맞춰야 stale 잔존이 출국일을 되살리지 않는다. (Japan 한정 — 다른 목적지엔 이 키 없음.)
+    const isJapanFlight =
+      buildCaseJourneyContext({ destination: caseDestStr ?? null, data: prev } as CaseRow, destination ?? null)
+        .destinationKey === 'japan'
     // 활성 목적지 토큰을 읽기(flatten)와 동일하게 해석 — ?dest 미지정이어도 첫 토큰으로 fallback 해
     // 항공권 필드·출국일을 by_dest 에 저장한다. 읽기는 strict by_dest 라 top-level/컬럼에 쓰면
     // 출국일이 검증에 안 보여 '주의'가 누락됐다. 검역·검진과 동일 패턴(resolveWriteToken, 로컬 함수).
@@ -841,11 +846,12 @@ export async function updateFlightFields(
       const explicitDep = typeof fields.departure_date === 'string' ? fields.departure_date.trim() : ''
       const departureCol = explicitDep || entryDate
       merged = writeByDestValue(merged, writeDest, 'departure_date', departureCol || null)
-      // 출국일을 비우면 일본 departure_flight_date(+legacy)도 함께 제거 — 양방향 sync 가 stale 한
-      // 출발일에서 출국일을 되살리는 것 방지. (엔진은 빈 source 는 무시·채우기만 하므로 여기서 명시 제거.)
-      if (!departureCol) {
-        merged = writeByDestValue(merged, writeDest, 'departure_flight_date', null)
-        delete merged.departure_flight_date // top-level legacy 저장 위치도 제거(flatten 폴백 차단)
+      // 일본: departure_flight_date 를 출국일과 항상 동일하게 맞춘다(변경·삭제 모두). auto-fill 은 빈
+      // source 를 무시·채우기만 하므로, 안 맞추면 stale 한 departure_flight_date 가 양방향 sync 로
+      // 출국일을 되살려 D-day 가 안 바뀐다. top-level/legacy fallback 도 정리.
+      if (isJapanFlight) {
+        merged = writeByDestValue(merged, writeDest, 'departure_flight_date', departureCol || null)
+        delete merged.departure_flight_date // top-level 잔존 제거(by_dest 우선)
         clearLegacyInboundDate(merged)
       }
 
@@ -916,10 +922,11 @@ export async function updateFlightFields(
     const entryDate = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
     const explicitDep = typeof fields.departure_date === 'string' ? fields.departure_date.trim() : ''
     const departureCol = explicitDep || entryDate
-    // 출국일을 비우면 일본 departure_flight_date(+legacy)도 함께 제거 — by_dest 경로와 동일.
-    // 안 지우면 양방향 sync 가 stale 한 출발일에서 departure_date 컬럼을 되살린다.
-    if (!departureCol) {
-      delete nextData.departure_flight_date
+    // 일본: departure_flight_date 를 출국일과 항상 동일하게 맞춘다(변경·삭제 모두) — by_dest 경로와 동일.
+    // 안 맞추면 stale 한 값이 양방향 sync 로 departure_date 컬럼을 되살린다.
+    if (isJapanFlight) {
+      if (departureCol) nextData.departure_flight_date = departureCol
+      else delete nextData.departure_flight_date
       clearLegacyInboundDate(nextData)
     }
     const updatePayload: { data: Record<string, unknown>; departure_date: string | null } = {
