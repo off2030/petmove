@@ -1638,7 +1638,7 @@ export function StepDetailView({
       ) {
         const ok = await confirm({
           message: '출발일이 지난 날짜예요. 이대로 저장할까요?',
-          okLabel: '네, 저장',
+          okLabel: '저장',
           cancelLabel: '다시 입력',
         })
         if (!ok) return
