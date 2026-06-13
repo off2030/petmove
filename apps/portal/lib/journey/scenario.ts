@@ -188,19 +188,29 @@ function jpPrepHint(
   caseData: Record<string, unknown>,
   today: string,
 ): { label: string } | null {
-  // ① 합격(value≥0.5) 항체검사 중 가장 이른 채혈일 — 180 카운트다운의 기준점.
+  // ① 항체검사 채혈일 — 180 카운트다운의 기준점. value 는 명시적 불합격(<0.5)일 때만 제외하고,
+  // 비어 있으면 '완료' 버튼(rabies_titer_result_confirmed) 경로라 합격 취급. (done-resolver 와 동일)
   const records = Array.isArray(caseData.rabies_titer_records) ? caseData.rabies_titer_records : []
   let drawDate: string | null = null
+  let hasValue = false
   for (const r of records) {
     if (!r || typeof r !== 'object') continue
     const rec = r as Record<string, unknown>
     const d = typeof rec.date === 'string' && rec.date.length >= 10 ? rec.date.slice(0, 10) : ''
-    const v = typeof rec.value === 'string' ? parseFloat(rec.value) : NaN
-    if (!d || !Number.isFinite(v) || v < RABIES_TITER_PASS_IU) continue
-    if (!drawDate || d < drawDate) drawDate = d
+    if (!d) continue
+    const vStr = typeof rec.value === 'string' ? rec.value.trim() : ''
+    if (vStr) {
+      hasValue = true
+      const v = parseFloat(vStr)
+      if (Number.isFinite(v) && v < RABIES_TITER_PASS_IU) continue // 명시적 불합격 채혈 제외
+    }
+    if (!drawDate || d < drawDate) drawDate = d // 가장 이른 합격 채혈일
   }
-  if (drawDate) {
-    // 채혈일 + 180 이 지났으면 이미 입국 가능, 아니면 그 확정 달력 날짜를 노출.
+  // 항체검사 완료 판정 — 결과확인 플래그 OR 결과값 입력 (앱 done-resolver 기준).
+  const titerDone = caseData.rabies_titer_result_confirmed === true || hasValue
+  if (titerDone) {
+    // 완료됐는데 채혈일이 없으면(자동추출분 등) 확정 입국일을 못 구함 → 표시 안 함.
+    if (!drawDate) return null
     if (daysBetween(drawDate, today) >= JP_TITER_WAIT_DAYS) return { label: '입국 가능' }
     return { label: `${formatYmdDot(addDays(drawDate, JP_TITER_WAIT_DAYS))} 입국 가능` }
   }
