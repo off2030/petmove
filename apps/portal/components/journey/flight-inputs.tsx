@@ -114,41 +114,35 @@ export function FlightInputs({
   const drop = (fields: readonly FlightField[]) =>
     showTransport ? fields : fields.filter((f) => f.kind !== 'transport')
 
-  if (departureFirst) {
+  // 출국/귀국을 동등한 leg 로 — 각 leg 는 날짜(출발일)를 항상 노출하고 나머지는 '세부 정보' 접기.
+  // 태국(departureFirst): 출국 주필드=출발일, 세부=도착일·도착시간·공항·편명.
+  // 일본 등(collapsible): 출국 주필드=날짜(entry_date), 세부=공항·편명·운송방법.
+  if (departureFirst || collapsible) {
+    let outboundPrimary: readonly FlightField[]
+    let outboundDetail: readonly FlightField[]
+    if (departureFirst) {
+      outboundPrimary = [DEPARTURE_PRIMARY_FIELD]
+      outboundDetail = DEPARTURE_DETAIL_FIELDS
+    } else {
+      const entryFields = drop(ENTRY_FIELDS)
+      outboundPrimary = entryFields.slice(0, 1)
+      outboundDetail = entryFields.slice(1)
+    }
+    const returnFields = drop(RETURN_FIELDS)
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <FlightGroup fields={[DEPARTURE_PRIMARY_FIELD]} value={value} onChange={onChange} />
-        <CollapsibleDetails
-          label="세부 정보 (선택)"
-          fields={DEPARTURE_DETAIL_FIELDS}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <CollapsibleLeg
+          headerLabel={showReturn ? '출국 항공권' : undefined}
+          primaryFields={outboundPrimary}
+          detailFields={outboundDetail}
           value={value}
           onChange={onChange}
         />
-        {showReturn && (
-          <CollapsibleDetails
-            label="귀국 항공권 (선택)"
-            fields={drop(RETURN_FIELDS)}
-            value={value}
-            onChange={onChange}
-          />
-        )}
-      </div>
-    )
-  }
-
-  if (collapsible) {
-    // 첫 필드(날짜) 항상 노출, 나머지(공항·편명·운송방법)는 접기.
-    const [primary, ...rest] = drop(ENTRY_FIELDS)
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {primary && <FlightGroup fields={[primary]} value={value} onChange={onChange} />}
-        {rest.length > 0 && (
-          <CollapsibleDetails label="세부 정보 (선택)" fields={rest} value={value} onChange={onChange} />
-        )}
-        {showReturn && (
-          <CollapsibleDetails
-            label="귀국 항공권 (선택)"
-            fields={drop(RETURN_FIELDS)}
+        {showReturn && returnFields.length > 0 && (
+          <CollapsibleLeg
+            headerLabel="귀국 항공권"
+            primaryFields={returnFields.slice(0, 1)}
+            detailFields={returnFields.slice(1)}
             value={value}
             onChange={onChange}
           />
@@ -168,6 +162,37 @@ export function FlightInputs({
       />
       {showReturn && (
         <FlightGroup label="귀국 항공권" fields={drop(RETURN_FIELDS)} value={value} onChange={onChange} />
+      )}
+    </div>
+  )
+}
+
+/** 항공권 한 leg(출국/귀국) — 날짜(주필드) 항상 노출 + '세부 정보' 접기. 두 leg 가 동등 구조. */
+function CollapsibleLeg({
+  headerLabel,
+  primaryFields,
+  detailFields,
+  value,
+  onChange,
+}: {
+  headerLabel?: string
+  primaryFields: readonly FlightField[]
+  detailFields: readonly FlightField[]
+  value: FlightForm
+  onChange: (key: keyof FlightForm, next: string) => void
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {primaryFields.length > 0 && (
+        <FlightGroup label={headerLabel} fields={primaryFields} value={value} onChange={onChange} />
+      )}
+      {detailFields.length > 0 && (
+        <CollapsibleDetails
+          label="세부 정보 (선택)"
+          fields={detailFields}
+          value={value}
+          onChange={onChange}
+        />
       )}
     </div>
   )
