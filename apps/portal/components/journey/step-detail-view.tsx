@@ -29,7 +29,6 @@ import {
   validateThImportPermitVaccineGap,
   EU_ENTRY_FAMILY,
   SINGLE_DOSE_RABIES_DESTINATIONS,
-  validateThImportPermitDate,
   validateTiterAfterBooster,
   validateTiterWithinChain,
   validateVetVisitDate,
@@ -915,11 +914,10 @@ export function StepDetailView({
       const data = (caseRow?.data ?? {}) as Record<string, unknown>
       const entry = typeof data.entry_date === 'string' ? data.entry_date.slice(0, 10) : ''
       const filed = importPermit.applicationDate.trim()
-      // 태국 — 신청일이 입국일 9일(7영업일) 이내·백신 접종 14일(2주) 이내면 차단.
+      // 태국 — 백신 접종 14일(2주) 이내면 차단. 입국 9일(7영업일) 마감은 차단이 아닌
+      // '주의'로 안내(리스크 감수 진행 허용) — th.import-permit-9days-before-entry.
       if (destinationKey === 'thailand') {
-        return (
-          validateThImportPermitDate(filed, entry) ?? validateThImportPermitVaccineGap(filed, data)
-        )
+        return validateThImportPermitVaccineGap(filed, data)
       }
       // 필리핀 — 신청일이 백신 1차(단일 접종) 14일 이내면 차단 (부스터 면제).
       if (destinationKey === 'philippines') {

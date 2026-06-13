@@ -292,7 +292,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     category: '수입허가',
     title: '수입 허가 신청 마감 (입국 7영업일 전)',
     description:
-      '수입 허가 신청일은 태국 입국일 기준 최소 7영업일(달력일 최소 9일) 이전이어야 함. 입력 시 차단(validateThImportPermitDate)과 같은 함수 — 항공편 수정 후 어긋난 케이스를 주의로 표면화. (DLD: at least 7 business days prior to departure)',
+      '수입 허가 신청일은 태국 입국일 기준 최소 7영업일(달력일 최소 9일) 이전이어야 함. 리스크를 안고 진행하는 보호자가 있어 입력 차단이 아닌 주의로만 안내(validateThImportPermitDate). (DLD: at least 7 business days prior to departure)',
     severity: 'warning',
     addedAt: '2026-06-12',
     run: ({ caseRow, destination }) => {
