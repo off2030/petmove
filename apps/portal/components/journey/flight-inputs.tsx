@@ -90,6 +90,7 @@ export function FlightInputs({
   showReturn,
   showTransport = true,
   departureFirst = false,
+  collapsible = false,
 }: {
   value: FlightForm
   onChange: (key: keyof FlightForm, next: string) => void
@@ -104,6 +105,11 @@ export function FlightInputs({
    * 공항·편명은 '세부 정보' 접기 안에 선택 입력. 검증 기준일도 출발일.
    */
   departureFirst?: boolean
+  /**
+   * 일반 접기 레이아웃(일본 등) — 첫 필드(날짜=entry_date)만 항상 노출, 나머지(공항·편명·운송
+   * 방법)는 '세부 정보' 접기. 한국과 같은 시간대라 출발=도착이 같은 날이라 분리는 불필요.
+   */
+  collapsible?: boolean
 }) {
   const drop = (fields: readonly FlightField[]) =>
     showTransport ? fields : fields.filter((f) => f.kind !== 'transport')
@@ -118,6 +124,27 @@ export function FlightInputs({
           value={value}
           onChange={onChange}
         />
+        {showReturn && (
+          <CollapsibleDetails
+            label="귀국 항공권 (선택)"
+            fields={drop(RETURN_FIELDS)}
+            value={value}
+            onChange={onChange}
+          />
+        )}
+      </div>
+    )
+  }
+
+  if (collapsible) {
+    // 첫 필드(날짜) 항상 노출, 나머지(공항·편명·운송방법)는 접기.
+    const [primary, ...rest] = drop(ENTRY_FIELDS)
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {primary && <FlightGroup fields={[primary]} value={value} onChange={onChange} />}
+        {rest.length > 0 && (
+          <CollapsibleDetails label="세부 정보 (선택)" fields={rest} value={value} onChange={onChange} />
+        )}
         {showReturn && (
           <CollapsibleDetails
             label="귀국 항공권 (선택)"

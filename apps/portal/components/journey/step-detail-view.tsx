@@ -2070,6 +2070,8 @@ export function StepDetailView({
               showTransport={destinationKey === 'japan'}
               // 태국 — 출발일 주필드 + 도착일·도착시간·공항·편명 접기. 검증 기준일도 출발일.
               departureFirst={destinationKey === 'thailand'}
+              // 일본 — 날짜 주필드 + 공항·편명·운송방법 접기(출발=도착 동일 시간대라 분리 불필요).
+              collapsible={destinationKey === 'japan'}
             />
           </section>
         )}
