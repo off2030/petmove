@@ -1146,7 +1146,10 @@ export function StepDetailView({
             return_flight_number: flightForm.return_flight_number || null,
             return_transport: flightForm.return_transport || null,
           },
-          caseRow?.destination ?? null,
+          // 활성 목적지 토큰을 넘긴다 — 다른 scoped 저장(검역·허가 등)과 동일. caseRow.destination(전체
+          // 컬럼, 다중이면 "필리핀, 일본")을 넘기면 by_dest 쓰기 scope 가 어긋나 읽기(by_dest[활성])와
+          // 불일치 → 출국일 변경·삭제가 반영 안 되던 버그.
+          activeDest ?? null,
         )
         if (res.ok) {
           updateCase(res.value)
@@ -1258,7 +1261,9 @@ export function StepDetailView({
           caseId,
           vetVisitDate || null,
           false,
-          caseRow?.destination ?? null,
+          // 활성 목적지 토큰 — 읽기(activeDestinationView)와 scope 일치. caseRow.destination(전체
+          // 컬럼)을 넘기면 다중목적지에서 by_dest 쓰기/읽기 불일치로 내원일이 반영 안 됨(플라이트와 동일).
+          activeDest ?? null,
         )
         if (res.ok) {
           updateCase(res.value)
