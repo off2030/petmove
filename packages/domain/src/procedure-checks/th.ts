@@ -5,7 +5,6 @@ import {
   validateThImportPermitDate,
   validateThImportPermitVaccineGap,
 } from '../journey-steps/date-rules'
-import { readByDestValue } from '../destination-scoped-fields'
 import type { ProcedureCheck } from './types'
 import {
   daysBetween,
@@ -13,6 +12,7 @@ import {
   readBreed,
   readGeneralVaccineEntries,
   readRabiesEntries,
+  readScopedImportPermitFiled,
   resolveValidUntil,
   SKIP,
   readDepartureDate,
@@ -43,28 +43,6 @@ import {
  */
 
 const COUNTRY = 'thailand'
-
-/**
- * 수입 허가 신청일(by_dest 스코핑 필드)을 활성 목적지 기준으로 읽는다.
- * - by_dest 에 문자열 → 그 값 (목적지별 실제 신청일)
- * - by_dest 에 명시적 null(비움) → '' (top-level fallback 금지, 다른 목적지 값 누수 차단)
- * - by_dest 항목 없음(undefined, 단일 목적지 등) → top-level fallback
- *
- * 입국일은 buildDateRuleContext 가 이미 스코핑하는데 신청일만 raw top-level 로 읽으면,
- * 다중 목적지에서 '다른 목적지/잔여 top-level 신청일' vs '이 목적지 입국일' 이 섞여
- * 9일 검증이 잘못 뜨는 버그가 난다. 두 날짜의 출처를 맞춘다.
- */
-function readScopedImportPermitFiled(
-  data: Record<string, unknown>,
-  destination?: string | null,
-): string {
-  const scoped = readByDestValue(data, destination ?? null, 'import_permit_application_date')
-  if (typeof scoped === 'string') return scoped.slice(0, 10)
-  if (scoped === null) return '' // 명시적 비움 — fallback 금지
-  return typeof data.import_permit_application_date === 'string'
-    ? data.import_permit_application_date.slice(0, 10)
-    : ''
-}
 
 export const TH_CHECKS: ProcedureCheck[] = [
   // ── 마이크로칩 ──

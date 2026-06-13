@@ -1,6 +1,6 @@
 import type { CaseRow } from '../types'
 import { readEffectiveExtraValue } from '../destination-overrides-types'
-import { getDepartureDate, getVetVisitDate } from '../destination-scoped-fields'
+import { getDepartureDate, getVetVisitDate, readByDestValue } from '../destination-scoped-fields'
 import type { CheckResult } from './types'
 
 /**
@@ -299,6 +299,31 @@ export function readExtraField(caseRow: CaseRow, key: string, destination?: stri
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const v = readEffectiveExtraValue(data, key, destination ?? null)
   return typeof v === 'string' && v.length > 0 ? v : null
+}
+
+/**
+ * 수입 허가 신청일(by_dest 스코핑 필드)을 활성 목적지 기준으로 읽는다.
+ * - by_dest 에 문자열 → 그 값 (목적지별 실제 신청일)
+ * - by_dest 에 명시적 null(비움) → '' (top-level fallback 금지, 다른 목적지 값 누수 차단)
+ * - by_dest 항목 없음(undefined, 단일 목적지 등) → top-level fallback
+ *
+ * 입국일·출국일은 buildDateRuleContext / readDepartureDate 가 이미 목적지 스코핑하는데
+ * 신청일만 raw top-level(`data.import_permit_application_date`)로 읽으면, 다중 목적지에서
+ * '다른 목적지/잔여 top-level 신청일' vs '이 목적지 입국일' 이 섞여 마감 검증(태국 9일·
+ * 스위스 21일·필리핀 14일)이 잘못 뜨는 버그가 난다. 두 날짜의 출처를 맞춘다.
+ *
+ * th(9일)·eu 스위스(21일)·ph(14일) 가 공유.
+ */
+export function readScopedImportPermitFiled(
+  data: Record<string, unknown>,
+  destination?: string | null,
+): string {
+  const scoped = readByDestValue(data, destination ?? null, 'import_permit_application_date')
+  if (typeof scoped === 'string') return scoped.slice(0, 10)
+  if (scoped === null) return '' // 명시적 비움 — fallback 금지
+  return typeof data.import_permit_application_date === 'string'
+    ? data.import_permit_application_date.slice(0, 10)
+    : ''
 }
 
 // ── 보호자 (cross-case 매칭 — 동일 보호자 다중 등록 검증) ──

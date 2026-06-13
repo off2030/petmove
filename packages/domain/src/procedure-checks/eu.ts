@@ -10,6 +10,7 @@ import {
   daysBetween,
   readInternalParasiteEntries,
   readRabiesEntries,
+  readScopedImportPermitFiled,
   readTiterEntries,
   resolveValidUntil,
   SKIP,
@@ -318,10 +319,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
     addedAt: '2026-06-12',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const filed =
-        typeof data.import_permit_application_date === 'string'
-          ? data.import_permit_application_date.slice(0, 10)
-          : ''
+      const filed = readScopedImportPermitFiled(data, destination)
       if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
       const ctx = buildDateRuleContext(caseRow, destination)
       const entry =

@@ -10,6 +10,7 @@ import {
   findSameGuardianCases,
   readGeneralVaccineEntries,
   readRabiesEntries,
+  readScopedImportPermitFiled,
   resolveValidUntil,
   SKIP,
   readDepartureDate,
@@ -321,12 +322,9 @@ export const PH_CHECKS: ProcedureCheck[] = [
       'SPSIC 신청은 광견병·종합백신 1차(단일 접종) 기준 14일 이후 — 부스터(2회+)는 BAI 면제. 입력 차단(validatePhImportPermitVaccineGap)과 같은 함수.',
     severity: 'warning',
     addedAt: '2026-06-12',
-    run: ({ caseRow }) => {
+    run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const filed =
-        typeof data.import_permit_application_date === 'string'
-          ? data.import_permit_application_date.slice(0, 10)
-          : ''
+      const filed = readScopedImportPermitFiled(data, destination)
       if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
       const msg = validatePhImportPermitVaccineGap(filed, data)
       if (msg) {
