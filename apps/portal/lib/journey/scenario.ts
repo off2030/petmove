@@ -79,6 +79,12 @@ export interface JourneyData {
     departureDate: string | null
     daysLeft: number | null
     tripType: 'round' | 'one_way'
+    /**
+     * 출국일 미정 + 일본行 일 때만 채워지는 링 보조줄 힌트. 그 외 null.
+     * "지금부터 가장 빠르게 준비하면 출국 가능한 최단 시점"을 표시 — 항체검사 후엔 확정 입국 가능일(달력 날짜),
+     * 그 전엔 '최소 N일 남음' 상대 기간. 출국일이 있으면 D-day 가 우선이라 이 값은 안 쓴다.
+     */
+    prep: { label: string } | null
   }
   stages: JourneyStage[]
   /**
@@ -151,6 +157,74 @@ function formatKoreanDate(iso: string): string {
   if (parts.length !== 3) return iso
   const [y, m, d] = parts
   return `${y}년 ${Number(m)}월 ${Number(d)}일`
+}
+
+/** 'YYYY-MM-DD' → 'YY·MM·DD' (timeline 카드 날짜 표기와 동일). 형식이 아니면 원문. */
+function formatYmdDot(iso: string): string {
+  const parts = iso.split('-')
+  if (parts.length !== 3) return iso
+  const [y, m, d] = parts
+  return `${y.slice(2)}·${m}·${d}`
+}
+
+const JP_TITER_WAIT_DAYS = 180 // 일본: 항체검사 채혈일 + 180일 이후 입국 가능
+const JP_PRIME_BOOST_GAP_DAYS = 30 // 1차→2차 광견병 접종 최소 간격
+const RABIES_TITER_PASS_IU = 0.5 // 합격 항체값(IU/mL)
+
+/**
+ * 일본 최소 준비기간 / 입국 가능일 힌트 — 출국일이 미정일 때만 링 보조줄에 노출.
+ * "지금부터 가장 빠르게 준비하면 언제 출국 가능한가" 를 표시한다.
+ *
+ * 일본 규정의 핵심: 입국은 '항체검사 채혈일 + 180일' 이후 가능. 그래서 모든 분기가
+ * '가장 빠른 채혈 가능일(earliestDraw) + 180' 으로 환원된다.
+ *  - 합격 항체검사(채혈일 有, value≥0.5 IU/mL): 채혈일+180 = 확정 입국 가능일(달력 날짜)
+ *  - 2차 접종 완료: 지금 채혈 가능 → 최소 180일
+ *  - 1차만 완료: 1차일+30 에 2차+채혈 → 그만큼 + 180
+ *  - 광견병 시작 안 함(또는 칩 미완 — 최소기간 동일): 1차→+30→채혈→+180 ≈ 7개월
+ *
+ * 항체 2년 만료·백신 유효기간·40일 사전신고는 '정해진 출국일의 유효성' 문제라 최소기간엔 제외.
+ */
+function jpPrepHint(
+  caseData: Record<string, unknown>,
+  today: string,
+): { label: string } | null {
+  // ① 합격(value≥0.5) 항체검사 중 가장 이른 채혈일 — 180 카운트다운의 기준점.
+  const records = Array.isArray(caseData.rabies_titer_records) ? caseData.rabies_titer_records : []
+  let drawDate: string | null = null
+  for (const r of records) {
+    if (!r || typeof r !== 'object') continue
+    const rec = r as Record<string, unknown>
+    const d = typeof rec.date === 'string' && rec.date.length >= 10 ? rec.date.slice(0, 10) : ''
+    const v = typeof rec.value === 'string' ? parseFloat(rec.value) : NaN
+    if (!d || !Number.isFinite(v) || v < RABIES_TITER_PASS_IU) continue
+    if (!drawDate || d < drawDate) drawDate = d
+  }
+  if (drawDate) {
+    // 채혈일 + 180 이 지났으면 이미 입국 가능, 아니면 그 확정 달력 날짜를 노출.
+    if (daysBetween(drawDate, today) >= JP_TITER_WAIT_DAYS) return { label: '입국 가능' }
+    return { label: `${formatYmdDot(addDays(drawDate, JP_TITER_WAIT_DAYS))} 입국 가능` }
+  }
+
+  // ②③④ 접종 진행도 → 가장 빠른 채혈 가능일.
+  const dateAt = (i: number): string | null => {
+    const arr = Array.isArray(caseData.rabies_dates) ? caseData.rabies_dates : []
+    const r = arr[i]
+    const d =
+      r && typeof r === 'object' && typeof (r as Record<string, unknown>).date === 'string'
+        ? ((r as Record<string, unknown>).date as string)
+        : ''
+    return d.length >= 10 ? d.slice(0, 10) : null
+  }
+  const first = dateAt(0)
+  const second = dateAt(1)
+
+  // ④ 광견병 정보 없음 → 약 7개월(1차→+30→채혈→+180 = 210일).
+  if (!first && !second) return { label: '최소 7개월 남음' }
+
+  // 채혈 가능 최단일: 2차 완료 → 그 날(보통 과거) / 1차만 → 1차+30. 과거면 오늘로 클램프.
+  const earliestDraw = second ?? addDays(first as string, JP_PRIME_BOOST_GAP_DAYS)
+  const daysToDraw = Math.max(0, daysBetween(today, earliestDraw))
+  return { label: `최소 ${daysToDraw + JP_TITER_WAIT_DAYS}일 남음` }
 }
 
 /**
@@ -246,6 +320,11 @@ export function buildJourney(
   const today = todayKst()
   const dep = caseRow.departure_date
   const daysLeft = dep ? daysBetween(today, dep) : null
+  // 출국일 미정 + 일본行 일 때만 — 링 보조줄에 '최소 준비기간/입국 가능일' 힌트. 출국일 있으면 D-day 우선.
+  const prep =
+    !dep && ctx.destinationKey === 'japan'
+      ? jpPrepHint((caseRow.data ?? {}) as Record<string, unknown>, today)
+      : null
 
   const applicableSteps = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
 
@@ -678,6 +757,7 @@ export function buildJourney(
       departureDate: dep,
       daysLeft,
       tripType: ctx.tripType,
+      prep,
     },
     stages,
     nextStages,
