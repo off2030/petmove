@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import {
   createVaccineLookups,
   findRabiesChainBreak,
+  readEffectiveExtraValue,
   resolveRequiredDocs,
   todayKst,
   validateAdvanceNotification,
@@ -2920,14 +2921,21 @@ function readTiterForm(data: Record<string, unknown> | null | undefined): TiterF
   return { date: str(r.date), lab: str(r.lab), value: str(r.value) }
 }
 
-/** 항공권 폼 값을 caseRow.data 의 entry_* / return_* 평탄 키에서 읽어온다 (정보 탭과 동일 키). */
+/**
+ * 항공권 폼 값을 caseRow.data 의 entry_* / return_* 키에서 읽어온다 (정보 탭과 동일 키).
+ *
+ * readEffectiveExtraValue 로 읽어 **레거시 중첩 구조(japan_extra.inbound/outbound 등)** 까지
+ * fallback 한다 — 펫무브워크의 일본 항공편 편집기(JapanExtraField)는 항공사·편명·공항·운송방법을
+ * japan_extra 에 저장하고 날짜만 평탄 키로 동기화하므로, 평탄 키만 직접 읽으면 상세가 누락된다.
+ * (data 는 활성 목적지 기준으로 flatten 된 값 — by_dest 는 이미 top-level 로 올라와 있다.)
+ */
 function readFlightForm(
   data: Record<string, unknown> | null | undefined,
   // 출발일은 departure_date 컬럼(또는 by_dest flatten 후 caseRow.departure_date) — data 에 없으므로 별도로 받는다.
   departureDate?: string | null,
 ): FlightForm {
   const str = (key: string) => {
-    const v = data?.[key]
+    const v = readEffectiveExtraValue(data, key)
     return typeof v === 'string' ? v : ''
   }
   return {
