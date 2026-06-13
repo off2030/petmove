@@ -210,7 +210,9 @@ function CollapsibleDetails({
   value: FlightForm
   onChange: (key: keyof FlightForm, next: string) => void
 }) {
-  const [open, setOpen] = useState(false)
+  // 기본 닫힘 — 단, 이미 입력된 값이 있으면 자동 펼침(기존 정보가 숨겨지지 않게).
+  const hasData = fields.some((f) => value[f.key].trim().length > 0)
+  const [open, setOpen] = useState(hasData)
   return (
     <div>
       <button
@@ -220,11 +222,13 @@ function CollapsibleDetails({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 6,
+          justifyContent: 'space-between',
           width: '100%',
-          padding: '11px 4px',
+          padding: '12px 16px',
+          borderRadius: 12,
+          // 점선 테두리 — '+ 목적지 추가' 버튼과 같은 시각 언어로 '눌러서 펼치는 영역'임을 알린다.
+          border: `1px dashed ${C.line}`,
           background: 'transparent',
-          border: 0,
           fontFamily: 'inherit',
           fontSize: 13,
           fontWeight: 500,
@@ -232,20 +236,21 @@ function CollapsibleDetails({
           cursor: 'pointer',
         }}
       >
+        <span>{label}</span>
         <span
           style={{
             display: 'inline-block',
             transition: 'transform .15s',
-            transform: open ? 'rotate(90deg)' : 'none',
+            transform: open ? 'rotate(180deg)' : 'none',
             color: C.ink3,
+            fontSize: 11,
           }}
         >
-          ▶
+          ▾
         </span>
-        {label}
       </button>
       {open && (
-        <div style={{ marginTop: 2 }}>
+        <div style={{ marginTop: 8 }}>
           <FlightGroup fields={fields} value={value} onChange={onChange} />
         </div>
       )}
