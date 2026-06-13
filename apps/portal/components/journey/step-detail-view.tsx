@@ -564,9 +564,10 @@ export function StepDetailView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
-    if (!flightDirty) setFlightForm(readFlightForm(caseRow?.data))
+    // 출발일은 departure_date 컬럼 — data 만 넘기면 ''로 초기화돼 저장 직후 출발일이 사라진다.
+    if (!flightDirty) setFlightForm(readFlightForm(caseRow?.data, caseRow?.departure_date))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseRow?.data])
+  }, [caseRow?.data, caseRow?.departure_date])
   useEffect(() => {
     if (!advanceDirty) setAdvanceDate(readAdvanceDate(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
