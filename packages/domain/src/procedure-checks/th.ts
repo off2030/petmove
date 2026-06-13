@@ -5,6 +5,7 @@ import {
   validateThImportPermitDate,
   validateThImportPermitVaccineGap,
 } from '../journey-steps/date-rules'
+import { todayKst } from '../dates'
 import type { ProcedureCheck } from './types'
 import {
   daysBetween,
@@ -293,13 +294,33 @@ export const TH_CHECKS: ProcedureCheck[] = [
     category: '수입허가',
     title: '수입 허가 신청 마감 (입국 7영업일 전)',
     description:
-      '수입 허가 신청일은 태국 입국일 기준 최소 7영업일(달력일 최소 9일) 이전이어야 함. 이미 신청을 마친 뒤 항공권을 사거나 일정을 앞당기는 보호자도 있어, 입력 차단·주의가 아닌 안내(info)로만 표시(validateThImportPermitDate). (DLD: at least 7 business days prior to departure)',
+      '수입 허가는 입국(=출국) 최소 7영업일(달력일 9일) 전까지 신청해야 함. 두 상황을 안내(info): ' +
+      '①신청 전 — 오늘(KST) 기준 출국까지 9일 미만이면 "신청 시간 부족" 안내(출국일 앵커). ' +
+      '②신청 후 — 신청일이 입국일 9일 이내면 표시(validateThImportPermitDate). ' +
+      '입력 차단·주의가 아닌 안내로만 — 이미 신청을 마친 뒤 일정을 조정하는 보호자도 있어서. (DLD: at least 7 business days prior to departure)',
     severity: 'info',
     addedAt: '2026-06-12',
     run: ({ caseRow, destination }) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       const filed = readScopedImportPermitFiled(data, destination)
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
+      const filedValid = /^\d{4}-\d{2}-\d{2}$/.test(filed)
+
+      // ① 신청 전 — 오늘(KST) 기준 출국까지 9일 미만이면 신청 시간 부족 안내.
+      //    보호자가 입력하는 건 출국일이므로 출국일을 앵커로 D-day 계산.
+      if (!filedValid) {
+        const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
+        if (!dep) return SKIP
+        const x = daysBetween(todayKst(), dep)
+        if (x === null || x < 0 || x >= 9) return SKIP // 이미 지남·9일 이상 남음 → 침묵
+        const when = x === 0 ? '오늘 출발 예정입니다.' : `${x}일 후 출발 예정입니다.`
+        return {
+          ok: false,
+          message: `${when} 수입 허가 신청에 필요한 시간이 부족합니다. 허가증을 받지 못하면 출국 날짜를 변경해야 할 수 있어요.`,
+          offendingPaths: ['departure_date'],
+        }
+      }
+
+      // ② 신청 후 — 신청일이 입국일 9일 이내면 표시.
       const ctx = buildDateRuleContext(caseRow, destination)
       // 입국일 = 도착일(entry_date) 우선, 미입력 시 출발일(departure_date)로 근사 — 태국 카드는
       // 도착일이 선택 입력이라, 비어 있으면 출발일을 입국 기준으로 써 9영업일 전 검증을 유지한다.
