@@ -237,17 +237,25 @@ function CollapsibleDetails({
         }}
       >
         <span>{label}</span>
-        <span
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
           style={{
-            display: 'inline-block',
+            color: C.ink3,
+            flexShrink: 0,
             transition: 'transform .15s',
             transform: open ? 'rotate(180deg)' : 'none',
-            color: C.ink3,
-            fontSize: 11,
           }}
         >
-          ▾
-        </span>
+          <path d="m6 9 6 6 6-6" />
+        </svg>
       </button>
       {open && (
         <div style={{ marginTop: 8 }}>
