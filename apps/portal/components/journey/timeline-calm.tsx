@@ -171,9 +171,9 @@ export function TimelineCalm({
   const animOffset = CIRC * (1 - animPct)
 
   const dDayLabel = formatDDay(trip.daysLeft)
-  // 링 보조줄 suffix — 출국일 있으면 D-day, 없으면 일본 최소 준비기간/입국 가능일 힌트(trip.prep).
-  // nowrap 으로 묶어, 한 줄에 들어가면 인라인(· suffix)·길어서 안 들어가면 통째로 아랫줄로 떨어진다.
-  const ringSuffix = dDayLabel ?? trip.prep?.label ?? null
+  // 출국일 있으면 D-day 를 '단계' 줄에 인라인. 없으면 일본 최소 준비기간/입국 가능일 힌트(trip.prep)를
+  // 별도 둘째 줄로 — '입국 가능일' 날짜가 길어 한 줄에 안 들어가서.
+  const prepLabel = !dDayLabel ? (trip.prep?.label ?? null) : null
 
   // 완료 배너 날짜 — 왕복은 출발~도착(귀국) 범위, 편도는 도착일만.
   const arrivalText = journeyCompleteDate ? formatKoreanDate(journeyCompleteDate) : ''
@@ -840,9 +840,11 @@ export function TimelineCalm({
                 <span style={{ fontSize: 22, color: C.ink3, marginLeft: 2 }}>%</span>
               </div>
               <div style={{ marginTop: 8, fontSize: 12, color: C.ink3, textAlign: 'center', maxWidth: 200 }}>
-                <span style={num}>{done}</span>
-                <span> / {total} 단계</span>
-                {ringSuffix && <span style={{ whiteSpace: 'nowrap' }}> · {ringSuffix}</span>}
+                <div>
+                  <span style={num}>{done}</span>
+                  <span> / {total} 단계{dDayLabel ? ` · ${dDayLabel}` : ''}</span>
+                </div>
+                {prepLabel && <div style={{ marginTop: 3, color: C.ink2 }}>{prepLabel}</div>}
               </div>
             </div>
           </div>
