@@ -1,6 +1,7 @@
 'use client'
 
 import { DateTextField } from '@petmove/ui'
+import { CollapsibleSection } from './collapsible-section'
 import type { RabiesProductHints } from './rabies-entry-inputs'
 
 /**
@@ -172,135 +173,153 @@ function EntryCard({
     boxSizing: 'border-box',
   }
 
-  return (
-    <div style={cardStyle}>
-      <div
-        style={{
-          padding: '12px 0 4px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{title}</div>
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label="삭제"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 32,
-            height: 32,
-            borderRadius: 999,
-            border: 0,
-            background: 'transparent',
-            color: C.ink3,
-            cursor: 'pointer',
-          }}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M3 6h18" />
-            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-          </svg>
-        </button>
-      </div>
+  // 접종일만 항상 노출, 면역 유효기간·약품 정보는 '세부 정보' 접기. 구충(둘 다 false)은 접을 게 없어 미노출.
+  const hasDetail = showValidUntil || showProduct
+  const detailHasData =
+    (showValidUntil && entry.valid_until.trim() !== '') ||
+    (showProduct && PRODUCT_FIELDS.some((f) => entry[f.key].trim() !== ''))
 
-      <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
-        <div style={labelStyle}>{dateLabel}</div>
-        <div style={{ marginTop: 8 }}>
-          <DateTextField
-            value={entry.date}
-            onChange={(v) => onChange('date', v)}
-            placeholder="YYYY-MM-DD"
-            block
-          />
-        </div>
-      </div>
-
-      {showValidUntil && (
-        <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
-          <div style={labelStyle}>면역 유효기간</div>
-          <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-            {(['1', '2', '3'] as const).map((n) => {
-              const selected = selectedYear(entry.valid_until) === n
-              return (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => onChange('valid_until', `${n}년`)}
-                  style={{
-                    flex: 1,
-                    padding: '9px 0',
-                    borderRadius: 10,
-                    border: `1px solid ${selected ? C.ink : C.line}`,
-                    background: selected ? C.ink : 'var(--pm-surface)',
-                    color: selected ? C.surface : C.ink2,
-                    fontFamily: 'inherit',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    transition: 'background .12s, color .12s, border-color .12s',
-                  }}
-                >
-                  {n}년
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {showProduct &&
-        PRODUCT_FIELDS.map((field) => {
-          const designated = !otherHospital
-          const hint = designated ? productHints?.[field.key] : undefined
+  const validUntilRow = showValidUntil && (
+    <div style={{ padding: '14px 0' }}>
+      <div style={labelStyle}>면역 유효기간</div>
+      <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+        {(['1', '2', '3'] as const).map((n) => {
+          const selected = selectedYear(entry.valid_until) === n
           return (
-            <div key={field.key} style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
-              <div style={labelStyle}>
-                {field.label}
-                {designated && (
-                  <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 400, color: C.ink3 }}>
-                    병원 지정
-                  </span>
-                )}
-              </div>
-              {designated ? (
-                <div style={designatedStyle}>
-                  {hint || <span style={{ color: C.ink3 }}>—</span>}
-                </div>
-              ) : field.kind === 'date' ? (
-                <div style={{ marginTop: 8 }}>
-                  <DateTextField
-                    value={entry[field.key]}
-                    onChange={(v) => onChange(field.key, v)}
-                    placeholder="YYYY-MM-DD"
-                    block
-                  />
-                </div>
-              ) : (
-                <input
-                  type="text"
-                  value={entry[field.key]}
-                  onChange={(e) => onChange(field.key, e.target.value)}
-                  placeholder={field.placeholder}
-                  style={inputStyle}
-                />
-              )}
-            </div>
+            <button
+              key={n}
+              type="button"
+              onClick={() => onChange('valid_until', `${n}년`)}
+              style={{
+                flex: 1,
+                padding: '9px 0',
+                borderRadius: 10,
+                border: `1px solid ${selected ? C.ink : C.line}`,
+                background: selected ? C.ink : 'var(--pm-surface)',
+                color: selected ? C.surface : C.ink2,
+                fontFamily: 'inherit',
+                fontSize: 14,
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'background .12s, color .12s, border-color .12s',
+              }}
+            >
+              {n}년
+            </button>
           )
         })}
+      </div>
+    </div>
+  )
+
+  const productRows =
+    showProduct &&
+    PRODUCT_FIELDS.map((field, idx) => {
+      const designated = !otherHospital
+      const hint = designated ? productHints?.[field.key] : undefined
+      // 세부 카드의 첫 행만 구분선 없음 — 유효기간이 앞에 있으면 약품은 항상 구분선.
+      const borderTop = showValidUntil || idx > 0 ? `.5px solid ${C.line}` : undefined
+      return (
+        <div key={field.key} style={{ padding: '14px 0', borderTop }}>
+          <div style={labelStyle}>
+            {field.label}
+            {designated && (
+              <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 400, color: C.ink3 }}>
+                병원 지정
+              </span>
+            )}
+          </div>
+          {designated ? (
+            <div style={designatedStyle}>{hint || <span style={{ color: C.ink3 }}>—</span>}</div>
+          ) : field.kind === 'date' ? (
+            <div style={{ marginTop: 8 }}>
+              <DateTextField
+                value={entry[field.key]}
+                onChange={(v) => onChange(field.key, v)}
+                placeholder="YYYY-MM-DD"
+                block
+              />
+            </div>
+          ) : (
+            <input
+              type="text"
+              value={entry[field.key]}
+              onChange={(e) => onChange(field.key, e.target.value)}
+              placeholder={field.placeholder}
+              style={inputStyle}
+            />
+          )}
+        </div>
+      )
+    })
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={cardStyle}>
+        <div
+          style={{
+            padding: '12px 0 4px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{title}</div>
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label="삭제"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 32,
+              height: 32,
+              borderRadius: 999,
+              border: 0,
+              background: 'transparent',
+              color: C.ink3,
+              cursor: 'pointer',
+            }}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 6h18" />
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+            </svg>
+          </button>
+        </div>
+
+        <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
+          <div style={labelStyle}>{dateLabel}</div>
+          <div style={{ marginTop: 8 }}>
+            <DateTextField
+              value={entry.date}
+              onChange={(v) => onChange('date', v)}
+              placeholder="YYYY-MM-DD"
+              block
+            />
+          </div>
+        </div>
+      </div>
+
+      {hasDetail && (
+        <CollapsibleSection label="세부 정보 (선택)" defaultOpen={detailHasData}>
+          <div style={cardStyle}>
+            {validUntilRow}
+            {productRows}
+          </div>
+        </CollapsibleSection>
+      )}
     </div>
   )
 }

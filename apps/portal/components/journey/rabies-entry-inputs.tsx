@@ -1,6 +1,7 @@
 'use client'
 
 import { DateTextField } from '@petmove/ui'
+import { CollapsibleSection } from './collapsible-section'
 
 /**
  * 광견병 백신 step(1·2차) 입력 필드. controlled — 부모(step-detail-view)가 state·save 보유.
@@ -130,86 +131,93 @@ export function RabiesEntryInputs({
     boxSizing: 'border-box',
   }
 
-  return (
-    <div style={cardStyle}>
-      {FIELDS.map((field, i) => {
-        const isProduct =
-          field.key === 'product' ||
-          field.key === 'manufacturer' ||
-          field.key === 'lot' ||
-          field.key === 'expiry'
-        // 본병원(타병원 미체크) — 약품칸은 지정 약품을 읽기 전용으로 표시.
-        const designated = isProduct && !otherHospital
-        const hint = designated ? hintForKey(field.key, productHints) : undefined
-        return (
-          <div
-            key={field.key}
-            style={{
-              padding: '14px 0',
-              borderTop: i === 0 ? undefined : `.5px solid ${C.line}`,
-            }}
-          >
-            <div style={labelStyle}>
-              {field.label}
-              {designated && (
-                <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 400, color: C.ink3 }}>
-                  병원 지정
-                </span>
-              )}
-            </div>
-            {field.kind === 'years' ? (
-              <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                {(['1', '2', '3'] as const).map((n) => {
-                  const selected = selectedYear(value[field.key]) === n
-                  return (
-                    <button
-                      key={n}
-                      type="button"
-                      onClick={() => onChange(field.key, `${n}년`)}
-                      style={{
-                        flex: 1,
-                        padding: '9px 0',
-                        borderRadius: 10,
-                        border: `1px solid ${selected ? C.ink : C.line}`,
-                        background: selected ? C.ink : 'var(--pm-surface)',
-                        color: selected ? C.surface : C.ink2,
-                        fontFamily: 'inherit',
-                        fontSize: 14,
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        transition: 'background .12s, color .12s, border-color .12s',
-                      }}
-                    >
-                      {n}년
-                    </button>
-                  )
-                })}
-              </div>
-            ) : designated ? (
-              <div style={designatedStyle}>
-                {hint || <span style={{ color: C.ink3 }}>—</span>}
-              </div>
-            ) : field.kind === 'date' ? (
-              <div style={{ marginTop: 8 }}>
-                <DateTextField
-                  value={value[field.key]}
-                  onChange={(v) => onChange(field.key, v)}
-                  placeholder="YYYY-MM-DD"
-                  block
-                />
-              </div>
-            ) : (
-              <input
-                type="text"
-                value={value[field.key]}
-                onChange={(e) => onChange(field.key, e.target.value)}
-                placeholder={field.placeholder}
-                style={inputStyle}
-              />
+  const renderRows = (subset: typeof FIELDS) =>
+    subset.map((field, i) => {
+      const isProduct =
+        field.key === 'product' ||
+        field.key === 'manufacturer' ||
+        field.key === 'lot' ||
+        field.key === 'expiry'
+      // 본병원(타병원 미체크) — 약품칸은 지정 약품을 읽기 전용으로 표시.
+      const designated = isProduct && !otherHospital
+      const hint = designated ? hintForKey(field.key, productHints) : undefined
+      return (
+        <div
+          key={field.key}
+          style={{
+            padding: '14px 0',
+            borderTop: i === 0 ? undefined : `.5px solid ${C.line}`,
+          }}
+        >
+          <div style={labelStyle}>
+            {field.label}
+            {designated && (
+              <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 400, color: C.ink3 }}>
+                병원 지정
+              </span>
             )}
           </div>
-        )
-      })}
+          {field.kind === 'years' ? (
+            <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+              {(['1', '2', '3'] as const).map((n) => {
+                const selected = selectedYear(value[field.key]) === n
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => onChange(field.key, `${n}년`)}
+                    style={{
+                      flex: 1,
+                      padding: '9px 0',
+                      borderRadius: 10,
+                      border: `1px solid ${selected ? C.ink : C.line}`,
+                      background: selected ? C.ink : 'var(--pm-surface)',
+                      color: selected ? C.surface : C.ink2,
+                      fontFamily: 'inherit',
+                      fontSize: 14,
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      transition: 'background .12s, color .12s, border-color .12s',
+                    }}
+                  >
+                    {n}년
+                  </button>
+                )
+              })}
+            </div>
+          ) : designated ? (
+            <div style={designatedStyle}>{hint || <span style={{ color: C.ink3 }}>—</span>}</div>
+          ) : field.kind === 'date' ? (
+            <div style={{ marginTop: 8 }}>
+              <DateTextField
+                value={value[field.key]}
+                onChange={(v) => onChange(field.key, v)}
+                placeholder="YYYY-MM-DD"
+                block
+              />
+            </div>
+          ) : (
+            <input
+              type="text"
+              value={value[field.key]}
+              onChange={(e) => onChange(field.key, e.target.value)}
+              placeholder={field.placeholder}
+              style={inputStyle}
+            />
+          )}
+        </div>
+      )
+    })
+
+  // 접종일만 항상 노출, 나머지(면역 유효기간·약품 정보)는 '세부 정보' 접기.
+  const detailFields = FIELDS.slice(1)
+  const detailHasData = detailFields.some((f) => value[f.key].trim() !== '')
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={cardStyle}>{renderRows(FIELDS.slice(0, 1))}</div>
+      <CollapsibleSection label="세부 정보 (선택)" defaultOpen={detailHasData}>
+        <div style={cardStyle}>{renderRows(detailFields)}</div>
+      </CollapsibleSection>
     </div>
   )
 }

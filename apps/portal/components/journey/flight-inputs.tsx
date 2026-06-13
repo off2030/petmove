@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
 import { DateTextField } from '@petmove/ui'
+import { CollapsibleSection } from './collapsible-section'
 
 /**
  * 항공권 구매 step 입력 필드 — 출국·귀국 항공권. controlled — 부모(step-detail-view)가
@@ -212,57 +212,10 @@ function CollapsibleDetails({
 }) {
   // 기본 닫힘 — 단, 이미 입력된 값이 있으면 자동 펼침(기존 정보가 숨겨지지 않게).
   const hasData = fields.some((f) => value[f.key].trim().length > 0)
-  const [open, setOpen] = useState(hasData)
   return (
-    <div>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          width: '100%',
-          padding: '12px 16px',
-          borderRadius: 12,
-          // 점선 테두리 — '+ 목적지 추가' 버튼과 같은 시각 언어로 '눌러서 펼치는 영역'임을 알린다.
-          border: `1px dashed ${C.line}`,
-          background: 'transparent',
-          fontFamily: 'inherit',
-          fontSize: 13,
-          fontWeight: 500,
-          color: C.ink2,
-          cursor: 'pointer',
-        }}
-      >
-        <span>{label}</span>
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
-          style={{
-            color: C.ink3,
-            flexShrink: 0,
-            transition: 'transform .15s',
-            transform: open ? 'rotate(180deg)' : 'none',
-          }}
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
-      </button>
-      {open && (
-        <div style={{ marginTop: 8 }}>
-          <FlightGroup fields={fields} value={value} onChange={onChange} />
-        </div>
-      )}
-    </div>
+    <CollapsibleSection label={label} defaultOpen={hasData}>
+      <FlightGroup fields={fields} value={value} onChange={onChange} />
+    </CollapsibleSection>
   )
 }
 
