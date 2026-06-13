@@ -89,6 +89,25 @@ interface RequiredDocSpec {
   templates?: DocTemplate[]
 }
 
+/**
+ * 접종 및 건강증명서(별지 제25호) — 농림축산검역본부 공식 양식. 한국에서 출국하는 모든
+ * 목적지 공통(완전히 동일한 서류)이라 단일 상수로 공유한다. id='form25' 는 목적지별 SPECS
+ * 안에서 유일하므로 여러 나라가 같은 객체를 참조해도 안전.
+ */
+const KR_FORM25_VACCINATION_HEALTH_CERT: RequiredDocSpec = {
+  id: 'form25',
+  name: '접종 및 건강증명서(별지 제 25호 서식)',
+  source: '동물병원',
+  kind: 'manual',
+  issuanceStepId: 'vet-visit',
+  description:
+    '농림축산검역본부 지정 양식의 접종 및 건강증명서입니다.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급합니다.\n\n원본 2부를 준비해서, 동물검역 때 1부를 제출합니다.\n\n접종과 출국 전 임상검사를 한 동물병원이 다른 경우, 각 동물병원에서 따로 증명서를 받아야 합니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+  templates: [
+    { label: 'PDF', href: '/forms/form25.pdf', filename: '별지 제 25호 서식.pdf' },
+    { label: '한글(HWP)', href: '/forms/form25.hwp', filename: '별지 제 25호 서식.hwp' },
+  ],
+}
+
 const SPECS: Record<string, RequiredDocSpec[]> = {
   '일본': [
     {
@@ -111,19 +130,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
         '사전 신고 후 일본 동물검역소에서 발급 받을 수 있습니다.\n\n발급까지 수 주 이상 걸릴 수 있으며, 1회만 사용이 가능합니다.\n\n동물검역을 받을 때 반드시 소지해야 합니다.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용하실 수 있습니다.',
       previewStepId: 'advance-notification',
     },
-    {
-      id: 'form25',
-      name: '접종 및 건강증명서(별지 제 25호 서식)',
-      source: '동물병원',
-      kind: 'manual',
-      issuanceStepId: 'vet-visit',
-      description:
-        '농림축산검역본부 지정 양식의 접종 및 건강증명서입니다.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급합니다.\n\n원본 2부를 준비해서, 동물검역 때 1부를 제출합니다.\n\n접종과 출국 전 임상검사를 한 동물병원이 다른 경우, 각 동물병원에서 따로 증명서를 받아야 합니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
-      templates: [
-        { label: 'PDF', href: '/forms/form25.pdf', filename: '별지 제 25호 서식.pdf' },
-        { label: '한글(HWP)', href: '/forms/form25.hwp', filename: '별지 제 25호 서식.hwp' },
-      ],
-    },
+    KR_FORM25_VACCINATION_HEALTH_CERT,
     {
       id: 'form-ac-or-re',
       name: 'FormAC/RE',
@@ -152,34 +159,6 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
   ],
   '태국': [
     {
-      id: 'th-import-permit-doc',
-      name: '수입허가증(Import Permit)',
-      source: '태국 동물검역소(AQS)',
-      kind: 'step',
-      stepRef: 'import-permit',
-      description:
-        '수입 허가 신청 후 태국 입국 공항의 동물검역소(AQS)에서 이메일로 발급받습니다.\n\n발급일로부터 60일간 유효합니다.\n\n태국 도착 후 수입 동물검역 때 제시해야 합니다.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용하실 수 있습니다.',
-      previewStepId: 'import-permit',
-    },
-    {
-      id: 'th-health-cert-en',
-      name: '영문 건강증명서(Health Certificate)',
-      source: '동물병원',
-      kind: 'manual',
-      issuanceStepId: 'vet-visit',
-      description:
-        '임상 수의사가 영문으로 발급하는 건강증명서입니다.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급합니다.\n\n수의사 서명이 있는 원본이 필요합니다.\n\n한국 수출 동물검역 때 제출하고, 태국 도착 후 검역에도 사용됩니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
-    },
-    {
-      id: 'th-vaccine-cert-en',
-      name: '예방접종 증명서(영문)',
-      source: '동물병원',
-      kind: 'manual',
-      issuanceStepId: 'general-vaccine',
-      description:
-        '광견병 백신과 종합백신의 영문 접종 증명서입니다.\n\n접종한 동물병원에서 발급받습니다. 접종한 동물병원이 여러 곳인 경우, 각 동물병원에서 따로 받아야 합니다.\n\n백신 이름·제조사·접종일·유효기간과 수의사 서명이 들어가야 합니다.\n\n수입 허가 신청과 동물검역에 사용됩니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
-    },
-    {
       id: 'th-rabies-titer-result',
       name: '광견병 항체 검사 결과지',
       source: '동물병원',
@@ -190,6 +169,18 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
         '검사를 의뢰한 동물병원에서 발급받습니다.\n\n태국 입국에는 필요하지 않지만, 한국으로 돌아올 때 반드시 원본이 필요합니다.\n\n광견병 백신 면역 유효기간 유지 시 채혈일로부터 2년까지 사용할 수 있습니다.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리합니다.',
       previewStepId: 'rabies-titer',
     },
+    {
+      id: 'th-import-permit-doc',
+      name: '수입허가증(Import Notification)',
+      source: '태국 동물검역소(AQS)',
+      kind: 'step',
+      stepRef: 'import-permit',
+      description:
+        '수입 허가 신청 후 태국 동물검역소(AQS)에서 이메일로 발급받는 동물 수입 허가 통지서(NOTIFICATION FOR IMPORTATION OF ANIMAL(S))입니다.\n\n발급일로부터 60일간 유효합니다.\n\n태국 도착 후 수입 동물검역 때 제시해야 합니다.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용하실 수 있습니다.',
+      previewStepId: 'import-permit',
+    },
+    // 접종 및 건강증명서(별지 제25호) — 일본과 완전히 동일한 한국 공식 양식.
+    KR_FORM25_VACCINATION_HEALTH_CERT,
     {
       id: 'th-kr-export-quarantine-cert',
       name: '한국 수출 동물검역증',
