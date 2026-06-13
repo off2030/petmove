@@ -557,6 +557,13 @@ function TiterRecordRow({
   const labObj = LABS.find(l => l.value === record.lab)
   const labDisplay = labObj?.label || record.lab || '—'
   const labTone = labColor(record.lab)
+  // 고객(펫무브앱)이 '직접 입력'으로 저장한 자유텍스트 기관명 — LABS 코드에 없으면
+  // 드롭다운 옵션에 동적 추가해 선택 상태로 보존한다. (옵션에 없으면 미선택으로 보여
+  // 매니저가 무심코 다른 값을 골랐을 때 보호자 입력값이 소실됨.)
+  const isCustomLab = !!record.lab && !labObj
+  const labOptions = isCustomLab
+    ? [{ value: '', label: '—' }, ...LABS, { value: record.lab as string, label: `${record.lab} (직접입력)` }]
+    : [{ value: '', label: '—' }, ...LABS]
   const dateInfo = useFieldVerification(`${DATA_KEY}[${recordIdx}].date`)
   const dateColorCls = dateInfo ? severityTextClass(dateInfo.severity) : ''
   const dateTitle = dateInfo ? tooltipText(dateInfo) : undefined
@@ -589,7 +596,7 @@ function TiterRecordRow({
       {/* Lab — DropdownSelect 통일. trigger 가 lab chip. */}
       <DropdownSelect
         value={record.lab ?? ''}
-        options={[{ value: '', label: '—' }, ...LABS]}
+        options={labOptions}
         onChange={(v) => onUpdateField('lab', v || null)}
         portal
         triggerClassName={cn(
