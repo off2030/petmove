@@ -1024,6 +1024,8 @@ export async function markAdvanceNotificationApprovalSkipped(
 
 export async function markJpExportQuarantineReservationSkipped(
   caseId: string,
+  /** 활성 목적지 토큰 — 신청일을 by_dest[destination] 에서 읽어 가드한다(저장은 by_dest). */
+  destination?: string | null,
 ): Promise<Result<CaseRow>> {
   try {
     const access = await assertCaseAccess(caseId)
@@ -1032,16 +1034,22 @@ export async function markJpExportQuarantineReservationSkipped(
     const admin = createAdminClient()
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
-      .select('data')
+      .select('data, destination')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    if (
-      typeof prev.jp_export_quarantine_application_date !== 'string' ||
-      (prev.jp_export_quarantine_application_date as string).length < 10
-    ) {
+    // 신청일은 by_dest(활성 목적지) 우선, 마이그 전 top-level 폴백 — updateJpExportQuarantineFields 와 동일.
+    const token = resolveWriteToken(existing?.destination, prev, destination)
+    const appliedRaw = readByDestValue(prev, token, 'jp_export_quarantine_application_date')
+    const applied =
+      typeof appliedRaw === 'string' && appliedRaw.length >= 10
+        ? appliedRaw
+        : typeof prev.jp_export_quarantine_application_date === 'string'
+          ? prev.jp_export_quarantine_application_date
+          : ''
+    if (applied.length < 10) {
       return { ok: false, error: '신청일이 입력되어 있지 않습니다.' }
     }
 

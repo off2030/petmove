@@ -722,6 +722,18 @@ export async function setJpExportQuarantineReportStatus(
   return patchCaseData(caseId, (d) => {
     // 새 액션이 호출되는 시점 = derive 모드로 전환. legacy stored 는 클리어.
     delete d.import_export_status
+    // 신청일은 by_dest 스코핑 — top-level 또는 어느 by_dest 엔트리에든 있으면 '있음'으로 본다.
+    // 어디에도 없을 때만 오늘로 폴백(운영자가 신청일 없이 완료/진행 표시). by_dest 에 실제 신청일이
+    // 있는 케이스에 top-level 찌꺼기를 남기지 않는다.
+    const hasExportAppDate = () => {
+      const top = d.jp_export_quarantine_application_date
+      if (typeof top === 'string' && top.length >= 10) return true
+      const byDest = (d.by_dest ?? {}) as Record<string, Record<string, unknown> | undefined>
+      return Object.values(byDest).some((o) => {
+        const v = o?.jp_export_quarantine_application_date
+        return typeof v === 'string' && v.length >= 10
+      })
+    }
     if (target === 'not_started') {
       delete d.jp_export_quarantine_application_date
       delete d.jp_export_quarantine_reservation_skipped
@@ -737,13 +749,8 @@ export async function setJpExportQuarantineReportStatus(
       if (wasDone) {
         d.jp_export_quarantine_admin_demoted_at = new Date().toISOString()
         delete d.jp_export_quarantine_reservation_skipped
-      } else {
-        if (
-          typeof d.jp_export_quarantine_application_date !== 'string' ||
-          (d.jp_export_quarantine_application_date as string).length < 10
-        ) {
-          d.jp_export_quarantine_application_date = new Date().toISOString().slice(0, 10)
-        }
+      } else if (!hasExportAppDate()) {
+        d.jp_export_quarantine_application_date = new Date().toISOString().slice(0, 10)
       }
       return
     }
@@ -753,10 +760,7 @@ export async function setJpExportQuarantineReportStatus(
     delete d.jp_export_quarantine_admin_demoted_at
     d.jp_export_quarantine_reservation_skipped = true
     delete d.jp_export_quarantine_confirmed
-    if (
-      typeof d.jp_export_quarantine_application_date !== 'string' ||
-      (d.jp_export_quarantine_application_date as string).length < 10
-    ) {
+    if (!hasExportAppDate()) {
       d.jp_export_quarantine_application_date = new Date().toISOString().slice(0, 10)
     }
   })

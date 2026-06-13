@@ -1501,7 +1501,7 @@ export function StepDetailView({
     if (skippingJpExport) return
     setSkippingJpExport(true)
     startTransition(async () => {
-      const res = await markJpExportQuarantineReservationSkipped(caseId)
+      const res = await markJpExportQuarantineReservationSkipped(caseId, activeDest)
       setSkippingJpExport(false)
       if (res.ok) {
         updateCase(res.value)
