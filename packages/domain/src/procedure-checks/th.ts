@@ -315,7 +315,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
         const when = x === 0 ? '오늘 출발 예정입니다.' : `${x}일 후 출발 예정입니다.`
         return {
           ok: false,
-          message: `${when} 수입 허가 신청에 필요한 시간이 부족합니다. 허가증을 받지 못하면 출국 날짜를 변경해야 할 수 있어요.`,
+          message: `${when} 수입 허가 신청에 필요한 시간이 부족합니다. 출국 전에 허가증을 받지 못하면 출발일을 변경하세요.`,
           offendingPaths: ['departure_date'],
         }
       }
