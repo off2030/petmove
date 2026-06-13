@@ -109,7 +109,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '입국 공항 동물검역소에 수입 허가를 신청하세요.\n\n입국 7영업일 전까지 이메일로 신청합니다.\n신청서(R1/1), 여권 사본, 항공편 일정, 반려동물 사진, 마이크로칩·예방접종 증명서, 백신 수첩이 필요합니다.\n수입 허가증은 발급일로부터 60일간 유효합니다.',
       doneSummary: '태국 수입허가증을 받았습니다.',
       cardLine: '태국 수입 허가를 신청하세요.',
-      deadline: { anchor: 'departure', daysBefore: 14 },
+      deadline: { anchor: 'departure', daysBefore: 9 },
       // 태국은 허가 번호 대신 첨부·완료 버튼으로 완료 처리 — 입력은 신청일만(base 의 permit_no
       // 입력 제거). deriveImportPermitStatus 가 첨부/완료 플래그로 done 을 판정하므로 permit_no
       // 가 없어도 동작한다(신청일=in_progress, 첨부 or 완료 버튼=done).
