@@ -10,6 +10,7 @@ import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   deriveAdvanceNotificationStatus,
   deriveJpExportQuarantineStatus,
+  flattenCaseForDestination,
   getDepartureDate,
   getVetVisitDate,
   matchesDestinationKey,
@@ -513,7 +514,13 @@ function isJapan(row: CaseRow): boolean {
  * 수출은 추가로 귀국일 없으면 'na' (admin 만의 표기).
  */
 function effectiveImportStatus(row: CaseRow): string {
-  if (isJapan(row)) return deriveAdvanceNotificationStatus(row)
+  // 일본 derive 는 신청일·skip 등 by_dest 스코핑 필드를 top-level 에서 읽으므로(단일 출처 계약),
+  // 활성 목적지로 평탄화한 view 를 넘긴다 — 안 그러면 by_dest 에 저장된 신청일을 못 봐 상태가
+  // portal(평탄화함)과 어긋난다. (admin 수출/수입 칸이 펫무브앱과 달리 '대기중'으로 보이던 버그.)
+  if (isJapan(row)) {
+    const view = flattenCaseForDestination(row, resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY))
+    return deriveAdvanceNotificationStatus(view)
+  }
   const data = (row.data ?? {}) as Record<string, unknown>
   const stored = data.import_import_status
   if (stored != null && String(stored) !== '') return String(stored)
@@ -522,7 +529,12 @@ function effectiveImportStatus(row: CaseRow): string {
 
 function effectiveExportStatus(row: CaseRow): string {
   if (!importReportReturnDate(row)) return 'na'
-  if (isJapan(row)) return deriveJpExportQuarantineStatus(row)
+  // 일본 derive 는 신청일(by_dest) 을 top-level 에서 읽으므로 활성 목적지로 평탄화 후 넘긴다.
+  // (평탄화 안 하면 신청일을 못 봐 'done'→'in_progress'로 오판 → 펫무브앱과 불일치.)
+  if (isJapan(row)) {
+    const view = flattenCaseForDestination(row, resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY))
+    return deriveJpExportQuarantineStatus(view)
+  }
   const data = (row.data ?? {}) as Record<string, unknown>
   const stored = data.import_export_status
   if (stored != null && String(stored) !== '') return String(stored)
