@@ -744,6 +744,7 @@ export async function updateTiterExtraEntries(
 /** 항공권 구매 step 이 다루는 case.data 평탄 키 — 출국 4 + 귀국 4. */
 const FLIGHT_DATA_KEYS = [
   'entry_date',
+  'entry_time',
   'entry_departure_airport',
   'entry_airport',
   'entry_flight_number',
@@ -764,15 +765,25 @@ const FLIGHT_DATA_KEYS = [
  */
 export async function updateFlightFields(
   caseId: string,
-  fields: Record<(typeof FLIGHT_DATA_KEYS)[number], string | null>,
+  // departure_date(출발일)는 FLIGHT_DATA_KEYS 가 아닌 별도 — 단일=컬럼/다중=by_dest 로 특수 저장.
+  // 태국 항공권 카드처럼 출발일을 따로 입력하는 경우만 넘긴다. 미지정이면 기존대로 entry_date 동기화.
+  fields: Record<(typeof FLIGHT_DATA_KEYS)[number], string | null> & {
+    departure_date?: string | null
+  },
   /** 다중 목적지 케이스에서 활성 목적지 토큰 — 지정 + 다중이면 항공권/출국일을 by_dest 에 분리 저장. */
   destination?: string | null,
 ): Promise<Result<CaseRow>> {
   try {
-    for (const key of ['entry_date', 'return_date'] as const) {
+    for (const key of ['entry_date', 'departure_date', 'return_date'] as const) {
       const v = fields[key]
       if (v != null && v !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
         return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+      }
+    }
+    {
+      const t = typeof fields.entry_time === 'string' ? fields.entry_time.trim() : ''
+      if (t && !/^\d{2}:\d{2}$/.test(t)) {
+        return { ok: false, error: '시간 형식은 HH:mm 여야 합니다.' }
       }
     }
     // 출국 ≤ 귀국 — 둘 다 입력된 경우만 검사. 논리적 불가능 조건이므로 저장 거부.
@@ -813,8 +824,11 @@ export async function updateFlightFields(
         const val = typeof fields[key] === 'string' ? (fields[key] as string).trim() : ''
         merged = writeByDestValue(merged, writeDest, key, val || null)
       }
+      // 출발일 = 명시적 departure_date 우선, 없으면 entry_date 동기화(일본 등 후방호환).
       const entryDate = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
-      merged = writeByDestValue(merged, writeDest, 'departure_date', entryDate || null)
+      const explicitDep = typeof fields.departure_date === 'string' ? fields.departure_date.trim() : ''
+      const departureCol = explicitDep || entryDate
+      merged = writeByDestValue(merged, writeDest, 'departure_date', departureCol || null)
 
       // 공용 부수효과 패리티 — 단일 목적지 한정(다중은 종전대로 by_dest 만). top-level 경로와 동일하게:
       //  · flight_info_recorded_at(항공권 구매 step 표시일) 최초 캡처 / 전부 지워지면 정리
@@ -830,7 +844,7 @@ export async function updateFlightFields(
         } else if (!hasAnyFlightInfo) {
           delete merged.flight_info_recorded_at
         }
-        updatePayload.departure_date = entryDate || null
+        updatePayload.departure_date = departureCol || null
       }
 
       const { error: updErr } = await admin.from('cases').update(updatePayload).eq('id', caseId)
@@ -876,13 +890,16 @@ export async function updateFlightFields(
       delete nextData.flight_info_recorded_at
     }
 
-    // 항공편 입국일(entry_date) = 출국일 — 펫무브워크와 동일하게 departure_date 컬럼도 동기화.
-    // 입국일을 지우면 departure_date 도 null 로 비운다 — 안 비우면 옛 출국일이 컬럼에
-    // 남아 journey 체크의 entry_date||departure_date 폴백이 유령 출국일을 잡는다.
+    // 출발일(departure_date) 컬럼 = 명시적 departure_date 우선, 없으면 entry_date 동기화.
+    // 태국 등 출발일 별도 입력 케이스는 entry_date(도착일)와 다른 날일 수 있어 명시값을 쓴다.
+    // (일본 등 미지정 케이스는 종전대로 entry_date 동기화 — 후방호환.) 모두 비면 null 로 비워
+    // journey 체크의 entry_date||departure_date 폴백이 유령 출국일을 잡지 않게 한다.
     const entryDate = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
+    const explicitDep = typeof fields.departure_date === 'string' ? fields.departure_date.trim() : ''
+    const departureCol = explicitDep || entryDate
     const updatePayload: { data: Record<string, unknown>; departure_date: string | null } = {
       data: nextData,
-      departure_date: entryDate || null,
+      departure_date: departureCol || null,
     }
 
     const { error } = await admin

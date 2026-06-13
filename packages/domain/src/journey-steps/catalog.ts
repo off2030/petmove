@@ -449,7 +449,10 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // (has-flight-date done 시그널도 동일 조건으로 미완료 처리하여 다음 단계 진행 차단.)
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const hasEntry = typeof data.entry_date === 'string' && data.entry_date.length >= 10
+      // 출국편 입력 여부 — 도착일(entry_date) 또는 출발일(departure_date, 태국 등 별도 입력) 중 하나라도.
+      const hasEntry =
+        (typeof data.entry_date === 'string' && data.entry_date.length >= 10) ||
+        (typeof caseRow.departure_date === 'string' && caseRow.departure_date.length >= 10)
       const hasReturn = typeof data.return_date === 'string' && data.return_date.length >= 10
       if (!hasEntry || hasReturn) return undefined
       const ctx = buildCaseJourneyContext(caseRow)

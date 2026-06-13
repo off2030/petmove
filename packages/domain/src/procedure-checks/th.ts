@@ -303,10 +303,12 @@ export const TH_CHECKS: ProcedureCheck[] = [
           : ''
       if (!/^\d{4}-\d{2}-\d{2}$/.test(filed)) return SKIP
       const ctx = buildDateRuleContext(caseRow, destination)
+      // 입국일 = 도착일(entry_date) 우선, 미입력 시 출발일(departure_date)로 근사 — 태국 카드는
+      // 도착일이 선택 입력이라, 비어 있으면 출발일을 입국 기준으로 써 9영업일 전 검증을 유지한다.
       const entry =
         typeof ctx.data.entry_date === 'string' && ctx.data.entry_date.length >= 10
           ? ctx.data.entry_date.slice(0, 10)
-          : ''
+          : (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
       const msg = validateThImportPermitDate(filed, entry)
       if (msg) {
         return {

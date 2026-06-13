@@ -245,7 +245,7 @@ export function StepDetailView({
     savedTiterExtra.length === 0 ? [makeEmptyTiterExtra()] : savedTiterExtra,
   )
 
-  const savedFlightForm = readFlightForm(caseRow?.data)
+  const savedFlightForm = readFlightForm(caseRow?.data, caseRow?.departure_date)
   const [flightForm, setFlightForm] = useState<FlightForm>(savedFlightForm)
 
   const savedAdvanceDate = readAdvanceDate(caseRow?.data)
@@ -826,11 +826,13 @@ export function StepDetailView({
       return null
     }
     if (isFlight) {
+      // 출국편 기준일 — 태국 등 출발일 별도 입력 카드는 departure_date(출발일), 그 외는 entry_date.
+      const outboundDate = (flightForm.departure_date || flightForm.entry_date).trim()
       // 출국 ≤ 귀국 (항공편 내재적 정합성). 이후 일정과의 관계는 차단 X.
       if (
-        flightForm.entry_date &&
+        outboundDate &&
         flightForm.return_date &&
-        flightForm.return_date < flightForm.entry_date
+        flightForm.return_date < outboundDate
       ) {
         return '귀국 항공편 날짜는 출국 항공편 날짜 이후여야 합니다.'
       }
@@ -844,8 +846,9 @@ export function StepDetailView({
       }
       const jpEntryErr = validateJpEntryDate(flightForm.entry_date.trim(), entryRuleCtx)
       if (jpEntryErr) return jpEntryErr
-      // 태국 입국일 — 광견병·종합백신 접종 + 21일 이내면 차단 (일본 180일과 동일 정책).
-      const thEntryErr = validateThEntryDate(flightForm.entry_date.trim(), entryRuleCtx)
+      // 태국 — 21일 대기 기준일은 출발일(departure_date). procedure-check(th.*-21days-before-arrival)
+      // 가 departure_date 를 보는 것과 동일 기준으로 client 차단도 출발일로 검증한다.
+      const thEntryErr = validateThEntryDate(outboundDate, entryRuleCtx)
       if (thEntryErr) return thEntryErr
       // 필리핀 입국일 — 생후 120일(4개월) 미만 입국 차단.
       const phEntryErr = validatePhEntryDate(flightForm.entry_date.trim(), entryRuleCtx)
@@ -1128,7 +1131,9 @@ export function StepDetailView({
         const res = await updateFlightFields(
           caseId,
           {
+            departure_date: flightForm.departure_date || null,
             entry_date: flightForm.entry_date || null,
+            entry_time: flightForm.entry_time || null,
             entry_departure_airport: flightForm.entry_departure_airport || null,
             entry_airport: flightForm.entry_airport || null,
             entry_flight_number: flightForm.entry_flight_number || null,
@@ -1145,7 +1150,12 @@ export function StepDetailView({
           updateCase(res.value)
           // by_dest 저장 시 res.value.data 는 top-level 이 아니라 by_dest 에 있으므로, 활성
           // 목적지 뷰로 평탄화해서 폼을 동기화 (단일 목적지면 뷰가 원본과 동일).
-          setFlightForm(readFlightForm(activeDestinationView(res.value, activeDest).data))
+          setFlightForm(
+            readFlightForm(
+              activeDestinationView(res.value, activeDest).data,
+              activeDestinationView(res.value, activeDest).departure_date,
+            ),
+          )
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -2038,6 +2048,8 @@ export function StepDetailView({
               showReturn={tripType === 'round'}
               // 운송 방법은 일본 수출서류(japan_extra)만 사용 — 일본 케이스에서만 노출.
               showTransport={destinationKey === 'japan'}
+              // 태국 — 출발일 주필드 + 도착일·도착시간·공항·편명 접기. 검증 기준일도 출발일.
+              departureFirst={destinationKey === 'thailand'}
             />
           </section>
         )}
@@ -2887,12 +2899,18 @@ function readTiterForm(data: Record<string, unknown> | null | undefined): TiterF
 }
 
 /** 항공권 폼 값을 caseRow.data 의 entry_* / return_* 평탄 키에서 읽어온다 (정보 탭과 동일 키). */
-function readFlightForm(data: Record<string, unknown> | null | undefined): FlightForm {
+function readFlightForm(
+  data: Record<string, unknown> | null | undefined,
+  // 출발일은 departure_date 컬럼(또는 by_dest flatten 후 caseRow.departure_date) — data 에 없으므로 별도로 받는다.
+  departureDate?: string | null,
+): FlightForm {
   const str = (key: string) => {
     const v = data?.[key]
     return typeof v === 'string' ? v : ''
   }
   return {
+    departure_date: typeof departureDate === 'string' ? departureDate : '',
+    entry_time: str('entry_time'),
     entry_date: str('entry_date'),
     entry_departure_airport: str('entry_departure_airport'),
     entry_airport: str('entry_airport'),
@@ -2908,6 +2926,8 @@ function readFlightForm(data: Record<string, unknown> | null | undefined): Fligh
 
 function flightFormEqual(a: FlightForm, b: FlightForm): boolean {
   return (
+    a.departure_date === b.departure_date &&
+    a.entry_time === b.entry_time &&
     a.entry_date === b.entry_date &&
     a.entry_departure_airport === b.entry_departure_airport &&
     a.entry_airport === b.entry_airport &&

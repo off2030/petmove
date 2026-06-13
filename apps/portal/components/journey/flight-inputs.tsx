@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { DateTextField } from '@petmove/ui'
 
 /**
@@ -11,7 +12,12 @@ import { DateTextField } from '@petmove/ui'
  */
 
 export interface FlightForm {
+  /** 출발일(한국 출국일) — departure_date 컬럼. 태국 카드의 주필드·검증 기준. */
+  departure_date: string
+  /** 도착일(입국일) — entry_date. 출발일과 다른 날일 수 있음(레드아이 등). */
   entry_date: string
+  /** 도착 시간 — entry_time(HH:mm). */
+  entry_time: string
   entry_departure_airport: string
   entry_airport: string
   entry_flight_number: string
@@ -44,7 +50,7 @@ const TRANSPORT_OPTIONS: readonly { value: string; label: string }[] = [
 interface FlightField {
   key: keyof FlightForm
   label: string
-  kind: 'text' | 'date' | 'transport'
+  kind: 'text' | 'date' | 'time' | 'transport'
   placeholder?: string
 }
 
@@ -54,6 +60,20 @@ const ENTRY_FIELDS: readonly FlightField[] = [
   { key: 'entry_airport', label: '도착 공항', kind: 'text', placeholder: '예: 나리타 NRT' },
   { key: 'entry_flight_number', label: '편명', kind: 'text', placeholder: '예: KE703' },
   { key: 'entry_transport', label: '운송 방법', kind: 'transport' },
+]
+
+// 출발일 우선 레이아웃(태국 등) — 출발일만 항상 노출, 나머지는 '세부 정보' 접기 안.
+const DEPARTURE_PRIMARY_FIELD: FlightField = {
+  key: 'departure_date',
+  label: '출발일',
+  kind: 'date',
+}
+const DEPARTURE_DETAIL_FIELDS: readonly FlightField[] = [
+  { key: 'entry_date', label: '도착일', kind: 'date' },
+  { key: 'entry_time', label: '도착 시간', kind: 'time', placeholder: '예: 14:30' },
+  { key: 'entry_departure_airport', label: '출발 공항', kind: 'text', placeholder: '예: 인천 ICN' },
+  { key: 'entry_airport', label: '도착 공항', kind: 'text', placeholder: '예: 방콕 BKK' },
+  { key: 'entry_flight_number', label: '편명', kind: 'text', placeholder: '예: KE651' },
 ]
 
 const RETURN_FIELDS: readonly FlightField[] = [
@@ -69,6 +89,7 @@ export function FlightInputs({
   onChange,
   showReturn,
   showTransport = true,
+  departureFirst = false,
 }: {
   value: FlightForm
   onChange: (key: keyof FlightForm, next: string) => void
@@ -78,9 +99,37 @@ export function FlightInputs({
    * 의 japan_extra(inbound/outbound transport)뿐이라(pdf-fill.ts), 다른 나라에서는 받지 않는다.
    */
   showTransport?: boolean
+  /**
+   * 출발일 우선 레이아웃(태국 등) — 출발일(departure_date)만 항상 노출하고, 도착일·도착시간·
+   * 공항·편명은 '세부 정보' 접기 안에 선택 입력. 검증 기준일도 출발일.
+   */
+  departureFirst?: boolean
 }) {
   const drop = (fields: readonly FlightField[]) =>
     showTransport ? fields : fields.filter((f) => f.kind !== 'transport')
+
+  if (departureFirst) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <FlightGroup fields={[DEPARTURE_PRIMARY_FIELD]} value={value} onChange={onChange} />
+        <CollapsibleDetails
+          label="세부 정보 (선택)"
+          fields={DEPARTURE_DETAIL_FIELDS}
+          value={value}
+          onChange={onChange}
+        />
+        {showReturn && (
+          <CollapsibleDetails
+            label="귀국 항공권 (선택)"
+            fields={drop(RETURN_FIELDS)}
+            value={value}
+            onChange={onChange}
+          />
+        )}
+      </div>
+    )
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       {/* 편도면 그룹이 하나뿐 — '출국 항공권' 라벨 생략(상위 '입력' 헤딩으로 충분). */}
@@ -92,6 +141,61 @@ export function FlightInputs({
       />
       {showReturn && (
         <FlightGroup label="귀국 항공권" fields={drop(RETURN_FIELDS)} value={value} onChange={onChange} />
+      )}
+    </div>
+  )
+}
+
+/** 출발일 외 정보 접기 — 펼치면 fields 를 FlightGroup 으로 노출. */
+function CollapsibleDetails({
+  label,
+  fields,
+  value,
+  onChange,
+}: {
+  label: string
+  fields: readonly FlightField[]
+  value: FlightForm
+  onChange: (key: keyof FlightForm, next: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          width: '100%',
+          padding: '11px 4px',
+          background: 'transparent',
+          border: 0,
+          fontFamily: 'inherit',
+          fontSize: 13,
+          fontWeight: 500,
+          color: C.ink2,
+          cursor: 'pointer',
+        }}
+      >
+        <span
+          style={{
+            display: 'inline-block',
+            transition: 'transform .15s',
+            transform: open ? 'rotate(90deg)' : 'none',
+            color: C.ink3,
+          }}
+        >
+          ▶
+        </span>
+        {label}
+      </button>
+      {open && (
+        <div style={{ marginTop: 2 }}>
+          <FlightGroup fields={fields} value={value} onChange={onChange} />
+        </div>
       )}
     </div>
   )
@@ -153,6 +257,27 @@ function FlightGroup({
                   block
                 />
               </div>
+            ) : field.kind === 'time' ? (
+              <input
+                type="text"
+                inputMode="numeric"
+                value={value[field.key]}
+                onChange={(e) => onChange(field.key, e.target.value)}
+                placeholder={field.placeholder ?? 'HH:mm'}
+                style={{
+                  width: '100%',
+                  marginTop: 8,
+                  padding: '10px 12px',
+                  border: `1px solid ${C.line}`,
+                  borderRadius: 10,
+                  background: 'var(--pm-surface)',
+                  fontFamily: 'inherit',
+                  fontSize: 15,
+                  color: C.ink,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
             ) : (
               <input
                 type="text"
