@@ -294,14 +294,18 @@ export const TH_CHECKS: ProcedureCheck[] = [
     category: '수입허가',
     title: '수입 허가 신청 마감 (출국 9일 전)',
     description:
-      '수입 허가는 출국(=입국) 최소 7영업일(달력일 9일) 전까지 신청해야 함. 오늘(KST) 기준 출국까지 ' +
-      '9일 미만이면 신청 여부와 무관하게 "신청 시간 부족" 안내(info) — 출국일 앵커 D-day. 신청 전·후를 ' +
-      '한 문구로 통일(신청 후에도 출발 임박이면 허가증 미수령 리스크가 같음). 입력 차단·주의가 아닌 안내로만 ' +
-      '— 리스크 안고 진행하는 보호자도 있어서. (DLD: at least 7 business days prior to departure)',
+      '수입 허가는 출국(=입국) 최소 7영업일(달력일 9일) 전까지 신청해야 함. **신청 전**에 오늘(KST) 기준 ' +
+      '출국까지 9일 미만이면 "신청 시간 부족" 안내(info) — 출국일 앵커 D-day. 신청일을 입력하면 안내 중단 ' +
+      '(이후는 카드 situational "진행 중" 메시지가 인계). 입력 차단·주의가 아닌 안내로만 — 리스크 안고 ' +
+      '진행하는 보호자도 있어서. (DLD: at least 7 business days prior to departure)',
     severity: 'info',
     addedAt: '2026-06-12',
     run: ({ caseRow, destination }) => {
-      // 신청 여부와 무관 — 오늘(KST) 기준 출국까지 9일 미만이면 안내. 보호자가 입력하는 건
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      // 이미 신청일을 입력했으면 안내하지 않는다 — 신청을 마친 뒤 "신청 시간 부족" 안내는 어색.
+      // (신청 후 진행 안내는 카드 situational "진행 중" 메시지가 담당.)
+      if (/^\d{4}-\d{2}-\d{2}$/.test(readScopedImportPermitFiled(data, destination))) return SKIP
+      // 신청 전 — 오늘(KST) 기준 출국까지 9일 미만이면 안내. 보호자가 입력하는 건
       // 출국일이므로 출국일을 앵커로 D-day 계산. (단계 완료 시 카드 자체가 안 보임.)
       const dep = (readDepartureDate(caseRow, destination) ?? '').slice(0, 10)
       if (!dep) return SKIP
