@@ -183,7 +183,8 @@ export function validateThEntryDate(v: string, ctx: DateRuleContext): string | n
 }
 
 /**
- * 수입 허가 신청일은 출국일 이후일 수 없음 — 이미 출국한 뒤엔 신청이 불가능(논리적 불가능).
+ * 수입 허가 신청일은 출국일 이전이어야 함 — 출국 당일·그 이후 신청은 불가능(논리적 불가능).
+ * (당일도 차단: 출국 당일 신청은 허가 발급 자체가 불가능.)
  * client(입력 불가)·procedure-check(출국일을 나중에 당겨 어긋난 경우를 주의로) 공용. 한쪽 비면 통과.
  * (9일·14일 마감과 달리 '신청 자체가 불가능한' 입력이라 차단 대상.)
  */
@@ -192,8 +193,8 @@ export function validateImportPermitNotAfterDeparture(
   departureDate: string,
 ): string | null {
   if (!filedDate || !departureDate) return null
-  if (filedDate.slice(0, 10) > departureDate.slice(0, 10)) {
-    return '수입 허가 신청일은 출국일보다 늦을 수 없습니다. 날짜를 확인하세요.'
+  if (filedDate.slice(0, 10) >= departureDate.slice(0, 10)) {
+    return '수입 허가 신청일은 출국일 이전이어야 합니다. 날짜를 확인하세요.'
   }
   return null
 }

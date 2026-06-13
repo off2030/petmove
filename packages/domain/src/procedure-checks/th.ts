@@ -321,7 +321,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
     category: '수입허가',
     title: '수입 허가 신청일, 출국일 순서',
     description:
-      '수입 허가 신청일은 출국일 이후일 수 없음(이미 출국한 뒤엔 신청 불가). 입력 차단(validateImportPermitNotAfterDeparture)과 같은 함수 — 출국일을 나중에 당겨 어긋난 경우를 주의로 표면화.',
+      '수입 허가 신청일은 출국일 이전이어야 함(출국 당일·이후엔 신청 불가). 입력 차단(validateImportPermitNotAfterDeparture)과 같은 함수 — 출국일을 나중에 당겨 어긋난 경우를 주의로 표면화.',
     severity: 'warning',
     addedAt: '2026-06-13',
     run: ({ caseRow, destination }) => {
@@ -337,7 +337,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
           offendingPaths: ['import_permit_application_date', 'departure_date'],
         }
       }
-      return { ok: true, message: `신청일(${filed}) ≤ 출국일(${dep || '미입력'}).` }
+      return { ok: true, message: `신청일(${filed}) < 출국일(${dep || '미입력'}).` }
     },
   },
   {
