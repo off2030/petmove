@@ -441,8 +441,18 @@ export async function submitShareLink(
         else merged[k] = v
       }
       // 항공권 정보 최초 입력 시점에만 캡처 — 기존 값이 있으면 덮어쓰지 않음 (updateFlightFields 와 동일).
-      if (recordingFlightInfo && typeof merged.flight_info_recorded_at !== 'string') {
-        merged.flight_info_recorded_at = new Date().toISOString().slice(0, 10)
+      // flight_info_recorded_at 은 destination-scoped 키 — by_dest 모드면 by_dest[scope]에 저장/조회해야
+      // read(flatten strict)와 일치한다. top-level 에 쓰면 다중 목적지에서 strict flatten 이 떨궈
+      // 항공 단계 완료 표시일이 증발한다(다른 scoped 키와 동일 처리).
+      if (recordingFlightInfo) {
+        const existingRecordedAt = useByDest
+          ? readByDestValue(merged, scope!, 'flight_info_recorded_at')
+          : merged.flight_info_recorded_at
+        if (typeof existingRecordedAt !== 'string') {
+          const recordedAt = new Date().toISOString().slice(0, 10)
+          if (useByDest) merged = writeByDestValue(merged, scope!, 'flight_info_recorded_at', recordedAt)
+          else merged.flight_info_recorded_at = recordedAt
+        }
       }
       for (const { group, entries } of vaccineSubmissions) {
         if (!group.array_key) continue

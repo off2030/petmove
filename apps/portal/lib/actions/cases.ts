@@ -1227,12 +1227,21 @@ export async function updateVetVisitDate(
     // (vet_visit_date 는 destination-scoped 필드. destination 미지정만 아래 top-level 경로.)
     const isSingleDest =
       parseDestinations((existing as { destination: string | null }).destination).length === 1
-    if (destination) {
-      let nextData = writeByDestValue(prev, destination, 'vet_visit_date', v || null)
+    // 활성 목적지 토큰을 읽기(flatten)와 동일하게 해석 — destination 미지정(대부분 진입로가 ?dest= 없이
+    // 들어옴)이어도 다중 목적지면 첫 토큰으로 resolve 해 by_dest 에 저장한다. top-level 에 쓰면 다중
+    // 목적지 read(strict flatten)가 그 값을 떨궈 검진일이 즉시 증발한다(검역·허가·항공편과 동일한
+    // resolveWriteToken 패턴 — 바로 아래 resolveWriteToken 주석 참조).
+    const writeDest = resolveWriteToken(
+      (existing as { destination: string | null }).destination,
+      prev,
+      destination,
+    )
+    if (writeDest) {
+      let nextData = writeByDestValue(prev, writeDest, 'vet_visit_date', v || null)
       // 검진일이 바뀌거나 지워지면 legacy 완료 플래그(vet_visit_confirmed, 공용)를 해제 — top-level 경로와
       // 동일. 단일 목적지 한정(공용 단일값이라 다중 목적지에선 의미 모호 → 종전 유지).
       if (isSingleDest && 'vet_visit_confirmed' in nextData) {
-        const prevByDest = readByDestValue(prev, destination, 'vet_visit_date')
+        const prevByDest = readByDestValue(prev, writeDest, 'vet_visit_date')
         const prevDate =
           typeof prevByDest === 'string'
             ? prevByDest

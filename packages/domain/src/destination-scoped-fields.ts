@@ -164,6 +164,10 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   'advance_notification_date',
   'advance_notification_approval_skipped',
   'jp_export_quarantine_reservation_skipped',
+  // admin '진행중'(demote) 시그널 — 위 skip 플래그와 같은 일본 단일 단계 내부 신호. derive 가
+  // top-level 로 read(report-status.ts), admin action 이 top-level 로 write. 같은 이유로 전역.
+  'advance_notification_admin_demoted_at',
+  'jp_export_quarantine_admin_demoted_at',
 ])
 
 export function isGlobalCaseDataKey(key: string): boolean {

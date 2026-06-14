@@ -409,7 +409,9 @@ export async function updateCaseField(
   let autoFilled: { data: Record<string, unknown>; columns?: Record<string, unknown> } | undefined
   if (DATE_TRIGGER_KEYS.has(key)) {
     try {
-      await applyAutoFillRules(supabase, caseId, key)
+      // by_dest 경로(위)와 동일하게 활성 목적지를 넘긴다 — 안 넘기면 auto-fill 이 채운 scoped 타깃
+      // (예: 일본 출국 항공편일)이 다중 목적지에서 top-level 로 가 strict flatten 에 떨궈 증발한다.
+      await applyAutoFillRules(supabase, caseId, key, destination)
       // auto-fill 이후 최신 data + 엔진이 쓸 수 있는 컬럼 (departure_date) 을 같이 읽어
       // 클라이언트 context 에 반영할 수 있게 리턴.
       const { data: refreshed } = await supabase
