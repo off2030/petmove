@@ -481,6 +481,15 @@ export function buildJourney(
       caseData.rabies_titer_scheduled.slice(0, 10) > today
         ? caseData.rabies_titer_scheduled.slice(0, 10)
         : null
+    // 사전 신고 — 미래(예정) 신청일이 입력돼 있으면 '예정 [신청일]' 칩(마감 대신). 없으면 마감.
+    // 신청일이 마감을 넘기면 procedure-check '주의'가 칩을 덮어쓴다(여기선 단순 표시만).
+    const advanceUpcomingDate =
+      step.id === 'advance-notification' &&
+      !done &&
+      typeof caseData.advance_notification_date === 'string' &&
+      caseData.advance_notification_date.slice(0, 10) > today
+        ? caseData.advance_notification_date.slice(0, 10)
+        : null
     // 항체검사 '진행 중' — 채혈일이 도래(≤ 오늘)했고 아직 결과·완료 전(!done). 안내 문구 없이
     // 기본 문구 + '진행 중' 칩으로 표시한다(2스텝의 1단계 완료 상태). 미래 채혈일은 위 예정 배지.
     const titerInProgress =
@@ -655,9 +664,13 @@ export function buildJourney(
                         ? done
                           ? resolveCompletedDate(step.done, caseRow)
                           : titerExtraUpcomingDate
-                        : done
-                          ? resolveCompletedDate(step.done, caseRow)
-                          : (datedUpcoming ?? fallbackDate)
+                        : step.id === 'advance-notification'
+                          ? done
+                            ? resolveCompletedDate(step.done, caseRow)
+                            : advanceUpcomingDate ?? fallbackDate
+                          : done
+                            ? resolveCompletedDate(step.done, caseRow)
+                            : (datedUpcoming ?? fallbackDate)
     // 칩 라벨 분기 — '마감 26·11·21' (단일 non-window 마감일이 표시 날짜인 경우) vs
     // '예정 …' (그 외 일정·이벤트·window 시작·기간 시작 등). 사전 신고처럼 deadline 자체가
     // 보호자의 행동 마감일일 때만 '마감'. window 마감(출국 10일 이내 검진 등)은 구간 시작이라 '예정' 유지.
