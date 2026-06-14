@@ -93,12 +93,11 @@ export function TopBar() {
         prefetch
         aria-label="일정"
         style={{
-          // 펫무브워크 상단 "PETMOVE Work" 와 동일한 워드마크 스타일.
-          // Alonzo ExtraLight + faux bold(700) + tight tracking. globals.css 의 --pm-font-mark 토큰.
+          // 별도 웹폰트 없이 각 운영체제의 표준 UI sans-serif로 표시.
           display: 'flex',
           alignItems: 'center',
           gap: 7,
-          fontFamily: 'var(--pm-font-mark)',
+          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif',
           fontWeight: 700,
           fontSize: 17,
           letterSpacing: '0.025em',
