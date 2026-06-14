@@ -175,7 +175,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 2회국(일본·하와이) — 1차(r[0]) 도래/지남 완료확인 안내.
       if (!isSingleDoseRabiesCase(caseRow)) {
         if (data.rabies_1_confirmed === true) return undefined
-        return datedCardSituational(r[0]?.date ?? null, '광견병 백신 1차', '접종')
+        return datedCardSituational(r[0]?.date ?? null, '1차 광견병 백신', '접종')
       }
       // 1회 접종국 단일카드 — 유효기간 만료 분기 먼저, 아니면 도래 완료확인.
       if (r.length === 0) return undefined
@@ -243,7 +243,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const data = (caseRow.data ?? {}) as Record<string, unknown>
       if (data.rabies_2_confirmed === true) return undefined
       const r = readRabiesEntries(caseRow)
-      return datedCardSituational(r[1]?.date ?? null, '광견병 백신 2차', '접종')
+      return datedCardSituational(r[1]?.date ?? null, '2차 광견병 백신', '접종')
     },
     order: 35,
     earliest: { anchor: 'step:rabies-vaccine-1', daysAfter: 30 },
