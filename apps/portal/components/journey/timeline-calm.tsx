@@ -190,12 +190,11 @@ export function TimelineCalm({
     // advisory(추가 백신·추가 검사) 가 미완료면 본 흐름의 다음 단계는 못 가리지만 미래
     // 만료 대비 reminder 이므로 안내 톤으로 표시 — 보호자가 인지하되 '문제'는 아니다.
     const hasWarn = (s.failedChecks ?? 0) > 0
-    // 날짜가 내일 이후 — 상태(done/current/upcoming) 무관하게 '예정 28·01·03' 칩으로
-    // 미래 일정임을 명시. (current 라도 의미 있는 날짜가 있으면 같이 보여준다.)
+    const hasInfo = (s.infoChecks ?? 0) > 0 || (!!s.advisory && !isDone)
+    // 날짜가 내일 이후 — 상태(done/current/upcoming) 무관하게 '예정 28·01·03' 칩으로 명시.
+    // advisory(추가 백신·검사)로 좌측 i·안내문은 그대로 두되, 미래 날짜가 있으면 우측 칩은
+    // '예정 [날짜]'로(아래 칩 분기에서 hasInfo 보다 hasFutureDate 를 우선).
     const hasFutureDate = isFuture(s.date)
-    // advisory(추가 백신·추가 검사)는 미완료면 '안내' 톤 — 단, 미래 추가접종/검사를 잡아둔
-    // 상태(hasFutureDate)면 '예정 [날짜]'로 보여준다(잡아둔 일정을 나그처럼 보이지 않게).
-    const hasInfo = (s.infoChecks ?? 0) > 0 || (!!s.advisory && !isDone && !hasFutureDate)
     // 마감 라벨 + 날짜가 있는 미완 step (사전 신고 등). 과거/미래 무관하게 항상 표시 —
     // 마감일은 단순 '예정 일자'가 아니라 보호자가 인지해야 할 시점이고, 지난 경우엔
     // warn 색으로 'overdue' 신호를 줘야 한다.
@@ -324,6 +323,23 @@ export function TimelineCalm({
                 '주의'
               ) : s.inProgress ? (
                 '진행 중'
+              ) : hasFutureDate ? (
+                // 미래 날짜가 있으면 우측 칩은 '예정/마감 [날짜]'를 안내보다 우선 — advisory(추가
+                // 백신 등)에 추가접종을 잡아둬도 '안내' 대신 잡아둔 예정일을 보여준다. (마감 라벨은
+                // dateLabel 로 그대로 — 사전 신고 마감일 등.)
+                <span
+                  style={{
+                    display: 'inline-block',
+                    padding: '2px 8px',
+                    borderRadius: 6,
+                    background: 'rgba(184,153,104,0.18)',
+                    border: '.5px solid var(--pm-accent)',
+                    color: C.accent,
+                    fontWeight: 700,
+                  }}
+                >
+                  {s.dateLabel ?? '예정'} {formatStageDate(s)}
+                </span>
               ) : hasInfo ? (
                 '안내'
               ) : showDeadlinePill ? (
@@ -339,20 +355,6 @@ export function TimelineCalm({
                   }}
                 >
                   마감 {formatStageDate(s)}
-                </span>
-              ) : hasFutureDate ? (
-                <span
-                  style={{
-                    display: 'inline-block',
-                    padding: '2px 8px',
-                    borderRadius: 6,
-                    background: 'rgba(184,153,104,0.18)',
-                    border: '.5px solid var(--pm-accent)',
-                    color: C.accent,
-                    fontWeight: 700,
-                  }}
-                >
-                  {s.dateLabel ?? '예정'} {formatStageDate(s)}
                 </span>
               ) : isCurr ? (
                 '예정'
@@ -726,7 +728,7 @@ export function TimelineCalm({
                     카드 본문(desc/cardDesc)이 이미 안내문과 동일한 경우(예: 사전 신고 awaiting
                     — situational 이 cardDesc·infoMessage 동시에 채움)에는 한 번만 노출. */}
                 {stage.infoMessage &&
-                  ((stage.infoChecks ?? 0) > 0 || (stage.advisory && !isFuture(stage.date))) &&
+                  ((stage.infoChecks ?? 0) > 0 || stage.advisory) &&
                   stage.infoMessage !== (stage.cardDesc ?? stage.desc) && (
                     <div style={{ marginTop: 18 }}>
                       <div style={{ ...monoCap, color: C.info }}>안내</div>
