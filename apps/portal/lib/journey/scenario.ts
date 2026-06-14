@@ -710,8 +710,7 @@ export function buildJourney(
       (step.id === 'advance-notification' ||
         step.id === 'jp-export-quarantine' ||
         step.id === 'import-permit' ||
-        step.id === 'vet-visit' ||
-        step.id === 'rabies-titer') &&
+        step.id === 'vet-visit') &&
       !done &&
       !!sit
     const infoChecks = (infoByStep.get(step.id) ?? 0) + (isAwaitingStep ? 1 : 0)

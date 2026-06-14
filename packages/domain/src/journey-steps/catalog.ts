@@ -415,9 +415,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       if (date.length < 10 || date > todayKst()) return undefined
       if (data.rabies_titer_result_confirmed === true) return undefined
       if (typeof primary?.value === 'string' && primary.value.trim().length > 0) return undefined
-      // 진행 중(채혈일 도래 + 결과 미입력)은 별도 안내 문구를 띄우지 않는다 — 기본 문구 +
-      // '진행 중' 칩으로 표시(scenario inProgress). 결과 입력/완료는 하단 폼·버튼으로 한다.
-      return undefined
+      // 진행 중(채혈일 도래 + 결과 미입력) — 우측 '진행 중' 칩(scenario inProgress) + 이 문구.
+      const msg = '광견병 항체 검사를 진행 중입니다. 결과가 나오면 완료 버튼을 누르세요.'
+      return { desc: msg, cardDesc: msg }
     },
     inputs: [
       { key: 'rabies_titer_date', label: '채혈일', type: 'date' },
