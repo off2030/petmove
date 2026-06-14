@@ -143,6 +143,11 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   'infectious_disease_confirmed',
   'external_parasite_confirmed',
   'internal_parasite_confirmed',
+  // 회차 목록 카드의 '미래(예정) 회차' 별도 저장 자리 — 대응 *_dates 와 동일 동물 단위(전역).
+  // 미래 날짜를 기록 배열에서 빼서 여기 두면 입력칸은 실제 회차만, 미래는 예정 배지로만 표시.
+  'general_vaccine_dates_scheduled',
+  'external_parasite_dates_scheduled',
+  'internal_parasite_dates_scheduled',
   // 2) 스코핑 기반 구조물·케이스 단위 메타
   'by_dest', //              destination 별 분기를 담는 컨테이너 그 자체
   'trip_type', //            destination 키 맵(내부적으로 목적지별 — 컨테이너는 전역)

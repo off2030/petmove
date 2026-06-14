@@ -568,8 +568,13 @@ export function buildJourney(
       }
       const key = arrKey[step.id]
       if (!key) return null
+      // 별도 예정 자리(<key>_scheduled) 우선 — 미래 회차를 기록 배열에서 뺐으므로 배지는
+      // 여기서 읽는다. 아직 마이그레이션 안 된(배열에 미래가 남은) 데이터는 배열 최신 미래일로 폴백.
+      const sched = caseData[`${key}_scheduled`]
+      const schedDate =
+        typeof sched === 'string' && sched.slice(0, 10) > today ? sched.slice(0, 10) : null
       const max = latestEntryDate(caseData[key], 0)
-      return max && max > today ? max : null
+      return schedDate ?? (max && max > today ? max : null)
     })()
     const date = passedUnconfirmed
       ? null

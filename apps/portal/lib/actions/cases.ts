@@ -262,6 +262,35 @@ function applyDatedConfirm(
   else nextData[confirmKey] = latest <= todayKst()
 }
 
+/**
+ * 회차 목록(종합백신·구충 등)의 미래(예정) 회차를 기록 배열에서 분리한다.
+ * 과거/오늘 회차만 records 로 반환하고, 가장 늦은 미래일은 nextData[scheduledKey] 에 저장한다
+ * (미래 회차 없으면 삭제). 미래 날짜를 "실제 기록"이 아니라 "별도 예정 자리"에 둠으로써,
+ * 입력칸(회차 목록)은 실제 한 것만 보이고 미래는 예정 배지로만 표시된다 — "날짜는 차 있는데
+ * 왜 완료 안 됨?" 혼동 제거. 단일 날짜 단계의 confirmed-마스킹과 같은 의도를 배열 단계에 적용.
+ * 완료는 보호자가 실제(오늘/과거) 날짜를 저장할 때만 일어난다.
+ */
+function splitScheduledDoses(
+  entries: Record<string, unknown>[],
+  scheduledKey: string,
+  nextData: Record<string, unknown>,
+): Record<string, unknown>[] {
+  const today = todayKst()
+  const records: Record<string, unknown>[] = []
+  let maxFuture = ''
+  for (const e of entries) {
+    const d = typeof e.date === 'string' ? e.date.slice(0, 10) : ''
+    if (d && d > today) {
+      if (d > maxFuture) maxFuture = d
+    } else {
+      records.push(e)
+    }
+  }
+  if (maxFuture) nextData[scheduledKey] = maxFuture
+  else delete nextData[scheduledKey]
+  return records
+}
+
 export async function updateRabiesEntryFields(
   caseId: string,
   index: number,
@@ -1892,9 +1921,11 @@ export async function updateGeneralVaccineEntries(
     }
 
     const nextData: Record<string, unknown> = { ...prev }
-    if (next.length === 0) delete nextData.general_vaccine_dates
-    else nextData.general_vaccine_dates = next
-    applyDatedConfirm(nextData, next, 'general_vaccine_confirmed')
+    // 미래(예정) 회차는 기록에서 빼서 별도 예정 자리로 — 입력칸 비움 + 예정 배지.
+    const gvRecords = splitScheduledDoses(next, 'general_vaccine_dates_scheduled', nextData)
+    if (gvRecords.length === 0) delete nextData.general_vaccine_dates
+    else nextData.general_vaccine_dates = gvRecords
+    applyDatedConfirm(nextData, gvRecords, 'general_vaccine_confirmed')
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1961,9 +1992,11 @@ export async function updateParasiteEntries(
     }
 
     const nextData: Record<string, unknown> = { ...prev }
-    if (next.length === 0) delete nextData[fieldKey]
-    else nextData[fieldKey] = next
-    applyDatedConfirm(nextData, next, fieldKey.replace(/_dates$/, '_confirmed'))
+    // 미래(예정) 회차는 기록에서 빼서 별도 예정 자리로 — 입력칸 비움 + 예정 배지.
+    const pRecords = splitScheduledDoses(next, `${fieldKey}_scheduled`, nextData)
+    if (pRecords.length === 0) delete nextData[fieldKey]
+    else nextData[fieldKey] = pRecords
+    applyDatedConfirm(nextData, pRecords, fieldKey.replace(/_dates$/, '_confirmed'))
 
     const { data: updated, error } = await admin
       .from('cases')
