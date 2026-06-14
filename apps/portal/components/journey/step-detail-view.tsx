@@ -1360,7 +1360,10 @@ export function StepDetailView({
         )
         if (res.ok) {
           updateCase(res.value)
-          setJpExport(readJpExportForm(res.value.data))
+          // by_dest 저장 — 활성 목적지 뷰로 평탄화해서 폼 동기화. raw res.value.data 를 그대로
+          // 읽으면 by_dest(일본) 안의 신청일·예약일이 top-level 에 없어 빈 칸이 되고 dirty 가
+          // 남아 버튼이 '저장' 으로 굳었다(탭 이동 후에야 정상). 다른 by_dest 핸들러와 통일.
+          setJpExport(readJpExportForm(activeDestinationView(res.value, activeDest).data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
