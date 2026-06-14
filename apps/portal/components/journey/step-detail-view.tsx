@@ -1056,6 +1056,10 @@ export function StepDetailView({
         const res = await updateMicrochipFields(caseId, chip || null, date || null)
         if (res.ok) {
           updateCase(res.value)
+          // 미래(예정) 저장이면 입력칸도 비워 baseline(savedDate 마스킹)과 일치시킨다 —
+          // 안 그러면 dirty 가 안 풀려 '저장 안 됨'처럼 보이고 이탈 경고 팝업이 뜬다.
+          const cf = (res.value.data as Record<string, unknown> | undefined)?.microchip_confirmed === false
+          setDate(cf ? '' : readImplantDate(res.value.data))
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
@@ -1105,8 +1109,12 @@ export function StepDetailView({
         })
         if (res.ok) {
           updateCase(res.value)
-          // 서버가 trim·정규화한 값으로 폼을 맞춰 dirty 해제.
-          setRabies(readRabiesEntryForm(res.value.data, rabiesIndex))
+          // 서버가 trim·정규화한 값으로 폼을 맞춰 dirty 해제. 미래(예정) 저장이면 날짜칸도
+          // 비워 savedRabies(마스킹) baseline 과 일치 — dirty 잔류·이탈 경고 팝업 방지.
+          const rawR = readRabiesEntryForm(res.value.data, rabiesIndex)
+          const rcf =
+            (res.value.data as Record<string, unknown> | undefined)?.[`rabies_${rabiesIndex + 1}_confirmed`] === false
+          setRabies(rcf ? { ...rawR, date: '' } : rawR)
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
         } else {
