@@ -452,8 +452,11 @@ export function StepDetailView({
   // 버튼 문구·저장 확인 여부는 form(입력 중) 날짜 기준. 미래면 '예정일로 저장', 오늘 이하면 '저장'.
   const formUpcoming = isConfirmStep && confirmFormDate.length >= 10 && confirmFormDate > todayStr
   const formArrived = isConfirmStep && confirmFormDate.length >= 10 && confirmFormDate <= todayStr
-  // 저장된 예정일이 지났는데(예정일 다음날부터 — 당일 제외) 아직 확인(done) 전 — '예정일 지남,
-  // 저장 필요' 안내 노출. 당일(예정일 == 오늘)엔 배너 없이 저장 버튼만 활성(formArrived)으로 둔다.
+  // 저장된 예정일이 '오늘'이면(savedDueToday) '오늘이 예정일' 안내, '지난 후'면
+  // (savedArrivedUnconfirmed) '예정일 지남' 안내. 둘 다 아직 확인(done) 전일 때만 — 검역 후
+  // 완료 버튼을 누르도록(지난 경우엔 예정일 변경도) 유도한다. 어느 쪽이든 버튼은 '완료'(formArrived).
+  const savedDueToday =
+    isConfirmStep && confirmSavedDate.length >= 10 && confirmSavedDate === todayStr && !done
   const savedArrivedUnconfirmed =
     isConfirmStep && confirmSavedDate.length >= 10 && confirmSavedDate < todayStr && !done
   // 예정으로 저장한 검역일이 도래(≤ 오늘)했고 아직 미완료 — 변경 없이 누르면 완료 확정이므로
@@ -2315,8 +2318,9 @@ export function StepDetailView({
           </section>
         )}
 
-        {/* 예정일이 지났는데 아직 '저장'으로 확인 안 한 상태 — 저장하면 완료, 또는 날짜 재등록 안내. */}
-        {savedArrivedUnconfirmed && (
+        {/* 예정일 당일(savedDueToday) / 지난 후(savedArrivedUnconfirmed) — 아직 완료 전.
+            검역 후 완료(지난 경우엔 예정일 변경도) 안내. */}
+        {(savedDueToday || savedArrivedUnconfirmed) && (
           <section
             style={{
               marginTop: 18,
@@ -2327,7 +2331,9 @@ export function StepDetailView({
             }}
           >
             <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
-              예정일이 지났습니다. 완료 버튼을 눌러 완료하시거나, 새로운 예정일을 등록하실 수 있습니다.
+              {savedDueToday
+                ? `오늘은 ${step.title} 예정일입니다. 검역 후 완료 버튼을 눌러주세요.`
+                : `${step.title} 예정일이 지났습니다. 완료 버튼을 누르시거나 예정일을 변경해주세요.`}
             </div>
           </section>
         )}
