@@ -620,6 +620,17 @@ export async function updateTiterFields(
     else delete entry.value
 
     const nextData: Record<string, unknown> = { ...prev }
+    // 미래(예정) 채혈일은 실제 검사 기록 대신 별도 예정 자리로 — 입력칸 비움 + 예정 배지.
+    // 도래해도 '검사 진행 중'으로 안 잡히고, 지나면 배지만 사라진다(원래 상태). 실제 검사는
+    // 보호자가 오늘/과거 채혈일로 저장할 때만 기록되어 2스텝(진행중 → 결과/완료)이 시작된다.
+    const titerToday = todayKst()
+    const titerEntryDate = typeof entry.date === 'string' ? (entry.date as string).slice(0, 10) : ''
+    if (titerEntryDate && titerEntryDate > titerToday) {
+      nextData.rabies_titer_scheduled = titerEntryDate
+      delete entry.date
+    } else {
+      delete nextData.rabies_titer_scheduled
+    }
     if (!hasValidDate(entry) && arr.length <= 1) {
       delete nextData.rabies_titer_records
     } else {

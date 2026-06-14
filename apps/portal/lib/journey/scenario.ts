@@ -467,6 +467,15 @@ export function buildJourney(
             SINGLE_DOSE_RABIES_DESTINATIONS.includes(ctx.destinationKey ?? '') ? 1 : 2,
           )
         : null
+    // 항체검사 채혈일을 미래(예정)로 저장하면 별도 자리(rabies_titer_scheduled)에 저장된다.
+    // 그게 미래면 '예정 [날짜]' 칩. 도래/지나면 null → 배지 사라짐(원래 상태). 실제 검사는
+    // 보호자가 오늘/과거 채혈일로 저장할 때만 기록되어 진행 중→완료 2스텝이 시작된다.
+    const titerScheduledDate =
+      step.id === 'rabies-titer' &&
+      typeof caseData.rabies_titer_scheduled === 'string' &&
+      caseData.rabies_titer_scheduled.slice(0, 10) > today
+        ? caseData.rabies_titer_scheduled.slice(0, 10)
+        : null
     // 추가 검사 — 입국일 이전에 예약한(미래) 채혈이 있으면 '예정 [날짜]' 칩. 입국 후 채혈은
     // 그 입국을 보증 못 하므로 제외(무의미한 미래 채혈을 예정으로 오인 노출하지 않음).
     const titerExtraUpcomingDate = (() => {
@@ -604,6 +613,8 @@ export function buildJourney(
                       : microchipImplantDate && microchipImplantDate > today
                         ? microchipImplantDate
                         : null
+                    : step.id === 'rabies-titer'
+                      ? (done ? resolveCompletedDate(step.done, caseRow) : titerScheduledDate)
                     : step.id === 'rabies-vaccine-extra'
                       ? done
                         ? resolveCompletedDate(step.done, caseRow)

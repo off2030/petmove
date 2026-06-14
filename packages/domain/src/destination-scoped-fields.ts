@@ -129,6 +129,7 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   'rabies_dates',
   'general_vaccine_dates', //   종합백신 접종 이력 — 동물 단위 사실 (rabies_dates 동일)
   'rabies_titer_records',
+  'rabies_titer_scheduled', //  항체검사 채혈일을 미래(예정)로 저장 시 별도 자리 — *_dates 동일 동물 단위(전역)
   'rabies_extra_confirmed',
   'rabies_titer_result_confirmed',
   'titer_extra_confirmed',
