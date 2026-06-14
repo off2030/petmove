@@ -228,7 +228,14 @@ export function StepDetailView({
   const [chip, setChip] = useState(savedChip)
   const [date, setDate] = useState(savedDate)
 
-  const savedRabies = readRabiesEntryForm(caseRow?.data, rabiesIndex)
+  // 광견병 1·2차도 마이크로칩과 동일 — 미래(예정) 접종일은 입력칸에서 비운다(예정 배지로만).
+  // rabies_{n}_confirmed===false = 도래 전 예정. 실제 날짜로 저장해야 채워지고 완료된다.
+  // 배지는 scenario(datedUpcoming)가 raw rabies_dates 를 읽어 그대로 표시.
+  const rabiesScheduled =
+    (caseRow?.data as Record<string, unknown> | undefined)?.[`rabies_${rabiesIndex + 1}_confirmed`] ===
+    false
+  const rawSavedRabies = readRabiesEntryForm(caseRow?.data, rabiesIndex)
+  const savedRabies = rabiesScheduled ? { ...rawSavedRabies, date: '' } : rawSavedRabies
   const [rabies, setRabies] = useState<RabiesEntryForm>(savedRabies)
   // 광견병 step 한정 — org 백신 카탈로그 ("지정 약품" 힌트 계산용).
   const [vaccineData, setVaccineData] = useState<VaccineProductsData | null>(null)
@@ -569,7 +576,10 @@ export function StepDetailView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
-    if (!rabiesDirty) setRabies(readRabiesEntryForm(caseRow?.data, rabiesIndex))
+    if (!rabiesDirty) {
+      const raw = readRabiesEntryForm(caseRow?.data, rabiesIndex)
+      setRabies(rabiesScheduled ? { ...raw, date: '' } : raw)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
