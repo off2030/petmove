@@ -1543,8 +1543,9 @@ export function StepDetailView({
   const isAdvanceAwaitingApproval = isAdvanceDateEntered && !advanceApprovalSkipped
   // 신청일 도래 + 아직 '진행 중' 확인 전 → 하단 버튼이 '진행 중'(markAdvanceNotificationInProgress).
   // 확인 후 → '완료'(skip → done). 변경 없을 때만(저장과 충돌 방지). 보호자에겐 한 번에 버튼 하나만.
-  const advanceInProgressMode = isAdvanceAwaitingApproval && !advanceAcked && !dirty
-  const advanceSkipMode = isAdvanceAwaitingApproval && advanceAcked && !dirty
+  // titer 방식 — '진행 중' ack 버튼 게이트 제거. 신청일 도래(미완료·미변경)면 바로 '완료' 버튼.
+  const advanceInProgressMode = false
+  const advanceSkipMode = isAdvanceAwaitingApproval && !dirty
   const [skippingApproval, setSkippingApproval] = useState(false)
   const handleSkipAdvanceApproval = () => {
     if (skippingApproval) return
@@ -1576,8 +1577,9 @@ export function StepDetailView({
   // 'awaiting' = 신청 도래 + 아직 완료 처리 안 함. done(legacy confirmed/admin) 이면 제외.
   const isJpExportAwaitingReservation = isJpExportApplied && !jpExportReservationSkipped && !done
   // 신청일 도래 + '진행 중' 확인 전 → '진행 중' 버튼, 확인 후 → '완료' 버튼. 변경 없을 때만.
-  const jpExportInProgressMode = isJpExportAwaitingReservation && !jpExportAcked && !dirty
-  const jpExportSkipMode = isJpExportAwaitingReservation && jpExportAcked && !dirty
+  // titer 방식 — ack 게이트 제거. 신청일 도래(미완료·미변경)면 바로 '완료' 버튼.
+  const jpExportInProgressMode = false
+  const jpExportSkipMode = isJpExportAwaitingReservation && !dirty
   const [skippingJpExport, setSkippingJpExport] = useState(false)
   const handleSkipJpExportReservation = () => {
     if (skippingJpExport) return
@@ -1670,8 +1672,8 @@ export function StepDetailView({
     })
   }
   // 신청 단계 '진행 중' 게이트 — 신청일 도래 후 아직 진행 중 확인 전. 당일/지난 배너 + '진행 중' 버튼.
-  const reportInProgressMode =
-    advanceInProgressMode || jpExportInProgressMode || importPermitInProgressMode
+  // 사전 신고·수출검역은 titer 방식으로 전환(진행 중 ack·배너 제거) — import-permit 만 유지.
+  const reportInProgressMode = importPermitInProgressMode
   const reportApplicationSavedDate = isAdvanceNotification
     ? savedAdvanceDate
     : isJpExportQuarantine

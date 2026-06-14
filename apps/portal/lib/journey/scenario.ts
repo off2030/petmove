@@ -492,6 +492,20 @@ export function buildJourney(
         const d = p && typeof p.date === 'string' ? p.date.slice(0, 10) : ''
         return d.length >= 10 && d <= today
       })()
+    // 사전 신고·일본 수출검역 신청 '진행 중' — 신청일이 도래(≤ 오늘)했고 미완료. titer 방식:
+    // ack 버튼 없이 신청일 도래만으로 진행 중. 미래 신청일은 ≤오늘 가드에 안 걸려 예정으로 남음.
+    const advanceInProgress =
+      step.id === 'advance-notification' &&
+      !done &&
+      typeof caseData.advance_notification_date === 'string' &&
+      caseData.advance_notification_date.slice(0, 10).length >= 10 &&
+      caseData.advance_notification_date.slice(0, 10) <= today
+    const jpExportInProgress =
+      step.id === 'jp-export-quarantine' &&
+      !done &&
+      typeof caseData.jp_export_quarantine_application_date === 'string' &&
+      caseData.jp_export_quarantine_application_date.slice(0, 10).length >= 10 &&
+      caseData.jp_export_quarantine_application_date.slice(0, 10) <= today
     // 추가 검사 — 입국일 이전에 예약한(미래) 채혈이 있으면 '예정 [날짜]' 칩. 입국 후 채혈은
     // 그 입국을 보증 못 하므로 제외(무의미한 미래 채혈을 예정으로 오인 노출하지 않음).
     const titerExtraUpcomingDate = (() => {
@@ -707,9 +721,7 @@ export function buildJourney(
     // vet-visit: 검진일 도래 + 서류 미완(= situational '받았습니다. 서류 확인') 상태에만 해당 —
     // 미래 검진일이면 situational 이 undefined 라 그대로 '예정 [날짜]' 칩 유지.
     const isAwaitingStep =
-      (step.id === 'advance-notification' ||
-        step.id === 'jp-export-quarantine' ||
-        step.id === 'import-permit' ||
+      (step.id === 'import-permit' ||
         step.id === 'vet-visit') &&
       !done &&
       !!sit
@@ -744,7 +756,7 @@ export function buildJourney(
       infoChecks: infoChecks > 0 ? infoChecks : undefined,
       advisory: isAdvisory ? true : undefined,
       infoMessage,
-      inProgress: titerInProgress ? true : undefined,
+      inProgress: titerInProgress || advanceInProgress || jpExportInProgress ? true : undefined,
     }
   })
 
