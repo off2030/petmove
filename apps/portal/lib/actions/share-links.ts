@@ -411,10 +411,12 @@ export async function submitShareLink(
       .maybeSingle()
     const current = ((caseInfo?.data as Record<string, unknown> | null) ?? {})
     const caseDestination = (caseInfo as { destination?: string | null } | null)?.destination ?? null
-    // B: 단일도 by_dest 통일 — scope 미지정이면 단일 목적지의 유일 토큰으로 resolve.
-    // (다중 목적지인데 scope 가 없으면 어느 칸인지 알 수 없어 종전대로 top-level.)
+    // 활성 목적지 토큰을 읽기(flatten)와 동일하게 해석 — scope 미지정이면 첫 토큰으로 폴백한다.
+    // 읽기(activeDestinationView/buildCaseJourneyContext)가 activeDest 없을 때 첫 토큰으로 폴백하므로,
+    // 쓰기도 첫 토큰 by_dest 에 저장해야 일치한다. 다중 목적지인데 scope 없이 top-level 에 쓰면
+    // strict flatten 이 떨궈 제출값이 증발한다(resolveWriteToken 과 동일 컨벤션).
     const caseDests = parseDestinations(caseDestination)
-    const scope = row.destination_scope ?? (caseDests.length === 1 ? caseDests[0] : null)
+    const scope = row.destination_scope ?? (caseDests[0] ?? null)
     const useByDest = !!scope
 
     // colUpdate 처리 — by_dest 모드면 departure_date 같은 scoped 컬럼은 by_dest 로.
@@ -451,7 +453,7 @@ export async function submitShareLink(
         if (typeof existingRecordedAt !== 'string') {
           const recordedAt = new Date().toISOString().slice(0, 10)
           if (useByDest) merged = writeByDestValue(merged, scope!, 'flight_info_recorded_at', recordedAt)
-          else merged.flight_info_recorded_at = recordedAt
+          else merged.flight_info_recorded_at = recordedAt // scoping-fallback-ok: scope 없음(목적지 없는 케이스) 폴백
         }
       }
       for (const { group, entries } of vaccineSubmissions) {

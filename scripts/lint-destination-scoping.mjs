@@ -63,7 +63,10 @@ const SCAN_DIRS = [
 ]
 
 // 케이스 data 를 담는 것으로 인정하는 변수 식별자(이 베이스의 spread/대입만 검사).
-const DATA_BASES = ['data', 'prev', 'prevData', 'nextData', 'next', 'baseData', 'merged']
+// 'd' 는 patchCaseData((d) => …) 류 mutator 베이스 — 빠뜨리면 그 안의 scoped 키 top-level 쓰기가
+// lint 를 그냥 통과한다(신고탭 수출 완료 버그가 이 구멍으로 숨어 있었음). Date 변수도 'd' 를 자주
+// 쓰지만 그건 메서드 호출(d.setX())이라 대입/spread 패턴엔 안 걸린다.
+const DATA_BASES = ['data', 'prev', 'prevData', 'nextData', 'next', 'baseData', 'merged', 'd']
 
 function walk(dir) {
   const out = []
@@ -125,42 +128,77 @@ const KEY_BLACKLIST_PROPS = new Set([
   'length', 'map', 'filter', 'find', 'slice', 'push', 'value', 'ok', 'error',
 ])
 
-const problems = []
+const problems = []          // 미분류 키 (SCOPED/GLOBAL 둘 다 아님)
+const fallbackProblems = []  // SCOPED 키를 top-level 에 직접 쓰는 지점 (단일목적지 fallback 만 허용)
 for (const rel of SCAN_DIRS) {
   for (const file of walk(path.join(ROOT, rel))) {
     const content = readFileSync(file, 'utf-8')
     const lines = content.split('\n')
     const hits = [...spreadSiblings(content), ...assignTargets(content)]
     for (const { key, line } of hits) {
-      if (SCOPED.has(key) || GLOBAL.has(key) || SCOPING_LINT_BASELINE.has(key) || KEY_BLACKLIST_PROPS.has(key)) continue
-      if ((lines[line - 1] ?? '').includes('scoping-lint-ignore')) continue
+      const lineText = lines[line - 1] ?? ''
+      if (lineText.includes('scoping-lint-ignore')) continue
+      if (SCOPED.has(key)) {
+        // SCOPED 키는 by_dest(writeByDestValue)로 써야 한다. top-level 직접 쓰기는 단일 목적지
+        // (또는 토큰 미해석) fallback 에서만 정당 — 그 줄에 // scoping-fallback-ok 로 명시 허용.
+        // 안 그러면 다중 목적지 read(strict flatten)가 top-level scoped 값을 떨궈 데이터가 증발한다.
+        if (!lineText.includes('scoping-fallback-ok')) {
+          fallbackProblems.push({ file: path.relative(ROOT, file), line, key })
+        }
+        continue
+      }
+      if (GLOBAL.has(key) || SCOPING_LINT_BASELINE.has(key) || KEY_BLACKLIST_PROPS.has(key)) continue
       problems.push({ file: path.relative(ROOT, file), line, key })
     }
   }
 }
 
 // ── 3) 보고 ───────────────────────────────────────────────────────────────
-if (problems.length === 0) {
-  console.log('✓ destination-scoping lint: 미분류 case.data 키 없음')
-  process.exit(0)
+function groupByKey(list) {
+  const m = new Map()
+  for (const p of list) {
+    if (!m.has(p.key)) m.set(p.key, [])
+    m.get(p.key).push(`${p.file}:${p.line}`)
+  }
+  return m
 }
 
-// 키별 그룹
-const byKey = new Map()
-for (const p of problems) {
-  if (!byKey.has(p.key)) byKey.set(p.key, [])
-  byKey.get(p.key).push(`${p.file}:${p.line}`)
+let failed = false
+
+if (problems.length > 0) {
+  failed = true
+  const byKey = groupByKey(problems)
+  console.error(`✗ destination-scoping lint: 미분류 case.data 키 ${byKey.size}종\n`)
+  for (const [key, locs] of [...byKey].sort()) {
+    console.error(`  • ${key}`)
+    for (const l of locs.slice(0, 4)) console.error(`      ${l}`)
+    if (locs.length > 4) console.error(`      … +${locs.length - 4}`)
+  }
+  console.error(
+    '\n각 키를 분류하세요 (destination-scoped-fields.ts):\n' +
+    '  - 목적지마다 달라야 함 → DESTINATION_SCOPED_FIELD_KEYS + 쓰기를 by_dest 로\n' +
+    '  - 케이스 공통(동물·보호자 신원 등) → GLOBAL_CASE_DATA_KEYS\n' +
+    '  - 케이스 data 가 아닌 오탐 → 그 줄에 // scoping-lint-ignore',
+  )
 }
-console.error(`✗ destination-scoping lint: 미분류 case.data 키 ${byKey.size}종\n`)
-for (const [key, locs] of [...byKey].sort()) {
-  console.error(`  • ${key}`)
-  for (const l of locs.slice(0, 4)) console.error(`      ${l}`)
-  if (locs.length > 4) console.error(`      … +${locs.length - 4}`)
+
+if (fallbackProblems.length > 0) {
+  failed = true
+  const byKey = groupByKey(fallbackProblems)
+  console.error(`\n✗ destination-scoping lint: SCOPED 키를 top-level 에 직접 쓰는 지점 ${byKey.size}종\n`)
+  for (const [key, locs] of [...byKey].sort()) {
+    console.error(`  • ${key}`)
+    for (const l of locs.slice(0, 6)) console.error(`      ${l}`)
+    if (locs.length > 6) console.error(`      … +${locs.length - 6}`)
+  }
+  console.error(
+    '\nSCOPED 키는 다중 목적지 read 가 by_dest[활성목적지]만 신뢰하고 top-level 은 떨군다(증발).\n' +
+    '  - 다중 목적지에서 쓸 수 있는 경로면 → resolveWriteToken/resolveTabActiveDest 로 활성목적지를\n' +
+    '    해석해 writeByDestValue 로 저장 (예: updateVetVisitDate, updateJpExportQuarantineFields).\n' +
+    '  - 토큰이 null 일 때(목적지 없음/단일)만 도달하는 정당한 fallback 이면 → 그 줄에 // scoping-fallback-ok',
+  )
 }
-console.error(
-  '\n각 키를 분류하세요 (destination-scoped-fields.ts):\n' +
-  '  - 목적지마다 달라야 함 → DESTINATION_SCOPED_FIELD_KEYS + 쓰기를 by_dest 로\n' +
-  '  - 케이스 공통(동물·보호자 신원 등) → GLOBAL_CASE_DATA_KEYS\n' +
-  '  - 케이스 data 가 아닌 오탐 → 그 줄에 // scoping-lint-ignore',
-)
-process.exit(1)
+
+if (failed) process.exit(1)
+console.log('✓ destination-scoping lint: 미분류 키 없음 + SCOPED 키 top-level 직접 쓰기 없음')
+process.exit(0)

@@ -899,7 +899,7 @@ export async function updateFlightFields(
           return typeof v === 'string' && v.trim().length > 0
         })
         if (hasAnyFlightInfo && typeof merged.flight_info_recorded_at !== 'string') {
-          merged.flight_info_recorded_at = new Date().toISOString().slice(0, 10)
+          merged.flight_info_recorded_at = new Date().toISOString().slice(0, 10) // scoping-fallback-ok: isSingleDest 가드 — 단일 목적지만 top-level
         } else if (!hasAnyFlightInfo) {
           delete merged.flight_info_recorded_at
         }
@@ -944,7 +944,7 @@ export async function updateFlightFields(
       return typeof v === 'string' && v.length > 0
     })
     if (hasAnyFlightInfo && typeof nextData.flight_info_recorded_at !== 'string') {
-      nextData.flight_info_recorded_at = new Date().toISOString().slice(0, 10)
+      nextData.flight_info_recorded_at = new Date().toISOString().slice(0, 10) // scoping-fallback-ok: writeDest 없음(목적지 미해석) 폴백
     } else if (!hasAnyFlightInfo) {
       delete nextData.flight_info_recorded_at
     }
@@ -959,7 +959,7 @@ export async function updateFlightFields(
     // 일본: departure_flight_date 를 출국일과 항상 동일하게 맞춘다(변경·삭제 모두) — by_dest 경로와 동일.
     // 안 맞추면 stale 한 값이 양방향 sync 로 departure_date 컬럼을 되살린다.
     if (isJapanFlight) {
-      if (departureCol) nextData.departure_flight_date = departureCol
+      if (departureCol) nextData.departure_flight_date = departureCol // scoping-fallback-ok: writeDest 없음(목적지 미해석) 폴백
       else delete nextData.departure_flight_date
       clearLegacyInboundDate(nextData)
     }
@@ -1265,16 +1265,18 @@ export async function updateVetVisitDate(
 
     // 내원일 도메인 차단은 server 에 두지 않는다 — client(입력 불가)·procedure-check(주의)가
     // 같은 함수로 담당(단일 출처).
+    // 여기는 writeDest=null(목적지 자체가 없는 케이스)만 도달하는 top-level 폴백 — 위 resolveWriteToken
+    // 이 단일·다중 목적지를 모두 토큰으로 해석해 by_dest 로 보내므로, 다중 목적지가 이 경로로 새지 않는다.
     const nextData: Record<string, unknown> = { ...prev }
     const prevDate = typeof prev.vet_visit_date === 'string' ? prev.vet_visit_date : ''
-    if (v) nextData.vet_visit_date = v
+    if (v) nextData.vet_visit_date = v // scoping-fallback-ok: writeDest 없음(목적지 없는 케이스) 폴백
     else delete nextData.vet_visit_date
     // 새 모델 — 완료 판정은 done-resolver 가 (1) 모든 필수 서류 ✓ 또는 (2) legacy
     // vet_visit_confirmed 플래그, (3) spec 없는 destination 의 경우 검진일 입력만으로
     // 판정. 보호자가 검진일을 바꾸거나 지우면 기존 완료 플래그를 자동 해제 (사전 신고와 동일).
     if (v !== prevDate) delete nextData.vet_visit_confirmed
     // confirmed 파라미터는 admin 호환 위해 남겨두지만 portal 호출은 항상 false 로 전달.
-    if (v && confirmed) nextData.vet_visit_confirmed = true
+    if (v && confirmed) nextData.vet_visit_confirmed = true // scoping-fallback-ok: writeDest 없음 폴백(portal 은 항상 confirmed=false → 사실상 미사용)
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1568,9 +1570,9 @@ export async function updateImportPermitFields(
         typeof prev.import_permit_application_date === 'string'
           ? prev.import_permit_application_date
           : ''
-      if (v) nextData.import_permit_application_date = v
+      if (v) nextData.import_permit_application_date = v // scoping-fallback-ok: token 없음(목적지 없음) 폴백
       else delete nextData.import_permit_application_date
-      if (permitNo) nextData.permit_no = permitNo
+      if (permitNo) nextData.permit_no = permitNo // scoping-fallback-ok: token 없음(목적지 없음) 폴백
       else delete nextData.permit_no
       if (v !== prevFiled) delete nextData.import_permit_issued_skipped
     }
@@ -1624,7 +1626,7 @@ export async function markImportPermitIssued(
       nextData = writeByDestValue(nextData, token, 'import_permit_issued_skipped', true)
       delete nextData.import_permit_issued_skipped
     } else {
-      nextData.import_permit_issued_skipped = true
+      nextData.import_permit_issued_skipped = true // scoping-fallback-ok: token 없음(목적지 없음) 폴백
     }
 
     const { data: updated, error } = await admin
@@ -1989,11 +1991,13 @@ export async function updateJpExportQuarantineFields(
       delete nextData.jp_export_quarantine_date
       delete nextData.jp_export_quarantine_time
     } else {
-      if (a) nextData.jp_export_quarantine_application_date = a
+      // token 없음(목적지 없는 케이스)만 도달하는 top-level 폴백 — resolveWriteToken 이 단일·다중을
+      // 모두 토큰으로 해석하므로 다중 목적지는 위 by_dest 경로로 간다.
+      if (a) nextData.jp_export_quarantine_application_date = a // scoping-fallback-ok: token 없음 폴백
       else delete nextData.jp_export_quarantine_application_date
-      if (d) nextData.jp_export_quarantine_date = d
+      if (d) nextData.jp_export_quarantine_date = d // scoping-fallback-ok: token 없음 폴백
       else delete nextData.jp_export_quarantine_date
-      if (time) nextData.jp_export_quarantine_time = time
+      if (time) nextData.jp_export_quarantine_time = time // scoping-fallback-ok: token 없음 폴백
       else delete nextData.jp_export_quarantine_time
     }
     // 신청일이 바뀌거나 지워지면 '완료 처리(skip)'를 해제 — 사전 신고와 동일 사유.

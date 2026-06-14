@@ -791,7 +791,7 @@ export async function setJpExportQuarantineReportStatus(
       next = writeByDestValue(next, scopedToken, 'jp_export_quarantine_application_date', today)
       delete next.jp_export_quarantine_application_date
     } else {
-      next.jp_export_quarantine_application_date = today
+      next.jp_export_quarantine_application_date = today // scoping-fallback-ok: 단일 목적지(scopedToken 없음) 폴백
     }
   }
 
