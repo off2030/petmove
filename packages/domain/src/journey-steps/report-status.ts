@@ -50,6 +50,22 @@ export function deriveAdvanceNotificationStatus(caseRow: CaseRow): JpReportStatu
 }
 
 /**
+ * 사전 신고가 '진행 중'으로 확인됐는지 — 신청일이 도래(≤오늘)만 한 상태(=예정)와 구분한다.
+ * 보호자가 portal 에서 '진행 중' 버튼을 눌렀거나(advance_notification_in_progress), 운영자가
+ * 진행 중으로 표시(admin demote / stored 'in_progress')한 경우 = 확인됨. 신청일 도래만으론 부족
+ * (검역 5단계의 '예정일 지나도 자동완료 X' 와 같은 명시적 확인 게이트 — design feedback_date_based_completion).
+ * derive(in_progress)는 그대로 두고(=admin·충돌검출 영향 X), 이 ack 가 portal '진행 중' 톤만 게이트한다.
+ */
+export function isAdvanceNotificationInProgressAck(caseRow: CaseRow): boolean {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  return (
+    data.advance_notification_in_progress === true ||
+    typeof data.advance_notification_admin_demoted_at === 'string' ||
+    data.import_import_status === 'in_progress'
+  )
+}
+
+/**
  * 일본 수출 동물검역 진행 상태. 일본 + 왕복 케이스에서만 의미.
  *
  *  - stored `import_export_status`: legacy 수동값. 처리 동일.
@@ -107,6 +123,16 @@ export function deriveImportPermitStatus(caseRow: CaseRow): JpReportStatus {
   return 'not_started'
 }
 
+/**
+ * 수입 허가가 '진행 중'으로 확인됐는지 — 사전 신고와 동일 게이트. 수입 허가는 admin demote/
+ * stored 가 없어 보호자의 '진행 중' 버튼(import_permit_in_progress)만으로 판정. 플래그는
+ * by_dest(scoped) — caseRow 는 활성 목적지로 flatten 된 view 여야 한다(derive 와 동일 컨벤션).
+ */
+export function isImportPermitInProgressAck(caseRow: CaseRow): boolean {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  return data.import_permit_in_progress === true
+}
+
 export function deriveJpExportQuarantineStatus(caseRow: CaseRow): JpReportStatus {
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   const stored = data.import_export_status
@@ -124,4 +150,17 @@ export function deriveJpExportQuarantineStatus(caseRow: CaseRow): JpReportStatus
   if (typeof data.jp_export_quarantine_admin_demoted_at === 'string') return 'in_progress'
   if (applied.length >= 10) return 'in_progress'
   return 'not_started'
+}
+
+/**
+ * 일본 수출검역 신청이 '진행 중'으로 확인됐는지 — 사전 신고와 동일 게이트.
+ * jp_export_quarantine_in_progress(보호자 버튼) / admin demote / stored 'in_progress'.
+ */
+export function isJpExportQuarantineInProgressAck(caseRow: CaseRow): boolean {
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  return (
+    data.jp_export_quarantine_in_progress === true ||
+    typeof data.jp_export_quarantine_admin_demoted_at === 'string' ||
+    data.import_export_status === 'in_progress'
+  )
 }

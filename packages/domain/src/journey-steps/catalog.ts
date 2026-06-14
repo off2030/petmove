@@ -20,6 +20,9 @@ import {
   deriveAdvanceNotificationStatus,
   deriveImportPermitStatus,
   deriveJpExportQuarantineStatus,
+  isAdvanceNotificationInProgressAck,
+  isImportPermitInProgressAck,
+  isJpExportQuarantineInProgressAck,
 } from './report-status'
 import type { StepDefinition } from './types'
 import type { CaseRow } from '../types'
@@ -597,6 +600,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 완료(skip) 상태에선 안내 노출 안 함 — '완료' 자체가 명시적 보호자 액션이라 추가 설명 불필요.
       // 첨부는 언제든 documents 탭에서 올릴 수 있음.
       if (deriveAdvanceNotificationStatus(caseRow) !== 'in_progress') return undefined
+      // 신청일이 도래했어도 보호자가 '진행 중' 버튼을 누르기 전엔 '진행 중' 안내 X (=예정 단계).
+      // step-detail 이 '오늘은 …예정일입니다. 신고 후 진행 중 버튼을' 배너를 대신 노출한다.
+      if (!isAdvanceNotificationInProgressAck(caseRow)) return undefined
       const msg = '사전 신고를 진행 중입니다. 허가증이 나오면 파일을 첨부하거나 완료 버튼을 누르세요.'
       return { desc: msg, cardDesc: msg }
     },
@@ -688,6 +694,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 완료(skip) 상태에선 안내 노출 안 함 — '완료' 자체가 명시적 보호자 액션이라 추가 설명 불필요.
       // 예약일·시간은 언제든 input 으로 수정 가능.
       if (deriveJpExportQuarantineStatus(caseRow) !== 'in_progress') return undefined
+      // 신청일 도래만으론 '진행 중' 안내 X — 보호자가 '진행 중' 버튼을 눌러야(사전 신고와 동일).
+      if (!isJpExportQuarantineInProgressAck(caseRow)) return undefined
       // 예약일·시간은 '희망' 데이터일 뿐 완료 판정에 영향 없음 — 보호자가 '완료' 버튼을 직접
       // 눌러야 step 이 done. 사전 신고와 동일 모델.
       // 예약 일정 안내는 방문 step([[jp-export-quarantine-visit]])이 맡고, 여기는 진행 중 안내만.
@@ -970,6 +978,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
           : ''
       if (filed.length >= 10 && filed > todayKst()) return undefined
       if (deriveImportPermitStatus(caseRow) !== 'in_progress') return undefined
+      // 신청일 도래만으론 '진행 중' 안내 X — 보호자가 '진행 중' 버튼을 눌러야(사전 신고와 동일).
+      if (!isImportPermitInProgressAck(caseRow)) return undefined
       const msg =
         '수입 허가 신청을 진행 중입니다. 수입허가증을 받으면 허가 번호를 입력하고 파일을 첨부하거나 완료 버튼을 누르세요.'
       return { desc: msg, cardDesc: msg }

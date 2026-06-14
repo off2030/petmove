@@ -1088,6 +1088,54 @@ export async function markAdvanceNotificationApprovalSkipped(
   }
 }
 
+/**
+ * 사전 신고 '진행 중' — 보호자가 신고 후 '진행 중' 버튼을 눌러 확인. 신청일이 도래(≤오늘)했어도
+ * 이 플래그 전엔 '예정'으로 취급(situational/배너 분기). 신청일이 있어야 의미가 있음 — 미입력 시 노옵.
+ * 완료(skip)와 별개 단계라 done 으로 만들지 않는다. 일본 단일 단계라 플래그는 전역(top-level).
+ */
+export async function markAdvanceNotificationInProgress(
+  caseId: string,
+): Promise<Result<CaseRow>> {
+  try {
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    if (
+      typeof prev.advance_notification_date !== 'string' ||
+      (prev.advance_notification_date as string).length < 10
+    ) {
+      return { ok: false, error: '신청일이 입력되어 있지 않습니다.' }
+    }
+
+    const nextData: Record<string, unknown> = {
+      ...prev,
+      advance_notification_in_progress: true,
+    }
+    // 운영자 수동 stored 값보다 보호자의 적극적 입력을 우선 — derive 모드로 전환(date-patch 와 동일).
+    delete nextData.import_import_status
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 export async function markJpExportQuarantineReservationSkipped(
   caseId: string,
   /** 활성 목적지 토큰 — 신청일을 by_dest[destination] 에서 읽어 가드한다(저장은 by_dest). */
@@ -1142,6 +1190,58 @@ export async function markJpExportQuarantineReservationSkipped(
 }
 
 /**
+ * 일본 수출검역 신청 '진행 중' — 사전 신고와 동일 모델(예약 확정 전 단계). 신청일이 있어야 의미가
+ * 있음(by_dest 우선 읽기). 플래그는 reservation_skipped 와 동일하게 일본 단일 단계라 전역.
+ */
+export async function markJpExportQuarantineInProgress(
+  caseId: string,
+  destination?: string | null,
+): Promise<Result<CaseRow>> {
+  try {
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data, destination')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const token = resolveWriteToken(existing?.destination, prev, destination)
+    const appliedRaw = readByDestValue(prev, token, 'jp_export_quarantine_application_date')
+    const applied =
+      typeof appliedRaw === 'string' && appliedRaw.length >= 10
+        ? appliedRaw
+        : typeof prev.jp_export_quarantine_application_date === 'string'
+          ? prev.jp_export_quarantine_application_date
+          : ''
+    if (applied.length < 10) {
+      return { ok: false, error: '신청일이 입력되어 있지 않습니다.' }
+    }
+
+    const nextData: Record<string, unknown> = {
+      ...prev,
+      jp_export_quarantine_in_progress: true,
+    }
+    delete nextData.import_export_status
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
  * 사전 신고 step 의 신청일을 patch — case.data.advance_notification_date (YYYY-MM-DD).
  * 빈/null 이면 키 제거. data 의 다른 키는 fetch-merge 로 보존.
  */
@@ -1175,7 +1275,11 @@ export async function updateAdvanceNotificationDate(
     // 신청일이 바뀌거나 지워지면 '완료 처리(skip)'를 해제 — 새 신청일은 '허가증 대기'에서
     // 다시 시작하는 것이고(skip 은 '완료 처리' 버튼으로만 설정), 신청일 없는 skip 은 무의미하다.
     // 같은 신청일을 다시 저장할 때는 보존해 명시적 '완료 처리' 상태를 지우지 않는다.
-    if (v !== prevDate) delete nextData.advance_notification_approval_skipped
+    if (v !== prevDate) {
+      delete nextData.advance_notification_approval_skipped
+      // 신청일이 바뀌면 '진행 중' 확인도 해제 — 새 신청일은 '예정'부터 다시 시작.
+      delete nextData.advance_notification_in_progress
+    }
     // 신고탭 stored 값을 클리어해 derive 모드로 전환 — portal 보호자의 적극적 입력이
     // 운영자의 기존 수동 상태보다 우선시되도록. 액션이 일어난 케이스만 영향.
     delete nextData.import_import_status
@@ -1558,9 +1662,10 @@ export async function updateImportPermitFields(
       const prevFiled = typeof prevFiledRaw === 'string' ? prevFiledRaw : ''
       nextData = writeByDestValue(nextData, token, 'import_permit_application_date', v || null)
       nextData = writeByDestValue(nextData, token, 'permit_no', permitNo || null)
-      // 신청일 변경·삭제 시 완료 처리(skip) 해제 — 새 신청은 '허가증 대기'부터 다시.
+      // 신청일 변경·삭제 시 완료 처리(skip)·'진행 중' 확인 해제 — 새 신청은 '예정'부터 다시.
       if (v !== prevFiled) {
         nextData = writeByDestValue(nextData, token, 'import_permit_issued_skipped', null)
+        nextData = writeByDestValue(nextData, token, 'import_permit_in_progress', null)
       }
       // top-level 잔존 제거 — 다른 목적지로의 flatten fallback 누수 차단 (applyQuarantine 동일).
       delete nextData.import_permit_application_date
@@ -1574,7 +1679,10 @@ export async function updateImportPermitFields(
       else delete nextData.import_permit_application_date
       if (permitNo) nextData.permit_no = permitNo // scoping-fallback-ok: token 없음(목적지 없음) 폴백
       else delete nextData.permit_no
-      if (v !== prevFiled) delete nextData.import_permit_issued_skipped
+      if (v !== prevFiled) {
+        delete nextData.import_permit_issued_skipped
+        delete nextData.import_permit_in_progress
+      }
     }
 
     const { data: updated, error } = await admin
@@ -1627,6 +1735,58 @@ export async function markImportPermitIssued(
       delete nextData.import_permit_issued_skipped
     } else {
       nextData.import_permit_issued_skipped = true // scoping-fallback-ok: token 없음(목적지 없음) 폴백
+    }
+
+    const { data: updated, error } = await admin
+      .from('cases')
+      .update({ data: nextData })
+      .eq('id', caseId)
+      .select('*')
+      .single()
+    if (error) return { ok: false, error: error.message }
+    return { ok: true, value: updated as CaseRow }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * 수입 허가 '진행 중' — 보호자가 신청 후 '진행 중' 버튼을 눌러 확인(사전 신고와 동일, 완료와 별개).
+ * 신청일이 있어야 의미가 있음. 플래그는 issued_skipped 와 동일하게 by_dest 분리.
+ */
+export async function markImportPermitInProgress(
+  caseId: string,
+  destination?: string | null,
+): Promise<Result<CaseRow>> {
+  try {
+    const access = await assertCaseAccess(caseId)
+    if (!access.ok) return access
+
+    const admin = createAdminClient()
+    const { data: existing, error: fetchErr } = await admin
+      .from('cases')
+      .select('data, destination')
+      .eq('id', caseId)
+      .single()
+    if (fetchErr) return { ok: false, error: fetchErr.message }
+
+    const prev = (existing?.data ?? {}) as Record<string, unknown>
+    const caseDestStr = (existing as { destination: string | null }).destination
+    const token = resolveWriteToken(caseDestStr, prev, destination)
+    const filedRaw = token
+      ? readByDestValue(prev, token, 'import_permit_application_date')
+      : prev.import_permit_application_date
+    const filed = typeof filedRaw === 'string' ? filedRaw : ''
+    if (filed.length < 10) {
+      return { ok: false, error: '신청일이 입력되어 있지 않습니다.' }
+    }
+
+    let nextData: Record<string, unknown> = { ...prev }
+    if (token) {
+      nextData = writeByDestValue(nextData, token, 'import_permit_in_progress', true)
+      delete nextData.import_permit_in_progress
+    } else {
+      nextData.import_permit_in_progress = true // scoping-fallback-ok: token 없음(목적지 없음) 폴백
     }
 
     const { data: updated, error } = await admin
@@ -2002,7 +2162,11 @@ export async function updateJpExportQuarantineFields(
     }
     // 신청일이 바뀌거나 지워지면 '완료 처리(skip)'를 해제 — 사전 신고와 동일 사유.
     // reservation_skipped 는 일본 전용 키(다른 목적지가 같은 step 을 안 가져 누수 없음) → 공용 유지.
-    if (a !== prevApplied) delete nextData.jp_export_quarantine_reservation_skipped
+    if (a !== prevApplied) {
+      delete nextData.jp_export_quarantine_reservation_skipped
+      // 신청일이 바뀌면 '진행 중' 확인도 해제 — 새 신청일은 '예정'부터 다시 시작.
+      delete nextData.jp_export_quarantine_in_progress
+    }
     // 예약일·시간은 '희망/예정' 데이터일 뿐, 완료 판정에 영향 없음 — 보호자가 하단 '완료'
     // 버튼(reservation_skipped 플래그)을 명시적으로 눌러야 step 이 done. 사전 신고와 동일 모델.
     // 기존에 admin 토글로 confirmed=true 가 세팅된 케이스가 있다면 그 값은 그대로 둔다

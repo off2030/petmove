@@ -332,8 +332,8 @@ export const JP_CHECKS: ProcedureCheck[] = [
     category: '광견병',
     title: '추가 검사 타이밍',
     description:
-      '추가 항체 검사(2차+) 채혈일도 끊김 없는 광견병 부스터 chain 의 면역 유효기간 이내여야 함. 벗어나면 면역이 끊긴 상태라, 추가 접종으로 면역을 이은 뒤 다시 검사해야 함. 1차(기준) 채혈은 jp.rabies-titer-vs-booster(주의)가 담당 — 여기는 추가 검사만, 안내 톤.',
-    severity: 'info',
+      '추가 항체 검사(2차+) 채혈일이 끊김 없는 광견병 부스터 chain 의 면역 유효기간 밖이면 날짜 정합성을 확인하라는 주의. 1차(기준) 채혈은 jp.rabies-titer-vs-booster 가 담당 — 여기는 추가 검사만. 직접 입력은 저장 거부(validateTiterWithinChain)로 막히므로, 앞 차수를 거꾸로 수정해 채혈이 유효기간 밖으로 밀려난 경우에만 표면화한다(= 항상 주의, 안내로는 나올 수 없음).',
+    severity: 'warning',
     addedAt: '2026-06-11',
     run: ({ caseRow }) => {
       const rabies = readRabiesEntries(caseRow)
@@ -353,7 +353,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
         return {
           ok: false,
           message:
-            '추가 검사 채혈일이 광견병 백신 면역 유효기간을 벗어났습니다. 면역 유효기간이 끝나기 전에 추가 접종을 한 뒤 검사하세요.',
+            '추가 검사일이 직전 광견병 백신 면역 유효기간을 벗어났습니다. 접종일·유효기간·채혈일을 확인하세요.',
           offendingPaths,
         }
       }
@@ -560,7 +560,7 @@ export const JP_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: `광견병 항체 검사 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 전 추가 검사를 하세요.`,
+        message: `광견병 항체 검사 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 만료 후에 일본에 입국하려면 추가 검사를 받으세요.`,
         offendingPaths: offending,
       }
     },

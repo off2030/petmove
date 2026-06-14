@@ -58,6 +58,8 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 목적지마다 허가를 따로 받으므로 신청일·완료(skip) 플래그도 by_dest 분리.
   'import_permit_application_date',
   'import_permit_issued_skipped',
+  // '진행 중' 확인 플래그(보호자가 신청 후 '진행 중' 버튼을 눌렀는지) — skip 플래그와 동일하게 by_dest 분리.
+  'import_permit_in_progress',
   // 절차 시간 (EU 촌충국가별 praziquantel 투여시각)
   'deworming_time',
   // 도착국 거주지 주소 — destination 별로 다른 주소
@@ -164,6 +166,9 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   'advance_notification_date',
   'advance_notification_approval_skipped',
   'jp_export_quarantine_reservation_skipped',
+  // 보호자가 '진행 중' 버튼을 눌렀는지 — 위 skip 플래그와 같은 일본 단일 단계 내부 신호라 전역.
+  'advance_notification_in_progress',
+  'jp_export_quarantine_in_progress',
   // admin '진행중'(demote) 시그널 — 위 skip 플래그와 같은 일본 단일 단계 내부 신호. derive 가
   // top-level 로 read(report-status.ts), admin action 이 top-level 로 write. 같은 이유로 전역.
   'advance_notification_admin_demoted_at',

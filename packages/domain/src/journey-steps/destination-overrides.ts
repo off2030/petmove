@@ -1,5 +1,5 @@
 import { todayKst } from '../procedure-checks/utils'
-import { deriveImportPermitStatus } from './report-status'
+import { deriveImportPermitStatus, isImportPermitInProgressAck } from './report-status'
 import type { StepDefinition } from './types'
 
 /**
@@ -123,6 +123,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
             : ''
         if (filed.length >= 10 && filed > todayKst()) return undefined
         if (deriveImportPermitStatus(caseRow) !== 'in_progress') return undefined
+        // 신청일 도래만으론 '진행 중' 안내 X — 보호자가 '진행 중' 버튼을 눌러야(사전 신고와 동일).
+        if (!isImportPermitInProgressAck(caseRow)) return undefined
         const msg =
           '수입 허가 신청을 진행 중입니다. 수입허가증을 받으면 파일을 첨부하거나 완료 버튼을 누르세요.'
         return { desc: msg, cardDesc: msg }

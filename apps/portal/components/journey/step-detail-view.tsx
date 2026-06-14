@@ -30,6 +30,9 @@ import {
   validateThImportPermitVaccineGap,
   EU_ENTRY_FAMILY,
   SINGLE_DOSE_RABIES_DESTINATIONS,
+  isAdvanceNotificationInProgressAck,
+  isImportPermitInProgressAck,
+  isJpExportQuarantineInProgressAck,
   validateTiterAfterBooster,
   validateTiterWithinChain,
   validateVetVisitDate,
@@ -45,7 +48,10 @@ import { useUnsavedGuard } from '@/components/portal-shell/nav-guard'
 import {
   getCaseVaccineData,
   markAdvanceNotificationApprovalSkipped,
+  markAdvanceNotificationInProgress,
+  markImportPermitInProgress,
   markImportPermitIssued,
+  markJpExportQuarantineInProgress,
   markJpExportQuarantineReservationSkipped,
   markTiterResultConfirmed,
   updateAdvanceNotificationDate,
@@ -1503,16 +1509,19 @@ export function StepDetailView({
   const advanceApprovalSkipped =
     (caseRow?.data as Record<string, unknown> | undefined)?.advance_notification_approval_skipped ===
     true
+  // 보호자가 '진행 중' 버튼을 눌렀는지(또는 운영자가 진행 중 표시). 신청일 도래 후 이 확인 전엔
+  // '예정'(진행 중 버튼 노출), 확인 후엔 '진행 중'(완료 버튼 노출).
+  const advanceAcked = !!caseRow && isAdvanceNotificationInProgressAck(caseRow)
   const isAdvanceDateEntered =
     isAdvanceNotification &&
     savedAdvanceDate.length >= 10 &&
     savedAdvanceDate <= todayStr &&
     stepDocuments.length === 0
   const isAdvanceAwaitingApproval = isAdvanceDateEntered && !advanceApprovalSkipped
-  // 사전 신고 허가증 대기 상태에서 입력 변경이 없으면 하단 '저장' 버튼이 '완료' 로 전환되어
-  // skip-approval 액션을 실행. 보호자에겐 화면에 액션 버튼이 둘(저장+완료)이 아니라 하나만
-  // 보이도록 — 안내 박스 내 별도 '완료' 버튼은 제거됐다.
-  const advanceSkipMode = isAdvanceAwaitingApproval && !dirty
+  // 신청일 도래 + 아직 '진행 중' 확인 전 → 하단 버튼이 '진행 중'(markAdvanceNotificationInProgress).
+  // 확인 후 → '완료'(skip → done). 변경 없을 때만(저장과 충돌 방지). 보호자에겐 한 번에 버튼 하나만.
+  const advanceInProgressMode = isAdvanceAwaitingApproval && !advanceAcked && !dirty
+  const advanceSkipMode = isAdvanceAwaitingApproval && advanceAcked && !dirty
   const [skippingApproval, setSkippingApproval] = useState(false)
   const handleSkipAdvanceApproval = () => {
     if (skippingApproval) return
@@ -1536,14 +1545,16 @@ export function StepDetailView({
   const jpExportReservationSkipped =
     (caseRow?.data as Record<string, unknown> | undefined)?.jp_export_quarantine_reservation_skipped ===
     true
+  const jpExportAcked = !!caseRow && isJpExportQuarantineInProgressAck(caseRow)
   const isJpExportApplied =
     isJpExportQuarantine &&
     savedJpExport.applicationDate.length >= 10 &&
     savedJpExport.applicationDate <= todayStr
   // 'awaiting' = 신청 도래 + 아직 완료 처리 안 함. done(legacy confirmed/admin) 이면 제외.
   const isJpExportAwaitingReservation = isJpExportApplied && !jpExportReservationSkipped && !done
-  // 하단 '저장' 버튼이 '완료' 로 전환되는 모드 — 변경 없을 때만(저장과 충돌 방지).
-  const jpExportSkipMode = isJpExportAwaitingReservation && !dirty
+  // 신청일 도래 + '진행 중' 확인 전 → '진행 중' 버튼, 확인 후 → '완료' 버튼. 변경 없을 때만.
+  const jpExportInProgressMode = isJpExportAwaitingReservation && !jpExportAcked && !dirty
+  const jpExportSkipMode = isJpExportAwaitingReservation && jpExportAcked && !dirty
   const [skippingJpExport, setSkippingJpExport] = useState(false)
   const handleSkipJpExportReservation = () => {
     if (skippingJpExport) return
@@ -1567,7 +1578,10 @@ export function StepDetailView({
     savedImportPermit.applicationDate.length >= 10 &&
     savedImportPermit.applicationDate <= todayStr &&
     !done
-  const importPermitCompleteMode = isImportPermitInProgress && !dirty
+  const importPermitAcked = !!caseRow && isImportPermitInProgressAck(caseRow)
+  // 신청일 도래 + '진행 중' 확인 전 → '진행 중' 버튼, 확인 후 → '완료' 버튼. 변경 없을 때만.
+  const importPermitInProgressMode = isImportPermitInProgress && !importPermitAcked && !dirty
+  const importPermitCompleteMode = isImportPermitInProgress && importPermitAcked && !dirty
   const [completingImportPermit, setCompletingImportPermit] = useState(false)
   const handleCompleteImportPermit = () => {
     if (completingImportPermit) return
@@ -1584,6 +1598,75 @@ export function StepDetailView({
       }
     })
   }
+  // 신청 단계(사전 신고·일본 수출검역·수입 허가) '진행 중' 표시 — 신청 후 보호자가 눌러 확인.
+  // 완료(skip)와 별개로, 도래만으론 진행 중으로 안 넘어가게 하는 명시적 게이트. 한 번에 하나만 활성.
+  const [markingInProgress, setMarkingInProgress] = useState(false)
+  const handleMarkAdvanceInProgress = () => {
+    if (markingInProgress) return
+    setMarkingInProgress(true)
+    startTransition(async () => {
+      const res = await markAdvanceNotificationInProgress(caseId)
+      setMarkingInProgress(false)
+      if (res.ok) {
+        updateCase(res.value)
+        router.replace(journeyHref)
+      } else {
+        setStatus('error')
+        setError(res.error)
+      }
+    })
+  }
+  const handleMarkJpExportInProgress = () => {
+    if (markingInProgress) return
+    setMarkingInProgress(true)
+    startTransition(async () => {
+      const res = await markJpExportQuarantineInProgress(caseId, activeDest)
+      setMarkingInProgress(false)
+      if (res.ok) {
+        updateCase(res.value)
+        router.replace(journeyHref)
+      } else {
+        setStatus('error')
+        setError(res.error)
+      }
+    })
+  }
+  const handleMarkImportPermitInProgress = () => {
+    if (markingInProgress) return
+    setMarkingInProgress(true)
+    startTransition(async () => {
+      const res = await markImportPermitInProgress(caseId, activeDest)
+      setMarkingInProgress(false)
+      if (res.ok) {
+        updateCase(res.value)
+        router.replace(journeyHref)
+      } else {
+        setStatus('error')
+        setError(res.error)
+      }
+    })
+  }
+  // 신청 단계 '진행 중' 게이트 — 신청일 도래 후 아직 진행 중 확인 전. 당일/지난 배너 + '진행 중' 버튼.
+  const reportInProgressMode =
+    advanceInProgressMode || jpExportInProgressMode || importPermitInProgressMode
+  const reportApplicationSavedDate = isAdvanceNotification
+    ? savedAdvanceDate
+    : isJpExportQuarantine
+      ? savedJpExport.applicationDate
+      : isImportPermit
+        ? savedImportPermit.applicationDate
+        : ''
+  const reportAcked = isAdvanceNotification
+    ? advanceAcked
+    : isJpExportQuarantine
+      ? jpExportAcked
+      : importPermitAcked
+  // 신고/신청 동사 — 사전 신고는 '신고', 나머지(수출검역 신청·수입 허가)는 '신청'.
+  const reportVerb = isAdvanceNotification ? '신고' : '신청'
+  const reportDueToday =
+    reportInProgressMode && reportApplicationSavedDate === todayStr && !reportAcked && !done
+  const reportPassed =
+    reportInProgressMode && reportApplicationSavedDate < todayStr && !reportAcked && !done
   // 광견병 항체 검사 — 사전 신고·수출검역과 동일 2단계.
   //  - 채혈일 입력(오늘 이하) + 미완료 = '검사 진행 중'. 하단 저장 버튼이 titerCompleteMode
   //    로 '완료' 전환 → 결과 확인 플래그 set. (결과값을 직접 입력해 저장해도 done.)
@@ -1968,9 +2051,11 @@ export function StepDetailView({
                   gap: 10,
                 }}
               >
+                {/* 안내 박스는 제목 없이 본문만 — 상황 안내(situationalDesc)와 같은 톤으로 통일.
+                    제목(check.title)을 떼 둘이 들쭉날쭉해 보이던 문제 해소. 주의 박스는 상황 안내가
+                    안 섞여 어긋남이 없으므로 제목 유지. */}
                 {notices.map(({ check, result }) => (
                   <li key={check.id}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, marginBottom: 2 }}>{check.title}</div>
                     {result.message && (
                       <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>{result.message}</div>
                     )}
@@ -2338,6 +2423,26 @@ export function StepDetailView({
           </section>
         )}
 
+        {/* 신청 단계(사전 신고·일본 수출검역·수입 허가) — 신청일 도래 후 아직 '진행 중' 확인 전.
+            당일/지난 안내 + 하단 버튼은 '진행 중'. (진행 중 확인 후엔 situational '진행 중입니다…' 노출.) */}
+        {(reportDueToday || reportPassed) && (
+          <section
+            style={{
+              marginTop: 18,
+              padding: '14px 16px',
+              borderRadius: 16,
+              background: C.infoBg,
+              border: `.5px solid color-mix(in srgb, ${C.info} 35%, transparent)`,
+            }}
+          >
+            <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
+              {reportDueToday
+                ? `오늘은 ${step.title} 예정일입니다. ${reportVerb} 후 진행 중 버튼을 눌러주세요.`
+                : `${step.title} 예정일이 지났습니다. ${reportVerb} 후 진행 중 버튼을 누르거나 예정일을 변경해주세요.`}
+            </div>
+          </section>
+        )}
+
       </div>
 
       {/* 하단 sticky 저장 바 — 인터랙티브 step 한정. 한국 모바일 앱 패턴 (토스/카카오/당근).
@@ -2391,24 +2496,32 @@ export function StepDetailView({
           {(() => {
             const completeMode =
               advanceSkipMode || jpExportSkipMode || titerCompleteMode || vetVisitConfirmMode || importPermitCompleteMode
+            // 신청 단계 '진행 중' 표시 모드 — completeMode 와 상호배타(ack 여부로 갈림).
+            const inProgressMode = reportInProgressMode
             const processing =
-              skippingApproval || skippingJpExport || completingTiter || confirmingVetDocs || completingImportPermit
-            const active = (canSave || completeMode) && status !== 'saving' && !processing
+              skippingApproval || skippingJpExport || completingTiter || confirmingVetDocs || completingImportPermit || markingInProgress
+            const active = (canSave || completeMode || inProgressMode) && status !== 'saving' && !processing
             return (
           <button
             type="button"
             onClick={
-              advanceSkipMode
-                ? handleSkipAdvanceApproval
-                : jpExportSkipMode
-                  ? handleSkipJpExportReservation
-                  : titerCompleteMode
-                    ? handleCompleteTiter
-                    : vetVisitConfirmMode
-                      ? handleConfirmVetVisitDocs
-                      : importPermitCompleteMode
-                        ? handleCompleteImportPermit
-                        : handleSaveClick
+              advanceInProgressMode
+                ? handleMarkAdvanceInProgress
+                : jpExportInProgressMode
+                  ? handleMarkJpExportInProgress
+                  : importPermitInProgressMode
+                    ? handleMarkImportPermitInProgress
+                    : advanceSkipMode
+                      ? handleSkipAdvanceApproval
+                      : jpExportSkipMode
+                        ? handleSkipJpExportReservation
+                        : titerCompleteMode
+                          ? handleCompleteTiter
+                          : vetVisitConfirmMode
+                            ? handleConfirmVetVisitDocs
+                            : importPermitCompleteMode
+                              ? handleCompleteImportPermit
+                              : handleSaveClick
             }
             disabled={!active}
             aria-live="polite"
@@ -2436,6 +2549,8 @@ export function StepDetailView({
                   ? '✓ 저장됨'
                   : vetVisitConfirmMode
                     ? '모두 있어요'
+                    : inProgressMode
+                      ? '진행 중'
                     : completeMode
                       ? '완료'
                     : formUpcoming ||
