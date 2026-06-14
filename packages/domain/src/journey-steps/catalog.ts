@@ -1,6 +1,10 @@
 import {
   addYears,
+  readCivEntries,
+  readExternalParasiteEntries,
   readGeneralVaccineEntries,
+  readInfectiousDiseaseEntries,
+  readInternalParasiteEntries,
   readRabiesEntries,
   readTiterEntries,
   resolveValidUntil,
@@ -18,6 +22,7 @@ import {
   deriveJpExportQuarantineStatus,
 } from './report-status'
 import type { StepDefinition } from './types'
+import type { CaseRow } from '../types'
 
 /** 'YYYY-MM-DD' → 'YYYY년 M월 D일'. 형식이 아니면 원문 반환. */
 function formatKoreanDate(iso: string): string {
@@ -25,6 +30,44 @@ function formatKoreanDate(iso: string): string {
   if (parts.length !== 3) return iso
   const [y, m, d] = parts
   return `${y}년 ${Number(m)}월 ${Number(d)}일`
+}
+
+/**
+ * 백신·검사·구충 카드(예정→도래→완료확인 모델)의 당일/지남 안내 문구.
+ *  - 미입력·미래(예정): undefined → 기본 cardLine 유지(날짜는 일정 칩에만, "X일 예정" 텍스트 없음).
+ *  - 당일(latest == 오늘): "오늘은 {항목} 예정일입니다. {동사} 후 완료 버튼을 눌러주세요."
+ *  - 지남(latest < 오늘): "{항목} 예정일이 지났습니다. 완료 버튼을 누르시거나 예정일을 변경해주세요."
+ * confirm 플래그가 true(=완료)면 호출 측에서 미리 걸러 done 으로 처리하므로 여기선 날짜만 본다.
+ * variant 'titer' = 결과 입력 단계라 "결과를 입력하거나 완료 버튼을…" 변형.
+ */
+function datedCardSituational(
+  latestDate: string | null,
+  item: string,
+  verb: string,
+  variant?: 'titer',
+): { desc: string; cardDesc: string } | undefined {
+  if (!latestDate || latestDate.length < 10) return undefined
+  const today = todayKst()
+  if (latestDate > today) return undefined // 미래(예정) — 기본 안내 유지
+  const completeClause =
+    variant === 'titer' ? '결과를 입력하거나 완료 버튼을 눌러주세요' : `${verb} 후 완료 버튼을 눌러주세요`
+  const passedClause =
+    variant === 'titer'
+      ? '결과를 입력하거나 완료 버튼을 누르시거나 예정일을 변경해주세요'
+      : '완료 버튼을 누르시거나 예정일을 변경해주세요'
+  const msg =
+    latestDate === today
+      ? `오늘은 ${item} 예정일입니다. ${completeClause}.`
+      : `${item} 예정일이 지났습니다. ${passedClause}.`
+  return { desc: msg, cardDesc: msg }
+}
+
+/** date_array 카드의 가장 늦은 입력일(없으면 null) — situational/표시용. */
+function latestDateOfData(caseRow: CaseRow, reader: (c: CaseRow) => Array<{ date: string }>): string | null {
+  const ds = reader(caseRow)
+    .map((e) => e.date)
+    .filter((d) => typeof d === 'string' && d.length >= 10)
+  return ds.length ? ds.slice().sort().slice(-1)[0] : null
 }
 
 /** 'HH:mm'(24시간) → '오후 2시 30분'(한국식 12시간). 분이 0이면 '오후 2시'. 형식 외엔 원문. */
@@ -122,29 +165,36 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 안내(종합백신과 동일 모델). 일본·하와이(2회국)는 이 situational 이 미적용(undefined) — 기존
     // 1차/2차/추가 분리 카드 유지. done 은 destination-override 가 1회국에서 has-rabies-valid 로 교체.
     situational: (caseRow) => {
-      if (!isSingleDoseRabiesCase(caseRow)) return undefined
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
       const r = readRabiesEntries(caseRow)
+      // 2회국(일본·하와이) — 1차(r[0]) 도래/지남 완료확인 안내.
+      if (!isSingleDoseRabiesCase(caseRow)) {
+        if (data.rabies_1_confirmed === true) return undefined
+        return datedCardSituational(r[0]?.date ?? null, '1차 광견병 백신', '접종')
+      }
+      // 1회 접종국 단일카드 — 유효기간 만료 분기 먼저, 아니면 도래 완료확인.
       if (r.length === 0) return undefined
       const latest = [...r].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
-      if (!validUntil) return undefined
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
       const entry =
         (typeof data.entry_date === 'string' && data.entry_date) ||
         (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
         ''
       const today = todayKst()
-      if (latest.date > today) return undefined
-      if (validUntil < today) {
+      if (latest.date > today) return undefined // 미래(예정) — 기본 안내
+      // 만료/입국전 만료는 advisory(별도 안내 카드) — 도래 완료확인은 '다음 할 일' 유지.
+      if (validUntil && validUntil < today) {
         const msg = `직전 광견병 백신의 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
-        return { desc: msg, cardDesc: msg }
+        return { desc: msg, cardDesc: msg, advisory: true }
       }
-      if (entry && validUntil < entry) {
+      if (entry && validUntil && validUntil < entry) {
         const token = buildCaseJourneyContext(caseRow).destinationToken
         const msg = `광견병 백신 면역 유효기간이 ${token ? `${token} ` : ''}입국 전에 만료됩니다. ${formatKoreanDate(validUntil)}까지 추가 접종을 하세요.`
-        return { desc: msg, cardDesc: msg }
+        return { desc: msg, cardDesc: msg, advisory: true }
       }
-      return undefined
+      // 1회국 단일카드 완료확인 — 별도 키(rabies_single_confirmed). 2회국 1차(rabies_1_confirmed)와 분리.
+      if (data.rabies_single_confirmed === true) return undefined
+      return datedCardSituational(latest.date, '광견병 백신', '접종')
     },
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 30,
@@ -182,6 +232,13 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       excludeDestinations: [...SINGLE_DOSE_RABIES_DESTINATIONS],
       species: 'all',
       tripType: 'all',
+    },
+    // 2차(r[1]) 도래/지남 완료확인 안내(예정→도래→완료 모델).
+    situational: (caseRow) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      if (data.rabies_2_confirmed === true) return undefined
+      const r = readRabiesEntries(caseRow)
+      return datedCardSituational(r[1]?.date ?? null, '2차 광견병 백신', '접종')
     },
     order: 35,
     earliest: { anchor: 'step:rabies-vaccine-1', daysAfter: 30 },
@@ -249,8 +306,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 예약이면 예약 안내문을 띄운다. advisory step 이라 일정·상세가 모두 이 situational 을
       // 안내문으로 쓰므로, undefined 를 반환하면 일정은 정적 요약으로 fallback 되고 상세엔
       // 안내 박스가 사라져 둘이 어긋난다(예정 상태에서 안내문 불일치 버그).
-      if (latest.date > today && (!entry || validUntil >= entry)) {
-        const msg = `${formatKoreanDate(latest.date)} 추가 접종 예정입니다. 접종 후 완료 버튼을 눌러주세요.`
+      // 당일 — 도래, 완료 버튼 안내. (미래 예정은 기본 안내 + 일정 '예정' 칩 — "X일 예정" 텍스트 제거.)
+      if (latest.date === today && (!entry || validUntil >= entry)) {
+        const msg = '오늘은 추가 접종 예정일입니다. 접종 후 완료 버튼을 눌러주세요.'
         return { desc: msg, cardDesc: msg }
       }
       // 이미 만료 — 추가 접종 기록 입력 요청. (만료 전 임박은 jp.rabies-validity-expires-soon 담당.)
@@ -345,8 +403,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       if (date.length < 10 || date > todayKst()) return undefined
       if (data.rabies_titer_result_confirmed === true) return undefined
       if (typeof primary?.value === 'string' && primary.value.trim().length > 0) return undefined
-      const msg = '광견병 항체 검사를 진행 중입니다. 결과가 나오면 결과를 입력하거나 완료 버튼을 누르세요.'
-      return { desc: msg, cardDesc: msg }
+      // 당일/지남 — 결과 입력 또는 완료 버튼 안내(titer 변형).
+      return datedCardSituational(date, '광견병 항체 검사', '검사', 'titer')
     },
     inputs: [
       { key: 'rabies_titer_date', label: '채혈일', type: 'date' },
@@ -408,10 +466,13 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 예약이면 예약 안내. advisory step 이라 일정·상세가 모두 이 situational 을 안내문으로
       // 쓰므로, undefined 면 일정은 정적 요약으로 fallback 되고 상세엔 안내 박스가 사라져 어긋난다.
       // (추가 백신 situational 과 동일 패턴.)
-      if (latest.date > today && (!entry || validUntil >= entry)) {
-        const msg = `${formatKoreanDate(latest.date)} 추가 검사 예정입니다. 검사 후 완료 버튼을 눌러주세요.`
+      // 당일 — 도래, 완료 버튼 안내.
+      if (latest.date === today && (!entry || validUntil >= entry)) {
+        const msg = '오늘은 추가 검사 예정일입니다. 검사 후 완료 버튼을 눌러주세요.'
         return { desc: msg, cardDesc: msg }
       }
+      // 미래(예정) — 기본 안내 + 일정 '예정' 칩 ("X일 예정" 텍스트 제거).
+      if (latest.date > today) return undefined
       // 유효기간이 입국일을 덮으면(아직 유효) — 도래·미확인이면 저장 안내, 아니면 안내 불필요.
       if (entry && validUntil >= entry) {
         // 예정일 다음날부터(당일 제외) — 당일엔 '지났다'가 부정확하므로 기본 안내문으로 둔다.
@@ -681,27 +742,29 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     situational: (caseRow) => {
       const entries = readGeneralVaccineEntries(caseRow)
       if (entries.length === 0) return undefined
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
       const latest = [...entries].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
-      if (!validUntil) return undefined
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
       const entry =
         (typeof data.entry_date === 'string' && data.entry_date) ||
         (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
         ''
       const today = todayKst()
-      // 미래(예정) 접종만 있으면 기본 안내로 둔다.
+      // 미래(예정) 접종만 있으면 기본 안내로 둔다(날짜는 일정 칩에만).
       if (latest.date > today) return undefined
-      if (validUntil < today) {
+      // 만료/입국전 만료는 advisory(별도 안내 카드) — 도래 완료확인은 '다음 할 일' 유지.
+      if (validUntil && validUntil < today) {
         const msg = `직전 종합백신의 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료되었습니다. 추가 접종 기록을 입력하세요.`
-        return { desc: msg, cardDesc: msg }
+        return { desc: msg, cardDesc: msg, advisory: true }
       }
-      if (entry && validUntil < entry) {
+      if (entry && validUntil && validUntil < entry) {
         const token = buildCaseJourneyContext(caseRow).destinationToken
         const msg = `종합백신 면역 유효기간이 ${token ? `${token} ` : ''}입국 전에 만료됩니다. ${formatKoreanDate(validUntil)}까지 추가 접종을 하세요.`
-        return { desc: msg, cardDesc: msg }
+        return { desc: msg, cardDesc: msg, advisory: true }
       }
-      return undefined
+      // 만료 아님 + 도래 + 미확인 → 당일/지남 완료확인 안내.
+      if (data.general_vaccine_confirmed === true) return undefined
+      return datedCardSituational(latest.date, '종합백신', '접종')
     },
     inputs: [
       { key: 'general_vaccine_dates', label: '접종일', type: 'date_array', hasValidUntil: true },
@@ -726,6 +789,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     },
     order: 60,
     done: 'has-civ-vaccine',
+    situational: (caseRow) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      if (data.civ_confirmed === true) return undefined
+      return datedCardSituational(latestDateOfData(caseRow, readCivEntries), '독감(CIV) 백신', '접종')
+    },
     inputs: [
       { key: 'civ_dates', label: '접종일', type: 'date_array', hasValidUntil: true },
     ],
@@ -748,6 +816,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     },
     order: 70,
     done: 'has-infectious-disease-test',
+    situational: (caseRow) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      if (data.infectious_disease_confirmed === true) return undefined
+      return datedCardSituational(latestDateOfData(caseRow, readInfectiousDiseaseEntries), '전염병 검사', '검사')
+    },
     inputs: [
       { key: 'infectious_disease_records', label: '검사일', type: 'date_array' },
     ],
@@ -782,6 +855,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     },
     order: 80,
     done: 'has-external-parasite',
+    situational: (caseRow) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      if (data.external_parasite_confirmed === true) return undefined
+      return datedCardSituational(latestDateOfData(caseRow, readExternalParasiteEntries), '외부구충', '구충')
+    },
     inputs: [
       { key: 'external_parasite_dates', label: '처치일', type: 'date_array' },
     ],
@@ -811,6 +889,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     },
     order: 90,
     done: 'has-internal-parasite',
+    situational: (caseRow) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      if (data.internal_parasite_confirmed === true) return undefined
+      return datedCardSituational(latestDateOfData(caseRow, readInternalParasiteEntries), '내부구충', '구충')
+    },
     inputs: [
       { key: 'internal_parasite_dates', label: '투약일', type: 'date_array' },
     ],
@@ -837,6 +920,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     order: 130,
     deadline: { anchor: 'departure', daysBefore: 3, window: true },
     done: 'has-internal-parasite',
+    situational: (caseRow) => {
+      const data = (caseRow.data ?? {}) as Record<string, unknown>
+      if (data.internal_parasite_confirmed === true) return undefined
+      return datedCardSituational(latestDateOfData(caseRow, readInternalParasiteEntries), '촌충 구충', '구충')
+    },
     inputs: [
       { key: 'internal_parasite_dates', label: '구충일', type: 'date_array' },
     ],

@@ -539,6 +539,38 @@ export function buildJourney(
     //  - earliest 단독: '예정' 의미상 어긋나 제외 — '다음 할 일' 카드 본문(cardDesc)에서만 안내.
     // deadline 이 있고 window 가 아니면 그게 마감일 — '마감' 칩으로 표시.
     const fallbackDate = step.deadline && !step.deadline.window ? deadline : null
+    // 백신·검사·구충(예정→도래→완료) 카드 — not-done 인데 미래 입력 날짜가 있으면 '예정 [날짜]' 칩.
+    // (done 게이트로 미래=미완료가 됐으므로, 회귀 없이 예정 칩이 유지되도록 직접 surface.
+    //  done 이면 max ≤ 오늘이라 datedUpcoming=null — done 분기와 충돌 없음.)
+    const datedUpcoming = (() => {
+      if (step.id === 'rabies-vaccine-1' || step.id === 'rabies-vaccine-2') {
+        // 1회 접종국 단일카드(rabies-vaccine-1)는 1·2·n차 목록 — 최신일 기준(general-vaccine 동일).
+        if (
+          step.id === 'rabies-vaccine-1' &&
+          SINGLE_DOSE_RABIES_DESTINATIONS.includes(ctx.destinationKey ?? '')
+        ) {
+          const max = latestEntryDate(caseData.rabies_dates, 0)
+          return max && max > today ? max : null
+        }
+        const i = step.id === 'rabies-vaccine-2' ? 1 : 0
+        const arr = Array.isArray(caseData.rabies_dates) ? caseData.rabies_dates : []
+        const slot = arr[i] as Record<string, unknown> | undefined
+        const d = slot && typeof slot.date === 'string' ? slot.date.slice(0, 10) : ''
+        return d.length >= 10 && d > today ? d : null
+      }
+      const arrKey: Record<string, string> = {
+        'general-vaccine': 'general_vaccine_dates',
+        'civ-vaccine': 'civ_dates',
+        'infectious-disease-test': 'infectious_disease_records',
+        'external-parasite': 'external_parasite_dates',
+        'internal-parasite': 'internal_parasite_dates',
+        'echinococcus-treatment': 'internal_parasite_dates',
+      }
+      const key = arrKey[step.id]
+      if (!key) return null
+      const max = latestEntryDate(caseData[key], 0)
+      return max && max > today ? max : null
+    })()
     const date = passedUnconfirmed
       ? null
       : isDeparture && !isJpImportQuarantine
@@ -579,7 +611,7 @@ export function buildJourney(
                           : titerExtraUpcomingDate
                         : done
                           ? resolveCompletedDate(step.done, caseRow)
-                          : fallbackDate
+                          : (datedUpcoming ?? fallbackDate)
     // 칩 라벨 분기 — '마감 26·11·21' (단일 non-window 마감일이 표시 날짜인 경우) vs
     // '예정 …' (그 외 일정·이벤트·window 시작·기간 시작 등). 사전 신고처럼 deadline 자체가
     // 보호자의 행동 마감일일 때만 '마감'. window 마감(출국 10일 이내 검진 등)은 구간 시작이라 '예정' 유지.
@@ -654,8 +686,10 @@ export function buildJourney(
     // 만료 상태의 백신(광견병 단일카드·종합백신)은 일본 추가백신처럼 '안내'로 배치한다 —
     // situational 안내가 있고 미완료면 advisory 취급(다음 할 일 대신 별도 안내 카드, 일정 row
     // 안내 톤). 미접종이면 situational 이 undefined 라 일반 '다음 할 일'(접종하세요)로 노출.
+    // 만료(advisory 마커)일 때만 안내로 강등 — 당일/지남 '완료확인' situational 은 advisory 가
+    // 아니므로 '다음 할 일'에 그대로 남는다(도래일에 가장 actionable 한 항목이 묻히지 않게).
     const isExpiryVaccineState =
-      (step.id === 'rabies-vaccine-1' || step.id === 'general-vaccine') && !done && !!sit?.desc
+      (step.id === 'rabies-vaccine-1' || step.id === 'general-vaccine') && !done && sit?.advisory === true
     const isAdvisory = step.advisoryOnly === true || isExpiryVaccineState
     // 안내 카드 본문 — info check 메시지가 있으면 그걸, 없으면 advisory step 의 desc(상황별),
     // 신청-완료 awaiting 은 situational desc 자체가 안내문.

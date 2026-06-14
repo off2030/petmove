@@ -303,6 +303,17 @@ export async function updateCaseField(
       nextData[key] = value
     }
     dataMutated = true
+    // 백신·구충 날짜 배열을 admin 이 편집하면 portal 이 남긴 '예정→완료확인' 플래그(*_confirmed)를
+    // 정리한다. 안 하면 portal 이 미래로 저장하며 남긴 false sentinel 이 잔존해, admin 이 과거일로
+    // 정정해도 done-resolver(isDatedConfirmed)가 false 단락으로 영구 미완료가 된다. 삭제 시
+    // 날짜 게이트 폴백(과거=완료, 미래=예정)으로 정상 동작. (admin 은 확인 버튼 UI 가 없어 폴백이 맞음.)
+    const DATED_CONFIRM_FLAGS: Record<string, string[]> = {
+      rabies_dates: ['rabies_1_confirmed', 'rabies_2_confirmed', 'rabies_single_confirmed'],
+      general_vaccine_dates: ['general_vaccine_confirmed'],
+      external_parasite_dates: ['external_parasite_confirmed'],
+      internal_parasite_dates: ['internal_parasite_confirmed'],
+    }
+    for (const flag of DATED_CONFIRM_FLAGS[key] ?? []) delete nextData[flag]
   }
   // 일본 등 destination 별 sync (예: departure_flight_date ↔ departure_date) 는
   // hardcode 가 아닌 org_auto_fill_rules 로 처리 — applyAutoFillRules 가 트리거.

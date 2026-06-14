@@ -61,8 +61,11 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       // 날짜 값 자체는 후속 검증(after-microchip 등)에 그대로 쓰이므로 보존하고, 완료 판정만 미룬다.
       return implant.slice(0, 10) <= todayKst()
     }
-    case 'has-rabies-entry':
-      return readRabiesEntries(caseRow).length > 0
+    case 'has-rabies-entry': {
+      // 1차 = 입력순서 첫 항목(r[0]). 도래+확인(예정→완료) 게이트.
+      const r = readRabiesEntries(caseRow)
+      return isDatedConfirmed(data, r[0]?.date ?? null, 'rabies_1_confirmed')
+    }
     case 'has-rabies-valid': {
       // 1회 접종국 단일 카드 — 종합백신(has-general-vaccine)과 동일. 최근 접종 유효기간이
       // 입국일을 커버해야 완료. 입국 전 만료면 추가 접종 필요 → 미완료. 입국일 없으면 입력만으로 완료.
@@ -77,10 +80,16 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
         (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
         ''
       if (entry && validUntil && validUntil < entry) return false
-      return true
+      // 1회국 단일카드 — 별도 키(최신 접종 기준). 2회국 1차(rabies_1_confirmed)와 의미 분리:
+      // 다중 목적지(일본+태국)에서 단일카드 저장이 2회국 1차를 clobber 하지 않도록.
+      return isDatedConfirmed(data, latest.date, 'rabies_single_confirmed')
     }
-    case 'has-rabies-booster':
-      return readRabiesEntries(caseRow).length >= 2
+    case 'has-rabies-booster': {
+      // 2차 = 입력순서 둘째(r[1]). 도래+확인 게이트.
+      const r = readRabiesEntries(caseRow)
+      if (r.length < 2) return false
+      return isDatedConfirmed(data, r[1].date, 'rabies_2_confirmed')
+    }
     case 'has-extra-rabies': {
       // 추가 접종(일본 3차+ / 1회 접종국 2차+)은 (a) 직전 백신의 면역 유효기간 이내에 받아
       // chain 유지하고, (b) 입국일이 입력된 경우 최신 booster 유효기간이 입국일을 커버해야
@@ -168,16 +177,28 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
         (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
         ''
       if (entry && validUntil && validUntil < entry) return false
-      return true
+      return isDatedConfirmed(data, latest.date, 'general_vaccine_confirmed')
     }
     case 'has-civ-vaccine':
-      return readCivEntries(caseRow).length > 0
+      return isDatedConfirmed(data, latestDateOf(readCivEntries(caseRow).map((e) => e.date)), 'civ_confirmed')
     case 'has-infectious-disease-test':
-      return readInfectiousDiseaseEntries(caseRow).length > 0
+      return isDatedConfirmed(
+        data,
+        latestDateOf(readInfectiousDiseaseEntries(caseRow).map((e) => e.date)),
+        'infectious_disease_confirmed',
+      )
     case 'has-internal-parasite':
-      return readInternalParasiteEntries(caseRow).length > 0
+      return isDatedConfirmed(
+        data,
+        latestDateOf(readInternalParasiteEntries(caseRow).map((e) => e.date)),
+        'internal_parasite_confirmed',
+      )
     case 'has-external-parasite':
-      return readExternalParasiteEntries(caseRow).length > 0
+      return isDatedConfirmed(
+        data,
+        latestDateOf(readExternalParasiteEntries(caseRow).map((e) => e.date)),
+        'external_parasite_confirmed',
+      )
     case 'has-deworming-time':
       return typeof data.deworming_time === 'string' && (data.deworming_time as string).length > 0
     case 'has-vet-visit': {
@@ -278,6 +299,31 @@ function isQuarantineConfirmed(
   const dt = data[dateKey]
   if (typeof dt !== 'string' || dt.length < 10) return false
   return data[confirmKey] === true
+}
+
+/** 날짜 배열에서 가장 늦은 'YYYY-MM-DD' (없으면 null). */
+function latestDateOf(dates: string[]): string | null {
+  const valid = dates.filter((d) => typeof d === 'string' && d.length >= 10)
+  if (valid.length === 0) return null
+  return valid.slice().sort().slice(-1)[0]
+}
+
+/**
+ * 백신·검사·구충 카드 완료 — 가장 늦은 입력일이 도래(≤오늘) AND 확인 플래그가 명시적 false 가
+ * 아님. 추가접종(has-extra-rabies)과 동일한 3-state:
+ *   - confirmKey === false → 미완료 (미래로 저장됐거나 도래 후 아직 '완료' 미클릭).
+ *   - confirmKey === true / undefined → 날짜 게이트(latest ≤ 오늘)로 판정.
+ * 옛 데이터(플래그 없음=undefined): 과거 입력이면 그대로 완료 유지(회귀 0), 미래 입력이면
+ * 자동으로 미완료(예정)로 교정. → prod 마이그레이션 불필요.
+ */
+function isDatedConfirmed(
+  data: Record<string, unknown>,
+  latestDate: string | null,
+  confirmKey: string,
+): boolean {
+  if (!latestDate || latestDate.length < 10) return false
+  if (data[confirmKey] === false) return false
+  return latestDate <= todayKst()
 }
 
 /**

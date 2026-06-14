@@ -474,12 +474,31 @@ export function StepDetailView({
   )
   const titerExtraArrivedUnconfirmed =
     isTiterExtra && !done && savedTiterExtraLatest !== '' && savedTiterExtraLatest <= todayStr
+  // 백신·구충(예정→도래→완료) — 저장된 가장 늦은 입력일이 도래(≤오늘)했는데 아직 미완료면
+  // 변경 없이도 '완료' 버튼 활성. (추가 백신/검사 ArrivedUnconfirmed 와 동일 톤.)
+  const latestSavedDate = (list: Array<{ date?: string | null }>): string =>
+    list.reduce<string>(
+      (m, e) => (typeof e?.date === 'string' && e.date.length >= 10 && e.date > m ? e.date : m),
+      '',
+    )
+  const rabiesArrivedUnconfirmed =
+    isRabies && !isRabiesSingleCard && !done && savedRabies.date.length >= 10 && savedRabies.date <= todayStr
+  const rabiesSingleArrivedUnconfirmed =
+    isRabiesSingleCard && !done && latestSavedDate(savedRabiesList) !== '' && latestSavedDate(savedRabiesList) <= todayStr
+  const generalVaccineArrivedUnconfirmed =
+    isGeneralVaccine && !done && latestSavedDate(savedGeneralVaccine) !== '' && latestSavedDate(savedGeneralVaccine) <= todayStr
+  const parasiteArrivedUnconfirmed =
+    isParasite && !done && latestSavedDate(savedParasite) !== '' && latestSavedDate(savedParasite) <= todayStr
   // 저장 버튼 활성: 변경됨(dirty) OR 검진일 도래했는데 아직 확인 전(저장 클릭으로 완료).
   const canSave =
     dirty ||
     (formArrived && !done) ||
     rabiesExtraArrivedUnconfirmed ||
-    titerExtraArrivedUnconfirmed
+    titerExtraArrivedUnconfirmed ||
+    rabiesArrivedUnconfirmed ||
+    rabiesSingleArrivedUnconfirmed ||
+    generalVaccineArrivedUnconfirmed ||
+    parasiteArrivedUnconfirmed
   // 신청·신고 step(검역 5단계 외) — 신청일/신고일이 미래면 버튼 라벨을 '예정일로 저장'으로.
   // 완료 판정은 신청일이 오늘 이하로 도래한 뒤(+ 예약/허가증/skip). canSave 는 dirty 그대로.
   const jpExportApplicationUpcoming =
@@ -514,6 +533,12 @@ export function StepDetailView({
   const parasiteUpcoming =
     isParasite &&
     parasite.some((e) => typeof e.date === 'string' && e.date.length >= 10 && e.date > todayStr)
+  // 광견병 1·2차(2회국) — 폼 날짜가 미래면 '예정일로 저장'. 단일카드(1회국)는 목록 중 미래.
+  const rabiesUpcoming =
+    isRabies && !isRabiesSingleCard && rabies.date.length >= 10 && rabies.date > todayStr
+  const rabiesSingleUpcoming =
+    isRabiesSingleCard &&
+    rabiesList.some((e) => typeof e.date === 'string' && e.date.length >= 10 && e.date > todayStr)
 
   // dirty 일 때는 외부 변경(Realtime/admin push) 무시 — 사용자 입력 보존.
   useEffect(() => {
@@ -2413,12 +2438,20 @@ export function StepDetailView({
                         titerExtraUpcoming ||
                         generalVaccineUpcoming ||
                         importPermitUpcoming ||
-                        parasiteUpcoming
+                        parasiteUpcoming ||
+                        rabiesUpcoming ||
+                        rabiesSingleUpcoming
                       ? '예정일로 저장'
                       : // 추가 접종·추가 검사 — 도래(오늘 이하)한 입력의 저장 = 완료 확인.
                         // 검역 confirm 단계도 예정 저장분이 도래하면(미변경) 완료 확정이라 '완료'.
-                        // 안내문도 "완료 버튼을 눌러주세요"라 라벨을 '완료'로 맞춘다.
-                        isRabiesExtra || isTiterExtra || confirmArrivedComplete
+                        // 백신·구충도 예정 저장분이 도래하면 '완료'. 안내문도 "완료 버튼을 눌러주세요".
+                        isRabiesExtra ||
+                        isTiterExtra ||
+                        confirmArrivedComplete ||
+                        rabiesArrivedUnconfirmed ||
+                        rabiesSingleArrivedUnconfirmed ||
+                        generalVaccineArrivedUnconfirmed ||
+                        parasiteArrivedUnconfirmed
                         ? '완료'
                         : '저장'}
           </button>

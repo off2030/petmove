@@ -130,6 +130,16 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   'rabies_extra_confirmed',
   'rabies_titer_result_confirmed',
   'titer_extra_confirmed',
+  // 백신·검사·구충 카드의 '예정→도래→완료확인' 플래그 — 대응 *_dates 가 동물 단위(전역)라
+  // 확인 플래그도 전역. server 저장 액션이 '가장 늦은 입력일 ≤ 오늘'로 자동 set/clear.
+  'rabies_1_confirmed',
+  'rabies_2_confirmed',
+  'rabies_single_confirmed',
+  'general_vaccine_confirmed',
+  'civ_confirmed',
+  'infectious_disease_confirmed',
+  'external_parasite_confirmed',
+  'internal_parasite_confirmed',
   // 2) 스코핑 기반 구조물·케이스 단위 메타
   'by_dest', //              destination 별 분기를 담는 컨테이너 그 자체
   'trip_type', //            destination 키 맵(내부적으로 목적지별 — 컨테이너는 전역)

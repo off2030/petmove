@@ -181,7 +181,9 @@ export interface StepDefinition {
    * 이 미래형 situational 리마인더보다 우선 — 완료 표시와 모순 방지.)
    * 두 필드 모두 선택 — undefined 면 해당 자리만 기본 로직으로 폴백.
    */
-  situational?: (caseRow: CaseRow) => { desc?: string; cardDesc?: string } | undefined
+  situational?: (
+    caseRow: CaseRow,
+  ) => { desc?: string; cardDesc?: string; advisory?: boolean } | undefined
   /**
    * 다음 할 일 카드 본문 — 날짜(earliest/deadline)가 있을 때 "{날짜} 이후/까지 …"
    * 의 … 자리에 쓰임. 생략 시 description 첫 문장으로 폴백.

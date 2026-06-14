@@ -238,6 +238,28 @@ export async function updateMicrochipFields(
  *  - 접종일·제품 유효기간은 YYYY-MM-DD 검증 (면역 유효기간은 "N년" 문자열).
  *    data 의 다른 키는 fetch-merge 로 보존.
  */
+/**
+ * 백신·검사·구충 카드의 '예정→도래→완료확인' 플래그를 저장 시 자동 set/clear.
+ * 가장 늦은 입력일이 도래(≤오늘)면 confirmed=true(완료), 미래(예정)면 false, 입력 없으면 삭제.
+ * done-resolver(isDatedConfirmed)와 짝 — 미래로 저장=미완료(예정), 도래 후 재저장(완료 버튼)=완료.
+ */
+function applyDatedConfirm(
+  nextData: Record<string, unknown>,
+  entries: unknown[],
+  confirmKey: string,
+): void {
+  let latest = ''
+  for (const r of entries) {
+    const d =
+      r && typeof r === 'object' && typeof (r as Record<string, unknown>).date === 'string'
+        ? ((r as Record<string, unknown>).date as string)
+        : ''
+    if (d.length >= 10 && d > latest) latest = d
+  }
+  if (latest === '') delete nextData[confirmKey]
+  else nextData[confirmKey] = latest <= todayKst()
+}
+
 export async function updateRabiesEntryFields(
   caseId: string,
   index: number,
@@ -328,6 +350,9 @@ export async function updateRabiesEntryFields(
     const nextData: Record<string, unknown> = { ...prev }
     if (sorted.length === 0) delete nextData.rabies_dates
     else nextData.rabies_dates = sorted
+    // 1·2차 도래/예정 확인 플래그 (정렬 후 index 0=1차, 1=2차) — has-rabies-entry/booster 와 짝.
+    applyDatedConfirm(nextData, sorted[0] ? [sorted[0]] : [], 'rabies_1_confirmed')
+    applyDatedConfirm(nextData, sorted[1] ? [sorted[1]] : [], 'rabies_2_confirmed')
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -492,6 +517,13 @@ export async function updateRabiesExtraEntries(
         return d > max ? d : max
       }, '')
       nextData.rabies_extra_confirmed = latestExtra !== '' && latestExtra <= todayKst()
+    }
+
+    // 1회 접종국 단일카드(baseIndex 0) — has-rabies-valid 가 rabies_single_confirmed 로 도래/예정을
+    // 판정(최신 접종 기준). 2회국 1차(rabies_1_confirmed)와 별도 키 — 다중 목적지(일본+태국)에서
+    // 단일카드 저장이 2회국 1차 완료를 덮어쓰지 않도록 분리. 2회국 추가카드(baseIndex 2)는 미해당.
+    if (baseIndex === 0) {
+      applyDatedConfirm(nextData, rabiesNext, 'rabies_single_confirmed')
     }
 
     const { data: updated, error } = await admin
@@ -1689,6 +1721,7 @@ export async function updateGeneralVaccineEntries(
     const nextData: Record<string, unknown> = { ...prev }
     if (next.length === 0) delete nextData.general_vaccine_dates
     else nextData.general_vaccine_dates = next
+    applyDatedConfirm(nextData, next, 'general_vaccine_confirmed')
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -1757,6 +1790,7 @@ export async function updateParasiteEntries(
     const nextData: Record<string, unknown> = { ...prev }
     if (next.length === 0) delete nextData[fieldKey]
     else nextData[fieldKey] = next
+    applyDatedConfirm(nextData, next, fieldKey.replace(/_dates$/, '_confirmed'))
 
     const { data: updated, error } = await admin
       .from('cases')
