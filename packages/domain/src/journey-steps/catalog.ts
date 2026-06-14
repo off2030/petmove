@@ -279,11 +279,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'rabies-vaccine-extra',
     category: 'vaccination',
-    title: '광견병 백신 3차',
-    shortLabel: '백신3',
+    title: '광견병 추가 백신',
+    shortLabel: '추가 백신',
     description:
       '직전 광견병 백신의 면역 유효기간이 끝나기 전에 추가 접종을 하세요.\n\n유효기간 만료 전에 추가 접종을 하지 않으면, 1차 접종부터 다시 준비를 시작해야 합니다.',
-    doneSummary: '광견병 백신 3차를 접종했습니다.',
+    doneSummary: '광견병 추가 백신을 접종했습니다.',
     // 미래 만료 대비 reminder — 본 흐름의 다음 단계(사전 신고 등)를 다음 할 일에서 가리지 않는다.
     advisoryOnly: true,
     // 카드가 떴을 때(유효기간 만료·임박)의 안내 — 만료 여부로 두 문구를 분기한다.
@@ -316,7 +316,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 안내 박스가 사라져 둘이 어긋난다(예정 상태에서 안내문 불일치 버그).
       // 당일 — 도래, 완료 버튼 안내. (미래 예정은 기본 안내 + 일정 '예정' 칩 — "X일 예정" 텍스트 제거.)
       if (latest.date === today && (!entry || validUntil >= entry)) {
-        const msg = '오늘은 광견병 백신 3차 예정일입니다. 접종 후 완료 버튼을 눌러주세요.'
+        const msg = '오늘은 광견병 추가 백신 예정일입니다. 접종 후 완료 버튼을 눌러주세요.'
         return { desc: msg, cardDesc: msg }
       }
       // 이미 만료 — 추가 접종 기록 입력 요청. (만료 전 임박은 jp.rabies-validity-expires-soon 담당.)
@@ -335,7 +335,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 예정일이 지났는데(다음날부터 — 당일 제외) 아직 '저장'으로 확인 전 — 저장으로 완료 안내.
       // 당일(예정일 == 오늘)엔 '지났다'가 부정확하므로 기본 안내문으로 둔다(검역 5단계와 동일).
       if (latest.date < today && data.rabies_extra_confirmed === false) {
-        const msg = '광견병 백신 3차 예정일이 지났습니다. 완료 버튼을 누르시거나 예정일을 변경해주세요. 접종하지 못한 경우 1차 접종부터 다시 준비하세요.'
+        const msg = '광견병 추가 백신 예정일이 지났습니다. 완료 버튼을 누르시거나 예정일을 변경해주세요. 접종하지 못한 경우 1차 접종부터 다시 준비하세요.'
         return { desc: msg, cardDesc: msg }
       }
       return undefined
