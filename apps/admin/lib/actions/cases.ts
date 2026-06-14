@@ -3,7 +3,14 @@
 import { createClient } from '@petmove/auth/server'
 import { applyAutoFillRules, getVetVisitWindowDays } from '@petmove/domain'
 import { evaluateAndNotify } from './system-notifications'
-import { isDestinationScopedKey, parseDestinations } from '@petmove/domain'
+import {
+  isDestinationScopedKey,
+  parseDestinations,
+  resolveTabActiveDest,
+  readByDestValue,
+  writeByDestValue,
+  type CaseRow,
+} from '@petmove/domain'
 
 const REGULAR_COLUMNS = new Set([
   'customer_name',
@@ -731,50 +738,95 @@ export async function setJpExportQuarantineReportStatus(
   caseId: string,
   target: ReportTarget,
 ): Promise<UpdateResult> {
-  return patchCaseData(caseId, (d) => {
-    // 새 액션이 호출되는 시점 = derive 모드로 전환. legacy stored 는 클리어.
-    delete d.import_export_status
-    // 신청일은 by_dest 스코핑 — top-level 또는 어느 by_dest 엔트리에든 있으면 '있음'으로 본다.
-    // 어디에도 없을 때만 오늘로 폴백(운영자가 신청일 없이 완료/진행 표시). by_dest 에 실제 신청일이
-    // 있는 케이스에 top-level 찌꺼기를 남기지 않는다.
-    const hasExportAppDate = () => {
-      const top = d.jp_export_quarantine_application_date
-      if (typeof top === 'string' && top.length >= 10) return true
-      const byDest = (d.by_dest ?? {}) as Record<string, Record<string, unknown> | undefined>
-      return Object.values(byDest).some((o) => {
-        const v = o?.jp_export_quarantine_application_date
-        return typeof v === 'string' && v.length >= 10
-      })
+  const supabase = await createClient()
+  const { data: row, error: fetchErr } = await supabase
+    .from('cases')
+    .select('data, destination, departure_date')
+    .eq('id', caseId)
+    .single()
+  if (fetchErr) return { ok: false, error: fetchErr.message }
+  const current = ((row?.data as Record<string, unknown> | null) ?? {}) as Record<string, unknown>
+  const destination = (row?.destination as string | null) ?? null
+
+  // 신청일(jp_export_quarantine_application_date)은 by_dest 스코핑 키다(DESTINATION_SCOPED_FIELD_KEYS).
+  // 다중 목적지에서 신청일을 top-level 에 쓰면, 신고 탭 read(effectiveExportStatus →
+  // flattenCaseForDestination strict)가 활성 목적지 by_dest 만 신뢰하고 top-level 을 떨궈
+  // derive 가 신청일을 못 본다 → '완료'(reservation_skipped + 신청일>=10) 가 성립 안 해 칸이
+  // '대기중'으로 되돌아간다(신고 탭 수출 완료가 안 먹던 버그). 그래서 다중 목적지는 portal 과
+  // 동일하게 by_dest[활성목적지]에 쓴다. 단일 목적지는 기존 top-level 그대로(정상 동작 유지).
+  const isMulti = parseDestinations(destination).length > 1
+  const activeDest = resolveTabActiveDest(
+    {
+      destination,
+      data: current,
+      departure_date: (row?.departure_date as string | null) ?? null,
+    } as CaseRow,
+    'import_report_active_dest',
+  )
+  // scopedToken: non-null 이면 신청일을 by_dest 에 쓴다(다중 목적지 한정). null 이면 top-level.
+  const scopedToken = isMulti ? activeDest : null
+
+  // 기존 신청일 — by_dest(활성 목적지) 우선, 마이그 전 top-level 폴백 (portal·read 와 동일 경로).
+  const appliedRaw = activeDest
+    ? readByDestValue(current, activeDest, 'jp_export_quarantine_application_date')
+    : undefined
+  const applied =
+    typeof appliedRaw === 'string' && appliedRaw.length >= 10
+      ? appliedRaw
+      : typeof current.jp_export_quarantine_application_date === 'string'
+        ? (current.jp_export_quarantine_application_date as string)
+        : ''
+  const hasAppDate = applied.length >= 10
+  const today = new Date().toISOString().slice(0, 10)
+
+  let next: Record<string, unknown> = { ...current }
+  // 새 액션 호출 = derive 모드 전환. legacy stored 클리어.
+  delete next.import_export_status
+
+  // 신청일이 없을 때 오늘로 폴백 — 다중 목적지면 by_dest[활성목적지]에, 아니면 top-level.
+  const writeAppDateToday = () => {
+    if (scopedToken) {
+      next = writeByDestValue(next, scopedToken, 'jp_export_quarantine_application_date', today)
+      delete next.jp_export_quarantine_application_date
+    } else {
+      next.jp_export_quarantine_application_date = today
     }
-    if (target === 'not_started') {
-      delete d.jp_export_quarantine_application_date
-      delete d.jp_export_quarantine_reservation_skipped
-      delete d.jp_export_quarantine_confirmed
-      delete d.jp_export_quarantine_admin_demoted_at
-      return
+  }
+
+  if (target === 'not_started') {
+    // 신청일·완료/진행 플래그 모두 클리어. 다중 목적지는 by_dest 스코핑 신청일도 명시적으로
+    // 비워야(null sentinel) derive 가 신청일을 보고 'in_progress' 로 되살아나지 않는다
+    // (top-level delete 만으로는 by_dest 잔존이 남는다).
+    delete next.jp_export_quarantine_application_date
+    if (scopedToken) {
+      next = writeByDestValue(next, scopedToken, 'jp_export_quarantine_application_date', null)
     }
-    if (target === 'in_progress') {
-      // 완료 단일 경로(skip 플래그) 기준. legacy confirmed=true 가 남아 있을 수 있으니
-      // 같이 정리한다(이제 derive 에서 무시되지만 데이터 위생 차원).
-      const wasDone = d.jp_export_quarantine_reservation_skipped === true
-      delete d.jp_export_quarantine_confirmed
-      if (wasDone) {
-        d.jp_export_quarantine_admin_demoted_at = new Date().toISOString()
-        delete d.jp_export_quarantine_reservation_skipped
-      } else if (!hasExportAppDate()) {
-        d.jp_export_quarantine_application_date = new Date().toISOString().slice(0, 10)
-      }
-      return
+    delete next.jp_export_quarantine_reservation_skipped
+    delete next.jp_export_quarantine_confirmed
+    delete next.jp_export_quarantine_admin_demoted_at
+  } else if (target === 'in_progress') {
+    // 완료 단일 경로(skip 플래그) 기준. legacy confirmed=true 가 남아 있을 수 있으니
+    // 같이 정리한다(이제 derive 에서 무시되지만 데이터 위생 차원).
+    const wasDone = next.jp_export_quarantine_reservation_skipped === true
+    delete next.jp_export_quarantine_confirmed
+    if (wasDone) {
+      next.jp_export_quarantine_admin_demoted_at = new Date().toISOString()
+      delete next.jp_export_quarantine_reservation_skipped
+    } else if (!hasAppDate) {
+      writeAppDateToday()
     }
+  } else {
     // target === 'done' — 완료는 단일 경로(reservation_skipped 플래그)로 일원화.
     // 예약일·시간은 '희망' 데이터로만 취급되고 완료 판정에 영향 없음. legacy confirmed
     // 플래그가 남아 있다면 정리한다(이제 derive 에서 무시되지만 데이터 위생 차원).
-    delete d.jp_export_quarantine_admin_demoted_at
-    d.jp_export_quarantine_reservation_skipped = true
-    delete d.jp_export_quarantine_confirmed
-    if (!hasExportAppDate()) {
-      d.jp_export_quarantine_application_date = new Date().toISOString().slice(0, 10)
-    }
-  })
+    delete next.jp_export_quarantine_admin_demoted_at
+    next.jp_export_quarantine_reservation_skipped = true
+    delete next.jp_export_quarantine_confirmed
+    if (!hasAppDate) writeAppDateToday()
+  }
+
+  const { error } = await supabase.from('cases').update({ data: next }).eq('id', caseId)
+  if (error) return { ok: false, error: error.message }
+  return { ok: true, autoFilled: { data: next } }
 }
 
