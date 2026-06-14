@@ -109,7 +109,7 @@ export function TopBar() {
           lineHeight: 1,
         }}
       >
-        <Image src="/curl-84-v2-tile.svg" alt="" aria-hidden="true" width={22} height={22} priority />
+        <Image src="/ribbon-p-dark.svg" alt="" aria-hidden="true" width={22} height={22} priority />
         <span>PETMOVE</span>
       </Link>
       <div
