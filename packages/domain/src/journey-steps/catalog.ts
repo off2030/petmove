@@ -133,7 +133,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       }
       // 둘 다 있음 — 도래 완료확인(당일/지남). 미래(예정)·확인됨이면 기본 안내.
       if (data.microchip_confirmed === true) return undefined
-      return datedCardSituational(implant, '마이크로칩', '삽입')
+      return datedCardSituational(implant, '마이크로칩 삽입', '삽입')
     },
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 20,
