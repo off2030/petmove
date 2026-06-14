@@ -109,7 +109,7 @@ export function TopBar() {
           lineHeight: 1,
         }}
       >
-        <Image src="/flow-tile.svg" alt="" aria-hidden="true" width={22} height={22} priority />
+        <Image src="/two-tile.svg" alt="" aria-hidden="true" width={22} height={22} priority />
         <span>PETMOVE</span>
       </Link>
       <div
