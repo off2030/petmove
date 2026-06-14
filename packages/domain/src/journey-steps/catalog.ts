@@ -1008,13 +1008,19 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // spec 없는 destination 은 검진일 입력만으로 완료라 안내 자체가 등장하지 않음.
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const dt = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
-      if (dt.length < 10 || dt > todayKst()) return undefined
+      const dt = typeof data.vet_visit_date === 'string' ? data.vet_visit_date.slice(0, 10) : ''
+      const today = todayKst()
+      if (dt.length < 10 || dt > today) return undefined
       if (data.vet_visit_confirmed === true) return undefined
       if (resolveRequiredDocs(caseRow.destination, caseRow) === null) return undefined
       // done-resolver(has-vet-visit)와 동일 범위 — vet-visit 시점까지의 서류만 본다.
       if (areAllRequiredDocsVerified(caseRow, 'vet-visit')) return undefined
-      const msg = '출국 전 임상검사를 받았습니다. 필요한 서류가 모두 있는지 확인하세요.'
+      // 검진일이 오늘이면 '오늘이 예정일', 지났으면 '예정일이 지났습니다(+검진 안 했으면 예정일 변경)'.
+      // 완료 기준은 날짜가 아니라 '필수 서류 모두 ✓' 라 안내 톤도 서류 확인 유도로 통일.
+      const msg =
+        dt === today
+          ? '오늘은 출국 전 임상검사 예정일입니다. 검진을 받고 필요한 서류가 모두 있는지 확인하세요.'
+          : '출국 전 임상검사 예정일이 지났습니다. 검진을 받으셨다면 필요한 서류가 모두 있는지 확인하세요. 검진을 받지 않았다면 예정일을 변경하세요.'
       return { desc: msg, cardDesc: msg }
     },
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
