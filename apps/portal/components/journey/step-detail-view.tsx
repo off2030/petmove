@@ -219,7 +219,12 @@ export function StepDetailView({
 
   // 인터랙티브 step 폼 state — 다른 step 에서는 렌더 안 함. hooks 는 매번 호출.
   const savedChip = caseRow?.microchip ?? ''
-  const savedDate = readImplantDate(caseRow?.data)
+  // 미래(예정)로 저장한 시술일은 입력칸에서 비운다 — 예정 배지로만 표시(완료 혼동 방지).
+  // microchip_confirmed===false = 아직 도래 전 '예정'. 보호자가 실제(오늘/과거) 날짜로
+  // 저장해야 칸에 채워지고 완료된다. 도래/지난 뒤에도 false 로 남아 빈 칸 유지(원래 상태).
+  const microchipScheduled =
+    (caseRow?.data as Record<string, unknown> | undefined)?.microchip_confirmed === false
+  const savedDate = microchipScheduled ? '' : readImplantDate(caseRow?.data)
   const [chip, setChip] = useState(savedChip)
   const [date, setDate] = useState(savedDate)
 
@@ -560,7 +565,7 @@ export function StepDetailView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.microchip])
   useEffect(() => {
-    if (!microchipDirty) setDate(readImplantDate(caseRow?.data))
+    if (!microchipDirty) setDate(microchipScheduled ? '' : readImplantDate(caseRow?.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseRow?.data])
   useEffect(() => {
