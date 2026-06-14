@@ -340,6 +340,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         const msg = '광견병 추가 백신 예정일이 지났습니다. 완료 버튼을 누르시거나 예정일을 변경해주세요. 접종하지 못한 경우 1차 접종부터 다시 준비하세요.'
         return { desc: msg, cardDesc: msg }
       }
+      // 미래(예정) 추가 접종이 입력돼 있으면 '예정' 안내(나그 설명 대신). 예정 배지(scenario)와 짝.
+      // 도래해 실제 접종을 확인하면 완료. (직전 백신이 입국 전 만료여도 이 예정이 커버하면 OK.)
+      if (latest.date > today) {
+        const msg = '추가 접종이 예정되어 있습니다.'
+        return { desc: msg, cardDesc: msg }
+      }
       return undefined
     },
     // 일본(2회 프라임 + 3차+) 전용 별도 카드. 1회 접종국은 광견병 백신 카드 하나에서
