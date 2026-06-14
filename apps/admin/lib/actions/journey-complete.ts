@@ -9,7 +9,12 @@
  */
 
 import { createClient } from '@petmove/auth/server'
-import { parseDestinations, summarizeJourney, type PastJourneySummary } from '@petmove/domain'
+import {
+  DESTINATION_SCOPED_FIELD_KEYS,
+  parseDestinations,
+  summarizeJourney,
+  type PastJourneySummary,
+} from '@petmove/domain'
 
 type TripType = 'round' | 'one_way'
 type Result = { ok: true } | { ok: false; error: string }
@@ -73,16 +78,32 @@ export async function markJourneyCompleteAdmin(
 
   const nextTokens = tokens.filter((t) => t !== dest)
   const nextDest = nextTokens.join(', ')
-  const nextData = {
+  const nextData: Record<string, unknown> = {
     ...data,
     by_dest: byDestAll,
     trip_type: tripTypeAll,
     past_journeys: pastJourneys,
   }
+  const updatePayload: Record<string, unknown> = { destination: nextDest, data: nextData }
+
+  // demote 정리 (portal finishJourney 와 동일) — 내려간 여정의 공용 잔존(top-level scoped 필드·
+  // 도착확인·완료 prompt·출국일 컬럼)을 남은(특히 단일 결과) 목적지가 물려받지 않게 비운다.
+  // 단일 목적지 케이스는 scoped 필드(예: return_date)가 top-level 에 사는데, 안 비우면 다음
+  // 여정으로 새어 '수출검역 신청'이 잘못 '예정'으로 뜨는 등 누수가 생긴다. 백신·항체(동물 단위)는 유지.
+  for (const k of DESTINATION_SCOPED_FIELD_KEYS) delete nextData[k]
+  const ac = { ...((nextData.arrival_confirmed as Record<string, unknown> | undefined) ?? {}) }
+  delete ac[dest]
+  nextData.arrival_confirmed = ac
+  const cpd = {
+    ...((nextData.completion_prompt_dismissed as Record<string, unknown> | undefined) ?? {}),
+  }
+  delete cpd[dest]
+  nextData.completion_prompt_dismissed = cpd
+  updatePayload.departure_date = null
 
   const { error: updErr } = await supabase
     .from('cases')
-    .update({ destination: nextDest, data: nextData })
+    .update(updatePayload)
     .eq('id', caseId)
   if (updErr) return { ok: false, error: updErr.message }
 

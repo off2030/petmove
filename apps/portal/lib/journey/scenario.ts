@@ -748,13 +748,13 @@ export function buildJourney(
     }
   }
   // return lane step 별 노출 조건 — 충족돼야 다음 할 일에 올림.
-  // 수출검역 신청은 귀국 항공편이 정해진 뒤에야 예약 가능 — return_date 입력 시점부터 노출.
-  // (entry_date 만 입력된 출국편 단독 상태에선 step 자체는 applicable 하지만 다음 할 일은 X.)
+  // 수출검역 신청은 귀국 항공편이 정해진 뒤에야 예약 가능 — 기준은 '항공권 구매 완료'(has-flight-date).
+  // 왕복의 has-flight-date 는 출국편(entry/departure) + 귀국일(return_date)을 모두 요구한다.
+  // return_date 단독으로 판정하면, 출국편 없이 귀국일만 남은 잔재(과거 여정에서 안 지워진
+  // return_date 등 — 논리적으로 불가능한 상태)에도 수출검역이 '예정'으로 떠버린다(누수 버그).
+  // 출국편까지 갖춰진 정상 예약일 때만 노출하도록 has-flight-date 로 게이트한다.
   const RETURN_LANE_READY: Record<string, (c: typeof caseRow) => boolean> = {
-    'jp-export-quarantine': (c) => {
-      const data = (c.data ?? {}) as Record<string, unknown>
-      return typeof data.return_date === 'string' && (data.return_date as string).length >= 10
-    },
+    'jp-export-quarantine': (c) => resolveDone('has-flight-date', c),
   }
   const returnIdx = stages.findIndex(
     (s) => s.state === 'upcoming' && nonBlockingIds.has(s.id),
