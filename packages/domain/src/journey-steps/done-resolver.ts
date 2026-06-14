@@ -57,9 +57,9 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       if (!caseRow.microchip || caseRow.microchip.length === 0) return false
       const implant = data.microchip_implant_date
       if (typeof implant !== 'string' || implant.length < 10) return false
-      // 시술일이 미래(예정)면 아직 삽입 전 — 날짜가 도래해야 완료(출국 전 임상검사·검역과 동일).
+      // 다른 카드와 동일 — 미래(예정)면 미완료, 도래 후 '완료' 확인해야 done(microchip_confirmed).
       // 날짜 값 자체는 후속 검증(after-microchip 등)에 그대로 쓰이므로 보존하고, 완료 판정만 미룬다.
-      return implant.slice(0, 10) <= todayKst()
+      return isDatedConfirmed(data, implant.slice(0, 10), 'microchip_confirmed')
     }
     case 'has-rabies-entry': {
       // 1차 = 입력순서 첫 항목(r[0]). 도래+확인(예정→완료) 게이트.

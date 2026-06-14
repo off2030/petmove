@@ -308,6 +308,7 @@ export async function updateCaseField(
     // 정정해도 done-resolver(isDatedConfirmed)가 false 단락으로 영구 미완료가 된다. 삭제 시
     // 날짜 게이트 폴백(과거=완료, 미래=예정)으로 정상 동작. (admin 은 확인 버튼 UI 가 없어 폴백이 맞음.)
     const DATED_CONFIRM_FLAGS: Record<string, string[]> = {
+      microchip_implant_date: ['microchip_confirmed'],
       rabies_dates: ['rabies_1_confirmed', 'rabies_2_confirmed', 'rabies_single_confirmed'],
       general_vaccine_dates: ['general_vaccine_confirmed'],
       external_parasite_dates: ['external_parasite_confirmed'],

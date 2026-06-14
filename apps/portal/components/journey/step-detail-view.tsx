@@ -481,6 +481,8 @@ export function StepDetailView({
       (m, e) => (typeof e?.date === 'string' && e.date.length >= 10 && e.date > m ? e.date : m),
       '',
     )
+  const microchipArrivedUnconfirmed =
+    isMicrochip && !done && savedDate.length >= 10 && savedDate <= todayStr
   const rabiesArrivedUnconfirmed =
     isRabies && !isRabiesSingleCard && !done && savedRabies.date.length >= 10 && savedRabies.date <= todayStr
   const rabiesSingleArrivedUnconfirmed =
@@ -495,6 +497,7 @@ export function StepDetailView({
     (formArrived && !done) ||
     rabiesExtraArrivedUnconfirmed ||
     titerExtraArrivedUnconfirmed ||
+    microchipArrivedUnconfirmed ||
     rabiesArrivedUnconfirmed ||
     rabiesSingleArrivedUnconfirmed ||
     generalVaccineArrivedUnconfirmed ||
@@ -533,6 +536,8 @@ export function StepDetailView({
   const parasiteUpcoming =
     isParasite &&
     parasite.some((e) => typeof e.date === 'string' && e.date.length >= 10 && e.date > todayStr)
+  // 마이크로칩 — 시술일이 미래면 '예정일로 저장'.
+  const microchipUpcoming = isMicrochip && date.length >= 10 && date > todayStr
   // 광견병 1·2차(2회국) — 폼 날짜가 미래면 '예정일로 저장'. 단일카드(1회국)는 목록 중 미래.
   const rabiesUpcoming =
     isRabies && !isRabiesSingleCard && rabies.date.length >= 10 && rabies.date > todayStr
@@ -2440,7 +2445,8 @@ export function StepDetailView({
                         importPermitUpcoming ||
                         parasiteUpcoming ||
                         rabiesUpcoming ||
-                        rabiesSingleUpcoming
+                        rabiesSingleUpcoming ||
+                        microchipUpcoming
                       ? '예정일로 저장'
                       : // 추가 접종·추가 검사 — 도래(오늘 이하)한 입력의 저장 = 완료 확인.
                         // 검역 confirm 단계도 예정 저장분이 도래하면(미변경) 완료 확정이라 '완료'.
@@ -2448,6 +2454,7 @@ export function StepDetailView({
                         isRabiesExtra ||
                         isTiterExtra ||
                         confirmArrivedComplete ||
+                        microchipArrivedUnconfirmed ||
                         rabiesArrivedUnconfirmed ||
                         rabiesSingleArrivedUnconfirmed ||
                         generalVaccineArrivedUnconfirmed ||

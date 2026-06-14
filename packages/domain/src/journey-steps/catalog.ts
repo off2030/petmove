@@ -126,9 +126,14 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       const number = (caseRow.microchip ?? '').trim()
       const hasNumber = number.length > 0
       const hasImplant = implant.length >= 10
-      if (hasNumber === hasImplant) return undefined
-      const msg = hasNumber ? '마이크로칩 삽입 날짜를 입력하세요.' : '마이크로칩 번호를 입력하세요.'
-      return { desc: msg, cardDesc: msg }
+      // 번호·시술일 한 쌍 — 한쪽만 채워졌으면 빠진 쪽 요청.
+      if (hasNumber !== hasImplant) {
+        const msg = hasNumber ? '마이크로칩 삽입 날짜를 입력하세요.' : '마이크로칩 번호를 입력하세요.'
+        return { desc: msg, cardDesc: msg }
+      }
+      // 둘 다 있음 — 도래 완료확인(당일/지남). 미래(예정)·확인됨이면 기본 안내.
+      if (data.microchip_confirmed === true) return undefined
+      return datedCardSituational(implant, '마이크로칩', '삽입')
     },
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 20,

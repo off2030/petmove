@@ -210,6 +210,8 @@ export async function updateMicrochipFields(
     const nextData = { ...prev }
     if (dt === null) delete nextData.microchip_implant_date
     else nextData.microchip_implant_date = dt
+    // 다른 카드와 동일 — 시술일 ≤ 오늘이면 확인(완료), 미래면 false(예정), 없으면 삭제.
+    applyDatedConfirm(nextData, dt ? [{ date: dt }] : [], 'microchip_confirmed')
 
     const { data: updated, error } = await admin
       .from('cases')
