@@ -320,6 +320,8 @@ export function TimelineCalm({
             >
               {hasWarn ? (
                 '주의'
+              ) : s.inProgress ? (
+                '진행 중'
               ) : hasInfo ? (
                 '안내'
               ) : showDeadlinePill ? (

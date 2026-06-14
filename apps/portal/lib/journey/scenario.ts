@@ -57,6 +57,11 @@ export interface JourneyStage {
    * '주의'(실제 문제)가 아닌 차분한 안내 톤.)
    */
   advisory?: boolean
+  /**
+   * 검사→결과 2단계 step(광견병 항체 검사)에서 채혈일이 도래(≤ 오늘)했으나 아직 결과
+   * 미입력 = '진행 중' 상태. 안내 문구 없이 기본 문구 + '진행 중' 칩으로 표시한다.
+   */
+  inProgress?: boolean
 }
 
 /**
@@ -476,6 +481,17 @@ export function buildJourney(
       caseData.rabies_titer_scheduled.slice(0, 10) > today
         ? caseData.rabies_titer_scheduled.slice(0, 10)
         : null
+    // 항체검사 '진행 중' — 채혈일이 도래(≤ 오늘)했고 아직 결과·완료 전(!done). 안내 문구 없이
+    // 기본 문구 + '진행 중' 칩으로 표시한다(2스텝의 1단계 완료 상태). 미래 채혈일은 위 예정 배지.
+    const titerInProgress =
+      step.id === 'rabies-titer' &&
+      !done &&
+      (() => {
+        const arr = Array.isArray(caseData.rabies_titer_records) ? caseData.rabies_titer_records : []
+        const p = arr[0] as Record<string, unknown> | undefined
+        const d = p && typeof p.date === 'string' ? p.date.slice(0, 10) : ''
+        return d.length >= 10 && d <= today
+      })()
     // 추가 검사 — 입국일 이전에 예약한(미래) 채혈이 있으면 '예정 [날짜]' 칩. 입국 후 채혈은
     // 그 입국을 보증 못 하므로 제외(무의미한 미래 채혈을 예정으로 오인 노출하지 않음).
     const titerExtraUpcomingDate = (() => {
@@ -729,6 +745,7 @@ export function buildJourney(
       infoChecks: infoChecks > 0 ? infoChecks : undefined,
       advisory: isAdvisory ? true : undefined,
       infoMessage,
+      inProgress: titerInProgress ? true : undefined,
     }
   })
 
