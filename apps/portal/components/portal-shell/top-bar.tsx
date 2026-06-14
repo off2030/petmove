@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useCases } from './case-data-provider'
@@ -94,6 +95,9 @@ export function TopBar() {
         style={{
           // 펫무브워크 상단 "PETMOVE Work" 와 동일한 워드마크 스타일.
           // Alonzo ExtraLight + faux bold(700) + tight tracking. globals.css 의 --pm-font-mark 토큰.
+          display: 'flex',
+          alignItems: 'center',
+          gap: 7,
           fontFamily: 'var(--pm-font-mark)',
           fontWeight: 700,
           fontSize: 17,
@@ -105,7 +109,8 @@ export function TopBar() {
           lineHeight: 1,
         }}
       >
-        PETMOVE
+        <Image src="/curl-tile.svg" alt="" aria-hidden="true" width={22} height={22} priority />
+        <span>PETMOVE</span>
       </Link>
       <div
         style={{
