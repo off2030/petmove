@@ -164,8 +164,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '광견병 백신 1차',
     shortLabel: '백신1',
     description:
-      '광견병 백신 1차를 접종하세요.\n\n생후 91일이 지난 후에 접종해야 합니다.',
-    doneSummary: '광견병 백신 1차를 접종했습니다.',
+      '1차 광견병 백신을 접종하세요.\n\n생후 91일이 지난 후에 접종해야 합니다.',
+    doneSummary: '1차 광견병 백신을 접종했습니다.',
     // 1회 접종국(태국·필리핀·EU)은 이 카드 하나에서 1·2·3차를 목록으로 입력 + 만료 시 추가 접종
     // 안내(종합백신과 동일 모델). 일본·하와이(2회국)는 이 situational 이 미적용(undefined) — 기존
     // 1차/2차/추가 분리 카드 유지. done 은 destination-override 가 1회국에서 has-rabies-valid 로 교체.
