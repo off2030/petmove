@@ -71,10 +71,12 @@ export default function CaseJourneyStepPage({
   const step = applicable[stepIndex]
   const done = resolveDone(step.done, view)
   const checkResults = collectStepChecks(step, view, ctx.destinationKey)
-  // 이 step 보다 뒤(후행) 적용 단계에 이미 입력된 데이터가 있는지 — 수정·삭제 전 '주의'
-  // 확인창 조건. 뒤 일정이 있으면 앞 단계 변경이 정합성을 깨뜨릴 수 있어 사전 경고한다.
+  // 같은 레인의 후행 단계에 이미 입력된 데이터가 있는지 — 수정·삭제 전 '주의' 확인창 조건.
+  // 메인 레인과 nonBlocking 귀국 레인은 병렬이므로 서로를 후행 일정으로 보지 않는다.
+  const isReturnLane = step.nonBlocking === true
   const hasDownstreamData = applicable
     .slice(stepIndex + 1)
+    .filter((s) => (s.nonBlocking === true) === isReturnLane)
     .some((s) => resolveDone(s.done, view) || (s.hasInputData?.(view) ?? false))
 
   return (
