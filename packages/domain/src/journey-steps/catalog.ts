@@ -52,6 +52,10 @@ function datedCardSituational(
   if (!latestDate || latestDate.length < 10) return undefined
   const today = todayKst()
   if (latestDate > today) return undefined // 미래(예정) — 기본 안내 유지
+  // 일반 단계는 예정일이 도래/지나도 안내 문구를 띄우지 않는다 — 미래는 예정 배지뿐,
+  // 도래·지남은 무문구(원래 상태). 완료는 보호자가 실제 날짜로 저장할 때만 일어난다.
+  // titer(검사→결과 2단계)만 '결과를 입력하거나 완료' 안내를 유지한다(특수 단계).
+  if (variant !== 'titer') return undefined
   const completeClause =
     variant === 'titer' ? '결과를 입력하거나 완료 버튼을 눌러주세요' : `${verb} 후 완료 버튼을 눌러주세요`
   const passedClause =
