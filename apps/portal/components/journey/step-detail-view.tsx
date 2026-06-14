@@ -1482,6 +1482,7 @@ export function StepDetailView({
     !!rawSituationalDesc &&
     [...failed, ...notices].some(({ result }) => result.message === rawSituationalDesc)
   const situationalDesc = situationalDup ? undefined : rawSituationalDesc
+  const noticeCount = notices.length + (situationalDesc ? 1 : 0)
   const stepDocuments = readCaseDocuments(caseRow?.data).filter((d) => d.stepId === step.id)
 
   // 항공권 step + 왕복 + 출국만 입력된 상태 — 편도 전환 affordance 노출.
@@ -1903,14 +1904,14 @@ export function StepDetailView({
           })}
         </section>
 
-        {/* Situational 안내 — step config 가 caseRow 상태에 따라 동적으로 만든 메시지.
+        {/* 안내 — situational 메시지와 procedure-check info 를 한 박스에 합친다.
             timeline 의 desc 와 동일 내용이라 detail 페이지에서도 같은 정보 전달.
             항공권 step + 왕복 + 출국만 입력 상태에선 '편도 일정으로 전환' 토글을 노출.
             사전 신고 허가증 대기(advanceSkipMode) / 일본 수출검역 신청 진행(jpExportSkipMode)
             상태의 '완료' 액션은 하단 sticky 저장 버튼이 라벨 전환으로 맡는다 — 안내 박스엔
             별도 액션 버튼 X. 완료(skip) 상태에선 situational 자체가 undefined 라 안내 박스
             미노출. */}
-        {situationalDesc && (
+        {noticeCount > 0 && (
           <section
             style={{
               marginTop: 16,
@@ -1921,13 +1922,15 @@ export function StepDetailView({
             }}
           >
             <div style={{ ...monoCap, color: C.info, fontWeight: 700, marginBottom: 8 }}>
-              안내
+              안내{noticeCount > 1 ? ` ${noticeCount}건` : ''}
             </div>
-            <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5, whiteSpace: 'pre-line' }}>
-              {situationalDesc}
-              {isFlightRoundEntryOnly && ' 귀국 일정이 미정인 경우는 편도 일정으로 전환할 수 있습니다.'}
-            </div>
-            {isFlightRoundEntryOnly && (
+            {situationalDesc && (
+              <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5, whiteSpace: 'pre-line' }}>
+                {situationalDesc}
+                {isFlightRoundEntryOnly && ' 귀국 일정이 미정인 경우는 편도 일정으로 전환할 수 있습니다.'}
+              </div>
+            )}
+            {situationalDesc && isFlightRoundEntryOnly && (
               <button
                 type="button"
                 onClick={handleConvertToOneWay}
@@ -1950,6 +1953,31 @@ export function StepDetailView({
                 {convertingTrip ? '전환 중…' : '편도 일정으로 전환'}
               </button>
             )}
+            {notices.length > 0 && (
+              <ul
+                style={{
+                  margin: situationalDesc ? '12px 0 0' : 0,
+                  padding: situationalDesc ? '12px 0 0' : 0,
+                  borderTop: situationalDesc ? `.5px solid color-mix(in srgb, ${C.info} 25%, transparent)` : 'none',
+                  listStyle: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                }}
+              >
+                {notices.map(({ check, result }) => (
+                  <li key={check.id}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, marginBottom: 2 }}>{check.title}</div>
+                    {result.message && (
+                      <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>{result.message}</div>
+                    )}
+                    {result.fixHint && (
+                      <div style={{ fontSize: 13, color: C.ink3, marginTop: result.message ? 4 : 2, lineHeight: 1.5 }}>↳ {result.fixHint}</div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         )}
 
@@ -1969,36 +1997,6 @@ export function StepDetailView({
             </div>
             <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {failed.map(({ check, result }) => (
-                <li key={check.id}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, marginBottom: 2 }}>{check.title}</div>
-                  {result.message && (
-                    <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>{result.message}</div>
-                  )}
-                  {result.fixHint && (
-                    <div style={{ fontSize: 13, color: C.ink3, marginTop: result.message ? 4 : 2, lineHeight: 1.5 }}>↳ {result.fixHint}</div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {/* 안내 — 오류는 아니지만 미리 알려둘 사항. 주의보다 차분한 중립 톤. */}
-        {notices.length > 0 && (
-          <section
-            style={{
-              marginTop: 16,
-              padding: '14px 16px',
-              borderRadius: 16,
-              background: C.infoBg,
-              border: `.5px solid color-mix(in srgb, ${C.info} 35%, transparent)`,
-            }}
-          >
-            <div style={{ ...monoCap, color: C.info, fontWeight: 700, marginBottom: 8 }}>
-              안내 {notices.length}건
-            </div>
-            <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {notices.map(({ check, result }) => (
                 <li key={check.id}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, marginBottom: 2 }}>{check.title}</div>
                   {result.message && (
