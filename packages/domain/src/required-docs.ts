@@ -140,7 +140,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     KR_FORM25_VACCINATION_HEALTH_CERT,
     {
       id: 'form-ac-or-re',
-      name: 'FormAC/RE',
+      name: 'FormAC',
       source: '동물병원',
       kind: 'manual',
       issuanceStepId: 'vet-visit',
