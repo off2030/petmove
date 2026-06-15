@@ -88,14 +88,19 @@ export async function proxy(request: NextRequest) {
   // 위조 쿠키는 layout 의 verify 가 실패 → getCurrentUser → /login 으로 떨어지므로 안전.
   if (request.cookies.get('pm_preview')?.value) return response
 
-  // 보호 경로 — getUser() 로 세션 검증.
+  // 보호 경로 — getClaims() 로 세션 검증.
   //
-  // getUser() 는 만료된 access token 을 refresh token 으로 자동 갱신한다(성공 시 setAll 로
-  // 새 쿠키를 response 에 심음). 갱신이 실패하는 경우는 둘로 갈린다:
+  // getClaims() 는 비대칭 서명키(현재 ECC P-256)면 캐시된 JWKS 로 access token 서명을
+  // *로컬 검증*한다 — getUser() 와 달리 매 요청 Supabase Auth 서버(/user)로 네트워크
+  // 왕복을 하지 않는다. 토큰 refresh 는 그대로 유지된다: 내부적으로 getSession() 을 거치며
+  // 토큰이 만료됐을 때만 refresh token 으로 자동 갱신(setAll 로 새 쿠키를 response 에 심음).
+  // 즉 refresh 는 만료 시에만 네트워크, 평상시 검증은 0회 — Fluid CPU 의 미들웨어 비용을 걷어낸다.
+  // 보안 동일: 서명을 직접 검증하고, 페이지의 getCurrentUser 가 한 번 더 확인한다.
+  //
+  // 갱신 실패는 둘로 갈린다:
   //   (a) 일시 오류 — 네트워크 끊김·서버 5xx·절전 복귀 직후. 곧 회복되고 세션은 멀쩡.
   //   (b) 진짜 무효 — 세션 없음·refresh token 폐기. 로그인 필요.
-  // (a) 는 통과시키고(세션 유지), (b) 만 /login 으로 보낸다. signOut() 은 호출하지 않는다
-  // — 일시 오류를 영구 로그아웃으로 만들고, getUser 가 진짜 무효 시엔 이미 쿠키를 정리한다.
+  // (a) 는 통과시키고(세션 유지), (b) 만 /login 으로 보낸다. signOut() 은 호출하지 않는다.
   const loginRedirect = () => {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('next', pathname)
@@ -104,20 +109,23 @@ export async function proxy(request: NextRequest) {
 
   let result
   try {
-    result = await supabase.auth.getUser()
+    result = await supabase.auth.getClaims()
   } catch (err) {
-    // getUser 가 던지는 예외는 대개 네트워크 계열 — 일시 오류면 통과(fail-open).
+    // getClaims 가 던지는 예외는 대개 네트워크 계열(JWKS fetch·refresh) — 일시 오류면 통과(fail-open).
     return isTransientAuthError(err) ? response : loginRedirect()
   }
 
-  if (result.data.user) return response
+  if (result.data?.claims) return response
 
-  // user 없음 — 에러 종류로 분기. 일시 오류면 세션 유지하고 통과.
+  // claims 없음 — 에러 종류로 분기. 일시 오류면 세션 유지하고 통과.
   return isTransientAuthError(result.error) ? response : loginRedirect()
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // _next 빌드 산출물·정적 파일은 미들웨어를 아예 안 태운다(함수 부팅 비용 절약).
+    // 폰트(woff/woff2/ttf/otf)·sw.js·manifest·robots·sitemap 추가 — 이들은 인증과 무관한데
+    // 종전 matcher 는 매칭돼 미들웨어를 부팅한 뒤 isPublic 으로 early-return 만 했다.
+    '/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|otf)$).*)',
   ],
 }

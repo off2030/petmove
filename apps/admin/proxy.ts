@@ -81,22 +81,23 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   if (isPublic(pathname)) return response
 
-  // getUser() 는 내부적으로 refresh 를 시도하며, stale/경쟁 refresh token 으로
-  // throw 할 수 있다 — 이는 "미인증"이 아니라 일시적 실패일 수 있다. 따라서 throw 시
-  // signOut() 으로 세션을 파괴하지 않는다(네트워크 블립에 멀쩡한 세션이 날아가는 것
-  // 방지). throw 든 user=null 이든 아래 단일 분기에서 처리한다.
-  let user = null
+  // getClaims() 는 비대칭 서명키(현재 ECC P-256)면 캐시된 JWKS 로 access token 을 *로컬
+  // 검증*한다 — getUser() 처럼 매 요청 /user 로 네트워크 왕복을 하지 않아 Fluid CPU 를 아낀다.
+  // refresh 는 그대로: 내부 getSession() 이 만료 시에만 refresh token 으로 갱신(setAll 로
+  // 새 쿠키). stale/경쟁 refresh token 으로 throw 할 수 있는데 이는 "미인증"이 아니라 일시적
+  // 실패일 수 있어 signOut() 으로 세션을 파괴하지 않는다. throw 든 null 이든 아래에서 처리한다.
+  let userId: string | null = null
   try {
-    user = (await supabase.auth.getUser()).data.user
+    userId = (await supabase.auth.getClaims()).data?.claims.sub ?? null
   } catch {
-    /* 일시적 실패 가능 — user=null 로 두고 아래 공통 처리 */
+    /* 일시적 실패 가능 — userId=null 로 두고 아래 공통 처리 */
   }
 
   // 인증 실패 처리. redirect 는 *문서 내비게이션에만* — 일시적 실패였다면 /login 이
   // 재검증 후 next 로 되돌려보낸다(전체 로드라 잃을 SPA 상태가 없다). 서버액션·RSC 등
   // 백그라운드 요청은 redirect 없이 통과 — 라우터가 redirect 를 내비게이션으로 따라가며
   // 생기는 "상세페이지 → 홈 튕김"을 차단한다. 데이터 노출 없음: 실제 경계는 RLS.
-  if (!user) {
+  if (!userId) {
     if (!isDocumentNavigation(request)) return response
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('next', pathname)
@@ -104,7 +105,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // 멤버십·비번 게이트도 redirect 를 내보내므로 동일 원칙 — 문서 내비게이션이 아니면
-  // 게이트 자체를 건너뛴다(불필요한 DB 조회 2건도 절약). user 는 위에서 확정됨.
+  // 게이트 자체를 건너뛴다(불필요한 DB 조회 2건도 절약). userId 는 위에서 확정됨.
   if (!isDocumentNavigation(request)) return response
 
   // Invite-only 게이트: 멤버십 0 + super_admin 아님 → 차단.
@@ -112,8 +113,8 @@ export async function proxy(request: NextRequest) {
   // 초대 수락 진행 중인 /invite/* 는 우회.
   if (!bypassMembershipGate(pathname)) {
     const [profRes, memRes] = await Promise.all([
-      supabase.from('profiles').select('is_super_admin').eq('id', user.id).maybeSingle(),
-      supabase.from('memberships').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+      supabase.from('profiles').select('is_super_admin').eq('id', userId).maybeSingle(),
+      supabase.from('memberships').select('id', { count: 'exact', head: true }).eq('user_id', userId),
     ])
     const isSuperAdmin = !!profRes.data?.is_super_admin
     const memberCount = memRes.count ?? 0
@@ -144,6 +145,6 @@ export const config = {
     // _next 빌드 산출물·favicon·정적 이미지만 제외. /api/* 는 의도적으로 포함 —
     // /api/auth/* (OAuth 시작/callback) 가 PUBLIC_PREFIXES 통과해야 미로그인
     // 사용자도 도달 가능하기 때문. 그 외 보호된 API 도 동일 게이트로 처리.
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|otf|woff|woff2|ttf)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|otf|woff|woff2|ttf)$).*)',
   ],
 }
