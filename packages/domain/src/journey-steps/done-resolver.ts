@@ -183,6 +183,10 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
         (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
         ''
       if (entry && validUntil && validUntil < entry) return false
+      // 여행 미예약(입국일 없음) + 유효기간 만료 30일 임박 — 추가 접종 준비 안내를 위해 미완료로
+      // 둔다(종합백신 카드 situational 임박 안내와 짝, 광견병과 동일 모델). 예약된 여행이 유효기간
+      // 내면 정상 완료 — 출발 직전 오경보 방지로 !entry 일 때만.
+      if (!entry && validUntil && validUntil < addDays(todayKst(), 30)) return false
       return isDatedConfirmed(data, latest.date, 'general_vaccine_confirmed')
     }
     case 'has-civ-vaccine':

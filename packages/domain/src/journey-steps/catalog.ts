@@ -800,6 +800,13 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         const msg = `종합백신 면역 유효기간이 ${token ? `${token} ` : ''}입국 전에 만료됩니다. ${formatKoreanDate(validUntil)}까지 추가 접종을 하세요.`
         return { desc: msg, cardDesc: msg, advisory: true }
       }
+      // 만료 임박(오늘 기준 30일 이내) — 여행 미예약(!entry)일 때만 추가 접종 준비를 알린다.
+      // 광견병 카드와 동일 모델(has-general-vaccine 의 임박 미완료 조건과 짝, 예약된 여행이
+      // 유효기간 내면 오경보 방지).
+      if (!entry && validUntil && validUntil >= today && validUntil < addDays(today, 30)) {
+        const msg = `직전 종합백신의 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 유효기간이 끝나기 전에 추가 접종을 하세요.`
+        return { desc: msg, cardDesc: msg, advisory: true }
+      }
       // 만료 아님 + 도래 + 미확인 → 당일/지남 완료확인 안내.
       if (data.general_vaccine_confirmed === true) return undefined
       return datedCardSituational(latest.date, '종합백신', '접종')
