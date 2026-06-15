@@ -34,8 +34,8 @@ const CUSTOM_LAB = '__custom__'
 
 const LAB_OPTIONS = [
   { value: 'apqa_seoul', label: '농림축산검역본부 (APQA)' },
-  { value: 'ksvdl_r', label: 'Kansas State Rabies Laboratory' },
-  { value: CUSTOM_LAB, label: '직접 입력' },
+  { value: 'krsl', label: '코미팜 (KRSL)' },
+  { value: CUSTOM_LAB, label: '기타' },
 ]
 
 const LAB_CODES = LAB_OPTIONS.filter((o) => o.value !== CUSTOM_LAB).map((o) => o.value)

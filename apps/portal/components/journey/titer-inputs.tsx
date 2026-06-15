@@ -7,7 +7,7 @@ import { DateTextField } from '@petmove/ui'
  * 광견병 항체 검사 step 입력 필드 — 채혈일 + 검사기관 + 검사결과. controlled — 부모
  * (step-detail-view)가 state·save 를 보유. 저장 형식은 case.data.rabies_titer_records[0]
  * 의 date / lab / value (펫무브워크 RabiesTiterField 와 동일 키).
- *  - lab 은 검사기관 코드(apqa_seoul / ksvdl_r), 목록에 없으면 직접 입력한 기관명.
+ *  - lab 은 검사기관 코드(apqa_seoul / krsl), 목록에 없으면 '기타'로 직접 입력한 기관명.
  *  - value 는 IU/mL 단위 없이 수치만 (저장 시 server action 이 단위 제거).
  */
 
@@ -23,8 +23,8 @@ const CUSTOM_LAB = '__custom__'
 /** 검사기관 선택지 — value 는 펫무브워크 LAB_INFO 와 동일 코드, label 은 보호자용 명칭. */
 const LAB_OPTIONS = [
   { value: 'apqa_seoul', label: '농림축산검역본부 (APQA)' },
-  { value: 'ksvdl_r', label: 'Kansas State Rabies Laboratory' },
-  { value: CUSTOM_LAB, label: '직접 입력' },
+  { value: 'krsl', label: '코미팜 (KRSL)' },
+  { value: CUSTOM_LAB, label: '기타' },
 ]
 
 /** 검사기관 코드(직접 입력 제외) — 직접 입력 모드 판별용. */
