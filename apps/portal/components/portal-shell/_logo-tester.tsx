@@ -12,20 +12,13 @@ type Variant = { name: string; svg: string }
 
 // 각 후보의 <svg> 내부 콘텐츠 (viewBox 0 0 100 100 기준).
 const VARIANTS: Variant[] = [
-  {
-    name: 'current (dark-v2)',
-    svg: '<rect width="100" height="100" rx="22.5" fill="#1f1c17"/><path d="M34 80 C 28 62, 29 42, 41 31 C 53 23, 68 28, 68 43 C 68 55, 57 60, 49 56 C 43 53, 43 47, 48 45" fill="none" stroke="#e08a64" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>',
-  },
-  // --- ribbon-p 계열 ---
   { name: 'ribbon-p-amber', svg: '<rect width="100" height="100" rx="22.5" fill="#e8a55a"/><path d="M34 80 C 28 62, 29 42, 41 31 C 53 23, 68 28, 68 43 C 68 55, 57 60, 49 56 C 43 53, 43 47, 48 45" fill="none" stroke="#ffffff" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>' },
   { name: 'ribbon-p-coral', svg: '<rect width="100" height="100" rx="22.5" fill="#e08a64"/><path d="M34 80 C 28 62, 29 42, 41 31 C 53 23, 68 28, 68 43 C 68 55, 57 60, 49 56 C 43 53, 43 47, 48 45" fill="none" stroke="#ffffff" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>' },
   { name: 'ribbon-p-dark', svg: '<rect width="100" height="100" rx="22.5" fill="#1f1c17"/><path d="M34 80 C 28 62, 29 42, 41 31 C 53 23, 68 28, 68 43 C 68 55, 57 60, 49 56 C 43 53, 43 47, 48 45" fill="none" stroke="#fbf8f2" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>' },
   { name: 'ribbon-p-dark-mint', svg: '<rect width="100" height="100" rx="22.5" fill="#1f1c17"/><path d="M34 80 C 28 62, 29 42, 41 31 C 53 23, 68 28, 68 43 C 68 55, 57 60, 49 56 C 43 53, 43 47, 48 45" fill="none" stroke="#6fb89a" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>' },
-  { name: 'ribbon-p-ink', svg: '<rect width="100" height="100" rx="22.5" fill="#1a1814"/><path d="M34 80 C 28 62, 29 42, 41 31 C 53 23, 68 28, 68 43 C 68 55, 57 60, 49 56 C 43 53, 43 47, 48 45" fill="none" stroke="#e08a64" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>' },
   { name: 'ribbon-p-mint', svg: '<rect width="100" height="100" rx="22.5" fill="#6fb89a"/><path d="M34 80 C 28 62, 29 42, 41 31 C 53 23, 68 28, 68 43 C 68 55, 57 60, 49 56 C 43 53, 43 47, 48 45" fill="none" stroke="#ffffff" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>' },
   { name: 'ribbon-p-mono', svg: '<rect width="100" height="100" rx="22.5" fill="#faf9f5"/><path d="M34 80 C 28 62, 29 42, 41 31 C 53 23, 68 28, 68 43 C 68 55, 57 60, 49 56 C 43 53, 43 47, 48 45" fill="none" stroke="#1a1814" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>' },
   { name: 'ribbon-p-sky', svg: '<rect width="100" height="100" rx="22.5" fill="#6fa8c4"/><path d="M34 80 C 28 62, 29 42, 41 31 C 53 23, 68 28, 68 43 C 68 55, 57 60, 49 56 C 43 53, 43 47, 48 45" fill="none" stroke="#ffffff" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>' },
-  { name: 'ribbon-p-sky-soft', svg: '<rect width="100" height="100" rx="22.5" fill="#d8e7ef"/><path d="M34 80 C 28 62, 29 42, 41 31 C 53 23, 68 28, 68 43 C 68 55, 57 60, 49 56 C 43 53, 43 47, 48 45" fill="none" stroke="#3a657a" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>' },
 ]
 
 const KEY = 'pm-logo-test'
