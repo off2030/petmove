@@ -377,7 +377,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '광견병 항체 검사',
     shortLabel: '항체',
     description:
-      '일본 지정 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있습니다.\n0.5 IU/mL 이상이면 합격입니다.\n2차 접종 면역 유효기간 이내에 검사하세요.',
+      '일본 지정 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있습니다.\n0.5 IU/mL 이상이면 합격입니다.\n2차 접종 면역 유효기간 이내에 검사하세요.\n유효기간은 2년입니다.',
     doneSummary: '광견병 항체 검사를 받았습니다.',
     applicability: {
       destinations: [
