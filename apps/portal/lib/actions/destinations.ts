@@ -21,6 +21,7 @@ import { getCurrentUser } from '@petmove/auth/server'
 import {
   summarizeJourney,
   resolveDone,
+  writeByDestValue,
   DESTINATION_SCOPED_FIELD_KEYS,
   MAX_DESTINATIONS_PER_CASE,
   type PastJourneySummary,
@@ -277,19 +278,31 @@ export async function setCaseDestinationTripType(
 
     const { data: row, error: rowErr } = await admin
       .from('cases')
-      .select('data')
+      .select('data, destination')
       .eq('id', caseId)
       .single()
     if (rowErr || !row) return { ok: false, error: rowErr?.message ?? '여정을 찾을 수 없습니다.' }
-    const data = ((row as { data: Record<string, unknown> | null }).data ?? {}) as Record<
-      string,
-      unknown
-    >
+    const typedRow = row as { data: Record<string, unknown> | null; destination: string | null }
+    const data = (typedRow.data ?? {}) as Record<string, unknown>
     const nextTripType: Record<string, TripType> = {
       ...((data.trip_type as Record<string, TripType> | undefined) ?? {}),
       [dest]: tripType,
     }
-    const nextData = { ...data, trip_type: nextTripType }
+    let nextData: Record<string, unknown> = { ...data, trip_type: nextTripType }
+
+    // 편도로 전환하면 귀국편(귀국일·미정 플래그)을 제거 — 편도엔 귀국 leg 가 없다.
+    // (안 지우면 잔존 귀국일이 항공권 '출국 ≤ 귀국' 검증에 걸려 출국일 변경을 막는다.)
+    if (tripType === 'one_way') {
+      if (parseDestTokens(typedRow.destination).length > 1) {
+        // 다중 목적지 — 이 목적지 칸만 명시적 비움(null sentinel). top-level 은 타 목적지 것일 수 있어 보존.
+        nextData = writeByDestValue(nextData, dest, 'return_date', null)
+        nextData = writeByDestValue(nextData, dest, 'return_undecided', null)
+      } else {
+        // 단일 목적지 — top-level 저장이라 직접 제거.
+        delete nextData.return_date
+        delete nextData.return_undecided
+      }
+    }
 
     const { error: updErr } = await admin
       .from('cases')

@@ -875,14 +875,7 @@ export async function updateFlightFields(
         return { ok: false, error: '시간 형식은 HH:mm 여야 합니다.' }
       }
     }
-    // 출국 ≤ 귀국 — 둘 다 입력된 경우만 검사. 논리적 불가능 조건이므로 저장 거부.
-    {
-      const entry = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
-      const ret = typeof fields.return_date === 'string' ? fields.return_date.trim() : ''
-      if (entry && ret && ret < entry) {
-        return { ok: false, error: '귀국 항공편 날짜는 출국 항공편 날짜 이후여야 합니다.' }
-      }
-    }
+    // (출국 ≤ 귀국 검증은 tripType 을 알아야 해서 fetch 후로 이동 — 편도는 잔존 귀국일 무시.)
     // 귀국일이 입력돼 있으면 '미정' 플래그는 무의미 — 서버에서도 강제 해제(상호배타). 클라이언트가
     // 이미 비우지만, 직접 호출·레이스 대비로 한 번 더 정규화한다.
     if (typeof fields.return_date === 'string' && fields.return_date.trim().length > 0) {
@@ -910,9 +903,20 @@ export async function updateFlightFields(
     const isSingleDest = parseDestinations(caseDestStr).length === 1
     // 일본은 출국일(departure_date)이 departure_flight_date 와 양방향 sync — 출국일 쓸 때 이 키도
     // 함께 맞춰야 stale 잔존이 출국일을 되살리지 않는다. (Japan 한정 — 다른 목적지엔 이 키 없음.)
-    const isJapanFlight =
-      buildCaseJourneyContext({ destination: caseDestStr ?? null, data: prev } as CaseRow, destination ?? null)
-        .destinationKey === 'japan'
+    const flightCtx = buildCaseJourneyContext(
+      { destination: caseDestStr ?? null, data: prev } as CaseRow,
+      destination ?? null,
+    )
+    const isJapanFlight = flightCtx.destinationKey === 'japan'
+    // 출국 ≤ 귀국 — 왕복에서만 검사. 편도는 귀국 leg 가 없어, 왕복에서 전환되며 남은 잔존
+    // 귀국일을 무시한다. updateCaseInfoFields 의 trip_type==='round' 가드와 동일 패턴.
+    if (flightCtx.tripType === 'round') {
+      const entry = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
+      const ret = typeof fields.return_date === 'string' ? fields.return_date.trim() : ''
+      if (entry && ret && ret < entry) {
+        return { ok: false, error: '귀국 항공편 날짜는 출국 항공편 날짜 이후여야 합니다.' }
+      }
+    }
     // 활성 목적지 토큰을 읽기(flatten)와 동일하게 해석 — ?dest 미지정이어도 첫 토큰으로 fallback 해
     // 항공권 필드·출국일을 by_dest 에 저장한다. 읽기는 strict by_dest 라 top-level/컬럼에 쓰면
     // 출국일이 검증에 안 보여 '주의'가 누락됐다. 검역·검진과 동일 패턴(resolveWriteToken, 로컬 함수).

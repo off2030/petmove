@@ -883,8 +883,10 @@ export function StepDetailView({
     if (isFlight) {
       // 출국편 기준일 — 태국 등 출발일 별도 입력 카드는 departure_date(출발일), 그 외는 entry_date.
       const outboundDate = (flightForm.departure_date || flightForm.entry_date).trim()
-      // 출국 ≤ 귀국 (항공편 내재적 정합성). 이후 일정과의 관계는 차단 X.
+      // 출국 ≤ 귀국 (항공편 내재적 정합성) — 왕복에서만. 편도는 귀국 leg 가 없어, 왕복에서
+      // 전환되며 남은 잔존 귀국일을 무시한다(서버 updateFlightFields·정보 저장과 동일 가드).
       if (
+        tripType === 'round' &&
         outboundDate &&
         flightForm.return_date &&
         flightForm.return_date < outboundDate
