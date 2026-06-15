@@ -1943,6 +1943,36 @@ export function StepDetailView({
               <span style={{ color: C.ink3 }}>→</span>
             </Link>
           )}
+          {/* 출국 전 임상검사 — 발급받을 서류(별지25호·FormAC 등)는 서류 체크리스트(/docs)에서
+              보유 여부를 확인·관리한다. 활성 목적지(?dest=)를 보존해 다른 목적지로 튕기지 않게. */}
+          {isVetVisit && (
+            <Link
+              href={
+                activeDest
+                  ? `/cases/${caseId}/docs?dest=${encodeURIComponent(activeDest)}`
+                  : `/cases/${caseId}/docs`
+              }
+              style={{
+                marginTop: 14,
+                marginRight: 8,
+                padding: '9px 14px',
+                borderRadius: 999,
+                border: `.5px solid ${C.line}`,
+                background: 'rgb(var(--pm-surface-rgb) / 0.55)',
+                color: C.ink,
+                fontSize: 13,
+                fontWeight: 500,
+                letterSpacing: '-0.005em',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                textDecoration: 'none',
+              }}
+            >
+              서류 체크리스트
+              <span style={{ color: C.ink3 }}>→</span>
+            </Link>
+          )}
           {step.links?.map((l) => {
             // 정적 파일(/forms/x.pdf 등, 확장자 있는 경로) = 다운로드 → <a download> + '↓'.
             const isFile = /\/[^/]+\.[a-z0-9]+$/i.test(l.url)
