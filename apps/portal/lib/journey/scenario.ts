@@ -323,9 +323,13 @@ const PASSED_UNCONFIRMED_MSG =
 const ADVISORY_DEFERRED_CHECKS = new Set<string>([
   'jp.entry-within-2years-of-titer',
   'jp.rabies-valid-until-on-departure',
-  // 1회 접종국의 광견병 만료 룰 — '추가 백신' 카드 situational 이 같은 조건을 안내 (일본 모델).
+  // 1회 접종국의 광견병·종합백신 '입국 전 만료' 룰 — 각 백신 카드(rabies-vaccine-1·
+  // general-vaccine) situational 이 같은 조건을 안내 (일본 모델). 항공권 validationIds 에서도
+  // 제거해 광견병과 대칭 — 종합백신만 항공권 카드에 중복으로 새던 것 차단.
   'th.rabies-not-expired-on-arrival',
+  'th.general-vaccine-not-expired-on-arrival',
   'ph.rabies-not-expired-on-arrival',
+  'ph.general-vaccine-not-expired-on-arrival',
   'eu.rabies-valid-until-on-departure',
 ])
 

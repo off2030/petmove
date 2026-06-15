@@ -96,13 +96,12 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // 일본의 180일 anchor(항체 검사) 미적용 — 21일 룰은 입력 차단(validateThEntryDate)과
       // 아래 procedure-check 가 담당.
       earliest: undefined,
-      // th.rabies-not-expired-on-arrival 은 항공권이 아니라 '추가 백신' 카드의 situational
-      // 안내가 담당 (일본 jp.rabies-valid-until-on-departure 와 동일 모델 — scenario 의
-      // ADVISORY_DEFERRED_CHECKS 로 상단 주의 중복 차단).
+      // 광견병·종합백신 '입국 전 만료'(*.not-expired-on-arrival)는 항공권이 아니라 각 백신
+      // 카드(rabies-vaccine-1·general-vaccine)의 situational 안내가 담당 — scenario 의
+      // ADVISORY_DEFERRED_CHECKS 로 상단·항공권 중복 차단. 항공권엔 21일 대기 룰만 남긴다.
       validationIds: [
         'th.rabies-21days-before-arrival',
         'th.general-vaccine-21days-before-arrival',
-        'th.general-vaccine-not-expired-on-arrival',
       ],
     },
     // 수입 허가 — 태국 입국 공항 동물검역소(AQS)에 이메일 신청. 신청 → 허가증 2단계
@@ -213,12 +212,12 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       cardLine: '필리핀에 입국할 수 있습니다.',
       order: 95,
       earliest: undefined,
-      // ph.rabies-not-expired-on-arrival 은 '추가 백신' 카드 situational 이 담당 (태국과 동일).
+      // 광견병·종합백신 '입국 전 만료'(*.not-expired-on-arrival)는 각 백신 카드 situational 이
+      // 담당 (태국과 동일 — ADVISORY_DEFERRED_CHECKS). 항공권엔 생후 120일·21일 대기 룰만 남긴다.
       validationIds: [
         'ph.min-120days-on-arrival',
         'ph.rabies-prime-21days-before-arrival',
         'ph.general-vaccine-prime-21days-before-arrival',
-        'ph.general-vaccine-not-expired-on-arrival',
       ],
     },
     'import-permit': {
