@@ -1,12 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useCases } from './case-data-provider'
 import { hasJourney } from '@/lib/cases/journey-filter'
 import { readLastCaseId } from './last-case'
+// TEMP 로고 테스터 — 결정 후 이 import + 아래 TEMP 블록 + _logo-tester.tsx 삭제.
+import { LogoMark, LogoCycleButton } from './_logo-tester'
 
 /**
  * Portal 상단 chrome — portal-preview/app.jsx 의 ThemeControls 포팅.
@@ -108,7 +109,8 @@ export function TopBar() {
           lineHeight: 1,
         }}
       >
-        <Image src="/ribbon-p-dark-v2.svg" alt="" aria-hidden="true" width={22} height={22} priority />
+        {/* TEMP 로고 테스터 — 원래는 <Image src="/ribbon-p-dark-v2.svg" .../> */}
+        <LogoMark size={22} />
         <span>PETMOVE</span>
       </Link>
       <div
@@ -120,6 +122,8 @@ export function TopBar() {
           minWidth: 0,
         }}
       >
+        {/* TEMP 로고 후보 전환 버튼 — 결정 후 삭제. */}
+        <LogoCycleButton />
         {/* 설정 진입 — 계정·테마·약관·문의 등 앱 설정은 /settings 로. 동물전환은 그대로 우측에 유지. */}
         <Link href="/settings" prefetch aria-label="설정" title="설정" style={btn}>
           {/* Heroicons cog-6-tooth (outline) — 8-tooth lucide 보다 톱니 수가 적고 모서리가 둥글어 Calm 톤에 부드럽게 녹음. */}
