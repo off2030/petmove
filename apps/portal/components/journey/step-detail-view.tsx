@@ -1515,17 +1515,35 @@ export function StepDetailView({
   const situationalDup =
     !!rawSituationalDesc &&
     [...failed, ...notices].some(({ result }) => result.message === rawSituationalDesc)
-  const situationalDesc = situationalDup ? undefined : rawSituationalDesc
+  let situationalDesc = situationalDup ? undefined : rawSituationalDesc
+  // 항공권 step 은 안내를 **저장 전 로컬 폼 상태**로 즉시 갱신한다. 안내(귀국 항공권 입력하세요)·
+  // done 은 본래 저장된 caseRow.data 에서 계산돼, '미정' 체크나 날짜 입력 직후엔 저장해야 반영됐다.
+  // 라이브 flightForm 값을 입힌 합성 row 로 situational 을 다시 불러(도메인 로직 재사용) 체크 즉시
+  // 사라지고/풀면 다시 나타나게 한다.
+  if (isFlight && caseRow) {
+    const liveRow = {
+      ...caseRow,
+      departure_date: flightForm.departure_date || caseRow.departure_date,
+      data: {
+        ...((caseRow.data as Record<string, unknown> | null) ?? {}),
+        entry_date: flightForm.entry_date,
+        return_date: flightForm.return_date,
+        return_undecided: flightForm.return_undecided,
+      },
+    }
+    situationalDesc = step.situational?.(liveRow)?.desc
+  }
   const noticeCount = notices.length + (situationalDesc ? 1 : 0)
   const stepDocuments = readCaseDocuments(caseRow?.data).filter((d) => d.stepId === step.id)
 
-  // 항공권 step + 왕복 + 출국만 입력된 상태 — 편도 전환 affordance 노출.
+  // 항공권 step + 왕복 + 출국만 입력 + 미정 아님 — 편도 전환 affordance 노출. 안내와 동일하게
+  // 로컬 폼 기준으로 계산해 '미정' 체크 즉시 함께 사라진다.
   const isFlightRoundEntryOnly = (() => {
     if (!isFlight || tripType !== 'round') return false
-    const data = (caseRow?.data ?? {}) as Record<string, unknown>
-    const hasEntry = typeof data.entry_date === 'string' && data.entry_date.length >= 10
-    const hasReturn = typeof data.return_date === 'string' && data.return_date.length >= 10
-    return hasEntry && !hasReturn
+    const hasEntry = (flightForm.departure_date || flightForm.entry_date).trim().length >= 10
+    const hasReturn = flightForm.return_date.trim().length >= 10
+    const undecided = flightForm.return_undecided === '1'
+    return hasEntry && !hasReturn && !undecided
   })()
   // 사전 신고 step + 신청일 입력됐는데 허가증 첨부 아직 — 두 분기:
   //  - skip X: 첨부 권장 + '다음' 으로 명시적 skip.
