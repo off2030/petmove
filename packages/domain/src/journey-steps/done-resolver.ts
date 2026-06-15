@@ -1,5 +1,6 @@
 import type { CaseRow } from '../types'
 import {
+  addDays,
   addYears,
   readGeneralVaccineEntries,
   readCivEntries,
@@ -80,6 +81,11 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
         (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
         ''
       if (entry && validUntil && validUntil < entry) return false
+      // 여행 미예약(입국일 없음) + 유효기간 만료 30일 임박 — 추가 접종 준비를 알리려 미완료로
+      // 둔다(광견병 카드 situational 임박 안내와 짝). 이미 예약된 여행이 유효기간 내면 정상
+      // 완료라 !entry 일 때만 — 출발 직전 멀쩡한 백신에 오경보가 뜨지 않게. 일본은 advisoryOnly
+      // '추가 백신' 카드가 같은 역할(단일 접종국은 그 카드가 없어 여기서 처리).
+      if (!entry && validUntil && validUntil < addDays(todayKst(), 30)) return false
       // 1회국 단일카드 — 별도 키(최신 접종 기준). 2회국 1차(rabies_1_confirmed)와 의미 분리:
       // 다중 목적지(일본+태국)에서 단일카드 저장이 2회국 1차를 clobber 하지 않도록.
       return isDatedConfirmed(data, latest.date, 'rabies_single_confirmed')

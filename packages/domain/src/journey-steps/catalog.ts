@@ -1,4 +1,5 @@
 import {
+  addDays,
   addYears,
   readCivEntries,
   readExternalParasiteEntries,
@@ -199,6 +200,14 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       if (entry && validUntil && validUntil < entry) {
         const token = buildCaseJourneyContext(caseRow).destinationToken
         const msg = `광견병 백신 면역 유효기간이 ${token ? `${token} ` : ''}입국 전에 만료됩니다. ${formatKoreanDate(validUntil)}까지 추가 접종을 하세요.`
+        return { desc: msg, cardDesc: msg, advisory: true }
+      }
+      // 만료 임박(오늘 기준 30일 이내) — 아직 유효하지만 곧 만료. 여행 미예약(!entry)일 때만
+      // 추가 접종 준비를 알린다(done-resolver has-rabies-valid 의 임박 미완료 조건과 동일 —
+      // 이미 예약된 여행이 유효기간 내면 오경보가 되지 않게). 일본은 '추가 백신' 카드가 같은
+      // 역할(rabies-extra-applicable)을 하지만, 1회 접종국(태국·필리핀·EU)은 그 카드가 없다.
+      if (!entry && validUntil && validUntil >= today && validUntil < addDays(today, 30)) {
+        const msg = `직전 광견병 백신의 면역 유효기간이 ${formatKoreanDate(validUntil)}에 만료됩니다. 유효기간이 끝나기 전에 추가 접종을 하세요.`
         return { desc: msg, cardDesc: msg, advisory: true }
       }
       // 1회국 단일카드 완료확인 — 별도 키(rabies_single_confirmed). 2회국 1차(rabies_1_confirmed)와 분리.
