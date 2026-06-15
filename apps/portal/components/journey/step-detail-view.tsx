@@ -276,24 +276,20 @@ export function StepDetailView({
   const savedKrExportQuarantineDate = readKrExportQuarantineDate(caseRow?.data)
   const [krExportQuarantineDate, setKrExportQuarantineDate] = useState(savedKrExportQuarantineDate)
 
+  // 입력칸은 자기 검역일만(항공편 날짜 자동 채움 X) — 한국 수출 동물검역(certificate-issue)과
+  // 동일하게 비운 채로 시작해 보호자가 직접 검역일을 입력한다. 타임라인 '예정' 배지는
+  // scenario.ts 가 항공편 날짜를 폴백으로 계속 띄우므로(기본 동작 유지) 상세 입력만 비운다.
   const savedJpImportQuarantineDate = readJpImportQuarantineDate(caseRow?.data)
-  // 검역일이 비어있으면 일본 도착 항공편 날짜(입국일)를 예정일 기본값으로 — 자동 채움값(baseline)과
-  // 같으면 dirty 아님(버튼 비활성). 보호자가 직접 바꿔야 dirty(활성).
-  const jpImportQuarantineBaseline =
-    savedJpImportQuarantineDate || (isJpImportQuarantine ? savedFlightForm.entry_date.slice(0, 10) : '')
+  const jpImportQuarantineBaseline = savedJpImportQuarantineDate
   const [jpImportQuarantineDate, setJpImportQuarantineDate] = useState(jpImportQuarantineBaseline)
 
   const savedJpExportQuarantineVisitDate = readJpExportQuarantineVisitDate(caseRow?.data)
-  // 검역일이 비어있으면 신청 예약일을 예정일 기본값으로 — baseline 과 같으면 dirty 아님(버튼 비활성).
-  const jpExportQuarantineVisitBaseline =
-    savedJpExportQuarantineVisitDate || (isJpExportQuarantineVisit ? savedJpExport.date : '')
+  const jpExportQuarantineVisitBaseline = savedJpExportQuarantineVisitDate
   const [jpExportQuarantineVisitDate, setJpExportQuarantineVisitDate] =
     useState(jpExportQuarantineVisitBaseline)
 
   const savedKrImportQuarantineDate = readKrImportQuarantineDate(caseRow?.data)
-  // 검역일이 비어있으면 귀국 항공편 날짜를 예정일 기본값으로 — baseline 과 같으면 dirty 아님(버튼 비활성).
-  const krImportQuarantineBaseline =
-    savedKrImportQuarantineDate || (isKrImportQuarantine ? savedFlightForm.return_date.slice(0, 10) : '')
+  const krImportQuarantineBaseline = savedKrImportQuarantineDate
   const [krImportQuarantineDate, setKrImportQuarantineDate] = useState(krImportQuarantineBaseline)
 
   // 나라별 도착 수입검역 — 동적 필드(importQuarantineField)에서 저장값. baseline 자동채움 없음
