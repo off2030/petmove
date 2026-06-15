@@ -145,7 +145,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'manual',
       issuanceStepId: 'vet-visit',
       description:
-        '일본 지정 양식의 접종, 검사 및 건강증명서입니다.\n\n일본에 처음 입국하는 경우 FormAC를 준비합니다.\n\n재입국의 경우 FormRE와 일본 수출동물검역증을 준비합니다.\n\n출국일 기준 10일 이내에 임상 수의사의 서명을 받습니다.\n\n한국 수출 동물검역 때 검역관 확인·서명을 받습니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+        '일본 지정 양식의 접종, 검사 및 건강증명서입니다.\n출국일 기준 10일 이내에 동물병원에서 발급받습니다. 이 서류는 발급하지 않는 동물병원이 많으므로 미리 확인하세요.\n\n재입국인 경우 FormAC 대신 FormRE와 일본 수출 동물검역증(Export Quarantine Certificate)을 준비해야 할 수 있습니다. 일본 동물검역소 혹은 담당 동물병원에 확인하세요.\n한국 수출 동물검역 때 검역관 확인·서명을 받아야 합니다.\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
       templates: [
         { label: 'FormAC (PDF)', href: '/forms/form-ac.pdf', filename: 'FormAC.pdf' },
         { label: 'FormAC (Excel)', href: '/forms/form-ac.xlsx', filename: 'FormAC.xlsx' },
