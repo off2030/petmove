@@ -206,6 +206,8 @@ function ReturnUndecidedToggle({
         display: 'inline-flex',
         alignItems: 'center',
         gap: 8,
+        // 체크 여부와 무관하게 높이를 고정 — 토글 시 카드 높이가 흔들리지 않게.
+        height: 22,
         marginTop: 10,
         padding: 0,
         background: 'transparent',
@@ -217,6 +219,7 @@ function ReturnUndecidedToggle({
         aria-hidden
         style={{
           flex: '0 0 auto',
+          boxSizing: 'border-box',
           width: 18,
           height: 18,
           borderRadius: 5,
@@ -228,11 +231,15 @@ function ReturnUndecidedToggle({
           justifyContent: 'center',
           fontSize: 12,
           lineHeight: 1,
+          transition: 'background .12s, border-color .12s',
         }}
       >
-        {checked ? '✓' : ''}
+        {/* 체크마크는 항상 렌더하고 opacity 로만 토글 — 글리프 추가/제거에 의한 리플로우 방지. */}
+        <span style={{ opacity: checked ? 1 : 0 }}>✓</span>
       </span>
-      <span style={{ fontSize: 14, fontWeight: 500, color: checked ? C.ink : C.ink2 }}>미정</span>
+      <span style={{ fontSize: 14, lineHeight: 1, fontWeight: 500, color: checked ? C.ink : C.ink2 }}>
+        미정
+      </span>
     </button>
   )
 }
