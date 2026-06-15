@@ -86,9 +86,18 @@ export default function CaseJourneyStepPage({
   // 같은 레인의 후행 단계에 이미 입력된 데이터가 있는지 — 수정·삭제 전 '주의' 확인창 조건.
   // 메인 레인과 nonBlocking 귀국 레인은 병렬이므로 서로를 후행 일정으로 보지 않는다.
   const isReturnLane = step.nonBlocking === true
-  const hasDownstreamData = applicable
+  const downstreamLane = applicable
     .slice(stepIndex + 1)
     .filter((s) => (s.nonBlocking === true) === isReturnLane)
+  // 편집 step 과 같은 병렬 그룹(직후의 연속 concurrent 접종 — 광견병·종합백신처럼 순서 의존이
+  // 없는 단계)은 후행 일정으로 보지 않는다. 슬라이스 선두의 concurrent run 을 건너뛴다 —
+  // 그래야 광견병 수정 시 병렬인 종합백신 입력이 '이후 일정' 경고를 띄우지 않는다.
+  let firstDependent = 0
+  while (firstDependent < downstreamLane.length && downstreamLane[firstDependent].concurrent) {
+    firstDependent++
+  }
+  const hasDownstreamData = downstreamLane
+    .slice(firstDependent)
     .some((s) => resolveDone(s.done, view) || (s.hasInputData?.(view) ?? false))
 
   return (
