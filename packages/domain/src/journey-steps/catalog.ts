@@ -525,7 +525,9 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         (typeof data.entry_date === 'string' && data.entry_date.length >= 10) ||
         (typeof caseRow.departure_date === 'string' && caseRow.departure_date.length >= 10)
       const hasReturn = typeof data.return_date === 'string' && data.return_date.length >= 10
-      if (!hasEntry || hasReturn) return undefined
+      // '미정' 체크 시 안내를 숨긴다(체크 풀면 다시 노출) — 출국편만으로 완료 인정과 일치.
+      const returnUndecided = data.return_undecided === '1'
+      if (!hasEntry || hasReturn || returnUndecided) return undefined
       const ctx = buildCaseJourneyContext(caseRow)
       if (ctx.tripType !== 'round') return undefined
       const msg = '귀국 항공권 정보를 입력하세요.'
