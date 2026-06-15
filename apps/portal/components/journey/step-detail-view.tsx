@@ -7,7 +7,6 @@ import {
   createVaccineLookups,
   findRabiesChainBreak,
   readEffectiveExtraValue,
-  resolveRequiredDocs,
   todayKst,
   validateAdvanceNotification,
   validateJpEntryDate,
@@ -73,7 +72,6 @@ import {
   updateTiterFields,
   updateVetVisitDate,
 } from '@/lib/actions/cases'
-import { setRequiredDocsComplete } from '@/lib/actions/required-docs'
 import { readCaseDocuments } from '@/lib/documents'
 import { AdvanceNotificationInputs } from './advance-notification-inputs'
 import { FlightInputs, type FlightForm } from './flight-inputs'
@@ -89,7 +87,6 @@ import { MicrochipInputs } from './microchip-inputs'
 import { RabiesEntryInputs, type RabiesEntryForm, type RabiesProductHints } from './rabies-entry-inputs'
 import { RabiesExtraInputs, type RabiesExtraEntry } from './rabies-extra-inputs'
 import { StepAttachments } from './step-attachments'
-import { StepDocChecklist } from './step-doc-checklist'
 import { TiterExtraInputs, type TiterExtraEntry } from './titer-extra-inputs'
 import { TiterInputs, type TiterForm } from './titer-inputs'
 import { VetVisitInputs } from './vet-visit-inputs'
@@ -512,6 +509,11 @@ export function StepDetailView({
     isGeneralVaccine && !done && latestSavedDate(savedGeneralVaccine) !== '' && latestSavedDate(savedGeneralVaccine) <= todayStr
   const parasiteArrivedUnconfirmed =
     isParasite && !done && latestSavedDate(savedParasite) !== '' && latestSavedDate(savedParasite) <= todayStr
+  // 출국 전 임상검사 — 다른 백신·검사와 동일 dated-confirm. 예정(미래)으로 저장한 검진일이
+  // 도래(≤오늘)했는데 아직 완료 전이면 '완료' 버튼을 활성화해 확인으로 완료한다. (서류 준비
+  // 현황은 별도 단계 '서류 체크리스트'(document-checklist)로 분리 — 여긴 검진일만 다룬다.)
+  const vetVisitArrivedUnconfirmed =
+    isVetVisit && !done && savedVetVisitDate.length >= 10 && savedVetVisitDate <= todayStr
   // 저장 버튼 활성: 변경됨(dirty) OR 검진일 도래했는데 아직 확인 전(저장 클릭으로 완료).
   const canSave =
     dirty ||
@@ -522,7 +524,8 @@ export function StepDetailView({
     rabiesArrivedUnconfirmed ||
     rabiesSingleArrivedUnconfirmed ||
     generalVaccineArrivedUnconfirmed ||
-    parasiteArrivedUnconfirmed
+    parasiteArrivedUnconfirmed ||
+    vetVisitArrivedUnconfirmed
   // 신청·신고 step(검역 5단계 외) — 신청일/신고일이 미래면 버튼 라벨을 '예정일로 저장'으로.
   // 완료 판정은 신청일이 오늘 이하로 도래한 뒤(+ 예약/허가증/skip). canSave 는 dirty 그대로.
   const jpExportApplicationUpcoming =
@@ -1326,11 +1329,10 @@ export function StepDetailView({
       setStatus('saving')
       setError(null)
       startTransition(async () => {
-        // 새 모델 — 저장은 데이터 저장만 (완료 처리 X). 완료는 '완료' 버튼/서류 자동.
+        // 다른 백신·검사와 동일 dated-confirm — 검진일 ≤ 오늘이면 저장 즉시 완료, 미래면 예정.
         const res = await updateVetVisitDate(
           caseId,
           vetVisitDate || null,
-          false,
           // 활성 목적지 토큰 — 읽기(activeDestinationView)와 scope 일치. caseRow.destination(전체
           // 컬럼)을 넘기면 다중목적지에서 by_dest 쓰기/읽기 불일치로 내원일이 반영 안 됨(플라이트와 동일).
           activeDest ?? null,
@@ -1708,39 +1710,6 @@ export function StepDetailView({
     startTransition(async () => {
       const res = await markTiterResultConfirmed(caseId)
       setCompletingTiter(false)
-      if (res.ok) {
-        updateCase(res.value)
-        router.replace(journeyHref)
-      } else {
-        setStatus('error')
-        setError(res.error)
-      }
-    })
-  }
-  // 출국 전 임상검사 — 검진일 저장(오늘 이하) + 미완료면 하단 버튼을 '모두 있어요'로 전환.
-  // 누르면 수기 필수 서류(별지25·FormAC/RE 등)를 일괄 '있음' 처리 → 자동 서류(항체 결과지·
-  // 허가증)와 합쳐져 done-resolver(필수 서류 모두 ✓)가 단계를 완료한다. 자동 서류는 플래그를
-  // 안 보므로 수기 서류 id 만 넘긴다.
-  const vetVisitManualDocIds = useMemo(() => {
-    if (!isVetVisit || !caseRow) return [] as string[]
-    const docs = resolveRequiredDocs(caseRow.destination, caseRow)
-    if (!docs) return [] as string[]
-    return docs.filter((d) => d.manual && !d.na).map((d) => d.id)
-  }, [isVetVisit, caseRow])
-  const vetVisitConfirmMode =
-    isVetVisit &&
-    savedVetVisitDate.length >= 10 &&
-    savedVetVisitDate <= todayStr &&
-    !done &&
-    !dirty &&
-    vetVisitManualDocIds.length > 0
-  const [confirmingVetDocs, setConfirmingVetDocs] = useState(false)
-  const handleConfirmVetVisitDocs = () => {
-    if (confirmingVetDocs) return
-    setConfirmingVetDocs(true)
-    startTransition(async () => {
-      const res = await setRequiredDocsComplete(caseId, vetVisitManualDocIds, activeDest)
-      setConfirmingVetDocs(false)
       if (res.ok) {
         updateCase(res.value)
         router.replace(journeyHref)
@@ -2407,17 +2376,6 @@ export function StepDetailView({
           </section>
         )}
 
-        {/* 서류 준비 현황 — 출국 전 임상검사(vet-visit)에만. 이 단계의 완료가 '필수 서류 모두
-            ✓'에 달려 있어 현황 표시가 완료 안내로서 의미가 있다. 한국 수출 동물검역
-            (certificate-issue)은 검역일 입력+저장으로 완료(date 기반)라 서류 현황이 완료와
-            무관 → 오해를 줘 제외(서류는 아래 '첨부' + 서류 탭에서 다룬다). */}
-        {step.id === 'vet-visit' && (
-          <section style={{ marginTop: 22 }}>
-            <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>서류 준비 현황</h3>
-            <StepDocChecklist caseId={caseId} currentStepId={step.id} activeDest={activeDest} />
-          </section>
-        )}
-
         {/* Attachments */}
         {step.allowAttachments && (
           <section style={{ marginTop: 22 }}>
@@ -2523,11 +2481,11 @@ export function StepDetailView({
               '완료'로 전환 — 저장할 변경이 없는 상태에서 명시적 완료 액션을 직접 노출. */}
           {(() => {
             const completeMode =
-              advanceSkipMode || jpExportSkipMode || titerCompleteMode || vetVisitConfirmMode || importPermitCompleteMode
+              advanceSkipMode || jpExportSkipMode || titerCompleteMode || importPermitCompleteMode
             // 신청 단계 '진행 중' 표시 모드 — completeMode 와 상호배타(ack 여부로 갈림).
             const inProgressMode = reportInProgressMode
             const processing =
-              skippingApproval || skippingJpExport || completingTiter || confirmingVetDocs || completingImportPermit || markingInProgress
+              skippingApproval || skippingJpExport || completingTiter || completingImportPermit || markingInProgress
             const active = (canSave || completeMode || inProgressMode) && status !== 'saving' && !processing
             return (
           <button
@@ -2545,11 +2503,9 @@ export function StepDetailView({
                         ? handleSkipJpExportReservation
                         : titerCompleteMode
                           ? handleCompleteTiter
-                          : vetVisitConfirmMode
-                            ? handleConfirmVetVisitDocs
-                            : importPermitCompleteMode
-                              ? handleCompleteImportPermit
-                              : handleSaveClick
+                          : importPermitCompleteMode
+                            ? handleCompleteImportPermit
+                            : handleSaveClick
             }
             disabled={!active}
             aria-live="polite"
@@ -2575,9 +2531,7 @@ export function StepDetailView({
                 ? '처리 중…'
                 : justSaved
                   ? '✓ 저장됨'
-                  : vetVisitConfirmMode
-                    ? '모두 있어요'
-                    : inProgressMode
+                  : inProgressMode
                       ? '진행 중'
                     : completeMode
                       ? '완료'
@@ -2605,7 +2559,8 @@ export function StepDetailView({
                         rabiesArrivedUnconfirmed ||
                         rabiesSingleArrivedUnconfirmed ||
                         generalVaccineArrivedUnconfirmed ||
-                        parasiteArrivedUnconfirmed
+                        parasiteArrivedUnconfirmed ||
+                        vetVisitArrivedUnconfirmed
                         ? '완료'
                         : '저장'}
           </button>

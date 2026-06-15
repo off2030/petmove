@@ -1344,7 +1344,6 @@ export async function updateAdvanceNotificationDate(
 export async function updateVetVisitDate(
   caseId: string,
   date: string | null,
-  confirmed: boolean,
   /** 다중 목적지 케이스에서 활성 목적지 토큰 — 지정 + 다중이면 by_dest[destination] 에 분리 저장. */
   destination?: string | null,
 ): Promise<Result<CaseRow>> {
@@ -1369,8 +1368,6 @@ export async function updateVetVisitDate(
 
     // B: 단일도 by_dest 통일 — 활성 목적지 토큰만 있으면 vet_visit_date 를 by_dest[destination] 에 저장.
     // (vet_visit_date 는 destination-scoped 필드. destination 미지정만 아래 top-level 경로.)
-    const isSingleDest =
-      parseDestinations((existing as { destination: string | null }).destination).length === 1
     // 활성 목적지 토큰을 읽기(flatten)와 동일하게 해석 — destination 미지정(대부분 진입로가 ?dest= 없이
     // 들어옴)이어도 다중 목적지면 첫 토큰으로 resolve 해 by_dest 에 저장한다. top-level 에 쓰면 다중
     // 목적지 read(strict flatten)가 그 값을 떨궈 검진일이 즉시 증발한다(검역·허가·항공편과 동일한
@@ -1382,21 +1379,10 @@ export async function updateVetVisitDate(
     )
     if (writeDest) {
       let nextData = writeByDestValue(prev, writeDest, 'vet_visit_date', v || null)
-      // 검진일이 바뀌거나 지워지면 legacy 완료 플래그(vet_visit_confirmed, 공용)를 해제 — top-level 경로와
-      // 동일. 단일 목적지 한정(공용 단일값이라 다중 목적지에선 의미 모호 → 종전 유지).
-      if (isSingleDest && 'vet_visit_confirmed' in nextData) {
-        const prevByDest = readByDestValue(prev, writeDest, 'vet_visit_date')
-        const prevDate =
-          typeof prevByDest === 'string'
-            ? prevByDest
-            : typeof prev.vet_visit_date === 'string'
-              ? prev.vet_visit_date
-              : ''
-        if (v !== prevDate) {
-          nextData = { ...nextData }
-          delete (nextData as Record<string, unknown>).vet_visit_confirmed
-        }
-      }
+      // 다른 백신·검사·구충과 동일 — 검진일 ≤ 오늘이면 확인(완료), 미래면 false(예정), 없으면 삭제.
+      // vet_visit_confirmed 는 공용(top-level) 플래그 — 백신 confirmed 플래그들과 동일 모델.
+      nextData = { ...nextData }
+      applyDatedConfirm(nextData, v ? [{ date: v }] : [], 'vet_visit_confirmed')
       const { data: updated, error } = await admin
         .from('cases')
         .update({ data: nextData })
@@ -1412,15 +1398,10 @@ export async function updateVetVisitDate(
     // 여기는 writeDest=null(목적지 자체가 없는 케이스)만 도달하는 top-level 폴백 — 위 resolveWriteToken
     // 이 단일·다중 목적지를 모두 토큰으로 해석해 by_dest 로 보내므로, 다중 목적지가 이 경로로 새지 않는다.
     const nextData: Record<string, unknown> = { ...prev }
-    const prevDate = typeof prev.vet_visit_date === 'string' ? prev.vet_visit_date : ''
     if (v) nextData.vet_visit_date = v // scoping-fallback-ok: writeDest 없음(목적지 없는 케이스) 폴백
     else delete nextData.vet_visit_date
-    // 새 모델 — 완료 판정은 done-resolver 가 (1) 모든 필수 서류 ✓ 또는 (2) legacy
-    // vet_visit_confirmed 플래그, (3) spec 없는 destination 의 경우 검진일 입력만으로
-    // 판정. 보호자가 검진일을 바꾸거나 지우면 기존 완료 플래그를 자동 해제 (사전 신고와 동일).
-    if (v !== prevDate) delete nextData.vet_visit_confirmed
-    // confirmed 파라미터는 admin 호환 위해 남겨두지만 portal 호출은 항상 false 로 전달.
-    if (v && confirmed) nextData.vet_visit_confirmed = true // scoping-fallback-ok: writeDest 없음 폴백(portal 은 항상 confirmed=false → 사실상 미사용)
+    // 다른 백신·검사와 동일한 dated-confirm — 검진일 ≤ 오늘이면 완료, 미래면 예정(false), 없으면 삭제.
+    applyDatedConfirm(nextData, v ? [{ date: v }] : [], 'vet_visit_confirmed') // scoping-fallback-ok: writeDest 없음 폴백
 
     const { data: updated, error } = await admin
       .from('cases')

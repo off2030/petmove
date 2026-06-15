@@ -10,7 +10,6 @@ import {
   resolveValidUntil,
   todayKst,
 } from '../procedure-checks/utils'
-import { areAllRequiredDocsVerified, resolveRequiredDocs } from '../required-docs'
 import {
   buildCaseJourneyContext,
   isSingleDoseRabiesCase,
@@ -1015,29 +1014,12 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '출국 전 임상검사',
     shortLabel: '내원',
     description:
-      '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받고 검역에 필요한 서류를 준비하세요.',
+      '출국일 기준 10일 이내에 동물병원을 방문해서 임상 수의사의 검진을 받으세요.',
     doneSummary: '출국 전 임상검사를 받았습니다.',
-    cardLine: '임상 수의사의 검진을 받고 검역에 필요한 서류를 준비하세요.',
-    // 검진일 ≤ 오늘 + 미완료 상태에서 안내. 완료는 큐레이션된 필수 서류가 모두 ✓ 일 때
-    // done-resolver 가 자동 판정. 옛 데이터 호환을 위해 vet_visit_confirmed 플래그도 done.
-    // spec 없는 destination 은 검진일 입력만으로 완료라 안내 자체가 등장하지 않음.
-    situational: (caseRow) => {
-      const data = (caseRow.data ?? {}) as Record<string, unknown>
-      const dt = typeof data.vet_visit_date === 'string' ? data.vet_visit_date.slice(0, 10) : ''
-      const today = todayKst()
-      if (dt.length < 10 || dt > today) return undefined
-      if (data.vet_visit_confirmed === true) return undefined
-      if (resolveRequiredDocs(caseRow.destination, caseRow) === null) return undefined
-      // done-resolver(has-vet-visit)와 동일 범위 — vet-visit 시점까지의 서류만 본다.
-      if (areAllRequiredDocsVerified(caseRow, 'vet-visit')) return undefined
-      // 검진일이 오늘이면 '오늘이 예정일', 지났으면 '예정일이 지났습니다(+검진 안 했으면 예정일 변경)'.
-      // 완료 기준은 날짜가 아니라 '필수 서류 모두 ✓' 라 안내 톤도 서류 확인 유도로 통일.
-      const msg =
-        dt === today
-          ? '오늘은 출국 전 임상검사 예정일입니다. 검진을 받고 필요한 서류가 모두 있는지 확인하세요.'
-          : '출국 전 임상검사 예정일이 지났습니다. 검진을 받으셨다면 필요한 서류가 모두 있는지 확인하세요. 검진을 받지 않았다면 예정일을 변경하세요.'
-      return { desc: msg, cardDesc: msg }
-    },
+    cardLine: '임상 수의사의 검진을 받으세요.',
+    // 다른 백신·검사·구충과 동일한 dated-confirm 모델 — situational 안내 없이 검진일만으로
+    // 완료 판정(done-resolver has-vet-visit). 미래=예정 배지, 도래 후 완료. 서류 준비 현황은
+    // 별도 단계(document-checklist)로 분리됐다.
     applicability: { destinations: 'all', species: 'all', tripType: 'all' },
     order: 110,
     deadline: { anchor: 'departure', daysBefore: 9, window: true },
@@ -1046,6 +1028,26 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'vet_visit_date', label: '검진일', type: 'date' },
     ],
     validationIds: ['common.vet-visit-date-valid'],
+  },
+
+  // ── 11-1. 서류 체크리스트 ────────────────────────────────────────────────
+  // 출국 전 임상검사에서 분리. 타임라인 행을 누르면 서류 페이지(/docs)로 이동해 거기서
+  // 큐레이션된 필수 서류를 검토·완료하고, 모두 ✓(보유/해당없음)되면 자동 완료된다.
+  // 완료 신호 all-required-docs 의 cutoff 가 이 단계(order 115)라, 한국 수출 동물검역증
+  // (검역소 방문 때 발급, order 120)은 게이트에서 제외된다. 모든 목적지는 최소 별지25호를
+  // 갖는다(required-docs DEFAULT_SPECS) — '서류 목록 없음' 케이스는 없다.
+  {
+    id: 'document-checklist',
+    category: 'document',
+    title: '서류 체크리스트',
+    shortLabel: '서류',
+    description:
+      '검역에 필요한 서류가 모두 준비됐는지 확인하세요.\n\n각 서류를 눌러 보유 여부를 확인하고, 발급받은 서류는 사본을 저장해두세요.\n\n필수 서류가 모두 준비되어야 동물검역소를 방문할 수 있습니다.',
+    doneSummary: '검역에 필요한 서류를 모두 준비했습니다.',
+    cardLine: '검역에 필요한 서류가 모두 준비됐는지 확인하세요.',
+    applicability: { destinations: 'all', species: 'all', tripType: 'all' },
+    order: 115,
+    done: 'all-required-docs',
   },
 
   // ── 12. 한국 수출 동물검역 ────────────────────────────────────────────

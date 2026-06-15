@@ -60,6 +60,11 @@ export function TimelineCalm({
   const { stages, trip, pet, nextStages, caseAlerts, journeyComplete, journeyCompleteDate } = data
   // step 상세로 넘어갈 때 활성 목적지를 유지하기 위한 쿼리. 단일 목적지면 빈 문자열.
   const destQuery = activeDest ? `?dest=${encodeURIComponent(activeDest)}` : ''
+  // 행 링크 — 보통은 step 상세, 서류 체크리스트(linkToDocs)는 서류 페이지로 직행.
+  const stageHref = (s: JourneyStage) =>
+    s.linkToDocs
+      ? `/cases/${caseId}/docs${destQuery}`
+      : `/cases/${caseId}/journey/${s.id}${destQuery}`
   const total = stages.length
   const done = stages.filter((s) => s.state === 'done').length
   const pct = done / total
@@ -203,7 +208,7 @@ export function TimelineCalm({
     return (
       <Link
         key={s.id}
-        href={`/cases/${caseId}/journey/${s.id}${destQuery}`}
+        href={stageHref(s)}
         style={{
           display: 'flex',
           alignItems: 'flex-start',
@@ -455,7 +460,7 @@ export function TimelineCalm({
             입력 차단 외 stage-level 룰이 추가될 가능성을 위해 로직은 유지. */}
         {warnedStages.length > 0 && firstWarnedStage && (
           <Link
-            href={`/cases/${caseId}/journey/${firstWarnedStage.id}${destQuery}`}
+            href={stageHref(firstWarnedStage)}
             className="pm-pressable"
             style={{
               display: 'flex',
@@ -693,7 +698,7 @@ export function TimelineCalm({
             {nextStages.map((stage, i) => (
               <Link
                 key={stage.id}
-                href={`/cases/${caseId}/journey/${stage.id}${destQuery}`}
+                href={stageHref(stage)}
                 className="pm-pressable"
                 style={{
                   display: 'block',
@@ -767,7 +772,7 @@ export function TimelineCalm({
             {infoStages.map((stage, i) => (
               <Link
                 key={stage.id}
-                href={`/cases/${caseId}/journey/${stage.id}${destQuery}`}
+                href={stageHref(stage)}
                 className="pm-pressable"
                 style={{
                   display: 'block',

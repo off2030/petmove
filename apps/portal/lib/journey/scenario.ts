@@ -62,6 +62,11 @@ export interface JourneyStage {
    * 미입력 = '진행 중' 상태. 안내 문구 없이 기본 문구 + '진행 중' 칩으로 표시한다.
    */
   inProgress?: boolean
+  /**
+   * true 면 이 행을 누를 때 step 상세가 아니라 서류 페이지(/cases/<id>/docs)로 이동한다.
+   * 서류 체크리스트(document-checklist) 전용 — 서류 검토·완료는 서류 페이지에서 한다.
+   */
+  linkToDocs?: boolean
 }
 
 /**
@@ -637,8 +642,8 @@ export function buildJourney(
             : step.id === 'vet-visit'
               ? done
                 ? resolveCompletedDate(step.done, caseRow)
-                // 검진일 도래 + 미완료 = '받았습니다, 서류 확인' 안내 상태 → 칩 숨김(date=null),
-                // situational desc 로 표현. 미래 검진일이면 그대로 '예정 [날짜]'.
+                // 다른 백신·검사와 동일 — 미래 검진일이면 '예정 [날짜]' 칩, 도래(≤오늘) +
+                // 미완료(예정 저장분이 지남)면 칩을 내려 plain 상태로(완료는 상세에서 '완료').
                 : vetVisitDate && vetVisitDate <= today
                   ? null
                   : vetVisitDate
@@ -728,14 +733,12 @@ export function buildJourney(
                   ? cardLine
                   : summary))
     const failedChecks = failedByStep.get(step.id) ?? 0
-    // 액션-완료 두 단계 step (사전 신고·일본 수출검역 신청·출국 전 임상검사) — 신청/검진은
-    // 됐지만 완료는 아직(situational 활성, !done) 상태에선 우측 칩이 '안내' 톤으로 바뀌도록
-    // infoChecks 1 추가. 이미 액션 한 번을 마친 셈이라 '마감 …' / '예정' 만 보이면 어색.
-    // vet-visit: 검진일 도래 + 서류 미완(= situational '받았습니다. 서류 확인') 상태에만 해당 —
-    // 미래 검진일이면 situational 이 undefined 라 그대로 '예정 [날짜]' 칩 유지.
+    // 액션-완료 두 단계 step (수입 허가) — 신청은 됐지만 완료는 아직(situational 활성, !done)
+    // 상태에선 우측 칩이 '안내' 톤으로 바뀌도록 infoChecks 1 추가. 이미 액션 한 번을 마친
+    // 셈이라 '마감 …' / '예정' 만 보이면 어색. (출국 전 임상검사는 dated-confirm 모델로 통일돼
+    // situational 이 없으므로 제외 — 서류는 별도 '서류 체크리스트' 단계로 분리.)
     const isAwaitingStep =
-      (step.id === 'import-permit' ||
-        step.id === 'vet-visit') &&
+      step.id === 'import-permit' &&
       !done &&
       !!sit
     const infoChecks = (infoByStep.get(step.id) ?? 0) + (isAwaitingStep ? 1 : 0)
@@ -770,6 +773,8 @@ export function buildJourney(
       advisory: isAdvisory ? true : undefined,
       infoMessage,
       inProgress: titerInProgress || advanceInProgress || jpExportInProgress ? true : undefined,
+      // 서류 체크리스트 행은 step 상세가 아니라 서류 페이지(/docs)로 이동.
+      linkToDocs: step.id === 'document-checklist' ? true : undefined,
     }
   })
 

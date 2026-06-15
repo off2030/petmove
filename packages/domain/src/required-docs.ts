@@ -108,6 +108,13 @@ const KR_FORM25_VACCINATION_HEALTH_CERT: RequiredDocSpec = {
   ],
 }
 
+/**
+ * 큐레이션 spec 이 없는 목적지의 기본 필수 서류 — 별지 제25호(접종 및 건강증명서) 하나.
+ * 한국에서 출국하는 모든 케이스는 최소한 이 서류가 필요하므로 '서류 목록 없음' 케이스는
+ * 없다. (서류 체크리스트 단계 done='all-required-docs' 가 모든 목적지에서 동작하도록.)
+ */
+const DEFAULT_SPECS: RequiredDocSpec[] = [KR_FORM25_VACCINATION_HEALTH_CERT]
+
 const SPECS: Record<string, RequiredDocSpec[]> = {
   '일본': [
     {
@@ -331,8 +338,9 @@ export function resolveRequiredDocs(
   // 1차: destination 토큰 키('일본'·'태국' 등) / 2차: destination-config 키('eu'·'uk' 등 —
   // EU 패밀리처럼 토큰이 나라 이름이라 열거 불가능한 목적지).
   const keyForDocs = findDestinationKeyForDocs(destination)
-  const allSpecs = SPECS[destination] ?? (keyForDocs ? SPECS_BY_KEY[keyForDocs] : undefined)
-  if (!allSpecs) return null
+  // 큐레이션 spec(일본·태국·필리핀·EU 패밀리)이 없으면 기본 [별지25] 로 폴백 — 모든 목적지가
+  // 최소 1건의 필수 서류를 갖는다('서류 목록 없음' 케이스 제거).
+  const allSpecs = SPECS[destination] ?? (keyForDocs ? SPECS_BY_KEY[keyForDocs] : undefined) ?? DEFAULT_SPECS
   // 왕복 전용 서류(예: 한국 귀국용 항체 검사 결과지)는 편도 케이스에서 제외 —
   // 목록·vet-visit 완료 게이트 양쪽에서 빠진다.
   const tripType = getTripType((caseRow.data ?? {}) as Record<string, unknown>, destination)
@@ -408,16 +416,17 @@ function hasAttachmentForStep(caseRow: CaseRow, stepId: string): boolean {
 }
 
 /**
- * 큐레이션된 필수 서류가 모두 ✓ 인지(verified 또는 해당없음). spec 이 없는 목적지는 false —
- * 자동 완료 시그널 자체가 없는 것으로 본다.
+ * 큐레이션된 필수 서류가 모두 ✓ 인지(verified 또는 해당없음). 모든 목적지가 최소 [별지25]
+ * 를 갖도록 DEFAULT_SPECS 로 폴백하므로, destination 이 있으면 spec 도 항상 있다.
  *
  * `uptoStepId` 가 주어지면 그 step 까지 발급되는 서류만 게이트에 넣는다 — 그 step 보다
- * 뒤에 발급되는 서류(예: vet-visit 기준 한국 수출 동물검역증은 certificate-issue 발급물)는
- * 아직 발급 전이라 제외. StepDocChecklist 카드가 previewStepId 로 미래 서류를 가리는 것과
- * 동일 규칙이라, 카드에 보이는 서류가 다 ✓ 면 곧 완료가 되도록 맞춘다.
+ * 뒤에 발급되는 서류(예: 한국 수출 동물검역증은 certificate-issue 발급물)는 아직 발급 전이라
+ * 제외. 서류 페이지 체크리스트가 previewStepId 로 미래 서류를 가리는 것과 동일 규칙이라,
+ * 보이는 서류가 다 ✓ 면 곧 완료가 되도록 맞춘다.
  *
- * vet-visit done-resolver 가 'vet-visit' 로 호출 — 출국 전 임상검사 시점까지의 서류(항체검사
- * 결과지·허가증·별지25·FormAC/RE)가 다 갖춰지면 자동 완료.
+ * 서류 체크리스트 done-resolver 가 'document-checklist'(order 115) 로 호출 — 그 시점까지의
+ * 서류(항체검사 결과지·허가증·별지25·FormAC/RE 등)가 다 갖춰지면 자동 완료. 한국 수출
+ * 동물검역증(certificate-issue, order 120)은 검역소 방문 때 발급물이라 게이트에서 제외된다.
  */
 export function areAllRequiredDocsVerified(caseRow: CaseRow, uptoStepId?: string): boolean {
   const items = resolveRequiredDocs(caseRow.destination, caseRow)

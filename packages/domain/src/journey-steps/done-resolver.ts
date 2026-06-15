@@ -202,18 +202,21 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
     case 'has-deworming-time':
       return typeof data.deworming_time === 'string' && (data.deworming_time as string).length > 0
     case 'has-vet-visit': {
-      // 검진일 ≤ 오늘 AND 다음 중 하나:
-      //  - legacy `vet_visit_confirmed=true` (옛 '저장=완료' 모델 또는 admin 토글)
-      //  - 큐레이션된 필수 서류가 모두 ✓ (Japan 등 spec 있는 destination — 보호자가
-      //    서류 탭에서 체크리스트를 채우면 자동 완료)
-      //  - 큐레이션 spec 자체가 없는 destination — 자동 검증 신호가 없으므로 검진일 입력
-      //    만으로 완료 처리 (옛 모델과 동일)
-      const dt = typeof data.vet_visit_date === 'string' ? data.vet_visit_date : ''
-      if (dt.length < 10 || dt > todayKst()) return false
-      if (data.vet_visit_confirmed === true) return true
-      // 출국 전 임상검사 시점까지 발급되는 서류만 게이트 — 한국 수출 동물검역증(이후 발급)은 제외.
-      if (areAllRequiredDocsVerified(caseRow, 'vet-visit')) return true
-      return resolveRequiredDocs(caseRow.destination, caseRow) === null
+      // 출국 전 임상검사 — 다른 백신·검사·구충과 동일한 dated-confirm 모델로 통일.
+      // 검진일이 도래(≤오늘)했고 vet_visit_confirmed 가 명시적 false 가 아니면 완료.
+      // 미래(예정)로 저장하면 confirmed=false → 미완료(예정 배지), 도래 후 '완료' 확인 또는
+      // 오늘/과거 날짜로 저장하면 confirmed=true → 완료. 서류 준비 현황은 별도
+      // 단계(document-checklist, done='all-required-docs')로 분리됐다.
+      const dt = typeof data.vet_visit_date === 'string' ? data.vet_visit_date.slice(0, 10) : ''
+      return isDatedConfirmed(data, dt || null, 'vet_visit_confirmed')
+    }
+    case 'all-required-docs': {
+      // 서류 체크리스트 — 큐레이션된 필수 서류가 모두 ✓(보유 또는 해당없음)이면 완료.
+      // 출국 전 임상검사~서류 체크리스트 시점까지 발급되는 서류만 게이트 — 한국 수출
+      // 동물검역증(검역소 방문 때 발급)은 이후 단계라 제외(cutoff=document-checklist order).
+      // 목적지 미상(서류 목록 자체가 없는 케이스)은 막지 않는다 — 트리비얼 완료.
+      if (resolveRequiredDocs(caseRow.destination, caseRow) === null) return true
+      return areAllRequiredDocsVerified(caseRow, 'document-checklist')
     }
     case 'has-flight-date': {
       // entry_date(도착일) 또는 케이스의 departure_date(출국일) 둘 중 하나라도 입력되면 완료.

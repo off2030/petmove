@@ -61,7 +61,19 @@ export default function CaseJourneyStepPage({
       )
     }
   }, [stepIndex, id, router, activeDest])
+  // 서류 체크리스트는 전용 상세 화면 없이 서류 페이지에서 처리 — 행 링크는 이미 /docs 로
+  // 가지만, 직접 URL 진입·뒤로가기 등으로 이 경로에 닿으면 서류 페이지로 보낸다.
+  useEffect(() => {
+    if (stepId === 'document-checklist') {
+      router.replace(
+        activeDest
+          ? `/cases/${id}/docs?dest=${encodeURIComponent(activeDest)}`
+          : `/cases/${id}/docs`,
+      )
+    }
+  }, [stepId, id, router, activeDest])
   if (stepIndex === -1) return null
+  if (stepId === 'document-checklist') return null
 
   const ctx = buildCaseJourneyContext(view)
   // 상세 step 은 전체 일정(getStepsForCase) 결과에서 그대로 꺼낸다 — 목적지 override·종 분기
