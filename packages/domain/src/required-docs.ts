@@ -348,6 +348,12 @@ export function resolveRequiredDocs(
   if (specs.length === 0) return null
   const flags = readBoolFlags(caseRow, 'required_doc_flags')
   const naFlags = readBoolFlags(caseRow, 'required_doc_na')
+  // 운영자(펫무브워크 서류탭)가 준비상태를 '완료'로 바꾸면(export_doc_status='done') 수기 서류
+  // (별지25·FormAC)를 보유로 인정 — 보호자 수기 토글·사본 첨부와 OR. export_doc_status 는
+  // 케이스 단위(top-level) 상태라 케이스 전체에 적용된다. (내원일·출국일 변경 시 admin 이
+  // export_doc_status 를 리셋하므로 단계 되돌리기 시 서류도 자동으로 '발급 예정'으로 복귀.)
+  const exportDocDone =
+    ((caseRow.data ?? {}) as Record<string, unknown>).export_doc_status === 'done'
   return specs.map((spec) => {
     // 첨부 대상 stepId — step 연동 서류는 공유 step, 그 외는 doc.id 자체.
     const attachStepId = spec.previewStepId ?? spec.id
@@ -363,8 +369,9 @@ export function resolveRequiredDocs(
     const verified =
       !na &&
       (spec.kind === 'manual'
-        ? // 발급 step 시작됨 AND (수기 발급완료 플래그 OR 사본 첨부) → '보유'.
-          issuanceStarted && (flags[spec.id] === true || hasAttachmentForStep(caseRow, attachStepId))
+        ? // 운영자 서류탭 '완료' OR (발급 step 시작됨 AND (수기 발급완료 플래그 OR 사본 첨부)) → '보유'.
+          exportDocDone ||
+          (issuanceStarted && (flags[spec.id] === true || hasAttachmentForStep(caseRow, attachStepId)))
         : spec.stepRef
           ? resolveStepDone(spec.stepRef, caseRow)
           : false)
