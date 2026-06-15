@@ -499,6 +499,14 @@ export function buildJourney(
       caseData.advance_notification_date.slice(0, 10) > today
         ? caseData.advance_notification_date.slice(0, 10)
         : null
+    // 수입 허가 — 미래(예정) 신청일이면 '예정 [신청일]' 칩(마감 대신). 사전 신고와 동일.
+    const importPermitUpcomingDate =
+      step.id === 'import-permit' &&
+      !done &&
+      typeof caseData.import_permit_application_date === 'string' &&
+      caseData.import_permit_application_date.slice(0, 10) > today
+        ? caseData.import_permit_application_date.slice(0, 10)
+        : null
     // 항체검사 '진행 중' — 채혈일이 도래(≤ 오늘)했고 아직 결과·완료 전(!done). 안내 문구 없이
     // 기본 문구 + '진행 중' 칩으로 표시한다(2스텝의 1단계 완료 상태). 미래 채혈일은 위 예정 배지.
     const titerInProgress =
@@ -524,6 +532,13 @@ export function buildJourney(
       typeof caseData.jp_export_quarantine_application_date === 'string' &&
       caseData.jp_export_quarantine_application_date.slice(0, 10).length >= 10 &&
       caseData.jp_export_quarantine_application_date.slice(0, 10) <= today
+    // 수입 허가 '진행 중' — 신청일 도래(≤오늘)·미완료. 사전 신고와 동일(ack 게이트 없음).
+    const importPermitInProgress =
+      step.id === 'import-permit' &&
+      !done &&
+      typeof caseData.import_permit_application_date === 'string' &&
+      caseData.import_permit_application_date.slice(0, 10).length >= 10 &&
+      caseData.import_permit_application_date.slice(0, 10) <= today
     // 추가 검사 — 입국일 이전에 예약한(미래) 채혈이 있으면 '예정 [날짜]' 칩. 입국 후 채혈은
     // 그 입국을 보증 못 하므로 제외(무의미한 미래 채혈을 예정으로 오인 노출하지 않음).
     const titerExtraUpcomingDate = (() => {
@@ -677,9 +692,13 @@ export function buildJourney(
                           ? done
                             ? resolveCompletedDate(step.done, caseRow)
                             : advanceUpcomingDate ?? fallbackDate
-                          : done
-                            ? resolveCompletedDate(step.done, caseRow)
-                            : (datedUpcoming ?? fallbackDate)
+                          : step.id === 'import-permit'
+                            ? done
+                              ? resolveCompletedDate(step.done, caseRow)
+                              : importPermitUpcomingDate ?? fallbackDate
+                            : done
+                              ? resolveCompletedDate(step.done, caseRow)
+                              : (datedUpcoming ?? fallbackDate)
     // 칩 라벨 분기 — '마감 26·11·21' (단일 non-window 마감일이 표시 날짜인 경우) vs
     // '예정 …' (그 외 일정·이벤트·window 시작·기간 시작 등). 사전 신고처럼 deadline 자체가
     // 보호자의 행동 마감일일 때만 '마감'. window 마감(출국 10일 이내 검진 등)은 구간 시작이라 '예정' 유지.
@@ -776,7 +795,10 @@ export function buildJourney(
       infoChecks: infoChecks > 0 ? infoChecks : undefined,
       advisory: isAdvisory ? true : undefined,
       infoMessage,
-      inProgress: titerInProgress || advanceInProgress || jpExportInProgress ? true : undefined,
+      inProgress:
+        titerInProgress || advanceInProgress || jpExportInProgress || importPermitInProgress
+          ? true
+          : undefined,
       // 서류 체크리스트 행은 step 상세가 아니라 서류 페이지(/docs)로 이동.
       linkToDocs: step.id === 'document-checklist' ? true : undefined,
     }

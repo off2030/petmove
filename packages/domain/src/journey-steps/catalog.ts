@@ -20,7 +20,6 @@ import {
   deriveAdvanceNotificationStatus,
   deriveImportPermitStatus,
   deriveJpExportQuarantineStatus,
-  isImportPermitInProgressAck,
 } from './report-status'
 import type { StepDefinition } from './types'
 import type { CaseRow } from '../types'
@@ -1010,8 +1009,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
           : ''
       if (filed.length >= 10 && filed > todayKst()) return undefined
       if (deriveImportPermitStatus(caseRow) !== 'in_progress') return undefined
-      // 신청일 도래만으론 '진행 중' 안내 X — 보호자가 '진행 중' 버튼을 눌러야(사전 신고와 동일).
-      if (!isImportPermitInProgressAck(caseRow)) return undefined
+      // titer 방식 — '진행 중' ack 버튼 게이트 없이 신청일 도래(in_progress)만으로 진행 중 안내(사전 신고와 동일).
       const msg =
         '수입 허가 신청을 진행 중입니다. 수입허가증을 받으면 허가 번호를 입력하고 파일을 첨부하거나 완료 버튼을 누르세요.'
       return { desc: msg, cardDesc: msg }
