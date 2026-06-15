@@ -50,6 +50,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'return_departure_airport',
   'return_arrival_airport',
   'return_transport',
+  // 귀국 항공권 '미정' 플래그('1') — 귀국편이 목적지별로 다르므로 같이 분리. 출국 일정만으로
+  // 항공권 구매 step 완료 인정(done-resolver has-flight-date). return_date 입력 시 자동 해제.
+  'return_undecided',
   // 증명서·허가 (국가별)
   'permit_no',
   'certificate_no',

@@ -828,6 +828,9 @@ const FLIGHT_DATA_KEYS = [
   'return_arrival_airport',
   'return_flight_number',
   'return_transport',
+  // 귀국 항공권 '미정' 플래그('1'/없음) — 왕복인데 귀국편 미정 시 출국 일정만으로 완료 인정.
+  // 다른 항공권 키와 동일 저장 경로(by_dest/top-level)·flatten 을 타도록 같이 둔다.
+  'return_undecided',
 ] as const
 
 /**
@@ -879,6 +882,11 @@ export async function updateFlightFields(
       if (entry && ret && ret < entry) {
         return { ok: false, error: '귀국 항공편 날짜는 출국 항공편 날짜 이후여야 합니다.' }
       }
+    }
+    // 귀국일이 입력돼 있으면 '미정' 플래그는 무의미 — 서버에서도 강제 해제(상호배타). 클라이언트가
+    // 이미 비우지만, 직접 호출·레이스 대비로 한 번 더 정규화한다.
+    if (typeof fields.return_date === 'string' && fields.return_date.trim().length > 0) {
+      fields = { ...fields, return_undecided: '' }
     }
 
     const access = await assertCaseAccess(caseId)

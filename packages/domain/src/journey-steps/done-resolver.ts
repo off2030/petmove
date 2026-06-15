@@ -230,6 +230,10 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       // 안내문이 카드에 노출되며 다음 할 일에 머무름.
       const ctx = buildCaseJourneyContext(caseRow)
       if (ctx.tripType === 'round') {
+        // 보호자가 귀국 항공권 '미정'을 표시하면 출국편만으로 완료 인정 — 귀국편을 아직 안
+        // 정한 케이스(많음)를 다음 단계로 흘려보낸다. trip_type 은 round 그대로라 귀국 검역
+        // 단계는 유지된다(편도 전환과 다름). 귀국일이 실제 입력되면 플래그는 해제된다.
+        if (data.return_undecided === '1') return true
         return typeof data.return_date === 'string' && (data.return_date as string).length >= 10
       }
       return true

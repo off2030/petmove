@@ -1214,6 +1214,7 @@ export function StepDetailView({
             return_arrival_airport: flightForm.return_arrival_airport || null,
             return_flight_number: flightForm.return_flight_number || null,
             return_transport: flightForm.return_transport || null,
+            return_undecided: flightForm.return_undecided || null,
           },
           // 활성 목적지 토큰을 넘긴다 — 다른 scoped 저장(검역·허가 등)과 동일. caseRow.destination(전체
           // 컬럼, 다중이면 "필리핀, 일본")을 넘기면 by_dest 쓰기 scope 가 어긋나 읽기(by_dest[활성])와
@@ -2217,7 +2218,14 @@ export function StepDetailView({
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <FlightInputs
               value={flightForm}
-              onChange={(key, next) => setFlightForm((prev) => ({ ...prev, [key]: next }))}
+              onChange={(key, next) =>
+                setFlightForm((prev) => {
+                  const updated = { ...prev, [key]: next }
+                  // 귀국일을 입력하면 '미정' 플래그는 의미가 없어 자동 해제(토글도 숨겨짐).
+                  if (key === 'return_date' && next.trim().length > 0) updated.return_undecided = ''
+                  return updated
+                })
+              }
               showReturn={tripType === 'round'}
               // 운송 방법은 일본 수출서류(japan_extra)만 사용 — 일본 케이스에서만 노출.
               showTransport={destinationKey === 'japan'}
@@ -3132,6 +3140,7 @@ function readFlightForm(
     return_arrival_airport: str('return_arrival_airport'),
     return_flight_number: str('return_flight_number'),
     return_transport: str('return_transport'),
+    return_undecided: str('return_undecided'),
   }
 }
 
@@ -3148,7 +3157,8 @@ function flightFormEqual(a: FlightForm, b: FlightForm): boolean {
     a.return_departure_airport === b.return_departure_airport &&
     a.return_arrival_airport === b.return_arrival_airport &&
     a.return_flight_number === b.return_flight_number &&
-    a.return_transport === b.return_transport
+    a.return_transport === b.return_transport &&
+    a.return_undecided === b.return_undecided
   )
 }
 

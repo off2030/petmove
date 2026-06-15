@@ -27,6 +27,12 @@ export interface FlightForm {
   return_arrival_airport: string
   return_flight_number: string
   return_transport: string
+  /**
+   * 귀국 항공권 '미정' 플래그 — 왕복인데 귀국편을 아직 안 정한 경우 '1'. 출국 일정만으로
+   * 항공권 구매 step 을 완료로 인정(done-resolver has-flight-date). 귀국일이 입력되면 의미가
+   * 없어 자동 해제('')되고 토글도 숨긴다. trip_type 은 round 그대로 — 귀국 검역 단계는 유지.
+   */
+  return_undecided: string
 }
 
 const C = {
@@ -139,13 +145,16 @@ export function FlightInputs({
           onChange={onChange}
         />
         {showReturn && returnFields.length > 0 && (
-          <CollapsibleLeg
-            headerLabel="귀국 항공권"
-            primaryFields={returnFields.slice(0, 1)}
-            detailFields={returnFields.slice(1)}
-            value={value}
-            onChange={onChange}
-          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <CollapsibleLeg
+              headerLabel="귀국 항공권"
+              primaryFields={returnFields.slice(0, 1)}
+              detailFields={returnFields.slice(1)}
+              value={value}
+              onChange={onChange}
+            />
+            <ReturnUndecidedToggle value={value} onChange={onChange} />
+          </div>
         )}
       </div>
     )
@@ -161,9 +170,75 @@ export function FlightInputs({
         onChange={onChange}
       />
       {showReturn && (
-        <FlightGroup label="귀국 항공권" fields={drop(RETURN_FIELDS)} value={value} onChange={onChange} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <FlightGroup label="귀국 항공권" fields={drop(RETURN_FIELDS)} value={value} onChange={onChange} />
+          <ReturnUndecidedToggle value={value} onChange={onChange} />
+        </div>
       )}
     </div>
+  )
+}
+
+/**
+ * 귀국 항공권 '미정' 토글 — 왕복인데 귀국편을 아직 안 정한 보호자용. 체크하면 출국 일정만으로
+ * 항공권 구매 step 이 완료된다(done-resolver). 귀국일이 입력되면 불필요하므로 토글 자체를 숨긴다.
+ */
+function ReturnUndecidedToggle({
+  value,
+  onChange,
+}: {
+  value: FlightForm
+  onChange: (key: keyof FlightForm, next: string) => void
+}) {
+  // 귀국일이 입력되면 미정 선택지는 사라진다(상위에서 플래그도 해제).
+  if (value.return_date.trim().length > 0) return null
+  const checked = value.return_undecided === '1'
+  return (
+    <button
+      type="button"
+      onClick={() => onChange('return_undecided', checked ? '' : '1')}
+      aria-pressed={checked}
+      className="pm-pressable"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        width: '100%',
+        textAlign: 'left',
+        padding: '12px 14px',
+        borderRadius: 14,
+        border: `.5px solid ${checked ? C.ink : C.line}`,
+        background: checked ? 'color-mix(in srgb, var(--pm-ink) 5%, var(--pm-surface))' : C.surface,
+        cursor: 'pointer',
+        transition: 'border-color .12s, background .12s',
+      }}
+    >
+      <span
+        aria-hidden
+        style={{
+          flex: '0 0 auto',
+          width: 20,
+          height: 20,
+          borderRadius: 6,
+          border: `1.5px solid ${checked ? C.ink : C.ink3}`,
+          background: checked ? C.ink : 'transparent',
+          color: C.surface,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 13,
+          lineHeight: 1,
+        }}
+      >
+        {checked ? '✓' : ''}
+      </span>
+      <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>귀국 항공권은 아직 미정</span>
+        <span style={{ fontSize: 12.5, color: C.ink3, lineHeight: 1.45 }}>
+          출국 일정만 입력해도 이 단계를 완료할 수 있어요. 귀국편을 정하면 날짜를 입력해 주세요.
+        </span>
+      </span>
+    </button>
   )
 }
 
