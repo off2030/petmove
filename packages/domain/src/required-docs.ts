@@ -153,6 +153,16 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
         { label: 'Form RE (Excel)', href: '/forms/form-re.xlsm', filename: 'FormRE.xlsm' },
       ],
     },
+    {
+      id: 'kr-export-quarantine-cert',
+      name: '한국 수출 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'certificate-issue',
+      description:
+        '한국 수출 동물검역 후 발급받아요.\n\n일본 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'certificate-issue',
+    },
   ],
   '태국': [
     {
@@ -178,6 +188,16 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     },
     // 접종 및 건강증명서(별지 제25호) — 일본과 완전히 동일한 한국 공식 양식.
     KR_FORM25_VACCINATION_HEALTH_CERT,
+    {
+      id: 'th-kr-export-quarantine-cert',
+      name: '한국 수출 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'certificate-issue',
+      description:
+        '한국 수출 동물검역 후 발급받아요.\n\n태국 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'certificate-issue',
+    },
   ],
   '필리핀': [
     {
@@ -219,6 +239,16 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
         '검사를 의뢰한 동물병원에서 발급받아요.\n\n필리핀 입국에는 필요하지 않지만, 한국으로 돌아올 때 반드시 원본이 필요해요. 필리핀 현지에서는 검사가 어려우므로 출국 전에 미리 받아두세요.\n\n광견병 백신 면역 유효기간 유지 시 채혈일로부터 2년까지 사용할 수 있어요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'rabies-titer',
     },
+    {
+      id: 'ph-kr-export-quarantine-cert',
+      name: '한국 수출 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'certificate-issue',
+      description:
+        '한국 수출 동물검역 후 발급받아요.\n\n필리핀 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'certificate-issue',
+    },
   ],
 }
 
@@ -248,6 +278,16 @@ function euFamilyDocSpecs(label: string, opts?: { withImportPermit?: boolean }):
       issuanceStepId: 'vet-visit',
       description:
         `${label} 입국용 건강증명서예요.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 동물검역 때 검역관의 확인을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종 내용, 항체 검사 결과가 기재되어야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
+    },
+    {
+      id: 'eu-kr-export-quarantine-cert',
+      name: '한국 수출 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'certificate-issue',
+      description:
+        `한국 수출 동물검역 후 발급받아요.\n\n${label} 입국 검사 때 제시해야 할 수 있어요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
+      previewStepId: 'certificate-issue',
     },
   ]
   if (opts?.withImportPermit) {
