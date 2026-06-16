@@ -2716,7 +2716,7 @@ function generalVaccineCardLabel(
     if (isCat) return '종합백신(FVRCP)'
   }
   if (destinationKey === 'philippines') {
-    if (isDog) return '종합백신(DHLPPi)'
+    if (isDog) return '종합백신(DHPPL)'
     if (isCat) return '종합백신(FVRCP)'
   }
   return '종합백신'
