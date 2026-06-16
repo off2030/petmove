@@ -592,7 +592,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '사전 신고',
     shortLabel: '신고',
     description:
-      '일본 입국 40일 전까지 신고하세요.\n\nNACCS에서 신청하고 일본 동물검역소의 이메일 안내에 따르세요.\n절차가 완료되면 허가증(Approval)이 발급돼요.\n왕복 일정이면 일본 수출 동물검역 신청도 함께 하세요.',
+      '일본 입국 40일 전까지 신고하세요.\n\nNACCS에서 신청하고 일본 동물검역소의 이메일 안내에 따르세요.\n절차가 완료되면 허가서(Approval)가 발급돼요.\n왕복 일정이면 일본 수출 동물검역 신청도 함께 하세요.',
     doneSummary: '일본 동물검역소에 사전 신고를 했어요.',
     cardLine: '일본 동물검역소에 사전 신고를 하세요.',
     // 진행 상태는 [[deriveAdvanceNotificationStatus]] 가 단일 출처 — admin 신고탭과 동일.
@@ -600,7 +600,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     //  - skip O (명시적 첨부 없이 완료 처리): '첨부 없이 완료 처리됨' — done 이라 timeline 은
     //    doneSummary 로 가리고 detail 헤더에서만 보임. 보호자가 되돌릴 수 있도록 안내.
     //  - status 'in_progress' (신청일 입력 OR admin demote OR legacy stored 'in_progress'):
-    //    '신청 완료, 허가증 대기' — done 아니라 timeline·detail 동시 노출.
+    //    '신청 완료, 허가서 대기' — done 아니라 timeline·detail 동시 노출.
     // 첨부가 올라오면 두 경우 모두 doneSummary 로 자연스럽게 전환.
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
@@ -613,7 +613,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       // 첨부는 언제든 documents 탭에서 올릴 수 있음.
       if (deriveAdvanceNotificationStatus(caseRow) !== 'in_progress') return undefined
       // titer 방식 — '진행 중' ack 버튼 게이트 없이 신청일 도래(in_progress)만으로 진행 중 안내.
-      const msg = '사전 신고를 진행 중이에요. 허가증이 나오면 파일을 첨부하거나 완료 버튼을 누르세요.'
+      const msg = '사전 신고를 진행 중이에요. 허가서가 나오면 파일을 첨부하거나 완료 버튼을 누르세요.'
       return { desc: msg, cardDesc: msg }
     },
     applicability: { destinations: ['japan'], species: 'all', tripType: 'all' },
@@ -633,8 +633,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     },
     inputs: [{ key: 'advance_notification_date', label: '신청일', type: 'date' }],
     allowAttachments: true,
-    attachmentHint: '수입허가증을 사진, PDF로 보관하세요.',
-    attachmentLabel: '허가증(Approval)',
+    attachmentHint: '허가서를 사진, PDF로 보관하세요.',
+    attachmentLabel: '허가서(Approval)',
     links: [
       { url: 'https://webaps-prod.nac.naccs.jp/anau/anipas/AOWZ01/OWZ01W02O', label: 'NACCS 신청 페이지' },
       { url: '/guide/jp-quarantine-contacts', label: '일본 동물검역소 연락처' },

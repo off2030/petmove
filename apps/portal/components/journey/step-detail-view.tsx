@@ -1542,7 +1542,7 @@ export function StepDetailView({
     const undecided = flightForm.return_undecided === '1'
     return hasEntry && !hasReturn && !undecided
   })()
-  // 사전 신고 step + 신청일 입력됐는데 허가증 첨부 아직 — 두 분기:
+  // 사전 신고 step + 신청일 입력됐는데 허가서 첨부 아직 — 두 분기:
   //  - skip X: 첨부 권장 + '다음' 으로 명시적 skip.
   //  - skip O: '첨부 없이 완료 처리됨' 안내 + '되돌리기' 로 awaiting 으로 복귀.
   // stepDocuments 는 이미 step.id === advance-notification 기준 필터링됨.
@@ -1957,7 +1957,7 @@ export function StepDetailView({
         {/* 안내 — situational 메시지와 procedure-check info 를 한 박스에 합친다.
             timeline 의 desc 와 동일 내용이라 detail 페이지에서도 같은 정보 전달.
             항공권 step + 왕복 + 출국만 입력 상태에선 '편도 일정으로 전환' 토글을 노출.
-            사전 신고 허가증 대기(advanceSkipMode) / 일본 수출검역 신청 진행(jpExportSkipMode)
+            사전 신고 허가서 대기(advanceSkipMode) / 일본 수출검역 신청 진행(jpExportSkipMode)
             상태의 '완료' 액션은 하단 sticky 저장 버튼이 라벨 전환으로 맡는다 — 안내 박스엔
             별도 액션 버튼 X. 완료(skip) 상태에선 situational 자체가 undefined 라 안내 박스
             미노출. */}
@@ -2430,7 +2430,7 @@ export function StepDetailView({
           )}
           {/* 저장 중·저장됨은 별도 줄 대신 버튼 라벨로 — 첨부 영역과 겹치지 않음.
               미래 날짜(예정)면 라벨을 '예정일로 저장'으로 바꿔 누르기 전에 의도를 알린다.
-              사전 신고 허가증 대기(advanceSkipMode) / 일본 수출검역 신청 진행
+              사전 신고 허가서 대기(advanceSkipMode) / 일본 수출검역 신청 진행
               (jpExportSkipMode) / 광견병 항체 검사 진행(titerCompleteMode) / 수입 허가 신청
               진행(importPermitCompleteMode)이면 같은 버튼이 '완료'로 전환 — 저장할 변경이
               없는 상태에서 명시적 완료 액션을 직접 노출. */}

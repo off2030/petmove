@@ -378,7 +378,7 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
               segments.push({ type: 'flat', entry: def })
             }
           }
-          // 사전신고 허가증 첨부 — 활성 목적지가 일본일 때만 추가정보 마지막 row 로 표시.
+          // 사전신고 허가서 첨부 — 활성 목적지가 일본일 때만 추가정보 마지막 row 로 표시.
           // 케이스가 다중 목적지(예: '일본, 필리핀')이고 활성이 일본 외이면 안 노출.
           // portal 보호자·admin 운영자 모두 업로드 가능, case.data.documents 배열 공유
           // (stepId='advance-notification'). 첨부 = 완료 시그널이라 업로드 시점에
@@ -532,7 +532,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
   isCollapsed: boolean
   onToggleCollapsed: () => void
   /**
-   * 추가정보 마지막에 끼워 넣을 임의 노드 (예: 일본 사전신고 허가증 첨부 행). 별도 섹션 X.
+   * 추가정보 마지막에 끼워 넣을 임의 노드 (예: 일본 사전신고 허가서 첨부 행). 별도 섹션 X.
    * 함수 형태: 자식이 자체 drag/drop 을 가로챘을 때 부모 ring 을 끄도록 onTakeoverDrag 콜백 전달.
    */
   trailing?: (helpers: { onTakeoverDrag: () => void }) => React.ReactNode
@@ -637,7 +637,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
     if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false)
   }
   function handleDrop(e: React.DragEvent) {
-    // 자식 row(예: 허가증) 가 자체 onDrop 으로 stopPropagation 하면 여기 안 옴.
+    // 자식 row(예: 허가서) 가 자체 onDrop 으로 stopPropagation 하면 여기 안 옴.
     // 도달했다면 row 외 추가정보 영역에 드롭된 거 → AI 추출 흐름 진행.
     e.preventDefault()
     setDragOver(false)
@@ -648,7 +648,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
   // Ctrl+V 붙여넣기.
   // - 이미지: 섹션 hover 중일 때만 (다른 섹션과 충돌 방지)
   // - 텍스트: 케이스 페이지 어디서든 fallback (input/textarea 포커스 아닐 때)
-  // - 자식 row(허가증 등) hover 시 양보 — 그쪽이 자체 paste 핸들러로 처리.
+  // - 자식 row(허가서 등) hover 시 양보 — 그쪽이 자체 paste 핸들러로 처리.
   useEffect(() => {
     function onPaste(e: ClipboardEvent) {
       if (!sectionRef.current) return
@@ -656,7 +656,7 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
       if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return
       const items = e.clipboardData?.items
       if (!items) return
-      // 허가증 row hover 시 양보 — defaultPrevented 검사로는 핸들러 등록 순서에
+      // 허가서 row hover 시 양보 — defaultPrevented 검사로는 핸들러 등록 순서에
       // 의존하게 되므로 hover 위치를 직접 확인하는 게 안전.
       const naccsHovered = sectionRef.current.querySelector('[data-naccs-row]:hover')
       if (naccsHovered) return
@@ -842,7 +842,7 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel, activ
 }
 
 /**
- * 사전신고 허가증 첨부 row — 일본 목적지 한정.
+ * 사전신고 허가서 첨부 row — 일본 목적지 한정.
  * 추가정보 섹션 마지막 행으로 통합 (별도 카테고리 X). 좌측 라벨 + 우측 파일 리스트·첨부 버튼.
  * case.data.documents 배열에서 stepId='advance-notification' 만 필터해 표시.
  * portal 보호자가 올린 파일도 같은 자리에 보이고, 운영자가 추가 업로드 가능.
@@ -881,7 +881,7 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow, onTakeoverDrag }: 
     }
   }
 
-  // Ctrl+V 붙여넣기 — 허가증 row hover 중일 때만 처리. SimpleExtraSection 의
+  // Ctrl+V 붙여넣기 — 허가서 row hover 중일 때만 처리. SimpleExtraSection 의
   // AI 추출 paste 핸들러는 data-naccs-row hover 를 감지하면 양보 (아래 부모 핸들러
   // 의 querySelector 분기 참조). 이미지/PDF 파일만 받음, 텍스트·다른 종류 무시.
   useEffect(() => {
@@ -949,7 +949,7 @@ function AdvanceNotificationAttachmentsRow({ caseId, caseRow, onTakeoverDrag }: 
         dragOver && 'bg-accent/40 ring-2 ring-ring/30 ring-dashed',
       )}
     >
-      <SectionLabel>허가증</SectionLabel>
+      <SectionLabel>허가서</SectionLabel>
       {/* 다른 추가정보 행처럼 첨부 버튼만. 올린 파일은 메모(notes)에 모여 표시되며
           (업로드 시 documents+notes 동시 기록) 인라인 리스트는 두지 않는다. */}
       <div className="min-w-0 flex items-center flex-wrap gap-2">

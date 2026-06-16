@@ -99,7 +99,7 @@ export async function uploadStepDocument(formData: FormData): Promise<Result<Cas
       notes: [...existingNotes, noteEntry],
     }
     // 사전신고 첨부 = 완료 시그널. admin 이 진행중으로 demote 한 상태였더라도
-    // 보호자가 새 허가증을 첨부하면 자동 해제 — 다시 완료로 derive.
+    // 보호자가 새 허가서를 첨부하면 자동 해제 — 다시 완료로 derive.
     if (stepId === 'advance-notification') {
       delete nextData.advance_notification_admin_demoted_at
       // stored 클리어해 derive 모드 전환.

@@ -129,7 +129,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     },
     {
       id: 'advance-notification-approval',
-      name: '허가증(Approval)',
+      name: '허가서(Approval)',
       source: '일본 동물검역소',
       kind: 'step',
       stepRef: 'advance-notification',

@@ -7,7 +7,7 @@
  * (attachments)·같은 데이터 모델을 공유. 차이점은 RLS — 여기선 admin 세션
  * (org 멤버십)로 접근하고, portal 측은 case_customer_links 기반.
  *
- * 현재는 사전신고(advance-notification) 첨부에만 노출 — 운영자가 NACCS 허가증을
+ * 현재는 사전신고(advance-notification) 첨부에만 노출 — 운영자가 NACCS 허가서를
  * 추가 첨부하거나 보호자가 올린 파일을 검토하기 위한 용도.
  */
 
