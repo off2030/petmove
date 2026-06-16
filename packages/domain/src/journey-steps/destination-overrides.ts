@@ -165,7 +165,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       title: '광견병 백신',
       shortLabel: '백신',
       description:
-        '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n수입허가증(SPSIC) 신청 14일 전까지 접종을 완료하세요.\n입국 때 면역 유효기간이 남아있어야 해요.',
+        '광견병 백신을 접종하세요.\n\n마이크로칩 삽입 후에 접종해야 해요.\n생후 12주(84일)가 지난 후에 접종해야 해요.\n수입 허가증(SPSIC) 신청 2주 전까지 접종해야 해요.\n입국 때 면역 유효기간이 남아있어야 해요.',
       doneSummary: '광견병 백신을 접종했어요.',
       earliest: { anchor: 'birth', daysAfter: 84 },
       done: 'has-rabies-valid',
