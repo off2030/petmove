@@ -106,19 +106,23 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // (base 카드의 deriveImportPermitStatus 모델 그대로, 문구·마감만 태국 기준).
     'import-permit': {
       description:
-        '입국 공항 동물검역소에 수입 허가 신청을 하세요.\n\n입국 7영업일 전까지 이메일로 신청해요.\n신청서(R1/1), 여권 사본, 항공편 일정, 반려동물 사진, 마이크로칩·예방접종 증명서, 백신 수첩이 필요해요.\n수입 허가증은 발급일로부터 60일간 유효해요.',
-      doneSummary: '태국 수입허가증을 받았어요.',
+        '입국 공항 동물검역소에 수입 허가 신청을 하세요.\n\n입국 7영업일 전까지 이메일로 신청해요.\n신청서(R.1/1), 여권 사본, 항공편 일정, 반려동물 사진, 마이크로칩·예방접종 증명서, 백신 수첩이 필요해요.\n승인되면 반입 승인통지서(R.6)를 이메일로 받아요. 발급일로부터 60일간 유효해요.',
+      doneSummary: '태국 반입 승인통지서(R.6)를 받았어요.',
       cardLine: '태국 수입 허가 신청을 하세요.',
       deadline: { anchor: 'departure', daysBefore: 9 },
       // 태국은 허가 번호 대신 첨부·완료 버튼으로 완료 처리 — 입력은 신청일만(base 의 permit_no
       // 입력 제거). deriveImportPermitStatus 가 첨부/완료 플래그로 done 을 판정하므로 permit_no
       // 가 없어도 동작한다(신청일=in_progress, 첨부 or 완료 버튼=done).
       inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
+      // 출국 전 이메일로 받는 R.6(반입 승인통지서) — base 의 '수입허가증' 라벨을 태국 명칭으로 교체.
+      // (입국 검역 때 받는 R.7 수입허가서는 별개 — '태국 수입 동물검역' departure 카드에서 다룸.)
+      attachmentHint: '반입 승인통지서(R.6)를 사진, PDF로 보관하세요.',
+      attachmentLabel: '반입 승인통지서(R.6)',
       // situational·완료 판정은 base catalog 의 import-permit 그대로 사용 — base 문구가 이미
       // '허가 번호' 언급을 뺀 어요체("진행 중이에요…")라 태국 전용 override 불필요. ack 게이트 없이
       // 신청일 도래(in_progress) 시 인라인 안내가 뜬다(사전 신고와 동일 titer 방식).
       links: [
-        { url: '/forms/R1.1.pdf', label: 'R1/1 서식 다운로드' },
+        { url: '/forms/R1.1.pdf', label: 'R.1/1 서식 다운로드' },
         { url: '/guide/th-aqs-contacts', label: '태국 동물검역소(AQS) 연락처' },
       ],
       validationIds: [
@@ -130,7 +134,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       title: '태국 수입 동물검역',
       shortLabel: '수입',
       description:
-        '태국 도착 후 공항 동물검역소(AQS)에서 수입 검역을 받으세요.\n수완나품 공항은 입국 심사 후 수하물 찾는 곳(8번 벨트 근처)에 동물검역소가 있어요.\n검역 수수료는 동물 1마리당 500바트(현금)예요.\n검사를 통과하면 수입승인서(R-6)와 수입허가증(R-7)이 발급돼요.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 바로 인도돼요. 서류가 미비하거나 전염병 증상이 있으면 최대 30일 격리될 수 있으며, 격리 비용은 보호자가 부담해요.',
+        '태국 도착 후 공항 동물검역소(AQS)에서 수입 검역을 받으세요.\n검역 수수료는 동물 1마리당 500바트(현금)예요.\n검사를 통과하면 수입허가서(R.7)를 받아요.',
       doneSummary: '태국 수입 동물검역을 받았어요.',
       done: 'quarantine:th_import_quarantine_date',
       inputs: [
@@ -142,7 +146,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         },
       ],
       allowAttachments: true,
-      attachmentHint: '검역증(수입승인서 R-6·수입허가증 R-7) 사본을 사진, PDF로 저장하세요.',
+      attachmentHint: '수입허가서(R.7) 사본을 사진, PDF로 저장하세요.',
       validationIds: ['th.import-quarantine-date-valid'],
     },
     // 한국 수입 동물검역(왕복 마지막) — 검역일 ≥ 귀국일 재검증을 태국 룰로 연결.

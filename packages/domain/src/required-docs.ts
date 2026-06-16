@@ -178,12 +178,12 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     },
     {
       id: 'th-import-permit-doc',
-      name: '수입 허가증(Import Notification)',
+      name: '반입 승인통지서(R.6)',
       source: '태국 동물검역소(AQS)',
       kind: 'step',
       stepRef: 'import-permit',
       description:
-        '수입 허가 신청 후 발급받는 서류예요.\n\n발급일로부터 60일간 유효해요.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
+        '수입 허가 신청 후 이메일로 받는 서류예요.\n\n발급일로부터 60일간 유효해요.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
       previewStepId: 'import-permit',
     },
     // 접종 및 건강증명서(별지 제25호) — 일본과 완전히 동일한 한국 공식 양식.
