@@ -65,8 +65,8 @@ export const MY_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦습니다.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 합니다.',
+        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요.`,
+        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 해요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -94,13 +94,13 @@ export const MY_CHECKS: ProcedureCheck[] = [
       if (!ev.ok) {
         const reason =
           ev.failedRule === '91days'
-            ? `생후 ${ev.ageInDays}일령으로 91일에 미달합니다`
+            ? `생후 ${ev.ageInDays}일령으로 91일에 미달해요`
             : ev.failedRule === 'calendar3m'
-              ? `1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빠릅니다`
-              : `생후 ${ev.ageInDays}일령이며 1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빠릅니다`
+              ? `1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
+              : `생후 ${ev.ageInDays}일령이며 1차 접종일(${first.date})이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못합니다. ${reason}.`,
+          message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못해요. ${reason}.`,
           fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월) 둘 다 충족 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
@@ -128,7 +128,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
       if (days < 30) {
         return {
           ok: false,
-          message: `광견병 접종일(${earliest.date})부터 출국일(${dep})까지 ${days}일입니다. 30일 이상이어야 합니다.`,
+          message: `광견병 접종일(${earliest.date})부터 출국일(${dep})까지 ${days}일이에요. 30일 이상이어야 해요.`,
           fixHint: `광견병 접종을 출국일 ${dep} 기준 30일 이전에 완료하세요.`,
           offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
         }
@@ -158,8 +158,8 @@ export const MY_CHECKS: ProcedureCheck[] = [
       if (cushion < 7) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep})로부터 ${cushion}일밖에 남지 않아 MAQIS 검역 7일을 충족할 수 없습니다.`,
-          fixHint: '출국 전 부스터 접종이 필요합니다.',
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep})로부터 ${cushion}일밖에 남지 않아 MAQIS 검역 7일을 충족할 수 없어요.`,
+          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -182,7 +182,7 @@ export const MY_CHECKS: ProcedureCheck[] = [
       if (entries.length === 0) {
         return {
           ok: false,
-          message: '종합백신 기록이 없습니다.',
+          message: '종합백신 기록이 없어요.',
           fixHint: '강아지는 DHPPL/파라인플루엔자, 고양이는 범백혈구감소증(FVRCP)을 접종한 뒤 등록하세요.',
         }
       }
@@ -211,8 +211,8 @@ export const MY_CHECKS: ProcedureCheck[] = [
       if (cushion < 7) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep})로부터 ${cushion}일밖에 남지 않아 MAQIS 검역 7일을 충족할 수 없습니다.`,
-          fixHint: '출국 전 추가 접종이 필요합니다.',
+          message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep})로부터 ${cushion}일밖에 남지 않아 MAQIS 검역 7일을 충족할 수 없어요.`,
+          fixHint: '출국 전 추가 접종이 필요해요.',
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
@@ -250,8 +250,8 @@ export const MY_CHECKS: ProcedureCheck[] = [
       if (match) {
         return {
           ok: false,
-          message: `견종 "${breed.ko || breed.en}"은(는) 말레이시아 수입 금지 견종입니다 (매치: ${match}).`,
-          fixHint: 'DVS 7종 수입 금지 견종으로, 별도로 가능한 절차가 없습니다.',
+          message: `견종 "${breed.ko || breed.en}"은(는) 말레이시아 수입 금지 견종이에요 (매치: ${match}).`,
+          fixHint: 'DVS 7종 수입 금지 견종으로, 별도로 가능한 절차가 없어요.',
           offendingPaths: ['breed', 'breed_en'],
         }
       }
@@ -288,8 +288,8 @@ export const MY_CHECKS: ProcedureCheck[] = [
       if (match) {
         return {
           ok: false,
-          message: `견종 "${breed.ko || breed.en}"은(는) 말레이시아 제한 견종으로 MAQIS 특별 승인이 필요합니다 (매치: ${match}).`,
-          fixHint: 'DVS 제한 견종은 MAQIS 사전 특별 승인과 혈통서가 필수이며, 상업 목적 수입은 금지됩니다.',
+          message: `견종 "${breed.ko || breed.en}"은(는) 말레이시아 제한 견종으로 MAQIS 특별 승인이 필요해요 (매치: ${match}).`,
+          fixHint: 'DVS 제한 견종은 MAQIS 사전 특별 승인과 혈통서가 필수이며, 상업 목적 수입은 금지돼요.',
           offendingPaths: ['breed', 'breed_en'],
         }
       }

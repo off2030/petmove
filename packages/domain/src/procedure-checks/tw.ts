@@ -57,8 +57,8 @@ export const TW_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦습니다.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 합니다.',
+        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요.`,
+        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 해요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -86,7 +86,7 @@ export const TW_CHECKS: ProcedureCheck[] = [
       if (age < 90) {
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 생후 ${age}일령입니다. 최소 90일령 이상이어야 합니다.`,
+          message: `1차 접종일(${first.date})이 생후 ${age}일령이에요. 최소 90일령 이상이어야 해요.`,
           fixHint: `${birth} 기준 90일 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
@@ -114,8 +114,8 @@ export const TW_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료됩니다.`,
-          fixHint: '출국 전 부스터 접종이 필요합니다.',
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
+          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -144,7 +144,7 @@ export const TW_CHECKS: ProcedureCheck[] = [
         const priorDoses = rabies.filter((r) => r.date <= t.date)
         if (priorDoses.length === 0) {
           offending.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date}) 이전에 광견병 접종 기록이 없습니다.`)
+          problems.push(`채혈일(${t.date}) 이전에 광견병 접종 기록이 없어요.`)
         }
       }
       if (problems.length > 0) {
@@ -192,12 +192,12 @@ export const TW_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       const reason =
         days === null
-          ? '날짜 형식이 올바르지 않습니다.'
+          ? '날짜 형식이 올바르지 않아요.'
           : days < 0
-            ? `채혈일(${newest.date})이 출국일(${dep})보다 이후입니다.`
+            ? `채혈일(${newest.date})이 출국일(${dep})보다 이후예요.`
             : days < 180
-              ? `RNATT 채혈일(${newest.date})부터 출국일(${dep})까지 ${days}일입니다. 180일 이상이어야 합니다.`
-              : `RNATT 채혈일(${newest.date})에 1년을 더한 날(${upper})이 출국일(${dep})보다 빠릅니다. 1년을 초과하여 추가 검사가 필요합니다.`
+              ? `RNATT 채혈일(${newest.date})부터 출국일(${dep})까지 ${days}일이에요. 180일 이상이어야 해요.`
+              : `RNATT 채혈일(${newest.date})에 1년을 더한 날(${upper})이 출국일(${dep})보다 빨라요. 1년을 초과하여 추가 검사가 필요해요.`
       return {
         ok: false,
         message: reason,

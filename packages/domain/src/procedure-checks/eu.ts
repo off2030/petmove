@@ -76,7 +76,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: '접종일은 마이크로칩 삽입일 이후여야 합니다.',
+        message: '접종일은 마이크로칩 삽입일 이후여야 해요.',
         offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
       }
     },
@@ -104,7 +104,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
       if (age < 84) {
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 생후 ${age}일령입니다. 최소 84일령(12주) 이상이어야 합니다.`,
+          message: `1차 접종일(${first.date})이 생후 ${age}일령이에요. 최소 84일령(12주) 이상이어야 해요.`,
           fixHint: `${birth} 기준 84일 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
@@ -135,7 +135,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
           .sort((a, b) => a.date.localeCompare(b.date))
         if (priorDoses.length === 0) {
           offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date}) 이전의 광견병 접종 기록이 없습니다.`)
+          problems.push(`채혈일(${t.date}) 이전의 광견병 접종 기록이 없어요.`)
           continue
         }
         // 가장 최근 접종에서 시작해 chain 을 거슬러 올라간다. 이전 접종의 면역
@@ -154,7 +154,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
         const gap = daysBetween(chainStart.date, t.date)
         if (gap === null || gap < 30) {
           offendingPaths.push(`rabies_titer_records[${t.originalIndex}].date`)
-          problems.push(`채혈일(${t.date})과 직전 유효 접종(${chainStart.date})의 간격이 ${gap ?? '?'}일로 30일 미만입니다.`)
+          problems.push(`채혈일(${t.date})과 직전 유효 접종(${chainStart.date})의 간격이 ${gap ?? '?'}일로 30일 미만이에요.`)
         }
       }
       if (offendingPaths.length > 0) {
@@ -202,14 +202,14 @@ export const EU_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       const message =
         days === null
-          ? '항체 검사일과 출국일을 확인할 수 없습니다.'
+          ? '항체 검사일과 출국일을 확인할 수 없어요.'
           : days < 0
-            ? `항체 검사일(${newest.date})이 출국일(${dep})보다 이후입니다. 채혈은 출국 전에 완료되어야 합니다.`
-            : `항체 검사(${newest.date}) + 3개월(${earliestDep})이 출국일(${dep})보다 늦습니다. 출국까지 ${days}일로 3개월에 미달합니다.`
+            ? `항체 검사일(${newest.date})이 출국일(${dep})보다 이후예요. 채혈은 출국 전에 완료되어야 해요.`
+            : `항체 검사(${newest.date}) + 3개월(${earliestDep})이 출국일(${dep})보다 늦어요. 출국까지 ${days}일로 3개월에 미달해요.`
       return {
         ok: false,
         message,
-        fixHint: `출국일을 ${earliestDep} 이후로 조정하거나 더 이른 항체 검사가 필요합니다.`,
+        fixHint: `출국일을 ${earliestDep} 이후로 조정하거나 더 이른 항체 검사가 필요해요.`,
         offendingPaths: offending,
       }
     },
@@ -235,8 +235,8 @@ export const EU_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 이전에 만료됩니다.`,
-          fixHint: '출국 전 추가 접종이 필요합니다. 부스터 chain이 끊기면 RNATT 추가 검사가 필요합니다.',
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 이전에 만료돼요.`,
+          fixHint: '출국 전 추가 접종이 필요해요. 부스터 chain이 끊기면 RNATT 추가 검사가 필요해요.',
           offendingPaths: [
             'departure_date',
             `rabies_dates[${latest.originalIndex}].date`,
@@ -268,7 +268,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
       if (diff < 1 || diff > 3) {
         return {
           ok: false,
-          message: `촌충구충(${latest.date})부터 출국일(${dep})까지 ${diff}일입니다. 1~3일 범위여야 합니다 (24-120시간 보수 적용).`,
+          message: `촌충구충(${latest.date})부터 출국일(${dep})까지 ${diff}일이에요. 1~3일 범위여야 해요 (24-120시간 보수 적용).`,
           fixHint: `촌충구충일을 ${dep} 기준 1~3일 전 사이로 조정하세요.`,
           offendingPaths: [`internal_parasite_dates[${latest.originalIndex}].date`],
         }
@@ -362,7 +362,7 @@ export const EU_CHECKS: ProcedureCheck[] = [
       if (entry && raw < entry) {
         return {
           ok: false,
-          message: '입국 검사일은 도착(입국)일보다 빠를 수 없습니다.',
+          message: '입국 검사일은 도착(입국)일보다 빠를 수 없어요.',
           offendingPaths: ['eu_import_quarantine_date'],
         }
       }
@@ -396,14 +396,14 @@ export const EU_CHECKS: ProcedureCheck[] = [
       if (entry && raw < entry) {
         return {
           ok: false,
-          message: '현지 검역증명서 발급일은 도착(입국)일보다 빠를 수 없습니다.',
+          message: '현지 검역증명서 발급일은 도착(입국)일보다 빠를 수 없어요.',
           offendingPaths: ['eu_export_quarantine_date'],
         }
       }
       if (ret && raw > ret) {
         return {
           ok: false,
-          message: '현지 검역증명서 발급일은 한국 귀국일보다 늦을 수 없습니다.',
+          message: '현지 검역증명서 발급일은 한국 귀국일보다 늦을 수 없어요.',
           offendingPaths: ['eu_export_quarantine_date'],
         }
       }

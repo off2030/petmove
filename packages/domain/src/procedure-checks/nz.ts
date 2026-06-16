@@ -69,8 +69,8 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦습니다.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 합니다.',
+        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요.`,
+        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 해요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -99,7 +99,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       if (first.date < earliestValid) {
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 3개월령(${earliestValid}) 이전입니다. 생후 ${age ?? '?'}일입니다.`,
+          message: `1차 접종일(${first.date})이 3개월령(${earliestValid}) 이전이에요. 생후 ${age ?? '?'}일이에요.`,
           fixHint: `${birth} 기준 3개월(${earliestValid}) 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
@@ -129,8 +129,8 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       if (cushion < 10) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})과 출국일(${dep})의 차이가 ${cushion}일이라 검역 10일을 cover할 수 없습니다.`,
-          fixHint: '출국 전 추가 접종이 필요합니다. 만료 후 접종은 1차로 간주되어 RNATT 추가 검사가 필요합니다.',
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})과 출국일(${dep})의 차이가 ${cushion}일이라 검역 10일을 cover할 수 없어요.`,
+          fixHint: '출국 전 추가 접종이 필요해요. 만료 후 접종은 1차로 간주되어 RNATT 추가 검사가 필요해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -165,8 +165,8 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       const days = daysBetween(primary.date, dep)
       return {
         ok: false,
-        message: `1차 접종(${primary.date}) + 6개월(${earliestValidDep})이 출국일(${dep})보다 늦습니다. ${days}일밖에 되지 않습니다.`,
-        fixHint: `출국일을 ${earliestValidDep} 이후로 조정하세요. RNATT는 별도로 3개월 대기가 필요합니다.`,
+        message: `1차 접종(${primary.date}) + 6개월(${earliestValidDep})이 출국일(${dep})보다 늦어요. ${days}일밖에 되지 않아요.`,
+        fixHint: `출국일을 ${earliestValidDep} 이후로 조정하세요. RNATT는 별도로 3개월 대기가 필요해요.`,
         offendingPaths: ['departure_date', `rabies_dates[${primary.originalIndex}].date`],
       }
     },
@@ -201,12 +201,12 @@ export const NZ_CHECKS: ProcedureCheck[] = [
             `rabies_dates[${b.prev.originalIndex}].date`,
             `rabies_dates[${b.curr.originalIndex}].date`,
           )
-          msgs.push(`${b.curr.date} 접종이 직전 접종(${b.prev.date})의 유효기간(${b.prevValid}) 만료 후에 이루어져 1차로 간주됩니다.`)
+          msgs.push(`${b.curr.date} 접종이 직전 접종(${b.prev.date})의 유효기간(${b.prevValid}) 만료 후에 이루어져 1차로 간주돼요.`)
         }
         return {
           ok: false,
           message: msgs.join(' / '),
-          fixHint: '만료 후 접종은 primary 로 취급되어 6-12개월 대기 + RNATT 추가 검사가 필요합니다.',
+          fixHint: '만료 후 접종은 primary 로 취급되어 6-12개월 대기 + RNATT 추가 검사가 필요해요.',
           offendingPaths: Array.from(new Set(offending)),
         }
       }
@@ -248,12 +248,12 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       const reason =
         days === null
-          ? '날짜 형식이 올바르지 않습니다.'
+          ? '날짜 형식이 올바르지 않아요.'
           : days < 0
-            ? `채혈일(${newest.date})이 출국일(${dep}) 이후입니다.`
+            ? `채혈일(${newest.date})이 출국일(${dep}) 이후예요.`
             : lower > dep
-              ? `RNATT(${newest.date}) + 3개월(${lower})이 출국일(${dep})보다 늦어 3개월에 미달합니다.`
-              : `RNATT(${newest.date}) + 24개월(${upper})이 출국일(${dep})보다 빨라 24개월을 초과하므로 추가 검사가 필요합니다.`
+              ? `RNATT(${newest.date}) + 3개월(${lower})이 출국일(${dep})보다 늦어 3개월에 미달해요.`
+              : `RNATT(${newest.date}) + 24개월(${upper})이 출국일(${dep})보다 빨라 24개월을 초과하므로 추가 검사가 필요해요.`
       return {
         ok: false,
         message: reason,
@@ -287,7 +287,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `생년월일(${birth}) + 9개월(${earliestDep})이 출국일(${dep})보다 늦어 9개월에 미달합니다.`,
+        message: `생년월일(${birth}) + 9개월(${earliestDep})이 출국일(${dep})보다 늦어 9개월에 미달해요.`,
         fixHint: `출국일을 ${earliestDep} 이후로 조정하세요.`,
         offendingPaths: ['departure_date', 'birth_date'],
       }
@@ -312,7 +312,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       if (entries.length < 2) {
         return {
           ok: false,
-          message: `내부구충이 1회만 기록되어 있습니다(${entries[0].date}). 2회가 필요합니다.`,
+          message: `내부구충이 1회만 기록되어 있어요(${entries[0].date}). 2회가 필요해요.`,
           fixHint: '14일 이상 간격으로 2차를 추가하세요 (2차는 출국 4일 이내).',
           offendingPaths: [`internal_parasite_dates[${entries[0].originalIndex}].date`],
         }
@@ -327,15 +327,15 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       const issues: string[] = []
       const offending: string[] = []
       if (dep1 === null || dep1 < 0 || dep1 > 30) {
-        issues.push(`1차(${dose1.date})부터 출국까지 ${dep1 ?? '?'}일입니다. 출국 30일 이내(0~30일 범위)여야 합니다.`)
+        issues.push(`1차(${dose1.date})부터 출국까지 ${dep1 ?? '?'}일이에요. 출국 30일 이내(0~30일 범위)여야 해요.`)
         offending.push(`internal_parasite_dates[${dose1.originalIndex}].date`)
       }
       if (dep2 === null || dep2 < 0 || dep2 > 4) {
-        issues.push(`2차(${dose2.date})부터 출국까지 ${dep2 ?? '?'}일입니다. 출국 4일 이내(0~4일 범위)여야 합니다.`)
+        issues.push(`2차(${dose2.date})부터 출국까지 ${dep2 ?? '?'}일이에요. 출국 4일 이내(0~4일 범위)여야 해요.`)
         offending.push(`internal_parasite_dates[${dose2.originalIndex}].date`)
       }
       if (interval === null || interval < 14) {
-        issues.push(`도즈 간격이 ${interval ?? '?'}일입니다. 14일 이상이어야 합니다.`)
+        issues.push(`도즈 간격이 ${interval ?? '?'}일이에요. 14일 이상이어야 해요.`)
         offending.push(
           `internal_parasite_dates[${dose1.originalIndex}].date`,
           `internal_parasite_dates[${dose2.originalIndex}].date`,
@@ -367,7 +367,7 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       if (entries.length < 2) {
         return {
           ok: false,
-          message: `외부구충이 1회만 기록되어 있습니다(${entries[0].date}). 2회가 필요합니다.`,
+          message: `외부구충이 1회만 기록되어 있어요(${entries[0].date}). 2회가 필요해요.`,
           fixHint: '14일 이상 간격으로 2차를 추가하세요 (2차는 출국 2일 이내).',
           offendingPaths: [`external_parasite_dates[${entries[0].originalIndex}].date`],
         }
@@ -382,15 +382,15 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       const issues: string[] = []
       const offending: string[] = []
       if (dep1 === null || dep1 < 0 || dep1 > 30) {
-        issues.push(`1차(${dose1.date})부터 출국까지 ${dep1 ?? '?'}일입니다. 출국 30일 이내(0~30일 범위)여야 합니다.`)
+        issues.push(`1차(${dose1.date})부터 출국까지 ${dep1 ?? '?'}일이에요. 출국 30일 이내(0~30일 범위)여야 해요.`)
         offending.push(`external_parasite_dates[${dose1.originalIndex}].date`)
       }
       if (dep2 === null || dep2 < 0 || dep2 > 2) {
-        issues.push(`2차(${dose2.date})부터 출국까지 ${dep2 ?? '?'}일입니다. 출국 2일 이내(0~2일 범위)여야 합니다.`)
+        issues.push(`2차(${dose2.date})부터 출국까지 ${dep2 ?? '?'}일이에요. 출국 2일 이내(0~2일 범위)여야 해요.`)
         offending.push(`external_parasite_dates[${dose2.originalIndex}].date`)
       }
       if (interval === null || interval < 14) {
-        issues.push(`도즈 간격이 ${interval ?? '?'}일입니다. 14일 이상이어야 합니다.`)
+        issues.push(`도즈 간격이 ${interval ?? '?'}일이에요. 14일 이상이어야 해요.`)
         offending.push(
           `external_parasite_dates[${dose1.originalIndex}].date`,
           `external_parasite_dates[${dose2.originalIndex}].date`,
@@ -428,14 +428,14 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       if (days < 0) {
         return {
           ok: false,
-          message: `심장사상충 투약일(${latest.date})이 출국일(${dep})보다 늦습니다.`,
+          message: `심장사상충 투약일(${latest.date})이 출국일(${dep})보다 늦어요.`,
           offendingPaths: [`heartworm_dates[${latest.originalIndex}].date`],
         }
       }
       if (days > 4) {
         return {
           ok: false,
-          message: `최근 심장사상충 투약(${latest.date})부터 출국일(${dep})까지 ${days}일입니다. 출국 4일 이내(4일 전 이후)여야 합니다.`,
+          message: `최근 심장사상충 투약(${latest.date})부터 출국일(${dep})까지 ${days}일이에요. 출국 4일 이내(4일 전 이후)여야 해요.`,
           fixHint: `투약일을 ${dep} 기준 4일 전 이후로 조정하세요.`,
           offendingPaths: [`heartworm_dates[${latest.originalIndex}].date`],
         }
@@ -466,14 +466,14 @@ export const NZ_CHECKS: ProcedureCheck[] = [
       if (days < 0) {
         return {
           ok: false,
-          message: `검사일(${latest.date})이 출국일(${dep})보다 늦습니다.`,
+          message: `검사일(${latest.date})이 출국일(${dep})보다 늦어요.`,
           offendingPaths: [`infectious_disease_records[${latest.originalIndex}].date`],
         }
       }
       if (days > 16) {
         return {
           ok: false,
-          message: `최근 전염병검사(${latest.date})부터 출국일(${dep})까지 ${days}일입니다. 출국 16일 이내(16일 전 이후)여야 합니다.`,
+          message: `최근 전염병검사(${latest.date})부터 출국일(${dep})까지 ${days}일이에요. 출국 16일 이내(16일 전 이후)여야 해요.`,
           fixHint: `검사일을 ${dep} 기준 16일 전 이후로 다시 실시하세요.`,
           offendingPaths: [`infectious_disease_records[${latest.originalIndex}].date`],
         }
@@ -566,17 +566,17 @@ function buildAnnualVaccineRule(opts: {
 
       const issues: string[] = []
       if (toDep === null) {
-        return { ok: false, message: '날짜 형식이 올바르지 않습니다.', offendingPaths: [`${opts.dataKey}[${latest.originalIndex}].date`] }
+        return { ok: false, message: '날짜 형식이 올바르지 않아요.', offendingPaths: [`${opts.dataKey}[${latest.originalIndex}].date`] }
       }
       if (toDep < 0) {
-        issues.push(`최근 접종(${latest.date})이 출국일(${dep})보다 늦습니다.`)
+        issues.push(`최근 접종(${latest.date})이 출국일(${dep})보다 늦어요.`)
       } else if (toDep < 14) {
-        issues.push(`최근 접종(${latest.date})부터 출국까지 ${toDep}일입니다. 14일 이상이어야 합니다.`)
+        issues.push(`최근 접종(${latest.date})부터 출국까지 ${toDep}일이에요. 14일 이상이어야 해요.`)
       }
       if (validUntil) {
         const cushion = daysBetween(dep, validUntil)
         if (cushion === null || cushion < 10) {
-          issues.push(`유효기간(${validUntil})과 출국일(${dep})의 차이가 ${cushion ?? '?'}일이라 검역 10일을 cover할 수 없습니다.`)
+          issues.push(`유효기간(${validUntil})과 출국일(${dep})의 차이가 ${cushion ?? '?'}일이라 검역 10일을 cover할 수 없어요.`)
         }
       }
       if (issues.length > 0) {

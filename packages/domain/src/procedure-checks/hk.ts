@@ -66,8 +66,8 @@ export const HK_CHECKS: ProcedureCheck[] = [
       const last = rabies[rabies.length - 1]
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 모든 광견병 접종(최근 ${last.date})보다 늦습니다.`,
-        fixHint: '시술 후 광견병 접종이 다시 필요합니다.',
+        message: `마이크로칩(${microchip})이 모든 광견병 접종(최근 ${last.date})보다 늦어요.`,
+        fixHint: '시술 후 광견병 접종이 다시 필요해요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -95,13 +95,13 @@ export const HK_CHECKS: ProcedureCheck[] = [
       if (!ev.ok) {
         const reason =
           ev.failedRule === '91days'
-            ? `생후 ${ev.ageInDays}일령으로 91일에 미달합니다`
+            ? `생후 ${ev.ageInDays}일령으로 91일에 미달해요`
             : ev.failedRule === 'calendar3m'
-              ? `${first.date}이 캘린더 3개월(${ev.calendar3mThreshold})보다 빠릅니다`
-              : `생후 ${ev.ageInDays}일령이며 ${first.date}이 캘린더 3개월(${ev.calendar3mThreshold})보다 빠릅니다`
+              ? `${first.date}이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
+              : `생후 ${ev.ageInDays}일령이며 ${first.date}이 캘린더 3개월(${ev.calendar3mThreshold})보다 빨라요`
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못합니다. ${reason}.`,
+          message: `1차 접종일(${first.date})이 보수적 기준을 충족하지 못해요. ${reason}.`,
           fixHint: `생후 91일 AND ${ev.calendar3mThreshold}(캘린더 3개월)을 모두 충족한 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
@@ -129,7 +129,7 @@ export const HK_CHECKS: ProcedureCheck[] = [
       if (days < 30) {
         return {
           ok: false,
-          message: `광견병 접종(${earliest.date})부터 출국일(${dep})까지 ${days}일입니다. 30일 이상이어야 합니다.`,
+          message: `광견병 접종(${earliest.date})부터 출국일(${dep})까지 ${days}일이에요. 30일 이상이어야 해요.`,
           fixHint: `광견병 접종을 출국일 ${dep} 기준 30일 이전에 완료하세요.`,
           offendingPaths: [`rabies_dates[${earliest.originalIndex}].date`, 'departure_date'],
         }
@@ -157,8 +157,8 @@ export const HK_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료됩니다.`,
-          fixHint: '출국 전 부스터 접종이 필요합니다.',
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
+          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -181,7 +181,7 @@ export const HK_CHECKS: ProcedureCheck[] = [
       if (entries.length === 0) {
         return {
           ok: false,
-          message: '종합백신 기록이 없습니다.',
+          message: '종합백신 기록이 없어요.',
           fixHint: '강아지는 DHP, 고양이는 FVRCP 접종 후 등록하세요.',
         }
       }
@@ -208,7 +208,7 @@ export const HK_CHECKS: ProcedureCheck[] = [
       if (days < 14) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date})부터 출국일(${dep})까지 ${days}일입니다. 14일 이상이어야 합니다.`,
+          message: `최근 종합백신(${latest.date})부터 출국일(${dep})까지 ${days}일이에요. 14일 이상이어야 해요.`,
           fixHint: `종합백신을 출국일 ${dep} 기준 14일 이전에 접종하세요.`,
           offendingPaths: [`general_vaccine_dates[${latest.originalIndex}].date`],
         }
@@ -236,8 +236,8 @@ export const HK_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료됩니다.`,
-          fixHint: '출국 전 추가 접종이 필요합니다.',
+          message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
+          fixHint: '출국 전 추가 접종이 필요해요.',
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }

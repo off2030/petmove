@@ -67,7 +67,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: '접종일은 마이크로칩 삽입일 이후여야 합니다.',
+        message: '접종일은 마이크로칩 삽입일 이후여야 해요.',
         offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
       }
     },
@@ -93,7 +93,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: '접종일은 마이크로칩 삽입일 이후여야 합니다.',
+        message: '접종일은 마이크로칩 삽입일 이후여야 해요.',
         offendingPaths: ['microchip_implant_date', `general_vaccine_dates[${first.originalIndex}].date`],
       }
     },
@@ -121,7 +121,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (age < 84) {
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 생후 ${age}일령입니다. 최소 84일령(12주) 이상이어야 합니다.`,
+          message: `1차 접종일(${first.date})이 생후 ${age}일령이에요. 최소 84일령(12주) 이상이어야 해요.`,
           fixHint: `${birth} 기준 84일 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
@@ -156,8 +156,8 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (days < 21) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})부터 출국(${dep})까지 ${days}일입니다. 21일 이상이어야 합니다.`,
-          fixHint: `출국일을 ${latest.date} 기준 21일 이후로 조정하세요. (직전 접종 유효기간 내 재접종이면 21일 면제됩니다.)`,
+          message: `최근 접종(${latest.date})부터 출국(${dep})까지 ${days}일이에요. 21일 이상이어야 해요.`,
+          fixHint: `출국일을 ${latest.date} 기준 21일 이후로 조정하세요. (직전 접종 유효기간 내 재접종이면 21일 면제돼요.)`,
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -184,8 +184,8 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료됩니다.`,
-          fixHint: '출국 전 부스터 접종이 필요합니다.',
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
+          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -221,8 +221,8 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (days < 21) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date})부터 출국(${dep})까지 ${days}일입니다. 21일 이상이어야 합니다.`,
-          fixHint: `출국일을 ${latest.date} 기준 21일 이후로 조정하세요. (직전 접종 유효기간 내 재접종이면 21일 면제됩니다.)`,
+          message: `최근 종합백신(${latest.date})부터 출국(${dep})까지 ${days}일이에요. 21일 이상이어야 해요.`,
+          fixHint: `출국일을 ${latest.date} 기준 21일 이후로 조정하세요. (직전 접종 유효기간 내 재접종이면 21일 면제돼요.)`,
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
@@ -249,8 +249,8 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료됩니다.`,
-          fixHint: '출국 전 부스터 접종이 필요합니다.',
+          message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
+          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
@@ -279,7 +279,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (ageOnDep < 120) {
         return {
           ok: false,
-          message: `생년월일(${birth}) 기준 출국(${dep}) 시점에 ${ageOnDep}일령입니다. 최소 120일령(4개월) 이상이어야 합니다.`,
+          message: `생년월일(${birth}) 기준 출국(${dep}) 시점에 ${ageOnDep}일령이에요. 최소 120일령(4개월) 이상이어야 해요.`,
           fixHint: `출국일을 ${birth} 기준 120일 이후로 조정하세요.`,
           offendingPaths: ['departure_date', 'birth_date'],
         }
@@ -303,8 +303,8 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (others.length + 1 > 3) {
         return {
           ok: false,
-          message: `같은 보호자(${caseRow.customer_name})가 필리핀 목적 케이스를 ${others.length + 1}건 등록하여 1회 3마리 한도를 초과했습니다.`,
-          fixHint: 'BAI MC 49에 따라 1회 신청당 최대 3마리까지 가능합니다. 추가 등록은 별도 SPSIC 신청이 필요합니다.',
+          message: `같은 보호자(${caseRow.customer_name})가 필리핀 목적 케이스를 ${others.length + 1}건 등록하여 1회 3마리 한도를 초과했어요.`,
+          fixHint: 'BAI MC 49에 따라 1회 신청당 최대 3마리까지 가능해요. 추가 등록은 별도 SPSIC 신청이 필요해요.',
           offendingPaths: ['customer_name'],
         }
       }
@@ -362,7 +362,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (entry && raw < entry) {
         return {
           ok: false,
-          message: '필리핀 수입 동물검역일은 필리핀 입국일보다 빠를 수 없습니다.',
+          message: '필리핀 수입 동물검역일은 필리핀 입국일보다 빠를 수 없어요.',
           offendingPaths: ['ph_import_quarantine_date'],
         }
       }
@@ -396,14 +396,14 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (entry && raw < entry) {
         return {
           ok: false,
-          message: '필리핀 수출 동물검역일은 필리핀 입국일보다 빠를 수 없습니다.',
+          message: '필리핀 수출 동물검역일은 필리핀 입국일보다 빠를 수 없어요.',
           offendingPaths: ['ph_export_quarantine_date'],
         }
       }
       if (ret && raw > ret) {
         return {
           ok: false,
-          message: '필리핀 수출 동물검역일은 한국 귀국일보다 늦을 수 없습니다.',
+          message: '필리핀 수출 동물검역일은 한국 귀국일보다 늦을 수 없어요.',
           offendingPaths: ['ph_export_quarantine_date'],
         }
       }

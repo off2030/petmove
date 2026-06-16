@@ -68,7 +68,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: '접종일은 마이크로칩 삽입일 이후여야 합니다.',
+        message: '접종일은 마이크로칩 삽입일 이후여야 해요.',
         offendingPaths: ['microchip_implant_date', `rabies_dates[${first.originalIndex}].date`],
       }
     },
@@ -94,7 +94,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: '접종일은 마이크로칩 삽입일 이후여야 합니다.',
+        message: '접종일은 마이크로칩 삽입일 이후여야 해요.',
         offendingPaths: ['microchip_implant_date', `general_vaccine_dates[${first.originalIndex}].date`],
       }
     },
@@ -122,7 +122,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
       if (age < 84) {
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 생후 ${age}일령입니다. 최소 84일령(12주) 이상이어야 합니다.`,
+          message: `1차 접종일(${first.date})이 생후 ${age}일령이에요. 최소 84일령(12주) 이상이어야 해요.`,
           fixHint: `${birth} 기준 84일 이후로 1차 접종일을 조정하세요.`,
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
@@ -156,7 +156,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
       if (days < 21) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})부터 출국(${dep})까지 ${days}일입니다. 21일 이상이어야 합니다.`,
+          message: `최근 접종(${latest.date})부터 출국(${dep})까지 ${days}일이에요. 21일 이상이어야 해요.`,
           fixHint: `출국일을 ${latest.date} 기준 21일 이후로 조정하거나 부스터를 더 일찍 접종하세요.`,
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
@@ -184,8 +184,8 @@ export const TH_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료됩니다.`,
-          fixHint: '출국 전 부스터 접종이 필요합니다.',
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
+          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -217,7 +217,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
       if (days < 21) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date})부터 출국(${dep})까지 ${days}일입니다. 21일 이상이어야 합니다.`,
+          message: `최근 종합백신(${latest.date})부터 출국(${dep})까지 ${days}일이에요. 21일 이상이어야 해요.`,
           fixHint: `출국일을 ${latest.date} 기준 21일 이후로 조정하거나 부스터를 더 일찍 접종하세요.`,
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
@@ -245,8 +245,8 @@ export const TH_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료됩니다.`,
-          fixHint: '출국 전 부스터 접종이 필요합니다.',
+          message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
+          fixHint: '출국 전 부스터 접종이 필요해요.',
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
@@ -278,8 +278,8 @@ export const TH_CHECKS: ProcedureCheck[] = [
       if (match) {
         return {
           ok: false,
-          message: `견종 "${breed.ko || breed.en}"은 태국 수입이 금지되어 있습니다 (매치: ${match}).`,
-          fixHint: '태국 내 사육은 합법이나 수입은 법으로 금지되어 있습니다.',
+          message: `견종 "${breed.ko || breed.en}"은 태국 수입이 금지되어 있어요 (매치: ${match}).`,
+          fixHint: '태국 내 사육은 합법이나 수입은 법으로 금지되어 있어요.',
           offendingPaths: ['breed', 'breed_en'],
         }
       }
@@ -311,10 +311,10 @@ export const TH_CHECKS: ProcedureCheck[] = [
       if (!dep) return SKIP
       const x = daysBetween(todayKst(), dep)
       if (x === null || x < 0 || x >= 9) return SKIP // 이미 지남·9일 이상 남음 → 침묵
-      const when = x === 0 ? '오늘 출발 예정입니다.' : `${x}일 후 출발 예정입니다.`
+      const when = x === 0 ? '오늘 출발 예정이에요.' : `${x}일 후 출발 예정이에요.`
       return {
         ok: false,
-        message: `${when} 수입 허가 신청에 필요한 시간이 부족합니다. 출국 전에 허가증을 받지 못하면 출발일을 변경하세요.`,
+        message: `${when} 수입 허가 신청에 필요한 시간이 부족해요. 출국 전에 허가증을 받지 못하면 출발일을 변경하세요.`,
         offendingPaths: ['departure_date'],
       }
     },
@@ -393,7 +393,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
       if (entry && raw < entry) {
         return {
           ok: false,
-          message: '태국 수입 동물검역일은 태국 입국일보다 빠를 수 없습니다.',
+          message: '태국 수입 동물검역일은 태국 입국일보다 빠를 수 없어요.',
           offendingPaths: ['th_import_quarantine_date'],
         }
       }
@@ -427,14 +427,14 @@ export const TH_CHECKS: ProcedureCheck[] = [
       if (entry && raw < entry) {
         return {
           ok: false,
-          message: '태국 수출 동물검역일은 태국 입국일보다 빠를 수 없습니다.',
+          message: '태국 수출 동물검역일은 태국 입국일보다 빠를 수 없어요.',
           offendingPaths: ['th_export_quarantine_date'],
         }
       }
       if (ret && raw > ret) {
         return {
           ok: false,
-          message: '태국 수출 동물검역일은 한국 귀국일보다 늦을 수 없습니다.',
+          message: '태국 수출 동물검역일은 한국 귀국일보다 늦을 수 없어요.',
           offendingPaths: ['th_export_quarantine_date'],
         }
       }

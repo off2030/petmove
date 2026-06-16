@@ -70,8 +70,8 @@ export const AU_CHECKS: ProcedureCheck[] = [
       }
       return {
         ok: false,
-        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦습니다.`,
-        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 합니다.',
+        message: `마이크로칩(${microchip})이 광견병 1차 접종(${first.date})보다 늦어요.`,
+        fixHint: '시술 후 광견병 1차 접종부터 다시 시작해야 해요.',
         offendingPaths: ['microchip_implant_date'],
       }
     },
@@ -101,8 +101,8 @@ export const AU_CHECKS: ProcedureCheck[] = [
       if (cushion < 10) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})과 출국일(${dep})의 차이가 ${cushion}일이라 검역 10일을 cover할 수 없습니다.`,
-          fixHint: '출국 전 추가 접종이 필요합니다.',
+          message: `최근 접종(${latest.date})의 유효기간(${validUntil})과 출국일(${dep})의 차이가 ${cushion}일이라 검역 10일을 cover할 수 없어요.`,
+          fixHint: '출국 전 추가 접종이 필요해요.',
           offendingPaths: [
             'departure_date',
             `rabies_dates[${latest.originalIndex}].date`,
@@ -161,9 +161,9 @@ export const AU_CHECKS: ProcedureCheck[] = [
         const reqLabel = basis.kind === 'sample' ? '187일(180+7 보수)' : '180일'
         return {
           ok: false,
-          message: `${label}(${basis.date})부터 출국일(${dep})까지 ${days}일입니다. ${reqLabel} 이상이어야 합니다.`,
+          message: `${label}(${basis.date})부터 출국일(${dep})까지 ${days}일이에요. ${reqLabel} 이상이어야 해요.`,
           fixHint: basis.kind === 'sample'
-            ? '검체 도착일을 입력하면 180일 기준으로 검증할 수 있습니다. 미입력 시에는 lab 수령일이 채혈일보다 며칠 늦으므로 채혈일에 +7일 보수 마진을 적용합니다.'
+            ? '검체 도착일을 입력하면 180일 기준으로 검증할 수 있어요. 미입력 시에는 lab 수령일이 채혈일보다 며칠 늦으므로 채혈일에 +7일 보수 마진을 적용해요.'
             : '출국일을 검체 도착일 + 180일 이후로 조정하세요.',
           offendingPaths,
         }
@@ -199,7 +199,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
       for (const t of titers) offending.push(`rabies_titer_records[${t.originalIndex}].date`)
       return {
         ok: false,
-        message: `최신 RNATT(${newest.date})의 유효기간(${newestValidUntil})이 출국일(${dep})보다 빠릅니다.`,
+        message: `최신 RNATT(${newest.date})의 유효기간(${newestValidUntil})이 출국일(${dep})보다 빨라요.`,
         fixHint: '추가 검사를 하거나 출국일을 검사일 + 12개월 이내로 조정하세요.',
         offendingPaths: offending,
       }
@@ -227,7 +227,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
         const samplelist = violations.map((t) => t.date).join(', ')
         return {
           ok: false,
-          message: `ID 확인일(${auExtra.id_date})이 RNATT 채혈일(${samplelist}) 이전이 아닙니다. 같은 날 시술하면 RNATT가 무효가 되어 180일 시계가 재시작됩니다.`,
+          message: `ID 확인일(${auExtra.id_date})이 RNATT 채혈일(${samplelist}) 이전이 아니에요. 같은 날 시술하면 RNATT가 무효가 되어 180일 시계가 재시작돼요.`,
           fixHint: 'ID 확인을 별도 vet visit으로 RNATT 채혈 이전에 완료하세요.',
           offendingPaths,
         }
@@ -260,8 +260,8 @@ export const AU_CHECKS: ProcedureCheck[] = [
       if (cushion < 10) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})과 출국일(${dep})의 차이가 ${cushion}일이라 검역 10일을 cover할 수 없습니다.`,
-          fixHint: '출국 전 추가 접종이 필요합니다.',
+          message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})과 출국일(${dep})의 차이가 ${cushion}일이라 검역 10일을 cover할 수 없어요.`,
+          fixHint: '출국 전 추가 접종이 필요해요.',
           offendingPaths: [
             'departure_date',
             `general_vaccine_dates[${latest.originalIndex}].date`,
@@ -293,14 +293,14 @@ export const AU_CHECKS: ProcedureCheck[] = [
       if (days < 0) {
         return {
           ok: false,
-          message: `검사일(${latest.date})이 출국일(${dep})보다 늦습니다.`,
+          message: `검사일(${latest.date})이 출국일(${dep})보다 늦어요.`,
           offendingPaths: [`infectious_disease_records[${latest.originalIndex}].date`],
         }
       }
       if (days > 44) {
         return {
           ok: false,
-          message: `최근 전염병검사(${latest.date})부터 출국일(${dep})까지 ${days}일입니다. 출국일 포함 45일 이내(44일 전 이후)여야 합니다.`,
+          message: `최근 전염병검사(${latest.date})부터 출국일(${dep})까지 ${days}일이에요. 출국일 포함 45일 이내(44일 전 이후)여야 해요.`,
           fixHint: `검사일을 ${dep} 기준 44일 전 이후로 다시 실시하세요.`,
           offendingPaths: [`infectious_disease_records[${latest.originalIndex}].date`],
         }
@@ -326,7 +326,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
       if (entries.length < 2) {
         return {
           ok: false,
-          message: `CIV가 1회만 기록되어 있습니다(${entries[0].date}). 2회 접종이 필요합니다.`,
+          message: `CIV가 1회만 기록되어 있어요(${entries[0].date}). 2회 접종이 필요해요.`,
           fixHint: '14일 후 2차 접종을 추가하세요.',
           offendingPaths: [`civ_dates[${entries[0].originalIndex}].date`],
         }
@@ -343,15 +343,15 @@ export const AU_CHECKS: ProcedureCheck[] = [
       const issues: string[] = []
       const offending: string[] = []
       if (interval !== 14) {
-        issues.push(`도즈 간격이 ${interval ?? '?'}일입니다. 정확히 14일이어야 합니다.`)
+        issues.push(`도즈 간격이 ${interval ?? '?'}일이에요. 정확히 14일이어야 해요.`)
         offending.push(`civ_dates[${dose1.originalIndex}].date`, `civ_dates[${dose2.originalIndex}].date`)
       }
       if (dose2ToDep !== null && dose2ToDep < 14) {
-        issues.push(`2차 접종부터 출국까지 ${dose2ToDep}일입니다. 14일 이상이어야 합니다.`)
+        issues.push(`2차 접종부터 출국까지 ${dose2ToDep}일이에요. 14일 이상이어야 해요.`)
         offending.push(`civ_dates[${dose2.originalIndex}].date`)
       }
       if (cushion !== null && cushion < 10) {
-        issues.push(`2차 유효기간(${dose2ValidUntil})과 출국일의 차이가 ${cushion}일이라 검역 10일을 cover할 수 없습니다.`)
+        issues.push(`2차 유효기간(${dose2ValidUntil})과 출국일의 차이가 ${cushion}일이라 검역 10일을 cover할 수 없어요.`)
         offending.push(`civ_dates[${dose2.originalIndex}].date`)
       }
       if (issues.length > 0) {
@@ -390,7 +390,7 @@ export const AU_CHECKS: ProcedureCheck[] = [
       if (entries.length < 2) {
         return {
           ok: false,
-          message: `내부구충이 1회만 기록되어 있습니다(${entries[0].date}). 2회가 필요합니다.`,
+          message: `내부구충이 1회만 기록되어 있어요(${entries[0].date}). 2회가 필요해요.`,
           fixHint: '14일 이상 간격으로 2차를 추가하세요.',
           offendingPaths: [`internal_parasite_dates[${entries[0].originalIndex}].date`],
         }
@@ -406,15 +406,15 @@ export const AU_CHECKS: ProcedureCheck[] = [
       const issues: string[] = []
       const offending: string[] = []
       if (dep1 === null || dep1 < 0 || dep1 > 44) {
-        issues.push(`1차(${dose1.date})부터 출국까지 ${dep1 ?? '?'}일입니다. 0~44일 범위여야 합니다.`)
+        issues.push(`1차(${dose1.date})부터 출국까지 ${dep1 ?? '?'}일이에요. 0~44일 범위여야 해요.`)
         offending.push(`internal_parasite_dates[${dose1.originalIndex}].date`)
       }
       if (dep2 === null || dep2 < 0 || dep2 > 4) {
-        issues.push(`2차(${dose2.date})부터 출국까지 ${dep2 ?? '?'}일입니다. 0~4일 범위여야 합니다.`)
+        issues.push(`2차(${dose2.date})부터 출국까지 ${dep2 ?? '?'}일이에요. 0~4일 범위여야 해요.`)
         offending.push(`internal_parasite_dates[${dose2.originalIndex}].date`)
       }
       if (interval === null || interval < 14) {
-        issues.push(`도즈 간격이 ${interval ?? '?'}일입니다. 14일 이상이어야 합니다.`)
+        issues.push(`도즈 간격이 ${interval ?? '?'}일이에요. 14일 이상이어야 해요.`)
         offending.push(
           `internal_parasite_dates[${dose1.originalIndex}].date`,
           `internal_parasite_dates[${dose2.originalIndex}].date`,
@@ -481,7 +481,7 @@ function buildExternalParasiteRule(
 
         // 첫 도즈 ≥ N 일 전
         if (firstToDep === null || firstToDep < maxIntervalDays) {
-          issues.push(`첫 도즈(${first.date})부터 출국까지 ${firstToDep ?? '?'}일입니다. ${maxIntervalDays}일 이상이어야 합니다.`)
+          issues.push(`첫 도즈(${first.date})부터 출국까지 ${firstToDep ?? '?'}일이에요. ${maxIntervalDays}일 이상이어야 해요.`)
           offending.push(`external_parasite_dates[${first.originalIndex}].date`)
         }
 
@@ -492,7 +492,7 @@ function buildExternalParasiteRule(
           const gap = daysBetween(prev.date, curr.date)
           if (gap === null) continue
           if (gap > maxIntervalDays) {
-            issues.push(`${prev.date}부터 ${curr.date}까지 도즈 간격이 ${gap}일입니다. ${maxIntervalDays}일 이하여야 합니다.`)
+            issues.push(`${prev.date}부터 ${curr.date}까지 도즈 간격이 ${gap}일이에요. ${maxIntervalDays}일 이하여야 해요.`)
             offending.push(
               `external_parasite_dates[${prev.originalIndex}].date`,
               `external_parasite_dates[${curr.originalIndex}].date`,
@@ -504,7 +504,7 @@ function buildExternalParasiteRule(
         const last = entries[entries.length - 1]
         const lastToDep = daysBetween(last.date, dep)
         if (lastToDep === null || lastToDep < 0 || lastToDep > maxIntervalDays) {
-          issues.push(`마지막(${last.date})부터 출국까지 ${lastToDep ?? '?'}일입니다. 0~${maxIntervalDays}일 범위여야 합니다.`)
+          issues.push(`마지막(${last.date})부터 출국까지 ${lastToDep ?? '?'}일이에요. 0~${maxIntervalDays}일 범위여야 해요.`)
           offending.push(`external_parasite_dates[${last.originalIndex}].date`)
         }
 
