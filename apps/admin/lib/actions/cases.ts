@@ -8,6 +8,7 @@ import {
   parseDestinations,
   resolveTabActiveDest,
   readByDestValue,
+  stampDocsChecklistCompletion,
   writeByDestValue,
   type CaseRow,
 } from '@petmove/domain'
@@ -217,6 +218,9 @@ export async function updateCaseField(
       }
     }
 
+    // 서류 체크리스트 완료일 — 이 목적지 기준 '모두 ✓' 전환 시 박거나(미완료 복귀 시) 지운다.
+    updateObj['data'] = stampDocsChecklistCompletion(row as CaseRow, nextData, destination)
+
     const { error: updErr } = await supabase
       .from('cases')
       .update(updateObj)
@@ -364,7 +368,11 @@ export async function updateCaseField(
     }
   }
 
-  if (dataMutated) updateObj.data = nextData
+  // 서류 체크리스트 완료일 — 운영자가 준비상태를 done 으로 바꾸거나(export_doc_status) 내원·
+  // 출국일 변경으로 done 이 리셋되면 완료/미완료가 뒤집힌다. nextData 기준으로 재계산해 박거나
+  // 지운다(top-level 키라 단일/다중 모두 활성 목적지 스코프로). 변화가 있으면 data 를 쓴다.
+  const stampedData = stampDocsChecklistCompletion(row as CaseRow, nextData, destination)
+  if (dataMutated || stampedData !== nextData) updateObj.data = stampedData
 
   // Single UPDATE — column 변경 + data 부수효과 + status 리셋 모두 합산.
   const { error: updErr } = await supabase

@@ -13,9 +13,8 @@
 
 import { randomUUID } from 'node:crypto'
 import { createAdminClient } from '@petmove/auth'
-import { resolveStepAttachmentName, type CaseRow } from '@petmove/domain'
+import { resolveStepAttachmentName, stampDocsChecklistCompletion, type CaseRow } from '@petmove/domain'
 import { type CaseDocument, MAX_DOCUMENT_BYTES, readCaseDocuments } from '@/lib/documents'
-import { stampDocsChecklistCompletion } from '@/lib/cases/docs-completion'
 import { assertCaseAccess, type Result } from './_shared'
 
 const BUCKET = 'attachments'

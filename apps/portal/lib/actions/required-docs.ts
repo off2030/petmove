@@ -13,8 +13,7 @@
 
 import { createAdminClient } from '@petmove/auth'
 import type { CaseRow } from '@petmove/domain'
-import { parseDestinations, readByDestValue, resolveActiveDestination, writeByDestValue } from '@petmove/domain'
-import { stampDocsChecklistCompletion } from '@/lib/cases/docs-completion'
+import { parseDestinations, readByDestValue, resolveActiveDestination, stampDocsChecklistCompletion, writeByDestValue } from '@petmove/domain'
 import { assertCaseAccess, type Result } from './_shared'
 
 /**
