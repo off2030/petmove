@@ -101,7 +101,7 @@ const KR_FORM25_VACCINATION_HEALTH_CERT: RequiredDocSpec = {
   kind: 'manual',
   issuanceStepId: 'vet-visit',
   description:
-    '농림축산검역본부 지정 양식의 접종 및 건강증명서입니다.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급합니다.\n\n원본 2부를 준비해서, 한국 수출 동물검역 때 1부를 제출합니다.\n\n접종과 출국 전 임상검사를 한 동물병원이 다른 경우, 각 동물병원에서 따로 증명서를 받아야 합니다.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+    '농림축산검역본부 지정 양식의 접종 및 건강증명서예요.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급해요.\n\n원본 2부를 준비해서, 한국 수출 동물검역 때 1부를 제출해요.\n\n접종과 출국 전 임상검사를 한 동물병원이 다른 경우, 각 동물병원에서 따로 증명서를 받아야 해요.\n\n이 서류를 발급하지 않는 동물병원도 있으니 미리 확인하세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
   templates: [
     { label: 'PDF', href: '/forms/form25.pdf', filename: '별지 제 25호 서식.pdf' },
     { label: '한글(HWP)', href: '/forms/form25.hwp', filename: '별지 제 25호 서식.hwp' },
@@ -124,7 +124,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'step',
       stepRef: 'rabies-titer',
       description:
-        '검사를 의뢰한 동물병원에서 발급받습니다.\n\n동물검역을 받을 때 반드시 원본이 필요합니다.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리합니다.\n\n광견병 백신 면역 유효기간 유지 시 최대 2년까지 사용할 수 있습니다.',
+        '검사를 의뢰한 동물병원에서 발급받아요.\n\n동물검역을 받을 때 반드시 원본이 필요해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.\n\n광견병 백신 면역 유효기간 유지 시 최대 2년까지 사용할 수 있어요.',
       previewStepId: 'rabies-titer',
     },
     {
@@ -134,7 +134,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'step',
       stepRef: 'advance-notification',
       description:
-        '사전 신고 후 일본 동물검역소에서 발급 받을 수 있습니다.\n\n발급까지 수 주 이상 걸릴 수 있으며, 1회만 사용이 가능합니다.\n\n동물검역을 받을 때 반드시 소지해야 합니다.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용하실 수 있습니다.',
+        '사전 신고 후 일본 동물검역소에서 발급 받을 수 있어요.\n\n발급까지 수 주 이상 걸릴 수 있으며, 1회만 사용할 수 있어요.\n\n동물검역을 받을 때 반드시 소지해야 해요.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용하실 수 있어요.',
       previewStepId: 'advance-notification',
     },
     KR_FORM25_VACCINATION_HEALTH_CERT,
@@ -145,7 +145,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'manual',
       issuanceStepId: 'vet-visit',
       description:
-        '일본 지정 양식의 접종, 검사 및 건강증명서입니다.\n출국일 기준 10일 이내에 동물병원에서 발급받습니다. 이 서류는 발급하지 않는 동물병원이 많으므로 미리 확인하세요.\n\n재입국인 경우 FormAC 대신 FormRE와 일본 수출 동물검역증(Export Quarantine Certificate)을 준비해야 할 수 있습니다. 일본 동물검역소 혹은 담당 동물병원에 확인하세요.\n한국 수출 동물검역 때 검역관 확인·서명을 받아야 합니다.\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+        '일본 지정 양식의 접종, 검사 및 건강증명서예요.\n출국일 기준 10일 이내에 동물병원에서 발급받아요. 이 서류는 발급하지 않는 동물병원이 많으므로 미리 확인하세요.\n\n재입국인 경우 FormAC 대신 FormRE와 일본 수출 동물검역증(Export Quarantine Certificate)을 준비해야 할 수 있어요. 일본 동물검역소 혹은 담당 동물병원에 확인하세요.\n한국 수출 동물검역 때 검역관 확인·서명을 받아야 해요.\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       templates: [
         { label: 'FormAC (PDF)', href: '/forms/form-ac.pdf', filename: 'FormAC.pdf' },
         { label: 'FormAC (Excel)', href: '/forms/form-ac.xlsx', filename: 'FormAC.xlsx' },
@@ -160,7 +160,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'step',
       stepRef: 'certificate-issue',
       description:
-        '한국 수출 동물검역 후 발급받습니다.\n\n일본 수입 동물검역 때 원본을 제시해야 합니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+        '한국 수출 동물검역 후 발급받아요.\n\n일본 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'certificate-issue',
     },
   ],
@@ -173,7 +173,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'rabies-titer',
       roundTripOnly: true,
       description:
-        '검사를 의뢰한 동물병원에서 발급받습니다.\n\n태국 입국에는 필요하지 않지만, 한국으로 돌아올 때 반드시 원본이 필요합니다.\n\n광견병 백신 면역 유효기간 유지 시 채혈일로부터 2년까지 사용할 수 있습니다.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리합니다.',
+        '검사를 의뢰한 동물병원에서 발급받아요.\n\n태국 입국에는 필요하지 않지만, 한국으로 돌아올 때 반드시 원본이 필요해요.\n\n광견병 백신 면역 유효기간 유지 시 채혈일로부터 2년까지 사용할 수 있어요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'rabies-titer',
     },
     {
@@ -183,7 +183,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'step',
       stepRef: 'import-permit',
       description:
-        '수입 허가 신청 후 태국 동물검역소(AQS)에서 이메일로 발급받는 동물 수입 허가 통지서(NOTIFICATION FOR IMPORTATION OF ANIMAL(S))입니다.\n\n발급일로부터 60일간 유효합니다.\n\n태국 도착 후 수입 동물검역 때 제시해야 합니다.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용하실 수 있습니다.',
+        '수입 허가 신청 후 태국 동물검역소(AQS)에서 이메일로 발급받는 동물 수입 허가 통지서(NOTIFICATION FOR IMPORTATION OF ANIMAL(S))예요.\n\n발급일로부터 60일간 유효해요.\n\n태국 도착 후 수입 동물검역 때 제시해야 해요.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용하실 수 있어요.',
       previewStepId: 'import-permit',
     },
     // 접종 및 건강증명서(별지 제25호) — 일본과 완전히 동일한 한국 공식 양식.
@@ -195,7 +195,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'step',
       stepRef: 'certificate-issue',
       description:
-        '한국 수출 동물검역 후 발급받습니다.\n\n태국 수입 동물검역 때 원본을 제시해야 합니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+        '한국 수출 동물검역 후 발급받아요.\n\n태국 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'certificate-issue',
     },
   ],
@@ -207,7 +207,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'step',
       stepRef: 'import-permit',
       description:
-        'Intercommerce 온라인 신청 후 필리핀 동물산업국(BAI)에서 발급받습니다.\n\n발급일로부터 60일간 유효하며 연장할 수 없습니다.\n\n필리핀 도착 후 수입 동물검역 때 원본을 제시해야 합니다.\n\n앱에 저장해두면 필요할 때 쉽게 사용하실 수 있습니다.',
+        'Intercommerce 온라인 신청 후 필리핀 동물산업국(BAI)에서 발급받아요.\n\n발급일로부터 60일간 유효하며 연장할 수 없어요.\n\n필리핀 도착 후 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 저장해두면 필요할 때 쉽게 사용하실 수 있어요.',
       previewStepId: 'import-permit',
     },
     {
@@ -217,7 +217,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'manual',
       issuanceStepId: 'vet-visit',
       description:
-        '임상 수의사가 영문으로 발급하는 건강증명서입니다.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급합니다.\n\n마이크로칩 번호, 접종 기록, 기생충 치료 확인, 수의사 서명과 면허번호가 들어가야 합니다.\n\n영어로 작성하거나 공인 영문 번역본이 필요합니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+        '임상 수의사가 영문으로 발급하는 건강증명서예요.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급해요.\n\n마이크로칩 번호, 접종 기록, 기생충 치료 확인, 수의사 서명과 면허번호가 들어가야 해요.\n\n영어로 작성하거나 공인 영문 번역본이 필요해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
     },
     {
       id: 'ph-vaccine-cert-en',
@@ -226,7 +226,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'manual',
       issuanceStepId: 'general-vaccine',
       description:
-        '광견병 백신·종합백신의 접종 증명서와 내외부 구충 치료 기록입니다.\n\n접종한 동물병원에서 영문으로 발급받습니다. 접종한 동물병원이 여러 곳인 경우, 각 동물병원에서 따로 받아야 합니다.\n\n백신 이름·제조사·접종일·유효기간과 수의사 서명이 들어가야 합니다.\n\n수입허가증(SPSIC) 신청과 동물검역에 사용됩니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+        '광견병 백신·종합백신의 접종 증명서와 내외부 구충 치료 기록이에요.\n\n접종한 동물병원에서 영문으로 발급받아요. 접종한 동물병원이 여러 곳인 경우, 각 동물병원에서 따로 받아야 해요.\n\n백신 이름·제조사·접종일·유효기간과 수의사 서명이 들어가야 해요.\n\n수입허가증(SPSIC) 신청과 동물검역에 사용돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
     },
     {
       id: 'ph-rabies-titer-result',
@@ -236,7 +236,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'rabies-titer',
       roundTripOnly: true,
       description:
-        '검사를 의뢰한 동물병원에서 발급받습니다.\n\n필리핀 입국에는 필요하지 않지만, 한국으로 돌아올 때 반드시 원본이 필요합니다. 필리핀 현지에서는 검사가 어려우므로 출국 전에 미리 받아두세요.\n\n광견병 백신 면역 유효기간 유지 시 채혈일로부터 2년까지 사용할 수 있습니다.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리합니다.',
+        '검사를 의뢰한 동물병원에서 발급받아요.\n\n필리핀 입국에는 필요하지 않지만, 한국으로 돌아올 때 반드시 원본이 필요해요. 필리핀 현지에서는 검사가 어려우므로 출국 전에 미리 받아두세요.\n\n광견병 백신 면역 유효기간 유지 시 채혈일로부터 2년까지 사용할 수 있어요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'rabies-titer',
     },
     {
@@ -246,7 +246,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'step',
       stepRef: 'certificate-issue',
       description:
-        '한국 수출 동물검역 후 발급받습니다.\n\n필리핀 수입 동물검역 때 원본을 제시해야 합니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.',
+        '한국 수출 동물검역 후 발급받아요.\n\n필리핀 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'certificate-issue',
     },
   ],
@@ -266,8 +266,8 @@ function euFamilyDocSpecs(label: string, opts?: { withImportPermit?: boolean }):
       kind: 'step',
       stepRef: 'rabies-titer',
       description:
-        '검사를 의뢰한 동물병원을 통해 발급받습니다. 검사는 농림축산검역본부에서 합니다.\n\n' +
-        `${label} 입국 검사 때 반드시 원본이 필요합니다.\n\n광견병 백신을 유효기간 안에 계속 추가 접종하면 결과지는 계속 유효합니다.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리합니다.`,
+        '검사를 의뢰한 동물병원을 통해 발급받아요. 검사는 농림축산검역본부에서 해요.\n\n' +
+        `${label} 입국 검사 때 반드시 원본이 필요해요.\n\n광견병 백신을 유효기간 안에 계속 추가 접종하면 결과지는 계속 유효해요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.`,
       previewStepId: 'rabies-titer',
     },
     {
@@ -277,7 +277,7 @@ function euFamilyDocSpecs(label: string, opts?: { withImportPermit?: boolean }):
       kind: 'manual',
       issuanceStepId: 'vet-visit',
       description:
-        `${label} 입국용 건강증명서입니다.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 동물검역 때 검역관의 확인을 받습니다.\n\n마이크로칩 번호, 광견병 백신 접종 내용, 항체 검사 결과가 기재되어야 합니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.`,
+        `${label} 입국용 건강증명서예요.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 작성하고, 한국 수출 동물검역 때 검역관의 확인을 받아요.\n\n마이크로칩 번호, 광견병 백신 접종 내용, 항체 검사 결과가 기재되어야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
     },
     {
       id: 'eu-kr-export-quarantine-cert',
@@ -286,7 +286,7 @@ function euFamilyDocSpecs(label: string, opts?: { withImportPermit?: boolean }):
       kind: 'step',
       stepRef: 'certificate-issue',
       description:
-        `한국 수출 동물검역 후 발급받습니다.\n\n${label} 입국 검사 때 제시해야 할 수 있습니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리합니다.`,
+        `한국 수출 동물검역 후 발급받아요.\n\n${label} 입국 검사 때 제시해야 할 수 있어요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
       previewStepId: 'certificate-issue',
     },
   ]
@@ -298,7 +298,7 @@ function euFamilyDocSpecs(label: string, opts?: { withImportPermit?: boolean }):
       kind: 'step',
       stepRef: 'import-permit',
       description:
-        '스위스 연방 식품안전수의청(FSVO)에서 발급받습니다.\n\n입국 최소 3주 전까지 신청해야 합니다.\n\n스위스 입국 검사 때 원본을 제시해야 합니다.\n\n앱에 저장해두면 필요할 때 쉽게 사용하실 수 있습니다.',
+        '스위스 연방 식품안전수의청(FSVO)에서 발급받아요.\n\n입국 최소 3주 전까지 신청해야 해요.\n\n스위스 입국 검사 때 원본을 제시해야 해요.\n\n앱에 저장해두면 필요할 때 쉽게 사용하실 수 있어요.',
       previewStepId: 'import-permit',
     })
   }
