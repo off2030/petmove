@@ -115,7 +115,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // 가 없어도 동작한다(신청일=in_progress, 첨부 or 완료 버튼=done).
       inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
       // 출국 전 이메일로 받는 R.6(수입 허가 통지서) — base 의 '수입허가증' 라벨을 태국 명칭으로 교체.
-      // (입국 검역 때 받는 R.7 수입허가서는 별개 — '태국 수입 동물검역' departure 카드에서 다룸.)
+      // (입국 검역 때 받는 R.7 수입 허가서는 별개 — '태국 수입 동물검역' departure 카드에서 다룸.)
       attachmentHint: '수입 허가 통지서(R.6)를 사진, PDF로 보관하세요.',
       attachmentLabel: '수입 허가 통지서(R.6)',
       // situational·완료 판정은 base catalog 의 import-permit 그대로 사용 — base 문구가 이미
@@ -134,7 +134,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       title: '태국 수입 동물검역',
       shortLabel: '수입',
       description:
-        '태국 도착 후 공항 동물검역소(AQS)에서 수입 검역을 받으세요.\n검역 수수료는 동물 1마리당 500바트(현금)예요.\n검사를 통과하면 수입허가서(R.7)를 받아요.',
+        '태국 도착 후 공항 동물검역소(AQS)에서 수입 검역을 받으세요.\n검역 수수료는 동물 1마리당 500바트(현금)예요.\n검사를 통과하면 수입 허가서(R.7)를 받아요.',
       doneSummary: '태국 수입 동물검역을 받았어요.',
       done: 'quarantine:th_import_quarantine_date',
       inputs: [
@@ -146,7 +146,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         },
       ],
       allowAttachments: true,
-      attachmentHint: '수입허가서(R.7) 사본을 사진, PDF로 저장하세요.',
+      attachmentHint: '수입 허가서(R.7) 사본을 사진, PDF로 저장하세요.',
       validationIds: ['th.import-quarantine-date-valid'],
     },
     // 한국 수입 동물검역(왕복 마지막) — 검역일 ≥ 귀국일 재검증을 태국 룰로 연결.
