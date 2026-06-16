@@ -532,12 +532,8 @@ export function buildJourney(
       typeof caseData.jp_export_quarantine_application_date === 'string' &&
       caseData.jp_export_quarantine_application_date.slice(0, 10).length >= 10 &&
       caseData.jp_export_quarantine_application_date.slice(0, 10) <= today
-<<<<<<< HEAD
-    // 수입 허가 '진행 중' — 신청일 도래(≤오늘)·미완료. 사전 신고와 동일(ack 게이트 없음).
-=======
     // 수입 허가 '진행 중' — 사전 신고와 동일 titer 방식. ack 버튼 없이 신청일 도래만으로 진행 중.
     // (import_permit_application_date 는 by_dest scoped — caseData 는 활성 목적지로 flatten 됨.)
->>>>>>> a5a52166 (fix(portal): 수입 허가 '진행 중'을 사전 신고와 동일 titer 방식으로 통일)
     const importPermitInProgress =
       step.id === 'import-permit' &&
       !done &&

@@ -1612,15 +1612,8 @@ export function StepDetailView({
     savedImportPermit.applicationDate.length >= 10 &&
     savedImportPermit.applicationDate <= todayStr &&
     !done
-<<<<<<< HEAD
-  const importPermitAcked = !!caseRow && isImportPermitInProgressAck(caseRow)
-  // titer 방식(사전 신고·수출검역과 동일) — '진행 중' ack 버튼·배너 제거. 신청일 도래(미완료·
-  // 미변경)면 바로 '완료' 버튼. 도래 안내는 카탈로그 situational 인라인 문구가 담당.
-  const importPermitInProgressMode = false
-=======
   // titer 방식(사전 신고와 동일) — '진행 중' ack 버튼 게이트 제거. 신청일 도래(미완료·미변경)면
-  // 바로 '완료' 버튼. 진행 중 안내는 situational('수입 허가 신청을 진행 중입니다…')이 맡는다.
->>>>>>> a5a52166 (fix(portal): 수입 허가 '진행 중'을 사전 신고와 동일 titer 방식으로 통일)
+  // 바로 '완료' 버튼. 진행 중 안내는 situational('수입 허가 신청을 진행 중이에요…')이 맡는다.
   const importPermitCompleteMode = isImportPermitInProgress && !dirty
   const [completingImportPermit, setCompletingImportPermit] = useState(false)
   const handleCompleteImportPermit = () => {
