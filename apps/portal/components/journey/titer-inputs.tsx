@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { DateTextField } from '@petmove/ui'
+import { getTiterLabOptions, isKnownTiterLab, isSameTiterLab } from '@petmove/domain'
 
 /**
  * 광견병 항체 검사 step 입력 필드 — 채혈일 + 검사기관 + 검사결과. controlled — 부모
@@ -20,23 +21,18 @@ export interface TiterForm {
 /** '직접 입력' 옵션 sentinel — form.lab 에 저장되지 않고 목록 표시용으로만 쓰임. */
 const CUSTOM_LAB = '__custom__'
 
-/** 검사기관 선택지 — value 는 펫무브워크 LAB_INFO 와 동일 코드, label 은 보호자용 명칭. */
-const LAB_OPTIONS = [
-  { value: 'apqa_seoul', label: '농림축산검역본부 (APQA)' },
-  { value: 'krsl', label: '코미팜 (KRSL)' },
-  { value: CUSTOM_LAB, label: '기타' },
-]
-
-/** 검사기관 코드(직접 입력 제외) — 직접 입력 모드 판별용. */
-const LAB_CODES = LAB_OPTIONS.filter((o) => o.value !== CUSTOM_LAB).map((o) => o.value)
-
 export function TiterInputs({
   form,
   onChange,
+  destinationKey,
 }: {
   form: TiterForm
   onChange: (key: keyof TiterForm, next: string) => void
+  /** 목적지(정규화 키) — 검사기관 선택지를 목적지별로 분기. */
+  destinationKey?: string | null
 }) {
+  // 검사기관 선택지 — 목적지별(@petmove/domain) + '기타'(직접 입력) 마지막에 덧붙임.
+  const LAB_OPTIONS = [...getTiterLabOptions(destinationKey), { value: CUSTOM_LAB, label: '기타' }]
   const C = {
     surface: 'var(--pm-surface)',
     line: 'var(--pm-line)',
@@ -49,7 +45,7 @@ export function TiterInputs({
   // 검사기관 — lab 이 코드 목록에 없으면 직접 입력 모드. lab 이 비었지만 사용자가
   // 방금 '직접 입력' 을 고른 경우(아직 미입력)도 직접 입력 모드로 본다.
   const [pickedCustom, setPickedCustom] = useState(false)
-  const isCustomStored = form.lab !== '' && !LAB_CODES.includes(form.lab)
+  const isCustomStored = form.lab !== '' && !isKnownTiterLab(form.lab)
   const customMode = isCustomStored || (pickedCustom && form.lab === '')
   const selectedLab = customMode ? CUSTOM_LAB : form.lab
 
@@ -57,7 +53,7 @@ export function TiterInputs({
     if (next === CUSTOM_LAB) {
       setPickedCustom(true)
       // 코드 → 직접 입력 전환 시 코드가 기관명으로 남지 않도록 비움.
-      if (LAB_CODES.includes(form.lab)) onChange('lab', '')
+      if (isKnownTiterLab(form.lab)) onChange('lab', '')
     } else {
       setPickedCustom(false)
       onChange('lab', next)
@@ -106,7 +102,8 @@ export function TiterInputs({
         <div style={labelStyle}>검사기관</div>
         <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {LAB_OPTIONS.map((o) => {
-            const selected = selectedLab === o.value
+            // APQA 변형(seoul/eu/hq)은 같은 '농림축산검역본부'로 보고 선택 표시.
+            const selected = isSameTiterLab(selectedLab, o.value)
             return (
               <button
                 key={o.value}

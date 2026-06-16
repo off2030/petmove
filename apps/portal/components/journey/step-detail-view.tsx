@@ -2139,6 +2139,7 @@ export function StepDetailView({
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <TiterExtraInputs
               entries={titerExtra}
+              destinationKey={destinationKey}
               onChange={(idx, key, next) =>
                 setTiterExtra((prev) =>
                   prev.map((e, i) => (i === idx ? { ...e, [key]: next } : e)),
@@ -2159,6 +2160,7 @@ export function StepDetailView({
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <TiterInputs
               form={titerForm}
+              destinationKey={destinationKey}
               onChange={(key, next) => setTiterForm((prev) => ({ ...prev, [key]: next }))}
             />
           </section>
