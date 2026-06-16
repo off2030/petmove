@@ -98,6 +98,8 @@ export function FlightInputs({
   showTransport = true,
   departureFirst = false,
   collapsible = false,
+  entryFieldKeys,
+  returnFieldKeys,
 }: {
   value: FlightForm
   onChange: (key: keyof FlightForm, next: string) => void
@@ -117,9 +119,23 @@ export function FlightInputs({
    * 방법)는 '세부 정보' 접기. 한국과 같은 시간대라 출발=도착이 같은 날이라 분리는 불필요.
    */
   collapsible?: boolean
+  /**
+   * 출국·귀국 leg 에서 받을 필드를 키로 한정(미지정=전체). 나라별 최소 입력용 —
+   * 예: 필리핀은 출국 [날짜·도착공항] / 귀국 [날짜](+미정 토글)만 받는다.
+   * departureFirst 레이아웃은 별도 상수를 쓰므로 영향 없음(기본·collapsible 레이아웃에만 적용).
+   */
+  entryFieldKeys?: ReadonlyArray<keyof FlightForm>
+  returnFieldKeys?: ReadonlyArray<keyof FlightForm>
 }) {
   const drop = (fields: readonly FlightField[]) =>
     showTransport ? fields : fields.filter((f) => f.kind !== 'transport')
+  // 나라별 필드 한정 — 키 목록이 주어지면 그 키만, 없으면 전체.
+  const selectedEntryFields = entryFieldKeys
+    ? ENTRY_FIELDS.filter((f) => entryFieldKeys.includes(f.key))
+    : ENTRY_FIELDS
+  const selectedReturnFields = returnFieldKeys
+    ? RETURN_FIELDS.filter((f) => returnFieldKeys.includes(f.key))
+    : RETURN_FIELDS
 
   // 출국/귀국을 동등한 leg 로 — 각 leg 는 날짜(출발일)를 항상 노출하고 나머지는 '세부 정보' 접기.
   // 태국(departureFirst): 출국 주필드=출발일, 세부=도착일·도착시간·공항·편명.
@@ -131,11 +147,11 @@ export function FlightInputs({
       outboundPrimary = [DEPARTURE_PRIMARY_FIELD]
       outboundDetail = DEPARTURE_DETAIL_FIELDS
     } else {
-      const entryFields = drop(ENTRY_FIELDS)
+      const entryFields = drop(selectedEntryFields)
       outboundPrimary = entryFields.slice(0, 1)
       outboundDetail = entryFields.slice(1)
     }
-    const returnFields = drop(RETURN_FIELDS)
+    const returnFields = drop(selectedReturnFields)
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <CollapsibleLeg
@@ -165,14 +181,14 @@ export function FlightInputs({
       {/* 편도면 그룹이 하나뿐 — '출국 항공권' 라벨 생략(상위 '입력' 헤딩으로 충분). */}
       <FlightGroup
         label={showReturn ? '출국 항공권' : undefined}
-        fields={drop(ENTRY_FIELDS)}
+        fields={drop(selectedEntryFields)}
         value={value}
         onChange={onChange}
       />
       {showReturn && (
         <FlightGroup
           label="귀국 항공권"
-          fields={drop(RETURN_FIELDS)}
+          fields={drop(selectedReturnFields)}
           value={value}
           onChange={onChange}
           // '미정' 토글을 귀국일 카드 안, 날짜 바로 아래에 끼운다.

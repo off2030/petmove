@@ -2192,6 +2192,9 @@ export function StepDetailView({
               departureFirst={destinationKey === 'thailand'}
               // 일본 — 날짜 주필드 + 공항·편명·운송방법 접기(출발=도착 동일 시간대라 분리 불필요).
               collapsible={destinationKey === 'japan'}
+              // 필리핀 — 수입 허가(SPSIC)엔 항공편 일정만 필요: 출국 [날짜·도착공항] / 귀국 [날짜](+미정).
+              entryFieldKeys={destinationKey === 'philippines' ? ['entry_date', 'entry_airport'] : undefined}
+              returnFieldKeys={destinationKey === 'philippines' ? ['return_date'] : undefined}
             />
           </section>
         )}
