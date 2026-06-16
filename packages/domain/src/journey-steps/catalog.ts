@@ -1003,6 +1003,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     // 신청 완료(in_progress) → '허가증 대기' 안내. 미래 신청일(예정)·완료 상태에선 숨김.
     situational: (caseRow) => {
       const data = (caseRow.data ?? {}) as Record<string, unknown>
+      // 신청일이 미래(=예정)이면 안내 노출 안 함 — 사전 신고와 동일 패턴.
       const filed =
         typeof data.import_permit_application_date === 'string'
           ? data.import_permit_application_date
