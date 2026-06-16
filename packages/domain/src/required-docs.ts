@@ -205,7 +205,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '한국 귀국 후 공항 동물검역소에서 수입 검역을 받으면 발급받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '한국 수입 동물검역 후 발급받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'kr-import-quarantine',
     },
   ],
