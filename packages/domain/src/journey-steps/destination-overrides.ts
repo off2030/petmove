@@ -1,5 +1,3 @@
-import { todayKst } from '../procedure-checks/utils'
-import { deriveImportPermitStatus, isImportPermitInProgressAck } from './report-status'
 import type { StepDefinition } from './types'
 
 /**
@@ -116,21 +114,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // 입력 제거). deriveImportPermitStatus 가 첨부/완료 플래그로 done 을 판정하므로 permit_no
       // 가 없어도 동작한다(신청일=in_progress, 첨부 or 완료 버튼=done).
       inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
-      // base situational 의 '허가 번호를 입력하고' 안내는 번호 입력을 뺀 태국엔 맞지 않아 교체.
-      situational: (caseRow) => {
-        const data = (caseRow.data ?? {}) as Record<string, unknown>
-        const filed =
-          typeof data.import_permit_application_date === 'string'
-            ? data.import_permit_application_date
-            : ''
-        if (filed.length >= 10 && filed > todayKst()) return undefined
-        if (deriveImportPermitStatus(caseRow) !== 'in_progress') return undefined
-        // 신청일 도래만으론 '진행 중' 안내 X — 보호자가 '진행 중' 버튼을 눌러야(사전 신고와 동일).
-        if (!isImportPermitInProgressAck(caseRow)) return undefined
-        const msg =
-          '수입 허가 신청을 진행 중입니다. 수입허가증을 받으면 파일을 첨부하거나 완료 버튼을 누르세요.'
-        return { desc: msg, cardDesc: msg }
-      },
+      // situational·완료 판정은 base catalog 의 import-permit 그대로 사용 — base 문구가 이미
+      // '허가 번호' 언급을 뺀 어요체("진행 중이에요…")라 태국 전용 override 불필요. ack 게이트 없이
+      // 신청일 도래(in_progress) 시 인라인 안내가 뜬다(사전 신고와 동일 titer 방식).
       links: [
         { url: '/forms/R1.1.pdf', label: 'R1/1 서식 다운로드' },
         { url: '/guide/th-aqs-contacts', label: '태국 동물검역소(AQS) 연락처' },

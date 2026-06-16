@@ -1019,7 +1019,7 @@ export function StepDetailView({
         const returnDate = typeof data.return_date === 'string' ? data.return_date : ''
         const anchor = reserved || (returnDate.length >= 10 ? returnDate.slice(0, 10) : '')
         if (anchor && app > addDays(anchor, -10)) {
-          return '일본 수출 동물검역은 최소 10일 전에 신청, 예약해야 합니다.'
+          return '일본 수출 동물검역은 최소 10일 전에 신청, 예약해야 해요.'
         }
       }
       return null
@@ -1684,8 +1684,8 @@ export function StepDetailView({
       const ok = await confirm({
         message: '이후 일정이 이미 입력돼 있어요',
         description: isRabies1Deletion
-          ? '이 단계를 삭제하면 이미 입력한 이후 일정과 어긋날 수 있습니다. 이후 일정을 확인하세요.\n\n1차 광견병 기록이 삭제되고, 2차 광견병 기록이 1차로 올라갑니다. 이대로 진행할까요?'
-          : '이 단계를 수정·삭제하면 이미 입력한 이후 일정과 어긋날 수 있습니다. 이후 일정을 확인하세요.',
+          ? '이 단계를 삭제하면 이미 입력한 이후 일정과 어긋날 수 있어요. 이후 일정을 확인하세요.\n\n1차 광견병 기록이 삭제되고, 2차 광견병 기록이 1차로 올라갑니다. 이대로 진행할까요?'
+          : '이 단계를 수정·삭제하면 이미 입력한 이후 일정과 어긋날 수 있어요. 이후 일정을 확인하세요.',
         okLabel: '확인',
       })
       if (!ok) return
@@ -1716,7 +1716,7 @@ export function StepDetailView({
     const ok = await confirm({
       message: '편도 일정으로 전환하시겠어요?',
       description:
-        '일본 수출 동물검역·한국 수입검역 등 귀국편 단계가 일정에서 빠집니다.\n\n정보탭 → 여행 정보 → 유형 메뉴에서 왕복으로 다시 전환할 수 있습니다.',
+        '일본 수출 동물검역·한국 수입검역 등 귀국편 단계가 일정에서 빠져요.\n\n정보탭 → 여행 정보 → 유형 메뉴에서 왕복으로 다시 전환할 수 있어요.',
       okLabel: '편도로 전환',
     })
     if (!ok) return
@@ -1977,7 +1977,7 @@ export function StepDetailView({
             {situationalDesc && (
               <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5, whiteSpace: 'pre-line' }}>
                 {situationalDesc}
-                {isFlightRoundEntryOnly && ' 귀국 일정이 미정인 경우는 편도 일정으로 전환할 수 있습니다.'}
+                {isFlightRoundEntryOnly && ' 귀국 일정이 미정인 경우는 편도 일정으로 전환할 수 있어요.'}
               </div>
             )}
             {situationalDesc && isFlightRoundEntryOnly && (
@@ -2377,8 +2377,8 @@ export function StepDetailView({
           >
             <div style={{ fontSize: 13, color: C.ink2, lineHeight: 1.5 }}>
               {savedDueToday
-                ? `오늘은 ${step.title} 예정일입니다. 검역 후 완료 버튼을 눌러주세요.`
-                : `${step.title} 예정일이 지났습니다. 완료 버튼을 누르시거나 예정일을 변경해주세요.`}
+                ? `오늘은 ${step.title} 예정일이에요. 검역 후 완료 버튼을 눌러주세요.`
+                : `${step.title} 예정일이 지났어요. 완료 버튼을 누르시거나 예정일을 변경해주세요.`}
             </div>
           </section>
         )}
