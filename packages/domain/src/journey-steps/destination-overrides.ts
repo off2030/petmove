@@ -171,9 +171,14 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       done: 'has-rabies-valid',
       validationIds: ['ph.rabies-prime-after-12weeks', 'ph.microchip-before-rabies'],
     },
+    // 항체 검사 — 필리핀 입국엔 불필요, 한국 귀국용(왕복에만 노출). 입국 요건인 종합백신
+    // (order 50) 뒤로 배치해 광견병(30)·종합백신(50)이 '다음 할 일'에 동시에 뜨게 한다
+    // (태국과 동일 — base 40 → 55 override). 안 그러면 항체검사가 두 백신 사이를 막아
+    // 종합백신이 광견병 완료 뒤에야 떠 동시 진행이 안 보인다.
     'rabies-titer': {
       description:
         '국제 공인 검사기관에서 광견병 항체 검사를 받으세요.\n\n동물병원을 통해 의뢰할 수 있어요.\n0.5 IU/mL 이상이면 합격이에요.\n한국 입국에 사용 시 유효기간은 2년이에요.',
+      order: 55,
     },
     'general-vaccine': {
       description:
