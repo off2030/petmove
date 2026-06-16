@@ -69,7 +69,8 @@ export function DocsView({
     }
   }, [caseId, updateCase])
 
-  const { pet, trip, requiredDocs, checklist, autoDocs, storedDocs } = data
+  const { pet, trip, requiredDocs, checklist, quarantineDocs, autoDocs, storedDocs } = data
+  const quarantineDone = quarantineDocs.filter((d) => d.verified).length
   // requiredDocs spec 이 있는 목적지(예: 일본)는 큐레이션된 5건만 보고,
   // 기존 자동 체크리스트·자동 작성 섹션은 가린다.
   const useCurated = requiredDocs !== null
@@ -163,6 +164,25 @@ export function DocsView({
                 ))}
               </div>
             )}
+          </>
+        )}
+
+        {/* 검역증 — 검역 단계에서 받는 증명서. 행 클릭 시 해당 일정 step 상세(첨부·완료)로 이동. */}
+        {quarantineDocs.length > 0 && (
+          <>
+            <SectionLabel right={`${quarantineDone}/${quarantineDocs.length}`}>검역증</SectionLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {quarantineDocs.map((d) => (
+                <ChecklistRow
+                  key={d.id}
+                  doc={d}
+                  C={C}
+                  monoCap={monoCap}
+                  pendingLabel="받기 전"
+                  href={`/cases/${caseId}/journey/${d.id}${destQuery}`}
+                />
+              ))}
+            </div>
           </>
         )}
 

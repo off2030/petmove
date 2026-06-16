@@ -9,6 +9,7 @@ import {
   resolveRequiredDocs,
   type CertDefinition,
   type RequiredDocItem,
+  type StepDefinition,
 } from '@petmove/domain'
 import { activeDestinationView } from '@/lib/cases/active-destination'
 import { formatFileSize, readCaseDocuments } from '@/lib/documents'
@@ -34,8 +35,21 @@ export interface DocsViewData {
    */
   requiredDocs: RequiredDocItem[] | null
   checklist: ChecklistItem[]
+  /**
+   * 검역증 — 검역 단계에서 *받는* 증명서(한국 수출·수입 + 도착국 수입·현지 수출).
+   * 케이스의 적용 검역 step 에서 파생. 행 클릭 시 해당 일정 step 상세로 이동(거기서 첨부·완료).
+   */
+  quarantineDocs: QuarantineDocItem[]
   autoDocs: AutoDocItem[]
   storedDocs: StoredDocItem[]
+}
+
+export interface QuarantineDocItem {
+  /** step id — 클릭 시 /journey/<id> 로 이동 */
+  id: string
+  name: string
+  source: string
+  verified: boolean
 }
 
 export interface ChecklistItem {
@@ -80,13 +94,24 @@ export function buildDocsView(
   const applicableSteps = getStepsForCase(JOURNEY_STEP_CATALOG, caseRow)
   const requiredDocs = resolveRequiredDocs(caseRow.destination, caseRow)
 
-  // 1) 체크리스트 — 첨부가 필요한 step
+  // 1) 체크리스트 — 첨부가 필요한 step (검역증 step 은 별도 섹션이라 제외)
   const checklist: ChecklistItem[] = applicableSteps
-    .filter((s) => s.allowAttachments)
+    .filter((s) => s.allowAttachments && !isQuarantineCertStep(s))
     .map((s) => ({
       id: s.id,
       name: s.title,
       source: checklistSourceFor(s.category),
+      verified: resolveDone(s.done, caseRow),
+    }))
+
+  // 1-1) 검역증 — 검역 단계에서 받는 증명서. 한국 수출/수입 + 도착국 수입·현지 수출.
+  //      신청·사전통지 단계(수입 허가·일본 수출검역 신청·아일랜드 사전통지)는 제외.
+  const quarantineDocs: QuarantineDocItem[] = applicableSteps
+    .filter(isQuarantineCertStep)
+    .map((s) => ({
+      id: s.id,
+      name: s.title,
+      source: isKrQuarantineAuthority(s) ? '농림축산검역본부' : '현지 동물검역소',
       verified: resolveDone(s.done, caseRow),
     }))
 
@@ -106,8 +131,14 @@ export function buildDocsView(
     fresh: false,
   }))
 
-  // 3) 보관 중인 서류 — 보호자가 step 에서 올린 파일. 최신 업로드가 위로.
+  // 3) 보관함 — 체크리스트·검역증에 묶이지 않은 '기타' 첨부만(중복 노출 제거). 체크리스트
+  //    서류는 그 항목 상세에서, 검역증은 일정 step 에서 보므로 여기선 misc 등 자유 첨부만.
+  const linkedStepIds = new Set<string>()
+  if (requiredDocs) requiredDocs.forEach((d) => linkedStepIds.add(d.attachStepId))
+  else checklist.forEach((d) => linkedStepIds.add(d.id))
+  quarantineDocs.forEach((d) => linkedStepIds.add(d.id))
   const storedDocs: StoredDocItem[] = readCaseDocuments(caseRow.data)
+    .filter((d) => !linkedStepIds.has(d.stepId ?? ''))
     .slice()
     .sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt))
     .map((d) => ({
@@ -130,9 +161,29 @@ export function buildDocsView(
     },
     requiredDocs,
     checklist,
+    quarantineDocs,
     autoDocs,
     storedDocs,
   }
+}
+
+/**
+ * 검역증 step 판정 — 검역 단계에서 *받는* 증명서만(한국 수출/수입·도착국 수입·현지 수출).
+ * 신청·사전통지 단계는 제외: 수입 허가(has-import-permit)·일본 수출검역 신청
+ * (has-jp-export-quarantine, 방문 step has-jp-export-quarantine-visit 는 포함)·
+ * 아일랜드 사전통지(quarantine:ie_advance_notice_date).
+ */
+function isQuarantineCertStep(step: StepDefinition): boolean {
+  const d = typeof step.done === 'string' ? step.done : ''
+  if (d === 'has-jp-export-quarantine') return false
+  if (d === 'quarantine:ie_advance_notice_date') return false
+  if (d.startsWith('quarantine:')) return true
+  return d.startsWith('has-') && d.includes('-quarantine')
+}
+
+/** 한국 검역(수출·수입)은 농림축산검역본부 발급, 그 외는 도착국 현지 검역소. */
+function isKrQuarantineAuthority(step: StepDefinition): boolean {
+  return step.done === 'has-kr-export-quarantine' || step.done === 'has-kr-import-quarantine'
 }
 
 /** 체크리스트 source 라벨 — step category 기반. UI 의 '병원 발급' / 'PetMove' 톤과 통일. */
