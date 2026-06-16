@@ -361,7 +361,7 @@ export function RequiredDocDetail({
               // naAllowed 면 '해당없음' 은 그대로 허용.
               <>
                 <button type="button" disabled style={disabledBtn}>
-                  있어요
+                  준비했어요
                 </button>
                 {doc.naAllowed && (
                   <button type="button" onClick={handleToggleNa} disabled={busy} style={naBtn}>
@@ -377,7 +377,7 @@ export function RequiredDocDetail({
                   disabled={busy}
                   style={doc.verified ? outlineBtn : primaryBtn}
                 >
-                  {busy ? '처리 중…' : doc.verified ? '✓ 있음' : '있어요'}
+                  {busy ? '처리 중…' : doc.verified ? '✓ 있음' : '준비했어요'}
                 </button>
                 {doc.naAllowed && !doc.verified && (
                   <button
