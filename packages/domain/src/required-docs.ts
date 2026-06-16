@@ -178,7 +178,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     },
     {
       id: 'th-import-permit-doc',
-      name: '반입 승인통지서(R.6)',
+      name: '수입 허가 통지서(R.6)',
       source: '태국 동물검역소(AQS)',
       kind: 'step',
       stepRef: 'import-permit',
