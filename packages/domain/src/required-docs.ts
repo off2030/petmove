@@ -258,7 +258,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     {
       id: 'th-export-quarantine-cert',
       name: '수출 허가서(R.9)·건강증명서',
-      source: '태국 축산국(DLD)',
+      source: '태국 동물검역소(AQS)',
       kind: 'step',
       stepRef: 'th-export-quarantine',
       group: 'quarantine',
