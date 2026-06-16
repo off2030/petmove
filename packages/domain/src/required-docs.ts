@@ -175,25 +175,25 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     },
     {
       id: 'jp-import-quarantine-cert',
-      name: '일본 수입 동물검역증 (Import Quarantine Certificate)',
+      name: '일본 수입 동물검역증',
       source: '일본 동물검역소',
       kind: 'step',
       stepRef: 'departure',
       group: 'quarantine',
       description:
-        '일본 도착 후 공항 동물검역소에서 수입 검역을 통과하면 발급받아요.\n\n재발급되지 않으니 잘 보관해두세요. 향후 일본에서 재출국할 때 필요해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '일본 수입 동물검역 후 발급받아요.\n\n정확한 서류 이름은 Import Quarantine Certificate 입니다.\n\n일본에서 출국할 때 필요할 수 있으므로 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'departure',
     },
     {
       id: 'jp-export-quarantine-cert',
-      name: '일본 수출 동물검역증 (Export Quarantine Certificate)',
+      name: '일본 수출 동물검역증',
       source: '일본 동물검역소',
       kind: 'step',
       stepRef: 'jp-export-quarantine-visit',
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '일본 출국 전 동물검역소에서 수출 검역을 받으면 발급받아요.\n\n향후 일본 재입국 시 필요할 수 있으니 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '일본 수출 동물검역 후 발급받아요.\n\n정확한 서류 이름은 Export Quarantine Certificate 입니다.\n\n향후 일본 재입국 시 필요할 수 있으니 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'jp-export-quarantine-visit',
     },
     {
