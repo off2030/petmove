@@ -1020,8 +1020,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'permit_no', label: '허가 번호', type: 'text' },
     ],
     allowAttachments: true,
-    attachmentHint: '수입허가증을 사진, PDF로 보관하세요.',
-    attachmentLabel: '수입허가증',
+    attachmentHint: '수입 허가증을 사진, PDF로 보관하세요.',
+    attachmentLabel: '수입 허가증',
   },
 
   // ── 11. 내원 — 수의사 검진 ──────────────────────────────────────────────

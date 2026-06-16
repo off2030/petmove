@@ -114,7 +114,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // 입력 제거). deriveImportPermitStatus 가 첨부/완료 플래그로 done 을 판정하므로 permit_no
       // 가 없어도 동작한다(신청일=in_progress, 첨부 or 완료 버튼=done).
       inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
-      // 출국 전 이메일로 받는 R.6(수입 허가 통지서) — base 의 '수입허가증' 라벨을 태국 명칭으로 교체.
+      // 출국 전 이메일로 받는 R.6(수입 허가 통지서) — base 의 '수입 허가증' 라벨을 태국 명칭으로 교체.
       // (입국 검역 때 받는 R.7 수입 허가서는 별개 — '태국 수입 동물검역' departure 카드에서 다룸.)
       attachmentHint: '수입 허가 통지서(R.6)를 사진, PDF로 보관하세요.',
       attachmentLabel: '수입 허가 통지서(R.6)',
@@ -177,10 +177,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     },
     'general-vaccine': {
       description:
-        '강아지는 DHLPPi(디스템퍼·전염성간염·렙토스피라·파라인플루엔자·파보바이러스), 고양이는 FVRCP(범백혈구감소증·허피스·칼리시)가 포함된 종합백신을 접종하세요.\n\n수입허가증(SPSIC) 신청 14일 전까지 접종을 완료하세요.\n필리핀 입국 때 면역 유효기간이 남아있어야 해요.',
+        '강아지는 DHLPPi(디스템퍼·전염성간염·렙토스피라·파라인플루엔자·파보바이러스), 고양이는 FVRCP(범백혈구감소증·허피스·칼리시)가 포함된 종합백신을 접종하세요.\n\n수입 허가증(SPSIC) 신청 14일 전까지 접종을 완료하세요.\n필리핀 입국 때 면역 유효기간이 남아있어야 해요.',
       descriptionBySpecies: {
-        dog: '종합백신(DHLPPi)을 접종하세요.\n\n디스템퍼·전염성간염·렙토스피라·파라인플루엔자·파보바이러스 예방을 포함해야 해요.\n한국 백신은 렙토스피라 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n마이크로칩 삽입 후 접종해요.\n수입허가증(SPSIC) 신청 14일 전까지 접종을 완료하세요.\n필리핀 입국 때 면역 유효기간이 남아있어야 해요.\n이전 접종의 유효기간 안에 추가 접종(부스터)을 한 경우에는 대기 기간 없이 바로 출국할 수 있어요.',
-        cat: '종합백신(FVRCP)을 접종하세요.\n\n범백혈구감소증·허피스바이러스·칼리시바이러스가 포함되어야 해요.\n마이크로칩 삽입 후 접종해요.\n수입허가증(SPSIC) 신청 14일 전까지 접종을 완료하세요.\n필리핀 입국 때 면역 유효기간이 남아있어야 해요.\n이전 접종의 유효기간 안에 추가 접종(부스터)을 한 경우에는 대기 기간 없이 바로 출국할 수 있어요.',
+        dog: '종합백신(DHLPPi)을 접종하세요.\n\n디스템퍼·전염성간염·렙토스피라·파라인플루엔자·파보바이러스 예방을 포함해야 해요.\n한국 백신은 렙토스피라 예방을 포함하지 않는 경우가 대부분이므로 주의하세요.\n마이크로칩 삽입 후 접종해요.\n수입 허가증(SPSIC) 신청 14일 전까지 접종을 완료하세요.\n필리핀 입국 때 면역 유효기간이 남아있어야 해요.\n이전 접종의 유효기간 안에 추가 접종(부스터)을 한 경우에는 대기 기간 없이 바로 출국할 수 있어요.',
+        cat: '종합백신(FVRCP)을 접종하세요.\n\n범백혈구감소증·허피스바이러스·칼리시바이러스가 포함되어야 해요.\n마이크로칩 삽입 후 접종해요.\n수입 허가증(SPSIC) 신청 14일 전까지 접종을 완료하세요.\n필리핀 입국 때 면역 유효기간이 남아있어야 해요.\n이전 접종의 유효기간 안에 추가 접종(부스터)을 한 경우에는 대기 기간 없이 바로 출국할 수 있어요.',
       },
       validationIds: ['ph.microchip-before-general-vaccine'],
     },
@@ -188,12 +188,12 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // base 문구(EU·호주 중심)와 달라 교체.
     'external-parasite': {
       description:
-        '외부 기생충(진드기·벼룩) 구충을 받으세요.\n\n수입허가증(SPSIC) 신청일 기준 91일 이내, 7일 이전에 동물병원에서 받으세요.\n수의사의 치료 기록이 필요해요.',
+        '외부 기생충(진드기·벼룩) 구충을 받으세요.\n\n수입 허가증(SPSIC) 신청일 기준 91일 이내, 7일 이전에 동물병원에서 받으세요.\n수의사의 치료 기록이 필요해요.',
       doneSummary: '외부구충 처치를 받았어요.',
     },
     'internal-parasite': {
       description:
-        '내부 기생충 구충을 받으세요.\n\n수입허가증(SPSIC) 신청일 기준 91일 이내, 7일 이전에 동물병원에서 받으세요.\n수의사의 치료 기록이 필요해요.',
+        '내부 기생충 구충을 받으세요.\n\n수입 허가증(SPSIC) 신청일 기준 91일 이내, 7일 이전에 동물병원에서 받으세요.\n수의사의 치료 기록이 필요해요.',
       doneSummary: '내부구충 투약을 받았어요.',
     },
     'flight-purchase': {
@@ -211,24 +211,24 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       ],
     },
     'import-permit': {
-      title: '수입허가증(SPSIC) 신청',
+      title: '수입 허가증(SPSIC) 신청',
       description:
-        '필리핀 수입허가증(SPSIC)을 신청하세요.\n\nIntercommerce 사이트에서 일회성 수입자(One-time Importer)로 등록한 후 온라인으로 신청해요.\n광견병·종합백신 접종 14일 후부터 신청할 수 있어요.\n생후 120일(4개월) 이상이어야 하며, 1회 최대 3마리까지 신청할 수 있어요.\n예방접종 증명서, 구충 기록, 마이크로칩 증명서, 반려동물 사진을 PDF 또는 JPG(5MB 이하)로 첨부해요.\n승인까지 수일이 걸려요. 출발 1~2주 전까지 신청하세요.\n수입허가증은 발급일로부터 60일간 유효하며 연장할 수 없어요.',
-      doneSummary: '필리핀 수입허가증(SPSIC)을 받았어요.',
-      cardLine: '필리핀 수입허가증(SPSIC)을 신청하세요.',
+        '필리핀 수입 허가증(SPSIC)을 신청하세요.\n\nIntercommerce 사이트에서 일회성 수입자(One-time Importer)로 등록한 후 온라인으로 신청해요.\n광견병·종합백신 접종 14일 후부터 신청할 수 있어요.\n생후 120일(4개월) 이상이어야 하며, 1회 최대 3마리까지 신청할 수 있어요.\n예방접종 증명서, 구충 기록, 마이크로칩 증명서, 반려동물 사진을 PDF 또는 JPG(5MB 이하)로 첨부해요.\n승인까지 수일이 걸려요. 출발 1~2주 전까지 신청하세요.\n수입 허가증은 발급일로부터 60일간 유효하며 연장할 수 없어요.',
+      doneSummary: '필리핀 수입 허가증(SPSIC)을 받았어요.',
+      cardLine: '필리핀 수입 허가증(SPSIC)을 신청하세요.',
       deadline: { anchor: 'departure', daysBefore: 10 },
       links: [
         { url: 'https://www.intercommerce.com.ph/registrationbai.asp', label: 'Intercommerce 수입자 등록' },
         { url: 'https://www.bai.gov.ph/Travelers/PET', label: 'BAI 반려동물 수입 안내' },
       ],
-      attachmentLabel: '수입허가증(SPSIC)',
+      attachmentLabel: '수입 허가증(SPSIC)',
       validationIds: ['ph.import-permit-14days-after-vaccines'],
     },
     departure: {
       title: '필리핀 수입 동물검역',
       shortLabel: '수입',
       description:
-        '필리핀 도착 후 공항에서 BAI 동물검역관(VQO)에게 수입 검역을 받으세요.\n수입허가증(SPSIC) 원본, 한국 수출 동물검역증 원본, 예방접종 증명서, 마이크로칩 증명서를 제시해요.\nSPSIC 발급 수수료와 검역 수수료는 도착 공항 검역 사무소에서 납부해요.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 바로 인도돼요. 요건을 충족하지 못하면 격리되거나 반송될 수 있으며, 비용은 보호자가 부담해요.',
+        '필리핀 도착 후 공항에서 BAI 동물검역관(VQO)에게 수입 검역을 받으세요.\n수입 허가증(SPSIC) 원본, 한국 수출 동물검역증 원본, 예방접종 증명서, 마이크로칩 증명서를 제시해요.\nSPSIC 발급 수수료와 검역 수수료는 도착 공항 검역 사무소에서 납부해요.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 바로 인도돼요. 요건을 충족하지 못하면 격리되거나 반송될 수 있으며, 비용은 보호자가 부담해요.',
       doneSummary: '필리핀 수입 동물검역을 받았어요.',
       done: 'quarantine:ph_import_quarantine_date',
       inputs: [
@@ -279,7 +279,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     'import-permit': {
       description:
         '스위스 수입허가를 신청하세요.\n\n스위스 연방 식품안전수의청(FSVO)에 입국 최소 3주 전까지 신청해야 해요.\n발급받은 허가서는 스위스 입국 검사 때 제시해요.\n반려동물의 스위스 입국은 바젤·제네바·취리히 공항으로만 가능해요.',
-      doneSummary: '스위스 수입허가증을 받았어요.',
+      doneSummary: '스위스 수입 허가증을 받았어요.',
       cardLine: '스위스 수입허가를 신청하세요.',
       deadline: { anchor: 'departure', daysBefore: 21 },
       links: [
@@ -288,7 +288,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
           label: 'FSVO 반려동물 입국 안내',
         },
       ],
-      attachmentLabel: '수입허가증(FSVO)',
+      attachmentLabel: '수입 허가증(FSVO)',
       validationIds: ['eu.ch-import-permit-21days-before-entry'],
     },
   },

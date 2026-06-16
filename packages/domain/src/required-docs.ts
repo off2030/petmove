@@ -283,7 +283,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
   '필리핀': [
     {
       id: 'ph-spsic-doc',
-      name: '수입허가증(SPSIC)',
+      name: '수입 허가증(SPSIC)',
       source: '필리핀 동물산업국(BAI)',
       kind: 'step',
       stepRef: 'import-permit',
@@ -307,7 +307,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'manual',
       issuanceStepId: 'general-vaccine',
       description:
-        '광견병 백신·종합백신의 접종 증명서와 내외부 구충 치료 기록이에요.\n\n접종한 동물병원에서 영문으로 발급받아요. 접종한 동물병원이 여러 곳인 경우, 각 동물병원에서 따로 받아야 해요.\n\n백신 이름·제조사·접종일·유효기간과 수의사 서명이 들어가야 해요.\n\n수입허가증(SPSIC) 신청과 동물검역에 사용돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '광견병 백신·종합백신의 접종 증명서와 내외부 구충 치료 기록이에요.\n\n접종한 동물병원에서 영문으로 발급받아요. 접종한 동물병원이 여러 곳인 경우, 각 동물병원에서 따로 받아야 해요.\n\n백신 이름·제조사·접종일·유효기간과 수의사 서명이 들어가야 해요.\n\n수입 허가증(SPSIC) 신청과 동물검역에 사용돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
     },
     {
       id: 'ph-rabies-titer-result',
@@ -424,7 +424,7 @@ function euFamilyDocSpecs(label: string, opts?: { withImportPermit?: boolean }):
   if (opts?.withImportPermit) {
     specs.unshift({
       id: 'eu-import-permit-doc',
-      name: '수입허가증(FSVO)',
+      name: '수입 허가증(FSVO)',
       source: '스위스 연방 식품안전수의청(FSVO)',
       kind: 'step',
       stepRef: 'import-permit',

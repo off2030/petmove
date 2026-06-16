@@ -317,7 +317,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
     id: 'ph.import-permit-14days-after-vaccines',
     country: COUNTRY,
     category: '수입허가',
-    title: '백신, 수입허가증(SPSIC) 타이밍',
+    title: '백신, 수입 허가증(SPSIC) 타이밍',
     description:
       'SPSIC 신청은 광견병·종합백신 1차(단일 접종) 기준 14일 이후 — 부스터(2회+)는 BAI 면제. 입력 차단(validatePhImportPermitVaccineGap)과 같은 함수.',
     severity: 'warning',

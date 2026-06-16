@@ -302,7 +302,7 @@ export function validateThImportPermitVaccineGap(
 }
 
 /**
- * 필리핀 — 수입허가증(SPSIC) 신청일은 광견병·종합백신 **1차(단일 접종)** 기준 14일 이후.
+ * 필리핀 — 수입 허가증(SPSIC) 신청일은 광견병·종합백신 **1차(단일 접종)** 기준 14일 이후.
  * 부스터(2회 이상)는 BAI 면제(즉시 신청 가능) — 단일 접종일 때만 검사.
  * client·procedure-check 공용. 한쪽 비면 통과.
  */
@@ -319,7 +319,7 @@ export function validatePhImportPermitVaccineGap(
     if (dates.length !== 1) continue // 0건 = 비교 불가, 2건+ = 부스터 면제
     const earliest = addDays(dates[0], 14)
     if (earliest && filedDate < earliest) {
-      return `${label} 접종일(${fmt(dates[0])})로부터 14일이 지난 ${fmt(earliest)} 이후에 수입허가증(SPSIC)을 신청할 수 있어요.`
+      return `${label} 접종일(${fmt(dates[0])})로부터 14일이 지난 ${fmt(earliest)} 이후에 수입 허가증(SPSIC)을 신청할 수 있어요.`
     }
   }
   return null

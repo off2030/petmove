@@ -69,7 +69,7 @@ export function ImportPermitInputs({
         <div style={{ padding: '14px 0', borderTop: `.5px solid ${C.line}` }}>
           <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>허가 번호</div>
           <div style={{ fontSize: 12, color: C.ink3, marginTop: 2 }}>
-            수입허가증에 기재된 번호 — 허가증을 받은 뒤 입력하세요
+            수입 허가증에 기재된 번호 — 허가증을 받은 뒤 입력하세요
           </div>
           <input
             type="text"
