@@ -70,13 +70,17 @@ export function DocsView({
   }, [caseId, updateCase])
 
   const { pet, trip, requiredDocs, checklist, autoDocs, storedDocs } = data
-  // requiredDocs spec 이 있는 목적지(예: 일본)는 큐레이션된 5건만 보고,
+  // requiredDocs spec 이 있는 목적지(예: 일본)는 큐레이션된 항목만 보고,
   // 기존 자동 체크리스트·자동 작성 섹션은 가린다.
   const useCurated = requiredDocs !== null
+  // 검역증(검역 단계에서 받는 증명서)은 '검역증' 섹션으로 분리, 나머지는 '서류 체크리스트'.
+  const curatedChecklist = requiredDocs?.filter((d) => d.group !== 'quarantine') ?? []
+  const quarantineCerts = requiredDocs?.filter((d) => d.group === 'quarantine') ?? []
   const checklistDone = checklist.filter((d) => d.verified).length
-  const requiredDone = requiredDocs?.filter((d) => d.verified).length ?? 0
+  const requiredDone = curatedChecklist.filter((d) => d.verified).length
   // '해당없음' 으로 표시한 서류는 분모에서 제외 — 보유/해당없음을 다 정리하면 X/X.
-  const requiredTotal = requiredDocs?.filter((d) => !d.na).length ?? 0
+  const requiredTotal = curatedChecklist.filter((d) => !d.na).length
+  const quarantineDone = quarantineCerts.filter((d) => d.verified).length
 
   function handleOpenDoc(docId: string) {
     getStepDocumentUrl(caseId, docId).then((res) => {
@@ -116,7 +120,7 @@ export function DocsView({
           <>
             <SectionLabel right={`${requiredDone}/${requiredTotal}`}>서류 체크리스트</SectionLabel>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {requiredDocs!.map((d) => (
+              {curatedChecklist.map((d) => (
                 <ChecklistRow
                   key={d.id}
                   doc={d}
@@ -163,6 +167,25 @@ export function DocsView({
                 ))}
               </div>
             )}
+          </>
+        )}
+
+        {/* 검역증 — 검역 단계에서 받는 증명서. 체크리스트와 동일하게 서류탭 안의 상세 페이지로 이동. */}
+        {quarantineCerts.length > 0 && (
+          <>
+            <SectionLabel right={`${quarantineDone}/${quarantineCerts.length}`}>검역증</SectionLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {quarantineCerts.map((d) => (
+                <ChecklistRow
+                  key={d.id}
+                  doc={d}
+                  C={C}
+                  monoCap={monoCap}
+                  pendingLabel="받기 전"
+                  href={`/cases/${caseId}/docs/${d.id}${destQuery}`}
+                />
+              ))}
+            </div>
           </>
         )}
 

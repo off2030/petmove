@@ -2,6 +2,8 @@ import type { CaseRow } from './types'
 import { todayKst } from './dates'
 import { DESTINATION_OVERRIDES, getDestinationOverride, getTripType } from './destination-config'
 import { JOURNEY_STEP_CATALOG } from './journey-steps/catalog'
+import { buildCaseJourneyContext } from './journey-steps/applicability'
+import { resolveStepForDestination } from './journey-steps/destination-overrides'
 import { resolveCompletedDate, resolveDone } from './journey-steps/done-resolver'
 
 /**
@@ -37,6 +39,11 @@ export interface RequiredDocItem {
   awaiting: boolean
   /** 상세 페이지 본문. 서류 설명·받는 방법. */
   description: string
+  /**
+   * 서류함 섹션 그룹. 'quarantine' = 검역 단계에서 받는 검역증(한국 수출/수입·도착국 수입·
+   * 현지 수출) → 서류탭에서 '검역증' 섹션으로 분리 노출. 미지정 = 일반 '서류 체크리스트'.
+   */
+  group?: 'quarantine'
   /** preview 소스 step.id — 해당 step 에 업로드된 파일이 '디지털원본/사본' 으로 노출. */
   previewStepId?: string
   /**
@@ -83,6 +90,8 @@ interface RequiredDocSpec {
    */
   issuanceStepId?: string
   description: string
+  /** 'quarantine' 이면 서류탭 '검역증' 섹션으로 분리 노출 (RequiredDocItem.group 으로 전달). */
+  group?: 'quarantine'
   /** preview 영역에 노출할 step 의 업로드. 없으면 preview 영역 placeholder. */
   previewStepId?: string
   /** 다운로드 가능한 빈 서식(지정 양식). 상세 페이지 '서식 받기' 섹션. */
@@ -159,9 +168,45 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       source: '농림축산검역본부',
       kind: 'step',
       stepRef: 'certificate-issue',
+      group: 'quarantine',
       description:
         '한국 수출 동물검역 후 발급받아요.\n\n일본 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'certificate-issue',
+    },
+    {
+      id: 'jp-import-quarantine-cert',
+      name: '일본 수입 동물검역증 (Import Quarantine Certificate)',
+      source: '일본 동물검역소',
+      kind: 'step',
+      stepRef: 'departure',
+      group: 'quarantine',
+      description:
+        '일본 도착 후 공항 동물검역소에서 수입 검역을 통과하면 발급받아요.\n\n재발급되지 않으니 잘 보관해두세요. 향후 일본에서 재출국할 때 필요해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'departure',
+    },
+    {
+      id: 'jp-export-quarantine-cert',
+      name: '일본 수출 동물검역증 (Export Quarantine Certificate)',
+      source: '일본 동물검역소',
+      kind: 'step',
+      stepRef: 'jp-export-quarantine-visit',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '일본 출국 전 동물검역소에서 수출 검역을 받으면 발급받아요.\n\n향후 일본 재입국 시 필요할 수 있으니 잘 보관해두세요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'jp-export-quarantine-visit',
+    },
+    {
+      id: 'kr-import-quarantine-cert',
+      name: '한국 수입 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'kr-import-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '한국 귀국 후 공항 동물검역소에서 수입 검역을 받으면 발급받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'kr-import-quarantine',
     },
   ],
   '태국': [
@@ -385,6 +430,7 @@ export function resolveRequiredDocs(
       na,
       awaiting,
       description: spec.description,
+      group: spec.group,
       previewStepId: spec.previewStepId,
       attachStepId,
       verified,
@@ -468,7 +514,11 @@ export function findRequiredDoc(
 function resolveStepDone(stepId: string, caseRow: CaseRow): boolean {
   const step = JOURNEY_STEP_CATALOG.find((s) => s.id === stepId)
   if (!step) return false
-  return resolveDone(step.done, caseRow)
+  // 목적지 오버라이드된 done 우선 — 예: 'departure'는 일본에서 'has-jp-import-quarantine'로
+  // 교체된다(base 'departure-past'면 검역 완료를 잘못 판정). done 미오버라이드면 base 그대로.
+  const { destinationKey } = buildCaseJourneyContext(caseRow)
+  const resolved = resolveStepForDestination(step, destinationKey)
+  return resolveDone(resolved.done, caseRow)
 }
 
 /** case.data 의 boolean 플래그 맵(required_doc_flags / required_doc_na) 읽기. true 만 남긴다. */

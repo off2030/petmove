@@ -106,8 +106,13 @@ export function buildDocsView(
     fresh: false,
   }))
 
-  // 3) 보관 중인 서류 — 보호자가 step 에서 올린 파일. 최신 업로드가 위로.
+  // 3) 보관함 — 체크리스트·검역증(필수 서류)에 묶이지 않은 '기타' 첨부만. 그 서류들은 각
+  //    상세 페이지(서류탭)에서 보므로 여기선 중복 노출하지 않는다(misc 등 자유 첨부만).
+  const linkedStepIds = new Set<string>()
+  if (requiredDocs) requiredDocs.forEach((d) => linkedStepIds.add(d.attachStepId))
+  else checklist.forEach((d) => linkedStepIds.add(d.id))
   const storedDocs: StoredDocItem[] = readCaseDocuments(caseRow.data)
+    .filter((d) => !linkedStepIds.has(d.stepId ?? ''))
     .slice()
     .sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt))
     .map((d) => ({
