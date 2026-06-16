@@ -239,9 +239,45 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       source: '농림축산검역본부',
       kind: 'step',
       stepRef: 'certificate-issue',
+      group: 'quarantine',
       description:
         '한국 수출 동물검역 후 발급받아요.\n\n태국 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'certificate-issue',
+    },
+    {
+      id: 'th-import-quarantine-cert',
+      name: '태국 수입 동물검역증',
+      source: '태국 동물검역소(AQS)',
+      kind: 'step',
+      stepRef: 'departure',
+      group: 'quarantine',
+      description:
+        '태국 수입 동물검역 후 발급받아요.\n\n정확한 서류 이름은 수입 허가서(R.7)입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'departure',
+    },
+    {
+      id: 'th-export-quarantine-cert',
+      name: '태국 수출 동물검역증',
+      source: '태국 축산국(DLD)',
+      kind: 'step',
+      stepRef: 'th-export-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '태국 수출 동물검역 후 발급받아요.\n\n정확한 서류 이름은 수출허가증과 태국 건강증명서입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'th-export-quarantine',
+    },
+    {
+      id: 'th-kr-import-quarantine-cert',
+      name: '한국 수입 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'kr-import-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '한국 수입 동물검역 후 발급받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'kr-import-quarantine',
     },
   ],
   '필리핀': [
@@ -290,9 +326,34 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       source: '농림축산검역본부',
       kind: 'step',
       stepRef: 'certificate-issue',
+      group: 'quarantine',
       description:
         '한국 수출 동물검역 후 발급받아요.\n\n필리핀 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'certificate-issue',
+    },
+    {
+      id: 'ph-export-quarantine-cert',
+      name: '필리핀 수출 동물검역증',
+      source: '필리핀 동물산업국(BAI)',
+      kind: 'step',
+      stepRef: 'ph-export-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '필리핀 수출 동물검역 후 발급받아요.\n\n정확한 서류 이름은 수출 허가와 건강증명서입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'ph-export-quarantine',
+    },
+    {
+      id: 'ph-kr-import-quarantine-cert',
+      name: '한국 수입 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'kr-import-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '한국 수입 동물검역 후 발급받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'kr-import-quarantine',
     },
   ],
 }
@@ -330,9 +391,34 @@ function euFamilyDocSpecs(label: string, opts?: { withImportPermit?: boolean }):
       source: '농림축산검역본부',
       kind: 'step',
       stepRef: 'certificate-issue',
+      group: 'quarantine',
       description:
         `한국 수출 동물검역 후 발급받아요.\n\n${label} 입국 검사 때 제시해야 할 수 있어요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
       previewStepId: 'certificate-issue',
+    },
+    {
+      id: 'eu-export-cert-doc',
+      name: '현지 검역증명서',
+      source: '현지 동물병원·정부 기관',
+      kind: 'step',
+      stepRef: 'eu-export-cert',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '한국으로 돌아오기 전 현지 동물병원·정부 기관에서 발급받는 한국 입국용 건강증명서(검역증명서)예요.\n\n한국 수입 동물검역 때 제출해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'eu-export-cert',
+    },
+    {
+      id: 'eu-kr-import-quarantine-cert',
+      name: '한국 수입 동물검역증',
+      source: '농림축산검역본부',
+      kind: 'step',
+      stepRef: 'kr-import-quarantine',
+      group: 'quarantine',
+      roundTripOnly: true,
+      description:
+        '한국 수입 동물검역 후 발급받아요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+      previewStepId: 'kr-import-quarantine',
     },
   ]
   if (opts?.withImportPermit) {
