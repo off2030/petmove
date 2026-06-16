@@ -194,7 +194,7 @@ export function validateImportPermitNotAfterDeparture(
 ): string | null {
   if (!filedDate || !departureDate) return null
   if (filedDate.slice(0, 10) >= departureDate.slice(0, 10)) {
-    return '수입 허가 신청일은 출국일 이전이어야 해요. 날짜를 확인하세요.'
+    return '수입 허가 신청일은 출국일보다 빨라야 해요. 날짜를 확인하세요.'
   }
   return null
 }
