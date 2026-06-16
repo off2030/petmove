@@ -441,6 +441,31 @@ export function validateKrImportDate(v: string, ctx: DateRuleContext): string | 
 }
 
 /**
+ * 나라별 도착(수입) 검역일: 그 나라 입국일(entry_date)보다 빠를 수 없음. 도착 이후는 제한 없음.
+ * 'quarantine:<나라>_import_quarantine_date' step(태국·필리핀·EU 등, 일본 외)의 입력 차단용 —
+ * 일본은 entry_date 미사용이라 validateJpImportDate(출국 항공편 기준)를 따로 쓴다.
+ */
+export function validateImportQuarantineDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  const entry = readDate(ctx.data, 'entry_date')
+  if (entry && v < entry) return `수입 동물검역일은 입국일(${fmt(entry)})보다 빠를 수 없어요.`
+  return null
+}
+
+/**
+ * 나라별 현지 수출 검역일: 그 나라 입국일(entry_date) ≤ 검역일 ≤ 귀국일(return_date).
+ * 'quarantine:<나라>_export_quarantine_date' step(태국·필리핀 등)의 입력 차단용.
+ */
+export function validateExportQuarantineDate(v: string, ctx: DateRuleContext): string | null {
+  if (!v) return null
+  const entry = readDate(ctx.data, 'entry_date')
+  if (entry && v < entry) return `수출 동물검역일은 입국일(${fmt(entry)})보다 빠를 수 없어요.`
+  const ret = readDate(ctx.data, 'return_date')
+  if (ret && v > ret) return `수출 동물검역일은 귀국일(${fmt(ret)})보다 늦을 수 없어요.`
+  return null
+}
+
+/**
  * 출국 전 임상검사일: 출국일(앞 단계) 이전·목적지별 윈도우 이내. **자기 기준(출국일)으로만** 검증.
  *
  * 한국 수출검역일과의 관계(임상검사 ≤ 수출검역)는 여기서 보지 않는다 — 그 제약은 의존하는 쪽인

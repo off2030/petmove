@@ -10,6 +10,8 @@ import {
   todayKst,
   validateAdvanceNotification,
   validateJpEntryDate,
+  validateExportQuarantineDate,
+  validateImportQuarantineDate,
   validateJpExportReservationDate,
   validateJpExportVisitDate,
   validateJpImportDate,
@@ -1008,6 +1010,14 @@ export function StepDetailView({
         destination: caseRow?.destination ?? null,
         departureDate: null,
       })
+    }
+    // 나라별 도착(수입)·현지 수출 검역(태국·필리핀·EU 등) — 검역일이 입국일 이전(수입·수출)이거나
+    // 귀국일 이후(수출)면 입력 차단. 일본 검역(jp_*)은 위 전용 분기가 따로 담당.
+    if (isImportQuarantine && importQuarantineField && /_quarantine_date$/.test(importQuarantineField)) {
+      const ctx = { data, destination: caseRow?.destination ?? null, departureDate: null }
+      return importQuarantineField.endsWith('_export_quarantine_date')
+        ? validateExportQuarantineDate(importQuarantineDate.trim(), ctx)
+        : validateImportQuarantineDate(importQuarantineDate.trim(), ctx)
     }
     if (isJpExportQuarantine) {
       const reserved = (jpExport.date ?? '').trim()
