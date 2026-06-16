@@ -1277,7 +1277,14 @@ export function StepDetailView({
         const res = await updateParasiteEntries(
           caseId,
           parasiteFieldKey,
-          parasite.map((e) => ({ date: e.date || null })),
+          // 약품 4필드는 '세부 정보(선택)'(내부 기생충 치료) 입력값 — 외부/촌충은 폼에 없어 빈값 전달.
+          parasite.map((e) => ({
+            date: e.date || null,
+            product: e.product || null,
+            manufacturer: e.manufacturer || null,
+            lot: e.lot || null,
+            expiry: e.expiry || null,
+          })),
         )
         if (res.ok) {
           updateCase(res.value)
@@ -2225,16 +2232,18 @@ export function StepDetailView({
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <GeneralVaccineInputs
               entries={parasite}
-              vaccineLabel={isExternalParasite ? '외부구충' : isEchinococcus ? '촌충 구충' : '내부구충'}
-              dateLabel={isExternalParasite ? '처치일' : isEchinococcus ? '구충일' : '투약일'}
+              // 내부 기생충 치료 카드는 페이지 제목과 중복돼 카드 내 라벨을 비운다(추가 카드는 'n회차').
+              vaccineLabel={isExternalParasite ? '외부구충' : isEchinococcus ? '촌충 구충' : ''}
+              dateLabel={isExternalParasite ? '처치일' : isEchinococcus ? '구충일' : '치료일'}
               showValidUntil={false}
-              showProduct={false}
+              // 내부 기생충 치료는 펫무브워크와 동일한 약품 4필드를 '세부 정보(선택)'로 직접 입력.
+              showProduct={isInternalParasite}
               addLabel={
                 isExternalParasite
                   ? '+ 처치 기록 추가'
                   : isEchinococcus
                     ? '+ 구충 기록 추가'
-                    : '+ 투약 기록 추가'
+                    : '+ 치료 기록 추가'
               }
               onChange={(idx, key, next) =>
                 setParasite((prev) => prev.map((e, i) => (i === idx ? { ...e, [key]: next } : e)))
@@ -2733,6 +2742,7 @@ function readParasiteForm(
   if (!data) return []
   const arr = data[fieldKey]
   if (!Array.isArray(arr)) return []
+  const str = (v: unknown) => (typeof v === 'string' ? v : '')
   const out: GeneralVaccineEntry[] = []
   for (const item of arr) {
     if (typeof item === 'string') {
@@ -2741,8 +2751,17 @@ function readParasiteForm(
     }
     if (item && typeof item === 'object') {
       const rec = item as Record<string, unknown>
-      const date = typeof rec.date === 'string' ? rec.date : ''
-      if (date) out.push({ ...makeEmptyGeneralVaccine(), date })
+      const date = str(rec.date)
+      // 약품 4필드(약품명·제조사·제조번호·제품유효기간) — '세부 정보(선택)' 직접 입력값.
+      const product = str(rec.product)
+      const manufacturer = str(rec.manufacturer)
+      const lot = str(rec.lot)
+      const expiry = str(rec.expiry)
+      // 포털 구충은 약품 자동채움 카탈로그가 없어 항상 직접 입력(other_hospital:true)으로 표시 —
+      // 펫무브워크가 본병원으로 지정한 값도 편집 가능한 텍스트로 그대로 보여준다.
+      if (date || product || manufacturer || lot || expiry) {
+        out.push({ ...makeEmptyGeneralVaccine(), date, product, manufacturer, lot, expiry })
+      }
     }
   }
   return out

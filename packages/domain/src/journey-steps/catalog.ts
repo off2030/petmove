@@ -915,11 +915,11 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
   {
     id: 'internal-parasite',
     category: 'preparation',
-    title: '내부구충',
+    title: '내부 기생충 치료',
     shortLabel: '내부',
     description:
-      '내부 기생충 구충을 받으세요. 호주·뉴질랜드·필리핀 등에서 요구돼요.',
-    doneSummary: '내부구충 투약을 받았어요.',
+      '내부 기생충 치료를 하세요. 호주·뉴질랜드·필리핀 등에서 요구돼요.',
+    doneSummary: '내부 기생충 치료를 했어요.',
     // EU 촌충 5국(영국·아일랜드·몰타·노르웨이·핀란드)은 강아지 한정·시점(24~120시간)이 달라
     // 별도 카드(echinococcus-treatment)로 분리 — 같은 데이터 키(internal_parasite_dates) 공유.
     applicability: {
@@ -943,6 +943,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       { key: 'internal_parasite_dates', label: '투약일', type: 'date_array' },
     ],
     allowAttachments: true,
+    attachmentHint: '증명서, 수첩 등을 사진, PDF로 보관하세요.',
   },
 
   // ── 촌충 구충 (에키노코쿠스) — 영국·아일랜드·몰타·노르웨이·핀란드, 강아지 한정 ─────

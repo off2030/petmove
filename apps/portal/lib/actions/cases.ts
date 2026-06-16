@@ -1954,15 +1954,25 @@ const PARASITE_FIELD_KEYS = new Set(['external_parasite_dates', 'internal_parasi
 export async function updateParasiteEntries(
   caseId: string,
   fieldKey: string,
-  entries: Array<{ date: string | null }>,
+  entries: Array<{
+    date: string | null
+    // 약품 4필드(약품명·제조사·제조번호·제품유효기간) — 내부 기생충 치료 '세부 정보(선택)'.
+    product?: string | null
+    manufacturer?: string | null
+    lot?: string | null
+    expiry?: string | null
+  }>,
 ): Promise<Result<CaseRow>> {
   try {
     if (!PARASITE_FIELD_KEYS.has(fieldKey)) {
       return { ok: false, error: '잘못된 구충 필드입니다.' }
     }
     for (const e of entries) {
-      if (e.date != null && e.date !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(e.date)) {
-        return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+      // date·expiry 는 날짜형 — 형식 검증. product·manufacturer·lot 은 자유 텍스트.
+      for (const v of [e.date, e.expiry]) {
+        if (v != null && v !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+          return { ok: false, error: '날짜 형식은 YYYY-MM-DD 여야 합니다.' }
+        }
       }
     }
 
@@ -1982,16 +1992,28 @@ export async function updateParasiteEntries(
 
     const next: Record<string, unknown>[] = []
     for (let i = 0; i < entries.length; i++) {
+      const fields = entries[i]
       const prevSlot = prevArr[i]
       const prevEntry =
         prevSlot && typeof prevSlot === 'object'
           ? { ...(prevSlot as Record<string, unknown>) }
           : {}
+      const isFreshEntry = Object.keys(prevEntry).length === 0
       const entry: Record<string, unknown> = { ...prevEntry }
-      const v = typeof entries[i].date === 'string' ? (entries[i].date as string).trim() : ''
-      if (v) entry.date = v
-      else delete entry.date
+      // date + 약품 4필드를 병합 — 빈값은 키 삭제(자동 추론 폴백 유지), 나머지는 trim 후 저장.
+      for (const [key, raw] of Object.entries(fields)) {
+        const val = typeof raw === 'string' ? raw.trim() : raw
+        if (val == null || val === '') delete entry[key]
+        else entry[key] = val
+      }
       if (!hasValidDate(entry)) continue
+      // 약품 4필드 중 하나라도 채워진 신규 entry 는 '타병원' 기본 (종합백신과 동일 정책).
+      if (
+        isFreshEntry &&
+        ['product', 'manufacturer', 'lot', 'expiry'].some((k) => typeof entry[k] === 'string')
+      ) {
+        entry.other_hospital = true
+      }
       next.push(entry)
     }
 

@@ -189,8 +189,8 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     // base 문구(EU·호주 중심)와 달라 교체.
     'internal-parasite': {
       description:
-        '내부 기생충 구충을 받으세요.\n\n수입 허가증(SPSIC) 신청일 기준 91일 이내, 7일 이전에 동물병원에서 받으세요.\n수의사의 치료 기록이 필요해요.',
-      doneSummary: '내부구충 투약을 받았어요.',
+        '내부 기생충 치료를 하세요.\n\n수입 허가증(SPSIC) 신청일로부터 7일 ~ 3개월 전 사이에 치료합니다.\n동물병원에서 치료하고 증명서를 구비해야 해요.',
+      doneSummary: '내부 기생충 치료를 했어요.',
     },
     'flight-purchase': {
       description:
