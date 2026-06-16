@@ -2232,8 +2232,8 @@ export function StepDetailView({
             <h3 style={{ ...monoCap, margin: '0 0 10px', padding: '0 4px' }}>입력</h3>
             <GeneralVaccineInputs
               entries={parasite}
-              // 내부 기생충 치료 카드는 페이지 제목과 중복돼 카드 내 라벨을 비운다(추가 카드는 'n회차').
-              vaccineLabel={isExternalParasite ? '외부구충' : isEchinococcus ? '촌충 구충' : ''}
+              // 1번째 카드 = 라벨, 2번째부터 = '라벨 n차' (차수 표기). 여러 번 치료 시 'n차'로 구분.
+              vaccineLabel={isExternalParasite ? '외부구충' : isEchinococcus ? '촌충 구충' : '내부 기생충 치료'}
               dateLabel={isExternalParasite ? '처치일' : isEchinococcus ? '구충일' : '치료일'}
               showValidUntil={false}
               // 내부 기생충 치료는 펫무브워크와 동일한 약품 4필드를 '세부 정보(선택)'로 직접 입력.

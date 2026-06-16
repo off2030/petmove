@@ -89,16 +89,7 @@ export function GeneralVaccineInputs({
         <EntryCard
           key={i}
           entry={entry}
-          // vaccineLabel 이 비면(내부 기생충 치료) 카드 내 제목을 숨긴다 — 추가 카드는 'n회차'만.
-          title={
-            vaccineLabel
-              ? i === 0
-                ? vaccineLabel
-                : `${vaccineLabel} ${i + 1}차`
-              : i === 0
-                ? ''
-                : `${i + 1}회차`
-          }
+          title={i === 0 ? vaccineLabel : `${vaccineLabel} ${i + 1}차`}
           dateLabel={dateLabel}
           showValidUntil={showValidUntil}
           showProduct={showProduct}
