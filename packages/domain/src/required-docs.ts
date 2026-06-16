@@ -246,13 +246,13 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     },
     {
       id: 'th-import-quarantine-cert',
-      name: '태국 수입 동물검역증',
+      name: '수입 허가서(R.7)',
       source: '태국 동물검역소(AQS)',
       kind: 'step',
       stepRef: 'departure',
       group: 'quarantine',
       description:
-        '태국 수입 동물검역 후 발급받아요.\n\n정확한 서류 이름은 수입 허가서(R.7)입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '태국 수입 동물검역 후 발급받아요.\n\n정확한 서류 이름은 Import License(R.7) 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'departure',
     },
     {
