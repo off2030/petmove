@@ -1169,7 +1169,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '태국 수출 동물검역',
     shortLabel: '수출',
     description:
-      '태국 출국 전 공항 동물검역소에서 수출 동물검역을 받으세요.\n출국 직전(1~3일 전 권장)에 검사받아요. 주말·야간에는 검역을 받을 수 없어요.\n접종 증명서를 챙기세요.\n검사를 통과하면 수출허가서(R.9)와 태국 건강증명서가 발급돼요.',
+      '출국 전 공항 동물검역소에서 수출 동물검역을 받으세요.\n출국 직전(1~3일 전 권장)에 방문하세요. 주말·공휴일·야간에는 검역을 받을 수 없어요.\n접종 증명서를 꼭 챙기세요.\n검사를 통과하면 수출허가서(R.9)와 건강증명서가 발급돼요. 한국 입국 때 이 서류가 반드시 필요해요.',
     doneSummary: '태국 수출 동물검역을 받았어요.',
     cardLine: '태국 동물검역소에서 수출 검역을 받으세요.',
     applicability: { destinations: ['thailand'], species: 'all', tripType: 'round' },
