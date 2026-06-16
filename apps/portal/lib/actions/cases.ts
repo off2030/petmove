@@ -523,8 +523,8 @@ export async function updateRabiesExtraEntries(
         ok: false,
         error:
           chainBreak.reason === 'too-early'
-            ? `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 접종일보다 늦어야 합니다.`
-            : `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 합니다.`,
+            ? `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 접종일보다 늦어야 해요.`
+            : `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 해요.`,
       }
     }
 
@@ -914,7 +914,7 @@ export async function updateFlightFields(
       const entry = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
       const ret = typeof fields.return_date === 'string' ? fields.return_date.trim() : ''
       if (entry && ret && ret < entry) {
-        return { ok: false, error: '귀국 항공편 날짜는 출국 항공편 날짜 이후여야 합니다.' }
+        return { ok: false, error: '귀국 항공편 날짜는 출국 항공편 날짜 이후여야 해요.' }
       }
     }
     // 활성 목적지 토큰을 읽기(flatten)와 동일하게 해석 — ?dest 미지정이어도 첫 토큰으로 fallback 해
@@ -1919,8 +1919,8 @@ export async function updateGeneralVaccineEntries(
         ok: false,
         error:
           gvChainBreak.reason === 'too-early'
-            ? `${gvChainBreak.brokenAt}차 접종일은 ${gvChainBreak.brokenAt - 1}차 접종일보다 늦어야 합니다.`
-            : `${gvChainBreak.brokenAt}차 접종일은 ${gvChainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 합니다.`,
+            ? `${gvChainBreak.brokenAt}차 접종일은 ${gvChainBreak.brokenAt - 1}차 접종일보다 늦어야 해요.`
+            : `${gvChainBreak.brokenAt}차 접종일은 ${gvChainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 해요.`,
       }
     }
 
@@ -2460,7 +2460,7 @@ export async function updateCaseInfoFields(
       effective.return_date &&
       effective.return_date < effective.departure_date
     ) {
-      return { ok: false, error: '귀국일은 출국일 이후여야 합니다.' }
+      return { ok: false, error: '귀국일은 출국일 이후여야 해요.' }
     }
     let chip: string | null = null
     if (effective.microchip) {

@@ -91,7 +91,7 @@ export function validateJpEntryDate(v: string, ctx: DateRuleContext): string | n
   const latestTiter = titerDates[titerDates.length - 1]
   const earliest = addDays(latestTiter, 180)
   if (earliest && v < earliest) {
-    return `광견병 항체 검사일(${fmt(latestTiter)})로부터 180일이 지난 ${fmt(earliest)} 이후에 일본 입국이 가능합니다.`
+    return `광견병 항체 검사일(${fmt(latestTiter)})로부터 180일이 지난 ${fmt(earliest)} 이후에 일본 입국이 가능해요.`
   }
   return null
 }
@@ -176,7 +176,7 @@ export function validateThEntryDate(v: string, ctx: DateRuleContext): string | n
     if (!latest) continue
     const earliest = addDays(latest, 21)
     if (earliest && v < earliest) {
-      return `${label} 접종일(${fmt(latest)})로부터 21일이 지난 ${fmt(earliest)} 이후에 태국 입국이 가능합니다.`
+      return `${label} 접종일(${fmt(latest)})로부터 21일이 지난 ${fmt(earliest)} 이후에 태국 입국이 가능해요.`
     }
   }
   return null
@@ -194,7 +194,7 @@ export function validateImportPermitNotAfterDeparture(
 ): string | null {
   if (!filedDate || !departureDate) return null
   if (filedDate.slice(0, 10) >= departureDate.slice(0, 10)) {
-    return '수입 허가 신청일은 출국일 이전이어야 합니다. 날짜를 확인하세요.'
+    return '수입 허가 신청일은 출국일 이전이어야 해요. 날짜를 확인하세요.'
   }
   return null
 }
@@ -215,7 +215,7 @@ export function validatePhEntryDate(v: string, ctx: DateRuleContext): string | n
   if (!birth) return null
   const earliest = addDays(birth, 120)
   if (earliest && v < earliest) {
-    return `생후 120일(4개월)이 지난 ${fmt(earliest)} 이후에 필리핀 입국이 가능합니다.`
+    return `생후 120일(4개월)이 지난 ${fmt(earliest)} 이후에 필리핀 입국이 가능해요.`
   }
   return null
 }
@@ -271,7 +271,7 @@ export function validateEuTiterAfterVaccine(
   }
   if (daysBetween(chainStart.date, titerDate) < 30) {
     const earliest = addDays(chainStart.date, 30)
-    return `광견병 항체 검사는 백신 접종일(${fmt(chainStart.date)})로부터 30일이 지난 후에 받을 수 있습니다.${earliest ? ` ${fmt(earliest)} 이후로 입력하세요.` : ''}`
+    return `광견병 항체 검사는 백신 접종일(${fmt(chainStart.date)})로부터 30일이 지난 후에 받을 수 있어요.${earliest ? ` ${fmt(earliest)} 이후로 입력하세요.` : ''}`
   }
   return null
 }
@@ -295,7 +295,7 @@ export function validateThImportPermitVaccineGap(
     const latest = dates.reduce((m, d) => (d > m ? d : m))
     const earliest = addDays(latest, 14)
     if (earliest && filedDate < earliest) {
-      return `${label} 접종일(${fmt(latest)})로부터 14일(2주)이 지난 ${fmt(earliest)} 이후에 수입 허가를 신청할 수 있습니다.`
+      return `${label} 접종일(${fmt(latest)})로부터 14일(2주)이 지난 ${fmt(earliest)} 이후에 수입 허가를 신청할 수 있어요.`
     }
   }
   return null
@@ -319,7 +319,7 @@ export function validatePhImportPermitVaccineGap(
     if (dates.length !== 1) continue // 0건 = 비교 불가, 2건+ = 부스터 면제
     const earliest = addDays(dates[0], 14)
     if (earliest && filedDate < earliest) {
-      return `${label} 접종일(${fmt(dates[0])})로부터 14일이 지난 ${fmt(earliest)} 이후에 수입허가증(SPSIC)을 신청할 수 있습니다.`
+      return `${label} 접종일(${fmt(dates[0])})로부터 14일이 지난 ${fmt(earliest)} 이후에 수입허가증(SPSIC)을 신청할 수 있어요.`
     }
   }
   return null
@@ -357,7 +357,7 @@ export function validateEuEntryDate(v: string, ctx: DateRuleContext): string | n
   if (ok) return null
   const earliestTiter = titerDates[0]
   const earliest = addMonths(earliestTiter, 3)
-  return `광견병 항체 검사일(${fmt(earliestTiter)})로부터 3개월이 지난 ${earliest ? fmt(earliest) : ''} 이후에 입국이 가능합니다.`
+  return `광견병 항체 검사일(${fmt(earliestTiter)})로부터 3개월이 지난 ${earliest ? fmt(earliest) : ''} 이후에 입국이 가능해요.`
 }
 
 /**
@@ -367,7 +367,7 @@ export function validateEuEntryDate(v: string, ctx: DateRuleContext): string | n
 export function validateIeAdvanceNoticeDate(noticeDate: string, entryDate: string): string | null {
   if (!noticeDate || !entryDate) return null
   if (daysBetween(noticeDate, entryDate) < 1) {
-    return '아일랜드 입국 24시간(1일) 전까지 사전 통지를 해야 합니다. 통지가 늦은 경우 입국일을 변경해야 합니다.'
+    return '아일랜드 입국 24시간(1일) 전까지 사전 통지를 해야 해요. 통지가 늦은 경우 입국일을 변경해야 해요.'
   }
   return null
 }
@@ -379,7 +379,7 @@ export function validateIeAdvanceNoticeDate(noticeDate: string, entryDate: strin
 export function validateChImportPermitDate(filedDate: string, entryDate: string): string | null {
   if (!filedDate || !entryDate) return null
   if (daysBetween(filedDate, entryDate) < 21) {
-    return '스위스 입국 3주(21일) 전까지 수입허가를 신청해야 합니다. 신청이 늦은 경우 입국일을 변경해야 합니다.'
+    return '스위스 입국 3주(21일) 전까지 수입허가를 신청해야 해요. 신청이 늦은 경우 입국일을 변경해야 해요.'
   }
   return null
 }
@@ -388,9 +388,9 @@ export function validateChImportPermitDate(filedDate: string, entryDate: string)
 export function validateJpExportReservationDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const ret = readDate(ctx.data, 'return_date')
-  if (ret && v > ret) return '수출 동물검역 예약일은 귀국일보다 늦을 수 없습니다.'
+  if (ret && v > ret) return '수출 동물검역 예약일은 귀국일보다 늦을 수 없어요.'
   const entry = readDate(ctx.data, 'entry_date')
-  if (entry && v < entry) return `수출 동물검역 예약일은 일본 입국일(${fmt(entry)})보다 빠를 수 없습니다.`
+  if (entry && v < entry) return `수출 동물검역 예약일은 일본 입국일(${fmt(entry)})보다 빠를 수 없어요.`
   return null
 }
 
@@ -398,9 +398,9 @@ export function validateJpExportReservationDate(v: string, ctx: DateRuleContext)
 export function validateJpExportVisitDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const entry = readDate(ctx.data, 'entry_date')
-  if (entry && v < entry) return `일본 수출 동물검역일은 일본 입국일(${fmt(entry)})보다 빠를 수 없습니다.`
+  if (entry && v < entry) return `일본 수출 동물검역일은 일본 입국일(${fmt(entry)})보다 빠를 수 없어요.`
   const ret = readDate(ctx.data, 'return_date')
-  if (ret && v > ret) return `일본 수출 동물검역일은 귀국일(${fmt(ret)})보다 늦을 수 없습니다.`
+  if (ret && v > ret) return `일본 수출 동물검역일은 귀국일(${fmt(ret)})보다 늦을 수 없어요.`
   return null
 }
 
@@ -408,13 +408,13 @@ export function validateJpExportVisitDate(v: string, ctx: DateRuleContext): stri
 export function validateKrExportDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const vet = readDate(ctx.data, 'vet_visit_date')
-  if (vet && v < vet) return `한국 수출 동물검역은 출국 전 임상검사 후 받을 수 있습니다.`
+  if (vet && v < vet) return `한국 수출 동물검역은 출국 전 임상검사 후 받을 수 있어요.`
   const depart = departFromData(ctx.data)
   if (depart) {
-    if (v > depart) return `한국 수출 동물검역일은 출국일(${fmt(depart)})보다 늦을 수 없습니다.`
+    if (v > depart) return `한국 수출 동물검역일은 출국일(${fmt(depart)})보다 늦을 수 없어요.`
     const windowDays = getVetVisitWindowDays(ctx.destination)
     if (daysBetween(v, depart) >= windowDays) {
-      return `한국 수출 동물검역일은 출국일 기준 ${windowDays}일 이내여야 합니다.`
+      return `한국 수출 동물검역일은 출국일 기준 ${windowDays}일 이내여야 해요.`
     }
   }
   return null
@@ -426,7 +426,7 @@ export function validateJpImportDate(v: string, ctx: DateRuleContext): string | 
   const entry = departFromData(ctx.data)
   if (!entry) return null
   // 일본 도착(출국 항공편) 전에는 받을 수 없음. 도착 이후 날짜는 입력 허용(상한 없음).
-  if (v < entry) return '일본 수입 동물검역일은 일본 입국일보다 빠를 수 없습니다.'
+  if (v < entry) return '일본 수입 동물검역일은 일본 입국일보다 빠를 수 없어요.'
   return null
 }
 
@@ -436,7 +436,7 @@ export function validateKrImportDate(v: string, ctx: DateRuleContext): string | 
   const ret = readDate(ctx.data, 'return_date')
   if (!ret) return null
   // 한국 도착(귀국 항공편) 전에는 받을 수 없음. 도착 이후 날짜는 입력 허용(상한 없음).
-  if (v < ret) return '한국 수입 동물검역일은 입국일보다 빠를 수 없습니다.'
+  if (v < ret) return '한국 수입 동물검역일은 입국일보다 빠를 수 없어요.'
   return null
 }
 
@@ -452,10 +452,10 @@ export function validateVetVisitDate(v: string, ctx: DateRuleContext): string | 
   if (!v) return null
   const dep = ctx.departureDate ? ctx.departureDate.slice(0, 10) : ''
   if (dep && /^\d{4}-\d{2}-\d{2}$/.test(dep)) {
-    if (v > dep) return '입력한 날짜가 출국일보다 늦습니다. 출국 전 임상검사는 출국 전에 받아야 합니다.'
+    if (v > dep) return '입력한 날짜가 출국일보다 늦어요. 출국 전 임상검사는 출국 전에 받아야 해요.'
     const windowDays = getVetVisitWindowDays(ctx.destination)
     if (daysBetween(v, dep) >= windowDays) {
-      return `출국 전 임상검사는 출국일 기준 ${windowDays}일 이내에 받아야 합니다.`
+      return `출국 전 임상검사는 출국일 기준 ${windowDays}일 이내에 받아야 해요.`
     }
   }
   return null
@@ -477,8 +477,8 @@ export function validateRabiesInterval(primeDate: string, boosterDate: string): 
   if (gap >= 30) return null
   const earliest = addDays(primeDate, 30)
   return earliest
-    ? `2차 광견병 접종은 1차 접종일(${fmt(primeDate)})로부터 30일 이후에 해야 합니다. ${fmt(earliest)} 이후로 입력하세요.`
-    : `2차 광견병 접종은 1차 접종일(${fmt(primeDate)})로부터 30일 이후에 해야 합니다.`
+    ? `2차 광견병 접종은 1차 접종일(${fmt(primeDate)})로부터 30일 이후에 해야 해요. ${fmt(earliest)} 이후로 입력하세요.`
+    : `2차 광견병 접종은 1차 접종일(${fmt(primeDate)})로부터 30일 이후에 해야 해요.`
 }
 
 /**
@@ -520,7 +520,7 @@ export function validateRabiesPrimeAge(
   const age = daysBetween(birthDate, primeDate)
   if (age < minDays) {
     const eligible = addDays(birthDate, minDays)
-    return `1차 광견병 접종은 생후 ${minDays}일(${eligible ? fmt(eligible) : ''}) 이후에 해야 합니다.`
+    return `1차 광견병 접종은 생후 ${minDays}일(${eligible ? fmt(eligible) : ''}) 이후에 해야 해요.`
   }
   return null
 }
@@ -538,7 +538,7 @@ export function validateMicrochipBeforeBooster(
 ): string | null {
   if (!microchipDate || !secondDate) return null
   if (microchipDate > secondDate) {
-    return `마이크로칩 삽입 이후에 ${vaccineLabel}을 접종해야 합니다.`
+    return `마이크로칩 삽입 이후에 ${vaccineLabel}을 접종해야 해요.`
   }
   return null
 }
@@ -554,7 +554,7 @@ export function validateMicrochipBeforeBooster(
 export function validateAdvanceNotification(notifDate: string, entryDate: string): string | null {
   if (!notifDate || !entryDate) return null
   if (daysBetween(notifDate, entryDate) < 40) {
-    return '일본 입국 40일 전까지 신고를 해야 합니다. 신고가 늦은 경우 입국일을 변경해야 합니다.'
+    return '일본 입국 40일 전까지 신고를 해야 해요. 신고가 늦은 경우 입국일을 변경해야 해요.'
   }
   return null
 }
@@ -588,7 +588,7 @@ export function validateTiterWithinChain(
   if (!titerDate) return null
   const chainEnd = rabiesBoosterChainEnd(boosters)
   if (chainEnd && titerDate > chainEnd) {
-    return '채혈일이 광견병 백신 면역 유효기간을 벗어났습니다.'
+    return '채혈일이 광견병 백신 면역 유효기간을 벗어났어요.'
   }
   return null
 }
@@ -604,7 +604,7 @@ export function validateTiterAfterBooster(primaryDates: string[], titerDate: str
   if (valid.length === 0) return null
   const latest = valid.reduce((m, d) => (d > m ? d : m))
   if (titerDate < latest) {
-    return `광견병 항체 검사일(${fmt(titerDate)})이 광견병 백신 접종일(${fmt(latest)})보다 빠릅니다. 날짜를 확인하세요.`
+    return `광견병 항체 검사일(${fmt(titerDate)})이 광견병 백신 접종일(${fmt(latest)})보다 빨라요. 날짜를 확인하세요.`
   }
   return null
 }

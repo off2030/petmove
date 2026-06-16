@@ -768,7 +768,7 @@ export function StepDetailView({
       if (chip !== '' && chip.length !== 15) return '15자리 숫자를 입력하세요.'
       const birth = readBirthDate(caseRow?.data)
       if (date && birth && date < birth) {
-        return '마이크로칩 삽입일이 출생일보다 빠릅니다. 날짜를 확인하세요.'
+        return '마이크로칩 삽입일이 출생일보다 빨라요. 날짜를 확인하세요.'
       }
       return null
     }
@@ -788,8 +788,8 @@ export function StepDetailView({
       )
       if (chainBreak) {
         return chainBreak.reason === 'too-early'
-          ? `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 접종일보다 늦어야 합니다.`
-          : `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 합니다.`
+          ? `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 접종일보다 늦어야 해요.`
+          : `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 해요.`
       }
       return null
     }
@@ -831,7 +831,7 @@ export function StepDetailView({
           ])
           // 순서(2차 ≥ 1차)는 위 validateRabiesInterval 이 담당 — 여기선 유효기간 경과만.
           if (chainBreak && chainBreak.reason === 'expired')
-            return '2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 합니다.'
+            return '2차 광견병 백신은 1차 광견병 백신 면역 유효기간 안에 해야 해요.'
           // 마이크로칩 ≤ 2차 — procedure-check(jp.microchip-rabies-sequence)와 같은 domain 함수.
           const chipErr = validateMicrochipBeforeBooster(readImplantDate(caseRow?.data), rabies.date)
           if (chipErr) return chipErr
@@ -853,8 +853,8 @@ export function StepDetailView({
       ])
       if (chainBreak) {
         return chainBreak.reason === 'too-early'
-          ? `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 접종일보다 늦어야 합니다.`
-          : `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 합니다.`
+          ? `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 접종일보다 늦어야 해요.`
+          : `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 해요.`
       }
       return null
     }
@@ -891,7 +891,7 @@ export function StepDetailView({
         flightForm.return_date &&
         flightForm.return_date < outboundDate
       ) {
-        return '귀국 항공편 날짜는 출국 항공편 날짜 이후여야 합니다.'
+        return '귀국 항공편 날짜는 출국 항공편 날짜 이후여야 해요.'
       }
       // 일본 입국일 — 광견병 항체 검사 + 180일 이내면 server 가 거부할 입력. server roundtrip
       // 전 즉시 차단해 빨간 박스로 분명히 보이게 (server 결과는 form 변경 시 useEffect 가
@@ -920,11 +920,11 @@ export function StepDetailView({
       for (const e of generalVaccine) {
         // 출생일 이전 접종 — 논리적 불가능 조건이라 저장 거부.
         if (e.date && birth && e.date < birth) {
-          return '접종일이 출생일보다 빠릅니다. 날짜를 확인하세요.'
+          return '접종일이 출생일보다 빨라요. 날짜를 확인하세요.'
         }
         // 유효기간 < 접종일 — 논리적 불가능 조건이라 저장 거부.
         if (e.date && e.valid_until && e.valid_until < e.date) {
-          return '면역 유효기간이 접종일보다 빠릅니다. 날짜를 확인하세요.'
+          return '면역 유효기간이 접종일보다 빨라요. 날짜를 확인하세요.'
         }
       }
       // 칩 이후 접종 — 광견병과 동일. 가장 이른 접종이 칩보다 빠르면 차단(칩 식별 연계).
@@ -951,8 +951,8 @@ export function StepDetailView({
       )
       if (chainBreak) {
         return chainBreak.reason === 'too-early'
-          ? `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 접종일보다 늦어야 합니다.`
-          : `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 합니다.`
+          ? `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 접종일보다 늦어야 해요.`
+          : `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 해요.`
       }
       return null
     }
@@ -961,7 +961,7 @@ export function StepDetailView({
       const birth = readBirthDate(caseRow?.data)
       for (const e of parasite) {
         if (e.date && birth && e.date < birth) {
-          return '처치일이 출생일보다 빠릅니다. 날짜를 확인하세요.'
+          return '처치일이 출생일보다 빨라요. 날짜를 확인하세요.'
         }
       }
       return null
@@ -3113,7 +3113,7 @@ function validateTiterDate(
   if (isFirstTiter) {
     const microchip = readImplantDate(data)
     if (r1.date && microchip && r1.date < microchip && date !== r2.date) {
-      return '마이크로칩보다 1차 접종을 먼저 한 경우, 채혈일은 2차 접종일과 같아야 합니다.'
+      return '마이크로칩보다 1차 접종을 먼저 한 경우, 채혈일은 2차 접종일과 같아야 해요.'
     }
   }
   return null
