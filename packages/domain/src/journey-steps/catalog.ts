@@ -1169,7 +1169,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '태국 수출 동물검역',
     shortLabel: '수출',
     description:
-      '태국 출국 전 동물검역소에서 수출 동물검역을 받으세요.\n출발 3~7영업일 전에 태국 축산국(DLD)에 수출 허가를 신청해요.\n출발 2~3일 전(공항에서는 48시간 전)에 동물검역소에서 반려동물과 서류 검사를 받아요.\n검사 통과 후 수출허가증과 태국 건강증명서가 발급돼요.',
+      '태국 출국 전 공항 동물검역소에서 수출 동물검역을 받으세요.\n출국 직전(1~3일 전 권장)에 검사받아요. 주말·야간에는 검역을 받을 수 없어요.\n광견병 접종증명서를 챙기세요.\n검사를 통과하면 수출허가서(R.9)와 태국 건강증명서가 발급돼요.',
     doneSummary: '태국 수출 동물검역을 받았어요.',
     cardLine: '태국 동물검역소에서 수출 검역을 받으세요.',
     applicability: { destinations: ['thailand'], species: 'all', tripType: 'round' },
@@ -1186,7 +1186,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: '수출허가증·건강증명서 사본을 사진, PDF로 저장하세요.',
+    attachmentHint: '수출허가서(R.9)·건강증명서 사본을 사진, PDF로 저장하세요.',
   },
 
   // ── 현지 검역증명서 발급 (왕복 — 귀국 출국 시, EU 패밀리 전용) ─────────────
