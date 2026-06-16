@@ -184,13 +184,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       },
       validationIds: ['ph.microchip-before-general-vaccine'],
     },
-    // 구충 — 필리핀은 SPSIC 신청일 기준 7~91일 사이 처치 기록이 필요(내부 필수·외부 권장).
+    // 구충 — 내부구충만 필수(SPSIC 신청일 기준 7~91일). 외부구충은 발급 SPSIC import
+    // terms 7항상 "recommended but optional" 이라 카드 비노출(catalog 적용 목적지에서 제외).
     // base 문구(EU·호주 중심)와 달라 교체.
-    'external-parasite': {
-      description:
-        '외부 기생충(진드기·벼룩) 구충을 받으세요.\n\n수입 허가증(SPSIC) 신청일 기준 91일 이내, 7일 이전에 동물병원에서 받으세요.\n수의사의 치료 기록이 필요해요.',
-      doneSummary: '외부구충 처치를 받았어요.',
-    },
     'internal-parasite': {
       description:
         '내부 기생충 구충을 받으세요.\n\n수입 허가증(SPSIC) 신청일 기준 91일 이내, 7일 이전에 동물병원에서 받으세요.\n수의사의 치료 기록이 필요해요.',

@@ -882,6 +882,8 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     doneSummary: '외부구충 처치를 받았어요.',
     // EU 패밀리(영국·아일랜드·몰타·노르웨이·핀란드)는 외부구충 요건이 없어 제외 —
     // EU 요건은 촌충(에키노코쿠스, echinococcus-treatment 카드)뿐.
+    // 필리핀도 제외 — 발급 SPSIC import terms 7항상 외부구충은 "recommended but optional"
+    // (내부구충만 필수). 내부구충 카드만 유지. (확인: 2026-06-16 실제 SPSIC 원본)
     applicability: {
       destinations: [
         'australia',
@@ -892,7 +894,6 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
         'uae',
         'hawaii',
         'guam',
-        'philippines',
       ],
       species: 'all',
       tripType: 'all',
