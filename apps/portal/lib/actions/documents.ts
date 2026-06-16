@@ -15,6 +15,7 @@ import { randomUUID } from 'node:crypto'
 import { createAdminClient } from '@petmove/auth'
 import { resolveStepAttachmentName, type CaseRow } from '@petmove/domain'
 import { type CaseDocument, MAX_DOCUMENT_BYTES, readCaseDocuments } from '@/lib/documents'
+import { stampDocsChecklistCompletion } from '@/lib/cases/docs-completion'
 import { assertCaseAccess, type Result } from './_shared'
 
 const BUCKET = 'attachments'
@@ -54,7 +55,7 @@ export async function uploadStepDocument(formData: FormData): Promise<Result<Cas
     // (이름 결정에 기존 documents 가 필요하므로 storage 업로드 전에 먼저 조회.)
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
-      .select('data')
+      .select('*')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
@@ -105,10 +106,12 @@ export async function uploadStepDocument(formData: FormData): Promise<Result<Cas
       // stored 클리어해 derive 모드 전환.
       delete nextData.import_import_status
     }
+    // 첨부가 마지막 필수 서류를 채우면 서류 체크리스트 완료일을 박는다.
+    const finalData = stampDocsChecklistCompletion(existing as CaseRow, nextData)
 
     const { data: updated, error } = await admin
       .from('cases')
-      .update({ data: nextData })
+      .update({ data: finalData })
       .eq('id', caseId)
       .select('*')
       .single()
@@ -136,7 +139,7 @@ export async function deleteStepDocument(
     const admin = createAdminClient()
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
-      .select('data')
+      .select('*')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
@@ -159,9 +162,11 @@ export async function deleteStepDocument(
     if (target.stepId === 'advance-notification') {
       delete nextData.import_import_status
     }
+    // 첨부 삭제로 필수 서류가 미완료로 돌아가면 완료일을 지운다(재완료 시 다시 박힘).
+    const finalData = stampDocsChecklistCompletion(existing as CaseRow, nextData)
     const { data: updated, error } = await admin
       .from('cases')
-      .update({ data: nextData })
+      .update({ data: finalData })
       .eq('id', caseId)
       .select('*')
       .single()

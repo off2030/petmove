@@ -105,6 +105,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // share-link/admin updateCaseField — 는 이 키를 다루지 않아 영향 없음.)
   'required_doc_flags',
   'required_doc_na',
+  // 서류 체크리스트(document-checklist)가 모두 ✓ 된 시점('YYYY-MM-DD', KST) — 일정 표시일용.
+  // 완료 판정(required_doc_flags/na·첨부·step done)이 목적지별이라 완료 시점도 by_dest 분리.
+  'required_docs_completed_at',
 ])
 
 export function isDestinationScopedKey(key: string): boolean {

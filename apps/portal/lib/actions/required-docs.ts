@@ -14,6 +14,7 @@
 import { createAdminClient } from '@petmove/auth'
 import type { CaseRow } from '@petmove/domain'
 import { parseDestinations, readByDestValue, resolveActiveDestination, writeByDestValue } from '@petmove/domain'
+import { stampDocsChecklistCompletion } from '@/lib/cases/docs-completion'
 import { assertCaseAccess, type Result } from './_shared'
 
 /**
@@ -82,7 +83,7 @@ export async function setRequiredDocsComplete(
     const admin = createAdminClient()
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
-      .select('data,destination')
+      .select('*')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
@@ -97,6 +98,7 @@ export async function setRequiredDocsComplete(
     }
     let next = writeScopedFlags(prev, scope, 'required_doc_flags', flags)
     next = writeScopedFlags(next, scope, 'required_doc_na', na)
+    next = stampDocsChecklistCompletion(existing as CaseRow, next, destination)
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -148,7 +150,7 @@ async function mutateDocState(
     const admin = createAdminClient()
     const { data: existing, error: fetchErr } = await admin
       .from('cases')
-      .select('data,destination')
+      .select('*')
       .eq('id', caseId)
       .single()
     if (fetchErr) return { ok: false, error: fetchErr.message }
@@ -157,7 +159,8 @@ async function mutateDocState(
     // 다중 목적지 케이스 + 활성 목적지 지정 시에만 by_dest 로 분리 저장. 단일 목적지는 기존
     // top-level 동작 그대로(읽기 flatten 이 단일에선 top-level fallback 이라 정합).
     const scope = resolveDocScope(existing?.destination, destination)
-    const nextData = apply(prev, scope)
+    let nextData = apply(prev, scope)
+    nextData = stampDocsChecklistCompletion(existing as CaseRow, nextData, destination)
 
     const { data: updated, error } = await admin
       .from('cases')

@@ -442,6 +442,18 @@ export function resolveCompletedDate(signal: StepDoneSignal, caseRow: CaseRow): 
       const dt = typeof data.entry_date === 'string' ? data.entry_date : null
       return dt && dt.length >= 10 ? dt.slice(0, 10) : null
     }
+    case 'all-required-docs': {
+      // 서류 체크리스트 완료일 = 모든 필수 서류가 ✓ 된 시점(required_docs_completed_at).
+      // 완료가 수기 플래그·첨부·step done 여러 경로에서 파생돼 단일 날짜 필드가 없으므로,
+      // portal 의 서류 완료 액션이 '모두 ✓' 전환 순간에 박아둔 타임스탬프를 읽는다(by_dest
+      // 스코프 — caseRow 는 활성 목적지로 flatten 된 view). 옛 완료 케이스는 값이 없어 null
+      // (표시 '—') — 서류를 한 번 토글하면 그 시점으로 박힌다.
+      const dt =
+        typeof data.required_docs_completed_at === 'string'
+          ? data.required_docs_completed_at
+          : null
+      return dt && dt.length >= 10 ? dt.slice(0, 10) : null
+    }
     case 'has-advance-notification': {
       const dt =
         typeof data.advance_notification_date === 'string' ? data.advance_notification_date : null
