@@ -218,7 +218,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'rabies-titer',
       roundTripOnly: true,
       description:
-        '검사를 의뢰한 동물병원에서 발급받아요.\n\n태국 입국에는 필요하지 않지만, 한국으로 돌아올 때 반드시 원본이 필요해요.\n\n광견병 백신 면역 유효기간 유지 시 채혈일로부터 2년까지 사용할 수 있어요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+        '검사를 의뢰한 동물병원에서 발급받아요.\n\n한국 귀국 때 반드시 원본이 필요해요. 유효기간은 2년이에요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'rabies-titer',
     },
     {
@@ -292,7 +292,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'rabies-titer',
       roundTripOnly: true,
       description:
-        '검사를 의뢰한 동물병원에서 발급받아요.\n\n필리핀 입국에는 필요하지 않지만, 한국으로 돌아올 때 반드시 원본이 필요해요. 필리핀 현지에서는 검사가 어려우므로 출국 전에 미리 받아두세요.\n\n광견병 백신 면역 유효기간 유지 시 채혈일로부터 2년까지 사용할 수 있어요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
+        '검사를 의뢰한 동물병원에서 발급받아요.\n\n한국 귀국 때 반드시 원본이 필요해요. 유효기간은 2년이에요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'rabies-titer',
     },
     {
