@@ -2641,12 +2641,19 @@ export async function getCaseVaccineData(caseId: string): Promise<Result<Vaccine
       return { ok: false, error: caseErr?.message ?? '여정을 찾을 수 없습니다.' }
     }
 
-    // 광견병 + 종합백신(개/고양이) 약품 카탈로그 — 둘 다 portal 입력에서 날짜 기준 자동추천에 쓴다.
+    // 광견병 + 종합백신(개/고양이) + 내부구충(개/고양이) 약품 카탈로그 — portal 입력에서
+    // 날짜 기준 자동추천(백신) 및 구충제 예시 placeholder(내부구충, 종별)에 쓴다.
     const { data: rows, error } = await admin
       .from('org_vaccine_products')
       .select('category, vaccine, product, manufacturer, batch, expiry, year')
       .eq('org_id', (caseRow as { org_id: string }).org_id)
-      .in('category', ['rabies', 'comprehensive_dog', 'comprehensive_cat'])
+      .in('category', [
+        'rabies',
+        'comprehensive_dog',
+        'comprehensive_cat',
+        'parasite_internal_dog',
+        'parasite_internal_cat',
+      ])
     if (error) return { ok: false, error: error.message }
 
     const value = emptyVaccineProductsData()
@@ -2661,6 +2668,8 @@ export async function getCaseVaccineData(caseId: string): Promise<Result<Vaccine
       }
       if (row.category === 'comprehensive_dog') value.comprehensive_dog.push(product)
       else if (row.category === 'comprehensive_cat') value.comprehensive_cat.push(product)
+      else if (row.category === 'parasite_internal_dog') value.parasite_internal_dog.push(product)
+      else if (row.category === 'parasite_internal_cat') value.parasite_internal_cat.push(product)
       else value.rabies.push(product)
     }
     return { ok: true, value }

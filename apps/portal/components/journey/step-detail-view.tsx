@@ -71,7 +71,11 @@ import {
 import { readCaseDocuments } from '@/lib/documents'
 import { AdvanceNotificationInputs } from './advance-notification-inputs'
 import { FlightInputs, type FlightForm } from './flight-inputs'
-import { GeneralVaccineInputs, type GeneralVaccineEntry } from './general-vaccine-inputs'
+import {
+  GeneralVaccineInputs,
+  type GeneralVaccineEntry,
+  type ProductPlaceholders,
+} from './general-vaccine-inputs'
 import { ImportPermitInputs, type ImportPermitForm } from './import-permit-inputs'
 import { JpExportQuarantineInputs, type JpExportForm } from './jp-export-quarantine-inputs'
 import { JpExportQuarantineVisitInputs } from './jp-export-quarantine-visit-inputs'
@@ -753,6 +757,32 @@ export function StepDetailView({
       }),
     [generalVaccine, rabiesLookups, generalSpecies],
   )
+
+  // 내부 기생충 치료 약품 예시(placeholder) — 백신이 아니라 내부구충제, 종별로 다름.
+  // 케이스 org 의 약품정보(org_vaccine_products)에서 종별 카탈로그의 최신(유효기간 늦은) 항목을
+  // 그대로 예시로 보여준다 → 펫무브워크 약품관리와 항상 일치(예: 강아지 Drontal Plus/Elanco,
+  // 고양이 Panacur/Intervet + 제조번호). org 에 등록이 없으면 표준 브랜드명만 기본 예시로.
+  const internalParasitePlaceholders = useMemo<ProductPlaceholders | undefined>(() => {
+    const fallback: ProductPlaceholders =
+      generalSpecies === 'cat'
+        ? { product: '예: Panacur', manufacturer: '예: Intervet', lot: '' }
+        : { product: '예: Drontal Plus', manufacturer: '예: Elanco', lot: '' }
+    const list =
+      generalSpecies === 'cat'
+        ? vaccineData?.parasite_internal_cat
+        : vaccineData?.parasite_internal_dog
+    const pick = (list ?? [])
+      .slice()
+      .sort((a, b) => ((a.expiry ?? '') < (b.expiry ?? '') ? 1 : -1))[0]
+    const name = pick?.product || pick?.vaccine
+    if (!name) return fallback
+    return {
+      product: `예: ${name}`,
+      manufacturer: pick?.manufacturer ? `예: ${pick.manufacturer}` : fallback.manufacturer,
+      // 제조번호는 케이스 org 카탈로그 값. 없으면 ''로 두어 백신 기본 예시 누수 차단.
+      lot: pick?.batch ? `예: ${pick.batch}` : '',
+    }
+  }, [generalSpecies, vaccineData])
 
   // 저장을 막아야 하는 '입력 불가' 차단 검증을 한 곳에 모은다 — 통과(null)면 저장 가능, 위반이면
   // 사람이 읽는 에러 메시지. 단계 자체의 내재적 정합성 + 앞(선행) 단계 대비 검증만 차단한다
@@ -2243,15 +2273,8 @@ export function StepDetailView({
               showValidUntil={false}
               // 내부 기생충 치료는 펫무브워크와 동일한 약품 4필드를 '세부 정보(선택)'로 직접 입력.
               showProduct={isInternalParasite}
-              // 구충제 예시는 백신(DHPPL)이 아니라 내부구충제 — 종별로 다름(펫무브워크 약품정보 기준).
-              // 강아지=Drontal Plus(Elanco), 고양이=Panacur(Intervet). lot 은 ''로 백신 기본예시 누수 차단.
-              productPlaceholders={
-                isInternalParasite
-                  ? generalSpecies === 'cat'
-                    ? { product: '예: Panacur', manufacturer: '예: Intervet', lot: '' }
-                    : { product: '예: Drontal Plus', manufacturer: '예: Elanco', lot: '예: KV035S6' }
-                  : undefined
-              }
+              // 구충제 예시는 백신(DHPPL)이 아니라 내부구충제 — 종별로 다르며 케이스 org 약품정보에서 가져온다.
+              productPlaceholders={isInternalParasite ? internalParasitePlaceholders : undefined}
               addLabel={
                 isExternalParasite
                   ? '+ 처치 기록 추가'
