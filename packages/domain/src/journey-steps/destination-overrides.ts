@@ -149,11 +149,6 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       attachmentHint: '수입 허가서(R.7) 사본을 사진, PDF로 저장하세요.',
       validationIds: ['th.import-quarantine-date-valid'],
     },
-    // 한국 수입 동물검역(왕복 마지막) — 검역일 ≥ 귀국일 재검증을 태국 룰로 연결.
-    // (base 의 jp.kr-import-quarantine-date-valid 는 country=japan 이라 태국 케이스에선 미실행.)
-    'kr-import-quarantine': {
-      validationIds: ['th.kr-import-quarantine-date-valid'],
-    },
   },
 
   // 필리핀 출처: BAI(동물산업국) MC No.49(2022)·BAI Pet Import 공식 안내 + petmove.co.kr
@@ -248,9 +243,6 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       allowAttachments: true,
       attachmentHint: '검역 서류 사본을 사진, PDF로 저장하세요.',
       validationIds: ['ph.import-quarantine-date-valid'],
-    },
-    'kr-import-quarantine': {
-      validationIds: ['ph.kr-import-quarantine-date-valid'],
     },
   },
 
@@ -359,10 +351,6 @@ function euFamilyOverrides(opts: {
       allowAttachments: true,
       attachmentHint: '확인받은 서류 사본을 사진, PDF로 저장하세요.',
       validationIds: ['eu.import-quarantine-date-valid'],
-    },
-    // 한국 수입 동물검역(왕복 마지막) — 검역일 ≥ 귀국일 재검증을 EU 룰로 연결.
-    'kr-import-quarantine': {
-      validationIds: ['eu.kr-import-quarantine-date-valid'],
     },
   }
 }

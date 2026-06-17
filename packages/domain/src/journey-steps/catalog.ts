@@ -1268,7 +1268,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     inputs: [
       { key: 'kr_import_quarantine_date', label: '검역일', type: 'date' },
     ],
-    validationIds: ['jp.kr-import-quarantine-date-valid'],
+    validationIds: ['common.kr-import-quarantine-date-valid'],
     allowAttachments: true,
     attachmentHint: '검역증 사본을 사진, PDF로 저장하세요.',
   },
