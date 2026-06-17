@@ -107,7 +107,7 @@ function ConfirmDialog({ state, onClose }: { state: PendingState; onClose: (ok: 
               'px-md py-1.5 text-sm rounded-md transition-colors',
               variant === 'destructive'
                 ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
-                : 'bg-foreground text-background hover:bg-foreground/90',
+                : 'bg-primary text-primary-foreground hover:bg-primary/90',
             )}
           >
             {okLabel}
