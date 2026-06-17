@@ -229,7 +229,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       title: '필리핀 수입 동물검역',
       shortLabel: '수입',
       description:
-        '필리핀 도착 후 공항에서 BAI 동물검역관(VQO)에게 수입 검역을 받으세요.\n수입 허가증(SPSIC) 원본, 한국 수출 동물검역증 원본, 예방접종 증명서, 마이크로칩 증명서를 제시해요.\nSPSIC 발급 수수료와 검역 수수료는 도착 공항 검역 사무소에서 납부해요.\n서류가 완비되고 건강에 이상이 없으면 격리 없이 바로 인도돼요. 요건을 충족하지 못하면 격리되거나 반송될 수 있으며, 비용은 보호자가 부담해요.',
+        '필리핀 도착 후 공항 동물검역소에서 BAI 동물검역관(VQO)에게 수입 검역을 받으세요.',
       doneSummary: '필리핀 수입 동물검역을 받았어요.',
       done: 'quarantine:ph_import_quarantine_date',
       inputs: [
