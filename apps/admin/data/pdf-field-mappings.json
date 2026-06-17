@@ -4775,6 +4775,7 @@
       "Text5":  { "source": "consignee_lab", "transform": "lab_shipping:block", "note": "Consignee — 수신 실험실 전체 블록" },
       "Text14": { "source": "goods_description", "note": "Full Description of Goods — ARC(남아공)만 혼합 검체 구성 덮어씀. 그 외 빈 값→preserveTemplateText 가 템플릿 기본(canine serum) 유지" },
       "Text16": { "source": "tube_count", "note": "QTY — 검체 갯수 (ARC 는 14 고정)" },
+      "Text15": { "source": "goods_hs_code", "note": "HS 코드 — ARC(남아공) '3002.12.00.6', 그 외 빈 값→템플릿 기본 '3002905250' 유지" },
       "Text17": { "source": "goods_unit", "note": "Unit — ARC 'EA'(혼합 검체), 그 외 빈 값→템플릿 기본 'Tube' 유지" },
       "Text20": { "source": "tube_count", "transform": "invoice_total_value", "note": "Total Value — tube_count × 1.00" },
       "Text24": { "source": "tube_count", "transform": "invoice_total_value", "note": "Total Invoice Value — tube_count × 1.00" },

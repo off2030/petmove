@@ -287,6 +287,8 @@ export async function generateInvoice(opts: ShipmentOpts): Promise<GeneratePdfRe
     ship_date: opts.ship_date ?? '',
     goods_description: isArc ? ARC_INVOICE_GOODS : '',
     goods_unit: isArc ? 'EA' : '',
+    // ARC(남아공) 수출용 HS 코드. 그 외 lab 은 빈 값 → 템플릿 기본(3002905250) 유지.
+    goods_hs_code: isArc ? '3002.12.00.6' : '',
   })
   if (r.ok) r.filename = `Invoice_${tubeCount}tubes.pdf`
   return r
@@ -306,6 +308,12 @@ export async function generateESD(opts: ShipmentOpts): Promise<GeneratePdfResult
 }
 
 export async function generateInvoiceAndESD(opts: ShipmentOpts): Promise<GeneratePdfResult> {
+  // ARC-OVI(남아공)는 미국식 ESD(Exempt Specimen Declaration) 불필요 — 인보이스 1장만.
+  // (남아공 통관은 VHC_MIP 수의건강증명서로, ARC 팩에서 별도 발급.)
+  if ((opts.consignee_lab ?? '').toLowerCase() === 'arc_ovr') {
+    return generateInvoice(opts)
+  }
+
   const { PDFDocument } = await import('pdf-lib')
   const { readFile } = await import('node:fs/promises')
   const path = await import('node:path')
