@@ -218,9 +218,11 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       doneSummary: '필리핀 수입 허가증(SPSIC)을 받았어요.',
       cardLine: '필리핀 수입 허가증(SPSIC)을 신청하세요.',
       deadline: { anchor: 'departure', daysBefore: 10 },
+      // 허가 번호 대신 첨부·완료 버튼으로 완료 처리 — 입력은 신청일만(base 의 permit_no 제거).
+      // deriveImportPermitStatus 가 첨부/완료 플래그로 done 판정(태국과 동일 2-step 모델).
+      inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
       links: [
         { url: 'https://www.intercommerce.com.ph/registrationbai.asp', label: 'Intercommerce 수입자 등록' },
-        { url: 'https://www.bai.gov.ph/Travelers/PET', label: 'BAI 반려동물 수입 안내' },
       ],
       attachmentLabel: '수입 허가증(SPSIC)',
       validationIds: ['ph.import-permit-14days-after-vaccines'],
