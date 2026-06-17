@@ -325,7 +325,7 @@ export function TimelineCalm({
                     display: 'inline-block',
                     padding: '2px 8px',
                     borderRadius: 6,
-                    background: 'rgba(232,165,90,0.18)',
+                    background: 'rgba(217,154,88,0.18)',
                     border: '.5px solid var(--pm-accent)',
                     color: C.accent,
                     fontWeight: 700,
@@ -341,7 +341,7 @@ export function TimelineCalm({
                     display: 'inline-block',
                     padding: '2px 8px',
                     borderRadius: 6,
-                    background: isOverdueDeadline ? C.warnBg : 'rgba(232,165,90,0.18)',
+                    background: isOverdueDeadline ? C.warnBg : 'rgba(217,154,88,0.18)',
                     border: `.5px solid ${isOverdueDeadline ? `color-mix(in srgb, ${C.warn} 33%, transparent)` : 'var(--pm-accent)'}`,
                     color: isOverdueDeadline ? C.warn : C.accent,
                     fontWeight: 700,
@@ -809,7 +809,7 @@ export function TimelineCalm({
         >
           <div style={{ position: 'relative', width: 220, height: 220 }}>
             <svg width="220" height="220" viewBox="0 0 220 220">
-              <circle cx="110" cy="110" r={R} fill="none" stroke="rgba(232,165,90,.14)" strokeWidth="14" />
+              <circle cx="110" cy="110" r={R} fill="none" stroke="rgba(217,154,88,.14)" strokeWidth="14" />
               <circle
                 cx="110"
                 cy="110"
@@ -821,7 +821,7 @@ export function TimelineCalm({
                 strokeDasharray={CIRC}
                 strokeDashoffset={animOffset}
                 transform="rotate(-90 110 110)"
-                style={{ filter: 'drop-shadow(0 0 6px rgba(232,165,90,.5))' }}
+                style={{ filter: 'drop-shadow(0 0 6px rgba(217,154,88,.5))' }}
               />
             </svg>
             <div

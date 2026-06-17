@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 
 const buttonBaseClass =
-  'inline-flex w-full items-center justify-center rounded-md h-10 px-md text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#E8A55A]/40 disabled:pointer-events-none disabled:opacity-50 select-none'
+  'inline-flex w-full items-center justify-center rounded-md h-10 px-md text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D99A58]/40 disabled:pointer-events-none disabled:opacity-50 select-none'
 const socialButtonClass = `${buttonBaseClass} border border-[rgba(42,38,32,0.16)] bg-[#FBF7F1] text-[#2A2620] hover:bg-[#F0E8DC]`
-const primaryButtonClass = `${buttonBaseClass} bg-[#E8A55A] text-[#FBF7F1] hover:bg-[#D98B3A]`
+const primaryButtonClass = `${buttonBaseClass} bg-[#D99A58] text-[#FBF7F1] hover:bg-[#C98B45]`
 
 export function LoginForm({
   next,
@@ -132,7 +132,7 @@ export function LoginForm({
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
-            className="w-full rounded-md border border-[rgba(42,38,32,0.16)] bg-[#FBF7F1] px-sm py-2 text-sm text-[#2A2620] placeholder:text-[#9A9286]/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#E8A55A]/40"
+            className="w-full rounded-md border border-[rgba(42,38,32,0.16)] bg-[#FBF7F1] px-sm py-2 text-sm text-[#2A2620] placeholder:text-[#9A9286]/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D99A58]/40"
           />
           <button type="submit" className={primaryButtonClass} disabled={loading !== null || !email}>
             {loading === 'magic' ? '발송 중…' : '이메일로 로그인 링크 받기'}
@@ -140,7 +140,7 @@ export function LoginForm({
         </form>
 
         {info && (
-          <p className="rounded-md border border-[#E8A55A]/30 bg-[#E8A55A]/10 p-sm text-xs text-[#6B6457]">
+          <p className="rounded-md border border-[#D99A58]/30 bg-[#D99A58]/10 p-sm text-xs text-[#6B6457]">
             {info}
           </p>
         )}

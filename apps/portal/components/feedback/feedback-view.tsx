@@ -176,7 +176,7 @@ export function FeedbackView({ caseId, dest }: { caseId: string; dest: string | 
                     padding: '12px 2px',
                     borderRadius: 14,
                     border: selected ? `1px solid ${C.accent}` : `.5px solid ${C.line}`,
-                    background: selected ? 'rgba(232,165,90,.10)' : C.surface,
+                    background: selected ? 'rgba(217,154,88,.10)' : C.surface,
                     color: selected ? C.accent : C.ink3,
                     fontFamily: 'inherit',
                     cursor: 'pointer',

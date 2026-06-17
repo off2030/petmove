@@ -42,7 +42,7 @@
   --pm-ink-3: #9A9286;
   --pm-line: rgba(42, 38, 32, 0.10);
   --pm-line-2: rgba(42, 38, 32, 0.14);
-  --pm-accent: #E8A55A;
+  --pm-accent: #D99A58;
   --pm-accent-soft: #E8DCC4;
   --pm-sage: #8FA68C;
   --pm-warn: #C26A4A;
@@ -98,7 +98,7 @@
   --pm-ink-3: #847C6E;
   --pm-line: rgba(236, 228, 216, 0.12);
   --pm-line-2: rgba(236, 228, 216, 0.16);
-  --pm-accent: #EAB06A;
+  --pm-accent: #DEA86A;
   --pm-accent-soft: #3A3328;
   --pm-sage: #9DB89A;
   --pm-warn: #D67E5C;
@@ -116,7 +116,7 @@
   --pm-card-rim: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
   --pm-card-rim-soft: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
   --pm-ring-bg: #1C1916;
-  --pm-ring-accent: #EAB06A;
+  --pm-ring-accent: #DEA86A;
 }
 
 @keyframes pm-fade-up {
@@ -187,8 +187,8 @@
     --popover: 40 56% 96%;
     --popover-foreground: 29 19% 13%;
 
-    /* Primary: 펫무브 amber (#E8A55A) — 공용 부품(달력 선택일 등)도 펫무브 톤 */
-    --primary: 32 75% 63%;
+    /* Primary: 펫무브 amber (#D99A58) — 공용 부품(달력 선택일 등)도 펫무브 톤 */
+    --primary: 31 63% 60%;
     --primary-foreground: 32 30% 92%;
 
     /* Secondary: warm sand (#E8DEC4) */
@@ -211,8 +211,8 @@
     /* Border: warm hairline (#D9CFB8) */
     --border: 40 26% 79%;
     --input: 40 26% 79%;
-    /* Ring (focus): 펫무브 amber (#E8A55A) */
-    --ring: 32 75% 63%;
+    /* Ring (focus): 펫무브 amber (#D99A58) */
+    --ring: 31 63% 60%;
 
     --radius: 0.5rem;
 
@@ -225,7 +225,7 @@
     --pmw-accent-strong: 32 30% 43%;     /* #8C6F4E warm brown — tinted/hover */
     --pmw-tag-bg: 40 36% 83%;            /* #E5D9C2 warm cream */
     --pmw-tag-fg: 35 27% 30%;            /* #5E4D38 dark olive */
-    --pmw-cal-today: 32 75% 63%;         /* 펫무브 amber #E8A55A */
+    --pmw-cal-today: 31 63% 60%;         /* 펫무브 amber #D99A58 */
     --pmw-cal-sunday: 16 56% 40%;        /* #A04A2D rust orange */
     --pmw-cal-saturday: 215 32% 27%;     /* #2F4459 ink blue */
     --pmw-positive: 120 20% 31%;         /* #3F5F3F forest green */
@@ -318,8 +318,8 @@
     --popover: 30 18% 15%;
     --popover-foreground: 32 30% 92%;
 
-    /* Primary: 펫무브 amber dark (#EAB06A) */
-    --primary: 33 75% 67%;
+    /* Primary: 펫무브 amber dark (#DEA86A) */
+    --primary: 32 64% 64%;
     --primary-foreground: 32 30% 92%;
 
     /* Secondary/muted: deep warm gray (#3D3530) */
@@ -338,7 +338,7 @@
 
     --border: 25 12% 21%;
     --input: 25 12% 21%;
-    --ring: 33 75% 67%;
+    --ring: 32 64% 64%;
 
     /* PMW semantic — Warm Stationery dark */
     --pmw-accent: 30 38% 71%;            /* #D4B69A lighter clay */
@@ -346,7 +346,7 @@
     --pmw-accent-strong: 30 30% 58%;     /* #B89876 muted clay */
     --pmw-tag-bg: 25 12% 21%;            /* dark warm */
     --pmw-tag-fg: 40 36% 83%;            /* warm cream */
-    --pmw-cal-today: 33 75% 67%;         /* 펫무브 amber dark #EAB06A */
+    --pmw-cal-today: 32 64% 64%;         /* 펫무브 amber dark #DEA86A */
     --pmw-cal-sunday: 16 47% 58%;        /* #C77E5E light rust */
     --pmw-cal-saturday: 213 17% 61%;     /* #8E9BAB light ink */
     --pmw-positive: 113 17% 60%;         /* #8FA888 light forest */
