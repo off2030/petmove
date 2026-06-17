@@ -35,8 +35,11 @@ const C = {
   ink3: 'var(--pm-ink-3)',
 } as const
 
+type ProductFieldKey = 'product' | 'manufacturer' | 'lot' | 'expiry'
+
+/** 약품 4필드 — placeholder 는 백신 기본값. step 별로 productPlaceholders 로 덮어쓸 수 있음(예: 구충제). */
 const PRODUCT_FIELDS: ReadonlyArray<{
-  key: 'product' | 'manufacturer' | 'lot' | 'expiry'
+  key: ProductFieldKey
   label: string
   kind: 'text' | 'date'
   placeholder?: string
@@ -46,6 +49,9 @@ const PRODUCT_FIELDS: ReadonlyArray<{
   { key: 'lot', label: '제조번호', kind: 'text', placeholder: '예: 323 DPL 02' },
   { key: 'expiry', label: '제품 유효기간', kind: 'date' },
 ]
+
+/** step 별 약품 예시(placeholder) 덮어쓰기. 키별로 지정한 것만 교체, 나머지는 기본값. */
+export type ProductPlaceholders = Partial<Record<ProductFieldKey, string>>
 
 /** "N년" 문자열 → 선택된 연수. 빈값은 1년 기본. 그 외(날짜 등)는 미선택. (광견병과 동일.) */
 function selectedYear(value: string): string | null {
@@ -66,6 +72,7 @@ export function GeneralVaccineInputs({
   showProduct = true,
   addLabel = '+ 접종 기록 추가',
   productHintsFor,
+  productPlaceholders,
 }: {
   entries: GeneralVaccineEntry[]
   /** 카드 헤더 라벨 — 종별 백신명 (예: '종합백신(DHPPL)') 또는 처치명 ('외부구충'). */
@@ -82,6 +89,8 @@ export function GeneralVaccineInputs({
   addLabel?: string
   /** 각 entry 접종일 기준 카탈로그 자동추천 — 본병원일 때 약품 4필드에 읽기 전용 표시(광견병과 동일). */
   productHintsFor?: (index: number) => RabiesProductHints | null
+  /** 약품 예시(placeholder) 덮어쓰기 — 구충제는 백신 예시 대신 구충제 예시(종별 다름)를 보여준다. */
+  productPlaceholders?: ProductPlaceholders
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -94,6 +103,7 @@ export function GeneralVaccineInputs({
           showValidUntil={showValidUntil}
           showProduct={showProduct}
           productHints={productHintsFor?.(i) ?? null}
+          productPlaceholders={productPlaceholders}
           onChange={(key, next) => onChange(i, key, next)}
           onRemove={() => onRemove(i)}
         />
@@ -127,6 +137,7 @@ function EntryCard({
   showValidUntil,
   showProduct,
   productHints,
+  productPlaceholders,
   onChange,
   onRemove,
 }: {
@@ -136,6 +147,7 @@ function EntryCard({
   showValidUntil: boolean
   showProduct: boolean
   productHints: RabiesProductHints | null
+  productPlaceholders?: ProductPlaceholders
   onChange: (key: keyof GeneralVaccineEntry, next: string) => void
   onRemove: () => void
 }) {
@@ -245,7 +257,7 @@ function EntryCard({
               type="text"
               value={entry[field.key]}
               onChange={(e) => onChange(field.key, e.target.value)}
-              placeholder={field.placeholder}
+              placeholder={productPlaceholders?.[field.key] ?? field.placeholder}
               style={inputStyle}
             />
           )}

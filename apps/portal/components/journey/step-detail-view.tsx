@@ -2241,6 +2241,15 @@ export function StepDetailView({
               showValidUntil={false}
               // 내부 기생충 치료는 펫무브워크와 동일한 약품 4필드를 '세부 정보(선택)'로 직접 입력.
               showProduct={isInternalParasite}
+              // 구충제 예시는 백신(DHPPL)이 아니라 내부구충제 — 종별로 다름(펫무브워크 약품정보 기준).
+              // 강아지=Drontal Plus(Elanco), 고양이=Panacur(Intervet). lot 은 ''로 백신 기본예시 누수 차단.
+              productPlaceholders={
+                isInternalParasite
+                  ? generalSpecies === 'cat'
+                    ? { product: '예: Panacur', manufacturer: '예: Intervet', lot: '' }
+                    : { product: '예: Drontal Plus', manufacturer: '예: Elanco', lot: '예: KV035S6' }
+                  : undefined
+              }
               addLabel={
                 isExternalParasite
                   ? '+ 처치 기록 추가'
