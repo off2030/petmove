@@ -6,7 +6,7 @@ import { supabaseBrowser } from '@/lib/supabase/browser'
 const buttonBaseClass =
   'inline-flex w-full items-center justify-center rounded-md h-10 px-md text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#E8A55A]/40 disabled:pointer-events-none disabled:opacity-50 select-none'
 const socialButtonClass = `${buttonBaseClass} border border-[rgba(42,38,32,0.16)] bg-[#FBF7F1] text-[#2A2620] hover:bg-[#F0E8DC]`
-const primaryButtonClass = `${buttonBaseClass} bg-[#E8A55A] text-[#3a2a08] hover:bg-[#D98B3A]`
+const primaryButtonClass = `${buttonBaseClass} bg-[#E8A55A] text-[#FBF7F1] hover:bg-[#D98B3A]`
 
 export function LoginForm({
   next,

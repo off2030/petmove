@@ -314,7 +314,7 @@ const primaryButtonClass = cn(
   'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#E8A55A]/40',
   'disabled:pointer-events-none disabled:opacity-50 select-none',
   'w-full h-12 text-base tracking-[0.1px]',
-  'bg-[#E8A55A] text-[#3a2a08] hover:bg-[#D98B3A]',
+  'bg-[#E8A55A] text-[#FBF7F1] hover:bg-[#D98B3A]',
 )
 const secondaryButtonClass = cn(
   'inline-flex items-center justify-center rounded-md font-medium transition-colors',
