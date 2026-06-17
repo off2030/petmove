@@ -264,7 +264,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '태국 수출 동물검역 후 발급받아요.\n\n정확한 서류 이름은 Export License(R.9)와 Official Animal Health Certificate 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '태국 수출 동물검역 후 발급돼요.\n\n정확한 서류 이름은 Export License(R.9), Official Animal Health Certificate 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'th-export-quarantine',
     },
     {
