@@ -781,10 +781,12 @@ export function StepDetailView({
   // 그대로 예시로 보여준다 → 펫무브워크 약품관리와 항상 일치(예: 강아지 Drontal Plus/Elanco,
   // 고양이 Panacur/Intervet + 제조번호). org 에 등록이 없으면 표준 브랜드명만 기본 예시로.
   const internalParasitePlaceholders = useMemo<ProductPlaceholders | undefined>(() => {
+    // org 카탈로그가 없을 때의 기본 예시 — 표준 브랜드 + 대표 제조번호(형식 안내용 예시).
+    // org 약품관리에 등록돼 있으면 아래 동적 경로가 실제 제조번호로 덮어쓴다.
     const fallback: ProductPlaceholders =
       generalSpecies === 'cat'
-        ? { product: '예: Panacur', manufacturer: '예: Intervet', lot: '' }
-        : { product: '예: Drontal Plus', manufacturer: '예: Elanco', lot: '' }
+        ? { product: '예: Panacur', manufacturer: '예: Intervet', lot: '예: A492A02' }
+        : { product: '예: Drontal Plus', manufacturer: '예: Elanco', lot: '예: KV035S6' }
     const list =
       generalSpecies === 'cat'
         ? vaccineData?.parasite_internal_cat
@@ -797,8 +799,8 @@ export function StepDetailView({
     return {
       product: `예: ${name}`,
       manufacturer: pick?.manufacturer ? `예: ${pick.manufacturer}` : fallback.manufacturer,
-      // 제조번호는 케이스 org 카탈로그 값. 없으면 ''로 두어 백신 기본 예시 누수 차단.
-      lot: pick?.batch ? `예: ${pick.batch}` : '',
+      // 제조번호는 케이스 org 카탈로그 값. batch 미기록이면 기본 예시로(빈칸 방지).
+      lot: pick?.batch ? `예: ${pick.batch}` : fallback.lot,
     }
   }, [generalSpecies, vaccineData])
 
