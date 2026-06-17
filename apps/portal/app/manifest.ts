@@ -17,13 +17,19 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: 'ko',
     orientation: 'portrait',
     icons: [
-      // SVG — vector path, 어떤 사이즈에서도 또렷. PMW 모노그램 (admin 과 동일
-      // 브랜드 패밀리). portal 전용 visual 은 추후 브랜드 디자인 freeze 후 교체.
+      // 펫무브 전용 — 리본P (amber #D99A58, 강조색과 동일). SVG vector 라 어떤 사이즈에서도 또렷.
       {
         src: '/icon.svg',
         sizes: 'any',
         type: 'image/svg+xml',
         purpose: 'any',
+      },
+      // maskable — Android 적응형(둥근/사각/물방울 crop). full-bleed amber + 안전영역 리본P.
+      {
+        src: '/icon-maskable.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
+        purpose: 'maskable',
       },
     ],
   }
