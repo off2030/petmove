@@ -281,17 +281,9 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     },
   ],
   '필리핀': [
-    // 순서 = 일정 타임라인(step order)과 일치: 종합백신(50) → 항체검사(55) →
-    // 수입허가 SPSIC(100) → 임상검사 건강증명서(110) → 검역증 그룹(120·155·160).
-    {
-      id: 'ph-vaccine-cert-en',
-      name: '예방접종·구충 증명서(영문)',
-      source: '동물병원',
-      kind: 'manual',
-      issuanceStepId: 'general-vaccine',
-      description:
-        '광견병 백신·종합백신의 접종 증명서와 내외부 구충 치료 기록이에요.\n\n접종한 동물병원에서 영문으로 발급받아요. 접종한 동물병원이 여러 곳인 경우, 각 동물병원에서 따로 받아야 해요.\n\n백신 이름·제조사·접종일·유효기간과 수의사 서명이 들어가야 해요.\n\n수입 허가증(SPSIC) 신청과 동물검역에 사용돼요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
-    },
+    // 태국과 동일 구조 — 항체검사(왕복, 55) → 수입허가 SPSIC(100) → 별지25(공통,
+    // vet-visit 110). 순서는 일정 타임라인(step order)과 일치. 접종·건강증명서는 모든
+    // 출국 케이스 공통인 별지 제25호 하나로 통합(영문 백신·건강 증명서 분리 제거).
     {
       id: 'ph-rabies-titer-result',
       name: '광견병 항체 검사 결과지',
@@ -313,15 +305,8 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
         'Intercommerce 온라인 신청 후 필리핀 동물산업국(BAI)에서 발급받아요.\n\n발급일로부터 60일간 유효하며 연장할 수 없어요.\n\n필리핀 도착 후 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
       previewStepId: 'import-permit',
     },
-    {
-      id: 'ph-health-cert-en',
-      name: '영문 건강증명서(Health Certificate)',
-      source: '동물병원',
-      kind: 'manual',
-      issuanceStepId: 'vet-visit',
-      description:
-        '임상 수의사가 영문으로 발급하는 건강증명서예요.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급해요.\n\n마이크로칩 번호, 접종 기록, 기생충 치료 확인, 수의사 서명과 면허번호가 들어가야 해요.\n\n영어로 작성하거나 공인 영문 번역본이 필요해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
-    },
+    // 접종 및 건강증명서(별지 제25호) — 일본·태국과 완전히 동일한 한국 공식 양식.
+    KR_FORM25_VACCINATION_HEALTH_CERT,
     {
       id: 'ph-kr-export-quarantine-cert',
       name: '한국 수출 동물검역증',
