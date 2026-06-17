@@ -204,8 +204,8 @@
     --accent: 40 36% 84%;
     --accent-foreground: 29 19% 13%;
 
-    /* Destructive: rust red (#A04525) */
-    --destructive: 16 64% 38%;
+    /* Destructive: 펫무브 경고색 (#C26A4A) — 다른 경고(주의 배지·삭제 버튼)와 통일 */
+    --destructive: 16 50% 53%;
     --destructive-foreground: 32 30% 92%;
 
     /* Border: warm hairline (#D9CFB8) */
@@ -333,7 +333,7 @@
     --accent: 25 12% 21%;
     --accent-foreground: 32 30% 92%;
 
-    --destructive: 14 51% 53%;
+    --destructive: 16 60% 60%;
     --destructive-foreground: 32 30% 92%;
 
     --border: 25 12% 21%;
