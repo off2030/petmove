@@ -302,7 +302,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       kind: 'step',
       stepRef: 'import-permit',
       description:
-        'Intercommerce 온라인 신청 후 필리핀 동물산업국(BAI)에서 발급받아요.\n\n발급일로부터 60일간 유효하며 연장할 수 없어요.\n\n필리핀 도착 후 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
+        '수입 허가 신청이 승인되면 발급돼요.\n\n발급일로부터 60일간 유효해요.\n\nPDF 파일로 발급되며, 앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
       previewStepId: 'import-permit',
     },
     // 접종 및 건강증명서(별지 제25호) — 일본·태국과 완전히 동일한 한국 공식 양식.
