@@ -88,6 +88,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   'th_export_quarantine_confirmed',
   'ph_import_quarantine_date',
   'ph_import_quarantine_confirmed',
+  // 필리핀 귀국 전 현지 동물병원 방문 — BAI 수출검역 신청용 건강증명서. dated-confirm.
+  'ph_local_vet_visit_date',
+  'ph_local_vet_visit_confirmed',
   'ph_export_quarantine_date',
   'ph_export_quarantine_confirmed',
   // EU 패밀리 공용 — 입국 검사·현지 검역증명서. 키는 공용이지만 by_dest 가 목적지별 분리.

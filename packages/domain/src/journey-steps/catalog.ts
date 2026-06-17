@@ -1224,15 +1224,43 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     attachmentHint: '건강증명서·검역증명서 사본을 사진, PDF로 저장하세요.',
   },
 
+  // ── 필리핀 현지 동물병원 방문 (왕복 — 귀국 출국 전, BAI 수출검역 신청용 건강증명서 발급) ──
+  // 태국과 달리 BAI 수출검역을 바로 받지 못하고, 먼저 현지 수의사 임상검진·건강증명서가 필요.
+  // dated-confirm(quarantine:<필드>) 모델 재사용 — 방문일 입력 + 보호자 완료 확인.
+  {
+    id: 'ph-local-vet-visit',
+    category: 'document',
+    title: '현지 동물병원 방문',
+    shortLabel: '현지검진',
+    description:
+      '필리핀 출국 전 현지 동물병원을 방문해 임상 검진을 받고 건강증명서를 발급받으세요.\n출국일 기준 10일 이내에 받아야 해요.\n이 건강증명서로 BAI 수출 동물검역을 신청해요.',
+    doneSummary: '현지 동물병원에서 검진·건강증명서를 받았어요.',
+    cardLine: '필리핀 현지 동물병원에서 검진·건강증명서를 받으세요.',
+    applicability: { destinations: ['philippines'], species: 'all', tripType: 'round' },
+    order: 150,
+    done: 'quarantine:ph_local_vet_visit_date',
+    inputs: [
+      {
+        key: 'ph_local_vet_visit_date',
+        label: '방문일',
+        type: 'date',
+        helpText: '현지 동물병원에서 검진받은 날짜',
+      },
+    ],
+    allowAttachments: true,
+    attachmentHint: '건강증명서 사본을 사진, PDF로 저장하세요.',
+  },
+
   // ── 필리핀 수출 동물검역 (왕복 — 귀국 출국 시, 필리핀 전용) ───────────────
   // 태국 수출검역과 동일 모델 — 완료신호 'quarantine:<필드>' confirm 메커니즘 재사용.
+  // 현지 건강증명서는 직전 단계(ph-local-vet-visit)에서 발급 — 여기선 그 서류로 BAI 검역.
   {
     id: 'ph-export-quarantine',
     category: 'document',
     title: '필리핀 수출 동물검역',
     shortLabel: '수출',
     description:
-      '필리핀 출국 전 BAI 동물검역소에서 수출 동물검역을 받으세요.\n출국 전에 현지 수의사의 건강증명서를 받고, BAI에서 수출 허가와 검역 확인을 받아요.\n발급받은 서류는 한국 수입 동물검역 때 제출해요.\n광견병 항체 검사 결과지(한국 입국용) 원본을 함께 준비하세요.',
+      '필리핀 출국 전 BAI 동물검역소에서 수출 동물검역을 받으세요.\n현지 동물병원에서 받은 건강증명서를 제출하면, BAI에서 수출 허가와 검역 확인을 해줘요.\n발급받은 서류는 한국 수입 동물검역 때 제출해요.\n광견병 항체 검사 결과지(한국 입국용) 원본을 함께 준비하세요.',
     doneSummary: '필리핀 수출 동물검역을 받았어요.',
     cardLine: '필리핀 BAI 동물검역소에서 수출 검역을 받으세요.',
     applicability: { destinations: ['philippines'], species: 'all', tripType: 'round' },
