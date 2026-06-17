@@ -187,8 +187,8 @@
     --popover: 40 56% 96%;
     --popover-foreground: 29 19% 13%;
 
-    /* Primary: 깊은 burgundy (#7A2E2E) — 매거진 시그니처 액센트 */
-    --primary: 0 46% 33%;
+    /* Primary: 펫무브 amber (#E8A55A) — 공용 부품(달력 선택일 등)도 펫무브 톤 */
+    --primary: 32 75% 63%;
     --primary-foreground: 32 30% 92%;
 
     /* Secondary: warm sand (#E8DEC4) */
@@ -211,8 +211,8 @@
     /* Border: warm hairline (#D9CFB8) */
     --border: 40 26% 79%;
     --input: 40 26% 79%;
-    /* Ring (focus): 깊은 ink blue (#2F4459) — 매거진 cool 액센트 */
-    --ring: 215 32% 27%;
+    /* Ring (focus): 펫무브 amber (#E8A55A) */
+    --ring: 32 75% 63%;
 
     --radius: 0.5rem;
 
@@ -225,7 +225,7 @@
     --pmw-accent-strong: 32 30% 43%;     /* #8C6F4E warm brown — tinted/hover */
     --pmw-tag-bg: 40 36% 83%;            /* #E5D9C2 warm cream */
     --pmw-tag-fg: 35 27% 30%;            /* #5E4D38 dark olive */
-    --pmw-cal-today: 49 30% 42%;         /* #8B7E4F olive */
+    --pmw-cal-today: 32 75% 63%;         /* 펫무브 amber #E8A55A */
     --pmw-cal-sunday: 16 56% 40%;        /* #A04A2D rust orange */
     --pmw-cal-saturday: 215 32% 27%;     /* #2F4459 ink blue */
     --pmw-positive: 120 20% 31%;         /* #3F5F3F forest green */
@@ -318,8 +318,8 @@
     --popover: 30 18% 15%;
     --popover-foreground: 32 30% 92%;
 
-    /* Primary: lighter burgundy (#B85555) — dark 에선 lift */
-    --primary: 0 41% 53%;
+    /* Primary: 펫무브 amber dark (#EAB06A) */
+    --primary: 33 75% 67%;
     --primary-foreground: 32 30% 92%;
 
     /* Secondary/muted: deep warm gray (#3D3530) */
@@ -338,7 +338,7 @@
 
     --border: 25 12% 21%;
     --input: 25 12% 21%;
-    --ring: 213 24% 53%;
+    --ring: 33 75% 67%;
 
     /* PMW semantic — Warm Stationery dark */
     --pmw-accent: 30 38% 71%;            /* #D4B69A lighter clay */
@@ -346,7 +346,7 @@
     --pmw-accent-strong: 30 30% 58%;     /* #B89876 muted clay */
     --pmw-tag-bg: 25 12% 21%;            /* dark warm */
     --pmw-tag-fg: 40 36% 83%;            /* warm cream */
-    --pmw-cal-today: 47 30% 65%;         /* #C5B98A light olive */
+    --pmw-cal-today: 33 75% 67%;         /* 펫무브 amber dark #EAB06A */
     --pmw-cal-sunday: 16 47% 58%;        /* #C77E5E light rust */
     --pmw-cal-saturday: 213 17% 61%;     /* #8E9BAB light ink */
     --pmw-positive: 113 17% 60%;         /* #8FA888 light forest */
