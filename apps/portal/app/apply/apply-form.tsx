@@ -1,5 +1,7 @@
 'use client'
 
+
+import { COAT_COLOR_HEX as COLOR_HEX } from '@/lib/coat-colors'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@petmove/ui'
@@ -246,15 +248,6 @@ function sexOptions(m: Messages) {
   ]
 }
 
-// 모색 스와치용 HEX 매핑 (colors.json 의 ko 와 매칭)
-const COLOR_HEX: Record<string, string> = {
-  '흰색': '#FFFFFF',
-  '검정': '#141413',
-  '갈색': '#6D4A2B',
-  '황색': '#E8B84A',
-  '크림': '#F5E6C8',
-  '회색': '#9CA3AF',
-}
 
 interface PetForm {
   petName: string

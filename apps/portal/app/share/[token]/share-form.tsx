@@ -1,5 +1,7 @@
 'use client'
 
+
+import { COAT_COLOR_HEX as COLOR_HEX } from '@/lib/coat-colors'
 import { Fragment, useEffect, useRef, useState, useTransition } from 'react'
 import { CheckCircle2, Plus, X } from 'lucide-react'
 import { DateTextField } from '@petmove/ui'
@@ -31,14 +33,6 @@ const SEX_OPTIONS = [
   { value: 'female', label: '암컷' },
   { value: 'male', label: '수컷' },
 ]
-const COLOR_HEX: Record<string, string> = {
-  '흰색': '#FFFFFF',
-  '검정': '#141413',
-  '갈색': '#6D4A2B',
-  '황색': '#E8B84A',
-  '크림': '#F5E6C8',
-  '회색': '#9CA3AF',
-}
 const chipButtonActive = 'border-foreground bg-foreground text-background'
 const chipButtonInactive = 'border-border bg-card text-foreground hover:bg-accent'
 const dropdownClass = 'mt-1 rounded-md border border-border/80 bg-popover shadow-sm'
