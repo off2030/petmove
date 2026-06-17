@@ -86,7 +86,7 @@ export function JpExportQuarantineInputs({
               boxSizing: 'border-box',
               background: 'var(--pm-surface)',
               border: `1px solid ${C.line}`,
-              borderRadius: 8,
+              borderRadius: 10,
               padding: '8px 10px',
               fontFamily: 'inherit',
               fontSize: 15,

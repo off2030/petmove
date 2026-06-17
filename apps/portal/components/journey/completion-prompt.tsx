@@ -70,7 +70,7 @@ export function CompletionPrompt({
           width: '100%',
           maxWidth: 480,
           margin: '0 12px max(12px, env(safe-area-inset-bottom))',
-          borderRadius: 24,
+          borderRadius: 22,
           background: C.surface,
           boxShadow: '0 14px 44px rgba(42,38,32,.24)',
           padding: '10px 20px 22px',
