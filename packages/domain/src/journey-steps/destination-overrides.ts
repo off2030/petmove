@@ -220,7 +220,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       // deriveImportPermitStatus 가 첨부/완료 플래그로 done 판정(태국과 동일 2-step 모델).
       inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
       links: [
-        { url: 'https://www.intercommerce.com.ph/registrationbai.asp', label: 'Intercommerce 수입자 등록' },
+        { url: 'https://www.intercommerce.com.ph/login.asp?home=HOME', label: 'Intercommerce 수입자 등록' },
       ],
       attachmentLabel: '수입 허가증(SPSIC)',
       validationIds: ['ph.import-permit-14days-after-vaccines'],
