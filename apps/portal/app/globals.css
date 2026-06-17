@@ -116,7 +116,7 @@
   --pm-card-rim: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
   --pm-card-rim-soft: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
   --pm-ring-bg: #1C1916;
-  --pm-ring-accent: #C9AC7C;
+  --pm-ring-accent: #EAB06A;
 }
 
 @keyframes pm-fade-up {

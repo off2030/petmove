@@ -762,7 +762,7 @@ export function StepDetailView({
     if (raw === 'dog' || raw === '강아지' || raw === '개') return 'dog'
     if (raw === 'cat' || raw === '고양이') return 'cat'
     return null
-  }, [caseRow?.data])
+  }, [caseRow])
   const generalVaccineProductHints = useMemo(
     () =>
       generalVaccine.map((e): RabiesProductHints | null => {
