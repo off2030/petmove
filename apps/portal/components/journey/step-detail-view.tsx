@@ -2195,6 +2195,8 @@ export function StepDetailView({
               // 필리핀 — 수입 허가(SPSIC)엔 항공편 일정만 필요: 출국 [날짜·도착공항] / 귀국 [날짜](+미정).
               entryFieldKeys={destinationKey === 'philippines' ? ['entry_date', 'entry_airport'] : undefined}
               returnFieldKeys={destinationKey === 'philippines' ? ['return_date'] : undefined}
+              // 도착 공항 예시 — 기본값(나리타 NRT)이 일본 기준이라 필리핀은 마닐라로 교체.
+              fieldPlaceholders={destinationKey === 'philippines' ? { entry_airport: '예: 마닐라 MNL' } : undefined}
             />
           </section>
         )}

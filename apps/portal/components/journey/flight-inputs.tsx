@@ -100,6 +100,7 @@ export function FlightInputs({
   collapsible = false,
   entryFieldKeys,
   returnFieldKeys,
+  fieldPlaceholders,
 }: {
   value: FlightForm
   onChange: (key: keyof FlightForm, next: string) => void
@@ -126,16 +127,28 @@ export function FlightInputs({
    */
   entryFieldKeys?: ReadonlyArray<keyof FlightForm>
   returnFieldKeys?: ReadonlyArray<keyof FlightForm>
+  /**
+   * 필드 예시(placeholder) 덮어쓰기 — 기본 예시가 일본 기준(나리타 NRT)이라 목적지별로 교체.
+   * 예: 필리핀 도착 공항은 '예: 마닐라 MNL'. 키별로 지정한 것만 교체, 나머지는 기본값.
+   */
+  fieldPlaceholders?: Partial<Record<keyof FlightForm, string>>
 }) {
   const drop = (fields: readonly FlightField[]) =>
     showTransport ? fields : fields.filter((f) => f.kind !== 'transport')
+  // 목적지별 예시(placeholder) 덮어쓰기 적용 — 지정된 키만 교체.
+  const withPlaceholders = (fields: readonly FlightField[]) =>
+    fieldPlaceholders
+      ? fields.map((f) =>
+          fieldPlaceholders[f.key] != null ? { ...f, placeholder: fieldPlaceholders[f.key] } : f,
+        )
+      : fields
   // 나라별 필드 한정 — 키 목록이 주어지면 그 키만, 없으면 전체.
-  const selectedEntryFields = entryFieldKeys
-    ? ENTRY_FIELDS.filter((f) => entryFieldKeys.includes(f.key))
-    : ENTRY_FIELDS
-  const selectedReturnFields = returnFieldKeys
-    ? RETURN_FIELDS.filter((f) => returnFieldKeys.includes(f.key))
-    : RETURN_FIELDS
+  const selectedEntryFields = withPlaceholders(
+    entryFieldKeys ? ENTRY_FIELDS.filter((f) => entryFieldKeys.includes(f.key)) : ENTRY_FIELDS,
+  )
+  const selectedReturnFields = withPlaceholders(
+    returnFieldKeys ? RETURN_FIELDS.filter((f) => returnFieldKeys.includes(f.key)) : RETURN_FIELDS,
+  )
 
   // 출국/귀국을 동등한 leg 로 — 각 leg 는 날짜(출발일)를 항상 노출하고 나머지는 '세부 정보' 접기.
   // 태국(departureFirst): 출국 주필드=출발일, 세부=도착일·도착시간·공항·편명.
