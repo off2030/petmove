@@ -320,14 +320,14 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     },
     {
       id: 'ph-export-quarantine-cert',
-      name: '수출 허가증(Export Permit)·국제 수의건강증명서(IVHC)',
+      name: '수출 허가증·국제 수의건강증명서',
       source: '필리핀 동물산업국(BAI)',
       kind: 'step',
       stepRef: 'ph-export-quarantine',
       group: 'quarantine',
       roundTripOnly: true,
       description:
-        '필리핀 수출 동물검역 후 발급받아요.\n\n정확한 서류 이름은 정부 공식 수출 허가증(Export Permit)과 국제 수의건강증명서(IVHC)입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '필리핀 수출 동물검역 후 발급돼요.\n\n정확한 서류 이름은 Export Permit, International Veterinary Health Certificate 입니다.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'ph-export-quarantine',
     },
     {
