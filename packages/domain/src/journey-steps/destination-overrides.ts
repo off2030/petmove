@@ -217,7 +217,10 @@ export const STEP_DESTINATION_OVERRIDES: Record<
         '필리핀 수입 허가증(SPSIC)을 신청하세요.\n\nIntercommerce 사이트에서 온라인으로 신청해요.\n접종일로부터 2주가 지난 후에 신청할 수 있어요.\n신청일 기준 4개월령 이상이어야 해요. 3마리까지 신청할 수 있어요.\n승인까지 수 일이 걸려요. 최소 1~2주 전까지 신청하세요.\n수입 허가증은 발급일로부터 60일간 유효해요.',
       doneSummary: '필리핀 수입 허가증(SPSIC)을 받았어요.',
       cardLine: '필리핀 수입 허가증(SPSIC)을 신청하세요.',
-      deadline: { anchor: 'departure', daysBefore: 10 },
+      // 마감 배지 없음 — SPSIC 는 출국 전이기만 하면 되고 고정 마감일(X일 전 규칙)이 없음.
+      // base 의 deadline(daysBefore:30)도 undefined 로 무효화(태국 earliest:undefined 와 동일 패턴).
+      // 권장 시점은 description('승인까지 수 일… 최소 1~2주 전')으로만 안내.
+      deadline: undefined,
       // 허가 번호 대신 첨부·완료 버튼으로 완료 처리 — 입력은 신청일만(base 의 permit_no 제거).
       // deriveImportPermitStatus 가 첨부/완료 플래그로 done 판정(태국과 동일 2-step 모델).
       inputs: [{ key: 'import_permit_application_date', label: '신청일', type: 'date' }],
