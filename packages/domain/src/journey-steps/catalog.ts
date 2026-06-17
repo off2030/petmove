@@ -1260,7 +1260,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '필리핀 수출 동물검역',
     shortLabel: '수출',
     description:
-      '필리핀 출국 전 BAI 동물검역소에서 수출 동물검역을 받으세요.\n현지 동물병원에서 받은 건강증명서를 제출하면, BAI에서 수출 허가와 검역 확인을 해줘요.\n발급받은 서류는 한국 수입 동물검역 때 제출해요.\n광견병 항체 검사 결과지(한국 입국용) 원본을 함께 준비하세요.',
+      '필리핀 출국 전 BAI 동물검역소에서 수출 동물검역을 받으세요.\n현지 동물병원에서 받은 건강증명서가 있어야 해요.\n수출 허가증·국제 수의건강증명서가 발급돼요.',
     doneSummary: '필리핀 수출 동물검역을 받았어요.',
     cardLine: '필리핀 BAI 동물검역소에서 수출 검역을 받으세요.',
     applicability: { destinations: ['philippines'], species: 'all', tripType: 'round' },
@@ -1276,7 +1276,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
       },
     ],
     allowAttachments: true,
-    attachmentHint: '수출 허가·건강증명서 사본을 사진, PDF로 저장하세요.',
+    attachmentHint: '수출 허가증·국제 수의건강증명서 사본을 사진, PDF로 저장하세요.',
   },
 
   // ── 15. 한국 수입 동물검역 (왕복 케이스 한정 — 귀국 후) ─────────────────
