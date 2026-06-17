@@ -1233,7 +1233,7 @@ export const JOURNEY_STEP_CATALOG: StepDefinition[] = [
     title: '현지 동물병원 방문',
     shortLabel: '현지검진',
     description:
-      '필리핀 출국 전 현지 동물병원을 방문해 임상 검진을 받고 건강증명서를 발급받으세요.\n출국일 기준 10일 이내에 받아야 해요.\n이 건강증명서로 BAI 수출 동물검역을 신청해요.',
+      '필리핀 출국 전 현지 동물병원을 방문해 임상 검진을 받고 건강증명서를 발급받으세요.\n이 건강증명서가 있어야 BAI 동물검역소에서 수출 동물검역을 받을 수 있어요.\nBAI 동물검역 방문 직전에 받아야 해요. (3일 이내 권장)',
     doneSummary: '현지 동물병원에서 검진·건강증명서를 받았어요.',
     cardLine: '필리핀 현지 동물병원에서 검진·건강증명서를 받으세요.',
     applicability: { destinations: ['philippines'], species: 'all', tripType: 'round' },
