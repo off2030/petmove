@@ -1976,8 +1976,9 @@ export function StepDetailView({
             </Link>
           )}
           {step.links?.map((l) => {
-            // 정적 파일(/forms/x.pdf 등, 확장자 있는 경로) = 다운로드 → <a download> + '↓'.
-            const isFile = /\/[^/]+\.[a-z0-9]+$/i.test(l.url)
+            // 다운로드(↓)는 앱이 제공하는 로컬 정적 파일만 (/forms/x.pdf 등). 외부 URL 은 확장자가
+            // 있어도(.asp·.php·.html 등 웹페이지) 파일이 아니므로 startsWith('/') 를 필수로 둔다.
+            const isFile = l.url.startsWith('/') && /\/[^/]+\.[a-z0-9]+$/i.test(l.url)
             // 상대 경로(/…) = 앱 내부 페이지 → Next Link + '→', http = 외부 → 새 탭 + '↗'.
             const internal = l.url.startsWith('/') && !isFile
             // 내부 링크는 inline-flex 로 한 줄에 나란히, 외부 링크는 block 으로 자기 줄.
