@@ -1273,16 +1273,17 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
                 </button>
               )
             })}
-            {/* 4개 이상은 직접 입력 */}
+            {/* 4개 이상은 직접 입력 (1~3은 버튼). 1~3 선택 시 칸은 비워둠 */}
             <input
               type="number"
-              min={1}
+              min={4}
               max={99}
               inputMode="numeric"
-              value={tubeCount}
+              value={Number(tubeCount) >= 4 ? tubeCount : ''}
               onChange={(e) => setTubeCount(e.target.value.replace(/[^0-9]/g, ''))}
-              aria-label="검체수 직접 입력"
-              className="w-16 h-8 px-2 rounded border border-border/80 bg-background text-sm text-foreground text-center"
+              placeholder="4+"
+              aria-label="검체수 직접 입력 (4 이상)"
+              className="w-16 h-8 px-2 rounded border border-border/80 bg-background text-sm text-foreground text-center placeholder:text-muted-foreground"
             />
           </div>
         </div>
