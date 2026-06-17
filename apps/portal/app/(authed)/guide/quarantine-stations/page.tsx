@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import { useRouter } from 'next/navigation'
 import { QUARANTINE_REGIONS, type QuarantineStation } from '@/lib/quarantine-stations'
 
@@ -8,15 +10,6 @@ import { QUARANTINE_REGIONS, type QuarantineStation } from '@/lib/quarantine-sta
  * 4탭(일정·서류·정보·프로필)에 추가하지 않고 step 링크로만 진입. Stone/Calm 톤.
  */
 
-const C = {
-  bg: 'var(--pm-bg)',
-  surface: 'var(--pm-surface)',
-  ink: 'var(--pm-ink)',
-  ink2: 'var(--pm-ink-2)',
-  ink3: 'var(--pm-ink-3)',
-  line: 'var(--pm-line)',
-  accent: 'var(--pm-accent)',
-} as const
 
 const serif: React.CSSProperties = {
   fontFamily: 'var(--pm-font-display)',

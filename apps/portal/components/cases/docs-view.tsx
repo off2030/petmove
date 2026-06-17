@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { getStepDocumentUrl, pruneMissingStepDocuments } from '@/lib/actions/documents'
@@ -25,17 +27,6 @@ export function DocsView({
   activeDest?: string | null
 }) {
   const destQuery = activeDest ? `?dest=${encodeURIComponent(activeDest)}` : ''
-  const C = {
-    bg: 'var(--pm-bg)',
-    surface: 'var(--pm-surface)',
-    ink: 'var(--pm-ink)',
-    ink2: 'var(--pm-ink-2)',
-    ink3: 'var(--pm-ink-3)',
-    line: 'var(--pm-line)',
-    accent: 'var(--pm-accent)',
-    soft: 'var(--pm-accent-soft)',
-    sage: 'var(--pm-sage)',
-  } as const
 
   const serif: React.CSSProperties = {
     fontFamily: 'var(--pm-font-display)',

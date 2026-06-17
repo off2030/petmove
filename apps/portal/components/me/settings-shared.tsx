@@ -2,26 +2,16 @@
 
 import Link from 'next/link'
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { C } from '@/lib/palette'
 
 /**
  * 설정 sub-page 공유 컴포넌트: 팔레트 / 헤더+뒤로 / 섹션 카드 / 하단 sticky 저장 바.
  * 원본 톤: components/cases/info-view.tsx 및 me/profile-view.tsx (Stone 팔레트).
  */
 
-// 색은 globals.css 의 --pm-* 토큰을 참조 — light/dark 를 컴포넌트 수정 없이 따라감.
-// (알파 합성이 필요한 곳은 color-mix(in srgb, var(--pm-x) N%, transparent) 로, var()+hex 금지)
-export const C = {
-  bg: 'var(--pm-bg)',
-  surface: 'var(--pm-surface)',
-  ink: 'var(--pm-ink)',
-  ink2: 'var(--pm-ink-2)',
-  ink3: 'var(--pm-ink-3)',
-  line: 'var(--pm-line)',
-  accent: 'var(--pm-accent)',
-  soft: 'var(--pm-accent-soft)',
-  sage: 'var(--pm-sage)',
-  warn: 'var(--pm-warn)',
-} as const
+// 색 팔레트는 @/lib/palette 가 단일 출처. 여기선 re-export 만 (이 파일에서 C 를
+// import 하던 기존 코드 호환). 색을 바꾸려면 globals.css 의 --pm-* 토큰만 고치면 됨.
+export { C }
 
 export const serif: CSSProperties = {
   fontFamily: 'var(--pm-font-display)',

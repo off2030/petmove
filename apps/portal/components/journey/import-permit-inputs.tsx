@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import { DateTextField } from '@petmove/ui'
 
 /**
@@ -23,12 +25,6 @@ export function ImportPermitInputs({
   /** 허가 번호 입력 노출 — step.inputs 에 permit_no 가 있을 때만(태국은 신청일만). */
   showPermitNo?: boolean
 }) {
-  const C = {
-    surface: 'var(--pm-surface)',
-    line: 'var(--pm-line)',
-    ink: 'var(--pm-ink)',
-    ink3: 'var(--pm-ink-3)',
-  } as const
 
   const fieldBox: React.CSSProperties = {
     padding: '10px 12px',

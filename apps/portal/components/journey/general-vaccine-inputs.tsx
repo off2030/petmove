@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import { DateTextField } from '@petmove/ui'
 import { CollapsibleSection } from './collapsible-section'
 import type { RabiesProductHints } from './rabies-entry-inputs'
@@ -27,13 +29,6 @@ export interface GeneralVaccineEntry {
   other_hospital: boolean
 }
 
-const C = {
-  surface: 'var(--pm-surface)',
-  line: 'var(--pm-line)',
-  ink: 'var(--pm-ink)',
-  ink2: 'var(--pm-ink-2)',
-  ink3: 'var(--pm-ink-3)',
-} as const
 
 type ProductFieldKey = 'product' | 'manufacturer' | 'lot' | 'expiry'
 

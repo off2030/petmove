@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C as PM } from '@/lib/palette'
 import { useState } from 'react'
 import { DateTextField } from '@petmove/ui'
 import { getTiterLabOptions, isKnownTiterLab, isSameTiterLab } from '@petmove/domain'
@@ -22,13 +24,8 @@ export interface TiterExtraEntry {
 }
 
 const C = {
-  surface: 'var(--pm-surface)',
-  line: 'var(--pm-line)',
-  ink: 'var(--pm-ink)',
-  ink2: 'var(--pm-ink-2)',
-  ink3: 'var(--pm-ink-3)',
-  accent: 'var(--pm-accent)',
-  accentSoft: 'rgba(232,165,90,.14)',
+  ...PM,
+  accentSoft: 'color-mix(in srgb, var(--pm-accent) 14%, transparent)',
 } as const
 
 const CUSTOM_LAB = '__custom__'

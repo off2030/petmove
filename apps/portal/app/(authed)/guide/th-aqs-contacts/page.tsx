@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import { useRouter } from 'next/navigation'
 import type { ContactRow, ContactSection } from '@/lib/th-aqs-contacts'
 import { TH_AQS_CONTACTS } from '@/lib/th-aqs-contacts'
@@ -9,15 +11,6 @@ import { TH_AQS_CONTACTS } from '@/lib/th-aqs-contacts'
  * 4탭에 추가하지 않고 step 링크로만 진입. jp-quarantine-contacts 페이지와 동일 톤(Stone/Calm).
  */
 
-const C = {
-  bg: 'var(--pm-bg)',
-  surface: 'var(--pm-surface)',
-  ink: 'var(--pm-ink)',
-  ink2: 'var(--pm-ink-2)',
-  ink3: 'var(--pm-ink-3)',
-  line: 'var(--pm-line)',
-  accent: 'var(--pm-accent)',
-} as const
 
 const serif: React.CSSProperties = {
   fontFamily: 'var(--pm-font-display)',

@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C as PM } from '@/lib/palette'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { CaseHeader } from '@/components/cases/case-header'
@@ -71,22 +73,8 @@ export function TimelineCalm({
 
   // Stone palette — scoped to this view (globals.css 의 --pm-* 와 같은 값, 인라인 fidelity).
   const C = {
-    bg: 'var(--pm-bg)',
-    surface: 'var(--pm-surface)',
-    ink: 'var(--pm-ink)',
-    ink2: 'var(--pm-ink-2)',
-    ink3: 'var(--pm-ink-3)',
+    ...PM,
     line: 'rgb(var(--pm-ink-rgb) / .07)',
-    accent: 'var(--pm-accent)',
-    sage: 'var(--pm-sage)',
-    warn: 'var(--pm-warn)',
-    warnBg: 'rgba(194,106,74,0.08)',
-    info: 'var(--pm-info)',
-    infoBg: 'rgba(201,166,99,0.08)',
-    // 그라데이션은 globals.css 의 --pm-card-* 토큰을 따른다 (light/dark 자동 분기).
-    cardSoft: 'var(--pm-card-soft)',
-    cardList: 'var(--pm-card-list)',
-    cardHero: 'var(--pm-card-hero)',
   } as const
 
   // 주의가 발생한 stage 들 — 실패한 비-info 체크(실제 문제)가 있는 경우만.

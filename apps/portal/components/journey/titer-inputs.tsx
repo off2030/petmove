@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C as PM } from '@/lib/palette'
 import { useState } from 'react'
 import { DateTextField } from '@petmove/ui'
 import { getTiterLabOptions, isKnownTiterLab, isSameTiterLab } from '@petmove/domain'
@@ -34,12 +36,8 @@ export function TiterInputs({
   // 검사기관 선택지 — 목적지별(@petmove/domain) + '기타'(직접 입력) 마지막에 덧붙임.
   const LAB_OPTIONS = [...getTiterLabOptions(destinationKey), { value: CUSTOM_LAB, label: '기타' }]
   const C = {
-    surface: 'var(--pm-surface)',
-    line: 'var(--pm-line)',
-    ink: 'var(--pm-ink)',
-    ink2: 'var(--pm-ink-2)',
-    accent: 'var(--pm-accent)',
-    accentSoft: 'rgba(232,165,90,.14)',
+    ...PM,
+    accentSoft: 'color-mix(in srgb, var(--pm-accent) 14%, transparent)',
   } as const
 
   // 검사기관 — lab 이 코드 목록에 없으면 직접 입력 모드. lab 이 비었지만 사용자가

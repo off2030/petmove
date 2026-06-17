@@ -13,17 +13,7 @@ import { saveCaseFeedback } from '@/lib/actions/cases'
  * 한 번 보낸 뒤에도 수정해서 다시 보낼 수 있다.
  */
 
-const C = {
-  bg: 'var(--pm-bg)',
-  surface: 'var(--pm-surface)',
-  ink: 'var(--pm-ink)',
-  ink2: 'var(--pm-ink-2)',
-  ink3: 'var(--pm-ink-3)',
-  line: 'var(--pm-line)',
-  accent: 'var(--pm-accent)',
-  sage: 'var(--pm-sage)',
-  warn: 'var(--pm-warn)',
-} as const
+import { C } from '@/lib/palette'
 
 // 표시 순서는 '아주 좋아요'(level 5)를 맨 앞으로 — 긍정 선택을 앞세워 응답 문턱을 낮춘다.
 // level(저장값)은 그대로라 점수 의미는 불변, 화면 순서만 역순.

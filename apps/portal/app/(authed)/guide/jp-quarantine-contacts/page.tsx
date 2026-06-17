@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import { useRouter } from 'next/navigation'
 import {
   JP_QUARANTINE_CONTACTS,
@@ -17,15 +19,6 @@ import {
  * 사전 신고 승인 후·예약(각 공항 지부).
  */
 
-const C = {
-  bg: 'var(--pm-bg)',
-  surface: 'var(--pm-surface)',
-  ink: 'var(--pm-ink)',
-  ink2: 'var(--pm-ink-2)',
-  ink3: 'var(--pm-ink-3)',
-  line: 'var(--pm-line)',
-  accent: 'var(--pm-accent)',
-} as const
 
 const serif: React.CSSProperties = {
   fontFamily: 'var(--pm-font-display)',

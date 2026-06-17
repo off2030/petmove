@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -10,11 +12,6 @@ import { createPortal } from 'react-dom'
  * mount 유지를 위해 render/shown 2단계 상태. scrim 탭·ESC 로 닫힘, 열림 동안 body 스크롤 잠금.
  */
 
-const C = {
-  surface: 'var(--pm-surface)',
-  ink: 'var(--pm-ink)',
-  line: 'var(--pm-line)',
-} as const
 
 export function BottomSheet({
   open,

@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import { useState, type ReactNode } from 'react'
 
 /**
@@ -10,11 +12,6 @@ import { useState, type ReactNode } from 'react'
  * (빈 입력은 닫힘으로 깔끔하게, 기존 데이터는 가려지지 않게).
  */
 
-const C = {
-  line: 'var(--pm-line)',
-  ink2: 'var(--pm-ink-2)',
-  ink3: 'var(--pm-ink-3)',
-} as const
 
 export function CollapsibleSection({
   label,

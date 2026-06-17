@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
@@ -11,15 +13,6 @@ import { JAPAN_AIRPORTS, type AirportMap } from '@/lib/japan-airport-quarantine'
  * 검역 카운터 위치 안내도(공식 PDF→PNG)를 공항·터미널별로 정리. 안내도 탭 시 전체화면 확대.
  */
 
-const C = {
-  bg: 'var(--pm-bg)',
-  surface: 'var(--pm-surface)',
-  ink: 'var(--pm-ink)',
-  ink2: 'var(--pm-ink-2)',
-  ink3: 'var(--pm-ink-3)',
-  line: 'var(--pm-line)',
-  accent: 'var(--pm-accent)',
-} as const
 
 const serif: React.CSSProperties = {
   fontFamily: 'var(--pm-font-display)',

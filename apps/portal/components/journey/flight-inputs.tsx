@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import type { ReactNode } from 'react'
 import { DateTextField } from '@petmove/ui'
 import { CollapsibleSection } from './collapsible-section'
@@ -36,13 +38,6 @@ export interface FlightForm {
   return_undecided: string
 }
 
-const C = {
-  surface: 'var(--pm-surface)',
-  line: 'var(--pm-line)',
-  ink: 'var(--pm-ink)',
-  ink2: 'var(--pm-ink-2)',
-  ink3: 'var(--pm-ink-3)',
-} as const
 
 /**
  * 운송 방법 선택지 — 보호자 친근 라벨 chip. share 폼(share-form.tsx)의 고객용 2지와 동일.

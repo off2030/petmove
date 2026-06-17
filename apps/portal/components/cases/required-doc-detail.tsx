@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import Link from 'next/link'
 import { useEffect, useState, useTransition } from 'react'
 import type { RequiredDocItem } from '@petmove/domain'
@@ -31,18 +33,6 @@ export function RequiredDocDetail({
   /** 활성 목적지(?dest=) — 다중 목적지에서 완료/해당없음을 그 목적지(by_dest)로 저장. */
   activeDest?: string | null
 }) {
-  const C = {
-    bg: 'var(--pm-bg)',
-    surface: 'var(--pm-surface)',
-    ink: 'var(--pm-ink)',
-    ink2: 'var(--pm-ink-2)',
-    ink3: 'var(--pm-ink-3)',
-    line: 'var(--pm-line)',
-    accent: 'var(--pm-accent)',
-    soft: 'var(--pm-accent-soft)',
-    sage: 'var(--pm-sage)',
-    warn: 'var(--pm-warn)',
-  } as const
 
   const serif: React.CSSProperties = {
     fontFamily: 'var(--pm-font-display)',

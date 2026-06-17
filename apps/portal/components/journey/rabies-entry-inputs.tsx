@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import { DateTextField } from '@petmove/ui'
 import { CollapsibleSection } from './collapsible-section'
 
@@ -85,13 +87,6 @@ export function RabiesEntryInputs({
   /** 타병원 접종 여부. 본병원이면 약품칸은 지정 약품 읽기 전용, 타병원이면 직접 입력. */
   otherHospital?: boolean
 }) {
-  const C = {
-    surface: 'var(--pm-surface)',
-    line: 'var(--pm-line)',
-    ink: 'var(--pm-ink)',
-    ink2: 'var(--pm-ink-2)',
-    ink3: 'var(--pm-ink-3)',
-  } as const
 
   const cardStyle: React.CSSProperties = {
     background: C.surface,

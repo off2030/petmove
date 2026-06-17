@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import { useRef, useState, useTransition } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import type { CaseRow } from '@petmove/domain'
@@ -26,13 +28,6 @@ import { resizeImage } from '@/lib/image'
  * - 선택 즉시 server action → 응답 case 로 Context 업데이트(헤더 스위처도 동시 갱신).
  */
 
-const C = {
-  ink: 'var(--pm-ink)',
-  ink2: 'var(--pm-ink-2)',
-  ink3: 'var(--pm-ink-3)',
-  line: 'var(--pm-line)',
-  surface: 'var(--pm-surface)',
-} as const
 
 export function PetAvatarPicker({ case_ }: { case_: CaseRow }) {
   const { cases, profile, updateCase } = useCases()

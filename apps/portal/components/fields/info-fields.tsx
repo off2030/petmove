@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C as PM } from '@/lib/palette'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import destsData from '@petmove/domain/data/destinations.json'
@@ -22,14 +24,8 @@ import { PortalCalendar, ymdLocal } from './portal-calendar'
  */
 
 const C = {
-  surface: 'var(--pm-surface)',
-  ink: 'var(--pm-ink)',
-  ink2: 'var(--pm-ink-2)',
-  ink3: 'var(--pm-ink-3)',
-  line: 'var(--pm-line)',
-  accent: 'var(--pm-accent)',
-  accentSoft: 'rgba(232,165,90,.14)',
-  soft: 'var(--pm-accent-soft)',
+  ...PM,
+  accentSoft: 'color-mix(in srgb, var(--pm-accent) 14%, transparent)',
 } as const
 
 interface Dest {

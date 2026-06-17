@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import { DateTextField } from '@petmove/ui'
 
 /**
@@ -19,12 +21,6 @@ export function ImportQuarantineInputs({
   /** 날짜 필드 라벨 — 검역 '검역일', EU 입국 '검사일', 증명서 '발급일', 사전 통지 '통지일'. */
   label?: string
 }) {
-  const C = {
-    surface: 'var(--pm-surface)',
-    line: 'var(--pm-line)',
-    ink: 'var(--pm-ink)',
-    ink3: 'var(--pm-ink-3)',
-  } as const
 
   return (
     <div

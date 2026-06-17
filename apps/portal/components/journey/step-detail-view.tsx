@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
@@ -1535,20 +1537,6 @@ export function StepDetailView({
     }
   }
 
-  const C = {
-    bg: 'var(--pm-bg)',
-    surface: 'var(--pm-surface)',
-    ink: 'var(--pm-ink)',
-    ink2: 'var(--pm-ink-2)',
-    ink3: 'var(--pm-ink-3)',
-    line: 'var(--pm-line)',
-    accent: 'var(--pm-accent)',
-    sage: 'var(--pm-sage)',
-    warn: 'var(--pm-warn)',
-    warnBg: 'color-mix(in srgb, var(--pm-warn) 8%, transparent)',
-    info: 'var(--pm-info)',
-    infoBg: 'color-mix(in srgb, var(--pm-info) 8%, transparent)',
-  } as const
 
   const serif: React.CSSProperties = {
     fontFamily: 'var(--pm-font-display)',

@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import { DateTextField } from '@petmove/ui'
 import type { RabiesEntryForm, RabiesProductHints } from './rabies-entry-inputs'
 
@@ -20,13 +22,6 @@ export interface RabiesExtraEntry extends RabiesEntryForm {
   other_hospital: boolean
 }
 
-const C = {
-  surface: 'var(--pm-surface)',
-  line: 'var(--pm-line)',
-  ink: 'var(--pm-ink)',
-  ink2: 'var(--pm-ink-2)',
-  ink3: 'var(--pm-ink-3)',
-} as const
 
 const FIELDS: ReadonlyArray<{
   key: keyof RabiesEntryForm

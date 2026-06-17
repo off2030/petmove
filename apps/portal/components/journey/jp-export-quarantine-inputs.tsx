@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import { DateTextField } from '@petmove/ui'
 
 export interface JpExportForm {
@@ -28,12 +30,6 @@ export function JpExportQuarantineInputs({
   form: JpExportForm
   onChange: (key: keyof JpExportForm, next: string) => void
 }) {
-  const C = {
-    surface: 'var(--pm-surface)',
-    line: 'var(--pm-line)',
-    ink: 'var(--pm-ink)',
-    ink3: 'var(--pm-ink-3)',
-  } as const
 
   return (
     <div

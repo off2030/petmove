@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C as PM } from '@/lib/palette'
 import { useRef, useState, useTransition } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import {
@@ -29,12 +31,7 @@ interface Props {
 }
 
 const C = {
-  ink: 'var(--pm-ink)',
-  ink2: 'var(--pm-ink-2)',
-  ink3: 'var(--pm-ink-3)',
-  line: 'var(--pm-line)',
-  surface: 'var(--pm-surface)',
-  accent: 'var(--pm-accent)',
+  ...PM,
   accentSoft: 'var(--pm-accent-soft)',
 } as const
 

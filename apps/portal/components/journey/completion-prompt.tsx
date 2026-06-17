@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import type { CSSProperties } from 'react'
 import type { CaseRow } from '@petmove/domain'
 import { PetAvatarDisplay } from '@/components/me/pet-avatar-display'
@@ -10,13 +12,6 @@ import { PetAvatarDisplay } from '@/components/me/pet-avatar-display'
  * 발동 판정·호출은 여정 페이지에서. 여긴 표시 + 버튼 콜백만.
  */
 
-const C = {
-  surface: '#FBF7F1',
-  ink: '#2A2620',
-  ink3: '#9A9286',
-  line2: 'rgba(42,38,32,.14)',
-  accent: '#E8A55A',
-}
 
 /** 한국어 받침 — '와/과'. */
 function waGwa(name: string): string {

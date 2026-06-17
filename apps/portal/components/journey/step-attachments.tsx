@@ -1,5 +1,7 @@
 'use client'
 
+
+import { C } from '@/lib/palette'
 import { useRef, useState, useTransition } from 'react'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import {
@@ -16,15 +18,6 @@ import { type CaseDocument, formatFileSize, MAX_DOCUMENT_BYTES } from '@/lib/doc
  * 모든 storage 작업은 lib/actions/documents.ts 의 service-role server action 경유.
  */
 
-const C = {
-  surface: 'var(--pm-surface)',
-  line: 'var(--pm-line)',
-  ink: 'var(--pm-ink)',
-  ink3: 'var(--pm-ink-3)',
-  accent: 'var(--pm-accent)',
-  soft: 'var(--pm-accent-soft)',
-  warn: 'var(--pm-warn)',
-} as const
 
 export function StepAttachments({
   caseId,
