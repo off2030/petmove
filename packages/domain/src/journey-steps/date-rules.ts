@@ -326,6 +326,23 @@ export function validatePhImportPermitVaccineGap(
 }
 
 /**
+ * 필리핀 — 수입 허가증(SPSIC)은 발급일로부터 60일간 유효(연장 불가)하므로, 출국일 60일보다
+ * 일찍 신청하면 출국 전에 만료돼 무효. 신청일이 (출국일 − 60일)보다 빠르면 차단.
+ * (발급은 신청 며칠 뒤라 신청일 기준 60일은 약간 보수적이지만 안전 측 — 출국 시 유효 보장.)
+ */
+export function validatePhImportPermitWithin60Days(
+  filedDate: string,
+  departureDate: string,
+): string | null {
+  if (!filedDate || !departureDate) return null
+  const earliest = addDays(departureDate.slice(0, 10), -60)
+  if (earliest && filedDate.slice(0, 10) < earliest) {
+    return `수입 허가증(SPSIC)은 발급일로부터 60일간 유효해요. 출국 60일 이내(${fmt(earliest)} 이후)에 신청하세요.`
+  }
+  return null
+}
+
+/**
  * EU 패밀리 입국일(= 출국 항공편 날짜) — 광견병 항체 검사 채혈일 + 3개월(캘린더) 미만 입국만
  * hard 차단. 일본 180일 룰과 같은 기준: 재검사해도 새 채혈일 + 3개월을 다시 기다려야 하므로
  * 회복 경로가 입국일 변경뿐. (EU Reg 576/2013 Art.12 — "at least three months")

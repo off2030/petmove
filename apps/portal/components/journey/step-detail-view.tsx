@@ -27,6 +27,7 @@ import {
   validateImportPermitNotAfterDeparture,
   validatePhEntryDate,
   validatePhImportPermitVaccineGap,
+  validatePhImportPermitWithin60Days,
   validateThEntryDate,
   validateThImportPermitVaccineGap,
   EU_ENTRY_FAMILY,
@@ -1025,12 +1026,14 @@ export function StepDetailView({
           validateThImportPermitVaccineGap(filed, data)
         )
       }
-      // 필리핀 — ①신청일이 출국일 이후면 차단(논리적 불가능, 태국과 동일) ②백신 1차(단일 접종)
-      // 14일 이내면 차단(부스터 면제). 출국일은 항공권 저장 시 entry_date 와 동기화된 departure_date.
+      // 필리핀 — ①신청일이 출국일 이후면 차단(논리적 불가능) ②출국 60일보다 일찍이면 차단
+      // (SPSIC 60일 유효, 출국 전 만료) ③백신 1차(단일 접종) 14일 이내면 차단(부스터 면제).
+      // 출국일은 항공권 저장 시 entry_date 와 동기화된 departure_date.
       if (destinationKey === 'philippines') {
         const dep = (caseRow?.departure_date ?? '').slice(0, 10)
         return (
           validateImportPermitNotAfterDeparture(filed, dep) ??
+          validatePhImportPermitWithin60Days(filed, dep) ??
           validatePhImportPermitVaccineGap(filed, data)
         )
       }
