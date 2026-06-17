@@ -214,7 +214,7 @@ export const STEP_DESTINATION_OVERRIDES: Record<
     'import-permit': {
       title: '수입 허가증(SPSIC) 신청',
       description:
-        '필리핀 수입 허가증(SPSIC)을 신청하세요.\n\nIntercommerce 사이트에서 일회성 수입자(One-time Importer)로 등록한 후 온라인으로 신청해요.\n광견병·종합백신 접종 14일 후부터 신청할 수 있어요.\n생후 120일(4개월) 이상이어야 하며, 1회 최대 3마리까지 신청할 수 있어요.\n예방접종 증명서, 구충 기록, 마이크로칩 증명서, 반려동물 사진을 PDF 또는 JPG(5MB 이하)로 첨부해요.\n승인까지 수일이 걸려요. 출발 1~2주 전까지 신청하세요.\n수입 허가증은 발급일로부터 60일간 유효하며 연장할 수 없어요.',
+        '필리핀 수입 허가증(SPSIC)을 신청하세요.\n\nIntercommerce 사이트에서 온라인으로 신청해요.\n접종일로부터 2주가 지난 후에 신청할 수 있어요.\n신청일 기준 4개월령 이상이어야 해요. 3마리까지 신청할 수 있어요.\n승인까지 수 일이 걸려요. 최소 1~2주 전까지 신청하세요.\n수입 허가증은 발급일로부터 60일간 유효해요.',
       doneSummary: '필리핀 수입 허가증(SPSIC)을 받았어요.',
       cardLine: '필리핀 수입 허가증(SPSIC)을 신청하세요.',
       deadline: { anchor: 'departure', daysBefore: 10 },
