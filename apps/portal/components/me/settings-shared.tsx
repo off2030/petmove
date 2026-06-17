@@ -317,7 +317,7 @@ export function StickySaveBar({
           borderRadius: 14,
           border: 0,
           background: justSaved ? C.sage : canSave ? C.accent : C.line,
-          color: justSaved || canSave ? '#fff' : C.ink3,
+          color: justSaved ? '#fff' : canSave ? '#3a2a08' : C.ink3,
           fontFamily: 'inherit',
           fontSize: 15,
           fontWeight: 600,

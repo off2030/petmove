@@ -28,7 +28,7 @@ const C = {
   ink2: 'var(--pm-ink-2)',
   ink3: 'var(--pm-ink-3)',
   accent: 'var(--pm-accent)',
-  accentSoft: 'rgba(184,153,104,.14)',
+  accentSoft: 'rgba(232,165,90,.14)',
 } as const
 
 const CUSTOM_LAB = '__custom__'

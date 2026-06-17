@@ -5,7 +5,7 @@
 const C = {
   bg: '#F5EFE8', surface: '#FBF7F1', ink: '#2A2620', ink2: '#6B6457', ink3: '#9A9286',
   line: 'rgba(42,38,32,.08)', line2: 'rgba(42,38,32,.14)',
-  accent: '#B89968', soft: '#E8DCC4', sage: '#8FA68C', sageDeep: '#6E8A6B',
+  accent: '#E8A55A', soft: '#E8DCC4', sage: '#8FA68C', sageDeep: '#6E8A6B',
   cardList: 'linear-gradient(160deg, #F5EDE0 0%, #F2E9DC 50%, #ECE3D3 100%)',
   cardHero: 'radial-gradient(140% 100% at 80% 18%, #E8DECC 0%, #DCD2BD 45%, #CBC1AB 100%)',
 };

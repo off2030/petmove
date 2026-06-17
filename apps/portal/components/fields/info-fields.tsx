@@ -28,7 +28,7 @@ const C = {
   ink3: 'var(--pm-ink-3)',
   line: 'var(--pm-line)',
   accent: 'var(--pm-accent)',
-  accentSoft: 'rgba(184,153,104,.14)',
+  accentSoft: 'rgba(232,165,90,.14)',
   soft: 'var(--pm-accent-soft)',
 } as const
 

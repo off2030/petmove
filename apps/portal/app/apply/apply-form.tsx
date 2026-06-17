@@ -311,14 +311,14 @@ const destructiveBoxClass =
   'rounded-md border border-[#C26A4A]/30 bg-[#C26A4A]/10 px-md py-2.5 text-sm text-[#C26A4A]'
 const primaryButtonClass = cn(
   'inline-flex items-center justify-center rounded-md font-medium transition-colors',
-  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#B89968]/40',
+  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#E8A55A]/40',
   'disabled:pointer-events-none disabled:opacity-50 select-none',
   'w-full h-12 text-base tracking-[0.1px]',
-  'bg-[#B89968] text-[#FBF7F1] hover:bg-[#A98B5E]',
+  'bg-[#E8A55A] text-[#3a2a08] hover:bg-[#D98B3A]',
 )
 const secondaryButtonClass = cn(
   'inline-flex items-center justify-center rounded-md font-medium transition-colors',
-  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#B89968]/40',
+  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#E8A55A]/40',
   'disabled:pointer-events-none disabled:opacity-50 select-none',
   'h-12 px-6 text-base tracking-[0.1px]',
   'border border-[rgba(42,38,32,0.16)] bg-[#FBF7F1] text-[#2A2620] hover:bg-[#F0E8DC]',
@@ -364,18 +364,18 @@ function FieldRow({
 }) {
   return (
     <div
-      className={cn(fieldRowClass, className, missing && 'relative pl-3 -ml-3 bg-[#B89968]/10 rounded-sm')}
+      className={cn(fieldRowClass, className, missing && 'relative pl-3 -ml-3 bg-[#E8A55A]/10 rounded-sm')}
       data-field-key={fieldKey}
     >
       {missing && (
-        <span aria-hidden className="absolute left-0 top-2 bottom-2 w-[3px] bg-[#B89968] rounded" />
+        <span aria-hidden className="absolute left-0 top-2 bottom-2 w-[3px] bg-[#E8A55A] rounded" />
       )}
       <div className={fieldHeaderClass}>
         <span className={labelClass}>{label}</span>
         <span className={fieldMetaClass}>
           {hint && !missing && <span className={hintRightClass}>{hint}</span>}
           {missing && (
-            <span className="font-display text-[12px] text-[#B89968]">{m.fillRequest}</span>
+            <span className="font-display text-[12px] text-[#E8A55A]">{m.fillRequest}</span>
           )}
         </span>
       </div>
@@ -440,7 +440,7 @@ function SearchSheetField({
           value={query}
           onChange={(e) => onQuery(e.target.value)}
           placeholder={searchPlaceholder}
-          className="mb-2.5 w-full rounded-lg border border-[rgba(42,38,32,0.16)] bg-white px-3 py-2.5 text-[15px] text-[#2A2620] placeholder:text-[#9A9286]/70 focus:outline-none focus:ring-1 focus:ring-[#B89968]/40"
+          className="mb-2.5 w-full rounded-lg border border-[rgba(42,38,32,0.16)] bg-white px-3 py-2.5 text-[15px] text-[#2A2620] placeholder:text-[#9A9286]/70 focus:outline-none focus:ring-1 focus:ring-[#E8A55A]/40"
         />
         <div className="pm-noscroll flex flex-col gap-1 overflow-y-auto" style={{ height: '52vh' }}>
           {items.length === 0 ? (
@@ -465,7 +465,7 @@ function SearchSheetField({
                     {secondary && <span className="text-[13px] text-[#9A9286] truncate">{secondary}</span>}
                   </span>
                   {isSel && (
-                    <svg aria-hidden viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 text-[#B89968]">
+                    <svg aria-hidden viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 text-[#E8A55A]">
                       <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
@@ -503,7 +503,7 @@ function StepProgress({ step, total }: { step: number; total: number }) {
             key={i}
             className={cn(
               'h-1 flex-1 rounded-full transition-colors',
-              i < step ? 'bg-[#B89968]' : 'bg-[rgba(42,38,32,0.14)]',
+              i < step ? 'bg-[#E8A55A]' : 'bg-[rgba(42,38,32,0.14)]',
             )}
           />
         ))}

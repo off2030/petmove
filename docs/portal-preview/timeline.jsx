@@ -14,7 +14,7 @@ function TimelineCalm({ scenario, onNav, ringShape = 'H' }) {
   // Stone palette tokens — scoped to this view only
   const C = {
     bg: '#F5EFE8', surface: '#FBF7F1', ink: '#2A2620', ink2: '#6B6457', ink3: '#9A9286',
-    line: 'rgba(42,38,32,.07)', accent: '#8A7355', soft: '#EDE4D7', bar: '#D4C7AC', sage: '#8FA68C',
+    line: 'rgba(42,38,32,.07)', accent: '#E8A55A', soft: '#EDE4D7', bar: '#D4C7AC', sage: '#8FA68C',
     cardSoft: 'linear-gradient(160deg, #F0E8DB 0%, #EDE4D7 50%, #E6DDCD 100%)',
     cardList: 'linear-gradient(160deg, #F5EDE0 0%, #F2E9DC 50%, #ECE3D3 100%)',
     cardHero: 'radial-gradient(140% 100% at 80% 18%, #E8DECC 0%, #DCD2BD 45%, #CBC1AB 100%)',
@@ -142,8 +142,8 @@ function TimelineCalm({ scenario, onNav, ringShape = 'H' }) {
                 <circle cx="110" cy="110" r={R - 15} fill="none" stroke={C.sage} strokeWidth="4" strokeLinecap="round" strokeDasharray={2 * Math.PI * (R - 15)} strokeDashoffset={2 * Math.PI * (R - 15) * 0.5} transform="rotate(-90 110 110)" />
               </>}
               {ringShape === 'H' && <>
-                <circle cx="110" cy="110" r={R} fill="none" stroke="rgba(184,153,104,.14)" strokeWidth="14" />
-                <circle cx="110" cy="110" r={R} fill="none" stroke={C.accent} strokeWidth="3" strokeLinecap="round" strokeDasharray={CIRC} strokeDashoffset={animOffset} transform="rotate(-90 110 110)" style={{ filter: 'drop-shadow(0 0 6px rgba(184,153,104,.5))' }} />
+                <circle cx="110" cy="110" r={R} fill="none" stroke="rgba(232,165,90,.14)" strokeWidth="14" />
+                <circle cx="110" cy="110" r={R} fill="none" stroke={C.accent} strokeWidth="3" strokeLinecap="round" strokeDasharray={CIRC} strokeDashoffset={animOffset} transform="rotate(-90 110 110)" style={{ filter: 'drop-shadow(0 0 6px rgba(232,165,90,.5))' }} />
               </>}
             </svg>
             <div style={{

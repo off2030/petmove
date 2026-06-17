@@ -39,7 +39,7 @@ export function TiterInputs({
     ink: 'var(--pm-ink)',
     ink2: 'var(--pm-ink-2)',
     accent: 'var(--pm-accent)',
-    accentSoft: 'rgba(184,153,104,.14)',
+    accentSoft: 'rgba(232,165,90,.14)',
   } as const
 
   // 검사기관 — lab 이 코드 목록에 없으면 직접 입력 모드. lab 이 비었지만 사용자가
