@@ -100,12 +100,12 @@ interface CollectedCheck {
  * 항공권 '도착 공항'(현지) 예시 placeholder — 기본값이 일본(나리타 NRT) 기준이라 목적지별
  * 현지 공항으로 교체(entry_airport = 도착 공항, return_departure_airport = 귀국편 출발 공항).
  * 출발 공항·귀국 도착 공항은 한국(인천)이라 기본값 유지. 태국은 departureFirst 레이아웃이
- * 자체 상수(방콕 BKK)를 써서 제외. 'eu' 는 여러 나라를 묶은 키라 대표 허브(프랑크푸르트)로 둠.
+ * 자체 상수(방콕 BKK)를 써서 제외. 'eu' 는 여러 나라를 묶은 키라 대표 허브(파리 CDG)로 둠.
  */
 const FLIGHT_ARRIVAL_AIRPORT_EXAMPLE: Record<string, string> = {
   japan: '예: 나리타 NRT',
   philippines: '예: 마닐라 MNL',
-  eu: '예: 프랑크푸르트 FRA',
+  eu: '예: 파리 CDG',
   uk: '예: 런던 히드로 LHR',
   ireland: '예: 더블린 DUB',
   malta: '예: 몰타 MLA',
