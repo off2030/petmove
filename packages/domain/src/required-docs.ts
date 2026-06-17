@@ -170,7 +170,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'certificate-issue',
       group: 'quarantine',
       description:
-        '한국 수출 동물검역 후 발급받아요.\n\n일본 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '한국 수출 동물검역 후 발급돼요.\n\n일본 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'certificate-issue',
     },
     {
@@ -241,7 +241,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'certificate-issue',
       group: 'quarantine',
       description:
-        '한국 수출 동물검역 후 발급받아요.\n\n태국 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '한국 수출 동물검역 후 발급돼요.\n\n태국 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'certificate-issue',
     },
     {
@@ -315,7 +315,7 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       stepRef: 'certificate-issue',
       group: 'quarantine',
       description:
-        '한국 수출 동물검역 후 발급받아요.\n\n필리핀 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
+        '한국 수출 동물검역 후 발급돼요.\n\n필리핀 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'certificate-issue',
     },
     {
@@ -380,7 +380,7 @@ function euFamilyDocSpecs(label: string, opts?: { withImportPermit?: boolean }):
       stepRef: 'certificate-issue',
       group: 'quarantine',
       description:
-        `한국 수출 동물검역 후 발급받아요.\n\n${label} 입국 검사 때 제시해야 할 수 있어요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
+        `한국 수출 동물검역 후 발급돼요.\n\n${label} 입국 검사 때 제시해야 할 수 있어요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.`,
       previewStepId: 'certificate-issue',
     },
     {
