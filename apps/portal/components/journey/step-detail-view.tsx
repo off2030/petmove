@@ -1599,11 +1599,13 @@ export function StepDetailView({
   const noticeCount = notices.length + (situationalDesc ? 1 : 0)
   const stepDocuments = readCaseDocuments(caseRow?.data).filter((d) => d.stepId === step.id)
 
-  // 항공권 step + 왕복 + 출국만 입력 + 미정 아님 — 편도 전환 affordance 노출. 로컬 폼 기준으로
-  // 계산해 '미정' 체크 즉시 함께 사라진다. hasEntry 는 도착일(entry_date) 기준 — 출발일이 주
-  // 입력 필드인 태국 등에서 출발일만으로는 이 버튼이 뜨지 않게 한다(원래 동작 유지, 사실상 일본).
+  // 항공권 step + 왕복 + 출국만 입력 + 미정 아님 — '편도 전환' affordance 노출. 일본 전용 —
+  // 태국·필리핀·EU 등은 귀국 leg 의 '미정' 토글만으로 처리(편도 전환 버튼 미노출, 태국과 동일).
+  // 과거엔 entry_date 입력 기준이라 entry_date 레이아웃(일본·필리핀·EU)에 다 떴는데, 의도는
+  // 일본 한정이었음(태국은 departure_date 주필드라 원래 미노출). destinationKey 로 명시 게이트.
+  // 로컬 폼 기준으로 계산해 '미정' 체크 즉시 함께 사라진다.
   const isFlightRoundEntryOnly = (() => {
-    if (!isFlight || tripType !== 'round') return false
+    if (!isFlight || tripType !== 'round' || destinationKey !== 'japan') return false
     const hasEntry = flightForm.entry_date.trim().length >= 10
     const hasReturn = flightForm.return_date.trim().length >= 10
     const undecided = flightForm.return_undecided === '1'
