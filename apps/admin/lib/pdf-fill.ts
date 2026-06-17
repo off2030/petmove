@@ -186,7 +186,7 @@ const LAB_SHIPPING: Record<string, { name: string; country: string; block: strin
   },
   vbddl: {
     name: 'Vector Borne Disease Diagnostic Lab',
-    country: 'USA',
+    country: 'United States',
     block: [
       'Vector Borne Disease Diagnostic Lab',
       ' CVM Research Building, Room',
@@ -197,7 +197,7 @@ const LAB_SHIPPING: Record<string, { name: string; country: string; block: strin
   },
   ksvdl_r: {
     name: 'Kansas State Rabies Laboratory',
-    country: 'USA',
+    country: 'United States',
     block: [
       'Contact Name: Dr. Dale Claassen',
       'Tel. +1-785-532-4474 / emal: rabies@vet.k-state.edu',

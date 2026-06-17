@@ -1231,8 +1231,8 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
 
   function handleSubmit() {
     const n = Math.trunc(Number(tubeCount))
-    if (!Number.isFinite(n) || n < 1 || n > 5) {
-      alert('1~5 사이 숫자를 선택하세요')
+    if (!Number.isFinite(n) || n < 1 || n > 99) {
+      alert('검체수는 1~99 사이 숫자로 입력하세요')
       return
     }
     if (selectedSpecies.size === 0) {
@@ -1254,8 +1254,8 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
           <label className="text-sm font-medium text-primary mb-2 block">
             검체수
           </label>
-          <div className="flex gap-sm">
-            {[1, 2, 3, 4, 5].map(n => {
+          <div className="flex gap-sm items-center">
+            {[1, 2, 3].map(n => {
               const v = String(n)
               const selected = tubeCount === v
               return (
@@ -1273,6 +1273,17 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
                 </button>
               )
             })}
+            {/* 4개 이상은 직접 입력 */}
+            <input
+              type="number"
+              min={1}
+              max={99}
+              inputMode="numeric"
+              value={tubeCount}
+              onChange={(e) => setTubeCount(e.target.value.replace(/[^0-9]/g, ''))}
+              aria-label="검체수 직접 입력"
+              className="w-16 h-8 px-2 rounded border border-border/80 bg-background text-sm text-foreground text-center"
+            />
           </div>
         </div>
 
