@@ -867,7 +867,7 @@ export function TodosApp({
       {activeTab === 'inspection' && (
         <>
           <div className="hidden md:flex items-center gap-sm">
-            <ShipmentDocsButton rows={inspectionRows} />
+            <ShipmentDocsButton />
             <BulkApplyPicker
               label="KSVDL"
                     rows={inspectionRows.filter(r => r.lab === 'ksvdl')}
@@ -886,7 +886,7 @@ export function TodosApp({
           </div>
           <div className="md:hidden">
             <InspectionFooterMobileMenu>
-              <ShipmentDocsButton rows={inspectionRows} />
+              <ShipmentDocsButton />
               <BulkApplyPicker
                 label="KSVDL"
                 rows={inspectionRows.filter(r => r.lab === 'ksvdl')}
@@ -1089,7 +1089,7 @@ export function TodosInspectionActions({ query }: { query: string }) {
         </div>
       )}
       {activeDialog === 'invoice' && (
-        <InvoiceDialog rows={invoiceRows} onClose={() => setActiveDialog(null)} />
+        <InvoiceDialog onClose={() => setActiveDialog(null)} />
       )}
       {activeDialog === 'ksvdl' && (
         <BulkApplyDialog
@@ -1161,7 +1161,7 @@ function InspectionFooterMobileMenu({ children }: { children: React.ReactNode })
 }
 
 /** 검사 탭 하단 — Invoice + ESD 생성 버튼. 튜브 갯수 + 수신 실험실 + 종 다이얼로그. */
-function ShipmentDocsButton({ rows }: { rows: InspectionRow[] }) {
+function ShipmentDocsButton() {
   const [open, setOpen] = useState(false)
   const [busy, startBusy] = useTransition()
 
@@ -1191,43 +1191,23 @@ function ShipmentDocsButton({ rows }: { rows: InspectionRow[] }) {
       >
         Invoice
       </button>
-      {open && <ShipmentDocsDialog rows={rows} onClose={() => setOpen(false)} onSubmit={handle} />}
+      {open && <ShipmentDocsDialog onClose={() => setOpen(false)} onSubmit={handle} />}
     </div>
   )
 }
 
-/** 검사 탭 하단 배송서류 다이얼로그 — 튜브 갯수 + 수신 실험실 + 종 + 발송일(검사일) 선택. */
+/** 검사 탭 하단 배송서류 다이얼로그 — 튜브 갯수 + 수신 실험실 + 종 + 발송일 입력. */
 interface ShipmentDocsDialogProps {
-  rows: InspectionRow[]
   onClose: () => void
   onSubmit: (opts: { tube_count: number; consignee_lab: string; species: ('dog' | 'cat')[]; ship_date?: string }) => void
 }
 
-function ShipmentDocsDialog({ rows, onClose, onSubmit }: ShipmentDocsDialogProps) {
+function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
   const [tubeCount, setTubeCount] = useState('1')
   const [selectedLab, setSelectedLab] = useState('ksvdl_r')
   const [selectedSpecies, setSelectedSpecies] = useState<Set<'dog' | 'cat'>>(new Set(['dog']))
-  // 발송일 = 전염병 검사일(채혈일). 케이스를 고르면 그 검사일로 자동 채움. 비우면 오늘.
+  // 발송일 — 채혈일에 맞춰 미리 발급할 때 직접 입력. 비우면 오늘.
   const [shipDate, setShipDate] = useState('')
-
-  // 검사일이 있는 검사 행만 — 케이스 선택지로 노출(펫·기관·검사일). 같은 (케이스+검사일)은 1개로.
-  const dateChoices = useMemo(() => {
-    const seen = new Set<string>()
-    const out: { key: string; label: string; lab: string; date: string }[] = []
-    for (const r of rows) {
-      if (!r.date) continue
-      const key = `${r.caseRow.id}:${r.date}`
-      if (seen.has(key)) continue
-      seen.add(key)
-      out.push({
-        key,
-        label: r.caseRow.pet_name || r.caseRow.customer_name || '(이름 없음)',
-        lab: r.lab.replace(/_/g, '-').toUpperCase(),
-        date: r.date,
-      })
-    }
-    return out.sort((a, b) => b.date.localeCompare(a.date))
-  }, [rows])
 
   const labs = [
     { value: 'ksvdl_r', label: 'KSVDL-R' },
@@ -1357,10 +1337,10 @@ function ShipmentDocsDialog({ rows, onClose, onSubmit }: ShipmentDocsDialogProps
           </div>
         </div>
 
-        {/* 발송일 = 전염병 검사일(채혈일). 케이스를 고르면 그 검사일로 자동, 비우면 오늘 */}
+        {/* 발송일 — 채혈일에 맞춰 미리 발급할 때 직접 입력. 비우면 오늘 */}
         <div className="mb-5">
           <label className="text-sm font-medium text-primary mb-2 block">
-            발송일 <span className="text-muted-foreground font-normal">(전염병 검사일 · 채혈일)</span>
+            발송일
           </label>
           <input
             type="date"
@@ -1369,29 +1349,8 @@ function ShipmentDocsDialog({ rows, onClose, onSubmit }: ShipmentDocsDialogProps
             className="w-full h-9 px-3 rounded border border-border/80 bg-background text-sm text-foreground"
           />
           <p className="text-[12px] text-muted-foreground mt-1">
-            {shipDate ? '인보이스·ESD 날짜와 수출 ref 에 이 날짜가 들어갑니다.' : '비우면 오늘 날짜로 발급됩니다.'}
+            비우면 오늘 날짜로 발급됩니다.
           </p>
-          {dateChoices.length > 0 && (
-            <div className="mt-2 max-h-32 overflow-y-auto scrollbar-minimal border border-border/60 rounded">
-              {dateChoices.map(c => {
-                const active = shipDate === c.date
-                return (
-                  <button
-                    key={c.key}
-                    type="button"
-                    onClick={() => setShipDate(c.date)}
-                    className={cn(
-                      'w-full flex items-center justify-between gap-sm px-3 py-1.5 text-left text-sm transition-colors',
-                      active ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-accent',
-                    )}
-                  >
-                    <span className="truncate">{c.label} <span className="text-muted-foreground text-[12px]">{c.lab}</span></span>
-                    <span className="font-mono tabular-nums text-[12px] shrink-0">{c.date}</span>
-                  </button>
-                )
-              })}
-            </div>
-          )}
         </div>
 
         {/* 버튼 */}
@@ -1521,7 +1480,7 @@ function BulkApplyDialog({
  * Invoice + ESD 생성 다이얼로그 래퍼. ShipmentDocsDialog 에 submit 핸들러를 붙여
  * 외부에서 open 제어 가능하게 만듦.
  */
-function InvoiceDialog({ rows, onClose }: { rows: InspectionRow[]; onClose: () => void }) {
+function InvoiceDialog({ onClose }: { onClose: () => void }) {
   async function handle(opts: { tube_count: number; consignee_lab: string; species: ('dog' | 'cat')[]; ship_date?: string }) {
     onClose()
     try {
@@ -1530,7 +1489,7 @@ function InvoiceDialog({ rows, onClose }: { rows: InspectionRow[]; onClose: () =
       alert(error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.')
     }
   }
-  return <ShipmentDocsDialog rows={rows} onClose={onClose} onSubmit={handle} />
+  return <ShipmentDocsDialog onClose={onClose} onSubmit={handle} />
 }
 
 /**
