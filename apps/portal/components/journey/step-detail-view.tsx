@@ -97,6 +97,24 @@ interface CollectedCheck {
 }
 
 /**
+ * 항공권 '도착 공항'(현지) 예시 placeholder — 기본값이 일본(나리타 NRT) 기준이라 목적지별
+ * 현지 공항으로 교체(entry_airport = 도착 공항, return_departure_airport = 귀국편 출발 공항).
+ * 출발 공항·귀국 도착 공항은 한국(인천)이라 기본값 유지. 태국은 departureFirst 레이아웃이
+ * 자체 상수(방콕 BKK)를 써서 제외. 'eu' 는 여러 나라를 묶은 키라 대표 허브(프랑크푸르트)로 둠.
+ */
+const FLIGHT_ARRIVAL_AIRPORT_EXAMPLE: Record<string, string> = {
+  japan: '예: 나리타 NRT',
+  philippines: '예: 마닐라 MNL',
+  eu: '예: 프랑크푸르트 FRA',
+  uk: '예: 런던 히드로 LHR',
+  ireland: '예: 더블린 DUB',
+  malta: '예: 몰타 MLA',
+  norway: '예: 오슬로 OSL',
+  finland: '예: 헬싱키 HEL',
+  switzerland: '예: 취리히 ZRH',
+}
+
+/**
  * 케이스 step 상세 화면. Stone 팔레트 / Fraunces serif — TimelineCalm 과 동일 톤.
  *
  * 4 영역:
@@ -2225,8 +2243,15 @@ export function StepDetailView({
               // 필리핀 — 수입 허가(SPSIC)엔 항공편 일정만 필요: 출국 [날짜·도착공항] / 귀국 [날짜](+미정).
               entryFieldKeys={destinationKey === 'philippines' ? ['entry_date', 'entry_airport'] : undefined}
               returnFieldKeys={destinationKey === 'philippines' ? ['return_date'] : undefined}
-              // 도착 공항 예시 — 기본값(나리타 NRT)이 일본 기준이라 필리핀은 마닐라로 교체.
-              fieldPlaceholders={destinationKey === 'philippines' ? { entry_airport: '예: 마닐라 MNL' } : undefined}
+              // 도착 공항 예시 — 기본값(나리타 NRT)이 일본 기준이라 목적지별 현지 공항으로 교체.
+              fieldPlaceholders={
+                destinationKey && FLIGHT_ARRIVAL_AIRPORT_EXAMPLE[destinationKey]
+                  ? {
+                      entry_airport: FLIGHT_ARRIVAL_AIRPORT_EXAMPLE[destinationKey],
+                      return_departure_airport: FLIGHT_ARRIVAL_AIRPORT_EXAMPLE[destinationKey],
+                    }
+                  : undefined
+              }
             />
           </section>
         )}
