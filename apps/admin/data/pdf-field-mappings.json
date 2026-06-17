@@ -4745,7 +4745,7 @@
     "filename": "ESD_{tube_count}tubes.pdf",
     "dateFormat": "mdy_slash",
     "fields": {
-      "text_1ataj":  { "source": null, "transform": "today_ymd_slash",          "note": "Date of Letter (오늘)" },
+      "text_1ataj":  { "source": "ship_date", "transform": "date_or_today",      "note": "Date of Letter — 발송일(전염병 검사일=채혈일), 없으면 오늘" },
       "text_2gscn":  { "source": "consignee_lab", "transform": "lab_shipping:name", "note": "수신 실험실 이름만" },
       "text_3fefc":  { "source": "tube_count", "note": "0.5 mL × N tubes 의 N" },
       "text_4vgcf":  { "source": null, "note": "FedEx AWB No. (수동 — 배송 예약 후 입력)" },
@@ -4765,16 +4765,17 @@
     "template": "Invoice.pdf",
     "description": "FedEx Commercial Invoice — 템플릿에 병원 정보·문구·수치가 이미 기입돼 있고 가변 필드만 새로 채움. (Date of exportation/Date, Shipper's Export Refs, Consignee, QTY, Total Value, Total Invoice Value)",
     "filename": "Invoice_{tube_count}tubes.pdf",
+    "dateFormat": "ymd_slash",
     "preserveTemplateText": true,
     "fields": {
-      "Text2":  { "source": null, "transform": "today_ymd_slash", "note": "Date of Exportation (오늘)" },
-      "Text3":  { "source": "shipper_export_ref", "note": "Shipper's Export References (LVMCYYYYMMDD)" },
+      "Text2":  { "source": "ship_date", "transform": "date_or_today", "note": "Date of Exportation — 발송일(전염병 검사일=채혈일), 없으면 오늘" },
+      "Text3":  { "source": "shipper_export_ref", "note": "Shipper's Export References (LVMCYYYYMMDD — 발송일 기준)" },
       "Text4":  { "source": null, "transform": "vet:invoice_shipper_block", "note": "SHIPPER/EXPORTER — 조직 정보 (이름/주소/연락처/Account·MID)" },
       "Text5":  { "source": "consignee_lab", "transform": "lab_shipping:block", "note": "Consignee — 수신 실험실 전체 블록" },
       "Text16": { "source": "tube_count", "note": "QTY — 튜브 갯수 숫자" },
       "Text20": { "source": "tube_count", "transform": "invoice_total_value", "note": "Total Value — tube_count × 1.00" },
       "Text24": { "source": "tube_count", "transform": "invoice_total_value", "note": "Total Invoice Value — tube_count × 1.00" },
-      "Text29": { "source": null, "transform": "today_ymd_slash", "note": "Date (오늘)" }
+      "Text29": { "source": "ship_date", "transform": "date_or_today", "note": "Date — 발송일(전염병 검사일=채혈일), 없으면 오늘" }
     },
     "signatures": [
       { "image": "lausanne.png", "page": 0, "x": 14, "y": 55, "w": 120, "h": 34 }

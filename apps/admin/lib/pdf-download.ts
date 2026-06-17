@@ -51,6 +51,8 @@ export type ShipmentPdfRequest = {
   consignee_lab?: string
   /** ESD 종 표기. 미지정 시 ['dog']. */
   species?: ('dog' | 'cat')[]
+  /** 발송일(Date of Exportation, YYYY-MM-DD). 채혈일에 맞춰 미리 발급 시 지정. 미지정 시 오늘. */
+  ship_date?: string
 }
 
 export type BundlePdfRequest = {

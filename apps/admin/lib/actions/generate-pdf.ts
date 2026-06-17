@@ -239,21 +239,32 @@ export type ShipmentOpts = {
   consignee_lab?: string
   /** ESD 종 표기. ['dog'] / ['cat'] / ['dog','cat'] (혼합 발송). 미지정 시 ['dog']. */
   species?: ('dog' | 'cat')[]
+  /**
+   * 발송일 = 전염병 검사일(채혈일, YYYY-MM-DD). 채혈일에 맞춰 수일 전 미리 발급할 때
+   * 케이스의 검사일을 지정. Invoice/ESD 의 날짜 칸 + 수출 ref(LVMCYYYYMMDD)에 사용.
+   * 미지정 시 오늘.
+   */
+  ship_date?: string
 }
 
-function generateShipperExportRef(): string {
+/** 발송일(전염병 검사일) 기준 수출 참조번호. YYYY-MM-DD 형식이면 그 날짜, 아니면 오늘. */
+function generateShipperExportRef(shipDate?: string): string {
+  const m = (shipDate ?? '').trim().match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (m) return `LVMC${m[1]}${m[2]}${m[3]}`
   const d = new Date()
   const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
-  return `LVMC${y}${m}${day}`
+  return `LVMC${y}${mm}${day}`
 }
 
 export async function generateInvoice(opts: ShipmentOpts): Promise<GeneratePdfResult> {
   const r = await generateStandalone('Invoice', {
     tube_count: opts.tube_count,
     consignee_lab: opts.consignee_lab ?? '',
-    shipper_export_ref: generateShipperExportRef(),
+    shipper_export_ref: generateShipperExportRef(opts.ship_date),
+    // 날짜 칸(date_or_today): 검사일 있으면 그 날짜, 없으면 오늘.
+    ship_date: opts.ship_date ?? '',
   })
   if (r.ok) r.filename = `Invoice_${opts.tube_count}tubes.pdf`
   return r
@@ -264,7 +275,8 @@ export async function generateESD(opts: ShipmentOpts): Promise<GeneratePdfResult
   const r = await generateStandalone('ESD', {
     tube_count: opts.tube_count,
     consignee_lab: opts.consignee_lab ?? '',
-    shipper_export_ref: generateShipperExportRef(),
+    shipper_export_ref: generateShipperExportRef(opts.ship_date),
+    ship_date: opts.ship_date ?? '',
     species,
   })
   if (r.ok) r.filename = `ESD_${opts.tube_count}tubes.pdf`

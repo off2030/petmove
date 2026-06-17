@@ -93,6 +93,7 @@ type ShipmentPdfBody = {
   tube_count: number
   consignee_lab?: string
   species?: ('dog' | 'cat')[]
+  ship_date?: string
 }
 
 type BundlePdfBody = {
@@ -183,6 +184,7 @@ export async function POST(req: NextRequest) {
         tube_count: body.tube_count,
         consignee_lab: body.consignee_lab,
         species: body.species,
+        ship_date: body.ship_date,
       }
       const result =
         body.variant === 'invoice'
