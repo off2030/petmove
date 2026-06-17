@@ -4773,7 +4773,9 @@
       "Text8":  { "source": "consignee_lab", "transform": "lab_shipping:country", "note": "COUNTRY OF ULTIMATE DESTINATION — 수신 실험실 국가 (ARC→South Africa, 그 외 US labs→United States). 템플릿 기본값 'United States' 덮어씀" },
       "Text4":  { "source": null, "transform": "vet:invoice_shipper_block", "note": "SHIPPER/EXPORTER — 조직 정보 (이름/주소/연락처/Account·MID)" },
       "Text5":  { "source": "consignee_lab", "transform": "lab_shipping:block", "note": "Consignee — 수신 실험실 전체 블록" },
-      "Text16": { "source": "tube_count", "note": "QTY — 튜브 갯수 숫자" },
+      "Text14": { "source": "goods_description", "note": "Full Description of Goods — ARC(남아공)만 혼합 검체 구성 덮어씀. 그 외 빈 값→preserveTemplateText 가 템플릿 기본(canine serum) 유지" },
+      "Text16": { "source": "tube_count", "note": "QTY — 검체 갯수 (ARC 는 14 고정)" },
+      "Text17": { "source": "goods_unit", "note": "Unit — ARC 'EA'(혼합 검체), 그 외 빈 값→템플릿 기본 'Tube' 유지" },
       "Text20": { "source": "tube_count", "transform": "invoice_total_value", "note": "Total Value — tube_count × 1.00" },
       "Text24": { "source": "tube_count", "transform": "invoice_total_value", "note": "Total Invoice Value — tube_count × 1.00" },
       "Text29": { "source": "ship_date", "transform": "date_or_today", "note": "Date — 발송일(전염병 검사일=채혈일), 없으면 오늘" }
