@@ -46,7 +46,7 @@
   --pm-accent-soft: #E8DCC4;
   --pm-sage: #8FA68C;
   --pm-warn: #C26A4A;
-  --pm-info: #C9A663;
+  --pm-info: #5E83A6;
 
   /* bg/surface 의 rgb 트리플 — 인라인 그라디언트/반투명 오버레이(상단바·하단바·저장바)가
      rgb(var(--pm-bg-rgb) / α) 로 테마를 따라가도록. (다크에서 dark 블록이 트리플을 교체) */
@@ -102,7 +102,7 @@
   --pm-accent-soft: #3A3328;
   --pm-sage: #9DB89A;
   --pm-warn: #D67E5C;
-  --pm-info: #D6B775;
+  --pm-info: #84A6C6;
   --pm-bg-rgb: 28 25 22;
   --pm-surface-rgb: 38 34 32;
   --pm-ink-rgb: 236 228 216;
