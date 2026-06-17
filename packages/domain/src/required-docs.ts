@@ -281,25 +281,8 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
     },
   ],
   '필리핀': [
-    {
-      id: 'ph-spsic-doc',
-      name: '수입 허가증(SPSIC)',
-      source: '필리핀 동물산업국(BAI)',
-      kind: 'step',
-      stepRef: 'import-permit',
-      description:
-        'Intercommerce 온라인 신청 후 필리핀 동물산업국(BAI)에서 발급받아요.\n\n발급일로부터 60일간 유효하며 연장할 수 없어요.\n\n필리핀 도착 후 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
-      previewStepId: 'import-permit',
-    },
-    {
-      id: 'ph-health-cert-en',
-      name: '영문 건강증명서(Health Certificate)',
-      source: '동물병원',
-      kind: 'manual',
-      issuanceStepId: 'vet-visit',
-      description:
-        '임상 수의사가 영문으로 발급하는 건강증명서예요.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급해요.\n\n마이크로칩 번호, 접종 기록, 기생충 치료 확인, 수의사 서명과 면허번호가 들어가야 해요.\n\n영어로 작성하거나 공인 영문 번역본이 필요해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
-    },
+    // 순서 = 일정 타임라인(step order)과 일치: 종합백신(50) → 항체검사(55) →
+    // 수입허가 SPSIC(100) → 임상검사 건강증명서(110) → 검역증 그룹(120·155·160).
     {
       id: 'ph-vaccine-cert-en',
       name: '예방접종·구충 증명서(영문)',
@@ -319,6 +302,25 @@ const SPECS: Record<string, RequiredDocSpec[]> = {
       description:
         '검사를 의뢰한 동물병원에서 발급받아요.\n\n필리핀 입국에는 필요하지 않지만, 한국으로 돌아올 때 반드시 원본이 필요해요. 필리핀 현지에서는 검사가 어려우므로 출국 전에 미리 받아두세요.\n\n광견병 백신 면역 유효기간 유지 시 채혈일로부터 2년까지 사용할 수 있어요.\n\n앱에 사본 이미지를 저장해두면 검사 관련 정보를 확인할 때 편리해요.',
       previewStepId: 'rabies-titer',
+    },
+    {
+      id: 'ph-spsic-doc',
+      name: '수입 허가증(SPSIC)',
+      source: '필리핀 동물산업국(BAI)',
+      kind: 'step',
+      stepRef: 'import-permit',
+      description:
+        'Intercommerce 온라인 신청 후 필리핀 동물산업국(BAI)에서 발급받아요.\n\n발급일로부터 60일간 유효하며 연장할 수 없어요.\n\n필리핀 도착 후 수입 동물검역 때 원본을 제시해야 해요.\n\n앱에 저장해두면 필요할 때 쉽게 사용할 수 있어요.',
+      previewStepId: 'import-permit',
+    },
+    {
+      id: 'ph-health-cert-en',
+      name: '영문 건강증명서(Health Certificate)',
+      source: '동물병원',
+      kind: 'manual',
+      issuanceStepId: 'vet-visit',
+      description:
+        '임상 수의사가 영문으로 발급하는 건강증명서예요.\n\n출국일 기준 10일 이내에 임상 수의사가 검진 후 발급해요.\n\n마이크로칩 번호, 접종 기록, 기생충 치료 확인, 수의사 서명과 면허번호가 들어가야 해요.\n\n영어로 작성하거나 공인 영문 번역본이 필요해요.\n\n앱에 사본 이미지를 저장해두면 관련 정보를 확인할 때 편리해요.',
     },
     {
       id: 'ph-kr-export-quarantine-cert',
