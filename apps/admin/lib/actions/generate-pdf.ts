@@ -3,7 +3,7 @@
 import { createClient } from '@petmove/auth/server'
 import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
 import type { CaseRow } from '@petmove/domain'
-import { getEffectiveVaccineList, flattenCaseForDestination, getDepartureDate, getVetVisitDate } from '@petmove/domain'
+import { getEffectiveVaccineList, flattenCaseForDestination, getDepartureDate, getVetVisitDate, parseDestinations } from '@petmove/domain'
 import { loadEffectiveVetInfo } from '@/lib/vet-info'
 
 export type GeneratePdfResult =
@@ -65,7 +65,15 @@ async function generate(
   const allowedVaccines = getEffectiveVaccineList(destForRules, extraFields)
   // 다중 목적지 케이스: 활성 목적지의 by_dest 값을 top-level 로 평탄화한 caseRow 로 채움.
   // 단일 목적지 또는 by_dest 미사용 케이스는 그대로.
-  caseRow = flattenCaseForDestination(caseRow, options?.destination ?? null)
+  // destination 미지정 호출(검사탭 KSVDL·VBDDL+APQA·ARC 버튼 등 — caseId 만 넘김)에서도
+  // 단일 목적지면 그 토큰으로 flatten 해서 by_dest 에 저장된 scoped 값(vet_visit_date 등)이
+  // top-level 로 올라와 폼에 채워지게 한다. 다중 목적지인데 미지정이면 어느 토큰인지 알 수
+  // 없어 no-op(기존 동작) — 콤마-조인 문자열을 by_dest 키로 쓰면 scoped 필드가 전부 삭제됨.
+  // (cases-app 은 단일·다중 모두 항상 destination 을 넘기므로 이 폴백 영향 없음.)
+  const flattenDest =
+    options?.destination ??
+    (parseDestinations(caseRow.destination).length === 1 ? caseRow.destination : null)
+  caseRow = flattenCaseForDestination(caseRow, flattenDest)
   return fillPdf(formKey, caseRow, {
     includeSignature: options?.includeSignature,
     includeVet: options?.includeVet,
