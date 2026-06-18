@@ -63,6 +63,25 @@ export const SINGLE_DOSE_RABIES_DESTINATIONS: string[] = [
   'switzerland',
 ]
 
+/**
+ * 항공권 날짜를 수입검역의 '예정 [날짜]' 배지로 띄워도 되는 목적지 — destination-config 키.
+ * entry_date 는 한국 '출발일'(=departure_date 동기화)이라, 출발=도착이 같은 날인 단거리 노선에서만
+ * 실제 도착·공항검역일과 일치한다. 시차로 익일 도착하는 장거리(EU 등)는 어긋나므로 제외.
+ * 명단 밖 목적지는 항공권 예정 배지를 안 띄우고, 고객이 실제 검역일을 입력해야 표시·완료된다.
+ * (배지는 항공권 날짜가 '미래'일 때만 — 지나면 내려가고 평범한 상태로. 다른 백신·검사 카드와 동일.)
+ *
+ *  - 도착(수입검역, entry_date 기반): 일본·필리핀 (당일 도착 확실).
+ *  - 귀국(한국 수입검역, return_date 기반): 일본·필리핀·태국 (귀국 노선은 조금 더 관대).
+ *
+ * 새 목적지는 노선 특성(출발=도착 동일일 여부)을 개별 판단해 추가한다.
+ */
+export const FLIGHT_DATE_IMPORT_QUARANTINE_DESTINATIONS: string[] = ['japan', 'philippines']
+export const FLIGHT_DATE_RETURN_QUARANTINE_DESTINATIONS: string[] = [
+  'japan',
+  'philippines',
+  'thailand',
+]
+
 /** 케이스가 광견병 1회 접종 모델 목적지인지. */
 export function isSingleDoseRabiesCase(caseRow: CaseRow): boolean {
   const key = buildCaseJourneyContext(caseRow).destinationKey

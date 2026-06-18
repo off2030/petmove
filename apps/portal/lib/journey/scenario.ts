@@ -1,5 +1,7 @@
 import type { CaseRow } from '@petmove/domain'
 import {
+  FLIGHT_DATE_IMPORT_QUARANTINE_DESTINATIONS,
+  FLIGHT_DATE_RETURN_QUARANTINE_DESTINATIONS,
   JOURNEY_STEP_CATALOG,
   SINGLE_DOSE_RABIES_DESTINATIONS,
   buildCaseJourneyContext,
@@ -441,6 +443,24 @@ export function buildJourney(
       typeof caseData.return_date === 'string' && caseData.return_date.length >= 10
         ? caseData.return_date.slice(0, 10)
         : null
+    // 항공권 날짜(출발/귀국편)를 도착·귀국 수입검역의 '예정 [날짜]' 배지로 — 단, 출발=도착이 같은
+    // 날인 목적지(FLIGHT_DATE_*_QUARANTINE_DESTINATIONS)에서, 그 날짜가 '미래'일 때만. 지나면 null →
+    // 배지 내려가고 평범한 상태(다른 백신·검사 카드와 동일 '예정→도래→내림'). 완료는 고객이 실제
+    // 검역일을 입력·저장할 때(quarantine: 모델). 명단 밖 목적지(EU·태국 도착 등)는 예정 배지 없음.
+    const importQuarantineUpcoming =
+      isJpImportQuarantine &&
+      FLIGHT_DATE_IMPORT_QUARANTINE_DESTINATIONS.includes(ctx.destinationKey ?? '') &&
+      flightEntryDate &&
+      flightEntryDate > today
+        ? flightEntryDate
+        : null
+    const krImportUpcoming =
+      step.id === 'kr-import-quarantine' &&
+      FLIGHT_DATE_RETURN_QUARANTINE_DESTINATIONS.includes(ctx.destinationKey ?? '') &&
+      flightReturnDate &&
+      flightReturnDate > today
+        ? flightReturnDate
+        : null
     const jpExportReservationDate =
       typeof caseData.jp_export_quarantine_date === 'string' &&
       caseData.jp_export_quarantine_date.length >= 10
@@ -586,18 +606,20 @@ export function buildJourney(
     // vet-visit 는 새 모델(완료 = 서류 모두 ✓ 또는 '완료' 버튼) — '저장 = 완료' 가정의
     // PASSED_UNCONFIRMED_MSG 가 부적절해서 ownConfirmDate 에서 제외. 대신 situational 이
     // '받았습니다. 서류 체크리스트를 확인하세요' 로 안내.
-    // 자기 검진일이 비어 있으면 항공편 기준 예정일(일본 도착=입국, 귀국=return, 수출검역
-    // 예약일)을 fallback 으로. 그래야 검역일을 아직 저장 안 했어도 그 예정일이 지나면
-    // '예정 [지난 날짜]' 가 아니라 '지났어요, 저장하세요' 안내로 전환된다.
+    // 수입검역(도착·귀국)은 항공편 날짜를 ownConfirmDate 폴백으로 쓰지 않는다 — 항공편은
+    // '미래 예정 배지'(importQuarantineUpcoming/krImportUpcoming) 전용이고, 지나면 그냥 배지가
+    // 내려가야 한다(상세엔 완료 버튼이 없어 'PASSED_UNCONFIRMED_MSG = 완료 버튼 누르세요'가
+    // 거짓이 됨). 따라서 ownConfirmDate 는 '고객이 직접 저장한 검역일'만 본다 — 그 저장분이
+    // 도래·미확인일 때만 안내가 뜨고, 그땐 상세에 실제로 '완료' 버튼이 있어 문구가 맞는다.
     const ownConfirmDate =
       step.id === 'certificate-issue'
         ? krExportQuarantineDate
         : isJpImportQuarantine
-          ? (jpImportOwnDate ?? quarantineOwnDate ?? flightEntryDate)
+          ? (jpImportOwnDate ?? quarantineOwnDate)
           : step.id === 'jp-export-quarantine-visit'
             ? (jpExportVisitOwnDate ?? jpExportReservationDate)
             : step.id === 'kr-import-quarantine'
-              ? (krImportOwnDate ?? flightReturnDate)
+              ? krImportOwnDate
               // 나라별 출국(수출) 검역(태국 등) — 자기 검역일만 (예약 fallback 앵커 없음).
               : quarantineField
                 ? quarantineOwnDate
@@ -654,9 +676,9 @@ export function buildJourney(
       : isDeparture && !isJpImportQuarantine
       ? dep
       : isJpImportQuarantine
-        ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? flightEntryDate
+        ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? importQuarantineUpcoming
         : step.id === 'kr-import-quarantine'
-          ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? flightReturnDate
+          ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? krImportUpcoming
           : step.id === 'jp-export-quarantine-visit'
             ? (done ? resolveCompletedDate(step.done, caseRow) : null) ?? jpExportReservationDate
             : step.id === 'vet-visit'
