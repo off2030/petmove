@@ -36,6 +36,9 @@ export function TopBar() {
   }, [activeCaseId])
   // 워드마크는 '여정(목적지) 있는 동물'의 일정으로 — 목적지 0개면 첫 여정 동물, 없으면 /cases.
   const { cases } = useCases()
+  // 등록한 반려동물이 0마리면 첫 진입(환영) 화면 — 좌측 PETMOVE 워드마크는 숨기고(히어로가
+  // 이미 브랜드를 말함) 우측 ⚙(설정·로그아웃 비상구)만 남긴다. 한 마리라도 등록되면 다시 노출.
+  const onboarding = cases.length === 0
   const journeyCases = cases.filter(hasJourney)
   const candidate = activeCaseId ?? lastCaseId
   const homeCaseId =
@@ -88,29 +91,34 @@ export function TopBar() {
         WebkitBackdropFilter: 'blur(20px)',
       }}
     >
-      <Link
-        href={homeHref}
-        prefetch
-        aria-label="일정"
-        style={{
-          // 별도 웹폰트 없이 각 운영체제의 표준 UI sans-serif로 표시.
-          display: 'flex',
-          alignItems: 'center',
-          gap: 7,
-          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif',
-          fontWeight: 700,
-          fontSize: 17,
-          letterSpacing: '0.025em',
-          color: 'var(--pm-ink-3)',
-          pointerEvents: 'auto',
-          flexShrink: 0,
-          textDecoration: 'none',
-          lineHeight: 1,
-        }}
-      >
-        <LogoMark size={22} />
-        <span>PETMOVE</span>
-      </Link>
+      {onboarding ? (
+        // 환영 화면 — 로고 자리는 비우되, space-between 으로 ⚙ 가 우측에 유지되도록 placeholder.
+        <span aria-hidden />
+      ) : (
+        <Link
+          href={homeHref}
+          prefetch
+          aria-label="일정"
+          style={{
+            // 별도 웹폰트 없이 각 운영체제의 표준 UI sans-serif로 표시.
+            display: 'flex',
+            alignItems: 'center',
+            gap: 7,
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif',
+            fontWeight: 700,
+            fontSize: 17,
+            letterSpacing: '0.025em',
+            color: 'var(--pm-ink-3)',
+            pointerEvents: 'auto',
+            flexShrink: 0,
+            textDecoration: 'none',
+            lineHeight: 1,
+          }}
+        >
+          <LogoMark size={22} />
+          <span>PETMOVE</span>
+        </Link>
+      )}
       <div
         style={{
           display: 'flex',
