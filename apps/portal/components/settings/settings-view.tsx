@@ -217,12 +217,12 @@ export function SettingsView() {
   const hideDesc = profile?.hide_step_descriptions === true
   async function setFlag(key: 'free_input_mode' | 'hide_step_descriptions', next: boolean) {
     if (savingKey) return
-    // 자기책임 모드를 켤 때만 부드러운 안내 1회 — 무섭지 않은 톤.
+    // 자동 검증 기능을 끌 때만 부드러운 안내 1회 — 무섭지 않은 톤.
     if (key === 'free_input_mode' && next) {
       const ok = await confirm({
         message:
-          '자기책임 모드를 켜면 입력 도우미(입력 제한·주의 표시)가 꺼져요.\n날짜·정보를 자유롭게 입력할 수 있고, 준비가 맞는지는 직접 확인하시면 돼요. 백신 유효기간 임박 같은 안내는 그대로 보여드려요.',
-        okLabel: '켤게요',
+          '자동 검증 기능을 끄면 설정된 규칙에 따른 입력 제한과 경고 표시가 나타나지 않아요.\n날짜·정보를 자유롭게 입력할 수 있고, 준비가 맞는지는 직접 확인하시면 돼요.',
+        okLabel: '끌게요',
         cancelLabel: '그대로 둘게요',
       })
       if (!ok) return
@@ -259,14 +259,14 @@ export function SettingsView() {
       <SectionCard label="고급">
         <ToggleRow
           label="일정 설명문 숨기기"
-          desc="일정 탭에서 각 단계의 설명을 감춰 간결하게 봐요."
+          desc="전체 일정 카드의 설명문을 숨기고 간결하게 봐요."
           on={hideDesc}
           disabled={savingKey === 'hide_step_descriptions'}
           onToggle={() => setFlag('hide_step_descriptions', !hideDesc)}
         />
         <ToggleRow
-          label="자기책임 모드"
-          desc="입력 제한과 주의 표시를 끄고 날짜·정보를 자유롭게 입력해요. 백신 유효기간 임박 같은 안내는 그대로 보여드려요."
+          label="자동 검증 기능 끄기"
+          desc="설정된 규칙에 따른 입력 제한, 경고 표시를 표시하지 않습니다."
           on={freeInput}
           disabled={savingKey === 'free_input_mode'}
           onToggle={() => setFlag('free_input_mode', !freeInput)}
