@@ -5,7 +5,7 @@ import { supabaseBrowser } from '@petmove/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-type Provider = 'google' | 'naver'
+type Provider = 'google' | 'naver' | 'kakao'
 
 const ERROR_MESSAGES: Record<string, string> = {
   invite_required: '이 서비스는 초대받은 사용자만 사용할 수 있습니다. 관리자에게 초대를 요청하세요.',
@@ -107,8 +107,14 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
           >
             {loading === 'naver' ? '이동 중…' : '네이버로 로그인'}
           </Button>
-          {/* 카카오 로그인: 비즈앱 검수 통과 전까지 비활성화 (KOE205).
-              Provider 설정/시크릿은 Bitwarden 백업 + Seoul Supabase 에 OFF 상태로 보관. */}
+          <Button
+            className="w-full"
+            variant="outline"
+            disabled={loading !== null}
+            onClick={() => oauth('kakao')}
+          >
+            {loading === 'kakao' ? '이동 중…' : '카카오로 로그인'}
+          </Button>
           <Button
             className="w-full"
             variant="outline"
