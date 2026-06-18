@@ -8,22 +8,24 @@ import { hasJourney } from '@/lib/cases/journey-filter'
 import { readLastCaseId, readLastDest, writeLastCaseId, writeLastDest } from './last-case'
 
 /**
- * 보호자 앱 하단 3탭 — case-aware.
+ * 보호자 앱 하단 4탭 — case-aware.
  *
  * 현재 path 가 /cases/<id>/... 이면 그 id 를 보존하면서 다른 탭으로 전환.
- * /me/... (case-외) 같은 화면에선 sessionStorage 의 마지막 caseId 로 복귀
+ * /me/... · /services (case-외) 같은 화면에선 sessionStorage 의 마지막 caseId 로 복귀
  *   — swipe-tabs 와 동일한 키 공유. 이게 없으면 내 정보 탭에서 일정/서류 탭을
  *   누를 때마다 /cases (다중 케이스 선택 화면) 로 튕겨나가는 버그가 됨.
  * sessionStorage 도 비어 있으면 /cases 로 보냄 (1건이면 자동 redirect).
- * 내 정보 탭은 항상 /me (case-외 hub). 앱 설정(계정·테마·약관 등)은 상단바 ⚙ → /settings.
+ * 서비스·내 정보 탭은 caseId 와 무관하게 항상 /services · /me (case-외 hub).
+ * 앱 설정(계정·테마·약관 등)은 상단바 ⚙ → /settings.
  */
 
-type Icon = 'route' | 'doc' | 'user'
-type Tab = { key: 'journey' | 'docs' | 'me'; label: string; icon: Icon }
+type Icon = 'route' | 'doc' | 'grid' | 'user'
+type Tab = { key: 'journey' | 'docs' | 'services' | 'me'; label: string; icon: Icon }
 
 const TABS: Tab[] = [
   { key: 'journey', label: '일정', icon: 'route' },
   { key: 'docs', label: '서류', icon: 'doc' },
+  { key: 'services', label: '서비스', icon: 'grid' },
   { key: 'me', label: '내 정보', icon: 'user' },
 ]
 
@@ -155,12 +157,14 @@ export function BottomNav() {
 
 function hrefFor(key: Tab['key'], caseId: string | null, dest: string | null): string {
   if (key === 'me') return '/me'
+  if (key === 'services') return '/services'
   if (!caseId) return '/cases'
   return `/cases/${caseId}/${key}${dest ? `?dest=${encodeURIComponent(dest)}` : ''}`
 }
 
 function isActive(key: Tab['key'], pathname: string): boolean {
   if (key === 'me') return pathname === '/me' || pathname.startsWith('/me/')
+  if (key === 'services') return pathname === '/services' || pathname.startsWith('/services/')
   return new RegExp(`^/cases/[^/]+/${key}(?:/|$)`).test(pathname)
 }
 
@@ -188,6 +192,15 @@ function NavIcon({ name, stroke = 1.7 }: { name: Icon; stroke?: number }) {
         <svg {...p}>
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
           <path d="M14 2v6h6M9 13h6M9 17h6" />
+        </svg>
+      )
+    case 'grid':
+      return (
+        <svg {...p}>
+          <rect x="4" y="4" width="7" height="7" rx="1.6" />
+          <rect x="13" y="4" width="7" height="7" rx="1.6" />
+          <rect x="4" y="13" width="7" height="7" rx="1.6" />
+          <rect x="13" y="13" width="7" height="7" rx="1.6" />
         </svg>
       )
     case 'user':

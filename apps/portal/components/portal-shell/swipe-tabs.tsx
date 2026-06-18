@@ -6,7 +6,7 @@ import { readLastCaseId, readLastDest, writeLastCaseId } from './last-case'
 import { useNavGuard } from './nav-guard'
 
 /**
- * 3탭(일정/서류/내 정보) 좌우 스와이프 내비. (앱 설정 /settings 은 ⚙ 진입 — 스와이프 대상 아님)
+ * 4탭(일정/서류/서비스/내 정보) 좌우 스와이프 내비. (앱 설정 /settings 은 ⚙ 진입 — 스와이프 대상 아님)
  *
  * 검출은 두 경로 OR:
  *  1) 거리 기반 — 시작→끝 |dx| ≥60px AND |dy/dx| ≤1.0 (~45°), 1초 이내
@@ -22,7 +22,7 @@ import { useNavGuard } from './nav-guard'
  * - 인접 탭은 router.prefetch 해 전환을 즉시화. BottomNav 의 `<Link>` 자동 prefetch 와 동일한 효과.
  */
 
-const TAB_ORDER = ['journey', 'docs', 'me'] as const
+const TAB_ORDER = ['journey', 'docs', 'services', 'me'] as const
 type Tab = (typeof TAB_ORDER)[number]
 
 const MIN_DISTANCE_PX = 60
@@ -36,8 +36,9 @@ const FLICK_MIN_DX = 40 // 플릭 윈도우 내 최소 가로 이동
 const FLICK_OFF_AXIS_RATIO = 0.7 // 플릭 기반: |vy/vx| 허용치
 
 function currentTab(pathname: string): Tab | null {
-  // /me 는 leaf — 그 자체가 탭 루트.
+  // /me · /services 는 leaf — 그 자체가 탭 루트 (case-외).
   if (pathname === '/me') return 'me'
+  if (pathname === '/services') return 'services'
   // 케이스 탭은 *루트만* 매칭 — /cases/<id>/(journey|docs) 정확히. 서브 페이지
   // (예: /cases/<id>/journey/<stepId>) 에서는 tab=null 로 두어 탭 스와이프 핸들러가
   // 마운트되지 않게 한다. 그래야 보호자가 상세 페이지에서 버튼·입력 인터랙션을 할 때
@@ -82,6 +83,7 @@ function startsOnNoSwipeZone(target: EventTarget | null): boolean {
 
 function hrefFor(tab: Tab, caseId: string | null): string {
   if (tab === 'me') return '/me'
+  if (tab === 'services') return '/services'
   const id = caseId ?? readLastCaseId()
   if (!id) return '/cases'
   // 다중 목적지 — 케이스별 마지막 활성 목적지(?dest=) 유지 (bottom-nav 가 기록, 여기선 읽기만).

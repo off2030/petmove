@@ -14,7 +14,7 @@ import { getMyProfile } from '@/lib/actions/profile'
 export const dynamic = 'force-dynamic'
 
 /**
- * 인증된 보호자 셸. 4탭 (일정/서류/정보/프로필) 공통 레이아웃.
+ * 인증된 보호자 셸. 4탭 (일정/서류/서비스/내 정보) 공통 레이아웃.
  *
  * 일반 진입: getUser + listMyCases + getMyProfile (모두 RLS 위 단일 쿼리). CaseDataProvider
  * 가 cases + profile 을 client Context 로 공유 — 모든 탭 페이지가 추가 fetch 없이 메모리에서
