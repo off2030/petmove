@@ -23,9 +23,9 @@ const config: CapacitorConfig = {
   // webDir 는 static export 모드에서 사용. remote URL 모드에선 형식상만 필요 (빌드 산출물 폴더).
   webDir: 'out',
   server: {
-    // production 배포 시 https://petmove.co.kr 로 변경. 베타 단계엔 Vercel 임시 도메인.
+    // 펫무브 본체 주소. 루트 petmove.co.kr·www 는 고스트 블로그이므로 반드시 app 서브도메인.
     // 변경 후 `npx cap sync` → 새 native 빌드 → 앱스토어 재제출.
-    url: 'https://petmove.co.kr',
+    url: 'https://app.petmove.co.kr',
     // cleartext 는 dev/staging 에서 http 로 로드할 때만. production https 면 불필요.
     cleartext: false,
   },
