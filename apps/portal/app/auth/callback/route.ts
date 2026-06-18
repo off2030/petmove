@@ -18,32 +18,29 @@ function sanitizeNext(v: string | null | undefined): string {
  * Supabase 가 Kakao 사진을 user_metadata 에 안 넣어주는 경우가 있어 provider_token 으로 직접.
  * best-effort.
  */
-async function fetchKakaoProfileImage(
-  providerToken: string,
-): Promise<{ url: string | null; dbg: string }> {
+async function fetchKakaoProfileImage(providerToken: string): Promise<string | null> {
   try {
     const res = await fetch('https://kapi.kakao.com/v2/user/me', {
       headers: { Authorization: `Bearer ${providerToken}` },
       cache: 'no-store',
       signal: AbortSignal.timeout(8_000),
     })
-    if (!res.ok) return { url: null, dbg: `st${res.status}` }
+    if (!res.ok) return null
     const j = (await res.json()) as {
       kakao_account?: { profile?: { profile_image_url?: string; is_default_image?: boolean } }
       properties?: { profile_image?: string }
     }
     const prof = j.kakao_account?.profile
-    const accUrl = prof?.profile_image_url
-    const isDef = prof?.is_default_image
-    const propUrl = j.properties?.profile_image
-    // 카카오계정 사진(기본 아니면) 우선, 없으면 properties(레거시) fallback.
-    let u: string | null = null
-    if (accUrl && !isDef) u = accUrl
-    else if (propUrl) u = propUrl
-    if (u && !/^https:\/\//.test(u)) u = null
-    return { url: u, dbg: `ok-acct${accUrl ? 1 : 0}-def${isDef ? 1 : 0}-prop${propUrl ? 1 : 0}-fin${u ? 1 : 0}` }
+    // 카카오계정 사진(기본 이미지 아니면) 우선, 없으면 properties(레거시) fallback.
+    let u =
+      prof?.profile_image_url && !prof.is_default_image
+        ? prof.profile_image_url
+        : (j.properties?.profile_image ?? null)
+    // 카카오는 프로필 사진 URL 을 http 로 주는 경우가 많음 → https 로 승격 (k.kakaocdn.net 은 https 지원).
+    if (u && u.startsWith('http://')) u = 'https://' + u.slice(7)
+    return u && u.startsWith('https://') ? u : null
   } catch {
-    return { url: null, dbg: 'ex' }
+    return null
   }
 }
 
@@ -69,9 +66,6 @@ export async function GET(request: Request) {
     )
   }
 
-  // 임시 진단 — 카카오 아바타 디버그용 (provider_token/API 상태). PII 없음. 확인 후 제거.
-  let kdbg = ''
-
   if (code) {
     const supabase = await createClient()
     const { data: exchangeData, error } = await supabase.auth.exchangeCodeForSession(code)
@@ -87,17 +81,8 @@ export async function GET(request: Request) {
       // 카카오는 user_metadata 에 사진이 안 담겨오는 경우가 있어 provider_token 으로 직접 조회.
       // 구글은 user_metadata(avatar_url/picture) 로 충분 → ensureCustomerProfile 내부 처리.
       let kakaoAvatar: string | null = null
-      if (user.app_metadata?.provider === 'kakao') {
-        const ptok = exchangeData.session?.provider_token
-        if (ptok) {
-          const r = await fetchKakaoProfileImage(ptok)
-          kakaoAvatar = r.url
-          kdbg = r.dbg
-        } else {
-          kdbg = 'notok'
-        }
-      } else {
-        kdbg = `prov:${user.app_metadata?.provider ?? 'none'}`
+      if (user.app_metadata?.provider === 'kakao' && exchangeData.session?.provider_token) {
+        kakaoAvatar = await fetchKakaoProfileImage(exchangeData.session.provider_token)
       }
       try { await ensureCustomerProfile(supabase, user, { avatarUrl: kakaoAvatar }) } catch { /* best-effort */ }
       // 자동 매칭 — 보호자 이메일과 일치하는 기존 admin 케이스를 case_customer_links 로 연결.
@@ -109,9 +94,5 @@ export async function GET(request: Request) {
     }
   }
 
-  // 진단 중엔 안정적으로 읽히도록 /settings 로 (리다이렉트 안 되는 페이지). 평소엔 next.
-  const dest = kdbg
-    ? new URL(`/settings?kdbg=${encodeURIComponent(kdbg)}`, url.origin)
-    : new URL(next, url.origin)
-  return NextResponse.redirect(dest)
+  return NextResponse.redirect(new URL(next, url.origin))
 }
