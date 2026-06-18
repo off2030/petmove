@@ -8,11 +8,11 @@ import { C, serif, monoCap } from '@/components/me/settings-shared'
 /**
  * 서비스 탭 (/services) — 펫무브 유료 상품 안내. 목적지 인식형.
  *
- * 서비스 내용·비용은 목적지에 따라 달라진다. 기본은 등록 시 신청한 목적지(=내 케이스의
- * 첫 목적지)로 보여주고, 등록한 다른 목적지로 전환도 가능(칩 선택).
- *  - 선택지 = 내 케이스들의 목적지 union. (전체 201개국을 나열하지 않는다 — 펫무브가
- *    서비스를 제공하는 목적지만 차차 늘려간다. '서비스 제공 국가' 큐레이션 목록이 정해지면
- *    여기 destinations 소스를 그 목록으로 바꾸면 된다.)
+ * 서비스 내용·비용은 목적지에 따라 달라진다. 선택지 = 펫무브가 서비스를 제공하는
+ * '서비스 제공 국가' 큐레이션 목록(OFFERED_DESTINATIONS). 기본 선택은 등록 시 신청한
+ * 목적지가 그 목록에 있으면 그것, 없으면 목록 첫 번째. 칩으로 전환 가능.
+ *  - 큐레이션 목록은 여정 카드 구성이 끝난 목적지부터 추가(2026-06-12 일본·태국·필리핀 완료 → 시드).
+ *    새 나라 서비스가 준비되면 OFFERED_DESTINATIONS 에 추가. (전체 201개국 나열 X.)
  *
  * 두 갈래: 오프라인(방문 올케어, 전체 대행) / 온라인(가이드 & 점검, 직접+도움).
  * v1 은 안내(소개)만 — 상담 신청·결제 액션은 결제 모델 확정 전까지 미연결.
@@ -21,6 +21,12 @@ import { C, serif, monoCap } from '@/components/me/settings-shared'
  * 목적지별 내용 분기는 차차 — 지금은 모든 목적지가 같은 generic 안내를 본다. 추가 시
  * 아래 buildOffer(dest) 를 목적지별 데이터로 분기하면 카드가 목적지마다 달라진다.
  */
+
+/**
+ * 서비스 제공 국가 — 펫무브가 유료 서비스를 제공하는 목적지(=선택지).
+ * 여정 카드 구성이 끝난 목적지부터 추가. 새 나라 준비되면 여기에 push.
+ */
+const OFFERED_DESTINATIONS: string[] = ['일본', '태국', '필리핀']
 
 type Accent = { stroke: string; chipBg: string }
 
@@ -206,10 +212,11 @@ function DestinationChips({
 
 export function ServicesView() {
   const { cases } = useCases()
-  const destinations = destinationsFromCases(cases)
+  // 기본 = 등록 시 신청한 목적지가 서비스 제공 목록에 있으면 그것, 없으면 목록 첫 번째(일본).
+  const registered = destinationsFromCases(cases)
+  const defaultDest = registered.find((d) => OFFERED_DESTINATIONS.includes(d)) ?? OFFERED_DESTINATIONS[0]
   const [picked, setPicked] = useState<string | null>(null)
-  // 기본 = 등록 시 신청한 목적지(첫 목적지). 선택값이 목록에서 사라지면 기본으로 폴백.
-  const selected = picked && destinations.includes(picked) ? picked : destinations[0] ?? null
+  const selected = picked && OFFERED_DESTINATIONS.includes(picked) ? picked : defaultDest
 
   const offers = buildOffers(selected)
 
@@ -233,7 +240,7 @@ export function ServicesView() {
           출국 준비를 펫무브가 함께할게요. 맡기실지, 직접 하며 도움받으실지 골라보세요.
         </p>
 
-        <DestinationChips destinations={destinations} selected={selected} onSelect={setPicked} />
+        <DestinationChips destinations={OFFERED_DESTINATIONS} selected={selected} onSelect={setPicked} />
 
         {selected && (
           <p style={{ fontSize: 12, color: C.ink3, lineHeight: 1.6, margin: '12px 4px 0' }}>
@@ -248,9 +255,7 @@ export function ServicesView() {
         </div>
 
         <p style={{ fontSize: 12, color: C.ink3, lineHeight: 1.6, margin: '20px 4px 0' }}>
-          {destinations.length === 0
-            ? '목적지를 등록하면 그 나라 기준으로 맞춤 안내를 보여드려요.'
-            : '상담 신청과 가격 안내는 곧 추가될 예정이에요.'}
+          상담 신청과 가격 안내는 곧 추가될 예정이에요.
         </p>
       </div>
     </div>
