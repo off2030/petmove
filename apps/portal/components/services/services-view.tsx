@@ -1,35 +1,46 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import type { CaseRow } from '@petmove/domain'
+import destsData from '@petmove/domain/data/destinations.json'
 import { useCases } from '@/components/portal-shell/case-data-provider'
-import { C, serif, monoCap } from '@/components/me/settings-shared'
+import { BottomSheet } from '@/components/fields/bottom-sheet'
+import { SegmentField, type FieldOption } from '@/components/fields/info-fields'
+import { C, serif, SectionCard } from '@/components/me/settings-shared'
 
 /**
- * 서비스 탭 (/services) — 펫무브 유료 상품 안내. 목적지 인식형.
+ * 서비스 탭 (/services) — 펫무브 유료 상품 안내. 목적지 + 여정 유형(왕복·편도) 인식형.
  *
- * 서비스 내용·비용은 목적지에 따라 달라진다. 선택지 = 펫무브가 서비스를 제공하는
- * '서비스 제공 국가' 큐레이션 목록(OFFERED_DESTINATIONS). 기본 선택은 등록 시 신청한
- * 목적지가 그 목록에 있으면 그것, 없으면 목록 첫 번째. 칩으로 전환 가능.
- *  - 큐레이션 목록은 여정 카드 구성이 끝난 목적지부터 추가(2026-06-12 일본·태국·필리핀 완료 → 시드).
- *    새 나라 서비스가 준비되면 OFFERED_DESTINATIONS 에 추가. (전체 201개국 나열 X.)
+ * 서비스 내용·비용은 목적지와 왕복/편도에 따라 달라진다.
+ *  - 목적지 선택지 = '서비스 제공 국가' 큐레이션 목록(OFFERED_KO). 처음부터 검색 시트로
+ *    — 목록이 늘어나도 버튼으로 감당 안 되므로. 새 나라 준비되면 OFFERED_KO 에 push.
+ *  - 기본 목적지 = 등록 시 신청한 목적지가 목록에 있으면 그것, 없으면 목록 첫 번째.
+ *  - 왕복/편도 = 등록값을 기본 표시 + 여기서도 전환. 단, 이 선택은 **둘러보기용 로컬 상태**라
+ *    실제 여정의 trip_type 을 바꾸지 않는다(목록엔 미등록 목적지도 있어 저장 대상이 아님).
  *
  * 두 갈래: 오프라인(방문 올케어, 전체 대행) / 온라인(가이드 & 점검, 직접+도움).
  * v1 은 안내(소개)만 — 상담 신청·결제 액션은 결제 모델 확정 전까지 미연결.
+ * 목적지·유형별 내용·비용 분기는 차차 — 지금은 buildOffers 가 generic 반환.
  * (결제 모델 미정: docs/portal-plan.md §결제 / memory project_portal_paywall)
- *
- * 목적지별 내용 분기는 차차 — 지금은 모든 목적지가 같은 generic 안내를 본다. 추가 시
- * 아래 buildOffer(dest) 를 목적지별 데이터로 분기하면 카드가 목적지마다 달라진다.
  */
 
-/**
- * 서비스 제공 국가 — 펫무브가 유료 서비스를 제공하는 목적지(=선택지).
- * 여정 카드 구성이 끝난 목적지부터 추가. 새 나라 준비되면 여기에 push.
- */
-const OFFERED_DESTINATIONS: string[] = ['일본', '태국', '필리핀']
+interface Dest {
+  ko: string
+  en: string
+}
+const DESTS = destsData as Dest[]
+
+/** 서비스 제공 국가 — 여정 카드 구성이 끝난 목적지부터. 새 나라 준비되면 여기에 push. */
+const OFFERED_KO: string[] = ['일본', '태국', '필리핀']
+const OFFERED: Dest[] = OFFERED_KO.map((ko) => DESTS.find((d) => d.ko === ko) ?? { ko, en: '' })
+
+type TripType = 'round' | 'one_way'
+const TRIP_OPTIONS: readonly FieldOption[] = [
+  { value: 'round', label: '왕복' },
+  { value: 'one_way', label: '편도' },
+]
 
 type Accent = { stroke: string; chipBg: string }
-
 const AMBER: Accent = { stroke: C.accent, chipBg: C.soft }
 const SAGE: Accent = {
   stroke: C.sage,
@@ -62,10 +73,10 @@ interface Offer {
 }
 
 /**
- * 한 목적지의 두 서비스 카드. 지금은 dest 와 무관하게 동일 generic — 목적지별 내용·비용은
- * 차차 여기서 분기한다(예: 수입허가증 필요 없는 목적지면 항목 제외, 비용 표기 등).
+ * 한 (목적지 × 여정유형)의 두 서비스 카드. 지금은 인자와 무관하게 동일 generic —
+ * 목적지·유형별 내용·비용은 차차 여기서 분기한다(예: 편도면 귀국 관련 항목 제외, 비용 등).
  */
-function buildOffers(_dest: string | null): Offer[] {
+function buildOffers(_dest: string | null, _trip: TripType): Offer[] {
   return [
     {
       accent: AMBER,
@@ -99,6 +110,23 @@ function destinationsFromCases(cases: CaseRow[]): string[] {
     }
   }
   return out
+}
+
+/** 등록값에서 그 목적지의 왕복/편도를 읽는다 — 없으면 'round'. data.trip_type 객체 + 레거시 문자열 대응. */
+function tripTypeForDest(cases: CaseRow[], dest: string | null): TripType {
+  if (!dest) return 'round'
+  for (const c of cases) {
+    const data = (c.data ?? {}) as Record<string, unknown>
+    const tt = data.trip_type
+    if (tt && typeof tt === 'object' && !Array.isArray(tt)) {
+      const v = (tt as Record<string, unknown>)[dest]
+      if (v === 'round' || v === 'one_way') return v
+    } else if (typeof tt === 'string') {
+      const toks = (c.destination ?? '').split(',').map((t) => t.trim())
+      if (toks.includes(dest) && (tt === 'round' || tt === 'one_way')) return tt
+    }
+  }
+  return 'round'
 }
 
 function ServiceCard({ offer }: { offer: Offer }) {
@@ -167,58 +195,67 @@ function ServiceCard({ offer }: { offer: Offer }) {
   )
 }
 
-/** 목적지 선택 칩 — 내 케이스 목적지들. 1개면 정적 표시(전환 불필요), 0개면 미렌더. */
-function DestinationChips({
-  destinations,
-  selected,
-  onSelect,
-}: {
-  destinations: string[]
-  selected: string | null
-  onSelect: (d: string) => void
-}) {
-  if (destinations.length === 0) return null
+/** 목적지 검색 시트 trigger 행 — 탭하면 BottomSheet(검색 + 목록). */
+function DestinationField({ selected, onOpen }: { selected: Dest | null; onOpen: () => void }) {
   return (
-    <div style={{ marginTop: 16 }}>
-      <div style={{ ...monoCap, marginBottom: 10, padding: '0 4px' }}>목적지</div>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {destinations.map((d) => {
-          const on = d === selected
-          return (
-            <button
-              key={d}
-              type="button"
-              onClick={() => onSelect(d)}
-              style={{
-                padding: '7px 14px',
-                borderRadius: 999,
-                fontSize: 13,
-                fontWeight: 500,
-                fontFamily: 'inherit',
-                border: `.5px solid ${on ? C.accent : C.line}`,
-                background: on ? C.soft : C.surface,
-                color: on ? C.accent : C.ink2,
-                cursor: 'pointer',
-              }}
-            >
-              {d}
-            </button>
-          )
-        })}
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={onOpen}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        width: '100%',
+        minHeight: 46,
+        padding: '11px 0',
+        borderBottom: `.5px solid ${C.line}`,
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        fontFamily: 'inherit',
+        textAlign: 'left',
+      }}
+    >
+      <span style={{ fontSize: 13, color: C.ink2, flexShrink: 0, width: 88 }}>목적지</span>
+      <span style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <span style={{ fontSize: 15, fontWeight: 500, color: C.ink, fontFamily: 'var(--pm-font-display)' }}>
+          {selected?.ko ?? '선택'}
+        </span>
+        {selected?.en && <span style={{ fontSize: 13, color: C.ink3 }}>{selected.en}</span>}
+      </span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.ink3} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ flexShrink: 0 }}>
+        <path d="M8 10l4 4 4-4" />
+      </svg>
+    </button>
   )
 }
 
 export function ServicesView() {
   const { cases } = useCases()
-  // 기본 = 등록 시 신청한 목적지가 서비스 제공 목록에 있으면 그것, 없으면 목록 첫 번째(일본).
-  const registered = destinationsFromCases(cases)
-  const defaultDest = registered.find((d) => OFFERED_DESTINATIONS.includes(d)) ?? OFFERED_DESTINATIONS[0]
-  const [picked, setPicked] = useState<string | null>(null)
-  const selected = picked && OFFERED_DESTINATIONS.includes(picked) ? picked : defaultDest
 
-  const offers = buildOffers(selected)
+  // 기본 목적지 = 등록 시 신청한 목적지가 서비스 제공 목록에 있으면 그것, 없으면 첫 번째(일본).
+  const registered = destinationsFromCases(cases)
+  const defaultDestKo = registered.find((d) => OFFERED_KO.includes(d)) ?? OFFERED_KO[0]
+  const [pickedKo, setPickedKo] = useState<string | null>(null)
+  const selectedKo = pickedKo && OFFERED_KO.includes(pickedKo) ? pickedKo : defaultDestKo
+  const selected = OFFERED.find((d) => d.ko === selectedKo) ?? { ko: selectedKo, en: '' }
+
+  // 왕복/편도 = 등록값 기본 + 로컬 전환(둘러보기용, 저장 X). 목적지 바뀌면 그 목적지 등록값으로.
+  const defaultTrip = tripTypeForDest(cases, selectedKo)
+  const [tripOverride, setTripOverride] = useState<{ dest: string; trip: TripType } | null>(null)
+  const trip = tripOverride && tripOverride.dest === selectedKo ? tripOverride.trip : defaultTrip
+
+  // 검색 시트
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return OFFERED
+    return OFFERED.filter((d) => d.ko.includes(q) || d.en.toLowerCase().includes(q))
+  }, [query])
+
+  const offers = buildOffers(selectedKo, trip)
+  const tripLabel = trip === 'round' ? '왕복' : '편도'
 
   return (
     <div
@@ -240,15 +277,28 @@ export function ServicesView() {
           출국 준비를 펫무브가 함께할게요. 맡기실지, 직접 하며 도움받으실지 골라보세요.
         </p>
 
-        <DestinationChips destinations={OFFERED_DESTINATIONS} selected={selected} onSelect={setPicked} />
+        <SectionCard marginTop={18}>
+          <DestinationField
+            selected={selected}
+            onOpen={() => {
+              setQuery('')
+              setSheetOpen(true)
+            }}
+          />
+          <SegmentField
+            label="왕복·편도"
+            value={trip}
+            onChange={(v) => setTripOverride({ dest: selectedKo, trip: v === 'one_way' ? 'one_way' : 'round' })}
+            options={TRIP_OPTIONS}
+            last
+          />
+        </SectionCard>
 
-        {selected && (
-          <p style={{ fontSize: 12, color: C.ink3, lineHeight: 1.6, margin: '12px 4px 0' }}>
-            {selected} 기준으로 안내해 드려요.
-          </p>
-        )}
+        <p style={{ fontSize: 12, color: C.ink3, lineHeight: 1.6, margin: '12px 4px 0' }}>
+          {selected.ko} · {tripLabel} 기준으로 안내해 드려요.
+        </p>
 
-        <div style={{ marginTop: selected ? 18 : 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {offers.map((o) => (
             <ServiceCard key={o.title} offer={o} />
           ))}
@@ -258,6 +308,63 @@ export function ServicesView() {
           상담 신청과 가격 안내는 곧 추가될 예정이에요.
         </p>
       </div>
+
+      <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="목적지 선택">
+        <input
+          className="pm-field-input"
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="국가 검색"
+          style={{
+            width: '100%',
+            padding: '12px 14px',
+            margin: '4px 0 10px',
+            border: `1px solid ${C.line}`,
+            borderRadius: 12,
+            background: 'transparent',
+            fontFamily: 'inherit',
+            fontSize: 15,
+            color: C.ink,
+          }}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 4 }}>
+          {filtered.length === 0 ? (
+            <div style={{ padding: '24px 0', fontSize: 13, color: C.ink3, textAlign: 'center' }}>
+              일치하는 목적지가 없습니다.
+            </div>
+          ) : (
+            filtered.map((d) => {
+              const isSel = d.ko === selectedKo
+              return (
+                <button
+                  key={d.ko}
+                  type="button"
+                  onClick={() => {
+                    setPickedKo(d.ko)
+                    setSheetOpen(false)
+                  }}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'baseline',
+                    padding: '13px 0',
+                    borderBottom: `.5px solid ${C.line}`,
+                    background: isSel ? C.soft : 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    textAlign: 'left',
+                  }}
+                >
+                  <span style={{ fontSize: 15, color: C.ink, paddingLeft: isSel ? 8 : 0 }}>{d.ko}</span>
+                  <span style={{ fontSize: 13, color: C.ink3 }}>{d.en}</span>
+                </button>
+              )
+            })
+          )}
+        </div>
+      </BottomSheet>
     </div>
   )
 }
