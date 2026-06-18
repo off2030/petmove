@@ -212,24 +212,27 @@ export function SettingsView() {
   const scheduledAt = profile?.deletion_scheduled_at ?? null
 
   // 고급 토글 — customer_profiles 에 저장(계정 전체). 저장 중인 키만 disable.
+  // 표시는 '긍정 기능 + 기본 ON' — DB 필드는 부정 플래그(free_input_mode/hide_step_descriptions,
+  // 기본 false)라 토글 ON(기능 켜짐) = 필드 false 로 매핑한다(마이그레이션 불필요).
   const [savingKey, setSavingKey] = useState<string | null>(null)
-  const freeInput = profile?.free_input_mode === true
-  const hideDesc = profile?.hide_step_descriptions === true
-  async function setFlag(key: 'free_input_mode' | 'hide_step_descriptions', next: boolean) {
+  const autoValidate = !(profile?.free_input_mode === true) // ON = 자동 검증 켜짐
+  const showDesc = !(profile?.hide_step_descriptions === true) // ON = 설명문 표시
+  async function setFeature(field: 'free_input_mode' | 'hide_step_descriptions', turnOn: boolean) {
     if (savingKey) return
-    // 자동 검증 기능을 끌 때만 부드러운 안내 1회 — 무섭지 않은 톤.
-    if (key === 'free_input_mode' && next) {
+    // 자동 검증 기능을 '끌' 때만 부드러운 안내 1회.
+    if (field === 'free_input_mode' && !turnOn) {
       const ok = await confirm({
         message:
-          '자동 검증 기능을 끄면 설정된 규칙에 따른 입력 제한과 경고 표시가 나타나지 않아요.\n날짜·정보를 자유롭게 입력할 수 있고, 준비가 맞는지는 직접 확인하시면 돼요.',
+          '자동 검증 기능을 끄면 입력 제한과 경고 표시가 사라지고 정보를 자유롭게 입력할 수 있어요.\n안전한 준비를 위해서는 켜두시는 게 좋아요.',
         okLabel: '끌게요',
         cancelLabel: '그대로 둘게요',
       })
       if (!ok) return
     }
-    setSavingKey(key)
+    setSavingKey(field)
+    const dbValue = !turnOn // 부정 플래그 — 기능 ON = 필드 false
     const res = await updateMyProfile(
-      key === 'free_input_mode' ? { free_input_mode: next } : { hide_step_descriptions: next },
+      field === 'free_input_mode' ? { free_input_mode: dbValue } : { hide_step_descriptions: dbValue },
     )
     if (res.ok) updateProfile(res.value)
     setSavingKey(null)
@@ -258,18 +261,18 @@ export function SettingsView() {
 
       <SectionCard label="고급">
         <ToggleRow
-          label="일정 설명문 숨기기"
-          desc="전체 일정 카드의 설명문을 숨기고 간결하게 봐요."
-          on={hideDesc}
+          label="일정 설명문 표시"
+          desc="전체 일정 카드에 단계 설명문을 보여줘요. 끄면 제목만 간결하게 봐요."
+          on={showDesc}
           disabled={savingKey === 'hide_step_descriptions'}
-          onToggle={() => setFlag('hide_step_descriptions', !hideDesc)}
+          onToggle={() => setFeature('hide_step_descriptions', !showDesc)}
         />
         <ToggleRow
-          label="자동 검증 기능 끄기"
-          desc="설정된 규칙에 따른 입력 제한, 경고 표시를 표시하지 않습니다."
-          on={freeInput}
+          label="자동 검증 기능"
+          desc="설정된 규칙에 따라 입력 제한과 경고를 표시해요. 안전한 준비를 위해 켜두는 걸 권장해요."
+          on={autoValidate}
           disabled={savingKey === 'free_input_mode'}
-          onToggle={() => setFlag('free_input_mode', !freeInput)}
+          onToggle={() => setFeature('free_input_mode', !autoValidate)}
           last
         />
       </SectionCard>
