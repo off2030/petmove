@@ -109,7 +109,9 @@ export async function GET(request: Request) {
     }
   }
 
-  const dest = new URL(next, url.origin)
-  if (kdbg) dest.searchParams.set('kdbg', kdbg)
+  // 진단 중엔 안정적으로 읽히도록 /settings 로 (리다이렉트 안 되는 페이지). 평소엔 next.
+  const dest = kdbg
+    ? new URL(`/settings?kdbg=${encodeURIComponent(kdbg)}`, url.origin)
+    : new URL(next, url.origin)
   return NextResponse.redirect(dest)
 }
