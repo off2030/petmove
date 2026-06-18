@@ -201,7 +201,9 @@ export function TimelineCalm({
           display: 'flex',
           alignItems: 'flex-start',
           gap: 14,
-          padding: '13px 0',
+          // 보조줄(desc) 없는 행은 제목 한 줄이라 빽빽해진다 — 설명문 숨김 모드 등에서
+          // 세로 여백을 키워 호흡을 준다. 보조줄 있는 행은 기존 간격 유지.
+          padding: s.desc ? '13px 0' : '18px 0',
           borderBottom: isLast ? 'none' : `.5px solid ${C.line}`,
           textDecoration: 'none',
           color: 'inherit',
