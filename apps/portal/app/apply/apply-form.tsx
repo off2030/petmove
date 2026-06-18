@@ -297,7 +297,7 @@ const inputEnClass =
 const numericInputClass =
   `w-full h-10 bg-transparent px-0 font-display text-[15px] tracking-[0.3px] tabular-nums text-[#2A2620] ${placeholderClass} focus:outline-none transition-colors`
 const chipButtonActive =
-  'border-[#2A2620] bg-[#2A2620] text-[#FBF7F1]'
+  'border-[#D99A58] bg-[#D99A58] text-[#FBF7F1]'
 const chipButtonInactive =
   'border-[rgba(42,38,32,0.14)] bg-[#FBF7F1] text-[#2A2620] hover:bg-[#F0E8DC]'
 const destructiveBoxClass =

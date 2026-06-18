@@ -33,7 +33,7 @@ const SEX_OPTIONS = [
   { value: 'female', label: '암컷' },
   { value: 'male', label: '수컷' },
 ]
-const chipButtonActive = 'border-foreground bg-foreground text-background'
+const chipButtonActive = 'border-primary bg-primary text-primary-foreground'
 const chipButtonInactive = 'border-border bg-card text-foreground hover:bg-accent'
 const dropdownClass = 'mt-1 rounded-md border border-border/80 bg-popover shadow-sm'
 const dropdownRowClass = 'w-full text-left px-md py-2.5 text-[15px] transition-colors hover:bg-accent'
