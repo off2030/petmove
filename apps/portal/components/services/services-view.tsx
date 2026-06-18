@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import type { CaseRow } from '@petmove/domain'
 import destsData from '@petmove/domain/data/destinations.json'
 import { useCases } from '@/components/portal-shell/case-data-provider'
+import { StartHereEmpty } from '@/components/portal-shell/start-here-empty'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { SegmentField, type FieldOption } from '@/components/fields/info-fields'
 import { C, serif, SectionCard } from '@/components/me/settings-shared'
@@ -271,6 +272,18 @@ export function ServicesView() {
   // position:fixed 의 기준을 가로채 본문에 박히는 것을 피하려고. SSR 가드로 mount 후에만.
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
+
+  // 등록한 반려동물이 0마리면 일반 안내 대신 '시작하기' 한 길만 — 목적지·동물이 있어야
+  // 맞춤 서비스를 보여줄 수 있으므로. 동물을 등록하면 아래 일반 화면으로 돌아간다.
+  if (cases.length === 0) {
+    return (
+      <StartHereEmpty
+        title="반려동물을 먼저 등록해주세요"
+        subtitle="등록하면 목적지에 맞는 서비스를 안내해 드려요"
+      />
+    )
+  }
+
   function startInquiry() {
     void notifyServiceInquiry({ name: guardian.name, destination: selectedKo, tripType: trip })
     window.open(KAKAO_CHAT_URL, '_blank', 'noopener,noreferrer')

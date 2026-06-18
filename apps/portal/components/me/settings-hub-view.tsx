@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { buildCaseJourneyContext, type CaseRow } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
+import { StartHereEmpty } from '@/components/portal-shell/start-here-empty'
 import {
   buildProfileView,
   buildPetBlock,
@@ -416,6 +417,16 @@ export function SettingsHubView() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [partnerKey])
+
+  // 등록한 반려동물이 0마리면 휑한 허브 대신 '시작하기' 한 길만 보여준다.
+  if (cases.length === 0) {
+    return (
+      <StartHereEmpty
+        title="아직 등록한 반려동물이 없어요"
+        subtitle="반려동물을 등록하고 출국 준비를 시작해보세요"
+      />
+    )
+  }
 
   return (
     <div
