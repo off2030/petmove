@@ -100,7 +100,7 @@ export function LoginForm({
         <div className="space-y-md text-center">
           <h1 className="font-display text-[28px] leading-tight text-[#2A2620]">펫무브</h1>
           <p className="text-sm leading-snug text-[#9A9286]">
-            반려동물과 함께 떠나는 해외여행
+            반려동물과 함께하는 해외여행
             <br />
             펫무브 앱으로 쉽게 준비하세요!
           </p>
