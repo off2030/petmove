@@ -33,6 +33,10 @@ export interface CustomerProfileRow {
   avatar_photo_url: string | null
   /** 회원 탈퇴 요청 시각. NULL = 활성, 값 있으면 +7일 후 cron 이 hard delete + 케이스 익명화. */
   deletion_scheduled_at: string | null
+  /** 자기책임 모드 — 입력불가 차단 해제 + 주의/경고 숨김(안내는 유지). 설정>고급. 기본 false. */
+  free_input_mode: boolean
+  /** 일정 탭 단계 정적 설명문 숨김(상태 안내는 유지). 설정>고급. 기본 false. */
+  hide_step_descriptions: boolean
   created_at: string
   updated_at: string
 }
@@ -64,6 +68,9 @@ export interface UpdateProfileInput {
   /** 아바타 — null 로 보내면 reset. 색은 화이트리스트 검증, photo_url 은 도메인 검증. */
   avatar_color?: string | null
   avatar_photo_url?: string | null
+  /** 설정>고급 — 자기책임 모드 / 설명문 숨김. */
+  free_input_mode?: boolean
+  hide_step_descriptions?: boolean
 }
 
 // 화이트리스트 — 단일 출처(lib/avatar.ts)에서 import.
@@ -97,6 +104,9 @@ export async function updateMyProfile(
       }
       patch.avatar_photo_url = url
     }
+    if (input.free_input_mode !== undefined) patch.free_input_mode = input.free_input_mode
+    if (input.hide_step_descriptions !== undefined)
+      patch.hide_step_descriptions = input.hide_step_descriptions
 
     if (Object.keys(patch).length === 0) {
       return getMyProfile() as Promise<Result<CustomerProfileRow>>
@@ -115,6 +125,28 @@ export async function updateMyProfile(
     return { ok: true, value: data as CustomerProfileRow }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * 자기책임 모드(free_input_mode) 여부 — 서버 액션의 도메인 차단 우회 판정용.
+ * client getSaveBlockError 가 free 모드에서 통과시킨 저장이 server 도메인 차단(광견병
+ * 1·2차 순서·귀국편 순서 등)에 다시 막히지 않도록, 차단 직전에만 lazy 로 조회한다.
+ * 형식·필드키 검증은 free 모드여도 유지(데이터 파싱 가능성 보존) — 여기선 도메인 차단만.
+ */
+export async function isFreeInputMode(): Promise<boolean> {
+  try {
+    const user = await getCurrentUser()
+    if (!user) return false
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from('customer_profiles')
+      .select('free_input_mode')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    return (data as { free_input_mode?: boolean } | null)?.free_input_mode === true
+  } catch {
+    return false
   }
 }
 

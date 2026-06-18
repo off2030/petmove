@@ -35,7 +35,7 @@ export default function CaseJourneyPage({
 }) {
   const { id } = use(params)
   const caseRow = useCase(id)
-  const { cases, refreshCases } = useCases()
+  const { cases, refreshCases, profile } = useCases()
   const router = useRouter()
   const searchParams = useSearchParams()
   const confirm = useConfirm()
@@ -66,7 +66,10 @@ export default function CaseJourneyPage({
 
   if (!caseRow || !hasJourney(caseRow)) return null
 
-  const data = buildJourney(caseRow, activeDest)
+  const data = buildJourney(caseRow, activeDest, {
+    freeInputMode: profile?.free_input_mode === true,
+    hideStepDescriptions: profile?.hide_step_descriptions === true,
+  })
 
   // ── 완료 확인 prompt (A형) 발동 판정 ──
   const dest = data.trip.toCity

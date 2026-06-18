@@ -338,7 +338,15 @@ const ADVISORY_DEFERRED_CHECKS = new Set<string>([
 export function buildJourney(
   caseRowInput: CaseRow,
   activeDestination?: string | null,
+  prefs?: {
+    /** 자기책임 모드 — '주의'/case 경고 숨김(입력불가 차단은 step-detail·server 가 담당). '안내'는 유지. */
+    freeInputMode?: boolean
+    /** 일정 탭 단계의 정적 설명문 숨김(상태 안내·주의는 유지). */
+    hideStepDescriptions?: boolean
+  },
 ): JourneyData {
+  const freeInputMode = prefs?.freeInputMode === true
+  const hideStepDescriptions = prefs?.hideStepDescriptions === true
   // 다중 목적지: 활성 목적지 1개짜리 뷰로 좁혀, 아래 단일목적지 가정 로직을 그대로 태운다.
   // (단계 적용·완료 판정·검증·표시 날짜가 모두 활성 목적지 기준이 된다. 단일 목적지면 무변경.)
   const caseRow = activeDestinationView(caseRowInput, activeDestination)
@@ -376,7 +384,8 @@ export function buildJourney(
         // advisory step(추가 백신·추가 검사)이 같은 조건을 안내로 처리 — 상단 주의로 중복 노출 안 함.
         if (ADVISORY_DEFERRED_CHECKS.has(check.id)) continue
         // step 에 매핑되지 않은 non-info = case-level 결격. 별도 영역에 모은다.
-        if (check.severity !== 'info') {
+        // (자기책임 모드: '주의'/경고는 숨김 — info '안내'만 남긴다.)
+        if (check.severity !== 'info' && !freeInputMode) {
           caseAlerts.push({
             id: check.id,
             title: check.title,
@@ -393,6 +402,8 @@ export function buildJourney(
         const r2 = applicableSteps.find((s) => s.id === 'rabies-vaccine-2')
         if (r2 && resolveDone(r2.done, caseRow)) stepId = 'rabies-titer'
       }
+      // 자기책임 모드: '주의'(non-info)는 배지·보조줄에서 숨긴다. info '안내'는 그대로.
+      if (check.severity !== 'info' && freeInputMode) continue
       const bucket = check.severity === 'info' ? infoByStep : failedByStep
       bucket.set(stepId, (bucket.get(stepId) ?? 0) + 1)
       // 안내 카드 본문 — 같은 step 에 여러 안내가 묶이면 첫 메시지만 보존.
@@ -812,7 +823,9 @@ export function buildJourney(
       date,
       dateLabel,
       state: done ? 'done' : 'upcoming',
-      desc: failedMsg ?? desc,
+      // 설명문 숨김 토글: 정적 설명문(summary)일 때만 감춘다. 주의(failedMsg)·상태 안내
+      // (situational desc, summary 와 다른 문구)는 유지 — 보호자가 놓치면 안 될 내용이라.
+      desc: failedMsg ?? (hideStepDescriptions && desc === summary ? undefined : desc),
       cardDesc,
       failedChecks: failedChecks > 0 ? failedChecks : undefined,
       infoChecks: infoChecks > 0 ? infoChecks : undefined,

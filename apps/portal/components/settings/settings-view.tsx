@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import type { ReactNode } from 'react'
-import { signOut } from '@/lib/actions/profile'
+import { useState, type ReactNode } from 'react'
+import { useConfirm } from '@petmove/ui'
+import { signOut, updateMyProfile } from '@/lib/actions/profile'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { C, EditPageShell, SectionCard } from '@/components/me/settings-shared'
 import { ThemeSwitcher } from './theme-switcher'
@@ -126,11 +127,113 @@ function ValueRow({
   )
 }
 
+/** iOS 톤 on/off 스위치. on=accent 트랙, off=옅은 잉크 트랙. */
+function Switch({ on, onClick, disabled }: { on: boolean; onClick: () => void; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        flexShrink: 0,
+        width: 46,
+        height: 28,
+        borderRadius: 999,
+        border: 0,
+        padding: 3,
+        cursor: disabled ? 'default' : 'pointer',
+        background: on ? 'var(--pm-accent)' : 'rgb(var(--pm-ink-rgb) / .18)',
+        opacity: disabled ? 0.55 : 1,
+        transition: 'background .18s, opacity .18s',
+        display: 'flex',
+        alignItems: 'center',
+      }}
+    >
+      <span
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: '50%',
+          background: C.surface,
+          boxShadow: '0 1px 3px rgba(0,0,0,.25)',
+          transform: on ? 'translateX(18px)' : 'translateX(0)',
+          transition: 'transform .18s',
+        }}
+      />
+    </button>
+  )
+}
+
+/** 라벨 + 보조 설명(좌) + 스위치(우). 마지막이 아니면 하단 hairline. */
+function ToggleRow({
+  label,
+  desc,
+  on,
+  disabled,
+  onToggle,
+  last,
+}: {
+  label: string
+  desc?: string
+  on: boolean
+  disabled?: boolean
+  onToggle: () => void
+  last?: boolean
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        gap: 14,
+        padding: ROW_PAD,
+        borderBottom: last ? 'none' : `.5px solid ${C.line}`,
+      }}
+    >
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 13, color: C.ink2 }}>{label}</div>
+        {desc && (
+          <div style={{ fontSize: 11.5, color: C.ink3, marginTop: 3, lineHeight: 1.45 }}>{desc}</div>
+        )}
+      </div>
+      <Switch on={on} onClick={onToggle} disabled={disabled} />
+    </div>
+  )
+}
+
 export function SettingsView() {
   const version = process.env.NEXT_PUBLIC_APP_VERSION
   const gitSha = process.env.NEXT_PUBLIC_GIT_SHA
-  const { profile } = useCases()
+  const { profile, updateProfile } = useCases()
+  const confirm = useConfirm()
   const scheduledAt = profile?.deletion_scheduled_at ?? null
+
+  // 고급 토글 — customer_profiles 에 저장(계정 전체). 저장 중인 키만 disable.
+  const [savingKey, setSavingKey] = useState<string | null>(null)
+  const freeInput = profile?.free_input_mode === true
+  const hideDesc = profile?.hide_step_descriptions === true
+  async function setFlag(key: 'free_input_mode' | 'hide_step_descriptions', next: boolean) {
+    if (savingKey) return
+    // 자기책임 모드를 켤 때만 부드러운 안내 1회 — 무섭지 않은 톤.
+    if (key === 'free_input_mode' && next) {
+      const ok = await confirm({
+        message:
+          '자기책임 모드를 켜면 입력 도우미(입력 제한·주의 표시)가 꺼져요.\n날짜·정보를 자유롭게 입력할 수 있고, 준비가 맞는지는 직접 확인하시면 돼요. 백신 유효기간 임박 같은 안내는 그대로 보여드려요.',
+        okLabel: '켤게요',
+        cancelLabel: '그대로 둘게요',
+      })
+      if (!ok) return
+    }
+    setSavingKey(key)
+    const res = await updateMyProfile(
+      key === 'free_input_mode' ? { free_input_mode: next } : { hide_step_descriptions: next },
+    )
+    if (res.ok) updateProfile(res.value)
+    setSavingKey(null)
+  }
   const daysLeft = scheduledAt
     ? Math.max(
         0,
@@ -151,6 +254,24 @@ export function SettingsView() {
         <div style={{ padding: '14px 0' }}>
           <ThemeSwitcher />
         </div>
+      </SectionCard>
+
+      <SectionCard label="고급">
+        <ToggleRow
+          label="일정 설명문 숨기기"
+          desc="일정 탭에서 각 단계의 설명을 감춰 간결하게 봐요."
+          on={hideDesc}
+          disabled={savingKey === 'hide_step_descriptions'}
+          onToggle={() => setFlag('hide_step_descriptions', !hideDesc)}
+        />
+        <ToggleRow
+          label="자기책임 모드"
+          desc="입력 제한과 주의 표시를 끄고 날짜·정보를 자유롭게 입력해요. 백신 유효기간 임박 같은 안내는 그대로 보여드려요."
+          on={freeInput}
+          disabled={savingKey === 'free_input_mode'}
+          onToggle={() => setFlag('free_input_mode', !freeInput)}
+          last
+        />
       </SectionCard>
 
       <SectionCard label="약관·정책">

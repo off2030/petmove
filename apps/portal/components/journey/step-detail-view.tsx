@@ -233,7 +233,10 @@ export function StepDetailView({
     () => (caseRowRaw ? activeDestinationView(caseRowRaw, activeDest) : caseRowRaw),
     [caseRowRaw, activeDest],
   )
-  const { updateCase } = useCases()
+  const { updateCase, profile } = useCases()
+  // 자기책임 모드 — 입력불가 차단(전부) 해제. 형식·필드키 검증은 server 가 유지(데이터 파싱
+  // 가능성 보존). '주의'/'안내'는 scenario(buildJourney prefs)가 담당.
+  const freeInput = profile?.free_input_mode === true
 
   // 인터랙티브 step 폼 state — 다른 step 에서는 렌더 안 함. hooks 는 매번 호출.
   const savedChip = caseRow?.microchip ?? ''
@@ -813,6 +816,8 @@ export function StepDetailView({
   // 같은 @petmove/domain 함수를 클라이언트에서도 선행해, 어차피 차단될 저장에는 확인 팝업이
   // 뜨지 않게 한다(검증 → 통과 시에만 확인 → 저장).
   function getSaveBlockError(): string | null {
+    // 자기책임 모드 — 모든 입력불가 차단을 통과시킨다(아무 날짜·정보 저장). 책임은 보호자.
+    if (freeInput) return null
     if (isMicrochip) {
       if (chip !== '' && chip.length !== 15) return '15자리 숫자를 입력하세요.'
       const birth = readBirthDate(caseRow?.data)

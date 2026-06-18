@@ -36,6 +36,7 @@ import {
 } from '@petmove/domain'
 import { AVATAR_COLOR_IDS, type AvatarColorId } from '@/lib/avatar'
 import { readForm } from '@/lib/cases/info-form'
+import { isFreeInputMode } from './profile'
 import { assertCaseAccess, type Result } from './_shared'
 
 /**
@@ -362,7 +363,7 @@ export async function updateRabiesEntryFields(
     // 모델상 1차 없는 2차는 저장 시 1차로 당겨져 슬롯이 어긋난다(2차로 넣은 게 1차로 이동).
     // 말없이 옮기는 대신 1차를 먼저 입력하도록 막는다(논리적으로 2차는 1차 없이 존재 불가).
     // client getSaveBlockError 의 isRabies2 분기와 동일 조건 — 단일 출처. 3차+ 는 별도 함수.
-    if (index === 1 && hasValidDate(entry) && !hasValidDate(rabiesArr[0])) {
+    if (index === 1 && hasValidDate(entry) && !hasValidDate(rabiesArr[0]) && !(await isFreeInputMode())) {
       return { ok: false, error: '1차 접종일을 먼저 입력하세요.' }
     }
 
@@ -913,7 +914,7 @@ export async function updateFlightFields(
     if (flightCtx.tripType === 'round') {
       const entry = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
       const ret = typeof fields.return_date === 'string' ? fields.return_date.trim() : ''
-      if (entry && ret && ret < entry) {
+      if (entry && ret && ret < entry && !(await isFreeInputMode())) {
         return { ok: false, error: '귀국 항공편 날짜는 출국 항공편 날짜 이후여야 해요.' }
       }
     }
