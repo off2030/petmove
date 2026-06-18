@@ -75,9 +75,10 @@ export async function GET(request: Request) {
     return loginRedirect(url.origin, `naver_token: ${(e as Error).message}`)
   }
 
-  // 2. access_token → user info (email, name)
+  // 2. access_token → user info (email, name, profile_image)
   let email: string
   let name: string | null
+  let profileImage: string | null = null
   try {
     const meRes = await fetch('https://openapi.naver.com/v1/nid/me', {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -86,13 +87,14 @@ export async function GET(request: Request) {
     })
     const meJson = (await meRes.json()) as {
       resultcode?: string
-      response?: { email?: string; name?: string; nickname?: string }
+      response?: { email?: string; name?: string; nickname?: string; profile_image?: string }
     }
     if (meJson.resultcode !== '00' || !meJson.response?.email) {
       return loginRedirect(url.origin, 'naver_no_email')
     }
     email = meJson.response.email.toLowerCase()
     name = meJson.response.name ?? meJson.response.nickname ?? null
+    profileImage = meJson.response.profile_image ?? null
   } catch (e) {
     return loginRedirect(url.origin, `naver_me: ${(e as Error).message}`)
   }
@@ -140,7 +142,10 @@ export async function GET(request: Request) {
       const { data: created, error: createErr } = await admin.auth.admin.createUser({
         email,
         email_confirm: true,
-        user_metadata: name ? { name, full_name: name } : {},
+        user_metadata: {
+          ...(name ? { name, full_name: name } : {}),
+          ...(profileImage ? { avatar_url: profileImage } : {}),
+        },
         app_metadata: { provider: 'naver', providers: ['naver'] },
       })
       if (createErr || !created.user) {
@@ -173,7 +178,7 @@ export async function GET(request: Request) {
     // 5. portal 특화 — customer_profiles 자동 생성 + 이메일 기준 자동 매칭
     const { data: { user: sessionUser } } = await supabase.auth.getUser()
     if (sessionUser) {
-      try { await ensureCustomerProfile(supabase, sessionUser) } catch { /* best-effort */ }
+      try { await ensureCustomerProfile(supabase, sessionUser, { avatarUrl: profileImage }) } catch { /* best-effort */ }
       try { await autoLinkCasesByEmail(admin, sessionUser) } catch { /* best-effort */ }
     }
   } catch (e) {
