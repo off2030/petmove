@@ -103,17 +103,17 @@ export function LoginForm({ next, initialError = null }: { next: string; initial
             className="w-full"
             variant="outline"
             disabled={loading !== null}
-            onClick={() => oauth('naver')}
+            onClick={() => oauth('kakao')}
           >
-            {loading === 'naver' ? '이동 중…' : '네이버로 로그인'}
+            {loading === 'kakao' ? '이동 중…' : '카카오로 로그인'}
           </Button>
           <Button
             className="w-full"
             variant="outline"
             disabled={loading !== null}
-            onClick={() => oauth('kakao')}
+            onClick={() => oauth('naver')}
           >
-            {loading === 'kakao' ? '이동 중…' : '카카오로 로그인'}
+            {loading === 'naver' ? '이동 중…' : '네이버로 로그인'}
           </Button>
           <Button
             className="w-full"

@@ -119,17 +119,17 @@ export function LoginForm({
             type="button"
             className={socialButtonClass}
             disabled={loading !== null}
-            onClick={() => oauthLogin('google')}
+            onClick={naverOAuth}
           >
-            {loading === 'google' ? '이동 중…' : 'Google 계정으로 계속'}
+            {loading === 'naver' ? '이동 중…' : '네이버 계정으로 계속'}
           </button>
           <button
             type="button"
             className={socialButtonClass}
             disabled={loading !== null}
-            onClick={naverOAuth}
+            onClick={() => oauthLogin('google')}
           >
-            {loading === 'naver' ? '이동 중…' : '네이버 계정으로 계속'}
+            {loading === 'google' ? '이동 중…' : 'Google 계정으로 계속'}
           </button>
         </div>
 
