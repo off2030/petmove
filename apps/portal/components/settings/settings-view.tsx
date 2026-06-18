@@ -262,14 +262,14 @@ export function SettingsView() {
       <SectionCard label="고급">
         <ToggleRow
           label="일정 설명문 표시"
-          desc="전체 일정 카드에 단계 설명문을 보여줘요. 끄면 제목만 간결하게 봐요."
+          desc="전체 일정 카드에 간략한 설명문을 표시해요."
           on={showDesc}
           disabled={savingKey === 'hide_step_descriptions'}
           onToggle={() => setFeature('hide_step_descriptions', !showDesc)}
         />
         <ToggleRow
           label="자동 검증 기능"
-          desc="설정된 규칙에 따라 입력 제한과 경고를 표시해요. 안전한 준비를 위해 켜두는 걸 권장해요."
+          desc="설정된 규칙에 따라 입력을 제한하고 경고를 표시해요. 중요한 실수를 예방할 수 있어요."
           on={autoValidate}
           disabled={savingKey === 'free_input_mode'}
           onToggle={() => setFeature('free_input_mode', !autoValidate)}
