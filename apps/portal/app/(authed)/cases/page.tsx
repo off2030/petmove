@@ -98,6 +98,7 @@ export default async function CasesPage() {
 function EmptyState() {
   return (
     <div
+      className="pm-welcome-fade"
       style={{
         // main 본문 영역(100dvh − 상단 safe+48 − 하단 88)을 채워 세로 중앙 정렬.
         minHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - 48px - 88px)',
@@ -110,9 +111,7 @@ function EmptyState() {
         gap: 18,
       }}
     >
-      {/* 로그인 후 처음 만나는 화면 — 제목이 먼저 떠오르고 시작하기 버튼이 살짝 뒤따라 등장. */}
       <h1
-        className="pm-welcome-title"
         style={{
           fontFamily: 'var(--pm-font-display)',
           fontSize: 21,
@@ -127,7 +126,6 @@ function EmptyState() {
       </h1>
       <Link
         href="/apply"
-        className="pm-welcome-cta"
         style={{
           padding: '11px 22px',
           borderRadius: 999,

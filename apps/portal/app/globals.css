@@ -125,20 +125,10 @@
 }
 .pm-fade-up { animation: pm-fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 
-/* 환영(첫 진입) 화면 순차 등장 — 제목이 먼저 떠오르고, 시작하기 버튼이 살짝 뒤따라
-   올라온다. 둘 다 fill-mode both 라 delay 동안 숨겨져 있어 깜빡임 없음. */
-@keyframes pm-welcome-rise {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes pm-welcome-pop {
-  from { opacity: 0; transform: translateY(10px) scale(0.96); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-.pm-welcome-title { animation: pm-welcome-rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.pm-welcome-cta { animation: pm-welcome-pop 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.32s both; }
+/* 환영(첫 진입) 화면 — 통짜 fade-up 을 일반(0.5s)보다 조금 더 천천히. */
+.pm-welcome-fade { animation: pm-fade-up 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 @media (prefers-reduced-motion: reduce) {
-  .pm-welcome-title, .pm-welcome-cta { animation: none; }
+  .pm-welcome-fade { animation: none; }
 }
 
 .pm-noscroll::-webkit-scrollbar { display: none; }
