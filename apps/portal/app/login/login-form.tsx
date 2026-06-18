@@ -29,8 +29,9 @@ export function LoginForm({
     }
   }, [initialError])
 
-  async function googleOAuth() {
-    setLoading('google')
+  // Google·카카오는 둘 다 Supabase builtin OAuth — provider 만 다름.
+  async function oauthLogin(provider: 'google' | 'kakao') {
+    setLoading(provider)
     setError(null)
     setInfo(null)
 
@@ -42,7 +43,7 @@ export function LoginForm({
     }
 
     const { error } = await supabaseBrowser.auth.signInWithOAuth({
-      provider: 'google',
+      provider,
       options: { redirectTo },
     })
 
@@ -104,7 +105,15 @@ export function LoginForm({
             type="button"
             className={socialButtonClass}
             disabled={loading !== null}
-            onClick={googleOAuth}
+            onClick={() => oauthLogin('kakao')}
+          >
+            {loading === 'kakao' ? '이동 중…' : '카카오 계정으로 계속'}
+          </button>
+          <button
+            type="button"
+            className={socialButtonClass}
+            disabled={loading !== null}
+            onClick={() => oauthLogin('google')}
           >
             {loading === 'google' ? '이동 중…' : 'Google 계정으로 계속'}
           </button>
