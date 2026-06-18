@@ -44,7 +44,13 @@ export function LoginForm({
 
     const { error } = await supabaseBrowser.auth.signInWithOAuth({
       provider,
-      options: { redirectTo },
+      options: {
+        redirectTo,
+        // 카카오는 프로필 사진을 명시적으로 요청해야 동의 화면에 뜨고 반환됨 (구글은 기본 제공).
+        ...(provider === 'kakao'
+          ? { scopes: 'account_email profile_nickname profile_image' }
+          : {}),
+      },
     })
 
     if (error) {
