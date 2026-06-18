@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import type { CaseRow } from '@petmove/domain'
 import destsData from '@petmove/domain/data/destinations.json'
 import { useCases } from '@/components/portal-shell/case-data-provider'
@@ -266,6 +267,10 @@ export function ServicesView() {
     primaryCase: cases[0] ?? null,
   }).guardian
   const [confirmOpen, setConfirmOpen] = useState(false)
+  // FAB 는 portal 로 body 에 그린다 — pm-fade-up 의 transform(fill-mode both 로 잔존)이
+  // position:fixed 의 기준을 가로채 본문에 박히는 것을 피하려고. SSR 가드로 mount 후에만.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   function startInquiry() {
     void notifyServiceInquiry({ name: guardian.name, destination: selectedKo, tripType: trip })
     window.open(KAKAO_CHAT_URL, '_blank', 'noopener,noreferrer')
@@ -384,33 +389,37 @@ export function ServicesView() {
         </div>
       </BottomSheet>
 
-      {!sheetOpen && !confirmOpen && (
-        <button
-          type="button"
-          aria-label="카카오톡으로 문의"
-          onClick={() => setConfirmOpen(true)}
-          style={{
-            position: 'fixed',
-            right: 16,
-            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)',
-            width: 56,
-            height: 56,
-            borderRadius: '50%',
-            border: 'none',
-            background: '#FEE500',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            zIndex: 38,
-            boxShadow: '0 6px 18px -4px rgba(0,0,0,0.28), 0 2px 6px -2px rgba(0,0,0,0.12)',
-          }}
-        >
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="#3C1E1E" aria-hidden>
-            <path d="M12 3.5C6.8 3.5 2.5 6.9 2.5 11c0 2.6 1.8 4.9 4.5 6.3-.2.7-.7 2.5-.8 2.9-.1.4.2.55.45.42.3-.16 2.6-1.78 3.55-2.42.55.08 1.12.12 1.7.12 5.2 0 9.5-3.4 9.5-7.6S17.2 3.5 12 3.5z" />
-          </svg>
-        </button>
-      )}
+      {mounted &&
+        !sheetOpen &&
+        !confirmOpen &&
+        createPortal(
+          <button
+            type="button"
+            aria-label="카카오톡으로 문의"
+            onClick={() => setConfirmOpen(true)}
+            style={{
+              position: 'fixed',
+              right: 16,
+              bottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)',
+              width: 56,
+              height: 56,
+              borderRadius: '50%',
+              border: 'none',
+              background: '#FEE500',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              zIndex: 38,
+              boxShadow: '0 6px 18px -4px rgba(0,0,0,0.28), 0 2px 6px -2px rgba(0,0,0,0.12)',
+            }}
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="#3C1E1E" aria-hidden>
+              <path d="M12 3.5C6.8 3.5 2.5 6.9 2.5 11c0 2.6 1.8 4.9 4.5 6.3-.2.7-.7 2.5-.8 2.9-.1.4.2.55.45.42.3-.16 2.6-1.78 3.55-2.42.55.08 1.12.12 1.7.12 5.2 0 9.5-3.4 9.5-7.6S17.2 3.5 12 3.5z" />
+            </svg>
+          </button>,
+          document.body,
+        )}
 
       <BottomSheet open={confirmOpen} onClose={() => setConfirmOpen(false)} title="문의를 시작할게요">
         <div style={{ display: 'flex', flexDirection: 'column' }}>
