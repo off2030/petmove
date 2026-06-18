@@ -400,7 +400,8 @@ export function ServicesView() {
             style={{
               position: 'fixed',
               right: 16,
-              bottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)',
+              // 하단 바와 동일 기준(max(safe,14px)) 위로 바 높이(~66px)+여백 → 확실히 띄움.
+              bottom: 'calc(max(env(safe-area-inset-bottom, 0px), 14px) + 90px)',
               width: 56,
               height: 56,
               borderRadius: '50%',
