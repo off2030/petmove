@@ -7,6 +7,8 @@ import { useCases } from '@/components/portal-shell/case-data-provider'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { SegmentField, type FieldOption } from '@/components/fields/info-fields'
 import { C, serif, SectionCard } from '@/components/me/settings-shared'
+import { buildProfileView } from '@/lib/profile/catalog'
+import { notifyServiceInquiry } from '@/lib/actions/service-inquiry'
 
 /**
  * 서비스 탭 (/services) — 펫무브 유료 상품 안내. 목적지 + 여정 유형(왕복·편도) 인식형.
@@ -33,6 +35,9 @@ const DESTS = destsData as Dest[]
 /** 서비스 제공 국가 — 여정 카드 구성이 끝난 목적지부터. 새 나라 준비되면 여기에 push. */
 const OFFERED_KO: string[] = ['일본', '태국', '필리핀']
 const OFFERED: Dest[] = OFFERED_KO.map((ko) => DESTS.find((d) => d.ko === ko) ?? { ko, en: '' })
+
+/** 펫무브 카카오톡 채널 채팅 링크 — '카카오톡으로 문의' 진입. */
+const KAKAO_CHAT_URL = 'https://pf.kakao.com/_zDDxhj/chat'
 
 type TripType = 'round' | 'one_way'
 const TRIP_OPTIONS: readonly FieldOption[] = [
@@ -231,7 +236,7 @@ function DestinationField({ selected, onOpen }: { selected: Dest | null; onOpen:
 }
 
 export function ServicesView() {
-  const { cases } = useCases()
+  const { cases, profile, userEmail } = useCases()
 
   // 기본 목적지 = 등록 시 신청한 목적지가 서비스 제공 목록에 있으면 그것, 없으면 첫 번째(일본).
   const registered = destinationsFromCases(cases)
@@ -253,6 +258,19 @@ export function ServicesView() {
     if (!q) return OFFERED
     return OFFERED.filter((d) => d.ko.includes(q) || d.en.toLowerCase().includes(q))
   }, [query])
+
+  // 문의 — 로그인 상태라 이름·이메일을 이미 앎(폼 X). 카톡 열기 직전 운영자에게 봇 알림.
+  const guardian = buildProfileView({
+    userEmail,
+    customerProfile: profile,
+    primaryCase: cases[0] ?? null,
+  }).guardian
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  function startInquiry() {
+    void notifyServiceInquiry({ name: guardian.name, destination: selectedKo, tripType: trip })
+    window.open(KAKAO_CHAT_URL, '_blank', 'noopener,noreferrer')
+    setConfirmOpen(false)
+  }
 
   const offers = buildOffers(selectedKo, trip)
   const tripLabel = trip === 'round' ? '왕복' : '편도'
@@ -364,6 +382,83 @@ export function ServicesView() {
             })
           )}
         </div>
+      </BottomSheet>
+
+      {!sheetOpen && !confirmOpen && (
+        <button
+          type="button"
+          aria-label="카카오톡으로 문의"
+          onClick={() => setConfirmOpen(true)}
+          style={{
+            position: 'fixed',
+            right: 16,
+            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)',
+            width: 56,
+            height: 56,
+            borderRadius: '50%',
+            border: 'none',
+            background: '#FEE500',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            zIndex: 38,
+            boxShadow: '0 6px 18px -4px rgba(0,0,0,0.28), 0 2px 6px -2px rgba(0,0,0,0.12)',
+          }}
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="#3C1E1E" aria-hidden>
+            <path d="M12 3.5C6.8 3.5 2.5 6.9 2.5 11c0 2.6 1.8 4.9 4.5 6.3-.2.7-.7 2.5-.8 2.9-.1.4.2.55.45.42.3-.16 2.6-1.78 3.55-2.42.55.08 1.12.12 1.7.12 5.2 0 9.5-3.4 9.5-7.6S17.2 3.5 12 3.5z" />
+          </svg>
+        </button>
+      )}
+
+      <BottomSheet open={confirmOpen} onClose={() => setConfirmOpen(false)} title="문의를 시작할게요">
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '10px 0', borderBottom: `.5px solid ${C.line}` }}>
+            <span style={{ fontSize: 13, color: C.ink3 }}>이름</span>
+            <span style={{ fontSize: 14, color: C.ink, fontWeight: 500 }}>{guardian.name ?? '미설정'}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '10px 0' }}>
+            <span style={{ fontSize: 13, color: C.ink3 }}>이메일</span>
+            <span style={{ fontSize: 14, color: C.ink }}>{guardian.email ?? userEmail ?? '미설정'}</span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '12px 0 0' }}>
+          {[selected.ko, tripLabel].map((chip) => (
+            <span key={chip} style={{ fontSize: 11, padding: '3px 9px', borderRadius: 999, background: C.soft, color: C.accent }}>
+              {chip}
+            </span>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={startInquiry}
+          style={{
+            width: '100%',
+            marginTop: 16,
+            padding: '13px 0',
+            borderRadius: 12,
+            border: 'none',
+            background: '#FEE500',
+            color: '#191600',
+            fontFamily: 'inherit',
+            fontSize: 15,
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#191600" aria-hidden>
+            <path d="M12 3.5C6.8 3.5 2.5 6.9 2.5 11c0 2.6 1.8 4.9 4.5 6.3-.2.7-.7 2.5-.8 2.9-.1.4.2.55.45.42.3-.16 2.6-1.78 3.55-2.42.55.08 1.12.12 1.7.12 5.2 0 9.5-3.4 9.5-7.6S17.2 3.5 12 3.5z" />
+          </svg>
+          카카오톡으로 문의
+        </button>
+        <p style={{ fontSize: 11.5, color: C.ink3, textAlign: 'center', margin: '10px 0 0' }}>
+          운영자가 미리 확인하고 답변을 준비해요
+        </p>
       </BottomSheet>
     </div>
   )
