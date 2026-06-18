@@ -823,9 +823,14 @@ export function buildJourney(
       date,
       dateLabel,
       state: done ? 'done' : 'upcoming',
-      // 설명문 숨김 토글: 정적 설명문(summary)일 때만 감춘다. 주의(failedMsg)·상태 안내
-      // (situational desc, summary 와 다른 문구)는 유지 — 보호자가 놓치면 안 될 내용이라.
-      desc: failedMsg ?? (hideStepDescriptions && desc === summary ? undefined : desc),
+      // 설명문 숨김 토글: 정적 설명문(summary) + 완료 narration(doneSummary)을 감춘다.
+      // 주의(failedMsg)·상태 안내(situational desc — 오늘 예정일·진행 중 등)는 유지 —
+      // 보호자가 놓치면 안 될 내용이라.
+      desc: failedMsg
+        ? failedMsg
+        : hideStepDescriptions && (desc === summary || desc === step.doneSummary)
+          ? undefined
+          : desc,
       cardDesc,
       failedChecks: failedChecks > 0 ? failedChecks : undefined,
       infoChecks: infoChecks > 0 ? infoChecks : undefined,
