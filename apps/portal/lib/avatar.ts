@@ -21,15 +21,16 @@ export type AvatarColorId =
   | 'slate'
   | 'terracotta'
 
-// 순서가 곧 "n번째 케이스에 어떤 색을 줄지" — 화사한 5색을 먼저, 어두운 2색(slate/purple)을 뒤로.
-// picker grid 표시 순서도 이 배열을 그대로 따라가므로 사용자가 보기에도 화사한 색이 먼저 보임.
+// 순서가 곧 "n번째 케이스에 어떤 색을 줄지". 첫 동물(index 0)은 펫무브 로고색(amber=orange)
+// 으로 시작 — 브랜드 첫인상. 이어서 화사한 색들, 어두운 2색(slate/purple)을 뒤로.
+// picker grid 표시 순서도 이 배열을 그대로 따라가므로 로고색이 맨 앞에 보인다.
 export const AVATAR_COLOR_IDS: readonly AvatarColorId[] = [
+  'orange',
   'sage',
   'rose',
   'ocean',
   'sand',
   'terracotta',
-  'orange',
   'slate',
   'purple',
 ] as const
