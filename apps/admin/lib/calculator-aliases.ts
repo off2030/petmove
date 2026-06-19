@@ -12,6 +12,16 @@ export const CAT_VARIANTS: Record<string, string> = {
   '뉴질랜드': '뉴질랜드(고양이)',
 }
 
+/**
+ * 강아지만 진행하는 목적지 — 고양이 선택 시 계산기에서 '해당 없음' 표시.
+ * (남아프리카공화국 = ARC-OVI, 개 전용.)
+ */
+export const DOG_ONLY_COUNTRIES = new Set<string>(['남아프리카공화국'])
+
+export function isDogOnly(country: string): boolean {
+  return DOG_ONLY_COUNTRIES.has(country)
+}
+
 export const EU_ALIASES: Record<string, string> = {
   '오스트리아': '유럽',
   '벨기에': '유럽',
