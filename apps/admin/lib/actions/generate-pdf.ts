@@ -258,16 +258,16 @@ function generateShipperExportRef(shipDate?: string): string {
   return `LVMC${y}${mm}${day}`
 }
 
-/** ARC-OVI(남아공) 표준 검체 구성 — 혈청 3ml×2 + EDTA 전혈 0.5ml×10 + 무염색 도말×2 = 14점. */
-const ARC_SPECIMEN_COUNT = 14
+/** ARC-OVI(남아공) 표준 검체 구성 — 혈청 3ml×3 + EDTA 전혈 0.5ml×10 + 무염색 도말×3 = 16점. */
+const ARC_SPECIMEN_COUNT = 16
 /** ARC 인보이스 Full Description of Goods (혼합 검체라 통관 단위는 EA). */
 const ARC_INVOICE_GOODS = [
   'Exempt Animal Specimen',
   '',
   'Non-infectious canine specimens for diagnostic testing:',
-  ' - Serum 3ml x 2 tubes',
+  ' - Serum 3ml x 3 tubes',
   ' - EDTA whole blood 0.5ml x 10 tubes',
-  ' - Unstained blood smear x 2 slides',
+  ' - Unstained blood smear x 3 slides',
   '',
   'For diagnostic testing only. Not for resale.',
   'No commercial value. Value for customs purpose only.',
@@ -275,7 +275,7 @@ const ARC_INVOICE_GOODS = [
 ].join('\n')
 
 export async function generateInvoice(opts: ShipmentOpts): Promise<GeneratePdfResult> {
-  // ARC-OVI(남아공)는 표준 14점 혼합 검체 — 수량·품목 설명·단위를 고정값으로 덮어씀.
+  // ARC-OVI(남아공)는 표준 16점 혼합 검체 — 수량·품목 설명·단위를 고정값으로 덮어씀.
   // 그 외 lab 은 빈 값 → preserveTemplateText 가 템플릿 기본값(canine serum / Tube) 유지.
   const isArc = (opts.consignee_lab ?? '').toLowerCase() === 'arc_ovr'
   const tubeCount = isArc ? ARC_SPECIMEN_COUNT : opts.tube_count
