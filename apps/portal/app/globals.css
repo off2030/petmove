@@ -139,6 +139,21 @@
 .pm-noscroll::-webkit-scrollbar { display: none; }
 .pm-noscroll { scrollbar-width: none; }
 
+/* 탭 전환 로딩 스켈레톤 — force-dynamic 라우트의 RSC 왕복(캐시 미스) 동안 이전 화면이
+   얼어붙는 대신 보여줄 차분한 플레이스홀더. 새 색·타이포 없이 기존 --pm-* 토큰만 사용. */
+@keyframes pm-skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.pm-skeleton {
+  background: var(--pm-line);
+  border-radius: 10px;
+  animation: pm-skeleton-pulse 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pm-skeleton { animation: none; }
+}
+
 /* 정보 탭 편집 필드 — placeholder 톤 통일 (인라인 스타일로는 ::placeholder 불가). */
 .pm-field-input::placeholder { color: var(--pm-ink-3); opacity: 1; }
 .pm-field-input { caret-color: var(--pm-accent); }
