@@ -28,6 +28,13 @@ interface AttachButtonProps {
   /** 버튼 자체를 숨기고 picker / ScanFlow 만 mount. triggerRef 와 함께 사용. */
   hidden?: boolean
   /**
+   * 모바일 이미지 선택 시 ScanFlow(크롭) 통과 여부. 기본 true.
+   * false 면 크롭 모달 없이 고른 파일을 그대로 onFile — 단순 첨부(메모 등)용.
+   * (크롭은 AI 추출용 영수증성 문서에서만 의미 있고, 모달이 안 뜨면 첨부가
+   *  통째로 막히는 모바일 취약점이 있어 일반 첨부는 끈다.)
+   */
+  scan?: boolean
+  /**
    * 크롭 모드.
    * - 'free' (기본): 박스 코너 드래그로 자유 조정 (react-image-crop). 일반 문서.
    * - 'fixed': 박스 풀 사이즈 고정, 이미지 줌/팬으로 맞춤 (react-easy-crop).
@@ -54,6 +61,7 @@ export function AttachButton({
   triggerRef,
   hidden,
   cropMode = 'free',
+  scan = true,
 }: AttachButtonProps) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [scanSource, setScanSource] = useState<File | null>(null)
@@ -75,7 +83,7 @@ export function AttachButton({
   function handleFiles(fileList: FileList) {
     const files = Array.from(fileList)
     if (files.length === 0) return
-    const mobile = isMobile()
+    const mobile = isMobile() && scan
     let imageRouted = false
     for (const f of files) {
       // 모바일 + 이미지 + 첫 이미지 → ScanFlow. 이후 파일은 직통.

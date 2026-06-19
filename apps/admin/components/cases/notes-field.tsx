@@ -289,9 +289,10 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
             언마운트되지 않게 함(언마운트 시 ScanFlow·input 이 사라져 저장 실패). */}
         <AttachButton
           multiple
+          scan={false}
           onFile={(file) => uploadFiles([file])}
           className="md:hidden inline-flex ml-auto h-7 w-7 rounded-full border border-border/80 bg-popover"
-          title="파일 첨부 (카메라 시 자동 크롭)"
+          title="파일 첨부"
         >
           <Paperclip size={14} />
         </AttachButton>
@@ -376,6 +377,7 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
               </div>
               <AttachButton
                 multiple
+                scan={false}
                 onFile={(file) => uploadFiles([file])}
                 className="shrink-0 hidden md:inline-flex h-7 w-7 items-center justify-center rounded-full border border-border/80 bg-popover text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
                 title="파일 첨부"
