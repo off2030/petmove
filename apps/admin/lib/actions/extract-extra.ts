@@ -72,7 +72,10 @@ export interface HawaiiResult {
   address_overseas: string | null
   postal_code: string | null
   phone: string | null
+  departure_date: string | null
   entry_date: string | null
+  arrival_time: string | null
+  flight_number: string | null
 }
 
 export interface UkResult {
@@ -211,7 +214,7 @@ const SCHEMAS: { [C in Country]: Record<string, unknown> } = {
     required: [
       'passport_number', 'passport_issuing_country', 'passport_expiry_date',
       'date_of_birth', 'email_address', 'address_overseas', 'postal_code',
-      'phone', 'entry_date',
+      'phone', 'departure_date', 'entry_date', 'arrival_time', 'flight_number',
     ],
     properties: {
       passport_number: nullable(),
@@ -222,7 +225,10 @@ const SCHEMAS: { [C in Country]: Record<string, unknown> } = {
       address_overseas: nullable(),
       postal_code: nullable(),
       phone: nullable(),
+      departure_date: nullable(),
       entry_date: nullable(),
+      arrival_time: nullable(),
+      flight_number: nullable(),
     },
   },
   uk: {
@@ -319,7 +325,10 @@ Determine direction BY AIRPORTS, not by date order.${COMMON_RULES}
 - address_overseas: Overseas address in English (street + city + state if present). EXCLUDE postal code.
 - postal_code: Postal/ZIP code.
 - phone: Holder's phone number for Hawaii entry. Accept any format the user wrote — international ("+1-808-555-0199"), digits only ("18085550199" or "8085550199"), with separators. Return as written, do not reformat.
-- entry_date: Date of arrival in Hawaii, YYYY-MM-DD. Labels include "도착", "입국일", "arrival", "하와이 도착". If TWO dates appear like "출국 5/10, 도착 5/10" or "departure/arrival" pair, use the ARRIVAL date. CRITICAL — if year is missing (e.g. just "5/10" or "May 10"): output the next upcoming occurrence AFTER today's date. NEVER output a year in the past.`,
+- entry_date: Date of arrival in Hawaii, YYYY-MM-DD. Labels include "도착", "입국일", "arrival", "하와이 도착". If TWO dates appear like "출국 5/10, 도착 5/10" or "departure/arrival" pair, use the ARRIVAL date. CRITICAL — if year is missing (e.g. just "5/10" or "May 10"): output the next upcoming occurrence AFTER today's date. NEVER output a year in the past.
+- departure_date: Date the owner/pet DEPARTS Korea (출국일/departure), YYYY-MM-DD. The earlier date in a "출국/도착" or "departure/arrival" pair. Same missing-year rule as entry_date.
+- arrival_time: Scheduled ARRIVAL time in Hawaii, 24h format "HH:mm". Convert AM/PM (e.g. "2:30 PM" → "14:30"). If only a departure time is shown, return null.
+- flight_number: Flight number of the arriving flight into Hawaii (e.g. "KE053", "HA458"). If multiple legs, use the final leg arriving in Hawaii.`,
 
   uk: `You extract the overseas destination address for UK pet-import from images or text.${COMMON_RULES}
 - address_overseas: UK destination address in English, including postal code if visible. Return null if no address found.`,
