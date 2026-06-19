@@ -3,6 +3,7 @@ import { Inter_Tight } from 'next/font/google'
 import './globals.css'
 import { ConfirmProvider } from '@petmove/ui'
 import { ServiceWorkerRegister } from '@/components/sw-register'
+import { NativeSplash } from '@/components/native-splash'
 import { ThemeProvider } from '@/components/portal-shell/theme-provider'
 import { NavGuardProvider } from '@/components/portal-shell/nav-guard'
 
@@ -57,6 +58,7 @@ export default function RootLayout({
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
         <script dangerouslySetInnerHTML={{ __html: themeNoFlash }} />
         <ServiceWorkerRegister />
+        <NativeSplash />
         <ThemeProvider>
           <ConfirmProvider>
             <NavGuardProvider>

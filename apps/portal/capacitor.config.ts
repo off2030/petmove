@@ -31,9 +31,28 @@ const config: CapacitorConfig = {
   },
   ios: {
     contentInset: 'always',
+    // B — WebView 배경색. 콜드 스타트 때 웹이 페인트되기 전 흰 화면 대신 앱 톤(stone)을 깐다.
+    backgroundColor: '#F5EFE8',
   },
   android: {
     allowMixedContent: false,
+    backgroundColor: '#F5EFE8',
+  },
+  plugins: {
+    // A — 네이티브 스플래시. Remote URL 모드라 앱 실행 시 웹을 처음부터 받아오는 동안
+    // 흰 화면이 보이는데, 그동안 스플래시로 덮는다. 웹 셸이 첫 페인트에 도달하면
+    // NativeSplash 컴포넌트가 SplashScreen.hide() 로 내린다(그 자리에 스켈레톤/콘텐츠).
+    // launchAutoHide:true + 3초 백스톱 — hide() 가 못 불려도(오프라인·로드 실패) 스플래시가
+    // 영원히 안 멈추도록. 스켈레톤이 있으니 백스톱이 일찍 떠도 흰 화면은 안 보인다.
+    SplashScreen: {
+      launchShowDuration: 3000,
+      launchAutoHide: true,
+      backgroundColor: '#F5EFE8',
+      showSpinner: false,
+      androidScaleType: 'CENTER_CROP',
+      splashFullScreen: true,
+      splashImmersive: false,
+    },
   },
 }
 
