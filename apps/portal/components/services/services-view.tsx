@@ -80,6 +80,10 @@ interface Offer {
   title: string
   tag: string
   desc: string
+  /** "이런 분께 추천" 한 줄 — 두 갈래 중 자기 것을 빠르게 고르게 하는 결정 보조. */
+  forWhom: string
+  /** 밀어주는 갈래에 '추천' 배지 + 강조 테두리. */
+  recommended?: boolean
   included: string[]
 }
 
@@ -95,6 +99,8 @@ function buildOffers(_dest: string | null, _trip: TripType): Offer[] {
       title: '방문 올케어',
       tag: '오프라인 · 전체 대행',
       desc: '병원에 한 번 오시면 검역 준비를 처음부터 끝까지 대신 진행해 드려요.',
+      forWhom: '처음이라 막막하고, 맡기고 싶은 분',
+      recommended: true,
       included: ['검역·백신 일정 관리', '서류 발급 대행', '수입허가증 신청', '출국일 공항 동행'],
     },
     {
@@ -103,6 +109,7 @@ function buildOffers(_dest: string | null, _trip: TripType): Offer[] {
       title: '가이드 & 점검',
       tag: '온라인 · 직접 + 도움',
       desc: '직접 준비하시되, 단계별 가이드와 서류 점검·신청을 곁에서 도와드려요.',
+      forWhom: '직접 해봤거나, 비용을 아끼고 싶은 분',
       included: ['단계별 준비 가이드', '서류 검토·점검', '수입허가증 신청 대행'],
     },
   ]
@@ -156,7 +163,32 @@ function tripTypeForDest(cases: CaseRow[], dest: string | null): TripType {
 function ServiceCard({ offer }: { offer: Offer }) {
   const { accent } = offer
   return (
-    <div style={{ borderRadius: 18, background: C.surface, border: `.5px solid ${C.line}`, padding: 18 }}>
+    <div
+      style={{
+        position: 'relative',
+        borderRadius: 18,
+        background: C.surface,
+        border: offer.recommended ? `1.5px solid ${C.accent}` : `.5px solid ${C.line}`,
+        padding: 18,
+      }}
+    >
+      {offer.recommended && (
+        <span
+          style={{
+            position: 'absolute',
+            top: -9,
+            left: 16,
+            fontSize: 11,
+            fontWeight: 500,
+            padding: '2px 9px',
+            borderRadius: 999,
+            background: C.accent,
+            color: '#fff',
+          }}
+        >
+          추천
+        </span>
+      )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         <div
           style={{
@@ -193,6 +225,35 @@ function ServiceCard({ offer }: { offer: Offer }) {
       </div>
 
       <p style={{ fontSize: 13, color: C.ink2, lineHeight: 1.6, margin: '14px 0 0' }}>{offer.desc}</p>
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          marginTop: 12,
+          padding: '7px 10px',
+          borderRadius: 10,
+          background: accent.chipBg,
+        }}
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={accent.stroke}
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ flexShrink: 0 }}
+          aria-hidden
+        >
+          <circle cx="12" cy="8" r="3.2" />
+          <path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
+        </svg>
+        <span style={{ fontSize: 12, color: C.ink2, lineHeight: 1.4 }}>이런 분께 추천 · {offer.forWhom}</span>
+      </div>
 
       <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 9 }}>
         {offer.included.map((item) => (
