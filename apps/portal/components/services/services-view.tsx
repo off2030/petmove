@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import type { CaseRow } from '@petmove/domain'
 import destsData from '@petmove/domain/data/destinations.json'
 import { useCases } from '@/components/portal-shell/case-data-provider'
+import { readLastCaseId, readLastDest } from '@/components/portal-shell/last-case'
 import { StartHereEmpty } from '@/components/portal-shell/start-here-empty'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { SegmentField, type FieldOption } from '@/components/fields/info-fields'
@@ -18,7 +19,10 @@ import { notifyServiceInquiry } from '@/lib/actions/service-inquiry'
  * 서비스 내용·비용은 목적지와 왕복/편도에 따라 달라진다.
  *  - 목적지 선택지 = '서비스 제공 국가' 큐레이션 목록(OFFERED_KO). 처음부터 검색 시트로
  *    — 목록이 늘어나도 버튼으로 감당 안 되므로. 새 나라 준비되면 OFFERED_KO 에 push.
- *  - 기본 목적지 = 등록 시 신청한 목적지가 목록에 있으면 그것, 없으면 목록 첫 번째.
+ *  - 기본 목적지 = **현재 선택된 동물의 여정** 목적지(일정/서류에서 보던 케이스 = LAST_CASE_KEY,
+ *    그 케이스의 활성 목적지 = readLastDest). 그게 서비스 제공 목록에 있으면 그것. 없으면
+ *    전체 케이스 union 의 첫 제공 목적지, 그것도 없으면 목록 첫 번째. (서비스는 보고 있는
+ *    동물 기준으로 안내해야 — 여러 동물의 목적지가 섞이면 엉뚱한 나라가 잡힘.)
  *  - 왕복/편도 = 등록값을 기본 표시 + 여기서도 전환. 단, 이 선택은 **둘러보기용 로컬 상태**라
  *    실제 여정의 trip_type 을 바꾸지 않는다(목록엔 미등록 목적지도 있어 저장 대상이 아님).
  *
@@ -102,6 +106,19 @@ function buildOffers(_dest: string | null, _trip: TripType): Offer[] {
       included: ['단계별 준비 가이드', '서류 검토·점검', '수입허가증 신청 대행'],
     },
   ]
+}
+
+/**
+ * 한 케이스(동물)의 여정 목적지 중 서비스 제공 목록에 있는 것 — 활성 목적지(activeDest) 우선.
+ * 다중 목적지 케이스면 보던 목적지(?dest=)를 맨 앞에 두고, 없거나 미제공이면 그 다음 제공 목적지.
+ */
+function offeredDestForCase(c: CaseRow, activeDest: string | null): string | null {
+  const toks = (c.destination ?? '').split(',').map((t) => t.trim()).filter(Boolean)
+  const ordered =
+    activeDest && toks.includes(activeDest)
+      ? [activeDest, ...toks.filter((t) => t !== activeDest)]
+      : toks
+  return ordered.find((t) => OFFERED_KO.includes(t)) ?? null
 }
 
 /** 내 케이스들의 목적지 union — 등록 순서 보존, 중복 제거. */
@@ -240,15 +257,30 @@ function DestinationField({ selected, onOpen }: { selected: Dest | null; onOpen:
 export function ServicesView() {
   const { cases, profile, userEmail } = useCases()
 
-  // 기본 목적지 = 등록 시 신청한 목적지가 서비스 제공 목록에 있으면 그것, 없으면 첫 번째(일본).
+  // 현재 선택된 동물 = 일정/서류에서 마지막으로 보던 케이스(LAST_CASE_KEY) + 그 활성 목적지
+  // (readLastDest). sessionStorage 라 mount 후에만 읽는다(SSR/hydration 불일치 방지) — 첫
+  // 렌더는 union 폴백, mount 직후 선택 동물 기준으로 정정된다.
+  const [journeyHint, setJourneyHint] = useState<{ caseId: string; dest: string | null } | null>(null)
+  useEffect(() => {
+    const id = readLastCaseId()
+    setJourneyHint(id ? { caseId: id, dest: readLastDest(id) } : null)
+  }, [])
+  const selectedCase = journeyHint ? cases.find((c) => c.id === journeyHint.caseId) ?? null : null
+
+  // 기본 목적지 = 선택된 동물의 여정 목적지(제공 목록에 있으면). 없으면 전체 union 첫 제공, 최후 일본.
   const registered = destinationsFromCases(cases)
-  const defaultDestKo = registered.find((d) => OFFERED_KO.includes(d)) ?? OFFERED_KO[0]
+  const defaultDestKo =
+    (selectedCase ? offeredDestForCase(selectedCase, journeyHint?.dest ?? null) : null) ??
+    registered.find((d) => OFFERED_KO.includes(d)) ??
+    OFFERED_KO[0]
   const [pickedKo, setPickedKo] = useState<string | null>(null)
   const selectedKo = pickedKo && OFFERED_KO.includes(pickedKo) ? pickedKo : defaultDestKo
   const selected = OFFERED.find((d) => d.ko === selectedKo) ?? { ko: selectedKo, en: '' }
 
   // 왕복/편도 = 등록값 기본 + 로컬 전환(둘러보기용, 저장 X). 목적지 바뀌면 그 목적지 등록값으로.
-  const defaultTrip = tripTypeForDest(cases, selectedKo)
+  // 선택된 동물을 맨 앞에 두고 읽어, 같은 목적지를 가진 다른 동물의 값에 가려지지 않게 한다.
+  const tripCases = selectedCase ? [selectedCase, ...cases.filter((c) => c.id !== selectedCase.id)] : cases
+  const defaultTrip = tripTypeForDest(tripCases, selectedKo)
   const [tripOverride, setTripOverride] = useState<{ dest: string; trip: TripType } | null>(null)
   const trip = tripOverride && tripOverride.dest === selectedKo ? tripOverride.trip : defaultTrip
 
