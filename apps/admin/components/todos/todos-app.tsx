@@ -1208,7 +1208,7 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
   const [selectedSpecies, setSelectedSpecies] = useState<Set<'dog' | 'cat'>>(new Set(['dog']))
   // 발송일 — 채혈일에 맞춰 미리 발급할 때 직접 입력. 비우면 오늘.
   const [shipDate, setShipDate] = useState('')
-  // ARC-OVI(남아공)는 표준 16점 혼합 검체라 검체수 고정.
+  // ARC-OVI(남아공)는 표준 14점 혼합 검체라 검체수 고정.
   const isArc = selectedLab === 'arc_ovr'
 
   const labs = [
@@ -1232,8 +1232,8 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
   }
 
   function handleSubmit() {
-    // ARC 는 16점 고정 — 서버에서도 강제하지만 UI 도 16 으로 전달.
-    const n = isArc ? 16 : Math.trunc(Number(tubeCount))
+    // ARC 는 14점 고정 — 서버에서도 강제하지만 UI 도 14 로 전달.
+    const n = isArc ? 14 : Math.trunc(Number(tubeCount))
     if (!isArc && (!Number.isFinite(n) || n < 1 || n > 99)) {
       alert('검체수는 1~99 사이 숫자로 입력하세요')
       return
@@ -1252,15 +1252,15 @@ function ShipmentDocsDialog({ onClose, onSubmit }: ShipmentDocsDialogProps) {
       <div className="bg-background border border-border/80 rounded-lg shadow-lg p-6 max-w-sm w-full mx-4">
         <h2 className="text-base font-semibold text-primary mb-4">인보이스</h2>
 
-        {/* 검체수 — ARC(남아공)는 표준 16점 고정 */}
+        {/* 검체수 — ARC(남아공)는 표준 14점 고정 */}
         <div className="mb-5">
           <label className="text-sm font-medium text-primary mb-2 block">
             검체수
           </label>
           {isArc ? (
             <div className="text-sm text-foreground">
-              ARC 표준 <span className="font-medium">16점 (EA)</span>
-              <span className="block text-[12px] text-muted-foreground mt-0.5">혈청 2ml×3 · EDTA 0.5ml×10 · 무염색도말×3</span>
+              ARC 표준 <span className="font-medium">14점 (EA)</span>
+              <span className="block text-[12px] text-muted-foreground mt-0.5">혈청 3ml×2 · EDTA 0.5ml×10 · 무염색도말×2</span>
             </div>
           ) : (
           <div className="flex gap-sm items-center">

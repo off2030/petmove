@@ -4688,10 +4688,10 @@
       "text_48wdfs": { "source": null, "default": "Smear examination",        "note": "TEST(S) REQUIRED 3줄 — 검사 방법" },
 
       "text_50hof":  { "source": null, "default": "Import into South Africa", "note": "Purpose for testing (Mandatory) — 남아공 수입" },
-      "text_55iblu": { "source": null, "default": "Serum 2ml × 3 (centrifuged)", "note": "Type of specimen/s 1줄 — 가이드라인 총량 6ml(2×3ml) 유지, 보유 튜브로 2ml×3 분주(원심분리)" },
-      "text_56jrkp": { "source": null, "default": "Unstained blood smear × 3", "note": "Type of specimen/s 2줄 — 무염색 혈액도말 ×3" },
+      "text_55iblu": { "source": null, "default": "Serum 3ml × 2 (centrifuged)", "note": "Type of specimen/s 1줄 — 가이드라인: 2×3ml 혈청(원심분리)" },
+      "text_56jrkp": { "source": null, "default": "Unstained blood smear × 2", "note": "Type of specimen/s 2줄 — 무염색 혈액도말 ×2" },
       "text_57cmub": { "source": null, "default": "EDTA whole blood 5ml (0.5ml x 10 tubes aligned for total volume)", "note": "Type of specimen/s 3줄 — EDTA 전혈 5ml (5ml 튜브 미보유로 0.5ml 10개로 총량 맞춤, Dirofilaria용)" },
-      "text_58dxit": { "source": null, "default": "16 (Serum ×3, Blood smear ×3, EDTA ×10)", "note": "Number of specimen/s — 총 16개 (혈청3+도말3+EDTA10)" },
+      "text_58dxit": { "source": null, "default": "14 (Serum ×2, Blood smear ×2, EDTA ×10)", "note": "Number of specimen/s — 총 14개 (혈청2+도말2+EDTA10)" },
       "text_54so":   { "source": "infectious_date:arc_ovi", "note": "Collection date — 채혈일 (arc_ovi 검사일, 없으면 내원일)" }
     }
   },
@@ -4705,7 +4705,7 @@
       "text_1hnad":  { "source": "infectious_date:arc_ovi", "transform": "arc_sender_ref", "note": "p1 CERTIFICATE NUMBER (1) — ARC-OVI Sender Ref 와 동일(LVMC-YYYYMMDD-01)" },
       "text_2owvx":  { "source": null, "default": "Animal and Plant Quarantine Agency (APQA)", "note": "p1 RESPONSIBLE VETERINARY AUTHORITY — 한국 정부 검역당국 APQA 고정" },
       "text_3pqtn":  { "source": null, "transform": "vet:name_en", "note": "p1 ISSUING VETERINARIAN/VETERINARY AUTHORITY — 발급 수의사" },
-      "text_5atie":  { "source": null, "default": "Serum 2ml × 3, Unstained blood smear × 3, EDTA whole blood 0.5ml × 10", "note": "p1 A.1.a) Type of sample — 수량 포함(ARC-OVI 시료 내역과 동일)" },
+      "text_5atie":  { "source": null, "default": "Serum 3ml × 2, Unstained blood smear × 2, EDTA whole blood 0.5ml × 10", "note": "p1 A.1.a) Type of sample — 수량 포함(ARC-OVI 시료 내역과 동일)" },
       "text_6vgec":  { "source": "species", "transform": "species_paren_en", "note": "p1 A.1.b) Species of origin — Canine(Dog)/Feline(Cat)" },
       "text_7krhr":  { "source": null, "default": "1 package", "note": "p1 A.2 Type and number of packages" },
       "text_10jlvd": { "source": "microchip_combined", "transform": "prefix:Microchip No. ", "note": "p1 A.4 Identification marks — 'Microchip No. {칩번호}'(주칩+보조칩)" },
