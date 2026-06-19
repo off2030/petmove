@@ -504,7 +504,10 @@ function mapExtractResultToUnified(country: Country, result: Record<string, unkn
     set('address_overseas', result.address_overseas)
     set('postal_code', result.postal_code)
     set('overseas_phone', result.phone)
+    set('departure_flight_date', result.departure_date)
     set('entry_date', result.entry_date)
+    set('entry_flight_number', result.flight_number)
+    set('entry_time', result.arrival_time)
   } else if (country === 'switzerland') {
     set('entry_date', result.entry_date)
     set('entry_airport', result.entry_airport)

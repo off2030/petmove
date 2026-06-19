@@ -23,10 +23,6 @@ interface HawaiiExtra {
   address_overseas: string | null
   postal_code: string | null
   total_pets_arriving: string | null
-  departure_date: string | null
-  entry_date: string | null
-  arrival_time: string | null
-  flight_number: string | null
 }
 
 const EMPTY: HawaiiExtra = {
@@ -38,10 +34,6 @@ const EMPTY: HawaiiExtra = {
   address_overseas: null,
   postal_code: null,
   total_pets_arriving: null,
-  departure_date: null,
-  entry_date: null,
-  arrival_time: null,
-  flight_number: null,
 }
 
 const DATA_KEY = 'hawaii_extra'
@@ -164,7 +156,7 @@ export function HawaiiExtraField({ caseId, caseRow, sectionNumber }: { caseId: s
     if (files.length > 0) handleFiles(files)
   }
 
-  function renderField(key: keyof HawaiiExtra, label: string, type: 'text' | 'date' | 'email' | 'time' = 'text', placeholder = '') {
+  function renderField(key: keyof HawaiiExtra, label: string, type: 'text' | 'date' | 'email' = 'text', placeholder = '') {
     const val = extra[key] ?? null
     const isEditing = editingField === key
     return (
@@ -210,10 +202,6 @@ export function HawaiiExtraField({ caseId, caseRow, sectionNumber }: { caseId: s
       {renderField('address_overseas', '해외주소', 'text')}
       {renderField('postal_code', '우편번호', 'text')}
       {renderField('total_pets_arriving', '동반 동물 수', 'text', '비워두면 자동 계산')}
-      {renderField('departure_date', '출국일', 'date')}
-      {renderField('entry_date', '도착일', 'date')}
-      {renderField('arrival_time', '도착시간', 'time', '예: 14:30')}
-      {renderField('flight_number', '항공편명', 'text', '예: KE053')}
     </ExtraSectionShell>
   )
 }
@@ -225,7 +213,7 @@ function HawaiiFieldRow({ label, value, isEditing, onStartEdit, onCancelEdit, on
   onStartEdit: () => void
   onCancelEdit: () => void
   onSave: (v: string | null) => void
-  type: 'text' | 'date' | 'email' | 'time'
+  type: 'text' | 'date' | 'email'
   placeholder: string
 }) {
   const editMode = useSectionEditMode()
@@ -282,7 +270,7 @@ function HawaiiFieldRow({ label, value, isEditing, onStartEdit, onCancelEdit, on
 }
 
 function InlineInput({ type, initial, placeholder, onSave, onCancel }: {
-  type: 'text' | 'date' | 'email' | 'time'
+  type: 'text' | 'date' | 'email'
   initial: string
   placeholder: string
   onSave: (v: string | null) => void

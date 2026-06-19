@@ -215,7 +215,8 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     vaccines: ['rabies', 'rabies_titer', 'external_parasite', 'internal_parasite'],
     extraSection: 'hawaii',
     // 하와이는 기본적으로 미국 — USA 의 추가정보 필드 모두 포함 (overseas_phone, entry_date 추가).
-    extraFields: ['address_overseas', 'postal_code', 'email', 'overseas_phone', 'passport_number', 'passport_expiry_date', 'passport_issuing_country', 'holder_birth_date', 'entry_date'],
+    // 출국 항공편 그룹: 출국일(departure_flight_date)·도착일(entry_date)·항공편명·도착시간.
+    extraFields: ['address_overseas', 'postal_code', 'email', 'overseas_phone', 'passport_number', 'passport_expiry_date', 'passport_issuing_country', 'holder_birth_date', 'departure_flight_date', 'entry_date', 'entry_flight_number', 'entry_time'],
   },
   guam: {
     keywords: ['괌', 'guam'],
