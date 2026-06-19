@@ -284,6 +284,17 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
         >
           메모
         </SectionLabel>
+        {/* 모바일 전용 첨부 — 데스크톱은 드래그·붙여넣기·메모추가 클립을 쓰지만
+            모바일엔 그 경로가 없다. addingText 블록 밖에 두어 textarea blur 로
+            언마운트되지 않게 함(언마운트 시 ScanFlow·input 이 사라져 저장 실패). */}
+        <AttachButton
+          multiple
+          onFile={(file) => uploadFiles([file])}
+          className="md:hidden inline-flex ml-auto h-7 w-7 rounded-full border border-border/80 bg-popover"
+          title="파일 첨부 (카메라 시 자동 크롭)"
+        >
+          <Paperclip size={14} />
+        </AttachButton>
       </div>
 
       <div className="min-w-0 flex items-start gap-md">
@@ -366,8 +377,8 @@ export function NotesField({ caseId, caseRow }: { caseId: string; caseRow: CaseR
               <AttachButton
                 multiple
                 onFile={(file) => uploadFiles([file])}
-                className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full border border-border/80 bg-popover text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
-                title="파일 첨부 (모바일 카메라 시 자동 크롭)"
+                className="shrink-0 hidden md:inline-flex h-7 w-7 items-center justify-center rounded-full border border-border/80 bg-popover text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
+                title="파일 첨부"
               >
                 <Paperclip size={14} />
               </AttachButton>
