@@ -341,9 +341,6 @@ export function ServicesView() {
         <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>
           서비스
         </h1>
-        <p style={{ fontSize: 13.5, color: C.ink2, lineHeight: 1.6, margin: '10px 0 0' }}>
-          출국 준비를 펫무브가 함께할게요. 맡기실지, 직접 하며 도움받으실지 골라보세요.
-        </p>
 
         <SectionCard marginTop={18}>
           <DestinationField
@@ -362,19 +359,11 @@ export function ServicesView() {
           />
         </SectionCard>
 
-        <p style={{ fontSize: 12, color: C.ink3, lineHeight: 1.6, margin: '12px 4px 0' }}>
-          {selected.ko} · {tripLabel} 기준으로 안내해 드려요.
-        </p>
-
         <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {offers.map((o) => (
             <ServiceCard key={o.title} offer={o} />
           ))}
         </div>
-
-        <p style={{ fontSize: 12, color: C.ink3, lineHeight: 1.6, margin: '20px 4px 0' }}>
-          상담 신청과 가격 안내는 곧 추가될 예정이에요.
-        </p>
       </div>
 
       <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="목적지 선택">
