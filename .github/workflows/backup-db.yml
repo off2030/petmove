@@ -1,0 +1,87 @@
+name: Backup DB to Google Drive
+
+# Supabase(Seoul) DB 를 매일 덤프해 구글 드라이브에 올린다 — 무료 플랜엔 복구용 자동
+# 백업이 없으므로(메모리·docs/backup-setup.md 참고) 잘못된 마이그레이션·스크립트·앱 버그로
+# 데이터가 유실됐을 때 되돌릴 off-site 안전망을 둔다.
+#
+# 동작: Supabase CLI 로 roles/schema/data 3종 SQL 덤프 → tar.gz → rclone 으로 구글
+# 드라이브 'Petmove-Backups/' 에 업로드 → 30일 지난 백업 정리.
+#
+# 설정(최초 1회, secrets 2개)은 docs/backup-setup.md 참고. secrets 미설정이면 이번
+# 실행은 조용히 건너뛴다(설정 전 헛경보 방지).
+
+on:
+  schedule:
+    # 매일 17:00 UTC = KST 02:00. 계정삭제 cron(KST 03:00, hard delete)보다 먼저 떠서
+    # 그날 삭제 직전 상태를 한 부 남긴다.
+    - cron: '0 17 * * *'
+  workflow_dispatch: {}
+
+concurrency:
+  group: backup-db
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Dump + upload to Google Drive
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check secrets configured
+        id: cfg
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          RCLONE_CONF: ${{ secrets.RCLONE_CONF }}
+        run: |
+          if [ -z "$DB_URL" ] || [ -z "$RCLONE_CONF" ]; then
+            echo "::warning::백업 secrets(SUPABASE_DB_URL / RCLONE_CONF) 미설정 — docs/backup-setup.md 참고. 이번 실행은 건너뜁니다."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Supabase CLI
+        if: steps.cfg.outputs.ready == 'true'
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Install rclone
+        if: steps.cfg.outputs.ready == 'true'
+        run: sudo apt-get update && sudo apt-get install -y rclone
+
+      - name: Dump database
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          STAMP=$(date -u +%Y%m%d-%H%M%S)
+          echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+          mkdir -p dump
+          # Supabase 권장 백업 — 역할/스키마/데이터 3종. --db-url 은 '세션 풀러'(포트 5432)
+          # 연결 문자열이어야 함(트랜잭션 풀러 6543 은 덤프 미지원). docs/backup-setup.md 참고.
+          supabase db dump --db-url "$DB_URL" -f dump/roles.sql --role-only
+          supabase db dump --db-url "$DB_URL" -f dump/schema.sql
+          supabase db dump --db-url "$DB_URL" -f dump/data.sql --data-only --use-copy
+          tar -czf "petmove-db-$STAMP.tar.gz" -C dump roles.sql schema.sql data.sql
+          ls -lh "petmove-db-$STAMP.tar.gz"
+
+      - name: Upload to Google Drive
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          RCLONE_CONF: ${{ secrets.RCLONE_CONF }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.config/rclone
+          printf '%s' "$RCLONE_CONF" > ~/.config/rclone/rclone.conf
+          # 리모트 이름은 'gdrive', 대상 폴더는 'Petmove-Backups/'(없으면 자동 생성).
+          rclone copy "petmove-db-$STAMP.tar.gz" gdrive:Petmove-Backups/ --no-traverse
+          echo "업로드 완료: petmove-db-$STAMP.tar.gz"
+
+      - name: Prune backups older than 30 days
+        if: steps.cfg.outputs.ready == 'true'
+        run: |
+          set -euo pipefail
+          rclone delete --min-age 30d gdrive:Petmove-Backups/ || true
+          echo "30일 초과 백업 정리 완료"
