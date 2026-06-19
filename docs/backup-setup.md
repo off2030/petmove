@@ -84,6 +84,12 @@
 복구는 새 Supabase 프로젝트에 `psql` 로 roles → schema → data 순서로 적용합니다.
 (실제 복구가 필요해지면 함께 진행하면 됩니다.)
 
+> **복구 시 주의 — 순환 외래키:** `conversations` ↔ `messages` 테이블이 서로 참조해서,
+> data-only 덤프를 그대로 넣으면 외래키 검사에 걸립니다. **데이터는 빠짐없이 들어 있고**,
+> 넣을 때만 외래키 검사를 잠시 끄면 됩니다 — data.sql 적용 전에
+> `SET session_replication_role = replica;` 를 실행(또는 `psql --single-transaction` +
+> 그 설정)하면 깔끔히 복구됩니다. pg_dump 가 띄우는 경고가 이 얘기로, **백업 누락이 아닙니다.**
+
 ## 백업에 **안 들어가는** 것
 
 - **Storage 파일**(아바타·서류 이미지 등 버킷 파일)은 DB 덤프에 포함되지 않습니다. 필요하면
