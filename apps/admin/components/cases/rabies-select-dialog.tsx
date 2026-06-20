@@ -61,22 +61,34 @@ interface Props {
   eligibleAfterDate?: string | null
   /** 타병원 접종(`other_hospital: true`) 도 후보에 포함. FormRE 만 true. */
   includeOtherHospital?: boolean
+  /**
+   * 국가 검증 규칙으로 산출한 추천 선택 (ascIndex 배열). 주어지면 기본 체크가
+   * "전체"가 아니라 이 집합 — 1회 접종 필수 국가에서 규정 충족에 필요한 최소
+   * 접종(기본 최근 1건, 미달 시 anchor 까지)만 미리 선택. 사용자는 조정 가능.
+   */
+  recommendedIndices?: number[] | null
   /** 모달이 닫히면 호출. cancel 은 null, confirm 은 number[] (0건 선택도 허용 — 빈 배열). */
   onClose: (indices: number[] | null) => void
 }
 
-export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, eligibleAfterDate, includeOtherHospital, onClose }: Props) {
+export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, eligibleAfterDate, includeOtherHospital, recommendedIndices, onClose }: Props) {
   const sorted = useMemo(
     () => normalize(rabiesDates, eligibleAfterDate, includeOtherHospital),
     [rabiesDates, eligibleAfterDate, includeOtherHospital],
   )
-  // 기본 — 모두 체크. 선택분 중 최근 slotCount 개는 dedicated 슬롯,
-  // 그 이전은 "기타 예방접종" 칸으로 자동 분배. 사용자는 증명서에서
-  // 제외할 항목만 해제하면 됨 (0 건도 허용).
-  const defaultSelected = useMemo(
-    () => new Set(sorted.map((r) => r.ascIndex)),
-    [sorted],
-  )
+  // 추천 선택(recommendedIndices)이 있으면 그 집합을 기본으로 — 1회 접종 필수
+  // 국가에서 규정 충족에 필요한 최소 접종만 자동 선택. 후보(sorted) 안에 있는
+  // 인덱스로만 제한. 추천이 없으면 기존대로 모두 체크(사용자가 뺄 것만 해제).
+  // 선택분 중 최근 slotCount 개는 dedicated 슬롯, 그 이전은 "기타 예방접종" 칸으로 분배.
+  const autoSelected = !!recommendedIndices && recommendedIndices.length > 0
+  const defaultSelected = useMemo(() => {
+    const valid = new Set(sorted.map((r) => r.ascIndex))
+    if (recommendedIndices && recommendedIndices.length > 0) {
+      const picked = recommendedIndices.filter((i) => valid.has(i))
+      if (picked.length > 0) return new Set(picked)
+    }
+    return valid
+  }, [sorted, recommendedIndices])
 
   const [selected, setSelected] = useState<Set<number>>(defaultSelected)
 
@@ -128,6 +140,12 @@ export function RabiesSelectDialog({ open, formLabel, slotCount, rabiesDates, el
             광견병 슬롯에, 그 이전은 "기타 예방접종" 칸에 기재됩니다. 선택하지 않은 접종은
             증명서에 나오지 않습니다.
           </p>
+          {autoSelected && (
+            <p className="font-serif text-[12px] text-pmw-info">
+              이 나라는 광견병 접종 1회면 충분합니다. 규정(항체검사 시점 등) 충족에 필요한
+              최소 접종만 자동 선택했어요. 필요하면 조정하세요.
+            </p>
+          )}
           <ul className="mt-2 divide-y divide-border/60 border border-border/80 rounded-md">
             {sorted.map((r) => {
               const checked = selected.has(r.ascIndex)

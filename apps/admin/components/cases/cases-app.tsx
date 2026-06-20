@@ -16,7 +16,7 @@ import { extractResultToSeed } from '@/lib/extract-to-seed'
 import { filesToBase64, filesToPdfText } from '@/lib/file-to-base64'
 import { uploadFileToNotes } from '@/lib/notes-upload'
 import { lookupCaseByMicrochip } from '@/lib/actions/lookup-case-by-chip'
-import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateOVD, generateVBC, generateSGP, generateTW, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti } from '@/lib/actions/generate-pdf'
+import { generateFormRE, generateFormAC, generateIdentificationDeclaration, generateForm25, generateForm25AuNz, generateAU, generateAU2, generateAUCat, generateAUCat2, generateNZ, generateOVD, generateVBC, generateSGP, generateTW, generateAQS, generateCH, generateFormR11, generateVHC, previewSiblings, generateAnnexIIIMulti, generateUKMulti, recommendForm25RabiesSelection } from '@/lib/actions/generate-pdf'
 import { downloadMultipartPdfRequest, downloadPdfRequest } from '@/lib/pdf-download'
 import { MultiFormDialog } from './multi-form-dialog'
 import { RabiesSelectDialog, RABIES_SLOT_CAP } from './rabies-select-dialog'
@@ -25,7 +25,7 @@ import { TransferDialog } from './transfer-dialog'
 import { AssigneePicker } from './assignee-picker'
 import { ShareLinkDialog } from './share-link-dialog'
 import { PortalPreviewDialog } from './portal-preview-dialog'
-import { getDepartureDate, resolveCerts } from '@petmove/domain'
+import { getDepartureDate, resolveCerts, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS } from '@petmove/domain'
 import type { CaseRow } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
 import { evaluateCase } from './verification-context'
@@ -231,7 +231,7 @@ function Inner() {
   const [previewOpen, setPreviewOpen] = useState<{ caseId: string; label: string } | null>(null)
   // 별지 25호/EX 의 광견병 슬롯이 부족할 때 띄우는 선택 모달.
   const [rabiesPick, setRabiesPick] = useState<
-    | { caseId: string; formKey: 'Form25' | 'Form25AuNz' | 'FormRE'; rabiesDates: unknown; destination: string | null; cap: number; eligibleAfterDate?: string | null; includeOtherHospital?: boolean }
+    | { caseId: string; formKey: 'Form25' | 'Form25AuNz' | 'FormRE'; rabiesDates: unknown; destination: string | null; cap: number; eligibleAfterDate?: string | null; includeOtherHospital?: boolean; recommendedIndices?: number[] | null }
     | null
   >(null)
   const [includeSignature, setIncludeSignature] = useState(false)
@@ -607,6 +607,7 @@ function Inner() {
           rabiesDates={rabiesPick?.rabiesDates}
           eligibleAfterDate={rabiesPick?.eligibleAfterDate}
           includeOtherHospital={rabiesPick?.includeOtherHospital}
+          recommendedIndices={rabiesPick?.recommendedIndices}
           onClose={(indices) => {
             const pick = rabiesPick
             setRabiesPick(null)
@@ -798,7 +799,7 @@ function Inner() {
                             <button
                               key={btn.key}
                               type="button"
-                              onClick={() => {
+                              onClick={async () => {
                                 const formKey = CERT_FORM_KEYS[btn.key]
                                 if (!formKey) return
                                 const cap = RABIES_SLOT_CAP[formKey]
@@ -834,6 +835,27 @@ function Inner() {
                                       }
                                       return true
                                     })
+                                    // 광견병 1회 접종 필수 국가 + 접종 2건 이상이면, 국가 규칙으로
+                                    // 추천 선택(기본 최근 1건, 규정 미달 시 anchor 까지)을 받아 모달을
+                                    // 프리셀렉트로 연다. cap(3) 이하라도 "최근 것만" 이 기본이라 모달 노출.
+                                    const destKey = buildCaseJourneyContext({ ...selectedCase, destination: focusDest }).destinationKey
+                                    const isSingleDose = !!destKey && SINGLE_DOSE_RABIES_DESTINATIONS.includes(destKey)
+                                    if (isSingleDose && rabies.length >= 2) {
+                                      const rec = await recommendForm25RabiesSelection(
+                                        selectedCase.id,
+                                        formKey as 'Form25' | 'Form25AuNz',
+                                        focusDest,
+                                      )
+                                      setRabiesPick({
+                                        caseId: selectedCase.id,
+                                        formKey: formKey as 'Form25' | 'Form25AuNz',
+                                        rabiesDates: dataObj.rabies_dates,
+                                        destination: focusDest,
+                                        cap,
+                                        recommendedIndices: rec.singleDose ? rec.indices : null,
+                                      })
+                                      return
+                                    }
                                     if (rabies.length > cap) {
                                       setRabiesPick({
                                         caseId: selectedCase.id,

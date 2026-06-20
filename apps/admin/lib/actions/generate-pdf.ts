@@ -3,7 +3,7 @@
 import { createClient } from '@petmove/auth/server'
 import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
 import type { CaseRow } from '@petmove/domain'
-import { getEffectiveVaccineList, flattenCaseForDestination, getDepartureDate, getVetVisitDate, parseDestinations } from '@petmove/domain'
+import { getEffectiveVaccineList, flattenCaseForDestination, getDepartureDate, getVetVisitDate, parseDestinations, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, recommendRabiesDoseIndices } from '@petmove/domain'
 import { loadEffectiveVetInfo } from '@/lib/vet-info'
 
 export type GeneratePdfResult =
@@ -81,6 +81,46 @@ async function generate(
     extras: options?.extras,
     rabiesIndices: options?.rabiesIndices,
   })
+}
+
+/** 별지25/EX 광견병 dose 기본 선택 추천. */
+export type RabiesRecommendation = {
+  /** 광견병 1회 접종 필수 국가인지 (false 면 모달은 기존대로 전체 체크 기본). */
+  singleDose: boolean
+  /** 추천 선택 — normalizeAsc(date 오름차순) 공간의 ascIndex 배열. */
+  indices: number[]
+}
+
+/**
+ * 별지25/별지25 EX 발행 시 광견병 dose 의 **기본 선택**을 국가 검증 규칙으로 추천.
+ * 1회 접종 필수 국가에서만 의미: 기본은 최근 1건, 규정 미달이면 anchor 접종까지 확장.
+ * 모달이 열릴 때 프리셀렉트로 사용 (recommendRabiesDoseIndices 참조).
+ */
+export async function recommendForm25RabiesSelection(
+  caseId: string,
+  formKey: 'Form25' | 'Form25AuNz',
+  destination?: string | null,
+): Promise<RabiesRecommendation> {
+  const supabase = await createClient()
+  const { data: row } = await supabase.from('cases').select('*').eq('id', caseId).single()
+  if (!row) return { singleDose: false, indices: [] }
+  let caseRow = row as CaseRow
+  const data = (caseRow.data ?? {}) as Record<string, unknown>
+  // 별지25/EX 는 타병원 접종 제외 — 모달 normalize·서버 fill 과 동일 공간을 맞춤.
+  if (OTHER_HOSPITAL_EXCLUDED_FORMS.has(formKey)) {
+    caseRow = { ...caseRow, data: stripOtherHospitalRecords(data) }
+  }
+  // 활성 목적지 기준 평탄화 — by_dest 출국일·검사일 등이 top-level 로 올라와 체크가 정확.
+  const flattenDest =
+    destination ?? (parseDestinations(caseRow.destination).length === 1 ? caseRow.destination : null)
+  caseRow = flattenCaseForDestination(caseRow, flattenDest)
+  // country 키 — 활성 목적지 토큰 우선, 없으면 케이스 destination 으로 정규화.
+  const destToken = destination ?? caseRow.destination
+  const key = buildCaseJourneyContext({ ...caseRow, destination: destToken ?? null }).destinationKey
+  const singleDose = !!key && SINGLE_DOSE_RABIES_DESTINATIONS.includes(key)
+  if (!singleDose || !key) return { singleDose: false, indices: [] }
+  // 평탄화 완료 → 체크 ctx 의 destination 은 null(top-level 값 사용).
+  return { singleDose: true, indices: recommendRabiesDoseIndices(caseRow, key, null) }
 }
 
 /**
