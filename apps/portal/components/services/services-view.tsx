@@ -26,7 +26,7 @@ import { notifyServiceInquiry } from '@/lib/actions/service-inquiry'
  *  - 왕복/편도 = 등록값을 기본 표시 + 여기서도 전환. 단, 이 선택은 **둘러보기용 로컬 상태**라
  *    실제 여정의 trip_type 을 바꾸지 않는다(목록엔 미등록 목적지도 있어 저장 대상이 아님).
  *
- * 두 갈래: 오프라인(로잔 올케어, 전체 의뢰) / 온라인(온라인 안심케어, 부분 의뢰).
+ * 두 갈래: 오프라인(오프라인 올케어, 전체 의뢰) / 온라인(온라인 안심케어, 부분 의뢰).
  * v1 은 안내(소개)만 — 상담 신청·결제 액션은 결제 모델 확정 전까지 미연결.
  * 목적지·유형별 내용·비용 분기는 차차 — 지금은 buildOffers 가 generic 반환.
  * (결제 모델 미정: docs/portal-plan.md §결제 / memory project_portal_paywall)
@@ -101,7 +101,7 @@ function buildOffers(_dest: string | null, _trip: TripType): Offer[] {
     {
       accent: AMBER,
       icon: clinicIcon,
-      title: '로잔 올케어',
+      title: '오프라인 올케어',
       tag: '오프라인 · 전체 의뢰',
       desc: '병원에 한 번 오시면 검역 준비를 처음부터 끝까지 대신 진행해 드려요.',
       forWhom: '처음이라 막막하고, 맡기고 싶은 분',

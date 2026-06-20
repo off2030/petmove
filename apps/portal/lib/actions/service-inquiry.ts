@@ -24,7 +24,7 @@ export async function notifyServiceInquiry(input: {
   name?: string | null
   destination?: string | null
   tripType?: 'round' | 'one_way' | null
-  /** 상세페이지의 특정 티어 문의면 '로잔 올케어' 등. 플로팅(일반)은 생략. */
+  /** 상세페이지의 특정 티어 문의면 '오프라인 올케어' 등. 플로팅(일반)은 생략. */
   serviceTier?: string | null
 }): Promise<{ ok: boolean }> {
   try {
