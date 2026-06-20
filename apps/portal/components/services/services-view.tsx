@@ -60,10 +60,10 @@ const SAGE: Accent = {
 
 const clinicIcon = (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d="M4 21V9l8-5 8 5v12" />
-    <path d="M4 21h16" />
-    <path d="M12 10v4M10 12h4" />
-    <path d="M9.5 21v-3.5h5V21" />
+    <path d="M3 21h18" />
+    <path d="M5 21V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v15" />
+    <path d="M10 21v-3.5a2 2 0 0 1 4 0V21" />
+    <path d="M12 8v4M10 10h4" />
   </svg>
 )
 
