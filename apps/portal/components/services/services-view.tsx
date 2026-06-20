@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import type { CaseRow } from '@petmove/domain'
 import destsData from '@petmove/domain/data/destinations.json'
@@ -84,7 +84,12 @@ interface Offer {
   forWhom: string
   /** 밀어주는 갈래에 '추천' 배지 + 강조 테두리. */
   recommended?: boolean
-  included: string[]
+  /** 카드 = label 만, 상세 = label + sub(한 줄 설명). */
+  included: { label: string; sub: string }[]
+  /** 상세 히어로의 강조 한 줄. */
+  heroLine: string
+  /** 상세 '이렇게 진행돼요' 3단계 라벨. */
+  steps: string[]
 }
 
 /**
@@ -101,7 +106,14 @@ function buildOffers(_dest: string | null, _trip: TripType): Offer[] {
       desc: '병원에 한 번 오시면 검역 준비를 처음부터 끝까지 대신 진행해 드려요.',
       forWhom: '처음이라 막막하고, 맡기고 싶은 분',
       recommended: true,
-      included: ['검역·백신 일정 관리', '서류 발급 대행', '수입허가증 신청', '출국일 공항 동행'],
+      heroLine: '복잡한 검역, 한 가지만 놓쳐도 출국이 막혀요.',
+      included: [
+        { label: '검역·백신 일정 관리', sub: '놓치면 안 되는 날짜를 대신 챙겨요' },
+        { label: '서류 발급 대행', sub: '건강증명서·검사 서류까지 발급해요' },
+        { label: '수입허가증 신청', sub: '목적지 정부 허가 신청을 대신해요' },
+        { label: '출국일 공항 동행', sub: '당일 검역대까지 함께 갑니다' },
+      ],
+      steps: ['상담', '준비·관리', '출국 동행'],
     },
     {
       accent: SAGE,
@@ -110,7 +122,13 @@ function buildOffers(_dest: string | null, _trip: TripType): Offer[] {
       tag: '온라인 · 직접 + 도움',
       desc: '직접 준비하시되, 단계별 가이드와 서류 점검·신청을 곁에서 도와드려요.',
       forWhom: '직접 해봤거나, 비용을 아끼고 싶은 분',
-      included: ['단계별 준비 가이드', '서류 검토·점검', '수입허가증 신청 대행'],
+      heroLine: '직접 준비하시되, 혼자 헤매지 않게 곁에서 도와드려요.',
+      included: [
+        { label: '단계별 준비 가이드', sub: '지금 뭘 해야 하는지 순서대로 알려드려요' },
+        { label: '서류 검토·점검', sub: '빠진 서류·오류를 미리 잡아드려요' },
+        { label: '수입허가증 신청 대행', sub: '까다로운 허가 신청은 대신해 드려요' },
+      ],
+      steps: ['상담', '직접 준비 + 점검', '출국'],
     },
   ]
 }
@@ -160,16 +178,26 @@ function tripTypeForDest(cases: CaseRow[], dest: string | null): TripType {
   return 'round'
 }
 
-function ServiceCard({ offer }: { offer: Offer }) {
+function ServiceCard({ offer, onOpen }: { offer: Offer; onOpen: () => void }) {
   const { accent } = offer
   return (
     <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onOpen()
+        }
+      }}
       style={{
         position: 'relative',
         borderRadius: 18,
         background: C.surface,
         border: offer.recommended ? `1.5px solid ${C.accent}` : `.5px solid ${C.line}`,
         padding: 18,
+        cursor: 'pointer',
       }}
     >
       {offer.recommended && (
@@ -257,7 +285,7 @@ function ServiceCard({ offer }: { offer: Offer }) {
 
       <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 9 }}>
         {offer.included.map((item) => (
-          <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+          <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
             <svg
               width="15"
               height="15"
@@ -272,10 +300,315 @@ function ServiceCard({ offer }: { offer: Offer }) {
             >
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            <span style={{ fontSize: 12.5, color: C.ink2 }}>{item}</span>
+            <span style={{ fontSize: 12.5, color: C.ink2 }}>{item.label}</span>
           </div>
         ))}
       </div>
+
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          gap: 3,
+          marginTop: 14,
+          paddingTop: 12,
+          borderTop: `.5px solid ${C.line}`,
+          fontSize: 13,
+          fontWeight: 500,
+          color: offer.recommended ? C.accent : C.ink3,
+        }}
+      >
+        자세히 보기
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+      </div>
+    </div>
+  )
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+ * 서비스 상세 — 신뢰(실적·후기)·진행·FAQ·CTA. 목록 카드 탭 → 같은 화면이 상세로 전환.
+ *
+ * ⚠️ 출시(공개) 전 임시(가상) 값 — 실제 누적 실적·고객 후기가 생기면 반드시 교체할 것.
+ *    라이브에 가상 실적/후기를 그대로 두면 허위 표시가 됨. (사용자 승인하에 출시 전 한정.)
+ * FAQ 답변은 가상 X — 가격·환불 정책은 미정이라 '상담 시 안내'로 정직하게 유지.
+ * ──────────────────────────────────────────────────────────────────────── */
+const STAT_OUTBOUND = '2000마리' // ⚠️ 출시 전 가상 실적 — 실제 누적치로 교체 후 공개
+const STAT_RATING = '4.9' // ⚠️ 출시 전 가상 만족도 — 실제 평점으로 교체 후 공개
+
+/** ⚠️ 출시 전 가상 후기 — 실제 고객 후기로 교체할 것. */
+const REVIEWS: { initial: string; name: string; text: string }[] = [
+  { initial: '민', name: '민지님', text: '혼자였으면 절대 못 했어요. 날짜마다 챙겨주셔서 마음이 편했습니다.' },
+  { initial: '준', name: '준호님', text: '서류가 이렇게 복잡한 줄 몰랐는데, 하나하나 대신 처리해주셔서 출국까지 문제없었어요.' },
+]
+
+/** FAQ — 답변은 정직하게(가격·환불 미정이라 단정 X, '상담 시 안내'). */
+const FAQ: { q: string; a: string }[] = [
+  { q: '비용은 얼마인가요?', a: '목적지와 반려동물 상태에 따라 달라져요. 카카오톡으로 문의 주시면 정확히 안내해 드려요.' },
+  {
+    q: '준비 기간은 얼마나 걸리나요?',
+    a: '나라마다 달라요. 광견병 항체검사가 필요한 곳은 몇 달 전부터 준비해야 해서, 상담 때 목적지에 맞는 일정표를 만들어 드려요.',
+  },
+  { q: '중간에 취소하면 환불되나요?', a: '진행 단계에 따라 안내해 드려요. 자세한 기준은 상담 시 확인하실 수 있어요.' },
+]
+
+const starIcon = (size: number, fill: string) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} aria-hidden>
+    <path d="M12 2.5l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.9 6.2 20.95l1.1-6.45-4.7-4.6 6.5-.95z" />
+  </svg>
+)
+
+function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () => void; onInquire: () => void }) {
+  const { accent } = offer
+  const [openFaq, setOpenFaq] = useState<number | null>(0)
+
+  return (
+    <div style={{ padding: '0 24px' }}>
+      <button
+        type="button"
+        onClick={onBack}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          background: 'transparent',
+          border: 'none',
+          padding: '2px 0 0',
+          margin: 0,
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          color: C.ink,
+        }}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M15 6l-6 6 6 6" />
+        </svg>
+        <span style={{ ...serif, fontSize: 18, color: C.ink }}>{offer.title}</span>
+      </button>
+
+      <div style={{ marginTop: 16 }}>
+        <span
+          style={{
+            display: 'inline-block',
+            fontSize: 11,
+            padding: '2px 9px',
+            borderRadius: 999,
+            background: accent.chipBg,
+            color: accent.stroke,
+            fontWeight: 500,
+          }}
+        >
+          {offer.tag}
+        </span>
+        <p style={{ ...serif, fontSize: 21, lineHeight: 1.35, color: C.ink, margin: '10px 0 0' }}>{offer.heroLine}</p>
+        <p style={{ fontSize: 13.5, lineHeight: 1.6, color: C.ink2, margin: '8px 0 0' }}>{offer.desc}</p>
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
+        <div style={{ flex: 1, background: C.soft, borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
+          <div style={{ ...serif, fontSize: 19, color: C.ink }}>{STAT_OUTBOUND}</div>
+          <div style={{ fontSize: 11, color: C.ink3, marginTop: 2 }}>누적 출국</div>
+        </div>
+        <div style={{ flex: 1, background: C.soft, borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
+          <div style={{ ...serif, fontSize: 19, color: C.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+            {starIcon(14, C.accent)}
+            {STAT_RATING}
+          </div>
+          <div style={{ fontSize: 11, color: C.ink3, marginTop: 2 }}>만족도</div>
+        </div>
+        <div style={{ flex: 1, background: C.soft, borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
+          <div style={{ color: accent.stroke, display: 'flex', justifyContent: 'center' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M12 3l7 3v5c0 4.2-2.9 7.4-7 8.5C7.9 18.4 5 15.2 5 11V6z" />
+              <path d="M9 11.5l2 2 4-4" />
+            </svg>
+          </div>
+          <div style={{ fontSize: 11, color: C.ink3, marginTop: 4 }}>안전 보장</div>
+        </div>
+      </div>
+
+      <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '26px 0 10px' }}>이런 걸 대신해 드려요</h2>
+      <div style={{ background: C.surface, border: `.5px solid ${C.line}`, borderRadius: 16, padding: '4px 16px' }}>
+        {offer.included.map((item, i) => (
+          <div
+            key={item.label}
+            style={{
+              display: 'flex',
+              gap: 11,
+              padding: '12px 0',
+              borderBottom: i < offer.included.length - 1 ? `.5px solid ${C.line}` : 'none',
+            }}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke={accent.stroke}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ flexShrink: 0, marginTop: 1 }}
+              aria-hidden
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            <div>
+              <div style={{ fontSize: 13.5, fontWeight: 500, color: C.ink }}>{item.label}</div>
+              <div style={{ fontSize: 11.5, color: C.ink3, marginTop: 2 }}>{item.sub}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '26px 0 12px' }}>이렇게 진행돼요</h2>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        {offer.steps.map((s, i) => (
+          <Fragment key={s}>
+            <div style={{ flex: 1, textAlign: 'center' }}>
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  background: C.soft,
+                  color: C.accent,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 14,
+                  fontWeight: 500,
+                }}
+              >
+                {i + 1}
+              </div>
+              <div style={{ fontSize: 11.5, color: C.ink2, marginTop: 5 }}>{s}</div>
+            </div>
+            {i < offer.steps.length - 1 && (
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke={C.ink3}
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ marginTop: 8, flexShrink: 0 }}
+                aria-hidden
+              >
+                <path d="M9 6l6 6-6 6" />
+              </svg>
+            )}
+          </Fragment>
+        ))}
+      </div>
+
+      <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '26px 0 10px' }}>먼저 경험한 분들</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {REVIEWS.map((r) => (
+          <div key={r.name} style={{ background: C.surface, border: `.5px solid ${C.line}`, borderRadius: 14, padding: '12px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span
+                style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: '50%',
+                  background: C.soft,
+                  color: C.accent,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  flexShrink: 0,
+                }}
+              >
+                {r.initial}
+              </span>
+              <span style={{ fontSize: 12.5, fontWeight: 500, color: C.ink }}>{r.name}</span>
+              <span style={{ display: 'inline-flex', gap: 1 }}>
+                {[0, 1, 2, 3, 4].map((n) => (
+                  <Fragment key={n}>{starIcon(11, C.accent)}</Fragment>
+                ))}
+              </span>
+            </div>
+            <p style={{ fontSize: 12.5, color: C.ink2, lineHeight: 1.6, margin: 0 }}>{r.text}</p>
+          </div>
+        ))}
+      </div>
+
+      <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '26px 0 6px' }}>자주 묻는 질문</h2>
+      <div>
+        {FAQ.map((f, i) => {
+          const open = openFaq === i
+          return (
+            <div key={f.q} style={{ borderBottom: `.5px solid ${C.line}` }}>
+              <button
+                type="button"
+                onClick={() => setOpenFaq(open ? null : i)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 10,
+                  width: '100%',
+                  padding: '13px 2px',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  textAlign: 'left',
+                  color: C.ink,
+                  fontSize: 13.5,
+                }}
+              >
+                {f.q}
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke={C.ink3}
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                  style={{ flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+              {open && <p style={{ fontSize: 12.5, color: C.ink2, lineHeight: 1.6, margin: '0 2px 13px' }}>{f.a}</p>}
+            </div>
+          )
+        })}
+      </div>
+
+      <button
+        type="button"
+        onClick={onInquire}
+        style={{
+          width: '100%',
+          marginTop: 22,
+          padding: '15px 0',
+          borderRadius: 14,
+          border: 'none',
+          background: C.accent,
+          color: '#fff',
+          fontFamily: 'inherit',
+          fontSize: 15,
+          fontWeight: 600,
+          cursor: 'pointer',
+        }}
+      >
+        이 서비스로 시작하기
+      </button>
+      <p style={{ fontSize: 11.5, color: C.ink3, textAlign: 'center', margin: '10px 0 0' }}>
+        궁금한 점은 카카오톡으로 편하게 물어보세요
+      </p>
     </div>
   )
 }
@@ -361,6 +694,8 @@ export function ServicesView() {
     primaryCase: cases[0] ?? null,
   }).guardian
   const [confirmOpen, setConfirmOpen] = useState(false)
+  // 상세로 들어간 서비스(카드 탭). null = 목록. 새 라우트 없이 같은 화면을 전환한다.
+  const [openTitle, setOpenTitle] = useState<string | null>(null)
   // FAB 는 portal 로 body 에 그린다 — pm-fade-up 의 transform(fill-mode both 로 잔존)이
   // position:fixed 의 기준을 가로채 본문에 박히는 것을 피하려고. SSR 가드로 mount 후에만.
   const [mounted, setMounted] = useState(false)
@@ -384,6 +719,7 @@ export function ServicesView() {
   }
 
   const offers = buildOffers(selectedKo, trip)
+  const openOffer = openTitle ? offers.find((o) => o.title === openTitle) ?? null : null
   const tripLabel = trip === 'round' ? '왕복' : '편도'
 
   return (
@@ -398,34 +734,42 @@ export function ServicesView() {
         overflow: 'auto',
       }}
     >
-      <div style={{ padding: '0 24px' }}>
-        <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>
-          서비스
-        </h1>
+      {openOffer ? (
+        <ServiceDetail
+          offer={openOffer}
+          onBack={() => setOpenTitle(null)}
+          onInquire={() => setConfirmOpen(true)}
+        />
+      ) : (
+        <div style={{ padding: '0 24px' }}>
+          <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>
+            서비스
+          </h1>
 
-        <SectionCard marginTop={18}>
-          <DestinationField
-            selected={selected}
-            onOpen={() => {
-              setQuery('')
-              setSheetOpen(true)
-            }}
-          />
-          <SegmentField
-            label="왕복·편도"
-            value={trip}
-            onChange={(v) => setTripOverride({ dest: selectedKo, trip: v === 'one_way' ? 'one_way' : 'round' })}
-            options={TRIP_OPTIONS}
-            last
-          />
-        </SectionCard>
+          <SectionCard marginTop={18}>
+            <DestinationField
+              selected={selected}
+              onOpen={() => {
+                setQuery('')
+                setSheetOpen(true)
+              }}
+            />
+            <SegmentField
+              label="왕복·편도"
+              value={trip}
+              onChange={(v) => setTripOverride({ dest: selectedKo, trip: v === 'one_way' ? 'one_way' : 'round' })}
+              options={TRIP_OPTIONS}
+              last
+            />
+          </SectionCard>
 
-        <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {offers.map((o) => (
-            <ServiceCard key={o.title} offer={o} />
-          ))}
+          <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {offers.map((o) => (
+              <ServiceCard key={o.title} offer={o} onOpen={() => setOpenTitle(o.title)} />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="목적지 선택">
         <input
