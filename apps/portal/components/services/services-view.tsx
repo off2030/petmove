@@ -69,10 +69,10 @@ const clinicIcon = (
 
 const devicesIcon = (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d="M5 5h5a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5z" />
-    <path d="M2.5 13.5h10" />
-    <path d="M16 6h3a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5h-3a1.5 1.5 0 0 1-1.5-1.5v-9a1.5 1.5 0 0 1 1.5-1.5z" />
-    <path d="M16.7 16h1.6" />
+    <path d="M5.5 6h8a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5h-8a1.5 1.5 0 0 1-1.5-1.5v-4a1.5 1.5 0 0 1 1.5-1.5z" />
+    <path d="M3 15.5h13" />
+    <path d="M18.3 8.5h1.4a1.3 1.3 0 0 1 1.3 1.3v6.4a1.3 1.3 0 0 1-1.3 1.3h-1.4a1.3 1.3 0 0 1-1.3-1.3V9.8a1.3 1.3 0 0 1 1.3-1.3z" />
+    <path d="M18.3 16h1.4" />
   </svg>
 )
 
