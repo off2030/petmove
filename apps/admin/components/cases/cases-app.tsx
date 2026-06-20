@@ -25,7 +25,7 @@ import { TransferDialog } from './transfer-dialog'
 import { AssigneePicker } from './assignee-picker'
 import { ShareLinkDialog } from './share-link-dialog'
 import { PortalPreviewDialog } from './portal-preview-dialog'
-import { getDepartureDate, resolveCerts, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS } from '@petmove/domain'
+import { getDepartureDate, resolveCerts, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, isRabiesTiterReturnOnly } from '@petmove/domain'
 import type { CaseRow } from '@petmove/domain'
 import { useConfirm } from '@petmove/ui'
 import { evaluateCase } from './verification-context'
@@ -835,12 +835,15 @@ function Inner() {
                                       }
                                       return true
                                     })
-                                    // 광견병 1회 접종 필수 국가 + 접종 2건 이상이면, 국가 규칙으로
+                                    // "최근 1건이면 충분한" 모델 국가(1회+항체검사: EU·태국·필리핀, 또는
+                                    // 입국 항체검사 없음: 미국·캐나다 등) + 접종 2건 이상이면, 국가 규칙으로
                                     // 추천 선택(기본 최근 1건, 규정 미달 시 anchor 까지)을 받아 모달을
                                     // 프리셀렉트로 연다. cap(3) 이하라도 "최근 것만" 이 기본이라 모달 노출.
                                     const destKey = buildCaseJourneyContext({ ...selectedCase, destination: focusDest }).destinationKey
-                                    const isSingleDose = !!destKey && SINGLE_DOSE_RABIES_DESTINATIONS.includes(destKey)
-                                    if (isSingleDose && rabies.length >= 2) {
+                                    const smartModel =
+                                      (!!destKey && SINGLE_DOSE_RABIES_DESTINATIONS.includes(destKey)) ||
+                                      isRabiesTiterReturnOnly(focusDest)
+                                    if (smartModel && rabies.length >= 2) {
                                       const rec = await recommendForm25RabiesSelection(
                                         selectedCase.id,
                                         formKey as 'Form25' | 'Form25AuNz',
@@ -852,7 +855,7 @@ function Inner() {
                                         rabiesDates: dataObj.rabies_dates,
                                         destination: focusDest,
                                         cap,
-                                        recommendedIndices: rec.singleDose ? rec.indices : null,
+                                        recommendedIndices: rec.applies ? rec.indices : null,
                                       })
                                       return
                                     }

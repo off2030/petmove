@@ -3,7 +3,7 @@
 import { createClient } from '@petmove/auth/server'
 import { fillPdf, fillPdfMulti } from '@/lib/pdf-fill'
 import type { CaseRow } from '@petmove/domain'
-import { getEffectiveVaccineList, flattenCaseForDestination, getDepartureDate, getVetVisitDate, parseDestinations, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, recommendRabiesDoseIndices } from '@petmove/domain'
+import { getEffectiveVaccineList, flattenCaseForDestination, getDepartureDate, getVetVisitDate, parseDestinations, buildCaseJourneyContext, SINGLE_DOSE_RABIES_DESTINATIONS, isRabiesTiterReturnOnly, recommendRabiesDoseIndices } from '@petmove/domain'
 import { loadEffectiveVetInfo } from '@/lib/vet-info'
 
 export type GeneratePdfResult =
@@ -85,15 +85,20 @@ async function generate(
 
 /** 별지25/EX 광견병 dose 기본 선택 추천. */
 export type RabiesRecommendation = {
-  /** 광견병 1회 접종 필수 국가인지 (false 면 모달은 기존대로 전체 체크 기본). */
-  singleDose: boolean
+  /**
+   * "최근 1건이면 충분한" 광견병 모델 국가인지 — 1회+항체검사(EU·태국·필리핀) 또는
+   * 입국 항체검사 없음(미국·캐나다 등). false 면 모달은 기존대로 전체 체크 기본.
+   */
+  applies: boolean
   /** 추천 선택 — normalizeAsc(date 오름차순) 공간의 ascIndex 배열. */
   indices: number[]
 }
 
 /**
  * 별지25/별지25 EX 발행 시 광견병 dose 의 **기본 선택**을 국가 검증 규칙으로 추천.
- * 1회 접종 필수 국가에서만 의미: 기본은 최근 1건, 규정 미달이면 anchor 접종까지 확장.
+ * "최근 1건이면 충분한" 모델 국가에서만 의미:
+ *  - 1회 접종 + 항체검사(EU·태국·필리핀): 기본 최근 1건, 규정 미달이면 anchor 까지 확장.
+ *  - 입국 항체검사 없음(미국·캐나다 등 rabiesTiterForReturnOnly): 항상 최근 1건.
  * 모달이 열릴 때 프리셀렉트로 사용 (recommendRabiesDoseIndices 참조).
  */
 export async function recommendForm25RabiesSelection(
@@ -103,7 +108,7 @@ export async function recommendForm25RabiesSelection(
 ): Promise<RabiesRecommendation> {
   const supabase = await createClient()
   const { data: row } = await supabase.from('cases').select('*').eq('id', caseId).single()
-  if (!row) return { singleDose: false, indices: [] }
+  if (!row) return { applies: false, indices: [] }
   let caseRow = row as CaseRow
   const data = (caseRow.data ?? {}) as Record<string, unknown>
   // 별지25/EX 는 타병원 접종 제외 — 모달 normalize·서버 fill 과 동일 공간을 맞춤.
@@ -117,10 +122,11 @@ export async function recommendForm25RabiesSelection(
   // country 키 — 활성 목적지 토큰 우선, 없으면 케이스 destination 으로 정규화.
   const destToken = destination ?? caseRow.destination
   const key = buildCaseJourneyContext({ ...caseRow, destination: destToken ?? null }).destinationKey
-  const singleDose = !!key && SINGLE_DOSE_RABIES_DESTINATIONS.includes(key)
-  if (!singleDose || !key) return { singleDose: false, indices: [] }
+  // 적용 대상: 1회+항체검사 모델(EU 가족·태국·필리핀) 또는 입국 항체검사 없는 국가(미국·캐나다 등).
+  const applies = !!key && (SINGLE_DOSE_RABIES_DESTINATIONS.includes(key) || isRabiesTiterReturnOnly(destToken))
+  if (!applies || !key) return { applies: false, indices: [] }
   // 평탄화 완료 → 체크 ctx 의 destination 은 null(top-level 값 사용).
-  return { singleDose: true, indices: recommendRabiesDoseIndices(caseRow, key, null) }
+  return { applies: true, indices: recommendRabiesDoseIndices(caseRow, key, null) }
 }
 
 /**

@@ -343,14 +343,26 @@ export function getTripType(
 }
 
 /**
- * 활성 목적지가 "편도일 때 광견병 항체 검사를 숨기는 국가" 인지 여부.
+ * 입국에 광견병 항체검사(RNATT)가 필요 없는 목적지 — 항체검사는 한국 귀국용만.
+ * (예: 미국·캐나다·멕시코 등 USDA 호환국). 이 나라들은 입국에 "유효한 광견병 접종"만
+ * 요구하므로 수출 증명서의 광견병 dose 는 가장 최근 1건이면 충분 (anchor 확장 불필요).
  * destination-config 의 rabiesTiterForReturnOnly 플래그 기반.
  */
-export function isRabiesTiterHiddenForOneWay(
+export function isRabiesTiterReturnOnly(
   destination: string | null | undefined,
 ): boolean {
   const override = getDestinationOverride(destination)
   return !!override?.rabiesTiterForReturnOnly
+}
+
+/**
+ * 활성 목적지가 "편도일 때 광견병 항체 검사를 숨기는 국가" 인지 여부.
+ * 입국 항체검사가 귀국용일 뿐이면 편도에선 숨김 — isRabiesTiterReturnOnly 와 동일 플래그.
+ */
+export function isRabiesTiterHiddenForOneWay(
+  destination: string | null | undefined,
+): boolean {
+  return isRabiesTiterReturnOnly(destination)
 }
 
 /** 단일 목적지 토큰에 매칭되는 오버라이드 반환. 없으면 null. */
