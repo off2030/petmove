@@ -217,8 +217,8 @@ export function CalculatorOutputModal({
     [countries, countrySearch],
   )
 
-  function buildHtml() {
-    return renderPrintHtml({
+  function handlePrint() {
+    const html = renderPrintHtml({
       docType,
       country,
       species,
@@ -229,10 +229,6 @@ export function CalculatorOutputModal({
       customerName: customerName ?? null,
       petName: petName ?? null,
     })
-  }
-
-  function handlePrint() {
-    const html = buildHtml()
     const win = window.open('', '_blank', 'width=900,height=1100')
     if (!win) {
       alert('팝업 차단을 해제해 주세요.')
@@ -249,25 +245,6 @@ export function CalculatorOutputModal({
         // ignore
       }
     }, 250)
-  }
-
-  function handleDownloadHtml() {
-    const html = buildHtml()
-    const docLabel = docType === 'invoice' ? '청구서' : '견적서'
-    const today = new Date()
-    const ymd = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`
-    const namePart = (petName || customerName || country || '').trim()
-    const filename = [docLabel, namePart, ymd].filter(Boolean).join('_') + '.html'
-
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
   const [mounted, setMounted] = useState(false)
@@ -583,14 +560,6 @@ export function CalculatorOutputModal({
             className="h-8 rounded-full border border-border/80 px-4 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
             취소
-          </button>
-          <button
-            type="button"
-            onClick={handleDownloadHtml}
-            disabled={enabledRows.length === 0}
-            className="h-8 rounded-full border border-border/80 bg-transparent px-4 text-sm text-foreground hover:bg-accent transition-colors disabled:opacity-50"
-          >
-            HTML 다운로드
           </button>
           <button
             type="button"
