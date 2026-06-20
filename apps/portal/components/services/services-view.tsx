@@ -67,10 +67,12 @@ const clinicIcon = (
   </svg>
 )
 
-const chatCheckIcon = (
+const devicesIcon = (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d="M12 20l-3-3H7a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-2l-3 3z" />
-    <path d="M9 11l2 2 4-4" />
+    <path d="M5 5h5a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5z" />
+    <path d="M2.5 13.5h10" />
+    <path d="M16 6h3a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5h-3a1.5 1.5 0 0 1-1.5-1.5v-9a1.5 1.5 0 0 1 1.5-1.5z" />
+    <path d="M16.7 16h1.6" />
   </svg>
 )
 
@@ -117,7 +119,7 @@ function buildOffers(_dest: string | null, _trip: TripType): Offer[] {
     },
     {
       accent: SAGE,
-      icon: chatCheckIcon,
+      icon: devicesIcon,
       title: '온라인 안심케어',
       tag: '온라인 · 부분 의뢰',
       desc: '직접 준비하시되, 단계별 가이드와 서류 점검·신청을 곁에서 도와드려요.',
