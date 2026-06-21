@@ -63,7 +63,11 @@ const clinicIcon = (
     <path d="M3 21h18" />
     <path d="M5 21V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v15" />
     <path d="M10 21v-3.5a2 2 0 0 1 4 0V21" />
-    <path d="M12 8v4M10 10h4" />
+    <path d="M12 10.2c-1.1 0-1.9.7-1.9 1.5 0 .7.8 1.1 1.9 1.1s1.9-.4 1.9-1.1c0-.8-.8-1.5-1.9-1.5z" fill="currentColor" stroke="none" />
+    <circle cx="9.4" cy="9.5" r="0.85" fill="currentColor" stroke="none" />
+    <circle cx="11" cy="8.5" r="0.85" fill="currentColor" stroke="none" />
+    <circle cx="13" cy="8.5" r="0.85" fill="currentColor" stroke="none" />
+    <circle cx="14.6" cy="9.5" r="0.85" fill="currentColor" stroke="none" />
   </svg>
 )
 
