@@ -594,45 +594,6 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
         ))}
       </div>
 
-      {offer.reviews.length > 0 && (
-        <>
-          <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '26px 0 10px' }}>먼저 경험한 분들</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {offer.reviews.map((r) => (
-              <div key={r.name} style={{ background: C.surface, border: `.5px solid ${C.line}`, borderRadius: 14, padding: '12px 16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <span
-                    style={{
-                      width: 26,
-                      height: 26,
-                      borderRadius: '50%',
-                      background: C.soft,
-                      color: C.accent,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 12,
-                      fontWeight: 500,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {r.initial}
-                  </span>
-                  <span style={{ fontSize: 12.5, fontWeight: 500, color: C.ink }}>{r.name}</span>
-                  {r.meta && <span style={{ fontSize: 11, color: C.ink3 }}>· {r.meta}</span>}
-                  <span style={{ display: 'inline-flex', gap: 1, marginLeft: 'auto' }}>
-                    {[0, 1, 2, 3, 4].map((n) => (
-                      <Fragment key={n}>{starIcon(11, C.accent)}</Fragment>
-                    ))}
-                  </span>
-                </div>
-                <p style={{ fontSize: 12.5, color: C.ink2, lineHeight: 1.6, margin: 0 }}>{r.text}</p>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
       <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '26px 0 6px' }}>자주 묻는 질문</h2>
       <div>
         {offer.faq.map((f, i) => {
@@ -697,6 +658,45 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
           )
         })}
       </div>
+
+      {offer.reviews.length > 0 && (
+        <>
+          <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '26px 0 10px' }}>먼저 경험한 분들</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {offer.reviews.map((r) => (
+              <div key={r.name} style={{ background: C.surface, border: `.5px solid ${C.line}`, borderRadius: 14, padding: '12px 16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <span
+                    style={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: '50%',
+                      background: C.soft,
+                      color: C.accent,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 12,
+                      fontWeight: 500,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {r.initial}
+                  </span>
+                  <span style={{ fontSize: 12.5, fontWeight: 500, color: C.ink }}>{r.name}</span>
+                  {r.meta && <span style={{ fontSize: 11, color: C.ink3 }}>· {r.meta}</span>}
+                  <span style={{ display: 'inline-flex', gap: 1, marginLeft: 'auto' }}>
+                    {[0, 1, 2, 3, 4].map((n) => (
+                      <Fragment key={n}>{starIcon(11, C.accent)}</Fragment>
+                    ))}
+                  </span>
+                </div>
+                <p style={{ fontSize: 12.5, color: C.ink2, lineHeight: 1.6, margin: 0 }}>{r.text}</p>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       <button
         type="button"
