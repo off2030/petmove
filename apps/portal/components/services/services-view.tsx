@@ -99,8 +99,6 @@ interface Offer {
   heroLine: string
   /** 상세 '이렇게 진행돼요' 3단계 라벨. */
   steps: string[]
-  /** 오프라인 카드/상세: 칩 대신 '진행 · {venue}' 표기 — 이 서비스를 진행하는 병원(있을 때만). */
-  venue?: string
 }
 
 /**
@@ -113,11 +111,10 @@ function buildOffers(_dest: string | null, _trip: TripType): Offer[] {
       accent: AMBER,
       icon: clinicIcon,
       title: '오프라인 올케어',
-      tag: '오프라인 · 전체 의뢰',
+      tag: '로잔동물의료센터 · 전체 의뢰',
       desc: '병원에 한 번 오시면 검역 준비를 처음부터 끝까지 대신 진행해 드려요.',
       forWhom: '처음이라 막막하고, 맡기고 싶은 분',
       recommended: true,
-      venue: '로잔동물의료센터',
       heroLine: '복잡한 검역, 한 가지만 놓쳐도 출국이 막혀요.',
       included: [
         { label: '검역·백신 일정 관리', sub: '놓치면 안 되는 날짜를 대신 챙겨요' },
@@ -190,27 +187,6 @@ function tripTypeForDest(cases: CaseRow[], dest: string | null): TripType {
   return 'round'
 }
 
-/** 오프라인 카드/상세 헤더: '진행' 라벨 + 진행 병원명 — 칩 대신, 어디서 진행되는지 표기. */
-function VenueLine({ venue, accent, marginTop = 6 }: { venue: string; accent: Accent; marginTop?: number }) {
-  return (
-    <div style={{ marginTop, fontSize: 11.5, lineHeight: 1.3, display: 'flex', alignItems: 'center', gap: 6 }}>
-      <span
-        style={{
-          fontSize: 10.5,
-          fontWeight: 500,
-          padding: '1px 7px',
-          borderRadius: 999,
-          background: accent.chipBg,
-          color: accent.stroke,
-        }}
-      >
-        진행
-      </span>
-      <span style={{ color: C.ink2 }}>{venue}</span>
-    </div>
-  )
-}
-
 function ServiceCard({ offer, onOpen }: { offer: Offer; onOpen: () => void }) {
   const { accent } = offer
   return (
@@ -268,24 +244,20 @@ function ServiceCard({ offer, onOpen }: { offer: Offer; onOpen: () => void }) {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ ...serif, fontSize: 18, color: C.ink, lineHeight: 1.2 }}>{offer.title}</div>
-          {offer.venue ? (
-            <VenueLine venue={offer.venue} accent={accent} />
-          ) : (
-            <span
-              style={{
-                display: 'inline-block',
-                marginTop: 6,
-                fontSize: 11,
-                padding: '2px 9px',
-                borderRadius: 999,
-                background: accent.chipBg,
-                color: accent.stroke,
-                fontWeight: 500,
-              }}
-            >
-              {offer.tag}
-            </span>
-          )}
+          <span
+            style={{
+              display: 'inline-block',
+              marginTop: 6,
+              fontSize: 11,
+              padding: '2px 9px',
+              borderRadius: 999,
+              background: accent.chipBg,
+              color: accent.stroke,
+              fontWeight: 500,
+            }}
+          >
+            {offer.tag}
+          </span>
         </div>
       </div>
 
@@ -426,23 +398,19 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
       </button>
 
       <div style={{ marginTop: 16 }}>
-        {offer.venue ? (
-          <VenueLine venue={offer.venue} accent={accent} marginTop={0} />
-        ) : (
-          <span
-            style={{
-              display: 'inline-block',
-              fontSize: 11,
-              padding: '2px 9px',
-              borderRadius: 999,
-              background: accent.chipBg,
-              color: accent.stroke,
-              fontWeight: 500,
-            }}
-          >
-            {offer.tag}
-          </span>
-        )}
+        <span
+          style={{
+            display: 'inline-block',
+            fontSize: 11,
+            padding: '2px 9px',
+            borderRadius: 999,
+            background: accent.chipBg,
+            color: accent.stroke,
+            fontWeight: 500,
+          }}
+        >
+          {offer.tag}
+        </span>
         <p style={{ ...serif, fontSize: 21, lineHeight: 1.35, color: C.ink, margin: '10px 0 0' }}>{offer.heroLine}</p>
         <p style={{ fontSize: 13.5, lineHeight: 1.6, color: C.ink2, margin: '8px 0 0' }}>{offer.desc}</p>
       </div>
