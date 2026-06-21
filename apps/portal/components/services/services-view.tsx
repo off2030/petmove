@@ -144,7 +144,7 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
       { label: '광견병 백신 접종' },
       { label: '광견병 항체 검사' },
       { label: '사전 신고' },
-      { label: '일본 수출 동물검역 신청 예약' },
+      { label: '일본 수출 동물검역 신청 · 예약' },
       { label: '출국 전 임상검사' },
       { label: '서류 준비' },
     ],
