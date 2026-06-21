@@ -214,7 +214,7 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
       icon: clinicIcon,
       title: '오프라인 올케어',
       tag: '병원 방문 · 전체 의뢰',
-      desc: '수의사가 모든 절차를 직접 준비·관리해 드려요.',
+      desc: '수의사가 모든 절차를 준비·관리해 드려요.',
       forWhom: [
         '검역이 처음이라 막막해요',
         '바빠서 직접 챙기기 어려워요',
