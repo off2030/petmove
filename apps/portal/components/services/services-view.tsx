@@ -151,8 +151,8 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
     steps: ['예약', '내원', '상담', '시작'],
     faq: [
       {
-        q: '위치가 어디인가요?',
-        a: '로잔동물의료센터로 방문해 주세요. 예약은 필수예요.',
+        q: '어디로 방문하나요?',
+        a: '로잔동물의료센터로 방문해 주세요.',
         link: { label: '병원 위치 보기', href: 'https://naver.me/GUwSYQ9h' },
       },
       { q: '비용은 얼마인가요?', a: '50~60만원 정도입니다. 정확한 비용은 상담 후 결정됩니다.' },
