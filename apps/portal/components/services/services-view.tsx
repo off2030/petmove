@@ -746,12 +746,19 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
           fontSize: 15,
           fontWeight: 600,
           cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 7,
         }}
       >
-        이 서비스로 시작하기
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" aria-hidden>
+          <path d="M12 3.5C6.8 3.5 2.5 6.9 2.5 11c0 2.6 1.8 4.9 4.5 6.3-.2.7-.7 2.5-.8 2.9-.1.4.2.55.45.42.3-.16 2.6-1.78 3.55-2.42.55.08 1.12.12 1.7.12 5.2 0 9.5-3.4 9.5-7.6S17.2 3.5 12 3.5z" />
+        </svg>
+        카카오톡으로 상담하기
       </button>
       <p style={{ fontSize: 11.5, color: C.ink3, textAlign: 'center', margin: '10px 0 0' }}>
-        궁금한 점은 카카오톡으로 편하게 물어보세요
+        부담 없이 편하게 물어보세요
       </p>
     </div>
   )
