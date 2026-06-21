@@ -69,10 +69,13 @@ const clinicIcon = (
 
 const devicesIcon = (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d="M5.5 6h8a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5h-8a1.5 1.5 0 0 1-1.5-1.5v-4a1.5 1.5 0 0 1 1.5-1.5z" />
-    <path d="M3 15.5h13" />
-    <path d="M18.3 8.5h1.4a1.3 1.3 0 0 1 1.3 1.3v6.4a1.3 1.3 0 0 1-1.3 1.3h-1.4a1.3 1.3 0 0 1-1.3-1.3V9.8a1.3 1.3 0 0 1 1.3-1.3z" />
-    <path d="M18.3 16h1.4" />
+    <path d="M6.5 4h9a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5h-9a1.5 1.5 0 0 1-1.5-1.5v-4a1.5 1.5 0 0 1 1.5-1.5z" />
+    <path d="M3.5 13.8h15" />
+    <path
+      d="M15.9 7.5h3.1a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5h-3.1a1.5 1.5 0 0 1-1.5-1.5V9a1.5 1.5 0 0 1 1.5-1.5z"
+      style={{ fill: 'color-mix(in srgb, var(--pm-sage) 14%, var(--pm-surface))' }}
+    />
+    <path d="M16.7 17.5h1.6" />
   </svg>
 )
 
