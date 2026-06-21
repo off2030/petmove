@@ -111,7 +111,7 @@ type Prep = { label: string; sub: string }
 const OFFLINE_PREP: Record<string, Prep[]> = {
   일본: [
     { label: '마이크로칩 · 백신 · 검사', sub: '출국에 필요한 시술·접종·검사를 병원에서 직접 진행해요' },
-    { label: '일본 동물검역소 신고·소통', sub: '출국 전 사전신고와 검역소 연락을 대신 챙겨요' },
+    { label: '일본 검역소 신고·소통', sub: '출국 전 사전신고와 검역소 연락을 대신 챙겨요' },
     { label: '서류 준비', sub: '건강증명서 등 필요한 서류를 준비해요' },
   ],
   default: [
@@ -125,7 +125,7 @@ const OFFLINE_PREP: Record<string, Prep[]> = {
 const ONLINE_PREP: Record<string, Prep[]> = {
   일본: [
     { label: '단계별 가이드', sub: '지금 뭘 해야 하는지 순서대로 알려드려요' },
-    { label: '일본 동물검역소 신고·소통', sub: '까다로운 사전신고·검역소 연락을 도와드려요' },
+    { label: '일본 검역소 신고·소통', sub: '까다로운 사전신고·검역소 연락을 도와드려요' },
     { label: '서류 검토·점검', sub: '빠진 서류·오류를 미리 잡아드려요' },
   ],
   default: [
@@ -144,8 +144,8 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
       icon: clinicIcon,
       title: '오프라인 올케어',
       tag: '병원 방문 · 전체 의뢰',
-      desc: '수의사가 모든 준비를 한 곳에서 직접 진행·관리해 드려요.',
-      forWhom: '검역 준비는 전문가에게 맡기고 행복한 여행만 생각하고 싶은 분',
+      desc: '수의사가 모든 준비를 직접 진행·관리해 드려요.',
+      forWhom: '전문가에게 맡기고 행복한 여행만 생각하고 싶은 분',
       recommended: true,
       heroLine: '복잡한 검역, 한 가지만 놓쳐도 출국이 막혀요.',
       included: OFFLINE_PREP[d] ?? OFFLINE_PREP.default,
@@ -157,7 +157,7 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
       title: '온라인 안심케어',
       tag: '셀프 준비 · 부분 의뢰',
       desc: '실패 없는 안전한 준비를 곁에서 도와드려요.',
-      forWhom: '부분 의뢰를 원하시는 분',
+      forWhom: '어려울 때 도움이 필요하거나 부분 의뢰를 원하시는 분',
       heroLine: '직접 준비하시되, 혼자 헤매지 않게 곁에서 도와드려요.',
       included: ONLINE_PREP[d] ?? ONLINE_PREP.default,
       steps: ['상담', '직접 준비 + 점검', '출국'],
