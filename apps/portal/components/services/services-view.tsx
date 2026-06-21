@@ -757,9 +757,6 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
         </svg>
         카카오톡으로 상담하기
       </button>
-      <p style={{ fontSize: 11.5, color: C.ink3, textAlign: 'center', margin: '10px 0 0' }}>
-        부담 없이 편하게 물어보세요
-      </p>
     </div>
   )
 }
