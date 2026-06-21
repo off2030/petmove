@@ -162,8 +162,8 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
     reviews: [
       {
         initial: '까',
-        name: '까망·베르 보호자',
-        meta: '일본',
+        name: '최○지님',
+        meta: '까망·베르 · 일본',
         text: '애들 무사히 일본에 도착했습니다! 여러 가지로 신경 써주셔서 감사합니다.',
       },
       {
@@ -173,9 +173,9 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
         text: '일본 검역이 깐깐하다고 들어 긴장을 많이 했는데, 서류를 완벽하게 준비해주신 덕분에 아무 문제 없이 통과할 수 있었습니다. 진심으로 감사드립니다.',
       },
       {
-        initial: '구',
-        name: '구슬·꼼 보호자',
-        meta: '일본',
+        initial: '꼼',
+        name: '구○이님',
+        meta: '꼼이 · 일본',
         text: '덕분에 강아지랑 같이 일본 잘 들어왔습니다. 한국에 갈 일 있으면 다시 잘 부탁드리겠습니다. 감사합니다!',
       },
     ],
