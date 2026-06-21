@@ -118,7 +118,6 @@ const OFFLINE_PREP: Record<string, Prep[]> = {
     { label: '검역·백신 일정 관리', sub: '놓치면 안 되는 날짜를 대신 챙겨요' },
     { label: '서류 발급 대행', sub: '건강증명서·검사 서류까지 발급해요' },
     { label: '수입허가증 신청', sub: '목적지 정부 허가 신청을 대신해요' },
-    { label: '출국일 공항 동행', sub: '당일 검역대까지 함께 갑니다' },
   ],
 }
 
@@ -152,7 +151,7 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
       ],
       recommended: true,
       included: OFFLINE_PREP[d] ?? OFFLINE_PREP.default,
-      steps: ['상담', '준비·관리', '출국 동행'],
+      steps: ['상담', '준비·관리', '출국'],
       atClinic: true,
     },
     {
