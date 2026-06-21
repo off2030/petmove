@@ -83,7 +83,17 @@ const devicesIcon = (
   </svg>
 )
 
+/** 상세 V 체크리스트 항목 — sub(한 줄 설명)는 선택. 목록이 길면 라벨만 둔다. */
+type Prep = { label: string; sub?: string }
+/** 먼저 경험한 분들 — 실제 후기(이름은 익명화). meta = 반려동물·목적지. */
+type Review = { initial: string; name: string; meta?: string; text: string }
+/** 자주 묻는 질문 — link 있으면 답변 아래 바깥링크(예: 병원 위치) 노출. */
+type Faq = { q: string; a: string; link?: { label: string; href: string } }
+/** 목적지별 상세 본문 — 같은 상품이라도 나라마다 다르게 구성한다. */
+type DestDetail = { intro: string; included: Prep[]; steps: string[]; faq: Faq[]; reviews: Review[] }
+
 interface Offer {
+  // ── 목록 카드(목적지 공통) ──
   accent: Accent
   icon: ReactNode
   title: string
@@ -93,48 +103,113 @@ interface Offer {
   forWhom: string[]
   /** 밀어주는 갈래에 '추천' 배지 + 강조 테두리. */
   recommended?: boolean
-  /** 카드 = label 만, 상세 = label + sub(한 줄 설명). */
-  included: { label: string; sub: string }[]
   /** 실제 병원에서 진행하는 상품(오프라인 올케어)만 히어로 아래 '진행 병원' 띠를 표시. */
   atClinic?: boolean
-  /** 상세 '이렇게 진행돼요' 3단계 라벨. */
+  // ── 상세(목적지별) — DestDetail 을 펼쳐 담는다 ──
+  /** 상세 상단의 가벼운 소개 한두 문장. */
+  intro: string
+  included: Prep[]
+  /** 상세 '이렇게 진행돼요' 단계 라벨. */
   steps: string[]
+  faq: Faq[]
+  reviews: Review[]
 }
 
 /**
- * 서비스 카드 — 카드 본체(설명·추천 대상·아이콘·진행 단계)는 목적지 공통.
- * 목적지마다 다른 건 'V 체크리스트(준비 내용)'뿐 → {OFFLINE,ONLINE}_PREP 에서 목적지별 분기.
- * 새 목적지는 두 맵에 그 나라 항목만 추가(전용 카피 전엔 default 폴백, 카드 본체는 그대로).
+ * 서비스 상세 — 카드 본체(설명·추천 대상·아이콘)는 목적지 공통이지만,
+ * 상세 본문(소개·체크리스트·진행 단계·FAQ·후기)은 **목적지마다 다르게** 구성한다.
+ * 새 목적지는 {OFFLINE,ONLINE}_DETAIL 에 그 나라 블록을 추가(전용 카피 전엔 default 폴백).
+ * 후기(reviews)는 default 로 공유하지 않는다 — 한 나라 후기가 다른 나라에 새지 않도록 빈 배열.
  */
-type Prep = { label: string; sub: string }
+const DEFAULT_FAQ: Faq[] = [
+  { q: '비용은 얼마인가요?', a: '목적지와 반려동물 상태에 따라 달라져요. 카카오톡으로 문의 주시면 정확히 안내해 드려요.' },
+  {
+    q: '준비 기간은 얼마나 걸리나요?',
+    a: '나라마다 달라요. 광견병 항체검사가 필요한 곳은 몇 달 전부터 준비해야 해서, 상담 때 목적지에 맞는 일정표를 만들어 드려요.',
+  },
+  {
+    q: '예약을 취소·변경할 수 있나요?',
+    a: '절차를 시작하기 전이라면 언제든 가능해요. 이미 진행된 부분은 진행한 만큼만 정산돼요. 자세한 기준은 상담 시 안내해 드려요.',
+  },
+]
 
-const OFFLINE_PREP: Record<string, Prep[]> = {
-  일본: [
-    { label: '마이크로칩 · 백신 · 검사', sub: '출국에 필요한 시술·접종·검사를 병원에서 직접 진행해요' },
-    { label: '일본 검역소 신고·소통', sub: '출국 전 사전신고와 검역소 연락을 대신 챙겨요' },
-    { label: '서류 준비', sub: '건강증명서 등 필요한 서류를 준비해요' },
-  ],
-  default: [
-    { label: '검역·백신 일정 관리', sub: '놓치면 안 되는 날짜를 대신 챙겨요' },
-    { label: '서류 발급 대행', sub: '건강증명서·검사 서류까지 발급해요' },
-    { label: '수입허가증 신청', sub: '목적지 정부 허가 신청을 대신해요' },
-  ],
+const OFFLINE_DETAIL: Record<string, DestDetail> = {
+  일본: {
+    intro: '일본은 검역 절차가 많고 까다로워요. 20년 경험의 수의사가 마이크로칩부터 출국 서류까지 하나하나 직접 준비·관리해 드려요.',
+    included: [
+      { label: '마이크로칩 삽입 · 동물등록' },
+      { label: '광견병 백신' },
+      { label: '광견병 항체검사' },
+      { label: '사전 신고' },
+      { label: '일본 수출동물검역 신청 · 예약' },
+      { label: '출국 전 임상검사' },
+      { label: '서류 준비' },
+    ],
+    steps: ['예약', '내원', '준비'],
+    faq: [
+      {
+        q: '어디로 방문하나요?',
+        a: '로잔동물의료센터로 방문해 주세요. 예약은 필수예요.',
+        link: { label: '병원 위치 보기', href: 'https://naver.me/GUwSYQ9h' },
+      },
+      { q: '비용은 얼마인가요?', a: '마이크로칩 유무, 접종 상태에 따라 달라져요. 카카오톡으로 문의 주시면 정확히 알려드려요.' },
+      { q: '준비 기간은 얼마나 걸리나요?', a: '광견병 항체검사 때문에 6~7개월 이상 필요해요. 여유 있게 준비를 시작하세요.' },
+      {
+        q: '예약을 취소·변경할 수 있나요?',
+        a: '절차를 시작하기 전이라면 언제든 가능해요. 이미 진행된 검사·접종은 진행한 만큼만 정산돼요. 자세한 기준은 상담 시 안내해 드려요.',
+      },
+    ],
+    // ⚠️ 실제 카톡 후기(이름 익명화). 게재 전 당사자 동의 확인 필요.
+    reviews: [
+      {
+        initial: '노',
+        name: '유○하님',
+        meta: '노엘 · 일본',
+        text: '일본 검역이 깐깐하다고 들어 긴장을 많이 했는데, 서류를 완벽하게 준비해주신 덕분에 아무 문제 없이 통과했습니다. 진심으로 감사합니다.',
+      },
+      { initial: '포', name: '윤○우님', meta: '포로리 · 일본', text: '선생님 덕분에 포로리 일본에 잘 들어왔습니다. 정말 감사합니다.' },
+      { initial: '레', name: '김○근님', meta: '레몬 · 일본', text: '레몬이 준비 잘 해주셔서 감사합니다.' },
+    ],
+  },
+  default: {
+    intro: '복잡한 검역 절차, 20년 경험의 수의사가 처음부터 끝까지 직접 준비·관리해 드려요.',
+    included: [
+      { label: '검역·백신 일정 관리', sub: '놓치면 안 되는 날짜를 대신 챙겨요' },
+      { label: '서류 발급 대행', sub: '건강증명서·검사 서류까지 발급해요' },
+      { label: '수입허가증 신청', sub: '목적지 정부 허가 신청을 대신해요' },
+    ],
+    steps: ['상담', '준비·관리', '출국'],
+    faq: DEFAULT_FAQ,
+    reviews: [],
+  },
 }
 
-const ONLINE_PREP: Record<string, Prep[]> = {
-  일본: [
-    { label: '단계별 가이드', sub: '지금 뭘 해야 하는지 순서대로 알려드려요' },
-    { label: '일본 검역소 신고·소통', sub: '까다로운 사전신고·검역소 연락을 도와드려요' },
-    { label: '서류 검토·점검', sub: '빠진 서류·오류를 미리 잡아드려요' },
-  ],
-  default: [
-    { label: '단계별 준비 가이드', sub: '지금 뭘 해야 하는지 순서대로 알려드려요' },
-    { label: '서류 검토·점검', sub: '빠진 서류·오류를 미리 잡아드려요' },
-    { label: '수입허가증 신청 대행', sub: '까다로운 허가 신청은 대신해 드려요' },
-  ],
+const ONLINE_DETAIL: Record<string, DestDetail> = {
+  일본: {
+    intro: '직접 준비하시되 혼자 헤매지 않게, 까다로운 일본 검역 절차를 단계별로 도와드려요.',
+    included: [
+      { label: '단계별 가이드', sub: '지금 뭘 해야 하는지 순서대로 알려드려요' },
+      { label: '일본 검역소 신고·소통', sub: '까다로운 사전신고·검역소 연락을 도와드려요' },
+      { label: '서류 검토·점검', sub: '빠진 서류·오류를 미리 잡아드려요' },
+    ],
+    steps: ['상담', '직접 준비 + 점검', '출국'],
+    faq: DEFAULT_FAQ,
+    reviews: [],
+  },
+  default: {
+    intro: '직접 준비하시되 혼자 헤매지 않게, 실패 없는 안전한 준비를 곁에서 도와드려요.',
+    included: [
+      { label: '단계별 준비 가이드', sub: '지금 뭘 해야 하는지 순서대로 알려드려요' },
+      { label: '서류 검토·점검', sub: '빠진 서류·오류를 미리 잡아드려요' },
+      { label: '수입허가증 신청 대행', sub: '까다로운 허가 신청은 대신해 드려요' },
+    ],
+    steps: ['상담', '직접 준비 + 점검', '출국'],
+    faq: DEFAULT_FAQ,
+    reviews: [],
+  },
 }
 
-/** 카드 본체는 공통, included(V 체크리스트)만 목적지별. 미정 목적지는 default 폴백. */
+/** 카드 본체는 공통, 상세 본문(DestDetail)만 목적지별. 미정 목적지는 default 폴백. */
 function buildOffers(dest: string | null, _trip: TripType): Offer[] {
   const d = dest ?? ''
   return [
@@ -150,9 +225,8 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
         '전문가에게 맡기고 안심하고 싶어요',
       ],
       recommended: true,
-      included: OFFLINE_PREP[d] ?? OFFLINE_PREP.default,
-      steps: ['상담', '준비·관리', '출국'],
       atClinic: true,
+      ...(OFFLINE_DETAIL[d] ?? OFFLINE_DETAIL.default),
     },
     {
       accent: SAGE,
@@ -165,8 +239,7 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
         '멀어서 방문이 힘들어요',
         '어려운 부분만 도움받고 싶어요',
       ],
-      included: ONLINE_PREP[d] ?? ONLINE_PREP.default,
-      steps: ['상담', '직접 준비 + 점검', '출국'],
+      ...(ONLINE_DETAIL[d] ?? ONLINE_DETAIL.default),
     },
   ]
 }
@@ -346,33 +419,13 @@ function ServiceCard({ offer, onOpen }: { offer: Offer; onOpen: () => void }) {
 }
 
 /* ────────────────────────────────────────────────────────────────────────
- * 서비스 상세 — 신뢰(실적·후기)·진행·FAQ·CTA. 목록 카드 탭 → 같은 화면이 상세로 전환.
- *
- * ⚠️ 출시(공개) 전 임시(가상) 값 — 실제 누적 실적·고객 후기가 생기면 반드시 교체할 것.
- *    라이브에 가상 실적/후기를 그대로 두면 허위 표시가 됨. (사용자 승인하에 출시 전 한정.)
- * FAQ 답변은 가상 X — 가격·환불 정책은 미정이라 '상담 시 안내'로 정직하게 유지.
+ * 서비스 상세 — 소개·진행 병원·체크리스트·진행 단계·후기·FAQ·CTA.
+ * 본문(intro·included·steps·faq·reviews)은 목적지별 DestDetail 에서 온다(buildOffers).
+ * 통계(누적·만족도) 박스는 검증 가능한 실값이 없어 제거 — 신뢰는 진행 병원 + 실제 후기로.
  * ──────────────────────────────────────────────────────────────────────── */
-const STAT_OUTBOUND = '2000마리' // ⚠️ 출시 전 가상 실적 — 실제 누적치로 교체 후 공개
-const STAT_RATING = '4.9' // ⚠️ 출시 전 가상 만족도 — 실제 평점으로 교체 후 공개
 
 /** 오프라인 올케어 진행 주체 — 약관·처리방침(docs/legal)의 공식 표기와 통일. */
 const CLINIC = { name: '로잔동물의료센터', vet: '이진원 수의사', area: '서울 관악' }
-
-/** ⚠️ 출시 전 가상 후기 — 실제 고객 후기로 교체할 것. */
-const REVIEWS: { initial: string; name: string; text: string }[] = [
-  { initial: '민', name: '민지님', text: '혼자였으면 절대 못 했어요. 날짜마다 챙겨주셔서 마음이 편했습니다.' },
-  { initial: '준', name: '준호님', text: '서류가 이렇게 복잡한 줄 몰랐는데, 하나하나 대신 처리해주셔서 출국까지 문제없었어요.' },
-]
-
-/** FAQ — 답변은 정직하게(가격·환불 미정이라 단정 X, '상담 시 안내'). */
-const FAQ: { q: string; a: string }[] = [
-  { q: '비용은 얼마인가요?', a: '목적지와 반려동물 상태에 따라 달라져요. 카카오톡으로 문의 주시면 정확히 안내해 드려요.' },
-  {
-    q: '준비 기간은 얼마나 걸리나요?',
-    a: '나라마다 달라요. 광견병 항체검사가 필요한 곳은 몇 달 전부터 준비해야 해서, 상담 때 목적지에 맞는 일정표를 만들어 드려요.',
-  },
-  { q: '중간에 취소하면 환불되나요?', a: '진행 단계에 따라 안내해 드려요. 자세한 기준은 상담 시 확인하실 수 있어요.' },
-]
 
 const starIcon = (size: number, fill: string) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} aria-hidden>
@@ -422,7 +475,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
         >
           {offer.tag}
         </span>
-        <p style={{ ...serif, fontSize: 21, lineHeight: 1.35, color: C.ink, margin: '10px 0 0' }}>{offer.desc}</p>
+        <p style={{ fontSize: 14.5, lineHeight: 1.7, color: C.ink2, margin: '12px 0 0' }}>{offer.intro}</p>
       </div>
 
       {offer.atClinic && (
@@ -468,30 +521,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
-        <div style={{ flex: 1, background: C.soft, borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
-          <div style={{ ...serif, fontSize: 19, color: C.ink }}>{STAT_OUTBOUND}</div>
-          <div style={{ fontSize: 11, color: C.ink3, marginTop: 2 }}>누적 출국</div>
-        </div>
-        <div style={{ flex: 1, background: C.soft, borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
-          <div style={{ ...serif, fontSize: 19, color: C.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-            {starIcon(14, C.accent)}
-            {STAT_RATING}
-          </div>
-          <div style={{ fontSize: 11, color: C.ink3, marginTop: 2 }}>만족도</div>
-        </div>
-        <div style={{ flex: 1, background: C.soft, borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
-          <div style={{ color: accent.stroke, display: 'flex', justifyContent: 'center' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M12 3l7 3v5c0 4.2-2.9 7.4-7 8.5C7.9 18.4 5 15.2 5 11V6z" />
-              <path d="M9 11.5l2 2 4-4" />
-            </svg>
-          </div>
-          <div style={{ fontSize: 11, color: C.ink3, marginTop: 4 }}>안전 보장</div>
-        </div>
-      </div>
-
-      <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '26px 0 10px' }}>이런 걸 대신해 드려요</h2>
+      <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '24px 0 10px' }}>이런 걸 대신해 드려요</h2>
       <div style={{ background: C.surface, border: `.5px solid ${C.line}`, borderRadius: 16, padding: '4px 16px' }}>
         {offer.included.map((item, i) => (
           <div
@@ -519,7 +549,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
             </svg>
             <div>
               <div style={{ fontSize: 13.5, fontWeight: 500, color: C.ink }}>{item.label}</div>
-              <div style={{ fontSize: 11.5, color: C.ink3, marginTop: 2 }}>{item.sub}</div>
+              {item.sub && <div style={{ fontSize: 11.5, color: C.ink3, marginTop: 2 }}>{item.sub}</div>}
             </div>
           </div>
         ))}
@@ -568,43 +598,48 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
         ))}
       </div>
 
-      <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '26px 0 10px' }}>먼저 경험한 분들</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {REVIEWS.map((r) => (
-          <div key={r.name} style={{ background: C.surface, border: `.5px solid ${C.line}`, borderRadius: 14, padding: '12px 16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <span
-                style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: '50%',
-                  background: C.soft,
-                  color: C.accent,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 12,
-                  fontWeight: 500,
-                  flexShrink: 0,
-                }}
-              >
-                {r.initial}
-              </span>
-              <span style={{ fontSize: 12.5, fontWeight: 500, color: C.ink }}>{r.name}</span>
-              <span style={{ display: 'inline-flex', gap: 1 }}>
-                {[0, 1, 2, 3, 4].map((n) => (
-                  <Fragment key={n}>{starIcon(11, C.accent)}</Fragment>
-                ))}
-              </span>
-            </div>
-            <p style={{ fontSize: 12.5, color: C.ink2, lineHeight: 1.6, margin: 0 }}>{r.text}</p>
+      {offer.reviews.length > 0 && (
+        <>
+          <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '26px 0 10px' }}>먼저 경험한 분들</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {offer.reviews.map((r) => (
+              <div key={r.name} style={{ background: C.surface, border: `.5px solid ${C.line}`, borderRadius: 14, padding: '12px 16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <span
+                    style={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: '50%',
+                      background: C.soft,
+                      color: C.accent,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 12,
+                      fontWeight: 500,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {r.initial}
+                  </span>
+                  <span style={{ fontSize: 12.5, fontWeight: 500, color: C.ink }}>{r.name}</span>
+                  {r.meta && <span style={{ fontSize: 11, color: C.ink3 }}>· {r.meta}</span>}
+                  <span style={{ display: 'inline-flex', gap: 1, marginLeft: 'auto' }}>
+                    {[0, 1, 2, 3, 4].map((n) => (
+                      <Fragment key={n}>{starIcon(11, C.accent)}</Fragment>
+                    ))}
+                  </span>
+                </div>
+                <p style={{ fontSize: 12.5, color: C.ink2, lineHeight: 1.6, margin: 0 }}>{r.text}</p>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
 
       <h2 style={{ ...serif, fontSize: 15, color: C.ink, margin: '26px 0 6px' }}>자주 묻는 질문</h2>
       <div>
-        {FAQ.map((f, i) => {
+        {offer.faq.map((f, i) => {
           const open = openFaq === i
           return (
             <div key={f.q} style={{ borderBottom: `.5px solid ${C.line}` }}>
@@ -643,7 +678,25 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
                   <path d="M6 9l6 6 6-6" />
                 </svg>
               </button>
-              {open && <p style={{ fontSize: 12.5, color: C.ink2, lineHeight: 1.6, margin: '0 2px 13px' }}>{f.a}</p>}
+              {open && (
+                <div style={{ margin: '0 2px 13px' }}>
+                  <p style={{ fontSize: 12.5, color: C.ink2, lineHeight: 1.6, margin: 0 }}>{f.a}</p>
+                  {f.link && (
+                    <a
+                      href={f.link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 7, fontSize: 12.5, fontWeight: 500, color: accent.stroke, textDecoration: 'none' }}
+                    >
+                      {f.link.label}
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M7 17L17 7" />
+                        <path d="M8 7h9v9" />
+                      </svg>
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           )
         })}
