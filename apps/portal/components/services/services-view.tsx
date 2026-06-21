@@ -85,6 +85,8 @@ const devicesIcon = (
 
 /** 상세 V 체크리스트 항목 — sub(한 줄 설명)는 선택. 목록이 길면 라벨만 둔다. */
 type Prep = { label: string; sub?: string }
+/** 상세 히어로 3장(오프라인 공통) — 아이콘 + 큰 핵심어 + 한 줄 설명. */
+type Highlight = { icon: ReactNode; head: string; sub: string }
 /** 먼저 경험한 분들 — 실제 후기(이름은 익명화). meta = 반려동물·목적지. */
 type Review = { initial: string; name: string; meta?: string; text: string }
 /** 자주 묻는 질문 — link 있으면 답변 아래 바깥링크(예: 병원 위치) 노출. */
@@ -105,6 +107,8 @@ interface Offer {
   recommended?: boolean
   /** 실제 병원에서 진행하는 상품(오프라인 올케어)만 히어로 아래 '진행 병원' 띠를 표시. */
   atClinic?: boolean
+  /** 상세 히어로 3장(오프라인 공통 — 경험·전문성·앱). 없으면 미표시. */
+  highlights?: Highlight[]
   // ── 상세(목적지별) — DestDetail 을 펼쳐 담는다 ──
   /** 상세 상단의 가벼운 소개 한두 문장. */
   intro: string
@@ -135,7 +139,8 @@ const DEFAULT_FAQ: Faq[] = [
 
 const OFFLINE_DETAIL: Record<string, DestDetail> = {
   일본: {
-    intro: '수의사가 일본 출국의 모든 절차를 직접 준비·관리해 드려요.',
+    intro:
+      '로잔동물의료센터에서 반려동물 일본 여행을 위한 검역 준비를 해드립니다. 병원 준비는 물론 일본 검역소와의 소통, 서류 준비까지 빈틈없이 해드립니다. 펫무브 앱과 연동되어 언제든 필요한 정보를 찾고 진행 상황을 쉽게 확인할 수 있습니다.',
     included: [
       { label: '마이크로칩 삽입 · 동물등록' },
       { label: '광견병 백신 접종' },
@@ -205,6 +210,41 @@ const ONLINE_DETAIL: Record<string, DestDetail> = {
   },
 }
 
+/** 오프라인 올케어 히어로 3장 — 목적지 무관 공통(병원의 경험·전문성·앱 편의). */
+const OFFLINE_HIGHLIGHTS: Highlight[] = [
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <circle cx="12" cy="9" r="5" />
+        <path d="M8.5 13.2L6.8 20.5L12 17.8L17.2 20.5L15.5 13.2" />
+      </svg>
+    ),
+    head: '20년',
+    sub: '풍부한 경험',
+  },
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M6 4v4a4 4 0 0 0 8 0V4" />
+        <path d="M10 12v2.5a3 3 0 0 0 3 3h1" />
+        <circle cx="16" cy="17.5" r="2" />
+      </svg>
+    ),
+    head: '수의사',
+    sub: '전문 의료진이 준비',
+  },
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <rect x="7" y="2.5" width="10" height="19" rx="2.5" />
+        <path d="M9.3 11l1.9 1.9 3.5-3.6" />
+      </svg>
+    ),
+    head: '앱 연동',
+    sub: '간편하게 정보·진행 상황 확인',
+  },
+]
+
 /** 카드 본체는 공통, 상세 본문(DestDetail)만 목적지별. 미정 목적지는 default 폴백. */
 function buildOffers(dest: string | null, _trip: TripType): Offer[] {
   const d = dest ?? ''
@@ -222,6 +262,7 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
       ],
       recommended: true,
       atClinic: true,
+      highlights: OFFLINE_HIGHLIGHTS,
       ...(OFFLINE_DETAIL[d] ?? OFFLINE_DETAIL.default),
     },
     {
@@ -474,6 +515,41 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
         <p style={{ fontSize: 14.5, lineHeight: 1.7, color: C.ink2, margin: '12px 0 0' }}>{offer.intro}</p>
       </div>
 
+      {offer.highlights && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 16 }}>
+          {offer.highlights.map((h) => (
+            <div
+              key={h.head}
+              style={{
+                background: C.surface,
+                border: `.5px solid ${C.line}`,
+                borderRadius: 12,
+                padding: '13px 8px',
+                textAlign: 'center',
+              }}
+            >
+              <div
+                style={{
+                  width: 34,
+                  height: 34,
+                  margin: '0 auto',
+                  borderRadius: 10,
+                  background: accent.chipBg,
+                  color: accent.stroke,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {h.icon}
+              </div>
+              <div style={{ fontSize: 13.5, fontWeight: 500, color: C.ink, marginTop: 8 }}>{h.head}</div>
+              <div style={{ fontSize: 10.5, color: C.ink3, marginTop: 3, lineHeight: 1.4 }}>{h.sub}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {offer.atClinic && (
         <div
           style={{
@@ -511,7 +587,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
               {CLINIC.name} · {CLINIC.vet}
             </div>
             <div style={{ fontSize: 11.5, color: C.ink3, marginTop: 2 }}>
-              20년 경험의 면허 수의사가 직접 진행해요
+              면허 수의사가 직접 진행해요
             </div>
           </div>
         </div>
