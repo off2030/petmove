@@ -229,7 +229,7 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
       icon: devicesIcon,
       title: '온라인 안심케어',
       tag: '셀프 준비 · 부분 의뢰',
-      desc: '실패 없는 안전한 준비를 곁에서 도와드려요.',
+      desc: '안심하고 준비하실 수 있도록 곁에서 도와드려요.',
       forWhom: [
         '직접 해본 경험이 있어요',
         '멀어서 방문이 힘들어요',
