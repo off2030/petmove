@@ -163,7 +163,7 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
       desc: '실패 없는 안전한 준비를 곁에서 도와드려요.',
       forWhom: [
         '직접 해본 경험이 있어요',
-        '멀어서 방문이 어려워요',
+        '멀어서 방문이 힘들어요',
         '어려운 부분만 도움받고 싶어요',
       ],
       heroLine: '직접 준비하시되, 혼자 헤매지 않게 곁에서 도와드려요.',
