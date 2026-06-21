@@ -89,8 +89,8 @@ interface Offer {
   title: string
   tag: string
   desc: string
-  /** "이런 분께 추천" 한 줄 — 두 갈래 중 자기 것을 빠르게 고르게 하는 결정 보조. */
-  forWhom: string
+  /** "이런 분께 추천" 항목들 — 두 갈래 중 자기 것을 빠르게 고르게 하는 결정 보조. */
+  forWhom: string[]
   /** 밀어주는 갈래에 '추천' 배지 + 강조 테두리. */
   recommended?: boolean
   /** 카드 = label 만, 상세 = label + sub(한 줄 설명). */
@@ -145,7 +145,7 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
       title: '오프라인 올케어',
       tag: '병원 방문 · 전체 의뢰',
       desc: '수의사가 모든 준비를 직접 진행·관리해 드려요.',
-      forWhom: '전문가에게 맡기고 행복한 여행만 생각하고 싶은 분',
+      forWhom: ['검역이 처음이라 막막한 분', '바빠서 직접 챙기기 어려운 분', '전문가에게 맡기고 안심하고 싶은 분'],
       recommended: true,
       heroLine: '복잡한 검역, 한 가지만 놓쳐도 출국이 막혀요.',
       included: OFFLINE_PREP[d] ?? OFFLINE_PREP.default,
@@ -157,7 +157,7 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
       title: '온라인 안심케어',
       tag: '셀프 준비 · 부분 의뢰',
       desc: '실패 없는 안전한 준비를 곁에서 도와드려요.',
-      forWhom: '어려울 때 도움이 필요하거나 부분 의뢰를 원하시는 분',
+      forWhom: ['직접 해본 경험이 있는 분', '멀어서 직접 방문이 어려운 분', '어려운 부분만 도움받고 싶은 분'],
       heroLine: '직접 준비하시되, 혼자 헤매지 않게 곁에서 도와드려요.',
       included: ONLINE_PREP[d] ?? ONLINE_PREP.default,
       steps: ['상담', '직접 준비 + 점검', '출국'],
@@ -286,33 +286,34 @@ function ServiceCard({ offer, onOpen }: { offer: Offer; onOpen: () => void }) {
 
       <p style={{ fontSize: 13, color: C.ink2, lineHeight: 1.6, margin: '14px 0 0' }}>{offer.desc}</p>
 
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          marginTop: 12,
-          padding: '7px 10px',
-          borderRadius: 10,
-          background: accent.chipBg,
-        }}
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke={accent.stroke}
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{ flexShrink: 0 }}
-          aria-hidden
-        >
-          <circle cx="12" cy="8" r="3.2" />
-          <path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
-        </svg>
-        <span style={{ fontSize: 12, color: C.ink2, lineHeight: 1.4 }}>이런 분께 추천 · {offer.forWhom}</span>
+      <div style={{ marginTop: 12, padding: '11px 13px', borderRadius: 10, background: accent.chipBg }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, color: accent.stroke, fontWeight: 500 }}>
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ flexShrink: 0 }}
+            aria-hidden
+          >
+            <circle cx="12" cy="8" r="3.2" />
+            <path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
+          </svg>
+          이런 분께 추천
+        </div>
+        {offer.forWhom.map((who) => (
+          <div
+            key={who}
+            style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginTop: 7, fontSize: 12.5, color: C.ink2, lineHeight: 1.5 }}
+          >
+            <span style={{ flexShrink: 0, marginTop: 6, width: 4, height: 4, borderRadius: '50%', background: accent.stroke }} />
+            {who}
+          </div>
+        ))}
       </div>
 
       <div
