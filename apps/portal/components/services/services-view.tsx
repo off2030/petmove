@@ -232,7 +232,7 @@ const OFFLINE_HIGHLIGHTS: Highlight[] = [
           alignItems: 'center',
           justifyContent: 'center',
           ...serif,
-          fontSize: 11.5,
+          fontSize: 10,
           fontWeight: 500,
         }}
       >
