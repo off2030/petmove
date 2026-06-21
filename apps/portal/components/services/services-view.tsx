@@ -89,7 +89,7 @@ interface Offer {
   title: string
   tag: string
   desc: string
-  /** "이런 분께 추천" 항목들 — 두 갈래 중 자기 것을 빠르게 고르게 하는 결정 보조. */
+  /** "이럴 때 추천해요" 항목들 — 두 갈래 중 자기 것을 빠르게 고르게 하는 결정 보조. */
   forWhom: string[]
   /** 밀어주는 갈래에 '추천' 배지 + 강조 테두리. */
   recommended?: boolean
@@ -311,7 +311,7 @@ function ServiceCard({ offer, onOpen }: { offer: Offer; onOpen: () => void }) {
             <circle cx="12" cy="8" r="3.2" />
             <path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
           </svg>
-          이런 분께 추천
+          이럴 때 추천해요
         </div>
         {offer.forWhom.map((who) => (
           <div
