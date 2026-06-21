@@ -180,7 +180,7 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
         a: '로잔동물의료센터로 방문해 주세요.',
         link: { label: '병원 위치 보기', href: 'https://naver.me/GUwSYQ9h' },
       },
-      { q: '비용은 얼마인가요?', a: '50~60만원 정도예요. 정확한 비용은 상담 후 결정돼요.' },
+      { q: '비용은 얼마인가요?', a: '오프라인 올케어의 비용은 50~60만원이에요. 정확한 비용은 상담 후 결정돼요.' },
       { q: '준비 기간이 궁금해요', a: '접종 상황에 따라 최소 6~7개월 정도 걸려요.' },
     ],
     reviews: JAPAN_REVIEWS,
