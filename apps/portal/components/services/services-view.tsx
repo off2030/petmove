@@ -294,8 +294,8 @@ function ServiceCard({ offer, onOpen }: { offer: Offer; onOpen: () => void }) {
 
       <p style={{ fontSize: 13, color: C.ink2, lineHeight: 1.6, margin: '14px 0 0' }}>{offer.desc}</p>
 
-      <div style={{ marginTop: 12, padding: '11px 13px', borderRadius: 10, background: accent.chipBg }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, color: accent.stroke, fontWeight: 500 }}>
+      <div style={{ marginTop: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, color: C.ink3, fontWeight: 500 }}>
           <svg
             width="13"
             height="13"
