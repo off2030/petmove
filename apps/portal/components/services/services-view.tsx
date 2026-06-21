@@ -201,7 +201,7 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
 const ONLINE_DETAIL: Record<string, DestDetail> = {
   일본: {
     intro:
-      '안심하고 준비할 수 있도록 곁에서 도와드려요. 막히는 부분이 있으면 언제든 물어보세요. 어려운 사전 신고, 일본 수출 동물검역 신청과 예약, 서류 점검도 해 드려요.',
+      '안심하고 준비할 수 있도록 곁에서 도와드려요. 막히는 부분이 있으면 언제든 물어보세요. 서류 점검도 해 드려요. 어려운 사전 신고, 일본 수출 동물검역 신청과 예약을 대신해 드려요.',
     included: [
       { label: '단계별 가이드' },
       { label: '사전 신고' },
@@ -231,8 +231,8 @@ const ONLINE_DETAIL: Record<string, DestDetail> = {
   },
 }
 
-/** 오프라인 올케어 히어로 3장 — 목적지 무관 공통(전문성·경험·앱 편의). */
-const OFFLINE_HIGHLIGHTS: Highlight[] = [
+/** 히어로 3장 — 로잔 공통 강점(전문성·경험·앱 편의). 올케어·안심케어 둘 다 사용. */
+const HIGHLIGHTS: Highlight[] = [
   {
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -275,7 +275,7 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
         '전문가에게 맡기고 안심하고 싶어요',
       ],
       recommended: true,
-      highlights: OFFLINE_HIGHLIGHTS,
+      highlights: HIGHLIGHTS,
       ...(OFFLINE_DETAIL[d] ?? OFFLINE_DETAIL.default),
     },
     {
@@ -290,6 +290,7 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
         '멀어서 방문이 힘들어요',
         '어려운 부분만 도움받고 싶어요',
       ],
+      highlights: HIGHLIGHTS,
       ...(ONLINE_DETAIL[d] ?? ONLINE_DETAIL.default),
     },
   ]
