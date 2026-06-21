@@ -138,10 +138,10 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
     intro: '수의사가 일본 출국의 모든 절차를 직접 준비·관리해 드려요.',
     included: [
       { label: '마이크로칩 삽입 · 동물등록' },
-      { label: '광견병 백신' },
-      { label: '광견병 항체검사' },
+      { label: '광견병 백신 접종' },
+      { label: '광견병 항체 검사' },
       { label: '사전 신고' },
-      { label: '일본 수출동물검역 신청 · 예약' },
+      { label: '일본 수출 동물검역 신청 예약' },
       { label: '출국 전 임상검사' },
       { label: '서류 준비' },
     ],
