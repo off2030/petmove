@@ -797,7 +797,6 @@ export function ServicesView() {
     customerProfile: profile,
     primaryCase: cases[0] ?? null,
   }).guardian
-  const [confirmOpen, setConfirmOpen] = useState(false)
   // 상세로 들어간 서비스(카드 탭). null = 목록. 새 라우트 없이 같은 화면을 전환한다.
   const [openTitle, setOpenTitle] = useState<string | null>(null)
   // FAB 는 portal 로 body 에 그린다 — pm-fade-up 의 transform(fill-mode both 로 잔존)이
@@ -819,12 +818,10 @@ export function ServicesView() {
   function startInquiry() {
     void notifyServiceInquiry({ name: guardian.name, destination: selectedKo, tripType: trip })
     window.open(KAKAO_CHAT_URL, '_blank', 'noopener,noreferrer')
-    setConfirmOpen(false)
   }
 
   const offers = buildOffers(selectedKo, trip)
   const openOffer = openTitle ? offers.find((o) => o.title === openTitle) ?? null : null
-  const tripLabel = trip === 'round' ? '왕복' : '편도'
 
   return (
     <div
@@ -842,7 +839,7 @@ export function ServicesView() {
         <ServiceDetail
           offer={openOffer}
           onBack={() => setOpenTitle(null)}
-          onInquire={() => setConfirmOpen(true)}
+          onInquire={startInquiry}
         />
       ) : (
         <div style={{ padding: '0 24px' }}>
@@ -971,12 +968,11 @@ export function ServicesView() {
 
       {mounted &&
         !sheetOpen &&
-        !confirmOpen &&
         createPortal(
           <button
             type="button"
             aria-label="카카오톡으로 문의"
-            onClick={() => setConfirmOpen(true)}
+            onClick={startInquiry}
             style={{
               position: 'fixed',
               right: 16,
@@ -1002,54 +998,6 @@ export function ServicesView() {
           document.body,
         )}
 
-      <BottomSheet open={confirmOpen} onClose={() => setConfirmOpen(false)} title="문의를 시작할게요">
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '10px 0', borderBottom: `.5px solid ${C.line}` }}>
-            <span style={{ fontSize: 13, color: C.ink3 }}>이름</span>
-            <span style={{ fontSize: 14, color: C.ink, fontWeight: 500 }}>{guardian.name ?? '미설정'}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '10px 0' }}>
-            <span style={{ fontSize: 13, color: C.ink3 }}>이메일</span>
-            <span style={{ fontSize: 14, color: C.ink }}>{guardian.email ?? userEmail ?? '미설정'}</span>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '12px 0 0' }}>
-          {[selected.ko, tripLabel].map((chip) => (
-            <span key={chip} style={{ fontSize: 11, padding: '3px 9px', borderRadius: 999, background: C.soft, color: C.accent }}>
-              {chip}
-            </span>
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={startInquiry}
-          style={{
-            width: '100%',
-            marginTop: 16,
-            padding: '13px 0',
-            borderRadius: 12,
-            border: 'none',
-            background: '#FEE500',
-            color: '#191600',
-            fontFamily: 'inherit',
-            fontSize: 15,
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="#191600" aria-hidden>
-            <path d="M12 3.5C6.8 3.5 2.5 6.9 2.5 11c0 2.6 1.8 4.9 4.5 6.3-.2.7-.7 2.5-.8 2.9-.1.4.2.55.45.42.3-.16 2.6-1.78 3.55-2.42.55.08 1.12.12 1.7.12 5.2 0 9.5-3.4 9.5-7.6S17.2 3.5 12 3.5z" />
-          </svg>
-          카카오톡으로 문의
-        </button>
-        <p style={{ fontSize: 11.5, color: C.ink3, textAlign: 'center', margin: '10px 0 0' }}>
-          운영자가 미리 확인하고 답변을 준비해요
-        </p>
-      </BottomSheet>
     </div>
   )
 }
