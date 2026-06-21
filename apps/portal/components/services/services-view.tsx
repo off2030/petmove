@@ -8,8 +8,8 @@ import { useCases } from '@/components/portal-shell/case-data-provider'
 import { readLastCaseId, readLastDest } from '@/components/portal-shell/last-case'
 import { StartHereEmpty } from '@/components/portal-shell/start-here-empty'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
-import { SegmentField, type FieldOption } from '@/components/fields/info-fields'
-import { C, serif, SectionCard } from '@/components/me/settings-shared'
+import { type FieldOption } from '@/components/fields/info-fields'
+import { C, serif } from '@/components/me/settings-shared'
 import { buildProfileView } from '@/lib/profile/catalog'
 import { notifyServiceInquiry } from '@/lib/actions/service-inquiry'
 
@@ -632,41 +632,6 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
   )
 }
 
-/** 목적지 검색 시트 trigger 행 — 탭하면 BottomSheet(검색 + 목록). */
-function DestinationField({ selected, onOpen }: { selected: Dest | null; onOpen: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        width: '100%',
-        minHeight: 46,
-        padding: '11px 0',
-        borderBottom: `.5px solid ${C.line}`,
-        background: 'transparent',
-        border: 'none',
-        cursor: 'pointer',
-        fontFamily: 'inherit',
-        textAlign: 'left',
-      }}
-    >
-      <span style={{ fontSize: 13, color: C.ink2, flexShrink: 0, width: 88 }}>목적지</span>
-      <span style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <span style={{ fontSize: 15, fontWeight: 500, color: C.ink, fontFamily: 'var(--pm-font-display)' }}>
-          {selected?.ko ?? '선택'}
-        </span>
-        {selected?.en && <span style={{ fontSize: 13, color: C.ink3 }}>{selected.en}</span>}
-      </span>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.ink3} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ flexShrink: 0 }}>
-        <path d="M8 10l4 4 4-4" />
-      </svg>
-    </button>
-  )
-}
-
 export function ServicesView() {
   const { cases, profile, userEmail } = useCases()
 
@@ -765,22 +730,59 @@ export function ServicesView() {
             서비스
           </h1>
 
-          <SectionCard marginTop={18}>
-            <DestinationField
-              selected={selected}
-              onOpen={() => {
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => {
                 setQuery('')
                 setSheetOpen(true)
               }}
-            />
-            <SegmentField
-              label="왕복·편도"
-              value={trip}
-              onChange={(v) => setTripOverride({ dest: selectedKo, trip: v === 'one_way' ? 'one_way' : 'round' })}
-              options={TRIP_OPTIONS}
-              last
-            />
-          </SectionCard>
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '6px 11px',
+                borderRadius: 999,
+                border: `0.5px solid ${C.line}`,
+                background: C.surface,
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                fontSize: 13,
+                fontWeight: 500,
+                color: C.ink,
+              }}
+            >
+              {selected.ko}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.ink3} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ flexShrink: 0 }}>
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 2, padding: 2, borderRadius: 999, border: `0.5px solid ${C.line}`, background: C.surface }}>
+              {TRIP_OPTIONS.map((o) => {
+                const on = trip === o.value
+                return (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => setTripOverride({ dest: selectedKo, trip: o.value === 'one_way' ? 'one_way' : 'round' })}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: 999,
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      fontSize: 12.5,
+                      fontWeight: 500,
+                      background: on ? C.soft : 'transparent',
+                      color: on ? C.accent : C.ink3,
+                    }}
+                  >
+                    {o.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
 
           <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
             {offers.map((o) => (
