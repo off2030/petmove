@@ -95,8 +95,6 @@ interface Offer {
   recommended?: boolean
   /** 카드 = label 만, 상세 = label + sub(한 줄 설명). */
   included: { label: string; sub: string }[]
-  /** 상세 히어로의 강조 한 줄. */
-  heroLine: string
   /** 실제 병원에서 진행하는 상품(오프라인 올케어)만 히어로 아래 '진행 병원' 띠를 표시. */
   atClinic?: boolean
   /** 상세 '이렇게 진행돼요' 3단계 라벨. */
@@ -153,7 +151,6 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
         '전문가에게 맡기고 안심하고 싶어요',
       ],
       recommended: true,
-      heroLine: '복잡한 검역, 한 가지만 놓쳐도 출국이 막혀요.',
       included: OFFLINE_PREP[d] ?? OFFLINE_PREP.default,
       steps: ['상담', '준비·관리', '출국 동행'],
       atClinic: true,
@@ -169,7 +166,6 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
         '멀어서 방문이 힘들어요',
         '어려운 부분만 도움받고 싶어요',
       ],
-      heroLine: '직접 준비하시되, 혼자 헤매지 않게 곁에서 도와드려요.',
       included: ONLINE_PREP[d] ?? ONLINE_PREP.default,
       steps: ['상담', '직접 준비 + 점검', '출국'],
     },
@@ -427,8 +423,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
         >
           {offer.tag}
         </span>
-        <p style={{ ...serif, fontSize: 21, lineHeight: 1.35, color: C.ink, margin: '10px 0 0' }}>{offer.heroLine}</p>
-        <p style={{ fontSize: 13.5, lineHeight: 1.6, color: C.ink2, margin: '8px 0 0' }}>{offer.desc}</p>
+        <p style={{ ...serif, fontSize: 21, lineHeight: 1.35, color: C.ink, margin: '10px 0 0' }}>{offer.desc}</p>
       </div>
 
       {offer.atClinic && (
