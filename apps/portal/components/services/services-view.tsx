@@ -135,7 +135,7 @@ const DEFAULT_FAQ: Faq[] = [
 
 const OFFLINE_DETAIL: Record<string, DestDetail> = {
   일본: {
-    intro: '일본은 검역 절차가 많고 까다로워요. 20년 경험의 수의사가 마이크로칩부터 출국 서류까지 하나하나 직접 준비·관리해 드려요.',
+    intro: '수의사가 일본 출국의 모든 절차를 직접 준비·관리해 드려요.',
     included: [
       { label: '마이크로칩 삽입 · 동물등록' },
       { label: '광견병 백신' },
@@ -172,7 +172,7 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
     ],
   },
   default: {
-    intro: '복잡한 검역 절차, 20년 경험의 수의사가 처음부터 끝까지 직접 준비·관리해 드려요.',
+    intro: '복잡한 검역 절차, 수의사가 처음부터 끝까지 직접 준비·관리해 드려요.',
     included: [
       { label: '검역·백신 일정 관리', sub: '놓치면 안 되는 날짜를 대신 챙겨요' },
       { label: '서류 발급 대행', sub: '건강증명서·검사 서류까지 발급해요' },
@@ -515,7 +515,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
               {CLINIC.name} · {CLINIC.vet}
             </div>
             <div style={{ fontSize: 11.5, color: C.ink3, marginTop: 2 }}>
-              면허 수의사가 시술·접종·검사를 직접 진행해요
+              20년 경험의 면허 수의사가 직접 진행해요
             </div>
           </div>
         </div>
