@@ -105,8 +105,6 @@ interface Offer {
   forWhom: string[]
   /** 밀어주는 갈래에 '추천' 배지 + 강조 테두리. */
   recommended?: boolean
-  /** 실제 병원에서 진행하는 상품(오프라인 올케어)만 히어로 아래 '진행 병원' 띠를 표시. */
-  atClinic?: boolean
   /** 상세 히어로 3장(오프라인 공통 — 경험·전문성·앱). 없으면 미표시. */
   highlights?: Highlight[]
   // ── 상세(목적지별) — DestDetail 을 펼쳐 담는다 ──
@@ -261,7 +259,6 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
         '전문가에게 맡기고 안심하고 싶어요',
       ],
       recommended: true,
-      atClinic: true,
       highlights: OFFLINE_HIGHLIGHTS,
       ...(OFFLINE_DETAIL[d] ?? OFFLINE_DETAIL.default),
     },
@@ -461,9 +458,6 @@ function ServiceCard({ offer, onOpen }: { offer: Offer; onOpen: () => void }) {
  * 통계(누적·만족도) 박스는 검증 가능한 실값이 없어 제거 — 신뢰는 진행 병원 + 실제 후기로.
  * ──────────────────────────────────────────────────────────────────────── */
 
-/** 오프라인 올케어 진행 주체 — 약관·처리방침(docs/legal)의 공식 표기와 통일. */
-const CLINIC = { name: '로잔동물의료센터', vet: '이진원 수의사', area: '서울 관악' }
-
 const starIcon = (size: number, fill: string) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} aria-hidden>
     <path d="M12 2.5l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.9 6.2 20.95l1.1-6.45-4.7-4.6 6.5-.95z" />
@@ -547,49 +541,6 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
               <div style={{ fontSize: 10.5, color: C.ink3, marginTop: 3, lineHeight: 1.4 }}>{h.sub}</div>
             </div>
           ))}
-        </div>
-      )}
-
-      {offer.atClinic && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            marginTop: 14,
-            padding: '12px 14px',
-            borderRadius: 14,
-            background: C.soft,
-            border: `.5px solid ${C.line}`,
-          }}
-        >
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 11,
-              flexShrink: 0,
-              background: accent.chipBg,
-              color: accent.stroke,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {clinicIcon}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <span style={{ fontSize: 10.5, color: C.ink3, fontWeight: 500 }}>진행 병원</span>
-              <span style={{ fontSize: 10.5, color: C.ink3 }}>{CLINIC.area}</span>
-            </div>
-            <div style={{ fontSize: 13.5, fontWeight: 500, color: C.ink, marginTop: 1 }}>
-              {CLINIC.name} · {CLINIC.vet}
-            </div>
-            <div style={{ fontSize: 11.5, color: C.ink3, marginTop: 2 }}>
-              면허 수의사가 직접 진행해요
-            </div>
-          </div>
         </div>
       )}
 
