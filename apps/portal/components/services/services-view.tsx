@@ -138,7 +138,7 @@ const DEFAULT_FAQ: Faq[] = [
 const OFFLINE_DETAIL: Record<string, DestDetail> = {
   일본: {
     intro:
-      '로잔동물의료센터에서 검역 준비를 해 드립니다. 의료 절차는 물론 일본 검역소와의 소통, 서류까지 빈틈없이 준비해 드립니다. 앱을 통해 언제든 쉽게 정보, 진행 상황을 확인할 수 있습니다.',
+      '로잔동물의료센터에서 검역 준비를 해 드립니다. 의료 절차는 물론 일본 검역소와의 소통, 서류 준비까지 빈틈없이 진행해 드립니다. 앱을 통해 언제든 쉽게 정보, 진행 상황을 확인할 수 있습니다.',
     included: [
       { label: '마이크로칩 삽입 · 동물등록' },
       { label: '광견병 백신 접종' },
@@ -221,7 +221,7 @@ const OFFLINE_HIGHLIGHTS: Highlight[] = [
     label: '전문 의료진',
   },
   {
-    icon: <span style={{ ...serif, fontSize: 16, fontWeight: 500 }}>20Y</span>,
+    icon: <span style={{ ...serif, fontSize: 14, fontWeight: 500 }}>20Y</span>,
     label: '풍부한 경험',
   },
   {
