@@ -221,24 +221,7 @@ const OFFLINE_HIGHLIGHTS: Highlight[] = [
     label: '전문 의료진',
   },
   {
-    icon: (
-      <span
-        style={{
-          width: 25,
-          height: 25,
-          border: '1.5px solid currentColor',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          ...serif,
-          fontSize: 10,
-          fontWeight: 500,
-        }}
-      >
-        20Y
-      </span>
-    ),
+    icon: <span style={{ ...serif, fontSize: 15, fontWeight: 500 }}>20y</span>,
     label: '풍부한 경험',
   },
   {
