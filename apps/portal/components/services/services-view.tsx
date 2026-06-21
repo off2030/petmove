@@ -148,7 +148,7 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
       { label: '출국 전 임상검사' },
       { label: '서류 준비' },
     ],
-    steps: ['예약', '내원', '진행'],
+    steps: ['예약', '내원', '상담', '진행'],
     faq: [
       {
         q: '어디로 방문하나요?',
