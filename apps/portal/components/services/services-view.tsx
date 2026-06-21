@@ -151,12 +151,11 @@ const OFFLINE_DETAIL: Record<string, DestDetail> = {
     steps: ['예약', '내원', '상담', '진행'],
     faq: [
       {
-        q: '어디로 방문하나요?',
+        q: '위치가 어디인가요?',
         a: '로잔동물의료센터로 방문해 주세요. 예약은 필수예요.',
         link: { label: '병원 위치 보기', href: 'https://naver.me/GUwSYQ9h' },
       },
-      { q: '비용은 얼마인가요?', a: '마이크로칩 유무, 접종 상태에 따라 달라져요. 카카오톡으로 문의 주시면 정확히 알려드려요.' },
-      { q: '준비 기간은 얼마나 걸리나요?', a: '광견병 항체검사 때문에 6~7개월 이상 필요해요. 여유 있게 준비를 시작하세요.' },
+      { q: '비용은 얼마인가요?', a: '50~60만원 정도입니다. 정확한 비용은 상담 후 결정됩니다.' },
     ],
     // ⚠️ 실제 카톡 후기(이름 익명화). 게재 전 당사자 동의 확인 필요.
     reviews: [
@@ -458,7 +457,7 @@ const starIcon = (size: number, fill: string) => (
 
 function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () => void; onInquire: () => void }) {
   const { accent } = offer
-  const [openFaq, setOpenFaq] = useState<number | null>(0)
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   return (
     <div style={{ padding: '0 24px' }}>
