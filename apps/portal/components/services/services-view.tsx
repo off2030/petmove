@@ -335,7 +335,7 @@ function ServiceCard({ offer, onOpen }: { offer: Offer; onOpen: () => void }) {
           borderTop: `.5px solid ${C.line}`,
           fontSize: 13,
           fontWeight: 500,
-          color: offer.recommended ? C.accent : C.ink3,
+          color: accent.stroke,
         }}
       >
         자세히 보기
