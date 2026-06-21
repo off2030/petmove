@@ -982,6 +982,7 @@ export function ServicesView() {
 
       {mounted &&
         !sheetOpen &&
+        !openOffer &&
         createPortal(
           <button
             type="button"
