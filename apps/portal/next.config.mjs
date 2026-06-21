@@ -35,11 +35,17 @@ const nextConfig = {
     // 포털에서 안 쓰는 모듈이 번들에 포함되지 않도록.
     optimizePackageImports: ['@petmove/domain'],
     // 클라이언트 라우터 캐시 TTL. 4탭 스와이프 + 케이스 전환을 즉시화.
-    // dynamic 페이지는 기본 0초 (매 진입마다 서버 왕복) — Context 가 데이터 source 역할을
-    // 하므로 stale 진입 시에도 UI 는 즉시 (cases 데이터는 Provider 메모리). admin 변경은
-    // Supabase Realtime 으로 push, focus/visibility 로 안전망 → stale 위험 없음.
+    //
+    // dynamic 을 길게(30분) 잡는다 — 잎 페이지는 전부 client 컴포넌트라 RSC payload 에
+    // stale 될 데이터가 없다(cases·profile 은 CaseDataProvider 메모리에서 읽고, today 같은
+    // 값도 매 렌더 라이브 계산). 데이터 신선도는 Realtime push + focus/visibility refetch +
+    // mutation 후 명시적 refresh 가 책임진다. 따라서 RSC 캐시가 오래 살아도 stale 위험 0.
+    //
+    // 120초였을 때의 회귀: CaseDataProvider 의 prefetch 가 prefetchedRef 로 URL 을 1회만
+    // 예열하고 재예열하지 않는다 → 120초가 지나 캐시가 식으면 영영 콜드 → "처음엔 빠르다
+    // 2분 뒤 다시 느림". 세션 길이(30분)를 넘기게 잡아 그 만료 구간을 없앤다.
     staleTimes: {
-      dynamic: 120,
+      dynamic: 1800,
       static: 300,
     },
   },
