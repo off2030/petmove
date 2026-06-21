@@ -357,7 +357,7 @@ function ServiceCard({ offer, onOpen }: { offer: Offer; onOpen: () => void }) {
         position: 'relative',
         borderRadius: 18,
         background: C.surface,
-        border: offer.recommended ? `1.5px solid ${C.accent}` : `.5px solid ${C.line}`,
+        border: offer.recommended ? `1.5px solid ${accent.stroke}` : `.5px solid ${C.line}`,
         padding: 18,
         cursor: 'pointer',
       }}
@@ -372,7 +372,7 @@ function ServiceCard({ offer, onOpen }: { offer: Offer; onOpen: () => void }) {
             fontWeight: 500,
             padding: '2px 9px',
             borderRadius: 999,
-            background: C.accent,
+            background: accent.stroke,
             color: '#fff',
           }}
         >
@@ -604,8 +604,8 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
                   width: 32,
                   height: 32,
                   borderRadius: '50%',
-                  background: C.soft,
-                  color: C.accent,
+                  background: accent.chipBg,
+                  color: accent.stroke,
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -714,8 +714,8 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
                       width: 26,
                       height: 26,
                       borderRadius: '50%',
-                      background: C.soft,
-                      color: C.accent,
+                      background: accent.chipBg,
+                      color: accent.stroke,
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -730,7 +730,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
                   {r.meta && <span style={{ fontSize: 11, color: C.ink3 }}>· {r.meta}</span>}
                   <span style={{ display: 'inline-flex', gap: 1, marginLeft: 'auto' }}>
                     {[0, 1, 2, 3, 4].map((n) => (
-                      <Fragment key={n}>{starIcon(11, C.accent)}</Fragment>
+                      <Fragment key={n}>{starIcon(11, accent.stroke)}</Fragment>
                     ))}
                   </span>
                 </div>
@@ -750,7 +750,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
           padding: '15px 0',
           borderRadius: 14,
           border: 'none',
-          background: C.accent,
+          background: accent.stroke,
           color: '#fff',
           fontFamily: 'inherit',
           fontSize: 15,
