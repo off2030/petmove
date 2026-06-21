@@ -105,22 +105,23 @@ interface Offer {
  * 한 (목적지 × 여정유형)의 두 서비스 카드. 지금은 인자와 무관하게 동일 generic —
  * 목적지·유형별 내용·비용은 차차 여기서 분기한다(예: 편도면 귀국 관련 항목 제외, 비용 등).
  */
-function buildOffers(_dest: string | null, _trip: TripType): Offer[] {
+function buildOffers(dest: string | null, _trip: TripType): Offer[] {
+  // 검역소 신고 항목은 '선택한 목적지'명으로 — 카드는 목적지별로 보이므로 '일본' 하드코딩 금지.
+  const quarantine = `${dest ?? '현지'} 동물검역소 신고·소통`
   return [
     {
       accent: AMBER,
       icon: clinicIcon,
       title: '오프라인 올케어',
       tag: '병원 방문 · 전체 의뢰',
-      desc: '병원에 한 번 오시면 검역 준비를 처음부터 끝까지 대신 진행해 드려요.',
-      forWhom: '처음이라 막막하고, 맡기고 싶은 분',
+      desc: '수의사가 모든 준비를 한 곳에서 직접 진행·관리해 드려요.',
+      forWhom: '검역 준비는 전문가에게 맡기고 행복한 여행만 생각하고 싶은 분',
       recommended: true,
       heroLine: '복잡한 검역, 한 가지만 놓쳐도 출국이 막혀요.',
       included: [
-        { label: '검역·백신 일정 관리', sub: '놓치면 안 되는 날짜를 대신 챙겨요' },
-        { label: '서류 발급 대행', sub: '건강증명서·검사 서류까지 발급해요' },
-        { label: '수입허가증 신청', sub: '목적지 정부 허가 신청을 대신해요' },
-        { label: '출국일 공항 동행', sub: '당일 검역대까지 함께 갑니다' },
+        { label: '마이크로칩 · 백신 · 검사', sub: '출국에 필요한 시술·접종·검사를 병원에서 직접 진행해요' },
+        { label: quarantine, sub: '검역소 신고와 일정 조율을 대신 챙겨요' },
+        { label: '서류 준비', sub: '건강증명서 등 필요한 서류를 준비해요' },
       ],
       steps: ['상담', '준비·관리', '출국 동행'],
     },
@@ -129,13 +130,13 @@ function buildOffers(_dest: string | null, _trip: TripType): Offer[] {
       icon: devicesIcon,
       title: '온라인 안심케어',
       tag: '셀프 준비 · 부분 의뢰',
-      desc: '직접 준비하시되, 단계별 가이드와 서류 점검·신청을 곁에서 도와드려요.',
-      forWhom: '직접 해봤거나, 비용을 아끼고 싶은 분',
+      desc: '실패 없는 안전한 준비를 곁에서 도와드려요.',
+      forWhom: '부분 의뢰를 원하시는 분',
       heroLine: '직접 준비하시되, 혼자 헤매지 않게 곁에서 도와드려요.',
       included: [
-        { label: '단계별 준비 가이드', sub: '지금 뭘 해야 하는지 순서대로 알려드려요' },
+        { label: '단계별 가이드', sub: '지금 뭘 해야 하는지 순서대로 알려드려요' },
+        { label: quarantine, sub: '까다로운 검역소 신고·연락을 도와드려요' },
         { label: '서류 검토·점검', sub: '빠진 서류·오류를 미리 잡아드려요' },
-        { label: '수입허가증 신청 대행', sub: '까다로운 허가 신청은 대신해 드려요' },
       ],
       steps: ['상담', '직접 준비 + 점검', '출국'],
     },
