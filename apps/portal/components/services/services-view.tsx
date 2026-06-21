@@ -315,28 +315,6 @@ function ServiceCard({ offer, onOpen }: { offer: Offer; onOpen: () => void }) {
         <span style={{ fontSize: 12, color: C.ink2, lineHeight: 1.4 }}>이런 분께 추천 · {offer.forWhom}</span>
       </div>
 
-      <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 9 }}>
-        {offer.included.map((item) => (
-          <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke={accent.stroke}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ flexShrink: 0 }}
-              aria-hidden
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            <span style={{ fontSize: 12.5, color: C.ink2 }}>{item.label}</span>
-          </div>
-        ))}
-      </div>
-
       <div
         style={{
           display: 'flex',
