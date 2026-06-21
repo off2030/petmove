@@ -102,12 +102,42 @@ interface Offer {
 }
 
 /**
- * 한 (목적지 × 여정유형)의 두 서비스 카드. 지금은 인자와 무관하게 동일 generic —
- * 목적지·유형별 내용·비용은 차차 여기서 분기한다(예: 편도면 귀국 관련 항목 제외, 비용 등).
+ * 서비스 카드 — 카드 본체(설명·추천 대상·아이콘·진행 단계)는 목적지 공통.
+ * 목적지마다 다른 건 'V 체크리스트(준비 내용)'뿐 → {OFFLINE,ONLINE}_PREP 에서 목적지별 분기.
+ * 새 목적지는 두 맵에 그 나라 항목만 추가(전용 카피 전엔 default 폴백, 카드 본체는 그대로).
  */
+type Prep = { label: string; sub: string }
+
+const OFFLINE_PREP: Record<string, Prep[]> = {
+  일본: [
+    { label: '마이크로칩 · 백신 · 검사', sub: '출국에 필요한 시술·접종·검사를 병원에서 직접 진행해요' },
+    { label: '일본 동물검역소 신고·소통', sub: '출국 전 사전신고와 검역소 연락을 대신 챙겨요' },
+    { label: '서류 준비', sub: '건강증명서 등 필요한 서류를 준비해요' },
+  ],
+  default: [
+    { label: '검역·백신 일정 관리', sub: '놓치면 안 되는 날짜를 대신 챙겨요' },
+    { label: '서류 발급 대행', sub: '건강증명서·검사 서류까지 발급해요' },
+    { label: '수입허가증 신청', sub: '목적지 정부 허가 신청을 대신해요' },
+    { label: '출국일 공항 동행', sub: '당일 검역대까지 함께 갑니다' },
+  ],
+}
+
+const ONLINE_PREP: Record<string, Prep[]> = {
+  일본: [
+    { label: '단계별 가이드', sub: '지금 뭘 해야 하는지 순서대로 알려드려요' },
+    { label: '일본 동물검역소 신고·소통', sub: '까다로운 사전신고·검역소 연락을 도와드려요' },
+    { label: '서류 검토·점검', sub: '빠진 서류·오류를 미리 잡아드려요' },
+  ],
+  default: [
+    { label: '단계별 준비 가이드', sub: '지금 뭘 해야 하는지 순서대로 알려드려요' },
+    { label: '서류 검토·점검', sub: '빠진 서류·오류를 미리 잡아드려요' },
+    { label: '수입허가증 신청 대행', sub: '까다로운 허가 신청은 대신해 드려요' },
+  ],
+}
+
+/** 카드 본체는 공통, included(V 체크리스트)만 목적지별. 미정 목적지는 default 폴백. */
 function buildOffers(dest: string | null, _trip: TripType): Offer[] {
-  // 검역소 신고 항목은 '선택한 목적지'명으로 — 카드는 목적지별로 보이므로 '일본' 하드코딩 금지.
-  const quarantine = `${dest ?? '현지'} 동물검역소 신고·소통`
+  const d = dest ?? ''
   return [
     {
       accent: AMBER,
@@ -118,11 +148,7 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
       forWhom: '검역 준비는 전문가에게 맡기고 행복한 여행만 생각하고 싶은 분',
       recommended: true,
       heroLine: '복잡한 검역, 한 가지만 놓쳐도 출국이 막혀요.',
-      included: [
-        { label: '마이크로칩 · 백신 · 검사', sub: '출국에 필요한 시술·접종·검사를 병원에서 직접 진행해요' },
-        { label: quarantine, sub: '검역소 신고와 일정 조율을 대신 챙겨요' },
-        { label: '서류 준비', sub: '건강증명서 등 필요한 서류를 준비해요' },
-      ],
+      included: OFFLINE_PREP[d] ?? OFFLINE_PREP.default,
       steps: ['상담', '준비·관리', '출국 동행'],
     },
     {
@@ -133,11 +159,7 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
       desc: '실패 없는 안전한 준비를 곁에서 도와드려요.',
       forWhom: '부분 의뢰를 원하시는 분',
       heroLine: '직접 준비하시되, 혼자 헤매지 않게 곁에서 도와드려요.',
-      included: [
-        { label: '단계별 가이드', sub: '지금 뭘 해야 하는지 순서대로 알려드려요' },
-        { label: quarantine, sub: '까다로운 검역소 신고·연락을 도와드려요' },
-        { label: '서류 검토·점검', sub: '빠진 서류·오류를 미리 잡아드려요' },
-      ],
+      included: ONLINE_PREP[d] ?? ONLINE_PREP.default,
       steps: ['상담', '직접 준비 + 점검', '출국'],
     },
   ]
