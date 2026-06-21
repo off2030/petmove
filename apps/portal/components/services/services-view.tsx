@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { useRouter, useSearchParams } from 'next/navigation'
 import type { CaseRow } from '@petmove/domain'
 import destsData from '@petmove/domain/data/destinations.json'
 import { useCases } from '@/components/portal-shell/case-data-provider'
@@ -99,6 +100,8 @@ interface Offer {
   accent: Accent
   icon: ReactNode
   title: string
+  /** 상세를 주소(?service=)에 반영하기 위한 식별자. */
+  slug: string
   tag: string
   desc: string
   /** "이럴 때 추천해요" 항목들 — 두 갈래 중 자기 것을 빠르게 고르게 하는 결정 보조. */
@@ -253,6 +256,7 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
       accent: AMBER,
       icon: clinicIcon,
       title: '오프라인 올케어',
+      slug: 'offline',
       tag: '병원 방문 · 전체 의뢰',
       desc: '수의사가 모든 절차를 준비·관리해 드려요.',
       forWhom: [
@@ -268,6 +272,7 @@ function buildOffers(dest: string | null, _trip: TripType): Offer[] {
       accent: SAGE,
       icon: devicesIcon,
       title: '온라인 안심케어',
+      slug: 'online',
       tag: '셀프 준비 · 부분 의뢰',
       desc: '안심하고 준비하실 수 있도록 곁에서 도와드려요.',
       forWhom: [
@@ -797,8 +802,10 @@ export function ServicesView() {
     customerProfile: profile,
     primaryCase: cases[0] ?? null,
   }).guardian
-  // 상세로 들어간 서비스(카드 탭). null = 목록. 새 라우트 없이 같은 화면을 전환한다.
-  const [openTitle, setOpenTitle] = useState<string | null>(null)
+  // 상세(카드 탭)는 주소에 반영한다(?service=offline). 상태로만 들고 있으면 같은 /services 라
+  // '서비스' 탭·뒤로가기가 목록으로 안 돌아온다(탭이 안 먹힘). slug 로 매칭.
+  const router = useRouter()
+  const openSlug = useSearchParams().get('service')
   // FAB 는 portal 로 body 에 그린다 — pm-fade-up 의 transform(fill-mode both 로 잔존)이
   // position:fixed 의 기준을 가로채 본문에 박히는 것을 피하려고. SSR 가드로 mount 후에만.
   const [mounted, setMounted] = useState(false)
@@ -821,7 +828,7 @@ export function ServicesView() {
   }
 
   const offers = buildOffers(selectedKo, trip)
-  const openOffer = openTitle ? offers.find((o) => o.title === openTitle) ?? null : null
+  const openOffer = openSlug ? offers.find((o) => o.slug === openSlug) ?? null : null
 
   return (
     <div
@@ -838,7 +845,7 @@ export function ServicesView() {
       {openOffer ? (
         <ServiceDetail
           offer={openOffer}
-          onBack={() => setOpenTitle(null)}
+          onBack={() => router.push('/services')}
           onInquire={startInquiry}
         />
       ) : (
@@ -903,7 +910,7 @@ export function ServicesView() {
 
           <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
             {offers.map((o) => (
-              <ServiceCard key={o.title} offer={o} onOpen={() => setOpenTitle(o.title)} />
+              <ServiceCard key={o.title} offer={o} onOpen={() => router.push(`/services?service=${o.slug}`)} />
             ))}
           </div>
         </div>
