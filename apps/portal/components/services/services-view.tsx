@@ -85,8 +85,8 @@ const devicesIcon = (
 
 /** 상세 V 체크리스트 항목 — sub(한 줄 설명)는 선택. 목록이 길면 라벨만 둔다. */
 type Prep = { label: string; sub?: string }
-/** 상세 히어로 3장(오프라인 공통) — 아이콘 + 큰 핵심어 + 한 줄 설명. */
-type Highlight = { icon: ReactNode; head: string; sub: string }
+/** 상세 히어로 3장(오프라인 공통) — 아이콘(또는 숫자 배지) + 한 줄 라벨. */
+type Highlight = { icon: ReactNode; label: string }
 /** 먼저 경험한 분들 — 실제 후기(이름은 익명화). meta = 반려동물·목적지. */
 type Review = { initial: string; name: string; meta?: string; text: string }
 /** 자주 묻는 질문 — link 있으면 답변 아래 바깥링크(예: 병원 위치) 노출. */
@@ -208,28 +208,21 @@ const ONLINE_DETAIL: Record<string, DestDetail> = {
   },
 }
 
-/** 오프라인 올케어 히어로 3장 — 목적지 무관 공통(병원의 경험·전문성·앱 편의). */
+/** 오프라인 올케어 히어로 3장 — 목적지 무관 공통(전문성·경험·앱 편의). */
 const OFFLINE_HIGHLIGHTS: Highlight[] = [
   {
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <circle cx="12" cy="9" r="5" />
-        <path d="M8.5 13.2L6.8 20.5L12 17.8L17.2 20.5L15.5 13.2" />
+        <circle cx="9.5" cy="7" r="3.3" />
+        <path d="M3.5 20.5v-1a6 6 0 0 1 8-5.65" />
+        <path d="M16.8 20.8s-2.3-1.4-2.3-3.1a1.35 1.35 0 0 1 2.3-.95 1.35 1.35 0 0 1 2.3.95c0 1.7-2.3 3.1-2.3 3.1z" />
       </svg>
     ),
-    head: '20년',
-    sub: '풍부한 경험',
+    label: '전문 의료진',
   },
   {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M6 4v4a4 4 0 0 0 8 0V4" />
-        <path d="M10 12v2.5a3 3 0 0 0 3 3h1" />
-        <circle cx="16" cy="17.5" r="2" />
-      </svg>
-    ),
-    head: '수의사',
-    sub: '전문 의료진이 준비',
+    icon: <span style={{ ...serif, fontSize: 16, fontWeight: 500 }}>20Y</span>,
+    label: '풍부한 경험',
   },
   {
     icon: (
@@ -238,8 +231,7 @@ const OFFLINE_HIGHLIGHTS: Highlight[] = [
         <path d="M9.3 11l1.9 1.9 3.5-3.6" />
       </svg>
     ),
-    head: '앱 연동',
-    sub: '간편하게 정보·진행 상황 확인',
+    label: '앱 연동',
   },
 ]
 
@@ -513,7 +505,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 16 }}>
           {offer.highlights.map((h) => (
             <div
-              key={h.head}
+              key={h.label}
               style={{
                 background: C.surface,
                 border: `.5px solid ${C.line}`,
@@ -537,8 +529,7 @@ function ServiceDetail({ offer, onBack, onInquire }: { offer: Offer; onBack: () 
               >
                 {h.icon}
               </div>
-              <div style={{ fontSize: 13.5, fontWeight: 500, color: C.ink, marginTop: 8 }}>{h.head}</div>
-              <div style={{ fontSize: 10.5, color: C.ink3, marginTop: 3, lineHeight: 1.4 }}>{h.sub}</div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: C.ink, marginTop: 8, lineHeight: 1.3 }}>{h.label}</div>
             </div>
           ))}
         </div>
