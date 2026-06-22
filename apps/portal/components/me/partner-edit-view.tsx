@@ -6,12 +6,14 @@ import { useCases } from '@/components/portal-shell/case-data-provider'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { C, EditPageShell, SectionCard, OrgAvatar } from './settings-shared'
 import {
+  getPartnerOrgInfo,
   listAvailableOrgs,
   setVetOrg,
   setTransportOrg,
   unsetVetOrg,
   unsetTransportOrg,
   type PartnerOrg,
+  type PartnerOrgInfo,
   type PartnerRole,
 } from '@/lib/actions/partners'
 
@@ -95,6 +97,23 @@ export function PartnerEditView({ role }: { role: PartnerRole }) {
     return orgs.find((o) => o.id === currentOrgId) ?? null
   }, [currentOrgId, orgs])
 
+  // 연결된 조직의 공개 연락 정보(주소·전화·이메일) — 읽기 전용 표시. 연결 변경 시 재 fetch.
+  const [orgInfo, setOrgInfo] = useState<PartnerOrgInfo | null>(null)
+  useEffect(() => {
+    if (!currentOrgId) {
+      setOrgInfo(null)
+      return
+    }
+    let cancelled = false
+    getPartnerOrgInfo(role).then((r) => {
+      if (cancelled) return
+      if (r.ok) setOrgInfo(r.value)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [currentOrgId, role])
+
   async function handleSelect(orgId: string) {
     setSheetOpen(false)
     // 기존 담당이 있고 다른 조직으로 바꾸는 경우 — 이전 조직이 더 못 본다는 안내(확인).
@@ -161,6 +180,13 @@ export function PartnerEditView({ role }: { role: PartnerRole }) {
                 )}
               </div>
             </div>
+            {orgInfo && (orgInfo.address || orgInfo.phone || orgInfo.email) && (
+              <div>
+                {orgInfo.address && <InfoRow label="주소" value={orgInfo.address} />}
+                {orgInfo.phone && <InfoRow label="전화" value={orgInfo.phone} href={`tel:${orgInfo.phone}`} />}
+                {orgInfo.email && <InfoRow label="이메일" value={orgInfo.email} href={`mailto:${orgInfo.email}`} />}
+              </div>
+            )}
           </SectionCard>
 
           <SectionCard>
@@ -276,6 +302,41 @@ export function PartnerEditView({ role }: { role: PartnerRole }) {
         )}
       </BottomSheet>
     </EditPageShell>
+  )
+}
+
+/**
+ * 연결된 조직의 연락 정보 한 줄 — 좌측 라벨 + 우측 값. 카드 상단 이름 블록과 .5px 디바이더로
+ * 구분. href 가 있으면 값이 tel:/mailto: 링크(전화·이메일). 주소는 일반 텍스트.
+ */
+function InfoRow({ label, value, href }: { label: string; value: string; href?: string }) {
+  const valueStyle: CSSProperties = {
+    fontSize: 13,
+    color: href ? C.accent : C.ink,
+    textAlign: 'right',
+    wordBreak: 'break-word',
+    textDecoration: 'none',
+  }
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'baseline',
+        gap: 16,
+        padding: '13px 0',
+        borderTop: `.5px solid ${C.line}`,
+      }}
+    >
+      <span style={{ fontSize: 12, color: C.ink3, flexShrink: 0 }}>{label}</span>
+      {href ? (
+        <a href={href} style={valueStyle}>
+          {value}
+        </a>
+      ) : (
+        <span style={valueStyle}>{value}</span>
+      )}
+    </div>
   )
 }
 
