@@ -183,7 +183,7 @@ export function PartnerEditView({ role }: { role: PartnerRole }) {
             {orgInfo && (orgInfo.address || orgInfo.phone || orgInfo.email) && (
               <div>
                 {orgInfo.address && <InfoRow label="주소" value={orgInfo.address} />}
-                {orgInfo.phone && <InfoRow label="전화" value={orgInfo.phone} href={`tel:${orgInfo.phone}`} />}
+                {orgInfo.phone && <InfoRow label="전화" value={formatKoreanPhone(orgInfo.phone)} href={`tel:${orgInfo.phone}`} />}
                 {orgInfo.email && <InfoRow label="이메일" value={orgInfo.email} href={`mailto:${orgInfo.email}`} />}
               </div>
             )}
@@ -357,14 +357,36 @@ function withScheme(url: string): string {
 }
 
 /**
- * 담당 병원의 외부 채널 연결 버튼 — 네이버예약(그린)·카카오톡(옐로) 브랜드 톤 pill.
+ * 한국 전화번호 표시용 하이픈 포맷 — admin org-info-form 의 formatPhoneForSave 와 동일 규칙.
+ * DB 에 하이픈 없이 저장된 값("028727588")도 화면에선 정규 형식("02-872-7588")으로.
+ *  - 02 지역: 10자리 02-XXXX-XXXX / 9자리 02-XXX-XXXX
+ *  - 그 외: 11자리 XXX-XXXX-XXXX / 10자리 XXX-XXX-XXXX
+ *  - 매칭 실패(이미 +82·해외 등) 시 원본 보존.
+ */
+function formatKoreanPhone(raw: string): string {
+  const trimmed = raw.trim()
+  if (!trimmed || /^\+/.test(trimmed)) return trimmed
+  const d = trimmed.replace(/\D/g, '')
+  if (d.startsWith('02')) {
+    if (d.length === 10) return `02-${d.slice(2, 6)}-${d.slice(6)}`
+    if (d.length === 9) return `02-${d.slice(2, 5)}-${d.slice(5)}`
+  }
+  if (d.length === 11) return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`
+  if (d.length === 10) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`
+  return trimmed
+}
+
+/**
+ * 담당 병원의 외부 채널 연결 버튼 — 차분한 아웃라인 톤.
+ * 카드와 같은 surface 배경 + 얇은 테두리 + 잉크색 라벨로 Stone 톤에 녹이고,
+ * 브랜드 색(네이버 그린·카카오 옐로)은 작은 아이콘 배지에만 남겨 식별성 유지.
  * 새 탭으로 병원이 등록한 링크를 연다. URL 이 있는 채널만 렌더(호출부 가드).
  */
 function ConnectButton({ kind, href }: { kind: 'naver' | 'kakao'; href: string }) {
-  const cfg =
+  const brand =
     kind === 'naver'
-      ? { bg: '#03C75A', fg: '#FFFFFF', label: '네이버예약' }
-      : { bg: '#FEE500', fg: '#3C1E1E', label: '카카오톡' }
+      ? { badgeBg: '#03C75A', badgeFg: '#FFFFFF', label: '네이버예약' }
+      : { badgeBg: '#FEE500', badgeFg: '#3C1E1E', label: '카카오톡' }
   return (
     <a
       href={withScheme(href)}
@@ -376,25 +398,41 @@ function ConnectButton({ kind, href }: { kind: 'naver' | 'kakao'; href: string }
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 7,
+        gap: 8,
         height: 46,
         borderRadius: 14,
-        background: cfg.bg,
-        color: cfg.fg,
+        background: C.surface,
+        border: `.5px solid ${C.line}`,
+        color: C.ink,
         textDecoration: 'none',
         fontSize: 14,
         fontWeight: 600,
         letterSpacing: '-0.01em',
       }}
     >
-      {kind === 'naver' ? (
-        <span style={{ fontWeight: 800, fontSize: 15, lineHeight: 1 }}>N</span>
-      ) : (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-          <path d="M12 3.5C6.8 3.5 2.5 6.9 2.5 11c0 2.6 1.8 4.9 4.5 6.3-.2.7-.7 2.5-.8 2.9-.1.4.2.55.45.42.3-.16 2.6-1.78 3.55-2.42.55.08 1.12.12 1.7.12 5.2 0 9.5-3.4 9.5-7.6S17.2 3.5 12 3.5z" />
-        </svg>
-      )}
-      {cfg.label}
+      <span
+        aria-hidden
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 22,
+          height: 22,
+          borderRadius: 7,
+          background: brand.badgeBg,
+          color: brand.badgeFg,
+          flexShrink: 0,
+        }}
+      >
+        {kind === 'naver' ? (
+          <span style={{ fontWeight: 800, fontSize: 13, lineHeight: 1 }}>N</span>
+        ) : (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3.5C6.8 3.5 2.5 6.9 2.5 11c0 2.6 1.8 4.9 4.5 6.3-.2.7-.7 2.5-.8 2.9-.1.4.2.55.45.42.3-.16 2.6-1.78 3.55-2.42.55.08 1.12.12 1.7.12 5.2 0 9.5-3.4 9.5-7.6S17.2 3.5 12 3.5z" />
+          </svg>
+        )}
+      </span>
+      {brand.label}
     </a>
   )
 }
