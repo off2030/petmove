@@ -377,16 +377,16 @@ function formatKoreanPhone(raw: string): string {
 }
 
 /**
- * 담당 병원의 외부 채널 연결 버튼 — 차분한 아웃라인 톤.
- * 카드와 같은 surface 배경 + 얇은 테두리 + 잉크색 라벨로 Stone 톤에 녹이고,
- * 브랜드 색(네이버 그린·카카오 옐로)은 작은 아이콘 배지에만 남겨 식별성 유지.
+ * 담당 병원의 외부 채널 연결 버튼 — 옅은 틴트 톤.
+ * 브랜드 색을 아주 옅게(배경 ~12%) 깔고 글자·아이콘은 진한 브랜드 색으로.
+ * 채도는 낮추되 색 정체성은 남겨 Stone 톤과 충돌하지 않게.
  * 새 탭으로 병원이 등록한 링크를 연다. URL 이 있는 채널만 렌더(호출부 가드).
  */
 function ConnectButton({ kind, href }: { kind: 'naver' | 'kakao'; href: string }) {
   const brand =
     kind === 'naver'
-      ? { badgeBg: '#03C75A', badgeFg: '#FFFFFF', label: '네이버예약' }
-      : { badgeBg: '#FEE500', badgeFg: '#3C1E1E', label: '카카오톡' }
+      ? { bg: 'rgba(3, 199, 90, 0.12)', fg: '#0A8F45', label: '네이버예약' }
+      : { bg: 'rgba(254, 229, 0, 0.22)', fg: '#3C1E1E', label: '카카오톡' }
   return (
     <a
       href={withScheme(href)}
@@ -398,40 +398,24 @@ function ConnectButton({ kind, href }: { kind: 'naver' | 'kakao'; href: string }
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 8,
+        gap: 7,
         height: 46,
         borderRadius: 14,
-        background: C.surface,
-        border: `.5px solid ${C.line}`,
-        color: C.ink,
+        background: brand.bg,
+        color: brand.fg,
         textDecoration: 'none',
         fontSize: 14,
         fontWeight: 600,
         letterSpacing: '-0.01em',
       }}
     >
-      <span
-        aria-hidden
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 22,
-          height: 22,
-          borderRadius: 7,
-          background: brand.badgeBg,
-          color: brand.badgeFg,
-          flexShrink: 0,
-        }}
-      >
-        {kind === 'naver' ? (
-          <span style={{ fontWeight: 800, fontSize: 13, lineHeight: 1 }}>N</span>
-        ) : (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 3.5C6.8 3.5 2.5 6.9 2.5 11c0 2.6 1.8 4.9 4.5 6.3-.2.7-.7 2.5-.8 2.9-.1.4.2.55.45.42.3-.16 2.6-1.78 3.55-2.42.55.08 1.12.12 1.7.12 5.2 0 9.5-3.4 9.5-7.6S17.2 3.5 12 3.5z" />
-          </svg>
-        )}
-      </span>
+      {kind === 'naver' ? (
+        <span style={{ fontWeight: 800, fontSize: 15, lineHeight: 1 }}>N</span>
+      ) : (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <path d="M12 3.5C6.8 3.5 2.5 6.9 2.5 11c0 2.6 1.8 4.9 4.5 6.3-.2.7-.7 2.5-.8 2.9-.1.4.2.55.45.42.3-.16 2.6-1.78 3.55-2.42.55.08 1.12.12 1.7.12 5.2 0 9.5-3.4 9.5-7.6S17.2 3.5 12 3.5z" />
+        </svg>
+      )}
       {brand.label}
     </a>
   )
