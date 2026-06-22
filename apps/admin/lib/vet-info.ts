@@ -47,6 +47,11 @@ export interface VetInfo {
   // 면허
   license_no: string
 
+  // 보호자 안내용 외부 연결 — 펫무브 보호자 [내 정보 > 담당 동물병원] 카드의
+  // '네이버예약'·'카카오톡' 버튼이 이 URL 로 연결된다. 병원만 입력(운송회사 무관).
+  naver_booking_url: string
+  kakao_chat_url: string
+
   // 운송회사 정보 — 동물병원 정보와 독립. 같은 org 가 둘 다 입력해도 서로 영향 없음.
   // 동물병원의 (병원/수의사) 구성과 평행: (회사/담당자) 두 그룹.
   // 우편번호·휴대폰·추가정보 등 모든 키가 별도 저장이라 한 조직이 양쪽 토글 사이에서
@@ -93,6 +98,8 @@ export const DEFAULT_VET_INFO: VetInfo = {
   email: '',
   postal_code: '',
   license_no: '',
+  naver_booking_url: '',
+  kakao_chat_url: '',
   transport_company_ko: '',
   transport_company_en: '',
   transport_address_ko: '',

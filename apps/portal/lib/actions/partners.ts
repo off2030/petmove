@@ -104,6 +104,10 @@ export interface PartnerOrgInfo {
   phone: string | null
   /** 이메일 — 없으면 null. */
   email: string | null
+  /** 네이버예약 링크 — 병원만. 없으면 null. */
+  naverBookingUrl: string | null
+  /** 카카오톡 채널 chat 링크 — 병원만. 없으면 null. */
+  kakaoChatUrl: string | null
 }
 
 /**
@@ -168,11 +172,20 @@ export async function getPartnerOrgInfo(
     }
     const value: PartnerOrgInfo =
       role === 'vet'
-        ? { address: pick('address_ko'), phone: pick('phone'), email: pick('email') }
+        ? {
+            address: pick('address_ko'),
+            phone: pick('phone'),
+            email: pick('email'),
+            // 네이버예약·카카오톡은 병원(hospital) 전용 안내 링크.
+            naverBookingUrl: pick('naver_booking_url'),
+            kakaoChatUrl: pick('kakao_chat_url'),
+          }
         : {
             address: pick('transport_address_ko'),
             phone: pick('transport_phone'),
             email: pick('transport_email'),
+            naverBookingUrl: null,
+            kakaoChatUrl: null,
           }
     return { ok: true, value }
   } catch (e) {

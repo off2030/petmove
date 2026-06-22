@@ -47,6 +47,8 @@ const HOSPITAL_FIELDS: FieldDef[] = [
   { key: 'postal_code', label: '우편번호', group: 'Clinic' },
   { key: 'phone', label: '전화', group: 'Clinic' },
   { key: 'email', label: '이메일', group: 'Clinic' },
+  { key: 'naver_booking_url', label: '네이버예약 링크', group: 'Clinic' },
+  { key: 'kakao_chat_url', label: '카카오톡 채널 링크', group: 'Clinic' },
 ]
 
 const TRANSPORT_FIELDS: FieldDef[] = [
