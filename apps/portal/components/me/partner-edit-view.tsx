@@ -191,17 +191,22 @@ export function PartnerEditView({ role }: { role: PartnerRole }) {
               <div
                 style={{
                   display: 'flex',
-                  gap: 20,
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 16,
                   padding: '13px 0',
                   borderTop: `.5px solid ${C.line}`,
                 }}
               >
-                {orgInfo.naverBookingUrl && (
-                  <ChannelLink kind="naver" href={orgInfo.naverBookingUrl} />
-                )}
-                {orgInfo.kakaoChatUrl && (
-                  <ChannelLink kind="kakao" href={orgInfo.kakaoChatUrl} />
-                )}
+                <span style={{ fontSize: 12, color: C.ink3, flexShrink: 0 }}>예약·문의</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 18 }}>
+                  {orgInfo.naverBookingUrl && (
+                    <ChannelLink kind="naver" href={orgInfo.naverBookingUrl} />
+                  )}
+                  {orgInfo.kakaoChatUrl && (
+                    <ChannelLink kind="kakao" href={orgInfo.kakaoChatUrl} />
+                  )}
+                </span>
               </div>
             )}
           </SectionCard>
