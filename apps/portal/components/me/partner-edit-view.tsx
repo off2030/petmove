@@ -411,7 +411,9 @@ function formatKoreanPhone(raw: string): string {
 function ChannelLink({ kind, href }: { kind: 'naver' | 'kakao'; href: string }) {
   const brand =
     kind === 'naver'
-      ? { fg: '#0A8F45', label: '네이버예약' }
+      ? // 네이버 브랜드 그린(#0A8F45) 대신 펫무브 '일정 완료'에 쓰는 sage 그린으로
+        // 채도를 낮춰 따뜻한 톤에 맞춤. var(--pm-sage) — 라이트/다크 자동.
+        { fg: C.sage, label: '네이버예약' }
       : { fg: '#3C1E1E', label: '카카오톡' }
   return (
     <a
