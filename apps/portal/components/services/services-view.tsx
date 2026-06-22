@@ -1,7 +1,6 @@
 'use client'
 
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { createPortal } from 'react-dom'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { CaseRow } from '@petmove/domain'
 import destsData from '@petmove/domain/data/destinations.json'
@@ -820,10 +819,6 @@ export function ServicesView() {
   // '서비스' 탭·뒤로가기가 목록으로 안 돌아온다(탭이 안 먹힘). slug 로 매칭.
   const router = useRouter()
   const openSlug = useSearchParams().get('service')
-  // FAB 는 portal 로 body 에 그린다 — pm-fade-up 의 transform(fill-mode both 로 잔존)이
-  // position:fixed 의 기준을 가로채 본문에 박히는 것을 피하려고. SSR 가드로 mount 후에만.
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
 
   // 등록한 반려동물이 0마리면 일반 안내 대신 '시작하기' 한 길만 — 목적지·동물이 있어야
   // 맞춤 서비스를 보여줄 수 있으므로. 동물을 등록하면 아래 일반 화면으로 돌아간다.
@@ -986,40 +981,6 @@ export function ServicesView() {
           )}
         </div>
       </BottomSheet>
-
-      {mounted &&
-        !sheetOpen &&
-        !openOffer &&
-        createPortal(
-          <button
-            type="button"
-            aria-label="카카오톡으로 문의"
-            onClick={startInquiry}
-            style={{
-              position: 'fixed',
-              right: 16,
-              // 하단 바와 동일 기준(max(safe,14px)) 위로 바 높이(~66px)+여백 → 확실히 띄움.
-              bottom: 'calc(max(env(safe-area-inset-bottom, 0px), 14px) + 90px)',
-              width: 56,
-              height: 56,
-              borderRadius: '50%',
-              border: 'none',
-              background: '#FEE500',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              zIndex: 38,
-              boxShadow: '0 6px 18px -4px rgba(0,0,0,0.28), 0 2px 6px -2px rgba(0,0,0,0.12)',
-            }}
-          >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="#3C1E1E" aria-hidden>
-              <path d="M12 3.5C6.8 3.5 2.5 6.9 2.5 11c0 2.6 1.8 4.9 4.5 6.3-.2.7-.7 2.5-.8 2.9-.1.4.2.55.45.42.3-.16 2.6-1.78 3.55-2.42.55.08 1.12.12 1.7.12 5.2 0 9.5-3.4 9.5-7.6S17.2 3.5 12 3.5z" />
-            </svg>
-          </button>,
-          document.body,
-        )}
-
     </div>
   )
 }
