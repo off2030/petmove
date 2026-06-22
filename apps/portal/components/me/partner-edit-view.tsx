@@ -189,6 +189,17 @@ export function PartnerEditView({ role }: { role: PartnerRole }) {
             )}
           </SectionCard>
 
+          {orgInfo && (orgInfo.naverBookingUrl || orgInfo.kakaoChatUrl) && (
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              {orgInfo.naverBookingUrl && (
+                <ConnectButton kind="naver" href={orgInfo.naverBookingUrl} />
+              )}
+              {orgInfo.kakaoChatUrl && (
+                <ConnectButton kind="kakao" href={orgInfo.kakaoChatUrl} />
+              )}
+            </div>
+          )}
+
           <SectionCard>
             <button
               type="button"
@@ -337,6 +348,54 @@ function InfoRow({ label, value, href }: { label: string; value: string; href?: 
         <span style={valueStyle}>{value}</span>
       )}
     </div>
+  )
+}
+
+/** 사용자가 스킴 없이 입력한 URL(예: "pf.kakao.com/...")도 안전하게 열리도록 https 보정. */
+function withScheme(url: string): string {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`
+}
+
+/**
+ * 담당 병원의 외부 채널 연결 버튼 — 네이버예약(그린)·카카오톡(옐로) 브랜드 톤 pill.
+ * 새 탭으로 병원이 등록한 링크를 연다. URL 이 있는 채널만 렌더(호출부 가드).
+ */
+function ConnectButton({ kind, href }: { kind: 'naver' | 'kakao'; href: string }) {
+  const cfg =
+    kind === 'naver'
+      ? { bg: '#03C75A', fg: '#FFFFFF', label: '네이버예약' }
+      : { bg: '#FEE500', fg: '#3C1E1E', label: '카카오톡' }
+  return (
+    <a
+      href={withScheme(href)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="pm-pressable"
+      style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 7,
+        height: 46,
+        borderRadius: 14,
+        background: cfg.bg,
+        color: cfg.fg,
+        textDecoration: 'none',
+        fontSize: 14,
+        fontWeight: 600,
+        letterSpacing: '-0.01em',
+      }}
+    >
+      {kind === 'naver' ? (
+        <span style={{ fontWeight: 800, fontSize: 15, lineHeight: 1 }}>N</span>
+      ) : (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <path d="M12 3.5C6.8 3.5 2.5 6.9 2.5 11c0 2.6 1.8 4.9 4.5 6.3-.2.7-.7 2.5-.8 2.9-.1.4.2.55.45.42.3-.16 2.6-1.78 3.55-2.42.55.08 1.12.12 1.7.12 5.2 0 9.5-3.4 9.5-7.6S17.2 3.5 12 3.5z" />
+        </svg>
+      )}
+      {cfg.label}
+    </a>
   )
 }
 
