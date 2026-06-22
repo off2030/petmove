@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, useTransition, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition, type CSSProperties } from 'react'
 import { useConfirm } from '@petmove/ui'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
@@ -58,7 +58,14 @@ const ROLE_CONFIG: Record<PartnerRole, RoleConfig> = {
 // 펫무브 직영(platform) — 담당 병원 미정. org_id 가 이 값이면 미연결로 표시.
 const PLATFORM_ORG_ID = '00000000-0000-0000-0000-000000000002'
 
-export function PartnerEditView({ role }: { role: PartnerRole }) {
+export function PartnerEditView({
+  role,
+  initialOrgInfo = null,
+}: {
+  role: PartnerRole
+  /** 서버(page)가 첫 렌더에 미리 읽어 넘긴 연락처 — client fetch 없이 즉시 표시. */
+  initialOrgInfo?: PartnerOrgInfo | null
+}) {
   const { cases, partners, refreshCases } = useCases()
   const confirm = useConfirm()
   const [pending, startTransition] = useTransition()
@@ -99,9 +106,16 @@ export function PartnerEditView({ role }: { role: PartnerRole }) {
   // 읽는다 — 전체 카탈로그 fetch 를 기다리지 않아 페이지 진입 즉시 표시(빈 CTA 깜빡임 제거).
   const currentOrg = role === 'vet' ? partners.vet : partners.transport
 
-  // 연결된 조직의 공개 연락 정보(주소·전화·이메일) — 읽기 전용 표시. 연결 변경 시 재 fetch.
-  const [orgInfo, setOrgInfo] = useState<PartnerOrgInfo | null>(null)
+  // 연결된 조직의 공개 연락 정보(주소·전화·네이버·카카오). 첫 값은 서버(page)가 넘긴
+  // initialOrgInfo — 그래서 마운트 직후엔 다시 fetch 하지 않는다(상세 정보가 따로 늦게
+  // 뜨던 단계 로딩 제거). 보호자가 이 화면에서 병원을 바꿔 currentOrgId 가 변할 때만 갱신.
+  const [orgInfo, setOrgInfo] = useState<PartnerOrgInfo | null>(initialOrgInfo)
+  const orgInfoSeeded = useRef(true)
   useEffect(() => {
+    if (orgInfoSeeded.current) {
+      orgInfoSeeded.current = false
+      return // 서버가 넘긴 initialOrgInfo 가 현재 연결 조직을 이미 커버
+    }
     if (!currentOrgId) {
       setOrgInfo(null)
       return
