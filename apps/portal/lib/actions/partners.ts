@@ -97,6 +97,89 @@ export async function getMyPartnerOrgs(): Promise<
   }
 }
 
+export interface PartnerOrgInfo {
+  /** 주소 (한글) — 없으면 null. */
+  address: string | null
+  /** 대표 전화 — 없으면 null. */
+  phone: string | null
+  /** 이메일 — 없으면 null. */
+  email: string | null
+}
+
+/**
+ * 보호자에게 보여줄 담당 조직(병원·운송업체)의 공개 연락 정보 — 주소·전화·이메일.
+ * [내 정보 > 담당 동물병원] 카드(/me/vet)에서 조직 상세 표시용.
+ *
+ * organization_settings.company_info(VetInfo blob)에서 role 별 필드만 추출:
+ *   - vet: address_ko / phone / email
+ *   - transport: transport_address_ko / transport_phone / transport_email
+ *
+ * organization_settings 의 SELECT RLS 는 조직 멤버만 허용하므로 보호자(비멤버)는 직접
+ * 못 읽는다 → service-role 로 읽되, **본인 첫 케이스에 실제 연결된 org** 한정으로만
+ * 조회(범위 제한)해 안전선을 둔다. 미연결이거나 정보 없으면 빈 값(모두 null).
+ */
+export async function getPartnerOrgInfo(
+  role: PartnerRole,
+): Promise<Result<PartnerOrgInfo | null>> {
+  try {
+    const user = await getCurrentUser()
+    if (!user) return { ok: false, error: '인증 필요' }
+    const supabase = await createClient()
+    const { data: links, error: linksError } = await supabase
+      .from('case_customer_links')
+      .select('case_id')
+      .eq('user_id', user.id)
+      .limit(1)
+    if (linksError) return { ok: false, error: linksError.message }
+    if (!links?.length) return { ok: true, value: null }
+
+    const caseId = (links[0] as { case_id: string }).case_id
+    const { data: caseRow, error: caseError } = await supabase
+      .from('cases')
+      .select('org_id, transport_org_id')
+      .eq('id', caseId)
+      .maybeSingle()
+    if (caseError) return { ok: false, error: caseError.message }
+
+    const raw =
+      role === 'vet'
+        ? (caseRow as { org_id: string | null } | null)?.org_id ?? null
+        : (caseRow as { transport_org_id: string | null } | null)?.transport_org_id ?? null
+    const orgId = raw && raw !== PLATFORM_ORG_ID ? raw : null
+    if (!orgId) return { ok: true, value: null }
+
+    // organization_settings 는 조직 멤버만 RLS SELECT 허용 → service-role 로 읽는다.
+    // 위에서 본인 케이스에 연결된 org 로만 한정했으므로 타 조직 정보는 새지 않는다.
+    const { createAdminClient } = await import('@petmove/auth')
+    const admin = createAdminClient()
+    const { data: settings } = await admin
+      .from('organization_settings')
+      .select('value')
+      .eq('org_id', orgId)
+      .eq('key', 'company_info')
+      .maybeSingle()
+    const info = ((settings as { value: Record<string, unknown> } | null)?.value ?? {}) as Record<
+      string,
+      unknown
+    >
+    const pick = (k: string): string | null => {
+      const v = info[k]
+      return typeof v === 'string' && v.trim() ? v.trim() : null
+    }
+    const value: PartnerOrgInfo =
+      role === 'vet'
+        ? { address: pick('address_ko'), phone: pick('phone'), email: pick('email') }
+        : {
+            address: pick('transport_address_ko'),
+            phone: pick('transport_phone'),
+            email: pick('transport_email'),
+          }
+    return { ok: true, value }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 /**
  * 카드 바텀시트에 노출할 조직 목록. role 에 따라 hospital/both 또는 transport/both 만.
  * platform(펫무브 직영) 은 id 로 명시 제외 — org_type 이 드리프트('both' 등)로 바뀌어도
