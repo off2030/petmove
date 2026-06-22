@@ -272,10 +272,9 @@ export const DESTINATION_OVERRIDES: Record<string, DestinationOverride> = {
     rabiesTiterForReturnOnly: true,
   },
   uzbekistan: {
-    // 광견병 출국 30일 전 + 유효기간 1년.
+    // 광견병 출국 30일 전 + 입국용 항체검사(유효기간 1년) 필수 → 편도에서도 항체검사 표시.
     keywords: ['우즈베키스탄', 'uzbekistan'],
     vaccines: ['rabies', 'rabies_titer'],
-    rabiesTiterForReturnOnly: true,
   },
   cambodia: {
     keywords: ['캄보디아', 'cambodia'],
