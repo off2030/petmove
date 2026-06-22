@@ -59,7 +59,7 @@ const ROLE_CONFIG: Record<PartnerRole, RoleConfig> = {
 const PLATFORM_ORG_ID = '00000000-0000-0000-0000-000000000002'
 
 export function PartnerEditView({ role }: { role: PartnerRole }) {
-  const { cases, refreshCases } = useCases()
+  const { cases, partners, refreshCases } = useCases()
   const confirm = useConfirm()
   const [pending, startTransition] = useTransition()
   const [orgs, setOrgs] = useState<PartnerOrg[] | null>(null)
@@ -80,8 +80,11 @@ export function PartnerEditView({ role }: { role: PartnerRole }) {
       : null
   }, [cases, role])
 
-  // 카탈로그 fetch — 마운트 시 1회. 현재 연결 조직 이름·메타 표시에도 재사용.
+  // 카탈로그(전체 병원 목록)는 '변경'·'연결' 바텀시트를 열 때만 필요 — 첫 진입에 안 불러온다.
+  // (현재 연결 조직의 이름·아바타는 아래 partners 에서 즉시 표시하므로 카탈로그를 기다릴
+  // 필요가 없다.) 시트를 처음 열 때 1회만 로드.
   useEffect(() => {
+    if (!sheetOpen || orgs !== null) return
     let cancelled = false
     listAvailableOrgs(role).then((r) => {
       if (cancelled) return
@@ -90,12 +93,11 @@ export function PartnerEditView({ role }: { role: PartnerRole }) {
     return () => {
       cancelled = true
     }
-  }, [role])
+  }, [sheetOpen, orgs, role])
 
-  const currentOrg = useMemo<PartnerOrg | null>(() => {
-    if (!currentOrgId || !orgs) return null
-    return orgs.find((o) => o.id === currentOrgId) ?? null
-  }, [currentOrgId, orgs])
+  // 연결 조직의 이름·아바타는 CaseDataProvider 가 서버 초기 로드로 채운 partners 에서 바로
+  // 읽는다 — 전체 카탈로그 fetch 를 기다리지 않아 페이지 진입 즉시 표시(빈 CTA 깜빡임 제거).
+  const currentOrg = role === 'vet' ? partners.vet : partners.transport
 
   // 연결된 조직의 공개 연락 정보(주소·전화·이메일) — 읽기 전용 표시. 연결 변경 시 재 fetch.
   const [orgInfo, setOrgInfo] = useState<PartnerOrgInfo | null>(null)

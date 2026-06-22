@@ -115,19 +115,15 @@ export async function getPartnerOrgInfo(
     const user = await getCurrentUser()
     if (!user) return { ok: false, error: '인증 필요' }
     const supabase = await createClient()
-    const { data: links, error: linksError } = await supabase
-      .from('case_customer_links')
-      .select('case_id')
-      .eq('user_id', user.id)
-      .limit(1)
-    if (linksError) return { ok: false, error: linksError.message }
-    if (!links?.length) return { ok: true, value: null }
-
-    const caseId = (links[0] as { case_id: string }).case_id
+    // 본인 첫 케이스의 org_id/transport_org_id 를 한 번에 — case_customer_links 를 inner
+    // 조인해 본인 링크 케이스만(listMyCases 와 동일 패턴). 과거 links→cases 2단 순차를 1단
+    // 으로 줄여 [내 정보 > 담당 병원] 상세의 연락처 표시를 앞당김.
     const { data: caseRow, error: caseError } = await supabase
       .from('cases')
-      .select('org_id, transport_org_id')
-      .eq('id', caseId)
+      .select('org_id, transport_org_id, case_customer_links!inner(user_id)')
+      .eq('case_customer_links.user_id', user.id)
+      .is('deleted_at', null)
+      .limit(1)
       .maybeSingle()
     if (caseError) return { ok: false, error: caseError.message }
 
