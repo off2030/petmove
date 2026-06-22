@@ -42,42 +42,28 @@ const PARTNER_TYPES_BY_ROLE: Record<PartnerRole, readonly string[]> = {
 }
 
 /**
- * 보호자의 현재 연결 조직 — 본인 첫 케이스의 org_id(담당 병원) / transport_org_id 를 보고
- * 조직 정보를 한 번에 반환. 통일 정책 전제(모든 본인 케이스 동일 값). 케이스 없거나
- * 미연결이면 해당 키 null. [내 정보] 허브에서 카드별 이름 표시용.
+ * 담당 병원(org_id)·운송(transport_org_id) ID 로 조직 정보를 조회. [내 정보] 허브의
+ * 병원·운송 카드 표시용. ID 는 호출측이 이미 가진 케이스(cases[0])에서 넘긴다 —
+ * 그래서 여기선 organizations 단일 쿼리만 한다(과거 links→cases→organizations 3단
+ * 순차 쿼리를 1단으로). 둘 다 platform 이거나 null 이면 미연결 → 해당 키 null.
+ *
+ * 통일 정책 전제(모든 본인 케이스 동일 값) — 호출측이 첫 케이스 값을 대표로 넘긴다.
  */
-export async function getMyPartnerOrgs(): Promise<
-  Result<{ vet: PartnerOrg | null; transport: PartnerOrg | null }>
-> {
+export async function getPartnerOrgsByIds(
+  orgId: string | null,
+  transportOrgId: string | null,
+): Promise<Result<{ vet: PartnerOrg | null; transport: PartnerOrg | null }>> {
   try {
     const user = await getCurrentUser()
     if (!user) return { ok: false, error: '인증 필요' }
-    const supabase = await createClient()
-    const { data: links, error: linksError } = await supabase
-      .from('case_customer_links')
-      .select('case_id')
-      .eq('user_id', user.id)
-      .limit(1)
-    if (linksError) return { ok: false, error: linksError.message }
-    if (!links?.length) return { ok: true, value: { vet: null, transport: null } }
-
-    const caseId = (links[0] as { case_id: string }).case_id
-    const { data: caseRow, error: caseError } = await supabase
-      .from('cases')
-      .select('org_id, transport_org_id')
-      .eq('id', caseId)
-      .maybeSingle()
-    if (caseError) return { ok: false, error: caseError.message }
 
     // 담당 병원 = org_id, 운송 = transport_org_id. 둘 다 platform = 담당 미정 → null 표시.
-    const orgId = (caseRow as { org_id: string | null } | null)?.org_id ?? null
     const vetId = orgId && orgId !== PLATFORM_ORG_ID ? orgId : null
-    const tspRaw =
-      (caseRow as { transport_org_id: string | null } | null)?.transport_org_id ?? null
-    const tspId = tspRaw && tspRaw !== PLATFORM_ORG_ID ? tspRaw : null
+    const tspId = transportOrgId && transportOrgId !== PLATFORM_ORG_ID ? transportOrgId : null
     const ids = [vetId, tspId].filter((v): v is string => !!v)
     if (ids.length === 0) return { ok: true, value: { vet: null, transport: null } }
 
+    const supabase = await createClient()
     const { data: orgs, error: orgsError } = await supabase
       .from('organizations')
       .select('id, name, name_en, org_type, avatar_url')

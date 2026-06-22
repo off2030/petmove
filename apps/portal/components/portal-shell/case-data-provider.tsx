@@ -14,7 +14,10 @@ import {
 } from 'react'
 import { listMyCases } from '@/lib/actions/cases'
 import { getMyProfile, type CustomerProfileRow } from '@/lib/actions/profile'
+import { getPartnerOrgsByIds, type PartnerOrg } from '@/lib/actions/partners'
 import { LAST_CASE_KEY } from './last-case'
+
+type PartnerOrgs = { vet: PartnerOrg | null; transport: PartnerOrg | null }
 
 /**
  * 보호자의 모든 데이터(케이스 + 프로파일)를 한 번 fetch 해 Context 로 공유.
@@ -32,6 +35,8 @@ type CaseDataContextValue = {
   cases: CaseRow[]
   profile: CustomerProfileRow | null
   userEmail: string | null
+  /** 담당 병원·운송 조직 — 첫 케이스의 org_id/transport_org_id 기준, 서버 초기 로드로 채움. */
+  partners: PartnerOrgs
   refreshCases: () => Promise<void>
   refreshProfile: () => Promise<void>
   updateCase: (next: CaseRow) => void
@@ -45,12 +50,14 @@ const CaseDataContext = createContext<CaseDataContextValue | null>(null)
 export function CaseDataProvider({
   initialCases,
   initialProfile,
+  initialPartners,
   userEmail,
   previewMode = false,
   children,
 }: {
   initialCases: CaseRow[]
   initialProfile: CustomerProfileRow | null
+  initialPartners: PartnerOrgs
   userEmail: string | null
   /** 펫무브워크 고객앱 미리보기 — 보호자 세션이 없어 Realtime·refetch 를 끈다. */
   previewMode?: boolean
@@ -59,6 +66,7 @@ export function CaseDataProvider({
   const router = useRouter()
   const [cases, setCases] = useState<CaseRow[]>(initialCases)
   const [profile, setProfile] = useState<CustomerProfileRow | null>(initialProfile)
+  const [partners, setPartners] = useState<PartnerOrgs>(initialPartners)
 
   // 모든 케이스 × 탭 URL 을 백그라운드 prefetch — 케이스 전환 시 RSC 캐시 적중.
   //
@@ -129,6 +137,34 @@ export function CaseDataProvider({
       window.removeEventListener('scroll', onInteract)
     }
   }, [caseIdsKey, router])
+
+  // 담당 병원·운송 카드 데이터. 초기값은 서버(layout)가 첫 케이스 org_id 로 채워 넘긴다 —
+  // 그래서 첫 마운트엔 재fetch 하지 않는다(빈칸 깜빡임 방지). 보호자가 /me/vet·/me/agency
+  // 에서 병원을 바꾸면 refreshCases 로 cases[0].org_id 가 갱신 → partnerKey 변함 → 그때만
+  // organizations 를 다시 읽어 카드 이름을 최신화. (org 가 안 변한 일반 refresh 엔 재fetch 안 함.)
+  const partnerKey = useMemo(() => {
+    const first = cases[0]
+    return first ? `${first.org_id ?? ''}|${first.transport_org_id ?? ''}` : ''
+  }, [cases])
+  const partnersFirstRun = useRef(true)
+  useEffect(() => {
+    if (previewMode) return
+    if (partnersFirstRun.current) {
+      partnersFirstRun.current = false
+      return // initialPartners 가 이미 이 key 를 커버
+    }
+    let cancelled = false
+    const first = cases[0] ?? null
+    void getPartnerOrgsByIds(first?.org_id ?? null, first?.transport_org_id ?? null).then((r) => {
+      if (cancelled) return
+      if (r.ok) setPartners(r.value)
+    })
+    return () => {
+      cancelled = true
+    }
+    // cases 가 아니라 partnerKey 가 트리거 — org 가 실제로 바뀔 때만 재fetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partnerKey, previewMode])
 
   const refreshCases = useCallback(async () => {
     const result = await listMyCases()
@@ -278,13 +314,14 @@ export function CaseDataProvider({
       cases,
       profile,
       userEmail,
+      partners,
       refreshCases,
       refreshProfile,
       updateCase,
       updateProfile,
       removeCase,
     }),
-    [cases, profile, userEmail, refreshCases, refreshProfile, updateCase, updateProfile, removeCase],
+    [cases, profile, userEmail, partners, refreshCases, refreshProfile, updateCase, updateProfile, removeCase],
   )
 
   return <CaseDataContext.Provider value={value}>{children}</CaseDataContext.Provider>

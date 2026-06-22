@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { type CSSProperties, type ReactNode } from 'react'
 import { buildCaseJourneyContext, type CaseRow } from '@petmove/domain'
 import { useCases } from '@/components/portal-shell/case-data-provider'
 import { StartHereEmpty } from '@/components/portal-shell/start-here-empty'
@@ -12,7 +12,7 @@ import {
 } from '@/lib/profile/catalog'
 import { AVATAR_GRADIENTS, avatarTextColor, isAvatarColorId } from '@/lib/avatar'
 import { dDayLabel } from '@/lib/cases/info-form'
-import { getMyPartnerOrgs, type PartnerOrg } from '@/lib/actions/partners'
+import { type PartnerOrg } from '@/lib/actions/partners'
 import { PetAvatarDisplay } from './pet-avatar-display'
 import { C, serif, monoCap, OrgAvatar } from './settings-shared'
 
@@ -389,34 +389,13 @@ function AddAnimalCard({ href }: { href: string }) {
 // ── Hub ────────────────────────────────────────────────────────────────────
 
 export function SettingsHubView() {
-  const { cases, profile, userEmail } = useCases()
+  const { cases, profile, userEmail, partners } = useCases()
   const primary = cases[0] ?? null
   const view = buildProfileView({ userEmail, customerProfile: profile, primaryCase: primary })
 
-  // 담당 조직(병원·운송) 카드 채움 — 첫 케이스의 vet/transport_org_id 기준.
-  // cases 가 갱신될 때(refreshCases 후) vet/transport_org_id 변경되면 재 fetch.
-  const partnerKey = primary
-    ? `${primary.org_id ?? ''}|${primary.transport_org_id ?? ''}`
-    : ''
-  const [partners, setPartners] = useState<{
-    vet: PartnerOrg | null
-    transport: PartnerOrg | null
-  } | null>(null)
-  useEffect(() => {
-    if (!primary) {
-      setPartners({ vet: null, transport: null })
-      return
-    }
-    let cancelled = false
-    getMyPartnerOrgs().then((r) => {
-      if (cancelled) return
-      if (r.ok) setPartners(r.value)
-    })
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [partnerKey])
+  // 담당 병원·운송 카드는 CaseDataProvider 가 서버 초기 로드로 채워 둔 partners 를 그대로
+  // 읽는다 — 페이지 진입 즉시 채워진 상태(빈칸 깜빡임·따로 fetch 없음). 병원 변경 시
+  // refreshCases → partnerKey 변화로 Provider 가 알아서 갱신.
 
   // 등록한 반려동물이 0마리면 휑한 허브 대신 '시작하기' 한 길만 보여준다.
   if (cases.length === 0) {
@@ -460,7 +439,7 @@ export function SettingsHubView() {
 
         <Section label="담당 동물병원">
           <PartnerCard
-            org={partners?.vet ?? null}
+            org={partners.vet}
             placeholder="담당 동물병원을 연결해 보세요"
             href="/me/vet"
           />

@@ -10,6 +10,7 @@ import { SwipeTabs } from '@/components/portal-shell/swipe-tabs'
 import { TopBar } from '@/components/portal-shell/top-bar'
 import { listMyCases } from '@/lib/actions/cases'
 import { getMyProfile } from '@/lib/actions/profile'
+import { getPartnerOrgsByIds } from '@/lib/actions/partners'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,6 +35,7 @@ export default async function AuthedLayout({ children }: { children: React.React
       <CaseDataProvider
         initialCases={caseRow ? [caseRow] : []}
         initialProfile={null}
+        initialPartners={{ vet: null, transport: null }}
         userEmail={null}
         previewMode
       >
@@ -49,10 +51,20 @@ export default async function AuthedLayout({ children }: { children: React.React
   const cases = casesResult.ok ? casesResult.value : []
   const profile = profileResult.ok ? profileResult.value : null
 
+  // 담당 병원·운송 카드도 첫 진입에 같이 채운다 — cases 에 이미 있는 org_id 로 organizations
+  // 한 번만 조회. client useEffect 로 따로 fetch 하던 [내 정보] 병원 카드의 "빈칸→이름→로고"
+  // 3단 깜빡임을 없애기 위함. 미연결이면 쿼리 자체를 건너뜀.
+  const primary = cases[0] ?? null
+  const partnersResult = primary
+    ? await getPartnerOrgsByIds(primary.org_id ?? null, primary.transport_org_id ?? null)
+    : null
+  const partners = partnersResult?.ok ? partnersResult.value : { vet: null, transport: null }
+
   return (
     <CaseDataProvider
       initialCases={cases}
       initialProfile={profile}
+      initialPartners={partners}
       userEmail={user.email ?? null}
     >
       <Shell>{children}</Shell>
