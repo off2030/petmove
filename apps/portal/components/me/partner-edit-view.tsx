@@ -187,18 +187,24 @@ export function PartnerEditView({ role }: { role: PartnerRole }) {
                 {orgInfo.email && <InfoRow label="이메일" value={orgInfo.email} href={`mailto:${orgInfo.email}`} />}
               </div>
             )}
+            {orgInfo && (orgInfo.naverBookingUrl || orgInfo.kakaoChatUrl) && (
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 20,
+                  padding: '13px 0',
+                  borderTop: `.5px solid ${C.line}`,
+                }}
+              >
+                {orgInfo.naverBookingUrl && (
+                  <ChannelLink kind="naver" href={orgInfo.naverBookingUrl} />
+                )}
+                {orgInfo.kakaoChatUrl && (
+                  <ChannelLink kind="kakao" href={orgInfo.kakaoChatUrl} />
+                )}
+              </div>
+            )}
           </SectionCard>
-
-          {orgInfo && (orgInfo.naverBookingUrl || orgInfo.kakaoChatUrl) && (
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              {orgInfo.naverBookingUrl && (
-                <ConnectButton kind="naver" href={orgInfo.naverBookingUrl} />
-              )}
-              {orgInfo.kakaoChatUrl && (
-                <ConnectButton kind="kakao" href={orgInfo.kakaoChatUrl} />
-              )}
-            </div>
-          )}
 
           <SectionCard>
             <button
@@ -377,46 +383,40 @@ function formatKoreanPhone(raw: string): string {
 }
 
 /**
- * 담당 병원의 외부 채널 연결 버튼 — 옅은 틴트 톤.
- * 브랜드 색을 아주 옅게(배경 ~12%) 깔고 글자·아이콘은 진한 브랜드 색으로.
- * 채도는 낮추되 색 정체성은 남겨 Stone 톤과 충돌하지 않게.
+ * 담당 병원의 외부 채널 연결 — 텍스트 링크 톤(옵션 3).
+ * 색 박스 없이 정보 카드 안에 작은 브랜드 아이콘 + 라벨 + '›' 한 줄로. 가장 절제된 형태.
  * 새 탭으로 병원이 등록한 링크를 연다. URL 이 있는 채널만 렌더(호출부 가드).
  */
-function ConnectButton({ kind, href }: { kind: 'naver' | 'kakao'; href: string }) {
+function ChannelLink({ kind, href }: { kind: 'naver' | 'kakao'; href: string }) {
   const brand =
     kind === 'naver'
-      ? { bg: 'rgba(3, 199, 90, 0.12)', fg: '#0A8F45', label: '네이버예약' }
-      : { bg: 'rgba(254, 229, 0, 0.22)', fg: '#3C1E1E', label: '카카오톡' }
+      ? { fg: '#0A8F45', label: '네이버예약' }
+      : { fg: '#3C1E1E', label: '카카오톡' }
   return (
     <a
       href={withScheme(href)}
       target="_blank"
       rel="noopener noreferrer"
-      className="pm-pressable"
       style={{
-        flex: 1,
-        display: 'flex',
+        display: 'inline-flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        gap: 7,
-        height: 46,
-        borderRadius: 14,
-        background: brand.bg,
-        color: brand.fg,
+        gap: 6,
         textDecoration: 'none',
-        fontSize: 14,
+        color: brand.fg,
+        fontSize: 13.5,
         fontWeight: 600,
         letterSpacing: '-0.01em',
       }}
     >
       {kind === 'naver' ? (
-        <span style={{ fontWeight: 800, fontSize: 15, lineHeight: 1 }}>N</span>
+        <span style={{ fontWeight: 800, fontSize: 14, lineHeight: 1 }}>N</span>
       ) : (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
           <path d="M12 3.5C6.8 3.5 2.5 6.9 2.5 11c0 2.6 1.8 4.9 4.5 6.3-.2.7-.7 2.5-.8 2.9-.1.4.2.55.45.42.3-.16 2.6-1.78 3.55-2.42.55.08 1.12.12 1.7.12 5.2 0 9.5-3.4 9.5-7.6S17.2 3.5 12 3.5z" />
         </svg>
       )}
       {brand.label}
+      <span style={{ color: C.ink3, fontWeight: 400 }}>›</span>
     </a>
   )
 }
