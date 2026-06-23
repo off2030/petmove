@@ -859,11 +859,8 @@ export function ServicesView() {
         />
       ) : (
         <div style={{ padding: '0 24px' }}>
-          <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>
-            서비스
-          </h1>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+          {/* 페이지명('서비스')은 하단 탭이 이미 말하므로 상단 제목은 두지 않는다 — 바로 콘텐츠. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <button
               type="button"
               onClick={() => {

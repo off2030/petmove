@@ -347,7 +347,7 @@ function Section({
   first?: boolean
 }) {
   return (
-    <div style={{ marginTop: first ? 22 : 26 }}>
+    <div style={{ marginTop: first ? 4 : 26 }}>
       <div style={{ ...monoCap, marginBottom: 10, padding: '0 4px' }}>{label}</div>
       {children}
     </div>
@@ -420,10 +420,7 @@ export function SettingsHubView() {
       }}
     >
       <div style={{ padding: '0 24px' }}>
-        <h1 style={{ ...serif, fontSize: 28, lineHeight: 1.12, margin: '8px 0 0', color: C.ink }}>
-          내 정보
-        </h1>
-
+        {/* 페이지명('내 정보')은 하단 탭이 이미 말하므로 상단 제목은 두지 않는다 — 바로 콘텐츠. */}
         <Section label="보호자" first>
           <GuardianCard data={view.guardian} href="/me/guardian" />
         </Section>
