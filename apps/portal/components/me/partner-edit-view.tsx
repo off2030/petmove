@@ -411,12 +411,13 @@ function formatKoreanPhone(raw: string): string {
 function ChannelLink({ kind, href }: { kind: 'naver' | 'kakao'; href: string }) {
   const brand =
     kind === 'naver'
-      ? // 네이버 브랜드 그린(#0A8F45) 대신 펫무브 '일정 완료'에 쓰는 sage 그린으로
-        // 채도를 낮춰 따뜻한 톤에 맞춤. var(--pm-sage) — 라이트/다크 자동.
-        { fg: C.sage, label: '네이버예약' }
-      : // 카카오 브랜드 브라운(#3C1E1E·붉은기) 대신 페이지 본문 잉크(var(--pm-ink))로
-        // 채도를 낮춰 전체 Stone 톤과 통일. 라이트/다크 자동.
-        { fg: C.ink, label: '카카오톡' }
+      ? // 펫무브 '일정 완료' sage 그린을 본문 잉크와 살짝 섞어 한 톤 진하게.
+        // (순수 --pm-sage 는 링크 글씨로 쓰기엔 옅어 가독성↓) 카카오와 명암을 맞춤.
+        // sage·ink 둘 다 라이트/다크 자동 → 섞은 값도 자동.
+        { fg: 'color-mix(in srgb, var(--pm-sage) 60%, var(--pm-ink))', label: '네이버예약' }
+      : // 카카오 브랜드 브라운(#3C1E1E·붉은기) 대신 한 단계 연한 회갈색(var(--pm-ink-2))로
+        // 채도·명도를 낮춰 네이버 sage 와 같은 중간 톤에서 만남. 라이트/다크 자동.
+        { fg: C.ink2, label: '카카오톡' }
   return (
     <a
       href={withScheme(href)}
