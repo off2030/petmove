@@ -96,11 +96,13 @@ export function PortalPreviewDialog({ caseId, caseLabel, onClose }: Props) {
           </div>
         </div>
 
-        {/* Phone frame */}
+        {/* Phone frame — 폭은 요즘 폰 기준 390px(실기기와 일치). iframe 은 프레임보다 데스크톱
+            클래식 스크롤바 폭(~17px)만큼 넓혀, 그 스크롤바를 overflow-hidden 으로 가린다 →
+            콘텐츠 폭이 실폰(오버레이 스크롤바=0px)과 정확히 같아져 제목이 거짓으로 잘리지 않는다. */}
         <div className="rounded-[44px] bg-neutral-900 p-3 shadow-2xl">
           <div
             className="overflow-hidden rounded-[32px] bg-[#F5EFE8]"
-            style={{ width: 375, height: 'min(760px, 80vh)' }}
+            style={{ width: 390, height: 'min(760px, 80vh)' }}
           >
             {error ? (
               <div className="flex h-full items-center justify-center px-8 text-center">
@@ -112,7 +114,8 @@ export function PortalPreviewDialog({ caseId, caseLabel, onClose }: Props) {
               <iframe
                 src={url}
                 title="펫무브 고객앱 미리보기"
-                className="h-full w-full border-0"
+                className="h-full border-0"
+                style={{ width: 'calc(100% + 17px)' }}
               />
             ) : (
               <div className="flex h-full items-center justify-center">
