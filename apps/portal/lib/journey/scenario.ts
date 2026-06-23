@@ -490,13 +490,20 @@ export function buildJourney(
       typeof caseData.vet_visit_date === 'string' && caseData.vet_visit_date.length >= 10
         ? caseData.vet_visit_date.slice(0, 10)
         : null
-    // 마이크로칩 시술일이 미래로 입력된 경우 — done 시그널이 '오늘 이전'만 완료로 인정하므로
-    // 미완료지만 보호자가 예약해둔 셈이라 '예정 [날짜]' 칩으로 노출(임상검사와 동일 패턴).
-    const microchipImplantDate =
-      typeof caseData.microchip_implant_date === 'string' &&
-      caseData.microchip_implant_date.length >= 10
-        ? caseData.microchip_implant_date.slice(0, 10)
-        : null
+    // 마이크로칩 미래(예정) 시술일은 별도 자리(microchip_implant_date_scheduled)에 저장된다 —
+    // 그게 미래면 '예정 [날짜]' 칩. (마이그레이션 전 옛 데이터: 실제 필드에 미래가 남아 있으면 폴백.)
+    const microchipImplantDate = (() => {
+      const sched =
+        typeof caseData.microchip_implant_date_scheduled === 'string'
+          ? caseData.microchip_implant_date_scheduled.slice(0, 10)
+          : ''
+      if (sched.length >= 10 && sched > today) return sched
+      const field =
+        typeof caseData.microchip_implant_date === 'string'
+          ? caseData.microchip_implant_date.slice(0, 10)
+          : ''
+      return field.length >= 10 ? field : null
+    })()
     // 한국 수출 동물검역도 동일 — 검역일이 미래면 미완료지만 잡아둔 일정이므로 '예정' 으로 노출.
     const krExportQuarantineDate =
       typeof caseData.kr_export_quarantine_date === 'string' &&

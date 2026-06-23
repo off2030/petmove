@@ -209,10 +209,21 @@ export async function updateMicrochipFields(
     if (fetchErr) return { ok: false, error: fetchErr.message }
     const prev = (existing?.data ?? {}) as Record<string, unknown>
     const nextData = { ...prev }
-    if (dt === null) delete nextData.microchip_implant_date
-    else nextData.microchip_implant_date = dt
-    // 다른 카드와 동일 — 시술일 ≤ 오늘이면 확인(완료), 미래면 false(예정), 없으면 삭제.
-    applyDatedConfirm(nextData, dt ? [{ date: dt }] : [], 'microchip_confirmed')
+    // 미래(예정) 시술일은 실제 기록(microchip_implant_date) 대신 별도 예정 자리로 — 펫무브워크엔
+    // 실제로 한 시술만 남고, 미래 예약은 '예정 배지'로만 노출된다(종합백신·항체검사 1차와 동일).
+    // 시술일은 광견병 after-microchip 검증의 기준점이라, 예정이 기준점이 되지 않게 분리가 중요.
+    const micToday = todayKst()
+    const micFuture = dt != null && dt > micToday
+    if (micFuture) {
+      nextData.microchip_implant_date_scheduled = dt
+      delete nextData.microchip_implant_date
+    } else {
+      delete nextData.microchip_implant_date_scheduled
+      if (dt === null) delete nextData.microchip_implant_date
+      else nextData.microchip_implant_date = dt
+    }
+    // 실제(≤오늘) 시술일이 있으면 완료(true), 없으면 삭제. 미래는 위에서 예정 자리로 빠져 제외.
+    applyDatedConfirm(nextData, !micFuture && dt ? [{ date: dt }] : [], 'microchip_confirmed')
 
     const { data: updated, error } = await admin
       .from('cases')
