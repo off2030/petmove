@@ -1402,11 +1402,15 @@ export async function updateVetVisitDate(
       destination,
     )
     if (writeDest) {
-      let nextData = writeByDestValue(prev, writeDest, 'vet_visit_date', v || null)
-      // 다른 백신·검사·구충과 동일 — 검진일 ≤ 오늘이면 확인(완료), 미래면 false(예정), 없으면 삭제.
-      // vet_visit_confirmed 는 공용(top-level) 플래그 — 백신 confirmed 플래그들과 동일 모델.
+      // 미래(예정) 검진일은 실제 검진일(by_dest)에 안 쓰고 별도 예정 자리(top-level)로 — 펫무브워크엔
+      // 실제로 본 검진만 남고, 미래 예약은 '예정 배지'로만(종합백신·항체검사 1차와 동일).
+      const vvFuture = !!v && v > todayKst()
+      let nextData = writeByDestValue(prev, writeDest, 'vet_visit_date', vvFuture ? null : v || null)
       nextData = { ...nextData }
-      applyDatedConfirm(nextData, v ? [{ date: v }] : [], 'vet_visit_confirmed')
+      if (vvFuture) nextData.vet_visit_date_scheduled = v
+      else delete nextData.vet_visit_date_scheduled
+      // vet_visit_confirmed 는 공용(top-level) 플래그 — 실제(≤오늘) 검진일만 완료로.
+      applyDatedConfirm(nextData, !vvFuture && v ? [{ date: v }] : [], 'vet_visit_confirmed')
       const { data: updated, error } = await admin
         .from('cases')
         .update({ data: nextData })
@@ -1422,10 +1426,17 @@ export async function updateVetVisitDate(
     // 여기는 writeDest=null(목적지 자체가 없는 케이스)만 도달하는 top-level 폴백 — 위 resolveWriteToken
     // 이 단일·다중 목적지를 모두 토큰으로 해석해 by_dest 로 보내므로, 다중 목적지가 이 경로로 새지 않는다.
     const nextData: Record<string, unknown> = { ...prev }
-    if (v) nextData.vet_visit_date = v // scoping-fallback-ok: writeDest 없음(목적지 없는 케이스) 폴백
-    else delete nextData.vet_visit_date
-    // 다른 백신·검사와 동일한 dated-confirm — 검진일 ≤ 오늘이면 완료, 미래면 예정(false), 없으면 삭제.
-    applyDatedConfirm(nextData, v ? [{ date: v }] : [], 'vet_visit_confirmed') // scoping-fallback-ok: writeDest 없음 폴백
+    const vvFuture = !!v && v > todayKst()
+    if (vvFuture) {
+      nextData.vet_visit_date_scheduled = v
+      delete nextData.vet_visit_date
+    } else {
+      delete nextData.vet_visit_date_scheduled
+      if (v) nextData.vet_visit_date = v // scoping-fallback-ok: writeDest 없음(목적지 없는 케이스) 폴백
+      else delete nextData.vet_visit_date
+    }
+    // 실제(≤오늘) 검진일만 완료로. 미래는 위에서 예정 자리로 빠져 제외.
+    applyDatedConfirm(nextData, !vvFuture && v ? [{ date: v }] : [], 'vet_visit_confirmed') // scoping-fallback-ok
 
     const { data: updated, error } = await admin
       .from('cases')

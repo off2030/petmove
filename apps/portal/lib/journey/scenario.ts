@@ -486,10 +486,16 @@ export function buildJourney(
         : null
     // 임상검사 검진일이 미래로 입력된 경우 — done 시그널은 '오늘 이전'만 인정하므로
     // 미완료 상태가 되지만, 보호자가 일정을 잡아둔 셈이라 '예정 [날짜]' 칩으로 노출.
-    const vetVisitDate =
-      typeof caseData.vet_visit_date === 'string' && caseData.vet_visit_date.length >= 10
-        ? caseData.vet_visit_date.slice(0, 10)
-        : null
+    const vetVisitDate = (() => {
+      const sched =
+        typeof caseData.vet_visit_date_scheduled === 'string'
+          ? caseData.vet_visit_date_scheduled.slice(0, 10)
+          : ''
+      if (sched.length >= 10 && sched > today) return sched
+      const field =
+        typeof caseData.vet_visit_date === 'string' ? caseData.vet_visit_date.slice(0, 10) : ''
+      return field.length >= 10 ? field : null
+    })()
     // 마이크로칩 미래(예정) 시술일은 별도 자리(microchip_implant_date_scheduled)에 저장된다 —
     // 그게 미래면 '예정 [날짜]' 칩. (마이그레이션 전 옛 데이터: 실제 필드에 미래가 남아 있으면 폴백.)
     const microchipImplantDate = (() => {
