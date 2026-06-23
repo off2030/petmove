@@ -407,7 +407,9 @@ function formatKoreanPhone(raw: string): string {
 
 /**
  * 담당 병원의 외부 채널 연결 — 텍스트 링크 톤(옵션 3).
- * 색 박스 없이 정보 카드 안에 작은 브랜드 아이콘 + 라벨 + '›' 한 줄로. 가장 절제된 형태.
+ * 색 박스 없이 정보 카드 안에 작은 브랜드 아이콘 + 라벨 한 줄로. 가장 절제된 형태.
+ * '›'(화면 이동 표시)는 안 붙임 — 전화·이메일과 동일하게, 외부를 여는 동작이라
+ * 브랜드 아이콘+라벨만으로 탭 가능함을 나타냄(카드 내 affordance 일관).
  * 새 탭으로 병원이 등록한 링크를 연다. URL 이 있는 채널만 렌더(호출부 가드).
  */
 function ChannelLink({ kind, href }: { kind: 'naver' | 'kakao'; href: string }) {
@@ -442,7 +444,6 @@ function ChannelLink({ kind, href }: { kind: 'naver' | 'kakao'; href: string }) 
         </svg>
       )}
       {brand.label}
-      <span style={{ color: C.ink3, fontWeight: 400 }}>›</span>
     </a>
   )
 }
