@@ -206,7 +206,15 @@ export function RabiesEntryInputs({
 
   // 접종일만 항상 노출, 나머지(면역 유효기간·약품 정보)는 '세부 정보' 접기.
   const detailFields = FIELDS.slice(1)
-  const detailHasData = detailFields.some((f) => value[f.key].trim() !== '')
+  // 본병원이면 약품 4필드는 직접 입력값(value)이 아니라 병원 지정 약품(productHints)으로
+  // 읽기 전용 표시된다 — 그 값도 '내용 있음'으로 쳐야 채워진 카드가 펼친 상태로 뜬다.
+  const hasDesignated =
+    !otherHospital &&
+    (['product', 'manufacturer', 'lot', 'expiry'] as const).some(
+      (k) => (productHints?.[k] ?? '').trim() !== '',
+    )
+  const detailHasData =
+    hasDesignated || detailFields.some((f) => value[f.key].trim() !== '')
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={cardStyle}>{renderRows(FIELDS.slice(0, 1))}</div>

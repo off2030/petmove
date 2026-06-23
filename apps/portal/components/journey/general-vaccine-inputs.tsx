@@ -182,7 +182,14 @@ function EntryCard({
 
   // 접종일만 항상 노출, 면역 유효기간·약품 정보는 '세부 정보' 접기. 구충(둘 다 false)은 접을 게 없어 미노출.
   const hasDetail = showValidUntil || showProduct
+  // 본병원이면 약품 4필드는 직접 입력값(entry)이 아니라 병원 지정 약품(productHints)으로
+  // 읽기 전용 표시된다 — 그 값도 '내용 있음'으로 쳐야 채워진 카드가 펼친 상태로 뜬다.
+  const hasDesignated =
+    showProduct &&
+    !otherHospital &&
+    PRODUCT_FIELDS.some((f) => (productHints?.[f.key] ?? '').trim() !== '')
   const detailHasData =
+    hasDesignated ||
     (showValidUntil && entry.valid_until.trim() !== '') ||
     (showProduct && PRODUCT_FIELDS.some((f) => entry[f.key].trim() !== ''))
 
