@@ -281,9 +281,9 @@ function Info({ scenario }) {
   );
 }
 
-// ── 프로필: 보호자+동물 hero / 동물병원 / 계정 ─────────────────
+// ── 프로필: 보호자+동물 hero / 동물병원 / 에이전시 / 계정 ─────────────────
 function Profile({ scenario }) {
-  const { pet, guardian, clinic } = scenario;
+  const { pet, guardian, clinic, transport } = scenario;
   const C = {
     bg: '#F2EDE6', surface: '#FBF7F1', ink: '#2A2620', ink2: '#6B6457', ink3: '#9A9286',
     line: 'rgba(42,38,32,.10)', accent: '#E8A55A', soft: '#E8DCC4', sage: '#8FA68C',
@@ -366,6 +366,10 @@ function Profile({ scenario }) {
         <PartnerCard
           cap="동물병원" name={clinic.name} role={clinic.role} sub={clinic.address} phone={clinic.phone}
           icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11H5a2 2 0 0 0-2 2v7h18v-7a2 2 0 0 0-2-2h-4M12 11V3M9 7h6"/></svg>}/>
+
+        <PartnerCard
+          cap="에이전시" name={transport.name} role={transport.contact} sub={transport.role} phone={transport.phone}
+          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>}/>
 
         <div style={{ ...monoCap, marginTop: 24, marginBottom: 10, padding: '0 4px' }}>계정</div>
         <div style={{ background: C.surface, border: `.5px solid ${C.line}`, borderRadius: 18, padding: '4px 16px' }}>
