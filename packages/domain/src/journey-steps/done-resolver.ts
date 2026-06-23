@@ -68,14 +68,19 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return isDatedConfirmed(data, r[0]?.date ?? null, 'rabies_1_confirmed')
     }
     case 'has-rabies-valid': {
-      // 1회 접종국 단일 카드 — 종합백신(has-general-vaccine)과 동일. 최근 접종 유효기간이
-      // 입국일을 커버해야 완료. 입국 전 만료면 추가 접종 필요 → 미완료. 입국일 없으면 입력만으로 완료.
+      // 1회 접종국 단일 카드 — 종합백신(has-general-vaccine)과 동일. "가장 최근에 '실제로 맞은'
+      // 접종" 의 유효기간이 입국일을 커버해야 완료. 미래(예정) 회차는 아직 맞은 게 아니므로 완료
+      // 판정에서 제외 — 미리 잡아둔 부스터가 멀쩡히 유효한 접종의 완료를 풀지 않게(종합백신 동일).
+      // 미래 회차는 추가접종(has-extra-rabies) 단계 + '예정' 배지로 별도 노출된다.
       const r = readRabiesEntries(caseRow)
       if (r.length === 0) return false
-      const latest = [...r].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
+      const today = todayKst()
+      const administered = r.filter((e) => e.date <= today)
+      if (administered.length === 0) return false // 전부 미래(예정) → 미완료
+      const latest = [...administered].sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0]
       const validUntil = resolveValidUntil(latest.date, latest.valid_until)
       // 이미 만료(오늘 기준) — 출국일 입력 여부와 무관하게 추가 접종 필요 → 미완료.
-      if (validUntil && validUntil < todayKst()) return false
+      if (validUntil && validUntil < today) return false
       const entry =
         (typeof data.entry_date === 'string' && data.entry_date) ||
         (typeof caseRow.departure_date === 'string' ? caseRow.departure_date : '') ||
@@ -85,9 +90,12 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       // 둔다(광견병 카드 situational 임박 안내와 짝). 이미 예약된 여행이 유효기간 내면 정상
       // 완료라 !entry 일 때만 — 출발 직전 멀쩡한 백신에 오경보가 뜨지 않게. 일본은 advisoryOnly
       // '추가 백신' 카드가 같은 역할(단일 접종국은 그 카드가 없어 여기서 처리).
-      if (!entry && validUntil && validUntil < addDays(todayKst(), 30)) return false
-      // 1회국 단일카드 — 별도 키(최신 접종 기준). 2회국 1차(rabies_1_confirmed)와 의미 분리:
-      // 다중 목적지(일본+태국)에서 단일카드 저장이 2회국 1차를 clobber 하지 않도록.
+      if (!entry && validUntil && validUntil < addDays(today, 30)) return false
+      // 미래 예약(부스터)이 따로 있으면 이미 맞은 유효 회차로 완료 인정(플래그는 가장 늦은=미래
+      // 회차를 반영해 false 라 무시). 없으면 평소대로 confirm 플래그 존중 — 단일 회차가 도래했어도
+      // '저장' 확인 전까진 미완료(재입력 요구 유지). 1회국 단일카드는 별도 키(rabies_single_confirmed)
+      // — 다중 목적지(일본+태국)에서 2회국 1차(rabies_1_confirmed)를 clobber 하지 않도록 분리.
+      if (r.some((e) => e.date > today)) return true
       return isDatedConfirmed(data, latest.date, 'rabies_single_confirmed')
     }
     case 'has-rabies-booster': {
@@ -190,11 +198,11 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       return isDatedConfirmed(data, latest.date, 'general_vaccine_confirmed')
     }
     case 'has-civ-vaccine':
-      return isDatedConfirmed(data, latestDateOf(readCivEntries(caseRow).map((e) => e.date)), 'civ_confirmed')
+      return isLatestAdministeredConfirmed(data, readCivEntries(caseRow).map((e) => e.date), 'civ_confirmed')
     case 'has-infectious-disease-test':
-      return isDatedConfirmed(
+      return isLatestAdministeredConfirmed(
         data,
-        latestDateOf(readInfectiousDiseaseEntries(caseRow).map((e) => e.date)),
+        readInfectiousDiseaseEntries(caseRow).map((e) => e.date),
         'infectious_disease_confirmed',
       )
     case 'has-internal-parasite':
@@ -341,6 +349,29 @@ function isDatedConfirmed(
   if (!latestDate || latestDate.length < 10) return false
   if (data[confirmKey] === false) return false
   return latestDate <= todayKst()
+}
+
+/**
+ * "미래 예약 회차가 이미 맞은 유효 회차의 완료를 풀지 않는" dated-confirm.
+ *   - 이미 맞은(≤오늘) 회차가 하나도 없으면 미완료(전부 미래 = 예정).
+ *   - 미래(>오늘) 예약 회차가 따로 있으면 이미 맞은 회차로 완료 인정 — confirm 플래그는 가장
+ *     늦은(=미래) 회차를 반영해 false 라 무시한다. 미리 잡아둔 부스터가 멀쩡한 접종의 완료를 풀지
+ *     않게(종합백신·구충이 splitScheduledDoses 로 얻는 동작을, 미래를 배열에 그대로 두는 카드에서
+ *     done 판정으로 달성).
+ *   - 미래 예약이 없으면 평소 dated-confirm: 가장 늦은 회차 ≤오늘 AND 플래그 != false (도래해도
+ *     '저장' 확인 전까진 미완료 — 재입력 요구 유지).
+ */
+function isLatestAdministeredConfirmed(
+  data: Record<string, unknown>,
+  dates: string[],
+  confirmKey: string,
+): boolean {
+  const today = todayKst()
+  const valid = dates.filter((d) => typeof d === 'string' && d.length >= 10)
+  const administered = valid.filter((d) => d <= today)
+  if (administered.length === 0) return false
+  if (valid.some((d) => d > today)) return true
+  return isDatedConfirmed(data, administered.slice().sort().slice(-1)[0], confirmKey)
 }
 
 /**
