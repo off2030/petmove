@@ -587,13 +587,20 @@ export function buildJourney(
     // 추가 검사 — 입국일 이전에 예약한(미래) 채혈이 있으면 '예정 [날짜]' 칩. 입국 후 채혈은
     // 그 입국을 보증 못 하므로 제외(무의미한 미래 채혈을 예정으로 오인 노출하지 않음).
     const titerExtraUpcomingDate = (() => {
-      if (step.id !== 'rabies-titer-extra' || !Array.isArray(caseData.rabies_titer_records))
-        return null
+      if (step.id !== 'rabies-titer-extra') return null
       const entryBound =
         (typeof caseData.entry_date === 'string' && caseData.entry_date.length >= 10
           ? caseData.entry_date.slice(0, 10)
           : '') ||
         (typeof dep === 'string' && dep.length >= 10 ? dep.slice(0, 10) : '')
+      // 미래(예정) 추가 채혈은 별도 자리(rabies_titer_extra_scheduled)에 저장 — 그게 미래(입국 전)면 칩.
+      const sched =
+        typeof caseData.rabies_titer_extra_scheduled === 'string'
+          ? caseData.rabies_titer_extra_scheduled.slice(0, 10)
+          : ''
+      if (sched.length >= 10 && sched > today && (!entryBound || sched <= entryBound)) return sched
+      // 옛 데이터 폴백 — 기록 배열에 미래가 남아 있으면.
+      if (!Array.isArray(caseData.rabies_titer_records)) return null
       let max = ''
       for (const r of (caseData.rabies_titer_records as unknown[]).slice(1)) {
         const d =

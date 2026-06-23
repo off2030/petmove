@@ -789,30 +789,21 @@ export async function updateTiterExtraEntries(
       newExtras.push(entry)
     }
 
-    const titerNext: unknown[] = [...preserved, ...newExtras]
+    const nextData: Record<string, unknown> = { ...prev }
+    // 미래(예정) 추가 채혈은 실제 기록(rabies_titer_records)에서 빼 별도 예정 자리로 — 펫무브워크엔
+    // 실제로 한 검사만 남고, 미래 예약은 예정 배지로만(종합백신·항체검사 1차와 동일).
+    const pastExtras = splitScheduledDoses(newExtras, 'rabies_titer_extra_scheduled', nextData)
+    const titerNext: unknown[] = [...preserved, ...pastExtras]
     while (titerNext.length > 0 && !hasValidDate(titerNext[titerNext.length - 1])) {
       titerNext.pop()
     }
-
-    const nextData: Record<string, unknown> = { ...prev }
     if (titerNext.length === 0) delete nextData.rabies_titer_records
     else nextData.rabies_titer_records = titerNext
 
-    // 추가 검사(2회+) 확인 플래그 — 추가 접종과 동일. 가장 최근 추가 채혈일이 도래(≤ 오늘)면
-    // true, 미래(예정)면 false. 추가 채혈이 없으면 제거.
-    const titerExtraEntries = titerNext.slice(1)
-    if (titerExtraEntries.length === 0) {
-      delete nextData.titer_extra_confirmed
-    } else {
-      const latestExtra = titerExtraEntries.reduce<string>((max, r) => {
-        const d =
-          r && typeof r === 'object' && typeof (r as Record<string, unknown>).date === 'string'
-            ? ((r as Record<string, unknown>).date as string)
-            : ''
-        return d > max ? d : max
-      }, '')
-      nextData.titer_extra_confirmed = latestExtra !== '' && latestExtra <= todayKst()
-    }
+    // 추가 검사(2회+) 확인 플래그 — 실제(≤오늘) 추가 채혈이 있으면 완료(true), 없으면 제거.
+    // 미래는 위에서 예정 자리로 빠져 제외되므로 false 가 나오지 않는다(마스킹 자동 무력화).
+    if (titerNext.slice(1).length === 0) delete nextData.titer_extra_confirmed
+    else nextData.titer_extra_confirmed = true
 
     const { data: updated, error } = await admin
       .from('cases')
