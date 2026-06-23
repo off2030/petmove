@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from 'react'
 import { MAX_DESTINATIONS_PER_CASE } from '@petmove/domain'
-import destsData from '@petmove/domain/data/destinations.json'
+import { APP_DESTINATIONS } from '@/lib/app-destinations'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { SegmentField, type FieldOption } from '@/components/fields/info-fields'
 import { C, SectionCard, monoCap } from './settings-shared'
@@ -23,12 +23,6 @@ const TRIP_OPTIONS: readonly FieldOption[] = [
  * 모든 변경은 **부모(useAnimalEditForm)의 로컬 상태만 갱신**한다 — 즉시 저장하지 않고
  * 동물 정보 '저장' 버튼에서 함께 커밋된다. 목적지 삭제·함께 준비 해제 confirm 도 저장 시점에 뜬다.
  */
-
-interface Dest {
-  ko: string
-  en: string
-}
-const DESTS = destsData as Dest[]
 
 export interface DestinationChipsProps {
   /** 렌더용 카드 — base 순서(삭제예정 포함) 뒤에 추가분. */
@@ -69,10 +63,10 @@ export function DestinationChips({
   const activeCount = cards.filter((c) => !c.removing).length
   const atLimit = activeCount >= MAX_DESTINATIONS_PER_CASE
 
-  // 추가 가능한 목적지 — 이미 선택된 토큰 제외.
+  // 추가 가능한 목적지 — 앱 지원 국가(APP_DESTINATIONS) 중 이미 선택된 토큰 제외.
   const available = useMemo(() => {
     const set = new Set(selected)
-    return DESTS.filter((d) => !set.has(d.ko))
+    return APP_DESTINATIONS.filter((d) => !set.has(d.ko))
   }, [selected])
 
   const filtered = useMemo(() => {

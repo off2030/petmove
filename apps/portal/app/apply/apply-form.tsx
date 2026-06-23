@@ -9,6 +9,7 @@ import { DateTextField } from '@petmove/ui'
 import { applyCase } from '@/lib/actions/apply-case'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import destsData from '@petmove/domain/data/destinations.json'
+import { APP_DESTINATIONS } from '@/lib/app-destinations'
 import breedsData from '@petmove/domain/data/breeds.json'
 import colorsData from '@petmove/domain/data/colors.json'
 
@@ -659,7 +660,8 @@ export function ApplyForm({
     })
   }
 
-  const filteredDests = DESTS.filter(d => {
+  // 펫무브 앱 목적지 선택지 = 앱 지원 국가(APP_DESTINATIONS) 한정. (DESTS 는 선택값 라벨 조회용으로 유지.)
+  const filteredDests = APP_DESTINATIONS.filter(d => {
     if (!destQuery.trim()) return true
     const q = destQuery.toLowerCase()
     return d.ko.includes(q) || d.en.toLowerCase().includes(q)

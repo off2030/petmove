@@ -10,6 +10,7 @@ import { StartHereEmpty } from '@/components/portal-shell/start-here-empty'
 import { BottomSheet } from '@/components/fields/bottom-sheet'
 import { type FieldOption } from '@/components/fields/info-fields'
 import { C, serif } from '@/components/me/settings-shared'
+import { APP_DESTINATIONS_KO } from '@/lib/app-destinations'
 import { buildProfileView } from '@/lib/profile/catalog'
 import { notifyServiceInquiry } from '@/lib/actions/service-inquiry'
 
@@ -38,8 +39,8 @@ interface Dest {
 }
 const DESTS = destsData as Dest[]
 
-/** 서비스 제공 국가 — 여정 카드 구성이 끝난 목적지부터. 새 나라 준비되면 여기에 push. */
-const OFFERED_KO: string[] = ['일본', '태국', '필리핀']
+/** 서비스 제공 국가 = 앱 지원 목적지(여정·서류 구성 완료). 새 나라는 app-destinations 한 곳에서 추가. */
+const OFFERED_KO: readonly string[] = APP_DESTINATIONS_KO
 const OFFERED: Dest[] = OFFERED_KO.map((ko) => DESTS.find((d) => d.ko === ko) ?? { ko, en: '' })
 
 /** 펫무브 카카오톡 채널 채팅 링크 — '카카오톡으로 문의' 진입. */
