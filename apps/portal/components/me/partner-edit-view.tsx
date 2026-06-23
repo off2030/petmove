@@ -414,10 +414,10 @@ function ChannelLink({ kind, href }: { kind: 'naver' | 'kakao'; href: string }) 
       ? // 펫무브 '일정 완료' sage 그린을 본문 잉크와 살짝 섞어 한 톤 진하게.
         // (순수 --pm-sage 는 링크 글씨로 쓰기엔 옅어 가독성↓) 카카오와 명암을 맞춤.
         // sage·ink 둘 다 라이트/다크 자동 → 섞은 값도 자동.
-        { fg: 'color-mix(in srgb, var(--pm-sage) 60%, var(--pm-ink))', label: '네이버예약' }
-      : // 카카오 브랜드 브라운(#3C1E1E·붉은기) 대신 한 단계 연한 회갈색(var(--pm-ink-2))로
-        // 채도·명도를 낮춰 네이버 sage 와 같은 중간 톤에서 만남. 라이트/다크 자동.
-        { fg: C.ink2, label: '카카오톡' }
+        { fg: 'color-mix(in srgb, var(--pm-sage) 70%, var(--pm-ink))', label: '네이버예약' }
+      : // 카카오 브랜드 브라운(#3C1E1E·붉은기) 대신 회갈색으로. ink-2 를 ink-3 쪽으로
+        // 살짝 밝혀 네이버 sage 와 같은 중간 톤에서 만남. 라이트/다크 자동.
+        { fg: 'color-mix(in srgb, var(--pm-ink-2) 70%, var(--pm-ink-3))', label: '카카오톡' }
   return (
     <a
       href={withScheme(href)}
