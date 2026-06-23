@@ -43,7 +43,9 @@ const HOSPITAL_FIELDS: FieldDef[] = [
   { key: 'clinic_ko', label: '병원명', group: 'Clinic' },
   { key: 'clinic_en', label: '영문 병원명', group: 'Clinic' },
   { key: 'address_ko', label: '주소', group: 'Clinic', type: 'textarea' },
+  { key: 'address_detail_ko', label: '상세주소', group: 'Clinic' },
   { key: 'address_en', label: '영문 주소', group: 'Clinic', type: 'textarea' },
+  { key: 'address_detail_en', label: '영문 상세주소', group: 'Clinic' },
   { key: 'postal_code', label: '우편번호', group: 'Clinic' },
   { key: 'phone', label: '전화', group: 'Clinic' },
   { key: 'email', label: '이메일', group: 'Clinic' },
@@ -55,9 +57,42 @@ const TRANSPORT_FIELDS: FieldDef[] = [
   { key: 'transport_company_ko', label: '회사명', group: 'Company' },
   { key: 'transport_company_en', label: '영문 회사명', group: 'Company' },
   { key: 'transport_address_ko', label: '주소', group: 'Company', type: 'textarea' },
+  { key: 'transport_address_detail_ko', label: '상세주소', group: 'Company' },
   { key: 'transport_address_en', label: '영문 주소', group: 'Company', type: 'textarea' },
+  { key: 'transport_address_detail_en', label: '영문 상세주소', group: 'Company' },
   { key: 'transport_postal_code', label: '우편번호', group: 'Company' },
 ]
+
+/**
+ * 상세주소(층·호·건물명) 키 → 합쳐 보관할 전체주소 키.
+ * 입력은 별도 칸이지만 저장은 전체주소에 "도로명, 상세"로 합쳐 넣는다
+ * (PDF·펫무브 표시가 전체주소 한 필드를 읽으므로). 상세만 따로도 저장돼 재검색에 보존됨.
+ */
+const ADDRESS_DETAIL_PARENT: Partial<Record<VetInfoKey, VetInfoKey>> = {
+  address_detail_ko: 'address_ko',
+  address_detail_en: 'address_en',
+  transport_address_detail_ko: 'transport_address_ko',
+  transport_address_detail_en: 'transport_address_en',
+}
+
+/** 도로명(base) + 상세(detail) 를 "base, detail" 한 줄로. 한쪽이 비면 다른 쪽만. */
+function combineAddress(base: string, detail: string): string {
+  const b = base.trim()
+  const d = detail.trim()
+  if (!b) return d
+  if (!d) return b
+  return `${b}, ${d}`
+}
+
+/** 전체주소에서 알고 있는 상세 접미사를 떼어 도로명만 복원. 못 찾으면 원본 유지. */
+function stripAddressDetail(full: string, detail: string): string {
+  const f = full.trim()
+  const d = detail.trim()
+  if (!d) return f
+  if (f.endsWith(`, ${d}`)) return f.slice(0, f.length - d.length - 2).trim()
+  if (f.endsWith(d)) return f.slice(0, f.length - d.length).replace(/[,\s]+$/, '').trim()
+  return f
+}
 
 /** First/Last 분리 영문명 키 → 합성된 단일 키 매핑. handleSave 가 같이 갱신. */
 const SPLIT_NAME_PARENT: Record<string, { first: VetInfoKey; last: VetInfoKey; combined: VetInfoKey }> = {
@@ -231,6 +266,13 @@ export function OrgInfoForm({
       const last = (key === split.last ? next : (info[split.last] as string) ?? '').trim()
       patch[split.combined] = [first, last].filter(Boolean).join(' ')
     }
+    // 상세주소 키 저장 시 — 전체주소(address_ko 등)도 "도로명, 상세"로 합쳐 함께 저장.
+    // 기존 전체주소에서 이전 상세(info[key])를 떼어낸 도로명에 새 상세를 붙인다.
+    const addrParent = ADDRESS_DETAIL_PARENT[key]
+    if (addrParent) {
+      const base = stripAddressDetail((info[addrParent] as string) ?? '', (info[key] as string) ?? '')
+      patch[addrParent] = combineAddress(base, next)
+    }
     // phone 저장 시 phone_intl 도 자동 파생 ("02-872-7588" → "+82-2-872-7588").
     // 별지25 hospital_phone, OVD/AnnexIII clinic phone 등 PDF 매핑이 vet:phone_intl 를
     // 직접 read 하므로 sync 필수.
@@ -270,6 +312,8 @@ export function OrgInfoForm({
     const krKey: VetInfoKey = isTransport ? 'transport_address_ko' : 'address_ko'
     const enKey: VetInfoKey = isTransport ? 'transport_address_en' : 'address_en'
     const zipKey: VetInfoKey = isTransport ? 'transport_postal_code' : 'postal_code'
+    const detailKrKey: VetInfoKey = isTransport ? 'transport_address_detail_ko' : 'address_detail_ko'
+    const detailEnKey: VetInfoKey = isTransport ? 'transport_address_detail_en' : 'address_detail_en'
     // draft 비우기 — 검색 결과로 즉시 덮어쓸 거라 사용자 편집 중인 draft 와 충돌 방지.
     setDrafts((d) => {
       const next = { ...d }
@@ -278,9 +322,12 @@ export function OrgInfoForm({
       delete next[zipKey]
       return next
     })
+    // 이미 입력된 상세주소는 새 도로명 뒤에 다시 붙여 보존 — 검색을 다시 눌러도 안 지워짐.
+    const detailKo = (info[detailKrKey] as string) ?? ''
+    const detailEn = (info[detailEnKey] as string) ?? ''
     const patch: Partial<VetInfo> = {
-      [krKey]: result.address_ko,
-      [enKey]: result.address_en,
+      [krKey]: combineAddress(result.address_ko, detailKo),
+      [enKey]: combineAddress(result.address_en, detailEn),
       [zipKey]: result.postal_code,
     }
     startTransition(async () => {

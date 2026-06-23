@@ -23,6 +23,10 @@ export interface VetInfo {
   name_ko: string
   clinic_ko: string
   address_ko: string
+  /** 상세주소(층·호·건물명). 입력은 별도 칸이지만 저장은 address_ko 에 "도로명, 상세"로
+   *  합쳐 넣는다(PDF·펫무브가 address_ko 한 필드를 읽으므로). 여기엔 재검색 시 다시
+   *  붙일 수 있게 상세만 따로도 보관. */
+  address_detail_ko?: string
 
   // 영문
   name_en: string
@@ -33,6 +37,8 @@ export interface VetInfo {
   name_last_en: string
   clinic_en: string
   address_en: string
+  /** 영문 상세주소 — address_en 에 "road, detail"로 합쳐 보관(한글과 동일 방식). */
+  address_detail_en?: string
   /** 주소 1줄 (street) / 2줄 (locality) 분리 */
   address_street_en: string
   address_locality_en: string
@@ -59,7 +65,11 @@ export interface VetInfo {
   transport_company_ko: string
   transport_company_en: string
   transport_address_ko: string
+  /** 운송 상세주소(한글) — transport_address_ko 에 합쳐 보관. */
+  transport_address_detail_ko?: string
   transport_address_en: string
+  /** 운송 상세주소(영문) — transport_address_en 에 합쳐 보관. */
+  transport_address_detail_en?: string
   transport_postal_code: string
   transport_phone: string
   transport_email: string
@@ -85,11 +95,13 @@ export const DEFAULT_VET_INFO: VetInfo = {
   name_ko: '',
   clinic_ko: '',
   address_ko: '',
+  address_detail_ko: '',
   name_en: '',
   name_first_en: '',
   name_last_en: '',
   clinic_en: '',
   address_en: '',
+  address_detail_en: '',
   address_street_en: '',
   address_locality_en: '',
   phone: '',
@@ -103,7 +115,9 @@ export const DEFAULT_VET_INFO: VetInfo = {
   transport_company_ko: '',
   transport_company_en: '',
   transport_address_ko: '',
+  transport_address_detail_ko: '',
   transport_address_en: '',
+  transport_address_detail_en: '',
   transport_postal_code: '',
   transport_phone: '',
   transport_email: '',
