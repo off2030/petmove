@@ -758,11 +758,15 @@ export function buildJourney(
     //    동일한 안내 톤(situational/현재형) 사용.
     //  - 미완료: situational.desc 가 있으면 우선, 없으면 description 첫 문장(현재형 안내문).
     const isFutureDate = date != null && date > today
+    // 일본 수출검역 방문 — situational.desc 는 예약 날짜·시간(상세 '안내' 박스 + '다음 할 일'
+    // 인라인 안내 전용)이다. 전체 일정 리스트 보조문구로 쓰면 '예정 [예약일]' 배지와 날짜가
+    // 중복되고, 다른 검역 카드(배지 + 정적 설명)와도 어긋난다 — 리스트에선 정적 설명(summary)만.
+    const listSit = step.id === 'jp-export-quarantine-visit' ? undefined : sit?.desc
     const desc = passedUnconfirmed
       ? PASSED_UNCONFIRMED_MSG
       : done && !isFutureDate
-        ? (step.doneSummary ?? sit?.desc ?? summary)
-        : (sit?.desc ?? summary)
+        ? (step.doneSummary ?? listSit ?? summary)
+        : (listSit ?? summary)
     // 다음 할 일 카드 본문 — 날짜(earliest/deadline)가 있으면 step.cardLine
     // (미지정 시 설명 첫 문장)에 날짜 구문을 붙이고, 날짜가 없으면 설명 첫 문장만.
     // earliest("이후")가 deadline("까지"/window 구간)보다 우선: 보호자가 먼저 알아야 할 제약.
@@ -913,14 +917,18 @@ export function buildJourney(
   // 방문이 아직 멀면(current 아님) 별도 '안내' 카드로 조기 노출되지 않도록 current 에서만 처리.
   // step 상세 화면의 '안내' 박스는 situational.desc 로 이미 별도 노출된다.
   const jpExportVisitStage = nextStages.find((s) => s.id === 'jp-export-quarantine-visit')
-  // desc 가 예약 안내(situational)일 때만 승격 — 예약일이 지나 미확인(passedUnconfirmed)이면
-  // desc 가 '지났어요, 저장' 안내로 바뀌므로 그땐 승격하지 않는다(지난 예약을 안내로 띄우지 않음).
-  if (jpExportVisitStage?.desc && jpExportVisitStage.desc !== PASSED_UNCONFIRMED_MSG) {
+  // 예약 날짜·시간 안내는 situational.desc 에서 직접 읽어 '다음 할 일' 인라인 안내로 승격한다.
+  // (리스트 보조문구 desc 는 정적 설명으로 분리됐으므로 그걸 재사용하지 않는다.) 예약일이 지나
+  // 미확인(passedUnconfirmed)이면 desc 가 '지났어요, 저장' 안내라 승격하지 않는다(지난 예약 숨김).
+  if (jpExportVisitStage && jpExportVisitStage.desc !== PASSED_UNCONFIRMED_MSG) {
     const d = (caseRow.data ?? {}) as Record<string, unknown>
     const hasReservation =
       typeof d.jp_export_quarantine_date === 'string' && d.jp_export_quarantine_date.length >= 10
-    if (hasReservation) {
-      jpExportVisitStage.infoMessage = jpExportVisitStage.desc
+    const reservationDesc = applicableSteps
+      .find((s) => s.id === 'jp-export-quarantine-visit')
+      ?.situational?.(caseRow)?.desc
+    if (hasReservation && reservationDesc) {
+      jpExportVisitStage.infoMessage = reservationDesc
       jpExportVisitStage.infoChecks = (jpExportVisitStage.infoChecks ?? 0) + 1
     }
   }
