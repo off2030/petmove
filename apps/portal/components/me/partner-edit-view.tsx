@@ -350,7 +350,9 @@ export function PartnerEditView({
 function InfoRow({ label, value, href }: { label: string; value: string; href?: string }) {
   const valueStyle: CSSProperties = {
     fontSize: 13,
-    color: href ? C.accent : C.ink,
+    // 전화·이메일도 주소와 같은 본문 잉크색으로 통일 — 앰버 링크색을 빼 카드 정돈.
+    // tel:/mailto: 탭 기능은 <a> 로 그대로 유지.
+    color: C.ink,
     textAlign: 'right',
     wordBreak: 'break-word',
     textDecoration: 'none',
