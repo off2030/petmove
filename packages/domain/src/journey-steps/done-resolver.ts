@@ -295,10 +295,11 @@ export function resolveDone(signal: StepDoneSignal, caseRow: CaseRow): boolean {
       if (ctx.tripType === 'round') {
         return isQuarantineConfirmed(data, 'kr_import_quarantine_date', 'kr_import_quarantine_confirmed')
       }
-      if (isQuarantineConfirmed(data, 'jp_import_quarantine_date', 'jp_import_quarantine_confirmed')) {
-        return true
-      }
-      return !!caseRow.departure_date && caseRow.departure_date < todayKst()
+      // 편도 일본은 일본 수입검역 '저장' 확인으로 완료. 그 외(비-일본 편도)는 수입검역 step 이
+      // 없어 완료 확인 prompt('잘 다녀왔어요' → arrival_confirmed, 위에서 처리)로만 완료된다.
+      // 예전엔 '출국일 경과'만으로 자동 완료했으나, 왕복과 똑같이 보호자에게 완료 확인 prompt 를
+      // 띄우려고 자동 완료를 제거한다(journeyComplete 가 false 로 남아 shouldPromptArrival 발동).
+      return isQuarantineConfirmed(data, 'jp_import_quarantine_date', 'jp_import_quarantine_confirmed')
     }
     case 'departure-past': {
       const dep = caseRow.departure_date
