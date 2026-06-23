@@ -2,7 +2,7 @@
 
 
 import { C } from '@/lib/palette'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 /**
  * 입력 카드의 '세부 정보' 접기 — 주필드만 항상 노출하고 보조 입력을 접는다.
@@ -10,6 +10,10 @@ import { useState, type ReactNode } from 'react'
  *
  * defaultOpen: 보통 '이미 입력된 값이 있으면 펼침'을 호출 측에서 계산해 넘긴다
  * (빈 입력은 닫힘으로 깔끔하게, 기존 데이터는 가려지지 않게).
+ *
+ * 주의: defaultOpen 은 '병원 지정 약품' 같은 값이 비동기(약품 카탈로그 로딩)로 늦게
+ * 도착하면 mount 이후에 false→true 로 바뀐다. useState 는 첫 렌더값만 잡으므로,
+ * 그 전환을 감지해 한 번 자동으로 펼친다(사용자가 직접 접은 뒤엔 다시 강제하지 않음).
  */
 
 
@@ -23,6 +27,12 @@ export function CollapsibleSection({
   children: ReactNode
 }) {
   const [open, setOpen] = useState(defaultOpen)
+  // defaultOpen 이 false→true 로 바뀌는 순간(늦게 도착한 데이터)에만 1회 펼친다.
+  const prevDefaultOpen = useRef(defaultOpen)
+  useEffect(() => {
+    if (defaultOpen && !prevDefaultOpen.current) setOpen(true)
+    prevDefaultOpen.current = defaultOpen
+  }, [defaultOpen])
   return (
     <div>
       <button
