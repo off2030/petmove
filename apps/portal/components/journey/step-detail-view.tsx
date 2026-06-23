@@ -300,7 +300,16 @@ export function StepDetailView({
   const [titerForm, setTiterForm] = useState<TiterForm>(savedTiterForm)
 
   // 광견병 추가 항체 검사(2회차+) — 빈 상태에서도 카드 1장이 보이도록 최소 1장 유지.
-  const savedTiterExtra = readTiterExtraEntries(caseRow?.data)
+  // 추가 접종과 동일 — 예정(미확인) 최신 추가 채혈은 입력칸에서 숨긴다(titer_extra_confirmed===false).
+  const titerExtraScheduled =
+    (caseRow?.data as Record<string, unknown> | undefined)?.titer_extra_confirmed === false
+  const savedTiterExtra = maskScheduledLatestTiter(
+    readTiterExtraEntries(caseRow?.data),
+    titerExtraScheduled,
+  )
+  const titerExtraScheduledRaw = titerExtraScheduled
+    ? latestTiterEntry(readTiterExtraEntries(caseRow?.data))
+    : null
   const [titerExtra, setTiterExtra] = useState<TiterExtraEntry[]>(
     savedTiterExtra.length === 0 ? [makeEmptyTiterExtra()] : savedTiterExtra,
   )
@@ -531,7 +540,7 @@ export function StepDetailView({
     '',
   )
   const titerExtraArrivedUnconfirmed =
-    isTiterExtra && !done && savedTiterExtraLatest !== '' && savedTiterExtraLatest <= todayStr
+    isTiterExtra && !done && !titerExtraScheduled && savedTiterExtraLatest !== '' && savedTiterExtraLatest <= todayStr
   // 백신·구충(예정→도래→완료) — 저장된 가장 늦은 입력일이 도래(≤오늘)했는데 아직 미완료면
   // 변경 없이도 '완료' 버튼 활성. (추가 백신/검사 ArrivedUnconfirmed 와 동일 톤.)
   const latestSavedDate = (list: Array<{ date?: string | null }>): string =>
@@ -663,7 +672,9 @@ export function StepDetailView({
   }, [caseRow?.data])
   useEffect(() => {
     if (!titerExtraDirty) {
-      const next = readTiterExtraEntries(caseRow?.data)
+      const sched =
+        (caseRow?.data as Record<string, unknown> | undefined)?.titer_extra_confirmed === false
+      const next = maskScheduledLatestTiter(readTiterExtraEntries(caseRow?.data), sched)
       setTiterExtra(next.length === 0 ? [makeEmptyTiterExtra()] : next)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1295,17 +1306,26 @@ export function StepDetailView({
       setStatus('saving')
       setError(null)
       startTransition(async () => {
-        const res = await updateTiterExtraEntries(
-          caseId,
-          titerExtra.map((e) => ({
-            date: e.date || null,
-            lab: e.lab || null,
-            value: e.value || null,
-          })),
-        )
+        const sendEntries = titerExtra.filter(titerEntryFilled).map((e) => ({
+          date: e.date || null,
+          lab: e.lab || null,
+          value: e.value || null,
+        }))
+        // 예정(마스킹)된 미래 추가 채혈 보존 — 새 채혈 입력이 없으면(확인 전) 그대로 유지.
+        const pastCount = savedTiterExtra.filter(titerEntryFilled).length
+        if (titerExtraScheduledRaw && sendEntries.length <= pastCount) {
+          sendEntries.push({
+            date: titerExtraScheduledRaw.date || null,
+            lab: titerExtraScheduledRaw.lab || null,
+            value: titerExtraScheduledRaw.value || null,
+          })
+        }
+        const res = await updateTiterExtraEntries(caseId, sendEntries)
         if (res.ok) {
           updateCase(res.value)
-          const next = readTiterExtraEntries(res.value.data)
+          const sched =
+            (res.value.data as Record<string, unknown> | undefined)?.titer_extra_confirmed === false
+          const next = maskScheduledLatestTiter(readTiterExtraEntries(res.value.data), sched)
           setTiterExtra(next.length === 0 ? [makeEmptyTiterExtra()] : next)
           setStatus('saved')
           window.setTimeout(() => setStatus('idle'), 1500)
@@ -2640,7 +2660,7 @@ export function StepDetailView({
                         // 검역 confirm 단계도 예정 저장분이 도래하면(미변경) 완료 확정이라 '완료'.
                         // 백신·구충도 예정 저장분이 도래하면 '완료'. 안내문도 "완료 버튼을 눌러주세요".
                         rabiesExtraArrivedUnconfirmed ||
-                        isTiterExtra ||
+                        titerExtraArrivedUnconfirmed ||
                         confirmArrivedComplete ||
                         microchipArrivedUnconfirmed ||
                         rabiesArrivedUnconfirmed ||
@@ -3108,6 +3128,29 @@ function rabiesExtraEqual(a: RabiesExtraEntry[], b: RabiesExtraEntry[]): boolean
  */
 function makeEmptyTiterExtra(): TiterExtraEntry {
   return { date: '', lab: '', value: '' }
+}
+
+/** 가장 늦은 날짜의 추가 채혈을 반환 — 예정(미확인) 최신 회차 보존용. 없으면 null. */
+function latestTiterEntry(entries: TiterExtraEntry[]): TiterExtraEntry | null {
+  let latest: TiterExtraEntry | null = null
+  for (const e of entries) {
+    const d = typeof e.date === 'string' ? e.date.slice(0, 10) : ''
+    if (d.length >= 10 && (!latest || d > (latest.date || ''))) latest = e
+  }
+  return latest
+}
+
+/** 예정(미확인) 최신 추가 채혈을 입력 목록에서 숨긴다 — 추가 접종(maskScheduledLatestRabies)과 동일. */
+function maskScheduledLatestTiter(
+  entries: TiterExtraEntry[],
+  scheduled: boolean,
+): TiterExtraEntry[] {
+  if (!scheduled || entries.length === 0) return entries
+  let maxIdx = 0
+  for (let i = 1; i < entries.length; i++) {
+    if ((entries[i].date || '') > (entries[maxIdx].date || '')) maxIdx = i
+  }
+  return entries.map((e, i) => (i === maxIdx ? makeEmptyTiterExtra() : e))
 }
 
 /**
