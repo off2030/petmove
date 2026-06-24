@@ -291,9 +291,9 @@ export const PH_CHECKS: ProcedureCheck[] = [
     id: 'ph.max-3pets-per-shipment',
     country: COUNTRY,
     category: '서류',
-    title: '1회 수입 한도 3마리 (BAI MC 49)',
+    title: '한 보호자당 3마리 한도 (BAI MC 49)',
     description:
-      'BAI MC 49: SPSIC 1회 신청당 최대 3마리. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 필리핀 목적 케이스 4건 이상 등록 시 경고.',
+      'BAI MC 49: 개인(일회성) 수입은 한 보호자당 최대 3마리. 동일 보호자(이름·영문이름·전화·국내주소 일치)가 필리핀 목적 케이스 4건 이상 등록 시 경고.',
     severity: 'warning',
     addedAt: '2026-05-07',
     run: ({ caseRow, relatedCases, destination }) => {
@@ -302,8 +302,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (others.length + 1 > 3) {
         return {
           ok: false,
-          message: `같은 보호자(${caseRow.customer_name})가 필리핀 목적 케이스를 ${others.length + 1}건 등록하여 1회 3마리 한도를 초과했어요.`,
-          fixHint: 'BAI MC 49에 따라 1회 신청당 최대 3마리까지 가능해요. 추가 등록은 별도 SPSIC 신청이 필요해요.',
+          message: `같은 보호자(${caseRow.customer_name})가 필리핀 목적 케이스를 ${others.length + 1}건 등록했어요. 한 보호자당 3마리까지만 데려갈 수 있습니다.`,
           offendingPaths: ['customer_name'],
         }
       }
