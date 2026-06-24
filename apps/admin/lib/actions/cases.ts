@@ -343,15 +343,27 @@ export async function updateCaseField(
   const isDeparture = storage === 'column' && key === 'departure_date'
   if ((isVetVisit || isDeparture) && valueChanged) {
     const today = new Date().toISOString().slice(0, 10)
-    if (currentData.export_doc_status === 'done') {
-      let shouldReset = false
-      if (isVetVisit) {
-        shouldReset = true
-      } else {
-        const visit = typeof currentData.vet_visit_date === 'string' ? currentData.vet_visit_date : ''
-        if (!visit || visit < today) shouldReset = true
+    if (isVetVisit) {
+      // 내원일(출국 전 임상검사)이 도래(≤오늘)하도록 저장되면 수기 서류(별지25·FormAC 등)를
+      // 자동 '완료'(export_doc_status='done'). 운영자가 서류탭 준비상태를 수동 '완료' 누르던
+      // 단계를 자동화 — 펫무브워크 전용(portal updateVetVisitDate 는 안 건드림, 보호자 수동 확인 유지).
+      // 검역증(kind='step')은 export_doc_status 와 무관하므로 영향 없음(검역증 제외 요구 충족).
+      // 미래(예정)·삭제로 바뀌면 발급 예정으로 복귀 — done 이었으면 리셋.
+      const newVet = typeof value === 'string' ? value.slice(0, 10) : ''
+      const vetArrived = newVet.length >= 10 && newVet <= today
+      if (vetArrived) {
+        if (currentData.export_doc_status !== 'done') {
+          nextData.export_doc_status = 'done'
+          dataMutated = true
+        }
+      } else if (currentData.export_doc_status === 'done') {
+        delete nextData.export_doc_status
+        dataMutated = true
       }
-      if (shouldReset) {
+    } else if (currentData.export_doc_status === 'done') {
+      // 출국일(departure_date) 변경 + 내원일 비었거나 이미 지남 → 서류 done 리셋(재출국 대비).
+      const visit = typeof currentData.vet_visit_date === 'string' ? currentData.vet_visit_date : ''
+      if (!visit || visit < today) {
         delete nextData.export_doc_status
         dataMutated = true
       }
