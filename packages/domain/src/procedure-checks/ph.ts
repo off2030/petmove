@@ -120,7 +120,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (age < 84) {
         return {
           ok: false,
-          message: `1차 접종일(${first.date})이 생후 ${age}일령이에요. 최소 84일령(12주) 이상이어야 해요.`,
+          message: '광견병 접종은 생후 84일(12주)이 지나서 할 수 있어요',
           offendingPaths: [`rabies_dates[${first.originalIndex}].date`],
         }
       }
@@ -154,7 +154,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (days < 21) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})부터 출국(${dep})까지 ${days}일이에요. 21일 이상이어야 해요.`,
+          message: '광견병 접종은 출국 21일 전까지 해야 해요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -181,7 +181,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 접종(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
+          message: '광견병 백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.',
           offendingPaths: ['departure_date', `rabies_dates[${latest.originalIndex}].date`],
         }
       }
@@ -217,7 +217,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (days < 21) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date})부터 출국(${dep})까지 ${days}일이에요. 21일 이상이어야 해요.`,
+          message: '종합백신 접종은 출국 21일 전까지 해야 해요.',
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
@@ -244,7 +244,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (validUntil < dep) {
         return {
           ok: false,
-          message: `최근 종합백신(${latest.date})의 유효기간(${validUntil})이 출국일(${dep}) 전에 만료돼요.`,
+          message: '종합백신 면역 유효기간이 출국 전에 만료돼요. 만료 전에 추가 접종을 하세요.',
           offendingPaths: ['departure_date', `general_vaccine_dates[${latest.originalIndex}].date`],
         }
       }
