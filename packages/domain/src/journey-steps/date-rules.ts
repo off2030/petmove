@@ -629,7 +629,7 @@ export function validateTiterWithinChain(
   if (!titerDate) return null
   const chainEnd = rabiesBoosterChainEnd(boosters)
   if (chainEnd && titerDate > chainEnd) {
-    return '채혈일이 광견병 백신 면역 유효기간을 벗어났어요.'
+    return '채혈일이 광견병 백신 면역 유효기간을 벗어났어요. 날짜를 확인하세요.'
   }
   return null
 }
@@ -645,7 +645,7 @@ export function validateTiterAfterBooster(primaryDates: string[], titerDate: str
   if (valid.length === 0) return null
   const latest = valid.reduce((m, d) => (d > m ? d : m))
   if (titerDate < latest) {
-    return `광견병 항체 검사일(${fmt(titerDate)})이 광견병 백신 접종일(${fmt(latest)})보다 빨라요. 날짜를 확인하세요.`
+    return '광견병 항체 검사일이 광견병 접종일보다 빨라요. 날짜를 확인하세요.'
   }
   return null
 }

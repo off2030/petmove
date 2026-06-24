@@ -959,7 +959,8 @@ export function StepDetailView({
       }
       // 만료된 과거 검사는 사실 데이터로 입력 허용 — 갱신 여부는 추가 검사/접종 step 의 검증과
       // procedure-check 주의(만료 후 추가 접종/검사 안내)가 표면화한다.
-      return validateTiterDate(caseRow?.data, titerForm.date, true)
+      // 4번째 인자 = 일본(1·2차 모델)에서만 '1차<칩 → 채혈=2차' 룰 적용.
+      return validateTiterDate(caseRow?.data, titerForm.date, true, destinationKey === 'japan')
     }
     if (isTiterExtra) {
       for (const entry of titerExtra) {
@@ -3199,6 +3200,8 @@ function validateTiterDate(
   data: Record<string, unknown> | null | undefined,
   date: string,
   isFirstTiter: boolean,
+  /** 1·2차 모델(일본)인지 — '1차<칩 → 채혈=2차' 룰은 일본 전용. 1회 접종국은 1차<칩이 입력 단계에서 차단됨. */
+  isTwoShotModel = false,
 ): string | null {
   if (!date) return null
   const r2 = readRabiesEntryForm(data, 1)
@@ -3216,7 +3219,9 @@ function validateTiterDate(
   })
   const chainErr = validateTiterWithinChain(boosters, date)
   if (chainErr) return chainErr
-  if (isFirstTiter) {
+  // '1차<칩 → 채혈은 2차와 같은 날' 룰은 일본(1·2차 모델) 전용 — 1회 접종국(태국·필리핀·EU)은
+  // 1차가 칩보다 빠르면 입력 단계에서 이미 hard 차단되므로 이 상태 자체가 성립하지 않는다.
+  if (isFirstTiter && isTwoShotModel) {
     const microchip = readImplantDate(data)
     if (r1.date && microchip && r1.date < microchip && date !== r2.date) {
       return '마이크로칩보다 1차 접종을 먼저 한 경우, 채혈일은 2차 접종일과 같아야 해요.'
