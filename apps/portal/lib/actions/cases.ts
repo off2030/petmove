@@ -36,6 +36,7 @@ import {
 } from '@petmove/domain'
 import { AVATAR_COLOR_IDS, type AvatarColorId } from '@/lib/avatar'
 import { readForm } from '@/lib/cases/info-form'
+import { rabiesSaveWorking, splitRabiesByDate } from '@/lib/journey/rabies-scheduled'
 import { isFreeInputMode } from './profile'
 import { assertCaseAccess, type Result } from './_shared'
 
@@ -339,9 +340,9 @@ export async function updateRabiesEntryFields(
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    const rabiesArr = Array.isArray(prev.rabies_dates)
-      ? [...(prev.rabies_dates as unknown[])]
-      : []
+    // 작업 세트 = 실제(rabies_dates) + 아직 미래인 예정(rabies_dates_scheduled). 회차 index 가
+    // 논리적 1차/2차에 매핑되도록 합친 뷰 위에서 편집한 뒤, 저장 시 날짜로 다시 쪼갠다.
+    const rabiesArr = rabiesSaveWorking(prev)
     const slot = rabiesArr[index]
     const prevEntry =
       slot && typeof slot === 'object' ? { ...(slot as Record<string, unknown>) } : {}
@@ -390,12 +391,18 @@ export async function updateRabiesEntryFields(
       compacted as Array<Record<string, unknown> & { date?: string | null }>,
     )
 
+    // 날짜로 분리 — 실제(≤오늘)는 rabies_dates(운영자·PDF·완료판정이 보는 값), 미래(>오늘)
+    // 계획은 rabies_dates_scheduled(고객 예정 배지·검증용). 펫무브워크엔 실제만 남는다.
+    const { real, scheduled } = splitRabiesByDate(sorted)
     const nextData: Record<string, unknown> = { ...prev }
-    if (sorted.length === 0) delete nextData.rabies_dates
-    else nextData.rabies_dates = sorted
-    // 1·2차 도래/예정 확인 플래그 (정렬 후 index 0=1차, 1=2차) — has-rabies-entry/booster 와 짝.
-    applyDatedConfirm(nextData, sorted[0] ? [sorted[0]] : [], 'rabies_1_confirmed')
-    applyDatedConfirm(nextData, sorted[1] ? [sorted[1]] : [], 'rabies_2_confirmed')
+    if (real.length === 0) delete nextData.rabies_dates
+    else nextData.rabies_dates = real
+    if (scheduled.length === 0) delete nextData.rabies_dates_scheduled
+    else nextData.rabies_dates_scheduled = scheduled
+    // 1·2차 확인 플래그는 실제 회차 기준 — 미래는 분리돼 제외되므로 false 가 안 나온다(마스킹
+    // 무력화). done-resolver 는 실제 rabies_dates 만 보므로 미래 계획으로 완료가 풀리지 않는다.
+    applyDatedConfirm(nextData, real[0] ? [real[0]] : [], 'rabies_1_confirmed')
+    applyDatedConfirm(nextData, real[1] ? [real[1]] : [], 'rabies_2_confirmed')
 
     const { data: updated, error } = await admin
       .from('cases')
@@ -484,11 +491,13 @@ export async function updateRabiesExtraEntries(
     if (fetchErr) return { ok: false, error: fetchErr.message }
 
     const prev = (existing?.data ?? {}) as Record<string, unknown>
-    const rabiesArr = Array.isArray(prev.rabies_dates)
-      ? [...(prev.rabies_dates as unknown[])]
-      : []
+    // 작업 세트 = 실제(rabies_dates) + 아직 미래인 예정(rabies_dates_scheduled). 폼은 실제 회차만
+    // 보여주므로 entries 는 실제 extras 와 대응시키고, 미래(예정) extras 는 따로 보존해 다시 합친다.
+    const rabiesArr = rabiesSaveWorking(prev)
     const preserved = rabiesArr.slice(0, baseIndex)
-    const prevExtras = rabiesArr.slice(baseIndex)
+    const { real: prevExtras, scheduled: futureExtrasPrev } = splitRabiesByDate(
+      rabiesArr.slice(baseIndex),
+    )
 
     const newExtras: Record<string, unknown>[] = []
     for (let i = 0; i < entries.length; i++) {
@@ -515,10 +524,13 @@ export async function updateRabiesExtraEntries(
       newExtras.push(entry)
     }
 
-    const rabiesNext: unknown[] = [...preserved, ...newExtras]
-    while (rabiesNext.length > 0 && !hasValidDate(rabiesNext[rabiesNext.length - 1])) {
-      rabiesNext.pop()
-    }
+    // 보존(1·2차 등) + 폼의 실제/신규 + 보존된 미래 예정 → 날짜순 정규화(체인 검증·분리가
+    // 날짜 순서를 전제). 미래 계획도 체인 검증에 포함되어 '2차가 너무 늦다' 등 경고를 받는다.
+    const rabiesNext = normalizeRabiesOrder(
+      [...preserved, ...newExtras, ...futureExtrasPrev].filter(hasValidDate) as Array<
+        Record<string, unknown> & { date?: string | null }
+      >,
+    ) as unknown[]
 
     // chain 검증 — 각 접종은 직전 접종의 면역 유효기간 이내여야 함. 만료 후 접종은
     // 새 기초접종이 되어 1·2차+검사+180일 다시 — 입력 단계에서 거부.
@@ -540,33 +552,25 @@ export async function updateRabiesExtraEntries(
       }
     }
 
+    // 날짜로 분리 — 실제(≤오늘)는 rabies_dates(운영자·PDF·완료판정), 미래(>오늘) 계획은
+    // rabies_dates_scheduled(고객 예정 배지·검증용). 펫무브워크엔 실제로 한 접종만 남는다.
+    const { real, scheduled } = splitRabiesByDate(rabiesNext)
     const nextData: Record<string, unknown> = { ...prev }
-    if (rabiesNext.length === 0) delete nextData.rabies_dates
-    else nextData.rabies_dates = rabiesNext
+    if (real.length === 0) delete nextData.rabies_dates
+    else nextData.rabies_dates = real
+    if (scheduled.length === 0) delete nextData.rabies_dates_scheduled
+    else nextData.rabies_dates_scheduled = scheduled
 
-    // 추가 접종 확인 플래그 — 가장 최근 추가 접종일이 도래(≤ 오늘)했으면 보호자가 실제
-    // 접종을 확인하며 저장한 것으로 보고 완료(true). 미래(예정)면 false — 도래 후 '저장' 클릭으로
-    // 확인. 추가 접종이 없으면 제거. (검역 5단계 확인 모델과 동일 취지. 옛 데이터는 플래그가
-    // 없어 done-resolver 가 날짜 게이트로 폴백 → 회귀 없음.)
-    const rabiesExtraEntries = rabiesNext.slice(baseIndex)
-    if (rabiesExtraEntries.length === 0) {
-      delete nextData.rabies_extra_confirmed
-    } else {
-      const latestExtra = rabiesExtraEntries.reduce<string>((max, r) => {
-        const d =
-          r && typeof r === 'object' && typeof (r as Record<string, unknown>).date === 'string'
-            ? ((r as Record<string, unknown>).date as string)
-            : ''
-        return d > max ? d : max
-      }, '')
-      nextData.rabies_extra_confirmed = latestExtra !== '' && latestExtra <= todayKst()
-    }
+    // 추가 확인 플래그 — 실제 추가 회차가 있으면 완료(true), 없으면 제거. 미래는 분리돼 false 가
+    // 안 나온다(마스킹 무력화). done-resolver(has-extra-rabies)는 실제만 보므로 회귀 없음.
+    if (real.slice(baseIndex).length === 0) delete nextData.rabies_extra_confirmed
+    else nextData.rabies_extra_confirmed = true
 
-    // 1회 접종국 단일카드(baseIndex 0) — has-rabies-valid 가 rabies_single_confirmed 로 도래/예정을
-    // 판정(최신 접종 기준). 2회국 1차(rabies_1_confirmed)와 별도 키 — 다중 목적지(일본+태국)에서
-    // 단일카드 저장이 2회국 1차 완료를 덮어쓰지 않도록 분리. 2회국 추가카드(baseIndex 2)는 미해당.
+    // 1회 접종국 단일카드(baseIndex 0) — has-rabies-valid 가 rabies_single_confirmed 로 판정. 실제
+    // 회차 기준(미래 분리됨). 2회국 1차(rabies_1_confirmed)와 별도 키 — 다중 목적지(일본+태국)에서
+    // 단일카드 저장이 2회국 1차 완료를 덮어쓰지 않도록 분리.
     if (baseIndex === 0) {
-      applyDatedConfirm(nextData, rabiesNext, 'rabies_single_confirmed')
+      applyDatedConfirm(nextData, real, 'rabies_single_confirmed')
     }
 
     const { data: updated, error } = await admin
