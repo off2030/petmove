@@ -378,6 +378,19 @@ export function CaseDetail({ caseRow, scrollRef }: { caseRow: CaseRow; scrollRef
               segments.push({ type: 'flat', entry: def })
             }
           }
+          // 태국 — 출국 항공편 그룹 맨 앞에 출발일(departure_date 컬럼)을 노출. 포털 출국 항공편 카드는
+          // 출발일+도착일을 함께 보여주는데 펫무브워크 그룹엔 도착일만 있었음. departure_date 는 절차정보
+          // '출국일'과 같은 필드라 별도 동기화 없이 자동 일치(편집·완료 동작도 동일). 태국만 — 일본은 이미
+          // departure_flight_date 로 출발일이 그룹에 있고, 필리핀은 출발=도착(같은 날)이라 도착일이 곧 출발일.
+          if (matchesDestinationKey(viewDestination, 'thailand')) {
+            const flightGroup = segments.find(
+              (s): s is Extract<ExtraSegment, { type: 'group' }> =>
+                s.type === 'group' && s.name === '출국 항공편',
+            )
+            if (flightGroup && !flightGroup.items.some((i) => i.key === 'departure_date')) {
+              flightGroup.items.unshift({ key: 'departure_date', label: '출발일', type: 'date' })
+            }
+          }
           // 사전신고 허가서 첨부 — 활성 목적지가 일본일 때만 추가정보 마지막 row 로 표시.
           // 케이스가 다중 목적지(예: '일본, 필리핀')이고 활성이 일본 외이면 안 노출.
           // portal 보호자·admin 운영자 모두 업로드 가능, case.data.documents 배열 공유
@@ -577,7 +590,9 @@ function SimpleExtraSection({ caseId, caseRow, sectionNumber, segments, destinat
     const keys: string[] = []
     for (const seg of segments) {
       if (seg.type === 'flat') keys.push(seg.entry.key)
-      else for (const item of seg.items) keys.push(item.key)
+      // departure_date 는 그룹에 출발일로 노출만 하는 컬럼 필드(절차정보 '출국일') — 추가정보
+      // '전체 삭제'/hasAnyValue 대상에서 제외(data 키가 아니라 컬럼이라 바로 지우면 안 됨).
+      else for (const item of seg.items) if (item.key !== 'departure_date') keys.push(item.key)
     }
     return keys
   })()
@@ -840,6 +855,30 @@ function ExtraGroupRow({ caseId, caseRow, groupName, items, useShortLabel, activ
       </span>
       <div className="min-w-0">
         {items.map((def) => {
+          // 출발일(departure_date)은 절차정보 '출국일'과 같은 컬럼 필드 — 그룹 안에서도 같은 데이터를
+          // 출발일로 노출(태국). storage='column' + 목적지 scoped 라우팅·완료 부수효과는 EditableField/
+          // updateCaseField 가 절차정보와 동일하게 처리. 값은 readCaseField 로 컬럼+by_dest 읽기.
+          if (def.key === 'departure_date') {
+            const spec: FieldSpec = {
+              key: 'departure_date',
+              storage: 'column',
+              label: useShortLabel && def.shortLabel ? def.shortLabel : def.label,
+              type: 'date',
+              group: '추가정보',
+              groupOrder: 4,
+              order: 0,
+            }
+            return (
+              <EditableField
+                key={def.key}
+                caseId={caseId}
+                spec={spec}
+                rawValue={readCaseField(caseRow, spec, activeDest)}
+                compact
+                clearable
+              />
+            )
+          }
           const spec = buildSpecForExtra(def, useShortLabel)
           const rawValue = readEffectiveExtraValue(data, def.key, activeDest)
           return (
