@@ -1017,6 +1017,8 @@ function ReturnFlightRow({ caseId, caseRow, activeDest }: {
   const rdRaw = readEffectiveExtraValue(data, 'return_date', activeDest)
   const returnDate = typeof rdRaw === 'string' ? rdRaw : ''
   const undecided = readEffectiveExtraValue(data, 'return_undecided', activeDest) === '1'
+  // 출국 항공편(EditableField) 과 동일하게 평소엔 값만 보이고 클릭해야 입력창이 뜬다.
+  const [editing, setEditing] = useState(false)
 
   function save(key: string, value: string | null) {
     updateLocalCaseField(caseId, 'data', key, value, destArgFor(key))
@@ -1034,16 +1036,36 @@ function ReturnFlightRow({ caseId, caseRow, activeDest }: {
       {/* 좌측 라벨 — 출국 항공편(ExtraGroupRow groupName)과 동일 스타일로 일치. */}
       <span className="pt-1 font-serif text-[14px] font-semibold text-foreground">귀국 항공편</span>
       <div className="min-w-0 grid grid-cols-1 md:grid-cols-[100px_1fr] items-center gap-md py-1">
-        <SectionLabel>날짜</SectionLabel>
+        {/* 라벨 클릭으로도 편집 진입 — 출국 항공편(EditableField)과 동일. */}
+        <SectionLabel onClick={editing ? undefined : () => setEditing(true)}>날짜</SectionLabel>
         <div className="min-w-0 flex items-center gap-3">
-          <DateTextField
-            value={returnDate}
-            onChange={onChangeDate}
-            placeholder="YYYY-MM-DD"
-            className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
-          />
-          {/* 귀국일이 비었을 때만 '미정' 노출 — 날짜 우측 한 줄. */}
-          {returnDate.trim().length === 0 && (
+          {editing ? (
+            <DateTextField
+              autoFocus
+              value={returnDate}
+              onChange={(v) => { onChangeDate(v); setEditing(false) }}
+              onBlur={() => setEditing(false)}
+              onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); setEditing(false) } }}
+              placeholder="YYYY-MM-DD"
+              className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              title="클릭하여 편집"
+              className={cn(
+                'text-left rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-accent/60 cursor-text',
+                returnDate
+                  ? 'font-mono text-[15px] tracking-[0.3px] text-foreground'
+                  : 'font-sans text-base font-normal text-muted-foreground/60',
+              )}
+            >
+              {returnDate || <span className="inline-block min-w-[2.5rem] select-none" aria-hidden>&nbsp;</span>}
+            </button>
+          )}
+          {/* 귀국일이 비었고 편집 중이 아닐 때만 '미정' 노출 — 날짜 우측 한 줄. */}
+          {!editing && returnDate.trim().length === 0 && (
             <button
               type="button"
               onClick={() => save('return_undecided', undecided ? null : '1')}
