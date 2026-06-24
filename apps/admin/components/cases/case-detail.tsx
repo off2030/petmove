@@ -1031,41 +1031,39 @@ function ReturnFlightRow({ caseId, caseRow, activeDest }: {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-start gap-md py-2.5 border-b border-border/80 last:border-0 transition-colors hover:bg-accent/60">
-      <SectionLabel className="pt-1">귀국 항공편</SectionLabel>
-      <div className="min-w-0">
-        <div className="flex items-center gap-3">
-          <span className="w-12 shrink-0 font-mono text-[12px] text-muted-foreground/80">날짜</span>
+      {/* 좌측 라벨 — 출국 항공편(ExtraGroupRow groupName)과 동일 스타일로 일치. */}
+      <span className="pt-1 font-serif text-[14px] font-semibold text-foreground">귀국 항공편</span>
+      <div className="min-w-0 grid grid-cols-1 md:grid-cols-[100px_1fr] items-center gap-md py-1">
+        <SectionLabel>날짜</SectionLabel>
+        <div className="min-w-0 flex items-center gap-3">
           <DateTextField
             value={returnDate}
             onChange={onChangeDate}
             placeholder="YYYY-MM-DD"
             className="h-8 w-40 rounded-md border border-border/80 bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
           />
-        </div>
-        {/* 귀국일이 비었을 때만 '미정' 노출 — 펫무브앱과 동일. */}
-        {returnDate.trim().length === 0 && (
-          <button
-            type="button"
-            onClick={() => save('return_undecided', undecided ? null : '1')}
-            aria-pressed={undecided}
-            className="mt-2.5 ml-[60px] inline-flex items-center gap-2"
-          >
-            <span
-              className={cn(
-                'flex h-[18px] w-[18px] items-center justify-center rounded-[5px] border transition-colors',
-                undecided ? 'border-foreground bg-foreground text-background' : 'border-muted-foreground/50',
-              )}
+          {/* 귀국일이 비었을 때만 '미정' 노출 — 날짜 우측 한 줄. */}
+          {returnDate.trim().length === 0 && (
+            <button
+              type="button"
+              onClick={() => save('return_undecided', undecided ? null : '1')}
+              aria-pressed={undecided}
+              className="inline-flex items-center gap-2"
             >
-              {undecided && <Check className="h-3 w-3" strokeWidth={3} />}
-            </span>
-            <span className={cn('text-[14px] font-medium', undecided ? 'text-foreground' : 'text-muted-foreground')}>
-              미정
-            </span>
-          </button>
-        )}
-        <p className="mt-1.5 ml-[60px] text-[12px] text-muted-foreground/80">
-          편도 항공권만 끊은 경우 ‘미정’을 체크하면 출국편만으로 항공권 단계가 완료돼요.
-        </p>
+              <span
+                className={cn(
+                  'flex h-[18px] w-[18px] items-center justify-center rounded-[5px] border transition-colors',
+                  undecided ? 'border-foreground bg-foreground text-background' : 'border-muted-foreground/50',
+                )}
+              >
+                {undecided && <Check className="h-3 w-3" strokeWidth={3} />}
+              </span>
+              <span className={cn('text-[14px] font-medium', undecided ? 'text-foreground' : 'text-muted-foreground')}>
+                미정
+              </span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
