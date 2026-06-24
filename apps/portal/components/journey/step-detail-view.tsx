@@ -981,7 +981,7 @@ export function StepDetailView({
         flightForm.return_date &&
         flightForm.return_date < outboundDate
       ) {
-        return '귀국 항공편 날짜는 출국 항공편 날짜 이후여야 해요.'
+        return '귀국 항공편 날짜가 출국 항공편 날짜보다 빨라요. 날짜를 확인하세요.'
       }
       // 일본 입국일 — 광견병 항체 검사 + 180일 이내면 server 가 거부할 입력. server roundtrip
       // 전 즉시 차단해 빨간 박스로 분명히 보이게 (server 결과는 form 변경 시 useEffect 가

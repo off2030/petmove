@@ -919,7 +919,7 @@ export async function updateFlightFields(
       const entry = typeof fields.entry_date === 'string' ? fields.entry_date.trim() : ''
       const ret = typeof fields.return_date === 'string' ? fields.return_date.trim() : ''
       if (entry && ret && ret < entry && !(await isFreeInputMode())) {
-        return { ok: false, error: '귀국 항공편 날짜는 출국 항공편 날짜 이후여야 해요.' }
+        return { ok: false, error: '귀국 항공편 날짜가 출국 항공편 날짜보다 빨라요. 날짜를 확인하세요.' }
       }
     }
     // 활성 목적지 토큰을 읽기(flatten)와 동일하게 해석 — ?dest 미지정이어도 첫 토큰으로 fallback 해

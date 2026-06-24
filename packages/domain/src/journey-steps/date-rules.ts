@@ -215,7 +215,7 @@ export function validatePhEntryDate(v: string, ctx: DateRuleContext): string | n
   if (!birth) return null
   const earliest = addDays(birth, 120)
   if (earliest && v < earliest) {
-    return `생후 120일(4개월)이 지난 ${fmt(earliest)} 이후에 필리핀 입국이 가능해요.`
+    return '생후 120일(4개월)이 지나야 필리핀에 입국할 수 있어요'
   }
   return null
 }
@@ -295,7 +295,7 @@ export function validateThImportPermitVaccineGap(
     const latest = dates.reduce((m, d) => (d > m ? d : m))
     const earliest = addDays(latest, 14)
     if (earliest && filedDate < earliest) {
-      return `${label} 접종일(${fmt(latest)})로부터 14일(2주)이 지난 ${fmt(earliest)} 이후에 수입 허가를 신청할 수 있어요.`
+      return `${label} 접종일로부터 14일이 지나고 수입 허가를 신청할 수 있어요.`
     }
   }
   return null
@@ -319,7 +319,7 @@ export function validatePhImportPermitVaccineGap(
     if (dates.length !== 1) continue // 0건 = 비교 불가, 2건+ = 부스터 면제
     const earliest = addDays(dates[0], 14)
     if (earliest && filedDate < earliest) {
-      return `${label} 접종일(${fmt(dates[0])})로부터 14일이 지난 ${fmt(earliest)} 이후에 수입 허가증(SPSIC)을 신청할 수 있어요.`
+      return `${label} 접종일로부터 14일이 지나고 수입 허가증(SPSIC)을 신청할 수 있어요.`
     }
   }
   return null
@@ -428,7 +428,7 @@ export function validateKrExportDate(v: string, ctx: DateRuleContext): string | 
   if (vet && v < vet) return `한국 수출 동물검역은 출국 전 임상검사 후 받을 수 있어요.`
   const depart = departFromData(ctx.data)
   if (depart) {
-    if (v > depart) return `한국 수출 동물검역일은 출국일(${fmt(depart)})보다 늦을 수 없어요.`
+    if (v > depart) return `한국 수출 동물검역일은 출국일(${fmt(depart)})보다 늦어요. 날짜를 확인하세요.`
     const windowDays = getVetVisitWindowDays(ctx.destination)
     if (daysBetween(v, depart) >= windowDays) {
       return `한국 수출 동물검역일은 출국일 기준 ${windowDays}일 이내여야 해요.`
@@ -465,7 +465,7 @@ export function validateKrImportDate(v: string, ctx: DateRuleContext): string | 
 export function validateImportQuarantineDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const entry = readDate(ctx.data, 'entry_date')
-  if (entry && v < entry) return `수입 동물검역일은 입국일(${fmt(entry)})보다 빠를 수 없어요.`
+  if (entry && v < entry) return '수입 동물검역일은 입국일보다 빠를 수 없어요. 날짜를 확인하세요.'
   return null
 }
 
@@ -476,9 +476,9 @@ export function validateImportQuarantineDate(v: string, ctx: DateRuleContext): s
 export function validateExportQuarantineDate(v: string, ctx: DateRuleContext): string | null {
   if (!v) return null
   const entry = readDate(ctx.data, 'entry_date')
-  if (entry && v < entry) return `수출 동물검역일은 입국일(${fmt(entry)})보다 빠를 수 없어요.`
+  if (entry && v < entry) return '수출 동물검역일은 입국일보다 빠를 수 없어요. 날짜를 확인하세요.'
   const ret = readDate(ctx.data, 'return_date')
-  if (ret && v > ret) return `수출 동물검역일은 귀국일(${fmt(ret)})보다 늦을 수 없어요.`
+  if (ret && v > ret) return '수출 동물검역일은 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.'
   return null
 }
 
