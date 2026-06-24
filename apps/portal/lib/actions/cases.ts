@@ -1401,9 +1401,9 @@ export async function updateVetVisitDate(
       // 실제로 본 검진만 남고, 미래 예약은 '예정 배지'로만(종합백신·항체검사 1차와 동일).
       const vvFuture = !!v && v > todayKst()
       let nextData = writeByDestValue(prev, writeDest, 'vet_visit_date', vvFuture ? null : v || null)
-      nextData = { ...nextData }
-      if (vvFuture) nextData.vet_visit_date_scheduled = v
-      else delete nextData.vet_visit_date_scheduled
+      // 예정(미래) 내원일도 목적지별(by_dest) — 실제 내원일과 같은 분리 원칙. 다중 목적지에서
+      // 한 나라 예정이 다른 나라로 새지 않게. read 는 flatten 이 surface(scenario.ts).
+      nextData = writeByDestValue(nextData, writeDest, 'vet_visit_date_scheduled', vvFuture ? v : null)
       // vet_visit_confirmed 는 공용(top-level) 플래그 — 실제(≤오늘) 검진일만 완료로.
       applyDatedConfirm(nextData, !vvFuture && v ? [{ date: v }] : [], 'vet_visit_confirmed')
       const { data: updated, error } = await admin
@@ -1423,7 +1423,7 @@ export async function updateVetVisitDate(
     const nextData: Record<string, unknown> = { ...prev }
     const vvFuture = !!v && v > todayKst()
     if (vvFuture) {
-      nextData.vet_visit_date_scheduled = v
+      nextData.vet_visit_date_scheduled = v // scoping-fallback-ok: writeDest 없음(목적지 없는 케이스) 폴백
       delete nextData.vet_visit_date
     } else {
       delete nextData.vet_visit_date_scheduled

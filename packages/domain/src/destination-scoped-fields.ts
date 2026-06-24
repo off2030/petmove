@@ -26,6 +26,9 @@ export const DESTINATION_SCOPED_FIELD_KEYS: ReadonlySet<string> = new Set([
   // 일정
   'departure_date',
   'vet_visit_date',
+  // 예정(미래) 내원일 — 실제 내원일(vet_visit_date)과 같은 분리 원칙. 다중 목적지가 많아
+  // 한 나라 예정 내원일이 다른 나라로 새지 않게 by_dest 로 분리. read 는 flatten 이 surface.
+  'vet_visit_date_scheduled',
   // 검진 완료(legacy '저장=완료'·admin 토글) 플래그 — 검진일과 같은 step(전 목적지)이라
   // 같이 분리. 안 하면 한 목적지 검진 완료가 다른 목적지로 누수(검진일은 분리됐는데 완료만
   // 전역이면 어긋남). 현행 코드는 이 값을 true 로 쓰지 않아(legacy 데이터만 존재) 다중
@@ -158,6 +161,10 @@ export const GLOBAL_CASE_DATA_KEYS: ReadonlySet<string> = new Set([
   'general_vaccine_dates_scheduled',
   'external_parasite_dates_scheduled',
   'internal_parasite_dates_scheduled',
+  // 마이크로칩 삽입·광견병 접종 예정일 — 대응 *_date(s) 가 동물 단위(전역)라 예정도 전역.
+  // (내원일 예정과 달리 동물 한 마리의 사실이라 목적지 무관.)
+  'microchip_implant_date_scheduled',
+  'rabies_dates_scheduled',
   // 2) 스코핑 기반 구조물·케이스 단위 메타
   'by_dest', //              destination 별 분기를 담는 컨테이너 그 자체
   'trip_type', //            destination 키 맵(내부적으로 목적지별 — 컨테이너는 전역)
