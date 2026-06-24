@@ -579,7 +579,7 @@ export function validateMicrochipBeforeBooster(
 ): string | null {
   if (!microchipDate || !secondDate) return null
   if (microchipDate > secondDate) {
-    return `마이크로칩 삽입 후 ${vaccineLabel} 접종을 하세요`
+    return `마이크로칩 삽입 후 ${vaccineLabel}을 접종하세요`
   }
   return null
 }
