@@ -16,10 +16,11 @@ export interface RabiesChainBreak {
   brokenAt: number
   /**
    * 깨진 사유:
-   *  - 'too-early': 직전 차수와 같거나 이른 날짜(부스터는 직전 접종보다 늦어야 함) — 순서 위반.
-   *  - 'expired'  : 직전 접종의 면역 유효기간을 넘긴 날짜 — chain 끊김(새 기초접종).
+   *  - 'too-early' : 직전 차수보다 이른 날짜 — 순서 위반.
+   *  - 'same-date' : 직전 차수와 같은 날짜 — 부스터는 직전 접종보다 늦어야 함.
+   *  - 'expired'   : 직전 접종의 면역 유효기간을 넘긴 날짜 — chain 끊김(새 기초접종).
    */
-  reason: 'too-early' | 'expired'
+  reason: 'too-early' | 'same-date' | 'expired'
   /** 직전 접종일 (YYYY-MM-DD). */
   prevDate: string
   /** 직전 접종의 면역 유효기간 마지막일 (YYYY-MM-DD). */
@@ -43,9 +44,12 @@ export function findRabiesChainBreak(
     const prev = valid[i - 1]
     const cur = valid[i]
     const prevValidUntil = resolveValidUntil(prev.date, prev.valid_until)
-    // (a) 순서 위반 — 직전 차수와 같거나 이른 날짜(부스터는 직전 접종보다 늦어야 함).
-    if (cur.date <= prev.date) {
+    // (a) 순서 위반 — 직전 차수보다 이른 날짜. 같은 날짜는 별도 사유('same-date')로 구분.
+    if (cur.date < prev.date) {
       return { brokenAt: i + 1, reason: 'too-early', prevDate: prev.date, prevValidUntil }
+    }
+    if (cur.date === prev.date) {
+      return { brokenAt: i + 1, reason: 'same-date', prevDate: prev.date, prevValidUntil }
     }
     // (b) 유효기간 경과 — 부스터가 직전 면역 유효기간을 넘김.
     if (cur.date > prevValidUntil) {
@@ -53,4 +57,20 @@ export function findRabiesChainBreak(
     }
   }
   return null
+}
+
+/**
+ * chain 깨짐 사유별 입력 차단 메시지(단일 출처) — client·server 의 광견병·종합백신 입력
+ * 검증이 공용으로 쓴다. N = 깨진 차수(brokenAt).
+ */
+export function rabiesChainBreakMessage(brk: RabiesChainBreak): string {
+  const n = brk.brokenAt
+  switch (brk.reason) {
+    case 'too-early':
+      return `${n}차 접종일이 ${n - 1}차 접종일보다 빠릅니다. 날짜를 확인하세요.`
+    case 'same-date':
+      return `${n}차 접종일이 ${n - 1}차 접종일과 같습니다. 날짜를 확인하세요.`
+    case 'expired':
+      return `${n}차 접종일은 ${n - 1}차 백신 면역 유효기간 이내여야 해요.`
+  }
 }

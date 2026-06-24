@@ -20,6 +20,7 @@ import {
   applyAutoFillRules,
   buildCaseJourneyContext,
   findRabiesChainBreak,
+  rabiesChainBreakMessage,
   isDestinationScopedKey,
   normalizeRabiesOrder,
   parseDestinations,
@@ -545,10 +546,7 @@ export async function updateRabiesExtraEntries(
     if (chainBreak) {
       return {
         ok: false,
-        error:
-          chainBreak.reason === 'too-early'
-            ? `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 접종일보다 늦어야 해요.`
-            : `${chainBreak.brokenAt}차 접종일은 ${chainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 해요.`,
+        error: rabiesChainBreakMessage(chainBreak),
       }
     }
 
@@ -1935,10 +1933,7 @@ export async function updateGeneralVaccineEntries(
     if (gvChainBreak) {
       return {
         ok: false,
-        error:
-          gvChainBreak.reason === 'too-early'
-            ? `${gvChainBreak.brokenAt}차 접종일은 ${gvChainBreak.brokenAt - 1}차 접종일보다 늦어야 해요.`
-            : `${gvChainBreak.brokenAt}차 접종일은 ${gvChainBreak.brokenAt - 1}차 백신 면역 유효기간 이내여야 해요.`,
+        error: rabiesChainBreakMessage(gvChainBreak),
       }
     }
 

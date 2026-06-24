@@ -561,8 +561,7 @@ export function validateRabiesPrimeAge(
   if (!birthDate || !primeDate) return null
   const age = daysBetween(birthDate, primeDate)
   if (age < minDays) {
-    const eligible = addDays(birthDate, minDays)
-    return `1차 광견병 접종은 생후 ${minDays}일(${eligible ? fmt(eligible) : ''}) 이후에 해야 해요.`
+    return `광견병 접종은 생후 ${minDays}일(${Math.round(minDays / 7)}주)이 지나서 할 수 있어요`
   }
   return null
 }
@@ -576,11 +575,11 @@ export function validateMicrochipBeforeBooster(
   microchipDate: string,
   secondDate: string,
   /** 백신명 — 메시지에 들어감. 광견병 기본, 종합백신 등은 호출 시 지정. */
-  vaccineLabel = '광견병 백신',
+  vaccineLabel = '광견병',
 ): string | null {
   if (!microchipDate || !secondDate) return null
   if (microchipDate > secondDate) {
-    return `마이크로칩 삽입 이후에 ${vaccineLabel}을 접종해야 해요.`
+    return `마이크로칩 삽입 후 ${vaccineLabel} 접종을 하세요`
   }
   return null
 }
