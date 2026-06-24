@@ -5,6 +5,7 @@ import type { CaseRow } from '@petmove/domain'
 import { isDestinationScopedKey, matchesDestinationKey } from '@petmove/domain'
 import {
   setAdvanceNotificationReportStatus,
+  setImportPermitReportStatus,
   setJpExportQuarantineReportStatus,
   updateCaseField,
 } from '@/lib/actions/cases'
@@ -251,8 +252,29 @@ function SelectCell({
   const isJapanReport =
     matchesDestinationKey(row.destination, 'japan') &&
     (col.key === 'import_import_status' || col.key === 'import_export_status')
+  // 태국·필리핀 '수입' 칸 = 수입 허가 step 과 양방향 sync (일본 사전신고의 짝, '수출'은 해당 없음).
+  const isImportPermitReport =
+    (matchesDestinationKey(row.destination, 'thailand') ||
+      matchesDestinationKey(row.destination, 'philippines')) &&
+    col.key === 'import_import_status'
   async function pick(v: string) {
     if (v === value) return
+    if (isImportPermitReport && (v === 'not_started' || v === 'in_progress' || v === 'done')) {
+      if (v === 'not_started') {
+        const ok = await confirm({
+          message: '대기중으로 되돌리시겠어요?',
+          description:
+            '수입 허가 진행 정보(신청일·완료 표시)가 지워집니다. 보호자가 첨부한 허가증이나 입력된 허가번호는 그대로 유지됩니다.',
+          okLabel: '대기로 되돌리기',
+        })
+        if (!ok) return
+      }
+      const res = await setImportPermitReportStatus(row.id, v as 'not_started' | 'in_progress' | 'done')
+      if (res.ok && res.autoFilled?.data) {
+        replaceLocalCaseData(row.id, res.autoFilled.data)
+      }
+      return
+    }
     if (isJapanReport && (v === 'not_started' || v === 'in_progress' || v === 'done')) {
       if (v === 'not_started') {
         const ok = await confirm({

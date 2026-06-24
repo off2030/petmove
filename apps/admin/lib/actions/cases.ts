@@ -10,6 +10,7 @@ import {
   readByDestValue,
   stampDocsChecklistCompletion,
   writeByDestValue,
+  flattenCaseForDestination,
   type CaseRow,
 } from '@petmove/domain'
 
@@ -841,6 +842,83 @@ export async function setJpExportQuarantineReportStatus(
 }
 
 /**
+ * 수입 허가(import-permit) 신고 상태 변경 — 태국·필리핀 등 허가 필요국. portal 의 수입 허가
+ * step 시그널과 같은 by_dest 키를 공유해 양방향 sync (일본 사전 신고 setter 의 짝).
+ *
+ * 신호(모두 by_dest 스코핑):
+ *   - import_permit_application_date (신청일) → derive 'in_progress'
+ *   - import_permit_issued_skipped (첨부 없이 완료 처리) → derive 'done'
+ *   - import_permit_in_progress (보호자/운영자 '진행 중' 확인 ack — portal '진행 중' 톤 게이트)
+ * 첨부(stepId 'import-permit')·허가번호(permit_no)는 portal/추가정보 관할이라 손대지 않는다 —
+ * 둘 중 하나라도 있으면 derive 가 'done' 으로 잡으므로 '대기/진행중'으로 못 내릴 수 있다(UI confirm 안내).
+ *
+ * portal(updateImportPermitFields)이 단일 목적지도 by_dest 에 쓰므로(B안), 읽기(flatten)와
+ * 일치하도록 admin 도 활성 목적지 토큰이 해석되면 항상 by_dest 에 쓰고 top-level 잔존은 지운다.
+ */
+export async function setImportPermitReportStatus(
+  caseId: string,
+  target: ReportTarget,
+): Promise<UpdateResult> {
+  const supabase = await createClient()
+  const { data: row, error: fetchErr } = await supabase
+    .from('cases')
+    .select('data, destination, departure_date')
+    .eq('id', caseId)
+    .single()
+  if (fetchErr) return { ok: false, error: fetchErr.message }
+  const current = ((row?.data as Record<string, unknown> | null) ?? {}) as Record<string, unknown>
+  const caseRow = {
+    destination: (row?.destination as string | null) ?? null,
+    data: current,
+    departure_date: (row?.departure_date as string | null) ?? null,
+  } as CaseRow
+  const token = resolveTabActiveDest(caseRow, 'import_report_active_dest')
+  const today = new Date().toISOString().slice(0, 10)
+
+  // 신청일은 read flatten 과 동일 경로로 읽는다(by_dest 우선, 단일 by_dest 엔트리 없으면 top-level).
+  const view = flattenCaseForDestination(caseRow, token)
+  const viewData = (view.data ?? {}) as Record<string, unknown>
+  const appliedRaw = viewData.import_permit_application_date
+  const hasAppDate = typeof appliedRaw === 'string' && appliedRaw.length >= 10
+
+  let next: Record<string, unknown> = { ...current }
+  // 새 액션 호출 = derive 모드. legacy 수동 stored 클리어.
+  delete next.import_import_status
+
+  // token 있으면 by_dest 에 쓰고 top-level 잔존 제거(flatten fallback 누수 차단). 없으면 top-level.
+  const writeSignal = (key: string, value: unknown) => {
+    if (token) {
+      next = writeByDestValue(next, token, key, value)
+      delete next[key]
+    } else if (value === null || value === undefined || value === '') {
+      delete next[key]
+    } else {
+      next[key] = value
+    }
+  }
+
+  if (target === 'not_started') {
+    writeSignal('import_permit_application_date', null)
+    writeSignal('import_permit_issued_skipped', null)
+    writeSignal('import_permit_in_progress', null)
+  } else if (target === 'in_progress') {
+    // 완료(skip) 해제 + 신청일 없으면 오늘로 → derive 'in_progress'. '진행 중' ack set.
+    writeSignal('import_permit_issued_skipped', null)
+    if (!hasAppDate) writeSignal('import_permit_application_date', today)
+    writeSignal('import_permit_in_progress', true)
+  } else {
+    // target === 'done' — 첨부 없이 완료 처리(skip). 신청일 없으면 오늘로(skip+신청일 정합).
+    writeSignal('import_permit_issued_skipped', true)
+    if (!hasAppDate) writeSignal('import_permit_application_date', today)
+    writeSignal('import_permit_in_progress', null)
+  }
+
+  const { error } = await supabase.from('cases').update({ data: next }).eq('id', caseId)
+  if (error) return { ok: false, error: error.message }
+  return { ok: true, autoFilled: { data: next } }
+}
+
+/**
  * 신고 내리기 = 신고 취소. 단순 숨김(import_report_dismissed=true)에 더해, 수입(사전 신고)·
  * 수출(수출검역) 진행 정보를 모두 비운다 — 두 setter 의 'not_started' 클리어와 동일한 필드를
  * 한 번의 read/write 로 처리. 비운 뒤에도 dismissed=true 로 신고 탭에서 계속 숨김.
@@ -886,6 +964,15 @@ export async function dismissImportReport(caseId: string): Promise<UpdateResult>
   delete next.jp_export_quarantine_reservation_skipped
   delete next.jp_export_quarantine_confirmed
   delete next.jp_export_quarantine_admin_demoted_at
+
+  // 수입 허가(태국·필리핀 등) 진행 정보 클리어 — setImportPermitReportStatus('not_started') 와 동일.
+  // 첨부(stepId 'import-permit')·허가번호(permit_no)는 손대지 않는다(보호자/추가정보 관할, 위 안내문과 일치).
+  // 신호는 by_dest 스코핑 — portal 이 단일 목적지도 by_dest 에 쓰므로 활성 목적지 by_dest 도 null
+  // sentinel 로 비워야(top-level delete 만으론 부족) derive 가 되살아나지 않는다.
+  for (const k of ['import_permit_application_date', 'import_permit_issued_skipped', 'import_permit_in_progress'] as const) {
+    delete next[k]
+    if (activeDest) next = writeByDestValue(next, activeDest, k, null)
+  }
 
   // 숨김 유지.
   next.import_report_dismissed = true

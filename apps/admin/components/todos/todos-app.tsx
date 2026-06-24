@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { DialogFooter } from '@/components/ui/dialog-footer'
 import {
   deriveAdvanceNotificationStatus,
+  deriveImportPermitStatus,
   deriveJpExportQuarantineStatus,
   flattenCaseForDestination,
   getDepartureDate,
@@ -508,6 +509,18 @@ function isJapan(row: CaseRow): boolean {
 }
 
 /**
+ * 수입 허가(import-permit) step 으로 신고 상태를 도출하는 목적지 — 태국·필리핀.
+ * 이들은 일본식 사전신고가 아니라 수입 허가증 신청·발급 2단계라, 신고 탭 '수입' 칸을
+ * portal 의 허가 step 시그널과 같은 derive 로 잇는다. (명시 분류 — country='all' 누수 금지)
+ */
+function usesImportPermitReport(row: CaseRow): boolean {
+  return (
+    matchesDestinationKey(row.destination, 'thailand') ||
+    matchesDestinationKey(row.destination, 'philippines')
+  )
+}
+
+/**
  * 신고 탭 상태 — 일본 케이스는 공용 derive 헬퍼([[deriveAdvanceNotificationStatus]])로,
  * 그 외 destination 은 stored 값만 본다. derive 헬퍼는 portal 의 사전 신고 step 도 같이
  * 사용 — 한곳에 모아 양쪽이 비대칭으로 보이지 않게 한다.
@@ -521,6 +534,12 @@ function effectiveImportStatus(row: CaseRow): string {
   if (isJapan(row)) {
     const view = flattenCaseForDestination(row, resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY))
     return deriveAdvanceNotificationStatus(view)
+  }
+  // 태국·필리핀 — 수입 허가 step 시그널(신청일·완료·첨부·허가번호)로 derive. 신청일·완료 플래그가
+  // by_dest 스코핑이라 활성 목적지로 평탄화한 view 를 넘긴다(일본 derive 와 동일 컨벤션).
+  if (usesImportPermitReport(row)) {
+    const view = flattenCaseForDestination(row, resolveTabActiveDest(row, IMPORT_REPORT_DEST_KEY))
+    return deriveImportPermitStatus(view)
   }
   const data = (row.data ?? {}) as Record<string, unknown>
   const stored = data.import_import_status
