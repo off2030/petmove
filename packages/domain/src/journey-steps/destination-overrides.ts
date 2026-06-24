@@ -191,6 +191,9 @@ export const STEP_DESTINATION_OVERRIDES: Record<
       description:
         '내부 기생충 치료를 하세요.\n\n수입 허가증(SPSIC) 신청 전 7일 ~ 3개월 사이에 치료하세요.',
       doneSummary: '내부 기생충 치료를 했어요.',
+      // 종합백신(50) 뒤·광견병 항체검사(55, 귀국용) 앞에 배치. 항체검사는 한국 귀국용이라
+      // 입국 요건인 구충을 먼저 보여준다 (base 90 → 52 override).
+      order: 52,
     },
     'flight-purchase': {
       description:
