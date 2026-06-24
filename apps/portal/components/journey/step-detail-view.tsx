@@ -1011,10 +1011,9 @@ export function StepDetailView({
         if (e.date && birth && e.date < birth) {
           return '접종일이 출생일보다 빨라요. 날짜를 확인하세요.'
         }
-        // 유효기간 < 접종일 — 논리적 불가능 조건이라 저장 거부.
-        if (e.date && e.valid_until && e.valid_until < e.date) {
-          return '면역 유효기간이 접종일보다 빨라요. 날짜를 확인하세요.'
-        }
+        // (면역 유효기간 valid_until 은 '1년/2년/3년' 기간 선택이라 '접종일보다 빠름' 자체가
+        //  성립 안 함 — 옛 raw 비교는 "1년" < 날짜가 lexically true 라 1년 선택 시 오차단됐다.
+        //  진짜 유효기간 검증은 아래 findRabiesChainBreak('expired')가 resolveValidUntil 로 처리.)
       }
       // 칩 이후 접종 — 광견병과 동일. 가장 이른 접종이 칩보다 빠르면 차단(칩 식별 연계).
       // 단일 출처는 목적지 override 의 *.microchip-before-general-vaccine 매핑(태국·필리핀).
