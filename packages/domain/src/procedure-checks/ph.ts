@@ -361,7 +361,7 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (entry && raw < entry) {
         return {
           ok: false,
-          message: '필리핀 수입 동물검역일은 필리핀 입국일보다 빠를 수 없어요.',
+          message: '필리핀 수입 동물검역일은 필리핀 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
           offendingPaths: ['ph_import_quarantine_date'],
         }
       }
@@ -395,14 +395,14 @@ export const PH_CHECKS: ProcedureCheck[] = [
       if (entry && raw < entry) {
         return {
           ok: false,
-          message: '필리핀 수출 동물검역일은 필리핀 입국일보다 빠를 수 없어요.',
+          message: '필리핀 수출 동물검역일은 필리핀 입국일보다 빠를 수 없어요. 날짜를 확인하세요.',
           offendingPaths: ['ph_export_quarantine_date'],
         }
       }
       if (ret && raw > ret) {
         return {
           ok: false,
-          message: '필리핀 수출 동물검역일은 한국 귀국일보다 늦을 수 없어요.',
+          message: '필리핀 수출 동물검역일은 한국 귀국일보다 늦을 수 없어요. 날짜를 확인하세요.',
           offendingPaths: ['ph_export_quarantine_date'],
         }
       }
