@@ -272,7 +272,7 @@ export const TH_CHECKS: ProcedureCheck[] = [
       if (match) {
         return {
           ok: false,
-          message: `견종 "${breed.ko || breed.en}"은 태국 수입이 금지되어 있어요 (매치: ${match}).`,
+          message: `"${breed.ko || breed.en}"은 태국 수입이 금지되어 있어요 (매치: ${match}).`,
           offendingPaths: ['breed', 'breed_en'],
         }
       }
